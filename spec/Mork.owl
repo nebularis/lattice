@@ -884,7 +884,7 @@
         <NamedIndividual IRI="#OwlNothing"/>
     </SameIndividual>
     <ObjectPropertyAssertion>
-        <ObjectProperty IRI="#mappingScheme"/>
+        <ObjectProperty IRI="#ontologicalScheme"/>
         <NamedIndividual IRI="#DeferredABoxReference"/>
         <NamedIndividual IRI="#MorkOntologyScheme"/>
     </ObjectPropertyAssertion>
@@ -900,7 +900,17 @@
     </ObjectPropertyAssertion>
     <ObjectPropertyAssertion>
         <ObjectProperty IRI="#ontologicalScheme"/>
+        <NamedIndividual IRI="#DeferredDataPropertyDefinition"/>
+        <NamedIndividual IRI="#MorkOntologyScheme"/>
+    </ObjectPropertyAssertion>
+    <ObjectPropertyAssertion>
+        <ObjectProperty IRI="#ontologicalScheme"/>
         <NamedIndividual IRI="#DeferredIndividualDefinition"/>
+        <NamedIndividual IRI="#MorkOntologyScheme"/>
+    </ObjectPropertyAssertion>
+    <ObjectPropertyAssertion>
+        <ObjectProperty IRI="#ontologicalScheme"/>
+        <NamedIndividual IRI="#DeferredObjectPropertyDefinition"/>
         <NamedIndividual IRI="#MorkOntologyScheme"/>
     </ObjectPropertyAssertion>
     <EquivalentObjectProperties>

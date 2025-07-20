@@ -1743,7 +1743,7 @@ rdf:List rdf:type owl:Class .
 ###  http://www.nebularis.org/ontologies/Mork#DeferredABoxReference
 :DeferredABoxReference rdf:type owl:NamedIndividual ,
                                 :DeferredContext ;
-                       :mappingScheme :MorkOntologyScheme ;
+                       :ontologicalScheme :MorkOntologyScheme ;
                        <http://www.w3.org/2004/02/skos/core#definition> "Used as a placeholder for referencing the A-Box object in a triple that a DataMapping with an RBox-match refers to." .
 
 
@@ -1761,7 +1761,8 @@ rdf:List rdf:type owl:Class .
 
 ###  http://www.nebularis.org/ontologies/Mork#DeferredDataPropertyDefinition
 :DeferredDataPropertyDefinition rdf:type owl:NamedIndividual ,
-                                         :OwlDataProperty .
+                                         :OwlDataProperty ;
+                                :ontologicalScheme :MorkOntologyScheme .
 
 
 ###  http://www.nebularis.org/ontologies/Mork#DeferredIndividualDefinition
@@ -1772,7 +1773,8 @@ rdf:List rdf:type owl:Class .
 
 ###  http://www.nebularis.org/ontologies/Mork#DeferredObjectPropertyDefinition
 :DeferredObjectPropertyDefinition rdf:type owl:NamedIndividual ,
-                                           :OwlObjectProperty .
+                                           :OwlObjectProperty ;
+                                  :ontologicalScheme :MorkOntologyScheme .
 
 
 ###  http://www.nebularis.org/ontologies/Mork#JSON
