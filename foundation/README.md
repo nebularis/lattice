@@ -36,7 +36,7 @@ Hash namespaces are preferred to slash namespaces so that every term in a layer 
 
 This document uses only the prefixes Foundation's own axioms actually need:
 
-```turtle
+```turtle-spec
 @prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
 @prefix owl:  <http://www.w3.org/2002/07/owl#> .
 @prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
@@ -55,7 +55,7 @@ Every class, property, and axiom group below follows the same fixed template:
 >
 > **Utility.** A paragraph explaining why the term exists and what it's for — becomes the term's `fnd:utility` value (defined in §5 below).
 >
-> ```turtle
+> ```turtle-example
 > fnd:TermName a owl:Class ;
 >     rdfs:comment "..." ;
 >     fnd:utility "..." .
@@ -83,7 +83,7 @@ The blocks are fragments, not independently complete files — prefixes are decl
 
 **Utility.** Ordinary `rdfs:comment` provides a narrative, whilst `fnd:utility` speaks to why a thing exists and is shaped the way it is. Every term in every LATTICE layer uses this property, making the reasoning behind the ontology itself as inspectable as the data the ontology describes.
 
-```turtle
+```turtle-spec
 fnd:utility a owl:AnnotationProperty ;
     rdfs:comment "The design rationale for a term — why it exists, not merely what it means." .
 ```
@@ -98,10 +98,10 @@ fnd:utility a owl:AnnotationProperty ;
 
 This is a deliberate asymmetry with Evidence, TemporalScope, and GovernanceState, which are naturally separate small objects (a proof, a date range, a status, etc).
 
-```turtle
+```turtle-spec
 fnd:Version a owl:Class ;
     rdfs:comment "An individual representing a specific, identified state of some persistent thing." ;
-    fnd:utility "The mixin for identity that survives change. The domain individual itself plays the role of the version, rather than pointing out to a separate version object — unlike Evidence, TemporalScope, and GovernanceState, there is no meaningful object distinct from the thing itself for versioning to reference." ;
+    fnd:utility "The mixin for identity that survives change. The domain individual itself plays the role of being a version, rather than pointing out to a separate version object — unlike Evidence, TemporalScope, and GovernanceState, there is no meaningful object distinct from the thing itself for versioning to reference." ;
     rdfs:subClassOf [
         a owl:Restriction ;
         owl:onProperty fnd:hasIdentity ;
@@ -115,7 +115,7 @@ fnd:Version a owl:Class ;
 
 **Utility.** Separating identity from version is what makes "this is the same Obligation, edited" distinguishable from "this is a different Obligation that happens to look similar." Without this split, versioning collapses into a flat sequence of unrelated snapshots with no way to assert they're states of one continuant.
 
-```turtle
+```turtle-spec
 fnd:PersistentIdentity a owl:Class ;
     rdfs:comment "The stable identifier for a thing across all of its versions." ;
     fnd:utility "Separates 'the same thing, edited' from 'a different thing that looks similar' — without this, a version history is just a set of unrelated snapshots with no continuant they're all states of." ;
@@ -132,7 +132,7 @@ fnd:PersistentIdentity a owl:Class ;
 
 **Utility.** Kept independent of `Version` deliberately — a Role Occupancy's contingent binding (a D&O third party becoming bound to a role) needs evidential support ("this transition fired because X was asserted") without that being a question of versioning at all. Coupling the two would force anything needing evidence to also take on full version-tracking, which is a stronger commitment than most callers need.
 
-```turtle
+```turtle-spec
 fnd:Evidenced a owl:Class ;
     rdfs:comment "A mixin for anything that can carry supporting evidence." ;
     fnd:utility "Independent of Version deliberately — needing evidential support for an assertion (why did this transition fire) is a different concern from needing identity that survives change, and coupling them would force every evidenced thing into full version-tracking whether it needs it or not." .
@@ -144,7 +144,7 @@ fnd:Evidenced a owl:Class ;
 
 **Utility.** Aligned with `prov:Entity` (§8) rather than defined from scratch, since PROV-O already provides exactly this concept with established semantics and tooling support. Evidence is required to support at least one thing — evidence that supports nothing isn't evidence of anything, and that's worth the T-box catching rather than leaving implicit.
 
-```turtle
+```turtle-spec
 fnd:Evidence a owl:Class ;
     rdfs:subClassOf prov:Entity ;
     rdfs:comment "An item of evidence supporting some assertion or entity." ;
@@ -166,7 +166,7 @@ fnd:Evidence a owl:Class ;
 
 **Utility.** Named separately from `Evidence.recordedAt` on purpose: *when a fact was true* and *when we learned or asserted it* are genuinely different questions, and conflating them is a common, easy-to-make modelling error (the bitemporal distinction — valid time versus transaction time). A thing can be `TemporallyScoped` without being `Evidenced`, and vice versa.
 
-```turtle
+```turtle-spec
 fnd:TemporallyScoped a owl:Class ;
     rdfs:comment "A mixin for anything with a validity period distinct from when it was recorded." ;
     fnd:utility "Keeps 'when this was true' (TemporalScope) separate from 'when we recorded it' (Evidence.recordedAt) — the bitemporal distinction between valid time and transaction time, which is easy to accidentally collapse into one timestamp." ;
@@ -183,7 +183,7 @@ fnd:TemporallyScoped a owl:Class ;
 
 **Utility.** A re-entering state (suspended, then reinstated) is modelled as a new `Version` with its own `TemporalScope`, rather than one individual carrying multiple disjoint validity windows — keeping this class to exactly one `validFrom`/`validTo` pair keeps that discipline enforceable at the T-box level instead of relying on convention.
 
-```turtle
+```turtle-spec
 fnd:TemporalScope a owl:Class ;
     rdfs:comment "A validity period: a start, and an optional end." ;
     fnd:utility "Deliberately holds exactly one validFrom/validTo pair. A thing that becomes valid, lapses, then becomes valid again is modelled as a new Version with a new TemporalScope, not as one TemporalScope with multiple windows — this keeps that discipline enforceable rather than conventional." ;
@@ -200,7 +200,7 @@ fnd:TemporalScope a owl:Class ;
 
 **Utility.** Expected to apply mainly to specification-level artefacts — a Wording Template, a SHACL shape, an ontology term — moving through draft/review/active/superseded, rather than to ordinary A-box facts. Kept as its own mixin rather than folded into `Version` or `Evidenced` so that a downstream class only takes on governance semantics when it genuinely has a review lifecycle, not by default.
 
-```turtle
+```turtle-spec
 fnd:Governable a owl:Class ;
     rdfs:comment "A mixin for anything that carries a governance-lifecycle status." ;
     fnd:utility "Expected to apply mainly to specification-level artefacts moving through a review lifecycle, not to ordinary facts. Kept separate from Version and Evidenced so governance semantics are opted into deliberately, not inherited by default." ;
@@ -217,7 +217,7 @@ fnd:Governable a owl:Class ;
 
 **Utility.** Deliberately left open here — see [§4](#4-design-decisions). The class exists so `hasGovernanceState` has a range to point at; the closed set of actual values (`Draft`, `Reviewed`, `Active`, `Superseded`) is declared as named individuals in `vocab/foundation-vocab.ttl` and enforced as a closed set in `shapes/constraints.ttl`, not here. Also deliberately *not* a state machine — Foundation sits below Behaviour in the dependency order and cannot depend on Behaviour's Trigger/Guard/Effect apparatus without creating a cycle; a downstream ontology wanting transition semantics around governance status composes Behaviour on top of this bare value.
 
-```turtle
+```turtle-spec
 fnd:GovernanceState a owl:Class ;
     rdfs:comment "The status of a governed artefact within its review lifecycle." ;
     fnd:utility "Left open at the T-box level; the closed enumeration lives in vocab/ and shapes/, not spec/. Deliberately not a state machine — Foundation sits below Behaviour in the dependency order and cannot depend on it, so this is a bare value a downstream ontology can layer Behaviour's transition semantics on top of, not a lifecycle Foundation provides itself." .
@@ -225,7 +225,7 @@ fnd:GovernanceState a owl:Class ;
 
 ### Disjointness
 
-```turtle
+```turtle-spec
 [] a owl:AllDisjointClasses ;
     owl:members ( fnd:Version fnd:PersistentIdentity fnd:Evidence fnd:TemporalScope fnd:GovernanceState ) .
 
@@ -244,7 +244,7 @@ fnd:Governable owl:disjointWith fnd:GovernanceState .
 
 **Utility.** `hasIdentity` is marked `Functional` — a version belongs to exactly one identity, never several — which, combined with the `owl:inverseOf` relationship, entails the corresponding inverse-functional behaviour on `hasVersion` automatically. No separate axiom is needed to state that a version can't belong to two different identities; it follows from `Functional` plus the inverse declaration, and asserting it again would be redundant.
 
-```turtle
+```turtle-spec
 fnd:hasIdentity a owl:ObjectProperty, owl:FunctionalProperty ;
     rdfs:domain fnd:Version ;
     rdfs:range fnd:PersistentIdentity ;
@@ -265,7 +265,7 @@ fnd:hasVersion a owl:ObjectProperty ;
 
 **Utility.** Marked `Irreflexive` (a version cannot supersede itself) and `Asymmetric` (if A supersedes B, B cannot also supersede A) — both cheap, correct, reasoner-checkable constraints that catch nonsensical version histories. Deliberately *not* marked `Transitive`: this property expresses immediate succession only, not "is eventually superseded by." Materialising the full transitive closure of a long version chain would multiply inferred triples for little benefit; "is this the latest version" is better answered as a zero-or-more-hop query at query time than as a standing set of materialised facts. Whether two versions related by this property actually share the same `hasIdentity` value is a whole-graph integrity check, not expressible as a pure class restriction without property chains that would overreach what this axiom is for — that check belongs in `shapes/constraints.ttl`.
 
-```turtle
+```turtle-spec
 fnd:supersededBy a owl:ObjectProperty, owl:AsymmetricProperty, owl:IrreflexiveProperty ;
     rdfs:domain fnd:Version ;
     rdfs:range fnd:Version ;
@@ -279,7 +279,7 @@ fnd:supersededBy a owl:ObjectProperty, owl:AsymmetricProperty, owl:IrreflexivePr
 
 **Utility.** Not `Functional` in either direction — an individual can accumulate multiple pieces of evidence over time, and one piece of evidence could in principle support more than one thing. No minimum cardinality on `hasEvidence`: an Evidenced thing may have no evidence yet, which is the normal starting state, not an error.
 
-```turtle
+```turtle-spec
 fnd:hasEvidence a owl:ObjectProperty ;
     rdfs:domain fnd:Evidenced ;
     rdfs:range fnd:Evidence ;
@@ -300,7 +300,7 @@ fnd:supports a owl:ObjectProperty ;
 
 **Utility.** A sub-property of `prov:wasAttributedTo` rather than a freestanding LATTICE property, and its range is `prov:Agent` directly rather than a LATTICE-specific Agent class — Foundation doesn't need its own agent concept when PROV-O already provides one with the right generality (human, organisation, or software agent all fit).
 
-```turtle
+```turtle-spec
 fnd:assertedBy a owl:ObjectProperty ;
     rdfs:domain fnd:Evidence ;
     rdfs:range prov:Agent ;
@@ -315,7 +315,7 @@ fnd:assertedBy a owl:ObjectProperty ;
 
 **Utility.** The transaction-time half of the bitemporal split introduced under `TemporallyScoped` (§6) — deliberately attached to `Evidence`, not to `TemporalScope`, since "when we learned this" is a property of the evidence itself, not of the validity period the evidence might be evidence for.
 
-```turtle
+```turtle-spec
 fnd:recordedAt a owl:DatatypeProperty, owl:FunctionalProperty ;
     rdfs:domain fnd:Evidence ;
     rdfs:range xsd:dateTime ;
@@ -327,7 +327,7 @@ fnd:recordedAt a owl:DatatypeProperty, owl:FunctionalProperty ;
 
 **Definition.** The validity period of a TemporallyScoped thing.
 
-```turtle
+```turtle-spec
 fnd:hasTemporalScope a owl:ObjectProperty, owl:FunctionalProperty ;
     rdfs:domain fnd:TemporallyScoped ;
     rdfs:range fnd:TemporalScope ;
@@ -341,7 +341,7 @@ fnd:hasTemporalScope a owl:ObjectProperty, owl:FunctionalProperty ;
 
 **Utility.** `validFrom` is required — an unbounded-past validity period isn't a case LATTICE needs to express. `validTo` is optional, capped at one, so a currently-open-ended scope simply omits it rather than needing a sentinel value.
 
-```turtle
+```turtle-spec
 fnd:validFrom a owl:DatatypeProperty, owl:FunctionalProperty ;
     rdfs:domain fnd:TemporalScope ;
     rdfs:range xsd:dateTime ;
@@ -359,7 +359,7 @@ fnd:validTo a owl:DatatypeProperty, owl:FunctionalProperty ;
 
 **Definition.** The current governance status of a Governable thing.
 
-```turtle
+```turtle-spec
 fnd:hasGovernanceState a owl:ObjectProperty, owl:FunctionalProperty ;
     rdfs:domain fnd:Governable ;
     rdfs:range fnd:GovernanceState ;
@@ -371,7 +371,7 @@ fnd:hasGovernanceState a owl:ObjectProperty, owl:FunctionalProperty ;
 
 Collected here for visibility, and to make them easy to extract into a separate optional module later if that split (discussed in §4) is taken up. Nothing in this section introduces new LATTICE classes or properties — it only relates existing ones to PROV-O.
 
-```turtle
+```turtle-spec
 fnd:Evidence rdfs:subClassOf prov:Entity .
 fnd:assertedBy rdfs:subPropertyOf prov:wasAttributedTo .
 ```
@@ -380,7 +380,7 @@ fnd:assertedBy rdfs:subPropertyOf prov:wasAttributedTo .
 
 Illustration only — `ins:Obligation` isn't defined here; it belongs to Instrument. This shows how a domain class from another layer would compose Foundation's mixins.
 
-```turtle
+```turtle-example
 # Illustrative only — ins: is not part of Foundation's own namespace.
 ins:Obligation rdfs:subClassOf fnd:Version, fnd:Evidenced, fnd:TemporallyScoped .
 
