@@ -15,6 +15,14 @@ By opening a pull request, you're contributing under the licence that already go
 
 ---
 
+## AI-assisted contributions
+
+Using generative AI tooling to help draft ontology content, documentation, or reference-implementation code is welcome. It carries disclosure obligations that are not optional where AI-generated content appears in what you submit: a required commit trailer, a required PR description section, and — for ontology content specifically — a check that the content holds the same domain-neutral line as anything drafted by hand.
+
+**Read [GENAI_CONTRIBUTION.md](GENAI_CONTRIBUTION.md) before opening a PR that includes AI-assisted content.** It covers what has to be disclosed, how, the checks to run before you submit, and how this interacts with the licensing representation above given LATTICE has no CLA to carry it instead.
+
+---
+
 ## SPDX headers — required on every file
 
 Every file in this repository needs a one-line `SPDX-License-Identifier` header as its first non-blank line, following the [REUSE specification](https://reuse.software/). This is what lets tooling — and anyone auditing the repository — determine the licence of any given file without cross-referencing a table.
@@ -52,7 +60,8 @@ Each layer follows the shared template described in the top-level README. Two bo
 1. Add the SPDX header to any new file as you create it.
 2. Add or update tests in the relevant layer's `test/` directory for any change to `spec/`, `shapes/`, or `projection/`.
 3. If the change affects `execution/` output for a layer, update that layer's `invalidation-policy.md` note if the regeneration behaviour itself has changed — not for every routine regeneration, only when the policy is different.
-4. `reuse lint` and the layer's own test suite need to pass before review.
+4. If any content in the PR was AI-drafted or AI-assisted, add the `Generated-by:` commit trailer and the AI provenance section to the PR description — see [GENAI_CONTRIBUTION.md](GENAI_CONTRIBUTION.md).
+5. `reuse lint` and the layer's own test suite need to pass before review.
 
 If a directory the per-layer template expects is missing from your local checkout, `scripts/scaffold-lattice.sh` will recreate the full structure without touching anything that already exists.
 
@@ -61,3 +70,5 @@ If a directory the per-layer template expects is missing from your local checkou
 ## Contributor License Agreement
 
 None is required to contribute at this stage. MPL 2.0's own terms govern every contribution to `.ttl` files and `tools/`; CC BY-SA 4.0 governs every contribution to documentation. This may change specifically for `tools/` if a dual-licensed build of the reference implementation is introduced later, in which case contributors to that directory would be asked to sign a CLA at that point — prospectively, not retroactively applied to anything already merged.
+
+The absence of a CLA is also why [AI-assisted contributions](#ai-assisted-contributions) carry their own explicit disclosure requirement rather than relying on a signed agreement to cover the question — see [GENAI_CONTRIBUTION.md](GENAI_CONTRIBUTION.md) for how that representation works without one.
