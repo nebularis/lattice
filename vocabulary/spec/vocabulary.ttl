@@ -1,0 +1,81 @@
+@prefix : <https://www.nebularis.org/neuro-semantic/vocabulary#> .
+@prefix fnd: <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix voc: <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
+@prefix xml: <http://www.w3.org/XML/1998/namespace> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@base <https://www.nebularis.org/neuro-semantic/vocabulary> .
+
+<https://www.nebularis.org/neuro-semantic/vocabulary> 
+    rdf:type owl:Ontology ;
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/vocabulary/0.0.2> ;
+    owl:imports <http://www.w3.org/2004/02/skos/core> ,
+                <https://www.nebularis.org/neuro-semantic/foundation/0.0.7> .
+
+#################################################################
+#    Object Properties
+#################################################################
+
+###  https://www.nebularis.org/neuro-semantic/lattice/vocabulary#boundScheme
+voc:boundScheme rdf:type owl:ObjectProperty ,
+                         owl:FunctionalProperty ;
+                rdfs:domain voc:SchemeContract ;
+                rdfs:range voc:ConceptScheme ;
+                rdfs:comment "The concrete scheme a downstream implementation has bound to satisfy this contract, if one has been bound yet." ;
+                fnd:utility "Functional once bound, but never required — an unbound contract is the normal starting state. Forcing a binding at declaration time would defeat the point of deferring the scheme choice to whoever implements against LATTICE." .
+
+
+###  https://www.nebularis.org/neuro-semantic/lattice/vocabulary#constrainsProperty
+voc:constrainsProperty rdf:type owl:ObjectProperty ;
+                       rdfs:domain voc:SchemeContract ;
+                       rdfs:range rdf:Property ;
+                       rdfs:comment "The property, declared in another layer, that this contract governs." ;
+                       fnd:utility "Ranges over rdf:Property generically (a meta-modelling move requiring OWL 2 DL punning) rather than owl:ObjectProperty specifically, so a contract isn't structurally prevented from covering an unusual case." .
+
+
+###  https://www.nebularis.org/neuro-semantic/lattice/vocabulary#requiresGovernanceState
+voc:requiresGovernanceState rdf:type owl:ObjectProperty ;
+                            rdfs:domain voc:SchemeContract ;
+                            rdfs:range fnd:GovernanceState ;
+                            rdfs:comment "A governance state the bound scheme must currently hold for this contract to be considered satisfied." ;
+                            fnd:utility "Optional — a contract may not care about governance state at all. Multiple values are disjunctive: any one is sufficient. Whether a specific bound scheme actually satisfies this is a shapes/constraints.ttl check, not asserted here." .
+
+
+#################################################################
+#    Classes
+#################################################################
+
+###  http://www.w3.org/1999/02/22-rdf-syntax-ns#Property
+rdf:Property rdf:type owl:Class .
+
+
+###  http://www.w3.org/2004/02/skos/core#Concept
+skos:Concept owl:disjointWith voc:ConceptScheme .
+
+
+###  https://www.nebularis.org/neuro-semantic/lattice/vocabulary#ConceptScheme
+voc:ConceptScheme rdf:type owl:Class ;
+                  rdfs:subClassOf skos:ConceptScheme ,
+                                  fnd:Governable ,
+                                  fnd:Version ;
+                  owl:disjointWith voc:SchemeContract ;
+                  rdfs:comment "A published, identified, governed collection of concepts." ;
+                  fnd:utility "Subclasses fnd:Version because SKOS itself has no notion of one scheme version superseding another — Foundation's versioning machinery is reused rather than reinvented. Subclasses fnd:Governable because a scheme is a specification-level artefact with a review lifecycle, the paradigm case GovernanceState was designed for." .
+
+
+###  https://www.nebularis.org/neuro-semantic/lattice/vocabulary#SchemeContract
+voc:SchemeContract rdf:type owl:Class ;
+                   rdfs:subClassOf fnd:Governable ,
+                                   fnd:Version ,
+                                   [ rdf:type owl:Restriction ;
+                                     owl:onProperty voc:constrainsProperty ;
+                                     owl:minCardinality "1"^^xsd:nonNegativeInteger
+                                   ] ;
+                   rdfs:comment "A declared requirement binding a property, defined in some other layer, to concepts drawn from a conformant scheme." ;
+                   fnd:utility "The inclusion mechanism made concrete. Deliberately satisfiable by a not-yet-bound state — a contract can be authored and reviewed before any real scheme exists to fulfil it, which is what lets a property's definition be domain-neutral at authoring time." .
+
+
+###  Generated by the OWL API (version 4.5.29.2024-05-13T12:11:03Z) https://github.com/owlcs/owlapi
