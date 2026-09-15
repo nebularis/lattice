@@ -1,0 +1,230 @@
+@prefix : <https://www.nebularis.org/neuro-semantic/foundation#> .
+@prefix fnd: <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xml: <http://www.w3.org/XML/1998/namespace> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@base <https://www.nebularis.org/neuro-semantic/Foundation> .
+
+<https://www.nebularis.org/neuro-semantic/foundation> 
+    rdf:type owl:Ontology ;
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/foundation/0.0.7> ;
+    owl:imports <http://www.w3.org/ns/prov-o-20130430> .
+
+#################################################################
+#    Annotation properties
+#################################################################
+
+###  https://www.nebularis.org/neuro-semantic/lattice/foundation#utility
+fnd:utility rdf:type owl:AnnotationProperty ;
+            rdfs:comment "The design rationale for a term — why it exists, not merely what it means." .
+
+
+#################################################################
+#    Object Properties
+#################################################################
+
+###  https://www.nebularis.org/neuro-semantic/lattice/foundation#assertedBy
+fnd:assertedBy rdf:type owl:ObjectProperty ;
+               rdfs:subPropertyOf prov:wasAttributedTo ;
+               rdfs:domain fnd:Evidence ;
+               rdfs:range prov:Agent ;
+               rdfs:comment "The agent that asserted a piece of evidence." ;
+               fnd:utility "Sub-property of prov:wasAttributedTo, ranging over prov:Agent directly — no LATTICE-specific Agent class is defined, since PROV-O already has the right generality across human, organisational, and software agents." .
+
+
+###  https://www.nebularis.org/neuro-semantic/lattice/foundation#hasEvidence
+fnd:hasEvidence rdf:type owl:ObjectProperty ;
+                owl:inverseOf fnd:supports ;
+                rdfs:domain fnd:Evidenced ;
+                rdfs:range fnd:Evidence ;
+                rdfs:comment "The evidence supporting an Evidenced thing." ;
+                fnd:utility "Not Functional — an individual can accumulate multiple pieces of evidence over time. No minimum: having no evidence yet is a normal starting state, not an error." .
+
+
+###  https://www.nebularis.org/neuro-semantic/lattice/foundation#hasGovernanceState
+fnd:hasGovernanceState rdf:type owl:ObjectProperty ,
+                                owl:FunctionalProperty ;
+                       rdfs:domain fnd:Governable ;
+                       rdfs:range fnd:GovernanceState ;
+                       rdfs:comment "The current governance status of a Governable thing." ;
+                       fnd:utility "Functional — one current status. A status change is a new fact about this property's value, not a state-machine transition Foundation itself models; see GovernanceState (§6)." .
+
+
+###  https://www.nebularis.org/neuro-semantic/lattice/foundation#hasIdentity
+fnd:hasIdentity rdf:type owl:ObjectProperty ;
+                owl:inverseOf fnd:hasVersion ;
+                rdf:type owl:FunctionalProperty ;
+                rdfs:domain fnd:Version ;
+                rdfs:range fnd:PersistentIdentity ;
+                rdfs:comment "A Version's persistent identity." ;
+                fnd:utility "Functional: a version belongs to exactly one identity. Combined with owl:inverseOf, this alone entails that hasVersion is inverse-functional — asserting that separately would be redundant." .
+
+
+###  https://www.nebularis.org/neuro-semantic/lattice/foundation#hasTemporalScope
+fnd:hasTemporalScope rdf:type owl:ObjectProperty ,
+                              owl:FunctionalProperty ;
+                     rdfs:domain fnd:TemporallyScoped ;
+                     rdfs:range fnd:TemporalScope ;
+                     rdfs:comment "The validity period of a TemporallyScoped thing." ;
+                     fnd:utility "Functional, consistent with TemporalScope's own single validFrom/validTo pair (§6) — one scope per version, with re-entry modelled as a new version rather than a scope with gaps." .
+
+
+###  https://www.nebularis.org/neuro-semantic/lattice/foundation#hasVersion
+fnd:hasVersion rdf:type owl:ObjectProperty ;
+               rdfs:domain fnd:PersistentIdentity ;
+               rdfs:range fnd:Version ;
+               rdfs:comment "A PersistentIdentity's versions." ;
+               fnd:utility "The inverse of hasIdentity. Not independently marked with a cardinality characteristic — its inverse-functional behaviour is already entailed by hasIdentity's Functional characteristic." .
+
+
+###  https://www.nebularis.org/neuro-semantic/lattice/foundation#supersededBy
+fnd:supersededBy rdf:type owl:ObjectProperty ,
+                          owl:AsymmetricProperty ,
+                          owl:IrreflexiveProperty ;
+                 rdfs:domain fnd:Version ;
+                 rdfs:range fnd:Version ;
+                 rdfs:comment "Direct succession between two versions of the same identity." ;
+                 fnd:utility "Irreflexive and Asymmetric catch nonsensical version histories cheaply. Deliberately not Transitive — this is immediate succession only; materialising full transitive closure isn't worth the inferred-triple cost, and 'latest version' is a query-time question. Same-identity integrity is a shapes/constraints.ttl concern, not a T-box restriction here." .
+
+
+###  https://www.nebularis.org/neuro-semantic/lattice/foundation#supports
+fnd:supports rdf:type owl:ObjectProperty ;
+             rdfs:domain fnd:Evidence ;
+             rdfs:range fnd:Evidenced ;
+             rdfs:comment "The inverse of hasEvidence." ;
+             fnd:utility "The inverse direction of hasEvidence; Evidence's own minimum-one restriction (§6) is what actually requires every piece of evidence to support something." .
+
+
+#################################################################
+#    Data properties
+#################################################################
+
+###  https://www.nebularis.org/neuro-semantic/lattice/foundation#recordedAt
+fnd:recordedAt rdf:type owl:DatatypeProperty ,
+                        owl:FunctionalProperty ;
+               rdfs:domain fnd:Evidence ;
+               rdfs:range xsd:dateTime ;
+               rdfs:comment "When a piece of evidence was recorded." ;
+               fnd:utility "The transaction-time half of the bitemporal split. Attached to Evidence rather than TemporalScope, since 'when we learned this' describes the evidence, not the validity period it may be evidence for." .
+
+
+###  https://www.nebularis.org/neuro-semantic/lattice/foundation#validFrom
+fnd:validFrom rdf:type owl:DatatypeProperty ,
+                       owl:FunctionalProperty ;
+              rdfs:domain fnd:TemporalScope ;
+              rdfs:range xsd:dateTime ;
+              rdfs:comment "The start of a validity period." ;
+              fnd:utility "Required — an unbounded-past validity period isn't a case LATTICE needs to express." .
+
+
+###  https://www.nebularis.org/neuro-semantic/lattice/foundation#validTo
+fnd:validTo rdf:type owl:DatatypeProperty ,
+                     owl:FunctionalProperty ;
+            rdfs:domain fnd:TemporalScope ;
+            rdfs:range xsd:dateTime ;
+            rdfs:comment "The end of a validity period, if it has one." ;
+            fnd:utility "Optional and capped at one — an open-ended scope simply omits this rather than needing a sentinel value." .
+
+
+#################################################################
+#    Classes
+#################################################################
+
+###  https://www.nebularis.org/neuro-semantic/lattice/foundation#Evidence
+fnd:Evidence rdf:type owl:Class ;
+             rdfs:subClassOf prov:Entity ,
+                             [ rdf:type owl:Restriction ;
+                               owl:onProperty fnd:supports ;
+                               owl:minCardinality "1"^^xsd:nonNegativeInteger
+                             ] ,
+                             [ rdf:type owl:Restriction ;
+                               owl:onProperty fnd:recordedAt ;
+                               owl:cardinality "1"^^xsd:nonNegativeInteger
+                             ] ;
+             owl:disjointWith fnd:Evidenced ;
+             rdfs:comment "An item of evidence supporting some assertion or entity." ;
+             fnd:utility "Aligned with prov:Entity rather than defined from scratch, for interoperability with existing provenance tooling. Required to support at least one thing, since evidence supporting nothing isn't evidence of anything." .
+
+
+###  https://www.nebularis.org/neuro-semantic/lattice/foundation#Evidenced
+fnd:Evidenced rdf:type owl:Class ;
+              rdfs:comment "A mixin for anything that can carry supporting evidence." ;
+              fnd:utility "Independent of Version deliberately — needing evidential support for an assertion (why did this transition fire) is a different concern from needing identity that survives change, and coupling them would force every evidenced thing into full version-tracking whether it needs it or not." .
+
+
+###  https://www.nebularis.org/neuro-semantic/lattice/foundation#Governable
+fnd:Governable rdf:type owl:Class ;
+               rdfs:subClassOf [ rdf:type owl:Restriction ;
+                                 owl:onProperty fnd:hasGovernanceState ;
+                                 owl:cardinality "1"^^xsd:nonNegativeInteger
+                               ] ;
+               owl:disjointWith fnd:GovernanceState ;
+               rdfs:comment "A mixin for anything that carries a governance-lifecycle status." ;
+               fnd:utility "Expected to apply mainly to specification-level artefacts moving through a review lifecycle, not to ordinary facts. Kept separate from Version and Evidenced so governance semantics are opted into deliberately, not inherited by default." .
+
+
+###  https://www.nebularis.org/neuro-semantic/lattice/foundation#GovernanceState
+fnd:GovernanceState rdf:type owl:Class ;
+                    rdfs:comment "The status of a governed artefact within its review lifecycle." ;
+                    fnd:utility "Left open at the T-box level; the closed enumeration lives in vocab/ and shapes/, not spec/. Deliberately not a state machine — Foundation sits below Behaviour in the dependency order and cannot depend on it, so this is a bare value a downstream ontology can layer Behaviour's transition semantics on top of, not a lifecycle Foundation provides itself." .
+
+
+###  https://www.nebularis.org/neuro-semantic/lattice/foundation#PersistentIdentity
+fnd:PersistentIdentity rdf:type owl:Class ;
+                       rdfs:subClassOf [ rdf:type owl:Restriction ;
+                                         owl:onProperty fnd:hasVersion ;
+                                         owl:minCardinality "1"^^xsd:nonNegativeInteger
+                                       ] ;
+                       rdfs:comment "The stable identifier for a thing across all of its versions." ;
+                       fnd:utility "Separates 'the same thing, edited' from 'a different thing that looks similar' — without this, a version history is just a set of unrelated snapshots with no continuant they're all states of." .
+
+
+###  https://www.nebularis.org/neuro-semantic/lattice/foundation#TemporalScope
+fnd:TemporalScope rdf:type owl:Class ;
+                  rdfs:subClassOf [ rdf:type owl:Restriction ;
+                                    owl:onProperty fnd:validFrom ;
+                                    owl:cardinality "1"^^xsd:nonNegativeInteger
+                                  ] ;
+                  owl:disjointWith fnd:TemporallyScoped ;
+                  rdfs:comment "A validity period: a start, and an optional end." ;
+                  fnd:utility "Deliberately holds exactly one validFrom/validTo pair. A thing that becomes valid, lapses, then becomes valid again is modelled as a new Version with a new TemporalScope, not as one TemporalScope with multiple windows — this keeps that discipline enforceable rather than conventional." .
+
+
+###  https://www.nebularis.org/neuro-semantic/lattice/foundation#TemporallyScoped
+fnd:TemporallyScoped rdf:type owl:Class ;
+                     rdfs:subClassOf [ rdf:type owl:Restriction ;
+                                       owl:onProperty fnd:hasTemporalScope ;
+                                       owl:cardinality "1"^^xsd:nonNegativeInteger
+                                     ] ;
+                     rdfs:comment "A mixin for anything with a validity period distinct from when it was recorded." ;
+                     fnd:utility "Keeps 'when this was true' (TemporalScope) separate from 'when we recorded it' (Evidence.recordedAt) — the bitemporal distinction between valid time and transaction time, which is easy to accidentally collapse into one timestamp." .
+
+
+###  https://www.nebularis.org/neuro-semantic/lattice/foundation#Version
+fnd:Version rdf:type owl:Class ;
+            rdfs:subClassOf [ rdf:type owl:Restriction ;
+                              owl:onProperty fnd:hasIdentity ;
+                              owl:cardinality "1"^^xsd:nonNegativeInteger
+                            ] ;
+            rdfs:comment "An individual representing a specific, identified state of some persistent thing." ;
+            fnd:utility "The mixin for identity that survives change. The domain individual itself plays the role of being a version, rather than pointing out to a separate version object — unlike Evidence, TemporalScope, and GovernanceState, there is no meaningful object distinct from the thing itself for versioning to reference." .
+
+
+#################################################################
+#    General axioms
+#################################################################
+
+[ rdf:type owl:AllDisjointClasses ;
+  owl:members ( fnd:Evidence
+                fnd:GovernanceState
+                fnd:PersistentIdentity
+                fnd:TemporalScope
+                fnd:Version
+              )
+] .
+
+
+###  Generated by the OWL API (version 4.5.29.2024-05-13T12:11:03Z) https://github.com/owlcs/owlapi

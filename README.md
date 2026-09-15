@@ -12,11 +12,11 @@ LATTICE is the middle of a three-part picture.
 
 **MORK (Mapping Ontological & Representational Knowledge)** used to map source material — structured data (schemas, records, API specifications, etc) and unstructured wordings (documents, clauses, free text) — onto a target domain ontology's T-box & R-Box, using Formal Concept Analysis over the co-occurrence structure of previously mapped source material to propose alignment. MORK as a general-purpose mapping vocabulary, based on SKOS. 
 
-LATTICE's layers (described below) are one family of mapping target, but not the only possible one. The mapping mechanism itself ships inside this repository, under `mork/`, because LATTICE uses it as the reference way of populating its own layers — `mork/targets/` is a configuration that points it at LATTICE specifically.
+The layers described below are one family of mapping target, but not the only possible one. The mapping mechanism itself ships inside this repository, under `mork/`, because LATTICE uses it as the reference way of populating its own layers — `mork/targets/` is a configuration that points it at LATTICE specifically.
 
 **LATTICE (Concept Lattice of Domain Ontology Layers)** provides the semantic substrate MORK's output lands in - designed to be extended by particular subject domains in order to be used in industry-specific ways. 
 
-**SPC** (Subject-oriented Process Calculus) provides a formal mechanism for describing orchestration between agents (human, AI, or computational), whose data has been mapped in by MORK and whose roles, obligations, and eligibility are modelled in LATTICE. Where LATTICE's Behaviour layer models what state something is in and what can cause it to change, SPC is concerned with the live, session-typed exchange between agents that drives those changes — giving that exchange a formal contract to align to, grounded in the same ontology, rather than an ad hoc protocol. 
+**SPC (Subject-oriented Process Calculus)**  provides a formal mechanism for describing orchestration between agents (human, AI, or computational), whose data has been mapped in by MORK and whose roles, obligations, and eligibility are modelled in LATTICE. Where LATTICE's Behaviour layer models what state something is in and what can cause it to change, SPC is concerned with the live, session-typed exchange between agents that drives those changes — giving that exchange a formal contract to align to, grounded in the same ontology, rather than an ad hoc protocol. 
 
 #### Model Layers
 

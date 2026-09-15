@@ -8,3 +8,4 @@ spec/Mork.txt
 test/data/Contracts.txt
 test/data/Demo.txt
 examples/UncertainMappings.txt
+**/*Catalog*.xml
