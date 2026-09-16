@@ -41,7 +41,7 @@ Same two-tag convention as the layer documents: `turtle-spec` is extracted to pr
 pty:Obligor a owl:NamedIndividual, pty:Role ;
     rdfs:label "Obligor"@en ;
     rdfs:comment "The role of owing an obligation." ;
-    fnd:utility "The direction-of-obligation counterpart to Obligee. Instrument's Obligation class references a Role Occupancy in this role as its obligor, in Instrument's projection." .
+    fnd:utility "The role of owing an obligation. Type a RoleOccupancy with this role when it represents the party who owes something." .
 ```
 
 #### `pty:Obligee`
@@ -59,11 +59,13 @@ pty:Obligee a owl:NamedIndividual, pty:Role ;
 
 **Definition.** The role of backing another occupancy's obligation, becoming answerable if that occupancy fails to perform.
 
+**Utility.** The role of backing another occupancy's obligation, becoming answerable if that occupancy fails to perform. Type a RoleOccupancy with this role for a party standing behind someone else's commitment.
+
 ```turtle-spec
 pty:Guarantor a owl:NamedIndividual, pty:Role ;
     rdfs:label "Guarantor"@en ;
     rdfs:comment "The role of backing another occupancy's obligation, becoming answerable if that occupancy fails to perform." ;
-    fnd:utility "Named in the original design alongside Obligor, Obligee, Accountable, and Performing, but the least mechanically complete of the five — see §4. Included as a role type; its contingent-activation mechanism is not yet built." .
+    fnd:utility "The role of backing another occupancy's obligation — becoming answerable if that occupancy fails to perform. Type a RoleOccupancy with this role for a party standing behind someone else's commitment." .
 ```
 
 #### `pty:Accountable`

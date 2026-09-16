@@ -19,7 +19,7 @@
 
 ###  https://www.nebularis.org/neuro-semantic/lattice/foundation#utility
 fnd:utility rdf:type owl:AnnotationProperty ;
-            rdfs:comment "The design rationale for a term — why it exists, not merely what it means." .
+            rdfs:comment "A concise explanation of what a term is for and how to use it." .
 
 
 #################################################################
@@ -32,7 +32,7 @@ fnd:assertedBy rdf:type owl:ObjectProperty ;
                rdfs:domain fnd:Evidence ;
                rdfs:range prov:Agent ;
                rdfs:comment "The agent that asserted a piece of evidence." ;
-               fnd:utility "Sub-property of prov:wasAttributedTo, ranging over prov:Agent directly — no LATTICE-specific Agent class is defined, since PROV-O already has the right generality across human, organisational, and software agents." .
+               fnd:utility "Points a piece of evidence at whoever or whatever asserted it — a person, an organisation, or an automated system. Any prov:Agent individual is a valid value." .
 
 
 ###  https://www.nebularis.org/neuro-semantic/lattice/foundation#hasEvidence
@@ -50,7 +50,7 @@ fnd:hasGovernanceState rdf:type owl:ObjectProperty ,
                        rdfs:domain fnd:Governable ;
                        rdfs:range fnd:GovernanceState ;
                        rdfs:comment "The current governance status of a Governable thing." ;
-                       fnd:utility "Functional — one current status. A status change is a new fact about this property's value, not a state-machine transition Foundation itself models; see GovernanceState (§6)." .
+                       fnd:utility "Points a Governable thing at its current governance status. Keep one current value at a time and update it as review status changes." .
 
 
 ###  https://www.nebularis.org/neuro-semantic/lattice/foundation#hasIdentity
@@ -60,7 +60,7 @@ fnd:hasIdentity rdf:type owl:ObjectProperty ;
                 rdfs:domain fnd:Version ;
                 rdfs:range fnd:PersistentIdentity ;
                 rdfs:comment "A Version's persistent identity." ;
-                fnd:utility "Functional: a version belongs to exactly one identity. Combined with owl:inverseOf, this alone entails that hasVersion is inverse-functional — asserting that separately would be redundant." .
+                fnd:utility "Points a Version at its PersistentIdentity. Set this once, when the version is created — it won't need to change even as the thing itself is edited into later versions." .
 
 
 ###  https://www.nebularis.org/neuro-semantic/lattice/foundation#hasTemporalScope
@@ -69,7 +69,7 @@ fnd:hasTemporalScope rdf:type owl:ObjectProperty ,
                      rdfs:domain fnd:TemporallyScoped ;
                      rdfs:range fnd:TemporalScope ;
                      rdfs:comment "The validity period of a TemporallyScoped thing." ;
-                     fnd:utility "Functional, consistent with TemporalScope's own single validFrom/validTo pair (§6) — one scope per version, with re-entry modelled as a new version rather than a scope with gaps." .
+                     fnd:utility "Points a TemporallyScoped thing at its validity period. If the thing later lapses and becomes valid again, that's a new version with its own new TemporalScope, not a second value here." .
 
 
 ###  https://www.nebularis.org/neuro-semantic/lattice/foundation#hasVersion
@@ -77,7 +77,7 @@ fnd:hasVersion rdf:type owl:ObjectProperty ;
                rdfs:domain fnd:PersistentIdentity ;
                rdfs:range fnd:Version ;
                rdfs:comment "A PersistentIdentity's versions." ;
-               fnd:utility "The inverse of hasIdentity. Not independently marked with a cardinality characteristic — its inverse-functional behaviour is already entailed by hasIdentity's Functional characteristic." .
+               fnd:utility "Points a PersistentIdentity at all of its versions. Typically populated by querying rather than asserted directly, since it's the inverse of hasIdentity." .
 
 
 ###  https://www.nebularis.org/neuro-semantic/lattice/foundation#supersededBy
@@ -87,7 +87,7 @@ fnd:supersededBy rdf:type owl:ObjectProperty ,
                  rdfs:domain fnd:Version ;
                  rdfs:range fnd:Version ;
                  rdfs:comment "Direct succession between two versions of the same identity." ;
-                 fnd:utility "Irreflexive and Asymmetric catch nonsensical version histories cheaply. Deliberately not Transitive — this is immediate succession only; materialising full transitive closure isn't worth the inferred-triple cost, and 'latest version' is a query-time question. Same-identity integrity is a shapes/constraints.ttl concern, not a T-box restriction here." .
+                 fnd:utility "Points one version at the version that directly replaced it. Set this when creating a new version to supersede an old one. Records immediate succession only — to find the latest in a chain, follow this property repeatedly rather than expecting a single hop." .
 
 
 ###  https://www.nebularis.org/neuro-semantic/lattice/foundation#supports
@@ -108,7 +108,7 @@ fnd:recordedAt rdf:type owl:DatatypeProperty ,
                rdfs:domain fnd:Evidence ;
                rdfs:range xsd:dateTime ;
                rdfs:comment "When a piece of evidence was recorded." ;
-               fnd:utility "The transaction-time half of the bitemporal split. Attached to Evidence rather than TemporalScope, since 'when we learned this' describes the evidence, not the validity period it may be evidence for." .
+               fnd:utility "The point at which a piece of evidence was recorded — not when the fact it supports became true, which is answered separately by whatever TemporalScope applies to the thing being supported." .
 
 
 ###  https://www.nebularis.org/neuro-semantic/lattice/foundation#validFrom
@@ -117,7 +117,7 @@ fnd:validFrom rdf:type owl:DatatypeProperty ,
               rdfs:domain fnd:TemporalScope ;
               rdfs:range xsd:dateTime ;
               rdfs:comment "The start of a validity period." ;
-              fnd:utility "Required — an unbounded-past validity period isn't a case LATTICE needs to express." .
+              fnd:utility "The point at which a validity period begins. Always required — use the best available estimate if you don't know a precise start." .
 
 
 ###  https://www.nebularis.org/neuro-semantic/lattice/foundation#validTo
@@ -146,13 +146,13 @@ fnd:Evidence rdf:type owl:Class ;
                              ] ;
              owl:disjointWith fnd:Evidenced ;
              rdfs:comment "An item of evidence supporting some assertion or entity." ;
-             fnd:utility "Aligned with prov:Entity rather than defined from scratch, for interoperability with existing provenance tooling. Required to support at least one thing, since evidence supporting nothing isn't evidence of anything." .
+             fnd:utility "An item of evidence supporting some other fact in the graph. Populate supports to say what it's evidence for, assertedBy for who or what provided it, and recordedAt for when. Every piece of evidence must support at least one thing." .
 
 
 ###  https://www.nebularis.org/neuro-semantic/lattice/foundation#Evidenced
 fnd:Evidenced rdf:type owl:Class ;
               rdfs:comment "A mixin for anything that can carry supporting evidence." ;
-              fnd:utility "Independent of Version deliberately — needing evidential support for an assertion (why did this transition fire) is a different concern from needing identity that survives change, and coupling them would force every evidenced thing into full version-tracking whether it needs it or not." .
+              fnd:utility "Subclass this when something needs to carry supporting evidence for why it holds. Attach evidence via hasEvidence; a fresh instance doesn't need any evidence yet, since something can be true before anyone has recorded why." .
 
 
 ###  https://www.nebularis.org/neuro-semantic/lattice/foundation#Governable
@@ -163,13 +163,13 @@ fnd:Governable rdf:type owl:Class ;
                                ] ;
                owl:disjointWith fnd:GovernanceState ;
                rdfs:comment "A mixin for anything that carries a governance-lifecycle status." ;
-               fnd:utility "Expected to apply mainly to specification-level artefacts moving through a review lifecycle, not to ordinary facts. Kept separate from Version and Evidenced so governance semantics are opted into deliberately, not inherited by default." .
+               fnd:utility "Subclass this when something moves through a review lifecycle before being trusted — a Wording Template, a SHACL shape, an ontology term itself. Use hasGovernanceState to record its current status. Most ordinary facts in a populated graph won't need this mixin at all." .
 
 
 ###  https://www.nebularis.org/neuro-semantic/lattice/foundation#GovernanceState
 fnd:GovernanceState rdf:type owl:Class ;
                     rdfs:comment "The status of a governed artefact within its review lifecycle." ;
-                    fnd:utility "Left open at the T-box level; the closed enumeration lives in vocab/ and shapes/, not spec/. Deliberately not a state machine — Foundation sits below Behaviour in the dependency order and cannot depend on it, so this is a bare value a downstream ontology can layer Behaviour's transition semantics on top of, not a lifecycle Foundation provides itself." .
+                    fnd:utility "The current status of a Governable thing within its review lifecycle — draft, reviewed, active, or superseded. Point hasGovernanceState at whichever value currently applies. Tracking the transition itself is a separate concern from recording the current value; pair with a state-machine mechanism elsewhere if you need it." .
 
 
 ###  https://www.nebularis.org/neuro-semantic/lattice/foundation#PersistentIdentity
@@ -190,7 +190,7 @@ fnd:TemporalScope rdf:type owl:Class ;
                                   ] ;
                   owl:disjointWith fnd:TemporallyScoped ;
                   rdfs:comment "A validity period: a start, and an optional end." ;
-                  fnd:utility "Deliberately holds exactly one validFrom/validTo pair. A thing that becomes valid, lapses, then becomes valid again is modelled as a new Version with a new TemporalScope, not as one TemporalScope with multiple windows — this keeps that discipline enforceable rather than conventional." .
+                  fnd:utility "A validity period with a start and an optional end. If something becomes valid, lapses, and later becomes valid again, model that as a new Version with its own new TemporalScope rather than adding a second window here." .
 
 
 ###  https://www.nebularis.org/neuro-semantic/lattice/foundation#TemporallyScoped
@@ -200,7 +200,7 @@ fnd:TemporallyScoped rdf:type owl:Class ;
                                        owl:cardinality "1"^^xsd:nonNegativeInteger
                                      ] ;
                      rdfs:comment "A mixin for anything with a validity period distinct from when it was recorded." ;
-                     fnd:utility "Keeps 'when this was true' (TemporalScope) separate from 'when we recorded it' (Evidence.recordedAt) — the bitemporal distinction between valid time and transaction time, which is easy to accidentally collapse into one timestamp." .
+                     fnd:utility "Subclass this when something has a period during which it holds true, distinct from when someone recorded that fact. Use hasTemporalScope to state the validity period." .
 
 
 ###  https://www.nebularis.org/neuro-semantic/lattice/foundation#Version
@@ -210,7 +210,7 @@ fnd:Version rdf:type owl:Class ;
                               owl:cardinality "1"^^xsd:nonNegativeInteger
                             ] ;
             rdfs:comment "An individual representing a specific, identified state of some persistent thing." ;
-            fnd:utility "The mixin for identity that survives change. The domain individual itself plays the role of being a version, rather than pointing out to a separate version object — unlike Evidence, TemporalScope, and GovernanceState, there is no meaningful object distinct from the thing itself for versioning to reference." .
+            fnd:utility "A mixin for identity that survives change. The domain individual itself plays the role of being a version, rather than pointing out to a separate version object. Subclass this when a domain concept needs identity that survives being edited or restated. Instances of a Version-bearing class are the versions themselves; each carries identity via hasIdentity, and successive versions link through supersededBy." .
 
 
 #################################################################

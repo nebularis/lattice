@@ -60,26 +60,26 @@ None.
 
 **Definition.** A published, identified, governed collection of concepts.
 
-**Utility.** SKOS gives concepts and schemes their meaning; it says nothing about one *version* of a scheme superseding another, because versioning isn't SKOS's concern. Subclassing `fnd:Version` closes that gap directly, for free — no new versioning machinery, just composition of what Foundation already provides. Subclassing `fnd:Governable` reflects that a scheme is exactly the kind of specification-level artefact Foundation's `GovernanceState` was designed around: it moves through draft, review, and active status the same way a Wording Template or a SHACL shape does.
+**Utility.** A published, versioned, governed collection of concepts. Use `fnd:hasIdentity` and `fnd:supersededBy` to track successive editions of the same scheme over time, and `fnd:hasGovernanceState` to record whether a given edition is in draft, under review, active, or superseded.
 
 ```turtle-spec
 voc:ConceptScheme a owl:Class ;
     rdfs:subClassOf fnd:Version, fnd:Governable ;
     rdfs:comment "A published, identified, governed collection of concepts." ;
-    fnd:utility "Subclasses fnd:Version because SKOS itself has no notion of one scheme version superseding another — Foundation's versioning machinery is reused rather than reinvented. Subclasses fnd:Governable because a scheme is a specification-level artefact with a review lifecycle, the paradigm case GovernanceState was designed for." .
+    fnd:utility "A published, versioned, governed collection of concepts. Use fnd:hasIdentity and fnd:supersededBy to track successive editions of the same scheme over time, and fnd:hasGovernanceState to record its review status." .
 ```
 
 #### `voc:SchemeContract`
 
 **Definition.** A declared requirement binding a property, defined in some other layer, to concepts drawn from a conformant scheme.
 
-**Utility.** This is the inclusion mechanism itself, made concrete. A contract can be authored — and reasoned about, and reviewed — before any real scheme exists to satisfy it, which is exactly the deferred-binding property that lets Instrument's specification declare "this property takes concept values" without knowing what any downstream implementer will eventually supply. Subclassing `fnd:Version` and `fnd:Governable` for the same reasons as `ConceptScheme`: a contract's own requirements can tighten or loosen over a review lifecycle, and one version of a contract can supersede another using Foundation's existing machinery rather than new machinery of its own.
+**Utility.** Author one of these when a property should take concept values, but you don't yet know, or don't want to fix, which scheme those concepts will come from. Set `constrainsProperty` to name the property, `requiresGovernanceState` if the eventual scheme must be in a specific status, and leave `boundScheme` empty until an implementation supplies one.
 
 ```turtle-spec
 voc:SchemeContract a owl:Class ;
     rdfs:subClassOf fnd:Version, fnd:Governable ;
     rdfs:comment "A declared requirement binding a property, defined in some other layer, to concepts drawn from a conformant scheme." ;
-    fnd:utility "The inclusion mechanism made concrete. Deliberately satisfiable by a not-yet-bound state — a contract can be authored and reviewed before any real scheme exists to fulfil it, which is what lets a property's definition be domain-neutral at authoring time." ;
+    fnd:utility "Author one of these when a property should take concept values but you don't yet know which scheme those concepts will come from. Set constrainsProperty to name the property, requiresGovernanceState if needed, and leave boundScheme empty until an implementation supplies one." ;
     rdfs:subClassOf [
         a owl:Restriction ;
         owl:onProperty voc:constrainsProperty ;
@@ -101,42 +101,42 @@ voc:ConceptScheme owl:disjointWith voc:SchemeContract .
 
 **Definition.** The property, declared in another layer, that this contract governs.
 
-**Utility.** The range is `rdf:Property` rather than `owl:ObjectProperty` specifically — a meta-modelling move, referring to a property as an ordinary individual, which requires OWL 2 DL's punning support (standard in every major reasoner, but worth naming explicitly rather than leaving a careful reader to wonder whether it was overlooked). Kept general on purpose: a contract constraining a datatype property that happens to hold a concept URI as a plain string, rather than an object property, isn't ruled out by this axiom, even though the common case is an object property.
+**Utility.** Names the property a SchemeContract governs. Point this at whichever property, in whatever layer, needs its values to come from a conformant concept scheme.
 
 ```turtle-spec
 voc:constrainsProperty a owl:ObjectProperty ;
     rdfs:domain voc:SchemeContract ;
     rdfs:range rdf:Property ;
     rdfs:comment "The property, declared in another layer, that this contract governs." ;
-    fnd:utility "Ranges over rdf:Property generically (a meta-modelling move requiring OWL 2 DL punning) rather than owl:ObjectProperty specifically, so a contract isn't structurally prevented from covering an unusual case." .
+    fnd:utility "Names the property a SchemeContract governs. Point this at whichever property needs its values to come from a conformant concept scheme." .
 ```
 
 #### `voc:requiresGovernanceState`
 
 **Definition.** A governance state the bound scheme must currently hold for this contract to be considered satisfied.
 
-**Utility.** Not required to have a value at all — a contract may legitimately not care about the bound scheme's governance state, only about its identity or kind (communicated out of band, per §4). Where more than one value is given, they're read disjunctively: any one of the stated states is sufficient, not all of them simultaneously. Whether a specific bound scheme's *actual* state satisfies this requirement is a whole-graph check, not asserted here — that belongs in `shapes/constraints.ttl`, consistent with the same T-box/SHACL boundary Foundation's document draws for `supersededBy`'s same-identity check.
+**Utility.** States which governance state or states the bound scheme must currently hold. If you give more than one value, any single one is sufficient. Leave this unset if the contract does not care about governance status.
 
 ```turtle-spec
 voc:requiresGovernanceState a owl:ObjectProperty ;
     rdfs:domain voc:SchemeContract ;
     rdfs:range fnd:GovernanceState ;
     rdfs:comment "A governance state the bound scheme must currently hold for this contract to be considered satisfied." ;
-    fnd:utility "Optional — a contract may not care about governance state at all. Multiple values are disjunctive: any one is sufficient. Whether a specific bound scheme actually satisfies this is a shapes/constraints.ttl check, not asserted here." .
+    fnd:utility "States which governance state(s) the bound scheme must currently hold — any one value given is sufficient if more than one is stated. Leave unset if the contract doesn't care about governance status at all." .
 ```
 
 #### `voc:boundScheme`
 
 **Definition.** The concrete scheme a downstream implementation has bound to satisfy this contract, if one has been bound yet.
 
-**Utility.** Functional — once bound, a contract points at exactly one scheme — but deliberately *not* required to have any value at all. An unbound contract is the normal, expected state of a freshly authored one; forcing a binding at declaration time would defeat the entire point of deferring the choice of scheme to whoever actually implements against LATTICE.
+**Utility.** Points a SchemeContract at the concrete scheme that satisfies it, once one has been chosen. Leave this unset until an implementation actually supplies a scheme.
 
 ```turtle-spec
 voc:boundScheme a owl:ObjectProperty, owl:FunctionalProperty ;
     rdfs:domain voc:SchemeContract ;
     rdfs:range voc:ConceptScheme ;
     rdfs:comment "The concrete scheme a downstream implementation has bound to satisfy this contract, if one has been bound yet." ;
-    fnd:utility "Functional once bound, but never required — an unbound contract is the normal starting state. Forcing a binding at declaration time would defeat the point of deferring the scheme choice to whoever implements against LATTICE." .
+    fnd:utility "Points a SchemeContract at the concrete scheme that satisfies it, once one has been chosen. Leave this unset until an implementation supplies a scheme." .
 ```
 
 ## 8. Alignments
@@ -146,7 +146,7 @@ voc:ConceptScheme rdfs:subClassOf skos:ConceptScheme .
 voc:ConceptScheme owl:disjointWith skos:Concept .
 ```
 
-**Utility.** The first states what Vocabulary actually is: a governed specialisation of a `skos:ConceptScheme`, not a parallel or competing concept. The second tightens an integrity condition SKOS itself describes only informally — see [§4](#4-design-decisions).
+**Utility.** A `voc:ConceptScheme` is a specialised, governed `skos:ConceptScheme`, not a separate or competing kind of thing. Nothing should be classified as both a scheme and a concept at once.
 
 ## 9. Worked Micro-Example
 

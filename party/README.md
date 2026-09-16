@@ -51,37 +51,37 @@ None declared. `fnd:utility` is reused unchanged.
 
 **Definition.** A real-world party — a person, an organisation, or any other agent capable of occupying a role.
 
-**Utility.** Deliberately bare. Party says nothing about what kind of actor this is, or what data identifies one — that's either domain-specific (and belongs downstream) or a future extension.
+**Utility.** A real-world party — a person, an organisation, or any other agent. Reference an Actor from a RoleOccupancy's `occupiedBy` property. Party itself does not prescribe internal identification fields, so add whatever properties your domain needs on this class or a subclass.
 
 ```turtle-spec
 pty:Actor a owl:Class ;
     rdfs:comment "A real-world party — a person, an organisation, or any other agent capable of occupying a role." ;
-    fnd:utility "Deliberately bare, with no Foundation mixins and no internal structure. Nothing in the established design required actor-level versioning or actor-specific properties." .
+    fnd:utility "A real-world party — a person, an organisation, or any other agent. Reference an Actor from a RoleOccupancy's occupiedBy property. Add whatever identifying properties your own domain needs to this class or a subclass of it." .
 ```
 
 #### `pty:Role`
 
 **Definition.** A capacity in which an actor may occupy a Role Occupancy.
 
-**Utility.** Separates the capacity an actor participates in from the actor itself — the same actor can be `Obligor` on one instrument and `Guarantor` on another, or hold different roles at different times within one instrument, without `Role` needing to say anything about who currently holds it.
+**Utility.** A capacity that a RoleOccupancy is filling, independent of which actor fills it. Use role individuals such as `Obligor`, `Obligee`, `Accountable`, `Performing`, or `Guarantor` to type occupancies.
 
 ```turtle-spec
 pty:Role a owl:Class ;
     rdfs:comment "A capacity in which an actor may occupy a Role Occupancy." ;
-    fnd:utility "Separates the capacity an actor participates in from the actor itself — the same actor can hold different roles across different instruments, or different roles over time within one instrument, without Role needing to say anything about who currently holds it. This is what makes inRole meaningful independently of whether occupiedBy has been set. Left open here; the closed-by-default enumeration is mechanism-intrinsic vocabulary, declared in vocab/party-vocab.ttl, following the same pattern established for fnd:GovernanceState." .
+    fnd:utility "A capacity that a RoleOccupancy is filling, independent of which actor fills it. Use role individuals such as Obligor, Obligee, Accountable, Performing, or Guarantor to type occupancies appropriately." .
 ```
 
 #### `pty:RoleOccupancy`
 
 **Definition.** An actor's occupancy of a role, reified so it can carry a time scope and exist before it's filled.
 
-**Utility.** Subclasses `fnd:TemporallyScoped` so an occupancy an have a validity period, and `fnd:Evidenced` because binding an actor into a role — especially a previously contingent one — requires recorded support. Subclasses `fnd:Version` for a more specific reason: because `occupiedBy` is functional, an occupant leaving and a new one arriving cannot both be asserted on the same individual without violating the cardinality — turnover would be modelled as a new Version, linked by shared identity to the old one, which `supersededBy`.
+**Utility.** Represents one actor's occupancy of one role, for a period of time. Set `inRole` when the occupancy is created, and set `occupiedBy` once an actor is bound, which may happen later or not at all. If the occupant changes, create a new RoleOccupancy sharing the same `fnd:hasIdentity` as the old one and link them via `fnd:supersededBy`, rather than editing `occupiedBy` on the original. Use `fnd:hasEvidence` to record why a specific actor was bound, and `fnd:hasTemporalScope` for the validity period.
 
 ```turtle-spec
 pty:RoleOccupancy a owl:Class ;
     rdfs:subClassOf fnd:Version, fnd:Evidenced, fnd:TemporallyScoped ;
     rdfs:comment "An actor's occupancy of a role, reified so it can carry a time scope and exist before it's filled." ;
-    fnd:utility "The central reification. TemporallyScoped for the occupancy's validity period; Evidenced because binding an actor into a role, especially a contingent one, benefits from recorded support; Version because occupiedBy is functional, so turnover to a new occupant requires a new version rather than a second value on the same individual." ;
+    fnd:utility "Represents one actor's occupancy of one role, for a period of time. Set inRole when the occupancy is created — the role slot can exist before anyone fills it — and occupiedBy once an actor is bound, which may happen later or not at all. If the occupant changes, create a new RoleOccupancy sharing the old one's fnd:hasIdentity and link them with fnd:supersededBy. Use fnd:hasEvidence to record why a particular actor was bound." ;
     rdfs:subClassOf [
         a owl:Restriction ;
         owl:onProperty pty:inRole ;
@@ -93,13 +93,13 @@ pty:RoleOccupancy a owl:Class ;
 
 **Definition.** A set of Role Occupancies sharing responsibility for one obligation, under a declared composition rule.
 
-**Utility.** Subclasses `fnd:Version` and `fnd:Evidenced` — a group's composition can change (a member defaulting and being removed, a new participant added), and evidence of why supports each such change. Not `fnd:TemporallyScoped`, since a group's overall validity is a function of its members' own validity periods, already carried on each `RoleOccupancy`.
+**Utility.** A set of Role Occupancies sharing responsibility for one obligation. Set `hasCompositionRule` to define how member shares relate to the whole, and connect members through `GroupMembership` individuals rather than a direct property. If composition changes, create a new version and link it to the old one with `fnd:supersededBy`.
 
 ```turtle-spec
 pty:ParticipationGroup a owl:Class ;
     rdfs:subClassOf fnd:Version, fnd:Evidenced ;
     rdfs:comment "A set of Role Occupancies sharing responsibility for one obligation, under a declared composition rule." ;
-    fnd:utility "Version and Evidenced for the same reasons as RoleOccupancy's composition changing over time. Not TemporallyScoped — the group's validity is derivable from its members' own validity." ;
+    fnd:utility "A set of Role Occupancies sharing responsibility for one obligation. Give it a hasCompositionRule to say how members' shares relate to the whole, and connect members through GroupMembership individuals rather than a direct property. If composition changes, create a new version and link it with fnd:supersededBy." ;
     rdfs:subClassOf [
         a owl:Restriction ;
         owl:onProperty pty:hasCompositionRule ;
@@ -115,24 +115,24 @@ pty:ParticipationGroup a owl:Class ;
 
 **Definition.** How a Participation Group's members' shares relate to the whole obligation.
 
-**Utility.** Open at the T-box level for the same reason as `Role` (§4). Several liability and joint-and-several liability are both instances of this one class with different named individuals — `SeveralOnly`, `JointAndSeveral` — declared downstream in `vocab/party-vocab.ttl`, not enumerated here.
+**Utility.** How a Participation Group's members' shares relate to the whole obligation, for example whether each member's exposure is capped at its own share, or any member may be called for the full amount with recourse against others. Named values such as `SeveralOnly` and `JointAndSeveral` are declared in `vocab/party-vocab.ttl`.
 
 ```turtle-spec
 pty:CompositionRule a owl:Class ;
     rdfs:comment "How a Participation Group's members' shares relate to the whole obligation." ;
-    fnd:utility "Open here for the same reason as Role. Several liability and joint-and-several liability are both instances of this class, distinguished only by which named individual — declared in vocab/party-vocab.ttl, not here — a given group's hasCompositionRule points at." .
+    fnd:utility "How a Participation Group's members' shares relate to the whole obligation — for example, whether each member's exposure is capped at its own share, or any member may be called for the full amount with a right of recourse against the others. Named values are declared in vocab/party-vocab.ttl." .
 ```
 
 #### `pty:GroupMembership`
 
 **Definition.** One Role Occupancy's participation in one Participation Group, carrying that occupancy's share.
 
-**Utility.** Reifies the qualification a membership property cannot carry — the share is a property of *this occupancy, in this group*, not of the occupancy generally.
+**Utility.** Connects one RoleOccupancy to one ParticipationGroup and carries that participation's share. Create one membership per occupancy-per-group relationship, rather than storing share directly on the occupancy.
 
 ```turtle-spec
 pty:GroupMembership a owl:Class ;
     rdfs:comment "One Role Occupancy's participation in one Participation Group, carrying that occupancy's share." ;
-    fnd:utility "Reifies the qualification a plain membership property couldn't carry — share belongs to this occupancy's participation in this specific group, not to the occupancy in isolation." ;
+    fnd:utility "Connects one RoleOccupancy to one ParticipationGroup, carrying that participation's share. Create one for each occupancy added to a group, rather than putting a share value directly on the occupancy." ;
     rdfs:subClassOf [
         a owl:Restriction ;
         owl:onProperty pty:memberOccupancy ;
@@ -152,13 +152,13 @@ pty:GroupMembership a owl:Class ;
 
 **Definition.** A performing Role Occupancy's discharge of an accountable one, without transferring the accountability itself.
 
-**Utility.** Subclasses `fnd:Evidenced` (why was this delegation authorised) and `fnd:TemporallyScoped` (delegations have periods of effect), but deliberately not `fnd:Version` — unlike `RoleOccupancy`'s turnover, a delegation whose scope is revised is more naturally a new, distinct delegation than a new version of the same one, since its content, not merely its occupant, is what changed.
+**Utility.** Records that a performing Role Occupancy is carrying out what an accountable one owes, without transferring accountability. Set `delegatesFrom` to the accountable occupancy and `delegatesTo` to the performing occupancy. Use `fnd:hasEvidence` for the authorisation and `fnd:hasTemporalScope` for the covered period. If scope changes materially, create a new Delegation rather than editing this one.
 
 ```turtle-spec
 pty:Delegation a owl:Class ;
     rdfs:subClassOf fnd:Evidenced, fnd:TemporallyScoped ;
     rdfs:comment "A performing Role Occupancy's discharge of an accountable one, without transferring the accountability itself." ;
-    fnd:utility "Evidenced and TemporallyScoped for the same reasons as RoleOccupancy. Not Version — a delegation with revised scope is a different delegation, not a new version of the same one, distinguishing it from RoleOccupancy's turnover case." ;
+    fnd:utility "Records that a performing Role Occupancy is carrying out what an accountable one owes, without the accountable occupancy losing its accountability. Set delegatesFrom to the accountable occupancy and delegatesTo to the performing one. If the scope changes materially, create a new Delegation rather than editing this one." ;
     rdfs:subClassOf [
         a owl:Restriction ;
         owl:onProperty pty:delegatesFrom ;
@@ -177,7 +177,7 @@ pty:Delegation a owl:Class ;
     owl:members ( pty:Actor pty:Role pty:RoleOccupancy pty:ParticipationGroup pty:GroupMembership pty:Delegation ) .
 ```
 
-**Utility.** Six genuinely distinct kinds of individual, none of which should ever be classified as another — unlike Foundation's mixins, none of Party's own classes are meant to co-occur on the same individual, so a single disjointness group covers all six without the split Foundation needed between its mixins and their value classes.
+**Utility.** Actor, Role, RoleOccupancy, ParticipationGroup, GroupMembership, and Delegation are distinct kinds of thing. One individual should never be classified as more than one of them.
 
 ## 7. Object and Data Properties
 
@@ -190,7 +190,7 @@ pty:occupiedBy a owl:ObjectProperty, owl:FunctionalProperty ;
     rdfs:domain pty:RoleOccupancy ;
     rdfs:range pty:Actor ;
     rdfs:comment "The actor currently occupying a Role Occupancy, if one has been bound yet." ;
-    fnd:utility "Functional but deliberately not required — an unoccupied occupancy is the normal state of a contingent role before whatever event populates it. See §4." .
+    fnd:utility "Points a RoleOccupancy at the actor currently occupying it. Leave unset for a role that's designed in but not yet filled — the normal state for a contingent occupancy until something binds an actor to it." .
 ```
 
 #### `pty:inRole`
@@ -209,7 +209,7 @@ pty:inRole a owl:ObjectProperty, owl:FunctionalProperty ;
 
 **Definition.** `memberOccupancy`: the Role Occupancy a GroupMembership represents. `memberOf`: the Participation Group it belongs to. `hasParticipant`: the inverse of `memberOf`.
 
-**Utility.** `hasParticipant` exists purely so `ParticipationGroup` can carry a minimum-cardinality restriction (§6) requiring at least one member — it adds no fact beyond what `memberOf` already states, since the two are formally inverse.
+**Utility.** `hasParticipant` is the inverse of `memberOf`. It points a ParticipationGroup at its GroupMembership individuals and is typically used for querying rather than direct assertion.
 
 ```turtle-spec
 pty:memberOccupancy a owl:ObjectProperty, owl:FunctionalProperty ;
@@ -229,21 +229,21 @@ pty:hasParticipant a owl:ObjectProperty ;
     rdfs:domain pty:ParticipationGroup ;
     rdfs:range pty:GroupMembership ;
     rdfs:comment "The inverse of memberOf." ;
-    fnd:utility "Exists so ParticipationGroup can express a minimum-one-member restriction; adds no fact beyond what memberOf already states." .
+    fnd:utility "The inverse of memberOf — points a ParticipationGroup at its GroupMembership individuals. Typically used for querying a group's members rather than asserted directly." .
 ```
 
 #### `pty:share`
 
 **Definition.** The proportion of the obligation a group member is responsible for.
 
-**Utility.** Modelled as a plain proportion (`xsd:decimal`), not an absolute monetary amount — the generic, domain-neutral case. A downstream layer needing shares expressed as fixed amounts rather than proportions extends this; it isn't attempted here.
+**Utility.** The proportion of the obligation this group member is responsible for, expressed as a decimal, for example `0.4` for 40 percent. If fixed-amount shares are needed, add that as a separate property.
 
 ```turtle-spec
 pty:share a owl:DatatypeProperty, owl:FunctionalProperty ;
     rdfs:domain pty:GroupMembership ;
     rdfs:range xsd:decimal ;
     rdfs:comment "The proportion of the obligation a group member is responsible for." ;
-    fnd:utility "A proportion, not an absolute amount — the generic case. Fixed monetary shares are a downstream extension, not attempted here." .
+    fnd:utility "The proportion of the obligation this group member is responsible for, expressed as a decimal — 0.4 for 40%. For fixed-amount shares rather than proportions, add that as a separate property." .
 ```
 
 #### `pty:hasCompositionRule`
@@ -275,7 +275,7 @@ pty:delegatesTo a owl:ObjectProperty ;
     rdfs:domain pty:Delegation ;
     rdfs:range pty:RoleOccupancy ;
     rdfs:comment "The performing Role Occupancy actually carrying out the delegated obligation." ;
-    fnd:utility "Not globally functional — one performing occupancy may discharge obligations delegated from more than one accountable occupancy. Same reasoning as delegatesFrom." .
+    fnd:utility "Points a Delegation at the performing RoleOccupancy that carries out the delegated obligation. One performing occupancy may appear in multiple delegations." .
 ```
 
 ## 8. Alignments
