@@ -1,18 +1,16 @@
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
-# Party Vocabulary — Named Individuals
-
-*Fulfils the forward references left open in `party/spec/party.md` §4, §6, §11: the named individuals of `pty:Role` and `pty:CompositionRule`. Same literate convention as the three layer documents — see `party/spec/party.md` §3 if this is the first vocabulary document you're reading.*
+# Party Vocabulary
 
 ---
 
 ## 1. Purpose and Scope
 
-`pty:Role` and `pty:CompositionRule` were left open at the T-box level in `party/spec/party.md`, deliberately — the actual closed-ish enumeration was always meant to live here, as mechanism-intrinsic vocabulary rather than domain vocabulary going through Vocabulary's scheme-contract mechanism. This document declares that enumeration and, in §4, corrects an imprecision in how "closed" that enumeration actually is.
+Provides mechanism-intrinsic vocabulary (rather than domain vocabulary) via Vocabulary's scheme-contract mechanism.
 
 ## 2. Namespace and Prefixes
 
-Same `pty:` and `fnd:` namespaces as `party/spec/party.md`. No new prefixes needed.
+Same `pty:` and `fnd:` namespaces as `./spec/party.md`. No new prefixes needed.
 
 ```turtle-spec
 @prefix pty:  <https://www.nebularis.org/neuro-semantic/lattice/party#> .
@@ -27,9 +25,9 @@ Same two-tag convention as the layer documents: `turtle-spec` is extracted to pr
 
 ## 4. Design Decisions
 
-**This is a baseline, not a closed set.** Previous versions had `CompositionRule` "closed in `shapes/constraints.ttl`. The `sh:in` constraint that `shapes/constraints.ttl` will eventually declare constrains against *this* baseline by default — a downstream implementation needing an additional composition rule (a proportional cap, a layered-cost structure, or anything else genuinely mechanism-shaped rather than domain-shaped) extends this vocabulary with its own named individuals and correspondingly extends or overrides that specific SHACL shape. "Closed" describes what ships by default, not a ceiling nothing may ever cross.
+**This is a baseline, not a closed set.** Previous versions had `CompositionRule` "closed in `shapes/constraints.ttl`. The `sh:in` constraint that `shapes/constraints.ttl` will eventually declare constrains against *this* baseline by default — a downstream implementation needing an additional composition rule (such as a proportional cap, layered-cost structure, etc) extends this vocabulary with its own named individuals and correspondingly extends or overrides that specific SHACL shape. "Closed" describes what ships by default, not a ceiling nothing may ever cross.
 
-**`Role` gets the same treatment, for consistency, even though the original document only said this explicitly about composition rules.** There's no principled reason role types would be less extensible than composition rules — both are mechanism-intrinsic baselines a downstream domain may reasonably need to extend (a "Witness" or "Indemnifier" role, say) without that extension being domain vocabulary in the sense Vocabulary's scheme-contract mechanism exists to gate.
+**`Role` gets the same treatment, for consistency, even though the original document only said this explicitly about composition rules.** There's no principled reason role types would be less extensible than composition rules — both are mechanism-intrinsic baselines a downstream domain may reasonably need to extend (e.g., a "Witness" or "Indemnifier" role, say) without that extension being domain vocabulary in the sense Vocabulary's scheme-contract mechanism exists to gate.
 
 **`Guarantor` is included, and it's the least mechanically complete of the vocabulary here.** Unlike Obligor/Obligee (which `Instrument`'s projection will hang directly off Obligation's direction) and Accountable/Performing (which `Delegation` already formalises), nothing gives Guarantor a mechanism of its own. A guarantee's real content — contingent liability that activates on another occupancy's default — looks like it needs Instrument's Obligation and a Behaviour trigger together, not Party alone. 
 
@@ -43,7 +41,7 @@ Same two-tag convention as the layer documents: `turtle-spec` is extracted to pr
 pty:Obligor a owl:NamedIndividual, pty:Role ;
     rdfs:label "Obligor"@en ;
     rdfs:comment "The role of owing an obligation." ;
-    fnd:utility "The direction-of-obligation counterpart to Obligee. Instrument's Obligation class references a Role Occupancy in this role as its obligor, in Instrument's own projection file — not declared here." .
+    fnd:utility "The direction-of-obligation counterpart to Obligee. Instrument's Obligation class references a Role Occupancy in this role as its obligor, in Instrument's projection." .
 ```
 
 #### `pty:Obligee`
@@ -87,14 +85,14 @@ pty:Accountable a owl:NamedIndividual, pty:Role ;
 pty:Performing a owl:NamedIndividual, pty:Role ;
     rdfs:label "Performing"@en ;
     rdfs:comment "The role that actually carries out an obligation's performance, discharging an Accountable occupancy's obligation without taking on its accountability." ;
-    fnd:utility "The other side of the delegation split. A pty:Delegation's delegatesTo always points at an occupancy in this role; delegatesFrom always at one in the Accountable role." .
+    fnd:utility "The other side of the delegation split. A pty:Delegation's delegatesTo always points at an occupancy in this role, whilst delegatesFrom always at one in the Accountable role." .
 ```
 
 ## 6. Composition Rule Individuals
 
 #### `pty:SeveralOnly`
 
-**Definition.** A composition rule under which each member's share of an obligation is independently capped; no member answers for another's shortfall.
+**Definition.** A composition rule under which each member's share of an obligation is independently capped. No member answers for another's shortfall.
 
 ```turtle-spec
 pty:SeveralOnly a owl:NamedIndividual, pty:CompositionRule ;
@@ -119,8 +117,8 @@ pty:JointAndSeveral a owl:NamedIndividual, pty:CompositionRule ;
 | Individual | Type | Notes |
 |---|---|---|
 | `pty:Obligor` | `pty:Role` | direction, paired with `Obligee` |
-| `pty:Obligee` | `pty:Role` | direction, paired with `Obligor`; also the contingent-occupancy role |
-| `pty:Guarantor` | `pty:Role` | named per original design; activation mechanism not yet built |
+| `pty:Obligee` | `pty:Role` | direction, paired with `Obligor`,; also the contingent-occupancy role |
+| `pty:Guarantor` | `pty:Role` | activation mechanism TBD |
 | `pty:Accountable` | `pty:Role` | `Delegation`'s `delegatesFrom` side |
 | `pty:Performing` | `pty:Role` | `Delegation`'s `delegatesTo` side |
 | `pty:SeveralOnly` | `pty:CompositionRule` | independently capped shares |

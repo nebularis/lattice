@@ -1,39 +1,75 @@
-@prefix pty:  <https://www.nebularis.org/neuro-semantic/lattice/party#> .
-@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
-@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix : <https://www.nebularis.org/neuro-semantic/party-vocab#> .
+@prefix fnd: <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix pty: <https://www.nebularis.org/neuro-semantic/lattice/party#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xml: <http://www.w3.org/XML/1998/namespace> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@base <https://www.nebularis.org/neuro-semantic/party-vocab> .
 
-pty:Obligor a owl:NamedIndividual, pty:Role ;
-    rdfs:label "Obligor"@en ;
-    rdfs:comment "The role of owing an obligation." ;
-    fnd:utility "The direction-of-obligation counterpart to Obligee. Instrument's Obligation class references a Role Occupancy in this role as its obligor, in Instrument's own projection file — not declared here." .
+<https://www.nebularis.org/neuro-semantic/party-vocab> rdf:type owl:Ontology ;
+                                                        owl:versionIRI <https://www.nebularis.org/neuro-semantic/party-vocab/0.0.1> ;
+                                                        owl:imports <https://www.nebularis.org/neuro-semantic/party/0.0.3> .
 
-pty:Obligee a owl:NamedIndividual, pty:Role ;
-    rdfs:label "Obligee"@en ;
-    rdfs:comment "The role of being owed an obligation." ;
-    fnd:utility "The direction-of-obligation counterpart to Obligor. Also the role a contingent occupancy — a third party with no relationship to an instrument until some event binds them in — is typed as, once occupiedBy is eventually set." .
+#################################################################
+#    Individuals
+#################################################################
 
-pty:Guarantor a owl:NamedIndividual, pty:Role ;
-    rdfs:label "Guarantor"@en ;
-    rdfs:comment "The role of backing another occupancy's obligation, becoming answerable if that occupancy fails to perform." ;
-    fnd:utility "Named in the original design alongside Obligor, Obligee, Accountable, and Performing, but the least mechanically complete of the five — see §4. Included as a role type; its contingent-activation mechanism is not yet built." .
+###  https://www.nebularis.org/neuro-semantic/lattice/party#Accountable
+pty:Accountable rdf:type owl:NamedIndividual ,
+                         pty:Role ;
+                rdfs:comment "The role that remains answerable for an obligation's performance even when a different occupancy actually carries it out." ;
+                rdfs:label "Accountable"@en ;
+                fnd:utility "One side of the delegation split formalised by pty:Delegation. Accountability does not transfer to a Performing occupancy even when performance does." .
 
-pty:Accountable a owl:NamedIndividual, pty:Role ;
-    rdfs:label "Accountable"@en ;
-    rdfs:comment "The role that remains answerable for an obligation's performance even when a different occupancy actually carries it out." ;
-    fnd:utility "One side of the delegation split formalised by pty:Delegation. Accountability does not transfer to a Performing occupancy even when performance does." .
 
-pty:Performing a owl:NamedIndividual, pty:Role ;
-    rdfs:label "Performing"@en ;
-    rdfs:comment "The role that actually carries out an obligation's performance, discharging an Accountable occupancy's obligation without taking on its accountability." ;
-    fnd:utility "The other side of the delegation split. A pty:Delegation's delegatesTo always points at an occupancy in this role; delegatesFrom always at one in the Accountable role." .
+###  https://www.nebularis.org/neuro-semantic/lattice/party#Guarantor
+pty:Guarantor rdf:type owl:NamedIndividual ,
+                       pty:Role ;
+              rdfs:comment "The role of backing another occupancy's obligation, becoming answerable if that occupancy fails to perform." ;
+              rdfs:label "Guarantor"@en ;
+              fnd:utility "Named in the original design alongside Obligor, Obligee, Accountable, and Performing, but the least mechanically complete of the five — see §4. Included as a role type; its contingent-activation mechanism is not yet built." .
 
-pty:SeveralOnly a owl:NamedIndividual, pty:CompositionRule ;
-    rdfs:label "Several-only"@en ;
-    rdfs:comment "A composition rule under which each member's share of an obligation is independently capped; no member answers for another's shortfall." ;
-    fnd:utility "If one member defaults, the residual is simply unmet — it does not redistribute onto the remaining members. The baseline case for a Participation Group whose members each bear a bounded, non-aggregating portion of one obligation." .
 
-pty:JointAndSeveral a owl:NamedIndividual, pty:CompositionRule ;
-    rdfs:label "Joint and several"@en ;
-    rdfs:comment "A composition rule under which any member may be called for the full obligation, subject to a right of recourse against the other members afterward." ;
-    fnd:utility "The dual of SeveralOnly: exposure is not capped at a member's own share, but the group's internal contribution rights — who ultimately bears what — are a distinct concern this rule does not itself resolve." .
+###  https://www.nebularis.org/neuro-semantic/lattice/party#JointAndSeveral
+pty:JointAndSeveral rdf:type owl:NamedIndividual ,
+                             pty:CompositionRule ;
+                    rdfs:comment "A composition rule under which any member may be called for the full obligation, subject to a right of recourse against the other members afterward." ;
+                    rdfs:label "Joint and several"@en ;
+                    fnd:utility "The dual of SeveralOnly: exposure is not capped at a member's own share, but the group's internal contribution rights — who ultimately bears what — are a distinct concern this rule does not itself resolve." .
+
+
+###  https://www.nebularis.org/neuro-semantic/lattice/party#Obligee
+pty:Obligee rdf:type owl:NamedIndividual ,
+                     pty:Role ;
+            rdfs:comment "The role of being owed an obligation." ;
+            rdfs:label "Obligee"@en ;
+            fnd:utility "The direction-of-obligation counterpart to Obligor. Also the role a contingent occupancy — a third party with no relationship to an instrument until some event binds them in — is typed as, once occupiedBy is eventually set." .
+
+
+###  https://www.nebularis.org/neuro-semantic/lattice/party#Obligor
+pty:Obligor rdf:type owl:NamedIndividual ,
+                     pty:Role ;
+            rdfs:comment "The role of owing an obligation." ;
+            rdfs:label "Obligor"@en ;
+            fnd:utility "The direction-of-obligation counterpart to Obligee. Instrument's Obligation class references a Role Occupancy in this role as its obligor, in Instrument's projection." .
+
+
+###  https://www.nebularis.org/neuro-semantic/lattice/party#Performing
+pty:Performing rdf:type owl:NamedIndividual ,
+                        pty:Role ;
+               rdfs:comment "The role that actually carries out an obligation's performance, discharging an Accountable occupancy's obligation without taking on its accountability." ;
+               rdfs:label "Performing"@en ;
+               fnd:utility "The other side of the delegation split. A pty:Delegation's delegatesTo always points at an occupancy in this role, whilst delegatesFrom always at one in the Accountable role." .
+
+
+###  https://www.nebularis.org/neuro-semantic/lattice/party#SeveralOnly
+pty:SeveralOnly rdf:type owl:NamedIndividual ,
+                         pty:CompositionRule ;
+                rdfs:comment "A composition rule under which each member's share of an obligation is independently capped; no member answers for another's shortfall." ;
+                rdfs:label "Several-only"@en ;
+                fnd:utility "If one member defaults, the residual is simply unmet — it does not redistribute onto the remaining members. The baseline case for a Participation Group whose members each bear a bounded, non-aggregating portion of one obligation." .
+
+
+###  Generated by the OWL API (version 4.5.29.2024-05-13T12:11:03Z) https://github.com/owlcs/owlapi
