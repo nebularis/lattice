@@ -529,7 +529,153 @@ These recur across the layer sections above and are the load-bearing joints of t
 
 ---
 
-## 10. Open Items and Recommendations (Aggregated)
+## 10. Hash Identities
+
+“Hash identities” are intended to make LATTICE’s versioned RDF graphs reproducible, cacheable, and auditable. They answer different questions and must not be collapsed into one digest.
+
+The current repository does **not** implement this model yet. Foundation currently provides the semantic building blocks for identity and versioning:
+
+- `fnd:PersistentIdentity` represents the continuing thing.
+- `fnd:Version` represents one state of that thing.
+- `fnd:hasIdentity` links a version to its persistent identity.
+- `fnd:supersededBy` links one version to its successor.
+
+For example, an obligation edited after a contract change should receive a new `ins:Obligation` version, linked to the same persistent identity. It must not be mutated in place. The planned hashing model extends this with deterministic identities for authored content and derived outputs.
+
+### The four identities
+
+| Identity | Question answered | Typical use |
+|---|---|---|
+| **Semantic content hash** | Did the meaning-bearing declaration change? | Detecting semantic changes and deciding which semantic caches are invalid |
+| **Generation/profile identity** | Were these outputs produced under the same compiler, evaluator, registry, validation, and IRI-binding configuration? | Determining whether two derived products are interchangeable |
+| **Build artefact hash** | Did regeneration produce the same bytes or graph? | Checking deterministic compilation and detecting accidental edits |
+| **Runtime state hash** | Is this execution or replay at the same state and position? | Replay verification, event-log comparison, and operational state reconciliation |
+
+The planning documents sometimes call all four “hash identities”, but generation identity is conceptually a profile identity. It may be represented by a versioned identifier or digest rather than being treated as semantic content itself.
+
+#### 1. Semantic content hash
+
+This is computed from a canonical representation of the meaning-bearing declaration. For Eligibility, that includes the dimensions and constraints that actually affect admission. For Behaviour, it includes declarations such as transitions, triggers, guards, activation policies, effect payloads, and target bindings.
+
+The canonicalisation contract is intended to remove irrelevant representation differences, including:
+
+- RDF/Turtle serialisation order
+- blank-node labels
+- equivalent graph encodings
+- optional-value representation
+- imported graph versions
+- concept and scheme identity
+- ordered collections
+- legacy IRI overrides
+- wildcard dimensions
+
+The important optimisation is **wildcard elision**. If a newly added dimension is unconstrained for an existing profile, its wildcard value is omitted from that profile’s canonical form. Adding the dimension therefore leaves existing semantic hashes unchanged. A profile changes its hash only when it actually uses the new dimension.
+
+The planned `elg:Unsourced` marker is deliberately not elided. It distinguishes “explicitly unconstrained” from “we never supplied this value”. It still admits everything, but it participates in the hash and can fail governance when the dimension is runtime-critical.
+
+The semantic hash is therefore about meaning, not deployment. Two deployments with identical declarations but different generated property IRIs can have the same semantic hash.
+
+#### 2. Generation or profile identity
+
+A semantic hash alone is insufficient for reusing a derived artefact. The same declarations may be compiled using different:
+
+- compiler or evaluator versions
+- Eligibility or Behaviour profiles
+- entailment regimes
+- validation profiles
+- registry versions
+- generated property-IRI bindings
+- implementation options
+
+Those differences can produce incompatible outputs even when the declarations mean the same thing.
+
+The planned cache rule is:
+
+```text
+cache valid = semantic content hash + generation/profile identity
+```
+
+This preserves the benefit of stable semantic hashes without claiming that outputs from different compiler configurations are interchangeable.
+
+#### 3. Build artefact hash
+
+This identifies the generated result itself, such as:
+
+- a compiled SHACL shape set
+- a SPARQL evaluator
+- a generated per-dimension property surface
+- a materialised RDF graph
+- a relational or event-store projection
+- a generated state-machine table
+
+A deterministic generator should produce the same artefact hash from the same semantic input and generation identity. If the hash changes unexpectedly, the implementation or serialisation process changed.
+
+This is distinct from the semantic hash. A harmless compiler or serialisation change may alter the artefact hash without changing the declaration’s meaning.
+
+#### 4. Runtime state hash
+
+This applies to execution rather than static declarations. It represents a state snapshot or replay position, potentially including:
+
+- current state occupancies
+- activation registers
+- ordered stimulus queues
+- execution sequence numbers
+- emitted stimuli
+- effect results
+- occupancy and account records
+
+Runtime hashing supports deterministic replay. Two executions that differ only in wall-clock timestamps or storage addresses may still be equivalent if those values are excluded from the comparison projection. Differences in queue order or final state should not be ignored because they can change behaviour.
+
+### How the hashes participate in change and invalidation
+
+The intended lifecycle is:
+
+1. Author a declaration or create a new version.
+2. Canonicalise the meaning-bearing graph.
+3. Compute its semantic content hash.
+4. Select a generation or realisation profile.
+5. Generate derived products.
+6. Record their source, profile, implementation version, relevant hashes, and authority level.
+7. Compute a build artefact hash for each generated product.
+8. Emit invalidation information when source versions change.
+9. For operational execution, record runtime state hashes and execution provenance.
+
+The design explicitly rejects in-place mutation of authored Instrument nodes. A Behaviour effect such as `StructureWrite` or `Reparameterisation` should create a new version or derived node, link it to the execution as evidence, recompute the structural or semantic hash, and identify dependent derived products for invalidation. Withdrawal is represented through supersession or inactivity, not by deleting triples.
+
+The broader A-12 proposal also classifies derived products, including inferred statements, validation results, materialisations, projections, indexes, generated artefacts, compiled evaluators, and decision or execution records. Each product should record:
+
+- the source graph or dataset snapshot
+- source declarations
+- derivation or projection profile
+- implementation version
+- entailment and validation configuration
+- creation time
+- relevant hash identities
+- invalidation dependencies
+- an authority declaration
+
+That authority declaration matters because a materialised or projected statement must not automatically outrank its source. It may be advisory, a reproducible cache, operationally authoritative, or externally authoritative and synchronised.
+
+### What implementation is planned
+
+The attached plans point toward a Foundation-level extension, roughly involving:
+
+- a derived-product class such as `fnd:DerivedArtefact`
+- links such as `fnd:derivedFrom`
+- a generation-profile class such as `fnd:GenerationProfile`
+- content-hash properties
+- invalidation-event modelling
+- canonicalisation rules shared by Eligibility, Behaviour, and generated surfaces
+- deterministic tooling under `tools/` or a later compilation area
+- SHACL/SPARQL governance checks rejecting untraceable or hand-edited generated artefacts
+
+The current repository has only the versioning substrate. It has no hash properties, canonicalisation library, compiler, invalidation event vocabulary, or generated execution tooling. The relevant implementation is still design work, scheduled around ADR A-12 and the later derivation and validation gates in the attached execution plan.
+
+One significant migration consequence is already called out. When the canonicalisation contract changes, every affected semantic or structural hash changes, so the derived estate requires a planned full rehash and regeneration. After that cutover, wildcard elision provides the intended steady-state benefit: adding an unused dimension should not invalidate existing profiles or their derived artefacts.
+
+---
+
+## 11. Open Items and Recommendations (Aggregated)
 
 Ranked by what would most unblock further work, not by section order:
 
