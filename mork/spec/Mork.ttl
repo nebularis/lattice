@@ -9,6 +9,7 @@
 @prefix dct: <http://purl.org/dc/terms/> .
 @prefix swrl: <http://www.w3.org/2003/11/swrl#> .
 @prefix swrlb: <http://www.w3.org/2003/11/swrlb#> .
+@prefix rr: <http://www.w3.org/ns/r2rml#> .
 @base <http://www.nebularis.org/ontologies/Mork#> .
 
 <http://www.nebularis.org/ontologies/Mork> rdf:type owl:Ontology ;
@@ -1198,6 +1199,14 @@ This property generates the morphisms of the preorder category Int(I) (Foundatio
                          skos:definition "Links a RuleMapping to the SWRL rule (swrl:Imp individual) it generates when compiled. The generated rule is structured RDF with fully traversable antecedent/consequent atom lists, class predicates, property predicates, and variable bindings." .
 
 
+###  http://www.nebularis.org/ontologies/Mork#generatesTransformDefinition
+:generatesTransformDefinition rdf:type owl:ObjectProperty ;
+                              rdfs:domain :TransformMapping ;
+                              rdfs:range rr:TriplesMap ;
+                              rdfs:label "generates transform definition" ;
+                              skos:definition "Links a TransformMapping to the RML/R2RML triples map (rr:TriplesMap individual) it generates when compiled. The generated triples map is structured RDF — logical source, subject map, and predicate-object/referencing-object maps — fully traversable and queryable within the RDF graph, not a serialised mapping file." .
+
+
 ###  http://www.nebularis.org/ontologies/Mork#hasRuleTemplate
 :hasRuleTemplate rdf:type owl:ObjectProperty ;
                  rdfs:domain :RuleMapping ;
@@ -1212,6 +1221,14 @@ This property generates the morphisms of the preorder category Int(I) (Foundatio
                    rdfs:range :RuleProvenance ;
                    rdfs:label "has rule provenance" ;
                    skos:definition "Links a RuleMapping to its provenance record (origin, review chain, lifecycle metadata)." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#hasTransformProvenance
+:hasTransformProvenance rdf:type owl:ObjectProperty ;
+                        rdfs:domain :TransformMapping ;
+                        rdfs:range :TransformProvenance ;
+                        rdfs:label "has transform provenance" ;
+                        skos:definition "Links a TransformMapping to its provenance record (origin, review chain, lifecycle metadata)." .
 
 
 ###  http://www.nebularis.org/ontologies/Mork#hasShapeTemplate
@@ -2490,8 +2507,8 @@ The expressions form a monoid (TemplateExpression, Concat, Literal(\"\")) over s
 :GenerativeMapping rdf:type owl:Class ;
                    rdfs:subClassOf :DataMapping ;
                    rdfs:label "generative mapping" ;
-                   skos:definition "The class of all DataMapping individuals whose evaluation produces a constraint or inference artefact (SHACL shape, SWRL rule, or future artefact types). Serves as the common superclass for ShapeMapping and RuleMapping, and as the domain for shared properties (hasParameterBinding, hasTargetingSpec, dependsOnMapping)." ;
-                   skos:scopeNote "GenerativeMapping is not an equivalence class — it has no structural characterisation that would allow automatic classification. Membership is inferred via subclass relationships from ShapeMapping or RuleMapping." .
+                   skos:definition "The class of all DataMapping individuals whose evaluation produces a constraint, inference, or transformation artefact (SHACL shape, SWRL rule, RML triples map, or future artefact types). Serves as the common superclass for ShapeMapping, RuleMapping, and TransformMapping, and as the domain for shared properties (hasParameterBinding, hasTargetingSpec, dependsOnMapping)." ;
+                   skos:scopeNote "GenerativeMapping is not an equivalence class — it has no structural characterisation that would allow automatic classification. Membership is inferred via subclass relationships from ShapeMapping, RuleMapping, or TransformMapping." .
 
 
 ###  http://www.nebularis.org/ontologies/Mork#ShapeMapping
@@ -2530,6 +2547,28 @@ The generated shape is structured RDF — not a serialised string. Its internal 
 Classification as RuleMapping is inferred from the presence of the generatesRuleDefinition property pointing to a swrl:Imp individual. The canonical representation is the structured RDF graph, not a serialised string.
 
 The optional swrlCompactSyntax annotation provides a human-readable rendering with no logical role.""" .
+
+
+###  http://www.nebularis.org/ontologies/Mork#TransformMapping
+:TransformMapping rdf:type owl:Class ;
+                  owl:equivalentClass [ owl:intersectionOf ( :DataMapping
+                                                             [ rdf:type owl:Restriction ;
+                                                               owl:onProperty :generatesTransformDefinition ;
+                                                               owl:someValuesFrom rr:TriplesMap
+                                                             ]
+                                                           ) ;
+                                        rdf:type owl:Class
+                                      ] ;
+                  rdfs:subClassOf :GenerativeMapping ;
+                  rdfs:label "transform mapping" ;
+                  skos:definition """A generative mapping that, when compiled, produces an RML/R2RML triples map as a first-class RDF graph object (an rr:TriplesMap individual with structured subject map, predicate-object maps, and logical source).
+
+Classification as TransformMapping is inferred from the presence of the generatesTransformDefinition property pointing to an rr:TriplesMap individual, following the same definitional pattern as ShapeMapping (≡ DataMapping ⊓ ∃generatesShapeDefinition.sh:Shape) and RuleMapping (≡ DataMapping ⊓ ∃generatesRuleDefinition.swrl:Imp).
+
+The generated triples map is structured RDF — not a serialised mapping file. Its internal structure (logical source, subject map, predicate-object maps, referencing object maps and join conditions) is fully traversable and queryable within the RDF graph.""" ;
+                  skos:scopeNote """Unlike ShapeMapping and RuleMapping, an ordinary (non-generative) DataMapping is already RML-compilable in the ingress direction — a compiler may walk any Datum, Lookup, or R-Box assertion node and emit a triples map without that node ever being asserted as a TransformMapping. TransformMapping exists to make that compiled artefact a first-class, queryable, provenance-bearing graph object exactly where a deployment needs to trace "which mapping produced this triples map" — the same governance guarantee ShapeMapping and RuleMapping already give SHACL shapes and SWRL rules.
+
+TransformMapping is also the natural target for the reverse (egress) direction: a DataMapping whose source is itself part of the ontology (e.g. a qnt:Quantity or qnt:Range chain) and whose rr:TriplesMap projects that chain out to a flatter, deployment-specific representation. egressProjection (§ DataMapping) names the target Representation; generatesTransformDefinition names the compiled artefact that performs the projection.""" .
 
 
 ###  http://www.nebularis.org/ontologies/Mork#QueryTemplate
@@ -2584,6 +2623,13 @@ Also supports optional jurisdiction scoping (appliesInJurisdiction) and effectiv
                 rdfs:subClassOf skos:Concept ;
                 rdfs:label "rule provenance" ;
                 skos:definition "Records the origin and review chain of generated SWRL rules, including LLM model ID, confidence, review status, jurisdiction, effective period, and impact scope (advisory, enforcement, annotation)." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#TransformProvenance
+:TransformProvenance rdf:type owl:Class ;
+                     rdfs:subClassOf skos:Concept ;
+                     rdfs:label "transform provenance" ;
+                     skos:definition "Records the origin and review chain of a generated RML triples map, including LLM model ID, confidence, review status, and the direction of transformation (ingress: external source to ontology, or egress: ontology to a flatter target representation)." .
 
 
 #################################################################
@@ -2924,6 +2970,18 @@ Also supports optional jurisdiction scoping (appliesInJurisdiction) and effectiv
                                 owl:onProperty :hasParameterBinding ;
                                 owl:minCardinality "1"^^xsd:nonNegativeInteger
                               ] .
+
+### TransformMapping must generate at least one rr:TriplesMap (redundant with equivalence, but explicit)
+:TransformMapping rdfs:subClassOf [ rdf:type owl:Restriction ;
+                                     owl:onProperty :generatesTransformDefinition ;
+                                     owl:someValuesFrom rr:TriplesMap
+                                   ] .
+
+### TransformMapping must have transform provenance
+:TransformMapping rdfs:subClassOf [ rdf:type owl:Restriction ;
+                                     owl:onProperty :hasTransformProvenance ;
+                                     owl:someValuesFrom :TransformProvenance
+                                   ] .
 
 ### TargetingSpec must have at least one targeting mode (Axiom 5.6h-i)
 :TargetingSpec rdfs:subClassOf [ rdf:type owl:Class ;
