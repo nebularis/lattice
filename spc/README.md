@@ -1,105 +1,1392 @@
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
-# SPC — Subject-oriented Process Calculus
+# SPC Ontology — Description Logic Elements
 
-SPC is the orchestration layer that sits alongside LATTICE's domain modelling layers. Where LATTICE models parties, obligations, eligibility, and behaviour state, SPC models the session-typed exchange between subjects that drives those states forward.
-
-In this repository, SPC is currently centred on the ontology in `spec/spc.ttl`. The surrounding `shapes/`, `vocab/`, `projection/`, `execution/`, `examples/`, and `test/` directories reserve the same layer structure used elsewhere in LATTICE, but are not yet populated.
+*Literate specification, following the repository convention used by the other populated layer READMEs. This document is intended to be rich enough for `spec/spc.ttl` to be regenerated from its `turtle-spec` blocks.*
 
 ---
 
 ## 1. Purpose and Scope
 
-The SPC layer captures the structural parts of a subject-oriented process calculus in RDF/OWL so they can be described, queried, and related to the rest of the LATTICE model.
+SPC provides the orchestration layer for LATTICE. It models the subject-oriented process structures that govern typed interaction between participants, while leaving business vocabulary and domain axioms in imported ontologies. In the current repository state, the substantive SPC artefact is `spec/spc.ttl`, and this README now mirrors that ontology in literate form.
 
-The current ontology covers:
+The ontology currently covers:
 
-- value sorts, including base, product, sum, and recursive sorts
-- subject behaviours such as send, receive, do, choice, conditional, recursion, and call
-- global and local session types, including branching, projection, parallel composition, and duality
+- core SPC identifiers and value structures
+- subject behaviours and their structural roles
+- global and local session types, including projection-related structures
 - runtime configurations, message pools, interfaces, and open subject systems
-- typing assertions for behaviours and configurations
-- the bridge from SPC refinements into imported OWL domain ontologies
-- reified reduction steps, reduction rules, and selected metatheoretic constraints
+- typing assertions and configuration typing
+- refinement predicates and the bridge into imported OWL ontologies
+- reduction structures and selected metatheoretic constraints
 
-This keeps protocol structure inside SPC while leaving business vocabulary and domain axioms in imported ontologies.
+## 2. Namespace and Prefixes
 
-## 2. Repository Layout
+The current SPC ontology still uses a provisional namespace, unlike the harmonised LATTICE namespaces used by the other layers. That provisional state is part of the current source and is reproduced exactly here so extraction stays faithful to `spec/spc.ttl`.
+
+```turtle-spec
+@prefix : <http://example.org/spc#> .
+@prefix spc: <http://example.org/spc#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+```
+
+## 3. How to Read This Document
+
+Genuine specification content is fenced ` ```turtle-spec ` and can be concatenated, in document order, to regenerate `spec/spc.ttl`. Prose outside those fences is explanatory only. Unlike the Foundation and Vocabulary READMEs, this SPC source ontology currently carries `rdfs:comment` annotations but does not yet use a parallel `fnd:utility` annotation pattern, so the explanatory prose here is a guide to the grouped axiom sets rather than a second annotation stream to extract. The per-term definitions remain embedded in the Turtle itself through those `rdfs:comment` annotations.
+
+If regenerating `spec/spc.ttl` from this document, concatenate the prefix block in §2 and then every `turtle-spec` block from §5 through §19, in order.
+
+## 4. Design Decisions
+
+- The ontology targets **OWL 2 DL**, and uses qualified cardinalities, keys, and property chains in the structural layer.
+- Domain refinement predicates are intended to remain in a more tractable fragment, described in the source comments as **EL++** plus arithmetic-style constraints.
+- Several important invariants are documented but left to external validation, including recursion contractiveness, binder matching, participant-set coherence in parallel types, duality involution, and full preservation or deadlock checks.
+- The current README documents the ontology in grouped sections that mirror the compiled Turtle file, so the specification can be extracted from the README without re-authoring the ontology by hand.
+
+## 5. Ontology Header
+
+The ontology header states the layer scope and the intended modelling split between structural OWL 2 DL axioms and a tractable imported domain fragment.
+
+```turtle-spec
+#################################################################
+# SPC OWL Ontology (Turtle)
+#
+# This ontology encodes the Subject Process Calculus (SPC) structures
+# and the Description Logic/DL integration layer described in:
+# - "A Categorical Foundation for Subject-Oriented Process Logic" (SPC foundations)
+# - "Formal Specification of the SPC-to-OWL Ontology" (DL paper)
+#
+# Notes:
+# - The ontology targets OWL 2 DL (SHOIQ(D)).
+# - Domain-specific refinement predicates should remain in EL++ (imported ontology),
+#   while structural axioms here may use OWL 2 DL features (qualified cardinalities, keys, property chains).
+# - Some metatheoretic invariants and process-level reduction semantics require external validation or SWRL rules;
+#   they are annotated accordingly.
+# - Extensive rdfs:comment annotations are provided to document design intent and constraints.
+#################################################################
+
+#################################################################
+# Ontology header
+#################################################################
+
+spc:Ontology a owl:Ontology ;
+  rdfs:comment "SPC OWL Ontology: Structural encoding of sorts, behaviors, session types (global/local), configurations, interfaces/open systems, typing assertions, domain bridge, and selected invariants. See foundation and DL papers for formal semantics and proofs." ;
+  rdfs:comment "Design principles: structural layer in OWL 2 DL; domain layer (refinement predicates) in tractable fragment (EL++); use of keys for intra-parent uniqueness (branch/label), property chains for participant extraction, qualified cardinality for structural exactness." ;
+  rdfs:comment "Contravariant functor 𝒪: SPC^op → DL is realized by conservative extension patterns; narrowing behavior in SPC corresponds to expanding knowledge in DL." .
+```
+
+## 6. Core Object Classes
+
+These are the basic SPC reference classes used throughout the rest of the ontology for subjects, labels, variables, expressions, protocol names, and runtime values.
+
+```turtle-spec
+#################################################################
+# Core object classes (shared vocabulary)
+#################################################################
+
+# Fundamental identifiers and vocabulary
+spc:SubjectIdentifier a owl:Class ;
+  rdfs:comment "Identifiers (names) for subjects/ports in SPC." .
+
+spc:Label a owl:Class ;
+  rdfs:comment "Message/branch labels used in session types and behaviors." .
+
+spc:Variable a owl:Class ;
+  rdfs:comment "Variables bound on receive branches and used in expressions/predicates." .
+
+spc:Expression a owl:Class ;
+  rdfs:comment "First-order expressions (payload calculations, guards). Expressions are assumed total; see foundation Axiom 3.4." .
+
+spc:InternalFunction a owl:Class ;
+  rdfs:comment "Total internal functions f: () → () used in DoBehavior. Side-effects should be modeled via explicit messages." .
+
+spc:ProtocolName a owl:Class ;
+  rdfs:comment "Protocol name identifiers for nested/session calls." .
+
+spc:Value a owl:Class ;
+  rdfs:comment "Runtime values carried by messages and evaluated expressions. Value-to-individual mapping provided by OntologyBridge." .
+
+```
+
+## 7. Sort Hierarchy
+
+SPC sorts model the payload universe. The ontology partitions `spc:Sort` into base, product, sum, and recursive forms, and uses qualified cardinalities to make composite sort structure explicit.
+
+```turtle-spec
+#################################################################
+# Sort hierarchy (Section 3.1 of DL spec)
+#################################################################
+
+spc:Sort a owl:Class ;
+  rdfs:comment "Value type universe. Partitioned into BaseSort, ProductSort, SumSort, RecursiveSort." .
+
+spc:BaseSort a owl:Class ;
+  rdfs:subClassOf spc:Sort ;
+  rdfs:comment "Base sorts: unit, bool, int, string. Closed enumeration via named individuals." .
+
+spc:ProductSort a owl:Class ;
+  rdfs:subClassOf spc:Sort ;
+  rdfs:comment "Product sort with exactly one left/fst and one right/snd component (qualified cardinalities)." .
+
+spc:SumSort a owl:Class ;
+  rdfs:subClassOf spc:Sort ;
+  rdfs:comment "Sum sort with exactly one left and one right component (qualified cardinalities)." .
+
+spc:RecursiveSort a owl:Class ;
+  rdfs:subClassOf spc:Sort ;
+  rdfs:comment "Recursive sort with exactly one body sort. Contractiveness is an external syntactic check (not expressible in DL)." .
+
+# Partition and disjointness for Sort
+spc:Sort rdfs:subClassOf [
+    a owl:Class ;
+    owl:equivalentClass [
+      a owl:Class ;
+      owl:unionOf ( spc:BaseSort spc:ProductSort spc:SumSort spc:RecursiveSort )
+    ]
+  ] ;
+  rdfs:comment "Partition: Sort ≡ BaseSort ⊔ ProductSort ⊔ SumSort ⊔ RecursiveSort. See AllDisjointClasses below." .
+
+[ a owl:AllDisjointClasses ;
+  owl:members ( spc:BaseSort spc:ProductSort spc:SumSort spc:RecursiveSort )
+] .
+
+# Base sort individuals (closed enumeration)
+spc:unit_sort a owl:NamedIndividual, spc:BaseSort ;
+  rdfs:comment "Unit sort." .
+
+spc:bool_sort a owl:NamedIndividual, spc:BaseSort ;
+  rdfs:comment "Boolean sort." .
+
+spc:int_sort a owl:NamedIndividual, spc:BaseSort ;
+  rdfs:comment "Integer sort." .
+
+spc:string_sort a owl:NamedIndividual, spc:BaseSort ;
+  rdfs:comment "String sort." .
+
+# ProductSort roles and exact cardinalities
+spc:hasFstSort a owl:ObjectProperty ;
+  rdfs:domain spc:ProductSort ;
+  rdfs:range spc:Sort ;
+  rdfs:comment "Product sort's first (left) component." .
+
+spc:hasSndSort a owl:ObjectProperty ;
+  rdfs:domain spc:ProductSort ;
+  rdfs:range spc:Sort ;
+  rdfs:comment "Product sort's second (right) component." .
+
+spc:ProductSort rdfs:subClassOf [
+    a owl:Restriction ;
+    owl:onProperty spc:hasFstSort ;
+    owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ;
+    owl:onClass spc:Sort
+  ], [
+    a owl:Restriction ;
+    owl:onProperty spc:hasSndSort ;
+    owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ;
+    owl:onClass spc:Sort
+  ] .
+
+# SumSort roles and exact cardinalities
+spc:hasLeftSort a owl:ObjectProperty ;
+  rdfs:domain spc:SumSort ;
+  rdfs:range spc:Sort ;
+  rdfs:comment "Sum sort's left component sort." .
+
+spc:hasRightSort a owl:ObjectProperty ;
+  rdfs:domain spc:SumSort ;
+  rdfs:range spc:Sort ;
+  rdfs:comment "Sum sort's right component sort." .
+
+spc:SumSort rdfs:subClassOf [
+    a owl:Restriction ;
+    owl:onProperty spc:hasLeftSort ;
+    owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ;
+    owl:onClass spc:Sort
+  ], [
+    a owl:Restriction ;
+    owl:onProperty spc:hasRightSort ;
+    owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ;
+    owl:onClass spc:Sort
+  ] .
+
+# RecursiveSort role and exact cardinality
+spc:hasSortBody a owl:ObjectProperty ;
+  rdfs:domain spc:RecursiveSort ;
+  rdfs:range spc:Sort ;
+  rdfs:comment "Body sort for a recursive sort (μX.S). Contractiveness check is external." .
+
+spc:RecursiveSort rdfs:subClassOf [
+    a owl:Restriction ;
+    owl:onProperty spc:hasSortBody ;
+    owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ;
+    owl:onClass spc:Sort
+  ] .
+```
+
+## 8. Behavior Hierarchy
+
+This section captures the subject-local process constructs. Send, receive, internal work, choice, conditionals, recursion, and nested calls are all represented as explicit OWL classes and roles.
+
+```turtle-spec
+#################################################################
+# Behavior hierarchy (Section 3.2 of DL spec)
+#################################################################
+
+spc:Behavior a owl:Class ;
+  rdfs:comment "Behavior grammar B; partitioned into End, Send, Receive, Do, Choice, Conditional, Rec, RecVar, Call." .
+
+spc:EndBehavior a owl:Class ;
+  rdfs:subClassOf spc:Behavior ;
+  rdfs:comment "Termination behavior; no continuation." .
+
+spc:SendBehavior a owl:Class ;
+  rdfs:subClassOf spc:Behavior ;
+  rdfs:comment "Send to target with label and payload expression; has continuation." .
+
+spc:ReceiveBehavior a owl:Class ;
+  rdfs:subClassOf spc:Behavior ;
+  rdfs:comment "Receive from source; multi-branch structure with label-variable-body triples; at least one branch." .
+
+spc:ReceiveBranch a owl:Class ;
+  rdfs:comment "Branch element of a receive behavior; includes label, bound variable, and branch body. Parent link used to enforce label uniqueness via hasKey." .
+
+spc:DoBehavior a owl:Class ;
+  rdfs:subClassOf spc:Behavior ;
+  rdfs:comment "Execute internal function f and continue; function assumed total (external guarantee)." .
+
+spc:ChoiceBehavior a owl:Class ;
+  rdfs:subClassOf spc:Behavior ;
+  rdfs:comment "Internal choice between two alternative behaviors; type of both branches must be identical (subsumption used as needed)." .
+
+spc:ConditionalBehavior a owl:Class ;
+  rdfs:subClassOf spc:Behavior ;
+  rdfs:comment "If-then-else with boolean guard expression; guard's sort must be bool." .
+
+spc:RecBehavior a owl:Class ;
+  rdfs:subClassOf spc:Behavior ;
+  rdfs:comment "Recursive behavior binder (rec X.B)." .
+
+spc:RecVarBehavior a owl:Class ;
+  rdfs:subClassOf spc:Behavior ;
+  rdfs:comment "Recursion variable behavior (X); refersToVariable must match binder (external scope check)." .
+
+spc:CallBehavior a owl:Class ;
+  rdfs:subClassOf spc:Behavior ;
+  rdfs:comment "Subprocess/protocol invocation call[P⟨s̄⟩].B; continuation resumes after subprocess completion." .
+
+# Disjointness for behavior subclasses
+[ a owl:AllDisjointClasses ;
+  owl:members ( spc:EndBehavior spc:SendBehavior spc:ReceiveBehavior spc:DoBehavior spc:ChoiceBehavior spc:ConditionalBehavior spc:RecBehavior spc:RecVarBehavior spc:CallBehavior )
+] .
+
+# Behavior roles
+spc:hasContinuation a owl:ObjectProperty ;
+  rdfs:domain spc:Behavior ;
+  rdfs:range spc:Behavior ;
+  rdfs:comment "Continuation link for behaviors that proceed (send/do/call, etc.)." .
+
+spc:hasTargetSubject a owl:ObjectProperty ;
+  rdfs:domain spc:SendBehavior ;
+  rdfs:range spc:SubjectIdentifier ;
+  rdfs:comment "Send target subject identifier." .
+
+spc:hasSendLabel a owl:ObjectProperty ;
+  rdfs:domain spc:SendBehavior ;
+  rdfs:range spc:Label ;
+  rdfs:comment "Send label." .
+
+spc:hasPayloadExpression a owl:ObjectProperty ;
+  rdfs:domain spc:SendBehavior ;
+  rdfs:range spc:Expression ;
+  rdfs:comment "Payload expression evaluated to a Value and sent on the message." .
+
+# Exact roles for SendBehavior
+spc:SendBehavior rdfs:subClassOf
+  [ a owl:Restriction ; owl:onProperty spc:hasTargetSubject ; owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ; owl:onClass spc:SubjectIdentifier ],
+  [ a owl:Restriction ; owl:onProperty spc:hasSendLabel ; owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ; owl:onClass spc:Label ],
+  [ a owl:Restriction ; owl:onProperty spc:hasPayloadExpression ; owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ; owl:onClass spc:Expression ],
+  [ a owl:Restriction ; owl:onProperty spc:hasContinuation ; owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ; owl:onClass spc:Behavior ] .
+
+# Receive behavior roles
+spc:hasSourceSubject a owl:ObjectProperty ;
+  rdfs:domain spc:ReceiveBehavior ;
+  rdfs:range spc:SubjectIdentifier ;
+  rdfs:comment "Receive source subject identifier." .
+
+spc:hasBranch a owl:ObjectProperty ;
+  rdfs:domain spc:ReceiveBehavior ;
+  rdfs:range spc:ReceiveBranch ;
+  rdfs:comment "Branches of a receive behavior (one per label/variable/body triple)." .
+
+spc:hasBranchLabel a owl:ObjectProperty ;
+  rdfs:domain spc:ReceiveBranch ;
+  rdfs:range spc:Label ;
+  rdfs:comment "Label selector for this branch." .
+
+spc:hasBranchVariable a owl:ObjectProperty ;
+  rdfs:domain spc:ReceiveBranch ;
+  rdfs:range spc:Variable ;
+  rdfs:comment "Bound variable for the branch payload." .
+
+spc:hasBranchBody a owl:ObjectProperty ;
+  rdfs:domain spc:ReceiveBranch ;
+  rdfs:range spc:Behavior ;
+  rdfs:comment "Branch body behavior." .
+
+spc:hasBranchParent a owl:ObjectProperty ;
+  rdfs:domain spc:ReceiveBranch ;
+  rdfs:range spc:ReceiveBehavior ;
+  owl:inverseOf spc:hasBranch ;
+  rdfs:comment "Parent receive behavior for this branch; used for key constraint on (parent,label)." .
+
+# ReceiveBehavior constraints: source and at least one branch
+spc:ReceiveBehavior rdfs:subClassOf
+  [ a owl:Restriction ; owl:onProperty spc:hasSourceSubject ; owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ; owl:onClass spc:SubjectIdentifier ],
+  [ a owl:Restriction ; owl:onProperty spc:hasBranch ; owl:minQualifiedCardinality "1"^^xsd:nonNegativeInteger ; owl:onClass spc:ReceiveBranch ] .
+
+# Key: uniquely identify branches within a receive behavior by (parent,label)
+spc:ReceiveBranch owl:hasKey ( spc:hasBranchParent spc:hasBranchLabel ) ;
+  rdfs:comment "Key constraint: within a single ReceiveBehavior, branch labels must be unique. Enforced via hasKey on (parent,label)." .
+
+# Do behavior roles
+spc:hasInternalFunction a owl:ObjectProperty ;
+  rdfs:domain spc:DoBehavior ;
+  rdfs:range spc:InternalFunction ;
+  rdfs:comment "Internal function executed by do[f].B; f guaranteed total externally." .
+
+spc:DoBehavior rdfs:subClassOf
+  [ a owl:Restriction ; owl:onProperty spc:hasInternalFunction ; owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ; owl:onClass spc:InternalFunction ],
+  [ a owl:Restriction ; owl:onProperty spc:hasContinuation ; owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ; owl:onClass spc:Behavior ] .
+
+# Choice behavior roles
+spc:hasLeftAlternative a owl:ObjectProperty ;
+  rdfs:domain spc:ChoiceBehavior ;
+  rdfs:range spc:Behavior ;
+  rdfs:comment "Left alternative behavior." .
+
+spc:hasRightAlternative a owl:ObjectProperty ;
+  rdfs:domain spc:ChoiceBehavior ;
+  rdfs:range spc:Behavior ;
+  rdfs:comment "Right alternative behavior." .
+
+spc:ChoiceBehavior rdfs:subClassOf
+  [ a owl:Restriction ; owl:onProperty spc:hasLeftAlternative ; owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ; owl:onClass spc:Behavior ],
+  [ a owl:Restriction ; owl:onProperty spc:hasRightAlternative ; owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ; owl:onClass spc:Behavior ] .
+
+# Conditional behavior roles
+spc:hasGuardExpression a owl:ObjectProperty ;
+  rdfs:domain spc:ConditionalBehavior ;
+  rdfs:range spc:Expression ;
+  rdfs:comment "Guard expression; must have bool sort." .
+
+spc:hasTrueBranch a owl:ObjectProperty ;
+  rdfs:domain spc:ConditionalBehavior ;
+  rdfs:range spc:Behavior ;
+  rdfs:comment "True branch behavior." .
+
+spc:hasFalseBranch a owl:ObjectProperty ;
+  rdfs:domain spc:ConditionalBehavior ;
+  rdfs:range spc:Behavior ;
+  rdfs:comment "False branch behavior." .
+
+spc:hasExpressionSort a owl:ObjectProperty ;
+  rdfs:domain spc:Expression ;
+  rdfs:range spc:Sort ;
+  rdfs:comment "Typing of expressions to sorts (structural typing)." .
+
+spc:ConditionalBehavior rdfs:subClassOf
+  [ a owl:Restriction ; owl:onProperty spc:hasGuardExpression ; owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ; owl:onClass spc:Expression ],
+  [ a owl:Restriction ; owl:onProperty spc:hasTrueBranch ; owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ; owl:onClass spc:Behavior ],
+  [ a owl:Restriction ; owl:onProperty spc:hasFalseBranch ; owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ; owl:onClass spc:Behavior ],
+  [ a owl:Restriction ; owl:onProperty spc:hasGuardExpression ;
+    owl:someValuesFrom [
+      a owl:Class ;
+      owl:intersectionOf ( spc:Expression [ a owl:Restriction ; owl:onProperty spc:hasExpressionSort ; owl:hasValue spc:bool_sort ] )
+    ]
+  ] ;
+  rdfs:comment "Guard must be boolean: hasGuardExpression some (Expression and hasExpressionSort value bool_sort)." .
+
+# Rec behavior roles
+spc:hasRecursionVariable a owl:ObjectProperty ;
+  rdfs:domain spc:RecBehavior ;
+  rdfs:range spc:Variable ;
+  rdfs:comment "Recursion variable declaration for rec X.B." .
+
+spc:hasRecBody a owl:ObjectProperty ;
+  rdfs:domain spc:RecBehavior ;
+  rdfs:range spc:Behavior ;
+  rdfs:comment "Recursive body behavior." .
+
+spc:RecBehavior rdfs:subClassOf
+  [ a owl:Restriction ; owl:onProperty spc:hasRecursionVariable ; owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ; owl:onClass spc:Variable ],
+  [ a owl:Restriction ; owl:onProperty spc:hasRecBody ; owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ; owl:onClass spc:Behavior ] .
+
+spc:refersToVariable a owl:ObjectProperty ;
+  rdfs:domain spc:RecVarBehavior ;
+  rdfs:range spc:Variable ;
+  rdfs:comment "Reference from RecVarBehavior to corresponding recursion variable. Binder matching is an external scope check." .
+
+spc:RecVarBehavior rdfs:subClassOf
+  [ a owl:Restriction ; owl:onProperty spc:refersToVariable ; owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ; owl:onClass spc:Variable ] .
+
+# Call behavior roles
+spc:hasProtocolReference a owl:ObjectProperty ;
+  rdfs:domain spc:CallBehavior ;
+  rdfs:range spc:ProtocolName ;
+  rdfs:comment "Protocol name to call." .
+
+spc:hasSubjectArgument a owl:ObjectProperty ;
+  rdfs:domain spc:CallBehavior ;
+  rdfs:range spc:SubjectIdentifier ;
+  rdfs:comment "Subject arguments passed to protocol call (0..n)." .
+
+spc:CallBehavior rdfs:subClassOf
+  [ a owl:Restriction ; owl:onProperty spc:hasProtocolReference ; owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ; owl:onClass spc:ProtocolName ],
+  [ a owl:Restriction ; owl:onProperty spc:hasContinuation ; owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ; owl:onClass spc:Behavior ] .
+
+# End behavior: no continuation
+spc:EndBehavior rdfs:subClassOf [
+    a owl:Class ;
+    owl:complementOf [
+      a owl:Restriction ;
+      owl:onProperty spc:hasContinuation ;
+      owl:someValuesFrom owl:Thing
+    ]
+  ] ;
+  rdfs:comment "EndBehavior has no continuation: subclass of complement of (hasContinuation some Thing)." .
+
+```
+
+## 9. Session Types
+
+Global and local session types are represented separately. The ontology includes participant roles, message options, projection-supporting structures, label uniqueness keys, participant propagation chains, and explicit duality links.
+
+```turtle-spec
+#################################################################
+# Session types (global/local) (Sections 3.3, 4.1–4.2 of DL spec)
+#################################################################
+
+spc:ParticipantRole a owl:Class ;
+  rdfs:comment "Participant roles (p, q, r, ...) in global types and projected local types." .
+
+# Global types
+spc:GlobalType a owl:Class ;
+  rdfs:comment "Global session types (choreographies). Partitioned into End, Communication, Recursive, RecVar, Parallel." .
+
+spc:EndGlobalType a owl:Class ;
+  rdfs:subClassOf spc:GlobalType ;
+  rdfs:comment "Global type end (termination)." .
+
+spc:CommunicationGlobalType a owl:Class ;
+  rdfs:subClassOf spc:GlobalType ;
+  rdfs:comment "Communication p → q : {ℓ_i⟨S_i⟩.G_i}; sender/receiver functional; ≥1 message option; labels unique per parent." .
+
+spc:RecursiveGlobalType a owl:Class ;
+  rdfs:subClassOf spc:GlobalType ;
+  rdfs:comment "Global recursive type μt.G." .
+
+spc:RecVarGlobalType a owl:Class ;
+  rdfs:subClassOf spc:GlobalType ;
+  rdfs:comment "Global recursion variable t." .
+
+spc:ParallelGlobalType a owl:Class ;
+  rdfs:subClassOf spc:GlobalType ;
+  rdfs:comment "Parallel composition G₁ | G₂; participants sets should be disjoint (coherence constraint annotated)." .
+
+# Disjointness for global subclasses
+[ a owl:AllDisjointClasses ;
+  owl:members ( spc:EndGlobalType spc:CommunicationGlobalType spc:RecursiveGlobalType spc:RecVarGlobalType spc:ParallelGlobalType )
+] .
+
+# Communication roles and options
+spc:hasSenderRole a owl:ObjectProperty ;
+  rdfs:domain spc:CommunicationGlobalType ;
+  rdfs:range spc:ParticipantRole ;
+  rdfs:comment "Sender role p in p → q : ..." .
+
+spc:hasReceiverRole a owl:ObjectProperty ;
+  rdfs:domain spc:CommunicationGlobalType ;
+  rdfs:range spc:ParticipantRole ;
+  rdfs:comment "Receiver role q in p → q : ..." .
+
+# Make hasSenderRole and hasReceiverRole subproperties of hasParticipant to enable extraction via subproperty semantics
+spc:hasSenderRole rdfs:subPropertyOf spc:hasParticipant .
+spc:hasReceiverRole rdfs:subPropertyOf spc:hasParticipant .
+
+spc:MessageOption a owl:Class ;
+  rdfs:comment "Branch option in communication global type: (label, payload sort, continuation global type). Parent link used for label uniqueness via hasKey." .
+
+spc:hasMessageOption a owl:ObjectProperty ;
+  rdfs:domain spc:CommunicationGlobalType ;
+  rdfs:range spc:MessageOption ;
+  rdfs:comment "Options for communication global type." .
+
+spc:hasOptionLabel a owl:ObjectProperty ;
+  rdfs:domain spc:MessageOption ;
+  rdfs:range spc:Label ;
+  rdfs:comment "Option label." .
+
+spc:hasPayloadSort a owl:ObjectProperty ;
+  rdfs:domain spc:MessageOption ;
+  rdfs:range spc:Sort ;
+  rdfs:comment "Option payload sort (S_i)." .
+
+spc:hasContinuationType a owl:ObjectProperty ;
+  rdfs:domain spc:MessageOption ;
+  rdfs:range spc:GlobalType ;
+  rdfs:comment "Continuation global type G_i." .
+
+spc:hasOptionParent a owl:ObjectProperty ;
+  rdfs:domain spc:MessageOption ;
+  rdfs:range spc:CommunicationGlobalType ;
+  owl:inverseOf spc:hasMessageOption ;
+  rdfs:comment "Parent communication global type; used for label uniqueness via hasKey." .
+
+# CommunicationGlobalType constraints: sender/receiver functional; ≥1 option
+spc:CommunicationGlobalType rdfs:subClassOf
+  [ a owl:Restriction ; owl:onProperty spc:hasSenderRole ; owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ; owl:onClass spc:ParticipantRole ],
+  [ a owl:Restriction ; owl:onProperty spc:hasReceiverRole ; owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ; owl:onClass spc:ParticipantRole ],
+  [ a owl:Restriction ; owl:onProperty spc:hasMessageOption ; owl:minQualifiedCardinality "1"^^xsd:nonNegativeInteger ; owl:onClass spc:MessageOption ] .
+
+# Key: uniquely identify message options within a communication by (parent,label)
+spc:MessageOption owl:hasKey ( spc:hasOptionParent spc:hasOptionLabel ) ;
+  rdfs:comment "Key constraint: within a single CommunicationGlobalType, option labels must be unique. Enforced via hasKey on (parent,label)." .
+
+# Parallel structure
+spc:hasLeftComponent a owl:ObjectProperty ;
+  rdfs:domain spc:ParallelGlobalType ;
+  rdfs:range spc:GlobalType ;
+  rdfs:comment "Left component G₁." .
+
+spc:hasRightComponent a owl:ObjectProperty ;
+  rdfs:domain spc:ParallelGlobalType ;
+  rdfs:range spc:GlobalType ;
+  rdfs:comment "Right component G₂." .
+
+spc:ParallelGlobalType rdfs:subClassOf
+  [ a owl:Restriction ; owl:onProperty spc:hasLeftComponent ; owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ; owl:onClass spc:GlobalType ],
+  [ a owl:Restriction ; owl:onProperty spc:hasRightComponent ; owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ; owl:onClass spc:GlobalType ] ;
+  rdfs:comment "Coherence: participants of left and right components should be disjoint. Full set-disjointness is nontrivial in DL; see property chain participants and annotate external check." .
+
+# Participant extraction (property chain axioms)
+spc:hasParticipant a owl:ObjectProperty ;
+  rdfs:domain spc:GlobalType ;
+  rdfs:range spc:ParticipantRole ;
+  rdfs:comment "Participant extraction; derived via subproperties and property chains." .
+
+# Propagate participants from continuation types via message options
+spc:hasParticipant owl:propertyChainAxiom ( spc:hasMessageOption spc:hasContinuationType spc:hasParticipant ) ;
+  rdfs:comment "Property chain: hasMessageOption o hasContinuationType o hasParticipant ⊑ hasParticipant (participants of continuations are participants of current global type)." .
+
+# Propagate participants through parallel components
+spc:hasParticipant owl:propertyChainAxiom ( spc:hasLeftComponent spc:hasParticipant ) .
+spc:hasParticipant owl:propertyChainAxiom ( spc:hasRightComponent spc:hasParticipant ) .
+rdfs:comment "Property chains: participants of left/right components are participants of the parallel type." .
+
+# Local types
+spc:LocalType a owl:Class ;
+  rdfs:comment "Local session types (per participant). Partitioned into End, Output, Input, Recursive, RecVar, Parallel." .
+
+spc:EndLocalType a owl:Class ;
+  rdfs:subClassOf spc:LocalType ;
+  rdfs:comment "Local end type." .
+
+spc:OutputLocalType a owl:Class ;
+  rdfs:subClassOf spc:LocalType ;
+  rdfs:comment "Output (selection) type: !q.{ℓ_i⟨S_i⟩.T_i}; subtype selects from fewer labels; payload covariant; continuation covariant." .
+
+spc:InputLocalType a owl:Class ;
+  rdfs:subClassOf spc:LocalType ;
+  rdfs:comment "Input (branching) type: ?p.{ℓ_i⟨S_i⟩.T_i}; subtype offers more labels; payload contravariant; continuation covariant." .
+
+spc:RecursiveLocalType a owl:Class ;
+  rdfs:subClassOf spc:LocalType ;
+  rdfs:comment "Local recursive type μt.T." .
+
+spc:RecVarLocalType a owl:Class ;
+  rdfs:subClassOf spc:LocalType ;
+  rdfs:comment "Local recursion variable t." .
+
+spc:ParallelLocalType a owl:Class ;
+  rdfs:subClassOf spc:LocalType ;
+  rdfs:comment "Local parallel composition T₁ | T₂." .
+
+[ a owl:AllDisjointClasses ;
+  owl:members ( spc:EndLocalType spc:OutputLocalType spc:InputLocalType spc:RecursiveLocalType spc:RecVarLocalType spc:ParallelLocalType )
+] .
+
+# Output/Input options (TypeOption)
+spc:TypeOption a owl:Class ;
+  rdfs:comment "Branch option in local types: (label, payload sort, continuation local type). Parent link used for label uniqueness via hasKey." .
+
+spc:hasOutputTarget a owl:ObjectProperty ;
+  rdfs:domain spc:OutputLocalType ;
+  rdfs:range spc:ParticipantRole ;
+  rdfs:comment "Output type target participant: !q..." .
+
+spc:hasOutputOption a owl:ObjectProperty ;
+  rdfs:domain spc:OutputLocalType ;
+  rdfs:range spc:TypeOption ;
+  rdfs:comment "Options for output local type." .
+
+spc:hasInputSource a owl:ObjectProperty ;
+  rdfs:domain spc:InputLocalType ;
+  rdfs:range spc:ParticipantRole ;
+  rdfs:comment "Input type source participant: ?p..." .
+
+spc:hasInputOption a owl:ObjectProperty ;
+  rdfs:domain spc:InputLocalType ;
+  rdfs:range spc:TypeOption ;
+  rdfs:comment "Options for input local type." .
+
+spc:hasTypeOptionParent a owl:ObjectProperty ;
+  rdfs:domain spc:TypeOption ;
+  rdfs:range spc:LocalType ;
+  rdfs:comment "Parent local type (output or input); used for label uniqueness via hasKey." .
+
+# TypeOption roles (re-use hasOptionLabel, hasPayloadSort, hasContinuationLocalType)
+spc:hasContinuationLocalType a owl:ObjectProperty ;
+  rdfs:domain spc:TypeOption ;
+  rdfs:range spc:LocalType ;
+  rdfs:comment "Continuation local type for this option." .
+
+# Constraints
+spc:OutputLocalType rdfs:subClassOf
+  [ a owl:Restriction ; owl:onProperty spc:hasOutputTarget ; owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ; owl:onClass spc:ParticipantRole ],
+  [ a owl:Restriction ; owl:onProperty spc:hasOutputOption ; owl:minQualifiedCardinality "1"^^xsd:nonNegativeInteger ; owl:onClass spc:TypeOption ] .
+
+spc:InputLocalType rdfs:subClassOf
+  [ a owl:Restriction ; owl:onProperty spc:hasInputSource ; owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ; owl:onClass spc:ParticipantRole ],
+  [ a owl:Restriction ; owl:onProperty spc:hasInputOption ; owl:minQualifiedCardinality "1"^^xsd:nonNegativeInteger ; owl:onClass spc:TypeOption ] .
+
+# Keys for TypeOption within a given local type by (parent,label)
+spc:TypeOption owl:hasKey ( spc:hasTypeOptionParent spc:hasOptionLabel ) ;
+  rdfs:comment "Key constraint: within a single Output/InputLocalType, option labels must be unique. Enforced via hasKey on (parent,label)." .
+
+# Duality on local types
+spc:dualOf a owl:ObjectProperty ;
+  rdfs:domain spc:LocalType ;
+  rdfs:range spc:LocalType ;
+  owl:FunctionalProperty true ;
+  rdfs:comment "Type duality: swaps output and input; involution desired (dualOf ∘ dualOf = identity). OWL 2 DL cannot directly encode involution; annotate external validation or SWRL rule if needed." .
+
+spc:EndLocalType rdfs:subClassOf [ a owl:Restriction ; owl:onProperty spc:dualOf ; owl:hasValue spc:EndLocalType ] ;
+  rdfs:comment "Dual of end is end (encoded via hasValue; illustrative — often handled externally)." .
+
+```
+
+## 10. Configuration Hierarchy
+
+Configurations reify runtime state as actor mappings, actor states, and message pools so operational states can be described as graph structures.
+
+```turtle-spec
+#################################################################
+# Configuration hierarchy (Section 3.4 of DL spec)
+#################################################################
+
+spc:Configuration a owl:Class ;
+  rdfs:comment "Actor configuration ⟨α, μ, ρ⟩." .
+
+spc:ActorMapping a owl:Class ;
+  rdfs:comment "Set of actor entries (partial map α: SubjectIdentifier ⇀ ActorState)." .
+
+spc:ActorEntry a owl:Class ;
+  rdfs:comment "One mapping entry (subject id → actor state)." .
+
+spc:ActorState a owl:Class ;
+  rdfs:comment "Actor runtime states: ReadyState, ExecutingState, FailedState." .
+
+spc:ReadyState a owl:Class ;
+  rdfs:subClassOf spc:ActorState ;
+  rdfs:comment "Ready state with behavior to process." .
+
+spc:ExecutingState a owl:Class ;
+  rdfs:subClassOf spc:ActorState ;
+  rdfs:comment "Executing state [B, κ] with continuation reference." .
+
+spc:FailedState a owl:Class ;
+  rdfs:subClassOf spc:ActorState ;
+  rdfs:comment "Failure state; no structural roles." .
+
+spc:MessagePool a owl:Class ;
+  rdfs:comment "Multiset of in-transit messages." .
+
+spc:InTransitMessage a owl:Class ;
+  rdfs:comment "Reified message (sender, receiver, label, value). One per multiplicity instance in multiset." .
+
+spc:ReceptionistSet a owl:Class ;
+  rdfs:comment "Externally visible subjects (receptionists)." .
+
+[ a owl:AllDisjointClasses ;
+  owl:members ( spc:ReadyState spc:ExecutingState spc:FailedState )
+] .
+
+# Configuration roles
+spc:hasActorMapping a owl:ObjectProperty ;
+  rdfs:domain spc:Configuration ;
+  rdfs:range spc:ActorMapping ;
+  rdfs:comment "Configuration's actor mapping." .
+
+spc:hasMessagePool a owl:ObjectProperty ;
+  rdfs:domain spc:Configuration ;
+  rdfs:range spc:MessagePool ;
+  rdfs:comment "Configuration's message pool." .
+
+spc:hasReceptionistSet a owl:ObjectProperty ;
+  rdfs:domain spc:Configuration ;
+  rdfs:range spc:ReceptionistSet ;
+  rdfs:comment "Configuration's receptionist set." .
+
+spc:hasActorEntry a owl:ObjectProperty ;
+  rdfs:domain spc:ActorMapping ;
+  rdfs:range spc:ActorEntry ;
+  rdfs:comment "Entries of actor mapping." .
+
+spc:hasSubjectId a owl:ObjectProperty ;
+  rdfs:domain spc:ActorEntry ;
+  rdfs:range spc:SubjectIdentifier ;
+  rdfs:comment "Entry subject id." .
+
+spc:hasActorState a owl:ObjectProperty ;
+  rdfs:domain spc:ActorEntry ;
+  rdfs:range spc:ActorState ;
+  rdfs:comment "Entry actor state." .
+
+spc:hasReadyBehavior a owl:ObjectProperty ;
+  rdfs:domain spc:ReadyState ;
+  rdfs:range spc:Behavior ;
+  rdfs:comment "Ready state's behavior (to process next message)." .
+
+spc:hasExecutingBehavior a owl:ObjectProperty ;
+  rdfs:domain spc:ExecutingState ;
+  rdfs:range spc:Behavior ;
+  rdfs:comment "Executing state's behavior." .
+
+spc:hasContinuationRef a owl:ObjectProperty ;
+  rdfs:domain spc:ExecutingState ;
+  rdfs:range spc:Configuration ;
+  rdfs:comment "Reference to subprocess configuration κ_P (if modeling inline call return). External runtime semantics may manage differently." .
+
+spc:hasMessage a owl:ObjectProperty ;
+  rdfs:domain spc:MessagePool ;
+  rdfs:range spc:InTransitMessage ;
+  rdfs:comment "Messages in pool (reified)." .
+
+spc:hasMessageSender a owl:ObjectProperty ;
+  rdfs:domain spc:InTransitMessage ;
+  rdfs:range spc:SubjectIdentifier ;
+  rdfs:comment "Message sender subject." .
+
+spc:hasMessageReceiver a owl:ObjectProperty ;
+  rdfs:domain spc:InTransitMessage ;
+  rdfs:range spc:SubjectIdentifier ;
+  rdfs:comment "Message receiver subject." .
+
+spc:hasMessageLabel a owl:ObjectProperty ;
+  rdfs:domain spc:InTransitMessage ;
+  rdfs:range spc:Label ;
+  rdfs:comment "Message label." .
+
+spc:hasMessageValue a owl:ObjectProperty ;
+  rdfs:domain spc:InTransitMessage ;
+  rdfs:range spc:Value ;
+  rdfs:comment "Message value payload." .
+
+```
+
+## 11. Interfaces and Open Subject Systems
+
+SPC also models typed interfaces and open subject systems, making it possible to describe externally visible ports, internal subjects, and wiring between them.
+
+```turtle-spec
+#################################################################
+# Interfaces and Open Subject Systems (Section 3.5 & 5 of DL/foundations)
+#################################################################
+
+spc:Interface a owl:Class ;
+  rdfs:comment "Typed interface (set of typed ports)." .
+
+spc:TypedPort a owl:Class ;
+  rdfs:comment "Typed port element within interface." .
+
+spc:hasPort a owl:ObjectProperty ;
+  rdfs:domain spc:Interface ;
+  rdfs:range spc:TypedPort ;
+  rdfs:comment "Interface ports." .
+
+spc:hasPortName a owl:ObjectProperty ;
+  rdfs:domain spc:TypedPort ;
+  rdfs:range spc:SubjectIdentifier ;
+  rdfs:comment "Port name (subject identifier)." .
+
+spc:hasPortType a owl:ObjectProperty ;
+  rdfs:domain spc:TypedPort ;
+  rdfs:range spc:LocalType ;
+  rdfs:comment "Local session type assigned to the port." .
+
+# Key: port uniqueness within an interface by name
+spc:TypedPort owl:hasKey ( spc:hasPortName ) ;
+  rdfs:comment "Port key within interface: name uniqueness." .
+
+spc:OpenSubjectSystem a owl:Class ;
+  rdfs:comment "Open subject system S = (Σ, α, B, ι, o) from input interface I to output interface J. Structured cospan L(I) → S ← L(J)." .
+
+spc:InternalSubject a owl:Class ;
+  rdfs:comment "Internal subject (name/type/behavior binding) of an open system." .
+
+spc:WiringEntry a owl:Class ;
+  rdfs:comment "Wiring entry mapping interface port to internal subject." .
+
+spc:hasInputInterface a owl:ObjectProperty ;
+  rdfs:domain spc:OpenSubjectSystem ;
+  rdfs:range spc:Interface ;
+  rdfs:comment "Input interface I." .
+
+spc:hasOutputInterface a owl:ObjectProperty ;
+  rdfs:domain spc:OpenSubjectSystem ;
+  rdfs:range spc:Interface ;
+  rdfs:comment "Output interface J." .
+
+spc:hasInternalSubject a owl:ObjectProperty ;
+  rdfs:domain spc:OpenSubjectSystem ;
+  rdfs:range spc:InternalSubject ;
+  rdfs:comment "Internal subjects set." .
+
+spc:hasSubjectType a owl:ObjectProperty ;
+  rdfs:domain spc:InternalSubject ;
+  rdfs:range spc:LocalType ;
+  rdfs:comment "Type for internal subject." .
+
+spc:hasSubjectBehavior a owl:ObjectProperty ;
+  rdfs:domain spc:InternalSubject ;
+  rdfs:range spc:Behavior ;
+  rdfs:comment "Behavior for internal subject." .
+
+spc:hasInputWiring a owl:ObjectProperty ;
+  rdfs:domain spc:OpenSubjectSystem ;
+  rdfs:range spc:WiringEntry ;
+  rdfs:comment "Input wiring entries mapping input interface ports to internal subjects." .
+
+spc:hasOutputWiring a owl:ObjectProperty ;
+  rdfs:domain spc:OpenSubjectSystem ;
+  rdfs:range spc:WiringEntry ;
+  rdfs:comment "Output wiring entries mapping output interface ports to internal subjects." .
+
+spc:hasPortRef a owl:ObjectProperty ;
+  rdfs:domain spc:WiringEntry ;
+  rdfs:range spc:TypedPort ;
+  rdfs:comment "Wiring entry's port reference." .
+
+spc:mapsToSubject a owl:ObjectProperty ;
+  rdfs:domain spc:WiringEntry ;
+  rdfs:range spc:InternalSubject ;
+  rdfs:comment "Wiring entry maps port to internal subject." .
+
+```
+
+## 12. Typing Assertions and Contexts
+
+Typing judgments are reified so behaviours and configurations can be linked to explicit typing contexts and assigned session types.
+
+```turtle-spec
+#################################################################
+# Typing assertions and contexts (Section 4.1 of DL spec)
+#################################################################
+
+spc:TypingAssertion a owl:Class ;
+  rdfs:comment "Reified typing judgment Γ ⊢ B : T." .
+
+spc:TypingContext a owl:Class ;
+  rdfs:comment "Context Γ as set of bindings SubjectIdentifier → LocalType." .
+
+spc:TypeBinding a owl:Class ;
+  rdfs:comment "Binding (subject, type) in a typing context." .
+
+spc:bindsSubject a owl:ObjectProperty ;
+  rdfs:domain spc:TypeBinding ;
+  rdfs:range spc:SubjectIdentifier ;
+  rdfs:comment "Binding's subject identifier." .
+
+spc:bindsType a owl:ObjectProperty ;
+  rdfs:domain spc:TypeBinding ;
+  rdfs:range spc:LocalType ;
+  rdfs:comment "Binding's local type." .
+
+spc:hasBinding a owl:ObjectProperty ;
+  rdfs:domain spc:TypingContext ;
+  rdfs:range spc:TypeBinding ;
+  rdfs:comment "Context's bindings." .
+
+spc:hasTypingContext a owl:ObjectProperty ;
+  rdfs:domain spc:TypingAssertion ;
+  rdfs:range spc:TypingContext ;
+  rdfs:comment "Typing assertion's context." .
+
+spc:hasTypedBehavior a owl:ObjectProperty ;
+  rdfs:domain spc:TypingAssertion ;
+  rdfs:range spc:Behavior ;
+  rdfs:comment "Typing assertion's behavior." .
+
+spc:hasAssignedType a owl:ObjectProperty ;
+  rdfs:domain spc:TypingAssertion ;
+  rdfs:range spc:LocalType ;
+  rdfs:comment "Typing assertion's assigned local type." .
+
+# Configuration typing
+spc:ConfigurationTyping a owl:Class ;
+  rdfs:comment "Reified judgment ⊢ κ : G (configuration typed by a global type)." .
+
+spc:hasTypedConfiguration a owl:ObjectProperty ;
+  rdfs:domain spc:ConfigurationTyping ;
+  rdfs:range spc:Configuration ;
+  rdfs:comment "Typed configuration κ." .
+
+spc:hasGlobalProtocol a owl:ObjectProperty ;
+  rdfs:domain spc:ConfigurationTyping ;
+  rdfs:range spc:GlobalType ;
+  rdfs:comment "Global protocol type G." .
+
+```
+
+## 13. Projection Relation
+
+Projection from global type to participant-local type is represented explicitly through a reified assertion.
+
+```turtle-spec
+#################################################################
+# Projection relation (Section 4.4.1 of DL spec)
+#################################################################
+
+spc:ProjectionAssertion a owl:Class ;
+  rdfs:comment "Reified projection G↾r = T for global type G onto participant r yielding local type T." .
+
+spc:projectsGlobalType a owl:ObjectProperty ;
+  rdfs:domain spc:ProjectionAssertion ;
+  rdfs:range spc:GlobalType ;
+  rdfs:comment "Global type being projected." .
+
+spc:projectsOntoParticipant a owl:ObjectProperty ;
+  rdfs:domain spc:ProjectionAssertion ;
+  rdfs:range spc:ParticipantRole ;
+  rdfs:comment "Participant role r." .
+
+spc:yieldsLocalType a owl:ObjectProperty ;
+  rdfs:domain spc:ProjectionAssertion ;
+  rdfs:range spc:LocalType ;
+  rdfs:comment "Projected local type T." .
+```
+
+## 14. Domain Integration, Predicates, and Bridge
+
+This is where SPC meets imported OWL domain ontologies. Refinement predicates, ontology bridge mappings, and refinement satisfaction are all represented here.
+
+```turtle-spec
+#################################################################
+# Domain integration: Predicates, Bridge (Section 5 of DL spec)
+#################################################################
+
+# Predicate language (EL++ + arithmetic)
+spc:Predicate a owl:Class ;
+  rdfs:comment "Refinement predicate language; EL++ fragment recommended for tractability. Arithmetic constraints treated as linear constraints." .
+
+spc:TruePredicate a owl:Class ;
+  rdfs:subClassOf spc:Predicate .
+
+spc:FalsePredicate a owl:Class ;
+  rdfs:subClassOf spc:Predicate .
+
+spc:ConjunctionPredicate a owl:Class ;
+  rdfs:subClassOf spc:Predicate .
+
+spc:DisjunctionPredicate a owl:Class ;
+  rdfs:subClassOf spc:Predicate .
+
+spc:NegationPredicate a owl:Class ;
+  rdfs:subClassOf spc:Predicate .
+
+spc:ConceptMembershipPredicate a owl:Class ;
+  rdfs:subClassOf spc:Predicate ;
+  rdfs:comment "Membership of a value in an OWL concept: x ∈ C." .
+
+spc:RoleAssertionPredicate a owl:Class ;
+  rdfs:subClassOf spc:Predicate ;
+  rdfs:comment "Role assertion between values: (x, y) ∈ R." .
+
+spc:EqualityPredicate a owl:Class ;
+  rdfs:subClassOf spc:Predicate .
+
+spc:ArithmeticPredicate a owl:Class ;
+  rdfs:subClassOf spc:Predicate ;
+  rdfs:comment "Linear arithmetic constraints on values/attributes." .
+
+[ a owl:AllDisjointClasses ;
+  owl:members ( spc:TruePredicate spc:FalsePredicate spc:ConjunctionPredicate spc:DisjunctionPredicate spc:NegationPredicate spc:ConceptMembershipPredicate spc:RoleAssertionPredicate spc:EqualityPredicate spc:ArithmeticPredicate )
+] .
+
+# OWL bridge concepts (imported ontology attachment points)
+spc:OWLOntology a owl:Class ;
+  rdfs:comment "Imported OWL ontology (domain knowledge)." .
+
+spc:OWLConcept a owl:Class ;
+  rdfs:comment "Concept from imported ontology." .
+
+spc:OWLRole a owl:Class ;
+  rdfs:comment "Object property from imported ontology." .
+
+spc:OWLIndividual a owl:Class ;
+  rdfs:comment "Individual from imported ontology." .
+
+# Predicate roles
+spc:hasPredicateVariable a owl:ObjectProperty ;
+  rdfs:domain spc:ConceptMembershipPredicate ;
+  rdfs:range spc:Variable ;
+  rdfs:comment "Variable in concept membership predicate." .
+
+spc:hasTargetConcept a owl:ObjectProperty ;
+  rdfs:domain spc:ConceptMembershipPredicate ;
+  rdfs:range spc:OWLConcept ;
+  rdfs:comment "Target concept C in x ∈ C." .
+
+spc:hasFirstVariable a owl:ObjectProperty ;
+  rdfs:domain spc:RoleAssertionPredicate ;
+  rdfs:range spc:Variable ;
+  rdfs:comment "First variable in role assertion." .
+
+spc:hasSecondVariable a owl:ObjectProperty ;
+  rdfs:domain spc:RoleAssertionPredicate ;
+  rdfs:range spc:Variable ;
+  rdfs:comment "Second variable in role assertion." .
+
+spc:hasTargetRole a owl:ObjectProperty ;
+  rdfs:domain spc:RoleAssertionPredicate ;
+  rdfs:range spc:OWLRole ;
+  rdfs:comment "Target role R in (x, y) ∈ R." .
+
+# Refined type option (local type option with predicate)
+spc:RefinedTypeOption a owl:Class ;
+  rdfs:subClassOf spc:TypeOption ;
+  rdfs:comment "Type option carrying an attached refinement predicate over payload variable." .
+
+spc:hasRefinementPredicate a owl:ObjectProperty ;
+  rdfs:domain spc:RefinedTypeOption ;
+  rdfs:range spc:Predicate ;
+  rdfs:comment "Attached predicate for refinement type option." .
+
+# Ontology bridge β = (𝒪, σ, ι)
+spc:OntologyBridge a owl:Class ;
+  rdfs:comment "Ontology bridge encoding maps: sort→concept (σ), value→individual (ι), and imported ontology reference 𝒪." .
+
+spc:importsOntology a owl:ObjectProperty ;
+  rdfs:domain spc:OntologyBridge ;
+  rdfs:range spc:OWLOntology ;
+  rdfs:comment "Imported domain ontology (TBox/ABox)." .
+
+spc:SortConceptMapping a owl:Class ;
+  rdfs:comment "Map entry from sort to concept (σ)." .
+
+spc:mapsSort a owl:ObjectProperty ;
+  rdfs:domain spc:SortConceptMapping ;
+  rdfs:range spc:BaseSort ;
+  rdfs:comment "Mapping entry sort (base sorts are mapped explicitly; composites are derived inductively externally)." .
+
+spc:mapsToConcept a owl:ObjectProperty ;
+  rdfs:domain spc:SortConceptMapping ;
+  rdfs:range spc:OWLConcept ;
+  rdfs:comment "Mapped concept in domain ontology." .
+
+spc:hasSortMapping a owl:ObjectProperty ;
+  rdfs:domain spc:OntologyBridge ;
+  rdfs:range spc:SortConceptMapping ;
+  rdfs:comment "Bridge's sort→concept mappings." .
+
+spc:ValueIndividualMapping a owl:Class ;
+  rdfs:comment "Map entry from value to individual (ι)." .
+
+spc:mapsValue a owl:ObjectProperty ;
+  rdfs:domain spc:ValueIndividualMapping ;
+  rdfs:range spc:Value ;
+  rdfs:comment "Mapping entry value." .
+
+spc:mapsToIndividual a owl:ObjectProperty ;
+  rdfs:domain spc:ValueIndividualMapping ;
+  rdfs:range spc:OWLIndividual ;
+  rdfs:comment "Mapped individual in domain ontology." .
+
+spc:hasValueMapping a owl:ObjectProperty ;
+  rdfs:domain spc:OntologyBridge ;
+  rdfs:range spc:ValueIndividualMapping ;
+  rdfs:comment "Bridge's value→individual mappings." .
+
+# Constraint satisfaction reification
+spc:ConstraintSatisfaction a owl:Class ;
+  rdfs:comment "Reified satisfaction v ⊨ {x:S | φ} under the ontology context (Ω)." .
+
+spc:satisfiesValue a owl:ObjectProperty ;
+  rdfs:domain spc:ConstraintSatisfaction ;
+  rdfs:range spc:Value ;
+  rdfs:comment "Value satisfying a refinement." .
+
+spc:satisfiesRefinement a owl:ObjectProperty ;
+  rdfs:domain spc:ConstraintSatisfaction ;
+  rdfs:range spc:RefinedTypeOption ;
+  rdfs:comment "Refinement type option satisfied." .
+
+```
+
+## 15. Reduction Semantics and Actions
+
+Operational steps are reified as reductions with explicit action labels and named reduction rules. The ontology records the structures involved even where full execution semantics stay external.
+
+```turtle-spec
+#################################################################
+# Reduction semantics and actions (Section 7 of DL spec)
+#################################################################
+
+spc:ReductionStep a owl:Class ;
+  rdfs:comment "Reified configuration reduction step κ →^a κ'." .
+
+spc:Action a owl:Class ;
+  rdfs:comment "Actions: TauAction, SendAction, ReceiveAction, TerminationAction." .
+
+spc:TauAction a owl:Class ;
+  rdfs:subClassOf spc:Action .
+
+spc:SendAction a owl:Class ;
+  rdfs:subClassOf spc:Action .
+
+spc:ReceiveAction a owl:Class ;
+  rdfs:subClassOf spc:Action .
+
+spc:TerminationAction a owl:Class ;
+  rdfs:subClassOf spc:Action .
+
+[ a owl:AllDisjointClasses ;
+  owl:members ( spc:TauAction spc:SendAction spc:ReceiveAction spc:TerminationAction )
+] .
+
+spc:hasSourceConfiguration a owl:ObjectProperty ;
+  rdfs:domain spc:ReductionStep ;
+  rdfs:range spc:Configuration ;
+  rdfs:comment "Source configuration κ." .
+
+spc:hasTargetConfiguration a owl:ObjectProperty ;
+  rdfs:domain spc:ReductionStep ;
+  rdfs:range spc:Configuration ;
+  rdfs:comment "Target configuration κ'." .
+
+spc:hasAction a owl:ObjectProperty ;
+  rdfs:domain spc:ReductionStep ;
+  rdfs:range spc:Action ;
+  rdfs:comment "Action label." .
+
+spc:hasAppliedRule a owl:ObjectProperty ;
+  rdfs:domain spc:ReductionStep ;
+  rdfs:range spc:ReductionRule ;
+  rdfs:comment "Reduction rule applied (named enumeration below)." .
+
+# Send/Receive action details
+spc:hasSendActor a owl:ObjectProperty ;
+  rdfs:domain spc:SendAction ;
+  rdfs:range spc:SubjectIdentifier ;
+  rdfs:comment "Sender subject of action." .
+
+spc:hasSendTarget a owl:ObjectProperty ;
+  rdfs:domain spc:SendAction ;
+  rdfs:range spc:SubjectIdentifier ;
+  rdfs:comment "Target subject of action." .
+
+spc:hasSendLabel a owl:ObjectProperty ;
+  rdfs:domain spc:SendAction ;
+  rdfs:range spc:Label ;
+  rdfs:comment "Label of send action." .
+
+spc:hasSendValue a owl:ObjectProperty ;
+  rdfs:domain spc:SendAction ;
+  rdfs:range spc:Value ;
+  rdfs:comment "Payload value of send action." .
+
+spc:hasReceiveActor a owl:ObjectProperty ;
+  rdfs:domain spc:ReceiveAction ;
+  rdfs:range spc:SubjectIdentifier ;
+  rdfs:comment "Receiver subject of action." .
+
+spc:hasReceiveSource a owl:ObjectProperty ;
+  rdfs:domain spc:ReceiveAction ;
+  rdfs:range spc:SubjectIdentifier ;
+  rdfs:comment "Source subject of receive action." .
+
+spc:hasReceiveLabel a owl:ObjectProperty ;
+  rdfs:domain spc:ReceiveAction ;
+  rdfs:range spc:Label ;
+  rdfs:comment "Label of receive action." .
+
+spc:hasReceiveValue a owl:ObjectProperty ;
+  rdfs:domain spc:ReceiveAction ;
+  rdfs:range spc:Value ;
+  rdfs:comment "Payload value received." .
+
+# Reduction rules enumeration (names only; external semantics)
+spc:ReductionRule a owl:Class ;
+  rdfs:comment "Named rules: SendRule, ReceiveRule, DoRule, ChoiceLRule, ChoiceRRule, CondTrueRule, CondFalseRule, TermRule, CallRule, CallReturnRule." .
+
+spc:SendRule a owl:Class ;
+  rdfs:subClassOf spc:ReductionRule .
+
+spc:ReceiveRule a owl:Class ;
+  rdfs:subClassOf spc:ReductionRule .
+
+spc:DoRule a owl:Class ;
+  rdfs:subClassOf spc:ReductionRule .
+
+spc:ChoiceLRule a owl:Class ;
+  rdfs:subClassOf spc:ReductionRule .
+
+spc:ChoiceRRule a owl:Class ;
+  rdfs:subClassOf spc:ReductionRule .
+
+spc:CondTrueRule a owl:Class ;
+  rdfs:subClassOf spc:ReductionRule .
+
+spc:CondFalseRule a owl:Class ;
+  rdfs:subClassOf spc:ReductionRule .
+
+spc:TermRule a owl:Class ;
+  rdfs:subClassOf spc:ReductionRule .
+
+spc:CallRule a owl:Class ;
+  rdfs:subClassOf spc:ReductionRule .
+
+spc:CallReturnRule a owl:Class ;
+  rdfs:subClassOf spc:ReductionRule .
+
+```
+
+## 16. Global Type Reduction
+
+This section reifies reductions over global types themselves, separate from runtime configuration reduction.
+
+```turtle-spec
+#################################################################
+# Global type reduction (Section 7.2 of DL spec)
+#################################################################
+
+spc:GlobalTypeReduction a owl:Class ;
+  rdfs:comment "Reified reduction G →^{p!q.ℓ} G' on global types." .
+
+spc:hasSourceGlobalType a owl:ObjectProperty ;
+  rdfs:domain spc:GlobalTypeReduction ;
+  rdfs:range spc:GlobalType ;
+  rdfs:comment "Source global type G." .
+
+spc:hasTargetGlobalType a owl:ObjectProperty ;
+  rdfs:domain spc:GlobalTypeReduction ;
+  rdfs:range spc:GlobalType ;
+  rdfs:comment "Target global type G'." .
+
+spc:hasReductionSender a owl:ObjectProperty ;
+  rdfs:domain spc:GlobalTypeReduction ;
+  rdfs:range spc:ParticipantRole ;
+  rdfs:comment "Sender role p in reduction action." .
+
+spc:hasReductionReceiver a owl:ObjectProperty ;
+  rdfs:domain spc:GlobalTypeReduction ;
+  rdfs:range spc:ParticipantRole ;
+  rdfs:comment "Receiver role q in reduction action." .
+
+spc:hasReductionLabel a owl:ObjectProperty ;
+  rdfs:domain spc:GlobalTypeReduction ;
+  rdfs:range spc:Label ;
+  rdfs:comment "Reduction label ℓ." .
+
+```
+
+## 17. Metatheoretic Invariants
+
+The ontology includes explicit markers for deadlock approximation and subject-reduction style preservation constraints, while noting that full checking lies outside OWL alone.
+
+```turtle-spec
+#################################################################
+# Metatheoretic invariants (encoded as consistency constraints)
+#################################################################
+
+# Deadlock concept (approximation; external checking recommended)
+spc:DeadlockedConfiguration a owl:Class ;
+  rdfs:subClassOf spc:Configuration ;
+  rdfs:comment "Deadlocked configuration: no ReductionStep with this as source, and contains non-terminated ReadyState entries. Full detection requires external reasoning." .
+
+# Type preservation (subject reduction) as consistency notion
+spc:TypePreservationConstraint a owl:Class ;
+  rdfs:comment "Constraint: Reduction from a well-typed configuration must yield a well-typed target configuration. Enforced by external validator or reasoning pattern." .
+```
+
+## 18. Architectural Metadata
+
+These marker classes distinguish the intended tractable refinement fragment from the more expressive structural layer.
+
+```turtle-spec
+#################################################################
+# Architectural metadata (fragment markers)
+#################################################################
+
+spc:ELPlusFragment a owl:Class ;
+  rdfs:comment "Marker for concepts intended to remain in EL++ (domain refinement)." .
+
+spc:StructuralFragment a owl:Class ;
+  rdfs:comment "Marker for structural encoding (OWL 2 DL allowed; fixed finite TBox)." .
+```
+
+## 19. Additional Annotations and Notes
+
+The closing notes record important modelling boundaries that are intentionally left to external validation, especially for coherence, duality, and recursion well-formedness.
+
+```turtle-spec
+#################################################################
+# Additional annotations and notes
+#################################################################
+
+# Annotation of coherence constraint (parallel participants disjointness)
+spc:ParallelGlobalType rdfs:comment "Coherence condition: part(G₁) ∩ part(G₂) = ∅. Recommended external validation: ensure no ParticipantRole appears via hasParticipant from both hasLeftComponent and hasRightComponent for the same ParallelGlobalType." .
+
+# Annotation of duality involution
+spc:dualOf rdfs:comment "Involution desired: dualOf(dualOf(T)) = T. OWL 2 DL cannot encode property composition equals identity. Option: SWRL rule or external check." .
+
+# Annotation of well-formed recursion (contractiveness)
+spc:RecursiveSort rdfs:comment "Contractiveness external: recursive body must contain constructor guarding recursion variable (μX.S, with X under × or +). This syntactic property is checked outside DL." .
+
+# Annotation of label uniqueness enforcement
+spc:MessageOption rdfs:comment "hasKey (parent,label) ensures intra-parent label uniqueness; employs parent link since DL keys cannot target property paths." .
+spc:ReceiveBranch rdfs:comment "hasKey (parent,label) ensures intra-parent label uniqueness in receive branches." .
+
+# Annotation for participant extraction property chains
+spc:hasParticipant rdfs:comment "Property chains implement participant propagation across continuation and parallel constructs; hasSenderRole/hasReceiverRole subproperties add direct participants." .
+
+# Final note on decidability
+spc:OntologyBridge rdfs:comment "Ensure mapped concepts/roles from imported ontology are within EL++ to preserve tractable reasoning for refinement checks; structural layer here uses OWL 2 DL features but is fixed-size." .
+```
+
+## 20. Repository Layout and Current Status
+
+The broader `spc/` directory already follows the standard LATTICE layer scaffold, but only `spec/spc.ttl` is populated today. The other locations remain reserved for later SHACL constraints, derived vocabulary, projections, examples, execution artefacts, and tests.
 
 ```text
 spc/
 ├── README.md
 ├── spec/
-│   └── spc.ttl              # Current SPC ontology
+│   └── spc.ttl
 ├── shapes/
-│   ├── structural.ttl       # Reserved for SHACL property shapes
-│   ├── constraints.ttl      # Reserved for whole-graph constraints
-│   └── rules.ttl            # Reserved for derived facts and materialisation rules
+│   ├── structural.ttl
+│   ├── constraints.ttl
+│   └── rules.ttl
 ├── vocab/
-│   └── spc-vocab.ttl        # Reserved for SPC-intrinsic named individuals
-├── projection/              # Reserved for declared contracts to other layers
+│   └── spc-vocab.ttl
+├── projection/
 ├── execution/
-│   ├── manifest.ttl         # Reserved for generated/runtime artefacts
+│   ├── manifest.ttl
 │   ├── benchmark-pack.md
 │   ├── invalidation-policy.md
 │   └── split-plan.md
-├── examples/                # Reserved for worked SPC examples
-└── test/                    # Reserved for layer-local validation
+├── examples/
+└── test/
 ```
-
-## 3. What `spec/spc.ttl` Defines
-
-### Core structural vocabulary
-
-The ontology starts by defining the basic identifiers SPC needs to talk about subjects, labels, variables, expressions, protocol names, and runtime values.
-
-### Sorts
-
-`spc:Sort` is partitioned into `BaseSort`, `ProductSort`, `SumSort`, and `RecursiveSort`. The ontology provides named base sorts for `unit`, `bool`, `int`, and `string`, and uses qualified cardinalities to enforce structural exactness for composite sorts.
-
-### Behaviours
-
-`spc:Behavior` is partitioned into the expected process constructs, including send, receive, do, choice, conditional, recursive binders, recursion variables, calls, and termination. Receive branches are reified so labels, variables, and bodies can be constrained explicitly.
-
-### Session types
-
-The ontology models both global and local session types.
-
-- **Global types** capture participant-to-participant communication, message options, recursion, and parallel composition.
-- **Local types** capture per-participant views as input and output protocols, with reified options and an explicit `dualOf` relation.
-- **Projection** is represented through `spc:ProjectionAssertion`, linking a global type, a participant, and the resulting local type.
-
-Participant propagation is modelled with property chains so the participants of continuations and parallel components remain queryable from the enclosing global type.
-
-### Runtime configurations and open systems
-
-The ontology includes runtime configuration structures such as actor mappings, actor states, message pools, in-transit messages, and receptionist sets. It also defines interfaces, typed ports, internal subjects, wiring entries, and `spc:OpenSubjectSystem` so protocols can be described as typed, externally visible systems rather than only as isolated behaviours.
-
-### Domain bridge and refinement layer
-
-`spc:Predicate` and its subclasses provide the refinement side of the model. `spc:OntologyBridge` links SPC to imported OWL ontologies through sort-to-concept and value-to-individual mappings, letting session types carry domain-grounded predicates without moving domain semantics into SPC itself.
-
-### Operational and metatheoretic structures
-
-The ontology reifies reduction steps, actions, reduction rules, and global type reductions. It also introduces markers for deadlock approximation and type preservation, making those concerns visible in the model even where full checking must happen outside OWL.
-
-## 4. Design Posture
-
-The current SPC ontology follows a few clear design commitments.
-
-- The structural layer targets **OWL 2 DL**, using qualified cardinalities, keys, and property chains where needed.
-- The domain refinement side is intended to stay in a more tractable fragment, noted in the file as **EL++** plus arithmetic-style constraints.
-- Several important invariants are only partially representable in OWL and are therefore left to external validation, including recursion contractiveness, binder matching, parallel participant disjointness, duality involution, full deadlock detection, and full subject-reduction checking.
-- The namespace in `spec/spc.ttl` is currently the provisional `http://example.org/spc#`, which signals that namespace harmonisation with the rest of LATTICE is still pending.
-
-## 5. Relationship to LATTICE
-
-SPC is where protocol structure meets the ontologies LATTICE already uses for domain meaning.
-
-- LATTICE provides the domain concepts, roles, obligations, eligibility conditions, and stateful entities that a subject system may talk about.
-- SPC provides the typed interaction structure that governs how those subjects exchange values and coordinate work.
-- The ontology bridge allows SPC refinements to refer to imported OWL concepts and roles, so process constraints can stay aligned with the same semantic substrate used elsewhere in the repository.
-
-## 6. Current Status
-
-At present, `spec/spc.ttl` is the only populated SPC artefact in this repository. The empty `shapes/`, `vocab/`, `projection/`, `execution/`, `examples/`, and `test/` locations mark the intended structure for the rest of the layer once validation rules, derived vocabularies, compiled artefacts, and worked examples are added.
