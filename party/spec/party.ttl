@@ -1,0 +1,202 @@
+@prefix : <https://www.nebularis.org/neuro-semantic/party#> .
+@prefix fnd: <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix pty: <https://www.nebularis.org/neuro-semantic/lattice/party#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xml: <http://www.w3.org/XML/1998/namespace> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@base <https://www.nebularis.org/neuro-semantic/party> .
+
+<https://www.nebularis.org/neuro-semantic/party> rdf:type owl:Ontology ;
+                                                  owl:versionIRI <https://www.nebularis.org/neuro-semantic/party/0.0.3> ;
+                                                  owl:imports <https://www.nebularis.org/neuro-semantic/foundation/0.0.7> .
+
+#################################################################
+#    Object Properties
+#################################################################
+
+###  https://www.nebularis.org/neuro-semantic/lattice/party#delegatesFrom
+pty:delegatesFrom rdf:type owl:ObjectProperty ;
+                  rdfs:domain pty:Delegation ;
+                  rdfs:range pty:RoleOccupancy ;
+                  rdfs:comment "The accountable Role Occupancy whose performance is being delegated." ;
+                  fnd:utility "Not globally functional — an accountable occupancy may have several delegations over time or in parallel. Each Delegation individual names exactly one (§6); the multiplicity is in there being many Delegation individuals." .
+
+
+###  https://www.nebularis.org/neuro-semantic/lattice/party#delegatesTo
+pty:delegatesTo rdf:type owl:ObjectProperty ;
+                rdfs:domain pty:Delegation ;
+                rdfs:range pty:RoleOccupancy ;
+                rdfs:comment "The performing Role Occupancy actually carrying out the delegated obligation." ;
+                fnd:utility "Not globally functional — one performing occupancy may discharge obligations delegated from more than one accountable occupancy. Same reasoning as delegatesFrom." .
+
+
+###  https://www.nebularis.org/neuro-semantic/lattice/party#hasCompositionRule
+pty:hasCompositionRule rdf:type owl:ObjectProperty ,
+                                owl:FunctionalProperty ;
+                       rdfs:domain pty:ParticipationGroup ;
+                       rdfs:range pty:CompositionRule ;
+                       rdfs:comment "The rule governing how a Participation Group's members' shares relate to the whole." ;
+                       fnd:utility "Functional and required (§6) — a group's composition rule is never ambiguous or absent once the group exists." .
+
+
+###  https://www.nebularis.org/neuro-semantic/lattice/party#hasParticipant
+pty:hasParticipant rdf:type owl:ObjectProperty ;
+                   owl:inverseOf pty:memberOf ;
+                   rdfs:domain pty:ParticipationGroup ;
+                   rdfs:range pty:GroupMembership ;
+                   rdfs:comment "The inverse of memberOf." ;
+                   fnd:utility "Exists so ParticipationGroup can express a minimum-one-member restriction; adds no fact beyond what memberOf already states." .
+
+
+###  https://www.nebularis.org/neuro-semantic/lattice/party#inRole
+pty:inRole rdf:type owl:ObjectProperty ,
+                    owl:FunctionalProperty ;
+           rdfs:domain pty:RoleOccupancy ;
+           rdfs:range pty:Role ;
+           rdfs:comment "The role a Role Occupancy is an occupancy of." ;
+           fnd:utility "Required, unlike occupiedBy — the role slot is designed in from the outset even when nobody has yet filled it." .
+
+
+###  https://www.nebularis.org/neuro-semantic/lattice/party#memberOccupancy
+pty:memberOccupancy rdf:type owl:ObjectProperty ,
+                             owl:FunctionalProperty ;
+                    rdfs:domain pty:GroupMembership ;
+                    rdfs:range pty:RoleOccupancy ;
+                    rdfs:comment "The Role Occupancy a GroupMembership represents." ;
+                    fnd:utility "Functional and required (§6) — a membership always names exactly one occupancy." .
+
+
+###  https://www.nebularis.org/neuro-semantic/lattice/party#memberOf
+pty:memberOf rdf:type owl:ObjectProperty ,
+                      owl:FunctionalProperty ;
+             rdfs:domain pty:GroupMembership ;
+             rdfs:range pty:ParticipationGroup ;
+             rdfs:comment "The Participation Group a GroupMembership belongs to." ;
+             fnd:utility "Functional and required (§6) — a membership always names exactly one group." .
+
+
+###  https://www.nebularis.org/neuro-semantic/lattice/party#occupiedBy
+pty:occupiedBy rdf:type owl:ObjectProperty ,
+                        owl:FunctionalProperty ;
+               rdfs:domain pty:RoleOccupancy ;
+               rdfs:range pty:Actor ;
+               rdfs:comment "The actor currently occupying a Role Occupancy, if one has been bound yet." ;
+               fnd:utility "Functional but deliberately not required — an unoccupied occupancy is the normal state of a contingent role before whatever event populates it. See §4." .
+
+
+#################################################################
+#    Data properties
+#################################################################
+
+###  https://www.nebularis.org/neuro-semantic/lattice/party#share
+pty:share rdf:type owl:DatatypeProperty ,
+                   owl:FunctionalProperty ;
+          rdfs:domain pty:GroupMembership ;
+          rdfs:range xsd:decimal ;
+          rdfs:comment "The proportion of the obligation a group member is responsible for." ;
+          fnd:utility "A proportion, not an absolute amount — the generic case. Fixed monetary shares are a downstream extension, not attempted here." .
+
+
+#################################################################
+#    Classes
+#################################################################
+
+###  https://www.nebularis.org/neuro-semantic/lattice/party#Actor
+pty:Actor rdf:type owl:Class ;
+          rdfs:comment "A real-world party — a person, an organisation, or any other agent capable of occupying a role." ;
+          fnd:utility "Deliberately bare, with no Foundation mixins and no internal structure. Nothing in the established design required actor-level versioning or actor-specific properties; adding them speculatively would be scaffolding built ahead of a real requirement." .
+
+
+###  https://www.nebularis.org/neuro-semantic/lattice/party#CompositionRule
+pty:CompositionRule rdf:type owl:Class ;
+                    rdfs:comment "How a Participation Group's members' shares relate to the whole obligation." ;
+                    fnd:utility "Open here for the same reason as Role. Several liability and joint-and-several liability are both instances of this class, distinguished only by which named individual — declared in vocab/party-vocab.ttl, not here — a given group's hasCompositionRule points at." .
+
+
+###  https://www.nebularis.org/neuro-semantic/lattice/party#Delegation
+pty:Delegation rdf:type owl:Class ;
+               rdfs:subClassOf fnd:Evidenced ,
+                               fnd:TemporallyScoped ,
+                               [ rdf:type owl:Restriction ;
+                                 owl:onProperty pty:delegatesFrom ;
+                                 owl:cardinality "1"^^xsd:nonNegativeInteger
+                               ] ,
+                               [ rdf:type owl:Restriction ;
+                                 owl:onProperty pty:delegatesTo ;
+                                 owl:cardinality "1"^^xsd:nonNegativeInteger
+                               ] ;
+               rdfs:comment "A performing Role Occupancy's discharge of an accountable one, without transferring the accountability itself." ;
+               fnd:utility "Evidenced and TemporallyScoped for the same reasons as RoleOccupancy. Not Version — a delegation with revised scope is a different delegation, not a new version of the same one, distinguishing it from RoleOccupancy's turnover case." .
+
+
+###  https://www.nebularis.org/neuro-semantic/lattice/party#GroupMembership
+pty:GroupMembership rdf:type owl:Class ;
+                    rdfs:subClassOf [ rdf:type owl:Restriction ;
+                                      owl:onProperty pty:memberOccupancy ;
+                                      owl:cardinality "1"^^xsd:nonNegativeInteger
+                                    ] ,
+                                    [ rdf:type owl:Restriction ;
+                                      owl:onProperty pty:memberOf ;
+                                      owl:cardinality "1"^^xsd:nonNegativeInteger
+                                    ] ,
+                                    [ rdf:type owl:Restriction ;
+                                      owl:onProperty pty:share ;
+                                      owl:cardinality "1"^^xsd:nonNegativeInteger
+                                    ] ;
+                    rdfs:comment "One Role Occupancy's participation in one Participation Group, carrying that occupancy's share." ;
+                    fnd:utility "Reifies the qualification a plain membership property couldn't carry — share belongs to this occupancy's participation in this specific group, not to the occupancy in isolation. No Foundation mixins; kept as minimal as Actor and Role." .
+
+
+###  https://www.nebularis.org/neuro-semantic/lattice/party#ParticipationGroup
+pty:ParticipationGroup rdf:type owl:Class ;
+                       rdfs:subClassOf fnd:Evidenced ,
+                                       fnd:Version ,
+                                       [ rdf:type owl:Restriction ;
+                                         owl:onProperty pty:hasParticipant ;
+                                         owl:minCardinality "1"^^xsd:nonNegativeInteger
+                                       ] ,
+                                       [ rdf:type owl:Restriction ;
+                                         owl:onProperty pty:hasCompositionRule ;
+                                         owl:cardinality "1"^^xsd:nonNegativeInteger
+                                       ] ;
+                       rdfs:comment "A set of Role Occupancies sharing responsibility for one obligation, under a declared composition rule." ;
+                       fnd:utility "Version and Evidenced for the same reasons as RoleOccupancy's composition changing over time. Not TemporallyScoped — the group's validity is derivable from its members' own validity periods, and asserting a second, independent scope would be redundant." .
+
+
+###  https://www.nebularis.org/neuro-semantic/lattice/party#Role
+pty:Role rdf:type owl:Class ;
+         rdfs:comment "A capacity in which an actor may occupy a Role Occupancy." ;
+         fnd:utility "Left open here; the closed enumeration of actual role types is mechanism-intrinsic vocabulary, declared as named individuals in vocab/party-vocab.ttl and enforced as a closed set in shapes/constraints.ttl, following the same pattern established for fnd:GovernanceState." .
+
+
+###  https://www.nebularis.org/neuro-semantic/lattice/party#RoleOccupancy
+pty:RoleOccupancy rdf:type owl:Class ;
+                  rdfs:subClassOf fnd:Evidenced ,
+                                  fnd:TemporallyScoped ,
+                                  fnd:Version ,
+                                  [ rdf:type owl:Restriction ;
+                                    owl:onProperty pty:inRole ;
+                                    owl:cardinality "1"^^xsd:nonNegativeInteger
+                                  ] ;
+                  rdfs:comment "An actor's occupancy of a role, reified so it can carry a time scope and exist before it's filled." ;
+                  fnd:utility "The central reification. TemporallyScoped for the occupancy's validity period; Evidenced because binding an actor into a role, especially a contingent one, benefits from recorded support; Version because occupiedBy is functional, so turnover to a new occupant requires a new version rather than a second value on the same individual." .
+
+
+#################################################################
+#    General axioms
+#################################################################
+
+[ rdf:type owl:AllDisjointClasses ;
+  owl:members ( pty:Actor
+                pty:Delegation
+                pty:GroupMembership
+                pty:ParticipationGroup
+                pty:Role
+                pty:RoleOccupancy
+              )
+] .
+
+
+###  Generated by the OWL API (version 4.5.29.2024-05-13T12:11:03Z) https://github.com/owlcs/owlapi

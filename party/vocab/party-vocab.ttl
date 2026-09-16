@@ -1,0 +1,39 @@
+@prefix pty:  <https://www.nebularis.org/neuro-semantic/lattice/party#> .
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+pty:Obligor a owl:NamedIndividual, pty:Role ;
+    rdfs:label "Obligor"@en ;
+    rdfs:comment "The role of owing an obligation." ;
+    fnd:utility "The direction-of-obligation counterpart to Obligee. Instrument's Obligation class references a Role Occupancy in this role as its obligor, in Instrument's own projection file — not declared here." .
+
+pty:Obligee a owl:NamedIndividual, pty:Role ;
+    rdfs:label "Obligee"@en ;
+    rdfs:comment "The role of being owed an obligation." ;
+    fnd:utility "The direction-of-obligation counterpart to Obligor. Also the role a contingent occupancy — a third party with no relationship to an instrument until some event binds them in — is typed as, once occupiedBy is eventually set." .
+
+pty:Guarantor a owl:NamedIndividual, pty:Role ;
+    rdfs:label "Guarantor"@en ;
+    rdfs:comment "The role of backing another occupancy's obligation, becoming answerable if that occupancy fails to perform." ;
+    fnd:utility "Named in the original design alongside Obligor, Obligee, Accountable, and Performing, but the least mechanically complete of the five — see §4. Included as a role type; its contingent-activation mechanism is not yet built." .
+
+pty:Accountable a owl:NamedIndividual, pty:Role ;
+    rdfs:label "Accountable"@en ;
+    rdfs:comment "The role that remains answerable for an obligation's performance even when a different occupancy actually carries it out." ;
+    fnd:utility "One side of the delegation split formalised by pty:Delegation. Accountability does not transfer to a Performing occupancy even when performance does." .
+
+pty:Performing a owl:NamedIndividual, pty:Role ;
+    rdfs:label "Performing"@en ;
+    rdfs:comment "The role that actually carries out an obligation's performance, discharging an Accountable occupancy's obligation without taking on its accountability." ;
+    fnd:utility "The other side of the delegation split. A pty:Delegation's delegatesTo always points at an occupancy in this role; delegatesFrom always at one in the Accountable role." .
+
+pty:SeveralOnly a owl:NamedIndividual, pty:CompositionRule ;
+    rdfs:label "Several-only"@en ;
+    rdfs:comment "A composition rule under which each member's share of an obligation is independently capped; no member answers for another's shortfall." ;
+    fnd:utility "If one member defaults, the residual is simply unmet — it does not redistribute onto the remaining members. The baseline case for a Participation Group whose members each bear a bounded, non-aggregating portion of one obligation." .
+
+pty:JointAndSeveral a owl:NamedIndividual, pty:CompositionRule ;
+    rdfs:label "Joint and several"@en ;
+    rdfs:comment "A composition rule under which any member may be called for the full obligation, subject to a right of recourse against the other members afterward." ;
+    fnd:utility "The dual of SeveralOnly: exposure is not capped at a member's own share, but the group's internal contribution rights — who ultimately bears what — are a distinct concern this rule does not itself resolve." .
