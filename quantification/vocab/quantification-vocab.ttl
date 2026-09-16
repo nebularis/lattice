@@ -1,0 +1,153 @@
+@prefix qnt:  <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+qnt:OrderKind a owl:Class ;
+    rdfs:comment "A mechanism-intrinsic kind of ordering declared for a ValueSpace." .
+
+qnt:TotalOrder a qnt:OrderKind ;
+    rdfs:comment "An order in which every pair of values is comparable." .
+
+qnt:CyclicOrder a qnt:OrderKind ;
+    rdfs:comment "A repeating order with no globally meaningful lower-to-upper direction." .
+
+qnt:NoOrder a qnt:OrderKind ;
+    rdfs:comment "A declaration that a ValueSpace supports equality only and does not support ranges." .
+
+qnt:DensityKind a owl:Class ;
+    rdfs:comment "A mechanism-intrinsic declaration of what counts as adjacent in a ValueSpace." .
+
+qnt:Discrete a qnt:DensityKind ;
+    rdfs:comment "Adjacency is defined via the space's granularity floor." .
+
+qnt:Dense a qnt:DensityKind ;
+    rdfs:comment "Adjacency is defined only where closures abut without a gap." .
+
+qnt:UnspecifiedDensity a qnt:DensityKind ;
+    rdfs:comment "Adjacency is not defined; range-set merging uses overlap only." .
+
+qnt:BoundSense a owl:Class ;
+    rdfs:comment "A mechanism-intrinsic designation of a bound as lower or upper." .
+
+qnt:Lower a qnt:BoundSense .
+qnt:Upper a qnt:BoundSense .
+
+qnt:Closure a owl:Class ;
+    rdfs:comment "A mechanism-intrinsic designation of whether a range endpoint is included." .
+
+qnt:Closed a qnt:Closure ;
+    rdfs:comment "A bound whose endpoint is included." .
+
+qnt:Open a qnt:Closure ;
+    rdfs:comment "A bound whose endpoint is excluded." .
+
+qnt:OffsetKind a owl:Class ;
+    rdfs:comment "A mechanism-intrinsic kind of offset used by an AnchorBinding." .
+
+qnt:Absolute a qnt:OffsetKind ;
+    rdfs:comment "An offset expressed as an absolute quantity in the anchor's space." .
+
+qnt:Proportional a qnt:OffsetKind ;
+    rdfs:comment "An offset expressed as a proportion of the anchor value. Requires the space to declare Ratio capability." .
+
+qnt:ConversionKind a owl:Class ;
+    rdfs:comment "A mechanism-intrinsic kind of unit conversion." .
+
+qnt:Exact a qnt:ConversionKind ;
+    rdfs:comment "A definitional, lossless conversion." .
+
+qnt:Defined a qnt:ConversionKind ;
+    rdfs:comment "A conversion with a declared factor or registered function under the unit contract." .
+
+qnt:Contextual a qnt:ConversionKind ;
+    rdfs:comment "A conversion requiring an evidenced contextual observation." .
+
+qnt:OperationKind a owl:Class ;
+    rdfs:comment "A mechanism-intrinsic kind of operation over declared ValueSpaces." .
+
+qnt:Compare a qnt:OperationKind .
+qnt:Contains a qnt:OperationKind .
+qnt:Overlaps a qnt:OperationKind .
+qnt:Difference a qnt:OperationKind .
+qnt:Sum a qnt:OperationKind .
+qnt:Ratio a qnt:OperationKind .
+qnt:Minimum a qnt:OperationKind .
+qnt:Maximum a qnt:OperationKind .
+qnt:Count a qnt:OperationKind .
+qnt:BinOf a qnt:OperationKind ;
+    rdfs:comment "The operation returning the unique RecurrenceBin containing a given position, or Undetermined with a reason." .
+
+qnt:RangeSemanticsKind a owl:Class ;
+    rdfs:comment "A mechanism-intrinsic classification of a Contains or Overlaps capability's meet properties." .
+
+qnt:ExactRangeSemantics a qnt:RangeSemanticsKind ;
+    rdfs:comment "Satisfies both meet soundness (Q4a) and meet completeness (Q4b). Safe for meet-based enumeration." .
+
+qnt:ScreeningRangeSemantics a qnt:RangeSemanticsKind ;
+    rdfs:comment "Satisfies meet soundness (Q4a) only, not completeness. Must not be used for meet-based enumeration — screening and candidate generation only." .
+
+qnt:TruthValue a owl:Class ;
+    rdfs:comment "A three-valued result of a comparison." .
+
+qnt:True a qnt:TruthValue .
+qnt:False a qnt:TruthValue .
+qnt:Undetermined a qnt:TruthValue .
+
+qnt:UnresolvedReason a owl:Class ;
+    rdfs:comment "A mechanism-intrinsic reason why a comparison cannot yield a definite result." .
+
+qnt:ValueAbsent a qnt:UnresolvedReason .
+qnt:ValueMarkedUnresolved a qnt:UnresolvedReason .
+qnt:GranularityInsufficient a qnt:UnresolvedReason .
+qnt:ConversionContextAbsent a qnt:UnresolvedReason .
+qnt:OutsideDeclaredSpace a qnt:UnresolvedReason .
+qnt:OperationNotPermitted a qnt:UnresolvedReason .
+
+qnt:BinContiguity a owl:Class ;
+    rdfs:comment "A mechanism-intrinsic policy governing whether recurrence bins are contiguous." .
+
+qnt:Contiguous a qnt:BinContiguity ;
+    rdfs:comment "Successive bins share a boundary with no gap." .
+
+qnt:GapPermitting a qnt:BinContiguity ;
+    rdfs:comment "Successive bins may have a gap between them." .
+
+qnt:BoundaryDerivation a owl:Class ;
+    rdfs:comment "A mechanism-intrinsic policy governing how a recurrence bin boundary is derived when the anchor does not land on it cleanly." .
+
+qnt:AnchorPreserving a qnt:BoundaryDerivation ;
+    rdfs:comment "The anchor's position within the period is preserved where the boundary space permits it." .
+
+qnt:PeriodEndAligned a qnt:BoundaryDerivation ;
+    rdfs:comment "The boundary always aligns to the end of the period, regardless of the anchor's exact position." .
+
+qnt:BinKeyStrategy a owl:Class ;
+    rdfs:comment "A mechanism-intrinsic strategy for deriving stable recurrence-bin keys." .
+
+qnt:AnchorAndOrdinal a qnt:BinKeyStrategy .
+qnt:BoundaryPair a qnt:BinKeyStrategy .
+
+qnt:ComponentDirection a owl:Class ;
+    rdfs:comment "A mechanism-intrinsic sort direction for an OrderingComponent." .
+
+qnt:Ascending a qnt:ComponentDirection .
+qnt:Descending a qnt:ComponentDirection .
+
+qnt:UnresolvedOrderPolicy a owl:Class ;
+    rdfs:comment "A mechanism-intrinsic policy for ordering occurrences with unresolved order values." .
+
+qnt:Defer a qnt:UnresolvedOrderPolicy .
+qnt:PlaceLast a qnt:UnresolvedOrderPolicy .
+qnt:Reject a qnt:UnresolvedOrderPolicy .
+
+qnt:LawRegister a owl:Class ;
+    rdfs:comment "A mechanism-intrinsic classification of what kind of evidence discharges a Law." .
+
+qnt:SemanticLaw a qnt:LawRegister ;
+    rdfs:comment "Discharged by formal argument and property tests." .
+
+qnt:StaticConstraint a qnt:LawRegister ;
+    rdfs:comment "Discharged by SPARQL, SHACL, reasoner, or compiled static analysis." .
+
+qnt:RuntimeConformance a qnt:LawRegister ;
+    rdfs:comment "Discharged only by an executed test run — no formal argument alone suffices." .

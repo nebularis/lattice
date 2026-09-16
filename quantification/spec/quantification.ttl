@@ -1,0 +1,561 @@
+@prefix qnt:  <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix voc:  <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+
+qnt:ValueSpace a owl:Class ;
+    rdfs:comment "A governed declaration of a space in which values may be represented, ordered, bounded, compared, and used by declared operations." ;
+    fnd:utility "Declare a ValueSpace whenever values need a stated home — how they're ordered, whether they require units, and which operations are valid. Set densityKind so range-set normalisation knows what 'adjacent' means for this space, and cycleLength if the space is cyclically ordered." ;
+    rdfs:subClassOf
+        fnd:Version ,
+        fnd:Governable ,
+        [ a owl:Restriction ; owl:onProperty qnt:spaceKey ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty qnt:orderKind ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty qnt:spaceHash ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty qnt:densityKind ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty qnt:cycleLength ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] .
+
+qnt:Value a owl:Class ;
+    rdfs:comment "A point value asserted in one declared ValueSpace." ;
+    fnd:utility "Use as the generic point-value carrier for values needing comparison, bounding, ordering, or evidence. Numeric values use Quantity; add other representations as needed while keeping the onSpace relation." ;
+    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty qnt:onSpace ; owl:cardinality "1"^^xsd:nonNegativeInteger ] .
+
+qnt:Quantity a owl:Class ;
+    rdfs:subClassOf qnt:Value ;
+    rdfs:comment "A point value expressed as a literal, optionally in a unit governed by its ValueSpace's unit contract." ;
+    fnd:utility "Use for literal-represented values. The literal's datatype follows the ValueSpace's declared valueDatatype rather than being fixed — a temporal position can use xsd:dateTime here as readily as a mass can use xsd:decimal. Numeric representation alone does not imply arithmetic or conversion is permitted." ;
+    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty qnt:numericValue ; owl:cardinality "1"^^xsd:nonNegativeInteger ] .
+
+qnt:OrdinalValue a owl:Class ;
+    rdfs:subClassOf qnt:Value ;
+    rdfs:comment "A point value represented by a concept in an ordered deployment-defined scheme." ;
+    fnd:utility "Use for ranked values such as grades or tiers where comparison is meaningful but arithmetic isn't. Point ordinalConcept at the backing skos:Concept; the substrate ships no scheme members." ;
+    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty qnt:ordinalConcept ; owl:cardinality "1"^^xsd:nonNegativeInteger ] .
+
+qnt:UnresolvedValue a owl:Class ;
+    rdfs:subClassOf qnt:Value, fnd:Evidenced ;
+    rdfs:comment "A value whose required content is not currently available as a definite value in its declared space." ;
+    fnd:utility "Use when a required value is pending, unknown, disputed, or unavailable, with a declared reason and evidence. Do not use this for a known-but-coarse value — see knownToGranularity instead." ;
+    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty qnt:unresolvedReason ; owl:minCardinality "1"^^xsd:nonNegativeInteger ] .
+
+qnt:Bound a owl:Class ;
+    rdfs:comment "An open or closed lower or upper limit expressed by a Value in one ValueSpace." ;
+    fnd:utility "Use for any endpoint or limit — a ceiling, floor, or threshold. Always set boundClosure: whether the endpoint itself counts as within range changes the result, not just the presentation." ;
+    rdfs:subClassOf
+        [ a owl:Restriction ; owl:onProperty qnt:onSpace ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty qnt:boundValue ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty qnt:boundSense ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty qnt:boundClosure ; owl:cardinality "1"^^xsd:nonNegativeInteger ] .
+
+qnt:Range a owl:Class ;
+    rdfs:comment "A bounded region of one non-cyclic ValueSpace." ;
+    fnd:utility "Use for two-sided or half-bounded regions. Set only lowerBound, only upperBound, or both — an absent bound means unbounded in that direction. If this range is derived from a nominal value and an offset, point relativeToAnchor at the AnchorBinding rather than authoring the two bounds independently." ;
+    rdfs:subClassOf
+        [ a owl:Restriction ; owl:onProperty qnt:onSpace ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty qnt:hasBound ; owl:minCardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty qnt:lowerBound ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty qnt:upperBound ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty qnt:relativeToAnchor ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] .
+
+qnt:CyclicRange a owl:Class ;
+    rdfs:comment "A bounded region on a cyclic ValueSpace, represented by a start value and an extent around the cycle, each end independently closed or open." ;
+    fnd:utility "Use for a range that may wrap a cycle boundary — represent it by cycleStart and cycleExtent, not lower/upper endpoints. Set startClosure and endClosure exactly as for an ordinary Bound; a cyclic range's endpoints need closure declared just as much." ;
+    rdfs:subClassOf
+        [ a owl:Restriction ; owl:onProperty qnt:onSpace ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty qnt:cycleStart ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty qnt:cycleExtent ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty qnt:startClosure ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty qnt:endClosure ; owl:cardinality "1"^^xsd:nonNegativeInteger ] .
+
+qnt:RangeSet a owl:Class ;
+    rdfs:comment "A collection of zero or more ranges over one ValueSpace." ;
+    fnd:utility "Use for a union of ranges. An empty RangeSet may be a valid computed result even where an authoring profile rejects an empty asserted set." ;
+    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty qnt:onSpace ; owl:cardinality "1"^^xsd:nonNegativeInteger ] .
+
+qnt:AnchorBinding a owl:Class ;
+    rdfs:comment "A declared anchor value and offsets from which a Range's bounds are derived." ;
+    fnd:utility "Use where a range is defined relative to a nominal value rather than as two independent bounds — a tolerance or a scheduled window. The anchor and offsets are the authored form even if the derived bounds are also materialised. Proportional offsets require the space to declare Ratio capability." ;
+    rdfs:subClassOf
+        [ a owl:Restriction ; owl:onProperty qnt:anchorValue ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty qnt:offsetKind ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty qnt:lowerOffset ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty qnt:upperOffset ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] .
+
+qnt:UnitContract a owl:Class ;
+    rdfs:comment "A declaration governing whether values in a ValueSpace require units, which unit family applies, and how conversion, precision, and rounding are governed." ;
+    fnd:utility "Declare whether a ValueSpace requires units, which unit family is permitted, and which unit is canonical. Set precisionPolicy and roundingPolicy where a comparison's exactness depends on them — the substrate ships no unit, precision, or rounding individuals." ;
+    rdfs:subClassOf
+        fnd:Version ,
+        [ a owl:Restriction ; owl:onProperty qnt:requiresUnit ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty qnt:unitFamily ; owl:minCardinality "1"^^xsd:nonNegativeInteger ] .
+
+qnt:Unit a owl:Class ;
+    rdfs:comment "A deployment-defined designation for expressing values in a unit-bearing ValueSpace." ;
+    fnd:utility "Use as a value object supplied by a deployment or aligned external vocabulary. The substrate ships no unit individuals." .
+
+qnt:UnitFamily a owl:Class ;
+    rdfs:comment "A deployment-defined family of units governed by one conversion contract." ;
+    fnd:utility "Use to group units a ValueSpace permits and whose conversion rules are declared together." .
+
+qnt:Conversion a owl:Class ;
+    rdfs:subClassOf fnd:Version ;
+    rdfs:comment "A declared transformation between two units in a UnitFamily." ;
+    fnd:utility "State how a value in one unit becomes comparable with a value in another. Give it a conversionFactor for the linear case, or a conversionFunction for anything else — never leave the transformation itself undeclared. Contextual conversions additionally need a ConversionContext at evaluation time." ;
+    rdfs:subClassOf
+        [ a owl:Restriction ; owl:onProperty qnt:fromUnit ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty qnt:toUnit ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty qnt:conversionKind ; owl:cardinality "1"^^xsd:nonNegativeInteger ] .
+
+qnt:ConversionFunction a owl:Class ;
+    rdfs:subClassOf fnd:Version, fnd:Evidenced ;
+    rdfs:comment "A registered, versioned, deterministic function transforming values between two units." ;
+    fnd:utility "Register one of these when a conversion is not a simple factor — declare its signature and determinism claim, and attach conformance evidence via fnd:hasEvidence. Reference it from every Conversion that uses it, rather than restating the transformation per conversion." .
+
+qnt:ConversionContext a owl:Class ;
+    rdfs:subClassOf fnd:Evidenced, fnd:TemporallyScoped ;
+    rdfs:comment "An evidenced context supplying the observation or reference required for a contextual conversion." ;
+    fnd:utility "Use where conversion depends on an external observation or reference position. Required for a Contextual conversion; optional provenance for any other kind. Its absence makes a dependent comparison indeterminate, not the underlying data invalid." .
+
+qnt:OperationCapability a owl:Class ;
+    rdfs:subClassOf fnd:Version ;
+    rdfs:comment "A declared permission and signature for applying one operation to values in specified ValueSpaces." ;
+    fnd:utility "Declare which operations a ValueSpace permits, their operand spaces, and their result space. For Contains or Overlaps, also set rangeSemanticsKind and participatesInMeet — a consumer doing meet-based enumeration needs to know directly whether this capability is safe to use for it, not re-derive it from the operation kind." ;
+    rdfs:subClassOf
+        [ a owl:Restriction ; owl:onProperty qnt:operationKind ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty qnt:resultSpace ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty qnt:rangeSemanticsKind ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty qnt:participatesInMeet ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] .
+
+qnt:OperationOperand a owl:Class ;
+    rdfs:comment "A numbered operand position in an OperationCapability signature." ;
+    fnd:utility "Use where an operation needs several typed operands, such as position minus position yielding an extent. Declare the required ValueSpace at each argument position; shapes ensure no two positions share an index." ;
+    rdfs:subClassOf
+        [ a owl:Restriction ; owl:onProperty qnt:operandIndex ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty qnt:operandSpace ; owl:cardinality "1"^^xsd:nonNegativeInteger ] .
+
+qnt:Recurrence a owl:Class ;
+    rdfs:subClassOf fnd:Version, fnd:Governable ;
+    rdfs:comment "A governed declaration of a deterministic generator of canonically identified ranges over a compatible extent space." ;
+    fnd:utility "Use for repeated periods. Declare an anchor, a period whose space is extent-compatible with the anchor's position space, a binContiguity and boundaryDerivation policy, and a binKeyStrategy — so independently executed processes identify the same generated bin. Set validRange if the recurrence has a bounded domain." ;
+    rdfs:subClassOf
+        [ a owl:Restriction ; owl:onProperty qnt:anchor ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty qnt:period ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty qnt:binContiguity ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty qnt:boundaryDerivation ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty qnt:binKeyStrategy ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty qnt:validRange ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] .
+
+qnt:RecurrenceBin a owl:Class ;
+    rdfs:subClassOf qnt:Range ;
+    rdfs:comment "A canonically identified range generated by a Recurrence." ;
+    fnd:utility "Use for a range produced from a recurrence declaration, whether calculated live, materialised, or projected externally. Always retain its recurrence source and canonical bin key." ;
+    rdfs:subClassOf
+        [ a owl:Restriction ; owl:onProperty qnt:generatedByRecurrence ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty qnt:binKey ; owl:cardinality "1"^^xsd:nonNegativeInteger ] .
+
+qnt:OrderingBasis a owl:Class ;
+    rdfs:subClassOf fnd:Version ;
+    rdfs:comment "A declaration of deterministic ordering using an ordered sequence of components and an unresolved-order policy." ;
+    fnd:utility "Use where a process must order occurrences deterministically and a single position can't establish it alone. Add one OrderingComponent per criterion, in priority order, and state what happens when an ordering value is unresolved." ;
+    rdfs:subClassOf
+        [ a owl:Restriction ; owl:onProperty qnt:hasOrderingComponent ; owl:minCardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty qnt:unresolvedOrderPolicy ; owl:cardinality "1"^^xsd:nonNegativeInteger ] .
+
+qnt:OrderingComponent a owl:Class ;
+    rdfs:comment "One positioned criterion within an OrderingBasis." ;
+    fnd:utility "Use to declare each ordering criterion, its position among the others, and its direction — so a scheduled read and a correction sharing a timestamp resolve deterministically rather than by whichever the store happened to return first." ;
+    rdfs:subClassOf
+        [ a owl:Restriction ; owl:onProperty qnt:componentIndex ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty qnt:componentSpace ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty qnt:componentDirection ; owl:cardinality "1"^^xsd:nonNegativeInteger ] .
+
+qnt:Comparison a owl:Class ;
+    rdfs:subClassOf fnd:Evidenced ;
+    rdfs:comment "An evidenced result of comparing values, ranges, or both under a stated value space and operational profile." ;
+    fnd:utility "Use where a comparison result must be retained, explained, audited, or reused. Records the truth value, any unresolved reasons, and the producing operational profile." ;
+    rdfs:subClassOf
+        [ a owl:Restriction ; owl:onProperty qnt:comparisonResult ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty qnt:comparisonProfile ; owl:cardinality "1"^^xsd:nonNegativeInteger ] .
+
+qnt:OperationalProfile a owl:Class ;
+    rdfs:subClassOf fnd:Version ;
+    rdfs:comment "A declared implementation strategy and configuration under which a Quantification operation is evaluated." ;
+    fnd:utility "Identifies the realisation strategy that produced a result — a SPARQL query set, SHACL package, reasoner configuration, materialisation job, external projection, or compiled evaluator — together with its version. Every persisted Comparison names one." .
+
+qnt:OperationRequest a owl:Class ;
+    rdfs:comment "A recorded request to apply an operation to values in stated ValueSpaces." ;
+    fnd:utility "Use where a request must be recorded, audited, or rejected with a reason. A request may exist even where no matching OperationCapability does; the resulting Comparison then records OperationNotPermitted." ;
+    rdfs:subClassOf
+        [ a owl:Restriction ; owl:onProperty qnt:requestedOperation ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty qnt:requestedOnSpace ; owl:minCardinality "1"^^xsd:nonNegativeInteger ] .
+
+qnt:Law a owl:Class ;
+    rdfs:comment "A stated semantic obligation over Quantification mechanism, belonging to one of three registers." ;
+    fnd:utility "Check lawRegister before determining how this law is discharged — semantic laws need a formal argument, static constraints need static analysis, runtime conformance needs an executed test run. See §10 for the full register." ;
+    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty qnt:lawRegister ; owl:cardinality "1"^^xsd:nonNegativeInteger ] .
+
+qnt:LawDischarge a owl:Class ;
+    rdfs:subClassOf fnd:Evidenced ;
+    rdfs:comment "Recorded evidence discharging one Law for one implementation profile." ;
+    fnd:utility "A discharge names the law, the evidence supporting it via fnd:hasEvidence, and the implementation profile it was proved or tested against. An assertion without evidence does not discharge a law — use one of the three subclasses below rather than this class directly." ;
+    rdfs:subClassOf
+        [ a owl:Restriction ; owl:onProperty qnt:dischargesLaw ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty qnt:dischargedForImplementationProfile ; owl:cardinality "1"^^xsd:nonNegativeInteger ] .
+
+qnt:SemanticLawDischarge a owl:Class ;
+    rdfs:subClassOf qnt:LawDischarge ;
+    rdfs:comment "A LawDischarge for a semantic law, evidenced by formal argument and property tests." ;
+    fnd:utility "Use for order coherence, bound coherence, containment, overlap, conversion, or closure laws — cite the formal argument as evidence and record any property tests run against it." ;
+    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty qnt:formalArgumentReference ; owl:minCardinality "1"^^xsd:nonNegativeInteger ] .
+
+qnt:StaticConstraintDischarge a owl:Class ;
+    rdfs:subClassOf qnt:LawDischarge ;
+    rdfs:comment "A LawDischarge for a static declaration constraint, evidenced by SPARQL, SHACL, reasoner, or compiled analysis." ;
+    fnd:utility "Use for a constraint checkable from the declaration alone, without running anything — record which analysis method checked it." ;
+    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty qnt:staticAnalysisMethod ; owl:cardinality "1"^^xsd:nonNegativeInteger ] .
+
+qnt:RuntimeConformanceDischarge a owl:Class ;
+    rdfs:subClassOf qnt:LawDischarge ;
+    rdfs:comment "A LawDischarge for a runtime conformance claim, evidenced only by an executed test run." ;
+    fnd:utility "Use for a claim about implementation behaviour — recurrence determinism, unresolved non-coercion, ordering determinism. Record the executed test run; a formal argument alone never satisfies this discharge type." ;
+    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty qnt:executedTestRun ; owl:minCardinality "1"^^xsd:nonNegativeInteger ] .
+
+[] a owl:AllDisjointClasses ;
+    owl:members (
+        qnt:ValueSpace qnt:Value qnt:Bound qnt:Range qnt:RangeSet qnt:AnchorBinding
+        qnt:UnitContract qnt:Unit qnt:UnitFamily qnt:Conversion qnt:ConversionFunction
+        qnt:ConversionContext qnt:OperationCapability qnt:OperationOperand
+        qnt:Recurrence qnt:OrderingBasis qnt:OrderingComponent qnt:Comparison
+        qnt:OperationalProfile qnt:OperationRequest qnt:Law qnt:LawDischarge
+    ) .
+
+qnt:Quantity owl:disjointWith qnt:OrdinalValue, qnt:UnresolvedValue .
+qnt:OrdinalValue owl:disjointWith qnt:UnresolvedValue .
+qnt:CyclicRange owl:disjointWith qnt:Range .
+qnt:SemanticLawDischarge owl:disjointWith qnt:StaticConstraintDischarge, qnt:RuntimeConformanceDischarge .
+qnt:StaticConstraintDischarge owl:disjointWith qnt:RuntimeConformanceDischarge .
+
+qnt:spaceKey a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:domain qnt:ValueSpace ; rdfs:range xsd:string ;
+    rdfs:comment "A stable key for a ValueSpace." ;
+    fnd:utility "Use as a stable deployment-local identifier for canonical ordering, generated artefacts, and hash construction." .
+
+qnt:spaceHash a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:domain qnt:ValueSpace ; rdfs:range xsd:string ;
+    rdfs:comment "The canonical semantic hash of a ValueSpace declaration." ;
+    fnd:utility "Records the hash of the canonical, meaning-bearing content of a ValueSpace declaration — not a hash of arbitrary RDF serialisation." .
+
+qnt:onSpace a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:range qnt:ValueSpace ;
+    rdfs:comment "The ValueSpace in which a value, bound, range, or range set is expressed." ;
+    fnd:utility "Set this so a value and its bounds are interpreted under one declared ordering and operation contract." .
+
+qnt:orderKind a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain qnt:ValueSpace ; rdfs:range qnt:OrderKind ;
+    rdfs:comment "The ordering form declared for a ValueSpace." ;
+    fnd:utility "Declares whether a ValueSpace is totally ordered, cyclically ordered, or unordered for range purposes." .
+
+qnt:densityKind a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain qnt:ValueSpace ; rdfs:range qnt:DensityKind ;
+    rdfs:comment "Whether a ValueSpace is discrete, dense, or unspecified for the purpose of range-set adjacency." ;
+    fnd:utility "Set this so range-set normalisation knows what counts as adjacent. Discrete spaces merge via granularityFloor; dense spaces merge only where closures abut without a gap; Unspecified spaces are never merged on adjacency, only on overlap." .
+
+qnt:granularityFloor a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain qnt:ValueSpace ; rdfs:range qnt:Quantity ;
+    rdfs:comment "The default minimum increment between distinguishable values in a discrete ValueSpace." ;
+    fnd:utility "Set on a Discrete space so adjacency has a definite meaning, and so GranularityInsufficient has a default to compare a value's own granularity against." .
+
+qnt:cycleLength a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain qnt:ValueSpace ; rdfs:range qnt:Quantity ;
+    rdfs:comment "The extent of one full cycle of a CyclicOrder ValueSpace." ;
+    fnd:utility "Required on any CyclicOrder space — without it, a CyclicRange's extent cannot be checked against the space it wraps around." .
+
+qnt:valueDatatype a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain qnt:ValueSpace ; rdfs:range rdfs:Datatype ;
+    rdfs:comment "The literal datatype expected of Quantity values in this ValueSpace." ;
+    fnd:utility "Set where a space's values should use a specific literal datatype other than the default — an OWL-Time-aligned xsd:dateTime for a temporal position space, for instance. Leave unset to allow xsd:decimal." .
+
+qnt:hasOperationCapability a owl:ObjectProperty ;
+    rdfs:domain qnt:ValueSpace ; rdfs:range qnt:OperationCapability ;
+    rdfs:comment "An operation capability declared for a ValueSpace." ;
+    fnd:utility "Links a ValueSpace to each operation signature it permits. Never assume an operation not declared here." .
+
+qnt:unitContract a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain qnt:ValueSpace ; rdfs:range qnt:UnitContract ;
+    rdfs:comment "The optional unit contract governing values in a ValueSpace." ;
+    fnd:utility "Set where a space's values require or permit governed units and conversion." .
+
+qnt:numericValue a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:domain qnt:Quantity ; rdfs:range rdfs:Literal ;
+    rdfs:comment "The literal representation of a Quantity, in the datatype its ValueSpace declares." ;
+    fnd:utility "Stores the literal value of a Quantity. Check the ValueSpace's valueDatatype for the expected datatype rather than assuming xsd:decimal." .
+
+qnt:ordinalConcept a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain qnt:OrdinalValue ; rdfs:range skos:Concept ;
+    rdfs:comment "The concept representing an OrdinalValue." ;
+    fnd:utility "Points an ordinal value at its deployment-defined concept. Scheme governance and ordering are declared outside the substrate." .
+
+qnt:inUnit a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain qnt:Quantity ; rdfs:range qnt:Unit ;
+    rdfs:comment "The unit in which a Quantity is expressed." ;
+    fnd:utility "Set where the ValueSpace's unit contract requires an explicit unit. A unit-less quantity is permitted only where that contract allows it." .
+
+qnt:knownToGranularity a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain qnt:Value ; rdfs:range qnt:Quantity ;
+    rdfs:comment "The declared extent of precision with which a Value is known." ;
+    fnd:utility "Set when a value is present but stands for a region of possible exact values. A comparison needing finer distinction than this returns Undetermined with GranularityInsufficient." .
+
+qnt:boundValue a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain qnt:Bound ; rdfs:range qnt:Value ;
+    rdfs:comment "The value forming a Bound's endpoint." ;
+    fnd:utility "Points a bound at its endpoint value, in the same ValueSpace as the Bound." .
+
+qnt:boundSense a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain qnt:Bound ; rdfs:range qnt:BoundSense ;
+    rdfs:comment "Whether a Bound is lower or upper." .
+
+qnt:boundClosure a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain qnt:Bound ; rdfs:range qnt:Closure ;
+    rdfs:comment "Whether a Bound includes or excludes its endpoint." .
+
+qnt:hasBound a owl:ObjectProperty ;
+    rdfs:domain qnt:Range ; rdfs:range qnt:Bound ;
+    rdfs:comment "A Bound belonging to a Range." ;
+    fnd:utility "Use to attach one lower and/or one upper bound to a Range." .
+
+qnt:lowerBound a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain qnt:Range ; rdfs:range qnt:Bound ; rdfs:subPropertyOf qnt:hasBound ;
+    rdfs:comment "The optional lower Bound of a Range." .
+
+qnt:upperBound a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain qnt:Range ; rdfs:range qnt:Bound ; rdfs:subPropertyOf qnt:hasBound ;
+    rdfs:comment "The optional upper Bound of a Range." .
+
+qnt:relativeToAnchor a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain qnt:Range ; rdfs:range qnt:AnchorBinding ;
+    rdfs:comment "The AnchorBinding a Range's bounds are derived from, where it has one." ;
+    fnd:utility "Set where a range's bounds are computed from a nominal value and offsets, so the derivation stays explicit rather than only the computed endpoints." .
+
+qnt:hasRange a owl:ObjectProperty ;
+    rdfs:domain qnt:RangeSet ; rdfs:range qnt:Range ;
+    rdfs:comment "A Range belonging to a RangeSet." ;
+    fnd:utility "State each member range of a RangeSet. A normalisation process may merge adjacent or overlapping members where the ValueSpace's densityKind permits it." .
+
+qnt:cycleStart a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain qnt:CyclicRange ; rdfs:range qnt:Value ;
+    rdfs:comment "The starting point of a CyclicRange." .
+
+qnt:cycleExtent a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain qnt:CyclicRange ; rdfs:range qnt:Quantity ;
+    rdfs:comment "The extent travelled from a CyclicRange's start around its cycle." ;
+    fnd:utility "Use rather than an upper endpoint for cyclic ranges. Its ValueSpace must be compatible with the cyclic space's declared cycleLength." .
+
+qnt:startClosure a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain qnt:CyclicRange ; rdfs:range qnt:Closure ;
+    rdfs:comment "Whether a CyclicRange's start point is included." .
+
+qnt:endClosure a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain qnt:CyclicRange ; rdfs:range qnt:Closure ;
+    rdfs:comment "Whether a CyclicRange's end point (start plus extent) is included." .
+
+qnt:anchorValue a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain qnt:AnchorBinding ; rdfs:range qnt:Value ;
+    rdfs:comment "The nominal or reference value an AnchorBinding's offsets are relative to." .
+
+qnt:offsetKind a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain qnt:AnchorBinding ; rdfs:range qnt:OffsetKind ;
+    rdfs:comment "Whether an AnchorBinding's offsets are absolute or proportional to the anchor value." .
+
+qnt:lowerOffset a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:domain qnt:AnchorBinding ; rdfs:range xsd:decimal ;
+    rdfs:comment "The offset below the anchor value, in the units or proportion offsetKind declares." .
+
+qnt:upperOffset a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:domain qnt:AnchorBinding ; rdfs:range xsd:decimal ;
+    rdfs:comment "The offset above the anchor value, in the units or proportion offsetKind declares." .
+
+qnt:requiresUnit a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:domain qnt:UnitContract ; rdfs:range xsd:boolean ;
+    rdfs:comment "Whether values governed by a UnitContract require an explicit unit." .
+
+qnt:unitFamily a owl:ObjectProperty ;
+    rdfs:domain qnt:UnitContract ; rdfs:range qnt:UnitFamily ;
+    rdfs:comment "A unit family permitted by a UnitContract." .
+
+qnt:canonicalUnit a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain qnt:UnitContract ; rdfs:range qnt:Unit ;
+    rdfs:comment "The unit used as the canonical representation under a UnitContract." ;
+    fnd:utility "Identifies the unit a normalisation or materialisation profile uses. Does not require every asserted value to already be stored in it." .
+
+qnt:precisionPolicy a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:domain qnt:UnitContract ; rdfs:range rdfs:Literal ;
+    rdfs:comment "A deployment-declared statement of the precision a comparison under this contract requires." ;
+    fnd:utility "Set where comparisons under this contract need a stated precision requirement rather than relying on incidental literal precision. No fixed vocabulary is defined yet for this property's value — see the open items." .
+
+qnt:roundingPolicy a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:domain qnt:UnitContract ; rdfs:range rdfs:Literal ;
+    rdfs:comment "A deployment-declared statement of how values under this contract are rounded before comparison." ;
+    fnd:utility "Set where rounding behaviour affects a comparison's result and needs to be explicit rather than left to whichever implementation runs it. No fixed vocabulary is defined yet for this property's value — see the open items." .
+
+qnt:fromUnit a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain qnt:Conversion ; rdfs:range qnt:Unit ;
+    rdfs:comment "The source unit of a Conversion." .
+
+qnt:toUnit a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain qnt:Conversion ; rdfs:range qnt:Unit ;
+    rdfs:comment "The destination unit of a Conversion." .
+
+qnt:conversionKind a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain qnt:Conversion ; rdfs:range qnt:ConversionKind ;
+    rdfs:comment "The kind of transformation declared by a Conversion." ;
+    fnd:utility "Distinguishes exact, defined, and contextual conversion semantics." .
+
+qnt:conversionFactor a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:domain qnt:Conversion ; rdfs:range xsd:decimal ;
+    rdfs:comment "A linear multiplicative factor for a Defined Conversion." ;
+    fnd:utility "Use for the common linear case — target = source × factor. For anything non-linear, use conversionFunction instead." .
+
+qnt:conversionFunction a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain qnt:Conversion ; rdfs:range qnt:ConversionFunction ;
+    rdfs:comment "The registered function performing a non-linear Conversion." ;
+    fnd:utility "Use for a conversion that isn't a simple factor. Point at a registered ConversionFunction rather than an undeclared deployment detail." .
+
+qnt:conversionContext a owl:ObjectProperty ;
+    rdfs:domain qnt:Comparison ; rdfs:range qnt:ConversionContext ;
+    rdfs:comment "The context used by a Comparison requiring contextual conversion." ;
+    fnd:utility "Records the supplied conversion context for a comparison. Its absence is an explicit source of an indeterminate result where contextual conversion is required." .
+
+qnt:operationKind a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain qnt:OperationCapability ; rdfs:range qnt:OperationKind ;
+    rdfs:comment "The operation permitted by an OperationCapability." .
+
+qnt:rangeSemanticsKind a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain qnt:OperationCapability ; rdfs:range qnt:RangeSemanticsKind ;
+    rdfs:comment "Whether a Contains or Overlaps capability provides exact or screening-only range semantics." ;
+    fnd:utility "Set on any Contains or Overlaps capability. ExactRangeSemantics satisfies both meet soundness and completeness; ScreeningRangeSemantics satisfies soundness only and must not be used for meet-based enumeration — see participatesInMeet." .
+
+qnt:participatesInMeet a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:domain qnt:OperationCapability ; rdfs:range xsd:boolean ;
+    rdfs:comment "Whether this capability's results may be used in meet-based (intersection) enumeration." ;
+    fnd:utility "Read this directly rather than re-deriving it from rangeSemanticsKind — true only for ExactRangeSemantics. Eligibility's meet-based strategies consume this as a declared answer, not a rule to reimplement." .
+
+qnt:hasOperand a owl:ObjectProperty ;
+    rdfs:domain qnt:OperationCapability ; rdfs:range qnt:OperationOperand ;
+    rdfs:comment "An operand slot in an operation capability signature." .
+
+qnt:operandIndex a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:domain qnt:OperationOperand ; rdfs:range xsd:nonNegativeInteger ;
+    rdfs:comment "The zero-based position of an operation operand." .
+
+qnt:operandSpace a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain qnt:OperationOperand ; rdfs:range qnt:ValueSpace ;
+    rdfs:comment "The ValueSpace required at one operation operand position." .
+
+qnt:resultSpace a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain qnt:OperationCapability ; rdfs:range qnt:ValueSpace ;
+    rdfs:comment "The ValueSpace in which a value-producing operation yields its result." ;
+    fnd:utility "Set for Difference, Sum, Ratio, and similar value-producing operations. Not used for Compare, Contains, or Overlaps, which produce a Comparison instead." .
+
+qnt:anchor a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain qnt:Recurrence ; rdfs:range qnt:Value ;
+    rdfs:comment "The anchor from which a Recurrence generates bins." .
+
+qnt:period a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain qnt:Recurrence ; rdfs:range qnt:Quantity ;
+    rdfs:comment "The extent between recurrence bin boundaries." ;
+    fnd:utility "State the repeated extent of a recurrence. Its ValueSpace must be extent-compatible with the anchor's position space — checked as a static declaration constraint, not an OWL restriction here." .
+
+qnt:binContiguity a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain qnt:Recurrence ; rdfs:range qnt:BinContiguity ;
+    rdfs:comment "Whether a Recurrence's generated bins are contiguous or may have gaps between them." .
+
+qnt:boundaryDerivation a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain qnt:Recurrence ; rdfs:range qnt:BoundaryDerivation ;
+    rdfs:comment "How a Recurrence derives a bin boundary when the anchor does not land cleanly on it." ;
+    fnd:utility "Set explicitly for cases like a monthly recurrence anchored on the 31st in a 30-day month — declare whether the anchor day is preserved where possible or the boundary always aligns to period end." .
+
+qnt:binKeyStrategy a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain qnt:Recurrence ; rdfs:range qnt:BinKeyStrategy ;
+    rdfs:comment "The strategy used to derive canonical identifiers for recurrence bins." .
+
+qnt:validRange a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain qnt:Recurrence ; rdfs:range qnt:Range ;
+    rdfs:comment "The bounded domain over which a Recurrence is defined, if it is not defined everywhere." ;
+    fnd:utility "Set where binOf should return Undetermined with OutsideDeclaredSpace for a position outside this range, rather than extrapolating the recurrence indefinitely." .
+
+qnt:generatedByRecurrence a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain qnt:RecurrenceBin ; rdfs:range qnt:Recurrence ;
+    rdfs:comment "The Recurrence that generated a RecurrenceBin." .
+
+qnt:binKey a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:domain qnt:RecurrenceBin ; rdfs:range xsd:string ;
+    rdfs:comment "The canonical stable identifier of a RecurrenceBin." .
+
+qnt:hasOrderingComponent a owl:ObjectProperty ;
+    rdfs:domain qnt:OrderingBasis ; rdfs:range qnt:OrderingComponent ;
+    rdfs:comment "An OrderingComponent belonging to an OrderingBasis." ;
+    fnd:utility "Add one per ordering criterion, each with its own componentIndex giving its priority." .
+
+qnt:componentIndex a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:domain qnt:OrderingComponent ; rdfs:range xsd:nonNegativeInteger ;
+    rdfs:comment "The priority position of an OrderingComponent within its OrderingBasis, lower values evaluated first." .
+
+qnt:componentSpace a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain qnt:OrderingComponent ; rdfs:range qnt:ValueSpace ;
+    rdfs:comment "The ValueSpace an OrderingComponent orders by." .
+
+qnt:componentDirection a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain qnt:OrderingComponent ; rdfs:range qnt:ComponentDirection ;
+    rdfs:comment "Whether an OrderingComponent sorts ascending or descending." .
+
+qnt:unresolvedOrderPolicy a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain qnt:OrderingBasis ; rdfs:range qnt:UnresolvedOrderPolicy ;
+    rdfs:comment "The policy applied when an occurrence's ordering value is unresolved." .
+
+qnt:comparisonResult a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain qnt:Comparison ; rdfs:range qnt:TruthValue ;
+    rdfs:comment "The truth value produced by a Comparison." .
+
+qnt:unresolvedReason a owl:ObjectProperty ;
+    rdfs:domain qnt:Comparison ; rdfs:range qnt:UnresolvedReason ;
+    rdfs:comment "A declared reason why a Comparison is indeterminate." .
+
+qnt:comparisonProfile a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain qnt:Comparison ; rdfs:range qnt:OperationalProfile ;
+    rdfs:comment "The operational profile that produced a Comparison." .
+
+qnt:requestedOperation a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain qnt:OperationRequest ; rdfs:range qnt:OperationKind ;
+    rdfs:comment "The operation kind requested by an OperationRequest." .
+
+qnt:requestedOnSpace a owl:ObjectProperty ;
+    rdfs:domain qnt:OperationRequest ; rdfs:range qnt:ValueSpace ;
+    rdfs:comment "A ValueSpace supplying an operand to a requested operation." .
+
+qnt:lawRegister a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain qnt:Law ; rdfs:range qnt:LawRegister ;
+    rdfs:comment "Which of the three evidence registers a Law belongs to." .
+
+qnt:dischargesLaw a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain qnt:LawDischarge ; rdfs:range qnt:Law ;
+    rdfs:comment "The Law a LawDischarge discharges." .
+
+qnt:dischargedForImplementationProfile a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain qnt:LawDischarge ; rdfs:range qnt:OperationalProfile ;
+    rdfs:comment "The implementation profile a LawDischarge was proved or tested against." .
+
+qnt:formalArgumentReference a owl:ObjectProperty ;
+    rdfs:domain qnt:SemanticLawDischarge ;
+    rdfs:comment "A reference to the formal argument evidencing a SemanticLawDischarge." .
+
+qnt:staticAnalysisMethod a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain qnt:StaticConstraintDischarge ;
+    rdfs:comment "The static analysis method (SPARQL, SHACL, reasoner, or compiled analysis) that checked a StaticConstraintDischarge." .
+
+qnt:executedTestRun a owl:ObjectProperty ;
+    rdfs:domain qnt:RuntimeConformanceDischarge ;
+    rdfs:comment "A reference to an executed test run evidencing a RuntimeConformanceDischarge." .

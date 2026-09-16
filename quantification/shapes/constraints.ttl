@@ -1,0 +1,41 @@
+@prefix qnt: <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
+@prefix sh:  <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+qnt:RangeShape
+    a sh:NodeShape ;
+    sh:targetClass qnt:Range ;
+    sh:property [ sh:path qnt:onSpace ; sh:minCount 1 ; sh:maxCount 1 ; sh:class qnt:ValueSpace ] ;
+    sh:property [ sh:path qnt:lowerBound ; sh:maxCount 1 ; sh:class qnt:Bound ] ;
+    sh:property [ sh:path qnt:upperBound ; sh:maxCount 1 ; sh:class qnt:Bound ] .
+
+qnt:CyclicRangeShape
+    a sh:NodeShape ;
+    sh:targetClass qnt:CyclicRange ;
+    sh:property [ sh:path qnt:cycleStart ; sh:minCount 1 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path qnt:cycleExtent ; sh:minCount 1 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path qnt:startClosure ; sh:minCount 1 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path qnt:endClosure ; sh:minCount 1 ; sh:maxCount 1 ] .
+
+qnt:RecurrenceShape
+    a sh:NodeShape ;
+    sh:targetClass qnt:Recurrence ;
+    sh:property [ sh:path qnt:anchor ; sh:minCount 1 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path qnt:period ; sh:minCount 1 ; sh:maxCount 1 ; sh:class qnt:Quantity ] ;
+    sh:property [ sh:path qnt:binContiguity ; sh:minCount 1 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path qnt:boundaryDerivation ; sh:minCount 1 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path qnt:binKeyStrategy ; sh:minCount 1 ; sh:maxCount 1 ] .
+
+qnt:OperationCapabilityMeetShape
+    a sh:NodeShape ;
+    sh:targetClass qnt:OperationCapability ;
+    sh:sparql [
+        sh:message "A Contains or Overlaps capability must declare rangeSemanticsKind and participatesInMeet." ;
+        sh:select """
+            SELECT $this WHERE {
+                $this qnt:operationKind ?k .
+                FILTER (?k IN (qnt:Contains, qnt:Overlaps))
+                FILTER NOT EXISTS { $this qnt:rangeSemanticsKind ?rsk }
+            }
+        """
+    ] .
