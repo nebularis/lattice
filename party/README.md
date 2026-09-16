@@ -357,11 +357,3 @@ ex:delegation-1
 | `pty:delegatesTo` | Object property | not globally functional; cardinality 1 per `Delegation` |
 
 Six classes mutually disjoint (§6).
-
-## 11. Open Items
-
-- **Self-delegation prevention** — a SHACL-SPARQL check that a `Delegation`'s `delegatesFrom` and `delegatesTo` never point at the same `RoleOccupancy` — belongs in `shapes/constraints.ttl`, not attempted here as an OWL restriction, for the same reason Foundation deferred `supersededBy`'s same-identity check.
-- **Instrument's own projection** (`instrument/projection/party.ttl`) — `hasObligor`/`hasObligee` on `Obligation`, referencing `RoleOccupancy` — is Instrument's document to write.
-- **Behaviour's own projection** (`behaviour/projection/party.ttl`) — the Effect that populates a contingent occupancy's `occupiedBy` — is Behaviour's document to write.
-- **Eligibility's own projection** (`eligibility/projection/party.ttl`) — a Guard testing a specific occupancy's standing, and/or testing whether a given case falls within a `Delegation`'s scope — is Eligibility's document to write.
-- **The SPC correlation** (`RoleOccupancy` ↔ an SPC Subject's participant-role typing) remains explicitly out of scope, per the earlier naming discussion — not attempted here, and not to be attempted until SPC's own provenance question is resolved.
