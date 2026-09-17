@@ -1,0 +1,22 @@
+# SPDX-License-Identifier: MPL-2.0
+
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix ins:  <https://www.nebularis.org/neuro-semantic/lattice/instrument#> .
+
+ins:SupersessionSameIdentityShape a sh:NodeShape ;
+	sh:targetClass ins:Element ;
+	sh:sparql [
+		sh:message "fnd:supersededBy must point to an element sharing the same fnd:hasIdentity." ;
+		sh:select """
+			PREFIX fnd: <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+			PREFIX ins: <https://www.nebularis.org/neuro-semantic/lattice/instrument#>
+			SELECT $this WHERE {
+				$this fnd:hasIdentity ?id1 ;
+					  fnd:supersededBy ?next .
+				?next a ins:Element ;
+					  fnd:hasIdentity ?id2 .
+				FILTER (?id1 != ?id2)
+			}
+		"""
+	] .

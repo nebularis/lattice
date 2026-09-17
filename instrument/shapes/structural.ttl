@@ -1,0 +1,18 @@
+# SPDX-License-Identifier: MPL-2.0
+
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix ins:  <https://www.nebularis.org/neuro-semantic/lattice/instrument#> .
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+
+ins:ElementShape a sh:NodeShape ;
+	sh:targetClass ins:Element ;
+	sh:property [ sh:path fnd:hasIdentity ; sh:minCount 1 ; sh:maxCount 1 ] .
+
+ins:ProvisionShape a sh:NodeShape ;
+	sh:targetClass ins:Provision ;
+	sh:property [ sh:path ins:hasObligation ; sh:minCount 1 ] .
+
+ins:ObligationShape a sh:NodeShape ;
+	sh:targetClass ins:Obligation ;
+	sh:property [ sh:path ins:obligor ; sh:minCount 1 ] ;
+	sh:property [ sh:path ins:obligee ; sh:minCount 1 ] .

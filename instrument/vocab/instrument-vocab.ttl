@@ -1,0 +1,10 @@
+# SPDX-License-Identifier: MPL-2.0
+
+@prefix ins:  <https://www.nebularis.org/neuro-semantic/lattice/instrument#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@base <https://www.nebularis.org/neuro-semantic/instrument-vocab> .
+
+<https://www.nebularis.org/neuro-semantic/instrument-vocab>
+	a owl:Ontology ;
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/instrument-vocab/0.0.1> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/instrument/0.0.1> .

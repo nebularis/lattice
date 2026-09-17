@@ -26,6 +26,7 @@ This directory holds the ADRs that govern LATTICE's substrate architecture. An A
 | [A-05](ADR-A05-compatibility-vocabulary.md) | Compatibility operation vocabulary | Accepted |
 | [A-06](ADR-A06-wildcard-semantics.md) | Wildcard semantics and limits | Accepted |
 | [A-07](ADR-A07-eligibility-authoring-direction.md) | Eligibility authoring direction and extraction contract | Accepted |
+| [A-07b](ADR-A07b-minimal-instrument-shape.md) | Minimal Instrument shape and versioning contract | Accepted |
 | [A-C1](ADR-AC1-applied-layer-theorem-restatement.md) | Applied-layer theorem restatement policy | Accepted |
 | [A-C2](ADR-AC2-clean-room-authoring-procedure.md) | Clean-room authoring procedure for substrate content | Accepted |
 

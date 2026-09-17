@@ -1,0 +1,8 @@
+# SPDX-License-Identifier: MPL-2.0
+
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix ins:  <https://www.nebularis.org/neuro-semantic/lattice/instrument#> .
+
+ins:NoMaterialisationRulesYet a sh:NodeShape ;
+	sh:targetClass ins:Element ;
+	sh:message "Instrument Gate 2.5 introduces structure and constraints only. No materialisation rules are defined at this stage." .

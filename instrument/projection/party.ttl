@@ -1,0 +1,17 @@
+# SPDX-License-Identifier: MPL-2.0
+
+@prefix ins:  <https://www.nebularis.org/neuro-semantic/lattice/instrument#> .
+@prefix pty:  <https://www.nebularis.org/neuro-semantic/lattice/party#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+ins:fulfilledBy
+	rdfs:range pty:ParticipationGroup ;
+	rdfs:comment "Links an obligation to the participation group fulfilling it." .
+
+ins:obligor
+	rdfs:range pty:RoleOccupancy ;
+	rdfs:comment "Role occupancy that owes performance of an obligation." .
+
+ins:obligee
+	rdfs:range pty:RoleOccupancy ;
+	rdfs:comment "Role occupancy to whom an obligation is owed." .

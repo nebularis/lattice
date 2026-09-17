@@ -28,8 +28,8 @@ This document records the checks the substrate is expected to satisfy, as they b
 
 | Check | What it verifies | Status |
 |---|---|---|
-| Disjointness | `ins:Element`/`Provision`/`Obligation`/`Qualifier` disjointness holds | Pending Gate 2.5 authoring |
-| Versioning/supersession | No in-place mutation of an authored Instrument node; every write produces a new version with a recomputed structural hash | Pending Gate 2.5 authoring |
+| Disjointness | `ins:Element`/`Provision`/`Obligation`/`Qualifier` disjointness holds | Satisfied by Gate 2.5 authoring (`instrument/spec/instrument.ttl`) |
+| Versioning/supersession | No in-place mutation of an authored Instrument node; every write produces a new version with a recomputed structural hash | Satisfied by Gate 2.5 authoring (`instrument/README.md`, `instrument/shapes/constraints.ttl`) |
 
 ## Gate 3 — Behaviour declaration model
 
