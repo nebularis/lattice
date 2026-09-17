@@ -1,0 +1,30 @@
+# SPDX-License-Identifier: CC-BY-SA-4.0
+
+@prefix ql: <http://semweb.mmlab.be/ns/ql#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix rml: <http://semweb.mmlab.be/ns/rml#> .
+@prefix rr: <http://www.w3.org/ns/r2rml#> .
+
+<http://example.org/rml/TM_Map_Loan> a rr:TriplesMap ;
+    rml:logicalSource [ rml:iterator "$" ;
+            rml:referenceFormulation ql:JSONPath ;
+            rml:source "loan.json" ] ;
+    rdfs:isDefinedBy <http://example.org/mapping#Map_Loan> ;
+    rr:predicateObjectMap [ rr:objectMap [ rr:joinCondition [ rr:child "loanId" ;
+                            rr:parent "loanId" ] ;
+                    rr:parentTriplesMap <http://example.org/rml/TM_Map_Principal> ] ;
+            rr:predicate <http://example.org/fin#principal> ] ;
+    rr:subjectMap [ rr:class <http://example.org/fin#Loan> ;
+            rr:template "http://example.org/fin/Loan/{loanId}" ;
+            rr:termType rr:IRI ] .
+
+<http://example.org/rml/TM_Map_Principal> a rr:TriplesMap ;
+    rml:logicalSource [ rml:iterator "$.loanId" ;
+            rml:referenceFormulation ql:JSONPath ;
+            rml:source "loan.json" ] ;
+    rdfs:isDefinedBy <http://example.org/mapping#Map_Principal> ;
+    rr:predicateObjectMap [ rr:objectMap [ rml:reference "principal" ;
+                    rr:termType rr:Literal ] ;
+            rr:predicate <https://www.nebularis.org/neuro-semantic/lattice/quantification#numericValue> ] ;
+    rr:subjectMap [ rr:template "http://example.org/fin/LoanPrincipal/{loanId}" ;
+            rr:termType rr:IRI ] .

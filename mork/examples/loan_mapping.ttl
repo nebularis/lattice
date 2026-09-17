@@ -1,0 +1,71 @@
+# SPDX-License-Identifier: CC-BY-SA-4.0
+
+@prefix mork: <http://www.nebularis.org/ontologies/Mork#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix qnt:  <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
+@prefix fin:  <http://example.org/fin#> .
+@prefix mm:   <http://example.org/mapping#> .
+
+# Run via the compiler in tools: 
+# python3 mork2rml.py loan_mapping_clean.ttl \
+#           --base-iri "http://example.org/fin/" \
+#           --rml-base "http://example.org/rml/" \
+#           --source "loan.json" > loan_mapping.rml
+
+# --- minimal qnt: property typing, so the compiler's object/data property
+#     heuristic (_is_object_property) classifies term types correctly ---
+qnt:numericValue a owl:DatatypeProperty .
+qnt:onSpace      a owl:ObjectProperty .
+qnt:inUnit       a owl:ObjectProperty .
+
+# --- consumer (fin:) bridging vocabulary: governed link from Loan into
+#     the qnt: substrate (this is NOT the flat encoding — see egress side) ---
+fin:Loan      a owl:Class .
+fin:principal a owl:ObjectProperty ; rdfs:domain fin:Loan ; rdfs:range qnt:Quantity .
+fin:LoanPrincipalSpace a qnt:ValueSpace .
+fin:USD a qnt:Unit .
+
+# --- MappingScheme + RepresentationScheme (JSON source) ---
+mm:MS a mork:MappingScheme .
+mm:Scheme_Loan_Source a mork:RepresentationScheme ; mork:format mork:JSON ; mork:identifier "loan.json" .
+mm:Concept_Loan a mork:DataConcept ;
+    mork:conceptScheme mm:MS ;
+    mork:representationScheme mm:Scheme_Loan_Source ;
+    mork:path "$" .
+
+# --- T-Box reference: fin:Loan already exists, no creation needed ---
+mm:Map_Loan_Class a mork:DataMapping ;
+    mork:mappingScheme mm:MS ;
+    mork:exactTBoxMatch fin:Loan .
+
+# --- Datum: individuate one Loan per source record ---
+mm:Map_Loan a mork:DataMapping, mork:Datum ;
+    mork:mappingScheme mm:MS ;
+    mork:mappingFor mm:Concept_Loan ;
+    mork:deferredMapping mm:Map_Loan_Class ;
+    mork:conceptName "Loan" ;
+    mork:dataRef "loanId" .
+    # Note: Map_Principal links back via broaderApplicative (P2) below;
+    # it is deliberately NOT also listed here via compositeNarrowerMapping (P1),
+    # since both rules firing for the same edge double-counts in-degree in the compiler's
+    # DependencyAnalyser._build_dependency_graph and produces a false cycle.
+
+# --- Contextual application: Loan --fin:principal--> qnt:Quantity ---
+mm:Map_Principal a mork:DataMapping ;
+    mork:mappingScheme mm:MS ;
+    mork:broaderApplicative mm:Map_Loan ;
+    mork:compositeBroaderMapping mm:Map_Loan ;
+    mork:inverseRBoxMatch fin:principal ;
+    mork:conceptName "LoanPrincipal" ;
+    mork:dataRef "loanId" ;
+    mork:compositeNarrowerMapping mm:Map_PrincipalValue .
+
+# --- R-Box property assertion: qnt:Quantity --qnt:numericValue--> literal ---
+mm:Map_PrincipalValue a mork:DataMapping ;
+    mork:mappingScheme mm:MS ;
+    mork:compositeBroaderMapping mm:Map_Principal ;
+    mork:exactRBoxMatch qnt:numericValue ;
+    mork:dataRef "principal" .
