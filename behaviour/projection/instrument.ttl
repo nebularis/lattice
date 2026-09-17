@@ -1,0 +1,9 @@
+# SPDX-License-Identifier: MPL-2.0
+
+@prefix bhv:  <https://www.nebularis.org/neuro-semantic/lattice/behaviour#> .
+@prefix ins:  <https://www.nebularis.org/neuro-semantic/lattice/instrument#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+bhv:targetsElement
+	rdfs:range ins:Element ;
+	rdfs:comment "Targets an Instrument element for effect application." .

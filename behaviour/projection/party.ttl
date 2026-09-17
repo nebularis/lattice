@@ -1,0 +1,13 @@
+# SPDX-License-Identifier: MPL-2.0
+
+@prefix bhv:  <https://www.nebularis.org/neuro-semantic/lattice/behaviour#> .
+@prefix pty:  <https://www.nebularis.org/neuro-semantic/lattice/party#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+bhv:targetsOccupancy
+	rdfs:range pty:RoleOccupancy ;
+	rdfs:comment "Targets a Party role occupancy for effect application." .
+
+bhv:forSubject
+	rdfs:range pty:RoleOccupancy ;
+	rdfs:comment "Subject occupancy whose state is being recorded." .

@@ -1,0 +1,9 @@
+# SPDX-License-Identifier: MPL-2.0
+
+@prefix bhv:  <https://www.nebularis.org/neuro-semantic/lattice/behaviour#> .
+@prefix elg:  <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+bhv:requiresEligibility
+	rdfs:range elg:AdmissionProfile ;
+	rdfs:comment "Binds a Behaviour guard to the Eligibility profile it requires." .

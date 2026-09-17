@@ -1,0 +1,9 @@
+# SPDX-License-Identifier: MPL-2.0
+
+@prefix bhv: <https://www.nebularis.org/neuro-semantic/lattice/behaviour#> .
+@prefix ex:  <https://example.org/lattice/behaviour/execution/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+ex:manifest-gate3
+	a bhv:OperationalProfile ;
+	rdfs:comment "Gate 3 execution manifest placeholder for Behaviour operational profiles." .

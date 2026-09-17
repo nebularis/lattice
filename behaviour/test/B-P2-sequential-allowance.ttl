@@ -1,0 +1,42 @@
+# SPDX-License-Identifier: MPL-2.0
+
+@prefix bhv: <https://www.nebularis.org/neuro-semantic/lattice/behaviour#> .
+@prefix qnt: <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex:  <https://example.org/lattice/behaviour/test/> .
+
+ex:space
+    a qnt:ValueSpace ;
+    qnt:spaceKey "bp2-space" ;
+    qnt:orderKind qnt:TotalOrder ;
+    qnt:densityKind qnt:Discrete ;
+    qnt:spaceHash "bp2-space-v1" .
+
+ex:reset a qnt:Recurrence .
+
+ex:allowance
+    a bhv:AllowanceDefinition ;
+    bhv:allowanceSpace ex:space ;
+    bhv:absorptionPolicy bhv:Sequential ;
+    bhv:resetRecurrence ex:reset .
+
+ex:balance
+    a qnt:Quantity ;
+    qnt:onSpace ex:space ;
+    qnt:numericValue "80"^^xsd:decimal .
+
+ex:draw
+    a qnt:Quantity ;
+    qnt:onSpace ex:space ;
+    qnt:numericValue "25"^^xsd:decimal .
+
+ex:account
+    a bhv:AllowanceAccount ;
+    bhv:tracksAllowance ex:allowance ;
+    bhv:availableBalance ex:balance .
+
+ex:effect
+    a bhv:EffectDefinition ;
+    bhv:targetKind bhv:AllowanceTarget ;
+    bhv:usesAllowance ex:allowance ;
+    bhv:consumesAmount ex:draw .

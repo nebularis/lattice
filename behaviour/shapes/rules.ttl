@@ -1,0 +1,20 @@
+# SPDX-License-Identifier: MPL-2.0
+
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix bhv:  <https://www.nebularis.org/neuro-semantic/lattice/behaviour#> .
+
+bhv:MaterialiseExecutionEffectLink a sh:NodeShape ;
+	sh:targetClass bhv:TransitionExecution ;
+	sh:rule [
+		a sh:SPARQLRule ;
+		sh:construct """
+			PREFIX bhv: <https://www.nebularis.org/neuro-semantic/lattice/behaviour#>
+			CONSTRUCT {
+				$this bhv:appliesEffect ?effect .
+			}
+			WHERE {
+				$this bhv:executedTransition ?transition .
+				?transition bhv:hasEffect ?effect .
+			}
+		"""
+	] .

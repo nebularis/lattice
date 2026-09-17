@@ -1,0 +1,55 @@
+# SPDX-License-Identifier: MPL-2.0
+
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix bhv:  <https://www.nebularis.org/neuro-semantic/lattice/behaviour#> .
+
+bhv:PriorityOrderedNeedsPriority a sh:NodeShape ;
+	sh:targetClass bhv:TransitionDefinition ;
+	sh:sparql [
+		sh:message "PriorityOrdered transitions must declare bhv:priority." ;
+		sh:select """
+			PREFIX bhv: <https://www.nebularis.org/neuro-semantic/lattice/behaviour#>
+			SELECT $this WHERE {
+				$this bhv:selectionPolicy bhv:PriorityOrdered .
+				FILTER NOT EXISTS { $this bhv:priority ?p }
+			}
+		"""
+	] .
+
+bhv:SequentialOnlyAtGate3 a sh:NodeShape ;
+	sh:targetClass bhv:AllowanceDefinition ;
+	sh:sparql [
+		sh:message "Gate 3 permits bhv:Sequential absorption only. bhv:Proportional remains deferred." ;
+		sh:select """
+			PREFIX bhv: <https://www.nebularis.org/neuro-semantic/lattice/behaviour#>
+			SELECT $this WHERE {
+				$this bhv:absorptionPolicy bhv:Proportional .
+			}
+		"""
+	] .
+
+bhv:HypotheticalStateIsolation a sh:NodeShape ;
+	sh:targetClass bhv:StateOccupancy ;
+	sh:property [ sh:path bhv:isHypothetical ; sh:minCount 1 ; sh:maxCount 1 ] .
+
+bhv:SingleCurrentOccupancyPerStateSpace a sh:NodeShape ;
+	sh:targetClass bhv:StateOccupancy ;
+	sh:sparql [
+		sh:message "A non-hypothetical subject may not have more than one current state occupancy in the same state space." ;
+		sh:select """
+			PREFIX bhv: <https://www.nebularis.org/neuro-semantic/lattice/behaviour#>
+			SELECT $this WHERE {
+				$this bhv:forSubject ?subject ;
+					  bhv:occupiesState ?state1 ;
+					  bhv:isHypothetical false ;
+					  bhv:isCurrent true .
+				?state1 bhv:inStateSpace ?space .
+				?other bhv:forSubject ?subject ;
+					   bhv:occupiesState ?state2 ;
+					   bhv:isHypothetical false ;
+					   bhv:isCurrent true .
+				?state2 bhv:inStateSpace ?space .
+				FILTER (?other != $this)
+			}
+		"""
+	] .

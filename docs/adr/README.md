@@ -27,6 +27,10 @@ This directory holds the ADRs that govern LATTICE's substrate architecture. An A
 | [A-06](ADR-A06-wildcard-semantics.md) | Wildcard semantics and limits | Accepted |
 | [A-07](ADR-A07-eligibility-authoring-direction.md) | Eligibility authoring direction and extraction contract | Accepted |
 | [A-07b](ADR-A07b-minimal-instrument-shape.md) | Minimal Instrument shape and versioning contract | Accepted |
+| [A-08](ADR-A08-behaviour-four-tier-model.md) | Behaviour four-tier model | Accepted |
+| [A-09](ADR-A09-behaviour-selection-policy.md) | Behaviour selection policy | Accepted |
+| [A-10](ADR-A10-behaviour-activation-policy.md) | Behaviour activation policy | Accepted |
+| [A-11](ADR-A11-effect-and-target-binding.md) | Effect payload and target binding contract | Accepted |
 | [A-C1](ADR-AC1-applied-layer-theorem-restatement.md) | Applied-layer theorem restatement policy | Accepted |
 | [A-C2](ADR-AC2-clean-room-authoring-procedure.md) | Clean-room authoring procedure for substrate content | Accepted |
 

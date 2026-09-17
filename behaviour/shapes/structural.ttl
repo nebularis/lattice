@@ -1,0 +1,23 @@
+# SPDX-License-Identifier: MPL-2.0
+
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix bhv:  <https://www.nebularis.org/neuro-semantic/lattice/behaviour#> .
+
+bhv:TransitionDefinitionShape a sh:NodeShape ;
+	sh:targetClass bhv:TransitionDefinition ;
+	sh:property [ sh:path bhv:fromState ; sh:minCount 1 ; sh:maxCount 1 ] ;
+	sh:property [ sh:path bhv:toState ; sh:minCount 1 ; sh:maxCount 1 ] ;
+	sh:property [ sh:path bhv:hasTrigger ; sh:minCount 1 ] ;
+	sh:property [ sh:path bhv:hasEffect ; sh:minCount 1 ] ;
+	sh:property [ sh:path bhv:selectionPolicy ; sh:minCount 1 ; sh:maxCount 1 ] ;
+	sh:property [ sh:path bhv:activationPolicy ; sh:minCount 1 ; sh:maxCount 1 ] .
+
+bhv:AllowanceDefinitionShape a sh:NodeShape ;
+	sh:targetClass bhv:AllowanceDefinition ;
+	sh:property [ sh:path bhv:allowanceSpace ; sh:minCount 1 ; sh:maxCount 1 ] ;
+	sh:property [ sh:path bhv:absorptionPolicy ; sh:minCount 1 ; sh:maxCount 1 ] .
+
+bhv:AllowanceAccountShape a sh:NodeShape ;
+	sh:targetClass bhv:AllowanceAccount ;
+	sh:property [ sh:path bhv:tracksAllowance ; sh:minCount 1 ; sh:maxCount 1 ] ;
+	sh:property [ sh:path bhv:availableBalance ; sh:minCount 1 ; sh:maxCount 1 ] .

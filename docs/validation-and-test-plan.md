@@ -35,11 +35,11 @@ This document records the checks the substrate is expected to satisfy, as they b
 
 | Check | What it verifies | Status |
 |---|---|---|
-| Tier separation | No class serves two of declaration/occurrence/execution/state-record | Pending Gate 3 authoring |
-| Effect payload completeness | Every effect operation has a typed payload; every target binding resolves | Pending Gate 3 authoring |
-| Extent scope | `Sequential` absorption's conservation law (`total absorbed = min(demand, Σ drawable)`) discharged; `Proportional` absorption is declared-and-unusable, not silently absent | Pending Gate 3 authoring |
-| Occupancy invariants | Exactly one current occupancy per participating space; no overlapping non-hypothetical occupancies | Pending Gate 3 authoring |
-| Hypothetical isolation | Hypothetical executions write to a separate graph role (ADR-A13); no persisted current occupancy | Pending Gate 3 authoring |
+| Tier separation | No class serves two of declaration/occurrence/execution/state-record | Satisfied by Gate 3 authoring (`ADR-A08`, `behaviour/spec/behaviour.ttl`) |
+| Effect payload completeness | Every effect operation has a typed payload; every target binding resolves | Satisfied by Gate 3 authoring (`ADR-A11`, `behaviour/spec/behaviour.ttl`, `behaviour/projection/*.ttl`) |
+| Extent scope | `Sequential` absorption's conservation law (`total absorbed = min(demand, Σ drawable)`) discharged; `Proportional` absorption is declared-and-unusable, not silently absent | Partially satisfied by Gate 3 authoring. `Sequential` is modelled and fixture-backed in `behaviour/test/B-P2-sequential-allowance.ttl`; `Proportional` is declared and rejected by `behaviour/shapes/constraints.ttl`. Formal conservation-law discharge remains for Gate 4/5. |
+| Occupancy invariants | Exactly one current occupancy per participating space; no overlapping non-hypothetical occupancies | Satisfied at declaration level by Gate 3 constraints (`behaviour/shapes/constraints.ttl`). Full temporal-overlap discharge remains for executable profiles. |
+| Hypothetical isolation | Hypothetical executions write to a separate graph role (ADR-A13); no persisted current occupancy | Satisfied at model level by Gate 3 authoring (`ADR-A13`, `behaviour/spec/behaviour.ttl`, `behaviour/shapes/constraints.ttl`) |
 
 ## Gate 4 — Derivation and validation
 

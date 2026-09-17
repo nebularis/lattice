@@ -1,0 +1,33 @@
+# SPDX-License-Identifier: MPL-2.0
+
+@prefix bhv:  <https://www.nebularis.org/neuro-semantic/lattice/behaviour#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@base <https://www.nebularis.org/neuro-semantic/behaviour-vocab> .
+
+<https://www.nebularis.org/neuro-semantic/behaviour-vocab>
+	a owl:Ontology ;
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/behaviour-vocab/0.0.1> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/behaviour/0.0.1> .
+
+bhv:ExternalStimulus a bhv:TriggerKind .
+bhv:ScheduledTrigger a bhv:TriggerKind .
+bhv:DerivedTrigger a bhv:TriggerKind .
+
+bhv:SingleMatch a bhv:SelectionPolicy .
+bhv:AllMatches a bhv:SelectionPolicy .
+bhv:PriorityOrdered a bhv:SelectionPolicy .
+
+bhv:ImmediateActivation a bhv:ActivationPolicy .
+bhv:DeferredActivation a bhv:ActivationPolicy .
+bhv:ManualActivation a bhv:ActivationPolicy .
+
+bhv:InstrumentTarget a bhv:TargetKind .
+bhv:PartyTarget a bhv:TargetKind .
+bhv:AllowanceTarget a bhv:TargetKind .
+
+bhv:Sequential a bhv:AbsorptionPolicy .
+bhv:Proportional a bhv:AbsorptionPolicy .
+
+bhv:B-P1 a bhv:OperationalProfile ; rdfs:comment "Direct transition-evaluation profile" .
+bhv:B-P2 a bhv:OperationalProfile ; rdfs:comment "Sequential allowance-evaluation profile" .

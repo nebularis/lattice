@@ -1,0 +1,21 @@
+# SPDX-License-Identifier: MPL-2.0
+
+@prefix bhv:  <https://www.nebularis.org/neuro-semantic/lattice/behaviour#> .
+@prefix qnt:  <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+bhv:allowanceSpace
+    rdfs:range qnt:ValueSpace ;
+    rdfs:comment "Value space governing a Behaviour allowance." .
+
+bhv:resetRecurrence
+    rdfs:range qnt:Recurrence ;
+    rdfs:comment "Recurrence governing allowance reset cadence." .
+
+bhv:consumesAmount
+    rdfs:range qnt:Quantity ;
+    rdfs:comment "Quantity consumed by an allowance effect." .
+
+bhv:availableBalance
+    rdfs:range qnt:Quantity ;
+    rdfs:comment "Current available balance for an allowance account." .

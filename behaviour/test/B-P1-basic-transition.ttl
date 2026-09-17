@@ -1,0 +1,33 @@
+# SPDX-License-Identifier: MPL-2.0
+
+@prefix bhv: <https://www.nebularis.org/neuro-semantic/lattice/behaviour#> .
+@prefix elg: <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
+@prefix ins: <https://www.nebularis.org/neuro-semantic/lattice/instrument#> .
+@prefix ex:  <https://example.org/lattice/behaviour/test/> .
+
+ex:space a bhv:StateSpace .
+ex:start a bhv:State ; bhv:inStateSpace ex:space .
+ex:end a bhv:State ; bhv:inStateSpace ex:space .
+
+ex:trigger a bhv:TriggerDefinition ; bhv:triggerKind bhv:ExternalStimulus .
+ex:guard a bhv:GuardDefinition ; bhv:requiresEligibility ex:profile .
+ex:effect a bhv:EffectDefinition ; bhv:targetKind bhv:InstrumentTarget ; bhv:targetsElement ex:obligation .
+
+ex:transition a bhv:TransitionDefinition ;
+    bhv:fromState ex:start ;
+    bhv:toState ex:end ;
+    bhv:hasTrigger ex:trigger ;
+    bhv:hasGuard ex:guard ;
+    bhv:hasEffect ex:effect ;
+    bhv:selectionPolicy bhv:PriorityOrdered ;
+    bhv:activationPolicy bhv:ImmediateActivation ;
+    bhv:priority 1 .
+
+ex:stimulus a bhv:Stimulus .
+ex:execution a bhv:TransitionExecution ;
+    bhv:executedTransition ex:transition ;
+    bhv:causedByStimulus ex:stimulus ;
+    bhv:usesProfile bhv:B-P1 .
+
+ex:profile a elg:AdmissionProfile .
+ex:obligation a ins:Obligation .
