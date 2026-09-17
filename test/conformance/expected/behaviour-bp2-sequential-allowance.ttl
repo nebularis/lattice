@@ -1,0 +1,13 @@
+# SPDX-License-Identifier: MPL-2.0
+
+@prefix bhv: <https://www.nebularis.org/neuro-semantic/lattice/behaviour#> .
+@prefix ex:  <https://example.org/lattice/test/conformance/> .
+
+ex:account
+    ex:openingBalance "80" ;
+    ex:consumedAmount "25" ;
+    ex:expectedRemainingBalance "55" ;
+    bhv:tracksAllowance ex:allowance .
+
+ex:allowance
+    bhv:absorptionPolicy bhv:Sequential .

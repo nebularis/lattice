@@ -1,0 +1,12 @@
+# SPDX-License-Identifier: MPL-2.0
+
+@prefix bhv: <https://www.nebularis.org/neuro-semantic/lattice/behaviour#> .
+@prefix qnt: <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
+@prefix ex:  <https://example.org/lattice/test/gate4/> .
+
+ex:space a qnt:ValueSpace .
+
+ex:broken-allowance
+    a bhv:AllowanceDefinition ;
+    bhv:allowanceSpace ex:space ;
+    bhv:absorptionPolicy bhv:Proportional .

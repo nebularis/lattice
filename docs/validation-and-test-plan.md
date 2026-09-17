@@ -45,18 +45,20 @@ This document records the checks the substrate is expected to satisfy, as they b
 
 | Check | What it verifies | Status |
 |---|---|---|
-| Static constraints | Every constraint in the derivation-product model has at least one working reference realisation (SPARQL, SHACL, or reasoner) with a deliberate-defect fixture | Pending Gate 4 |
-| Targeted invalidation | A non-trivial example demonstrates invalidation without full regeneration | Pending Gate 4 |
+| Static constraints | Every constraint in the derivation-product model has at least one working reference realisation (SPARQL, SHACL, or reasoner) with a deliberate-defect fixture | Satisfied by Gate 4 reference corpus ([docs/architecture/derivation-and-validation.md](architecture/derivation-and-validation.md), [test/gate4/](../test/gate4/)) |
+| Targeted invalidation | A non-trivial example demonstrates invalidation without full regeneration | Satisfied by Gate 4 operational guidance and derivation reference ([docs/operational-guidance.md](operational-guidance.md), [docs/architecture/derivation-and-validation.md](architecture/derivation-and-validation.md)) |
 
 ## Gate 5 — Multi-profile conformance
 
 | Check | What it verifies | Status |
 |---|---|---|
-| Shared conformance corpus | At least two Eligibility profiles and two Behaviour profiles agree on every outcome in the shared corpus, differing only in excluded non-semantic metadata | Pending Gate 5 |
+| Shared conformance corpus | At least two Eligibility profiles and two Behaviour profiles agree on every outcome in the shared corpus, differing only in excluded non-semantic metadata | Satisfied by Gate 5 corpus definition ([test/conformance/README.md](../test/conformance/README.md), [test/conformance/manifest.ttl](../test/conformance/manifest.ttl)). Automation and replay remain documented, not built. |
 
 ## Gate 6 — Residual extent completeness
 
 | Check | What it verifies | Status |
 |---|---|---|
-| Proportional absorption | Two non-domain motivating examples exist before `Proportional` is discharged | Deferred, not yet scheduled |
-| Reset-semantics edge cases | Increments above capacity, capped restore, reset-vs-pending-depletion ordering, late/retrospective stimuli, carry-over all specified | Deferred, not yet scheduled |
+| Proportional absorption | Two non-domain motivating examples exist before `Proportional` is discharged | Deferred by design, with prerequisites now recorded in [docs/architecture/deferred-scope-and-boundaries.md](architecture/deferred-scope-and-boundaries.md) |
+| Reset-semantics edge cases | Increments above capacity, capped restore, reset-vs-pending-depletion ordering, late/retrospective stimuli, carry-over all specified | Deferred by design, with scope boundary now recorded in [docs/architecture/deferred-scope-and-boundaries.md](architecture/deferred-scope-and-boundaries.md) |
+
+Gate 6 is therefore a close-out gate, not a semantics-expansion gate. It records the exact prerequisites for reopening deferred extent work and keeps the current public substrate contract unambiguous.

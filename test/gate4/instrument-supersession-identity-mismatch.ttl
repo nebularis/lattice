@@ -1,0 +1,17 @@
+# SPDX-License-Identifier: MPL-2.0
+
+@prefix ins: <https://www.nebularis.org/neuro-semantic/lattice/instrument#> .
+@prefix fnd: <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix ex:  <https://example.org/lattice/test/gate4/> .
+
+ex:identity-a a fnd:PersistentIdentity .
+ex:identity-b a fnd:PersistentIdentity .
+
+ex:old-obligation
+    a ins:Obligation ;
+    fnd:hasIdentity ex:identity-a ;
+    fnd:supersededBy ex:new-obligation .
+
+ex:new-obligation
+    a ins:Obligation ;
+    fnd:hasIdentity ex:identity-b .

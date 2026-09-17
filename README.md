@@ -29,7 +29,7 @@ LATTICE is organised as seven layers, each an independent OWL/SHACL/SKOS module:
 | **Quantification** | Substrate | Declared value spaces, quantities, ordered values, bounds, ranges, conversion, granularity, and recurrence — the mechanism behind any magnitude, interval, or ordinal comparison the other layers need. |
 | **Party** | Substrate | 	Actors, the roles they occupy, and the direction and composition of obligation between them (e.g., modelling independently capped shares, joint obligation with a right of recourse, delegated accountability, or contingent role occupancy). |
 | **Eligibility** | Substrate | admissibility criteria (conditions, unresolved questions, and decisions). |
-| **Behaviour** | Substrate | State, transition, trigger, guard, and effect. This core mechanism doesn't presuppose any particular target domain, but see the note on `behaviour/projection/instrument.ttl` below. |
+| **Behaviour** | Substrate | State, transition, trigger, and effect, including a usable `Sequential` allowance profile. `Proportional` allowance semantics and reset edge cases remain explicitly deferred. |
 | **Instrument** | Applied domain ontology | A primary domain ontology built on the substrates, giving the generic shape of a governing document, e.g., Provision → Obligation → Qualifier. |
 
 Instrument is a first layer building on the substrates. A different applied domain ontology (e.g., a device's operational lifecycle, access-control entitlement system, asset maintenance schedule, etc) could sit atop Instrument or even replace it, composing with the same Party, Eligibility, and Behaviour mechanisms through its own `projection/` contracts, without touching any of the core specifications.
@@ -108,7 +108,9 @@ lattice/
 ## How the layers interact
 
 ```
-foundationquantification
+foundation
+    └── vocabulary
+            └── quantification
                     └── party
                             ├── eligibility
                             │       └── instrument
@@ -116,8 +118,7 @@ foundationquantification
 
 mork — targets any layer
 spc  — standalone today; not yet imported by, or importing, any layer above
-mork — targets any layer
-spc  - leverages domain ontology axioms to form session types
+spc  — leverages domain ontology axioms to form session types once a separate integration effort defines the needed contracts
 ```
 
 A few commmon compositions are worth noting:

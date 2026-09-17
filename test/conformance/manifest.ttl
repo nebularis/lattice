@@ -1,0 +1,30 @@
+# SPDX-License-Identifier: MPL-2.0
+
+@prefix elg: <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
+@prefix bhv: <https://www.nebularis.org/neuro-semantic/lattice/behaviour#> .
+@prefix ex:  <https://example.org/lattice/test/conformance/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+ex:eligibility-e1-undetermined a ex:ConformanceCase ;
+    rdfs:label "Eligibility E1 undetermined" ;
+    ex:usesProfile elg:E1 ;
+    ex:caseFile "cases/eligibility-e1-undetermined.ttl" ;
+    ex:expectedFile "expected/eligibility-e1-undetermined.ttl" .
+
+ex:eligibility-e2-contained a ex:ConformanceCase ;
+    rdfs:label "Eligibility E2 contained" ;
+    ex:usesProfile elg:E2 ;
+    ex:caseFile "cases/eligibility-e2-contained.ttl" ;
+    ex:expectedFile "expected/eligibility-e2-contained.ttl" .
+
+ex:behaviour-bp1-transition a ex:ConformanceCase ;
+    rdfs:label "Behaviour B-P1 transition" ;
+    ex:usesProfile bhv:B-P1 ;
+    ex:caseFile "cases/behaviour-bp1-transition.ttl" ;
+    ex:expectedFile "expected/behaviour-bp1-transition.ttl" .
+
+ex:behaviour-bp2-sequential-allowance a ex:ConformanceCase ;
+    rdfs:label "Behaviour B-P2 sequential allowance" ;
+    ex:usesProfile bhv:B-P2 ;
+    ex:caseFile "cases/behaviour-bp2-sequential-allowance.ttl" ;
+    ex:expectedFile "expected/behaviour-bp2-sequential-allowance.ttl" .

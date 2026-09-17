@@ -1,0 +1,7 @@
+# SPDX-License-Identifier: MPL-2.0
+PREFIX bhv: <https://www.nebularis.org/neuro-semantic/lattice/behaviour#>
+
+SELECT ?allowance WHERE {
+    ?allowance a bhv:AllowanceDefinition ;
+        bhv:absorptionPolicy bhv:Proportional .
+}

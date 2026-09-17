@@ -177,6 +177,8 @@ Gate 3 includes the allowance extent profile directly against Quantification.
 - `bhv:Sequential` absorption is supported now.
 - `bhv:Proportional` is declared but not permitted by Gate 3 constraints.
 
+Gate 6 does not widen that surface. `bhv:Proportional` remains declared-and-unusable until the repository carries two non-domain motivating examples, an explicit proportional conservation law, and cross-profile conformance coverage. Reset edge cases remain deferred for the same reason: they need explicit law statements and fixtures, not inferred behaviour.
+
 State occupancy records distinguish hypothetical from current execution state through `bhv:isHypothetical` and `bhv:isCurrent`. A non-hypothetical subject may have at most one current occupancy in a given state space.
 
 ## 8. Shapes

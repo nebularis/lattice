@@ -1,0 +1,8 @@
+# SPDX-License-Identifier: MPL-2.0
+PREFIX bhv: <https://www.nebularis.org/neuro-semantic/lattice/behaviour#>
+
+SELECT ?transition WHERE {
+    ?transition a bhv:TransitionDefinition ;
+        bhv:selectionPolicy bhv:PriorityOrdered .
+    FILTER NOT EXISTS { ?transition bhv:priority ?priority }
+}

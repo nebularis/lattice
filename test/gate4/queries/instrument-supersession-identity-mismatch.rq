@@ -1,0 +1,12 @@
+# SPDX-License-Identifier: MPL-2.0
+PREFIX ins: <https://www.nebularis.org/neuro-semantic/lattice/instrument#>
+PREFIX fnd: <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+
+SELECT ?old ?new ?id1 ?id2 WHERE {
+    ?old a ins:Element ;
+        fnd:hasIdentity ?id1 ;
+        fnd:supersededBy ?new .
+    ?new a ins:Element ;
+        fnd:hasIdentity ?id2 .
+    FILTER (?id1 != ?id2)
+}

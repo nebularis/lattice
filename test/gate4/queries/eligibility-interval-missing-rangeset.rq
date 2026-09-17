@@ -1,0 +1,8 @@
+# SPDX-License-Identifier: MPL-2.0
+PREFIX elg: <https://www.nebularis.org/neuro-semantic/lattice/eligibility#>
+
+SELECT ?condition WHERE {
+    ?condition a elg:IntervalCondition ;
+        elg:matchStrategy elg:IntervalContainment .
+    FILTER NOT EXISTS { ?condition elg:requiredRangeSet ?rangeSet }
+}

@@ -1,0 +1,19 @@
+# SPDX-License-Identifier: MPL-2.0
+
+@prefix bhv: <https://www.nebularis.org/neuro-semantic/lattice/behaviour#> .
+@prefix ex:  <https://example.org/lattice/test/gate4/> .
+
+ex:space a bhv:StateSpace .
+ex:from a bhv:State ; bhv:inStateSpace ex:space .
+ex:to a bhv:State ; bhv:inStateSpace ex:space .
+ex:trigger a bhv:TriggerDefinition ; bhv:triggerKind bhv:ExternalStimulus .
+ex:effect a bhv:EffectDefinition ; bhv:targetKind bhv:PartyTarget .
+
+ex:broken-priority-transition
+    a bhv:TransitionDefinition ;
+    bhv:fromState ex:from ;
+    bhv:toState ex:to ;
+    bhv:hasTrigger ex:trigger ;
+    bhv:hasEffect ex:effect ;
+    bhv:selectionPolicy bhv:PriorityOrdered ;
+    bhv:activationPolicy bhv:ImmediateActivation .

@@ -1,0 +1,9 @@
+# SPDX-License-Identifier: MPL-2.0
+
+@prefix elg: <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
+@prefix ex:  <https://example.org/lattice/test/conformance/> .
+
+ex:decision-e1
+    elg:forProfile ex:profile-e1 ;
+    elg:hasQuestion ex:question-e1 ;
+    elg:decisionValue elg:Undetermined .

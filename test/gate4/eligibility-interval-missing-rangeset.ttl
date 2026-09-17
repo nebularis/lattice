@@ -1,0 +1,10 @@
+# SPDX-License-Identifier: MPL-2.0
+
+@prefix elg: <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
+@prefix ex:  <https://example.org/lattice/test/gate4/> .
+
+ex:broken-interval-condition
+    a elg:IntervalCondition ;
+    elg:matchStrategy elg:IntervalContainment ;
+    elg:compatibilityOperation elg:AllRequired ;
+    elg:wildcardSemantics elg:NoWildcard .

@@ -1,0 +1,28 @@
+# SPDX-License-Identifier: MPL-2.0
+
+@prefix elg: <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
+@prefix ex:  <https://example.org/lattice/test/conformance/> .
+
+ex:condition-e1
+    a elg:ExactCondition ;
+    elg:matchStrategy elg:ExactMatch ;
+    elg:compatibilityOperation elg:AllRequired ;
+    elg:wildcardSemantics elg:NoWildcard .
+
+ex:profile-e1
+    a elg:AdmissionProfile ;
+    elg:hasCondition ex:condition-e1 ;
+    elg:matchStrategy elg:SetMembership ;
+    elg:compatibilityOperation elg:AllRequired ;
+    elg:wildcardSemantics elg:NoWildcard .
+
+ex:question-e1
+    a elg:Question ;
+    elg:forCondition ex:condition-e1 .
+
+ex:decision-e1
+    a elg:EligibilityDecision ;
+    elg:forProfile ex:profile-e1 ;
+    elg:hasQuestion ex:question-e1 ;
+    elg:decisionValue elg:Undetermined ;
+    elg:usesOperationalProfile elg:E1 .
