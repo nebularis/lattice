@@ -1,0 +1,64 @@
+# SPDX-License-Identifier: MPL-2.0
+
+@prefix elg: <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
+@prefix qnt: <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex:  <https://example.org/lattice/eligibility/test/> .
+
+ex:value-space
+    a qnt:ValueSpace ;
+    qnt:spaceKey "score-space" ;
+    qnt:orderKind qnt:TotalOrder ;
+    qnt:densityKind qnt:Discrete ;
+    qnt:spaceHash "score-space-v1" .
+
+ex:lb-value a qnt:Quantity ; qnt:onSpace ex:value-space ; qnt:numericValue "650"^^xsd:decimal .
+ex:ub-value a qnt:Quantity ; qnt:onSpace ex:value-space ; qnt:numericValue "900"^^xsd:decimal .
+
+ex:lb a qnt:Bound ;
+    qnt:onSpace ex:value-space ;
+    qnt:boundValue ex:lb-value ;
+    qnt:boundSense qnt:Lower ;
+    qnt:boundClosure qnt:Closed .
+
+ex:ub a qnt:Bound ;
+    qnt:onSpace ex:value-space ;
+    qnt:boundValue ex:ub-value ;
+    qnt:boundSense qnt:Upper ;
+    qnt:boundClosure qnt:Closed .
+
+ex:req-range a qnt:Range ;
+    qnt:onSpace ex:value-space ;
+    qnt:lowerBound ex:lb ;
+    qnt:upperBound ex:ub ;
+    qnt:hasBound ex:lb, ex:ub .
+
+ex:req-set a qnt:RangeSet ;
+    qnt:onSpace ex:value-space ;
+    qnt:hasRange ex:req-range .
+
+ex:condition-e2
+    a elg:IntervalCondition ;
+    elg:requiredRangeSet ex:req-set ;
+    elg:matchStrategy elg:IntervalContainment ;
+    elg:compatibilityOperation elg:AllRequired ;
+    elg:wildcardSemantics elg:NoWildcard .
+
+ex:profile-e2
+    a elg:AdmissionProfile ;
+    elg:hasCondition ex:condition-e2 ;
+    elg:matchStrategy elg:SetMembership ;
+    elg:compatibilityOperation elg:AllRequired ;
+    elg:wildcardSemantics elg:NoWildcard .
+
+ex:question-e2
+    a elg:Question ;
+    elg:forCondition ex:condition-e2 ;
+    elg:candidateRangeSet ex:req-set .
+
+ex:decision-e2
+    a elg:EligibilityDecision ;
+    elg:forProfile ex:profile-e2 ;
+    elg:hasQuestion ex:question-e2 ;
+    elg:decisionValue elg:Permitted ;
+    elg:usesOperationalProfile elg:E2 .

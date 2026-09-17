@@ -1,0 +1,21 @@
+# SPDX-License-Identifier: MPL-2.0
+
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix elg:  <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
+
+elg:ConditionShape a sh:NodeShape ;
+	sh:targetClass elg:Condition ;
+	sh:property [ sh:path elg:matchStrategy ; sh:minCount 1 ; sh:maxCount 1 ] ;
+	sh:property [ sh:path elg:compatibilityOperation ; sh:minCount 1 ; sh:maxCount 1 ] ;
+	sh:property [ sh:path elg:wildcardSemantics ; sh:minCount 1 ; sh:maxCount 1 ] .
+
+elg:AdmissionProfileShape a sh:NodeShape ;
+	sh:targetClass elg:AdmissionProfile ;
+	sh:property [ sh:path elg:hasCondition ; sh:minCount 1 ] .
+
+elg:EligibilityDecisionShape a sh:NodeShape ;
+	sh:targetClass elg:EligibilityDecision ;
+	sh:property [ sh:path elg:forProfile ; sh:minCount 1 ; sh:maxCount 1 ] ;
+	sh:property [ sh:path elg:hasQuestion ; sh:minCount 1 ] ;
+	sh:property [ sh:path elg:decisionValue ; sh:minCount 1 ; sh:maxCount 1 ] ;
+	sh:property [ sh:path elg:usesOperationalProfile ; sh:minCount 1 ; sh:maxCount 1 ] .

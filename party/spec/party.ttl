@@ -10,7 +10,8 @@
 
 <https://www.nebularis.org/neuro-semantic/party> rdf:type owl:Ontology ;
                                                   owl:versionIRI <https://www.nebularis.org/neuro-semantic/party/0.0.3> ;
-                                                  owl:imports <https://www.nebularis.org/neuro-semantic/foundation/0.0.7> .
+                                                  owl:imports <https://www.nebularis.org/neuro-semantic/foundation/0.0.7> ,
+                                                              <https://www.nebularis.org/neuro-semantic/quantification/0.0.1> .
 
 #################################################################
 #    Object Properties

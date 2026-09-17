@@ -1,0 +1,33 @@
+# SPDX-License-Identifier: MPL-2.0
+
+@prefix elg: <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
+@prefix qnt: <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
+@prefix ex:  <https://example.org/lattice/eligibility/> .
+
+ex:exact-condition
+    a elg:ExactCondition ;
+    elg:matchStrategy elg:ExactMatch ;
+    elg:compatibilityOperation elg:AllRequired ;
+    elg:wildcardSemantics elg:NoWildcard .
+
+ex:set-condition
+    a elg:SetMembershipCondition ;
+    elg:matchStrategy elg:SetMembership ;
+    elg:compatibilityOperation elg:AnySufficient ;
+    elg:wildcardSemantics elg:NoWildcard .
+
+ex:interval-condition
+    a elg:IntervalCondition ;
+    elg:matchStrategy elg:IntervalContainment ;
+    elg:compatibilityOperation elg:DimensionConsistent ;
+    elg:wildcardSemantics elg:NoWildcard ;
+    elg:requiredRangeSet ex:allowed-band .
+
+ex:allowed-band
+    a qnt:RangeSet .
+
+ex:wildcard-condition
+    a elg:WildcardCondition ;
+    elg:matchStrategy elg:Wildcard ;
+    elg:compatibilityOperation elg:AnySufficient ;
+    elg:wildcardSemantics elg:SingleDimensionWildcard .

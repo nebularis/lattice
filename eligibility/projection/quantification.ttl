@@ -1,0 +1,17 @@
+# SPDX-License-Identifier: MPL-2.0
+
+@prefix elg:  <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
+@prefix qnt:  <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+elg:requiredRangeSet
+    rdfs:range qnt:RangeSet ;
+    rdfs:comment "Declared admissibility interval set for IntervalContainment." .
+
+elg:candidateRangeSet
+    rdfs:range qnt:RangeSet ;
+    rdfs:comment "Observed interval set evaluated against requiredRangeSet." .
+
+elg:candidateValue
+    rdfs:range qnt:Value ;
+    rdfs:comment "Observed point value evaluated by exact, membership, or interval strategies." .

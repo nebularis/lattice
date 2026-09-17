@@ -1,0 +1,9 @@
+# SPDX-License-Identifier: MPL-2.0
+
+@prefix elg:  <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
+@prefix pty:  <https://www.nebularis.org/neuro-semantic/lattice/party#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+elg:subjectRoleOccupancy
+	rdfs:range pty:RoleOccupancy ;
+	rdfs:comment "Eligibility question subject binding to Party role occupancy." .

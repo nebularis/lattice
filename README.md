@@ -16,16 +16,17 @@ The layers described below are one family of mapping target, but not the only po
 
 **LATTICE (Concept Lattice of Domain Ontology Layers)** provides the semantic substrate MORK's output lands in - designed to be extended by particular subject domains in order to be used in industry-specific ways. 
 
-**SPC (Subject-oriented Process Calculus)**  provides a formal mechanism for describing orchestration between agents (human, AI, or computational), whose data has been mapped in by MORK and whose roles, obligations, and eligibility are modelled in LATTICE. Where LATTICE's Behaviour layer models what state something is in and what can cause it to change, SPC is concerned with the live, session-typed exchange between agents that drives those changes — giving that exchange a formal contract to align to, grounded in the same ontology, rather than an ad hoc protocol. 
+**SPC (Subject-oriented Process Calculus)**  provides a formal mechanism for describing orchestration between agents (human, AI, or computational), whose data has been mapped in by MORK and whose roles, obligations, and eligibility are modelled in LATTICE. Where LATTICE's Behaviour layer models what state something is in and what can cause it to change, SPC is concerned with the live, session-typed exchange between agents that drives those changes — giving that exchange a formal contract to align to, grounded in the same ontology, rather than an ad hoc protocol. SPC has a substantial standalone ontology already authored (`spc/`), but it is not yet integrated with the layers below: it uses a placeholder namespace and declares no `projection/` contract to any of them. Treat it as a separate, pre-integration body of work rather than part of the dependency graph described below.
 
 #### Model Layers
 
-LATTICE is organised as six layers, each an independent OWL/SHACL/SKOS module:
+LATTICE is organised as seven layers, each an independent OWL/SHACL/SKOS module:
 
 | Layer | Kind | What it models |
 |---|---|---|
 | **Foundation** | Substrate | Identity, versioning, provenance and evidence, governance state, temporal scoping. |
 | **Vocabulary** | Substrate | The governed mechanism by which external, domain-specific concept schemes get bound into the other layers without touching their core specifications. |
+| **Quantification** | Substrate | Declared value spaces, quantities, ordered values, bounds, ranges, conversion, granularity, and recurrence — the mechanism behind any magnitude, interval, or ordinal comparison the other layers need. |
 | **Party** | Substrate | 	Actors, the roles they occupy, and the direction and composition of obligation between them (e.g., modelling independently capped shares, joint obligation with a right of recourse, delegated accountability, or contingent role occupancy). |
 | **Eligibility** | Substrate | admissibility criteria (conditions, unresolved questions, and decisions). |
 | **Behaviour** | Substrate | State, transition, trigger, guard, and effect. This core mechanism doesn't presuppose any particular target domain, but see the note on `behaviour/projection/instrument.ttl` below. |
@@ -74,11 +75,13 @@ lattice/
 │
 ├── foundation/              # Foundation Layers (provenance, versioning)
 ├── vocabulary/              # Inclusion of Domain-specific Vocabularies 
+├── quantification/          # Value Spaces, Quantities, Ranges, Recurrence
 ├── party/                   # Parties, Roles, & Participation Modelling 
 ├── instrument/              # Governing Instrument (Upper Domain Ontology)  
 ├── eligibility/             # Eligibility Criteria Modelling 
 ├── behaviour/               # Behaviour Modelling 
 ├── mork/                    # Mapping Vocabulary
+├── spc/                     # Orchestration calculus (standalone, unintegrated)
 │
 ├── governance/              # Cross-layer governance
 │   ├── scheme-contracts/
@@ -105,13 +108,14 @@ lattice/
 ## How the layers interact
 
 ```
-foundation
-    └── vocabulary
-            └── party
-                    ├── instrument
-                    ├── eligibility
-                    └── behaviour   (imports instrument, eligibility, party)
+foundationquantification
+                    └── party
+                            ├── eligibility
+                            │       └── instrument
+                            └── behaviour   (imports instrument, eligibility, party, quantification)
 
+mork — targets any layer
+spc  — standalone today; not yet imported by, or importing, any layer above
 mork — targets any layer
 spc  - leverages domain ontology axioms to form session types
 ```

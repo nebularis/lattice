@@ -1,0 +1,22 @@
+# SPDX-License-Identifier: MPL-2.0
+
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix elg:  <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
+
+elg:UndeterminedWhenNoCandidateInput a sh:NodeShape ;
+	sh:targetClass elg:EligibilityDecision ;
+	sh:rule [
+		a sh:SPARQLRule ;
+		sh:construct """
+			PREFIX elg: <https://www.nebularis.org/neuro-semantic/lattice/eligibility#>
+			CONSTRUCT {
+				$this elg:decisionValue elg:Undetermined .
+			}
+			WHERE {
+				$this elg:hasQuestion ?q .
+				FILTER NOT EXISTS { ?q elg:candidateValue ?v }
+				FILTER NOT EXISTS { ?q elg:candidateRangeSet ?r }
+			}
+		"""
+	] .

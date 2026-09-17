@@ -1,0 +1,21 @@
+# SPDX-License-Identifier: MPL-2.0
+
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix elg:  <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
+
+elg:IntervalContainmentRequiresRangeSet a sh:NodeShape ;
+	sh:targetClass elg:IntervalCondition ;
+	sh:property [ sh:path elg:requiredRangeSet ; sh:minCount 1 ] .
+
+elg:WildcardPolicyConsistency a sh:NodeShape ;
+	sh:targetClass elg:Condition ;
+	sh:sparql [
+		sh:message "NoWildcard requires a non-Wildcard match strategy." ;
+		sh:select """
+			PREFIX elg: <https://www.nebularis.org/neuro-semantic/lattice/eligibility#>
+			SELECT $this WHERE {
+				$this elg:wildcardSemantics elg:NoWildcard ;
+					  elg:matchStrategy elg:Wildcard .
+			}
+		"""
+	] .

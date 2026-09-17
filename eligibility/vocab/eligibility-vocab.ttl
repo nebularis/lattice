@@ -1,0 +1,44 @@
+# SPDX-License-Identifier: MPL-2.0
+
+@prefix elg:  <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@base <https://www.nebularis.org/neuro-semantic/eligibility-vocab> .
+
+<https://www.nebularis.org/neuro-semantic/eligibility-vocab>
+	a owl:Ontology ;
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/eligibility-vocab/0.0.1> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/eligibility/0.0.1> .
+
+elg:ExactMatch a elg:MatchStrategy .
+elg:SetMembership a elg:MatchStrategy .
+elg:IntervalContainment a elg:MatchStrategy .
+elg:Wildcard a elg:MatchStrategy .
+
+elg:AllRequired a elg:CompatibilityOperation .
+elg:AnySufficient a elg:CompatibilityOperation .
+elg:DimensionConsistent a elg:CompatibilityOperation .
+
+elg:NoWildcard a elg:WildcardSemantics .
+elg:SingleDimensionWildcard a elg:WildcardSemantics .
+elg:MultiDimensionWildcard a elg:WildcardSemantics .
+
+elg:Permitted a elg:Decision .
+elg:Denied a elg:Decision .
+elg:Undetermined a elg:Decision .
+
+elg:E1 a elg:OperationalProfile ; rdfs:comment "Exact-match profile" .
+elg:E2 a elg:OperationalProfile ; rdfs:comment "Interval-containment profile" .
+elg:E3 a elg:OperationalProfile ; rdfs:comment "Wildcard profile" .
+elg:E4 a elg:OperationalProfile ; rdfs:comment "Compatibility-any profile" .
+elg:E5 a elg:OperationalProfile ; rdfs:comment "Compatibility-all profile" .
+elg:E6 a elg:OperationalProfile ; rdfs:comment "Dimension-consistency profile" .
+
+elg:L1 a elg:Law ; rdfs:comment "Each condition declares exactly one match strategy." .
+elg:L2 a elg:Law ; rdfs:comment "Each condition declares exactly one compatibility operation." .
+elg:L3 a elg:Law ; rdfs:comment "Each condition declares exactly one wildcard policy." .
+elg:L4 a elg:Law ; rdfs:comment "IntervalContainment requires declared requiredRangeSet." .
+elg:L5 a elg:Law ; rdfs:comment "IntervalOverlap is excluded from admissibility decisions." .
+elg:L6 a elg:Law ; rdfs:comment "EligibilityDecision has exactly one decision value." .
+elg:L7 a elg:Law ; rdfs:comment "EligibilityDecision references at least one question." .
+elg:L8 a elg:Law ; rdfs:comment "EligibilityDecision names one operational profile." .

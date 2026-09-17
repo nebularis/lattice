@@ -37,28 +37,30 @@ It is the middle of a three-part picture:
 
 - **MORK** (Mapping Ontological & Representational Knowledge) — a general-purpose, SKOS-based mapping vocabulary and pipeline for aligning heterogeneous source data (schemas, records, free text) onto a target ontology's T-Box/A-Box/R-Box, using AI-proposed hypotheses validated by deterministic machinery (OWL reasoning, SHACL, Formal Concept Analysis over co-occurrence). MORK ships inside this repository (`mork/`) and is domain-agnostic; `mork/targets/` (currently empty) is where it would be configured to target LATTICE specifically, but MORK itself does not depend on LATTICE.
 - **LATTICE proper** — the six-layer ontology substrate this document mostly covers, designed to be extended per-industry.
-- **SPC** (Subject-oriented Process Calculus) — a *planned* formal mechanism for session-typed orchestration between agents (human, AI, computational) whose data MORK has mapped and whose roles/obligations/eligibility LATTICE models. SPC gives the live exchange between agents a contract grounded in the same ontology. **SPC has no implementation in this repository at all** — it exists only as a named concept in the root README's overview. Anyone extending this project toward orchestration is starting from zero here, not from a partially-built spec.
+- **SPC** (Subject-oriented Process Calculus) — a formal mechanism for session-typed orchestration between agents (human, AI, computational) whose data MORK has mapped and whose roles/obligations/eligibility LATTICE models. SPC gives the live exchange between agents a contract grounded in the same ontology. **SPC has a substantial standalone ontology** (`spc/spec/spc.ttl`, ~1227 lines; `spc/README.md`, ~1393 lines; plus an architecture note and a paper under `spc/docs/`), but it is **not yet integrated**: it uses a placeholder namespace (`http://example.org/spc#`) rather than the shared `nebularis.org` base, and its `projection/` directory is empty — no contract to Party or Behaviour exists yet. Treat it as a separately developed body of work pending namespace harmonisation and projection authoring, not as part of the dependency graph below.
 
-### The six LATTICE layers
+### The seven LATTICE layers
 
 | Layer | Kind | Models | Namespace prefix | Depends on |
 |---|---|---|---|---|
 | Foundation | Substrate | Identity/versioning, evidence, temporal scoping, governance status | `fnd:` | — |
 | Vocabulary | Substrate | Governed binding of external concept schemes into other layers' properties | `voc:` | Foundation |
-| Party | Substrate | Actors, roles, role occupancy, participation groups, delegation | `pty:` | Foundation, Vocabulary |
-| Eligibility | Substrate | Admissibility: conditions, unresolved questions, decisions | `elg:` | Foundation, Vocabulary, Party |
-| Behaviour | Substrate | State, transition, trigger, guard, effect | `bhv:` | Foundation, Vocabulary, Party, Eligibility, Instrument |
-| Instrument | Applied domain ontology | Generic governing-document shape: Provision → Obligation → Qualifier | `ins:` | Foundation, Vocabulary, Party |
+| Quantification | Substrate | Declared value spaces, quantities, ordered values, bounds, ranges, conversion, granularity, recurrence | `qnt:` | Foundation, Vocabulary |
+| Party | Substrate | Actors, roles, role occupancy, participation groups, delegation | `pty:` | Foundation, Vocabulary, Quantification |
+| Eligibility | Substrate | Admissibility: conditions, unresolved questions, decisions | `elg:` | Foundation, Vocabulary, Quantification, Party |
+| Instrument | Applied domain ontology | Generic governing-document shape: Provision → Obligation → Qualifier | `ins:` | Foundation, Vocabulary, Party, Eligibility |
+| Behaviour | Substrate | State, transition, trigger, guard, effect | `bhv:` | Foundation, Vocabulary, Quantification, Party, Eligibility, Instrument |
 
-Dependency order, as stated in the root README:
+Dependency order, per [ADR-A01](../adr/ADR-A01-layer-dependency-order.md):
 
 ```
 foundation
     └── vocabulary
-            └── party
-                    ├── instrument
-                    ├── eligibility
-                    └── behaviour   (imports instrument, eligibility, party)
+            └── quantification
+                    └── party
+                            ├── eligibility
+                            │       └── instrument
+                            └── behaviour   (imports instrument, eligibility, party, quantification)
 ```
 
 Instrument is a first applied ontology on the substrates, not the only possible one — a different applied domain (device lifecycle, access-control entitlement, asset maintenance) could sit atop Instrument or replace it, composing with Party/Eligibility/Behaviour through its own `projection/` contracts without touching the core layers.
@@ -112,18 +114,19 @@ This is the section to read before recommending any change — most of the six-l
 |---|---|---|---|---|---|---|
 | Foundation | 434 lines, complete | 230 lines, complete | empty | empty (no individuals yet — `Draft/Reviewed/Active/Superseded` not declared) | n/a | **Fully specified T-box** |
 | Vocabulary | complete | 81 lines, complete | empty | n/a | n/a (contracts belong in consuming layers) | **Fully specified T-box** |
-| Party | 359 lines, complete | 202 lines, complete | empty | 75 lines, 7 named individuals, complete | `behaviour.ttl` empty | **Fully specified T-box + vocab** |
-| Eligibility | **empty (0 bytes)** | **empty** | empty | empty | `party.ttl` empty | **Not authored** |
-| Behaviour | **empty (0 bytes)** | **empty** | empty | empty | `eligibility.ttl`, `instrument.ttl`, `party.ttl` all empty | **Not authored** — only `execution/{benchmark-pack,invalidation-policy,split-plan}.md` exist as filenames, also empty |
-| Instrument | **empty (0 bytes)** | **empty** | empty | empty | `party.ttl` empty | **Not authored** |
+| Quantification | 1277 lines, complete | 561 lines, complete | populated (`constraints.ttl`, `rules.ttl`, `structural.ttl`) | populated | empty (`.gitkeep` only — imported by everything above it, imports nothing back) | **Fully specified T-box + shapes.** Previously missing `owl:Ontology` header/imports fixed under ADR-A01/Gate 1. |
+| Party | 359 lines, complete | 202 lines, complete | empty | 75 lines, 7 named individuals, complete | `behaviour.ttl` empty | **Fully specified T-box + vocab.** Now also imports Quantification (ADR-A01/Gate 1). |
+| Eligibility | **empty (0 bytes)** | **empty** | empty | empty | `party.ttl` empty | **Not authored** — scheduled Gate 2 |
+| Instrument | **empty (0 bytes)** | **empty** | empty | empty | `party.ttl` empty | **Not authored** — scheduled Gate 2.5 |
+| Behaviour | **empty (0 bytes)** | **empty** | empty | empty | `eligibility.ttl`, `instrument.ttl`, `party.ttl` all empty | **Not authored** — scheduled Gate 3; only `execution/{benchmark-pack,invalidation-policy,split-plan}.md` exist as filenames, also empty |
 | Governance | empty | n/a | empty | n/a | n/a | **Not authored** — scaffold only |
 | MORK | 657 lines, narrative "for dummies" guide (not literate-spec format) | `Mork.ttl` 1888 lines + `Mork.owl`, complete and large | empty | n/a | n/a | **Fully specified, pre-existing/independent vocabulary** — richer and older in style (OWL-API generated, SKOS-annotation-heavy) than the newer literate-spec layers |
-| SPC | mentioned in root README only | — | — | — | — | **No content anywhere** |
+| SPC | 1393 lines, complete | 1227 lines, complete | empty | empty | empty (`.gitkeep` only) | **Fully specified but unintegrated.** Placeholder namespace (`http://example.org/spc#`), no projection contract to any layer. Also carries `spc/docs/architecture.md` plus a paper and two images. Integration is out of scope for the current Eligibility/Behaviour programme. |
 | Root `examples/*.ttl` (employment, lending-covenant, saas-subscription, clinical-trial) | — | all four files 0 bytes | — | — | — | **Not authored** |
-| `docs/adr/`, `docs/operational-guidance.md`, `docs/validation-and-test-plan.md`, `docs/architecture/technology-options.md` | — | — | — | — | — | Present as filenames; `docs/adr/` and this file (prior to this write-up) were empty. `operational-guidance.md` and `validation-and-test-plan.md` were not inspected for this document — check directly before relying on them. |
+| `docs/adr/`, `docs/GOVERNANCE.md`, `docs/operational-guidance.md`, `docs/validation-and-test-plan.md`, `docs/architecture/conformance-levels.md`, `docs/architecture/technology-options.md` | — | — | — | — | — | `docs/adr/` now populated (ADR-A01, A12–A15, A-C1, A-C2); `docs/GOVERNANCE.md` and `docs/architecture/conformance-levels.md` newly authored. `docs/operational-guidance.md` remains empty — not yet inspected/authored. |
 | `tools/`, `scripts/` | — | — | — | — | — | **Empty** (`.gitkeep` only) — no reference implementation, no compiler, no extraction tooling, no `scaffold-lattice.sh` despite `CONTRIBUTING.md` referencing it |
 
-**Practical implication for anyone extending this repository:** Foundation, Vocabulary, and Party form a complete, internally consistent, three-layer T-box that MORK-style tooling or a hand-written populated graph could already build on for actor/role/versioning/evidence/governance-state modelling. Eligibility, Behaviour, Instrument, Governance, SPC, the reference tooling, and every worked example are green-field. The only concrete guidance for their eventual shape is: (a) the purpose/scope sentence each empty layer's directory presence and the root README imply, (b) forward references already made from Party's own document (`ins:Obligation`, `ins:fulfilledBy`, a Behaviour-driven Effect setting `pty:occupiedBy`), and (c) the general composition rules in §1. These are collected in [§7](#7-unbuilt-layers-scope-implied-by-cross-reference).
+**Practical implication for anyone extending this repository:** Foundation, Vocabulary, Quantification, and Party form a complete, internally consistent, four-layer T-box that MORK-style tooling or a hand-written populated graph could already build on for actor/role/versioning/evidence/governance-state/value-space modelling. Eligibility, Behaviour, Instrument, and Governance remain green-field, but Eligibility's `IntervalContainment` strategy and Behaviour's extent profile are no longer blocked on a missing quantity mechanism — Quantification already provides `qnt:ValueSpace`, `qnt:Range`, `qnt:RangeSet`, and recurrence. SPC is fully specified in isolation but unintegrated. The concrete guidance for the remaining empty layers' eventual shape is: (a) the purpose/scope sentence each layer's directory presence and the root README imply, (b) forward references already made from Party's own document (`ins:Obligation`, `ins:fulfilledBy`, a Behaviour-driven Effect setting `pty:occupiedBy`), (c) the general composition rules in §1, and (d) [ADR-A01](../adr/ADR-A01-layer-dependency-order.md) through [ADR-A15](../adr/ADR-A15-realisation-strategy-neutrality.md). These are collected in [§7](#7-unbuilt-layers-scope-implied-by-cross-reference).
 
 ---
 

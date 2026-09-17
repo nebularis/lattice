@@ -1,0 +1,68 @@
+# SPDX-License-Identifier: MPL-2.0
+
+@prefix elg: <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
+@prefix qnt: <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex:  <https://example.org/lattice/eligibility/> .
+
+ex:credit-score-space
+    a qnt:ValueSpace ;
+    qnt:spaceKey "credit-score" ;
+    qnt:orderKind qnt:TotalOrder ;
+    qnt:densityKind qnt:Discrete ;
+    qnt:spaceHash "space-credit-score-v1" .
+
+ex:lower-value a qnt:Quantity ;
+    qnt:onSpace ex:credit-score-space ;
+    qnt:numericValue "700"^^xsd:decimal .
+
+ex:upper-value a qnt:Quantity ;
+    qnt:onSpace ex:credit-score-space ;
+    qnt:numericValue "850"^^xsd:decimal .
+
+ex:lower-bound a qnt:Bound ;
+    qnt:onSpace ex:credit-score-space ;
+    qnt:boundValue ex:lower-value ;
+    qnt:boundSense qnt:Lower ;
+    qnt:boundClosure qnt:Closed .
+
+ex:upper-bound a qnt:Bound ;
+    qnt:onSpace ex:credit-score-space ;
+    qnt:boundValue ex:upper-value ;
+    qnt:boundSense qnt:Upper ;
+    qnt:boundClosure qnt:Closed .
+
+ex:required-range a qnt:Range ;
+    qnt:onSpace ex:credit-score-space ;
+    qnt:lowerBound ex:lower-bound ;
+    qnt:upperBound ex:upper-bound ;
+    qnt:hasBound ex:lower-bound, ex:upper-bound .
+
+ex:required-rangeset a qnt:RangeSet ;
+    qnt:onSpace ex:credit-score-space ;
+    qnt:hasRange ex:required-range .
+
+ex:minimum-credit-condition
+    a elg:IntervalCondition ;
+    elg:matchStrategy elg:IntervalContainment ;
+    elg:compatibilityOperation elg:AllRequired ;
+    elg:wildcardSemantics elg:NoWildcard ;
+    elg:requiredRangeSet ex:required-rangeset .
+
+ex:profile-a
+    a elg:AdmissionProfile ;
+    elg:hasCondition ex:minimum-credit-condition ;
+    elg:matchStrategy elg:SetMembership ;
+    elg:compatibilityOperation elg:AllRequired ;
+    elg:wildcardSemantics elg:NoWildcard .
+
+ex:question-1
+    a elg:Question ;
+    elg:forCondition ex:minimum-credit-condition ;
+    elg:candidateRangeSet ex:required-rangeset .
+
+ex:decision-1
+    a elg:EligibilityDecision ;
+    elg:forProfile ex:profile-a ;
+    elg:hasQuestion ex:question-1 ;
+    elg:decisionValue elg:Permitted .
