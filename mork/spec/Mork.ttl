@@ -2357,14 +2357,14 @@ The IntentScheme occupies a position between natural language and ontological co
             rdfs:label "intent node" ;
             skos:definition """The base class for structured intent representations. IntentNode individuals form a bounded join-semilattice under :refinesIntent.
 
-Subtypes capture the principal categories of insurance product and eligibility criteria: CoverageIntent, QuantitativeConstraint, SpatialScope, TemporalScope, ExclusionIntent, InclusionIntent. These subtypes are not mutually disjoint.""" ;
+Subtypes capture the principal categories of insurance product and eligibility criteria: QualitativeIntent, QuantitativeConstraint, SpatialScope, TemporalScope, ExclusionIntent, InclusionIntent. These subtypes are not mutually disjoint.""" ;
             skos:scopeNote "IntentNode properties reference only SKOS concept schemes, xsd datatypes, and the natural language source. None reference the target ontology's classes or properties, ensuring stability under ontology evolution (Foundations §3.8.4, Proposition 3.8.4)." .
 
 
-###  http://www.nebularis.org/ontologies/Mork#CoverageIntent
+###  http://www.nebularis.org/ontologies/Mork#QualitativeIntent
 :QualitativeIntent rdf:type owl:Class ;
                 rdfs:subClassOf :IntentNode ;
-                rdfs:label "coverage intent" ;
+                rdfs:label "qualitative intent" ;
                 skos:definition "An intent node representing domain-bearing tokens and nominative signals (e.g., concepts, labels, codes), whose meanings must be inferred via a knowledge base." .
 
 
