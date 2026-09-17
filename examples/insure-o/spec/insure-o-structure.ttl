@@ -1,0 +1,40 @@
+# SPDX-License-Identifier: MPL-2.0
+
+@prefix ino: <https://www.nebularis.org/neuro-semantic/lattice/examples/insure-o#> .
+@prefix ins: <https://www.nebularis.org/neuro-semantic/lattice/instrument#> .
+@prefix bhv: <https://www.nebularis.org/neuro-semantic/lattice/behaviour#> .
+@prefix elg: <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+ino:PolicyDocument a owl:Class ;
+    rdfs:subClassOf ins:Element ;
+    rdfs:comment "A policy document or contract root." .
+
+ino:CoverageTerm a owl:Class ;
+    rdfs:subClassOf ins:Provision ;
+    rdfs:comment "A coverage term for a policy." .
+
+ino:LimitTerm a owl:Class ;
+    rdfs:subClassOf ins:Qualifier ;
+    rdfs:comment "A limit qualifier on a coverage term." .
+
+ino:RetentionTerm a owl:Class ;
+    rdfs:subClassOf ins:Qualifier ;
+    rdfs:comment "A retention or deductible qualifier." .
+
+ino:AggregateCapacity a owl:Class ;
+    rdfs:subClassOf bhv:AllowanceDefinition ;
+    rdfs:comment "A policy aggregate capacity resource." .
+
+ino:LayerCapacity a owl:Class ;
+    rdfs:subClassOf bhv:AllowanceDefinition ;
+    rdfs:comment "A sequential layer capacity resource." .
+
+ino:Claim a owl:Class ;
+    rdfs:subClassOf bhv:Stimulus ;
+    rdfs:comment "A claim or loss event." .
+
+ino:PolicyAdmission a owl:Class ;
+    rdfs:subClassOf elg:AdmissionProfile ;
+    rdfs:comment "Minimal insurance admission profile binding conditions to a policy." .

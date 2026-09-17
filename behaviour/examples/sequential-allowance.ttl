@@ -36,5 +36,6 @@ ex:account-1
 ex:consume-effect
     a bhv:EffectDefinition ;
     bhv:targetKind bhv:AllowanceTarget ;
+    bhv:targetsAllowance ex:allowance-definition ;
     bhv:consumesAmount ex:draw-30 ;
     bhv:usesAllowance ex:allowance-definition .

@@ -1,0 +1,33 @@
+# SPDX-License-Identifier: MPL-2.0
+
+@prefix ino: <https://www.nebularis.org/neuro-semantic/lattice/examples/insure-o#> .
+@prefix bhv: <https://www.nebularis.org/neuro-semantic/lattice/behaviour#> .
+@prefix elg: <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+
+ino:shadow-module a elg:AdmissionProfile ;
+    elg:hasCondition ino:shadow-peril-condition .
+
+ino:shadow-peril-condition a elg:Condition ;
+    elg:matchStrategy elg:HierarchicalMatch ;
+    elg:compatibilityOperation elg:AllRequired ;
+    elg:wildcardSemantics elg:NoWildcard ;
+    elg:boundScheme ino:shadow-peril-scheme .
+
+ino:shadow-peril-root a skos:Concept ;
+    skos:prefLabel "Peril"@en .
+
+ino:shadow-fire a skos:Concept ;
+    skos:prefLabel "Fire"@en ;
+    skos:broader ino:shadow-peril-root .
+
+ino:shadow-industrial-fire a skos:Concept ;
+    skos:prefLabel "Industrial Fire"@en ;
+    skos:broader ino:shadow-fire .
+
+ino:shadow-peril-scheme a skos:ConceptScheme ;
+    skos:prefLabel "Shadow peril scheme"@en ;
+    skos:hasTopConcept ino:shadow-peril-root .
+
+ino:shadow-capacity a bhv:AllowanceDefinition ;
+    bhv:absorptionPolicy bhv:Sequential .

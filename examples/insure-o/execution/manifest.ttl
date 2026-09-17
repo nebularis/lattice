@@ -1,0 +1,16 @@
+# SPDX-License-Identifier: MPL-2.0
+
+@prefix ino: <https://www.nebularis.org/neuro-semantic/lattice/examples/insure-o#> .
+@prefix bhv: <https://www.nebularis.org/neuro-semantic/lattice/behaviour#> .
+@prefix elg: <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
+
+ino:shadow-policy a elg:AdmissionProfile ;
+    elg:hasCondition ino:shadow-peril-condition .
+
+ino:shadow-peril-condition a elg:Condition ;
+    elg:matchStrategy elg:HierarchicalMatch ;
+    elg:compatibilityOperation elg:AllRequired ;
+    elg:wildcardSemantics elg:NoWildcard .
+
+ino:shadow-capacity a bhv:AllowanceDefinition ;
+    bhv:absorptionPolicy bhv:Sequential .

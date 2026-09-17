@@ -1,0 +1,27 @@
+# SPDX-License-Identifier: MPL-2.0
+
+@prefix ino: <https://www.nebularis.org/neuro-semantic/lattice/examples/insure-o#> .
+@prefix elg: <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
+@prefix voc: <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+
+ino:peril-root a skos:Concept ;
+    skos:prefLabel "Peril"@en .
+
+ino:fire a skos:Concept ;
+    skos:prefLabel "Fire"@en ;
+    skos:broader ino:peril-root .
+
+ino:industrial-fire a skos:Concept ;
+    skos:prefLabel "Industrial Fire"@en ;
+    skos:broader ino:fire .
+
+ino:peril-hierarchy-constraint a elg:Condition ;
+    elg:matchStrategy elg:HierarchicalMatch ;
+    elg:compatibilityOperation elg:AllRequired ;
+    elg:wildcardSemantics elg:NoWildcard ;
+    elg:boundScheme ino:peril-scheme .
+
+ino:peril-scheme a voc:ConceptScheme ;
+    skos:prefLabel "Insure-O peril scheme"@en ;
+    skos:hasTopConcept ino:peril-root .

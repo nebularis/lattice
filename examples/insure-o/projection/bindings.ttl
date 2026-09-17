@@ -1,0 +1,77 @@
+# SPDX-License-Identifier: MPL-2.0
+
+@prefix ino: <https://www.nebularis.org/neuro-semantic/lattice/examples/insure-o#> .
+@prefix ins: <https://www.nebularis.org/neuro-semantic/lattice/instrument#> .
+@prefix pty: <https://www.nebularis.org/neuro-semantic/lattice/party#> .
+@prefix elg: <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
+@prefix bhv: <https://www.nebularis.org/neuro-semantic/lattice/behaviour#> .
+@prefix voc: <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+
+ino:peril-contract a voc:SchemeContract ;
+    voc:constrainsProperty ins:hasPerilType ;
+    voc:requiresGovernanceState <https://www.nebularis.org/neuro-semantic/lattice/foundation#Active> .
+
+ino:territory-contract a voc:SchemeContract ;
+    voc:constrainsProperty ins:hasTerritory ;
+    voc:requiresGovernanceState <https://www.nebularis.org/neuro-semantic/lattice/foundation#Active> .
+
+ino:lob-contract a voc:SchemeContract ;
+    voc:constrainsProperty ins:hasLineOfBusiness ;
+    voc:requiresGovernanceState <https://www.nebularis.org/neuro-semantic/lattice/foundation#Active> .
+
+ino:asset-class-contract a voc:SchemeContract ;
+    voc:constrainsProperty ins:hasAssetClass ;
+    voc:requiresGovernanceState <https://www.nebularis.org/neuro-semantic/lattice/foundation#Active> .
+
+ino:currency-contract a voc:SchemeContract ;
+    voc:constrainsProperty ins:hasCurrency ;
+    voc:requiresGovernanceState <https://www.nebularis.org/neuro-semantic/lattice/foundation#Active> .
+
+ino:peril-root a skos:Concept ;
+    skos:prefLabel "Peril"@en .
+
+ino:fire a skos:Concept ;
+    skos:prefLabel "Fire"@en ;
+    skos:broader ino:peril-root .
+
+ino:industrial-fire a skos:Concept ;
+    skos:prefLabel "Industrial Fire"@en ;
+    skos:broader ino:fire .
+
+ino:peril-scheme a voc:ConceptScheme ;
+    skos:prefLabel "Insure-O peril scheme"@en ;
+    skos:hasTopConcept ino:peril-root .
+
+ino:territory-scheme a voc:ConceptScheme ;
+    skos:prefLabel "Insure-O territory scheme"@en .
+
+ino:lob-scheme a voc:ConceptScheme ;
+    skos:prefLabel "Insure-O line-of-business scheme"@en .
+
+ino:asset-class-scheme a voc:ConceptScheme ;
+    skos:prefLabel "Insure-O asset class scheme"@en .
+
+ino:currency-scheme a voc:ConceptScheme ;
+    skos:prefLabel "Insure-O currency scheme"@en .
+
+ino:peril-contract voc:boundScheme ino:peril-scheme .
+ino:territory-contract voc:boundScheme ino:territory-scheme .
+ino:lob-contract voc:boundScheme ino:lob-scheme .
+ino:asset-class-contract voc:boundScheme ino:asset-class-scheme .
+ino:currency-contract voc:boundScheme ino:currency-scheme .
+
+ino:policy-capacity a bhv:AllowanceDefinition ;
+    bhv:allowanceSpace <https://example.org/qnt/monetary-space> .
+
+ino:layer-capacity a bhv:AllowanceDefinition ;
+    bhv:allowanceSpace <https://example.org/qnt/monetary-space> .
+
+ino:policy-eligibility a elg:AdmissionProfile ;
+    elg:hasCondition ino:policy-peril-condition , ino:policy-territory-condition .
+
+ino:policy-peril-condition a elg:Condition ;
+    elg:matchStrategy elg:HierarchicalMatch .
+
+ino:policy-territory-condition a elg:Condition ;
+    elg:matchStrategy elg:ExactMatch .

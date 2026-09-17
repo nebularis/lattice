@@ -1,0 +1,78 @@
+# SPDX-License-Identifier: MPL-2.0
+
+@prefix ino: <https://www.nebularis.org/neuro-semantic/lattice/examples/insure-o#> .
+@prefix ins: <https://www.nebularis.org/neuro-semantic/lattice/instrument#> .
+@prefix pty: <https://www.nebularis.org/neuro-semantic/lattice/party#> .
+@prefix bhv: <https://www.nebularis.org/neuro-semantic/lattice/behaviour#> .
+@prefix elg: <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+ino:PolicyDocument a owl:Class ;
+    rdfs:subClassOf ins:Element ;
+    rdfs:comment "A policy document or contract root for an insurance arrangement." .
+
+ino:CoverageTerm a owl:Class ;
+    rdfs:subClassOf ins:Provision ;
+    rdfs:comment "A coverage term binding one or more limits, conditions, and obligations." .
+
+ino:LimitTerm a owl:Class ;
+    rdfs:subClassOf ins:Qualifier ;
+    rdfs:comment "A monetary or count-based limit qualifier attached to a coverage term." .
+
+ino:RetentionTerm a owl:Class ;
+    rdfs:subClassOf ins:Qualifier ;
+    rdfs:comment "A deductible or retention qualifier attached to a coverage term." .
+
+ino:AggregateCapacity a owl:Class ;
+    rdfs:subClassOf bhv:AllowanceDefinition ;
+    rdfs:comment "An aggregation or annual aggregate capacity resource available to claims." .
+
+ino:LayerCapacity a owl:Class ;
+    rdfs:subClassOf bhv:AllowanceDefinition ;
+    rdfs:comment "A capacity layer or tower segment that may be consumed sequentially." .
+
+ino:Claim a owl:Class ;
+    rdfs:subClassOf bhv:Stimulus ;
+    rdfs:comment "An insurance claim or loss event triggering eligibility and allowance checks." .
+
+ino:hasPerilType a owl:ObjectProperty ;
+    rdfs:domain ins:Element ;
+    rdfs:range owl:Thing ;
+    rdfs:comment "Business-dimension binding for the peril type or peril tree member." .
+
+ino:hasTerritory a owl:ObjectProperty ;
+    rdfs:domain ins:Element ;
+    rdfs:range owl:Thing ;
+    rdfs:comment "Business-dimension binding for territory or location membership." .
+
+ino:hasLineOfBusiness a owl:ObjectProperty ;
+    rdfs:domain ins:Element ;
+    rdfs:range owl:Thing ;
+    rdfs:comment "Business-dimension binding for the relevant line of business." .
+
+ino:hasAssetClass a owl:ObjectProperty ;
+    rdfs:domain ins:Element ;
+    rdfs:range owl:Thing ;
+    rdfs:comment "Business-dimension binding for the asset class or subject matter." .
+
+ino:hasCurrency a owl:ObjectProperty ;
+    rdfs:domain ins:Element ;
+    rdfs:range owl:Thing ;
+    rdfs:comment "Business-dimension binding for the currency or monetary scheme." .
+
+ino:hasCoverageLimit a owl:ObjectProperty ;
+    rdfs:domain ino:CoverageTerm ;
+    rdfs:range ino:LimitTerm .
+
+ino:hasRetention a owl:ObjectProperty ;
+    rdfs:domain ino:CoverageTerm ;
+    rdfs:range ino:RetentionTerm .
+
+ino:appliesToPolicy a owl:ObjectProperty ;
+    rdfs:domain ino:CoverageTerm ;
+    rdfs:range ino:PolicyDocument .
+
+ino:guardedBy a owl:ObjectProperty ;
+    rdfs:domain bhv:EffectDefinition ;
+    rdfs:range elg:AdmissionProfile .

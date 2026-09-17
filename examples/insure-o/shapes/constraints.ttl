@@ -1,0 +1,25 @@
+# SPDX-License-Identifier: MPL-2.0
+
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix ino: <https://www.nebularis.org/neuro-semantic/lattice/examples/insure-o#> .
+@prefix ins: <https://www.nebularis.org/neuro-semantic/lattice/instrument#> .
+
+ino:CoverageTermShape a sh:NodeShape ;
+    sh:targetClass ino:CoverageTerm ;
+    sh:property [
+        sh:path ino:hasCoverageLimit ;
+        sh:minCount 1 ;
+        sh:maxCount 1
+    ] ;
+    sh:property [
+        sh:path ino:appliesToPolicy ;
+        sh:minCount 1 ;
+        sh:maxCount 1
+    ] .
+
+ino:PolicyDocumentShape a sh:NodeShape ;
+    sh:targetClass ino:PolicyDocument ;
+    sh:property [
+        sh:path ins:hasProvision ;
+        sh:minCount 1
+    ] .

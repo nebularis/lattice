@@ -1,0 +1,10 @@
+# SPDX-License-Identifier: MPL-2.0
+
+@prefix ino: <https://www.nebularis.org/neuro-semantic/lattice/examples/insure-o#> .
+@prefix bhv: <https://www.nebularis.org/neuro-semantic/lattice/behaviour#> .
+
+ino:case-07-base-layer a bhv:AllowanceDefinition ;
+    bhv:absorptionPolicy bhv:Sequential .
+
+ino:case-07-excess-layer a bhv:AllowanceDefinition ;
+    bhv:absorptionPolicy bhv:Sequential .

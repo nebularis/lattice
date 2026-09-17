@@ -28,6 +28,19 @@ bhv:SequentialOnlyAtGate3 a sh:NodeShape ;
 		"""
 	] .
 
+bhv:AllowanceTargetRequiresTargetedAllowance a sh:NodeShape ;
+	sh:targetClass bhv:EffectDefinition ;
+	sh:sparql [
+		sh:message "An effect with bhv:AllowanceTarget must declare bhv:targetsAllowance." ;
+		sh:select """
+			PREFIX bhv: <https://www.nebularis.org/neuro-semantic/lattice/behaviour#>
+			SELECT $this WHERE {
+				$this bhv:targetKind bhv:AllowanceTarget .
+				FILTER NOT EXISTS { $this bhv:targetsAllowance ?allowance }
+			}
+		"""
+	] .
+
 bhv:HypotheticalStateIsolation a sh:NodeShape ;
 	sh:targetClass bhv:StateOccupancy ;
 	sh:property [ sh:path bhv:isHypothetical ; sh:minCount 1 ; sh:maxCount 1 ] .

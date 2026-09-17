@@ -38,5 +38,6 @@ ex:account
 ex:effect
     a bhv:EffectDefinition ;
     bhv:targetKind bhv:AllowanceTarget ;
+    bhv:targetsAllowance ex:allowance ;
     bhv:usesAllowance ex:allowance ;
     bhv:consumesAmount ex:draw .

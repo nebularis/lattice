@@ -1,0 +1,21 @@
+# SPDX-License-Identifier: MPL-2.0
+
+@prefix ino: <https://www.nebularis.org/neuro-semantic/lattice/examples/insure-o#> .
+@prefix pty: <https://www.nebularis.org/neuro-semantic/lattice/party#> .
+
+ino:InsurerRole a pty:Role .
+ino:InsuredRole a pty:Role .
+ino:ClaimantRole a pty:Role .
+ino:LossPayeeRole a pty:Role .
+
+ino:insurer-occupancy a pty:RoleOccupancy ;
+    pty:inRole ino:InsurerRole .
+
+ino:insured-occupancy a pty:RoleOccupancy ;
+    pty:inRole ino:InsuredRole .
+
+ino:claimant-occupancy a pty:RoleOccupancy ;
+    pty:inRole ino:ClaimantRole .
+
+ino:loss-payee-occupancy a pty:RoleOccupancy ;
+    pty:inRole ino:LossPayeeRole .

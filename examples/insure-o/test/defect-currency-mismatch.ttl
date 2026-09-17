@@ -1,0 +1,7 @@
+# SPDX-License-Identifier: MPL-2.0
+
+@prefix ino: <https://www.nebularis.org/neuro-semantic/lattice/examples/insure-o#> .
+@prefix ins: <https://www.nebularis.org/neuro-semantic/lattice/instrument#> .
+
+ino:defect-currency a ins:Element ;
+    ino:hasCurrency <https://example.org/currency/GBP> .

@@ -13,6 +13,7 @@
 elg:ExactMatch a elg:MatchStrategy .
 elg:SetMembership a elg:MatchStrategy .
 elg:IntervalContainment a elg:MatchStrategy .
+elg:HierarchicalMatch a elg:MatchStrategy .
 elg:Wildcard a elg:MatchStrategy .
 
 elg:AllRequired a elg:CompatibilityOperation .
@@ -42,3 +43,4 @@ elg:L5 a elg:Law ; rdfs:comment "IntervalOverlap is excluded from admissibility 
 elg:L6 a elg:Law ; rdfs:comment "EligibilityDecision has exactly one decision value." .
 elg:L7 a elg:Law ; rdfs:comment "EligibilityDecision references at least one question." .
 elg:L8 a elg:Law ; rdfs:comment "EligibilityDecision names one operational profile." .
+elg:L9 a elg:Law ; rdfs:comment "HierarchicalMatch requires a well-founded skos:broader hierarchy and a materialised local closure for the bound concept scheme." .

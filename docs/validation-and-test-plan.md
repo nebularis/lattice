@@ -23,6 +23,7 @@ This document records the checks the substrate is expected to satisfy, as they b
 | Law discharge | L1–L4, L5a, L5b, L6, L7 discharged for every baseline strategy; L8 discharged for every strategy declaring `supportsExclusion` | Pending Gate 2 authoring |
 | Profile parity (E1/E2) | Direct-SPARQL and SHACL evaluation agree on the shared conformance corpus before any generated surface exists | Pending Gate 5 |
 | IntervalContainment fixture | At least one admission/meet fixture using `qnt:Range`/`qnt:RangeSet` | Satisfied by Gate 2 authoring (`eligibility/test/E2-interval-containment.ttl`) |
+| Hierarchical closure fixture | A concept hierarchy bound to a `HierarchicalMatch` condition materialises local `skos:broaderTransitive` closure without depending on runtime `skos:broader*` traversal | Satisfied by Gate 2 completion of `eligibility/shapes/rules.ttl` and the hierarchical example fixture |
 
 ## Gate 2.5 — Minimal Instrument
 
@@ -38,6 +39,7 @@ This document records the checks the substrate is expected to satisfy, as they b
 | Tier separation | No class serves two of declaration/occurrence/execution/state-record | Satisfied by Gate 3 authoring (`ADR-A08`, `behaviour/spec/behaviour.ttl`) |
 | Effect payload completeness | Every effect operation has a typed payload; every target binding resolves | Satisfied by Gate 3 authoring (`ADR-A11`, `behaviour/spec/behaviour.ttl`, `behaviour/projection/*.ttl`) |
 | Extent scope | `Sequential` absorption's conservation law (`total absorbed = min(demand, Σ drawable)`) discharged; `Proportional` absorption is declared-and-unusable, not silently absent | Partially satisfied by Gate 3 authoring. `Sequential` is modelled and fixture-backed in `behaviour/test/B-P2-sequential-allowance.ttl`; `Proportional` is declared and rejected by `behaviour/shapes/constraints.ttl`. Formal conservation-law discharge remains for Gate 4/5. |
+| Allowance-target binding | Any `EffectDefinition` with `bhv:targetKind bhv:AllowanceTarget` must also declare `bhv:targetsAllowance` to the actual allowance it is directed at | Satisfied by Gate 3 completion of the `bhv:targetsAllowance` property and `behaviour/shapes/constraints.ttl` check. |
 | Occupancy invariants | Exactly one current occupancy per participating space; no overlapping non-hypothetical occupancies | Satisfied at declaration level by Gate 3 constraints (`behaviour/shapes/constraints.ttl`). Full temporal-overlap discharge remains for executable profiles. |
 | Hypothetical isolation | Hypothetical executions write to a separate graph role (ADR-A13); no persisted current occupancy | Satisfied at model level by Gate 3 authoring (`ADR-A13`, `behaviour/spec/behaviour.ttl`, `behaviour/shapes/constraints.ttl`) |
 

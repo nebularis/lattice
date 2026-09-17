@@ -1,0 +1,53 @@
+# SPDX-License-Identifier: MPL-2.0
+
+@prefix ino: <https://www.nebularis.org/neuro-semantic/lattice/examples/insure-o#> .
+@prefix bhv: <https://www.nebularis.org/neuro-semantic/lattice/behaviour#> .
+@prefix elg: <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+
+ino:TriggerMode a owl:Class .
+ino:Basis a owl:Class .
+ino:TemporalQualifier a owl:Class .
+ino:DefenceTreatment a owl:Class .
+ino:RecoveryType a owl:Class .
+ino:ReinstatementStatus a owl:Class .
+ino:CollateralStatus a owl:Class .
+ino:CostClass a owl:Class .
+
+ino:PerEventTrigger a ino:TriggerMode .
+ino:AggregateTrigger a ino:TriggerMode .
+ino:OccurrenceTrigger a ino:TriggerMode .
+
+ino:LimitBasis a ino:Basis .
+ino:PremiumBasis a ino:Basis .
+ino:ClaimBasis a ino:Basis .
+
+ino:AnnualQualifier a ino:TemporalQualifier .
+ino:PolicyTermQualifier a ino:TemporalQualifier .
+ino:OccurrenceQualifier a ino:TemporalQualifier .
+
+ino:DefenceWithinLimit a ino:DefenceTreatment .
+ino:DefenceOutsideLimit a ino:DefenceTreatment .
+ino:DefenceShared a ino:DefenceTreatment .
+
+ino:RecoversLoss a ino:RecoveryType .
+ino:RecoversExpense a ino:RecoveryType .
+ino:RecoversBoth a ino:RecoveryType .
+
+ino:Reinstated a ino:ReinstatementStatus .
+ino:NotReinstated a ino:ReinstatementStatus .
+ino:PendingReinstatement a ino:ReinstatementStatus .
+
+ino:CollateralCompliant a ino:CollateralStatus .
+ino:CollateralBreached a ino:CollateralStatus .
+ino:CollateralPending a ino:CollateralStatus .
+
+ino:CostClassOfLoss a ino:CostClass .
+ino:CostClassOfDefence a ino:CostClass .
+ino:CostClassOfExpense a ino:CostClass .
+
+ino:CapitalLimit a bhv:AllowanceDefinition .
+ino:AggregateLimit a bhv:AllowanceDefinition .
+ino:RetentionLimit a bhv:AllowanceDefinition .
+
+ino:PolicyAdmission a elg:AdmissionProfile .

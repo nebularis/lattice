@@ -1,0 +1,11 @@
+# SPDX-License-Identifier: MPL-2.0
+
+@prefix ino: <https://www.nebularis.org/neuro-semantic/lattice/examples/insure-o#> .
+@prefix ins: <https://www.nebularis.org/neuro-semantic/lattice/instrument#> .
+@prefix voc: <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
+
+ino:defect-01 a ins:Element ;
+    ino:hasPerilType <https://example.org/unknown/peril> .
+
+ino:defect-contract a voc:SchemeContract ;
+    voc:constrainsProperty ino:hasPerilType .

@@ -96,7 +96,8 @@ lattice/
 │   ├── employment.ttl
 │   ├── lending-covenant.ttl
 │   ├── saas-subscription.ttl
-│   └── clinical-trial.ttl
+│   ├── clinical-trial.ttl
+│   └── insure-o/            # Applied validation package for insurance-style substrate checks
 │
 ├── test/                    # Whole-graph CI
 │

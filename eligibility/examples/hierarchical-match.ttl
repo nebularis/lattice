@@ -1,0 +1,30 @@
+# SPDX-License-Identifier: MPL-2.0
+
+@prefix elg: <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix ex:  <https://example.org/lattice/eligibility/> .
+
+ex:peril-root a skos:Concept ; skos:prefLabel "Peril"@en .
+ex:fire a skos:Concept ; skos:prefLabel "Fire"@en ; skos:broader ex:peril-root .
+ex:industrial-fire a skos:Concept ; skos:prefLabel "Industrial Fire"@en ; skos:broader ex:fire .
+
+ex:hierarchical-condition
+    a elg:Condition ;
+    elg:matchStrategy elg:HierarchicalMatch ;
+    elg:compatibilityOperation elg:AllRequired ;
+    elg:wildcardSemantics elg:NoWildcard .
+
+ex:subject-question
+    a elg:Question ;
+    elg:forCondition ex:hierarchical-condition ;
+    elg:candidateValue ex:industrial-fire .
+
+ex:decision
+    a elg:EligibilityDecision ;
+    elg:forProfile ex:hierarchical-profile ;
+    elg:hasQuestion ex:subject-question ;
+    elg:decisionValue elg:Permitted .
+
+ex:hierarchical-profile
+    a elg:AdmissionProfile ;
+    elg:hasCondition ex:hierarchical-condition .

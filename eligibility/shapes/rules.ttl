@@ -2,7 +2,23 @@
 
 @prefix sh:   <http://www.w3.org/ns/shacl#> .
 @prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 @prefix elg:  <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
+
+elg:HierarchicalClosureRule a sh:NodeShape ;
+	sh:targetClass skos:Concept ;
+	sh:rule [
+		a sh:SPARQLRule ;
+		sh:construct """
+			PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+			CONSTRUCT {
+				?concept skos:broaderTransitive ?ancestor .
+			}
+			WHERE {
+				?concept skos:broader+ ?ancestor .
+			}
+		"""
+	] .
 
 elg:UndeterminedWhenNoCandidateInput a sh:NodeShape ;
 	sh:targetClass elg:EligibilityDecision ;

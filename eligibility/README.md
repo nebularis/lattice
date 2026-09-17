@@ -35,10 +35,12 @@ Eligibility imports Foundation, Vocabulary, Quantification, and Party. Quantific
 
 ## 4. Strategy Algebra
 
-- Included match strategies: `ExactMatch`, `SetMembership`, `IntervalContainment`, `Wildcard`.
+- Included match strategies: `ExactMatch`, `SetMembership`, `IntervalContainment`, `HierarchicalMatch`, `Wildcard`.
 - Excluded: `IntervalOverlap` as an admissibility strategy.
 - Compatibility operations: `AllRequired`, `AnySufficient`, `DimensionConsistent`.
 - Wildcard policies: `NoWildcard`, `SingleDimensionWildcard`, `MultiDimensionWildcard`.
+
+`HierarchicalMatch` is valid when a dimension is backed by a concept scheme whose membership is resolved against a well-founded `skos:broader` hierarchy. The closure is materialised locally so evaluation does not rely on live `skos:broader*` traversal during admission checks.
 
 ## 5. Core Model
 
@@ -141,6 +143,7 @@ elg:conditionKey a owl:DatatypeProperty, owl:FunctionalProperty ;
 elg:ExactMatch a elg:MatchStrategy .
 elg:SetMembership a elg:MatchStrategy .
 elg:IntervalContainment a elg:MatchStrategy .
+elg:HierarchicalMatch a elg:MatchStrategy .
 elg:Wildcard a elg:MatchStrategy .
 
 elg:AllRequired a elg:CompatibilityOperation .
@@ -170,6 +173,7 @@ elg:L5 a elg:Law ; rdfs:comment "IntervalOverlap is excluded from admissibility 
 elg:L6 a elg:Law ; rdfs:comment "EligibilityDecision has exactly one decision value." .
 elg:L7 a elg:Law ; rdfs:comment "EligibilityDecision references at least one question." .
 elg:L8 a elg:Law ; rdfs:comment "EligibilityDecision names one operational profile." .
+elg:L9 a elg:Law ; rdfs:comment "HierarchicalMatch requires a well-founded skos:broader hierarchy and a materialised local closure for the bound concept scheme." .
 ```
 
 ## 7. Shapes
@@ -195,6 +199,7 @@ Illustrative non-domain examples are authored in:
 
 - `eligibility/examples/condition-taxonomy.ttl`
 - `eligibility/examples/interval-containment.ttl`
+- `eligibility/examples/hierarchical-match.ttl`
 
 ```turtle-example
 @prefix elg: <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .

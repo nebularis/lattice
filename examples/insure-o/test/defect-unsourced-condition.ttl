@@ -1,0 +1,7 @@
+# SPDX-License-Identifier: MPL-2.0
+
+@prefix ino: <https://www.nebularis.org/neuro-semantic/lattice/examples/insure-o#> .
+@prefix elg: <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
+
+ino:defect-unsourced a elg:Condition ;
+    elg:matchStrategy elg:ExactMatch .

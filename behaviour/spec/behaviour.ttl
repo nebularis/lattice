@@ -82,6 +82,7 @@ bhv:requiresEligibility a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:doma
 bhv:targetKind a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain bhv:EffectDefinition ; rdfs:range bhv:TargetKind .
 bhv:targetsElement a owl:ObjectProperty ; rdfs:domain bhv:EffectDefinition ; rdfs:range ins:Element .
 bhv:targetsOccupancy a owl:ObjectProperty ; rdfs:domain bhv:EffectDefinition ; rdfs:range pty:RoleOccupancy .
+bhv:targetsAllowance a owl:ObjectProperty ; rdfs:domain bhv:EffectDefinition ; rdfs:range bhv:AllowanceDefinition .
 bhv:usesAllowance a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain bhv:EffectDefinition ; rdfs:range bhv:AllowanceDefinition .
 bhv:consumesAmount a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain bhv:EffectDefinition ; rdfs:range qnt:Quantity .
 bhv:allowanceSpace a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain bhv:AllowanceDefinition ; rdfs:range qnt:ValueSpace .

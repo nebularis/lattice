@@ -1,0 +1,28 @@
+# SPDX-License-Identifier: MPL-2.0
+
+@prefix mk:   <https://www.nebularis.org/neuro-semantic/lattice/mork#> .
+@prefix ino:  <https://www.nebularis.org/neuro-semantic/lattice/examples/insure-o#> .
+@prefix ins:  <https://www.nebularis.org/neuro-semantic/lattice/instrument#> .
+@prefix bhv:  <https://www.nebularis.org/neuro-semantic/lattice/behaviour#> .
+@prefix elg:  <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+
+ino:target-structural-map a mk:MappingTarget ;
+    mk:targetsConcept ins:CoverageTerm ;
+    mk:mapsToRole "primary-structure" ;
+    mk:appliesPattern "minimal-subclassing" .
+
+ino:target-capacity-map a mk:MappingTarget ;
+    mk:targetsConcept bhv:AllowanceDefinition ;
+    mk:mapsToRole "capacity-resource" ;
+    mk:appliesPattern "sequential-allowance" .
+
+ino:target-admission-map a mk:MappingTarget ;
+    mk:targetsConcept elg:AdmissionProfile ;
+    mk:mapsToRole "eligibility-guard" ;
+    mk:appliesPattern "hierarchical-match" .
+
+ino:target-hierarchy-map a mk:MappingTarget ;
+    mk:targetsConcept skos:Concept ;
+    mk:mapsToRole "scheme-membership" ;
+    mk:appliesPattern "materialised-closure" .
