@@ -511,7 +511,7 @@ spc:hasParticipant owl:propertyChainAxiom ( spc:hasMessageOption spc:hasContinua
 # Propagate participants through parallel components
 spc:hasParticipant owl:propertyChainAxiom ( spc:hasLeftComponent spc:hasParticipant ) .
 spc:hasParticipant owl:propertyChainAxiom ( spc:hasRightComponent spc:hasParticipant ) .
-rdfs:comment "Property chains: participants of left/right components are participants of the parallel type." .
+# rdfs:comment "Property chains: participants of left/right components are participants of the parallel type." .
 
 # Local types
 spc:LocalType a owl:Class ;
