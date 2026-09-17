@@ -1063,7 +1063,6 @@ _:invHypothesisMapping rdf:type owl:ObjectProperty ;
 
 This property generates the morphisms of the preorder category Int(I) (Foundations §2.5a). The intent nodes under this relation form a bounded join-semilattice.""" .
 
-
 ###  http://www.nebularis.org/ontologies/Mork#intentMapping
 :intentMapping rdf:type owl:ObjectProperty ;
                rdfs:subPropertyOf skos:mappingRelation ;
@@ -1088,6 +1087,12 @@ This property generates the morphisms of the preorder category Int(I) (Foundatio
                 rdfs:label "constraint unit" ;
                 skos:definition "References a concept representing the unit of measurement for a quantitative constraint (e.g., USD, GBP, metres)." .
 
+###  http://www.nebularis.org/ontologies/Mork#constraintDimension
+:constraintDimension a owl:ObjectProperty ;
+    rdfs:domain :QuantitativeConstraint ;
+    rdfs:range skos:Concept ;
+    rdfs:label "constraint dimension" ;
+    skos:definition "References a concept identifying the measured dimension a quantitative constraint applies to. The concept resides in an external scheme." .
 
 #################################################################
 #    Object Properties - Template Expression Algebra (Foundations §3.9)
@@ -1153,7 +1158,6 @@ This property generates the morphisms of the preorder category Int(I) (Foundatio
                        rdfs:range :TemplateExpression ;
                        rdfs:label "placeholder expression" ;
                        skos:definition "The template expression that provides the value for a placeholder binding." .
-
 
 #################################################################
 #    Object Properties - Constraint and Rule Generation (Foundations §5.3)
@@ -1568,6 +1572,12 @@ This datatype property can be used in one of two ways:
               rdfs:label "temporal unit" ;
               skos:definition "The unit of the temporal scope. Range: {\"Days\", \"Months\", \"Years\"}." .
 
+###  http://www.nebularis.org/ontologies/Mork#referenceIdentifier
+:referenceIdentifier rdf:type owl:DatatypeProperty ;
+              rdfs:domain :NormativeReferenceItent ;
+              rdfs:range xsd:string ;
+              rdfs:label "reference identifier" ;
+              skos:definition "An opaque identifier for the referenced external standard or authority (e.g., a body name or form code)." .
 
 #################################################################
 #    Data Properties - Template Expression Algebra (Foundations §3.9)
@@ -2401,6 +2411,11 @@ Subtypes capture the principal categories of insurance product and eligibility c
                  rdfs:subClassOf :IntentNode ;
                  rdfs:label "inclusion intent" ;
                  skos:definition "An intent node representing an explicit inclusion (e.g., 'including sub-limits')." .
+
+:NormativeReferenceItent a owl:Class ;
+                 rdfs:subClassOf :IntentNode ;
+                 rdfs:label "normative reference intent" ;
+                 skos:definition "An intent node referencing an external standard, authority, or published form by identifier, without committing to its domain semantics." .
 
 
 #################################################################
