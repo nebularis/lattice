@@ -1,0 +1,1807 @@
+# SPDX-License-Identifier: MPL-2.0
+
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix bhv:  <https://www.nebularis.org/neuro-semantic/lattice/behaviour#> .
+
+###############################################################################
+# 5. SHACL GOVERNANCE SHAPES
+###############################################################################
+
+#-----------------------------------------------------------------------
+# 5.1  ContractShape
+#-----------------------------------------------------------------------
+
+ctr:ContractShape
+  a sh:NodeShape ;
+  sh:targetClass ctr:Contract ;
+  sh:name "ContractShape"@en ;
+
+  sh:property [
+    sh:path ctr:hasRootElement ;
+    sh:minCount 1 ;
+    sh:class ctr:ContractElement ;
+    sh:message "A Contract must have at least one root ContractElement."@en
+  ] ;
+
+  sh:property [
+    sh:path ctr:hasPartyRole ;
+    sh:minCount 1 ;
+    sh:class ctr:PartyRole ;
+    sh:message "A Contract must have at least one PartyRole."@en
+  ] ;
+
+  sh:property [
+    sh:path ctr:effectiveFrom ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:date ;
+    sh:message "A Contract must have exactly one effectiveFrom date."@en
+  ] ;
+
+  sh:property [
+    sh:path ctr:hasContractType ;
+    sh:maxCount 1 ;
+    sh:class skos:Concept ;
+    sh:message "hasContractType must point to a single SKOS concept."@en
+  ] .
+
+#-----------------------------------------------------------------------
+# 5.2  ContractElementShape
+#-----------------------------------------------------------------------
+
+ctr:ContractElementShape
+  a sh:NodeShape ;
+  sh:targetClass ctr:ContractElement ;
+  sh:name "ContractElementShape"@en ;
+
+  sh:property [
+    sh:path ctr:hasElementType ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:class skos:Concept ;
+    sh:message "A ContractElement must have exactly one hasElementType concept."@en
+  ] ;
+
+  sh:property [
+    sh:path ctr:elementSequence ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:integer
+  ] .
+
+# Stamp must have writtenLine
+ctr:StampElementShape
+  a sh:NodeShape ;
+  sh:name "StampElementShape"@en ;
+  sh:target [
+    a sh:SPARQLTarget ;
+    sh:prefixes [
+      sh:declare [ sh:prefix "ctr" ; sh:namespace "https://www.nebularis.org/neuro-semantic/insurance/contract#" ] ;
+      sh:declare [ sh:prefix "skos" ; sh:namespace "http://www.w3.org/2004/02/skos/core#" ]
+    ] ;
+    sh:select """
+      SELECT ?this WHERE {
+        ?this ctr:hasElementType ?t .
+        ?t skos:notation "Stamp" .
+      }
+    """
+  ] ;
+  sh:property [
+    sh:path ctr:writtenLine ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:decimal ;
+    sh:minInclusive "0.0"^^xsd:decimal ;
+    sh:maxInclusive "1.0"^^xsd:decimal ;
+    sh:message "A Stamp ContractElement must have a writtenLine value in [0.0, 1.0]."@en
+  ] .
+
+# Endorsement must have endorsement timing
+ctr:EndorsementElementShape
+  a sh:NodeShape ;
+  sh:name "EndorsementElementShape"@en ;
+  sh:target [
+    a sh:SPARQLTarget ;
+    sh:prefixes [
+      sh:declare [ sh:prefix "ctr" ; sh:namespace "https://www.nebularis.org/neuro-semantic/insurance/contract#" ] ;
+      sh:declare [ sh:prefix "skos" ; sh:namespace "http://www.w3.org/2004/02/skos/core#" ]
+    ] ;
+    sh:select """
+      SELECT ?this WHERE {
+        ?this ctr:hasElementType ?t .
+        ?t skos:notation "Endorsement" .
+      }
+    """
+  ] ;
+  sh:property [
+    sh:path ctr:hasEndorsementTiming ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:class skos:Concept ;
+    sh:message "An Endorsement ContractElement must have exactly one hasEndorsementTiming."@en
+  ] .
+
+# hasChild acyclicity
+ctr:HasChildAcyclicityShape
+  a sh:NodeShape ;
+  sh:targetClass ctr:ContractElement ;
+  sh:name "HasChildAcyclicityShape"@en ;
+  sh:sparql [
+    a sh:SPARQLConstraint ;
+    sh:message "The transitive closure of ctr:hasChild must be acyclic (no element may be its own ancestor)."@en ;
+    sh:prefixes [
+      sh:declare [ sh:prefix "ctr" ; sh:namespace "https://www.nebularis.org/neuro-semantic/insurance/contract#" ]
+    ] ;
+    sh:select """
+      SELECT ?this WHERE {
+        ?this ctr:hasChild+ ?this .
+      }
+    """
+  ] .
+
+#-----------------------------------------------------------------------
+# 5.3  TermApplicationShape
+#-----------------------------------------------------------------------
+
+ctr:TermApplicationShape
+  a sh:NodeShape ;
+  sh:targetClass ctr:TermApplication ;
+  sh:name "TermApplicationShape"@en ;
+
+  sh:property [
+    sh:path ctr:functionType ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:class skos:Concept ;
+    sh:message "A TermApplication must have exactly one functionType."@en
+  ] .
+
+ctr:LiabilityDimensionTermApplicationShape
+  a sh:NodeShape ;
+  sh:name "LiabilityDimensionTermApplicationShape"@en ;
+  sh:target [
+    a sh:SPARQLTarget ;
+    sh:prefixes [
+      sh:declare [ sh:prefix "ctr" ; sh:namespace "https://www.nebularis.org/neuro-semantic/insurance/contract#" ]
+    ] ;
+    sh:select """
+      SELECT ?this WHERE {
+        ?this a ctr:TermApplication ;
+              ctr:liabilityDirection ?ld .
+      }
+    """
+  ] ;
+  sh:property [
+    sh:path ctr:claimantRole ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:class skos:Concept ;
+    sh:message "A liability-typed TermApplication must have exactly one claimantRole."@en
+  ] ;
+  sh:property [
+    sh:path ctr:indemnityPayeeRole ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:class skos:Concept ;
+    sh:message "A liability-typed TermApplication must have exactly one indemnityPayeeRole."@en
+  ] ;
+  sh:sparql [
+    a sh:SPARQLConstraint ;
+    sh:message "If liabilityDirection is THIRD_PARTY, claimantRole must be ThirdParty."@en ;
+    sh:prefixes [
+      sh:declare [ sh:prefix "ctr" ; sh:namespace "https://www.nebularis.org/neuro-semantic/insurance/contract#" ] ;
+      sh:declare [ sh:prefix "skos" ; sh:namespace "http://www.w3.org/2004/02/skos/core#" ]
+    ] ;
+    sh:select """
+      SELECT ?this WHERE {
+        ?this ctr:liabilityDirection ?ld ;
+              ctr:claimantRole ?cr .
+        ?ld skos:notation "THIRD_PARTY" .
+        FILTER NOT EXISTS { ?cr skos:notation "ThirdParty" }
+      }
+    """
+  ] ;
+  sh:sparql [
+    a sh:SPARQLConstraint ;
+    sh:message "If liabilityDirection is FIRST_PARTY, claimantRole must be InsuredParty or AdditionalInsured."@en ;
+    sh:prefixes [
+      sh:declare [ sh:prefix "ctr" ; sh:namespace "https://www.nebularis.org/neuro-semantic/insurance/contract#" ] ;
+      sh:declare [ sh:prefix "skos" ; sh:namespace "http://www.w3.org/2004/02/skos/core#" ]
+    ] ;
+    sh:select """
+      SELECT ?this WHERE {
+        ?this ctr:liabilityDirection ?ld ;
+              ctr:claimantRole ?cr .
+        ?ld skos:notation "FIRST_PARTY" .
+        FILTER NOT EXISTS {
+          { ?cr skos:notation "InsuredParty" }
+          UNION
+          { ?cr skos:notation "AdditionalInsured" }
+        }
+      }
+    """
+  ] ;
+  sh:sparql [
+    a sh:SPARQLConstraint ;
+    sh:message "If dutyToDefend is true, defenseCostTreatment must be present on the clause or on an attached DefenseCostFacet."@en ;
+    sh:prefixes [
+      sh:declare [ sh:prefix "ctr" ; sh:namespace "https://www.nebularis.org/neuro-semantic/insurance/contract#" ]
+    ] ;
+    sh:select """
+      SELECT ?this WHERE {
+        ?this ctr:dutyToDefend true .
+        FILTER NOT EXISTS { ?this ctr:defenseCostTreatment ?dct }
+        FILTER NOT EXISTS {
+          ?this ctr:hasFacet ?f .
+          ?f a ctr:DefenseCostFacet ;
+             ctr:defenseCostTreatment ?dct2 .
+        }
+      }
+    """
+  ] ;
+  sh:sparql [
+    a sh:SPARQLConstraint ;
+    sh:message "If indemnityPayeeRole is LossPayee, a lossPayeeRef must be present."@en ;
+    sh:prefixes [
+      sh:declare [ sh:prefix "ctr" ; sh:namespace "https://www.nebularis.org/neuro-semantic/insurance/contract#" ] ;
+      sh:declare [ sh:prefix "skos" ; sh:namespace "http://www.w3.org/2004/02/skos/core#" ]
+    ] ;
+    sh:select """
+      SELECT ?this WHERE {
+        ?this ctr:indemnityPayeeRole ?pr .
+        ?pr skos:notation "LossPayee" .
+        FILTER NOT EXISTS { ?this ctr:lossPayeeRef ?lp }
+      }
+    """
+  ] .
+
+ctr:LiabilityDirectionMixedClauseShape
+  a sh:NodeShape ;
+  sh:targetClass ctr:ContractElement ;
+  sh:name "LiabilityDirectionMixedClauseShape"@en ;
+  sh:sparql [
+    a sh:SPARQLConstraint ;
+    sh:message "Avoid MIXED when FIRST_PARTY and THIRD_PARTY sub-clauses exist for the same coveredDamageSubject; split into separate clauses."@en ;
+    sh:prefixes [
+      sh:declare [ sh:prefix "ctr" ; sh:namespace "https://www.nebularis.org/neuro-semantic/insurance/contract#" ] ;
+      sh:declare [ sh:prefix "skos" ; sh:namespace "http://www.w3.org/2004/02/skos/core#" ]
+    ] ;
+    sh:select """
+      SELECT ?this WHERE {
+        ?this ctr:hasTermApplication ?taMixed, ?taFirst, ?taThird .
+        ?taMixed ctr:liabilityDirection ?ldMixed ;
+                 ctr:coveredDamageSubject ?subject .
+        ?ldMixed skos:notation "MIXED" .
+        ?taFirst ctr:liabilityDirection ?ldFirst ;
+                 ctr:coveredDamageSubject ?subject .
+        ?ldFirst skos:notation "FIRST_PARTY" .
+        ?taThird ctr:liabilityDirection ?ldThird ;
+                 ctr:coveredDamageSubject ?subject .
+        ?ldThird skos:notation "THIRD_PARTY" .
+      }
+    """
+  ] .
+
+# CoverageGrant TermApplications must carry LimitFacet and ClaimsBasisFacet
+ctr:CoverageGrantTermApplicationShape
+  a sh:NodeShape ;
+  sh:name "CoverageGrantTermApplicationShape"@en ;
+  sh:target [
+    a sh:SPARQLTarget ;
+    sh:prefixes [
+      sh:declare [ sh:prefix "ctr" ; sh:namespace "https://www.nebularis.org/neuro-semantic/insurance/contract#" ] ;
+      sh:declare [ sh:prefix "skos" ; sh:namespace "http://www.w3.org/2004/02/skos/core#" ]
+    ] ;
+    sh:select """
+      SELECT ?this WHERE {
+        ?this a ctr:TermApplication ;
+              ctr:functionType ?ft .
+        ?ft skos:notation "CoverageGrant" .
+      }
+    """
+  ] ;
+  sh:property [
+    sh:path ctr:hasFacet ;
+    sh:qualifiedValueShape [ sh:class ctr:LimitFacet ] ;
+    sh:qualifiedMinCount 1 ;
+    sh:message "A CoverageGrant TermApplication must have at least one LimitFacet."@en
+  ] ;
+  sh:sparql [
+    a sh:SPARQLConstraint ;
+    sh:message "A CoverageGrant TermApplication must have at least one ClaimsBasisFacet."@en ;
+    sh:prefixes [
+      sh:declare [ sh:prefix "ctr" ; sh:namespace "https://www.nebularis.org/neuro-semantic/insurance/contract#" ] ;
+      sh:declare [ sh:prefix "skos" ; sh:namespace "http://www.w3.org/2004/02/skos/core#" ]
+    ] ;
+    sh:select """
+      SELECT ?this WHERE {
+        ?this a ctr:TermApplication ;
+              ctr:functionType ?ft .
+        ?ft skos:notation "CoverageGrant" .
+        FILTER NOT EXISTS {
+          ?this ctr:hasFacet ?f .
+          ?f a ctr:ClaimsBasisFacet .
+        }
+      }
+    """
+  ] .
+
+#-----------------------------------------------------------------------
+# 5.4  LimitFacetShape
+#-----------------------------------------------------------------------
+
+ctr:LimitFacetShape
+  a sh:NodeShape ;
+  sh:targetClass ctr:LimitFacet ;
+  sh:name "LimitFacetShape"@en ;
+
+  sh:property [
+    sh:path ctr:hasLimit ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:class ctr:Limit ;
+    sh:message "A LimitFacet must reference exactly one Limit node."@en
+  ] ;
+
+  sh:property [
+    sh:path ctr:hasBasis ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:class skos:Concept ;
+    sh:message "A LimitFacet must have exactly one basis."@en
+  ] .
+
+#-----------------------------------------------------------------------
+# 5.5  RetentionFacetShape
+#-----------------------------------------------------------------------
+
+ctr:RetentionFacetShape
+  a sh:NodeShape ;
+  sh:targetClass ctr:RetentionFacet ;
+  sh:name "RetentionFacetShape"@en ;
+
+  sh:property [
+    sh:path ctr:hasRetention ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:class ctr:Retention ;
+    sh:message "A RetentionFacet must reference exactly one Retention node."@en
+  ] ;
+
+  sh:property [
+    sh:path ctr:hasBasis ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:class skos:Concept ;
+    sh:message "A RetentionFacet must have exactly one basis."@en
+  ] ;
+
+  sh:property [
+    sh:path ctr:coinsurancePercentage ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:decimal ;
+    sh:message "coinsurancePercentage must be a single decimal value when present."@en
+  ] .
+
+#-----------------------------------------------------------------------
+# 5.6  MonetaryExtentShape
+#-----------------------------------------------------------------------
+
+ctr:MonetaryExtentShape
+  a sh:NodeShape ;
+  sh:targetClass ctr:MonetaryExtent ;
+  sh:name "MonetaryExtentShape"@en ;
+
+  sh:property [
+    sh:path ctr:amount ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:decimal ;
+    sh:message "A MonetaryExtent must have exactly one amount."@en
+  ] ;
+
+  sh:property [
+    sh:path ctr:currency ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 3 ;
+    sh:maxLength 3 ;
+    sh:message "A MonetaryExtent must have exactly one ISO 4217 currency code (exactly 3 characters)."@en
+  ] .
+
+#-----------------------------------------------------------------------
+# 5.7  FlowDirectiveShape  [REMEDIATION: CSO-006, CSO-012, CSO-013]
+#-----------------------------------------------------------------------
+
+ctr:FlowDirectiveShape
+  a sh:NodeShape ;
+  sh:targetClass ctr:FlowDirective ;
+  sh:name "FlowDirectiveShape"@en ;
+
+  sh:property [
+    sh:path ctr:flowType ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:class skos:Concept ;
+    sh:message "A FlowDirective must have exactly one flowType."@en
+  ] ;
+
+  sh:property [
+    sh:path ctr:flowSource ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:message "A FlowDirective must have exactly one flowSource."@en
+  ] ;
+
+  sh:property [
+    sh:path ctr:flowTarget ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:message "A FlowDirective must have exactly one flowTarget."@en
+  ] ;
+
+  sh:property [
+    sh:path ctr:flowConditionType ;
+    sh:maxCount 1 ;
+    sh:class skos:Concept ;
+    sh:message "flowConditionType, when present, must be a SKOS concept from FlowConditionScheme."@en
+  ] ;
+
+  sh:property [
+    sh:path ctr:flowConditionText ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:message "flowConditionText, when present, must be a single string."@en
+  ] ;
+
+  sh:sparql [
+    a sh:SPARQLConstraint ;
+    sh:message "When flowConditionType is present, flowConditionText or flowCondition must also be present."@en ;
+    sh:prefixes [
+      sh:declare [ sh:prefix "ctr" ; sh:namespace "https://www.nebularis.org/neuro-semantic/insurance/contract#" ]
+    ] ;
+    sh:select """
+      SELECT ?this WHERE {
+        ?this ctr:flowConditionType ?t .
+        FILTER NOT EXISTS { ?this ctr:flowConditionText ?txt }
+        FILTER NOT EXISTS { ?this ctr:flowCondition ?legacy }
+      }
+    """
+  ] .
+
+# Conditional: Contribution flows must have contributionMethod
+ctr:ContributionFlowShape
+  a sh:NodeShape ;
+  sh:name "ContributionFlowShape"@en ;
+  sh:target [
+    a sh:SPARQLTarget ;
+    sh:prefixes [
+      sh:declare [ sh:prefix "ctr" ; sh:namespace "https://www.nebularis.org/neuro-semantic/insurance/contract#" ] ;
+      sh:declare [ sh:prefix "skos" ; sh:namespace "http://www.w3.org/2004/02/skos/core#" ]
+    ] ;
+    sh:select """
+      SELECT ?this WHERE {
+        ?this a ctr:FlowDirective ;
+              ctr:flowType ?ft .
+        ?ft skos:notation "Contribution" .
+      }
+    """
+  ] ;
+  sh:property [
+    sh:path ctr:contributionMethod ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:class skos:Concept ;
+    sh:message "A Contribution FlowDirective must have exactly one contributionMethod."@en
+  ] .
+
+# Conditional: QuotaShareCession flows must have cessionPercentage
+ctr:QuotaShareCessionFlowShape
+  a sh:NodeShape ;
+  sh:name "QuotaShareCessionFlowShape"@en ;
+  sh:target [
+    a sh:SPARQLTarget ;
+    sh:prefixes [
+      sh:declare [ sh:prefix "ctr" ; sh:namespace "https://www.nebularis.org/neuro-semantic/insurance/contract#" ] ;
+      sh:declare [ sh:prefix "skos" ; sh:namespace "http://www.w3.org/2004/02/skos/core#" ]
+    ] ;
+    sh:select """
+      SELECT ?this WHERE {
+        ?this a ctr:FlowDirective ;
+              ctr:flowType ?ft .
+        ?ft skos:notation "QuotaShareCession" .
+      }
+    """
+  ] ;
+  sh:property [
+    sh:path ctr:cessionPercentage ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:decimal ;
+    sh:minInclusive "0.0"^^xsd:decimal ;
+    sh:maxInclusive "1.0"^^xsd:decimal ;
+    sh:message "A QuotaShareCession FlowDirective must have a cessionPercentage in [0.0, 1.0]."@en
+  ] .
+
+# Conditional: LossCorridorRetention flows must have corridorAttach and corridorCeiling
+ctr:LossCorridorRetentionFlowShape
+  a sh:NodeShape ;
+  sh:name "LossCorridorRetentionFlowShape"@en ;
+  sh:target [
+    a sh:SPARQLTarget ;
+    sh:prefixes [
+      sh:declare [ sh:prefix "ctr" ; sh:namespace "https://www.nebularis.org/neuro-semantic/insurance/contract#" ] ;
+      sh:declare [ sh:prefix "skos" ; sh:namespace "http://www.w3.org/2004/02/skos/core#" ]
+    ] ;
+    sh:select """
+      SELECT ?this WHERE {
+        ?this a ctr:FlowDirective ;
+              ctr:flowType ?ft .
+        ?ft skos:notation "LossCorridorRetention" .
+      }
+    """
+  ] ;
+  sh:property [
+    sh:path ctr:corridorAttach ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:decimal ;
+    sh:message "A LossCorridorRetention FlowDirective must have corridorAttach."@en
+  ] ;
+  sh:property [
+    sh:path ctr:corridorCeiling ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:decimal ;
+    sh:message "A LossCorridorRetention FlowDirective must have corridorCeiling."@en
+  ] ;
+  sh:sparql [
+    a sh:SPARQLConstraint ;
+    sh:message "corridorCeiling must be greater than corridorAttach."@en ;
+    sh:prefixes [
+      sh:declare [ sh:prefix "ctr" ; sh:namespace "https://www.nebularis.org/neuro-semantic/insurance/contract#" ]
+    ] ;
+    sh:select """
+      SELECT ?this WHERE {
+        ?this ctr:corridorAttach ?low ;
+              ctr:corridorCeiling ?high .
+        FILTER ( ?high <= ?low )
+      }
+    """
+  ] .
+
+# Conditional: CollateralDraw flows must reference a CollateralFacility-shaped target
+ctr:CollateralDrawFlowShape
+  a sh:NodeShape ;
+  sh:name "CollateralDrawFlowShape"@en ;
+  sh:target [
+    a sh:SPARQLTarget ;
+    sh:prefixes [
+      sh:declare [ sh:prefix "ctr" ; sh:namespace "https://www.nebularis.org/neuro-semantic/insurance/contract#" ] ;
+      sh:declare [ sh:prefix "skos" ; sh:namespace "http://www.w3.org/2004/02/skos/core#" ]
+    ] ;
+    sh:select """
+      SELECT ?this WHERE {
+        ?this a ctr:FlowDirective ;
+              ctr:flowType ?ft .
+        ?ft skos:notation "CollateralDraw" .
+      }
+    """
+  ] ;
+  sh:sparql [
+    a sh:SPARQLConstraint ;
+    sh:message "A CollateralDraw FlowDirective target must satisfy the rcv:CollateralFacility shape (carry rcv:collateralAmount and rcv:collateralStatus, or be typed as rcv:CollateralFacility)."@en ;
+    sh:prefixes [
+      sh:declare [ sh:prefix "ctr" ; sh:namespace "https://www.nebularis.org/neuro-semantic/insurance/contract#" ] ;
+      sh:declare [ sh:prefix "rcv" ; sh:namespace "https://www.nebularis.org/neuro-semantic/insurance/rcv#" ]
+    ] ;
+    sh:select """
+      SELECT ?this WHERE {
+        ?this ctr:flowTarget ?target .
+        FILTER NOT EXISTS {
+          { ?target a rcv:CollateralFacility }
+          UNION
+          { ?target rcv:collateralAmount ?a ; rcv:collateralStatus ?s }
+        }
+      }
+    """
+  ] .
+
+# Conditional: FollowForm flows must have followFormType
+ctr:FollowFormFlowShape
+  a sh:NodeShape ;
+  sh:name "FollowFormFlowShape"@en ;
+  sh:target [
+    a sh:SPARQLTarget ;
+    sh:prefixes [
+      sh:declare [ sh:prefix "ctr" ; sh:namespace "https://www.nebularis.org/neuro-semantic/insurance/contract#" ] ;
+      sh:declare [ sh:prefix "skos" ; sh:namespace "http://www.w3.org/2004/02/skos/core#" ]
+    ] ;
+    sh:select """
+      SELECT ?this WHERE {
+        ?this a ctr:FlowDirective ;
+              ctr:flowType ?ft .
+        ?ft skos:notation "FollowForm" .
+      }
+    """
+  ] ;
+  sh:property [
+    sh:path ctr:followFormType ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:class skos:Concept ;
+    sh:message "A FollowForm FlowDirective must have exactly one followFormType."@en
+  ] .
+
+# Conditional: SignalActivation and SignalGate flows must have signalCondition and activationDirection
+ctr:SignalFlowShape
+  a sh:NodeShape ;
+  sh:name "SignalFlowShape"@en ;
+  sh:target [
+    a sh:SPARQLTarget ;
+    sh:prefixes [
+      sh:declare [ sh:prefix "ctr" ; sh:namespace "https://www.nebularis.org/neuro-semantic/insurance/contract#" ] ;
+      sh:declare [ sh:prefix "skos" ; sh:namespace "http://www.w3.org/2004/02/skos/core#" ]
+    ] ;
+    sh:select """
+      SELECT ?this WHERE {
+        ?this a ctr:FlowDirective ;
+              ctr:flowType ?ft .
+        ?ft skos:notation ?n .
+        FILTER ( ?n = "SignalActivation" || ?n = "SignalGate" )
+      }
+    """
+  ] ;
+  sh:property [
+    sh:path ctr:signalCondition ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:message "A SignalActivation or SignalGate FlowDirective must have a signalCondition."@en
+  ] ;
+  sh:property [
+    sh:path ctr:activationDirection ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:class skos:Concept ;
+    sh:message "A SignalActivation or SignalGate FlowDirective must have an activationDirection."@en
+  ] .
+
+# FlowDirective acyclicity — element-level and cross-contract  [REMEDIATION: CSO-013]
+ctr:FlowDirectiveAcyclicityShape
+  a sh:NodeShape ;
+  sh:targetClass ctr:FlowDirective ;
+  sh:name "FlowDirectiveAcyclicityShape"@en ;
+  sh:sparql [
+    a sh:SPARQLConstraint ;
+    sh:message "FlowDirective source→target graph must be acyclic (including cross-contract coordination flows)."@en ;
+    sh:prefixes [
+      sh:declare [ sh:prefix "ctr" ; sh:namespace "https://www.nebularis.org/neuro-semantic/insurance/contract#" ]
+    ] ;
+    sh:select """
+      SELECT ?this WHERE {
+        ?this ctr:flowSource ?origin .
+        {
+          SELECT ?origin WHERE {
+            ?origin (
+              ^ctr:flowSource/
+              ^ctr:hasFlowDirective/
+              ( ^ctr:referencesChildContract | ctr:referencesChildContract )*/
+              ctr:hasFlowDirective/
+              ctr:flowTarget
+            )+ ?origin .
+          }
+        }
+      }
+    """
+  ] .
+
+#-----------------------------------------------------------------------
+# 5.8  NegotiationThreadShape  [REMEDIATION: CSO-008, CSO-010]
+#-----------------------------------------------------------------------
+
+ctr:NegotiationThreadShape
+  a sh:NodeShape ;
+  sh:targetClass ctr:NegotiationThread ;
+  sh:name "NegotiationThreadShape"@en ;
+
+  sh:property [
+    sh:path ctr:threadState ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:in ( "OPEN" "SUBMITTED" "INDICATED" "REFERRED_INFO" "REFERRED_PROCESS"
+            "QUESTIONS_PENDING" "ANSWERS_SENT" "FIRM_QUOTED" "COUNTER_SENT"
+            "ACCEPTED" "DECLINED_BROKER" "DECLINED_MARKET" "EXPIRED" "BOUND" ) ;
+    sh:message "threadState must be one of the 14 specified state values."@en
+  ] ;
+
+  sh:property [
+    sh:path ctr:targetsLayer ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:message "A NegotiationThread must target exactly one tower layer."@en
+  ] ;
+
+  sh:property [
+    sh:path ctr:hasSubmission ;
+    sh:minCount 1 ;
+    sh:message "A NegotiationThread must have at least one Submission."@en
+  ] ;
+
+  sh:property [
+    sh:path ctr:threadCreatedAt ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:dateTime ;
+    sh:message "A NegotiationThread must have exactly one threadCreatedAt timestamp."@en
+  ] ;
+
+  sh:property [
+    sh:path ctr:lastProposedBy ;
+    sh:maxCount 1 ;
+    sh:class skos:Concept ;
+    sh:message "lastProposedBy must point to a single SKOS concept (Broker or Market)."@en
+  ] .
+
+# State transition validation — allowed transitions matrix
+ctr:NegotiationThreadTransitionShape
+  a sh:NodeShape ;
+  sh:targetClass ctr:NegotiationThread ;
+  sh:name "NegotiationThreadTransitionShape"@en ;
+  sh:sparql [
+    a sh:SPARQLConstraint ;
+    sh:message "Invalid state transition on NegotiationThread. Transition violates the allowed state machine."@en ;
+    sh:prefixes [
+      sh:declare [ sh:prefix "ctr" ; sh:namespace "https://www.nebularis.org/neuro-semantic/insurance/contract#" ] ;
+      sh:declare [ sh:prefix "core" ; sh:namespace "https://www.nebularis.org/ontology/nsd/core#" ]
+    ] ;
+    sh:select """
+      SELECT ?this WHERE {
+        ?this ctr:hasStateTransition ?t1, ?t2 .
+        ?t1 core:validFrom ?ts1 ;
+            ctr:transitionToState ?newState1 .
+        ?t2 core:validFrom ?ts2 ;
+            ctr:transitionFromState ?fromState2 .
+        FILTER ( ?ts2 > ?ts1 )
+        FILTER NOT EXISTS {
+          ?t1 ctr:transitionToState ?s .
+          ?t2 ctr:transitionFromState ?s .
+        }
+        FILTER NOT EXISTS {
+          ?other core:validFrom ?tsOther ;
+                 ctr:transitionToState ?fromState2 .
+          ?this ctr:hasStateTransition ?other .
+          FILTER ( ?tsOther < ?ts2 )
+          FILTER ( ?tsOther > ?ts1 )
+        }
+        BIND ( CONCAT("Transition from ", STR(?newState1), " to ",
+               STR(?fromState2), " is not a direct allowed transition.") AS ?msg )
+        FILTER (
+          !( ( ?newState1 = "OPEN" && ?fromState2 = "SUBMITTED" ) ||
+             ( ?newState1 = "SUBMITTED" && ?fromState2 = "INDICATED" ) ||
+             ( ?newState1 = "SUBMITTED" && ?fromState2 = "REFERRED_INFO" ) ||
+             ( ?newState1 = "SUBMITTED" && ?fromState2 = "REFERRED_PROCESS" ) ||
+             ( ?newState1 = "SUBMITTED" && ?fromState2 = "QUESTIONS_PENDING" ) ||
+             ( ?newState1 = "SUBMITTED" && ?fromState2 = "FIRM_QUOTED" ) ||
+             ( ?newState1 = "SUBMITTED" && ?fromState2 = "DECLINED_MARKET" ) ||
+             ( ?newState1 = "INDICATED" && ?fromState2 = "FIRM_QUOTED" ) ||
+             ( ?newState1 = "INDICATED" && ?fromState2 = "REFERRED_INFO" ) ||
+             ( ?newState1 = "INDICATED" && ?fromState2 = "QUESTIONS_PENDING" ) ||
+             ( ?newState1 = "INDICATED" && ?fromState2 = "DECLINED_MARKET" ) ||
+             ( ?newState1 = "INDICATED" && ?fromState2 = "DECLINED_BROKER" ) ||
+             ( ?newState1 = "REFERRED_INFO" && ?fromState2 = "QUESTIONS_PENDING" ) ||
+             ( ?newState1 = "REFERRED_INFO" && ?fromState2 = "INDICATED" ) ||
+             ( ?newState1 = "REFERRED_INFO" && ?fromState2 = "FIRM_QUOTED" ) ||
+             ( ?newState1 = "REFERRED_INFO" && ?fromState2 = "DECLINED_MARKET" ) ||
+             ( ?newState1 = "REFERRED_PROCESS" && ?fromState2 = "INDICATED" ) ||
+             ( ?newState1 = "REFERRED_PROCESS" && ?fromState2 = "FIRM_QUOTED" ) ||
+             ( ?newState1 = "REFERRED_PROCESS" && ?fromState2 = "DECLINED_MARKET" ) ||
+             ( ?newState1 = "QUESTIONS_PENDING" && ?fromState2 = "ANSWERS_SENT" ) ||
+             ( ?newState1 = "ANSWERS_SENT" && ?fromState2 = "INDICATED" ) ||
+             ( ?newState1 = "ANSWERS_SENT" && ?fromState2 = "FIRM_QUOTED" ) ||
+             ( ?newState1 = "ANSWERS_SENT" && ?fromState2 = "REFERRED_INFO" ) ||
+             ( ?newState1 = "ANSWERS_SENT" && ?fromState2 = "DECLINED_MARKET" ) ||
+             ( ?newState1 = "FIRM_QUOTED" && ?fromState2 = "COUNTER_SENT" ) ||
+             ( ?newState1 = "FIRM_QUOTED" && ?fromState2 = "ACCEPTED" ) ||
+             ( ?newState1 = "FIRM_QUOTED" && ?fromState2 = "DECLINED_BROKER" ) ||
+             ( ?newState1 = "FIRM_QUOTED" && ?fromState2 = "EXPIRED" ) ||
+             ( ?newState1 = "COUNTER_SENT" && ?fromState2 = "FIRM_QUOTED" ) ||
+             ( ?newState1 = "COUNTER_SENT" && ?fromState2 = "DECLINED_MARKET" ) ||
+             ( ?newState1 = "COUNTER_SENT" && ?fromState2 = "EXPIRED" ) ||
+             ( ?newState1 = "ACCEPTED" && ?fromState2 = "BOUND" )
+           )
+        )
+      }
+    """
+  ] .
+
+#-----------------------------------------------------------------------
+# 5.9  QuoteShape  [REMEDIATION: CSO-007]
+#-----------------------------------------------------------------------
+
+ctr:QuoteShape
+  a sh:NodeShape ;
+  sh:targetClass ctr:Quote ;
+  sh:name "QuoteShape"@en ;
+
+  sh:property [
+    sh:path ctr:commitmentLevel ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:class skos:Concept ;
+    sh:message "A Quote must have exactly one commitmentLevel."@en
+  ] ;
+
+  sh:property [
+    sh:path ctr:quoteStatus ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:class skos:Concept ;
+    sh:message "A Quote must have exactly one quoteStatus."@en
+  ] ;
+
+  sh:property [
+    sh:path ctr:promotedToContract ;
+    sh:maxCount 1 ;
+    sh:class ctr:Contract ;
+    sh:message "promotedToContract may point to at most one Contract."@en
+  ] ;
+
+  sh:property [
+    sh:path ctr:hasCompletenessAssessment ;
+    sh:maxCount 1 ;
+    sh:class ctr:CompletenessAssessment ;
+    sh:message "A Quote may have at most one CompletenessAssessment."@en
+  ] ;
+
+  sh:property [
+    sh:path ctr:hasRootElement ;
+    sh:class ctr:ContractElement ;
+    sh:message "Quote root elements must be ContractElement instances."@en
+  ] ;
+
+  sh:property [
+    sh:path ctr:hasPartyRole ;
+    sh:class ctr:PartyRole ;
+    sh:message "Quote party roles must be PartyRole instances."@en
+  ] .
+
+ctr:ClaimShape
+  a sh:NodeShape ;
+  sh:targetClass ctr:Claim ;
+  sh:name "ClaimShape"@en ;
+  sh:property [
+    sh:path ctr:claimant ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:class ctr:PartyRole ;
+    sh:message "A Claim must have exactly one claimant PartyRole."@en
+  ] ;
+  sh:property [
+    sh:path ctr:payee ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:class ctr:PartyRole ;
+    sh:message "A Claim must have exactly one payee PartyRole."@en
+  ] ;
+  sh:property [
+    sh:path ctr:defendant ;
+    sh:maxCount 1 ;
+    sh:class ctr:PartyRole ;
+    sh:message "A Claim may have one defendant PartyRole."@en
+  ] ;
+  sh:property [
+    sh:path ctr:relatesToCoverageClause ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:class ctr:TermApplication ;
+    sh:message "A Claim must relate to exactly one coverage clause TermApplication."@en
+  ] ;
+  sh:property [
+    sh:path ctr:harmType ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:class skos:Concept ;
+    sh:message "A Claim must have exactly one harmType concept."@en
+  ] ;
+  sh:property [
+    sh:path ctr:indemnityAmount ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:decimal
+  ] ;
+  sh:property [
+    sh:path ctr:defenseCostAmount ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:decimal
+  ] ;
+  sh:sparql [
+    a sh:SPARQLConstraint ;
+    sh:message "For THIRD_PARTY clauses, claimant role must be ThirdParty and defendant role must be insured-aligned."@en ;
+    sh:prefixes [
+      sh:declare [ sh:prefix "ctr" ; sh:namespace "https://www.nebularis.org/neuro-semantic/insurance/contract#" ] ;
+      sh:declare [ sh:prefix "skos" ; sh:namespace "http://www.w3.org/2004/02/skos/core#" ]
+    ] ;
+    sh:select """
+      SELECT ?this WHERE {
+        ?this ctr:relatesToCoverageClause ?clause ;
+              ctr:claimant ?claimantRole ;
+              ctr:defendant ?defendantRole .
+        ?clause ctr:liabilityDirection ?ld .
+        ?ld skos:notation "THIRD_PARTY" .
+        ?claimantRole ctr:roleType ?claimantType .
+        ?defendantRole ctr:roleType ?defendantType .
+        {
+          FILTER NOT EXISTS { ?claimantType skos:notation "ThirdParty" }
+        }
+        UNION
+        {
+          FILTER NOT EXISTS {
+            { ?defendantType skos:notation "InsuredParty" }
+            UNION { ?defendantType skos:notation "NamedInsured" }
+            UNION { ?defendantType skos:notation "AdditionalInsured" }
+          }
+        }
+      }
+    """
+  ] .
+
+#-----------------------------------------------------------------------
+# 5.10  ContractTowerBindingShape
+#-----------------------------------------------------------------------
+
+ctr:ContractTowerBindingShape
+  a sh:NodeShape ;
+  sh:targetClass ctr:ContractTowerBinding ;
+  sh:name "ContractTowerBindingShape"@en ;
+
+  sh:property [
+    sh:path ctr:referencesContract ;
+    sh:maxCount 1 ;
+    sh:class ctr:Contract ;
+    sh:message "A CTB may reference one Contract (required for non-Provisional states)."@en
+  ] ;
+
+  sh:property [
+    sh:path ctr:referencesQuote ;
+    sh:maxCount 1 ;
+    sh:class ctr:Quote ;
+    sh:message "A CTB may reference one Quote (required for Provisional state)."@en
+  ] ;
+
+  sh:property [
+    sh:path ctr:relatesToLayer ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:message "A CTB must relate to exactly one tower layer."@en
+  ] ;
+
+  sh:property [
+    sh:path ctr:participationShare ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:decimal ;
+    sh:minInclusive "0.0"^^xsd:decimal ;
+    sh:maxInclusive "1.0"^^xsd:decimal ;
+    sh:message "participationShare must be a decimal in [0.0, 1.0]."@en
+  ] ;
+
+  sh:property [
+    sh:path ctr:bindingStatus ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:class skos:Concept ;
+    sh:message "A CTB must have exactly one bindingStatus."@en
+  ] ;
+
+  sh:property [
+    sh:path ctr:participationRole ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:class skos:Concept ;
+    sh:message "A CTB must have exactly one participationRole."@en
+  ] ;
+
+  sh:property [
+    sh:path ctr:uniformityType ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:class skos:Concept ;
+    sh:message "A CTB must have exactly one uniformityType."@en
+  ] ;
+
+  sh:sparql [
+    a sh:SPARQLConstraint ;
+    sh:message "A CTB must reference exactly one of referencesContract or referencesQuote."@en ;
+    sh:prefixes [
+      sh:declare [ sh:prefix "ctr" ; sh:namespace "https://www.nebularis.org/neuro-semantic/insurance/contract#" ]
+    ] ;
+    sh:select """
+      SELECT ?this WHERE {
+        BIND ( EXISTS { ?this ctr:referencesContract ?c } AS ?hasContract )
+        BIND ( EXISTS { ?this ctr:referencesQuote ?q } AS ?hasQuote )
+        FILTER ( (?hasContract && ?hasQuote) || (!?hasContract && !?hasQuote) )
+      }
+    """
+  ] ;
+
+  sh:sparql [
+    a sh:SPARQLConstraint ;
+    sh:message "A Provisional CTB must reference a Quote."@en ;
+    sh:prefixes [
+      sh:declare [ sh:prefix "ctr" ; sh:namespace "https://www.nebularis.org/neuro-semantic/insurance/contract#" ] ;
+      sh:declare [ sh:prefix "skos" ; sh:namespace "http://www.w3.org/2004/02/skos/core#" ]
+    ] ;
+    sh:select """
+      SELECT ?this WHERE {
+        ?this ctr:bindingStatus ?bs .
+        ?bs skos:notation "Provisional" .
+        FILTER NOT EXISTS { ?this ctr:referencesQuote ?q }
+      }
+    """
+  ] ;
+
+  sh:sparql [
+    a sh:SPARQLConstraint ;
+    sh:message "A non-Provisional CTB must reference a Contract."@en ;
+    sh:prefixes [
+      sh:declare [ sh:prefix "ctr" ; sh:namespace "https://www.nebularis.org/neuro-semantic/insurance/contract#" ] ;
+      sh:declare [ sh:prefix "skos" ; sh:namespace "http://www.w3.org/2004/02/skos/core#" ]
+    ] ;
+    sh:select """
+      SELECT ?this WHERE {
+        ?this ctr:bindingStatus ?bs .
+        ?bs skos:notation ?n .
+        FILTER ( ?n != "Provisional" )
+        FILTER NOT EXISTS { ?this ctr:referencesContract ?c }
+      }
+    """
+  ] .
+
+#-----------------------------------------------------------------------
+# 5.11  ClaimsBasisFacetShape
+#-----------------------------------------------------------------------
+
+ctr:ClaimsBasisFacetShape
+  a sh:NodeShape ;
+  sh:targetClass ctr:ClaimsBasisFacet ;
+  sh:name "ClaimsBasisFacetShape"@en ;
+
+  sh:property [
+    sh:path ctr:claimsTriggerBasis ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:class skos:Concept ;
+    sh:message "A ClaimsBasisFacet must have exactly one claimsTriggerBasis."@en
+  ] .
+
+#-----------------------------------------------------------------------
+# 5.12  ReinstatementFacetShape  [REMEDIATION: CSO-001]
+#-----------------------------------------------------------------------
+
+ctr:ReinstatementFacetShape
+  a sh:NodeShape ;
+  sh:targetClass ctr:ReinstatementFacet ;
+  sh:name "ReinstatementFacetShape"@en ;
+
+  sh:property [
+    sh:path ctr:reinstatementCount ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:integer ;
+    sh:minInclusive "0"^^xsd:integer ;
+    sh:message "reinstatementCount must be a non-negative integer."@en
+  ] ;
+
+  sh:property [
+    sh:path ctr:reinstatementPercentage ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:decimal ;
+    sh:minInclusive "0.0"^^xsd:decimal ;
+    sh:message "reinstatementPercentage must be a non-negative decimal."@en
+  ] ;
+
+  sh:property [
+    sh:path ctr:reinstatementProRataTime ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:boolean ;
+    sh:message "reinstatementProRataTime must be present and boolean."@en
+  ] ;
+
+  sh:property [
+    sh:path ctr:reinstatementAutomatic ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:boolean ;
+    sh:message "reinstatementAutomatic must be present and boolean."@en
+  ] ;
+  
+# ADD: new required property
+  sh:property [
+    sh:path ctr:reinstatementProRataAmount ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:boolean ;
+    sh:message """reinstatementProRataAmount must be present and boolean.
+Indicates whether reinstatement premium is pro-rated as to the fraction of
+the limit consumed by the loss. Must be explicitly declared — absence is
+ambiguous between 'not specified' and 'false'."""@en ] .
+
+#-----------------------------------------------------------------------
+# 5.13  AggregationFacetShape  [REMEDIATION: CSO-002, CSO-003]
+#-----------------------------------------------------------------------
+
+ctr:AggregationFacetShape
+  a sh:NodeShape ;
+  sh:targetClass ctr:AggregationFacet ;
+  sh:name "AggregationFacetShape"@en ;
+
+  sh:property [
+    sh:path ctr:aggregationWindow ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:class skos:Concept ;
+    sh:message "An AggregationFacet must have exactly one aggregationWindow."@en
+  ] ;
+
+  sh:property [
+    sh:path ctr:aggregateDeductibleAmount ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:decimal
+  ] ;
+
+  sh:property [
+    sh:path ctr:aggregateDeductibleCurrency ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string
+  ] ;
+
+  sh:property [
+    sh:path ctr:hoursClauseDuration ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:dayTimeDuration
+  ] ;
+
+  sh:property [
+    sh:path ctr:hoursClauseNonOverlap ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:boolean
+  ] ;
+
+  sh:property [
+    sh:path ctr:maxWindows ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:integer ;
+    sh:minInclusive "1"^^xsd:integer
+  ] ;
+
+  # When hoursClauseDuration is present, hoursClauseNonOverlap must also be present
+  sh:sparql [
+    a sh:SPARQLConstraint ;
+    sh:message "When hoursClauseDuration is present, hoursClauseNonOverlap and maxWindows must also be present."@en ;
+    sh:prefixes [
+      sh:declare [ sh:prefix "ctr" ; sh:namespace "https://www.nebularis.org/neuro-semantic/insurance/contract#" ]
+    ] ;
+    sh:select """
+      SELECT ?this WHERE {
+        ?this ctr:hoursClauseDuration ?d .
+        FILTER NOT EXISTS { ?this ctr:hoursClauseNonOverlap ?b }
+      }
+    """
+  ] ;
+
+  sh:sparql [
+    a sh:SPARQLConstraint ;
+    sh:message "When hoursClauseDuration is present, maxWindows must also be present."@en ;
+    sh:prefixes [
+      sh:declare [ sh:prefix "ctr" ; sh:namespace "https://www.nebularis.org/neuro-semantic/insurance/contract#" ]
+    ] ;
+    sh:select """
+      SELECT ?this WHERE {
+        ?this ctr:hoursClauseDuration ?d .
+        FILTER NOT EXISTS { ?this ctr:maxWindows ?mw }
+      }
+    """
+  ] ;
+
+  # Validate aggregateDeductibleCurrency present when aggregateDeductibleAmount present
+  sh:sparql [
+    a sh:SPARQLConstraint ;
+    sh:message "When aggregateDeductibleAmount is present, aggregateDeductibleCurrency must also be present."@en ;
+    sh:prefixes [
+      sh:declare [ sh:prefix "ctr" ; sh:namespace "https://www.nebularis.org/neuro-semantic/insurance/contract#" ]
+    ] ;
+    sh:select """
+      SELECT ?this WHERE {
+        ?this ctr:aggregateDeductibleAmount ?a .
+        FILTER NOT EXISTS { ?this ctr:aggregateDeductibleCurrency ?c }
+      }
+    """
+  ] .
+
+#-----------------------------------------------------------------------
+# 5.14  TriggerFacetShape  [REMEDIATION: CSO-004]
+#-----------------------------------------------------------------------
+
+ctr:TriggerFacetShape
+  a sh:NodeShape ;
+  sh:targetClass ctr:TriggerFacet ;
+  sh:name "TriggerFacetShape"@en ;
+
+  sh:property [
+    sh:path ctr:triggerType ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:class skos:Concept ;
+    sh:message "A TriggerFacet must have exactly one triggerType."@en
+  ] ;
+
+  # Canonical payout structure property
+  sh:property [
+    sh:path ctr:payoutStructure ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:class skos:Concept ;
+    sh:message "A TriggerFacet must have exactly one payoutStructure (Binary, Linear, or Graduated)."@en
+  ] ;
+
+  sh:property [
+    sh:path ctr:cooldownPeriod ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:dayTimeDuration
+  ] ;
+
+  # Graduated: must have at least one TriggerTier
+  sh:sparql [
+    a sh:SPARQLConstraint ;
+    sh:message "A Graduated TriggerFacet must have at least one TriggerTier."@en ;
+    sh:prefixes [
+      sh:declare [ sh:prefix "ctr" ;
+        sh:namespace "https://www.nebularis.org/neuro-semantic/insurance/contract#" ] ;
+      sh:declare [ sh:prefix "skos" ;
+        sh:namespace "http://www.w3.org/2004/02/skos/core#" ]
+    ] ;
+    sh:select """
+      SELECT ?this WHERE {
+        ?this a ctr:TriggerFacet ;
+              ctr:payoutStructure ?ps .
+        ?ps skos:notation "Graduated" .
+        FILTER NOT EXISTS { ?this ctr:hasTriggerTier ?tier }
+      }
+    """
+  ] ;
+
+    # NEW: Linear requires both floor and ceiling thresholds
+  sh:sparql [
+    a sh:SPARQLConstraint ;
+    sh:message "A Linear TriggerFacet must have both ctr:linearFloorThreshold and ctr:linearCeilingThreshold."@en ;
+    sh:prefixes [
+      sh:declare [ sh:prefix "ctr" ;
+        sh:namespace "https://www.nebularis.org/neuro-semantic/insurance/contract#" ] ;
+      sh:declare [ sh:prefix "skos" ;
+        sh:namespace "http://www.w3.org/2004/02/skos/core#" ]
+    ] ;
+    sh:select """
+      SELECT ?this WHERE {
+        ?this a ctr:TriggerFacet ;
+              ctr:payoutStructure ?ps .
+        ?ps skos:notation "Linear" .
+        FILTER NOT EXISTS {
+          ?this ctr:linearFloorThreshold ?floor ;
+                ctr:linearCeilingThreshold ?ceil .
+        }
+      }
+    """
+  ] ;
+
+  # NEW: linearCeilingThreshold must be strictly greater than linearFloorThreshold
+  sh:sparql [
+    a sh:SPARQLConstraint ;
+    sh:message "ctr:linearCeilingThreshold must be strictly greater than ctr:linearFloorThreshold."@en ;
+    sh:prefixes [
+      sh:declare [ sh:prefix "ctr" ;
+        sh:namespace "https://www.nebularis.org/neuro-semantic/insurance/contract#" ]
+    ] ;
+    sh:select """
+      SELECT ?this WHERE {
+        ?this ctr:linearFloorThreshold ?floor ;
+              ctr:linearCeilingThreshold ?ceil .
+        FILTER ( ?ceil <= ?floor )
+      }
+    """
+  ] ;
+
+  # When triggerType = Composite, at least one component trigger must be present
+  sh:sparql [
+    a sh:SPARQLConstraint ;
+    sh:message "A Composite TriggerFacet must have at least one component trigger via ctr:hasComponentTrigger."@en ;
+    sh:prefixes [
+      sh:declare [ sh:prefix "ctr" ; sh:namespace "https://www.nebularis.org/neuro-semantic/insurance/contract#" ] ;
+      sh:declare [ sh:prefix "skos" ; sh:namespace "http://www.w3.org/2004/02/skos/core#" ]
+    ] ;
+    sh:select """
+      SELECT ?this WHERE {
+        ?this a ctr:TriggerFacet ;
+              ctr:triggerType ?tt .
+        ?tt skos:notation "Composite" .
+        FILTER NOT EXISTS { ?this ctr:hasComponentTrigger ?child }
+      }
+    """
+  ] ;
+
+  # When triggerType = Composite, compositeOperator must be present
+  sh:sparql [
+    a sh:SPARQLConstraint ;
+    sh:message "A Composite TriggerFacet must have a compositeOperator."@en ;
+    sh:prefixes [
+      sh:declare [ sh:prefix "ctr" ; sh:namespace "https://www.nebularis.org/neuro-semantic/insurance/contract#" ] ;
+      sh:declare [ sh:prefix "skos" ; sh:namespace "http://www.w3.org/2004/02/skos/core#" ]
+    ] ;
+    sh:select """
+      SELECT ?this WHERE {
+        ?this a ctr:TriggerFacet ;
+              ctr:triggerType ?tt .
+        ?tt skos:notation "Composite" .
+        FILTER NOT EXISTS { ?this ctr:compositeOperator ?op }
+      }
+    """
+  ] .
+
+#-----------------------------------------------------------------------
+# 5.15  TriggerTierShape  [REMEDIATION: CSO-004]
+#-----------------------------------------------------------------------
+
+ctr:TriggerTierShape
+  a sh:NodeShape ;
+  sh:targetClass ctr:TriggerTier ;
+  sh:name "TriggerTierShape"@en ;
+
+  sh:property [
+    sh:path ctr:tierThreshold ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:decimal ;
+    sh:message "A TriggerTier must have exactly one tierThreshold."@en
+  ] ;
+
+  sh:property [
+    sh:path ctr:tierPayoutPercentage ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:decimal ;
+    sh:minInclusive "0.0"^^xsd:decimal ;
+    sh:maxInclusive "1.0"^^xsd:decimal ;
+    sh:message "tierPayoutPercentage must be in [0.0, 1.0]."@en
+  ] ;
+
+  sh:property [
+    sh:path ctr:tierPayoutCap ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:decimal
+  ] ;
+
+  sh:property [
+    sh:path ctr:tierSequence ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:integer ;
+    sh:message "A TriggerTier must have exactly one tierSequence."@en
+  ] .
+
+#-----------------------------------------------------------------------
+# 5.16  PremiumFacetShape  [REMEDIATION: CSO-015]
+#-----------------------------------------------------------------------
+
+ctr:PremiumFacetShape
+  a sh:NodeShape ;
+  sh:targetClass ctr:PremiumFacet ;
+  sh:name "PremiumFacetShape"@en ;
+
+  sh:property [
+    sh:path ctr:premiumBasis ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:class skos:Concept ;
+    sh:message "A PremiumFacet must have exactly one premiumBasis."@en
+  ] ;
+
+  sh:property [
+    sh:path ctr:premiumAmount ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:decimal
+  ] ;
+
+  sh:property [
+    sh:path ctr:premiumCurrency ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:minLength 3 ;
+    sh:maxLength 3
+  ] ;
+
+  sh:property [
+    sh:path ctr:premiumRate ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:decimal
+  ] ;
+
+  sh:property [
+    sh:path ctr:minimumPremium ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:decimal
+  ] ;
+
+  sh:property [
+    sh:path ctr:depositPremium ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:decimal
+  ] .
+
+#-----------------------------------------------------------------------
+# 5.17  CollateralFacetShape  [REMEDIATION: CSO-005]
+#-----------------------------------------------------------------------
+
+ctr:CollateralFacetShape
+  a sh:NodeShape ;
+  sh:targetClass ctr:CollateralFacet ;
+  sh:name "CollateralFacetShape"@en ;
+
+  sh:property [
+    sh:path ctr:collateralType ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:class skos:Concept ;
+    sh:message "A CollateralFacet must have exactly one collateralType."@en
+  ] ;
+
+  sh:property [
+    sh:path ctr:minCollateralRatio ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:decimal
+  ] ;
+
+  sh:property [
+    sh:path ctr:collateralTrustRef ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:anyURI
+  ] .
+
+#-----------------------------------------------------------------------
+# 5.18  PoolParticipationFacetShape
+#-----------------------------------------------------------------------
+
+ctr:PoolParticipationFacetShape
+  a sh:NodeShape ;
+  sh:targetClass ctr:PoolParticipationFacet ;
+  sh:name "PoolParticipationFacetShape"@en ;
+
+  sh:property [
+    sh:path ctr:poolIdentifier ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:message "A PoolParticipationFacet must have exactly one poolIdentifier."@en
+  ] ;
+
+  sh:property [
+    sh:path ctr:participantShare ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:decimal ;
+    sh:minInclusive "0.0"^^xsd:decimal ;
+    sh:maxInclusive "1.0"^^xsd:decimal ;
+    sh:message "participantShare must be a decimal in [0.0, 1.0]."@en
+  ] ;
+
+  sh:property [
+    sh:path ctr:payoutBasis ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:class skos:Concept ;
+    sh:message "A PoolParticipationFacet must have exactly one payoutBasis."@en
+  ] ;
+
+  sh:property [
+    sh:path ctr:participantPayoutCap ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:decimal
+  ] .
+
+#-----------------------------------------------------------------------
+# 5.19  SubmissionShape  [REMEDIATION: CSO-009]
+#-----------------------------------------------------------------------
+
+ctr:SubmissionShape
+  a sh:NodeShape ;
+  sh:targetClass ctr:Submission ;
+  sh:name "SubmissionShape"@en ;
+
+  sh:property [
+    sh:path ctr:targetsLayer ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:message "A Submission must target exactly one tower layer."@en
+  ] ;
+
+  sh:property [
+    sh:path ctr:submissionVersion ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:message "A Submission must have exactly one submissionVersion."@en
+  ] ;
+
+  sh:property [
+    sh:path ctr:submissionHash ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:message "A Submission must have a content hash."@en
+  ] ;
+
+  sh:property [
+    sh:path ctr:submissionStatus ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:class skos:Concept ;
+    sh:message "A Submission must have exactly one submissionStatus."@en
+  ] ;
+
+  sh:property [
+    sh:path ctr:hasSubmissionDocument ;
+    sh:maxCount 1 ;
+    sh:message "A Submission may reference one submission document artifact."@en
+  ] ;
+
+  sh:property [
+    sh:path ctr:sentTimestamp ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:dateTime
+  ] ;
+
+  sh:property [
+    sh:path ctr:hasTargetPremiumRange ;
+    sh:maxCount 2 ;
+    sh:class ctr:MonetaryExtent ;
+    sh:message "hasTargetPremiumRange supports at most 2 MonetaryExtent instances (low and high bounds)."@en
+  ] .
+
+#-----------------------------------------------------------------------
+# 5.20  InformationRequestShape
+#-----------------------------------------------------------------------
+
+ctr:InformationRequestShape
+  a sh:NodeShape ;
+  sh:targetClass ctr:InformationRequest ;
+  sh:name "InformationRequestShape"@en ;
+
+  sh:property [
+    sh:path ctr:hasQuestion ;
+    sh:minCount 1 ;
+    sh:class ctr:Question ;
+    sh:message "An InformationRequest must have at least one Question."@en
+  ] ;
+
+  sh:property [
+    sh:path ctr:originatesFromThread ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:class ctr:NegotiationThread ;
+    sh:message "An InformationRequest must originate from exactly one NegotiationThread."@en
+  ] ;
+
+  sh:property [
+    sh:path ctr:requestTimestamp ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:dateTime ;
+    sh:message "An InformationRequest must have exactly one requestTimestamp."@en
+  ] .
+
+#-----------------------------------------------------------------------
+# 5.21  ExternalWordingShape
+#-----------------------------------------------------------------------
+
+ctr:ExternalWordingShape
+  a sh:NodeShape ;
+  sh:targetClass ctr:ExternalWording ;
+  sh:name "ExternalWordingShape"@en ;
+
+  sh:property [
+    sh:path ctr:wordingIdentifier ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:message "An ExternalWording must have exactly one wordingIdentifier."@en
+  ] ;
+
+  sh:property [
+    sh:path ctr:wordingSource ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:message "An ExternalWording must have exactly one wordingSource."@en
+  ] .
+
+#-----------------------------------------------------------------------
+# 5.22  TermQualificationShape  [REMEDIATION: CSO-007]
+#-----------------------------------------------------------------------
+
+ctr:TermQualificationShape
+  a sh:NodeShape ;
+  sh:targetClass ctr:TermQualification ;
+  sh:name "TermQualificationShape"@en ;
+
+  sh:property [
+    sh:path ctr:qualifiesTerm ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:message "A TermQualification must qualify exactly one TermApplication or Facet."@en
+  ] ;
+
+  sh:property [
+    sh:path ctr:hasPrecision ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:class skos:Concept ;
+    sh:message "A TermQualification must have exactly one hasPrecision value."@en
+  ] ;
+
+  sh:property [
+    sh:path ctr:hasApproximationRange ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:decimal
+  ] .
+
+#-----------------------------------------------------------------------
+# 5.23  DefenseCostFacetShape  [REMEDIATION: CSO-022]
+#-----------------------------------------------------------------------
+
+ctr:DefenseCostFacetShape
+  a sh:NodeShape ;
+  sh:targetClass ctr:DefenseCostFacet ;
+  sh:name "DefenseCostFacetShape"@en ;
+
+  sh:property [
+    sh:path ctr:defenseCostTreatment ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:class skos:Concept ;
+    sh:message "A DefenseCostFacet must have exactly one defenseCostTreatment concept."@en
+  ] .
+
+#-----------------------------------------------------------------------
+# 5.24  CoveredPerilsDerivationShape  [REMEDIATION: CSO-020]
+#-----------------------------------------------------------------------
+
+ctr:CoveredPerilsDerivationShape
+  a sh:NodeShape ;
+  sh:targetClass ctr:Contract ;
+  sh:name "CoveredPerilsDerivationShape"@en ;
+  sh:rule [
+    a sh:SPARQLRule ;
+    sh:prefixes [
+      sh:declare [ sh:prefix "ctr" ; sh:namespace "https://www.nebularis.org/neuro-semantic/insurance/contract#" ] ;
+      sh:declare [ sh:prefix "skos" ; sh:namespace "http://www.w3.org/2004/02/skos/core#" ]
+    ] ;
+    sh:construct """
+      CONSTRUCT {
+        ?this ctr:effectivePerilScope ?peril .
+      }
+      WHERE {
+        ?this ctr:hasRootElement ?root .
+        ?root (ctr:hasChild)* ?el .
+        ?el ctr:hasTermApplication ?ta .
+        ?ta ctr:functionType ?ft ;
+            ctr:hasPerilScope ?peril .
+        ?ft skos:notation "CoverageGrant" .
+        FILTER NOT EXISTS {
+          ?root (ctr:hasChild)* ?exEl .
+          ?exEl ctr:hasTermApplication ?exTa .
+          ?exTa ctr:functionType ?exFt ;
+                ctr:hasPerilScope ?peril .
+          ?exFt skos:notation "Exclusion" .
+        }
+      }
+    """
+  ] .
+
+#-----------------------------------------------------------------------
+# 5.25  Scheme Membership for Concept-Valued Scope Properties  [3.4.0]
+#-----------------------------------------------------------------------
+
+ctr:PerilScopeConceptShape
+  a sh:NodeShape ;
+  sh:property [ sh:path skos:inScheme ; sh:hasValue apex-voc:PerilScheme ; sh:minCount 1 ;
+                sh:message "Peril scope values must be concepts in apex-voc:PerilScheme."@en ] .
+
+ctr:TerritoryScopeConceptShape
+  a sh:NodeShape ;
+  sh:property [ sh:path skos:inScheme ; sh:hasValue apex-voc:TerritoryScheme ; sh:minCount 1 ;
+                sh:message "Territory scope values must be concepts in apex-voc:TerritoryScheme."@en ] .
+
+ctr:ActorScopeConceptShape
+  a sh:NodeShape ;
+  sh:property [ sh:path skos:inScheme ; sh:hasValue core:ActorScheme ; sh:minCount 1 ;
+                sh:message "Actor scope values should come from core:ActorScheme."@en ] .
+
+ctr:PartyRoleTypeConceptShape
+  a sh:NodeShape ;
+  sh:property [ sh:path skos:inScheme ; sh:hasValue ctr-voc:PartyRoleTypeScheme ; sh:minCount 1 ] .
+
+ctr:CoverageTypeScopeConceptShape
+  a sh:NodeShape ;
+  sh:property [ sh:path skos:inScheme ; sh:minCount 1 ;
+                sh:or (
+                  [ sh:hasValue ctr-voc:CoverageTypeScheme ]
+                  [ sh:node ctr:CoverageTypeImplementationSchemeShape ]
+                ) ;
+                sh:message "Coverage type scope values must come from the legacy CSO scheme or from an implementation scheme declaring gov:satisfiesSchemeConstraint gov:CoverageTypeSchemeContract."@en ] .
+
+ctr:LineOfBusinessScopeConceptShape
+  a sh:NodeShape ;
+  sh:property [ sh:path skos:inScheme ; sh:minCount 1 ;
+                sh:or (
+                  [ sh:hasValue ctr-voc:LineOfBusinessScheme ]
+                  [ sh:node ctr:LineOfBusinessImplementationSchemeShape ]
+                ) ;
+                sh:message "Line-of-business scope values must come from the legacy CSO scheme or from an implementation scheme declaring gov:satisfiesSchemeConstraint gov:LineOfBusinessSchemeContract."@en ] .
+
+ctr:AssetClassScopeConceptShape
+  a sh:NodeShape ;
+  sh:property [ sh:path skos:inScheme ; sh:minCount 1 ;
+                sh:or (
+                  [ sh:hasValue ctr-voc:AssetClassScheme ]
+                  [ sh:node ctr:AssetClassImplementationSchemeShape ]
+                ) ;
+                sh:message "Asset-class scope values must come from the legacy CSO scheme or from an implementation scheme declaring gov:satisfiesSchemeConstraint gov:AssetClassSchemeContract."@en ] .
+
+ctr:CoverageTypeImplementationSchemeShape
+  a sh:NodeShape ;
+  sh:property [ sh:path rdf:type ; sh:hasValue gov:ImplementationReferenceScheme ; sh:minCount 1 ] ;
+  sh:property [ sh:path gov:satisfiesSchemeConstraint ; sh:hasValue gov:CoverageTypeSchemeContract ; sh:minCount 1 ] .
+
+ctr:LineOfBusinessImplementationSchemeShape
+  a sh:NodeShape ;
+  sh:property [ sh:path rdf:type ; sh:hasValue gov:ImplementationReferenceScheme ; sh:minCount 1 ] ;
+  sh:property [ sh:path gov:satisfiesSchemeConstraint ; sh:hasValue gov:LineOfBusinessSchemeContract ; sh:minCount 1 ] .
+
+ctr:AssetClassImplementationSchemeShape
+  a sh:NodeShape ;
+  sh:property [ sh:path rdf:type ; sh:hasValue gov:ImplementationReferenceScheme ; sh:minCount 1 ] ;
+  sh:property [ sh:path gov:satisfiesSchemeConstraint ; sh:hasValue gov:AssetClassSchemeContract ; sh:minCount 1 ] .
+
+ctr:QuestionSubjectConceptShape
+  a sh:NodeShape ;
+  sh:property [ sh:path skos:inScheme ; sh:hasValue ctr-voc:QuestionSubjectScheme ; sh:minCount 1 ] .
+
+ctr:QuestionScopeConceptShape
+  a sh:NodeShape ;
+  sh:property [ sh:path skos:inScheme ; sh:hasValue ctr-voc:QuestionScopeScheme ; sh:minCount 1 ] .
+
+ctr:TermApplicationSchemeMembershipShape
+  a sh:NodeShape ;
+  sh:targetClass ctr:TermApplication ;
+  sh:property [ sh:path ctr:hasPerilScope ; sh:node ctr:PerilScopeConceptShape ] ;
+  sh:property [ sh:path ctr:hasTerritoryScope ; sh:node ctr:TerritoryScopeConceptShape ] ;
+  sh:property [ sh:path ctr:hasActorScope ; sh:node ctr:ActorScopeConceptShape ;
+                sh:severity sh:Warning ;
+                sh:message "Actor scope currently points to core:ActorScheme, which has sparse concept population. Treat out-of-scheme actor values as migration debt."@en ] ;
+  sh:property [ sh:path ctr:claimantRole ; sh:node ctr:PartyRoleTypeConceptShape ] ;
+  sh:property [ sh:path ctr:indemnityPayeeRole ; sh:node ctr:PartyRoleTypeConceptShape ] ;
+  sh:property [ sh:path ctr:hasCoverageTypeScope ; sh:node ctr:CoverageTypeScopeConceptShape ] ;
+  sh:property [ sh:path ctr:hasLineOfBusinessScope ; sh:node ctr:LineOfBusinessScopeConceptShape ] ;
+  sh:property [ sh:path ctr:hasAssetClassScope ; sh:node ctr:AssetClassScopeConceptShape ] .
+
+ctr:ContractPerilSchemeMembershipShape
+  a sh:NodeShape ;
+  sh:targetClass ctr:Contract ;
+  sh:property [ sh:path ctr:effectivePerilScope ; sh:node ctr:PerilScopeConceptShape ] .
+
+ctr:QuestionSchemeMembershipShape
+  a sh:NodeShape ;
+  sh:targetClass ctr:Question ;
+  sh:property [ sh:path ctr:hasSubject ; sh:node ctr:QuestionSubjectConceptShape ] ;
+  sh:property [ sh:path ctr:hasScope ; sh:node ctr:QuestionScopeConceptShape ] .

@@ -1,0 +1,2706 @@
+@prefix ctr:     <https://www.nebularis.org/neuro-semantic/insurance/contract#> .
+@prefix ctr-voc: <https://www.nebularis.org/neuro-semantic/insurance/contract/vocab#> .
+@prefix fbo-voc: <https://www.nebularis.org/neuro-semantic/insurance/behaviour/vocab#> .
+@prefix ref-voc: <https://www.nebularis.org/neuro-semantic/insurance/reference/vocab#> .
+@prefix apex-voc: <https://www.nebularis.org/neuro-semantic/insurance/vocab#> .
+@prefix voc:     <https://www.nebularis.org/ontology/nsd/voc#> .
+@prefix gov:     <https://www.nebularis.org/neuro-semantic/insurance/governance/vocab#> .
+@prefix tow:     <https://www.nebularis.org/neuro-semantic/insurance/tower#> .
+@prefix core:    <https://www.nebularis.org/ontology/nsd/core#> .
+@prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
+@prefix owl:     <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+@prefix sh:      <http://www.w3.org/ns/shacl#> .
+@prefix dct:     <http://purl.org/dc/terms/> .
+
+###############################################################################
+# Ontology Header
+###############################################################################
+
+<https://www.nebularis.org/neuro-semantic/insurance/contract>
+  a owl:Ontology ;
+  owl:versionIRI <https://www.nebularis.org/neuro-semantic/insurance/contract/0.1.1> ;
+  owl:priorVersion <https://www.nebularis.org/neuro-semantic/insurance/contract/0.1.0> ;
+  owl:imports <https://www.nebularis.org/ontology/nsd/core> ;
+  owl:imports <https://www.nebularis.org/ontology/nsd/skos> ;
+  dct:title "Insurance Contract Structure Ontology"@en ;
+  dct:description """Models the legal, semantic, and structural aspects of insurance
+and reinsurance contracts using a minimal T-Box with semantic function reification,
+structural flow directives, and faceted financial terms. Serves demand projection
+(submissions), supply capture (quotes/indications), and bound contract representation."""@en ;
+  dct:creator "Tim Watson" ;
+  owl:versionInfo "3.5.1" ;
+  rdfs:comment """Occupies the Structural Stratum (S^s / S₃). Incorporates Submission 
+  properties, MonetaryExtent/Limit/Retention class declarations, Contract-level 
+  FlowDirective domain extension, surety party roles, extended DefenseCostTreatment 
+  vocabulary, CTB provisional or bound referencing, flow-condition typing, and 
+  cross-contract acyclicity traversal, and explicit first-party/third-party liability 
+  dimension semantics at clause and claim levels."""@en ;
+  skos:scopeNote "This ontology supplies temporal continuity properties that projection requires 
+  in order to source FBO dimension 14 (TemporalQualifier), which supports retroactive 
+  dates, extended reporting periods, sunset clauses and run-offs inexpressible downstream
+  (e.g., claims-made continuity semantics that can be projected)."""@en .
+
+
+
+###############################################################################
+# 1. CLASSES
+###############################################################################
+
+#-----------------------------------------------------------------------
+# 1.1  ctr:Contract
+#-----------------------------------------------------------------------
+
+ctr:Contract
+  a owl:Class ;
+  rdfs:subClassOf core:VersionedEntity ;
+  rdfs:label "Contract"@en ;
+  rdfs:comment """A legally binding agreement between identified parties, creating
+coverage obligations, conditions, and exclusions. Supply-side: describes what is
+provided and by whom. Linked to tower layers via ContractTowerBinding.
+
+Contract type (Policy, Treaty, Facultative, Binder, CaptiveProgramme, MGAPanel,
+SidecarAgreement, PoolMembership) is indicated via ctr:hasContractType pointing
+to a SKOS concept — not via T-Box subclassing.
+
+Contract-level FlowDirectives (coordination flows) may be declared via
+ctr:hasFlowDirective to express master-contract dependencies spanning child
+contracts (shared aggregates, follow-form relationships). These traverse
+ctr:referencesChildContract links and are subject to cross-contract acyclicity."""@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+#-----------------------------------------------------------------------
+# 1.2  ctr:ContractElement
+#-----------------------------------------------------------------------
+
+ctr:ContractElement
+  a owl:Class ;
+  rdfs:subClassOf core:VersionedEntity ;
+  rdfs:label "Contract Element"@en ;
+  rdfs:comment """The single, universal structural unit of a contract. All structural
+artifacts — sections, clauses, sub-clauses, endorsements, stamps, definition pages,
+declaration pages, schedule entries, warranties, subjectivities — are instances of
+ContractElement. Structural type is indicated by ctr:hasElementType.
+
+Dual Classification Pattern: A ContractElement may simultaneously be an instance
+of ctr:Contract for master-contract reference arrangements."""@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+#-----------------------------------------------------------------------
+# 1.3  ctr:TermApplication
+#-----------------------------------------------------------------------
+
+ctr:TermApplication
+  a owl:Class ;
+  rdfs:subClassOf owl:Thing ;
+  rdfs:label "Term Application"@en ;
+  rdfs:comment """The reification node that captures the semantic function of a
+ContractElement. Separates what a structural element *does* from what it *is*. A
+ContractElement may have multiple TermApplications. Each carries a functionType,
+scope qualifiers, and links to Facets.
+
+Scope qualifiers: hasPerilScope, hasTerritoryScope, hasActorScope,
+hasLiabilityDirectionScope, hasCoverageTypeScope, hasLineOfBusinessScope,
+hasAssetClassScope — these are the structural subset of the FBO 20-dimensional
+scope model."""@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+#-----------------------------------------------------------------------
+# 1.4  ctr:CoverageGrantTermApplication  (named subclass — OWL DL target)
+#-----------------------------------------------------------------------
+
+ctr:CoverageGrantTermApplication
+  a owl:Class ;
+  rdfs:subClassOf ctr:TermApplication ;
+  rdfs:label "Coverage Grant Term Application"@en ;
+  rdfs:comment """A TermApplication whose functionType is CoverageGrant. Must have
+at least one LimitFacet and at least one ClaimsBasisFacet. The named subclass
+enables OWL DL reasoning and SHACL shape targeting without T-Box subclassing
+per element type."""@en ;
+  rdfs:subClassOf
+    [ a owl:Restriction ;
+      owl:onProperty ctr:hasFacet ;
+      owl:someValuesFrom ctr:LimitFacet ] ;
+  rdfs:subClassOf
+    [ a owl:Restriction ;
+      owl:onProperty ctr:hasFacet ;
+      owl:someValuesFrom ctr:ClaimsBasisFacet ] ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+#-----------------------------------------------------------------------
+# 1.5  ctr:Facet  (base class)
+#-----------------------------------------------------------------------
+
+ctr:Facet
+  a owl:Class ;
+  rdfs:subClassOf owl:Thing ;
+  rdfs:label "Facet"@en ;
+  rdfs:comment """Base class for all parameter-carrying nodes attached to
+TermApplications. A Facet is not meaningful in isolation; it derives meaning from
+the TermApplication that owns it. The design decision to put basis on each Facet
+prevents ambiguous interpretation when multiple limits exist on a single
+TermApplication."""@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+#-----------------------------------------------------------------------
+# 1.5.1  ctr:LimitFacet
+#-----------------------------------------------------------------------
+
+ctr:LimitFacet
+  a owl:Class ;
+  rdfs:subClassOf ctr:Facet ;
+  rdfs:label "Limit Facet"@en ;
+  rdfs:comment """Carries a limit amount, currency, and basis. Used for coverage
+grants, sub-limits, policy limits, and treaty limits.
+
+Projection: Each LimitFacet on a CoverageGrant TermApplication projects to an
+FBO CapacityTank with tank.cap = amount, tank.basis = mapped basis,
+tank.scope = derived from owning TermApplication scope qualifiers."""@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+#-----------------------------------------------------------------------
+# 1.5.2  ctr:RetentionFacet
+#-----------------------------------------------------------------------
+
+ctr:RetentionFacet
+  a owl:Class ;
+  rdfs:subClassOf ctr:Facet ;
+  rdfs:label "Retention Facet"@en ;
+  rdfs:comment """Carries a deductible or excess amount, currency, percentage, and
+basis. The deductible/excess distinction is SHACL-derived from presence or absence
+of an Erosion FlowDirective — not a T-Box distinction.
+
+ctr:coinsurancePercentage (optional) carries the minimum insured-to-value ratio
+for coinsurance clauses — distinct from retention amount, being a proportional
+penalty for under-insurance."""@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+#-----------------------------------------------------------------------
+# 1.5.3  ctr:DefenseCostFacet
+#-----------------------------------------------------------------------
+
+ctr:DefenseCostFacet
+  a owl:Class ;
+  rdfs:subClassOf ctr:Facet ;
+  rdfs:label "Defense Cost Facet"@en ;
+  rdfs:comment """Carries a defenseCostTreatment annotation (SKOS concept from
+DefenseCostTreatmentScheme: ErodesLimit, OutsideLimit, SeparateTower,
+SharedWithIndemnity, Supplementary, NotApplicable). Determines FBO tank drainage
+semantics. Aligns with FBO DefenseTreatment vocabulary via skos:exactMatch."""@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+#-----------------------------------------------------------------------
+# 1.5.4  ctr:TemporalFacet
+#-----------------------------------------------------------------------
+
+ctr:TemporalFacet
+  a owl:Class ;
+  rdfs:subClassOf ctr:Facet ;
+  rdfs:label "Temporal Facet"@en ;
+  rdfs:comment """Carries date or duration extents: retroactive dates, indemnity
+periods, extended reporting periods, continuity dates."""@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+#-----------------------------------------------------------------------
+# 1.5.5  ctr:WaitingPeriodFacet
+#-----------------------------------------------------------------------
+
+ctr:WaitingPeriodFacet
+  a owl:Class ;
+  rdfs:subClassOf ctr:TemporalFacet ;
+  rdfs:label "Waiting Period Facet"@en ;
+  rdfs:comment """Specialisation of TemporalFacet for waiting period mechanics in
+BI, parametric, and time-element coverage. Carries waitingPeriodDuration
+(xsd:dayTimeDuration, ISO 8601) and waitingPeriodBasis (SKOS: Hours72,
+BusinessDays, CalendarDays)."""@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+#-----------------------------------------------------------------------
+# 1.5.6  ctr:IndemnityPeriodFacet
+#-----------------------------------------------------------------------
+
+ctr:IndemnityPeriodFacet
+  a owl:Class ;
+  rdfs:subClassOf ctr:TemporalFacet ;
+  rdfs:label "Indemnity Period Facet"@en ;
+  rdfs:comment """Specialisation of TemporalFacet for maximum indemnity period
+limits in BI coverage. Carries maxIndemnityPeriod (xsd:dayTimeDuration) and
+indemnityPeriodBasis."""@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+#-----------------------------------------------------------------------
+# 1.5.7  ctr:ActorFacet
+#-----------------------------------------------------------------------
+
+ctr:ActorFacet
+  a owl:Class ;
+  rdfs:subClassOf ctr:Facet ;
+  rdfs:label "Actor Facet"@en ;
+  rdfs:comment """Carries actor qualification for scoped coverage: party roles,
+additional insured grants, exclusion write-backs with actor qualification."""@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+#-----------------------------------------------------------------------
+# 1.5.8  ctr:ClaimsBasisFacet
+#-----------------------------------------------------------------------
+
+ctr:ClaimsBasisFacet
+  a owl:Class ;
+  rdfs:subClassOf ctr:Facet ;
+  rdfs:label "Claims Basis Facet"@en ;
+  rdfs:comment """Carries the claims trigger basis (LossesOccurring, ClaimsMade,
+RiskAttaching, ClaimsFirstMade). Must be present on every CoverageGrant
+TermApplication — required for temporal gate evaluation in the FBO.
+
+Projection: ClaimsBasisFacet value maps to FBO ScopeQualifier dimension
+TriggerMode and determines temporal gate configuration."""@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+#-----------------------------------------------------------------------
+# 1.5.9  ctr:DeclarationFacet
+#-----------------------------------------------------------------------
+
+ctr:DeclarationFacet
+  a owl:Class ;
+  rdfs:subClassOf ctr:Facet ;
+  rdfs:label "Declaration Facet"@en ;
+  rdfs:comment """Carries declared values for policy schedule items: TIV, revenue,
+declared currency, and declaration type. Used on TermApplications of functionType
+Declaration."""@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+#-----------------------------------------------------------------------
+# 1.5.10  ctr:ReinstatementFacet  [REMEDIATION: CSO-001]
+#-----------------------------------------------------------------------
+
+ctr:ReinstatementFacet
+  a owl:Class ;
+  rdfs:subClassOf ctr:Facet ;
+  rdfs:label "Reinstatement Facet"@en ;
+  rdfs:comment """Carries reinstatement parameters as declared in the contract:
+reinstatementCount (xsd:integer ≥0), reinstatementPercentage (xsd:decimal ≥0.0,
+percentage of original premium charged per reinstatement), reinstatementProRataTime
+(xsd:boolean), reinstatementAutomatic (xsd:boolean — automatic vs optional).
+
+Attached to CoverageGrant TermApplications that have reinstatement provisions.
+Parameters qualify the grant itself (how many times the limit can be restored) rather
+than expressing a dependency between two contract elements — hence a Facet, not a
+FlowDirective.
+
+Projection: projects to FBO TankStateRecord reinstatementState:
+  reinstatementState.maxReinstatements = reinstatementCount
+  reinstatement premium uses reinstatementPercentage and reinstatementProRataTime
+  automatic/optional distinction determines whether reinstatement FlowAction is
+  unconditionally triggered or requires insured's election."""@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+#-----------------------------------------------------------------------
+# 1.5.11  ctr:AggregationFacet  [REMEDIATION: CSO-002 + CSO-003 merged]
+#-----------------------------------------------------------------------
+
+ctr:AggregationFacet
+  a owl:Class ;
+  rdfs:subClassOf ctr:Facet ;
+  rdfs:label "Aggregation Facet"@en ;
+  rdfs:comment """Carries aggregate-specific parameters as declared in the contract.
+Serves two roles:
+
+Aggregate limit context: When attached to a CoverageGrant TermApplication with a
+LimitFacet of basis AnnualAggregate, carries Annual Aggregate Deductible (AAD)
+threshold, aggregation window (PolicyYear, CalendarYear, Custom, PerEvent), and
+loss counting basis. The LimitFacet carries the cap; AggregationFacet carries the
+threshold and counting semantics.
+
+Hours clause context: When aggregation involves an hours clause (catastrophe events),
+carries temporal aggregation window parameters: hoursClauseDuration
+(xsd:dayTimeDuration), hoursClauseNonOverlap (xsd:boolean, required when
+hoursClauseDuration present), hoursClauseSelectionMethod (SKOS: InsuredChoice,
+LargestLoss, FirstEvent).
+
+Projection: projects to FBO CapacityTank aggKey, hoursClauseState, aggregateState
+configuration, and Aggregation FlowActions."""@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+#-----------------------------------------------------------------------
+# 1.5.12  ctr:TriggerFacet  [REMEDIATION: CSO-004]
+#-----------------------------------------------------------------------
+
+ctr:TriggerFacet
+  a owl:Class ;
+  rdfs:subClassOf ctr:Facet ;
+  rdfs:label "Trigger Facet"@en ;
+  rdfs:comment """Carries parametric trigger parameters as declared in the contract.
+Trigger specifications are contractual terms — the contract defines the trigger
+index, threshold, oracle, and payout structure.
+
+Properties: triggerType (SKOS: Indemnity, Parametric, ModelledLoss, IndustryIndex,
+OracleTriggered, Composite), triggerThreshold (xsd:decimal), triggerIndex (xsd:string),
+triggerSource (xsd:string), payoutStructure (SKOS: Binary, Linear, Graduated),
+cooldownPeriod (xsd:dayTimeDuration, optional).
+
+Graduated payouts: when payoutStructure = Graduated, TriggerTier instances (via
+ctr:hasTriggerTier) carry tier thresholds and payout percentages.
+
+Composite triggers: when triggerType = Composite, compositeOperator (SKOS: AND, OR,
+NOT, SEQUENCE) and hasComponentTrigger link to child TriggerFacet instances.
+
+Projection: projects to FBO triggerConfig on CapacityTank."""@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+#-----------------------------------------------------------------------
+# 1.5.13  ctr:CollateralFacet  [REMEDIATION: CSO-005]
+#-----------------------------------------------------------------------
+
+ctr:CollateralFacet
+  a owl:Class ;
+  rdfs:subClassOf ctr:Facet ;
+  rdfs:label "Collateral Facet"@en ;
+  rdfs:comment """Carries collateralisation parameters as declared in the contract:
+collateralType (SKOS: FullyCollateralised, PartiallyCollateralised, TrustBacked,
+LOCBacked), minCollateralRatio (xsd:decimal), collateralTrustRef (xsd:anyURI).
+
+The RCV ontology owns rcv:CollateralFacility. CollateralDraw FlowDirectives
+reference CollateralFacility instances by cross-domain IRI via flowTarget
+(range owl:Thing). SHACL CollateralDrawFlowShape validates the reference.
+
+Projection: projects to FBO collateralState configuration and CollateralDraw
+FlowActions."""@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+#-----------------------------------------------------------------------
+# 1.5.14  ctr:PoolParticipationFacet  [REMEDIATION: CSO-006 PoolDistribution]
+#-----------------------------------------------------------------------
+
+ctr:PoolParticipationFacet
+  a owl:Class ;
+  rdfs:subClassOf ctr:Facet ;
+  rdfs:label "Pool Participation Facet"@en ;
+  rdfs:comment """Carries pool participation parameters as declared in the contract:
+poolIdentifier (xsd:string), participantShare (xsd:decimal), payoutBasis (SKOS:
+ProRata, ExposureWeighted, EqualShare, ContributionWeighted), participantPayoutCap
+(xsd:decimal, optional).
+
+Projection: projects to FBO poolConfig on CapacityTank and PoolDistribute
+FlowActions."""@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+#-----------------------------------------------------------------------
+# 1.5.15  ctr:PremiumFacet  [REMEDIATION: CSO-015]
+#-----------------------------------------------------------------------
+
+ctr:PremiumFacet
+  a owl:Class ;
+  rdfs:subClassOf ctr:Facet ;
+  rdfs:label "Premium Facet"@en ;
+  rdfs:comment """Carries premium terms as declared in the contract. Enables
+premium comparison across quotes and reinstatement premium calculation in the FBO.
+
+Properties: premiumAmount (xsd:decimal, optional), premiumCurrency (xsd:string,
+ISO 4217, optional), premiumBasis (SKOS: Flat, RateOnLine, Adjustable,
+MinimumAndDeposit, required), premiumRate (xsd:decimal, optional), minimumPremium
+(xsd:decimal, optional), depositPremium (xsd:decimal, optional).
+
+Usage: For reinstatement premium, a PremiumFacet is attached to the same
+CoverageGrant TermApplication as the ReinstatementFacet. The reinstatement premium
+formula uses reinstatementPercentage on ReinstatementFacet with base premium on
+PremiumFacet."""@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+#-----------------------------------------------------------------------
+# 1.5.16  ctr:CustomFacet
+#-----------------------------------------------------------------------
+
+ctr:CustomFacet
+  a owl:Class ;
+  rdfs:subClassOf ctr:Facet ;
+  rdfs:label "Custom Facet"@en ;
+  rdfs:comment """Extension point for jurisdiction-specific, line-of-business-
+specific, or instrument-specific constraints not covered by standard Facet subtypes.
+Carries facetType (SKOS concept annotation) and facetText (xsd:string). Governed
+via SHACL-validated custom shapes for the given facetType."""@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+#-----------------------------------------------------------------------
+# 1.6  ctr:FlowDirective
+#-----------------------------------------------------------------------
+
+ctr:FlowDirective
+  a owl:Class ;
+  rdfs:subClassOf owl:Thing ;
+  rdfs:label "Flow Directive"@en ;
+  rdfs:comment """A structural declaration of semantic dependency or transformation
+between two nodes in the contract graph. Records what the contract says about how
+terms relate. The projection functor π₃₄ maps FlowDirectives to FBO FlowActions.
+FlowDirectives do not compute behaviour.
+
+Critical distinction: A CSO FlowDirective is a structural declaration; an FBO
+FlowAction is a behavioural entity. Structural-only FlowDirectives (Override,
+ScopeExpansion, ScopeNarrowing, FollowForm, FollowFortunes) do NOT produce FBO
+FlowActions — they modify the structural graph used in evaluation.
+
+Domain of hasFlowDirective: ContractElement OR TermApplication OR Contract.
+Contract-level FlowDirectives are coordination flows spanning child contracts
+(via referencesChildContract). Cross-contract acyclicity applies."""@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+#-----------------------------------------------------------------------
+# 1.7  ctr:ExternalWording
+#-----------------------------------------------------------------------
+
+ctr:ExternalWording
+  a owl:Class ;
+  rdfs:subClassOf owl:Thing ;
+  rdfs:label "External Wording"@en ;
+  rdfs:comment """A reference to a standard wording, clause library entry, or
+regulatory form incorporated by reference into a ContractElement. Supports London
+Market (LMA, NMA, CL, JLT) and US market (ISO CGL, AAIS, state-specific) patterns.
+wordingHash (SHA-256) enables integrity verification."""@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+#-----------------------------------------------------------------------
+# 1.8  ctr:PartyRole
+#-----------------------------------------------------------------------
+
+ctr:PartyRole
+  a owl:Class ;
+  rdfs:subClassOf owl:Thing ;
+  rdfs:label "Party Role"@en ;
+  rdfs:comment """Reified representation of a party's participation in a contract
+with a specific role type. A party may hold multiple roles. PartyRoleType SKOS
+scheme includes insurance, reinsurance, and surety-specific roles (Principal,
+Obligee, Guarantor, Indemnitor) required for tripartite surety bond structures."""@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+#-----------------------------------------------------------------------
+# 1.9  ctr:NegotiationThread
+#-----------------------------------------------------------------------
+
+ctr:NegotiationThread
+  a owl:Class ;
+  rdfs:subClassOf core:VersionedEntity ;
+  rdfs:label "Negotiation Thread"@en ;
+  rdfs:comment """A persistent, versioned entity capturing the full conversation
+between broker and a specific market participant for a specific layer, from
+submission through to bind. The NegotiationThread IRI is the canonical SPC
+SessionID — the session-typed process calculus treats the thread as the session
+identity for the negotiation process.
+
+State machine: 14 states (OPEN, SUBMITTED, INDICATED, REFERRED_INFO,
+REFERRED_PROCESS, QUESTIONS_PENDING, ANSWERS_SENT, FIRM_QUOTED, COUNTER_SENT,
+ACCEPTED, DECLINED_BROKER, DECLINED_MARKET, EXPIRED, BOUND). State transitions
+enforced by SHACL.
+
+Information referral integration: when thread enters REFERRED_INFO or
+QUESTIONS_PENDING, it links to IRO entities via ctr:hasInformationRequest on
+MarketResponse. The IRO owns InformationRequest, Question, InformationGap, and
+RemediationAction — the CSO provides the linkage point only."""@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+#-----------------------------------------------------------------------
+# 1.10  ctr:MarketResponse
+#-----------------------------------------------------------------------
+
+ctr:MarketResponse
+  a owl:Class ;
+  rdfs:subClassOf core:VersionedEntity ;
+  rdfs:label "Market Response"@en ;
+  rdfs:comment """A unified entity representing any response from a market
+participant to a submission: rejection, referral, indication, non-binding quote,
+or binding quote. Response type indicated by ctr:responseType (SKOS concept from
+MarketResponseType scheme)."""@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:TermCarryingResponse
+  a owl:Class ;
+  rdfs:subClassOf ctr:MarketResponse ;
+  rdfs:label "Term Carrying Response"@en ;
+  rdfs:comment "A MarketResponse that carries contractual term content (for example an indication or quote)."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:InformationReferralResponse
+  a owl:Class ;
+  rdfs:subClassOf ctr:MarketResponse ;
+  rdfs:label "Information Referral Response"@en ;
+  rdfs:comment "A MarketResponse that requests additional information before a term-carrying response can be issued."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+#-----------------------------------------------------------------------
+# 1.10a  ctr:Claim
+#-----------------------------------------------------------------------
+
+ctr:Claim
+  a owl:Class ;
+  rdfs:subClassOf core:VersionedEntity ;
+  rdfs:label "Claim"@en ;
+  rdfs:comment "A claims event linked to a covered clause, with explicit claimant, defendant, payee, and harm subject semantics."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+#-----------------------------------------------------------------------
+# 1.11  ctr:Quote
+#-----------------------------------------------------------------------
+
+ctr:Quote
+  a owl:Class ;
+  rdfs:subClassOf core:VersionedEntity ;
+  rdfs:label "Quote"@en ;
+  rdfs:comment """A proto-contract: structurally identical to a Contract (has
+ContractElements, TermApplications, Facets, FlowDirectives, PartyRoles), but
+without legal force until promoted via p_bind.
+
+Epistemic status — three independent dimensions:
+1. Completeness: which term categories are present vs absent (CompletenessAssessment)
+2. Precision: whether specified terms are exact or approximate (TermQualification)
+3. Commitment: legal/commercial force (commitmentLevel SKOS concept)
+
+The evaluation functor is blind to commitment level and precision — it operates
+on CSO structures identically for Quotes and Contracts. Precision/completeness
+metadata is consumed only by gap analysis tooling.
+
+p_bind projection: copies ContractElements, TermApplications, Facets, FlowDirectives,
+PartyRoles. Does NOT copy TermQualifications or CompletenessAssessment. Transitions
+ProvisionalCTB → BoundCTB. Creates CapacityCommitmentFact."""@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+#-----------------------------------------------------------------------
+# 1.12  ctr:CompletenessAssessment  [REMEDIATION: CSO-007]
+#-----------------------------------------------------------------------
+
+ctr:CompletenessAssessment
+  a owl:Class ;
+  rdfs:subClassOf owl:Thing ;
+  rdfs:label "Completeness Assessment"@en ;
+  rdfs:comment """An assessment of which term categories are present versus absent
+in a Quote. Attached via ctr:hasCompletenessAssessment (0..1 per Quote). Supports
+the gap detection framework's distinction between a complete indication (all term
+categories present, some values approximate) and an incomplete quote (entire term
+categories missing). Records coverage across principal axes: coverage basis, limit
+structure, retention structure, peril scope, territorial scope, party roles,
+exclusions, conditions — each with status Present, Absent, or PartiallyPresent.
+Not copied to Contract on p_bind."""@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+#-----------------------------------------------------------------------
+# 1.13  ctr:TermQualification  [REMEDIATION: CSO-007]
+#-----------------------------------------------------------------------
+
+ctr:TermQualification
+  a owl:Class ;
+  rdfs:subClassOf owl:Thing ;
+  rdfs:label "Term Qualification"@en ;
+  rdfs:comment """An overlay on a Quote's term content that qualifies the precision
+and confidence of individual terms without modifying CSO vocabulary. Implements the
+precision dimension of the epistemic status model. Distinguishes exact vs approximate
+vs placeholder values on Indications and non-binding quotes.
+
+Properties: qualifiesTerm (→ TermApplication or Facet), hasPrecision (SKOS: Exact,
+Approximate, Placeholder), hasApproximationRange (xsd:decimal, optional — magnitude
+of possible variation).
+
+Not copied to Contract on p_bind — all terms in a bound Contract are implicitly
+exact."""@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+#-----------------------------------------------------------------------
+# 1.14  ctr:Submission  [REMEDIATION: CSO-009]
+#-----------------------------------------------------------------------
+
+ctr:Submission
+  a owl:Class ;
+  rdfs:subClassOf core:VersionedEntity ;
+  rdfs:label "Submission"@en ;
+  rdfs:comment """The package sent to a market participant to solicit a quote.
+A demand projection — expresses what coverage is needed using CSO vocabulary
+(TermApplications, Facets, scope qualifiers) derived from the client's requirements
+and the Tower/CoverageTermSet.
+
+Aggregate Root: contains references to tower structure (targetsLayer), exposure
+data (hasExposureRef), coverage requirements (hasCoverageRequirements), and
+optionally a target premium range.
+
+The submittedTo identity is carried by NegotiationThread.forMarket. A Submission
+is linked to the thread via ctr:hasSubmission on NegotiationThread.
+
+submissionHash (SHA-256) enables integrity verification and deduplication."""@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+#-----------------------------------------------------------------------
+# 1.15  ctr:InformationRequest
+#-----------------------------------------------------------------------
+
+ctr:InformationRequest
+  a owl:Class ;
+  rdfs:subClassOf core:VersionedEntity ;
+  rdfs:label "Information Request"@en ;
+  rdfs:comment """CSO-side representation of an information referral lifecycle
+entity. Carries lifecycle context (which thread, when requested) and the list of
+questions. The full information gap and remediation model (InformationGap,
+RemediationAction, QuestionInterpretation, QuestionShadow) belongs to the IRO.
+CSO provides the integration point by IRI cross-reference."""@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+#-----------------------------------------------------------------------
+# 1.16  ctr:Question
+#-----------------------------------------------------------------------
+
+ctr:Question
+  a owl:Class ;
+  rdfs:subClassOf owl:Thing ;
+  rdfs:label "Question"@en ;
+  rdfs:comment """A single question from a market participant within a CSO
+InformationRequest. Carries subject, intent, scope, criticality, and natural
+language text. CSO Question instances may be linked to IRO QuestionInterpretation
+entities by IRI when the IRO is deployed."""@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+#-----------------------------------------------------------------------
+# 1.17  ctr:ContractTowerBinding (CTB)
+#-----------------------------------------------------------------------
+
+ctr:ContractTowerBinding
+  a owl:Class ;
+  rdfs:subClassOf core:VersionedEntity ;
+  rdfs:label "Contract Tower Binding"@en ;
+  rdfs:comment """The junction entity mediating the relationship between a Contract
+(legal supply) and a Tower Block (demand specification). Carries participation
+share, binding status, uniformity type, and evidence references.
+
+Exists in two phases:
+- Pre-bind (Provisional): links a Quote to a Layer. Enables gap analysis.
+- Post-bind (Bound): links a Contract to a Layer. Confirmed coverage fulfilment.
+
+Relationship to RCV: MarketParticipation (demand-side, before vehicle matched),
+CapacityParticipation (vehicle identified, supply-side), CTB (contract linked
+to layer at binding). All three reference the same tow:Block."""@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+#-----------------------------------------------------------------------
+# 1.18  ctr:Limit  [REMEDIATION: CSO-011]
+#-----------------------------------------------------------------------
+
+ctr:Limit
+  a owl:Class ;
+  rdfs:subClassOf owl:Thing ;
+  rdfs:label "Limit"@en ;
+  rdfs:comment """Value node carrying the monetary extent of a coverage limit.
+Carries one or more MonetaryExtent instances (to support multi-currency expression).
+Referenced by LimitFacet via ctr:hasLimit. Derives its lifecycle from the Facet
+that owns it — not independently versioned."""@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+#-----------------------------------------------------------------------
+# 1.19  ctr:Retention  [REMEDIATION: CSO-011]
+#-----------------------------------------------------------------------
+
+ctr:Retention
+  a owl:Class ;
+  rdfs:subClassOf owl:Thing ;
+  rdfs:label "Retention"@en ;
+  rdfs:comment """Value node carrying the monetary extent of a deductible or excess.
+Carries one or more MonetaryExtent instances. Referenced by RetentionFacet via
+ctr:hasRetention. Derives its lifecycle from the Facet that owns it — not
+independently versioned."""@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+#-----------------------------------------------------------------------
+# 1.20  ctr:MonetaryExtent  [REMEDIATION: CSO-011]
+#-----------------------------------------------------------------------
+
+ctr:MonetaryExtent
+  a owl:Class ;
+  rdfs:subClassOf owl:Thing ;
+  rdfs:label "Monetary Extent"@en ;
+  rdfs:comment """An amount-currency pair representing a monetary value. Used by
+Limit and Retention nodes, and by Submission target premium ranges. Amount is
+xsd:decimal; currency is ISO 4217 string (exactly 3 characters)."""@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+#-----------------------------------------------------------------------
+# 1.21  ctr:TriggerTier  [REMEDIATION: CSO-004]
+#-----------------------------------------------------------------------
+
+ctr:TriggerTier
+  a owl:Class ;
+  rdfs:subClassOf owl:Thing ;
+  rdfs:label "Trigger Tier"@en ;
+  rdfs:comment """A graduated payout tier for parametric trigger specifications.
+Each tier defines a threshold, payout percentage (in [0.0, 1.0]), optional payout
+cap, and ordering sequence. Referenced by TriggerFacet when payoutStructure = Graduated.
+Tiers are ordered by tierSequence (ascending from lowest to highest threshold)."""@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:CapacityCommitmentFact
+  a owl:Class ;
+  rdfs:subClassOf core:Fact ;
+  rdfs:label "Capacity Commitment Fact"@en ;
+  rdfs:comment "A fact emitted at bind to record the committed capacity resulting from promotion of a Quote to a bound Contract within a CTB."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+
+###############################################################################
+# 2. OWL AXIOMS AND CARDINALITY CONSTRAINTS
+###############################################################################
+
+#-----------------------------------------------------------------------
+# 2.1  Contract cardinality axioms
+#-----------------------------------------------------------------------
+
+ctr:Contract
+  rdfs:subClassOf
+    [ a owl:Restriction ;
+      owl:onProperty ctr:hasRootElement ;
+      owl:minCardinality "1"^^xsd:nonNegativeInteger ] ;
+  rdfs:subClassOf
+    [ a owl:Restriction ;
+      owl:onProperty ctr:hasPartyRole ;
+      owl:minCardinality "1"^^xsd:nonNegativeInteger ] ;
+  rdfs:subClassOf
+    [ a owl:Restriction ;
+      owl:onProperty ctr:effectiveFrom ;
+      owl:cardinality "1"^^xsd:nonNegativeInteger ] .
+
+#-----------------------------------------------------------------------
+# 2.2  TermApplication — exactly one functionType
+#-----------------------------------------------------------------------
+
+ctr:TermApplication
+  rdfs:subClassOf
+    [ a owl:Restriction ;
+      owl:onProperty ctr:functionType ;
+      owl:cardinality "1"^^xsd:nonNegativeInteger ] .
+
+#-----------------------------------------------------------------------
+# 2.3  Quote cardinality axioms
+#-----------------------------------------------------------------------
+
+ctr:Quote
+  rdfs:subClassOf
+    [ a owl:Restriction ;
+      owl:onProperty ctr:promotedToContract ;
+      owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ;
+  rdfs:subClassOf
+    [ a owl:Restriction ;
+      owl:onProperty ctr:hasCompletenessAssessment ;
+      owl:maxCardinality "1"^^xsd:nonNegativeInteger ] .
+
+#-----------------------------------------------------------------------
+# 2.4  InformationRequest — at least one Question
+#-----------------------------------------------------------------------
+
+ctr:InformationRequest
+  rdfs:subClassOf
+    [ a owl:Restriction ;
+      owl:onProperty ctr:hasQuestion ;
+      owl:minCardinality "1"^^xsd:nonNegativeInteger ] .
+
+#-----------------------------------------------------------------------
+# 2.5  hasChild irreflexivity and asymmetry (declared on property below)
+#      Acyclicity enforced by SHACL SPARQL constraint (HasChildAcyclicityShape)
+#-----------------------------------------------------------------------
+
+#-----------------------------------------------------------------------
+# 2.6  Facet disjointness axiom  [REMEDIATION: updates for new Facet subtypes]
+#
+#  All concrete Facet subtypes are mutually disjoint.
+#  WaitingPeriodFacet and IndemnityPeriodFacet are subtypes of TemporalFacet
+#  and are not direct members of this axiom.
+#-----------------------------------------------------------------------
+
+[ a owl:AllDisjointClasses ;
+  owl:members (
+    ctr:LimitFacet
+    ctr:RetentionFacet
+    ctr:DefenseCostFacet
+    ctr:TemporalFacet
+    ctr:ActorFacet
+    ctr:ClaimsBasisFacet
+    ctr:DeclarationFacet
+    ctr:ReinstatementFacet
+    ctr:AggregationFacet
+    ctr:TriggerFacet
+    ctr:CollateralFacet
+    ctr:PoolParticipationFacet
+    ctr:PremiumFacet
+    ctr:CustomFacet
+  )
+] .
+
+
+###############################################################################
+# 3. OBJECT PROPERTIES
+###############################################################################
+
+#-----------------------------------------------------------------------
+# 3.1  Structural — Contract/Quote ↔ ContractElement
+#-----------------------------------------------------------------------
+
+ctr:hasRootElement
+  a owl:ObjectProperty ;
+  rdfs:label "has root element"@en ;
+  rdfs:domain [ owl:unionOf ( ctr:Contract ctr:Quote ) ] ;
+  rdfs:range ctr:ContractElement ;
+  owl:inverseOf ctr:isRootElementOf ;
+  rdfs:comment "Links a Contract or Quote to its top-level structural elements."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:isRootElementOf
+  a owl:ObjectProperty ;
+  rdfs:label "is root element of"@en ;
+  rdfs:domain ctr:ContractElement ;
+  rdfs:range [ owl:unionOf ( ctr:Contract ctr:Quote ) ] ;
+  owl:inverseOf ctr:hasRootElement ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:hasChild
+  a owl:ObjectProperty , owl:AsymmetricProperty , owl:IrreflexiveProperty ;
+  rdfs:label "has child"@en ;
+  rdfs:domain ctr:ContractElement ;
+  rdfs:range ctr:ContractElement ;
+  owl:inverseOf ctr:hasParent ;
+  rdfs:comment """Structural nesting of contract elements. Acyclicity of the
+transitive closure enforced by SHACL SPARQL constraint (HasChildAcyclicityShape)."""@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:hasParent
+  a owl:ObjectProperty , owl:AsymmetricProperty , owl:IrreflexiveProperty ;
+  rdfs:label "has parent"@en ;
+  rdfs:domain ctr:ContractElement ;
+  rdfs:range ctr:ContractElement ;
+  owl:inverseOf ctr:hasChild ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+#-----------------------------------------------------------------------
+# 3.2  Cross-contract reference  [REMEDIATION: CSO-012, CSO-013]
+#-----------------------------------------------------------------------
+
+ctr:referencesChildContract
+  a owl:ObjectProperty ;
+  rdfs:label "references child contract"@en ;
+  rdfs:domain ctr:Contract ;
+  rdfs:range ctr:Contract ;
+  rdfs:comment """Links a master contract to its child contracts in a multi-contract
+arrangement. Used by the FlowDirective acyclicity constraint to traverse the full
+contract constellation. Cross-contract FlowDirective acyclicity applies across the
+full graph spanning master and all child contracts."""@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+#-----------------------------------------------------------------------
+# 3.3  Element type annotation
+#-----------------------------------------------------------------------
+
+ctr:hasElementType
+  a owl:ObjectProperty ;
+  rdfs:label "has element type"@en ;
+  rdfs:domain ctr:ContractElement ;
+  rdfs:range skos:Concept ;
+  rdfs:comment """Points to a SKOS concept from ElementTypeScheme indicating the
+structural type (Section, Clause, Endorsement, Stamp, etc.). Cardinality exactly 1
+enforced by SHACL."""@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+#-----------------------------------------------------------------------
+# 3.4  TermApplication attachment
+#-----------------------------------------------------------------------
+
+ctr:hasTermApplication
+  a owl:ObjectProperty ;
+  rdfs:label "has term application"@en ;
+  rdfs:domain ctr:ContractElement ;
+  rdfs:range ctr:TermApplication ;
+  owl:inverseOf ctr:isTermApplicationOf ;
+  rdfs:comment "Links a ContractElement to its reified semantic functions."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:isTermApplicationOf
+  a owl:ObjectProperty ;
+  rdfs:label "is term application of"@en ;
+  rdfs:domain ctr:TermApplication ;
+  rdfs:range ctr:ContractElement ;
+  owl:inverseOf ctr:hasTermApplication ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+#-----------------------------------------------------------------------
+# 3.5  TermApplication function type
+#-----------------------------------------------------------------------
+
+ctr:functionType
+  a owl:ObjectProperty ;
+  rdfs:label "function type"@en ;
+  rdfs:domain ctr:TermApplication ;
+  rdfs:range skos:Concept ;
+  rdfs:comment """SKOS concept from FunctionTypeScheme: CoverageGrant, Exclusion,
+Condition, SubLimit, Declaration, WriteBack, Definition, Deductible, Excess,
+ExtendedReportingPeriod. Cardinality exactly 1."""@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+#-----------------------------------------------------------------------
+# 3.6  TermApplication scope qualifiers
+#-----------------------------------------------------------------------
+
+ctr:hasPerilScope
+  a owl:ObjectProperty ;
+  rdfs:label "has peril scope"@en ;
+  rdfs:domain ctr:TermApplication ;
+  rdfs:range skos:Concept ;
+  gov:constrainedToScheme apex-voc:PerilScheme ;
+  rdfs:comment """The peril(s) this term applies to (SKOS concept from Peril
+taxonomy). Orthogonal to coverage semantics per Principle 2 (Peril ≠ Coverage)."""@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:effectivePerilScope
+  a owl:ObjectProperty ;
+  rdfs:label "effective peril scope"@en ;
+  rdfs:domain ctr:Contract ;
+  rdfs:range skos:Concept ;
+  gov:constrainedToScheme apex-voc:PerilScheme ;
+  rdfs:comment "Derived peril scope after applying coverage and exclusion semantics. Produced by SHACL SPARQL derivation queries."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:hasTerritoryScope
+  a owl:ObjectProperty ;
+  rdfs:label "has territory scope"@en ;
+  rdfs:domain ctr:TermApplication ;
+  rdfs:range skos:Concept ;
+  gov:constrainedToScheme apex-voc:TerritoryScheme ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:hasActorScope
+  a owl:ObjectProperty ;
+  rdfs:label "has actor scope"@en ;
+  rdfs:domain ctr:TermApplication ;
+  rdfs:range skos:Concept ;
+  gov:constrainedToScheme core:ActorScheme ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:hasLiabilityDirectionScope
+  a owl:ObjectProperty ;
+  rdfs:label "has liability direction scope"@en ;
+  rdfs:domain ctr:TermApplication ;
+  rdfs:range skos:Concept ;
+  rdfs:comment "First-party / third-party direction qualifier."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:liabilityDirection
+  a owl:ObjectProperty ;
+  rdfs:label "liability direction"@en ;
+  rdfs:domain ctr:TermApplication ;
+  rdfs:range skos:Concept ;
+  owl:equivalentProperty ctr:hasLiabilityDirectionScope ;
+  rdfs:comment "Canonical liability direction concept from LiabilityDirectionScheme (FIRST_PARTY, THIRD_PARTY, MIXED)."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:claimantRole
+  a owl:ObjectProperty ;
+  rdfs:label "claimant role"@en ;
+  rdfs:domain ctr:TermApplication ;
+  rdfs:range skos:Concept ;
+  gov:constrainedToScheme ctr-voc:PartyRoleTypeScheme ;
+  rdfs:comment "Role concept indicating who suffers the harm (InsuredParty, AdditionalInsured, ThirdParty)."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:indemnityPayeeRole
+  a owl:ObjectProperty ;
+  rdfs:label "indemnity payee role"@en ;
+  rdfs:domain ctr:TermApplication ;
+  rdfs:range skos:Concept ;
+  gov:constrainedToScheme ctr-voc:PartyRoleTypeScheme ;
+  rdfs:comment "Role concept indicating who receives indemnity payment (InsuredParty, AdditionalInsured, ThirdParty, LossPayee, DirectPayProvider)."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:coveredDamageSubject
+  a owl:ObjectProperty ;
+  rdfs:label "covered damage subject"@en ;
+  rdfs:domain ctr:TermApplication ;
+  rdfs:range skos:Concept ;
+  rdfs:comment "Damage or harm subject concept from HarmSubjectScheme."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:triggerBasis
+  a owl:ObjectProperty ;
+  rdfs:label "trigger basis"@en ;
+  rdfs:domain ctr:TermApplication ;
+  rdfs:range skos:Concept ;
+  rdfs:comment "Trigger basis concept from TriggerBasisScheme (Occurrence, ClaimsMade, Discovery, Parametric)."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:legalLiabilityBasis
+  a owl:ObjectProperty ;
+  rdfs:label "legal liability basis"@en ;
+  rdfs:domain ctr:TermApplication ;
+  rdfs:range skos:Concept ;
+  rdfs:comment "Legal liability basis concept from LegalLiabilityBasisScheme (Negligence, StrictLiability, ContractualLiability, Statutory)."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:lossPayeeRef
+  a owl:ObjectProperty ;
+  rdfs:label "loss payee ref"@en ;
+  rdfs:domain ctr:TermApplication ;
+  rdfs:range owl:Thing ;
+  rdfs:comment "Reference to a loss payee entity when indemnityPayeeRole is LossPayee."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:hasCoverageTypeScope
+  a owl:ObjectProperty ;
+  rdfs:label "has coverage type scope"@en ;
+  rdfs:domain ctr:TermApplication ;
+  rdfs:range skos:Concept ;
+  gov:constrainedToScheme gov:CoverageTypeSchemeContract ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:hasLineOfBusinessScope
+  a owl:ObjectProperty ;
+  rdfs:label "has line of business scope"@en ;
+  rdfs:domain ctr:TermApplication ;
+  rdfs:range skos:Concept ;
+  gov:constrainedToScheme gov:LineOfBusinessSchemeContract ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:hasAssetClassScope
+  a owl:ObjectProperty ;
+  rdfs:label "has asset class scope"@en ;
+  rdfs:domain ctr:TermApplication ;
+  rdfs:range skos:Concept ;
+  gov:constrainedToScheme gov:AssetClassSchemeContract ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+#-----------------------------------------------------------------------
+# 3.7  Facet attachment
+#-----------------------------------------------------------------------
+
+ctr:hasFacet
+  a owl:ObjectProperty ;
+  rdfs:label "has facet"@en ;
+  rdfs:domain ctr:TermApplication ;
+  rdfs:range ctr:Facet ;
+  owl:inverseOf ctr:isFacetOf ;
+  rdfs:comment "Attaches a Facet to a TermApplication."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:isFacetOf
+  a owl:ObjectProperty ;
+  rdfs:label "is facet of"@en ;
+  rdfs:domain ctr:Facet ;
+  rdfs:range ctr:TermApplication ;
+  owl:inverseOf ctr:hasFacet ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+#-----------------------------------------------------------------------
+# 3.8  Limit / Retention value nodes
+#-----------------------------------------------------------------------
+
+ctr:hasLimit
+  a owl:ObjectProperty ;
+  rdfs:label "has limit"@en ;
+  rdfs:domain ctr:LimitFacet ;
+  rdfs:range ctr:Limit ;
+  rdfs:comment "Links a LimitFacet to its Limit value node. Cardinality exactly 1."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:hasRetention
+  a owl:ObjectProperty ;
+  rdfs:label "has retention"@en ;
+  rdfs:domain ctr:RetentionFacet ;
+  rdfs:range ctr:Retention ;
+  rdfs:comment "Links a RetentionFacet to its Retention value node. Cardinality exactly 1."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:hasExtent
+  a owl:ObjectProperty ;
+  rdfs:label "has extent"@en ;
+  rdfs:domain [ owl:unionOf ( ctr:Limit ctr:Retention ) ] ;
+  rdfs:range ctr:MonetaryExtent ;
+  rdfs:comment """Links a Limit or Retention to its MonetaryExtent(s). Multiple
+extents support multi-currency expression."""@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+#-----------------------------------------------------------------------
+# 3.9  Basis properties
+#-----------------------------------------------------------------------
+
+ctr:hasBasis
+  a owl:ObjectProperty ;
+  rdfs:label "has basis"@en ;
+  rdfs:domain [ owl:unionOf ( ctr:LimitFacet ctr:RetentionFacet ) ] ;
+  rdfs:range skos:Concept ;
+  rdfs:comment "SKOS concept from LimitBasisScheme or RetentionBasis scheme. Cardinality exactly 1."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+#-----------------------------------------------------------------------
+# 3.10  FlowDirective properties  [REMEDIATION: CSO-006, CSO-012]
+#-----------------------------------------------------------------------
+
+ctr:hasFlowDirective
+  a owl:ObjectProperty ;
+  rdfs:label "has flow directive"@en ;
+  rdfs:domain [ owl:unionOf ( ctr:ContractElement ctr:TermApplication ctr:Contract ) ] ;
+  rdfs:range ctr:FlowDirective ;
+  rdfs:comment """Links a ContractElement, TermApplication, or Contract to its
+declared FlowDirectives. When declared directly on a Contract, the FlowDirective
+is a coordination flow expressing master-contract level dependencies (shared
+aggregates, follow-form relationships spanning child contracts)."""@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:flowSource
+  a owl:ObjectProperty ;
+  rdfs:label "flow source"@en ;
+  rdfs:domain ctr:FlowDirective ;
+  rdfs:range [ owl:unionOf ( ctr:Facet ctr:TermApplication ) ] ;
+  rdfs:comment "The originating Facet or TermApplication of this flow. Cardinality exactly 1."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:flowTarget
+  a owl:ObjectProperty ;
+  rdfs:label "flow target"@en ;
+  rdfs:domain ctr:FlowDirective ;
+  rdfs:range owl:Thing ;
+  rdfs:comment """The receiving Facet, TermApplication, or cross-domain entity of
+this flow. Range is owl:Thing to permit cross-domain IRI references (e.g.,
+rcv:CollateralFacility for CollateralDraw flows). SHACL shapes enforce type
+constraints per FlowType. Cardinality exactly 1."""@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:flowType
+  a owl:ObjectProperty ;
+  rdfs:label "flow type"@en ;
+  rdfs:domain ctr:FlowDirective ;
+  rdfs:range skos:Concept ;
+  rdfs:comment "SKOS concept from FlowTypeScheme. Cardinality exactly 1."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:flowConditionType
+  a owl:ObjectProperty ;
+  rdfs:label "flow condition type"@en ;
+  rdfs:domain ctr:FlowDirective ;
+  rdfs:range skos:Concept ;
+  rdfs:comment "SKOS concept from FlowConditionScheme indicating the typed condition semantics of flowConditionText."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:followFormType
+  a owl:ObjectProperty ;
+  rdfs:label "follow form type"@en ;
+  rdfs:domain ctr:FlowDirective ;
+  rdfs:range skos:Concept ;
+  rdfs:comment "SKOS concept: TrueFollowForm, ConditionalFollowForm. Required when flowType = FollowForm."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:contributionMethod
+  a owl:ObjectProperty ;
+  rdfs:label "contribution method"@en ;
+  rdfs:domain ctr:FlowDirective ;
+  rdfs:range skos:Concept ;
+  rdfs:comment "SKOS concept from ContributionMethodScheme: ProRataByLimit, EqualShares, OtherInsuranceOrder. Required when flowType = Contribution."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:activationDirection
+  a owl:ObjectProperty ;
+  rdfs:label "activation direction"@en ;
+  rdfs:domain ctr:FlowDirective ;
+  rdfs:range skos:Concept ;
+  rdfs:comment "SKOS concept: Enable, Disable. Used with SignalActivation and SignalGate flow types."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:aadBasis
+  a owl:ObjectProperty ;
+  rdfs:label "AAD basis"@en ;
+  rdfs:domain ctr:FlowDirective ;
+  rdfs:range skos:Concept ;
+  rdfs:comment "Basis for annual aggregate deductible accumulation. Used with AnnualAggregateDeductible flow type."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+#-----------------------------------------------------------------------
+# 3.11  External wording incorporation
+#-----------------------------------------------------------------------
+
+ctr:incorporatesWording
+  a owl:ObjectProperty ;
+  rdfs:label "incorporates wording"@en ;
+  rdfs:domain ctr:ContractElement ;
+  rdfs:range ctr:ExternalWording ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+#-----------------------------------------------------------------------
+# 3.12  Party role properties
+#-----------------------------------------------------------------------
+
+ctr:hasPartyRole
+  a owl:ObjectProperty ;
+  rdfs:label "has party role"@en ;
+  rdfs:domain [ owl:unionOf ( ctr:Contract ctr:Quote ) ] ;
+  rdfs:range ctr:PartyRole ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:roleType
+  a owl:ObjectProperty ;
+  rdfs:label "role type"@en ;
+  rdfs:domain ctr:PartyRole ;
+  rdfs:range skos:Concept ;
+  rdfs:comment """SKOS concept from PartyRoleTypeScheme. Includes insurance/reinsurance
+roles (NamedInsured, AdditionalInsured, Insurer, LeadInsurer, FollowingInsurer,
+Cedent, Reinsurer, Broker, Beneficiary) and surety roles (Principal, Obligee,
+Guarantor, Indemnitor)."""@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:roleScope
+  a owl:ObjectProperty ;
+  rdfs:label "role scope"@en ;
+  rdfs:domain ctr:PartyRole ;
+  rdfs:range ctr:TermApplication ;
+  rdfs:comment "For scoped roles, points to the TermApplication qualifying the scope."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:roleCoverageScope
+  a owl:ObjectProperty ;
+  rdfs:label "role coverage scope"@en ;
+  rdfs:domain ctr:PartyRole ;
+  rdfs:range ctr:ContractElement ;
+  rdfs:comment "For Additional Insured endorsements, points to the endorsement element granting coverage."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:scopedToPartyRole
+  a owl:ObjectProperty ;
+  rdfs:label "scoped to party role"@en ;
+  rdfs:domain ctr:ActorFacet ;
+  rdfs:range ctr:PartyRole ;
+  rdfs:comment "Links an ActorFacet to the PartyRole instance it qualifies."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+#-----------------------------------------------------------------------
+# 3.13  Contract type and child-contract reference
+#-----------------------------------------------------------------------
+
+ctr:hasContractType
+  a owl:ObjectProperty ;
+  rdfs:label "has contract type"@en ;
+  rdfs:domain ctr:Contract ;
+  rdfs:range skos:Concept ;
+  rdfs:comment "SKOS concept from ContractTypeScheme: Policy, Treaty, Facultative, Binder, CaptiveProgramme, MGAPanel, SidecarAgreement, PoolMembership."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+#-----------------------------------------------------------------------
+# 3.14  NegotiationThread properties  [REMEDIATION: CSO-008, CSO-010]
+#-----------------------------------------------------------------------
+
+ctr:targetsLayer
+  a owl:ObjectProperty ;
+  rdfs:label "targets layer"@en ;
+  rdfs:domain [ owl:unionOf ( ctr:NegotiationThread ctr:Submission ) ] ;
+  rdfs:range tow:Block ;
+  rdfs:comment "The tower layer (TPO Block) this thread or submission is marketing."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+tow:hasNegotiationThread
+  a owl:ObjectProperty ;
+  rdfs:label "has negotiation thread"@en ;
+  rdfs:domain tow:Block ;
+  rdfs:range ctr:NegotiationThread ;
+  owl:inverseOf ctr:targetsLayer ;
+  rdfs:comment "Inverse convenience property to query all negotiation threads attached to a tower layer."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:forMarket
+  a owl:ObjectProperty ;
+  rdfs:label "for market"@en ;
+  rdfs:domain ctr:NegotiationThread ;
+  rdfs:range owl:Thing ;
+  rdfs:comment "The market participant this thread addresses. Range is owl:Thing — references a party registry individual by IRI."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:hasQuote
+  a owl:ObjectProperty ;
+  rdfs:label "has quote"@en ;
+  rdfs:domain [ owl:unionOf ( ctr:NegotiationThread ctr:MarketResponse ) ] ;
+  rdfs:range ctr:Quote ;
+  rdfs:comment "Quotes produced by a NegotiationThread or carried by a MarketResponse."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:hasSubmission
+  a owl:ObjectProperty ;
+  rdfs:label "has submission"@en ;
+  rdfs:domain ctr:NegotiationThread ;
+  rdfs:range ctr:Submission ;
+  rdfs:comment "The submission(s) associated with this thread. Min cardinality 1."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:hasMarketResponse
+  a owl:ObjectProperty ;
+  rdfs:label "has market response"@en ;
+  rdfs:domain ctr:NegotiationThread ;
+  rdfs:range ctr:MarketResponse ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:hasStateTransition
+  a owl:ObjectProperty ;
+  rdfs:label "has state transition"@en ;
+  rdfs:domain ctr:NegotiationThread ;
+  rdfs:range core:Fact ;
+  rdfs:comment """Each state transition recorded as a core:Fact with timestamp,
+old state, new state, and actor. Enables full audit trail of negotiation lifecycle."""@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:correlatedThread
+  a owl:ObjectProperty ;
+  rdfs:label "correlated thread"@en ;
+  rdfs:domain ctr:NegotiationThread ;
+  rdfs:range ctr:NegotiationThread ;
+  rdfs:comment "Links to related threads for cross-thread coordination (same layer or cross-layer)."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:lastProposedBy
+  a owl:ObjectProperty ;
+  rdfs:label "last proposed by"@en ;
+  rdfs:domain ctr:NegotiationThread ;
+  rdfs:range skos:Concept ;
+  rdfs:comment "SKOS concept (Broker, Market) indicating which party last made a proposal. Supports counter-offer tracking."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+#-----------------------------------------------------------------------
+# 3.15  MarketResponse properties
+#-----------------------------------------------------------------------
+
+ctr:responseType
+  a owl:ObjectProperty ;
+  rdfs:label "response type"@en ;
+  rdfs:domain ctr:MarketResponse ;
+  rdfs:range skos:Concept ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:onThread
+  a owl:ObjectProperty ;
+  rdfs:label "on thread"@en ;
+  rdfs:domain ctr:MarketResponse ;
+  rdfs:range ctr:NegotiationThread ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:hasInformationRequest
+  a owl:ObjectProperty ;
+  rdfs:label "has information request"@en ;
+  rdfs:domain ctr:MarketResponse ;
+  rdfs:range owl:Thing ;
+  rdfs:comment """Cross-domain IRI reference to an IRO InformationRequest entity
+(range owl:Thing to permit cross-ontology reference). Used when the response is
+an information referral. The IRO owns the InformationRequest entity; this property
+is the CSO linkage point."""@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+#-----------------------------------------------------------------------
+# 3.16  Quote-specific properties  [REMEDIATION: CSO-007]
+#-----------------------------------------------------------------------
+
+ctr:promotedToContract
+  a owl:ObjectProperty ;
+  rdfs:label "promoted to contract"@en ;
+  rdfs:domain ctr:Quote ;
+  rdfs:range ctr:Contract ;
+  rdfs:comment "The Contract created by the p_bind projection. Max cardinality 1."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:promotedFromQuote
+  a owl:ObjectProperty ;
+  rdfs:label "promoted from quote"@en ;
+  rdfs:domain ctr:Contract ;
+  rdfs:range ctr:Quote ;
+  owl:inverseOf ctr:promotedToContract ;
+  rdfs:comment "Inverse of promotedToContract. Provenance link from a bound Contract back to its originating Quote."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:hasTermQualification
+  a owl:ObjectProperty ;
+  rdfs:label "has term qualification"@en ;
+  rdfs:domain ctr:Quote ;
+  rdfs:range ctr:TermQualification ;
+  rdfs:comment "Per-term precision metadata overlay. Not copied to Contract on p_bind."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:hasCompletenessAssessment
+  a owl:ObjectProperty ;
+  rdfs:label "has completeness assessment"@en ;
+  rdfs:domain ctr:Quote ;
+  rdfs:range ctr:CompletenessAssessment ;
+  rdfs:comment "Completeness assessment across term categories. Max cardinality 1. Not copied on p_bind."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:commitmentLevel
+  a owl:ObjectProperty ;
+  rdfs:label "commitment level"@en ;
+  rdfs:domain ctr:Quote ;
+  rdfs:range skos:Concept ;
+  rdfs:comment """SKOS concept from CommitmentLevelScheme: Indication, NonBindingQuote,
+BindingQuote. Captures legal or commercial force — semantically distinct from
+quoteStatus which tracks lifecycle status. Cardinality exactly 1."""@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:quoteStatus
+  a owl:ObjectProperty ;
+  rdfs:label "quote status"@en ;
+  rdfs:domain ctr:Quote ;
+  rdfs:range skos:Concept ;
+  rdfs:comment "SKOS concept from QuoteStatusScheme: Active, Accepted, Countered, Amended, Expired, Declined, Withdrawn. Cardinality exactly 1."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+#-----------------------------------------------------------------------
+# 3.17  TermQualification properties  [REMEDIATION: CSO-007]
+#-----------------------------------------------------------------------
+
+ctr:qualifiesTerm
+  a owl:ObjectProperty ;
+  rdfs:label "qualifies term"@en ;
+  rdfs:domain ctr:TermQualification ;
+  rdfs:range [ owl:unionOf ( ctr:TermApplication ctr:Facet ) ] ;
+  rdfs:comment "The TermApplication or Facet being qualified."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:hasPrecision
+  a owl:ObjectProperty ;
+  rdfs:label "has precision"@en ;
+  rdfs:domain ctr:TermQualification ;
+  rdfs:range skos:Concept ;
+  rdfs:comment "SKOS concept from TermPrecisionScheme: Exact, Approximate, Placeholder."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+#-----------------------------------------------------------------------
+# 3.18  Submission properties  [REMEDIATION: CSO-009]
+#-----------------------------------------------------------------------
+
+ctr:hasCoverageRequirements
+  a owl:ObjectProperty ;
+  rdfs:label "has coverage requirements"@en ;
+  rdfs:domain ctr:Submission ;
+  rdfs:range ctr:TermApplication ;
+  rdfs:comment "Coverage requirements expressed as TermApplications with scope and Facets."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:hasTargetPremiumRange
+  a owl:ObjectProperty ;
+  rdfs:label "has target premium range"@en ;
+  rdfs:domain ctr:Submission ;
+  rdfs:range ctr:MonetaryExtent ;
+  rdfs:comment "Optional target premium range (low and/or high bounds as MonetaryExtent instances). Max cardinality 2."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:submissionStatus
+  a owl:ObjectProperty ;
+  rdfs:label "submission status"@en ;
+  rdfs:domain ctr:Submission ;
+  rdfs:range skos:Concept ;
+  rdfs:comment "SKOS concept from SubmissionStatusScheme capturing lifecycle state of the submission package."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:hasSubmissionDocument
+  a owl:ObjectProperty ;
+  rdfs:label "has submission document"@en ;
+  rdfs:domain ctr:Submission ;
+  rdfs:range owl:Thing ;
+  rdfs:comment "Optional cross-domain reference to a submission document artifact (IRI or document entity)."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:sentViaChannel
+  a owl:ObjectProperty ;
+  rdfs:label "sent via channel"@en ;
+  rdfs:domain ctr:Submission ;
+  rdfs:range skos:Concept ;
+  rdfs:comment "SKOS concept from SubmissionChannelScheme: Email, PlatformAPI, Portal, DelegatedAuthority."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+#-----------------------------------------------------------------------
+# 3.19  InformationRequest / Question properties
+#-----------------------------------------------------------------------
+
+ctr:originatesFromThread
+  a owl:ObjectProperty ;
+  rdfs:label "originates from thread"@en ;
+  rdfs:domain ctr:InformationRequest ;
+  rdfs:range ctr:NegotiationThread ;
+  rdfs:comment "Cardinality exactly 1."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:hasQuestion
+  a owl:ObjectProperty ;
+  rdfs:label "has question"@en ;
+  rdfs:domain ctr:InformationRequest ;
+  rdfs:range ctr:Question ;
+  rdfs:comment "Min cardinality 1."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:hasSubject
+  a owl:ObjectProperty ;
+  rdfs:label "has subject"@en ;
+  rdfs:domain ctr:Question ;
+  rdfs:range skos:Concept ;
+  gov:constrainedToScheme ctr-voc:QuestionSubjectScheme ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:hasIntent
+  a owl:ObjectProperty ;
+  rdfs:label "has intent"@en ;
+  rdfs:domain ctr:Question ;
+  rdfs:range skos:Concept ;
+  rdfs:comment "SKOS concept from IntentTypeScheme: Qualitative, Quantitative, Bounds, Temporal, Confirmation."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:hasScope
+  a owl:ObjectProperty ;
+  rdfs:label "has scope"@en ;
+  rdfs:domain ctr:Question ;
+  rdfs:range skos:Concept ;
+  gov:constrainedToScheme ctr-voc:QuestionScopeScheme ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:hasCriticality
+  a owl:ObjectProperty ;
+  rdfs:label "has criticality"@en ;
+  rdfs:domain ctr:Question ;
+  rdfs:range skos:Concept ;
+  rdfs:comment "SKOS concept: Required, Optional, Contextual."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+#-----------------------------------------------------------------------
+# 3.20  ContractTowerBinding (CTB) properties
+#-----------------------------------------------------------------------
+
+ctr:referencesContract
+  a owl:ObjectProperty ;
+  rdfs:label "references contract"@en ;
+  rdfs:domain ctr:ContractTowerBinding ;
+  rdfs:range ctr:Contract ;
+  rdfs:comment "The Contract being bound to the tower layer. Cardinality exactly 1."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:referencesQuote
+  a owl:ObjectProperty ;
+  rdfs:label "references quote"@en ;
+  rdfs:domain ctr:ContractTowerBinding ;
+  rdfs:range ctr:Quote ;
+  rdfs:comment "The Quote linked to the tower layer for a provisional pre-bind CTB. Mutually exclusive with referencesContract by SHACL."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:relatesToLayer
+  a owl:ObjectProperty ;
+  rdfs:label "relates to layer"@en ;
+  rdfs:domain ctr:ContractTowerBinding ;
+  rdfs:range tow:Block ;
+  rdfs:comment "The tower Block (layer) this CTB fulfils capacity for. Cardinality exactly 1."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:participationRole
+  a owl:ObjectProperty ;
+  rdfs:label "participation role"@en ;
+  rdfs:domain ctr:ContractTowerBinding ;
+  rdfs:range skos:Concept ;
+  rdfs:comment "SKOS concept from ParticipationRoleScheme: Leader, Follower, Independent. Cardinality exactly 1."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:bindingStatus
+  a owl:ObjectProperty ;
+  rdfs:label "binding status"@en ;
+  rdfs:domain ctr:ContractTowerBinding ;
+  rdfs:range skos:Concept ;
+  rdfs:comment "SKOS concept from BindingStatusScheme: Provisional, Bound, Endorsed, Amended, Expired, Withdrawn. Cardinality exactly 1."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:uniformityType
+  a owl:ObjectProperty ;
+  rdfs:label "uniformity type"@en ;
+  rdfs:domain ctr:ContractTowerBinding ;
+  rdfs:range skos:Concept ;
+  rdfs:comment "SKOS concept from UniformityTypeScheme: UniformSubscription, PanelVertical, CoInsurance, MasterMultiLayer, Mixed. Cardinality exactly 1."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:contractSpan
+  a owl:ObjectProperty ;
+  rdfs:label "contract span"@en ;
+  rdfs:domain ctr:ContractTowerBinding ;
+  rdfs:range tow:CoverageSpan ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:hasFulfilmentBinding
+  a owl:ObjectProperty ;
+  rdfs:label "has fulfilment binding"@en ;
+  rdfs:domain ctr:ContractTowerBinding ;
+  rdfs:range tow:LayerFulfilmentBinding ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:termDeltaRefs
+  a owl:ObjectProperty ;
+  rdfs:label "term delta refs"@en ;
+  rdfs:domain ctr:ContractTowerBinding ;
+  rdfs:range core:Fact ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:evidenceRef
+  a owl:ObjectProperty ;
+  rdfs:label "evidence ref"@en ;
+  rdfs:domain ctr:ContractTowerBinding ;
+  rdfs:range core:Fact ;
+  rdfs:comment "QuoteFacts, CapacityCommitmentFacts, SigningFacts."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+#-----------------------------------------------------------------------
+# 3.21  Endorsement timing
+#-----------------------------------------------------------------------
+
+ctr:hasEndorsementTiming
+  a owl:ObjectProperty ;
+  rdfs:label "has endorsement timing"@en ;
+  rdfs:domain ctr:ContractElement ;
+  rdfs:range skos:Concept ;
+  rdfs:comment "SKOS concept from EndorsementTimingScheme: PreBind, PostBind, MidTerm, Renewal. Required on all Endorsement-type ContractElements."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+#-----------------------------------------------------------------------
+# 3.22  TriggerFacet — TriggerTier and component trigger links  [REMEDIATION: CSO-004]
+#-----------------------------------------------------------------------
+
+ctr:hasTriggerTier
+  a owl:ObjectProperty ;
+  rdfs:label "has trigger tier"@en ;
+  rdfs:domain ctr:TriggerFacet ;
+  rdfs:range ctr:TriggerTier ;
+  rdfs:comment "Links a graduated TriggerFacet to its payout tier instances. Required when payoutStructure = Graduated."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:hasComponentTrigger
+  a owl:ObjectProperty ;
+  rdfs:label "has component trigger"@en ;
+  rdfs:domain ctr:TriggerFacet ;
+  rdfs:range ctr:TriggerFacet ;
+  rdfs:comment "For composite trigger expressions. Links a parent TriggerFacet to its component TriggerFacets. Required when triggerType = Composite."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+#-----------------------------------------------------------------------
+# 3.23  DefenseCostFacet treatment  [REMEDIATION: CSO-022]
+#-----------------------------------------------------------------------
+
+ctr:defenseCostTreatment
+  a owl:ObjectProperty ;
+  rdfs:label "defense cost treatment"@en ;
+  rdfs:domain [ owl:unionOf ( ctr:DefenseCostFacet ctr:TermApplication ) ] ;
+  rdfs:range skos:Concept ;
+  rdfs:comment """SKOS concept from DefenseCostTreatmentScheme: ErodesLimit, OutsideLimit,
+SeparateTower, SharedWithIndemnity, Supplementary, NotApplicable.
+Aligns with FBO DefenseTreatment vocabulary via skos:exactMatch."""@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+#-----------------------------------------------------------------------
+# 3.24  AggregationFacet SKOS-typed properties  [REMEDIATION: CSO-002, CSO-003]
+#-----------------------------------------------------------------------
+
+ctr:aggregationWindow
+  a owl:ObjectProperty ;
+  rdfs:label "aggregation window"@en ;
+  rdfs:domain ctr:AggregationFacet ;
+  rdfs:range skos:Concept ;
+  rdfs:comment "SKOS concept from AggregateWindowScheme: PolicyYear, CalendarYear, Custom, PerEvent. Cardinality exactly 1."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:aggregateCountingBasis
+  a owl:ObjectProperty ;
+  rdfs:label "aggregate counting basis"@en ;
+  rdfs:domain ctr:AggregationFacet ;
+  rdfs:range skos:Concept ;
+  rdfs:comment "SKOS concept from AggregateCountingBasisScheme: PerOccurrence, PerClaim, PerEvent."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:hoursClauseSelectionMethod
+  a owl:ObjectProperty ;
+  rdfs:label "hours clause selection method"@en ;
+  rdfs:domain ctr:AggregationFacet ;
+  rdfs:range skos:Concept ;
+  rdfs:comment "SKOS concept from HoursClauseSelectionScheme: InsuredChoice, LargestLoss, FirstEvent. Present when hoursClauseDuration is set."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+#-----------------------------------------------------------------------
+# 3.25  TriggerFacet SKOS-typed properties
+#-----------------------------------------------------------------------
+
+ctr:triggerType
+  a owl:ObjectProperty ;
+  rdfs:label "trigger type"@en ;
+  rdfs:domain ctr:TriggerFacet ;
+  rdfs:range skos:Concept ;
+  rdfs:comment "SKOS concept from TriggerTypeScheme: Indemnity, Parametric, ModelledLoss, IndustryIndex, OracleTriggered, Composite. Cardinality exactly 1."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:compositeOperator
+  a owl:ObjectProperty ;
+  rdfs:label "composite operator"@en ;
+  rdfs:domain ctr:TriggerFacet ;
+  rdfs:range skos:Concept ;
+  rdfs:comment "SKOS concept from CompositeOperatorScheme: AND, OR, NOT, SEQUENCE. Present when triggerType = Composite."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+#-----------------------------------------------------------------------
+# 3.26  CollateralFacet SKOS-typed properties
+#-----------------------------------------------------------------------
+
+ctr:collateralType
+  a owl:ObjectProperty ;
+  rdfs:label "collateral type"@en ;
+  rdfs:domain ctr:CollateralFacet ;
+  rdfs:range skos:Concept ;
+  rdfs:comment "SKOS concept from CollateralTypeScheme: FullyCollateralised, PartiallyCollateralised, TrustBacked, LOCBacked."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+#-----------------------------------------------------------------------
+# 3.27  PoolParticipationFacet SKOS-typed properties
+#-----------------------------------------------------------------------
+
+ctr:payoutBasis
+  a owl:ObjectProperty ;
+  rdfs:label "payout basis"@en ;
+  rdfs:domain ctr:PoolParticipationFacet ;
+  rdfs:range skos:Concept ;
+  rdfs:comment "SKOS concept from PoolPayoutBasisScheme: ProRata, ExposureWeighted, EqualShare, ContributionWeighted."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+#-----------------------------------------------------------------------
+# 3.28  PremiumFacet SKOS-typed properties  [REMEDIATION: CSO-015]
+#-----------------------------------------------------------------------
+
+ctr:premiumBasis
+  a owl:ObjectProperty ;
+  rdfs:label "premium basis"@en ;
+  rdfs:domain ctr:PremiumFacet ;
+  rdfs:range skos:Concept ;
+  rdfs:comment "SKOS concept from PremiumBasisScheme: Flat, RateOnLine, Adjustable, MinimumAndDeposit. Cardinality exactly 1."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+#-----------------------------------------------------------------------
+# 3.29  WaitingPeriodFacet and IndemnityPeriodFacet SKOS-typed properties
+#-----------------------------------------------------------------------
+
+ctr:waitingPeriodBasis
+  a owl:ObjectProperty ;
+  rdfs:label "waiting period basis"@en ;
+  rdfs:domain ctr:WaitingPeriodFacet ;
+  rdfs:range skos:Concept ;
+  rdfs:comment "SKOS concept from WaitingPeriodBasisScheme: Hours72, BusinessDays, CalendarDays."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:indemnityPeriodBasis
+  a owl:ObjectProperty ;
+  rdfs:label "indemnity period basis"@en ;
+  rdfs:domain ctr:IndemnityPeriodFacet ;
+  rdfs:range skos:Concept ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+#-----------------------------------------------------------------------
+# 3.30  ClaimsBasisFacet SKOS-typed property
+#-----------------------------------------------------------------------
+
+ctr:claimsTriggerBasis
+  a owl:ObjectProperty ;
+  rdfs:label "claims trigger basis"@en ;
+  rdfs:domain ctr:ClaimsBasisFacet ;
+  rdfs:range skos:Concept ;
+  rdfs:comment "SKOS concept from ClaimsTriggerBasisScheme: LossesOccurring, ClaimsMade, RiskAttaching, ClaimsFirstMade. Cardinality exactly 1."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+#-----------------------------------------------------------------------
+# 3.31  CustomFacet SKOS-typed property
+#-----------------------------------------------------------------------
+
+ctr:facetType
+  a owl:ObjectProperty ;
+  rdfs:label "facet type"@en ;
+  rdfs:domain ctr:CustomFacet ;
+  rdfs:range skos:Concept ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+#-----------------------------------------------------------------------
+# 3.32  Claim properties  [LIABILITY DIMENSION]
+#-----------------------------------------------------------------------
+
+ctr:claimant
+  a owl:ObjectProperty ;
+  rdfs:label "claimant"@en ;
+  rdfs:domain ctr:Claim ;
+  rdfs:range ctr:PartyRole ;
+  rdfs:comment "PartyRole representing the claimant for this claim event."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:defendant
+  a owl:ObjectProperty ;
+  rdfs:label "defendant"@en ;
+  rdfs:domain ctr:Claim ;
+  rdfs:range ctr:PartyRole ;
+  rdfs:comment "PartyRole representing the defending party, typically an insured role for third-party liability claims."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:payee
+  a owl:ObjectProperty ;
+  rdfs:label "payee"@en ;
+  rdfs:domain ctr:Claim ;
+  rdfs:range ctr:PartyRole ;
+  rdfs:comment "PartyRole that receives claim payment."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:relatesToCoverageClause
+  a owl:ObjectProperty ;
+  rdfs:label "relates to coverage clause"@en ;
+  rdfs:domain ctr:Claim ;
+  rdfs:range ctr:TermApplication ;
+  rdfs:comment "Links a claim event to the governing coverage clause term application."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:harmType
+  a owl:ObjectProperty ;
+  rdfs:label "harm type"@en ;
+  rdfs:domain ctr:Claim ;
+  rdfs:range skos:Concept ;
+  rdfs:comment "Harm subject concept aligned to coveredDamageSubject."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+
+###############################################################################
+# 4. DATATYPE PROPERTIES
+###############################################################################
+
+#-----------------------------------------------------------------------
+# 4.1  Contract identification and dates
+#-----------------------------------------------------------------------
+
+ctr:effectiveFrom
+  a owl:DatatypeProperty ;
+  rdfs:label "effective from"@en ;
+  rdfs:domain ctr:Contract ;
+  rdfs:range xsd:date ;
+  rdfs:comment "The date from which the contract is in force. Cardinality exactly 1."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:effectiveTo
+  a owl:DatatypeProperty ;
+  rdfs:label "effective to"@en ;
+  rdfs:domain ctr:Contract ;
+  rdfs:range xsd:date ;
+  rdfs:comment "The date on which the contract expires. Cardinality 0..1."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+#-----------------------------------------------------------------------
+# 4.2  ContractElement datatype properties
+#-----------------------------------------------------------------------
+
+ctr:writtenLine
+  a owl:DatatypeProperty ;
+  rdfs:label "written line"@en ;
+  rdfs:domain ctr:ContractElement ;
+  rdfs:range xsd:decimal ;
+  rdfs:comment "The written line percentage for a Stamp element. Normalised [0.0, 1.0]. Required on Stamp elements."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:elementText
+  a owl:DatatypeProperty ;
+  rdfs:label "element text"@en ;
+  rdfs:domain ctr:ContractElement ;
+  rdfs:range xsd:string ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:elementSequence
+  a owl:DatatypeProperty ;
+  rdfs:label "element sequence"@en ;
+  rdfs:domain ctr:ContractElement ;
+  rdfs:range xsd:integer ;
+  rdfs:comment "Ordering position among siblings."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+#-----------------------------------------------------------------------
+# 4.3  MonetaryExtent  [REMEDIATION: CSO-011]
+#-----------------------------------------------------------------------
+
+ctr:amount
+  a owl:DatatypeProperty ;
+  rdfs:label "amount"@en ;
+  rdfs:domain ctr:MonetaryExtent ;
+  rdfs:range xsd:decimal ;
+  rdfs:comment "Cardinality exactly 1."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:currency
+  a owl:DatatypeProperty ;
+  rdfs:label "currency"@en ;
+  rdfs:domain ctr:MonetaryExtent ;
+  rdfs:range xsd:string ;
+  rdfs:comment """ISO 4217 currency code (exactly 3 characters). Cardinality exactly 1.
+
+This is the lexical form and remains mandatory for interchange. It is not resolvable without an
+external table, so anything that reasons over currency — FX aggregation, cross-currency tower
+summation, the FBO CurrencyFX dimension — should use ctr:currencyConcept (Section 8), which
+carries the same code as skos:notation and is a first-class graph node."""@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+#-----------------------------------------------------------------------
+# 4.4  FlowDirective datatype properties  [REMEDIATION: CSO-006]
+#-----------------------------------------------------------------------
+
+ctr:flowCondition
+  a owl:DatatypeProperty ;
+  rdfs:label "flow condition"@en ;
+  rdfs:domain ctr:FlowDirective ;
+  rdfs:range xsd:string ;
+  rdfs:comment "Legacy free-text flow condition retained for backward compatibility. Prefer flowConditionText + flowConditionType for new data."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:flowConditionText
+  a owl:DatatypeProperty ;
+  rdfs:label "flow condition text"@en ;
+  rdfs:domain ctr:FlowDirective ;
+  rdfs:range xsd:string ;
+  rdfs:comment "Human-readable condition text paired with flowConditionType for typed condition semantics."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:flowPriority
+  a owl:DatatypeProperty ;
+  rdfs:label "flow priority"@en ;
+  rdfs:domain ctr:FlowDirective ;
+  rdfs:range xsd:integer ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:expansionCondition
+  a owl:DatatypeProperty ;
+  rdfs:label "expansion condition"@en ;
+  rdfs:domain ctr:FlowDirective ;
+  rdfs:range xsd:string ;
+  rdfs:comment "For ScopeExpansion: condition under which the write-back applies."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:dropDownCondition
+  a owl:DatatypeProperty ;
+  rdfs:label "drop down condition"@en ;
+  rdfs:domain ctr:FlowDirective ;
+  rdfs:range xsd:string ;
+  rdfs:comment "For DropDown: the exhaustion trigger condition."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:gateCondition
+  a owl:DatatypeProperty ;
+  rdfs:label "gate condition"@en ;
+  rdfs:domain ctr:FlowDirective ;
+  rdfs:range xsd:string ;
+  rdfs:comment "For AttachmentGate: the condition that must be satisfied."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:cessionPercentage
+  a owl:DatatypeProperty ;
+  rdfs:label "cession percentage"@en ;
+  rdfs:domain ctr:FlowDirective ;
+  rdfs:range xsd:decimal ;
+  rdfs:comment "For QuotaShareCession: proportion of premium and losses ceded, normalised [0.0, 1.0]."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:aadThreshold
+  a owl:DatatypeProperty ;
+  rdfs:label "AAD threshold"@en ;
+  rdfs:domain ctr:FlowDirective ;
+  rdfs:range xsd:decimal ;
+  rdfs:comment "For AnnualAggregateDeductible: accumulation threshold before cover responds."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:corridorAttach
+  a owl:DatatypeProperty ;
+  rdfs:label "corridor attachment"@en ;
+  rdfs:domain ctr:FlowDirective ;
+  rdfs:range xsd:decimal ;
+  rdfs:comment "For LossCorridorRetention: low threshold of the retention corridor."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:corridorCeiling
+  a owl:DatatypeProperty ;
+  rdfs:label "corridor ceiling"@en ;
+  rdfs:domain ctr:FlowDirective ;
+  rdfs:range xsd:decimal ;
+  rdfs:comment "For LossCorridorRetention: high threshold of the retention corridor."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:primacyProgramRef
+  a owl:DatatypeProperty ;
+  rdfs:label "primacy program ref"@en ;
+  rdfs:domain ctr:FlowDirective ;
+  rdfs:range xsd:string ;
+  rdfs:comment "For PrimacyOrdering: identifier of the primary programme (e.g., NFIP)."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:signalCondition
+  a owl:DatatypeProperty ;
+  rdfs:label "signal condition"@en ;
+  rdfs:domain ctr:FlowDirective ;
+  rdfs:range xsd:string ;
+  rdfs:comment "For SignalActivation and SignalGate: condition string that enables/disables a downstream flow or coverage grant."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+#-----------------------------------------------------------------------
+# 4.5  RetentionFacet datatype properties  [REMEDIATION: CSO-016]
+#-----------------------------------------------------------------------
+
+ctr:coinsurancePercentage
+  a owl:DatatypeProperty ;
+  rdfs:label "coinsurance percentage"@en ;
+  rdfs:domain ctr:RetentionFacet ;
+  rdfs:range xsd:decimal ;
+  rdfs:comment """The minimum insured-to-value ratio required under a coinsurance
+clause. Distinct from retention amount: a proportional penalty for under-insurance,
+not a deductible. Cardinality 0..1. Used for property policies with coinsurance
+requirements."""@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+#-----------------------------------------------------------------------
+# 4.6  WaitingPeriodFacet datatype properties
+#-----------------------------------------------------------------------
+
+ctr:waitingPeriodDuration
+  a owl:DatatypeProperty ;
+  rdfs:label "waiting period duration"@en ;
+  rdfs:domain ctr:WaitingPeriodFacet ;
+  rdfs:range xsd:dayTimeDuration ;
+  rdfs:comment "Duration of the waiting period in ISO 8601 dayTimeDuration format."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+#-----------------------------------------------------------------------
+# 4.7  IndemnityPeriodFacet datatype properties
+#-----------------------------------------------------------------------
+
+ctr:maxIndemnityPeriod
+  a owl:DatatypeProperty ;
+  rdfs:label "max indemnity period"@en ;
+  rdfs:domain ctr:IndemnityPeriodFacet ;
+  rdfs:range xsd:dayTimeDuration ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+#-----------------------------------------------------------------------
+# 4.8  ReinstatementFacet datatype properties  [REMEDIATION: CSO-001]
+#-----------------------------------------------------------------------
+
+ctr:reinstatementCount
+  a owl:DatatypeProperty ;
+  rdfs:label "reinstatement count"@en ;
+  rdfs:domain ctr:ReinstatementFacet ;
+  rdfs:range xsd:integer ;
+  rdfs:comment "Number of reinstatements available. Maps to FBO TankStateRecord R : ReinstatementId → N. Cardinality exactly 1. Must be ≥ 0."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:reinstatementPercentage
+  a owl:DatatypeProperty ;
+  rdfs:label "reinstatement percentage"@en ;
+  rdfs:domain ctr:ReinstatementFacet ;
+  rdfs:range xsd:decimal ;
+  rdfs:comment "Percentage of original premium charged per reinstatement. Cardinality exactly 1. Must be ≥ 0.0."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:reinstatementProRataTime
+  a owl:DatatypeProperty ;
+  rdfs:label "reinstatement pro rata time"@en ;
+  rdfs:domain ctr:ReinstatementFacet ;
+  rdfs:range xsd:boolean ;
+  rdfs:comment """Whether the reinstatement premium is pro-rated as to the
+remaining policy period at the time of reinstatement. When true, the premium
+charged = reinstatementPercentage × originalPremium × (remainingDays /
+totalPolicyDays). When false, no time adjustment applies. Independent of
+ctr:reinstatementProRataAmount — both may be true simultaneously, in which
+case the two adjustments apply multiplicatively.
+
+Cardinality: exactly 1."""@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:reinstatementProRataAmount
+  a owl:DatatypeProperty ;
+  rdfs:label "reinstatement pro rata amount"@en ;
+  rdfs:domain ctr:ReinstatementFacet ;
+  rdfs:range xsd:boolean ;
+  rdfs:comment """Whether the reinstatement premium is pro-rated as to the
+fraction of the limit consumed by the loss that triggered the reinstatement.
+When true, the premium charged = reinstatementPercentage × originalPremium ×
+(lossAmount / limitAmount). When false, no amount adjustment applies —
+the full reinstatement premium is charged regardless of whether the loss
+partially or fully exhausted the limit.
+
+Independent of ctr:reinstatementProRataTime — both may be true simultaneously,
+in which case the two adjustments apply multiplicatively:
+  RP = reinstatementPercentage × originalPremium × timeRatio × amountRatio
+
+Common drafting: London Market XL treaties routinely distinguish between
+'pro-rata as to time and amount', 'pro-rata as to time only', and
+'100% flat' reinstatement premium structures.
+
+Projection: This flag initialises the FBO reinstatementState.proRataAmount
+field in TankStateRecord. Without it, the projection functor cannot correctly
+compute reinstatement premiums for partially-exhausting losses.
+
+Cardinality: exactly 1."""@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:reinstatementAutomatic
+  a owl:DatatypeProperty ;
+  rdfs:label "reinstatement automatic"@en ;
+  rdfs:domain ctr:ReinstatementFacet ;
+  rdfs:range xsd:boolean ;
+  rdfs:comment "Whether reinstatements are automatic (true) or optional/insured-election (false). Cardinality exactly 1."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+#-----------------------------------------------------------------------
+# 4.9  AggregationFacet datatype properties  [REMEDIATION: CSO-002, CSO-003]
+#-----------------------------------------------------------------------
+
+ctr:aggregateDeductibleAmount
+  a owl:DatatypeProperty ;
+  rdfs:label "aggregate deductible amount"@en ;
+  rdfs:domain ctr:AggregationFacet ;
+  rdfs:range xsd:decimal ;
+  rdfs:comment "Annual Aggregate Deductible (AAD) threshold before cover responds. Cardinality 0..1."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:aggregateDeductibleCurrency
+  a owl:DatatypeProperty ;
+  rdfs:label "aggregate deductible currency"@en ;
+  rdfs:domain ctr:AggregationFacet ;
+  rdfs:range xsd:string ;
+  rdfs:comment "ISO 4217 currency code for the AAD amount. Cardinality 0..1."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:hoursClauseDuration
+  a owl:DatatypeProperty ;
+  rdfs:label "hours clause duration"@en ;
+  rdfs:domain ctr:AggregationFacet ;
+  rdfs:range xsd:dayTimeDuration ;
+  rdfs:comment "Duration of the hours clause temporal window in ISO 8601 dayTimeDuration. When present, hoursClauseNonOverlap must also be present."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:hoursClauseNonOverlap
+  a owl:DatatypeProperty ;
+  rdfs:label "hours clause non-overlap"@en ;
+  rdfs:domain ctr:AggregationFacet ;
+  rdfs:range xsd:boolean ;
+  rdfs:comment "Whether hours clause windows must not overlap. Required when hoursClauseDuration is present."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:maxWindows
+  a owl:DatatypeProperty ;
+  rdfs:label "max windows"@en ;
+  rdfs:domain ctr:AggregationFacet ;
+  rdfs:range xsd:integer ;
+  rdfs:comment "Maximum number of hours-clause windows available within the applicable aggregation period. Required when hoursClauseDuration is present."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+#-----------------------------------------------------------------------
+# 4.10  TriggerFacet datatype properties  [REMEDIATION: CSO-004]
+#-----------------------------------------------------------------------
+
+ctr:triggerThreshold
+  a owl:DatatypeProperty ;
+  rdfs:label "trigger threshold"@en ;
+  rdfs:domain ctr:TriggerFacet ;
+  rdfs:range xsd:decimal ;
+  rdfs:comment "The threshold value at which the trigger fires."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:triggerIndex
+  a owl:DatatypeProperty ;
+  rdfs:label "trigger index"@en ;
+  rdfs:domain ctr:TriggerFacet ;
+  rdfs:range xsd:string ;
+  rdfs:comment "The name or identifier of the triggering index or oracle."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:triggerSource
+  a owl:DatatypeProperty ;
+  rdfs:label "trigger source"@en ;
+  rdfs:domain ctr:TriggerFacet ;
+  rdfs:range xsd:string ;
+  rdfs:comment "The oracle or data source providing trigger readings."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:payoutStructure
+  a owl:ObjectProperty ;
+  rdfs:label "payout structure"@en ;
+  rdfs:domain ctr:TriggerFacet ;
+  rdfs:range skos:Concept ;
+  rdfs:comment """SKOS concept from PayoutStructureScheme indicating the functional
+form of the trigger payout:
+  Binary    — full limit paid if trigger fires, zero otherwise
+  Linear    — payout scales linearly between linearFloorThreshold and
+              linearCeilingThreshold; requires both properties to be present
+  Graduated — payout follows a step table defined by TriggerTier instances;
+              requires at least one TriggerTier to be present
+
+Replaces the prior ctr:triggerGraduated boolean, which could not distinguish
+Binary from Linear (both mapped to false/true respectively, conflating two
+structurally distinct contractual provisions).
+
+Projection:
+  Binary    → FBO step-function TriggerGate (→^tg) with threshold = triggerThreshold
+  Linear    → FBO linear interpolation FlowAction with floor/ceiling parameters
+  Graduated → FBO lookup-table payout using TriggerTier instances"""@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:linearFloorThreshold
+  a owl:DatatypeProperty ;
+  rdfs:label "linear floor threshold"@en ;
+  rdfs:domain ctr:TriggerFacet ;
+  rdfs:range xsd:decimal ;
+  rdfs:comment """The trigger index value at which payout begins (0% of limit).
+Below this value the trigger produces no payout. Required when
+ctr:payoutStructure = Linear. At this value payout = 0.0.
+Above ctr:linearCeilingThreshold payout = full limit."""@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:linearCeilingThreshold
+  a owl:DatatypeProperty ;
+  rdfs:label "linear ceiling threshold"@en ;
+  rdfs:domain ctr:TriggerFacet ;
+  rdfs:range xsd:decimal ;
+  rdfs:comment """The trigger index value at which payout reaches 100% of limit.
+Required when ctr:payoutStructure = Linear. Must be strictly greater than
+ctr:linearFloorThreshold. Between floor and ceiling, payout interpolates
+linearly: payoutPct = (observed - floor) / (ceiling - floor)."""@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:cooldownPeriod
+  a owl:DatatypeProperty ;
+  rdfs:label "cooldown period"@en ;
+  rdfs:domain ctr:TriggerFacet ;
+  rdfs:range xsd:dayTimeDuration ;
+  rdfs:comment "Minimum interval between successive trigger activations. Cardinality 0..1."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+#-----------------------------------------------------------------------
+# 4.11  TriggerTier datatype properties  [REMEDIATION: CSO-004]
+#-----------------------------------------------------------------------
+
+ctr:tierThreshold
+  a owl:DatatypeProperty ;
+  rdfs:label "tier threshold"@en ;
+  rdfs:domain ctr:TriggerTier ;
+  rdfs:range xsd:decimal ;
+  rdfs:comment "The trigger reading level at which this tier applies. Cardinality exactly 1."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:tierPayoutPercentage
+  a owl:DatatypeProperty ;
+  rdfs:label "tier payout percentage"@en ;
+  rdfs:domain ctr:TriggerTier ;
+  rdfs:range xsd:decimal ;
+  rdfs:comment "Percentage of capacity paid when this tier is reached. Range [0.0, 1.0]. Cardinality exactly 1."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:tierPayoutCap
+  a owl:DatatypeProperty ;
+  rdfs:label "tier payout cap"@en ;
+  rdfs:domain ctr:TriggerTier ;
+  rdfs:range xsd:decimal ;
+  rdfs:comment "Maximum payout for this tier. Cardinality 0..1."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:tierSequence
+  a owl:DatatypeProperty ;
+  rdfs:label "tier sequence"@en ;
+  rdfs:domain ctr:TriggerTier ;
+  rdfs:range xsd:integer ;
+  rdfs:comment "Ordering among tiers, ascending from lowest to highest threshold. Cardinality exactly 1."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+#-----------------------------------------------------------------------
+# 4.12  CollateralFacet datatype properties  [REMEDIATION: CSO-005]
+#-----------------------------------------------------------------------
+
+ctr:minCollateralRatio
+  a owl:DatatypeProperty ;
+  rdfs:label "min collateral ratio"@en ;
+  rdfs:domain ctr:CollateralFacet ;
+  rdfs:range xsd:decimal ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:collateralTrustRef
+  a owl:DatatypeProperty ;
+  rdfs:label "collateral trust ref"@en ;
+  rdfs:domain ctr:CollateralFacet ;
+  rdfs:range xsd:anyURI ;
+  rdfs:comment "Reference to the trust deed or collateral arrangement."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+#-----------------------------------------------------------------------
+# 4.13  PoolParticipationFacet datatype properties
+#-----------------------------------------------------------------------
+
+ctr:poolIdentifier
+  a owl:DatatypeProperty ;
+  rdfs:label "pool identifier"@en ;
+  rdfs:domain ctr:PoolParticipationFacet ;
+  rdfs:range xsd:string ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:participantShare
+  a owl:DatatypeProperty ;
+  rdfs:label "participant share"@en ;
+  rdfs:domain ctr:PoolParticipationFacet ;
+  rdfs:range xsd:decimal ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:participantPayoutCap
+  a owl:DatatypeProperty ;
+  rdfs:label "participant payout cap"@en ;
+  rdfs:domain ctr:PoolParticipationFacet ;
+  rdfs:range xsd:decimal ;
+  rdfs:comment "Cardinality 0..1."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+#-----------------------------------------------------------------------
+# 4.14  PremiumFacet datatype properties  [REMEDIATION: CSO-015]
+#-----------------------------------------------------------------------
+
+ctr:premiumAmount
+  a owl:DatatypeProperty ;
+  rdfs:label "premium amount"@en ;
+  rdfs:domain ctr:PremiumFacet ;
+  rdfs:range xsd:decimal ;
+  rdfs:comment "Cardinality 0..1."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:premiumCurrency
+  a owl:DatatypeProperty ;
+  rdfs:label "premium currency"@en ;
+  rdfs:domain ctr:PremiumFacet ;
+  rdfs:range xsd:string ;
+  rdfs:comment "ISO 4217 currency code. Cardinality 0..1."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:premiumRate
+  a owl:DatatypeProperty ;
+  rdfs:label "premium rate"@en ;
+  rdfs:domain ctr:PremiumFacet ;
+  rdfs:range xsd:decimal ;
+  rdfs:comment "Rate per unit of exposure. Used when premiumBasis = RateOnLine or Adjustable. Cardinality 0..1."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:minimumPremium
+  a owl:DatatypeProperty ;
+  rdfs:label "minimum premium"@en ;
+  rdfs:domain ctr:PremiumFacet ;
+  rdfs:range xsd:decimal ;
+  rdfs:comment "Cardinality 0..1."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:depositPremium
+  a owl:DatatypeProperty ;
+  rdfs:label "deposit premium"@en ;
+  rdfs:domain ctr:PremiumFacet ;
+  rdfs:range xsd:decimal ;
+  rdfs:comment "Deposit premium for adjustable structures. Cardinality 0..1."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+#-----------------------------------------------------------------------
+# 4.15  CustomFacet datatype properties
+#-----------------------------------------------------------------------
+
+ctr:facetText
+  a owl:DatatypeProperty ;
+  rdfs:label "facet text"@en ;
+  rdfs:domain ctr:CustomFacet ;
+  rdfs:range xsd:string ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+#-----------------------------------------------------------------------
+# 4.16  ExternalWording datatype properties
+#-----------------------------------------------------------------------
+
+ctr:wordingIdentifier
+  a owl:DatatypeProperty ;
+  rdfs:label "wording identifier"@en ;
+  rdfs:domain ctr:ExternalWording ;
+  rdfs:range xsd:string ;
+  rdfs:comment "Canonical identifier, e.g. LMA5401, CG 00 01 04 13. Cardinality exactly 1."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:wordingSource
+  a owl:DatatypeProperty ;
+  rdfs:label "wording source"@en ;
+  rdfs:domain ctr:ExternalWording ;
+  rdfs:range xsd:string ;
+  rdfs:comment "Issuing body: LMA, ISO, AAIS, JLT, NMA, CL, etc. Cardinality exactly 1."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:wordingTitle
+  a owl:DatatypeProperty ;
+  rdfs:label "wording title"@en ;
+  rdfs:domain ctr:ExternalWording ;
+  rdfs:range xsd:string ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:wordingVersion
+  a owl:DatatypeProperty ;
+  rdfs:label "wording version"@en ;
+  rdfs:domain ctr:ExternalWording ;
+  rdfs:range xsd:string ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:wordingRepositoryRef
+  a owl:DatatypeProperty ;
+  rdfs:label "wording repository ref"@en ;
+  rdfs:domain ctr:ExternalWording ;
+  rdfs:range xsd:anyURI ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:wordingHash
+  a owl:DatatypeProperty ;
+  rdfs:label "wording hash"@en ;
+  rdfs:domain ctr:ExternalWording ;
+  rdfs:range xsd:string ;
+  rdfs:comment "SHA-256 hash of the wording text for integrity verification."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+#-----------------------------------------------------------------------
+# 4.17  NegotiationThread datatype properties  [REMEDIATION: CSO-008, CSO-010]
+#-----------------------------------------------------------------------
+
+ctr:threadState
+  a owl:DatatypeProperty ;
+  rdfs:label "thread state"@en ;
+  rdfs:domain ctr:NegotiationThread ;
+  rdfs:range xsd:string ;
+  rdfs:comment """Current negotiation state. SHACL-constrained to 14 values:
+OPEN, SUBMITTED, INDICATED, REFERRED_INFO, REFERRED_PROCESS, QUESTIONS_PENDING,
+ANSWERS_SENT, FIRM_QUOTED, COUNTER_SENT, ACCEPTED, DECLINED_BROKER,
+DECLINED_MARKET, EXPIRED, BOUND."""@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:threadCreatedAt
+  a owl:DatatypeProperty ;
+  rdfs:label "thread created at"@en ;
+  rdfs:domain ctr:NegotiationThread ;
+  rdfs:range xsd:dateTime ;
+  rdfs:comment "Timestamp of thread creation. Cardinality exactly 1."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+#-----------------------------------------------------------------------
+# 4.18  MarketResponse datatype properties
+#-----------------------------------------------------------------------
+
+ctr:hasTimestamp
+  a owl:DatatypeProperty ;
+  rdfs:label "has timestamp"@en ;
+  rdfs:domain ctr:MarketResponse ;
+  rdfs:range xsd:dateTime ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+#-----------------------------------------------------------------------
+# 4.19  Quote datatype properties
+#-----------------------------------------------------------------------
+
+ctr:validUntil
+  a owl:DatatypeProperty ;
+  rdfs:label "valid until"@en ;
+  rdfs:domain ctr:Quote ;
+  rdfs:range xsd:dateTime ;
+  rdfs:comment "After this dateTime the quote lapses. Cardinality 0..1."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+#-----------------------------------------------------------------------
+# 4.20  TermQualification datatype properties  [REMEDIATION: CSO-007]
+#-----------------------------------------------------------------------
+
+ctr:hasApproximationRange
+  a owl:DatatypeProperty ;
+  rdfs:label "has approximation range"@en ;
+  rdfs:domain ctr:TermQualification ;
+  rdfs:range xsd:decimal ;
+  rdfs:comment "For approximate values: the magnitude of possible variation (percentage of nominal or absolute per annotation convention)."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+#-----------------------------------------------------------------------
+# 4.21  Submission datatype properties  [REMEDIATION: CSO-009]
+#-----------------------------------------------------------------------
+
+ctr:submissionVersion
+  a owl:DatatypeProperty ;
+  rdfs:label "submission version"@en ;
+  rdfs:domain ctr:Submission ;
+  rdfs:range xsd:string ;
+  rdfs:comment "Cardinality exactly 1."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:submissionHash
+  a owl:DatatypeProperty ;
+  rdfs:label "submission hash"@en ;
+  rdfs:domain ctr:Submission ;
+  rdfs:range xsd:string ;
+  rdfs:comment "SHA-256 hash of submission content for integrity and deduplication. Cardinality exactly 1."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:hasExposureRef
+  a owl:DatatypeProperty ;
+  rdfs:label "has exposure ref"@en ;
+  rdfs:domain ctr:Submission ;
+  rdfs:range xsd:anyURI ;
+  rdfs:comment "URI references to the exposure data package in the Exposure ontology."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:hasRiskProfileRef
+  a owl:DatatypeProperty ;
+  rdfs:label "has risk profile ref"@en ;
+  rdfs:domain ctr:Submission ;
+  rdfs:range xsd:anyURI ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:sentTimestamp
+  a owl:DatatypeProperty ;
+  rdfs:label "sent timestamp"@en ;
+  rdfs:domain ctr:Submission ;
+  rdfs:range xsd:dateTime ;
+  rdfs:comment "When the submission was dispatched. Cardinality 0..1."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+#-----------------------------------------------------------------------
+# 4.22  InformationRequest datatype properties
+#-----------------------------------------------------------------------
+
+ctr:requestTimestamp
+  a owl:DatatypeProperty ;
+  rdfs:label "request timestamp"@en ;
+  rdfs:domain ctr:InformationRequest ;
+  rdfs:range xsd:dateTime ;
+  rdfs:comment "Cardinality exactly 1."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+#-----------------------------------------------------------------------
+# 4.23  Question datatype properties
+#-----------------------------------------------------------------------
+
+ctr:questionText
+  a owl:DatatypeProperty ;
+  rdfs:label "question text"@en ;
+  rdfs:domain ctr:Question ;
+  rdfs:range xsd:string ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+#-----------------------------------------------------------------------
+# 4.24  Liability dimension datatype properties
+#-----------------------------------------------------------------------
+
+ctr:dutyToDefend
+  a owl:DatatypeProperty ;
+  rdfs:label "duty to defend"@en ;
+  rdfs:domain ctr:TermApplication ;
+  rdfs:range xsd:boolean ;
+  rdfs:comment "Whether this clause creates a duty to defend obligations in addition to indemnity."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:subrogationApplicable
+  a owl:DatatypeProperty ;
+  rdfs:label "subrogation applicable"@en ;
+  rdfs:domain ctr:TermApplication ;
+  rdfs:range xsd:boolean ;
+  rdfs:comment "Whether subrogation rights apply to this clause."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:indemnityAmount
+  a owl:DatatypeProperty ;
+  rdfs:label "indemnity amount"@en ;
+  rdfs:domain ctr:Claim ;
+  rdfs:range xsd:decimal ;
+  rdfs:comment "Indemnity amount paid or reserved for the claim event."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:defenseCostAmount
+  a owl:DatatypeProperty ;
+  rdfs:label "defense cost amount"@en ;
+  rdfs:domain ctr:Claim ;
+  rdfs:range xsd:decimal ;
+  rdfs:comment "Defense cost amount paid or reserved for the claim event."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+#-----------------------------------------------------------------------
+# 4.25  ContractTowerBinding datatype properties
+#-----------------------------------------------------------------------
+
+ctr:participationShare
+  a owl:DatatypeProperty ;
+  rdfs:label "participation share"@en ;
+  rdfs:domain ctr:ContractTowerBinding ;
+  rdfs:range xsd:decimal ;
+  rdfs:comment "Share of layer capacity provided by this Contract, normalised [0.0, 1.0]. Cardinality exactly 1. Range enforced by SHACL."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:termVersionHash
+  a owl:DatatypeProperty ;
+  rdfs:label "term version hash"@en ;
+  rdfs:domain ctr:ContractTowerBinding ;
+  rdfs:range xsd:string ;
+  rdfs:comment "Hash of CoverageTermSet at time of binding, used for subscription uniformity checks."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+#-----------------------------------------------------------------------
+# 4.26  Versioning (inherited from core, repeated for clarity)
+#-----------------------------------------------------------------------
+
+ctr:provenanceHash
+  a owl:DatatypeProperty ;
+  rdfs:label "provenance hash"@en ;
+  rdfs:comment "SHA-256 hash of the entity's content at creation time. CSO-level content integrity. See also core:provenanceHash."@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+
+###############################################################################
+# 7. TEMPORAL CONTINUITY PROPERTIES  [3.3.1 - additive]
+#
+# Projection dependency. The behavioural stratum's TemporalQualifier dimension
+# (FBO dimension 14: Standard, RetroDateApplies, ERPActive, SunsetApplies, TailCoverage,
+# RunOff, MilestoneGated) had no structural source. Without a retroactive date and a
+# continuity date on the claims basis, a claims-made tower projects into FBO as though it
+# were unqualified, and prior-acts exclusions vanish silently.
+###############################################################################
+
+ctr:retroactiveDate
+  a owl:DatatypeProperty ;
+  rdfs:domain ctr:ClaimsBasisFacet ;
+  rdfs:range xsd:date ;
+  rdfs:label "retroactive date"@en ;
+  rdfs:comment """The date before which acts, errors, omissions or occurrences are not covered,
+regardless of when the resulting claim is made.
+
+Projection: presence of this property yields FBO dimension 14 = RetroDateApplies, and the date
+itself parameterises the temporal gate."""@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+ctr:continuityDate
+  a owl:DatatypeProperty ;
+  rdfs:domain ctr:ClaimsBasisFacet ;
+  rdfs:range xsd:date ;
+  rdfs:label "continuity date"@en ;
+  rdfs:comment """The date from which continuous cover has been maintained across successive
+policy periods, used to preserve claims-made continuity on renewal and to determine whether
+prior-knowledge exclusions bite.
+
+Projection: parameterises the FBO temporal gate for ERPActive, TailCoverage and RunOff."""@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
+
+###############################################################################
+# 8. CURRENCY AS A CONCEPT  [3.3.2 - additive]
+#
+# ctr:currency is an xsd:string. That is correct for interchange and wrong for reasoning.
+# A literal cannot carry a broader relation, cannot be crosswalked, and cannot be the object
+# of the FBO CurrencyFX dimension, which requires a skos:Concept. The projection functor was
+# therefore binding a string into a concept-valued property and producing towers that failed
+# validation on every monetary extent.
+#
+# The resolution keeps both. ctr:currency remains the mandatory lexical form; ctr:currencyConcept
+# is the resolved node. The two are joined on skos:notation, never on the local name of the
+# concept IRI, because local names are a naming convention and notations are a controlled key.
+#
+# The scheme is voc:CurrencyScheme in nsd-skos, not a CSO-local vocabulary. Currency is not a
+# contract-structural term: the tower, exposure and claims strata all need the same concepts,
+# and a fourth private copy is how the Territory and Valuation Basis duplications happened.
+###############################################################################
+
+ctr:currencyConcept
+  a owl:ObjectProperty ;
+  rdfs:label "currency concept"@en ;
+  rdfs:domain ctr:MonetaryExtent ;
+  rdfs:range skos:Concept ;
+  rdfs:comment """The denomination of this monetary extent as a resolved SKOS concept from
+voc:CurrencyScheme.
+
+Cardinality 0..1. Optional at capture time and expected to be materialised by resolution from
+ctr:currency. Where both are present they must agree: the concept's skos:notation must equal the
+string. ctr:ExtentCurrencyAgreementShape enforces that.
+
+Consumers that aggregate across a tower must gate on this property rather than on ctr:currency.
+Summing extents that differ in denomination produces a number with no referent, and the failure
+is silent because the arithmetic succeeds."""@en ;
+  rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/insurance/contract> .
