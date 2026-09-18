@@ -1,0 +1,57 @@
+# apps/spc_boundary/lib/spc_boundary/config_loader.ex
+defmodule SpcBoundary.ConfigLoader do
+  @moduledoc """
+  Loads design-time generated configuration files into persistent_term
+  at application startup.
+
+  Files loaded:
+  - config/ingress_registry.json → {:spc_ingress_registry}
+  - config/query_registry.json → {:spc_query_registry}
+  - config/shape_queries.json → {:spc_shape_queries}
+  """
+
+  use GenServer
+
+  require Logger
+
+  def start_link(opts) do
+    GenServer.start_link(__MODULE__, opts, name: __MODULE__)
+  end
+
+  @impl true
+  def init(_opts) do
+    config_dir = Application.get_env(:spc_boundary, :config_dir, "priv/config")
+
+    load_json_config(config_dir, "ingress_registry.json", {:spc_ingress_registry})
+    load_json_config(config_dir, "query_registry.json", {:spc_query_registry})
+    load_json_config(config_dir, "shape_queries.json", {:spc_shape_queries})
+
+    Logger.info("SPC Boundary configuration loaded from #{config_dir}")
+    {:ok, %{}}
+  end
+
+  defp load_json_config(dir, filename, pt_key) do
+    path = Path.join(dir, filename)
+    case File.read(path) do
+      {:ok, content} ->
+        case Jason.decode(content) do
+          {:ok, data} ->
+            :persistent_term.put(pt_key, data)
+            Logger.info("Loaded #{filename} (#{map_size_or_length(data)} entries)")
+          {:error, reason} ->
+            Logger.warning("Failed to parse #{path}: #{inspect(reason)}")
+            :persistent_term.put(pt_key, %{})
+        end
+      {:error, :enoent} ->
+        Logger.info("Config file #{path} not found. Using empty defaults.")
+        :persistent_term.put(pt_key, %{})
+      {:error, reason} ->
+        Logger.warning("Failed to read #{path}: #{inspect(reason)}")
+        :persistent_term.put(pt_key, %{})
+    end
+  end
+
+  defp map_size_or_length(m) when is_map(m), do: map_size(m)
+  defp map_size_or_length(l) when is_list(l), do: length(l)
+  defp map_size_or_length(_), do: "?"
+end

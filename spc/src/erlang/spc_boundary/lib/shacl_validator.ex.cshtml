@@ -1,0 +1,160 @@
+# apps/spc_boundary/lib/spc_boundary/shacl_validator.ex
+defmodule SpcBoundary.ShaclValidator do
+  @moduledoc """
+  SHACL validation fallback for non-MORK-mapped channels.
+
+  When a payload arrives through a channel without a validated MORK
+  mapping, the subject process (via the coordinator) invokes this
+  validator to check the payload against the pre-extracted SHACL
+  shape for the expected message type.
+
+  The validation is performed by sending the payload (as RDF triples)
+  and the shape (as a Turtle file path) to Jena's SHACL validation
+  endpoint. This keeps the validation logic in Jena (where the shapes
+  are already loaded) and out of the BEAM critical path.
+
+  For payloads that are already A-Box individuals (IRIs pointing to
+  data in Fuseki), we validate by asking Fuseki to check the individual
+  against the shape. For raw payloads (JSON not yet materialised), we
+  must first materialise, then validate.
+  """
+
+  require Logger
+
+  @fuseki_url Application.compile_env(:spc_boundary, :fuseki_url, "http://localhost:3030")
+  @dataset Application.compile_env(:spc_boundary, :fuseki_dataset, "spc")
+
+  @doc """
+  Validate an A-Box individual (already in the graph store) against
+  a SHACL shape.
+
+  Returns :ok or {:error, violations} where violations is a list of
+  human-readable violation descriptions.
+  """
+  @spec validate_individual(binary(), binary()) :: :ok | {:error, [binary()]}
+  def validate_individual(individual_iri, shape_iri) do
+    # Construct a SPARQL ASK or a SHACL validation request.
+    # Jena Fuseki does not have a built-in SHACL validation endpoint
+    # in all configurations. We use a SPARQL-based approach or
+    # the Jena SHACL API via a thin REST wrapper.
+    #
+    # Approach: Execute a SPARQL query that checks whether the
+    # individual satisfies the required property shapes.
+    # The shapes were pre-compiled to SPARQL at design time.
+
+    case get_shape_query(shape_iri) do
+      nil ->
+        Logger.warning("No validation query for shape #{shape_iri}. Allowing.")
+        :ok
+
+      validation_query ->
+        query = substitute_focus_node(validation_query, individual_iri)
+        case SpcBoundary.FusekiClient.execute_template(:raw_query, %{query: query}) do
+          {:ok, %{"results" => %{"bindings" => []}}} ->
+            # No violations found
+            :ok
+
+          {:ok, %{"results" => %{"bindings" => bindings}}} ->
+            violations = Enum.map(bindings, fn b ->
+              path = get_in(b, ["path", "value"]) || "unknown"
+              msg = get_in(b, ["message", "value"]) || "Constraint violated"
+              "#{path}: #{msg}"
+            end)
+            {:error, violations}
+
+          {:error, reason} ->
+            Logger.error("SHACL validation query failed: #{inspect(reason)}")
+            # Fail open or fail closed? Configuration choice.
+            # Default: fail open with warning for POC.
+            :ok
+        end
+    end
+  end
+
+  @doc """
+  Validate a raw payload (not yet materialised) against a SHACL shape.
+  First materialises to a temporary graph, validates, then cleans up.
+  """
+  @spec validate_payload(map(), binary(), map()) :: :ok | {:error, [binary()]}
+  def validate_payload(payload, shape_iri, ingress_config) do
+    # Transform the payload to triples using the ingress config
+    # (but into a temporary named graph)
+    temp_graph = "urn:spc:validation:#{:erlang.unique_integer([:positive])}"
+
+    case SpcBoundary.Ingress.ingest(
+           Map.get(ingress_config, "source_schema"), payload) do
+      {:ok, %{sparql_update: base_sparql}} ->
+        # Wrap in a GRAPH clause for isolation
+        insert = String.replace(base_sparql, "INSERT DATA {",
+                                "INSERT DATA { GRAPH <#{temp_graph}> {")
+                 |> String.replace_trailing("}", "} }")
+
+        with :ok <- SpcBoundary.FusekiClient.insert_triples(insert),
+             result <- validate_in_graph(temp_graph, shape_iri),
+             :ok <- cleanup_graph(temp_graph) do
+          result
+        end
+
+      {:error, reason} ->
+        {:error, [{:transform_failed, reason}]}
+    end
+  end
+
+  # ------------------------------------------------------------------
+  # Internal
+  # ------------------------------------------------------------------
+
+  defp get_shape_query(shape_iri) do
+    # Shape queries are pre-compiled SPARQL that checks property
+    # constraints. Stored in persistent_term by the config loader.
+    registry = :persistent_term.get({:spc_shape_queries}, %{})
+    Map.get(registry, shape_iri)
+  end
+
+  defp substitute_focus_node(query, iri) do
+    String.replace(query, "?focusNode", "<#{iri}>")
+  end
+
+  defp validate_in_graph(graph_iri, shape_iri) do
+    case get_shape_query(shape_iri) do
+      nil -> :ok
+      query ->
+        # Scope the query to the named graph
+        scoped = "SELECT ?path ?message WHERE { GRAPH <#{graph_iri}> { #{extract_where(query)} } }"
+        case execute_raw_select(scoped) do
+          {:ok, %{"results" => %{"bindings" => []}}} -> :ok
+          {:ok, %{"results" => %{"bindings" => b}}} ->
+            {:error, Enum.map(b, fn v ->
+              "#{get_in(v, ["path", "value"])}: #{get_in(v, ["message", "value"])}"
+            end)}
+          _ -> :ok
+        end
+    end
+  end
+
+  defp cleanup_graph(graph_iri) do
+    drop = "DROP GRAPH <#{graph_iri}>"
+    SpcBoundary.FusekiClient.insert_triples(drop)
+  end
+
+  defp extract_where(query) do
+    # Naive extraction of WHERE clause body. Production would properly parse.
+    case Regex.run(~r/WHERE\s*\{(.+)\}/s, query) do
+      [_, body] -> body
+      _ -> query
+    end
+  end
+
+  defp execute_raw_select(query) do
+    url = "#{@fuseki_url}/#{@dataset}/query"
+    request = Finch.build(:post, url,
+                [{"content-type", "application/sparql-query"},
+                 {"accept", "application/sparql-results+json"}],
+                query)
+    case Finch.request(request, SpcBoundary.Finch, receive_timeout: 30_000) do
+      {:ok, %{status: 200, body: body}} -> {:ok, Jason.decode!(body)}
+      {:ok, %{status: s, body: b}} -> {:error, {:fuseki, s, b}}
+      {:error, r} -> {:error, r}
+    end
+  end
+end

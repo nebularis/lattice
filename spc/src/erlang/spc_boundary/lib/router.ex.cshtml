@@ -1,0 +1,173 @@
+# apps/spc_boundary/lib/spc_boundary/router.ex
+defmodule SpcBoundary.Router do
+  @moduledoc """
+  HTTP router for the SPC boundary. Handles:
+  - POST /api/ingest/:source_schema — ingress endpoint
+  - POST /api/sessions — create a new session
+  - POST /api/sessions/:id/send — send a message within a session
+  - GET  /api/sessions/:id/state — query session/subject state
+  - GET  /health — health check
+  """
+
+  use Plug.Router
+
+  plug Plug.Logger
+  plug :match
+  plug Plug.Parsers,
+    parsers: [:json],
+    pass: ["application/json"],
+    json_decoder: Jason
+  plug :dispatch
+
+  # ------------------------------------------------------------------
+  # Ingress: external data arrives here
+  # ------------------------------------------------------------------
+
+  post "/api/ingest/:source_schema" do
+    case SpcBoundary.Ingress.ingest_and_route(
+           String.to_atom(source_schema), conn.body_params) do
+      :ok ->
+        send_resp(conn, 202, Jason.encode!(%{status: "accepted"}))
+
+      {:error, {:transform_failed, errors}} ->
+        send_resp(conn, 422, Jason.encode!(%{
+          status: "error",
+          reason: "transform_failed",
+          errors: Enum.map(errors, &to_string/1)
+        }))
+
+      {:error, {:session_not_found, sid, _}} ->
+        send_resp(conn, 404, Jason.encode!(%{
+          status: "error",
+          reason: "session_not_found",
+          session_id: to_string(sid)
+        }))
+
+      {:error, reason} ->
+        send_resp(conn, 500, Jason.encode!(%{
+          status: "error",
+          reason: inspect(reason)
+        }))
+    end
+  end
+
+  # ------------------------------------------------------------------
+  # Session management
+  # ------------------------------------------------------------------
+
+  post "/api/sessions" do
+    %{"protocol" => protocol} = conn.body_params
+    protocol_atom = String.to_atom(protocol)
+    session_id = generate_session_id(protocol)
+
+    case :spc_session_sup.start_session(session_id, protocol_atom) of
+      {:ok, _pid} ->
+        send_resp(conn, 201, Jason.encode!(%{
+          status: "created",
+          session_id: to_string(session_id)
+        }))
+
+      {:error, reason} ->
+        send_resp(conn, 500, Jason.encode!(%{
+          status: "error",
+          reason: inspect(reason)
+        }))
+    end
+  end
+
+  post "/api/sessions/:session_id/send" do
+    %{"participant" => participant,
+      "label" => label,
+      "payload" => payload} = conn.body_params
+
+    sid = String.to_atom(session_id)
+    part = String.to_atom(participant)
+    lbl = String.to_atom(label)
+
+    case find_coordinator(sid) do
+      {:ok, coord_pid} ->
+        case :gen_server.call(coord_pid, {:external_send, part, lbl, payload}) do
+          {:ok, next_state} ->
+            send_resp(conn, 200, Jason.encode!(%{
+              status: "ok",
+              next_state: next_state
+            }))
+
+          {:error, reason} ->
+            send_resp(conn, 422, Jason.encode!(%{
+              status: "error",
+              reason: format_error(reason)
+            }))
+        end
+
+      {:error, _} ->
+        send_resp(conn, 404, Jason.encode!(%{
+          status: "error",
+          reason: "session_not_found"
+        }))
+    end
+  end
+
+  get "/api/sessions/:session_id/state" do
+    sid = String.to_atom(session_id)
+
+    case find_coordinator(sid) do
+      {:ok, coord_pid} ->
+        case :gen_server.call(coord_pid, :get_state) do
+          {:ok, state_info} ->
+            send_resp(conn, 200, Jason.encode!(state_info))
+          _ ->
+            send_resp(conn, 500, Jason.encode!(%{status: "error"}))
+        end
+
+      {:error, _} ->
+        send_resp(conn, 404, Jason.encode!(%{
+          status: "error",
+          reason: "session_not_found"
+        }))
+    end
+  end
+
+  # ------------------------------------------------------------------
+  # Health
+  # ------------------------------------------------------------------
+
+  get "/health" do
+    send_resp(conn, 200, Jason.encode!(%{
+      status: "ok",
+      beam_processes: :erlang.system_info(:process_count),
+      uptime_ms: :erlang.statistics(:wall_clock) |> elem(0)
+    }))
+  end
+
+  match _ do
+    send_resp(conn, 404, Jason.encode!(%{status: "not_found"}))
+  end
+
+  # ------------------------------------------------------------------
+  # Helpers
+  # ------------------------------------------------------------------
+
+  defp generate_session_id(protocol) do
+    ts = :erlang.system_time(:millisecond)
+    rand = :rand.uniform(999_999)
+    String.to_atom("#{protocol}_#{ts}_#{rand}")
+  end
+
+  defp find_coordinator(session_id) do
+    case :global.whereis_name({:spc_session, session_id}) do
+      :undefined -> {:error, :not_found}
+      pid -> {:ok, pid}
+    end
+  end
+
+  defp format_error({:not_in_send_state, state_id}),
+    do: "Not in a send state (current state: #{state_id})"
+  defp format_error({:invalid_label, label, state_id}),
+    do: "Label '#{label}' not valid in state #{state_id}"
+  defp format_error({:wrong_partner, got, :expected, expected}),
+    do: "Wrong partner: got #{got}, expected #{expected}"
+  defp format_error({:payload_validation_failed, label, violations}),
+    do: "Payload for '#{label}' failed validation: #{inspect(violations)}"
+  defp format_error(other), do: inspect(other)
+end

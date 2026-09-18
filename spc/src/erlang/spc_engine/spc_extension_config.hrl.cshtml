@@ -1,0 +1,99 @@
+
+
+```erlang
+%%% spc_extension_config.hrl
+%%%
+%%% Shared record definitions for SPC extension configuration.
+%%% These records are parsed from the design-time generated JSON
+%%% by spc_extension_config.erl and read by the extension services
+%%% (timer, job, error, compensation, signal, connector).
+
+-ifndef(SPC_EXTENSION_CONFIG_HRL).
+-define(SPC_EXTENSION_CONFIG_HRL, true).
+
+%% -----------------------------------------------------------------
+%% Timer configuration for a single state
+%% -----------------------------------------------------------------
+
+-record(timer_cfg, {
+    type            :: interrupting | non_interrupting,
+    duration_ms     :: pos_integer() | undefined,
+    cron            :: binary() | undefined,
+    datetime        :: binary() | undefined,        % ISO 8601
+    timeout_label   :: atom(),
+    target_state    :: non_neg_integer()
+}).
+
+%% -----------------------------------------------------------------
+%% Retry / job configuration for a single label
+%% -----------------------------------------------------------------
+
+-record(job_cfg, {
+    max_attempts        :: pos_integer(),
+    backoff_strategy    :: none | constant | exponential | jitter,
+    base_delay_ms       :: non_neg_integer(),
+    multiplier          :: float(),
+    jitter_pct          :: float(),              % 0.0 – 1.0
+    max_delay_ms        :: pos_integer(),
+    on_exhausted        :: {error_label, atom()} | {escalate, atom()}
+}).
+
+%% -----------------------------------------------------------------
+%% Error handler configuration for a participant / error type
+%% -----------------------------------------------------------------
+
+-record(error_cfg, {
+    error_type      :: business | transport | timeout | validation | unknown,
+    recovery_label  :: atom() | undefined,
+    recovery_state  :: non_neg_integer() | undefined,
+    escalate_to     :: atom() | undefined
+}).
+
+%% -----------------------------------------------------------------
+%% Compensation pair (action ↔ undo)
+%% -----------------------------------------------------------------
+
+-record(comp_pair, {
+    action_label    :: atom(),
+    action_state    :: non_neg_integer(),
+    comp_label      :: atom(),
+    comp_state      :: non_neg_integer()
+}).
+
+%% -----------------------------------------------------------------
+%% Compensation scope (ordered collection of pairs)
+%% -----------------------------------------------------------------
+
+-record(comp_scope, {
+    scope_id    :: atom(),
+    pairs       :: [#comp_pair{}],
+    ordering    :: sequential | parallel
+}).
+
+%% -----------------------------------------------------------------
+%% Signal binding (emit or subscribe)
+%% -----------------------------------------------------------------
+
+-record(signal_cfg, {
+    topic                   :: binary(),
+    exchange_type           :: direct | fanout | topic | headers,
+    routing_key_template    :: binary(),         % e.g. "session.{role}.{label}"
+    correlation_fields      :: [binary()],       % MORK concept paths
+    direction               :: emit | subscribe
+}).
+
+%% -----------------------------------------------------------------
+%% Connector binding (references a named connector)
+%% -----------------------------------------------------------------
+
+-record(connector_binding, {
+    connector_name  :: atom(),
+    label           :: atom(),
+    direction       :: egress | ingress,
+    query_template  :: binary() | undefined,    % for egress
+    frame_path      :: binary() | undefined,    % JSON-LD frame for egress
+    converter       :: atom() | undefined       % module for custom format
+}).
+
+-endif. % SPC_EXTENSION_CONFIG_HRL
+```

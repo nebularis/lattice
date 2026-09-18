@@ -1,0 +1,28 @@
+# apps/spc_boundary/lib/spc_boundary/application.ex
+defmodule SpcBoundary.Application do
+  use Application
+
+  @impl true
+  def start(_type, _args) do
+    fuseki_url = Application.get_env(:spc_boundary, :fuseki_url, "http://localhost:3030")
+
+    children = [
+      # HTTP connection pool for outbound requests (Finch)
+      {Finch, name: SpcBoundary.Finch, pools: %{
+        default: [size: 25, count: 4],
+        # Pool specifically for Fuseki
+        fuseki_url => [size: 10, count: 2, protocol: :http1]
+      }},
+
+      # HTTP ingress server (Bandit/Plug)
+      {Bandit, plug: SpcBoundary.Router, port: 4000},
+
+      # Config loader — loads ingress/egress/query configs from files
+      # into persistent_term at startup
+      {SpcBoundary.ConfigLoader, []}
+    ]
+
+    opts = [strategy: :one_for_one, name: SpcBoundary.Supervisor]
+    Supervisor.start_link(children, opts)
+  end
+end

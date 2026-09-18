@@ -1,0 +1,269 @@
+# apps/spc_boundary/lib/spc_boundary/ingress.ex
+defmodule SpcBoundary.Ingress do
+  @moduledoc """
+  Configuration-driven ingress endpoint. Receives external HTTP requests
+  or AMQP messages, transforms them into A-Box individuals (triples)
+  using the MORK-generated field-to-property mappings stored in config,
+  materialises the triples into Fuseki, and routes the typed message
+  into the SPC runtime.
+
+  The transformation logic is driven by ingress mapping configuration
+  (generated at design time from MORK mappings). No Elixir code is
+  generated — the mapping config is interpreted at runtime.
+
+  Ingress mapping config structure (per source schema):
+  {
+    "source_schema": "whitespace_quote",
+    "target_concept": "ins:Quote",
+    "target_concept_iri": "http://example.org/ins#Quote",
+    "identity_template": "ins:quote_{quote_id}_{effective_date}",
+    "identity_fields": ["quote_id", "effective_date"],
+    "field_mappings": [
+      {
+        "source_path": "premium_amount",
+        "target_property": "http://example.org/ins#hasPremium",
+        "datatype": "xsd:decimal",
+        "required": true
+      },
+      {
+        "source_path": "quote_status",
+        "target_property": "http://example.org/ins#hasStatus",
+        "value_map": {
+          "FIRM": "http://example.org/skos#firmQuote",
+          "INDICATIVE": "http://example.org/skos#indicativeQuote"
+        },
+        "required": true
+      },
+      ...
+    ],
+    "session_field": "session_reference",
+    "label": "submit_risk",
+    "participant": "Broker"
+  }
+  """
+
+  require Logger
+
+  @type transform_result :: {:ok, %{
+    iri: binary(),
+    session_id: atom(),
+    participant: atom(),
+    label: atom(),
+    sparql_update: binary()
+  }} | {:error, term()}
+
+  # ------------------------------------------------------------------
+  # Public API
+  # ------------------------------------------------------------------
+
+  @doc """
+  Transform an incoming payload (decoded JSON map) using the named
+  ingress mapping, materialise into Fuseki, and return routing info.
+  """
+  @spec ingest(atom() | binary(), map()) :: transform_result()
+  def ingest(source_schema, payload) when is_map(payload) do
+    case get_ingress_config(source_schema) do
+      nil ->
+        {:error, {:unknown_source_schema, source_schema}}
+
+      config ->
+        with {:ok, individual} <- transform(config, payload),
+             :ok <- materialise(individual) do
+          {:ok, %{
+            iri: individual.iri,
+            session_id: individual.session_id,
+            participant: individual.participant,
+            label: individual.label,
+            sparql_update: individual.sparql_update
+          }}
+        end
+    end
+  end
+
+  @doc """
+  Transform and route: ingest the payload and send it to the SPC
+  session coordinator for protocol delivery.
+  """
+  @spec ingest_and_route(atom() | binary(), map()) :: :ok | {:error, term()}
+  def ingest_and_route(source_schema, payload) do
+    case ingest(source_schema, payload) do
+      {:ok, result} ->
+        # Route to the session coordinator
+        session_id = result.session_id
+        participant = result.participant
+        label = result.label
+        iri = result.iri
+
+        case find_coordinator(session_id) do
+          {:ok, coord_pid} ->
+            # Send as an external send event. The coordinator delivers
+            # to the participant's subject process.
+            :gen_server.call(coord_pid,
+              {:external_send, participant, label, iri})
+
+          {:error, reason} ->
+            {:error, {:session_not_found, session_id, reason}}
+        end
+
+      {:error, _} = err ->
+        err
+    end
+  end
+
+  # ------------------------------------------------------------------
+  # Internal: transformation
+  # ------------------------------------------------------------------
+
+  defp transform(config, payload) do
+    # Mint the individual IRI from the identity template
+    iri = mint_iri(config, payload)
+
+    # Build triples from field mappings
+    type_iri = Map.fetch!(config, "target_concept_iri")
+    type_triple = "<#{iri}> a <#{type_iri}> ."
+
+    field_results = Enum.map(Map.fetch!(config, "field_mappings"), fn mapping ->
+      transform_field(iri, mapping, payload)
+    end)
+
+    # Check for required field failures
+    errors = for {:error, reason} <- field_results, do: reason
+    case errors do
+      [] ->
+        triples = [type_triple | for {:ok, t} <- field_results, t != nil, do: t]
+        sparql = build_insert_data(triples)
+
+        session_id = resolve_session_id(config, payload)
+        participant = String.to_atom(Map.fetch!(config, "participant"))
+        label = String.to_atom(Map.fetch!(config, "label"))
+
+        {:ok, %{
+          iri: iri,
+          session_id: session_id,
+          participant: participant,
+          label: label,
+          triples: triples,
+          sparql_update: sparql
+        }}
+
+      _ ->
+        {:error, {:transform_failed, errors}}
+    end
+  end
+
+  defp transform_field(subject_iri, mapping, payload) do
+    source_path = Map.fetch!(mapping, "source_path")
+    raw_value = get_nested(payload, String.split(source_path, "."))
+
+    case {raw_value, Map.get(mapping, "required", false)} do
+      {nil, true} ->
+        {:error, {:missing_required_field, source_path}}
+
+      {nil, false} ->
+        {:ok, nil}
+
+      {value, _} ->
+        target_prop = Map.fetch!(mapping, "target_property")
+        formatted = format_value(value, mapping)
+        {:ok, "<#{subject_iri}> <#{target_prop}> #{formatted} ."}
+    end
+  end
+
+  defp format_value(value, %{"value_map" => vmap}) when is_map(vmap) do
+    case Map.get(vmap, to_string(value)) do
+      nil -> format_literal(value, Map.get(%{}, "datatype"))
+      mapped_iri -> "<#{mapped_iri}>"
+    end
+  end
+
+  defp format_value(value, mapping) do
+    format_literal(value, Map.get(mapping, "datatype"))
+  end
+
+  defp format_literal(value, "xsd:decimal"), do: ~s("#{value}"^^<http://www.w3.org/2001/XMLSchema#decimal>)
+  defp format_literal(value, "xsd:integer"), do: ~s("#{value}"^^<http://www.w3.org/2001/XMLSchema#integer>)
+  defp format_literal(value, "xsd:boolean"), do: ~s("#{value}"^^<http://www.w3.org/2001/XMLSchema#boolean>)
+  defp format_literal(value, "xsd:dateTime"), do: ~s("#{value}"^^<http://www.w3.org/2001/XMLSchema#dateTime>)
+  defp format_literal(value, "xsd:date"), do: ~s("#{value}"^^<http://www.w3.org/2001/XMLSchema#date>)
+  defp format_literal(value, _), do: ~s("#{escape_turtle(to_string(value))}")
+
+  defp escape_turtle(s) do
+    s
+    |> String.replace("\\", "\\\\")
+    |> String.replace("\"", "\\\"")
+    |> String.replace("\n", "\\n")
+    |> String.replace("\r", "\\r")
+  end
+
+  # ------------------------------------------------------------------
+  # Internal: IRI minting
+  # ------------------------------------------------------------------
+
+  defp mint_iri(config, payload) do
+    template = Map.fetch!(config, "identity_template")
+    fields = Map.fetch!(config, "identity_fields")
+
+    Enum.reduce(fields, template, fn field, acc ->
+      value = get_nested(payload, String.split(field, "."))
+      placeholder = "{#{field}}"
+      String.replace(acc, placeholder, to_string(value || "unknown"))
+    end)
+  end
+
+  # ------------------------------------------------------------------
+  # Internal: materialisation
+  # ------------------------------------------------------------------
+
+  defp materialise(%{sparql_update: sparql}) do
+    SpcBoundary.FusekiClient.insert_triples(sparql)
+  end
+
+  defp build_insert_data(triples) do
+    body = Enum.join(triples, "\n  ")
+    "INSERT DATA {\n  #{body}\n}"
+  end
+
+  # ------------------------------------------------------------------
+  # Internal: session resolution
+  # ------------------------------------------------------------------
+
+  defp resolve_session_id(config, payload) do
+    session_field = Map.get(config, "session_field", "session_id")
+    raw = get_nested(payload, String.split(session_field, "."))
+    case raw do
+      nil -> :unknown_session
+      val -> String.to_atom(to_string(val))
+    end
+  end
+
+  defp find_coordinator(session_id) do
+    # Look up the coordinator PID for a session.
+    # The session supervisor maintains a registry.
+    case :global.whereis_name({:spc_session, session_id}) do
+      :undefined -> {:error, :not_found}
+      pid -> {:ok, pid}
+    end
+  end
+
+  # ------------------------------------------------------------------
+  # Internal: nested map access
+  # ------------------------------------------------------------------
+
+  defp get_nested(map, [key]) when is_map(map), do: Map.get(map, key)
+  defp get_nested(map, [key | rest]) when is_map(map) do
+    case Map.get(map, key) do
+      child when is_map(child) -> get_nested(child, rest)
+      _ -> nil
+    end
+  end
+  defp get_nested(_, _), do: nil
+
+  # ------------------------------------------------------------------
+  # Configuration access
+  # ------------------------------------------------------------------
+
+  defp get_ingress_config(source_schema) do
+    registry = :persistent_term.get({:spc_ingress_registry}, %{})
+    Map.get(registry, to_string(source_schema))
+  end
+end
