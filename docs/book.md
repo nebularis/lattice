@@ -21,8 +21,53 @@ html, body {
     radial-gradient(circle at 12% 0%, rgba(157,247,215,.13), transparent 28rem),
     radial-gradient(circle at 88% 8%, rgba(143,183,255,.14), transparent 26rem),
     linear-gradient(135deg, #05070d 0%, #09101c 48%, #0b0f1a 100%);
-  color: var(--book-text);
+  color: var(--book-text) !important;
+  background-color: var(--book-bg) !important;
 }
+.page-content,
+.wrapper,
+.main-content,
+.markdown-body,
+.container-lg,
+main,
+article.book {
+  background: var(--book-bg) !important;
+  color: var(--book-text) !important;
+}
+.book {
+  min-height: 100vh;
+  background: var(--book-bg) !important;
+}
+.book,
+.book * ,
+.book p,
+.book li,
+.book td,
+.book th,
+.book h1,
+.book h2,
+.book h3,
+.book strong,
+.book code,
+.book small {
+  color: var(--book-text) !important;
+}
+.book p,
+.book li,
+.book td,
+.book .small { color: var(--book-muted) !important; }
+.book h1,
+.book h2,
+.book h3,
+.book strong,
+.book th { color: var(--book-text) !important; }
+.book a { color: var(--book-accent) !important; }
+.book pre,
+.book pre code {
+  color: #d9e7ff !important;
+  background: #0a1220 !important;
+}
+.book table { color: var(--book-text) !important; }
 .book::before {
   content: "";
   position: fixed;
