@@ -58,11 +58,32 @@ srf:SourceSignature a srf:SignatureScope ; rdfs:comment "The surface asserts ove
 srf:Advisory a srf:DerivationAuthority ; rdfs:comment "Informative; never authoritative on its own." .
 srf:CachedReproducible a srf:DerivationAuthority ; rdfs:comment "Authoritative only because it is provably reproducible from its source." .
 
+srf:GraphConstructionProjection a srf:ProjectionKind ; rdfs:comment "Mapping intent that constructs new graph structure not present as a single reachable value." .
+srf:DerivationProjection a srf:ProjectionKind ; rdfs:comment "Mapping intent that computes a value from one or more source values." .
+srf:JoinProjection a srf:ProjectionKind ; rdfs:comment "Mapping intent that combines evidence from more than one carrier." .
+srf:ExpansionProjection a srf:ProjectionKind ; rdfs:comment "Mapping intent that restates one relation as several." .
+
+srf:EvaluationSubjectRole a srf:ProjectionRole ; rdfs:comment "The carrier instance a projection is evaluated for." .
+srf:CandidateEvidenceRole a srf:ProjectionRole ; rdfs:comment "A value offered as evidence toward the projection's result." .
+srf:RequiredEvidenceRole a srf:ProjectionRole ; rdfs:comment "A value a projection's result cannot be computed without." .
+srf:ResultTargetRole a srf:ProjectionRole ; rdfs:comment "Where a projection's computed result is written." .
+srf:ClosureBasisRole a srf:ProjectionRole ; rdfs:comment "The relation a projection's closure, where it has one, is computed over." .
+srf:TransformDependencyRole a srf:ProjectionRole ; rdfs:comment "A dependency a derivation reads without itself being required or candidate evidence." .
+
+srf:RmlBackend a srf:CompilerBackend ; rdfs:comment "RML/R2RML triples-map compilation." .
+srf:SparqlBackend a srf:CompilerBackend ; rdfs:comment "SPARQL query compilation." .
+srf:ShaclBackend a srf:CompilerBackend ; rdfs:comment "SHACL shape compilation." .
+srf:SwrlBackend a srf:CompilerBackend ; rdfs:comment "SWRL rule compilation." .
+srf:NativeIrBackend a srf:CompilerBackend ; rdfs:comment "Native execution intermediate representation compilation." .
+
+srf:NoLLMCompletion a srf:LLMCompletionPolicy ; rdfs:comment "No LLM participation in lowering." .
+srf:BoundedLLMCompletion a srf:LLMCompletionPolicy ; rdfs:comment "An LLM may complete only declared gaps using an approved template, and every completion requires governance state before production use." .
+
 srf:SemanticLaw a srf:LawRegister ; rdfs:comment "Discharged by formal argument and property tests." .
 srf:StaticConstraint a srf:LawRegister ; rdfs:comment "Discharged by SPARQL, SHACL, reasoner, or compiled static analysis." .
 srf:RuntimeConformance a srf:LawRegister ; rdfs:comment "Discharged only by an executed run." .
 
-srf:X1 a srf:Law ; srf:lawRegister srf:SemanticLaw ; rdfs:comment "Conservativity. For a source graph G and a local-signature surface S generated from it, G union S entails a statement over the source signature exactly when G does." .
+srf:X1 a srf:Law ; srf:lawRegister srf:SemanticLaw ; rdfs:comment "Conservativity. For a source graph G and a local-signature surface S generated from it, G union S entails a statement over the source signature exactly when G does. Composition: a stacked surface's signature scope is source-signature if any surface in its read set is source-signature, and conservativity composes accordingly." .
 srf:X2 a srf:Law ; srf:lawRegister srf:SemanticLaw ; rdfs:comment "Index faithfulness. A carrier instance belongs to the generated class for a value exactly when the read path relates it to that value under the profile's declared entailment regime." .
 srf:X3 a srf:Law ; srf:lawRegister srf:SemanticLaw ; rdfs:comment "Closure soundness and completeness. A generated closure relation holds between a carrier instance and a value exactly when the read path relates that instance to some value standing in the reflexive-transitive closure of the declared basis, restricted to the declared scope." .
 srf:X4 a srf:Law ; srf:lawRegister srf:SemanticLaw ; rdfs:comment "Wildcard non-collapse. A wildcard member of a population mints a symbol on the same terms as any other member and carries no admits-everything semantics." .
@@ -81,8 +102,14 @@ srf:S8 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "Generate
 srf:S9 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "No generated surface declares an authority above cached-reproducible." .
 srf:S10 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "A generated surface's stack depth does not exceed its profile's permitted stack depth." .
 
-srf:R1 a srf:Law ; srf:lawRegister srf:RuntimeConformance ; rdfs:comment "Regeneration determinism. The same read set under the same profile yields an identical symbol inventory and an identical artefact hash." .
+srf:R1 a srf:Law ; srf:lawRegister srf:RuntimeConformance ; rdfs:comment "Regeneration determinism. The same read set under the same profile yields an identical symbol inventory and an identical artefact hash. Composition: every surface in a stack shares one profile identity, checked statically; a mixed-profile stack is not a conformant regeneration." .
 srf:R2 a srf:Law ; srf:lawRegister srf:RuntimeConformance ; rdfs:comment "Surface and source parity. Every question in the shared conformance corpus is answered identically against the surface and against the source under a direct evaluation profile." .
 srf:R3 a srf:Law ; srf:lawRegister srf:RuntimeConformance ; rdfs:comment "Invalidation minimality. A scoped change regenerates only the computed impact set and leaves every other surface byte-identical." .
 srf:R4 a srf:Law ; srf:lawRegister srf:RuntimeConformance ; rdfs:comment "Materialisation idempotence. Re-running a materialisation over an unchanged read set adds no triples." .
 srf:R5 a srf:Law ; srf:lawRegister srf:RuntimeConformance ; rdfs:comment "Closure well-foundedness. The declared closure basis is acyclic over the declared scope, established by traversing it." .
+
+srf:P1 a srf:Law ; srf:lawRegister srf:SemanticLaw ; rdfs:comment "Projection conservativity. A local-signature projection is conservative on the same terms as an index; a source-signature projection composes under the same rule as X1 and X6." .
+srf:P2 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "Every projection contract declares exactly one projection kind and at least an evaluation-subject and a result-target role binding; a join or derivation kind additionally declares at least one candidate-evidence or required-evidence role binding." .
+srf:P3 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "A projection contract declares at most one evaluation-subject, result-target, and closure-basis role binding; candidate-evidence, required-evidence, and transform-dependency role bindings may repeat." .
+srf:P4 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "A backend policy names no compiler backend in both allowedBackend and deniedBackend." .
+srf:P5 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "A backend policy declaring deterministicOnly true declares no llmCompletionPolicy other than NoLLMCompletion." .

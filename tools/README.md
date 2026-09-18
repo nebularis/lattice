@@ -2,9 +2,25 @@
 
 # Tools
 
-Python 3.10+. `tools/surface/` requires rdflib, as `tools/mork2rml.py` does;
+Python 3.9+. `tools/surface/` requires rdflib, as `tools/mork2rml.py` does;
 `tools/lattice/literate_extract.py` has no dependencies. Run everything from
 the repository root.
+
+## Python environment
+
+The repository-level development environment is declared in `pyproject.toml`.
+For a reproducible core validation environment, create a virtual environment
+and install the pinned constraints with:
+
+```bash
+python3 -m venv .venv
+. .venv/bin/activate
+python -m pip install -c requirements-lock.txt ".[reasoning]"
+```
+
+The lock covers RDF parsing, SHACL validation, and OWL/RDFS reasoning. The
+optional MORK community dependencies remain separate from the core validation
+environment and can be installed with `.[community]` when needed.
 
 ## `tools/lattice/literate_extract.py`
 

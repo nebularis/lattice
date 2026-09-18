@@ -1,0 +1,25 @@
+Metadata-Version: 2.4
+Name: lattice-tooling
+Version: 0.1.0
+Summary: Shared development and validation environment for LATTICE tooling
+Requires-Python: >=3.9
+License-File: LICENSE
+License-File: LICENSE-DOCS.md
+Requires-Dist: rdflib<8,>=7.0
+Requires-Dist: pyshacl<1,>=0.26
+Provides-Extra: reasoning
+Requires-Dist: owlrl<8,>=7.1; extra == "reasoning"
+Provides-Extra: community
+Requires-Dist: numpy<3,>=1.24; extra == "community"
+Requires-Dist: networkx<4,>=3; extra == "community"
+Requires-Dist: pydantic<3,>=2; extra == "community"
+Requires-Dist: langchain-core>=0.2; extra == "community"
+Requires-Dist: langgraph>=0.2; extra == "community"
+Provides-Extra: all
+Requires-Dist: owlrl<8,>=7.1; extra == "all"
+Requires-Dist: numpy<3,>=1.24; extra == "all"
+Requires-Dist: networkx<4,>=3; extra == "all"
+Requires-Dist: pydantic<3,>=2; extra == "all"
+Requires-Dist: langchain-core>=0.2; extra == "all"
+Requires-Dist: langgraph>=0.2; extra == "all"
+Dynamic: license-file

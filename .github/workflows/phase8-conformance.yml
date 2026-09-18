@@ -1,0 +1,25 @@
+# SPDX-License-Identifier: MPL-2.0
+
+name: Phase 8 conformance
+
+# Temporarily manual-only while the repository package-management workflow is
+# being stabilised.
+on:
+  workflow_dispatch:
+
+jobs:
+  conformance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install repository validation dependencies
+        run: python -m pip install -c requirements-lock.txt ".[reasoning]"
+      - name: Check Surface extraction
+        run: python tools/literate_extract.py surface/README.md --layer surface --root . --shapes shapes/structural.ttl shapes/constraints.ttl --check
+      - name: Run compiler tests
+        run: python -m unittest tools.surface.test_surface tools.mork_compilers.test_mork_compilers -v
+      - name: Run Phase 8 conformance gate
+        run: python -m tools.phase8_conformance

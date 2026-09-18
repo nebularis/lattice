@@ -53,6 +53,14 @@ srf:IndexContract a owl:Class ;
 	rdfs:comment "A surface contract restating a carrier's values as symbols by which carriers can be retrieved." ;
 	fnd:utility "Use where retrieval by value is the hot operation. Declare the value population, one or more index forms, and a naming policy. Declare a closure basis where retrieval must also succeed for ancestors of the asserted value; closureScope narrows the value set the closure is computed over." .
 
+srf:ProjectionContract a owl:Class ;
+	rdfs:subClassOf srf:SurfaceContract ,
+		[ a owl:Restriction ; owl:onProperty srf:projectionKind ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+		[ a owl:Restriction ; owl:onProperty srf:hasRoleBinding ; owl:minCardinality "1"^^xsd:nonNegativeInteger ] ,
+		[ a owl:Restriction ; owl:onProperty srf:backendPolicy ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ;
+	rdfs:comment "A surface contract restating mapping intent that requires graph construction, derivation, a join, or an expansion, lowered into MORK rather than emitted directly." ;
+	fnd:utility "Use where neither promotion's direct-property restatement nor indexing's population membership covers the intent — a computed value, a join across carriers, or one relation expanding into several. Declare a projectionKind, at least one role binding naming what the projection reads and where it writes, and a backend policy. A ProjectionContract never emits SPARQL, SHACL, or SWRL itself; it lowers into a MORK mapping graph, which a separate compiler stage compiles." .
+
 srf:PathStep a owl:Class ;
 	rdfs:comment "One positioned traversal within a read path, in a stated direction." ;
 	fnd:utility "Use where the value is not reachable by a single property. Add one step per hop with a zero-based stepIndex in traversal order and an explicit stepDirection. For a single-hop path use readProperty instead; a contract declares one form or the other, never both." ;
@@ -442,10 +450,83 @@ srf:executedRun a owl:DatatypeProperty, owl:FunctionalProperty ;
 				  srf:IndexForm srf:RealisationMode srf:NamingPolicy srf:NamingNormalisation
 				  srf:SourceFidelity srf:ExtentKind srf:StepDirection srf:EntailmentRegime
 				  srf:SymbolMode srf:ReadSourceKind srf:SignatureScope srf:DerivationAuthority
-				  srf:Law srf:LawRegister ) .
+				  srf:Law srf:LawRegister srf:ProjectionRoleBinding srf:ProjectionBackendPolicy
+				  srf:ProjectionKind srf:ProjectionRole srf:CompilerBackend srf:LLMCompletionPolicy ) .
 
 srf:PromotionContract owl:disjointWith srf:IndexContract .
+srf:ProjectionContract owl:disjointWith srf:PromotionContract, srf:IndexContract .
 srf:GeneratedSurface owl:disjointWith srf:GeneratedSymbol .
 srf:ContractBoundPopulation owl:disjointWith srf:ClassExtentPopulation, srf:EnumeratedPopulation, srf:RangePartitionPopulation .
 srf:ClassExtentPopulation owl:disjointWith srf:EnumeratedPopulation, srf:RangePartitionPopulation .
 srf:EnumeratedPopulation owl:disjointWith srf:RangePartitionPopulation .
+
+srf:ProjectionRoleBinding a owl:Class ;
+	rdfs:subClassOf
+		[ a owl:Restriction ; owl:onProperty srf:roleKind ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+		[ a owl:Restriction ; owl:onProperty srf:bindsProperty ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ,
+		[ a owl:Restriction ; owl:onProperty srf:bindsCarrier ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ;
+	rdfs:comment "One named role a projection contract binds to a property and, where the role's evidence comes from a different class than the contract's own carrier, to that class." ;
+	fnd:utility "Name the role a property or carrier plays explicitly, rather than leaving a compiler to infer it from position — the same discipline srf:PathStep applies to a read path, extended to intents with more than one moving part. Every projection names at least an evaluation-subject and a result-target role; a join or derivation names candidate-evidence or required-evidence roles as well." .
+
+srf:ProjectionBackendPolicy a owl:Class ;
+	rdfs:subClassOf
+		[ a owl:Restriction ; owl:onProperty srf:llmCompletionPolicy ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+		[ a owl:Restriction ; owl:onProperty srf:deterministicOnly ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ;
+	rdfs:comment "The declared backend eligibility and LLM-participation policy a projection contract lowers under." ;
+	fnd:utility "Name every backend a lowered mapping may target in allowedBackend, or every backend it may not in deniedBackend, never both for one backend. Set deterministicOnly true to forbid LLM completion outright during lowering; set llmCompletionPolicy to state what happens when it is false." .
+
+srf:ProjectionKind a owl:Class .
+srf:ProjectionRole a owl:Class .
+srf:CompilerBackend a owl:Class .
+srf:LLMCompletionPolicy a owl:Class .
+
+srf:projectionKind a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:ProjectionContract ; rdfs:range srf:ProjectionKind ;
+	rdfs:comment "The mapping-intent kind a projection contract declares." .
+
+srf:hasRoleBinding a owl:ObjectProperty ;
+	rdfs:domain srf:ProjectionContract ; rdfs:range srf:ProjectionRoleBinding ;
+	rdfs:comment "A named role a projection contract binds to a property or carrier." .
+
+srf:roleKind a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:ProjectionRoleBinding ; rdfs:range srf:ProjectionRole ;
+	rdfs:comment "Which role a projection role binding fills." .
+
+srf:bindsProperty a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:ProjectionRoleBinding ; rdfs:range rdf:Property ;
+	rdfs:comment "The property a projection role binding names for its role." .
+
+srf:bindsCarrier a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:ProjectionRoleBinding ; rdfs:range rdfs:Class ;
+	rdfs:comment "The class a role's evidence is drawn from, where it differs from the contract's own carrier." ;
+	fnd:utility "Set this for a join or a required-evidence role that reaches a second carrier; leave it unset where the role reads the contract's own carrier." .
+
+srf:backendPolicy a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:ProjectionContract ; rdfs:range srf:ProjectionBackendPolicy ;
+	rdfs:comment "The backend-eligibility and LLM-participation policy a projection contract lowers under." .
+
+srf:allowedBackend a owl:ObjectProperty ;
+	rdfs:domain srf:ProjectionBackendPolicy ; rdfs:range srf:CompilerBackend ;
+	rdfs:comment "A compiler backend a lowered mapping may target." .
+
+srf:deniedBackend a owl:ObjectProperty ;
+	rdfs:domain srf:ProjectionBackendPolicy ; rdfs:range srf:CompilerBackend ;
+	rdfs:comment "A compiler backend a lowered mapping may not target." .
+
+srf:llmCompletionPolicy a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:ProjectionBackendPolicy ; rdfs:range srf:LLMCompletionPolicy ;
+	rdfs:comment "What an LLM may propose during lowering, where deterministicOnly is false." .
+
+srf:deterministicOnly a owl:DatatypeProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:ProjectionBackendPolicy ; rdfs:range xsd:boolean ;
+	rdfs:comment "Whether lowering under this policy may invoke an LLM at all." ;
+	fnd:utility "True forbids LLM participation outright, the recommended default for production. False defers to llmCompletionPolicy." .
+
+srf:approvedTemplate a owl:DatatypeProperty ;
+	rdfs:domain srf:ProjectionBackendPolicy ; rdfs:range xsd:string ;
+	rdfs:comment "The identifier of a mapping template a bounded LLM completion may draw from." .
+
+srf:producesMapping a owl:ObjectProperty ;
+	rdfs:domain srf:GeneratedSurface ;
+	rdfs:comment "A MORK mapping node a projection's generation run lowered into." ;
+	fnd:utility "Populated only for a generated surface covering a ProjectionContract. Names a mork:DataMapping, mork:ShapeMapping, mork:RuleMapping, mork:QueryTemplate, or mork:ProjectionMapping by punning, without Surface importing MORK." .

@@ -53,7 +53,7 @@ from .compile import CompileError, StackedInput, SurfaceCompiler, discharge_dete
 from .lowering import lower_all
 from .model import ContractError, SurfaceGraphAnalyser, read_contracts, read_projection_contracts
 from .namespaces import OUTPUT_PREFIXES, RDF, SRF
-from .parity import check_parity
+from .parity import check_parity, run_shared_surface_parity
 from .serialise import parse_files, serialise
 
 logger = logging.getLogger(__name__)
@@ -227,6 +227,14 @@ def command_check(args: argparse.Namespace) -> int:
 
 
 def command_parity(args: argparse.Namespace) -> int:
+    if args.shared_corpus:
+        failures = 0
+        for case, report in run_shared_surface_parity(args.shared_corpus, args.root, _now(args.now)):
+            print(f"{case}\n{report.describe()}")
+            if not report.holds():
+                failures += 1
+        return 1 if failures else 0
+
     declarations = parse_files(args.contracts)
     source = _load(args)
     produced_at = _now(args.now)
@@ -313,9 +321,11 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     check.set_defaults(func=command_check)
 
     parity = sub.add_parser("parity", help="compare surface answers against source answers")
-    parity.add_argument("--contracts", nargs="+", required=True)
+    parity.add_argument("--contracts", nargs="*", default=[])
     parity.add_argument("--sources", nargs="*", default=[])
     parity.add_argument("--contract", default=None)
+    parity.add_argument("--shared-corpus", default=None, help="shared conformance manifest")
+    parity.add_argument("--root", default=".", help="repository root for corpus paths")
     parity.add_argument("--now", default=None)
     parity.set_defaults(func=command_parity)
 

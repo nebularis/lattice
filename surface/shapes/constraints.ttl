@@ -1,0 +1,404 @@
+# SPDX-License-Identifier: MPL-2.0
+
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix srf:  <https://www.nebularis.org/neuro-semantic/lattice/surface#> .
+
+srf:ReadPathFormExclusiveShape a sh:NodeShape ;
+	sh:targetClass srf:SurfaceContract ;
+	sh:sparql [
+		sh:message "A surface contract declares exactly one read-path form: either srf:readProperty or one or more srf:hasPathStep, never both and never neither. Discharges srf:S1." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this WHERE {
+				{ $this srf:readProperty ?p . $this srf:hasPathStep ?s }
+				UNION
+				{
+					FILTER NOT EXISTS { $this srf:readProperty ?anyProperty }
+					FILTER NOT EXISTS { $this srf:hasPathStep ?anyStep }
+				}
+			}
+		"""
+	] .
+
+srf:PathStepIndexUniqueShape a sh:NodeShape ;
+	sh:targetClass srf:SurfaceContract ;
+	sh:sparql [
+		sh:message "Two path steps of one read path share a step index. Discharges srf:S1." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this WHERE {
+				$this srf:hasPathStep ?first, ?second .
+				?first srf:stepIndex ?index .
+				?second srf:stepIndex ?index .
+				FILTER (?first != ?second)
+			}
+		"""
+	] .
+
+srf:BoundSchemePresentShape a sh:NodeShape ;
+	sh:targetClass srf:IndexContract ;
+	sh:sparql [
+		sh:message "A contract-bound population names a scheme contract with no bound scheme. Discharges srf:S2." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			PREFIX voc: <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#>
+			SELECT $this WHERE {
+				$this srf:valuePopulation ?population .
+				?population a srf:ContractBoundPopulation ;
+							srf:fromSchemeContract ?schemeContract .
+				FILTER NOT EXISTS { ?schemeContract voc:boundScheme ?scheme }
+			}
+		"""
+	] .
+
+srf:BoundSchemeGovernanceShape a sh:NodeShape ;
+	sh:targetClass srf:IndexContract ;
+	sh:sparql [
+		sh:message "The scheme bound to a contract-bound population's scheme contract holds none of the governance states that contract requires. Discharges srf:S2." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			PREFIX voc: <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#>
+			PREFIX fnd: <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+			SELECT $this WHERE {
+				$this srf:valuePopulation ?population .
+				?population srf:fromSchemeContract ?schemeContract .
+				?schemeContract voc:boundScheme ?scheme ;
+								voc:requiresGovernanceState ?required .
+				FILTER NOT EXISTS {
+					?schemeContract voc:requiresGovernanceState ?permitted .
+					?scheme fnd:hasGovernanceState ?permitted .
+				}
+			}
+		"""
+	] .
+
+srf:ClosureBasisAgreementShape a sh:NodeShape ;
+	sh:targetClass srf:IndexContract ;
+	sh:sparql [
+		sh:message "A closure basis is declared exactly when a closure-relation index form is declared. Discharges srf:S3." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this WHERE {
+				{
+					$this srf:indexForm srf:ClosureRelation .
+					FILTER NOT EXISTS { $this srf:closureBasis ?basis }
+				}
+				UNION
+				{
+					$this srf:closureBasis ?declaredBasis .
+					FILTER NOT EXISTS { $this srf:indexForm srf:ClosureRelation }
+				}
+			}
+		"""
+	] .
+
+srf:EnumerablePopulationShape a sh:NodeShape ;
+	sh:targetClass srf:IndexContract ;
+	sh:sparql [
+		sh:message "An index form minting one symbol per value requires a population that can be enumerated; a range-partition population cannot be in this release. Discharges srf:S4." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this WHERE {
+				VALUES ?perValueForm { srf:NominalClass srf:MembershipAssertion }
+				$this srf:indexForm ?perValueForm ;
+					  srf:valuePopulation ?population .
+				?population a srf:RangePartitionPopulation .
+			}
+		"""
+	] .
+
+srf:RangePartitionDeferredShape a sh:NodeShape ;
+	sh:targetClass srf:IndexContract ;
+	sh:sparql [
+		sh:message "Range-partition populations are declared and not yet permitted. Use a DirectProperty index form for quantified dimensions." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this WHERE {
+				$this srf:valuePopulation ?population .
+				?population a srf:RangePartitionPopulation .
+			}
+		"""
+	] .
+
+srf:ExternalIndexDeferredShape a sh:NodeShape ;
+	sh:targetClass srf:IndexContract ;
+	sh:sparql [
+		sh:message "The ExternalIndex form is declared and not yet permitted." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this WHERE {
+				$this srf:indexForm srf:ExternalIndex .
+			}
+		"""
+	] .
+
+srf:CrosswalkRelationRequiredShape a sh:NodeShape ;
+	sh:targetClass srf:PromotionContract ;
+	sh:sparql [
+		sh:message "A crosswalk promotion names the mapping relation it traverses, and a non-crosswalk promotion names none. Discharges srf:X5." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this WHERE {
+				{
+					VALUES ?crosswalk { srf:CrosswalkExact srf:CrosswalkInexact }
+					$this srf:sourceFidelity ?crosswalk .
+					FILTER NOT EXISTS { $this srf:viaMatchRelation ?relation }
+				}
+				UNION
+				{
+					VALUES ?direct { srf:ExactSource srf:DerivedSource }
+					$this srf:sourceFidelity ?direct .
+					$this srf:viaMatchRelation ?declaredRelation .
+				}
+			}
+		"""
+	] .
+
+srf:DefinitionOnlyPromotionShape a sh:NodeShape ;
+	sh:targetClass srf:PromotionContract ;
+	sh:sparql [
+		sh:message "A definition-only promotion emits a property chain and therefore traverses forward steps only." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this WHERE {
+				$this srf:realisationMode srf:DefinitionOnly ;
+					  srf:hasPathStep ?step .
+				?step srf:stepDirection srf:Inverse .
+			}
+		"""
+	] .
+
+srf:PromotionSignatureDisciplineShape a sh:NodeShape ;
+	sh:targetClass srf:PromotionContract ;
+	sh:sparql [
+		sh:message "A promotion onto a property outside the contract's target namespace reaches the authored signature: it must declare exact or crosswalk-exact fidelity and must be materialised rather than definitional. Discharges srf:X6." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this WHERE {
+				$this srf:promotesTo ?promoted ;
+					  srf:targetNamespace ?namespace .
+				FILTER (!STRSTARTS(STR(?promoted), STR(?namespace)))
+				{
+					VALUES ?lossy { srf:DerivedSource srf:CrosswalkInexact }
+					$this srf:sourceFidelity ?lossy .
+				}
+				UNION
+				{ $this srf:realisationMode srf:DefinitionOnly }
+			}
+		"""
+	] .
+
+srf:AuthorityCeilingShape a sh:NodeShape ;
+	sh:targetClass srf:DerivedArtefact ;
+	sh:sparql [
+		sh:message "A derived surface artefact declares an authority above cached-reproducible. Discharges srf:S9." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this WHERE {
+				$this srf:derivationAuthority ?authority .
+				FILTER (?authority NOT IN (srf:Advisory, srf:CachedReproducible))
+			}
+		"""
+	] .
+
+srf:InexactPromotionAuthorityShape a sh:NodeShape ;
+	sh:targetClass srf:GeneratedSurface ;
+	sh:sparql [
+		sh:message "A surface generated from a derived or crosswalk-inexact promotion is advisory only. Discharges srf:X5." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this WHERE {
+				VALUES ?lossy { srf:DerivedSource srf:CrosswalkInexact }
+				$this srf:coversContract ?contract ;
+					  srf:derivationAuthority ?authority .
+				?contract srf:sourceFidelity ?lossy .
+				FILTER (?authority != srf:Advisory)
+			}
+		"""
+	] .
+
+srf:StackDepthShape a sh:NodeShape ;
+	sh:targetClass srf:GeneratedSurface ;
+	sh:sparql [
+		sh:message "A generated surface's stack depth exceeds the permitted depth of its profile. Discharges srf:S10." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this WHERE {
+				$this srf:stackDepth ?depth ;
+					  srf:generatedByProfile ?profile .
+				?profile srf:permittedStackDepth ?permitted .
+				FILTER (?depth > ?permitted)
+			}
+		"""
+	] .
+
+srf:StackDepthReleaseCeilingShape a sh:NodeShape ;
+	sh:targetClass srf:SurfaceProfile ;
+	sh:sparql [
+		sh:message "This release permits a stack depth of at most one surface over another." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this WHERE {
+				$this srf:permittedStackDepth ?permitted .
+				FILTER (?permitted > 1)
+			}
+		"""
+	] .
+
+srf:PopulationBudgetExceededShape a sh:NodeShape ;
+	sh:targetClass srf:GeneratedSurface ;
+	sh:sparql [
+		sh:message "A generation run enumerated more values than its contract's population budget permits. Discharges srf:S4." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this WHERE {
+				$this srf:populationSize ?size ;
+					  srf:coversContract ?contract .
+				OPTIONAL { ?contract srf:populationBudget ?contractBudget }
+				OPTIONAL {
+					?contract srf:surfaceProfile ?profile .
+					?profile srf:defaultPopulationBudget ?profileBudget
+				}
+				BIND (COALESCE(?contractBudget, ?profileBudget, 5000) AS ?budget)
+				FILTER (?size > ?budget)
+			}
+		"""
+	] .
+
+srf:PopulationBudgetWarningShape a sh:NodeShape ;
+	sh:targetClass srf:GeneratedSurface ;
+	sh:severity sh:Warning ;
+	sh:sparql [
+		sh:message "A generation run enumerated more than five hundred values for a per-value index form. Consider a DirectProperty form." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this WHERE {
+				$this srf:populationSize ?size .
+				FILTER (?size > 500)
+			}
+		"""
+	] .
+
+srf:SymbolNamingInjectiveShape a sh:NodeShape ;
+	sh:targetClass srf:GeneratedSurface ;
+	sh:sparql [
+		sh:message "Two population members minted the same identifier. Discharges srf:S6." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this WHERE {
+				?first srf:inSurface $this ; srf:denotes ?term ; srf:fromValue ?firstValue .
+				?second srf:inSurface $this ; srf:denotes ?term ; srf:fromValue ?secondValue .
+				FILTER (?firstValue != ?secondValue)
+			}
+		"""
+	] .
+
+srf:ClosureWellFoundednessDischargedShape a sh:NodeShape ;
+	sh:targetClass srf:GeneratedSurface ;
+	sh:sparql [
+		sh:message "A surface generated for a closure-relation form has no recorded discharge of srf:R5." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this WHERE {
+				$this srf:coversContract ?contract .
+				?contract srf:indexForm srf:ClosureRelation .
+				FILTER NOT EXISTS {
+					?discharge srf:dischargedForSurface $this ;
+							   srf:dischargesLaw srf:R5 .
+				}
+			}
+		"""
+	] .
+
+srf:ProjectionEvaluationSubjectRequiredShape a sh:NodeShape ;
+	sh:targetClass srf:ProjectionContract ;
+	sh:sparql [
+		sh:message "A projection contract has no evaluation-subject role binding. Discharges srf:P2." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this WHERE {
+				$this a srf:ProjectionContract .
+				FILTER NOT EXISTS {
+					$this srf:hasRoleBinding ?binding .
+					?binding srf:roleKind srf:EvaluationSubjectRole .
+				}
+			}
+		"""
+	] .
+
+srf:ProjectionResultTargetRequiredShape a sh:NodeShape ;
+	sh:targetClass srf:ProjectionContract ;
+	sh:sparql [
+		sh:message "A projection contract has no result-target role binding. Discharges srf:P2." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this WHERE {
+				$this a srf:ProjectionContract .
+				FILTER NOT EXISTS {
+					$this srf:hasRoleBinding ?binding .
+					?binding srf:roleKind srf:ResultTargetRole .
+				}
+			}
+		"""
+	] .
+
+srf:ProjectionEvidenceRequiredForJoinOrDerivationShape a sh:NodeShape ;
+	sh:targetClass srf:ProjectionContract ;
+	sh:sparql [
+		sh:message "A join or derivation projection has no candidate-evidence or required-evidence role binding. Discharges srf:P2." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this WHERE {
+				VALUES ?evidenceKind { srf:JoinProjection srf:DerivationProjection }
+				$this srf:projectionKind ?evidenceKind .
+				FILTER NOT EXISTS {
+					$this srf:hasRoleBinding ?binding .
+					VALUES ?evidenceRole { srf:CandidateEvidenceRole srf:RequiredEvidenceRole }
+					?binding srf:roleKind ?evidenceRole .
+				}
+			}
+		"""
+	] .
+
+srf:ProjectionRoleKindSingletonShape a sh:NodeShape ;
+	sh:targetClass srf:ProjectionContract ;
+	sh:sparql [
+		sh:message "A projection contract declares more than one evaluation-subject, result-target, or closure-basis role binding. Discharges srf:P3." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this WHERE {
+				VALUES ?singletonRole { srf:EvaluationSubjectRole srf:ResultTargetRole srf:ClosureBasisRole }
+				$this srf:hasRoleBinding ?first, ?second .
+				?first srf:roleKind ?singletonRole .
+				?second srf:roleKind ?singletonRole .
+				FILTER (?first != ?second)
+			}
+		"""
+	] .
+
+srf:ProjectionBackendAllowDenyDisjointShape a sh:NodeShape ;
+	sh:targetClass srf:ProjectionBackendPolicy ;
+	sh:sparql [
+		sh:message "A backend policy names one compiler backend in both allowedBackend and deniedBackend. Discharges srf:P4." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this WHERE {
+				$this srf:allowedBackend ?backend ;
+					  srf:deniedBackend ?backend .
+			}
+		"""
+	] .
+
+srf:ProjectionDeterministicOnlyLLMPolicyShape a sh:NodeShape ;
+	sh:targetClass srf:ProjectionBackendPolicy ;
+	sh:sparql [
+		sh:message "A backend policy declares deterministicOnly true and an llmCompletionPolicy other than NoLLMCompletion. Discharges srf:P5." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this WHERE {
+				$this srf:deterministicOnly true ;
+					  srf:llmCompletionPolicy ?policy .
+				FILTER (?policy != srf:NoLLMCompletion)
+			}
+		"""
+	] .

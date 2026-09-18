@@ -37,9 +37,11 @@ regime named, rather than silently passed.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Sequence, Set
+from pathlib import Path
+from typing import Dict, List, Optional, Sequence, Set, Tuple
 
-from rdflib import Graph, URIRef
+from rdflib import Graph, Namespace, URIRef
+from rdflib.namespace import RDF
 
 from .compile import (
     CLOSURE,
@@ -54,6 +56,8 @@ from .compile import (
 )
 from .namespaces import RDF, SRF
 from .naming import Minter
+
+CONFORMANCE = Namespace("https://example.org/lattice/test/conformance/")
 
 
 @dataclass
@@ -232,3 +236,37 @@ def _promotion_parity(
             )
         )
     return report
+
+
+def run_shared_surface_parity(
+    manifest_path: str | Path,
+    root: str | Path = ".",
+    produced_at: str = "2026-09-18T00:00:00Z",
+) -> List[Tuple[str, ParityReport]]:
+    """Run Surface parity for explicit Surface cases in the shared corpus.
+
+    A shared-corpus case opts into this runner with ``ex:surfaceContractFile``
+    and ``ex:surfaceContractKey``. Existing Eligibility and Behaviour cases
+    remain untouched because they do not declare those fields.
+    """
+    from .model import read_contracts
+    from .serialise import parse_files
+    from .compile import SurfaceCompiler
+
+    root_path = Path(root)
+    manifest = Graph().parse(str(manifest_path), format="turtle")
+    reports: List[Tuple[str, ParityReport]] = []
+    for case in sorted(manifest.subjects(RDF.type, CONFORMANCE.ConformanceCase), key=str):
+        contract_file = manifest.value(case, CONFORMANCE.surfaceContractFile)
+        contract_key = manifest.value(case, CONFORMANCE.surfaceContractKey)
+        if contract_file is None or contract_key is None:
+            continue
+        declarations = parse_files([str(root_path / str(contract_file))])
+        source = declarations
+        contracts = [contract for contract in read_contracts(declarations)
+                     if contract.key == str(contract_key)]
+        if not contracts:
+            raise ValueError(f"shared Surface case {case} names no contract {contract_key}")
+        compiled = SurfaceCompiler(contracts[0], source, produced_at).compile()
+        reports.append((str(case), check_parity(compiled, source)))
+    return reports

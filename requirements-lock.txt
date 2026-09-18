@@ -1,0 +1,14 @@
+# SPDX-License-Identifier: MPL-2.0
+# Core LATTICE validation environment, generated 2026-09-18.
+# Install with: python3 -m pip install -c requirements-lock.txt ".[reasoning]"
+html5rdf==1.2.1
+importlib-metadata==8.7.1
+isodate==0.7.2
+owlrl==7.6.2
+packaging==25.0
+prettytable==3.16.0
+pyparsing==3.3.2
+pyshacl==0.40.1
+rdflib==7.6.0
+wcwidth==0.8.4
+zipp==3.23.1

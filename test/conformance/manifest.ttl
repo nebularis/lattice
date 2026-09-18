@@ -28,3 +28,18 @@ ex:behaviour-bp2-sequential-allowance a ex:ConformanceCase ;
     ex:usesProfile bhv:B-P2 ;
     ex:caseFile "cases/behaviour-bp2-sequential-allowance.ttl" ;
     ex:expectedFile "expected/behaviour-bp2-sequential-allowance.ttl" .
+
+ex:surface-employment-job-family a ex:ConformanceCase ;
+    rdfs:label "Surface employment job family parity" ;
+    ex:surfaceContractFile "surface/examples/employment-job-family.ttl" ;
+    ex:surfaceContractKey "job-family" .
+
+ex:surface-saas-subscription-currency a ex:ConformanceCase ;
+    rdfs:label "Surface subscription currency promotion parity" ;
+    ex:surfaceContractFile "surface/examples/saas-subscription-currency.ttl" ;
+    ex:surfaceContractKey "subscription-currency" .
+
+ex:surface-clinical-crosswalk a ex:ConformanceCase ;
+    rdfs:label "Surface clinical crosswalk parity" ;
+    ex:surfaceContractFile "surface/examples/clinical-trial-crosswalk.ttl" ;
+    ex:surfaceContractKey "harmonised-site-category" .

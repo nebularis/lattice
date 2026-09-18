@@ -1,0 +1,23 @@
+@prefix srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#> .
+@prefix ex: <https://example.org/lattice/surface/defect#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ex:profile a srf:SurfaceProfile ;
+    srf:generatorVersion "test" ;
+    srf:canonicalisationVersion "srf-canon/2" ;
+    srf:entailmentRegime srf:NoEntailment ;
+    srf:namingNormalisation srf:SanitisedLocalName ;
+    srf:symbolMode srf:PunnedSymbols ;
+    srf:permittedStackDepth 0 .
+
+ex:bad a srf:IndexContract ;
+    srf:contractKey "closure-without-basis" ;
+    srf:carrier ex:Carrier ;
+    srf:readProperty ex:hasValue ;
+    srf:realisationMode srf:Materialised ;
+    srf:targetNamespace "https://example.org/lattice/surface/defect/generated#"^^xsd:anyURI ;
+    srf:surfaceProfile ex:profile ;
+    srf:valuePopulation ex:population ;
+    srf:indexForm srf:ClosureRelation .
+
+ex:population a srf:EnumeratedPopulation ; srf:member ex:value .

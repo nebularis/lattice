@@ -79,3 +79,20 @@ srf:LawDischargeShape a sh:NodeShape ;
 	sh:property [ sh:path srf:dischargesLaw ; sh:minCount 1 ; sh:maxCount 1 ] ;
 	sh:property [ sh:path srf:dischargedForSurface ; sh:minCount 1 ; sh:maxCount 1 ] ;
 	sh:property [ sh:path srf:dischargedAt ; sh:minCount 1 ; sh:maxCount 1 ] .
+
+srf:ProjectionContractShape a sh:NodeShape ;
+	sh:targetClass srf:ProjectionContract ;
+	sh:property [ sh:path srf:projectionKind ; sh:minCount 1 ; sh:maxCount 1 ] ;
+	sh:property [ sh:path srf:hasRoleBinding ; sh:minCount 1 ] ;
+	sh:property [ sh:path srf:backendPolicy ; sh:maxCount 1 ] .
+
+srf:ProjectionRoleBindingShape a sh:NodeShape ;
+	sh:targetClass srf:ProjectionRoleBinding ;
+	sh:property [ sh:path srf:roleKind ; sh:minCount 1 ; sh:maxCount 1 ] ;
+	sh:property [ sh:path srf:bindsProperty ; sh:maxCount 1 ] ;
+	sh:property [ sh:path srf:bindsCarrier ; sh:maxCount 1 ] .
+
+srf:ProjectionBackendPolicyShape a sh:NodeShape ;
+	sh:targetClass srf:ProjectionBackendPolicy ;
+	sh:property [ sh:path srf:llmCompletionPolicy ; sh:minCount 1 ; sh:maxCount 1 ] ;
+	sh:property [ sh:path srf:deterministicOnly ; sh:minCount 1 ; sh:maxCount 1 ] .

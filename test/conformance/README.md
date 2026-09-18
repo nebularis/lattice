@@ -12,6 +12,7 @@ The corpus does not assume a compiled evaluator. It defines a profile-neutral se
 
 - Eligibility: `elg:E1`, `elg:E2`
 - Behaviour: `bhv:B-P1`, `bhv:B-P2`
+- Surface: employment index, multi-hop promotion, and crosswalk promotion
 
 ## Semantic-output projection
 
@@ -75,6 +76,11 @@ Ignore:
 - [cases/behaviour-bp1-transition.ttl](cases/behaviour-bp1-transition.ttl)
 - [cases/behaviour-bp2-sequential-allowance.ttl](cases/behaviour-bp2-sequential-allowance.ttl)
 
+Surface cases are declared in [manifest.ttl](manifest.ttl) with
+`ex:surfaceContractFile` and `ex:surfaceContractKey`. They use the Surface
+source graph as the oracle and compare generated assertions through the R2
+parity harness.
+
 ## Expected outputs
 
 - [expected/eligibility-e1-undetermined.ttl](expected/eligibility-e1-undetermined.ttl)
@@ -84,4 +90,10 @@ Ignore:
 
 ## Interpretation
 
-Gate 5 is satisfied when every accepted evaluator profile for a case produces a semantic-output projection identical to the expected output for that case, modulo the excluded non-semantic metadata listed above. Automation remains deferred. This corpus fixes the comparison contract now so later automation does not invent it implicitly.
+Gate 5 is satisfied when every accepted evaluator profile for a case produces a semantic-output projection identical to the expected output for that case, modulo the excluded non-semantic metadata listed above. The current automated Surface gate is:
+
+```bash
+python3 -m tools.phase8_conformance
+```
+
+This corpus fixes the comparison contract so later automation does not invent it implicitly.

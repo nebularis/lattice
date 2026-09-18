@@ -33,6 +33,7 @@ from .compile import (
     MEMBERSHIP,
     CompileError,
     CyclicClosureBasis,
+    ReadSetRecord,
     SurfaceCompiler,
     ancestors,
     carrier_instances,
@@ -42,6 +43,15 @@ from .compile import (
 from .model import ContractError, SurfaceGraphAnalyser, read_contracts, read_projection_contracts
 from .mork import HAS_PROJECTION_PROVENANCE, PROJECTION_MAPPING, lift, lower
 from .lowering import lower_all, lower_contract, lower_projection
+from .invalidation import (
+    compare_read_set,
+    impacted_mappings,
+    impacted_artefacts,
+    impacted_surfaces,
+    plan_regeneration,
+    read_set_from_manifest,
+)
+from .parity import run_shared_surface_parity
 from .namespaces import MORK, OWL, RDF, RDFS, SRF
 from .naming import (
     DIGEST_LOCAL_NAME,
@@ -353,7 +363,8 @@ class EntailmentRegimeTests(unittest.TestCase):
             SurfaceCompiler(richer_contract, graph, AT).compile()
 
 
-class ProjectionModelTests(unittest.TestCase):    """Parsing and law enforcement for srf:ProjectionContract (ADR-A17, ADR-A20)."""
+class ProjectionModelTests(unittest.TestCase):
+    """Parsing and law enforcement for srf:ProjectionContract (ADR-A17, ADR-A20)."""
 
     def setUp(self) -> None:
         self.graph = load("saas-subscription-arr-projection.ttl")
@@ -373,6 +384,7 @@ class ProjectionModelTests(unittest.TestCase):    """Parsing and law enforcement
         self.assertTrue(contract.backend_policy.deterministic_only)
         self.assertEqual(contract.backend_policy.llm_completion_policy, SRF.NoLLMCompletion)
         self.assertIn(SRF.SparqlBackend, contract.backend_policy.allowed_backends)
+
 
     def test_missing_evaluation_subject_role_is_refused(self) -> None:
         graph = Graph().parse(
@@ -457,6 +469,105 @@ class ProjectionModelTests(unittest.TestCase):    """Parsing and law enforcement
                     format="turtle",
                 )
             ).backend_policy(URIRef(SAAS_ARR + "policy"))
+
+
+class InvalidationTests(unittest.TestCase):
+    def test_read_set_change_is_reported_as_stale(self) -> None:
+        compiled, _ = compile_example("employment-job-family.ttl", "job-family")
+        current = {
+            (str(entry.kind), str(entry.source)): entry.digest
+            for entry in compiled.read_set
+        }
+        self.assertTrue(compare_read_set(compiled.read_set, current).fresh)
+
+        key = next(iter(current))
+        current[key] = "changed"
+        report = compare_read_set(compiled.read_set, current)
+        self.assertFalse(report.fresh)
+        self.assertEqual(len(report.changes), 1)
+        self.assertEqual(report.changes[0].source, key[1])
+
+    def test_surface_source_change_propagates_downstream(self) -> None:
+        upstream = URIRef("https://example.org/surface/upstream")
+        downstream = URIRef("https://example.org/surface/downstream")
+        manifests = {
+            str(upstream): [],
+            str(downstream): [
+                ReadSetRecord(
+                    kind=SRF.SurfaceSource,
+                    source=upstream,
+                    digest="upstream-hash",
+                ),
+            ],
+        }
+        self.assertEqual(
+            impacted_surfaces(manifests, {str(upstream)}),
+            (str(downstream),),
+        )
+
+    def test_manifest_read_set_round_trips_into_freshness_check(self) -> None:
+        compiled, _ = compile_example("employment-job-family.ttl", "job-family")
+        recorded = read_set_from_manifest(compiled.modules["manifest"])
+        self.assertEqual(len(recorded), len(compiled.read_set))
+        current = {
+            (str(entry.kind), str(entry.source)): entry.digest
+            for entry in recorded
+        }
+        self.assertTrue(compare_read_set(recorded, current).fresh)
+
+    def test_changed_surface_source_propagates_through_mork_mapping_dag(self) -> None:
+        mapping_graph = Graph()
+        source = URIRef("https://example.org/surface/projection")
+        first = URIRef("https://example.org/mork/first")
+        second = URIRef("https://example.org/mork/second")
+        mapping_graph.add((first, MORK.mappingFor, source))
+        mapping_graph.add((second, MORK.dependsOnMapping, first))
+        self.assertEqual(
+            impacted_mappings(mapping_graph, {str(source)}),
+            (str(first), str(second)),
+        )
+
+    def test_mapping_change_propagates_to_generated_artefacts(self) -> None:
+        mapping_graph = Graph()
+        mapping = URIRef("https://example.org/mork/mapping")
+        artefact = URIRef("https://example.org/generated/shape")
+        mapping_graph.add((artefact, MORK.generatedBy, mapping))
+        self.assertEqual(
+            impacted_artefacts(mapping_graph, {str(mapping)}),
+            (str(artefact),),
+        )
+
+    def test_shared_conformance_manifest_runs_surface_case(self) -> None:
+        reports = run_shared_surface_parity(
+            ROOT / "test" / "conformance" / "manifest.ttl",
+            ROOT,
+            AT,
+        )
+        self.assertEqual(
+            [case for case, _ in reports],
+            [
+                "https://example.org/lattice/test/conformance/surface-clinical-crosswalk",
+                "https://example.org/lattice/test/conformance/surface-employment-job-family",
+                "https://example.org/lattice/test/conformance/surface-saas-subscription-currency",
+            ],
+        )
+        self.assertTrue(all(report.holds() for _, report in reports))
+
+    def test_profile_change_widens_regeneration_scope(self) -> None:
+        mapping_graph = Graph()
+        mapping = URIRef("https://example.org/mork/mapping")
+        artefact = URIRef("https://example.org/generated/shape")
+        mapping_graph.add((mapping, MORK.mappingFor, URIRef("https://example.org/surface/contract")))
+        mapping_graph.add((artefact, MORK.generatedBy, mapping))
+        plan = plan_regeneration(
+            {"https://example.org/surface/contract": []},
+            mapping_graph,
+            changed_profiles={"https://example.org/surface/profile"},
+        )
+        self.assertEqual(plan.surfaces, ("https://example.org/surface/contract",))
+        self.assertEqual(plan.mappings, (str(mapping),))
+        self.assertEqual(plan.artefacts, (str(artefact),))
+        self.assertEqual(plan.reasons, ("profile-change",))
 
 
 class ProjectionLoweringTests(unittest.TestCase):
