@@ -1,0 +1,768 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>LATTICE — Semantic substrate for governed systems</title>
+    <meta
+      name="description"
+      content="LATTICE is a domain-neutral semantic framework for representing governing instruments, obligations, eligibility conditions, and lifecycle behaviours."
+    >
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #070a12;
+        --bg-soft: #0d1322;
+        --panel: rgba(17, 25, 43, 0.78);
+        --panel-strong: rgba(22, 33, 57, 0.92);
+        --text: #eef4ff;
+        --muted: #a7b4ca;
+        --subtle: #6f7f98;
+        --line: rgba(169, 190, 230, 0.18);
+        --accent: #9df7d7;
+        --accent-2: #8fb7ff;
+        --accent-3: #d9a6ff;
+        --warning: #ffd58a;
+        --shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
+        --radius: 24px;
+        --max: 1160px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background:
+          radial-gradient(circle at top left, rgba(141, 247, 215, 0.18), transparent 30rem),
+          radial-gradient(circle at 80% 10%, rgba(143, 183, 255, 0.2), transparent 28rem),
+          radial-gradient(circle at 60% 85%, rgba(217, 166, 255, 0.12), transparent 34rem),
+          linear-gradient(135deg, #05070d 0%, #09101c 45%, #0b0f1a 100%);
+        color: var(--text);
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", sans-serif;
+        line-height: 1.6;
+      }
+
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        background-image:
+          linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+        background-size: 48px 48px;
+        mask-image: linear-gradient(to bottom, black, transparent 80%);
+      }
+
+      a {
+        color: inherit;
+      }
+
+      .site-header {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        border-bottom: 1px solid var(--line);
+        background: rgba(7, 10, 18, 0.72);
+        backdrop-filter: blur(18px);
+      }
+
+      .nav {
+        width: min(100% - 2rem, var(--max));
+        margin: 0 auto;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: 0.95rem 0;
+      }
+
+      .brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.7rem;
+        text-decoration: none;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+      }
+
+      .brand-mark {
+        width: 2.1rem;
+        height: 2.1rem;
+        display: grid;
+        place-items: center;
+        border: 1px solid rgba(157, 247, 215, 0.46);
+        border-radius: 0.7rem;
+        background:
+          linear-gradient(135deg, rgba(157, 247, 215, 0.22), rgba(143, 183, 255, 0.12)),
+          rgba(255, 255, 255, 0.04);
+        box-shadow: 0 0 32px rgba(157, 247, 215, 0.12);
+      }
+
+      .nav-links {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+      }
+
+      .nav-links a {
+        padding: 0.55rem 0.8rem;
+        border-radius: 999px;
+        color: var(--muted);
+        font-size: 0.94rem;
+        text-decoration: none;
+      }
+
+      .nav-links a:hover {
+        color: var(--text);
+        background: rgba(255, 255, 255, 0.06);
+      }
+
+      main {
+        position: relative;
+      }
+
+      .section {
+        width: min(100% - 2rem, var(--max));
+        margin: 0 auto;
+      }
+
+      .hero {
+        display: grid;
+        grid-template-columns: minmax(0, 1.1fr) minmax(320px, 0.9fr);
+        gap: clamp(2rem, 5vw, 4rem);
+        align-items: center;
+        padding: clamp(4rem, 9vw, 7.5rem) 0 4rem;
+      }
+
+      .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin: 0 0 1.2rem;
+        padding: 0.35rem 0.7rem;
+        border: 1px solid rgba(157, 247, 215, 0.28);
+        border-radius: 999px;
+        color: var(--accent);
+        background: rgba(157, 247, 215, 0.07);
+        font-size: 0.82rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        margin: 0;
+        max-width: 12ch;
+        font-size: clamp(3.6rem, 13vw, 8rem);
+        line-height: 0.88;
+        letter-spacing: -0.09em;
+      }
+
+      .gradient-text {
+        background: linear-gradient(120deg, #ffffff 0%, var(--accent) 38%, var(--accent-2) 72%, var(--accent-3) 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+      }
+
+      .lead {
+        max-width: 42rem;
+        margin: 1.5rem 0 0;
+        color: var(--muted);
+        font-size: clamp(1.08rem, 2vw, 1.35rem);
+      }
+
+      .hero-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.85rem;
+        margin-top: 2rem;
+      }
+
+      .button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 2.9rem;
+        padding: 0.78rem 1rem;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        color: var(--text);
+        background: rgba(255, 255, 255, 0.055);
+        font-weight: 760;
+        text-decoration: none;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+      }
+
+      .button.primary {
+        border-color: rgba(157, 247, 215, 0.55);
+        color: #03130e;
+        background: linear-gradient(135deg, var(--accent), #b9cfff);
+      }
+
+      .button:hover {
+        transform: translateY(-1px);
+      }
+
+      .orbital-card {
+        position: relative;
+        min-height: 430px;
+        border: 1px solid var(--line);
+        border-radius: calc(var(--radius) + 8px);
+        background:
+          linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02)),
+          var(--panel);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+      }
+
+      .orbital-card::before {
+        content: "";
+        position: absolute;
+        inset: -30%;
+        background:
+          conic-gradient(
+            from 120deg,
+            transparent,
+            rgba(157, 247, 215, 0.26),
+            transparent,
+            rgba(143, 183, 255, 0.22),
+            transparent,
+            rgba(217, 166, 255, 0.18),
+            transparent
+          );
+        animation: spin 18s linear infinite;
+      }
+
+      .orbital-card::after {
+        content: "";
+        position: absolute;
+        inset: 1px;
+        border-radius: calc(var(--radius) + 7px);
+        background: linear-gradient(160deg, rgba(9, 16, 28, 0.96), rgba(11, 15, 26, 0.9));
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(1turn);
+        }
+      }
+
+      .lattice-map {
+        position: relative;
+        z-index: 1;
+        height: 100%;
+        min-height: 430px;
+        display: grid;
+        place-items: center;
+        padding: 2rem;
+      }
+
+      .node {
+        position: absolute;
+        padding: 0.54rem 0.72rem;
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        border-radius: 999px;
+        color: var(--text);
+        background: rgba(255, 255, 255, 0.07);
+        font-size: 0.78rem;
+        font-weight: 760;
+        letter-spacing: 0.02em;
+        box-shadow: 0 8px 26px rgba(0, 0, 0, 0.24);
+      }
+
+      .node.core {
+        display: grid;
+        place-items: center;
+        width: 9rem;
+        height: 9rem;
+        border-radius: 50%;
+        border-color: rgba(157, 247, 215, 0.42);
+        background:
+          radial-gradient(circle at 35% 25%, rgba(157, 247, 215, 0.36), transparent 38%),
+          rgba(157, 247, 215, 0.08);
+        font-size: 1.1rem;
+        letter-spacing: 0.14em;
+      }
+
+      .node.foundation { left: 9%; top: 19%; }
+      .node.vocabulary { right: 9%; top: 18%; }
+      .node.quantification { left: 7%; bottom: 29%; }
+      .node.party { right: 14%; bottom: 32%; }
+      .node.eligibility { left: 32%; bottom: 12%; }
+      .node.behaviour { right: 27%; bottom: 12%; }
+      .node.instrument { left: 34%; top: 10%; }
+
+      .rings {
+        position: absolute;
+        inset: 18%;
+        border: 1px solid rgba(157, 247, 215, 0.18);
+        border-radius: 50%;
+      }
+
+      .rings::before,
+      .rings::after {
+        content: "";
+        position: absolute;
+        inset: 13%;
+        border: 1px solid rgba(143, 183, 255, 0.15);
+        border-radius: inherit;
+      }
+
+      .rings::after {
+        inset: 28%;
+        border-color: rgba(217, 166, 255, 0.16);
+      }
+
+      .grid {
+        display: grid;
+        gap: 1rem;
+      }
+
+      .cards {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        padding: 1rem 0 4.5rem;
+      }
+
+      .card {
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        padding: 1.25rem;
+        background: var(--panel);
+        box-shadow: 0 18px 55px rgba(0, 0, 0, 0.18);
+      }
+
+      .card h2,
+      .card h3 {
+        margin: 0 0 0.55rem;
+        line-height: 1.15;
+      }
+
+      .card p {
+        margin: 0;
+        color: var(--muted);
+      }
+
+      .feature {
+        display: grid;
+        grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+        gap: 1rem;
+        align-items: stretch;
+        padding-bottom: 4.5rem;
+      }
+
+      .feature-panel {
+        border: 1px solid var(--line);
+        border-radius: calc(var(--radius) + 8px);
+        padding: clamp(1.4rem, 3vw, 2rem);
+        background: var(--panel-strong);
+      }
+
+      .feature-panel h2 {
+        margin: 0 0 0.7rem;
+        font-size: clamp(1.9rem, 4vw, 3.3rem);
+        line-height: 0.98;
+        letter-spacing: -0.055em;
+      }
+
+      .feature-panel p {
+        color: var(--muted);
+      }
+
+      .layer-list {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.7rem;
+      }
+
+      .layer {
+        padding: 0.85rem;
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.045);
+      }
+
+      .layer strong {
+        display: block;
+        margin-bottom: 0.2rem;
+      }
+
+      .layer span {
+        color: var(--muted);
+        font-size: 0.92rem;
+      }
+
+      .code-card {
+        overflow: hidden;
+        border: 1px solid var(--line);
+        border-radius: calc(var(--radius) + 8px);
+        background: #080c15;
+        box-shadow: var(--shadow);
+      }
+
+      .code-head {
+        display: flex;
+        gap: 0.45rem;
+        padding: 0.85rem 1rem;
+        border-bottom: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.04);
+      }
+
+      .dot {
+        width: 0.72rem;
+        height: 0.72rem;
+        border-radius: 50%;
+        background: var(--accent);
+      }
+
+      .dot:nth-child(2) { background: var(--warning); }
+      .dot:nth-child(3) { background: var(--accent-3); }
+
+      pre {
+        margin: 0;
+        padding: 1.25rem;
+        overflow: auto;
+        color: #dce8ff;
+        font: 0.92rem/1.65 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      }
+
+      .token {
+        color: var(--accent);
+      }
+
+      .docs {
+        padding-bottom: 5rem;
+      }
+
+      .docs-header {
+        display: flex;
+        align-items: end;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-bottom: 1rem;
+      }
+
+      .docs-header h2 {
+        margin: 0;
+        font-size: clamp(2rem, 5vw, 4rem);
+        line-height: 1;
+        letter-spacing: -0.06em;
+      }
+
+      .docs-links {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 1rem;
+      }
+
+      .doc-link {
+        min-height: 10rem;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        padding: 1.1rem;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: rgba(255, 255, 255, 0.05);
+        text-decoration: none;
+      }
+
+      .doc-link:hover {
+        border-color: rgba(157, 247, 215, 0.42);
+        background: rgba(157, 247, 215, 0.07);
+        transform: translateY(-2px);
+      }
+
+      .doc-link strong {
+        font-size: 1.08rem;
+      }
+
+      .doc-link span {
+        color: var(--muted);
+      }
+
+      .site-footer {
+        border-top: 1px solid var(--line);
+        color: var(--subtle);
+        background: rgba(0, 0, 0, 0.18);
+      }
+
+      .footer-inner {
+        width: min(100% - 2rem, var(--max));
+        margin: 0 auto;
+        display: flex;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: 1.5rem 0;
+        font-size: 0.92rem;
+      }
+
+      @media (max-width: 880px) {
+        .hero,
+        .feature {
+          grid-template-columns: 1fr;
+        }
+
+        .cards,
+        .docs-links {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .nav {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+
+        .nav-links {
+          flex-wrap: wrap;
+        }
+      }
+
+      @media (max-width: 560px) {
+        .cards,
+        .docs-links,
+        .layer-list {
+          grid-template-columns: 1fr;
+        }
+
+        .orbital-card,
+        .lattice-map {
+          min-height: 360px;
+        }
+
+        .node {
+          font-size: 0.7rem;
+        }
+
+        .node.core {
+          width: 7rem;
+          height: 7rem;
+        }
+
+        .footer-inner,
+        .docs-header {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation-duration: 0.001ms !important;
+          animation-iteration-count: 1 !important;
+          scroll-behavior: auto !important;
+          transition-duration: 0.001ms !important;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <header class="site-header">
+      <nav class="nav" aria-label="Main navigation">
+        <a class="brand" href="#">
+          <span class="brand-mark" aria-hidden="true">⌬</span>
+          <span>LATTICE</span>
+        </a>
+
+        <div class="nav-links">
+          <a href="#model">Model</a>
+          <a href="#layers">Layers</a>
+          <a href="#docs">Docs</a>
+          <a href="https://github.com/nebularis/lattice">GitHub</a>
+        </div>
+      </nav>
+    </header>
+
+    <main>
+      <section class="section hero">
+        <div>
+          <p class="eyebrow">Semantic substrate · Governed systems · Domain neutral</p>
+          <h1><span class="gradient-text">LATTICE</span></h1>
+          <p class="lead">
+            A domain-neutral semantic framework for representing governing instruments:
+            contracts, protocols, agreements, obligations, eligibility conditions, and
+            lifecycle behaviours.
+          </p>
+
+          <div class="hero-actions">
+            <a class="button primary" href="#docs">Read the docs</a>
+            <a class="button" href="https://github.com/nebularis/lattice">Browse source</a>
+          </div>
+        </div>
+
+        <aside class="orbital-card" aria-label="LATTICE layer map">
+          <div class="lattice-map">
+            <div class="rings" aria-hidden="true"></div>
+            <span class="node core">LATTICE</span>
+            <span class="node instrument">Instrument</span>
+            <span class="node foundation">Foundation</span>
+            <span class="node vocabulary">Vocabulary</span>
+            <span class="node quantification">Quantification</span>
+            <span class="node party">Party</span>
+            <span class="node eligibility">Eligibility</span>
+            <span class="node behaviour">Behaviour</span>
+          </div>
+        </aside>
+      </section>
+
+      <section class="section grid cards" id="model" aria-label="Project overview">
+        <article class="card">
+          <h2>Map</h2>
+          <p>
+            LATTICE sits between source material and executable reasoning, giving mapped
+            concepts a precise semantic target.
+          </p>
+        </article>
+
+        <article class="card">
+          <h2>Constrain</h2>
+          <p>
+            OWL, SHACL, and SKOS modules define the shape of valid governing artefacts
+            without binding the model to one industry.
+          </p>
+        </article>
+
+        <article class="card">
+          <h2>Operate</h2>
+          <p>
+            Behaviour, eligibility, party, and instrument layers provide the substrate
+            for obligations, states, transitions, and decisions.
+          </p>
+        </article>
+      </section>
+
+      <section class="section feature" id="layers">
+        <div class="feature-panel">
+          <h2>Seven layers, one substrate.</h2>
+          <p>
+            Each layer is independently specified and designed to compose with the others.
+            The result is a reusable semantic foundation for governed systems, not a
+            one-off domain ontology.
+          </p>
+          <p>
+            This site is currently a stub. More generated references, examples, and
+            implementation notes will appear here as the project evolves.
+          </p>
+        </div>
+
+        <div class="feature-panel">
+          <div class="layer-list">
+            <div class="layer">
+              <strong>Foundation</strong>
+              <span>Identity, provenance, versioning, governance state.</span>
+            </div>
+            <div class="layer">
+              <strong>Vocabulary</strong>
+              <span>Binding domain concept schemes into the substrate.</span>
+            </div>
+            <div class="layer">
+              <strong>Quantification</strong>
+              <span>Values, quantities, bounds, ranges, and recurrence.</span>
+            </div>
+            <div class="layer">
+              <strong>Party</strong>
+              <span>Actors, roles, participation, and obligation direction.</span>
+            </div>
+            <div class="layer">
+              <strong>Eligibility</strong>
+              <span>Conditions, unresolved questions, and decisions.</span>
+            </div>
+            <div class="layer">
+              <strong>Behaviour</strong>
+              <span>State, transition, trigger, guard, and effect.</span>
+            </div>
+            <div class="layer">
+              <strong>Instrument</strong>
+              <span>Applied ontology for governing documents.</span>
+            </div>
+            <div class="layer">
+              <strong>MORK + SPC</strong>
+              <span>Mapping and orchestration companions.</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section feature" aria-label="Example">
+        <div class="code-card">
+          <div class="code-head" aria-hidden="true">
+            <span class="dot"></span>
+            <span class="dot"></span>
+            <span class="dot"></span>
+          </div>
+          <pre><code><span class="token">@prefix</span> bhv: &lt;https://www.nebularis.org/neuro-semantic/lattice/behaviour#&gt; .
+<span class="token">@prefix</span> ex:  &lt;https://example.org/lattice/&gt; .
+
+ex:transition
+  a bhv:TransitionDefinition ;
+  bhv:fromState ex:proposed ;
+  bhv:toState ex:active ;
+  bhv:hasTrigger ex:approval ;
+  bhv:hasEffect ex:create-obligation .</code></pre>
+        </div>
+
+        <div class="feature-panel">
+          <h2>Readable specifications, executable artefacts.</h2>
+          <p>
+            LATTICE specifications are authored as literate documentation, with Turtle
+            blocks extracted into ontology, vocabulary, shape, rule, and example artefacts.
+          </p>
+          <a class="button" href="https://github.com/nebularis/lattice/tree/main/examples">
+            View examples
+          </a>
+        </div>
+      </section>
+
+      <section class="section docs" id="docs">
+        <div class="docs-header">
+          <h2>Start here.</h2>
+          <a class="button" href="https://github.com/nebularis/lattice/tree/main/docs">
+            All documentation
+          </a>
+        </div>
+
+        <div class="docs-links">
+          <a class="doc-link" href="./GOVERNANCE.md">
+            <strong>Governance</strong>
+            <span>Authoritative document hierarchy and containment rules.</span>
+          </a>
+
+          <a class="doc-link" href="./architecture/">
+            <strong>Architecture</strong>
+            <span>Cross-layer reference material and conformance guidance.</span>
+          </a>
+
+          <a class="doc-link" href="./adr/">
+            <strong>ADRs</strong>
+            <span>Decision records for why the substrate is shaped this way.</span>
+          </a>
+
+          <a class="doc-link" href="../README.md">
+            <strong>Repository README</strong>
+            <span>Project overview, layout, licensing, and contribution links.</span>
+          </a>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="footer-inner">
+        <span>LATTICE · Concept Lattice of Domain Ontology Layers</span>
+        <span>Built for GitHub Pages</span>
+      </div>
+    </footer>
+  </body>
+</html>
