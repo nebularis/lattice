@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>The LATTICE Field Guide</title>
+  <meta name="description" content="A practical guide to Surface, Eligibility, MORK, and governed compilation.">
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #05070d;
+      --bg-2: #0a1220;
+      --panel: #101a2d;
+      --panel-2: #14223a;
+      --text: #f4f7ff;
+      --muted: #bdc8da;
+      --soft: #8d9bb2;
+      --line: #2a3a56;
+      --mint: #9df7d7;
+      --blue: #9bbcff;
+      --purple: #d4a8ff;
+      --max: 1120px;
+    }
+    * { box-sizing: border-box; }
+    html { background: var(--bg) !important; }
+    body {
+      margin: 0 !important;
+      min-width: 320px;
+      background: var(--bg) !important;
+      color: var(--text) !important;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.7;
+    }
+    a { color: var(--mint); }
+    a:hover { color: #fff; }
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      border-bottom: 1px solid var(--line);
+      background: rgba(5, 7, 13, .96);
+      backdrop-filter: blur(18px);
+    }
+    .topbar-inner, .book { width: min(calc(100% - 2rem), var(--max)); margin: 0 auto; }
+    .topbar-inner { min-height: 4rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+    .brand { color: var(--text); font-weight: 850; letter-spacing: .08em; text-decoration: none; }
+    .back { color: var(--muted); text-decoration: none; font-size: .92rem; }
+    .book { padding: 3.6rem 0 6rem; }
+    .hero { padding-bottom: 3rem; border-bottom: 1px solid var(--line); }
+    .eyebrow { color: var(--mint); font-size: .78rem; font-weight: 850; letter-spacing: .14em; text-transform: uppercase; }
+    h1, h2, h3 { line-height: 1.12; }
+    h1 { max-width: 900px; margin: .7rem 0 1rem; font-size: clamp(2.8rem, 8vw, 6.8rem); letter-spacing: -.065em; background: linear-gradient(120deg, #fff, var(--mint) 42%, var(--blue) 78%, var(--purple)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    h2 { margin: 4rem 0 1rem; padding-top: 1rem; border-top: 1px solid var(--line); color: var(--text); font-size: 2.2rem; }
+    h3 { margin-top: 2.2rem; color: var(--mint); font-size: 1.3rem; }
+    p, li, td { color: var(--muted); }
+    .dek { max-width: 800px; font-size: 1.25rem; }
+    .small { color: var(--soft); font-size: .92rem; }
+    .toc { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: .7rem; margin: 2rem 0 3rem; }
+    .toc a { padding: .8rem 1rem; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); text-decoration: none; }
+    .callout { margin: 1.4rem 0; padding: 1rem 1.2rem; border: 1px solid #386052; border-radius: 12px; background: #102a2a; color: var(--muted); }
+    .callout strong { color: var(--text); }
+    pre { overflow-x: auto; padding: 1.1rem 1.2rem; border: 1px solid var(--line); border-radius: 12px; background: #07101d; color: #dbe8ff; }
+    code { color: #dbe8ff; }
+    table { width: 100%; margin: 1.2rem 0; border: 1px solid var(--line); border-spacing: 0; border-radius: 12px; overflow: hidden; background: var(--panel); }
+    th, td { padding: .75rem .85rem; text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); }
+    th { color: var(--mint); background: var(--panel-2); }
+    tr:last-child td { border-bottom: 0; }
+    blockquote { margin: 1.4rem 0; padding: .8rem 1.2rem; border-left: 3px solid var(--mint); color: var(--muted); }
+    footer { padding: 2rem 1rem 3rem; border-top: 1px solid var(--line); color: var(--soft); text-align: center; }
+    @media (max-width: 720px) { .book { padding-top: 2rem; } h2 { font-size: 1.8rem; } table { display: block; overflow-x: auto; } }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="./index.html">LATTICE / FIELD GUIDE</a>
+      <a class="back" href="./index.html">Back to home</a>
+    </div>
+  </header>
+  <main class="book">
+    <header class="hero">
+      <div class="eyebrow">A practical book on governed semantics</div>
+      <h1>The LATTICE Field Guide</h1>
+      <p class="dek">How to move from declarations to trusted execution using Surface, Eligibility, MORK, and deterministic compiler backends.</p>
+      <p class="small">For ontology authors, projection authors, compiler builders, reviewers, and operators.</p>
+    </header>
+
+    <nav class="toc" aria-label="Contents">
+      <a href="#orientation">1. Orientation</a><a href="#stack">2. Semantic stack</a><a href="#surface">3. Surface</a><a href="#eligibility">4. Eligibility</a><a href="#mork">5. MORK</a><a href="#compile">6. Compilation</a><a href="#examples">7. Examples</a><a href="#operate">8. Operations</a><a href="#boundaries">9. Boundaries</a><a href="#next">10. Roadmap</a>
+    </nav>
+
+    <section id="orientation">
+      <h2>1. Orientation</h2>
+      <p>LATTICE is a semantic substrate for governed systems. It is designed for situations where a document, policy, contract, protocol, or operational rule must become a graph that can be inspected, validated, transformed, queried, and eventually executed without losing its source meaning.</p>
+      <pre><code>meaningful declarations
+        |
+        v
+validated graph
+        |
+        v
+compiled mode of operation
+        |
+        v
+runtime answers with provenance</code></pre>
+      <p>The central discipline is to separate semantic authority from computational convenience. A source declaration says what is true. A generated surface, query, shape, rule, or runtime plan is a derived way of asking questions about it.</p>
+      <div class="callout"><strong>Working question:</strong> can a reviewer explain what the system believes, why it believes it, which compiler produced the operational form, and what must be regenerated when an input changes?</div>
+      <table><tr><th>Term</th><th>Meaning</th></tr><tr><td>Declaration</td><td>An authored graph statement that defines domain meaning.</td></tr><tr><td>Surface</td><td>A generated query-facing restatement of declared graph facts.</td></tr><tr><td>Eligibility</td><td>A declarative model for conditions, questions, and decisions.</td></tr><tr><td>MORK</td><td>A machine-facing mapping graph for review and compilation.</td></tr><tr><td>Artefact</td><td>A generated shape, query, rule, transform, or runtime plan.</td></tr></table>
+    </section>
+
+    <section id="stack">
+      <h2>2. The semantic stack</h2>
+      <p>LATTICE is layered because different kinds of meaning have different owners.</p>
+      <table><tr><th>Layer</th><th>Question</th><th>Typical output</th></tr><tr><td>Foundation</td><td>What is this artefact and who governs it?</td><td>Identity, version, evidence, governance state.</td></tr><tr><td>Vocabulary</td><td>Which concepts are available?</td><td>Scheme contracts and implementation-owned SKOS schemes.</td></tr><tr><td>Quantification</td><td>What does a value mean numerically?</td><td>Quantities, bounds, ranges, value spaces.</td></tr><tr><td>Party</td><td>Who participates?</td><td>Actors, roles, participation.</td></tr><tr><td>Eligibility</td><td>Does evidence satisfy a condition?</td><td>Questions and three-valued decisions.</td></tr><tr><td>Behaviour</td><td>How does a system change state?</td><td>Triggers, guards, transitions, effects.</td><tr><td>Instrument</td><td>Which applied object carries the rules?</td><td>Contracts, clauses, obligations.</td></tr></table>
+      <p>Direct SPARQL, SHACL, reasoning, materialisation, and generated surfaces are peer realisation strategies. None becomes the source of truth merely because it is faster.</p>
+      <h3>Literate specifications</h3>
+      <p>Layer READMEs are specifications. Turtle blocks are extracted into machine artefacts. Run the drift check after changing a README, vocabulary, ontology, or shape.</p>
+      <pre><code>python3 tools/literate_extract.py surface/README.md \
+  --layer surface --root . \
+  --shapes shapes/structural.ttl shapes/constraints.ttl --check</code></pre>
+    </section>
+
+    <section id="surface">
+      <h2>3. Surface: making graph questions cheap</h2>
+      <p>A correct graph can still be awkward to query. Surface creates a generated local restatement that makes a declared class of question answerable by direct lookup, while preserving the source as semantic authority.</p>
+      <h3>Promotion</h3>
+      <p>Promotion reads a value at the end of a declared path and puts it directly on the carrier.</p>
+      <pre><code>Subscription
+  --hasPlan--&gt; Plan
+  --hasPricing--&gt; Pricing
+  --inCurrency--&gt; EUR
+
+becomes:
+Subscription --subscriptionCurrency--&gt; EUR</code></pre>
+      <pre><code>ex:subscription-currency a srf:PromotionContract ;
+    srf:contractKey "subscription-currency" ;
+    srf:carrier saas:Subscription ;
+    srf:hasPathStep ex:step-0, ex:step-1, ex:step-2 ;
+    srf:promotesTo saas:subscriptionCurrency ;
+    srf:sourceFidelity srf:ExactSource ;
+    srf:realisationMode srf:Materialised ;
+    srf:targetNamespace &lt;https://example.org/saas/generated/&gt; ;
+    srf:surfaceProfile ex:default-profile .</code></pre>
+      <h3>Indexing</h3>
+      <table><tr><th>Form</th><th>Use it when</th><th>Runtime shape</th></tr><tr><td>NominalClass</td><td>Population is bounded and enumerable.</td><td><code>?carrier a generated:ValueClass</code></td></tr><tr><td>MembershipAssertion</td><td>Answers must work without a reasoner.</td><td>Materialised type assertions.</td></tr><tr><td>ClosureRelation</td><td>Ancestor retrieval is a real query.</td><td><code>?carrier generated:matches ?ancestor</code></td></tr><tr><td>DirectProperty</td><td>Value space is open-ended or large.</td><td><code>?carrier generated:property ?value</code></td></tr></table>
+      <h3>Hierarchical closure</h3>
+      <p>Closure is declared, scoped, reflexive, and cycle-checked. A job-family leaf can generate matches to itself and each in-scope ancestor, so runtime queries do not need to walk the taxonomy.</p>
+      <h3>Fidelity and X6</h3>
+      <p>Exact and exact-crosswalk source-signature promotions may target authored properties when materialised. Lossy results use generated properties. Definition-only authored-property chains remain prohibited.</p>
+      <h3>Projection</h3>
+      <p>Projection is for construction, derivation, joins, or expansions that Promotion and Index cannot express. Surface records the author-facing intent and lowers it into MORK.</p>
+      <pre><code>ex:subscription-arr a srf:ProjectionContract ;
+    srf:projectionKind srf:DerivationProjection ;
+    srf:carrier saas:Subscription ;
+    srf:hasRoleBinding ex:price, ex:frequency, ex:target ;
+    srf:backendPolicy ex:deterministic-policy .</code></pre>
+    </section>
+
+    <section id="eligibility">
+      <h2>4. Eligibility: conditions to decisions</h2>
+      <p>Eligibility describes conditions, evidence, matching strategies, profiles, and decisions. It does not ask OWL to perform interval arithmetic or decide what missing evidence means.</p>
+      <pre><code>Condition
+  --matchStrategy--&gt; IntervalContainment
+  --requiredRangeSet--&gt; [700, 850]
+
+Question
+  --forCondition--&gt; Condition
+  --candidateRangeSet--&gt; [720, 810]
+
+EligibilityDecision
+  --decisionValue--&gt; Permitted</code></pre>
+      <table><tr><th>Outcome</th><th>Meaning</th></tr><tr><td>Permitted</td><td>Evidence demonstrates satisfaction.</td></tr><tr><td>Denied</td><td>Evidence demonstrates failure.</td></tr><tr><td>Undetermined</td><td>Evidence is missing, malformed, incompatible, or insufficient.</td></tr></table>
+      <p>For interval containment, a candidate range must be contained by a required range in the same supported value space. Open and closed endpoints matter.</p>
+      <pre><code>Required:  [700, 850]
+Candidate: [720, 810]   =&gt; Permitted
+Candidate: [650, 810]   =&gt; Denied
+Candidate: missing      =&gt; Undetermined</code></pre>
+    </section>
+
+    <section id="mork">
+      <h2>5. MORK: the machine-facing mapping graph</h2>
+      <p>MORK is designed for machines, mapping agents, and LLMs. It records mapping intent in a form that can be reviewed, versioned, governed, and compiled deterministically.</p>
+      <table><tr><th>Mapping</th><th>Produces</th></tr><tr><td>DataMapping</td><td>General mapping intent and dependency anchor.</td></tr><tr><td>ShapeMapping</td><td>Structured SHACL definitions.</td></tr><tr><td>RuleMapping</td><td>Structured SWRL implications.</td></tr><tr><td>TransformMapping</td><td>RML or R2RML transformations.</td></tr><tr><td>ProjectionMapping</td><td>Generated projection class definitions and provenance.</td></tr><tr><td>QueryTemplate</td><td>Parameterized query artefacts.</td></tr></table>
+      <p>Surface is the authoring layer. MORK is the expanded machine graph. Domain authors should normally declare semantic roles and backend policy in Surface rather than hand-writing parameter bindings, precedence edges, and structured rule atoms.</p>
+      <p>Foundation-aligned governance records mapping identity, version, current state, supersession, and effective dates.</p>
+    </section>
+
+    <section id="compile">
+      <h2>6. Compilation</h2>
+      <pre><code>validate -&gt; normalise -&gt; lower -&gt; compile -&gt; emit -&gt; verify</code></pre>
+      <p>All backends should share an intermediate semantic core. Eligibility's current IntervalContainment IR is read once and projected into SPARQL, SHACL, and SWRL.</p>
+      <h3>SPARQL</h3><p>Use SPARQL for complete decisions, diagnostics, missing-data distinction, and profile aggregation.</p>
+      <h3>SHACL</h3><p>Use SHACL for readiness and validation reports. A validation report still needs an adapter before it becomes a three-valued Eligibility decision.</p>
+      <h3>SWRL</h3><p>Use SWRL for positive monotonic classification. It must not infer denial or indeterminacy from absence of evidence.</p>
+      <h3>RML</h3><p>Use RML for mapping external representations into RDF aligned with a target ontology. The mapping remains inspectable before transformation.</p>
+      <p>Same validated graph plus same compiler profile should produce the same semantic hashes, dependency order, identifiers, and artefact content. Generated outputs should point back to source contracts, mappings, and declaration nodes.</p>
+    </section>
+
+    <section id="examples">
+      <h2>7. Worked examples</h2>
+      <h3>Job-family index</h3><p>A scheme-bound population, nominal classes, membership assertions, and closure make ancestor retrieval direct.</p>
+      <pre><code>python3 -m tools.surface compile \
+  --contracts surface/examples/employment-job-family.ttl \
+  --out surface/execution \
+  --verify-determinism --parity</code></pre>
+      <h3>Multi-hop currency promotion</h3><p>An exact path from Subscription through Plan and Pricing becomes a direct currency property without enumerating the currency space.</p>
+      <pre><code>python3 -m tools.surface parity \
+  --contracts surface/examples/saas-subscription-currency.ttl</code></pre>
+      <h3>Inexact crosswalk</h3><p>The clinical example crosses an inexact relation. The result remains queryable but is advisory and cannot masquerade as authored target-vocabulary truth.</p>
+      <h3>Richer Projection</h3><p>The annual recurring revenue example binds multiple evidence properties and lowers a derivation intent into MORK.</p>
+      <pre><code>python3 -m tools.surface lower \
+  --contracts surface/examples/saas-subscription-arr-projection.ttl \
+  --out /tmp/subscription-arr-mapping.ttl</code></pre>
+      <h3>Eligibility compilation</h3>
+      <pre><code>python3 -m tools.mork_compilers.cli compile-condition \
+  --declarations eligibility/examples/interval-containment.ttl \
+  --condition https://example.org/lattice/eligibility/minimum-credit-condition \
+  --backend sparql \
+  --out /tmp/eligibility-sparql.ttl</code></pre>
+    </section>
+
+    <section id="operate">
+      <h2>8. Operating the system</h2>
+      <h3>Install</h3>
+      <pre><code>python3 -m venv .venv
+. .venv/bin/activate
+python -m pip install -c requirements-lock.txt ".[reasoning]"</code></pre>
+      <h3>Validate</h3>
+      <pre><code>python3 -m unittest tools.surface.test_surface tools.mork_compilers.test_mork_compilers -q
+python3 -m tools.phase8_conformance</code></pre>
+      <h3>Freshness and regeneration</h3>
+      <p>Generated surfaces record read-set hashes. Source, mapping, artefact, profile, and canonicalisation changes are planned through dependency-scoped invalidation. Profile and canonicalisation changes intentionally widen the regeneration scope.</p>
+      <table><tr><th>Change</th><th>Scope</th></tr><tr><td>Instance assertion</td><td>Affected materialised assertions.</td></tr><tr><td>Scheme membership</td><td>Contract inventory and dependent closure.</td></tr><tr><td>Projection contract</td><td>Lowered mapping and dependent mappings.</td></tr><tr><td>Profile</td><td>All artefacts using the profile.</td></tr><tr><td>Canonicalisation</td><td>Full estate rehash and regeneration.</td></tr></table>
+      <pre><code>python3 -m tools.surface check \
+  --manifest surface/execution/job-family/manifest.ttl \
+  --contracts surface/examples/employment-job-family.ttl</code></pre>
+    </section>
+
+    <section id="boundaries">
+      <h2>9. Boundaries and design choices</h2>
+      <p>Surface is not the whole semantic compiler. It does not by itself create arbitrary domain nodes, perform unrestricted multi-source derivation, resolve datatype literals through concept joins, or expand one source node into coordinated behavioural nodes.</p>
+      <p>A full CSO to FBO compiler must create tanks, actions, qualifiers, claims, and spans, and must enforce projection completeness. Surface surrounds that compiler with exact restatement, indexing, closure, governed acceleration, freshness, and invalidation.</p>
+      <p>Intentional deferred capabilities include RangePartitionPopulation, stacking beyond depth one, ExternalIndex, richer entailment regimes, profile-level Eligibility results, and full CSO-to-FBO semantic compilation.</p>
+    </section>
+
+    <section id="next">
+      <h2>10. Roadmap</h2>
+      <ol><li>Resolve the Foundation boundary for generic derived artefacts.</li><li>Decide whether to adopt the domain-facing Executable Projection Contract.</li><li>Confirm MORK namespace and toolchain assumptions.</li><li>Add profile identity materialisation if appropriate.</li><li>Implement Eligibility profile aggregation and runtime result tracking.</li><li>Add broader Projection and Behaviour conformance cases.</li><li>Add SWRL and OWL reasoner validation.</li><li>Begin pilot migration for one domain-bound Eligibility projection and one CSO-to-FBO Projection scenario.</li></ol>
+      <div class="callout"><strong>Definition of done:</strong> an author declares projection intent without raw MORK internals, generated artefacts are governed and traceable, and stale outputs regenerate without rebuilding unrelated parts of the estate.</div>
+    </section>
+  </main>
+  <footer>LATTICE · The Field Guide · <a href="./index.html">Return to home</a></footer>
+</body>
+</html>
