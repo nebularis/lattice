@@ -1,0 +1,95 @@
+# SPDX-License-Identifier: MPL-2.0
+
+@prefix srf:  <https://www.nebularis.org/neuro-semantic/lattice/surface#> .
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex:   <https://example.org/lattice/surface/saas#> .
+
+# A promotion over a three-step read path. The currency a subscription is
+# priced in is reachable only through its plan and that plan's pricing, so a
+# consumer asking "which subscriptions are priced in this currency" traverses
+# three hops per subscription. The promotion restates the value on the
+# subscription itself.
+#
+# The population is not enumerated and is not enumerable: there is no bound
+# scheme here and no per-value symbol is minted. This is the case a per-value
+# index form cannot serve.
+
+# --- the carrier and the chain ----------------------------------------------
+
+ex:Subscription a owl:Class .
+ex:Plan a owl:Class .
+ex:Pricing a owl:Class .
+
+ex:hasPlan a owl:ObjectProperty ;
+    rdfs:domain ex:Subscription ;
+    rdfs:range ex:Plan .
+
+ex:hasPricing a owl:ObjectProperty ;
+    rdfs:domain ex:Plan ;
+    rdfs:range ex:Pricing .
+
+ex:inCurrency a owl:ObjectProperty ;
+    rdfs:domain ex:Pricing .
+
+# --- generation profile ------------------------------------------------------
+
+ex:profile-v1 a srf:SurfaceProfile ;
+    fnd:hasIdentity ex:profile-identity ;
+    srf:generatorVersion "lattice-surface-compiler/0.1.0" ;
+    srf:canonicalisationVersion "srf-canon/1" ;
+    srf:entailmentRegime srf:NoEntailment ;
+    srf:namingNormalisation srf:SanitisedLocalName ;
+    srf:symbolMode srf:PunnedSymbols ;
+    srf:permittedStackDepth 0 .
+
+# --- the promotion contract --------------------------------------------------
+
+ex:currency-step-0 a srf:PathStep ;
+    srf:stepIndex 0 ;
+    srf:stepProperty ex:hasPlan ;
+    srf:stepDirection srf:Forward .
+
+ex:currency-step-1 a srf:PathStep ;
+    srf:stepIndex 1 ;
+    srf:stepProperty ex:hasPricing ;
+    srf:stepDirection srf:Forward .
+
+ex:currency-step-2 a srf:PathStep ;
+    srf:stepIndex 2 ;
+    srf:stepProperty ex:inCurrency ;
+    srf:stepDirection srf:Forward .
+
+ex:subscription-currency-promotion a srf:PromotionContract ;
+    fnd:hasIdentity ex:subscription-currency-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    srf:contractKey "subscription-currency" ;
+    srf:carrier ex:Subscription ;
+    srf:hasPathStep ex:currency-step-0 , ex:currency-step-1 , ex:currency-step-2 ;
+    srf:targetNamespace "https://example.org/lattice/surface/saas/exec#"^^xsd:anyURI ;
+    srf:realisationMode srf:Materialised ;
+    srf:surfaceProfile ex:profile-v1 ;
+    srf:promotesTo <https://example.org/lattice/surface/saas/exec#subscriptionCurrency> ;
+    srf:sourceFidelity srf:ExactSource .
+
+# --- carrier instances -------------------------------------------------------
+
+ex:subscription-1 a ex:Subscription ;
+    ex:hasPlan ex:plan-standard .
+
+ex:subscription-2 a ex:Subscription ;
+    ex:hasPlan ex:plan-enterprise .
+
+ex:plan-standard a ex:Plan ;
+    ex:hasPricing ex:pricing-eu .
+
+ex:plan-enterprise a ex:Plan ;
+    ex:hasPricing ex:pricing-uk .
+
+ex:pricing-eu a ex:Pricing ;
+    ex:inCurrency ex:currency-eur .
+
+ex:pricing-uk a ex:Pricing ;
+    ex:inCurrency ex:currency-gbp .

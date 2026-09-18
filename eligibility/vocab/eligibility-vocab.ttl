@@ -35,6 +35,8 @@ elg:E4 a elg:OperationalProfile ; rdfs:comment "Compatibility-any profile" .
 elg:E5 a elg:OperationalProfile ; rdfs:comment "Compatibility-all profile" .
 elg:E6 a elg:OperationalProfile ; rdfs:comment "Dimension-consistency profile" .
 
+elg:SemanticLaw a elg:LawRegister ; rdfs:comment "Discharged by formal argument." .
+
 elg:L1 a elg:Law ; rdfs:comment "Each condition declares exactly one match strategy." .
 elg:L2 a elg:Law ; rdfs:comment "Each condition declares exactly one compatibility operation." .
 elg:L3 a elg:Law ; rdfs:comment "Each condition declares exactly one wildcard policy." .
@@ -43,4 +45,6 @@ elg:L5 a elg:Law ; rdfs:comment "IntervalOverlap is excluded from admissibility 
 elg:L6 a elg:Law ; rdfs:comment "EligibilityDecision has exactly one decision value." .
 elg:L7 a elg:Law ; rdfs:comment "EligibilityDecision references at least one question." .
 elg:L8 a elg:Law ; rdfs:comment "EligibilityDecision names one operational profile." .
-elg:L9 a elg:Law ; rdfs:comment "HierarchicalMatch requires a well-founded skos:broader hierarchy and a materialised local closure for the bound concept scheme." .
+elg:L9 a elg:Law ;
+	elg:lawRegister elg:SemanticLaw ;
+	rdfs:comment "Hierarchical match closure. A candidate value satisfies a condition under hierarchical match exactly when it stands in the reflexive-transitive closure of the bound scheme's ordering relation, restricted to that scheme's members, below the asserted value. The ordering relation is acyclic over the bound scheme; a scheme carrying a cycle is not evaluable under hierarchical match." .

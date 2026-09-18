@@ -1,0 +1,114 @@
+# SPDX-License-Identifier: MPL-2.0
+
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix srf:  <https://www.nebularis.org/neuro-semantic/lattice/surface#> .
+@prefix voc:  <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+# Parity checks that need a source declaration and its generated surface in
+# view at the same time. They run over the union graph and not as part of the
+# Surface layer's own shapes, which see only one side.
+
+srf:SurfaceCoverageParityShape a sh:NodeShape ;
+	sh:targetClass srf:GeneratedSurface ;
+	sh:sparql [
+		sh:message "A member of the bound scheme has no nominal symbol in the surface generated for that contract. Discharges srf:S5." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			PREFIX voc: <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#>
+			PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+			SELECT $this WHERE {
+				$this srf:coversContract ?contract .
+				?contract srf:indexForm srf:NominalClass ;
+						  srf:valuePopulation ?population .
+				?population srf:fromSchemeContract ?schemeContract .
+				?schemeContract voc:boundScheme ?scheme .
+				?member skos:inScheme ?scheme .
+				FILTER NOT EXISTS {
+					?symbol srf:inSurface $this ;
+							srf:symbolForm srf:NominalClass ;
+							srf:fromValue ?member .
+				}
+			}
+		"""
+	] .
+
+srf:SurfaceProvenanceParityShape a sh:NodeShape ;
+	sh:targetClass srf:GeneratedSurface ;
+	sh:sparql [
+		sh:message "A generated class has no symbol record accounting for it. Discharges srf:S7." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+			SELECT $this WHERE {
+				?generated rdfs:subClassOf+ srf:GeneratedClass .
+				FILTER NOT EXISTS { ?symbol a srf:GeneratedSymbol ; srf:denotes ?generated }
+			}
+		"""
+	] .
+
+srf:SurfaceOrphanSymbolShape a sh:NodeShape ;
+	sh:targetClass srf:GeneratedSymbol ;
+	sh:sparql [
+		sh:message "A symbol record denotes a value that is no longer in its contract's bound scheme. The surface is stale and must be regenerated. Discharges srf:R3." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			PREFIX voc: <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#>
+			PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+			SELECT $this WHERE {
+				$this srf:fromValue ?value ;
+					  srf:inSurface ?surface .
+				?surface srf:coversContract ?contract .
+				?contract srf:valuePopulation ?population .
+				?population srf:fromSchemeContract ?schemeContract .
+				?schemeContract voc:boundScheme ?scheme .
+				FILTER NOT EXISTS { ?value skos:inScheme ?scheme }
+			}
+		"""
+	] .
+
+srf:SurfaceContainmentParityShape a sh:NodeShape ;
+	sh:targetClass srf:GeneratedSurface ;
+	sh:sparql [
+		sh:message "A generated term's target namespace collides with the namespace of the layer that declares its carrier, so a generated term is not distinguishable from an authored one. Discharges srf:S8." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this WHERE {
+				$this srf:coversContract ?contract .
+				?contract srf:carrier ?carrier ;
+						  srf:targetNamespace ?namespace .
+				FILTER (STRSTARTS(STR(?carrier), STR(?namespace)))
+			}
+		"""
+	] .
+
+srf:SurfaceAuthorityParityShape a sh:NodeShape ;
+	sh:targetClass srf:GeneratedSymbol ;
+	sh:sparql [
+		sh:message "A symbol claims an authority its surface does not hold. Discharges srf:S9." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this WHERE {
+				$this srf:inSurface ?surface ;
+					  srf:derivationAuthority ?symbolAuthority .
+				?surface srf:derivationAuthority ?surfaceAuthority .
+				FILTER (?symbolAuthority != ?surfaceAuthority)
+			}
+		"""
+	] .
+
+srf:SurfaceProfileParityShape a sh:NodeShape ;
+	sh:targetClass srf:GeneratedSurface ;
+	sh:sparql [
+		sh:message "A surface and its contract name different generation profiles, so the artefact cannot be compared with any other produced under that contract. Discharges srf:R1." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this WHERE {
+				$this srf:coversContract ?contract ;
+					  srf:generatedByProfile ?surfaceProfile .
+				?contract srf:surfaceProfile ?contractProfile .
+				FILTER (?surfaceProfile != ?contractProfile)
+			}
+		"""
+	] .

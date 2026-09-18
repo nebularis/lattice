@@ -1,0 +1,81 @@
+# SPDX-License-Identifier: MPL-2.0
+
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix srf:  <https://www.nebularis.org/neuro-semantic/lattice/surface#> .
+
+srf:SurfaceContractShape a sh:NodeShape ;
+	sh:targetClass srf:SurfaceContract ;
+	sh:property [ sh:path srf:carrier ; sh:minCount 1 ; sh:maxCount 1 ] ;
+	sh:property [ sh:path srf:contractKey ; sh:minCount 1 ; sh:maxCount 1 ] ;
+	sh:property [ sh:path srf:targetNamespace ; sh:minCount 1 ; sh:maxCount 1 ] ;
+	sh:property [ sh:path srf:realisationMode ; sh:minCount 1 ; sh:maxCount 1 ] ;
+	sh:property [ sh:path srf:surfaceProfile ; sh:minCount 1 ; sh:maxCount 1 ] ;
+	sh:property [ sh:path srf:readProperty ; sh:maxCount 1 ] ;
+	sh:property [ sh:path srf:populationBudget ; sh:maxCount 1 ] .
+
+srf:PromotionContractShape a sh:NodeShape ;
+	sh:targetClass srf:PromotionContract ;
+	sh:property [ sh:path srf:promotesTo ; sh:minCount 1 ; sh:maxCount 1 ] ;
+	sh:property [ sh:path srf:sourceFidelity ; sh:minCount 1 ; sh:maxCount 1 ] ;
+	sh:property [ sh:path srf:viaMatchRelation ; sh:maxCount 1 ] .
+
+srf:IndexContractShape a sh:NodeShape ;
+	sh:targetClass srf:IndexContract ;
+	sh:property [ sh:path srf:valuePopulation ; sh:minCount 1 ; sh:maxCount 1 ] ;
+	sh:property [ sh:path srf:indexForm ; sh:minCount 1 ] ;
+	sh:property [ sh:path srf:namingPolicy ; sh:minCount 1 ; sh:maxCount 1 ] ;
+	sh:property [ sh:path srf:closureBasis ; sh:maxCount 1 ] ;
+	sh:property [ sh:path srf:closureScope ; sh:maxCount 1 ] .
+
+srf:PathStepShape a sh:NodeShape ;
+	sh:targetClass srf:PathStep ;
+	sh:property [ sh:path srf:stepIndex ; sh:minCount 1 ; sh:maxCount 1 ] ;
+	sh:property [ sh:path srf:stepProperty ; sh:minCount 1 ; sh:maxCount 1 ] ;
+	sh:property [ sh:path srf:stepDirection ; sh:minCount 1 ; sh:maxCount 1 ] .
+
+srf:SurfaceProfileShape a sh:NodeShape ;
+	sh:targetClass srf:SurfaceProfile ;
+	sh:property [ sh:path srf:generatorVersion ; sh:minCount 1 ; sh:maxCount 1 ] ;
+	sh:property [ sh:path srf:canonicalisationVersion ; sh:minCount 1 ; sh:maxCount 1 ] ;
+	sh:property [ sh:path srf:entailmentRegime ; sh:minCount 1 ; sh:maxCount 1 ] ;
+	sh:property [ sh:path srf:namingNormalisation ; sh:minCount 1 ; sh:maxCount 1 ] ;
+	sh:property [ sh:path srf:symbolMode ; sh:minCount 1 ; sh:maxCount 1 ] ;
+	sh:property [ sh:path srf:permittedStackDepth ; sh:minCount 1 ; sh:maxCount 1 ] ;
+	sh:property [ sh:path srf:defaultPopulationBudget ; sh:maxCount 1 ] .
+
+srf:GeneratedSurfaceShape a sh:NodeShape ;
+	sh:targetClass srf:GeneratedSurface ;
+	sh:property [ sh:path srf:coversContract ; sh:minCount 1 ; sh:maxCount 1 ] ;
+	sh:property [ sh:path srf:generatedByProfile ; sh:minCount 1 ; sh:maxCount 1 ] ;
+	sh:property [ sh:path srf:derivationAuthority ; sh:minCount 1 ; sh:maxCount 1 ] ;
+	sh:property [ sh:path srf:producedAt ; sh:minCount 1 ; sh:maxCount 1 ] ;
+	sh:property [ sh:path srf:hasReadSetEntry ; sh:minCount 1 ] ;
+	sh:property [ sh:path srf:stackDepth ; sh:minCount 1 ; sh:maxCount 1 ] ;
+	sh:property [ sh:path srf:signatureScope ; sh:minCount 1 ; sh:maxCount 1 ] ;
+	sh:property [ sh:path srf:artefactHash ; sh:maxCount 1 ] ;
+	sh:property [ sh:path srf:semanticContentHash ; sh:maxCount 1 ] .
+
+srf:GeneratedSymbolShape a sh:NodeShape ;
+	sh:targetClass srf:GeneratedSymbol ;
+	sh:property [ sh:path srf:inSurface ; sh:minCount 1 ; sh:maxCount 1 ] ;
+	sh:property [ sh:path srf:symbolForm ; sh:minCount 1 ; sh:maxCount 1 ] ;
+	sh:property [ sh:path srf:denotes ; sh:minCount 1 ; sh:maxCount 1 ] ;
+	sh:property [ sh:path srf:fromValue ; sh:maxCount 1 ] .
+
+srf:ReadSetEntryShape a sh:NodeShape ;
+	sh:targetClass srf:ReadSetEntry ;
+	sh:property [ sh:path srf:readsSource ; sh:minCount 1 ; sh:maxCount 1 ] ;
+	sh:property [ sh:path srf:readSourceKind ; sh:minCount 1 ; sh:maxCount 1 ] ;
+	sh:property [ sh:path srf:readHash ; sh:minCount 1 ; sh:maxCount 1 ] ;
+	sh:property [ sh:path srf:readVersion ; sh:maxCount 1 ] .
+
+srf:SymbolCountShape a sh:NodeShape ;
+	sh:targetClass srf:SymbolCount ;
+	sh:property [ sh:path srf:countForm ; sh:minCount 1 ; sh:maxCount 1 ] ;
+	sh:property [ sh:path srf:countValue ; sh:minCount 1 ; sh:maxCount 1 ] .
+
+srf:LawDischargeShape a sh:NodeShape ;
+	sh:targetClass srf:LawDischarge ;
+	sh:property [ sh:path srf:dischargesLaw ; sh:minCount 1 ; sh:maxCount 1 ] ;
+	sh:property [ sh:path srf:dischargedForSurface ; sh:minCount 1 ; sh:maxCount 1 ] ;
+	sh:property [ sh:path srf:dischargedAt ; sh:minCount 1 ; sh:maxCount 1 ] .

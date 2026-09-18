@@ -1168,7 +1168,7 @@ This property generates the morphisms of the preorder category Int(I) (Foundatio
                   rdfs:domain :GenerativeMapping ;
                   rdfs:range :TargetingSpec ;
                   rdfs:label "has targeting spec" ;
-                  skos:definition "Binds a GenerativeMapping (ShapeMapping or RuleMapping) to its targeting specification (sh:targetClass, sh:targetObjectsOf, sh:targetSubjectsOf, or sh:targetNode, with optional jurisdiction scoping and effective date range)." .
+                  skos:definition "Binds a GenerativeMapping (ShapeMapping, RuleMapping, TransformMapping, or ProjectionMapping) to its targeting specification (sh:targetClass, sh:targetObjectsOf, sh:targetSubjectsOf, or sh:targetNode, with optional jurisdiction scoping and effective date range)." .
 
 
 ###  http://www.nebularis.org/ontologies/Mork#hasParameterBinding
@@ -1176,7 +1176,7 @@ This property generates the morphisms of the preorder category Int(I) (Foundatio
                      rdfs:domain :GenerativeMapping ;
                      rdfs:range :ParameterBinding ;
                      rdfs:label "has parameter binding" ;
-                     skos:definition "Relates a GenerativeMapping (ShapeMapping or RuleMapping) to one of its typed parameter bindings (paramName, paramType, paramValue). Also used by QueryTemplate via the separate paramBinding property." .
+                     skos:definition "Relates a GenerativeMapping (ShapeMapping, RuleMapping, TransformMapping, or ProjectionMapping) to one of its typed parameter bindings (paramName, paramType, paramValue). Also used by QueryTemplate via the separate paramBinding property." .
 
 
 ###  http://www.nebularis.org/ontologies/Mork#dependsOnMapping
@@ -1184,7 +1184,7 @@ This property generates the morphisms of the preorder category Int(I) (Foundatio
                   rdfs:domain :GenerativeMapping ;
                   rdfs:range :DataMapping ;
                   rdfs:label "depends on mapping" ;
-                  skos:definition "Compositional dependency ensuring that target concepts exist before the GenerativeMapping (ShapeMapping or RuleMapping) is compiled." .
+                  skos:definition "Compositional dependency ensuring that target concepts exist before the GenerativeMapping (ShapeMapping, RuleMapping, TransformMapping, or ProjectionMapping) is compiled." .
 
 
 ###  http://www.nebularis.org/ontologies/Mork#generatesShapeDefinition
@@ -1211,6 +1211,14 @@ This property generates the morphisms of the preorder category Int(I) (Foundatio
                               skos:definition "Links a TransformMapping to the RML/R2RML triples map (rr:TriplesMap individual) it generates when compiled. The generated triples map is structured RDF — logical source, subject map, and predicate-object/referencing-object maps — fully traversable and queryable within the RDF graph, not a serialised mapping file." .
 
 
+###  http://www.nebularis.org/ontologies/Mork#generatesClassDefinition
+:generatesClassDefinition rdf:type owl:ObjectProperty ;
+                          rdfs:domain :ProjectionMapping ;
+                          rdfs:range :OwlClass ;
+                          rdfs:label "generates class definition" ;
+                          skos:definition "Links a ProjectionMapping to a class the surface compiler minted for it." .
+
+
 ###  http://www.nebularis.org/ontologies/Mork#hasRuleTemplate
 :hasRuleTemplate rdf:type owl:ObjectProperty ;
                  rdfs:domain :RuleMapping ;
@@ -1233,6 +1241,14 @@ This property generates the morphisms of the preorder category Int(I) (Foundatio
                         rdfs:range :TransformProvenance ;
                         rdfs:label "has transform provenance" ;
                         skos:definition "Links a TransformMapping to its provenance record (origin, review chain, lifecycle metadata)." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#hasProjectionProvenance
+:hasProjectionProvenance rdf:type owl:ObjectProperty ;
+                         rdfs:domain :ProjectionMapping ;
+                         rdfs:range :ProjectionProvenance ;
+                         rdfs:label "has projection provenance" ;
+                         skos:definition "Links a ProjectionMapping to its provenance record (origin, review chain, lifecycle metadata)." .
 
 
 ###  http://www.nebularis.org/ontologies/Mork#hasShapeTemplate
@@ -1712,6 +1728,7 @@ This datatype property can be used in one of two ways:
            rdfs:domain [ rdf:type owl:Class ;
                          owl:unionOf ( :ConstraintProvenance
                                        :RuleProvenance
+                                       :ProjectionProvenance
                                      )
                        ] ;
            rdfs:range xsd:string ;
@@ -1724,6 +1741,7 @@ This datatype property can be used in one of two ways:
             rdfs:domain [ rdf:type owl:Class ;
                           owl:unionOf ( :ConstraintProvenance
                                         :RuleProvenance
+                                        :ProjectionProvenance
                                       )
                         ] ;
             rdfs:range xsd:string ;
@@ -1736,6 +1754,7 @@ This datatype property can be used in one of two ways:
                rdfs:domain [ rdf:type owl:Class ;
                              owl:unionOf ( :ConstraintProvenance
                                            :RuleProvenance
+                                           :ProjectionProvenance
                                          )
                            ] ;
                rdfs:range xsd:decimal ;
@@ -1748,6 +1767,7 @@ This datatype property can be used in one of two ways:
               rdfs:domain [ rdf:type owl:Class ;
                             owl:unionOf ( :ConstraintProvenance
                                           :RuleProvenance
+                                          :ProjectionProvenance
                                         )
                           ] ;
               rdfs:range xsd:string ;
@@ -1760,6 +1780,7 @@ This datatype property can be used in one of two ways:
                    rdfs:domain [ rdf:type owl:Class ;
                                  owl:unionOf ( :ConstraintProvenance
                                                :RuleProvenance
+                                               :ProjectionProvenance
                                              )
                                ] ;
                    rdfs:range xsd:string ;
@@ -1772,6 +1793,7 @@ This datatype property can be used in one of two ways:
                    rdfs:domain [ rdf:type owl:Class ;
                                  owl:unionOf ( :ConstraintProvenance
                                                :RuleProvenance
+                                               :ProjectionProvenance
                                              )
                                ] ;
                    rdfs:range xsd:dateTime ;
@@ -2522,8 +2544,8 @@ The expressions form a monoid (TemplateExpression, Concat, Literal(\"\")) over s
 :GenerativeMapping rdf:type owl:Class ;
                    rdfs:subClassOf :DataMapping ;
                    rdfs:label "generative mapping" ;
-                   skos:definition "The class of all DataMapping individuals whose evaluation produces a constraint, inference, or transformation artefact (SHACL shape, SWRL rule, RML triples map, or future artefact types). Serves as the common superclass for ShapeMapping, RuleMapping, and TransformMapping, and as the domain for shared properties (hasParameterBinding, hasTargetingSpec, dependsOnMapping)." ;
-                   skos:scopeNote "GenerativeMapping is not an equivalence class — it has no structural characterisation that would allow automatic classification. Membership is inferred via subclass relationships from ShapeMapping, RuleMapping, or TransformMapping." .
+                   skos:definition "The class of all DataMapping individuals whose evaluation produces a constraint, inference, transformation, or projection artefact (SHACL shape, SWRL rule, RML triples map, projection mapping records, or future artefact types). Serves as the common superclass for ShapeMapping, RuleMapping, TransformMapping, and ProjectionMapping, and as the domain for shared properties (hasParameterBinding, hasTargetingSpec, dependsOnMapping)." ;
+                   skos:scopeNote "GenerativeMapping is not an equivalence class — it has no structural characterisation that would allow automatic classification. Membership is inferred via subclass relationships from ShapeMapping, RuleMapping, TransformMapping, or ProjectionMapping." .
 
 
 ###  http://www.nebularis.org/ontologies/Mork#ShapeMapping
@@ -2586,6 +2608,22 @@ The generated triples map is structured RDF — not a serialised mapping file. I
 TransformMapping is also the natural target for the reverse (egress) direction: a DataMapping whose source is itself part of the ontology (e.g. a qnt:Quantity or qnt:Range chain) and whose rr:TriplesMap projects that chain out to a flatter, deployment-specific representation. egressProjection (§ DataMapping) names the target Representation; generatesTransformDefinition names the compiled artefact that performs the projection.""" .
 
 
+###  http://www.nebularis.org/ontologies/Mork#ProjectionMapping
+:ProjectionMapping rdf:type owl:Class ;
+                   owl:equivalentClass [ owl:intersectionOf ( :DataMapping
+                                                              [ rdf:type owl:Restriction ;
+                                                                owl:onProperty :generatesClassDefinition ;
+                                                                owl:someValuesFrom :OwlClass
+                                                              ]
+                                                            ) ;
+                                         rdf:type owl:Class
+                                       ] ;
+                   rdfs:subClassOf :GenerativeMapping ;
+                   rdfs:label "projection mapping" ;
+                   skos:definition "A generative mapping that, when compiled, produces lookup-surface class definitions as first-class RDF graph objects and records the generated symbols against the mapping." ;
+                   skos:scopeNote "Classification as ProjectionMapping is inferred from the presence of the generatesClassDefinition property pointing to an OwlClass, following the same definitional pattern as ShapeMapping, RuleMapping, and TransformMapping." .
+
+
 ###  http://www.nebularis.org/ontologies/Mork#QueryTemplate
 :QueryTemplate rdf:type owl:Class ;
                rdfs:subClassOf skos:Concept ;
@@ -2596,7 +2634,7 @@ TransformMapping is also the natural target for the reverse (egress) direction: 
 ###  http://www.nebularis.org/ontologies/Mork#TargetingSpec
 :TargetingSpec rdf:type owl:Class ;
                rdfs:label "targeting spec" ;
-               skos:definition """Binds a GenerativeMapping (ShapeMapping or RuleMapping) to its target scope within the target ontology. Supports four targeting modes from the SHACL vocabulary:
+               skos:definition """Binds a GenerativeMapping (ShapeMapping, RuleMapping, TransformMapping, or ProjectionMapping) to its target scope within the target ontology. Supports four targeting modes from the SHACL vocabulary:
 
 - sh:targetClass: the shape/rule applies to all instances of the specified class
 - sh:targetObjectsOf: applies to all objects of the specified property
@@ -2617,6 +2655,13 @@ Also supports optional jurisdiction scoping (appliesInJurisdiction) and effectiv
                       rdfs:subClassOf skos:Concept ;
                       rdfs:label "constraint provenance" ;
                       skos:definition "Records the origin and review chain of generated constraints, including LLM model ID, confidence, review status, jurisdiction, and effective period." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#ProjectionProvenance
+:ProjectionProvenance rdf:type owl:Class ;
+                      rdfs:subClassOf skos:Concept ;
+                      rdfs:label "projection provenance" ;
+                      skos:definition "Records the origin and review chain of generated projection mappings, including profile, read-set identity, review status, and generation timestamps." .
 
 
 ###  http://www.nebularis.org/ontologies/Mork#RuleScheme
@@ -2998,6 +3043,30 @@ Also supports optional jurisdiction scoping (appliesInJurisdiction) and effectiv
                                      owl:someValuesFrom :TransformProvenance
                                    ] .
 
+### ProjectionMapping must generate at least one class definition
+:ProjectionMapping rdfs:subClassOf [ rdf:type owl:Restriction ;
+                                      owl:onProperty :generatesClassDefinition ;
+                                      owl:someValuesFrom :OwlClass
+                                    ] .
+
+### ProjectionMapping must have projection provenance
+:ProjectionMapping rdfs:subClassOf [ rdf:type owl:Restriction ;
+                                      owl:onProperty :hasProjectionProvenance ;
+                                      owl:someValuesFrom :ProjectionProvenance
+                                    ] .
+
+### ProjectionMapping must have a targeting spec
+:ProjectionMapping rdfs:subClassOf [ rdf:type owl:Restriction ;
+                                      owl:onProperty :hasTargetingSpec ;
+                                      owl:someValuesFrom :TargetingSpec
+                                    ] .
+
+### ProjectionMapping must have at least one parameter binding
+:ProjectionMapping rdfs:subClassOf [ rdf:type owl:Restriction ;
+                                      owl:onProperty :hasParameterBinding ;
+                                      owl:minCardinality "1"^^xsd:nonNegativeInteger
+                                    ] .
+
 ### TargetingSpec must have at least one targeting mode (Axiom 5.6h-i)
 :TargetingSpec rdfs:subClassOf [ rdf:type owl:Class ;
                                   owl:unionOf ( [ rdf:type owl:Restriction ;
@@ -3038,3 +3107,13 @@ Also supports optional jurisdiction scoping (appliesInJurisdiction) and effectiv
                                    owl:onProperty :provenanceCreated ;
                                    owl:someValuesFrom xsd:dateTime
                                  ] .
+
+### ProjectionProvenance must have creator and creation date
+:ProjectionProvenance rdfs:subClassOf [ rdf:type owl:Restriction ;
+                                         owl:onProperty :provenanceCreator ;
+                                         owl:someValuesFrom xsd:string
+                                       ] ,
+                                       [ rdf:type owl:Restriction ;
+                                         owl:onProperty :provenanceCreated ;
+                                         owl:someValuesFrom xsd:dateTime
+                                       ] .

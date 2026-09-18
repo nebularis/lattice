@@ -21,6 +21,7 @@ This directory holds the ADRs that govern LATTICE's substrate architecture. An A
 | [A-13](ADR-A13-dataset-graph-role-model.md) | Dataset, graph-role, and provenance model | Accepted |
 | [A-14](ADR-A14-conformance-levels.md) | Conformance-level framework | Accepted |
 | [A-15](ADR-A15-realisation-strategy-neutrality.md) | Realisation-strategy neutrality | Accepted |
+| [A-16](ADR-A16-surface-projection-mechanism.md) | Surface projection mechanism | Accepted |
 | [A-03](ADR-A03-condition-taxonomy.md) | Eligibility condition taxonomy | Accepted |
 | [A-04](ADR-A04-interval-overlap-law-split.md) | Interval containment and overlap law split | Accepted |
 | [A-05](ADR-A05-compatibility-vocabulary.md) | Compatibility operation vocabulary | Accepted |
@@ -34,4 +35,4 @@ This directory holds the ADRs that govern LATTICE's substrate architecture. An A
 | [A-C1](ADR-AC1-applied-layer-theorem-restatement.md) | Applied-layer theorem restatement policy | Accepted |
 | [A-C2](ADR-AC2-clean-room-authoring-procedure.md) | Clean-room authoring procedure for substrate content | Accepted |
 
-ADR numbering deliberately skips A-02 through A-11: those IDs are reserved for the Eligibility (A-03–A-07) and Behaviour (A-08–A-11) decisions authored in Gates 2 and 3, plus A-02 for the document-hierarchy question folded into [../GOVERNANCE.md](../GOVERNANCE.md) instead of a standalone ADR. This index is updated as each is added.
+ADR numbering deliberately skips A-02. Eligibility (A-03–A-07 and A-07b) and Behaviour (A-08–A-11) are now assigned to the decisions authored in Gates 2 and 3. A-02 remains reserved for the document-hierarchy question folded into [../GOVERNANCE.md](../GOVERNANCE.md) instead of a standalone ADR. This index is updated as each is added.

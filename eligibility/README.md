@@ -40,7 +40,7 @@ Eligibility imports Foundation, Vocabulary, Quantification, and Party. Quantific
 - Compatibility operations: `AllRequired`, `AnySufficient`, `DimensionConsistent`.
 - Wildcard policies: `NoWildcard`, `SingleDimensionWildcard`, `MultiDimensionWildcard`.
 
-`HierarchicalMatch` is valid when a dimension is backed by a concept scheme whose membership is resolved against a well-founded `skos:broader` hierarchy. The closure is materialised locally so evaluation does not rely on live `skos:broader*` traversal during admission checks.
+`HierarchicalMatch` is valid when a dimension is backed by a concept scheme whose membership is resolved against a well-founded `skos:broader` hierarchy. Evaluation may compute closure at query time or use a generated surface, provided closure is interpreted over the bound scheme.
 
 ## 5. Core Model
 
@@ -86,6 +86,7 @@ elg:WildcardSemantics a owl:Class .
 elg:Decision a owl:Class .
 elg:OperationalProfile a owl:Class ; rdfs:subClassOf fnd:Version .
 elg:Law a owl:Class .
+elg:LawRegister a owl:Class .
 
 elg:hasCondition a owl:ObjectProperty ;
 	rdfs:domain elg:AdmissionProfile ; rdfs:range elg:Condition .
@@ -105,6 +106,9 @@ elg:candidateValue a owl:ObjectProperty ;
 elg:matchStrategy a owl:ObjectProperty, owl:FunctionalProperty ;
 	rdfs:domain elg:Condition ; rdfs:range elg:MatchStrategy .
 
+elg:constrainedByContract a owl:ObjectProperty ;
+	rdfs:domain elg:Condition ; rdfs:range voc:SchemeContract .
+
 elg:compatibilityOperation a owl:ObjectProperty, owl:FunctionalProperty ;
 	rdfs:domain elg:Condition ; rdfs:range elg:CompatibilityOperation .
 
@@ -119,6 +123,9 @@ elg:hasQuestion a owl:ObjectProperty ;
 
 elg:decisionValue a owl:ObjectProperty, owl:FunctionalProperty ;
 	rdfs:domain elg:EligibilityDecision ; rdfs:range elg:Decision .
+
+elg:lawRegister a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain elg:Law ; rdfs:range elg:LawRegister .
 
 elg:usesOperationalProfile a owl:ObjectProperty, owl:FunctionalProperty ;
 	rdfs:domain elg:EligibilityDecision ; rdfs:range elg:OperationalProfile .
@@ -165,6 +172,8 @@ elg:E4 a elg:OperationalProfile ; rdfs:comment "Compatibility-any profile" .
 elg:E5 a elg:OperationalProfile ; rdfs:comment "Compatibility-all profile" .
 elg:E6 a elg:OperationalProfile ; rdfs:comment "Dimension-consistency profile" .
 
+elg:SemanticLaw a elg:LawRegister ; rdfs:comment "Discharged by formal argument." .
+
 elg:L1 a elg:Law ; rdfs:comment "Each condition declares exactly one match strategy." .
 elg:L2 a elg:Law ; rdfs:comment "Each condition declares exactly one compatibility operation." .
 elg:L3 a elg:Law ; rdfs:comment "Each condition declares exactly one wildcard policy." .
@@ -173,7 +182,9 @@ elg:L5 a elg:Law ; rdfs:comment "IntervalOverlap is excluded from admissibility 
 elg:L6 a elg:Law ; rdfs:comment "EligibilityDecision has exactly one decision value." .
 elg:L7 a elg:Law ; rdfs:comment "EligibilityDecision references at least one question." .
 elg:L8 a elg:Law ; rdfs:comment "EligibilityDecision names one operational profile." .
-elg:L9 a elg:Law ; rdfs:comment "HierarchicalMatch requires a well-founded skos:broader hierarchy and a materialised local closure for the bound concept scheme." .
+elg:L9 a elg:Law ;
+	elg:lawRegister elg:SemanticLaw ;
+	rdfs:comment "Hierarchical match closure. A candidate value satisfies a condition under hierarchical match exactly when it stands in the reflexive-transitive closure of the bound scheme's ordering relation, restricted to that scheme's members, below the asserted value. The ordering relation is acyclic over the bound scheme; a scheme carrying a cycle is not evaluable under hierarchical match." .
 ```
 
 ## 7. Shapes

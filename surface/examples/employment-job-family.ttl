@@ -1,0 +1,110 @@
+# SPDX-License-Identifier: MPL-2.0
+
+@prefix srf:  <https://www.nebularis.org/neuro-semantic/lattice/surface#> .
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix voc:  <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex:   <https://example.org/lattice/surface/employment#> .
+
+# An index contract over a scheme-bound population, with per-value classes and
+# an ancestor-compatible closure relation. Retrieval by an ancestor family must
+# return assignments that assert a descendant family, without traversing the
+# scheme at query time.
+
+# --- the carrier and its dimension ------------------------------------------
+
+ex:RoleAssignment a owl:Class ;
+    rdfs:comment "An assignment of a person to a role, for a period." .
+
+ex:hasJobFamily a owl:ObjectProperty ;
+    rdfs:domain ex:RoleAssignment ;
+    rdfs:range skos:Concept .
+
+# --- the implementation-owned scheme ----------------------------------------
+
+ex:JobFamilyScheme a voc:ConceptScheme ;
+    fnd:hasIdentity ex:job-family-scheme-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Job family scheme"@en ;
+    skos:hasTopConcept ex:AnyJobFamily .
+
+ex:AnyJobFamily a skos:Concept ;
+    skos:inScheme ex:JobFamilyScheme ;
+    skos:prefLabel "Any job family"@en .
+
+ex:Technical a skos:Concept ;
+    skos:inScheme ex:JobFamilyScheme ;
+    skos:prefLabel "Technical"@en .
+
+ex:Engineering a skos:Concept ;
+    skos:inScheme ex:JobFamilyScheme ;
+    skos:prefLabel "Engineering"@en ;
+    skos:broader ex:Technical .
+
+ex:SiteReliability a skos:Concept ;
+    skos:inScheme ex:JobFamilyScheme ;
+    skos:prefLabel "Site reliability"@en ;
+    skos:broader ex:Engineering .
+
+ex:Commercial a skos:Concept ;
+    skos:inScheme ex:JobFamilyScheme ;
+    skos:prefLabel "Commercial"@en .
+
+ex:Sales a skos:Concept ;
+    skos:inScheme ex:JobFamilyScheme ;
+    skos:prefLabel "Sales"@en ;
+    skos:broader ex:Commercial .
+
+# --- the scheme contract the population follows ------------------------------
+
+ex:job-family-contract a voc:SchemeContract ;
+    fnd:hasIdentity ex:job-family-contract-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    voc:constrainsProperty ex:hasJobFamily ;
+    voc:requiresGovernanceState fnd:Active ;
+    voc:boundScheme ex:JobFamilyScheme .
+
+# --- generation profile ------------------------------------------------------
+
+ex:profile-v1 a srf:SurfaceProfile ;
+    fnd:hasIdentity ex:profile-identity ;
+    srf:generatorVersion "lattice-surface-compiler/0.1.0" ;
+    srf:canonicalisationVersion "srf-canon/1" ;
+    srf:entailmentRegime srf:NoEntailment ;
+    srf:namingNormalisation srf:SanitisedLocalName ;
+    srf:symbolMode srf:PunnedSymbols ;
+    srf:permittedStackDepth 0 ;
+    srf:defaultPopulationBudget 5000 .
+
+# --- the surface contract ----------------------------------------------------
+
+ex:job-family-population a srf:ContractBoundPopulation ;
+    srf:fromSchemeContract ex:job-family-contract .
+
+ex:job-family-index a srf:IndexContract ;
+    fnd:hasIdentity ex:job-family-index-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    srf:contractKey "job-family" ;
+    srf:carrier ex:RoleAssignment ;
+    srf:readProperty ex:hasJobFamily ;
+    srf:targetNamespace "https://example.org/lattice/surface/employment/exec#"^^xsd:anyURI ;
+    srf:realisationMode srf:DefinitionAndMaterialised ;
+    srf:surfaceProfile ex:profile-v1 ;
+    srf:valuePopulation ex:job-family-population ;
+    srf:indexForm srf:NominalClass , srf:MembershipAssertion , srf:ClosureRelation ;
+    srf:namingPolicy srf:LocalNameFromValue ;
+    srf:closureBasis skos:broader .
+
+# --- carrier instances -------------------------------------------------------
+
+ex:assignment-1 a ex:RoleAssignment ;
+    ex:hasJobFamily ex:SiteReliability .
+
+ex:assignment-2 a ex:RoleAssignment ;
+    ex:hasJobFamily ex:Commercial .
+
+ex:assignment-3 a ex:RoleAssignment ;
+    ex:hasJobFamily ex:AnyJobFamily .

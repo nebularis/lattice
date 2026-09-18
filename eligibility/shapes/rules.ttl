@@ -3,19 +3,23 @@
 @prefix sh:   <http://www.w3.org/ns/shacl#> .
 @prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix voc:  <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
 @prefix elg:  <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
 
-elg:HierarchicalClosureRule a sh:NodeShape ;
-	sh:targetClass skos:Concept ;
-	sh:rule [
-		a sh:SPARQLRule ;
-		sh:construct """
+elg:HierarchyWellFoundednessShape a sh:NodeShape ;
+	sh:targetClass elg:Condition ;
+	sh:sparql [
+		sh:message "The scheme bound to a hierarchically-matched condition contains a cycle in its ordering relation, so hierarchical match has no truth condition. Discharges elg:L9 clause (a)." ;
+		sh:select """
+			PREFIX elg: <https://www.nebularis.org/neuro-semantic/lattice/eligibility#>
+			PREFIX voc: <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#>
 			PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-			CONSTRUCT {
-				?concept skos:broaderTransitive ?ancestor .
-			}
-			WHERE {
-				?concept skos:broader+ ?ancestor .
+			SELECT $this WHERE {
+				$this elg:matchStrategy elg:HierarchicalMatch ;
+					  elg:constrainedByContract ?schemeContract .
+				?schemeContract voc:boundScheme ?scheme .
+				?concept skos:inScheme ?scheme ;
+						 skos:broader+ ?concept .
 			}
 		"""
 	] .

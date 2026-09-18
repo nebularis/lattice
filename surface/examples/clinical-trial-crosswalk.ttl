@@ -1,0 +1,88 @@
+# SPDX-License-Identifier: MPL-2.0
+
+@prefix srf:  <https://www.nebularis.org/neuro-semantic/lattice/surface#> .
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex:   <https://example.org/lattice/surface/trial#> .
+
+# A promotion that crosses between two schemes through a mapping relation
+# weaker than exact correspondence. Two things follow, and both are visible in
+# the declaration rather than left to a reader of the output:
+#
+#   1. the promoted value lands on a property minted in the contract's own
+#      target namespace, never on a property an authored layer declares, so
+#      that its derived nature is legible from the identifier alone;
+#   2. the generated surface is advisory, because a value reached across a
+#      close match answers a slightly different question from the one asked.
+
+ex:SiteEnrolment a owl:Class .
+
+ex:hasSiteCategory a owl:ObjectProperty ;
+    rdfs:domain ex:SiteEnrolment ;
+    rdfs:range skos:Concept .
+
+# --- the two schemes and the crosswalk between them --------------------------
+
+ex:LocalSiteCategoryScheme a skos:ConceptScheme .
+ex:HarmonisedSiteCategoryScheme a skos:ConceptScheme .
+
+ex:LocalTertiaryCentre a skos:Concept ;
+    skos:inScheme ex:LocalSiteCategoryScheme ;
+    skos:closeMatch ex:HarmonisedSpecialistCentre .
+
+ex:LocalCommunityClinic a skos:Concept ;
+    skos:inScheme ex:LocalSiteCategoryScheme ;
+    skos:closeMatch ex:HarmonisedPrimaryCare .
+
+ex:HarmonisedSpecialistCentre a skos:Concept ;
+    skos:inScheme ex:HarmonisedSiteCategoryScheme .
+
+ex:HarmonisedPrimaryCare a skos:Concept ;
+    skos:inScheme ex:HarmonisedSiteCategoryScheme .
+
+# --- generation profile ------------------------------------------------------
+
+ex:profile-v1 a srf:SurfaceProfile ;
+    fnd:hasIdentity ex:profile-identity ;
+    srf:generatorVersion "lattice-surface-compiler/0.1.0" ;
+    srf:canonicalisationVersion "srf-canon/1" ;
+    srf:entailmentRegime srf:NoEntailment ;
+    srf:namingNormalisation srf:SanitisedLocalName ;
+    srf:symbolMode srf:WrappedSymbols ;
+    srf:permittedStackDepth 1 .
+
+# --- the crosswalk promotion -------------------------------------------------
+
+ex:harmonised-step-0 a srf:PathStep ;
+    srf:stepIndex 0 ;
+    srf:stepProperty ex:hasSiteCategory ;
+    srf:stepDirection srf:Forward .
+
+ex:harmonised-step-1 a srf:PathStep ;
+    srf:stepIndex 1 ;
+    srf:stepProperty skos:closeMatch ;
+    srf:stepDirection srf:Forward .
+
+ex:harmonised-category-promotion a srf:PromotionContract ;
+    fnd:hasIdentity ex:harmonised-category-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    srf:contractKey "harmonised-site-category" ;
+    srf:carrier ex:SiteEnrolment ;
+    srf:hasPathStep ex:harmonised-step-0 , ex:harmonised-step-1 ;
+    srf:targetNamespace "https://example.org/lattice/surface/trial/exec#"^^xsd:anyURI ;
+    srf:realisationMode srf:Materialised ;
+    srf:surfaceProfile ex:profile-v1 ;
+    srf:promotesTo <https://example.org/lattice/surface/trial/exec#harmonisedSiteCategory> ;
+    srf:sourceFidelity srf:CrosswalkInexact ;
+    srf:viaMatchRelation skos:closeMatch .
+
+# --- carrier instances -------------------------------------------------------
+
+ex:enrolment-1 a ex:SiteEnrolment ;
+    ex:hasSiteCategory ex:LocalTertiaryCentre .
+
+ex:enrolment-2 a ex:SiteEnrolment ;
+    ex:hasSiteCategory ex:LocalCommunityClinic .

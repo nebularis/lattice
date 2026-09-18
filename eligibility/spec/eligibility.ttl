@@ -50,6 +50,7 @@ elg:WildcardSemantics a owl:Class .
 elg:Decision a owl:Class .
 elg:OperationalProfile a owl:Class ; rdfs:subClassOf fnd:Version .
 elg:Law a owl:Class .
+elg:LawRegister a owl:Class .
 
 elg:hasCondition a owl:ObjectProperty ;
 	rdfs:domain elg:AdmissionProfile ; rdfs:range elg:Condition .
@@ -69,6 +70,9 @@ elg:candidateValue a owl:ObjectProperty ;
 elg:matchStrategy a owl:ObjectProperty, owl:FunctionalProperty ;
 	rdfs:domain elg:Condition ; rdfs:range elg:MatchStrategy .
 
+elg:constrainedByContract a owl:ObjectProperty ;
+	rdfs:domain elg:Condition ; rdfs:range voc:SchemeContract .
+
 elg:compatibilityOperation a owl:ObjectProperty, owl:FunctionalProperty ;
 	rdfs:domain elg:Condition ; rdfs:range elg:CompatibilityOperation .
 
@@ -83,6 +87,9 @@ elg:hasQuestion a owl:ObjectProperty ;
 
 elg:decisionValue a owl:ObjectProperty, owl:FunctionalProperty ;
 	rdfs:domain elg:EligibilityDecision ; rdfs:range elg:Decision .
+
+elg:lawRegister a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain elg:Law ; rdfs:range elg:LawRegister .
 
 elg:usesOperationalProfile a owl:ObjectProperty, owl:FunctionalProperty ;
 	rdfs:domain elg:EligibilityDecision ; rdfs:range elg:OperationalProfile .

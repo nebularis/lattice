@@ -1,0 +1,88 @@
+# SPDX-License-Identifier: MPL-2.0
+
+@prefix srf:  <https://www.nebularis.org/neuro-semantic/lattice/surface#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@base <https://www.nebularis.org/neuro-semantic/surface-vocab> .
+
+<https://www.nebularis.org/neuro-semantic/surface-vocab>
+	a owl:Ontology ;
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/surface-vocab/0.0.1> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/surface/0.0.1> .
+
+srf:NominalClass a srf:IndexForm ; rdfs:comment "One generated class per value, defined as the carrier restricted to that value." .
+srf:MembershipAssertion a srf:IndexForm ; rdfs:comment "Asserted typing of each carrier instance into the generated class for its value." .
+srf:ClosureRelation a srf:IndexForm ; rdfs:comment "One generated relation carrying each carrier instance to every ancestor of its value under the declared basis." .
+srf:DirectProperty a srf:IndexForm ; rdfs:comment "One generated property carrying each carrier instance to the value at the end of its read path." .
+srf:ExternalIndex a srf:IndexForm ; rdfs:comment "A store-native index outside the RDF surface. Declared and not yet permitted." .
+
+srf:DefinitionOnly a srf:RealisationMode ; rdfs:comment "Emit definitions and axioms only; evaluation depends on the profile's declared entailment regime." .
+srf:Materialised a srf:RealisationMode ; rdfs:comment "Emit asserted triples only; evaluation requires no entailment." .
+srf:DefinitionAndMaterialised a srf:RealisationMode ; rdfs:comment "Emit both definitions and the assertions they would entail." .
+
+srf:LocalNameFromValue a srf:NamingPolicy ; rdfs:comment "Mint from the value's own local name." .
+srf:QualifiedLocalName a srf:NamingPolicy ; rdfs:comment "Mint from the value's local name preceded by the contract's declared naming prefix." .
+srf:DigestLocalName a srf:NamingPolicy ; rdfs:comment "Mint from a digest of the value's identifier. Injective for any population." .
+
+srf:VerbatimLocalName a srf:NamingNormalisation ; rdfs:comment "Use identifier fragments unchanged." .
+srf:SanitisedLocalName a srf:NamingNormalisation ; rdfs:comment "Replace each character outside the unreserved identifier set with a single underscore." .
+
+srf:ExactSource a srf:SourceFidelity ; rdfs:comment "The promoted value is the source value, reached by traversal alone." .
+srf:DerivedSource a srf:SourceFidelity ; rdfs:comment "The promoted value is computed from source values and is not one of them." .
+srf:CrosswalkExact a srf:SourceFidelity ; rdfs:comment "The promoted value is reached through a mapping relation asserting exact correspondence." .
+srf:CrosswalkInexact a srf:SourceFidelity ; rdfs:comment "The promoted value is reached through a mapping relation weaker than exact correspondence." .
+
+srf:NamedIndividuals a srf:ExtentKind ; rdfs:comment "The named individuals asserted to be instances of the class." .
+srf:DirectSubClasses a srf:ExtentKind ; rdfs:comment "The immediate subclasses of the class." .
+srf:TransitiveSubClasses a srf:ExtentKind ; rdfs:comment "The transitive subclasses of the class." .
+
+srf:Forward a srf:StepDirection ; rdfs:comment "Traversed from subject to object." .
+srf:Inverse a srf:StepDirection ; rdfs:comment "Traversed from object to subject." .
+
+srf:NoEntailment a srf:EntailmentRegime ; rdfs:comment "Asserted triples only." .
+srf:RDFSEntailment a srf:EntailmentRegime ; rdfs:comment "RDFS entailment." .
+srf:OWL2ELEntailment a srf:EntailmentRegime ; rdfs:comment "OWL 2 EL entailment." .
+srf:OWL2DLEntailment a srf:EntailmentRegime ; rdfs:comment "OWL 2 DL entailment." .
+
+srf:PunnedSymbols a srf:SymbolMode ; rdfs:comment "The symbol record and the minted term share one identifier." .
+srf:WrappedSymbols a srf:SymbolMode ; rdfs:comment "The symbol record is a separate individual pointing at the minted term." .
+
+srf:DeclarationSource a srf:ReadSourceKind ; rdfs:comment "An authored declaration graph." .
+srf:BoundSchemeSource a srf:ReadSourceKind ; rdfs:comment "A concept scheme bound to a scheme contract." .
+srf:InstanceGraphSource a srf:ReadSourceKind ; rdfs:comment "A graph of carrier instances." .
+srf:SurfaceSource a srf:ReadSourceKind ; rdfs:comment "Another generated surface." .
+
+srf:LocalSignature a srf:SignatureScope ; rdfs:comment "Every term the surface asserts about is one it minted itself." .
+srf:SourceSignature a srf:SignatureScope ; rdfs:comment "The surface asserts over a property an authored layer declares." .
+
+srf:Advisory a srf:DerivationAuthority ; rdfs:comment "Informative; never authoritative on its own." .
+srf:CachedReproducible a srf:DerivationAuthority ; rdfs:comment "Authoritative only because it is provably reproducible from its source." .
+
+srf:SemanticLaw a srf:LawRegister ; rdfs:comment "Discharged by formal argument and property tests." .
+srf:StaticConstraint a srf:LawRegister ; rdfs:comment "Discharged by SPARQL, SHACL, reasoner, or compiled static analysis." .
+srf:RuntimeConformance a srf:LawRegister ; rdfs:comment "Discharged only by an executed run." .
+
+srf:X1 a srf:Law ; srf:lawRegister srf:SemanticLaw ; rdfs:comment "Conservativity. For a source graph G and a local-signature surface S generated from it, G union S entails a statement over the source signature exactly when G does." .
+srf:X2 a srf:Law ; srf:lawRegister srf:SemanticLaw ; rdfs:comment "Index faithfulness. A carrier instance belongs to the generated class for a value exactly when the read path relates it to that value under the profile's declared entailment regime." .
+srf:X3 a srf:Law ; srf:lawRegister srf:SemanticLaw ; rdfs:comment "Closure soundness and completeness. A generated closure relation holds between a carrier instance and a value exactly when the read path relates that instance to some value standing in the reflexive-transitive closure of the declared basis, restricted to the declared scope." .
+srf:X4 a srf:Law ; srf:lawRegister srf:SemanticLaw ; rdfs:comment "Wildcard non-collapse. A wildcard member of a population mints a symbol on the same terms as any other member and carries no admits-everything semantics." .
+srf:X5 a srf:Law ; srf:lawRegister srf:SemanticLaw ; rdfs:comment "Promotion fidelity. A promotion declaring exact or crosswalk-exact fidelity preserves the meaning of the value it restates; a promotion declaring derived or crosswalk-inexact fidelity does not, and caps its surface at advisory authority." .
+
+srf:X6 a srf:Law ; srf:lawRegister srf:SemanticLaw ; rdfs:comment "Promotion signature discipline. A promotion onto a property outside the contract's target namespace reaches the authored signature: it declares exact or crosswalk-exact fidelity, and it is materialised rather than definitional." .
+
+srf:S1 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "Every surface contract declares a carrier, a contract key, a target namespace, a realisation mode, a profile, and exactly one read-path form." .
+srf:S2 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "A contract-bound population names a scheme contract with a bound scheme holding a required governance state." .
+srf:S3 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "A closure basis is declared exactly when a closure-relation index form is declared." .
+srf:S4 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "An index form minting one symbol per value declares an enumerable population." .
+srf:S5 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "Every population member has exactly one symbol per declared index form." .
+srf:S6 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "No two population members mint the same identifier." .
+srf:S7 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "Every minted term has a symbol record naming its value, contract, and profile." .
+srf:S8 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "Generated content occupies projection and execution graph roles only." .
+srf:S9 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "No generated surface declares an authority above cached-reproducible." .
+srf:S10 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "A generated surface's stack depth does not exceed its profile's permitted stack depth." .
+
+srf:R1 a srf:Law ; srf:lawRegister srf:RuntimeConformance ; rdfs:comment "Regeneration determinism. The same read set under the same profile yields an identical symbol inventory and an identical artefact hash." .
+srf:R2 a srf:Law ; srf:lawRegister srf:RuntimeConformance ; rdfs:comment "Surface and source parity. Every question in the shared conformance corpus is answered identically against the surface and against the source under a direct evaluation profile." .
+srf:R3 a srf:Law ; srf:lawRegister srf:RuntimeConformance ; rdfs:comment "Invalidation minimality. A scoped change regenerates only the computed impact set and leaves every other surface byte-identical." .
+srf:R4 a srf:Law ; srf:lawRegister srf:RuntimeConformance ; rdfs:comment "Materialisation idempotence. Re-running a materialisation over an unchanged read set adds no triples." .
+srf:R5 a srf:Law ; srf:lawRegister srf:RuntimeConformance ; rdfs:comment "Closure well-foundedness. The declared closure basis is acyclic over the declared scope, established by traversing it." .

@@ -1,0 +1,451 @@
+# SPDX-License-Identifier: MPL-2.0
+
+@prefix srf:  <https://www.nebularis.org/neuro-semantic/lattice/surface#> .
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix voc:  <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
+@prefix qnt:  <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+
+@base <https://www.nebularis.org/neuro-semantic/surface> .
+
+<https://www.nebularis.org/neuro-semantic/surface>
+	rdf:type owl:Ontology ;
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/surface/0.0.1> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/foundation/0.0.7> ,
+				<https://www.nebularis.org/neuro-semantic/vocabulary/0.0.2> ,
+				<https://www.nebularis.org/neuro-semantic/quantification/0.0.1> .
+
+rdf:Property rdf:type owl:Class .
+rdfs:Class rdf:type owl:Class .
+
+srf:SurfaceContract a owl:Class ;
+	rdfs:comment "A governed declaration that a relationship reachable from a carrier may be restated locally in a declared form." ;
+	fnd:utility "Author one whenever a question about a carrier must be answerable without traversing the path that establishes the answer. Give it a carrier, a read path, a realisation mode, a stable contract key, a target namespace for minted symbols, and a surface profile. Use PromotionContract to restate a value as a direct assertion and IndexContract to restate it as a retrievable symbol." ;
+	rdfs:subClassOf
+		fnd:Version ,
+		fnd:Governable ,
+		[ a owl:Restriction ; owl:onProperty srf:carrier ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+		[ a owl:Restriction ; owl:onProperty srf:contractKey ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+		[ a owl:Restriction ; owl:onProperty srf:targetNamespace ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+		[ a owl:Restriction ; owl:onProperty srf:realisationMode ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+		[ a owl:Restriction ; owl:onProperty srf:surfaceProfile ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+		[ a owl:Restriction ; owl:onProperty srf:readProperty ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ,
+		[ a owl:Restriction ; owl:onProperty srf:populationBudget ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] .
+
+srf:PromotionContract a owl:Class ;
+	rdfs:subClassOf srf:SurfaceContract ,
+		[ a owl:Restriction ; owl:onProperty srf:promotesTo ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+		[ a owl:Restriction ; owl:onProperty srf:sourceFidelity ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+		[ a owl:Restriction ; owl:onProperty srf:viaMatchRelation ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ;
+	rdfs:comment "A surface contract restating a value reachable by a read path as a direct assertion on the carrier." ;
+	fnd:utility "Use where a value is reachable only through a chain of relations or through a mapping relation into another ontology, and consumers need it on the subject itself. Set promotesTo to the local property carrying the value and sourceFidelity to state whether the restatement preserves meaning. Name any traversed mapping relation in viaMatchRelation." .
+
+srf:IndexContract a owl:Class ;
+	rdfs:subClassOf srf:SurfaceContract ,
+		[ a owl:Restriction ; owl:onProperty srf:valuePopulation ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+		[ a owl:Restriction ; owl:onProperty srf:indexForm ; owl:minCardinality "1"^^xsd:nonNegativeInteger ] ,
+		[ a owl:Restriction ; owl:onProperty srf:namingPolicy ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+		[ a owl:Restriction ; owl:onProperty srf:closureBasis ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ,
+		[ a owl:Restriction ; owl:onProperty srf:closureScope ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ;
+	rdfs:comment "A surface contract restating a carrier's values as symbols by which carriers can be retrieved." ;
+	fnd:utility "Use where retrieval by value is the hot operation. Declare the value population, one or more index forms, and a naming policy. Declare a closure basis where retrieval must also succeed for ancestors of the asserted value; closureScope narrows the value set the closure is computed over." .
+
+srf:PathStep a owl:Class ;
+	rdfs:comment "One positioned traversal within a read path, in a stated direction." ;
+	fnd:utility "Use where the value is not reachable by a single property. Add one step per hop with a zero-based stepIndex in traversal order and an explicit stepDirection. For a single-hop path use readProperty instead; a contract declares one form or the other, never both." ;
+	rdfs:subClassOf
+		[ a owl:Restriction ; owl:onProperty srf:stepIndex ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+		[ a owl:Restriction ; owl:onProperty srf:stepProperty ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+		[ a owl:Restriction ; owl:onProperty srf:stepDirection ; owl:cardinality "1"^^xsd:nonNegativeInteger ] .
+
+srf:ValuePopulation a owl:Class ;
+	rdfs:comment "The declared set of values a contract's symbols are generated for." ;
+	fnd:utility "Required by any index form that mints one symbol per value. Prefer ContractBoundPopulation, which follows a scheme contract rather than naming a scheme, so rebinding the scheme changes the population without editing the surface contract." .
+
+srf:ContractBoundPopulation a owl:Class ;
+	rdfs:subClassOf srf:ValuePopulation ,
+		[ a owl:Restriction ; owl:onProperty srf:fromSchemeContract ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ;
+	rdfs:comment "A population comprising the members of whichever scheme currently satisfies a named scheme contract." ;
+	fnd:utility "Point fromSchemeContract at the voc:SchemeContract governing the read path's value property. The population is the membership of that contract's bound scheme, in whatever governance state the contract requires." .
+
+srf:ClassExtentPopulation a owl:Class ;
+	rdfs:subClassOf srf:ValuePopulation ,
+		[ a owl:Restriction ; owl:onProperty srf:fromClass ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+		[ a owl:Restriction ; owl:onProperty srf:extentKind ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ;
+	rdfs:comment "A population comprising the declared extent of a class in a source ontology." ;
+	fnd:utility "Use to index against terms an upper ontology already names, rather than against concepts in a bound scheme. Set extentKind to state whether the extent is the class's named individuals, its direct subclasses, or its transitive subclasses." .
+
+srf:EnumeratedPopulation a owl:Class ;
+	rdfs:subClassOf srf:ValuePopulation ,
+		[ a owl:Restriction ; owl:onProperty srf:hasPopulationMember ; owl:minCardinality "1"^^xsd:nonNegativeInteger ] ;
+	rdfs:comment "A population listed explicitly, member by member." ;
+	fnd:utility "Use only where no scheme contract or class extent describes the value set — a fixture, or a deliberately partial index. An enumerated population does not track its source and will not invalidate when that source changes." .
+
+srf:RangePartitionPopulation a owl:Class ;
+	rdfs:subClassOf srf:ValuePopulation ,
+		[ a owl:Restriction ; owl:onProperty srf:fromRangeSet ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ;
+	rdfs:comment "A population comprising the partition induced by a declared range set over an ordered value space." ;
+	fnd:utility "Declared and not yet permitted. Until a partition law is stated, use a DirectProperty index form for quantified dimensions." .
+
+srf:SurfaceProfile a owl:Class ;
+	rdfs:subClassOf fnd:Version ,
+		[ a owl:Restriction ; owl:onProperty srf:generatorVersion ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+		[ a owl:Restriction ; owl:onProperty srf:canonicalisationVersion ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+		[ a owl:Restriction ; owl:onProperty srf:entailmentRegime ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+		[ a owl:Restriction ; owl:onProperty srf:namingNormalisation ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+		[ a owl:Restriction ; owl:onProperty srf:symbolMode ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+		[ a owl:Restriction ; owl:onProperty srf:permittedStackDepth ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+		[ a owl:Restriction ; owl:onProperty srf:defaultPopulationBudget ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ;
+	rdfs:comment "The declared generation configuration under which a surface is produced." ;
+	fnd:utility "Every generated artefact names one. Two artefacts are interchangeable only if they share a profile identity and the same source content, so a change to the generator, naming normalisation, symbol mode, entailment regime, or canonicalisation contract is a new profile version and a full regeneration." .
+
+srf:GeneratedClass a owl:Class ;
+	rdfs:comment "The common parent of every class minted by a surface generator." ;
+	fnd:utility "Every generated class reaches this by rdfs:subClassOf, directly or through its contract's family class. Query for its subclasses to enumerate a surface's class inventory without relying on punning." .
+
+srf:generatedRelation a owl:ObjectProperty ;
+	rdfs:comment "The common parent of every object property minted by a surface generator." ;
+	fnd:utility "Every generated object relation, including closure relations and promoted object-valued properties, is a subproperty of this." .
+
+srf:generatedAttribute a owl:DatatypeProperty ;
+	rdfs:comment "The common parent of every datatype property minted by a surface generator." ;
+	fnd:utility "Every generated literal-valued property, including promoted datatype-valued properties, is a subproperty of this." .
+
+srf:DerivedArtefact a owl:Class ;
+	rdfs:subClassOf fnd:Evidenced ,
+		[ a owl:Restriction ; owl:onProperty srf:generatedByProfile ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+		[ a owl:Restriction ; owl:onProperty srf:derivationAuthority ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+		[ a owl:Restriction ; owl:onProperty srf:producedAt ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ;
+	rdfs:comment "A recorded product of a generation run, traceable to its inputs, its profile, and its authority." ;
+	fnd:utility "Never assert one by hand. A derived artefact states what produced it and how far it may be trusted; a generated symbol without such a record is unaccounted for and fails governance." .
+
+srf:GeneratedSurface a owl:Class ;
+	rdfs:subClassOf srf:DerivedArtefact ,
+		[ a owl:Restriction ; owl:onProperty srf:coversContract ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+		[ a owl:Restriction ; owl:onProperty srf:hasReadSetEntry ; owl:minCardinality "1"^^xsd:nonNegativeInteger ] ,
+		[ a owl:Restriction ; owl:onProperty srf:stackDepth ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+		[ a owl:Restriction ; owl:onProperty srf:signatureScope ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+		[ a owl:Restriction ; owl:onProperty srf:populationSize ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ,
+		[ a owl:Restriction ; owl:onProperty srf:semanticContentHash ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ,
+		[ a owl:Restriction ; owl:onProperty srf:artefactHash ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ;
+	rdfs:comment "The recorded output of one generation run for one surface contract." ;
+	fnd:utility "One per contract per run. Carries the read set the run depended on, the symbol inventory counts, and the hashes that decide whether the surface is still current." .
+
+srf:GeneratedSymbol a owl:Class ;
+	rdfs:subClassOf srf:DerivedArtefact ,
+		[ a owl:Restriction ; owl:onProperty srf:inSurface ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+		[ a owl:Restriction ; owl:onProperty srf:symbolForm ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+		[ a owl:Restriction ; owl:onProperty srf:denotes ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+		[ a owl:Restriction ; owl:onProperty srf:fromValue ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ;
+	rdfs:comment "The record of one term minted by a generation run." ;
+	fnd:utility "Points at the minted term through denotes, and at the source value through fromValue where the form mints one symbol per value. In punned symbol mode the record and the term share an IRI; in wrapper mode they do not." .
+
+srf:ReadSetEntry a owl:Class ;
+	rdfs:subClassOf
+		[ a owl:Restriction ; owl:onProperty srf:readsSource ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+		[ a owl:Restriction ; owl:onProperty srf:readSourceKind ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+		[ a owl:Restriction ; owl:onProperty srf:readHash ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+		[ a owl:Restriction ; owl:onProperty srf:readVersion ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ;
+	rdfs:comment "One input a generation run depended on, with the version and hash it was read at." ;
+	fnd:utility "The unit of invalidation. A surface is stale when any entry's current hash differs from the recorded one; nothing else needs to be classified to know that." .
+
+srf:SymbolCount a owl:Class ;
+	rdfs:subClassOf
+		[ a owl:Restriction ; owl:onProperty srf:countForm ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+		[ a owl:Restriction ; owl:onProperty srf:countValue ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ;
+	rdfs:comment "The number of symbols a generation run minted in one index form." ;
+	fnd:utility "Use for inventory parity between runs without materialising a diff of every symbol." .
+
+srf:LawDischarge a owl:Class ;
+	rdfs:subClassOf fnd:Evidenced ,
+		[ a owl:Restriction ; owl:onProperty srf:dischargesLaw ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+		[ a owl:Restriction ; owl:onProperty srf:dischargedForSurface ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+		[ a owl:Restriction ; owl:onProperty srf:dischargedAt ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ;
+	rdfs:comment "Recorded evidence that one runtime-conformance law held for one generated surface." ;
+	fnd:utility "Required for every law in the runtime-conformance register that the contract's declared forms bring into play. A formal argument never discharges one of these; only an executed run does." .
+
+srf:IndexForm a owl:Class .
+srf:RealisationMode a owl:Class .
+srf:NamingPolicy a owl:Class .
+srf:NamingNormalisation a owl:Class .
+srf:SourceFidelity a owl:Class .
+srf:ExtentKind a owl:Class .
+srf:StepDirection a owl:Class .
+srf:EntailmentRegime a owl:Class .
+srf:SymbolMode a owl:Class .
+srf:ReadSourceKind a owl:Class .
+srf:SignatureScope a owl:Class .
+srf:DerivationAuthority a owl:Class .
+srf:Law a owl:Class ;
+	rdfs:subClassOf [ a owl:Restriction ; owl:onProperty srf:lawRegister ; owl:cardinality "1"^^xsd:nonNegativeInteger ] .
+srf:LawRegister a owl:Class .
+
+srf:carrier a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:SurfaceContract ; rdfs:range rdfs:Class ;
+	rdfs:comment "The class whose instances a surface contract restates a relationship for." ;
+	fnd:utility "Names a class declared in any layer, by punning. Surface never imports the layer the carrier belongs to." .
+
+srf:readProperty a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:SurfaceContract ; rdfs:range rdf:Property ;
+	rdfs:comment "The single property reaching a carrier's value, where the read path is one hop." ;
+	fnd:utility "Use for the common single-hop case. A contract declares either this or a sequence of PathStep individuals, never both." .
+
+srf:hasPathStep a owl:ObjectProperty ;
+	rdfs:domain srf:SurfaceContract ; rdfs:range srf:PathStep ;
+	rdfs:comment "A positioned traversal belonging to a multi-hop read path." ;
+	fnd:utility "Add one per hop; the steps' indices give the traversal order." .
+
+srf:stepProperty a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:PathStep ; rdfs:range rdf:Property ;
+	rdfs:comment "The property traversed by a path step." .
+
+srf:stepDirection a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:PathStep ; rdfs:range srf:StepDirection ;
+	rdfs:comment "Whether a path step is traversed from subject to object or from object to subject." .
+
+srf:stepIndex a owl:DatatypeProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:PathStep ; rdfs:range xsd:nonNegativeInteger ;
+	rdfs:comment "The zero-based position of a path step within its read path." .
+
+srf:surfaceProfile a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:SurfaceContract ; rdfs:range srf:SurfaceProfile ;
+	rdfs:comment "The generation profile a surface contract is generated under." .
+
+srf:realisationMode a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:SurfaceContract ; rdfs:range srf:RealisationMode ;
+	rdfs:comment "Whether a contract emits definitions, materialised assertions, or both." ;
+	fnd:utility "DefinitionOnly leaves the work to a declared entailment regime; Materialised emits assertions and needs none. Mode decides which generated module a change lands in, so it also decides invalidation scope." .
+
+srf:promotesTo a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:PromotionContract ; rdfs:range rdf:Property ;
+	rdfs:comment "The local property a promotion contract restates its value on." ;
+	fnd:utility "Declared, not minted. Point it at a property the consuming layer already declares, so consumers query a term they know." .
+
+srf:sourceFidelity a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:PromotionContract ; rdfs:range srf:SourceFidelity ;
+	rdfs:comment "Whether a promotion preserves the meaning of the value it restates." ;
+	fnd:utility "ExactSource and CrosswalkExact preserve meaning. DerivedSource and CrosswalkInexact do not, and cap the resulting surface at advisory authority." .
+
+srf:viaMatchRelation a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:PromotionContract ; rdfs:range rdf:Property ;
+	rdfs:comment "The mapping relation a promotion traverses, where it crosses between schemes." ;
+	fnd:utility "Required for either crosswalk fidelity and absent otherwise. Name the exact relation traversed rather than a family of them, since match strength is what the fidelity declaration rests on." .
+
+srf:valuePopulation a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:IndexContract ; rdfs:range srf:ValuePopulation ;
+	rdfs:comment "The value set an index contract mints symbols for." .
+
+srf:indexForm a owl:ObjectProperty ;
+	rdfs:domain srf:IndexContract ; rdfs:range srf:IndexForm ;
+	rdfs:comment "A form in which an index contract restates its values." ;
+	fnd:utility "Declare more than one where a deployment wants both a definitional surface and an inert one — NominalClass with MembershipAssertion is the usual pair." .
+
+srf:namingPolicy a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:IndexContract ; rdfs:range srf:NamingPolicy ;
+	rdfs:comment "How an index contract derives a minted symbol's identifier from a value." .
+
+srf:closureBasis a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:IndexContract ; rdfs:range rdf:Property ;
+	rdfs:comment "The property whose reflexive-transitive closure an ancestor-compatible index is computed over." ;
+	fnd:utility "Declared rather than assumed. Set it to whichever relation orders the value set — a scheme's broader relation, a subclass relation, or a deployment's own ordering property." .
+
+srf:closureScope a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:IndexContract ; rdfs:range srf:ValuePopulation ;
+	rdfs:comment "The value set a closure is computed within, where it differs from the contract's own population." ;
+	fnd:utility "Set this where the basis relation reaches values outside the indexed population and the closure must stop at the population boundary." .
+
+srf:fromSchemeContract a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:ContractBoundPopulation ; rdfs:range voc:SchemeContract ;
+	rdfs:comment "The scheme contract whose bound scheme supplies a population's members." .
+
+srf:fromClass a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:ClassExtentPopulation ; rdfs:range rdfs:Class ;
+	rdfs:comment "The class whose declared extent supplies a population's members." .
+
+srf:extentKind a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:ClassExtentPopulation ; rdfs:range srf:ExtentKind ;
+	rdfs:comment "Which extent of a class a population takes." .
+
+srf:hasPopulationMember a owl:ObjectProperty ;
+	rdfs:domain srf:EnumeratedPopulation ;
+	rdfs:comment "A value listed explicitly in an enumerated population." .
+
+srf:fromRangeSet a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:RangePartitionPopulation ; rdfs:range qnt:RangeSet ;
+	rdfs:comment "The range set whose induced partition supplies a population's members." .
+
+srf:entailmentRegime a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:SurfaceProfile ; rdfs:range srf:EntailmentRegime ;
+	rdfs:comment "The entailment regime under which a profile's definitional output is expected to be evaluated." ;
+	fnd:utility "A DefinitionOnly surface answers nothing without the regime named here. State NoEntailment only where every declared form is materialised." .
+
+srf:namingNormalisation a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:SurfaceProfile ; rdfs:range srf:NamingNormalisation ;
+	rdfs:comment "The transformation applied to identifier fragments before a symbol is minted." .
+
+srf:symbolMode a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:SurfaceProfile ; rdfs:range srf:SymbolMode ;
+	rdfs:comment "Whether a profile records symbol provenance on the minted term itself or on a separate individual." .
+
+srf:generatedByProfile a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:DerivedArtefact ; rdfs:range srf:SurfaceProfile ;
+	rdfs:comment "The profile a derived artefact was produced under." .
+
+srf:derivationAuthority a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:DerivedArtefact ; rdfs:range srf:DerivationAuthority ;
+	rdfs:comment "How far a derived artefact may be trusted on its own." ;
+	fnd:utility "A surface never declares an authority above CachedReproducible. Where an external store is the system of record, that is a synchronisation contract and not a surface." .
+
+srf:coversContract a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:GeneratedSurface ; rdfs:range srf:SurfaceContract ;
+	rdfs:comment "The surface contract a generation run was performed for." .
+
+srf:hasReadSetEntry a owl:ObjectProperty ;
+	rdfs:domain srf:GeneratedSurface ; rdfs:range srf:ReadSetEntry ;
+	rdfs:comment "An input a generation run depended on." .
+
+srf:readsSource a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:ReadSetEntry ;
+	rdfs:comment "The graph, declaration, scheme, or surface a read-set entry was taken from." .
+
+srf:readSourceKind a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:ReadSetEntry ; rdfs:range srf:ReadSourceKind ;
+	rdfs:comment "What kind of input a read-set entry names." ;
+	fnd:utility "SurfaceSource entries are what make a surface stacked; the depth they imply is checked against the profile's permitted stack depth." .
+
+srf:signatureScope a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:GeneratedSurface ; rdfs:range srf:SignatureScope ;
+	rdfs:comment "Whether a generated surface's output stays within its own minted terms or reaches the authored signature." ;
+	fnd:utility "An index is always local. A promotion is local when it restates onto a property minted in the contract's target namespace, and reaches the source signature when it restates onto a property a consuming layer already declares. Read this before treating a surface as discardable." .
+
+srf:inSurface a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:GeneratedSymbol ; rdfs:range srf:GeneratedSurface ;
+	rdfs:comment "The generated surface a symbol record belongs to." .
+
+srf:symbolForm a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:GeneratedSymbol ; rdfs:range srf:IndexForm ;
+	rdfs:comment "The index form a symbol was minted in." .
+
+srf:fromValue a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:GeneratedSymbol ;
+	rdfs:comment "The source value a symbol was minted for, where the form mints one symbol per value." .
+
+srf:denotes a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:GeneratedSymbol ;
+	rdfs:comment "The minted term a symbol record accounts for." .
+
+srf:hasSymbolCount a owl:ObjectProperty ;
+	rdfs:domain srf:GeneratedSurface ; rdfs:range srf:SymbolCount ;
+	rdfs:comment "A per-form tally of the symbols a generation run minted." .
+
+srf:countForm a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:SymbolCount ; rdfs:range srf:IndexForm ;
+	rdfs:comment "The index form a symbol count is taken over." .
+
+srf:dischargesLaw a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:LawDischarge ; rdfs:range srf:Law ;
+	rdfs:comment "The law a discharge record evidences." .
+
+srf:dischargedForSurface a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:LawDischarge ; rdfs:range srf:GeneratedSurface ;
+	rdfs:comment "The generated surface a law was discharged for." .
+
+srf:lawRegister a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:Law ; rdfs:range srf:LawRegister ;
+	rdfs:comment "Which evidence register a law belongs to." ;
+	fnd:utility "Check this before asking how a law is discharged: a semantic law needs a formal argument, a static constraint needs static analysis, a runtime-conformance claim needs an executed run." .
+
+srf:contractKey a owl:DatatypeProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:SurfaceContract ; rdfs:range xsd:string ;
+	rdfs:comment "A stable key identifying a surface contract within its deployment." ;
+	fnd:utility "Participates in every identifier the contract mints, so changing it renames the whole surface. Choose it once, at authoring time." .
+
+srf:targetNamespace a owl:DatatypeProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:SurfaceContract ; rdfs:range xsd:anyURI ;
+	rdfs:comment "The namespace a surface contract's minted identifiers are placed in." ;
+	fnd:utility "Keep generated terms out of the namespace of any authored layer, so that a generated term is recognisable as generated from its IRI alone." .
+
+srf:populationBudget a owl:DatatypeProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:SurfaceContract ; rdfs:range xsd:nonNegativeInteger ;
+	rdfs:comment "The largest population a contract may mint one symbol per value for." ;
+	fnd:utility "Overrides the profile default. Raising it is a deliberate act: a per-value form over a large population is the case a DirectProperty form exists to avoid." .
+
+srf:defaultPopulationBudget a owl:DatatypeProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:SurfaceProfile ; rdfs:range xsd:nonNegativeInteger ;
+	rdfs:comment "The population budget applied to any contract under a profile that declares none of its own." .
+
+srf:generatorVersion a owl:DatatypeProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:SurfaceProfile ; rdfs:range xsd:string ;
+	rdfs:comment "The version of the generator a profile binds." .
+
+srf:canonicalisationVersion a owl:DatatypeProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:SurfaceProfile ; rdfs:range xsd:string ;
+	rdfs:comment "The version of the canonicalisation contract a profile's hashes are computed under." .
+
+srf:namingPrefix a owl:DatatypeProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:IndexContract ; rdfs:range xsd:string ;
+	rdfs:comment "The disambiguating token inserted into minted identifiers under a qualified naming policy." .
+
+srf:permittedStackDepth a owl:DatatypeProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:SurfaceProfile ; rdfs:range xsd:nonNegativeInteger ;
+	rdfs:comment "The deepest chain of surface-over-surface generation a profile allows." .
+
+srf:stackDepth a owl:DatatypeProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:GeneratedSurface ; rdfs:range xsd:nonNegativeInteger ;
+	rdfs:comment "How many surfaces deep a generation run's read set reaches." ;
+	fnd:utility "Zero where every input is a source graph. One where an input is itself a generated surface, and so on." .
+
+srf:populationSize a owl:DatatypeProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:GeneratedSurface ; rdfs:range xsd:nonNegativeInteger ;
+	rdfs:comment "The number of values a generation run enumerated." .
+
+srf:producedAt a owl:DatatypeProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:DerivedArtefact ; rdfs:range xsd:dateTime ;
+	rdfs:comment "When a derived artefact was produced." .
+
+srf:artefactHash a owl:DatatypeProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:GeneratedSurface ; rdfs:range xsd:string ;
+	rdfs:comment "The hash of a generation run's emitted content." ;
+	fnd:utility "Compare across runs to establish that regeneration was deterministic. A change here with no change in the read set or profile is a generator defect." .
+
+srf:semanticContentHash a owl:DatatypeProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:GeneratedSurface ; rdfs:range xsd:string ;
+	rdfs:comment "The hash of the canonical, meaning-bearing inputs a generation run consumed." ;
+	fnd:utility "Together with the profile identity, decides whether an existing surface may be reused rather than regenerated." .
+
+srf:readVersion a owl:DatatypeProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:ReadSetEntry ; rdfs:range xsd:string ;
+	rdfs:comment "The version identifier an input carried when it was read." .
+
+srf:readHash a owl:DatatypeProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:ReadSetEntry ; rdfs:range xsd:string ;
+	rdfs:comment "The hash of an input's canonical content at the time it was read." .
+
+srf:countValue a owl:DatatypeProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:SymbolCount ; rdfs:range xsd:nonNegativeInteger ;
+	rdfs:comment "The number of symbols tallied in one index form." .
+
+srf:dischargedAt a owl:DatatypeProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:LawDischarge ; rdfs:range xsd:dateTime ;
+	rdfs:comment "When a law discharge was recorded." .
+
+srf:executedRun a owl:DatatypeProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:LawDischarge ; rdfs:range xsd:string ;
+	rdfs:comment "The identifier of the executed run evidencing a law discharge." .
+
+[] a owl:AllDisjointClasses ;
+	owl:members ( srf:SurfaceContract srf:PathStep srf:ValuePopulation srf:SurfaceProfile
+				  srf:DerivedArtefact srf:ReadSetEntry srf:SymbolCount srf:LawDischarge
+				  srf:IndexForm srf:RealisationMode srf:NamingPolicy srf:NamingNormalisation
+				  srf:SourceFidelity srf:ExtentKind srf:StepDirection srf:EntailmentRegime
+				  srf:SymbolMode srf:ReadSourceKind srf:SignatureScope srf:DerivationAuthority
+				  srf:Law srf:LawRegister ) .
+
+srf:PromotionContract owl:disjointWith srf:IndexContract .
+srf:GeneratedSurface owl:disjointWith srf:GeneratedSymbol .
+srf:ContractBoundPopulation owl:disjointWith srf:ClassExtentPopulation, srf:EnumeratedPopulation, srf:RangePartitionPopulation .
+srf:ClassExtentPopulation owl:disjointWith srf:EnumeratedPopulation, srf:RangePartitionPopulation .
+srf:EnumeratedPopulation owl:disjointWith srf:RangePartitionPopulation .
