@@ -11,3 +11,4 @@ examples/UncertainMappings.txt
 **/*Catalog*.xml
 WINGMAN
 .local/**
+**/*.pyc
