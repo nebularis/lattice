@@ -4,9 +4,6 @@
 
 **Generic promotion and shadow-indexing for LATTICE, with a path into MORK**
 
-Status: design proposal, pre-authoring. No artefacts cut.
-Input: MERIDIAN FBO execution-shadow package (V1, 2026-08-28) and the CSO→FBO projection contract, generalised.
-
 ---
 
 ## 0. What this document is for
