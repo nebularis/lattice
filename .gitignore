@@ -10,3 +10,4 @@ test/data/Demo.txt
 examples/UncertainMappings.txt
 **/*Catalog*.xml
 WINGMAN
+.local/**
