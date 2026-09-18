@@ -6,6 +6,7 @@ description: "A practical guide to Surface, Eligibility, MORK, and governed comp
 
 <style>
 :root {
+  color-scheme: dark;
   --book-bg: #070a12;
   --book-panel: rgba(17, 25, 43, 0.78);
   --book-text: #eef4ff;
@@ -14,6 +15,25 @@ description: "A practical guide to Surface, Eligibility, MORK, and governed comp
   --book-accent: #9df7d7;
   --book-blue: #8fb7ff;
   --book-purple: #d9a6ff;
+}
+html, body {
+  background:
+    radial-gradient(circle at 12% 0%, rgba(157,247,215,.13), transparent 28rem),
+    radial-gradient(circle at 88% 8%, rgba(143,183,255,.14), transparent 26rem),
+    linear-gradient(135deg, #05070d 0%, #09101c 48%, #0b0f1a 100%);
+  color: var(--book-text);
+}
+.book::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: linear-gradient(to bottom, black, transparent 82%);
 }
 .book {
   max-width: 1120px;
