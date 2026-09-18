@@ -53,6 +53,8 @@ Each layer follows the shared template described in the top-level README. Two bo
 
 **`spec/`, `shapes/`, `vocab/`, and `projection/` never contain executable code.** These directories are ontology content — Turtle, SHACL, SPARQL — governed by MPL 2.0 as data, not as software. Compilation logic, extraction pipelines, and anything else that runs belongs in `tools/`, licensed the same way but kept in a directory a build process can point at cleanly. CI checks for this boundary and will fail a PR that puts a script inside a layer's ontology directories.
 
+**`applied/` is the place for new domain ontologies.** If you wish to contribute a new domain, put it under here.
+
 ---
 
 ## Pull request process
@@ -62,8 +64,6 @@ Each layer follows the shared template described in the top-level README. Two bo
 3. If the change affects `execution/` output for a layer, update that layer's `invalidation-policy.md` note if the regeneration behaviour itself has changed — not for every routine regeneration, only when the policy is different.
 4. If any content in the PR was AI-drafted or AI-assisted, add the `Generated-by:` commit trailer and the AI provenance section to the PR description — see [GENAI_CONTRIBUTION.md](GENAI_CONTRIBUTION.md).
 5. `reuse lint` and the layer's own test suite need to pass before review.
-
-If a directory the per-layer template expects is missing from your local checkout, `scripts/scaffold-lattice.sh` will recreate the full structure without touching anything that already exists.
 
 ---
 
