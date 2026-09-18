@@ -10,12 +10,14 @@
 @prefix swrl: <http://www.w3.org/2003/11/swrl#> .
 @prefix swrlb: <http://www.w3.org/2003/11/swrlb#> .
 @prefix rr: <http://www.w3.org/ns/r2rml#> .
+@prefix fnd: <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
 @base <http://www.nebularis.org/ontologies/Mork#> .
 
 <http://www.nebularis.org/ontologies/Mork> rdf:type owl:Ontology ;
                                             owl:imports <http://www.w3.org/2004/02/skos/core> ,
                                                         <http://www.w3.org/ns/shacl> ,
-                                                        <http://www.w3.org/2003/11/swrl> .
+                                                        <http://www.w3.org/2003/11/swrl> ,
+                                                        <https://www.nebularis.org/neuro-semantic/foundation/0.0.7> .
 
 #################################################################
 #    Annotation properties
@@ -1658,6 +1660,15 @@ This datatype property can be used in one of two ways:
                 skos:definition "Version identifier for a MappingScheme." .
 
 
+###  http://www.nebularis.org/ontologies/Mork#compilationMode
+:compilationMode rdf:type owl:ObjectProperty ,
+                          owl:FunctionalProperty ;
+                 rdfs:domain :MappingScheme ;
+                 rdfs:range :CompilationMode ;
+                 rdfs:label "compilation mode" ;
+                 skos:definition "The compilation mode a MappingScheme's member mappings are compiled under: DraftMode, ReviewMode, or ProductionMode (Foundations §5.10b, ADR-A22). Unset is equivalent to DraftMode. Only ProductionMode brings the governance-state and version-identity SHACL gate (mork:GenerativeMappingProductionGovernanceShape) into force for that scheme's mappings; a mapping compiled under DraftMode or ReviewMode is unaffected by it." .
+
+
 ###  http://www.nebularis.org/ontologies/Mork#deprecationReason
 :deprecationReason rdf:type owl:DatatypeProperty ;
                    rdfs:domain :DataMapping ;
@@ -2091,6 +2102,12 @@ The equivalence class definition means any individual that has a deferredMapping
                rdfs:subClassOf skos:ConceptScheme ;
                rdfs:label "mapping scheme" ;
                skos:definition "a scheme that captures mappings between concepts, from a RepresentationScheme to an OntologicalScheme" .
+
+
+###  http://www.nebularis.org/ontologies/Mork#CompilationMode
+:CompilationMode rdf:type owl:Class ;
+                 rdfs:label "compilation mode" ;
+                 skos:definition "Which of draft, review, or production compilation a MappingScheme's compilationMode names (ADR-A22). Named individuals are DraftMode, ReviewMode, and ProductionMode." .
 
 
 ###  http://www.nebularis.org/ontologies/Mork#Membership
@@ -2542,10 +2559,12 @@ The expressions form a monoid (TemplateExpression, Concat, Literal(\"\")) over s
 
 ###  http://www.nebularis.org/ontologies/Mork#GenerativeMapping
 :GenerativeMapping rdf:type owl:Class ;
-                   rdfs:subClassOf :DataMapping ;
+                   rdfs:subClassOf :DataMapping ,
+                                   fnd:Governable ,
+                                   fnd:Version ;
                    rdfs:label "generative mapping" ;
                    skos:definition "The class of all DataMapping individuals whose evaluation produces a constraint, inference, transformation, or projection artefact (SHACL shape, SWRL rule, RML triples map, projection mapping records, or future artefact types). Serves as the common superclass for ShapeMapping, RuleMapping, TransformMapping, and ProjectionMapping, and as the domain for shared properties (hasParameterBinding, hasTargetingSpec, dependsOnMapping)." ;
-                   skos:scopeNote "GenerativeMapping is not an equivalence class — it has no structural characterisation that would allow automatic classification. Membership is inferred via subclass relationships from ShapeMapping, RuleMapping, TransformMapping, or ProjectionMapping." .
+                   skos:scopeNote "GenerativeMapping is not an equivalence class — it has no structural characterisation that would allow automatic classification. Membership is inferred via subclass relationships from ShapeMapping, RuleMapping, TransformMapping, or ProjectionMapping. Foundation alignment (ADR-A22): subclassing fnd:Governable and fnd:Version requires exactly one fnd:hasGovernanceState and one fnd:hasIdentity per instance at the OWL level, matching the pattern srf:SurfaceContract already uses. This is additive to, not a replacement for, the pre-existing reviewStatus (on *Provenance individuals), supersedes, mappingVersion, and deprecationReason properties, which remain valid and are unchanged; see mork/docs/governance-and-versioning-migration.md for how the two relate and for the backward-compatibility story. Production-mode compilation gating on governance state is a SHACL-level, mode-conditional check (mork:GenerativeMappingProductionGovernanceShape: beyond Draft, plus identity), not an unconditional OWL requirement — a draft-mode mapping with no governance state asserted yet is incomplete, not inconsistent." .
 
 
 ###  http://www.nebularis.org/ontologies/Mork#ShapeMapping
@@ -2700,6 +2719,27 @@ Also supports optional jurisdiction scoping (appliesInJurisdiction) and effectiv
 :Bottom rdf:type owl:NamedIndividual ,
                  :OwlAxiom ;
         owl:sameAs :OwlNothing .
+
+
+###  http://www.nebularis.org/ontologies/Mork#DraftMode
+:DraftMode rdf:type owl:NamedIndividual ,
+                    :CompilationMode ;
+           rdfs:label "draft mode" ;
+           skos:definition "Governance state and version identity are not required on member mappings. The default where compilationMode is unset (ADR-A22)." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#ReviewMode
+:ReviewMode rdf:type owl:NamedIndividual ,
+                     :CompilationMode ;
+            rdfs:label "review mode" ;
+            skos:definition "Governance state and version identity are recommended but not enforced by mork:GenerativeMappingProductionGovernanceShape on member mappings." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#ProductionMode
+:ProductionMode rdf:type owl:NamedIndividual ,
+                         :CompilationMode ;
+                rdfs:label "production mode" ;
+                skos:definition "Every GenerativeMapping in the scheme must have progressed beyond fnd:Draft governance state (Reviewed, Active, or Superseded) and declare fnd:hasIdentity before it compiles; enforced by mork:GenerativeMappingProductionGovernanceShape (ADR-A22)." .
 
 
 ###  http://www.nebularis.org/ontologies/Mork#OwlNothing

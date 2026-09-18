@@ -10,10 +10,13 @@ Literate specification for the Surface layer.
 
 A declaration graph states what is true. Answering a question against it may require traversing relations that are expensive, remote, or governed elsewhere. Surface declares how part of that graph may be restated locally — as additional symbols and assertions that make a specific class of question answerable by direct lookup, and that add nothing to what the source already meant.
 
-Two operations are declared, and only two:
+Three operations are declared:
 
 - **Promotion** — a value reachable from a subject by a declared read path is restated as a direct assertion on that subject.
 - **Indexing** — a value asserted of subjects is restated as a symbol those subjects can be retrieved by.
+- **Projection** (ADR-A17) — mapping intent that needs graph construction, derivation, a join, or an expansion is lowered into a MORK mapping graph rather than restated directly.
+
+Promotion and indexing emit their generated artefact directly. Projection does not: its intent is broader than a single read path can express, so a `ProjectionContract` lowers into MORK (ADR-A18), which a staged compiler (ADR-A19) then compiles to SPARQL, SHACL, SWRL, RML, or a native execution plan.
 
 This subsystem turns declared facts into query-friendly local surfaces without altering their meaning. A `Surface` is a generated, graph-local, query-facing restatement of a sub-graph originating in a domain or substrate ontology. The sub-graph usually refers to the target domain or substrate ontology's A-Box, though this is not a constraint.
 
@@ -41,9 +44,10 @@ The _Surface Contract_ is a declarative specification that says:
 - what namespace it emits under
 - which generation profile applies
 
-There are two main kinds of _Surface Contract_:
+There are three main kinds of _Surface Contract_:
 - `PromotionContract`
 - `IndexContract`
+- `ProjectionContract`
 
 #### Promotion, in practice
 
@@ -119,6 +123,44 @@ Let's break down what the generator does:
 - **Well-foundedness is checked, not assumed.** SPARQL cannot verify acyclicity of a closure over an arbitrary declared relation as a static shape, so the generator itself traverses the basis over the declared scope at generation time and records the result as an `srf:LawDischarge` for `srf:R5`. A closure-form surface with no such discharge on record is non-conformant.
 
 For an example of this kind of shape, see `surface/examples/employment-job-family.ttl`.
+
+#### Projection
+
+Promotion restates one value; indexing restates a value as a retrieval symbol. Neither covers intent that needs new graph structure, a computed value, evidence combined across more than one carrier, or one relation expanding into several — the case `ProjectionContract` exists for (ADR-A17). Consider annualising a subscription's recurring revenue: the value is not reachable by any single read path, because it is computed from two of the carrier's own properties rather than read off the end of a chain.
+
+```turtle-example
+@prefix srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#> .
+@prefix ex:  <https://example.org/lattice/surface/> .
+@prefix saas: <https://example.org/saas/> .
+
+ex:subscription-arr a srf:ProjectionContract ;
+	srf:contractKey "subscription-arr" ;
+	srf:carrier saas:Subscription ;
+	srf:projectionKind srf:DerivationProjection ;
+	srf:hasRoleBinding ex:arr-subject, ex:arr-price, ex:arr-frequency, ex:arr-target ;
+	srf:realisationMode srf:Materialised ;
+	srf:targetNamespace <https://example.org/saas/generated/> ;
+	srf:surfaceProfile ex:default-profile ;
+	srf:backendPolicy ex:arr-backend-policy .
+
+ex:arr-subject a srf:ProjectionRoleBinding ; srf:roleKind srf:EvaluationSubjectRole .
+ex:arr-price a srf:ProjectionRoleBinding ; srf:roleKind srf:RequiredEvidenceRole ; srf:bindsProperty saas:hasMonthlyPrice .
+ex:arr-frequency a srf:ProjectionRoleBinding ; srf:roleKind srf:RequiredEvidenceRole ; srf:bindsProperty saas:hasBillingPeriodsPerYear .
+ex:arr-target a srf:ProjectionRoleBinding ; srf:roleKind srf:ResultTargetRole ; srf:bindsProperty saas:annualRecurringRevenue .
+
+ex:arr-backend-policy a srf:ProjectionBackendPolicy ;
+	srf:allowedBackend srf:SparqlBackend, srf:NativeIrBackend ;
+	srf:deterministicOnly true ;
+	srf:llmCompletionPolicy srf:NoLLMCompletion .
+```
+
+A few things of note:
+
+- **No read path.** A projection reads its evidence through role bindings, not `srf:hasPathStep` — `srf:RequiredEvidenceRole` names the property directly, because the value isn't reached by traversal, it's read from two properties of the carrier itself and combined.
+- **Two required-evidence bindings, one contract.** Unlike `EvaluationSubjectRole`, `ResultTargetRole`, and `ClosureBasisRole`, which a contract declares at most once, `RequiredEvidenceRole` and `CandidateEvidenceRole` may repeat — a derivation commonly needs more than one input (`srf:P3`).
+- **This contract never emits SPARQL, SHACL, or anything else directly.** It lowers into a MORK mapping graph (ADR-A18); the backend policy states which compiled targets that mapping may become, and forbids LLM participation in the lowering outright (`srf:deterministicOnly true`).
+
+For a worked instance graph, see `surface/examples/saas-subscription-arr-projection.ttl`.
 
 #### Choosing an index form
 
@@ -249,13 +291,15 @@ Extraction and drift checking are performed by `tools/lattice/literate_extract.p
 
 **Well-foundedness of a closure basis is a runtime claim, not a static one.** SPARQL cannot express a property path over a variable predicate, so no fixed SHACL shape can check acyclicity for an arbitrary declared basis. The generator checks it over the declared scope and discharges the law; a surface that has not discharged it is non-conformant.
 
+**Projection lowers into MORK rather than emitting an artefact itself.** Promotion and indexing cover restatement of one already-reachable value. Graph construction, derivation, joins, and expansion are mapping-graph concerns MORK already owns, so a `ProjectionContract` declares intent and role bindings and hands the rest to MORK's mapping graph and staged compiler family (ADR-A17–ADR-A19), rather than Surface growing a second compiler for the same problem.
+
 ## 5. Architecture
 
 There are three tiers, with one class of artefact in each.
 
 ```
-DECLARATION      srf:SurfaceContract  (srf:PromotionContract | srf:IndexContract)
-                 srf:ValuePopulation · srf:PathStep · srf:SurfaceProfile
+DECLARATION      srf:SurfaceContract  (srf:PromotionContract | srf:IndexContract | srf:ProjectionContract)
+                 srf:ValuePopulation · srf:PathStep · srf:SurfaceProfile · srf:ProjectionRoleBinding · srf:ProjectionBackendPolicy
                  versioned, governable
                  "What may be restated locally, from what, in what form?"
 
@@ -346,6 +390,22 @@ srf:IndexContract a owl:Class ;
 		[ a owl:Restriction ; owl:onProperty srf:closureScope ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ;
 	rdfs:comment "A surface contract restating a carrier's values as symbols by which carriers can be retrieved." ;
 	fnd:utility "Use where retrieval by value is the hot operation. Declare the value population, one or more index forms, and a naming policy. Declare a closure basis where retrieval must also succeed for ancestors of the asserted value; closureScope narrows the value set the closure is computed over." .
+```
+
+#### `srf:ProjectionContract`
+
+**Definition.** A surface contract restating mapping intent that requires graph construction, derivation, a join, or an expansion, lowered into MORK rather than emitted directly.
+
+**Utility.** Use where neither promotion's direct-property restatement nor indexing's population membership covers the intent — a computed value, a join across carriers, or one relation expanding into several. Declare a `srf:projectionKind`, at least one role binding naming what the projection reads and where it writes, and a backend policy. A projection contract never emits SPARQL, SHACL, or SWRL itself; it lowers into a MORK mapping graph (ADR-A18), which a separate compiler stage compiles (ADR-A19).
+
+```turtle-spec
+srf:ProjectionContract a owl:Class ;
+	rdfs:subClassOf srf:SurfaceContract ,
+		[ a owl:Restriction ; owl:onProperty srf:projectionKind ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+		[ a owl:Restriction ; owl:onProperty srf:hasRoleBinding ; owl:minCardinality "1"^^xsd:nonNegativeInteger ] ,
+		[ a owl:Restriction ; owl:onProperty srf:backendPolicy ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ;
+	rdfs:comment "A surface contract restating mapping intent that requires graph construction, derivation, a join, or an expansion, lowered into MORK rather than emitted directly." ;
+	fnd:utility "Use where neither promotion's direct-property restatement nor indexing's population membership covers the intent — a computed value, a join across carriers, or one relation expanding into several. Declare a projectionKind, at least one role binding naming what the projection reads and where it writes, and a backend policy. A ProjectionContract never emits SPARQL, SHACL, or SWRL itself; it lowers into a MORK mapping graph, which a separate compiler stage compiles." .
 ```
 
 ### 6.3 Read paths
@@ -794,13 +854,114 @@ srf:executedRun a owl:DatatypeProperty, owl:FunctionalProperty ;
 				  srf:IndexForm srf:RealisationMode srf:NamingPolicy srf:NamingNormalisation
 				  srf:SourceFidelity srf:ExtentKind srf:StepDirection srf:EntailmentRegime
 				  srf:SymbolMode srf:ReadSourceKind srf:SignatureScope srf:DerivationAuthority
-				  srf:Law srf:LawRegister ) .
+				  srf:Law srf:LawRegister srf:ProjectionRoleBinding srf:ProjectionBackendPolicy
+				  srf:ProjectionKind srf:ProjectionRole srf:CompilerBackend srf:LLMCompletionPolicy ) .
 
 srf:PromotionContract owl:disjointWith srf:IndexContract .
+srf:ProjectionContract owl:disjointWith srf:PromotionContract, srf:IndexContract .
 srf:GeneratedSurface owl:disjointWith srf:GeneratedSymbol .
 srf:ContractBoundPopulation owl:disjointWith srf:ClassExtentPopulation, srf:EnumeratedPopulation, srf:RangePartitionPopulation .
 srf:ClassExtentPopulation owl:disjointWith srf:EnumeratedPopulation, srf:RangePartitionPopulation .
 srf:EnumeratedPopulation owl:disjointWith srf:RangePartitionPopulation .
+```
+
+### 6.11 Projection role bindings
+
+#### `srf:ProjectionRoleBinding`
+
+**Definition.** One named role a projection contract binds to a property and, where the role's evidence comes from a different class than the contract's own carrier, to that class.
+
+**Utility.** Name the role a property or carrier plays explicitly, rather than leaving a compiler to infer it from position — the same discipline `srf:PathStep` applies to a read path, extended to intents with more than one moving part. Every projection names at least an evaluation-subject and a result-target role; a join or derivation names candidate-evidence or required-evidence roles as well.
+
+```turtle-spec
+srf:ProjectionRoleBinding a owl:Class ;
+	rdfs:subClassOf
+		[ a owl:Restriction ; owl:onProperty srf:roleKind ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+		[ a owl:Restriction ; owl:onProperty srf:bindsProperty ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ,
+		[ a owl:Restriction ; owl:onProperty srf:bindsCarrier ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ;
+	rdfs:comment "One named role a projection contract binds to a property and, where the role's evidence comes from a different class than the contract's own carrier, to that class." ;
+	fnd:utility "Name the role a property or carrier plays explicitly, rather than leaving a compiler to infer it from position — the same discipline srf:PathStep applies to a read path, extended to intents with more than one moving part. Every projection names at least an evaluation-subject and a result-target role; a join or derivation names candidate-evidence or required-evidence roles as well." .
+```
+
+### 6.12 Projection backend policy
+
+#### `srf:ProjectionBackendPolicy`
+
+**Definition.** The declared backend eligibility and LLM-participation policy a projection contract lowers under.
+
+**Utility.** Name every backend a lowered mapping may target in `srf:allowedBackend`, or every backend it may not in `srf:deniedBackend`, never both for one backend. Set `srf:deterministicOnly` true to forbid LLM completion outright during lowering; set `srf:llmCompletionPolicy` to state what happens when it is false.
+
+```turtle-spec
+srf:ProjectionBackendPolicy a owl:Class ;
+	rdfs:subClassOf
+		[ a owl:Restriction ; owl:onProperty srf:llmCompletionPolicy ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+		[ a owl:Restriction ; owl:onProperty srf:deterministicOnly ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ;
+	rdfs:comment "The declared backend eligibility and LLM-participation policy a projection contract lowers under." ;
+	fnd:utility "Name every backend a lowered mapping may target in allowedBackend, or every backend it may not in deniedBackend, never both for one backend. Set deterministicOnly true to forbid LLM completion outright during lowering; set llmCompletionPolicy to state what happens when it is false." .
+```
+
+### 6.13 Projection mechanism kind classes
+
+```turtle-spec
+srf:ProjectionKind a owl:Class .
+srf:ProjectionRole a owl:Class .
+srf:CompilerBackend a owl:Class .
+srf:LLMCompletionPolicy a owl:Class .
+```
+
+### 6.14 Projection properties
+
+```turtle-spec
+srf:projectionKind a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:ProjectionContract ; rdfs:range srf:ProjectionKind ;
+	rdfs:comment "The mapping-intent kind a projection contract declares." .
+
+srf:hasRoleBinding a owl:ObjectProperty ;
+	rdfs:domain srf:ProjectionContract ; rdfs:range srf:ProjectionRoleBinding ;
+	rdfs:comment "A named role a projection contract binds to a property or carrier." .
+
+srf:roleKind a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:ProjectionRoleBinding ; rdfs:range srf:ProjectionRole ;
+	rdfs:comment "Which role a projection role binding fills." .
+
+srf:bindsProperty a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:ProjectionRoleBinding ; rdfs:range rdf:Property ;
+	rdfs:comment "The property a projection role binding names for its role." .
+
+srf:bindsCarrier a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:ProjectionRoleBinding ; rdfs:range rdfs:Class ;
+	rdfs:comment "The class a role's evidence is drawn from, where it differs from the contract's own carrier." ;
+	fnd:utility "Set this for a join or a required-evidence role that reaches a second carrier; leave it unset where the role reads the contract's own carrier." .
+
+srf:backendPolicy a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:ProjectionContract ; rdfs:range srf:ProjectionBackendPolicy ;
+	rdfs:comment "The backend-eligibility and LLM-participation policy a projection contract lowers under." .
+
+srf:allowedBackend a owl:ObjectProperty ;
+	rdfs:domain srf:ProjectionBackendPolicy ; rdfs:range srf:CompilerBackend ;
+	rdfs:comment "A compiler backend a lowered mapping may target." .
+
+srf:deniedBackend a owl:ObjectProperty ;
+	rdfs:domain srf:ProjectionBackendPolicy ; rdfs:range srf:CompilerBackend ;
+	rdfs:comment "A compiler backend a lowered mapping may not target." .
+
+srf:llmCompletionPolicy a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:ProjectionBackendPolicy ; rdfs:range srf:LLMCompletionPolicy ;
+	rdfs:comment "What an LLM may propose during lowering, where deterministicOnly is false." .
+
+srf:deterministicOnly a owl:DatatypeProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:ProjectionBackendPolicy ; rdfs:range xsd:boolean ;
+	rdfs:comment "Whether lowering under this policy may invoke an LLM at all." ;
+	fnd:utility "True forbids LLM participation outright, the recommended default for production. False defers to llmCompletionPolicy." .
+
+srf:approvedTemplate a owl:DatatypeProperty ;
+	rdfs:domain srf:ProjectionBackendPolicy ; rdfs:range xsd:string ;
+	rdfs:comment "The identifier of a mapping template a bounded LLM completion may draw from." .
+
+srf:producesMapping a owl:ObjectProperty ;
+	rdfs:domain srf:GeneratedSurface ;
+	rdfs:comment "A MORK mapping node a projection's generation run lowered into." ;
+	fnd:utility "Populated only for a generated surface covering a ProjectionContract. Names a mork:DataMapping, mork:ShapeMapping, mork:RuleMapping, mork:QueryTemplate, or mork:ProjectionMapping by punning, without Surface importing MORK." .
 ```
 
 ## 7. Index forms
@@ -894,11 +1055,32 @@ srf:SourceSignature a srf:SignatureScope ; rdfs:comment "The surface asserts ove
 srf:Advisory a srf:DerivationAuthority ; rdfs:comment "Informative; never authoritative on its own." .
 srf:CachedReproducible a srf:DerivationAuthority ; rdfs:comment "Authoritative only because it is provably reproducible from its source." .
 
+srf:GraphConstructionProjection a srf:ProjectionKind ; rdfs:comment "Mapping intent that constructs new graph structure not present as a single reachable value." .
+srf:DerivationProjection a srf:ProjectionKind ; rdfs:comment "Mapping intent that computes a value from one or more source values." .
+srf:JoinProjection a srf:ProjectionKind ; rdfs:comment "Mapping intent that combines evidence from more than one carrier." .
+srf:ExpansionProjection a srf:ProjectionKind ; rdfs:comment "Mapping intent that restates one relation as several." .
+
+srf:EvaluationSubjectRole a srf:ProjectionRole ; rdfs:comment "The carrier instance a projection is evaluated for." .
+srf:CandidateEvidenceRole a srf:ProjectionRole ; rdfs:comment "A value offered as evidence toward the projection's result." .
+srf:RequiredEvidenceRole a srf:ProjectionRole ; rdfs:comment "A value a projection's result cannot be computed without." .
+srf:ResultTargetRole a srf:ProjectionRole ; rdfs:comment "Where a projection's computed result is written." .
+srf:ClosureBasisRole a srf:ProjectionRole ; rdfs:comment "The relation a projection's closure, where it has one, is computed over." .
+srf:TransformDependencyRole a srf:ProjectionRole ; rdfs:comment "A dependency a derivation reads without itself being required or candidate evidence." .
+
+srf:RmlBackend a srf:CompilerBackend ; rdfs:comment "RML/R2RML triples-map compilation." .
+srf:SparqlBackend a srf:CompilerBackend ; rdfs:comment "SPARQL query compilation." .
+srf:ShaclBackend a srf:CompilerBackend ; rdfs:comment "SHACL shape compilation." .
+srf:SwrlBackend a srf:CompilerBackend ; rdfs:comment "SWRL rule compilation." .
+srf:NativeIrBackend a srf:CompilerBackend ; rdfs:comment "Native execution intermediate representation compilation." .
+
+srf:NoLLMCompletion a srf:LLMCompletionPolicy ; rdfs:comment "No LLM participation in lowering." .
+srf:BoundedLLMCompletion a srf:LLMCompletionPolicy ; rdfs:comment "An LLM may complete only declared gaps using an approved template, and every completion requires governance state before production use." .
+
 srf:SemanticLaw a srf:LawRegister ; rdfs:comment "Discharged by formal argument and property tests." .
 srf:StaticConstraint a srf:LawRegister ; rdfs:comment "Discharged by SPARQL, SHACL, reasoner, or compiled static analysis." .
 srf:RuntimeConformance a srf:LawRegister ; rdfs:comment "Discharged only by an executed run." .
 
-srf:X1 a srf:Law ; srf:lawRegister srf:SemanticLaw ; rdfs:comment "Conservativity. For a source graph G and a local-signature surface S generated from it, G union S entails a statement over the source signature exactly when G does." .
+srf:X1 a srf:Law ; srf:lawRegister srf:SemanticLaw ; rdfs:comment "Conservativity. For a source graph G and a local-signature surface S generated from it, G union S entails a statement over the source signature exactly when G does. Composition: a stacked surface's signature scope is source-signature if any surface in its read set is source-signature, and conservativity composes accordingly." .
 srf:X2 a srf:Law ; srf:lawRegister srf:SemanticLaw ; rdfs:comment "Index faithfulness. A carrier instance belongs to the generated class for a value exactly when the read path relates it to that value under the profile's declared entailment regime." .
 srf:X3 a srf:Law ; srf:lawRegister srf:SemanticLaw ; rdfs:comment "Closure soundness and completeness. A generated closure relation holds between a carrier instance and a value exactly when the read path relates that instance to some value standing in the reflexive-transitive closure of the declared basis, restricted to the declared scope." .
 srf:X4 a srf:Law ; srf:lawRegister srf:SemanticLaw ; rdfs:comment "Wildcard non-collapse. A wildcard member of a population mints a symbol on the same terms as any other member and carries no admits-everything semantics." .
@@ -917,11 +1099,17 @@ srf:S8 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "Generate
 srf:S9 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "No generated surface declares an authority above cached-reproducible." .
 srf:S10 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "A generated surface's stack depth does not exceed its profile's permitted stack depth." .
 
-srf:R1 a srf:Law ; srf:lawRegister srf:RuntimeConformance ; rdfs:comment "Regeneration determinism. The same read set under the same profile yields an identical symbol inventory and an identical artefact hash." .
+srf:R1 a srf:Law ; srf:lawRegister srf:RuntimeConformance ; rdfs:comment "Regeneration determinism. The same read set under the same profile yields an identical symbol inventory and an identical artefact hash. Composition: every surface in a stack shares one profile identity, checked statically; a mixed-profile stack is not a conformant regeneration." .
 srf:R2 a srf:Law ; srf:lawRegister srf:RuntimeConformance ; rdfs:comment "Surface and source parity. Every question in the shared conformance corpus is answered identically against the surface and against the source under a direct evaluation profile." .
 srf:R3 a srf:Law ; srf:lawRegister srf:RuntimeConformance ; rdfs:comment "Invalidation minimality. A scoped change regenerates only the computed impact set and leaves every other surface byte-identical." .
 srf:R4 a srf:Law ; srf:lawRegister srf:RuntimeConformance ; rdfs:comment "Materialisation idempotence. Re-running a materialisation over an unchanged read set adds no triples." .
 srf:R5 a srf:Law ; srf:lawRegister srf:RuntimeConformance ; rdfs:comment "Closure well-foundedness. The declared closure basis is acyclic over the declared scope, established by traversing it." .
+
+srf:P1 a srf:Law ; srf:lawRegister srf:SemanticLaw ; rdfs:comment "Projection conservativity. A local-signature projection is conservative on the same terms as an index; a source-signature projection composes under the same rule as X1 and X6." .
+srf:P2 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "Every projection contract declares exactly one projection kind and at least an evaluation-subject and a result-target role binding; a join or derivation kind additionally declares at least one candidate-evidence or required-evidence role binding." .
+srf:P3 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "A projection contract declares at most one evaluation-subject, result-target, and closure-basis role binding; candidate-evidence, required-evidence, and transform-dependency role bindings may repeat." .
+srf:P4 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "A backend policy names no compiler backend in both allowedBackend and deniedBackend." .
+srf:P5 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "A backend policy declaring deterministicOnly true declares no llmCompletionPolicy other than NoLLMCompletion." .
 ```
 
 ## 10. Shapes
@@ -1008,6 +1196,23 @@ srf:LawDischargeShape a sh:NodeShape ;
 	sh:property [ sh:path srf:dischargesLaw ; sh:minCount 1 ; sh:maxCount 1 ] ;
 	sh:property [ sh:path srf:dischargedForSurface ; sh:minCount 1 ; sh:maxCount 1 ] ;
 	sh:property [ sh:path srf:dischargedAt ; sh:minCount 1 ; sh:maxCount 1 ] .
+
+srf:ProjectionContractShape a sh:NodeShape ;
+	sh:targetClass srf:ProjectionContract ;
+	sh:property [ sh:path srf:projectionKind ; sh:minCount 1 ; sh:maxCount 1 ] ;
+	sh:property [ sh:path srf:hasRoleBinding ; sh:minCount 1 ] ;
+	sh:property [ sh:path srf:backendPolicy ; sh:maxCount 1 ] .
+
+srf:ProjectionRoleBindingShape a sh:NodeShape ;
+	sh:targetClass srf:ProjectionRoleBinding ;
+	sh:property [ sh:path srf:roleKind ; sh:minCount 1 ; sh:maxCount 1 ] ;
+	sh:property [ sh:path srf:bindsProperty ; sh:maxCount 1 ] ;
+	sh:property [ sh:path srf:bindsCarrier ; sh:maxCount 1 ] .
+
+srf:ProjectionBackendPolicyShape a sh:NodeShape ;
+	sh:targetClass srf:ProjectionBackendPolicy ;
+	sh:property [ sh:path srf:llmCompletionPolicy ; sh:minCount 1 ; sh:maxCount 1 ] ;
+	sh:property [ sh:path srf:deterministicOnly ; sh:minCount 1 ; sh:maxCount 1 ] .
 ```
 
 ```turtle-shapes
@@ -1320,6 +1525,99 @@ srf:ClosureWellFoundednessDischargedShape a sh:NodeShape ;
 			}
 		"""
 	] .
+
+srf:ProjectionEvaluationSubjectRequiredShape a sh:NodeShape ;
+	sh:targetClass srf:ProjectionContract ;
+	sh:sparql [
+		sh:message "A projection contract has no evaluation-subject role binding. Discharges srf:P2." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this WHERE {
+				$this a srf:ProjectionContract .
+				FILTER NOT EXISTS {
+					$this srf:hasRoleBinding ?binding .
+					?binding srf:roleKind srf:EvaluationSubjectRole .
+				}
+			}
+		"""
+	] .
+
+srf:ProjectionResultTargetRequiredShape a sh:NodeShape ;
+	sh:targetClass srf:ProjectionContract ;
+	sh:sparql [
+		sh:message "A projection contract has no result-target role binding. Discharges srf:P2." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this WHERE {
+				$this a srf:ProjectionContract .
+				FILTER NOT EXISTS {
+					$this srf:hasRoleBinding ?binding .
+					?binding srf:roleKind srf:ResultTargetRole .
+				}
+			}
+		"""
+	] .
+
+srf:ProjectionEvidenceRequiredForJoinOrDerivationShape a sh:NodeShape ;
+	sh:targetClass srf:ProjectionContract ;
+	sh:sparql [
+		sh:message "A join or derivation projection has no candidate-evidence or required-evidence role binding. Discharges srf:P2." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this WHERE {
+				VALUES ?evidenceKind { srf:JoinProjection srf:DerivationProjection }
+				$this srf:projectionKind ?evidenceKind .
+				FILTER NOT EXISTS {
+					$this srf:hasRoleBinding ?binding .
+					VALUES ?evidenceRole { srf:CandidateEvidenceRole srf:RequiredEvidenceRole }
+					?binding srf:roleKind ?evidenceRole .
+				}
+			}
+		"""
+	] .
+
+srf:ProjectionRoleKindSingletonShape a sh:NodeShape ;
+	sh:targetClass srf:ProjectionContract ;
+	sh:sparql [
+		sh:message "A projection contract declares more than one evaluation-subject, result-target, or closure-basis role binding. Discharges srf:P3." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this WHERE {
+				VALUES ?singletonRole { srf:EvaluationSubjectRole srf:ResultTargetRole srf:ClosureBasisRole }
+				$this srf:hasRoleBinding ?first, ?second .
+				?first srf:roleKind ?singletonRole .
+				?second srf:roleKind ?singletonRole .
+				FILTER (?first != ?second)
+			}
+		"""
+	] .
+
+srf:ProjectionBackendAllowDenyDisjointShape a sh:NodeShape ;
+	sh:targetClass srf:ProjectionBackendPolicy ;
+	sh:sparql [
+		sh:message "A backend policy names one compiler backend in both allowedBackend and deniedBackend. Discharges srf:P4." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this WHERE {
+				$this srf:allowedBackend ?backend ;
+					  srf:deniedBackend ?backend .
+			}
+		"""
+	] .
+
+srf:ProjectionDeterministicOnlyLLMPolicyShape a sh:NodeShape ;
+	sh:targetClass srf:ProjectionBackendPolicy ;
+	sh:sparql [
+		sh:message "A backend policy declares deterministicOnly true and an llmCompletionPolicy other than NoLLMCompletion. Discharges srf:P5." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this WHERE {
+				$this srf:deterministicOnly true ;
+					  srf:llmCompletionPolicy ?policy .
+				FILTER (?policy != srf:NoLLMCompletion)
+			}
+		"""
+	] .
 ```
 
 ## 11. Canonicalisation, identity, and invalidation
@@ -1357,6 +1655,7 @@ Non-domain examples are authored in:
 - `surface/examples/employment-job-family.ttl` — hierarchical closure and per-value classes over a scheme-bound population
 - `surface/examples/saas-subscription-currency.ttl` — promotion across a three-step read path onto a direct property
 - `surface/examples/clinical-trial-crosswalk.ttl` — promotion across an inexact mapping relation
+- `surface/examples/saas-subscription-arr-projection.ttl` — a derivation projection combining two required-evidence bindings into a computed result, lowered under a deterministic-only backend policy
 
 Deliberate-defect fixtures are authored in `surface/test/`.
 

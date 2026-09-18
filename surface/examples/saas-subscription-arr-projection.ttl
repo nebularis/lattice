@@ -1,0 +1,92 @@
+# SPDX-License-Identifier: MPL-2.0
+
+@prefix srf:  <https://www.nebularis.org/neuro-semantic/lattice/surface#> .
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex:   <https://example.org/lattice/surface/saas-arr#> .
+
+# A derivation projection. Annual recurring revenue is not reachable by a read
+# path at all: it is computed from two of the subscription's own properties
+# (its monthly price and its billing periods per year), so neither promotion
+# nor indexing covers it. The projection contract names the two required
+# inputs and the result target as role bindings, states its projection kind,
+# and declares a backend policy that forbids LLM participation in lowering.
+#
+# This contract lowers into a MORK mapping graph (ADR-A18); it does not emit
+# SPARQL, SHACL, or anything else itself. The three non-domain examples this
+# sibling to only need to resolve promotion and index contracts, so no
+# compiler currently reads this file's contract — see ADR-A19 and ADR-A23 for
+# when a lowering and backend-compiler pass is expected to exist.
+
+# --- the carrier and its properties ------------------------------------------
+
+ex:Subscription a owl:Class .
+
+ex:hasMonthlyPrice a owl:DatatypeProperty ;
+    rdfs:domain ex:Subscription ;
+    rdfs:range xsd:decimal .
+
+ex:hasBillingPeriodsPerYear a owl:DatatypeProperty ;
+    rdfs:domain ex:Subscription ;
+    rdfs:range xsd:integer .
+
+ex:annualRecurringRevenue a owl:DatatypeProperty ;
+    rdfs:domain ex:Subscription ;
+    rdfs:range xsd:decimal .
+
+# --- generation profile ------------------------------------------------------
+
+ex:profile-v1 a srf:SurfaceProfile ;
+    fnd:hasIdentity ex:profile-identity ;
+    srf:generatorVersion "lattice-surface-compiler/0.1.0" ;
+    srf:canonicalisationVersion "srf-canon/2" ;
+    srf:entailmentRegime srf:NoEntailment ;
+    srf:namingNormalisation srf:SanitisedLocalName ;
+    srf:symbolMode srf:PunnedSymbols ;
+    srf:permittedStackDepth 0 .
+
+# --- the projection contract -------------------------------------------------
+
+ex:arr-subject a srf:ProjectionRoleBinding ;
+    srf:roleKind srf:EvaluationSubjectRole .
+
+ex:arr-price a srf:ProjectionRoleBinding ;
+    srf:roleKind srf:RequiredEvidenceRole ;
+    srf:bindsProperty ex:hasMonthlyPrice .
+
+ex:arr-frequency a srf:ProjectionRoleBinding ;
+    srf:roleKind srf:RequiredEvidenceRole ;
+    srf:bindsProperty ex:hasBillingPeriodsPerYear .
+
+ex:arr-target a srf:ProjectionRoleBinding ;
+    srf:roleKind srf:ResultTargetRole ;
+    srf:bindsProperty ex:annualRecurringRevenue .
+
+ex:arr-backend-policy a srf:ProjectionBackendPolicy ;
+    srf:allowedBackend srf:SparqlBackend, srf:NativeIrBackend ;
+    srf:deterministicOnly true ;
+    srf:llmCompletionPolicy srf:NoLLMCompletion .
+
+ex:subscription-arr-projection a srf:ProjectionContract ;
+    fnd:hasIdentity ex:subscription-arr-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    srf:contractKey "subscription-arr" ;
+    srf:carrier ex:Subscription ;
+    srf:projectionKind srf:DerivationProjection ;
+    srf:hasRoleBinding ex:arr-subject, ex:arr-price, ex:arr-frequency, ex:arr-target ;
+    srf:targetNamespace "https://example.org/lattice/surface/saas-arr/exec#"^^xsd:anyURI ;
+    srf:realisationMode srf:Materialised ;
+    srf:surfaceProfile ex:profile-v1 ;
+    srf:backendPolicy ex:arr-backend-policy .
+
+# --- carrier instances -------------------------------------------------------
+
+ex:subscription-1 a ex:Subscription ;
+    ex:hasMonthlyPrice "1200.00"^^xsd:decimal ;
+    ex:hasBillingPeriodsPerYear "12"^^xsd:integer .
+
+ex:subscription-2 a ex:Subscription ;
+    ex:hasMonthlyPrice "9000.00"^^xsd:decimal ;
+    ex:hasBillingPeriodsPerYear "4"^^xsd:integer .

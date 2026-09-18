@@ -62,3 +62,11 @@ A surface may be generated over another surface. The read set records this as a 
 **Conformance (L7).** A conformant surface does not raise the conformance level of the graph it indexes: a surface over an analysis-ready graph does not make that graph operationally evaluable. Surfaces accelerate; they do not admit. A surface is never the evidence for an admissibility decision or an execution record — those cite declarations. That an implementation reached an answer through a surface is a realisation-profile fact recorded on the decision, not a change in what the decision rests on.
 
 **Deferred, deliberately.** `RangePartitionPopulation` and the `ExternalIndex` form are declared and rejected by this release's constraints, so that their absence is visible in the model rather than silent. Both are tracked in the outstanding-items note.
+
+## Addendum/Decision: X6 stands as designed (sign-off)
+
+Source-signature promotion stays in Surface, constrained as already stated — materialised rather than definitional, and never lossy onto an authored property. Pushing it to MORK would keep Surface strictly conservative in theory but costs the ability to express dimension-sourcing contracts (the CSO→FBO case that motivated X6) as Surface contracts at all, and Surface's whole purpose is to spare authors from writing MORK mapping detail by hand. ADR-A21 states how this composes once a surface stacks over another.
+
+## Addendum (2026-09-18): a third operation
+
+ADR-A17 extends this ADR's "two operations and only two" decision with a third, Projection, for mapping intent neither promotion nor indexing covers. This does not reopen or weaken anything decided here: Promotion and Indexing keep their laws, their direct-emit path, and this ADR's rationale unchanged. Projection is additive, gets its own law register (ADR-A20), and — unlike Promotion and Indexing — lowers into MORK rather than emitting an artefact itself (ADR-A18).

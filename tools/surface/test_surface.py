@@ -21,6 +21,7 @@ notice.
 from __future__ import annotations
 
 import unittest
+from dataclasses import replace
 from pathlib import Path
 
 from rdflib import Graph, URIRef
@@ -38,8 +39,9 @@ from .compile import (
     enumerate_population,
     evaluate_path,
 )
-from .model import ContractError, read_contracts
+from .model import ContractError, SurfaceGraphAnalyser, read_contracts, read_projection_contracts
 from .mork import HAS_PROJECTION_PROVENANCE, PROJECTION_MAPPING, lift, lower
+from .lowering import lower_all, lower_contract, lower_projection
 from .namespaces import MORK, OWL, RDF, RDFS, SRF
 from .naming import (
     DIGEST_LOCAL_NAME,
@@ -61,6 +63,7 @@ AT = "2026-09-18T00:00:00Z"
 
 EMPLOYMENT = "https://example.org/lattice/surface/employment#"
 SAAS = "https://example.org/lattice/surface/saas#"
+SAAS_ARR = "https://example.org/lattice/surface/saas-arr#"
 
 
 def load(*names: str) -> Graph:
@@ -333,6 +336,298 @@ class MorkInteropTests(unittest.TestCase):
         compiled, _ = compile_example("employment-job-family.ttl", "job-family")
         mapping = lift(compiled)
         self.assertTrue(any(mapping.triples((None, HAS_PROJECTION_PROVENANCE, None))))
+
+
+class EntailmentRegimeTests(unittest.TestCase):
+    """The compiler acts on NoEntailment only, and refuses everything else (ADR-A19 §3.5)."""
+
+    def test_no_entailment_profile_compiles(self) -> None:
+        compile_example("employment-job-family.ttl", "job-family")
+
+    def test_unsupported_entailment_regime_is_refused(self) -> None:
+        graph = load("employment-job-family.ttl")
+        contract = only_contract(graph, "job-family")
+        richer_profile = replace(contract.profile, entailment_regime=str(SRF.OWL2ELEntailment))
+        richer_contract = replace(contract, profile=richer_profile)
+        with self.assertRaisesRegex(CompileError, "entailment regime"):
+            SurfaceCompiler(richer_contract, graph, AT).compile()
+
+
+class ProjectionModelTests(unittest.TestCase):    """Parsing and law enforcement for srf:ProjectionContract (ADR-A17, ADR-A20)."""
+
+    def setUp(self) -> None:
+        self.graph = load("saas-subscription-arr-projection.ttl")
+
+    def test_projection_contract_parses_role_bindings_and_backend_policy(self) -> None:
+        contracts = read_projection_contracts(
+            self.graph, only=SAAS_ARR + "subscription-arr-projection"
+        )
+        self.assertEqual(len(contracts), 1)
+        contract = contracts[0]
+        self.assertEqual(contract.projection_kind, SRF.DerivationProjection)
+        self.assertEqual(len(contract.role_bindings), 4)
+        self.assertEqual(len(contract.roles(SRF.RequiredEvidenceRole)), 2)
+        self.assertEqual(len(contract.roles(SRF.EvaluationSubjectRole)), 1)
+        self.assertEqual(len(contract.roles(SRF.ResultTargetRole)), 1)
+        self.assertIsNotNone(contract.backend_policy)
+        self.assertTrue(contract.backend_policy.deterministic_only)
+        self.assertEqual(contract.backend_policy.llm_completion_policy, SRF.NoLLMCompletion)
+        self.assertIn(SRF.SparqlBackend, contract.backend_policy.allowed_backends)
+
+    def test_missing_evaluation_subject_role_is_refused(self) -> None:
+        graph = Graph().parse(
+            data=f"""
+            @prefix srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#> .
+            @prefix ex: <{SAAS_ARR}> .
+            @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+            ex:target a srf:ProjectionRoleBinding ; srf:roleKind srf:ResultTargetRole .
+            ex:profile-v1 a srf:SurfaceProfile ;
+                srf:generatorVersion "x" ; srf:canonicalisationVersion "srf-canon/2" ;
+                srf:entailmentRegime srf:NoEntailment ;
+                srf:namingNormalisation srf:SanitisedLocalName ;
+                srf:symbolMode srf:PunnedSymbols ; srf:permittedStackDepth 0 .
+            ex:bad a srf:ProjectionContract ;
+                srf:contractKey "bad" ; srf:carrier ex:Subscription ;
+                srf:projectionKind srf:DerivationProjection ;
+                srf:hasRoleBinding ex:target ;
+                srf:targetNamespace "https://example.org/exec#"^^xsd:anyURI ;
+                srf:realisationMode srf:Materialised ;
+                srf:surfaceProfile ex:profile-v1 .
+            """,
+            format="turtle",
+        )
+        with self.assertRaisesRegex(ContractError, "evaluation-subject"):
+            read_projection_contracts(graph)
+
+    def test_duplicate_singleton_role_is_refused(self) -> None:
+        graph = Graph().parse(
+            data=f"""
+            @prefix srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#> .
+            @prefix ex: <{SAAS_ARR}> .
+            @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+            ex:subject a srf:ProjectionRoleBinding ; srf:roleKind srf:EvaluationSubjectRole .
+            ex:subject2 a srf:ProjectionRoleBinding ; srf:roleKind srf:EvaluationSubjectRole .
+            ex:target a srf:ProjectionRoleBinding ; srf:roleKind srf:ResultTargetRole .
+            ex:profile-v1 a srf:SurfaceProfile ;
+                srf:generatorVersion "x" ; srf:canonicalisationVersion "srf-canon/2" ;
+                srf:entailmentRegime srf:NoEntailment ;
+                srf:namingNormalisation srf:SanitisedLocalName ;
+                srf:symbolMode srf:PunnedSymbols ; srf:permittedStackDepth 0 .
+            ex:bad a srf:ProjectionContract ;
+                srf:contractKey "bad" ; srf:carrier ex:Subscription ;
+                srf:projectionKind srf:GraphConstructionProjection ;
+                srf:hasRoleBinding ex:subject, ex:subject2, ex:target ;
+                srf:targetNamespace "https://example.org/exec#"^^xsd:anyURI ;
+                srf:realisationMode srf:Materialised ;
+                srf:surfaceProfile ex:profile-v1 .
+            """,
+            format="turtle",
+        )
+        with self.assertRaisesRegex(ContractError, "srf:P3"):
+            read_projection_contracts(graph)
+
+    def test_backend_named_in_both_allow_and_deny_is_refused(self) -> None:
+        with self.assertRaisesRegex(ContractError, "srf:P4"):
+            SurfaceGraphAnalyser(
+                Graph().parse(
+                    data="""
+                    @prefix srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#> .
+                    @prefix ex: <https://example.org/lattice/surface/saas-arr#> .
+                    ex:policy a srf:ProjectionBackendPolicy ;
+                        srf:allowedBackend srf:SparqlBackend ;
+                        srf:deniedBackend srf:SparqlBackend ;
+                        srf:deterministicOnly true ;
+                        srf:llmCompletionPolicy srf:NoLLMCompletion .
+                    """,
+                    format="turtle",
+                )
+            ).backend_policy(URIRef(SAAS_ARR + "policy"))
+
+    def test_deterministic_only_with_bounded_completion_is_refused(self) -> None:
+        with self.assertRaisesRegex(ContractError, "srf:P5"):
+            SurfaceGraphAnalyser(
+                Graph().parse(
+                    data="""
+                    @prefix srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#> .
+                    @prefix ex: <https://example.org/lattice/surface/saas-arr#> .
+                    ex:policy a srf:ProjectionBackendPolicy ;
+                        srf:deterministicOnly true ;
+                        srf:llmCompletionPolicy srf:BoundedLLMCompletion .
+                    """,
+                    format="turtle",
+                )
+            ).backend_policy(URIRef(SAAS_ARR + "policy"))
+
+
+class ProjectionLoweringTests(unittest.TestCase):
+    """Surface-to-MORK lowering for srf:ProjectionContract (ADR-A18)."""
+
+    def contract(self):
+        graph = load("saas-subscription-arr-projection.ttl")
+        return read_projection_contracts(
+            graph, only=SAAS_ARR + "subscription-arr-projection"
+        )[0]
+
+    def test_lower_projection_emits_one_data_mapping(self) -> None:
+        mapping_graph = lower_projection(self.contract())
+        mappings = set(mapping_graph.subjects(RDF.type, MORK.DataMapping))
+        self.assertEqual(len(mappings), 1)
+        mapping = next(iter(mappings))
+        self.assertEqual(
+            mapping_graph.value(mapping, MORK.mappingFor),
+            URIRef(SAAS_ARR + "subscription-arr-projection"),
+        )
+        self.assertTrue(any(mapping_graph.triples((mapping, MORK.hasTargetingSpec, None))))
+
+    def test_lower_projection_records_role_bindings_and_backend_policy_as_parameters(
+        self,
+    ) -> None:
+        mapping_graph = lower_projection(self.contract())
+        names = {
+            str(mapping_graph.value(node, MORK.paramName))
+            for node in mapping_graph.objects(None, MORK.hasParameterBinding)
+        }
+        self.assertIn("deterministicOnly", names)
+        self.assertIn("llmCompletionPolicy", names)
+        self.assertIn("projectionKind", names)
+        self.assertTrue(any(name.startswith("role_") for name in names))
+
+    def test_lowering_is_deterministic(self) -> None:
+        contract = self.contract()
+        first = lower_projection(contract)
+        second = lower_projection(contract)
+        self.assertEqual(canonical.hash_graph(first), canonical.hash_graph(second))
+
+
+class ContractLoweringTests(unittest.TestCase):
+    """Surface-to-MORK lowering for Promotion/Index contracts (ADR-A18, Phase 3 item 2)."""
+
+    def test_lower_contract_emits_promotion_parameters(self) -> None:
+        graph = load("saas-subscription-currency.ttl")
+        contract = only_contract(graph, "subscription-currency")
+        mapping_graph = lower_contract(contract)
+        names = {
+            str(mapping_graph.value(node, MORK.paramName))
+            for node in mapping_graph.objects(None, MORK.hasParameterBinding)
+        }
+        self.assertIn("promotesTo", names)
+        self.assertIn("sourceFidelity", names)
+        self.assertIn("readPath", names)
+
+    def test_lower_contract_emits_index_parameters(self) -> None:
+        graph = load("employment-job-family.ttl")
+        contract = only_contract(graph, "job-family")
+        mapping_graph = lower_contract(contract)
+        names = {
+            str(mapping_graph.value(node, MORK.paramName))
+            for node in mapping_graph.objects(None, MORK.hasParameterBinding)
+        }
+        self.assertIn("namingPolicy", names)
+        self.assertTrue(any(name.startswith("indexForm_") for name in names))
+
+    def test_lower_contract_agrees_with_lift_on_parameter_names(self) -> None:
+        # Same contract, two mechanisms: a bare declaration lowered directly,
+        # versus a compiled surface lifted after the fact. contract_parameter_
+        # bindings() is shared between them precisely so this holds.
+        graph = load("saas-subscription-currency.ttl")
+        contract = only_contract(graph, "subscription-currency")
+        declared = lower_contract(contract)
+        compiled, _ = compile_example("saas-subscription-currency.ttl", "subscription-currency")
+        lifted = lift(compiled)
+        declared_names = {
+            str(declared.value(node, MORK.paramName))
+            for node in declared.objects(None, MORK.hasParameterBinding)
+        }
+        lifted_names = {
+            str(lifted.value(node, MORK.paramName))
+            for node in lifted.objects(None, MORK.hasParameterBinding)
+        }
+        self.assertEqual(declared_names, lifted_names)
+
+    def test_lower_contract_mints_a_different_mapping_iri_than_lift(self) -> None:
+        # The two mechanisms must never collide on one mapping IRI for the
+        # same contract key (see lowering.py's module docstring).
+        graph = load("saas-subscription-currency.ttl")
+        contract = only_contract(graph, "subscription-currency")
+        declared_mapping = next(lower_contract(contract).subjects(RDF.type, MORK.DataMapping))
+        compiled, _ = compile_example("saas-subscription-currency.ttl", "subscription-currency")
+        lifted_mapping = next(lift(compiled).subjects(RDF.type, MORK.DataMapping))
+        self.assertNotEqual(declared_mapping, lifted_mapping)
+
+
+class LoweringDependencyTests(unittest.TestCase):
+    """The mork:dependsOnMapping graph link_dependencies/lower_all compute (ADR-A18)."""
+
+    SCENARIO = """
+        @prefix srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#> .
+        @prefix ex: <https://example.org/lattice/surface/dep#> .
+        @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+        ex:profile a srf:SurfaceProfile ;
+            srf:generatorVersion "x" ; srf:canonicalisationVersion "srf-canon/2" ;
+            srf:entailmentRegime srf:NoEntailment ;
+            srf:namingNormalisation srf:SanitisedLocalName ;
+            srf:symbolMode srf:PunnedSymbols ; srf:permittedStackDepth 0 .
+
+        ex:promotion a srf:PromotionContract ;
+            srf:contractKey "derived-value" ; srf:carrier ex:Household ;
+            srf:readProperty ex:hasIncome ;
+            srf:promotesTo ex:derivedValue ;
+            srf:sourceFidelity srf:ExactSource ;
+            srf:targetNamespace "https://example.org/exec#"^^xsd:anyURI ;
+            srf:realisationMode srf:Materialised ;
+            srf:surfaceProfile ex:profile .
+
+        ex:subject a srf:ProjectionRoleBinding ; srf:roleKind srf:EvaluationSubjectRole .
+        ex:evidence a srf:ProjectionRoleBinding ;
+            srf:roleKind srf:RequiredEvidenceRole ; srf:bindsProperty ex:derivedValue .
+        ex:household-evidence a srf:ProjectionRoleBinding ;
+            srf:roleKind srf:CandidateEvidenceRole ; srf:bindsCarrier ex:Household .
+        ex:target a srf:ProjectionRoleBinding ; srf:roleKind srf:ResultTargetRole .
+
+        ex:projection a srf:ProjectionContract ;
+            srf:contractKey "eligibility-check" ; srf:carrier ex:Applicant ;
+            srf:projectionKind srf:JoinProjection ;
+            srf:hasRoleBinding ex:subject, ex:evidence, ex:household-evidence, ex:target ;
+            srf:targetNamespace "https://example.org/exec#"^^xsd:anyURI ;
+            srf:realisationMode srf:Materialised ;
+            srf:surfaceProfile ex:profile .
+    """
+    DEP = "https://example.org/lattice/surface/dep#"
+
+    def setUp(self) -> None:
+        self.graph = Graph().parse(data=self.SCENARIO, format="turtle")
+
+    def _mapping_for(self, combined: Graph, contract_iri: str) -> URIRef:
+        return next(
+            mapping
+            for mapping in combined.subjects(RDF.type, MORK.DataMapping)
+            if combined.value(mapping, MORK.mappingFor) == URIRef(contract_iri)
+        )
+
+    def test_projection_depends_on_the_promotion_it_reads(self) -> None:
+        contracts = read_contracts(self.graph)
+        projections = read_projection_contracts(self.graph)
+        combined = lower_all(contracts=contracts, projections=projections)
+
+        promotion_mapping = self._mapping_for(combined, self.DEP + "promotion")
+        projection_mapping = self._mapping_for(combined, self.DEP + "projection")
+        depends_on = set(combined.objects(projection_mapping, MORK.dependsOnMapping))
+        self.assertIn(promotion_mapping, depends_on)
+
+    def test_promotion_is_never_a_dependant(self) -> None:
+        contracts = read_contracts(self.graph)
+        projections = read_projection_contracts(self.graph)
+        combined = lower_all(contracts=contracts, projections=projections)
+        promotion_mapping = self._mapping_for(combined, self.DEP + "promotion")
+        self.assertFalse(any(combined.triples((promotion_mapping, MORK.dependsOnMapping, None))))
+
+    def test_lower_all_is_deterministic(self) -> None:
+        contracts = read_contracts(self.graph)
+        projections = read_projection_contracts(self.graph)
+        first = lower_all(contracts=contracts, projections=projections)
+        second = lower_all(contracts=contracts, projections=projections)
+        self.assertEqual(canonical.hash_graph(first), canonical.hash_graph(second))
 
 
 class DefectFixtureTests(unittest.TestCase):

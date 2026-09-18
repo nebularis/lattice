@@ -13,3 +13,16 @@ python3 -m tools.surface compile \
 ```
 
 A deployment's own packages live in that deployment's `execution/` directory. These three exist only to make the worked examples inspectable.
+
+## Lowered MORK mapping graphs
+
+`srf:ProjectionContract` examples (and any Promotion/Index contract lowered under `--promotion-index`) regenerate their MORK mapping graph with:
+
+```bash
+python3 -m tools.surface lower \
+    --contracts surface/examples/saas-subscription-arr-projection.ttl \
+    --out surface/execution/subscription-arr/mapping.ttl
+```
+
+No lowered mapping graph is committed here yet — `tools/surface/lowering.py` (ADR-A18) was written and tested by reading, not by running, in an environment with no Python interpreter. Run the command above and commit its output once Python is available, rather than trusting a hand-authored file to be byte-accurate.
+

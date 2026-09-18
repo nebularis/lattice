@@ -38,7 +38,7 @@ Concretely:
 
 **SPC is not part of this dependency chain.** `spc/` contains a substantial, independently developed ontology (`spc/spec/spc.ttl`, `spc/README.md`) under a placeholder namespace (`http://example.org/spc#`), with no populated `projection/` directory. It is not imported by, and does not import, any layer in the order above. Integrating it — namespace harmonisation, projection contracts to Party and Behaviour — is out of scope for this ADR and is left as separate, future work.
 
-**Convention note.** No layer's README duplicates its ontology header (`owl:Ontology`, `owl:versionIRI`, `owl:imports`) inside a `turtle-spec` fence. The header is authored once, directly in `spec/<layer>.ttl`. This is the existing convention across Foundation, Vocabulary, and Party, and Quantification is corrected to follow it rather than introducing a second place the header could drift.
+**Convention note.** A layer's ontology header is authored inside its README's `turtle-spec` fence, as the first block, and extracted into `spec/<layer>.ttl` like the rest of the T-box.
 
 ## Consequences
 

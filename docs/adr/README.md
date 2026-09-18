@@ -22,6 +22,18 @@ This directory holds the ADRs that govern LATTICE's substrate architecture. An A
 | [A-14](ADR-A14-conformance-levels.md) | Conformance-level framework | Accepted |
 | [A-15](ADR-A15-realisation-strategy-neutrality.md) | Realisation-strategy neutrality | Accepted |
 | [A-16](ADR-A16-surface-projection-mechanism.md) | Surface projection mechanism | Accepted |
+| [A-17](ADR-A17-surface-unified-projection-authoring-model.md) | Surface unified projection authoring model | Accepted |
+| [A-18](ADR-A18-surface-to-mork-lowering-boundary.md) | Surface-to-MORK lowering boundary | Accepted |
+| [A-19](ADR-A19-staged-compiler-architecture-and-backend-fanout.md) | Staged compiler architecture and backend fan-out | Accepted |
+| [A-20](ADR-A20-projection-subsystem-semantics-and-laws.md) | Projection subsystem semantics and law model | Accepted |
+| [A-21](ADR-A21-signature-scope-composition-for-stacked-surfaces.md) | Signature-scope and conservativity composition in stacked surfaces | Accepted |
+| [A-22](ADR-A22-mork-governance-and-versioning-foundation-alignment.md) | MORK governance and versioning with Foundation alignment | Accepted |
+| [A-23](ADR-A23-mork-compiler-family-completion-policy.md) | MORK compiler family completion policy | Accepted |
+| [A-24](ADR-A24-eligibility-executable-semantics-backend-strategy.md) | Eligibility executable semantics and backend strategy | Accepted |
+| [A-25](ADR-A25-llm-participation-and-deterministic-production-gate.md) | LLM participation and deterministic production gate | Accepted |
+| [A-26](ADR-A26-provenance-chain-completeness-across-surface-mork-artefacts.md) | Provenance chain completeness across Surface, MORK, and artefacts | Accepted |
+| [A-27](ADR-A27-invalidation-and-minimal-scope-regeneration-policy.md) | Invalidation and minimal-scope regeneration policy | Accepted |
+| [A-28](ADR-A28-parity-and-conformance-release-gate.md) | Parity and conformance gate for generated behaviours | Accepted |
 | [A-03](ADR-A03-condition-taxonomy.md) | Eligibility condition taxonomy | Accepted |
 | [A-04](ADR-A04-interval-overlap-law-split.md) | Interval containment and overlap law split | Accepted |
 | [A-05](ADR-A05-compatibility-vocabulary.md) | Compatibility operation vocabulary | Accepted |
@@ -35,4 +47,4 @@ This directory holds the ADRs that govern LATTICE's substrate architecture. An A
 | [A-C1](ADR-AC1-applied-layer-theorem-restatement.md) | Applied-layer theorem restatement policy | Accepted |
 | [A-C2](ADR-AC2-clean-room-authoring-procedure.md) | Clean-room authoring procedure for substrate content | Accepted |
 
-ADR numbering deliberately skips A-02. Eligibility (A-03–A-07 and A-07b) and Behaviour (A-08–A-11) are now assigned to the decisions authored in Gates 2 and 3. A-02 remains reserved for the document-hierarchy question folded into [../GOVERNANCE.md](../GOVERNANCE.md) instead of a standalone ADR. This index is updated as each is added.
+ADR numbering deliberately skips A-02. Eligibility (A-03–A-07 and A-07b) and Behaviour (A-08–A-11) are now assigned to the decisions authored in Gates 2 and 3. A-02 remains reserved for the document-hierarchy question folded into [../GOVERNANCE.md](../GOVERNANCE.md) instead of a standalone ADR. A-17–A-28 are the Surface-MORK unified projection wave, numbered continuously from A-16 per the [ADR bundle outline](../../surface/docs/adr-bundle-outline-surface-mork-unified-projection.md); accepted following maintainer sign-off on the [delivery plan](../../surface/docs/surface-mork-unified-projection-delivery-plan.md) Phase 0 architecture lock. This index is updated as each is added.

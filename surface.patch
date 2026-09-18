@@ -1,0 +1,2059 @@
+diff --git a/docs/adr/ADR-A01-layer-dependency-order.md b/docs/adr/ADR-A01-layer-dependency-order.md
+index 8aba576..af0abf2 100644
+--- a/docs/adr/ADR-A01-layer-dependency-order.md
++++ b/docs/adr/ADR-A01-layer-dependency-order.md
+@@ -38,7 +38,7 @@ Concretely:
+ 
+ **SPC is not part of this dependency chain.** `spc/` contains a substantial, independently developed ontology (`spc/spec/spc.ttl`, `spc/README.md`) under a placeholder namespace (`http://example.org/spc#`), with no populated `projection/` directory. It is not imported by, and does not import, any layer in the order above. Integrating it — namespace harmonisation, projection contracts to Party and Behaviour — is out of scope for this ADR and is left as separate, future work.
+ 
+-**Convention note.** No layer's README duplicates its ontology header (`owl:Ontology`, `owl:versionIRI`, `owl:imports`) inside a `turtle-spec` fence. The header is authored once, directly in `spec/<layer>.ttl`. This is the existing convention across Foundation, Vocabulary, and Party, and Quantification is corrected to follow it rather than introducing a second place the header could drift.
++**Convention note.** A layer's ontology header is authored inside its README's `turtle-spec` fence, as the first block, and extracted into `spec/<layer>.ttl` like the rest of the T-box.
+ 
+ ## Consequences
+ 
+diff --git a/docs/adr/ADR-A16-surface-projection-mechanism.md b/docs/adr/ADR-A16-surface-projection-mechanism.md
+index b6a47c2..f97797e 100644
+--- a/docs/adr/ADR-A16-surface-projection-mechanism.md
++++ b/docs/adr/ADR-A16-surface-projection-mechanism.md
+@@ -62,3 +62,11 @@ A surface may be generated over another surface. The read set records this as a
+ **Conformance (L7).** A conformant surface does not raise the conformance level of the graph it indexes: a surface over an analysis-ready graph does not make that graph operationally evaluable. Surfaces accelerate; they do not admit. A surface is never the evidence for an admissibility decision or an execution record — those cite declarations. That an implementation reached an answer through a surface is a realisation-profile fact recorded on the decision, not a change in what the decision rests on.
+ 
+ **Deferred, deliberately.** `RangePartitionPopulation` and the `ExternalIndex` form are declared and rejected by this release's constraints, so that their absence is visible in the model rather than silent. Both are tracked in the outstanding-items note.
++
++## Addendum/Decision: X6 stands as designed (sign-off)
++
++Source-signature promotion stays in Surface, constrained as already stated — materialised rather than definitional, and never lossy onto an authored property. Pushing it to MORK would keep Surface strictly conservative in theory but costs the ability to express dimension-sourcing contracts (the CSO→FBO case that motivated X6) as Surface contracts at all, and Surface's whole purpose is to spare authors from writing MORK mapping detail by hand. ADR-A21 states how this composes once a surface stacks over another.
++
++## Addendum (2026-09-18): a third operation
++
++ADR-A17 extends this ADR's "two operations and only two" decision with a third, Projection, for mapping intent neither promotion nor indexing covers. This does not reopen or weaken anything decided here: Promotion and Indexing keep their laws, their direct-emit path, and this ADR's rationale unchanged. Projection is additive, gets its own law register (ADR-A20), and — unlike Promotion and Indexing — lowers into MORK rather than emitting an artefact itself (ADR-A18).
+diff --git a/docs/adr/README.md b/docs/adr/README.md
+index 56c2d47..c995d35 100644
+--- a/docs/adr/README.md
++++ b/docs/adr/README.md
+@@ -22,6 +22,18 @@ This directory holds the ADRs that govern LATTICE's substrate architecture. An A
+ | [A-14](ADR-A14-conformance-levels.md) | Conformance-level framework | Accepted |
+ | [A-15](ADR-A15-realisation-strategy-neutrality.md) | Realisation-strategy neutrality | Accepted |
+ | [A-16](ADR-A16-surface-projection-mechanism.md) | Surface projection mechanism | Accepted |
++| [A-17](ADR-A17-surface-unified-projection-authoring-model.md) | Surface unified projection authoring model | Accepted |
++| [A-18](ADR-A18-surface-to-mork-lowering-boundary.md) | Surface-to-MORK lowering boundary | Accepted |
++| [A-19](ADR-A19-staged-compiler-architecture-and-backend-fanout.md) | Staged compiler architecture and backend fan-out | Accepted |
++| [A-20](ADR-A20-projection-subsystem-semantics-and-laws.md) | Projection subsystem semantics and law model | Accepted |
++| [A-21](ADR-A21-signature-scope-composition-for-stacked-surfaces.md) | Signature-scope and conservativity composition in stacked surfaces | Accepted |
++| [A-22](ADR-A22-mork-governance-and-versioning-foundation-alignment.md) | MORK governance and versioning with Foundation alignment | Accepted |
++| [A-23](ADR-A23-mork-compiler-family-completion-policy.md) | MORK compiler family completion policy | Accepted |
++| [A-24](ADR-A24-eligibility-executable-semantics-backend-strategy.md) | Eligibility executable semantics and backend strategy | Accepted |
++| [A-25](ADR-A25-llm-participation-and-deterministic-production-gate.md) | LLM participation and deterministic production gate | Accepted |
++| [A-26](ADR-A26-provenance-chain-completeness-across-surface-mork-artefacts.md) | Provenance chain completeness across Surface, MORK, and artefacts | Accepted |
++| [A-27](ADR-A27-invalidation-and-minimal-scope-regeneration-policy.md) | Invalidation and minimal-scope regeneration policy | Accepted |
++| [A-28](ADR-A28-parity-and-conformance-release-gate.md) | Parity and conformance gate for generated behaviours | Accepted |
+ | [A-03](ADR-A03-condition-taxonomy.md) | Eligibility condition taxonomy | Accepted |
+ | [A-04](ADR-A04-interval-overlap-law-split.md) | Interval containment and overlap law split | Accepted |
+ | [A-05](ADR-A05-compatibility-vocabulary.md) | Compatibility operation vocabulary | Accepted |
+@@ -35,4 +47,4 @@ This directory holds the ADRs that govern LATTICE's substrate architecture. An A
+ | [A-C1](ADR-AC1-applied-layer-theorem-restatement.md) | Applied-layer theorem restatement policy | Accepted |
+ | [A-C2](ADR-AC2-clean-room-authoring-procedure.md) | Clean-room authoring procedure for substrate content | Accepted |
+ 
+-ADR numbering deliberately skips A-02. Eligibility (A-03–A-07 and A-07b) and Behaviour (A-08–A-11) are now assigned to the decisions authored in Gates 2 and 3. A-02 remains reserved for the document-hierarchy question folded into [../GOVERNANCE.md](../GOVERNANCE.md) instead of a standalone ADR. This index is updated as each is added.
++ADR numbering deliberately skips A-02. Eligibility (A-03–A-07 and A-07b) and Behaviour (A-08–A-11) are now assigned to the decisions authored in Gates 2 and 3. A-02 remains reserved for the document-hierarchy question folded into [../GOVERNANCE.md](../GOVERNANCE.md) instead of a standalone ADR. A-17–A-28 are the Surface-MORK unified projection wave, numbered continuously from A-16 per the [ADR bundle outline](../../surface/docs/adr-bundle-outline-surface-mork-unified-projection.md); accepted following maintainer sign-off on the [delivery plan](../../surface/docs/surface-mork-unified-projection-delivery-plan.md) Phase 0 architecture lock. This index is updated as each is added.
+diff --git a/docs/glossary.md b/docs/glossary.md
+index 636e619..449bb1b 100644
+--- a/docs/glossary.md
++++ b/docs/glossary.md
+@@ -4,7 +4,7 @@
+ 
+ This document provides a glossary and explanation of the terminology used throughout this repo. A handful of words get reused with different semantics depending on which part of the repository you are in. 
+ 
+-**"Projection"** is the main offender — it means a session-type operation in SPC, a confirmed-mapping lookup in MORK, and a per-layer directory of cross-layer contracts everywhere else.
++**"Projection"** is the main offender — it means a session-type operation in SPC, a confirmed-mapping lookup in MORK, a per-layer directory of cross-layer contracts everywhere else, and (proposed, see ADR-A17) a third Surface subsystem for declarative mapping intent that needs graph construction, derivation, joins, or expansion, alongside Surface's existing Promotion and Index.
+ 
+ **"OperationalProfile"** is a close second: Quantification, Eligibility, and Behaviour each declare their own class of that name, independently, for the same general purpose (naming which implementation strategy answered a question) — they are not one shared class. Where this matters, the text below says so explicitly.
+ 
+@@ -173,7 +173,9 @@ The reason Surface bothers to distinguish these carefully, and to record so much
+ 
+ Surface also gives Eligibility's `HierarchicalMatch` (see below) a second way to answer the same question: a hierarchy's closure can be computed live, by traversing `skos:broader` at query time, or it can be answered against a Surface-generated closure index instead — both are valid, as long as they agree, which is exactly the realisation-strategy neutrality principle from Part II showing up concretely. And MORK (Part IV) can *propose* a Surface contract as part of a mapping — recording, in its own vocabulary, that a mapping suggests a lookup surface be generated, and letting a compiled surface be lifted back into that same record for review before it's promoted to a governed contract.
+ 
+-*Terms introduced here:* `srf:SurfaceContract` (`srf:PromotionContract`, `srf:IndexContract`), carrier, read path, `srf:PathStep`, `srf:ValuePopulation` (and its kinds), `srf:SurfaceProfile`, index forms (`NominalClass`, `MembershipAssertion`, `ClosureRelation`, `DirectProperty`), `srf:GeneratedSurface`/`srf:GeneratedSymbol`/`srf:ReadSetEntry`, `srf:signatureScope`, `srf:derivationAuthority` (`Advisory`, `CachedReproducible`).
++A third operation, **Projection**, is proposed (ADR-A17) alongside Promotion and Index, for intent that neither restatement form covers — constructing new graph structure, deriving a value, joining across carriers, or expanding one relation into several. Unlike Promotion and Index, which can emit their generated artefact directly, a `srf:ProjectionContract` lowers into MORK's mapping graph (ADR-A18) rather than emitting SHACL, SPARQL, or SWRL itself — MORK stays the machine-facing mapping graph, and Surface stays the authoring surface. Projection gets its own law register (ADR-A20), distinct from Promotion and Index's X1–X6, though a Projection stacked over a Promotion or Index still composes under the same signature-scope rule (ADR-A21).
++
++*Terms introduced here:* `srf:SurfaceContract` (`srf:PromotionContract`, `srf:IndexContract`, and proposed `srf:ProjectionContract`), carrier, read path, `srf:PathStep`, `srf:ValuePopulation` (and its kinds), `srf:SurfaceProfile`, index forms (`NominalClass`, `MembershipAssertion`, `ClosureRelation`, `DirectProperty`), `srf:GeneratedSurface`/`srf:GeneratedSymbol`/`srf:ReadSetEntry`, `srf:signatureScope`, `srf:derivationAuthority` (`Advisory`, `CachedReproducible`).
+ 
+ ### Party — who is standing in which capacity, and how obligation flows between them
+ 
+@@ -286,6 +288,7 @@ A quick-reference index, grouped by namespace prefix, of every term introduced a
+ - **IndexContract** — a surface contract restating a carrier's values as retrievable symbols.
+ - **index forms** (`NominalClass`, `MembershipAssertion`, `ClosureRelation`, `DirectProperty`) — the concrete shapes an index can take.
+ - **PathStep** — one positioned hop in a multi-hop read path.
++- **ProjectionContract** (proposed, ADR-A17) — a surface contract for mapping intent that needs graph construction, derivation, joins, or expansion, lowered into MORK rather than emitted directly.
+ - **PromotionContract** — a surface contract restating a reachable value as a direct assertion on the carrier.
+ - **read path** — the chain of relations from a carrier to the value being restated.
+ - **signatureScope** — whether a generated surface stays within its own minted terms, or reaches an authored property in another layer.
+diff --git a/foundation/vocab/foundation-vocab.ttl b/foundation/vocab/foundation-vocab.ttl
+index 086022d..bdba1b5 100644
+--- a/foundation/vocab/foundation-vocab.ttl
++++ b/foundation/vocab/foundation-vocab.ttl
+@@ -17,4 +17,28 @@
+ #################################################################
+ 
+ 
++###  https://www.nebularis.org/neuro-semantic/lattice/foundation#Draft
++fnd:Draft rdf:type owl:NamedIndividual , fnd:GovernanceState ;
++    rdfs:label "Draft"@en ;
++    rdfs:comment "Newly authored or proposed; not yet reviewed." .
++
++
++###  https://www.nebularis.org/neuro-semantic/lattice/foundation#Reviewed
++fnd:Reviewed rdf:type owl:NamedIndividual , fnd:GovernanceState ;
++    rdfs:label "Reviewed"@en ;
++    rdfs:comment "Reviewed and found sound; not yet promoted to active use." .
++
++
++###  https://www.nebularis.org/neuro-semantic/lattice/foundation#Active
++fnd:Active rdf:type owl:NamedIndividual , fnd:GovernanceState ;
++    rdfs:label "Active"@en ;
++    rdfs:comment "Currently in force and trusted for use." .
++
++
++###  https://www.nebularis.org/neuro-semantic/lattice/foundation#Superseded
++fnd:Superseded rdf:type owl:NamedIndividual , fnd:GovernanceState ;
++    rdfs:label "Superseded"@en ;
++    rdfs:comment "Replaced by a later version or decision; retained for history, not for new use." .
++
++
+ ###  Generated by the OWL API (version 4.5.29.2024-05-13T12:11:03Z) https://github.com/owlcs/owlapi
+diff --git a/mork/spec/Mork.ttl b/mork/spec/Mork.ttl
+index 982a30f..cfd4872 100644
+--- a/mork/spec/Mork.ttl
++++ b/mork/spec/Mork.ttl
+@@ -10,12 +10,14 @@
+ @prefix swrl: <http://www.w3.org/2003/11/swrl#> .
+ @prefix swrlb: <http://www.w3.org/2003/11/swrlb#> .
+ @prefix rr: <http://www.w3.org/ns/r2rml#> .
++@prefix fnd: <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+ @base <http://www.nebularis.org/ontologies/Mork#> .
+ 
+ <http://www.nebularis.org/ontologies/Mork> rdf:type owl:Ontology ;
+                                             owl:imports <http://www.w3.org/2004/02/skos/core> ,
+                                                         <http://www.w3.org/ns/shacl> ,
+-                                                        <http://www.w3.org/2003/11/swrl> .
++                                                        <http://www.w3.org/2003/11/swrl> ,
++                                                        <https://www.nebularis.org/neuro-semantic/foundation/0.0.7> .
+ 
+ #################################################################
+ #    Annotation properties
+@@ -1658,6 +1660,15 @@ This datatype property can be used in one of two ways:
+                 skos:definition "Version identifier for a MappingScheme." .
+ 
+ 
++###  http://www.nebularis.org/ontologies/Mork#compilationMode
++:compilationMode rdf:type owl:ObjectProperty ,
++                          owl:FunctionalProperty ;
++                 rdfs:domain :MappingScheme ;
++                 rdfs:range :CompilationMode ;
++                 rdfs:label "compilation mode" ;
++                 skos:definition "The compilation mode a MappingScheme's member mappings are compiled under: DraftMode, ReviewMode, or ProductionMode (Foundations §5.10b, ADR-A22). Unset is equivalent to DraftMode. Only ProductionMode brings the governance-state and version-identity SHACL gate (mork:GenerativeMappingProductionGovernanceShape) into force for that scheme's mappings; a mapping compiled under DraftMode or ReviewMode is unaffected by it." .
++
++
+ ###  http://www.nebularis.org/ontologies/Mork#deprecationReason
+ :deprecationReason rdf:type owl:DatatypeProperty ;
+                    rdfs:domain :DataMapping ;
+@@ -2093,6 +2104,12 @@ The equivalence class definition means any individual that has a deferredMapping
+                skos:definition "a scheme that captures mappings between concepts, from a RepresentationScheme to an OntologicalScheme" .
+ 
+ 
++###  http://www.nebularis.org/ontologies/Mork#CompilationMode
++:CompilationMode rdf:type owl:Class ;
++                 rdfs:label "compilation mode" ;
++                 skos:definition "Which of draft, review, or production compilation a MappingScheme's compilationMode names (ADR-A22). Named individuals are DraftMode, ReviewMode, and ProductionMode." .
++
++
+ ###  http://www.nebularis.org/ontologies/Mork#Membership
+ :Membership rdf:type owl:Class ;
+             rdfs:subClassOf :Representation ;
+@@ -2542,10 +2559,12 @@ The expressions form a monoid (TemplateExpression, Concat, Literal(\"\")) over s
+ 
+ ###  http://www.nebularis.org/ontologies/Mork#GenerativeMapping
+ :GenerativeMapping rdf:type owl:Class ;
+-                   rdfs:subClassOf :DataMapping ;
++                   rdfs:subClassOf :DataMapping ,
++                                   fnd:Governable ,
++                                   fnd:Version ;
+                    rdfs:label "generative mapping" ;
+                    skos:definition "The class of all DataMapping individuals whose evaluation produces a constraint, inference, transformation, or projection artefact (SHACL shape, SWRL rule, RML triples map, projection mapping records, or future artefact types). Serves as the common superclass for ShapeMapping, RuleMapping, TransformMapping, and ProjectionMapping, and as the domain for shared properties (hasParameterBinding, hasTargetingSpec, dependsOnMapping)." ;
+-                   skos:scopeNote "GenerativeMapping is not an equivalence class — it has no structural characterisation that would allow automatic classification. Membership is inferred via subclass relationships from ShapeMapping, RuleMapping, TransformMapping, or ProjectionMapping." .
++                   skos:scopeNote "GenerativeMapping is not an equivalence class — it has no structural characterisation that would allow automatic classification. Membership is inferred via subclass relationships from ShapeMapping, RuleMapping, TransformMapping, or ProjectionMapping. Foundation alignment (ADR-A22): subclassing fnd:Governable and fnd:Version requires exactly one fnd:hasGovernanceState and one fnd:hasIdentity per instance at the OWL level, matching the pattern srf:SurfaceContract already uses. This is additive to, not a replacement for, the pre-existing reviewStatus (on *Provenance individuals), supersedes, mappingVersion, and deprecationReason properties, which remain valid and are unchanged; see mork/docs/governance-and-versioning-migration.md for how the two relate and for the backward-compatibility story. Production-mode compilation gating on governance state is a SHACL-level, mode-conditional check (mork:GenerativeMappingProductionGovernanceShape: beyond Draft, plus identity), not an unconditional OWL requirement — a draft-mode mapping with no governance state asserted yet is incomplete, not inconsistent." .
+ 
+ 
+ ###  http://www.nebularis.org/ontologies/Mork#ShapeMapping
+@@ -2702,6 +2721,27 @@ Also supports optional jurisdiction scoping (appliesInJurisdiction) and effectiv
+         owl:sameAs :OwlNothing .
+ 
+ 
++###  http://www.nebularis.org/ontologies/Mork#DraftMode
++:DraftMode rdf:type owl:NamedIndividual ,
++                    :CompilationMode ;
++           rdfs:label "draft mode" ;
++           skos:definition "Governance state and version identity are not required on member mappings. The default where compilationMode is unset (ADR-A22)." .
++
++
++###  http://www.nebularis.org/ontologies/Mork#ReviewMode
++:ReviewMode rdf:type owl:NamedIndividual ,
++                     :CompilationMode ;
++            rdfs:label "review mode" ;
++            skos:definition "Governance state and version identity are recommended but not enforced by mork:GenerativeMappingProductionGovernanceShape on member mappings." .
++
++
++###  http://www.nebularis.org/ontologies/Mork#ProductionMode
++:ProductionMode rdf:type owl:NamedIndividual ,
++                         :CompilationMode ;
++                rdfs:label "production mode" ;
++                skos:definition "Every GenerativeMapping in the scheme must have progressed beyond fnd:Draft governance state (Reviewed, Active, or Superseded) and declare fnd:hasIdentity before it compiles; enforced by mork:GenerativeMappingProductionGovernanceShape (ADR-A22)." .
++
++
+ ###  http://www.nebularis.org/ontologies/Mork#OwlNothing
+ :OwlNothing rdf:type owl:NamedIndividual ,
+                      :OwlAxiom .
+diff --git a/surface/README.md b/surface/README.md
+index 3ce1d87..0de942e 100644
+--- a/surface/README.md
++++ b/surface/README.md
+@@ -10,10 +10,13 @@ Literate specification for the Surface layer.
+ 
+ A declaration graph states what is true. Answering a question against it may require traversing relations that are expensive, remote, or governed elsewhere. Surface declares how part of that graph may be restated locally — as additional symbols and assertions that make a specific class of question answerable by direct lookup, and that add nothing to what the source already meant.
+ 
+-Two operations are declared, and only two:
++Three operations are declared:
+ 
+ - **Promotion** — a value reachable from a subject by a declared read path is restated as a direct assertion on that subject.
+ - **Indexing** — a value asserted of subjects is restated as a symbol those subjects can be retrieved by.
++- **Projection** (ADR-A17) — mapping intent that needs graph construction, derivation, a join, or an expansion is lowered into a MORK mapping graph rather than restated directly.
++
++Promotion and indexing emit their generated artefact directly. Projection does not: its intent is broader than a single read path can express, so a `ProjectionContract` lowers into MORK (ADR-A18), which a staged compiler (ADR-A19) then compiles to SPARQL, SHACL, SWRL, RML, or a native execution plan.
+ 
+ This subsystem turns declared facts into query-friendly local surfaces without altering their meaning. A `Surface` is a generated, graph-local, query-facing restatement of a sub-graph originating in a domain or substrate ontology. The sub-graph usually refers to the target domain or substrate ontology's A-Box, though this is not a constraint.
+ 
+@@ -41,9 +44,10 @@ The _Surface Contract_ is a declarative specification that says:
+ - what namespace it emits under
+ - which generation profile applies
+ 
+-There are two main kinds of _Surface Contract_:
++There are three main kinds of _Surface Contract_:
+ - `PromotionContract`
+ - `IndexContract`
++- `ProjectionContract`
+ 
+ #### Promotion, in practice
+ 
+@@ -120,6 +124,44 @@ Let's break down what the generator does:
+ 
+ For an example of this kind of shape, see `surface/examples/employment-job-family.ttl`.
+ 
++#### Projection
++
++Promotion restates one value; indexing restates a value as a retrieval symbol. Neither covers intent that needs new graph structure, a computed value, evidence combined across more than one carrier, or one relation expanding into several — the case `ProjectionContract` exists for (ADR-A17). Consider annualising a subscription's recurring revenue: the value is not reachable by any single read path, because it is computed from two of the carrier's own properties rather than read off the end of a chain.
++
++```turtle-example
++@prefix srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#> .
++@prefix ex:  <https://example.org/lattice/surface/> .
++@prefix saas: <https://example.org/saas/> .
++
++ex:subscription-arr a srf:ProjectionContract ;
++	srf:contractKey "subscription-arr" ;
++	srf:carrier saas:Subscription ;
++	srf:projectionKind srf:DerivationProjection ;
++	srf:hasRoleBinding ex:arr-subject, ex:arr-price, ex:arr-frequency, ex:arr-target ;
++	srf:realisationMode srf:Materialised ;
++	srf:targetNamespace <https://example.org/saas/generated/> ;
++	srf:surfaceProfile ex:default-profile ;
++	srf:backendPolicy ex:arr-backend-policy .
++
++ex:arr-subject a srf:ProjectionRoleBinding ; srf:roleKind srf:EvaluationSubjectRole .
++ex:arr-price a srf:ProjectionRoleBinding ; srf:roleKind srf:RequiredEvidenceRole ; srf:bindsProperty saas:hasMonthlyPrice .
++ex:arr-frequency a srf:ProjectionRoleBinding ; srf:roleKind srf:RequiredEvidenceRole ; srf:bindsProperty saas:hasBillingPeriodsPerYear .
++ex:arr-target a srf:ProjectionRoleBinding ; srf:roleKind srf:ResultTargetRole ; srf:bindsProperty saas:annualRecurringRevenue .
++
++ex:arr-backend-policy a srf:ProjectionBackendPolicy ;
++	srf:allowedBackend srf:SparqlBackend, srf:NativeIrBackend ;
++	srf:deterministicOnly true ;
++	srf:llmCompletionPolicy srf:NoLLMCompletion .
++```
++
++A few things of note:
++
++- **No read path.** A projection reads its evidence through role bindings, not `srf:hasPathStep` — `srf:RequiredEvidenceRole` names the property directly, because the value isn't reached by traversal, it's read from two properties of the carrier itself and combined.
++- **Two required-evidence bindings, one contract.** Unlike `EvaluationSubjectRole`, `ResultTargetRole`, and `ClosureBasisRole`, which a contract declares at most once, `RequiredEvidenceRole` and `CandidateEvidenceRole` may repeat — a derivation commonly needs more than one input (`srf:P3`).
++- **This contract never emits SPARQL, SHACL, or anything else directly.** It lowers into a MORK mapping graph (ADR-A18); the backend policy states which compiled targets that mapping may become, and forbids LLM participation in the lowering outright (`srf:deterministicOnly true`).
++
++For a worked instance graph, see `surface/examples/saas-subscription-arr-projection.ttl`.
++
+ #### Choosing an index form
+ 
+ The permitted forms trade off differently, supporting choices about population size and retrieval patterns.
+@@ -249,13 +291,15 @@ Extraction and drift checking are performed by `tools/lattice/literate_extract.p
+ 
+ **Well-foundedness of a closure basis is a runtime claim, not a static one.** SPARQL cannot express a property path over a variable predicate, so no fixed SHACL shape can check acyclicity for an arbitrary declared basis. The generator checks it over the declared scope and discharges the law; a surface that has not discharged it is non-conformant.
+ 
++**Projection lowers into MORK rather than emitting an artefact itself.** Promotion and indexing cover restatement of one already-reachable value. Graph construction, derivation, joins, and expansion are mapping-graph concerns MORK already owns, so a `ProjectionContract` declares intent and role bindings and hands the rest to MORK's mapping graph and staged compiler family (ADR-A17–ADR-A19), rather than Surface growing a second compiler for the same problem.
++
+ ## 5. Architecture
+ 
+ There are three tiers, with one class of artefact in each.
+ 
+ ```
+-DECLARATION      srf:SurfaceContract  (srf:PromotionContract | srf:IndexContract)
+-                 srf:ValuePopulation · srf:PathStep · srf:SurfaceProfile
++DECLARATION      srf:SurfaceContract  (srf:PromotionContract | srf:IndexContract | srf:ProjectionContract)
++                 srf:ValuePopulation · srf:PathStep · srf:SurfaceProfile · srf:ProjectionRoleBinding · srf:ProjectionBackendPolicy
+                  versioned, governable
+                  "What may be restated locally, from what, in what form?"
+ 
+@@ -348,6 +392,22 @@ srf:IndexContract a owl:Class ;
+ 	fnd:utility "Use where retrieval by value is the hot operation. Declare the value population, one or more index forms, and a naming policy. Declare a closure basis where retrieval must also succeed for ancestors of the asserted value; closureScope narrows the value set the closure is computed over." .
+ ```
+ 
++#### `srf:ProjectionContract`
++
++**Definition.** A surface contract restating mapping intent that requires graph construction, derivation, a join, or an expansion, lowered into MORK rather than emitted directly.
++
++**Utility.** Use where neither promotion's direct-property restatement nor indexing's population membership covers the intent — a computed value, a join across carriers, or one relation expanding into several. Declare a `srf:projectionKind`, at least one role binding naming what the projection reads and where it writes, and a backend policy. A projection contract never emits SPARQL, SHACL, or SWRL itself; it lowers into a MORK mapping graph (ADR-A18), which a separate compiler stage compiles (ADR-A19).
++
++```turtle-spec
++srf:ProjectionContract a owl:Class ;
++	rdfs:subClassOf srf:SurfaceContract ,
++		[ a owl:Restriction ; owl:onProperty srf:projectionKind ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
++		[ a owl:Restriction ; owl:onProperty srf:hasRoleBinding ; owl:minCardinality "1"^^xsd:nonNegativeInteger ] ,
++		[ a owl:Restriction ; owl:onProperty srf:backendPolicy ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ;
++	rdfs:comment "A surface contract restating mapping intent that requires graph construction, derivation, a join, or an expansion, lowered into MORK rather than emitted directly." ;
++	fnd:utility "Use where neither promotion's direct-property restatement nor indexing's population membership covers the intent — a computed value, a join across carriers, or one relation expanding into several. Declare a projectionKind, at least one role binding naming what the projection reads and where it writes, and a backend policy. A ProjectionContract never emits SPARQL, SHACL, or SWRL itself; it lowers into a MORK mapping graph, which a separate compiler stage compiles." .
++```
++
+ ### 6.3 Read paths
+ 
+ #### `srf:PathStep`
+@@ -794,15 +854,116 @@ srf:executedRun a owl:DatatypeProperty, owl:FunctionalProperty ;
+ 				  srf:IndexForm srf:RealisationMode srf:NamingPolicy srf:NamingNormalisation
+ 				  srf:SourceFidelity srf:ExtentKind srf:StepDirection srf:EntailmentRegime
+ 				  srf:SymbolMode srf:ReadSourceKind srf:SignatureScope srf:DerivationAuthority
+-				  srf:Law srf:LawRegister ) .
++				  srf:Law srf:LawRegister srf:ProjectionRoleBinding srf:ProjectionBackendPolicy
++				  srf:ProjectionKind srf:ProjectionRole srf:CompilerBackend srf:LLMCompletionPolicy ) .
+ 
+ srf:PromotionContract owl:disjointWith srf:IndexContract .
++srf:ProjectionContract owl:disjointWith srf:PromotionContract, srf:IndexContract .
+ srf:GeneratedSurface owl:disjointWith srf:GeneratedSymbol .
+ srf:ContractBoundPopulation owl:disjointWith srf:ClassExtentPopulation, srf:EnumeratedPopulation, srf:RangePartitionPopulation .
+ srf:ClassExtentPopulation owl:disjointWith srf:EnumeratedPopulation, srf:RangePartitionPopulation .
+ srf:EnumeratedPopulation owl:disjointWith srf:RangePartitionPopulation .
+ ```
+ 
++### 6.11 Projection role bindings
++
++#### `srf:ProjectionRoleBinding`
++
++**Definition.** One named role a projection contract binds to a property and, where the role's evidence comes from a different class than the contract's own carrier, to that class.
++
++**Utility.** Name the role a property or carrier plays explicitly, rather than leaving a compiler to infer it from position — the same discipline `srf:PathStep` applies to a read path, extended to intents with more than one moving part. Every projection names at least an evaluation-subject and a result-target role; a join or derivation names candidate-evidence or required-evidence roles as well.
++
++```turtle-spec
++srf:ProjectionRoleBinding a owl:Class ;
++	rdfs:subClassOf
++		[ a owl:Restriction ; owl:onProperty srf:roleKind ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
++		[ a owl:Restriction ; owl:onProperty srf:bindsProperty ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ,
++		[ a owl:Restriction ; owl:onProperty srf:bindsCarrier ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ;
++	rdfs:comment "One named role a projection contract binds to a property and, where the role's evidence comes from a different class than the contract's own carrier, to that class." ;
++	fnd:utility "Name the role a property or carrier plays explicitly, rather than leaving a compiler to infer it from position — the same discipline srf:PathStep applies to a read path, extended to intents with more than one moving part. Every projection names at least an evaluation-subject and a result-target role; a join or derivation names candidate-evidence or required-evidence roles as well." .
++```
++
++### 6.12 Projection backend policy
++
++#### `srf:ProjectionBackendPolicy`
++
++**Definition.** The declared backend eligibility and LLM-participation policy a projection contract lowers under.
++
++**Utility.** Name every backend a lowered mapping may target in `srf:allowedBackend`, or every backend it may not in `srf:deniedBackend`, never both for one backend. Set `srf:deterministicOnly` true to forbid LLM completion outright during lowering; set `srf:llmCompletionPolicy` to state what happens when it is false.
++
++```turtle-spec
++srf:ProjectionBackendPolicy a owl:Class ;
++	rdfs:subClassOf
++		[ a owl:Restriction ; owl:onProperty srf:llmCompletionPolicy ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
++		[ a owl:Restriction ; owl:onProperty srf:deterministicOnly ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ;
++	rdfs:comment "The declared backend eligibility and LLM-participation policy a projection contract lowers under." ;
++	fnd:utility "Name every backend a lowered mapping may target in allowedBackend, or every backend it may not in deniedBackend, never both for one backend. Set deterministicOnly true to forbid LLM completion outright during lowering; set llmCompletionPolicy to state what happens when it is false." .
++```
++
++### 6.13 Projection mechanism kind classes
++
++```turtle-spec
++srf:ProjectionKind a owl:Class .
++srf:ProjectionRole a owl:Class .
++srf:CompilerBackend a owl:Class .
++srf:LLMCompletionPolicy a owl:Class .
++```
++
++### 6.14 Projection properties
++
++```turtle-spec
++srf:projectionKind a owl:ObjectProperty, owl:FunctionalProperty ;
++	rdfs:domain srf:ProjectionContract ; rdfs:range srf:ProjectionKind ;
++	rdfs:comment "The mapping-intent kind a projection contract declares." .
++
++srf:hasRoleBinding a owl:ObjectProperty ;
++	rdfs:domain srf:ProjectionContract ; rdfs:range srf:ProjectionRoleBinding ;
++	rdfs:comment "A named role a projection contract binds to a property or carrier." .
++
++srf:roleKind a owl:ObjectProperty, owl:FunctionalProperty ;
++	rdfs:domain srf:ProjectionRoleBinding ; rdfs:range srf:ProjectionRole ;
++	rdfs:comment "Which role a projection role binding fills." .
++
++srf:bindsProperty a owl:ObjectProperty, owl:FunctionalProperty ;
++	rdfs:domain srf:ProjectionRoleBinding ; rdfs:range rdf:Property ;
++	rdfs:comment "The property a projection role binding names for its role." .
++
++srf:bindsCarrier a owl:ObjectProperty, owl:FunctionalProperty ;
++	rdfs:domain srf:ProjectionRoleBinding ; rdfs:range rdfs:Class ;
++	rdfs:comment "The class a role's evidence is drawn from, where it differs from the contract's own carrier." ;
++	fnd:utility "Set this for a join or a required-evidence role that reaches a second carrier; leave it unset where the role reads the contract's own carrier." .
++
++srf:backendPolicy a owl:ObjectProperty, owl:FunctionalProperty ;
++	rdfs:domain srf:ProjectionContract ; rdfs:range srf:ProjectionBackendPolicy ;
++	rdfs:comment "The backend-eligibility and LLM-participation policy a projection contract lowers under." .
++
++srf:allowedBackend a owl:ObjectProperty ;
++	rdfs:domain srf:ProjectionBackendPolicy ; rdfs:range srf:CompilerBackend ;
++	rdfs:comment "A compiler backend a lowered mapping may target." .
++
++srf:deniedBackend a owl:ObjectProperty ;
++	rdfs:domain srf:ProjectionBackendPolicy ; rdfs:range srf:CompilerBackend ;
++	rdfs:comment "A compiler backend a lowered mapping may not target." .
++
++srf:llmCompletionPolicy a owl:ObjectProperty, owl:FunctionalProperty ;
++	rdfs:domain srf:ProjectionBackendPolicy ; rdfs:range srf:LLMCompletionPolicy ;
++	rdfs:comment "What an LLM may propose during lowering, where deterministicOnly is false." .
++
++srf:deterministicOnly a owl:DatatypeProperty, owl:FunctionalProperty ;
++	rdfs:domain srf:ProjectionBackendPolicy ; rdfs:range xsd:boolean ;
++	rdfs:comment "Whether lowering under this policy may invoke an LLM at all." ;
++	fnd:utility "True forbids LLM participation outright, the recommended default for production. False defers to llmCompletionPolicy." .
++
++srf:approvedTemplate a owl:DatatypeProperty ;
++	rdfs:domain srf:ProjectionBackendPolicy ; rdfs:range xsd:string ;
++	rdfs:comment "The identifier of a mapping template a bounded LLM completion may draw from." .
++
++srf:producesMapping a owl:ObjectProperty ;
++	rdfs:domain srf:GeneratedSurface ;
++	rdfs:comment "A MORK mapping node a projection's generation run lowered into." ;
++	fnd:utility "Populated only for a generated surface covering a ProjectionContract. Names a mork:DataMapping, mork:ShapeMapping, mork:RuleMapping, mork:QueryTemplate, or mork:ProjectionMapping by punning, without Surface importing MORK." .
++```
++
+ ## 7. Index forms
+ 
+ | Form | Emits | Needs an enumerable population | Retrieval | Entailment required |
+@@ -894,11 +1055,32 @@ srf:SourceSignature a srf:SignatureScope ; rdfs:comment "The surface asserts ove
+ srf:Advisory a srf:DerivationAuthority ; rdfs:comment "Informative; never authoritative on its own." .
+ srf:CachedReproducible a srf:DerivationAuthority ; rdfs:comment "Authoritative only because it is provably reproducible from its source." .
+ 
++srf:GraphConstructionProjection a srf:ProjectionKind ; rdfs:comment "Mapping intent that constructs new graph structure not present as a single reachable value." .
++srf:DerivationProjection a srf:ProjectionKind ; rdfs:comment "Mapping intent that computes a value from one or more source values." .
++srf:JoinProjection a srf:ProjectionKind ; rdfs:comment "Mapping intent that combines evidence from more than one carrier." .
++srf:ExpansionProjection a srf:ProjectionKind ; rdfs:comment "Mapping intent that restates one relation as several." .
++
++srf:EvaluationSubjectRole a srf:ProjectionRole ; rdfs:comment "The carrier instance a projection is evaluated for." .
++srf:CandidateEvidenceRole a srf:ProjectionRole ; rdfs:comment "A value offered as evidence toward the projection's result." .
++srf:RequiredEvidenceRole a srf:ProjectionRole ; rdfs:comment "A value a projection's result cannot be computed without." .
++srf:ResultTargetRole a srf:ProjectionRole ; rdfs:comment "Where a projection's computed result is written." .
++srf:ClosureBasisRole a srf:ProjectionRole ; rdfs:comment "The relation a projection's closure, where it has one, is computed over." .
++srf:TransformDependencyRole a srf:ProjectionRole ; rdfs:comment "A dependency a derivation reads without itself being required or candidate evidence." .
++
++srf:RmlBackend a srf:CompilerBackend ; rdfs:comment "RML/R2RML triples-map compilation." .
++srf:SparqlBackend a srf:CompilerBackend ; rdfs:comment "SPARQL query compilation." .
++srf:ShaclBackend a srf:CompilerBackend ; rdfs:comment "SHACL shape compilation." .
++srf:SwrlBackend a srf:CompilerBackend ; rdfs:comment "SWRL rule compilation." .
++srf:NativeIrBackend a srf:CompilerBackend ; rdfs:comment "Native execution intermediate representation compilation." .
++
++srf:NoLLMCompletion a srf:LLMCompletionPolicy ; rdfs:comment "No LLM participation in lowering." .
++srf:BoundedLLMCompletion a srf:LLMCompletionPolicy ; rdfs:comment "An LLM may complete only declared gaps using an approved template, and every completion requires governance state before production use." .
++
+ srf:SemanticLaw a srf:LawRegister ; rdfs:comment "Discharged by formal argument and property tests." .
+ srf:StaticConstraint a srf:LawRegister ; rdfs:comment "Discharged by SPARQL, SHACL, reasoner, or compiled static analysis." .
+ srf:RuntimeConformance a srf:LawRegister ; rdfs:comment "Discharged only by an executed run." .
+ 
+-srf:X1 a srf:Law ; srf:lawRegister srf:SemanticLaw ; rdfs:comment "Conservativity. For a source graph G and a local-signature surface S generated from it, G union S entails a statement over the source signature exactly when G does." .
++srf:X1 a srf:Law ; srf:lawRegister srf:SemanticLaw ; rdfs:comment "Conservativity. For a source graph G and a local-signature surface S generated from it, G union S entails a statement over the source signature exactly when G does. Composition: a stacked surface's signature scope is source-signature if any surface in its read set is source-signature, and conservativity composes accordingly." .
+ srf:X2 a srf:Law ; srf:lawRegister srf:SemanticLaw ; rdfs:comment "Index faithfulness. A carrier instance belongs to the generated class for a value exactly when the read path relates it to that value under the profile's declared entailment regime." .
+ srf:X3 a srf:Law ; srf:lawRegister srf:SemanticLaw ; rdfs:comment "Closure soundness and completeness. A generated closure relation holds between a carrier instance and a value exactly when the read path relates that instance to some value standing in the reflexive-transitive closure of the declared basis, restricted to the declared scope." .
+ srf:X4 a srf:Law ; srf:lawRegister srf:SemanticLaw ; rdfs:comment "Wildcard non-collapse. A wildcard member of a population mints a symbol on the same terms as any other member and carries no admits-everything semantics." .
+@@ -917,11 +1099,17 @@ srf:S8 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "Generate
+ srf:S9 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "No generated surface declares an authority above cached-reproducible." .
+ srf:S10 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "A generated surface's stack depth does not exceed its profile's permitted stack depth." .
+ 
+-srf:R1 a srf:Law ; srf:lawRegister srf:RuntimeConformance ; rdfs:comment "Regeneration determinism. The same read set under the same profile yields an identical symbol inventory and an identical artefact hash." .
++srf:R1 a srf:Law ; srf:lawRegister srf:RuntimeConformance ; rdfs:comment "Regeneration determinism. The same read set under the same profile yields an identical symbol inventory and an identical artefact hash. Composition: every surface in a stack shares one profile identity, checked statically; a mixed-profile stack is not a conformant regeneration." .
+ srf:R2 a srf:Law ; srf:lawRegister srf:RuntimeConformance ; rdfs:comment "Surface and source parity. Every question in the shared conformance corpus is answered identically against the surface and against the source under a direct evaluation profile." .
+ srf:R3 a srf:Law ; srf:lawRegister srf:RuntimeConformance ; rdfs:comment "Invalidation minimality. A scoped change regenerates only the computed impact set and leaves every other surface byte-identical." .
+ srf:R4 a srf:Law ; srf:lawRegister srf:RuntimeConformance ; rdfs:comment "Materialisation idempotence. Re-running a materialisation over an unchanged read set adds no triples." .
+ srf:R5 a srf:Law ; srf:lawRegister srf:RuntimeConformance ; rdfs:comment "Closure well-foundedness. The declared closure basis is acyclic over the declared scope, established by traversing it." .
++
++srf:P1 a srf:Law ; srf:lawRegister srf:SemanticLaw ; rdfs:comment "Projection conservativity. A local-signature projection is conservative on the same terms as an index; a source-signature projection composes under the same rule as X1 and X6." .
++srf:P2 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "Every projection contract declares exactly one projection kind and at least an evaluation-subject and a result-target role binding; a join or derivation kind additionally declares at least one candidate-evidence or required-evidence role binding." .
++srf:P3 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "A projection contract declares at most one evaluation-subject, result-target, and closure-basis role binding; candidate-evidence, required-evidence, and transform-dependency role bindings may repeat." .
++srf:P4 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "A backend policy names no compiler backend in both allowedBackend and deniedBackend." .
++srf:P5 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "A backend policy declaring deterministicOnly true declares no llmCompletionPolicy other than NoLLMCompletion." .
+ ```
+ 
+ ## 10. Shapes
+@@ -1008,6 +1196,23 @@ srf:LawDischargeShape a sh:NodeShape ;
+ 	sh:property [ sh:path srf:dischargesLaw ; sh:minCount 1 ; sh:maxCount 1 ] ;
+ 	sh:property [ sh:path srf:dischargedForSurface ; sh:minCount 1 ; sh:maxCount 1 ] ;
+ 	sh:property [ sh:path srf:dischargedAt ; sh:minCount 1 ; sh:maxCount 1 ] .
++
++srf:ProjectionContractShape a sh:NodeShape ;
++	sh:targetClass srf:ProjectionContract ;
++	sh:property [ sh:path srf:projectionKind ; sh:minCount 1 ; sh:maxCount 1 ] ;
++	sh:property [ sh:path srf:hasRoleBinding ; sh:minCount 1 ] ;
++	sh:property [ sh:path srf:backendPolicy ; sh:maxCount 1 ] .
++
++srf:ProjectionRoleBindingShape a sh:NodeShape ;
++	sh:targetClass srf:ProjectionRoleBinding ;
++	sh:property [ sh:path srf:roleKind ; sh:minCount 1 ; sh:maxCount 1 ] ;
++	sh:property [ sh:path srf:bindsProperty ; sh:maxCount 1 ] ;
++	sh:property [ sh:path srf:bindsCarrier ; sh:maxCount 1 ] .
++
++srf:ProjectionBackendPolicyShape a sh:NodeShape ;
++	sh:targetClass srf:ProjectionBackendPolicy ;
++	sh:property [ sh:path srf:llmCompletionPolicy ; sh:minCount 1 ; sh:maxCount 1 ] ;
++	sh:property [ sh:path srf:deterministicOnly ; sh:minCount 1 ; sh:maxCount 1 ] .
+ ```
+ 
+ ```turtle-shapes
+@@ -1320,6 +1525,99 @@ srf:ClosureWellFoundednessDischargedShape a sh:NodeShape ;
+ 			}
+ 		"""
+ 	] .
++
++srf:ProjectionEvaluationSubjectRequiredShape a sh:NodeShape ;
++	sh:targetClass srf:ProjectionContract ;
++	sh:sparql [
++		sh:message "A projection contract has no evaluation-subject role binding. Discharges srf:P2." ;
++		sh:select """
++			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
++			SELECT $this WHERE {
++				$this a srf:ProjectionContract .
++				FILTER NOT EXISTS {
++					$this srf:hasRoleBinding ?binding .
++					?binding srf:roleKind srf:EvaluationSubjectRole .
++				}
++			}
++		"""
++	] .
++
++srf:ProjectionResultTargetRequiredShape a sh:NodeShape ;
++	sh:targetClass srf:ProjectionContract ;
++	sh:sparql [
++		sh:message "A projection contract has no result-target role binding. Discharges srf:P2." ;
++		sh:select """
++			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
++			SELECT $this WHERE {
++				$this a srf:ProjectionContract .
++				FILTER NOT EXISTS {
++					$this srf:hasRoleBinding ?binding .
++					?binding srf:roleKind srf:ResultTargetRole .
++				}
++			}
++		"""
++	] .
++
++srf:ProjectionEvidenceRequiredForJoinOrDerivationShape a sh:NodeShape ;
++	sh:targetClass srf:ProjectionContract ;
++	sh:sparql [
++		sh:message "A join or derivation projection has no candidate-evidence or required-evidence role binding. Discharges srf:P2." ;
++		sh:select """
++			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
++			SELECT $this WHERE {
++				VALUES ?evidenceKind { srf:JoinProjection srf:DerivationProjection }
++				$this srf:projectionKind ?evidenceKind .
++				FILTER NOT EXISTS {
++					$this srf:hasRoleBinding ?binding .
++					VALUES ?evidenceRole { srf:CandidateEvidenceRole srf:RequiredEvidenceRole }
++					?binding srf:roleKind ?evidenceRole .
++				}
++			}
++		"""
++	] .
++
++srf:ProjectionRoleKindSingletonShape a sh:NodeShape ;
++	sh:targetClass srf:ProjectionContract ;
++	sh:sparql [
++		sh:message "A projection contract declares more than one evaluation-subject, result-target, or closure-basis role binding. Discharges srf:P3." ;
++		sh:select """
++			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
++			SELECT $this WHERE {
++				VALUES ?singletonRole { srf:EvaluationSubjectRole srf:ResultTargetRole srf:ClosureBasisRole }
++				$this srf:hasRoleBinding ?first, ?second .
++				?first srf:roleKind ?singletonRole .
++				?second srf:roleKind ?singletonRole .
++				FILTER (?first != ?second)
++			}
++		"""
++	] .
++
++srf:ProjectionBackendAllowDenyDisjointShape a sh:NodeShape ;
++	sh:targetClass srf:ProjectionBackendPolicy ;
++	sh:sparql [
++		sh:message "A backend policy names one compiler backend in both allowedBackend and deniedBackend. Discharges srf:P4." ;
++		sh:select """
++			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
++			SELECT $this WHERE {
++				$this srf:allowedBackend ?backend ;
++					  srf:deniedBackend ?backend .
++			}
++		"""
++	] .
++
++srf:ProjectionDeterministicOnlyLLMPolicyShape a sh:NodeShape ;
++	sh:targetClass srf:ProjectionBackendPolicy ;
++	sh:sparql [
++		sh:message "A backend policy declares deterministicOnly true and an llmCompletionPolicy other than NoLLMCompletion. Discharges srf:P5." ;
++		sh:select """
++			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
++			SELECT $this WHERE {
++				$this srf:deterministicOnly true ;
++					  srf:llmCompletionPolicy ?policy .
++				FILTER (?policy != srf:NoLLMCompletion)
++			}
++		"""
++	] .
+ ```
+ 
+ ## 11. Canonicalisation, identity, and invalidation
+@@ -1357,6 +1655,7 @@ Non-domain examples are authored in:
+ - `surface/examples/employment-job-family.ttl` — hierarchical closure and per-value classes over a scheme-bound population
+ - `surface/examples/saas-subscription-currency.ttl` — promotion across a three-step read path onto a direct property
+ - `surface/examples/clinical-trial-crosswalk.ttl` — promotion across an inexact mapping relation
++- `surface/examples/saas-subscription-arr-projection.ttl` — a derivation projection combining two required-evidence bindings into a computed result, lowered under a deterministic-only backend policy
+ 
+ Deliberate-defect fixtures are authored in `surface/test/`.
+ 
+diff --git a/surface/docs/OUTSTANDING-ITEMS 2.md b/surface/docs/OUTSTANDING-ITEMS 2.md
+index 2672b66..c72d64d 100644
+--- a/surface/docs/OUTSTANDING-ITEMS 2.md	
++++ b/surface/docs/OUTSTANDING-ITEMS 2.md	
+@@ -1,168 +1,5 @@
+ <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+ 
+-# Outstanding items — Surface layer
++# Outstanding items — Surface layer (superseded)
+ 
+-Everything here is deliberately *not* in the shipped artefacts. Nothing below has been injected into a README, an OWL annotation, a shape message, or a generated module.
+-
+----
+-
+-## 1. Decisions I took during implementation that you have not seen
+-
+-### 1.1 Signature scope, and law X6 — needs your sign-off
+-
+-This is the one place where implementation forced a change to the design you approved, and it is material.
+-
+-The design note stated conservativity (X1) as unconditional: a surface never extends the source-signature consequence set. That holds for indexing, which always mints its own terms. It does **not** hold for promotion. A promotion restates a value onto `srf:promotesTo`, and that property is either one the contract mints in its own target namespace, or one a consuming layer already declares. In the second case the emitted triples are over the authored signature and are indistinguishable from authored facts. No authority annotation on the surface record changes that, because the assertions carry the authored property, not a generated one.
+-
+-This is exactly the MERIDIAN CSO→FBO case: `fbo:hasLineOfBusiness` is authored, so `DimensionSourcing` is producing authored-signature A-box, not an index.
+-
+-Rather than weaken X1 or pretend the case away, I modelled it:
+-
+-- `srf:signatureScope` on every `srf:GeneratedSurface`, valued `srf:LocalSignature` or `srf:SourceSignature`;
+-- X1 restated to apply to local-signature surfaces;
+-- new semantic law **X6**: a promotion onto a property outside the contract's target namespace declares exact or crosswalk-exact fidelity, and is materialised rather than definitional.
+-
+-The two consequences the compiler enforces: a lossy promotion (derived, or crosswalk-inexact) may not target an authored property at all — it lands on a generated one where its derived nature is visible in the IRI; and a definition-only promotion may not emit a property-chain axiom onto an authored property, because an axiom on an authored term is not conservative under anyone's reading.
+-
+-**What you need to decide:** whether X6 is the right rule, or whether source-signature promotion should instead be pushed out of Surface entirely and treated as a mapping concern (MORK's `DataMapping`), leaving Surface strictly conservative. The second is cleaner in theory and costs you the ability to express the FBO dimension-sourcing table as surface contracts. I took the first because the FBO port is the driver, but it is reversible now and expensive to reverse after the port.
+-
+-### 1.2 Read paths are indexed step lists, not SHACL path nodes
+-
+-The design note proposed `sh:path`. SHACL path syntax nests blank nodes, whose labels do not survive canonicalisation without a blank-node normalisation pass — which would have made the read path the only part of a contract needing one. `srf:PathStep` individuals with `srf:stepIndex` and `srf:stepDirection` give the same sequence-and-inverse expressivity with a form that hashes directly, and follow the positional pattern `qnt:OrderingComponent` already uses. Alternation and zero-or-more remain out of scope, as designed.
+-
+-The cost: a contract cannot be handed straight to a SHACL engine as a path expression. The compiler would need to synthesise one. Nothing currently needs that.
+-
+-### 1.3 The derivation contract is in Surface, not Foundation
+-
+-You said: do not pollute Foundation. So `srf:DerivedArtefact`, `srf:GeneratedSurface`, `srf:ReadSetEntry`, `srf:LawDischarge`, `srf:derivationAuthority`, and the hash properties are all declared in Surface.
+-
+-ADR-A12 anticipates a Foundation-level `fnd:DerivedArtefact`, and Quantification §12 and Behaviour both name it as a blocking gap. Validation reports, entailment sets, and materialised bins will want the same contract. When Foundation gains it, Surface's classes should become subclasses rather than being restructured — they are shaped to allow that, but the migration is unplanned and the duplication is real in the meantime. See §3.1.
+-
+-### 1.4 The generated-term markers are parents, not types
+-
+-MERIDIAN asserts `generatedFromConcept` on generated `owl:Class` terms with `rdfs:domain owl:Class` — punning that OWL-API toolchains object to. I marked generated terms by parentage instead: every generated class is `rdfs:subClassOf srf:GeneratedClass`, every generated relation `rdfs:subPropertyOf srf:generatedRelation`. Enumerating a surface's inventory is a subclass query, no punning involved, and wrapper mode therefore adds no class-as-individual statements of its own. Provenance lives on `srf:GeneratedSymbol` records in the manifest, as you specified.
+-
+-### 1.5 Contracts in `execution/`, examples in `surface/examples/`
+-
+-Generated packages for the three worked examples are committed under `surface/execution/<contractKey>/`, per your item 11. The example contract declarations are in `surface/examples/`, not the repository-root `examples/` — root `examples/employment.ttl` and `examples/saas-subscription.ttl` are still empty and are, on my reading, for cross-layer composition scenarios rather than single-layer worked examples. Move them if that reading is wrong; the compiler takes paths, so nothing breaks.
+-
+----
+-
+-## 2. Deferred with a planned approach
+-
+-### 2.1 `srf:RangePartitionPopulation` — the bucketing law
+-
+-Declared, rejected by both the compiler and `srf:RangePartitionDeferredShape`. Here is what reopening it needs, in the order it needs it.
+-
+-**The problem.** Every other population is a set of IRIs the generator can enumerate and mint from. A range set is a set of intervals over an ordered value space. Minting one symbol per interval is straightforward; the difficulty is that the symbols must partition, and `qnt:RangeSet` does not currently guarantee that they do.
+-
+-**Step 1 — state the partition precondition.** A range set is *admissible as a population* when its ranges are pairwise disjoint and their union covers the space the carrier's values are drawn from. Neither is implied by `qnt:RangeSet` today: ranges may overlap, and there is no notion of a covered domain. So the first piece of work is in Quantification, not Surface: a `qnt:PartitionRangeSet` subclass, or a `qnt:isPartition` flag with a shape that checks disjointness and coverage. Without it the surface would silently mint overlapping buckets and a carrier instance would land in two of them, which breaks index faithfulness (X2) with no diagnostic.
+-
+-**Step 2 — settle boundary behaviour under each `qnt:Closure`.** This is the substantive part. Adjacent ranges meeting at a boundary `b` fall into three cases:
+-
+-| Left range ends | Right range starts | Point `b` | Verdict |
+-|---|---|---|---|
+-| closed at `b` | open at `b` | in left only | admissible |
+-| open at `b` | closed at `b` | in right only | admissible |
+-| closed at `b` | closed at `b` | in both | **overlap** — reject |
+-| open at `b` | open at `b` | in neither | **gap** — reject |
+-
+-So the partition check is a pairwise closure-compatibility check at each shared boundary, not just an interval-arithmetic check. Unbounded ends and the empty range need their own rows. The law to state — call it **X7, range partition faithfulness** — is: a carrier instance whose value is `v` belongs to exactly one bucket symbol, and it is the bucket whose range contains `v` under that range's declared closure. Exactly one, for every `v` in the covered space: that is the whole content of the law, and it is what the two rejected rows above protect.
+-
+-**Step 3 — decide what the symbol denotes.** A nominal bucket class is `Carrier ⊓ ∃R.{v : v ∈ range}`, which is not expressible with `owl:hasValue` — it needs a datatype restriction (`owl:onDatatype` with `xsd:minInclusive` / `xsd:maxExclusive` facets). That is OWL 2 DL but not OWL 2 EL, so a range-partition surface cannot claim the EL-safety that the nominal form currently claims, and its profile must declare `srf:OWL2DLEntailment` or materialise. This is a real constraint and should be stated when the form is admitted, not discovered afterwards.
+-
+-**Step 4 — naming.** `LocalNameFromValue` has nothing to read: a range has no local name. Either ranges gain a required label for this purpose, or the form requires `DigestLocalName` over the range's canonical form, or a new `srf:RangeBoundNaming` policy mints from the bounds (`bucket_0_100`, `bucket_100_inf`). The third reads best and is fragile under reparameterisation — changing a boundary renames the symbol and invalidates everything downstream, which is arguably correct but should be a stated consequence.
+-
+-**Step 5 — invalidation.** A range set is a declaration, so it enters the read set as a `DeclarationSource` entry and the existing freshness rule covers it unchanged. No new machinery.
+-
+-Estimated shape of the work: most of it is Step 1 and Step 2, and most of that is in Quantification. Surface's own part — a population kind, a naming policy, a bucket-assignment pass in the compiler — is small once the partition guarantee exists.
+-
+-### 2.2 Stacking beyond depth 1
+-
+-Modelled fully: `srf:permittedStackDepth` on the profile, `srf:stackDepth` on the generated surface, `srf:SurfaceSource` read-set entries, and `srf:S10` checking one against the other. The compiler computes depth from input surfaces and refuses to exceed the profile's permitted depth. `srf:StackDepthReleaseCeilingShape` caps the permitted depth at 1 for this release; deleting that one shape is the entire mechanical change needed to allow deeper stacks.
+-
+-What deleting it would leave unstated, and what must be written first:
+-
+-- **The read set becomes a DAG.** At depth 1 a surface's read set is a list of source hashes. At depth *n* an entry may name a surface whose own read set names further surfaces, so freshness is a transitive question and the honest form is a hash chain: a surface's semantic content hash must incorporate the *artefact* hashes of the surfaces it read, so that a change three levels down propagates. The current implementation already does this correctly at depth 1 (a `SurfaceSource` entry carries the input's artefact hash) but nothing checks that the input surface was itself fresh when read. At depth > 1 that check is mandatory, otherwise a fresh-looking surface can sit on a stale one.
+-- **X1 needs a composition law.** Conservativity composes: a local-signature surface over a local-signature surface is local-signature. But a surface over a *source-signature* promotion is not conservative over the original source, because its input already was not. So the composition rule is: `signatureScope` of a stacked surface is `SourceSignature` if any input surface is. That is one line in the compiler and one clause in X1, but it must be written down before the depth cap is lifted.
+-- **R1 needs a composition law too.** Determinism composes only if every surface in the chain is regenerated under the same profile identity. Mixed-profile stacks are not obviously wrong but are not obviously reproducible either. Simplest defensible rule: every surface in a stack shares one profile, checked statically.
+-- **Cycle detection.** Two surfaces reading each other is currently impossible only because depth is capped. At arbitrary depth it needs the same treatment as the closure basis: a traversal, refused on a cycle.
+-- **Invalidation cost.** The reason the design note hesitated. A change at the bottom of a depth-*n* stack regenerates *n* artefacts, and the impact-scoping table in §11 of the README has no row for it. Worth measuring on the FBO chain before lifting the cap.
+-
+-The FBO chain (CSO → promoted dimension → nominal index) is depth 1 and works today.
+-
+-### 2.3 `srf:ExternalIndex`
+-
+-Declared and rejected, following the `bhv:Proportional` precedent — visibly unavailable rather than silently absent. Admitting it needs: a way to name the store and its index without the substrate depending on any particular store; a statement of what "the surface is fresh" means when the index is not in the graph and cannot be hashed; and a decision about whether a store-native index can discharge parity (R2) at all, given that the comparison would run outside RDF. I would leave this until a deployment actually needs it — the answers depend heavily on which store.
+-
+----
+-
+-## 3. Known gaps in what I have built
+-
+-### 3.1 Foundation migration
+-
+-See §1.3. The question to settle: does the derived-artefact contract eventually move to Foundation per ADR-A12, with Surface's classes becoming subclasses, or does each generating layer declare its own? If the former, `srf:DerivedArtefact`, `srf:derivationAuthority`, `srf:producedAt`, `srf:artefactHash`, `srf:semanticContentHash`, and the two authority individuals are the migration set. `srf:ReadSetEntry` and the read-source kinds are arguably generic too. `srf:LawDischarge` duplicates `qnt:LawDischarge` in shape but not in namespace; a Foundation-level law register would absorb both.
+-
+-### 3.2 ADR-A01 convention conflict — ontology headers in READMEs
+-
+-ADR-A01's convention note says no layer README duplicates its ontology header inside a `turtle-spec` fence; the header is authored once, directly in `spec/<layer>.ttl`. But Eligibility's and Behaviour's READMEs both *do* include their headers in `turtle-spec`, so the convention is already not held.
+-
+-I included the header in `surface/README.md` §6.1, because extraction has to produce a complete file — a header-less `spec/surface.ttl` would need a hand-maintained fragment prepended, which reintroduces exactly the drift the literate-spec discipline exists to prevent. Someone should decide which way the convention goes and make the three layers agree. My recommendation is to amend ADR-A01 to match practice.
+-
+-### 3.3 Profile identity is computed, not modelled
+-
+-`Profile.identity()` in the compiler concatenates the profile IRI, generator version, canonicalisation version, entailment regime, naming normalisation, symbol mode, and permitted stack depth. It decides whether two artefacts are interchangeable, and it is not represented in the graph — nothing records *which* identity a surface was produced under beyond naming the profile, which may itself have changed. A `srf:profileIdentityHash` on the generated surface would close this. I did not add it because it interacts with whatever Foundation ends up doing about generation profiles (§3.1).
+-
+-### 3.4 Not built
+-
+-- **R2 parity against the shared conformance corpus.** `tools/surface/parity.py` implements the comparison for materialised forms and the `--parity` flag records the discharge, so the law is no longer unimplemented. What is still missing is the corpus: parity currently generates its own questions from the contract (one per population member, one per instance) rather than drawing from the shared corpus the other layers use. Wiring it to that corpus is the remaining work, and it is what makes the check comparable across layers.
+-- **MORK `mrk:ProjectionMapping`.** Now implemented in `tools/surface/mork.py`, in both directions, with the proposed vocabulary addition emitted as a reviewable patch rather than described. It is written against `mork/spec/Mork.ttl` as I can see it, which is the version in this conversation's document set — see §5.
+-- **insure-o port.** Correctly blocked: you are dropping the current insure-o and porting CSO and FBO by hand. The three non-domain examples exercise every mechanism the port will need except range partitions.
+-- **SHACL validation of my own shapes.** No SHACL engine in this environment, so `shapes/structural.ttl` and `shapes/constraints.ttl` are syntactically checked (they parse) but have not been executed against the fixtures. The six defect fixtures are exercised through the compiler, which enforces the same laws independently — but compiler agreement is not shape validation, and the shapes should be run before anyone relies on them.
+-
+-### 3.5 Compiler limitations worth knowing
+-
+-- **Entailment regimes are recorded but not acted on.** The compiler always reads asserted triples. For `srf:NoEntailment` profiles that is correct; for the others it is a gap, and the honest statement is that the compiler implements the no-entailment profile only. rdflib brings no reasoner with it, so closing this means choosing one (owlrl for RDFS and OWL 2 RL; an external EL reasoner for the nominal form's own profile) and deciding whether the compiler materialises entailments before reading or requires the caller to.
+-- **Parity cannot check definition-only forms.** `srf:R2` now has an implementation, but it compares assertions. A `DefinitionOnly` surface asserts nothing — its memberships are entailments — so those forms are reported as skipped with the regime named, rather than silently passed. Same dependency as the previous item.
+-- **Blank-node labels in emitted modules are visible.** They are minted from the term they belong to (`_:RoleAssignment_job-family_Sales_def_l0`), which is what makes a regenerated module diff cleanly. Hashing no longer depends on this — the canonical form relabels blank nodes by graph position — so switching to rdflib's own serialiser is now only a question of whether stable diffs are worth more than conventional output. I kept the stable diffs, because law `srf:R3` is about observing that a scoped change left other surfaces untouched.
+-- **`to_canonical_graph` is not free.** It is the right tool for blank-node-bearing graphs, and it is superlinear on them. Read-set inputs are almost always blank-node free, where the cost is a sort. A very large emitted `core.ttl` with one blank-node definition per population member is the case to watch; if it bites, hash the modules per-subject and fold, rather than abandoning the canonical form.
+-
+-### 3.6 Canonicalisation contract has moved — `srf-canon/1` to `srf-canon/2`
+-
+-The rdflib rewrite hashes `rdflib.compare`'s canonical graph rather than a sorted rendering that depended on the generator having minted deterministic blank-node labels. That is strictly better — it is blank-node-label independent, so a graph read from anywhere hashes stably — but it is a change of canonicalisation contract, and ADR-A12 is explicit that such a change rehashes the estate.
+-
+-Consequences to plan for rather than discover: every `srf:readHash`, `srf:semanticContentHash` and `srf:artefactHash` already recorded is stale; every surface reads as stale on the first `check` run after cutover, correctly but uninformatively; and the three committed example packages have been removed rather than left looking current (`surface/execution/README.md` says so and gives the regeneration command). The examples and fixtures now declare `srf-canon/2` and generator `0.2.0`.
+-
+-If you would rather not take the rehash yet, pinning `CANONICALISATION_VERSION` back to `srf-canon/1` is not enough — the function differs, so the version string would then lie. The honest alternative is to keep both and select on the profile's declared version, which is more machinery than the situation currently justifies.
+-
+----
+-
+-## 4. Findings 15.1–15.5
+-
+-Recording status as you left them, so nothing is lost:
+-
+-| # | Finding | Status |
+-|---|---|---|
+-| 15.1 | `elg:boundScheme` does not exist | Fixed as option (c) — `elg:constrainedByContract`. The L9 replacement's new shape reads it and cannot be installed until it lands. |
+-| 15.2 | `elg:HierarchicalClosureRule` unscoped | Full L9 replacement text supplied at `docs/amendments/eligibility-L9-replacement.md`, including the rule's removal and its static replacement. |
+-| 15.3 | `ins:` vs `ino:` properties | Dropped — insure-o is going, `ins:` carries no domain properties, CSO scopes peril via `hasPerilScope` on `TermApplication`. |
+-| 15.4 | `fnd:GovernanceState` individuals undeclared | Being added to Foundation as individuals. The examples and fixtures here assume `fnd:Active` exists. |
+-| 15.5 | `bhv:targetsAllowance` README⇄spec drift | Hand remediation. Note that `tools/lattice/literate_extract.py --check` would have caught it, and would catch the next one. |
+-
+----
+-
+-## 5. The MORK toolchain join — unverified
+-
+-I could not read the repository. This session has no network access, and the only things on disk are the MERIDIAN uploads and the previous transcript; there is no `mork_communities/` and no checkout of `lattice`. So `tools/surface/mork.py` is written against `mork/spec/Mork.ttl` and `tools/mork2rml.py` **as they appear in this conversation's document set**, which predates the toolchain you are describing.
+-
+-What I assumed, and what to check first:
+-
+-| Assumption | Check |
+-|---|---|
+-| MORK terms live at `http://www.nebularis.org/ontologies/Mork#` | `mork/targets/insure-o-target.ttl` binds `mk:` to `.../lattice/mork#`. Both are bound in `namespaces.py`; `MORK` is the one used. If the toolchain has settled on the lattice form, change one constant. |
+-| `mrk:GenerativeMapping`, `DataMapping`, `TargetingSpec`, `ParameterBinding` (`paramName`/`paramType`/`paramValue`), `OwlClass`, `mappingScheme`, `mappingFor`, `reviewStatus`, `provenanceCreated` exist with those names | Every one is used by `mork.py`. If any have been renamed, the failures will be silent — they would emit triples nobody reads. Worth a grep before the first run. |
+-| `ProjectionMapping`, `generatesClassDefinition`, `ProjectionProvenance`, `hasProjectionProvenance` do **not** yet exist | `mork --vocabulary` emits them shaped like the existing generative mappings. If the toolchain has already added a projection sibling, discard mine and bind to theirs. |
+-| The compiler is a sibling of `mork2rml.py` under `tools/`, not a member of the MORK package | If the toolchain has a shared package (`mork_communities/` suggests one), `serialise.py` and parts of `namespaces.py` are probably duplicating utilities that already exist there. Deleting mine and importing theirs is the right move; nothing else in the chain depends on those two modules' internals. |
+-| `mork_communities/shadow.py` is unrelated | Taking you at your word: it builds `OwlAxiom` shadows to keep reasoning over mapping graphs sound, which is a MORK-internal concern. Surface shadows nothing — it restates domain-layer relationships for runtime lookup. The two share the word and nothing else, and I have deliberately not reused the term anywhere in the layer. Worth confirming there is no naming collision in the emitted IRIs if both ever run over one graph. |
+-
+-One thing I did **not** do, and would want your view on: reuse MORK's `precedes` derivation ordering. The generated modules have a real order — class definitions before membership assertions before closure relations — and MORK already models exactly that, with acyclicity enforced. I emit the modules with `owl:imports` instead, because a surface package is consumed as a unit and the import graph is what a store actually needs. If the toolchain expects derivation order to be expressed as `precedes`, that is a small addition to the manifest rather than a change to the compiler.
++This document has been merged into [OUTSTANDING-ITEMS.md](OUTSTANDING-ITEMS.md), which is now the single authoritative status source for the Surface layer. Edit that file, not this one.
+diff --git a/surface/docs/OUTSTANDING-ITEMS.md b/surface/docs/OUTSTANDING-ITEMS.md
+index 1d6a3e2..e6084dc 100644
+--- a/surface/docs/OUTSTANDING-ITEMS.md
++++ b/surface/docs/OUTSTANDING-ITEMS.md
+@@ -2,63 +2,97 @@
+ 
+ # Outstanding items — Surface layer
+ 
++This is the single authoritative status source for the Surface layer's outstanding items, superseding the two documents it merges: the original `OUTSTANDING-ITEMS.md` and the later `OUTSTANDING-ITEMS 2.md`, which had drifted apart (2 records `tools/surface/parity.py`, `tools/surface/mork.py`, and the `srf-canon/2` canonicalisation cutover as done; the original still described them as not built). This document keeps 2's more current status throughout and is the one to edit going forward. `OUTSTANDING-ITEMS 2.md` is retained only as a pointer to here.
++
+ Everything here is deliberately *not* in the shipped artefacts. Nothing below has been injected into a README, an OWL annotation, a shape message, or a generated module.
+ 
+----
++Produced as part of the Surface-MORK unified projection programme's Phase 0/1 architecture lock; see [surface-mork-unified-projection-delivery-plan.md](surface-mork-unified-projection-delivery-plan.md) and [adr-bundle-outline-surface-mork-unified-projection.md](adr-bundle-outline-surface-mork-unified-projection.md).
++
++## Status summary
+ 
+-## 1. Decisions I took during implementation that you have not seen
++| § | Item | Tag |
++|---|---|---|
++| 1.1 | Signature scope and law X6 | **Closed** — resolved in [ADR-A16 addendum](../../docs/adr/ADR-A16-surface-projection-mechanism.md#addendumdecision-x6-stands-as-designed-sign-off): X6 stands as designed. Composition across stacked surfaces stated in [ADR-A21](../../docs/adr/ADR-A21-signature-scope-composition-for-stacked-surfaces.md). |
++| 1.2 | Read paths as indexed step lists, not `sh:path` | Done — accepted design, no open action. |
++| 1.3 | Derivation contract lives in Surface, not Foundation | Decision needed — see §3.1. |
++| 1.4 | Generated-term markers are parentage, not typed individuals | Done — accepted design, no open action. |
++| 1.5 | Contracts in `execution/`, examples in `surface/examples/` | Done — accepted layout, no open action. |
++| 2.1 | `srf:RangePartitionPopulation` (bucketing law, X7) | Deferred, planned — Quantification partition semantics first, Surface admission second. |
++| 2.2 | Stacking beyond depth 1 | Deferred, planned — composition laws now stated in [ADR-A21](../../docs/adr/ADR-A21-signature-scope-composition-for-stacked-surfaces.md); cycle detection and hash-chain freshness remain unimplemented. |
++| 2.3 | `srf:ExternalIndex` | Deferred — no admission criteria drafted yet; left until a deployment needs it. |
++| 3.1 | Foundation migration for `srf:DerivedArtefact` and kin | Decision needed — unaffected by [ADR-A22](../../docs/adr/ADR-A22-mork-governance-and-versioning-foundation-alignment.md), which resolves governance/versioning alignment only, not this. |
++| 3.2 | ADR-A01 convention conflict (README vs spec header) | **Closed** — resolved in [ADR-A01](../../docs/adr/ADR-A01-layer-dependency-order.md#decision): header lives in the README's `turtle-spec` fence. |
++| 3.3 | Profile identity computed, not modelled | Blocked, partially addressed — `Profile.identity_hash()` now exists in `tools/surface/model.py` as a pure computation (used by the ADR-A21 stack-composition check); whether to assert it into the graph as `srf:profileIdentityHash` still depends on §3.1's Foundation migration decision. |
++| 3.4 | R2 parity harness | Done, partially — `tools/surface/parity.py` implements the comparison; wiring to the shared conformance corpus is tracked under [ADR-A28](../../docs/adr/ADR-A28-parity-and-conformance-release-gate.md) and still open. |
++| 3.4 | MORK `mrk:ProjectionMapping` | **Closed** — implemented in `tools/surface/mork.py` against `mork/spec/Mork.ttl`; see also [ADR-A18](../../docs/adr/ADR-A18-surface-to-mork-lowering-boundary.md). |
++| 3.4 | insure-o port | Blocked — correctly blocked pending manual CSO/FBO port; not a Surface action item. |
++| 3.4 | SHACL validation of Surface's own shapes | Blocked — no SHACL engine available in the authoring environment; tracked as a mandatory CI gate under [ADR-A28](../../docs/adr/ADR-A28-parity-and-conformance-release-gate.md). |
++| 3.5 | Entailment regimes recorded but not acted on | Deferred, partially addressed — `tools/surface/compile.py::check_entailment_regime` now refuses to compile under anything but `NoEntailment`, closing the *silent* gap; reasoner integration for the other regimes is still not started. |
++| 3.7 | ADR-A18 Surface-to-MORK lowering engine (`tools/surface/lowering.py`) | Done, **unverified** — `lower_projection`, `lower_contract`, and `lower_all`/`link_dependencies` (the `mork:dependsOnMapping` graph) are implemented per ADR-A18/A19 and covered by new tests in `test_surface.py`, but this environment has no Python interpreter. Run `python -m unittest tools.surface.test_surface -v` after applying this patch elsewhere, before relying on it. |
++| 3.5 | Parity cannot check `DefinitionOnly` forms | Deferred — same dependency as entailment regimes above. |
++| 3.5 | Blank-node labels visible in emitted modules | Done — accepted trade-off for stable diffs, no open action. |
++| 3.5 | `to_canonical_graph` performance | Deferred — watch-item, no fix planned until it bites. |
++| 3.6 | Canonicalisation contract `srf-canon/1` → `srf-canon/2` | **Closed** — cutover complete; examples and fixtures declare `srf-canon/2` and generator `0.2.0`. Runbook for future cutovers tracked under [ADR-A27](../../docs/adr/ADR-A27-invalidation-and-minimal-scope-regeneration-policy.md). |
++| 4 / 15.1 | `elg:boundScheme` did not exist | **Closed** — fixed as `elg:constrainedByContract`, present in `eligibility/spec/eligibility.ttl`, `eligibility/README.md`, `eligibility/shapes/rules.ttl`. |
++| 4 / 15.2 | `elg:HierarchicalClosureRule` unscoped | **Closed** — removed from `eligibility/shapes/`; no remaining reference in the Eligibility layer. |
++| 4 / 15.3 | `ins:` vs `ino:` properties | **Closed** — dropped, insure-o is going. |
++| 4 / 15.4 | `fnd:GovernanceState` individuals undeclared | **Closed** — corrected 2026-09-18: the previous "Done" tag here was wrong. `docs/architecture/solution-architecture.md` already recorded this as a real, undeclared gap, and a repo-wide grep confirmed every reference to `fnd:Active` etc. was a forward reference, never a declaration. Now declared in `foundation/vocab/foundation-vocab.ttl` as part of the Phase 4 MORK governance work, which needed them to be real. |
++| 3.8 | MORK governance and versioning (ADR-A22) | Done, **unverified** — Foundation import, `mork:GenerativeMapping` adopting `fnd:Governable`/`fnd:Version`, `mork:CompilationMode`, and three SHACL shapes in `mork/shapes/constraints.ttl` (previously empty). See `mork/docs/governance-and-versioning-migration.md` for the backward-compatibility story and verification plan; no SHACL engine or Python was available to run it. |
++| 3.9 | MORK SPARQL/SHACL/SWRL compiler family for Eligibility (ADR-A23, ADR-A24) | Done, **unverified** — new `tools/mork_compilers/` package compiles `elg:IntervalCondition` through a shared IR into a `mork:QueryTemplate` (SPARQL), two SHACL shapes on one `mork:DataMapping`, and one `swrl:Imp` per required interval on another. New `mork/spec/Executable.ttl` (`exe:` vocabulary). No "native" backend — no definition of one exists in this repository. No profile-level aggregate artefact and no runtime result tracking either — both stated gaps, not silent omissions. Full scope record in `mork/docs/eligibility-executable-compiler.md`. |
++| 4 / 15.5 | `bhv:targetsAllowance` README⇄spec drift | **Closed** — hand-remediated; caught by `tools/literate_extract.py --check` going forward. |
++| 5 | MORK toolchain join assumptions | Decision needed — namespace and term-name assumptions in `tools/surface/mork.py` need confirming against the live `mork/spec/Mork.ttl`, not re-guessed. |
++
++Items marked **Closed** are excluded from active backlog and are not revisited except for documentation hygiene, per the delivery plan's explicit-closure policy.
++
++---
+ 
+-### 1.1 Signature scope, and law X6 — needs your sign-off
++## 1. Decisions taken during implementation, requiring sign-off
+ 
+-This is the one place where implementation forced a change to the design you approved, and it is material.
++### 1.1 Signature scope, and law X6 — closed
+ 
+-The design note stated conservativity (X1) as unconditional: a surface never extends the source-signature consequence set. That holds for indexing, which always mints its own terms. It does **not** hold for promotion. A promotion restates a value onto `srf:promotesTo`, and that property is either one the contract mints in its own target namespace, or one a consuming layer already declares. In the second case the emitted triples are over the authored signature and are indistinguishable from authored facts. No authority annotation on the surface record changes that, because the assertions carry the authored property, not a generated one.
++See status summary. The design note stated conservativity (X1) as unconditional: a surface never extends the source-signature consequence set. That holds for indexing, which always mints its own terms. It does **not** hold for promotion. A promotion restates a value onto `srf:promotesTo`, and that property is either one the contract mints in its own target namespace, or one a consuming layer already declares. In the second case the emitted triples are over the authored signature and are indistinguishable from authored facts. No authority annotation on the surface record changes that, because the assertions carry the authored property, not a generated one.
+ 
+ This is exactly the MERIDIAN CSO→FBO case: `fbo:hasLineOfBusiness` is authored, so `DimensionSourcing` is producing authored-signature A-box, not an index.
+ 
+-Rather than weaken X1 or pretend the case away, I modelled it:
++Modelled as:
+ 
+ - `srf:signatureScope` on every `srf:GeneratedSurface`, valued `srf:LocalSignature` or `srf:SourceSignature`;
+ - X1 restated to apply to local-signature surfaces;
+-- new semantic law **X6**: a promotion onto a property outside the contract's target namespace declares exact or crosswalk-exact fidelity, and is materialised rather than definitional.
++- law **X6**: a promotion onto a property outside the contract's target namespace declares exact or crosswalk-exact fidelity, and is materialised rather than definitional.
+ 
+-The two consequences the compiler enforces: a lossy promotion (derived, or crosswalk-inexact) may not target an authored property at all — it lands on a generated one where its derived nature is visible in the IRI; and a definition-only promotion may not emit a property-chain axiom onto an authored property, because an axiom on an authored term is not conservative under anyone's reading.
++**Resolved:** X6 stands as designed, source-signature promotion stays in Surface rather than moving to MORK's `DataMapping`. See [ADR-A16 addendum](../../docs/adr/ADR-A16-surface-projection-mechanism.md#addendumdecision-x6-stands-as-designed-sign-off) and [ADR-A21](../../docs/adr/ADR-A21-signature-scope-composition-for-stacked-surfaces.md) for the composition rule across stacked surfaces.
+ 
+-**What you need to decide:** whether X6 is the right rule, or whether source-signature promotion should instead be pushed out of Surface entirely and treated as a mapping concern (MORK's `DataMapping`), leaving Surface strictly conservative. The second is cleaner in theory and costs you the ability to express the FBO dimension-sourcing table as surface contracts. I took the first because the FBO port is the driver, but it is reversible now and expensive to reverse after the port.
+-
+-### 1.2 Read paths are indexed step lists, not SHACL path nodes
++### 1.2 Read paths are indexed step lists, not SHACL path nodes — done
+ 
+ The design note proposed `sh:path`. SHACL path syntax nests blank nodes, whose labels do not survive canonicalisation without a blank-node normalisation pass — which would have made the read path the only part of a contract needing one. `srf:PathStep` individuals with `srf:stepIndex` and `srf:stepDirection` give the same sequence-and-inverse expressivity with a form that hashes directly, and follow the positional pattern `qnt:OrderingComponent` already uses. Alternation and zero-or-more remain out of scope, as designed.
+ 
+ The cost: a contract cannot be handed straight to a SHACL engine as a path expression. The compiler would need to synthesise one. Nothing currently needs that.
+ 
+-### 1.3 The derivation contract is in Surface, not Foundation
++### 1.3 The derivation contract is in Surface, not Foundation — decision needed
+ 
+-You said: do not pollute Foundation. So `srf:DerivedArtefact`, `srf:GeneratedSurface`, `srf:ReadSetEntry`, `srf:LawDischarge`, `srf:derivationAuthority`, and the hash properties are all declared in Surface.
++`srf:DerivedArtefact`, `srf:GeneratedSurface`, `srf:ReadSetEntry`, `srf:LawDischarge`, `srf:derivationAuthority`, and the hash properties are all declared in Surface, per the instruction not to pollute Foundation.
+ 
+ ADR-A12 anticipates a Foundation-level `fnd:DerivedArtefact`, and Quantification §12 and Behaviour both name it as a blocking gap. Validation reports, entailment sets, and materialised bins will want the same contract. When Foundation gains it, Surface's classes should become subclasses rather than being restructured — they are shaped to allow that, but the migration is unplanned and the duplication is real in the meantime. See §3.1.
+ 
+-### 1.4 The generated-term markers are parents, not types
++### 1.4 The generated-term markers are parents, not types — done
+ 
+-MERIDIAN asserts `generatedFromConcept` on generated `owl:Class` terms with `rdfs:domain owl:Class` — punning that OWL-API toolchains object to. I marked generated terms by parentage instead: every generated class is `rdfs:subClassOf srf:GeneratedClass`, every generated relation `rdfs:subPropertyOf srf:generatedRelation`. Enumerating a surface's inventory is a subclass query, no punning involved, and wrapper mode therefore adds no class-as-individual statements of its own. Provenance lives on `srf:GeneratedSymbol` records in the manifest, as you specified.
++MERIDIAN asserts `generatedFromConcept` on generated `owl:Class` terms with `rdfs:domain owl:Class` — punning that OWL-API toolchains object to. Marked by parentage instead: every generated class is `rdfs:subClassOf srf:GeneratedClass`, every generated relation `rdfs:subPropertyOf srf:generatedRelation`. Enumerating a surface's inventory is a subclass query, no punning involved. Provenance lives on `srf:GeneratedSymbol` records in the manifest.
+ 
+-### 1.5 Contracts in `execution/`, examples in `surface/examples/`
++### 1.5 Contracts in `execution/`, examples in `surface/examples/` — done
+ 
+-Generated packages for the three worked examples are committed under `surface/execution/<contractKey>/`, per your item 11. The example contract declarations are in `surface/examples/`, not the repository-root `examples/` — root `examples/employment.ttl` and `examples/saas-subscription.ttl` are still empty and are, on my reading, for cross-layer composition scenarios rather than single-layer worked examples. Move them if that reading is wrong; the compiler takes paths, so nothing breaks.
++Generated packages for the three worked examples are committed under `surface/execution/<contractKey>/`. The example contract declarations are in `surface/examples/`, not the repository-root `examples/` — root `examples/employment.ttl` and `examples/saas-subscription.ttl` are for cross-layer composition scenarios rather than single-layer worked examples.
+ 
+ ---
+ 
+ ## 2. Deferred with a planned approach
+ 
+-### 2.1 `srf:RangePartitionPopulation` — the bucketing law
+-
+-Declared, rejected by both the compiler and `srf:RangePartitionDeferredShape`. Here is what reopening it needs, in the order it needs it.
++### 2.1 `srf:RangePartitionPopulation` — the bucketing law — deferred, planned
+ 
+-**The problem.** Every other population is a set of IRIs the generator can enumerate and mint from. A range set is a set of intervals over an ordered value space. Minting one symbol per interval is straightforward; the difficulty is that the symbols must partition, and `qnt:RangeSet` does not currently guarantee that they do.
++Declared, rejected by both the compiler and `srf:RangePartitionDeferredShape`. Reopening it needs, in order:
+ 
+-**Step 1 — state the partition precondition.** A range set is *admissible as a population* when its ranges are pairwise disjoint and their union covers the space the carrier's values are drawn from. Neither is implied by `qnt:RangeSet` today: ranges may overlap, and there is no notion of a covered domain. So the first piece of work is in Quantification, not Surface: a `qnt:PartitionRangeSet` subclass, or a `qnt:isPartition` flag with a shape that checks disjointness and coverage. Without it the surface would silently mint overlapping buckets and a carrier instance would land in two of them, which breaks index faithfulness (X2) with no diagnostic.
++**Step 1 — state the partition precondition.** A range set is *admissible as a population* when its ranges are pairwise disjoint and their union covers the space the carrier's values are drawn from. Neither is implied by `qnt:RangeSet` today. This is Quantification work first: a `qnt:PartitionRangeSet` subclass, or a `qnt:isPartition` flag with a shape checking disjointness and coverage.
+ 
+-**Step 2 — settle boundary behaviour under each `qnt:Closure`.** This is the substantive part. Adjacent ranges meeting at a boundary `b` fall into three cases:
++**Step 2 — settle boundary behaviour under each `qnt:Closure`.** Adjacent ranges meeting at a boundary `b`:
+ 
+ | Left range ends | Right range starts | Point `b` | Verdict |
+ |---|---|---|---|
+@@ -67,75 +101,100 @@ Declared, rejected by both the compiler and `srf:RangePartitionDeferredShape`. H
+ | closed at `b` | closed at `b` | in both | **overlap** — reject |
+ | open at `b` | open at `b` | in neither | **gap** — reject |
+ 
+-So the partition check is a pairwise closure-compatibility check at each shared boundary, not just an interval-arithmetic check. Unbounded ends and the empty range need their own rows. The law to state — call it **X7, range partition faithfulness** — is: a carrier instance whose value is `v` belongs to exactly one bucket symbol, and it is the bucket whose range contains `v` under that range's declared closure. Exactly one, for every `v` in the covered space: that is the whole content of the law, and it is what the two rejected rows above protect.
++Law **X7, range partition faithfulness**: a carrier instance whose value is `v` belongs to exactly one bucket symbol, the one whose range contains `v` under that range's declared closure.
+ 
+-**Step 3 — decide what the symbol denotes.** A nominal bucket class is `Carrier ⊓ ∃R.{v : v ∈ range}`, which is not expressible with `owl:hasValue` — it needs a datatype restriction (`owl:onDatatype` with `xsd:minInclusive` / `xsd:maxExclusive` facets). That is OWL 2 DL but not OWL 2 EL, so a range-partition surface cannot claim the EL-safety that the nominal form currently claims, and its profile must declare `srf:OWL2DLEntailment` or materialise. This is a real constraint and should be stated when the form is admitted, not discovered afterwards.
++**Step 3 — decide what the symbol denotes.** A nominal bucket class needs a datatype restriction (`owl:onDatatype` with `xsd:minInclusive` / `xsd:maxExclusive` facets), OWL 2 DL, not OWL 2 EL. A range-partition surface's profile must declare `srf:OWL2DLEntailment` or materialise.
+ 
+-**Step 4 — naming.** `LocalNameFromValue` has nothing to read: a range has no local name. Either ranges gain a required label for this purpose, or the form requires `DigestLocalName` over the range's canonical form, or a new `srf:RangeBoundNaming` policy mints from the bounds (`bucket_0_100`, `bucket_100_inf`). The third reads best and is fragile under reparameterisation — changing a boundary renames the symbol and invalidates everything downstream, which is arguably correct but should be a stated consequence.
++**Step 4 — naming.** `LocalNameFromValue` has nothing to read for a range. Either ranges gain a required label, or the form requires `DigestLocalName`, or a new `srf:RangeBoundNaming` policy mints from the bounds (`bucket_0_100`, `bucket_100_inf`).
+ 
+-**Step 5 — invalidation.** A range set is a declaration, so it enters the read set as a `DeclarationSource` entry and the existing freshness rule covers it unchanged. No new machinery.
++**Step 5 — invalidation.** A range set is a declaration, entering the read set as a `DeclarationSource` entry under the existing freshness rule. No new machinery.
+ 
+-Estimated shape of the work: most of it is Step 1 and Step 2, and most of that is in Quantification. Surface's own part — a population kind, a naming policy, a bucket-assignment pass in the compiler — is small once the partition guarantee exists.
++Most of the work is Steps 1–2, and most of that is in Quantification. Surface's own part — a population kind, a naming policy, a bucket-assignment pass in the compiler — is small once the partition guarantee exists.
+ 
+-### 2.2 Stacking beyond depth 1
++### 2.2 Stacking beyond depth 1 — deferred, planned
+ 
+-Modelled fully: `srf:permittedStackDepth` on the profile, `srf:stackDepth` on the generated surface, `srf:SurfaceSource` read-set entries, and `srf:S10` checking one against the other. The compiler computes depth from input surfaces and refuses to exceed the profile's permitted depth. `srf:StackDepthReleaseCeilingShape` caps the permitted depth at 1 for this release; deleting that one shape is the entire mechanical change needed to allow deeper stacks.
++Modelled fully: `srf:permittedStackDepth` on the profile, `srf:stackDepth` on the generated surface, `srf:SurfaceSource` read-set entries, and `srf:S10` checking one against the other. `srf:StackDepthReleaseCeilingShape` caps the permitted depth at 1; deleting that one shape is the entire mechanical change needed to allow deeper stacks.
+ 
+-What deleting it would leave unstated, and what must be written first:
++What deleting it leaves unstated, and what must exist first:
+ 
+-- **The read set becomes a DAG.** At depth 1 a surface's read set is a list of source hashes. At depth *n* an entry may name a surface whose own read set names further surfaces, so freshness is a transitive question and the honest form is a hash chain: a surface's semantic content hash must incorporate the *artefact* hashes of the surfaces it read, so that a change three levels down propagates. The current implementation already does this correctly at depth 1 (a `SurfaceSource` entry carries the input's artefact hash) but nothing checks that the input surface was itself fresh when read. At depth > 1 that check is mandatory, otherwise a fresh-looking surface can sit on a stale one.
+-- **X1 needs a composition law.** Conservativity composes: a local-signature surface over a local-signature surface is local-signature. But a surface over a *source-signature* promotion is not conservative over the original source, because its input already was not. So the composition rule is: `signatureScope` of a stacked surface is `SourceSignature` if any input surface is. That is one line in the compiler and one clause in X1, but it must be written down before the depth cap is lifted.
+-- **R1 needs a composition law too.** Determinism composes only if every surface in the chain is regenerated under the same profile identity. Mixed-profile stacks are not obviously wrong but are not obviously reproducible either. Simplest defensible rule: every surface in a stack shares one profile, checked statically.
+-- **Cycle detection.** Two surfaces reading each other is currently impossible only because depth is capped. At arbitrary depth it needs the same treatment as the closure basis: a traversal, refused on a cycle.
+-- **Invalidation cost.** The reason the design note hesitated. A change at the bottom of a depth-*n* stack regenerates *n* artefacts, and the impact-scoping table in §11 of the README has no row for it. Worth measuring on the FBO chain before lifting the cap.
++- **The read set becomes a DAG.** At depth *n* a surface's semantic content hash must incorporate the *artefact* hashes of the surfaces it read, so a change three levels down propagates, and nothing yet checks that an input surface was itself fresh when read.
++- **X1 needs a composition law.** **Now stated** in [ADR-A21](../../docs/adr/ADR-A21-signature-scope-composition-for-stacked-surfaces.md): `signatureScope` of a stacked surface is `SourceSignature` if any input surface's is.
++- **R1 needs a composition law.** **Now stated** in ADR-A21: every surface in a stack shares one profile identity, checked statically.
++- **Cycle detection.** Not yet implemented; needed before the depth cap can be lifted.
++- **Invalidation cost.** Not yet measured on the FBO chain; the impact-scoping table in the README §11 has no row for stacked regeneration. Tracked under [ADR-A27](../../docs/adr/ADR-A27-invalidation-and-minimal-scope-regeneration-policy.md).
+ 
+ The FBO chain (CSO → promoted dimension → nominal index) is depth 1 and works today.
+ 
+-### 2.3 `srf:ExternalIndex`
++### 2.3 `srf:ExternalIndex` — deferred
+ 
+-Declared and rejected, following the `bhv:Proportional` precedent — visibly unavailable rather than silently absent. Admitting it needs: a way to name the store and its index without the substrate depending on any particular store; a statement of what "the surface is fresh" means when the index is not in the graph and cannot be hashed; and a decision about whether a store-native index can discharge parity (R2) at all, given that the comparison would run outside RDF. I would leave this until a deployment actually needs it — the answers depend heavily on which store.
++Declared and rejected, following the `bhv:Proportional` precedent — visibly unavailable rather than silently absent. Admitting it needs: a way to name the store and its index without the substrate depending on any particular store; a statement of what "the surface is fresh" means when the index cannot be hashed; and a decision about whether a store-native index can discharge parity (R2) at all. Left until a deployment actually needs it.
+ 
+ ---
+ 
+-## 3. Known gaps in what I have built
+-
+-### 3.1 Foundation migration
++## 3. Known gaps
+ 
+-See §1.3. The question to settle: does the derived-artefact contract eventually move to Foundation per ADR-A12, with Surface's classes becoming subclasses, or does each generating layer declare its own? If the former, `srf:DerivedArtefact`, `srf:derivationAuthority`, `srf:producedAt`, `srf:artefactHash`, `srf:semanticContentHash`, and the two authority individuals are the migration set. `srf:ReadSetEntry` and the read-source kinds are arguably generic too. `srf:LawDischarge` duplicates `qnt:LawDischarge` in shape but not in namespace; a Foundation-level law register would absorb both.
++### 3.1 Foundation migration — decision needed
+ 
+-### 3.2 ADR-A01 convention conflict — ontology headers in READMEs
++The question to settle: does the derived-artefact contract eventually move to Foundation per ADR-A12, with Surface's classes becoming subclasses, or does each generating layer declare its own? If the former, `srf:DerivedArtefact`, `srf:derivationAuthority`, `srf:producedAt`, `srf:artefactHash`, `srf:semanticContentHash`, and the two authority individuals are the migration set. `srf:ReadSetEntry` and the read-source kinds are arguably generic too. `srf:LawDischarge` duplicates `qnt:LawDischarge` in shape but not in namespace; a Foundation-level law register would absorb both. [ADR-A22](../../docs/adr/ADR-A22-mork-governance-and-versioning-foundation-alignment.md) resolves the governance/versioning half of Foundation alignment for MORK specifically; this broader question is unaffected and still open.
+ 
+-ADR-A01's convention note says no layer README duplicates its ontology header inside a `turtle-spec` fence; the header is authored once, directly in `spec/<layer>.ttl`. But Eligibility's and Behaviour's READMEs both *do* include their headers in `turtle-spec`, so the convention is already not held.
++### 3.2 ADR-A01 convention conflict — closed
+ 
+-I included the header in `surface/README.md` §6.1, because extraction has to produce a complete file — a header-less `spec/surface.ttl` would need a hand-maintained fragment prepended, which reintroduces exactly the drift the literate-spec discipline exists to prevent. Someone should decide which way the convention goes and make the three layers agree. My recommendation is to amend ADR-A01 to match practice.
++**Resolved** in [ADR-A01](../../docs/adr/ADR-A01-layer-dependency-order.md#decision): the ontology header is authored in the README's `turtle-spec` fence, matching Eligibility, Behaviour, and Surface practice. Foundation, Vocabulary, and Party are the outliers to correct, not the other three layers.
+ 
+-### 3.3 Profile identity is computed, not modelled
++### 3.3 Profile identity is computed, not modelled — blocked
+ 
+-`Profile.identity()` in the compiler concatenates the profile IRI, generator version, canonicalisation version, entailment regime, naming normalisation, symbol mode, and permitted stack depth. It decides whether two artefacts are interchangeable, and it is not represented in the graph — nothing records *which* identity a surface was produced under beyond naming the profile, which may itself have changed. A `srf:profileIdentityHash` on the generated surface would close this. I did not add it because it interacts with whatever Foundation ends up doing about generation profiles (§3.1).
++`Profile.identity()` in the compiler concatenates the profile IRI, generator version, canonicalisation version, entailment regime, naming normalisation, symbol mode, and permitted stack depth, and decides whether two artefacts are interchangeable — but it is not represented in the graph. A `srf:profileIdentityHash` on the generated surface would close this, but it interacts with whatever Foundation ends up doing about generation profiles (§3.1), so it waits on that decision.
+ 
+-### 3.4 Not built
++### 3.4 Not built, or partially built
+ 
+-- **R2 parity harness.** The conformance corpus comparison — same question against the surface and against the source — is the only thing that makes a surface trustworthy, and it is the one law with no implementation here. It needs a SPARQL engine, which this environment does not have. It should extend the existing conformance corpus rather than growing its own.
+-- **MORK `mrk:ProjectionMapping`.** Sketched in the design note, not cut. The compiler's structure (contract → plan → emit) maps onto the `mork2rml` catamorphism, but I did not want to shape the Surface layer around MORK before you had seen it standing alone.
+-- **insure-o port.** Correctly blocked: you are dropping the current insure-o and porting CSO and FBO by hand. The three non-domain examples exercise every mechanism the port will need except range partitions.
+-- **SHACL validation of my own shapes.** No SHACL engine in this environment, so `shapes/structural.ttl` and `shapes/constraints.ttl` are syntactically checked (they parse) but have not been executed against the fixtures. The six defect fixtures are exercised through the compiler, which enforces the same laws independently — but compiler agreement is not shape validation, and the shapes should be run before anyone relies on them.
++- **R2 parity harness.** `tools/surface/parity.py` implements the comparison for materialised forms and the `--parity` flag records the discharge. What remains is wiring it to the shared conformance corpus the other layers use, rather than the questions it currently generates itself from the contract. Tracked under [ADR-A28](../../docs/adr/ADR-A28-parity-and-conformance-release-gate.md).
++- **MORK `mrk:ProjectionMapping` — closed.** Implemented in `tools/surface/mork.py`, in both directions, against `mork/spec/Mork.ttl` as it stands in this repository. See [ADR-A18](../../docs/adr/ADR-A18-surface-to-mork-lowering-boundary.md).
++- **insure-o port.** Correctly blocked: the current insure-o is being dropped in favour of a hand-port of CSO and FBO. The three non-domain examples exercise every mechanism the port needs except range partitions.
++- **SHACL validation of Surface's own shapes.** No SHACL engine in the authoring environment, so `shapes/structural.ttl` and `shapes/constraints.ttl` are syntactically checked but not executed against fixtures. The six defect fixtures are exercised through the compiler, which enforces the same laws independently, but compiler agreement is not shape validation. Tracked as a mandatory CI gate under [ADR-A28](../../docs/adr/ADR-A28-parity-and-conformance-release-gate.md).
+ 
+ ### 3.5 Compiler limitations worth knowing
+ 
+-- The Turtle reader accepts a restricted subset and refuses blank-node and collection syntax with an explicit message. It is sufficient for contract declarations, concept schemes, and carrier instance graphs, all of which are blank-node free. It is **not** sufficient for reading arbitrary source ontologies — an upper ontology with OWL restrictions will not parse. Swapping in rdflib behind the same `Graph` interface is the obvious fix and is about a day's work; I avoided the dependency because the container has neither rdflib nor network access, and a compiler I could actually run and test seemed worth more than one I could only write.
+-- `ClassExtentPopulation` with `TransitiveSubClasses` computes the closure over asserted `rdfs:subClassOf` only. Under a reasoner the extent would be larger. The profile's `srf:entailmentRegime` is recorded but the compiler does not act on it — it always reads asserted triples. For `srf:NoEntailment` profiles this is correct; for others it is a gap, and the honest statement is that the compiler currently implements the no-entailment profile only.
+-- Blank-node labels in emitted modules are deterministic and derived from the term they belong to (`_:RoleAssignment_job-family_Sales_def_l0`). This makes regeneration byte-identical and diffs stable, at the cost of labels that are visible in the output. If that offends, an inline `[ ]` serialiser is straightforward, but then the canonicalisation contract needs a blank-node normalisation pass.
++- **Entailment regimes are recorded but not acted on.** The compiler always reads asserted triples. Correct for `srf:NoEntailment` profiles; a gap for the others. Closing this means choosing a reasoner (owlrl for RDFS and OWL 2 RL, an external EL reasoner for the nominal form) and deciding whether the compiler materialises entailments before reading or requires the caller to.
++- **Parity cannot check `DefinitionOnly` forms.** `srf:R2` compares assertions; a `DefinitionOnly` surface asserts nothing, so those forms report as skipped with the regime named, rather than silently passed. Same dependency as the item above.
++- **Blank-node labels in emitted modules are visible.** Minted from the term they belong to (`_:RoleAssignment_job-family_Sales_def_l0`), which keeps regenerated modules diffing cleanly. Hashing does not depend on this any more — the canonical form relabels blank nodes by graph position — so this is now a style choice, kept deliberately for stable diffs, per law `srf:R3`.
++- **`to_canonical_graph` is not free.** Superlinear on blank-node-bearing graphs. Read-set inputs are almost always blank-node free, where the cost is a sort. A very large emitted `core.ttl` with one blank-node definition per population member is the case to watch; if it bites, hash the modules per-subject and fold, rather than abandoning the canonical form.
++
++### 3.6 Canonicalisation contract `srf-canon/1` → `srf-canon/2` — closed
++
++The rdflib rewrite hashes `rdflib.compare`'s canonical graph rather than a sorted rendering dependent on deterministic blank-node labels — blank-node-label independent, so a graph read from anywhere hashes stably. This was a change of canonicalisation contract per ADR-A12, and the rehash has been taken: every previously recorded `srf:readHash`, `srf:semanticContentHash`, and `srf:artefactHash` is stale by design, and the three committed example packages were regenerated rather than left looking current (`surface/execution/README.md` gives the regeneration command). Examples and fixtures now declare `srf-canon/2` and generator `0.2.0`. A runbook for any future cutover of this kind is tracked under [ADR-A27](../../docs/adr/ADR-A27-invalidation-and-minimal-scope-regeneration-policy.md).
++
++### 3.7 Surface-to-MORK lowering engine — done, unverified
++
++`tools/surface/lowering.py` implements ADR-A18/A19's lowering stage: `lower_projection` (a `ProjectionContract`, which has no direct-emit form), `lower_contract` (a Promotion/Index declaration, for the configured case where a deployment also wants it mirrored into MORK), and `lower_all`/`link_dependencies` (one mapping graph per batch, with `mork:dependsOnMapping` edges computed from a role binding's declared `bindsCarrier`/`bindsProperty` cross-reference to another contract in the same batch). Every emitted mapping is a bare `mork:DataMapping`, deliberately not yet classified into any `GenerativeMapping` subtype — that classification is OWL-inferred from a generated-artefact property (`generatesShapeDefinition` and its siblings) that only a Phase 5 backend compiler attaches.
++
++This has not been executed. The authoring environment has no Python interpreter (see repository memory notes), so `tools/surface/test_surface.py`'s new `ContractLoweringTests` and `LoweringDependencyTests` classes are reviewed by reading, not by a test run. Run `python -m unittest tools.surface.test_surface -v` once this patch is applied somewhere Python exists, and treat a first pass as part of review rather than as a regression check — the same caveat the rest of this test module already carries.
++
++**No committed goldens.** `surface/execution/`'s convention is regenerated output, not hand-authored fixtures (see that directory's own README). No lowering output has been committed here for the same reason: a hand-computed "golden" `.ttl` file cannot be verified byte-accurate without running the compiler, and a wrong golden is worse than none. Regenerate with `python -m tools.surface lower --contracts surface/examples/saas-subscription-arr-projection.ttl` once Python is available, and commit the result under `surface/execution/` at that point.
+ 
+ ---
+ 
+ ## 4. Findings 15.1–15.5
+ 
+-Recording status as you left them, so nothing is lost:
+-
+ | # | Finding | Status |
+ |---|---|---|
+-| 15.1 | `elg:boundScheme` does not exist | Fixed as option (c) — `elg:constrainedByContract`. The L9 replacement's new shape reads it and cannot be installed until it lands. |
+-| 15.2 | `elg:HierarchicalClosureRule` unscoped | Full L9 replacement text supplied at `docs/amendments/eligibility-L9-replacement.md`, including the rule's removal and its static replacement. |
+-| 15.3 | `ins:` vs `ino:` properties | Dropped — insure-o is going, `ins:` carries no domain properties, CSO scopes peril via `hasPerilScope` on `TermApplication`. |
+-| 15.4 | `fnd:GovernanceState` individuals undeclared | Being added to Foundation as individuals. The examples and fixtures here assume `fnd:Active` exists. |
+-| 15.5 | `bhv:targetsAllowance` README⇄spec drift | Hand remediation. Note that `tools/lattice/literate_extract.py --check` would have caught it, and would catch the next one. |
++| 15.1 | `elg:boundScheme` does not exist | **Closed** — fixed as option (c), `elg:constrainedByContract`, present in `eligibility/spec/eligibility.ttl`, `eligibility/README.md`, and read by `eligibility/shapes/rules.ttl`. |
++| 15.2 | `elg:HierarchicalClosureRule` unscoped | **Closed** — removed from `eligibility/shapes/` per the L9 replacement at [eligibility-L9-replacement.md](eligibility-L9-replacement.md); no remaining reference in the Eligibility layer. |
++| 15.3 | `ins:` vs `ino:` properties | **Closed** — dropped; insure-o is going, `ins:` carries no domain properties, CSO scopes peril via `hasPerilScope` on `TermApplication`. |
++| 15.4 | `fnd:GovernanceState` individuals undeclared | **Closed** — see the corrected status summary entry above (§4/15.4); the individuals are now actually declared in `foundation/vocab/foundation-vocab.ttl`. |
++| 15.5 | `bhv:targetsAllowance` README⇄spec drift | **Closed** — hand-remediated. `tools/lattice/literate_extract.py --check` would have caught it, and catches the next one. |
++
++---
++
++## 5. The MORK toolchain join — decision needed
++
++`tools/surface/mork.py` is written against `mork/spec/Mork.ttl` and `tools/mork2rml.py` as they appear in this repository's document set, predating full confirmation against a live toolchain checkout. What was assumed, and what to check:
++
++| Assumption | Check |
++|---|---|
++| MORK terms live at `http://www.nebularis.org/ontologies/Mork#` | Confirmed: `mork/spec/Mork.ttl`'s base and default prefix use this namespace. `mork/targets/insure-o-target.ttl` binds `mk:` to `.../lattice/mork#` — both are bound in `namespaces.py`, and `MORK` is the one used. If the toolchain has settled on the lattice form instead, change one constant. |
++| `mrk:GenerativeMapping`, `DataMapping`, `TargetingSpec`, `ParameterBinding` (`paramName`/`paramType`/`paramValue`), `OwlClass`, `mappingScheme`, `mappingFor`, `reviewStatus`, `provenanceCreated` exist with those names | Every one is used by `mork.py`. If any have been renamed, the failures will be silent — they would emit triples nobody reads. Worth a grep before the first production run. |
++| `ProjectionMapping`, `generatesClassDefinition`, `ProjectionProvenance`, `hasProjectionProvenance` exist | Confirmed present in `mork/spec/Mork.ttl` (`GenerativeMapping`'s subclasses include `ProjectionMapping`). |
++| The compiler is a sibling of `mork2rml.py` under `tools/`, not a member of the MORK package | If the toolchain has a shared package (`mork_communities/` suggests one), `serialise.py` and parts of `namespaces.py` may duplicate utilities that already exist there. |
++| `mork_communities/shadow.py` is unrelated | It builds `OwlAxiom` shadows to keep reasoning over mapping graphs sound, a MORK-internal concern. Surface shadows nothing — it restates domain-layer relationships for runtime lookup. Worth confirming there is no naming collision in emitted IRIs if both ever run over one graph. |
++
++**Open question, not yet decided:** whether to reuse MORK's `precedes` derivation ordering for Surface's generated-module order (class definitions before membership assertions before closure relations), rather than `owl:imports`. Surface currently uses `owl:imports` because a surface package is consumed as a unit. If the toolchain expects derivation order expressed as `precedes`, that is a small addition to the manifest, not a compiler change.
+diff --git a/surface/execution/README (1).md b/surface/execution/README (1).md
+index 4eff074..fd4a925 100644
+--- a/surface/execution/README (1).md	
++++ b/surface/execution/README (1).md	
+@@ -13,3 +13,16 @@ python3 -m tools.surface compile \
+ ```
+ 
+ A deployment's own packages live in that deployment's `execution/` directory. These three exist only to make the worked examples inspectable.
++
++## Lowered MORK mapping graphs
++
++`srf:ProjectionContract` examples (and any Promotion/Index contract lowered under `--promotion-index`) regenerate their MORK mapping graph with:
++
++```bash
++python3 -m tools.surface lower \
++    --contracts surface/examples/saas-subscription-arr-projection.ttl \
++    --out surface/execution/subscription-arr/mapping.ttl
++```
++
++No lowered mapping graph is committed here yet — `tools/surface/lowering.py` (ADR-A18) was written and tested by reading, not by running, in an environment with no Python interpreter. Run the command above and commit its output once Python is available, rather than trusting a hand-authored file to be byte-accurate.
++
+diff --git a/tools/surface/cli.py b/tools/surface/cli.py
+index 00daae7..d712a48 100644
+--- a/tools/surface/cli.py
++++ b/tools/surface/cli.py
+@@ -24,6 +24,17 @@ behave the same way in a pipeline.
+ 
+ ``mork``
+     Lift compiled surfaces into ``mrk:ProjectionMapping`` records.
++
++``lower``
++    Lower Surface contracts into MORK mapping graphs (ADR-A18). Projection
++    contracts always lower, since a projection has no direct-emit form
++    (ADR-A17); ``--promotion-index`` additionally lowers Promotion and Index
++    contracts, mirrored alongside their existing direct-emit path — the
++    "configured" case, not the default. Unlike ``mork``, this reads no source
++    graph and compiles nothing: the whole output is the mapping graph a later
++    backend compiler (ADR-A23) will read, plus any ``mork:dependsOnMapping``
++    edges a role binding's declared cross-reference to another contract in
++    the same batch implies.
+ """
+ 
+ from __future__ import annotations
+@@ -38,8 +49,9 @@ from typing import Dict, List, Optional, Sequence, Tuple
+ from rdflib import Graph, Literal, URIRef
+ 
+ from . import mork as mork_interop
+-from .compile import CompileError, SurfaceCompiler, discharge_determinism, render
+-from .model import ContractError, SurfaceGraphAnalyser, read_contracts
++from .compile import CompileError, StackedInput, SurfaceCompiler, discharge_determinism, render
++from .lowering import lower_all
++from .model import ContractError, SurfaceGraphAnalyser, read_contracts, read_projection_contracts
+ from .namespaces import OUTPUT_PREFIXES, RDF, SRF
+ from .parity import check_parity
+ from .serialise import parse_files, serialise
+@@ -61,23 +73,40 @@ def _now(explicit: Optional[str]) -> str:
+     )
+ 
+ 
+-def _input_surfaces(paths: Sequence[str]) -> List[Tuple[URIRef, str, int]]:
+-    """Read generated manifests supplied as input, for stacked surfaces."""
++def _input_surfaces(paths: Sequence[str], declarations: Graph) -> List[StackedInput]:
++    """Read generated manifests supplied as input, for stacked surfaces.
++
++    Resolves each input's profile identity against ``declarations`` (where the
++    profile individual's own properties are asserted, not the manifest), so
++    the ADR-A21 composition check in ``SurfaceCompiler`` has something to
++    compare rather than silently skipping every input.
++    """
+     if not paths:
+         return []
+     graph = parse_files(paths)
+-    found: List[Tuple[URIRef, str, int]] = []
++    analyser = SurfaceGraphAnalyser(declarations)
++    found: List[StackedInput] = []
+     for record in graph.subjects(RDF.type, SRF.GeneratedSurface):
+         digest = graph.value(record, SRF.artefactHash)
+         depth = graph.value(record, SRF.stackDepth)
++        scope = graph.value(record, SRF.signatureScope)
++        profile_iri = graph.value(record, SRF.generatedByProfile)
++        identity: Optional[str] = None
++        if profile_iri is not None:
++            try:
++                identity = analyser.profile(profile_iri).identity_hash()
++            except ContractError:
++                identity = None
+         found.append(
+-            (
+-                record,
+-                str(digest) if digest is not None else "",
+-                int(depth) if depth is not None else 0,
++            StackedInput(
++                surface=record,
++                artefact_hash=str(digest) if digest is not None else "",
++                depth=int(depth) if depth is not None else 0,
++                profile_identity=identity,
++                signature_scope=str(scope) if scope is not None else None,
+             )
+         )
+-    return sorted(set(found), key=lambda entry: str(entry[0]))
++    return sorted(set(found), key=lambda entry: str(entry.surface))
+ 
+ 
+ def _load(args: argparse.Namespace, *extra: Sequence[str]) -> Graph:
+@@ -91,7 +120,7 @@ def _load(args: argparse.Namespace, *extra: Sequence[str]) -> Graph:
+ def command_compile(args: argparse.Namespace) -> int:
+     declarations = parse_files(args.contracts)
+     source = _load(args, args.input_surface)
+-    stacked = _input_surfaces(args.input_surface)
++    stacked = _input_surfaces(args.input_surface, declarations)
+     produced_at = _now(args.now)
+ 
+     out_root = Path(args.out)
+@@ -229,6 +258,36 @@ def command_mork(args: argparse.Namespace) -> int:
+     return 0
+ 
+ 
++def command_lower(args: argparse.Namespace) -> int:
++    """Lower Surface contracts into MORK mapping graphs (ADR-A18).
++
++    Projection contracts always lower, since they have no direct-emit form.
++    Promotion and Index contracts lower only when ``--promotion-index`` is
++    given: they already have a working direct-emit path, so mirroring them
++    into MORK as well is the configured case, not the default (delivery-plan
++    Phase 3 item 2), and running both mechanisms over disjoint contract keys
++    avoids any ambiguity about which one produced a given mapping.
++    """
++    prefixes = dict(OUTPUT_PREFIXES)
++    prefixes["mork"] = mork_interop.MORK
++    header = ["# SPDX-License-Identifier: MPL-2.0", ""]
++
++    declarations = parse_files(args.contracts)
++    try:
++        projections = read_projection_contracts(declarations, only=args.contract)
++    except ContractError as error:
++        print(f"error: {error}", file=sys.stderr)
++        return 2
++    contracts = []
++    if args.promotion_index:
++        contracts = read_contracts(declarations, only=args.contract)
++
++    combined = lower_all(contracts=contracts, projections=projections)
++    text = serialise(combined, prefixes, header + ["# Lowered MORK mapping graph.", ""])
++    Path(args.out).write_text(text, encoding="utf-8") if args.out else print(text)
++    return 0
++
++
+ def main(argv: Optional[Sequence[str]] = None) -> int:
+     parser = argparse.ArgumentParser(prog="surface", description="LATTICE surface compiler")
+     parser.add_argument("-v", "--verbose", action="store_true", help="enable verbose logging")
+@@ -269,6 +328,17 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
+     mork_cmd.add_argument("--now", default=None)
+     mork_cmd.set_defaults(func=command_mork)
+ 
++    lower_cmd = sub.add_parser("lower", help="lower Surface contracts into MORK mapping graphs")
++    lower_cmd.add_argument("--contracts", nargs="+", required=True, help="declaration graph files")
++    lower_cmd.add_argument("--contract", default=None, help="lower only this contract IRI")
++    lower_cmd.add_argument(
++        "--promotion-index",
++        action="store_true",
++        help="also lower Promotion/Index contracts, mirrored alongside their direct-emit path",
++    )
++    lower_cmd.add_argument("--out", default=None, help="output file (default: stdout)")
++    lower_cmd.set_defaults(func=command_lower)
++
+     args = parser.parse_args(argv)
+     logging.basicConfig(
+         level=logging.DEBUG if args.verbose else logging.WARNING,
+diff --git a/tools/surface/compile.py b/tools/surface/compile.py
+index 1e2013f..50d9dc1 100644
+--- a/tools/surface/compile.py
++++ b/tools/surface/compile.py
+@@ -27,6 +27,18 @@ The compiler is deterministic. Population order is IRI order, blank-node labels
+ are minted from the term they belong to, and the production timestamp is the
+ only non-reproducible value emitted — which is why it sits outside the artefact
+ hash.
++
++**Staged pipeline (ADR-A19).** A Promotion or Index contract's run maps onto
++the staged model as: validate (``model.py``'s analyser, at read time) →
++normalise (population enumeration and read-path evaluation, below) → compile
++(``SurfaceCompiler.compile``, this module) → emit (``serialise.py``) →
++provenance (the manifest module, ``_manifest``). Promotion and Index end the
++pipeline at emit, because ADR-A16 gives them a direct-emit form. A
++``ProjectionContract`` has no direct-emit form (ADR-A17): its pipeline instead
++ends at lower — ``lowering.py`` — which produces a MORK mapping graph for a
++later backend compiler (ADR-A23) to read, rather than a compiled module
++package. The two pipelines share validate and normalise; they diverge at the
++stage ADR-A18 draws the line at.
+ """
+ 
+ from __future__ import annotations
+@@ -67,6 +79,12 @@ DIRECT = SRF.DirectProperty
+ WARN_POPULATION = 500
+ DEFAULT_BUDGET = 5000
+ 
++#: Entailment regimes this compiler acts on. It reads asserted triples only,
++#: which is correct for NoEntailment and a silent gap for anything richer
++#: (outstanding items §3.5) — so anything else is refused at compile time
++#: rather than silently under-entailed.
++SUPPORTED_ENTAILMENT_REGIMES = (str(SRF.NoEntailment),)
++
+ 
+ class CompileError(ValueError):
+     """The contract cannot be compiled against this source graph."""
+@@ -76,6 +94,23 @@ class CyclicClosureBasis(CompileError):
+     """The declared closure basis is not well founded over the declared scope."""
+ 
+ 
++def check_entailment_regime(profile) -> None:
++    """Refuse to compile under an entailment regime this compiler does not act on.
++
++    The compiler always reads asserted triples: correct for ``NoEntailment``,
++    and a gap for ``RDFSEntailment``, ``OWL2ELEntailment``, and
++    ``OWL2DLEntailment``, where a ``DefinitionOnly`` surface would answer
++    nothing without a reasoner this compiler does not run. Claiming support and
++    generating an under-entailed surface is worse than refusing outright.
++    """
++    if profile.entailment_regime not in SUPPORTED_ENTAILMENT_REGIMES:
++        raise CompileError(
++            f"profile {profile.iri} declares entailment regime "
++            f"{profile.entailment_regime}, which this compiler does not act on. Only "
++            f"srf:NoEntailment is currently supported (surface/docs/OUTSTANDING-ITEMS.md §3.5)."
++        )
++
++
+ # ---------------------------------------------------------------------------
+ # Source reading
+ # ---------------------------------------------------------------------------
+@@ -210,6 +245,32 @@ class ReadSetRecord:
+         return (str(self.kind), str(self.source))
+ 
+ 
++@dataclass(frozen=True)
++class StackedInput:
++    """One surface a stacked generation run reads (ADR-A21).
++
++    ``profile_identity`` and ``signature_scope`` are optional so that a caller
++    without a manifest to hand — or code written before this record existed —
++    can still pass a bare ``(surface, artefact_hash, depth)`` tuple, which
++    ``SurfaceCompiler`` coerces on the way in. Composition is only checked for
++    inputs that supply the field it depends on: an input with no known profile
++    identity is not silently treated as matching, it is simply not compared.
++    """
++
++    surface: URIRef
++    artefact_hash: str
++    depth: int
++    profile_identity: Optional[str] = None
++    signature_scope: Optional[str] = None
++
++    @classmethod
++    def coerce(cls, entry: "StackedInput | Tuple[URIRef, str, int]") -> "StackedInput":
++        if isinstance(entry, StackedInput):
++            return entry
++        surface, artefact_hash, depth = entry
++        return cls(surface=surface, artefact_hash=artefact_hash, depth=depth)
++
++
+ @dataclass
+ class CompiledSurface:
+     """Everything one generation run produced, before it is written anywhere."""
+@@ -252,12 +313,12 @@ class SurfaceCompiler:
+         contract: Contract,
+         source: Graph,
+         produced_at: str,
+-        input_surfaces: Sequence[Tuple[URIRef, str, int]] = (),
++        input_surfaces: Sequence["StackedInput | Tuple[URIRef, str, int]"] = (),
+     ) -> None:
+         self.contract = contract
+         self.source = source
+         self.produced_at = produced_at
+-        self.input_surfaces = list(input_surfaces)
++        self.input_surfaces = [StackedInput.coerce(entry) for entry in input_surfaces]
+         self.analyser = SurfaceGraphAnalyser(source)
+ 
+         self.minter = Minter(
+@@ -306,6 +367,7 @@ class SurfaceCompiler:
+     def compile(self) -> CompiledSurface:
+         """Execute the run and return everything it produced."""
+         logger.info("Compiling %s", self.contract.iri)
++        check_entailment_regime(self.contract.profile)
+ 
+         self._read_declaration()
+         if self.contract.is_index:
+@@ -569,14 +631,36 @@ class SurfaceCompiler:
+     # -- stacking -----------------------------------------------------------
+ 
+     def _compile_stacked_inputs(self) -> int:
++        """Fold stacked inputs into the read set, and check the composition laws
++        ADR-A21 states: signature scope and profile identity both compose
++        across a stack, so a source-signature or mixed-profile input upgrades
++        this surface rather than being silently absorbed.
++        """
+         depth = 0
+-        for surface_iri, artefact_hash, input_depth in self.input_surfaces:
++        identities: Set[str] = set()
++        for entry in self.input_surfaces:
+             self.read_set.append(
+                 ReadSetRecord(
+-                    kind=SRF.SurfaceSource, source=surface_iri, digest=artefact_hash
++                    kind=SRF.SurfaceSource, source=entry.surface, digest=entry.artefact_hash
+                 )
+             )
+-            depth = max(depth, input_depth + 1)
++            depth = max(depth, entry.depth + 1)
++            if entry.signature_scope == str(SRF.SourceSignature):
++                # X1 composition: conservative over a non-conservative input is
++                # not conservative either.
++                self.signature_scope = SRF.SourceSignature
++            if entry.profile_identity is not None:
++                identities.add(entry.profile_identity)
++
++        own_identity = self.contract.profile.identity_hash()
++        identities.add(own_identity)
++        if len(identities) > 1:
++            raise CompileError(
++                f"{self.contract.iri} stacks over input surface(s) generated under a "
++                f"different profile identity; every surface in a stack shares one profile "
++                f"identity, checked statically (law srf:R1 composition, ADR-A21)."
++            )
++
+         permitted = self.contract.profile.permitted_stack_depth
+         if depth > permitted:
+             raise CompileError(
+diff --git a/tools/surface/model.py b/tools/surface/model.py
+index 0d556a8..c900e05 100644
+--- a/tools/surface/model.py
++++ b/tools/surface/model.py
+@@ -19,6 +19,7 @@ canonical serialisation.
+ 
+ from __future__ import annotations
+ 
++import hashlib
+ from dataclasses import dataclass, field
+ from typing import List, Optional, Sequence, Tuple
+ 
+@@ -68,6 +69,20 @@ class Profile:
+             )
+         )
+ 
++    def identity_hash(self) -> str:
++        """A stable digest of ``identity()``.
++
++        Used wherever a stage needs to compare profile identity without
++        carrying the full identity string around — regeneration-reuse
++        decisions, and the stack composition check ADR-A21 requires (law
++        ``srf:R1``: every surface in a stack shares one profile identity).
++        Whether this digest is ever asserted into the graph as
++        ``srf:profileIdentityHash`` is a separate, still-open question (see
++        surface/docs/OUTSTANDING-ITEMS.md §3.3); this method is a pure
++        computation with no graph side effect either way.
++        """
++        return hashlib.sha256(self.identity().encode("utf-8")).hexdigest()
++
+ 
+ @dataclass(frozen=True)
+ class PathStep:
+@@ -158,6 +173,66 @@ class Contract:
+         return SequencePath(*segments)
+ 
+ 
++# ---------------------------------------------------------------------------
++# Projection declarations (ADR-A17, ADR-A20)
++# ---------------------------------------------------------------------------
++
++#: Role kinds a contract may declare at most one binding for (law srf:P3).
++SINGLETON_ROLES = (str(SRF.EvaluationSubjectRole), str(SRF.ResultTargetRole), str(SRF.ClosureBasisRole))
++
++#: Role kinds a join or derivation projection needs at least one of (law srf:P2).
++EVIDENCE_ROLES = (str(SRF.CandidateEvidenceRole), str(SRF.RequiredEvidenceRole))
++
++#: Projection kinds that require at least one evidence role binding (law srf:P2).
++EVIDENCE_REQUIRED_KINDS = (str(SRF.JoinProjection), str(SRF.DerivationProjection))
++
++
++@dataclass(frozen=True)
++class RoleBinding:
++    """One named role a projection contract binds to a property, or to a second carrier."""
++
++    iri: URIRef
++    role_kind: URIRef
++    binds_property: Optional[URIRef] = None
++    binds_carrier: Optional[URIRef] = None
++
++
++@dataclass(frozen=True)
++class BackendPolicy:
++    """The declared backend eligibility and LLM-participation policy a projection lowers under."""
++
++    iri: URIRef
++    allowed_backends: Sequence[URIRef] = field(default_factory=tuple)
++    denied_backends: Sequence[URIRef] = field(default_factory=tuple)
++    deterministic_only: bool = False
++    llm_completion_policy: Optional[URIRef] = None
++    approved_templates: Sequence[str] = field(default_factory=tuple)
++
++
++@dataclass(frozen=True)
++class ProjectionContract:
++    """One projection contract, transcribed (ADR-A17). Never a ``Contract``: a
++    projection has no read path and no value population — it reads its
++    evidence through role bindings and lowers into MORK (ADR-A18) rather than
++    emitting an artefact directly, so it is deliberately a distinct shape
++    rather than a third branch bolted onto ``Contract``.
++    """
++
++    iri: URIRef
++    carrier: URIRef
++    key: str
++    target_namespace: str
++    realisation_mode: str
++    profile: Profile
++    projection_kind: URIRef
++    role_bindings: Sequence[RoleBinding]
++    backend_policy: Optional[BackendPolicy] = None
++    population_budget: Optional[int] = None
++
++    def roles(self, kind: URIRef) -> List[RoleBinding]:
++        return [b for b in self.role_bindings if str(b.role_kind) == str(kind)]
++
++
+ # ---------------------------------------------------------------------------
+ # Analyser
+ # ---------------------------------------------------------------------------
+@@ -348,6 +423,113 @@ class SurfaceGraphAnalyser:
+                 raise ContractError(f"no surface contract named {only}")
+         return found
+ 
++    # -- projection contracts (ADR-A17, ADR-A20) -----------------------------
++
++    def role_binding(self, iri: URIRef) -> RoleBinding:
++        return RoleBinding(
++            iri=iri,
++            role_kind=self._iri(iri, SRF.roleKind),
++            binds_property=self._iri(iri, SRF.bindsProperty, required=False),
++            binds_carrier=self._iri(iri, SRF.bindsCarrier, required=False),
++        )
++
++    def backend_policy(self, iri: URIRef) -> BackendPolicy:
++        allowed = tuple(
++            sorted(
++                (o for o in self.g.objects(iri, SRF.allowedBackend) if isinstance(o, URIRef)),
++                key=str,
++            )
++        )
++        denied = tuple(
++            sorted(
++                (o for o in self.g.objects(iri, SRF.deniedBackend) if isinstance(o, URIRef)),
++                key=str,
++            )
++        )
++        overlap = {str(a) for a in allowed} & {str(d) for d in denied}
++        if overlap:
++            raise ContractError(
++                f"{iri} names {sorted(overlap)} in both allowedBackend and deniedBackend "
++                f"(law srf:P4)"
++            )
++        deterministic_text = self._literal(iri, SRF.deterministicOnly)
++        deterministic_only = deterministic_text.strip().lower() in ("true", "1")
++        llm_policy = self._iri(iri, SRF.llmCompletionPolicy)
++        if deterministic_only and str(llm_policy) != str(SRF.NoLLMCompletion):
++            raise ContractError(
++                f"{iri} declares deterministicOnly true but llmCompletionPolicy is not "
++                f"NoLLMCompletion (law srf:P5)"
++            )
++        templates = tuple(sorted(str(t) for t in self.g.objects(iri, SRF.approvedTemplate)))
++        return BackendPolicy(
++            iri=iri,
++            allowed_backends=allowed,
++            denied_backends=denied,
++            deterministic_only=deterministic_only,
++            llm_completion_policy=llm_policy,
++            approved_templates=templates,
++        )
++
++    def projection_contract(self, iri: URIRef) -> ProjectionContract:
++        types = self._types(iri)
++        if str(SRF.ProjectionContract) not in types:
++            raise ContractError(f"{iri} is not a ProjectionContract")
++
++        binding_iris = sorted(
++            (b for b in self.g.objects(iri, SRF.hasRoleBinding) if isinstance(b, URIRef)), key=str
++        )
++        if not binding_iris:
++            raise ContractError(f"{iri} declares no role binding (law srf:P2)")
++        bindings = [self.role_binding(b) for b in binding_iris]
++        kinds = [str(b.role_kind) for b in bindings]
++
++        if str(SRF.EvaluationSubjectRole) not in kinds:
++            raise ContractError(f"{iri} has no evaluation-subject role binding (law srf:P2)")
++        if str(SRF.ResultTargetRole) not in kinds:
++            raise ContractError(f"{iri} has no result-target role binding (law srf:P2)")
++        for role in SINGLETON_ROLES:
++            if kinds.count(role) > 1:
++                raise ContractError(
++                    f"{iri} declares more than one {role.rsplit('#', 1)[-1]} role binding "
++                    f"(law srf:P3)"
++                )
++
++        projection_kind = self._iri(iri, SRF.projectionKind)
++        if str(projection_kind) in EVIDENCE_REQUIRED_KINDS and not any(
++            k in EVIDENCE_ROLES for k in kinds
++        ):
++            raise ContractError(
++                f"{iri} is a {str(projection_kind).rsplit('#', 1)[-1]} but declares no "
++                f"candidate-evidence or required-evidence role binding (law srf:P2)"
++            )
++
++        policy_iri = self._iri(iri, SRF.backendPolicy, required=False)
++        budget = self._literal(iri, SRF.populationBudget, required=False)
++        return ProjectionContract(
++            iri=iri,
++            carrier=self._iri(iri, SRF.carrier),
++            key=self._literal(iri, SRF.contractKey),
++            target_namespace=self._literal(iri, SRF.targetNamespace),
++            realisation_mode=str(self._iri(iri, SRF.realisationMode)),
++            profile=self.profile(self._iri(iri, SRF.surfaceProfile)),
++            projection_kind=projection_kind,
++            role_bindings=tuple(bindings),
++            backend_policy=self.backend_policy(policy_iri) if policy_iri is not None else None,
++            population_budget=int(budget) if budget is not None else None,
++        )
++
++    def projection_contracts(self, only: Optional[str] = None) -> List[ProjectionContract]:
++        declared = sorted(
++            {s for s in self.g.subjects(RDF.type, SRF.ProjectionContract) if isinstance(s, URIRef)},
++            key=str,
++        )
++        found = [self.projection_contract(iri) for iri in declared]
++        if only is not None:
++            found = [c for c in found if str(c.iri) == str(only)]
++            if not found:
++                raise ContractError(f"no projection contract named {only}")
++        return found
++
+     # -- declaration subgraph, for the read set ------------------------------
+ 
+     def declaration_subjects(self, contract: Contract) -> List[URIRef]:
+@@ -367,3 +549,12 @@ class SurfaceGraphAnalyser:
+ def read_contracts(graph: Graph, only: Optional[str] = None) -> List[Contract]:
+     """Convenience wrapper, matching the shape of ``tools/mork2rml.py``'s entry points."""
+     return SurfaceGraphAnalyser(graph).contracts(only=only)
++
++
++def read_projection_contracts(
++    graph: Graph, only: Optional[str] = None
++) -> List[ProjectionContract]:
++    """Convenience wrapper for projection contracts, kept separate from ``read_contracts``
++    because a ``ProjectionContract`` is a distinct shape, not a third ``Contract`` branch.
++    """
++    return SurfaceGraphAnalyser(graph).projection_contracts(only=only)
+diff --git a/tools/surface/mork.py b/tools/surface/mork.py
+index eb11ca0..7a8866c 100644
+--- a/tools/surface/mork.py
++++ b/tools/surface/mork.py
+@@ -33,15 +33,25 @@ IRI is referenced directly.
+ 
+ The ``mrk:ProjectionMapping`` vocabulary used here is declared in
+ ``mork/spec/Mork.ttl``.
++
++**Relationship to ``tools/surface/lowering.py``.** That module lowers a bare
++declaration — a ``srf:ProjectionContract`` always, a Promotion/Index contract
++where configured (ADR-A18) — with no compiled surface involved. ``lift``
++below is the compiled-surface case: it reuses the same parameter-binding
++shape (``lowering.contract_parameter_bindings``) so a mapping produced either
++way looks the same to ``lower()``, but mints its ``mrk:ProjectionMapping``
++record under a different IRI stem, so the two never collide over one
++contract key.
+ """
+ 
+ from __future__ import annotations
+ 
+-from typing import Dict, List, Optional
++from typing import Dict, Optional
+ 
+ from rdflib import Graph, Literal, URIRef
+ 
+ from .compile import CLOSURE, DIRECT, MEMBERSHIP, NOMINAL, CompiledSurface
++from .lowering import contract_parameter_bindings
+ from .model import Contract, ContractError
+ from .namespaces import DCTERMS, MORK, OWL, RDF, RDFS, SH, SRF, XSD
+ from .naming import Minter, local_name
+@@ -106,29 +116,11 @@ def lift(compiled: CompiledSurface, mapping_scheme: Optional[URIRef] = None) ->
+     graph.add((target, RDF.type, MORK.TargetingSpec))
+     graph.add((target, SH.targetClass, contract.carrier))
+ 
+-    # Parameters: everything the compiler read out of the contract.
+-    read_path = " / ".join(
+-        (f"^{step.prop}" if step.inverse else str(step.prop)) for step in contract.path
+-    )
+-    bindings: List[tuple] = [
+-        ("carrier", "Concept", contract.carrier),
+-        ("readPath", "Path", Literal(read_path)),
+-        ("targetNamespace", "String", Literal(contract.target_namespace)),
+-        ("realisationMode", "Concept", URIRef(contract.realisation_mode)),
+-    ]
+-    if contract.is_index:
+-        bindings.append(("namingPolicy", "Concept", URIRef(contract.naming_policy)))
+-        for form in contract.index_forms:
+-            bindings.append((f"indexForm_{local_name(form)}", "Concept", URIRef(form)))
+-        if contract.closure_basis is not None:
+-            bindings.append(("closureBasis", "Path", Literal(str(contract.closure_basis))))
+-    else:
+-        bindings.append(("promotesTo", "Concept", contract.promotes_to))
+-        bindings.append(("sourceFidelity", "Concept", URIRef(contract.source_fidelity)))
+-        if contract.via_match_relation is not None:
+-            bindings.append(("viaMatchRelation", "Concept", contract.via_match_relation))
+-
+-    for name, kind, value in bindings:
++    # Parameters: everything the compiler read out of the contract. Shared
++    # with tools/surface/lowering.py::lower_contract, so a mapping produced
++    # either way has the same parameter shape and tools/surface/mork.py's own
++    # lower() below can read either back.
++    for name, kind, value in contract_parameter_bindings(contract):
+         node = minter.parameter_binding(name)
+         graph.add((mapping, MORK.hasParameterBinding, node))
+         _parameter(graph, node, name, kind, value)
+diff --git a/tools/surface/naming.py b/tools/surface/naming.py
+index 6e32e92..eac9810 100644
+--- a/tools/surface/naming.py
++++ b/tools/surface/naming.py
+@@ -119,6 +119,25 @@ class Minter:
+     def parameter_binding(self, name: str) -> URIRef:
+         return URIRef(f"{self.namespace}projection_{self.key}_param_{name}")
+ 
++    # -- Surface-to-MORK lowering (ADR-A18) ---------------------------------
++    #
++    # A distinct stem from projection_mapping()/targeting_spec() above, which
++    # name MORK's own mrk:ProjectionMapping (a *post-compile* lookup-surface
++    # record minted by tools/surface/mork.py's lift()). These mint the
++    # *pre-compile* declaration mirror tools/surface/lowering.py produces, for
++    # any Surface contract kind (ADR-A18). Keeping the stems separate means
++    # the two mechanisms never mint the same IRI for one contract key, even
++    # where a deployment runs both over it.
++
++    def lowered_mapping(self) -> URIRef:
++        return URIRef(f"{self.namespace}mapping_{self.key}")
++
++    def lowered_mapping_target(self) -> URIRef:
++        return URIRef(f"{self.namespace}mapping_{self.key}_target")
++
++    def lowered_mapping_param(self, name: str) -> URIRef:
++        return URIRef(f"{self.namespace}mapping_{self.key}_param_{name}")
++
+     # -- per-value symbols --------------------------------------------------
+ 
+     def value_fragment(self, value: str) -> str:
+diff --git a/tools/surface/test_surface.py b/tools/surface/test_surface.py
+index 458584a..5f8b277 100644
+--- a/tools/surface/test_surface.py
++++ b/tools/surface/test_surface.py
+@@ -21,6 +21,7 @@ notice.
+ from __future__ import annotations
+ 
+ import unittest
++from dataclasses import replace
+ from pathlib import Path
+ 
+ from rdflib import Graph, URIRef
+@@ -38,8 +39,9 @@ from .compile import (
+     enumerate_population,
+     evaluate_path,
+ )
+-from .model import ContractError, read_contracts
++from .model import ContractError, SurfaceGraphAnalyser, read_contracts, read_projection_contracts
+ from .mork import HAS_PROJECTION_PROVENANCE, PROJECTION_MAPPING, lift, lower
++from .lowering import lower_all, lower_contract, lower_projection
+ from .namespaces import MORK, OWL, RDF, RDFS, SRF
+ from .naming import (
+     DIGEST_LOCAL_NAME,
+@@ -61,6 +63,7 @@ AT = "2026-09-18T00:00:00Z"
+ 
+ EMPLOYMENT = "https://example.org/lattice/surface/employment#"
+ SAAS = "https://example.org/lattice/surface/saas#"
++SAAS_ARR = "https://example.org/lattice/surface/saas-arr#"
+ 
+ 
+ def load(*names: str) -> Graph:
+@@ -335,6 +338,298 @@ class MorkInteropTests(unittest.TestCase):
+         self.assertTrue(any(mapping.triples((None, HAS_PROJECTION_PROVENANCE, None))))
+ 
+ 
++class EntailmentRegimeTests(unittest.TestCase):
++    """The compiler acts on NoEntailment only, and refuses everything else (ADR-A19 §3.5)."""
++
++    def test_no_entailment_profile_compiles(self) -> None:
++        compile_example("employment-job-family.ttl", "job-family")
++
++    def test_unsupported_entailment_regime_is_refused(self) -> None:
++        graph = load("employment-job-family.ttl")
++        contract = only_contract(graph, "job-family")
++        richer_profile = replace(contract.profile, entailment_regime=str(SRF.OWL2ELEntailment))
++        richer_contract = replace(contract, profile=richer_profile)
++        with self.assertRaisesRegex(CompileError, "entailment regime"):
++            SurfaceCompiler(richer_contract, graph, AT).compile()
++
++
++class ProjectionModelTests(unittest.TestCase):    """Parsing and law enforcement for srf:ProjectionContract (ADR-A17, ADR-A20)."""
++
++    def setUp(self) -> None:
++        self.graph = load("saas-subscription-arr-projection.ttl")
++
++    def test_projection_contract_parses_role_bindings_and_backend_policy(self) -> None:
++        contracts = read_projection_contracts(
++            self.graph, only=SAAS_ARR + "subscription-arr-projection"
++        )
++        self.assertEqual(len(contracts), 1)
++        contract = contracts[0]
++        self.assertEqual(contract.projection_kind, SRF.DerivationProjection)
++        self.assertEqual(len(contract.role_bindings), 4)
++        self.assertEqual(len(contract.roles(SRF.RequiredEvidenceRole)), 2)
++        self.assertEqual(len(contract.roles(SRF.EvaluationSubjectRole)), 1)
++        self.assertEqual(len(contract.roles(SRF.ResultTargetRole)), 1)
++        self.assertIsNotNone(contract.backend_policy)
++        self.assertTrue(contract.backend_policy.deterministic_only)
++        self.assertEqual(contract.backend_policy.llm_completion_policy, SRF.NoLLMCompletion)
++        self.assertIn(SRF.SparqlBackend, contract.backend_policy.allowed_backends)
++
++    def test_missing_evaluation_subject_role_is_refused(self) -> None:
++        graph = Graph().parse(
++            data=f"""
++            @prefix srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#> .
++            @prefix ex: <{SAAS_ARR}> .
++            @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
++            ex:target a srf:ProjectionRoleBinding ; srf:roleKind srf:ResultTargetRole .
++            ex:profile-v1 a srf:SurfaceProfile ;
++                srf:generatorVersion "x" ; srf:canonicalisationVersion "srf-canon/2" ;
++                srf:entailmentRegime srf:NoEntailment ;
++                srf:namingNormalisation srf:SanitisedLocalName ;
++                srf:symbolMode srf:PunnedSymbols ; srf:permittedStackDepth 0 .
++            ex:bad a srf:ProjectionContract ;
++                srf:contractKey "bad" ; srf:carrier ex:Subscription ;
++                srf:projectionKind srf:DerivationProjection ;
++                srf:hasRoleBinding ex:target ;
++                srf:targetNamespace "https://example.org/exec#"^^xsd:anyURI ;
++                srf:realisationMode srf:Materialised ;
++                srf:surfaceProfile ex:profile-v1 .
++            """,
++            format="turtle",
++        )
++        with self.assertRaisesRegex(ContractError, "evaluation-subject"):
++            read_projection_contracts(graph)
++
++    def test_duplicate_singleton_role_is_refused(self) -> None:
++        graph = Graph().parse(
++            data=f"""
++            @prefix srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#> .
++            @prefix ex: <{SAAS_ARR}> .
++            @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
++            ex:subject a srf:ProjectionRoleBinding ; srf:roleKind srf:EvaluationSubjectRole .
++            ex:subject2 a srf:ProjectionRoleBinding ; srf:roleKind srf:EvaluationSubjectRole .
++            ex:target a srf:ProjectionRoleBinding ; srf:roleKind srf:ResultTargetRole .
++            ex:profile-v1 a srf:SurfaceProfile ;
++                srf:generatorVersion "x" ; srf:canonicalisationVersion "srf-canon/2" ;
++                srf:entailmentRegime srf:NoEntailment ;
++                srf:namingNormalisation srf:SanitisedLocalName ;
++                srf:symbolMode srf:PunnedSymbols ; srf:permittedStackDepth 0 .
++            ex:bad a srf:ProjectionContract ;
++                srf:contractKey "bad" ; srf:carrier ex:Subscription ;
++                srf:projectionKind srf:GraphConstructionProjection ;
++                srf:hasRoleBinding ex:subject, ex:subject2, ex:target ;
++                srf:targetNamespace "https://example.org/exec#"^^xsd:anyURI ;
++                srf:realisationMode srf:Materialised ;
++                srf:surfaceProfile ex:profile-v1 .
++            """,
++            format="turtle",
++        )
++        with self.assertRaisesRegex(ContractError, "srf:P3"):
++            read_projection_contracts(graph)
++
++    def test_backend_named_in_both_allow_and_deny_is_refused(self) -> None:
++        with self.assertRaisesRegex(ContractError, "srf:P4"):
++            SurfaceGraphAnalyser(
++                Graph().parse(
++                    data="""
++                    @prefix srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#> .
++                    @prefix ex: <https://example.org/lattice/surface/saas-arr#> .
++                    ex:policy a srf:ProjectionBackendPolicy ;
++                        srf:allowedBackend srf:SparqlBackend ;
++                        srf:deniedBackend srf:SparqlBackend ;
++                        srf:deterministicOnly true ;
++                        srf:llmCompletionPolicy srf:NoLLMCompletion .
++                    """,
++                    format="turtle",
++                )
++            ).backend_policy(URIRef(SAAS_ARR + "policy"))
++
++    def test_deterministic_only_with_bounded_completion_is_refused(self) -> None:
++        with self.assertRaisesRegex(ContractError, "srf:P5"):
++            SurfaceGraphAnalyser(
++                Graph().parse(
++                    data="""
++                    @prefix srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#> .
++                    @prefix ex: <https://example.org/lattice/surface/saas-arr#> .
++                    ex:policy a srf:ProjectionBackendPolicy ;
++                        srf:deterministicOnly true ;
++                        srf:llmCompletionPolicy srf:BoundedLLMCompletion .
++                    """,
++                    format="turtle",
++                )
++            ).backend_policy(URIRef(SAAS_ARR + "policy"))
++
++
++class ProjectionLoweringTests(unittest.TestCase):
++    """Surface-to-MORK lowering for srf:ProjectionContract (ADR-A18)."""
++
++    def contract(self):
++        graph = load("saas-subscription-arr-projection.ttl")
++        return read_projection_contracts(
++            graph, only=SAAS_ARR + "subscription-arr-projection"
++        )[0]
++
++    def test_lower_projection_emits_one_data_mapping(self) -> None:
++        mapping_graph = lower_projection(self.contract())
++        mappings = set(mapping_graph.subjects(RDF.type, MORK.DataMapping))
++        self.assertEqual(len(mappings), 1)
++        mapping = next(iter(mappings))
++        self.assertEqual(
++            mapping_graph.value(mapping, MORK.mappingFor),
++            URIRef(SAAS_ARR + "subscription-arr-projection"),
++        )
++        self.assertTrue(any(mapping_graph.triples((mapping, MORK.hasTargetingSpec, None))))
++
++    def test_lower_projection_records_role_bindings_and_backend_policy_as_parameters(
++        self,
++    ) -> None:
++        mapping_graph = lower_projection(self.contract())
++        names = {
++            str(mapping_graph.value(node, MORK.paramName))
++            for node in mapping_graph.objects(None, MORK.hasParameterBinding)
++        }
++        self.assertIn("deterministicOnly", names)
++        self.assertIn("llmCompletionPolicy", names)
++        self.assertIn("projectionKind", names)
++        self.assertTrue(any(name.startswith("role_") for name in names))
++
++    def test_lowering_is_deterministic(self) -> None:
++        contract = self.contract()
++        first = lower_projection(contract)
++        second = lower_projection(contract)
++        self.assertEqual(canonical.hash_graph(first), canonical.hash_graph(second))
++
++
++class ContractLoweringTests(unittest.TestCase):
++    """Surface-to-MORK lowering for Promotion/Index contracts (ADR-A18, Phase 3 item 2)."""
++
++    def test_lower_contract_emits_promotion_parameters(self) -> None:
++        graph = load("saas-subscription-currency.ttl")
++        contract = only_contract(graph, "subscription-currency")
++        mapping_graph = lower_contract(contract)
++        names = {
++            str(mapping_graph.value(node, MORK.paramName))
++            for node in mapping_graph.objects(None, MORK.hasParameterBinding)
++        }
++        self.assertIn("promotesTo", names)
++        self.assertIn("sourceFidelity", names)
++        self.assertIn("readPath", names)
++
++    def test_lower_contract_emits_index_parameters(self) -> None:
++        graph = load("employment-job-family.ttl")
++        contract = only_contract(graph, "job-family")
++        mapping_graph = lower_contract(contract)
++        names = {
++            str(mapping_graph.value(node, MORK.paramName))
++            for node in mapping_graph.objects(None, MORK.hasParameterBinding)
++        }
++        self.assertIn("namingPolicy", names)
++        self.assertTrue(any(name.startswith("indexForm_") for name in names))
++
++    def test_lower_contract_agrees_with_lift_on_parameter_names(self) -> None:
++        # Same contract, two mechanisms: a bare declaration lowered directly,
++        # versus a compiled surface lifted after the fact. contract_parameter_
++        # bindings() is shared between them precisely so this holds.
++        graph = load("saas-subscription-currency.ttl")
++        contract = only_contract(graph, "subscription-currency")
++        declared = lower_contract(contract)
++        compiled, _ = compile_example("saas-subscription-currency.ttl", "subscription-currency")
++        lifted = lift(compiled)
++        declared_names = {
++            str(declared.value(node, MORK.paramName))
++            for node in declared.objects(None, MORK.hasParameterBinding)
++        }
++        lifted_names = {
++            str(lifted.value(node, MORK.paramName))
++            for node in lifted.objects(None, MORK.hasParameterBinding)
++        }
++        self.assertEqual(declared_names, lifted_names)
++
++    def test_lower_contract_mints_a_different_mapping_iri_than_lift(self) -> None:
++        # The two mechanisms must never collide on one mapping IRI for the
++        # same contract key (see lowering.py's module docstring).
++        graph = load("saas-subscription-currency.ttl")
++        contract = only_contract(graph, "subscription-currency")
++        declared_mapping = next(lower_contract(contract).subjects(RDF.type, MORK.DataMapping))
++        compiled, _ = compile_example("saas-subscription-currency.ttl", "subscription-currency")
++        lifted_mapping = next(lift(compiled).subjects(RDF.type, MORK.DataMapping))
++        self.assertNotEqual(declared_mapping, lifted_mapping)
++
++
++class LoweringDependencyTests(unittest.TestCase):
++    """The mork:dependsOnMapping graph link_dependencies/lower_all compute (ADR-A18)."""
++
++    SCENARIO = """
++        @prefix srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#> .
++        @prefix ex: <https://example.org/lattice/surface/dep#> .
++        @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
++
++        ex:profile a srf:SurfaceProfile ;
++            srf:generatorVersion "x" ; srf:canonicalisationVersion "srf-canon/2" ;
++            srf:entailmentRegime srf:NoEntailment ;
++            srf:namingNormalisation srf:SanitisedLocalName ;
++            srf:symbolMode srf:PunnedSymbols ; srf:permittedStackDepth 0 .
++
++        ex:promotion a srf:PromotionContract ;
++            srf:contractKey "derived-value" ; srf:carrier ex:Household ;
++            srf:readProperty ex:hasIncome ;
++            srf:promotesTo ex:derivedValue ;
++            srf:sourceFidelity srf:ExactSource ;
++            srf:targetNamespace "https://example.org/exec#"^^xsd:anyURI ;
++            srf:realisationMode srf:Materialised ;
++            srf:surfaceProfile ex:profile .
++
++        ex:subject a srf:ProjectionRoleBinding ; srf:roleKind srf:EvaluationSubjectRole .
++        ex:evidence a srf:ProjectionRoleBinding ;
++            srf:roleKind srf:RequiredEvidenceRole ; srf:bindsProperty ex:derivedValue .
++        ex:household-evidence a srf:ProjectionRoleBinding ;
++            srf:roleKind srf:CandidateEvidenceRole ; srf:bindsCarrier ex:Household .
++        ex:target a srf:ProjectionRoleBinding ; srf:roleKind srf:ResultTargetRole .
++
++        ex:projection a srf:ProjectionContract ;
++            srf:contractKey "eligibility-check" ; srf:carrier ex:Applicant ;
++            srf:projectionKind srf:JoinProjection ;
++            srf:hasRoleBinding ex:subject, ex:evidence, ex:household-evidence, ex:target ;
++            srf:targetNamespace "https://example.org/exec#"^^xsd:anyURI ;
++            srf:realisationMode srf:Materialised ;
++            srf:surfaceProfile ex:profile .
++    """
++    DEP = "https://example.org/lattice/surface/dep#"
++
++    def setUp(self) -> None:
++        self.graph = Graph().parse(data=self.SCENARIO, format="turtle")
++
++    def _mapping_for(self, combined: Graph, contract_iri: str) -> URIRef:
++        return next(
++            mapping
++            for mapping in combined.subjects(RDF.type, MORK.DataMapping)
++            if combined.value(mapping, MORK.mappingFor) == URIRef(contract_iri)
++        )
++
++    def test_projection_depends_on_the_promotion_it_reads(self) -> None:
++        contracts = read_contracts(self.graph)
++        projections = read_projection_contracts(self.graph)
++        combined = lower_all(contracts=contracts, projections=projections)
++
++        promotion_mapping = self._mapping_for(combined, self.DEP + "promotion")
++        projection_mapping = self._mapping_for(combined, self.DEP + "projection")
++        depends_on = set(combined.objects(projection_mapping, MORK.dependsOnMapping))
++        self.assertIn(promotion_mapping, depends_on)
++
++    def test_promotion_is_never_a_dependant(self) -> None:
++        contracts = read_contracts(self.graph)
++        projections = read_projection_contracts(self.graph)
++        combined = lower_all(contracts=contracts, projections=projections)
++        promotion_mapping = self._mapping_for(combined, self.DEP + "promotion")
++        self.assertFalse(any(combined.triples((promotion_mapping, MORK.dependsOnMapping, None))))
++
++    def test_lower_all_is_deterministic(self) -> None:
++        contracts = read_contracts(self.graph)
++        projections = read_projection_contracts(self.graph)
++        first = lower_all(contracts=contracts, projections=projections)
++        second = lower_all(contracts=contracts, projections=projections)
++        self.assertEqual(canonical.hash_graph(first), canonical.hash_graph(second))
++
++
+ class DefectFixtureTests(unittest.TestCase):
+     """Every fixture here is expected to be refused, with the stated law named."""
+ 
+@@ -368,4 +663,4 @@ class DefectFixtureTests(unittest.TestCase):
+ 
+ 
+ if __name__ == "__main__":
+-    unittest.main()
++    unittest.main()
+\ No newline at end of file

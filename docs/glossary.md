@@ -4,7 +4,7 @@
 
 This document provides a glossary and explanation of the terminology used throughout this repo. A handful of words get reused with different semantics depending on which part of the repository you are in. 
 
-**"Projection"** is the main offender — it means a session-type operation in SPC, a confirmed-mapping lookup in MORK, and a per-layer directory of cross-layer contracts everywhere else.
+**"Projection"** is the main offender — it means a session-type operation in SPC, a confirmed-mapping lookup in MORK, a per-layer directory of cross-layer contracts everywhere else, and (proposed, see ADR-A17) a third Surface subsystem for declarative mapping intent that needs graph construction, derivation, joins, or expansion, alongside Surface's existing Promotion and Index.
 
 **"OperationalProfile"** is a close second: Quantification, Eligibility, and Behaviour each declare their own class of that name, independently, for the same general purpose (naming which implementation strategy answered a question) — they are not one shared class. Where this matters, the text below says so explicitly.
 
@@ -173,7 +173,9 @@ The reason Surface bothers to distinguish these carefully, and to record so much
 
 Surface also gives Eligibility's `HierarchicalMatch` (see below) a second way to answer the same question: a hierarchy's closure can be computed live, by traversing `skos:broader` at query time, or it can be answered against a Surface-generated closure index instead — both are valid, as long as they agree, which is exactly the realisation-strategy neutrality principle from Part II showing up concretely. And MORK (Part IV) can *propose* a Surface contract as part of a mapping — recording, in its own vocabulary, that a mapping suggests a lookup surface be generated, and letting a compiled surface be lifted back into that same record for review before it's promoted to a governed contract.
 
-*Terms introduced here:* `srf:SurfaceContract` (`srf:PromotionContract`, `srf:IndexContract`), carrier, read path, `srf:PathStep`, `srf:ValuePopulation` (and its kinds), `srf:SurfaceProfile`, index forms (`NominalClass`, `MembershipAssertion`, `ClosureRelation`, `DirectProperty`), `srf:GeneratedSurface`/`srf:GeneratedSymbol`/`srf:ReadSetEntry`, `srf:signatureScope`, `srf:derivationAuthority` (`Advisory`, `CachedReproducible`).
+A third operation, **Projection**, is proposed (ADR-A17) alongside Promotion and Index, for intent that neither restatement form covers — constructing new graph structure, deriving a value, joining across carriers, or expanding one relation into several. Unlike Promotion and Index, which can emit their generated artefact directly, a `srf:ProjectionContract` lowers into MORK's mapping graph (ADR-A18) rather than emitting SHACL, SPARQL, or SWRL itself — MORK stays the machine-facing mapping graph, and Surface stays the authoring surface. Projection gets its own law register (ADR-A20), distinct from Promotion and Index's X1–X6, though a Projection stacked over a Promotion or Index still composes under the same signature-scope rule (ADR-A21).
+
+*Terms introduced here:* `srf:SurfaceContract` (`srf:PromotionContract`, `srf:IndexContract`, and proposed `srf:ProjectionContract`), carrier, read path, `srf:PathStep`, `srf:ValuePopulation` (and its kinds), `srf:SurfaceProfile`, index forms (`NominalClass`, `MembershipAssertion`, `ClosureRelation`, `DirectProperty`), `srf:GeneratedSurface`/`srf:GeneratedSymbol`/`srf:ReadSetEntry`, `srf:signatureScope`, `srf:derivationAuthority` (`Advisory`, `CachedReproducible`).
 
 ### Party — who is standing in which capacity, and how obligation flows between them
 
@@ -286,6 +288,7 @@ A quick-reference index, grouped by namespace prefix, of every term introduced a
 - **IndexContract** — a surface contract restating a carrier's values as retrievable symbols.
 - **index forms** (`NominalClass`, `MembershipAssertion`, `ClosureRelation`, `DirectProperty`) — the concrete shapes an index can take.
 - **PathStep** — one positioned hop in a multi-hop read path.
+- **ProjectionContract** (proposed, ADR-A17) — a surface contract for mapping intent that needs graph construction, derivation, joins, or expansion, lowered into MORK rather than emitted directly.
 - **PromotionContract** — a surface contract restating a reachable value as a direct assertion on the carrier.
 - **read path** — the chain of relations from a carrier to the value being restated.
 - **signatureScope** — whether a generated surface stays within its own minted terms, or reaches an authored property in another layer.

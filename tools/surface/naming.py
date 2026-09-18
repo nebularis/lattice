@@ -119,6 +119,25 @@ class Minter:
     def parameter_binding(self, name: str) -> URIRef:
         return URIRef(f"{self.namespace}projection_{self.key}_param_{name}")
 
+    # -- Surface-to-MORK lowering (ADR-A18) ---------------------------------
+    #
+    # A distinct stem from projection_mapping()/targeting_spec() above, which
+    # name MORK's own mrk:ProjectionMapping (a *post-compile* lookup-surface
+    # record minted by tools/surface/mork.py's lift()). These mint the
+    # *pre-compile* declaration mirror tools/surface/lowering.py produces, for
+    # any Surface contract kind (ADR-A18). Keeping the stems separate means
+    # the two mechanisms never mint the same IRI for one contract key, even
+    # where a deployment runs both over it.
+
+    def lowered_mapping(self) -> URIRef:
+        return URIRef(f"{self.namespace}mapping_{self.key}")
+
+    def lowered_mapping_target(self) -> URIRef:
+        return URIRef(f"{self.namespace}mapping_{self.key}_target")
+
+    def lowered_mapping_param(self, name: str) -> URIRef:
+        return URIRef(f"{self.namespace}mapping_{self.key}_param_{name}")
+
     # -- per-value symbols --------------------------------------------------
 
     def value_fragment(self, value: str) -> str:

@@ -19,6 +19,7 @@ canonical serialisation.
 
 from __future__ import annotations
 
+import hashlib
 from dataclasses import dataclass, field
 from typing import List, Optional, Sequence, Tuple
 
@@ -67,6 +68,20 @@ class Profile:
                 str(self.permitted_stack_depth),
             )
         )
+
+    def identity_hash(self) -> str:
+        """A stable digest of ``identity()``.
+
+        Used wherever a stage needs to compare profile identity without
+        carrying the full identity string around — regeneration-reuse
+        decisions, and the stack composition check ADR-A21 requires (law
+        ``srf:R1``: every surface in a stack shares one profile identity).
+        Whether this digest is ever asserted into the graph as
+        ``srf:profileIdentityHash`` is a separate, still-open question (see
+        surface/docs/OUTSTANDING-ITEMS.md §3.3); this method is a pure
+        computation with no graph side effect either way.
+        """
+        return hashlib.sha256(self.identity().encode("utf-8")).hexdigest()
 
 
 @dataclass(frozen=True)
@@ -156,6 +171,66 @@ class Contract:
         if len(segments) == 1:
             return segments[0]
         return SequencePath(*segments)
+
+
+# ---------------------------------------------------------------------------
+# Projection declarations (ADR-A17, ADR-A20)
+# ---------------------------------------------------------------------------
+
+#: Role kinds a contract may declare at most one binding for (law srf:P3).
+SINGLETON_ROLES = (str(SRF.EvaluationSubjectRole), str(SRF.ResultTargetRole), str(SRF.ClosureBasisRole))
+
+#: Role kinds a join or derivation projection needs at least one of (law srf:P2).
+EVIDENCE_ROLES = (str(SRF.CandidateEvidenceRole), str(SRF.RequiredEvidenceRole))
+
+#: Projection kinds that require at least one evidence role binding (law srf:P2).
+EVIDENCE_REQUIRED_KINDS = (str(SRF.JoinProjection), str(SRF.DerivationProjection))
+
+
+@dataclass(frozen=True)
+class RoleBinding:
+    """One named role a projection contract binds to a property, or to a second carrier."""
+
+    iri: URIRef
+    role_kind: URIRef
+    binds_property: Optional[URIRef] = None
+    binds_carrier: Optional[URIRef] = None
+
+
+@dataclass(frozen=True)
+class BackendPolicy:
+    """The declared backend eligibility and LLM-participation policy a projection lowers under."""
+
+    iri: URIRef
+    allowed_backends: Sequence[URIRef] = field(default_factory=tuple)
+    denied_backends: Sequence[URIRef] = field(default_factory=tuple)
+    deterministic_only: bool = False
+    llm_completion_policy: Optional[URIRef] = None
+    approved_templates: Sequence[str] = field(default_factory=tuple)
+
+
+@dataclass(frozen=True)
+class ProjectionContract:
+    """One projection contract, transcribed (ADR-A17). Never a ``Contract``: a
+    projection has no read path and no value population — it reads its
+    evidence through role bindings and lowers into MORK (ADR-A18) rather than
+    emitting an artefact directly, so it is deliberately a distinct shape
+    rather than a third branch bolted onto ``Contract``.
+    """
+
+    iri: URIRef
+    carrier: URIRef
+    key: str
+    target_namespace: str
+    realisation_mode: str
+    profile: Profile
+    projection_kind: URIRef
+    role_bindings: Sequence[RoleBinding]
+    backend_policy: Optional[BackendPolicy] = None
+    population_budget: Optional[int] = None
+
+    def roles(self, kind: URIRef) -> List[RoleBinding]:
+        return [b for b in self.role_bindings if str(b.role_kind) == str(kind)]
 
 
 # ---------------------------------------------------------------------------
@@ -348,6 +423,113 @@ class SurfaceGraphAnalyser:
                 raise ContractError(f"no surface contract named {only}")
         return found
 
+    # -- projection contracts (ADR-A17, ADR-A20) -----------------------------
+
+    def role_binding(self, iri: URIRef) -> RoleBinding:
+        return RoleBinding(
+            iri=iri,
+            role_kind=self._iri(iri, SRF.roleKind),
+            binds_property=self._iri(iri, SRF.bindsProperty, required=False),
+            binds_carrier=self._iri(iri, SRF.bindsCarrier, required=False),
+        )
+
+    def backend_policy(self, iri: URIRef) -> BackendPolicy:
+        allowed = tuple(
+            sorted(
+                (o for o in self.g.objects(iri, SRF.allowedBackend) if isinstance(o, URIRef)),
+                key=str,
+            )
+        )
+        denied = tuple(
+            sorted(
+                (o for o in self.g.objects(iri, SRF.deniedBackend) if isinstance(o, URIRef)),
+                key=str,
+            )
+        )
+        overlap = {str(a) for a in allowed} & {str(d) for d in denied}
+        if overlap:
+            raise ContractError(
+                f"{iri} names {sorted(overlap)} in both allowedBackend and deniedBackend "
+                f"(law srf:P4)"
+            )
+        deterministic_text = self._literal(iri, SRF.deterministicOnly)
+        deterministic_only = deterministic_text.strip().lower() in ("true", "1")
+        llm_policy = self._iri(iri, SRF.llmCompletionPolicy)
+        if deterministic_only and str(llm_policy) != str(SRF.NoLLMCompletion):
+            raise ContractError(
+                f"{iri} declares deterministicOnly true but llmCompletionPolicy is not "
+                f"NoLLMCompletion (law srf:P5)"
+            )
+        templates = tuple(sorted(str(t) for t in self.g.objects(iri, SRF.approvedTemplate)))
+        return BackendPolicy(
+            iri=iri,
+            allowed_backends=allowed,
+            denied_backends=denied,
+            deterministic_only=deterministic_only,
+            llm_completion_policy=llm_policy,
+            approved_templates=templates,
+        )
+
+    def projection_contract(self, iri: URIRef) -> ProjectionContract:
+        types = self._types(iri)
+        if str(SRF.ProjectionContract) not in types:
+            raise ContractError(f"{iri} is not a ProjectionContract")
+
+        binding_iris = sorted(
+            (b for b in self.g.objects(iri, SRF.hasRoleBinding) if isinstance(b, URIRef)), key=str
+        )
+        if not binding_iris:
+            raise ContractError(f"{iri} declares no role binding (law srf:P2)")
+        bindings = [self.role_binding(b) for b in binding_iris]
+        kinds = [str(b.role_kind) for b in bindings]
+
+        if str(SRF.EvaluationSubjectRole) not in kinds:
+            raise ContractError(f"{iri} has no evaluation-subject role binding (law srf:P2)")
+        if str(SRF.ResultTargetRole) not in kinds:
+            raise ContractError(f"{iri} has no result-target role binding (law srf:P2)")
+        for role in SINGLETON_ROLES:
+            if kinds.count(role) > 1:
+                raise ContractError(
+                    f"{iri} declares more than one {role.rsplit('#', 1)[-1]} role binding "
+                    f"(law srf:P3)"
+                )
+
+        projection_kind = self._iri(iri, SRF.projectionKind)
+        if str(projection_kind) in EVIDENCE_REQUIRED_KINDS and not any(
+            k in EVIDENCE_ROLES for k in kinds
+        ):
+            raise ContractError(
+                f"{iri} is a {str(projection_kind).rsplit('#', 1)[-1]} but declares no "
+                f"candidate-evidence or required-evidence role binding (law srf:P2)"
+            )
+
+        policy_iri = self._iri(iri, SRF.backendPolicy, required=False)
+        budget = self._literal(iri, SRF.populationBudget, required=False)
+        return ProjectionContract(
+            iri=iri,
+            carrier=self._iri(iri, SRF.carrier),
+            key=self._literal(iri, SRF.contractKey),
+            target_namespace=self._literal(iri, SRF.targetNamespace),
+            realisation_mode=str(self._iri(iri, SRF.realisationMode)),
+            profile=self.profile(self._iri(iri, SRF.surfaceProfile)),
+            projection_kind=projection_kind,
+            role_bindings=tuple(bindings),
+            backend_policy=self.backend_policy(policy_iri) if policy_iri is not None else None,
+            population_budget=int(budget) if budget is not None else None,
+        )
+
+    def projection_contracts(self, only: Optional[str] = None) -> List[ProjectionContract]:
+        declared = sorted(
+            {s for s in self.g.subjects(RDF.type, SRF.ProjectionContract) if isinstance(s, URIRef)},
+            key=str,
+        )
+        found = [self.projection_contract(iri) for iri in declared]
+        if only is not None:
+            found = [c for c in found if str(c.iri) == str(only)]
+            if not found:
+                raise ContractError(f"no projection contract named {only}")
+        return found
+
     # -- declaration subgraph, for the read set ------------------------------
 
     def declaration_subjects(self, contract: Contract) -> List[URIRef]:
@@ -367,3 +549,12 @@ class SurfaceGraphAnalyser:
 def read_contracts(graph: Graph, only: Optional[str] = None) -> List[Contract]:
     """Convenience wrapper, matching the shape of ``tools/mork2rml.py``'s entry points."""
     return SurfaceGraphAnalyser(graph).contracts(only=only)
+
+
+def read_projection_contracts(
+    graph: Graph, only: Optional[str] = None
+) -> List[ProjectionContract]:
+    """Convenience wrapper for projection contracts, kept separate from ``read_contracts``
+    because a ``ProjectionContract`` is a distinct shape, not a third ``Contract`` branch.
+    """
+    return SurfaceGraphAnalyser(graph).projection_contracts(only=only)

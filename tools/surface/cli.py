@@ -24,6 +24,17 @@ behave the same way in a pipeline.
 
 ``mork``
     Lift compiled surfaces into ``mrk:ProjectionMapping`` records.
+
+``lower``
+    Lower Surface contracts into MORK mapping graphs (ADR-A18). Projection
+    contracts always lower, since a projection has no direct-emit form
+    (ADR-A17); ``--promotion-index`` additionally lowers Promotion and Index
+    contracts, mirrored alongside their existing direct-emit path — the
+    "configured" case, not the default. Unlike ``mork``, this reads no source
+    graph and compiles nothing: the whole output is the mapping graph a later
+    backend compiler (ADR-A23) will read, plus any ``mork:dependsOnMapping``
+    edges a role binding's declared cross-reference to another contract in
+    the same batch implies.
 """
 
 from __future__ import annotations
@@ -38,8 +49,9 @@ from typing import Dict, List, Optional, Sequence, Tuple
 from rdflib import Graph, Literal, URIRef
 
 from . import mork as mork_interop
-from .compile import CompileError, SurfaceCompiler, discharge_determinism, render
-from .model import ContractError, SurfaceGraphAnalyser, read_contracts
+from .compile import CompileError, StackedInput, SurfaceCompiler, discharge_determinism, render
+from .lowering import lower_all
+from .model import ContractError, SurfaceGraphAnalyser, read_contracts, read_projection_contracts
 from .namespaces import OUTPUT_PREFIXES, RDF, SRF
 from .parity import check_parity
 from .serialise import parse_files, serialise
@@ -61,23 +73,40 @@ def _now(explicit: Optional[str]) -> str:
     )
 
 
-def _input_surfaces(paths: Sequence[str]) -> List[Tuple[URIRef, str, int]]:
-    """Read generated manifests supplied as input, for stacked surfaces."""
+def _input_surfaces(paths: Sequence[str], declarations: Graph) -> List[StackedInput]:
+    """Read generated manifests supplied as input, for stacked surfaces.
+
+    Resolves each input's profile identity against ``declarations`` (where the
+    profile individual's own properties are asserted, not the manifest), so
+    the ADR-A21 composition check in ``SurfaceCompiler`` has something to
+    compare rather than silently skipping every input.
+    """
     if not paths:
         return []
     graph = parse_files(paths)
-    found: List[Tuple[URIRef, str, int]] = []
+    analyser = SurfaceGraphAnalyser(declarations)
+    found: List[StackedInput] = []
     for record in graph.subjects(RDF.type, SRF.GeneratedSurface):
         digest = graph.value(record, SRF.artefactHash)
         depth = graph.value(record, SRF.stackDepth)
+        scope = graph.value(record, SRF.signatureScope)
+        profile_iri = graph.value(record, SRF.generatedByProfile)
+        identity: Optional[str] = None
+        if profile_iri is not None:
+            try:
+                identity = analyser.profile(profile_iri).identity_hash()
+            except ContractError:
+                identity = None
         found.append(
-            (
-                record,
-                str(digest) if digest is not None else "",
-                int(depth) if depth is not None else 0,
+            StackedInput(
+                surface=record,
+                artefact_hash=str(digest) if digest is not None else "",
+                depth=int(depth) if depth is not None else 0,
+                profile_identity=identity,
+                signature_scope=str(scope) if scope is not None else None,
             )
         )
-    return sorted(set(found), key=lambda entry: str(entry[0]))
+    return sorted(set(found), key=lambda entry: str(entry.surface))
 
 
 def _load(args: argparse.Namespace, *extra: Sequence[str]) -> Graph:
@@ -91,7 +120,7 @@ def _load(args: argparse.Namespace, *extra: Sequence[str]) -> Graph:
 def command_compile(args: argparse.Namespace) -> int:
     declarations = parse_files(args.contracts)
     source = _load(args, args.input_surface)
-    stacked = _input_surfaces(args.input_surface)
+    stacked = _input_surfaces(args.input_surface, declarations)
     produced_at = _now(args.now)
 
     out_root = Path(args.out)
@@ -229,6 +258,36 @@ def command_mork(args: argparse.Namespace) -> int:
     return 0
 
 
+def command_lower(args: argparse.Namespace) -> int:
+    """Lower Surface contracts into MORK mapping graphs (ADR-A18).
+
+    Projection contracts always lower, since they have no direct-emit form.
+    Promotion and Index contracts lower only when ``--promotion-index`` is
+    given: they already have a working direct-emit path, so mirroring them
+    into MORK as well is the configured case, not the default (delivery-plan
+    Phase 3 item 2), and running both mechanisms over disjoint contract keys
+    avoids any ambiguity about which one produced a given mapping.
+    """
+    prefixes = dict(OUTPUT_PREFIXES)
+    prefixes["mork"] = mork_interop.MORK
+    header = ["# SPDX-License-Identifier: MPL-2.0", ""]
+
+    declarations = parse_files(args.contracts)
+    try:
+        projections = read_projection_contracts(declarations, only=args.contract)
+    except ContractError as error:
+        print(f"error: {error}", file=sys.stderr)
+        return 2
+    contracts = []
+    if args.promotion_index:
+        contracts = read_contracts(declarations, only=args.contract)
+
+    combined = lower_all(contracts=contracts, projections=projections)
+    text = serialise(combined, prefixes, header + ["# Lowered MORK mapping graph.", ""])
+    Path(args.out).write_text(text, encoding="utf-8") if args.out else print(text)
+    return 0
+
+
 def main(argv: Optional[Sequence[str]] = None) -> int:
     parser = argparse.ArgumentParser(prog="surface", description="LATTICE surface compiler")
     parser.add_argument("-v", "--verbose", action="store_true", help="enable verbose logging")
@@ -268,6 +327,17 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     mork_cmd.add_argument("--out", default=None, help="output file (default: stdout)")
     mork_cmd.add_argument("--now", default=None)
     mork_cmd.set_defaults(func=command_mork)
+
+    lower_cmd = sub.add_parser("lower", help="lower Surface contracts into MORK mapping graphs")
+    lower_cmd.add_argument("--contracts", nargs="+", required=True, help="declaration graph files")
+    lower_cmd.add_argument("--contract", default=None, help="lower only this contract IRI")
+    lower_cmd.add_argument(
+        "--promotion-index",
+        action="store_true",
+        help="also lower Promotion/Index contracts, mirrored alongside their direct-emit path",
+    )
+    lower_cmd.add_argument("--out", default=None, help="output file (default: stdout)")
+    lower_cmd.set_defaults(func=command_lower)
 
     args = parser.parse_args(argv)
     logging.basicConfig(

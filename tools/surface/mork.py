@@ -33,15 +33,25 @@ IRI is referenced directly.
 
 The ``mrk:ProjectionMapping`` vocabulary used here is declared in
 ``mork/spec/Mork.ttl``.
+
+**Relationship to ``tools/surface/lowering.py``.** That module lowers a bare
+declaration — a ``srf:ProjectionContract`` always, a Promotion/Index contract
+where configured (ADR-A18) — with no compiled surface involved. ``lift``
+below is the compiled-surface case: it reuses the same parameter-binding
+shape (``lowering.contract_parameter_bindings``) so a mapping produced either
+way looks the same to ``lower()``, but mints its ``mrk:ProjectionMapping``
+record under a different IRI stem, so the two never collide over one
+contract key.
 """
 
 from __future__ import annotations
 
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 
 from rdflib import Graph, Literal, URIRef
 
 from .compile import CLOSURE, DIRECT, MEMBERSHIP, NOMINAL, CompiledSurface
+from .lowering import contract_parameter_bindings
 from .model import Contract, ContractError
 from .namespaces import DCTERMS, MORK, OWL, RDF, RDFS, SH, SRF, XSD
 from .naming import Minter, local_name
@@ -106,29 +116,11 @@ def lift(compiled: CompiledSurface, mapping_scheme: Optional[URIRef] = None) -> 
     graph.add((target, RDF.type, MORK.TargetingSpec))
     graph.add((target, SH.targetClass, contract.carrier))
 
-    # Parameters: everything the compiler read out of the contract.
-    read_path = " / ".join(
-        (f"^{step.prop}" if step.inverse else str(step.prop)) for step in contract.path
-    )
-    bindings: List[tuple] = [
-        ("carrier", "Concept", contract.carrier),
-        ("readPath", "Path", Literal(read_path)),
-        ("targetNamespace", "String", Literal(contract.target_namespace)),
-        ("realisationMode", "Concept", URIRef(contract.realisation_mode)),
-    ]
-    if contract.is_index:
-        bindings.append(("namingPolicy", "Concept", URIRef(contract.naming_policy)))
-        for form in contract.index_forms:
-            bindings.append((f"indexForm_{local_name(form)}", "Concept", URIRef(form)))
-        if contract.closure_basis is not None:
-            bindings.append(("closureBasis", "Path", Literal(str(contract.closure_basis))))
-    else:
-        bindings.append(("promotesTo", "Concept", contract.promotes_to))
-        bindings.append(("sourceFidelity", "Concept", URIRef(contract.source_fidelity)))
-        if contract.via_match_relation is not None:
-            bindings.append(("viaMatchRelation", "Concept", contract.via_match_relation))
-
-    for name, kind, value in bindings:
+    # Parameters: everything the compiler read out of the contract. Shared
+    # with tools/surface/lowering.py::lower_contract, so a mapping produced
+    # either way has the same parameter shape and tools/surface/mork.py's own
+    # lower() below can read either back.
+    for name, kind, value in contract_parameter_bindings(contract):
         node = minter.parameter_binding(name)
         graph.add((mapping, MORK.hasParameterBinding, node))
         _parameter(graph, node, name, kind, value)

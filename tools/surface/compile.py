@@ -27,6 +27,18 @@ The compiler is deterministic. Population order is IRI order, blank-node labels
 are minted from the term they belong to, and the production timestamp is the
 only non-reproducible value emitted — which is why it sits outside the artefact
 hash.
+
+**Staged pipeline (ADR-A19).** A Promotion or Index contract's run maps onto
+the staged model as: validate (``model.py``'s analyser, at read time) →
+normalise (population enumeration and read-path evaluation, below) → compile
+(``SurfaceCompiler.compile``, this module) → emit (``serialise.py``) →
+provenance (the manifest module, ``_manifest``). Promotion and Index end the
+pipeline at emit, because ADR-A16 gives them a direct-emit form. A
+``ProjectionContract`` has no direct-emit form (ADR-A17): its pipeline instead
+ends at lower — ``lowering.py`` — which produces a MORK mapping graph for a
+later backend compiler (ADR-A23) to read, rather than a compiled module
+package. The two pipelines share validate and normalise; they diverge at the
+stage ADR-A18 draws the line at.
 """
 
 from __future__ import annotations
@@ -67,6 +79,12 @@ DIRECT = SRF.DirectProperty
 WARN_POPULATION = 500
 DEFAULT_BUDGET = 5000
 
+#: Entailment regimes this compiler acts on. It reads asserted triples only,
+#: which is correct for NoEntailment and a silent gap for anything richer
+#: (outstanding items §3.5) — so anything else is refused at compile time
+#: rather than silently under-entailed.
+SUPPORTED_ENTAILMENT_REGIMES = (str(SRF.NoEntailment),)
+
 
 class CompileError(ValueError):
     """The contract cannot be compiled against this source graph."""
@@ -74,6 +92,23 @@ class CompileError(ValueError):
 
 class CyclicClosureBasis(CompileError):
     """The declared closure basis is not well founded over the declared scope."""
+
+
+def check_entailment_regime(profile) -> None:
+    """Refuse to compile under an entailment regime this compiler does not act on.
+
+    The compiler always reads asserted triples: correct for ``NoEntailment``,
+    and a gap for ``RDFSEntailment``, ``OWL2ELEntailment``, and
+    ``OWL2DLEntailment``, where a ``DefinitionOnly`` surface would answer
+    nothing without a reasoner this compiler does not run. Claiming support and
+    generating an under-entailed surface is worse than refusing outright.
+    """
+    if profile.entailment_regime not in SUPPORTED_ENTAILMENT_REGIMES:
+        raise CompileError(
+            f"profile {profile.iri} declares entailment regime "
+            f"{profile.entailment_regime}, which this compiler does not act on. Only "
+            f"srf:NoEntailment is currently supported (surface/docs/OUTSTANDING-ITEMS.md §3.5)."
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -210,6 +245,32 @@ class ReadSetRecord:
         return (str(self.kind), str(self.source))
 
 
+@dataclass(frozen=True)
+class StackedInput:
+    """One surface a stacked generation run reads (ADR-A21).
+
+    ``profile_identity`` and ``signature_scope`` are optional so that a caller
+    without a manifest to hand — or code written before this record existed —
+    can still pass a bare ``(surface, artefact_hash, depth)`` tuple, which
+    ``SurfaceCompiler`` coerces on the way in. Composition is only checked for
+    inputs that supply the field it depends on: an input with no known profile
+    identity is not silently treated as matching, it is simply not compared.
+    """
+
+    surface: URIRef
+    artefact_hash: str
+    depth: int
+    profile_identity: Optional[str] = None
+    signature_scope: Optional[str] = None
+
+    @classmethod
+    def coerce(cls, entry: "StackedInput | Tuple[URIRef, str, int]") -> "StackedInput":
+        if isinstance(entry, StackedInput):
+            return entry
+        surface, artefact_hash, depth = entry
+        return cls(surface=surface, artefact_hash=artefact_hash, depth=depth)
+
+
 @dataclass
 class CompiledSurface:
     """Everything one generation run produced, before it is written anywhere."""
@@ -252,12 +313,12 @@ class SurfaceCompiler:
         contract: Contract,
         source: Graph,
         produced_at: str,
-        input_surfaces: Sequence[Tuple[URIRef, str, int]] = (),
+        input_surfaces: Sequence["StackedInput | Tuple[URIRef, str, int]"] = (),
     ) -> None:
         self.contract = contract
         self.source = source
         self.produced_at = produced_at
-        self.input_surfaces = list(input_surfaces)
+        self.input_surfaces = [StackedInput.coerce(entry) for entry in input_surfaces]
         self.analyser = SurfaceGraphAnalyser(source)
 
         self.minter = Minter(
@@ -306,6 +367,7 @@ class SurfaceCompiler:
     def compile(self) -> CompiledSurface:
         """Execute the run and return everything it produced."""
         logger.info("Compiling %s", self.contract.iri)
+        check_entailment_regime(self.contract.profile)
 
         self._read_declaration()
         if self.contract.is_index:
@@ -569,14 +631,36 @@ class SurfaceCompiler:
     # -- stacking -----------------------------------------------------------
 
     def _compile_stacked_inputs(self) -> int:
+        """Fold stacked inputs into the read set, and check the composition laws
+        ADR-A21 states: signature scope and profile identity both compose
+        across a stack, so a source-signature or mixed-profile input upgrades
+        this surface rather than being silently absorbed.
+        """
         depth = 0
-        for surface_iri, artefact_hash, input_depth in self.input_surfaces:
+        identities: Set[str] = set()
+        for entry in self.input_surfaces:
             self.read_set.append(
                 ReadSetRecord(
-                    kind=SRF.SurfaceSource, source=surface_iri, digest=artefact_hash
+                    kind=SRF.SurfaceSource, source=entry.surface, digest=entry.artefact_hash
                 )
             )
-            depth = max(depth, input_depth + 1)
+            depth = max(depth, entry.depth + 1)
+            if entry.signature_scope == str(SRF.SourceSignature):
+                # X1 composition: conservative over a non-conservative input is
+                # not conservative either.
+                self.signature_scope = SRF.SourceSignature
+            if entry.profile_identity is not None:
+                identities.add(entry.profile_identity)
+
+        own_identity = self.contract.profile.identity_hash()
+        identities.add(own_identity)
+        if len(identities) > 1:
+            raise CompileError(
+                f"{self.contract.iri} stacks over input surface(s) generated under a "
+                f"different profile identity; every surface in a stack shares one profile "
+                f"identity, checked statically (law srf:R1 composition, ADR-A21)."
+            )
+
         permitted = self.contract.profile.permitted_stack_depth
         if depth > permitted:
             raise CompileError(
