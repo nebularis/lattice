@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>The LATTICE Field Guide</title>
-  <meta name="description" content="A practical guide to Surface, Eligibility, MORK, and governed compilation.">
+  <meta name="description" content="A practical, thorough guide to every layer of LATTICE — Foundation through Instrument, Surface's promotion/indexing/projection, MORK's mapping and compiler family, and the applied domains built on top.">
   <style>
     :root {
       color-scheme: dark;
@@ -19,6 +19,7 @@
       --mint: #9df7d7;
       --blue: #9bbcff;
       --purple: #d4a8ff;
+      --amber: #f3cf8e;
       --max: 1120px;
     }
     * { box-sizing: border-box; }
@@ -48,10 +49,11 @@
     .book { padding: 3.6rem 0 6rem; }
     .hero { padding-bottom: 3rem; border-bottom: 1px solid var(--line); }
     .eyebrow { color: var(--mint); font-size: .78rem; font-weight: 850; letter-spacing: .14em; text-transform: uppercase; }
-    h1, h2, h3 { line-height: 1.12; }
+    h1, h2, h3, h4 { line-height: 1.12; }
     h1 { max-width: 900px; margin: .7rem 0 1rem; font-size: clamp(2.8rem, 8vw, 6.8rem); letter-spacing: -.065em; background: linear-gradient(120deg, #fff, var(--mint) 42%, var(--blue) 78%, var(--purple)); -webkit-background-clip: text; background-clip: text; color: transparent; }
     h2 { margin: 4rem 0 1rem; padding-top: 1rem; border-top: 1px solid var(--line); color: var(--text); font-size: 2.2rem; }
-    h3 { margin-top: 2.2rem; color: var(--mint); font-size: 1.3rem; }
+    h3 { margin-top: 2.4rem; color: var(--mint); font-size: 1.3rem; }
+    h4 { margin-top: 1.6rem; color: var(--blue); font-size: 1.05rem; }
     p, li, td { color: var(--muted); }
     .dek { max-width: 800px; font-size: 1.25rem; }
     .small { color: var(--soft); font-size: .92rem; }
@@ -59,6 +61,8 @@
     .toc a { padding: .8rem 1rem; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); text-decoration: none; }
     .callout { margin: 1.4rem 0; padding: 1rem 1.2rem; border: 1px solid #386052; border-radius: 12px; background: #102a2a; color: var(--muted); }
     .callout strong { color: var(--text); }
+    .callout.warn { border-color: #5a4a2a; background: #241c0d; }
+    .callout.warn strong { color: var(--amber); }
     pre { overflow-x: auto; padding: 1.1rem 1.2rem; border: 1px solid var(--line); border-radius: 12px; background: #07101d; color: #dbe8ff; }
     code { color: #dbe8ff; }
     table { width: 100%; margin: 1.2rem 0; border: 1px solid var(--line); border-spacing: 0; border-radius: 12px; overflow: hidden; background: var(--panel); }
@@ -66,6 +70,10 @@
     th { color: var(--mint); background: var(--panel-2); }
     tr:last-child td { border-bottom: 0; }
     blockquote { margin: 1.4rem 0; padding: .8rem 1.2rem; border-left: 3px solid var(--mint); color: var(--muted); }
+    .tag { display: inline-block; font-size: .72rem; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; padding: .18rem .55rem; border-radius: 999px; margin-left: .4rem; vertical-align: middle; }
+    .tag.ok { color: #0a2a20; background: var(--mint); }
+    .tag.partial { color: #241c0d; background: var(--amber); }
+    .tag.no { color: var(--muted); background: transparent; border: 1px solid var(--line); }
     footer { padding: 2rem 1rem 3rem; border-top: 1px solid var(--line); color: var(--soft); text-align: center; }
     @media (max-width: 720px) { .book { padding-top: 2rem; } h2 { font-size: 1.8rem; } table { display: block; overflow-x: auto; } }
   </style>
@@ -81,17 +89,17 @@
     <header class="hero">
       <div class="eyebrow">A practical book on governed semantics</div>
       <h1>The LATTICE Field Guide</h1>
-      <p class="dek">How to move from declarations to trusted execution using Surface, Eligibility, MORK, and deterministic compiler backends.</p>
-      <p class="small">For ontology authors, projection authors, compiler builders, reviewers, and operators.</p>
+      <p class="dek">Every layer, from Foundation to Instrument, and how Surface, MORK, and a family of deterministic backend compilers turn a declared graph into trusted, provenance-bearing execution — with real examples pulled straight out of this repository.</p>
+      <p class="small">For ontology authors, projection authors, compiler builders, reviewers, and operators. Where something is declared but not yet built, this guide says so plainly rather than quietly implying otherwise — that's the house style, and it's the one worth keeping.</p>
     </header>
 
     <nav class="toc" aria-label="Contents">
-      <a href="#orientation">1. Orientation</a><a href="#stack">2. Semantic stack</a><a href="#surface">3. Surface</a><a href="#eligibility">4. Eligibility</a><a href="#mork">5. MORK</a><a href="#compile">6. Compilation</a><a href="#examples">7. Examples</a><a href="#operate">8. Operations</a><a href="#boundaries">9. Boundaries</a><a href="#next">10. Roadmap</a>
+      <a href="#orientation">1. Orientation</a><a href="#stack">2. The semantic stack</a><a href="#surface">3. Surface</a><a href="#eligibility">4. Eligibility</a><a href="#mork">5. MORK</a><a href="#compile">6. Compilation</a><a href="#applied">7. Applied domains</a><a href="#examples">8. Worked examples</a><a href="#operate">9. Operations</a><a href="#boundaries">10. Boundaries</a><a href="#next">11. Roadmap</a><a href="#more">12. Further reading</a>
     </nav>
 
     <section id="orientation">
       <h2>1. Orientation</h2>
-      <p>LATTICE is a semantic substrate for governed systems. It is designed for situations where a document, policy, contract, protocol, or operational rule must become a graph that can be inspected, validated, transformed, queried, and eventually executed without losing its source meaning.</p>
+      <p>LATTICE is a semantic substrate for governed systems. It exists for situations where a document, policy, contract, protocol, or operational rule must become a graph that can be inspected, validated, transformed, queried, and eventually executed — without losing its source meaning along the way.</p>
       <pre><code>meaningful declarations
         |
         v
@@ -102,28 +110,66 @@ compiled mode of operation
         |
         v
 runtime answers with provenance</code></pre>
-      <p>The central discipline is to separate semantic authority from computational convenience. A source declaration says what is true. A generated surface, query, shape, rule, or runtime plan is a derived way of asking questions about it.</p>
+      <p>The central discipline is to separate semantic authority from computational convenience. A source declaration says what is true. A generated surface, mapping, query, shape, rule, or runtime plan is a derived way of asking questions about it — and a derived thing may only ever restate, never outrank, the declaration it came from.</p>
       <div class="callout"><strong>Working question:</strong> can a reviewer explain what the system believes, why it believes it, which compiler produced the operational form, and what must be regenerated when an input changes?</div>
-      <table><tr><th>Term</th><th>Meaning</th></tr><tr><td>Declaration</td><td>An authored graph statement that defines domain meaning.</td></tr><tr><td>Surface</td><td>A generated query-facing restatement of declared graph facts.</td></tr><tr><td>Eligibility</td><td>A declarative model for conditions, questions, and decisions.</td></tr><tr><td>MORK</td><td>A machine-facing mapping graph for review and compilation.</td></tr><tr><td>Artefact</td><td>A generated shape, query, rule, transform, or runtime plan.</td></tr></table>
+      <p>LATTICE is actually three related pieces of work, and the name strictly names only the middle one. <strong>MORK</strong> gets messy source material — schemas, API payloads, free-text clauses — aligned onto a target ontology, largely without human intervention once enough confirmed mappings exist. <strong>LATTICE</strong> is the stack of domain-neutral ontology layers that alignment lands in. <strong>SPC</strong>, a formal session-typed process calculus for the live exchange between agents, ships a substantial ontology of its own but is not yet wired into the layers below — it still uses a placeholder namespace, and connecting it is deliberately out of scope for now rather than an oversight.</p>
+      <table><tr><th>Term</th><th>Meaning</th></tr>
+      <tr><td>Declaration</td><td>An authored graph statement that defines domain meaning.</td></tr>
+      <tr><td>Surface</td><td>A generated, query-facing restatement of declared graph facts — promoted, indexed, or projected.</td></tr>
+      <tr><td>Eligibility</td><td>A declarative model for conditions, questions, and three-valued decisions.</td></tr>
+      <tr><td>MORK</td><td>A machine-facing, provenance-rich mapping graph, reviewable and compiled deterministically.</td></tr>
+      <tr><td>Artefact</td><td>A generated shape, query, rule, transform, or runtime plan — never the source of truth.</td></tr>
+      <tr><td>Applied domain</td><td>A full, ported real-world ontology built on the substrate — insurance, capacity, and others, at varying maturity.</td></tr></table>
     </section>
 
     <section id="stack">
       <h2>2. The semantic stack</h2>
-      <p>LATTICE is layered because different kinds of meaning have different owners.</p>
-      <table><tr><th>Layer</th><th>Question</th><th>Typical output</th></tr><tr><td>Foundation</td><td>What is this artefact and who governs it?</td><td>Identity, version, evidence, governance state.</td></tr><tr><td>Vocabulary</td><td>Which concepts are available?</td><td>Scheme contracts and implementation-owned SKOS schemes.</td></tr><tr><td>Quantification</td><td>What does a value mean numerically?</td><td>Quantities, bounds, ranges, value spaces.</td></tr><tr><td>Party</td><td>Who participates?</td><td>Actors, roles, participation.</td></tr><tr><td>Eligibility</td><td>Does evidence satisfy a condition?</td><td>Questions and three-valued decisions.</td></tr><tr><td>Behaviour</td><td>How does a system change state?</td><td>Triggers, guards, transitions, effects.</td><tr><td>Instrument</td><td>Which applied object carries the rules?</td><td>Contracts, clauses, obligations.</td></tr></table>
-      <p>Direct SPARQL, SHACL, reasoning, materialisation, and generated surfaces are peer realisation strategies. None becomes the source of truth merely because it is faster.</p>
+      <p>LATTICE is layered because different kinds of meaning have different owners, and the layering rule is strict: <strong>a lower layer never names a term belonging to a higher one.</strong> Foundation knows nothing of Party; Party knows nothing of Instrument. Where a higher layer needs to compose with a lower one, the composition is declared from the higher layer's own side — typically in a <code>projection/</code> directory reserved for exactly that — so nothing about a lower layer's specification ever has to change to make it possible. This is what keeps Foundation, Vocabulary, and Quantification genuinely domain-neutral: nothing above them is allowed to leak downward into them.</p>
+      <table><tr><th>Layer</th><th>Question it answers</th><th>Typical output</th></tr>
+      <tr><td>Foundation</td><td>What is this artefact, and who governs it?</td><td>Identity, version, evidence, governance state.</td></tr>
+      <tr><td>Vocabulary</td><td>Which external concepts are available, and to whom?</td><td>Scheme contracts, governed SKOS scheme wrappers.</td></tr>
+      <tr><td>Quantification</td><td>What does a value mean — ordered, bounded, converted, repeated?</td><td>Value spaces, quantities, bounds, ranges, recurrences.</td></tr>
+      <tr><td>Surface</td><td>Can this already-true fact be restated somewhere cheaper to ask?</td><td>Promoted properties, index classes, lowered projections.</td></tr>
+      <tr><td>Party</td><td>Who participates, in what capacity, for how long?</td><td>Actors, roles, role occupancies, participation groups.</td></tr>
+      <tr><td>Eligibility</td><td>Does evidence satisfy a condition?</td><td>Questions and three-valued decisions.</td></tr>
+      <tr><td>Behaviour</td><td>How does a system change state?</td><td>Triggers, guards, transitions, effects, allowances.</td></tr>
+      <tr><td>Instrument</td><td>Which applied object carries the rules?</td><td>Elements, provisions, obligations, qualifiers.</td></tr></table>
+      <p>Direct SPARQL, SHACL, reasoning, materialisation, and generated surfaces are peer realisation strategies throughout this stack. None becomes the source of truth merely because it happens to be faster — a specification that reads as though compiling something were mandatory for it to be usable at all has quietly smuggled an implementation detail into a definition.</p>
+
+      <h3>Foundation — four capabilities, never one bundle</h3>
+      <p>Foundation is the bedrock everything else builds on, and its defining choice is refusing to be one thing. An earlier draft offered a single <code>fnd:Governed</code> superclass carrying identity, evidence, temporal scoping, and governance status all at once — rejected, because adopting any one capability would have forced adopting all four. Instead there are four small, freely combinable mixins: <code>fnd:Version</code> (this individual is a specific, identified state of some persistent thing), <code>fnd:Evidenced</code> (can carry evidence for why it holds), <code>fnd:TemporallyScoped</code> (has a validity period distinct from when anyone recorded it), and <code>fnd:Governable</code> (moves through a review lifecycle before it's trusted). Each has a disjoint companion value class it points at — <code>fnd:PersistentIdentity</code>, <code>fnd:Evidence</code>, <code>fnd:TemporalScope</code>, <code>fnd:GovernanceState</code> — so the role and the thing it points at can never collapse into each other.</p>
+      <p><code>fnd:GovernanceState</code> is deliberately a bare current value — <code>Draft</code>, <code>Reviewed</code>, <code>Active</code>, <code>Superseded</code> — with no built-in state machine governing how one moves to another. That omission is the whole point: Foundation gives you the noun, and a layer built for exactly that job (Behaviour, or MORK's own governance model — see §5) supplies the verb.</p>
+
+      <h3>Vocabulary — binding an outside word list without ever naming it</h3>
+      <p>Some property genuinely needs values from an external, editorially-governed list — peril codes, jurisdictions, currencies — without the layer that declares the property ever having to name, or even know about, that list. The mechanism is a deliberate two-class split. A <code>voc:SchemeContract</code> is purely structural: "this property must eventually be bound to some scheme meeting these criteria," saying nothing about what the scheme is <em>about</em> — that's left entirely to prose and to whichever domain layer owns the property. A <code>voc:ConceptScheme</code> is a governed, versioned wrapper around an ordinary <code>skos:ConceptScheme</code>. The two connect through <code>voc:boundScheme</code>, which starts unset — an unbound contract is the normal starting state, filled in later by a completely different party once a scheme actually exists.</p>
+
+      <h3>Quantification — one mechanism for anything ordered, bounded, or repeated</h3>
+      <p>Named after the mechanism, not after any one kind of value, so that grades and tiers sit alongside currency amounts without misdescribing either. Its central object is the <code>qnt:ValueSpace</code>: an ordered set with a declared density and, critically, a declared, explicit list of which operations are actually permitted over it — holding numeric-looking literals never by itself grants permission to average them.</p>
+      <p>A <strong>position</strong> (a point on an ordered space) and an <strong>extent</strong> (a magnitude along it) are two genuinely separate declared spaces, not two readings of one — a position minus a position yields an extent, an extent plus an extent yields an extent, but a position plus a position is meaningless, and keeping the spaces apart makes that combination structurally unwritable rather than merely discouraged. This is also why temporal modelling needs no peer layer of its own: a moment in time is a position on a totally-ordered, unit-bearing space, and a recurring schedule is a generator of canonically identified ranges over it. <strong>Granularity</strong> (known only to the month — genuinely known, just imprecisely) and <strong>unresolvedness</strong> (genuinely missing, disputed, or pending) can both yield an <code>Undetermined</code> comparison, but conflating them — an earlier draft did — loses information a consumer needs to remediate correctly.</p>
+
+      <h3>Party — who is standing in which capacity</h3>
+      <p>Party answers one narrow question — who participates, in what capacity, for how long, and how does responsibility divide or transfer — and never what the obligation actually is, which stays a layer up in Instrument. Its central move is reification: an actor is never connected directly to a role. Every occupancy is its own timestamped, evidenced individual, <code>pty:RoleOccupancy</code>, with <code>inRole</code> required but <code>occupiedBy</code> optional — which is exactly the formal mechanism behind a role existing in a design from the outset while genuinely nobody occupies it yet. A <code>pty:ParticipationGroup</code> under a declared <code>pty:CompositionRule</code> expresses both "everyone capped independently at their own share" and "any one member liable for the full amount, with recourse against the others" using the same machinery — only the named rule differs. A <code>pty:Delegation</code> records that one occupancy performs what a different occupancy remains accountable for, without ever transferring the accountability itself.</p>
+
+      <h3>Behaviour — state, and the line between reading it and changing it</h3>
+      <p>A state-machine layer stacked on Eligibility (to gate transitions) and Instrument/Party (to change something), organised into declaration, occurrence, execution, and state-record tiers. Its single most important structural decision is the strict separation between a <strong>guard</strong> and an <strong>effect</strong>. A guard's only substantive property, <code>bhv:requiresEligibility</code>, points into Eligibility and nothing in the guard's own vocabulary is even capable of describing a write — there is no property path from "evaluate this guard" to "change something." An effect is the write side, targeting an Instrument element, a Party role occupancy, or an allowance balance, and every transition requires at least one. A failed or undetermined guard therefore cannot partially mutate anything: the mechanism that reads eligibility has no vocabulary for mutation to begin with. <code>bhv:Sequential</code> allowance absorption is usable today; <code>bhv:Proportional</code> absorption and reset edge cases are declared in the vocabulary and deliberately left inert, pending formal conservation laws and cross-profile test coverage that don't exist yet.</p>
+
+      <h3>Instrument — the generic shape of a governing document</h3>
+      <p>The shallowest substrate layer, deliberately: it gives "a governing document" — contract, policy, statute — its most generic possible shape without committing to what any particular document says. Everything hangs off <code>ins:Element</code>, of which <code>ins:Provision</code> (a structural grouping), <code>ins:Obligation</code> (a duty requiring at least one obligor and one obligee, reaching into Party for both), and <code>ins:Qualifier</code> (a constraint attachable to any element, including another qualifier) are disjoint kinds. Instrument borrows Party for <em>who</em>, Eligibility for <em>under what condition</em>, and Quantification for <em>how much or by when</em> — its own vocabulary stays confined to the skeleton those pieces hang on.</p>
+
       <h3>Literate specifications</h3>
-      <p>Layer READMEs are specifications. Turtle blocks are extracted into machine artefacts. Run the drift check after changing a README, vocabulary, ontology, or shape.</p>
+      <p>Layer READMEs are not prose written <em>about</em> the ontology — they are its authoring surface. Fenced <code>turtle-spec</code>, <code>turtle-vocab</code>, and <code>turtle-shapes</code> blocks inside a layer's README are mechanically extracted, in document order, into the compiled files a reasoner would actually load; a <code>turtle-example</code> block is deliberately never extracted, so a README can show a worked case without it leaking into the compiled ontology. Run the drift check after changing a README, vocabulary, ontology, or shape file:</p>
       <pre><code>python3 tools/literate_extract.py surface/README.md \
   --layer surface --root . \
   --shapes shapes/structural.ttl shapes/constraints.ttl --check</code></pre>
+      <div class="callout warn"><strong>Known doc bug:</strong> <code>tools/README.md</code> still documents this script's path as <code>tools/lattice/literate_extract.py</code>. No such directory exists — the real path is <code>tools/literate_extract.py</code>, exactly as used above and exactly as the CI workflow invokes it. This guide uses the correct path throughout.</div>
     </section>
 
     <section id="surface">
       <h2>3. Surface: making graph questions cheap</h2>
-      <p>A correct graph can still be awkward to query. Surface creates a generated local restatement that makes a declared class of question answerable by direct lookup, while preserving the source as semantic authority.</p>
+      <p>A correct graph can still be awkward to query. Surface creates a generated local restatement that makes a declared class of question answerable by direct lookup, while the source stays the only semantic authority. It declares three mechanisms now — <strong>Promotion</strong>, <strong>Indexing</strong>, and, since ADR-A17, <strong>Projection</strong> — and every one of them is required to record, alongside whatever it generates, exactly what it read to produce itself and how far it may be trusted. Conservativity is what makes an index and a promotion safe to discard and regenerate at will: an index mints only its own terms, so adding one entails nothing new about anything else. A promotion is the one case that isn't automatically conservative — restating a value onto a property another layer already declares produces triples indistinguishable from authored facts — which is why every generated surface records its <code>srf:signatureScope</code> (<code>LocalSignature</code> or <code>SourceSignature</code>) and why a promotion reaching an authored property must preserve exact meaning and be written out directly rather than left as a bare definition.</p>
+
       <h3>Promotion</h3>
-      <p>Promotion reads a value at the end of a declared path and puts it directly on the carrier.</p>
+      <p>Promotion reads a value at the end of a declared path and puts it directly on the carrier — turning three hops into one property read.</p>
       <pre><code>Subscription
   --hasPlan--&gt; Plan
   --hasPricing--&gt; Pricing
@@ -131,6 +177,7 @@ runtime answers with provenance</code></pre>
 
 becomes:
 Subscription --subscriptionCurrency--&gt; EUR</code></pre>
+      <p>The complete, real contract — from <code>surface/examples/saas-subscription-currency.ttl</code> — declares the path as three ordered, directed steps rather than a SHACL property-path expression (whose blank-node labels don't survive canonicalisation cleanly):</p>
       <pre><code>ex:subscription-currency a srf:PromotionContract ;
     srf:contractKey "subscription-currency" ;
     srf:carrier saas:Subscription ;
@@ -139,64 +186,185 @@ Subscription --subscriptionCurrency--&gt; EUR</code></pre>
     srf:sourceFidelity srf:ExactSource ;
     srf:realisationMode srf:Materialised ;
     srf:targetNamespace &lt;https://example.org/saas/generated/&gt; ;
-    srf:surfaceProfile ex:default-profile .</code></pre>
+    srf:surfaceProfile ex:default-profile .
+
+ex:step-0 srf:stepIndex 0 ; srf:stepProperty saas:hasPlan    ; srf:stepDirection srf:Forward .
+ex:step-1 srf:stepIndex 1 ; srf:stepProperty saas:hasPricing ; srf:stepDirection srf:Forward .
+ex:step-2 srf:stepIndex 2 ; srf:stepProperty saas:inCurrency ; srf:stepDirection srf:Forward .</code></pre>
+      <p>The sibling example, <code>clinical-trial-crosswalk.ttl</code>, promotes across two SKOS schemes via <code>skos:closeMatch</code> rather than a same-ontology property — an inexact crosswalk. That combination forces <code>srf:sourceFidelity srf:CrosswalkInexact</code>, which by law <code>srf:X5</code> caps the resulting surface at <code>Advisory</code> authority and, by law <code>srf:X6</code>, forbids it from landing on an authored property at all — it must mint its own property in its own target namespace, so its derived nature stays visible in the IRI rather than masquerading as something the target vocabulary actually asserts.</p>
+
       <h3>Indexing</h3>
-      <table><tr><th>Form</th><th>Use it when</th><th>Runtime shape</th></tr><tr><td>NominalClass</td><td>Population is bounded and enumerable.</td><td><code>?carrier a generated:ValueClass</code></td></tr><tr><td>MembershipAssertion</td><td>Answers must work without a reasoner.</td><td>Materialised type assertions.</td></tr><tr><td>ClosureRelation</td><td>Ancestor retrieval is a real query.</td><td><code>?carrier generated:matches ?ancestor</code></td></tr><tr><td>DirectProperty</td><td>Value space is open-ended or large.</td><td><code>?carrier generated:property ?value</code></td></tr></table>
+      <table><tr><th>Form</th><th>Use it when</th><th>Runtime shape</th></tr>
+      <tr><td>NominalClass</td><td>Population is bounded and enumerable.</td><td><code>?carrier a generated:ValueClass</code></td></tr>
+      <tr><td>MembershipAssertion</td><td>Answers must work without a reasoner.</td><td>Materialised type assertions.</td></tr>
+      <tr><td>ClosureRelation</td><td>Ancestor retrieval is a real query.</td><td><code>?carrier generated:matches ?ancestor</code></td></tr>
+      <tr><td>DirectProperty</td><td>Value space is open-ended or large — this is also what a promotion always emits.</td><td><code>?carrier generated:property ?value</code></td></tr></table>
+      <p><code>surface/examples/employment-job-family.ttl</code> declares all three per-value forms together over a scheme-bound population: <code>NominalClass</code> and <code>MembershipAssertion</code> answer "is this assignment in Engineering," while <code>ClosureRelation</code>, built over <code>skos:broader</code>, answers "is this assignment in Engineering <em>or anything narrower than it</em>" without walking the taxonomy at query time. Past a few hundred values a per-value form becomes suspect on its own terms — a contract or profile declares a <code>srf:populationBudget</code> (falling back to 5000), exceeding it is a hard failure, and a warning fires past 500 regardless — which is exactly the point at which the guidance is to restructure as <code>DirectProperty</code> instead of raising the budget.</p>
+
       <h3>Hierarchical closure</h3>
-      <p>Closure is declared, scoped, reflexive, and cycle-checked. A job-family leaf can generate matches to itself and each in-scope ancestor, so runtime queries do not need to walk the taxonomy.</p>
-      <h3>Fidelity and X6</h3>
-      <p>Exact and exact-crosswalk source-signature promotions may target authored properties when materialised. Lossy results use generated properties. Definition-only authored-property chains remain prohibited.</p>
-      <h3>Projection</h3>
-      <p>Projection is for construction, derivation, joins, or expansions that Promotion and Index cannot express. Surface records the author-facing intent and lowers it into MORK.</p>
-      <pre><code>ex:subscription-arr a srf:ProjectionContract ;
+      <p>Closure is declared, scoped, reflexive, and checked for cycles at generation time — SPARQL cannot express a property path over a variable predicate, so no fixed SHACL shape can verify acyclicity for an arbitrary declared basis; the generator traverses the declared basis over the declared scope itself and records the result as a law discharge (<code>srf:R5</code>). A job-family leaf can generate matches to itself and each in-scope ancestor, so runtime queries never walk the taxonomy live.</p>
+
+      <h3>Fidelity and signature scope</h3>
+      <p>Exact and exact-crosswalk source-signature promotions may target authored properties, but only when materialised — never definition-only, since an OWL axiom asserted onto an authored term isn't conservative under any reading. Lossy results are confined to a generated property in the contract's own namespace. This is law <code>srf:X6</code>, and it is the one place the original conservativity claim (<code>srf:X1</code>) needed a stated exception rather than being quietly bent.</p>
+
+      <h3>Projection — the third mechanism <span class="tag partial">Declaration lowers today · backend compilation partial</span></h3>
+      <p>Promotion restates one value; indexing restates a value as a retrieval symbol. Neither covers intent that needs new graph structure, a computed value, evidence combined across more than one carrier, or one relation expanding into several — the case <code>srf:ProjectionContract</code> exists for, added by <a href="./adr/ADR-A17-surface-unified-projection-authoring-model.md">ADR-A17</a>. Annual recurring revenue is the canonical illustration: it isn't reachable by any read path at all, because it's <em>computed</em> from two of the subscription's own properties rather than read off the end of a chain.</p>
+      <p>A projection contract names a <code>srf:projectionKind</code> — one of four, each covering a distinct shape of intent that promotion and indexing structurally cannot express:</p>
+      <table><tr><th>Kind</th><th>Covers</th></tr>
+      <tr><td>GraphConstructionProjection</td><td>Intent that mints new graph structure not present as any single reachable value.</td></tr>
+      <tr><td>DerivationProjection</td><td>A value computed from one or more of the carrier's own source values.</td></tr>
+      <tr><td>JoinProjection</td><td>Evidence combined across more than one carrier.</td></tr>
+      <tr><td>ExpansionProjection</td><td>One relation restated as several.</td></tr></table>
+      <p>Rather than a free-text description of intent, a projection contract declares one or more <code>srf:ProjectionRoleBinding</code> individuals — the same discipline <code>srf:PathStep</code> applies to a read path, extended to intents with more than one moving part. Each binding carries a <code>srf:roleKind</code>: at most one <code>EvaluationSubjectRole</code> (the carrier instance being evaluated) and at most one <code>ResultTargetRole</code> (where the computed result is written) are required by every contract; <code>RequiredEvidenceRole</code> and <code>CandidateEvidenceRole</code> may repeat, and at least one is required for a join or derivation; <code>ClosureBasisRole</code> and <code>TransformDependencyRole</code> round out the vocabulary for the other two kinds.</p>
+      <p>The complete worked example, <code>surface/examples/saas-subscription-arr-projection.ttl</code>, computes ARR from two required-evidence bindings:</p>
+      <pre><code>ex:arr-subject a srf:ProjectionRoleBinding ;
+    srf:roleKind srf:EvaluationSubjectRole .
+
+ex:arr-price a srf:ProjectionRoleBinding ;
+    srf:roleKind srf:RequiredEvidenceRole ;
+    srf:bindsProperty ex:hasMonthlyPrice .
+
+ex:arr-frequency a srf:ProjectionRoleBinding ;
+    srf:roleKind srf:RequiredEvidenceRole ;
+    srf:bindsProperty ex:hasBillingPeriodsPerYear .
+
+ex:arr-target a srf:ProjectionRoleBinding ;
+    srf:roleKind srf:ResultTargetRole ;
+    srf:bindsProperty ex:annualRecurringRevenue .
+
+ex:arr-backend-policy a srf:ProjectionBackendPolicy ;
+    srf:allowedBackend srf:SparqlBackend, srf:NativeIrBackend ;
+    srf:deterministicOnly true ;
+    srf:llmCompletionPolicy srf:NoLLMCompletion .
+
+ex:subscription-arr-projection a srf:ProjectionContract ;
+    srf:contractKey "subscription-arr" ;
+    srf:carrier ex:Subscription ;
     srf:projectionKind srf:DerivationProjection ;
-    srf:carrier saas:Subscription ;
-    srf:hasRoleBinding ex:price, ex:frequency, ex:target ;
-    srf:backendPolicy ex:deterministic-policy .</code></pre>
+    srf:hasRoleBinding ex:arr-subject, ex:arr-price, ex:arr-frequency, ex:arr-target ;
+    srf:realisationMode srf:Materialised ;
+    srf:backendPolicy ex:arr-backend-policy .</code></pre>
+
+      <h4>Why it lowers into MORK instead of Surface growing a second compiler</h4>
+      <p>Graph construction, derivation, joins, and expansion are mapping-graph concerns MORK already owns — it already models <code>mork:DataMapping</code>, <code>mork:ShapeMapping</code>, <code>mork:RuleMapping</code>, <code>mork:QueryTemplate</code>, and <code>mork:ProjectionMapping</code>, with parameter bindings, targeting specs, and provenance. Building a second compiler inside Surface would re-solve a problem MORK already solves, and hand authors a second vocabulary to learn for a need that is, in kind, the same as promotion and indexing: state intent against a carrier, generate an artefact, record what was generated and from what. So <a href="./adr/ADR-A18-surface-to-mork-lowering-boundary.md">ADR-A18</a> draws the boundary precisely: <strong>Surface never emits an executable artefact — SPARQL, SHACL, SWRL, RML — directly for a projection contract.</strong> It lowers deterministically into MORK mapping nodes, which downstream compilers then target, and lowered output must satisfy MORK's own completeness checks before any backend compiles it — MORK validation is the acceptance gate, not a downstream nicety.</p>
+      <pre><code>python3 -m tools.surface lower \
+    --contracts surface/examples/saas-subscription-arr-projection.ttl \
+    --out surface/execution/subscription-arr-mapping.ttl</code></pre>
+      <div class="callout warn"><strong>Honest status, straight from the example file's own comment:</strong> "The three non-domain examples this sibling to only need to resolve promotion and index contracts, so no compiler currently reads this file's contract." Lowering to a MORK mapping graph works today. A general backend compiler that turns a lowered <em>projection</em> mapping into SPARQL, SHACL, or SWRL does not exist yet — see §6 for exactly what does.</div>
+
+      <h4>LLM participation is opt-in, gated, and never silent</h4>
+      <p>Lowering could, in principle, use an LLM to complete a gap a contract leaves declarative — a missing parameter, an ambiguous role. Left unconstrained that threatens the determinism the staged compiler pipeline is built to guarantee, so <a href="./adr/ADR-A25-llm-participation-and-deterministic-production-gate.md">ADR-A25</a> makes LLM output proposal-grade by default. A <code>srf:ProjectionBackendPolicy</code> declares <code>srf:deterministicOnly</code> (the recommended default for production, and what the ARR example sets) alongside a <code>srf:llmCompletionPolicy</code> — <code>NoLLMCompletion</code>, or <code>BoundedLLMCompletion</code>, under which an LLM may complete only declared gaps using a pre-approved template, never freely improvise. Law <code>srf:P5</code> ties the two together: a policy declaring <code>deterministicOnly true</code> may name no completion policy other than <code>NoLLMCompletion</code>. Whatever an LLM does propose is materialised as explicit, visibly distinguishable graph nodes and requires governance sign-off before it may compile in production — the production gate rejects any mapping carrying an ungoverned LLM-originated node, regardless of how cleanly it otherwise validates.</p>
     </section>
 
     <section id="eligibility">
       <h2>4. Eligibility: conditions to decisions</h2>
-      <p>Eligibility describes conditions, evidence, matching strategies, profiles, and decisions. It does not ask OWL to perform interval arithmetic or decide what missing evidence means.</p>
-      <pre><code>Condition
-  --matchStrategy--&gt; IntervalContainment
-  --requiredRangeSet--&gt; [700, 850]
+      <p>Eligibility describes conditions, evidence, matching strategies, profiles, and decisions. It does not ask OWL to perform interval arithmetic or decide what missing evidence means — it is a small, closed algebra producing exactly one of three answers.</p>
+      <p>The full worked declaration, <code>eligibility/examples/interval-containment.ttl</code>, ties a <code>qnt:ValueSpace</code> through a closed <code>qnt:Range</code> to an <code>elg:IntervalCondition</code>:</p>
+      <pre><code>ex:required-range a qnt:Range ; qnt:onSpace ex:credit-score-space ;
+    qnt:lowerBound ex:lower-bound ; qnt:upperBound ex:upper-bound .
+    # lower-bound = 700, Closed; upper-bound = 850, Closed
 
-Question
-  --forCondition--&gt; Condition
-  --candidateRangeSet--&gt; [720, 810]
+ex:minimum-credit-condition
+    a elg:IntervalCondition ;
+    elg:matchStrategy elg:IntervalContainment ;
+    elg:compatibilityOperation elg:AllRequired ;
+    elg:wildcardSemantics elg:NoWildcard ;
+    elg:requiredRangeSet ex:required-rangeset .
 
-EligibilityDecision
-  --decisionValue--&gt; Permitted</code></pre>
+ex:question-1
+    a elg:Question ;
+    elg:forCondition ex:minimum-credit-condition ;
+    elg:candidateRangeSet ex:required-rangeset .
+
+ex:decision-1
+    a elg:EligibilityDecision ;
+    elg:forProfile ex:profile-a ;
+    elg:hasQuestion ex:question-1 ;
+    elg:decisionValue elg:Permitted .</code></pre>
       <table><tr><th>Outcome</th><th>Meaning</th></tr><tr><td>Permitted</td><td>Evidence demonstrates satisfaction.</td></tr><tr><td>Denied</td><td>Evidence demonstrates failure.</td></tr><tr><td>Undetermined</td><td>Evidence is missing, malformed, incompatible, or insufficient.</td></tr></table>
-      <p>For interval containment, a candidate range must be contained by a required range in the same supported value space. Open and closed endpoints matter.</p>
       <pre><code>Required:  [700, 850]
 Candidate: [720, 810]   =&gt; Permitted
 Candidate: [650, 810]   =&gt; Denied
 Candidate: missing      =&gt; Undetermined</code></pre>
+      <p>A second worked example, <code>eligibility/examples/hierarchical-match.ttl</code>, matches a peril candidate against a SKOS taxonomy (<em>industrial-fire</em> narrower than <em>fire</em>, narrower than <em>peril</em>) under <code>elg:HierarchicalMatch</code> — valid exactly when a candidate stands in the reflexive-transitive closure of the bound scheme's ordering relation, restricted to that scheme's own members; a scheme whose ordering relation contains a cycle simply isn't evaluable under this strategy at all. That closure may be computed by live traversal at query time, or answered from a Surface-generated <code>ClosureRelation</code> index (§3) — Eligibility doesn't care which, as long as the two agree; this is realisation-strategy neutrality showing up concretely. A third file, <code>eligibility/examples/condition-taxonomy.ttl</code>, is a compact side-by-side reference of all four admitted match strategies — <code>ExactMatch</code>, <code>SetMembership</code>, <code>IntervalContainment</code>, <code>Wildcard</code> — each paired with its own compatibility operation and wildcard policy, since every condition declares all three independently rather than any being implied by a condition's subtype. <code>IntervalOverlap</code> is deliberately excluded as an admissibility strategy: two ranges can each overlap a third separately while having no three-way intersection at all, and Eligibility only admits strategies with settled, closed-form semantics.</p>
     </section>
 
     <section id="mork">
       <h2>5. MORK: the machine-facing mapping graph</h2>
-      <p>MORK is designed for machines, mapping agents, and LLMs. It records mapping intent in a form that can be reviewed, versioned, governed, and compiled deterministically.</p>
-      <table><tr><th>Mapping</th><th>Produces</th></tr><tr><td>DataMapping</td><td>General mapping intent and dependency anchor.</td></tr><tr><td>ShapeMapping</td><td>Structured SHACL definitions.</td></tr><tr><td>RuleMapping</td><td>Structured SWRL implications.</td></tr><tr><td>TransformMapping</td><td>RML or R2RML transformations.</td></tr><tr><td>ProjectionMapping</td><td>Generated projection class definitions and provenance.</td></tr><tr><td>QueryTemplate</td><td>Parameterized query artefacts.</td></tr></table>
-      <p>Surface is the authoring layer. MORK is the expanded machine graph. Domain authors should normally declare semantic roles and backend policy in Surface rather than hand-writing parameter bindings, precedence edges, and structured rule atoms.</p>
-      <p>Foundation-aligned governance records mapping identity, version, current state, supersession, and effective dates.</p>
+      <p>MORK is designed for machines, mapping agents, and LLMs. It records mapping intent in a form that can be reviewed, versioned, governed, and compiled deterministically — every mapping is a first-class graph object rather than an opaque script, so it can be queried, composed, scored, and audited back to whatever evidence justified it.</p>
+      <table><tr><th>Mapping</th><th>Produces</th></tr>
+      <tr><td>DataMapping</td><td>General mapping intent and dependency anchor.</td></tr>
+      <tr><td>ShapeMapping</td><td>Structured SHACL definitions.</td></tr>
+      <tr><td>RuleMapping</td><td>Structured SWRL implications.</td></tr>
+      <tr><td>TransformMapping</td><td>RML or R2RML transformations.</td></tr>
+      <tr><td>ProjectionMapping</td><td>Generated lookup-surface class definitions and provenance.</td></tr>
+      <tr><td>QueryTemplate</td><td>Parameterized query artefacts.</td></tr></table>
+      <p>Surface is the authoring layer; MORK is the expanded machine graph. Domain authors normally declare semantic roles and backend policy in Surface rather than hand-writing parameter bindings, precedence edges, and structured rule atoms — the same relief promotion and indexing already give for the simpler cases.</p>
+
+      <h3>Compiling a real condition, backend by backend</h3>
+      <p>A newer package, <code>tools/mork_compilers/</code>, takes an <code>elg:IntervalCondition</code> and its Quantification range through a shared, backend-neutral <code>IntervalPlan</code>, then fans it out to three separate backend adapters. Against <code>eligibility/examples/interval-containment.ttl</code>'s credit-score condition, here is exactly what each backend actually emits:</p>
+      <pre><code>python3 -m tools.mork_compilers.cli compile-condition \
+    --declarations eligibility/examples/interval-containment.ttl \
+    --condition https://example.org/lattice/eligibility/minimum-credit-condition \
+    --backend sparql --out artefact.ttl</code></pre>
+      <div class="callout warn"><strong>Doc bug worth knowing:</strong> the CLI module's own docstring shows <code>python -m tools.mork_compilers compile-condition ...</code>, which does not run — the package has no <code>__main__.py</code>. The working form is <code>python3 -m tools.mork_compilers.cli compile-condition ...</code>, exactly as above.</div>
+      <p><strong>SPARQL</strong> compiles to one parameterized <code>SELECT</code>, binding <code>?decision</code> to the string <code>"Permitted"</code>, <code>"Denied"</code>, or <code>"Undetermined"</code> — never a silent denial for missing evidence:</p>
+      <pre><code>SELECT ?question ?decision WHERE {
+  ?question elg:forCondition &lt;...minimum-credit-condition&gt; .
+  OPTIONAL {
+    ?question elg:candidateRangeSet ?candidateRangeSet .
+    ?candidateRangeSet qnt:hasRange ?candidateRange .
+    ?candidateRange qnt:lowerBound/qnt:boundValue/qnt:numericValue ?candLower .
+    ?candidateRange qnt:upperBound/qnt:boundValue/qnt:numericValue ?candUpper .
+  }
+  BIND(
+    IF(!BOUND(?candLower) || !BOUND(?candUpper), "Undetermined",
+       IF((?candLower &gt;= 700.0 &amp;&amp; ?candUpper &lt;= 850.0), "Permitted", "Denied")
+    ) AS ?decision
+  )
+}</code></pre>
+      <p><strong>SHACL</strong> compiles to two SPARQL-based node shapes scoped per-condition — a readiness shape (does the Question even have candidate evidence?) and a containment shape (is the candidate contained in the required interval?) — rather than one blanket shape targeting every <code>elg:Question</code> in the graph. <strong>SWRL</strong> compiles to one structured <code>swrl:Imp</code> per required interval, built from real RDF atom lists (<code>ClassAtom</code>, <code>IndividualPropertyAtom</code>, <code>BuiltinAtom</code> using <code>swrlb:greaterThanOrEqual</code>/<code>lessThanOrEqual</code>), positive-only by design: the consequent only ever asserts <code>elg:Permitted</code>, never <code>Denied</code> or <code>Undetermined</code>, because SWRL's monotonic entailment has no sound way to conclude a negative from absent evidence.</p>
+      <p>All four artefacts — the query template, the two shapes, the rule — trace back through one <code>exe:IntervalContainmentPlan</code> provenance node to every Eligibility and Quantification node the compiler actually consumed, so a reviewer can walk from a generated SPARQL query all the way back to the declared range that produced it.</p>
+      <table><tr><th>Backend</th><th>Status</th></tr>
+      <tr><td>SPARQL</td><td><span class="tag ok">Implemented</span> for <code>elg:IntervalCondition</code>, via <code>tools/mork_compilers</code>.</td></tr>
+      <tr><td>SHACL</td><td><span class="tag ok">Implemented</span> for <code>elg:IntervalCondition</code>, via <code>tools/mork_compilers</code>.</td></tr>
+      <tr><td>SWRL</td><td><span class="tag ok">Implemented</span> for <code>elg:IntervalCondition</code>, positive-only, via <code>tools/mork_compilers</code>.</td></tr>
+      <tr><td>RML</td><td><span class="tag partial">Separate path</span> — handled by the pre-existing <code>tools/mork2rml.py</code> for <code>TransformMapping</code>, a different problem (ingesting external representations) from compiling an Eligibility condition.</td></tr>
+      <tr><td>Native execution plan</td><td><span class="tag no">Not built</span> — no document in this repository defines what a native artefact would be, so none exists and none is planned pending an actual definition.</td></tr></table>
+
+      <h3>Governance catches up with the compiler family</h3>
+      <p>A companion change makes <code>mork:GenerativeMapping</code> — and by subsumption every <code>ShapeMapping</code>, <code>RuleMapping</code>, <code>TransformMapping</code>, and <code>ProjectionMapping</code> — Foundation-aligned, adding <code>fnd:Governable</code> and <code>fnd:Version</code> as further superclasses, and introduces <code>mork:CompilationMode</code> (<code>DraftMode</code>, <code>ReviewMode</code>, <code>ProductionMode</code>, unset defaulting to draft) on a <code>MappingScheme</code>. A production-mode gate shape now requires governance state beyond <code>Draft</code>, plus a recorded identity, before a mapping scheme opted into <code>ProductionMode</code> may compile — additive throughout, so nothing existing fails merely by continuing to exist; the gate only fires for a scheme that explicitly opts in, and nothing does yet. The same change quietly closes an old open item: the four <code>fnd:GovernanceState</code> named individuals (<code>Draft</code>/<code>Reviewed</code>/<code>Active</code>/<code>Superseded</code>) — long referenced but never actually declared — are now backfilled into <code>foundation/vocab/foundation-vocab.ttl</code>.</p>
     </section>
 
     <section id="compile">
       <h2>6. Compilation</h2>
-      <pre><code>validate -&gt; normalise -&gt; lower -&gt; compile -&gt; emit -&gt; verify</code></pre>
-      <p>All backends should share an intermediate semantic core. Eligibility's current IntervalContainment IR is read once and projected into SPARQL, SHACL, and SWRL.</p>
+      <pre><code>validate -&gt; normalise -&gt; lower -&gt; compile -&gt; emit -&gt; record provenance</code></pre>
+      <p>Every backend compiler runs this same staged pipeline (<a href="./adr/ADR-A19-staged-compiler-architecture-and-backend-fanout.md">ADR-A19</a>). A backend is an adapter attached after the shared validate/normalise/lower stages, not a parallel reimplementation of them — determinism (identical input graph and profile identity producing identical output) is a property of the shared stages, checked once, rather than re-verified per backend. Adding a new backend means writing a compile/emit adapter against a stable intermediate model, not re-deriving parameter resolution or dependency ordering from scratch.</p>
       <h3>SPARQL</h3><p>Use SPARQL for complete decisions, diagnostics, missing-data distinction, and profile aggregation.</p>
       <h3>SHACL</h3><p>Use SHACL for readiness and validation reports. A validation report still needs an adapter before it becomes a three-valued Eligibility decision.</p>
       <h3>SWRL</h3><p>Use SWRL for positive monotonic classification. It must not infer denial or indeterminacy from absence of evidence.</p>
       <h3>RML</h3><p>Use RML for mapping external representations into RDF aligned with a target ontology. The mapping remains inspectable before transformation.</p>
-      <p>Same validated graph plus same compiler profile should produce the same semantic hashes, dependency order, identifiers, and artefact content. Generated outputs should point back to source contracts, mappings, and declaration nodes.</p>
+      <p>Same validated graph plus same compiler profile should produce the same semantic hashes, dependency order, identifiers, and artefact content — <code>tools/mork_compilers</code>'s own dependency-ordering and range-sorting both sort by IRI specifically so the same declaration graph yields the same order regardless of triple-parse order. Generated outputs point back to their source contracts, mappings, and declaration nodes, never the other way round.</p>
+      <div class="callout warn"><strong>Scope, honestly stated:</strong> today's SPARQL/SHACL/SWRL compilers target <code>elg:IntervalCondition</code> specifically, not an arbitrary lowered Surface <code>ProjectionContract</code>. The staged pipeline and the shared intermediate-representation pattern are built to generalise — that's the whole point of keeping stage boundaries explicit — but the generalisation itself hasn't happened yet.</div>
+    </section>
+
+    <section id="applied">
+      <h2>7. Applied domains</h2>
+      <p>Two applied domains currently sit on top of the substrate, at genuinely different levels of maturity, and reading them side by side says more about how this framework is meant to grow than either one does alone.</p>
+
+      <h3>Capacity — a generic finite-resource model</h3>
+      <p><code>applied/capacity/</code> generalises a pattern that shows up under a dozen different names across industries: a finite resource with a quantity, a balance, consumption by demand, a possible reset, eligibility gating, and typed relations to other resources (one resource depleting, bounding, or gating another). Insurance limits and towers are one instance; so are lending facilities, SaaS quotas, credit lines, inventory allocation, grant budgets, emissions allowances, and access entitlements. Behaviour already has a generic single-resource allowance mechanism (<code>bhv:AllowanceDefinition</code>/<code>bhv:AllowanceAccount</code>), but nothing models a <em>network</em> of interacting resources — Capacity exists to develop that vocabulary as a staged applied domain before it's proven generic enough to promote into Behaviour proper, against an explicit "Behaviour promotion protocol" of genericity, multi-domain, formal-law, architectural, and governance tests.</p>
+      <p>It builds on Foundation, Vocabulary, Quantification, Party, Eligibility, Behaviour, and Instrument — deliberately not Surface — and its namespace is explicitly barred from referencing any existing insurance-specific vocabulary, so the generic model can't quietly absorb domain assumptions from the one industry that happens to be driving it. A companion performance document, <code>applied/capacity/docs/perf.md</code>, states the reason a second, compact <code>capx:</code> execution vocabulary exists alongside the richer source model at all: high-throughput transaction paths (admission, allocation, reset, ordering) can't tolerate the unbounded joins a fully general graph traversal would need at request time, so the execution projection is a bounded-hop, O(1)-lookup runtime shape distilled from the general model — the same "restate for cheap lookup, keep the source authoritative" discipline Surface applies elsewhere, worked out by hand for a domain whose hot path is too latency-sensitive to wait for a generic mechanism.</p>
+      <p>As of today, only that compact execution projection is actually authored (<code>applied/capacity/spec/</code>); the richer, generic source ontology the architecture document proposes hasn't been written yet, and there is no <code>shapes/</code>, <code>vocab/</code>, <code>projection/</code>, <code>examples/</code>, or <code>test/</code> directory under <code>applied/capacity/</code> yet either.</p>
+
+      <h3>Insurance — staged, not yet integrated</h3>
+      <p><code>applied/insurance/</code> is a substantial hand port of an existing insurance contract-structure ontology — <code>ctr:Contract</code>, <code>ctr:ContractElement</code>, <code>ctr:TermApplication</code>, and a family of <code>ctr:Facet</code> subtypes (limit, retention, defense cost, trigger, collateral, reinstatement, and more). It is genuinely large and detailed. It is also, as of today, not wired into the rest of this framework: its <code>projection/</code> and <code>execution/</code> directories exist but are empty, and its ontology header still imports a namespace outside the LATTICE tree (<code>ontology/nsd/core</code>, <code>ontology/nsd/skos</code>) rather than composing with Party, Eligibility, and Behaviour through a declared contract. The Capacity architecture document lays out a planned "Phase 4" refactor — insurance limits and towers becoming domain-specialised subclasses of the generic Capacity vocabulary (<code>ins:InsuranceCapacityResource ⊑ cap:CapacityResource</code>, and similarly for demand and draw) — but that refactor hasn't started; a placeholder <code>applied/insurance/spec/capacity/</code> directory exists and is empty, reserved for exactly this.</p>
+      <p>The honest read: <strong>a domain being "applied" and a domain being "composed with the substrate" are two different milestones</strong>, and a domain can sit at the first without having reached the second. Capacity, ironically the newer of the two, is closer to substrate-clean composition than Insurance is, precisely because it was designed from the outset against the same layering discipline the rest of this guide describes.</p>
     </section>
 
     <section id="examples">
-      <h2>7. Worked examples</h2>
+      <h2>8. Worked examples</h2>
+      <p>Every example below exists as a real, complete file in this repository — nothing here is illustrative pseudocode.</p>
       <h3>Job-family index</h3><p>A scheme-bound population, nominal classes, membership assertions, and closure make ancestor retrieval direct.</p>
       <pre><code>python3 -m tools.surface compile \
   --contracts surface/examples/employment-job-family.ttl \
@@ -206,46 +374,70 @@ Candidate: missing      =&gt; Undetermined</code></pre>
       <pre><code>python3 -m tools.surface parity \
   --contracts surface/examples/saas-subscription-currency.ttl</code></pre>
       <h3>Inexact crosswalk</h3><p>The clinical example crosses an inexact relation. The result remains queryable but is advisory and cannot masquerade as authored target-vocabulary truth.</p>
-      <h3>Richer Projection</h3><p>The annual recurring revenue example binds multiple evidence properties and lowers a derivation intent into MORK.</p>
+      <h3>Annual recurring revenue (projection)</h3><p>The ARR example binds two required-evidence properties and a result target, then lowers a derivation intent into MORK — see §3 for the complete declaration and current compilation status.</p>
       <pre><code>python3 -m tools.surface lower \
   --contracts surface/examples/saas-subscription-arr-projection.ttl \
-  --out /tmp/subscription-arr-mapping.ttl</code></pre>
-      <h3>Eligibility compilation</h3>
+  --out surface/execution/subscription-arr-mapping.ttl</code></pre>
+      <h3>Eligibility compilation</h3><p>The credit-score interval condition, compiled to a real SPARQL query, two SHACL shapes, and a SWRL rule — see §5.</p>
       <pre><code>python3 -m tools.mork_compilers.cli compile-condition \
   --declarations eligibility/examples/interval-containment.ttl \
   --condition https://example.org/lattice/eligibility/minimum-credit-condition \
-  --backend sparql \
-  --out /tmp/eligibility-sparql.ttl</code></pre>
+  --backend sparql --out /tmp/eligibility-sparql.ttl</code></pre>
+      <h3>Hierarchical match and the condition taxonomy</h3><p><code>eligibility/examples/hierarchical-match.ttl</code> matches a peril candidate against a SKOS taxonomy; <code>eligibility/examples/condition-taxonomy.ttl</code> lays out all four admitted match strategies side by side as a single reference fixture.</p>
+      <div class="callout warn"><strong>Two things worth knowing before you go looking:</strong> the four cross-layer composition placeholders under root <code>examples/</code> (<code>employment.ttl</code>, <code>lending-covenant.ttl</code>, <code>saas-subscription.ttl</code>, <code>clinical-trial.ttl</code>) are still empty — zero bytes each. And a separate, substantial <code>examples/insure-o/</code> package (spec, shapes, vocab, projection, cases, test — about twenty files) exists independently of <code>applied/insurance/</code> described in §7; the two are not the same thing, and which one is current for insurance-domain work is worth confirming with whoever's driving that port before building on either.</div>
     </section>
 
     <section id="operate">
-      <h2>8. Operating the system</h2>
+      <h2>9. Operating the system</h2>
       <h3>Install</h3>
       <pre><code>python3 -m venv .venv
 . .venv/bin/activate
 python -m pip install -c requirements-lock.txt ".[reasoning]"</code></pre>
+      <p>Requires Python 3.9+ (<code>pyproject.toml</code>'s stated floor); CI itself validates against 3.11. Core runtime dependencies are <code>rdflib</code> and <code>pyshacl</code>, with <code>owlrl</code> (the OWL/RDFS reasoner) pulled in by the <code>[reasoning]</code> extra used above. A separate <code>[community]</code> extra (numpy, networkx, pydantic, langchain-core, langgraph) is for MORK's community-detection tooling specifically — install it only when working on that, not for ordinary validation.</p>
       <h3>Validate</h3>
-      <pre><code>python3 -m unittest tools.surface.test_surface tools.mork_compilers.test_mork_compilers -q
+      <pre><code>python3 -m unittest tools.surface.test_surface tools.mork_compilers.test_mork_compilers -v
 python3 -m tools.phase8_conformance</code></pre>
+      <p>The conformance gate does three things in sequence: SHACL-validates a MORK governance-and-versioning example against <code>mork/shapes/constraints.ttl</code>; compiles SHACL shapes from the credit-score Eligibility condition and validates its own data against them; and runs the shared Surface parity suite against <code>test/conformance/manifest.ttl</code>, failing loudly if that manifest resolves to zero cases. Three further Python test modules live under <code>mork/src/python/</code> and are picked up by <code>pytest</code>'s configured test paths, though CI itself currently runs only the two <code>unittest</code> suites shown above plus the conformance gate.</p>
+      <div class="callout warn"><strong>CI is manual-dispatch only, for now.</strong> The single workflow, <code>.github/workflows/phase8-conformance.yml</code>, triggers on <code>workflow_dispatch</code> — someone has to press the button — while the repository's package-management workflow stabilises. It is not yet wired to run automatically on every push or pull request.</div>
       <h3>Freshness and regeneration</h3>
       <p>Generated surfaces record read-set hashes. Source, mapping, artefact, profile, and canonicalisation changes are planned through dependency-scoped invalidation. Profile and canonicalisation changes intentionally widen the regeneration scope.</p>
-      <table><tr><th>Change</th><th>Scope</th></tr><tr><td>Instance assertion</td><td>Affected materialised assertions.</td></tr><tr><td>Scheme membership</td><td>Contract inventory and dependent closure.</td></tr><tr><td>Projection contract</td><td>Lowered mapping and dependent mappings.</td></tr><tr><td>Profile</td><td>All artefacts using the profile.</td></tr><tr><td>Canonicalisation</td><td>Full estate rehash and regeneration.</td></tr></table>
+      <table><tr><th>Change</th><th>Scope</th></tr>
+      <tr><td>Instance assertion</td><td>Affected materialised assertions.</td></tr>
+      <tr><td>Scheme membership</td><td>Contract inventory and dependent closure.</td></tr>
+      <tr><td>Projection contract</td><td>Lowered mapping and dependent mappings.</td></tr>
+      <tr><td>Profile</td><td>All artefacts using the profile.</td></tr>
+      <tr><td>Canonicalisation</td><td>Full estate rehash and regeneration.</td></tr></table>
       <pre><code>python3 -m tools.surface check \
   --manifest surface/execution/job-family/manifest.ttl \
   --contracts surface/examples/employment-job-family.ttl</code></pre>
     </section>
 
     <section id="boundaries">
-      <h2>9. Boundaries and design choices</h2>
-      <p>Surface is not the whole semantic compiler. It does not by itself create arbitrary domain nodes, perform unrestricted multi-source derivation, resolve datatype literals through concept joins, or expand one source node into coordinated behavioural nodes.</p>
-      <p>A full CSO to FBO compiler must create tanks, actions, qualifiers, claims, and spans, and must enforce projection completeness. Surface surrounds that compiler with exact restatement, indexing, closure, governed acceleration, freshness, and invalidation.</p>
-      <p>Intentional deferred capabilities include RangePartitionPopulation, stacking beyond depth one, ExternalIndex, richer entailment regimes, profile-level Eligibility results, and full CSO-to-FBO semantic compilation.</p>
+      <h2>10. Boundaries and design choices</h2>
+      <p>Surface is not the whole semantic compiler. Promotion and indexing do not by themselves create arbitrary domain nodes, perform unrestricted multi-source derivation, resolve datatype literals through concept joins, or expand one source node into coordinated behavioural nodes — that's now Projection's job, and Projection itself does not emit an executable artefact; it lowers into MORK and stops there until a backend compiler picks the result up.</p>
+      <p>A full CSO-to-FBO-style compiler must create tanks, actions, qualifiers, claims, and spans, and must enforce projection completeness. Surface surrounds that compiler with exact restatement, indexing, closure, governed acceleration, freshness, and invalidation — it accelerates a graph that's already meaningful; it does not make an under-specified one operationally evaluable.</p>
+      <p>Intentional deferred capabilities include <code>RangePartitionPopulation</code>, stacking beyond depth one, <code>ExternalIndex</code>, richer entailment regimes, profile-level Eligibility results, a native execution-plan backend, and full CSO-to-FBO semantic compilation. To that list, Projection adds its own: a general backend compiler for lowered projection mappings (today's SPARQL/SHACL/SWRL compilers target Eligibility's <code>IntervalCondition</code> specifically), and cross-batch dependency resolution during lowering (a role binding's crosswalk match relation, or a bound scheme contract, is not yet followed into a <code>mork:dependsOnMapping</code> edge — only same-batch carrier and property references are).</p>
     </section>
 
     <section id="next">
-      <h2>10. Roadmap</h2>
-      <ol><li>Resolve the Foundation boundary for generic derived artefacts.</li><li>Decide whether to adopt the domain-facing Executable Projection Contract.</li><li>Confirm MORK namespace and toolchain assumptions.</li><li>Add profile identity materialisation if appropriate.</li><li>Implement Eligibility profile aggregation and runtime result tracking.</li><li>Add broader Projection and Behaviour conformance cases.</li><li>Add SWRL and OWL reasoner validation.</li><li>Begin pilot migration for one domain-bound Eligibility projection and one CSO-to-FBO Projection scenario.</li></ol>
-      <div class="callout"><strong>Definition of done:</strong> an author declares projection intent without raw MORK internals, generated artefacts are governed and traceable, and stale outputs regenerate without rebuilding unrelated parts of the estate.</div>
+      <h2>11. Roadmap</h2>
+      <ol>
+        <li>Resolve the Foundation boundary for generic derived artefacts — <code>srf:DerivedArtefact</code> and its siblings still live in Surface pending a decision on whether they migrate to a Foundation-level contract that MORK's own artefacts could then share.</li>
+        <li>Generalise the SPARQL/SHACL/SWRL compiler family beyond <code>elg:IntervalCondition</code> to arbitrary lowered <code>ProjectionContract</code> mappings, closing the gap §6 and §10 both flag.</li>
+        <li>Define — or formally retire — the native execution-plan backend; the vocabulary (<code>srf:NativeIrBackend</code>) still exists with no compiler and no definition behind it.</li>
+        <li>Move CI from manual dispatch to running automatically on push/PR, once the package-management workflow it's waiting on stabilises.</li>
+        <li>Fix the stale <code>tools/README.md</code> path for <code>literate_extract.py</code>, and document the <code>tools.surface lower</code> subcommand it currently omits.</li>
+        <li>Carry the Capacity architecture's planned "Phase 4" refactor through: rebuild <code>applied/insurance/</code>'s limits and towers as specialisations of <code>applied/capacity/</code>, dropping its non-LATTICE namespace imports in the process.</li>
+        <li>Author the generic <code>applied/capacity/</code> source ontology the architecture document proposes — today only the compact execution projection exists.</li>
+        <li>Resolve cross-batch dependency edges during Surface-to-MORK lowering (crosswalk match relations, bound scheme contracts) that today are silently left unresolved.</li>
+        <li>Add broader Projection and Behaviour conformance cases, and extend <code>test/conformance/manifest.ttl</code> as new mechanisms land.</li>
+      </ol>
+      <div class="callout"><strong>Definition of done:</strong> an author declares intent — promoted, indexed, or projected — without touching raw MORK internals; every generated artefact is governed and traceable back to its source; and a stale output regenerates without rebuilding any unrelated part of the estate.</div>
+    </section>
+
+    <section id="more">
+      <h2>12. Further reading</h2>
+      <p>This guide is deliberately example-driven and narrow to what's actually built. For the fuller conceptual backdrop — how a semantic graph works from first principles, what every layer's terms mean, and how the pieces relate to each other — see <a href="./glossary.md">the LATTICE glossary</a>. For the record of every architectural decision named above, including the ones this guide only summarises, see the <a href="./adr/">ADR index</a>. For the mechanics of literate specification and the drift-checking discipline that keeps a README and its compiled ontology honest, see <a href="./architecture/">the architecture notes</a>.</p>
     </section>
   </main>
   <footer>LATTICE · The Field Guide · <a href="./index.html">Return to home</a></footer>
