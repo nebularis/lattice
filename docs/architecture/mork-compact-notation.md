@@ -26,7 +26,7 @@ MCN is the *proposal wire format* in the sense of ADR-A25: an LLM emits MCN, a d
 
 ### 1.1 Measured effect
 
-Two example files from the repository were hand-encoded in MCN and decoded with a prototype decoder; the decoded graphs were compared to the originals with an isomorphism-aware diff (rdflib `graph_diff`). Token counts use the `o200k_base` BPE vocabulary as a proxy for current frontier tokenizers.
+Two example files from the repository were hand-encoded in MCN and decoded with the reference decoder ([mork/src/python/mcn_decoder.py](../../mork/src/python/mcn_decoder.py), codebook in [mcn_codebook.py](../../mork/src/python/mcn_codebook.py), tests in [test_mcn_decoder.py](../../mork/src/python/test_mcn_decoder.py)); the decoded graphs were compared to the originals with an isomorphism-aware diff (rdflib `graph_diff`). Token counts use the `o200k_base` BPE vocabulary as a proxy for current frontier tokenizers.
 
 | Document | Triples | MCN | Turtle (as written, comments stripped) | JSON-LD (compacted) | RDF/XML | N-Triples |
 |---|---|---|---|---|---|---|
@@ -895,7 +895,7 @@ constraint:= 'dt' IRI                                  sh:datatype
 Example:
 
 ```
-cs MS tg :Applicant pb [min N 700] pv [MappingAgent claude-opus-5 0.93 DRAFT] gs "c :Applicant; :hasCreditScore dt xsd:integer >=700 <=850 [1..1] !viol msg \"credit score out of range\""
+cs MS tg :Applicant pb [min N 700] pv [MappingAgent claude-opus-5 0.93 DRAFT] gs "c :Applicant; :hasCreditScore dt xsd:integer >=700 <=850 [1..1] !.viol msg \"credit score out of range\""
 ```
 
 decodes to a `sh:NodeShape` (`cs_gs1`) with `sh:targetClass ex:Applicant` and one `sh:property` (`cs_gs1_p1`) carrying `sh:path`, `sh:datatype`, `sh:minInclusive`, `sh:maxInclusive`, `sh:minCount`, `sh:maxCount`, `sh:severity` and `sh:message`. Property shapes are minted IRIs by default and blank nodes under `@opt bnode-shapes`.
@@ -967,7 +967,7 @@ Axiom lines carry OWL content that is not an individual's property assertion. Th
 | Line | Meaning |
 |---|---|
 | `!C id clause*` | `owl:Class` declaration. Clauses: `= CE` equivalentClass, `< CE` subClassOf, `! CE` disjointWith, or any `code value` pair (annotations). |
-| `!O id clause*` | `owl:ObjectProperty`. Clauses: `< PE` subPropertyOf, `= PE` equivalentProperty, `inv PE` inverseOf, `dom CE`, `rng CE`, `+F` `+IF` `+S` `+AS` `+T` `+R` `+IR` characteristics (combinable: `+T+AS+IR`), `chain PE,PE,…` propertyChainAxiom, or `code value` pairs. |
+| `!O pe clause*` | `owl:ObjectProperty`. `pe` is a `PE` (§10.5): normally a plain id, but `^id` makes the subject `ObjectInverseOf(id)` (a minted, typed blank node) — used for `Mork.ttl`'s own precedence axioms, e.g. `!O ^compositeBroaderMapping < precedes` for Axiom P1 (`SubObjectPropertyOf(ObjectInverseOf(:compositeBroaderMapping) :precedes)`). Clauses: `< PE` subPropertyOf, `= PE` equivalentProperty, `inv PE` inverseOf, `dom CE`, `rng CE`, `+F` `+IF` `+S` `+AS` `+T` `+R` `+IR` characteristics (combinable: `+T+AS+IR`), `chain PE,PE,…` propertyChainAxiom, or `code value` pairs. |
 | `!D id clause*` | `owl:DatatypeProperty`. Clauses as `!O` minus `inv`/`chain`, plus `rng` taking a data range. |
 | `!A id clause*` | `owl:AnnotationProperty`. Clauses: `< id`, `dom`, `rng`, `code value` pairs. |
 | `!I id (: types)? (code value)*` | `owl:NamedIndividual` outside any block: `: type+type` gives class assertions, where each type is a type code or any identifier (local ids allowed without `+`); the rest as a node line. |
@@ -1202,12 +1202,12 @@ i1 IN src "credit score at least 700" cf 0.93 op GreaterThanOrEqual cv 700 cd :c
 i2 IS src "in US states" sty State sin Include sv :US ri i1
 %M MS md .prod mv 1.2
 cs_shape MS im i1 tg :Applicant pb [min N 700] pv [MappingAgent claude-opus-5 0.93 DRAFT pd 2026-09-19T10:00:00Z] tl :RangeTemplate se .viol gv .gA fi [PI] gs "c :Applicant; :hasCreditScore dt xsd:integer >=700 <=850 [1..1]"
-cs_rule MR im i1 tg [o :hasCreditScore aj :US] pb [threshold N 700] pv [MappingAgent claude-opus-5 0.9 DRAFT pd 2026-09-19T10:00:00Z] gr "Applicant(?a)^hasCreditScore(?a,?s)^swrlb:greaterThanOrEqual(?s,700)->Eligible(?a)"
+cs_rule MR im i1 tg [o :hasCreditScore] aj :US pb [threshold N 700] pv [MappingAgent claude-opus-5 0.9 DRAFT pd 2026-09-19T10:00:00Z] gr "Applicant(?a)^hasCreditScore(?a,?s)^swrlb:greaterThanOrEqual(?s,700)->Eligible(?a)"
 v2 MS ss cs_shape ef 2026-10-01T00:00:00Z fi cs_shape_fi1 gv .gA tg :Applicant pb [min N 720] pv [reviewer _ _ APPROVED pd 2026-10-01T00:00:00Z] gs "c :Applicant; :hasCreditScore >=720"
 loanIri = 'http://ex.org/loan/'+$loanId
 ```
 
-Decoded, `cs_shape` is a `ShapeMapping` with `hasTargetingSpec cs_shape_tg1` (`sh:targetClass ex:Applicant`), `hasParameterBinding cs_shape_pb1` (`paramName "min"`, `paramType "Numeric"`, `paramValue 700`), `hasConstraintProvenance cs_shape_pv1` (creator, model id, confidence, review status, created), `hasShapeTemplate`, `hasSeverity sh:Violation`, `fnd:hasGovernanceState fnd:Active`, `fnd:hasIdentity cs_shape_fi1` (a `PersistentIdentity`), and `generatesShapeDefinition cs_shape_gs1` (a structured `sh:NodeShape`). `cs_rule` is a `RuleMapping` whose `generatesRuleDefinition` is a structured `swrl:Imp` with body and head atom lists and minted variables `cs_rule_gr1_v_a`, `cs_rule_gr1_v_s`; the compact text is retained as `swrlCompactSyntax`. `v2` supersedes `cs_shape`, shares its persistent identity and carries the `effectiveFrom` GCI 5.10a requires.
+Decoded, `cs_shape` is a `ShapeMapping` with `hasTargetingSpec cs_shape_tg1` (`sh:targetClass ex:Applicant`), `hasParameterBinding cs_shape_pb1` (`paramName "min"`, `paramType "Numeric"`, `paramValue 700`), `hasConstraintProvenance cs_shape_pv1` (creator, model id, confidence, review status, created), `hasShapeTemplate`, `hasSeverity sh:Violation`, `fnd:hasGovernanceState fnd:Active`, `fnd:hasIdentity cs_shape_fi1` (a `PersistentIdentity`), and `generatesShapeDefinition cs_shape_gs1` (a structured `sh:NodeShape`). `cs_rule` is a `RuleMapping` with `hasTargetingSpec cs_rule_tg1` (`sh:targetObjectsOf :hasCreditScore`), `appliesInJurisdiction :US` asserted directly on `cs_rule` itself (`mork:appliesInJurisdiction` has `rdfs:domain :GenerativeMapping` in `Mork.ttl`, not `TargetingSpec`, so it is written as a top-level pair rather than nested inside `tg [...]`), and whose `generatesRuleDefinition` is a structured `swrl:Imp` with body and head atom lists and minted variables `cs_rule_gr1_v_a`, `cs_rule_gr1_v_s`; the compact text is retained as `swrlCompactSyntax`. `v2` supersedes `cs_shape`, shares its persistent identity and carries the `effectiveFrom` GCI 5.10a requires.
 
 ### 16.4 A representation scheme and taxonomy (from the `Mork.ttl` examples)
 
@@ -1310,7 +1310,7 @@ inline      := '[' ( '#' ident )? ( typelist pair* | positional ) ']'
 positional  := slot+ pair*                       ; slot count fixed by the enclosing code
 slot        := value | '_'
 annotation  := '{' pair* '}'                     ; no whitespace before '{'
-axiom       := '!C' ident cclause* | '!O' ident oclause* | '!D' ident dclause* | '!A' ident aclause*
+axiom       := '!C' ident cclause* | '!O' PE oclause* | '!D' ident dclause* | '!A' ident aclause*
              | '!I' ident (':' typelist)? pair* | '!G' CE '<' CE
              | '!DC' ident (',' ident)* | '!DP' ident (',' ident)* | '!DI' ident (',' ident)* | '!SA' ident (',' ident)*
              | '!T' term term term
@@ -1341,4 +1341,4 @@ BARE        := [^ \t,{}\[\]"<]+  [^ \t,{}\[\]]*
 - **Streaming.** Because a node line is self-contained given the block context, a decoder can process MCN incrementally as a model streams it and surface lint warnings mid-generation. Whether the agent loop should exploit that (stop-and-correct) is an architecture question for ADR-A25's bounded-completion mode.
 - **A JSON envelope for tool use.** Structured-output APIs constrain models to JSON schemas; `mork_schemas.py` already exists for that path. An MCN document can be carried as a single string field in such a schema, which keeps token cost low while retaining the schema-level validation of the envelope; whether to retire the per-field Pydantic schema in favour of `{"mcn": "…"}` should be decided by measuring error rates, not assumed.
 - **Numeric auto-ids.** A `@opt autoid` that lets a bare integer subject mint `B + "n" + digits` would shave tokens further; §17 argues against it on reliability grounds, but the measurement has not been made.
-- **Codebook governance.** The codebook must track `Mork.ttl`. The practical mechanism is a machine-readable codebook file (the tables in §8 were generated from one) checked by a test that every declared term in `Mork.ttl` has a code, with the spec tables regenerated from the same file.
+- **Codebook governance.** The codebook must track `Mork.ttl`. [mork/src/python/mcn_codebook.py](../../mork/src/python/mcn_codebook.py) is that machine-readable file (the tables in §8 were generated from it), and `TestCodebookCoverage` in [test_mcn_decoder.py](../../mork/src/python/test_mcn_decoder.py) fails whenever a class, property or named individual is added to `Mork.ttl` without a corresponding code. Regenerating §8's Markdown tables from the module on each change, rather than maintaining them by hand, remains open.
