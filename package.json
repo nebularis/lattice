@@ -1,0 +1,14 @@
+{
+  "name": "lattice-workspace",
+  "private": true,
+  "packageManager": "yarn@4.6.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "check": "yarn workspaces foreach -A run check",
+    "build": "yarn workspaces foreach -A run build",
+    "test": "yarn workspaces foreach -A run test"
+  }
+}

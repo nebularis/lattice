@@ -142,3 +142,9 @@ Two licences govern the artefacts in the repository:
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the licensing mechanics, the SPDX header convention, and where new content belongs within a layer.
+
+## Development environment
+
+Use [mise](https://mise.jdx.dev/) for repository toolchain setup and task orchestration. See [the toolchain guide](docs/developer/toolchain.md), [Windows and WSL guidance](docs/developer/windows-wsl.md), and the [Phase 0 and 1 validation handoff](docs/developer/phase-0-1-handoff.md).
+
+For the current implementation boundaries and reading order, see the [platform implementation map](docs/architecture/implementation-map.md). Architecture decisions are indexed in [docs/adr](docs/adr/README.md).

@@ -1,0 +1,27 @@
+{
+  "openapi": "3.1.0",
+  "info": {"title": "LATTICE Surface Workflow API", "version": "1.0.0", "description": "Typed control-plane contract. Semantic graph content is referenced by immutable graph references."},
+  "paths": {
+    "/surface/revisions": {
+      "post": {
+        "operationId": "createSurfaceRevision",
+        "responses": {"201": {"description": "Draft revision created"}, "409": {"description": "Revision already exists"}}
+      }
+    },
+    "/surface/revisions/{revisionId}": {
+      "get": {
+        "operationId": "getSurfaceRevision",
+        "parameters": [{"name": "revisionId", "in": "path", "required": true, "schema": {"type": "string"}}],
+        "responses": {"200": {"description": "Current versioned revision"}, "404": {"description": "Revision not found"}}
+      }
+    },
+    "/surface/revisions/{revisionId}/transitions": {
+      "post": {
+        "operationId": "transitionSurfaceRevision",
+        "parameters": [{"name": "revisionId", "in": "path", "required": true, "schema": {"type": "string"}}],
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "../surface/surface-revision-transition.schema.json"}}}},
+        "responses": {"200": {"description": "Transition applied"}, "404": {"description": "Revision not found"}, "409": {"description": "Stale version or invalid state transition"}}
+      }
+    }
+  }
+}

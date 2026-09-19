@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.nebularis.org/lattice/release/adapter-capabilities/1.0.0",
+  "title": "Release stack adapter capabilities",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["adapterId", "adapterVersion", "capabilities"],
+  "properties": {
+    "adapterId": {"type": "string", "minLength": 1},
+    "adapterVersion": {"type": "string", "minLength": 1},
+    "capabilities": {"type": "array", "uniqueItems": true, "items": {"enum": ["PACKAGE", "SIGN", "PUBLISH", "VERIFY", "PROMOTE", "ROLLBACK", "EXPORT", "RESTORE", "RETENTION", "TRACE_LINK", "IMPACT_GATE"]}}
+  }
+}

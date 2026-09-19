@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.nebularis.org/lattice/events/surface-job-result/1.0.0",
+  "title": "Surface worker job result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["jobId", "correlationId", "jobType", "outcome", "contractGraph", "profileGraph"],
+  "properties": {
+    "jobId": {"type": "string", "minLength": 1},
+    "correlationId": {"type": "string", "minLength": 1},
+    "jobType": {"enum": ["generation", "parity", "invalidation"]},
+    "outcome": {"enum": ["succeeded", "failed"]},
+    "contractGraph": {"$ref": "surface-job-request.schema.json#/$defs/graphReference"},
+    "profileGraph": {"$ref": "surface-job-request.schema.json#/$defs/graphReference"},
+    "outputs": {"type": "array", "items": {"type": "object"}},
+    "diagnostics": {"type": "array", "items": {"type": "string"}}
+  }
+}

@@ -4,6 +4,8 @@
 
 Literate specification for the Surface layer.
 
+The workflow control boundary for immutable contract revisions and graph-reference jobs is documented in [the revision lifecycle guide](docs/revision-lifecycle.md). It wraps the existing compiler and does not alter this normative specification.
+
 ---
 
 ## 1. Purpose and Scope

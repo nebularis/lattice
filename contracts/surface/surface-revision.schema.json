@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.nebularis.org/lattice/surface/surface-revision/1.0.0",
+  "title": "Surface contract revision",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["revisionId", "contractId", "state", "contractGraph", "profileGraph"],
+  "properties": {
+    "revisionId": {"type": "string", "minLength": 1},
+    "contractId": {"type": "string", "minLength": 1},
+    "state": {"enum": ["draft", "review_requested", "approved", "generated", "released", "superseded"]},
+    "approvalId": {"type": "string", "minLength": 1},
+    "contractGraph": {"$ref": "#/$defs/graphReference"},
+    "profileGraph": {"$ref": "#/$defs/graphReference"},
+    "generatedGraph": {"$ref": "#/$defs/graphReference"}
+  },
+  "$defs": {
+    "graphReference": {"type": "object", "additionalProperties": false, "required": ["tenantId", "projectId", "graphIri", "revisionHash"], "properties": {"tenantId": {"type": "string", "minLength": 1}, "projectId": {"type": "string", "minLength": 1}, "graphIri": {"type": "string", "format": "uri"}, "revisionHash": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"}}}
+  }
+}

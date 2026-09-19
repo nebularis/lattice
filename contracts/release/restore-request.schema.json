@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.nebularis.org/lattice/release/restore-request/1.0.0",
+  "title": "Release restore request",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["releaseId", "exportDigest", "environmentBinding"],
+  "properties": {
+    "releaseId": {"type": "string", "minLength": 1},
+    "exportDigest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+    "environmentBinding": {"$ref": "environment-binding.schema.json"}
+  }
+}

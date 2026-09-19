@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.nebularis.org/lattice/events/surface-job-request/1.0.0",
+  "title": "Surface worker job request",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["jobId", "correlationId", "jobType", "contractGraph", "profileGraph", "sourceGraphs"],
+  "properties": {
+    "jobId": {"type": "string", "minLength": 1},
+    "correlationId": {"type": "string", "minLength": 1},
+    "jobType": {"enum": ["generation", "parity", "invalidation"]},
+    "contractGraph": {"$ref": "#/$defs/graphReference"},
+    "profileGraph": {"$ref": "#/$defs/graphReference"},
+    "sourceGraphs": {"type": "array", "items": {"$ref": "#/$defs/graphReference"}},
+    "manifestGraph": {"$ref": "#/$defs/graphReference"}
+  },
+  "allOf": [
+    {"if": {"properties": {"jobType": {"const": "invalidation"}}}, "then": {"required": ["manifestGraph"]}}
+  ],
+  "$defs": {
+    "graphReference": {"type": "object", "additionalProperties": false, "required": ["tenantId", "projectId", "graphIri", "revisionHash"], "properties": {"tenantId": {"type": "string", "minLength": 1}, "projectId": {"type": "string", "minLength": 1}, "graphIri": {"type": "string", "format": "uri"}, "revisionHash": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"}}}
+  }
+}

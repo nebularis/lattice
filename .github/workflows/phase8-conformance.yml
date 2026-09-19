@@ -2,9 +2,8 @@
 
 name: Phase 8 conformance
 
-# Temporarily manual-only while the repository package-management workflow is
-# being stabilised.
 on:
+  pull_request:
   workflow_dispatch:
 
 jobs:

@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.nebularis.org/lattice/release/release-receipt/1.0.0",
+  "title": "Release stack receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["releaseId", "adapterId", "adapterVersion", "correlationId", "state", "artifactDigest"],
+  "properties": {
+    "releaseId": {"type": "string", "minLength": 1},
+    "adapterId": {"type": "string", "minLength": 1},
+    "adapterVersion": {"type": "string", "minLength": 1},
+    "correlationId": {"type": "string", "minLength": 1},
+    "state": {"enum": ["planned", "published", "promoted", "rolled_back", "exported", "restored", "retired", "failed"]},
+    "artifactDigest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+    "artifactUri": {"type": "string", "format": "uri"},
+    "signatureReference": {"type": "string", "format": "uri"},
+    "diagnosticReference": {"type": "string", "format": "uri"}
+  }
+}

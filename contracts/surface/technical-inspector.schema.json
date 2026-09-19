@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.nebularis.org/lattice/surface/technical-inspector/1.0.0",
+  "title": "Surface Projection Technical Inspector",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["stagingGraph", "mappingDigest", "dependencies", "mcnStatus", "backendCapabilities", "reviewRequirement"],
+  "properties": {
+    "stagingGraph": {"$ref": "../events/projection-lower-request.schema.json#/$defs/graphReference"},
+    "mappingDigest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+    "dependencies": {"type": "array", "items": {"type": "string", "format": "uri"}},
+    "mcnStatus": {"enum": ["not_computed", "available", "review_required"]},
+    "backendCapabilities": {"type": "array", "items": {"enum": ["sparql", "shacl", "swrl", "rml", "native_ir"]}},
+    "reviewRequirement": {"enum": ["engineering_review", "mapping_review"]}
+  }
+}

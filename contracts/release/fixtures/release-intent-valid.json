@@ -1,0 +1,38 @@
+{
+  "releaseId": "release-surface-001",
+  "tenantId": "tenant-example",
+  "projectId": "surface-example",
+  "correlationId": "correlation-001",
+  "environment": "staging",
+  "graphReferences": [
+    {
+      "tenantId": "tenant-example",
+      "projectId": "surface-example",
+      "graphIri": "https://example.test/graphs/surface/contracts/001",
+      "revisionHash": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    }
+  ],
+  "generatedOutputs": [
+    {
+      "mediaType": "application/n-quads",
+      "digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "uri": "https://artifacts.example.test/surface/001/output.nq"
+    }
+  ],
+  "semanticGates": [
+    {
+      "gate": "parity",
+      "outcome": "passed",
+      "evidenceDigest": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+    }
+  ],
+  "requirements": {
+    "profileId": "https://example.test/profiles/default",
+    "profileRevisionHash": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+    "canonicalisationVersion": "srf-canon/1",
+    "approvalEvidenceDigest": "sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+    "impactEvidenceDigest": "sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+  },
+  "retentionClass": "standard",
+  "legalHold": false
+}

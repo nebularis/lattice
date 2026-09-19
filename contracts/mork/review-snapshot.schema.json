@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.nebularis.org/lattice/mork/review-snapshot/1.0.0",
+  "title": "MORK immutable review snapshot",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["snapshotId", "tenantId", "projectId", "mappingGraph", "snapshotHash", "sectionId", "evidenceProjection"],
+  "properties": {
+    "snapshotId": {"type": "string", "minLength": 1},
+    "tenantId": {"type": "string", "minLength": 1},
+    "projectId": {"type": "string", "minLength": 1},
+    "mappingGraph": {"$ref": "../events/projection-lower-request.schema.json#/$defs/graphReference"},
+    "snapshotHash": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+    "sectionId": {"type": "string", "minLength": 1},
+    "evidenceProjection": {"type": "array", "items": {"type": "object"}}
+  }
+}

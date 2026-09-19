@@ -1,0 +1,1261 @@
+diff --git a/.github/prompts/plan-finish-insureO-after-python.prompt.md b/.github/prompts/plan-finish-insureO-after-python.prompt.md
+new file mode 100644
+index 0000000..24812da
+--- /dev/null
++++ b/.github/prompts/plan-finish-insureO-after-python.prompt.md
+@@ -0,0 +1,145 @@
++# Plan: Finish Gate 7 after Python becomes available
++
++This prompt captures the remaining work after the repository-level dataset and substrate scaffolding are already in place and the environment is able to run Python/Turtle validation.
++
++## Goal
++
++Complete the applied validation package under `examples/insure-o/` with a real, validated graph and a deterministic validation pass, using Python-based RDF/Turtle tooling instead of editor-only checks.
++
++## Preconditions
++
++1. Python is available on PATH.
++2. A Turtle/RDF library is installed, such as `rdflib`.
++3. The repository root is the active working directory.
++4. The substrate files already authored in the repo are the source of truth.
++
++## Immediate setup
++
++1. Confirm Python and package availability.
++2. Run a quick sanity check to import `rdflib`.
++3. Parse the core edited files individually to confirm they load cleanly as Turtle.
++4. Build a validation command sequence for the applied package and the relevant substrate files.
++
++## Execution plan
++
++### 1. Validate the existing substrate additions
++
++Run a focused Turtle parse and validation pass over:
++
++- `eligibility/README.md`-derived semantic content as represented in `eligibility/spec/eligibility.ttl`
++- `eligibility/shapes/rules.ttl`
++- `eligibility/vocab/eligibility-vocab.ttl`
++- `behaviour/spec/behaviour.ttl`
++- `behaviour/shapes/constraints.ttl`
++- `examples/insure-o/**/*.ttl`
++
++Confirm that:
++
++- `elg:HierarchicalMatch` is loadable and globally consistent
++- `elg:L9` is present and semantically coherent
++- the rule in `eligibility/shapes/rules.ttl` materialises the expected broader closure
++- the example hierarchy in `examples/insure-o/projection/**/*.ttl` is valid RDF/Turtle
++- the execution profile remains optional and non-semantic by design
++
++### 2. Add missing implementation details where validation reveals gaps
++
++If parsing or validation exposes a problem, fix only the root cause, then rerun the relevant validation pass.
++
++Typical follow-ups:
++
++- add missing ontology declarations for any applied-layer property or class used by the examples
++- tighten the scheme contract declarations for externally bound business dimensions
++- add missing `rdfs:domain` / `rdfs:range` or cardinality constraints where the repo pattern expects them
++- align example vocab with repo conventions for `voc:ConceptScheme` and `skos:broader` use
++
++### 3. Complete the actual insure-o example set
++
++Expand the package to a fuller but still minimal set of concrete examples for:
++
++- peril hierarchy
++- territory or jurisdiction hierarchy
++- line-of-business classification
++- asset-class binding
++- a policy/coverage example with a limit and retention
++- a sequential allowance chain over multiple capacity layers
++- a defect fixture for missing scheme contract
++- a defect fixture for unresolved or mismatched business dimension values
++
++The examples should remain generic and non-product-specific, while still showing realistic insurance-domain usage.
++
++### 4. Add a real validation corpus
++
++Create a small set of authoritative validation files under `examples/insure-o/test/` with intended pass/fail behaviour:
++
++- positive examples that should validate successfully
++- negative examples that should fail because of missing scheme contracts, malformed hierarchy membership, or invalid mixed-dimension usage
++- one scenario with a claim/allowance interaction that uses `bhv:Sequential`
++
++These tests should be kept deliberately small and readable, matching the repository’s existing gate-testing style.
++
++### 5. Validate the applied package end-to-end
++
++Run a focused validation pass over the entire `examples/insure-o/` tree and selected repository substrate files.
++
++The pass should check:
++
++- the package loads as valid Turtle
++- the scheme contracts bind to concept schemes
++- the hierarchy closure is materially represented
++- the eligibility profiles remain structurally valid
++- the capacity behaviour remains consistent with sequential absorption semantics
++
++### 6. Fix and revalidate until the package is green
++
++Repeat the cycle until the package passes the targeted validation set without syntax or ontology-level breakage.
++
++Scope discipline:
++
++- no speculative source-product modeling
++- no new proprietary naming
++- no change to the core substrate unless the validation reveals an actual root cause
++- no compilation requirement introduced into the semantic model
++
++## Expected final output
++
++When complete, the repo should contain:
++
++- a coherent `examples/insure-o/` package
++- a concrete peril hierarchy and matching admission profile
++- a realistic sequential allowance chain
++- a small set of valid and invalid example fixtures
++- a passing targeted validation run on the relevant graph files
++
++## Completion condition
++
++The work is done when:
++
++1. the applied package files parse cleanly as Turtle,
++2. the relevant validation suite passes,
++3. the hierarchy and allowance examples remain consistent with the substrate,
++4. the package is documented as an optional realisation path, not a required compiled output.
++
++## Execution command pattern
++
++Use commands along these lines once Python is available:
++
++```powershell
++python -m pip install rdflib
++python -c "import rdflib; print(rdflib.__version__)"
++python - <<'PY'
++from rdflib import Graph
++
++g = Graph()
++for path in [
++    'eligibility/spec/eligibility.ttl',
++    'behaviour/spec/behaviour.ttl',
++    'examples/insure-o/projection/bindings.ttl',
++    'examples/insure-o/projection/hierarchy-example.ttl',
++    'examples/insure-o/execution/shadow-profile.ttl',
++]:
++    g.parse(path, format='turtle')
++print('all ok')
++PY
++```
++
++Adapt the exact set of input files to the final validation run as the package stabilises.
+diff --git a/README.md b/README.md
+index 2309746..e4de303 100644
+--- a/README.md
++++ b/README.md
+@@ -96,7 +96,8 @@ lattice/
+ │   ├── employment.ttl
+ │   ├── lending-covenant.ttl
+ │   ├── saas-subscription.ttl
+-│   └── clinical-trial.ttl
++│   ├── clinical-trial.ttl
++│   └── insure-o/            # Applied validation package for insurance-style substrate checks
+ │
+ ├── test/                    # Whole-graph CI
+ │
+diff --git a/behaviour/examples/sequential-allowance.ttl b/behaviour/examples/sequential-allowance.ttl
+index 021b5c4..cbbe768 100644
+--- a/behaviour/examples/sequential-allowance.ttl
++++ b/behaviour/examples/sequential-allowance.ttl
+@@ -36,5 +36,6 @@ ex:account-1
+ ex:consume-effect
+     a bhv:EffectDefinition ;
+     bhv:targetKind bhv:AllowanceTarget ;
++    bhv:targetsAllowance ex:allowance-definition ;
+     bhv:consumesAmount ex:draw-30 ;
+     bhv:usesAllowance ex:allowance-definition .
+diff --git a/behaviour/shapes/constraints.ttl b/behaviour/shapes/constraints.ttl
+index 20fcc92..1af9e97 100644
+--- a/behaviour/shapes/constraints.ttl
++++ b/behaviour/shapes/constraints.ttl
+@@ -28,6 +28,19 @@ bhv:SequentialOnlyAtGate3 a sh:NodeShape ;
+ 		"""
+ 	] .
+ 
++bhv:AllowanceTargetRequiresTargetedAllowance a sh:NodeShape ;
++	sh:targetClass bhv:EffectDefinition ;
++	sh:sparql [
++		sh:message "An effect with bhv:AllowanceTarget must declare bhv:targetsAllowance." ;
++		sh:select """
++			PREFIX bhv: <https://www.nebularis.org/neuro-semantic/lattice/behaviour#>
++			SELECT $this WHERE {
++				$this bhv:targetKind bhv:AllowanceTarget .
++				FILTER NOT EXISTS { $this bhv:targetsAllowance ?allowance }
++			}
++		"""
++	] .
++
+ bhv:HypotheticalStateIsolation a sh:NodeShape ;
+ 	sh:targetClass bhv:StateOccupancy ;
+ 	sh:property [ sh:path bhv:isHypothetical ; sh:minCount 1 ; sh:maxCount 1 ] .
+diff --git a/behaviour/spec/behaviour.ttl b/behaviour/spec/behaviour.ttl
+index 8d76f02..65a910e 100644
+--- a/behaviour/spec/behaviour.ttl
++++ b/behaviour/spec/behaviour.ttl
+@@ -82,6 +82,7 @@ bhv:requiresEligibility a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:doma
+ bhv:targetKind a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain bhv:EffectDefinition ; rdfs:range bhv:TargetKind .
+ bhv:targetsElement a owl:ObjectProperty ; rdfs:domain bhv:EffectDefinition ; rdfs:range ins:Element .
+ bhv:targetsOccupancy a owl:ObjectProperty ; rdfs:domain bhv:EffectDefinition ; rdfs:range pty:RoleOccupancy .
++bhv:targetsAllowance a owl:ObjectProperty ; rdfs:domain bhv:EffectDefinition ; rdfs:range bhv:AllowanceDefinition .
+ bhv:usesAllowance a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain bhv:EffectDefinition ; rdfs:range bhv:AllowanceDefinition .
+ bhv:consumesAmount a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain bhv:EffectDefinition ; rdfs:range qnt:Quantity .
+ bhv:allowanceSpace a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain bhv:AllowanceDefinition ; rdfs:range qnt:ValueSpace .
+diff --git a/behaviour/test/B-P2-sequential-allowance.ttl b/behaviour/test/B-P2-sequential-allowance.ttl
+index 733cd28..3e5ecbc 100644
+--- a/behaviour/test/B-P2-sequential-allowance.ttl
++++ b/behaviour/test/B-P2-sequential-allowance.ttl
+@@ -38,5 +38,6 @@ ex:account
+ ex:effect
+     a bhv:EffectDefinition ;
+     bhv:targetKind bhv:AllowanceTarget ;
++    bhv:targetsAllowance ex:allowance ;
+     bhv:usesAllowance ex:allowance ;
+     bhv:consumesAmount ex:draw .
+diff --git a/docs/architecture/insure-o-application-validation.md b/docs/architecture/insure-o-application-validation.md
+new file mode 100644
+index 0000000..314c786
+--- /dev/null
++++ b/docs/architecture/insure-o-application-validation.md
+@@ -0,0 +1,39 @@
++<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
++
++# Insure-O Applied Validation Package
++
++This note records the purpose and boundaries of the applied validation package under `examples/insure-o/`.
++
++## Purpose
++
++The package exercises LATTICE's generic substrate in an insurance-shaped domain without naming or recompiling any proprietary product, insurer, or source estate vocabulary. It is intentionally a clean-room validation layer used to confirm that structural, behavioural, and eligibility mechanisms work together in a realistic but not product-specific arrangement.
++
++## Coverage
++
++The package demonstrates the following substrate combinations:
++
++- Instrument vocabulary for policy documents, coverage terms, limits, and retentions
++- Party role occupancies for insurer, insured, claimant, and loss payee roles
++- Eligibility conditions that use exact, set, interval, and hierarchical matching
++- Behaviour allowance definitions and sequential consumption rules
++- Vocabulary scheme-contract declarations for externally supplied business dimensions
++- A small MORK target sketch for mapping a policy limit into a behavioural allowance resource
++
++## Explicit exclusions
++
++The applied validation package explicitly excludes:
++
++- Risk Capital Vehicles and tower constructs
++- ContractTowerBinding and other tower-linkage mechanics
++- Claims-handling / CHO extension ideas
++- CAT modelling
++- Negotiation, procurement, and quotation workflows
++- Source-product naming, acronyms, or proprietary concept values
++
++## Realisation strategy
++
++The package follows ADR-A15's neutrality position. The execution folder is presented as one legitimate but optional realisation strategy, not as a semantic requirement. The semantic source remains the Turtle substrate and the shapes defined in the package.
++
++## Scope boundary
++
++This package is intentionally a validation substrate and not a domain replacement. It is designed to prove that LATTICE can host an insurance-like arrangement, not to author a complete or final insurance ontology in the repository itself.
+diff --git a/docs/architecture/solution-architecture.md b/docs/architecture/solution-architecture.md
+index 194170b..22ef7d0 100644
+--- a/docs/architecture/solution-architecture.md
++++ b/docs/architecture/solution-architecture.md
+@@ -123,6 +123,7 @@ This is the section to read before recommending any change. What follows is the
+ | MORK | 657 lines, narrative "for dummies" guide (not literate-spec format) | `Mork.ttl` 1888 lines + `Mork.owl`, complete and large | empty | n/a | n/a | **Fully specified, pre-existing/independent vocabulary** — richer and older in style (OWL-API generated, SKOS-annotation-heavy) than the newer literate-spec layers |
+ | SPC | 1393 lines, complete | 1227 lines, complete | empty | empty | empty (`.gitkeep` only) | **Fully specified but unintegrated.** Placeholder namespace (`http://example.org/spc#`), no projection contract to any layer. Also carries `spc/docs/architecture.md` plus a paper and two images. Integration is out of scope for the current Eligibility/Behaviour programme. |
+ | Root `examples/*.ttl` (employment, lending-covenant, saas-subscription, clinical-trial) | — | all four files 0 bytes | — | — | — | **Not authored** |
++| `examples/insure-o/` | authored | scaffolded | authored | authored | authored | **Applied validation package in progress.** Minimal insurance-style structural, behavioural, and scheme-binding examples are now present under the examples tree and reference the shared substrate without naming proprietary source constructs. |
+ | `docs/adr/`, `docs/GOVERNANCE.md`, `docs/operational-guidance.md`, `docs/validation-and-test-plan.md`, `docs/architecture/conformance-levels.md`, `docs/architecture/technology-options.md` | — | — | — | — | — | **Authored as programme guidance.** ADR set populated through A01, A03–A15, A-C1, A-C2. Operational guidance, validation plan, derivation reference, conformance ladder, and deferred-scope note are present. |
+ | `tools/`, `scripts/` | — | — | — | — | — | **Empty** (`.gitkeep` only) — no reference implementation, no compiler, no extraction tooling, no `scaffold-lattice.sh` despite `CONTRIBUTING.md` referencing it |
+ 
+diff --git a/docs/validation-and-test-plan.md b/docs/validation-and-test-plan.md
+index 452786e..a7cc466 100644
+--- a/docs/validation-and-test-plan.md
++++ b/docs/validation-and-test-plan.md
+@@ -23,6 +23,7 @@ This document records the checks the substrate is expected to satisfy, as they b
+ | Law discharge | L1–L4, L5a, L5b, L6, L7 discharged for every baseline strategy; L8 discharged for every strategy declaring `supportsExclusion` | Pending Gate 2 authoring |
+ | Profile parity (E1/E2) | Direct-SPARQL and SHACL evaluation agree on the shared conformance corpus before any generated surface exists | Pending Gate 5 |
+ | IntervalContainment fixture | At least one admission/meet fixture using `qnt:Range`/`qnt:RangeSet` | Satisfied by Gate 2 authoring (`eligibility/test/E2-interval-containment.ttl`) |
++| Hierarchical closure fixture | A concept hierarchy bound to a `HierarchicalMatch` condition materialises local `skos:broaderTransitive` closure without depending on runtime `skos:broader*` traversal | Satisfied by Gate 2 completion of `eligibility/shapes/rules.ttl` and the hierarchical example fixture |
+ 
+ ## Gate 2.5 — Minimal Instrument
+ 
+@@ -38,6 +39,7 @@ This document records the checks the substrate is expected to satisfy, as they b
+ | Tier separation | No class serves two of declaration/occurrence/execution/state-record | Satisfied by Gate 3 authoring (`ADR-A08`, `behaviour/spec/behaviour.ttl`) |
+ | Effect payload completeness | Every effect operation has a typed payload; every target binding resolves | Satisfied by Gate 3 authoring (`ADR-A11`, `behaviour/spec/behaviour.ttl`, `behaviour/projection/*.ttl`) |
+ | Extent scope | `Sequential` absorption's conservation law (`total absorbed = min(demand, Σ drawable)`) discharged; `Proportional` absorption is declared-and-unusable, not silently absent | Partially satisfied by Gate 3 authoring. `Sequential` is modelled and fixture-backed in `behaviour/test/B-P2-sequential-allowance.ttl`; `Proportional` is declared and rejected by `behaviour/shapes/constraints.ttl`. Formal conservation-law discharge remains for Gate 4/5. |
++| Allowance-target binding | Any `EffectDefinition` with `bhv:targetKind bhv:AllowanceTarget` must also declare `bhv:targetsAllowance` to the actual allowance it is directed at | Satisfied by Gate 3 completion of the `bhv:targetsAllowance` property and `behaviour/shapes/constraints.ttl` check. |
+ | Occupancy invariants | Exactly one current occupancy per participating space; no overlapping non-hypothetical occupancies | Satisfied at declaration level by Gate 3 constraints (`behaviour/shapes/constraints.ttl`). Full temporal-overlap discharge remains for executable profiles. |
+ | Hypothetical isolation | Hypothetical executions write to a separate graph role (ADR-A13); no persisted current occupancy | Satisfied at model level by Gate 3 authoring (`ADR-A13`, `behaviour/spec/behaviour.ttl`, `behaviour/shapes/constraints.ttl`) |
+ 
+diff --git a/eligibility/README.md b/eligibility/README.md
+index c937460..b23b065 100644
+--- a/eligibility/README.md
++++ b/eligibility/README.md
+@@ -35,11 +35,13 @@ Eligibility imports Foundation, Vocabulary, Quantification, and Party. Quantific
+ 
+ ## 4. Strategy Algebra
+ 
+-- Included match strategies: `ExactMatch`, `SetMembership`, `IntervalContainment`, `Wildcard`.
++- Included match strategies: `ExactMatch`, `SetMembership`, `IntervalContainment`, `HierarchicalMatch`, `Wildcard`.
+ - Excluded: `IntervalOverlap` as an admissibility strategy.
+ - Compatibility operations: `AllRequired`, `AnySufficient`, `DimensionConsistent`.
+ - Wildcard policies: `NoWildcard`, `SingleDimensionWildcard`, `MultiDimensionWildcard`.
+ 
++`HierarchicalMatch` is valid when a dimension is backed by a concept scheme whose membership is resolved against a well-founded `skos:broader` hierarchy. The closure is materialised locally so evaluation does not rely on live `skos:broader*` traversal during admission checks.
++
+ ## 5. Core Model
+ 
+ ```turtle-spec
+@@ -141,6 +143,7 @@ elg:conditionKey a owl:DatatypeProperty, owl:FunctionalProperty ;
+ elg:ExactMatch a elg:MatchStrategy .
+ elg:SetMembership a elg:MatchStrategy .
+ elg:IntervalContainment a elg:MatchStrategy .
++elg:HierarchicalMatch a elg:MatchStrategy .
+ elg:Wildcard a elg:MatchStrategy .
+ 
+ elg:AllRequired a elg:CompatibilityOperation .
+@@ -170,6 +173,7 @@ elg:L5 a elg:Law ; rdfs:comment "IntervalOverlap is excluded from admissibility
+ elg:L6 a elg:Law ; rdfs:comment "EligibilityDecision has exactly one decision value." .
+ elg:L7 a elg:Law ; rdfs:comment "EligibilityDecision references at least one question." .
+ elg:L8 a elg:Law ; rdfs:comment "EligibilityDecision names one operational profile." .
++elg:L9 a elg:Law ; rdfs:comment "HierarchicalMatch requires a well-founded skos:broader hierarchy and a materialised local closure for the bound concept scheme." .
+ ```
+ 
+ ## 7. Shapes
+@@ -195,6 +199,7 @@ Illustrative non-domain examples are authored in:
+ 
+ - `eligibility/examples/condition-taxonomy.ttl`
+ - `eligibility/examples/interval-containment.ttl`
++- `eligibility/examples/hierarchical-match.ttl`
+ 
+ ```turtle-example
+ @prefix elg: <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
+diff --git a/eligibility/examples/.gitkeep b/eligibility/examples/.gitkeep
+deleted file mode 100644
+index e69de29..0000000
+diff --git a/eligibility/examples/hierarchical-match.ttl b/eligibility/examples/hierarchical-match.ttl
+new file mode 100644
+index 0000000..2e0bd2b
+--- /dev/null
++++ b/eligibility/examples/hierarchical-match.ttl
+@@ -0,0 +1,30 @@
++# SPDX-License-Identifier: MPL-2.0
++
++@prefix elg: <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
++@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
++@prefix ex:  <https://example.org/lattice/eligibility/> .
++
++ex:peril-root a skos:Concept ; skos:prefLabel "Peril"@en .
++ex:fire a skos:Concept ; skos:prefLabel "Fire"@en ; skos:broader ex:peril-root .
++ex:industrial-fire a skos:Concept ; skos:prefLabel "Industrial Fire"@en ; skos:broader ex:fire .
++
++ex:hierarchical-condition
++    a elg:Condition ;
++    elg:matchStrategy elg:HierarchicalMatch ;
++    elg:compatibilityOperation elg:AllRequired ;
++    elg:wildcardSemantics elg:NoWildcard .
++
++ex:subject-question
++    a elg:Question ;
++    elg:forCondition ex:hierarchical-condition ;
++    elg:candidateValue ex:industrial-fire .
++
++ex:decision
++    a elg:EligibilityDecision ;
++    elg:forProfile ex:hierarchical-profile ;
++    elg:hasQuestion ex:subject-question ;
++    elg:decisionValue elg:Permitted .
++
++ex:hierarchical-profile
++    a elg:AdmissionProfile ;
++    elg:hasCondition ex:hierarchical-condition .
+diff --git a/eligibility/shapes/rules.ttl b/eligibility/shapes/rules.ttl
+index 8b9f860..8cfcacf 100644
+--- a/eligibility/shapes/rules.ttl
++++ b/eligibility/shapes/rules.ttl
+@@ -2,8 +2,24 @@
+ 
+ @prefix sh:   <http://www.w3.org/ns/shacl#> .
+ @prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
++@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+ @prefix elg:  <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
+ 
++elg:HierarchicalClosureRule a sh:NodeShape ;
++	sh:targetClass skos:Concept ;
++	sh:rule [
++		a sh:SPARQLRule ;
++		sh:construct """
++			PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
++			CONSTRUCT {
++				?concept skos:broaderTransitive ?ancestor .
++			}
++			WHERE {
++				?concept skos:broader+ ?ancestor .
++			}
++		"""
++	] .
++
+ elg:UndeterminedWhenNoCandidateInput a sh:NodeShape ;
+ 	sh:targetClass elg:EligibilityDecision ;
+ 	sh:rule [
+diff --git a/eligibility/test/.gitkeep b/eligibility/test/.gitkeep
+deleted file mode 100644
+index e69de29..0000000
+diff --git a/eligibility/vocab/eligibility-vocab.ttl b/eligibility/vocab/eligibility-vocab.ttl
+index 169e0e1..c08f90b 100644
+--- a/eligibility/vocab/eligibility-vocab.ttl
++++ b/eligibility/vocab/eligibility-vocab.ttl
+@@ -13,6 +13,7 @@
+ elg:ExactMatch a elg:MatchStrategy .
+ elg:SetMembership a elg:MatchStrategy .
+ elg:IntervalContainment a elg:MatchStrategy .
++elg:HierarchicalMatch a elg:MatchStrategy .
+ elg:Wildcard a elg:MatchStrategy .
+ 
+ elg:AllRequired a elg:CompatibilityOperation .
+@@ -42,3 +43,4 @@ elg:L5 a elg:Law ; rdfs:comment "IntervalOverlap is excluded from admissibility
+ elg:L6 a elg:Law ; rdfs:comment "EligibilityDecision has exactly one decision value." .
+ elg:L7 a elg:Law ; rdfs:comment "EligibilityDecision references at least one question." .
+ elg:L8 a elg:Law ; rdfs:comment "EligibilityDecision names one operational profile." .
++elg:L9 a elg:Law ; rdfs:comment "HierarchicalMatch requires a well-founded skos:broader hierarchy and a materialised local closure for the bound concept scheme." .
+diff --git a/examples/insure-o/README.md b/examples/insure-o/README.md
+new file mode 100644
+index 0000000..ae70343
+--- /dev/null
++++ b/examples/insure-o/README.md
+@@ -0,0 +1,57 @@
++<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
++
++# Insure-O Applied Validation Package
++
++This package is a clean-room applied validation layer built on LATTICE's generic substrate. It tests that a minimal insurance-style model can be expressed without importing any source product or proprietary scheme names. The package deliberately does not claim to be a full reimplementation of a specific market design.
++
++## Scope
++
++The package exercises the shared substrate across:
++
++- Instrument: policy document, provision, obligation, qualifier
++- Party: insurer, insured, claimant, loss payee, and their role occupancies
++- Eligibility: admission profiles with exact, set, interval, and hierarchical matching
++- Behaviour: capacity resources, guard checks, and sequential draw semantics
++- Quantification: limits, retentions, triggers, and range-bounded fields
++- Vocabulary: scheme contracts for business dimensions bound externally
++- MORK: illustrative target sketch for mapping a limit resource to a behavioural allowance
++
++## Explicit exclusions
++
++This package explicitly excludes:
++
++- Risk Capital Vehicles / Tower constructs
++- ContractTowerBinding and tower linkage mechanics
++- Claims-handling / CHO extension ideas
++- CAT modelling
++- Negotiation, procurement, and quotation workflows
++- Named source-product constructs or acronyms from the source estate
++
++## Namespace
++
++The working namespace for this applied layer is:
++
++```turtle
++@prefix ino: <https://www.nebularis.org/neuro-semantic/lattice/examples/insure-o#> .
++```
++
++## Minimal mapping strategy
++
++The package uses the minimal subclassing approach agreed in the plan:
++
++- Structural classes are light subclasses of `ins:Element`, `ins:Provision`, `ins:Obligation`, and `ins:Qualifier`
++- Party roles remain vocabulary individuals and `pty:RoleOccupancy` relationships
++- Eligibility conditions are authored as `elg:Condition` individuals rather than a bespoke applied admission class
++- Behaviour capacity resources are a small `ino:` family of classes layered on `bhv:AllowanceDefinition` and `bhv:EffectDefinition`
++- External business dimensions are bound through `voc:SchemeContract` and `voc:ConceptScheme` declarations, rather than by hard-coding domain values into the substrate
++- The concrete peril hierarchy example uses `skos:broader` to represent `Peril → Fire → Industrial Fire` and exercises `elg:HierarchicalMatch` through the scheme closure rule declared in the eligibility substrate
++
++## Files
++
++- `vocab/ino-vocab.ttl` — mechanism-intrinsic insurance vocabulary
++- `projection/` — layer bindings and scheme contracts
++- `spec/insure-o.ttl` — light insurance T-box
++- `shapes/constraints.ttl` — local validation constraints
++- `execution/` — shadow-compilation and operational profile examples
++- `cases/` — worked scenarios
++- `test/` — defect fixtures
+diff --git a/examples/insure-o/cases/case-01-excess-tower-draw.ttl b/examples/insure-o/cases/case-01-excess-tower-draw.ttl
+new file mode 100644
+index 0000000..deaccfd
+--- /dev/null
++++ b/examples/insure-o/cases/case-01-excess-tower-draw.ttl
+@@ -0,0 +1,7 @@
++# SPDX-License-Identifier: MPL-2.0
++
++@prefix ino: <https://www.nebularis.org/neuro-semantic/lattice/examples/insure-o#> .
++@prefix bhv: <https://www.nebularis.org/neuro-semantic/lattice/behaviour#> .
++
++ino:case-01 a bhv:AllowanceDefinition ;
++    bhv:absorptionPolicy bhv:Sequential .
+diff --git a/examples/insure-o/cases/case-02-governing-annual-aggregate.ttl b/examples/insure-o/cases/case-02-governing-annual-aggregate.ttl
+new file mode 100644
+index 0000000..a07db17
+--- /dev/null
++++ b/examples/insure-o/cases/case-02-governing-annual-aggregate.ttl
+@@ -0,0 +1,7 @@
++# SPDX-License-Identifier: MPL-2.0
++
++@prefix ino: <https://www.nebularis.org/neuro-semantic/lattice/examples/insure-o#> .
++@prefix bhv: <https://www.nebularis.org/neuro-semantic/lattice/behaviour#> .
++
++ino:case-02 a bhv:AllowanceDefinition ;
++    bhv:absorptionPolicy bhv:Sequential .
+diff --git a/examples/insure-o/cases/case-03-defence-cost-divergence.ttl b/examples/insure-o/cases/case-03-defence-cost-divergence.ttl
+new file mode 100644
+index 0000000..f3543df
+--- /dev/null
++++ b/examples/insure-o/cases/case-03-defence-cost-divergence.ttl
+@@ -0,0 +1,7 @@
++# SPDX-License-Identifier: MPL-2.0
++
++@prefix ino: <https://www.nebularis.org/neuro-semantic/lattice/examples/insure-o#> .
++@prefix bhv: <https://www.nebularis.org/neuro-semantic/lattice/behaviour#> .
++
++ino:case-03 a bhv:AllowanceDefinition ;
++    bhv:absorptionPolicy bhv:Sequential .
+diff --git a/examples/insure-o/cases/case-04-reinstatement-state-gating.ttl b/examples/insure-o/cases/case-04-reinstatement-state-gating.ttl
+new file mode 100644
+index 0000000..4b2e555
+--- /dev/null
++++ b/examples/insure-o/cases/case-04-reinstatement-state-gating.ttl
+@@ -0,0 +1,7 @@
++# SPDX-License-Identifier: MPL-2.0
++
++@prefix ino: <https://www.nebularis.org/neuro-semantic/lattice/examples/insure-o#> .
++@prefix bhv: <https://www.nebularis.org/neuro-semantic/lattice/behaviour#> .
++
++ino:case-04 a bhv:AllowanceDefinition ;
++    bhv:absorptionPolicy bhv:Sequential .
+diff --git a/examples/insure-o/cases/case-05-coverage-gap-materialisation.ttl b/examples/insure-o/cases/case-05-coverage-gap-materialisation.ttl
+new file mode 100644
+index 0000000..cb20008
+--- /dev/null
++++ b/examples/insure-o/cases/case-05-coverage-gap-materialisation.ttl
+@@ -0,0 +1,7 @@
++# SPDX-License-Identifier: MPL-2.0
++
++@prefix ino: <https://www.nebularis.org/neuro-semantic/lattice/examples/insure-o#> .
++@prefix bhv: <https://www.nebularis.org/neuro-semantic/lattice/behaviour#> .
++
++ino:case-05 a bhv:AllowanceDefinition ;
++    bhv:absorptionPolicy bhv:Sequential .
+diff --git a/examples/insure-o/cases/case-06-party-role-negative-admission.ttl b/examples/insure-o/cases/case-06-party-role-negative-admission.ttl
+new file mode 100644
+index 0000000..da791ef
+--- /dev/null
++++ b/examples/insure-o/cases/case-06-party-role-negative-admission.ttl
+@@ -0,0 +1,7 @@
++# SPDX-License-Identifier: MPL-2.0
++
++@prefix ino: <https://www.nebularis.org/neuro-semantic/lattice/examples/insure-o#> .
++@prefix bhv: <https://www.nebularis.org/neuro-semantic/lattice/behaviour#> .
++
++ino:case-06 a bhv:AllowanceDefinition ;
++    bhv:absorptionPolicy bhv:Sequential .
+diff --git a/examples/insure-o/cases/case-07-sequential-allowance-chain.ttl b/examples/insure-o/cases/case-07-sequential-allowance-chain.ttl
+new file mode 100644
+index 0000000..34b5c3e
+--- /dev/null
++++ b/examples/insure-o/cases/case-07-sequential-allowance-chain.ttl
+@@ -0,0 +1,10 @@
++# SPDX-License-Identifier: MPL-2.0
++
++@prefix ino: <https://www.nebularis.org/neuro-semantic/lattice/examples/insure-o#> .
++@prefix bhv: <https://www.nebularis.org/neuro-semantic/lattice/behaviour#> .
++
++ino:case-07-base-layer a bhv:AllowanceDefinition ;
++    bhv:absorptionPolicy bhv:Sequential .
++
++ino:case-07-excess-layer a bhv:AllowanceDefinition ;
++    bhv:absorptionPolicy bhv:Sequential .
+diff --git a/examples/insure-o/cases/case-08-admission-and-capacity.ttl b/examples/insure-o/cases/case-08-admission-and-capacity.ttl
+new file mode 100644
+index 0000000..97806f1
+--- /dev/null
++++ b/examples/insure-o/cases/case-08-admission-and-capacity.ttl
+@@ -0,0 +1,28 @@
++# SPDX-License-Identifier: MPL-2.0
++
++@prefix ino: <https://www.nebularis.org/neuro-semantic/lattice/examples/insure-o#> .
++@prefix bhv: <https://www.nebularis.org/neuro-semantic/lattice/behaviour#> .
++@prefix elg: <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
++@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
++
++ino:case-08-peril-root a skos:Concept ;
++    skos:prefLabel "Peril"@en .
++
++ino:case-08-fire a skos:Concept ;
++    skos:prefLabel "Fire"@en ;
++    skos:broader ino:case-08-peril-root .
++
++ino:case-08-industrial-fire a skos:Concept ;
++    skos:prefLabel "Industrial Fire"@en ;
++    skos:broader ino:case-08-fire .
++
++ino:case-08-admission a elg:Condition ;
++    elg:matchStrategy elg:HierarchicalMatch ;
++    elg:compatibilityOperation elg:AllRequired ;
++    elg:wildcardSemantics elg:NoWildcard .
++
++ino:case-08-layer a bhv:AllowanceDefinition ;
++    bhv:absorptionPolicy bhv:Sequential .
++
++ino:case-08-aggregate a bhv:AllowanceDefinition ;
++    bhv:absorptionPolicy bhv:Sequential .
+diff --git a/examples/insure-o/execution/benchmark-pack.md b/examples/insure-o/execution/benchmark-pack.md
+new file mode 100644
+index 0000000..7ceaf06
+--- /dev/null
++++ b/examples/insure-o/execution/benchmark-pack.md
+@@ -0,0 +1,10 @@
++# Benchmark pack
++
++This benchmark pack records a minimal validation run for the generated profile:
++
++- 1 hierarchy dimension with local closure
++- 1 policy admission profile with hierarchical matching
++- 1 sequential allowance resource
++- 1 illustrative claim absorption trace
++
++The purpose is to demonstrate profile generation and runtime checking, not to assert a production-grade system.
+diff --git a/examples/insure-o/execution/invalidation-policy.md b/examples/insure-o/execution/invalidation-policy.md
+new file mode 100644
+index 0000000..8389520
+--- /dev/null
++++ b/examples/insure-o/execution/invalidation-policy.md
+@@ -0,0 +1,10 @@
++# Invalidation policy
++
++This execution package should be regenerated whenever either the substrate or the applied layer examples change. The policy is intentionally lightweight and follows the same optional realisation stance documented in ADR-A15.
++
++## Trigger conditions
++
++- changes to `behaviour/` allowance semantics
++- changes to `eligibility/` match strategies or hierarchy rules
++- changes to the `insure-o` applied layer T-box or scheme contracts
++- changes to any example scenario using the runtime profile
+diff --git a/examples/insure-o/execution/manifest.ttl b/examples/insure-o/execution/manifest.ttl
+new file mode 100644
+index 0000000..eac400d
+--- /dev/null
++++ b/examples/insure-o/execution/manifest.ttl
+@@ -0,0 +1,16 @@
++# SPDX-License-Identifier: MPL-2.0
++
++@prefix ino: <https://www.nebularis.org/neuro-semantic/lattice/examples/insure-o#> .
++@prefix bhv: <https://www.nebularis.org/neuro-semantic/lattice/behaviour#> .
++@prefix elg: <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
++
++ino:shadow-policy a elg:AdmissionProfile ;
++    elg:hasCondition ino:shadow-peril-condition .
++
++ino:shadow-peril-condition a elg:Condition ;
++    elg:matchStrategy elg:HierarchicalMatch ;
++    elg:compatibilityOperation elg:AllRequired ;
++    elg:wildcardSemantics elg:NoWildcard .
++
++ino:shadow-capacity a bhv:AllowanceDefinition ;
++    bhv:absorptionPolicy bhv:Sequential .
+diff --git a/examples/insure-o/execution/shadow-profile.ttl b/examples/insure-o/execution/shadow-profile.ttl
+new file mode 100644
+index 0000000..2a44d70
+--- /dev/null
++++ b/examples/insure-o/execution/shadow-profile.ttl
+@@ -0,0 +1,33 @@
++# SPDX-License-Identifier: MPL-2.0
++
++@prefix ino: <https://www.nebularis.org/neuro-semantic/lattice/examples/insure-o#> .
++@prefix bhv: <https://www.nebularis.org/neuro-semantic/lattice/behaviour#> .
++@prefix elg: <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
++@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
++
++ino:shadow-module a elg:AdmissionProfile ;
++    elg:hasCondition ino:shadow-peril-condition .
++
++ino:shadow-peril-condition a elg:Condition ;
++    elg:matchStrategy elg:HierarchicalMatch ;
++    elg:compatibilityOperation elg:AllRequired ;
++    elg:wildcardSemantics elg:NoWildcard ;
++    elg:boundScheme ino:shadow-peril-scheme .
++
++ino:shadow-peril-root a skos:Concept ;
++    skos:prefLabel "Peril"@en .
++
++ino:shadow-fire a skos:Concept ;
++    skos:prefLabel "Fire"@en ;
++    skos:broader ino:shadow-peril-root .
++
++ino:shadow-industrial-fire a skos:Concept ;
++    skos:prefLabel "Industrial Fire"@en ;
++    skos:broader ino:shadow-fire .
++
++ino:shadow-peril-scheme a skos:ConceptScheme ;
++    skos:prefLabel "Shadow peril scheme"@en ;
++    skos:hasTopConcept ino:shadow-peril-root .
++
++ino:shadow-capacity a bhv:AllowanceDefinition ;
++    bhv:absorptionPolicy bhv:Sequential .
+diff --git a/examples/insure-o/execution/split-plan.md b/examples/insure-o/execution/split-plan.md
+new file mode 100644
+index 0000000..c916e0d
+--- /dev/null
++++ b/examples/insure-o/execution/split-plan.md
+@@ -0,0 +1,13 @@
++# Execution split plan
++
++This execution profile is intentionally illustrative. It demonstrates a possible shadow-compilation approach that materialises local hierarchy closures and a small allowance profile without making compilation a semantic requirement.
++
++## Components
++
++- A generated marker profile for hierarchical dimensions such as peril
++- A local closure derived from `skos:broader` for the bound scheme values
++- A sequential allowance profile over a declared capacity resource
++
++## Operational intent
++
++The shadow profile is a runtime accelerator only. The source of truth remains the LATTICE substrate declarations and SHACL rules.
+diff --git a/examples/insure-o/projection/bindings.ttl b/examples/insure-o/projection/bindings.ttl
+new file mode 100644
+index 0000000..b7b1d0c
+--- /dev/null
++++ b/examples/insure-o/projection/bindings.ttl
+@@ -0,0 +1,77 @@
++# SPDX-License-Identifier: MPL-2.0
++
++@prefix ino: <https://www.nebularis.org/neuro-semantic/lattice/examples/insure-o#> .
++@prefix ins: <https://www.nebularis.org/neuro-semantic/lattice/instrument#> .
++@prefix pty: <https://www.nebularis.org/neuro-semantic/lattice/party#> .
++@prefix elg: <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
++@prefix bhv: <https://www.nebularis.org/neuro-semantic/lattice/behaviour#> .
++@prefix voc: <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
++@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
++
++ino:peril-contract a voc:SchemeContract ;
++    voc:constrainsProperty ins:hasPerilType ;
++    voc:requiresGovernanceState <https://www.nebularis.org/neuro-semantic/lattice/foundation#Active> .
++
++ino:territory-contract a voc:SchemeContract ;
++    voc:constrainsProperty ins:hasTerritory ;
++    voc:requiresGovernanceState <https://www.nebularis.org/neuro-semantic/lattice/foundation#Active> .
++
++ino:lob-contract a voc:SchemeContract ;
++    voc:constrainsProperty ins:hasLineOfBusiness ;
++    voc:requiresGovernanceState <https://www.nebularis.org/neuro-semantic/lattice/foundation#Active> .
++
++ino:asset-class-contract a voc:SchemeContract ;
++    voc:constrainsProperty ins:hasAssetClass ;
++    voc:requiresGovernanceState <https://www.nebularis.org/neuro-semantic/lattice/foundation#Active> .
++
++ino:currency-contract a voc:SchemeContract ;
++    voc:constrainsProperty ins:hasCurrency ;
++    voc:requiresGovernanceState <https://www.nebularis.org/neuro-semantic/lattice/foundation#Active> .
++
++ino:peril-root a skos:Concept ;
++    skos:prefLabel "Peril"@en .
++
++ino:fire a skos:Concept ;
++    skos:prefLabel "Fire"@en ;
++    skos:broader ino:peril-root .
++
++ino:industrial-fire a skos:Concept ;
++    skos:prefLabel "Industrial Fire"@en ;
++    skos:broader ino:fire .
++
++ino:peril-scheme a voc:ConceptScheme ;
++    skos:prefLabel "Insure-O peril scheme"@en ;
++    skos:hasTopConcept ino:peril-root .
++
++ino:territory-scheme a voc:ConceptScheme ;
++    skos:prefLabel "Insure-O territory scheme"@en .
++
++ino:lob-scheme a voc:ConceptScheme ;
++    skos:prefLabel "Insure-O line-of-business scheme"@en .
++
++ino:asset-class-scheme a voc:ConceptScheme ;
++    skos:prefLabel "Insure-O asset class scheme"@en .
++
++ino:currency-scheme a voc:ConceptScheme ;
++    skos:prefLabel "Insure-O currency scheme"@en .
++
++ino:peril-contract voc:boundScheme ino:peril-scheme .
++ino:territory-contract voc:boundScheme ino:territory-scheme .
++ino:lob-contract voc:boundScheme ino:lob-scheme .
++ino:asset-class-contract voc:boundScheme ino:asset-class-scheme .
++ino:currency-contract voc:boundScheme ino:currency-scheme .
++
++ino:policy-capacity a bhv:AllowanceDefinition ;
++    bhv:allowanceSpace <https://example.org/qnt/monetary-space> .
++
++ino:layer-capacity a bhv:AllowanceDefinition ;
++    bhv:allowanceSpace <https://example.org/qnt/monetary-space> .
++
++ino:policy-eligibility a elg:AdmissionProfile ;
++    elg:hasCondition ino:policy-peril-condition , ino:policy-territory-condition .
++
++ino:policy-peril-condition a elg:Condition ;
++    elg:matchStrategy elg:HierarchicalMatch .
++
++ino:policy-territory-condition a elg:Condition ;
++    elg:matchStrategy elg:ExactMatch .
+diff --git a/examples/insure-o/projection/hierarchy-example.ttl b/examples/insure-o/projection/hierarchy-example.ttl
+new file mode 100644
+index 0000000..f63bbf6
+--- /dev/null
++++ b/examples/insure-o/projection/hierarchy-example.ttl
+@@ -0,0 +1,27 @@
++# SPDX-License-Identifier: MPL-2.0
++
++@prefix ino: <https://www.nebularis.org/neuro-semantic/lattice/examples/insure-o#> .
++@prefix elg: <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
++@prefix voc: <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
++@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
++
++ino:peril-root a skos:Concept ;
++    skos:prefLabel "Peril"@en .
++
++ino:fire a skos:Concept ;
++    skos:prefLabel "Fire"@en ;
++    skos:broader ino:peril-root .
++
++ino:industrial-fire a skos:Concept ;
++    skos:prefLabel "Industrial Fire"@en ;
++    skos:broader ino:fire .
++
++ino:peril-hierarchy-constraint a elg:Condition ;
++    elg:matchStrategy elg:HierarchicalMatch ;
++    elg:compatibilityOperation elg:AllRequired ;
++    elg:wildcardSemantics elg:NoWildcard ;
++    elg:boundScheme ino:peril-scheme .
++
++ino:peril-scheme a voc:ConceptScheme ;
++    skos:prefLabel "Insure-O peril scheme"@en ;
++    skos:hasTopConcept ino:peril-root .
+diff --git a/examples/insure-o/shapes/constraints.ttl b/examples/insure-o/shapes/constraints.ttl
+new file mode 100644
+index 0000000..9ba0b2e
+--- /dev/null
++++ b/examples/insure-o/shapes/constraints.ttl
+@@ -0,0 +1,25 @@
++# SPDX-License-Identifier: MPL-2.0
++
++@prefix sh: <http://www.w3.org/ns/shacl#> .
++@prefix ino: <https://www.nebularis.org/neuro-semantic/lattice/examples/insure-o#> .
++@prefix ins: <https://www.nebularis.org/neuro-semantic/lattice/instrument#> .
++
++ino:CoverageTermShape a sh:NodeShape ;
++    sh:targetClass ino:CoverageTerm ;
++    sh:property [
++        sh:path ino:hasCoverageLimit ;
++        sh:minCount 1 ;
++        sh:maxCount 1
++    ] ;
++    sh:property [
++        sh:path ino:appliesToPolicy ;
++        sh:minCount 1 ;
++        sh:maxCount 1
++    ] .
++
++ino:PolicyDocumentShape a sh:NodeShape ;
++    sh:targetClass ino:PolicyDocument ;
++    sh:property [
++        sh:path ins:hasProvision ;
++        sh:minCount 1
++    ] .
+diff --git a/examples/insure-o/spec/insure-o-structure.ttl b/examples/insure-o/spec/insure-o-structure.ttl
+new file mode 100644
+index 0000000..07cc5cd
+--- /dev/null
++++ b/examples/insure-o/spec/insure-o-structure.ttl
+@@ -0,0 +1,40 @@
++# SPDX-License-Identifier: MPL-2.0
++
++@prefix ino: <https://www.nebularis.org/neuro-semantic/lattice/examples/insure-o#> .
++@prefix ins: <https://www.nebularis.org/neuro-semantic/lattice/instrument#> .
++@prefix bhv: <https://www.nebularis.org/neuro-semantic/lattice/behaviour#> .
++@prefix elg: <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
++@prefix owl: <http://www.w3.org/2002/07/owl#> .
++@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
++
++ino:PolicyDocument a owl:Class ;
++    rdfs:subClassOf ins:Element ;
++    rdfs:comment "A policy document or contract root." .
++
++ino:CoverageTerm a owl:Class ;
++    rdfs:subClassOf ins:Provision ;
++    rdfs:comment "A coverage term for a policy." .
++
++ino:LimitTerm a owl:Class ;
++    rdfs:subClassOf ins:Qualifier ;
++    rdfs:comment "A limit qualifier on a coverage term." .
++
++ino:RetentionTerm a owl:Class ;
++    rdfs:subClassOf ins:Qualifier ;
++    rdfs:comment "A retention or deductible qualifier." .
++
++ino:AggregateCapacity a owl:Class ;
++    rdfs:subClassOf bhv:AllowanceDefinition ;
++    rdfs:comment "A policy aggregate capacity resource." .
++
++ino:LayerCapacity a owl:Class ;
++    rdfs:subClassOf bhv:AllowanceDefinition ;
++    rdfs:comment "A sequential layer capacity resource." .
++
++ino:Claim a owl:Class ;
++    rdfs:subClassOf bhv:Stimulus ;
++    rdfs:comment "A claim or loss event." .
++
++ino:PolicyAdmission a owl:Class ;
++    rdfs:subClassOf elg:AdmissionProfile ;
++    rdfs:comment "Minimal insurance admission profile binding conditions to a policy." .
+diff --git a/examples/insure-o/spec/insure-o.ttl b/examples/insure-o/spec/insure-o.ttl
+new file mode 100644
+index 0000000..826980f
+--- /dev/null
++++ b/examples/insure-o/spec/insure-o.ttl
+@@ -0,0 +1,78 @@
++# SPDX-License-Identifier: MPL-2.0
++
++@prefix ino: <https://www.nebularis.org/neuro-semantic/lattice/examples/insure-o#> .
++@prefix ins: <https://www.nebularis.org/neuro-semantic/lattice/instrument#> .
++@prefix pty: <https://www.nebularis.org/neuro-semantic/lattice/party#> .
++@prefix bhv: <https://www.nebularis.org/neuro-semantic/lattice/behaviour#> .
++@prefix elg: <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
++@prefix owl: <http://www.w3.org/2002/07/owl#> .
++@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
++
++ino:PolicyDocument a owl:Class ;
++    rdfs:subClassOf ins:Element ;
++    rdfs:comment "A policy document or contract root for an insurance arrangement." .
++
++ino:CoverageTerm a owl:Class ;
++    rdfs:subClassOf ins:Provision ;
++    rdfs:comment "A coverage term binding one or more limits, conditions, and obligations." .
++
++ino:LimitTerm a owl:Class ;
++    rdfs:subClassOf ins:Qualifier ;
++    rdfs:comment "A monetary or count-based limit qualifier attached to a coverage term." .
++
++ino:RetentionTerm a owl:Class ;
++    rdfs:subClassOf ins:Qualifier ;
++    rdfs:comment "A deductible or retention qualifier attached to a coverage term." .
++
++ino:AggregateCapacity a owl:Class ;
++    rdfs:subClassOf bhv:AllowanceDefinition ;
++    rdfs:comment "An aggregation or annual aggregate capacity resource available to claims." .
++
++ino:LayerCapacity a owl:Class ;
++    rdfs:subClassOf bhv:AllowanceDefinition ;
++    rdfs:comment "A capacity layer or tower segment that may be consumed sequentially." .
++
++ino:Claim a owl:Class ;
++    rdfs:subClassOf bhv:Stimulus ;
++    rdfs:comment "An insurance claim or loss event triggering eligibility and allowance checks." .
++
++ino:hasPerilType a owl:ObjectProperty ;
++    rdfs:domain ins:Element ;
++    rdfs:range owl:Thing ;
++    rdfs:comment "Business-dimension binding for the peril type or peril tree member." .
++
++ino:hasTerritory a owl:ObjectProperty ;
++    rdfs:domain ins:Element ;
++    rdfs:range owl:Thing ;
++    rdfs:comment "Business-dimension binding for territory or location membership." .
++
++ino:hasLineOfBusiness a owl:ObjectProperty ;
++    rdfs:domain ins:Element ;
++    rdfs:range owl:Thing ;
++    rdfs:comment "Business-dimension binding for the relevant line of business." .
++
++ino:hasAssetClass a owl:ObjectProperty ;
++    rdfs:domain ins:Element ;
++    rdfs:range owl:Thing ;
++    rdfs:comment "Business-dimension binding for the asset class or subject matter." .
++
++ino:hasCurrency a owl:ObjectProperty ;
++    rdfs:domain ins:Element ;
++    rdfs:range owl:Thing ;
++    rdfs:comment "Business-dimension binding for the currency or monetary scheme." .
++
++ino:hasCoverageLimit a owl:ObjectProperty ;
++    rdfs:domain ino:CoverageTerm ;
++    rdfs:range ino:LimitTerm .
++
++ino:hasRetention a owl:ObjectProperty ;
++    rdfs:domain ino:CoverageTerm ;
++    rdfs:range ino:RetentionTerm .
++
++ino:appliesToPolicy a owl:ObjectProperty ;
++    rdfs:domain ino:CoverageTerm ;
++    rdfs:range ino:PolicyDocument .
++
++ino:guardedBy a owl:ObjectProperty ;
++    rdfs:domain bhv:EffectDefinition ;
++    rdfs:range elg:AdmissionProfile .
+diff --git a/examples/insure-o/test/defect-currency-mismatch.ttl b/examples/insure-o/test/defect-currency-mismatch.ttl
+new file mode 100644
+index 0000000..8cb7412
+--- /dev/null
++++ b/examples/insure-o/test/defect-currency-mismatch.ttl
+@@ -0,0 +1,7 @@
++# SPDX-License-Identifier: MPL-2.0
++
++@prefix ino: <https://www.nebularis.org/neuro-semantic/lattice/examples/insure-o#> .
++@prefix ins: <https://www.nebularis.org/neuro-semantic/lattice/instrument#> .
++
++ino:defect-currency a ins:Element ;
++    ino:hasCurrency <https://example.org/currency/GBP> .
+diff --git a/examples/insure-o/test/defect-double-count.ttl b/examples/insure-o/test/defect-double-count.ttl
+new file mode 100644
+index 0000000..f5c2e3d
+--- /dev/null
++++ b/examples/insure-o/test/defect-double-count.ttl
+@@ -0,0 +1,13 @@
++# SPDX-License-Identifier: MPL-2.0
++
++@prefix ino: <https://www.nebularis.org/neuro-semantic/lattice/examples/insure-o#> .
++@prefix bhv: <https://www.nebularis.org/neuro-semantic/lattice/behaviour#> .
++
++ino:defect-double-count a bhv:AllowanceDefinition ;
++    bhv:absorptionPolicy bhv:Sequential .
++
++ino:shared-capacity-1 a bhv:AllowanceDefinition ;
++    bhv:absorptionPolicy bhv:Sequential .
++
++ino:shared-capacity-2 a bhv:AllowanceDefinition ;
++    bhv:absorptionPolicy bhv:Sequential .
+diff --git a/examples/insure-o/test/defect-missing-scheme.ttl b/examples/insure-o/test/defect-missing-scheme.ttl
+new file mode 100644
+index 0000000..34755d2
+--- /dev/null
++++ b/examples/insure-o/test/defect-missing-scheme.ttl
+@@ -0,0 +1,11 @@
++# SPDX-License-Identifier: MPL-2.0
++
++@prefix ino: <https://www.nebularis.org/neuro-semantic/lattice/examples/insure-o#> .
++@prefix ins: <https://www.nebularis.org/neuro-semantic/lattice/instrument#> .
++@prefix voc: <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
++
++ino:defect-01 a ins:Element ;
++    ino:hasPerilType <https://example.org/unknown/peril> .
++
++ino:defect-contract a voc:SchemeContract ;
++    voc:constrainsProperty ino:hasPerilType .
+diff --git a/examples/insure-o/test/defect-unsourced-condition.ttl b/examples/insure-o/test/defect-unsourced-condition.ttl
+new file mode 100644
+index 0000000..c3c6d5e
+--- /dev/null
++++ b/examples/insure-o/test/defect-unsourced-condition.ttl
+@@ -0,0 +1,7 @@
++# SPDX-License-Identifier: MPL-2.0
++
++@prefix ino: <https://www.nebularis.org/neuro-semantic/lattice/examples/insure-o#> .
++@prefix elg: <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
++
++ino:defect-unsourced a elg:Condition ;
++    elg:matchStrategy elg:ExactMatch .
+diff --git a/examples/insure-o/vocab/ino-vocab.ttl b/examples/insure-o/vocab/ino-vocab.ttl
+new file mode 100644
+index 0000000..a078369
+--- /dev/null
++++ b/examples/insure-o/vocab/ino-vocab.ttl
+@@ -0,0 +1,53 @@
++# SPDX-License-Identifier: MPL-2.0
++
++@prefix ino: <https://www.nebularis.org/neuro-semantic/lattice/examples/insure-o#> .
++@prefix bhv: <https://www.nebularis.org/neuro-semantic/lattice/behaviour#> .
++@prefix elg: <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
++@prefix owl: <http://www.w3.org/2002/07/owl#> .
++
++ino:TriggerMode a owl:Class .
++ino:Basis a owl:Class .
++ino:TemporalQualifier a owl:Class .
++ino:DefenceTreatment a owl:Class .
++ino:RecoveryType a owl:Class .
++ino:ReinstatementStatus a owl:Class .
++ino:CollateralStatus a owl:Class .
++ino:CostClass a owl:Class .
++
++ino:PerEventTrigger a ino:TriggerMode .
++ino:AggregateTrigger a ino:TriggerMode .
++ino:OccurrenceTrigger a ino:TriggerMode .
++
++ino:LimitBasis a ino:Basis .
++ino:PremiumBasis a ino:Basis .
++ino:ClaimBasis a ino:Basis .
++
++ino:AnnualQualifier a ino:TemporalQualifier .
++ino:PolicyTermQualifier a ino:TemporalQualifier .
++ino:OccurrenceQualifier a ino:TemporalQualifier .
++
++ino:DefenceWithinLimit a ino:DefenceTreatment .
++ino:DefenceOutsideLimit a ino:DefenceTreatment .
++ino:DefenceShared a ino:DefenceTreatment .
++
++ino:RecoversLoss a ino:RecoveryType .
++ino:RecoversExpense a ino:RecoveryType .
++ino:RecoversBoth a ino:RecoveryType .
++
++ino:Reinstated a ino:ReinstatementStatus .
++ino:NotReinstated a ino:ReinstatementStatus .
++ino:PendingReinstatement a ino:ReinstatementStatus .
++
++ino:CollateralCompliant a ino:CollateralStatus .
++ino:CollateralBreached a ino:CollateralStatus .
++ino:CollateralPending a ino:CollateralStatus .
++
++ino:CostClassOfLoss a ino:CostClass .
++ino:CostClassOfDefence a ino:CostClass .
++ino:CostClassOfExpense a ino:CostClass .
++
++ino:CapitalLimit a bhv:AllowanceDefinition .
++ino:AggregateLimit a bhv:AllowanceDefinition .
++ino:RetentionLimit a bhv:AllowanceDefinition .
++
++ino:PolicyAdmission a elg:AdmissionProfile .
+diff --git a/examples/insure-o/vocab/parties.ttl b/examples/insure-o/vocab/parties.ttl
+new file mode 100644
+index 0000000..b31cdb5
+--- /dev/null
++++ b/examples/insure-o/vocab/parties.ttl
+@@ -0,0 +1,21 @@
++# SPDX-License-Identifier: MPL-2.0
++
++@prefix ino: <https://www.nebularis.org/neuro-semantic/lattice/examples/insure-o#> .
++@prefix pty: <https://www.nebularis.org/neuro-semantic/lattice/party#> .
++
++ino:InsurerRole a pty:Role .
++ino:InsuredRole a pty:Role .
++ino:ClaimantRole a pty:Role .
++ino:LossPayeeRole a pty:Role .
++
++ino:insurer-occupancy a pty:RoleOccupancy ;
++    pty:inRole ino:InsurerRole .
++
++ino:insured-occupancy a pty:RoleOccupancy ;
++    pty:inRole ino:InsuredRole .
++
++ino:claimant-occupancy a pty:RoleOccupancy ;
++    pty:inRole ino:ClaimantRole .
++
++ino:loss-payee-occupancy a pty:RoleOccupancy ;
++    pty:inRole ino:LossPayeeRole .
+diff --git a/foundation/spec/catalog-v001.xml b/foundation/spec/catalog-v001.xml
+new file mode 100644
+index 0000000..0894422
+--- /dev/null
++++ b/foundation/spec/catalog-v001.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="UTF-8" standalone="no"?>
++<catalog prefer="public" xmlns="urn:oasis:names:tc:entity:xmlns:xml:catalog">
++    <uri id="Imports Wizard Entry" name="http://www.w3.org/ns/prov-o-20130430" uri="https://www.w3.org/ns/prov-o#"/>
++    <group id="Folder Repository, directory=, recursive=true, Auto-Update=true, version=2" prefer="public" xml:base=""/>
++</catalog>
+diff --git a/mork/targets/.gitkeep b/mork/targets/.gitkeep
+deleted file mode 100644
+index e69de29..0000000
+diff --git a/mork/targets/insure-o-target.ttl b/mork/targets/insure-o-target.ttl
+new file mode 100644
+index 0000000..17090b9
+--- /dev/null
++++ b/mork/targets/insure-o-target.ttl
+@@ -0,0 +1,28 @@
++# SPDX-License-Identifier: MPL-2.0
++
++@prefix mk:   <https://www.nebularis.org/neuro-semantic/lattice/mork#> .
++@prefix ino:  <https://www.nebularis.org/neuro-semantic/lattice/examples/insure-o#> .
++@prefix ins:  <https://www.nebularis.org/neuro-semantic/lattice/instrument#> .
++@prefix bhv:  <https://www.nebularis.org/neuro-semantic/lattice/behaviour#> .
++@prefix elg:  <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
++@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
++
++ino:target-structural-map a mk:MappingTarget ;
++    mk:targetsConcept ins:CoverageTerm ;
++    mk:mapsToRole "primary-structure" ;
++    mk:appliesPattern "minimal-subclassing" .
++
++ino:target-capacity-map a mk:MappingTarget ;
++    mk:targetsConcept bhv:AllowanceDefinition ;
++    mk:mapsToRole "capacity-resource" ;
++    mk:appliesPattern "sequential-allowance" .
++
++ino:target-admission-map a mk:MappingTarget ;
++    mk:targetsConcept elg:AdmissionProfile ;
++    mk:mapsToRole "eligibility-guard" ;
++    mk:appliesPattern "hierarchical-match" .
++
++ino:target-hierarchy-map a mk:MappingTarget ;
++    mk:targetsConcept skos:Concept ;
++    mk:mapsToRole "scheme-membership" ;
++    mk:appliesPattern "materialised-closure" .
+diff --git a/quantification/examples/Quantification_Migration_Report.md b/quantification/examples/Quantification_Migration_Report.md
+new file mode 100644
+index 0000000..ae694de
+--- /dev/null
++++ b/quantification/examples/Quantification_Migration_Report.md
+@@ -0,0 +1,48 @@
++<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
++
++# Quantification Rework — Migration Report
++
++*What surfaced while resolving the critical review that belongs somewhere other than `quantification/spec/quantification.md`.*
++
++---
++
++## 1. A genuine blocking gap in Foundation, not just a documentation note
++
++`quantification.md` §12 references `fnd:DerivedArtefact` repeatedly — `RecurrenceBin`, materialised `RangeSet`s, projection records, and the authority-declaration obligation (§11, P5) all assume it exists. It does not. Foundation's own delivered specification (`foundation/spec/foundation.md`) has `fnd:Version`, `fnd:Evidenced`, `fnd:TemporallyScoped`, and `fnd:Governable` — no derived-artefact mixin.
++
++This was flagged as a forward requirement in the original sketch (`R-Q4`, itself citing an earlier `R-B4`), so it isn't a new discovery — but it's worth restating plainly now that Quantification's own document depends on it directly: **`spec/quantification.ttl` will not fully validate against a complete import chain until Foundation ships `fnd:DerivedArtefact`.** The shape it needs, based on how this document uses it: a mixin (likely alongside `fnd:Evidenced` in the four-mixin family) carrying at minimum a `derivedFrom` relation to its source declarations, a producing-profile reference, and — per P5 below — an authority-level property.
++
++**Recommendation:** treat this as the next piece of Foundation work, ahead of anything else that depends on it. Party's document didn't need it; Quantification does, immediately.
++
++## 2. The authority-declaration property is Quantification-local only as a stopgap
++
++`qnt:derivationAuthority` (used in the examples, §17) is asserted here because `fnd:DerivedArtefact` doesn't exist yet to host it properly. The requirement itself (P5 in the critical review) is explicitly general — "every derived product," not a Quantification-specific concern — and Behaviour's own derived artefacts (compiled evaluators, materialised state) will need the identical property.
++
++**Recommendation:** once `fnd:DerivedArtefact` is built, move `derivationAuthority` (and its four-value vocabulary — advisory, cached-reproducible, operationally authoritative, externally authoritative-and-synchronised) onto it in Foundation, and have Quantification's `qnt:derivationAuthority` become a documented alias or be retired in favour of the Foundation property directly. Don't let two authority-declaration properties coexist once Foundation has the real one.
++
++## 3. SHACL that shouldn't live where a first instinct would put it
++
++The critical review's D3 flagged `ex:`-versus-`qnt:`-named shapes as a documentation defect; working through the fix surfaced a structural point worth stating explicitly rather than leaving implicit in the examples file.
++
++**The four illustrative SHACL shapes in `quantification.md` §11** (`RangeShape`, `CyclicRangeShape`, `RecurrenceShape`, `OperationCapabilityMeetShape`) are genuinely substrate shapes — they check structural conditions the T-box's own cardinality restrictions can't fully express (the `sh:sparql` check that a `Contains`/`Overlaps` capability sets `rangeSemanticsKind`, for instance, needs a property-existence check OWL restrictions alone don't give you as cleanly). These belong in `shapes/constraints.ttl`, exactly where they're extracted to — no migration needed, this is already correctly placed.
++
++**What does need to move**, and wasn't in the original document as a distinct artefact at all: the **period-space compatibility check** (§6, §10 — a `Recurrence`'s `period` must be extent-compatible with its `anchor`'s position space) is described in prose as "a SHACL-level check" but no actual shape was ever written for it, in either the original draft or this rework. It's real, load-bearing content (S5 in the review) that exists today only as a sentence. **Recommend authoring this as an actual `sh:sparql` constraint in `shapes/constraints.ttl`**, following the same pattern as `OperationCapabilityMeetShape`, before this specification is treated as complete.
++
++**The self-consistency check between `rangeSemanticsKind` and `participatesInMeet`** (§7 — the two should agree, `ExactRangeSemantics` implying `true`) is stated as a correctness expectation in prose but not enforced anywhere. Same recommendation: a `sh:sparql` shape in `shapes/constraints.ttl`, not attempted here.
++
++**The `same-identity` and `no-self-delegation` pattern** established for Foundation and Party respectively has a Quantification analogue that was never written: nothing checks that a `Range`'s `lowerBound` and `upperBound` (where both are present) are actually on the same `ValueSpace` as the `Range` itself, beyond governance obligation 4's prose statement. Worth a shape.
++
++## 4. Precision and rounding policy need real vocabulary, not `rdfs:Literal`
++
++`qnt:precisionPolicy` and `qnt:roundingPolicy` (§7) are declared with `rdfs:Literal` range as a deliberate placeholder — flagged as Open Question 5 in the README itself, not hidden. This isn't a migration so much as unfinished business: these two properties are the least-specified part of the whole rework, present because the review required them to exist (S6) but without enough guidance in either source document to design their actual vocabulary responsibly. Worth a dedicated pass once a real implementation profile needs to interpret rather than merely record them, per the open question's own framing.
++
++## 5. What did *not* need to move — confirmed, not just assumed
++
++Worth stating plainly, since the exercise of checking is as valuable as the exercise of finding problems: the four SHACL shapes, the mechanism-intrinsic vocabulary (§8), and the law register (§10) are all correctly scoped to Quantification's own document. Nothing in Part 1 of the critical review's "what's right" table needed relocating, and the automated consistency checks run against this rework (every referenced class and property declared somewhere; every `qnt:` term used in the examples declared in the TTL) found no further drift beyond what's listed above.
++
++## 6. Two items from the critical review deliberately not resolved in this pass
++
++Named explicitly so they aren't mistaken for oversights:
++
++- **P2 (the shared multi-profile conformance test corpus)** needs an actual executable test suite, not README content. §24–25 of the examples document seed the table the review asked for, but building the corpus itself is a testing-artefact deliverable, not a specification one — out of scope for these three documents.
++- **P4's clean-room authoring procedure** is referenced in §15 rather than re-implemented, per the review's own recommendation to defer to the established procedure by reference. Whether the public premise ADR it calls for has actually been published is outside what this rework can confirm or produce.

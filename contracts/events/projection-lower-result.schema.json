@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.nebularis.org/lattice/events/projection-lower-result/1.0.0",
+  "title": "Surface Projection lower result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["jobId", "correlationId", "outcome", "stagingGraph", "backendCapabilities"],
+  "properties": {
+    "jobId": {"type": "string", "minLength": 1},
+    "correlationId": {"type": "string", "minLength": 1},
+    "outcome": {"enum": ["succeeded", "failed"]},
+    "stagingGraph": {"$ref": "projection-lower-request.schema.json#/$defs/graphReference"},
+    "backendCapabilities": {"type": "array", "items": {"type": "string"}},
+    "diagnostics": {"type": "array", "items": {"type": "string"}}
+  }
+}

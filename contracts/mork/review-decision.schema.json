@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.nebularis.org/lattice/mork/review-decision/1.0.0",
+  "title": "MORK review decision",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["snapshotId", "snapshotHash", "decision", "rationale"],
+  "properties": {
+    "snapshotId": {"type": "string", "minLength": 1},
+    "snapshotHash": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+    "decision": {"enum": ["confirm", "retarget", "reshape", "decline", "teach", "defer"]},
+    "rationale": {"type": "string", "minLength": 1},
+    "targetConcept": {"type": "string", "format": "uri"},
+    "teachingReference": {"type": "string", "format": "uri"}
+  }
+}

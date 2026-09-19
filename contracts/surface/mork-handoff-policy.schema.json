@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.nebularis.org/lattice/surface/mork-handoff-policy/1.0.0",
+  "title": "Surface to MORK staging handoff policy",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["projectionKind", "reviewRequirement", "stagingOnly", "activationAuthority"],
+  "properties": {
+    "projectionKind": {"enum": ["derivation", "join", "expansion"]},
+    "reviewRequirement": {"enum": ["engineering_review", "mapping_review"]},
+    "stagingOnly": {"const": true},
+    "activationAuthority": {"const": "mork_governance_workflow"}
+  }
+}

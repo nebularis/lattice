@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.nebularis.org/lattice/release/release-intent/1.0.0",
+  "title": "LATTICE release intent",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["releaseId", "tenantId", "projectId", "correlationId", "environment", "graphReferences", "generatedOutputs", "semanticGates", "requirements"],
+  "properties": {
+    "releaseId": {"type": "string", "minLength": 1},
+    "tenantId": {"type": "string", "minLength": 1},
+    "projectId": {"type": "string", "minLength": 1},
+    "correlationId": {"type": "string", "minLength": 1},
+    "environment": {"type": "string", "minLength": 1},
+    "graphReferences": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/graphReference"}},
+    "generatedOutputs": {"type": "array", "items": {"$ref": "#/$defs/contentReference"}},
+    "semanticGates": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/gateEvidence"}},
+    "requirements": {"$ref": "#/$defs/requirements"},
+    "rollbackTargetReleaseId": {"type": "string", "minLength": 1},
+    "retentionClass": {"type": "string", "minLength": 1},
+    "legalHold": {"type": "boolean"}
+  },
+  "$defs": {
+    "graphReference": {"type": "object", "additionalProperties": false, "required": ["tenantId", "projectId", "graphIri", "revisionHash"], "properties": {"tenantId": {"type": "string", "minLength": 1}, "projectId": {"type": "string", "minLength": 1}, "graphIri": {"type": "string", "format": "uri"}, "revisionHash": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"}}},
+    "contentReference": {"type": "object", "additionalProperties": false, "required": ["mediaType", "digest", "uri"], "properties": {"mediaType": {"type": "string", "minLength": 1}, "digest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"}, "uri": {"type": "string", "format": "uri"}}},
+    "gateEvidence": {"type": "object", "additionalProperties": false, "required": ["gate", "outcome", "evidenceDigest"], "properties": {"gate": {"type": "string", "minLength": 1}, "outcome": {"const": "passed"}, "evidenceDigest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"}}},
+    "requirements": {"type": "object", "additionalProperties": false, "required": ["profileId", "profileRevisionHash", "canonicalisationVersion", "approvalEvidenceDigest", "impactEvidenceDigest"], "properties": {"profileId": {"type": "string", "format": "uri"}, "profileRevisionHash": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"}, "canonicalisationVersion": {"type": "string", "minLength": 1}, "approvalEvidenceDigest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"}, "impactEvidenceDigest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"}}}
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.nebularis.org/lattice/surface/projection-contract/1.0.0",
+  "title": "Surface Projection contract command model",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contractId", "carrier", "projectionKind", "roleBindings", "backendPolicy"],
+  "properties": {
+    "contractId": {"type": "string", "minLength": 1},
+    "carrier": {"type": "string", "format": "uri"},
+    "projectionKind": {"enum": ["derivation", "join", "expansion"]},
+    "roleBindings": {"type": "array", "minItems": 2, "items": {"$ref": "#/$defs/roleBinding"}},
+    "backendPolicy": {"$ref": "#/$defs/backendPolicy"}
+  },
+  "$defs": {
+    "roleBinding": {"type": "object", "additionalProperties": false, "required": ["roleKind"], "properties": {"roleKind": {"enum": ["evaluation_subject", "required_evidence", "candidate_evidence", "result_target", "closure_basis"]}, "property": {"type": "string", "format": "uri"}, "carrier": {"type": "string", "format": "uri"}}},
+    "backendPolicy": {"type": "object", "additionalProperties": false, "required": ["allowedBackends", "deterministicOnly", "llmCompletionPolicy"], "properties": {"allowedBackends": {"type": "array", "minItems": 1, "items": {"enum": ["sparql", "shacl", "swrl", "rml", "native_ir"]}}, "deterministicOnly": {"const": true}, "llmCompletionPolicy": {"const": "no_llm_completion"}}}
+  }
+}

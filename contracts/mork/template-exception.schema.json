@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.nebularis.org/lattice/mork/template-exception/1.0.0",
+  "title": "MORK template-by-exception request",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["exceptionId", "templateId", "snapshotId", "reason", "engineeringReviewRequired"],
+  "properties": {
+    "exceptionId": {"type": "string", "minLength": 1},
+    "templateId": {"type": "string", "minLength": 1},
+    "snapshotId": {"type": "string", "minLength": 1},
+    "reason": {"type": "string", "minLength": 1},
+    "engineeringReviewRequired": {"const": true}
+  }
+}

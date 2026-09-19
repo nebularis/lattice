@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.nebularis.org/lattice/mork/calibration-gate/1.0.0",
+  "title": "MORK calibration gate",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["packId", "profileId", "modelId", "sampleSize", "precision", "minimumPrecision", "passed"],
+  "properties": {
+    "packId": {"type": "string", "minLength": 1},
+    "profileId": {"type": "string", "minLength": 1},
+    "modelId": {"type": "string", "minLength": 1},
+    "sampleSize": {"type": "integer", "minimum": 1},
+    "precision": {"type": "number", "minimum": 0, "maximum": 1},
+    "minimumPrecision": {"type": "number", "minimum": 0, "maximum": 1},
+    "passed": {"type": "boolean"}
+  }
+}

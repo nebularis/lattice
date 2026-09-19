@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.nebularis.org/lattice/release/retention-decision/1.0.0",
+  "title": "Release retention decision",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["releaseId", "retentionClass", "legalHold"],
+  "properties": {
+    "releaseId": {"type": "string", "minLength": 1},
+    "retentionClass": {"type": "string", "minLength": 1},
+    "legalHold": {"type": "boolean"}
+  }
+}

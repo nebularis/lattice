@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.nebularis.org/lattice/mork/review-queue/1.0.0",
+  "title": "Replayable MORK review queue entry",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["entryId", "snapshotId", "packId", "profileId", "modelId", "yieldScore", "orderingKey"],
+  "properties": {
+    "entryId": {"type": "string", "minLength": 1},
+    "snapshotId": {"type": "string", "minLength": 1},
+    "packId": {"type": "string", "minLength": 1},
+    "profileId": {"type": "string", "minLength": 1},
+    "modelId": {"type": "string", "minLength": 1},
+    "yieldScore": {"type": "number", "minimum": 0, "maximum": 1},
+    "orderingKey": {"type": "string", "minLength": 1}
+  }
+}

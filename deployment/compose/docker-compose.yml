@@ -1,0 +1,51 @@
+services:
+  workspace:
+    build:
+      context: ../../.devcontainer
+      dockerfile: Dockerfile
+    command: sleep infinity
+    volumes:
+      - ../..:/workspaces/lattice:cached
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      fuseki:
+        condition: service_started
+
+  postgres:
+    image: postgres:16.4-alpine
+    environment:
+      POSTGRES_DB: lattice
+      POSTGRES_USER: lattice
+      POSTGRES_PASSWORD: lattice
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lattice -d lattice"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  fuseki:
+    image: stain/jena-fuseki:5.1.0
+    environment:
+      ADMIN_PASSWORD: lattice
+    ports:
+      - "3030:3030"
+
+  oci-registry:
+    image: registry:2.8.3
+    profiles: ["oci-reference"]
+    ports:
+      - "5000:5000"

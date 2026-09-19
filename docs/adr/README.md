@@ -34,6 +34,21 @@ This directory holds the ADRs that govern LATTICE's substrate architecture. An A
 | [A-26](ADR-A26-provenance-chain-completeness-across-surface-mork-artefacts.md) | Provenance chain completeness across Surface, MORK, and artefacts | Accepted |
 | [A-27](ADR-A27-invalidation-and-minimal-scope-regeneration-policy.md) | Invalidation and minimal-scope regeneration policy | Accepted |
 | [A-28](ADR-A28-parity-and-conformance-release-gate.md) | Parity and conformance gate for generated behaviours | Accepted |
+| [A-29](ADR-A29-repository-toolchain-and-environment-boundary.md) | Repository toolchain and environment boundary | Accepted |
+| [A-30](ADR-A30-shared-semantic-platform-cross-runtime-boundary.md) | Shared semantic platform and cross-runtime boundary | Accepted |
+| [A-31](ADR-A31-release-stack-neutral-integration-contract.md) | Release-stack-neutral integration contract | Accepted |
+| [A-32](ADR-A32-surface-revision-lifecycle-and-release-candidates.md) | Surface revision lifecycle and immutable release candidates | Accepted |
+| [A-33](ADR-A33-surface-revision-ledger-and-optimistic-concurrency.md) | Surface revision ledger and optimistic concurrency | Accepted |
+| [A-34](ADR-A34-surface-graph-family-registry-and-immutable-identity.md) | Surface graph-family registry and immutable identity | Accepted |
+| [A-35](ADR-A35-trusted-surface-worker-execution-boundary.md) | Trusted Surface worker execution boundary | Accepted |
+| [A-36](ADR-A36-surface-worker-idempotent-delivery-boundary.md) | Surface worker idempotent delivery boundary | Accepted |
+| [A-37](ADR-A37-surface-worker-durable-processing-and-rabbitmq-acknowledgement.md) | Surface worker durable processing and RabbitMQ acknowledgement | Accepted |
+| [A-38](ADR-A38-surface-output-publication-and-studio-authoring-boundary.md) | Surface output publication and Studio authoring boundary | Accepted |
+| [A-39](ADR-A39-semantic-release-assembly-and-provenance-ledger.md) | Semantic release assembly and provenance ledger | Accepted |
+| [A-40](ADR-A40-oci-reference-export-restore-and-command-adapters.md) | OCI reference export, restore, and command adapters | Accepted |
+| [A-41](ADR-A41-surface-projection-mork-staging-boundary.md) | Surface Projection to MORK staging boundary | Accepted |
+| [A-42](ADR-A42-mork-review-snapshot-and-decision-learning-boundary.md) | MORK review snapshot and decision-learning boundary | Accepted |
+| [A-43](ADR-A43-mork-replayable-queue-and-calibrated-governance.md) | MORK replayable queue and calibrated governance | Accepted |
 | [A-03](ADR-A03-condition-taxonomy.md) | Eligibility condition taxonomy | Accepted |
 | [A-04](ADR-A04-interval-overlap-law-split.md) | Interval containment and overlap law split | Accepted |
 | [A-05](ADR-A05-compatibility-vocabulary.md) | Compatibility operation vocabulary | Accepted |

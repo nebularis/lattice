@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.nebularis.org/lattice/surface/surface-revision-transition/1.0.0",
+  "title": "Surface revision transition command",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["expectedVersion", "action"],
+  "properties": {
+    "expectedVersion": {"type": "integer", "minimum": 0},
+    "action": {"enum": ["request_review", "approve", "record_generation", "release", "supersede"]},
+    "approvalId": {"type": "string", "minLength": 1},
+    "generatedGraph": {"$ref": "surface-revision.schema.json#/$defs/graphReference"}
+  },
+  "allOf": [
+    {"if": {"properties": {"action": {"const": "approve"}}}, "then": {"required": ["approvalId"]}},
+    {"if": {"properties": {"action": {"const": "record_generation"}}}, "then": {"required": ["generatedGraph"]}}
+  ]
+}
