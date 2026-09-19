@@ -2094,6 +2094,49 @@ class TestCodebookCoverage:
 
 
 # ===========================================================================
+# codebook.code_for() / codes_for() -- unconditional (no Mork.ttl needed)
+# ===========================================================================
+
+
+class TestCodebookLookup:
+    def test_code_for_resolves_a_type(self):
+        assert cb.code_for(cb.MORK_NS + "Datum") == "MD"
+
+    def test_code_for_resolves_a_property(self):
+        assert cb.code_for(cb.MORK_NS + "exactTBoxMatch") == "xt"
+
+    def test_code_for_resolves_a_reserved_individual(self):
+        assert cb.code_for(cb.MORK_NS + "DraftMode") == ".draft"
+
+    def test_code_for_unknown_iri_is_none(self):
+        assert cb.code_for("http://example.org/not-in-mork#Nope") is None
+
+    def test_code_for_resolves_polymorphic_property_members(self):
+        assert cb.code_for(cb.MORK_NS + "hasParameterBinding") == "pb"
+        assert cb.code_for(cb.MORK_NS + "paramBinding") == "pb"
+        assert cb.code_for(cb.MORK_NS + "hasConstraintProvenance") == "pv"
+
+    def test_codes_for_preserves_order_and_drops_unknowns(self):
+        iris = [
+            cb.MORK_NS + "exactTBoxMatch",
+            "http://example.org/not-in-mork#Nope",
+            cb.MORK_NS + "broadTBoxCategoryMatch",
+        ]
+        assert cb.codes_for(iris) == ["xt", "bt"]
+
+    def test_every_code_reverse_resolves_to_a_code(self):
+        # Every forward entry in TYPES/PROPERTIES/RESERVED should round-trip
+        # through code_for() to *some* code (not necessarily the same one,
+        # since a few IRIs have more than one code -- e.g. possibleMatch's
+        # synonym pm/px -- but never None).
+        for code, spec in cb.TYPES.items():
+            assert cb.code_for(cb._expand(spec.curie)) is not None, code
+        for code, spec in cb.PROPERTIES.items():
+            for part in spec.curie.split("/"):
+                assert cb.code_for(cb._expand(part)) is not None, code
+
+
+# ===========================================================================
 # Miscellaneous public-API tests
 # ===========================================================================
 
@@ -2111,6 +2154,49 @@ class TestPublicApi:
         assert isinstance(f.subject, URIRef)
         assert isinstance(f.message, str) and f.message
         assert isinstance(f.mirrors, str)
+        assert f.severity == "warning"
+        assert f.line is None
+        assert f.code == f.rule_id  # .code is a stable alias for .rule_id
+
+    def test_syntax_error_has_stable_namespaced_code(self):
+        with pytest.raises(McnSyntaxError) as excinfo:
+            gh("s1 zzz foo")
+        assert excinfo.value.code == "core-unknown-property-code"
+
+    def test_syntax_error_code_namespaced_per_sub_parser(self):
+        cases = {
+            'MS gs "c"': "shacl-",
+            'MR gr "no arrow here"': "swrl-",
+            'MT gt "nonsense"': "rml-",
+        }
+        for fragment, prefix in cases.items():
+            with pytest.raises(McnSyntaxError) as excinfo:
+                gh(f"s1 {fragment}")
+            assert excinfo.value.code.startswith(prefix), (fragment, excinfo.value.code)
+
+    def test_every_raised_syntax_error_has_a_non_default_code(self):
+        # Sanity check on the whole error surface: no raise site should be
+        # silently falling back to one of the generic per-parser defaults
+        # ("core-error", "lex-error", "ce-error", "swrl-error",
+        # "shacl-error", "rml-error", "expr-error", "syntax-error").
+        generic = {
+            "syntax-error", "lex-error", "ce-error", "swrl-error",
+            "shacl-error", "rml-error", "expr-error", "core-error",
+        }
+        samples = [
+            "s1 zzz foo",
+            "s1 ZZ c foo",
+            's1 xt "notanid"',
+            "s1 c [MD f ex:X]",
+            "s1 tg [z ex:Applicant]",
+            "!T ex:s ex:p",
+            "!Z ex:s",
+            'e1 = %broken',
+        ]
+        for text in samples:
+            with pytest.raises(McnSyntaxError) as excinfo:
+                gh(text)
+            assert excinfo.value.code not in generic, (text, excinfo.value.code)
 
     def test_decode_options_kwarg_seeds_options(self):
         with pytest.raises(McnLintError):
@@ -2132,3 +2218,37 @@ class TestPublicApi:
         assert str(FND) == cb.PREDECLARED_PREFIXES["fnd"]
         assert str(DCT) == cb.PREDECLARED_PREFIXES["dct"]
         assert str(SKOS) == cb.PREDECLARED_PREFIXES["skos"]
+
+
+class TestMcnPackage:
+    """`import mcn` is a thin re-export over mcn_decoder/mcn_codebook, kept
+    for consumers (e.g. the MTP generator sketches in mork/docs/) that
+    expect a package literally named `mcn` with decode/lint as top-level
+    functions."""
+
+    def test_import_mcn_exposes_decode_and_lint(self):
+        import mcn
+
+        graph = mcn.decode(f"@b <{EX}>\n@p ex=<http://ex.org/onto#>\n@t ex\ns1 MD f ex:X df ex:Y\n")
+        assert (U("s1"), MORK.mappingFor, URIRef("http://ex.org/onto#X")) in graph
+        assert mcn.lint(graph) == []
+
+    def test_mcn_package_reuses_the_same_classes(self):
+        import mcn
+
+        assert mcn.decode is decode
+        assert mcn.lint is lint
+        assert mcn.McnSyntaxError is McnSyntaxError
+        assert mcn.LintFinding is LintFinding
+
+    def test_mcn_package_exposes_codebook_submodule(self):
+        import mcn
+
+        assert mcn.codebook.code_for(mcn.codebook.MORK_NS + "exactTBoxMatch") == "xt"
+
+    def test_mcn_package_has_no_encode(self):
+        # Deliberately absent: spec §15 (RDF -> MCN) is not implemented.
+        # Consumers are expected to check via getattr(mcn, "encode", None).
+        import mcn
+
+        assert not hasattr(mcn, "encode")

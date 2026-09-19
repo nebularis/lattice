@@ -58,11 +58,28 @@ _QL = Namespace("http://semweb.mmlab.be/ns/ql#")
 
 class McnSyntaxError(SyntaxError):
     """A well-formedness violation (spec Sec 14.1). Always names the
-    logical line it was found on, 1-indexed."""
+    logical line it was found on, 1-indexed.
 
-    def __init__(self, message: str, line_no: Optional[int] = None, line_text: str = ""):
+    ``code`` is a stable, machine-matchable slug identifying the *kind* of
+    failure (e.g. "core-unknown-property-code", "shacl-unknown-severity"),
+    namespaced by the sub-parser that raised it (lex/ce/swrl/shacl/rml/expr/
+    core). It exists so tooling built on top of this decoder -- a repair
+    loop, a mutation-testing harness, a diagnostic->doctrine table -- can
+    key off a stable identifier the way it already can for LintFinding.code,
+    instead of pattern-matching free-text messages. It is not part of the
+    MCN spec itself; only the message and line number are normative.
+    """
+
+    def __init__(
+        self,
+        message: str,
+        line_no: Optional[int] = None,
+        line_text: str = "",
+        code: str = "syntax-error",
+    ):
         self.line_no = line_no
         self.line_text = line_text
+        self.code = code
         located = f"line {line_no}: {message}" if line_no is not None else message
         if line_text:
             located += f"\n    {line_text}"
@@ -141,8 +158,8 @@ class _Lexer:
 
     # -- primitives --
 
-    def _err(self, message: str) -> McnSyntaxError:
-        return McnSyntaxError(message, self.line_no, self.s)
+    def _err(self, message: str, code: str = "lex-error") -> McnSyntaxError:
+        return McnSyntaxError(message, self.line_no, self.s, code=code)
 
     def peek_char(self) -> str:
         return self.s[self.i] if self.i < self.n else ""
@@ -163,21 +180,21 @@ class _Lexer:
         out: List[str] = []
         while True:
             if self.i >= self.n:
-                raise self._err("unterminated quoted string")
+                raise self._err("unterminated quoted string", code="lex-unterminated-quoted-string")
             c = self.s[self.i]
             if c == "\\":
                 if self.i + 1 >= self.n:
-                    raise self._err("dangling backslash escape in quoted string")
+                    raise self._err("dangling backslash escape in quoted string", code="lex-dangling-backslash-escape-in-quoted-string")
                 nxt = self.s[self.i + 1]
                 if nxt == "u":
                     hexdigits = self.s[self.i + 2 : self.i + 6]
                     if len(hexdigits) != 4 or not re.fullmatch(r"[0-9A-Fa-f]{4}", hexdigits):
-                        raise self._err(r"malformed \u escape in quoted string")
+                        raise self._err(r"malformed \u escape in quoted string", code="lex-malformed-u-escape-in-quoted-string")
                     out.append(chr(int(hexdigits, 16)))
                     self.i += 6
                     continue
                 if nxt not in _ESCAPES:
-                    raise self._err(f"unknown escape '\\{nxt}' in quoted string")
+                    raise self._err(f"unknown escape '\\{nxt}' in quoted string", code="lex-unknown-escape-in-quoted-string")
                 out.append(_ESCAPES[nxt])
                 self.i += 2
                 continue
@@ -192,13 +209,13 @@ class _Lexer:
         if self.peek_char() == "@":
             m = re.match(r"@([A-Za-z]+(?:-[A-Za-z0-9]+)*)", self.s[self.i :])
             if not m:
-                raise self._err("malformed language tag after quoted string")
+                raise self._err("malformed language tag after quoted string", code="lex-malformed-language-tag-after-quoted-string")
             lang = m.group(1)
             self.i += m.end()
         elif self.peek_char() == "^":
             m = re.match(r"\^([A-Za-z_][\w.\-]*:[\w.\-]+)", self.s[self.i :])
             if not m:
-                raise self._err("malformed datatype CURIE after quoted string (expected ^prefix:local)")
+                raise self._err("malformed datatype CURIE after quoted string (expected ^prefix:local)", code="lex-malformed-datatype-curie-after-quoted-string")
             datatype = m.group(1)
             self.i += m.end()
         return Value(kind="quoted", text=text, lang=lang, datatype=datatype)
@@ -223,7 +240,7 @@ class _Lexer:
                     self.i += 1
                     return self.s[start + 1 : self.i - 1]
             self.i += 1
-        raise self._err(f"unbalanced '{open_ch}'")
+        raise self._err(f"unbalanced '{open_ch}'", code="lex-unbalanced")
 
     def _skip_quoted_verbatim(self) -> None:
         assert self.s[self.i] == '"'
@@ -237,7 +254,7 @@ class _Lexer:
                 self.i += 1
                 return
             self.i += 1
-        raise self._err("unterminated quoted string")
+        raise self._err("unterminated quoted string", code="lex-unterminated-quoted-string")
 
     # -- bare token: runs until whitespace or a delimiter --
 
@@ -246,7 +263,7 @@ class _Lexer:
         while self.i < self.n and self.s[self.i] not in _DELIMS:
             self.i += 1
         if self.i == start:
-            raise self._err(f"unexpected character {self.s[self.i]!r}")
+            raise self._err(f"unexpected character {self.s[self.i]!r}", code="lex-unexpected-character")
         return self.s[start : self.i]
 
     def peek_bare(self) -> str:
@@ -262,13 +279,13 @@ class _Lexer:
         self.skip_ws()
         c = self.peek_char()
         if c == "":
-            raise self._err("expected a value, found end of line")
+            raise self._err("expected a value, found end of line", code="lex-expected-a-value-found-end-of")
         if c == '"':
             return self.read_quoted()
         if c == "<":
             j = self.s.find(">", self.i)
             if j == -1:
-                raise self._err("unterminated '<' IRI")
+                raise self._err("unterminated '<' IRI", code="lex-unterminated-iri")
             text = self.s[self.i + 1 : j]
             self.i = j + 1
             return Value(kind="iri", text=text)
@@ -276,7 +293,7 @@ class _Lexer:
             inner = self.read_bracketed("[", "]")
             return Value(kind="inline", text=inner)
         if c in "{}]":
-            raise self._err(f"unexpected '{c}'")
+            raise self._err(f"unexpected '{c}'", code="lex-unexpected")
         return Value(kind="bare", text=self.read_bare())
 
     # -- one value plus its optional {annotation}, for list members --
@@ -302,7 +319,7 @@ class _Lexer:
     def read_word(self) -> str:
         self.skip_ws()
         if self.at_end():
-            raise self._err("expected a word, found end of line")
+            raise self._err("expected a word, found end of line", code="lex-expected-a-word-found-end-of")
         return self.read_bare()
 
     def peek_word(self) -> Optional[str]:
@@ -364,9 +381,9 @@ def _split_top_level_words(text: str) -> List[str]:
         buf.append(ch)
         i += 1
     if in_quote:
-        raise McnSyntaxError("unterminated quoted string", line_text=text)
+        raise McnSyntaxError("unterminated quoted string", line_text=text, code="lex-unterminated-quoted-string")
     if depth != 0:
-        raise McnSyntaxError("unbalanced brackets", line_text=text)
+        raise McnSyntaxError("unbalanced brackets", line_text=text, code="lex-unbalanced-brackets")
     if buf:
         words.append("".join(buf))
     return words
@@ -427,7 +444,8 @@ def _tokenize_ce(text: str, line_no: int) -> List[str]:
         m = _CE_TOKEN_RE.match(text, pos)
         if not m:
             raise McnSyntaxError(
-                f"malformed class expression near {text[pos:pos + 20]!r}", line_no, text
+                f"malformed class expression near {text[pos:pos + 20]!r}", line_no, text,
+                code="ce-malformed-class-expression-near",
             )
         tokens.append(m.group(0))
         pos = m.end()
@@ -449,15 +467,15 @@ class _ClassExpressionParser:
         self.pos = 0
         self.line_no = line_no
 
-    def _err(self, message: str):
-        return McnSyntaxError(message, self.line_no)
+    def _err(self, message: str, code: str = "ce-error"):
+        return McnSyntaxError(message, self.line_no, code=code)
 
     def peek(self) -> Optional[str]:
         return self.toks[self.pos] if self.pos < len(self.toks) else None
 
     def take(self) -> str:
         if self.pos >= len(self.toks):
-            raise self._err("unexpected end of class expression")
+            raise self._err("unexpected end of class expression", code="ce-unexpected-end-of-class-expression")
         tok = self.toks[self.pos]
         self.pos += 1
         return tok
@@ -465,7 +483,7 @@ class _ClassExpressionParser:
     def expect(self, tok: str) -> None:
         got = self.take()
         if got != tok:
-            raise self._err(f"expected {tok!r}, found {got!r}")
+            raise self._err(f"expected {tok!r}, found {got!r}", code="ce-expected-found")
 
     def at_end(self) -> bool:
         return self.pos >= len(self.toks)
@@ -517,7 +535,7 @@ class _ClassExpressionParser:
         tok = self.take()
         m = re.fullmatch(r"(\d+)?(\.\.)?(\d+)?", tok)
         if not m or tok == "":
-            raise self._err(f"malformed cardinality {tok!r}")
+            raise self._err(f"malformed cardinality {tok!r}", code="ce-malformed-cardinality")
         lo_s, dots, hi_s = m.group(1), m.group(2), m.group(3)
         lo = int(lo_s) if lo_s is not None else None
         hi = int(hi_s) if hi_s is not None else None
@@ -529,7 +547,7 @@ class _ClassExpressionParser:
     def parse_ae(self) -> URIRef:
         tok = self.peek()
         if tok is None:
-            raise self._err("unexpected end of class expression")
+            raise self._err("unexpected end of class expression", code="ce-unexpected-end-of-class-expression")
         if tok == "~":
             self.take()
             operand = self.parse_ae()
@@ -610,7 +628,7 @@ class _ClassExpressionParser:
             if qualifier is not None:
                 self.d.graph.add((node, OWL.onClass, qualifier))
         else:
-            raise self._err(f"unknown restriction operator {op!r}")
+            raise self._err(f"unknown restriction operator {op!r}", code="ce-unknown-restriction-operator")
         return node
 
     def _resolve_hasvalue(self, tok: str):
@@ -633,6 +651,7 @@ def _parse_class_expression(decoder: "_Decoder", text: str, line_no: int) -> URI
         raise McnSyntaxError(
             f"unexpected trailing content in class expression: {''.join(parser.toks[parser.pos:])!r}",
             line_no,
+            code="ce-unexpected-trailing-content-in-class-expression",
         )
     return result
 
@@ -645,6 +664,7 @@ def _parse_property_expression(decoder: "_Decoder", text: str, line_no: int) -> 
         raise McnSyntaxError(
             f"unexpected trailing content in property expression: {''.join(parser.toks[parser.pos:])!r}",
             line_no,
+            code="ce-unexpected-trailing-content-in-property-expression",
         )
     return node
 
@@ -671,12 +691,12 @@ class _SwrlPayloadParser:
         self.line_no = line_no
         self._vars: Dict[str, URIRef] = {}
 
-    def _err(self, message: str):
-        return McnSyntaxError(f"malformed SWRL payload: {message}", self.line_no)
+    def _err(self, message: str, code: str = "swrl-error"):
+        return McnSyntaxError(f"malformed SWRL payload: {message}", self.line_no, code=code)
 
     def parse(self, text: str) -> None:
         if "->" not in text:
-            raise self._err("missing '->' separating body from head")
+            raise self._err("missing '->' separating body from head", code="swrl-missing-separating-body-from-head")
         body_text, head_text = text.split("->", 1)
         body_atoms = self._parse_atoms(body_text.strip())
         head_atoms = self._parse_atoms(head_text.strip())
@@ -686,13 +706,13 @@ class _SwrlPayloadParser:
 
     def _parse_atoms(self, text: str) -> List[URIRef]:
         if not text:
-            raise self._err("empty atom conjunction")
+            raise self._err("empty atom conjunction", code="swrl-empty-atom-conjunction")
         atoms = []
         pos = 0
         for m in _SWRL_ATOM_RE.finditer(text):
             atoms.append(self._make_atom(m.group(1), _split_swrl_args(m.group(2))))
         if not atoms:
-            raise self._err(f"no atoms found in {text!r}")
+            raise self._err(f"no atoms found in {text!r}", code="swrl-no-atoms-found-in")
         return atoms
 
     def _var(self, name: str) -> URIRef:
@@ -709,7 +729,7 @@ class _SwrlPayloadParser:
         if text.startswith('"'):
             m = re.fullmatch(r'"((?:[^"\\]|\\.)*)"(?:\^([\w.\-]+:[\w.\-]+))?', text)
             if not m:
-                raise self._err(f"malformed literal argument {text!r}")
+                raise self._err(f"malformed literal argument {text!r}", code="swrl-malformed-literal-argument")
             unescaped = m.group(1).replace('\\"', '"').replace("\\\\", "\\")
             if m.group(2):
                 return Literal(unescaped, datatype=self.d._resolve_curie(m.group(2), self.line_no))
@@ -761,11 +781,11 @@ class _SwrlPayloadParser:
             self.d.graph.add((node, SWRL.argument1, self._arg(raw_args[0])))
             self.d.graph.add((node, SWRL.argument2, arg2))
             return node
-        raise self._err(f"atom {name}(...) has {len(raw_args)} arguments; expected 1 or 2")
+        raise self._err(f"atom {name}(...) has {len(raw_args)} arguments; expected 1 or 2", code="swrl-atom-has-arguments-expected-1-or")
 
     def _require_arity(self, name: str, args: List[str], expected: int) -> None:
         if len(args) != expected:
-            raise self._err(f"{name}(...) expects {expected} arguments, found {len(args)}")
+            raise self._err(f"{name}(...) expects {expected} arguments, found {len(args)}", code="swrl-expects-arguments-found")
 
 
 # ---------------------------------------------------------------------------
@@ -798,7 +818,7 @@ def _tokenize_sh(text: str, line_no: int) -> List[str]:
             continue
         m = _SH_TOKEN_RE.match(text, pos)
         if not m:
-            raise McnSyntaxError(f"malformed SHACL payload near {text[pos:pos + 20]!r}", line_no)
+            raise McnSyntaxError(f"malformed SHACL payload near {text[pos:pos + 20]!r}", line_no, code="shacl-malformed-shacl-payload-near")
         tokens.append(m.group(0))
         pos = m.end()
     return tokens
@@ -814,15 +834,15 @@ class _ShaclPayloadParser:
         self.pos = 0
         self._prop_shape_count = 0
 
-    def _err(self, message: str):
-        return McnSyntaxError(f"malformed SHACL payload: {message}", self.line_no)
+    def _err(self, message: str, code: str = "shacl-error"):
+        return McnSyntaxError(f"malformed SHACL payload: {message}", self.line_no, code=code)
 
     def peek(self) -> Optional[str]:
         return self.toks[self.pos] if self.pos < len(self.toks) else None
 
     def take(self) -> str:
         if self.pos >= len(self.toks):
-            raise self._err("unexpected end of payload")
+            raise self._err("unexpected end of payload", code="shacl-unexpected-end-of-payload")
         t = self.toks[self.pos]
         self.pos += 1
         return t
@@ -830,7 +850,7 @@ class _ShaclPayloadParser:
     def expect(self, tok: str) -> str:
         got = self.take()
         if got != tok:
-            raise self._err(f"expected {tok!r}, found {got!r}")
+            raise self._err(f"expected {tok!r}, found {got!r}", code="shacl-expected-found")
         return got
 
     def parse(self, text: str) -> None:
@@ -847,7 +867,7 @@ class _ShaclPayloadParser:
         while True:
             mode = self.take()
             if mode not in mode_pred:
-                raise self._err(f"unknown target mode {mode!r} (expected c/o/s/n)")
+                raise self._err(f"unknown target mode {mode!r} (expected c/o/s/n)", code="shacl-unknown-target-mode-expected-c-o")
             target_iri = self._resolve(self.take())
             self.d.graph.add((self.shape, mode_pred[mode], target_iri))
             if self.peek() == ",":
@@ -861,7 +881,7 @@ class _ShaclPayloadParser:
             self.take()
             sev = self.take()
             if sev not in _SH_SEVERITY:
-                raise self._err(f"unknown severity {sev!r}")
+                raise self._err(f"unknown severity {sev!r}", code="shacl-unknown-severity")
             self.d.graph.add((self.shape, SH.severity, _SH_SEVERITY[sev]))
             return
         if tok == "msg":
@@ -969,7 +989,7 @@ class _ShaclPayloadParser:
         elif tok == "nk":
             kind = self.take()
             if kind not in _SH_NODEKIND:
-                raise self._err(f"unknown node kind {kind!r}")
+                raise self._err(f"unknown node kind {kind!r}", code="shacl-unknown-node-kind")
             self.d.graph.add((pshape, SH.nodeKind, _SH_NODEKIND[kind]))
         elif tok == "[":
             self._parse_count(pshape)
@@ -1007,14 +1027,14 @@ class _ShaclPayloadParser:
         elif tok == "!":
             sev = self.take()
             if sev not in _SH_SEVERITY:
-                raise self._err(f"unknown severity {sev!r}")
+                raise self._err(f"unknown severity {sev!r}", code="shacl-unknown-severity")
             self.d.graph.add((pshape, SH.severity, _SH_SEVERITY[sev]))
         elif tok == "msg":
             self.d.graph.add((pshape, SH.message, self._literal_or_string(self.take())))
         elif tok == "name":
             self.d.graph.add((pshape, SH.name, self._literal_or_string(self.take())))
         else:
-            raise self._err(f"unknown property-shape constraint {tok!r}")
+            raise self._err(f"unknown property-shape constraint {tok!r}", code="shacl-unknown-property-shape-constraint")
 
     def _number(self, tok: str):
         if _DECIMAL_RE.fullmatch(tok):
@@ -1053,17 +1073,17 @@ class _RmlPayloadParser:
         self.tm = tm
         self.line_no = line_no
 
-    def _err(self, message: str):
-        return McnSyntaxError(f"malformed RML payload: {message}", self.line_no)
+    def _err(self, message: str, code: str = "rml-error"):
+        return McnSyntaxError(f"malformed RML payload: {message}", self.line_no, code=code)
 
     def parse(self, text: str) -> None:
         self.d.graph.add((self.tm, RDF.type, RR.TriplesMap))
         clauses = _split_top_level_words_on_semicolons(text)
         if not clauses:
-            raise self._err("empty payload")
+            raise self._err("empty payload", code="rml-empty-payload")
         self._parse_logical_source(clauses[0])
         if len(clauses) < 2:
-            raise self._err("missing subject map ('sm ...') clause")
+            raise self._err("missing subject map ('sm ...') clause", code="rml-missing-subject-map-sm-clause")
         self._parse_subject_map(clauses[1])
         for clause in clauses[2:]:
             self._parse_predicate_object_map(clause)
@@ -1071,10 +1091,10 @@ class _RmlPayloadParser:
     def _parse_logical_source(self, clause: str) -> None:
         words = _split_top_level_words(clause)
         if not words or words[0] != "src":
-            raise self._err("logical source clause must start with 'src'")
+            raise self._err("logical source clause must start with 'src'", code="rml-logical-source-clause-must-start-with")
         i = 1
         if i >= len(words):
-            raise self._err("'src' requires a source string")
+            raise self._err("'src' requires a source string", code="rml-src-requires-a-source-string")
         source = self._string(words[i])
         i += 1
         ref_formulation = _RML_REF_FORMULATION["json"]
@@ -1084,7 +1104,7 @@ class _RmlPayloadParser:
                 i += 1
                 fmt = words[i]
                 if fmt not in _RML_REF_FORMULATION:
-                    raise self._err(f"unknown reference formulation {fmt!r}")
+                    raise self._err(f"unknown reference formulation {fmt!r}", code="rml-unknown-reference-formulation")
                 ref_formulation = _RML_REF_FORMULATION[fmt]
                 i += 1
             elif words[i] == "it":
@@ -1092,7 +1112,7 @@ class _RmlPayloadParser:
                 iterator = self._string(words[i])
                 i += 1
             else:
-                raise self._err(f"unexpected token in logical source: {words[i]!r}")
+                raise self._err(f"unexpected token in logical source: {words[i]!r}", code="rml-unexpected-token-in-logical-source")
         ls = self.d._mint_bnode()
         self.d.graph.add((self.tm, RML.logicalSource, ls))
         self.d.graph.add((ls, RML.source, Literal(source)))
@@ -1103,9 +1123,9 @@ class _RmlPayloadParser:
     def _parse_subject_map(self, clause: str) -> None:
         words = _split_top_level_words(clause)
         if not words or words[0] != "sm":
-            raise self._err("subject map clause must start with 'sm'")
+            raise self._err("subject map clause must start with 'sm'", code="rml-subject-map-clause-must-start-with")
         if len(words) < 2:
-            raise self._err("'sm' requires a template")
+            raise self._err("'sm' requires a template", code="rml-sm-requires-a-template")
         template = words[1]
         sm = self.d._mint_bnode()
         self.d.graph.add((self.tm, RR.subjectMap, sm))
@@ -1113,7 +1133,7 @@ class _RmlPayloadParser:
         i = 2
         while i < len(words):
             if words[i] != "cls":
-                raise self._err(f"unexpected token in subject map: {words[i]!r}")
+                raise self._err(f"unexpected token in subject map: {words[i]!r}", code="rml-unexpected-token-in-subject-map")
             i += 1
             self.d.graph.add((sm, RR["class"], self.d._resolve_identifier(words[i], self.line_no)))
             i += 1
@@ -1121,7 +1141,7 @@ class _RmlPayloadParser:
     def _parse_predicate_object_map(self, clause: str) -> None:
         words = _split_top_level_words(clause)
         if len(words) < 2:
-            raise self._err(f"malformed predicate-object map: {clause!r}")
+            raise self._err(f"malformed predicate-object map: {clause!r}", code="rml-malformed-predicate-object-map")
         predicate = self.d._resolve_identifier(words[0], self.line_no)
         pom = self.d._mint_bnode()
         self.d.graph.add((self.tm, RR.predicateObjectMap, pom))
@@ -1142,7 +1162,7 @@ class _RmlPayloadParser:
             if "[" in ref:
                 ref, bracketed = ref.split("[", 1)
                 if not bracketed.endswith("]"):
-                    raise self._err(f"unbalanced '[' in join condition: {op!r}")
+                    raise self._err(f"unbalanced '[' in join condition: {op!r}", code="rml-unbalanced-in-join-condition")
                 join_text = bracketed[:-1]
             parent = self.d._resolve_identifier(ref, self.line_no)
             self.d.graph.add((om, RR.parentTriplesMap, parent))
@@ -1154,7 +1174,7 @@ class _RmlPayloadParser:
                     self.d.graph.add((jc, RR.child, Literal(child.strip())))
                     self.d.graph.add((jc, RR.parent, Literal(par.strip())))
         else:
-            raise self._err(f"unknown object-map operator {op[:1]!r} in {op!r}")
+            raise self._err(f"unknown object-map operator {op[:1]!r} in {op!r}", code="rml-unknown-object-map-operator-in")
         while i < len(words):
             if words[i] == "dt":
                 i += 1
@@ -1165,7 +1185,7 @@ class _RmlPayloadParser:
                 self.d.graph.add((om, RR.language, Literal(words[i])))
                 i += 1
             else:
-                raise self._err(f"unexpected trailing token {words[i]!r} in predicate-object map")
+                raise self._err(f"unexpected trailing token {words[i]!r} in predicate-object map", code="rml-unexpected-trailing-token-in-predicate-object")
 
     def _string(self, tok: str) -> str:
         if tok.startswith('"'):
@@ -1246,19 +1266,19 @@ class _ExpressionParser:
         self.d = decoder
         self.line_no = line_no
 
-    def _err(self, message: str):
-        return McnSyntaxError(f"malformed expression: {message}", self.line_no)
+    def _err(self, message: str, code: str = "expr-error"):
+        return McnSyntaxError(f"malformed expression: {message}", self.line_no, code=code)
 
     def parse_into(self, node: URIRef, text: str, *, is_root: bool = False) -> URIRef:
         text = text.strip()
         if not text:
-            raise self._err("empty expression")
+            raise self._err("empty expression", code="expr-empty-expression")
         return self._build(node, text, is_root=is_root)
 
     def _build(self, node: URIRef, text: str, *, is_root: bool = False) -> URIRef:
         parts = _expr_split_top_level(text, "+")
         if not parts or any(p == "" for p in parts):
-            raise self._err(f"empty term in {text!r}")
+            raise self._err(f"empty term in {text!r}", code="expr-empty-term-in")
         if len(parts) == 1:
             resolved = self._term(node, parts[0])
             if is_root and resolved != node:
@@ -1303,7 +1323,7 @@ class _ExpressionParser:
 
     def _read_quoted(self, text: str, quote_char: str) -> str:
         if not text.startswith(quote_char):
-            raise self._err(f"expected {quote_char!r} at start of {text!r}")
+            raise self._err(f"expected {quote_char!r} at start of {text!r}", code="expr-expected-at-start-of")
         out: List[str] = []
         i = 1
         n = len(text)
@@ -1320,26 +1340,26 @@ class _ExpressionParser:
             out.append(c)
             i += 1
         else:
-            raise self._err(f"unterminated {quote_char!r} in {text!r}")
+            raise self._err(f"unterminated {quote_char!r} in {text!r}", code="expr-unterminated-in")
         if i != n:
-            raise self._err(f"unexpected trailing content after quoted span: {text!r}")
+            raise self._err(f"unexpected trailing content after quoted span: {text!r}", code="expr-unexpected-trailing-content-after-quoted-span")
         return "".join(out)
 
     def _interpolation(self, node: URIRef, text: str) -> URIRef:
         m = re.match(r'%"((?:[^"\\]|\\.)*)"\((.*)\)$', text, re.DOTALL)
         if not m:
-            raise self._err(f"malformed interpolation expression {text!r}")
+            raise self._err(f"malformed interpolation expression {text!r}", code="expr-malformed-interpolation-expression")
         template = m.group(1).replace('\\"', '"').replace("\\\\", "\\")
         bindings_text = m.group(2).strip()
         self.d._add_type(node, MORK.InterpolationExpression, "mork:InterpolationExpression")
         self.d.graph.add((node, MORK.templateString, Literal(template)))
         parts = _expr_split_top_level(bindings_text, ",") if bindings_text else []
         if not parts:
-            raise self._err("interpolation expression has no bindings")
+            raise self._err("interpolation expression has no bindings", code="expr-interpolation-expression-has-no-bindings")
         for idx, part in enumerate(parts, start=1):
             name, sep, expr_text = part.partition("=")
             if not sep:
-                raise self._err(f"malformed binding {part!r} (expected name=expr)")
+                raise self._err(f"malformed binding {part!r} (expected name=expr)", code="expr-malformed-binding-expected-name-expr")
             binding = URIRef(f"{node}_b{idx}")
             self.d._add_type(binding, MORK.TemplateBinding, "mork:TemplateBinding")
             self.d.graph.add((node, MORK.hasBinding, binding))
@@ -1352,7 +1372,7 @@ class _ExpressionParser:
     def _lookup(self, node: URIRef, text: str) -> URIRef:
         m = re.match(r"\?([^.(]+)\.([^(]+)\((.*)\)$", text, re.DOTALL)
         if not m:
-            raise self._err(f"malformed lookup expression {text!r}")
+            raise self._err(f"malformed lookup expression {text!r}", code="expr-malformed-lookup-expression")
         scheme_tok, prop_tok, source_text = m.group(1).strip(), m.group(2).strip(), m.group(3).strip()
         self.d._add_type(node, MORK.LookupExpression, "mork:LookupExpression")
         self.d.graph.add((node, MORK.lookupScheme, self.d._resolve_identifier(scheme_tok, self.line_no)))
@@ -1464,8 +1484,8 @@ class _Decoder:
 
     # -- error helper --------------------------------------------------
 
-    def _error(self, message: str) -> McnSyntaxError:
-        return McnSyntaxError(message, self._line_no, self._current_line_text)
+    def _error(self, message: str, code: str = "core-error") -> McnSyntaxError:
+        return McnSyntaxError(message, self._line_no, self._current_line_text, code=code)
 
     # -- identifier resolution (Sec 3.4) --------------------------------
 
@@ -1474,16 +1494,17 @@ class _Decoder:
         if tok.startswith("<") and tok.endswith(">") and len(tok) >= 2:
             return URIRef(tok[1:-1])
         if not tok:
-            raise self._error("expected an IRI")
+            raise self._error("expected an IRI", code="core-expected-an-iri")
         return URIRef(tok)
 
     def _resolve_curie(self, curie: str, line_no: Optional[int] = None) -> URIRef:
         prefix, sep, local = curie.partition(":")
         if not sep:
-            raise McnSyntaxError(f"malformed CURIE {curie!r}", line_no or self._line_no, self._current_line_text)
+            raise McnSyntaxError(f"malformed CURIE {curie!r}", line_no or self._line_no, self._current_line_text, code="core-malformed-curie")
         if prefix not in self.prefixes:
             raise McnSyntaxError(
-                f"unbound prefix {prefix!r} in {curie!r}", line_no or self._line_no, self._current_line_text
+                f"unbound prefix {prefix!r} in {curie!r}", line_no or self._line_no, self._current_line_text,
+                code="core-unbound-prefix-in",
             )
         return URIRef(self.prefixes[prefix] + local)
 
@@ -1496,22 +1517,23 @@ class _Decoder:
         if tok.startswith("_:"):
             label = tok[2:]
             if not label:
-                raise McnSyntaxError("empty blank node label after '_:'", ln, self._current_line_text)
+                raise McnSyntaxError("empty blank node label after '_:'", ln, self._current_line_text, code="core-empty-blank-node-label-after")
             if label not in self._named_bnodes:
                 self._named_bnodes[label] = BNode()
             return self._named_bnodes[label]
         if tok.startswith(":"):
             if self.target_prefix is None:
                 raise McnSyntaxError(
-                    f"{tok!r} used but no '@t' default target prefix is in force", ln, self._current_line_text
+                    f"{tok!r} used but no '@t' default target prefix is in force", ln, self._current_line_text,
+                    code="core-used-but-no-t-default-target",
                 )
             return URIRef(self.prefixes[self.target_prefix] + tok[1:])
         if ":" in tok:
             return self._resolve_curie(tok, ln)
         if not tok or not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_.\-]*", tok):
-            raise McnSyntaxError(f"malformed identifier {tok!r}", ln, self._current_line_text)
+            raise McnSyntaxError(f"malformed identifier {tok!r}", ln, self._current_line_text, code="core-malformed-identifier")
         if self.base is None:
-            raise McnSyntaxError(f"local id {tok!r} used but no '@b' base IRI is in force", ln, self._current_line_text)
+            raise McnSyntaxError(f"local id {tok!r} used but no '@b' base IRI is in force", ln, self._current_line_text, code="core-local-id-used-but-no-b")
         return URIRef(self.base + tok)
 
     def _resolve_value_as_identifier(self, value: Value):
@@ -1519,7 +1541,7 @@ class _Decoder:
             return URIRef(value.text)
         if value.kind == "bare":
             return self._resolve_identifier(value.text)
-        raise self._error(f"cannot resolve a {value.kind} value as an identifier")
+        raise self._error(f"cannot resolve a {value.kind} value as an identifier", code="core-cannot-resolve-a-value-as-an")
 
     # -- type detection and assertion (Sec 9.2, Sec 8.1, Sec 11) --------
 
@@ -1547,7 +1569,7 @@ class _Decoder:
         if forced:
             tok = tok[1:]
             if not tok:
-                raise self._error("empty type token after '+'")
+                raise self._error("empty type token after '+'", code="core-empty-type-token-after")
         if tok in cb.TYPES:
             curie = cb.TYPES[tok].curie
             return self._resolve_curie(curie), curie
@@ -1555,7 +1577,7 @@ class _Decoder:
             return self._resolve_identifier(tok), tok
         if forced or allow_bare_local:
             return self._resolve_identifier(tok), tok
-        raise self._error(f"unknown type code {tok!r}")
+        raise self._error(f"unknown type code {tok!r}", code="core-unknown-type-code")
 
     def _assert_named_individual(self, subject) -> None:
         self.graph.add((subject, RDF.type, OWL.NamedIndividual))
@@ -1618,7 +1640,7 @@ class _Decoder:
                 return Literal(value.text, datatype=self._resolve_curie(value.datatype))
             return Literal(value.text)
         if value.kind != "bare":
-            raise self._error(f"expected a literal (quoted string or bare token), found {value.kind}")
+            raise self._error(f"expected a literal (quoted string or bare token), found {value.kind}", code="core-expected-a-literal-quoted-string-or")
         text = value.text
         if datatype_spec == "*":
             lex, inferred = _infer_literal_text(text)
@@ -1630,7 +1652,7 @@ class _Decoder:
                 return Literal(True)
             if text in _BOOL_FALSE:
                 return Literal(False)
-            raise self._error(f"expected a boolean (t/f/true/false), found {text!r}")
+            raise self._error(f"expected a boolean (t/f/true/false), found {text!r}", code="core-expected-a-boolean-t-f-true")
         return Literal(text, datatype=self._resolve_curie(datatype_spec))
 
     # -- expression-span reading (used by pe/ls/cl/cr and hb's 2nd slot) -
@@ -1666,12 +1688,12 @@ class _Decoder:
                 break
             lx.i += 1
         if quote:
-            raise self._error("unterminated quote in expression value")
+            raise self._error("unterminated quote in expression value", code="core-unterminated-quote-in-expression-value")
         if depth != 0:
-            raise self._error("unbalanced parentheses in expression value")
+            raise self._error("unbalanced parentheses in expression value", code="core-unbalanced-parentheses-in-expression-value")
         span = lx.s[start : lx.i].strip()
         if not span:
-            raise self._error("expected an expression value")
+            raise self._error("expected an expression value", code="core-expected-an-expression-value")
         return span
 
     def _read_slot_or_skip(self, lx: _Lexer) -> Optional[Value]:
@@ -1705,19 +1727,20 @@ class _Decoder:
                     return self._resolve_curie(table["*"]), cb.KIND_OBJECT, "*"
                 raise self._error(
                     f"cannot resolve polymorphic code {code!r}: subject's types "
-                    f"{sorted(types_here) or ['<none>']} match none of {sorted(table)}"
+                    f"{sorted(types_here) or ['<none>']} match none of {sorted(table)}",
+                    code="core-cannot-resolve-polymorphic-code-subject-s",
                 )
             return self._resolve_curie(spec.curie), spec.kind, None
         if ":" in code:
             return self._resolve_curie(code), "curie", None
-        raise self._error(f"unknown property code {code!r}")
+        raise self._error(f"unknown property code {code!r}", code="core-unknown-property-code")
 
     def _resolve_object(self, subject, code: str, value: Value, kind: str, matched_key: Optional[str]):
         if kind == cb.KIND_DATA:
             if value.kind == "inline":
-                raise self._error(f"code {code!r} takes a literal value, not an inline node")
+                raise self._error(f"code {code!r} takes a literal value, not an inline node", code="core-code-takes-a-literal-value-not")
             if value.kind == "iri":
-                raise self._error(f"code {code!r} takes a literal value, not an IRI")
+                raise self._error(f"code {code!r} takes a literal value, not an IRI", code="core-code-takes-a-literal-value-not")
             return self._literal_for_value(value, cb.PROPERTIES[code].datatype)
         if value.kind == "inline":
             return self._decode_inline(value.text, subject, code, matched_key)
@@ -1732,7 +1755,7 @@ class _Decoder:
             return self._resolve_value_as_identifier(value)
         # object kind
         if value.kind == "quoted":
-            raise self._error(f"code {code!r} takes an object (IRI) value, not a quoted string")
+            raise self._error(f"code {code!r} takes an object (IRI) value, not a quoted string", code="core-code-takes-an-object-iri-value")
         return self._resolve_value_as_identifier(value)
 
     def _assert_annotation(self, subject, predicate, obj, annotation_body: str) -> None:
@@ -1785,7 +1808,7 @@ class _Decoder:
             tok = lx.read_bare()
             explicit_id = tok[1:]
             if not explicit_id:
-                raise self._error("empty explicit id '#' in inline node")
+                raise self._error("empty explicit id '#' in inline node", code="core-empty-explicit-id-in-inline-node")
 
         if explicit_id is not None:
             node = self._resolve_identifier(explicit_id, line_no)
@@ -1809,7 +1832,7 @@ class _Decoder:
     def _decode_positional(self, node: URIRef, lx: _Lexer, code: str, parent_matched_key: Optional[str]) -> None:
         form = cb.POSITIONAL_FORMS.get(code)
         if form is None:
-            raise self._error(f"code {code!r} does not accept a positional inline node")
+            raise self._error(f"code {code!r} does not accept a positional inline node", code="core-code-does-not-accept-a-positional")
         if code == "tg":
             self._decode_positional_tg(node, lx)
         elif code == "pb":
@@ -1819,14 +1842,14 @@ class _Decoder:
         elif code == "hb":
             self._decode_positional_hb(node, lx)
         else:  # pragma: no cover -- exhaustive given cb.POSITIONAL_FORMS
-            raise self._error(f"no positional decoder registered for {code!r}")
+            raise self._error(f"no positional decoder registered for {code!r}", code="core-no-positional-decoder-registered-for")
         self._decode_pairs(node, lx)
 
     def _decode_positional_tg(self, node: URIRef, lx: _Lexer) -> None:
         self._assert_type(node, "GT")
         mode_tok = lx.read_word()
         if mode_tok not in cb.TARGETING_MODE_CODE:
-            raise self._error(f"unknown targeting mode {mode_tok!r} (expected one of c/o/s/n)")
+            raise self._error(f"unknown targeting mode {mode_tok!r} (expected one of c/o/s/n)", code="core-unknown-targeting-mode-expected-one-of")
         target_value = lx.read_value()
         target = self._resolve_value_as_identifier(target_value)
         target_code = cb.TARGETING_MODE_CODE[mode_tok]
@@ -1837,7 +1860,7 @@ class _Decoder:
         name_val = self._read_slot_or_skip(lx)
         type_tok = lx.read_word()
         if type_tok not in cb.PARAM_TYPE_WORD:
-            raise self._error(f"unknown parameter type {type_tok!r}")
+            raise self._error(f"unknown parameter type {type_tok!r}", code="core-unknown-parameter-type")
         value_val = self._read_slot_or_skip(lx)
         if name_val is not None:
             self.graph.add((node, MORK.paramName, self._literal_for_value(name_val, None)))
@@ -1850,7 +1873,8 @@ class _Decoder:
             raise self._error(
                 "cannot determine the provenance node's type for positional 'pv': "
                 "the parent subject's generative type (ShapeMapping/RuleMapping/"
-                "TransformMapping/ProjectionMapping) could not be determined"
+                "TransformMapping/ProjectionMapping) could not be determined",
+                code="core-cannot-determine-the-provenance-node-s",
             )
         self._assert_type(node, cb.PV_PROVENANCE_TYPE[parent_matched_key])
         creator = self._read_slot_or_skip(lx)
@@ -1897,7 +1921,7 @@ class _Decoder:
             self._add_type(node, RR.TriplesMap, "rr:TriplesMap")
             _RmlPayloadParser(self, node, self._line_no).parse(payload_text)
         else:  # pragma: no cover
-            raise self._error(f"no payload parser for type code {type_code!r}")
+            raise self._error(f"no payload parser for type code {type_code!r}", code="core-no-payload-parser-for-type-code")
 
     _PAYLOAD_TYPE_CURIES = (("SW", "swrl:Imp"), ("SH", "sh:NodeShape"), ("TM", "rr:TriplesMap"))
 
@@ -1927,7 +1951,7 @@ class _Decoder:
         d, rest = m.group(1), m.group(2)
         handler = getattr(self, f"_directive_{d}", None)
         if handler is None:
-            raise self._error(f"unknown directive '@{d}'")
+            raise self._error(f"unknown directive '@{d}'", code="core-unknown-directive")
         handler(rest)
 
     def _directive_b(self, rest: str) -> None:
@@ -1936,7 +1960,7 @@ class _Decoder:
     def _directive_o(self, rest: str) -> None:
         parts = rest.split()
         if not parts:
-            raise self._error("'@o' requires an ontology IRI")
+            raise self._error("'@o' requires an ontology IRI", code="core-o-requires-an-ontology-iri")
         onto = self._parse_iri_literal(parts[0])
         self.ontology = onto
         self.graph.add((onto, RDF.type, OWL.Ontology))
@@ -1948,7 +1972,7 @@ class _Decoder:
 
     def _directive_i(self, rest: str) -> None:
         if self.ontology is None:
-            raise self._error("'@i' (imports) requires a preceding '@o'")
+            raise self._error("'@i' (imports) requires a preceding '@o'", code="core-i-imports-requires-a-preceding-o")
         for tok in rest.split(","):
             tok = tok.strip()
             if not tok:
@@ -1960,9 +1984,9 @@ class _Decoder:
         name = name.strip()
         iri_text = iri_text.strip()
         if not sep or not name or not iri_text:
-            raise self._error("malformed '@p' directive (expected '@p prefix=<iri>')")
+            raise self._error("malformed '@p' directive (expected '@p prefix=<iri>')", code="core-malformed-p-directive-expected-p-prefix")
         if name in cb.PREDECLARED_PREFIXES:
-            raise self._error(f"cannot rebind predeclared prefix {name!r}")
+            raise self._error(f"cannot rebind predeclared prefix {name!r}", code="core-cannot-rebind-predeclared-prefix")
         resolved = self._parse_iri_literal(iri_text)
         self.prefixes[name] = str(resolved)
         self.graph.bind(name, Namespace(str(resolved)))
@@ -1970,21 +1994,21 @@ class _Decoder:
     def _directive_t(self, rest: str) -> None:
         name = rest.strip()
         if not name:
-            raise self._error("'@t' requires a prefix name")
+            raise self._error("'@t' requires a prefix name", code="core-t-requires-a-prefix-name")
         self.target_prefix = name
 
     def _directive_u(self, rest: str) -> None:
         name = rest.strip()
         if not name:
-            raise self._error("'@u' requires a profile name")
+            raise self._error("'@u' requires a profile name", code="core-u-requires-a-profile-name")
         if name not in self.profiles:
-            raise self._error(f"unknown profile {name!r} (none registered with this decode() call)")
+            raise self._error(f"unknown profile {name!r} (none registered with this decode() call)", code="core-unknown-profile-none-registered-with-this")
         self._load_profile(self.profiles[name])
 
     def _directive_opt(self, rest: str) -> None:
         flags = rest.split()
         if not flags:
-            raise self._error("'@opt' requires at least one flag")
+            raise self._error("'@opt' requires at least one flag", code="core-opt-requires-at-least-one-flag")
         self.options.update(flags)
 
     def _directive_v(self, rest: str) -> None:
@@ -1996,7 +2020,7 @@ class _Decoder:
             self.base = profile.base
         for name, iri in profile.prefixes.items():
             if name in cb.PREDECLARED_PREFIXES:
-                raise self._error(f"profile {profile!r} rebinds predeclared prefix {name!r}")
+                raise self._error(f"profile {profile!r} rebinds predeclared prefix {name!r}", code="core-profile-rebinds-predeclared-prefix")
             self.prefixes[name] = iri
             self.graph.bind(name, Namespace(iri))
         if profile.target is not None:
@@ -2013,14 +2037,14 @@ class _Decoder:
     def _block_header(self, line: str) -> None:
         m = re.match(r"(%[A-Z])\s*(.*)$", line)
         if not m:
-            raise self._error(f"malformed block header {line!r}")
+            raise self._error(f"malformed block header {line!r}", code="core-malformed-block-header")
         kind, rest = m.group(1), m.group(2)
         if kind not in cb.BLOCKS:
-            raise self._error(f"unknown block kind {kind!r}")
+            raise self._error(f"unknown block kind {kind!r}", code="core-unknown-block-kind")
         spec = cb.BLOCKS[kind]
         if kind == "%X":
             if rest.strip():
-                raise self._error("unexpected content after '%X'")
+                raise self._error("unexpected content after '%X'", code="core-unexpected-content-after-x")
             self.block_membership = None
             self.block_scheme = None
             self.block_default_type = None
@@ -2084,12 +2108,12 @@ class _Decoder:
             return URIRef(value.text)
         if value.kind == "bare":
             return self._resolve_identifier(value.text)
-        raise self._error(f"cannot use a {value.kind} value as a raw-triple term")
+        raise self._error(f"cannot use a {value.kind} value as a raw-triple term", code="core-cannot-use-a-value-as-a")
 
     def _axiom_line(self, line: str) -> None:
         m = re.match(r"!([A-Za-z]+)\s*(.*)$", line)
         if not m:
-            raise self._error(f"malformed axiom line {line!r}")
+            raise self._error(f"malformed axiom line {line!r}", code="core-malformed-axiom-line")
         kind, rest = m.group(1), m.group(2)
         handler = {
             "C": self._axiom_class,
@@ -2105,7 +2129,7 @@ class _Decoder:
             "T": self._axiom_raw_triple,
         }.get(kind)
         if handler is None:
-            raise self._error(f"unknown axiom line kind '!{kind}'")
+            raise self._error(f"unknown axiom line kind '!{kind}'", code="core-unknown-axiom-line-kind")
         handler(rest)
 
     def _read_ident_list(self, rest: str) -> List[URIRef]:
@@ -2115,9 +2139,9 @@ class _Decoder:
             lx.i += 1
             items.append(self._resolve_value_as_identifier(lx.read_value()))
         if not lx.at_end():
-            raise self._error("unexpected trailing content after identifier list")
+            raise self._error("unexpected trailing content after identifier list", code="core-unexpected-trailing-content-after-identifier-list")
         if len(items) < 2:
-            raise self._error("expected at least two comma-separated identifiers")
+            raise self._error("expected at least two comma-separated identifiers", code="core-expected-at-least-two-comma-separated")
         return items
 
     def _axiom_raw_triple(self, rest: str) -> None:
@@ -2126,7 +2150,7 @@ class _Decoder:
         p_val = lx.read_value()
         o_val = lx.read_value()
         if not lx.at_end():
-            raise self._error("'!T' takes exactly three terms (subject predicate object)")
+            raise self._error("'!T' takes exactly three terms (subject predicate object)", code="core-t-takes-exactly-three-terms-subject")
         self.graph.add((self._resolve_term(s_val), self._resolve_term(p_val), self._resolve_term(o_val)))
 
     def _axiom_all_disjoint_classes(self, rest: str) -> None:
@@ -2156,14 +2180,14 @@ class _Decoder:
         for i, w in enumerate(words):
             if w == "<":
                 if idx is not None:
-                    raise self._error("'!G' allows exactly one top-level '<' separator")
+                    raise self._error("'!G' allows exactly one top-level '<' separator", code="core-g-allows-exactly-one-top-level")
                 idx = i
         if idx is None:
-            raise self._error("'!G' requires a top-level '<' separating two class expressions")
+            raise self._error("'!G' requires a top-level '<' separating two class expressions", code="core-g-requires-a-top-level-separating")
         left_text = " ".join(words[:idx])
         right_text = " ".join(words[idx + 1 :])
         if not left_text or not right_text:
-            raise self._error("'!G' requires a class expression on both sides of '<'")
+            raise self._error("'!G' requires a class expression on both sides of '<'", code="core-g-requires-a-class-expression-on")
         left = _parse_class_expression(self, left_text, self._line_no)
         right = _parse_class_expression(self, right_text, self._line_no)
         self.graph.add((left, RDFS.subClassOf, right))
@@ -2189,7 +2213,7 @@ class _Decoder:
         operators mean a legitimate multi-word CE only ever continues via
         a standalone '&' or '|' word)."""
         if i >= len(words):
-            raise self._error("expected a class expression after clause keyword")
+            raise self._error("expected a class expression after clause keyword", code="core-expected-a-class-expression-after-clause")
         collected = [words[i]]
         i += 1
         while True:
@@ -2200,7 +2224,7 @@ class _Decoder:
                     continue
                 break
             if i >= len(words):
-                raise self._error(f"unbalanced/incomplete class expression: {' '.join(collected)!r}")
+                raise self._error(f"unbalanced/incomplete class expression: {' '.join(collected)!r}", code="core-unbalanced-incomplete-class-expression")
             collected.append(words[i])
             i += 1
         return " ".join(collected), i
@@ -2218,12 +2242,12 @@ class _Decoder:
                 elif w == "inv":
                     if i < n and words[i] == "^":
                         if i + 1 >= n:
-                            raise self._error("'inv ^' requires a property identifier")
+                            raise self._error("'inv ^' requires a property identifier", code="core-inv-requires-a-property-identifier")
                         value_text = "^" + words[i + 1]
                         i += 2
                     else:
                         if i >= n:
-                            raise self._error("'inv' requires a property identifier")
+                            raise self._error("'inv' requires a property identifier", code="core-inv-requires-a-property-identifier")
                         value_text = words[i]
                         i += 1
                 elif w == "chain":
@@ -2231,12 +2255,12 @@ class _Decoder:
                     while True:
                         if i < n and words[i] == "^":
                             if i + 1 >= n:
-                                raise self._error("'chain' has a dangling '^'")
+                                raise self._error("'chain' has a dangling '^'", code="core-chain-has-a-dangling")
                             items.append("^" + words[i + 1])
                             i += 2
                         else:
                             if i >= n:
-                                raise self._error("'chain' requires at least one property")
+                                raise self._error("'chain' requires at least one property", code="core-chain-requires-at-least-one-property")
                             items.append(words[i])
                             i += 1
                         if i < n and words[i] == ",":
@@ -2245,7 +2269,7 @@ class _Decoder:
                         break
                     value_text = ",".join(items)
                 else:  # pragma: no cover -- allowed_keywords is always a subset handled above
-                    raise self._error(f"internal error: unhandled clause keyword {w!r}")
+                    raise self._error(f"internal error: unhandled clause keyword {w!r}", code="core-internal-error-unhandled-clause-keyword")
                 clauses.append((w, value_text))
                 continue
             if _CHARACTERISTIC_FLAG_RE.match(w):
@@ -2253,7 +2277,7 @@ class _Decoder:
                 i += 1
                 continue
             if i + 1 >= n:
-                raise self._error(f"code {w!r} has no value")
+                raise self._error(f"code {w!r} has no value", code="core-code-has-no-value")
             clauses.append((w, words[i + 1]))
             i += 2
         return clauses
@@ -2262,7 +2286,7 @@ class _Decoder:
         lx = _Lexer(value_text, self._line_no)
         self._assert_property_pair(subject, code, lx)
         if not lx.at_end():
-            raise self._error(f"unexpected trailing content in clause {code!r}: {value_text!r}")
+            raise self._error(f"unexpected trailing content in clause {code!r}: {value_text!r}", code="core-unexpected-trailing-content-in-clause")
 
     def _axiom_class(self, rest: str) -> None:
         lx = _Lexer(rest, self._line_no)
@@ -2335,7 +2359,7 @@ class _Decoder:
                 self.graph.add((subject, RDFS.range, _parse_class_expression(self, value_text, self._line_no)))
             elif kw == "+flags":
                 if value_text != "+F":
-                    raise self._error(f"datatype property characteristic {value_text!r} is not supported (only +F)")
+                    raise self._error(f"datatype property characteristic {value_text!r} is not supported (only +F)", code="core-datatype-property-characteristic-is-not-supported")
                 self.graph.add((subject, RDF.type, OWL.FunctionalProperty))
             else:
                 self._apply_generic_clause(subject, kw, value_text)
@@ -2351,14 +2375,14 @@ class _Decoder:
             w = words[i]
             if w in ("<", "dom", "rng"):
                 if i + 1 >= n:
-                    raise self._error(f"{w!r} requires a value")
+                    raise self._error(f"{w!r} requires a value", code="core-requires-a-value")
                 target = self._resolve_identifier(words[i + 1])
                 pred = {"<": RDFS.subPropertyOf, "dom": RDFS.domain, "rng": RDFS.range}[w]
                 self.graph.add((subject, pred, target))
                 i += 2
             else:
                 if i + 1 >= n:
-                    raise self._error(f"code {w!r} has no value")
+                    raise self._error(f"code {w!r} has no value", code="core-code-has-no-value")
                 self._apply_generic_clause(subject, w, words[i + 1])
                 i += 2
 
@@ -2402,7 +2426,7 @@ class _Decoder:
                 continue
             if stripped.startswith(";"):
                 if not logical:
-                    raise McnSyntaxError("continuation line ';' with no preceding line", idx, raw)
+                    raise McnSyntaxError("continuation line ';' with no preceding line", idx, raw, code="core-continuation-line-with-no-preceding-line")
                 ln, prev = logical[-1]
                 logical[-1] = (ln, prev + " " + stripped[1:].strip())
                 continue
@@ -2431,7 +2455,7 @@ class _Decoder:
             findings = lint(self.graph)
             if findings:
                 summary = "; ".join(f"[{f.rule_id}] {f.subject}: {f.message}" for f in findings)
-                raise McnLintError(f"'@opt strict': {len(findings)} lint finding(s) fired: {summary}")
+                raise McnLintError(f"'@opt strict': {len(findings)} lint finding(s) fired: {summary}", code="core-opt-strict-lint-finding-s-fired")
 
         return self.graph
 
@@ -2487,10 +2511,31 @@ def _ntriples_line(s, p, o) -> str:
 
 @dataclass
 class LintFinding:
+    """One Sec 14.2 lint rule firing against a decoded graph.
+
+    ``severity`` is always "warning": every Sec 14.2 rule is advisory by
+    spec design, and a document that trips one is only rejected outright
+    under "@opt strict" (which raises McnLintError instead of returning
+    findings -- see lint()'s caller in decode()). The field exists, fixed
+    at "warning", so consumers built against the same
+    kind/code/line/message/severity shape as McnSyntaxError.code (e.g. a
+    pluggable Diagnostic adapter) don't need a special case for lint vs.
+    decode-time failures. ``line`` is reserved for future source-position
+    tracking -- lint runs on the decoded graph, which today carries no
+    provenance back to the originating MCN line, so it is always None.
+    """
+
     rule_id: str
     subject: URIRef
     message: str
     mirrors: str = ""
+    severity: str = "warning"
+    line: Optional[int] = None
+
+    @property
+    def code(self) -> str:
+        """Alias for ``rule_id``, matching McnSyntaxError.code's name."""
+        return self.rule_id
 
 
 def lint(graph: Graph) -> List[LintFinding]:
@@ -2690,4 +2735,7 @@ def decode(
     except McnSyntaxError:
         raise
     except (KeyError, IndexError, ValueError, AssertionError) as exc:
-        raise McnSyntaxError(f"internal parse failure: {exc}", decoder._line_no, decoder._current_line_text) from exc
+        raise McnSyntaxError(
+            f"internal parse failure: {exc}", decoder._line_no, decoder._current_line_text,
+            code="core-internal-parse-failure",
+        ) from exc

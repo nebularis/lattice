@@ -28,7 +28,7 @@ rendered twice.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Dict, Optional
+from typing import Dict, Iterable, List, Optional
 
 # ---------------------------------------------------------------------------
 # Predeclared prefixes (spec §3.4) -- never need an "@p" directive.
@@ -682,6 +682,52 @@ INVERSE_OF: Dict[str, str] = {
     "mork:weightedBroader": "mork:weightedNarrower",
     "mork:weightedNarrower": "mork:weightedBroader",
 }
+
+
+def _expand(curie: str) -> str:
+    """CURIE (or bare IRI) -> full IRI, using the predeclared prefix table.
+    Only meaningful for CURIEs whose prefix is one of PREDECLARED_PREFIXES;
+    the codebook never references any other prefix."""
+    if curie.startswith("http"):
+        return curie
+    prefix, _, local = curie.partition(":")
+    return PREDECLARED_PREFIXES[prefix] + local
+
+
+def _build_reverse_index() -> Dict[str, str]:
+    """iri -> code, first-code-wins under sorted iteration (deterministic).
+    Skips a polymorphic property's own '/'-joined union entry (no single
+    IRI to key on) but still indexes each of its constituent properties,
+    since those are real, individually addressable predicates."""
+    rev: Dict[str, str] = {}
+    for code in sorted(TYPES):
+        rev.setdefault(_expand(TYPES[code].curie), code)
+    for code in sorted(PROPERTIES):
+        spec = PROPERTIES[code]
+        for part in spec.curie.split("/"):
+            rev.setdefault(_expand(part), code)
+    for token in sorted(RESERVED):
+        rev.setdefault(_expand(RESERVED[token]), token)
+    return rev
+
+
+_REVERSE_INDEX: Dict[str, str] = _build_reverse_index()
+
+
+def code_for(iri: str) -> Optional[str]:
+    """The MCN code (or reserved token) for a full IRI, or None if the
+    ontology term has no code -- e.g. for a TestCodebookCoverage failure,
+    or for a term outside Mork.ttl entirely (SKOS/SHACL/SWRL/Foundation
+    terms MCN references by CURIE, not by code)."""
+    return _REVERSE_INDEX.get(iri)
+
+
+def codes_for(iris: Iterable[str]) -> List[str]:
+    """codes_for(iterable_of_iris) -> the codes that exist, in input order,
+    dropping any IRI with no code. Convenience for building doctrine
+    fragments and prompt tables that list "the codes for this family of
+    properties" (spec-external tooling; not used by the decoder itself)."""
+    return [c for c in (code_for(i) for i in iris) if c is not None]
 
 
 def is_annotation_property_code(code: str) -> bool:
