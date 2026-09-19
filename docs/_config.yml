@@ -1,0 +1,6 @@
+# Every page here (index.html, book.html, theory.md, ...) is hand-styled —
+# none of them use a Jekyll theme. Without this, the github-pages gem
+# silently defaults to `theme: jekyll-theme-primer`, which pulls in that
+# theme's own assets/css/style.scss and fails to compile locally under the
+# bundled (EOL) Ruby Sass gem with an encoding error.
+theme: null

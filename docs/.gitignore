@@ -1,0 +1,8 @@
+# Local Jekyll build/serve artifacts — never published, never committed.
+_site/
+.jekyll-cache/
+.jekyll-metadata
+
+# Bundler installs gems here (see .bundle/config) instead of system-wide.
+vendor/bundle/
+.bundle/
