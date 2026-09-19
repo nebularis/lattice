@@ -31,3 +31,4 @@ The authoring *order* for substrate content — generic premise, then non-domain
 - **Identity and derivation** — [ADR-A12](adr/ADR-A12-identity-and-derivation-model.md): what a derived artefact's hash and authority claims mean.
 - **Graph roles and provenance** — [ADR-A13](adr/ADR-A13-dataset-graph-role-model.md): how source, mapping, declaration, and execution content coexist in one dataset.
 - **Realisation-strategy neutrality** — [ADR-A15](adr/ADR-A15-realisation-strategy-neutrality.md): no mechanism requires compilation to be usable.
+- **MORK Compact Notation** — [architecture/mork-compact-notation.md](architecture/mork-compact-notation.md): the token-minimal wire format in which mapping agents emit MORK graphs, with the deterministic decoding to OWL that ADR-A25's proposal-grade gate operates on.
