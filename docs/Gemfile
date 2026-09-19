@@ -1,0 +1,9 @@
+source "https://rubygems.org"
+
+# Pulls in the exact Jekyll version + plugin set GitHub Pages builds with,
+# so "works locally" and "works on Pages" stay the same claim.
+gem "github-pages", group: :jekyll_plugins
+
+# Jekyll's built-in dev server (`jekyll serve`) needs webrick, which Ruby
+# stopped bundling by default from 3.0 onward.
+gem "webrick"
