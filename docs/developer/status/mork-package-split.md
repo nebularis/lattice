@@ -9,8 +9,8 @@
 ## Completed
 
 - Moved MORK semantic assets to `ontology/mork/`.
-- Moved the MORK Python project to `tools/mork/python/`.
-- Repointed root test discovery, phase-conformance fixtures, and direct Python fixture lookup paths.
+- Moved the MORK Python project to `tools/mork/` with a conventional `src/` layout.
+- Repointed root test discovery, phase-conformance fixtures, direct Python fixture lookup paths, and package installation tasks.
 - Updated the MCN decoder test to resolve the repository root from its new depth.
 - Preserved both non-identical MORK-to-RML implementations. Consolidation remains a separate behavior-affecting decision.
 

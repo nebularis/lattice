@@ -7,7 +7,7 @@ What this script does:
 2. Exercises pipeline-level module imports.
 3. Reports missing optional and required dependencies clearly.
 
-Run from tools/mork/python/src/python:
+Run from the repository root after installing `tools/mork`:
   python3 test_mork_communities_smoke.py
 """
 

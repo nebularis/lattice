@@ -12,7 +12,7 @@ MTP consumes normative MORK ontology, MCN codebook, decoder, examples, and shape
 
 ## Decision
 
-Place MTP Python code under `mork/src/python/mtp/`, curated content under `mork/mtp/data/`, and generated committed output under `mork/mtp/out/`. MTP consumes `mcn`, `mcn_codebook`, `Mork.ttl`, examples, and constraints through adapters. It does not modify those sources except through separately approved work.
+Place MTP Python code under `tools/mork/src/mtp/`, curated content under `ontology/mork/mtp/data/`, and generated committed output under `ontology/mork/mtp/out/`. MTP consumes `mcn`, `mcn_codebook`, `Mork.ttl`, examples, and constraints through adapters. It does not modify those sources except through separately approved work.
 
 Use root `mise` for scoped MTP bootstrap, check, and build tasks. Add a manual MTP structural CI job that installs the MORK package, runs structural tests, regenerates the pack, checks it, and fails on generated-output or pin drift. Backend-dependent model-quality evaluation remains deferred.
 

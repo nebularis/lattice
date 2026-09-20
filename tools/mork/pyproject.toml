@@ -21,9 +21,9 @@ dependencies = [
 ]
 
 [tool.setuptools]
-package-dir = {"" = "src/python"}
+package-dir = {"" = "src"}
 py-modules = ["mcn_decoder", "mcn_codebook"]
 
 [tool.setuptools.packages.find]
-where = ["src/python"]
+where = ["src"]
 include = ["mork_communities*", "mtp*", "mcn*"]

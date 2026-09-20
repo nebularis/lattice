@@ -93,7 +93,7 @@ The path manifest includes at least:
 | `foundation/` through `surface/` | `ontology/<name>/` | LATTICE semantic content |
 | `applied/`, `governance/`, `examples/` | `ontology/<name>/` | Semantic content |
 | `mork/spec`, `shapes`, `targets`, semantic examples/docs | `ontology/mork/` | MORK semantic content |
-| `mork/src/python` and executable tests | `tools/mork/python/` | MORK implementation |
+| `mork/src/python` and executable tests | `tools/mork/` | MORK implementation |
 | `spc/spec`, `shapes`, `vocab`, semantic examples/docs | `ontology/spc/` | SPC semantic content |
 | `spc/src/python`, `spc/src/erlang` | `tools/spc/python`, `tools/spc/erlang` | SPC implementation |
 | `docs/adr/` | `docs/architecture/decisions/` | Architecture decisions, completed |

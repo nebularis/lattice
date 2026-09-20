@@ -6,7 +6,7 @@ MTP is a deterministic generator for a versioned, hash-pinned MCN curriculum. It
 
 ## Ownership
 
-`mork/src/python/mtp/` is pure generator code. `mork/mtp/data/` contains curated doctrine, partition, lenses, cassettes, routing, and pins. `mork/mtp/out/` contains generated and committed output. The build owns every file under `out/`. MTP does not move or rewrite `Mork.ttl`, `mcn_decoder.py`, `mcn_codebook.py`, examples, or constraints.
+`tools/mork/src/mtp/` is pure generator code. `ontology/mork/mtp/data/` contains curated doctrine, partition, lenses, cassettes, routing, and pins. `ontology/mork/mtp/out/` contains generated and committed output. The build owns every file under `out/`. MTP does not move or rewrite `Mork.ttl`, `mcn_decoder.py`, `mcn_codebook.py`, examples, or constraints.
 
 ## Structural Pipeline
 
@@ -16,10 +16,10 @@ The build extracts logical facts and fingerprints from `Mork.ttl`, verifies code
 
 ## Toolchain and Validation
 
-The root `mise.toml` provides `bootstrap:mork`, `check:mtp`, and `build:mtp`. `mork/pyproject.toml` owns MTP Python dependencies. The manual `mtp-structural` CI job installs the MORK package, runs structural tests, builds output, checks pins and coverage, and rejects generated-file drift.
+The root `mise.toml` provides `bootstrap:mork`, `check:mtp`, and `build:mtp`. `tools/mork/pyproject.toml` owns MTP Python dependencies. The manual `mtp-structural` CI job installs the MORK package, runs structural tests, builds output, checks pins and coverage, and rejects generated-file drift.
 
-The authoring host has not run these Python commands. A network-enabled environment must install dependencies, regenerate and review `mork/mtp/out/` and `pins.lock.json`, then record the build and check results. LLM output scoring, backend selection, held-out eval sets, and eval metrics remain deferred to MTP Phase 7.
+The authoring host has not run these Python commands. A network-enabled environment must install dependencies, regenerate and review `ontology/mork/mtp/out/` and `pins.lock.json`, then record the build and check results. LLM output scoring, backend selection, held-out eval sets, and eval metrics remain deferred to MTP Phase 7.
 
 ## Documentation Boundary
 
-The detailed roadmap is [MTP implementation plan](../../mork/docs/mtp-implementation-plan.md). The phase handoff is [MTP handoff](../developer/mtp-handoff.md). Decisions affecting curation, pins, packages, code-generation, or backend interfaces require ADRs. Normative MCN and MORK semantics remain in their MORK documents.
+The detailed roadmap is [MTP implementation plan](../../ontology/mork/docs/mtp-implementation-plan.md). The phase handoff is [MTP handoff](../developer/mtp-handoff.md). Decisions affecting curation, pins, packages, code-generation, or backend interfaces require ADRs. Normative MCN and MORK semantics remain in their MORK documents.

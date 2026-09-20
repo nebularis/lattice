@@ -23,8 +23,8 @@ The three source documents already agree with each other almost everywhere they 
 
 MTP is a MORK subprogramme, not a standalone codebase. It preserves the existing MORK vocabulary, MCN decoder, codebook, examples, and shapes as authoritative sources. It integrates with current repository boundaries:
 
-- **Toolchains:** root [mise.toml](../../../mise.toml) pins Python 3.11 and will invoke scoped MTP tasks. [tools/mork/python/pyproject.toml](../../../tools/mork/python/pyproject.toml) remains the MORK package authority. Do not introduce a second Python lock strategy without an ADR.
-- **Code:** generator code belongs under `tools/mork/python/src/python/mtp/`, using the established pure-Python package style. Optional MTP worker wrappers belong under `workers/src/lattice_workers/` and accept only immutable graph or artifact references.
+- **Toolchains:** root [mise.toml](../../../mise.toml) pins Python 3.11 and will invoke scoped MTP tasks. [tools/mork/pyproject.toml](../../../tools/mork/pyproject.toml) remains the MORK package authority. Do not introduce a second Python lock strategy without an ADR.
+- **Code:** generator code belongs under `tools/mork/src/mtp/`, using the established pure-Python package style. Optional MTP worker wrappers belong under `workers/src/lattice_workers/` and accept only immutable graph or artifact references.
 - **Curated and generated content:** curated MTP inputs live under `ontology/mork/mtp/data/`; generated, committed teaching-pack output lives under `ontology/mork/mtp/out/`. Do not manually edit `out/`.
 - **Contracts:** only cross-runtime, UI, worker, or release-boundary payloads belong under root `contracts/mork/` or `contracts/events/`. Internal Python dataclasses remain in the package.
 - **Documentation:** normative MORK and MCN semantics remain in MORK specifications and existing design documents. Durable ownership, curation, pinning, or backend boundaries require an ADR under `docs/architecture/decisions/`. Explanatory implementation material belongs under `docs/architecture/` or `ontology/mork/docs/`.
@@ -68,13 +68,13 @@ MTP model-quality evaluation remains deferred to the backend-interface effort. S
 
 | Component | Status | Location |
 |---|---|---|
-| MCN decoder (spec §13, D1-D9) | **Built** | [tools/mork/python/src/python/mcn_decoder.py](../../../tools/mork/python/src/python/mcn_decoder.py) |
-| MCN codebook (spec §8) | **Built**, includes `code_for`/`codes_for` reverse lookup | [tools/mork/python/src/python/mcn_codebook.py](../../../tools/mork/python/src/python/mcn_codebook.py) |
-| `import mcn` package (decode/lint/canonical_ntriples) | **Built** | [tools/mork/python/src/python/mcn/__init__.py](../../../tools/mork/python/src/python/mcn/__init__.py) |
+| MCN decoder (spec §13, D1-D9) | **Built** | [tools/mork/src/mcn_decoder.py](../../../tools/mork/src/mcn_decoder.py) |
+| MCN codebook (spec §8) | **Built**, includes `code_for`/`codes_for` reverse lookup | [tools/mork/src/mcn_codebook.py](../../../tools/mork/src/mcn_codebook.py) |
+| `import mcn` package (decode/lint/canonical_ntriples) | **Built** | [tools/mork/src/mcn/__init__.py](../../../tools/mork/src/mcn/__init__.py) |
 | Stable, namespaced error/finding codes (`McnSyntaxError.code`, `LintFinding.code`/`.severity`/`.line`) | **Built** | same modules |
-| Decoder test suite (337 tests, incl. round-trip proofs for `loan_mapping.ttl`/`UncertainMappings.ttl`) | **Built** | [tools/mork/python/src/python/test_mcn_decoder.py](../../../tools/mork/python/src/python/test_mcn_decoder.py) |
+| Decoder test suite (337 tests, incl. round-trip proofs for `loan_mapping.ttl`/`UncertainMappings.ttl`) | **Built** | [tools/mork/src/test_mcn_decoder.py](../../../tools/mork/src/test_mcn_decoder.py) |
 | MCN encoder (spec §15, RDF → MCN) | **Not built** | — |
-| MTP package scaffold, CLI, facts, MCN adapter, corpus, partition, mutation, cassette, lens, routing, pin, and budget surfaces | **Authored, unvalidated** | [tools/mork/python/src/python/mtp](../../../tools/mork/python/src/python/mtp) |
+| MTP package scaffold, CLI, facts, MCN adapter, corpus, partition, mutation, cassette, lens, routing, pin, and budget surfaces | **Authored, unvalidated** | [tools/mork/src/mtp](../../../tools/mork/src/mtp) |
 | Curated starter doctrine, partition, lenses, cassettes, routing, and configuration | **Authored, unvalidated** | [ontology/mork/mtp/data](../mtp/data) |
 | Generated teaching pack | **Not generated in this restricted environment** | [ontology/mork/mtp/out](../mtp/out) |
 
@@ -143,8 +143,8 @@ The L0 and L2 pipelines are two stages of one build, not two separate tools. Mer
 Following the existing convention in this repository (`mork_communities/` is a pure-code package; `ontology/mork/test/data/` sits beside the code that consumes it, not inside it):
 
 ```
-mork/
-  src/python/
+tools/mork/
+    src/
     mtp/                        # pure code, mirrors mork_communities/ layout
       __init__.py
       facts.py
@@ -199,10 +199,10 @@ lattice/
         mtp/data/                     # curated inputs
         mtp/out/                      # generated and committed pack output
         docs/                         # MTP domain and implementation guides
-    tools/mork/python/src/python/mtp/  # MTP generator implementation
+    tools/mork/src/mtp/              # MTP generator implementation
 ```
 
-Do not move existing `tools/mork/python/src/python/mcn_decoder.py`, `mcn_codebook.py`, `mcn/`, `Mork.ttl`, examples, or shapes into the MTP package. The MTP package consumes them through the interfaces named in this plan.
+Do not move existing `tools/mork/src/mcn_decoder.py`, `mcn_codebook.py`, `mcn/`, `Mork.ttl`, examples, or shapes into the MTP package. The MTP package consumes them through the interfaces named in this plan.
 
 **Decision, not open question:** `mtp/codebook.py` does **not** parse a standalone `codebook.yaml`. The L0 sketch proposed one specifically so that "codes never diverge from the notation" — but `mcn_codebook.py` already *is* that single source of truth for the notation (it generates MCN spec §8 directly), and it was extended in the prior session with exactly the reverse-lookup surface (`code_for`, `codes_for`) the sketch's own `Codebook.code_for`/`codes_for` re-implement. `mtp/codebook.py` becomes a thin adapter:
 
@@ -289,7 +289,7 @@ Phase 0 must add scoped MTP task aliases to root `mise.toml`, for example `check
 
 Deliverables:
 
-1. `tools/mork/python/src/python/mtp/` package scaffold (`__init__.py`, empty modules per §5).
+1. `tools/mork/src/mtp/` package scaffold (`__init__.py`, empty modules per §5).
 2. `mtp/facts.py` — ontology extraction from L0 sketch §3: `Term`/`Axiom`/`Facts` dataclasses, `term_hash` (logical-predicate fingerprinting), `graph_hash`, axiom extraction (GCIs, `AllDisjointClasses`/`Properties`, equivalences, completeness axioms, the P1–P10 inverse-subproperty pattern).
 3. `mtp/ce.py` — OWL class expression → MCN §10.5 rendering, from L0 sketch §4, with `install_abbrev()` fed by `mtp.codebook.code_for`.
 4. `mtp/codebook.py` — the thin adapter over `mcn_codebook` described in §5, **not** a YAML loader.
@@ -435,7 +435,7 @@ No exit criteria: this phase is not started by this plan. It is scoped here pure
 
 ## 10. Repository change plan by area
 
-### 10.1 `tools/mork/python/src/python/mtp/` (new package)
+### 10.1 `tools/mork/src/mtp/` (new package)
 
 All files listed in §5 and §8. Depends on `mcn_decoder.py`/`mcn_codebook.py` only through the `mcn` package and `mtp/codebook.py`'s thin adapter — no changes to those modules are required by this plan.
 
@@ -508,7 +508,7 @@ Phases 0–2 have no dependency on each other's outputs beyond Phase 0's shared 
 Immediate next actions:
 
 1. Read the [consolidated repository handover](../../../docs/developer/status/implementation-handover.md), [toolchain guide](../../../docs/developer/toolchain.md), [implementation map](../../../docs/architecture/implementation-map.md), and the [MORK ADR catalogue](../../../docs/architecture/decisions/README.md) before adding MTP code.
-2. Create the Phase 0 MTP ADR, architecture guide, and validation handoff alongside the `tools/mork/python/src/python/mtp/` scaffold and `ontology/mork/mtp/data/config.yaml`.
+2. Create the Phase 0 MTP ADR, architecture guide, and validation handoff alongside the `tools/mork/src/mtp/` scaffold and `ontology/mork/mtp/data/config.yaml`.
 3. Add scoped `mise` and CI wiring only when the first importable MTP command exists. Do not claim that `mise run check:mtp` passed until the network-enabled validation environment has installed dependencies.
 4. Build `mtp/facts.py`, `mtp/ce.py`, and `mtp/mcnio.py` against the live MORK sources. Keep decoder and codebook changes out of scope unless a separately documented interface gap is discovered.
 5. Confirm term and axiom counts look sane by hand, then run the loan-example round-trip through `mtp.mcnio.InProcessTool` as a smoke test.

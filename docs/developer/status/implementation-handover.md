@@ -80,7 +80,7 @@ LATTICE creates and verifies semantic intent. The release stack packages, signs,
 |---|---|---|
 | Projection DTO and policy | [Projection contract](../../../contracts/surface/projection-contract.schema.json), [handoff policy](../../../contracts/surface/mork-handoff-policy.schema.json), [projection validator](../../../workers/src/lattice_workers/projection_contract.py) | [Surface Projection to MORK](../../architecture/surface-projection-mork.md), [ADR-A41](../../architecture/decisions/ADR-A41-surface-projection-mork-staging-boundary.md) |
 | Lowering worker | [lower request](../../../contracts/events/projection-lower-request.schema.json), [lower result](../../../contracts/events/projection-lower-result.schema.json), [worker dispatcher](../../../workers/src/lattice_workers/projection_lowering.py) | [Phase 4 handoff](phase-4-handoff.md) |
-| Fixture and inspection | [ARR Projection fixture](../../../ontology/surface/examples/saas-subscription-arr-projection.ttl), [Technical Inspector schema](../../../contracts/surface/technical-inspector.schema.json), [Studio](../../../apps/surface-contract-studio/src/studio.tsx) | [Surface lowering](../../../tools/surface/lowering.py) |
+| Fixture and inspection | [ARR Projection fixture](../../../ontology/surface/examples/saas-subscription-arr-projection.ttl), [Technical Inspector schema](../../../contracts/surface/technical-inspector.schema.json), [Studio](../../../apps/surface-contract-studio/src/studio.tsx) | [Surface lowering](../../../tools/surface/src/surface/lowering.py) |
 
 All Projection policies are deterministic-only and prohibit LLM completion. Lowering accepts only graph references and a staging namespace. It rejects active mapping targets. MORK governance, not Surface, owns activation.
 
@@ -92,7 +92,7 @@ All Projection policies are deterministic-only and prohibit LLM completion. Lowe
 |---|---|---|
 | Snapshot and decision model | [snapshot schema](../../../contracts/mork/review-snapshot.schema.json), [decision schema](../../../contracts/mork/review-decision.schema.json), [review semantics](../../../workers/src/lattice_workers/mork_review.py), [lifecycle](../../../workers/src/lattice_workers/mork_review_lifecycle.py) | [MORK Review Workbench](../../architecture/mork-review-workbench.md), [ADR-A42](../../architecture/decisions/ADR-A42-mork-review-snapshot-and-decision-learning-boundary.md) |
 | Role-restricted analysis | [evidence projection](../../../workers/src/lattice_workers/mork_evidence_projection.py), [analysis worker](../../../workers/src/lattice_workers/mork_analysis_worker.py), [review ledger migration](../../../workers/sql/V2__mork_review_ledger.sql) | [Phase 5 handoff](phase-5-handoff.md) |
-| Review Bench | [Workbench source](../../../apps/mork-review-workbench/src/main.tsx), [Bench E2E](../../../apps/mork-review-workbench/e2e/bench.spec.ts) | [MORK community package](../../../tools/mork/python/src/python/mork_communities) |
+| Review Bench | [Workbench source](../../../apps/mork-review-workbench/src/main.tsx), [Bench E2E](../../../apps/mork-review-workbench/e2e/bench.spec.ts) | [MORK community package](../../../tools/mork/src/mork_communities) |
 
 Domain Stewards can receive only review-safe evidence projections. They must not receive MCN, lint diagnostics, pack internals, MORK syntax, or cross-tenant content. `RESHAPE` produces structural feedback and must never change projection statistics.
 
@@ -120,7 +120,7 @@ mise run test
 
 mvn -f platform/pom.xml verify
 python -m pytest workers/tests
-python -m unittest tools.surface.test_surface tools.mork_compilers.test_mork_compilers -v
+python -m unittest surface.test_surface mork_compilers.test_mork_compilers -v
 python -m tools.phase8_conformance
 
 yarn install

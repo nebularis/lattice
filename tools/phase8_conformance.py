@@ -9,9 +9,9 @@ from pathlib import Path
 from pyshacl import validate
 from rdflib import Graph, URIRef
 
-from tools.mork_compilers.eligibility_ir import compile_condition
-from tools.mork_compilers.shacl_backend import compile_shapes
-from tools.surface.parity import run_shared_surface_parity
+from mork_compilers.eligibility_ir import compile_condition
+from mork_compilers.shacl_backend import compile_shapes
+from surface.parity import run_shared_surface_parity
 
 ROOT = Path(__file__).resolve().parents[1]
 CONDITION = URIRef(

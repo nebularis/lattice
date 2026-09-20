@@ -18,7 +18,7 @@ mise run bootstrap
 mvn -f platform/pom.xml -pl surface-workflow test
 python -m pytest workers/tests/test_surface_jobs.py
 python -m pytest workers/tests/test_surface_executor.py workers/tests/test_surface_consumer.py workers/tests/test_rabbitmq_surface_worker.py
-python -m unittest tools.surface.test_surface -v
+python -m unittest surface.test_surface -v
 python -m tools.phase8_conformance
 yarn install
 yarn check

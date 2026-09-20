@@ -18,13 +18,13 @@ Approved. This record preserves the decision request and its acceptance evidence
 3. `workers/` remains top-level as a deployable runtime package.
 4. ADRs move from `docs/adr/` to `docs/architecture/decisions/`, with every link and website entry point repointed in the same relocation unit.
 5. `docs/developer/plans`, `status`, and `review` become the required unit-of-work structure. `docs/developer/current` is removed after migration.
-6. `.github/copilot-instructions-2.md` is reviewed as a proposed companion before it replaces the active instructions.
+6. `.github/copilot-instructions.md` remains the active repository instruction file.
 
 ## Artifacts To Inspect
 
 - [Repository Topology and Documentation Governance Plan](../plans/repository-topology-and-documentation-governance.md)
 - [ADR-A77](../../architecture/decisions/ADR-A77-repository-topology-and-documentation-governance.md)
-- [Proposed companion instructions](../../../.github/copilot-instructions-2.md)
+- [Repository instructions](../../../.github/copilot-instructions.md)
 
 ## Commands To Run
 

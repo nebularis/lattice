@@ -22,8 +22,8 @@ def repository_root() -> Path:
 
 def build(out: Path, pack_version: str) -> int:
     root = repository_root()
-    data = root / "mork" / "mtp" / "data"
-    facts = extract(root / "mork" / "spec" / "Mork.ttl")
+    data = root / "ontology" / "mork" / "mtp" / "data"
+    facts = extract(root / "ontology" / "mork" / "spec" / "Mork.ttl")
     doctrine_data = doctrine.load(data / "doctrine.yaml")
     partition_data = yaml.safe_load((data / "partition.yaml").read_text(encoding="utf-8"))
     out.mkdir(parents=True, exist_ok=True)
@@ -32,7 +32,7 @@ def build(out: Path, pack_version: str) -> int:
     (out / "l0.json").write_text(json.dumps({"ontologyHash": facts.graph_hash, "termCount": len(facts.terms), "axiomCount": len(facts.axioms)}, indent=2) + "\n", encoding="utf-8")
     (out / "pairs.md").write_text("# Minimal pairs\n\n" + "\n".join(f"- {pair}" for pair in doctrine_data.get("minimal_pairs", [])) + "\n", encoding="utf-8")
     (out / "output_contract.txt").write_text("Use typed MCN code, reference, and minting positions. Keep confidence and uncertainty separate.\n", encoding="utf-8")
-    counts = predicate_counts(root / "mork" / "examples")
+    counts = predicate_counts(root / "ontology" / "mork" / "examples")
     (out / "stats.md").write_text("# Corpus statistics\n\n" + "\n".join(f"- `{predicate}`: {count}" for predicate, count in counts.most_common(20)) + "\n", encoding="utf-8")
     lenses = [yaml.safe_load(path.read_text(encoding="utf-8")) for path in sorted((data / "lenses").glob("*.yaml"))]
     lens_dir = out / "lenses"
@@ -60,8 +60,8 @@ def build(out: Path, pack_version: str) -> int:
 
 def check(out: Path) -> int:
     root = repository_root()
-    data = root / "mork" / "mtp" / "data"
-    facts = extract(root / "mork" / "spec" / "Mork.ttl")
+    data = root / "ontology" / "mork" / "mtp" / "data"
+    facts = extract(root / "ontology" / "mork" / "spec" / "Mork.ttl")
     doctrine_data = doctrine.load(data / "doctrine.yaml")
     findings = doctrine.check(doctrine_data, facts)
     expected = lock.read(data / "pins.lock.json")
@@ -90,11 +90,11 @@ def check(out: Path) -> int:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="mtp")
     parser.add_argument("command", choices=["facts-report", "build", "check", "update-pins"])
-    parser.add_argument("--out", type=Path, default=repository_root() / "mork" / "mtp" / "out")
+    parser.add_argument("--out", type=Path, default=repository_root() / "ontology" / "mork" / "mtp" / "out")
     parser.add_argument("--pack-version", default="0.1.0")
     args = parser.parse_args(argv)
     if args.command == "facts-report":
-        facts = extract(repository_root() / "mork" / "spec" / "Mork.ttl")
+        facts = extract(repository_root() / "ontology" / "mork" / "spec" / "Mork.ttl")
         print(json.dumps({"terms": len(facts.terms), "axioms": len(facts.axioms), "graphHash": facts.graph_hash}, indent=2))
         return 0
     if args.command == "build": return build(args.out, args.pack_version)

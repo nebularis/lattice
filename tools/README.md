@@ -2,9 +2,10 @@
 
 # Tools
 
-Python 3.9+. `tools/surface/` requires rdflib, as `tools/mork2rml.py` does;
-`tools/lattice/literate_extract.py` has no dependencies. Run everything from
-the repository root.
+Python 3.11+. The executable Python tools are sibling projects under `tools/`.
+`tools/mork/`, `tools/mork_compilers/`, and `tools/surface/` each own a
+`pyproject.toml` and a conventional `src/<package>/` layout. Run everything
+from the repository root.
 
 ## Python environment
 
@@ -22,7 +23,7 @@ The lock covers RDF parsing, SHACL validation, and OWL/RDFS reasoning. The
 optional MORK community dependencies remain separate from the core validation
 environment and can be installed with `.[community]` when needed.
 
-## `tools/lattice/literate_extract.py`
+## `tools/literate_extract.py`
 
 Regenerates a layer's compiled Turtle from its README, which is the
 authoritative specification. Fenced blocks are extracted in document order:
@@ -62,7 +63,7 @@ inventory, and a thin CLI over both.
 ### Compile
 
 ```bash
-python3 -m tools.surface compile \
+python3 -m surface compile \
     --contracts ontology/surface/examples/employment-job-family.ttl \
     --out ontology/surface/execution \
     --verify-determinism --parity
@@ -88,7 +89,7 @@ the output directory.
 ### Check freshness
 
 ```bash
-python3 -m tools.surface check \
+python3 -m surface check \
     --manifest ontology/surface/execution/job-family/manifest.ttl \
     --contracts ontology/surface/examples/employment-job-family.ttl
 ```
@@ -101,7 +102,7 @@ Exits non-zero when stale, so it drops into CI unchanged.
 ### Parity
 
 ```bash
-python3 -m tools.surface parity \
+python3 -m surface parity \
     --contracts ontology/surface/examples/employment-job-family.ttl
 ```
 
@@ -119,7 +120,7 @@ the loop, not more code here.
 
 ```bash
 # lift compiled surfaces into mrk:ProjectionMapping records
-python3 -m tools.surface mork \
+python3 -m surface mork \
     --contracts ontology/surface/examples/employment-job-family.ttl \
     --mapping-scheme https://example.org/mappings/employment
 ```
@@ -139,7 +140,7 @@ class IRI is referenced directly.
 ### Tests
 
 ```bash
-python3 -m unittest tools.surface.test_surface -v
+python3 -m unittest surface.test_surface -v
 ```
 
 Covers canonicalisation, naming, population enumeration, path evaluation,

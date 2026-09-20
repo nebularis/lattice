@@ -12,7 +12,7 @@ LATTICE is the middle of a three-part picture.
 
 **MORK (Mapping Ontological & Representational Knowledge)** used to map source material — structured data (schemas, records, API specifications, etc) and unstructured wordings (documents, clauses, free text) — onto a target domain ontology's T-box & R-Box, using Formal Concept Analysis over the co-occurrence structure of previously mapped source material to propose alignment. MORK as a general-purpose mapping vocabulary, based on SKOS.
 
-The layers described below are one family of mapping target, but not the only possible one. MORK's semantic vocabulary and target declarations live under `ontology/mork/`, while its Python implementation lives under `tools/mork/python/`. LATTICE uses MORK as the reference way of populating its own layers.
+The layers described below are one family of mapping target, but not the only possible one. MORK's semantic vocabulary and target declarations live under `ontology/mork/`, while its Python implementation lives under `tools/mork/`. LATTICE uses MORK as the reference way of populating its own layers.
 
 **LATTICE (Concept Lattice of Domain Ontology Layers)** provides the semantic substrate MORK's output lands in - designed to be extended by particular subject domains in order to be used in industry-specific ways.
 
@@ -154,7 +154,9 @@ mise exec -- erl -eval 'io:format("~p~n", [erlang:system_info(otp_release)]), ha
 mise run topology:preflight
 test -d ontology
 test -d tools
-test -d tools/mork/python
+test -d tools/mork
+test -d tools/mork_compilers
+test -d tools/surface
 test -d tools/spc/python
 test -d tools/spc/erlang
 test -d workers
@@ -206,9 +208,9 @@ mise exec -- yarn test
 ### Validate MORK
 
 ```bash
-mise exec -- python -m pip install -e tools/mork/python
-mise exec -- python -m pytest tools/mork/python/src/python -q
-mise exec -- python -m compileall -q tools/mork/python/src
+mise exec -- python -m pip install -e tools/mork -e tools/mork_compilers -e tools/surface
+mise exec -- python -m pytest tools/mork/src -q
+mise exec -- python -m compileall -q tools/mork/src tools/mork_compilers/src tools/surface/src
 ```
 
 ### Validate SPC Python

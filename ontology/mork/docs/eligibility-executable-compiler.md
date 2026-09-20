@@ -47,7 +47,7 @@ Every artefact carries provenance back to the condition and every Quantification
 
 No Python interpreter and no SHACL/SWRL/SPARQL engine were available in the environment this was written in.
 
-1. Run `python -m unittest tools.mork_compilers.test_mork_compilers -v` and treat the first pass as part of review, exactly as `tools/surface`'s own test suite documents for itself.
+1. Run `python -m unittest mork_compilers.test_mork_compilers -v` and treat the first pass as part of review, exactly as `surface`'s own test suite documents for itself.
 2. Parse `ontology/mork/spec/Executable.ttl` and confirm it is consistent with `ontology/mork/spec/Mork.ttl` under a real OWL reasoner — the punned references to `elg:Condition`, `elg:Question`, `elg:Decision` etc. should resolve once Eligibility's own ontology is loaded alongside it, even though this file does not import Eligibility formally.
 3. Execute the generated SPARQL query from `sparql_backend.compile_query_template` against `ontology/eligibility/examples/interval-containment.ttl` and confirm `ex:question-1` resolves to `"Permitted"`.
 4. Validate the generated SHACL shapes from `shacl_backend.compile_shapes` with a real SHACL engine against the same example, and against a fixture with a missing `elg:candidateRangeSet` and one with an out-of-range candidate.

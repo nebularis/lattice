@@ -35,8 +35,8 @@ This is the single place to check what remains of the delivery plan. It does not
 
 Nothing below matters until this is done, because every other outstanding item assumes the Phase 2–5 work is correct, and that has not been checked mechanically.
 
-1. **Surface compiler test suite — complete.** `python -m unittest tools.surface.test_surface -v` passes 54/54 from the repository root.
-2. **Focused MORK compiler test suite — complete.** `python -m unittest tools.mork_compilers.test_mork_compilers -v` passes 15/15.
+1. **Surface compiler test suite — complete.** `python -m unittest surface.test_surface -v` passes 54/54 from the repository root.
+2. **Focused MORK compiler test suite — complete.** `python -m unittest mork_compilers.test_mork_compilers -v` passes 15/15.
 3. **Run `tools/literate_extract.py --check`** across every layer README to confirm no extraction drift was introduced while editing `ontology/surface/README.md`.
 4. **Load `ontology/mork/spec/Mork.ttl` + `ontology/mork/spec/Executable.ttl` + `ontology/foundation/vocab/foundation-vocab.ttl` into a real OWL reasoner** and confirm consistency — the new `fnd:Governable`/`fnd:Version` axioms on `mork:GenerativeMapping` and the punned `elg:`/`qnt:` references in `Executable.ttl` remain outstanding.
 5. **SHACL execution — complete for current fixtures.** `ontology/mork/examples/Governance/GovernanceAndVersioning.ttl` conforms under `pyshacl`. Generated Eligibility shapes conform for the worked example and correctly fail for missing candidate evidence and an out-of-range candidate.
@@ -44,7 +44,7 @@ Nothing below matters until this is done, because every other outstanding item a
 7. **Load the generated SWRL rule** (`swrl_backend.compile_rules`) into a SWRL-capable reasoner and confirm it derives `exe:impliesDecision(ex:question-1, elg:Permitted)`.
 8. **Regenerate and commit real output** where a "no hand-written golden" note was left deliberately:
    - `ontology/surface/execution/` packages (see `ontology/surface/execution/README (1).md` for the exact command)
-   - a lowered MORK mapping graph for `ontology/surface/examples/saas-subscription-arr-projection.ttl` (`python -m tools.surface lower ...`)
+    - a lowered MORK mapping graph for `ontology/surface/examples/saas-subscription-arr-projection.ttl` (`python -m surface lower ...`)
 
 ---
 
@@ -82,7 +82,7 @@ Groundwork already in place to build on: Surface's read-set/hash model (ADR-A12,
 
 ### Phase 8 — conformance and parity framework [COMPLETE - BAR OUT OF SCOPE]
 
-Complete for the current Surface and Eligibility validation scope. The shared conformance manifest contains three explicit Surface cases, `tools/surface/parity.py` runs them through the source/surface comparison, and `tools.surface.cli parity --shared-corpus ...` exposes the gate. Index, multi-hop promotion, and crosswalk promotion pass 16 comparisons in total. `tools/phase8_conformance.py` now combines compiler tests, ontology/governance/generated SHACL, and shared parity, with [`.github/workflows/phase8-conformance.yml`](../../.github/workflows/phase8-conformance.yml) as the CI gate. Broader Behaviour automation and SWRL/OWL reasoner execution remain future work.
+Complete for the current Surface and Eligibility validation scope. The shared conformance manifest contains three explicit Surface cases, `surface/parity.py` runs them through the source/surface comparison, and `surface.cli parity --shared-corpus ...` exposes the gate. Index, multi-hop promotion, and crosswalk promotion pass 16 comparisons in total. `tools/phase8_conformance.py` now combines compiler tests, ontology/governance/generated SHACL, and shared parity, with [`.github/workflows/phase8-conformance.yml`](../../.github/workflows/phase8-conformance.yml) as the CI gate. Broader Behaviour automation and SWRL/OWL reasoner execution remain future work.
 
 This phase is also where the R2-parity-to-shared-corpus item (§3 above) belongs, and where the Eligibility interval-containment conformance corpus (originally a Phase 6 exit criterion) should land.
 
@@ -127,7 +127,7 @@ The implementation should:
 7. make CI use the same environment and lock data
 8. remove stale module docstrings and README claims that say Python or rdflib are unavailable once the environment is adopted
 
-The root environment must not silently replace `tools/mork/python/pyproject.toml`. The MORK package remains installable independently, while the root workspace environment provides the cross-package test and validation surface.
+The root environment must not silently replace `tools/mork/pyproject.toml`. The MORK package remains installable independently, while the root workspace environment provides the cross-package test and validation surface.
 
 ### 6.3 Dependency tiers
 
