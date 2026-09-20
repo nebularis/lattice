@@ -4,6 +4,8 @@
 
 This guide maps the implementation introduced by Phases 0 through 3. It is an orientation document for maintainers and coding agents. It does not replace normative ontology documentation in layer READMEs or decision rationale in ADRs.
 
+Read [solution-design-specification.md](solution-design-specification.md) first for the platform's process, component, data, infrastructure, and robustness design. This map is a source-file index into that design, not a substitute for it.
+
 | Area | Primary implementation | Contracts and guides | Current state |
 |---|---|---|---|
 | Repository orchestration | `mise.toml`, `.devcontainer/`, `deployment/compose/` | [toolchain](../developer/toolchain.md), [ADR-A29](../adr/ADR-A29-repository-toolchain-and-environment-boundary.md) | Authoring complete, runtime validation pending |

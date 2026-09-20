@@ -118,7 +118,7 @@ Path expressions use SHACL property-path syntax (`sh:path`), because shapes alre
 
 ## 5. Model — declaration tier
 
-DL-style, following the notation of `docs/architecture/solution-architecture.md` §0.
+DL-style, following the notation of `docs/architecture/ontology-architecture.md` §0.
 
 ```
 srf:SurfaceContract        ⊑ fnd:Version ⊓ fnd:Governable

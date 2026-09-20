@@ -7,7 +7,7 @@
 
 ## Context
 
-The repository's own documents have stated more than one dependency order at different times. The root README and `docs/architecture/solution-architecture.md` describe a six-layer picture with Instrument and Eligibility as independent siblings under Party. The Quantification layer's own README states a seven-layer order with Quantification third, between Vocabulary and Party. Neither `party/spec/party.ttl` nor `quantification/spec/quantification.ttl` declares the imports needed to make either version machine-checkable: Quantification's compiled ontology carries no `owl:Ontology` header at all, and Party imports only Foundation.
+The repository's own documents have stated more than one dependency order at different times. The root README and `docs/architecture/ontology-architecture.md` describe a six-layer picture with Instrument and Eligibility as independent siblings under Party. The Quantification layer's own README states a seven-layer order with Quantification third, between Vocabulary and Party. Neither `party/spec/party.ttl` nor `quantification/spec/quantification.ttl` declares the imports needed to make either version machine-checkable: Quantification's compiled ontology carries no `owl:Ontology` header at all, and Party imports only Foundation.
 
 A layer dependency order is not cosmetic. It determines which layer may name which other layer's terms, what a `projection/` file is allowed to reference, and what an import-closure check in CI is checking against. Leaving it inconsistently stated means every future contribution has to guess which of several stated orders is current.
 
@@ -44,5 +44,5 @@ Concretely:
 
 - `quantification/spec/quantification.ttl` gains an `owl:Ontology` header importing Foundation and Vocabulary, matching what its own README already claimed.
 - `party/spec/party.ttl` gains an `owl:imports` of Quantification.
-- The root README and `docs/architecture/solution-architecture.md` are corrected to state this same seven-link order, so the layer table, the dependency diagram, and the compiled imports agree.
+- The root README and `docs/architecture/ontology-architecture.md` are corrected to state this same seven-link order, so the layer table, the dependency diagram, and the compiled imports agree.
 - A future CI check (documented in [../validation-and-test-plan.md](../validation-and-test-plan.md), not yet built) can verify import closure mechanically once Eligibility, Instrument, and Behaviour exist and declare their own imports.
