@@ -9,7 +9,7 @@ MORK mapping graph: a mapping's resolved parameter bindings, and the order
 in which a batch of mappings must compile relative to one another
 (``mork:dependsOnMapping`` — "Compositional dependency ensuring that target
 concepts exist before the GenerativeMapping is compiled", per
-``mork/spec/Mork.ttl``). Reading either one is duplicated once per backend
+``ontology/mork/spec/Mork.ttl``). Reading either one is duplicated once per backend
 without a shared module.
 
 Kept independent of ``tools/surface``: that package's equivalent helpers

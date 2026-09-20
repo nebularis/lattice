@@ -39,5 +39,5 @@ package = false
 packages = []
 
 [tool.pytest.ini_options]
-testpaths = ["tools", "mork/src/python"]
-python_files = ["test_*.py", "*_Test.py"]
+testpaths = ["tools", "tools/mork/python/src/python"]
+python_files = ["test_*.py"]

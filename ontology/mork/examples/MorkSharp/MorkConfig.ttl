@@ -1,0 +1,16 @@
+@prefix dnr: <http://www.dotnetrdf.org/configuration#> .
+
+_:uriFactory a dnr:UriFactory ;
+   dnr:type "VDS.RDF.CachingUriFactory" .
+
+_:graph a dnr:Graph ;
+  dnr:type "VDS.RDF.Graph" ;
+  dnr:withName <http://www.nebularis.org/ontologies/Zoo> ;
+  dnr:fromFile "file:///Users/t4/work/lattice/ontology/mork/examples/Zoo.ttl" ;
+  dnr:usingUriFactory _:uriFactory .
+
+_:graph a dnr:Graph ;
+  dnr:type "VDS.RDF.Graph" ;
+  dnr:withName <http://www.nebularis.org/ontologies/Petstore> ;
+  dnr:fromFile "file:///Users/t4/work/lattice/ontology/mork/examples/Petstore.ttl" ;
+  dnr:usingUriFactory _:uriFactory .

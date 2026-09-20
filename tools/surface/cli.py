@@ -309,7 +309,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     build.add_argument("--contract", default=None, help="compile only this contract IRI")
     build.add_argument("--now", default=None, help="fix the production timestamp")
     build.add_argument("--verify-determinism", action="store_true", help="compile twice and compare")
-    build.add_argument("--parity", action="store_true", help="check surface/source parity before writing")
+    build.add_argument("--parity", action="store_true", help="check ontology/surface/source parity before writing")
     build.add_argument("--mork-mapping", action="store_true", help="also emit a MORK projection mapping")
     build.set_defaults(func=command_compile)
 

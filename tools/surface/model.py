@@ -78,7 +78,7 @@ class Profile:
         ``srf:R1``: every surface in a stack shares one profile identity).
         Whether this digest is ever asserted into the graph as
         ``srf:profileIdentityHash`` is a separate, still-open question (see
-        surface/docs/OUTSTANDING-ITEMS.md §3.3); this method is a pure
+        ontology/surface/docs/OUTSTANDING-ITEMS.md §3.3); this method is a pure
         computation with no graph side effect either way.
         """
         return hashlib.sha256(self.identity().encode("utf-8")).hexdigest()

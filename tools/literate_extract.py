@@ -22,12 +22,12 @@ Each extracted ``.ttl`` gains the project's SPDX header as its first line.
 
 Usage::
 
-    python3 -m tools.lattice.literate_extract surface/README.md \\
+    python3 -m tools.lattice.literate_extract ontology/surface/README.md \\
         --layer surface \\
         --root . \\
         --shapes shapes/structural.ttl shapes/constraints.ttl
 
-    python3 -m tools.lattice.literate_extract surface/README.md \\
+    python3 -m tools.lattice.literate_extract ontology/surface/README.md \\
         --layer surface --root . --check
 """
 

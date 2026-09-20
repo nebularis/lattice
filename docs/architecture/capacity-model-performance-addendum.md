@@ -364,7 +364,7 @@ They are source-of-truth semantics and should remain expressive.
 
 ## 9.2 Add a Capacity Execution profile
 
-Under `applied/capacity/execution/`, define:
+Under `ontology/applied/capacity/execution/`, define:
 
 - execution T-Box (`capacity-execution.ttl`),
 - structural/constraint shapes,
@@ -435,7 +435,7 @@ Not candidates:
 ## 11. Concrete addendum decisions
 
 1. **Adopt projection-first runtime strategy** for Capacity transaction processing.
-2. **Define `capx:` runtime profile** as a compact execution T-Box under `applied/capacity/execution`.
+2. **Define `capx:` runtime profile** as a compact execution T-Box under `ontology/applied/capacity/execution`.
 3. **Treat quantity canonicalisation as compile-time mandatory** for runtime-critical flows.
 4. **Require deterministic ordering and phase separation** as runtime invariants.
 5. **Retain source richness in Behaviour and Quantification** and avoid substrate simplification.

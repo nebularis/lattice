@@ -59,4 +59,4 @@ The present in-memory outbox and unit tests establish the contract. A production
 
 OIDC-derived identity must be converted to `Principal` at an authenticated boundary. AMQP messages cannot construct or modify a principal. New dataset adapters must declare their capabilities and pass the same contract tests as Fuseki. An unsupported capability is an explicit failure, not an adapter-specific fallback.
 
-See [ADR-A30](../adr/ADR-A30-shared-semantic-platform-cross-runtime-boundary.md) for the durable decision and [the implementation map](implementation-map.md) for the cross-phase dependency map.
+See [ADR-A30](decisions/ADR-A30-shared-semantic-platform-cross-runtime-boundary.md) for the durable decision and [the implementation map](implementation-map.md) for the cross-phase dependency map.

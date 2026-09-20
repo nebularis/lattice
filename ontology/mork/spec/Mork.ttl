@@ -1,0 +1,3159 @@
+@prefix : <http://www.nebularis.org/ontologies/Mork#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xml: <http://www.w3.org/XML/1998/namespace> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix dct: <http://purl.org/dc/terms/> .
+@prefix swrl: <http://www.w3.org/2003/11/swrl#> .
+@prefix swrlb: <http://www.w3.org/2003/11/swrlb#> .
+@prefix rr: <http://www.w3.org/ns/r2rml#> .
+@prefix fnd: <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@base <http://www.nebularis.org/ontologies/Mork#> .
+
+<http://www.nebularis.org/ontologies/Mork> rdf:type owl:Ontology ;
+                                            owl:imports <http://www.w3.org/2004/02/skos/core> ,
+                                                        <http://www.w3.org/ns/shacl> ,
+                                                        <http://www.w3.org/2003/11/swrl> ,
+                                                        <https://www.nebularis.org/neuro-semantic/foundation/0.0.7> .
+
+#################################################################
+#    Annotation properties
+#################################################################
+
+###  http://purl.org/dc/terms/contributor
+dct:contributor rdf:type owl:AnnotationProperty .
+
+
+###  http://purl.org/dc/terms/creator
+dct:creator rdf:type owl:AnnotationProperty .
+
+
+###  http://purl.org/dc/terms/description
+dct:description rdf:type owl:AnnotationProperty .
+
+
+###  http://purl.org/dc/terms/title
+dct:title rdf:type owl:AnnotationProperty .
+
+
+###  http://www.nebularis.org/ontologies/Mork#mappingNote
+:mappingNote rdf:type owl:AnnotationProperty ;
+             rdfs:label "mapping note" ;
+             skos:definition "Used to provide notes about a mapping decision." ;
+             rdfs:subPropertyOf skos:note .
+
+
+###  http://www.nebularis.org/ontologies/Mork#userDeclined
+:userDeclined rdf:type owl:AnnotationProperty ;
+              rdfs:label "user declined" ;
+              skos:definition "A note explaining that a user has declined the use of a DataMapping" ;
+              rdfs:subPropertyOf skos:note .
+
+
+###  http://www.nebularis.org/ontologies/Mork#swrlCompactSyntax
+:swrlCompactSyntax rdf:type owl:AnnotationProperty ;
+                   rdfs:subPropertyOf skos:note ;
+                   rdfs:label "swrl compact syntax" ;
+                   skos:definition "A human-readable rendering of a SWRL rule in compact syntax. This is an annotation property with no logical role in reasoning or validation. The canonical representation of the rule is the structured swrl:Imp individual linked via generatesRuleDefinition." .
+
+
+#################################################################
+#    Object Properties
+#################################################################
+
+###  http://www.nebularis.org/ontologies/Mork#assertsPropertyDomains
+:assertsPropertyDomains rdf:type owl:ObjectProperty ;
+                        rdfs:subPropertyOf :propertyMappingAssertions ;
+                        rdfs:label "asserts property domains" ;
+                        skos:definition "Used to indicate that a mapping to an object property should provide assertions about the domain(s) of that property. Intended for use with deferred mappings (i.e., where the axiom to which the domain property shall refer does not exist at the time the mapping is defined)." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#assertsPropertyRanges
+:assertsPropertyRanges rdf:type owl:ObjectProperty ;
+                       rdfs:subPropertyOf :propertyMappingAssertions ;
+                       rdfs:label "asserts property ranges" ;
+                       skos:definition "Used to indicate that a mapping to an object property should provide assertions about the range(s) of that property. Intended for use with deferred mappings (i.e., where the axiom to which the rdfs:range property shall refer does not exist at the time the mapping is defined)." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#associativeBroader
+:associativeBroader rdf:type owl:ObjectProperty ;
+                    rdfs:subPropertyOf skos:broader ;
+                    owl:inverseOf :associativeNarrower ;
+                    rdfs:label "associative broader" ;
+                    skos:definition "extends skos:broader with the concept of associativity" ;
+                    skos:scopeNote "By convention, associativeBroader is not used to make assertions. Rather, its subProperties should be used, however the superProperty exists in order to draw inferences about the transitive closure of a hierarchical relation." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#associativeNarrower
+:associativeNarrower rdf:type owl:ObjectProperty ;
+                     rdfs:subPropertyOf skos:narrower ;
+                     rdfs:label "associative narrower" ;
+                     skos:definition "extends skos:narrower with the concept of associativity" ;
+                     skos:scopeNote "By convention, associativeNarrower is not used to make assertions. Rather, its subProperties should be used, however the superProperty exists in order to draw inferences about the transitive closure of a hierarchical relation." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#broadABoxCategoryMatch
+:broadABoxCategoryMatch rdf:type owl:ObjectProperty ;
+                        rdfs:subPropertyOf :broadCategoryMatch ;
+                        owl:inverseOf :narrowABoxCategoryMatch ;
+                        rdfs:label "has broad a-box category match" ;
+                        skos:altLabel "has a-box super-category match" ;
+                        skos:definition """Used to state a mapping link where the subject maps to a broader category via object-property link to an individual that represents the Hyperonym (i.e., the more specific thing in the A-Box of the mapped concept scheme).
+
+The A-Box (or Assertional Box) contains assertions (or facts) about individuals within the domain.""" ;
+                        skos:example """###  http://www.example.org/Risks#isSubcategoryOf
+:isSubcategoryOf rdf:type owl:ObjectProperty .
+
+###  http://www.example.org/Risks#RegulatoryRisk
+:RegulatoryRisk rdf:type owl:NamedIndividual ,
+                                          risk:Risk .
+
+###  http://www.example.org/Risks#PCIDSS
+:PCIDSS rdf:type owl:NamedIndividual ,
+            skos:note \"Hyperonymic relation via A-Box object property\" ;
+            mork:hasMapping :PciDssMapping ;
+            rdfs:comment \"we want to instantiate an axiom `:isSubcategoryOf :RegulatoryRisk' here\" .
+
+###  http://www.example.org/Mapping#PciDssMapping
+:PciDssMapping rdf:type owl:NamedIndividual ,
+                      mork:DataMapping ;
+            rdfs:comment \"the following statements assert the desired axiom for PCIDSS, viz `isSubcategoryOf :RegulatoryRisk'\" ;
+            mork:exactTBoxMatch risk:Risk ;
+            mork:exactRBoxMatch risk:isSubcategoryOf ;
+            mork:broadABoxCategoryMatch risk:RegulatoryRisk .""" ;
+                        skos:scopeNote """An ABox category match may apply either before or after a datum is to be individuated. In either case, the operation is implied to be idempotent.
+
+An ABox category match implies the presence of both a RBox match (to the object property over which the relationship is to be defined) and a skos:mappingRelation to the owl:Individual in the A-box. This is not described in the domains for this property, since such constraints are better expressed as SWRL/SHACL constraints.""" .
+
+
+###  http://www.nebularis.org/ontologies/Mork#broadCategoryMatch
+:broadCategoryMatch rdf:type owl:ObjectProperty ;
+                    rdfs:subPropertyOf skos:broadMatch ;
+                    owl:inverseOf :narrowCategoryMatch ;
+                    rdfs:label "has broad category match" ;
+                    skos:definition "A broadCategoryMatch is used to state a hyperonymic, categorical mapping link between two conceptual resources in different concept schemes, where the subject is the (more specific) hyponym, and the object is the (more general) hyperonym." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#broadConceptRole
+:broadConceptRole rdf:type owl:ObjectProperty ;
+                  rdfs:subPropertyOf :associativeBroader ;
+                  rdfs:range skos:Concept ;
+                  rdfs:label "has objectified broad concept role" ;
+                  rdfs:seeAlso :Objectification ;
+                  skos:definition "Used to model the subject in an Objectification, i.e., a relationship between concepts that must be \"reified\" in order to annotate it, or create associations between the relationship and other concepts." ;
+                  skos:scopeNote """This property is NOT marked as the inverse of narrowConceptRole, since doing so would cause the reasoner to assume that the participants in an Objectification are members of that class.
+
+For situations where such extended reasoning is desireable, broadNavigableConceptRole and its inverse narrowNavigableConceptRole can be used.""" .
+
+
+###  http://www.nebularis.org/ontologies/Mork#broadNavigableConceptRole
+:broadNavigableConceptRole rdf:type owl:ObjectProperty ;
+                           rdfs:subPropertyOf :broadConceptRole ;
+                           owl:inverseOf :narrowNavigableConceptRole ;
+                           rdfs:label "has navigable objectified broad concept role" ;
+                           rdfs:seeAlso :Objectification ;
+                           skos:definition "Extends broadConceptRole to model the subject in an Objectification where the participating concepts can be inferred to be members of the Objectification class" ;
+                           skos:scopeNote """This property is the inverse of narrowNavigableConceptRole. The reasoner will assume Individuals related via this property are members of the class Objectification.
+
+For situations where such reasoning is not desireable, use the superProperty broadConceptRole instead.""" .
+
+
+###  http://www.nebularis.org/ontologies/Mork#broadRBoxCategoryMatch
+:broadRBoxCategoryMatch rdf:type owl:ObjectProperty ;
+                        rdfs:subPropertyOf :broadCategoryMatch ;
+                        owl:inverseOf :narrowRBoxCategoryMatch ;
+                        rdfs:label "has broad r-box category match" ;
+                        rdfs:seeAlso :Objectification ;
+                        skos:definition """Used to state a mapping link where the subject maps to a broader category of relationship (i.e., the more specific relation in the R-Box of the mapped concept scheme). This property is intended for use with members of the Objectification class, however no domain or range assertions are made in order to avoid having the reasoner incorrectly assign individuals to said class.
+
+The R-Box (or Relational Box) defines the properties or roles that can be used to relate individuals, and their characteristics, such as whether they are symmetric, transitive, or functional.""" ;
+                        skos:scopeNote "Assertions made with this property are intended for use alongside matches to individuals in the A-Box of a target ontology." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#broadTBoxCategoryMatch
+:broadTBoxCategoryMatch rdf:type owl:ObjectProperty ;
+                        rdfs:subPropertyOf :broadCategoryMatch ;
+                        owl:inverseOf :narrowTBoxCategoryMatch ;
+                        rdfs:label "has broad t-box category match" ;
+                        skos:altLabel "has t-box super-category match" ;
+                        skos:definition """Used to define a hyperonymic, categorical relationship between concepts in different concept schemes, specifically modelling the subject as being in an owl:subclassOf relationship with the object.
+
+The T-Box (or Terminological Box) defines the vocabulary of the domain by describing concepts (such as Classes) and roles (relationships that can be defined between objects).""" ;
+                        skos:scopeNote "A TBox category must be applied before a datum can be individuated, since it implies the existence of an owl:Class not originally present in an OntologicalScheme. The implication here is that the operation resulting from this axiom is idempotent." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#broaderApplicative
+:broaderApplicative rdf:type owl:ObjectProperty ;
+                    rdfs:subPropertyOf :broaderMapping ;
+                    rdf:type owl:AsymmetricProperty ;
+                    rdfs:label "has broader applicative mapping" ;
+                    skos:definition """Models contextual (Kleisli) composition for the context monad. This causes any compositeNarrowerMapping to be applied within the context (i.e., mapping outcome) of the object, rather than the subject.
+
+Used when a mapping needs to interact with the outcome of a prior mapping, for example a compositeBroader or hypothesisMapping. Please read the skos:scopeNote for the expected behaviours.""" ;
+                    skos:scopeNote """All compositeNarrowerMappings will be applied to the context (i.e., the axioms resulting as the *outcome* of the broaderApplicative object mapping). This implies the following rules:
+
+- The broaderApplicative object must be a DataMapping or subclass thereof.
+- An exactRBoxMatch or inverseRBoxMatch MUST be provided to indicate the relationship between the subject (outcome of this mapping) and the object (on the other end of the relationship).
+
+Specifically, this instruction means:
+
+- Consider the context/outcome axiom of this (subject) mapping, refer to it as the \"child\"
+- Look up the broaderApplicative mapping, refer to it as the \"parent\"
+- Find the axiom (or entry point into a digraph of axioms) created by the \"parent\" mapping, that is related to the \"child\" axiom along the relationship defined by the exactRBoxMatch
+- Apply the compositeNarrowerMappings of the subject (mapping) to the parent's axiom(s) and not to the child's
+
+Formally, this is modelled as Kleisli composition for a context monad (see Foundations §2.4). The co-occurrence constraint requiring an exactRBoxMatch is enforced by GCI Axiom 2.14a.""" .
+
+
+###  http://www.nebularis.org/ontologies/Mork#broaderMapping
+:broaderMapping rdf:type owl:ObjectProperty ;
+                rdfs:subPropertyOf :relatedMapping ;
+                owl:inverseOf :narrowerMapping ;
+                rdfs:domain [ rdf:type owl:Class ;
+                              owl:unionOf ( :DataMapping
+                                            [ rdf:type owl:Class ;
+                                              owl:intersectionOf ( skos:OrderedCollection
+                                                                   [ rdf:type owl:Restriction ;
+                                                                     owl:onProperty skos:member ;
+                                                                     owl:someValuesFrom :DataMapping
+                                                                   ]
+                                                                 )
+                                            ]
+                                          )
+                            ] ;
+                rdfs:range :DataMapping ;
+                rdfs:label "has broader mapping" ;
+                skos:definition "Relates a mapping to a mapping that is more general (less specific)" .
+
+
+###  http://www.nebularis.org/ontologies/Mork#closeMapping
+:closeMapping rdf:type owl:ObjectProperty ;
+              rdfs:subPropertyOf :relatedMapping ;
+              rdfs:label "has close mapping" ;
+              skos:definition "used to link two mappings that are sufficiently similar that they can be used interchangeably in some applications." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#compositeBroader
+:compositeBroader rdf:type owl:ObjectProperty ;
+                  rdfs:subPropertyOf :associativeBroader ;
+                  owl:inverseOf :compositeNarrower ;
+                  rdfs:label "composite broader" ;
+                  skos:definition "Extends associativeBroader with the concept of composition, wherein the object's existence is semantically conditional upon the subject's. This property is the inverse of compositeNarrower." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#compositeBroaderMapping
+:compositeBroaderMapping rdf:type owl:ObjectProperty ;
+                         rdfs:subPropertyOf :broaderMapping ;
+                         owl:inverseOf :compositeNarrowerMapping ;
+                         rdfs:label "has composite broader mapping" ;
+                         rdfs:seeAlso :compositeNarrowerMapping ;
+                         skos:definition "compositeBroaderMapping is used to compose mappings into a directed acyclic graph. The subject mapping is the component part of the object mapping. This is the inverse of compositeNarrowerMapping." ;
+                         skos:example "See compositeNarrowerMapping for an example" .
+
+
+###  http://www.nebularis.org/ontologies/Mork#compositeBroaderTemplate
+:compositeBroaderTemplate rdf:type owl:ObjectProperty ;
+                          rdfs:subPropertyOf :compositeBroaderMapping ;
+                          owl:inverseOf :compositeNarrowerTemplate ;
+                          rdfs:label "has composite broader template" ;
+                          rdfs:seeAlso :templateMapping ;
+                          skos:definition "Version of 'composite broader mapping' for use in templates. This property is the inverse of compositeNarrowerTemplate." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#compositeNarrower
+:compositeNarrower rdf:type owl:ObjectProperty ;
+                   rdfs:subPropertyOf :associativeNarrower ;
+                   rdfs:label "composite narrower" ;
+                   skos:definition "Extends associativeNarrower with the concept of composition, wherein the subject's existence is semantically conditional upon the object's. This property is the inverse of compositeBroader." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#compositeNarrowerMapping
+:compositeNarrowerMapping rdf:type owl:ObjectProperty ;
+                          rdfs:subPropertyOf :narrowerMapping ;
+                          rdfs:comment "A concept in a TaxonomyScheme may well be broken down into multiple axioms when mapped to an OntologicalScheme. In this case, the digraph of mapping instructions can be constructed by relating mappings using this (and its inverse) property." ;
+                          rdfs:label "has composite narrower mapping" ;
+                          rdfs:seeAlso :compositeBroaderMapping ;
+                          skos:definition "compositeNarrowerMapping is used to compose mappings into a directed acyclic graph. The object mapping is the component part of the subject mapping. This is the inverse of compositeBroaderMapping." ;
+                          skos:example """Take some representation scheme, mapped from json: 
+
+{
+    \"aardvarkName\": \"Peter\",
+    \"aardvarkSex\": \"M\"
+}
+
+This will yield two attributes, to which we will map three concepts in a concept scheme: aardvark, aardvark_Name, and aardvark_Sex.
+
+In our ontology, we may wish to model aardvark within the t-box of the ontology:
+
+:Aardvark rdf:type owl:Class;
+            rdfs:subClassOf :Animal .
+
+In this case, an input datum for aardvark will require that we define the class first, then assert a new individual which is a member of said class, before we can manage the input record by making DataTypeProperty assertions against the name and sex of the newly individuated animal.
+
+Or indeed we might be required to model this by relating our new individual to some other fact within the a-box, adding meaning via object properties or annotations, e.g., using skos:
+
+:Aardvark rdf:type owl:NamedIndividual ;
+           skos:narrowerTransitive :Animal .
+
+In either case, we are required to undertake multiple steps to individuate the record before we can begin to process the attributes that belong to (i.e. are narrower within) its concept scheme. This will yield a composition of mappings in order to create the necessary digraph in the target ontology scheme. The following example snippet (Turtle) positions the Aardvark concept in the T-Box of that target ontology, with subsequent individuals assigned to said class. Note the use of deferredMapping here, such that the class is composed of individuals, however the individuals cannot be asserted to belong to the class until it exists.
+
+:MapAardvarkClass rdf:type owl:NamedIndividual ;
+            rdfs:subClassOf mork:DataMapping ;
+            mork:broadTBoxCategoryMatch ont:Animal ; 
+            mork:compositeNarrowerMapping :MapAardvarkIndividual ;
+            mork:conceptName \"Aardvark\" .
+
+:MapAardvarkIndividual rdf:type owl:NamedIndividual ;
+            rdfs:subClassOf mork:Datum ;
+            mork:deferredMapping :MapAardvarkClass ;
+            mork:compositeNarrowerMapping :MapAardvarkName, :MapAardvarkSex .
+
+Subsequent mappings (for name and sex) may rely on these mappings as a hypothesis.""" .
+
+
+###  http://www.nebularis.org/ontologies/Mork#compositeNarrowerTemplate
+:compositeNarrowerTemplate rdf:type owl:ObjectProperty ;
+                           rdfs:subPropertyOf :compositeNarrowerMapping ;
+                           rdfs:label "has composite narrower template" ;
+                           rdfs:seeAlso :templateMapping ;
+                           skos:definition "Version of 'composite narrower mapping' for use in templates." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#concatenation
+:concatenation rdf:type owl:ObjectProperty ;
+               rdfs:subPropertyOf :placeholderMapping ;
+               rdfs:label "concatenation" ;
+               skos:definition "Used to indicate that a placeholderMapping is being used for the purposes of concatenating values" .
+
+
+###  http://www.nebularis.org/ontologies/Mork#conceptScheme
+:conceptScheme rdf:type owl:ObjectProperty ;
+               rdfs:subPropertyOf skos:inScheme ;
+               rdfs:range :TaxonomyScheme ;
+               rdfs:label "in concept scheme" ;
+               skos:definition "denotes the subject's membership in the object (TaxonomyScheme)" .
+
+
+###  http://www.nebularis.org/ontologies/Mork#deferredMapping
+:deferredMapping rdf:type owl:ObjectProperty ;
+                 rdfs:subPropertyOf :relatedMapping ;
+                 rdf:type owl:SymmetricProperty ;
+                 rdfs:label "has deferred mapping" ;
+                 skos:definition "Used to defer to a mapping where the subject is dependent on the result of applying the object (mapping) and obtaining the outcome. This can be used, for example, to ensure that individuals which belong to an owl:Class are processed only after the class axiom has been asserted." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#dependentMapping
+:dependentMapping rdf:type owl:ObjectProperty ;
+                  rdfs:subPropertyOf :deferredMapping ;
+                  rdfs:label "has dependent mapping" ;
+                  rdfs:seeAlso :yieldConcept ;
+                  skos:definition "Used to specifically indicate that the object mapping MUST be processed prior to the subject. Unlike the superProperty deferredMapping, the subject may not use the output of the object (mapping) directly (as its context)." ;
+                  skos:scopeNote "This property should be used when a related mapping must be executed in order to assert some axiom(s) prior to their use. The subject MUST NOT consider the target state of the object to be part of the context (of the subject's mapping), but rather must refer to it via other means, e.g., by reference to a DeferredContext that brings the asserted axioms into scope via mork:yieldConcept." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#digraphMatch
+:digraphMatch rdf:type owl:ObjectProperty ;
+              rdfs:subPropertyOf skos:broadMatch ;
+              owl:inverseOf :digraphOf ;
+              rdfs:range :Digraph ;
+              rdfs:label "has digraph match" ;
+              owl:deprecated "true"^^xsd:boolean ;
+              skos:definition "is used to state a hierarchical mapping link between conceptual resources in different concept schemes, where one concept is mapped to a directed (sub-)graph of related concepts." ;
+              skos:editorialNote "Deprecated: Use compositeBroaderMapping and compositeNarrowerMapping instead." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#digraphOf
+:digraphOf rdf:type owl:ObjectProperty ;
+           rdfs:subPropertyOf skos:narrowMatch ;
+           rdfs:domain :Digraph ;
+           rdfs:label "is digraph match from" ;
+           owl:deprecated "true"^^xsd:boolean ;
+           skos:definition "digraphFrom is used to state a hierarchical mapping link between conceptual resources in different concept schemes, where concepts belong to a directed (sub-)graph that relates back to some parent concept (in another scheme)." ;
+           skos:editorialNote "Deprecated: Use compositeBroaderMapping and compositeNarrowerMapping instead." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#elementType
+:elementType rdf:type owl:ObjectProperty ;
+             rdfs:subPropertyOf :compositeNarrower ;
+             rdfs:domain :Collection ;
+             rdfs:range :CollectionElement ;
+             rdfs:label "element type" ;
+             skos:definition "Specialises compositeNarrower with a particular semantics for describing the type of elements within a Collection. The domain and range for this property assertions provide an explicit hint to the reasoner as such." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#exactABoxMatch
+:exactABoxMatch rdf:type owl:ObjectProperty ;
+                rdfs:subPropertyOf :intransitiveExactMatch ;
+                rdfs:label "exact A-Box match" ;
+                skos:definition "Used to indicate an exact match to an element in the A-Box of an ontology (i.e., OntologicalScheme). The subject may come from any aspect of another domain (e.g., belonging to RepresentationScheme or TaxonomyScheme, coming from the T-Box, A-Box, or R-Box)." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#exactMapping
+:exactMapping rdf:type owl:ObjectProperty ;
+              rdfs:subPropertyOf :closeMapping ;
+              rdfs:label "has exact mapping" ;
+              skos:definition "used to link two mappings, indicating a high degree of confidence that they can be used interchangeably across a wide range of applications." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#exactRBoxMatch
+:exactRBoxMatch rdf:type owl:ObjectProperty ;
+                rdfs:subPropertyOf :intransitiveExactMatch ;
+                rdfs:label "exact R-Box match" ;
+                skos:definition "Used to indicate an exact match to an element in the R-Box of an ontology (i.e., OntologicalScheme). The subject may come from any aspect of another domain (e.g., belonging to RepresentationScheme or TaxonomyScheme, coming from the T-Box, A-Box, or R-Box)." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#exactTBoxMatch
+:exactTBoxMatch rdf:type owl:ObjectProperty ;
+                rdfs:subPropertyOf :intransitiveExactMatch ;
+                rdfs:label "exact T-Box match" ;
+                skos:definition """Used to indicate an exact match to an element in the T-Box of an ontology (i.e., OntologicalScheme). The subject may come from any aspect of another domain (e.g., belonging to RepresentationScheme or TaxonomyScheme, coming from the T-Box, A-Box, or R-Box).
+
+The T-Box (or Terminological Box) defines the vocabulary of the domain by describing concepts (such as Classes) and roles (relationships that can be defined between objects).""" .
+
+
+###  http://www.nebularis.org/ontologies/Mork#format
+:format rdf:type owl:ObjectProperty ;
+        rdfs:subPropertyOf owl:topObjectProperty ;
+        rdfs:domain :RepresentationScheme ;
+        rdfs:range :SerializationFormat ;
+        rdfs:label "has format" ;
+        skos:definition "denotes the SerializationFormat used by a RepresentationScheme" .
+
+
+###  http://www.nebularis.org/ontologies/Mork#hasConcept
+:hasConcept rdf:type owl:ObjectProperty ;
+            rdfs:subPropertyOf owl:topObjectProperty ;
+            owl:inverseOf skos:inScheme ;
+            rdfs:label "has concept" ;
+            skos:altLabel "contains concept" ;
+            skos:definition "Denotes the membership of a skos:Concept in a skos:ConceptScheme. This property is the inverse of skos:inScheme" .
+
+
+###  http://www.nebularis.org/ontologies/Mork#hasMapping
+:hasMapping rdf:type owl:ObjectProperty ;
+            rdfs:subPropertyOf skos:relatedMatch ;
+            owl:inverseOf :mappingFor ;
+            rdfs:domain [ rdf:type owl:Class ;
+                          owl:unionOf ( [ rdf:type owl:Restriction ;
+                                          owl:onProperty :conceptScheme ;
+                                          owl:someValuesFrom :TaxonomyScheme
+                                        ]
+                                        [ rdf:type owl:Restriction ;
+                                          owl:onProperty :representationScheme ;
+                                          owl:someValuesFrom :RepresentationScheme
+                                        ]
+                                      )
+                        ] ;
+            rdfs:range [ rdf:type owl:Restriction ;
+                         owl:onProperty :mappingScheme ;
+                         owl:someValuesFrom :MappingScheme
+                       ] ;
+            rdfs:label "has mapping" ;
+            skos:definition "Used to denote a mapping relation between a representation or concept scheme element and a mapping scheme element." ;
+            skos:scopeNote "Whilst it is expected that concepts in a RepresentationScheme or TaxonomyScheme may directly leverage object properties in the skos:mappingRelation hierarchy, selection of a specific mapping may require intermediation via an individual in a MappingScheme. This property exists to support the latter construct." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#hypothesisMapping
+:hypothesisMapping rdf:type owl:ObjectProperty ;
+                   rdfs:subPropertyOf :relatedMapping ;
+                   rdfs:label "has hypothesis mapping" ;
+                   rdfs:seeAlso :compositeNarrowerMapping ;
+                   skos:definition "Used to provide a mapping (object) that is being used as a hypothesis in support of the (subject) mapping's postulated match. Can also be used to hypothesise a mapping for an UncertainMapping." ;
+                   skos:example """A hypothesis mapping can be used to support the weighting for another mapping. Borrowing the \"aardvark\" datum mapping example from the compositeNarrowerMapping skos:example, we can see the the concept mapping of aardvark_name may rely on the \"Aardvark Class\" mapping as a hypothesis, since if we have not mapped the axiom for the whole, then the part cannot be mapped either.
+
+:Aardvark rdf:type owl:NamedIndividual ;
+            rdfs:subClassOf mork:DataConcept ;
+            mork:conceptScheme :Animals_Taxo ;
+            skos:closeMatch :MapAardvarkClass ;
+            mork::compositeNarrower :Aardvark_Name .
+
+:Aardvark_Name rdf:type owl:NamedIndividual ;
+            rdfs:subClassOf mork:DataConcept ;
+            mork:conceptScheme :Animals_Taxo ;
+            mork:compositeBroader :Aardvark ;
+            skos:closeMatch :MapAardvark_Name .
+
+:MapAardvark_Name rdf:type owl:NamedIndividual ;
+            rdfs:subClassOf mork:DataMapping ;
+            mork:hypothesisMapping :MapAardvarkClass ;
+            skos:closeMatch :Ont_prop_Animal_Name .
+
+:MapAardvarkClass rdf:type owl:NamedIndividual ;
+            rdfs:subClassOf mork:DataMapping ;
+            mork:broadClassMatch ont:Animal ;
+            mork:compositeNarrowerMapping :MapAardvarkIndividual ;
+            mork:conceptName \"Aardvark\" .
+
+:MapAardvarkIndividual rdf:type owl:NamedIndividual ;
+            rdfs:subClassOf datarep:Datum ;
+            mork:deferredMapping :MapAardvarkClass .
+
+This is a somewhat unnecessary hypothesis, since it is assumed that a processing logic would traverse the concept scheme for the taxa and fail the parent (aardvark) mapping before arriving at its component properties, however it provides an illustration of the use of this construct.""" .
+
+
+###  http://www.nebularis.org/ontologies/Mork#identityTemplateMapping
+:identityTemplateMapping rdf:type owl:ObjectProperty ;
+                         rdfs:subPropertyOf :templateMapping ;
+                         rdfs:label "has identity template mapping" ;
+                         skos:definition "Used to indicate a deferredMapping (which this is a sub-object-property of) between the subject and some object(s) upon which the identity (IRI formation) of the subject is dependent. Unlike deferredMapping, this property is not symmetric." ;
+                         skos:example "Aardvark is identified by its 'name' property, and thus we must process the 'name' mapping first and use the outcome of this mapping to determine the correct IRI/identity for each individual aardvark we come across." ;
+                         skos:scopeNote "This property establishes that IRI formation depends on template evaluation. The precedence relation resolvesIdentityFor is derived from this property (see Foundations §2.5, Rule P8)." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#indicativeMapping
+:indicativeMapping rdf:type owl:ObjectProperty ;
+                   rdfs:subPropertyOf :hasMapping ;
+                   rdfs:label "indicative mapping" ;
+                   skos:definition "Used to denote a potential mapping relation between a representation or concept scheme element and a mapping scheme element, suggesting that the subject may be an indicator for the existence of the object." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#interpolationComponent
+:interpolationComponent rdf:type owl:ObjectProperty ;
+                        rdfs:subPropertyOf skos:member ;
+                        rdfs:domain skos:OrderedCollection ;
+                        rdfs:range [ rdf:type owl:Class ;
+                                     owl:unionOf ( [ owl:intersectionOf ( :DataMapping
+                                                                          [ rdf:type owl:Restriction ;
+                                                                            owl:onProperty :dataRef ;
+                                                                            owl:someValuesFrom xsd:string
+                                                                          ]
+                                                                        ) ;
+                                                     rdf:type owl:Class
+                                                   ]
+                                                   [ rdf:type owl:Restriction ;
+                                                     owl:onProperty :dataInline ;
+                                                     owl:minCardinality "1"^^xsd:nonNegativeInteger
+                                                   ]
+                                                 )
+                                   ] ;
+                        rdfs:label "has template component (member)" ;
+                        rdfs:seeAlso :Interpolation ;
+                        skos:definition "Relates an InterpolationTemplate to one of its members." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#intransitiveExactMatch
+:intransitiveExactMatch rdf:type owl:ObjectProperty ;
+                        rdfs:subPropertyOf skos:closeMatch ;
+                        rdf:type owl:SymmetricProperty ;
+                        rdfs:label "has (intransitive) exact match" ;
+                        skos:definition """This is an intransitive version of skos:exactMatch. It is used to indicate what we believe to be a semantically exact match between concepts in different concept schemes.
+
+Placed under skos:closeMatch rather than skos:exactMatch to avoid inheriting transitivity, which would cause unintended inferences across chains of box matches.""" .
+
+
+###  http://www.nebularis.org/ontologies/Mork#inverseRBoxMatch
+:inverseRBoxMatch rdf:type owl:ObjectProperty ;
+                  rdfs:subPropertyOf :exactRBoxMatch ;
+                  rdfs:label "exact inverse R-Box match" ;
+                  skos:definition """Used to indicate an exact match to the inverse of an element in the R-Box of an ontology (i.e., OntologicalScheme). 
+
+This is required for situations where the inverse of a datatype or object property must be referenced but no explicit axiom exists for the binding.
+
+The subject may come from any aspect of another domain (e.g., belonging to RepresentationScheme or TaxonomyScheme, coming from the T-Box, A-Box, or R-Box).""" ;
+                  skos:scopeNote "NB: This property is NOT the inverse of exactRBoxMatch, but rather it represents the same semantics when referencing the inverse of the property. Since inverseRBoxMatch is a subproperty of exactRBoxMatch, the co-occurrence GCI (Axiom 2.14a) covers both direct and inverse cases." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#lexicalMatch
+:lexicalMatch rdf:type owl:ObjectProperty ;
+              rdfs:subPropertyOf :possibleMatch ;
+              rdfs:label "is lexical match with" ;
+              skos:definition "Used to indicate a possible or partial lexical match, where similar terms (i.e., words) exist, but the semantics or structure are not a good match." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#mappingFor
+:mappingFor rdf:type owl:ObjectProperty ;
+            rdfs:subPropertyOf skos:relatedMatch ;
+            rdfs:label "is mapping for" ;
+            skos:definition "Indicates the Representation or DataConcept for which a DataMapping applies. This property is the inverse of hasMapping." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#mappingScheme
+:mappingScheme rdf:type owl:ObjectProperty ;
+               rdfs:subPropertyOf skos:inScheme ;
+               rdfs:range :MappingScheme ;
+               rdfs:label "in mapping scheme" ;
+               skos:definition "denotes the subject's membership in the object MappingScheme" .
+
+
+###  http://www.nebularis.org/ontologies/Mork#memberOf
+:memberOf rdf:type owl:ObjectProperty ;
+          rdfs:subPropertyOf :compositeBroader ;
+          owl:inverseOf :memberProperty ;
+          rdfs:label "member property of" ;
+          rdfs:seeAlso :memberProperty ;
+          skos:definition "Defines the object as a component property (i.e., member) of the subject, primarily to describe Representation elements using a clear vocabulary. This property is the inverse of memberProperty." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#memberProperty
+:memberProperty rdf:type owl:ObjectProperty ;
+                rdfs:subPropertyOf :compositeNarrower ;
+                rdf:type owl:AsymmetricProperty ,
+                         owl:IrreflexiveProperty ;
+                rdfs:label "member property" ;
+                skos:definition """Defines the subject as a component property (i.e., member) of the object. This specialisation of compositeNarrower provides a clear vocabulary for describing member properties (i.e., associations via property) within Representation schemes.
+
+Note that memberProperty is both asymmetric and irreflexive.""" ;
+                skos:example """###  http://www.nebularis.org/hyperthunk/Mapping#Rep_Issuer
+:Rep_Issuer rdf:type owl:NamedIndividual ,
+                     mork:DataConcept ,
+                     mork:Entity ;
+            mork:conceptScheme :Mapping_Taxa ;
+            mork:memberProperty :Rep_IssuerID ;
+            mork:representationOf :Rep_Issuer ;
+            mork:representationScheme :Mapping_Representation ;
+            mork:identifier \"issuer\" ;
+            skos:note \"Individual Representation Rep_Issuer\" .""" .
+
+
+###  http://www.nebularis.org/ontologies/Mork#missingOrUnrelatedMatch
+:missingOrUnrelatedMatch rdf:type owl:ObjectProperty ;
+                         rdfs:subPropertyOf skos:relatedMatch ;
+                         rdfs:label "missing or unrelated match" ;
+                         owl:deprecated "true"^^xsd:boolean ;
+                         skos:editorialNote "Deprecated: Do not use." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#narrowABoxCategoryMatch
+:narrowABoxCategoryMatch rdf:type owl:ObjectProperty ;
+                         rdfs:subPropertyOf :narrowCategoryMatch ;
+                         rdfs:label "has narrow a-box category match" ;
+                         skos:altLabel "has a-box sub-category match" ;
+                         skos:definition """Used to state a mapping link where the subject maps to a narrower category via object-property link to an individual that represents the Hyperonym (i.e., the more specific thing in the A-Box of the mapped concept scheme).
+
+The A-Box (or Assertional Box) contains assertions (or facts) about individuals within the domain.""" ;
+                         skos:scopeNote """An ABox category match may apply either before or after a datum is to be individuated. In either case, the operation is implied to be idempotent.
+
+An ABox category match implies the presence of both a TBox match (to the object property over which the relationship is to be defined) and a skos:mappingRelation to the owl:Individual in the a-box, as described in the domains for this property.""" .
+
+
+###  http://www.nebularis.org/ontologies/Mork#narrowCategoryMatch
+:narrowCategoryMatch rdf:type owl:ObjectProperty ;
+                     rdfs:subPropertyOf skos:narrowMatch ;
+                     rdfs:label "has narrow category match" ;
+                     skos:definition "A narrowCategoryMatch is used to state a hyperonymic, categorical mapping link between two conceptual resources in different concept schemes, where the subject is the (more general) hyperonym and the object is the (more specific) hyponym." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#narrowConceptRole
+:narrowConceptRole rdf:type owl:ObjectProperty ;
+                   rdfs:subPropertyOf :associativeNarrower ;
+                   rdfs:range skos:Concept ;
+                   rdfs:label "has objectified narrow concept role" ;
+                   skos:definition "Used to model the object in association Objectification, i.e., a relationship between concepts that must be \"reified\" in order to annotate it, or create associations between the relationship and other concepts." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#narrowNavigableConceptRole
+:narrowNavigableConceptRole rdf:type owl:ObjectProperty ;
+                            rdfs:subPropertyOf :narrowConceptRole ;
+                            rdfs:label "has navigable objectified narrow concept role" ;
+                            rdfs:seeAlso :Objectification ;
+                            skos:definition "Extends narrowConceptRole to model the object in an Objectification where the participating concepts can be inferred to be members of the Objectification class" ;
+                            skos:scopeNote """This property is the inverse of broadNavigableConceptRole. The reasoner will assume Individuals related via this property are members of the class Objectification.
+
+For situations where such reasoning is not desireable, use the superProperty narrowConceptRole instead.""" .
+
+
+###  http://www.nebularis.org/ontologies/Mork#narrowRBoxCategoryMatch
+:narrowRBoxCategoryMatch rdf:type owl:ObjectProperty ;
+                         rdfs:subPropertyOf :narrowCategoryMatch ;
+                         rdfs:label "has narrow r-box category match" ;
+                         rdfs:seeAlso :Objectification ;
+                         skos:definition """Used to state a mapping link where the subject maps to a narrower category of relationship (i.e., the more general relation in the R-Box of the mapped concept scheme). This property is intended for use with members of the Objectification class, however no domain or range assertions are made in order to avoid having the reasoner incorrectly assign individuals to said class.
+
+The R-Box (or Relational Box) defines the properties or roles that can be used to relate individuals, and their characteristics, such as whether they are symmetric, transitive, or functional.""" .
+
+
+###  http://www.nebularis.org/ontologies/Mork#narrowTBoxCategoryMatch
+:narrowTBoxCategoryMatch rdf:type owl:ObjectProperty ;
+                         rdfs:subPropertyOf :narrowCategoryMatch ;
+                         rdfs:label "has narrow t-box match" ;
+                         skos:altLabel "has t-box sub-category match" ;
+                         skos:definition """Used to define a hyperonymic, categorical relationship between concepts in different concept schemes, specifically modelling the subject as being the superclass in an owl:subclassOf relationship with the object.
+
+The T-Box (or Terminological Box) defines the vocabulary of the domain by describing concepts (such as Classes) and roles (relationships that can be defined between objects).""" ;
+                         skos:scopeNote "A TBox category must be applied before a datum can be individuated, since it implies the existence of an owl:Class not originally present in an OntologicalScheme. The implication here is that the operation resulting from this axiom is idempotent." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#narrowerMapping
+:narrowerMapping rdf:type owl:ObjectProperty ;
+                 rdfs:subPropertyOf :relatedMapping ;
+                 rdfs:domain :DataMapping ;
+                 rdfs:range [ rdf:type owl:Class ;
+                              owl:unionOf ( :DataMapping
+                                            [ rdf:type owl:Class ;
+                                              owl:intersectionOf ( skos:OrderedCollection
+                                                                   [ rdf:type owl:Restriction ;
+                                                                     owl:onProperty skos:member ;
+                                                                     owl:someValuesFrom :DataConcept
+                                                                   ]
+                                                                 )
+                                            ]
+                                          )
+                            ] ;
+                 rdfs:label "has narrower mapping" ;
+                 skos:definition "Relates a mapping to a mapping that is more specific" .
+
+
+###  http://www.nebularis.org/ontologies/Mork#ontologicalScheme
+:ontologicalScheme rdf:type owl:ObjectProperty ;
+                   rdfs:subPropertyOf skos:inScheme ;
+                   rdfs:range :OntologicalScheme ;
+                   rdfs:label "in ontological scheme" ;
+                   skos:definition "Denotes the subject membership in an OntologicalScheme. Note that this is designed for use only by inference based on SWRL or SHACL constraints, and should not be used directly (since there is no hint on the Domain)" .
+
+
+###  http://www.nebularis.org/ontologies/Mork#partialMatch
+:partialMatch rdf:type owl:ObjectProperty ;
+              owl:equivalentProperty :possibleMatch ;
+              rdfs:subPropertyOf skos:mappingRelation ;
+              rdfs:label "is partial match with" ;
+              skos:definition "Synonym for possibleMatch" .
+
+
+###  http://www.nebularis.org/ontologies/Mork#pathMatch
+:pathMatch rdf:type owl:ObjectProperty ;
+           rdfs:subPropertyOf skos:mappingRelation ;
+           rdfs:domain [ rdf:type owl:Restriction ;
+                         owl:onProperty [ owl:inverseOf :referenceDataMapping
+                                        ] ;
+                         owl:someValuesFrom :DataMapping
+                       ] ;
+           rdfs:label "matches on path" ;
+           skos:definition "Used to associate a match with a specific path (i.e., predicate)" .
+
+
+###  http://www.nebularis.org/ontologies/Mork#placeholderMapping
+:placeholderMapping rdf:type owl:ObjectProperty ;
+                    rdfs:subPropertyOf owl:topObjectProperty ;
+                    rdfs:domain :DataMapping ;
+                    rdfs:range [ owl:intersectionOf ( :Interpolation
+                                                      [ rdf:type owl:Restriction ;
+                                                        owl:onProperty :interpolationComponent ;
+                                                        owl:someValuesFrom [ rdf:type owl:Class ;
+                                                                             owl:unionOf ( [ rdf:type owl:Restriction ;
+                                                                                             owl:onProperty :dataRef ;
+                                                                                             owl:someValuesFrom xsd:string
+                                                                                           ]
+                                                                                           [ rdf:type owl:Restriction ;
+                                                                                             owl:onProperty :dataInline ;
+                                                                                             owl:minCardinality "1"^^xsd:nonNegativeInteger
+                                                                                           ]
+                                                                                         )
+                                                                           ]
+                                                      ]
+                                                    ) ;
+                                 rdf:type owl:Class
+                               ] ;
+                    rdfs:label "has placeholder mapping" ;
+                    skos:definition "Indicates that a mapping defers to a collection of \"placeholders\" for values that should be derived at processing time" .
+
+
+###  http://www.nebularis.org/ontologies/Mork#possibleMatch
+:possibleMatch rdf:type owl:ObjectProperty ;
+               rdfs:subPropertyOf skos:mappingRelation ;
+               rdfs:label "is possible match with" ;
+               skos:definition "Used to indicate a possible/potential match." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#propertyMappingAssertions
+:propertyMappingAssertions rdf:type owl:ObjectProperty ;
+                           rdfs:subPropertyOf owl:topObjectProperty ;
+                           rdfs:label "has property mapping assertions" ;
+                           skos:definition "Used to make assertions about proposed object or datatype property mappings" ;
+                           skos:scopeNote "By convention, propertyMappingAssertions is not used to make assertions, but rather its subProperties are instead." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#referenceDataMapping
+:referenceDataMapping rdf:type owl:ObjectProperty ;
+                      rdfs:subPropertyOf :templateMapping ;
+                      rdfs:range [ rdf:type owl:Restriction ;
+                                   owl:onProperty :dataRef ;
+                                   owl:someValuesFrom xsd:string
+                                 ] ;
+                      rdfs:label "has reference data mapping" ;
+                      rdfs:seeAlso :Lookup ;
+                      skos:definition "Used to denote that a mapping takes a value from some input data (via dataRef), and matches it to a subject which contains an exact match on either the contents of its dataInline or the name of the individual." ;
+                      skos:example """:Mapping_Contract_LOB rdf:type owl:NamedIndividual , mork:Datum ;
+    mork:mappingScheme :Example_Scheme ;
+    mork:exactTBoxMatch :Contract ;
+    mork:referenceDataMapping :Mapping_Lob ;
+    mork:compositeNarrowerMapping :Mapping_Contract_Details .
+
+[ rdf:type owl:Axiom ;
+  owl:annotatedSource :Mapping_Contract_LOB ;
+  owl:annotationProperty mork:referenceDataMapping ;
+  owl:annotatedTarget :Mapping_Lob ;
+  skos:note \"lob may be determined by a lookup on the value contained in the lineOfBusiness field\" ] .
+
+:Mapping_Lob rdf:type owl:NamedIndividual , mork:Lookup ;
+    mork:mappingScheme :Example_Scheme ;
+    mork:exactRBoxMatch :lob ;
+    mork:exactTBoxMatch :LineOfBusiness ;
+    mork:referenceDataPath: skos:abbreviation ;
+    mork:dataRef \"path.to.data.field.lineOfBusiness\" ;
+    skos:note \"Line of business code maps to 'lob LineOfBusiness', via reference data lookup\" .""" ;
+                      skos:scopeNote "If the name of the individual is to be used, then the value of the object's dataInline MUST be set to \"\"." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#referenceDataPath
+:referenceDataPath rdf:type owl:ObjectProperty ;
+                   rdfs:subPropertyOf :pathMatch ;
+                   rdfs:label "matches reference data on path" ;
+                   skos:definition "Used to indicate the predicate on which a Lookup is based." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#relatedMapping
+:relatedMapping rdf:type owl:ObjectProperty ;
+                rdfs:subPropertyOf skos:related ;
+                rdfs:comment "These concept mapping relations mirror mapping relations, and the data model defined below is similar. A distinct vocabulary is provided for describing the semantic and structural relationships between mappings, to provide a convenient way to differentiate links within a mapping scheme from links between different schemes." ;
+                rdfs:label "has related mapping" ;
+                skos:definition "used to describe a relationships between two potential mappings" .
+
+
+###  http://www.nebularis.org/ontologies/Mork#relatedProperty
+:relatedProperty rdf:type owl:ObjectProperty ;
+                 rdfs:subPropertyOf skos:related ;
+                 rdfs:label "has related property" ;
+                 skos:definition "Used to relate DataConcept or Attribute individuals to object or datatype properties." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#representationOf
+:representationOf rdf:type owl:ObjectProperty ;
+                  rdfs:subPropertyOf skos:relatedMatch ;
+                  owl:inverseOf :representedAs ;
+                  rdfs:label "is representation of" ;
+                  rdfs:seeAlso :DataConcept ,
+                               :Representation ;
+                  skos:definition "Used to indicate that a Representation can be used for a given DataConcept. NB: it is perfectly reasonable for an individual to belong to both the Representation and DataConcept classes, therefore this property can be used by an individual to refer to itself." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#representationScheme
+:representationScheme rdf:type owl:ObjectProperty ;
+                      rdfs:subPropertyOf skos:inScheme ;
+                      rdfs:range :RepresentationScheme ;
+                      rdfs:label "in representation scheme" ;
+                      skos:definition "Denotes the subject's membership in the object RepresentationScheme" .
+
+
+###  http://www.nebularis.org/ontologies/Mork#representedAs
+:representedAs rdf:type owl:ObjectProperty ;
+               rdfs:subPropertyOf skos:relatedMatch ;
+               rdfs:label "is represented as" ;
+               skos:definition "Used to describe one of the (potentially multiple) Representations of a DataConcept. This property is the inverse of representationOf." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#semanticMatch
+:semanticMatch rdf:type owl:ObjectProperty ;
+               rdfs:subPropertyOf :possibleMatch ;
+               rdfs:label "is semantic match with" ;
+               skos:definition "Used to indicate a partial/possible semantic match." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#siblingMapping
+:siblingMapping rdf:type owl:ObjectProperty ;
+                rdfs:subPropertyOf :relatedMapping ;
+                skos:definition "Used to construct a DataMapping graph that represents an rdf:List, since skos:Collection and skos:Concept are disjoint and we need a way to describe outputs that a represented as rdf:Lists." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#structuralMatch
+:structuralMatch rdf:type owl:ObjectProperty ;
+                 rdfs:subPropertyOf :possibleMatch ;
+                 rdfs:label "is structural match with" ;
+                 skos:definition "Used to indicate a match in structure, i.e., where concepts in different concept schemes appear at the same place structurally, but may have different semantics/meanings, or have a poor lexical match." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#templateClassMapping
+:templateClassMapping rdf:type owl:ObjectProperty ;
+                      rdfs:subPropertyOf :templateMapping ;
+                      rdfs:label "has template class mapping" ;
+                      skos:definition "Used to denote an owl:Class that should be used as a template for generating t-box assertions." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#templateMapping
+:templateMapping rdf:type owl:ObjectProperty ;
+                 rdfs:subPropertyOf :deferredMapping ;
+                 rdfs:label "has template mapping" ;
+                 skos:definition """Used to denote a deferred mapping where the subject and the object together provide partial mapping semantics and must therefore be taken as a whole by a processing engine.
+
+This mechanism can be used to reduce the number of assertions required in order to fulfil a mapping, since the object can act as a template - providing partial mapping semantics - and leave the specific details of the mapping to the subject.""" ;
+                 skos:scopeNote """When a partial mapping intended for use as a \"template\" is created, any compositeNarrowerMapping that is also a partial (rather than a complete) mapping, should be associated via compositeNarrowerTemplate.
+
+NB: where multiple composite narrower mappings exist on both the subject and object, the following semantics shall apply:
+
+If the narrower mapping on the subject explicitly refers to a narrower mapping of the object, that assertion shall take precidence. 
+
+If the composite narrower mappings of both the subject and the object are modelled using skos:OrderedCollection, then the ordering of both collections will be respected. Should the size of the respective collections differ, the smaller of the two will be taken as the range of applicable mappings for the whole.
+
+If the composite narrower mappings of either subject or object are members of the DataMapping class or subclasses thereof and, members (by inference) of the IndexedMapping class, then the mappingIndex shall be used to correlate the templates and non-templates together, whether via exact indexA == indexB semantics, or by linking the indexes to the ordering of an skos:OrderedCollection.""" .
+
+
+###  http://www.nebularis.org/ontologies/Mork#weightedBroader
+:weightedBroader rdf:type owl:ObjectProperty ;
+                 rdfs:subPropertyOf :broaderMapping ;
+                 owl:inverseOf :weightedNarrower ;
+                 rdfs:label "has weighted broader" ;
+                 skos:definition "used to indicate that the subject has a lower weighting (and thereby is a broader match), compared to the object - this property is the inverse of weightedNarrower" .
+
+
+###  http://www.nebularis.org/ontologies/Mork#weightedNarrower
+:weightedNarrower rdf:type owl:ObjectProperty ;
+                  rdfs:subPropertyOf :narrowerMapping ;
+                  rdfs:label "has weighted narrower" ;
+                  skos:definition "Used to indicate that the object has a higher weighting (and thereby is a narrower match), compared to the subject. Explicitly means that the object is a more likely match than the subject." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#yieldConcept
+:yieldConcept rdf:type owl:ObjectProperty ;
+              rdfs:subPropertyOf owl:topObjectProperty ;
+              rdfs:label "yields concept" ;
+              skos:definition "Used to indicate that a mapping yields a particular concept to a broader scope'd mapping. In practice, this means that a compositeNarrower or deferredMapping can \"yield\" its output to another mapping, allowing generated axioms to be referenced declaratively prior to their assertion in a target ontology." .
+
+
+#################################################################
+#    Object Properties - Precedence (Foundations §2.5, §3.10)
+#################################################################
+
+###  http://www.nebularis.org/ontologies/Mork#precedes
+:precedes rdf:type owl:ObjectProperty ;
+          rdf:type owl:TransitiveProperty ,
+                   owl:AsymmetricProperty ,
+                   owl:IrreflexiveProperty ;
+          rdfs:domain :DataMapping ;
+          rdfs:range :DataMapping ;
+          rdfs:label "precedes" ;
+          skos:definition "Materialised precedence relation: m1 :precedes m2 means m1 must be evaluated before m2 in any valid execution schedule. This is a derived relation, populated via subproperty axioms and SWRL rules (see Foundations §2.5)." ;
+          skos:scopeNote """The precedence relation is the transitive closure of structural dependency relationships. 
+It is derived from: compositeBroaderMapping (inverse), broaderApplicative (inverse), dependentMapping (inverse), and templateMapping (inverse) via subproperty axioms, plus conditional rules (SWRL) for T-Box before A-Box, identity resolution, and template child correlation.
+
+Acyclicity of this property's extension must be enforced by SHACL, since OWL 2 DL cannot express graph-structural acyclicity constraints.""" .
+
+
+###  http://www.nebularis.org/ontologies/Mork#softPrecedes
+:softPrecedes rdf:type owl:ObjectProperty ;
+              rdf:type owl:TransitiveProperty ,
+                       owl:AsymmetricProperty ,
+                       owl:IrreflexiveProperty ;
+              rdfs:domain :DataMapping ;
+              rdfs:range :DataMapping ;
+              rdfs:label "soft precedes" ;
+              skos:definition "Advisory precedence relation: m1 :softPrecedes m2 means m1 should be evaluated before m2 when possible, but m2 may proceed (with reduced confidence) if m1 is unavailable." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#resolvesIdentityFor
+:resolvesIdentityFor rdf:type owl:ObjectProperty ;
+                     rdfs:subPropertyOf :precedes ;
+                     rdfs:domain :DataMapping ;
+                     rdfs:range :Datum ;
+                     rdfs:label "resolves identity for" ;
+                     skos:definition "m :resolvesIdentityFor d means m must complete (producing an IRI or identity) before d can be individuated. This is a subproperty of :precedes and thus inherits transitivity, asymmetry, and irreflexivity." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#templateBinding
+:templateBinding rdf:type owl:ObjectProperty ;
+                 rdfs:domain :DataMapping ;
+                 rdfs:range :DataMapping ;
+                 rdfs:label "template binding" ;
+                 skos:definition "Captures the explicit correlation between a template child and an instantiation child. Used for template child correlation precedence (Foundations §2.5.4, Rule P11)." .
+
+
+#################################################################
+#    Object Properties - Precedence Subproperty Axioms (Foundations §2.5.2)
+#################################################################
+
+### Axiom P1: Compositional precedence — a parent mapping precedes its composite children
+### SubObjectPropertyOf(ObjectInverseOf(:compositeBroaderMapping) :precedes)
+### i.e., if m_child :compositeBroaderMapping m_parent, then m_parent :precedes m_child
+
+[ rdf:type owl:Axiom ;
+  owl:annotatedSource [ owl:inverseOf :compositeBroaderMapping ] ;
+  owl:annotatedProperty rdfs:subPropertyOf ;
+  owl:annotatedTarget :precedes ;
+  rdfs:comment "Axiom P1 (Foundations §2.5.2): Compositional precedence — a parent mapping precedes its composite children."
+] .
+
+### Axiom P2: Applicative precedence — parent context must be established before child's contextual application
+### SubObjectPropertyOf(ObjectInverseOf(:broaderApplicative) :precedes)
+
+[ rdf:type owl:Axiom ;
+  owl:annotatedSource [ owl:inverseOf :broaderApplicative ] ;
+  owl:annotatedProperty rdfs:subPropertyOf ;
+  owl:annotatedTarget :precedes ;
+  rdfs:comment "Axiom P2 (Foundations §2.5.2): Applicative precedence — parent context must be established before contextual application."
+] .
+
+### Axiom P3: Strict dependency precedence
+### SubObjectPropertyOf(ObjectInverseOf(:dependentMapping) :precedes)
+
+[ rdf:type owl:Axiom ;
+  owl:annotatedSource [ owl:inverseOf :dependentMapping ] ;
+  owl:annotatedProperty rdfs:subPropertyOf ;
+  owl:annotatedTarget :precedes ;
+  rdfs:comment "Axiom P3 (Foundations §2.5.2): Strict dependency precedence."
+] .
+
+### Axiom P10: Template precedes instantiation
+### SubObjectPropertyOf(ObjectInverseOf(:templateMapping) :precedes)
+
+[ rdf:type owl:Axiom ;
+  owl:annotatedSource [ owl:inverseOf :templateMapping ] ;
+  owl:annotatedProperty rdfs:subPropertyOf ;
+  owl:annotatedTarget :precedes ;
+  rdfs:comment "Axiom P10 (Foundations §2.5.4): Template precedes instantiation."
+] .
+
+### Axiom P5: Hypothesis as soft precedence
+### SubObjectPropertyOf(ObjectInverseOf(:hypothesisMapping) :softPrecedes)
+
+[ rdf:type owl:Axiom ;
+  owl:annotatedSource [ owl:inverseOf :hypothesisMapping ] ;
+  owl:annotatedProperty rdfs:subPropertyOf ;
+  owl:annotatedTarget :softPrecedes ;
+  rdfs:comment "Axiom P5 (Foundations §2.5.2): Hypothesis as soft precedence."
+] .
+
+### The actual subproperty axioms for precedence derivation:
+
+### P1: inverse of compositeBroaderMapping ⊑ precedes
+_:invCompBroaderMapping rdf:type owl:ObjectProperty ;
+                        owl:inverseOf :compositeBroaderMapping ;
+                        rdfs:subPropertyOf :precedes .
+
+### P2: inverse of broaderApplicative ⊑ precedes
+_:invBroaderApplicative rdf:type owl:ObjectProperty ;
+                        owl:inverseOf :broaderApplicative ;
+                        rdfs:subPropertyOf :precedes .
+
+### P3: inverse of dependentMapping ⊑ precedes
+_:invDependentMapping rdf:type owl:ObjectProperty ;
+                      owl:inverseOf :dependentMapping ;
+                      rdfs:subPropertyOf :precedes .
+
+### P10: inverse of templateMapping ⊑ precedes
+_:invTemplateMapping rdf:type owl:ObjectProperty ;
+                     owl:inverseOf :templateMapping ;
+                     rdfs:subPropertyOf :precedes .
+
+### P5: inverse of hypothesisMapping ⊑ softPrecedes
+_:invHypothesisMapping rdf:type owl:ObjectProperty ;
+                       owl:inverseOf :hypothesisMapping ;
+                       rdfs:subPropertyOf :softPrecedes .
+
+
+#################################################################
+#    Object Properties - Intent Algebra (Foundations §3.8)
+#################################################################
+
+###  http://www.nebularis.org/ontologies/Mork#intentScheme
+:intentScheme rdf:type owl:ObjectProperty ;
+              rdfs:subPropertyOf skos:inScheme ;
+              rdfs:range :IntentScheme ;
+              rdfs:label "in intent scheme" ;
+              skos:definition "Denotes the subject's membership in the object IntentScheme" .
+
+
+###  http://www.nebularis.org/ontologies/Mork#refinesIntent
+:refinesIntent rdf:type owl:ObjectProperty ;
+               rdf:type owl:AsymmetricProperty ,
+                        owl:IrreflexiveProperty ,
+                        owl:TransitiveProperty ;
+               rdfs:domain :IntentNode ;
+               rdfs:range :IntentNode ;
+               rdfs:label "refines intent" ;
+               skos:definition """Expresses that the subject elaborates or specialises the object. The transitive closure of :refinesIntent gives the composition structure of compound intents.
+
+This property generates the morphisms of the preorder category Int(I) (Foundations §2.5a). The intent nodes under this relation form a bounded join-semilattice.""" .
+
+###  http://www.nebularis.org/ontologies/Mork#intentMapping
+:intentMapping rdf:type owl:ObjectProperty ;
+               rdfs:subPropertyOf skos:mappingRelation ;
+               rdfs:domain :IntentNode ;
+               rdfs:range :DataMapping ;
+               rdfs:label "intent mapping" ;
+               skos:definition "Links an intent node to the DataMapping (or ShapeMapping/RuleMapping) that realises it in terms of the target ontology." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#scopeValue
+:scopeValue rdf:type owl:ObjectProperty ;
+            rdfs:domain :SpatialScope ;
+            rdfs:range skos:Concept ;
+            rdfs:label "scope value" ;
+            skos:definition "References a concept in a geography concept scheme that identifies the spatial scope (e.g., a country, state, or region)." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#constraintUnit
+:constraintUnit rdf:type owl:ObjectProperty ;
+                rdfs:domain :QuantitativeConstraint ;
+                rdfs:range skos:Concept ;
+                rdfs:label "constraint unit" ;
+                skos:definition "References a concept representing the unit of measurement for a quantitative constraint (e.g., USD, GBP, metres)." .
+
+###  http://www.nebularis.org/ontologies/Mork#constraintDimension
+:constraintDimension a owl:ObjectProperty ;
+    rdfs:domain :QuantitativeConstraint ;
+    rdfs:range skos:Concept ;
+    rdfs:label "constraint dimension" ;
+    skos:definition "References a concept identifying the measured dimension a quantitative constraint applies to. The concept resides in an external scheme." .
+
+#################################################################
+#    Object Properties - Template Expression Algebra (Foundations §3.9)
+#################################################################
+
+###  http://www.nebularis.org/ontologies/Mork#concatLeft
+:concatLeft rdf:type owl:ObjectProperty ,
+                     owl:FunctionalProperty ;
+            rdfs:domain :ConcatExpression ;
+            rdfs:range :TemplateExpression ;
+            rdfs:label "concat left" ;
+            skos:definition "The left operand of a concatenation expression." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#concatRight
+:concatRight rdf:type owl:ObjectProperty ,
+                      owl:FunctionalProperty ;
+             rdfs:domain :ConcatExpression ;
+             rdfs:range :TemplateExpression ;
+             rdfs:label "concat right" ;
+             skos:definition "The right operand of a concatenation expression." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#hasBinding
+:hasBinding rdf:type owl:ObjectProperty ;
+            rdfs:domain :InterpolationExpression ;
+            rdfs:range :TemplateBinding ;
+            rdfs:label "has binding" ;
+            skos:definition "Relates an InterpolationExpression to one of its placeholder bindings." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#lookupSource
+:lookupSource rdf:type owl:ObjectProperty ,
+                       owl:FunctionalProperty ;
+              rdfs:domain :LookupExpression ;
+              rdfs:range :TemplateExpression ;
+              rdfs:label "lookup source" ;
+              skos:definition "The source expression whose evaluation provides the value to look up." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#lookupScheme
+:lookupScheme rdf:type owl:ObjectProperty ,
+                       owl:FunctionalProperty ;
+              rdfs:domain :LookupExpression ;
+              rdfs:range skos:ConceptScheme ;
+              rdfs:label "lookup scheme" ;
+              skos:definition "The concept scheme against which the lookup is performed." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#lookupProperty
+:lookupProperty rdf:type owl:ObjectProperty ,
+                         owl:FunctionalProperty ;
+                rdfs:domain :LookupExpression ;
+                rdfs:range owl:DatatypeProperty ;
+                rdfs:label "lookup property" ;
+                skos:definition "The datatype property on which the lookup match is performed." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#placeholderExpression
+:placeholderExpression rdf:type owl:ObjectProperty ,
+                                owl:FunctionalProperty ;
+                       rdfs:domain :TemplateBinding ;
+                       rdfs:range :TemplateExpression ;
+                       rdfs:label "placeholder expression" ;
+                       skos:definition "The template expression that provides the value for a placeholder binding." .
+
+#################################################################
+#    Object Properties - Constraint and Rule Generation (Foundations §5.3)
+#################################################################
+
+###  http://www.nebularis.org/ontologies/Mork#hasTargetingSpec
+:hasTargetingSpec rdf:type owl:ObjectProperty ;
+                  rdfs:domain :GenerativeMapping ;
+                  rdfs:range :TargetingSpec ;
+                  rdfs:label "has targeting spec" ;
+                  skos:definition "Binds a GenerativeMapping (ShapeMapping, RuleMapping, TransformMapping, or ProjectionMapping) to its targeting specification (sh:targetClass, sh:targetObjectsOf, sh:targetSubjectsOf, or sh:targetNode, with optional jurisdiction scoping and effective date range)." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#hasParameterBinding
+:hasParameterBinding rdf:type owl:ObjectProperty ;
+                     rdfs:domain :GenerativeMapping ;
+                     rdfs:range :ParameterBinding ;
+                     rdfs:label "has parameter binding" ;
+                     skos:definition "Relates a GenerativeMapping (ShapeMapping, RuleMapping, TransformMapping, or ProjectionMapping) to one of its typed parameter bindings (paramName, paramType, paramValue). Also used by QueryTemplate via the separate paramBinding property." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#dependsOnMapping
+:dependsOnMapping rdf:type owl:ObjectProperty ;
+                  rdfs:domain :GenerativeMapping ;
+                  rdfs:range :DataMapping ;
+                  rdfs:label "depends on mapping" ;
+                  skos:definition "Compositional dependency ensuring that target concepts exist before the GenerativeMapping (ShapeMapping, RuleMapping, TransformMapping, or ProjectionMapping) is compiled." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#generatesShapeDefinition
+:generatesShapeDefinition rdf:type owl:ObjectProperty ;
+                          rdfs:domain :ShapeMapping ;
+                          rdfs:range sh:Shape ;
+                          rdfs:label "generates shape definition" ;
+                          skos:definition "Links a ShapeMapping to the SHACL shape (sh:Shape individual, which may be an sh:NodeShape or sh:PropertyShape) it generates when compiled. The generated shape is structured RDF — not a serialised string. Its internal structure (target declarations, property constraints, SPARQL components, severity annotations) is fully traversable, queryable, and validatable within the RDF graph." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#generatesRuleDefinition
+:generatesRuleDefinition rdf:type owl:ObjectProperty ;
+                         rdfs:domain :RuleMapping ;
+                         rdfs:range swrl:Imp ;
+                         rdfs:label "generates rule definition" ;
+                         skos:definition "Links a RuleMapping to the SWRL rule (swrl:Imp individual) it generates when compiled. The generated rule is structured RDF with fully traversable antecedent/consequent atom lists, class predicates, property predicates, and variable bindings." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#generatesTransformDefinition
+:generatesTransformDefinition rdf:type owl:ObjectProperty ;
+                              rdfs:domain :TransformMapping ;
+                              rdfs:range rr:TriplesMap ;
+                              rdfs:label "generates transform definition" ;
+                              skos:definition "Links a TransformMapping to the RML/R2RML triples map (rr:TriplesMap individual) it generates when compiled. The generated triples map is structured RDF — logical source, subject map, and predicate-object/referencing-object maps — fully traversable and queryable within the RDF graph, not a serialised mapping file." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#generatesClassDefinition
+:generatesClassDefinition rdf:type owl:ObjectProperty ;
+                          rdfs:domain :ProjectionMapping ;
+                          rdfs:range :OwlClass ;
+                          rdfs:label "generates class definition" ;
+                          skos:definition "Links a ProjectionMapping to a class the surface compiler minted for it." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#hasRuleTemplate
+:hasRuleTemplate rdf:type owl:ObjectProperty ;
+                 rdfs:domain :RuleMapping ;
+                 rdfs:range :RuleTemplate ;
+                 rdfs:label "has rule template" ;
+                 skos:definition "Links a RuleMapping to a parameterisable RuleTemplate from the curated template catalog." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#hasRuleProvenance
+:hasRuleProvenance rdf:type owl:ObjectProperty ;
+                   rdfs:domain :RuleMapping ;
+                   rdfs:range :RuleProvenance ;
+                   rdfs:label "has rule provenance" ;
+                   skos:definition "Links a RuleMapping to its provenance record (origin, review chain, lifecycle metadata)." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#hasTransformProvenance
+:hasTransformProvenance rdf:type owl:ObjectProperty ;
+                        rdfs:domain :TransformMapping ;
+                        rdfs:range :TransformProvenance ;
+                        rdfs:label "has transform provenance" ;
+                        skos:definition "Links a TransformMapping to its provenance record (origin, review chain, lifecycle metadata)." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#hasProjectionProvenance
+:hasProjectionProvenance rdf:type owl:ObjectProperty ;
+                         rdfs:domain :ProjectionMapping ;
+                         rdfs:range :ProjectionProvenance ;
+                         rdfs:label "has projection provenance" ;
+                         skos:definition "Links a ProjectionMapping to its provenance record (origin, review chain, lifecycle metadata)." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#hasShapeTemplate
+:hasShapeTemplate rdf:type owl:ObjectProperty ;
+                  rdfs:domain :ShapeMapping ;
+                  rdfs:range :ShapeTemplate ;
+                  rdfs:label "has shape template" ;
+                  skos:definition "Links a ShapeMapping to a parameterisable ShapeTemplate from the curated template catalog. Template usage is strongly recommended as a governance mechanism but is not a necessary condition; absence triggers a SHACL warning routing to mandatory human review." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#hasConstraintProvenance
+:hasConstraintProvenance rdf:type owl:ObjectProperty ;
+                         rdfs:domain :ShapeMapping ;
+                         rdfs:range :ConstraintProvenance ;
+                         rdfs:label "has constraint provenance" ;
+                         skos:definition "Links a ShapeMapping to its provenance record (origin, review chain, lifecycle metadata)." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#hasSeverity
+:hasSeverity rdf:type owl:ObjectProperty ;
+             rdfs:domain :ShapeMapping ;
+             rdfs:range sh:Severity ;
+             rdfs:label "has severity" ;
+             skos:definition "The severity level for the generated SHACL shape (sh:Violation, sh:Warning, or sh:Info). May also be set directly on the generated shape." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#appliesInJurisdiction
+:appliesInJurisdiction rdf:type owl:ObjectProperty ;
+                       rdfs:domain :GenerativeMapping ;
+                       rdfs:range skos:Concept ;
+                       rdfs:label "applies in jurisdiction" ;
+                       skos:definition "References a SKOS concept from a jurisdiction concept scheme, scoping the GenerativeMapping to a specific jurisdiction." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#bindsToCriteria
+:bindsToCriteria rdf:type owl:ObjectProperty ;
+                 rdfs:domain :QueryTemplate ;
+                 rdfs:label "binds to criteria" ;
+                 skos:definition "Links a QueryTemplate to the product criteria or CriteriaShape that generated the query." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#paramBinding
+:paramBinding rdf:type owl:ObjectProperty ;
+              rdfs:domain :QueryTemplate ;
+              rdfs:range :ParameterBinding ;
+              rdfs:label "param binding" ;
+              skos:definition "Links a QueryTemplate to one of its parameter bindings." .
+
+
+#################################################################
+#    Object Properties - Versioning and Bidirectional (Foundations §5.10)
+#################################################################
+
+###  http://www.nebularis.org/ontologies/Mork#supersedes
+:supersedes rdf:type owl:ObjectProperty ;
+            rdf:type owl:AsymmetricProperty ,
+                     owl:IrreflexiveProperty ;
+            rdfs:domain :DataMapping ;
+            rdfs:range :DataMapping ;
+            rdfs:label "supersedes" ;
+            skos:definition "Creates a temporal chain among mapping versions. m1 :supersedes m2 means m1 is a newer version that replaces m2." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#egressProjection
+:egressProjection rdf:type owl:ObjectProperty ;
+                  rdfs:domain :DataMapping ;
+                  rdfs:range :Representation ;
+                  rdfs:label "egress projection" ;
+                  skos:definition "Links a DataMapping to the specific Representation element it should project to during egress. Enables the Compiler-Agent to generate both ingress transforms (forward traversal) and egress query templates (reverse traversal, SPARQL CONSTRUCT) from the mapping DAG." .
+
+
+#################################################################
+#    Data properties
+#################################################################
+
+###  http://www.nebularis.org/ontologies/Mork#collectionElementScalarValue
+:collectionElementScalarValue rdf:type owl:DatatypeProperty ;
+                              rdfs:subPropertyOf owl:topDataProperty ;
+                              skos:scopeNote """Not for external use. This datatype property is used as a placeholder super-property for generated owl:DataTypeProperty axioms which are used to hold the rdfs/xsd range for individuals in the Attribute and ScalarValueElement classes.
+
+This specific property is exclusively used to manage Objectification.""" .
+
+
+###  http://www.nebularis.org/ontologies/Mork#conceptFQNameTemplate
+:conceptFQNameTemplate rdf:type owl:DatatypeProperty ;
+                       rdfs:subPropertyOf :conceptNameTemplate .
+
+
+###  http://www.nebularis.org/ontologies/Mork#conceptIRI
+:conceptIRI rdf:type owl:DatatypeProperty ;
+            rdfs:subPropertyOf :conceptName ;
+            rdfs:range xsd:anyURI .
+
+
+###  http://www.nebularis.org/ontologies/Mork#conceptId
+:conceptId rdf:type owl:DatatypeProperty ;
+           rdfs:subPropertyOf :identifier ,
+                              skos:notation ;
+           rdf:type owl:FunctionalProperty ;
+           rdfs:domain skos:Concept ;
+           rdfs:range xsd:string ;
+           rdfs:label "concept id" ;
+           skos:definition "Specialises identifier for use in denoting the id of a DataConcept" .
+
+
+###  http://www.nebularis.org/ontologies/Mork#conceptName
+:conceptName rdf:type owl:DatatypeProperty ;
+             rdfs:subPropertyOf :name .
+
+
+###  http://www.nebularis.org/ontologies/Mork#conceptNameTemplate
+:conceptNameTemplate rdf:type owl:DatatypeProperty ;
+                     rdfs:subPropertyOf :template ;
+                     skos:definition "Template for a concept name" ;
+                     skos:example ":Subject mork:conceptNameTemplate \"Item{$name}\"" .
+
+
+###  http://www.nebularis.org/ontologies/Mork#conceptShortNameTemplate
+:conceptShortNameTemplate rdf:type owl:DatatypeProperty ;
+                          rdfs:subPropertyOf :conceptNameTemplate .
+
+
+###  http://www.nebularis.org/ontologies/Mork#data
+:data rdf:type owl:DatatypeProperty ;
+      rdfs:subPropertyOf owl:topDataProperty .
+
+
+###  http://www.nebularis.org/ontologies/Mork#dataInline
+:dataInline rdf:type owl:DatatypeProperty ;
+            rdfs:subPropertyOf :data .
+
+
+###  http://www.nebularis.org/ontologies/Mork#dataRef
+:dataRef rdf:type owl:DatatypeProperty ;
+         rdfs:subPropertyOf :data ;
+         rdf:type owl:FunctionalProperty .
+
+
+###  http://www.nebularis.org/ontologies/Mork#externalPropertyValue
+:externalPropertyValue rdf:type owl:DatatypeProperty ;
+                       rdfs:subPropertyOf owl:topDataProperty ;
+                       skos:scopeNote "Not for external use. This datatype property is used as a placeholder super-property for generated owl:DataTypeProperty axioms which are used to hold the rdfs/xsd range for individuals in the Attribute class." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#identifier
+:identifier rdf:type owl:DatatypeProperty ;
+            rdfs:subPropertyOf owl:topDataProperty ;
+            rdfs:label "identifier" ;
+            skos:definition "Is used to mark a Representation or DataConcept with an identifier used by some external scheme or schema." ;
+            skos:note """###  In this example, the 'identifier' denotes the JSON element/property name,
+###  whilst the 'path' denotes the location in the json document.
+###
+
+:JS_Array_ContractingParties rdf:type owl:NamedIndividual, mork:Array ;
+                   mork:elementType :JS_Elem_ContractingParties ;
+                   mork:identifier \"contractingParties\" ;
+                   mork:path \"contract.signatories.contractingParties\" .""" .
+
+
+###  http://www.nebularis.org/ontologies/Mork#incompleteMapping
+:incompleteMapping rdf:type owl:DatatypeProperty ;
+                   rdfs:subPropertyOf owl:topDataProperty ;
+                   rdfs:range xsd:boolean .
+
+
+###  http://www.nebularis.org/ontologies/Mork#individualIRI
+:individualIRI rdf:type owl:DatatypeProperty ;
+               rdfs:subPropertyOf :individualName .
+
+
+###  http://www.nebularis.org/ontologies/Mork#individualName
+:individualName rdf:type owl:DatatypeProperty ;
+                rdfs:subPropertyOf :name .
+
+
+###  http://www.nebularis.org/ontologies/Mork#interpolationTemplate
+:interpolationTemplate rdf:type owl:DatatypeProperty ;
+                       rdfs:subPropertyOf :template ;
+                       rdfs:range xsd:string ;
+                       rdfs:seeAlso :Interpolation ;
+                       skos:definition "Used to indicate a runtime interpolation of dataRef and/or dataInline values into a new string." ;
+                       skos:example """:SomeMapping rdf:type owl:NamedIndividual , mork:Datum ;
+    mork:dataRef \"path.to.processing-context.data.id\" ;
+    mork:dataInline \"ID\" ;
+    mork:interpolationTemplate \"The ${mork:dataInline} is: ${mork:dataRef}\" .""" ;
+                       skos:scopeNote """Allows the values assigned to datatype properties to be referenced for string interpolation. Referenced properties are evaluated against properties relating to the subject of the assertion.
+
+This datatype property can be used in one of two ways:
+
+1. to combine datatype properties from the assertion context with string literals/interpolation - see the skos:example on the Interpolation class for details.
+
+2. to provide a template for interpolating placeholder data into a new value, see the skos:example on this property for details..""" .
+
+
+###  http://www.nebularis.org/ontologies/Mork#iri
+:iri rdf:type owl:DatatypeProperty ;
+     rdfs:subPropertyOf :conceptId ;
+     rdf:type owl:FunctionalProperty ;
+     rdfs:domain :OwlAxiom ;
+     rdfs:label "identifier iri" ;
+     skos:definition "Is used to identify a skos:Concept via a fully qualified IRI" .
+
+
+###  http://www.nebularis.org/ontologies/Mork#itemsConstrained
+:itemsConstrained rdf:type owl:DatatypeProperty ;
+                  rdfs:subPropertyOf owl:topDataProperty ;
+                  rdfs:range xsd:boolean .
+
+
+###  http://www.nebularis.org/ontologies/Mork#mappingIndex
+:mappingIndex rdf:type owl:DatatypeProperty ;
+              rdfs:subPropertyOf owl:topDataProperty ;
+              rdfs:label "mapping index" ;
+              skos:definition "used to denote the index of a mapping where it occurs within a collection of mappings." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#mappingRecommendation
+:mappingRecommendation rdf:type owl:DatatypeProperty ;
+                       rdfs:subPropertyOf :data ;
+                       rdf:type owl:FunctionalProperty ;
+                       rdfs:range xsd:string .
+
+
+###  http://www.nebularis.org/ontologies/Mork#name
+:name rdf:type owl:DatatypeProperty ;
+      rdfs:subPropertyOf owl:topDataProperty ;
+      rdfs:range xsd:string .
+
+
+###  http://www.nebularis.org/ontologies/Mork#orderedItems
+:orderedItems rdf:type owl:DatatypeProperty ;
+              rdfs:subPropertyOf :itemsConstrained .
+
+
+###  http://www.nebularis.org/ontologies/Mork#path
+:path rdf:type owl:DatatypeProperty ;
+      rdfs:subPropertyOf :identifier ;
+      rdfs:label "has path" ;
+      skos:definition "Is used to denote a \"path expression\" that locates a Representation within an externally defined scheme or schema." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#reference
+:reference rdf:type owl:DatatypeProperty ;
+           rdfs:subPropertyOf :identifier .
+
+
+###  http://www.nebularis.org/ontologies/Mork#template
+:template rdf:type owl:DatatypeProperty ;
+          rdfs:subPropertyOf owl:topDataProperty ;
+          skos:definition "used to store templates for the generation of identifiers within a merged graph" .
+
+
+###  http://www.nebularis.org/ontologies/Mork#uniqueItems
+:uniqueItems rdf:type owl:DatatypeProperty ;
+             rdfs:subPropertyOf :itemsConstrained .
+
+
+###  http://www.nebularis.org/ontologies/Mork#weighting
+:weighting rdf:type owl:DatatypeProperty ;
+           rdfs:subPropertyOf owl:topDataProperty ;
+           rdfs:range xsd:integer ;
+           skos:definition "confidence score out of 100" .
+
+
+#################################################################
+#    Data Properties - Intent Algebra (Foundations §3.8)
+#################################################################
+
+###  http://www.nebularis.org/ontologies/Mork#hasNaturalLanguageSource
+:hasNaturalLanguageSource rdf:type owl:DatatypeProperty ;
+                          rdfs:domain :IntentNode ;
+                          rdfs:range xsd:string ;
+                          rdfs:label "has natural language source" ;
+                          skos:definition "The original natural language text fragment from which this intent node was extracted." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#hasIntentConfidence
+:hasIntentConfidence rdf:type owl:DatatypeProperty ;
+                     rdfs:domain :IntentNode ;
+                     rdfs:range xsd:decimal ;
+                     rdfs:label "has intent confidence" ;
+                     skos:definition "LLM extraction confidence score for this intent node, in the range [0, 1]." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#constraintOperator
+:constraintOperator rdf:type owl:DatatypeProperty ;
+                    rdfs:domain :QuantitativeConstraint ;
+                    rdfs:range xsd:string ;
+                    rdfs:label "constraint operator" ;
+                    skos:definition "The comparison operator for a quantitative constraint. Range: {\"LessThanOrEqual\", \"GreaterThanOrEqual\", \"Equal\", \"Between\", \"NotEqual\"}." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#constraintValue
+:constraintValue rdf:type owl:DatatypeProperty ;
+                 rdfs:domain :QuantitativeConstraint ;
+                 rdfs:range xsd:decimal ;
+                 rdfs:label "constraint value" ;
+                 skos:definition "The numeric value for a quantitative constraint (lower bound when constraintOperator = 'Between')." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#constraintUpperValue
+:constraintUpperValue rdf:type owl:DatatypeProperty ;
+                      rdfs:domain :QuantitativeConstraint ;
+                      rdfs:range xsd:decimal ;
+                      rdfs:label "constraint upper value" ;
+                      skos:definition "The upper bound numeric value, used when constraintOperator = 'Between'." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#scopeType
+:scopeType rdf:type owl:DatatypeProperty ;
+           rdfs:domain :SpatialScope ;
+           rdfs:range xsd:string ;
+           rdfs:label "scope type" ;
+           skos:definition "The type of spatial scope. Range: {\"Country\", \"State\", \"Region\", \"Postcode\", \"Coordinate\"}." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#scopeInclusion
+:scopeInclusion rdf:type owl:DatatypeProperty ;
+                rdfs:domain :SpatialScope ;
+                rdfs:range xsd:string ;
+                rdfs:label "scope inclusion" ;
+                skos:definition "Whether the spatial scope is an inclusion or exclusion. Range: {\"Include\", \"Exclude\"}." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#temporalDuration
+:temporalDuration rdf:type owl:DatatypeProperty ;
+                  rdfs:domain :TemporalScope ;
+                  rdfs:range xsd:dayTimeDuration ;
+                  rdfs:label "temporal duration" ;
+                  skos:definition "The duration of the temporal scope." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#temporalUnit
+:temporalUnit rdf:type owl:DatatypeProperty ;
+              rdfs:domain :TemporalScope ;
+              rdfs:range xsd:string ;
+              rdfs:label "temporal unit" ;
+              skos:definition "The unit of the temporal scope. Range: {\"Days\", \"Months\", \"Years\"}." .
+
+###  http://www.nebularis.org/ontologies/Mork#referenceIdentifier
+:referenceIdentifier rdf:type owl:DatatypeProperty ;
+              rdfs:domain :NormativeReferenceItent ;
+              rdfs:range xsd:string ;
+              rdfs:label "reference identifier" ;
+              skos:definition "An opaque identifier for the referenced external standard or authority (e.g., a body name or form code)." .
+
+#################################################################
+#    Data Properties - Template Expression Algebra (Foundations §3.9)
+#################################################################
+
+###  http://www.nebularis.org/ontologies/Mork#templateString
+:templateString rdf:type owl:DatatypeProperty ,
+                         owl:FunctionalProperty ;
+                rdfs:domain :InterpolationExpression ;
+                rdfs:range xsd:string ;
+                rdfs:label "template string" ;
+                skos:definition "The template string with placeholder references for an InterpolationExpression." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#placeholderName
+:placeholderName rdf:type owl:DatatypeProperty ,
+                          owl:FunctionalProperty ;
+                 rdfs:domain :TemplateBinding ;
+                 rdfs:range xsd:string ;
+                 rdfs:label "placeholder name" ;
+                 skos:definition "The name of the placeholder in the template string that this binding provides a value for." .
+
+
+#################################################################
+#    Data Properties - Constraint Generation (Foundations §5.3)
+#################################################################
+
+###  http://www.nebularis.org/ontologies/Mork#jurisdiction
+:jurisdiction rdf:type owl:DatatypeProperty ;
+              rdfs:range xsd:string ;
+              rdfs:label "jurisdiction" ;
+              skos:definition "The jurisdiction applicable to a ConstraintScheme, ConstraintProvenance, or TargetingSpec." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#effectiveFrom
+:effectiveFrom rdf:type owl:DatatypeProperty ;
+               rdfs:range xsd:dateTime ;
+               rdfs:label "effective from" ;
+               skos:definition "The date/time from which a mapping, constraint, or targeting specification becomes effective." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#effectiveUntil
+:effectiveUntil rdf:type owl:DatatypeProperty ;
+                rdfs:range xsd:dateTime ;
+                rdfs:label "effective until" ;
+                skos:definition "The date/time until which a mapping, constraint, or targeting specification remains effective." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#constraintVersion
+:constraintVersion rdf:type owl:DatatypeProperty ;
+                   rdfs:domain :ConstraintScheme ;
+                   rdfs:range xsd:string ;
+                   rdfs:label "constraint version" ;
+                   skos:definition "Version identifier for a ConstraintScheme." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#mappingVersion
+:mappingVersion rdf:type owl:DatatypeProperty ;
+                rdfs:domain :MappingScheme ;
+                rdfs:range xsd:string ;
+                rdfs:label "mapping version" ;
+                skos:definition "Version identifier for a MappingScheme." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#compilationMode
+:compilationMode rdf:type owl:ObjectProperty ,
+                          owl:FunctionalProperty ;
+                 rdfs:domain :MappingScheme ;
+                 rdfs:range :CompilationMode ;
+                 rdfs:label "compilation mode" ;
+                 skos:definition "The compilation mode a MappingScheme's member mappings are compiled under: DraftMode, ReviewMode, or ProductionMode (Foundations §5.10b, ADR-A22). Unset is equivalent to DraftMode. Only ProductionMode brings the governance-state and version-identity SHACL gate (mork:GenerativeMappingProductionGovernanceShape) into force for that scheme's mappings; a mapping compiled under DraftMode or ReviewMode is unaffected by it." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#deprecationReason
+:deprecationReason rdf:type owl:DatatypeProperty ;
+                   rdfs:domain :DataMapping ;
+                   rdfs:range xsd:string ;
+                   rdfs:label "deprecation reason" ;
+                   skos:definition "A textual explanation of why a mapping was deprecated." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#paramName
+:paramName rdf:type owl:DatatypeProperty ;
+           rdfs:domain :ParameterBinding ;
+           rdfs:range xsd:string ;
+           rdfs:label "param name" ;
+           skos:definition "The name of the parameter in a ParameterBinding." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#paramType
+:paramType rdf:type owl:DatatypeProperty ;
+           rdfs:domain :ParameterBinding ;
+           rdfs:range xsd:string ;
+           rdfs:label "param type" ;
+           skos:definition "The type of the parameter in a ParameterBinding. Values: Numeric, Concept, Path, String, Duration." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#paramValue
+:paramValue rdf:type owl:DatatypeProperty ;
+            rdfs:domain :ParameterBinding ;
+            rdfs:label "param value" ;
+            skos:definition "The value of the parameter in a ParameterBinding." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#queryLanguage
+:queryLanguage rdf:type owl:DatatypeProperty ;
+               rdfs:domain :QueryTemplate ;
+               rdfs:range xsd:string ;
+               rdfs:label "query language" ;
+               skos:definition "The query language of a QueryTemplate. Values: SPARQL, Cypher." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#queryText
+:queryText rdf:type owl:DatatypeProperty ;
+           rdfs:domain :QueryTemplate ;
+           rdfs:range xsd:string ;
+           rdfs:label "query text" ;
+           skos:definition "The serialised query template text with parameter placeholders." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#swrlText
+:swrlText rdf:type owl:DatatypeProperty ;
+          rdfs:domain :RuleMapping ;
+          rdfs:range xsd:string ;
+          rdfs:label "swrl text" ;
+          owl:deprecated "true"^^xsd:boolean ;
+          skos:definition "Serialised SWRL rule text for a RuleMapping." ;
+          skos:editorialNote "Deprecated: Use generatesRuleDefinition (object property → swrl:Imp) for canonical structured representation, and swrlCompactSyntax (annotation property) for human-readable rendering." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#targetsOntology
+:targetsOntology rdf:type owl:DatatypeProperty ;
+                 rdfs:domain :RuleMapping ;
+                 rdfs:range xsd:anyURI ;
+                 rdfs:label "targets ontology" ;
+                 skos:definition "The target ontology namespace for a RuleMapping." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#inputHash
+:inputHash rdf:type owl:DatatypeProperty ;
+           rdfs:domain [ rdf:type owl:Class ;
+                         owl:unionOf ( :ConstraintProvenance
+                                       :RuleProvenance
+                                       :ProjectionProvenance
+                                     )
+                       ] ;
+           rdfs:range xsd:string ;
+           rdfs:label "input hash" ;
+           skos:definition "Hash of the natural language source that produced the constraint." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#llmModelId
+:llmModelId rdf:type owl:DatatypeProperty ;
+            rdfs:domain [ rdf:type owl:Class ;
+                          owl:unionOf ( :ConstraintProvenance
+                                        :RuleProvenance
+                                        :ProjectionProvenance
+                                      )
+                        ] ;
+            rdfs:range xsd:string ;
+            rdfs:label "llm model id" ;
+            skos:definition "Identifier of the LLM model that generated the constraint." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#llmConfidence
+:llmConfidence rdf:type owl:DatatypeProperty ;
+               rdfs:domain [ rdf:type owl:Class ;
+                             owl:unionOf ( :ConstraintProvenance
+                                           :RuleProvenance
+                                           :ProjectionProvenance
+                                         )
+                           ] ;
+               rdfs:range xsd:decimal ;
+               rdfs:label "llm confidence" ;
+               skos:definition "Confidence score from the LLM that generated the constraint." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#reviewStatus
+:reviewStatus rdf:type owl:DatatypeProperty ;
+              rdfs:domain [ rdf:type owl:Class ;
+                            owl:unionOf ( :ConstraintProvenance
+                                          :RuleProvenance
+                                          :ProjectionProvenance
+                                        )
+                          ] ;
+              rdfs:range xsd:string ;
+              rdfs:label "review status" ;
+              skos:definition "Review status of the constraint. Values: DRAFT, APPROVED, DEPRECATED." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#provenanceCreator
+:provenanceCreator rdf:type owl:DatatypeProperty ;
+                   rdfs:domain [ rdf:type owl:Class ;
+                                 owl:unionOf ( :ConstraintProvenance
+                                               :RuleProvenance
+                                               :ProjectionProvenance
+                                             )
+                               ] ;
+                   rdfs:range xsd:string ;
+                   rdfs:label "provenance creator" ;
+                   skos:definition "The creator of the constraint or rule. Shadows dct:creator for use in OWL 2 DL restrictions." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#provenanceCreated
+:provenanceCreated rdf:type owl:DatatypeProperty ;
+                   rdfs:domain [ rdf:type owl:Class ;
+                                 owl:unionOf ( :ConstraintProvenance
+                                               :RuleProvenance
+                                               :ProjectionProvenance
+                                             )
+                               ] ;
+                   rdfs:range xsd:dateTime ;
+                   rdfs:label "provenance created" ;
+                   skos:definition "The creation date of the constraint or rule. Shadows dct:created for use in OWL 2 DL restrictions." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#impactScope
+:impactScope rdf:type owl:DatatypeProperty ;
+             rdfs:domain :RuleProvenance ;
+             rdfs:range xsd:string ;
+             rdfs:label "impact scope" ;
+             skos:definition "The impact scope of a generated SWRL rule. Values: advisory, enforcement, annotation." .
+
+
+#################################################################
+#    Classes
+#################################################################
+
+###  http://www.nebularis.org/ontologies/Mork#AnonymousElement
+:AnonymousElement rdf:type owl:Class ;
+                  rdfs:subClassOf :CollectionElement ,
+                                  [ owl:intersectionOf ( :CollectionElement
+                                                         [ rdf:type owl:Restriction ;
+                                                           owl:onProperty :identifier ;
+                                                           owl:hasValue ""
+                                                         ]
+                                                       ) ;
+                                    rdf:type owl:Class
+                                  ] ;
+                  rdfs:label "anonymous entity" ;
+                  skos:definition "Used to describe the Representation of an Entity that has no identifier, e.g., that is defined anonymously, such as an object within an array." ;
+                  skos:example """### the Array contractingParties contains elements which provide firstName and lastName
+### e.g., (JSON)
+### { \"contractingParties\": [ { \"firstName\": \"Joe\", \"lastName:\", \"Blogs\" }, { \"firstName\": \"John\", \"lastName\": \"Johns\" } ] }
+###
+
+:JS_Array_ContractingParties rdf:type owl:NamedIndividual, mork:Array ;
+                             mork:elementType :JS_Elem_ContractingParties ;
+                             mork:identifier \"contractingParties\" ;
+                             mork:path \"contract.signatories.contractingParties\" ;
+                             mork:representationOf :DC_ContractingParties ;
+                             mork:representationScheme :Scheme_Rep_Contracts .
+
+:JS_Elem_ContractingParties rdf:type owl:NamedIndividual, mork:AnonymousEntity ;
+                            mork:identifier \"\" ;
+                            mork:memberProperty :JS_Attr_FirstName, :JS_Attr_LastName ;
+                            mork:path \"contract.signatories.contractingParties[n]\" ;
+                            mork:representationOf :DC_ContractingParties_Party ;
+                            mork:representationScheme :Scheme_Rep_Contracts .""" .
+
+
+###  http://www.nebularis.org/ontologies/Mork#Array
+:Array rdf:type owl:Class ;
+       rdfs:subClassOf :UnorderedCollection ;
+       rdfs:label "array" ;
+       rdfs:seeAlso :elementType ;
+       skos:definition "Used to represent an Array, which is an unordered collection of elements. Elements can be associated with the array via the elementType object property." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#Association
+:Association rdf:type owl:Class ;
+             rdfs:subClassOf :Representation ;
+             owl:disjointWith :Entity ;
+             rdfs:label "association" ;
+             skos:definition "Represents an association between two data Representations. This mirrors the role of Objectification in the subClass hierarchy of DataConcept." ;
+             skos:scopeNote "By convention, mork:Association does not collect individual members, but acts as a structural component." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#Attribute
+:Attribute rdf:type owl:Class ;
+           owl:equivalentClass [ owl:intersectionOf ( [ rdf:type owl:Class ;
+                                                        owl:unionOf ( [ rdf:type owl:Restriction ;
+                                                                        owl:onProperty [ owl:inverseOf :memberProperty
+                                                                                       ] ;
+                                                                        owl:someValuesFrom :Association
+                                                                      ]
+                                                                      [ rdf:type owl:Restriction ;
+                                                                        owl:onProperty [ owl:inverseOf :memberProperty
+                                                                                       ] ;
+                                                                        owl:someValuesFrom :Entity
+                                                                      ]
+                                                                    )
+                                                      ]
+                                                      [ rdf:type owl:Restriction ;
+                                                        owl:onProperty :memberProperty ;
+                                                        owl:qualifiedCardinality "0"^^xsd:nonNegativeInteger ;
+                                                        owl:onClass :Representation
+                                                      ]
+                                                    ) ;
+                                 rdf:type owl:Class
+                               ] ;
+           rdfs:subClassOf :IdentifiableElement ;
+           rdfs:label "attribute (representation)" ;
+           skos:definition "is used to denote an attribute in a representation scheme" ;
+           skos:historyNote """Since we cannot easily capture data type constraints as data in OWL, members of this class will usually be \"shadowed\" by an owl:DataTypeProperty that is generated by a mapping process, against which the range (of possible data types) will be captured. 
+
+The individual Attribute will then be marked as relating to the generated owl:DataTypeProperty using either the owl:sameAs axiom, or and rdfs:seeAlso annotation.""" .
+
+
+###  http://www.nebularis.org/ontologies/Mork#Chaining
+:Chaining rdf:type owl:Class ;
+          rdfs:subClassOf :Composition ;
+          owl:disjointWith :Collection .
+
+
+###  http://www.nebularis.org/ontologies/Mork#Collection
+:Collection rdf:type owl:Class ;
+            rdfs:subClassOf :Composition ;
+            rdfs:label "collection" ;
+            skos:definition "Used to represent a collection of elements, such as a list or array." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#CollectionElement
+:CollectionElement rdf:type owl:Class ;
+                   rdfs:subClassOf :Membership ;
+                   rdfs:label "collection element" ;
+                   skos:definition "Used to describe the membership of elements within a collection." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#Composition
+:Composition rdf:type owl:Class ;
+             rdfs:subClassOf :Association ;
+             rdfs:label "composition" ;
+             skos:definition "Is used to represent a compositional association between two Representation elements. This carries the semantics that the object in a subject-predicate-object triple, should not be present in an object graph without the presence of a corresponding element representing the subject." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#DataConcept
+:DataConcept rdf:type owl:Class ;
+             rdfs:subClassOf skos:Concept ,
+                             [ owl:intersectionOf ( skos:Concept
+                                                    [ rdf:type owl:Restriction ;
+                                                      owl:onProperty :conceptScheme ;
+                                                      owl:someValuesFrom :TaxonomyScheme
+                                                    ]
+                                                  ) ;
+                               rdf:type owl:Class
+                             ] ;
+             rdfs:label "data concept" ;
+             skos:definition "An abstract description of a concept, representing a concept to be mapped to a representation and/or ontology scheme." ;
+             skos:scopeNote "DataConcepts are derived from a representation scheme and mapped to an ontological scheme. An individual can be both a Representation and a DataConcept." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#DataMapping
+:DataMapping rdf:type owl:Class ;
+             rdfs:subClassOf skos:Concept ,
+                             [ owl:intersectionOf ( skos:Concept
+                                                    [ rdf:type owl:Restriction ;
+                                                      owl:onProperty :mappingScheme ;
+                                                      owl:someValuesFrom :MappingScheme
+                                                    ]
+                                                  ) ;
+                               rdf:type owl:Class
+                             ] ;
+             rdfs:comment "Usually a DataMapping will provide some skos:note annotation explaining the logic behind the mapping. Optionally, mapping properties may be annotated to provide additional logical explanations." ;
+             rdfs:label "data mapping" ;
+             skos:definition "is used to capture a mapping between concepts from a representation and/or concept scheme to an ontological scheme" .
+
+
+###  http://www.nebularis.org/ontologies/Mork#Datum
+:Datum rdf:type owl:Class ;
+       owl:equivalentClass [ rdf:type owl:Restriction ;
+                             owl:onProperty :deferredMapping ;
+                             owl:someValuesFrom :DataMapping
+                           ] ;
+       rdfs:subClassOf :DataMapping ;
+       rdfs:comment """The need to individuate a datum (described by a TaxonomyScheme, provided via a RepresentationScheme) in an OntologicalScheme is implied by the existence of a DataMapping, however when individuation of a DataConcept requires complex mapping steps, specificity becomes important.
+
+The equivalence class definition means any individual that has a deferredMapping to a DataMapping is automatically classified as a Datum. This means the need for individuation is inferred from the dependency structure, not manually asserted.""" ;
+       rdfs:label "datum mapping" ;
+       rdfs:seeAlso :compositeNarrowerMapping ;
+       skos:definition "defines a mapping that explicitly states a datum must be individuated in a target OntologicalScheme" .
+
+
+###  http://www.nebularis.org/ontologies/Mork#DeferredConceptIRI
+:DeferredConceptIRI rdf:type owl:Class ;
+                    rdfs:subClassOf :OwlAxiom .
+
+
+###  http://www.nebularis.org/ontologies/Mork#DeferredContext
+:DeferredContext rdf:type owl:Class ;
+                 rdfs:subClassOf :DataMapping ;
+                 rdfs:label "deferred context" ;
+                 skos:definition "Used to act as a placeholder for an axiom that some DataMapping proposes the creation of, which must be referenced by an object property in a related DataMapping." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#Digraph
+:Digraph rdf:type owl:Class ;
+         rdfs:subClassOf skos:Concept ,
+                         [ rdf:type owl:Restriction ;
+                           owl:onProperty :digraphMatch ;
+                           owl:someValuesFrom :OwlAxiom
+                         ] ;
+         owl:deprecated "true"^^xsd:boolean ;
+         skos:editorialNote "Deprecated: Use compositeBroaderMapping and compositeNarrowerMapping instead." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#Entity
+:Entity rdf:type owl:Class ;
+        rdfs:subClassOf :IdentifiableElement ;
+        rdfs:label "entity (representation)" ;
+        rdfs:seeAlso :identifier ;
+        skos:definition "Is used to denote an entity in a representation scheme. An Entity will usually be marked with its identity in some originating representation scheme using the identifier datatype property." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#Hypothesis
+:Hypothesis rdf:type owl:Class ;
+            owl:equivalentClass [ rdf:type owl:Restriction ;
+                                  owl:onProperty [ owl:inverseOf :hypothesisMapping
+                                                 ] ;
+                                  owl:someValuesFrom :DataMapping
+                                ] ;
+            rdfs:subClassOf :DataMapping .
+
+
+###  http://www.nebularis.org/ontologies/Mork#IdentifiableElement
+:IdentifiableElement rdf:type owl:Class ;
+                     rdfs:subClassOf :Representation ,
+                                     [ owl:intersectionOf ( :Representation
+                                                            [ rdf:type owl:Restriction ;
+                                                              owl:onProperty :identifier ;
+                                                              owl:someValuesFrom xsd:string
+                                                            ]
+                                                          ) ;
+                                       rdf:type owl:Class
+                                     ] .
+
+
+###  http://www.nebularis.org/ontologies/Mork#IndexedMapping
+:IndexedMapping rdf:type owl:Class ;
+                rdfs:subClassOf :DataMapping .
+
+
+###  http://www.nebularis.org/ontologies/Mork#Interpolation
+:Interpolation rdf:type owl:Class ;
+               owl:equivalentClass [ owl:intersectionOf ( [ rdf:type owl:Restriction ;
+                                                            owl:onProperty :interpolationComponent ;
+                                                            owl:someValuesFrom :DataMapping
+                                                          ]
+                                                          [ rdf:type owl:Restriction ;
+                                                            owl:onProperty :interpolationTemplate ;
+                                                            owl:someValuesFrom xsd:string
+                                                          ]
+                                                        ) ;
+                                     rdf:type owl:Class
+                                   ] ;
+               rdfs:subClassOf skos:OrderedCollection ;
+               rdfs:label "interpolation template" ;
+               rdfs:seeAlso :interpolationComponent ,
+                            :interpolationTemplate ;
+               skos:definition "Used to collect two or more mappings that require interpolation against a template. The syntax for referencing the mappings is simply $1, $2, $3, according to their position within the underlying OrderedCollection." ;
+               skos:example """###  http://www.nebularis.org/ontologies/Mork#CorporateName
+:ConcatCorporateName rdf:type owl:NamedIndividual , mork:Interpolation ;
+               :interpolationComponent :FirstName ,
+                                                            :LastName ;
+               :interpolationTemplate \"$2, $1\" ,
+               skos:note \"produces Lastname, Firstname, e.g., 'Vader, Darth'\".
+
+###  http://www.nebularis.org/ontologies/Mork#FirstName
+:FirstName rdf:type owl:NamedIndividual , mork:DataMapping ;
+           :dataRef \"path.to.firstName\" .
+
+###  http://www.nebularis.org/ontologies/Mork#LastName
+:LastName rdf:type owl:NamedIndividual , mork:DataMapping ;
+          :dataRef \"path.to.lastName\" .
+
+###  http://www.nebularis.org/ontologies/Mork#MappingExample
+:MappingExample rdf:type owl:NamedIndividual ,
+                         :Datum ;
+                :concatenation :ConcatCorporateName ;
+                :exactRBoxMatch :corporateName .""" .
+
+
+###  http://www.nebularis.org/ontologies/Mork#Lookup
+:Lookup rdf:type owl:Class ;
+        rdfs:subClassOf :DataMapping ,
+                        [ owl:intersectionOf ( :DataMapping
+                                               [ rdf:type owl:Restriction ;
+                                                 owl:onProperty :dataRef ;
+                                                 owl:someValuesFrom xsd:string
+                                               ]
+                                             ) ;
+                          rdf:type owl:Class
+                        ] ;
+        rdfs:label "lookup" ;
+        rdfs:seeAlso :referenceDataMapping ;
+        skos:definition "Defines a \"lookup\", from some base data to a named individual" ;
+        skos:scopeNote """- dataRef value points to a \"path\" in the source data where the lookup (code or indicator) resides
+- t-box match indicates the class to which the identified individual must belong
+- r-box match indicates the relationship between the mapping subject and the identified individual (object)""" .
+
+
+###  http://www.nebularis.org/ontologies/Mork#MappingScheme
+:MappingScheme rdf:type owl:Class ;
+               rdfs:subClassOf skos:ConceptScheme ;
+               rdfs:label "mapping scheme" ;
+               skos:definition "a scheme that captures mappings between concepts, from a RepresentationScheme to an OntologicalScheme" .
+
+
+###  http://www.nebularis.org/ontologies/Mork#CompilationMode
+:CompilationMode rdf:type owl:Class ;
+                 rdfs:label "compilation mode" ;
+                 skos:definition "Which of draft, review, or production compilation a MappingScheme's compilationMode names (ADR-A22). Named individuals are DraftMode, ReviewMode, and ProductionMode." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#Membership
+:Membership rdf:type owl:Class ;
+            rdfs:subClassOf :Representation ;
+            rdfs:label "membership" ;
+            skos:definition "Conceptual representation of the notion of \"membership\" within some containing Representation element." ;
+            skos:scopeNote "By convention, individuals should not made direct members of this class, but rather belong to its subclasses." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#Objectification
+:Objectification rdf:type owl:Class ;
+                 owl:equivalentClass [ owl:intersectionOf ( [ rdf:type owl:Restriction ;
+                                                              owl:onProperty :broadConceptRole ;
+                                                              owl:minQualifiedCardinality "1"^^xsd:nonNegativeInteger ;
+                                                              owl:onClass skos:Concept
+                                                            ]
+                                                            [ rdf:type owl:Restriction ;
+                                                              owl:onProperty :narrowConceptRole ;
+                                                              owl:minQualifiedCardinality "1"^^xsd:nonNegativeInteger ;
+                                                              owl:onClass skos:Concept
+                                                            ]
+                                                          ) ;
+                                       rdf:type owl:Class
+                                     ] ;
+                 rdfs:subClassOf :DataConcept ;
+                 skos:altLabel "RoleAssociation" ;
+                 skos:definition "Represents an \"objectified fact\" relating two DataConcepts to one another with a specific set of roles in mind." ;
+                 skos:editorialNote """An Objectification allows instances of relationships to be treated as entities in their own right, sometimes referred to as "reification" (e.g., in UML, mediated by association classes), "objectification", or "nesting", e.g., in Object-Role Modeling (ORM) notation.
+
+Objectification is related to the linguistic activity of nominalization. In the context of Mork, an Objectification plays a similar role to an association class (in UML), insomuch as RDF does not allow us to attribute facts (i.e., properties) to the edges between nodes in the graph, therefore an intermediate node serves to allow us to capture the notion of \"relatedness\" in such a way that it can be mapped.
+
+See Terry Halpin's paper on objectified facts for more details: https://www.orm.net/pdf/objectification.pdf""" ;
+                 skos:example """# We can model a mapping directly from a relationship
+:Concept_Contract_Signatories
+                 rdf:type owl:NamedIndividual,
+                 mork:Objectification ; 
+           mork:broadConceptRole :Rep_Contract ;
+           mork:conceptScheme :Taxa_Scheme ; 
+           mork:narrowConceptRole :Rep_Signatories ;
+           skos:note \"Models an association between Rep_Conditions and the attribute combinedLimitSymbols, which is represented by Rep_CombinedLimitSymbols\" .
+
+:Mapping_Signatories 
+                 rdf:type owl:NamedIndividual, mork:DataMapping ;
+           mork:mappingFor :Concept_Contract_Signatories ;
+           skos:closeMatch contract:signatory ;
+           mork:mappingScheme :Scheme_Map_Contracts ;
+           mork:weighting 80 ;
+           skos:note \"the representation Array signatories may be related to the ontological concept signatory\" .
+
+[ rdf:type owl:Axiom ;
+   owl:annotatedSource :Mapping_Signatories ;
+   owl:annotatedProperty skos:closeMatch ;
+   owl:annotatedTarget contract:signatory ;
+   skos:note \"close match on 'signatories' and owl:objectProperty 'signatory'\"
+ ] .""" .
+
+
+###  http://www.nebularis.org/ontologies/Mork#OntologicalScheme
+:OntologicalScheme rdf:type owl:Class ;
+                   rdfs:subClassOf skos:ConceptScheme ;
+                   rdfs:label "ontological scheme" .
+
+
+###  http://www.nebularis.org/ontologies/Mork#OrderedCollection
+:OrderedCollection rdf:type owl:Class ;
+                   owl:equivalentClass [ rdf:type owl:Restriction ;
+                                         owl:onProperty :orderedItems ;
+                                         owl:hasValue "true"^^xsd:boolean
+                                       ] ;
+                   rdfs:subClassOf :Collection .
+
+
+###  http://www.nebularis.org/ontologies/Mork#OwlAxiom
+:OwlAxiom rdf:type owl:Class ;
+          owl:equivalentClass [ owl:intersectionOf ( skos:Concept
+                                                     [ rdf:type owl:Restriction ;
+                                                       owl:onProperty skos:inScheme ;
+                                                       owl:someValuesFrom :OntologicalScheme
+                                                     ]
+                                                   ) ;
+                                rdf:type owl:Class
+                              ] ;
+          rdfs:comment """For processing environments where objectProperties cannot refer to an arbitrary owl:Thing, each axiom in the OntologicalScheme will be connected to an assertion of this type via the owl:sameAs mechanism.
+
+Can also be used to instantiate individual members of this class that represent owl:Nothing (which is a problematic assertion in most processing environments).
+
+It is recommended that each member of this class also uses the rdfs:seeAlso annotation to record the owl:Thing it points to, for environments that do not properly support the owl:sameAs axiom.""" ;
+          rdfs:label "owl axiom" ;
+          skos:definition "used to denote an axiom in an OWL ontology" ;
+          skos:example """###  Mapping between the concept Signatory_acceptingParty and an objectProperty 
+###  in the target ontology (acceptingParty), met via Onto_Assoc_Contract_acceptingParty
+###  since placing an instance of owl:ObjectProperty in the object position of an RDF 
+###  triple is disallowed by some processing environments (e.g., owlapi).
+###
+###  Note that we mark Onto_Assoc_Contract_acceptingParty as representing acceptingParty
+###  via the owl:sameAs construct.
+###
+
+:Map_Signatory_acceptingParty rdf:type owl:NamedIndividual ;
+              skos:relatedMatch Onto_Assoc_Contract_acceptingParty ;
+              mork:hypothesisMapping :Map_Signatory_Party ;
+              mork:mappingScheme :Scheme_Map_Contracts .
+
+:Onto_Assoc_Contract_acceptingParty 
+                       rdf:type owl:NamedIndividual, 
+                       mork:OwlObjectProperty ;
+              owl:sameAs <http://www.nebularis.org/hyperthunk/examples/Contract#acceptingParty> ;
+              mork:conceptName \"acceptingParty\" ;
+              mork:iri \"http://www.nebularis.org/hyperthunk/examples/Contract/acceptingParty\" ;
+              mork:ontologicalScheme :Scheme_Onto_Contracts .""" ;
+          skos:scopeNote """The OwlAxiom members of an OntologicalScheme are not interrelated using skos notation, since that information is already present in the ontology itself.
+
+Rather, the behaviour when mapping data into (and out of) an OntologicalScheme is captured by each DataMapping such that ?mapping skos:inScheme :MappingScheme""" .
+
+
+###  http://www.nebularis.org/ontologies/Mork#OwlClass
+:OwlClass rdf:type owl:Class ;
+          rdfs:subClassOf :OwlAxiom ;
+          rdfs:label "owl class" ;
+          skos:definition "Represents an OWL Class." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#OwlDataProperty
+:OwlDataProperty rdf:type owl:Class ;
+                 rdfs:subClassOf :OwlAxiom ;
+                 rdfs:label "owl data property" ;
+                 skos:definition "Represents an OWL DataProperty" .
+
+
+###  http://www.nebularis.org/ontologies/Mork#OwlObjectProperty
+:OwlObjectProperty rdf:type owl:Class ;
+                   rdfs:subClassOf :OwlAxiom ;
+                   rdfs:label "owl object property" ;
+                   skos:definition "Represents an OWL ObjectProperty" .
+
+
+###  http://www.nebularis.org/ontologies/Mork#Referencing
+:Referencing rdf:type owl:Class ;
+             rdfs:subClassOf :Association .
+
+
+###  http://www.nebularis.org/ontologies/Mork#Representation
+:Representation rdf:type owl:Class ;
+                rdfs:subClassOf skos:Concept ,
+                                [ rdf:type owl:Restriction ;
+                                  owl:onProperty skos:inScheme ;
+                                  owl:someValuesFrom :RepresentationScheme
+                                ] ;
+                rdfs:label "representation" ;
+                skos:definition "Is used to describe the representation of a DataConcept. Some individuals may be both DataConcept and Representation." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#RepresentationScheme
+:RepresentationScheme rdf:type owl:Class ;
+                      rdfs:subClassOf skos:ConceptScheme ,
+                                      [ owl:intersectionOf ( skos:ConceptScheme
+                                                             [ rdf:type owl:Restriction ;
+                                                               owl:onProperty :format ;
+                                                               owl:someValuesFrom :SerializationFormat
+                                                             ]
+                                                           ) ;
+                                        rdf:type owl:Class
+                                      ] ;
+                      rdfs:label "representation scheme" ;
+                      skos:definition "a scheme that maps concepts to their representation" .
+
+
+###  http://www.nebularis.org/ontologies/Mork#ScalarValueElement
+:ScalarValueElement rdf:type owl:Class ;
+                    rdfs:subClassOf :AnonymousElement ;
+                    rdfs:label "scalar value" ;
+                    skos:altLabel "scalar collection element value" ;
+                    skos:definition "Used to describe scalar (atomic) values as members of a collection, such as an Array." ;
+                    skos:example """###  http://www.nebularis.org/hyperthunk/Mapping#Rep_CombinedLimitSymbols
+:Rep_CombinedLimitSymbols rdf:type owl:NamedIndividual , 
+                                    mork:Array ;
+                          mork:elementType :Rep_CombinedLimitSymbols_Element2147483650 ;
+                          mork:representationOf :Rep_CombinedLimitSymbols ;
+                          mork:representationScheme :Mapping_Representation ;
+                          mork:identifier \"combinedLimitSymbols\" ;
+                          mork:orderedItems \"false\"^^xsd:boolean .
+
+###  http://www.nebularis.org/hyperthunk/Mapping#Rep_CombinedLimitSymbols_Element2147483650
+:Rep_CombinedLimitSymbols_Element2147483650 rdf:type owl:NamedIndividual , 
+                                    mork:ScalarValueElement ;
+                          mork:representationScheme :Mapping_Representation ;
+                          mork:identifier \"combinedLimitSymbols_Element2147483650\" ;
+                          rdfs:seeAlso :combinedLimitSymbols_Element2147483650 .""" .
+
+[ rdf:type owl:Axiom ;
+   owl:annotatedSource :ScalarValueElement ;
+   owl:annotatedProperty skos:example ;
+   owl:annotatedTarget """###  http://www.nebularis.org/hyperthunk/Mapping#Rep_CombinedLimitSymbols
+:Rep_CombinedLimitSymbols rdf:type owl:NamedIndividual , 
+                                    mork:Array ;
+                          mork:elementType :Rep_CombinedLimitSymbols_Element2147483650 ;
+                          mork:representationOf :Rep_CombinedLimitSymbols ;
+                          mork:representationScheme :Mapping_Representation ;
+                          mork:identifier \"combinedLimitSymbols\" ;
+                          mork:orderedItems \"false\"^^xsd:boolean .
+
+###  http://www.nebularis.org/hyperthunk/Mapping#Rep_CombinedLimitSymbols_Element2147483650
+:Rep_CombinedLimitSymbols_Element2147483650 rdf:type owl:NamedIndividual , 
+                                    mork:ScalarValueElement ;
+                          mork:representationScheme :Mapping_Representation ;
+                          mork:identifier \"combinedLimitSymbols_Element2147483650\" ;
+                          rdfs:seeAlso :combinedLimitSymbols_Element2147483650 .""" ;
+   rdfs:comment "Shows an Array and its corresponding element type"
+ ] .
+
+
+###  http://www.nebularis.org/ontologies/Mork#SerializationFormat
+:SerializationFormat rdf:type owl:Class .
+
+
+###  http://www.nebularis.org/ontologies/Mork#SetListing
+:SetListing rdf:type owl:Class ;
+            owl:equivalentClass [ rdf:type owl:Restriction ;
+                                  owl:onProperty :uniqueItems ;
+                                  owl:hasValue "true"^^xsd:boolean
+                                ] ;
+            rdfs:subClassOf :Collection .
+
+
+###  http://www.nebularis.org/ontologies/Mork#TaxonomyScheme
+:TaxonomyScheme rdf:type owl:Class ;
+                rdfs:subClassOf skos:ConceptScheme .
+
+
+###  http://www.nebularis.org/ontologies/Mork#UncertainMapping
+:UncertainMapping rdf:type owl:Class ;
+                  owl:equivalentClass [ rdf:type owl:Class ;
+                                        owl:unionOf ( [ rdf:type owl:Restriction ;
+                                                        owl:onProperty :hypothesisMapping ;
+                                                        owl:someValuesFrom :DataMapping
+                                                      ]
+                                                      [ rdf:type owl:Restriction ;
+                                                        owl:onProperty :mappingRecommendation ;
+                                                        owl:someValuesFrom xsd:string
+                                                      ]
+                                                    )
+                                      ] ;
+                  rdfs:subClassOf :DataMapping ;
+                  rdfs:label "uncertain mapping" ;
+                  rdfs:seeAlso :hypothesisMapping ,
+                               :mappingRecommendation ;
+                  skos:definition "Individuals belonging to this class, represent mapping where the ontological target is missing, incomplete, uncertain, or undefined. Members of this class SHOULD also be members of DataMapping or one of its (other) subclasses." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#UnorderedCollection
+:UnorderedCollection rdf:type owl:Class ;
+                     owl:equivalentClass [ rdf:type owl:Restriction ;
+                                           owl:onProperty :orderedItems ;
+                                           owl:hasValue "false"^^xsd:boolean
+                                         ] ;
+                     rdfs:subClassOf :Collection .
+
+
+###  http://www.nebularis.org/ontologies/Mork#WeightedMatch
+:WeightedMatch rdf:type owl:Class ;
+               rdfs:subClassOf :DataMapping ,
+                               [ rdf:type owl:Restriction ;
+                                 owl:onProperty :weighting ;
+                                 owl:someValuesFrom xsd:integer
+                               ] ;
+               rdfs:label "weighted match" ;
+               skos:definition "is used to score a potential match (between concept taxa and ontological facts)" ;
+               skos:scopeNote "each member of this class may carry skos:note and rdfs:seeAlso that explain the rules used to arrive at the match" .
+
+
+###  http://www.w3.org/1999/02/22-rdf-syntax-ns#List
+rdf:List rdf:type owl:Class .
+
+
+#################################################################
+#    Classes - Intent Algebra (Foundations §3.8)
+#################################################################
+
+###  http://www.nebularis.org/ontologies/Mork#IntentScheme
+:IntentScheme rdf:type owl:Class ;
+              rdfs:subClassOf skos:ConceptScheme ;
+              rdfs:label "intent scheme" ;
+              skos:definition """A container for intent nodes extracted from natural language specifications. It carries jurisdiction, effective period, and provenance metadata.
+
+The IntentScheme occupies a position between natural language and ontological commitment. It captures what the user means without committing to how that meaning is realised in a target ontology.""" .
+
+
+###  http://www.nebularis.org/ontologies/Mork#IntentNode
+:IntentNode rdf:type owl:Class ;
+            rdfs:subClassOf skos:Concept ,
+                            [ rdf:type owl:Restriction ;
+                              owl:onProperty :intentScheme ;
+                              owl:someValuesFrom :IntentScheme
+                            ] ;
+            rdfs:label "intent node" ;
+            skos:definition """The base class for structured intent representations. IntentNode individuals form a bounded join-semilattice under :refinesIntent.
+
+Subtypes capture the principal categories of insurance product and eligibility criteria: QualitativeIntent, QuantitativeConstraint, SpatialScope, TemporalScope, ExclusionIntent, InclusionIntent. These subtypes are not mutually disjoint.""" ;
+            skos:scopeNote "IntentNode properties reference only SKOS concept schemes, xsd datatypes, and the natural language source. None reference the target ontology's classes or properties, ensuring stability under ontology evolution (Foundations §3.8.4, Proposition 3.8.4)." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#QualitativeIntent
+:QualitativeIntent rdf:type owl:Class ;
+                rdfs:subClassOf :IntentNode ;
+                rdfs:label "qualitative intent" ;
+                skos:definition "An intent node representing domain-bearing tokens and nominative signals (e.g., concepts, labels, codes), whose meanings must be inferred via a knowledge base." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#QuantitativeConstraint
+:QuantitativeConstraint rdf:type owl:Class ;
+                        rdfs:subClassOf :IntentNode ;
+                        rdfs:label "quantitative constraint" ;
+                        skos:definition "An intent node representing a numeric bound or comparison (e.g., 'up to $25M', 'revenue between $10M and $100M')." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#SpatialScope
+:SpatialScope rdf:type owl:Class ;
+              rdfs:subClassOf :IntentNode ;
+              rdfs:label "spatial scope" ;
+              skos:definition "An intent node representing a geographic scope (e.g., 'in US states', 'excluding EU')." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#TemporalScope
+:TemporalScope rdf:type owl:Class ;
+               rdfs:subClassOf :IntentNode ;
+               rdfs:label "temporal scope" ;
+               skos:definition "An intent node representing a temporal scope or duration (e.g., '12 months', 'annual')." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#ExclusionIntent
+:ExclusionIntent rdf:type owl:Class ;
+                 rdfs:subClassOf :IntentNode ;
+                 rdfs:label "exclusion intent" ;
+                 skos:definition "An intent node representing an exclusion (e.g., 'exclude nation-state attacks')." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#InclusionIntent
+:InclusionIntent rdf:type owl:Class ;
+                 rdfs:subClassOf :IntentNode ;
+                 rdfs:label "inclusion intent" ;
+                 skos:definition "An intent node representing an explicit inclusion (e.g., 'including sub-limits')." .
+
+:NormativeReferenceItent a owl:Class ;
+                 rdfs:subClassOf :IntentNode ;
+                 rdfs:label "normative reference intent" ;
+                 skos:definition "An intent node referencing an external standard, authority, or published form by identifier, without committing to its domain semantics." .
+
+
+#################################################################
+#    Classes - Template Expression Algebra (Foundations §3.9)
+#################################################################
+
+###  http://www.nebularis.org/ontologies/Mork#TemplateExpression
+:TemplateExpression rdf:type owl:Class ;
+                    rdfs:subClassOf skos:Concept ;
+                    rdfs:label "template expression" ;
+                    skos:definition """Base class for the formal template expression language (Foundations §3.9). 
+Represents a node in the expression algebra used for IRI formation, name generation, and value interpolation.
+The expressions form a monoid (TemplateExpression, Concat, Literal(\"\")) over string-valued expressions.""" .
+
+
+###  http://www.nebularis.org/ontologies/Mork#LiteralExpression
+:LiteralExpression rdf:type owl:Class ;
+                   rdfs:subClassOf :TemplateExpression ,
+                                   [ rdf:type owl:Restriction ;
+                                     owl:onProperty :dataInline ;
+                                     owl:someValuesFrom xsd:string
+                                   ] ;
+                   rdfs:label "literal expression" ;
+                   skos:definition "A constant string value in the template expression algebra. Evaluates to its dataInline value." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#RefExpression
+:RefExpression rdf:type owl:Class ;
+               rdfs:subClassOf :TemplateExpression ,
+                               [ rdf:type owl:Restriction ;
+                                 owl:onProperty :dataRef ;
+                                 owl:someValuesFrom xsd:string
+                               ] ;
+               rdfs:label "ref expression" ;
+               skos:definition "A reference to source data at a path in the template expression algebra. Evaluates by extracting the value at the dataRef path from the input." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#ConcatExpression
+:ConcatExpression rdf:type owl:Class ;
+                  rdfs:subClassOf :TemplateExpression ,
+                                  [ rdf:type owl:Restriction ;
+                                    owl:onProperty :concatLeft ;
+                                    owl:someValuesFrom :TemplateExpression
+                                  ] ,
+                                  [ rdf:type owl:Restriction ;
+                                    owl:onProperty :concatRight ;
+                                    owl:someValuesFrom :TemplateExpression
+                                  ] ;
+                  rdfs:label "concat expression" ;
+                  skos:definition "A concatenation of two template expressions. Evaluates to the string concatenation of its left and right operands. Concatenation is associative with Literal(\"\") as identity." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#InterpolationExpression
+:InterpolationExpression rdf:type owl:Class ;
+                         rdfs:subClassOf :TemplateExpression ,
+                                         [ rdf:type owl:Restriction ;
+                                           owl:onProperty :templateString ;
+                                           owl:someValuesFrom xsd:string
+                                         ] ;
+                         rdfs:label "interpolation expression" ;
+                         skos:definition "A template interpolation with placeholder bindings. Evaluates by substituting each placeholder in the templateString with the evaluated value of its corresponding TemplateBinding." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#LookupExpression
+:LookupExpression rdf:type owl:Class ;
+                  rdfs:subClassOf :TemplateExpression ,
+                                  [ rdf:type owl:Restriction ;
+                                    owl:onProperty :lookupSource ;
+                                    owl:someValuesFrom :TemplateExpression
+                                  ] ,
+                                  [ rdf:type owl:Restriction ;
+                                    owl:onProperty :lookupScheme ;
+                                    owl:someValuesFrom skos:ConceptScheme
+                                  ] ;
+                  rdfs:label "lookup expression" ;
+                  skos:definition "Resolves a value against a concept scheme by matching on a specified datatype property. Evaluates by finding the concept in lookupScheme whose lookupProperty value equals the evaluated lookupSource." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#TemplateBinding
+:TemplateBinding rdf:type owl:Class ;
+                 rdfs:label "template binding" ;
+                 skos:definition "A binding of a placeholder name to a template expression. Used within InterpolationExpression to provide values for template placeholders." .
+
+
+#################################################################
+#    Classes - Constraint and Rule Generation (Foundations §5.3)
+#################################################################
+
+###  http://www.nebularis.org/ontologies/Mork#ConstraintScheme
+:ConstraintScheme rdf:type owl:Class ;
+                  rdfs:subClassOf skos:ConceptScheme ;
+                  rdfs:label "constraint scheme" ;
+                  skos:definition "A container for a coherent set of SHACL shapes, versionable and scoped to a jurisdiction and effective period." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#ShapeTemplate
+:ShapeTemplate rdf:type owl:Class ;
+               rdfs:subClassOf skos:Concept ;
+               rdfs:label "shape template" ;
+               skos:definition "A parameterisable blueprint for one SHACL NodeShape or PropertyShape. ShapeTemplates serve as curated, reusable patterns that the LLM can instantiate, reducing scope for hallucination and model drift." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#GenerativeMapping
+:GenerativeMapping rdf:type owl:Class ;
+                   rdfs:subClassOf :DataMapping ,
+                                   fnd:Governable ,
+                                   fnd:Version ;
+                   rdfs:label "generative mapping" ;
+                   skos:definition "The class of all DataMapping individuals whose evaluation produces a constraint, inference, transformation, or projection artefact (SHACL shape, SWRL rule, RML triples map, projection mapping records, or future artefact types). Serves as the common superclass for ShapeMapping, RuleMapping, TransformMapping, and ProjectionMapping, and as the domain for shared properties (hasParameterBinding, hasTargetingSpec, dependsOnMapping)." ;
+                   skos:scopeNote "GenerativeMapping is not an equivalence class — it has no structural characterisation that would allow automatic classification. Membership is inferred via subclass relationships from ShapeMapping, RuleMapping, TransformMapping, or ProjectionMapping. Foundation alignment (ADR-A22): subclassing fnd:Governable and fnd:Version requires exactly one fnd:hasGovernanceState and one fnd:hasIdentity per instance at the OWL level, matching the pattern srf:SurfaceContract already uses. This is additive to, not a replacement for, the pre-existing reviewStatus (on *Provenance individuals), supersedes, mappingVersion, and deprecationReason properties, which remain valid and are unchanged; see ontology/mork/docs/governance-and-versioning-migration.md for how the two relate and for the backward-compatibility story. Production-mode compilation gating on governance state is a SHACL-level, mode-conditional check (mork:GenerativeMappingProductionGovernanceShape: beyond Draft, plus identity), not an unconditional OWL requirement — a draft-mode mapping with no governance state asserted yet is incomplete, not inconsistent." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#ShapeMapping
+:ShapeMapping rdf:type owl:Class ;
+              owl:equivalentClass [ owl:intersectionOf ( :DataMapping
+                                                         [ rdf:type owl:Restriction ;
+                                                           owl:onProperty :generatesShapeDefinition ;
+                                                           owl:someValuesFrom sh:Shape
+                                                         ]
+                                                       ) ;
+                                    rdf:type owl:Class
+                                  ] ;
+              rdfs:subClassOf :GenerativeMapping ;
+              rdfs:label "shape mapping" ;
+              skos:definition """A generative mapping that, when compiled by the Compiler-Agent, instantiates SHACL shapes as first-class RDF graph objects.
+
+Classification as ShapeMapping is inferred from the presence of the generatesShapeDefinition property pointing to an sh:Shape individual, following the same definitional pattern as Datum (≡ ∃deferredMapping.DataMapping) and RuleMapping (≡ DataMapping ⊓ ∃generatesRuleDefinition.swrl:Imp).
+
+The generated shape is structured RDF — not a serialised string. Its internal structure is fully traversable, queryable, and validatable within the RDF graph.""" .
+
+
+###  http://www.nebularis.org/ontologies/Mork#RuleMapping
+:RuleMapping rdf:type owl:Class ;
+             owl:equivalentClass [ owl:intersectionOf ( :DataMapping
+                                                        [ rdf:type owl:Restriction ;
+                                                          owl:onProperty :generatesRuleDefinition ;
+                                                          owl:someValuesFrom swrl:Imp
+                                                        ]
+                                                      ) ;
+                                   rdf:type owl:Class
+                                 ] ;
+             rdfs:subClassOf :GenerativeMapping ;
+             rdfs:label "rule mapping" ;
+             skos:definition """A generative mapping that, when compiled, produces SWRL rules as first-class RDF graph objects (swrl:Imp individuals with structured antecedent/consequent atom lists).
+
+Classification as RuleMapping is inferred from the presence of the generatesRuleDefinition property pointing to a swrl:Imp individual. The canonical representation is the structured RDF graph, not a serialised string.
+
+The optional swrlCompactSyntax annotation provides a human-readable rendering with no logical role.""" .
+
+
+###  http://www.nebularis.org/ontologies/Mork#TransformMapping
+:TransformMapping rdf:type owl:Class ;
+                  owl:equivalentClass [ owl:intersectionOf ( :DataMapping
+                                                             [ rdf:type owl:Restriction ;
+                                                               owl:onProperty :generatesTransformDefinition ;
+                                                               owl:someValuesFrom rr:TriplesMap
+                                                             ]
+                                                           ) ;
+                                        rdf:type owl:Class
+                                      ] ;
+                  rdfs:subClassOf :GenerativeMapping ;
+                  rdfs:label "transform mapping" ;
+                  skos:definition """A generative mapping that, when compiled, produces an RML/R2RML triples map as a first-class RDF graph object (an rr:TriplesMap individual with structured subject map, predicate-object maps, and logical source).
+
+Classification as TransformMapping is inferred from the presence of the generatesTransformDefinition property pointing to an rr:TriplesMap individual, following the same definitional pattern as ShapeMapping (≡ DataMapping ⊓ ∃generatesShapeDefinition.sh:Shape) and RuleMapping (≡ DataMapping ⊓ ∃generatesRuleDefinition.swrl:Imp).
+
+The generated triples map is structured RDF — not a serialised mapping file. Its internal structure (logical source, subject map, predicate-object maps, referencing object maps and join conditions) is fully traversable and queryable within the RDF graph.""" ;
+                  skos:scopeNote """Unlike ShapeMapping and RuleMapping, an ordinary (non-generative) DataMapping is already RML-compilable in the ingress direction — a compiler may walk any Datum, Lookup, or R-Box assertion node and emit a triples map without that node ever being asserted as a TransformMapping. TransformMapping exists to make that compiled artefact a first-class, queryable, provenance-bearing graph object exactly where a deployment needs to trace "which mapping produced this triples map" — the same governance guarantee ShapeMapping and RuleMapping already give SHACL shapes and SWRL rules.
+
+TransformMapping is also the natural target for the reverse (egress) direction: a DataMapping whose source is itself part of the ontology (e.g. a qnt:Quantity or qnt:Range chain) and whose rr:TriplesMap projects that chain out to a flatter, deployment-specific representation. egressProjection (§ DataMapping) names the target Representation; generatesTransformDefinition names the compiled artefact that performs the projection.""" .
+
+
+###  http://www.nebularis.org/ontologies/Mork#ProjectionMapping
+:ProjectionMapping rdf:type owl:Class ;
+                   owl:equivalentClass [ owl:intersectionOf ( :DataMapping
+                                                              [ rdf:type owl:Restriction ;
+                                                                owl:onProperty :generatesClassDefinition ;
+                                                                owl:someValuesFrom :OwlClass
+                                                              ]
+                                                            ) ;
+                                         rdf:type owl:Class
+                                       ] ;
+                   rdfs:subClassOf :GenerativeMapping ;
+                   rdfs:label "projection mapping" ;
+                   skos:definition "A generative mapping that, when compiled, produces lookup-surface class definitions as first-class RDF graph objects and records the generated symbols against the mapping." ;
+                   skos:scopeNote "Classification as ProjectionMapping is inferred from the presence of the generatesClassDefinition property pointing to an OwlClass, following the same definitional pattern as ShapeMapping, RuleMapping, and TransformMapping." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#QueryTemplate
+:QueryTemplate rdf:type owl:Class ;
+               rdfs:subClassOf skos:Concept ;
+               rdfs:label "query template" ;
+               skos:definition "A reusable, parameterised query template (SPARQL or Cypher) with parameter placeholders." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#TargetingSpec
+:TargetingSpec rdf:type owl:Class ;
+               rdfs:label "targeting spec" ;
+               skos:definition """Binds a GenerativeMapping (ShapeMapping, RuleMapping, TransformMapping, or ProjectionMapping) to its target scope within the target ontology. Supports four targeting modes from the SHACL vocabulary:
+
+- sh:targetClass: the shape/rule applies to all instances of the specified class
+- sh:targetObjectsOf: applies to all objects of the specified property
+- sh:targetSubjectsOf: applies to all subjects of the specified property
+- sh:targetNode: applies to a specific named individual
+
+Also supports optional jurisdiction scoping (appliesInJurisdiction) and effective date range (effectiveFrom, effectiveUntil). At least one targeting mode must be declared (enforced by GCI 5.6h-i and SHACL Shape M8).""" .
+
+
+###  http://www.nebularis.org/ontologies/Mork#ParameterBinding
+:ParameterBinding rdf:type owl:Class ;
+                  rdfs:label "parameter binding" ;
+                  skos:definition "A reified binding with type metadata: paramName, paramType (Numeric, Concept, Path, String, Duration), and paramValue." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#ConstraintProvenance
+:ConstraintProvenance rdf:type owl:Class ;
+                      rdfs:subClassOf skos:Concept ;
+                      rdfs:label "constraint provenance" ;
+                      skos:definition "Records the origin and review chain of generated constraints, including LLM model ID, confidence, review status, jurisdiction, and effective period." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#ProjectionProvenance
+:ProjectionProvenance rdf:type owl:Class ;
+                      rdfs:subClassOf skos:Concept ;
+                      rdfs:label "projection provenance" ;
+                      skos:definition "Records the origin and review chain of generated projection mappings, including profile, read-set identity, review status, and generation timestamps." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#RuleScheme
+:RuleScheme rdf:type owl:Class ;
+            rdfs:subClassOf skos:ConceptScheme ;
+            rdfs:label "rule scheme" ;
+            skos:definition "A container for a cohesive set of SWRL rules, versionable and scoped to a jurisdiction and effective period." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#RuleTemplate
+:RuleTemplate rdf:type owl:Class ;
+              rdfs:subClassOf skos:Concept ;
+              rdfs:label "rule template" ;
+              skos:definition "A parameterisable SWRL rule pattern with typed variables and atoms for antecedent/consequent. RuleTemplates serve as curated, reusable patterns that the LLM can instantiate." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#RuleProvenance
+:RuleProvenance rdf:type owl:Class ;
+                rdfs:subClassOf skos:Concept ;
+                rdfs:label "rule provenance" ;
+                skos:definition "Records the origin and review chain of generated SWRL rules, including LLM model ID, confidence, review status, jurisdiction, effective period, and impact scope (advisory, enforcement, annotation)." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#TransformProvenance
+:TransformProvenance rdf:type owl:Class ;
+                     rdfs:subClassOf skos:Concept ;
+                     rdfs:label "transform provenance" ;
+                     skos:definition "Records the origin and review chain of a generated RML triples map, including LLM model ID, confidence, review status, and the direction of transformation (ingress: external source to ontology, or egress: ontology to a flatter target representation)." .
+
+
+#################################################################
+#    Individuals
+#################################################################
+
+###  http://www.nebularis.org/ontologies/Mork#Bottom
+:Bottom rdf:type owl:NamedIndividual ,
+                 :OwlAxiom ;
+        owl:sameAs :OwlNothing .
+
+
+###  http://www.nebularis.org/ontologies/Mork#DraftMode
+:DraftMode rdf:type owl:NamedIndividual ,
+                    :CompilationMode ;
+           rdfs:label "draft mode" ;
+           skos:definition "Governance state and version identity are not required on member mappings. The default where compilationMode is unset (ADR-A22)." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#ReviewMode
+:ReviewMode rdf:type owl:NamedIndividual ,
+                     :CompilationMode ;
+            rdfs:label "review mode" ;
+            skos:definition "Governance state and version identity are recommended but not enforced by mork:GenerativeMappingProductionGovernanceShape on member mappings." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#ProductionMode
+:ProductionMode rdf:type owl:NamedIndividual ,
+                         :CompilationMode ;
+                rdfs:label "production mode" ;
+                skos:definition "Every GenerativeMapping in the scheme must have progressed beyond fnd:Draft governance state (Reviewed, Active, or Superseded) and declare fnd:hasIdentity before it compiles; enforced by mork:GenerativeMappingProductionGovernanceShape (ADR-A22)." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#OwlNothing
+:OwlNothing rdf:type owl:NamedIndividual ,
+                     :OwlAxiom .
+
+
+###  http://www.nebularis.org/ontologies/Mork#DeferredABoxReference
+:DeferredABoxReference rdf:type owl:NamedIndividual ,
+                                :DeferredContext ;
+                       :ontologicalScheme :MorkOntologyScheme ;
+                       skos:definition "Used as a placeholder for referencing the A-Box object in a triple that a DataMapping with an RBox-match refers to." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#DeferredClassDefinition
+:DeferredClassDefinition rdf:type owl:NamedIndividual ,
+                                  :OwlClass ;
+                         :ontologicalScheme :MorkOntologyScheme .
+
+
+###  http://www.nebularis.org/ontologies/Mork#DeferredConceptIRI
+:DeferredConceptIRI rdf:type owl:NamedIndividual ,
+                             :OwlAxiom ;
+                    :ontologicalScheme :MorkOntologyScheme .
+
+
+###  http://www.nebularis.org/ontologies/Mork#DeferredDataPropertyDefinition
+:DeferredDataPropertyDefinition rdf:type owl:NamedIndividual ,
+                                         :OwlDataProperty ;
+                                :ontologicalScheme :MorkOntologyScheme .
+
+
+###  http://www.nebularis.org/ontologies/Mork#DeferredIndividualDefinition
+:DeferredIndividualDefinition rdf:type owl:NamedIndividual ,
+                                       :OwlAxiom ;
+                              :ontologicalScheme :MorkOntologyScheme .
+
+
+###  http://www.nebularis.org/ontologies/Mork#DeferredObjectPropertyDefinition
+:DeferredObjectPropertyDefinition rdf:type owl:NamedIndividual ,
+                                           :OwlObjectProperty ;
+                                  :ontologicalScheme :MorkOntologyScheme .
+
+
+###  http://www.nebularis.org/ontologies/Mork#JSON
+:JSON rdf:type owl:NamedIndividual ,
+               :SerializationFormat ;
+      rdfs:isDefinedBy "https://datatracker.ietf.org/doc/html/rfc7159.html" .
+
+
+###  http://www.nebularis.org/ontologies/Mork#MorkOntologyScheme
+:MorkOntologyScheme rdf:type owl:NamedIndividual ,
+                             :OntologicalScheme .
+
+
+###  http://www.nebularis.org/ontologies/Mork#XML
+:XML rdf:type owl:NamedIndividual ,
+              :SerializationFormat ;
+     rdfs:isDefinedBy "https://www.w3.org/TR/xml/" .
+
+
+###  http://www.nebularis.org/ontologies/Mork#YAML
+:YAML rdf:type owl:NamedIndividual ,
+               :SerializationFormat ;
+      rdfs:isDefinedBy "https://yaml.org/spec/" .
+
+
+#################################################################
+#    Annotations on Individuals
+#################################################################
+
+:DeferredConceptIRI rdfs:label "deferred concept iri" ;
+                     rdfs:seeAlso :DeferredContext ;
+                     skos:definition "Used to indicate that the axiom a mapping property is referring to shall be obtained once it is created, referencing the conceptName, conceptIRI, or conceptNameTemplate on the mapping which declares the relationship to obtain (i.e., locate) the axiom in question." ;
+                     skos:example """:Map_FalconTypes rdf:type owl:NamedIndividual , mork:DataMapping ;
+    # nb: the conceptName refers to a generated class in the target ontology
+    mork:conceptName \"#Species\" ;
+    mork:mappingFor :FalconType ;
+    mork:weighting 85 ;
+    mork:deferredMapping :Map_Gen_Species_Class , :Map_Gen_Bird_Class , :Map_Gen_IsSpeciesOf ;
+    # yield the concept 'Species' to a broader mapping
+    mork:yieldConcept mork:DeferredConceptIRI ;
+    mork:mappingNote \"Define a new class 'Species' and a new class 'Bird' in the target ontology.\" .
+
+[ rdf:type owl:Axiom ;
+   owl:annotatedSource :Map_FalconTypes ;
+   owl:annotatedProperty mork:weighting ;
+   mork:mappingNote \"Falcon is a bird, birds lay eggs, however birds are not reptiles.\" ;
+ ] .
+
+[ rdf:type owl:Axiom ;
+   owl:annotatedSource :Map_FalconTypes ;
+   owl:annotatedProperty mork:deferredMapping ;
+   owl:annotatedTarget mork:DeferredClassDefinition ;
+   mork:mappingNote \"Not only is 'Falcon' absent from the target ontology, a Falcon is a bird, which is neither a Reptile nor a Mammal. Recommend defining a new class 'Species' and a new class 'Bird' in the target ontology, and then defining 'Falcon' as an individual of the class 'Species', and allows it to refer to the class 'Bird' via a new object property 'isSpeciesOf'.\" ;
+ ] .
+
+ :Map_Gen_Species_Class rdf:type owl:NamedIndividual , mork:DataMapping ;
+    # we use a #<conceptName> when the generated IRI should be prefixed with the base IRI of the output ontology
+    # we can also use another prefix to change this, e.g., \"zoo:species\"
+    mork:conceptName \"#Species\" ; 
+    mork:broadTBoxCategoryMatch owl:Thing ;  # make a new Thing called Species
+    skos:mappingNote \"Falcon and Platypus are both types of species of Animal.\" .
+
+:Map_Gen_Bird_Class rdf:type owl:NamedIndividual , mork:DataMapping ;
+    mork:conceptName \"#Bird\" ;
+    mork:broadTBoxCategoryMatch zoo:Animal ; # make a new type of animal called Bird
+    mork:mappingRecommendation \"Recommend introducing a notional construct to model reproductive modes, with 'Oviparity' as a member/individual.\" .
+
+:Map_Gen_IsSpeciesOf rdf:type owl:NamedIndividual , mork:DataMapping ;
+    mork:conceptName \"#isSpeciesOf\" ;
+    mork:broadRBoxCategoryMatch owl:topObjectProperty ;
+    mork:assertsPropertyDomains :Map_Gen_Species_Domain ;
+    mork:assertsPropertyRanges zoo:Animal ;
+    mork:mappingNote \"Establishes a relationship between Species and Animal\" .
+
+:Map_Gen_Species_Domain rdf:type owl:NamedIndividual , mork:DeferredContext ;
+    mork:conceptName \"#Species\" ;
+    mork:yieldConcept mork:DeferredConceptIRI ;
+    mork:mappingNote \"Yields the axiom <BaseIRI>#Species at processing time.\" .""" .
+
+
+#################################################################
+#    General axioms - Disjointness
+#################################################################
+
+### Collection disjointness
+[ rdf:type owl:AllDisjointClasses ;
+  owl:members ( :OrderedCollection
+                :SetListing
+                :UnorderedCollection
+              )
+] .
+
+### Mapping relation disjointness (Axiom 3.11)
+[ rdf:type owl:AllDisjointProperties ;
+  owl:members ( :broaderMapping
+                :closeMapping
+                :deferredMapping
+                :hypothesisMapping
+                :narrowerMapping
+              )
+] .
+
+### ShapeMapping / RuleMapping disjointness
+[ rdf:type owl:AllDisjointClasses ;
+  owl:members ( :ShapeMapping
+                :RuleMapping
+              ) ;
+  rdfs:comment "A DataMapping individual cannot simultaneously generate a SHACL shape and a SWRL rule. If a business criterion requires both validation and inference, it is modelled as two separate GenerativeMapping individuals."
+] .
+
+
+#################################################################
+#    General axioms - Co-occurrence GCIs (Foundations §2.4.2, §2.7)
+#################################################################
+
+### Axiom 2.14a: broaderApplicative co-occurrence
+### ∃broaderApplicative.DataMapping ⊑ ∃exactRBoxMatch.owl:Thing
+### Any mapping that declares a broaderApplicative relationship must also declare an exactRBoxMatch.
+[ rdf:type owl:Axiom ;
+  rdfs:comment "GCI Axiom 2.14a (Foundations §2.4.2): broaderApplicative co-occurrence. Since inverseRBoxMatch ⊑ exactRBoxMatch, this covers both direct and inverse cases."
+] .
+
+[ rdf:type owl:Class ;
+  owl:intersectionOf ( [ rdf:type owl:Restriction ;
+                         owl:onProperty :broaderApplicative ;
+                         owl:someValuesFrom :DataMapping
+                       ]
+                       [ rdf:type owl:Class ;
+                         owl:complementOf [ rdf:type owl:Restriction ;
+                                           owl:onProperty :exactRBoxMatch ;
+                                           owl:someValuesFrom owl:Thing
+                                         ]
+                       ]
+                     ) ;
+  rdfs:subClassOf owl:Nothing
+] .
+
+### Axiom 2.14b: Conditional A-Box co-occurrence
+### (∃broadABoxCategoryMatch.⊤ ⊓ ∃compositeBroaderMapping.DataMapping) ⊑ ∃exactRBoxMatch.⊤
+[ rdf:type owl:Axiom ;
+  rdfs:comment "GCI Axiom 2.14b (Foundations §2.4.2): A mapping with broadABoxCategoryMatch in a compositional context must declare an exactRBoxMatch."
+] .
+
+[ rdf:type owl:Class ;
+  owl:intersectionOf ( [ rdf:type owl:Restriction ;
+                         owl:onProperty :broadABoxCategoryMatch ;
+                         owl:someValuesFrom owl:Thing
+                       ]
+                       [ rdf:type owl:Restriction ;
+                         owl:onProperty :compositeBroaderMapping ;
+                         owl:someValuesFrom :DataMapping
+                       ]
+                       [ rdf:type owl:Class ;
+                         owl:complementOf [ rdf:type owl:Restriction ;
+                                           owl:onProperty :exactRBoxMatch ;
+                                           owl:someValuesFrom owl:Thing
+                                         ]
+                       ]
+                     ) ;
+  rdfs:subClassOf owl:Nothing
+] .
+
+### Axiom 2.14d: broadRBoxCategoryMatch with compositional context
+### (∃broadRBoxCategoryMatch.⊤ ⊓ ∃compositeBroaderMapping.DataMapping) ⊑ (∃exactABoxMatch.⊤ ⊔ ∃broadABoxCategoryMatch.⊤)
+[ rdf:type owl:Axiom ;
+  rdfs:comment "GCI Axiom 2.14d (Foundations §2.4.2): A mapping with broadRBoxCategoryMatch in a compositional context should reference an A-Box target."
+] .
+
+[ rdf:type owl:Class ;
+  owl:intersectionOf ( [ rdf:type owl:Restriction ;
+                         owl:onProperty :broadRBoxCategoryMatch ;
+                         owl:someValuesFrom owl:Thing
+                       ]
+                       [ rdf:type owl:Restriction ;
+                         owl:onProperty :compositeBroaderMapping ;
+                         owl:someValuesFrom :DataMapping
+                       ]
+                       [ rdf:type owl:Class ;
+                         owl:complementOf [ rdf:type owl:Class ;
+                                           owl:unionOf ( [ rdf:type owl:Restriction ;
+                                                           owl:onProperty :exactABoxMatch ;
+                                                           owl:someValuesFrom owl:Thing
+                                                         ]
+                                                         [ rdf:type owl:Restriction ;
+                                                           owl:onProperty :broadABoxCategoryMatch ;
+                                                           owl:someValuesFrom owl:Thing
+                                                         ]
+                                                       )
+                                         ]
+                       ]
+                     ) ;
+  rdfs:subClassOf owl:Nothing
+] .
+
+### Axiom 2.7a: Datum requires T-Box ancestry
+### Datum ⊑ ∃deferredMapping.(∃exactTBoxMatch.⊤ ⊔ ∃broadTBoxCategoryMatch.⊤)
+[ rdf:type owl:Axiom ;
+  rdfs:comment "GCI Axiom 2.7a (Foundations §2.7): A Datum must defer to a mapping that establishes a T-Box axiom. Multi-hop T-Box ancestry requires SHACL validation."
+] .
+
+:Datum rdfs:subClassOf [ rdf:type owl:Restriction ;
+                          owl:onProperty :deferredMapping ;
+                          owl:someValuesFrom [ rdf:type owl:Class ;
+                                               owl:unionOf ( [ rdf:type owl:Restriction ;
+                                                               owl:onProperty :exactTBoxMatch ;
+                                                               owl:someValuesFrom owl:Thing
+                                                             ]
+                                                             [ rdf:type owl:Restriction ;
+                                                               owl:onProperty :broadTBoxCategoryMatch ;
+                                                               owl:someValuesFrom owl:Thing
+                                                             ]
+                                                           )
+                                             ]
+                        ] .
+
+### Axiom 5.10a: Version consistency
+### ∃supersedes.DataMapping ⊑ ∃effectiveFrom.xsd:dateTime
+[ rdf:type owl:Axiom ;
+  rdfs:comment "GCI Axiom 5.10a (Foundations §5.10a): Any mapping that supersedes another must have an effective-from date."
+] .
+
+[ rdf:type owl:Class ;
+  owl:intersectionOf ( [ rdf:type owl:Restriction ;
+                         owl:onProperty :supersedes ;
+                         owl:someValuesFrom :DataMapping
+                       ]
+                       [ rdf:type owl:Class ;
+                         owl:complementOf [ rdf:type owl:Restriction ;
+                                           owl:onProperty :effectiveFrom ;
+                                           owl:someValuesFrom xsd:dateTime
+                                         ]
+                       ]
+                     ) ;
+  rdfs:subClassOf owl:Nothing
+] .
+
+
+#################################################################
+#    General axioms - GenerativeMapping completeness GCIs (Foundations §5.6, §6.13.6, §6.13.7)
+#################################################################
+
+### ShapeMapping must have a targeting spec
+:ShapeMapping rdfs:subClassOf [ rdf:type owl:Restriction ;
+                                 owl:onProperty :hasTargetingSpec ;
+                                 owl:someValuesFrom :TargetingSpec
+                               ] .
+
+### ShapeMapping must have at least one parameter binding
+:ShapeMapping rdfs:subClassOf [ rdf:type owl:Restriction ;
+                                 owl:onProperty :hasParameterBinding ;
+                                 owl:minCardinality "1"^^xsd:nonNegativeInteger
+                               ] .
+
+### ShapeMapping must have constraint provenance (Axiom 5.6b)
+:ShapeMapping rdfs:subClassOf [ rdf:type owl:Restriction ;
+                                 owl:onProperty :hasConstraintProvenance ;
+                                 owl:someValuesFrom :ConstraintProvenance
+                               ] .
+
+### ShapeMapping must generate at least one sh:Shape (Axiom 5.6a — redundant with equivalence, but explicit)
+:ShapeMapping rdfs:subClassOf [ rdf:type owl:Restriction ;
+                                 owl:onProperty :generatesShapeDefinition ;
+                                 owl:someValuesFrom sh:Shape
+                               ] .
+
+### RuleMapping must generate at least one swrl:Imp (Axiom 6.13.6a — redundant with equivalence, but explicit)
+:RuleMapping rdfs:subClassOf [ rdf:type owl:Restriction ;
+                                owl:onProperty :generatesRuleDefinition ;
+                                owl:someValuesFrom swrl:Imp
+                              ] .
+
+### RuleMapping must have rule provenance (Axiom 6.13.6b)
+:RuleMapping rdfs:subClassOf [ rdf:type owl:Restriction ;
+                                owl:onProperty :hasRuleProvenance ;
+                                owl:someValuesFrom :RuleProvenance
+                              ] .
+
+### RuleMapping must have a targeting spec
+:RuleMapping rdfs:subClassOf [ rdf:type owl:Restriction ;
+                                owl:onProperty :hasTargetingSpec ;
+                                owl:someValuesFrom :TargetingSpec
+                              ] .
+
+### RuleMapping must have at least one parameter binding
+:RuleMapping rdfs:subClassOf [ rdf:type owl:Restriction ;
+                                owl:onProperty :hasParameterBinding ;
+                                owl:minCardinality "1"^^xsd:nonNegativeInteger
+                              ] .
+
+### TransformMapping must generate at least one rr:TriplesMap (redundant with equivalence, but explicit)
+:TransformMapping rdfs:subClassOf [ rdf:type owl:Restriction ;
+                                     owl:onProperty :generatesTransformDefinition ;
+                                     owl:someValuesFrom rr:TriplesMap
+                                   ] .
+
+### TransformMapping must have transform provenance
+:TransformMapping rdfs:subClassOf [ rdf:type owl:Restriction ;
+                                     owl:onProperty :hasTransformProvenance ;
+                                     owl:someValuesFrom :TransformProvenance
+                                   ] .
+
+### ProjectionMapping must generate at least one class definition
+:ProjectionMapping rdfs:subClassOf [ rdf:type owl:Restriction ;
+                                      owl:onProperty :generatesClassDefinition ;
+                                      owl:someValuesFrom :OwlClass
+                                    ] .
+
+### ProjectionMapping must have projection provenance
+:ProjectionMapping rdfs:subClassOf [ rdf:type owl:Restriction ;
+                                      owl:onProperty :hasProjectionProvenance ;
+                                      owl:someValuesFrom :ProjectionProvenance
+                                    ] .
+
+### ProjectionMapping must have a targeting spec
+:ProjectionMapping rdfs:subClassOf [ rdf:type owl:Restriction ;
+                                      owl:onProperty :hasTargetingSpec ;
+                                      owl:someValuesFrom :TargetingSpec
+                                    ] .
+
+### ProjectionMapping must have at least one parameter binding
+:ProjectionMapping rdfs:subClassOf [ rdf:type owl:Restriction ;
+                                      owl:onProperty :hasParameterBinding ;
+                                      owl:minCardinality "1"^^xsd:nonNegativeInteger
+                                    ] .
+
+### TargetingSpec must have at least one targeting mode (Axiom 5.6h-i)
+:TargetingSpec rdfs:subClassOf [ rdf:type owl:Class ;
+                                  owl:unionOf ( [ rdf:type owl:Restriction ;
+                                                  owl:onProperty sh:targetClass ;
+                                                  owl:someValuesFrom owl:Class
+                                                ]
+                                                [ rdf:type owl:Restriction ;
+                                                  owl:onProperty sh:targetObjectsOf ;
+                                                  owl:someValuesFrom rdf:Property
+                                                ]
+                                                [ rdf:type owl:Restriction ;
+                                                  owl:onProperty sh:targetSubjectsOf ;
+                                                  owl:someValuesFrom rdf:Property
+                                                ]
+                                                [ rdf:type owl:Restriction ;
+                                                  owl:onProperty sh:targetNode ;
+                                                  owl:someValuesFrom owl:Thing
+                                                ]
+                                              )
+                                ] .
+
+### ConstraintProvenance must have creator and creation date (Axiom 6.13.7c)
+:ConstraintProvenance rdfs:subClassOf [ rdf:type owl:Restriction ;
+                                         owl:onProperty :provenanceCreator ;
+                                         owl:someValuesFrom xsd:string
+                                       ] ,
+                                       [ rdf:type owl:Restriction ;
+                                         owl:onProperty :provenanceCreated ;
+                                         owl:someValuesFrom xsd:dateTime
+                                       ] .
+
+### RuleProvenance must have creator and creation date
+:RuleProvenance rdfs:subClassOf [ rdf:type owl:Restriction ;
+                                   owl:onProperty :provenanceCreator ;
+                                   owl:someValuesFrom xsd:string
+                                 ] ,
+                                 [ rdf:type owl:Restriction ;
+                                   owl:onProperty :provenanceCreated ;
+                                   owl:someValuesFrom xsd:dateTime
+                                 ] .
+
+### ProjectionProvenance must have creator and creation date
+:ProjectionProvenance rdfs:subClassOf [ rdf:type owl:Restriction ;
+                                         owl:onProperty :provenanceCreator ;
+                                         owl:someValuesFrom xsd:string
+                                       ] ,
+                                       [ rdf:type owl:Restriction ;
+                                         owl:onProperty :provenanceCreated ;
+                                         owl:someValuesFrom xsd:dateTime
+                                       ] .

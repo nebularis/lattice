@@ -2,13 +2,13 @@
 
 # Quantification Rework — Migration Report
 
-*What surfaced while resolving the critical review that belongs somewhere other than `quantification/spec/quantification.md`.*
+*What surfaced while resolving the critical review that belongs somewhere other than `ontology/quantification/spec/quantification.md`.*
 
 ---
 
 ## 1. A genuine blocking gap in Foundation, not just a documentation note
 
-`quantification.md` §12 references `fnd:DerivedArtefact` repeatedly — `RecurrenceBin`, materialised `RangeSet`s, projection records, and the authority-declaration obligation (§11, P5) all assume it exists. It does not. Foundation's own delivered specification (`foundation/spec/foundation.md`) has `fnd:Version`, `fnd:Evidenced`, `fnd:TemporallyScoped`, and `fnd:Governable` — no derived-artefact mixin.
+`quantification.md` §12 references `fnd:DerivedArtefact` repeatedly — `RecurrenceBin`, materialised `RangeSet`s, projection records, and the authority-declaration obligation (§11, P5) all assume it exists. It does not. Foundation's own delivered specification (`ontology/foundation/spec/foundation.md`) has `fnd:Version`, `fnd:Evidenced`, `fnd:TemporallyScoped`, and `fnd:Governable` — no derived-artefact mixin.
 
 This was flagged as a forward requirement in the original sketch (`R-Q4`, itself citing an earlier `R-B4`), so it isn't a new discovery — but it's worth restating plainly now that Quantification's own document depends on it directly: **`spec/quantification.ttl` will not fully validate against a complete import chain until Foundation ships `fnd:DerivedArtefact`.** The shape it needs, based on how this document uses it: a mixin (likely alongside `fnd:Evidenced` in the four-mixin family) carrying at minimum a `derivedFrom` relation to its source declarations, a producing-profile reference, and — per P5 below — an authority-level property.
 

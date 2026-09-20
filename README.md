@@ -10,13 +10,13 @@ A domain neutral semantic framework for representing governing instruments (cont
 
 LATTICE is the middle of a three-part picture.
 
-**MORK (Mapping Ontological & Representational Knowledge)** used to map source material — structured data (schemas, records, API specifications, etc) and unstructured wordings (documents, clauses, free text) — onto a target domain ontology's T-box & R-Box, using Formal Concept Analysis over the co-occurrence structure of previously mapped source material to propose alignment. MORK as a general-purpose mapping vocabulary, based on SKOS. 
+**MORK (Mapping Ontological & Representational Knowledge)** used to map source material — structured data (schemas, records, API specifications, etc) and unstructured wordings (documents, clauses, free text) — onto a target domain ontology's T-box & R-Box, using Formal Concept Analysis over the co-occurrence structure of previously mapped source material to propose alignment. MORK as a general-purpose mapping vocabulary, based on SKOS.
 
-The layers described below are one family of mapping target, but not the only possible one. The mapping mechanism itself ships inside this repository, under `mork/`, because LATTICE uses it as the reference way of populating its own layers — `mork/targets/` is a configuration that points it at LATTICE specifically.
+The layers described below are one family of mapping target, but not the only possible one. MORK's semantic vocabulary and target declarations live under `ontology/mork/`, while its Python implementation lives under `tools/mork/python/`. LATTICE uses MORK as the reference way of populating its own layers.
 
-**LATTICE (Concept Lattice of Domain Ontology Layers)** provides the semantic substrate MORK's output lands in - designed to be extended by particular subject domains in order to be used in industry-specific ways. 
+**LATTICE (Concept Lattice of Domain Ontology Layers)** provides the semantic substrate MORK's output lands in - designed to be extended by particular subject domains in order to be used in industry-specific ways.
 
-**SPC (Subject-oriented Process Calculus)**  provides a formal mechanism for describing orchestration between agents (human, AI, or computational), whose data has been mapped in by MORK and whose roles, obligations, and eligibility are modelled in LATTICE. Where LATTICE's Behaviour layer models what state something is in and what can cause it to change, SPC is concerned with the live, session-typed exchange between agents that drives those changes — giving that exchange a formal contract to align to, grounded in the same ontology, rather than an ad hoc protocol. SPC has a substantial standalone ontology already authored (`spc/`), but it is not yet integrated with the layers below: it uses a placeholder namespace and declares no `projection/` contract to any of them. Treat it as a separate, pre-integration body of work rather than part of the dependency graph described below.
+**SPC (Subject-oriented Process Calculus)**  provides a formal mechanism for describing orchestration between agents (human, AI, or computational), whose data has been mapped in by MORK and whose roles, obligations, and eligibility are modelled in LATTICE. Where LATTICE's Behaviour layer models what state something is in and what can cause it to change, SPC is concerned with the live, session-typed exchange between agents that drives those changes — giving that exchange a formal contract to align to, grounded in the same ontology, rather than an ad hoc protocol. SPC has a substantial standalone ontology under `ontology/spc/`, with Python and Erlang implementations under `tools/spc/`. It is not yet integrated with the layers below: it uses a placeholder namespace and declares no `projection/` contract to any of them. Treat it as a separate, pre-integration body of work rather than part of the dependency graph described below.
 
 #### Model Layers
 
@@ -34,7 +34,7 @@ LATTICE is organised as seven layers, each an independent OWL/SHACL/SKOS module:
 
 Instrument is a first layer building on the substrates. A different applied domain ontology (e.g., a device's operational lifecycle, access-control entitlement system, asset maintenance schedule, etc) could sit atop Instrument or even replace it, composing with the same Party, Eligibility, and Behaviour mechanisms through its own `projection/` contracts, without touching any of the core specifications.
 
-Every mechanism in a layer's specification should be usable without knowing what industry or domain is consuming it. See `examples/` for the worked instances.
+Every mechanism in a layer's specification should be usable without knowing what industry or domain is consuming it. See `ontology/examples/` for the worked instances.
 
 ### Repository Layout
 
@@ -56,7 +56,7 @@ Each layer directory follows the same internal template, present in whole or in 
 └── test/           # the layer's own shape and rule tests
 ```
 
-Governance is deliberately separate from every layer it checks — `governance/` runs over the union graph rather than living inside any one module, enforcing scheme-contract compliance, deprecation posture, and cross-layer parity in CI.
+Governance is deliberately separate from every layer it checks — `ontology/governance/` runs over the union graph rather than living inside any one module, enforcing scheme-contract compliance, deprecation posture, and cross-layer parity in CI.
 
 Compiled artefacts live under `execution/`, being generated from `spec/`, `shapes/`, `vocab/`, and `projection/` by deterministic, reproducible processes or code (to be regenerated on source change per that layer's `invalidation-policy.md`).
 
@@ -73,26 +73,26 @@ lattice/
 ├── LICENSE-DOCS.md          # CC BY-SA 4.0 — documentation, specifications
 ├── CONTRIBUTING.md
 │
-├── foundation/              # Foundation Layers (provenance, versioning)
-├── vocabulary/              # Inclusion of Domain-specific Vocabularies 
-├── quantification/          # Value Spaces, Quantities, Ranges, Recurrence
-├── party/                   # Parties, Roles, & Participation Modelling 
-├── instrument/              # Governing Instrument (Upper Domain Ontology)  
-├── eligibility/             # Eligibility Criteria Modelling 
-├── behaviour/               # Behaviour Modelling 
-├── mork/                    # Mapping Vocabulary
-├── spc/                     # Orchestration calculus (standalone, unintegrated)
+├── ontology/foundation/              # Foundation Layers (provenance, versioning)
+├── ontology/vocabulary/              # Inclusion of Domain-specific Vocabularies
+├── ontology/quantification/          # Value Spaces, Quantities, Ranges, Recurrence
+├── ontology/party/                   # Parties, Roles, & Participation Modelling
+├── ontology/instrument/              # Governing Instrument (Upper Domain Ontology)
+├── ontology/eligibility/             # Eligibility Criteria Modelling
+├── ontology/behaviour/               # Behaviour Modelling
+│   ├── mork/                # Mapping vocabulary and semantic fixtures
+│   ├── spc/                 # Orchestration ontology, standalone and unintegrated
 │
-├── governance/              # Cross-layer governance
+├── ontology/governance/              # Cross-layer governance
 │   ├── scheme-contracts/
 │   ├── parity/
 │   └── shapes/
 │
 ├── docs/
 │   ├── architecture/
-│   └── adr/
+│   └── decisions/
 │
-├── examples/                # Cross-layer composition scenarios
+├── ontology/examples/                # Cross-layer composition scenarios
 │   ├── employment.ttl
 │   ├── lending-covenant.ttl
 │   ├── saas-subscription.ttl
@@ -130,6 +130,138 @@ A few commmon compositions are worth noting:
 
 ---
 
+## Developer Setup / Getting Started
+
+### Confirm required tools
+
+```bash
+mise --version
+mise doctor
+mise install
+mise ls
+
+mise exec -- python --version
+mise exec -- node --version
+mise exec -- java -version
+mise exec -- mvn --version
+mise exec -- elixir --version
+mise exec -- erl -eval 'io:format("~p~n", [erlang:system_info(otp_release)]), halt().'
+```
+
+### Check the new repository structure
+
+```bash
+mise run topology:preflight
+test -d ontology
+test -d tools
+test -d tools/mork/python
+test -d tools/spc/python
+test -d tools/spc/erlang
+test -d workers
+test -d platform
+test -d apps
+test -d contracts
+```
+
+### Install dependencies
+
+```bash
+mise run bootstrap
+```
+
+This installs the root Python dependencies, worker dependencies, Yarn workspace, etc.
+
+### Run aggregate repository checks
+
+```bash
+mise run check
+```
+
+This runs:
+
+```bash
+mise run check:python-root
+mise run check:workers
+mise run check:java
+mise run check:frontend
+mise run check:spc
+```
+
+### Build and test all frontend workspaces
+
+```bash
+mise exec -- yarn check
+mise exec -- yarn build
+mise exec -- yarn test
+```
+
+If Playwright reports missing browsers:
+
+```bash
+mise exec -- yarn workspace @lattice/mork-review-workbench exec playwright install
+mise exec -- yarn workspace @lattice/surface-contract-studio exec playwright install
+mise exec -- yarn test
+```
+
+### Validate MORK
+
+```bash
+mise exec -- python -m pip install -e tools/mork/python
+mise exec -- python -m pytest tools/mork/python/src/python -q
+mise exec -- python -m compileall -q tools/mork/python/src
+```
+
+### Validate SPC Python
+
+```bash
+mise exec -- python -m pip install -e 'tools/spc/python[dev]'
+mise exec -- python -m compileall -q tools/spc/python/src
+```
+
+### Validate SPC Erlang
+
+```bash
+cd tools/spc/erlang
+mise exec -- mix deps.get
+mise exec -- mix test
+cd ../..
+```
+
+### Run the complete test task
+
+```bash
+mise run test
+```
+
+### Build the Java platform cleanly
+
+```bash
+mise exec -- mvn -f platform/pom.xml clean verify
+```
+
+Focused Surface regression gate:
+
+```bash
+mise exec -- mvn -f platform/pom.xml -pl surface-workflow -am test
+```
+
+### Check Docker-backed services
+
+```bash
+docker --version
+docker compose version
+docker compose -f deployment/compose/docker-compose.yml config
+mise run services:up
+docker compose -f deployment/compose/docker-compose.yml ps
+mise run services:down
+```
+
+The service checks confirm container startup and reachability. They do not replace end-to-end integration tests.
+
+The canonical active documentation locations are `plans`, `status`, and `review`.
+
+---
+
 ## Licensing
 
 Two licences govern the artefacts in the repository:
@@ -145,6 +277,6 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the licensing mechanics, the SPDX hea
 
 ## Development environment
 
-Use [mise](https://mise.jdx.dev/) for repository toolchain setup and task orchestration. See [the toolchain guide](docs/developer/toolchain.md), [Windows and WSL guidance](docs/developer/windows-wsl.md), and the [Phase 0 and 1 validation handoff](docs/developer/phase-0-1-handoff.md).
+Use [mise](https://mise.jdx.dev/) for repository toolchain setup and task orchestration. See [the toolchain guide](docs/developer/toolchain.md), [Windows and WSL guidance](docs/developer/windows-wsl.md), and the [Phase 0 and 1 validation handoff](docs/developer/status/phase-0-1-handoff.md).
 
-For the current implementation boundaries and reading order, see the [platform implementation map](docs/architecture/implementation-map.md). Architecture decisions are indexed in [docs/adr](docs/adr/README.md).
+For the current implementation boundaries and reading order, see the [platform implementation map](docs/architecture/implementation-map.md). Architecture decisions are indexed in [docs/architecture/decisions](docs/architecture/decisions/README.md).

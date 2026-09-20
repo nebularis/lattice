@@ -32,17 +32,17 @@ def require_conforms(data: Graph, shapes: Graph, label: str) -> None:
 
 def main() -> int:
     governance_data = Graph().parse(
-        ROOT / "mork/examples/Governance/GovernanceAndVersioning.ttl",
+        ROOT / "ontology/mork/examples/Governance/GovernanceAndVersioning.ttl",
         format="turtle",
     )
     governance_shapes = Graph().parse(
-        ROOT / "mork/shapes/constraints.ttl",
+        ROOT / "ontology/mork/shapes/constraints.ttl",
         format="turtle",
     )
     require_conforms(governance_data, governance_shapes, "MORK governance")
 
     eligibility_data = Graph().parse(
-        ROOT / "eligibility/examples/interval-containment.ttl",
+        ROOT / "ontology/eligibility/examples/interval-containment.ttl",
         format="turtle",
     )
     eligibility_shapes = compile_shapes(

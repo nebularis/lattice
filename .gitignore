@@ -1,0 +1,63 @@
+# Operating-system and editor state
+.DS_Store
+.idea/
+.vscode/
+
+# Node and Yarn installs, caches, and build output
+node_modules/
+.pnp.*
+.yarn/
+.yarnrc.yml.tmp
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+apps/*/dist/
+coverage/
+playwright-report/
+test-results/
+
+# Java and Maven build output
+**/target/
+*.class
+
+# Python bytecode, environments, packaging metadata, and test output
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.venv/
+venv/
+env/
+ENV/
+.tox/
+.nox/
+*.egg-info/
+.eggs/
+build/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.ipynb_checkpoints/
+
+# Erlang and Elixir dependency and compilation output
+_build/
+deps/
+
+# Local environment files and logs
+.env
+.env.*
+!.env.example
+*.log
+
+# TEMP FILES
+**/.DS_Store
+**/catalog*.xml
+**/*Catalog*.xml
+WINGMAN
+.local/**
+**/*.pyc
+/.vscode
+./mork/src/**/*__pycache__
+*.patch

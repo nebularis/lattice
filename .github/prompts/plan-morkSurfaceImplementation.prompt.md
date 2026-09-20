@@ -64,7 +64,7 @@ The validation environment validates one whole phase at a time. It must not sile
 
 Every phase and every material implementation decision must leave an auditable documentation trail. This applies equally to code, schemas, deployment configuration, test fixtures, and operational procedures.
 
-- Record a decision in `docs/adr/` whenever it establishes a durable boundary, dependency direction, data ownership rule, security model, compatibility commitment, operational responsibility split, or technology-selection constraint. ADRs use the repository convention of Status, Context, Decision, and Consequences, and cross-reference the relevant plan phase, code modules, contracts, and prior ADRs.
+- Record a decision in `docs/architecture/decisions/` whenever it establishes a durable boundary, dependency direction, data ownership rule, security model, compatibility commitment, operational responsibility split, or technology-selection constraint. ADRs use the repository convention of Status, Context, Decision, and Consequences, and cross-reference the relevant plan phase, code modules, contracts, and prior ADRs.
 - Write comprehensive explanatory material in `docs/architecture/` for each delivered capability. Architecture guides explain the components, data and control flows, state transitions, trust boundaries, contracts, extension points, operational assumptions, failure handling, and known limitations. They explain how the implementation works, not only why it was chosen.
 - Keep normative ontology semantics in layer READMEs and decision rationale in ADRs. Architecture documents must link to these sources rather than restating normative content in a second authority.
 - Update user, developer, operator, security, recovery, and migration documentation whenever a capability reaches the relevant audience boundary. Architecture documentation is the source material for later user-guide generation.
@@ -80,10 +80,10 @@ Use `mise` from committed root `mise.toml` for tool-version pinning, shared envi
 | Java platform | Maven Wrapper, reactor `pom.xml`, Maven dependency management | Java 21 and Maven availability, `mise run check:java` |
 | React applications | Yarn workspaces, committed `yarn.lock`, Corepack | Node availability, `mise run check:frontend` |
 | Root ontology validation | root `pyproject.toml`, `requirements-lock.txt` | Python availability, `mise run check:python-root` |
-| MORK Python package | `mork/pyproject.toml` | Python availability, package-scoped tasks |
-| SPC Python package | `spc/src/python/pyproject.toml` | Python availability, package-scoped tasks |
+| MORK Python package | `tools/mork/python/pyproject.toml` | Python availability, package-scoped tasks |
+| SPC Python package | `tools/spc/python/pyproject.toml` | Python availability, package-scoped tasks |
 | Python workers | `workers/pyproject.toml` and a dedicated lock | Python availability, `mise run check:workers` |
-| SPC Erlang and Elixir | `spc/src/erlang/mix.exs`, `mix.lock` when introduced | Erlang and Elixir availability, `mise run check:spc` |
+| SPC Erlang and Elixir | `tools/spc/erlang/mix.exs`, `mix.lock` when introduced | Erlang and Elixir availability, `mise run check:spc` |
 | Infrastructure services | Docker Compose files under `deployment/` | `mise run services:up`, `services:down`, and smoke-test tasks |
 
 The initial `mise.toml` pins Java 21, Maven 3.9, Node 22, Python 3.11, Erlang 27, and Elixir 1.17. Add .NET only when a committed .NET project or local tool manifest needs it. Python 3.11 satisfies the MORK and SPC packages while remaining compatible with the root package's Python 3.9 minimum. Exact patch versions, image digests, and package-manager versions are pinned in their ecosystem-specific files and lockfiles.
@@ -111,7 +111,7 @@ The initial repository tasks are `mise run bootstrap`, `mise run check`, `mise r
   - `packages/ui-foundation`
   - `packages/api-clients`
 - Add `workers/`: Python 3.11+ deployable worker distribution.
-  - Wrap existing code in `tools/surface`, `tools/mork_compilers`, `mork/src/python/mork_communities`, and `tools/mork2rml.py`.
+  - Wrap existing code in `tools/surface`, `tools/mork_compilers`, `tools/mork/python/src/python/mork_communities`, and `tools/mork2rml.py`.
   - Do not rewrite semantic algorithms in Java.
 - Add `contracts/` only for OpenAPI, AsyncAPI, CloudEvents JSON Schema, and compatibility fixtures.
 - Add `deployment/` for Docker Compose, reference Fuseki, RabbitMQ, PostgreSQL, Keycloak, container builds, and later Kubernetes or Helm assets.
@@ -280,10 +280,10 @@ Validation-environment exit criteria:
 
 **Documentation and GitHub Pages**
 - Keep normative ontology documentation in layer READMEs.
-- Keep decisions in `docs/adr`.
+- Keep decisions in `docs/architecture/decisions`.
 - Add developer, operator, and security guides under `docs/developer`, `docs/operator`, and `docs/security`.
-- Keep application-specific guides under `mork/docs` and `surface/docs`.
-- Add `docs/developer/toolchain.md`, `docs/developer/windows-wsl.md`, `docs/developer/offline-phase-handoff.md`, and a phase-validation record template. Document `mise` as the entry point and each ecosystem's native package manager as the dependency authority.
+- Keep application-specific guides under `ontology/mork/docs` and `ontology/surface/docs`.
+- Add `docs/developer/toolchain.md`, `docs/developer/windows-wsl.md`, `docs/developer/status/offline-phase-handoff.md`, and a phase-validation record template. Document `mise` as the entry point and each ecosystem's native package manager as the dependency authority.
 - Evolve `docs/index.html` into the Pages entry point and `docs/book.html` into the long-form guide.
 - Add generated site metadata rather than duplicating normative content manually in HTML.
 - Create a Pages pipeline with link validation, static-site build, protected-branch deployment, and PR preview artefacts.

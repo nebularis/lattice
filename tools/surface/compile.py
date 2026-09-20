@@ -107,7 +107,7 @@ def check_entailment_regime(profile) -> None:
         raise CompileError(
             f"profile {profile.iri} declares entailment regime "
             f"{profile.entailment_regime}, which this compiler does not act on. Only "
-            f"srf:NoEntailment is currently supported (surface/docs/OUTSTANDING-ITEMS.md §3.5)."
+            f"srf:NoEntailment is currently supported (ontology/surface/docs/OUTSTANDING-ITEMS.md §3.5)."
         )
 
 

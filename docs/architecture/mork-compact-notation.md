@@ -3,8 +3,8 @@
 # MCN: MORK Compact Notation
 
 **Status:** Draft specification, version 0.1
-**Scope:** A token-minimal, machine-oriented text encoding of MORK graphs ([../../mork/spec/Mork.ttl](../../mork/spec/Mork.ttl)) with a deterministic decoding algorithm to OWL 2.
-**Related:** [ADR-A18](../adr/ADR-A18-surface-to-mork-lowering-boundary.md) (lowering boundary), [ADR-A19](../adr/ADR-A19-staged-compiler-architecture-and-backend-fanout.md) (staged compiler), [ADR-A22](../adr/ADR-A22-mork-governance-and-versioning-foundation-alignment.md) (governance and versioning), [ADR-A25](../adr/ADR-A25-llm-participation-and-deterministic-production-gate.md) (LLM participation), [ADR-A26](../adr/ADR-A26-provenance-chain-completeness-across-surface-mork-artefacts.md) (provenance chain).
+**Scope:** A token-minimal, machine-oriented text encoding of MORK graphs ([../../ontology/mork/spec/Mork.ttl](../../ontology/mork/spec/Mork.ttl)) with a deterministic decoding algorithm to OWL 2.
+**Related:** [ADR-A18](decisions/ADR-A18-surface-to-mork-lowering-boundary.md) (lowering boundary), [ADR-A19](decisions/ADR-A19-staged-compiler-architecture-and-backend-fanout.md) (staged compiler), [ADR-A22](decisions/ADR-A22-mork-governance-and-versioning-foundation-alignment.md) (governance and versioning), [ADR-A25](decisions/ADR-A25-llm-participation-and-deterministic-production-gate.md) (LLM participation), [ADR-A26](decisions/ADR-A26-provenance-chain-completeness-across-surface-mork-artefacts.md) (provenance chain).
 
 ---
 
@@ -22,16 +22,16 @@ MCN is a notation in which an LLM (or any mapping agent) emits MORK content with
 6. **Anything not covered by a code is still expressible.** CURIEs are accepted wherever a code is, and `!` lines carry arbitrary OWL axioms and raw triples, so completeness never depends on the codebook.
 7. **Decoding is a pure function of the text.** Minted IRIs, blank-node labels and triple order are all determined by the document, so decoded output can be hashed, diffed and cached (this matters for `mork:inputHash` and the invalidation policy in ADR-A27).
 
-MCN is the *proposal wire format* in the sense of ADR-A25: an LLM emits MCN, a deterministic decoder produces the RDF graph, and everything downstream (OWL DL checking, SHACL validation with [mork/shapes/constraints.ttl](../../mork/shapes/constraints.ttl), compilation) operates on the graph exactly as it does today. No compiler, shape or reasoner needs to know MCN exists.
+MCN is the *proposal wire format* in the sense of ADR-A25: an LLM emits MCN, a deterministic decoder produces the RDF graph, and everything downstream (OWL DL checking, SHACL validation with [ontology/mork/shapes/constraints.ttl](../../ontology/mork/shapes/constraints.ttl), compilation) operates on the graph exactly as it does today. No compiler, shape or reasoner needs to know MCN exists.
 
 ### 1.1 Measured effect
 
-Two example files from the repository were hand-encoded in MCN and decoded with the reference decoder ([mork/src/python/mcn_decoder.py](../../mork/src/python/mcn_decoder.py), codebook in [mcn_codebook.py](../../mork/src/python/mcn_codebook.py), tests in [test_mcn_decoder.py](../../mork/src/python/test_mcn_decoder.py)); the decoded graphs were compared to the originals with an isomorphism-aware diff (rdflib `graph_diff`). Token counts use the `o200k_base` BPE vocabulary as a proxy for current frontier tokenizers.
+Two example files from the repository were hand-encoded in MCN and decoded with the reference decoder ([tools/mork/python/src/python/mcn_decoder.py](../../tools/mork/python/src/python/mcn_decoder.py), codebook in [mcn_codebook.py](../../tools/mork/python/src/python/mcn_codebook.py), tests in [test_mcn_decoder.py](../../tools/mork/python/src/python/test_mcn_decoder.py)); the decoded graphs were compared to the originals with an isomorphism-aware diff (rdflib `graph_diff`). Token counts use the `o200k_base` BPE vocabulary as a proxy for current frontier tokenizers.
 
 | Document | Triples | MCN | Turtle (as written, comments stripped) | JSON-LD (compacted) | RDF/XML | N-Triples |
 |---|---|---|---|---|---|---|
-| [mork/examples/Mork2RML/loan_mapping.ttl](../../mork/examples/Mork2RML/loan_mapping.ttl) | 40 | **219** | 614 (2.8×) | 1418 (6.5×) | 1383 (6.3×) | 1881 (8.6×) |
-| [mork/examples/Zoo/UncertainMappings.ttl](../../mork/examples/Zoo/UncertainMappings.ttl) | 160 | **1366** | 2674 (2.0×) | 5308 (3.9×) | 5929 (4.3×) | 10235 (7.5×) |
+| [ontology/mork/examples/Mork2RML/loan_mapping.ttl](../../ontology/mork/examples/Mork2RML/loan_mapping.ttl) | 40 | **219** | 614 (2.8×) | 1418 (6.5×) | 1383 (6.3×) | 1881 (8.6×) |
+| [ontology/mork/examples/Zoo/UncertainMappings.ttl](../../ontology/mork/examples/Zoo/UncertainMappings.ttl) | 160 | **1366** | 2674 (2.0×) | 5308 (3.9×) | 5929 (4.3×) | 10235 (7.5×) |
 
 The Zoo document is dominated by prose (`mappingNote`, `mappingRecommendation`, a 200-token `skos:example`), which no notation can shrink. Separating that irreducible literal content from structural overhead:
 
@@ -1093,7 +1093,7 @@ A decoder MUST NOT reject a document because a referenced IRI is not defined in 
 
 ### 14.2 Lint rules
 
-Decoders SHOULD offer the following warnings (errors under `@opt strict`). Each mirrors an axiom in `Mork.ttl` and is checked on the decoded graph, so a model's mistakes surface before an OWL reasoner or SHACL engine is involved. They are heuristics, not the source of truth — [mork/shapes/constraints.ttl](../../mork/shapes/constraints.ttl) and the reasoner are.
+Decoders SHOULD offer the following warnings (errors under `@opt strict`). Each mirrors an axiom in `Mork.ttl` and is checked on the decoded graph, so a model's mistakes surface before an OWL reasoner or SHACL engine is involved. They are heuristics, not the source of truth — [ontology/mork/shapes/constraints.ttl](../../ontology/mork/shapes/constraints.ttl) and the reasoner are.
 
 | Lint | Mirrors |
 |---|---|
@@ -1113,7 +1113,7 @@ Decoders SHOULD offer the following warnings (errors under `@opt strict`). Each 
 
 ### 14.3 Downstream
 
-After decoding, the graph goes through exactly the existing pipeline: OWL 2 DL profile check, SHACL validation with `mork/shapes/constraints.ttl` (including the mode-conditional `GenerativeMappingProductionGovernanceShape`), the parity and conformance gate (ADR-A28) and compilation (ADR-A19). MCN adds nothing to and removes nothing from that pipeline.
+After decoding, the graph goes through exactly the existing pipeline: OWL 2 DL profile check, SHACL validation with `ontology/mork/shapes/constraints.ttl` (including the mode-conditional `GenerativeMappingProductionGovernanceShape`), the parity and conformance gate (ADR-A28) and compilation (ADR-A19). MCN adds nothing to and removes nothing from that pipeline.
 
 ---
 
@@ -1143,7 +1143,7 @@ Decoding is the required direction. Encoding is specified so that existing Turtl
 
 ### 16.1 The loan mapping (repository example, complete)
 
-MCN, 219 tokens, decoding to exactly the 40 triples of [loan_mapping.ttl](../../mork/examples/Mork2RML/loan_mapping.ttl):
+MCN, 219 tokens, decoding to exactly the 40 triples of [loan_mapping.ttl](../../ontology/mork/examples/Mork2RML/loan_mapping.ttl):
 
 ```
 @b <http://example.org/mapping#>
@@ -1171,7 +1171,7 @@ Reading the mapping block: `Map_Loan_Class` is a `DataMapping` (block default) w
 
 ### 16.2 Uncertain mappings (repository example, excerpt)
 
-From [UncertainMappings.ttl](../../mork/examples/Zoo/UncertainMappings.ttl), showing annotated matches, multi-valued matches to deferred definitions, `DeferredContext` yields and a shadow property declaration:
+From [UncertainMappings.ttl](../../ontology/mork/examples/Zoo/UncertainMappings.ttl), showing annotated matches, multi-valued matches to deferred definitions, `DeferredContext` yields and a shadow property declaration:
 
 ```
 @b <http://www.nebularis.org/ontologies/UncertainMappings#>
@@ -1341,4 +1341,4 @@ BARE        := [^ \t,{}\[\]"<]+  [^ \t,{}\[\]]*
 - **Streaming.** Because a node line is self-contained given the block context, a decoder can process MCN incrementally as a model streams it and surface lint warnings mid-generation. Whether the agent loop should exploit that (stop-and-correct) is an architecture question for ADR-A25's bounded-completion mode.
 - **A JSON envelope for tool use.** Structured-output APIs constrain models to JSON schemas; `mork_schemas.py` already exists for that path. An MCN document can be carried as a single string field in such a schema, which keeps token cost low while retaining the schema-level validation of the envelope; whether to retire the per-field Pydantic schema in favour of `{"mcn": "…"}` should be decided by measuring error rates, not assumed.
 - **Numeric auto-ids.** A `@opt autoid` that lets a bare integer subject mint `B + "n" + digits` would shave tokens further; §17 argues against it on reliability grounds, but the measurement has not been made.
-- **Codebook governance.** The codebook must track `Mork.ttl`. [mork/src/python/mcn_codebook.py](../../mork/src/python/mcn_codebook.py) is that machine-readable file (the tables in §8 were generated from it), and `TestCodebookCoverage` in [test_mcn_decoder.py](../../mork/src/python/test_mcn_decoder.py) fails whenever a class, property or named individual is added to `Mork.ttl` without a corresponding code. Regenerating §8's Markdown tables from the module on each change, rather than maintaining them by hand, remains open.
+- **Codebook governance.** The codebook must track `Mork.ttl`. [tools/mork/python/src/python/mcn_codebook.py](../../tools/mork/python/src/python/mcn_codebook.py) is that machine-readable file (the tables in §8 were generated from it), and `TestCodebookCoverage` in [test_mcn_decoder.py](../../tools/mork/python/src/python/test_mcn_decoder.py) fails whenever a class, property or named individual is added to `Mork.ttl` without a corresponding code. Regenerating §8's Markdown tables from the module on each change, rather than maintaining them by hand, remains open.

@@ -1,0 +1,128 @@
+# SPDX-License-Identifier: MPL-2.0
+#
+# Worked example for ADR-A22: MORK governance and versioning, Foundation-aligned.
+# Accompanies ontology/mork/docs/governance-and-versioning-migration.md. Not executed —
+# no SHACL engine was available when this was authored; the "expected" notes
+# below record what ontology/mork/shapes/constraints.ttl should report once one runs.
+
+@prefix mork: <http://www.nebularis.org/ontologies/Mork#> .
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex:   <http://www.nebularis.org/ontologies/Governance#> .
+@base <http://www.nebularis.org/ontologies/Governance> .
+
+<http://www.nebularis.org/ontologies/Governance> rdf:type owl:Ontology ;
+    owl:imports <http://www.nebularis.org/ontologies/Mork#> ,
+                <https://www.nebularis.org/neuro-semantic/foundation/0.0.7> .
+
+# --- a production-mode mapping scheme ---------------------------------------
+
+ex:eligibility-mapping-scheme a mork:MappingScheme ;
+    mork:compilationMode mork:ProductionMode .
+
+ex:draft-mapping-scheme a mork:MappingScheme .
+# No compilationMode asserted: equivalent to mork:DraftMode. Mappings in this
+# scheme are never checked by GenerativeMappingProductionGovernanceShape.
+
+# --- a fully governed mapping: expected to pass every shape in this file ----
+
+ex:credit-score-shape-identity a fnd:PersistentIdentity .
+
+ex:credit-score-shape-mapping a mork:ShapeMapping ;
+    mork:mappingScheme ex:eligibility-mapping-scheme ;
+    fnd:hasGovernanceState fnd:Active ;
+    fnd:hasIdentity ex:credit-score-shape-identity ;
+    mork:hasTargetingSpec ex:credit-score-target ;
+    mork:generatesShapeDefinition ex:credit-score-shape .
+
+ex:credit-score-target a mork:TargetingSpec ;
+    sh:targetClass ex:Applicant .
+
+ex:credit-score-shape a sh:NodeShape ;
+    sh:targetClass ex:Applicant ;
+    sh:property [ sh:path ex:hasCreditScore ; sh:minInclusive 700 ; sh:maxInclusive 850 ] .
+
+# --- a mapping missing governance state and identity -------------------------
+#
+# Expected once ontology/mork/shapes/constraints.ttl runs against
+# ex:eligibility-mapping-scheme in ProductionMode:
+#   GenerativeMappingProductionGovernanceShape reports a violation on
+#   ex:incomplete-shape-mapping — neither fnd:hasGovernanceState nor
+#   fnd:hasIdentity is asserted.
+# This is not a defect in this fixture: it exists to be the negative case.
+
+ex:incomplete-shape-mapping a mork:ShapeMapping ;
+    mork:mappingScheme ex:eligibility-mapping-scheme ;
+    mork:hasTargetingSpec ex:incomplete-target ;
+    mork:generatesShapeDefinition ex:incomplete-shape .
+
+ex:incomplete-target a mork:TargetingSpec ;
+    sh:targetClass ex:Applicant .
+
+ex:incomplete-shape a sh:NodeShape ;
+    sh:targetClass ex:Applicant ;
+    sh:property [ sh:path ex:hasIncome ; sh:minInclusive 0 ] .
+
+# --- the same incompleteness, but in a draft-mode scheme --------------------
+#
+# Expected: GenerativeMappingProductionGovernanceShape does NOT fire here,
+# because ex:draft-mapping-scheme declares no compilationMode (equivalent to
+# DraftMode). This is the case the migration guide's backward-compatibility
+# section describes: incomplete, not rejected.
+
+ex:draft-shape-mapping a mork:ShapeMapping ;
+    mork:mappingScheme ex:draft-mapping-scheme ;
+    mork:hasTargetingSpec ex:draft-target ;
+    mork:generatesShapeDefinition ex:draft-shape .
+
+ex:draft-target a mork:TargetingSpec ;
+    sh:targetClass ex:Applicant .
+
+ex:draft-shape a sh:NodeShape ;
+    sh:targetClass ex:Applicant .
+
+# --- version succession, Foundation-aligned ---------------------------------
+#
+# A separate scenario from the fully-governed example above, so that v1 here
+# can transition to fnd:Superseded without conflicting with the earlier
+# demonstration of an Active, compliant mapping — fnd:hasGovernanceState is
+# functional, so one individual never carries two values.
+#
+# ex:income-check-mapping-v2 supersedes v1 via fnd:supersededBy, sharing v1's
+# persistent identity (fnd:hasIdentity is functional per version, not per
+# identity — many versions may point at one PersistentIdentity). Expected:
+# GenerativeMappingSupersessionEffectiveFromShape reports a violation on v2
+# for the commented-out line below, since v2 has no mork:effectiveFrom
+# recorded. Uncomment it to see the compliant case instead.
+
+ex:income-check-identity a fnd:PersistentIdentity .
+
+ex:income-check-mapping-v1 a mork:ShapeMapping ;
+    mork:mappingScheme ex:eligibility-mapping-scheme ;
+    fnd:hasGovernanceState fnd:Superseded ;
+    fnd:hasIdentity ex:income-check-identity ;
+    mork:hasTargetingSpec ex:income-check-target ;
+    mork:generatesShapeDefinition ex:income-check-shape-v1 ;
+    fnd:supersededBy ex:income-check-mapping-v2 .
+
+ex:income-check-mapping-v2 a mork:ShapeMapping ;
+    mork:mappingScheme ex:eligibility-mapping-scheme ;
+    fnd:hasGovernanceState fnd:Active ;
+    fnd:hasIdentity ex:income-check-identity ;
+    mork:hasTargetingSpec ex:income-check-target ;
+    mork:generatesShapeDefinition ex:income-check-shape-v2 .
+    # mork:effectiveFrom "2026-10-01T00:00:00Z"^^xsd:dateTime .
+
+ex:income-check-target a mork:TargetingSpec ;
+    sh:targetClass ex:Applicant .
+
+ex:income-check-shape-v1 a sh:NodeShape ;
+    sh:targetClass ex:Applicant ;
+    sh:property [ sh:path ex:hasIncome ; sh:minInclusive 0 ] .
+
+ex:income-check-shape-v2 a sh:NodeShape ;
+    sh:targetClass ex:Applicant ;
+    sh:property [ sh:path ex:hasIncome ; sh:minInclusive 1 ] .

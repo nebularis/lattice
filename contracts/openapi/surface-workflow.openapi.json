@@ -5,22 +5,49 @@
     "/surface/revisions": {
       "post": {
         "operationId": "createSurfaceRevision",
-        "responses": {"201": {"description": "Draft revision created"}, "409": {"description": "Revision already exists"}}
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "../ontology/surface/surface-revision.schema.json"}}}},
+        "responses": {
+          "201": {"description": "Draft revision created", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/VersionedSurfaceRevision"}}}},
+          "400": {"description": "Invalid draft revision"},
+          "409": {"description": "Revision already exists"}
+        }
       }
     },
     "/surface/revisions/{revisionId}": {
       "get": {
         "operationId": "getSurfaceRevision",
         "parameters": [{"name": "revisionId", "in": "path", "required": true, "schema": {"type": "string"}}],
-        "responses": {"200": {"description": "Current versioned revision"}, "404": {"description": "Revision not found"}}
+        "responses": {
+          "200": {"description": "Current versioned revision", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/VersionedSurfaceRevision"}}}},
+          "404": {"description": "Revision not found"}
+        }
       }
     },
     "/surface/revisions/{revisionId}/transitions": {
       "post": {
         "operationId": "transitionSurfaceRevision",
         "parameters": [{"name": "revisionId", "in": "path", "required": true, "schema": {"type": "string"}}],
-        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "../surface/surface-revision-transition.schema.json"}}}},
-        "responses": {"200": {"description": "Transition applied"}, "404": {"description": "Revision not found"}, "409": {"description": "Stale version or invalid state transition"}}
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "../ontology/surface/surface-revision-transition.schema.json"}}}},
+        "responses": {
+          "200": {"description": "Transition applied", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/VersionedSurfaceRevision"}}}},
+          "400": {"description": "Invalid transition command"},
+          "404": {"description": "Revision not found"},
+          "409": {"description": "Stale version or invalid state transition"}
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "VersionedSurfaceRevision": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["revision", "version", "recordedAt"],
+        "properties": {
+          "revision": {"$ref": "../ontology/surface/surface-revision.schema.json"},
+          "version": {"type": "integer", "minimum": 0},
+          "recordedAt": {"type": "string", "format": "date-time"}
+        }
       }
     }
   }

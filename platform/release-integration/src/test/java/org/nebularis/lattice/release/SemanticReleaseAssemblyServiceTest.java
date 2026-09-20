@@ -13,7 +13,7 @@ class SemanticReleaseAssemblyServiceTest {
     @Test
     void rejectsReleaseWithoutAllRequiredSemanticGates() {
         var service = new SemanticReleaseAssemblyService(SemanticReleasePolicy.surfaceDefault());
-        assertThrows(IllegalArgumentException.class, () -> service.assemble(intent(List.of(new SemanticGateEvidence("parity", "passed", DIGEST))));
+        assertThrows(IllegalArgumentException.class, () -> service.assemble(intent(List.of(new SemanticGateEvidence("parity", "passed", DIGEST)))));
     }
 
     @Test
@@ -26,7 +26,7 @@ class SemanticReleaseAssemblyServiceTest {
             public ReleaseReceipt plan(ReleaseIntent ignored) { throw new AssertionError("adapter must not be called"); }
             public ReleaseReceipt publish(ReleaseIntent ignored) { throw new AssertionError("adapter must not be called"); }
         };
-        assertThrows(IllegalArgumentException.class, () -> coordinator.publish(adapter, intent(List.of(new SemanticGateEvidence("parity", "passed", DIGEST))));
+        assertThrows(IllegalArgumentException.class, () -> coordinator.publish(adapter, intent(List.of(new SemanticGateEvidence("parity", "passed", DIGEST)))));
     }
 
     private static ReleaseIntent intent(List<SemanticGateEvidence> gates) {

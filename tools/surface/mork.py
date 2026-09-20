@@ -32,7 +32,7 @@ individual and a class sharing an IRI. Under ``srf:PunnedSymbols`` the class
 IRI is referenced directly.
 
 The ``mrk:ProjectionMapping`` vocabulary used here is declared in
-``mork/spec/Mork.ttl``.
+``ontology/mork/spec/Mork.ttl``.
 
 **Relationship to ``tools/surface/lowering.py``.** That module lowers a bare
 declaration — a ``srf:ProjectionContract`` always, a Promotion/Index contract
