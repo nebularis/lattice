@@ -10,6 +10,8 @@ readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
   "rdflib>=7.0",
+  "pyshacl>=0.26,<1",
+  "pyyaml>=6,<7",
   "numpy>=1.24,<3",
   "networkx>=3,<4",
   "pydantic>=2,<3",
@@ -19,8 +21,9 @@ dependencies = [
 ]
 
 [tool.setuptools]
-package-dir = {"" = "src/python"}
+package-dir = {"" = "src"}
+py-modules = ["mcn_decoder", "mcn_codebook"]
 
 [tool.setuptools.packages.find]
-where = ["src/python"]
-include = ["mork_communities*"]
+where = ["src"]
+include = ["mork_communities*", "mtp*", "mcn*"]

@@ -18,9 +18,9 @@ This draft plan reconciles both outstanding-item documents, excludes the already
 
 **Verification**
 - Extraction drift: run `python3 tools/literate_extract.py --check`.
-- Surface regression: run `python3 -m unittest tools.surface.test_surface -v`.
-- Targeted interop: run `python3 -m unittest tools.surface.test_surface.MorkInteropTests -v`.
-- Parity checks: run `python3 -m tools.surface parity --contracts ontology/surface/examples/employment-job-family.ttl`.
+- Surface regression: run `python3 -m unittest surface.test_surface -v`.
+- Targeted interop: run `python3 -m unittest surface.test_surface.MorkInteropTests -v`.
+- Parity checks: run `python3 -m surface parity --contracts ontology/surface/examples/employment-job-family.ttl`.
 - SHACL validation: execute layer shape suites against fixtures once engine wiring is available, then capture pass/fail evidence in repository docs.
 
 **Decisions**

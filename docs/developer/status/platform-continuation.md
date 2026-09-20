@@ -28,7 +28,7 @@ The following checks completed in this network-enabled environment, before the w
 | Area | Evidence | Result |
 |---|---|---|
 | Toolchain | `mise`-managed Java 21, Maven 3.9, Node 22, Python 3.11, Erlang 27, and Elixir 1.17 | Passed |
-| Root Python | `python -m unittest tools.surface.test_surface tools.mork_compilers.test_mork_compilers -v` | 76 tests passed |
+| Root Python | `python -m unittest surface.test_surface mork_compilers.test_mork_compilers -v` | 76 tests passed |
 | Workers | `python -m pytest workers/tests -q` | 38 tests passed |
 | Java reactor | `mvn -f platform/pom.xml verify` | Passed |
 | Frontend | `yarn check` | Passed |

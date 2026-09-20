@@ -1,0 +1,4 @@
+id: L-INT
+question: How is intent separated from representation?
+rules: [Keep intent nodes explicit.]
+cassette: C-LOAN

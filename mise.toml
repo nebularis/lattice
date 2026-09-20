@@ -12,7 +12,7 @@ PYTHONUNBUFFERED = "1"
 
 [tasks.bootstrap]
 description = "Install configured toolchains and dependency sets"
-depends = ["bootstrap:python-root", "bootstrap:workers", "bootstrap:frontend"]
+depends = ["bootstrap:python-root", "bootstrap:mork", "bootstrap:mork-compilers", "bootstrap:surface", "bootstrap:workers", "bootstrap:frontend"]
 
 [tasks."bootstrap:python-root"]
 description = "Install root ontology validation dependencies"
@@ -21,6 +21,18 @@ run = "python -m pip install -c requirements-lock.txt '.[reasoning]'"
 [tasks."bootstrap:workers"]
 description = "Install the worker package with test dependencies"
 run = "python -m pip install -e ./workers[test]"
+
+[tasks."bootstrap:mork"]
+description = "Install the MORK package and MTP structural dependencies"
+run = "python -m pip install -e ./tools/mork"
+
+[tasks."bootstrap:mork-compilers"]
+description = "Install the MORK backend compiler package"
+run = "python -m pip install -e ./tools/mork_compilers"
+
+[tasks."bootstrap:surface"]
+description = "Install the Surface compiler package"
+run = "python -m pip install -e ./tools/surface"
 
 [tasks."bootstrap:frontend"]
 description = "Install the Yarn workspace through Corepack"
@@ -47,10 +59,18 @@ description = "Check local Markdown links under docs"
 run = "python tools/repository_topology_check.py --links"
 
 [tasks."check:python-root"]
-run = "python -m unittest tools.surface.test_surface tools.mork_compilers.test_mork_compilers -v && python -m tools.phase8_conformance"
+run = "python -m unittest surface.test_surface mork_compilers.test_mork_compilers -v && python -m tools.phase8_conformance"
 
 [tasks."check:workers"]
 run = "python -m pytest workers/tests"
+
+[tasks."check:mtp"]
+description = "Check the committed MORK Teaching Pack structure and pins"
+run = "python -m mtp.cli check --out ontology/mork/mtp/out"
+
+[tasks."build:mtp"]
+description = "Regenerate committed MORK Teaching Pack output"
+run = "python -m mtp.cli build --out ontology/mork/mtp/out"
 
 [tasks."check:java"]
 run = "mvn -f platform/pom.xml verify"

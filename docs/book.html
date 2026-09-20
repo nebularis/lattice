@@ -247,7 +247,7 @@ ex:subscription-arr-projection a srf:ProjectionContract ;
 
       <h4>Why it lowers into MORK instead of Surface growing a second compiler</h4>
       <p>Graph construction, derivation, joins, and expansion are mapping-graph concerns MORK already owns — it already models <code>mork:DataMapping</code>, <code>mork:ShapeMapping</code>, <code>mork:RuleMapping</code>, <code>mork:QueryTemplate</code>, and <code>mork:ProjectionMapping</code>, with parameter bindings, targeting specs, and provenance. Building a second compiler inside Surface would re-solve a problem MORK already solves, and hand authors a second vocabulary to learn for a need that is, in kind, the same as promotion and indexing: state intent against a carrier, generate an artefact, record what was generated and from what. So <a href="./architecture/decisions/ADR-A18-surface-to-mork-lowering-boundary.md">ADR-A18</a> draws the boundary precisely: <strong>Surface never emits an executable artefact — SPARQL, SHACL, SWRL, RML — directly for a projection contract.</strong> It lowers deterministically into MORK mapping nodes, which downstream compilers then target, and lowered output must satisfy MORK's own completeness checks before any backend compiles it — MORK validation is the acceptance gate, not a downstream nicety.</p>
-      <pre><code>python3 -m tools.surface lower \
+      <pre><code>python3 -m surface lower \
     --contracts ontology/surface/examples/saas-subscription-arr-projection.ttl \
     --out ontology/surface/execution/subscription-arr-mapping.ttl</code></pre>
       <div class="callout warn"><strong>Honest status, straight from the example file's own comment:</strong> "The three non-domain examples this sibling to only need to resolve promotion and index contracts, so no compiler currently reads this file's contract." Lowering to a MORK mapping graph works today. A general backend compiler that turns a lowered <em>projection</em> mapping into SPARQL, SHACL, or SWRL does not exist yet — see §6 for exactly what does.</div>
@@ -303,11 +303,11 @@ Candidate: missing      =&gt; Undetermined</code></pre>
 
       <h3>Compiling a real condition, backend by backend</h3>
       <p>A newer package, <code>tools/mork_compilers/</code>, takes an <code>elg:IntervalCondition</code> and its Quantification range through a shared, backend-neutral <code>IntervalPlan</code>, then fans it out to three separate backend adapters. Against <code>ontology/eligibility/examples/interval-containment.ttl</code>'s credit-score condition, here is exactly what each backend actually emits:</p>
-      <pre><code>python3 -m tools.mork_compilers.cli compile-condition \
+      <pre><code>python3 -m mork_compilers.cli compile-condition \
     --declarations ontology/eligibility/examples/interval-containment.ttl \
     --condition https://example.org/lattice/eligibility/minimum-credit-condition \
     --backend sparql --out artefact.ttl</code></pre>
-      <div class="callout warn"><strong>Doc bug worth knowing:</strong> the CLI module's own docstring shows <code>python -m tools.mork_compilers compile-condition ...</code>, which does not run — the package has no <code>__main__.py</code>. The working form is <code>python3 -m tools.mork_compilers.cli compile-condition ...</code>, exactly as above.</div>
+      <div class="callout"><strong>Package entry point:</strong> invoke the installed compiler family with <code>python3 -m mork_compilers.cli compile-condition</code>, exactly as above.</div>
       <p><strong>SPARQL</strong> compiles to one parameterized <code>SELECT</code>, binding <code>?decision</code> to the string <code>"Permitted"</code>, <code>"Denied"</code>, or <code>"Undetermined"</code> — never a silent denial for missing evidence:</p>
       <pre><code>SELECT ?question ?decision WHERE {
   ?question elg:forCondition &lt;...minimum-credit-condition&gt; .
@@ -366,20 +366,20 @@ Candidate: missing      =&gt; Undetermined</code></pre>
       <h2>8. Worked examples</h2>
       <p>Every example below exists as a real, complete file in this repository — nothing here is illustrative pseudocode.</p>
       <h3>Job-family index</h3><p>A scheme-bound population, nominal classes, membership assertions, and closure make ancestor retrieval direct.</p>
-      <pre><code>python3 -m tools.surface compile \
+      <pre><code>python3 -m surface compile \
   --contracts ontology/surface/examples/employment-job-family.ttl \
   --out ontology/surface/execution \
   --verify-determinism --parity</code></pre>
       <h3>Multi-hop currency promotion</h3><p>An exact path from Subscription through Plan and Pricing becomes a direct currency property without enumerating the currency space.</p>
-      <pre><code>python3 -m tools.surface parity \
+      <pre><code>python3 -m surface parity \
   --contracts ontology/surface/examples/saas-subscription-currency.ttl</code></pre>
       <h3>Inexact crosswalk</h3><p>The clinical example crosses an inexact relation. The result remains queryable but is advisory and cannot masquerade as authored target-vocabulary truth.</p>
       <h3>Annual recurring revenue (projection)</h3><p>The ARR example binds two required-evidence properties and a result target, then lowers a derivation intent into MORK — see §3 for the complete declaration and current compilation status.</p>
-      <pre><code>python3 -m tools.surface lower \
+      <pre><code>python3 -m surface lower \
   --contracts ontology/surface/examples/saas-subscription-arr-projection.ttl \
   --out ontology/surface/execution/subscription-arr-mapping.ttl</code></pre>
       <h3>Eligibility compilation</h3><p>The credit-score interval condition, compiled to a real SPARQL query, two SHACL shapes, and a SWRL rule — see §5.</p>
-      <pre><code>python3 -m tools.mork_compilers.cli compile-condition \
+      <pre><code>python3 -m mork_compilers.cli compile-condition \
   --declarations ontology/eligibility/examples/interval-containment.ttl \
   --condition https://example.org/lattice/eligibility/minimum-credit-condition \
   --backend sparql --out /tmp/eligibility-sparql.ttl</code></pre>
@@ -395,9 +395,9 @@ Candidate: missing      =&gt; Undetermined</code></pre>
 python -m pip install -c requirements-lock.txt ".[reasoning]"</code></pre>
       <p>Requires Python 3.9+ (<code>pyproject.toml</code>'s stated floor); CI itself validates against 3.11. Core runtime dependencies are <code>rdflib</code> and <code>pyshacl</code>, with <code>owlrl</code> (the OWL/RDFS reasoner) pulled in by the <code>[reasoning]</code> extra used above. A separate <code>[community]</code> extra (numpy, networkx, pydantic, langchain-core, langgraph) is for MORK's community-detection tooling specifically — install it only when working on that, not for ordinary validation.</p>
       <h3>Validate</h3>
-      <pre><code>python3 -m unittest tools.surface.test_surface tools.mork_compilers.test_mork_compilers -v
+      <pre><code>python3 -m unittest surface.test_surface mork_compilers.test_mork_compilers -v
 python3 -m tools.phase8_conformance</code></pre>
-      <p>The conformance gate does three things in sequence: SHACL-validates a MORK governance-and-versioning example against <code>ontology/mork/shapes/constraints.ttl</code>; compiles SHACL shapes from the credit-score Eligibility condition and validates its own data against them; and runs the shared Surface parity suite against <code>test/conformance/manifest.ttl</code>, failing loudly if that manifest resolves to zero cases. Three further Python test modules live under <code>tools/mork/python/src/python/</code> and are picked up by <code>pytest</code>'s configured test paths, though CI itself currently runs only the two <code>unittest</code> suites shown above plus the conformance gate.</p>
+      <p>The conformance gate does three things in sequence: SHACL-validates a MORK governance-and-versioning example against <code>ontology/mork/shapes/constraints.ttl</code>; compiles SHACL shapes from the credit-score Eligibility condition and validates its own data against them; and runs the shared Surface parity suite against <code>test/conformance/manifest.ttl</code>, failing loudly if that manifest resolves to zero cases. Three further Python test modules live under <code>tools/mork/src/</code> and are picked up by <code>pytest</code>'s configured test paths, though CI itself currently runs only the two <code>unittest</code> suites shown above plus the conformance gate.</p>
       <div class="callout warn"><strong>CI is manual-dispatch only, for now.</strong> The single workflow, <code>.github/workflows/phase8-conformance.yml</code>, triggers on <code>workflow_dispatch</code> — someone has to press the button — while the repository's package-management workflow stabilises. It is not yet wired to run automatically on every push or pull request.</div>
       <h3>Freshness and regeneration</h3>
       <p>Generated surfaces record read-set hashes. Source, mapping, artefact, profile, and canonicalisation changes are planned through dependency-scoped invalidation. Profile and canonicalisation changes intentionally widen the regeneration scope.</p>
@@ -407,7 +407,7 @@ python3 -m tools.phase8_conformance</code></pre>
       <tr><td>Projection contract</td><td>Lowered mapping and dependent mappings.</td></tr>
       <tr><td>Profile</td><td>All artefacts using the profile.</td></tr>
       <tr><td>Canonicalisation</td><td>Full estate rehash and regeneration.</td></tr></table>
-      <pre><code>python3 -m tools.surface check \
+      <pre><code>python3 -m surface check \
   --manifest ontology/surface/execution/job-family/manifest.ttl \
   --contracts ontology/surface/examples/employment-job-family.ttl</code></pre>
     </section>
@@ -426,7 +426,7 @@ python3 -m tools.phase8_conformance</code></pre>
         <li>Generalise the SPARQL/SHACL/SWRL compiler family beyond <code>elg:IntervalCondition</code> to arbitrary lowered <code>ProjectionContract</code> mappings, closing the gap §6 and §10 both flag.</li>
         <li>Define — or formally retire — the native execution-plan backend; the vocabulary (<code>srf:NativeIrBackend</code>) still exists with no compiler and no definition behind it.</li>
         <li>Move CI from manual dispatch to running automatically on push/PR, once the package-management workflow it's waiting on stabilises.</li>
-        <li>Fix the stale <code>tools/README.md</code> path for <code>literate_extract.py</code>, and document the <code>tools.surface lower</code> subcommand it currently omits.</li>
+        <li>Keep <code>tools/README.md</code> aligned with the installed <code>surface</code> package and its <code>lower</code> subcommand.</li>
         <li>Carry the Capacity architecture's planned "Phase 4" refactor through: rebuild <code>ontology/applied/insurance/</code>'s limits and towers as specialisations of <code>ontology/applied/capacity/</code>, dropping its non-LATTICE namespace imports in the process.</li>
         <li>Author the generic <code>ontology/applied/capacity/</code> source ontology the architecture document proposes — today only the compact execution projection exists.</li>
         <li>Resolve cross-batch dependency edges during Surface-to-MORK lowering (crosswalk match relations, bound scheme contracts) that today are silently left unresolved.</li>

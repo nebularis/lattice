@@ -1,0 +1,4 @@
+id: L-TPL
+question: How do templates compose mappings?
+rules: [Use template links without changing identity.] 
+cassette: C-LOAN

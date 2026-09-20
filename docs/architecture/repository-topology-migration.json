@@ -22,7 +22,7 @@
     {"from": "applied", "to": "ontology/applied", "kind": "semantic"},
     {"from": "governance", "to": "ontology/governance", "kind": "semantic"},
     {"from": "examples", "to": "ontology/examples", "kind": "semantic"},
-    {"from": "mork", "to": ["ontology/mork", "tools/mork/python"], "kind": "split"},
+    {"from": "mork", "to": ["ontology/mork", "tools/mork"], "kind": "split"},
     {"from": "spc", "to": ["ontology/spc", "tools/spc/python", "tools/spc/erlang"], "kind": "split"}
   ],
   "completedMoves": [

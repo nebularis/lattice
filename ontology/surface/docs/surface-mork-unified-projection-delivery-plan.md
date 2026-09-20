@@ -540,7 +540,7 @@ Exit criteria:
 - `ontology/mork/spec/Mork.ttl`
 - `ontology/mork/spec/Mork.owl`
 - `ontology/mork/README.md`
-- `tools/mork/python/src/python/*` compilers and validators
+- `tools/mork/src/*` compilers and validators
 
 ### 11.3 Eligibility and executable integration
 

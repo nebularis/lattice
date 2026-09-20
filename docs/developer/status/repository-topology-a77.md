@@ -25,7 +25,7 @@ The architecture-decision catalogue, developer work repository, semantic roots, 
 - Moved active plans, continuation state, handoffs, validation records, and the handoff template into their lifecycle locations.
 - Added the `mise run topology:preflight` guard for ADR-A77 prerequisites.
 - Moved the common LATTICE semantic roots under `ontology/`.
-- Split MORK into `ontology/mork/` semantic assets and `tools/mork/python/` implementation assets.
+- Split MORK into `ontology/mork/` semantic assets and `tools/mork/` implementation assets.
 - Split SPC into `ontology/spc/` semantic assets and `tools/spc/` Python and Erlang implementation assets.
 - Repaired topology-caused documentation links. The local Markdown audit reports no broken links.
 - Ran `git diff --check` successfully after removing the reported trailing whitespace.

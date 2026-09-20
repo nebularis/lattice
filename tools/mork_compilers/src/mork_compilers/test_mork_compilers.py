@@ -6,7 +6,7 @@ Tests for the MORK backend compiler family.
 
 Run from the repository root::
 
-    python3 -m unittest tools.mork_compilers.test_mork_compilers -v
+    python3 -m unittest mork_compilers.test_mork_compilers -v
 
 Requires rdflib. **These have not been executed** — no Python interpreter was
 available in the environment this revision was written in (see
@@ -30,7 +30,7 @@ from .shacl_backend import compile_shapes
 from .sparql_backend import compile_query_template
 from .swrl_backend import compile_rules
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[4]
 INTERVAL_EXAMPLE = ROOT / "ontology" / "eligibility" / "examples" / "interval-containment.ttl"
 
 CONDITION = URIRef("https://example.org/lattice/eligibility/minimum-credit-condition")

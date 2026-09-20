@@ -80,7 +80,7 @@ Use `mise` from committed root `mise.toml` for tool-version pinning, shared envi
 | Java platform | Maven Wrapper, reactor `pom.xml`, Maven dependency management | Java 21 and Maven availability, `mise run check:java` |
 | React applications | Yarn workspaces, committed `yarn.lock`, Corepack | Node availability, `mise run check:frontend` |
 | Root ontology validation | root `pyproject.toml`, `requirements-lock.txt` | Python availability, `mise run check:python-root` |
-| MORK Python package | `tools/mork/python/pyproject.toml` | Python availability, package-scoped tasks |
+| MORK Python package | `tools/mork/pyproject.toml` | Python availability, package-scoped tasks |
 | SPC Python package | `tools/spc/python/pyproject.toml` | Python availability, package-scoped tasks |
 | Python workers | `workers/pyproject.toml` and a dedicated lock | Python availability, `mise run check:workers` |
 | SPC Erlang and Elixir | `tools/spc/erlang/mix.exs`, `mix.lock` when introduced | Erlang and Elixir availability, `mise run check:spc` |
@@ -111,7 +111,7 @@ The initial repository tasks are `mise run bootstrap`, `mise run check`, `mise r
   - `packages/ui-foundation`
   - `packages/api-clients`
 - Add `workers/`: Python 3.11+ deployable worker distribution.
-  - Wrap existing code in `tools/surface`, `tools/mork_compilers`, `tools/mork/python/src/python/mork_communities`, and `tools/mork2rml.py`.
+  - Wrap existing code in `tools/surface`, `tools/mork_compilers`, `tools/mork/src/mork_communities`, and `tools/mork2rml.py`.
   - Do not rewrite semantic algorithms in Java.
 - Add `contracts/` only for OpenAPI, AsyncAPI, CloudEvents JSON Schema, and compatibility fixtures.
 - Add `deployment/` for Docker Compose, reference Fuseki, RabbitMQ, PostgreSQL, Keycloak, container builds, and later Kubernetes or Helm assets.

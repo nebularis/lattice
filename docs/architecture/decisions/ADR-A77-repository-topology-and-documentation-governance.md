@@ -26,7 +26,7 @@ The repository needs a topology that separates semantic assets from executable i
 ### MORK and SPC
 
 1. MORK semantic vocabulary, shapes, targets, semantic examples, fixtures, and semantic documentation move to `ontology/mork/`.
-2. MORK Python source, executable tests, package metadata, CLIs, and implementation documentation move to `tools/mork/python/`.
+2. MORK Python source, executable tests, package metadata, CLIs, and implementation documentation move to `tools/mork/`.
 3. SPC semantic vocabulary, shapes, vocabulary, semantic examples, and semantic documentation move to `ontology/spc/`.
 4. SPC Python and Erlang executable projects move to `tools/spc/python/` and `tools/spc/erlang/`.
 5. SPC remains semantically unintegrated with LATTICE unless another accepted decision changes that boundary.

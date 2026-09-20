@@ -1,0 +1,4 @@
+id: L-TBX
+question: How are TBox and RBox targets aligned?
+rules: [Use target ontology proxies and match predicates.]
+cassette: C-LOAN

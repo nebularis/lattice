@@ -7,6 +7,7 @@ import argparse
 import json
 import re
 from pathlib import Path
+from urllib.parse import unquote
 
 ROOT = Path(__file__).resolve().parent.parent
 MANIFEST_PATH = ROOT / "docs" / "architecture" / "repository-topology-migration.json"
@@ -69,9 +70,11 @@ def check_ready(manifest: dict[str, object]) -> list[str]:
 def check_links() -> list[str]:
     errors: list[str] = []
     for markdown_file in (ROOT / "docs").rglob("*.md"):
+        if "vendor" in markdown_file.parts:
+            continue
         text = markdown_file.read_text(encoding="utf-8")
         for target in MARKDOWN_LINK.findall(text):
-            target = target.strip()
+            target = unquote(target.strip())
             if not target or target.startswith(("#", "http://", "https://", "mailto:")):
                 continue
             path = target.split("#", 1)[0]

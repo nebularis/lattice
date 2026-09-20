@@ -6,7 +6,7 @@ Tests for the surface compiler.
 
 Run from the repository root::
 
-    python3 -m unittest tools.surface.test_surface -v
+    python3 -m unittest surface.test_surface -v
 
 Requires rdflib. **These have not been executed** — the environment this
 revision was written in has neither rdflib nor network access, so treat a first
@@ -66,7 +66,7 @@ from .naming import (
 from .parity import check_parity
 from .serialise import parse_files, serialise
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[4]
 EXAMPLES = ROOT / "ontology" / "surface" / "examples"
 FIXTURES = ROOT / "ontology" / "surface" / "test"
 AT = "2026-09-18T00:00:00Z"

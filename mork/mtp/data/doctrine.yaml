@@ -1,0 +1,21 @@
+preamble: MORK Teaching Pack kernel.
+invariants:
+  - Use MCN codes only where the codebook assigns them.
+  - Keep domain confidence separate from notation uncertainty.
+  - Emit code, reference, and minted identifiers in their typed positions.
+  - Keep resident pack order before retrieved context.
+  - Treat generated mappings as provenance-bearing evidence.
+decision_ladder:
+  - Identify the mapping family.
+  - Identify the source representation.
+  - Identify the target ontology term.
+  - Select the minimum valid MCN structure.
+  - Lint and validate before proposing output.
+  - Record uncertainty as a note, not weighting.
+minimal_pairs:
+  - DataMapping versus Datum
+  - WeightedMatch versus UncertainMapping
+  - Reference position versus minting position
+anchors: []
+covers: []
+deferrals: ["*"]

@@ -13,9 +13,9 @@ the smallest regeneration scope.
 1. Recompute current canonical digests for the changed declaration, scheme,
    instance, or surface source.
 2. Extract recorded entries with
-   `tools.surface.invalidation.read_set_from_manifest`.
+   `surface.invalidation.read_set_from_manifest`.
 3. Compare recorded and current digests with
-   `tools.surface.invalidation.compare_read_set`.
+   `surface.invalidation.compare_read_set`.
 4. Pass changed source IRIs to `plan_regeneration`.
 5. Regenerate only the returned surfaces.
 6. Lower affected Projection contracts again.

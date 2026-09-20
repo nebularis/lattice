@@ -7,7 +7,7 @@ Any packages produced under canonicalisation contract `srf-canon/1` by the depen
 Regenerate with:
 
 ```bash
-python3 -m tools.surface compile \
+python3 -m surface compile \
     --contracts ontology/surface/examples/employment-job-family.ttl \
     --out ontology/surface/execution --verify-determinism --parity
 ```
@@ -19,7 +19,7 @@ A deployment's own packages live in that deployment's `execution/` directory. Th
 `srf:ProjectionContract` examples (and any Promotion/Index contract lowered under `--promotion-index`) regenerate their MORK mapping graph with:
 
 ```bash
-python3 -m tools.surface lower \
+python3 -m surface lower \
     --contracts ontology/surface/examples/saas-subscription-arr-projection.ttl \
     --out ontology/surface/execution/subscription-arr/mapping.ttl
 ```

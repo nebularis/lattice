@@ -1,0 +1,4 @@
+id: L-GEN
+question: What must a generative mapping co-occur with?
+rules: [Declare targeting and parameter evidence.]
+cassette: C-LOAN

@@ -237,7 +237,7 @@ The shared conformance manifest supports explicit Surface cases using:
 The public command is:
 
 ```bash
-python3 -m tools.surface.cli parity \
+python3 -m surface.cli parity \
   --shared-corpus test/conformance/manifest.ttl \
   --root .
 ```
@@ -276,7 +276,7 @@ python3 -m venv .venv
 python -m pip install -c requirements-lock.txt ".[reasoning]"
 ```
 
-The MORK package remains independently installable from `tools/mork/python/pyproject.toml`.
+The MORK package remains independently installable from `tools/mork/pyproject.toml`.
 The root environment is the canonical environment for cross-package Surface,
 MORK, SHACL, and conformance gates.
 

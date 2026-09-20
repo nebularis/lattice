@@ -1,6 +1,6 @@
 # Default: normalize everything to LF in the repo, checkout as LF too.
 * text=auto eol=lf
- 
+
 # Explicit text types (belt-and-braces, in case autodetection misses one)
 *.md      text eol=lf
 *.json    text eol=lf
@@ -18,12 +18,12 @@
 *.sh      text eol=lf
 *.toml    text eol=lf
 Dockerfile text eol=lf
- 
+
 # Windows-specific scripts that genuinely need CRLF
 *.ps1     text eol=crlf
 *.bat     text eol=crlf
 *.cmd     text eol=crlf
- 
+
 # Binary files — never touch line endings, never diff as text
 *.png     binary
 *.jpg     binary

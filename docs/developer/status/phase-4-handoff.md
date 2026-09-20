@@ -6,7 +6,7 @@ The Phase 4 worker contract lowers `ontology/surface/examples/saas-subscription-
 
 ```text
 python -m pytest workers/tests/test_projection_contract.py workers/tests/test_projection_policy.py workers/tests/test_projection_lowering.py
-python -m unittest tools.surface.test_surface -v
+python -m unittest surface.test_surface -v
 yarn check
 yarn build
 yarn test
