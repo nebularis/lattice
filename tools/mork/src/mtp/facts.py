@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from rdflib import Graph, URIRef
+from rdflib.compare import to_isomorphic
 from rdflib.namespace import OWL, RDF, RDFS
 
 
@@ -36,13 +37,17 @@ LOGICAL_PREDICATES = {RDFS.subClassOf, RDFS.subPropertyOf, RDFS.domain, RDFS.ran
 
 
 def graph_hash(graph: Graph) -> str:
-    return _hash("\n".join(sorted(f"{subject.n3()} {predicate.n3()} {object.n3()}" for subject, predicate, object in graph)))
+    return _hash(str(to_isomorphic(graph).graph_digest()))
 
 
 def term_hash(graph: Graph, iri: URIRef) -> str:
-    rows = [f"{predicate.n3()} {object.n3()}" for _, predicate, object in graph.triples((iri, None, None)) if predicate in LOGICAL_PREDICATES]
-    rows.extend(f"inverse {subject.n3()}" for subject, predicate, _ in graph.triples((None, OWL.inverseOf, iri)))
-    return _hash("\n".join(sorted(rows)))
+    logical_graph = Graph()
+    for _, predicate, object in graph.triples((iri, None, None)):
+        if predicate in LOGICAL_PREDICATES:
+            logical_graph.add((iri, predicate, object))
+    for subject, predicate, _ in graph.triples((None, OWL.inverseOf, iri)):
+        logical_graph.add((subject, predicate, iri))
+    return _hash(str(to_isomorphic(logical_graph).graph_digest()))
 
 
 def extract(path: Path) -> Facts:

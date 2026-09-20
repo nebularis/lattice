@@ -1,4 +1,4 @@
-@prefix : <http://www.nebularis.org/ontologies/mapping/RMLMap> .
+@prefix : <http://www.nebularis.org/ontologies/mapping/RMLMap#> .
 @prefix owl: <http://www.w3.org/2002/07/owl#> .
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix xml: <http://www.w3.org/XML/1998/namespace> .
@@ -8,6 +8,7 @@
 @prefix zoo: <http://www.nebularis.org/ontologies/Zoo#> .
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 @prefix rml: <http://w3id.org/rml#> .
+@prefix rr: <http://www.w3.org/ns/r2rml#> .
 @base <http://www.nebularis.org/ontologies/mapping/RMLMap#> .
 
 <http://www.nebularis.org/ontologies/mapping/RMLMap> rdf:type owl:Ontology ;

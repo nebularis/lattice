@@ -52,6 +52,7 @@ deps/
 *.log
 
 # TEMP FILES
+ontology/mork/mtp/out/
 **/.DS_Store
 **/catalog*.xml
 **/*Catalog*.xml
