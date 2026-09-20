@@ -1,7 +1,7 @@
 ## 0. The thesis
 {: #thesis}
 
-Every non-trivial system that lets you *derive* things from a source of truth faces the same question sooner or later: how far can you trust the derived thing? LATTICE's answer, repeated at every layer in a different mathematical costume, is: **only as far as something has been mechanically proven, and not one inch further.**
+Every non-trivial system that lets you *derive* things from a source of truth faces the same question sooner or later: how far can you trust the derived thing? LATTICE's answer, repeated at every layer in a different mathematical costume, is: **only as far as something has been mechanically proven.**
 
 That single sentence is the thread running through this whole page. What changes from layer to layer is *which* branch of logic or theoretical computer science supplies the proof:
 
