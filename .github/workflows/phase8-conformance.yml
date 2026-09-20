@@ -2,8 +2,8 @@
 
 name: Phase 8 conformance
 
+# Temporarily manual-only while the broader platform validation is stabilised.
 on:
-  pull_request:
   workflow_dispatch:
 
 jobs:

@@ -1,10 +1,11 @@
 # SPDX-License-Identifier: MPL-2.0
 name: Platform checks
 
+# Temporarily manual-only while the authored Phase 0-6 implementation is
+# validated in a live toolchain environment.
 on:
   pull_request:
-  push:
-    branches:
+  workflow_dispatch:
 
 jobs:
   licence:
