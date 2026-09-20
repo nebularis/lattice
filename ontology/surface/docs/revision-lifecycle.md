@@ -12,6 +12,6 @@ Surface generation, parity, and invalidation are invoked through the `surface-jo
 
 The existing fixtures remain the initial acceptance corpus:
 
-- `surface/examples/saas-subscription-currency.ttl` for Promotion.
-- `surface/examples/clinical-trial-crosswalk.ttl` for crosswalk fidelity.
-- `surface/examples/employment-job-family.ttl` for Index and closure.
+- `ontology/surface/examples/saas-subscription-currency.ttl` for Promotion.
+- `ontology/surface/examples/clinical-trial-crosswalk.ttl` for crosswalk fidelity.
+- `ontology/surface/examples/employment-job-family.ttl` for Index and closure.

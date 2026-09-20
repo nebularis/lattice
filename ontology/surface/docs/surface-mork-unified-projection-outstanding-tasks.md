@@ -37,14 +37,14 @@ Nothing below matters until this is done, because every other outstanding item a
 
 1. **Surface compiler test suite — complete.** `python -m unittest tools.surface.test_surface -v` passes 54/54 from the repository root.
 2. **Focused MORK compiler test suite — complete.** `python -m unittest tools.mork_compilers.test_mork_compilers -v` passes 15/15.
-3. **Run `tools/literate_extract.py --check`** across every layer README to confirm no extraction drift was introduced while editing `surface/README.md`.
-4. **Load `mork/spec/Mork.ttl` + `mork/spec/Executable.ttl` + `foundation/vocab/foundation-vocab.ttl` into a real OWL reasoner** and confirm consistency — the new `fnd:Governable`/`fnd:Version` axioms on `mork:GenerativeMapping` and the punned `elg:`/`qnt:` references in `Executable.ttl` remain outstanding.
-5. **SHACL execution — complete for current fixtures.** `mork/examples/Governance/GovernanceAndVersioning.ttl` conforms under `pyshacl`. Generated Eligibility shapes conform for the worked example and correctly fail for missing candidate evidence and an out-of-range candidate.
-6. **Execute the generated SPARQL query — complete.** `question-1` resolves to `"Permitted"` against `eligibility/examples/interval-containment.ttl`.
+3. **Run `tools/literate_extract.py --check`** across every layer README to confirm no extraction drift was introduced while editing `ontology/surface/README.md`.
+4. **Load `ontology/mork/spec/Mork.ttl` + `ontology/mork/spec/Executable.ttl` + `ontology/foundation/vocab/foundation-vocab.ttl` into a real OWL reasoner** and confirm consistency — the new `fnd:Governable`/`fnd:Version` axioms on `mork:GenerativeMapping` and the punned `elg:`/`qnt:` references in `Executable.ttl` remain outstanding.
+5. **SHACL execution — complete for current fixtures.** `ontology/mork/examples/Governance/GovernanceAndVersioning.ttl` conforms under `pyshacl`. Generated Eligibility shapes conform for the worked example and correctly fail for missing candidate evidence and an out-of-range candidate.
+6. **Execute the generated SPARQL query — complete.** `question-1` resolves to `"Permitted"` against `ontology/eligibility/examples/interval-containment.ttl`.
 7. **Load the generated SWRL rule** (`swrl_backend.compile_rules`) into a SWRL-capable reasoner and confirm it derives `exe:impliesDecision(ex:question-1, elg:Permitted)`.
 8. **Regenerate and commit real output** where a "no hand-written golden" note was left deliberately:
-   - `surface/execution/` packages (see `surface/execution/README (1).md` for the exact command)
-   - a lowered MORK mapping graph for `surface/examples/saas-subscription-arr-projection.ttl` (`python -m tools.surface lower ...`)
+   - `ontology/surface/execution/` packages (see `ontology/surface/execution/README (1).md` for the exact command)
+   - a lowered MORK mapping graph for `ontology/surface/examples/saas-subscription-arr-projection.ttl` (`python -m tools.surface lower ...`)
 
 ---
 
@@ -55,18 +55,18 @@ These were identified, scoped, and explicitly *not* built during Phases 1–5, r
 | Item | Tag | Where it's recorded |
 |---|---|---|
 | `srf:RangePartitionPopulation` (bucketing law X7) | Deferred, planned | [OUTSTANDING-ITEMS.md](OUTSTANDING-ITEMS.md) §2.1 — needs Quantification partition semantics first |
-| Stacking beyond depth 1 (cycle detection, hash-chain freshness) | Deferred, planned | [OUTSTANDING-ITEMS.md](OUTSTANDING-ITEMS.md) §2.2, composition laws already stated in [ADR-A21](../../docs/adr/ADR-A21-signature-scope-composition-for-stacked-surfaces.md) |
+| Stacking beyond depth 1 (cycle detection, hash-chain freshness) | Deferred, planned | [OUTSTANDING-ITEMS.md](OUTSTANDING-ITEMS.md) §2.2, composition laws already stated in [ADR-A21](../../docs/architecture/decisions/ADR-A21-signature-scope-composition-for-stacked-surfaces.md) |
 | `srf:ExternalIndex` admission criteria | Deferred | [OUTSTANDING-ITEMS.md](OUTSTANDING-ITEMS.md) §2.3 |
-| Foundation migration boundary for `srf:DerivedArtefact` (does it move to Foundation?) | Decision needed | [OUTSTANDING-ITEMS.md](OUTSTANDING-ITEMS.md) §3.1; boundary *criteria* (not the decision itself) recorded in `mork/docs/governance-and-versioning-migration.md`'s own "Foundation migration boundary" section |
+| Foundation migration boundary for `srf:DerivedArtefact` (does it move to Foundation?) | Decision needed | [OUTSTANDING-ITEMS.md](OUTSTANDING-ITEMS.md) §3.1; boundary *criteria* (not the decision itself) recorded in `ontology/mork/docs/governance-and-versioning-migration.md`'s own "Foundation migration boundary" section |
 | `srf:profileIdentityHash` — assert profile identity into the graph, or keep it a pure computation | Blocked | [OUTSTANDING-ITEMS.md](OUTSTANDING-ITEMS.md) §3.3, depends on the item above. `Profile.identity_hash()` exists as a Python-only computation (Phase 2) pending this |
-| R2 parity wired to a **shared** conformance corpus (not contract-generated questions) | Deferred | [OUTSTANDING-ITEMS.md](OUTSTANDING-ITEMS.md) §3.4, tracked under [ADR-A28](../../docs/adr/ADR-A28-parity-and-conformance-release-gate.md) — this is Phase 8's job |
+| R2 parity wired to a **shared** conformance corpus (not contract-generated questions) | Deferred | [OUTSTANDING-ITEMS.md](OUTSTANDING-ITEMS.md) §3.4, tracked under [ADR-A28](../../docs/architecture/decisions/ADR-A28-parity-and-conformance-release-gate.md) — this is Phase 8's job |
 | Entailment regimes beyond `NoEntailment` (RDFS/OWL2EL/OWL2DL reasoner integration) | Deferred | [OUTSTANDING-ITEMS.md](OUTSTANDING-ITEMS.md) §3.5; `check_entailment_regime()` (Phase 2) currently refuses all of these outright rather than acting on them incorrectly |
-| MORK toolchain join assumptions (namespace/term-name assumptions in `tools/surface/mork.py`) | Decision needed | [OUTSTANDING-ITEMS.md](OUTSTANDING-ITEMS.md) §5 — needs confirming against a live `mork/spec/Mork.ttl` checkout, not re-guessed |
-| **"Executable Projection Contract" (`exp:`) domain-binding layer** — lets a domain ontology declare "my `loans:creditScore` supplies candidate evidence" instead of a compiler reading `elg:Question` directly | Decision needed (ADR-scale) | `mork/docs/eligibility-executable-compiler.md` — proposed in `surface/docs/MorkEnhancements.md`'s final section; deliberately not adopted as a side effect of Phase 5 |
-| Profile-level aggregate artefacts (`AllRequired`/`AnySufficient` combining several conditions into one SPARQL/SHACL/SWRL decision) | Deferred | `mork/docs/eligibility-executable-compiler.md`; `exe:ProfilePlan` is declared in the ontology and computed in Python (`compile_profile`) but no backend emits RDF for it yet |
-| Runtime result tracking (`exe:EvaluationRun`, `exe:ConditionResult`, `exe:Diagnostic`) | Deferred | `mork/docs/eligibility-executable-compiler.md` — this phase compiled artefacts, it did not run them |
+| MORK toolchain join assumptions (namespace/term-name assumptions in `tools/surface/mork.py`) | Decision needed | [OUTSTANDING-ITEMS.md](OUTSTANDING-ITEMS.md) §5 — needs confirming against a live `ontology/mork/spec/Mork.ttl` checkout, not re-guessed |
+| **"Executable Projection Contract" (`exp:`) domain-binding layer** — lets a domain ontology declare "my `loans:creditScore` supplies candidate evidence" instead of a compiler reading `elg:Question` directly | Decision needed (ADR-scale) | `ontology/mork/docs/eligibility-executable-compiler.md` — proposed in `ontology/surface/docs/MorkEnhancements.md`'s final section; deliberately not adopted as a side effect of Phase 5 |
+| Profile-level aggregate artefacts (`AllRequired`/`AnySufficient` combining several conditions into one SPARQL/SHACL/SWRL decision) | Deferred | `ontology/mork/docs/eligibility-executable-compiler.md`; `exe:ProfilePlan` is declared in the ontology and computed in Python (`compile_profile`) but no backend emits RDF for it yet |
+| Runtime result tracking (`exe:EvaluationRun`, `exe:ConditionResult`, `exe:Diagnostic`) | Deferred | `ontology/mork/docs/eligibility-executable-compiler.md` — this phase compiled artefacts, it did not run them |
 | "Native" MORK compiler backend | **Not planned until defined** | No document in this repository defines what a native artefact is; ADR-A23's addendum records this explicitly rather than inventing one |
-| Type adapters (e.g. decimal literal → `qnt:Quantity`) for candidate evidence not already shaped as Quantification terms | Not started | Named in `surface/docs/MorkEnhancements.md` §10 ("Type adaptation"); has no home yet since it depends on the `exp:` layer decision above |
+| Type adapters (e.g. decimal literal → `qnt:Quantity`) for candidate evidence not already shaped as Quantification terms | Not started | Named in `ontology/surface/docs/MorkEnhancements.md` §10 ("Type adaptation"); has no home yet since it depends on the `exp:` layer decision above |
 | Eligibility strategies beyond `IntervalContainment` (`ExactCondition`, `SetMembershipCondition`, `WildcardCondition`) | Not started | `tools/mork_compilers/eligibility_ir.py`'s own scope note |
 | Range-partition two-track remediation wired to an implementation backlog (original Phase 6 deliverable 6) | Not started | Depends on the Quantification partition-semantics item above; never picked up because Phase 6 was folded into Phase 5 around the interval-containment case only |
 
@@ -78,11 +78,11 @@ These were identified, scoped, and explicitly *not* built during Phases 1–5, r
 
 Complete for the current stack-depth-1 scope. `tools/surface/invalidation.py` extracts recorded read-set entries from emitted manifests, compares their digests conservatively, computes transitive regeneration scope through `srf:SurfaceSource`, propagates changed Surface contracts through MORK's `mappingFor` and `dependsOnMapping` edges, and tracks generated artefacts through `mork:generatedBy` and executable-plan provenance. Profile and canonicalisation changes widen scope intentionally. The 60-test Surface suite covers these behaviors. The operational procedure is documented in [phase7-invalidation-regeneration-runbook.md](phase7-invalidation-regeneration-runbook.md). Deeper-stack freshness, cycle handling, and measured impact cost remain deferred with stack-depth expansion.
 
-Groundwork already in place to build on: Surface's read-set/hash model (ADR-A12, `srf:ReadSetEntry`), the stack-composition laws (ADR-A21), and MORK's new governance/version model (ADR-A22) all bear directly on this phase and did not exist when the source plan was first written.
+Groundwork already in place to build on: Surface's read-set/hash model (ADR-A12, `srf:ReadSetEntry`), the stack-composition laws (ADR-A21), and MORK's new ontology/governance/version model (ADR-A22) all bear directly on this phase and did not exist when the source plan was first written.
 
 ### Phase 8 — conformance and parity framework [COMPLETE - BAR OUT OF SCOPE]
 
-Complete for the current Surface and Eligibility validation scope. The shared conformance manifest contains three explicit Surface cases, `tools/surface/parity.py` runs them through the source/surface comparison, and `tools.surface.cli parity --shared-corpus ...` exposes the gate. Index, multi-hop promotion, and crosswalk promotion pass 16 comparisons in total. `tools/phase8_conformance.py` now combines compiler tests, governance/generated SHACL, and shared parity, with [`.github/workflows/phase8-conformance.yml`](../../.github/workflows/phase8-conformance.yml) as the CI gate. Broader Behaviour automation and SWRL/OWL reasoner execution remain future work.
+Complete for the current Surface and Eligibility validation scope. The shared conformance manifest contains three explicit Surface cases, `tools/surface/parity.py` runs them through the source/surface comparison, and `tools.surface.cli parity --shared-corpus ...` exposes the gate. Index, multi-hop promotion, and crosswalk promotion pass 16 comparisons in total. `tools/phase8_conformance.py` now combines compiler tests, ontology/governance/generated SHACL, and shared parity, with [`.github/workflows/phase8-conformance.yml`](../../.github/workflows/phase8-conformance.yml) as the CI gate. Broader Behaviour automation and SWRL/OWL reasoner execution remain future work.
 
 This phase is also where the R2-parity-to-shared-corpus item (§3 above) belongs, and where the Eligibility interval-containment conformance corpus (originally a Phase 6 exit criterion) should land.
 
@@ -127,7 +127,7 @@ The implementation should:
 7. make CI use the same environment and lock data
 8. remove stale module docstrings and README claims that say Python or rdflib are unavailable once the environment is adopted
 
-The root environment must not silently replace `mork/pyproject.toml`. The MORK package remains installable independently, while the root workspace environment provides the cross-package test and validation surface.
+The root environment must not silently replace `tools/mork/python/pyproject.toml`. The MORK package remains installable independently, while the root workspace environment provides the cross-package test and validation surface.
 
 ### 6.3 Dependency tiers
 

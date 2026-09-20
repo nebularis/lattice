@@ -85,7 +85,7 @@
     mork:weighting 90 ; 
     mork:exactTBoxMatch schema:Individual ;
     mork:compositeNarrowerMapping :Mapping_Person_Name ;
-    mork:mappingNote \"A foaf:Person correlates with an Individaul in the target vocabulary/schema.\" .
+    mork:mappingNote \"A foaf:Person correlates with an Individaul in the target ontology/vocabulary/schema.\" .
 
 :Mapping_Person_Name rdf:type owl:NamedIndividual , mork:Datum ;
     mork:mappingFor foaf:name ;

@@ -18,7 +18,7 @@ A loan facility, insurance limit, cloud-service quota, credit line, inventory al
 - may activate, constrain, or deplete other capacity resources,
 - can be governed by a deterministic allocation policy.
 
-LATTICE already models much of this generic machinery in `behaviour/`:
+LATTICE already models much of this generic machinery in `ontology/behaviour/`:
 
 - `bhv:AllowanceDefinition`
 - `bhv:AllowanceAccount`
@@ -115,7 +115,7 @@ These are not all necessarily substrate concepts. They form the smallest coheren
 
 ### The existing applied-domain boundary supports this approach
 
-LATTICE already provides `applied/` for domain ontologies. Repository governance states that applied layers may contain concrete category sets, deployment-specific projections, applied theorems, and policy choices that should not enter the public substrate.
+LATTICE already provides `ontology/applied/` for domain ontologies. Repository governance states that applied layers may contain concrete category sets, deployment-specific projections, applied theorems, and policy choices that should not enter the public substrate.
 
 That is the correct place to begin. It avoids two opposite errors:
 
@@ -167,7 +167,7 @@ The following concepts are reusable but need a coherent applied model before the
 | Activation dependency | A downstream resource may become available only after an upstream resource reaches a defined state or balance |
 | Capacity arrangement | A domain-level root that groups resources, demands, dependencies, rules, and execution traces |
 
-These are plausible candidates for eventual promotion into Behaviour. They should remain in `applied/capacity/` until they have passed the promotion tests in §10.
+These are plausible candidates for eventual promotion into Behaviour. They should remain in `ontology/applied/capacity/` until they have passed the promotion tests in §10.
 
 ### What belongs in Insurance, not Capacity
 
@@ -285,7 +285,7 @@ A capacity construct moves into Behaviour only after it is demonstrated to be ge
 ## Package location
 
 ```text
-applied/
+ontology/applied/
 └── capacity/
     ├── README.md
     ├── spec/
@@ -304,7 +304,7 @@ applied/
     │   └── party.ttl
     ├── execution/
     │   └── invalidation-policy.md
-    ├── examples/
+    ├── ontology/examples/
     │   ├── lending-facility.ttl
     │   ├── service-quota.ttl
     │   ├── inventory-reservation.ttl
@@ -856,8 +856,8 @@ The public insurance applied layer should not introduce `InsuranceTank`, `LayerT
 Instead:
 
 ```text
-applied/insurance
-  imports applied/capacity
+ontology/applied/insurance
+  imports ontology/applied/capacity
   imports Instrument
   imports Party
   imports Eligibility
@@ -973,7 +973,7 @@ Each may later inform an insurance or private extension. None belongs in a publi
 
 Capacity is a proving ground for potentially generic mechanisms.
 
-A construct should move from `applied/capacity/` to `behaviour/` only when all of the following are true.
+A construct should move from `ontology/applied/capacity/` to `ontology/behaviour/` only when all of the following are true.
 
 ### Genericity test
 

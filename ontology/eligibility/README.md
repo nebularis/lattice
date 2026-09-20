@@ -208,9 +208,9 @@ elg:IntervalConditionShape a sh:NodeShape ;
 
 Illustrative non-domain examples are authored in:
 
-- `eligibility/examples/condition-taxonomy.ttl`
-- `eligibility/examples/interval-containment.ttl`
-- `eligibility/examples/hierarchical-match.ttl`
+- `ontology/eligibility/examples/condition-taxonomy.ttl`
+- `ontology/eligibility/examples/interval-containment.ttl`
+- `ontology/eligibility/examples/hierarchical-match.ttl`
 
 ```turtle-example
 @prefix elg: <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .

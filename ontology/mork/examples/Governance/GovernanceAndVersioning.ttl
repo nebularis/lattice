@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: MPL-2.0
 #
 # Worked example for ADR-A22: MORK governance and versioning, Foundation-aligned.
-# Accompanies mork/docs/governance-and-versioning-migration.md. Not executed —
+# Accompanies ontology/mork/docs/governance-and-versioning-migration.md. Not executed —
 # no SHACL engine was available when this was authored; the "expected" notes
-# below record what mork/shapes/constraints.ttl should report once one runs.
+# below record what ontology/mork/shapes/constraints.ttl should report once one runs.
 
 @prefix mork: <http://www.nebularis.org/ontologies/Mork#> .
 @prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
@@ -47,7 +47,7 @@ ex:credit-score-shape a sh:NodeShape ;
 
 # --- a mapping missing governance state and identity -------------------------
 #
-# Expected once mork/shapes/constraints.ttl runs against
+# Expected once ontology/mork/shapes/constraints.ttl runs against
 # ex:eligibility-mapping-scheme in ProductionMode:
 #   GenerativeMappingProductionGovernanceShape reports a violation on
 #   ex:incomplete-shape-mapping — neither fnd:hasGovernanceState nor

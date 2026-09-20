@@ -35,9 +35,9 @@ LATTICE is a domain-neutral semantic framework (OWL + SHACL + SKOS) for represen
 
 It is the middle of a three-part picture:
 
-- **MORK** (Mapping Ontological & Representational Knowledge) — a general-purpose, SKOS-based mapping vocabulary and pipeline for aligning heterogeneous source data (schemas, records, free text) onto a target ontology's T-Box/A-Box/R-Box, using AI-proposed hypotheses validated by deterministic machinery (OWL reasoning, SHACL, Formal Concept Analysis over co-occurrence). MORK ships inside this repository (`mork/`) and is domain-agnostic; `mork/targets/` (currently empty) is where it would be configured to target LATTICE specifically, but MORK itself does not depend on LATTICE.
+- **MORK** (Mapping Ontological & Representational Knowledge) — a general-purpose, SKOS-based mapping vocabulary and pipeline for aligning heterogeneous source data (schemas, records, free text) onto a target ontology's T-Box/A-Box/R-Box, using AI-proposed hypotheses validated by deterministic machinery (OWL reasoning, SHACL, Formal Concept Analysis over co-occurrence). MORK ships inside this repository (`mork/`) and is domain-agnostic; `ontology/mork/targets/` (currently empty) is where it would be configured to target LATTICE specifically, but MORK itself does not depend on LATTICE.
 - **LATTICE proper** — the seven-layer ontology stack this document mostly covers, designed to be extended per-industry.
-- **SPC** (Subject-oriented Process Calculus) — a formal mechanism for session-typed orchestration between agents (human, AI, computational) whose data MORK has mapped and whose roles/obligations/eligibility LATTICE models. SPC gives the live exchange between agents a contract grounded in the same ontology. **SPC has a substantial standalone ontology** (`spc/spec/spc.ttl`, ~1227 lines; `spc/README.md`, ~1393 lines; plus an architecture note and a paper under `spc/docs/`), but it is **not yet integrated**: it uses a placeholder namespace (`http://example.org/spc#`) rather than the shared `nebularis.org` base, and its `projection/` directory is empty — no contract to Party or Behaviour exists yet. Treat it as a separately developed body of work pending namespace harmonisation and projection authoring, not as part of the dependency graph below.
+- **SPC** (Subject-oriented Process Calculus) — a formal mechanism for session-typed orchestration between agents (human, AI, computational) whose data MORK has mapped and whose roles/obligations/eligibility LATTICE models. SPC gives the live exchange between agents a contract grounded in the same ontology. **SPC has a substantial standalone ontology** (`ontology/spc/spec/spc.ttl`, ~1227 lines; `ontology/spc/README.md`, ~1393 lines; plus an architecture note and a paper under `ontology/spc/docs/`), but it is **not yet integrated**: it uses a placeholder namespace (`http://example.org/spc#`) rather than the shared `nebularis.org` base, and its `projection/` directory is empty — no contract to Party or Behaviour exists yet. Treat it as a separately developed body of work pending namespace harmonisation and projection authoring, not as part of the dependency graph below.
 
 ### The seven LATTICE layers
 
@@ -51,7 +51,7 @@ It is the middle of a three-part picture:
 | Instrument | Applied domain ontology | Generic governing-document shape: Provision → Obligation → Qualifier | `ins:` | Foundation, Vocabulary, Party, Eligibility |
 | Behaviour | Substrate | State, transition, trigger, guard, effect | `bhv:` | Foundation, Vocabulary, Quantification, Party, Eligibility, Instrument |
 
-Dependency order, per [ADR-A01](../adr/ADR-A01-layer-dependency-order.md):
+Dependency order, per [ADR-A01](decisions/ADR-A01-layer-dependency-order.md):
 
 ```
 foundation
@@ -88,19 +88,19 @@ Layer-crossing composition rules (stated once here, they recur throughout the la
 ├── vocab/<layer>-vocab.ttl   # mechanism-intrinsic named individuals only, never business vocabulary
 ├── projection/<other-layer>.ttl   # this layer's declared contracts to/from another layer
 ├── execution/          # generated runtime artefacts + regeneration docs (invalidation-policy.md etc)
-├── examples/           # single-layer worked instances
+├── ontology/examples/           # single-layer worked instances
 └── test/               # this layer's own shape/rule tests
 ```
 
 **Literate-spec ⇄ compiled-ttl duality.** A layer's `README.md` is authoritative. Each class/property is documented once, with a *Definition* (→ `rdfs:comment`), a *Utility* paragraph (→ `fnd:utility`), and a fenced code block. Two fence tags matter: ` ```turtle-spec ` is genuine specification content, extracted in document order and concatenated with the layer's prefix block to produce `spec/<layer>.ttl`; ` ```turtle-example ` is illustration only and is never extracted. This convention was tightened after an early extraction pass over Foundation's document pulled in its own template illustration by mistake — worth knowing if you're asked to regenerate a `spec/*.ttl` from its README, or vice versa (walk classes/properties, render `rdfs:comment` as Definition and `fnd:utility` as Utility). The two artefacts are designed not to drift apart under this discipline: drift can only happen if someone edits the rendered Markdown prose directly instead of the annotation value it came from.
 
-**`vocab/` vs domain vocabulary — a hard boundary.** `vocab/` folders hold only small, mechanism-intrinsic enumerations (trigger kind, role type, composition-rule type) — closed-by-default sets that are part of *how the mechanism works*, not what a domain calls things. Actual business vocabularies (product codes, jurisdictions, currencies) never appear in this repository; `vocabulary/`'s `SchemeContract` mechanism is precisely how a downstream implementation supplies its own without touching core specs. If a proposed `vocab/` addition is hard to justify as mechanism rather than domain, that difficulty is the signal.
+**`vocab/` vs domain vocabulary — a hard boundary.** `vocab/` folders hold only small, mechanism-intrinsic enumerations (trigger kind, role type, composition-rule type) — closed-by-default sets that are part of *how the mechanism works*, not what a domain calls things. Actual business vocabularies (product codes, jurisdictions, currencies) never appear in this repository; `ontology/vocabulary/`'s `SchemeContract` mechanism is precisely how a downstream implementation supplies its own without touching core specs. If a proposed `vocab/` addition is hard to justify as mechanism rather than domain, that difficulty is the signal.
 
-**Governance is separate from every layer it checks.** `governance/` (currently an empty scaffold — `parity/`, `scheme-contracts/`, `shapes/`, all `.gitkeep` only) is meant to run over the union graph, enforcing scheme-contract compliance, deprecation posture, and cross-layer parity in CI, rather than living inside any one module.
+**Governance is separate from every layer it checks.** `ontology/governance/` (currently an empty scaffold — `parity/`, `scheme-contracts/`, `shapes/`, all `.gitkeep` only) is meant to run over the union graph, enforcing scheme-contract compliance, deprecation posture, and cross-layer parity in CI, rather than living inside any one module.
 
 **Two licences, split by content type.** `.ttl` files and `tools/` (the reference implementation, also currently empty) are MPL 2.0 — copyleft only on the modified file itself, no obligation on what you build atop it. `.md` files (docs, specs, layer READMEs) are CC BY-SA 4.0. Every file requires a one-line SPDX header as its first non-blank line (`# SPDX-License-Identifier: MPL-2.0` or `<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->`), checked by `reuse lint` in CI. `spec/`, `shapes/`, `vocab/`, `projection/` never contain executable code — that boundary is CI-enforced too.
 
-**AI-assisted contributions** are welcome but carry disclosure obligations (`GENAI_CONTRIBUTION.md`): a `Generated-by:` commit trailer, a PR-description provenance section, and — specific to this project, not derived from any licensing concern — a check that AI-drafted ontology content holds the same domain-neutral line as hand-drafted content. The stated risk: generative models drift toward heavily-represented training-data domains (insurance, lending) when asked for an unprompted example, which is exactly the kind of drift `vocab/`'s mechanism-vs-domain boundary and the cross-domain worked examples (`examples/employment.ttl` etc, currently empty placeholders) are designed to catch.
+**AI-assisted contributions** are welcome but carry disclosure obligations (`GENAI_CONTRIBUTION.md`): a `Generated-by:` commit trailer, a PR-description provenance section, and — specific to this project, not derived from any licensing concern — a check that AI-drafted ontology content holds the same domain-neutral line as hand-drafted content. The stated risk: generative models drift toward heavily-represented training-data domains (insurance, lending) when asked for an unprompted example, which is exactly the kind of drift `vocab/`'s mechanism-vs-domain boundary and the cross-domain worked examples (`ontology/examples/employment.ttl` etc, currently empty placeholders) are designed to catch.
 
 **Namespace convention.** Base `https://www.nebularis.org/neuro-semantic/lattice/`, one hash namespace per layer under that base (hash rather than slash namespaces, so every term in a layer resolves with one retrieval of that layer's document). See the prefix table in §1.
 
@@ -121,10 +121,10 @@ This is the section to read before recommending any change. What follows is the 
 | Behaviour | authored | authored | populated (`constraints.ttl`, `rules.ttl`, `structural.ttl`) | populated | populated (`eligibility.ttl`, `instrument.ttl`, `party.ttl`, `quantification.ttl`) | **Authored in Gate 3.** Includes transition, guard, effect, and `Sequential` allowance support. `Proportional` remains declared but rejected. |
 | Governance | scaffold + cross-layer docs | n/a | scaffold | n/a | n/a | **Partially authored.** Governance policy lives in `docs/GOVERNANCE.md`; automated governance shapes remain future work. |
 | MORK | 657 lines, narrative "for dummies" guide (not literate-spec format) | `Mork.ttl` 1888 lines + `Mork.owl`, complete and large | empty | n/a | n/a | **Fully specified, pre-existing/independent vocabulary** — richer and older in style (OWL-API generated, SKOS-annotation-heavy) than the newer literate-spec layers |
-| SPC | 1393 lines, complete | 1227 lines, complete | empty | empty | empty (`.gitkeep` only) | **Fully specified but unintegrated.** Placeholder namespace (`http://example.org/spc#`), no projection contract to any layer. Also carries `spc/docs/architecture.md` plus a paper and two images. Integration is out of scope for the current Eligibility/Behaviour programme. |
-| Root `examples/*.ttl` (employment, lending-covenant, saas-subscription, clinical-trial) | — | all four files 0 bytes | — | — | — | **Not authored** |
-| `examples/insure-o/` | authored | scaffolded | authored | authored | authored | **Applied validation package in progress.** Minimal insurance-style structural, behavioural, and scheme-binding examples are now present under the examples tree and reference the shared substrate without naming proprietary source constructs. |
-| `docs/adr/`, `docs/GOVERNANCE.md`, `docs/operational-guidance.md`, `docs/validation-and-test-plan.md`, `docs/architecture/conformance-levels.md`, `docs/architecture/technology-options.md` | — | — | — | — | — | **Authored as programme guidance.** ADR set populated through A01, A03–A15, A-C1, A-C2. Operational guidance, validation plan, derivation reference, conformance ladder, and deferred-scope note are present. |
+| SPC | 1393 lines, complete | 1227 lines, complete | empty | empty | empty (`.gitkeep` only) | **Fully specified but unintegrated.** Placeholder namespace (`http://example.org/spc#`), no projection contract to any layer. Also carries `ontology/spc/docs/architecture.md` plus a paper and two images. Integration is out of scope for the current Eligibility/Behaviour programme. |
+| Root `ontology/examples/*.ttl` (employment, lending-covenant, saas-subscription, clinical-trial) | — | all four files 0 bytes | — | — | — | **Not authored** |
+| `ontology/examples/insure-o/` | authored | scaffolded | authored | authored | authored | **Applied validation package in progress.** Minimal insurance-style structural, behavioural, and scheme-binding examples are now present under the examples tree and reference the shared substrate without naming proprietary source constructs. |
+| `docs/architecture/decisions/`, `docs/GOVERNANCE.md`, `docs/operational-guidance.md`, `docs/validation-and-test-plan.md`, `docs/architecture/conformance-levels.md`, `docs/architecture/technology-options.md` | — | — | — | — | — | **Authored as programme guidance.** ADR set populated through A01, A03–A15, A-C1, A-C2. Operational guidance, validation plan, derivation reference, conformance ladder, and deferred-scope note are present. |
 | `tools/`, `scripts/` | — | — | — | — | — | **Empty** (`.gitkeep` only) — no reference implementation, no compiler, no extraction tooling, no `scaffold-lattice.sh` despite `CONTRIBUTING.md` referencing it |
 
 **Practical implication for anyone extending this repository:** Foundation, Vocabulary, Quantification, Party, Eligibility, Instrument, and Behaviour now form a coherent authored stack with documentation, shapes, projections, fixtures, and a shared conformance corpus. The main remaining semantic deferrals are Behaviour `bhv:Proportional` absorption and allowance-reset edge cases, both recorded explicitly in [deferred-scope-and-boundaries.md](deferred-scope-and-boundaries.md). SPC is fully specified in isolation but unintegrated. The next substantive expansion work is therefore optional applied-layer authoring or a separate SPC integration programme, not completion of missing substrate basics.
@@ -278,7 +278,7 @@ ex:peril-contract voc:boundScheme ex:acme-peril-codes-v2 .
 
 ### 5.6 Open items
 
-- Named `SchemeContract`/`ConceptScheme` individuals (the actual authored contracts, e.g. Instrument's peril-type contract) belong in each consuming layer's own files and in `governance/scheme-contracts/` — none exist yet (both Instrument and `governance/scheme-contracts/` are empty).
+- Named `SchemeContract`/`ConceptScheme` individuals (the actual authored contracts, e.g. Instrument's peril-type contract) belong in each consuming layer's own files and in `ontology/governance/scheme-contracts/` — none exist yet (both Instrument and `ontology/governance/scheme-contracts/` are empty).
 - Same "not run through a parser" caveat as Foundation.
 
 ---
@@ -383,7 +383,7 @@ ex:delegation-1 a pty:Delegation ;
 
 ### 6.6 Open items
 
-- `party/spec/party.md` §4 should be tightened to describe `CompositionRule` and `Role` as closed-by-default-and-extensible consistently (currently one is stated more strongly "closed" than the vocab document's own §4 implies).
+- `ontology/party/spec/party.md` §4 should be tightened to describe `CompositionRule` and `Role` as closed-by-default-and-extensible consistently (currently one is stated more strongly "closed" than the vocab document's own §4 implies).
 - `Guarantor`'s activation mechanism is now expressible through the authored Instrument and Behaviour layers, but it is not yet illustrated by a dedicated cross-layer fixture.
 - The `sh:in` constraint enumerating the baseline `Role`/`CompositionRule` individuals (and the pattern for a downstream implementation extending or overriding it) belongs in `shapes/constraints.ttl` — not built for any layer.
 
@@ -399,7 +399,7 @@ Eligibility, Behaviour, and Instrument are now authored. What remains useful her
 
 **Behaviour (`bhv:`)** — remains the state, transition, trigger, guard, and effect layer. Its current extent surface is intentionally narrow: `Sequential` allowance handling is usable, while `Proportional` and reset edge cases remain explicitly deferred pending the prerequisites recorded in [deferred-scope-and-boundaries.md](deferred-scope-and-boundaries.md).
 
-**Governance** — runs over the union graph (not a layer instances live in), enforcing scheme-contract compliance, deprecation posture, cross-layer parity, in CI. `governance/scheme-contracts/` is explicitly where authored `voc:SchemeContract` individuals for cross-cutting concerns would live; `governance/parity/` presumably checks that sibling layers (e.g., all six) maintain structural parity in how they apply the shared per-layer template.
+**Governance** — runs over the union graph (not a layer instances live in), enforcing scheme-contract compliance, deprecation posture, cross-layer parity, in CI. `ontology/governance/scheme-contracts/` is explicitly where authored `voc:SchemeContract` individuals for cross-cutting concerns would live; `ontology/governance/parity/` presumably checks that sibling layers (e.g., all six) maintain structural parity in how they apply the shared per-layer template.
 
 **SPC** — is not green-field, but it is still unintegrated with the LATTICE stack. Treat it as adjacent authored work that requires namespace harmonisation, projection contracts, and a conformance story before it joins the dependency picture.
 

@@ -15,7 +15,7 @@ MERIDIAN FBO has a working, executed instance of a pattern that LATTICE needs ge
 
 This note designs the domain-neutral mechanism behind both, sited correctly in the LATTICE stack, and specifies how it later becomes a MORK generative-mapping family. It is a design document: rationale lives here and in the resulting ADR, never in the shipped artefacts.
 
-**Authoring-order constraint.** [ADR-A-C2](../adr/ADR-AC2-clean-room-authoring-procedure.md) applies to everything this design produces on the substrate side. The generic premise (§2) is stated first; two non-domain worked examples (§13) are authored before mechanism prose; the layer README is written from the premise and those examples, **not** paraphrased from MERIDIAN or from this note's §1. MERIDIAN material may be read for sufficiency checking only.
+**Authoring-order constraint.** [ADR-A-C2](../../docs/architecture/decisions/ADR-AC2-clean-room-authoring-procedure.md) applies to everything this design produces on the substrate side. The generic premise (§2) is stated first; two non-domain worked examples (§13) are authored before mechanism prose; the layer README is written from the premise and those examples, **not** paraphrased from MERIDIAN or from this note's §1. MERIDIAN material may be read for sufficiency checking only.
 
 ---
 
@@ -57,7 +57,7 @@ Two operations follow from that premise, and only two:
 
 Everything MERIDIAN's execution profile does is one of these two. So is a generated direct-property surface over Eligibility dimensions, a materialised recurrence-bin table over Quantification, a flattened peril-tree membership index, or a store-native label projection. The mechanism is the same; the surface form differs.
 
-The premise carries one non-negotiable property: **a surface is conservative over the source signature.** Adding it entails nothing new about source terms; removing it loses no authored fact. This is what makes a surface safe to regenerate, safe to discard, and correctly classified as `advisory` or `cached-reproducible` authority under [ADR-A12](../adr/ADR-A12-identity-and-derivation-model.md) — never as a system of record.
+The premise carries one non-negotiable property: **a surface is conservative over the source signature.** Adding it entails nothing new about source terms; removing it loses no authored fact. This is what makes a surface safe to regenerate, safe to discard, and correctly classified as `advisory` or `cached-reproducible` authority under [ADR-A12](../../docs/architecture/decisions/ADR-A12-identity-and-derivation-model.md) — never as a system of record.
 
 ---
 
@@ -344,7 +344,7 @@ One deviation from MERIDIAN worth taking: MERIDIAN's manifest carries `dct:` pac
 
 ### 12.1 Where the checks live
 
-`governance/` runs over the union graph, which is the only place that can see a source declaration and its generated surface at once. Surface parity checks therefore belong in `governance/parity/`, not in `surface/shapes/`:
+`ontology/governance/` runs over the union graph, which is the only place that can see a source declaration and its generated surface at once. Surface parity checks therefore belong in `ontology/governance/parity/`, not in `ontology/surface/shapes/`:
 
 1. **Coverage parity** — every value used by any carrier instance on an indexed dimension has a surrogate (else lookup silently under-returns);
 2. **Provenance parity** — every generated symbol traces to value + contract + profile;
@@ -367,15 +367,15 @@ Two consequences to state explicitly in the ADR:
 
 ## 13. Non-domain worked examples (authored first, per ADR-A-C2)
 
-Two are required before mechanism prose, from unrelated fields. Both fit existing empty placeholders in `examples/`:
+Two are required before mechanism prose, from unrelated fields. Both fit existing empty placeholders in `ontology/examples/`:
 
-**A. `examples/employment.ttl` — hierarchical closure + nominal index.**
+**A. `ontology/examples/employment.ttl` — hierarchical closure + nominal index.**
 A job-family scheme with a `skos:broader` tree (individual contributor → engineering → technical). An eligibility condition carries `hasJobFamily`. The surface generates one nominal class per family member plus a `matchesJobFamily` closure relation, and the benchmark proves that a condition asserting a leaf family is retrievable by an ancestor family without query-time traversal. This exercises: `ContractBoundPopulation`, `NominalClass`, `ClosureRelation`, reflexivity, wildcard uniformity.
 
-**B. `examples/saas-subscription.ttl` — promotion over a multi-hop path + direct property.**
+**B. `ontology/examples/saas-subscription.ttl` — promotion over a multi-hop path + direct property.**
 A subscription's currency is reachable only as `hasPlan / hasPricing / inCurrency`. A promotion contract restates it as a direct `subscriptionCurrency` on the subscription. This exercises: `PromotionContract`, sequence read path, `DirectProperty` form, `ExactSource` fidelity, and — crucially — a population that is *not* enumerated, proving the mechanism is not shadow-class-shaped.
 
-A third, optional, is worth having before the insure-o port: **C. `examples/clinical-trial.ttl`** exercising `CrosswalkInexact` promotion across a `skos:closeMatch` between two site-classification schemes, to make X5's advisory-capping visible in a fixture rather than only in prose.
+A third, optional, is worth having before the insure-o port: **C. `ontology/examples/clinical-trial.ttl`** exercising `CrosswalkInexact` promotion across a `skos:closeMatch` between two site-classification schemes, to make X5's advisory-capping visible in a fixture rather than only in prose.
 
 Deliberate-defect fixtures to pair with these (following the Gate 4 reference-realisation pattern):
 
@@ -432,7 +432,7 @@ Things I hit while designing that affect this work and need decisions independen
 
 ### 15.1 `elg:boundScheme` does not exist
 
-`examples/insure-o/projection/hierarchy-example.ttl` and `examples/insure-o/execution/shadow-profile.ttl` both assert `elg:boundScheme` on an `elg:Condition`. Eligibility's spec declares no such property; `voc:boundScheme` exists, with domain `voc:SchemeContract`. As written, those two triples bind nothing, and the hierarchical-match fixtures they support are not actually wired to a scheme. This matters here because `ContractBoundPopulation` depends on that binding being real.
+`ontology/examples/insure-o/projection/hierarchy-example.ttl` and `ontology/examples/insure-o/execution/shadow-profile.ttl` both assert `elg:boundScheme` on an `elg:Condition`. Eligibility's spec declares no such property; `voc:boundScheme` exists, with domain `voc:SchemeContract`. As written, those two triples bind nothing, and the hierarchical-match fixtures they support are not actually wired to a scheme. This matters here because `ContractBoundPopulation` depends on that binding being real.
 
 Options: (a) add `elg:boundScheme` to Eligibility with a projection to Vocabulary; (b) rewrite the fixtures to go through a `voc:SchemeContract`; (c) add `elg:constrainedByContract : Condition → voc:SchemeContract`. (c) is the most consistent with how Vocabulary is meant to be used, and is what the surface mechanism wants.
 
@@ -442,15 +442,15 @@ Options: (a) add `elg:boundScheme` to Eligibility with a projection to Vocabular
 
 ### 15.3 `ino:hasPerilType` vs `ins:hasPerilType`
 
-`examples/insure-o/projection/bindings.ttl` declares scheme contracts constraining `ins:hasPerilType`, `ins:hasTerritory`, `ins:hasLineOfBusiness`, `ins:hasAssetClass`, `ins:hasCurrency` — none of which exist in `instrument/spec/instrument.ttl`. `examples/insure-o/spec/insure-o.ttl` defines them in the `ino:` namespace, and `test/defect-missing-scheme.ttl` uses `ino:`. So five of the five scheme contracts in the applied package currently constrain non-existent properties. Since a surface contract's population comes from a scheme contract, and the scheme contract names a property, this has to be resolved before insure-o gets surfaces. The `ino:` forms are correct — Instrument is domain-neutral and should not carry peril or currency properties.
+`ontology/examples/insure-o/projection/bindings.ttl` declares scheme contracts constraining `ins:hasPerilType`, `ins:hasTerritory`, `ins:hasLineOfBusiness`, `ins:hasAssetClass`, `ins:hasCurrency` — none of which exist in `ontology/instrument/spec/instrument.ttl`. `ontology/examples/insure-o/spec/insure-o.ttl` defines them in the `ino:` namespace, and `test/defect-missing-scheme.ttl` uses `ino:`. So five of the five scheme contracts in the applied package currently constrain non-existent properties. Since a surface contract's population comes from a scheme contract, and the scheme contract names a property, this has to be resolved before insure-o gets surfaces. The `ino:` forms are correct — Instrument is domain-neutral and should not carry peril or currency properties.
 
 ### 15.4 Foundation's `GovernanceState` individuals are still undeclared
 
-`X-S2` requires a bound scheme to be in a required governance state. `voc:requiresGovernanceState` ranges over `fnd:GovernanceState`; `fnd:Draft`/`Reviewed`/`Active`/`Superseded` are declared nowhere, and `examples/insure-o/projection/bindings.ttl` forward-references `fnd:Active` by full IRI. The Foundation extension tranche should close this at the same time, since it is touching `vocab/foundation-vocab.ttl` anyway.
+`X-S2` requires a bound scheme to be in a required governance state. `voc:requiresGovernanceState` ranges over `fnd:GovernanceState`; `fnd:Draft`/`Reviewed`/`Active`/`Superseded` are declared nowhere, and `ontology/examples/insure-o/projection/bindings.ttl` forward-references `fnd:Active` by full IRI. The Foundation extension tranche should close this at the same time, since it is touching `vocab/foundation-vocab.ttl` anyway.
 
 ### 15.5 `bhv:targetsAllowance` drift
 
-`behaviour/spec/behaviour.ttl` declares `bhv:targetsAllowance`; `behaviour/README.md` §5 does not, though `behaviour/shapes/constraints.ttl` checks it and the validation plan claims it was added in Gate 3. The README is authoritative per `docs/GOVERNANCE.md`, so spec and README have drifted in the direction the drift discipline says cannot happen. Unrelated to surfaces, but it is a live README⇄spec parity failure worth logging.
+`ontology/behaviour/spec/behaviour.ttl` declares `bhv:targetsAllowance`; `ontology/behaviour/README.md` §5 does not, though `ontology/behaviour/shapes/constraints.ttl` checks it and the validation plan claims it was added in Gate 3. The README is authoritative per `docs/GOVERNANCE.md`, so spec and README have drifted in the direction the drift discipline says cannot happen. Unrelated to surfaces, but it is a live README⇄spec parity failure worth logging.
 
 ---
 
@@ -468,7 +468,7 @@ I have not baked any of these into the design above beyond the stated recommenda
 8. **Stacking (§6, "no stacking").** Confirm surfaces may not read other surfaces in v1. This forbids, for example, an index built over a promoted property — which is exactly the MERIDIAN CSO→FBO→shadow chain. If that chain must work as two artefacts rather than one contract, stacking has to be permitted with a composition law, and the read-set model becomes a DAG with hash chaining. **This is the most consequential open item here** and I have deliberately not resolved it: the two-stage chain is the real use case, but permitting it in v1 doubles the invalidation model's complexity. My suggestion is to permit it with a depth bound of 1 and a stated composition law for X1 and X-R1, rather than forbid it outright.
 9. **Closure materialisation vs. rule shipping.** MERIDIAN ships SHACL rules that compute closure at rule-execution time. An alternative ships the closure assertions themselves. The first is smaller and self-describing; the second is inert and needs no SHACL engine. Recommend supporting both via `RealisationMode` and defaulting to shipping assertions, since X-R4 and freshness checking are easier against inert data.
 10. **Population budget.** A default ceiling on nominal-class populations (MERIDIAN's largest family is 10; a real jurisdiction or peril tree is three orders of magnitude larger). Proposal: warn at 500, fail at 5,000 unless the contract declares an explicit override with a rationale recorded in the profile. Numbers are a guess and need your judgement.
-11. **Where do surface contracts live?** Substrate ships none. For insure-o they would go in `examples/insure-o/execution/`. For a real deployment, in the applied layer's own `execution/`. Confirm, and confirm that a "substrate inventory emptiness" check for Surface joins the Gate 1 check list.
+11. **Where do surface contracts live?** Substrate ships none. For insure-o they would go in `ontology/examples/insure-o/execution/`. For a real deployment, in the applied layer's own `execution/`. Confirm, and confirm that a "substrate inventory emptiness" check for Surface joins the Gate 1 check list.
 12. **Gate numbering.** This reads as Gate 7 (Gate 6 closed out documentation scope). Confirm, and confirm whether the Foundation derived-artefact extension is Gate 7 or a separate Gate 4b tranche given that Quantification and Behaviour already need it.
 13. **Findings §15.1–15.5.** Five defects, four of which block or distort the insure-o surface work. Decide which are fixed in this tranche and which are logged.
 
@@ -483,10 +483,10 @@ Ordered so that nothing is authored before what it depends on, and so that ADR-A
 | 1 | Decisions | §16.1–§16.12 resolved | you |
 | 2 | ADR | `ADR-A16-surface-projection-mechanism.md` — premise, tiers, conservativity, authority ceiling, stacking decision, realisation neutrality restated | 1 |
 | 3 | Foundation extension | `fnd:DerivedArtefact`, `fnd:GenerationProfile`, authority + hash properties, and the four `GovernanceState` individuals (§15.4); README first, then `spec/`, then `vocab/` | 2 |
-| 4 | Non-domain examples | `examples/employment.ttl`, `examples/saas-subscription.ttl` (+ optional clinical-trial), authored **before** the layer README | 2, 3 |
-| 5 | Surface layer | `surface/README.md` literate spec → `spec/surface.ttl`, `vocab/surface-vocab.ttl`, `shapes/{structural,constraints}.ttl`, `projection/vocabulary.ttl` + `projection/quantification.ttl` | 3, 4 |
-| 6 | Laws and fixtures | X1–X5, X-S1–X-S10, X-R1–X-R4 in the vocab; deliberate-defect fixtures per §13 in `surface/test/` | 5 |
-| 7 | Governance parity | `governance/parity/surface-parity.ttl` — the five checks of §12.1 | 5, 6 |
+| 4 | Non-domain examples | `ontology/examples/employment.ttl`, `ontology/examples/saas-subscription.ttl` (+ optional clinical-trial), authored **before** the layer README | 2, 3 |
+| 5 | Surface layer | `ontology/surface/README.md` literate spec → `spec/surface.ttl`, `vocab/surface-vocab.ttl`, `shapes/{structural,constraints}.ttl`, `projection/vocabulary.ttl` + `projection/quantification.ttl` | 3, 4 |
+| 6 | Laws and fixtures | X1–X5, X-S1–X-S10, X-R1–X-R4 in the vocab; deliberate-defect fixtures per §13 in `ontology/surface/test/` | 5 |
+| 7 | Governance parity | `ontology/governance/parity/surface-parity.ttl` — the five checks of §12.1 | 5, 6 |
 | 8 | Reference generator | `tools/` deterministic compiler: contract → core/closure/assertions/manifest; SPARQL reference realisation first, no MORK dependency | 5, 6 |
 | 9 | Conformance corpus | X-R2 parity harness extending the Gate 5 corpus; X-R1 determinism run | 8 |
 | 10 | Applied port | insure-o surfaces over peril (hierarchical) and territory (exact), after §15.1/§15.3 are fixed | 8, 9 |

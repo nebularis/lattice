@@ -7,7 +7,7 @@
 # checks, with no closed-world layer of its own. These are the first shapes.
 #
 # fnd:GovernanceState is open at the OWL level by Foundation's own design
-# (foundation/README.md §6: "the enumeration itself is a different layer's
+# (ontology/foundation/README.md §6: "the enumeration itself is a different layer's
 # concern") and is closed here, scoped to MORK's own governable classes, the
 # same way every layer using fnd:hasGovernanceState is expected to close it
 # for itself rather than Foundation imposing one global shape.
@@ -19,7 +19,7 @@
 #
 # None of these shapes have been executed. No SHACL engine is available in
 # the environment this was written in; see
-# mork/docs/governance-and-versioning-migration.md for the verification plan
+# ontology/mork/docs/governance-and-versioning-migration.md for the verification plan
 # and the backward-compatibility story with the pre-existing reviewStatus,
 # supersedes, and mappingVersion properties.
 

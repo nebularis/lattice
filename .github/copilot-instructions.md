@@ -14,7 +14,7 @@ At all times, the following files MUST be kept up to date with changes:
 
 - the root directory `README.md` (any new structure/folders/projects must be documented here)
 - the project-level `README.md` files (significant changes must be documented appropriately)
-- the ADR catalogue in `docs/adr`
+- the ADR catalogue in `docs/architecture/decisions`
 - the ontology architecture `docs/architecture/ontology-architecture.md'
 - the platform specification `docs/architecture/solution-design-specification.md'
 - the data architecture `docs/architecture/data-architecture.md'

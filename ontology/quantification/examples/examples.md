@@ -2,7 +2,7 @@
 
 # Quantification Ontology — Worked Examples
 
-*Companion to `quantification/spec/quantification.md`. Illustrative, not normative.*
+*Companion to `ontology/quantification/spec/quantification.md`. Illustrative, not normative.*
 
 All examples use the `ex:` namespace. No example contributes a unit, currency, calendar, scale, recurrence, or domain vocabulary to the Quantification substrate. Wherever an example needs to reference a construct belonging to Party, Instrument, Eligibility, or Behaviour, it uses an `ex:`-prefixed term rather than that layer's own namespace, since Quantification's own specification never references those layers — see the standing note at the head of Part XIII, which applies throughout, not only there.
 

@@ -18,13 +18,13 @@ several independent rules sharing one consequent), each a conjunction of
 rule, and no attempt, to derive ``elg:Denied`` or ``elg:Undetermined``.
 
 The consequent asserts ``exe:impliesDecision(?question, elg:Permitted)``, a
-property this package's ``mork/spec/Executable.ttl`` addition declares
+property this package's ``ontology/mork/spec/Executable.ttl`` addition declares
 specifically because ``elg:decisionValue``'s domain is ``elg:EligibilityDecision``,
 not ``elg:Question`` — SWRL derives a fact about the individual already in
 scope (the Question), not a newly minted EligibilityDecision individual.
 
 Rules are structured RDF (``swrl:Imp`` with ``swrl:body``/``swrl:head`` atom
-lists), per ``mork/spec/Mork.ttl``'s own description of ``RuleMapping`` — not
+lists), per ``ontology/mork/spec/Mork.ttl``'s own description of ``RuleMapping`` — not
 a serialised SWRL string. ``mork:swrlCompactSyntax`` is added purely as a
 human-readable annotation alongside the structured form, exactly as MORK's
 own documentation describes it.

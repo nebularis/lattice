@@ -206,8 +206,8 @@ bhv:AllowanceDefinitionShape a sh:NodeShape ;
 
 Examples are authored in:
 
-- `behaviour/examples/state-transition.ttl`
-- `behaviour/examples/sequential-allowance.ttl`
+- `ontology/behaviour/examples/state-transition.ttl`
+- `ontology/behaviour/examples/sequential-allowance.ttl`
 
 ```turtle-example
 @prefix bhv: <https://www.nebularis.org/neuro-semantic/lattice/behaviour#> .

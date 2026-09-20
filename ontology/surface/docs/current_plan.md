@@ -8,7 +8,7 @@ Scope: Surface, MORK, Eligibility executable compilation, and related validation
 
 ## 1. Purpose
 
-This document consolidates the planning material under `surface/docs` into one
+This document consolidates the planning material under `ontology/surface/docs` into one
 current execution plan. It combines the unified Surface-MORK delivery plan,
 the live outstanding-task trackers, the MORK Eligibility enhancement design,
 the Surface design sketch, the X6 and CSO/FBO analyses, and the Phase 7
@@ -18,9 +18,9 @@ Where older documents conflict with the current repository, this document uses
 the following authority order:
 
 1. Current code and passing tests
-2. `surface/docs/surface-mork-unified-projection-outstanding-tasks.md`
-3. `surface/docs/OUTSTANDING-ITEMS.md`
-4. Accepted ADRs under `docs/adr`
+2. `ontology/surface/docs/surface-mork-unified-projection-outstanding-tasks.md`
+3. `ontology/surface/docs/OUTSTANDING-ITEMS.md`
+4. Accepted ADRs under `docs/architecture/decisions`
 5. `surface-mork-unified-projection-delivery-plan.md`
 6. Earlier design notes and superseded documents
 
@@ -129,7 +129,7 @@ handling, or three-valued evaluation.
 | 1. Surface Projection vocabulary and shapes | Complete |
 | 2. Surface compiler and entailment guard | Verified |
 | 3. Surface-to-MORK lowering | Verified for current scope |
-| 4. MORK governance/versioning | Implemented and SHACL-verified for current fixtures |
+| 4. MORK ontology/governance/versioning | Implemented and SHACL-verified for current fixtures |
 | 5. Compiler family and Eligibility IntervalContainment slice | Verified |
 | 6. Eligibility tranche | Absorbed into Phase 5 for current slice |
 | 7. Provenance and invalidation | Complete for stack depth 1 |
@@ -142,7 +142,7 @@ handling, or three-valued evaluation.
 - Surface suite: 61 tests passing.
 - MORK compiler suite: 15 tests passing.
 - Combined compiler tests in the clean locked environment: 76 passing.
-- Surface extraction check: four artefacts consistent with `surface/README.md`.
+- Surface extraction check: four artefacts consistent with `ontology/surface/README.md`.
 - Generated interval SPARQL returns `Permitted` for the worked example.
 - MORK governance SHACL passes under `pyshacl`.
 - Generated Eligibility SHACL passes the valid case and rejects missing
@@ -165,7 +165,7 @@ The repository now has:
 - SPARQL backend producing `mork:QueryTemplate`
 - SHACL backend producing generated shapes
 - SWRL backend producing positive-only rules
-- `mork/spec/Executable.ttl`
+- `ontology/mork/spec/Executable.ttl`
 - Foundation-aligned MORK governance and versioning
 
 The current Eligibility compiler intentionally does not yet provide:
@@ -215,7 +215,7 @@ Implemented in `tools/surface/invalidation.py`:
 - deterministic `RegenerationPlan` output
 
 The operational procedure is in
-`surface/docs/phase7-invalidation-regeneration-runbook.md`.
+`ontology/surface/docs/phase7-invalidation-regeneration-runbook.md`.
 
 Deeper stacking remains deferred until the system has:
 
@@ -276,7 +276,7 @@ python3 -m venv .venv
 python -m pip install -c requirements-lock.txt ".[reasoning]"
 ```
 
-The MORK package remains independently installable from `mork/pyproject.toml`.
+The MORK package remains independently installable from `tools/mork/python/pyproject.toml`.
 The root environment is the canonical environment for cross-package Surface,
 MORK, SHACL, and conformance gates.
 

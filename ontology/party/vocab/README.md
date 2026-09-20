@@ -130,7 +130,7 @@ Seven individuals total — the baseline this vocabulary ships with, extensible 
 
 ## 8. Open Items
 
-- **`party/spec/party.md` §4 should be tightened** to describe `CompositionRule` (and, for consistency, `Role`) as closed-by-default-and-extensible, matching §4 of this document, rather than the stronger "closed" language it currently uses.
+- **`ontology/party/spec/party.md` §4 should be tightened** to describe `CompositionRule` (and, for consistency, `Role`) as closed-by-default-and-extensible, matching §4 of this document, rather than the stronger "closed" language it currently uses.
 - **Guarantor's activation mechanism** — contingent liability triggered by another occupancy's default — needs Instrument's Obligation and a Behaviour trigger together. Not attempted here, and not really attemptable until both those documents exist.
 - **The `sh:in` constraint itself**, and the pattern for how a downstream implementation extends or overrides it, belongs in `shapes/constraints.ttl` and hasn't been built for any layer yet — this document only supplies what that constraint would enumerate by default.
 - **Checked by manual syntax review and extraction testing**, not an actual parser, per the same environment caveat as every prior document.

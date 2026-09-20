@@ -46,11 +46,11 @@ The three source documents already agree with each other almost everywhere they 
 
 | Component | Status | Location |
 |---|---|---|
-| MCN decoder (spec §13, D1-D9) | **Built** | [mork/src/python/mcn_decoder.py](../src/python/mcn_decoder.py) |
-| MCN codebook (spec §8) | **Built**, includes `code_for`/`codes_for` reverse lookup | [mork/src/python/mcn_codebook.py](../src/python/mcn_codebook.py) |
-| `import mcn` package (decode/lint/canonical_ntriples) | **Built** | [mork/src/python/mcn/__init__.py](../src/python/mcn/__init__.py) |
+| MCN decoder (spec §13, D1-D9) | **Built** | [tools/mork/python/src/python/mcn_decoder.py](../../../tools/mork/python/src/python/mcn_decoder.py) |
+| MCN codebook (spec §8) | **Built**, includes `code_for`/`codes_for` reverse lookup | [tools/mork/python/src/python/mcn_codebook.py](../../../tools/mork/python/src/python/mcn_codebook.py) |
+| `import mcn` package (decode/lint/canonical_ntriples) | **Built** | [tools/mork/python/src/python/mcn/__init__.py](../../../tools/mork/python/src/python/mcn/__init__.py) |
 | Stable, namespaced error/finding codes (`McnSyntaxError.code`, `LintFinding.code`/`.severity`/`.line`) | **Built** | same modules |
-| Decoder test suite (337 tests, incl. round-trip proofs for `loan_mapping.ttl`/`UncertainMappings.ttl`) | **Built** | [mork/src/python/test_mcn_decoder.py](../src/python/test_mcn_decoder.py) |
+| Decoder test suite (337 tests, incl. round-trip proofs for `loan_mapping.ttl`/`UncertainMappings.ttl`) | **Built** | [tools/mork/python/src/python/test_mcn_decoder.py](../../../tools/mork/python/src/python/test_mcn_decoder.py) |
 | MCN encoder (spec §15, RDF → MCN) | **Not built** | — |
 | Everything else in this plan (`mtp/*`, `doctrine.yaml`, lenses, cassettes) | **Not built** | this plan |
 
@@ -69,7 +69,7 @@ The L0 and L2 pipelines are two stages of one build, not two separate tools. Mer
                                   │
               ┌───────────────────┼───────────────────┐
               ▼                   ▼                    ▼
-        L0 doctrine.yaml   S3 partition.yaml     S2 corpus (mork/examples/**)
+        L0 doctrine.yaml   S3 partition.yaml     S2 corpus (ontology/mork/examples/**)
         (anchors, pairs,   (term -> lens,              │
          ladder)           exhaustive/disjoint)         │ predicate frequency,
               │                   │                     │ co-occurrence, unused codes
@@ -79,7 +79,7 @@ The L0 and L2 pipelines are two stages of one build, not two separate tools. Mer
          output contract)        │                     │
                                   ▼                     │
                     S4 cassette fidelity ◄───────────────┘
-                    (real mork/examples/*.ttl → hand-written MCN,
+                    (real ontology/mork/examples/*.ttl → hand-written MCN,
                      decode ≅ source, via mcn.decode + isomorphism)
                                   │
                                   ▼
@@ -116,7 +116,7 @@ The L0 and L2 pipelines are two stages of one build, not two separate tools. Mer
 
 ## 5. Repository layout
 
-Following the existing convention in this repository (`mork_communities/` is a pure-code package; `mork/test/data/` sits beside the code that consumes it, not inside it):
+Following the existing convention in this repository (`mork_communities/` is a pure-code package; `ontology/mork/test/data/` sits beside the code that consumes it, not inside it):
 
 ```
 mork/
@@ -198,7 +198,7 @@ class InProcessTool:
         return tuple(Diagnostic("lint", f.code, f.line, f.message, f.severity) for f in mcn.lint(g))
 
     def shacl(self, g) -> tuple[Diagnostic, ...]:
-        ...  # pyshacl against mork/shapes/constraints.ttl, unchanged from the sketch
+        ...  # pyshacl against ontology/mork/shapes/constraints.ttl, unchanged from the sketch
 
     def encode(self, g, hints):
         return None  # not implemented; callers already check via getattr
@@ -231,14 +231,14 @@ R3b–e (retrieval manifest, the two new Meta-SHACL shapes for reference-grounde
 
 Deliverables:
 
-1. `mork/src/python/mtp/` package scaffold (`__init__.py`, empty modules per §5).
+1. `tools/mork/python/src/python/mtp/` package scaffold (`__init__.py`, empty modules per §5).
 2. `mtp/facts.py` — ontology extraction from L0 sketch §3: `Term`/`Axiom`/`Facts` dataclasses, `term_hash` (logical-predicate fingerprinting), `graph_hash`, axiom extraction (GCIs, `AllDisjointClasses`/`Properties`, equivalences, completeness axioms, the P1–P10 inverse-subproperty pattern).
 3. `mtp/ce.py` — OWL class expression → MCN §10.5 rendering, from L0 sketch §4, with `install_abbrev()` fed by `mtp.codebook.code_for`.
 4. `mtp/codebook.py` — the thin adapter over `mcn_codebook` described in §5, **not** a YAML loader.
 5. `mtp/template.py`, `mtp/budget.py` — unchanged from L0 sketch §8.
 6. `mtp/lock.py` — `pins.lock.json` read/write/diff.
 7. `mtp/mcnio.py` — the adapter from §6, `InProcessTool` only (no `NullTool` fallback needed for decode/lint/shacl since the decoder is not hypothetical; retain a minimal `NullTool` shape purely for `encode()`'s absence).
-8. `mork/mtp/data/config.yaml` (no `codebook:` key; ontology file points at `mork/spec/Mork.ttl`; shapes at `mork/shapes/constraints.ttl`).
+8. `mork/mtp/data/config.yaml` (no `codebook:` key; ontology file points at `ontology/mork/spec/Mork.ttl`; shapes at `ontology/mork/shapes/constraints.ttl`).
 
 Exit criteria:
 
@@ -267,7 +267,7 @@ Exit criteria:
 
 Deliverables:
 
-1. `mtp/corpus.py` — frequency/co-occurrence/unused-code statistics over `mork/examples/**/*.ttl`, from L2 sketch §5.3.
+1. `mtp/corpus.py` — frequency/co-occurrence/unused-code statistics over `ontology/mork/examples/**/*.ttl`, from L2 sketch §5.3.
 2. `mork/mtp/data/partition.yaml` — curated term→lens assignment rules (subtree/glob/explicit/overrides), from L2 sketch §5.4, covering the nine lenses named in LLM Training.md §4.
 3. `mtp/partition.py` — `build()`/`check_pins()`.
 4. `out/stats.md`, `out/partition.md` generation wired into `cli.py`.
@@ -285,12 +285,12 @@ Deliverables:
 1. `mtp/mcnline.py` — structural (non-semantic) tokeniser/mutator for MCN node lines, from L2 sketch §5.2. Deliberately independent of `mcn_decoder.py`'s `_Lexer`.
 2. `mtp/mutate.py` — `Mutation`/`MutantOutcome`, and the six seed operators named in L2 sketch §8 build order: `drop:df`, `drop:xr`, `swap:cb->ap`, `swap:df->dp`, `retype:MU->M`, `both:cb+cn`.
 3. `mtp/minimise.py` — ddmin-to-teaching-core, from L2 sketch §5.6.
-4. `mtp/cassette.py` — fidelity check (real corpus file → hand-written MCN → `mcn.decode` → isomorphic to source), minimisation, rendering. First three cassettes come directly from `mork/examples/Mork2RML/loan_mapping.ttl` and `mork/examples/Zoo/UncertainMappings.ttl` — files this plan already has machine-checked gold MCN for (§3), so Phase 3 starts with zero fidelity-proof debt on those two.
+4. `mtp/cassette.py` — fidelity check (real corpus file → hand-written MCN → `mcn.decode` → isomorphic to source), minimisation, rendering. First three cassettes come directly from `ontology/mork/examples/Mork2RML/loan_mapping.ttl` and `ontology/mork/examples/Zoo/UncertainMappings.ttl` — files this plan already has machine-checked gold MCN for (§3), so Phase 3 starts with zero fidelity-proof debt on those two.
 
 Exit criteria:
 
 - Running the six seed operators against the three seed cassettes produces a mutation matrix with at least one `caught-*` and, per the L2 document's own expectation, likely at least one `silent` verdict.
-- The silent-set report (L2 sketch: "the most valuable output in the whole design") is generated and reviewed by a human before Phase 4 starts — per L2 §8, this step alone will likely surface a real gap in `mork/shapes/constraints.ttl` and should be filed as a follow-up against that file rather than silently absorbed into a lens.
+- The silent-set report (L2 sketch: "the most valuable output in the whole design") is generated and reviewed by a human before Phase 4 starts — per L2 §8, this step alone will likely surface a real gap in `ontology/mork/shapes/constraints.ttl` and should be filed as a follow-up against that file rather than silently absorbed into a lens.
 - `cassette.not-isomorphic` and `cassette.decode-failed` gates both produce a genuine failure when deliberately fed a broken fixture, confirming the gate actually fires.
 
 ## Phase 4, lenses
@@ -375,7 +375,7 @@ No exit criteria: this phase is not started by this plan. It is scoped here pure
 
 ## 10. Repository change plan by area
 
-### 10.1 `mork/src/python/mtp/` (new package)
+### 10.1 `tools/mork/python/src/python/mtp/` (new package)
 
 All files listed in §5 and §8. Depends on `mcn_decoder.py`/`mcn_codebook.py` only through the `mcn` package and `mtp/codebook.py`'s thin adapter — no changes to those modules are required by this plan.
 
@@ -383,7 +383,7 @@ All files listed in §5 and §8. Depends on `mcn_decoder.py`/`mcn_codebook.py` o
 
 `data/` (curated, hand-authored + generated `pins.lock.json`) and `out/` (fully generated, committed) as laid out in §5.
 
-### 10.3 `mork/shapes/constraints.ttl`
+### 10.3 `ontology/mork/shapes/constraints.ttl`
 
 Not modified by this plan directly, but Phase 3's silent-set report is very likely to file follow-up items against it (per L2 §2's own framing: "it will very likely surface gaps in `constraints.ttl` on first run"). Track those as separate, ordinary issues against that file — this plan does not pre-authorize changes to it.
 
@@ -418,7 +418,7 @@ Per §2.2, these criteria are about the pack's own internal consistency, not abo
 | Risk | Mitigation |
 |---|---|
 | `doctrine.yaml` curation (Phase 1) is the one genuinely human-judgement-heavy step and could stall the whole plan | Scope it to the essay's existing draft (LLM Training.md §2) plus the three §7 additions; do not open-endedly rewrite it during Phase 1 |
-| Corpus (`mork/examples/**`) is small; frequency stats and "never used" lists may be noisy | Explicit in L2 §5.3 already; treat early stats as provisional, re-run once more real mapping schemes exist |
+| Corpus (`ontology/mork/examples/**`) is small; frequency stats and "never used" lists may be noisy | Explicit in L2 §5.3 already; treat early stats as provisional, re-run once more real mapping schemes exist |
 | Mutation operators (Phase 3) might find far more `silent` findings than anticipated, each implying a `constraints.ttl` follow-up | Time-box Phase 3 to the six seed operators only; do not expand the operator set until the resulting silent-set backlog is triaged |
 | `mtp/codebook.py`'s thin-adapter decision (§5) assumes `mcn_codebook.py`'s reverse index never needs per-consumer customisation | If a real need for divergent behaviour appears, revisit — but do not pre-build flexibility for a need that has not materialised |
 | Phase 6 (errata governance) has no concrete deployment yet to draw real telemetry from | Deliverable is the *shape* and one worked example, not a populated card; this is intentional |
@@ -431,7 +431,7 @@ Phases 0–2 have no dependency on each other's outputs beyond Phase 0's shared 
 
 Immediate next actions:
 
-1. Scaffold `mork/src/python/mtp/` and `mork/mtp/data/config.yaml` (Phase 0, item 1 and 8).
+1. Scaffold `tools/mork/python/src/python/mtp/` and `mork/mtp/data/config.yaml` (Phase 0, item 1 and 8).
 2. Build `mtp/facts.py` and `mtp/ce.py` against the live `Mork.ttl` and confirm term/axiom counts look sane by hand.
 3. Write `mtp/mcnio.py`'s `InProcessTool` against the `mcn` package and re-run the loan-example round-trip as a smoke test.
 4. Only then start drafting `doctrine.yaml` (Phase 1) — it is much easier to anchor curated text against a working `facts.py` that can already answer "does this term exist, is it deprecated" than to write it speculatively first.

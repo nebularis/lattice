@@ -6,7 +6,7 @@ Companion to [Platform Solution Design Specification](solution-design-specificat
 
 ## 1. MORK Review Workbench
 
-The canonical design is [MORK UXD](../../mork/docs/MORK%20UXD.md). It is a complete, independently authored thesis on reviewable semantic alignment: the six-verb decision model (Confirm, Retarget, Reshape, Decline, Teach, Defer), the role perimeter table, the yield-ordered queue, the Bench/Atlas/Dossier/Boundary/Ledger/Studio surface set, the anti-pattern catalogue, and the build order. Read it in full before changing the Workbench. This section does not repeat it, it maps it onto the platform built around it.
+The canonical design is [MORK UXD](../../ontology/mork/docs/MORK%20UXD.md). It is a complete, independently authored thesis on reviewable semantic alignment: the six-verb decision model (Confirm, Retarget, Reshape, Decline, Teach, Defer), the role perimeter table, the yield-ordered queue, the Bench/Atlas/Dossier/Boundary/Ledger/Studio surface set, the anti-pattern catalogue, and the build order. Read it in full before changing the Workbench. This section does not repeat it, it maps it onto the platform built around it.
 
 ### 1.1 Role-to-API bridge
 
@@ -123,7 +123,7 @@ Design rules for this view:
 2. Add job submission and polling for generation, parity, and invalidation, with explicit pending/running/failed states.
 3. Add the Release view, gated on real semantic gate evidence from the release ledger.
 4. Add the Projection editor's Technical Inspector panel wired to real staging-graph data, preserving the existing "cannot be requested here" rule.
-5. Add real-stack Playwright coverage per the continuation plan in [docs/developer/current](../developer/current/README.md).
+5. Add real-stack Playwright coverage per the [platform continuation status](../developer/status/platform-continuation.md).
 
 ## 3. Cross-Cutting UX Principles
 

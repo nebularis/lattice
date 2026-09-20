@@ -67,8 +67,8 @@ from .parity import check_parity
 from .serialise import parse_files, serialise
 
 ROOT = Path(__file__).resolve().parents[2]
-EXAMPLES = ROOT / "surface" / "examples"
-FIXTURES = ROOT / "surface" / "test"
+EXAMPLES = ROOT / "ontology" / "surface" / "examples"
+FIXTURES = ROOT / "ontology" / "surface" / "test"
 AT = "2026-09-18T00:00:00Z"
 
 EMPLOYMENT = "https://example.org/lattice/surface/employment#"

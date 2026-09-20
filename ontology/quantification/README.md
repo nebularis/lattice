@@ -2,9 +2,9 @@
 
 # Quantification Ontology — Values, Bounds, Ranges, Conversion, and Recurrence
 
-*Literate specification, following the convention established in `foundation/spec/foundation.md`, `vocabulary/spec/vocabulary.md`, and `party/spec/party.md`. This document and `spec/quantification.ttl`, `vocab/quantification-vocab.ttl`, and `shapes/*.ttl` are meant to be regenerated from one another — see §3.*
+*Literate specification, following the convention established in `ontology/foundation/spec/foundation.md`, `ontology/vocabulary/spec/vocabulary.md`, and `ontology/party/spec/party.md`. This document and `spec/quantification.ttl`, `vocab/quantification-vocab.ttl`, and `shapes/*.ttl` are meant to be regenerated from one another — see §3.*
 
-Suggested repository location: `quantification/spec/quantification.md`.
+Suggested repository location: `ontology/quantification/spec/quantification.md`.
 
 **Revision note.** This is a full rework of an earlier draft, addressing the five blocking defects and the substantive defects raised in that draft's critical review. §16 lists what changed and why. The rename from `qty:` to `qnt:` — Quantity to Quantification — is adopted throughout, per that review's confirmation that it is correct and should not be relitigated.
 

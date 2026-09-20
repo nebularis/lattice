@@ -2,7 +2,7 @@
 
 # Vocabulary Ontology — Description Logic Elements
 
-*Literate specification, following the same convention established in `foundation/spec/foundation.md` — see [§3](#3-how-to-read-this-document) if this is the first layer document you're reading.*
+*Literate specification, following the same convention established in `ontology/foundation/spec/foundation.md` — see [§3](#3-how-to-read-this-document) if this is the first layer document you're reading.*
 
 ---
 
@@ -190,5 +190,5 @@ No new annotation properties; `fnd:utility` reused throughout.
 
 - **Tidy Foundation's document to match §8's convention** — move `fnd:Evidence rdfs:subClassOf prov:Entity` out of its inline position in Foundation §6 so it appears only once, in Foundation §8, matching the stricter convention adopted here. Cosmetic (duplicate triples already collapse harmlessly), but worth doing for consistency now that a second layer document has established the tidier pattern.
 - **Concept-level constraints** (excluding deprecated concepts, requiring leaf concepts) are a plausible extension to `SchemeContract` — deliberately deferred, per §4.
-- **The named `SchemeContract` and `ConceptScheme` individuals themselves** — the actual authored contracts each layer will declare, and the actual schemes downstream implementers bind — belong in each consuming layer's own files (e.g. Instrument would declare its peril-type contract in `instrument/projection/` or a dedicated location not yet settled) and in `governance/scheme-contracts/` at the root, per the repository structure. Nothing here populates either.
+- **The named `SchemeContract` and `ConceptScheme` individuals themselves** — the actual authored contracts each layer will declare, and the actual schemes downstream implementers bind — belong in each consuming layer's own files (e.g. Instrument would declare its peril-type contract in `ontology/instrument/projection/` or a dedicated location not yet settled) and in `ontology/governance/scheme-contracts/` at the root, per the repository structure. Nothing here populates either.
 - **This Turtle has been checked by manual syntax review and by testing the extraction procedure against this exact document** (confirmed to produce the intended fragment set correctly — see the two-tag convention in §3) but not by an actual OWL/Turtle parser, for the same environment reason noted in Foundation's document. Needed before this becomes `spec/vocabulary.ttl`.

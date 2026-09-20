@@ -2,7 +2,7 @@
 
 # Amendment: Eligibility law L9
 
-**Affects:** `eligibility/README.md` (law register), `eligibility/vocab/eligibility-vocab.ttl` (`elg:L9` individual), `eligibility/shapes/` (the `elg:HierarchicalClosureRule` discharge)
+**Affects:** `ontology/eligibility/README.md` (law register), `ontology/eligibility/vocab/eligibility-vocab.ttl` (`elg:L9` individual), `ontology/eligibility/shapes/` (the `elg:HierarchicalClosureRule` discharge)
 **Reason:** `elg:HierarchicalClosureRule` is currently both the statement of what hierarchical closure *means* and the only mechanism that *materialises* it. As the sole discharge of L9 it runs unscoped over the whole union graph, with no provenance, no authority declaration, and no record that it ran. Materialisation now belongs to the Surface layer (ADR-A16), which scopes it to a declared population, records a read set, and caps its authority. L9 keeps the semantics; it stops owning the realisation.
 **Nature:** narrowing of discharge, not of meaning. Nothing that satisfied the previous L9 fails the replacement.
 

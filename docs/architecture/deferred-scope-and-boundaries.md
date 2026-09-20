@@ -15,7 +15,7 @@ The remaining deferred Behaviour items are:
 
 ### 1.1 `bhv:Proportional`
 
-`bhv:Proportional` remains declared in [behaviour/vocab/behaviour-vocab.ttl](../../behaviour/vocab/behaviour-vocab.ttl) and rejected by [behaviour/shapes/constraints.ttl](../../behaviour/shapes/constraints.ttl).
+`bhv:Proportional` remains declared in [ontology/behaviour/vocab/behaviour-vocab.ttl](../../ontology/behaviour/vocab/behaviour-vocab.ttl) and rejected by [ontology/behaviour/shapes/constraints.ttl](../../ontology/behaviour/shapes/constraints.ttl).
 
 Before it is made usable, the repository should first carry:
 
@@ -40,7 +40,7 @@ These are not blocked by Quantification or by the current Behaviour ontology sha
 
 ## 2. Applied-layer boundary
 
-Per [ADR-A-C1](../adr/ADR-A-C1-applied-layer-theorem-restatement.md) and [docs/GOVERNANCE.md](../GOVERNANCE.md), the public substrate stops at generic mechanism and generic law.
+Per [ADR-A-C1](decisions/ADR-AC1-applied-layer-theorem-restatement.md) and [docs/GOVERNANCE.md](../GOVERNANCE.md), the public substrate stops at generic mechanism and generic law.
 
 What belongs in an applied or deployment layer instead:
 

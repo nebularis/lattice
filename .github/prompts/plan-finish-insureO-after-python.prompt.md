@@ -4,7 +4,7 @@ This prompt captures the remaining work after the repository-level dataset and s
 
 ## Goal
 
-Complete the applied validation package under `examples/insure-o/` with a real, validated graph and a deterministic validation pass, using Python-based RDF/Turtle tooling instead of editor-only checks.
+Complete the applied validation package under `ontology/examples/insure-o/` with a real, validated graph and a deterministic validation pass, using Python-based RDF/Turtle tooling instead of editor-only checks.
 
 ## Preconditions
 
@@ -26,19 +26,19 @@ Complete the applied validation package under `examples/insure-o/` with a real, 
 
 Run a focused Turtle parse and validation pass over:
 
-- `eligibility/README.md`-derived semantic content as represented in `eligibility/spec/eligibility.ttl`
-- `eligibility/shapes/rules.ttl`
-- `eligibility/vocab/eligibility-vocab.ttl`
-- `behaviour/spec/behaviour.ttl`
-- `behaviour/shapes/constraints.ttl`
-- `examples/insure-o/**/*.ttl`
+- `ontology/eligibility/README.md`-derived semantic content as represented in `ontology/eligibility/spec/eligibility.ttl`
+- `ontology/eligibility/shapes/rules.ttl`
+- `ontology/eligibility/vocab/eligibility-vocab.ttl`
+- `ontology/behaviour/spec/behaviour.ttl`
+- `ontology/behaviour/shapes/constraints.ttl`
+- `ontology/examples/insure-o/**/*.ttl`
 
 Confirm that:
 
 - `elg:HierarchicalMatch` is loadable and globally consistent
 - `elg:L9` is present and semantically coherent
-- the rule in `eligibility/shapes/rules.ttl` materialises the expected broader closure
-- the example hierarchy in `examples/insure-o/projection/**/*.ttl` is valid RDF/Turtle
+- the rule in `ontology/eligibility/shapes/rules.ttl` materialises the expected broader closure
+- the example hierarchy in `ontology/examples/insure-o/projection/**/*.ttl` is valid RDF/Turtle
 - the execution profile remains optional and non-semantic by design
 
 ### 2. Add missing implementation details where validation reveals gaps
@@ -69,7 +69,7 @@ The examples should remain generic and non-product-specific, while still showing
 
 ### 4. Add a real validation corpus
 
-Create a small set of authoritative validation files under `examples/insure-o/test/` with intended pass/fail behaviour:
+Create a small set of authoritative validation files under `ontology/examples/insure-o/test/` with intended pass/fail behaviour:
 
 - positive examples that should validate successfully
 - negative examples that should fail because of missing scheme contracts, malformed hierarchy membership, or invalid mixed-dimension usage
@@ -79,7 +79,7 @@ These tests should be kept deliberately small and readable, matching the reposit
 
 ### 5. Validate the applied package end-to-end
 
-Run a focused validation pass over the entire `examples/insure-o/` tree and selected repository substrate files.
+Run a focused validation pass over the entire `ontology/examples/insure-o/` tree and selected repository substrate files.
 
 The pass should check:
 
@@ -104,7 +104,7 @@ Scope discipline:
 
 When complete, the repo should contain:
 
-- a coherent `examples/insure-o/` package
+- a coherent `ontology/examples/insure-o/` package
 - a concrete peril hierarchy and matching admission profile
 - a realistic sequential allowance chain
 - a small set of valid and invalid example fixtures
@@ -131,11 +131,11 @@ from rdflib import Graph
 
 g = Graph()
 for path in [
-    'eligibility/spec/eligibility.ttl',
-    'behaviour/spec/behaviour.ttl',
-    'examples/insure-o/projection/bindings.ttl',
-    'examples/insure-o/projection/hierarchy-example.ttl',
-    'examples/insure-o/execution/shadow-profile.ttl',
+    'ontology/eligibility/spec/eligibility.ttl',
+    'ontology/behaviour/spec/behaviour.ttl',
+    'ontology/examples/insure-o/projection/bindings.ttl',
+    'ontology/examples/insure-o/projection/hierarchy-example.ttl',
+    'ontology/examples/insure-o/execution/shadow-profile.ttl',
 ]:
     g.parse(path, format='turtle')
 print('all ok')

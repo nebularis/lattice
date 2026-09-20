@@ -355,7 +355,7 @@ Each subsection gives scope and completion intent for the eventual ADR body.
 
 ## 7. Proposed next file targets for full ADRs
 
-When you are ready to proceed, suggested ADR file names under `docs/adr`:
+When you are ready to proceed, suggested ADR file names under `docs/architecture/decisions`:
 
 - `ADR-A17-surface-unified-projection-authoring-model.md`
 - `ADR-A18-surface-to-mork-lowering-boundary.md`

@@ -21,7 +21,7 @@ jobs:
         with:
           python-version: "3.11"
       - run: python -m pip install -c requirements-lock.txt ".[reasoning]"
-      - run: python tools/literate_extract.py surface/README.md --layer surface --root . --shapes shapes/structural.ttl shapes/constraints.ttl --check
+      - run: python tools/literate_extract.py ontology/surface/README.md --layer surface --root . --shapes shapes/structural.ttl shapes/constraints.ttl --check
       - run: python -m unittest tools.surface.test_surface tools.mork_compilers.test_mork_compilers -v
       - run: python -m tools.phase8_conformance
 

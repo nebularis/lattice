@@ -1387,6 +1387,6 @@ spc/
 │   ├── benchmark-pack.md
 │   ├── invalidation-policy.md
 │   └── split-plan.md
-├── examples/
+├── ontology/examples/
 └── test/
 ```

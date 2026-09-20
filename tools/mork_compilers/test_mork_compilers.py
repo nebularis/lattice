@@ -10,7 +10,7 @@ Run from the repository root::
 
 Requires rdflib. **These have not been executed** — no Python interpreter was
 available in the environment this revision was written in (see
-``mork/docs/eligibility-executable-compiler.md``). Treat a first run as part
+``ontology/mork/docs/eligibility-executable-compiler.md``). Treat a first run as part
 of review, not as a regression check, exactly as ``tools/surface``'s own test
 module already states for itself.
 """
@@ -31,7 +31,7 @@ from .sparql_backend import compile_query_template
 from .swrl_backend import compile_rules
 
 ROOT = Path(__file__).resolve().parents[2]
-INTERVAL_EXAMPLE = ROOT / "eligibility" / "examples" / "interval-containment.ttl"
+INTERVAL_EXAMPLE = ROOT / "ontology" / "eligibility" / "examples" / "interval-containment.ttl"
 
 CONDITION = URIRef("https://example.org/lattice/eligibility/minimum-credit-condition")
 PROFILE = URIRef("https://example.org/lattice/eligibility/profile-a")

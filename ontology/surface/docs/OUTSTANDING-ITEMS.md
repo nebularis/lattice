@@ -12,35 +12,35 @@ Produced as part of the Surface-MORK unified projection programme's Phase 0/1 ar
 
 | § | Item | Tag |
 |---|---|---|
-| 1.1 | Signature scope and law X6 | **Closed** — resolved in [ADR-A16 addendum](../../docs/adr/ADR-A16-surface-projection-mechanism.md#addendumdecision-x6-stands-as-designed-sign-off): X6 stands as designed. Composition across stacked surfaces stated in [ADR-A21](../../docs/adr/ADR-A21-signature-scope-composition-for-stacked-surfaces.md). |
+| 1.1 | Signature scope and law X6 | **Closed** — resolved in [ADR-A16 addendum](../../docs/architecture/decisions/ADR-A16-surface-projection-mechanism.md#addendumdecision-x6-stands-as-designed-sign-off): X6 stands as designed. Composition across stacked surfaces stated in [ADR-A21](../../docs/architecture/decisions/ADR-A21-signature-scope-composition-for-stacked-surfaces.md). |
 | 1.2 | Read paths as indexed step lists, not `sh:path` | Done — accepted design, no open action. |
 | 1.3 | Derivation contract lives in Surface, not Foundation | Decision needed — see §3.1. |
 | 1.4 | Generated-term markers are parentage, not typed individuals | Done — accepted design, no open action. |
-| 1.5 | Contracts in `execution/`, examples in `surface/examples/` | Done — accepted layout, no open action. |
+| 1.5 | Contracts in `execution/`, examples in `ontology/surface/examples/` | Done — accepted layout, no open action. |
 | 2.1 | `srf:RangePartitionPopulation` (bucketing law, X7) | Deferred, planned — Quantification partition semantics first, Surface admission second. |
-| 2.2 | Stacking beyond depth 1 | Deferred, planned — composition laws now stated in [ADR-A21](../../docs/adr/ADR-A21-signature-scope-composition-for-stacked-surfaces.md); cycle detection and hash-chain freshness remain unimplemented. |
+| 2.2 | Stacking beyond depth 1 | Deferred, planned — composition laws now stated in [ADR-A21](../../docs/architecture/decisions/ADR-A21-signature-scope-composition-for-stacked-surfaces.md); cycle detection and hash-chain freshness remain unimplemented. |
 | 2.3 | `srf:ExternalIndex` | Deferred — no admission criteria drafted yet; left until a deployment needs it. |
-| 3.1 | Foundation migration for `srf:DerivedArtefact` and kin | Decision needed — unaffected by [ADR-A22](../../docs/adr/ADR-A22-mork-governance-and-versioning-foundation-alignment.md), which resolves governance/versioning alignment only, not this. |
-| 3.2 | ADR-A01 convention conflict (README vs spec header) | **Closed** — resolved in [ADR-A01](../../docs/adr/ADR-A01-layer-dependency-order.md#decision): header lives in the README's `turtle-spec` fence. |
+| 3.1 | Foundation migration for `srf:DerivedArtefact` and kin | Decision needed — unaffected by [ADR-A22](../../docs/architecture/decisions/ADR-A22-mork-governance-and-versioning-foundation-alignment.md), which resolves ontology/governance/versioning alignment only, not this. |
+| 3.2 | ADR-A01 convention conflict (README vs spec header) | **Closed** — resolved in [ADR-A01](../../docs/architecture/decisions/ADR-A01-layer-dependency-order.md#decision): header lives in the README's `turtle-spec` fence. |
 | 3.3 | Profile identity computed, not modelled | Blocked, partially addressed — `Profile.identity_hash()` now exists in `tools/surface/model.py` as a pure computation (used by the ADR-A21 stack-composition check); whether to assert it into the graph as `srf:profileIdentityHash` still depends on §3.1's Foundation migration decision. |
-| 3.4 | R2 parity harness | Done, partially — `tools/surface/parity.py` implements the comparison; wiring to the shared conformance corpus is tracked under [ADR-A28](../../docs/adr/ADR-A28-parity-and-conformance-release-gate.md) and still open. |
-| 3.4 | MORK `mrk:ProjectionMapping` | **Closed** — implemented in `tools/surface/mork.py` against `mork/spec/Mork.ttl`; see also [ADR-A18](../../docs/adr/ADR-A18-surface-to-mork-lowering-boundary.md). |
+| 3.4 | R2 parity harness | Done, partially — `tools/surface/parity.py` implements the comparison; wiring to the shared conformance corpus is tracked under [ADR-A28](../../docs/architecture/decisions/ADR-A28-parity-and-conformance-release-gate.md) and still open. |
+| 3.4 | MORK `mrk:ProjectionMapping` | **Closed** — implemented in `tools/surface/mork.py` against `ontology/mork/spec/Mork.ttl`; see also [ADR-A18](../../docs/architecture/decisions/ADR-A18-surface-to-mork-lowering-boundary.md). |
 | 3.4 | insure-o port | Blocked — correctly blocked pending manual CSO/FBO port; not a Surface action item. |
-| 3.4 | SHACL validation of Surface's own shapes | Blocked — no SHACL engine available in the authoring environment; tracked as a mandatory CI gate under [ADR-A28](../../docs/adr/ADR-A28-parity-and-conformance-release-gate.md). |
+| 3.4 | SHACL validation of Surface's own shapes | Blocked — no SHACL engine available in the authoring environment; tracked as a mandatory CI gate under [ADR-A28](../../docs/architecture/decisions/ADR-A28-parity-and-conformance-release-gate.md). |
 | 3.5 | Entailment regimes recorded but not acted on | Deferred, partially addressed — `tools/surface/compile.py::check_entailment_regime` now refuses to compile under anything but `NoEntailment`, closing the *silent* gap; reasoner integration for the other regimes is still not started. |
 | 3.7 | ADR-A18 Surface-to-MORK lowering engine (`tools/surface/lowering.py`) | **Verified** — Surface suite passes 54/54, including `lower_projection`, `lower_contract`, `lower_all`/`link_dependencies`, determinism, and MORK interop. |
 | 3.5 | Parity cannot check `DefinitionOnly` forms | Deferred — same dependency as entailment regimes above. |
 | 3.5 | Blank-node labels visible in emitted modules | Done — accepted trade-off for stable diffs, no open action. |
 | 3.5 | `to_canonical_graph` performance | Deferred — watch-item, no fix planned until it bites. |
-| 3.6 | Canonicalisation contract `srf-canon/1` → `srf-canon/2` | **Closed** — cutover complete; examples and fixtures declare `srf-canon/2` and generator `0.2.0`. Runbook for future cutovers tracked under [ADR-A27](../../docs/adr/ADR-A27-invalidation-and-minimal-scope-regeneration-policy.md). |
-| 4 / 15.1 | `elg:boundScheme` did not exist | **Closed** — fixed as `elg:constrainedByContract`, present in `eligibility/spec/eligibility.ttl`, `eligibility/README.md`, `eligibility/shapes/rules.ttl`. |
-| 4 / 15.2 | `elg:HierarchicalClosureRule` unscoped | **Closed** — removed from `eligibility/shapes/`; no remaining reference in the Eligibility layer. |
+| 3.6 | Canonicalisation contract `srf-canon/1` → `srf-canon/2` | **Closed** — cutover complete; examples and fixtures declare `srf-canon/2` and generator `0.2.0`. Runbook for future cutovers tracked under [ADR-A27](../../docs/architecture/decisions/ADR-A27-invalidation-and-minimal-scope-regeneration-policy.md). |
+| 4 / 15.1 | `elg:boundScheme` did not exist | **Closed** — fixed as `elg:constrainedByContract`, present in `ontology/eligibility/spec/eligibility.ttl`, `ontology/eligibility/README.md`, `ontology/eligibility/shapes/rules.ttl`. |
+| 4 / 15.2 | `elg:HierarchicalClosureRule` unscoped | **Closed** — removed from `ontology/eligibility/shapes/`; no remaining reference in the Eligibility layer. |
 | 4 / 15.3 | `ins:` vs `ino:` properties | **Closed** — dropped, insure-o is going. |
-| 4 / 15.4 | `fnd:GovernanceState` individuals undeclared | **Closed** — corrected 2026-09-18: the previous "Done" tag here was wrong. `docs/architecture/ontology-architecture.md` already recorded this as a real, undeclared gap, and a repo-wide grep confirmed every reference to `fnd:Active` etc. was a forward reference, never a declaration. Now declared in `foundation/vocab/foundation-vocab.ttl` as part of the Phase 4 MORK governance work, which needed them to be real. |
+| 4 / 15.4 | `fnd:GovernanceState` individuals undeclared | **Closed** — corrected 2026-09-18: the previous "Done" tag here was wrong. `docs/architecture/ontology-architecture.md` already recorded this as a real, undeclared gap, and a repo-wide grep confirmed every reference to `fnd:Active` etc. was a forward reference, never a declaration. Now declared in `ontology/foundation/vocab/foundation-vocab.ttl` as part of the Phase 4 MORK governance work, which needed them to be real. |
 | 3.8 | MORK governance and versioning (ADR-A22) | Implemented, **engine validation pending** — Foundation import, `mork:GenerativeMapping` adopting `fnd:Governable`/`fnd:Version`, `mork:CompilationMode`, and three SHACL shapes are present. Turtle parsing is clean, but SHACL execution remains outstanding. |
 | 3.9 | MORK SPARQL/SHACL/SWRL compiler family for Eligibility (ADR-A23, ADR-A24) | **IntervalContainment slice verified** — the focused MORK compiler suite passes 15/15, and generated SPARQL returns `Permitted` for the worked example. SHACL/SWRL engine execution, profile-level artefacts, runtime result tracking, and broader Eligibility strategies remain open. |
 | 4 / 15.5 | `bhv:targetsAllowance` README⇄spec drift | **Closed** — hand-remediated; caught by `tools/literate_extract.py --check` going forward. |
-| 5 | MORK toolchain join assumptions | Decision needed — namespace and term-name assumptions in `tools/surface/mork.py` need confirming against the live `mork/spec/Mork.ttl`, not re-guessed. |
+| 5 | MORK toolchain join assumptions | Decision needed — namespace and term-name assumptions in `tools/surface/mork.py` need confirming against the live `ontology/mork/spec/Mork.ttl`, not re-guessed. |
 
 Items marked **Closed** are excluded from active backlog and are not revisited except for documentation hygiene, per the delivery plan's explicit-closure policy.
 
@@ -60,7 +60,7 @@ Modelled as:
 - X1 restated to apply to local-signature surfaces;
 - law **X6**: a promotion onto a property outside the contract's target namespace declares exact or crosswalk-exact fidelity, and is materialised rather than definitional.
 
-**Resolved:** X6 stands as designed, source-signature promotion stays in Surface rather than moving to MORK's `DataMapping`. See [ADR-A16 addendum](../../docs/adr/ADR-A16-surface-projection-mechanism.md#addendumdecision-x6-stands-as-designed-sign-off) and [ADR-A21](../../docs/adr/ADR-A21-signature-scope-composition-for-stacked-surfaces.md) for the composition rule across stacked surfaces.
+**Resolved:** X6 stands as designed, source-signature promotion stays in Surface rather than moving to MORK's `DataMapping`. See [ADR-A16 addendum](../../docs/architecture/decisions/ADR-A16-surface-projection-mechanism.md#addendumdecision-x6-stands-as-designed-sign-off) and [ADR-A21](../../docs/architecture/decisions/ADR-A21-signature-scope-composition-for-stacked-surfaces.md) for the composition rule across stacked surfaces.
 
 ### 1.2 Read paths are indexed step lists, not SHACL path nodes — done
 
@@ -78,9 +78,9 @@ ADR-A12 anticipates a Foundation-level `fnd:DerivedArtefact`, and Quantification
 
 MERIDIAN asserts `generatedFromConcept` on generated `owl:Class` terms with `rdfs:domain owl:Class` — punning that OWL-API toolchains object to. Marked by parentage instead: every generated class is `rdfs:subClassOf srf:GeneratedClass`, every generated relation `rdfs:subPropertyOf srf:generatedRelation`. Enumerating a surface's inventory is a subclass query, no punning involved. Provenance lives on `srf:GeneratedSymbol` records in the manifest.
 
-### 1.5 Contracts in `execution/`, examples in `surface/examples/` — done
+### 1.5 Contracts in `execution/`, examples in `ontology/surface/examples/` — done
 
-Generated packages for the three worked examples are committed under `surface/execution/<contractKey>/`. The example contract declarations are in `surface/examples/`, not the repository-root `examples/` — root `examples/employment.ttl` and `examples/saas-subscription.ttl` are for cross-layer composition scenarios rather than single-layer worked examples.
+Generated packages for the three worked examples are committed under `ontology/surface/execution/<contractKey>/`. The example contract declarations are in `ontology/surface/examples/`, not the repository-root `ontology/examples/` — root `ontology/examples/employment.ttl` and `ontology/examples/saas-subscription.ttl` are for cross-layer composition scenarios rather than single-layer worked examples.
 
 ---
 
@@ -118,10 +118,10 @@ Modelled fully: `srf:permittedStackDepth` on the profile, `srf:stackDepth` on th
 What deleting it leaves unstated, and what must exist first:
 
 - **The read set becomes a DAG.** At depth *n* a surface's semantic content hash must incorporate the *artefact* hashes of the surfaces it read, so a change three levels down propagates, and nothing yet checks that an input surface was itself fresh when read.
-- **X1 needs a composition law.** **Now stated** in [ADR-A21](../../docs/adr/ADR-A21-signature-scope-composition-for-stacked-surfaces.md): `signatureScope` of a stacked surface is `SourceSignature` if any input surface's is.
+- **X1 needs a composition law.** **Now stated** in [ADR-A21](../../docs/architecture/decisions/ADR-A21-signature-scope-composition-for-stacked-surfaces.md): `signatureScope` of a stacked surface is `SourceSignature` if any input surface's is.
 - **R1 needs a composition law.** **Now stated** in ADR-A21: every surface in a stack shares one profile identity, checked statically.
 - **Cycle detection.** Not yet implemented; needed before the depth cap can be lifted.
-- **Invalidation cost.** Not yet measured on the FBO chain; the impact-scoping table in the README §11 has no row for stacked regeneration. Tracked under [ADR-A27](../../docs/adr/ADR-A27-invalidation-and-minimal-scope-regeneration-policy.md).
+- **Invalidation cost.** Not yet measured on the FBO chain; the impact-scoping table in the README §11 has no row for stacked regeneration. Tracked under [ADR-A27](../../docs/architecture/decisions/ADR-A27-invalidation-and-minimal-scope-regeneration-policy.md).
 
 The FBO chain (CSO → promoted dimension → nominal index) is depth 1 and works today.
 
@@ -135,11 +135,11 @@ Declared and rejected, following the `bhv:Proportional` precedent — visibly un
 
 ### 3.1 Foundation migration — decision needed
 
-The question to settle: does the derived-artefact contract eventually move to Foundation per ADR-A12, with Surface's classes becoming subclasses, or does each generating layer declare its own? If the former, `srf:DerivedArtefact`, `srf:derivationAuthority`, `srf:producedAt`, `srf:artefactHash`, `srf:semanticContentHash`, and the two authority individuals are the migration set. `srf:ReadSetEntry` and the read-source kinds are arguably generic too. `srf:LawDischarge` duplicates `qnt:LawDischarge` in shape but not in namespace; a Foundation-level law register would absorb both. [ADR-A22](../../docs/adr/ADR-A22-mork-governance-and-versioning-foundation-alignment.md) resolves the governance/versioning half of Foundation alignment for MORK specifically; this broader question is unaffected and still open.
+The question to settle: does the derived-artefact contract eventually move to Foundation per ADR-A12, with Surface's classes becoming subclasses, or does each generating layer declare its own? If the former, `srf:DerivedArtefact`, `srf:derivationAuthority`, `srf:producedAt`, `srf:artefactHash`, `srf:semanticContentHash`, and the two authority individuals are the migration set. `srf:ReadSetEntry` and the read-source kinds are arguably generic too. `srf:LawDischarge` duplicates `qnt:LawDischarge` in shape but not in namespace; a Foundation-level law register would absorb both. [ADR-A22](../../docs/architecture/decisions/ADR-A22-mork-governance-and-versioning-foundation-alignment.md) resolves the ontology/governance/versioning half of Foundation alignment for MORK specifically; this broader question is unaffected and still open.
 
 ### 3.2 ADR-A01 convention conflict — closed
 
-**Resolved** in [ADR-A01](../../docs/adr/ADR-A01-layer-dependency-order.md#decision): the ontology header is authored in the README's `turtle-spec` fence, matching Eligibility, Behaviour, and Surface practice. Foundation, Vocabulary, and Party are the outliers to correct, not the other three layers.
+**Resolved** in [ADR-A01](../../docs/architecture/decisions/ADR-A01-layer-dependency-order.md#decision): the ontology header is authored in the README's `turtle-spec` fence, matching Eligibility, Behaviour, and Surface practice. Foundation, Vocabulary, and Party are the outliers to correct, not the other three layers.
 
 ### 3.3 Profile identity is computed, not modelled — blocked
 
@@ -147,10 +147,10 @@ The question to settle: does the derived-artefact contract eventually move to Fo
 
 ### 3.4 Not built, or partially built
 
-- **R2 parity harness.** `tools/surface/parity.py` implements the comparison for materialised forms and the `--parity` flag records the discharge. What remains is wiring it to the shared conformance corpus the other layers use, rather than the questions it currently generates itself from the contract. Tracked under [ADR-A28](../../docs/adr/ADR-A28-parity-and-conformance-release-gate.md).
-- **MORK `mrk:ProjectionMapping` — closed.** Implemented in `tools/surface/mork.py`, in both directions, against `mork/spec/Mork.ttl` as it stands in this repository. See [ADR-A18](../../docs/adr/ADR-A18-surface-to-mork-lowering-boundary.md).
+- **R2 parity harness.** `tools/surface/parity.py` implements the comparison for materialised forms and the `--parity` flag records the discharge. What remains is wiring it to the shared conformance corpus the other layers use, rather than the questions it currently generates itself from the contract. Tracked under [ADR-A28](../../docs/architecture/decisions/ADR-A28-parity-and-conformance-release-gate.md).
+- **MORK `mrk:ProjectionMapping` — closed.** Implemented in `tools/surface/mork.py`, in both directions, against `ontology/mork/spec/Mork.ttl` as it stands in this repository. See [ADR-A18](../../docs/architecture/decisions/ADR-A18-surface-to-mork-lowering-boundary.md).
 - **insure-o port.** Correctly blocked: the current insure-o is being dropped in favour of a hand-port of CSO and FBO. The three non-domain examples exercise every mechanism the port needs except range partitions.
-- **SHACL validation of Surface's own shapes.** No SHACL engine in the authoring environment, so `shapes/structural.ttl` and `shapes/constraints.ttl` are syntactically checked but not executed against fixtures. The six defect fixtures are exercised through the compiler, which enforces the same laws independently, but compiler agreement is not shape validation. Tracked as a mandatory CI gate under [ADR-A28](../../docs/adr/ADR-A28-parity-and-conformance-release-gate.md).
+- **SHACL validation of Surface's own shapes.** No SHACL engine in the authoring environment, so `shapes/structural.ttl` and `shapes/constraints.ttl` are syntactically checked but not executed against fixtures. The six defect fixtures are exercised through the compiler, which enforces the same laws independently, but compiler agreement is not shape validation. Tracked as a mandatory CI gate under [ADR-A28](../../docs/architecture/decisions/ADR-A28-parity-and-conformance-release-gate.md).
 
 ### 3.5 Compiler limitations worth knowing
 
@@ -161,7 +161,7 @@ The question to settle: does the derived-artefact contract eventually move to Fo
 
 ### 3.6 Canonicalisation contract `srf-canon/1` → `srf-canon/2` — closed
 
-The rdflib rewrite hashes `rdflib.compare`'s canonical graph rather than a sorted rendering dependent on deterministic blank-node labels — blank-node-label independent, so a graph read from anywhere hashes stably. This was a change of canonicalisation contract per ADR-A12, and the rehash has been taken: every previously recorded `srf:readHash`, `srf:semanticContentHash`, and `srf:artefactHash` is stale by design, and the three committed example packages were regenerated rather than left looking current (`surface/execution/README.md` gives the regeneration command). Examples and fixtures now declare `srf-canon/2` and generator `0.2.0`. A runbook for any future cutover of this kind is tracked under [ADR-A27](../../docs/adr/ADR-A27-invalidation-and-minimal-scope-regeneration-policy.md).
+The rdflib rewrite hashes `rdflib.compare`'s canonical graph rather than a sorted rendering dependent on deterministic blank-node labels — blank-node-label independent, so a graph read from anywhere hashes stably. This was a change of canonicalisation contract per ADR-A12, and the rehash has been taken: every previously recorded `srf:readHash`, `srf:semanticContentHash`, and `srf:artefactHash` is stale by design, and the three committed example packages were regenerated rather than left looking current (`ontology/surface/execution/README.md` gives the regeneration command). Examples and fixtures now declare `srf-canon/2` and generator `0.2.0`. A runbook for any future cutover of this kind is tracked under [ADR-A27](../../docs/architecture/decisions/ADR-A27-invalidation-and-minimal-scope-regeneration-policy.md).
 
 ### 3.7 Surface-to-MORK lowering engine — verified
 
@@ -169,7 +169,7 @@ The rdflib rewrite hashes `rdflib.compare`'s canonical graph rather than a sorte
 
 The implementation has now been executed. `python3 -m unittest tools.surface.test_surface -v` passes 54/54, including `ContractLoweringTests`, `LoweringDependencyTests`, Projection lowering, determinism, and MORK interop.
 
-**No committed goldens.** `surface/execution/`'s convention is regenerated output, not hand-authored fixtures (see that directory's own README). No lowering output has been committed here for the same reason: a hand-computed "golden" `.ttl` file cannot be verified byte-accurate without running the compiler, and a wrong golden is worse than none. Regenerate with `python -m tools.surface lower --contracts surface/examples/saas-subscription-arr-projection.ttl` once Python is available, and commit the result under `surface/execution/` at that point.
+**No committed goldens.** `ontology/surface/execution/`'s convention is regenerated output, not hand-authored fixtures (see that directory's own README). No lowering output has been committed here for the same reason: a hand-computed "golden" `.ttl` file cannot be verified byte-accurate without running the compiler, and a wrong golden is worse than none. Regenerate with `python -m tools.surface lower --contracts ontology/surface/examples/saas-subscription-arr-projection.ttl` once Python is available, and commit the result under `ontology/surface/execution/` at that point.
 
 ---
 
@@ -177,23 +177,23 @@ The implementation has now been executed. `python3 -m unittest tools.surface.tes
 
 | # | Finding | Status |
 |---|---|---|
-| 15.1 | `elg:boundScheme` does not exist | **Closed** — fixed as option (c), `elg:constrainedByContract`, present in `eligibility/spec/eligibility.ttl`, `eligibility/README.md`, and read by `eligibility/shapes/rules.ttl`. |
-| 15.2 | `elg:HierarchicalClosureRule` unscoped | **Closed** — removed from `eligibility/shapes/` per the L9 replacement at [eligibility-L9-replacement.md](eligibility-L9-replacement.md); no remaining reference in the Eligibility layer. |
+| 15.1 | `elg:boundScheme` does not exist | **Closed** — fixed as option (c), `elg:constrainedByContract`, present in `ontology/eligibility/spec/eligibility.ttl`, `ontology/eligibility/README.md`, and read by `ontology/eligibility/shapes/rules.ttl`. |
+| 15.2 | `elg:HierarchicalClosureRule` unscoped | **Closed** — removed from `ontology/eligibility/shapes/` per the L9 replacement at [eligibility-L9-replacement.md](eligibility-L9-replacement.md); no remaining reference in the Eligibility layer. |
 | 15.3 | `ins:` vs `ino:` properties | **Closed** — dropped; insure-o is going, `ins:` carries no domain properties, CSO scopes peril via `hasPerilScope` on `TermApplication`. |
-| 15.4 | `fnd:GovernanceState` individuals undeclared | **Closed** — see the corrected status summary entry above (§4/15.4); the individuals are now actually declared in `foundation/vocab/foundation-vocab.ttl`. |
+| 15.4 | `fnd:GovernanceState` individuals undeclared | **Closed** — see the corrected status summary entry above (§4/15.4); the individuals are now actually declared in `ontology/foundation/vocab/foundation-vocab.ttl`. |
 | 15.5 | `bhv:targetsAllowance` README⇄spec drift | **Closed** — hand-remediated. `tools/lattice/literate_extract.py --check` would have caught it, and catches the next one. |
 
 ---
 
 ## 5. The MORK toolchain join — decision needed
 
-`tools/surface/mork.py` is written against `mork/spec/Mork.ttl` and `tools/mork2rml.py` as they appear in this repository's document set, predating full confirmation against a live toolchain checkout. What was assumed, and what to check:
+`tools/surface/mork.py` is written against `ontology/mork/spec/Mork.ttl` and `tools/mork2rml.py` as they appear in this repository's document set, predating full confirmation against a live toolchain checkout. What was assumed, and what to check:
 
 | Assumption | Check |
 |---|---|
-| MORK terms live at `http://www.nebularis.org/ontologies/Mork#` | Confirmed: `mork/spec/Mork.ttl`'s base and default prefix use this namespace. `mork/targets/insure-o-target.ttl` binds `mk:` to `.../lattice/mork#` — both are bound in `namespaces.py`, and `MORK` is the one used. If the toolchain has settled on the lattice form instead, change one constant. |
+| MORK terms live at `http://www.nebularis.org/ontologies/Mork#` | Confirmed: `ontology/mork/spec/Mork.ttl`'s base and default prefix use this namespace. `ontology/mork/targets/insure-o-target.ttl` binds `mk:` to `.../lattice/mork#` — both are bound in `namespaces.py`, and `MORK` is the one used. If the toolchain has settled on the lattice form instead, change one constant. |
 | `mrk:GenerativeMapping`, `DataMapping`, `TargetingSpec`, `ParameterBinding` (`paramName`/`paramType`/`paramValue`), `OwlClass`, `mappingScheme`, `mappingFor`, `reviewStatus`, `provenanceCreated` exist with those names | Every one is used by `mork.py`. If any have been renamed, the failures will be silent — they would emit triples nobody reads. Worth a grep before the first production run. |
-| `ProjectionMapping`, `generatesClassDefinition`, `ProjectionProvenance`, `hasProjectionProvenance` exist | Confirmed present in `mork/spec/Mork.ttl` (`GenerativeMapping`'s subclasses include `ProjectionMapping`). |
+| `ProjectionMapping`, `generatesClassDefinition`, `ProjectionProvenance`, `hasProjectionProvenance` exist | Confirmed present in `ontology/mork/spec/Mork.ttl` (`GenerativeMapping`'s subclasses include `ProjectionMapping`). |
 | The compiler is a sibling of `mork2rml.py` under `tools/`, not a member of the MORK package | If the toolchain has a shared package (`mork_communities/` suggests one), `serialise.py` and parts of `namespaces.py` may duplicate utilities that already exist there. |
 | `mork_communities/shadow.py` is unrelated | It builds `OwlAxiom` shadows to keep reasoning over mapping graphs sound, a MORK-internal concern. Surface shadows nothing — it restates domain-layer relationships for runtime lookup. Worth confirming there is no naming collision in emitted IRIs if both ever run over one graph. |
 

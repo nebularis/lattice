@@ -8,11 +8,11 @@ Read [solution-design-specification.md](solution-design-specification.md) first 
 
 | Area | Primary implementation | Contracts and guides | Current state |
 |---|---|---|---|
-| Repository orchestration | `mise.toml`, `.devcontainer/`, `deployment/compose/` | [toolchain](../developer/toolchain.md), [ADR-A29](../adr/ADR-A29-repository-toolchain-and-environment-boundary.md) | Authoring complete, runtime validation pending |
-| Semantic platform | `platform/semantic-dataset-*`, `semantic-policy`, `platform-outbox`, `workers/graph_validation.py` | `contracts/events/graph-validation-*.schema.json`, [semantic platform](semantic-platform.md), [ADR-A30](../adr/ADR-A30-shared-semantic-platform-cross-runtime-boundary.md) | Authoring complete, persistence and integration validation pending |
-| Surface workflow | `platform/surface-workflow`, `workers/surface_jobs.py` | `contracts/surface/`, `contracts/events/surface-job-*.schema.json`, [Surface workflow](surface-workflow.md), [ADR-A32](../adr/ADR-A32-surface-revision-lifecycle-and-release-candidates.md) | In progress |
-| Surface authoring UI | `apps/surface-contract-studio` | [Surface Contract Studio](surface-contract-studio.md), `contracts/openapi/surface-workflow.openapi.json`, [ADR-A38](../adr/ADR-A38-surface-output-publication-and-studio-authoring-boundary.md) | Fixture-backed, awaiting HTTP adapter validation |
-| Release integration | `platform/release-integration` | `contracts/release/`, [release integration](release-stack-integration.md), [ADR-A31](../adr/ADR-A31-release-stack-neutral-integration-contract.md) | In progress |
+| Repository orchestration | `mise.toml`, `.devcontainer/`, `deployment/compose/` | [toolchain](../developer/toolchain.md), [ADR-A29](decisions/ADR-A29-repository-toolchain-and-environment-boundary.md) | Authoring complete, runtime validation pending |
+| Semantic platform | `platform/semantic-dataset-*`, `semantic-policy`, `platform-outbox`, `workers/graph_validation.py` | `contracts/events/graph-validation-*.schema.json`, [semantic platform](semantic-platform.md), [ADR-A30](decisions/ADR-A30-shared-semantic-platform-cross-runtime-boundary.md) | Authoring complete, persistence and integration validation pending |
+| Surface workflow | `platform/surface-workflow`, `workers/surface_jobs.py` | `contracts/surface/`, `contracts/events/surface-job-*.schema.json`, [Surface workflow](surface-workflow.md), [ADR-A32](decisions/ADR-A32-surface-revision-lifecycle-and-release-candidates.md) | In progress |
+| Surface authoring UI | `apps/surface-contract-studio` | [Surface Contract Studio](surface-contract-studio.md), `contracts/openapi/surface-workflow.openapi.json`, [ADR-A38](decisions/ADR-A38-surface-output-publication-and-studio-authoring-boundary.md) | Fixture-backed, awaiting HTTP adapter validation |
+| Release integration | `platform/release-integration` | `contracts/release/`, [release integration](release-stack-integration.md), [ADR-A31](decisions/ADR-A31-release-stack-neutral-integration-contract.md) | In progress |
 
 ## Dependency Direction
 
@@ -30,10 +30,10 @@ The compiler and ontology assets retain semantic ownership. The new Java modules
 
 ## Reading Order
 
-1. Read [ADR-A29](../adr/ADR-A29-repository-toolchain-and-environment-boundary.md) for environment and task ownership.
-2. Read [semantic platform](semantic-platform.md) and [ADR-A30](../adr/ADR-A30-shared-semantic-platform-cross-runtime-boundary.md) for graph and transport boundaries.
-3. Read [Surface workflow](surface-workflow.md) and [ADR-A32](../adr/ADR-A32-surface-revision-lifecycle-and-release-candidates.md) before changing Surface lifecycle code or worker messages.
-4. Read [release integration](release-stack-integration.md) and [ADR-A31](../adr/ADR-A31-release-stack-neutral-integration-contract.md) before implementing registry, GitOps, CI, or signing adapters.
+1. Read [ADR-A29](decisions/ADR-A29-repository-toolchain-and-environment-boundary.md) for environment and task ownership.
+2. Read [semantic platform](semantic-platform.md) and [ADR-A30](decisions/ADR-A30-shared-semantic-platform-cross-runtime-boundary.md) for graph and transport boundaries.
+3. Read [Surface workflow](surface-workflow.md) and [ADR-A32](decisions/ADR-A32-surface-revision-lifecycle-and-release-candidates.md) before changing Surface lifecycle code or worker messages.
+4. Read [release integration](release-stack-integration.md) and [ADR-A31](decisions/ADR-A31-release-stack-neutral-integration-contract.md) before implementing registry, GitOps, CI, or signing adapters.
 
 ## Validation State
 

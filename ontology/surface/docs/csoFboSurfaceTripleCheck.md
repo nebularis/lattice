@@ -46,7 +46,7 @@ The live Surface layer has two operations only:
 - `PromotionContract` — restate a reachable value as a direct assertion on the carrier
 - `IndexContract` — restate a reachable value as a retrievable symbol
 
-That is explicit in [surface/README.md](surface/README.md#L11-L18), and the implementation mirrors it in [tools/surface/model.py](tools/surface/model.py#L81-L110) and [tools/surface/compile.py](tools/surface/compile.py#L374-L514).
+That is explicit in [ontology/surface/README.md](ontology/surface/README.md#L11-L18), and the implementation mirrors it in [tools/surface/model.py](tools/surface/model.py#L81-L110) and [tools/surface/compile.py](tools/surface/compile.py#L374-L514).
 
 The pre-Surface CSO→FBO mapping file is doing much more than that. It is not just flattening paths. It is a **semantic compiler** that:
 
@@ -81,7 +81,7 @@ The Surface README explicitly supports:
 - multi-hop traversal
 - traversal through a mapping or crosswalk relation
 
-See [surface/README.md](surface/README.md#L30-L38) and [surface/README.md](surface/README.md#L147-L156).
+See [ontology/surface/README.md](ontology/surface/README.md#L30-L38) and [ontology/surface/README.md](ontology/surface/README.md#L147-L156).
 
 The current implementation supports this directly with ordered `PathStep` sequences in [tools/surface/model.py](tools/surface/model.py#L62-L74) and path evaluation in [tools/surface/model.py](tools/surface/model.py#L138-L145).
 
@@ -130,9 +130,9 @@ This is exactly the class of case X6 preserves.
 
 ## 3. Crosswalk-aware projection, with exact vs inexact explicitly separated
 
-Surface already models crosswalk traversal through `srf:viaMatchRelation`, with fidelity declared on the contract. See [surface/README.md](surface/README.md#L82-L84) and [surface/README.md](surface/README.md#L191-L192).
+Surface already models crosswalk traversal through `srf:viaMatchRelation`, with fidelity declared on the contract. See [ontology/surface/README.md](ontology/surface/README.md#L82-L84) and [ontology/surface/README.md](ontology/surface/README.md#L191-L192).
 
-There is a working example in [surface/examples/clinical-trial-crosswalk.ttl](surface/examples/clinical-trial-crosswalk.ttl), and a test covering it in [tools/surface/test_surface.py](tools/surface/test_surface.py#L263-L268).
+There is a working example in [ontology/surface/examples/clinical-trial-crosswalk.ttl](ontology/surface/examples/clinical-trial-crosswalk.ttl), and a test covering it in [tools/surface/test_surface.py](tools/surface/test_surface.py#L263-L268).
 
 ### Relevance to CSO → FBO
 
@@ -159,7 +159,7 @@ It supports:
 - explicit `closureBasis`
 - governed populations through `ContractBoundPopulation`
 
-See [surface/README.md](surface/README.md#L94-L117), [surface/README.md](surface/README.md#L127-L145), and [tools/surface/compile.py](tools/surface/compile.py#L374-L457).
+See [ontology/surface/README.md](ontology/surface/README.md#L94-L117), [ontology/surface/README.md](ontology/surface/README.md#L127-L145), and [tools/surface/compile.py](tools/surface/compile.py#L374-L457).
 
 ### Relevance to FBO
 
@@ -190,7 +190,7 @@ If you are going to project exact facts into FBO-authored properties, you need a
 - when it went stale
 - what must be regenerated
 
-Surface gives you that directly through its read set and generated-surface manifests, see [surface/README.md](surface/README.md#L179-L187) and [tools/surface/compile.py](tools/surface/compile.py#L313-L360).
+Surface gives you that directly through its read set and generated-surface manifests, see [ontology/surface/README.md](ontology/surface/README.md#L179-L187) and [tools/surface/compile.py](tools/surface/compile.py#L313-L360).
 
 This is one of the main reasons it is a better home than MORK for this specific problem.
 
@@ -304,19 +304,19 @@ Definition-only promotions:
 - must be forward-only
 - may not target authored properties
 
-See [surface/README.md](surface/README.md#L155-L162) and [tools/surface/compile.py](tools/surface/compile.py#L503-L514).
+See [ontology/surface/README.md](ontology/surface/README.md#L155-L162) and [tools/surface/compile.py](tools/surface/compile.py#L503-L514).
 
 For your FBO use case this is acceptable, because the recommended path is already materialised source-signature promotion for exact restatements.
 
 ### Range partition is not ready
 
-`RangePartitionPopulation` is still declared but intentionally unavailable. See [surface/README.md](surface/README.md#L145-L145) and [tools/surface/model.py](tools/surface/model.py#L220-L224).
+`RangePartitionPopulation` is still declared but intentionally unavailable. See [ontology/surface/README.md](ontology/surface/README.md#L145-L145) and [tools/surface/model.py](tools/surface/model.py#L220-L224).
 
 This matters later for some quantitative bucketed retrieval patterns, but not for the current X6 decision.
 
 ### Stack depth is capped at one
 
-Surface-over-surface is supported, but only one level deep in the current release. See [surface/README.md](surface/README.md#L168-L168) and [tools/surface/compile.py](tools/surface/compile.py#L570-L584).
+Surface-over-surface is supported, but only one level deep in the current release. See [ontology/surface/README.md](ontology/surface/README.md#L168-L168) and [tools/surface/compile.py](tools/surface/compile.py#L570-L584).
 
 That still allows the useful pattern:
 

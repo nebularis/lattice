@@ -49,11 +49,11 @@ A CI check (`reuse lint`) runs on every pull request and fails the build if a fi
 
 Each layer follows the shared template described in the top-level README. Two boundaries are worth being explicit about, because they're easy to blur without realising it:
 
-**`vocab/` is for mechanism-intrinsic enumerations only.** Trigger kind, composition-rule type, role type — small, closed sets that are part of how the mechanism works, not what any particular domain calls things. If you find yourself adding a concept that names a business or industry category — a peril type, a jurisdiction list, a product line — it doesn't belong in any layer's `vocab/` folder. That's exactly what `vocabulary/`'s governance-contracts mechanism exists to let a downstream implementation supply on its own, without a pull request against this repository at all. If a proposed `vocab/` addition is hard to justify as mechanism rather than domain, that difficulty is the signal, not something to reason past.
+**`vocab/` is for mechanism-intrinsic enumerations only.** Trigger kind, composition-rule type, role type — small, closed sets that are part of how the mechanism works, not what any particular domain calls things. If you find yourself adding a concept that names a business or industry category — a peril type, a jurisdiction list, a product line — it doesn't belong in any layer's `vocab/` folder. That's exactly what `ontology/vocabulary/`'s governance-contracts mechanism exists to let a downstream implementation supply on its own, without a pull request against this repository at all. If a proposed `vocab/` addition is hard to justify as mechanism rather than domain, that difficulty is the signal, not something to reason past.
 
 **`spec/`, `shapes/`, `vocab/`, and `projection/` never contain executable code.** These directories are ontology content — Turtle, SHACL, SPARQL — governed by MPL 2.0 as data, not as software. Compilation logic, extraction pipelines, and anything else that runs belongs in `tools/`, licensed the same way but kept in a directory a build process can point at cleanly. CI checks for this boundary and will fail a PR that puts a script inside a layer's ontology directories.
 
-**`applied/` is the place for new domain ontologies.** If you wish to contribute a new domain, put it under here.
+**`ontology/applied/` is the place for new domain ontologies.** If you wish to contribute a new domain, put it under here.
 
 ---
 

@@ -29,6 +29,12 @@
 
 **New ADR identifiers introduced by this amendment:** A76 (platform ontology vocabulary home), A77 (module naming and path-migration policy). **ADR-A29 is not superseded and must not be.** The Gradle/`make`/`just`/`pnpm` decision previously assigned to ADR-A76 in P0.2.1 is withdrawn, not renumbered.
 
+## Amendment status: superseded in part by ADR-A77
+
+ADR-A77 supersedes AM-05's additive-only repository-topology rule and its prohibition on moving root ontology layers. The replacement is the [Repository Topology and Documentation Governance Plan](../developer/plans/repository-topology-and-documentation-governance.md): semantic assets move below `ontology/`, executable MORK and SPC implementations move below `tools/`, and `workers/` remains a top-level deployable runtime package.
+
+The toolchain corrections in AM-04 remain in force. `mise` remains the sole orchestration entry point, and Maven, Yarn 4, Python project tooling, and Mix remain dependency authorities. ADR-A77 also replaces the former path-migration policy with the approved relocation manifest and documentation-lifecycle requirements.
+
 ---
 
 ## AM-01 — Add Phase 0 gate P0.0: architecture ratification
@@ -49,7 +55,7 @@
 > | **P0.0.2** | **ADR supersession map.** For every accepted ADR A29–A43, state: unaffected / amended / superseded, by which new ADR, and with what migration consequence. Minimum expected entries per the review: A30 (cross-runtime boundary), A33 (revision ledger and optimistic concurrency), A34 (graph-family registry and immutable identity), A39 (PostgreSQL portions), A31 (unaffected — the boundary restatement in the review's §1.1 is an *addition* to §4.4, not a reversal), A29 (**explicitly unaffected**) | Is any ADR left in an ambiguous state? Does any new ADR silently contradict an accepted one without saying so? |
 > | **P0.0.3** | **Reference-model and naming resolution.** Settle: (a) the `GraphReference` → `AuthoredGraphReference`/`RuntimeGraphReference` migration shape and its compatibility alias period (AM-10); (b) the design-time authoring graph vs runtime tenant/environment graph distinction, stated *before* `environmentId` exists in code; (c) canonical module and report names (AM-06); (d) the path-migration policy and migration table format (AM-05), as ADR-A77 | Can an implementer read this and produce the same names and the same reference types as another implementer working from it independently? |
 >
-> **P0.0 exit gate.** `docs/architecture/ratification-v1.md` merged and signed; the supersession map merged into `docs/adr/README.md`; no P0.1 slice references an unresolved item. This gate is cheap in effort and expensive to skip: every finding it resolves is one that would otherwise surface as contradictory code in three modules.
+> **P0.0 exit gate.** `docs/architecture/ratification-v1.md` merged and signed; the supersession map merged into `docs/architecture/decisions/README.md`; no P0.1 slice references an unresolved item. This gate is cheap in effort and expensive to skip: every finding it resolves is one that would otherwise surface as contradictory code in three modules.
 
 ---
 
@@ -153,7 +159,7 @@
 
 **Where.** Part 1, "Target module topology", in full.
 
-**Why.** Review finding 5 and §1. The proposed tree omitted current top-level areas (`applied/`, `surface/`, `tools/`, `examples/`, `governance/`, and the root ontology layers), and renamed four active path families with ~200 documentation and configuration references behind them, for no runtime benefit. The conceptual separation it expressed (graph SPI, coordination SPI, pack/activation, runtime host, generated clients) is retained as a **module topology** mapped onto existing roots.
+**Why.** Review finding 5 and §1. The proposed tree omitted current top-level areas (`ontology/applied/`, `ontology/surface/`, `tools/`, `ontology/examples/`, `ontology/governance/`, and the root ontology layers), and renamed four active path families with ~200 documentation and configuration references behind them, for no runtime benefit. The conceptual separation it expressed (graph SPI, coordination SPI, pack/activation, runtime host, generated clients) is retained as a **module topology** mapped onto existing roots.
 
 **Replacement text — replace Part 1 in full.**
 
@@ -167,8 +173,8 @@
 >
 > ### 1.1 Preserved roots (unchanged in role and path)
 >
-> `foundation/`, `vocabulary/`, `quantification/`, `party/`, `eligibility/`, `instrument/`, `behaviour/` — ontology layers, per the existing layer template.
-> `surface/`, `mork/`, `spc/`, `applied/`, `examples/`, `governance/`, `tools/` — unchanged in role; `governance/shapes/` gains content (P0.3.5, P0.3.6).
+> `ontology/foundation/`, `ontology/vocabulary/`, `ontology/quantification/`, `ontology/party/`, `ontology/eligibility/`, `ontology/instrument/`, `ontology/behaviour/` — ontology layers, per the existing layer template.
+> `ontology/surface/`, `mork/`, `spc/`, `ontology/applied/`, `ontology/examples/`, `ontology/governance/`, `tools/` — unchanged in role; `ontology/governance/shapes/` gains content (P0.3.5, P0.3.6).
 > `contracts/`, `platform/`, `workers/`, `apps/`, `packages/`, `deployment/`, `docs/`, `.devcontainer/`, `.github/`.
 >
 > ### 1.2 Java modules to add to the existing `platform/pom.xml` reactor
@@ -206,7 +212,7 @@
 >
 > ### 1.5 Contracts, deployment, docs
 >
-> `contracts/` gains `pack/`, `plan/`, `projection/`, `query/`, `lineage/`, `hash/`, `fixtures/` alongside existing `events/`, `surface/`, `mork/`, `openapi/`.
+> `contracts/` gains `pack/`, `plan/`, `projection/`, `query/`, `lineage/`, `hash/`, `fixtures/` alongside existing `events/`, `ontology/surface/`, `mork/`, `openapi/`.
 > `deployment/compose/docker-compose.yml` is **extended in place**; `deployment/images/` and `deployment/seeds/` are added as siblings.
 > `docs/` gains `validation/`, `traceability/`, `runbooks/`; `docs/architecture/` gains `iri-policy.md`, `nfr.md`, `nfr.yaml`, `ratification-v1.md`.
 >
@@ -250,7 +256,7 @@
 
 | Slice | Deliverable | Human validation focus | Executable consequence |
 |---|---|---|---|
-| **P0.1.16** | **ADR-A76: home for the platform vocabulary** (`lattice:authority`, `lattice:commitSeq`, `lattice:transactionTime`, `lattice:ProvenanceScope`, `lattice:cause`, `lattice:packDigest`, `lattice:generationProfileId`, `lattice:writeBackState`, `lattice:version`, `lattice:lifecycleState`). Three named options, one chosen: **(i) a Foundation extension module** — `foundation/spec/foundation-derivation.ttl` plus an optional import, which is the direction `ontology-architecture.md §10` already anticipates (`fnd:DerivedArtefact`, `fnd:derivedFrom`, `fnd:GenerationProfile`) and which keeps the layer count stable; **(ii) a new root-level substrate layer** following the per-layer template, named to avoid collision with the `platform/` Maven root (e.g. `provenance/`); **(iii) split** — hash/derivation terms into Foundation per (i), operational terms (`commitSeq`, `cause`, `writeBackState`, `lifecycleState`) into (ii). Recommendation: **(iii)**, because hash and derivation identity are genuinely Foundation-level and demanded by `§10`, whereas commit sequence and write-back state are platform mechanics that should not enter the ontology substrate every adopter imports | Does the chosen home respect the strict downward-dependency rule? Does any platform term leak into a layer that must not depend on platform mechanics? Does the layer dependency diagram in `ontology-architecture.md §1` still hold? | P0.3.3 directory creation; layer dependency test |
+| **P0.1.16** | **ADR-A76: home for the platform vocabulary** (`lattice:authority`, `lattice:commitSeq`, `lattice:transactionTime`, `lattice:ProvenanceScope`, `lattice:cause`, `lattice:packDigest`, `lattice:generationProfileId`, `lattice:writeBackState`, `lattice:version`, `lattice:lifecycleState`). Three named options, one chosen: **(i) a Foundation extension module** — `ontology/foundation/spec/foundation-derivation.ttl` plus an optional import, which is the direction `ontology-architecture.md §10` already anticipates (`fnd:DerivedArtefact`, `fnd:derivedFrom`, `fnd:GenerationProfile`) and which keeps the layer count stable; **(ii) a new root-level substrate layer** following the per-layer template, named to avoid collision with the `platform/` Maven root (e.g. `provenance/`); **(iii) split** — hash/derivation terms into Foundation per (i), operational terms (`commitSeq`, `cause`, `writeBackState`, `lifecycleState`) into (ii). Recommendation: **(iii)**, because hash and derivation identity are genuinely Foundation-level and demanded by `§10`, whereas commit sequence and write-back state are platform mechanics that should not enter the ontology substrate every adopter imports | Does the chosen home respect the strict downward-dependency rule? Does any platform term leak into a layer that must not depend on platform mechanics? Does the layer dependency diagram in `ontology-architecture.md §1` still hold? | P0.3.3 directory creation; layer dependency test |
 
 **P0.3.3 Scope replacement (first clause only).**
 
@@ -270,7 +276,7 @@
 
 | Slice | Deliverable | Human validation focus | Executable consequence |
 |---|---|---|---|
-| **P0.1.1** | **ADR-A74 graph-primary realm model**, which must contain an explicit supersession section naming, at minimum: **ADR-A33** (surface revision ledger and optimistic concurrency) — superseded as to storage realm, **preserved as to the `expectedVersion`/`409` contract**, which P1.1.2 must not change; **ADR-A34** (graph-family registry and immutable identity) — superseded as to enforcement mechanism, preserved as to intent, with uniqueness becoming structural per A51; **ADR-A30** (cross-runtime boundary) — amended where it assumes a PostgreSQL system of record; **ADR-A39** — PostgreSQL portions superseded; **ADR-A31** — **unaffected**, with the review's boundary restatement added to `§4.4` as an addition, not a reversal; **ADR-A29** — **unaffected**. Plus the rewrite of `data-architecture.md §1–§3, §5–§7` incorporating the artifact-realm exception (AM-03) and the Phase 0 durable-data scope (AM-02) as ratified in P0.0.1 | Is every contradicted ADR named? Is A33's concurrency contract preserved verbatim while its storage realm changes? Does the rewritten `§5` still contain the seven original concurrent-access rules in equivalent form, plus new rule 8 (no direct store access)? | ArchUnit G2/G2a; `docs/adr/README.md` supersession map updated in the same slice |
+| **P0.1.1** | **ADR-A74 graph-primary realm model**, which must contain an explicit supersession section naming, at minimum: **ADR-A33** (surface revision ledger and optimistic concurrency) — superseded as to storage realm, **preserved as to the `expectedVersion`/`409` contract**, which P1.1.2 must not change; **ADR-A34** (graph-family registry and immutable identity) — superseded as to enforcement mechanism, preserved as to intent, with uniqueness becoming structural per A51; **ADR-A30** (cross-runtime boundary) — amended where it assumes a PostgreSQL system of record; **ADR-A39** — PostgreSQL portions superseded; **ADR-A31** — **unaffected**, with the review's boundary restatement added to `§4.4` as an addition, not a reversal; **ADR-A29** — **unaffected**. Plus the rewrite of `data-architecture.md §1–§3, §5–§7` incorporating the artifact-realm exception (AM-03) and the Phase 0 durable-data scope (AM-02) as ratified in P0.0.1 | Is every contradicted ADR named? Is A33's concurrency contract preserved verbatim while its storage realm changes? Does the rewritten `§5` still contain the seven original concurrent-access rules in equivalent form, plus new rule 8 (no direct store access)? | ArchUnit G2/G2a; `docs/architecture/decisions/README.md` supersession map updated in the same slice |
 
 ---
 
@@ -382,7 +388,7 @@
 | `clients/client-java`, `clients/client-python` as a new root | Part 1 | `platform/client-java`; `lattice_workers.client` |
 | `platform/surface-control-plane` (implied by spec §4.2) | Part 1 | `platform/runtime-host`, renamed in P0.1.10 |
 
-**Validation for the sweep.** A CI grep gate over `docs/developer/current/Updated-Plan.md` and all VPs failing on any withdrawn token. This is the cheapest possible guard against the plan itself being the source of the drift.
+**Validation for the sweep.** A CI grep gate over `docs/developer/plans/lattice-platform-agentic-development-v0.2.md` and all VPs failing on any withdrawn token. This is the cheapest possible guard against the plan itself being the source of the drift.
 
 ---
 

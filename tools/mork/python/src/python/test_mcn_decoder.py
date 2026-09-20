@@ -66,10 +66,10 @@ from mcn_decoder import (
     lint,
 )
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
-MORK_TTL = REPO_ROOT / "mork" / "spec" / "Mork.ttl"
-LOAN_TTL = REPO_ROOT / "mork" / "examples" / "Mork2RML" / "loan_mapping.ttl"
-UNCERTAIN_TTL = REPO_ROOT / "mork" / "examples" / "Zoo" / "UncertainMappings.ttl"
+REPO_ROOT = Path(__file__).resolve().parents[5]
+MORK_TTL = REPO_ROOT / "ontology" / "mork" / "spec" / "Mork.ttl"
+LOAN_TTL = REPO_ROOT / "ontology" / "mork" / "examples" / "Mork2RML" / "loan_mapping.ttl"
+UNCERTAIN_TTL = REPO_ROOT / "ontology" / "mork" / "examples" / "Zoo" / "UncertainMappings.ttl"
 
 EX = "http://ex.org/m#"
 
@@ -2023,7 +2023,7 @@ Map_Yield_Pet MX y .dci c #Pet n "Yields the axiom <BaseIRI>#Pet at processing t
 # ===========================================================================
 
 
-@pytest.mark.skipif(not MORK_TTL.exists(), reason="mork/spec/Mork.ttl not found")
+@pytest.mark.skipif(not MORK_TTL.exists(), reason="ontology/mork/spec/Mork.ttl not found")
 class TestCodebookCoverage:
     @staticmethod
     def _declared_terms():
@@ -2222,7 +2222,7 @@ class TestPublicApi:
 
 class TestMcnPackage:
     """`import mcn` is a thin re-export over mcn_decoder/mcn_codebook, kept
-    for consumers (e.g. the MTP generator sketches in mork/docs/) that
+    for consumers (e.g. the MTP generator sketches in ontology/mork/docs/) that
     expect a package literally named `mcn` with decode/lint as top-level
     functions."""
 

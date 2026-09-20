@@ -2,7 +2,7 @@
 
 # Party Ontology — Description Logic Elements
 
-*Literate specification, following the convention established in `foundation/spec/foundation.md` and `vocabulary/spec/vocabulary.md`.*
+*Literate specification, following the convention established in `ontology/foundation/spec/foundation.md` and `ontology/vocabulary/spec/vocabulary.md`.*
 
 ---
 

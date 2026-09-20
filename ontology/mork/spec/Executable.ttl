@@ -12,9 +12,9 @@
 #
 # Executable semantics IR for MORK's SPARQL/SHACL/SWRL backend compilers
 # (ADR-A23, ADR-A24; a scoped subset of the design in
-# surface/docs/MorkEnhancements.md — see mork/docs/eligibility-executable-
+# ontology/surface/docs/MorkEnhancements.md — see ontology/mork/docs/eligibility-executable-
 # compiler.md for exactly what was carried over and what was deliberately
-# left out). Sits alongside mork/spec/Mork.ttl rather than inside it, for
+# left out). Sits alongside ontology/mork/spec/Mork.ttl rather than inside it, for
 # the same reason Surface sits outside the substrate dependency order
 # (ADR-A01): it names elg: and qnt: terms by punning, not by import, so
 # that adding this compiler layer never requires Eligibility or
@@ -47,7 +47,7 @@
 :ProfilePlan a owl:Class ;
 	rdfs:subClassOf :ExecutablePlan ;
 	rdfs:comment "An executable plan for one elg:AdmissionProfile, aggregating its condition plans." ;
-	skos:scopeNote "Declared for the aggregation model tools/mork_compilers/eligibility_ir.py already computes (ProfilePlan, compile_profile), but no backend in that package emits this class, :implementsProfile, :hasConditionPlan, or :usesCompatibilityOperation as RDF yet — only per-condition artefacts are generated today. Declared now so the gap is visible rather than requiring a vocabulary change later; see mork/docs/eligibility-executable-compiler.md." .
+	skos:scopeNote "Declared for the aggregation model tools/mork_compilers/eligibility_ir.py already computes (ProfilePlan, compile_profile), but no backend in that package emits this class, :implementsProfile, :hasConditionPlan, or :usesCompatibilityOperation as RDF yet — only per-condition artefacts are generated today. Declared now so the gap is visible rather than requiring a vocabulary change later; see ontology/mork/docs/eligibility-executable-compiler.md." .
 
 :IntervalContainmentPlan a owl:Class ;
 	rdfs:subClassOf :ConditionPlan ;
@@ -87,7 +87,7 @@
 
 :compiledFromMapping a owl:ObjectProperty ;
 	rdfs:domain :ExecutablePlan ; rdfs:range mork:DataMapping ;
-	rdfs:comment "The MORK mapping an executable plan was compiled alongside, where one was minted (the SHACL and SWRL backends mint one; the SPARQL backend does not, since mork:QueryTemplate has no mapping-linking property in mork/spec/Mork.ttl today)." .
+	rdfs:comment "The MORK mapping an executable plan was compiled alongside, where one was minted (the SHACL and SWRL backends mint one; the SPARQL backend does not, since mork:QueryTemplate has no mapping-linking property in ontology/mork/spec/Mork.ttl today)." .
 
 :producesArtefact a owl:ObjectProperty ;
 	rdfs:domain :ExecutablePlan ; rdfs:range :GeneratedArtefact ;

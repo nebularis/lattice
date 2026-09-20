@@ -4,7 +4,7 @@ This execution package should be regenerated whenever either the substrate or th
 
 ## Trigger conditions
 
-- changes to `behaviour/` allowance semantics
-- changes to `eligibility/` match strategies or hierarchy rules
+- changes to `ontology/behaviour/` allowance semantics
+- changes to `ontology/eligibility/` match strategies or hierarchy rules
 - changes to the `insure-o` applied layer T-box or scheme contracts
 - changes to any example scenario using the runtime profile

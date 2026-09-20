@@ -7,7 +7,7 @@ Command line for the MORK backend compiler family (ADR-A23, ADR-A24).
 Usage::
 
     python -m tools.mork_compilers compile-condition \\
-        --declarations eligibility/examples/interval-containment.ttl \\
+        --declarations ontology/eligibility/examples/interval-containment.ttl \\
         --condition https://example.org/lattice/eligibility/minimum-credit-condition \\
         --backend sparql --out artefact.ttl
 

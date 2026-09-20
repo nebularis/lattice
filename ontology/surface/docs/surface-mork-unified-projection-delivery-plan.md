@@ -350,7 +350,7 @@ Exit criteria:
 
 Deliverables:
 
-1. Normalize `surface/docs/OUTSTANDING-ITEMS.md` and `surface/docs/OUTSTANDING-ITEMS 2.md` into one authoritative status source with `Done / Deferred / Decision needed / Blocked` tags.
+1. Normalize `ontology/surface/docs/OUTSTANDING-ITEMS.md` and `ontology/surface/docs/OUTSTANDING-ITEMS 2.md` into one authoritative status source with `Done / Deferred / Decision needed / Blocked` tags.
 2. Freeze and mark already-remediated entries as closed, including ProjectionMapping and Eligibility L9-related carry-overs.
 3. ADR confirming Surface as unified top-level projection authoring layer
 4. ADR confirming staged compilation model and Surface-to-MORK lowering
@@ -525,35 +525,35 @@ Exit criteria:
 
 ### 11.1 Surface layer
 
-- `surface/README.md`
-- `surface/spec/surface.ttl`
-- `surface/vocab/surface-vocab.ttl`
-- `surface/shapes/structural.ttl`
-- `surface/shapes/constraints.ttl`
-- `surface/examples/*`
-- `surface/docs/OUTSTANDING-ITEMS.md`
-- `surface/docs/OUTSTANDING-ITEMS 2.md`
+- `ontology/surface/README.md`
+- `ontology/surface/spec/surface.ttl`
+- `ontology/surface/vocab/surface-vocab.ttl`
+- `ontology/surface/shapes/structural.ttl`
+- `ontology/surface/shapes/constraints.ttl`
+- `ontology/surface/examples/*`
+- `ontology/surface/docs/OUTSTANDING-ITEMS.md`
+- `ontology/surface/docs/OUTSTANDING-ITEMS 2.md`
 - `tools/surface/*`
 
 ### 11.2 MORK layer
 
-- `mork/spec/Mork.ttl`
-- `mork/spec/Mork.owl`
-- `mork/README.md`
-- `mork/src/python/*` compilers and validators
+- `ontology/mork/spec/Mork.ttl`
+- `ontology/mork/spec/Mork.owl`
+- `ontology/mork/README.md`
+- `tools/mork/python/src/python/*` compilers and validators
 
 ### 11.3 Eligibility and executable integration
 
-- `eligibility/*` for declarative sources and examples
-- `surface/docs/MorkEnhancements.md` as detailed source plan
+- `ontology/eligibility/*` for declarative sources and examples
+- `ontology/surface/docs/MorkEnhancements.md` as detailed source plan
 - new executable semantics documents under Surface or dedicated executable layer once agreed
 
 ### 11.4 Cross-layer governance and conventions
 
-- `docs/adr/ADR-A01-layer-dependency-order.md`
-- `docs/adr/ADR-A12-identity-and-derivation-model.md`
-- `foundation/README.md`
-- `behaviour/README.md`
+- `docs/architecture/decisions/ADR-A01-layer-dependency-order.md`
+- `docs/architecture/decisions/ADR-A12-identity-and-derivation-model.md`
+- `ontology/foundation/README.md`
+- `ontology/behaviour/README.md`
 - `tools/literate_extract.py`
 
 ---
@@ -655,7 +655,7 @@ A release cannot pass production gate without:
 2. Publish a single outstanding-items status source and mark closed items explicitly.
 3. Open ADR set for Surface Projection subsystem and Surface-to-MORK lowering.
 4. Open MORK governance enhancement epic with Foundation import task.
-5. Start Surface Projection spec draft in `surface/spec` and `surface/vocab`.
+5. Start Surface Projection spec draft in `ontology/surface/spec` and `ontology/surface/vocab`.
 6. Start lowering prototype for one Eligibility interval example from Surface to MORK to SPARQL.
 
 ---

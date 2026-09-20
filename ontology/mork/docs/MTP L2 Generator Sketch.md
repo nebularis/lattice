@@ -60,7 +60,7 @@ Two consequences worth stating plainly:
 | I3 | `constraints.ttl` | SHACL | ontology | validation ground truth |
 | I4 | MCN decoder + lint | executable / importable | compiler team | verification; **pluggable**, see §5.1 |
 | I5 | MCN encoder (§15) | executable / importable | compiler team | optional; auto-derives gold MCN |
-| I6 | Example corpus | `mork/examples/**/*.ttl`, real mapping schemes | repo | source of cassettes + frequency stats |
+| I6 | Example corpus | `ontology/mork/examples/**/*.ttl`, real mapping schemes | repo | source of cassettes + frequency stats |
 | I7 | `lenses/L-*.yaml` | YAML | curator | `Q`, `RULES`, `SMELLS`, partition claims, `covers` |
 | I8 | `cassettes/C-*.yaml` | YAML | curator | NL prompt, source pointer, focus, mutations, split |
 | I9 | `partition.yaml` | YAML | curator | term → lens assignment rules |
@@ -885,7 +885,7 @@ id: C-IND-01
 lens: L-IND
 title: A datum needs the class mapping it defers to
 teaches: [inv.order, pair.df-dp]
-source: mork/examples/Mork2RML/loan_mapping.ttl
+source: ontology/mork/examples/Mork2RML/loan_mapping.ttl
 gold: auto                # auto | inline
 mcn: null                 # populated by `mtp cassette build` when gold: auto
 focus:

@@ -70,7 +70,7 @@ I would separate the system into three layers.
 
 ### 1. Eligibility declaration
 
-This is the existing `eligibility/examples/interval-containment.ttl` style.
+This is the existing `ontology/eligibility/examples/interval-containment.ttl` style.
 
 It describes the business rule in a stable, domain-oriented vocabulary:
 
@@ -302,7 +302,7 @@ So, in short: **yes, the proposed architecture fits Mork well**. The ontology al
 
 Below is a proposed design specification. It treats Eligibility as the declarative source model, Mork as the validated compilation model, and an executable intermediate representation as the shared source for SPARQL, SHACL, SWRL, and native evaluators.
 
-````markdown name=eligibility/docs/executable-semantics.md
+````markdown name=ontology/eligibility/docs/executable-semantics.md
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
 # Executable Eligibility Semantics Layer
@@ -1249,7 +1249,7 @@ A deployment claiming conformance must declare the highest supported level and t
 5. Generate SPARQL `SELECT` and `ASK` artefacts from the same plans.
 6. Generate SHACL readiness and containment constraints.
 7. Add SWRL generation for scalar normalised credit-score conditions.
-8. Add tests using `eligibility/examples/interval-containment.ttl`.
+8. Add tests using `ontology/eligibility/examples/interval-containment.ttl`.
 
 The initial test suite should cover:
 

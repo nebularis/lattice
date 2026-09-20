@@ -2,7 +2,7 @@
 
 # Insure-O Applied Validation Package
 
-This note records the purpose and boundaries of the applied validation package under `examples/insure-o/`.
+This note records the purpose and boundaries of the applied validation package under `ontology/examples/insure-o/`.
 
 ## Purpose
 

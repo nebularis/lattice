@@ -3,23 +3,23 @@
 # MORK governance and versioning: migration guide
 
 Date: 2026-09-18
-Status: Accompanies [ADR-A22](../../docs/adr/ADR-A22-mork-governance-and-versioning-foundation-alignment.md)
+Status: Accompanies [ADR-A22](../../docs/architecture/decisions/ADR-A22-mork-governance-and-versioning-foundation-alignment.md)
 
 ## What changed
 
-`mork/spec/Mork.ttl`:
+`ontology/mork/spec/Mork.ttl`:
 
 1. The ontology now imports Foundation (`https://www.nebularis.org/neuro-semantic/foundation/0.0.7`).
 2. `mork:GenerativeMapping` is now `rdfs:subClassOf fnd:Governable, fnd:Version`, in addition to its existing `mork:DataMapping` superclass. This cascades to `ShapeMapping`, `RuleMapping`, `TransformMapping`, and `ProjectionMapping` by ordinary subsumption — nothing about their existing `owl:equivalentClass` definitions changes.
 3. A new `mork:CompilationMode` class (individuals `mork:DraftMode`, `mork:ReviewMode`, `mork:ProductionMode`) and a new `mork:compilationMode` property (domain `mork:MappingScheme`) name which of the three a scheme's member mappings compile under. Unset is equivalent to `DraftMode`.
 
-`mork/shapes/constraints.ttl` (previously empty):
+`ontology/mork/shapes/constraints.ttl` (previously empty):
 
 1. `mork:GenerativeMappingGovernanceStateClosedShape` — closes `fnd:hasGovernanceState`'s range to Foundation's four named individuals, for `mork:GenerativeMapping`.
 2. `mork:GenerativeMappingProductionGovernanceShape` — a `mork:GenerativeMapping` belonging (via `mork:mappingScheme`) to a scheme in `mork:ProductionMode` must have a governance state beyond `fnd:Draft` (`fnd:Reviewed`, `fnd:Active`, or `fnd:Superseded`) and declare `fnd:hasIdentity`. A superseded, historical mapping is not rejected merely for being superseded — only a mapping left at `Draft` or with no governance state at all fails this. **Conditional**: a mapping in a scheme with no declared mode, or in `DraftMode`/`ReviewMode`, is entirely unaffected.
 3. `mork:GenerativeMappingSupersessionEffectiveFromShape` — a mapping that supersedes an earlier one via `fnd:supersededBy` must record `mork:effectiveFrom`, extending the pre-existing GCI Axiom 5.10a (which covers `mork:supersedes`) to the Foundation-aligned direction.
 
-`foundation/vocab/foundation-vocab.ttl` gained the four `fnd:GovernanceState` individuals (`Draft`, `Reviewed`, `Active`, `Superseded`) that were referenced throughout the repository (Surface's own examples, Vocabulary's and Party's worked examples) but never actually declared — see `docs/architecture/ontology-architecture.md`'s own note on this gap. This was a prerequisite for any of the above to be meaningful, not itself part of ADR-A22's scope, and is called out separately here for that reason.
+`ontology/foundation/vocab/foundation-vocab.ttl` gained the four `fnd:GovernanceState` individuals (`Draft`, `Reviewed`, `Active`, `Superseded`) that were referenced throughout the repository (Surface's own examples, Vocabulary's and Party's worked examples) but never actually declared — see `docs/architecture/ontology-architecture.md`'s own note on this gap. This was a prerequisite for any of the above to be meaningful, not itself part of ADR-A22's scope, and is called out separately here for that reason.
 
 ## Why
 
@@ -46,7 +46,7 @@ Existing `reviewStatus` values do not automatically map onto `fnd:GovernanceStat
 
 ## Foundation migration boundary (delivery-plan Phase 4 item 6)
 
-A related, narrower question — separate from the governance/versioning alignment above and still open — is whether Surface's own `srf:DerivedArtefact` family (`GeneratedSurface`, `GeneratedSymbol`, `ReadSetEntry`, `LawDischarge`) should migrate to Foundation, becoming subclasses of a Foundation-level `fnd:DerivedArtefact`, or remain layer-local (see `surface/docs/OUTSTANDING-ITEMS.md` §3.1 and [ADR-A12](../../docs/adr/ADR-A12-identity-and-derivation-model.md)).
+A related, narrower question — separate from the ontology/governance/versioning alignment above and still open — is whether Surface's own `srf:DerivedArtefact` family (`GeneratedSurface`, `GeneratedSymbol`, `ReadSetEntry`, `LawDischarge`) should migrate to Foundation, becoming subclasses of a Foundation-level `fnd:DerivedArtefact`, or remain layer-local (see `ontology/surface/docs/OUTSTANDING-ITEMS.md` §3.1 and [ADR-A12](../../docs/architecture/decisions/ADR-A12-identity-and-derivation-model.md)).
 
 This guide does not resolve that question. It records the boundary criteria the eventual decision should apply, so the decision itself can be made once rather than re-litigated per layer:
 
@@ -58,6 +58,6 @@ This guide does not resolve that question. It records the boundary criteria the 
 
 No SHACL engine and no Python interpreter were available in the environment this change was authored in. Before relying on any of the above:
 
-1. Validate `mork/spec/Mork.ttl` still parses as consistent OWL (a reasoner run, not just a syntax check) — the new `rdfs:subClassOf` axioms on `GenerativeMapping` are additive and should not introduce inconsistency, but this has not been checked mechanically.
-2. Run `mork/shapes/constraints.ttl` against a MappingScheme fixture in each of the three compilation modes, confirming: `DraftMode`/unset never triggers `GenerativeMappingProductionGovernanceShape`; `ProductionMode` triggers it exactly for mappings missing governance state or identity; `GenerativeMappingGovernanceStateClosedShape` rejects a `fnd:hasGovernanceState` value outside the four named individuals.
+1. Validate `ontology/mork/spec/Mork.ttl` still parses as consistent OWL (a reasoner run, not just a syntax check) — the new `rdfs:subClassOf` axioms on `GenerativeMapping` are additive and should not introduce inconsistency, but this has not been checked mechanically.
+2. Run `ontology/mork/shapes/constraints.ttl` against a MappingScheme fixture in each of the three compilation modes, confirming: `DraftMode`/unset never triggers `GenerativeMappingProductionGovernanceShape`; `ProductionMode` triggers it exactly for mappings missing governance state or identity; `GenerativeMappingGovernanceStateClosedShape` rejects a `fnd:hasGovernanceState` value outside the four named individuals.
 3. Re-run `tools/surface` (`tools/surface/test_surface.py`) to confirm nothing about MORK's own change affects Surface's existing lift/lower/lowering behaviour — none of it should, since Surface only ever asserts `mork:DataMapping`, `mork:ProjectionMapping`, `mork:hasTargetingSpec`, and `mork:hasParameterBinding`, none of which this phase touched.

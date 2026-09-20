@@ -7,7 +7,7 @@ module per top-level tool, e.g. mork2rml.py, morkSC.py). This package
 exists only so that `import mcn` works for consumers who expect a package
 literally named `mcn` with `decode`/`lint`/`canonical_ntriples` as
 top-level functions -- e.g. the MTP-L0/L2 teaching-pack generator sketches
-in mork/docs/, whose mcnio.InProcessTool does `import mcn` and then calls
+in ontology/mork/docs/, whose mcnio.InProcessTool does `import mcn` and then calls
 `mcn.decode(...)` / `mcn.lint(...)`.
 
 There is no encode() here: MCN's RDF->MCN encoding direction (spec §15) is

@@ -8,7 +8,7 @@ Generates one parameterised SPARQL ``SELECT`` per condition plan, answering
 the three-valued question ADR-A24 requires — ``Permitted``, ``Denied``, or
 ``Undetermined`` — never a silent ``Denied`` for missing evidence. The query
 is written as a ``mork:QueryTemplate``, which MorkEnhancements.md recommends
-as the first target and which ``mork/spec/Mork.ttl`` already models
+as the first target and which ``ontology/mork/spec/Mork.ttl`` already models
 (``queryText``, ``queryLanguage``, ``paramBinding``). It is not attached to a
 ``mork:DataMapping``: ``QueryTemplate`` is ``rdfs:subClassOf skos:Concept``
 in the ontology today, with no property linking a mapping to one, so

@@ -91,4 +91,4 @@ Legal hold and retention classes originate in the intent. The system enforcing p
 
 The adapter should emit OpenTelemetry-compatible trace links and preserve the correlation ID. The stack stores traces, logs, metrics, dashboards, and alerts. LATTICE requires enough receipt data to correlate a semantic release to those signals, while avoiding a dependency on a specific telemetry backend.
 
-See [ADR-A31](../adr/ADR-A31-release-stack-neutral-integration-contract.md), [the operator reference](../operator/release-stack-reference.md), and [the Phase 3 handoff](../developer/phase-3-handoff.md) for implementation and validation boundaries.
+See [ADR-A31](decisions/ADR-A31-release-stack-neutral-integration-contract.md), [the operator reference](../operator/release-stack-reference.md), and [the Phase 3 handoff](../developer/status/) for implementation and validation boundaries.

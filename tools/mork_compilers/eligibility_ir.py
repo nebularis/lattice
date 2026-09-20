@@ -3,7 +3,7 @@
 
 """
 Eligibility executable IR (ADR-A24; a scoped subset of the executable-
-semantics design in ``surface/docs/MorkEnhancements.md``).
+semantics design in ``ontology/surface/docs/MorkEnhancements.md``).
 
 Compiles an ``elg:IntervalCondition`` into a backend-neutral list of
 required intervals, so the SPARQL, SHACL, and SWRL backends in this package
@@ -17,13 +17,13 @@ exists at all.
 - Only ``elg:IntervalContainment`` is implemented. ``elg:ExactCondition``,
   ``elg:SetMembershipCondition``, and ``elg:WildcardCondition`` are not.
 - Candidate evidence is read directly from an ``elg:Question``'s own
-  ``elg:candidateRangeSet`` — the shape ``eligibility/examples/interval-
+  ``elg:candidateRangeSet`` — the shape ``ontology/eligibility/examples/interval-
   containment.ttl`` already uses. A domain-facing binding mechanism (a
   "loans:creditScore supplies the candidate evidence" style contract) is
   the "Executable Projection Contract" the design note proposes in its
   final section. That is a separate, not-yet-decided architectural layer
   and is deliberately not implemented here — see
-  ``mork/docs/eligibility-executable-compiler.md`` for why.
+  ``ontology/mork/docs/eligibility-executable-compiler.md`` for why.
 - Profile aggregation is recorded (``elg:AllRequired``, ``elg:AnySufficient``)
   but no backend in this package generates a combined, profile-level
   artefact; only per-condition artefacts are generated. Aggregating several

@@ -14,7 +14,7 @@ Read memory
 
 The current repository is a mixed Maven, Yarn, Python, Erlang, and Compose workspace. The proposed topology would rename or replace several active roots, so I’m now tracing those paths and the governing ADR/document rules to distinguish harmless additions from breaking moves.
 
-Read [](file:///c%3A/Users/U1287595/Downloads/lattice-run/lattice/docs/adr)
+Read [](file:///c%3A/Users/U1287595/Downloads/lattice-run/lattice/docs/architecture/decisions)
 
 Read [](file:///c%3A/Users/U1287595/Downloads/lattice-run/lattice/docs/developer)
 
@@ -24,15 +24,15 @@ Read [](file:///c%3A/Users/U1287595/Downloads/lattice-run/lattice/docs/architect
 
 Read [](file:///c%3A/Users/U1287595/Downloads/lattice-run/lattice/.github/copilot-instructions.md)
 
-Read [](file:///c%3A/Users/U1287595/Downloads/lattice-run/lattice/docs/adr/README.md)
+Read [](file:///c%3A/Users/U1287595/Downloads/lattice-run/lattice/docs/architecture/decisions/README.md)
 
 The main compatibility risks are concrete, not speculative: the new plan names `deploy/`, `pnpm`, and renamed applications, while the checked-in orchestration contract uses compose, Yarn 4, and the current application names. I’m checking the accepted toolchain ADR and build/development configuration next, then I’ll assess the deeper architectural contradictions.
 
-Read [](file:///c%3A/Users/U1287595/Downloads/lattice-run/lattice/docs/adr/ADR-A29-repository-toolchain-and-environment-boundary.md)
+Read [](file:///c%3A/Users/U1287595/Downloads/lattice-run/lattice/docs/architecture/decisions/ADR-A29-repository-toolchain-and-environment-boundary.md)
 
-Read [](file:///c%3A/Users/U1287595/Downloads/lattice-run/lattice/docs/adr/ADR-A30-shared-semantic-platform-cross-runtime-boundary.md)
+Read [](file:///c%3A/Users/U1287595/Downloads/lattice-run/lattice/docs/architecture/decisions/ADR-A30-shared-semantic-platform-cross-runtime-boundary.md)
 
-Read [](file:///c%3A/Users/U1287595/Downloads/lattice-run/lattice/docs/adr/ADR-A31-release-stack-neutral-integration-contract.md)
+Read [](file:///c%3A/Users/U1287595/Downloads/lattice-run/lattice/docs/architecture/decisions/ADR-A31-release-stack-neutral-integration-contract.md)
 
 Read [](file:///c%3A/Users/U1287595/Downloads/lattice-run/lattice/docs/developer/toolchain.md)
 
@@ -58,9 +58,9 @@ Read [](file:///c%3A/Users/U1287595/Downloads/lattice-run/lattice/docs/architect
 
 Read [](file:///c%3A/Users/U1287595/Downloads/lattice-run/lattice/docs/developer/current/README.md)
 
-Read [](file:///c%3A/Users/U1287595/Downloads/lattice-run/lattice/docs/adr/ADR-A33-surface-revision-ledger-and-optimistic-concurrency.md)
+Read [](file:///c%3A/Users/U1287595/Downloads/lattice-run/lattice/docs/architecture/decisions/ADR-A33-surface-revision-ledger-and-optimistic-concurrency.md)
 
-Read [](file:///c%3A/Users/U1287595/Downloads/lattice-run/lattice/docs/adr/ADR-A34-surface-graph-family-registry-and-immutable-identity.md)
+Read [](file:///c%3A/Users/U1287595/Downloads/lattice-run/lattice/docs/architecture/decisions/ADR-A34-surface-graph-family-registry-and-immutable-identity.md)
 
 **Findings**
 
@@ -150,3 +150,7 @@ The instructions should be updated after the plan is ratified to make the new pr
 - Replace the blanket “all listed architecture documents must be updated” wording with a requirement to update each affected normative document, while retaining the existing minimum set for cross-cutting changes.
 
 No repository files were changed and no validation commands were run.
+
+## Implementation Follow-up
+
+This review is historical evidence. Its recommendation against an ontology-root relocation was reconsidered and superseded by [ADR-A77](decisions/ADR-A77-repository-topology-and-documentation-governance.md). The accepted implementation approach preserves the review's toolchain findings while relocating semantic assets under `ontology/`, separating MORK and SPC semantic assets from executable implementations, and enforcing a path-manifest and documentation-governance migration before source directories move. See the [Repository Topology and Documentation Governance Plan](../developer/plans/repository-topology-and-documentation-governance.md).

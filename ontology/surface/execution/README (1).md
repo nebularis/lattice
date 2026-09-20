@@ -8,8 +8,8 @@ Regenerate with:
 
 ```bash
 python3 -m tools.surface compile \
-    --contracts surface/examples/employment-job-family.ttl \
-    --out surface/execution --verify-determinism --parity
+    --contracts ontology/surface/examples/employment-job-family.ttl \
+    --out ontology/surface/execution --verify-determinism --parity
 ```
 
 A deployment's own packages live in that deployment's `execution/` directory. These three exist only to make the worked examples inspectable.
@@ -20,8 +20,8 @@ A deployment's own packages live in that deployment's `execution/` directory. Th
 
 ```bash
 python3 -m tools.surface lower \
-    --contracts surface/examples/saas-subscription-arr-projection.ttl \
-    --out surface/execution/subscription-arr/mapping.ttl
+    --contracts ontology/surface/examples/saas-subscription-arr-projection.ttl \
+    --out ontology/surface/execution/subscription-arr/mapping.ttl
 ```
 
 No lowered mapping graph is committed here yet — `tools/surface/lowering.py` (ADR-A18) was written and tested by reading, not by running, in an environment with no Python interpreter. Run the command above and commit its output once Python is available, rather than trusting a hand-authored file to be byte-accurate.

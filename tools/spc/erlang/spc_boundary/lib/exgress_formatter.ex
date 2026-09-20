@@ -10,7 +10,7 @@ defmodule SpcBoundary.EgressFormatter do
   - "passthrough": return the raw result
 
   JSON-LD framing is the preferred approach because it requires no
-  generated code — only a frame document (generated at design time as a
+  generated code — only sssa frame document (generated at design time as a
   JSON file). The frame specifies the shape of the output JSON, and
   the JSON-LD processor handles the transformation.
   """

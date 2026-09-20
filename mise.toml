@@ -34,6 +34,18 @@ depends = ["check:python-root", "check:workers", "check:java", "check:frontend",
 description = "Run the repository test suites"
 depends = ["check", "test:frontend"]
 
+[tasks."topology:preflight"]
+description = "Check ADR-A77 topology migration prerequisites"
+run = "python tools/repository_topology_check.py"
+
+[tasks."topology:ready"]
+description = "Check prerequisites for moving semantic roots into ontology"
+run = "python tools/repository_topology_check.py --ready"
+
+[tasks."topology:links"]
+description = "Check local Markdown links under docs"
+run = "python tools/repository_topology_check.py --links"
+
 [tasks."check:python-root"]
 run = "python -m unittest tools.surface.test_surface tools.mork_compilers.test_mork_compilers -v && python -m tools.phase8_conformance"
 
@@ -50,7 +62,7 @@ run = "yarn check"
 run = "yarn test"
 
 [tasks."check:spc"]
-run = "cd spc/src/erlang && mix test"
+run = "cd tools/spc/erlang && mix test"
 
 [tasks."services:up"]
 description = "Start the reference platform services"

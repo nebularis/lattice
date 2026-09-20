@@ -11,7 +11,7 @@ inline in mcn_decoder.py) so that:
   - the codebook can be unit-tested for internal consistency (no duplicate
     codes, every polymorphic code has a resolution table, etc.) independently
     of the decoder that consumes it;
-  - the codebook's *coverage* of mork/spec/Mork.ttl can be checked
+  - the codebook's *coverage* of ontology/mork/spec/Mork.ttl can be checked
     mechanically (see test_mcn_decoder.py::TestCodebookCoverage), which is
     the "codebook governance" mechanism called for in §20 of the spec; and
   - a future encoder (RDF -> MCN, spec §15) can import the same tables the

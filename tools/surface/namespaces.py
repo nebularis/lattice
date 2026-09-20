@@ -7,8 +7,8 @@ Namespace bindings.
 Declared once and imported everywhere, following the convention
 ``tools/mork2rml.py`` establishes for the MORK compiler. Two MORK namespaces
 are in play in this repository — the original ontology namespace used by
-``mork/spec/Mork.ttl`` and the harmonised lattice namespace used by
-``mork/targets/``. Both are bound; ``MORK`` is the one a mapping graph is
+``ontology/mork/spec/Mork.ttl`` and the harmonised lattice namespace used by
+``ontology/mork/targets/``. Both are bound; ``MORK`` is the one a mapping graph is
 actually written in.
 """
 

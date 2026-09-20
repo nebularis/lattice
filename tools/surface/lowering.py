@@ -34,14 +34,14 @@ Index, however, is intentionally identical between the two — see
 ``mrk:DataMapping`` plus the presence of a specific generated artefact
 property (``generatesShapeDefinition``, ``generatesRuleDefinition``,
 ``generatesTransformDefinition``, ``generatesClassDefinition`` respectively) —
-see ``mork/spec/Mork.ttl``. None of those exist yet at lowering time: nothing
+see ``ontology/mork/spec/Mork.ttl``. None of those exist yet at lowering time: nothing
 has compiled the mapping into an artefact. So every mapping this module emits
 is a bare ``mork:DataMapping``, not yet classified into any
 ``GenerativeMapping`` subtype; classification follows naturally, by
 entailment, once a Phase 5 backend compiler (ADR-A23) attaches the artefact it
 produced. ``hasTargetingSpec``, ``hasParameterBinding``, and
 ``dependsOnMapping`` all declare ``rdfs:domain :GenerativeMapping`` in
-``mork/spec/Mork.ttl``, so asserting any of them (as this module and the
+``ontology/mork/spec/Mork.ttl``, so asserting any of them (as this module and the
 pre-existing ``mork.py::lift`` both already do) already entails
 ``rdf:type mork:GenerativeMapping`` under RDFS domain semantics — an untyped,
 not-yet-specific member of that class, which is the honest state of a mapping

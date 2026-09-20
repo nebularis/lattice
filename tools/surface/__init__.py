@@ -18,7 +18,7 @@ Module map, following the layout ``tools/mork2rml.py`` establishes:
 ``canonical``   canonicalisation and content hashing
 ``serialise``   deterministic Turtle output and file loading
 ``compile``     ``SurfaceCompiler`` — the algebra map from contract to symbols
-``parity``      the surface/source comparison discharging law ``srf:R2``
+``parity``      the ontology/surface/source comparison discharging law ``srf:R2``
 ``mork``        lifting to and lowering from ``mrk:ProjectionMapping``
 ``cli``         command line
 

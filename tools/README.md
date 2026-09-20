@@ -32,7 +32,7 @@ authoritative specification. Fenced blocks are extracted in document order:
 as its first line.
 
 ```bash
-python3 tools/lattice/literate_extract.py surface/README.md \
+python3 tools/lattice/literate_extract.py ontology/surface/README.md \
     --layer surface --root . \
     --shapes shapes/structural.ttl shapes/constraints.ttl
 ```
@@ -56,15 +56,15 @@ inventory, and a thin CLI over both.
 | `canonical` | canonicalisation and content hashing |
 | `serialise` | deterministic Turtle output, and file loading |
 | `compile` | `SurfaceCompiler` — contract plus read set to symbols |
-| `parity` | the surface/source comparison discharging law `srf:R2` |
+| `parity` | the ontology/surface/source comparison discharging law `srf:R2` |
 | `mork` | lifting to and lowering from `mrk:ProjectionMapping` |
 
 ### Compile
 
 ```bash
 python3 -m tools.surface compile \
-    --contracts surface/examples/employment-job-family.ttl \
-    --out surface/execution \
+    --contracts ontology/surface/examples/employment-job-family.ttl \
+    --out ontology/surface/execution \
     --verify-determinism --parity
 ```
 
@@ -89,8 +89,8 @@ the output directory.
 
 ```bash
 python3 -m tools.surface check \
-    --manifest surface/execution/job-family/manifest.ttl \
-    --contracts surface/examples/employment-job-family.ttl
+    --manifest ontology/surface/execution/job-family/manifest.ttl \
+    --contracts ontology/surface/examples/employment-job-family.ttl
 ```
 
 Recomputes the recorded read set against the current sources and names each
@@ -102,7 +102,7 @@ Exits non-zero when stale, so it drops into CI unchanged.
 
 ```bash
 python3 -m tools.surface parity \
-    --contracts surface/examples/employment-job-family.ttl
+    --contracts ontology/surface/examples/employment-job-family.ttl
 ```
 
 Asks the surface and the source the same question — membership per population
@@ -120,7 +120,7 @@ the loop, not more code here.
 ```bash
 # lift compiled surfaces into mrk:ProjectionMapping records
 python3 -m tools.surface mork \
-    --contracts surface/examples/employment-job-family.ttl \
+    --contracts ontology/surface/examples/employment-job-family.ttl \
     --mapping-scheme https://example.org/mappings/employment
 ```
 
@@ -144,7 +144,7 @@ python3 -m unittest tools.surface.test_surface -v
 
 Covers canonicalisation, naming, population enumeration, path evaluation,
 closure, compilation, parity, MORK round-tripping, and the six deliberate-defect
-fixtures in `surface/test/`. **Not yet executed** — the environment this
+fixtures in `ontology/surface/test/`. **Not yet executed** — the environment this
 revision was written in has neither rdflib nor network access, so treat the
 first run as part of review.
 

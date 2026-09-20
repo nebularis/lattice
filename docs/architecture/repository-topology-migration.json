@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "decision": "ADR-A77",
+  "status": "structural-relocation-complete",
+  "rules": {
+    "semanticRoot": "ontology",
+    "implementationRoot": "tools",
+    "preserveNamespaceIris": true,
+    "useGitMove": true,
+    "retainWorkersRoot": true,
+    "legacyReferencesAllowedOnlyInHistoricalRecords": true
+  },
+  "moves": [
+    {"from": "foundation", "to": "ontology/foundation", "kind": "semantic"},
+    {"from": "vocabulary", "to": "ontology/vocabulary", "kind": "semantic"},
+    {"from": "quantification", "to": "ontology/quantification", "kind": "semantic"},
+    {"from": "party", "to": "ontology/party", "kind": "semantic"},
+    {"from": "eligibility", "to": "ontology/eligibility", "kind": "semantic"},
+    {"from": "behaviour", "to": "ontology/behaviour", "kind": "semantic"},
+    {"from": "instrument", "to": "ontology/instrument", "kind": "semantic"},
+    {"from": "surface", "to": "ontology/surface", "kind": "semantic"},
+    {"from": "applied", "to": "ontology/applied", "kind": "semantic"},
+    {"from": "governance", "to": "ontology/governance", "kind": "semantic"},
+    {"from": "examples", "to": "ontology/examples", "kind": "semantic"},
+    {"from": "mork", "to": ["ontology/mork", "tools/mork/python"], "kind": "split"},
+    {"from": "spc", "to": ["ontology/spc", "tools/spc/python", "tools/spc/erlang"], "kind": "split"}
+  ],
+  "completedMoves": [
+    {"from": "docs/adr", "to": "docs/architecture/decisions", "kind": "documentation"}
+  ],
+  "nonMoves": [
+    "workers",
+    "platform",
+    "apps",
+    "packages",
+    "contracts",
+    "deployment",
+    "test",
+    "docs"
+  ]
+}

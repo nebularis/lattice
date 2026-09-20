@@ -110,7 +110,7 @@ Ship this table in L0. It is ~250 tokens and removes most of the observed error 
 
 Nine units, each written to a fixed template so it compresses well and reads uniformly: **Question it answers → Rules → Mandatory co-occurrences → Smell tests → Lint codes it prevents → one cassette pointer.**
 
-`L-REP` representation & collections · `L-TAX` taxonomy, objectification, roles · `L-IND` individuation, deferral, precedence · `L-GEN` generative mappings + governance/production gate · `L-TPL` template expression algebra · `L-INT` intent algebra · `L-EGR` egress/projection · `L-UNC` uncertainty & weighting · `L-TBX` axiom lines & shadow declarations.
+`L-REP` representation & collections · `L-TAX` taxonomy, objectification, roles · `L-IND` individuation, deferral, precedence · `L-GEN` generative mappings + ontology/governance/production gate · `L-TPL` template expression algebra · `L-INT` intent algebra · `L-EGR` egress/projection · `L-UNC` uncertainty & weighting · `L-TBX` axiom lines & shadow declarations.
 
 **Routing without RAG.** A static table, shipped in the pack, keyed on task type and cheap input signals — not a vector search:
 

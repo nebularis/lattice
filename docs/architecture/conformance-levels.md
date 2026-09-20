@@ -2,7 +2,7 @@
 
 # Conformance-Level Ladder
 
-Companion reference for [../adr/ADR-A14-conformance-levels.md](../adr/ADR-A14-conformance-levels.md). This document is the detailed, living version of the ladder; the ADR records the decision to adopt it.
+Companion reference for [decisions/ADR-A14-conformance-levels.md](decisions/ADR-A14-conformance-levels.md). This document is the detailed, living version of the ladder; the ADR records the decision to adopt it.
 
 | Level | Description | Required for | Typical checks |
 |---|---|---|---|

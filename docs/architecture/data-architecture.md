@@ -2,7 +2,7 @@
 
 # Platform Data Architecture
 
-Companion to [Platform Solution Design Specification](solution-design-specification.md). This document covers data that is not ontology content: lifecycle ledgers, registries, job state, and generated artifacts. Ontology and RDF modelling stays normative in the layer READMEs (`foundation/`, `surface/`, `applied/*`) and in [ontology-architecture.md](ontology-architecture.md). This document exists because the platform now needs a second data model, alongside the ontology, for its own operation.
+Companion to [Platform Solution Design Specification](solution-design-specification.md). This document covers data that is not ontology content: lifecycle ledgers, registries, job state, and generated artifacts. Ontology and RDF modelling stays normative in the layer READMEs (`ontology/foundation/`, `ontology/surface/`, `ontology/applied/*`) and in [ontology-architecture.md](ontology-architecture.md). This document exists because the platform now needs a second data model, alongside the ontology, for its own operation.
 
 ## 1. Three Data Realms
 

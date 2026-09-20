@@ -2541,7 +2541,7 @@ class LintFinding:
 def lint(graph: Graph) -> List[LintFinding]:
     """Runs the Sec 14.2 lint rules against a decoded graph. These are
     heuristics that mirror Mork.ttl's GCIs and completeness axioms so a
-    generator's mistakes surface cheaply; mork/shapes/constraints.ttl and
+    generator's mistakes surface cheaply; ontology/mork/shapes/constraints.ttl and
     an OWL reasoner remain the source of truth (Sec 14.3)."""
     findings: List[LintFinding] = []
     findings.extend(_lint_datum_without_deferred(graph))

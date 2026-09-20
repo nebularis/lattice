@@ -6,7 +6,7 @@ This document records how the current LATTICE substrate is expected to be used o
 
 ## 1. Realisation posture
 
-Per [adr/ADR-A15-realisation-strategy-neutrality.md](adr/ADR-A15-realisation-strategy-neutrality.md), direct SPARQL, SHACL, reasoning, materialisation, and projection are peer strategies. At the current repo state, Eligibility and Behaviour are operationally grounded through:
+Per [ADR-A15](architecture/decisions/ADR-A15-realisation-strategy-neutrality.md), direct SPARQL, SHACL, reasoning, materialisation, and projection are peer strategies. At the current repo state, Eligibility and Behaviour are operationally grounded through:
 
 - authored ontology declarations in each layer `spec/*.ttl`
 - mechanism vocabularies in `vocab/*-vocab.ttl`
@@ -15,11 +15,11 @@ Per [adr/ADR-A15-realisation-strategy-neutrality.md](adr/ADR-A15-realisation-str
 
 ## 2. Derived artefact discipline
 
-Per [adr/ADR-A12-identity-and-derivation-model.md](adr/ADR-A12-identity-and-derivation-model.md), any derived product for Eligibility or Behaviour should record, at minimum:
+Per [ADR-A12](architecture/decisions/ADR-A12-identity-and-derivation-model.md), any derived product for Eligibility or Behaviour should record, at minimum:
 
 - the source declaration artefacts it depends on
 - the operational profile that produced it
-- the graph role it belongs to, per [adr/ADR-A13-dataset-graph-role-model.md](adr/ADR-A13-dataset-graph-role-model.md)
+- the graph role it belongs to, per [ADR-A13](architecture/decisions/ADR-A13-dataset-graph-role-model.md)
 - semantic content hash and generation/profile identity, where the implementation can compute them
 
 The repository does not yet define `fnd:DerivedArtefact`, so Gate 4 records the discipline as operational guidance and fixture design rather than as a new Foundation schema change.
@@ -37,7 +37,7 @@ A rule is not considered grounded by prose alone. The reference realisations may
 
 Invalidation is dependency-scoped, not layer-global.
 
-Example: changing an Eligibility interval declaration in [eligibility/test/E2-interval-containment.ttl](../eligibility/test/E2-interval-containment.ttl) should invalidate:
+Example: changing an Eligibility interval declaration in [ontology/eligibility/test/E2-interval-containment.ttl](../ontology/eligibility/test/E2-interval-containment.ttl) should invalidate:
 
 - the derived admissibility result for the affected `elg:Question`
 - any cached Eligibility decision computed under `elg:E2`
@@ -50,7 +50,7 @@ It should not invalidate:
 - Behaviour allowance balances that do not depend on that Eligibility profile
 - Quantification declarations outside the changed value-space lineage
 
-Example: changing a Behaviour allowance definition in [behaviour/test/B-P2-sequential-allowance.ttl](../behaviour/test/B-P2-sequential-allowance.ttl) should invalidate:
+Example: changing a Behaviour allowance definition in [ontology/behaviour/test/B-P2-sequential-allowance.ttl](../ontology/behaviour/test/B-P2-sequential-allowance.ttl) should invalidate:
 
 - derived allowance-account balances for accounts tracking that definition
 - transition executions whose effects consume that allowance

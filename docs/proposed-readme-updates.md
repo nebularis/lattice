@@ -4,7 +4,7 @@
 
 **Status:** investigative draft for review. Nothing in this document has been applied to `README.md` or any other file. Each section below names the exact spot in the current `README.md` to change, what kind of change it is (add / replace / remove), and the proposed text.
 
-This is based on everything currently uncommitted in the working tree (`git status` — see the appendix), read in full: the new `surface/` layer, the new `applied/` directory, the fleshed-out `tools/` folder, the MORK `ProjectionMapping` addition, the Eligibility `HierarchicalMatch` change, and the new `docs/glossary.md` and `docs/adr/ADR-A16-*.md`. Small copy-editing diffs (`quantification/README.md`, `.vscode/settings.json`) don't reach the top-level README and aren't covered here.
+This is based on everything currently uncommitted in the working tree (`git status` — see the appendix), read in full: the new `ontology/surface/` layer, the new `ontology/applied/` directory, the fleshed-out `tools/` folder, the MORK `ProjectionMapping` addition, the Eligibility `HierarchicalMatch` change, and the new `docs/glossary.md` and `docs/architecture/decisions/ADR-A16-*.md`. Small copy-editing diffs (`ontology/quantification/README.md`, `.vscode/settings.json`) don't reach the top-level README and aren't covered here.
 
 ---
 
@@ -12,13 +12,13 @@ This is based on everything currently uncommitted in the working tree (`git stat
 
 | New/changed thing | What it is |
 |---|---|
-| `surface/` (untracked, whole directory) | A new, 8th ontology layer: **Surface** — declares *promotion* (restate a reachable value as a direct assertion) and *indexing* (restate a value as a retrievable symbol). Low in the dependency order: imports Foundation, Vocabulary, Quantification; imported by nothing else in the substrate. Has its own worked examples, a design-sketch and outstanding-items doc, and one compiled-output stub under `execution/`. |
-| `docs/adr/ADR-A16-surface-projection-mechanism.md` (untracked) | The ADR accepting the Surface layer. `docs/adr/README.md` (modified) already indexes it. |
+| `ontology/surface/` (untracked, whole directory) | A new, 8th ontology layer: **Surface** — declares *promotion* (restate a reachable value as a direct assertion) and *indexing* (restate a value as a retrievable symbol). Low in the dependency order: imports Foundation, Vocabulary, Quantification; imported by nothing else in the substrate. Has its own worked examples, a design-sketch and outstanding-items doc, and one compiled-output stub under `execution/`. |
+| `docs/architecture/decisions/ADR-A16-surface-projection-mechanism.md` (untracked) | The ADR accepting the Surface layer. `docs/architecture/decisions/README.md` (modified) already indexes it. |
 | `docs/glossary.md` (untracked) | A new top-level, domain-neutral glossary — currently scoped to the Surface subsystem's vocabulary (carrier, contract, read path, promotion, indexing, etc.), explicitly written as "a drop-in section for the README(s)." |
-| `applied/` (untracked, whole directory) | A **new top-level concept**: a home for ported/staged applied-domain ontologies, distinct from both `instrument/` (the generic upper ontology) and `examples/` (worked scenario instances). Currently contains `applied/insurance/` — a hand-ported insurance contract-structure ontology (`ctr:`). `applied/README.md` describes it as: "Lattice ships with several domains, at varying levels of maturity. Each domain is housed beneath this folder... and follows the same structure as any other ontology layer." |
+| `ontology/applied/` (untracked, whole directory) | A **new top-level concept**: a home for ported/staged applied-domain ontologies, distinct from both `ontology/instrument/` (the generic upper ontology) and `ontology/examples/` (worked scenario instances). Currently contains `ontology/applied/insurance/` — a hand-ported insurance contract-structure ontology (`ctr:`). `ontology/applied/README.md` describes it as: "Lattice ships with several domains, at varying levels of maturity. Each domain is housed beneath this folder... and follows the same structure as any other ontology layer." |
 | `tools/README.md`, `tools/literate_extract.py`, `tools/surface/` (all untracked) | `tools/` goes from a one-line mention to an actual documented reference implementation: a README⇄spec drift checker (`literate_extract.py`) and a full surface-contract compiler package (`tools/surface/`: compile, check freshness, parity, and lift/lower to/from MORK). |
-| `mork/spec/Mork.ttl` (modified) | MORK gains `mrk:ProjectionMapping`, a new `GenerativeMapping` subtype that ties a MORK mapping directly to Surface: a mapping can now *propose* a surface contract, and a compiled surface can be lifted back into a MORK provenance record. |
-| `eligibility/README.md` + spec/vocab/shapes (modified) | `HierarchicalMatch` no longer requires a hand-materialised local closure — it may now be backed by a **generated Surface index** instead of (or as well as) query-time traversal. This is the first concrete cross-layer consumer of Surface. |
+| `ontology/mork/spec/Mork.ttl` (modified) | MORK gains `mrk:ProjectionMapping`, a new `GenerativeMapping` subtype that ties a MORK mapping directly to Surface: a mapping can now *propose* a surface contract, and a compiled surface can be lifted back into a MORK provenance record. |
+| `ontology/eligibility/README.md` + spec/vocab/shapes (modified) | `HierarchicalMatch` no longer requires a hand-materialised local closure — it may now be backed by a **generated Surface index** instead of (or as well as) query-time traversal. This is the first concrete cross-layer consumer of Surface. |
 
 Everything below is organized as edits against the *current* `README.md`, quoting the exact text being replaced.
 
@@ -31,7 +31,7 @@ Everything below is organized as edits against the *current* `README.md`, quotin
 **Action:** append one sentence.
 
 **Current text ends:**
-> ...`mork/targets/` is a configuration that points it at LATTICE specifically.
+> ...`ontology/mork/targets/` is a configuration that points it at LATTICE specifically.
 
 **Add after it:**
 > A MORK mapping can also *propose* a lookup-surface (see Surface, below): a `mrk:ProjectionMapping` records the generated class it proposes, so a Surface contract can trace back through a mapping to the source text that motivated it, and a compiled surface can be lifted into that record for review before it's promoted to a governed contract.
@@ -85,13 +85,13 @@ LATTICE is organised as eight layers, each an independent OWL/SHACL/SKOS module:
 
 **Location:** line 35, immediately after the table.
 
-**Action:** add a paragraph. This is where the new `applied/` directory belongs conceptually — it's the concrete realisation of the "different applied domain ontology" the existing text already gestures at.
+**Action:** add a paragraph. This is where the new `ontology/applied/` directory belongs conceptually — it's the concrete realisation of the "different applied domain ontology" the existing text already gestures at.
 
 **Current text (unchanged, kept as-is):**
 > Instrument is a first layer building on the substrates. A different applied domain ontology (e.g., a device's operational lifecycle, access-control entitlement system, asset maintenance schedule, etc) could sit atop Instrument or even replace it, composing with the same Party, Eligibility, and Behaviour mechanisms through its own `projection/` contracts, without touching any of the core specifications.
 
 **Add immediately after:**
-> `applied/` is where these domain ontologies are staged as they're ported in, at whatever level of maturity they've reached — see [Repository layout](#repository-layout) below. The first is `applied/insurance/`, a hand port of an existing insurance contract-structure ontology. **As currently committed it has no `projection/` contracts of its own and imports a namespace outside the `neuro-semantic/lattice` tree** — it is staged content, not yet wired into the substrate the way this paragraph describes. Treat anything under `applied/` as a domain ontology in progress rather than a worked composition until it declares `projection/` contracts against Party, Eligibility, or Behaviour.
+> `ontology/applied/` is where these domain ontologies are staged as they're ported in, at whatever level of maturity they've reached — see [Repository layout](#repository-layout) below. The first is `ontology/applied/insurance/`, a hand port of an existing insurance contract-structure ontology. **As currently committed it has no `projection/` contracts of its own and imports a namespace outside the `neuro-semantic/lattice` tree** — it is staged content, not yet wired into the substrate the way this paragraph describes. Treat anything under `ontology/applied/` as a domain ontology in progress rather than a worked composition until it declares `projection/` contracts against Party, Eligibility, or Behaviour.
 
 ---
 
@@ -103,7 +103,7 @@ LATTICE is organised as eight layers, each an independent OWL/SHACL/SKOS module:
 **Action:** replace with a slightly fuller description now that `tools/` has real, documented content (previously this was a placeholder-level description; the folder held only `mork2rml.py` and a `.gitkeep`).
 
 **Proposed:**
-> The `tools/` folder holds reference implementations handling compilation — currently the MORK→RML compiler (`mork2rml.py`), the README⇄spec drift checker (`literate_extract.py`), and the Surface contract compiler (`surface/`). See `tools/README.md` for usage. It's licensed separately from everything else in the tree — see [Licensing](#licensing).
+> The `tools/` folder holds reference implementations handling compilation — currently the MORK→RML compiler (`mork2rml.py`), the README⇄spec drift checker (`literate_extract.py`), and the Surface contract compiler (`ontology/surface/`). See `tools/README.md` for usage. It's licensed separately from everything else in the tree — see [Licensing](#licensing).
 
 ---
 
@@ -111,7 +111,7 @@ LATTICE is organised as eight layers, each an independent OWL/SHACL/SKOS module:
 
 **Location:** lines 69–105, the fenced `lattice/` tree.
 
-**Action:** insert `surface/` into the layer list, insert a new top-level `applied/` block, expand the `docs/` and `tools/` entries, and annotate `examples/` with its current (empty-placeholder / superseded) state.
+**Action:** insert `ontology/surface/` into the layer list, insert a new top-level `ontology/applied/` block, expand the `docs/` and `tools/` entries, and annotate `ontology/examples/` with its current (empty-placeholder / superseded) state.
 
 **Current:**
 ```
@@ -121,17 +121,17 @@ lattice/
 ├── LICENSE-DOCS.md          # CC BY-SA 4.0 — documentation, specifications
 ├── CONTRIBUTING.md
 │
-├── foundation/              # Foundation Layers (provenance, versioning)
-├── vocabulary/              # Inclusion of Domain-specific Vocabularies 
-├── quantification/          # Value Spaces, Quantities, Ranges, Recurrence
-├── party/                   # Parties, Roles, & Participation Modelling 
-├── instrument/              # Governing Instrument (Upper Domain Ontology)  
-├── eligibility/             # Eligibility Criteria Modelling 
-├── behaviour/               # Behaviour Modelling 
+├── ontology/foundation/              # Foundation Layers (provenance, versioning)
+├── ontology/vocabulary/              # Inclusion of Domain-specific Vocabularies
+├── ontology/quantification/          # Value Spaces, Quantities, Ranges, Recurrence
+├── ontology/party/                   # Parties, Roles, & Participation Modelling
+├── ontology/instrument/              # Governing Instrument (Upper Domain Ontology)
+├── ontology/eligibility/             # Eligibility Criteria Modelling
+├── ontology/behaviour/               # Behaviour Modelling
 ├── mork/                    # Mapping Vocabulary
 ├── spc/                     # Orchestration calculus (standalone, unintegrated)
 │
-├── governance/              # Cross-layer governance
+├── ontology/governance/              # Cross-layer governance
 │   ├── scheme-contracts/
 │   ├── parity/
 │   └── shapes/
@@ -140,7 +140,7 @@ lattice/
 │   ├── architecture/
 │   └── adr/
 │
-├── examples/                # Cross-layer composition scenarios
+├── ontology/examples/                # Cross-layer composition scenarios
 │   ├── employment.ttl
 │   ├── lending-covenant.ttl
 │   ├── saas-subscription.ttl
@@ -161,21 +161,21 @@ lattice/
 ├── CONTRIBUTING.md
 ├── GENAI_CONTRIBUTION.md    # disclosure obligations for AI-assisted contributions
 │
-├── foundation/              # Foundation Layers (provenance, versioning)
-├── vocabulary/              # Inclusion of Domain-specific Vocabularies 
-├── quantification/          # Value Spaces, Quantities, Ranges, Recurrence
-├── surface/                 # Promotion & indexing: generated, local, query-facing restatements
-├── party/                   # Parties, Roles, & Participation Modelling 
-├── instrument/              # Governing Instrument (Upper Domain Ontology)  
-├── eligibility/             # Eligibility Criteria Modelling 
-├── behaviour/               # Behaviour Modelling 
+├── ontology/foundation/              # Foundation Layers (provenance, versioning)
+├── ontology/vocabulary/              # Inclusion of Domain-specific Vocabularies
+├── ontology/quantification/          # Value Spaces, Quantities, Ranges, Recurrence
+├── ontology/surface/                 # Promotion & indexing: generated, local, query-facing restatements
+├── ontology/party/                   # Parties, Roles, & Participation Modelling
+├── ontology/instrument/              # Governing Instrument (Upper Domain Ontology)
+├── ontology/eligibility/             # Eligibility Criteria Modelling
+├── ontology/behaviour/               # Behaviour Modelling
 ├── mork/                    # Mapping Vocabulary
 ├── spc/                     # Orchestration calculus (standalone, unintegrated)
 │
-├── applied/                 # Ported/staged applied-domain ontologies, varying maturity
+├── ontology/applied/                 # Ported/staged applied-domain ontologies, varying maturity
 │   └── insurance/           # Insurance contract-structure port — not yet wired via projection/
 │
-├── governance/              # Cross-layer governance
+├── ontology/governance/              # Cross-layer governance
 │   ├── scheme-contracts/
 │   ├── parity/
 │   └── shapes/
@@ -185,13 +185,13 @@ lattice/
 │   ├── adr/                 # includes ADR-A16, Surface projection mechanism
 │   └── glossary.md          # plain-language glossary (currently: Surface subsystem terms)
 │
-├── examples/                # Cross-layer composition scenarios — currently all placeholder/empty
+├── ontology/examples/                # Cross-layer composition scenarios — currently all placeholder/empty
 │   ├── employment.ttl
 │   ├── lending-covenant.ttl
 │   ├── saas-subscription.ttl
 │   ├── clinical-trial.ttl
 │   └── insure-o/            # Applied validation package for insurance-style substrate checks
-│                             #   — confirm against applied/insurance/ before treating both as current
+│                             #   — confirm against ontology/applied/insurance/ before treating both as current
 │
 ├── test/                    # Whole-graph CI
 │
@@ -199,12 +199,12 @@ lattice/
     ├── README.md
     ├── mork2rml.py           # MORK → RML/R2RML compiler
     ├── literate_extract.py   # README ⇄ spec/vocab/shapes drift check
-    └── surface/              # Surface contract compiler (compile / check / parity / mork lift-lower)
+    └── ontology/surface/              # Surface contract compiler (compile / check / parity / mork lift-lower)
 ```
 
 **Notes for the author, not asserted as fact above:**
-- All four files under root `examples/` (`employment.ttl`, `lending-covenant.ttl`, `saas-subscription.ttl`, `clinical-trial.ttl`) are currently **zero bytes**. That predates this batch of changes, but it's now more conspicuous: `surface/examples/` has three fully worked, populated `.ttl` files using two of the same domain names (`saas-subscription-currency.ttl`, `clinical-trial-crosswalk.ttl`) at the single-layer level. Worth deciding whether the root `examples/` files are meant to be filled in as cross-layer compositions built *on top of* the single-layer ones, or renamed/removed.
-- `examples/insure-o/` and `applied/insurance/` look like two different snapshots of the same domain (insurance contract structure) at different points in its life — the Surface layer's own outstanding-items note says explicitly: *"you are dropping the current insure-o and porting CSO and FBO by hand"* into what is now `applied/insurance/`. If that's accurate, `examples/insure-o/` may be slated for removal rather than something to document as current. This document doesn't remove it, since that's a judgement call, not an investigative finding.
+- All four files under root `ontology/examples/` (`employment.ttl`, `lending-covenant.ttl`, `saas-subscription.ttl`, `clinical-trial.ttl`) are currently **zero bytes**. That predates this batch of changes, but it's now more conspicuous: `ontology/surface/examples/` has three fully worked, populated `.ttl` files using two of the same domain names (`saas-subscription-currency.ttl`, `clinical-trial-crosswalk.ttl`) at the single-layer level. Worth deciding whether the root `ontology/examples/` files are meant to be filled in as cross-layer compositions built *on top of* the single-layer ones, or renamed/removed.
+- `ontology/examples/insure-o/` and `ontology/applied/insurance/` look like two different snapshots of the same domain (insurance contract structure) at different points in its life — the Surface layer's own outstanding-items note says explicitly: *"you are dropping the current insure-o and porting CSO and FBO by hand"* into what is now `ontology/applied/insurance/`. If that's accurate, `ontology/examples/insure-o/` may be slated for removal rather than something to document as current. This document doesn't remove it, since that's a judgement call, not an investigative finding.
 - `tools/README.md` (as currently written) documents the drift checker at the path `tools/lattice/literate_extract.py`, but the actual untracked file sits at `tools/literate_extract.py` — no `tools/lattice/` directory exists. That's a documentation bug worth fixing at the source (`tools/README.md`) rather than something to paper over in the top-level README; flagged here so it isn't silently propagated into the tree above.
 - `GENAI_CONTRIBUTION.md` is not new (it predates this batch of changes and isn't part of `git status`), but it's also not currently listed in the root tree at all — added above only because the tree was otherwise being rewritten; drop that line if it's out of scope for this pass.
 
@@ -259,7 +259,7 @@ spc  — leverages domain ontology axioms to form session types once a separate 
 
 **Location:** lines 133–139.
 
-**Action:** none required. `surface/`, `applied/`, and `tools/surface/` all fall cleanly under the existing two-licence split (`.ttl`/code under MPL 2.0, `.md` under CC BY-SA 4.0), so the existing text is already accurate. Not proposing a change here — noted only so it isn't mistaken for an oversight.
+**Action:** none required. `ontology/surface/`, `ontology/applied/`, and `tools/surface/` all fall cleanly under the existing two-licence split (`.ttl`/code under MPL 2.0, `.md` under CC BY-SA 4.0), so the existing text is already accurate. Not proposing a change here — noted only so it isn't mistaken for an oversight.
 
 ---
 
@@ -269,24 +269,24 @@ spc  — leverages domain ontology axioms to form session types once a separate 
 
 ```
  M .vscode/settings.json
- M docs/adr/README.md
- M eligibility/README.md
- M eligibility/shapes/rules.ttl
- M eligibility/spec/eligibility.ttl
- M eligibility/vocab/eligibility-vocab.ttl
- M mork/spec/Mork.ttl
- M quantification/README.md
+ M docs/architecture/decisions/README.md
+ M ontology/eligibility/README.md
+ M ontology/eligibility/shapes/rules.ttl
+ M ontology/eligibility/spec/eligibility.ttl
+ M ontology/eligibility/vocab/eligibility-vocab.ttl
+ M ontology/mork/spec/Mork.ttl
+ M ontology/quantification/README.md
 
 ?? .github/prompts/plan-surfaceOutstandingItemsRemediation.prompt.md
-?? applied/insurance/
-?? docs/adr/ADR-A16-surface-projection-mechanism.md
+?? ontology/applied/insurance/
+?? docs/architecture/decisions/ADR-A16-surface-projection-mechanism.md
 ?? docs/glossary.md
-?? surface/
+?? ontology/surface/
 ?? tools/README.md
 ?? tools/literate_extract.py
 ?? tools/surface/
 ```
 
-Read in full for this proposal: `surface/README.md`, `surface/docs/*.md` (including both `OUTSTANDING-ITEMS.md` and the duplicate `OUTSTANDING-ITEMS 2.md`, which differ — worth reconciling, not done here), `docs/adr/ADR-A16-*.md`, `docs/glossary.md`, `applied/README.md` and a sample of `applied/insurance/spec/structure/contract.ttl`, `tools/README.md`, the diffs for every modified file above, and `.github/prompts/plan-surfaceOutstandingItemsRemediation.prompt.md` (an internal planning artefact — not proposed for README inclusion, but useful corroboration for several notes above, e.g. the insure-o → applied/insurance transition).
+Read in full for this proposal: `ontology/surface/README.md`, `ontology/surface/docs/*.md` (including both `OUTSTANDING-ITEMS.md` and the duplicate `OUTSTANDING-ITEMS 2.md`, which differ — worth reconciling, not done here), `docs/architecture/decisions/ADR-A16-*.md`, `docs/glossary.md`, `ontology/applied/README.md` and a sample of `ontology/applied/insurance/spec/structure/contract.ttl`, `tools/README.md`, the diffs for every modified file above, and `.github/prompts/plan-surfaceOutstandingItemsRemediation.prompt.md` (an internal planning artefact — not proposed for README inclusion, but useful corroboration for several notes above, e.g. the insure-o → ontology/applied/insurance transition).
 
-Not covered above because they don't reach the top-level README: the `quantification/README.md` diff (prose tightening only, no new mechanism), `.vscode/settings.json` (editor config).
+Not covered above because they don't reach the top-level README: the `ontology/quantification/README.md` diff (prose tightening only, no new mechanism), `.vscode/settings.json` (editor config).

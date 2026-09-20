@@ -8,7 +8,7 @@ This document provides the solution design for a software platform built around 
 
 ### Supplementary Documents
 
-* ADRs `docs/adr` A29 through A43 record individual boundary decisions as they were made.
+* ADRs `docs/architecture/decisions` A29 through A43 record individual boundary decisions as they were made.
 * Inter-component data contracts are specified under `contracts/` and say what JSON moves between components
 * Ontology design and layer semantics, DL encodings, and layer dependency rules stay in the layer READMEs and in [ontology-architecture.md](ontology-architecture.md).
 * UX specification in full, in [ux-design.md](ux-design.md)
@@ -496,7 +496,7 @@ flowchart TB
   Browser --> CPProc
 ```
 
-The Control Plane and worker processes are not yet containerized or added to Compose, they currently run only as Maven/`pytest` test targets. Adding them as Compose services is required before the pilot in [docs/developer/current](../developer/current/README.md) can run end to end, and is tracked there, not duplicated here.
+The Control Plane and worker processes are not yet containerized or added to Compose, they currently run only as Maven/`pytest` test targets. Adding them as Compose services is required before the pilot in [the platform continuation status](../developer/status/platform-continuation.md) can run end to end, and is tracked there, not duplicated here.
 
 **Target shape (unchanged topology, hardened operational posture):** the same component graph, with PostgreSQL and RabbitMQ given persistent volumes and restart policies, Fuseki given a backup schedule for its dataset directory, and the Control Plane and worker tier each given their own container image with health checks. No additional component is introduced, this is an operational maturity step, not an architecture change, consistent with the single-writer, single-broker posture justified in [§7](#7-robustness-reliability-design).
 
@@ -532,14 +532,14 @@ The Control Plane and worker processes are not yet containerized or added to Com
 | Environment | Purpose | Difference from reference |
 |---|---|---|
 | Local development | Individual implementation work | Exactly the Compose stack in [§5.1](#51-deployment-topology) |
-| Pilot (seeded, local) | The author and reviewer pilot described in [docs/developer/current](../developer/current/README.md) | Adds seeded demo identities and fixture scenarios, still single-host Compose |
+| Pilot (seeded, local) | The author and reviewer pilot described in [the platform continuation status](../developer/status/platform-continuation.md) | Adds seeded demo identities and fixture scenarios, still single-host Compose |
 | Future shared/production | Not yet planned in detail | Would add TLS termination, secret management, persistent volumes, and the hardening in [§5.1](#51-deployment-topology)'s target shape, deliberately deferred until the pilot proves the design |
 
 ---
 
 ## 6. UX Design
 
-Full design is in [ux-design.md](ux-design.md), which covers the MORK Review Workbench (canonically [MORK UXD](../../mork/docs/MORK%20UXD.md)) and the newly authored Surface Contract Studio design at equivalent depth, including the Release view this document's [§4.4](#44-release-integration-exposure-the-answer-to-who-calls-this) requires. The cross-cutting principle repeated here because it governs every process map in [§2](#2-process-design): role perimeters and evidence redaction are enforced server-side, the browser never receives data it must hide from itself.
+Full design is in [ux-design.md](ux-design.md), which covers the MORK Review Workbench (canonically [MORK UXD](../../ontology/mork/docs/MORK%20UXD.md)) and the newly authored Surface Contract Studio design at equivalent depth, including the Release view this document's [§4.4](#44-release-integration-exposure-the-answer-to-who-calls-this) requires. The cross-cutting principle repeated here because it governs every process map in [§2](#2-process-design): role perimeters and evidence redaction are enforced server-side, the browser never receives data it must hide from itself.
 
 ---
 

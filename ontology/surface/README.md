@@ -85,7 +85,7 @@ A few things of note:
 
 - **Where does the promoted property live?** `saas:subscriptionCurrency` is declared by the consuming layer, not minted by Surface — `srf:promotesTo` points at a term the domain already owns precisely so consumers can query something they already know about. This is also the one case where a surface's assertions land on the authored signature rather than staying inside its own generated namespace (its `srf:signatureScope` is `SourceSignature`, not `LocalSignature`) — see "Authority, conservativity, and signature scope" below before treating this kind of surface as freely discardable.
 
-A promotion sometimes has to cross into a different ontology to reach its value — for instance, mapping a locally-recorded diagnosis code to a value from an external clinical coding scheme. That is what `srf:viaMatchRelation` is for: it names the mapping relation to be traversed and the fidelity must be one of the crosswalk values (`CrosswalkExact` if the mapping asserts exact correspondence, `CrosswalkInexact` if it does not). This is the shape of `surface/examples/clinical-trial-crosswalk.ttl`, which has the same mechanism as the subscription example, but the last step traverses a match relation instead of a same-ontology property, and the resulting surface is advisory because the mapping is inexact.
+A promotion sometimes has to cross into a different ontology to reach its value — for instance, mapping a locally-recorded diagnosis code to a value from an external clinical coding scheme. That is what `srf:viaMatchRelation` is for: it names the mapping relation to be traversed and the fidelity must be one of the crosswalk values (`CrosswalkExact` if the mapping asserts exact correspondence, `CrosswalkInexact` if it does not). This is the shape of `ontology/surface/examples/clinical-trial-crosswalk.ttl`, which has the same mechanism as the subscription example, but the last step traverses a match relation instead of a same-ontology property, and the resulting surface is advisory because the mapping is inexact.
 
 #### Indexing
 
@@ -124,7 +124,7 @@ Let's break down what the generator does:
 
 - **Well-foundedness is checked, not assumed.** SPARQL cannot verify acyclicity of a closure over an arbitrary declared relation as a static shape, so the generator itself traverses the basis over the declared scope at generation time and records the result as an `srf:LawDischarge` for `srf:R5`. A closure-form surface with no such discharge on record is non-conformant.
 
-For an example of this kind of shape, see `surface/examples/employment-job-family.ttl`.
+For an example of this kind of shape, see `ontology/surface/examples/employment-job-family.ttl`.
 
 #### Projection
 
@@ -162,7 +162,7 @@ A few things of note:
 - **Two required-evidence bindings, one contract.** Unlike `EvaluationSubjectRole`, `ResultTargetRole`, and `ClosureBasisRole`, which a contract declares at most once, `RequiredEvidenceRole` and `CandidateEvidenceRole` may repeat — a derivation commonly needs more than one input (`srf:P3`).
 - **This contract never emits SPARQL, SHACL, or anything else directly.** It lowers into a MORK mapping graph (ADR-A18); the backend policy states which compiled targets that mapping may become, and forbids LLM participation in the lowering outright (`srf:deterministicOnly true`).
 
-For a worked instance graph, see `surface/examples/saas-subscription-arr-projection.ttl`.
+For a worked instance graph, see `ontology/surface/examples/saas-subscription-arr-projection.ttl`.
 
 #### Choosing an index form
 
@@ -226,7 +226,7 @@ Nothing in the derived-record tier is asserted by hand — a `srf:GeneratedSurfa
 - Every generation run records what it **read**, not just what it produced: one `srf:ReadSetEntry` per input, each carrying the hash of that input's canonical content at read time. A surface is stale exactly when any entry's current hash no longer matches the recorded one — that single comparison decides staleness; nothing needs to be classified first.
 - Once staleness is known, *how much* to recompute is a smaller question, and the answer depends on what moved: a change to bound scheme membership recomputes that contract's symbol inventory (plus closure, if declared); a change to the carrier instance graph recomputes materialised memberships for the changed instances only, and nothing at all under `DefinitionOnly`; a change to the scheme contract's binding or required governance state, or to the profile identity, forces regeneration of the whole contract or the whole profile's estate respectively. Keeping definitions and materialised assertions in separate emitted modules is precisely what lets an instance-graph change skip the definitional module entirely.
 - `srf:semanticContentHash` (the canonical, meaning-bearing inputs) and `srf:artefactHash` (the emitted bytes) serve different jobs: matching semantic content hash plus matching profile identity is what licenses reusing an existing surface instead of regenerating it; an artefact hash that changes while both of those hold steady is a generator defect, not a source change.
-- Laws don't all get discharged the same way, and knowing which register a law sits in (`srf:lawRegister`) tells you what evidence to expect: a `SemanticLaw` (conservativity, index faithfulness, closure soundness, promotion fidelity, promotion signature discipline) is argued formally and tested as a property, never discharged by inspecting one run; a `StaticConstraint` is checked by the SHACL shapes in §10 over the contract or record graph; a `RuntimeConformance` law (determinism, surface/source parity, invalidation minimality, materialisation idempotence, closure well-foundedness) is discharged only by an actually executed run, recorded as a `srf:LawDischarge` — never by argument alone.
+- Laws don't all get discharged the same way, and knowing which register a law sits in (`srf:lawRegister`) tells you what evidence to expect: a `SemanticLaw` (conservativity, index faithfulness, closure soundness, promotion fidelity, promotion signature discipline) is argued formally and tested as a property, never discharged by inspecting one run; a `StaticConstraint` is checked by the SHACL shapes in §10 over the contract or record graph; a `RuntimeConformance` law (determinism, ontology/surface/source parity, invalidation minimality, materialisation idempotence, closure well-foundedness) is discharged only by an actually executed run, recorded as a `srf:LawDischarge` — never by argument alone.
 
 #### A practical checklist for authoring a contract
 
@@ -1116,7 +1116,7 @@ srf:P5 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "A backen
 
 ## 10. Shapes
 
-Contract-local and record-local checks are shipped here. Checks that need a source declaration and its generated surface in view at once belong to `governance/parity/`, which runs over the union graph.
+Contract-local and record-local checks are shipped here. Checks that need a source declaration and its generated surface in view at once belong to `ontology/governance/parity/`, which runs over the union graph.
 
 ```turtle-shapes
 @prefix sh:   <http://www.w3.org/ns/shacl#> .
@@ -1654,12 +1654,12 @@ Two consequences hold regardless:
 
 Non-domain examples are authored in:
 
-- `surface/examples/employment-job-family.ttl` — hierarchical closure and per-value classes over a scheme-bound population
-- `surface/examples/saas-subscription-currency.ttl` — promotion across a three-step read path onto a direct property
-- `surface/examples/clinical-trial-crosswalk.ttl` — promotion across an inexact mapping relation
-- `surface/examples/saas-subscription-arr-projection.ttl` — a derivation projection combining two required-evidence bindings into a computed result, lowered under a deterministic-only backend policy
+- `ontology/surface/examples/employment-job-family.ttl` — hierarchical closure and per-value classes over a scheme-bound population
+- `ontology/surface/examples/saas-subscription-currency.ttl` — promotion across a three-step read path onto a direct property
+- `ontology/surface/examples/clinical-trial-crosswalk.ttl` — promotion across an inexact mapping relation
+- `ontology/surface/examples/saas-subscription-arr-projection.ttl` — a derivation projection combining two required-evidence bindings into a computed result, lowered under a deterministic-only backend policy
 
-Deliberate-defect fixtures are authored in `surface/test/`.
+Deliberate-defect fixtures are authored in `ontology/surface/test/`.
 
 ```turtle-example
 @prefix srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#> .
