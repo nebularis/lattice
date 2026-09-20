@@ -60,3 +60,4 @@ WINGMAN
 **/*.pyc
 /.vscode
 ./mork/src/**/*__pycache__
+*.patch
