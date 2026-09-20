@@ -167,3 +167,7 @@ Validation evidence belongs in CI or release records, not this document. The exp
 ## Next Phase
 
 Phase 7 begins only after validation feedback is triaged. Its scope is compiler breadth and SPC readiness: adapter conformance, MORK-to-SPC bridge contracts with isolated RabbitMQ exchanges, and independently deployable SPC behavior. Read the Phase 7 section of the [canonical plan](../../.github/prompts/plan-morkSurfaceImplementation.prompt.md) before changing its boundary.
+
+## MTP Roadmap
+
+The MORK Teaching Pack is a separate, proposed generator roadmap that consumes MORK and MCN sources without changing their normative semantics. Read the [MTP implementation plan](../../mork/docs/mtp-implementation-plan.md), [MTP architecture](../architecture/mork-teaching-pack.md), [ADR-A44](../adr/ADR-A44-mork-teaching-pack-generated-content-boundary.md), and [MTP validation handoff](mtp-handoff.md) before implementing it. Its LLM model-quality evaluation remains explicitly deferred behind a backend-interface effort.

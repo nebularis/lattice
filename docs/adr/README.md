@@ -49,6 +49,7 @@ This directory holds the ADRs that govern LATTICE's substrate architecture. An A
 | [A-41](ADR-A41-surface-projection-mork-staging-boundary.md) | Surface Projection to MORK staging boundary | Accepted |
 | [A-42](ADR-A42-mork-review-snapshot-and-decision-learning-boundary.md) | MORK review snapshot and decision-learning boundary | Accepted |
 | [A-43](ADR-A43-mork-replayable-queue-and-calibrated-governance.md) | MORK replayable queue and calibrated governance | Accepted |
+| [A-44](ADR-A44-mork-teaching-pack-generated-content-boundary.md) | MORK Teaching Pack generated-content boundary | Accepted |
 | [A-03](ADR-A03-condition-taxonomy.md) | Eligibility condition taxonomy | Accepted |
 | [A-04](ADR-A04-interval-overlap-law-split.md) | Interval containment and overlap law split | Accepted |
 | [A-05](ADR-A05-compatibility-vocabulary.md) | Compatibility operation vocabulary | Accepted |

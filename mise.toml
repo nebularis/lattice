@@ -22,6 +22,10 @@ run = "python -m pip install -c requirements-lock.txt '.[reasoning]'"
 description = "Install the worker package with test dependencies"
 run = "python -m pip install -e ./workers[test]"
 
+[tasks."bootstrap:mork"]
+description = "Install the MORK package and MTP structural dependencies"
+run = "python -m pip install -e ./mork"
+
 [tasks."bootstrap:frontend"]
 description = "Install the Yarn workspace through Corepack"
 run = "corepack enable && yarn install --immutable"
@@ -39,6 +43,14 @@ run = "python -m unittest tools.surface.test_surface tools.mork_compilers.test_m
 
 [tasks."check:workers"]
 run = "python -m pytest workers/tests"
+
+[tasks."check:mtp"]
+description = "Check the committed MORK Teaching Pack structure and pins"
+run = "python -m mtp.cli check --out mork/mtp/out"
+
+[tasks."build:mtp"]
+description = "Regenerate committed MORK Teaching Pack output"
+run = "python -m mtp.cli build --out mork/mtp/out"
 
 [tasks."check:java"]
 run = "mvn -f platform/pom.xml verify"
