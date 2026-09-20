@@ -1,0 +1,37 @@
+routes:
+  - task: represent-source
+    signal: representation
+    lens: L-REP
+    cassette: C-LOAN
+  - task: model-uncertainty
+    signal: uncertainty
+    lens: L-UNC
+    cassette: C-UNCERTAIN
+  - task: compile-mapping
+    signal: generative
+    lens: L-GEN
+    cassette: C-LOAN
+  - task: align-taxonomy
+    signal: taxonomy
+    lens: L-TAX
+    cassette: C-LOAN
+  - task: identify-individual
+    signal: identity
+    lens: L-IND
+    cassette: C-LOAN
+  - task: compose-template
+    signal: template
+    lens: L-TPL
+    cassette: C-LOAN
+  - task: capture-intent
+    signal: intent
+    lens: L-INT
+    cassette: C-LOAN
+  - task: emit-expression
+    signal: expression
+    lens: L-EGR
+    cassette: C-LOAN
+  - task: align-ontology
+    signal: tbox
+    lens: L-TBX
+    cassette: C-LOAN

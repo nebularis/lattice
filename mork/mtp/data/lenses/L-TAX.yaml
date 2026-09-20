@@ -1,0 +1,4 @@
+id: L-TAX
+question: How are taxonomic matches represented?
+rules: [Use exact and category match predicates deliberately.]
+cassette: C-LOAN

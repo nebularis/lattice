@@ -1,0 +1,4 @@
+id: L-EGR
+question: How are expression and grammar artefacts carried?
+rules: [Use the required artefact payload fields.]
+cassette: C-LOAN

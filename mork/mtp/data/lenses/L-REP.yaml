@@ -1,0 +1,4 @@
+id: L-REP
+question: How is a source representation expressed?
+rules: [Use representation families before mapping assertions.]
+cassette: C-LOAN

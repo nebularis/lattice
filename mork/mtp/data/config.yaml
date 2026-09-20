@@ -1,0 +1,5 @@
+ontology: mork/spec/Mork.ttl
+shapes: mork/shapes/constraints.ttl
+l0_budget: 900
+lens_budget: 800
+pack_version: 0.1.0

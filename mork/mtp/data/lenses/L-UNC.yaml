@@ -1,0 +1,4 @@
+id: L-UNC
+question: How is uncertainty represented without contaminating confidence?
+rules: [Use uncertainty constructs and explicit notes.]
+cassette: C-UNCERTAIN
