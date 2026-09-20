@@ -3,18 +3,25 @@
 .idea/
 .vscode/
 
+# Build artifacts and caches consolidated in .build/
+.build/pytest-cache/*
+!.build/pytest-cache/.gitkeep
+.build/yarn-cache/*
+!.build/yarn-cache/.gitkeep
+.build/mork-review-workbench-test-results/*
+!.build/mork-review-workbench-test-results/.gitkeep
+.build/surface-contract-studio-test-results/*
+!.build/surface-contract-studio-test-results/.gitkeep
+
 # Node and Yarn installs, caches, and build output
 node_modules/
 .pnp.*
-.yarn/
-.yarnrc.yml.tmp
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 apps/*/dist/
 coverage/
 playwright-report/
-test-results/
 
 # Java and Maven build output
 **/target/
@@ -31,10 +38,7 @@ env/
 ENV/
 .tox/
 .nox/
-*.egg-info/
 .eggs/
-build/
-.pytest_cache/
 .mypy_cache/
 .ruff_cache/
 .coverage
@@ -58,7 +62,5 @@ ontology/mork/mtp/out/
 **/*Catalog*.xml
 WINGMAN
 .local/**
-**/*.pyc
-/.vscode
-./mork/src/**/*__pycache__
 *.patch
+/.yarn

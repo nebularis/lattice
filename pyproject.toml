@@ -41,3 +41,4 @@ packages = []
 [tool.pytest.ini_options]
 testpaths = ["tools"]
 python_files = ["test_*.py"]
+cache_dir = ".build/pytest-cache"

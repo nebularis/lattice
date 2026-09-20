@@ -1,9 +1,0 @@
-LICENSE
-LICENSE-DOCS.md
-README.md
-pyproject.toml
-lattice_tooling.egg-info/PKG-INFO
-lattice_tooling.egg-info/SOURCES.txt
-lattice_tooling.egg-info/dependency_links.txt
-lattice_tooling.egg-info/requires.txt
-lattice_tooling.egg-info/top_level.txt
