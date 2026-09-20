@@ -82,6 +82,70 @@ Most ideas start out life as `sketches`. Some may be captured as a plan rather t
 - Every active review record must name an existing matching status record.
 - `docs/developer/` root holds durable guidance only. Do not create a new `current/` directory.
 
+### Epic Decomposition Model
+
+An **epic** is a large work package spanning multiple phases, teams, or quarters with complex interdependencies. Epics are broken down into smaller, manageable units.
+
+**Hierarchy:** Epic ⇒ Phase ⇒ Slice ⇒ Milestone
+
+| Unit | Meaning | Ends with | Documentation |
+|---|---|---|---|
+| **Epic** | A large cross-phase work package with a stable owner (e.g. "LATTICE platform delivery", "Store SPI", "Ingestion pipeline") | Never; only the implementation phases end. Epic itself has no completion gate, only status tracking | `docs/developer/plans/<epic>.md` (marked `Unit type: Epic`) + individual phase plans + epic status file |
+| **Phase** | A cohort of slices that together produce a demonstrable capability (e.g. "Phase 0: Decisions and foundations") | Phase gate: integration milestone + docs updated + ADRs ratified. **Status file created.** | `docs/developer/plans/<phase>.md` + `docs/developer/status/<phase>.md` |
+| **Slice** | One agent work package (0.5–4 agent-days). A single coherent change, independently reviewable and testable | **Human validation gate.** Status file updated. | `docs/developer/validation/<slice-id>.md` (Validation Pack) |
+| **Milestone (Mn)** | Cross-component demonstrable outcome, exercised end-to-end in the local stack (e.g. "M0: Walking skeleton") | Human demo + E2E suite green. Recorded in phase status. | Phase plan and phase status |
+
+**Epic-specific governance:**
+
+- The epic plan document (e.g. `lattice-platform-agentic-development-v0.2.md`) outlines phases, tracks, dependencies, and milestones at a high level.
+- The epic plan is marked explicitly as `Unit type: Epic` and states that it will be decomposed into individual phase plans.
+- **No epic-level review is created until all phase plans are authored and all acceptance test suites pass.** The epic remains in status-tracking mode, referencing phase-level status and review documents.
+- Each phase gets its own plan (`phase-0-plan.md`, `phase-1-plan.md`, etc.) with scope, hard orderings, slice boundaries, and test taxonomy.
+- Each phase gets its own status file (`phase-0-status.md`, etc.) updated at the phase gate.
+- Each phase may get a review file only once that phase's acceptance tests are ready.
+
+**Slice sizing rule:** If a slice's Validation Pack contains more than ~15 test cases or touches more than two modules, split it. If it contains fewer than 3, merge it. Skeleton slices are exempt (they contain 1 test: the build smokes).
+
+**The mandatory shape of every slice:**
+
+Every slice, without exception, delivers:
+
+1. **Code** in one or two modules only.
+2. **Validation Pack (VP)** — a single markdown file at `docs/developer/validation/<slice-id>.md` containing:
+   - *What invariant does this slice protect?* (1 paragraph, in architecture language, citing G-nn/A-nn)
+   - *Test case table*: ID, Given/When/Then in plain language, test level (L0–L8), the invariant it protects, pass criterion, and whether it is a positive or negative case.
+   - *One command to run everything*: e.g. `mise module:check` or `mvn clean:verify`. If it is not one command, the slice is rejected on process grounds.
+   - *Expected artifacts* the human should inspect (golden files, capability report, canonicalisation trace, screenshots).
+   - *Deliberate non-coverage*: what this slice does **not** test and which later slice covers it.
+3. **Traceability update** — `docs/traceability/matrix.csv` rows linking slice ⇒ G-nn/C-nn/A-nn ⇒ test IDs. Rows must list the requirement ID (G-## for gap, C-## for component, A-## for ADR), the slice ID, and the test IDs that verify it. CI must fail if a claimed requirement has no test.
+4. **Doc delta** — if the slice contradicts or extends a normative document, the document is edited *in the same slice*. No "docs later".
+
+**Human validation gate protocol:**
+
+- **Step 1 — Review the VP before running anything.** The human judges whether the test cases are the *right* tests: do they actually pin the invariant? Are the negative cases the ones that matter? Is anything important listed under "deliberate non-coverage" that should not be?
+- **Step 2 — Run the single command.** If it is not one command, the slice is rejected on process grounds.
+- **Step 3 — Inspect named artifacts.** Golden files, traces, reports, screenshots.
+- **Step 4 — Adversarial probe.** The human picks one test case and asks the agent to demonstrate it *fails* when the implementation is deliberately broken (mutation check). This catches vacuous tests, which is the dominant failure mode of agent-authored suites.
+- **Step 5 — Sign off** in `docs/developer/validation/LOG.md` with slice ID, date, name, and any accepted deviations.
+
+**Test taxonomy (L0–L8):**
+
+The level of testing discipline for a slice should be verified during planning.
+
+| Level | Name | Runs where |
+|---|---|---|
+| **L0** | Build smoke (compiles, runs, no-op test passes) | Local + CI |
+| **L1** | Unit / pure-function | Local + CI |
+| **L2** | Property & determinism (same input → same digest; permutation invariance; law checks) | Local + CI |
+| **L3** | Contract (JSON Schema validation both directions; cross-runtime fixtures; OpenAPI conformance) | CI |
+| **L4** | Component integration with real infrastructure (Testcontainers: databases, brokers, stores) | CI |
+| **L5** | System E2E over the local compose stack via HTTP/AMQP only | CI nightly + on demand |
+| **L6** | UI E2E (Playwright) against the compose stack | CI nightly |
+| **L7** | Non-functional: SLO benchmark, capability/benchmark report, load profile | CI weekly + gated releases |
+| **L8** | Hostile / security suites: cross-tenant probe, injection corpus, scoping escape | CI nightly |
+
+**Non-weakening rule:** No slice may delete, skip, `@Disabled`, or loosen a test from a previous slice without an ADR-grade justification recorded in the VP and countersigned at the gate.
+
 ### Decisions and Links
 
 - Architecture decisions live only in `docs/architecture/decisions/`.

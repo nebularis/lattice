@@ -1,12 +1,15 @@
-# LATTICE Platform — Agentic Development Plan (v0.2, for review)
+# LATTICE Platform — Agentic Development Epic (v0.2, for decomposition)
 
-**Unit:** `lattice-platform-development`
-**Live status:** [Platform Continuation Status](../status/platform-continuation.md)
-**Current review request:** [Platform Continuation Review](../review/platform-continuation-review.md)
+**Unit type:** Epic
+**Epic:** `lattice-platform-development`
+**Epic status:** To be decomposed into phase plans
+**Epic review:** Deferred until all phase plans and acceptance tests are finalized
 
-**Purpose of this document.** A dependency-ordered, slice-by-slice development plan that agentic engineering teams can execute, where every slice ends in a human validation gate. It is written to be argued with: the intent is that you challenge ordering, slice boundaries, and test sufficiency *before* kickoff.
+**Purpose of this document.** A dependency-ordered, slice-by-slice development epic that defines the scope, milestones, tracks, and hard orderings for the LATTICE platform delivery. This epic will be decomposed into individual phase plans (e.g., `phase-0-plan.md`, `phase-1-plan.md`) per the Epic Decomposition model in [copilot-instructions](../../.github/copilot-instructions.md). Each plan is authored, reviewed, and accepted separately before its implementation begins. The final epic review will be created only after all phase plans are complete and their acceptance tests pass.
 
-**Source of truth for scope.** `Architecture Review.md` (G-nn gaps, C-nn components, A-nn decisions), plus the three existing design documents it critiques. Every slice below carries traceability IDs back to those.
+**Governing model.** Epic decomposition, phase plans, and slice validation follow the Epic Decomposition model in [copilot-instructions](../../.github/copilot-instructions.md). See that document for the standard approach to units of work, validation packs, traceability, and review gates.
+
+**Source of truth for scope.** `Architecture Review.md` (G-nn gaps, C-nn components, A-nn decisions), plus the three existing design documents it critiques. Every slice below carries traceability IDs back to those, recorded in `docs/traceability/matrix.csv`.
 
 **Two structural commitments this plan makes, which you must ratify first:**
 
@@ -23,40 +26,17 @@ Before any implementation slice in this plan begins, the `repository-topology-a7
 
 ---
 
-## Part 0 — c
+## Part 0 — Plan mechanics and validation model
 
-### 0.1 Units of work
+### 0.1 Note: Units of work hierarchy
 
-| Unit | Meaning | Ends with |
-|---|---|---|
-| **Epic** | A long-lived concern with a stable owner (e.g. Store SPI, Ingestion) | Nothing; tracks span phases |
-| **Phase** | A cohort of slices that together produce a demonstrable capability | Phase gate: integration milestone + docs updated + ADRs ratified |
-| **Slice** | One agent work package. A single coherent change, independently reviewable and testable | **Human validation gate** |
-| **Milestone (Mn)** | Cross-component demonstrable outcome, exercised end-to-end in the local stack | Human demo + E2E suite green |
+The hierarchy of units (Epic → Phase → Slice → Milestone) and their validation model are now defined in the [copilot-instructions Epic Decomposition section](../../.github/copilot-instructions.md). See that document for the authoritative definitions and required validation pack structure. This section retains the specific hierarchy for the LATTICE platform epic only.
 
 **Slice sizing rule.** If a slice's Validation Pack contains more than ~15 test cases, or touches more than two modules, split it. If it contains fewer than 3, merge it. Skeleton slices are exempt (they contain 1 test: the build smokes).
 
-### 0.2 The mandatory shape of every slice
+### 0.2 Slice validation model
 
-Every slice, without exception, delivers:
-
-1. **Code** in one or two modules only.
-2. **Validation Pack (VP)** — a single markdown file at `docs/validation/<slice-id>.md` containing:
-   - *What invariant does this slice protect?* (1 paragraph, in architecture language, citing G-nn/A-nn)
-   - *Test case table*: ID, Given/When/Then in plain language, level (L0–L8), the invariant it protects, pass criterion, and whether it is a positive or negative case.
-   - *One command to run everything*: e.g. `mise module:check` or `mvn clean:verify`, and so on.
-   - *Expected artifacts* the human should inspect (golden files, capability report, canonicalisation trace, screenshots).
-   - *Deliberate non-coverage*: what this slice does **not** test and which later slice covers it.
-3. **Traceability update** — `docs/traceability/matrix.csv` rows linking slice → G-nn/C-nn/A-nn → test IDs. CI fails if a claimed requirement has no test.
-4. **Doc delta** — if the slice contradicts or extends a normative document, the document is edited *in the same slice*. No "docs later".
-
-**Human validation gate protocol** (this is the part your process depends on, so it is explicit):
-
-- **Step 1 — Review the VP before running anything.** The human judges whether the test cases are the *right* tests: do they actually pin the invariant? Are the negative cases the ones that matter? Is anything important listed under "deliberate non-coverage" that should not be?
-- **Step 2 — Run the single command.** If it is not one command, the slice is rejected on process grounds.
-- **Step 3 — Inspect named artifacts.** Golden files, traces, reports, screenshots.
-- **Step 4 — Adversarial probe.** The human picks one test case and asks the agent to demonstrate it *fails* when the implementation is deliberately broken (mutation check). This catches vacuous tests, which is the dominant failure mode of agent-authored suites.
-- **Step 5 — Sign off** in `docs/validation/LOG.md` with slice ID, date, name, and any accepted deviations.
+The mandatory shape of every slice, validation pack requirements, and human validation gate protocol are defined in the [copilot-instructions Epic Decomposition section](../../.github/copilot-instructions.md). See that document for the authoritative requirements.
 
 ### 0.3 Test taxonomy (referenced as L0–L8 throughout)
 
