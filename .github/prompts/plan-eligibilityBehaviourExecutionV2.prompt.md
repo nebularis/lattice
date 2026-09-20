@@ -11,7 +11,7 @@ This supersedes the earlier draft. Two repo-state changes and two user clarifica
 - [foundation](foundation), [vocabulary](vocabulary), [party](party), **[quantification](quantification)** are complete T-Boxes. [spc](spc) is complete but architecturally unintegrated (own namespace, no projections, not part of the documented dependency graph).
 - [eligibility/README.md](eligibility/README.md), [behaviour/README.md](behaviour/README.md), [instrument/README.md](instrument/README.md) are all still genuinely empty (0 bytes) — clean-room authoring is straightforward, no adversarial procedure needed.
 - **quantification/spec/quantification.ttl declares no `owl:imports`** despite its own README stating it imports Foundation and Vocabulary (§2) — the axioms haven't caught up with the design prose. **[party/spec/party.ttl](party/spec/party.ttl) imports only Foundation**, not Quantification, despite Quantification's README claiming Party imports it. This mismatch is a Gate 1 fix, not a new design decision.
-- [README.md](README.md) and [docs/architecture/solution-architecture.md](docs/architecture/solution-architecture.md) both still describe a **six-layer** picture with no Quantification or SPC row, and both still state the old three-tier dependency order (Foundation → Vocabulary → Party → {Instrument, Eligibility, Behaviour}) with no Quantification link. solution-architecture.md still asserts "SPC has no implementation in this repository at all," which is now false.
+- [README.md](README.md) and [docs/architecture/ontology-architecture.md](docs/architecture/ontology-architecture.md) both still describe a **six-layer** picture with no Quantification or SPC row, and both still state the old three-tier dependency order (Foundation → Vocabulary → Party → {Instrument, Eligibility, Behaviour}) with no Quantification link. ontology-architecture.md still asserts "SPC has no implementation in this repository at all," which is now false.
 - [docs/adr](docs/adr), [docs/validation-and-test-plan.md](docs/validation-and-test-plan.md), and [docs/operational-guidance.md](docs/operational-guidance.md) are all empty — no conflicting content to reconcile, just files to author.
 - Instrument is still entirely unauthored, and Behaviour's effect contract (C.7 in the consolidated plan) writes into `ins:Element`/`ins:Obligation`/`ins:Qualifier`, so a minimal Instrument shape remains a hard prerequisite for Gate 3 (kept as Gate 2.5).
 - CI checks remain **documented, not built**, per your earlier decision — no GitHub Actions are added in this pass.
@@ -29,7 +29,7 @@ This supersedes the earlier draft. Two repo-state changes and two user clarifica
 4. Author ADR-A01 (layer dependency order): `Foundation → Vocabulary → Quantification → Party → Eligibility → Instrument → Behaviour`, matching what Quantification's own README already claims. Record SPC as a present-but-unintegrated ninth participant, explicitly out of this dependency chain until a separate integration effort addresses its namespace and projection gap.
 5. **Fix the import graph to match the documented order:** add `owl:imports` for Vocabulary to quantification.ttl; add `owl:imports` for Quantification to party.ttl; record that Eligibility/Instrument/Behaviour will import Quantification once authored.
 6. Update README.md: layer table gains Quantification, dependency diagram corrected.
-7. Update docs/architecture/solution-architecture.md: layer table, dependency-order fence, and Implementation Status table gain Quantification (fully specified) and correct SPC's status.
+7. Update docs/architecture/ontology-architecture.md: layer table, dependency-order fence, and Implementation Status table gain Quantification (fully specified) and correct SPC's status.
 8. Author ADR-A12 (identity/derivation model), ADR-A13 (dataset/graph-role model, flagging the open sub-question of new `fnd:` properties), ADR-A14 (conformance levels, + companion doc), ADR-A15 (realisation-strategy neutrality).
 9. Create docs/GOVERNANCE.md per decision 3 — tiers/postures, the lightweight naming rule, pointer to the conformance ladder, no repo-split or two-role procedure.
 10. Populate docs/validation-and-test-plan.md with documented (not built) checks: import-closure/no-upward-reference, substrate-inventory-emptiness, reuse-lint reference, placeholders for Gate 2+ checks.
@@ -78,7 +78,7 @@ This supersedes the earlier draft. Two repo-state changes and two user clarifica
 
 **Verification**
 - Each gate's exit criteria is the acceptance test before advancing.
-- After Gate 1: README.md, solution-architecture.md, and the ADRs state the same seven-link dependency graph, and party.ttl/quantification.ttl imports match it.
+- After Gate 1: README.md, ontology-architecture.md, and the ADRs state the same seven-link dependency graph, and party.ttl/quantification.ttl imports match it.
 - After Gates 2/3: fence-tag extraction is byte-consistent with README fenced blocks.
 - reuse lint passes on every new file.
 

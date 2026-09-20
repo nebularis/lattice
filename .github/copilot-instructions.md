@@ -1,4 +1,55 @@
 # Instructions for Copilot
+
+## Agentic Development Contract
+
+This governs how implemented code is validated. It exists to conserve tokens and keep the human in control of what runs.
+
+The general approach is that we work iteratively together, with the agent suggesting what we should build next, and the human verifying the approach along the way.
+
+### Design First
+
+Before we even sketch a plan for implementing/coding, we must consult the architecture and design records and produce a proposed Architecture Decision Record, which should also include either a design sketch OR be linked to a detailed design entry in the `docs/architecture/solution-design-specification.md' file. 
+
+At all times, the following files MUST be kept up to date with changes:
+
+- the root directory `README.md` (any new structure/folders/projects must be documented here)
+- the project-level `README.md` files (significant changes must be documented appropriately)
+- the ADR catalogue in `docs/adr`
+- the ontology architecture `docs/architecture/ontology-architecture.md'
+- the platform specification `docs/architecture/solution-design-specification.md'
+- the data architecture `docs/architecture/data-architecture.md'
+- the ux design `docs/architecture/ux-design.md'
+
+### Planning Mode
+
+When writing a plan for coding, the plan must be VERY detailed. This allows us to ensure alignment between the architecture, the design specification, and the plan.
+
+### Two Agent/Execution Modes: Default and Autonomous
+
+In both modes, the Agentic Development Contract still applies. The agent should not run off and build multiple sub-systems, but should follow the `Agentic Development Approach` instead.
+
+The two modes are explained next.
+
+#### Default Mode - use this unless other instructed
+
+- **Default** mode is write, then hand off. After implementing a change, do not run build, test, compile, or integration commands yourself to validate it. Cheap static diagnostics (language-server error checks, lint-on-save) are fine, they produce no large log output.
+- End every implementation turn with an explicit "Commands to run" block: exact commands, the directory to run them from, and what a pass looks like.
+- Wait for the human to run those commands and report the result before assuming success or making further changes on that assumption.
+- If the human reports a failure, diagnose from the pasted output. Do not re-run the command yourself to reproduce it, ask for more output if what was pasted is insufficient. The human in the loop is key to this mode.
+- This applies to every ecosystem in this repository: Maven/Java, Python/pytest, Yarn/Playwright, Docker Compose, database migrations, and any future build or test tooling.
+- Only run a command yourself when the human explicitly asks you to, or when a single-file syntax check is faster than an explanation and stays within the current tool call's scope.
+- Never state a change "passed," "works," or "is validated" unless the human reported that the commands succeeded, or you ran them because the human explicitly asked you to.
+
+#### Autonomous Mode - use this only when explicitly instructed
+
+- **Autonomous** mode allows the agent to run build, test, compile, or integration commands itself to validate changes. Use this mode only when explicitly allowed by the human.
+- The human trusts your judgment and expects accurate self-validation, testing, and verification in this mode.
+- NB: **THIS MODE DOES NOT OVERRIDE THE Agentic Development Contract**: you must still check in with the human when making design decisions.
+
+### Pause For Architectural Guidance
+
+In BOTH **Default** and **Autonomous** modes, do not make design decisions unilaterally without consulting the human for architectural guidance. In this way, we will work together on alignment and ensure that ADR logs are available to you and other agents, that help shape our understanding as we work together.
+
 ## General Guidelines
 
 - Do not use semi-colons in English text. Use periods or commas instead.

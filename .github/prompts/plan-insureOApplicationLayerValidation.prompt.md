@@ -30,7 +30,7 @@ Research also confirmed LATTICE's `voc:SchemeContract` mechanism (vocabulary lay
 
 11. **Validation corpus.** A handful of deliberate-defect fixtures in `examples/insure-o/test/`, chosen to replicate real failure modes documented in the source governance material — an admission condition left unsourced (silently admitting everything rather than nothing), a currency-code/concept type mismatch, a shared-capacity double-count — demonstrating that LATTICE's shapes/rules catch what the source estate's own governance layer had to be built, after the fact, to catch.
 
-12. **Documentation close-out.** A short, generic note (not naming the source product) added to docs/architecture/solution-architecture.md or a new architecture note, recording that an applied-layer validation package exists under `examples/insure-o/`, exercising Instrument, Eligibility, Behaviour, Quantification, Party, Vocabulary and MORK together, plus the explicit exclusion list restated once.
+12. **Documentation close-out.** A short, generic note (not naming the source product) added to docs/architecture/ontology-architecture.md or a new architecture note, recording that an applied-layer validation package exists under `examples/insure-o/`, exercising Instrument, Eligibility, Behaviour, Quantification, Party, Vocabulary and MORK together, plus the explicit exclusion list restated once.
 
 ## Verification
 
