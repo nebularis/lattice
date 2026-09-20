@@ -9,11 +9,11 @@ description = "Design-time toolchain for Subject Process Calculus"
 requires-python = ">=3.11"
 dependencies = [
     "rdflib>=7.0",
-    "rdflib-jsonld>=0.7",
     "parsimonious>=0.10",       # PEG parser
     "requests>=2.31",
     "click>=8.1",
     "pyyaml>=6.0",
+    "isodate>=0.6",
     "jsonschema>=4.20",
     "pyrml>=0.3",               # RML processor (or rmlmapper-java wrapper)
 ]

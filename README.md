@@ -130,6 +130,138 @@ A few commmon compositions are worth noting:
 
 ---
 
+## Developer Setup / Getting Started
+
+### Confirm required tools
+
+```bash
+mise --version
+mise doctor
+mise install
+mise ls
+
+mise exec -- python --version
+mise exec -- node --version
+mise exec -- java -version
+mise exec -- mvn --version
+mise exec -- elixir --version
+mise exec -- erl -eval 'io:format("~p~n", [erlang:system_info(otp_release)]), halt().'
+```
+
+### Check the new repository structure
+
+```bash
+mise run topology:preflight
+test -d ontology
+test -d tools
+test -d tools/mork/python
+test -d tools/spc/python
+test -d tools/spc/erlang
+test -d workers
+test -d platform
+test -d apps
+test -d contracts
+```
+
+### Install dependencies
+
+```bash
+mise run bootstrap
+```
+
+This installs the root Python dependencies, worker dependencies, Yarn workspace, etc.
+
+### Run aggregate repository checks
+
+```bash
+mise run check
+```
+
+This runs:
+
+```bash
+mise run check:python-root
+mise run check:workers
+mise run check:java
+mise run check:frontend
+mise run check:spc
+```
+
+### Build and test all frontend workspaces
+
+```bash
+mise exec -- yarn check
+mise exec -- yarn build
+mise exec -- yarn test
+```
+
+If Playwright reports missing browsers:
+
+```bash
+mise exec -- yarn workspace @lattice/mork-review-workbench exec playwright install
+mise exec -- yarn workspace @lattice/surface-contract-studio exec playwright install
+mise exec -- yarn test
+```
+
+### Validate MORK
+
+```bash
+mise exec -- python -m pip install -e tools/mork/python
+mise exec -- python -m pytest tools/mork/python/src/python -q
+mise exec -- python -m compileall -q tools/mork/python/src
+```
+
+### Validate SPC Python
+
+```bash
+mise exec -- python -m pip install -e 'tools/spc/python[dev]'
+mise exec -- python -m compileall -q tools/spc/python/src
+```
+
+### Validate SPC Erlang
+
+```bash
+cd tools/spc/erlang
+mise exec -- mix deps.get
+mise exec -- mix test
+cd ../..
+```
+
+### Run the complete test task
+
+```bash
+mise run test
+```
+
+### Build the Java platform cleanly
+
+```bash
+mise exec -- mvn -f platform/pom.xml clean verify
+```
+
+Focused Surface regression gate:
+
+```bash
+mise exec -- mvn -f platform/pom.xml -pl surface-workflow -am test
+```
+
+### Check Docker-backed services
+
+```bash
+docker --version
+docker compose version
+docker compose -f deployment/compose/docker-compose.yml config
+mise run services:up
+docker compose -f deployment/compose/docker-compose.yml ps
+mise run services:down
+```
+
+The service checks confirm container startup and reachability. They do not replace end-to-end integration tests.
+
+The canonical active documentation locations are `plans`, `status`, and `review`.
+
+---
+
 ## Licensing
 
 Two licences govern the artefacts in the repository:

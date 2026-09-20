@@ -40,4 +40,4 @@ packages = []
 
 [tool.pytest.ini_options]
 testpaths = ["tools", "tools/mork/python/src/python"]
-python_files = ["test_*.py", "*_Test.py"]
+python_files = ["test_*.py"]

@@ -17,7 +17,7 @@ from __future__ import annotations
 
 from typing import List, Optional
 
-from langchain_community.chat_models import ChatLiteLLM
+from langchain_litellm import ChatLiteLLM
 from langgraph.prebuilt import create_react_agent
 
 from mork_schemas import IntentExtractionOutput, MappingGenerationOutput
