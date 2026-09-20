@@ -40,7 +40,7 @@ run = "corepack enable && yarn install --immutable"
 
 [tasks.check]
 description = "Run all repository validation tasks"
-depends = ["check:python-root", "check:workers", "check:java", "check:frontend", "check:spc"]
+depends = ["check:python-root", "check:workers", "check:java", "check:frontend", "check:spc", "build:mtp", "check:mtp"]
 
 [tasks.test]
 description = "Run the repository test suites"
@@ -70,7 +70,7 @@ run = "python -m mtp.cli check --out ontology/mork/mtp/out"
 
 [tasks."build:mtp"]
 description = "Regenerate committed MORK Teaching Pack output"
-run = "python -m mtp.cli build --out ontology/mork/mtp/out"
+run = "python -m mtp.cli facts-report; python -m mtp.cli build --out ontology/mork/mtp/out"
 
 [tasks."check:java"]
 run = "mvn -f platform/pom.xml verify"
