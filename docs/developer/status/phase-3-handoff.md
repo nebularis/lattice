@@ -2,6 +2,9 @@
 
 # Phase 3 Validation Handoff
 
+**Status:** Accepted
+**Governing ADRs:** [ADR-A31](../../architecture/decisions/ADR-A31-release-stack-neutral-integration-contract.md), [ADR-A39](../../architecture/decisions/ADR-A39-semantic-release-assembly-and-provenance-ledger.md), [ADR-A40](../../architecture/decisions/ADR-A40-oci-reference-export-restore-and-command-adapters.md)
+
 ## Scope
 
 Phase 3 adds a release-stack-neutral contract and an OCI Image Layout reference adapter. It does not add a LATTICE-owned release pipeline, registry, deployment controller, signing service, workflow engine, or artifact-retention system.

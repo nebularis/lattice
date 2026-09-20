@@ -1,51 +1,4 @@
 # Instructions for Copilot
-## Repository Topology and Documentation Governance
-
-**Status:** Proposed companion. This file is not authoritative until it is reviewed and explicitly renamed to replace or merge with `.github/copilot-instructions.md`.
-
-## Authority and Reading Order
-
-Before changing a unit of work, read:
-
-1. The relevant accepted architecture decision in `docs/architecture/decisions/`.
-2. The unit plan in `docs/developer/plans/<unit>.md`.
-3. The unit status record in `docs/developer/status/<unit>.md`.
-4. Any active human review request in `docs/developer/review/<unit>-review.md`.
-
-Do not treat a plan as a status log. Do not begin a physical path move before the applicable ADR and path manifest are approved.
-
-## Repository Topology
-
-- `ontology/` owns semantic assets only: normative ontology sources, shapes, vocabularies, projections, semantic examples, semantic fixtures, and semantic documentation.
-- `tools/` owns executable reference implementations and developer-facing toolchains.
-- MORK and SPC semantic assets live under `ontology/mork` and `ontology/spc`. Their executable projects live under `tools/mork` and `tools/spc`.
-- `workers/` is a deployable asynchronous runtime package and remains a top-level root.
-- `platform/`, `apps/`, `packages/`, `contracts/`, `deployment/`, and `test/` remain top-level roots unless an accepted ADR says otherwise.
-- Never introduce a new top-level root or place executable implementation code under `ontology/` without an accepted architecture decision.
-- Never place normative semantic Turtle, shapes, or semantic fixtures under `tools/`.
-
-## Documentation Lifecycle
-
-Each active unit has one stable identifier, such as `iri-policy-p013`.
-
-- `docs/developer/plans/<unit>.md` defines scope, dependencies, steps, decisions, and planned validation. Change it only when the plan changes.
-- `docs/developer/status/<unit>.md` is the sole authoritative live state. Update it after every material implementation action, validation result, blocker, or handoff.
-- `docs/developer/review/<unit>-review.md` is the human review request. It contains scope, artifacts, exact `mise` commands, pass criteria, open questions, and a link to the matching status record. Create or refresh it before handoff. Archive or close it after disposition.
-- Never create a second active status record for a unit.
-- Every active review record must name an existing matching status record.
-- `docs/developer/` root holds durable guidance only. Do not create a new `current/` directory.
-
-## Decisions and Links
-
-- Architecture decisions live only in `docs/architecture/decisions/`.
-- New or updated links must use canonical paths. Do not introduce `docs/adr/` references.
-- When moving files, prefer using `git mv` if possible, and update all source, configuration, CI, documentation, and website references in the same migration unit.
-- Historical records may describe old paths only when needed for context. Add a relocation note and link to the canonical path.
-
-## Toolchain
-
-- `mise` is the only task-orchestration entry point unless ADR-A29 is superseded.
-- Maven, Yarn 4, Python project tooling, and Mix remain their own dependency authorities.
 
 ## Agentic Development Contract
 
@@ -97,6 +50,50 @@ The two modes are explained next.
 
 In BOTH **Default** and **Autonomous** modes, do not make design decisions unilaterally without consulting the human for architectural guidance. In this way, we will work together on alignment and ensure that ADR logs are available to you and other agents, that help shape our understanding as we work together.
 
+## Repository Topology and Documentation Governance
+
+If your user requests a named "unit of work", read:
+
+1. Any relevant accepted architecture decision in `docs/architecture/decisions/`.
+2. The unit plan in `docs/developer/plans/<unit>.md`.
+3. The unit status record in `docs/developer/status/<unit>.md`.
+4. Any active human review request in `docs/developer/review/<unit>-review.md`.
+
+Do not treat a plan as a status log. Do not begin a physical path move before the applicable ADR and path manifest are approved.
+
+### Repository Topology
+
+- `ontology/` owns semantic assets only: normative ontology sources, shapes, vocabularies, projections, semantic examples, semantic fixtures, and semantic documentation.
+- `tools/` owns executable reference implementations and developer-facing toolchains.
+- MORK and SPC semantic assets live under `ontology/mork` and `ontology/spc`. Their executable projects live under `tools/mork` and `tools/spc`.
+- `workers/` is a deployable asynchronous runtime package and remains a top-level root.
+- `platform/`, `apps/`, `packages/`, `contracts/`, `deployment/`, and `test/` remain top-level roots unless an accepted ADR says otherwise.
+- DO NOT introduce new directory structure, especially at the repo root, without an accepted architecture decision.
+
+### Documentation Lifecycle
+
+Most ideas start out life as `sketches`. Some may be captured as a plan rather than a sketch. Each active unit has one stable identifier, such as `iri-policy-p013`.
+
+- `docs/developer/sketches/<unit>.md` defines the broad shape of an idea. Sketches can become plans. A sketch can be updated freely. Once a sketch becomes a plan, it will typically be deleted. Some legacy sketches may still exist and should be left alone until the user has reviewed them with you.
+- `docs/developer/plans/<unit>.md` defines scope, dependencies, steps, decisions, and planned validation. Change it only when the plan changes.
+- `docs/developer/status/<unit>.md` is the sole authoritative live state. Update it after every material implementation action, validation result, blocker, or handoff.
+- `docs/developer/review/<unit>-review.md` is the human review request. It contains scope, artifacts, exact `mise` commands, pass criteria, open questions, and a link to the matching status record. Create or refresh it before handoff. Archive or close it after disposition.
+- Never create a second active status record for a unit.
+- Every active review record must name an existing matching status record.
+- `docs/developer/` root holds durable guidance only. Do not create a new `current/` directory.
+
+### Decisions and Links
+
+- Architecture decisions live only in `docs/architecture/decisions/`.
+- New or updated links must use canonical paths. Do not introduce `docs/adr/` references.
+- When moving files, prefer using `git mv` if possible, and update all source, configuration, CI, documentation, and website references in the same migration unit.
+- Historical records may describe old paths only when needed for context. Add a relocation note and link to the canonical path.
+
+### Toolchain
+
+- `mise` is the only task-orchestration entry point unless ADR-A29 is superseded.
+- Maven, Yarn 4, Python project tooling, and Mix remain their own dependency authorities.
+
 ## General Guidelines
 
 - Do not use semi-colons in English text. Use periods or commas instead.
@@ -104,27 +101,27 @@ In BOTH **Default** and **Autonomous** modes, do not make design decisions unila
 - Avoid over-explaining. Say things once and cross-reference if really needed.
 - Avoid superlatives.
 
-## Documenting DL/OWL/TTL Ontologies
+### Documenting DL/OWL/TTL Ontologies
 
 Try not to explain your design decisions in multiple places. Avoid explaining why you did not use a certain pattern or construct, especially if you've just explained why you did use a different one. If you feel the need to explain your design decisions, do so in a single place and cross-reference it from other places.
 
-# Thinking / Reasoning for Coding
+### Thinking / Reasoning for Coding
 
 Your user may present design collateral, architectural guidance, and coding standards. These must be adhered to at all times. Readability and clarity of intent is as important as working code that passes tests.
 
 Always consider the architectural quanta of the code you are writing and carefully consider whether your code might implicitly or explicitly change the dependencies within the codebase. If in chat mode (as opposed to agentic / co-work), prefer to clarify impacts with your user before making them.
 
-# Thinking / Reasoning for Writing
+### Thinking / Reasoning for Writing
 
 Your primary mode of operation should be critical thinking - looking for logical consistency and challenging logical errors, gaps, or misunderstandings.
 
 You should consider whether to present your own arguments as hypotheses or determined facts, generally adopting a stance of curiosity rather than dogmatism. This must be balanced against the need to maintain a clear and concise writing style (see below).
 
-# Writing Style / Voice 
+### Writing Style / Voice 
 
 Regardless of the style your user has requested (formal, informal, etc), try to be concise and avoid unnecessary verbosity. Where your user has requested that you provide output that is "comprehensive" and "detailed", this refers to the depth of subject matter understanding and analysis required, not the number of words used.
 
-## What To Avoid
+### What To Avoid
 
 The following MUST be avoided if at all possible, breaking these rules only under exceptional circumstances.
 
@@ -136,7 +133,7 @@ The following MUST be avoided if at all possible, breaking these rules only unde
 - Avoid formulaic transitions such as "Furthermore," "Moreover," "Additionally," and "In conclusion" at the start of sentences. 
 - Avoid vague meta-commentary like "It is important to note that," "In today's digital age," and "This serves as a testament to." Keep it short and succinct.
 
-## What To Reduce
+### What To Reduce
 
 The following styles should be kept to a minimum.
 

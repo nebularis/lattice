@@ -2,6 +2,10 @@
 
 # MTP Validation Handoff
 
+**Status:** Closed
+**Disposition:** Accepted on 2026-09-20
+**Governing ADR:** [ADR-A44](../../architecture/decisions/ADR-A44-mork-teaching-pack-generated-content-boundary.md)
+
 ## Scope
 
 MTP authoring establishes `tools/mork/src/mtp/`, curated inputs under `ontology/mork/mtp/data/`, generated-output ownership under `ontology/mork/mtp/out/`, structural tests, `mise` tasks, and a manual CI job. It does not implement LLM backend selection or model-quality evaluation.

@@ -3,13 +3,15 @@
 # Ontology Root Relocation Review
 
 **Unit:** `ontology-root-relocation`
-**Status:** Open
-**Plan:** [Repository Topology and Documentation Governance Plan](../plans/repository-topology-and-documentation-governance.md)
+**Status:** Closed
+**Disposition:** Accepted on 2026-09-20
+**Decision:** [ADR-A77](../../architecture/decisions/ADR-A77-repository-topology-and-documentation-governance.md)
 **Status record:** [Ontology Root Relocation Status](../status/ontology-root-relocation.md)
+**Governing ADR:** [ADR-A77](../../architecture/decisions/ADR-A77-repository-topology-and-documentation-governance.md)
 
-## Review Request
+## Review Outcome
 
-Review the safety conditions before moving the common LATTICE semantic roots into `ontology/`. This request excludes the later MORK and SPC split units.
+The safety conditions were satisfied. The common LATTICE semantic roots were moved into `ontology/`. This review excludes the later MORK and SPC split units.
 
 ## Paths Proposed For This Move
 

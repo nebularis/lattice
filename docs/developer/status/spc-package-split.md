@@ -3,8 +3,9 @@
 # SPC Package Split Status
 
 **Unit:** `spc-package-split`
-**State:** Reference rewrite in progress
-**Plan:** [Repository Topology and Documentation Governance Plan](../plans/repository-topology-and-documentation-governance.md)
+**State:** Accepted
+**Decision:** [ADR-A77](../../architecture/decisions/ADR-A77-repository-topology-and-documentation-governance.md)
+**Governing ADRs:** [ADR-A77](../../architecture/decisions/ADR-A77-repository-topology-and-documentation-governance.md), [ADR-A29](../../architecture/decisions/ADR-A29-repository-toolchain-and-environment-boundary.md), [ADR-A30](../../architecture/decisions/ADR-A30-shared-semantic-platform-cross-runtime-boundary.md)
 
 ## Completed
 
@@ -14,11 +15,6 @@
 - Updated the retained `mise` Mix dispatch path to `tools/spc/erlang`.
 - Preserved SPC's semantic non-integration boundary.
 
-## Remaining
+## Acceptance
 
-- Complete the full link and reference audit with the repository-wide cleanup unit.
-- Run Python and Mix validation after the restructuring migration is complete.
-
-## Next Action
-
-Contribute remaining SPC path findings to `reference-rewrite-and-lock`.
+The semantic/executable split, canonical path rewrite, and Python/Mix validation are accepted. SPC remains semantically unintegrated with LATTICE.

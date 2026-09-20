@@ -3,9 +3,10 @@
 # Ontology Root Relocation Status
 
 **Unit:** `ontology-root-relocation`
-**State:** Reference rewrite in progress
-**Plan:** [Repository Topology and Documentation Governance Plan](../plans/repository-topology-and-documentation-governance.md)
+**State:** Accepted
+**Decision:** [ADR-A77](../../architecture/decisions/ADR-A77-repository-topology-and-documentation-governance.md)
 **Review:** [Ontology Root Relocation Review](../review/ontology-root-relocation-review.md)
+**Governing ADR:** [ADR-A77](../../architecture/decisions/ADR-A77-repository-topology-and-documentation-governance.md)
 
 ## Scope
 
@@ -24,11 +25,6 @@ This unit excludes MORK and SPC, which have their own semantic and executable sp
 - Moved all common LATTICE semantic roots into `ontology/` using `git mv`.
 - Repointed CI extraction, conformance fixtures, root Python test discovery, and direct Surface and Eligibility fixture lookups.
 
-## Blockers
+## Acceptance
 
-- Repository-wide documentation and source reference rewrite remains incomplete.
-- Ecosystem validation is deferred until all topology moves complete.
-
-## Next Action
-
-Complete `reference-rewrite-and-lock`, then run the post-migration validation inventory.
+The common semantic roots, documentation references, and topology checks are accepted. Ecosystem validation is recorded in the dependent package and platform handoffs.

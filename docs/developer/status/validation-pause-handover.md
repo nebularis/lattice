@@ -3,7 +3,8 @@
 # Validation Pause Handover
 
 Date: 2026-09-20  
-Status: Paused for macOS upgrade  
+Status: Closed and superseded by completed validation
+Governing ADR: [ADR-A29](../../architecture/decisions/ADR-A29-repository-toolchain-and-environment-boundary.md)
 Implementation merge under validation: `ba04e5611efa39ec8d5cf753e854f5fa3e09d007`  
 Validation baseline revision: `25bc56b050d5dc7853d37c09b03ab1cb2f989532`
 
@@ -11,7 +12,7 @@ Validation baseline revision: `25bc56b050d5dc7853d37c09b03ab1cb2f989532`
 
 The host is running macOS 14 / Darwin 23.6.0 on Apple arm64. Homebrew warned that this macOS version is no longer supported for the requested formula installation and began building a large dependency chain from source while installing `mise`, including LLVM and Rust.
 
-The user has elected to upgrade macOS before continuing. Do not resume tool installation, package resolution, builds, tests, containers, or infrastructure validation until the OS upgrade is complete and the host toolchain has been rechecked.
+This pause record is closed. Subsequent validation was completed after the host toolchain became available. Retain the historical baseline and interruption details below as evidence of the earlier pause.
 
 ## Scope decision
 
@@ -167,9 +168,9 @@ No claims should be made that these commands or integrations pass.
 
 ## Relevant documents
 
-- [Implementation handover](implementation-handover.md)
-- [Toolchain guide](../toolchain.md)
-- [Offline handoff procedure](offline-phase-handoff.md)
+- [Implementation handover](../sketches/implementation-handover.md)
+- [Toolchain decision](../../architecture/decisions/ADR-A29-repository-toolchain-and-environment-boundary.md)
+- [Validation status](validation-status.md)
 - [Phase 0–1 handoff](phase-0-1-handoff.md)
 - [Phase 2 handoff](phase-2-handoff.md)
 - [Phase 3 handoff](phase-3-handoff.md)

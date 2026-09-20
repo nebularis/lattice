@@ -4,11 +4,11 @@
 
 This is the consolidated handover for Phases 0 through 6 of the MORK and Surface delivery plan. It is the starting point for a coding agent, maintainer, or network-enabled validation environment. The canonical phase plan remains [plan-morkSurfaceImplementation.prompt.md](../../../.github/prompts/plan-morkSurfaceImplementation.prompt.md).
 
-## Status
+## Status [DEAD]
 
 Phases 0 through 6 are **authoring complete**. Their source, contracts, tests, CI wiring, ADRs, architecture documentation, and phase handoffs exist. None is validated complete. This authoring host could run JSON parsing, editor diagnostics, Markdown-link checks, and `git diff --check`, but did not have Java 21, Maven, a usable Python interpreter, Docker on `PATH`, resolved Yarn dependencies, Playwright browsers, or network access.
 
-Phase 7 is not started. Do not begin it until a network-enabled environment returns a bounded validation result for the current phases or explicitly accepts the documented residual risks.
+This handover has been sidelined in favour of re-architecting the platform layers now.
 
 ## Reading Order
 

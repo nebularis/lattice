@@ -23,15 +23,15 @@ Before any implementation slice in this plan begins, the `repository-topology-a7
 
 ---
 
-## Part 0 — Plan mechanics
+## Part 0 — c
 
 ### 0.1 Units of work
 
 | Unit | Meaning | Ends with |
 |---|---|---|
-| **Track** | A long-lived concern with a stable owner (e.g. Store SPI, Ingestion) | Nothing; tracks span phases |
+| **Epic** | A long-lived concern with a stable owner (e.g. Store SPI, Ingestion) | Nothing; tracks span phases |
 | **Phase** | A cohort of slices that together produce a demonstrable capability | Phase gate: integration milestone + docs updated + ADRs ratified |
-| **Slice** | One agent work package. 0.5–4 agent-days. Single coherent change, independently reviewable and testable | **Human validation gate** (mandatory) |
+| **Slice** | One agent work package. A single coherent change, independently reviewable and testable | **Human validation gate** |
 | **Milestone (Mn)** | Cross-component demonstrable outcome, exercised end-to-end in the local stack | Human demo + E2E suite green |
 
 **Slice sizing rule.** If a slice's Validation Pack contains more than ~15 test cases, or touches more than two modules, split it. If it contains fewer than 3, merge it. Skeleton slices are exempt (they contain 1 test: the build smokes).
@@ -44,7 +44,7 @@ Every slice, without exception, delivers:
 2. **Validation Pack (VP)** — a single markdown file at `docs/validation/<slice-id>.md` containing:
    - *What invariant does this slice protect?* (1 paragraph, in architecture language, citing G-nn/A-nn)
    - *Test case table*: ID, Given/When/Then in plain language, level (L0–L8), the invariant it protects, pass criterion, and whether it is a positive or negative case.
-   - *One command to run everything*: e.g. `./gradlew :module:check` or `make verify-slice P1.3`.
+   - *One command to run everything*: e.g. `mise module:check` or `mvn clean:verify`, and so on.
    - *Expected artifacts* the human should inspect (golden files, capability report, canonicalisation trace, screenshots).
    - *Deliberate non-coverage*: what this slice does **not** test and which later slice covers it.
 3. **Traceability update** — `docs/traceability/matrix.csv` rows linking slice → G-nn/C-nn/A-nn → test IDs. CI fails if a claimed requirement has no test.
@@ -162,9 +162,9 @@ docs/
 
 ---
 
-## Part 2 — Track map and dependency DAG
+## Part 2 — Epic map and dependency DAG
 
-| Track | Owns | Primary components |
+| Epic | Owns | Primary components |
 |---|---|---|
 | **T-DEC** | ADRs, normative doc rewrites | A44–A75 |
 | **T-BUILD** | Repo, build, CI, codegen, compose, DevEx | — |
@@ -736,11 +736,11 @@ Deliberately lighter: each item is a sub-programme sized after Phase 3 measureme
 
 ---
 
-## Part 9 — Continuous tracks (run across all phases, never a trailing phase)
+## Part 9 — Continuous Epics (run across all phases, never a trailing phase)
 
 These are not phases; they are standing obligations with per-phase slices.
 
-| Track | Per-phase obligation | Enforcement |
+| Epic | Per-phase obligation | Enforcement |
 |---|---|---|
 | **T-DATA** | Every new component contributes generator coverage + a named scenario before its first L5 test | CI: an L5 test referencing an unseeded scenario fails |
 | **T-SEC** | Every slice touching a threat-model control adds or extends its L8 suite in the same slice | Traceability: an S-nn control without a passing test blocks the phase gate |
@@ -754,7 +754,7 @@ These are not phases; they are standing obligations with per-phase slices.
 
 ## Part 10 — Parallelisation plan
 
-Assumes multiple agent teams working concurrently with one human validator per track (validators may hold two tracks).
+Assumes multiple agent teams working concurrently with one human validator per Epic (validators may hold two Epics).
 
 | Phase | Parallel streams | Serialisation points |
 |---|---|---|

@@ -2,6 +2,9 @@
 
 # Implementation Validation Status
 
+**Status:** Accepted with recorded residuals
+**Governing ADR:** [ADR-A29](../../architecture/decisions/ADR-A29-repository-toolchain-and-environment-boundary.md)
+
 Date: 2026-09-20  
 Implementation merge: `ba04e5611efa39ec8d5cf753e854f5fa3e09d007`  
 Validation baseline revision: `25bc56b050d5dc7853d37c09b03ab1cb2f989532`

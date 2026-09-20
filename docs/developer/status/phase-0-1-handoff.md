@@ -2,6 +2,9 @@
 
 # Phase 0 and 1 Validation Handoff
 
+**Status:** Accepted
+**Governing ADRs:** [ADR-A29](../../architecture/decisions/ADR-A29-repository-toolchain-and-environment-boundary.md), [ADR-A30](../../architecture/decisions/ADR-A30-shared-semantic-platform-cross-runtime-boundary.md)
+
 ## Source and ownership
 
 This handoff covers `mise.toml`, the Dev Container and Compose configuration, `platform/`, `workers/`, `contracts/events/`, developer documentation, and CI workflows. Existing ontology layers, Surface tooling, MORK tooling, and SPC sources remain owned by their existing modules and were not moved.

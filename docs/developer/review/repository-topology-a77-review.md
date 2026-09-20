@@ -3,9 +3,10 @@
 # Repository Topology A77 Review
 
 **Unit:** `repository-topology-a77`
+**Status:** Closed
 **Disposition:** Accepted on 2026-09-20
 **Status record:** [Repository Topology A77 Status](../status/repository-topology-a77.md)
-**Plan:** [Repository Topology and Documentation Governance Plan](../plans/repository-topology-and-documentation-governance.md)
+**Decision:** [ADR-A77](../../architecture/decisions/ADR-A77-repository-topology-and-documentation-governance.md)
 
 ## Review Request
 
@@ -22,7 +23,7 @@ Approved. This record preserves the decision request and its acceptance evidence
 
 ## Artifacts To Inspect
 
-- [Repository Topology and Documentation Governance Plan](../plans/repository-topology-and-documentation-governance.md)
+- [ADR-A77](../../architecture/decisions/ADR-A77-repository-topology-and-documentation-governance.md)
 - [ADR-A77](../../architecture/decisions/ADR-A77-repository-topology-and-documentation-governance.md)
 - [Repository instructions](../../../.github/copilot-instructions.md)
 

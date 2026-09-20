@@ -7,14 +7,15 @@
 **Review:** [Platform Continuation Review](../review/platform-continuation-review.md)
 **Updated:** 2026-09-20
 Working revision: `b19e1e7192dbb04fca1894f01908e9a11d976a2f`  
-Status: paused after the first Surface control-plane implementation slice.
+Status: accepted after the first Surface control-plane implementation slice.
+Governing ADRs: [ADR-A30](../../architecture/decisions/ADR-A30-shared-semantic-platform-cross-runtime-boundary.md), [ADR-A32](../../architecture/decisions/ADR-A32-surface-revision-lifecycle-and-release-candidates.md), [ADR-A33](../../architecture/decisions/ADR-A33-surface-revision-ledger-and-optimistic-concurrency.md)
 
 ## Purpose
 
 This is the authoritative current state for the platform continuation unit. It is not a plan document. Design lives in [solution-design-specification.md](../../architecture/solution-design-specification.md), [data-architecture.md](../../architecture/data-architecture.md), and [ux-design.md](../../architecture/ux-design.md). What remains is verification of already-authored work, and that verification's gaps are already documented. This file references them rather than re-deriving them:
 
-- [Implementation handover](implementation-handover.md), phase-by-phase authoring status, outstanding validation, and the "Do Not Break" invariants.
-- [Offline phase handoff procedure](offline-phase-handoff.md), the rule that authoring complete does not imply validated complete.
+- [Implementation handover](../sketches/implementation-handover.md), phase-by-phase authoring status, outstanding validation, and the "Do Not Break" invariants.
+- [Validation status](validation-status.md), including the rule that authoring complete does not imply validated complete.
 - Each phase handoff, [0-1](phase-0-1-handoff.md), [2](phase-2-handoff.md), [3](phase-3-handoff.md), [4](phase-4-handoff.md), [5](phase-5-handoff.md), [6](phase-6-handoff.md), with its own unverified-assumptions statement.
 
 ## Working Arrangement
@@ -78,8 +79,8 @@ Pass looks like: `Tests run: 9, Failures: 0, Errors: 0`, including `SurfaceRevis
 ## Reference Material
 
 - [Canonical Phase 0-7 plan](../../../.github/prompts/plan-morkSurfaceImplementation.prompt.md)
-- [Implementation handover](implementation-handover.md), including its "Do Not Break" invariants
-- [Validation pause handover](validation-pause-handover.md)
+- [Implementation handover](../sketches/implementation-handover.md), including its "Do Not Break" invariants
+- [Validation status](validation-status.md)
 - [Validation status](validation-status.md)
 - [Platform solution design specification](../../architecture/solution-design-specification.md), [data architecture](../../architecture/data-architecture.md), [UX design](../../architecture/ux-design.md)
 - Session plan memory: `/memories/session/plan.md` (session-scoped, not durable)

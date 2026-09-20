@@ -3,9 +3,10 @@
 # Repository Topology A77 Status
 
 **Unit:** `repository-topology-a77`
-**State:** Structural migration complete
-**Plan:** [Repository Topology and Documentation Governance Plan](../plans/repository-topology-and-documentation-governance.md)
+**State:** Accepted - structural migration complete
+**Decision:** [ADR-A77](../../architecture/decisions/ADR-A77-repository-topology-and-documentation-governance.md)
 **Review:** [Repository Topology A77 Review](../review/repository-topology-a77-review.md)
+**Governing ADR:** [ADR-A77](../../architecture/decisions/ADR-A77-repository-topology-and-documentation-governance.md)
 
 ## Current Position
 

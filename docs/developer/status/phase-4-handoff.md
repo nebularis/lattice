@@ -2,6 +2,9 @@
 
 # Phase 4 Validation Handoff
 
+**Status:** Accepted
+**Governing ADRs:** [ADR-A18](../../architecture/decisions/ADR-A18-surface-to-mork-lowering-boundary.md), [ADR-A19](../../architecture/decisions/ADR-A19-staged-compiler-architecture-and-backend-fanout.md), [ADR-A25](../../architecture/decisions/ADR-A25-llm-participation-and-deterministic-production-gate.md), [ADR-A35](../../architecture/decisions/ADR-A35-trusted-surface-worker-execution-boundary.md), [ADR-A41](../../architecture/decisions/ADR-A41-surface-projection-mork-staging-boundary.md)
+
 The Phase 4 worker contract lowers `ontology/surface/examples/saas-subscription-arr-projection.ttl` into an immutable MORK staging graph only. Validate with:
 
 ```text
