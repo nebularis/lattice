@@ -91,3 +91,22 @@ run = "docker compose -f deployment/compose/docker-compose.yml up -d"
 [tasks."services:down"]
 description = "Stop the reference platform services"
 run = "docker compose -f deployment/compose/docker-compose.yml down"
+
+[tasks.clean]
+description = "Clean all build artifacts and caches"
+depends = ["clean:java", "clean:python", "clean:frontend", "clean:build"]
+
+[tasks."clean:java"]
+run = "mvn -f platform/pom.xml clean"
+
+[tasks."clean:python"]
+description = "Clean Python caches, bytecode, and build artifacts"
+run = "rm -rf .build/pytest-cache/* .pytest_cache __pycache__ build/ *.egg-info; find . -type d -name '__pycache__' -exec rm -rf {} + 2>/dev/null; find . -type d -name '*.egg-info' -exec rm -rf {} + 2>/dev/null; true"
+
+[tasks."clean:frontend"]
+description = "Clean Node/Yarn artifacts"
+run = "rm -rf node_modules .yarn apps/*/node_modules .build/yarn-cache/* .build/*-test-results/*; yarn cache clean"
+
+[tasks."clean:build"]
+description = "Clean generated build outputs"
+run = "rm -rf build/ ontology/mork/mtp/out/"
