@@ -56,6 +56,8 @@ deps/
 *.log
 
 # TEMP FILES
+**/execution/*
+!**/execution/.gitkeep
 ontology/mork/mtp/out/
 **/.DS_Store
 **/catalog*.xml

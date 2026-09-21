@@ -890,7 +890,7 @@ Today every one of these has nowhere to go. They will become log lines, and the 
 
 ### 4.16 C-16 Metering & Quota Service
 
-**Closes `G-13` (S2).** "LATTICE is the open source element of a wider commercial framework" and "a fundamental requirement is high performing services" jointly imply multi-tenant resource governance. No document mentions usage, quota, rate limiting, or cost attribution.
+**Closes `G-13` (S2).** "LATTICE (the open source element) may be used within a wider commercial framework" and "a fundamental requirement is high performing services" jointly imply multi-tenant resource governance. This requires usage, quota, rate limiting, and cost attribution.
 
 **Metered dimensions.**
 
@@ -946,7 +946,7 @@ Organisation
 
 ### 4.18 C-18 Push / Subscription Gateway
 
-**Closes `G-15` / `G-32` (S3).** `solution-design-specification.md §7.4` defers real-time push with the reason "polling is sufficient at this scale and keeps the transport surface to one protocol." Correct for job progress. Wrong for a claims operator watching tank levels, an ingestion monitor, an activation promotion, or a review queue that must not hand the same item to two reviewers.
+**Closes `G-15` / `G-32` (S3).** `solution-design-specification.md §7.4` defers real-time push with the reason "polling is sufficient at this scale and keeps the transport surface to one protocol." Correct for job progress. Wrong for a business operator watching tank levels, an ingestion monitor, an activation promotion, or a review queue that must not hand the same item to two reviewers.
 
 **Recommendation: one push transport, added deliberately, with a narrow contract.**
 
@@ -1176,6 +1176,20 @@ Proposed **ADR-A66** (`D-15`): principal model extension, service/agent principa
 
 **Implementation cost is real** — bi-temporal queries over named graphs require either a per-graph temporal index or a temporal-filter pattern in every query, and they interact badly with naive materialisation (you cannot materialise "current" and also answer as-of). Recommended split: materialise *current* projections for the hot path (the SLOs above), and answer as-of queries from the authoritative layers via a separate analytic path with relaxed SLOs. State this as a deliberate two-path design rather than discovering it when the first as-of query times out. Proposed **ADR-A67** (`D-16`).
 
+#### **COUNTER-ARGUMENT**
+
+Since IRIs are unique within a named graph, log writes are sufficient for _Transaction Time_, whether these are streamed to Kafka as a relevant event during ingestion or written to some SIEM adapter. 
+
+_Valid time_ on an A-Box individual is a domain consideration, and `fnd:TemporallyScoped` provides one means of capturing this, however we must be careful not to assume we know how a domain ontology wants to model questions of "what did we believe on 1 July, before some other event occured on 15 August?" It is up to an application author to decide how this works.
+
+Having **no in-place correction** by superseding the prior version (with `fnd:Evidence` naming the cause) is a nice design, but it may be an unmanageable data-explosion for some users. We should NOT mandate this.
+
+Indeed, `LATTICE` tried not to mandate how the end system works at all - it merely provides ontological layers you can build upon and tools you can use to populate your graph. The _claims handling_ use case you are alluding to could not served by applying a claim directly to a capacity tank anyway, because there are multiple vectors of admission for a claim that might incorporate a time-bound. That could include when a previous claim occured, how many claims were paid within a specified time-span since the original contract (which gave rise to the capacity tank node being defined) came into force, and so on. We MUST NOT try to model our end-user's business domains here.
+
+Rather, the `fnd:TemporallyScoped` mixin exists in `LATTICE` in order to provide a consistent mechanism for internal facts to be time bounded. This works very well for `eligibility` rules, for example, because a runtime engine checking a rule can noop and return "Not Eligible" if wall-clock-time > `validTo` on an individual `elg:Condition`. This is `LATTICE` providing our own mechanism for bi-temporal modelling in our own layers. Even here, we should not forbid in-place updates - it is a business behaviour decision, which we cannot foretel from our position.
+
+If your proposed model is truly a useful requirement _within the graph_ (i.e., bi-temporal queries are a use-case for some scenarios), then we should explicitly model this semantics, but not with an `owl:Class` - mixing the ontological and runtime semantics is as wrong as fixing the runtime behaviour for all writes/updates to the most complex and inefficient one possible. This should be an API setting, maybe something that can be configured by subgraph, perhaps even dynamically, but definitely not a default. 
+
 ### 5.6 Decision records and audit
 
 Implied by every document and specified by none. A decision record is written for: every behaviour transition (fired or not-fired, with reason), every admission gate outcome, every non-trivial Decision API call, every write-back proposal outcome, every human verb in MORK or Surface, and every activation.
@@ -1197,6 +1211,8 @@ DecisionRecord {
 **The point of recording `packDigest` + profile + input digests + freshness is reproducibility**: an auditor can re-derive the decision, and a divergence between the record and the re-derivation is itself a detectable defect (drift, non-determinism, or tampering). This is the concrete mechanism behind "who inspected this evidence and what did they do with it" in `data-architecture.md §6`, extended from human review to machine decisions — which is where regulatory scrutiny will actually land.
 
 Storage: decision records are high-volume. Recommendation: records in the Stream realm (append-only, partitioned by month, archived per `G-31`), with an index in PostgreSQL for the queries operators actually run (`by subject`, `by principal`, `by time range`, `by verdict`), and the full record fetched by id. Do not put millions of decision records in a single PostgreSQL table with no partitioning and then discover it.
+
+This is a good shout, but it needs to be configurable. End users may wish to serialize to kafka, utilise our RabbitMQ adapter layer, have us write to Postgres, or make their own adapter.
 
 ### 5.7 Security and threat model
 
@@ -1262,11 +1278,9 @@ Currently implicit. Required rules:
 
 ### 5.11 Open-source / commercial boundary and the SPI inventory
 
-**Closes `G-14` (S2).** LATTICE is described as "the open source element of a wider commercial framework". Nothing in the documents says where the seam is, which means the seam will be discovered by accident during the first commercial engagement — usually by finding that a commercial feature requires patching an OSS class.
+**Closes `G-14` (S2).** 
 
 **Proposed seam.** OSS: the ontology stack, MORK vocabulary, all contracts and schemas, canonicalisation (`C-11`), the store SPI plus the Jena/Fuseki adapter plus the TCK, the plan IR and interpreter (`C-04`/`C-05` core), the projection engine (`C-07`), the behaviour engine (`C-09`), the write-back mechanism (`C-10`), the query plane (`C-12`), provenance and lineage (`C-19`), metering emission (`C-16` emit side), the UI kit and SDKs (`C-20`), and the reference Workbench/Studio apps.
-
-Commercial: LLM provider integrations beyond a reference adapter, teaching packs and cassette corpora, advanced calibration and drift analytics, commercial store adapters, enterprise identity integrations, managed multi-tenant operations tooling, rating/billing, industry applied ontologies (the insurance product), and support/certification.
 
 **The mechanism that makes the seam real is an SPI inventory** — every extension point named, versioned, and TCK-covered, so a commercial extension is a plugin rather than a fork:
 
@@ -1288,6 +1302,8 @@ Commercial: LLM provider integrations beyond a reference adapter, teaching packs
 **Licensing consequence.** `ontology-architecture §2` sets MPL-2.0 for `.ttl`/`tools/` and CC-BY-SA-4.0 for docs. The platform code's licence is never stated in any document. It must be, and it interacts with the seam: MPL-2.0's file-level copyleft is a good fit for SPI interfaces and reference implementations (a commercial adapter in a new file carries no obligation), whereas anything more permissive weakens the framework's position and anything stronger (AGPL) makes commercial embedding hostile. Recommendation: **MPL-2.0 for platform code, with SPI interface modules explicitly documented as the sanctioned extension boundary.** Proposed **ADR-A71** (`D-20`).
 
 ### 5.12 Storage lifecycle and growth
+
+**NOTE** I have challenged the versioned-writes narrative earlier in this review. Equally, the notion that no deletes should ever take place is spurious - this should be a matter of policy, not course.
 
 **Closes `G-20` / `G-31`.** With no deletes, versioned writes, per-batch graphs, append-only ledgers, and decision records, a mid-size deployment grows by billions of triples per year. Three controls, all of which constrain the data model and therefore must be adopted now:
 
@@ -1532,12 +1548,16 @@ Rules: IRIs never contain personal data (A68); IRIs never contain a version or t
 `data-architecture.md §1` declares PostgreSQL authoritative for "lifecycle ledgers, graph-family registry, processed-job idempotency, review and governance ledgers, release ledger", and forbids it from holding RDF. `§3` then makes `surface_revision_ledger` the system of record for lifecycle state. The cost of that decision runs through every document:
 
 - **The ontology's governance layer becomes decorative.** Foundation provides `fnd:Version`, `fnd:PersistentIdentity`, `fnd:supersededBy`, `fnd:Governable`, `fnd:GovernanceState`, `fnd:Evidence`, `fnd:TemporalScope` — precisely lifecycle, versioning, provenance and approval. The platform reimplements all of it in `surface_revision_ledger` columns. `G-34` observed the two vocabularies never being mapped; the real finding is that the second one should not exist.
-- **MORK's design is contradicted.** The brief is explicit: *"MORK nodes are OWL/RDF and therefore mapping configuration is co-resident with the MORK ontology, and with previous mapping decisions captured in the graph as decision nodes."* `data-architecture.md` puts review snapshots and decisions in `mork_review_snapshot` / `mork_review_decision`, splitting a decision from the mapping it decides against, across a realm boundary that `§5.6` then forbids joining with a foreign key. Every "who decided what about this mapping" query becomes an application-layer join instead of one SPARQL pattern.
+- **MORK's design is contradicted.** The brief is explicit: *"MORK nodes are OWL/RDF and therefore mapping configuration is co-resident with the MORK ontology, and with previous mapping decisions captured in the graph as decision nodes."* `data-architecture.md` puts review snapshots and decisions in `mork_review_snapshot` / `mork_review_decision`, splitting a decision from the mapping it decides against, across a realm boundary that `§5.6` then forbids joining with a foreign key. Every "who decided what about this mapping" query becomes an application-layer join instead of one SPARQL pattern. _(USER_NOTE: Worse than this, we REALLY want to let the LLM know about decisions where a MORK mapping was REJECTED as incorrect - having all the MORK decision nodes in the graph means we can blend this history record of "what good mappings look like" into mtp and send it to an LLM agent that is assisting with generating the MORK mapping nodes at runtime)
 - **The `GraphReference` pointer exists to paper over the split.** `§1` says it is "the only pointer that crosses realms", resolved at read time. Under a graph-primary model most of those crossings simply disappear.
 - **It creates the dual-write problem that `G-06`, `§5.2` T5/T6/T9 and half the saga machinery exist to manage.** Every one of those sagas is a consequence of choosing two authoritative stores for facts that belong together.
 - **It doubles the audit surface.** `data-architecture §6` makes ledger tables the audit trail while `ontology-architecture §10` makes provenance graphs the audit trail. Two answers to "what happened", neither complete.
 
 Meanwhile the *original* justification — a relational materialisation of coverage spans for sweep-line processing in the insurance application — is not a system-of-record case at all. It is a **derived algorithmic projection**, which is exactly what Surface exists to produce. It was correct, it was narrow, and it should never have generalised into "PostgreSQL is the operational realm".
+
+### A1.1 ADDITIONAL USER NOTE
+
+Not only is this analysis correct, there is a hidden gem in here - materializing to a non-RDF datastore is ABSOLUTELY a useful feature. Being able to represent a data model in a SQL/COLUMN-STORE, or in an LPG even, might absolutely be an important tool for some use-cases. Mapping back and forth between an ontological layer and a non-RDF point is MORK territory in terms of implementing the projection/mapping, but the DECISION about when to synchronise, is BUSINESS logic and therefore WE WILL NEVER OWN IT. LATTICE is a framework, not an application. We use it to build applications, which may or may not use all of our features. 
 
 ## A1.2 The test for where a fact belongs
 
@@ -1603,11 +1623,24 @@ WHERE  { GRAPH ?g { ?rev lattice:version ?v ; lattice:state ?s }
 ```
 If the guard fails, nothing changes. Because SPARQL Update gives no affected-count, the SPI's `conditionalWrite` performs the update and a verification read **within the same transaction** (or, on stores without multi-request transactions, as a single request followed by a read-back with the new version as the guard). A mismatch is the existing `409`. This preserves `data-architecture §5.1` exactly, with no behavioural change visible above the SPI.
 
+### User Note on (1/Optimistic Concurrency)
+
+Please read [`optimistic-concurrency-in-rdf.md`](optimistic-concurrency-in-rdf.md) for the latest guidance on this.
+
 **2. Uniqueness constraints.** No native support.
 *Pattern, in preference order:* (a) **make uniqueness structural** — content-addressed revision IRIs mean collision is impossible by construction, which covers the graph-family registry, snapshots, generated outputs and packs; (b) **guarded insert** — `INSERT ... WHERE NOT EXISTS { ... }` in a single request, then verify; (c) **coordination-realm mutex** for the residual cases where a genuine cross-entity invariant must be serialised (one activation in flight per environment, one maintainer per projection). Do not attempt general uniqueness enforcement in the graph; make identity derive from content instead, which is the ontology's own idiom.
 
+### User Note on (2/Uniqueness)
+
+Please read [`uniqueness-in-rdf.md`](uniqueness-in-rdf.md) for the latest guidance on this.
+
+
 **3. Monotonic sequence and ordering.** RDF is a set; `recordedAt` alone cannot order events written in the same instant.
 *Pattern:* the SPI exposes a **dataset commit sequence** — a monotonically increasing per-dataset value assigned at commit, obtained from the store's transaction log where available and otherwise from the coordination realm's sequence, and written onto every assertion graph as `lattice:commitSeq`. All ledger replay and the change feed order by `(commitSeq)`, never by wall clock. Node identifiers within a batch use ULIDs for intra-batch order. This closes an unstated defect in the existing design, where `governance_ledger_entry` replay ordering and `release_ledger_event` ordering both depend on `recordedAt` with a tie-break on an opaque id.
+
+### User Note on (3/Monotonic sequence and ordering)
+
+Please read [`ordering-in-rdf.md`](ordering-in-rdf.md) for the latest guidance on this.
 
 **4. Work queues and the outbox.** `SELECT ... FOR UPDATE SKIP LOCKED` has no RDF equivalent, and per-message state churn in a triple store is wasteful.
 *Pattern:* work queues are **never** graph-resident. Two acceptable forms: (a) **broker-native** — publish inside the store transaction is impossible, so use the commit-marker technique: the unit of work writes its intent as part of its single-request update with `lattice:publishPending true`, and a relay claims pending intents by commit sequence, publishes, and clears the flag idempotently; or (b) **coordination outbox** — a table in the coordination realm written in the same coordination transaction as a lease, for flows that do not need graph atomicity. Form (a) preserves the outbox guarantee (`§7.2`) without a second authoritative store, at the cost of a scan on a small indexed pattern; form (b) is the pragmatic choice where the coordination realm already exists. Either way the guarantee is unchanged: nothing is published that was not committed, and nothing committed is lost.
@@ -1621,6 +1654,12 @@ If the guard fails, nothing changes. Because SPARQL Update gives no affected-cou
 |---|---|
 | Backup, PITR, and restore tooling for RDF stores is weaker and more store-specific than PostgreSQL's (`R-13`) | Backup design is a mandatory row in the capability matrix with stated RPO/RTO per adapter; content-addressed export bundles (`OciLayoutBundleService`, already built) provide a store-independent second line, verifiable on restore; the coordination realm being disposable removes it from the recovery critical path |
 | Fewer operators are fluent in RDF store operations than in PostgreSQL | Runbooks per adapter; the operations console (§6.2) surfaces store health without SPARQL; break-glass procedures documented; the reference deployment stays on the standards path so knowledge transfers |
+
+### USER NOTE - ACCEPTABLE USE OF SQL
+
+Just to be clear, it is absolutely acceptable to use a SQL database (via JDBC) for storage IF persistent storage is needed and RDF is not the right tool. The note below (A1.6) talks about how to do this with a domain value - and I fully support it.
+
+Hot counters that need persistent storage are an application-specific problem and almost certainly out of scope for `LATTICE`, with the possible exception of needing to implement some kind of monotonic sequence - this is probably best deferred to java or erlang if we absolutely need it.
 
 ## A1.6 Algorithmic projection sinks — the original PostgreSQL case, done properly
 

@@ -24,7 +24,7 @@ At all times, the following files MUST be kept up to date with changes:
 
 When writing a plan for coding, the plan must be VERY detailed. This allows us to ensure alignment between the architecture, the design specification, and the plan.
 
-### Two Agent/Execution Modes: Default and Autonomous
+### Two Agentic Execution Modes: Default and Autonomous
 
 In both modes, the Agentic Development Contract still applies. The agent should not run off and build multiple sub-systems, but should follow the `Agentic Development Approach` instead.
 
@@ -54,12 +54,14 @@ In BOTH **Default** and **Autonomous** modes, do not make design decisions unila
 
 If your user requests a named "unit of work", read:
 
-1. Any relevant accepted architecture decision in `docs/architecture/decisions/`.
-2. The unit plan in `docs/developer/plans/<unit>.md`.
-3. The unit status record in `docs/developer/status/<unit>.md`.
-4. Any active human review request in `docs/developer/review/<unit>-review.md`.
+1. Any relevant accepted architecture decision in `docs/architecture/decisions/`
+2. The unit plan in `docs/developer/plans/<unit>.md`
+3. The unit status record in `docs/developer/status/<unit>.md`
+4. Any active human review request in `docs/developer/review/<unit>-review.md`
 
 Do not treat a plan as a status log. Do not begin a physical path move before the applicable ADR and path manifest are approved.
+
+When trying to estimate scope, the measure should not be `agent days`, but rather, aim to estimate the cost in `tokens` or `ai-credits`. We can validate this after implementation and the record of estimated and actual might help with future planning.
 
 ### Repository Topology
 
@@ -75,7 +77,7 @@ Do not treat a plan as a status log. Do not begin a physical path move before th
 Most ideas start out life as `sketches`. Some may be captured as a plan rather than a sketch. Each active unit has one stable identifier, such as `iri-policy-p013`.
 
 - `docs/developer/sketches/<unit>.md` defines the broad shape of an idea. Sketches can become plans. A sketch can be updated freely. Once a sketch becomes a plan, it will typically be deleted. Some legacy sketches may still exist and should be left alone until the user has reviewed them with you.
-- `docs/developer/plans/<unit>.md` defines scope, dependencies, steps, decisions, and planned validation. Change it only when the plan changes.
+- `docs/developer/plans/<unit>.md` defines scope, dependencies, steps, decisions, and planned validation. Change it only when the plan changes. 
 - `docs/developer/status/<unit>.md` is the sole authoritative live state. Update it after every material implementation action, validation result, blocker, or handoff.
 - `docs/developer/review/<unit>-review.md` is the human review request. It contains scope, artifacts, exact `mise` commands, pass criteria, open questions, and a link to the matching status record. Create or refresh it before handoff. Archive or close it after disposition.
 - Never create a second active status record for a unit.
