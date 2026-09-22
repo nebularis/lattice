@@ -13,6 +13,7 @@ This document provides the solution design for a software platform built around 
 * Ontology design and layer semantics, DL encodings, and layer dependency rules stay in the layer READMEs and in [ontology-architecture.md](ontology-architecture.md).
 * UX specification in full, in [ux-design.md](ux-design.md)
 * Data model in [data-architecture.md](data-architecture.md)
+* RDF Patterns in [rdf-sparql-patterns-guide.md](rdf-sparql-patterns-guide.md)
 
 This platform architecture ties all of those together, and is the primary entry point for a reader new to the codebase.
 
@@ -32,11 +33,23 @@ This document is maintained as a living design record, alongside the ADR catalog
 | [data-architecture.md](data-architecture.md) | Conceptual/logical data model, system-of-record matrix, data flows, concurrency rules |
 | [ux-design.md](ux-design.md) | UX Design of platform components (e.g., MORK Workbench, Surface Contract Studio) |
 | [ontology-architecture.md](ontology-architecture.md) | Ontology layers, DL encodings, layer dependency order |
-| [implementation-map.md](implementation-map.md) | Phase-by-phase source file index |
+| [rdf-sparql-patterns-guide.md](rdf-sparql-patterns-guide.md) | RDF implementation patterns |
 | [semantic-platform.md](semantic-platform.md), [surface-workflow.md](surface-workflow.md), [release-stack-integration.md](release-stack-integration.md), [surface-projection-mork.md](surface-projection-mork.md), [mork-review-workbench.md](mork-review-workbench.md), [mork-queue-calibration-governance.md](mork-queue-calibration-governance.md) | Per-component design notes this document synthesizes and cross-references rather than repeats |
 | ADR-A29 through ADR-A43 | Individual accepted decisions this document assembles into one coherent picture |
 
 Read this document top to bottom once, then use it as a reference.
+
+### **Solution Overview**
+
+There are 2 very distinct sides to LATTICE. The first is the "BUILD TIME" or "DESIGN TIME" platform, which is basically a set of react applications and other tools, glued together with various software services, messaging infrastructure, graph database(s), etc. This is a deployable system with many moving parts - it is something we (in this repo) are building and design and WE get to DECIDE how it works.
+
+Then there is the other side of LATTICE - "PRODUCTION TIME", and that is where things are completely different. We do not own, define, or even know what "PRODUCTION" looks like! It will be different for everyone that builds on LATTICE. Perhaps someone will just use the ontologies and never touch the design-time application suite. Perhaps someone will use the full design-time suite to build their graph and configuration, but once it is populated, just use MORK as an integration layer, or maybe they use something else to pull data in and just use `surface` for making skos vocabularies available via entailment. We simply don't know what they will do, all we know is it will be code in another repo!
+
+We cannot decide which patterns are right for this 2nd use of `LATTICE`, because it is not an application we own. Multiple agent outputs have mentioned "multi-tenant", but `LATTICE` is not that kind of platform - though you could use it to build such a thing, I hope.
+
+We will need to design a means for these users (who are building on top of lattice ontologies and perhaps re-using lattice services) to declaratively choose the patterns they want to use as configuration - perhaps this can be another dimension of `surface` (see the repository).
+
+Yes, we might write a query layer that automatically applies the separate version/identification/sequencing behaviour so the user doesn't need to think about it - but we do that by building a compiler, a query generatory/optimiser, and only then write the layer that uses those things and let the consumer decide if they want the pattern, the tools, the APIs, or the full stack for their app.
 
 ---
 
