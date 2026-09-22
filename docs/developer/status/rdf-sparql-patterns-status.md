@@ -1,303 +1,140 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
 # RDF/SPARQL Implementation Patterns — Status Record
 
-**Unit:** `rdf-sparql-patterns-phase`  
-**Status:** Sketch & plan complete; awaiting human decision on A74/A75 before execution  
-**Last updated:** 2026-09-21  
+**Unit:** `rdf-sparql-patterns-phase`
+**Status:** Slice 1 complete. Slice 2 and Slice 3 scoped and ready, blocked on ADR-A78/A79/A80 ratification.
+**Last updated:** 2026-09-22
 **Owner:** Agent (pending human review and ratification)
 
 ---
 
 ## Executive summary
 
-The RDF/SPARQL implementation patterns have been surveyed, documented, and scoped for Phase 0 execution. Five core design patterns (K: Uniqueness, O: Ordering, C: Concurrency, T: Combined, Q: Query Discipline) are defined with 15 portable sub-patterns, each with concrete SPARQL examples.
+Slice 1 of this plan is complete: [rdf-sparql-patterns-guide.md](../../architecture/rdf-sparql-patterns-guide.md) consolidates the four source notes (Uniqueness, Ordering, Optimistic concurrency, Combined) into a single, corrected, cross-referenced reference, replacing the five fragmented pattern documents the original Slice 1 scoped.
 
-**Key findings:**
-- **Portable:** All patterns work on any SPARQL 1.1-compliant store (Jena TDB2 reference verified)
-- **Graph-primary:** Patterns implement A74 (RDF system of record) concretely
-- **Store SPI:** Patterns support A75 (three-tier SPI) via adapter layer
-- **Non-mandated:** Bi-temporal modeling and deletion policies are configurable, not dogmatic
+The plan itself has been rewritten. The previous Slice 2 ("Store-specific adapters and policy") is removed. Its replacement, scoped from a follow-up commissioning conversation, is the `ontology/persistence` substrate and the `tools/persistence` compiler that turns an adopter's own configuration choices into generated SPARQL. The previous Slice 3 ("Proposed ADRs") is superseded: its three governing ADRs (A78, A79, A80) are delivered now, alongside the rewritten plan, per the Design First rule, rather than scheduled as a future slice. A new Slice 3, housekeeping first cut, takes its slot number.
 
-**Blockers:** This phase must be approved before Phase 0.2 implementation begins. Approval hinges on acceptance of:
-- A74 (graph-primary as authoritative)
-- A75 (store SPI with Core/Query/Distribution tiers)
+**Key findings from the follow-up design pass:**
+- The guide is a menu of patterns, not a configuration mechanism. An adopter needs a way to select among them, per class or per deployment, which the guide itself does not provide.
+- Each of the guide's six configurable concerns (aggregate boundary, concurrency, ordering, receipts, meta topology, uniqueness) resolves independently, at a scope the adopter chooses, never uniformly across an ontology.
+- Aggregate boundaries reduce to two runtime mechanisms (named graph, SHACL-shape-derived closure) behind two authoring surfaces. A third, hand-declared property-path surface was considered and dropped, because making a domain property a sub-property of a `dal:` term has real OWL entailment consequences and creates an import dependency the rest of this design avoids. A SHACL boundary is walked once at compile time, never requiring runtime SHACL support from the backend.
+- The compiler is design-time only, needs no live backend at all: its canonical output is a `dal:CompiledProfile` graph naming a template and its parameters, never embedded SPARQL text. An optional, separate `instantiate` step, kept safe from injection by a mandatory RDF-term encoder and a type-enforced template renderer, verified by an adversarial corpus as a release gate, turns that into portable SPARQL text for an adopter who wants it.
+- A backend's capability is never assumed known. The compiler always emits an unconditional `dal:CapabilityRequirement`, and an adopter may optionally supply a self-authored, unverified `dal:CapabilitySpec` for a self-consistency check. Neither depends on a live SPI or a TCK run.
+- Two components the commissioning conversation initially described as in-scope (a runtime Request Query Mapping library, a Query Execution component) are explicitly deferred, because both depend on the store SPI, which does not exist yet. This is recorded as an open design question in the epic plan, not silently dropped.
+
+**Blockers:** Slice 2 and Slice 3 execution wait on ratification of:
+- ADR-A78 (persistence profile substrate and aggregate boundaries)
+- ADR-A79 (persistence compiler toolchain)
+- ADR-A80 (housekeeping component boundary)
 
 ---
 
 ## Completed artifacts
 
-### Sketch: `docs/developer/sketches/rdf-sparql-implementation-patterns.md`
+### Guide: `docs/architecture/rdf-sparql-patterns-guide.md`
 
-**Scope:** Problem statement (4 concerns) + solution approach (5 patterns K/O/C/T/Q) + 8 proposed ADRs + 15 design sub-patterns + open questions.
+**Scope:** consolidates Uniqueness, Ordering, Optimistic concurrency, and Combined concurrency-and-ordering into one narrative, correcting the divergences the `docs/developer/notes/misalignment.md` review identified in an earlier summary attempt.
 
-**Contents:**
-- Part 0: Problem statement (uniqueness, ordering, concurrency, bi-temporal, query safety, storage lifecycle)
-- Part 1: Solution overview
-  - Pattern K (Uniqueness): 7 sub-patterns P0–P7 (deterministic IRIs, key claims, guarded updates, conflict materialization, SHACL, external allocators, detect-reconcile)
-  - Pattern O (Ordering): 5 requirements O1–O5; three clocks model (valid-time, transaction-time, logical-time); per-stream dense vs dataset-wide sparse tradeoff
-  - Pattern C (Concurrency): guarded updates + receipt log + derived ETags + immutable chain + escape hatches
-  - Pattern T (Combined): metadata graphs + version counters + whole-graph replace safety + epoch/restart safety
-  - Pattern Q (Query Discipline): no string concat, no `now()` in guards, Cursor not collection, L2 determinism tests, L8 store isolation verification
-  - SPARQL query safety rules (5 rules)
-  - Bi-temporal modeling: configurable (transaction-time required, valid-time optional, in-place updates configurable)
-  - Storage lifecycle: deletion is policy, not forbidden (audit trail required, per-graph configuration)
-- Part 2: Architecture decision implications (A74, A75 impact)
-- Part 3: Design pattern inventory (8 ADRs, 15 sub-patterns)
-- Part 4: Formalization roadmap (sketch → plan → implementation)
-- Part 5: Open questions (6 deferred decisions)
+**Status:** ✅ Complete. Fulfils the original plan's Slice 1 in full, exceeding its scope (30 chapters plus five appendices, versus the five 2–4 page documents originally planned).
 
-**Evidence:** 
-- Notes reviewed and integrated (Uniqueness in RDF.md, Ordering in RDF.md, Optimistic concurrency, Combined concurrency & ordering)
-- Architecture Review counter-arguments incorporated (§5.6, §5.11–5.12)
-- Portable SPARQL patterns validated conceptually (known to work in production systems)
+### Sketch: `docs/developer/sketches/persistence-profile-substrate.md`
 
-**Status:** ✅ Complete, ready for review
+**Scope:** the `ontology/persistence` substrate (six dimensions, five scope kinds, the precedence algorithm, cross-axis validation, reasoning-dependency warnings, shared-substrate-class conventions), the aggregate-boundary design (two mechanisms, three authoring surfaces), and the software architecture (the compiler, and the deferred Request Query Mapping and Query Execution components, and the in-scope housekeeping first cut).
 
----
+**Status:** ✅ Complete, ready for review. Governs Slice 2 and Slice 3 of this plan, in place of the original sketch, which continues to govern Slice 1's historical record.
+
+### ADRs (Proposed, awaiting ratification)
+
+| ADR | Decision | Status |
+|---|---|---|
+| [A78](../../architecture/decisions/ADR-A78-persistence-profile-substrate-and-aggregate-boundaries.md) | Persistence profile substrate and configurable aggregate boundaries | Proposed |
+| [A79](../../architecture/decisions/ADR-A79-persistence-compiler-toolchain.md) | Persistence compiler toolchain and template-based SPARQL generation | Proposed |
+| [A80](../../architecture/decisions/ADR-A80-housekeeping-component-boundary.md) | Housekeeping component boundary | Proposed |
 
 ### Plan: `docs/developer/plans/rdf-sparql-patterns-phase-plan.md`
 
-**Scope:** 3 slices across 1.9 agent-days; entry/exit criteria; success criteria; integration with Phase 0.
+**Scope:** rewritten in place. Slice 1 marked complete (fulfilled by the guide). Slice 2 redefined as the substrate-and-compiler build. Slice 3 redefined as the housekeeping first cut. Store adapter documentation and any SPI, Request Query Mapping, or Query Execution work removed and recorded as out of scope, with pointers to the epic plan's open questions.
 
-**Contents:**
-
-#### Slice 1: Core patterns (0.5 days)
-
-5 design documents to be written:
-- Pattern K (Uniqueness): P0–P7 with examples, Jena-specific notes
-- Pattern O (Ordering): O1–O5 with examples, epoch safety, zero-padding
-- Pattern C (Concurrency): C1–C4 with CAS semantics, receipt verification
-- Pattern T (Combined): T1–T5 with metadata graph structure, payload replace
-- Query patterns: QP1–QP5 with injection/determinism/cursor examples
-
-**Output:** 5 design docs (2–4 pages each) + 3 runnable test cases per pattern
-
-**Validation:** `mise patterns:validate-sparql` against Jena TDB2; L1 + L3 test levels
-
-#### Slice 2: Store adapters & policy (0.4 days)
-
-- Store adapter guide for Jena TDB2 (reference) + roadmap for GraphDB/Neptune
-- Policy enforcement specs:
-  - Python lint rules: ban `datetime.now()`, `uuid.uuid4()`, string-format SPARQL
-  - ArchUnit rules: ScopedDataset boundaries, ban direct store access
-  - CI gates: determinism L2, injection L8, store isolation tests
-- Test infrastructure templates (per-pattern test structure)
-
-**Output:** 1 adapter guide + 1 policy enforcement spec + test infrastructure
-
-**Validation:** `mise patterns:validate-enforced` (lint + archunit + store isolation); L1 + L3 + L8 test levels
-
-#### Slice 3: ADRs & status (1 day)
-
-8 proposed ADRs to be formalized:
-- A74 (Graph-primary)
-- A75 (Store SPI)
-- A-Unique (Uniqueness enforcement)
-- A-Order (Dense per-stream ordering)
-- A-CAS (Guarded SPARQL update)
-- A-Temporal (Bi-temporal configurable)
-- A-Delete (Deletion as policy)
-- A-Query (Query discipline)
-
-**Output:** 8 decision records + status document + reviewer checklist
-
-**Validation:** `mise decisions:review` (renders ADRs, checks traceability); L4 design validation
-
-#### Integration with Phase 0
-
-Phase 0.2 (Walking skeleton) depends on Patterns T + C + Jena adapter ✅  
-Phase 0.3 (Schema & contracts) depends on Pattern K + policy enforcement ✅  
-Phase 0.4 (Canonicalization) depends on Pattern O + query discipline ✅
-
-**Status:** ✅ Complete, ready for execution
+**Status:** ✅ Complete, ready for execution once ADR-A78/A79/A80 are ratified.
 
 ---
 
-## Architecture decision implications
+## Slice status
 
-### A74 (Graph-primary) — PENDING RATIFICATION
-
-**Proposed decision:** RDF is authoritative for all semantic state; PostgreSQL/RabbitMQ are coordination stores only (transient, derived, reconstructible).
-
-**Patterns required:** K/O/C/T (all core patterns)
-
-**Implications:**
-- Phase 0.2 must implement T (metadata graphs + version counters) first
-- Phase 0.3 must implement K (uniqueness in RDF, not Postgres UNIQUE)
-- All writes through CommitMetadata wrapper (pattern C pattern C2)
-- Postgres read-only except operational indices
-
-**Evidence supporting A74:**
-- Pattern T proves feasibility (metadata graphs work on all SPARQL 1.1 stores)
-- Jena TDB2 adapter guide shows write-conflict detection ✅
-- Patterns K/O/C are portable and tested conceptually ✅
-
-**Counter-arguments (from Architecture Review):**
-- Bi-temporal model must be configurable, not mandated ✅ (Pattern O/ADR-A-Temporal)
-- In-place updates must be allowed (not just immutable versions) ✅ (ADR-A-Temporal)
-- Deletion must be allowed with audit trail ✅ (ADR-A-Delete)
-
-**Risk:** Performance if dense sequence per-stream contends heavily. **Mitigation:** Patterns O shows per-stream sharding; Slice 2 will tune contention model.
-
-**Status:** Ready for human decision. Must be ratified before Phase 0.2 implementation.
+| Slice | Identifier | Status |
+|---|---|---|
+| 1. Core patterns | `rdf-sparql-core-patterns` | ✅ Complete (fulfilled by the guide) |
+| 2. Substrate and compiler | `persistence-substrate-and-compiler` | Scoped, not started. Blocked on ADR-A78/A79 ratification |
+| 3. Housekeeping first cut | `housekeeping-first-cut` | Scoped, not started. Blocked on Slice 2 and ADR-A80 ratification |
 
 ---
 
-### A75 (Store SPI) — PENDING RATIFICATION
+## Open questions
 
-**Proposed decision:** Define three-tier store contracts (Core: mandatory; Query: optional; Distribution: optional). Reference implementation: Jena TDB2.
+Carried from [the sketch, Part 7](../sketches/persistence-profile-substrate.md#part-7--open-questions-resolved-vs-deferred), restated here as plan-level tracking, plus the two items explicitly pushed into the epic plan.
 
-**Three tiers:**
-
-| Tier | Mandated | Example capabilities |
-|------|----------|----------------------|
-| **Core** | SPARQL 1.1 query + update; named graphs; atomic one-request; isolation level documented | Jena TDB2, GraphDB (subset), RDF4J (subset) |
-| **Query** | SHACL validation; full-text search; geospatial; temporal; graph compression | GraphDB, GmlDB (partial) |
-| **Distribution** | Replication/HA; sharding; multi-region; write rebalancing | Neptune (regional), Rya (cluster), Halyard (distributed) |
-
-**Jena TDB2 (reference):**
-- Core SPI: ✅ Fully compliant
-- Query SPI: ⚠️ Partial (no SHACL incremental, no FTS)
-- Distribution SPI: ❌ Single instance only
-
-**Patterns required:** All patterns portable to Core SPI; Query SPI optimizations optional; Distribution SPI deferred to Phase 4.
-
-**Evidence supporting A75:**
-- Patterns K/O/C/T work on all Core SPI stores ✅
-- Jena TDB2 adapter proves reference implementation feasible ✅
-- Roadmap for GraphDB/Neptune shows upgrade path ✅
-
-**Status:** Ready for human decision. Must be ratified before Phase 0.2 implementation.
-
----
-
-## Open questions (deferred to Phase 0)
-
-1. **Store SPI target breadth** — Do we commit to GraphDB compatibility, or is Jena/Fuseki reference enough initially?
-   - **Answer deferred:** Jena TDB2 required for walking skeleton; GraphDB roadmap in Slice 2
-
-2. **Epoch/restart safety** — How do we regenerate valid ETags after restore without conflicting with consumer watermarks?
-   - **Answer deferred:** Epoch versioning in ETag; detailed algorithm in Slice 1, Pattern O
-
-3. **Distributed ordering** — If stores are sharded per tenant, how do we handle global dataset position?
-   - **Answer deferred:** Per-stream ordering primary; global order derived; Phase 4 (Distribution SPI)
-
-4. **SHACL incremental validation** — Which stores support re-validating only changed subgraph?
-   - **Answer deferred:** GraphDB does; Slice 2 store adapter documents; fallback to P7 (detect-reconcile)
-
-5. **Temporal analytics path** — For as-of queries over millions of triples, do we materialize current + separate analytic path?
-   - **Answer deferred:** ADR-A-Temporal proposes two-path design; detailed in Slice 1, Pattern O
-
-6. **LLM decision node usage** — Should MORK decision nodes live in graph (not Postgres) to support LLM training?
-   - **Answer:** Yes, per Architecture Review counter-argument (USER_NOTE). Confirms A74 graph-primary model. Slice 1 will document this as design implication.
+| # | Question | Where tracked |
+|---|---|---|
+| 1 | Request Query Mapping library design | [lattice-platform-agentic-development-v0.2.md](../plans/lattice-platform-agentic-development-v0.2.md) Part 13, row 11 |
+| 2 | Query Execution component design | [lattice-platform-agentic-development-v0.2.md](../plans/lattice-platform-agentic-development-v0.2.md) Part 13, row 12 |
+| 3 | Store SPI shape (proposed A75) | Not yet an ADR. Both items above depend on it |
+| 4 | Whether `dal:Revision`/`dal:recordedAt` align to `fnd:Evidence`/`fnd:recordedAt` | Sketch [§3.1](../sketches/persistence-profile-substrate.md#31-namespace-and-position-in-the-layer-model), deferred to Slice 2 authoring |
+| 5 | Whether a Java equivalent of `tools/persistence` is ever needed for JVM-embedded build pipelines | [ADR-A79](../../architecture/decisions/ADR-A79-persistence-compiler-toolchain.md) consequences, not scheduled |
 
 ---
 
 ## Blockers and dependencies
 
-### Blockers (external)
+### Blockers (human decision required)
 
-None. This phase is independent.
+- ADR-A78, ADR-A79, ADR-A80 ratification, before Slice 2 or Slice 3 execution begins.
 
 ### Dependencies (internal)
 
+- Guide ✅ complete
 - Sketch ✅ complete
-- Architecture Review notes ✅ incorporated
-- Notes reviewed ✅ (Uniqueness, Ordering, Concurrency, Combined)
+- Slice 2 must complete before Slice 3 begins (the housekeeping module's generated queries come from the Slice 2 compiler)
 
 ### Blocking other work
 
-- **Phase 0.2 (Walking skeleton)** cannot begin until A74 + A75 are ratified and Slice 1 is complete
-- **Phase 0.3 (Schema & contracts)** depends on Pattern K delivery (Slice 1)
-- **Phase 0.4 (Canonicalization)** depends on Pattern O delivery (Slice 1)
+- [lattice-platform-agentic-development-v0.2.md](../plans/lattice-platform-agentic-development-v0.2.md) Part 6 (Phase 2, ingestion and query planes) carries a note that several of its slices assume ad hoc SPARQL construction this plan's compiler is meant to replace, and need revision once Slice 2 lands. That revision is not scoped by this plan or this status record.
 
 ---
 
 ## Traceability
 
-### Links to Architecture Review
+### Links to the guide
 
-| Gap/Component | Pattern | ADR |
-|---|---|---|
-| G-03 (Provenance) | O (Ordering) + T (Combined) | A-Order, A-Temporal |
-| G-04 (Hash identities) | K (Uniqueness P0) | A-Unique |
-| G-06 (Dual-write sync) | T (Combined) | A74, A-CAS |
-| G-07 (Bi-temporal model) | O (Ordering) | A-Temporal (configurable) |
-| G-09 (Per-aggregate ordering) | O (Ordering O1) | A-Order |
-| C-02 (Store SPI) | All patterns | A75 |
-| G-14 (SPI inventory) | All patterns | A75 |
+| Sketch section | Guide chapter |
+|---|---|
+| Precedence algorithm | Chapter 25 (capabilities, strategies, planners) |
+| Aggregate boundary mechanisms | Part V, Chapter 19 |
+| Receipt model dimension | Chapter 20 |
+| Ordering grain and dataset tier | Chapter 21, Chapter 22 |
+| Uniqueness constraint | Chapter 8 |
+| Housekeeping job taxonomy | §7.5 (P7), S3, F5, §24.2 |
+| Injection safety | Chapter 28 (QP1) |
 
-### Links to proposed ADRs
+### Links to ADRs
 
-- **A74:** Graph-primary (blocks Phase 0.2)
-- **A75:** Store SPI (blocks Phase 0.2)
-- **A-Unique:** Uniqueness (blocks Phase 0.3)
-- **A-Order:** Ordering (blocks Phase 0.4)
-- **A-CAS:** Guarded update (blocks Phase 0.2)
-- **A-Temporal:** Bi-temporal configurable (blocks Phase 0.4/1)
-- **A-Delete:** Deletion as policy (blocks Phase 0.5)
-- **A-Query:** Query discipline (blocks Phase 0)
+- **A78:** substrate and boundaries (blocks Slice 2)
+- **A79:** compiler toolchain (blocks Slice 2)
+- **A80:** housekeeping boundary (blocks Slice 3)
 
 ---
 
 ## Next steps and timeline
 
-### Immediate (Phase 0 entry gate)
-
-1. **Human review:** Sketch + plan approved by architecture stakeholder
-2. **Decision gate:** A74 + A75 ratified or rejected
-3. **Execution:** Begin Slice 1 (core patterns documentation)
-
-### Slice 1 (0.5 days)
-
-- Write 5 design pattern documents
-- Provide 3 runnable test cases per pattern
-- Validate against Jena TDB2 (`mise patterns:validate-sparql`)
-
-### Slice 2 (0.4 days)
-
-- Write store adapter guide (Jena TDB2 reference + GraphDB roadmap)
-- Specify lint + ArchUnit enforcement
-- Write test infrastructure templates
-
-### Slice 3 (1 day)
-
-- Formalize 8 ADRs with rationale, implications, risks
-- Write status record with reviewer checklist
-- Update traceability matrix
-
-### Phase 0 entry (after plan completion)
-
-- Walking skeleton (Phase 0.2) begins
-- Patterns T + C + Jena adapter ready to use
-- Lint/archunit rules enforced in CI
+1. **Human review:** sketch, rewritten plan, and ADR-A78/A79/A80 reviewed together, since the ADRs assume the sketch's vocabulary throughout.
+2. **Decision gate:** A78, A79, A80 ratified, rejected, or amended.
+3. **Execution:** Slice 2 begins, per its validation pack in the rewritten plan.
+4. **Slice 3** begins once Slice 2's generated queries are available to consume.
 
 ---
 
-## Appendix: Validation pack
+## Appendix: Validation pack locations
 
-**Location:** `docs/developer/validation/rdf-sparql-patterns-phase.md` (to be created after human approval)
-
-**Test taxonomy:**
-- L1 (Unit): SPARQL examples (parse + execute) for each pattern
-- L3 (Contract): JSON Schema validation (not applicable); cross-store fixture validation
-- L4 (Design validation): ADR review checklist, pattern completeness
-- L8 (Hostile/security): SPARQL injection probes (L8 tests for Pattern Q)
-
-**Single command to run everything:**
-```bash
-mise patterns:validate-sparql && mise patterns:validate-enforced && mise decisions:review
-```
-
-**Expected artifacts:**
-- Pattern docs: 5 files in `docs/architecture/design-patterns/`
-- Lint report: `patterns-lint.json`
-- ArchUnit report: `patterns-archunit.json`
-- Store isolation tests: `patterns-store-isolation-results.json`
-- ADR review checklist: in `docs/developer/validation/rdf-sparql-patterns-phase.md`
-
-**Pass criteria:**
-- All SPARQL examples compile and run against Jena TDB2 ✅
-- Lint violations: 0
-- ArchUnit violations: 0
-- Store isolation test suite: 100% pass
-- ADR checklist: signed off by human reviewer
+- Slice 2: `docs/developer/validation/persistence-substrate-and-compiler.md` (to be created at slice start)
+- Slice 3: `docs/developer/validation/housekeeping-first-cut.md` (to be created at slice start)
+- Sign-off log: `docs/developer/validation/LOG.md`

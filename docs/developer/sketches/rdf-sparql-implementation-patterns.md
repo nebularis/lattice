@@ -69,15 +69,15 @@ The approach is **not** to mandate a single store or distribution model. Instead
 **Solution:** Three separate mechanisms, kept physically distinct:
 
 1. **Valid time** (`ex:occurredAt`) — when it happened in the world. Late/backfilled data is normal. Never assume commit order is valid order.
-2. **Transaction time** (`ex:recordedAt` + per-stream `seq`, optionally `epoch`, optionally `opSeq`) — when the system learned it. Monotonic, append-only, used for audit and replay.
+2. **Transaction time** (`ex:recordedAt` + per-stream `seq`, with `epoch`; `opSeq` required at event grain) — when the system learned it. Monotonic, append-only, used for audit and replay.
 3. **Logical/causal time** (per-stream counters, version pointers, `fnd:supersedes`) — happened-before, independent of wall clocks.
 
 **Key decision:** Per-stream vs. per-dataset ordering.
 
-- **Per-stream dense sequence (required)** — stream = entity, aggregate, tenant, or topic. Cheap, shardable, gap-free. Concurrent writers to different streams never contend on the counter.
-- **Dataset-wide total order (optional)** — do **not** mint it in the write transaction. Derive from the store's change feed, or accept sparse HLC order.
+- **Per-stream dense sequence (recommended when strict replay/completeness is needed)** — stream = entity, aggregate, tenant, or topic. Cheap, shardable, gap-free. Concurrent writers to different streams never contend on the counter.
+- **Dataset-wide total order (optional)** — do **not** mint it in the write transaction by default. Derive from the store's change feed where available, or accept sparse HLC order.
 
-**Critical implementation detail:** Put the counter read-and-increment **in the same transaction as the payload write**, on a single shared statement. This ensures allocation order == commit order and is dense with no abandoned values.
+**Critical implementation detail (for deployments that select dense ordering/CAS semantics):** Put the counter read-and-increment **in the same transaction as the payload write**, on a single shared statement. This ensures allocation order == commit order and is dense with no abandoned values.
 
 ```sparql
 DELETE { GRAPH <urn:meta> { ?ctr ex:next ?n } }
@@ -92,33 +92,47 @@ WHERE  { GRAPH <urn:meta> { ?ctr ex:next ?n }
 
 **Anti-pattern:** Pre-allocating sequence numbers before the transaction; using `NOW()` as an ordering mechanism; global dataset-wide dense counters (contention point).
 
-#### **Pattern C: Concurrency control** (Optimistic concurrency in RDF stores.md, 1.1–1.5)
+#### **Pattern C: Concurrency control** (Optimistic concurrency in RDF stores.md, 1.1–1.6; Combine Concurrency And Ordering Plan.md F1–F13)
 
 **Problem:** SPARQL 1.1 Protocol has no `If-Match`, no `RETURNING`, no affected-row count. An update endpoint replies `200`/`204` whether it changed anything or nothing. Two concurrent writers can both see "success" when only one actually won.
 
-**Solution:** Guarded `DELETE/INSERT … WHERE` as the CAS primitive, plus outcome verification:
+**Important scope note:** This CAS pattern is **not the platform default**.
+
+- **Default baseline:** versioning in IRIs, with concurrency behavior provided by the chosen backend's native guarantees.
+- **Optional advanced pattern:** guarded CAS + receipts/ordering, applied to selected datasets/graph families/aggregates by operator choice.
+
+**Solution (when CAS is selected):** Guarded `DELETE/INSERT … WHERE` as the CAS primitive, plus outcome verification:
 
 1. **Guarded update (1.1)** — Put the version guard (e.g., `FILTER(?etag = "E1")`) in the `WHERE` clause. No solutions in `WHERE` ⇒ no-op and silent success (the problem). One request = one transaction (works on most stores).
 
-2. **Append-only receipt log (1.2)** — Every successful write produces an immutable receipt `<urn:rev:orders/1/…>` with metadata. Check receipt with `ASK { GRAPH <urn:g:txlog> { <urn:rev:…> ?p ?o } }` to learn outcome. Idempotent and race-free across retries and crashes.
+2. **Append-only receipt log (1.2)** — Every successful write produces an immutable receipt with metadata. Outcome verification must be by **txn-claim node**, not by revision existence:
+   `ASK { GRAPH <urn:g:txn> { <urn:txn:...> :rev ?rev } }`
+   This is idempotent and resolves ambiguous timeouts.
 
-3. **Derive the ETag (1.2)** — Don't store `"E42"` separately; derive it from `{epoch}-{seq}`. One source of truth, HTTP and SPARQL agree by construction.
+3. **Derive the ETag (Combine F4)** — Don't store `"E42"` separately; derive it from `{epoch}-{seq}`. One source of truth, HTTP and SPARQL agree by construction.
 
-4. **Immutable receipt chain (1.2)** — `<urn:rev:orders/1/…> :prevRev <urn:rev:orders/1/…previous>` as IRIs, not strings. Verifiable chain catches forks (proof of lost update) via `GROUP BY ?prev HAVING (COUNT(*) > 1)`.
+4. **Immutable receipt chain (Combine F5)** — `<urn:rev:orders/1/…> :prevRev <urn:rev:orders/1/…previous>` as IRIs, not strings. Verifiable chain catches forks (proof of lost update) via `GROUP BY ?prev HAVING (COUNT(*) > 1)`.
 
 5. **HTTP-level CAS (1.4)** — If each aggregate is one graph, push concurrency control to HTTP: GSP `PUT + If-Match`, LDP `ETag` + conditional, or Solid N3 Patch with built-in precondition semantics.
 
 6. **Escape hatches for high contention (1.5)** — Single-writer queue per aggregate (Kafka partitioning); external lock (Postgres row, etcd, Redis with fencing tokens); event sourcing with patch logs (RDF Delta, TerminusDB).
 
+7. **Additional correctness constraints from Combine F7–F13** — pin datatype for seq/epoch, enforce `sh:maxCount 1` on version-row fields where supported, include tombstone policy where sequence continuity must survive delete/recreate, and keep `recordedAt` separate from ordering keys.
+
 **Applies to:** Any state mutation; aggregate state machines; MORK review outcomes; claims processing.
 
 **Portability gotchas:** Dataset scoping (`WITH`/`USING`); blank nodes (not addressable across requests); guard cardinality (must be functional); never rely on `INSERT DATA` failing for existing triple.
 
-#### **Pattern T: Combined concurrency and ordering** (Combine Concurrency And Ordering Plan.md, A1–A7, F1–F6)
+#### **Pattern T: Combined concurrency and ordering** (Combine Concurrency And Ordering Plan.md, A1–A7, F1–F13)
 
 **Problem:** The above patterns interact. A74 (graph-primary) separates metadata in a separate graph, which buys several properties but introduces new failure modes.
 
-**Solution:** Use version metadata in a dedicated graph per aggregate, combined with dense per-stream sequencing:
+**Solution:** Use version metadata separated from payload data, combined with dense per-stream sequencing **when this pattern is enabled**.
+
+> **Configuration note:** Both topology options are valid and must be documented as selectable:
+> 1) shared (sharded) meta graph, one row per aggregate; and  
+> 2) meta graph per aggregate.
+> The platform must not imply one option is universally superior for all stores/workloads.
 
 **What this buys (A1–A7):**
 
@@ -127,19 +141,43 @@ WHERE  { GRAPH <urn:meta> { ?ctr ex:next ?n }
 - **A3:** Whole-graph replace safe (payload can be deleted and re-created; version counter survives).
 - **A4:** Head pointer via single-triple lookup (no `MAX()`/`GROUP BY`).
 - **A5:** Different retention policies for payload (mutable), meta (mutable point), receipts (append-only).
-- **A6:** Per-subject sharding (different aggregates touch different subjects, no contention).
+- **A6:** Per-subject sharding (different aggregates touch different subjects, reduced contention, subject to backend conflict granularity).
 - **A7:** Localizes where to be careful (exactly one statement per aggregate contended).
 
-**Critical findings (F1–F6) and fixes:**
+**Critical findings (F1–F13) and fixes:**
 
 | Finding | Severity | Fix |
 |---------|----------|-----|
-| F1: CAS outcome unobservable | CRITICAL | Use receipt node + `ASK` for idempotent outcome check |
+| F1: CAS outcome unobservable | CRITICAL | Use txn-claim node in a dedicated graph + `ASK` |
 | F2: Revision IRI collides across aggregates | CRITICAL | Derive from full position: `urn:rev:orders/1/0000000000000042` (zero-padded) |
 | F3: No epoch; restore resets seq and breaks consumers | CRITICAL | Add `:epoch` to guard, meta row, every receipt, ETag; bump on restore |
 | F4: `:etag` and `:seq` two sources of truth | MAJOR | Derive ETag: `{epoch}-{seq}`; store only `:epoch` + `:seq` + `:head` |
 | F5: `:prev` is a string, chain not traversable | MAJOR | `:prevRev <urn:rev:…>` as IRI for verifiable chain + fork detection |
-| F6: Idempotency key written but never checked | MAJOR | Include `:txn` id as claim node, check in outcome ASK |
+| F6: Idempotency key written but never checked | MAJOR | Include `:txn` id as claim node, check in-guard + outcome ASK |
+| F7–F13: Guard cardinality/datatype drift, server arithmetic hazards, receipt-vs-replay ambiguity, seq reset on delete/recreate, OPTIONAL cross-product, coarse conflict detection, time misuse | MAJOR/MODERATE | Adopt corrected pattern constraints from source and enforce via capability/TCK/lint where applicable |
+
+**Identity and sharding interaction (Appendix A alignment):**
+- Use **lineage/aggregate identity** (stable IRI) to route CAS/meta shards.
+- Use **revision identity** (hash/versioned IRI) for immutable artifact/log addressing.
+- Do not shard hot CAS rows by revision hash alone (it changes per write and defeats stable affinity).
+
+**Projected scale examples (illustrative, not guarantees):**
+
+| Domain profile | Aggregate count | Write rate | Recommended meta topology bias | Why |
+|---|---:|---:|---|---|
+| Mid-size insurer | 2M tanks/aggregates | 50k stimuli/day (10x burst) | Shared+sharded meta | Controls graph-count growth; shard tuning handles hotspots |
+| Regional healthcare network | 20M patient-centric aggregates | 5–20M updates/day mixed batch/stream | Shared+sharded meta with higher shard cardinality | Operational scans and compaction are easier than per-aggregate graph explosion |
+| High-frequency trading support graph | 100k hot aggregates | 100M+ intraday mutations | Backend-specific: test both; often shared+sharded with external sequencer | Conflict granularity and lock behavior dominate; must be TCK-measured |
+
+**Receipt model must be configurable (no one-size-fits-all):**
+
+| Model | Strength | Cost | Use when |
+|---|---|---|---|
+| Receipt-only | Outcome/audit breadcrumbs | Lowest | Need CAS outcome + lightweight audit only |
+| Patch-log (`asserts`/`retracts`) | Replay + CDC + as-of reconstruction | Medium/High | Need downstream replay, deterministic change history |
+| Snapshot-per-revision | Strongest point-in-time simplicity | Highest storage/write amp | Compliance/forensics workloads requiring immutable full snapshots |
+
+When multiple options are enabled across graph families, each family must declare which model applies; query/CDC contracts must advertise the model to prevent replay assumptions on receipt-only families.
 
 **Applies to:** LATTICE's A74 (graph-primary) implementation; Phase 0.2 walking skeleton; any system that combines concurrent writers with dense ordering.
 
@@ -150,7 +188,10 @@ WHERE  { GRAPH <urn:meta> { ?ctr ex:next ?n }
 **Solution:** Enforce five rules:
 
 1. **No string concatenation into SPARQL.** `PreparedQuery` + `Params` only. Prevents injection.
-2. **No `now()` inside guards, effects, or canonicalization.** Time is an input. Prevents non-determinism and state-dependent results.
+2. **Scoped `NOW()` policy.**  
+   - **Forbidden:** guards, ordering keys, canonicalization inputs, identity derivation.  
+   - **Allowed with warning:** audit-only timestamps such as `recordedAt`, when not used for conflict detection or ordering semantics.
+   This must be documented because adopters may use only ontology/patterns without platform libraries.
 3. **Every result-returning method returns a `Cursor`, never materialized collection.** Bounds memory; enables streaming.
 4. **Determinism is tested (L2).** Any function claiming determinism has a permutation + repeat test in the validation pack.
 5. **Store isolation must be empirically verified.** Guarded updates don't guarantee write-skew isolation on all stores/configs. Test against the actual target store.
@@ -206,27 +247,33 @@ WHERE  { GRAPH <urn:meta> { ?ctr ex:next ?n }
 
 **Patterns required by A74:**
 
-- **K (Uniqueness):** Natural keys must be enforced in RDF via key claims or deterministic IRIs. No authoritative `UNIQUE` constraints in PostgreSQL.
-- **O (Ordering):** Per-stream dense sequencing in `<urn:meta>` graphs per aggregate. Kafka offsets and database timestamps are derived, not canonical.
-- **C (Concurrency):** Guarded `DELETE/INSERT … WHERE` against RDF. PostgreSQL row locks are belt-and-braces only.
-- **T (Combined):** Separate metadata graphs with version counters. Whole-graph payload replaces safe because version survives.
+- **K (Uniqueness):** Natural keys are enforced through RDF-native patterns by default. External allocators/unique-index substrates remain valid when explicitly chosen for contention/performance or deployment constraints.
+- **O (Ordering):** Per-stream dense sequencing is an optional strong-order pattern, not mandatory baseline behavior. Offsets/timestamps may be used as derived order signals depending on backend capabilities and selected profile.
+- **C (Concurrency):** Guarded `DELETE/INSERT … WHERE` is an optional CAS pattern for selected data domains. Baseline concurrency remains backend-defined unless CAS profile is enabled.
+- **T (Combined):** Separate metadata from payload when CAS+ordering profile is selected; topology is configurable (shared/sharded or per-aggregate).
 
 ### A75 impact: Three-tier store SPI (C-02)
 
 **Proposed ADR-A75 (store SPI)** defines three contract tiers:
 
-1. **Core SPI (mandatory):** SPARQL 1.1 query + update endpoints; named-graph support; isolation level (document which); `CONSTRUCT`/`ASK`/`SELECT` support; atomic one-request semantics.
+1. **Core SPI (mandatory):** SPARQL 1.1 query + update endpoints; named-graph support; isolation/capabilities report; `CONSTRUCT`/`ASK`/`SELECT`; atomic one-request semantics.
 2. **Query SPI (optional):** SHACL validation; full-text search; geospatial indexing; temporal indices.
 3. **Distribution SPI (optional):** Replication/HA; sharding (key-based partition); multi-region.
 
 **Reference implementation:** Jena TDB2 + Fuseki HTTP layer (Core SPI fully compliant, Query SPI partial, Distribution SPI none — single instance).
 
-**Patterns that must be portable across all Core SPI implementations:**
+**Patterns portable across Core SPI implementations (with capability gates where required):**
 
-- K (Uniqueness) ✅ P0–P7 work on any SPARQL 1.1 store
-- O (Ordering) ✅ Dense sequences work anywhere; dataset-wide sparse order requires change feed (store-specific)
-- C (Concurrency) ⚠️ Guarded update is portable; write-skew isolation varies by store/config (must test)
-- T (Combined) ✅ Metadata graphs are portable; version counters and receipts work anywhere
+- K (Uniqueness) ✅ P0–P7 conceptual portability; enforcement strength depends on capabilities/TCK outcomes.
+- O (Ordering) ⚠️ Per-stream dense ordering requires verified conflict/isolation behavior; sparse/global forms vary by backend.
+- C (Concurrency) ⚠️ Guarded update syntax is portable; correctness requires capability validation.
+- T (Combined) ⚠️ Topology portable; correctness/performance backend-dependent and must be profile-tested.
+
+**A75 capability-first amendment (approved):**
+- Capabilities are **discovered and verified**, not assumed.
+- Strategy planner selects enforcement profile based on capability report.
+- `CasResult` semantics include `applied | conflict | unknown`, with mandatory `resolve(txnId)` for unknown-outcome recovery.
+- Activation/startup must fail when required `min_level` is unmet; no silent downgrade.
 
 ---
 
@@ -257,11 +304,11 @@ WHERE  { GRAPH <urn:meta> { ?ctr ex:next ?n }
    - Sub-pattern K7: Detect-and-reconcile nightly scan
 
 2. **Pattern O: Ordering** (with sub-patterns O1–O5 for use cases)
-   - Sub-pattern O1: Per-stream dense sequencing
-   - Sub-pattern O2: Valid-time capture (optional)
-   - Sub-pattern O3: Logical causality (version pointers)
-   - Sub-pattern O4: Dataset-wide order (derived, sparse)
-   - Sub-pattern O5: Bitemporal query (point-in-time reads)
+   - Sub-pattern O1: Total order for replay/sync
+   - Sub-pattern O2: Causal/per-entity order
+   - Sub-pattern O3: Domain valid-time order
+   - Sub-pattern O4: Point-in-time/bitemporal read
+   - Sub-pattern O5: Ordered collections in data
 
 3. **Pattern C: Concurrency control** (with escape hatches C1–C6)
    - Sub-pattern C1: Guarded `DELETE/INSERT … WHERE` CAS
@@ -317,8 +364,9 @@ WHERE  { GRAPH <urn:meta> { ?ctr ex:next ?n }
 
 - **Part C:** Store-specific adapter guide
   - For each Core SPI store (Jena TDB2, GraphDB, Neptune, Rya, RDFox): document which patterns are native, which need workarounds
-  - Jena TDB2: write-conflict detection (T1–T5); no dataset-global dense counter; no SHACL incremental validation
-  - Neptune: MVCC (needs P3 sharded counter); no SHACL; has Streams (alternative to log); supports RDFMS (time-series)
+  - Jena TDB2: single-writer semantics; evaluate optional global counters where acceptable; pair with feed/log strategy where configured.
+  - Neptune: documented conflict exceptions + Streams; verify guarded update semantics and replica-read caveats.
+  - Remove unsupported terms and assertions not present in source notes (e.g., unnamed "RDFMS" claims).
 
 - **Part D:** Policy enforcement
   - Lint rules: Python import ban on `datetime.now()`, `uuid.uuid4()` in certain modules
@@ -343,11 +391,10 @@ WHERE  { GRAPH <urn:meta> { ?ctr ex:next ?n }
 ## Part 5 — Open questions
 
 1. **Store SPI target breadth** — Do we commit to GraphDB compatibility (≥ 2 stores), or is Jena/Fuseki reference enough initially?
-2. **Epoch/restart safety** — How do we regenerate valid ETags after restore without conflicting with existing consumer watermarks?
-3. **Distributed ordering** — If stores are sharded per tenant, how do we handle global dataset position (for compliance audits)?
-4. **SHACL incremental validation** — Which stores support re-validating only the changed subgraph? If none, does P5 stay optional?
-5. **Temporal analytics path** — For as-of queries over millions of triples per graph, do we materialize "current" projections + separate analytic queries, or query the log directly?
-6. **LLM decision node usage** — Architecture Review notes: having MORK decision nodes in the graph (not Postgres) enables LLM to learn from rejection history. Does this change the store SPI for MORK decision records?
+2. **Epoch/restart safety** — Specify epoch bump and stale-cursor handling as normative; clarify remaining implementation choices only.
+3. **Distributed ordering** — Specify per-stream dense + dataset sparse/derived tiering options and capability gates; clarify deployment choices only.
+4. **SHACL incremental validation** — Move to capability matrix + TCK verification requirement.
+5. **Temporal analytics path** — Document required decision point per profile (materialized current vs as-of/log replay), with declared SLA/cost implications.
 
 ---
 
@@ -359,4 +406,27 @@ WHERE  { GRAPH <urn:meta> { ?ctr ex:next ?n }
 - `docs/developer/notes/Uniqueness in RDF.md` — Portable patterns P0–P7
 - `docs/developer/notes/Ordering in RDF.md` — Requirements O1–O5 and clock model
 - `docs/developer/notes/Optimistic concurrency in RDF stores.md` — Portable CAS patterns 1.1–1.5
-- `docs/developer/notes/Combine Concurrency And Ordering Plan.md` — A1–A7 and F1–F6 findings
+- `docs/developer/notes/Combine Concurrency And Ordering Plan.md` — A1–A7 and F1–F13 findings
+- `docs/developer/notes/optimistic-concurrency-in-rdf.md` — LATTICE-specific aggregate-boundary implications and optional CAS deployment framing
+- `docs/architecture/Architecture Review.md` — Appendix A (IRI/identity policy), Addendum 2 (generic graph backend API)
+
+---
+
+## Appendix B — Traceability map (canonical corrections to source set)
+
+| Canonical correction | Source(s) grounding |
+|---|---|
+| CAS marked optional, not baseline default | `optimistic-concurrency-in-rdf.md` (framing + optional substrate), `Architecture Review.md` Addendum 2 (capability-gated backend semantics) |
+| Restore O1–O5 meanings and numbering | `Ordering in RDF.md` |
+| Expand Pattern C references to 1.1–1.6 and F1–F13 | `Optimistic concurrency in RDF stores.md`, `Combine Concurrency And Ordering Plan.md` |
+| Txn-claim `ASK` replaces revision-existence success check | `Combine Concurrency And Ordering Plan.md` (F1/F6), `Optimistic concurrency in RDF stores.md` |
+| Epoch mandatory in strong ordering/CAS profile, not optional | `Combine Concurrency And Ordering Plan.md` (F3/G4), `Ordering in RDF.md` |
+| ETag derived from epoch+seq (single source of truth) | `Combine Concurrency And Ordering Plan.md` (F4), `Optimistic concurrency in RDF stores.md` |
+| `prevRev` as IRI chain and fork detection | `Combine Concurrency And Ordering Plan.md` (F5), `Optimistic concurrency in RDF stores.md` |
+| Meta topology made configurable (shared/sharded vs per-aggregate), with conflict-granularity caveat | `Combine Concurrency And Ordering Plan.md` (A6/A7/F12), `Ordering in RDF.md` (graph proliferation) |
+| Identity/sharding split: stable lineage for CAS affinity, revision/hash for immutable addressing | `Architecture Review.md` Appendix A, Addendum 2; `Combine...` corrected pattern implications |
+| Receipt model explicitly configurable: receipt-only vs patch-log vs snapshot-per-revision | `Combine Concurrency And Ordering Plan.md` (F9), `Optimistic concurrency in RDF stores.md`, `Ordering in RDF.md` |
+| Scoped `NOW()` policy (forbid in guards/order/canonicalization; allow audit-only with warning) | `Ordering in RDF.md` gotchas + time model; `Combine...` corrected pattern (`recordedAt` usage); `Optimistic concurrency in RDF stores.md` portability notes |
+| A74 language softened to allow explicit external allocator/sequencer choices | `Uniqueness in RDF.md` (P6), `Ordering in RDF.md` (S8), `Architecture Review.md` Addendum 1/2 |
+| A75 upgraded to capability/TCK/strategy-planner semantics with fail-fast min-level | `Optimistic concurrency in RDF stores.md` adapter section, `Ordering in RDF.md` adapter/TCK, `Uniqueness in RDF.md` adapter/TCK, `Architecture Review.md` Addendum 2 |
+| Remove unsupported or misattributed claims in store notes; require capability evidence | `misalignment.md`, `Ordering in RDF.md`, `Optimistic concurrency in RDF stores.md`, `Architecture Review.md` Addendum 2 |
