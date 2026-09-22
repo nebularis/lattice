@@ -156,11 +156,11 @@ Epic decomposition into phase plans is **no longer blocked**: the required Phase
 
 | Field | Value |
 |-------|-------|
-| **Status** | 🚧 Required epic plan revision complete; ready for decomposition |
+| **Status** | 🚧 Required and optional epic plan revisions complete; ready for decomposition |
 | **Unit ID** | `lattice-platform-development` (epic) |
 | **Plan** | [lattice-platform-agentic-development-v0.2.md](plans/lattice-platform-agentic-development-v0.2.md) |
 | **Description** | Decompose epic into Phase 0-9 plans with dependency DAG and milestones |
-| **Blockers** | None for decomposition. The optional Phase 0.2–0.4 walking-skeleton integration (below) remains open but is not blocking |
+| **Blockers** | None |
 
 ### Scope
 - 16 tracks (T-DEC through T-SEC) with hard orderings
@@ -176,11 +176,16 @@ Part 6 (Phase 2) of the epic plan now integrates the persistence compiler instea
 
 See [rdf-sparql-patterns-phase-plan.md](plans/rdf-sparql-patterns-phase-plan.md) and [persistence-profile-substrate.md](sketches/persistence-profile-substrate.md) for the underlying substrate; no new ADR was needed (refinement of ADR-A78/A79 within existing guardrail G5).
 
-### Optional (not yet done): Phase 0.2–0.4 Walking-Skeleton Integration
-Per [COORDINATION_REORG_HANDOFF.md](../COORDINATION_REORG_HANDOFF.md), this remains open and is not blocking decomposition:
-- Phase 0.2 (Walking skeleton): Integrate patterns T (metadata graphs) + C (CAS)
-- Phase 0.3 (Schema & contracts): Integrate pattern K (uniqueness) + compiler
-- Phase 0.4 (Canonicalization): Integrate pattern O (ordering)
+### Optional Phase 0.2–0.4 Integration — ✅ Done (2026-09-22)
+Per [COORDINATION_REORG_HANDOFF.md](../COORDINATION_REORG_HANDOFF.md), Phase 0 of the epic plan (Part 4) now carries a "Persistence-pattern coherence" note plus cross-references so its vocabulary is `dal:`-nameable from day one, without Phase 0 depending on `tools/persistence`:
+- **Pattern C (CAS)** ↔ `dal:ConcurrencyStrategy`, cross-referenced at P0.5.2 (`conditionalWrite`/`guardSatisfied`) and P0.5.6 (concurrency TCK).
+- **Pattern T (named-graph-per-batch)** ↔ `dal:MetaTopologyProfile`/`dal:ReceiptModel`, cross-referenced at P0.1.5 (ADR-A65) and P0.3.6 (`provenance.ttl`).
+- **Pattern K (uniqueness)** ↔ `dal:UniquenessConstraint`, cross-referenced at P0.1.3 (ADR-A51).
+- **Pattern O (dense ordering)** ↔ `dal:OrderingGrain`/`dal:DatasetTierModel`, cross-referenced at P0.4.4 (canonicalisation) and P0.5.7 (`CommitSequence` + ordering TCK).
+- New slice **P0.3.9** (documentation only) produces `ontology/persistence/docs/platform-vocabulary-alignment.md`, proving no namespace/semantic collision between the six `dal:` dimensions and the platform vocabulary P0.3 defines.
+- New guardrail **G11** (§0.4): no `dal:`-governed write path may hand-construct SPARQL, reserved at P0.2.7 and enforced in full once P0.5.2's write surface exists.
+
+No code was written and no new Phase 0→Phase 2 dependency was introduced — this is cross-referencing and one new documentation-only slice.
 
 ---
 
@@ -299,7 +304,7 @@ Per [COORDINATION_REORG_HANDOFF.md](../COORDINATION_REORG_HANDOFF.md), this rema
 
 | Item | What | Why | Next |
 |------|------|-----|------|
-| **Epic decomposition** | Break `lattice-platform-agentic-development-v0.2.md` into Phase 0-9 plans | Required Phase 2 (P2.1/P2.3/P2.4) persistence-compiler revision is complete (2026-09-22) | Begin Phase 0 decomposition; the optional Phase 0.2-0.4 walking-skeleton pattern integration can proceed independently, before or after |
+| **Epic decomposition** | Break `lattice-platform-agentic-development-v0.2.md` into Phase 0-9 plans | Required Phase 2 (P2.1/P2.3/P2.4) revision and the optional Phase 0.2-0.4 coherence note are both complete (2026-09-22) | Begin Phase 0 decomposition |
 | **Housekeeping first cut (Slice 3)** | Scaffold `platform/housekeeping` module | Compiler ready; module contracts defined in ADR-A80 | Author Slice 3 (housekeeping scaffolding) |
 | **Store SPI** | Design runtime SPI for query execution | Compiler produces templates; runtime binding TBD | Separate epic/phase after housekeeping |
 | **MTP backend integration (Phase 7)** | Runtime API for LLM curriculum delivery | MTP generation complete; needs HTTP endpoint | Post-Phase-6 work |
@@ -335,7 +340,7 @@ Per [COORDINATION_REORG_HANDOFF.md](../COORDINATION_REORG_HANDOFF.md), this rema
 # Part VII — Open Questions (Blocking or Deferred)
 
 1. **Store SPI design** — How does runtime connect compiled templates to live backend? (Deferred to separate SPI phase)
-2. **Phase 0.2–0.4 walking-skeleton pattern integration** — optional, not blocking: fold patterns T/C (0.2), K (0.3), O (0.4) into the walking-skeleton plan once it is decomposed. (Required Phase 2 revision using compiler-generated queries is done — see Part II, §6 and Part V.)
+2. ~~Phase 0.2–0.4 walking-skeleton pattern integration~~ — done (2026-09-22): Part 4 of the epic plan carries the Pattern C/T/K/O ↔ `dal:` cross-references, new slice P0.3.9, and guardrail G11. See Part II, §6 and Part V.
 3. **MTP backend integration** — What HTTP API shape for LLM curriculum consumption? (Phase 7, post-Phase-6)
 4. **Housekeeping execution** — When is the housekeeping component itself executed (real-time vs. batch)? (ADR-A80 defers to future phase)
 
