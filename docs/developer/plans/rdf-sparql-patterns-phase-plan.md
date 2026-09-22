@@ -4,7 +4,7 @@
 
 **Unit type:** Plan
 **Identifier:** `rdf-sparql-patterns-phase`
-**Status:** Slice 1 complete. Slices 2 and 3 ready for execution, pending ADR ratification.
+**Status:** Slice 1 complete. ADR-A78/A79/A80 ratified. Slice 2 complete (see [validation pack](../validation/persistence-substrate-and-compiler.md)). Slice 3 not started.
 **Blocks:** `ontology/persistence` authoring, `tools/persistence` compiler, `platform/housekeeping` first cut, and (once the store SPI exists) the Request Query Mapping and Query Execution work items this plan explicitly excludes.
 **Estimated scope:** see [Part 2](#part-2--execution-plan-and-dependencies) for a per-slice token estimate. These are planning estimates, not commitments, and are to be checked against actual consumption once each slice completes.
 
@@ -15,15 +15,15 @@
 **Entry criteria:**
 - Guide complete: [rdf-sparql-patterns-guide.md](../../architecture/rdf-sparql-patterns-guide.md) (fulfils Slice 1, see [§1.1](#11-slice-1--core-patterns-and-design-specs-complete))
 - Sketch complete: [persistence-profile-substrate.md](../sketches/persistence-profile-substrate.md)
-- ADR-A78, ADR-A79, ADR-A80 ratified (currently Proposed, see [Part 0.1](#01-proposed-adrs-delivered-with-this-rewrite))
+- ADR-A78, ADR-A79, ADR-A80 ratified ✅ (see [Part 0.1](#01-proposed-adrs-delivered-with-this-rewrite))
 
 **Success criteria:**
-- `ontology/persistence` authored, validated against its own SHACL shapes, documented
-- `tools/persistence` compiler implemented, passing its injection corpus and its own test suite
-- `platform/housekeeping` module scaffolded with the contracts, configuration model, and generated queries described in [ADR-A80](../../architecture/decisions/ADR-A80-housekeeping-component-boundary.md)
-- `ontology-architecture.md` and the root `README.md` updated per the Design First contract's "kept up to date" list
-- Status recorded in `docs/developer/status/rdf-sparql-patterns-status.md`
-- No SPI code, no Request Query Mapping library, no Query Execution component delivered by this plan (see [Part 5](#part-5--explicitly-out-of-scope))
+- `ontology/persistence` authored, validated against its own SHACL shapes, documented — ✅ done (Slice 2)
+- `tools/persistence` compiler implemented, passing its injection corpus and its own test suite — ✅ done (Slice 2): 239 tests passing under `mise run check:persistence`
+- `platform/housekeeping` module scaffolded with the contracts, configuration model, and generated queries described in [ADR-A80](../../architecture/decisions/ADR-A80-housekeeping-component-boundary.md) — not started (Slice 3)
+- `ontology-architecture.md` and the root `README.md` updated per the Design First contract's "kept up to date" list — ✅ done (Slice 2)
+- Status recorded in `docs/developer/status/rdf-sparql-patterns-status.md` — ✅ done
+- No SPI code, no Request Query Mapping library, no Query Execution component delivered by this plan (see [Part 5](#part-5--explicitly-out-of-scope)) — ✅ held throughout Slice 2
 
 ---
 
@@ -31,7 +31,7 @@
 
 ### 0.1 Proposed ADRs delivered with this rewrite
 
-Per the Design First rule, a plan of this scope is preceded by a proposed ADR. Three are delivered with this rewrite, all Status: Proposed, awaiting human ratification before Slices 2 and 3 begin execution:
+Per the Design First rule, a plan of this scope is preceded by a proposed ADR. Three were delivered with this rewrite and have since been ratified (Status: Accepted):
 
 | ADR | Decision |
 |---|---|
@@ -63,7 +63,7 @@ All three are recorded as open design questions in [lattice-platform-agentic-dev
 
 **Status: fulfilled**, not by the five fragmented documents originally planned under `docs/architecture/design-patterns/`, but by the single consolidated [rdf-sparql-patterns-guide.md](../../architecture/rdf-sparql-patterns-guide.md), which covers every sub-pattern (P0–P7, O1–O5, §1.1–1.6, A1–A7, F1–F13, QP1–QP5) with more worked Turtle and SPARQL than the original slice scoped, in one navigable document rather than five. No further work is scheduled against this slice. Its validation, a documentation review rather than a runnable test suite, is recorded in this plan's [status record](../../developer/status/rdf-sparql-patterns-status.md).
 
-### 1.2 Slice 2 — Persistence profile substrate and compiler toolchain
+### 1.2 Slice 2 — Persistence profile substrate and compiler toolchain (✅ complete)
 
 **Slice identifier:** `persistence-substrate-and-compiler`
 
@@ -154,8 +154,8 @@ All three are recorded as open design questions in [lattice-platform-agentic-dev
 |---|---|---|---|
 | **1. Core patterns** | `rdf-sparql-core-patterns` | — | complete (delivered as the guide) |
 | **ADRs A78–A80** | — | Slice 1 (as prior art) | complete (delivered with this rewrite) |
-| **2. Substrate and compiler** | `persistence-substrate-and-compiler` | ADR-A78, ADR-A79 ratified | 8–12.5M |
-| **3. Housekeeping first cut** | `housekeeping-first-cut` | Slice 2 complete, ADR-A80 ratified | 3–4M |
+| **2. Substrate and compiler** | `persistence-substrate-and-compiler` | ADR-A78, ADR-A79 ratified ✅ | ✅ complete |
+| **3. Housekeeping first cut** | `housekeeping-first-cut` | Slice 2 complete ✅ (ADR-A80 already ratified ✅) | 3–4M (not started) |
 
 **Total remaining scope:** order of magnitude 11–16.5M tokens across Slices 2 and 3. These figures are rough planning estimates. Record actual consumption per slice in the status file at completion, so future estimates in this style improve.
 
@@ -164,7 +164,7 @@ All three are recorded as open design questions in [lattice-platform-agentic-dev
 **Entry (whole plan):**
 - Guide complete ✅
 - Sketch complete ✅
-- ADR-A78, ADR-A79, ADR-A80 ratified (pending)
+- ADR-A78, ADR-A79, ADR-A80 ratified ✅
 
 **Exit (whole plan):**
 - `ontology/persistence` authored and self-validating

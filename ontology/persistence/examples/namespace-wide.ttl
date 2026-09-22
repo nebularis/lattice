@@ -1,0 +1,29 @@
+# A namespace-wide profile: every class an applied ontology mints under
+# its own IRI prefix gets the same baseline dimensions, unless a
+# narrower, higher-priority scope overrides one of them.
+@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix ex:  <https://example.org/lending#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ex:LendingNamespace a dal:NamespaceScope ;
+    dal:iriPrefix "https://example.org/lending#" ;
+    dal:priority "5"^^xsd:integer .
+
+ex:LendingNamespaceProfile a dal:DataAccessProfile ;
+    dal:appliesTo          ex:LendingNamespace ;
+    dal:concurrencyProfile dal:ProvidedConcurrency ;
+    dal:orderingGrain      dal:CommitGrain ;
+    dal:receiptModel       dal:ReceiptOnly ;
+    dal:metaTopology       dal:SharedSharded ;
+    dal:metaShards         "64"^^xsd:long .
+
+# A single class inside the namespace overrides only the receipt model,
+# demonstrating per-dimension inheritance (sketch §3.3): everything else
+# still comes from ex:LendingNamespaceProfile above.
+ex:CreditDecisionClass a dal:ClassScope ;
+    dal:targetClass ex:CreditDecision ;
+    dal:priority "10"^^xsd:integer .
+
+ex:CreditDecisionReceiptOverride a dal:ReceiptProfile ;
+    dal:appliesTo    ex:CreditDecisionClass ;
+    dal:receiptModel dal:PatchLog .

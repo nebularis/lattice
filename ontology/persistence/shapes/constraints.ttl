@@ -1,0 +1,119 @@
+@prefix dal:  <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+
+# SHACL shapes validating ontology/persistence's OWN instance data (an
+# adopter's dal: configuration), per sketch §3.9. Mirrors the pattern in
+# rdf-sparql-patterns-guide.md Appendix B: sh:maxCount 1 on every functional
+# profile property, sh:class on every object property pointing at a scope,
+# and a standing sh:sparql check enforcing the shared-substrate-class
+# convention from ADR-A78 point 5 / sketch §3.7.
+
+dal:ProfileScopeShape
+    a sh:NodeShape ;
+    sh:targetClass dal:ProfileScope ;
+    sh:property [ sh:path dal:priority ; sh:maxCount 1 ; sh:datatype xsd:integer ] ;
+    sh:property [ sh:path dal:describedBy ; sh:maxCount 1 ; sh:datatype xsd:string ] .
+
+dal:GraphPatternScopeShape
+    a sh:NodeShape ;
+    sh:targetClass dal:GraphPatternScope ;
+    sh:property [ sh:path dal:graphPrefix ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ] .
+
+dal:NamespaceScopeShape
+    a sh:NodeShape ;
+    sh:targetClass dal:NamespaceScope ;
+    sh:property [ sh:path dal:iriPrefix ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ] .
+
+dal:ClassScopeShape
+    a sh:NodeShape ;
+    sh:targetClass dal:ClassScope ;
+    sh:property [ sh:path dal:targetClass ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:IRI ] ;
+    sh:property [ sh:path dal:includeSubclasses ; sh:maxCount 1 ; sh:datatype xsd:boolean ] .
+
+dal:ShapeScopeShape
+    a sh:NodeShape ;
+    sh:targetClass dal:ShapeScope ;
+    sh:property [ sh:path dal:targetShape ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:IRI ] .
+
+dal:EquivalentClassScopeShape
+    a sh:NodeShape ;
+    sh:targetClass dal:EquivalentClassScope ;
+    sh:property [ sh:path dal:equivalentTo ; sh:minCount 1 ; sh:maxCount 1 ] .
+
+dal:DataAccessProfileShape
+    a sh:NodeShape ;
+    sh:targetClass dal:DataAccessProfile ;
+    sh:property [ sh:path dal:appliesTo ; sh:minCount 1 ; sh:maxCount 1 ; sh:class dal:ProfileScope ] .
+
+dal:AggregateBoundaryProfileShape
+    a sh:NodeShape ;
+    sh:targetClass dal:AggregateBoundaryProfile ;
+    sh:property [ sh:path dal:strategy ; sh:minCount 1 ; sh:maxCount 1 ; sh:class dal:AggregateBoundaryStrategy ] ;
+    sh:property [ sh:path dal:maxTraversalDepth ; sh:maxCount 1 ; sh:datatype xsd:integer ] .
+
+# A CompositePropertyBoundary profile MUST carry a boundaryShape (ADR-A78
+# point 4: SHACL is the sole authoring surface for this strategy). Checked
+# with sh:sparql because the requirement is conditional on another
+# property's value, which sh:property alone cannot express.
+dal:CompositePropertyBoundaryRequiresShapeShape
+    a sh:NodeShape ;
+    sh:targetClass dal:AggregateBoundaryProfile ;
+    sh:sparql [
+        sh:message "dal:CompositePropertyBoundary requires dal:boundaryShape (ADR-A78 point 4): there is no other authoring surface for this strategy." ;
+        sh:prefixes dal: ;
+        sh:select """
+            SELECT $this WHERE {
+              $this dal:strategy dal:CompositePropertyBoundary .
+              FILTER NOT EXISTS { $this dal:boundaryShape ?shape }
+            }""" ] .
+
+dal:ConcurrencyProfileShape
+    a sh:NodeShape ;
+    sh:targetClass dal:ConcurrencyProfile ;
+    sh:property [ sh:path dal:concurrencyProfile ; sh:minCount 1 ; sh:maxCount 1 ; sh:class dal:ConcurrencyStrategy ] .
+
+dal:UniquenessConstraintShape
+    a sh:NodeShape ;
+    sh:targetClass dal:UniquenessConstraint ;
+    sh:property [ sh:path dal:constraintId ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path dal:appliesTo ; sh:minCount 1 ; sh:maxCount 1 ; sh:class dal:ProfileScope ] ;
+    sh:property [ sh:path dal:keyProperty ; sh:minCount 1 ] .
+
+dal:CapabilitySpecShape
+    a sh:NodeShape ;
+    sh:targetClass dal:CapabilitySpec ;
+    sh:property [ sh:path dal:providesCas ; sh:maxCount 1 ; sh:datatype xsd:string ;
+                  sh:in ( "LINEARIZABLE" "BEST_EFFORT" "NONE" ) ] ;
+    sh:property [ sh:path dal:providesReasoning ; sh:maxCount 1 ; sh:datatype xsd:boolean ] ;
+    sh:property [ sh:path dal:providesCommitValidation ; sh:maxCount 1 ; sh:datatype xsd:string ;
+                  sh:in ( "NONE" "SHACL_CORE" "SHACL_SPARQL" "CUSTOM_RULES" ) ] .
+
+# The SharedClassProfileWarning convention (ADR-A78 point 5, sketch §3.7):
+# a DataAccessProfile scoped ONLY by a bare ClassScope, targeting a class
+# whose IRI is not in the same namespace as the profile individual itself,
+# is very likely binding a persistence opinion to a shared substrate class
+# rather than to the deploying application's own graph family. This is a
+# warning shape (sh:severity sh:Warning), not a hard rejection, because a
+# deliberate global override is a legitimate, if rare, choice.
+dal:SharedClassProfileWarningShape
+    a sh:NodeShape ;
+    sh:targetClass dal:DataAccessProfile , dal:ConcurrencyProfile , dal:OrderingProfile ,
+                   dal:ReceiptProfile , dal:MetaTopologyProfile , dal:AggregateBoundaryProfile ;
+    sh:severity sh:Warning ;
+    sh:sparql [
+        sh:message "This profile's only scope is a bare ClassScope targeting a class outside its own namespace. Per ADR-A78 point 5, authority over a shared substrate class belongs to the deploying application, expressed via a GraphPatternScope or NamespaceScope, not a bare ClassScope. If this override is deliberate, acknowledge it explicitly." ;
+        sh:prefixes dal: ;
+        sh:select """
+            SELECT $this WHERE {
+              $this dal:appliesTo ?scope .
+              ?scope a dal:ClassScope ; dal:targetClass ?cls .
+              FILTER NOT EXISTS { $this dal:appliesTo [ a ?otherKind ] .
+                                  FILTER (?otherKind != dal:ClassScope) }
+              FILTER NOT EXISTS { $this dal:acknowledgedSharedClassOverride true }
+              BIND(STRBEFORE(STR($this), "#") AS ?thisNamespace)
+              BIND(STRBEFORE(STR(?cls), "#") AS ?clsNamespace)
+              FILTER(?thisNamespace != ?clsNamespace)
+            }""" ] .

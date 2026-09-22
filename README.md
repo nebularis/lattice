@@ -28,6 +28,8 @@ The layers described below are one family of mapping target, but not the only po
 
 **SPC (Subject-oriented Process Calculus)**  provides a formal mechanism for describing orchestration between agents (human, AI, or computational), whose data has been mapped in by MORK and whose roles, obligations, and eligibility are modelled in LATTICE. Where LATTICE's Behaviour layer models what state something is in and what can cause it to change, SPC is concerned with the live, session-typed exchange between agents that drives those changes — giving that exchange a formal contract to align to, grounded in the same ontology, rather than an ad hoc protocol. SPC has a substantial standalone ontology under `ontology/spc/`, with Python and Erlang implementations under `tools/spc/`. It is not yet integrated with the layers below: it uses a placeholder namespace and declares no `projection/` contract to any of them. Treat it as a separate, pre-integration body of work rather than part of the dependency graph described below.
 
+**Persistence (the Data Access Layer, `dal:`)** lets an adopter select, per class or per deployment of their own applied ontology, which of the portable RDF/SPARQL patterns in [`docs/architecture/rdf-sparql-patterns-guide.md`](docs/architecture/rdf-sparql-patterns-guide.md) apply: aggregate boundary, concurrency, ordering grain, receipt model, meta topology, and uniqueness. It is a cross-cutting substrate, not a layer — it targets classes, graphs, and shapes by IRI reference only, and no layer imports it or is imported by it. The vocabulary and SHACL shapes live under `ontology/persistence/`; a design-time-only compiler (no store SPI, no live backend) that turns a selection into generated SPARQL lives under `tools/persistence/`. See [ADR-A78](docs/architecture/decisions/ADR-A78-persistence-profile-substrate-and-aggregate-boundaries.md) and [ADR-A79](docs/architecture/decisions/ADR-A79-persistence-compiler-toolchain.md).
+
 #### Ontology Layers
 
 LATTICE is organised as seven layers, each an independent OWL/SHACL/SKOS module:
@@ -92,6 +94,7 @@ lattice/
 ├── ontology/behaviour/               # Behaviour Modelling
 │   ├── mork/                # Mapping vocabulary and semantic fixtures
 │   ├── spc/                 # Orchestration ontology, standalone and unintegrated
+│   ├── persistence/         # Data Access Layer (dal:), cross-cutting, no layer dependency
 │
 ├── ontology/governance/              # Cross-layer governance
 │   ├── scheme-contracts/
@@ -167,6 +170,7 @@ test -d tools
 test -d tools/mork
 test -d tools/mork_compilers
 test -d tools/surface
+test -d tools/persistence
 test -d tools/spc/python
 test -d tools/spc/erlang
 test -d workers
@@ -222,6 +226,15 @@ mise exec -- python -m pip install -e tools/mork -e tools/mork_compilers -e tool
 mise exec -- python -m pytest tools/mork/src -q
 mise exec -- python -m compileall -q tools/mork/src tools/mork_compilers/src tools/surface/src
 ```
+
+### Validate the persistence compiler
+
+```bash
+mise run bootstrap:persistence
+mise run check:persistence
+```
+
+Compiles `ontology/persistence`'s own worked examples, runs the resolver/validator/capability/boundary unit tests, the injection corpus, the determinism checks, and the Python architecture-policy checks, and validates every example fixture against `ontology/persistence/shapes/constraints.ttl`. See [`tools/persistence/README.md`](tools/persistence/README.md).
 
 ### Validate SPC Python
 

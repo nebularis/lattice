@@ -1,0 +1,14 @@
+# An optional, adopter-authored, unverified dal:CapabilitySpec (sketch
+# §3.6). Paired with baseline-single-class.ttl's ex:LoanApplication
+# target: this environment claims LINEARIZABLE CAS and no reasoning,
+# which is sufficient for that target's requirement (no reasoning-
+# dependent scope applies to it), so the resulting CapabilityCheck PASSes.
+@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix ex:  <https://example.org/lending#> .
+
+ex:MyFusekiEnvironment a dal:CapabilitySpec ;
+    dal:appliesToTarget          ex:LoanApplication ;
+    dal:providesCas              "LINEARIZABLE" ;
+    dal:providesReasoning        false ;
+    dal:providesCommitValidation "NONE" ;
+    dal:providesSingleWriter     true .

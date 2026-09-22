@@ -1,0 +1,11 @@
+{{! fork-detection-audit: guide F5. Two receipts sharing a pat:prevRev is
+    proof of a lost update. Read-only, run as a standing alert. }}
+PREFIX pat: <https://example.org/lattice/patterns#>
+
+SELECT ?prev (COUNT(*) AS ?n) (GROUP_CONCAT(STR(?r); separator=" ") AS ?forks)
+WHERE {
+  GRAPH ?log { ?r pat:prevRev ?prev }
+  FILTER(STRSTARTS(STR(?log), STR({{{logGraphPrefix}}})))
+}
+GROUP BY ?prev
+HAVING (COUNT(*) > 1)

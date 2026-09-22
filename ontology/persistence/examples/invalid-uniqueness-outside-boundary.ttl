@@ -1,0 +1,35 @@
+# Negative fixture (sketch §3.5, row 5): a uniqueness constraint whose
+# key property is not reachable within the declared CompositeProperty
+# boundary's shape (ex:serialNumber is not part of ex:WidgetShape's
+# closure). Rejected, remediation: narrow the key property or widen the
+# shape.
+@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix ex:  <https://example.org/lending#> .
+@prefix sh:  <http://www.w3.org/ns/shacl#> .
+
+ex:WidgetShape a sh:NodeShape ;
+    sh:targetClass ex:Widget ;
+    sh:property [ sh:path ex:part ; sh:node ex:PartShape ] .
+
+ex:PartShape a sh:NodeShape .
+
+ex:WidgetClass a dal:ClassScope ;
+    dal:targetClass ex:Widget .
+
+ex:WidgetBoundaryProfile a dal:AggregateBoundaryProfile ;
+    dal:appliesTo     ex:WidgetClass ;
+    dal:strategy      dal:CompositePropertyBoundary ;
+    dal:boundaryShape ex:WidgetShape .
+
+# receiptModel must be overridden away from the ReceiptOnly baseline default,
+# or this fixture would also (correctly) trip row 2 before ever reaching the
+# row 5 check this fixture exists to isolate.
+ex:WidgetReceiptProfile a dal:ReceiptProfile ;
+    dal:appliesTo    ex:WidgetClass ;
+    dal:receiptModel dal:PatchLog .
+
+ex:WidgetSerialUnique a dal:UniquenessConstraint ;
+    dal:constraintId "widget-serial-number" ;
+    dal:appliesTo    ex:WidgetClass ;
+    dal:keyProperty  ( ex:serialNumber ) ;
+    dal:onViolation  dal:Reject .

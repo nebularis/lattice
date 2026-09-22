@@ -1,0 +1,28 @@
+{{! append-event: guide Chapter 10.1, event-grain append. Server-assigned
+    next-position: the counter read-and-increment is in the same
+    transaction as the payload write, on a single shared statement. }}
+PREFIX pat: <https://example.org/lattice/patterns#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+DELETE { GRAPH {{{metaGraphPrefix}}} { $stream pat:seq ?n } }
+INSERT {
+  GRAPH {{{metaGraphPrefix}}} { $stream pat:seq ?n1 }
+  GRAPH {{{txnGraph}}}        { $txnId pat:rev ?rev }
+  GRAPH ?eventGraph {
+      $event a $eventType ; pat:revision ?rev ; pat:opSeq $opSeq ; pat:occurredAt $occurredAt
+  }
+  GRAPH ?logGraph {
+      ?rev a pat:Revision ; pat:target $stream ; pat:epoch $epoch ; pat:seq ?n1 ;
+           pat:txn $txnId ; pat:recordedAt ?now
+  }
+}
+WHERE {
+  GRAPH {{{metaGraphPrefix}}} { $stream pat:epoch $epoch ; pat:seq ?n
+                              FILTER NOT EXISTS { $stream pat:deleted true } }
+  FILTER NOT EXISTS { GRAPH {{{txnGraph}}} { $txnId pat:rev ?any } }
+  BIND(?n + 1 AS ?n1)
+  BIND(IRI(CONCAT(STR({{{logGraphPrefix}}}), SUBSTR(STR(NOW()), 1, 7))) AS ?logGraph)
+  BIND(?logGraph AS ?eventGraph)
+  BIND(IRI(CONCAT(STR($stream), "/", STR(?n1))) AS ?rev)
+  BIND(NOW() AS ?now)
+}

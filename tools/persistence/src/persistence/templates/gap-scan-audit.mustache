@@ -1,0 +1,14 @@
+{{! gap-scan-audit: guide S3, the gap and completeness check. Reads only;
+    the payoff of a dense per-stream sequence. Run by platform/housekeeping
+    (ADR-A80) or by an adopter's own reconciliation job. }}
+PREFIX pat: <https://example.org/lattice/patterns#>
+
+SELECT ?stream (MIN(?seq) AS ?lo) (MAX(?seq) AS ?hi) (COUNT(DISTINCT ?seq) AS ?n)
+WHERE {
+  GRAPH ?log {
+      ?r a pat:Revision ; pat:epoch $epoch ; pat:target ?stream ; pat:seq ?seq .
+  }
+  FILTER(STRSTARTS(STR(?log), STR({{{logGraphPrefix}}})))
+}
+GROUP BY ?stream
+HAVING (COUNT(DISTINCT ?seq) != MAX(?seq) - MIN(?seq) + 1)

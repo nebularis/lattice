@@ -1,0 +1,30 @@
+# A minimal, single-class strong profile. The commissioning example from
+# the sketch (§3.3), expanded with the renamed concurrency value.
+@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix ex:  <https://example.org/lending#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ex:LoanApplicationClass a dal:ClassScope ;
+    dal:targetClass ex:LoanApplication ;
+    dal:priority "20"^^xsd:integer .
+
+ex:LoanApplicationStrongProfile a dal:DataAccessProfile ;
+    dal:appliesTo           ex:LoanApplicationClass ;
+    dal:strategy            dal:NamedGraphBoundary ;
+    dal:graphIriTemplate    "urn:g:loan-application/{id}" ;
+    dal:concurrencyProfile  dal:Optimistic ;
+    dal:minConcurrencyLevel dal:Linearizable ;
+    dal:orderingGrain       dal:EventGrain ;
+    dal:receiptModel        dal:PatchLog ;
+    dal:metaTopology        dal:SharedSharded ;
+    dal:metaShards          "64"^^xsd:long ;
+    dal:uniqueness          ex:LoanApplicationNumberPerBranch .
+
+ex:LoanApplicationNumberPerBranch a dal:UniquenessConstraint ;
+    dal:constraintId        "loan-application-number-per-branch" ;
+    dal:appliesTo            ex:LoanApplicationClass ;
+    dal:keyProperty          ( ex:applicationNumber ) ;
+    dal:scopeProperty        ex:branch ;
+    dal:normalizePipeline    dal:NfkcTrimUppercase ;
+    dal:onViolation          dal:Reject ;
+    dal:minEnforcementLevel  dal:Transactional .

@@ -1,0 +1,57 @@
+# The worked conflict from the sketch (§3.4.3): two applied ontologies,
+# lending and credit, both deploy the shared substrate class beh:Behaviour
+# into disjoint graph families, plus a bare class-level fallback and a
+# reasoning-dependent equivalentClass override for "high value" instances.
+@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix beh: <https://www.nebularis.org/neuro-semantic/lattice/behaviour#> .
+@prefix ex:  <https://example.org/lending#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+# 1. lending's own deployment, scoped by WHERE lending writes its
+#    behaviour instances (a GraphPatternScope structurally outranks the
+#    bare ClassScope fallback below, per ADR-A78 point 5).
+ex:LendingBehaviourGraphs a dal:GraphPatternScope ;
+    dal:graphPrefix "urn:g:lending/behaviour/" ;
+    dal:coversClass beh:Behaviour ;
+    dal:priority "10"^^xsd:integer .
+
+ex:LendingBehaviourProfile a dal:DataAccessProfile ;
+    dal:appliesTo           ex:LendingBehaviourGraphs ;
+    dal:concurrencyProfile  dal:Optimistic ;
+    dal:receiptModel        dal:PatchLog .
+
+# 2. credit's own deployment, scoped the same way, disjoint graph prefix.
+ex:CreditBehaviourGraphs a dal:GraphPatternScope ;
+    dal:graphPrefix "urn:g:credit/behaviour/" ;
+    dal:coversClass beh:Behaviour ;
+    dal:priority "10"^^xsd:integer .
+
+ex:CreditBehaviourProfile a dal:DataAccessProfile ;
+    dal:appliesTo           ex:CreditBehaviourGraphs ;
+    dal:concurrencyProfile  dal:ProvidedConcurrency ;
+    dal:receiptModel        dal:ReceiptOnly .
+
+# 3. a bare class-level default, in case anyone deploys beh:Behaviour
+#    outside either graph family, deliberately low priority.
+ex:BehaviourClassFallback a dal:ClassScope ;
+    dal:targetClass beh:Behaviour ;
+    dal:priority "0"^^xsd:integer .
+
+ex:BehaviourFallbackProfile a dal:DataAccessProfile ;
+    dal:appliesTo           ex:BehaviourClassFallback ;
+    dal:concurrencyProfile  dal:ProvidedConcurrency ;
+    dal:receiptModel        dal:ReceiptOnly .
+
+# 4. a reasoning-dependent override: "high-value" behaviour instances
+#    want a stronger receipt model wherever they occur.
+ex:HighValueThresholdRestriction a owl:Restriction .
+
+ex:HighValueBehaviourEquivalence a dal:EquivalentClassScope ;
+    dal:equivalentTo [ a owl:Class ;
+                        owl:intersectionOf ( beh:Behaviour ex:HighValueThresholdRestriction ) ] ;
+    dal:priority "30"^^xsd:integer .
+
+ex:HighValueBehaviourProfile a dal:DataAccessProfile ;
+    dal:appliesTo    ex:HighValueBehaviourEquivalence ;
+    dal:receiptModel dal:SnapshotPerRevision .

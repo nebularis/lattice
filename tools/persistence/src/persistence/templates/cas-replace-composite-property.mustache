@@ -1,0 +1,61 @@
+{{! cas-replace-composite-property: sketch section 4.3's
+    CompositePropertyBoundary variant. There is no single graph to sweep:
+    the closure is a bounded property-path walk over the composite
+    property (a compile-time Mustache slot, the first composite property
+    found by walking this target's boundary shape at compile time, see
+    persistence.boundary and persistence.resolver). SPARQL 1.1 permits a
+    property path only inside WHERE, never inside a DELETE or INSERT
+    template block (a template's predicate position accepts a plain Verb
+    only) -- this was caught by this template's own render-and-parse
+    test, and is why the path below appears only in WHERE, binding
+    ?member for the DELETE template to consume as a plain triple pattern.
+    A property path also cannot itself be a SPARQL variable, and SPARQL
+    1.1 property paths have no bounded repetition syntax, so depth is
+    enforced at compile time by the shape walk's own cycle detection, not
+    by a runtime bound here; the path below uses one-or-more repetition,
+    matching the walked closure's reachability. The version row's subject
+    is the root INSTANCE iri, never a graph iri (sketch section 4.3,
+    point 1). The PAYLOAD marker below is a non-SPARQL text-substitution
+    marker, not a bindable variable: a set of triples cannot be bound
+    through a single SPARQL variable, so whatever executes this
+    instantiated template must splice in the caller's already-serialised,
+    trusted payload triples before submission -- see
+    tools/persistence/README.md, Known limitations.
+
+    Note for template authors: never put a Mustache tag inside this
+    comment block, including inside prose describing a slot by name in
+    braces. Chevron's comment parser ends at the first closing double-brace
+    it sees, even one nested inside a triple-brace tag, which silently
+    truncates the comment and corrupts everything after it. }}
+PREFIX pat: <https://example.org/lattice/patterns#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+DELETE {
+  ?root ?p1 ?o1 .
+  ?member ?p2 ?o2 .
+  GRAPH {{{metaGraphPrefix}}} { $root pat:seq $expectedSeq ; pat:head ?prevRev }
+}
+INSERT {
+  GRAPH ?logGraph { #PAYLOAD# }
+  GRAPH {{{metaGraphPrefix}}} { $root pat:epoch $epoch ; pat:seq $nextSeq ; pat:head $newRev }
+  GRAPH {{{txnGraph}}}        { $txnId pat:rev $newRev }
+  GRAPH ?logGraph2 {
+      $newRev a pat:Revision ; pat:target $root ; pat:epoch $epoch ; pat:seq $nextSeq ;
+              pat:prevRev ?prevRev ; pat:txn $txnId ; pat:recordedAt ?now
+  }
+}
+WHERE {
+  BIND(IRI(CONCAT(STR({{{logGraphPrefix}}}), SUBSTR(STR(NOW()), 1, 7))) AS ?logGraph)
+  BIND(?logGraph AS ?logGraph2)
+  GRAPH {{{metaGraphPrefix}}} {
+      $root pat:epoch $epoch ; pat:seq $expectedSeq ; pat:head ?prevRev
+      FILTER NOT EXISTS { $root pat:deleted true }
+  }
+  FILTER NOT EXISTS { GRAPH {{{txnGraph}}} { $txnId pat:rev ?any } }
+  BIND(NOW() AS ?now)
+  OPTIONAL { $root ?p1 ?o1 }
+  OPTIONAL {
+      $root {{{compositeProperty}}}+ ?member .
+      ?member ?p2 ?o2
+  }
+}

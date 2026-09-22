@@ -1,0 +1,18 @@
+# A valid NoBoundary + Optimistic combination: guide §14.2's value-based
+# CAS, guarding on the old value of one property rather than replacing a
+# whole aggregate. Contrast invalid-noboundary-cas.ttl, which is the same
+# shape minus the required dal:valueGuardProperty.
+@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix ex:  <https://example.org/lending#> .
+
+ex:OrderClass a dal:ClassScope ;
+    dal:targetClass ex:Order .
+
+ex:OrderStatusBoundaryProfile a dal:AggregateBoundaryProfile ;
+    dal:appliesTo ex:OrderClass ;
+    dal:strategy  dal:NoBoundary .
+
+ex:OrderStatusConcurrencyProfile a dal:ConcurrencyProfile ;
+    dal:appliesTo          ex:OrderClass ;
+    dal:concurrencyProfile dal:Optimistic ;
+    dal:valueGuardProperty ex:status .

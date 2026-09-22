@@ -1,0 +1,34 @@
+# CompositePropertyBoundary declared the only way it can be: through a
+# SHACL shape (ADR-A78 point 4, sketch §4.3-§4.4). ex:lineItem is walked
+# as the composite relation; ex:customer is deliberately absent from the
+# shape, so it stays outside the aggregate's closure.
+@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix ex:  <https://example.org/lending#> .
+@prefix sh:  <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ex:OrderAggregateShape a sh:NodeShape ;
+    sh:targetClass ex:Order ;
+    sh:property [ sh:path ex:lineItem ; sh:node ex:LineItemShape ; sh:minCount 1 ] .
+
+ex:LineItemShape a sh:NodeShape ;
+    sh:property [ sh:path ex:sku ; sh:datatype xsd:string ] .
+
+ex:OrderClass a dal:ClassScope ;
+    dal:targetClass ex:Order ;
+    dal:priority "20"^^xsd:integer .
+
+ex:OrderBoundaryProfile a dal:AggregateBoundaryProfile ;
+    dal:appliesTo         ex:OrderClass ;
+    dal:strategy          dal:CompositePropertyBoundary ;
+    dal:boundaryShape     ex:OrderAggregateShape ;
+    dal:maxTraversalDepth "8"^^xsd:integer .
+
+ex:OrderConcurrencyProfile a dal:ConcurrencyProfile ;
+    dal:appliesTo           ex:OrderClass ;
+    dal:concurrencyProfile  dal:Optimistic ;
+    dal:minConcurrencyLevel dal:Linearizable .
+
+ex:OrderReceiptProfile a dal:ReceiptProfile ;
+    dal:appliesTo    ex:OrderClass ;
+    dal:receiptModel dal:PatchLog .

@@ -1,0 +1,409 @@
+@prefix dal:  <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@base <https://www.nebularis.org/neuro-semantic/lattice/persistence> .
+
+<https://www.nebularis.org/neuro-semantic/lattice/persistence>
+    a owl:Ontology ;
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/persistence/0.1.0> ;
+    rdfs:label "LATTICE Data Access Layer (persistence profile substrate)" ;
+    rdfs:comment "Cross-cutting configuration vocabulary letting an adopter declare, per scope, which of the guide's uniqueness/ordering/concurrency/receipt/meta-topology/boundary patterns apply to a population of RDF resources. Targets classes, graphs, and shapes by IRI reference only. Imports nothing from Foundation-to-Behaviour and is imported by none of them (ADR-A78). See docs/architecture/rdf-sparql-patterns-guide.md and docs/developer/sketches/persistence-profile-substrate.md for the design this vocabulary encodes." .
+
+#################################################################
+#    §1. Profile scopes (sketch §3.2). Ranked by whether resolving
+#    them needs reasoning. GraphPatternScope, NamespaceScope, and
+#    ClassScope (asserted typing only) need none. ShapeScope is
+#    resolved once, offline, at compile time. EquivalentClassScope
+#    is the only kind that needs a reasoner or a materialised closure.
+#################################################################
+
+dal:ProfileScope a owl:Class ;
+    rdfs:comment "Base class for anything that answers 'which resources does this profile apply to'." .
+
+dal:GraphPatternScope a owl:Class ; rdfs:subClassOf dal:ProfileScope ;
+    rdfs:comment "Matches graphs whose IRI starts with dal:graphPrefix. No reasoning." .
+
+dal:NamespaceScope a owl:Class ; rdfs:subClassOf dal:ProfileScope ;
+    rdfs:comment "Matches resources whose own IRI starts with dal:iriPrefix. No reasoning." .
+
+dal:ClassScope a owl:Class ; rdfs:subClassOf dal:ProfileScope ;
+    rdfs:comment "Matches resources with an asserted rdf:type of dal:targetClass, optionally including asserted rdfs:subClassOf* members when dal:includeSubclasses is true. Asserted triples only, never entailment." .
+
+dal:ShapeScope a owl:Class ; rdfs:subClassOf dal:ProfileScope ;
+    rdfs:comment "Matches resources conforming to dal:targetShape, an sh:NodeShape evaluated once against the adopter's data model at compile time. Never a write-time SHACL dependency." .
+
+dal:EquivalentClassScope a owl:Class ; rdfs:subClassOf dal:ProfileScope ;
+    rdfs:comment "Matches resources reachable only through owl:equivalentClass or other OWL entailment (dal:equivalentTo). The only scope kind that needs a reasoner or a precomputed materialised closure." .
+
+dal:priority a owl:DatatypeProperty ;
+    rdfs:domain dal:ProfileScope ; rdfs:range xsd:integer ;
+    rdfs:comment "Explicit precedence, higher wins. Default 0. The sole tiebreak input the resolver uses; scope kind itself is never treated as a specificity ladder (sketch §3.4.2)." .
+
+dal:describedBy a owl:DatatypeProperty ;
+    rdfs:domain dal:ProfileScope ; rdfs:range xsd:string ;
+    rdfs:comment "Human-readable note for review, not consumed by the resolver." .
+
+dal:graphPrefix a owl:DatatypeProperty ;
+    rdfs:domain dal:GraphPatternScope ; rdfs:range xsd:string .
+
+dal:coversClass a owl:ObjectProperty ;
+    rdfs:domain dal:GraphPatternScope ;
+    rdfs:comment "Which class(es) this graph-pattern scope's resources instantiate. A design-time compiler resolves per class, not per live instance, and has no data graph to check actual membership against, so a GraphPatternScope must say what it covers rather than being discovered to cover it. Required for a GraphPatternScope to participate in resolution for a class-level target." .
+
+dal:iriPrefix a owl:DatatypeProperty ;
+    rdfs:domain dal:NamespaceScope ; rdfs:range xsd:string .
+
+dal:targetClass a owl:ObjectProperty ;
+    rdfs:domain dal:ClassScope .
+
+dal:includeSubclasses a owl:DatatypeProperty ;
+    rdfs:domain dal:ClassScope ; rdfs:range xsd:boolean .
+
+dal:targetShape a owl:ObjectProperty ;
+    rdfs:domain dal:ShapeScope ;
+    rdfs:comment "An sh:NodeShape defining scope membership." .
+
+dal:equivalentTo a owl:ObjectProperty ;
+    rdfs:domain dal:EquivalentClassScope .
+
+dal:requiresReasoning a owl:DatatypeProperty ; rdfs:range xsd:boolean ;
+    rdfs:comment "Intrinsic to dal:EquivalentClassScope and to dal:ClassScope with entailed (not merely asserted) subclass membership." .
+
+#################################################################
+#    §2. The composite profile (sketch §3.3). Sugar over the six
+#    independently scopable dimensions below, decomposed at compile
+#    time into the same six-dimension model at the same scope and
+#    priority.
+#################################################################
+
+dal:DataAccessProfile a owl:Class ;
+    rdfs:comment "Convenience individual declaring several dimensions at one scope. Never the model of record: the compiler decomposes it into six per-dimension assertions before resolution runs." .
+
+dal:appliesTo a owl:ObjectProperty ;
+    rdfs:range dal:ProfileScope ;
+    rdfs:comment "Every profile dimension individual (including DataAccessProfile) carries exactly one of these." .
+
+#################################################################
+#    §3. Aggregate boundary (sketch Part 4). Two runtime mechanisms:
+#    NamedGraphBoundary (physical) and CompositePropertyBoundary
+#    (logical, declared exclusively through a SHACL shape,
+#    dal:targetShape -- there is no hand-declared composition-property
+#    surface, see ADR-A78 point 4 for why). NoBoundary is triple-level,
+#    value-based CAS only.
+#################################################################
+
+dal:AggregateBoundaryProfile a owl:Class .
+
+dal:AggregateBoundaryStrategy a owl:Class .
+dal:NamedGraphBoundary        a dal:AggregateBoundaryStrategy ;
+    rdfs:comment "The aggregate root's IRI names a dedicated graph; members co-located inside it." .
+dal:CompositePropertyBoundary a dal:AggregateBoundaryStrategy ;
+    rdfs:comment "The aggregate's closure is the sh:property/sh:node recursion of dal:boundaryShape, walked once at compile time. Mandatory: dal:boundaryShape." .
+dal:NoBoundary                a dal:AggregateBoundaryStrategy ;
+    rdfs:comment "No coherent aggregate. Concurrency, if any, is value-based CAS on individual properties." .
+
+dal:strategy a owl:ObjectProperty ;
+    rdfs:domain dal:AggregateBoundaryProfile ; rdfs:range dal:AggregateBoundaryStrategy .
+
+dal:graphIriTemplate a owl:DatatypeProperty ;
+    rdfs:domain dal:AggregateBoundaryProfile ; rdfs:range xsd:string ;
+    rdfs:comment "How to derive the aggregate's graph IRI from its root instance's identity, e.g. \"urn:g:orders/{id}\". Meaningful only for dal:NamedGraphBoundary." .
+
+dal:boundaryShape a owl:ObjectProperty ;
+    rdfs:domain dal:AggregateBoundaryProfile ;
+    rdfs:comment "An sh:NodeShape. Mandatory when dal:strategy is dal:CompositePropertyBoundary, meaningless otherwise. The compiler walks its sh:property/sh:node tree once, offline; no target backend ever executes it." .
+
+dal:maxTraversalDepth a owl:DatatypeProperty ;
+    rdfs:domain dal:AggregateBoundaryProfile ; rdfs:range xsd:integer ;
+    rdfs:comment "Caps the sh:property/sh:node recursion walked from dal:boundaryShape. Default 8." .
+
+#################################################################
+#    §4. Concurrency (sketch §3.3.1). Named for what each value
+#    provides, not the mechanism. dal:LockingConcurrency is a
+#    marker the compiler records but never realises in SPARQL --
+#    pure SPARQL cannot serialise writer processes.
+#################################################################
+
+dal:ConcurrencyProfile a owl:Class .
+
+dal:ConcurrencyStrategy a owl:Class .
+dal:ProvidedConcurrency a dal:ConcurrencyStrategy ;
+    rdfs:comment "Whatever the target backend provides natively. No guard is generated: an unconditional write." .
+dal:Optimistic a dal:ConcurrencyStrategy ;
+    rdfs:comment "The guarded compare-and-set pattern (guide Chapter 19): version-row guard, txn claim, receipt. Fully realised by generated SPARQL." .
+dal:AppendOnly a dal:ConcurrencyStrategy ;
+    rdfs:comment "Server-assigned next-position append, no expected-version guard (guide Chapter 22)." .
+dal:LockingConcurrency a dal:ConcurrencyStrategy ;
+    rdfs:comment "MARKER ONLY. Declares this target needs external serialisation (guide §16.1-§16.2). The compiler emits an unconditional write and the marker itself, for non-SPARQL tooling (an IaC compiler, a future routing layer) to act on. Never realised as a SPARQL guard." .
+
+dal:concurrencyProfile a owl:ObjectProperty ;
+    rdfs:domain dal:ConcurrencyProfile ; rdfs:range dal:ConcurrencyStrategy .
+
+dal:minConcurrencyLevel a owl:ObjectProperty ;
+    rdfs:domain dal:ConcurrencyProfile ;
+    rdfs:comment "Meaningful only when dal:concurrencyProfile is dal:Optimistic." .
+dal:Linearizable a owl:NamedIndividual .
+dal:BestEffort   a owl:NamedIndividual .
+
+dal:valueGuardProperty a owl:ObjectProperty ;
+    rdfs:domain dal:ConcurrencyProfile ;
+    rdfs:comment "For dal:NoBoundary targets choosing dal:Optimistic: the single property a value-based guard compares the old value of (guide §14.2). Without one, Optimistic concurrency on a NoBoundary target has nothing coherent to replace and is rejected (sketch §3.5)." .
+
+#################################################################
+#    §5. Ordering (guide Chapter 21, Chapter 22)
+#################################################################
+
+dal:OrderingProfile a owl:Class .
+
+dal:OrderingGrain a owl:Class .
+dal:CommitGrain a dal:OrderingGrain ; rdfs:comment "One position per commit; events within it are unordered unless opSeq is used." .
+dal:EventGrain  a dal:OrderingGrain ; rdfs:comment "Each event carries its own client-supplied opSeq within a commit." .
+
+dal:orderingGrain a owl:ObjectProperty ;
+    rdfs:domain dal:OrderingProfile ; rdfs:range dal:OrderingGrain .
+
+dal:opSeqRequired a owl:DatatypeProperty ;
+    rdfs:domain dal:OrderingProfile ; rdfs:range xsd:boolean ;
+    rdfs:comment "Meaningless (and rejected, sketch §3.5) at dal:CommitGrain." .
+
+dal:DatasetTierModel a owl:Class .
+dal:DerivedFeed        a dal:DatasetTierModel ; rdfs:comment "Sourced from the store's native change feed, when one exists." .
+dal:HybridLogicalClock a dal:DatasetTierModel ; rdfs:comment "Contention-free partial order, no completeness detection." .
+dal:GlobalDenseCounter a dal:DatasetTierModel ; rdfs:comment "Affordable only on genuinely single-writer backends." .
+
+dal:datasetTierModel a owl:ObjectProperty ;
+    rdfs:domain dal:OrderingProfile ; rdfs:range dal:DatasetTierModel .
+
+#################################################################
+#    §6. Receipts (guide Chapter 20)
+#################################################################
+
+dal:ReceiptProfile a owl:Class .
+
+dal:ReceiptModel a owl:Class .
+dal:ReceiptOnly         a dal:ReceiptModel ; rdfs:comment "Audit breadcrumbs and CAS outcomes. No replay, no as-of." .
+dal:PatchLog            a dal:ReceiptModel ; rdfs:comment "asserts/retracts delta graphs alongside each receipt. Enables replay and CDC." .
+dal:SnapshotPerRevision a dal:ReceiptModel ; rdfs:comment "A sealed payload graph per revision. Trivially as-of, highest storage cost." .
+
+dal:receiptModel a owl:ObjectProperty ;
+    rdfs:domain dal:ReceiptProfile ; rdfs:range dal:ReceiptModel .
+
+#################################################################
+#    §7. Meta topology (guide §17.3, F12)
+#################################################################
+
+dal:MetaTopologyProfile a owl:Class .
+
+dal:MetaTopology a owl:Class .
+dal:SharedSharded a dal:MetaTopology ; rdfs:comment "One sharded meta graph, dal:metaShards shards, one row per aggregate." .
+dal:PerAggregate  a dal:MetaTopology ; rdfs:comment "One meta graph per aggregate. Isolates conflict detection on coarse-grained engines at the cost of graph-count growth." .
+
+dal:metaTopology a owl:ObjectProperty ;
+    rdfs:domain dal:MetaTopologyProfile ; rdfs:range dal:MetaTopology .
+
+dal:metaShards a owl:DatatypeProperty ;
+    rdfs:domain dal:MetaTopologyProfile ; rdfs:range xsd:long .
+
+dal:priorMetaShards a owl:DatatypeProperty ;
+    rdfs:domain dal:MetaTopologyProfile ; rdfs:range xsd:long ;
+    rdfs:comment "The shard count this scope was previously deployed under, declared by the adopter when migrating. Its presence alongside a different dal:metaShards value triggers the epoch-bump requirement below." .
+
+dal:epochBumpAcknowledged a owl:DatatypeProperty ;
+    rdfs:domain dal:MetaTopologyProfile ; rdfs:range xsd:boolean ;
+    rdfs:comment "Required alongside a dal:metaShards value that differs from a declared dal:priorMetaShards, for a scope with committed history (sketch §3.5, guide §24.4)." .
+
+#################################################################
+#    §8. Uniqueness (guide Chapter 8). Finer-grained by nature:
+#    a constraint is keyed by its own dal:constraintId, nested
+#    inside a scope via dal:appliesTo like any other dimension.
+#################################################################
+
+dal:UniquenessConstraint a owl:Class .
+
+dal:constraintId a owl:DatatypeProperty ;
+    rdfs:domain dal:UniquenessConstraint ; rdfs:range xsd:string .
+
+dal:keyProperty a owl:ObjectProperty ;
+    rdfs:domain dal:UniquenessConstraint ;
+    rdfs:comment "An rdf:List of one or more properties forming the key." .
+
+dal:scopeProperty a owl:ObjectProperty ;
+    rdfs:domain dal:UniquenessConstraint ;
+    rdfs:comment "Optional: narrows the key to be unique within this property's value (a composite/scoped key, guide K3)." .
+
+dal:normalizePipeline a owl:ObjectProperty ;
+    rdfs:domain dal:UniquenessConstraint .
+dal:NfkcTrimUppercase a owl:NamedIndividual .
+dal:NfkcTrimLowercase a owl:NamedIndividual .
+dal:NfkcTrimCasefold  a owl:NamedIndividual .
+
+dal:onViolation a owl:ObjectProperty ;
+    rdfs:domain dal:UniquenessConstraint .
+dal:Reject     a owl:NamedIndividual .
+dal:Merge      a owl:NamedIndividual .
+dal:Quarantine a owl:NamedIndividual .
+
+dal:minEnforcementLevel a owl:ObjectProperty .
+dal:Advisory      a owl:NamedIndividual .
+dal:Transactional a owl:NamedIndividual .
+dal:Strong        a owl:NamedIndividual .
+
+#################################################################
+#    §9. Capability declaration (adopter-authored, optional,
+#    unverified) and capability requirement (compiler output,
+#    unconditional). See sketch §3.6, ADR-A78 point 6.
+#################################################################
+
+dal:CapabilitySpec a owl:Class ;
+    rdfs:comment "An adopter-authored, optional, static declaration of assumed backend capabilities. NEVER derived from a live SPI or a TCK run, and never required for compilation to succeed. Shares field shape with the guide's StoreCapabilities record (Chapter 25 §25.2) by design, not by identity, so a future SPI-integrated stage can populate one from a real TCK run without a second vocabulary." .
+
+dal:appliesToTarget a owl:ObjectProperty ;
+    rdfs:domain dal:CapabilitySpec ;
+    rdfs:comment "Which named deployment target this spec describes." .
+
+dal:providesCas a owl:DatatypeProperty ;
+    rdfs:domain dal:CapabilitySpec ; rdfs:range xsd:string ;
+    rdfs:comment "One of LINEARIZABLE, BEST_EFFORT, NONE." .
+
+dal:providesReasoning a owl:DatatypeProperty ;
+    rdfs:domain dal:CapabilitySpec ; rdfs:range xsd:boolean .
+
+dal:providesCommitValidation a owl:DatatypeProperty ;
+    rdfs:domain dal:CapabilitySpec ; rdfs:range xsd:string ;
+    rdfs:comment "One of NONE, SHACL_CORE, SHACL_SPARQL, CUSTOM_RULES." .
+
+dal:providesSingleWriter a owl:DatatypeProperty ;
+    rdfs:domain dal:CapabilitySpec ; rdfs:range xsd:boolean .
+
+dal:providesStatementLevelConflictDetection a owl:DatatypeProperty ;
+    rdfs:domain dal:CapabilitySpec ; rdfs:range xsd:boolean .
+
+dal:CapabilityRequirement a owl:Class ;
+    rdfs:comment "The compiler's own unconditional output: exactly what a resolved configuration requires, independent of any CapabilitySpec. Always produced, one per target." .
+
+dal:requiresCas a owl:DatatypeProperty ;
+    rdfs:domain dal:CapabilityRequirement ; rdfs:range xsd:string .
+
+dal:requiresReasoningFor a owl:ObjectProperty ;
+    rdfs:domain dal:CapabilityRequirement ;
+    rdfs:comment "An rdf:List of the scopes, if any, whose resolution depended on reasoning being available." .
+
+dal:requiresUniquenessLevel a owl:ObjectProperty ;
+    rdfs:domain dal:CapabilityRequirement .
+
+dal:acknowledgedSharedClassOverride a owl:DatatypeProperty ; rdfs:range xsd:boolean ;
+    rdfs:comment "Escape hatch for the SharedClassProfileWarning shape (shapes/constraints.ttl): set true when a global override of a shared substrate class's profile is genuinely deliberate." .
+
+dal:CapabilityCheck a owl:Class ;
+    rdfs:comment "A per-dimension comparison of a dal:CapabilityRequirement against a supplied dal:CapabilitySpec, with a verdict. Present only when a spec was supplied for the target." .
+
+dal:checkedAgainst a owl:ObjectProperty ;
+    rdfs:domain dal:CapabilityCheck ; rdfs:range dal:CapabilitySpec .
+
+dal:verdict a owl:DatatypeProperty ;
+    rdfs:domain dal:CapabilityCheck ; rdfs:range xsd:string ;
+    rdfs:comment "PASS or FAIL." .
+
+#################################################################
+#    §10. Templates and generated operations. Modelled on
+#    ontology/mork's mrk:QueryTemplate / mrk:ParameterBinding,
+#    diverging deliberately: a dal:Template never embeds its query
+#    body as a literal (contrast mrk:queryText). Its text is a
+#    reviewed file in the tools/persistence template library,
+#    addressed here only by a stable identifier and path.
+#################################################################
+
+dal:Template a owl:Class ;
+    rdfs:comment "A reusable, versioned Mustache SPARQL template, shared across every target resolving to the same dimension combination." .
+
+dal:templateId a owl:DatatypeProperty ;
+    rdfs:domain dal:Template ; rdfs:range xsd:string .
+
+dal:templateVersion a owl:DatatypeProperty ;
+    rdfs:domain dal:Template ; rdfs:range xsd:string .
+
+dal:templatePath a owl:DatatypeProperty ;
+    rdfs:domain dal:Template ; rdfs:range xsd:string ;
+    rdfs:comment "Path within the checked-in template library, resolved only by the instantiate stage." .
+
+dal:GeneratedOperation a owl:Class ;
+    rdfs:comment "One operation (create, cas-replace, tombstone, ...) selected for a target: which template, and which parameters to mix into it." .
+
+dal:forOperation a owl:DatatypeProperty ;
+    rdfs:domain dal:GeneratedOperation ; rdfs:range xsd:string .
+
+dal:usesTemplate a owl:ObjectProperty ;
+    rdfs:domain dal:GeneratedOperation ; rdfs:range dal:Template .
+
+dal:hasParameterBinding a owl:ObjectProperty ;
+    rdfs:domain dal:GeneratedOperation ; rdfs:range dal:ParameterBinding .
+
+dal:ParameterBinding a owl:Class ;
+    rdfs:comment "A reified, typed parameter binding mixed into a template's Mustache slots at instantiate time. Modelled on mrk:ParameterBinding (paramName/paramType/paramValue)." .
+
+dal:paramName a owl:DatatypeProperty ;
+    rdfs:domain dal:ParameterBinding ; rdfs:range xsd:string .
+
+dal:paramType a owl:DatatypeProperty ;
+    rdfs:domain dal:ParameterBinding ; rdfs:range xsd:string ;
+    rdfs:comment "One of Iri, Literal, Integer, String, Boolean." .
+
+dal:paramValue a owl:DatatypeProperty ;
+    rdfs:domain dal:ParameterBinding .
+
+#################################################################
+#    §11. Compiled output (generated by tools/persistence, never
+#    hand-authored)
+#################################################################
+
+dal:CompiledProfile a owl:Class ;
+    rdfs:comment "The canonical output of `persistence compile`. Never contains literal SPARQL text." .
+
+dal:forTarget a owl:ObjectProperty ;
+    rdfs:domain dal:CompiledProfile .
+
+dal:forDeployment a owl:ObjectProperty ;
+    rdfs:domain dal:CompiledProfile ;
+    rdfs:comment "The dal:GraphPatternScope this compiled profile was resolved for, when the target class has more than one disjoint graph-pattern deployment (sketch §3.4.3: lending and credit both deploy beh:Behaviour, each into its own graph family, each getting its own compiled profile). Absent for the unscoped/fallback deployment and for targets with no graph-pattern deployment at all." .
+
+dal:resolvedDimension a owl:ObjectProperty ;
+    rdfs:domain dal:CompiledProfile ; rdfs:range dal:ResolvedDimension .
+
+dal:ResolvedDimension a owl:Class ;
+    rdfs:comment "Provenance for one dimension's winning value at one target: which scope won, and how many candidates existed." .
+
+dal:dimension a owl:DatatypeProperty ;
+    rdfs:domain dal:ResolvedDimension ; rdfs:range xsd:string .
+
+dal:resolvedValue a owl:ObjectProperty ;
+    rdfs:domain dal:ResolvedDimension .
+
+dal:wonBy a owl:ObjectProperty ;
+    rdfs:domain dal:ResolvedDimension .
+
+dal:candidateCount a owl:DatatypeProperty ;
+    rdfs:domain dal:ResolvedDimension ; rdfs:range xsd:integer .
+
+dal:diagnostic a owl:ObjectProperty ;
+    rdfs:domain dal:CompiledProfile ; rdfs:range dal:Diagnostic .
+
+dal:Diagnostic a owl:Class .
+dal:diagnosticKind    a owl:DatatypeProperty ; rdfs:domain dal:Diagnostic ; rdfs:range xsd:string .
+dal:diagnosticMessage a owl:DatatypeProperty ; rdfs:domain dal:Diagnostic ; rdfs:range xsd:string .
+dal:diagnosticSeverity a owl:DatatypeProperty ; rdfs:domain dal:Diagnostic ; rdfs:range xsd:string ;
+    rdfs:comment "WARNING or ERROR." .
+
+dal:appliedUniquenessConstraint a owl:ObjectProperty ;
+    rdfs:domain dal:CompiledProfile ; rdfs:range dal:UniquenessConstraint .
+
+dal:generatedOperation a owl:ObjectProperty ;
+    rdfs:domain dal:CompiledProfile ; rdfs:range dal:GeneratedOperation .
+
+dal:capabilityRequirement a owl:ObjectProperty ;
+    rdfs:domain dal:CompiledProfile ; rdfs:range dal:CapabilityRequirement .
+
+dal:capabilityCheck a owl:ObjectProperty ;
+    rdfs:domain dal:CompiledProfile ; rdfs:range dal:CapabilityCheck .

@@ -1,0 +1,17 @@
+# Negative fixture (sketch §3.5, row 3): dal:metaShards changed for a
+# scope that already has committed data under a prior shard count,
+# without dal:epochBumpAcknowledged. Rejected: this is a migration event
+# (guide §24.4), remediation: acknowledge the epoch bump.
+@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix ex:  <https://example.org/lending#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ex:WidgetClass a dal:ClassScope ;
+    dal:targetClass ex:Widget .
+
+ex:WidgetMetaTopologyProfile a dal:MetaTopologyProfile ;
+    dal:appliesTo  ex:WidgetClass ;
+    dal:metaTopology dal:SharedSharded ;
+    dal:metaShards "128"^^xsd:long ;
+    dal:priorMetaShards "64"^^xsd:long .
+    # dal:epochBumpAcknowledged deliberately absent

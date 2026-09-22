@@ -1,0 +1,25 @@
+{{! create-if-absent-named-graph: guide Chapter 19.3, NamedGraphBoundary.
+    This is a P2 uniqueness problem, not a CAS problem: it guards on the
+    ABSENCE of a version row, not on an expected version.
+    Mustache slots (compile-time constants): graphPrefix, metaGraphPrefix,
+    txnGraph. $-prefixed names are genuine SPARQL variables, bound per
+    request, never touched by this template.  #PAYLOAD# is a non-SPARQL text-substitution marker, not a bindable variable: a set of triples cannot be bound through a single SPARQL variable. Whatever executes this instantiated template must splice in the caller's already-serialised, trusted payload triples before submission -- see tools/persistence/README.md "Known limitations". }}
+PREFIX pat: <https://example.org/lattice/patterns#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+INSERT {
+  GRAPH ?g { #PAYLOAD# }
+  GRAPH {{{metaGraphPrefix}}} { $root pat:epoch $epoch ; pat:seq "1"^^xsd:long ; pat:head $newRev }
+  GRAPH {{{txnGraph}}}        { $txnId pat:rev $newRev }
+  GRAPH ?logGraph {
+      $newRev a pat:Revision ; pat:target $root ; pat:epoch $epoch ; pat:seq "1"^^xsd:long ;
+              pat:txn $txnId ; pat:recordedAt ?now
+  }
+}
+WHERE {
+  BIND(IRI(CONCAT({{{graphPrefix}}}, REPLACE(STR($root), "^.*[/#]", ""))) AS ?g)
+  BIND(IRI(CONCAT(STR({{{logGraphPrefix}}}), SUBSTR(STR(NOW()), 1, 7))) AS ?logGraph)
+  FILTER NOT EXISTS { GRAPH {{{metaGraphPrefix}}} { $root pat:seq ?any } }
+  FILTER NOT EXISTS { GRAPH {{{txnGraph}}} { $txnId pat:rev ?any } }
+  BIND(NOW() AS ?now)
+}

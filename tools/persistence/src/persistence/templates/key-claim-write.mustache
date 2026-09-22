@@ -1,0 +1,14 @@
+{{! key-claim-write: guide §6.2 (P2), the guarded write in one request.
+    Ownership monotonicity makes the post-write ASK race-free. }}
+PREFIX pat: <https://example.org/lattice/patterns#>
+
+INSERT {
+  GRAPH {{{txnGraph}}} {
+      $claim a pat:KeyClaim ; pat:constraint {{{constraintId}}} ; pat:claimedBy $owner
+  }
+}
+WHERE {
+  FILTER NOT EXISTS {
+      GRAPH {{{txnGraph}}} { $claim pat:claimedBy ?other . FILTER(?other != $owner) }
+  }
+}

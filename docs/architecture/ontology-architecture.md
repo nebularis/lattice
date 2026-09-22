@@ -121,6 +121,7 @@ This is the section to read before recommending any change. What follows is the 
 | Behaviour | authored | authored | populated (`constraints.ttl`, `rules.ttl`, `structural.ttl`) | populated | populated (`eligibility.ttl`, `instrument.ttl`, `party.ttl`, `quantification.ttl`) | **Authored in Gate 3.** Includes transition, guard, effect, and `Sequential` allowance support. `Proportional` remains declared but rejected. |
 | Governance | scaffold + cross-layer docs | n/a | scaffold | n/a | n/a | **Partially authored.** Governance policy lives in `docs/GOVERNANCE.md`; automated governance shapes remain future work. |
 | MORK | 657 lines, narrative "for dummies" guide (not literate-spec format) | `Mork.ttl` 1888 lines + `Mork.owl`, complete and large | empty | n/a | n/a | **Fully specified, pre-existing/independent vocabulary** — richer and older in style (OWL-API generated, SKOS-annotation-heavy) than the newer literate-spec layers |
+| Persistence (`dal:`) | authored (`README.md` + `docs/precedence-and-resolution.md` + `docs/aggregate-boundaries.md`) | authored (`spec/persistence.ttl`) | authored (`shapes/constraints.ttl`, including two SHACL-level fixtures) | n/a | n/a | **Fully specified, with a working compiler.** Cross-cutting substrate (§8a), not a layer. `tools/persistence` implements resolution, validation, capability self-check, boundary-shape walking, an 11-template Mustache library, and an injection corpus, all passing under `mise check:persistence`. |
 | SPC | 1393 lines, complete | 1227 lines, complete | empty | empty | empty (`.gitkeep` only) | **Fully specified but unintegrated.** Placeholder namespace (`http://example.org/spc#`), no projection contract to any layer. Also carries `ontology/spc/docs/architecture.md` plus a paper and two images. Integration is out of scope for the current Eligibility/Behaviour programme. |
 | Root `ontology/examples/*.ttl` (employment, lending-covenant, saas-subscription, clinical-trial) | — | all four files 0 bytes | — | — | — | **Not authored** |
 | `ontology/examples/insure-o/` | authored | scaffolded | authored | authored | authored | **Applied validation package in progress.** Minimal insurance-style structural, behavioural, and scheme-binding examples are now present under the examples tree and reference the shared substrate without naming proprietary source constructs. |
@@ -516,6 +517,28 @@ Semantica (referenced, not present here) is positioned as handling data *acquisi
 ### 8.6 Assessment for a reviewing agent
 
 MORK's vocabulary is real and complete (`Mork.ttl`), but its narrative document (`README.md`) is aspirational in tone throughout ("Our convergence theorem," "should be proven theorems," "we hope to see") — treat the mathematical claims in §8.4 as *design intent the vocabulary was built to support*, not as verified, benchmarked properties of a running system. There is no `tools/` implementation of the compiler, validator, or agents described in Part 6 of the README anywhere in this checkout. If asked to assess MORK's maturity: the T-box is production-ready as a vocabulary; the pipeline, agents, and convergence guarantees are unimplemented specification.
+
+---
+
+## 8a. Persistence (`dal:`)
+
+`ontology/persistence` is a cross-cutting substrate, not a layer in the dependency table in §1: it targets classes, graphs, and shapes by IRI reference only, imports nothing from Foundation through Behaviour, and none of them import it back. It sits alongside MORK and Surface as infrastructure every layer can be configured through without any layer depending on it.
+
+### 8a.1 Purpose
+
+The patterns in [rdf-sparql-patterns-guide.md](rdf-sparql-patterns-guide.md) (uniqueness, ordering, concurrency, and their combination) are a menu, not a selection mechanism. LATTICE ships as a framework: an adopter takes some or all of it and decides, per class or per deployment of their own applied ontology, which of the guide's patterns apply. `ontology/persistence` is that selection mechanism, and `tools/persistence` (a design-time-only compiler, no store SPI, no live backend) turns a selection into generated SPARQL.
+
+### 8a.2 Shape of the vocabulary
+
+Six independently scopable dimensions (aggregate boundary, concurrency, ordering grain, receipt model, meta topology, uniqueness), five scope kinds ranked by whether resolving them needs reasoning (`dal:GraphPatternScope`, `dal:NamespaceScope`, `dal:ClassScope`, `dal:ShapeScope`, `dal:EquivalentClassScope`, only the last of which needs one), and a fixed per-dimension precedence algorithm: highest `dal:priority` wins, non-reasoning beats reasoning at a tie, any further tie is a compile-time refusal. Full design: [persistence-profile-substrate.md](../developer/sketches/persistence-profile-substrate.md); governing decisions: [ADR-A78](decisions/ADR-A78-persistence-profile-substrate-and-aggregate-boundaries.md), [ADR-A79](decisions/ADR-A79-persistence-compiler-toolchain.md), [ADR-A80](decisions/ADR-A80-housekeeping-component-boundary.md).
+
+### 8a.3 The convention that resolves shared-class reuse
+
+A substrate ontology (Behaviour, Party, and so on) never binds a `dal:DataAccessProfile` to its own classes. Authority over how a shared class is persisted belongs to whichever applied ontology deploys it, expressed by scoping to that deployment's graph pattern, which structurally outranks a bare class-level scope. `ontology/persistence/shapes/constraints.ttl`'s `SharedClassProfileWarningShape` flags the anti-pattern (a bare `dal:ClassScope` targeting a class outside its own namespace) as a SHACL warning, not a hard rejection.
+
+### 8a.4 Assessment for a reviewing agent
+
+Implemented, not aspirational: `ontology/persistence/spec/persistence.ttl` and `shapes/constraints.ttl` are real OWL/SHACL, `tools/persistence` is a working Python compiler with a passing test suite (`mise check:persistence`) covering the resolver, validator, capability self-check, boundary-shape walker, an 11-template library, an injection corpus, determinism, and full compile→instantiate→parse round trips. `platform/housekeeping` (ADR-A80) is a separate, not-yet-built unit: its contracts and configuration model are designed, its execution engine is explicitly deferred alongside the store SPI (proposed A75).
 
 ---
 

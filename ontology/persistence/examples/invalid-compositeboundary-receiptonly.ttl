@@ -1,0 +1,26 @@
+# Negative fixture (sketch §3.5, row 2): CompositePropertyBoundary with
+# ReceiptOnly. A composite-property aggregate's write is a bounded
+# CONSTRUCT-based closure sweep (guide-adjacent, sketch §4.3), not a
+# single named-graph replace, so a receipt-only model cannot audit what
+# changed within the closure. Rejected, remediation: PatchLog at minimum.
+@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix ex:  <https://example.org/lending#> .
+@prefix sh:  <http://www.w3.org/ns/shacl#> .
+
+ex:WidgetShape a sh:NodeShape ;
+    sh:targetClass ex:Widget ;
+    sh:property [ sh:path ex:part ; sh:node ex:PartShape ] .
+
+ex:PartShape a sh:NodeShape .
+
+ex:WidgetClass a dal:ClassScope ;
+    dal:targetClass ex:Widget .
+
+ex:WidgetBoundaryProfile a dal:AggregateBoundaryProfile ;
+    dal:appliesTo     ex:WidgetClass ;
+    dal:strategy      dal:CompositePropertyBoundary ;
+    dal:boundaryShape ex:WidgetShape .
+
+ex:WidgetReceiptProfile a dal:ReceiptProfile ;
+    dal:appliesTo    ex:WidgetClass ;
+    dal:receiptModel dal:ReceiptOnly .

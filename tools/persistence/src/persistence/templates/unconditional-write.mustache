@@ -1,0 +1,8 @@
+{{! unconditional-write: dal:ProvidedConcurrency (backend-native, no guard
+    generated) or dal:LockingConcurrency (a marker only, guide §16.1-2:
+    serialisation is achieved externally, so the store itself needs no
+    guard). Either way this is a plain, unguarded write.  #PAYLOAD# is a non-SPARQL text-substitution marker, not a bindable variable: a set of triples cannot be bound through a single SPARQL variable. Whatever executes this instantiated template must splice in the caller's already-serialised, trusted payload triples before submission -- see tools/persistence/README.md "Known limitations". }}
+PREFIX pat: <https://example.org/lattice/patterns#>
+
+INSERT { GRAPH ?g { #PAYLOAD# } }
+WHERE  { BIND(IRI(CONCAT({{{graphPrefix}}}, REPLACE(STR($root), "^.*[/#]", ""))) AS ?g) }

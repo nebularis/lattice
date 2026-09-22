@@ -1,0 +1,21 @@
+# Negative fixture (sketch §3.5, row 1): dal:NoBoundary combined with
+# dal:Optimistic and no dal:valueGuardProperty declared. There is no
+# aggregate to whole-graph replace under NoBoundary, so Optimistic
+# concurrency here can only be a value-based guard on one property
+# (guide §14.2), and none is declared. Rejected as
+# NoBoundaryConcurrencyConflict, remediation: declare a
+# dal:valueGuardProperty, or declare a real boundary.
+@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix ex:  <https://example.org/lending#> .
+
+ex:FactClass a dal:ClassScope ;
+    dal:targetClass ex:Fact .
+
+ex:FactBoundaryProfile a dal:AggregateBoundaryProfile ;
+    dal:appliesTo ex:FactClass ;
+    dal:strategy  dal:NoBoundary .
+
+ex:FactConcurrencyProfile a dal:ConcurrencyProfile ;
+    dal:appliesTo           ex:FactClass ;
+    dal:concurrencyProfile  dal:Optimistic .
+    # dal:valueGuardProperty deliberately absent

@@ -1,0 +1,14 @@
+# SHACL-level negative fixture: dal:CompositePropertyBoundary declared
+# with no dal:boundaryShape at all. Caught by
+# dal:CompositePropertyBoundaryRequiresShapeShape in shapes/constraints.ttl,
+# not by the cross-axis Python validator: there is nothing to walk.
+@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix ex:  <https://example.org/lending#> .
+
+ex:WidgetClass a dal:ClassScope ;
+    dal:targetClass ex:Widget .
+
+ex:WidgetBoundaryProfile a dal:AggregateBoundaryProfile ;
+    dal:appliesTo ex:WidgetClass ;
+    dal:strategy  dal:CompositePropertyBoundary .
+    # dal:boundaryShape deliberately absent

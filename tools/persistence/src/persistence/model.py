@@ -1,0 +1,120 @@
+# SPDX-License-Identifier: MPL-2.0
+# NB: This module has been produced using GenAI
+
+"""Plain data types shared across the resolver, validator, capability, and
+compiler modules. Deliberately not RDF: these are the compiler's internal
+working representation. RDF serialisation of the outcome happens only in
+:mod:`persistence.compiler`'s emit step.
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from typing import Any, Optional
+
+
+# The six dimension names (sketch §3.3), used as plain strings throughout,
+# never as IRIs -- ``dal:dimension`` is an ``xsd:string`` property.
+DIMENSIONS = (
+    "aggregateBoundary",
+    "concurrencyProfile",
+    "orderingGrain",
+    "receiptModel",
+    "metaTopology",
+)
+
+# Platform baseline defaults (sketch §3.4.1). Every dimension resolves to
+# one of these when no scope matches a target.
+BASELINE_DEFAULTS: dict[str, str] = {
+    "aggregateBoundary": "NamedGraphBoundary",
+    "concurrencyProfile": "ProvidedConcurrency",
+    "orderingGrain": "CommitGrain",
+    "receiptModel": "ReceiptOnly",
+    "metaTopology": "SharedSharded",
+}
+
+
+@dataclass(frozen=True)
+class Candidate:
+    """One profile individual's declared value for one dimension at one
+    target, before priority resolution."""
+
+    scope: str  # scope individual's IRI
+    scope_kind: str  # "GraphPatternScope" | "NamespaceScope" | "ClassScope" | "ShapeScope" | "EquivalentClassScope"
+    priority: int
+    requires_reasoning: bool
+    profile: str  # the profile individual asserting this value (for provenance)
+    value: Any
+    extra: dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass
+class ResolvedDimension:
+    dimension: str
+    value: Optional[Any]
+    won_by: Optional[str]
+    candidate_count: int
+    extra: dict[str, Any] = field(default_factory=dict)
+    dropped_for_reasoning: list[str] = field(default_factory=list)
+    won_by_requires_reasoning: bool = False
+
+
+@dataclass
+class Diagnostic:
+    kind: str
+    message: str
+    severity: str  # "WARNING" | "ERROR"
+    target: Optional[str] = None
+
+
+@dataclass
+class ResolvedTarget:
+    target: str
+    dimensions: dict[str, ResolvedDimension]
+    uniqueness: list[dict[str, Any]]
+    diagnostics: list[Diagnostic] = field(default_factory=list)
+
+
+class ProfileAmbiguityError(Exception):
+    """A dimension had more than one candidate at the highest priority,
+    and none was preferred by the non-reasoning-over-reasoning tiebreak."""
+
+    def __init__(self, target: str, dimension: str, tied: list[Candidate]):
+        self.target = target
+        self.dimension = dimension
+        self.tied = tied
+        scopes = ", ".join(c.scope for c in tied)
+        super().__init__(
+            f"ambiguous resolution for dimension {dimension!r} at target {target!r}: "
+            f"tied candidates at equal priority from scopes [{scopes}]"
+        )
+
+
+class CrossAxisViolation(Exception):
+    """A named, structured cross-axis consistency failure (sketch §3.5)."""
+
+    def __init__(self, kind: str, target: str, message: str):
+        self.kind = kind
+        self.target = target
+        super().__init__(f"{kind} at {target}: {message}")
+
+
+class BoundaryConflict(Exception):
+    """A resource belongs to two aggregates under incompatible boundary
+    strategies (sketch §4.6)."""
+
+    def __init__(self, message: str):
+        super().__init__(message)
+
+
+__all__ = [
+    "DIMENSIONS",
+    "BASELINE_DEFAULTS",
+    "Candidate",
+    "ResolvedDimension",
+    "Diagnostic",
+    "ResolvedTarget",
+    "ProfileAmbiguityError",
+    "CrossAxisViolation",
+    "BoundaryConflict",
+]

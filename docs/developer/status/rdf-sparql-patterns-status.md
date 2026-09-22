@@ -3,30 +3,29 @@
 # RDF/SPARQL Implementation Patterns — Status Record
 
 **Unit:** `rdf-sparql-patterns-phase`
-**Status:** Slice 1 complete. Slice 2 and Slice 3 scoped and ready, blocked on ADR-A78/A79/A80 ratification.
+**Status:** Slice 1 complete. ADR-A78/A79/A80 ratified. Slice 2 complete. Slice 3 (housekeeping first cut) not started.
 **Last updated:** 2026-09-22
-**Owner:** Agent (pending human review and ratification)
+**Owner:** Agent (autonomous execution authorised by the human; Slice 2 delivered without further pause)
 
 ---
 
 ## Executive summary
 
-Slice 1 of this plan is complete: [rdf-sparql-patterns-guide.md](../../architecture/rdf-sparql-patterns-guide.md) consolidates the four source notes (Uniqueness, Ordering, Optimistic concurrency, Combined) into a single, corrected, cross-referenced reference, replacing the five fragmented pattern documents the original Slice 1 scoped.
+Slice 1 is complete: [rdf-sparql-patterns-guide.md](../../architecture/rdf-sparql-patterns-guide.md) consolidates the four source notes into one corrected, cross-referenced reference.
 
-The plan itself has been rewritten. The previous Slice 2 ("Store-specific adapters and policy") is removed. Its replacement, scoped from a follow-up commissioning conversation, is the `ontology/persistence` substrate and the `tools/persistence` compiler that turns an adopter's own configuration choices into generated SPARQL. The previous Slice 3 ("Proposed ADRs") is superseded: its three governing ADRs (A78, A79, A80) are delivered now, alongside the rewritten plan, per the Design First rule, rather than scheduled as a future slice. A new Slice 3, housekeeping first cut, takes its slot number.
+ADR-A78, ADR-A79, and ADR-A80 are ratified (Status: Accepted).
 
-**Key findings from the follow-up design pass:**
-- The guide is a menu of patterns, not a configuration mechanism. An adopter needs a way to select among them, per class or per deployment, which the guide itself does not provide.
-- Each of the guide's six configurable concerns (aggregate boundary, concurrency, ordering, receipts, meta topology, uniqueness) resolves independently, at a scope the adopter chooses, never uniformly across an ontology.
-- Aggregate boundaries reduce to two runtime mechanisms (named graph, SHACL-shape-derived closure) behind two authoring surfaces. A third, hand-declared property-path surface was considered and dropped, because making a domain property a sub-property of a `dal:` term has real OWL entailment consequences and creates an import dependency the rest of this design avoids. A SHACL boundary is walked once at compile time, never requiring runtime SHACL support from the backend.
-- The compiler is design-time only, needs no live backend at all: its canonical output is a `dal:CompiledProfile` graph naming a template and its parameters, never embedded SPARQL text. An optional, separate `instantiate` step, kept safe from injection by a mandatory RDF-term encoder and a type-enforced template renderer, verified by an adversarial corpus as a release gate, turns that into portable SPARQL text for an adopter who wants it.
-- A backend's capability is never assumed known. The compiler always emits an unconditional `dal:CapabilityRequirement`, and an adopter may optionally supply a self-authored, unverified `dal:CapabilitySpec` for a self-consistency check. Neither depends on a live SPI or a TCK run.
-- Two components the commissioning conversation initially described as in-scope (a runtime Request Query Mapping library, a Query Execution component) are explicitly deferred, because both depend on the store SPI, which does not exist yet. This is recorded as an open design question in the epic plan, not silently dropped.
+**Slice 2 is complete.** `ontology/persistence` is authored (vocabulary, self-validating SHACL shapes, 14 example fixtures, two design-note documents) and `tools/persistence` is a working Python compiler: 239 tests pass under `mise run check:persistence`, covering the resolver, validator, capability self-check, boundary-shape walker, an 11-template Mustache library, a 164-case injection corpus, determinism under triple-order permutation, full compile→instantiate→parse round trips, and three Python architecture-policy checks. Doc deltas (root `README.md`, `ontology-architecture.md`, `mise.toml`) are done. Traceability matrix and validation pack are in place.
 
-**Blockers:** Slice 2 and Slice 3 execution wait on ratification of:
-- ADR-A78 (persistence profile substrate and aggregate boundaries)
-- ADR-A79 (persistence compiler toolchain)
-- ADR-A80 (housekeeping component boundary)
+**Slice 3 (housekeeping first cut) has not been started** and remains scoped as written in the plan.
+
+**Key findings from building Slice 2, beyond what the sketch anticipated:**
+
+- **A class alone cannot be the unit of resolution.** The sketch's lending/credit worked example needed an actual implementation decision the sketch's prose did not spell out mechanically: a `Target` is a `(class, deployment)` pair, one per distinct `dal:GraphPatternScope` a class has (via a new `dal:coversClass` property, added during implementation), plus one unscoped/fallback target. Documented in `tools/persistence/README.md` and `ontology/persistence/docs/precedence-and-resolution.md`.
+- **Two real SPARQL-validity bugs existed in the design as sketched**, both caught only by actually rendering and parsing the templates with `rdflib`'s own SPARQL parser: (1) SPARQL 1.1 permits a property path only inside `WHERE`, never inside a `DELETE`/`INSERT` template block, and has no bounded `{n,m}` repetition at all — the sketch's `CompositePropertyBoundary` worked SPARQL used both incorrectly. (2) A single SPARQL variable cannot stand in for an entire set of triples (`GRAPH ?g { $payload }` is not valid SPARQL) — every template needing to accept caller-supplied payload triples now uses a documented, non-SPARQL `#PAYLOAD#` text marker instead, which whatever eventually executes the template must splice in before submission.
+- **`ontology/persistence/spec/persistence.ttl` had one property the sketch's Appendix A never declared** (`dal:aggregateBoundary`, used inconsistently against the actually-declared `dal:strategy`), found and fixed in both the ontology and the sketch itself during implementation.
+- **Mustache double-brace tags must never appear inside a `{{! comment }}` block**, including when the comment is *describing* Mustache syntax for documentation purposes — chevron's comment parser ends at the first closing double-brace it finds, silently truncating the comment and corrupting everything after it. Found by the template test suite, not by inspection.
+- **`pyshacl`'s `conforms` flag treats any result, including `sh:Warning` severity, as non-conformant unless `allow_warnings=True` is passed** — needed for the `SharedClassProfileWarningShape` design to work as a non-blocking warning at all.
 
 ---
 
@@ -34,29 +33,43 @@ The plan itself has been rewritten. The previous Slice 2 ("Store-specific adapte
 
 ### Guide: `docs/architecture/rdf-sparql-patterns-guide.md`
 
-**Scope:** consolidates Uniqueness, Ordering, Optimistic concurrency, and Combined concurrency-and-ordering into one narrative, correcting the divergences the `docs/developer/notes/misalignment.md` review identified in an earlier summary attempt.
-
-**Status:** ✅ Complete. Fulfils the original plan's Slice 1 in full, exceeding its scope (30 chapters plus five appendices, versus the five 2–4 page documents originally planned).
+**Status:** ✅ Complete.
 
 ### Sketch: `docs/developer/sketches/persistence-profile-substrate.md`
 
-**Scope:** the `ontology/persistence` substrate (six dimensions, five scope kinds, the precedence algorithm, cross-axis validation, reasoning-dependency warnings, shared-substrate-class conventions), the aggregate-boundary design (two mechanisms, three authoring surfaces), and the software architecture (the compiler, and the deferred Request Query Mapping and Query Execution components, and the in-scope housekeeping first cut).
+**Status:** ✅ Complete, remediated per human review (concurrency renamed for what it provides, the capability model rebuilt as an unconditional-requirement-plus-optional-self-check with no live-backend dependency, the compiler's canonical output made TTL rather than SPARQL text, and the hand-declared composition-property authoring surface dropped in favour of SHACL only). Governs Slice 2 and Slice 3.
 
-**Status:** ✅ Complete, ready for review. Governs Slice 2 and Slice 3 of this plan, in place of the original sketch, which continues to govern Slice 1's historical record.
+### ADRs: A78, A79, A80
 
-### ADRs (Proposed, awaiting ratification)
-
-| ADR | Decision | Status |
-|---|---|---|
-| [A78](../../architecture/decisions/ADR-A78-persistence-profile-substrate-and-aggregate-boundaries.md) | Persistence profile substrate and configurable aggregate boundaries | Proposed |
-| [A79](../../architecture/decisions/ADR-A79-persistence-compiler-toolchain.md) | Persistence compiler toolchain and template-based SPARQL generation | Proposed |
-| [A80](../../architecture/decisions/ADR-A80-housekeeping-component-boundary.md) | Housekeeping component boundary | Proposed |
+**Status:** ✅ Accepted.
 
 ### Plan: `docs/developer/plans/rdf-sparql-patterns-phase-plan.md`
 
-**Scope:** rewritten in place. Slice 1 marked complete (fulfilled by the guide). Slice 2 redefined as the substrate-and-compiler build. Slice 3 redefined as the housekeeping first cut. Store adapter documentation and any SPI, Request Query Mapping, or Query Execution work removed and recorded as out of scope, with pointers to the epic plan's open questions.
+**Status:** ✅ Complete. Slice 2 executed as scoped; Slice 3 unchanged.
 
-**Status:** ✅ Complete, ready for execution once ADR-A78/A79/A80 are ratified.
+### `ontology/persistence`
+
+| Path | Contents |
+|---|---|
+| `README.md` | purpose, the `dal:` prefix, three worked examples (single class, shared-class deployments, SHACL-declared composite boundary) |
+| `spec/persistence.ttl` | the vocabulary, ~300 triples, all eleven sections (scopes, six dimensions, capability triad, templates/operations, compiled output) |
+| `shapes/constraints.ttl` | self-validating SHACL shapes, including the mandatory-`boundaryShape` check and the `SharedClassProfileWarningShape` |
+| `examples/` | 14 fixtures: 5 positive (including the lending/credit conflict and the SHACL-declared composite boundary), 5 cross-axis negative fixtures (one per sketch §3.5 row), 1 mixed-receipt-model warning fixture, 1 shared-class-profile warning fixture, 1 SHACL-level negative fixture (missing `boundaryShape`), 1 value-based-CAS positive fixture |
+| `docs/precedence-and-resolution.md`, `docs/aggregate-boundaries.md` | the two design notes the plan required |
+
+### `tools/persistence`
+
+Python package (`persistence`), `pyproject.toml`, installable via `mise run bootstrap:persistence`. Modules: `terms` (the injection-safety encoder hierarchy), `render` (the type-enforced Mustache renderer), `namespaces`, `scopes` (including the `Target` model), `resolver` (the precedence algorithm), `boundary` (the SHACL closure walker), `capability` (requirement/spec/check), `validator` (every cross-axis check, named exception types), `operations` (template selection), `compiler` (orchestration and RDF emission), `instantiate` (the optional SPARQL-rendering stage), `cli`. 11 Mustache templates. 239 tests across 7 test modules, all passing.
+
+**Validation pack:** [`docs/developer/validation/persistence-substrate-and-compiler.md`](../validation/persistence-substrate-and-compiler.md).
+**Traceability:** [`docs/traceability/matrix.csv`](../../traceability/matrix.csv).
+
+### Doc deltas
+
+- `docs/architecture/ontology-architecture.md` — new §8a (Persistence), plus an Implementation Status table row.
+- Root `README.md` — a new paragraph in "Ontology Layers", a tree entry, a repository-structure check entry, and a "Validate the persistence compiler" section.
+- `mise.toml` — `bootstrap:persistence` and `check:persistence` tasks, wired into the aggregate `bootstrap` and `check` tasks.
+- `.gitignore` — `*.egg-info/` added (missing before this slice).
 
 ---
 
@@ -65,40 +78,36 @@ The plan itself has been rewritten. The previous Slice 2 ("Store-specific adapte
 | Slice | Identifier | Status |
 |---|---|---|
 | 1. Core patterns | `rdf-sparql-core-patterns` | ✅ Complete (fulfilled by the guide) |
-| 2. Substrate and compiler | `persistence-substrate-and-compiler` | Scoped, not started. Blocked on ADR-A78/A79 ratification |
-| 3. Housekeeping first cut | `housekeeping-first-cut` | Scoped, not started. Blocked on Slice 2 and ADR-A80 ratification |
+| 2. Substrate and compiler | `persistence-substrate-and-compiler` | ✅ Complete |
+| 3. Housekeeping first cut | `housekeeping-first-cut` | Scoped, not started |
 
 ---
 
 ## Open questions
 
-Carried from [the sketch, Part 7](../sketches/persistence-profile-substrate.md#part-7--open-questions-resolved-vs-deferred), restated here as plan-level tracking, plus the two items explicitly pushed into the epic plan.
+Unchanged from before Slice 2 began. Building the compiler did not resolve any of these; it also did not need to.
 
 | # | Question | Where tracked |
 |---|---|---|
 | 1 | Request Query Mapping library design | [lattice-platform-agentic-development-v0.2.md](../plans/lattice-platform-agentic-development-v0.2.md) Part 13, row 11 |
 | 2 | Query Execution component design | [lattice-platform-agentic-development-v0.2.md](../plans/lattice-platform-agentic-development-v0.2.md) Part 13, row 12 |
 | 3 | Store SPI shape (proposed A75) | Not yet an ADR. Both items above depend on it |
-| 4 | Whether `dal:Revision`/`dal:recordedAt` align to `fnd:Evidence`/`fnd:recordedAt` | Sketch [§3.1](../sketches/persistence-profile-substrate.md#31-namespace-and-position-in-the-layer-model), deferred to Slice 2 authoring |
+| 4 | Whether `dal:` receipt/capability terms align to `fnd:Evidence`/`fnd:recordedAt` | Sketch [§3.1](../sketches/persistence-profile-substrate.md#31-namespace-and-position-in-the-layer-model), not settled by Slice 2 |
 | 5 | Whether a Java equivalent of `tools/persistence` is ever needed for JVM-embedded build pipelines | [ADR-A79](../../architecture/decisions/ADR-A79-persistence-compiler-toolchain.md) consequences, not scheduled |
+
+**New, found during Slice 2 (not previously tracked):**
+
+| # | Question | Notes |
+|---|---|---|
+| 6 | `unconditional-write`'s missing variants | Only handles `dal:NamedGraphBoundary`. A target combining `dal:ProvidedConcurrency`/`dal:LockingConcurrency` with `dal:CompositePropertyBoundary` or `dal:NoBoundary` needs a second template variant, not yet built. |
+| 7 | Multi-property `CompositePropertyBoundary` closures | `cas-replace-composite-property` uses only the first composite property found, with `+` traversal. A shape with several sibling composite properties at one level needs a property-path alternation this first cut does not generate. |
 
 ---
 
-## Blockers and dependencies
+## Blocking other work
 
-### Blockers (human decision required)
-
-- ADR-A78, ADR-A79, ADR-A80 ratification, before Slice 2 or Slice 3 execution begins.
-
-### Dependencies (internal)
-
-- Guide ✅ complete
-- Sketch ✅ complete
-- Slice 2 must complete before Slice 3 begins (the housekeeping module's generated queries come from the Slice 2 compiler)
-
-### Blocking other work
-
-- [lattice-platform-agentic-development-v0.2.md](../plans/lattice-platform-agentic-development-v0.2.md) Part 6 (Phase 2, ingestion and query planes) carries a note that several of its slices assume ad hoc SPARQL construction this plan's compiler is meant to replace, and need revision once Slice 2 lands. That revision is not scoped by this plan or this status record.
+- [lattice-platform-agentic-development-v0.2.md](../plans/lattice-platform-agentic-development-v0.2.md) Part 6 is still marked pending revision once this plan's Slice 2 lands. **Slice 2 has now landed.** That revision itself remains out of scope for this plan and is not scheduled here.
+- Slice 3 (housekeeping) depends on Slice 2's generated queries, which now exist and are consumable via `python -m persistence instantiate`.
 
 ---
 
@@ -106,35 +115,37 @@ Carried from [the sketch, Part 7](../sketches/persistence-profile-substrate.md#p
 
 ### Links to the guide
 
-| Sketch section | Guide chapter |
+| Sketch/implementation section | Guide chapter |
 |---|---|
 | Precedence algorithm | Chapter 25 (capabilities, strategies, planners) |
-| Aggregate boundary mechanisms | Part V, Chapter 19 |
+| Aggregate boundary mechanisms | Part V, Chapter 19; §24.1 (tombstones) |
 | Receipt model dimension | Chapter 20 |
 | Ordering grain and dataset tier | Chapter 21, Chapter 22 |
-| Uniqueness constraint | Chapter 8 |
-| Housekeeping job taxonomy | §7.5 (P7), S3, F5, §24.2 |
+| Uniqueness constraint | Chapter 8, §6.2 (key-claim write/retire) |
+| Housekeeping job taxonomy (Slice 3, not yet built) | §7.5 (P7), S3, F5, §24.2 |
 | Injection safety | Chapter 28 (QP1) |
 
 ### Links to ADRs
 
-- **A78:** substrate and boundaries (blocks Slice 2)
-- **A79:** compiler toolchain (blocks Slice 2)
-- **A80:** housekeeping boundary (blocks Slice 3)
+- **A78:** substrate and boundaries — implemented in `ontology/persistence` and `persistence.{scopes,resolver,boundary}`.
+- **A79:** compiler toolchain — implemented in `tools/persistence` in full (both `compile` and `instantiate` subcommands).
+- **A80:** housekeeping boundary — not yet implemented (Slice 3).
+
+### Full requirement-to-test mapping
+
+See [`docs/traceability/matrix.csv`](../../traceability/matrix.csv).
 
 ---
 
-## Next steps and timeline
+## Next steps
 
-1. **Human review:** sketch, rewritten plan, and ADR-A78/A79/A80 reviewed together, since the ADRs assume the sketch's vocabulary throughout.
-2. **Decision gate:** A78, A79, A80 ratified, rejected, or amended.
-3. **Execution:** Slice 2 begins, per its validation pack in the rewritten plan.
-4. **Slice 3** begins once Slice 2's generated queries are available to consume.
+1. **Slice 3 (housekeeping first cut)**, per the plan: `platform/housekeeping` Maven module, job contracts, configuration model split, generated queries via `persistence instantiate`, README, and `docs/architecture/platform-housekeeping.md`.
+2. Resolve or continue deferring the two new open questions found during Slice 2 (items 6 and 7 above) before Slice 3 generates housekeeping job queries against `CompositePropertyBoundary` targets, if any exist.
 
 ---
 
 ## Appendix: Validation pack locations
 
-- Slice 2: `docs/developer/validation/persistence-substrate-and-compiler.md` (to be created at slice start)
-- Slice 3: `docs/developer/validation/housekeeping-first-cut.md` (to be created at slice start)
-- Sign-off log: `docs/developer/validation/LOG.md`
+- Slice 2: [`docs/developer/validation/persistence-substrate-and-compiler.md`](../validation/persistence-substrate-and-compiler.md) ✅ complete.
+- Slice 3: `docs/developer/validation/housekeeping-first-cut.md` (to be created at slice start).
+- Sign-off log: `docs/developer/validation/LOG.md` (not yet created; human sign-off per the plan's Part 3 five-step gate is still pending).

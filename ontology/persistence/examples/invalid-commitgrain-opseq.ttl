@@ -1,0 +1,13 @@
+# Negative fixture (sketch §3.5, row 4): dal:CommitGrain declared
+# alongside dal:opSeqRequired true. opSeq is meaningless at commit grain.
+# Rejected, remediation: drop the flag or move to dal:EventGrain.
+@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix ex:  <https://example.org/lending#> .
+
+ex:WidgetClass a dal:ClassScope ;
+    dal:targetClass ex:Widget .
+
+ex:WidgetOrderingProfile a dal:OrderingProfile ;
+    dal:appliesTo      ex:WidgetClass ;
+    dal:orderingGrain  dal:CommitGrain ;
+    dal:opSeqRequired  true .

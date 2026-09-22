@@ -1,0 +1,7 @@
+{{! key-claim-retire: the owner retires its own claim by tombstone, never
+    by deletion (guide §6.2). Only the current owner may retire. }}
+PREFIX pat: <https://example.org/lattice/patterns#>
+
+DELETE { GRAPH {{{txnGraph}}} { $claim pat:claimedBy $owner } }
+INSERT { GRAPH {{{txnGraph}}} { $claim pat:retiredBy $owner ; pat:retiredAt $now } }
+WHERE  { GRAPH {{{txnGraph}}} { $claim pat:claimedBy $owner } }

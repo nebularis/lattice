@@ -1,0 +1,31 @@
+# Warning fixture (sketch §3.5, row 6): one GraphPatternScope (one graph
+# family, one deployment) covers two classes, ex:Widget and ex:Gadget.
+# A higher-priority ClassScope then overrides ex:Gadget's receipt model
+# only. The two targets, both living in the same graph family, now resolve
+# to different receipt models. Not a compile error: a MixedReceiptModel
+# warning, because a downstream consumer subscribing to the whole graph
+# family must be told, not left to assume uniformity.
+@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix ex:  <https://example.org/lending#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ex:WidgetGraphs a dal:GraphPatternScope ;
+    dal:graphPrefix "urn:g:widgets/" ;
+    dal:coversClass ex:Widget , ex:Gadget ;
+    dal:priority "5"^^xsd:integer .
+
+ex:WidgetGraphsReceiptProfile a dal:ReceiptProfile ;
+    dal:appliesTo    ex:WidgetGraphs ;
+    dal:receiptModel dal:PatchLog .
+
+ex:GadgetClass a dal:ClassScope ;
+    dal:targetClass ex:Gadget ;
+    dal:priority "10"^^xsd:integer .
+
+ex:GadgetReceiptOverride a dal:ReceiptProfile ;
+    dal:appliesTo    ex:GadgetClass ;
+    dal:receiptModel dal:ReceiptOnly .
+
+# ex:Widget resolves to PatchLog (from ex:WidgetGraphs).
+# ex:Gadget resolves to ReceiptOnly (ex:GadgetClass outranks ex:WidgetGraphs).
+# Both live in the same graph family (urn:g:widgets/): heterogeneity warning.

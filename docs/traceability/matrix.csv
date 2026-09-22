@@ -1,0 +1,18 @@
+requirement_id,slice_id,test_ids,description
+A-78,persistence-substrate-and-compiler,"test_resolver.py::*,test_validator.py::*,test_boundary.py::*",ADR-A78 persistence profile substrate and configurable aggregate boundaries
+A-79,persistence-substrate-and-compiler,"test_terms.py::*,test_architecture.py::*,test_compiler_integration.py::*",ADR-A79 persistence compiler toolchain and template-based SPARQL generation
+G-Precedence,persistence-substrate-and-compiler,"test_resolver.py::TestSingleClassResolution,test_resolver.py::TestAmbiguity",sketch §3.4 precedence and resolution algorithm
+G-SharedClass,persistence-substrate-and-compiler,"test_resolver.py::TestSharedClassDeployments,test_compiler_integration.py::TestShaclSelfValidation::test_shared_class_profile_warning_fires",sketch §3.4.3 / §3.7 shared substrate class deployments and the SharedClassProfileWarning convention
+G-CrossAxis-1,persistence-substrate-and-compiler,test_validator.py::test_cross_axis_negative_fixture_raises_named_violation[invalid-noboundary-cas.ttl-Fact-NoBoundaryConcurrencyConflict],sketch §3.5 row 1: NoBoundary + Optimistic with no value guard
+G-CrossAxis-2,persistence-substrate-and-compiler,test_validator.py::test_cross_axis_negative_fixture_raises_named_violation[invalid-compositeboundary-receiptonly.ttl-Widget-CompositeBoundaryReceiptConflict],sketch §3.5 row 2: CompositePropertyBoundary + ReceiptOnly
+G-CrossAxis-3,persistence-substrate-and-compiler,test_validator.py::test_cross_axis_negative_fixture_raises_named_violation[invalid-metashards-changed-no-ack.ttl-Widget-UnacknowledgedShardMigration],sketch §3.5 row 3: unacknowledged shard migration
+G-CrossAxis-4,persistence-substrate-and-compiler,test_validator.py::test_cross_axis_negative_fixture_raises_named_violation[invalid-commitgrain-opseq.ttl-Widget-CommitGrainOpSeqConflict],sketch §3.5 row 4: CommitGrain + opSeqRequired
+G-CrossAxis-5,persistence-substrate-and-compiler,test_validator.py::test_cross_axis_negative_fixture_raises_named_violation[invalid-uniqueness-outside-boundary.ttl-Widget-UniquenessOutsideBoundary],sketch §3.5 row 5: uniqueness key outside the declared boundary
+G-CrossAxis-6,persistence-substrate-and-compiler,test_validator.py::test_mixed_receipt_model_is_a_warning_not_an_error,sketch §3.5 row 6: mixed receipt model warning (not an error)
+G-BoundaryConflict,persistence-substrate-and-compiler,test_validator.py::test_boundary_conflicts_do_not_false_positive_on_valid_fixtures,sketch §4.6 boundary-strategy conflicts
+G-BoundaryShape,persistence-substrate-and-compiler,"test_boundary.py::*,test_compiler_integration.py::TestShaclSelfValidation::test_does_not_conform",sketch §4.1/§4.3 CompositePropertyBoundary walked via SHACL shape only, mandatory boundaryShape
+G-Capability,persistence-substrate-and-compiler,"test_capability.py::*,test_resolver.py::TestSharedClassDeployments::test_capability_spec_without_reasoning_drops_the_equivalent_class_candidate",sketch §3.6 CapabilityRequirement/CapabilitySpec/CapabilityCheck triad
+G-Injection,persistence-substrate-and-compiler,test_terms.py::*,ADR-A79 point 5 injection corpus, a release gate for the instantiate stage
+G-Determinism,persistence-substrate-and-compiler,test_determinism.py::*,guide QP4 / ADR-A79 determinism under triple-order permutation
+G-EndToEnd,persistence-substrate-and-compiler,test_compiler_integration.py::test_end_to_end_compile_instantiate_parse,full compile -> emit -> instantiate -> parse round trip for every positive fixture
+G-ArchPolicy,persistence-substrate-and-compiler,test_architecture.py::*,plan Slice 2 item 4 policy enforcement (Python ArchUnit-equivalent)

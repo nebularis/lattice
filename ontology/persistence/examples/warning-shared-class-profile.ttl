@@ -1,0 +1,16 @@
+# SHACL-level warning fixture: a DataAccessProfile scoped only by a bare
+# ClassScope, targeting a class OUTSIDE the profile's own namespace
+# (beh:Behaviour, not something under https://example.org/lending#).
+# Caught by dal:SharedClassProfileWarningShape (sh:severity sh:Warning),
+# nudging the author toward a GraphPatternScope or NamespaceScope instead
+# (ADR-A78 point 5).
+@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix beh: <https://www.nebularis.org/neuro-semantic/lattice/behaviour#> .
+@prefix ex:  <https://example.org/lending#> .
+
+ex:UnwiseBehaviourClassScope a dal:ClassScope ;
+    dal:targetClass beh:Behaviour .
+
+ex:UnwiseBehaviourProfile a dal:DataAccessProfile ;
+    dal:appliesTo           ex:UnwiseBehaviourClassScope ;
+    dal:concurrencyProfile  dal:Optimistic .

@@ -146,7 +146,7 @@ Three of the four `dal:ConcurrencyStrategy` values name something the compiler a
 ```turtle
 dal:OrderClassStrongProfile a dal:DataAccessProfile ;
     dal:appliesTo          dal:LoanApplicationClass ;
-    dal:aggregateBoundary  dal:NamedGraphBoundary ;
+    dal:strategy            dal:NamedGraphBoundary ;
     dal:concurrencyProfile dal:Optimistic ;
     dal:minConcurrencyLevel dal:Linearizable ;
     dal:orderingGrain      dal:EventGrain ;
@@ -639,7 +639,7 @@ dal:LoanApplicationClass a dal:ClassScope ; dal:targetClass ex:LoanApplication ;
 
 dal:OrderClassStrongProfile a dal:DataAccessProfile ;
     dal:appliesTo          dal:LoanApplicationClass ;
-    dal:aggregateBoundary  dal:NamedGraphBoundary ;
+    dal:strategy            dal:NamedGraphBoundary ;
     dal:graphIriTemplate   "urn:g:loan-application/{id}" ;
     dal:concurrencyProfile dal:Optimistic ;
     dal:minConcurrencyLevel dal:Linearizable ;
@@ -670,15 +670,15 @@ The single artefact that states exactly what was decided, why, what it needs, an
 [] a dal:CompiledProfile ;
     dal:forTarget ex:LoanApplication ;
     dal:resolvedDimension
-        [ dal:dimension dal:aggregateBoundary ; dal:resolvedValue dal:NamedGraphBoundary ;
+        [ dal:dimension "aggregateBoundary" ; dal:resolvedValue dal:NamedGraphBoundary ;
           dal:wonBy dal:OrderClassStrongProfile ; dal:candidateCount 1 ] ,
-        [ dal:dimension dal:concurrencyProfile ; dal:resolvedValue dal:Optimistic ;
+        [ dal:dimension "concurrencyProfile" ; dal:resolvedValue dal:Optimistic ;
           dal:wonBy dal:OrderClassStrongProfile ; dal:candidateCount 1 ] ,
-        [ dal:dimension dal:orderingGrain ; dal:resolvedValue dal:EventGrain ;
+        [ dal:dimension "orderingGrain" ; dal:resolvedValue dal:EventGrain ;
           dal:wonBy dal:OrderClassStrongProfile ; dal:candidateCount 1 ] ,
-        [ dal:dimension dal:receiptModel ; dal:resolvedValue dal:PatchLog ;
+        [ dal:dimension "receiptModel" ; dal:resolvedValue dal:PatchLog ;
           dal:wonBy dal:OrderClassStrongProfile ; dal:candidateCount 1 ] ,
-        [ dal:dimension dal:metaTopology ; dal:resolvedValue dal:SharedSharded ;
+        [ dal:dimension "metaTopology" ; dal:resolvedValue dal:SharedSharded ;
           dal:metaShards "64"^^xsd:long ; dal:wonBy dal:OrderClassStrongProfile ; dal:candidateCount 1 ] ;
     dal:appliedUniquenessConstraint dal:LoanApplication-number-per-branch ;
 

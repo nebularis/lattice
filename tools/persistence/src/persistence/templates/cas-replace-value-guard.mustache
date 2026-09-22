@@ -1,0 +1,15 @@
+{{! cas-replace-value-guard: guide section 14.2's value-based CAS for
+    NoBoundary targets. Guards on the OLD value of the guard property
+    (compile-time Mustache slot guardProperty), not on a version row: no
+    aggregate exists to whole-graph replace here.
+
+    Note for template authors: never put a Mustache tag inside this
+    comment block. Chevron's comment parser ends at the first closing double-brace it
+    sees, even one nested inside a triple-brace tag, which silently
+    truncates the comment and corrupts everything after it -- this was
+    caught by this template's own render-and-parse test. }}
+PREFIX pat: <https://example.org/lattice/patterns#>
+
+DELETE { $root {{{guardProperty}}} $oldValue }
+INSERT { $root {{{guardProperty}}} $newValue }
+WHERE  { $root {{{guardProperty}}} $oldValue }
