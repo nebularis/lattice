@@ -9,7 +9,7 @@ note: "Comprehensive guide with running examples. Start with 'How to read this g
 
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
-# Uniqueness, Ordering and Concurrency in RDF — The LATTICE Pattern Guide
+## Uniqueness, Ordering and Concurrency in RDF — The LATTICE Pattern Guide
 
 **Status:** Authoritative architectural guide. See [Appendix D](#appendix-d--traceability-to-the-source-notes) for disagreement with other documentation.
 
