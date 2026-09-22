@@ -1,3 +1,12 @@
+---
+layout: architecture
+title: Platform Solution Design Specification
+eyebrow: System architecture and design
+dek: "Complete architecture for the LATTICE platform — control planes, worker tiers, messaging, data storage, web applications, and release management."
+description: "LATTICE platform architecture covering component design, process design, infrastructure, and robustness. Primary entry point for understanding the codebase."
+note: "Living design record maintained alongside ADR catalogue. Status discipline: Established, Decided here, or Deferred."
+---
+
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
 # Platform Solution Design Specification
