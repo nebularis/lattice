@@ -51,8 +51,9 @@ Each work unit has:
 - **pyshacl semantics:** `allow_warnings=True` needed for non-blocking `sh:Warning` severity
 
 ### Blocks
-- Epic decomposition into phase plans (awaiting integration of patterns into Phase 0 plan)
 - Housekeeping module first cut (Slice 3, depends on Slice 2 compiler)
+
+Epic decomposition into phase plans is **no longer blocked**: the required Phase 2 (P2.1/P2.3/P2.4) revision integrating this compiler is complete — see Part II, §6.
 
 ---
 
@@ -155,11 +156,11 @@ Each work unit has:
 
 | Field | Value |
 |-------|-------|
-| **Status** | 🚧 In progress; awaiting RDF patterns integration |
+| **Status** | 🚧 Required epic plan revision complete; ready for decomposition |
 | **Unit ID** | `lattice-platform-development` (epic) |
 | **Plan** | [lattice-platform-agentic-development-v0.2.md](plans/lattice-platform-agentic-development-v0.2.md) |
 | **Description** | Decompose epic into Phase 0-9 plans with dependency DAG and milestones |
-| **Blockers** | RDF/SPARQL patterns integration; Phase 0 plan revision for compiler-generated queries |
+| **Blockers** | None for decomposition. The optional Phase 0.2–0.4 walking-skeleton integration (below) remains open but is not blocking |
 
 ### Scope
 - 16 tracks (T-DEC through T-SEC) with hard orderings
@@ -167,11 +168,19 @@ Each work unit has:
 - 25+ modules in Part 1
 - Phases 0-1 at slice granularity; Phases 2-4 lighter initially
 
-### Changes Needed Per RDF Patterns Completion
+### Required Epic Plan Revision — ✅ Done (2026-09-22)
+Part 6 (Phase 2) of the epic plan now integrates the persistence compiler instead of constructing SPARQL ad hoc:
+- **P2.1 (C-05, mapping plan compiler):** new slice P2.1.4a resolves each `writeTarget`'s `ontology/persistence` profile and emits a `dal:CompiledProfile` plus instantiated (still-unbound) SPARQL Update text via `tools/persistence`, as part of `CompiledMappingSet`.
+- **P2.3 (C-04, ingestion gateway):** the `assert` step (P2.3.1) and commit step (P2.3.6) bind request-scoped parameters into those pre-instantiated templates — never construct SPARQL at request time. Deliberately scoped narrower than the still-deferred Request Query Mapping library (Part 13, open question 11).
+- **P2.4 (C-12, query plane):** the typed read API (P2.4.1) reuses the same resolved profile (ordering grain, receipt model) to shape read queries, consistent with the write path by construction.
+
+See [rdf-sparql-patterns-phase-plan.md](plans/rdf-sparql-patterns-phase-plan.md) and [persistence-profile-substrate.md](sketches/persistence-profile-substrate.md) for the underlying substrate; no new ADR was needed (refinement of ADR-A78/A79 within existing guardrail G5).
+
+### Optional (not yet done): Phase 0.2–0.4 Walking-Skeleton Integration
+Per [COORDINATION_REORG_HANDOFF.md](../COORDINATION_REORG_HANDOFF.md), this remains open and is not blocking decomposition:
 - Phase 0.2 (Walking skeleton): Integrate patterns T (metadata graphs) + C (CAS)
 - Phase 0.3 (Schema & contracts): Integrate pattern K (uniqueness) + compiler
 - Phase 0.4 (Canonicalization): Integrate pattern O (ordering)
-- Phase 1+ (Ingestion/Query): Revise per compiler-generated query binding model
 
 ---
 
@@ -290,7 +299,7 @@ Each work unit has:
 
 | Item | What | Why | Next |
 |------|------|-----|------|
-| **Epic decomposition** | Break `lattice-platform-agentic-development-v0.2.md` into Phase 0-9 plans | Patterns are now defined; Phase 0 needs concrete slices | Integrate RDF patterns into Phase 0.2-0.4 plans |
+| **Epic decomposition** | Break `lattice-platform-agentic-development-v0.2.md` into Phase 0-9 plans | Required Phase 2 (P2.1/P2.3/P2.4) persistence-compiler revision is complete (2026-09-22) | Begin Phase 0 decomposition; the optional Phase 0.2-0.4 walking-skeleton pattern integration can proceed independently, before or after |
 | **Housekeeping first cut (Slice 3)** | Scaffold `platform/housekeeping` module | Compiler ready; module contracts defined in ADR-A80 | Author Slice 3 (housekeeping scaffolding) |
 | **Store SPI** | Design runtime SPI for query execution | Compiler produces templates; runtime binding TBD | Separate epic/phase after housekeeping |
 | **MTP backend integration (Phase 7)** | Runtime API for LLM curriculum delivery | MTP generation complete; needs HTTP endpoint | Post-Phase-6 work |
@@ -326,7 +335,7 @@ Each work unit has:
 # Part VII — Open Questions (Blocking or Deferred)
 
 1. **Store SPI design** — How does runtime connect compiled templates to live backend? (Deferred to separate SPI phase)
-2. **Phase 0 plan revision** — What changes when using compiler-generated queries instead of hand-written SPARQL? (Needs epic decomposition)
+2. **Phase 0.2–0.4 walking-skeleton pattern integration** — optional, not blocking: fold patterns T/C (0.2), K (0.3), O (0.4) into the walking-skeleton plan once it is decomposed. (Required Phase 2 revision using compiler-generated queries is done — see Part II, §6 and Part V.)
 3. **MTP backend integration** — What HTTP API shape for LLM curriculum consumption? (Phase 7, post-Phase-6)
 4. **Housekeeping execution** — When is the housekeeping component itself executed (real-time vs. batch)? (ADR-A80 defers to future phase)
 
