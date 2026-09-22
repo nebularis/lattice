@@ -1,3 +1,12 @@
+---
+layout: architecture
+title: Platform Data Architecture
+eyebrow: Data model and storage realms
+dek: "The three data realms of LATTICE: semantic graph data, operational state, and artifact bytes. How they interact and maintain separation of concerns."
+description: "LATTICE data architecture covering conceptual and logical data models, system-of-record matrix, data flows, concurrency rules, and cross-realm contracts."
+note: "Companion to Platform Solution Design Specification. Ontology modelling stays in layer READMEs; this covers operational and lifecycle data."
+---
+
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
 # Platform Data Architecture

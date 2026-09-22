@@ -1,3 +1,12 @@
+---
+layout: architecture
+title: RDF & SPARQL Patterns Guide
+eyebrow: Design patterns for semantic data integrity
+dek: "Authoritative patterns for building safe, verifiable RDF systems with uniqueness, ordering, and concurrency control. A deep dive into the store SPI capability model."
+description: "Design patterns and techniques for RDF and SPARQL ensuring uniqueness, ordering, concurrency control, and operational safety in LATTICE systems."
+note: "Comprehensive guide with running examples. Start with 'How to read this guide' for your reading path."
+---
+
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
 # Uniqueness, Ordering and Concurrency in RDF — The LATTICE Pattern Guide
