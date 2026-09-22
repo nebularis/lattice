@@ -2,7 +2,7 @@
 
 # ADR-A79: Persistence compiler toolchain and template-based SPARQL generation
 
-**Status:** Proposed
+**Status:** Accepted
 **Date:** 2026-09-22
 **Supersedes:** none
 **Related:** ADR-A78, ADR-A80, [rdf-sparql-patterns-guide.md](../rdf-sparql-patterns-guide.md) Chapter 25, [persistence-profile-substrate sketch](../../developer/sketches/persistence-profile-substrate.md)

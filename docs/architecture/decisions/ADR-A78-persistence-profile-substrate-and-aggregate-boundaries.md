@@ -2,7 +2,7 @@
 
 # ADR-A78: Persistence profile substrate and configurable aggregate boundaries
 
-**Status:** Proposed
+**Status:** Accepted
 **Date:** 2026-09-22
 **Supersedes:** none
 **Related:** [rdf-sparql-patterns-guide.md](../rdf-sparql-patterns-guide.md), ADR-A01, ADR-A79, ADR-A80, proposed A74/A75, [persistence-profile-substrate sketch](../../developer/sketches/persistence-profile-substrate.md)

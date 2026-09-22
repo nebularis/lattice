@@ -62,8 +62,8 @@ This directory holds the ADRs that govern LATTICE's substrate architecture. An A
 | [A-11](ADR-A11-effect-and-target-binding.md) | Effect payload and target binding contract | Accepted |
 | [A-C1](ADR-AC1-applied-layer-theorem-restatement.md) | Applied-layer theorem restatement policy | Accepted |
 | [A-C2](ADR-AC2-clean-room-authoring-procedure.md) | Clean-room authoring procedure for substrate content | Accepted |
-| [A-78](ADR-A78-persistence-profile-substrate-and-aggregate-boundaries.md) | Persistence profile substrate and configurable aggregate boundaries | Proposed |
-| [A-79](ADR-A79-persistence-compiler-toolchain.md) | Persistence compiler toolchain and template-based SPARQL generation | Proposed |
-| [A-80](ADR-A80-housekeeping-component-boundary.md) | Housekeeping component boundary | Proposed |
+| [A-78](ADR-A78-persistence-profile-substrate-and-aggregate-boundaries.md) | Persistence profile substrate and configurable aggregate boundaries | Accepted |
+| [A-79](ADR-A79-persistence-compiler-toolchain.md) | Persistence compiler toolchain and template-based SPARQL generation | Accepted |
+| [A-80](ADR-A80-housekeeping-component-boundary.md) | Housekeeping component boundary | Accepted |
 
 ADR numbering deliberately skips A-02. Eligibility (A-03–A-07 and A-07b) and Behaviour (A-08–A-11) are now assigned to the decisions authored in Gates 2 and 3. A-02 remains reserved for the document-hierarchy question folded into [../../GOVERNANCE.md](../../GOVERNANCE.md) instead of a standalone ADR. A-17–A-28 are the Surface-MORK unified projection wave, numbered continuously from A-16 per the [ADR bundle outline](../../../ontology/surface/docs/adr-bundle-outline-surface-mork-unified-projection.md); accepted following maintainer sign-off on the [delivery plan](../../../ontology/surface/docs/surface-mork-unified-projection-delivery-plan.md) Phase 0 architecture lock. A-45 through A-76 are reserved by forward reference from `solution-design-specification.md` and `Architecture Review.md` to topics not yet drafted as standalone ADRs, and A-74/A-75 (graph-primary, store SPI) are likewise reserved but not yet filed. A-78 through A-80 are assigned to this round rather than into that reserved block, to avoid pre-empting a number a referring document already names for a different topic. This index is updated as each is added.

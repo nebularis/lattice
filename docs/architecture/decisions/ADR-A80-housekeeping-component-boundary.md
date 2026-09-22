@@ -2,7 +2,7 @@
 
 # ADR-A80: Housekeeping component boundary
 
-**Status:** Proposed
+**Status:** Accepted
 **Date:** 2026-09-22
 **Supersedes:** none
 **Related:** ADR-A78, ADR-A79, [rdf-sparql-patterns-guide.md](../rdf-sparql-patterns-guide.md) Chapters 21, 24, 25, 27
