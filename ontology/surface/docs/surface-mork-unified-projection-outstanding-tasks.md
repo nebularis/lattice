@@ -1,5 +1,19 @@
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
+⚠️ **DEPRECATED** — This document has been migrated to the LATTICE documentation governance structure.
+
+**New locations:**
+- Status: [docs/developer/status/surface-mork-unified-projection.md](../../../docs/developer/status/surface-mork-unified-projection.md)
+- Outstanding items: [docs/developer/status/surface-outstanding-items.md](../../../docs/developer/status/surface-outstanding-items.md)
+
+**Reason:** Consolidated into current status records in the developer coordination index.
+
+**Migration date:** 2026-09-22
+
+For phase-by-phase status and outstanding items tracking, refer to the links above. This file is retained for historical reference and ADR provenance tracing.
+
+---
+
 # Surface-MORK unified projection — outstanding tasks
 
 Date: 2026-09-18

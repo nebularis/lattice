@@ -1,3 +1,11 @@
+📋 **HISTORICAL REFERENCE** — This document is retained as part of the design analysis record.
+
+**Status:** Analysis document (2026-09-18), retained for context on Surface applicability to CSO/FBO patterns.
+
+**Note:** This is historical reference material and is not part of the active documentation migration.
+
+---
+
 # Triple-check: can `surface` carry the complexity of CSO → FBO?
 
 ## Short answer

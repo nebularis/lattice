@@ -1,3 +1,17 @@
+⚠️ **DEPRECATED** — This document has been migrated to the LATTICE documentation governance structure.
+
+**New locations:**
+- Plan: [docs/developer/plans/surface-mork-unified-projection-plan.md](../../../docs/developer/plans/surface-mork-unified-projection-plan.md) (Phase 5 section)
+- Status: [docs/developer/status/surface-mork-unified-projection.md](../../../docs/developer/status/surface-mork-unified-projection.md) (Phase 5 section)
+
+**Reason:** Content integrated into Phase 5 (MORK compiler backends) planning and status.
+
+**Migration date:** 2026-09-22
+
+For current MORK compiler backend details, refer to the links above. This file is retained for historical reference.
+
+---
+
 Yes. **Mork is designed to support this direction**, but the repository currently contains the ontology vocabulary and an RML compiler, not a completed eligibility-to-SWRL, SHACL, or SPARQL compiler.
 
 ## What Mork already provides

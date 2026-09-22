@@ -1,5 +1,19 @@
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
+⚠️ **DEPRECATED** — This document has been migrated to the LATTICE documentation governance structure.
+
+**New locations:**
+- Plan: [docs/developer/plans/surface-mork-unified-projection-plan.md](../../../docs/developer/plans/surface-mork-unified-projection-plan.md)
+- Status: [docs/developer/status/surface-mork-unified-projection.md](../../../docs/developer/status/surface-mork-unified-projection.md)
+
+**Reason:** Content consolidated into current phase plan and status records in the developer coordination index.
+
+**Migration date:** 2026-09-22
+
+For current execution planning and status, refer to the links above. This file is retained for historical reference.
+
+---
+
 # Current LATTICE projection plan
 
 Date: 2026-09-18  

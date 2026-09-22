@@ -1,5 +1,17 @@
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
+⚠️ **DEPRECATED** — This document has been migrated to the LATTICE documentation governance structure.
+
+**New location:** [docs/operator/surface-revision-lifecycle.md](../../../docs/operator/surface-revision-lifecycle.md)
+
+**Reason:** Moved to operational documentation with state machine, versioning scheme, and lifecycle events.
+
+**Migration date:** 2026-09-22
+
+For current revision lifecycle procedures and state machine, refer to the link above. This file is retained for historical reference.
+
+---
+
 # Surface Revision Lifecycle
 
 The Surface workflow control plane wraps the existing compiler. It does not change the semantics implemented by `tools/surface`.

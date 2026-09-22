@@ -1,5 +1,13 @@
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
+📋 **HISTORICAL REFERENCE** — This document is retained as part of the ADR authoring record.
+
+**Status:** Draft outline (2026-09-18), referenced by ADR-A16–A28 for context and decision rationale.
+
+**Note:** This is not part of the active documentation migration; it remains as historical reference for architectural decision tracing.
+
+---
+
 # ADR bundle outline — Surface-MORK unified projection
 
 Date: 2026-09-18  

@@ -1,5 +1,17 @@
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
+⚠️ **DEPRECATED** — This document has been migrated to the LATTICE documentation governance structure.
+
+**New location:** [docs/developer/sketches/surface-projection.md](../../../docs/developer/sketches/surface-projection.md)
+
+**Reason:** Consolidated into the developer coordination index as the authoritative design sketch.
+
+**Migration date:** 2026-09-22
+
+For current design and abstraction details, refer to the link above. This file is retained for historical reference and ADR provenance tracing.
+
+---
+
 # Surface Projection — Design Note
 
 **Generic promotion and shadow-indexing for LATTICE, with a path into MORK**

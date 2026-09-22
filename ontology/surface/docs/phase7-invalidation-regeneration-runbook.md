@@ -1,5 +1,17 @@
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
+⚠️ **DEPRECATED** — This document has been migrated to the LATTICE documentation governance structure.
+
+**New location:** [docs/operator/surface-invalidation-runbook.md](../../../docs/operator/surface-invalidation-runbook.md)
+
+**Reason:** Moved to operational documentation with updated procedures and release gates.
+
+**Migration date:** 2026-09-22
+
+For current invalidation and regeneration procedures, refer to the link above. This file is retained for historical reference.
+
+---
+
 # Phase 7 invalidation and regeneration runbook
 
 ## Scope

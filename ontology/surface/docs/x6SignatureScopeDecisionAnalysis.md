@@ -1,3 +1,11 @@
+📋 **HISTORICAL REFERENCE** — This document is retained as part of the decision analysis record.
+
+**Status:** Analysis document (2026-09-18), referenced by ADR-A21 for X6 signature scope decision context.
+
+**Note:** This is historical reference material and is not part of the active documentation migration.
+
+---
+
 # X6 decision analysis — signature scope, promoted properties, and projecting into FBO
 
 ## What decision is actually on the table

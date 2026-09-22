@@ -1,5 +1,17 @@
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
+⚠️ **DEPRECATED** — This document has been migrated to the LATTICE documentation governance structure.
+
+**New location:** Status integrated in [docs/developer/status/surface-mork-unified-projection.md](../../../docs/developer/status/surface-mork-unified-projection.md) and [docs/developer/status/surface-outstanding-items.md](../../../docs/developer/status/surface-outstanding-items.md)
+
+**Reason:** Content integrated into Eligibility layer tracking and Surface-MORK outstanding items.
+
+**Migration date:** 2026-09-22
+
+For current Eligibility law L9 status and amendments, refer to the links above. This file is retained for historical reference.
+
+---
+
 # Amendment: Eligibility law L9
 
 **Affects:** `ontology/eligibility/README.md` (law register), `ontology/eligibility/vocab/eligibility-vocab.ttl` (`elg:L9` individual), `ontology/eligibility/shapes/` (the `elg:HierarchicalClosureRule` discharge)

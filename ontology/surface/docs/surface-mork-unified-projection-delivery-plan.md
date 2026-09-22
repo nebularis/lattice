@@ -1,5 +1,17 @@
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
+⚠️ **DEPRECATED** — This document has been migrated to the LATTICE documentation governance structure.
+
+**New location:** [docs/developer/plans/surface-mork-unified-projection-plan.md](../../../docs/developer/plans/surface-mork-unified-projection-plan.md)
+
+**Reason:** Consolidated into the developer coordination index for current status and active planning.
+
+**Migration date:** 2026-09-22
+
+For current Surface-MORK unified projection planning, refer to the link above. This file is retained for historical reference and ADR provenance tracing.
+
+---
+
 # Surface-MORK Unified Projection Architecture and Delivery Plan
 
 Date: 2026-09-18  

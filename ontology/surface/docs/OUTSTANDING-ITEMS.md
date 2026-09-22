@@ -1,5 +1,17 @@
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
+⚠️ **DEPRECATED** — This document has been migrated to the LATTICE documentation governance structure.
+
+**New location:** [docs/developer/status/surface-outstanding-items.md](../../../docs/developer/status/surface-outstanding-items.md)
+
+**Reason:** Consolidated into the authoritative outstanding items tracker in the developer coordination index.
+
+**Migration date:** 2026-09-22
+
+For current outstanding decisions, deferred items, and known gaps, refer to the link above. This file is retained for historical reference.
+
+---
+
 # Outstanding items — Surface layer
 
 This is the single authoritative status source for the Surface layer's outstanding items, superseding the two documents it merges: the original `OUTSTANDING-ITEMS.md` and the later `OUTSTANDING-ITEMS 2.md`, which had drifted apart (2 records `tools/surface/parity.py`, `tools/surface/mork.py`, and the `srf-canon/2` canonicalisation cutover as done; the original still described them as not built). This document keeps 2's more current status throughout and is the one to edit going forward. `OUTSTANDING-ITEMS 2.md` is retained only as a pointer to here.

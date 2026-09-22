@@ -2,7 +2,7 @@
 
 # LATTICE Developer Coordination Index
 
-**Last updated:** 2026-09-22  
+**Last updated:** 2026-09-22 — Surface-MORK migration complete (Phases 0–8 consolidated)  
 **Purpose:** Single source of truth for all active units of work: sketches, plans, status, reviews, and validation packs.  
 **Format:** By unit identifier, with links to all related documents and current status.
 
@@ -207,7 +207,79 @@ No code was written and no new Phase 0→Phase 2 dependency was introduced — t
 
 ---
 
-## 7. Housekeeping First Cut
+## 7. Surface Projection and MORK Unified Compiler (Phases 0–10)
+
+| Field | Value |
+|-------|-------|
+| **Status** | ✅ Phases 0–8 complete; Phases 9–10 planned |
+| **Unit ID** | `surface-mork-unified-projection` (Epic) |
+| **Sketch** | [surface-projection.md](sketches/surface-projection.md) |
+| **Plan** | [surface-mork-unified-projection-plan.md](plans/surface-mork-unified-projection-plan.md) |
+| **Status Records** | [surface-mork-unified-projection.md](status/surface-mork-unified-projection.md), [surface-outstanding-items.md](status/surface-outstanding-items.md) |
+| **Implementation** | `tools/surface/` (compiler), `tools/mork_compilers/` (backends), `ontology/surface/` (vocabulary + shapes + examples) |
+| **ADRs** | A16–A28 (13 decisions covering projection, lowering, governance, compilers, parity, conformance, invalidation) |
+| **Tests** | 61/61 Surface tests; 15/15 MORK backend tests; 346/346 LLM/MTP tests |
+
+### Phase Completion Status
+
+| Phase | Scope | Status | Tests | Key Document |
+|-------|-------|--------|-------|---|
+| **0** | Vocabulary and layer semantics | ✅ Complete | ontology conforms | [Status §0](status/surface-mork-unified-projection.md#phase-0) |
+| **1** | Projection, promotion, index contracts | ✅ Complete | all validate | [Status §1](status/surface-mork-unified-projection.md#phase-1) |
+| **2** | Surface compiler architecture | ✅ Complete | 61/61 | [Status §2](status/surface-mork-unified-projection.md#phase-2) |
+| **3** | Surface-to-MORK lowering | ✅ Complete | 61/61 | [Status §3](status/surface-mork-unified-projection.md#phase-3) |
+| **4** | MORK governance and versioning | ✅ Complete | governance shapes | [Status §4](status/surface-mork-unified-projection.md#phase-4) |
+| **5** | MORK compiler backends | ✅ Complete | 15/15 (SPARQL, SHACL, SWRL, Eligibility IR) | [Status §5](status/surface-mork-unified-projection.md#phase-5) |
+| **6** | LLM training curriculum generation | ✅ Complete | 346/346 | [Status §6](status/surface-mork-unified-projection.md#phase-6) |
+| **7** | Invalidation and minimal-scope regeneration | ✅ Complete | 60+ invalidation tests | [Status §7](status/surface-mork-unified-projection.md#phase-7) |
+| **8** | Conformance, parity, and CI gates | ✅ Complete | parity ≥99%; 7/8 verification items; 1 SWRL integration pending | [Status §8](status/surface-mork-unified-projection.md#phase-8) |
+| **9** | Migration guides and phased rollout | ⏳ Planned | — | [Plan §9](plans/surface-mork-unified-projection-plan.md#phase-9) |
+| **10** | Scale, performance, optimization | ⏳ Planned | — | [Plan §10](plans/surface-mork-unified-projection-plan.md#phase-10) |
+
+### Key Findings
+- **Projection mechanism:** Unified abstraction for promotion (restating as direct properties) and shadow indexing (generating lookup symbols)
+- **Deterministic lowering:** Surface contracts lower to MORK with full provenance tracking and minimal-scope regeneration
+- **Compiler family:** Four production backends (SPARQL, SHACL, SWRL, Eligibility IR) + one deferred native backend
+- **Parity guarantees:** Generated output matches source contract semantics at ≥99% fidelity
+- **Verification checklist:** 7/8 items passing; SWRL reasoner integration (Phase 8, item 7) remains open
+
+### Completed Slices
+
+| Slice ID | Deliverable | Status | Reference |
+|----------|-------------|--------|-----------|
+| `surface-projection` | Design sketch + plan + status | ✅ | [Status §§1–2](status/surface-mork-unified-projection.md) |
+| `surface-to-mork-lowering` | Lowering engine (Phase 3) | ✅ | [Plan §3](plans/surface-mork-unified-projection-plan.md#phase-3) |
+| `mork-governance-and-versioning` | Foundation integration (Phase 4) | ✅ | [Plan §4](plans/surface-mork-unified-projection-plan.md#phase-4) |
+| `mork-compiler-family` | All backends (Phase 5) | ✅ | [Plan §5](plans/surface-mork-unified-projection-plan.md#phase-5) |
+| `surface-invalidation-and-regeneration` | Read-set tracking (Phase 7) | ✅ | [Plan §7](plans/surface-mork-unified-projection-plan.md#phase-7) |
+| `surface-conformance-and-parity` | CI gates (Phase 8) | ✅ | [Plan §8](plans/surface-mork-unified-projection-plan.md#phase-8) |
+
+### Operational Documentation
+- [Invalidation Runbook](../operator/surface-invalidation-runbook.md) — 4 operational scenarios with release gates
+- [Revision Lifecycle](../operator/surface-revision-lifecycle.md) — State machine, versioning, canonicalisation cutover procedures
+
+### Outstanding Items
+| Item | Status | Link |
+|------|--------|------|
+| Signature scope and law X6 | ✅ Closed | [Outstanding items §3.1](status/surface-outstanding-items.md#31-signature-scope-and-law-x6--closed) |
+| Foundation migration (`srf:DerivedArtefact`) | ⏳ Needed | [Outstanding items §3.2](status/surface-outstanding-items.md#32-adr-a01-convention-conflict--closed) |
+| Profile identity assertion | ⏳ Blocked | [Outstanding items §3.3](status/surface-outstanding-items.md#33-profile-identity-assertion--blocked) |
+| MORK toolchain join assumptions | ⏳ Needed | [Outstanding items §3.4](status/surface-outstanding-items.md#34-mork-toolchain-join-assumptions--needed) |
+
+### Deferred Items (Explicit Scoping)
+- `srf:RangePartitionPopulation` (bucketing) — blocked on Quantification layer
+- Stacking beyond depth 1 — composition laws drafted, full support deferred
+- Other eligibility strategies beyond IntervalContainment — deferred to broader Eligibility expansion
+- `srf:ExternalIndex` — admitted but deferred, no criteria yet
+- Entailment regimes beyond NoEntailment — deferred to Phase TBD
+
+### Blockers
+- Phase 8 SWRL verification: Reasoner integration for generated SWRL rules (1/8 checklist item remaining)
+- Phase 9 decomposition: Awaits Phase 8 sign-off
+
+---
+
+## 8. Housekeeping First Cut
 
 | Field | Value |
 |-------|-------|
@@ -263,6 +335,15 @@ No code was written and no new Phase 0→Phase 2 dependency was introduced — t
 
 ## By Topic
 
+### Surface Projection and MORK Compiler
+- Sketch: [surface-projection.md](sketches/surface-projection.md)
+- Plan: [surface-mork-unified-projection-plan.md](plans/surface-mork-unified-projection-plan.md)
+- Status: [surface-mork-unified-projection.md](status/surface-mork-unified-projection.md), [surface-outstanding-items.md](status/surface-outstanding-items.md)
+- ADRs: A16–A28 (13 decisions)
+- Implementation: `tools/surface/` (compiler), `tools/mork_compilers/` (backends), `ontology/surface/` (vocab + shapes)
+- Tests: 61/61 Surface, 15/15 MORK backends, 346/346 LLM/MTP
+- Operations: [surface-invalidation-runbook.md](../operator/surface-invalidation-runbook.md), [surface-revision-lifecycle.md](../operator/surface-revision-lifecycle.md)
+
 ### RDF/SPARQL & Persistence
 - Guide: [rdf-sparql-patterns-guide.md](../architecture/rdf-sparql-patterns-guide.md)
 - ADRs: A78, A79, A80
@@ -301,16 +382,20 @@ No code was written and no new Phase 0→Phase 2 dependency was introduced — t
 3. LLM training / MTP generation — 346 tests passing
 4. Repository topology (ADR-A77)
 5. MORK eligibility compiler (awaiting runtime validation, not handoff)
-6. Phase 0-6 handoff documents
+6. Surface Projection Phases 0–8 — 61/61 Surface tests, 15/15 MORK backends, 7/8 verification items
+7. Phase 0-6 handoff documents
 
 ### 🚧 In Progress
 1. Epic decomposition (Phase 0-9 plans)
 2. Housekeeping first cut (Slice 3, scoped but not started)
+3. Surface MORK Phase 8 verification (SWRL reasoner integration, 1/8 items pending)
 
 ### ⏳ Planned
 1. Housekeeping execution (tied to future store SPI)
 2. Governance surfaces backend integration (Phase 2/5)
 3. Phase 0-9 implementation
+4. Surface MORK Phase 9 — Migration guides and phased rollout
+5. Surface MORK Phase 10 — Scale and performance optimization
 
 ### 🗄️ Archived
 1. Phase 0-6 handoff documents (refer to individual status records)
@@ -323,6 +408,8 @@ No code was written and no new Phase 0→Phase 2 dependency was introduced — t
 | Item | What | Why | Next |
 |------|------|-----|------|
 | **Epic decomposition** | Break `lattice-platform-agentic-development-v0.2.md` into Phase 0-9 plans | Required Phase 2 (P2.1/P2.3/P2.4) revision and the optional Phase 0.2-0.4 coherence note are both complete (2026-09-22) | Begin Phase 0 decomposition |
+| **Surface MORK Phase 8 verification** | SWRL rule load into OWL reasoner (final verification item) | 7/8 verification items complete; SWRL backend generates rules but integration needed | Resolve before Phase 9 sign-off |
+| **Surface MORK Phase 9 decomposition** | Break migration and phased rollout into slices | Phase 8 complete (except SWRL integration); Phase 9 is planned but not decomposed | Decompose after Phase 8 verification complete |
 | **Housekeeping first cut (Slice 3)** | Scaffold `platform/housekeeping` module | Compiler ready; module contracts defined in ADR-A80 | Author Slice 3 (housekeeping scaffolding) |
 | **Store SPI** | Design runtime SPI for query execution | Compiler produces templates; runtime binding TBD | Separate epic/phase after housekeeping |
 | **MTP backend integration (Phase 7)** | Runtime API for LLM curriculum delivery | MTP generation complete; needs HTTP endpoint | Post-Phase-6 work |
@@ -349,8 +436,10 @@ No code was written and no new Phase 0→Phase 2 dependency was introduced — t
 ## Test Coverage Status
 | Unit | Tests | Command |
 |------|-------|---------|
+| Surface compiler | 61 passing | `pytest tools/surface/src/surface/test_surface.py -v` |
+| MORK compiler backends | 15 passing | `pytest tools/mork_compilers/src/mork_compilers/test_mork_compilers.py -v` |
+| LLM/MTP | 346 passing | `mise run check:mtp` |
 | Persistence compiler | 239 passing | `mise run check:persistence` |
-| MTP | 346 passing | `mise run check:mtp` |
 | Eligibility compiler | Present | `mise run check:eligibility-compiler` |
 
 ---
@@ -361,6 +450,9 @@ No code was written and no new Phase 0→Phase 2 dependency was introduced — t
 2. ~~Phase 0.2–0.4 walking-skeleton pattern integration~~ — done (2026-09-22): Part 4 of the epic plan carries the Pattern C/T/K/O ↔ `dal:` cross-references, new slice P0.3.9, and guardrail G11. See Part II, §6 and Part V.
 3. **MTP backend integration** — What HTTP API shape for LLM curriculum consumption? (Phase 7, post-Phase-6)
 4. **Housekeeping execution** — When is the housekeeping component itself executed (real-time vs. batch)? (ADR-A80 defers to future phase)
+5. **Surface MORK Phase 9 decomposition** — How to slice migration guides and phased rollout? (Blocking Phase 9, needs decomposition after Phase 8 SWRL verification)
+6. **Foundation migration for `srf:DerivedArtefact`** — Should profile identity be a Foundation concept or Surface-only? (Blocking profile identity assertion in Surface; see [surface-outstanding-items.md](status/surface-outstanding-items.md#33-profile-identity-assertion--blocked))
+7. **MORK toolchain join assumptions** — Pre-production verification checklist for join operations in mapping compilation (see [surface-outstanding-items.md](status/surface-outstanding-items.md#34-mork-toolchain-join-assumptions--needed))
 
 ---
 
@@ -373,5 +465,6 @@ This index is updated when:
 - A validation pack is accepted
 - A unit transitions between status states (🚧 → ✅, etc.)
 
+**Last updated:** 2026-09-22 — Surface-MORK documentation migration (Phases 0–8) merged into INDEX  
 **Last reviewed:** 2026-09-22  
-**Next review:** Upon epic decomposition completion or Phase 0 handoff
+**Next review:** Upon Phase 8 SWRL verification completion and Phase 9 decomposition
