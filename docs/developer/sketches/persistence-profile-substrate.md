@@ -717,8 +717,10 @@ The single artefact that states exactly what was decided, why, what it needs, an
     Mustache slots (shard, monthBucket, graphIriTemplate) come from a GeneratedOperation's
     ParameterBindings. $-prefixed names are genuine SPARQL variables, bound per request,
     never touched by this template's own rendering. }}
-PREFIX ex:  <https://example.org/lending#>
 PREFIX pat: <https://example.org/lattice/patterns#>
+{{! NB: prefixes will need to be configured in somehow, because they will vary based on the resolved compiler output}}
+PREFIX ex:  <https://example.org/lending#>
+
 
 DELETE {
   GRAPH ?g { ?s ?p ?o }
