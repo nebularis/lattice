@@ -2475,10 +2475,12 @@ SPARQL permits patterns that lead to injection, non-determinism and unexpected c
 
 The failure. A key value arrives from a form and is spliced into a query:
 
+{% raw %}
 ```python
 # NEVER
 q = f'ASK {{ GRAPH <urn:g:keys> {{ <{claim_iri}> pat:claimedBy <{owner}> }} }}'
 ```
+{% endraw %}
 
 An `owner` of `urn:x> } } ; DROP GRAPH <urn:g:keys> ; ASK { <urn:y` turns a read into a delete. IRIs and literals both need escaping, and both need *typing* (a `"42"` string is not a `"42"^^xsd:long`), and the escaping rules differ between them. The only robust approach is a prepared template with typed parameters rendered by a library that knows RDF term syntax:
 
