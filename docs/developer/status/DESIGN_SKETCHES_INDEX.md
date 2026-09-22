@@ -1,9 +1,24 @@
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
-# Design Sketch Implementation Validation — Document Index
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
-**Date completed:** 2026-09-20  
-**Task:** Validate extent of implementation for 7 design sketches in `/docs/developer/sketches/`  
+# Design Sketch Implementation Validation — Document Index (ARCHIVED)
+
+**Status:** Superseded. See `docs/developer/INDEX.md` for the current, consolidated tracking of all design sketches, plans, status records, reviews, and validation packs.
+
+This document is kept for historical reference. For current work status, consult:
+- **Consolidated index:** [`docs/developer/INDEX.md`](../INDEX.md)
+- **RDF/SPARQL patterns:** [rdf-sparql-patterns-status.md](./rdf-sparql-patterns-status.md) + [rdf-sparql-patterns-phase-plan.md](../plans/rdf-sparql-patterns-phase-plan.md)
+- **LLM/MTP work:** [llm-training-mtp.md](./llm-training-mtp.md) + [mtp-execution.md](./mtp-execution.md)
+- **Governance surfaces:** [governance-surfaces.md](./governance-surfaces.md) + [governance-surfaces-integration.md](../plans/governance-surfaces-integration.md)
+- **Other sketches:** See Part V in `INDEX.md` for archived/historical work
+
+---
+
+## Historical Contents (Below - for reference only)
+
+**Date completed:** 2026-09-20
+**Task:** Validate extent of implementation for 7 design sketches in `/docs/developer/sketches/`
 **Deliverables:** Status docs (completed), plan docs (deferred work), summary cross-reference
 
 ---

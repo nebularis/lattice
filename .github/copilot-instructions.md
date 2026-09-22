@@ -119,7 +119,7 @@ Every slice, without exception, delivers:
    - *One command to run everything*: e.g. `mise module:check` or `mvn clean:verify`. If it is not one command, the slice is rejected on process grounds.
    - *Expected artifacts* the human should inspect (golden files, capability report, canonicalisation trace, screenshots).
    - *Deliberate non-coverage*: what this slice does **not** test and which later slice covers it.
-3. **Traceability update** — `docs/traceability/matrix.csv` rows linking slice ⇒ G-nn/C-nn/A-nn ⇒ test IDs. Rows must list the requirement ID (G-## for gap, C-## for component, A-## for ADR), the slice ID, and the test IDs that verify it. CI must fail if a claimed requirement has no test.
+3. **Traceability update** — Update `docs/developer/INDEX.md` to record the slice's completion status and link to its validation pack. Optionally maintain `docs/traceability/matrix.csv` rows linking slice ⇒ G-nn/C-nn/A-nn ⇒ test IDs if this slice addresses a gap. See `docs/developer/INDEX.md` for current traceability model.
 4. **Doc delta** — if the slice contradicts or extends a normative document, the document is edited *in the same slice*. No "docs later".
 
 **Human validation gate protocol:**
