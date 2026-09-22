@@ -1,4 +1,4 @@
-# LATTICE
+# Lattice
 
 A domain neutral semantic framework for representing governing instruments (contracts, protocols, agreements, etc) and the obligations, eligibility conditions, and lifecycle behaviours they define, as structured, queryable, versioned graphs.
 
@@ -6,9 +6,19 @@ A domain neutral semantic framework for representing governing instruments (cont
 
 ## Overview
 
-### Ontology Model
+As a project, Lattice has been organised to allow users to pick and choose the parts they want without depending on everything. Lattice provides ontologies, libraries, deployable services, and control-plane infrastructure the way a framework does, and is not a standalone application.
 
-LATTICE is the middle of a three-part picture.
+An adopter is free to take some of it, all of it, or build around it entirely, and the parts they do take, they configure for their own domain and their own operational constraints.
+
+| Part | Purpose |
+|---|---|
+| Ontology Substrates | The ontologies in the substrate layers can be used together or standalone, to develop _domain ontologies_ with consistent semantics inherited from these upper ontologies. |
+| Applied Ontology Layers | Pre-built _domain ontologies_ with a focus on a specifc subject area, industry, or goal/usage |
+| Tools | Tools that operate on both the internal substrates (upper ontologies), applied ontologies, and a user's own _domain ontologies_ |
+| Platform (design time) | Capabilities that offer design support and administrative tooling for users of Lattice |
+| Platform (runtime) | Software infrastructure, services, and applications that support building complex ontology-based solutions on top of Lattice |
+
+### Ontology Layers
 
 **MORK (Mapping Ontological & Representational Knowledge)** used to map source material — structured data (schemas, records, API specifications, etc) and unstructured wordings (documents, clauses, free text) — onto a target domain ontology's T-box & R-Box, using Formal Concept Analysis over the co-occurrence structure of previously mapped source material to propose alignment. MORK as a general-purpose mapping vocabulary, based on SKOS.
 
@@ -18,7 +28,7 @@ The layers described below are one family of mapping target, but not the only po
 
 **SPC (Subject-oriented Process Calculus)**  provides a formal mechanism for describing orchestration between agents (human, AI, or computational), whose data has been mapped in by MORK and whose roles, obligations, and eligibility are modelled in LATTICE. Where LATTICE's Behaviour layer models what state something is in and what can cause it to change, SPC is concerned with the live, session-typed exchange between agents that drives those changes — giving that exchange a formal contract to align to, grounded in the same ontology, rather than an ad hoc protocol. SPC has a substantial standalone ontology under `ontology/spc/`, with Python and Erlang implementations under `tools/spc/`. It is not yet integrated with the layers below: it uses a placeholder namespace and declares no `projection/` contract to any of them. Treat it as a separate, pre-integration body of work rather than part of the dependency graph described below.
 
-#### Model Layers
+#### Ontology Layers
 
 LATTICE is organised as seven layers, each an independent OWL/SHACL/SKOS module:
 
