@@ -2,10 +2,22 @@
 
 **Unit type:** Epic
 **Epic:** `lattice-platform-development`
-**Epic status:** To be decomposed into phase plans
+**Epic status:** Decomposed into phase plans (2026-09-22). Phase 0 and Phase 1 are ready to execute at full slice detail. Phases 2–4 are rolling-wave placeholders per §0.5, expanded at P1.11.3/P2.11.4/P3.6.4 respectively.
 **Epic review:** Deferred until all phase plans and acceptance tests are finalized
 
-**Purpose of this document.** A dependency-ordered, slice-by-slice development epic that defines the scope, milestones, tracks, and hard orderings for the LATTICE platform delivery. This epic will be decomposed into individual phase plans (e.g., `phase-0-plan.md`, `phase-1-plan.md`) per the Epic Decomposition model in [copilot-instructions](../../.github/copilot-instructions.md). Each plan is authored, reviewed, and accepted separately before its implementation begins. The final epic review will be created only after all phase plans are complete and their acceptance tests pass.
+**Purpose of this document.** A dependency-ordered, slice-by-slice development epic that defines the scope, milestones, tracks, and hard orderings for the LATTICE platform delivery. This epic has been decomposed into individual phase plans per the Epic Decomposition model in [copilot-instructions](../../.github/copilot-instructions.md). Each plan is authored, reviewed, and accepted separately before its implementation begins. The final epic review will be created only after all phase plans are complete and their acceptance tests pass.
+
+**Decomposition index:**
+
+| Phase | Plan | Status | Sketch | Detail |
+|---|---|---|---|---|
+| 0 — Decisions and foundations | [phase-0-plan.md](phase-0-plan.md) | [phase-0-status.md](../status/phase-0-status.md) | [phase-0-sketch.md](../sketches/phase-0-sketch.md) | Full (Part 4) |
+| 1 — Graph-primary core and deployment plane | [phase-1-plan.md](phase-1-plan.md) | [phase-1-status.md](../status/phase-1-status.md) | [phase-1-sketch.md](../sketches/phase-1-sketch.md) | Full (Part 5) |
+| 2 — Ingestion and query planes | [phase-2-plan.md](phase-2-plan.md) | [phase-2-status.md](../status/phase-2-status.md) | [phase-2-sketch.md](../sketches/phase-2-sketch.md) | Rolling-wave (Part 6), expands at P1.11.3 |
+| 3 — Operation plane | [phase-3-plan.md](phase-3-plan.md) | [phase-3-status.md](../status/phase-3-status.md) | [phase-3-sketch.md](../sketches/phase-3-sketch.md) | Rolling-wave (Part 7), expands at P2.11.4 |
+| 4 — Maturity | [phase-4-plan.md](phase-4-plan.md) | [phase-4-status.md](../status/phase-4-status.md) | [phase-4-sketch.md](../sketches/phase-4-sketch.md) | Placeholder (Part 8), expands at P3.6.4 |
+
+Each phase plan cross-references its Part below for slice-level detail rather than duplicating it, and adds the `docs/architecture`, README, and `solution-design-specification.md` obligations the epic's own slice tables name but do not tabulate.
 
 **Governing model.** Epic decomposition, phase plans, and slice validation follow the Epic Decomposition model in [copilot-instructions](../../.github/copilot-instructions.md). See that document for the standard approach to units of work, validation packs, traceability, and review gates.
 
@@ -135,10 +147,13 @@ packages/
   ui-kit/ client-ts/
 clients/
   client-java/ client-python/
-deploy/
+deployment/
   compose/ images/ seeds/
 docs/
-  adr/ validation/ traceability/ architecture/ runbooks/
+  architecture/decisions/ (ADRs, canonical location per copilot-instructions — never `docs/adr/`)
+  developer/{sketches,plans,status,validation,review}/ (per-unit documentation lifecycle)
+  traceability/ (existing)
+  operator/ (existing — runbooks referenced from P3.5.3 etc. land here unless a phase plan says otherwise)
 ```
 
 ---
@@ -208,6 +223,8 @@ T-DEC ──► T-ONT ──┐
 
 ## Part 4 — PHASE 0: Decisions and non-retrofittable foundations
 
+**Decomposed into** [phase-0-plan.md](phase-0-plan.md) / [phase-0-status.md](../status/phase-0-status.md) / [phase-0-sketch.md](../sketches/phase-0-sketch.md). This Part remains the authoritative slice-level detail the phase plan references; it is not duplicated there.
+
 **Phase goal.** Make every irreversible decision, ratify it as an ADR, encode it as a machine-checked invariant, and stand up the build/test/deploy machinery — while proving the whole chain works end to end on a volatile stack (M0).
 
 **Phase exit gate (hard).** No slice in Phase 1+ starts until: all Phase 0 ADRs are ratified; M0 and M1 pass; `docs/traceability/matrix.csv` has zero untested claimed requirements; `data-architecture.md` has been rewritten for A74 and signed off.
@@ -249,7 +266,7 @@ Decisions are *slices* here, because agents can draft ADRs and humans validate t
 
 | Slice | Scope | Tests / validation |
 |---|---|---|
-| **P0.2.1** | Multi-module build skeleton per Part 1 (Maven or Gradle — decide in this slice, record as ADR-A76); BOM; Java 21 toolchain; one no-op test per module; `make`/`just` task runner with `verify`, `verify-slice`, `up`, `seed`, `e2e` | **L0**: clean build from scratch on a clean container; every module has a passing no-op test; task runner discoverable via `make help` |
+| **P0.2.1** | Multi-module build skeleton per Part 1 (Maven or Gradle — decide in this slice, record as ADR-A76); BOM; Java 21 toolchain; one no-op test per module; new `mise.toml` tasks `verify`, `verify-slice`, `up`, `seed`, `e2e` (per the existing toolchain rule — `mise` is the sole task-orchestration entry point, ADR-A29 not superseded; no `make`/`just` layer) | **L0**: clean build from scratch on a clean container; every module has a passing no-op test; task runner discoverable via `mise tasks` |
 | **P0.2.2** | Python workspace: uv/poetry lock, `pytest`, `ruff`, `mypy` strict on new packages; no-op test | **L0** |
 | **P0.2.3** | Frontend workspace: pnpm workspace, `packages/ui-kit` + `packages/client-ts` + three app shells; Vitest + Playwright installed; no-op tests | **L0** |
 | **P0.2.4** | **Contract codegen pipeline** (G3): JSON Schema → Java records (Jackson) + Python pydantic + TS types; OpenAPI → server route stubs + TS client; drift check task that fails if generated code is stale or hand-edited | **L3**: round-trip a fixture through Java→JSON→Python→JSON→Java, byte-identical; drift check fails on a deliberately edited generated file |
@@ -328,7 +345,7 @@ This is the single most load-bearing library in the system. Slice it finely.
 | **P0.7.3** | `runtime-host` skeleton: minimal HTTP server (per amended A44), virtual-thread-per-request, `LATTICE_ROLE` router mounting, Jackson at the edge only, JSON Schema validation from `contracts/`, `Deadline` in the call context propagated to every downstream call, `/healthz` `/readyz` | **L0/L4**: a request with an expired deadline is refused downstream, not executed; role profile mounts only its routes (asserted per role) |
 | **P0.7.4** | Error contract: `400/401/403/404/409/413/422/429/503` semantics, machine-readable problem details, `IllegalArgument/IllegalState` translation (extend the `SurfaceRevisionApi` pattern) | **L3**: every status has a fixture and an OpenAPI-documented shape |
 | **P0.7.5** | **Walking-skeleton vertical**: wire existing in-memory `SurfaceRevisionApi` behind HTTP; Studio calls it (real fetch, not fixture); one create + one transition + one 409 path | **L5**: E2E over HTTP; **L6**: Playwright renders the created revision and the conflict banner |
-| **P0.7.6** | Compose stack v1 (`deploy/compose`): control-plane image, Fuseki, broker, coordination (H2 file), dev OIDC, static app hosting; `make up` / `make down` / `make logs` | **L5**: cold start to green healthchecks under a stated time budget; readiness reflects dependency reachability |
+| **P0.7.6** | Compose stack v1 (`deployment/compose`, the existing repo-root name — see Part 1): control-plane image, Fuseki, broker, coordination (H2 file), dev OIDC, static app hosting; `mise run up` / `mise run down` / `mise run logs` | **L5**: cold start to green healthchecks under a stated time budget; readiness reflects dependency reachability |
 | **P0.7.7** | Playwright harness: base config, auth helper (dev token), page objects, axe accessibility check wired, trace/screenshot artifacts on failure | **L6**: smoke suite green; a deliberately broken selector fails with a useful artifact |
 
 > **M0 gate.** Browser → HTTP → domain → response, in compose, with one correlation ID traceable across services, plus a Playwright + axe smoke. Explicitly *no durable data*.
@@ -350,9 +367,9 @@ This is the single most load-bearing library in the system. Slice it finely.
 |---|---|---|
 | **P0.9.1** | `synth` CLI skeleton: deterministic seeded generator, output manifest with digests, `--seed` reproducibility | **L2**: same seed → byte-identical output; different seed → different but schema-valid |
 | **P0.9.2** | Ontology/contract fixtures: a demo applied ontology derived from `ontology/examples/insure-o`, Surface Promotion/Index/Projection contracts, Eligibility profiles, Behaviour declarations incl. a capacity-tank aggregate | **L1**: all generated TTL parses and passes layer shapes |
-| **P0.9.3** | Golden-file infrastructure: expected semantic hashes, expected canonical forms, expected pack digests, with an approved-diff workflow (`make approve-goldens`) | **L2**: golden drift fails with a readable diff; approval requires an explicit command (never automatic) |
+| **P0.9.3** | Golden-file infrastructure: expected semantic hashes, expected canonical forms, expected pack digests, with an approved-diff workflow (`mise run approve-goldens`) | **L2**: golden drift fails with a readable diff; approval requires an explicit command (never automatic) |
 | **P0.9.4** | Fixture corpora for the hostile suites: malformed graphs, adversarial blank-node structures, oversized payloads, injection strings | **L8** inputs |
-| **P0.9.5** | Seeding API/CLI for the compose stack (`make seed SCENARIO=...`), idempotent, digest-verified | **L5/L6**: UI tests can assume a named scenario; re-seeding is a no-op |
+| **P0.9.5** | Seeding API/CLI for the compose stack (`mise run seed SCENARIO=...`), idempotent, digest-verified | **L5/L6**: UI tests can assume a named scenario; re-seeding is a no-op |
 
 ### P0.10 — Phase 1 planning slices
 
@@ -364,6 +381,8 @@ This is the single most load-bearing library in the system. Slice it finely.
 ---
 
 ## Part 5 — PHASE 1: Graph-primary core and the deployment plane
+
+**Decomposed into** [phase-1-plan.md](phase-1-plan.md) / [phase-1-status.md](../status/phase-1-status.md) / [phase-1-sketch.md](../sketches/phase-1-sketch.md). This Part remains the authoritative slice-level detail the phase plan references; it is not duplicated there.
 
 **Phase goal.** Move all existing operational state into the graph; stand up tenancy, packs, activation, and the change feed; deliver the first operational-register UI. **Milestones M2, M3.**
 
@@ -476,6 +495,8 @@ This is the single most load-bearing library in the system. Slice it finely.
 ---
 
 ## Part 6 — PHASE 2: Ingestion and query planes
+
+**Decomposed into** [phase-2-plan.md](phase-2-plan.md) / [phase-2-status.md](../status/phase-2-status.md) / [phase-2-sketch.md](../sketches/phase-2-sketch.md) — a rolling-wave placeholder, per §0.5, full VP-level expansion scheduled at P1.11.3. This Part remains the authoritative slice-level detail until then.
 
 **Phase goal.** Data gets in, questions get answered, lineage is provable. **Milestones M4, M5, M6.**
 
@@ -634,6 +655,8 @@ This is the single most load-bearing library in the system. Slice it finely.
 
 ## Part 7 — PHASE 3: Operation plane
 
+**Decomposed into** [phase-3-plan.md](phase-3-plan.md) / [phase-3-status.md](../status/phase-3-status.md) / [phase-3-sketch.md](../sketches/phase-3-sketch.md) — a rolling-wave placeholder, per §0.5, full VP-level expansion scheduled at P2.11.4. This Part remains the authoritative slice-level detail until then.
+
 **Phase goal.** Projections stay fresh, tanks respond, values flow back. **Milestones M7, M8, M9.**
 
 > **Hard gate:** no C-09 slice starts until C-07 reconciliation (P3.1.7) has been green for a full week of nightly runs against the synthetic load, including an injected-divergence scenario. A behaviour engine over a silently-corrupt projection produces wrong decisions that look right.
@@ -721,6 +744,8 @@ This is the single most load-bearing library in the system. Slice it finely.
 ---
 
 ## Part 8 — PHASE 4: Maturity
+
+**Decomposed into** [phase-4-plan.md](phase-4-plan.md) / [phase-4-status.md](../status/phase-4-status.md) / [phase-4-sketch.md](../sketches/phase-4-sketch.md) — a placeholder, full expansion scheduled at P3.6.4. This Part remains the authoritative detail until then.
 
 Deliberately lighter: each item is a sub-programme sized after Phase 3 measurement.
 

@@ -156,11 +156,11 @@ Epic decomposition into phase plans is **no longer blocked**: the required Phase
 
 | Field | Value |
 |-------|-------|
-| **Status** | 🚧 Required and optional epic plan revisions complete; ready for decomposition |
+| **Status** | ✅ Decomposed into 5 phase chunks (2026-09-22). Phase 0 ready to execute, pending one pre-execution decision (below) |
 | **Unit ID** | `lattice-platform-development` (epic) |
 | **Plan** | [lattice-platform-agentic-development-v0.2.md](plans/lattice-platform-agentic-development-v0.2.md) |
-| **Description** | Decompose epic into Phase 0-9 plans with dependency DAG and milestones |
-| **Blockers** | None |
+| **Description** | Decomposed into Phase 0-4 plans with dependency DAG and milestones |
+| **Blockers** | See "Pre-execution decision points" under Phase 0 below |
 
 ### Scope
 - 16 tracks (T-DEC through T-SEC) with hard orderings
@@ -184,6 +184,24 @@ Per [COORDINATION_REORG_HANDOFF.md](../COORDINATION_REORG_HANDOFF.md), Phase 0 o
 - **Pattern O (dense ordering)** ↔ `dal:OrderingGrain`/`dal:DatasetTierModel`, cross-referenced at P0.4.4 (canonicalisation) and P0.5.7 (`CommitSequence` + ordering TCK).
 - New slice **P0.3.9** (documentation only) produces `ontology/persistence/docs/platform-vocabulary-alignment.md`, proving no namespace/semantic collision between the six `dal:` dimensions and the platform vocabulary P0.3 defines.
 - New guardrail **G11** (§0.4): no `dal:`-governed write path may hand-construct SPARQL, reserved at P0.2.7 and enforced in full once P0.5.2's write surface exists.
+
+### Epic Decomposition — ✅ Done (2026-09-22)
+
+| Phase | Plan | Status | Sketch | Depth |
+|---|---|---|---|---|
+| 0 — Decisions and foundations | [phase-0-plan.md](plans/phase-0-plan.md) | [phase-0-status.md](status/phase-0-status.md) | [phase-0-sketch.md](sketches/phase-0-sketch.md) | Full slice detail (epic Part 4, referenced not duplicated) |
+| 1 — Graph-primary core and deployment plane | [phase-1-plan.md](plans/phase-1-plan.md) | [phase-1-status.md](status/phase-1-status.md) | [phase-1-sketch.md](sketches/phase-1-sketch.md) | Full slice detail (epic Part 5) |
+| 2 — Ingestion and query planes | [phase-2-plan.md](plans/phase-2-plan.md) | [phase-2-status.md](status/phase-2-status.md) | [phase-2-sketch.md](sketches/phase-2-sketch.md) | Rolling-wave placeholder, expands at P1.11.3 |
+| 3 — Operation plane | [phase-3-plan.md](plans/phase-3-plan.md) | [phase-3-status.md](status/phase-3-status.md) | [phase-3-sketch.md](sketches/phase-3-sketch.md) | Rolling-wave placeholder, expands at P2.11.4 |
+| 4 — Maturity | [phase-4-plan.md](plans/phase-4-plan.md) | [phase-4-status.md](status/phase-4-status.md) | [phase-4-sketch.md](sketches/phase-4-sketch.md) | Placeholder, sized after Phase 3 measurement |
+
+Each phase plan adds three obligations the epic's slice tables name but never tabulate: a `docs/architecture` deliverables table, a subproject-README table, and a `solution-design-specification.md` delta table (which SDS section changes, and at which slice).
+
+**Three mechanical corrections made to the epic during decomposition** (not architectural decisions — corrections against already-established convention): `deploy/` → `deployment/` (root already exists under that name), `make`/`just` → `mise` tasks (copilot-instructions mandates `mise` as sole orchestrator, ADR-A29 not superseded), `docs/adr/` → `docs/architecture/decisions/`.
+
+**Pre-execution decision points surfaced, not resolved** (see [phase-0-plan.md §2](plans/phase-0-plan.md#2-pre-execution-decision-points-resolve-before-the-named-slice-starts)):
+- Relationship between the epic's proposed `platform/graph-spi` family and the existing `platform/semantic-dataset-spi`/`semantic-dataset-fuseki` — blocks P0.5.1.
+- `apps/surface-studio`/`apps/mork-bench` (epic's Part 1 names) vs existing `apps/surface-contract-studio`/`apps/mork-review-workbench` — blocks P1.10, lower urgency.
 
 No code was written and no new Phase 0→Phase 2 dependency was introduced — this is cross-referencing and one new documentation-only slice.
 
