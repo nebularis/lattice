@@ -5,7 +5,8 @@
 **Unit:** `eligibility-compiler`
 **State:** Implemented, awaiting validation in network environment
 **Sketch:** [mork-eligibility-compiler.md](../sketches/mork-eligibility-compiler.md)
-**Governing ADRs:** [ADR-A23](../../architecture/decisions/ADR-A23-mork-compiler-family-completion-policy.md), [ADR-A24](../../architecture/decisions/ADR-A24-eligibility-executable-semantics-backend-strategy.md)
+**Plan:** [eligibility-compiler.md](../plans/eligibility-compiler.md) (2026-09-23) — verification steps below are now slices A1–A5 there; step 5's Drools/Pellet dependency is redesigned as a shared, test-scope-only module (Part B), never a dependency of `tools/mork_compilers` itself
+**Governing ADRs:** [ADR-A23](../../architecture/decisions/ADR-A23-mork-compiler-family-completion-policy.md), [ADR-A24](../../architecture/decisions/ADR-A24-eligibility-executable-semantics-backend-strategy.md), ADR-A81 (proposed, test-only reasoning/rules engine isolation)
 
 ## What was built
 
@@ -41,13 +42,13 @@ A compiler family for deterministic, multi-backend eligibility condition executi
 
 ## Verification Plan (not yet executed)
 
-The authoring environment lacked Python interpreter, SHACL/SWRL engines, and SPARQL execution. Verification requires:
+The authoring environment lacked Python interpreter, SHACL/SWRL engines, and SPARQL execution. Superseded by [plans/eligibility-compiler.md](../plans/eligibility-compiler.md), which turns the five steps below into slices A1–A5 and — because step 5 would otherwise pull a JVM reasoner and rules engine onto the main dependency path — designs a shared, test-only `platform/reasoning-testkit` module (Part B) so no product package ever depends on Drools/Pellet directly. Original five steps, kept here for history:
 
-1. Run `python -m unittest mork_compilers.test_mork_compilers -v` 
-2. Parse `ontology/mork/spec/Executable.ttl` under OWL reasoner with Eligibility imported
-3. Execute generated SPARQL from `sparql_backend.compile_query_template()` against `ontology/eligibility/examples/interval-containment.ttl`
-4. Validate generated SHACL with real engine against example fixtures (missing candidate, out-of-range candidate)
-5. Load generated SWRL into Drools/Pellet and confirm inference
+1. Run `python -m unittest mork_compilers.test_mork_compilers -v` (→ A1)
+2. Parse `ontology/mork/spec/Executable.ttl` under OWL reasoner with Eligibility imported (→ A2)
+3. Execute generated SPARQL from `sparql_backend.compile_query_template()` against `ontology/eligibility/examples/interval-containment.ttl` (→ A3)
+4. Validate generated SHACL with real engine against example fixtures (missing candidate, out-of-range candidate) (→ A4)
+5. Load generated SWRL into Drools/Pellet and confirm inference (→ A5, gated on Part B)
 
 ## Repository integration
 

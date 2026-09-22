@@ -108,12 +108,13 @@ Epic decomposition into phase plans is **no longer blocked**: the required Phase
 
 | Field | Value |
 |-------|-------|
-| **Status** | ⏳ Source complete, awaiting runtime validation |
+| **Status** | ⏳ Source complete; verification plan authored (2026-09-23), not yet executed |
 | **Unit ID** | `eligibility-compiler` |
+| **Plan** | [eligibility-compiler.md](plans/eligibility-compiler.md) — verification (Part A) + shared test-only reasoning/rules-engine infrastructure (Part B) |
 | **Status Record** | [eligibility-compiler.md](status/eligibility-compiler.md) |
 | **Implementation** | `tools/mork_compilers/` — three backends (SPARQL, SHACL, SWRL) |
 | **Coverage** | IntervalCondition only (other condition types deferred); positive-only per ADR-A24 |
-| **Tests** | Unit tests present; need runtime validation in Python 3.11 environment with SHACL/SWRL engines |
+| **Tests** | Unit tests present; need runtime validation. SPARQL (`rdflib`) and SHACL (`pyshacl`) validation need no new dependency; SWRL/OWL-reasoner validation is gated on Part B's new shared test-only module |
 
 ### Deliberate Non-Coverage
 - No native backend
@@ -122,7 +123,8 @@ Epic decomposition into phase plans is **no longer blocked**: the required Phase
 - SWRL positive-only per ADR-A24
 
 ### Blocks
-- Needs network environment with SHACL/SWRL engines to validate
+- SWRL/OWL-reasoner validation needs `platform/reasoning-testkit` (new, proposed by the plan above, ADR-A81) — a shared, test-scope-only Maven module wrapping an OWL/SWRL reasoner and, if a second consumer emerges, Drools (Apache-2.0, no licence concern), consumed by Python test suites via a CLI subprocess rather than a direct dependency. Explicitly never a runtime dependency of any product package.
+- Licence check complete (2026-09-23): Openllet is **AGPL-3.0** (inherited from Pellet, not Apache-2.0 as an earlier draft wrongly stated), usable only because the module's isolation design (test-scope + subprocess CLI, never linked or distributed) avoids creating a combined/derivative work. **HermiT (LGPL-3.0)** is a lower-risk alternative but supports DL-safe SWRL rules only — open question is whether ADR-A24's SWRL subset is DL-safe. See [eligibility-compiler.md](plans/eligibility-compiler.md) §B.4
 
 ---
 
