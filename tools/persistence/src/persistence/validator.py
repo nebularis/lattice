@@ -88,6 +88,43 @@ def check_cross_axis(
                 "at commit grain. Drop the flag, or move to dal:EventGrain.",
             )
 
+    # New row (persistence-compiler-iri-sync Slice 1, 2026-09-23): epoch
+    # guard scope. Mirrors dal:RowLevelGuardOnlyWarningShape. Fires
+    # whether the value came from an explicit dal:EpochProfile or from
+    # BASELINE_DEFAULTS, so the discouraged shape is never generated
+    # silently (sketch note in model.py's BASELINE_DEFAULTS comment).
+    # Warning severity, matching the SHACL shape: this is a documented,
+    # adopter-facing trade-off (ADR-A82), never a hard refusal.
+    epoch_guard = dimensions.get("epochGuardScope")
+    if epoch_guard is not None and _local(epoch_guard.value) == "RowLevelGuardOnly":
+        diagnostics.append(
+            Diagnostic(
+                kind="RowLevelGuardOnly",
+                severity="WARNING",
+                target=str(target),
+                message=(
+                    "dal:epochGuardScope is dal:RowLevelGuardOnly (either explicitly declared or "
+                    "the platform baseline default): a write guarded only on the version row's own "
+                    "epoch can still match an unrestored row after a dataset-level bump that never "
+                    "reaches that row. dal:DatasetLevelGuard is required for restore safety to "
+                    "actually hold (iri-identity-patterns.md §10.3)."
+                ),
+            )
+        )
+    if epoch_guard is not None and _local(epoch_guard.extra.get("epochAuthority")) == "StoreLocalEpoch":
+        diagnostics.append(
+            Diagnostic(
+                kind="StoreLocalEpoch",
+                severity="WARNING",
+                target=str(target),
+                message=(
+                    "dal:epochAuthority is dal:StoreLocalEpoch: unsafe under a double restore from "
+                    "the same backup, since the second restore reuses the epoch the first one just "
+                    "allocated inside the same dataset (iri-identity-patterns.md §10.3)."
+                ),
+            )
+        )
+
     # Row 5: a uniqueness key property outside the declared boundary.
     if boundary_local == "CompositePropertyBoundary" and boundary is not None:
         boundary_shape = boundary.extra.get("boundaryShape")

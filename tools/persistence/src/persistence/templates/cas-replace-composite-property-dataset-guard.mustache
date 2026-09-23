@@ -1,0 +1,46 @@
+{{! cas-replace-composite-property-dataset-guard: sketch section 4.3's
+    CompositePropertyBoundary variant, dal:DatasetLevelGuard variant
+    (persistence-compiler-iri-sync Slice 1). Identical to
+    cas-replace-composite-property.mustache except for the added
+    dataset-level epoch guard in WHERE (iri-identity-patterns.md §10.3).
+    See that template's own comment for the property-path and PAYLOAD
+    marker rationale, not repeated here.
+
+    Note for template authors: never put a Mustache tag inside this
+    comment block, including inside prose describing a slot by name in
+    braces. Chevron's comment parser ends at the first closing double-brace
+    it sees, even one nested inside a triple-brace tag, which silently
+    truncates the comment and corrupts everything after it. }}
+PREFIX pat: <https://example.org/lattice/patterns#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+DELETE {
+  ?root ?p1 ?o1 .
+  ?member ?p2 ?o2 .
+  GRAPH {{{metaGraphPrefix}}} { $root pat:seq $expectedSeq ; pat:head ?prevRev }
+}
+INSERT {
+  GRAPH ?logGraph { #PAYLOAD# }
+  GRAPH {{{metaGraphPrefix}}} { $root pat:epoch $epoch ; pat:seq $nextSeq ; pat:head $newRev }
+  GRAPH {{{txnGraph}}}        { $txnId pat:rev $newRev }
+  GRAPH ?logGraph2 {
+      $newRev a pat:Revision ; pat:target $root ; pat:epoch $epoch ; pat:seq $nextSeq ;
+              pat:prevRev ?prevRev ; pat:txn $txnId ; pat:recordedAt ?now
+  }
+}
+WHERE {
+  BIND(IRI(CONCAT(STR({{{logGraphPrefix}}}), SUBSTR(STR(NOW()), 1, 7))) AS ?logGraph)
+  BIND(?logGraph AS ?logGraph2)
+  GRAPH {{{datasetGraph}}} { {{{datasetNode}}} pat:epoch $epoch }
+  GRAPH {{{metaGraphPrefix}}} {
+      $root pat:epoch $epoch ; pat:seq $expectedSeq ; pat:head ?prevRev
+      FILTER NOT EXISTS { $root pat:deleted true }
+  }
+  FILTER NOT EXISTS { GRAPH {{{txnGraph}}} { $txnId pat:rev ?any } }
+  BIND(NOW() AS ?now)
+  OPTIONAL { $root ?p1 ?o1 }
+  OPTIONAL {
+      $root {{{compositeProperty}}}+ ?member .
+      ?member ?p2 ?o2
+  }
+}

@@ -177,7 +177,7 @@ ex:ClaimantReceipts a dal:DataAccessProfile ;
 
 `dal:PersonalDataReceiptCompatibilityShape` (`shapes/constraints.ttl`) rejects this same scope if `dal:receiptModel` were `dal:PatchLog` or `dal:SnapshotPerRevision` without `dal:perSubjectScoped true` or `dal:erasureStrategy dal:CryptoShred` — not because the framework prefers `dal:ReceiptOnly`, but because the other two models keep a second, immutable copy of the payload that a per-subject graph drop cannot reach. An adopter who genuinely needs replay over personal data selects `dal:CryptoShred` instead and specifies key custody and an as-of failure policy for shredded revisions.
 
-Full fixture set for this and the other new dimensions: [`examples/identity-epoch-privacy-profile.ttl`](examples/identity-epoch-privacy-profile.ttl) (to be authored alongside the compiler wiring — see [ADR-A82](../../docs/architecture/decisions/ADR-A82-framework-neutral-identity-pattern-selection.md)'s consequence that this is a separately scoped slice).
+Full fixture set for this and the other new dimensions: [`examples/identity-epoch-privacy-profile.ttl`](examples/identity-epoch-privacy-profile.ttl) (still to be authored — it spans identity, epoch, and privacy together, and as of `persistence-compiler-iri-sync` Slice 1, 2026-09-23, only the epoch dimension's compiler wiring exists; see [ADR-A82](../../docs/architecture/decisions/ADR-A82-framework-neutral-identity-pattern-selection.md)'s consequence that this is a separately scoped slice). Slice 1 authored two narrower, epoch-only fixtures instead: [`examples/epoch-dataset-level-guard.ttl`](examples/epoch-dataset-level-guard.ttl) and [`examples/warning-epoch-unsafe-restore.ttl`](examples/warning-epoch-unsafe-restore.ttl).
 
 ## 10. Repository layout
 
@@ -187,7 +187,9 @@ ontology/persistence/
   shapes/constraints.ttl     SHACL shapes validating dal: instance data (§3.9)
   examples/                  worked examples 1-3 above, plus one negative
                              fixture per cross-axis check (see the guide's
-                             §3.5 table) and two SHACL-level fixtures
+                             §3.5 table), two SHACL-level fixtures, and two
+                             epoch-guard-scope fixtures (persistence-
+                             compiler-iri-sync Slice 1)
   docs/                      the precedence algorithm and boundary-strategy
                              design, for a reader who has not read the sketch
 ```

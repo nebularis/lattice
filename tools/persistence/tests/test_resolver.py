@@ -30,6 +30,34 @@ class TestBaselineDefaults:
         assert rd.candidate_count == 0
 
 
+class TestEpochGuardScope:
+    """persistence-compiler-iri-sync Slice 1 (2026-09-23): dal:EpochProfile's
+    dal:epochGuardScope, added to ontology/persistence by commit c276afb."""
+
+    def test_baseline_default_is_row_level_guard_only(self, example):
+        g = example("baseline-single-class.ttl")
+        target = _target("LoanApplication")
+        rd = resolver.resolve_dimension(g, target, "epochGuardScope", None)
+        assert rd.value == "RowLevelGuardOnly"
+        assert rd.won_by is None
+        assert rd.candidate_count == 0
+
+    def test_explicit_dataset_level_guard_resolves_with_authority_extra(self, example):
+        g = example("epoch-dataset-level-guard.ttl")
+        target = _target("LoanApplication")
+        rd = resolver.resolve_dimension(g, target, "epochGuardScope", None)
+        assert str(rd.value).rsplit("#", 1)[-1] == "DatasetLevelGuard"
+        assert rd.won_by == LENDING + "LoanApplicationEpoch"
+        assert str(rd.extra["epochAuthority"]).rsplit("#", 1)[-1] == "ExternalHighWaterMark"
+
+    def test_explicit_row_level_guard_only_resolves(self, example):
+        g = example("warning-epoch-unsafe-restore.ttl")
+        target = _target("CreditLine")
+        rd = resolver.resolve_dimension(g, target, "epochGuardScope", None)
+        assert str(rd.value).rsplit("#", 1)[-1] == "RowLevelGuardOnly"
+        assert str(rd.extra["epochAuthority"]).rsplit("#", 1)[-1] == "StoreLocalEpoch"
+
+
 class TestSingleClassResolution:
     def test_resolves_every_dimension(self, example):
         g = example("baseline-single-class.ttl")

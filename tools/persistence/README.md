@@ -37,7 +37,7 @@ Neither subcommand assumes you will ever run the other, or run any further LATTI
 | Stage | Input | Output | Failure mode |
 |---|---|---|---|
 | Load | ontology graphs, an optional `dal:CapabilitySpec` | an in-memory RDF graph | malformed Turtle |
-| Resolve | the loaded graph | one resolved profile per target, six dimensions each, with provenance | `ProfileAmbiguityError` |
+| Resolve | the loaded graph | one resolved profile per target, seven dimensions each, with provenance | `ProfileAmbiguityError` |
 | Validate | resolved profiles | a diagnostics list | `CrossAxisViolation`, `BoundaryConflict`, `MissingBoundaryShapeError` |
 | Select | validated profiles | one named template per generated operation | none — a lookup table |
 | Emit | selected templates + reified parameter bindings | a `dal:CompiledProfile` graph | an encoder rejection (see below) |
@@ -58,6 +58,7 @@ A generated operation's INSERT block that writes application data (`create-if-ab
 - **`cas-replace-composite-property`** uses only the *first* composite property found by walking a target's `dal:boundaryShape`, with `+` (one-or-more) traversal. A shape with several sibling composite properties at the same level needs a property-path alternation (`p1|p2|...`) this first cut does not yet generate.
 - **`dal:EquivalentClassScope` matching** is a syntactic approximation (does the target class appear inside the equivalence expression's `owl:intersectionOf`), not full OWL entailment. No reasoner dependency is introduced anywhere in this compiler, by design (sketch non-goals).
 - **The log-bucket month** (`urn:g:txlog/{month}`) is computed at request time via `NOW()`, inside the generated `WHERE` clause, not baked in as a compile-time constant — this differs from an earlier, since-corrected version of the worked example in the sketch, which would have hard-coded a single month into a template meant to be reused across many months.
+- **`dal:epochGuardScope`'s dataset-level guard graph and node are a fixed constant, not per-deployment configurable** (`persistence-compiler-iri-sync` Slice 1, 2026-09-23). `dal:EpochProfile` (`ontology/persistence` commit `c276afb`) does not declare a property naming which graph or resource IRI holds a deployment's dataset-level epoch value, so `datasetGraph`/`datasetNode` are both hard-coded to `urn:g:dataset`, matching `rdf-sparql-patterns-guide.md` §19.1's worked example exactly, the same way `urn:g:txn`/`urn:g:txlog/` already are. Only `cas-replace-named-graph`, `tombstone-delete-named-graph`, and `cas-replace-composite-property` have a `dal:DatasetLevelGuard` template variant; `unconditional-write`, `cas-replace-value-guard`, and `append-event` do not guard on epoch at all (no per-aggregate version row exists for the first, no meta-graph stamping exists for the others), and adding one to them was judged out of this slice's scope — see [`docs/developer/status/persistence-compiler-iri-sync.md`](../../docs/developer/status/persistence-compiler-iri-sync.md).
 
 ## Development
 

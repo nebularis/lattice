@@ -1,0 +1,18 @@
+# Warning fixture: dal:EpochProfile explicitly declaring both discouraged
+# values together -- dal:RowLevelGuardOnly (RowLevelGuardOnlyWarningShape)
+# and dal:StoreLocalEpoch (StoreLocalEpochWarningShape) -- an operator
+# that has not yet adopted either recommended restore-safety setting
+# (persistence-compiler-iri-sync Slice 1, iri-identity-patterns.md §10.3).
+# Neither is refused: LATTICE never mandates one deployment choice
+# (ADR-A82), but both must be flagged, never silent.
+@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix ex:  <https://example.org/lending#> .
+
+ex:CreditLineScope a dal:ClassScope ;
+    dal:priority 10 ;
+    dal:targetClass ex:CreditLine .
+
+ex:CreditLineEpoch a dal:EpochProfile ;
+    dal:appliesTo        ex:CreditLineScope ;
+    dal:epochGuardScope  dal:RowLevelGuardOnly ;
+    dal:epochAuthority   dal:StoreLocalEpoch .

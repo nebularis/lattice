@@ -1,0 +1,15 @@
+# Positive fixture: dal:EpochProfile explicitly declaring the safe
+# dal:DatasetLevelGuard scope and a restore-safe dal:epochAuthority
+# (persistence-compiler-iri-sync Slice 1, iri-identity-patterns.md §10.3).
+# No warning shape should fire against this configuration.
+@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix ex:  <https://example.org/lending#> .
+
+ex:LoanApplicationScope a dal:ClassScope ;
+    dal:priority 10 ;
+    dal:targetClass ex:LoanApplication .
+
+ex:LoanApplicationEpoch a dal:EpochProfile ;
+    dal:appliesTo        ex:LoanApplicationScope ;
+    dal:epochGuardScope  dal:DatasetLevelGuard ;
+    dal:epochAuthority   dal:ExternalHighWaterMark .

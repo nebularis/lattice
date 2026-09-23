@@ -1,0 +1,44 @@
+{{! cas-replace-named-graph-dataset-guard: guide Chapter 19.1's corrected
+    pattern, dal:DatasetLevelGuard variant (persistence-compiler-iri-sync
+    Slice 1). Identical to cas-replace-named-graph.mustache except for the
+    added dataset-level epoch guard in WHERE: a restore that bumps the
+    dataset's own epoch invalidates every stale writer at once, not only
+    the rows a bump actually reached (iri-identity-patterns.md §10.3).
+    Mustache slots: shard, graphPrefix, metaGraphPrefix, txnGraph,
+    logGraphPrefix, datasetGraph, datasetNode. $-prefixed names bind per
+    request: root, epoch, expectedSeq, nextSeq, txnId, payload,
+    assertGraph, retractGraph.  #PAYLOAD# is a non-SPARQL text-substitution
+    marker, not a bindable variable: a set of triples cannot be bound
+    through a single SPARQL variable. Whatever executes this instantiated
+    template must splice in the caller's already-serialised, trusted
+    payload triples before submission -- see tools/persistence/README.md
+    "Known limitations". }}
+PREFIX pat: <https://example.org/lattice/patterns#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+DELETE {
+  GRAPH ?g { ?s ?p ?o }
+  GRAPH {{{metaGraphPrefix}}} { $root pat:seq $expectedSeq ; pat:head ?prevRev }
+}
+INSERT {
+  GRAPH ?g { #PAYLOAD# }
+  GRAPH {{{metaGraphPrefix}}} { $root pat:epoch $epoch ; pat:seq $nextSeq ; pat:head $newRev }
+  GRAPH {{{txnGraph}}}        { $txnId pat:rev $newRev }
+  GRAPH ?logGraph {
+      $newRev a pat:Revision ; pat:target $root ; pat:epoch $epoch ; pat:seq $nextSeq ;
+              pat:prevRev ?prevRev ; pat:txn $txnId ; pat:recordedAt ?now ;
+              pat:asserts $assertGraph ; pat:retracts $retractGraph
+  }
+}
+WHERE {
+  BIND(IRI(CONCAT({{{graphPrefix}}}, REPLACE(STR($root), "^.*[/#]", ""))) AS ?g)
+  BIND(IRI(CONCAT(STR({{{logGraphPrefix}}}), SUBSTR(STR(NOW()), 1, 7))) AS ?logGraph)
+  GRAPH {{{datasetGraph}}} { {{{datasetNode}}} pat:epoch $epoch }
+  GRAPH {{{metaGraphPrefix}}} {
+      $root pat:epoch $epoch ; pat:seq $expectedSeq ; pat:head ?prevRev
+      FILTER NOT EXISTS { $root pat:deleted true }
+  }
+  FILTER NOT EXISTS { GRAPH {{{txnGraph}}} { $txnId pat:rev ?any } }
+  BIND(NOW() AS ?now)
+  OPTIONAL { GRAPH ?g { ?s ?p ?o } }
+}

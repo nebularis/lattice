@@ -88,6 +88,45 @@ def test_mixed_receipt_model_does_not_false_positive_on_uniform_family(example):
     assert diagnostics == []
 
 
+# persistence-compiler-iri-sync Slice 1 (2026-09-23): dal:epochGuardScope.
+# Mirrors dal:RowLevelGuardOnlyWarningShape / dal:StoreLocalEpochWarningShape.
+# Unlike the cross-axis rows above, this fires even on the *baseline*
+# default (BASELINE_DEFAULTS["epochGuardScope"] == "RowLevelGuardOnly"),
+# per model.py's comment: the discouraged shape must never be generated
+# silently, whether by explicit choice or by omission.
+
+def test_epoch_guard_scope_warns_on_baseline_default(example):
+    g = example("baseline-single-class.ttl")
+    target = _target_for(g, "LoanApplication")
+    dims, uniq = _resolve_all(g, target)
+    assert dims["epochGuardScope"].value == "RowLevelGuardOnly"
+    assert dims["epochGuardScope"].candidate_count == 0
+    diagnostics = validator.check_cross_axis(g, target, dims, uniq)
+    kinds = {(d.kind, d.severity) for d in diagnostics}
+    assert ("RowLevelGuardOnly", "WARNING") in kinds
+
+
+def test_epoch_guard_scope_warns_on_explicit_unsafe_configuration(example):
+    g = example("warning-epoch-unsafe-restore.ttl")
+    target = _target_for(g, "CreditLine")
+    dims, uniq = _resolve_all(g, target)
+    diagnostics = validator.check_cross_axis(g, target, dims, uniq)
+    kinds = {(d.kind, d.severity) for d in diagnostics}
+    assert ("RowLevelGuardOnly", "WARNING") in kinds
+    assert ("StoreLocalEpoch", "WARNING") in kinds
+
+
+def test_epoch_guard_scope_does_not_warn_on_dataset_level_guard(example):
+    g = example("epoch-dataset-level-guard.ttl")
+    target = _target_for(g, "LoanApplication")
+    dims, uniq = _resolve_all(g, target)
+    assert dims["epochGuardScope"].value.endswith("DatasetLevelGuard")
+    diagnostics = validator.check_cross_axis(g, target, dims, uniq)
+    kinds = {d.kind for d in diagnostics}
+    assert "RowLevelGuardOnly" not in kinds
+    assert "StoreLocalEpoch" not in kinds
+
+
 @pytest.mark.parametrize(
     "fixture",
     [

@@ -64,6 +64,13 @@ def select_operations(
     meta = dimensions["metaTopology"]
     shard_count = int(meta.extra.get("metaShards", DEFAULT_META_SHARDS))
     shard = _shard_for(target, shard_count)
+    # dal:epochGuardScope (persistence-compiler-iri-sync Slice 1). "urn:g:dataset"
+    # is a fixed, well-known graph and subject IRI, exactly like the
+    # existing "urn:g:txn"/"urn:g:txlog/" constants below: it is not
+    # per-target, so it is not derived from any dal: property, matching
+    # guide §19.1's worked example. Not independently configurable in
+    # this slice -- see persistence-compiler-iri-sync's status record.
+    dataset_level_guard = _local(dimensions["epochGuardScope"].value) == "DatasetLevelGuard"
 
     ops: list[GeneratedOperation] = []
     common_bindings = [
@@ -73,6 +80,8 @@ def select_operations(
         ),
         ParameterBinding("txnGraph", "Iri", Iri.encode("urn:g:txn")),
         ParameterBinding("metaGraphPrefix", "Iri", Iri.encode(f"urn:g:meta/{shard}")),
+        ParameterBinding("datasetGraph", "Iri", Iri.encode("urn:g:dataset")),
+        ParameterBinding("datasetNode", "Iri", Iri.encode("urn:g:dataset")),
     ]
 
     # Computed unconditionally whenever the boundary is NamedGraphBoundary,
@@ -92,9 +101,17 @@ def select_operations(
 
     if concurrency == "Optimistic":
         if boundary == "NamedGraphBoundary":
+            cas_template = (
+                "cas-replace-named-graph-dataset-guard.mustache" if dataset_level_guard
+                else "cas-replace-named-graph.mustache"
+            )
+            tombstone_template = (
+                "tombstone-delete-named-graph-dataset-guard.mustache" if dataset_level_guard
+                else "tombstone-delete-named-graph.mustache"
+            )
             ops.append(GeneratedOperation("create-if-absent", "create-if-absent-named-graph.mustache", common_bindings))
-            ops.append(GeneratedOperation("cas-replace", "cas-replace-named-graph.mustache", common_bindings))
-            ops.append(GeneratedOperation("tombstone-delete", "tombstone-delete-named-graph.mustache", common_bindings))
+            ops.append(GeneratedOperation("cas-replace", cas_template, common_bindings))
+            ops.append(GeneratedOperation("tombstone-delete", tombstone_template, common_bindings))
         elif boundary == "CompositePropertyBoundary":
             # SPARQL 1.1 property paths support only *, +, ? repetition, not
             # bounded {n,m} (there is no such production in the grammar),
@@ -112,7 +129,11 @@ def select_operations(
                 if first_property is not None
                 else []
             )
-            ops.append(GeneratedOperation("cas-replace", "cas-replace-composite-property.mustache", bindings))
+            composite_template = (
+                "cas-replace-composite-property-dataset-guard.mustache" if dataset_level_guard
+                else "cas-replace-composite-property.mustache"
+            )
+            ops.append(GeneratedOperation("cas-replace", composite_template, bindings))
         elif boundary == "NoBoundary":
             guard_prop = dimensions["concurrencyProfile"].extra.get("valueGuardProperty")
             bindings = common_bindings + (

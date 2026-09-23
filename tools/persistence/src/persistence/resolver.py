@@ -49,6 +49,17 @@ _DIMENSION_SPEC: dict[str, tuple[URIRef, URIRef, tuple[URIRef, ...]]] = {
         DAL.metaTopology,
         (DAL.metaShards, DAL.priorMetaShards, DAL.epochBumpAcknowledged),
     ),
+    # Added by persistence-compiler-iri-sync Slice 1. dal:epochAuthority is
+    # carried as an extra, not the resolved value: dal:epochGuardScope is
+    # what determines the generated SPARQL's guard shape (guide §19.1),
+    # while dal:epochAuthority governs the restore runbook, not the write
+    # path. dal:epochCoordinatorBinding/erasureRegisterBinding/
+    # erasureReplayOnRestore are deferred to Slice 4 of the same plan.
+    "epochGuardScope": (
+        DAL.EpochProfile,
+        DAL.epochGuardScope,
+        (DAL.epochAuthority,),
+    ),
 }
 
 

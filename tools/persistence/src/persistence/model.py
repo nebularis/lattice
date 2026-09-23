@@ -13,24 +13,40 @@ from dataclasses import dataclass, field
 from typing import Any, Optional
 
 
-# The six dimension names (sketch §3.3), used as plain strings throughout,
-# never as IRIs -- ``dal:dimension`` is an ``xsd:string`` property.
+# The original six dimension names (sketch §3.3), used as plain strings
+# throughout, never as IRIs -- ``dal:dimension`` is an ``xsd:string``
+# property. ``epochGuardScope`` was added by the persistence-compiler-iri-
+# sync unit (Slice 1, 2026-09-23) to resolve ``dal:EpochProfile``'s
+# ``dal:epochGuardScope``, added to ``ontology/persistence`` by commit
+# c276afb (iri-identity-patterns.md §10.3).
 DIMENSIONS = (
     "aggregateBoundary",
     "concurrencyProfile",
     "orderingGrain",
     "receiptModel",
     "metaTopology",
+    "epochGuardScope",
 )
 
 # Platform baseline defaults (sketch §3.4.1). Every dimension resolves to
 # one of these when no scope matches a target.
+#
+# ``epochGuardScope`` defaults to ``RowLevelGuardOnly`` deliberately: this
+# is the shape every existing template already generated before Slice 1 of
+# persistence-compiler-iri-sync, so declaring it as the explicit baseline
+# changes no existing deployment's generated SPARQL. It is the shape
+# ``dal:RowLevelGuardOnlyWarningShape`` calls discouraged, and this
+# baseline default is not exempt from that warning: see
+# ``validator.check_cross_axis``'s epoch-guard-scope row, which fires
+# whether the value came from an explicit ``dal:EpochProfile`` or from
+# this default, so the discouraged shape is never generated silently.
 BASELINE_DEFAULTS: dict[str, str] = {
     "aggregateBoundary": "NamedGraphBoundary",
     "concurrencyProfile": "ProvidedConcurrency",
     "orderingGrain": "CommitGrain",
     "receiptModel": "ReceiptOnly",
     "metaTopology": "SharedSharded",
+    "epochGuardScope": "RowLevelGuardOnly",
 }
 
 

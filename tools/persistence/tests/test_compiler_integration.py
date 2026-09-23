@@ -29,6 +29,7 @@ POSITIVE_FIXTURES = [
     ("namespace-wide.ttl", "https://example.org/lending#CreditDecision"),
     ("value-based-cas.ttl", "https://example.org/lending#Order"),
     ("composite-property-boundary-shacl.ttl", "https://example.org/lending#Order"),
+    ("epoch-dataset-level-guard.ttl", "https://example.org/lending#LoanApplication"),
 ]
 
 NEGATIVE_FIXTURES = [
@@ -137,3 +138,66 @@ class TestShaclSelfValidation:
             data, shacl_graph=shapes, inference="none", advanced=True, allow_warnings=True
         )
         assert "Results (0)" in report or "SharedClassProfileWarningShape" not in report
+
+    def test_epoch_unsafe_restore_warnings_fire(self, shapes):
+        # persistence-compiler-iri-sync Slice 1: SHACL-level defence in
+        # depth for the same invariant test_validator.py checks in Python.
+        data = Graph()
+        data.parse(SPEC_TTL, format="turtle")
+        data.parse(EXAMPLES_DIR / "warning-epoch-unsafe-restore.ttl", format="turtle")
+        conforms, _, report = pyshacl.validate(
+            data, shacl_graph=shapes, inference="none", advanced=True, allow_warnings=True
+        )
+        assert conforms  # warnings alone do not fail conformance
+        assert "RowLevelGuardOnlyWarningShape" in report
+        assert "StoreLocalEpochWarningShape" in report
+
+    def test_epoch_dataset_level_guard_has_no_warnings(self, shapes):
+        data = Graph()
+        data.parse(SPEC_TTL, format="turtle")
+        data.parse(EXAMPLES_DIR / "epoch-dataset-level-guard.ttl", format="turtle")
+        conforms, _, report = pyshacl.validate(
+            data, shacl_graph=shapes, inference="none", advanced=True, allow_warnings=True
+        )
+        assert conforms
+        assert "RowLevelGuardOnlyWarningShape" not in report
+        assert "StoreLocalEpochWarningShape" not in report
+
+
+class TestEpochGuardScopeTemplateSelection:
+    """persistence-compiler-iri-sync Slice 1 (2026-09-23): the resolved
+    dal:epochGuardScope value must select the matching CAS/tombstone
+    template variant, and the added dataset-level guard clause must
+    survive instantiate + parse, not just render."""
+
+    def test_dataset_level_guard_selects_dataset_guard_templates(self):
+        from rdflib import URIRef
+
+        g = Graph()
+        g.parse(SPEC_TTL, format="turtle")
+        g.parse(EXAMPLES_DIR / "epoch-dataset-level-guard.ttl", format="turtle")
+        target = URIRef("https://example.org/lending#LoanApplication")
+
+        out, compiled = compile_to_graph(g, classes={target})
+        assert len(compiled) == 1
+        cas_ops = [o for o in compiled[0].operations if o.operation == "cas-replace"]
+        assert len(cas_ops) == 1
+        assert cas_ops[0].template_id == "cas-replace-named-graph-dataset-guard.mustache"
+
+        rendered = instantiate_profile(out)
+        text = rendered["cas-replace"]
+        assert "urn:g:dataset" in text
+        prepareUpdate(text.replace("#PAYLOAD#", PAYLOAD_SUBSTITUTE))
+
+    def test_baseline_selects_original_named_graph_template(self):
+        from rdflib import URIRef
+
+        g = Graph()
+        g.parse(SPEC_TTL, format="turtle")
+        g.parse(EXAMPLES_DIR / "baseline-single-class.ttl", format="turtle")
+        target = URIRef("https://example.org/lending#LoanApplication")
+
+        _, compiled = compile_to_graph(g, classes={target})
+        cas_ops = [o for o in compiled[0].operations if o.operation == "cas-replace"]
+        assert len(cas_ops) == 1
+        assert cas_ops[0].template_id == "cas-replace-named-graph.mustache"
