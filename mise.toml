@@ -102,7 +102,7 @@ run = "docker compose -f deployment/compose/docker-compose.yml down"
 
 [tasks.clean]
 description = "Clean all build artifacts and caches"
-depends = ["clean:java", "clean:python", "clean:frontend", "clean:build"]
+depends = ["clean:java", "clean:python", "clean:frontend", "clean:build", "clean:docs"]
 
 [tasks."clean:java"]
 run = "mvn -f platform/pom.xml clean"
@@ -118,3 +118,22 @@ run = "rm -rf node_modules .yarn apps/*/node_modules .build/yarn-cache/* .build/
 [tasks."clean:build"]
 description = "Clean generated build outputs"
 run = "rm -rf build/ ontology/mork/mtp/out/"
+
+[tasks."clean:docs"]
+description = "Clean local Jekyll/Bundler artifacts under docs/ (never the committed Gemfile/Gemfile.lock)"
+run = "rm -rf docs/vendor docs/.bundle docs/_site docs/.jekyll-cache docs/.jekyll-metadata"
+
+[tasks."bootstrap:jekyll"]
+description = "Install Ruby/Bundler/Jekyll locally for docs/ (GitHub Pages). Not part of the default bootstrap task — run explicitly when working on docs content."
+tools = { ruby = "3.4" }
+run = """
+cd docs
+gem install bundler -v 2.6.2 --conservative
+bundle config set --local path 'vendor/bundle'
+bundle install
+"""
+
+[tasks."serve:jekyll"]
+description = "Serve docs/ locally with Jekyll (run bootstrap:jekyll first)"
+tools = { ruby = "3.4" }
+run = "cd docs && bundle exec jekyll serve"

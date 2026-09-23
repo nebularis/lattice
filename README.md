@@ -236,6 +236,17 @@ mise run check:persistence
 
 Compiles `ontology/persistence`'s own worked examples, runs the resolver/validator/capability/boundary unit tests, the injection corpus, the determinism checks, and the Python architecture-policy checks, and validates every example fixture against `ontology/persistence/shapes/constraints.ttl`. See [`tools/persistence/README.md`](tools/persistence/README.md).
 
+### Work on the docs site locally (Jekyll)
+
+Not part of the default `mise run bootstrap` — Ruby/Jekyll are only needed when editing GitHub Pages content under `docs/`:
+
+```bash
+mise run bootstrap:jekyll
+mise run serve:jekyll
+```
+
+`bootstrap:jekyll` installs an isolated Ruby (via `mise`, scoped to this task only) and the exact gem set `Gemfile.lock` pins, into `docs/vendor/bundle` (gitignored, never committed). `mise run clean` (or `mise run clean:docs` alone) removes `docs/vendor/`, `docs/.bundle/`, and any local Jekyll build output (`docs/_site/`, `.jekyll-cache/`) without touching `docs/Gemfile`/`docs/Gemfile.lock`.
+
 ### Validate SPC Python
 
 ```bash
