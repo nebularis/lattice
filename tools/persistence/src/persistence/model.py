@@ -24,6 +24,18 @@ from typing import Any, Optional
 # (plan decision 1): each is resolved by the same precedence algorithm as
 # the original six, from any node that declares it, instead of being read
 # only as an "extra" of whichever node won a related dimension.
+#
+# Slice 4 promotes ``epochAuthority`` out of ``epochGuardScope``'s extras
+# into its own dimension, for the same reason Slice 2 gave the other
+# extension properties their own dimension: read only as an extra, a
+# property declared on a node other than the one that wins
+# ``epochGuardScope`` would be dropped silently. Slice 4 also wires
+# ``dal:PrivacyProfile``'s three properties and ``dal:ReceiptProfile``'s
+# ``dal:perSubjectScoped`` into resolution, one dimension per property,
+# matching Slice 2's per-property style: ``dal:PrivacyProfile`` is a new
+# profile class in the same shape as ``dal:EpochProfile``, not a
+# resource-role situation like Slice 3's identity dimensions, so there is
+# no reason for a whole-node-wins model here.
 DIMENSIONS = (
     "aggregateBoundary",
     "concurrencyProfile",
@@ -44,12 +56,19 @@ DIMENSIONS = (
     "logShards",
     "keyShards",
     "registryGraph",
+    # Slice 4 (2026-09-23).
+    "epochAuthority",
+    "privacyClass",
+    "erasureStrategy",
+    "erasurePrecedence",
+    "perSubjectScoped",
 )
 
 # Dimensions whose resolved value is an RDF literal, emitted with
 # ``dal:resolvedLiteral`` rather than ``dal:resolvedValue``.
 LITERAL_DIMENSIONS = frozenset(
-    {"lagWindowMillis", "asOfFloorSource", "txnShards", "logShards", "keyShards", "registryGraph"}
+    {"lagWindowMillis", "asOfFloorSource", "txnShards", "logShards", "keyShards", "registryGraph",
+     "perSubjectScoped"}
 )
 
 # Platform baseline defaults (sketch §3.4.1). Every dimension resolves to
@@ -80,6 +99,12 @@ BASELINE_DEFAULTS: dict[str, str] = {
     "deadlockPolicy": "EngineDetectAndRetry",
     "contiguityCheckMode": "BlockingContiguityCheck",
     "retentionMode": "PrefixOnlyRetention",
+    # Slice 4 (plan decision, following Slice 2 decision 2's precedent): no
+    # default for epochAuthority, privacyClass, erasureStrategy,
+    # erasurePrecedence or perSubjectScoped. An undeclared dal:PrivacyProfile
+    # means "this scope declares no privacy stance", not "this scope is
+    # PublicData": absence is itself meaningful, checked only where a
+    # dal:PrivacyProfile actually exists (validator._check_slice_4).
 }
 
 

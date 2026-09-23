@@ -48,14 +48,20 @@ class TestEpochGuardScope:
         rd = resolver.resolve_dimension(g, target, "epochGuardScope", None)
         assert str(rd.value).rsplit("#", 1)[-1] == "DatasetLevelGuard"
         assert rd.won_by == LENDING + "LoanApplicationEpoch"
-        assert str(rd.extra["epochAuthority"]).rsplit("#", 1)[-1] == "ExternalHighWaterMark"
+        # persistence-compiler-iri-sync Slice 4: epochAuthority is promoted
+        # out of epochGuardScope's extras into its own dimension, resolved
+        # from the same dal:EpochProfile node.
+        authority = resolver.resolve_dimension(g, target, "epochAuthority", None)
+        assert str(authority.value).rsplit("#", 1)[-1] == "ExternalHighWaterMark"
+        assert authority.won_by == LENDING + "LoanApplicationEpoch"
 
     def test_explicit_row_level_guard_only_resolves(self, example):
         g = example("warning-epoch-unsafe-restore.ttl")
         target = _target("CreditLine")
         rd = resolver.resolve_dimension(g, target, "epochGuardScope", None)
         assert str(rd.value).rsplit("#", 1)[-1] == "RowLevelGuardOnly"
-        assert str(rd.extra["epochAuthority"]).rsplit("#", 1)[-1] == "StoreLocalEpoch"
+        authority = resolver.resolve_dimension(g, target, "epochAuthority", None)
+        assert str(authority.value).rsplit("#", 1)[-1] == "StoreLocalEpoch"
 
 
 class TestSingleClassResolution:

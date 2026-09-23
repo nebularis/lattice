@@ -1,0 +1,24 @@
+# Negative fixture: dal:PersonalData with a dal:PatchLog receipt model and
+# neither dal:perSubjectScoped true nor dal:erasureStrategy dal:CryptoShred
+# (persistence-compiler-iri-sync Slice 4, ADR-A68 point 7, mirrors
+# dal:PersonalDataReceiptCompatibilityShape). The two profile individuals
+# share one dal:appliesTo scope -- exactly the join the SHACL shape and the
+# compiler's Python mirror both check -- but each is its own node. The
+# erasure strategy here (dal:PerSubjectGraphDrop) is otherwise lawful on its
+# own, so this fixture isolates the receipt conflict rather than also
+# tripping dal:PersonalDataRequiresErasureShape.
+@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix ex:  <https://example.org/lending#> .
+
+ex:CaseFileScope a dal:ClassScope ;
+    dal:priority 10 ;
+    dal:targetClass ex:CaseFile .
+
+ex:CaseFilePrivacy a dal:PrivacyProfile ;
+    dal:appliesTo       ex:CaseFileScope ;
+    dal:privacyClass    dal:PersonalData ;
+    dal:erasureStrategy dal:PerSubjectGraphDrop .
+
+ex:CaseFileReceipts a dal:ReceiptProfile ;
+    dal:appliesTo    ex:CaseFileScope ;
+    dal:receiptModel dal:PatchLog .

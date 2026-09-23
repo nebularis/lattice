@@ -111,7 +111,7 @@ def check_cross_axis(
                 ),
             )
         )
-    if epoch_guard is not None and _local(epoch_guard.extra.get("epochAuthority")) == "StoreLocalEpoch":
+    if epoch_guard is not None and _local(_value(dimensions, "epochAuthority")) == "StoreLocalEpoch":
         diagnostics.append(
             Diagnostic(
                 kind="StoreLocalEpoch",
@@ -126,6 +126,7 @@ def check_cross_axis(
         )
 
     diagnostics.extend(_check_slice_2(target, dimensions))
+    diagnostics.extend(_check_slice_4(target, dimensions))
 
     # Row 5: a uniqueness key property outside the declared boundary.
     if boundary_local == "CompositePropertyBoundary" and boundary is not None:
@@ -249,6 +250,56 @@ def _check_slice_2(target: Target, dimensions: dict[str, ResolvedDimension]) -> 
     return out
 
 
+def _check_slice_4(target: Target, dimensions: dict[str, ResolvedDimension]) -> list[Diagnostic]:
+    """persistence-compiler-iri-sync Slice 4: the privacy/erasure checks.
+
+    Both mirrored shapes (``dal:PersonalDataRequiresErasureShape``,
+    ``dal:PersonalDataReceiptCompatibilityShape``) declare no
+    ``sh:severity``, so both default to ``sh:Violation``: an unreachable
+    erasure obligation is a correctness failure, not a discouraged-but-
+    valid trade-off, and both are raised as :class:`CrossAxisViolation`
+    rather than returned as warnings, matching every other un-severitied
+    shape this compiler mirrors (``DigestSchemeRequired``,
+    ``AsOfFloorRetentionConflict``, and so on).
+
+    The second check joins ``dal:PrivacyProfile``'s dimensions with
+    ``dal:ReceiptProfile``'s on resolved values, which also catches the
+    two profile classes declared on separate nodes -- something the
+    node-local SHACL shape (matched only by a shared ``dal:appliesTo``
+    scope) cannot see. This is the first check in this module to join two
+    dimensions that come from genuinely different profile classes, rather
+    than two properties of the same one."""
+    privacy_class = _local(_value(dimensions, "privacyClass"))
+    if privacy_class != "PersonalData":
+        return []
+
+    erasure_strategy = _local(_value(dimensions, "erasureStrategy"))
+
+    # Mirrors dal:PersonalDataRequiresErasureShape.
+    if erasure_strategy == "NoErasure":
+        raise CrossAxisViolation(
+            "PersonalDataRequiresErasure",
+            str(target),
+            "dal:privacyClass dal:PersonalData with dal:erasureStrategy dal:NoErasure has no lawful "
+            "erasure path. Select dal:PerSubjectGraphDrop or dal:CryptoShred (ADR-A68).",
+        )
+
+    # Mirrors dal:PersonalDataReceiptCompatibilityShape.
+    receipt_model = _local(_value(dimensions, "receiptModel"))
+    if receipt_model in ("PatchLog", "SnapshotPerRevision"):
+        per_subject_scoped = bool(_value(dimensions, "perSubjectScoped"))
+        if not per_subject_scoped and erasure_strategy != "CryptoShred":
+            raise CrossAxisViolation(
+                "PersonalDataReceiptConflict",
+                str(target),
+                f"dal:privacyClass dal:PersonalData with dal:receiptModel dal:{receipt_model} and "
+                "neither dal:perSubjectScoped true nor dal:erasureStrategy dal:CryptoShred: the delta "
+                "or snapshot graphs are a second, immutable copy of the personal data that per-subject "
+                "graph drop cannot reach (guide §20.4, ADR-A68 point 7).",
+            )
+    return []
+
+
 DIGEST_ENCODINGS = frozenset({"lowercase-hex", "base32", "base64url"})
 
 
@@ -314,11 +365,12 @@ def check_identity(
                 )
             # Joins the epoch dimension: position-derived IRIs are reused after
             # a double restore unless the epoch is durable and guarded.
-            epoch = dimensions.get("epochGuardScope")
+            epoch_guard_scope = dimensions.get("epochGuardScope")
+            epoch_authority = dimensions.get("epochAuthority")  # Slice 4: its own dimension, not an extra
             unsafe = []
-            if epoch is not None and _local(epoch.value) == "RowLevelGuardOnly":
+            if epoch_guard_scope is not None and _local(epoch_guard_scope.value) == "RowLevelGuardOnly":
                 unsafe.append("dal:RowLevelGuardOnly")
-            if epoch is not None and _local(epoch.extra.get("epochAuthority")) == "StoreLocalEpoch":
+            if epoch_authority is not None and _local(epoch_authority.value) == "StoreLocalEpoch":
                 unsafe.append("dal:StoreLocalEpoch")
             if unsafe:
                 out.append(_warning(

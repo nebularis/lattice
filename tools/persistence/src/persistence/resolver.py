@@ -49,16 +49,18 @@ _DIMENSION_SPEC: dict[str, tuple[URIRef, URIRef, tuple[URIRef, ...]]] = {
         DAL.metaTopology,
         (DAL.metaShards, DAL.priorMetaShards, DAL.epochBumpAcknowledged),
     ),
-    # Added by persistence-compiler-iri-sync Slice 1. dal:epochAuthority is
-    # carried as an extra, not the resolved value: dal:epochGuardScope is
-    # what determines the generated SPARQL's guard shape (guide §19.1),
-    # while dal:epochAuthority governs the restore runbook, not the write
-    # path. dal:epochCoordinatorBinding/erasureRegisterBinding/
-    # erasureReplayOnRestore are deferred to Slice 4 of the same plan.
+    # Added by persistence-compiler-iri-sync Slice 1, revised by Slice 4.
+    # dal:epochGuardScope is what determines the generated SPARQL's guard
+    # shape (guide §19.1). dal:epochAuthority governs the restore runbook,
+    # not the write path, and was originally carried as an extra of this
+    # dimension; Slice 4 promotes it to its own dimension below, for the
+    # same reason Slice 2 gave every other extension property its own
+    # dimension (an extra is silently dropped if declared on a node other
+    # than the one that wins the dimension it rides on).
     "epochGuardScope": (
         DAL.EpochProfile,
         DAL.epochGuardScope,
-        (DAL.epochAuthority,),
+        (),
     ),
     # Slice 2 (plan decision 1): one dimension per extension property, so
     # a property declared on its own profile node, or on a lower-priority
@@ -76,6 +78,21 @@ _DIMENSION_SPEC: dict[str, tuple[URIRef, URIRef, tuple[URIRef, ...]]] = {
     "logShards": (DAL.MetaTopologyProfile, DAL.logShards, ()),
     "keyShards": (DAL.MetaTopologyProfile, DAL.keyShards, ()),
     "registryGraph": (DAL.MetaTopologyProfile, DAL.registryGraph, ()),
+    # Slice 4 (2026-09-23). epochAuthority carries the remaining restore-
+    # surface properties as extras: they are all read from the same
+    # dal:EpochProfile node and none of them needs its own cross-axis
+    # check yet, unlike epochAuthority itself (checked against
+    # eventIdentityStrategy in check_identity, and against StoreLocalEpoch
+    # in check_cross_axis).
+    "epochAuthority": (
+        DAL.EpochProfile,
+        DAL.epochAuthority,
+        (DAL.epochCoordinatorBinding, DAL.erasureRegisterBinding, DAL.erasureReplayOnRestore),
+    ),
+    "privacyClass": (DAL.PrivacyProfile, DAL.privacyClass, ()),
+    "erasureStrategy": (DAL.PrivacyProfile, DAL.erasureStrategy, ()),
+    "erasurePrecedence": (DAL.PrivacyProfile, DAL.erasurePrecedence, ()),
+    "perSubjectScoped": (DAL.ReceiptProfile, DAL.perSubjectScoped, ()),
 }
 
 

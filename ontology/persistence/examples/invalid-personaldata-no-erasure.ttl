@@ -1,0 +1,15 @@
+# Negative fixture: dal:PrivacyProfile declaring dal:PersonalData with
+# dal:erasureStrategy dal:NoErasure has no lawful erasure path
+# (persistence-compiler-iri-sync Slice 4, ADR-A68, mirrors
+# dal:PersonalDataRequiresErasureShape).
+@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix ex:  <https://example.org/lending#> .
+
+ex:PersonRecordScope a dal:ClassScope ;
+    dal:priority 10 ;
+    dal:targetClass ex:PersonRecord .
+
+ex:PersonRecordPrivacy a dal:PrivacyProfile ;
+    dal:appliesTo       ex:PersonRecordScope ;
+    dal:privacyClass    dal:PersonalData ;
+    dal:erasureStrategy dal:NoErasure .
