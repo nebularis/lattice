@@ -19,10 +19,12 @@ Ratify every irreversible decision (A51, A54, A63, A65, A67, A68, A74, plus the 
 
 ## 2. Pre-execution decision points (resolve before the named slice starts)
 
-| Slice blocked | Question | Options | Owner |
-|---|---|---|---|
-| P0.5.1 | `platform/graph-spi` relationship to existing `platform/semantic-dataset-spi`/`semantic-dataset-fuseki` | (a) rename in place, (b) new modules replace the old ones with a deletion slice, (c) coexist during a stated migration window | Human, before P0.5 starts |
-| P1.10 (Phase 1, flagged here because it is cheap to resolve now) | `apps/surface-studio`/`apps/mork-bench` vs existing `apps/surface-contract-studio`/`apps/mork-review-workbench` | (a) rename, (b) epic's Part 1 names are informal shorthand for the existing apps, no action needed | Human |
+| Slice blocked | Question | Options | Owner | Status |
+|---|---|---|---|---|
+| P0.5.1 | `platform/graph-spi` relationship to existing `platform/semantic-dataset-spi`/`semantic-dataset-fuseki` | (a) rename in place, (b) new modules replace the old ones with a deletion slice, (c) coexist during a stated migration window | Human, before P0.5 starts | **Open** — not resolved during the 2026-09-23 autonomous P0.1 session; execution-impacting decisions were deliberately left for human confirmation. See [phase-0-status.md](../status/phase-0-status.md). |
+| P1.10 (Phase 1, flagged here because it is cheap to resolve now) | `apps/surface-studio`/`apps/mork-bench` vs existing `apps/surface-contract-studio`/`apps/mork-review-workbench` | (a) rename, (b) epic's Part 1 names are informal shorthand for the existing apps, no action needed | Human | Open |
+
+**Additional decision point surfaced during the P0.1 session (2026-09-23):** the epic's "ADR-A44 amended" (Control Plane HTTP runtime) collides with the existing accepted ADR-A44 (MORK Teaching Pack, unrelated subject). Filed as new **ADR-A81** instead of amending A44. This is a mechanical renumbering, not a design decision, but is flagged for human confirmation alongside the ADR review — see [phase-0-status.md](../status/phase-0-status.md).
 
 ## 3. Documentation obligations — `docs/architecture`
 

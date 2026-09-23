@@ -5,6 +5,7 @@
 **Status:** Accepted
 **Date:** 2026-09-20
 **Related:** MTP implementation plan, ADR-A25, ADR-A42, ADR-A43
+**Numbering note:** The LATTICE platform epic's Phase 0 plan refers to a separate, unrelated decision (Control Plane HTTP runtime: virtual threads, minimal server, deadline propagation) as "ADR-A44 amended." That content does not amend this ADR — it is filed as [ADR-A81](ADR-A81-control-plane-http-runtime.md) to avoid collision with this accepted decision.
 
 ## Context
 
