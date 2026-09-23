@@ -182,7 +182,7 @@ See [rdf-sparql-patterns-phase-plan.md](plans/rdf-sparql-patterns-phase-plan.md)
 Per [COORDINATION_REORG_HANDOFF.md](../COORDINATION_REORG_HANDOFF.md), Phase 0 of the epic plan (Part 4) now carries a "Persistence-pattern coherence" note plus cross-references so its vocabulary is `dal:`-nameable from day one, without Phase 0 depending on `tools/persistence`:
 - **Pattern C (CAS)** ↔ `dal:ConcurrencyStrategy`, cross-referenced at P0.5.2 (`conditionalWrite`/`guardSatisfied`) and P0.5.6 (concurrency TCK).
 - **Pattern T (named-graph-per-batch)** ↔ `dal:MetaTopologyProfile`/`dal:ReceiptModel`, cross-referenced at P0.1.5 (ADR-A65) and P0.3.6 (`provenance.ttl`).
-- **Pattern K (uniqueness)** ↔ `dal:UniquenessConstraint`, cross-referenced at P0.1.3 (ADR-A51).
+- **Pattern K (uniqueness)** ↔ `dal:UniquenessConstraint`, cross-referenced at P0.1.3 through the configurable minting and identity profiles described by ADR-A82.
 - **Pattern O (dense ordering)** ↔ `dal:OrderingGrain`/`dal:DatasetTierModel`, cross-referenced at P0.4.4 (canonicalisation) and P0.5.7 (`CommitSequence` + ordering TCK).
 - New slice **P0.3.9** (documentation only) produces `ontology/persistence/docs/platform-vocabulary-alignment.md`, proving no namespace/semantic collision between the six `dal:` dimensions and the platform vocabulary P0.3 defines.
 - New guardrail **G11** (§0.4): no `dal:`-governed write path may hand-construct SPARQL, reserved at P0.2.7 and enforced in full once P0.5.2's write surface exists.
@@ -206,6 +206,10 @@ Each phase plan adds three obligations the epic's slice tables name but never ta
 - `apps/surface-studio`/`apps/mork-bench` (epic's Part 1 names) vs existing `apps/surface-contract-studio`/`apps/mork-review-workbench` — blocks P1.10, lower urgency.
 
 No code was written and no new Phase 0→Phase 2 dependency was introduced — this is cross-referencing and one new documentation-only slice.
+
+### IRI and Identity Patterns — Proposed (2026-09-23)
+
+The unratified universal IRI policy in ADR-A51 was superseded by [ADR-A82](../architecture/decisions/ADR-A82-framework-neutral-identity-pattern-selection.md). The new [IRI and Identity Patterns](../architecture/iri-identity-patterns.md) guide treats entity, aggregate, component, lineage, content-revision, graph-locator, key-claim, and event-occurrence identities as independently configurable patterns. It crosswalks those choices to the K/O/C/T/QP RDF and SPARQL patterns and specifies the future `dal:` identity-profile vocabulary boundary. The implementation and validation slice for that vocabulary has not been planned or started.
 
 ---
 

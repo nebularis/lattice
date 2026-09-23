@@ -33,7 +33,7 @@ Every row is a slice-level deliverable already named in the epic; this table exi
 | Document | New or amended | Producing slice(s) |
 |---|---|---|
 | `docs/architecture/data-architecture.md` | Amended (§1–3, §5–7 rewritten for A74) | P0.1.1, closed out at P1.1.4 |
-| `docs/architecture/iri-policy.md` | New | P0.1.3 |
+| `docs/architecture/iri-identity-patterns.md` | New, supersedes `iri-policy.md` in scope | P0.1.3, reframed by ADR-A82 |
 | `docs/architecture/nfr.md` + `nfr.yaml` | New | P0.1.15 |
 | Threat model document (owner + control per S-1…S-12) | New — place under `docs/architecture/` alongside the other normative specs (no existing home named; confirm during P0.1.14, do not invent a new top-level `docs/` root) | P0.1.14 |
 | `docs/architecture/decisions/ADR-A44-*.md` | Amended, not replaced (virtual threads, minimal server, deadline propagation, role-profiled deployment) | P0.1.10 |

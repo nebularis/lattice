@@ -4,7 +4,7 @@
 
 Literate specification for the persistence profile substrate.
 
-Full narrative design: [persistence-profile-substrate.md](../../docs/developer/sketches/persistence-profile-substrate.md) (the sketch) and [rdf-sparql-patterns-guide.md](../../docs/architecture/rdf-sparql-patterns-guide.md) (the patterns this ontology configures). Governing decisions: [ADR-A78](../../docs/architecture/decisions/ADR-A78-persistence-profile-substrate-and-aggregate-boundaries.md), [ADR-A79](../../docs/architecture/decisions/ADR-A79-persistence-compiler-toolchain.md), [ADR-A80](../../docs/architecture/decisions/ADR-A80-housekeeping-component-boundary.md).
+Full narrative design: [persistence-profile-substrate.md](../../docs/developer/sketches/persistence-profile-substrate.md) (the sketch), [rdf-sparql-patterns-guide.md](../../docs/architecture/rdf-sparql-patterns-guide.md) (the persistence patterns), and [iri-identity-patterns.md](../../docs/architecture/iri-identity-patterns.md) (the identity patterns a future profile dimension will configure). Governing decisions: [ADR-A78](../../docs/architecture/decisions/ADR-A78-persistence-profile-substrate-and-aggregate-boundaries.md), [ADR-A79](../../docs/architecture/decisions/ADR-A79-persistence-compiler-toolchain.md), [ADR-A80](../../docs/architecture/decisions/ADR-A80-housekeeping-component-boundary.md), and [ADR-A82](../../docs/architecture/decisions/ADR-A82-framework-neutral-identity-pattern-selection.md).
 
 ## 1. Purpose and scope
 

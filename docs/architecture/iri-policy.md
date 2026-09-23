@@ -2,11 +2,11 @@
 
 # IRI and Identity Policy
 
-**Normative for:** [ADR-A51](decisions/ADR-A51-iri-and-identity-policy.md)
-**Status:** Proposed, pending human ratification alongside ADR-A51
+**Status:** Historical proposed reference profile. Not normative.
+**Superseded in scope by:** [IRI and Identity Patterns](iri-identity-patterns.md) and [ADR-A82](decisions/ADR-A82-framework-neutral-identity-pattern-selection.md)
 **Amended:** 2026-09-23, following [docs/developer/review/ADR-A51-review.md](../developer/review/ADR-A51-review.md). See [ADR-A51-review-disposition.md](../developer/review/ADR-A51-review-disposition.md) for the finding-by-finding resolution.
 
-This document is the operational reference for minting and interpreting IRIs across the LATTICE platform. ADR-A51 records the decision; this document records the grammar, encoding rules and worked examples so implementers and the graph-name validator (P0.3.7) share one source. Nothing here departs from ADR-A51; where the two could be read as disagreeing, ADR-A51 controls.
+This document preserves the proposed profile reviewed under ADR-A51. It is not an operational reference and must not be used as a framework-wide minting requirement. The pattern catalogue explains which concerns this profile conflated, presents compatible alternatives, and defines the configuration boundary for future tooling. The remaining content is historical review context only.
 
 ## 1. Scope and non-goals
 

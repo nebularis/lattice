@@ -2,11 +2,12 @@
 
 # ADR-A51: IRI and Identity Policy
 
-**Status:** Proposed
+**Status:** Superseded by [ADR-A82](ADR-A82-framework-neutral-identity-pattern-selection.md)
 **Date:** 2026-09-23 (amended 2026-09-23 following review)
 **Related:** Architecture Review Appendix A, G-05, ADR-A74, ADR-A54, ADR-A68, ADR-A75, `docs/architecture/iri-policy.md`, `docs/architecture/rdf-sparql-patterns-guide.md`
 **Drafted by:** Agent, autonomous session (P0.1.3). Pending human ratification — see [phase-0-status.md](../../developer/status/phase-0-status.md).
-**Amendment note:** The initial draft was reviewed in [docs/developer/review/ADR-A51-review.md](../../developer/review/ADR-A51-review.md), which found one critical conflict with RDF identity semantics (environment-scoped IRIs), one critical overclaim (uniqueness "by construction" with a truncated hash), and a set of internal contradictions and gaps against the `rdf-sparql-patterns-guide.md` entity-identity default. This revision resolves all of them; the disposition of each finding is recorded in [docs/developer/review/ADR-A51-review-disposition.md](../../developer/review/ADR-A51-review-disposition.md). Superseded content is struck from this document rather than kept alongside the correction, per the "say it once" convention.
+**Supersession note:** This proposed ADR selected a universal LATTICE identity grammar. It is retained as historical review context only. [ADR-A82](ADR-A82-framework-neutral-identity-pattern-selection.md) replaces that decision with configurable, framework-neutral identity-pattern selection.
+**Amendment note:** The initial draft was reviewed in [docs/developer/review/ADR-A51-review.md](../../developer/review/ADR-A51-review.md), which found one critical conflict with RDF identity semantics (environment-scoped IRIs), one critical overclaim (uniqueness "by construction" with a truncated hash), and a set of internal contradictions and gaps against the `rdf-sparql-patterns-guide.md` entity-identity default. The initial disposition claimed those findings resolved; [the second review](../../developer/review/ADR-A51-2nd-agent-review.md) identified remaining gaps. ADR-A82 supersedes this proposed decision rather than extending it further.
 
 ## Context
 
@@ -81,7 +82,7 @@ A source-system discriminator (used to avoid cross-source key collision) creates
 
 ## Consequences
 
-- `docs/architecture/iri-policy.md` is the normative grammar reference for this ADR: full component grammar, escaping and normalization rules, the content-hash specification, worked examples, and the skolemization convention (finding F-12, F-14, F-16).
+- At the time of this draft, `docs/architecture/iri-policy.md` was intended as its normative grammar reference. It is now historical profile material. The framework-neutral successor is `docs/architecture/iri-identity-patterns.md`.
 - ADR-A54's named-graph grammar and ADR-A63's `AuthoredGraphReference`/`RuntimeGraphReference` types depend on the lineage/content-revision/event distinction defined here, not on the single revision IRI the original draft assumed.
 - `rdf-sparql-patterns-guide.md`'s receipt IRIs must carry the dataset epoch (they did not; tracked and fixed as part of this same review pass, see the guide's own Appendix D).
 - A graph-name validator library with grammar tests (P0.3.7) implements this ADR's grammar and `ontology/persistence`'s `dal:graphIriTemplate`/`dal:graphPrefix` values must validate against it.
