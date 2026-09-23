@@ -17,6 +17,8 @@ P0.1 (decision pack) was executed autonomously on 2026-09-23: 17 ADRs drafted (A
 
 No code slice (P0.2 onward) has started. `docs/architecture/iri-policy.md` (P0.1.3 deliverable) was created alongside ADR-A51.
 
+**2026-09-23, later same day:** ADR-A51 was reviewed ([docs/developer/review/ADR-A51-review.md](../review/ADR-A51-review.md)) and found to conflict with RDF identity semantics (environment-scoped IRIs), overclaim uniqueness safety with a truncated hash, and disagree internally with `rdf-sparql-patterns-guide.md`'s own entity-identity default. ADR-A51 and `iri-policy.md` were rewritten to resolve every finding; `rdf-sparql-patterns-guide.md` was corrected in the same pass (revision IRIs now carry the dataset epoch; HMAC claim width; normalization pipeline; S6/S3 query bugs; SHACL `sh:declare` note). Full disposition: [docs/developer/review/ADR-A51-review-disposition.md](../review/ADR-A51-review-disposition.md). ADR-A51 remains `Proposed` — the correction does not constitute ratification.
+
 ## Decisions made autonomously in this session — flag for explicit human confirmation
 
 | Decision | What was assumed | Why |
@@ -41,7 +43,7 @@ Nothing else blocks P0.2 starting, once a human has reviewed the P0.1 ADRs (or e
 |---|---|---|---|
 | P0.1.1 | ADR-A74 | Drafted, Proposed | `data-architecture.md` §1–3, §5–7 rewrite still outstanding |
 | P0.1.2 | ADR-A75 | Drafted, Proposed | |
-| P0.1.3 | ADR-A51 + `iri-policy.md` | Drafted, Proposed | `iri-policy.md` created |
+| P0.1.3 | ADR-A51 + `iri-policy.md` | Drafted, Proposed, reviewed and corrected | `iri-policy.md` created; both revised 2026-09-23 per [ADR-A51-review.md](../review/ADR-A51-review.md) — see [disposition](../review/ADR-A51-review-disposition.md) |
 | P0.1.4 | ADR-A54 | Drafted, Proposed | Graph-name validator (P0.3.7) not yet built |
 | P0.1.5 | ADR-A65 | Drafted, Proposed | `ontology/governance/shapes/provenance.ttl` (P0.3.6) not yet built |
 | P0.1.6 | ADR-A67 | Drafted, Proposed | |

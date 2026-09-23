@@ -11,7 +11,7 @@ note: "Comprehensive guide with running examples. Start with 'How to read this g
 
 ## Uniqueness, Ordering and Concurrency in RDF — The LATTICE Pattern Guide
 
-**Status:** Authoritative architectural guide. See [Appendix D](#appendix-d--traceability-to-the-source-notes) for disagreement with other documentation.
+**Status:** Authoritative architectural guide. See [Appendix D](#appendix-d--traceability-to-the-source-notes) for disagreement with other documentation, and [docs/developer/review/ADR-A51-review-disposition.md](../developer/review/ADR-A51-review-disposition.md) for the identity-related corrections applied on 2026-09-23 (revision IRIs now carry the dataset epoch; HMAC claim IRIs widened to 128 bits; the normalization pipeline strips default-ignorable Unicode characters; the S6 as-of query and S3 gap scan are corrected).
 
 **Audience:** anyone designing, implementing, reviewing or operating a LATTICE component that writes to an RDF store: the store SPI (A75), the Surface workflow, MORK governance, ingestion workers, and the ontology authors who decide where aggregate boundaries fall.
 
@@ -237,7 +237,7 @@ GRAPH <urn:g:dataset> {
 GRAPH <urn:g:meta/17> {                      # shard = hash(<urn:g:orders/1>) mod 64
   <urn:g:orders/1>  pat:epoch "3"^^xsd:long ;
                     pat:seq   "41"^^xsd:long ;
-                    pat:head  <urn:rev:orders/1/0000000000000041> .
+                    pat:head  <urn:rev:orders/1/e3/0000000000000041> .
 }
 
 GRAPH <urn:g:keys> {
@@ -248,23 +248,23 @@ GRAPH <urn:g:keys> {
 }
 
 GRAPH <urn:g:txn> {
-  <urn:txn:01J8Q3Z5K9V2N7M4X6P1R8T0W2>  pat:rev  <urn:rev:orders/1/0000000000000041> .
+  <urn:txn:01J8Q3Z5K9V2N7M4X6P1R8T0W2>  pat:rev  <urn:rev:orders/1/e3/0000000000000041> .
 }
 
 GRAPH <urn:g:txlog/2026-09> {
-  <urn:rev:orders/1/0000000000000041>
+  <urn:rev:orders/1/e3/0000000000000041>
       a              pat:Revision ;
       pat:target     <urn:g:orders/1> ;
       pat:epoch      "3"^^xsd:long ;
       pat:seq        "41"^^xsd:long ;
-      pat:prevRev    <urn:rev:orders/1/0000000000000040> ;
+      pat:prevRev    <urn:rev:orders/1/e3/0000000000000040> ;
       pat:txn        "01J8Q3Z5K9V2N7M4X6P1R8T0W2" ;
       pat:hlc        "1758445643012:0000:n7" ;
       pat:recordedAt "2026-09-21T09:14:03.012Z"^^xsd:dateTime .
 }
 ```
 
-The reasons for each detail (why the epoch is there, why the revision IRI is zero-padded and namespaced by aggregate, why `pat:prevRev` is an IRI and not a string, why the txn id is a *subject* in its own graph) are the substance of Part V. The picture is given here so that the smaller examples in Parts II–IV can be read against it.
+The reasons for each detail (why the epoch is embedded in the receipt IRI itself and not only carried as a property, why the revision IRI is zero-padded and namespaced by aggregate, why `pat:prevRev` is an IRI and not a string, why the txn id is a *subject* in its own graph) are the substance of Part V. The picture is given here so that the smaller examples in Parts II–IV can be read against it.
 
 ### 2.4 Topology
 
@@ -423,14 +423,14 @@ def deterministic_iri(kind: str, key: str, version: str = "v1") -> str:
     digest = hashlib.sha256(f"{version}|{kind}|{norm}".encode("utf-8")).digest()
     return f"urn:ex:{kind}:{base64.b32encode(digest[:20]).decode('ascii').rstrip('=')}"
 
-deterministic_iri("sku", "widget-9")   # -> urn:ex:sku:NRXWG3DJMFXGS4DFNFWA
+deterministic_iri("sku", "widget-9")   # -> urn:ex:sku:AMWQUPC5R6I2WBRC6UZVXOYT62NP4ZFK
 ```
 
 Two workers ingesting the same SKU produce the same IRI and the same triples; the second insert is a no-op. No locks, no isolation requirement, and it works on stores with no transactions at all (Rya, Halyard, federations), which is why it is the only uniqueness pattern that has no capability prerequisite.
 
 ```turtle
 # both workers wrote this; the set has one copy
-<urn:ex:sku:NRXWG3DJMFXGS4DFNFWA>  a ex:Product ; ex:sku "WIDGET-9" .
+<urn:ex:sku:AMWQUPC5R6I2WBRC6UZVXOYT62NP4ZFK>  a ex:Product ; ex:sku "WIDGET-9" .
 ```
 
 **Use it only for immutable, natural, non-PII keys.** Three reasons:
@@ -462,7 +462,7 @@ The claim IRI is P0 applied to the key, with the constraint id and scope folded 
 import hmac, hashlib, base64
 
 def claim_iri(constraint_id: str, scope: str, normalized_key: str,
-              secret: bytes, version: str = "v1") -> str:
+              secret: bytes, version: str = "v1", nbytes: int = 16) -> str:
     """P1 claim node IRI.
 
     A keyed hash (HMAC) rather than a plain hash: the keys graph is an
@@ -470,11 +470,18 @@ def claim_iri(constraint_id: str, scope: str, normalized_key: str,
     normalized email is reversible by dictionary. With an HMAC the IRI is
     a stable pseudonym that cannot be inverted without the platform key.
     Rotating the secret is a re-keying and needs a new version salt.
+
+    nbytes=16 (128 bits) matches ADR-A51's minimum content-hash width;
+    an earlier draft of this function truncated to 10 bytes (80 bits),
+    which is adequate against accidental collision but leaves less
+    margin than the entity-IRI recommendation, since claim IRIs drive
+    ownership decisions. Use 16 unless a specific adapter has a hard
+    IRI-length constraint that has been explicitly reviewed.
     """
     material = f"{version}|{constraint_id}|{scope}|{normalized_key}".encode("utf-8")
     mac = hmac.new(secret, material, hashlib.sha256).digest()
     return f"urn:key:{constraint_id.split('-unique')[0]}:{version}:" \
-           f"{base64.b32encode(mac[:10]).decode('ascii').rstrip('=')}"
+           f"{base64.b32encode(mac[:nbytes]).decode('ascii').rstrip('=')}"
 ```
 
 > **On P0 versus P1 and PII.** The source notes say both "hashing an email into an IRI leaks PII" (P0) and "hash the key into a claim node" (P1). The resolution is that the claim node is (a) in its own graph, which can carry its own access-control and export rules, and (b) derived with a keyed hash so the IRI does not reveal the key. The entity IRI stays an opaque UUID. That combination is what this guide means by P1.
@@ -747,7 +754,7 @@ GROUP BY ?claim
 HAVING (COUNT(?owner) > 1)
 ```
 
-Ship both as metrics and alert on `> 0`. Decide the policy per constraint and write it down: `reject | merge (owl:sameAs + rewrite) | quarantine`. The reconciler is **never the only strategy**, and it is **never absent**.
+Ship both as metrics and alert on `> 0`. Decide the policy per constraint and write it down: `reject | merge (fnd:replacedBy + rewrite) | quarantine`. Prefer `fnd:replacedBy` over `owl:sameAs` for the merge case: under reasoning, `owl:sameAs` produces sameAs-clique explosion and cannot be retracted cleanly if the merge is later found to be wrong, whereas `fnd:replacedBy` is a plain, revocable pointer (ADR-A51). The reconciler is **never the only strategy**, and it is **never absent**.
 
 ## Chapter 8 — Normalization, and the uniqueness portability table
 
@@ -762,12 +769,14 @@ Uniqueness is only as good as key canonicalization. Every one of these pairs has
 | `1.0` / `1.00` / `"1"^^xsd:integer` | lexical form and datatype |
 | `"café"` (NFC) / `"café"` (NFD) | Unicode normalization form |
 | `"x "` / `"x"` | trailing whitespace |
+| `"x"` / `"x\u200b"` (zero-width space) or other default-ignorable/format characters | invisible in a diff or a code review, but a different code point sequence; NFKC and `.strip()` do **not** remove them (verified: see QP4) |
 | `http://…` / `https://…` / `…/` | scheme, trailing slash, percent-encoding |
 | `bücher.example` / `xn--bcher-kva.example` | IDN |
 
 Decide and **freeze** a normalization pipeline per constraint, version it (the `v1|` in the hash input), and apply it identically in three places: the write path, the SHACL or audit query, and the backfill job. SPARQL's string functions cannot do Unicode normalization or IDN handling, so normalize in the application, never in the query.
 
 ```python
+import re
 import unicodedata
 from dataclasses import dataclass
 from typing import Callable
@@ -783,11 +792,17 @@ class NormalizationPipeline:
             value = step(value)
         return value
 
+# Zero-width space, zero-width non-joiner/joiner, word joiner, BOM/ZWNBSP:
+# invisible, and NOT removed by NFKC or str.strip(). Strip them explicitly,
+# before NFKC, or two keys that look identical in every code review and
+# every terminal produce two different claim IRIs.
+_DEFAULT_IGNORABLE = re.compile("[\u200b\u200c\u200d\u2060\ufeff]")
+strip_default_ignorable = lambda s: _DEFAULT_IGNORABLE.sub("", s)
 nfkc      = lambda s: unicodedata.normalize("NFKC", s)
 trim      = str.strip
 lowercase = str.casefold          # not .lower(): casefold handles ß, İ etc.
 
-PERSON_EMAIL_V1 = NormalizationPipeline("v1", (nfkc, trim, lowercase))
+PERSON_EMAIL_V1 = NormalizationPipeline("v1", (strip_default_ignorable, nfkc, trim, lowercase))
 # A future v2 that also IDN-encodes the domain gets a new version and a
 # backfill; v1 claim IRIs are never silently reinterpreted.
 ```
@@ -816,7 +831,7 @@ Per-triple guarded writes are two to four orders of magnitude too slow for load.
 
 ### 8.4 Recommended default for uniqueness
 
-1. **Opaque UUID entity IRIs**, plus a **P1 key-claim registry** (keyed-hash claim IRIs) for every unique key.
+1. **Opaque UUID entity IRIs**, plus a **P1 key-claim registry** (keyed-hash claim IRIs) for every unique key. This is what ADR-A51 names `surrogate-claimed` and adopts as its own recommended default for mutable or sensitive keys — one mechanism, two names in two documents, kept consistent deliberately.
 2. **Guarded single-request update (P2)** as the write primitive, with post-`ASK` confirmation, relying on ownership monotonicity.
 3. **Per-backend upgrade** to commit-time SHACL (`sh:maxCount 1` on the claim) or native ICV where available; **P3** where the engine has write–write detection but not write-skew detection; **P6** where contention is high or the backend is non-ACID.
 4. **P7 reconciler and duplicate-count metric always on**, with a quarantine graph and an explicit merge policy per constraint.
@@ -940,8 +955,8 @@ WHERE {
   FILTER NOT EXISTS { GRAPH <urn:g:meta/17> { <urn:stream:orders/1> pat:deleted true } }
   FILTER NOT EXISTS { GRAPH <urn:g:txn> { <urn:txn:01J8Q4A7C2M9X1V5B3N8K6P0T4> pat:rev ?any } }
   BIND(?n + 1 AS ?n1)
-  BIND(IRI(CONCAT("urn:rev:orders/1/", SUBSTR(CONCAT("0000000000000000", STR(?n1)),
-                                              STRLEN(STR(?n1)) + 1))) AS ?rev)   # zero-padded
+  BIND(IRI(CONCAT("urn:rev:orders/1/e3/", SUBSTR(CONCAT("0000000000000000", STR(?n1)),
+                                              STRLEN(STR(?n1)) + 1))) AS ?rev)   # zero-padded, epoch-scoped (F3)
   BIND(NOW() AS ?now)
   VALUES (?ev ?type ?op ?occurred) {                                            # opSeq from the client (G1)
     (<urn:ev:01J8Q4A7C2M9X1V5B3N8K6P0T4/1> ex:OrderApproved    "1"^^xsd:long "2026-09-21T09:15:00Z"^^xsd:dateTime)
@@ -978,12 +993,12 @@ GRAPH <urn:g:dataset> {
 
 # one receipt per commit, in a small number of bucketed log graphs
 GRAPH <urn:g:txlog/2026-09> {
-  <urn:rev:orders/1/0000000000000018>
+  <urn:rev:orders/1/e3/0000000000000018>
       a              pat:Revision ;
       pat:target     <urn:stream:orders/1> ;
       pat:epoch      "3"^^xsd:long ;
       pat:seq        "18"^^xsd:long ;             # dense per stream, allocated in-transaction
-      pat:prevRev    <urn:rev:orders/1/0000000000000017> ;
+      pat:prevRev    <urn:rev:orders/1/e3/0000000000000017> ;
       pat:txn        "01J8Q4A7C2M9X1V5B3N8K6P0T4" ;
       pat:hlc        "1758445702450:0001:n7" ;    # sparse, globally comparable (S7)
       pat:recordedAt "2026-09-21T09:15:02.450Z"^^xsd:dateTime ;
@@ -995,7 +1010,7 @@ GRAPH <urn:g:events/orders/2026-09> {
   <urn:ev:01J8Q4A7C2M9X1V5B3N8K6P0T4/2>
       a             ex:FraudCheckPassed ;
       ex:order      <urn:order:1> ;
-      pat:revision  <urn:rev:orders/1/0000000000000018> ;
+      pat:revision  <urn:rev:orders/1/e3/0000000000000018> ;
       pat:opSeq     "2"^^xsd:long ;
       ex:occurredAt "2026-09-21T09:15:00Z"^^xsd:dateTime .
 }
@@ -1047,6 +1062,21 @@ HAVING (COUNT(DISTINCT ?seq) != MAX(?seq) - MIN(?seq) + 1)
 
 Ship this as a metric and alert on any row. It is the single best argument for dense over sparse: with an HLC or a store LSN the query is impossible, and you can never *prove* a consumer has not lost an event.
 
+**Blind spot:** this query only proves *internal* contiguity between the lowest and highest retained `?seq` for a stream. It cannot detect a missing **prefix** — a stream whose earliest retained receipt is already `5` (1–4 were lost, not merely pruned by retention) passes with `?lo = 5`, looking perfectly healthy. Close this by comparing `?lo` against the stream's expected retention low-water mark (the lowest `seq` the retention policy guarantees is still present):
+
+```sparql
+SELECT ?stream ?lo ?expectedLo WHERE {
+  { SELECT ?stream (MIN(?seq) AS ?lo) WHERE {
+      GRAPH ?log { ?r a pat:Revision ; pat:epoch "3"^^xsd:long ; pat:target ?stream ; pat:seq ?seq }
+      FILTER(STRSTARTS(STR(?log), "urn:g:txlog/")) }
+    GROUP BY ?stream }
+  GRAPH <urn:g:retention> { ?stream pat:retentionLowWaterMark ?expectedLo }
+  FILTER (?lo > ?expectedLo)
+}
+```
+
+A non-empty result means retention has not yet pruned that range, but the receipts are missing anyway: a genuine gap, not an expected prune. `pat:retentionLowWaterMark` is maintained by the retention job itself ([§24.2](#242-retention-and-pruning)), so the two numbers can never silently drift apart from different sources of truth.
+
 ### S4 — Latest revision per stream
 
 ```sparql
@@ -1082,29 +1112,31 @@ Never `ORDER BY ?recordedAt` alone (ties, clock skew), and never `ORDER BY ?seq`
 The failure this prevents, concretely: a payment captured on the 18th is backfilled on the 21st.
 
 ```turtle
-<urn:ev:…/late>  ex:occurredAt "2026-09-18T16:00:00Z"^^xsd:dateTime ; pat:revision <urn:rev:orders/1/…019> .
-<urn:ev:…/2>     ex:occurredAt "2026-09-21T09:15:00Z"^^xsd:dateTime ; pat:revision <urn:rev:orders/1/…018> .
+<urn:ev:…/late>  ex:occurredAt "2026-09-18T16:00:00Z"^^xsd:dateTime ; pat:revision <urn:rev:orders/1/e3/…019> .
+<urn:ev:…/2>     ex:occurredAt "2026-09-21T09:15:00Z"^^xsd:dateTime ; pat:revision <urn:rev:orders/1/e3/…018> .
 ```
 
 A valid-time query lists the late event first; a replay query lists it last. Both are correct. Using `?seq` for the former is the most common modelling bug in this whole area, and TCK test 8 in [Chapter 27](#chapter-27--the-conformance-tck) exists to catch it.
 
 ### S6 — As-of reads
 
-Log replay, the portable form:
+Log replay, the portable form. The naive version compares `pat:retracts ?g` against the *asserted* delta graph `?g` itself, which is wrong in the patch-log model of [§20.2](#202-patch-log): a revision's `pat:asserts` and `pat:retracts` point at two *different* delta graphs (`.../add` and `.../del`), so a retraction never shares a graph with the assertion it undoes, and `FILTER NOT EXISTS` over `pat:retracts ?g` never matches — every asserted triple looks permanently un-retracted, including ones a later revision removed. The correct form is triple-level, not graph-level: a triple asserted at or before the as-of position is included only if no revision at or before that same position retracted **that specific triple** for **that specific target**:
 
 ```sparql
-# state of the stream as of position (3, 17)
+# state of the stream as of position (3, 17) - triple-level as-of (corrected)
 CONSTRUCT { ?s ?p ?o } WHERE {
   GRAPH ?log { ?r pat:epoch "3"^^xsd:long ; pat:target <urn:stream:orders/1> ;
                pat:seq ?seq ; pat:asserts ?g  FILTER(?seq <= 17) }
   GRAPH ?g { ?s ?p ?o }
   FILTER NOT EXISTS {
-    GRAPH ?log2 { ?r2 pat:epoch "3"^^xsd:long ; pat:seq ?s2 ; pat:retracts ?g  FILTER(?s2 <= 17) }
+    GRAPH ?log2 { ?r2 pat:epoch "3"^^xsd:long ; pat:target <urn:stream:orders/1> ;
+                  pat:seq ?s2 ; pat:retracts ?g2  FILTER(?s2 > ?seq && ?s2 <= 17) }
+    GRAPH ?g2 { ?s ?p ?o }
   }
 }
 ```
 
-This is expensive and gets worse with history depth. Realistic options in order of preference:
+The fix has three parts the naive version was missing: the outer `FILTER NOT EXISTS` now checks a *later* retraction's delta graph `?g2` (not the assertion's own graph `?g`) for the *same triple* `?s ?p ?o`; `?r2` is constrained to the same `pat:target` (so a retraction on a different stream cannot suppress this one); and `?s2` is constrained to be strictly after the asserting revision's `?seq` and at or before the as-of position, matching "retracted at some point between the assertion and now". This is still expensive and gets worse with history depth. Realistic options in order of preference:
 
 1. **Store-native time travel** (MarkLogic system timestamps, Oracle Flashback, Stardog versioning; [Chapter 26](#chapter-26--store-by-store)).
 2. **`validFrom`/`validTo` intervals materialised on the data**, which makes as-of a range filter at the cost of a rewrite on every update. This is where `fnd:TemporalScope` fits ([Chapter 23](#chapter-23--bi-temporal-modelling-configurable-not-mandated)).
@@ -1241,7 +1273,7 @@ DELETE {
 INSERT {
   GRAPH <urn:g:orders/1> { <urn:order:1> a ex:Order ; ex:status "paid" ; … }
   GRAPH <urn:g:meta/17>  { <urn:g:orders/1> pat:seq "42"^^xsd:long }
-  GRAPH <urn:g:txlog/2026-09> { <urn:rev:orders/1/0000000000000042> a pat:Revision ; … }
+  GRAPH <urn:g:txlog/2026-09> { <urn:rev:orders/1/e3/0000000000000042> a pat:Revision ; … }
 }
 WHERE {
   GRAPH <urn:g:meta/17> { <urn:g:orders/1> pat:seq "41"^^xsd:long }        # the guard
@@ -1529,13 +1561,13 @@ GRAPH <urn:g:txlog> {
 
 The log is silently corrupt and every traversal is wrong.
 
-**Fix:** derive the IRI from the full position, zero-padded: `urn:rev:orders/1/0000000000000042`. Padding matters: unpadded numeric strings in IRIs sort `"9" > "10"` and break range scans.
+**Fix:** derive the IRI from the full position, zero-padded, and — per F3, below — scoped to the dataset epoch so a post-restore receipt can never reuse a pre-restore IRI: `urn:rev:orders/1/e3/0000000000000042`. Padding matters: unpadded numeric strings in IRIs sort `"9" > "10"` and break range scans.
 
 ### F3 — CRITICAL: no epoch
 
 Restore from backup, `pat:seq` rewinds, and a client holding `ETag: W/"42"` compare-and-sets against a *different* revision 42 and overwrites it. Receipt IRIs are reused. Consumer positions resume into a changed past ([Chapter 9, G4](#g4--no-epoch-so-restore-or-migration-corrupts-consumer-state)).
 
-**Fix:** `pat:epoch` in the guard, in the version row, in every receipt, and in the ETag. Bump on any restore, rebuild, re-key or migration.
+**Fix:** `pat:epoch` in the guard, in the version row, and in every receipt as a property — **and in the receipt's own IRI**, not only as a co-resident property. A property alone is not sufficient: the IRI itself is copied into exports, caches, CDC sinks and `pat:prevRev` references held elsewhere, and if the *string* `urn:rev:orders/1/0000000000000042` is reused after a restore, every one of those holders silently points at the wrong revision regardless of what the `pat:epoch` triple next to it says. The corrected form is `urn:rev:{aggregate}/e{epoch}/{seq}` (F2's fix, above). Bump the epoch on any restore, rebuild, re-key or migration, and reflect it in the ETag.
 
 ### F4 — MAJOR: `pat:etag` and `pat:seq` are two sources of truth
 
@@ -1549,7 +1581,7 @@ Nothing keeps them consistent. A partial failure or a buggy client leaves the ro
 
 ### F5 — MAJOR: `:prev "E1"` is a string, so the chain is not traversable
 
-**Fix:** `pat:prevRev <urn:rev:orders/1/0000000000000041>` as an IRI. This upgrades the receipt log from a flat table into a **verifiable chain**, and yields the strongest integrity check available:
+**Fix:** `pat:prevRev <urn:rev:orders/1/e3/0000000000000041>` as an IRI. This upgrades the receipt log from a flat table into a **verifiable chain**, and yields the strongest integrity check available:
 
 ```sparql
 # fork detection: must always return zero rows
@@ -1563,8 +1595,8 @@ Two receipts with the same `pat:prevRev` means two writers both won a CAS agains
 
 ```turtle
 # what a fork looks like
-<urn:rev:orders/1/0000000000000042>  pat:prevRev <urn:rev:orders/1/0000000000000041> .
-<urn:rev:orders/1/0000000000000042-b> pat:prevRev <urn:rev:orders/1/0000000000000041> .   # two children of 41
+<urn:rev:orders/1/e3/0000000000000042>  pat:prevRev <urn:rev:orders/1/e3/0000000000000041> .
+<urn:rev:orders/1/e3/0000000000000042-b> pat:prevRev <urn:rev:orders/1/e3/0000000000000041> .   # two children of 41
 ```
 
 If tamper-evidence is wanted rather than just consistency, add `pat:hash = H(prevHash ‖ canonicalised change)` and the chain is a ledger.
@@ -1645,13 +1677,13 @@ INSERT {
 
   GRAPH <urn:g:meta/17>  { <urn:g:orders/1> pat:epoch "3"^^xsd:long ;
                                             pat:seq   "42"^^xsd:long ;
-                                            pat:head  <urn:rev:orders/1/0000000000000042> }
+                                            pat:head  <urn:rev:orders/1/e3/0000000000000042> }
 
   GRAPH <urn:g:txn>      { <urn:txn:01J8Q5B2D8N4Y7W1Z3M6K9R2V5>
-                              pat:rev <urn:rev:orders/1/0000000000000042> }
+                              pat:rev <urn:rev:orders/1/e3/0000000000000042> }
 
   GRAPH <urn:g:txlog/2026-09> {
-      <urn:rev:orders/1/0000000000000042>
+      <urn:rev:orders/1/e3/0000000000000042>
           a              pat:Revision ;
           pat:target     <urn:g:orders/1> ;
           pat:epoch      "3"^^xsd:long ;
@@ -1684,7 +1716,7 @@ WHERE {
 
 ```sparql
 ASK { GRAPH <urn:g:txn> { <urn:txn:01J8Q5B2D8N4Y7W1Z3M6K9R2V5>
-                            pat:rev <urn:rev:orders/1/0000000000000042> } }
+                            pat:rev <urn:rev:orders/1/e3/0000000000000042> } }
 ```
 
 - `true`: applied, this attempt or a previous one. Respond `204 No Content`, `ETag: W/"3-42"`.
@@ -1700,9 +1732,9 @@ Same shape with the guard inverted, `pat:seq "1"`, no `pat:prevRev`, and `If-Non
 INSERT {
   GRAPH <urn:g:orders/2> { … }
   GRAPH <urn:g:meta/3>   { <urn:g:orders/2> pat:epoch "3"^^xsd:long ; pat:seq "1"^^xsd:long ;
-                                            pat:head <urn:rev:orders/2/0000000000000001> }
-  GRAPH <urn:g:txn>      { <urn:txn:01J8Q5C9…> pat:rev <urn:rev:orders/2/0000000000000001> }
-  GRAPH <urn:g:txlog/2026-09> { <urn:rev:orders/2/0000000000000001> a pat:Revision ; pat:target <urn:g:orders/2> ;
+                                            pat:head <urn:rev:orders/2/e3/0000000000000001> }
+  GRAPH <urn:g:txn>      { <urn:txn:01J8Q5C9…> pat:rev <urn:rev:orders/2/e3/0000000000000001> }
+  GRAPH <urn:g:txlog/2026-09> { <urn:rev:orders/2/e3/0000000000000001> a pat:Revision ; pat:target <urn:g:orders/2> ;
                                 pat:epoch "3"^^xsd:long ; pat:seq "1"^^xsd:long ; pat:txn "01J8Q5C9…" ; pat:recordedAt ?now }
 }
 WHERE {
@@ -1725,6 +1757,14 @@ import ulid   # any ULID/UUIDv7 library
 
 # CAS_TEMPLATE, ASK_TXN (prepared, parameterised; Chapter 28), clock (an Hlc, §S7)
 # and today_month() are elided.
+#
+# Note on ULID here versus ADR-A51: txn ids are ephemeral, TTL-pruned
+# correlation ids (§24.2), not entity identity. A ULID's embedded
+# millisecond timestamp is a legitimate benefit for this specific,
+# short-lived, non-personal-data case (time-ordered pruning). This is
+# the opposite case from ADR-A51's `surrogate`/`surrogate-claimed`
+# entity strategies, which use UUIDv4 specifically because entity
+# identity must never leak a creation timestamp (ADR-A51 rule 2).
 REV_WIDTH = 16   # zero-padding width for revision IRIs (19 for full int64 in production)
 
 class Outcome(Enum):
@@ -1746,8 +1786,8 @@ class Version:
         e, s = etag.removeprefix('W/"').rstrip('"').split("-")
         return Version(int(e), int(s))
 
-def rev_iri(aggregate: str, seq: int) -> str:   # F2: namespaced and zero-padded
-    return f"urn:rev:{aggregate}/{seq:0{REV_WIDTH}d}"
+def rev_iri(aggregate: str, epoch: int, seq: int) -> str:   # F2+F3: namespaced, epoch-scoped, zero-padded
+    return f"urn:rev:{aggregate}/e{epoch}/{seq:0{REV_WIDTH}d}"
 
 def meta_shard(aggregate_graph: str, shards: int = 64) -> str:   # F12
     import hashlib
@@ -1763,7 +1803,7 @@ def compare_and_set(store, aggregate: str, expected: Version, payload_quads, txn
         "epoch":     expected.epoch,
         "expected":  expected.seq,
         "next":      nxt.seq,
-        "rev":       rev_iri(aggregate, nxt.seq),
+        "rev":       rev_iri(aggregate, nxt.epoch, nxt.seq),
         "txn":       txn_id,
         "log":       f"urn:g:txlog/{today_month()}",
         "hlc":       clock.send(),
@@ -1835,9 +1875,9 @@ Whole-graph replace discards the diff, so the receipt log of [Chapter 19](#chapt
 What [Chapter 19](#chapter-19--the-corrected-pattern) writes. Audit trail, CAS outcomes and ordering. Cheapest. No replay, no as-of.
 
 ```turtle
-<urn:rev:orders/1/0000000000000042>
+<urn:rev:orders/1/e3/0000000000000042>
     a pat:Revision ; pat:target <urn:g:orders/1> ; pat:epoch "3"^^xsd:long ; pat:seq "42"^^xsd:long ;
-    pat:prevRev <urn:rev:orders/1/0000000000000041> ; pat:txn "01J8Q5B2…" ; pat:recordedAt "…"^^xsd:dateTime .
+    pat:prevRev <urn:rev:orders/1/e3/0000000000000041> ; pat:txn "01J8Q5B2…" ; pat:recordedAt "…"^^xsd:dateTime .
 # Nothing here says *what* changed between 41 and 42.
 ```
 
@@ -1847,29 +1887,29 @@ Add `pat:asserts` and `pat:retracts` pointing at delta graphs, computed **client
 
 ```turtle
 GRAPH <urn:g:txlog/2026-09> {
-  <urn:rev:orders/1/0000000000000042>
+  <urn:rev:orders/1/e3/0000000000000042>
       a pat:Revision ; … ;
-      pat:asserts  <urn:g:delta/orders/1/0000000000000042/add> ;
-      pat:retracts <urn:g:delta/orders/1/0000000000000042/del> .
+      pat:asserts  <urn:g:delta/orders/1/e3/0000000000000042/add> ;
+      pat:retracts <urn:g:delta/orders/1/e3/0000000000000042/del> .
 }
-GRAPH <urn:g:delta/orders/1/0000000000000042/add> { <urn:order:1> ex:status "paid" . }
-GRAPH <urn:g:delta/orders/1/0000000000000042/del> { <urn:order:1> ex:status "placed" . }
+GRAPH <urn:g:delta/orders/1/e3/0000000000000042/add> { <urn:order:1> ex:status "paid" . }
+GRAPH <urn:g:delta/orders/1/e3/0000000000000042/del> { <urn:order:1> ex:status "placed" . }
 ```
 
 The payload graph is still whole-graph replaced (the primitive does not change); the deltas are *additional* evidence. RDF Patch (`H`, `A`, `D` records) is the wire form if the log is ever exported, and RDF Delta is a store-side implementation of the same idea.
 
 ### 20.3 Snapshot per revision
 
-Never mutate `urn:g:orders/1`. Write `urn:g:orders/1/0000000000000042` and point `pat:head` at it. Trivially as-of and immutable, and the payload graph is now itself content-addressable by revision, which is exactly how [data-architecture.md §2.3](data-architecture.md#23-semantic-graph-families-fuseki-realm)'s families are already stored ("immutable per revision hash"). The graph count grows without bound, so bucket and prune by retention policy.
+Never mutate `urn:g:orders/1`. Write `urn:g:orders/1/e3/0000000000000042` and point `pat:head` at it. Trivially as-of and immutable, and the payload graph is now itself content-addressable by revision (and, per the F3 fix, by epoch as well as position — a payload graph name must not be reusable after a restore either), which is exactly how [data-architecture.md §2.3](data-architecture.md#23-semantic-graph-families-fuseki-realm)'s families are already stored ("immutable per revision hash"). The graph count grows without bound, so bucket and prune by retention policy.
 
 ```turtle
 GRAPH <urn:g:meta/17> {
   <urn:g:orders/1>  pat:epoch "3"^^xsd:long ; pat:seq "42"^^xsd:long ;
-                    pat:head <urn:rev:orders/1/0000000000000042> ;
-                    pat:current <urn:g:orders/1/0000000000000042> .       # the live snapshot graph
+                    pat:head <urn:rev:orders/1/e3/0000000000000042> ;
+                    pat:current <urn:g:orders/1/e3/0000000000000042> .       # the live snapshot graph
 }
-GRAPH <urn:g:orders/1/0000000000000041> { <urn:order:1> ex:status "placed" ; … }   # sealed
-GRAPH <urn:g:orders/1/0000000000000042> { <urn:order:1> ex:status "paid"   ; … }   # sealed
+GRAPH <urn:g:orders/1/e3/0000000000000041> { <urn:order:1> ex:status "placed" ; … }   # sealed
+GRAPH <urn:g:orders/1/e3/0000000000000042> { <urn:order:1> ex:status "paid"   ; … }   # sealed
 ```
 
 The CAS guard is unchanged (it is still on the version row); only the payload write differs: it *creates* a new graph rather than replacing one, and the `OPTIONAL` sweep disappears.
@@ -2029,11 +2069,11 @@ DELETE {
 }
 INSERT {
   GRAPH <urn:g:meta/17>  { <urn:g:orders/1> pat:epoch "3"^^xsd:long ; pat:seq "43"^^xsd:long ;
-                                            pat:head <urn:rev:orders/1/0000000000000043> ;
+                                            pat:head <urn:rev:orders/1/e3/0000000000000043> ;
                                             pat:deleted true }
-  GRAPH <urn:g:txn>      { <urn:txn:01J8Q6…> pat:rev <urn:rev:orders/1/0000000000000043> }
+  GRAPH <urn:g:txn>      { <urn:txn:01J8Q6…> pat:rev <urn:rev:orders/1/e3/0000000000000043> }
   GRAPH <urn:g:txlog/2026-09> {
-      <urn:rev:orders/1/0000000000000043>
+      <urn:rev:orders/1/e3/0000000000000043>
           a pat:Revision , pat:Deletion ;
           pat:target <urn:g:orders/1> ; pat:epoch "3"^^xsd:long ; pat:seq "43"^^xsd:long ;
           pat:prevRev ?prevRev ; pat:txn "01J8Q6…" ; pat:recordedAt ?now ;
@@ -2055,7 +2095,7 @@ Afterwards:
 ```turtle
 GRAPH <urn:g:meta/17> {
   <urn:g:orders/1>  pat:epoch "3"^^xsd:long ; pat:seq "43"^^xsd:long ;
-                    pat:head <urn:rev:orders/1/0000000000000043> ; pat:deleted true .
+                    pat:head <urn:rev:orders/1/e3/0000000000000043> ; pat:deleted true .
 }
 GRAPH <urn:g:orders/1> { }     # empty
 ```
@@ -2522,12 +2562,15 @@ Any function that claims determinism (IRI minting, normalization, claim-IRI deri
 
 ```python
 def test_claim_iri_is_deterministic():
-    inputs = ["ada@example.org", "Ada@Example.org ", "ada@example.org​"]
+    inputs = ["ada@example.org", "Ada@Example.org ", "ada@example.org\u200b"]   # third has a trailing zero-width space
     assert len({claim_iri("person-email-unique", "acme", PERSON_EMAIL_V1(i), SECRET) for i in inputs}) == 1
     for _ in range(100):
         assert claim_iri("person-email-unique", "acme", PERSON_EMAIL_V1(inputs[0]), SECRET) == \
-               "urn:key:person-email:v1:MFRGGZDFMZTWQ2LK"
+               claim_iri("person-email-unique", "acme", PERSON_EMAIL_V1(inputs[0]), SECRET)
 ```
+
+This test is the one that catches a normalization pipeline missing the `strip_default_ignorable` step ([§8.1](#81-where-uniqueness-actually-breaks)): the three inputs are visually and semantically the same email address, but only equal *after* normalization if the pipeline actually removes the zero-width space, which plain NFKC and `.strip()` do not. Prefer asserting equality against a second, independent computation of the same expression (as above) rather than a hardcoded expected IRI string in the test body — a hardcoded literal is itself an unverified claim that has to be kept in sync with the function and the secret, which is exactly the kind of illustrative-value drift this guide was found to contain elsewhere (see the [Chapter 5](#chapter-5--p0-deterministic-iris--make-uniqueness-structural) and [Chapter 6](#chapter-6--p1-and-p2-the-key-claim-registry-and-the-guarded-write) corrections).
+
 
 ### QP5 — Store isolation is empirically verified
 
@@ -2786,7 +2829,7 @@ pat:fence      a owl:DatatypeProperty ; rdfs:range xsd:long ;
 pat:lockedBy   a owl:ObjectProperty ;   rdfs:comment "Editorial lease holder (§16.3)." .
 pat:lockExpires a owl:DatatypeProperty ; rdfs:range xsd:dateTime ; rdfs:comment "Editorial lease expiry (§16.3)." .
 
-# ---- Receipt (subject = urn:rev:{target}/{seq zero-padded}; lives in a log bucket) ----
+# ---- Receipt (subject = urn:rev:{target}/e{epoch}/{seq zero-padded}; lives in a log bucket) ----
 
 pat:target     a owl:ObjectProperty ;   rdfs:comment "The aggregate or stream graph this revision wrote." .
 pat:opSeq      a owl:DatatypeProperty ; rdfs:range xsd:long ;
@@ -2836,6 +2879,17 @@ pat:stableWatermark a owl:DatatypeProperty ; rdfs:range xsd:string ;
 ## Appendix B — SHACL shapes
 
 Installed on backends whose `commitValidation ≥ SHACL_CORE`; run as an audit on all others.
+
+**On `sh:prefixes`:** `pat:NoForkShape`, below, uses `sh:prefixes pat:` inside a `sh:sparql` constraint. For a SHACL engine to resolve the `pat:` prefix used inside that embedded SPARQL string, the node named by `sh:prefixes` (`pat:`, i.e. the ontology's own namespace IRI) must itself carry `sh:declare` triples binding the prefix, as SHACL-SPARQL requires — it is not enough for the Turtle document containing the shape to declare `@prefix pat:`. Declare it once, alongside the vocabulary itself (Appendix A):
+
+```turtle
+<https://example.org/lattice/patterns#>
+    sh:declare [ sh:prefix "pat" ; sh:namespace "https://example.org/lattice/patterns#"^^xsd:anyURI ] .
+```
+
+Without this triple, an engine that actually enforces `sh:declare` (rather than falling back to the enclosing document's prefixes, which is not guaranteed) fails to resolve `pat:` inside the embedded SPARQL and the shape does not validate as intended — silently, unless the engine is configured to error on unresolved prefixes.
+
+**On `pat:NoForkShape`'s cost:** `sh:sparql` constraints are exactly the case [§7.3](#73-p5-shacl-as-the-safety-net) warns is poorly supported by incremental validators, several of which fall back to full-graph revalidation on every commit when a `sh:sparql` shape is present. Where that cost is unacceptable, run the equivalent standing query from [F5](#f5--major-prev-e1-is-a-string-so-the-chain-is-not-traversable) as a scheduled audit instead of a commit-time shape, and treat `pat:NoForkShape` as the commit-time option for engines that can afford it (verify with the TCK, [Chapter 27](#chapter-27--the-conformance-tck), test T-11).
 
 ```turtle
 @prefix sh:  <http://www.w3.org/ns/shacl#> .
@@ -2986,6 +3040,21 @@ Every position this guide takes is grounded in one of the source documents; wher
 | *Cursor* (iterator) and *Position* (resume) are **distinct** | sketch §1.2 rule 3 vs Ordering §6 | name collision |
 | `uuid4()` lint applies to **canonicalisation modules only** | Uniqueness recommended default (opaque UUID entity IRIs) | blanket ban |
 
+### D.1 Corrections from the ADR-A51 review (2026-09-23)
+
+A review of ADR-A51 ([docs/developer/review/ADR-A51-review.md](../developer/review/ADR-A51-review.md)) found this guide's own revision-IRI grammar was missing the epoch it elsewhere insists is mandatory, plus several smaller correctness bugs. All are fixed in this pass; see [docs/developer/review/ADR-A51-review-disposition.md](../developer/review/ADR-A51-review-disposition.md) for the full disposition.
+
+| Position in this guide (now) | Was | Finding |
+|---|---|---|
+| Revision/receipt IRIs carry the epoch: `urn:rev:{aggregate}/e{epoch}/{seq}` | `urn:rev:{aggregate}/{seq}`, epoch only as a co-resident property | The reviewer's F9: after a restore that rewinds `seq`, a new receipt reuses a pre-restore IRI string, silently aliasing two different revisions in every export, cache and `prevRev` reference that predates the restore |
+| HMAC claim IRIs default to 16 bytes (128 bits) | 10 bytes (80 bits) | Reviewer note: adequate against accidental collision, but claim IRIs drive ownership decisions and deserve the same margin as the entity-IRI recommendation |
+| `deterministic_iri`'s and `claim_iri`'s example outputs are computed and verified, not typed by hand | A hand-typed example string that did not match the documented byte count | Reviewer: "illustrative outputs don't match the code... these get copied into tests" |
+| Normalization pipeline strips default-ignorable Unicode characters (zero-width space etc.) before NFKC | NFKC + `.strip()` + `.casefold()` only | Reviewer: the QP4 determinism test's own third input (a trailing zero-width space) does not normalize equal under the documented pipeline |
+| S6 as-of query compares a later revision's *retraction delta graph* against the *same triple*, constrained to the same target | Compared `pat:retracts ?g` against the asserting revision's own graph `?g`, which never matches under the patch-log model | Reviewer: "the FILTER NOT EXISTS never matches... retracted triples are therefore returned" |
+| S3 gap scan is paired with a retention low-water-mark check | `MAX - MIN + 1 = COUNT` only | Reviewer: a missing *prefix* (not just an internal gap) passes the original check |
+| P7's merge policy is `fnd:replacedBy`, never `owl:sameAs` | `owl:sameAs + rewrite` | Consistency with ADR-A51's finding F-8 (`owl:sameAs` produces clique explosion and cannot be retracted cleanly) |
+| `pat:NoForkShape`'s `sh:prefixes pat:` requires a `sh:declare` triple on `pat:`, stated explicitly (Appendix B) | Assumed without stating the requirement | Reviewer: "`sh:prefixes ex:`/`sh:prefixes pat:` requires those IRIs to carry `sh:declare` blocks, which are not shown" |
+
 Content carried over faithfully from the sketch and kept here: the three clocks; the dense-per-stream / sparse-across-streams decision; the in-transaction counter insight; the missing return value; the F1–F6 severities; A1–A5 and A7; HTTP-level CAS; the portability gotchas; P0–P3 and P5–P7 as concepts; the baseline/strong profile scoping; the configurable topology and receipt-model notes; the scale-profile table; and the bi-temporal and deletion positions.
 
 ## Appendix E — What remains open
@@ -3000,3 +3069,5 @@ Items the sources do not settle and that need a decision, in the order they bloc
 6. **Default shard counts.** 64 meta shards and 1024 key shards are starting points; T-3 and K-2 on each target engine decide the real numbers.
 7. **Temporal analytics path per profile.** Materialised current state versus as-of by log replay or native time travel, with declared SLA and cost, per family, following the S6 preference order.
 8. **Which PostgreSQL ledgers move under A74, and when.** [§30.2](#302-the-postgresql-rules-are-already-these-patterns) shows the translation is mechanical; the migration sequencing and the cut-over of `GraphReference` are not decided.
+9. **Splitting normative content from narrative.** This document interleaves the grammar, the SPI, the shapes and the declaration schema with the reasoning behind them, which is deliberate for a first read ([How to read this guide](#how-to-read-this-guide)) but makes the normative parts harder to version and test independently, the way `iri-policy.md` does for ADR-A51. Not done in this pass; flagged by the ADR-A51 review as worth doing once the guide's content stabilises past Phase 0.
+10. **Skolem-IRI convention for triple terms.** The reified-span/extraction-candidate surrogate case ([§5](#chapter-5--p0-deterministic-iris--make-uniqueness-structural), `iri-policy.md` §5) may be better modelled with RDF 1.2 triple terms or annotations where the target store supports them, instead of a synthetic surrogate node. Not evaluated here.
