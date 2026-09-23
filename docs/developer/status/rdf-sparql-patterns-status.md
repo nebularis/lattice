@@ -3,8 +3,8 @@
 # RDF/SPARQL Implementation Patterns — Status Record
 
 **Unit:** `rdf-sparql-patterns-phase`
-**Status:** Slice 1 complete. ADR-A78/A79/A80 ratified. Slice 2 complete. Slice 3 (housekeeping first cut) not started.
-**Last updated:** 2026-09-22
+**Status:** Slice 1 complete. ADR-A78/A79/A80 ratified. Slice 2 complete as of 2026-09-22, **now out of sync with the vocabulary** after the 2026-09-23 IRI-patterns remediation (commit `c276afb`) — see [persistence-compiler-iri-sync.md](persistence-compiler-iri-sync.md). Slice 3 (housekeeping first cut) not started.
+**Last updated:** 2026-09-22 (Slice 2 content below); sync gap noted 2026-09-23
 **Owner:** Agent (autonomous execution authorised by the human; Slice 2 delivered without further pause)
 
 ---
@@ -15,7 +15,9 @@ Slice 1 is complete: [rdf-sparql-patterns-guide.md](../../architecture/rdf-sparq
 
 ADR-A78, ADR-A79, and ADR-A80 are ratified (Status: Accepted).
 
-**Slice 2 is complete.** `ontology/persistence` is authored (vocabulary, self-validating SHACL shapes, 14 example fixtures, two design-note documents) and `tools/persistence` is a working Python compiler: 239 tests pass under `mise run check:persistence`, covering the resolver, validator, capability self-check, boundary-shape walker, an 11-template Mustache library, a 164-case injection corpus, determinism under triple-order permutation, full compile→instantiate→parse round trips, and three Python architecture-policy checks. Doc deltas (root `README.md`, `ontology-architecture.md`, `mise.toml`) are done. Traceability matrix and validation pack are in place.
+**Slice 2 is complete** as delivered on 2026-09-22. `ontology/persistence` is authored (vocabulary, self-validating SHACL shapes, 14 example fixtures, two design-note documents) and `tools/persistence` is a working Python compiler: 239 tests pass under `mise run check:persistence`, covering the resolver, validator, capability self-check, boundary-shape walker, an 11-template Mustache library, a 164-case injection corpus, determinism under triple-order permutation, full compile→instantiate→parse round trips, and three Python architecture-policy checks. Doc deltas (root `README.md`, `ontology-architecture.md`, `mise.toml`) are done. Traceability matrix and validation pack are in place.
+
+**2026-09-23 update**: `ontology/persistence/spec/persistence.ttl` and `shapes/constraints.ttl` were substantially extended by the IRI-patterns remediation (commit `c276afb`) — three new profile dimensions, extensions to six existing ones, eight new SHACL shapes. None of it is consumed by `tools/persistence`; the 239 passing tests above exercise only the pre-`c276afb` vocabulary subset, which is still valid and unmodified, but no longer the complete picture. See [persistence-compiler-iri-sync.md](persistence-compiler-iri-sync.md) for the gap analysis and fix plan.
 
 **Slice 3 (housekeeping first cut) has not been started** and remains scoped as written in the plan.
 

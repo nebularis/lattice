@@ -47,7 +47,7 @@ The guide's worked examples use a 16-digit zero-padded revision-IRI width throug
 
 ## Deferred (not attempted in this pass)
 
-1. **Compiler wiring.** The new `dal:` classes/properties added to `ontology/persistence/spec/persistence.ttl` this session are not yet consumed by the `tools/persistence` compiler. They are documentation- and SHACL-validation-only until a compiler-wiring slice lands.
+1. **Compiler wiring.** The new `dal:` classes/properties added to `ontology/persistence/spec/persistence.ttl` this session are not yet consumed by the `tools/persistence` compiler. They are documentation- and SHACL-validation-only until a compiler-wiring slice lands. **Scoped 2026-09-23**: see [persistence-compiler-iri-sync.md](persistence-compiler-iri-sync.md) (status), [plan](../plans/persistence-compiler-iri-sync.md), and [gap analysis](../sketches/persistence-compiler-iri-sync.md).
 2. **New TCK test bodies.** Chapter 27's TCK table is unchanged; new test cases for the corrected behaviours (datatype round-trip, fencing-token advance, opposite-order deadlock probe, restore/epoch guard, fork-by-txn-cardinality) are not written. The existing T-1 through T-13 rows remain valid; this is additive work for a follow-up slice.
 3. **Fixture file for Worked example 4.** `ontology/persistence/README.md`'s Worked example 4 (added this session) documents a Turtle configuration but the promised machine-readable fixture is not yet created.
 

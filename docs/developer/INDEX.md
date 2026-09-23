@@ -27,15 +27,16 @@ Each work unit has:
 
 | Field | Value |
 |-------|-------|
-| **Status** | ✅ Slice 1 & 2 complete; Slice 3 planned |
+| **Status** | ✅ Slice 1 & 2 complete; ⚠️ Slice 2 (compiler) now out of sync with the vocabulary as of 2026-09-23; Slice 3 planned |
 | **Unit ID** | `rdf-sparql-patterns-phase` |
 | **Sketch** | [persistence-profile-substrate.md](sketches/persistence-profile-substrate.md) |
 | **Plan** | [rdf-sparql-patterns-phase-plan.md](plans/rdf-sparql-patterns-phase-plan.md) |
 | **Status Record** | [rdf-sparql-patterns-status.md](status/rdf-sparql-patterns-status.md) |
 | **Architecture Guide** | [docs/architecture/rdf-sparql-patterns-guide.md](../architecture/rdf-sparql-patterns-guide.md) (Slice 1) |
 | **ADRs** | ADR-A78 (persistence substrate), ADR-A79 (compiler), ADR-A80 (housekeeping) — all Accepted |
-| **Implementation** | `ontology/persistence` (Turtle vocabulary + SHACL shapes + 14 examples), `tools/persistence` (Python compiler, 239 tests passing) |
+| **Implementation** | `ontology/persistence` (Turtle vocabulary + SHACL shapes + 14 examples, extended 2026-09-23 per `c276afb`), `tools/persistence` (Python compiler, 239 tests passing against the pre-`c276afb` vocabulary subset only) |
 | **Validation Pack** | [persistence-substrate-and-compiler.md](validation/persistence-substrate-and-compiler.md) |
+| **Sync gap** | See unit 1a below |
 
 ### Slice Completion Status
 | Slice | Deliverable | Status |
@@ -54,6 +55,28 @@ Each work unit has:
 - Housekeeping module first cut (Slice 3, depends on Slice 2 compiler)
 
 Epic decomposition into phase plans is **no longer blocked**: the required Phase 2 (P2.1/P2.3/P2.4) revision integrating this compiler is complete — see Part II, §6.
+
+## 1a. Persistence Compiler / IRI-Patterns Sync (new, tracks the 2026-09-23 gap)
+
+| Field | Value |
+|-------|-------|
+| **Status** | ⏳ Scoped, not started. One of five independent slices blocked on a human decision |
+| **Unit ID** | `persistence-compiler-iri-sync` |
+| **Sketch (gap analysis)** | [persistence-compiler-iri-sync.md](sketches/persistence-compiler-iri-sync.md) |
+| **Plan** | [persistence-compiler-iri-sync.md](plans/persistence-compiler-iri-sync.md) |
+| **Status Record** | [persistence-compiler-iri-sync.md](status/persistence-compiler-iri-sync.md) |
+| **Triggering commit** | `c276afb` "[iri-patterns] remediate docs and update persistence ontology vocabulary" |
+
+### Gap summary
+Three new profile dimensions (`dal:IdentityProfile`, `dal:EpochProfile`, `dal:PrivacyProfile`), extensions to six existing ones, and eight new SHACL shapes were added to `ontology/persistence`, none consumed by `tools/persistence`. One finding (G1) is a live correctness issue, not just missing coverage: the compiler's CAS/tombstone templates generate the epoch-guard shape the vocabulary now documents as unsafe (`dal:RowLevelGuardOnly`), unconditionally, with no way to configure the safe `dal:DatasetLevelGuard` alternative.
+
+### Slices
+1. Dataset-level epoch guard (correctness, prioritise first)
+2. Ordering/receipt/concurrency/aggregate-boundary extras + meta-topology sharding (low risk)
+3. Identity minting profile resolution — **blocked on a human decision**: does `dal:resourceRole` need a third resolution-key axis on `Target`?
+4. Privacy/erasure profile + cross-profile compatibility
+5. Uniqueness `onViolation` branching, `mergeRelation`, `ClaimScheme` rotation
+6. Documentation close-out (README, this index, the two status files above)
 
 ---
 
