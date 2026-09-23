@@ -1,8 +1,8 @@
 [tools]
-java = "21"
+java = "25"
 maven = "3.9"
 node = "22"
-python = "3.11"
+python = "3.14"
 erlang = "27"
 elixir = "1.17"
 
@@ -12,7 +12,7 @@ PYTHONUNBUFFERED = "1"
 
 [tasks.bootstrap]
 description = "Install configured toolchains and dependency sets"
-depends = ["bootstrap:python-root", "bootstrap:mork", "bootstrap:mork-compilers", "bootstrap:surface", "bootstrap:persistence", "bootstrap:workers", "bootstrap:frontend"]
+depends = ["bootstrap:python-root", "bootstrap:mork", "bootstrap:mork-compilers", "bootstrap:surface", "bootstrap:persistence", "bootstrap:minting-python", "bootstrap:workers", "bootstrap:frontend"]
 
 [tasks."bootstrap:python-root"]
 description = "Install root ontology validation dependencies"
@@ -44,7 +44,7 @@ run = "corepack enable && yarn install --immutable"
 
 [tasks.check]
 description = "Run all repository validation tasks"
-depends = ["check:python-root", "check:workers", "check:java", "check:frontend", "check:spc", "check:persistence", "build:mtp", "check:mtp"]
+depends = ["check:python-root", "check:workers", "check:java", "check:frontend", "check:spc", "check:persistence", "check:minting-anchors", "check:minting-python", "build:mtp", "check:mtp"]
 
 [tasks.test]
 description = "Run the repository test suites"
@@ -87,6 +87,32 @@ run = "yarn test"
 
 [tasks."check:spc"]
 run = "cd tools/spc/erlang && mix test"
+
+[tasks."check:minting-anchors"]
+description = "Recompute every identity-minting anchor vector with openssl and the Python standard library, sharing no code with the minting libraries (ADR-A84)"
+run = "python contracts/identity/verify-anchors.py"
+
+[tasks."bootstrap:minting-python"]
+description = "Install the standalone Python minting library (ADR-A84) with its test extra"
+run = "python -m pip install -e './packages/minting/python[test]'"
+
+[tasks."check:minting-python"]
+description = "Run the Python minting library against the anchors, the generated vectors and the Unicode 16.0 table checks"
+run = "python -m pytest packages/minting/python/tests -q"
+
+[tasks."build:minting-vectors"]
+description = "Compile the identity-minting anchor fixture and regenerate the committed recipes and conformance vectors in packages/minting/testdata"
+run = """
+t=$(mktemp -d)
+python -m persistence compile ontology/persistence/spec/persistence.ttl ontology/persistence/examples/identity-minting-anchors.ttl --out "$t/compiled.ttl"
+rm -f packages/minting/testdata/*.recipe.json packages/minting/testdata/*.vectors.json
+python -m persistence export-recipes "$t/compiled.ttl" --vectors --out packages/minting/testdata
+rm -rf "$t"
+"""
+
+[tasks."check:minting-tables"]
+description = "Regenerate the pinned Unicode 16.0 tables from the UCD and fail if the committed copies differ"
+run = "python packages/minting/tools/generate_ucd_tables.py --check"
 
 [tasks."check:persistence"]
 description = "Run the persistence profile compiler test suite (resolver, validator, capability, injection corpus, determinism)"

@@ -14,7 +14,7 @@
 
 ## Decision
 
-1. **Virtual threads, not reactive.** Java 21 virtual-thread-per-request on a minimal HTTP server (Helidon SE / Javalin / Undertow class — a library, not a framework). Domain logic is blocking and synchronous by design; reactive style is explicitly rejected.
+1. **Virtual threads, not reactive.** Java virtual-thread-per-request (final since Java 21; the repository runs Java 25) on a minimal HTTP server (Helidon SE / Javalin / Undertow class — a library, not a framework). Domain logic is blocking and synchronous by design; reactive style is explicitly rejected.
 2. **Mandatory deadline propagation.** Every request carries a `Deadline`, propagated into every downstream call through the call context. A request with an expired deadline is refused before execution, not executed and then abandoned.
 3. **JSON codec.** Jackson at the edge only. Wire types are generated from `contracts/**/*.schema.json` (G3); JSON Schema validation runs at the edge before domain code sees a payload.
 4. **Control plane and data plane are the same process**, separated by role profile (ADR-A50), not by separate services.

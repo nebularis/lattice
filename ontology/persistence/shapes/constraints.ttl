@@ -189,6 +189,97 @@ dal:OccurrenceNamespaceDerivationRequiredShape
               FILTER NOT EXISTS { $this dal:occurrenceNamespaceDerivation ?d }
             }""" ] .
 
+# identity-minting M1: the members a self-contained minting recipe needs.
+# Checked on one profile node at a time. tools/persistence repeats these
+# checks on resolved values, together with the joins SHACL cannot do
+# (a claimed or key constraint that applies to the same target).
+dal:MintingRecipeMembersShape
+    a sh:NodeShape ;
+    sh:targetClass dal:IdentityProfile ;
+    sh:sparql [
+        sh:message "An identity strategy that mints needs dal:mintedIriTemplate." ;
+        sh:prefixes dal: ;
+        sh:select """
+            SELECT $this WHERE {
+              { $this dal:identityStrategy ?s . FILTER (?s IN (dal:NaturalKeyIdentity, dal:DerivedHashIdentity, dal:SurrogateClaimedIdentity, dal:RandomSurrogateIdentity, dal:ContentAddressedIdentity)) }
+              UNION { $this dal:eventIdentityStrategy dal:PositionDerivedEvent }
+              FILTER NOT EXISTS { $this dal:mintedIriTemplate ?t }
+            }""" ] ;
+    sh:sparql [
+        sh:message "dal:NaturalKeyIdentity and dal:DerivedHashIdentity need dal:keyConstraint naming the uniqueness constraint whose key they derive from." ;
+        sh:prefixes dal: ;
+        sh:select """
+            SELECT $this WHERE {
+              $this dal:identityStrategy ?s . FILTER (?s IN (dal:NaturalKeyIdentity, dal:DerivedHashIdentity))
+              FILTER NOT EXISTS { $this dal:eventIdentityStrategy dal:PositionDerivedEvent }
+              FILTER NOT EXISTS { $this dal:keyConstraint ?k }
+            }""" ] ;
+    sh:sparql [
+        sh:message "dal:DerivedHashIdentity needs dal:tuplePrefix for domain separation." ;
+        sh:prefixes dal: ;
+        sh:select """
+            SELECT $this WHERE {
+              $this dal:identityStrategy dal:DerivedHashIdentity .
+              FILTER NOT EXISTS { $this dal:eventIdentityStrategy dal:PositionDerivedEvent }
+              FILTER NOT EXISTS { $this dal:tuplePrefix ?p }
+            }""" ] ;
+    sh:sparql [
+        sh:message "dal:SurrogateClaimedIdentity needs dal:claimsConstraint and dal:surrogateKind." ;
+        sh:prefixes dal: ;
+        sh:select """
+            SELECT $this WHERE {
+              $this dal:identityStrategy dal:SurrogateClaimedIdentity .
+              FILTER (NOT EXISTS { $this dal:claimsConstraint ?c } || NOT EXISTS { $this dal:surrogateKind ?k })
+            }""" ] ;
+    sh:sparql [
+        sh:message "dal:CallerSuppliedSurrogate needs dal:callerSuppliedPattern." ;
+        sh:prefixes dal: ;
+        sh:select """
+            SELECT $this WHERE {
+              $this dal:surrogateKind dal:CallerSuppliedSurrogate .
+              FILTER NOT EXISTS { $this dal:callerSuppliedPattern ?p }
+            }""" ] ;
+    sh:sparql [
+        sh:message "dal:PositionDerivedEvent needs dal:epochWidth and dal:sequenceWidth, each from 1 to 19." ;
+        sh:prefixes dal: ;
+        sh:select """
+            SELECT $this WHERE {
+              $this dal:eventIdentityStrategy dal:PositionDerivedEvent .
+              FILTER (NOT EXISTS { $this dal:epochWidth ?e . FILTER (?e >= 1 && ?e <= 19) }
+                      || NOT EXISTS { $this dal:sequenceWidth ?q . FILTER (?q >= 1 && ?q <= 19) })
+            }""" ] ;
+    sh:sparql [
+        sh:message "dal:ContentAddressedIdentity needs dal:selfReferenceRule and a positive dal:canonicalizationWorkBudget." ;
+        sh:prefixes dal: ;
+        sh:select """
+            SELECT $this WHERE {
+              $this dal:identityStrategy dal:ContentAddressedIdentity .
+              FILTER (NOT EXISTS { $this dal:selfReferenceRule ?r }
+                      || NOT EXISTS { $this dal:canonicalizationWorkBudget ?b . FILTER (?b > 0) })
+            }""" ] .
+
+dal:AcceptedIriPatternRequiredShape
+    a sh:NodeShape ;
+    sh:targetClass dal:IdentityProfile ;
+    sh:sparql [
+        sh:message "dal:AdoptedIdentity and dal:ExternalRegistryIdentity need dal:acceptedIriPattern and dal:namingAuthority: nothing is minted, so the identifier supplied by the authority is validated instead." ;
+        sh:prefixes dal: ;
+        sh:select """
+            SELECT $this WHERE {
+              $this dal:identityStrategy ?s . FILTER (?s IN (dal:AdoptedIdentity, dal:ExternalRegistryIdentity))
+              FILTER (NOT EXISTS { $this dal:acceptedIriPattern ?p } || NOT EXISTS { $this dal:namingAuthority ?a })
+            }""" ] .
+
+dal:ClaimSchemeCompletenessShape
+    a sh:NodeShape ;
+    sh:targetClass dal:ClaimScheme ;
+    sh:property [ sh:path dal:schemeVersion ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path dal:schemeState ; sh:minCount 1 ; sh:maxCount 1 ; sh:class dal:SchemeState ] ;
+    sh:property [ sh:path dal:claimKeyId ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path dal:claimDigestScheme ; sh:minCount 1 ; sh:maxCount 1 ; sh:class dal:DigestScheme ] ;
+    sh:property [ sh:path dal:claimIriTemplate ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ;
+                  sh:pattern "\\{mac\\}" ] .
+
 dal:EpochProfileShape
     a sh:NodeShape ;
     sh:targetClass dal:EpochProfile ;

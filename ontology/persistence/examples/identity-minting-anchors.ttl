@@ -1,0 +1,139 @@
+# Positive fixture for identity-minting M1: the configuration that compiles
+# to exactly the seven recipes in contracts/identity/anchor-vectors.json,
+# one per recipe strategy. The compiler's recipes must equal the hand-authored
+# anchor recipes byte for byte, digests included, which ties the compiler,
+# the anchors and the specification together.
+@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix ex:  <https://example.org/lending#> .
+
+# ---- Derived hash: the SKU of rdf-sparql-patterns-guide.md Chapter 5 --------------------------
+ex:ProductScope a dal:ClassScope ; dal:priority 10 ; dal:targetClass ex:Product .
+
+ex:ProductSkuUnique a dal:UniquenessConstraint ;
+    dal:constraintId       "product-sku-unique" ;
+    dal:appliesTo          ex:ProductScope ;
+    dal:keyProperty        ( ex:sku ) ;
+    dal:normalizePipeline  dal:NfkcTrimUppercase ;
+    dal:onViolation        dal:Reject .
+
+ex:ProductIdentity a dal:IdentityProfile ;
+    dal:appliesTo         ex:ProductScope ;
+    dal:resourceRole      dal:EntityRole ;
+    dal:identityStrategy  dal:DerivedHashIdentity ;
+    dal:keyConstraint     ex:ProductSkuUnique ;
+    dal:tuplePrefix       ( "iri" "v1" "sku" ) ;
+    dal:digestScheme      ex:ProductDigest ;
+    dal:mintedIriTemplate "urn:ex:sku:{digest}" .
+
+ex:ProductDigest a dal:DigestScheme ;
+    dal:digestFunction "SHA-256" ; dal:digestWidthBits 160 ; dal:digestEncoding "base32" .
+
+# ---- Claimed surrogate: the email claim of the guide's §6.1 -----------------------------------
+ex:PersonScope a dal:ClassScope ; dal:priority 10 ; dal:targetClass ex:Person .
+
+ex:PersonEmailUnique a dal:UniquenessConstraint ;
+    dal:constraintId       "person-email-unique" ;
+    dal:appliesTo          ex:PersonScope ;
+    dal:keyProperty        ( ex:email ) ;
+    dal:scopeProperty      ex:tenant ;
+    dal:normalizePipeline  dal:NfkcTrimCasefold ;
+    dal:onViolation        dal:Reject ;
+    dal:claimScheme        ex:PersonEmailSchemeV1 .
+
+ex:PersonEmailSchemeV1 a dal:ClaimScheme ;
+    dal:schemeVersion     "v1" ;
+    dal:schemeState       dal:Accepting ;
+    dal:claimKeyId        "example-key-v1" ;
+    dal:claimDigestScheme ex:PersonEmailMac ;
+    dal:claimIriTemplate  "urn:key:person-email:{schemeVersion}:{mac}" .
+
+ex:PersonEmailMac a dal:DigestScheme ;
+    dal:digestFunction "HMAC-SHA-256" ; dal:digestWidthBits 128 ; dal:digestEncoding "base32" .
+
+ex:PersonIdentity a dal:IdentityProfile ;
+    dal:appliesTo             ex:PersonScope ;
+    dal:resourceRole          dal:EntityRole ;
+    dal:identityStrategy      dal:SurrogateClaimedIdentity ;
+    dal:surrogateKind         dal:CallerSuppliedSurrogate ;
+    dal:callerSuppliedPattern "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$" ;
+    dal:claimsConstraint      ex:PersonEmailUnique ;
+    dal:mintedIriTemplate     "urn:person:{surrogate}" .
+
+# ---- Natural key with two components ---------------------------------------------------------
+ex:PolicyScope a dal:ClassScope ; dal:priority 10 ; dal:targetClass ex:Policy .
+
+ex:PolicyNumberUnique a dal:UniquenessConstraint ;
+    dal:constraintId       "policy-number-unique" ;
+    dal:appliesTo          ex:PolicyScope ;
+    dal:keyProperty        ( ex:tenantCode ex:policyNumber ) ;
+    dal:normalizePipeline  dal:NfkcTrimUppercase ;
+    dal:onViolation        dal:Reject .
+
+ex:PolicyIdentity a dal:IdentityProfile ;
+    dal:appliesTo         ex:PolicyScope ;
+    dal:resourceRole      dal:EntityRole ;
+    dal:identityStrategy  dal:NaturalKeyIdentity ;
+    dal:keyConstraint     ex:PolicyNumberUnique ;
+    dal:mintedIriTemplate "urn:ex:policy:{key}" .
+
+# ---- Position-derived occurrence ---------------------------------------------------------------
+ex:OrderScope a dal:ClassScope ; dal:priority 10 ; dal:targetClass ex:Order .
+
+ex:OrderEvents a dal:IdentityProfile ;
+    dal:appliesTo                     ex:OrderScope ;
+    dal:resourceRole                  dal:EventOccurrenceRole ;
+    dal:identityStrategy              dal:DerivedHashIdentity ;
+    dal:eventIdentityStrategy         dal:PositionDerivedEvent ;
+    dal:occurrenceNamespaceDerivation dal:HashedTargetDerivation ;
+    dal:uniquenessWitnessRequired     true ;
+    dal:digestScheme                  ex:OrderNamespaceDigest ;
+    dal:epochWidth                    19 ;
+    dal:sequenceWidth                 19 ;
+    dal:mintedIriTemplate             "urn:ev:{namespace}/e{epoch}/{seq}" .
+
+ex:OrderNamespaceDigest a dal:DigestScheme ;
+    dal:digestFunction "SHA-256" ; dal:digestWidthBits 64 ; dal:digestEncoding "lowercase-hex" .
+
+# The dataset-level guard and an external epoch authority, so the
+# position-derived profile raises no epoch warning.
+ex:OrderEpoch a dal:EpochProfile ;
+    dal:appliesTo       ex:OrderScope ;
+    dal:epochGuardScope dal:DatasetLevelGuard ;
+    dal:epochAuthority  dal:ExternalHighWaterMark .
+
+# ---- Content-addressed -------------------------------------------------------------------------
+ex:ContractScope a dal:ClassScope ; dal:priority 10 ; dal:targetClass ex:Contract .
+
+ex:ContractRevisions a dal:IdentityProfile ;
+    dal:appliesTo                  ex:ContractScope ;
+    dal:resourceRole               dal:ContentRevisionRole ;
+    dal:identityStrategy           dal:ContentAddressedIdentity ;
+    dal:digestScheme               ex:ContractDigest ;
+    dal:selfReferenceRule          dal:SelfReferenceDisallowed ;
+    dal:canonicalizationWorkBudget 100000 ;
+    dal:mintedIriTemplate          "urn:rev:content:{digest}" .
+
+ex:ContractDigest a dal:DigestScheme ;
+    dal:digestFunction          "SHA-256" ;
+    dal:digestWidthBits         256 ;
+    dal:digestEncoding          "lowercase-hex" ;
+    dal:verifyFullDigestOnWrite true .
+
+# ---- Random surrogate --------------------------------------------------------------------------
+ex:LineItemScope a dal:ClassScope ; dal:priority 10 ; dal:targetClass ex:LineItem .
+
+ex:LineItemIdentity a dal:IdentityProfile ;
+    dal:appliesTo         ex:LineItemScope ;
+    dal:resourceRole      dal:ComponentRole ;
+    dal:identityStrategy  dal:RandomSurrogateIdentity ;
+    dal:mintedIriTemplate "urn:ex:line-item:{surrogate}" .
+
+# ---- Adopted identifier: validation only ---------------------------------------------------------
+ex:PartyScope a dal:ClassScope ; dal:priority 10 ; dal:targetClass ex:Party .
+
+ex:PartyIdentity a dal:IdentityProfile ;
+    dal:appliesTo         ex:PartyScope ;
+    dal:resourceRole      dal:EntityRole ;
+    dal:identityStrategy  dal:AdoptedIdentity ;
+    dal:namingAuthority   "national party register" ;
+    dal:acceptedIriPattern "^https://register[.]example/party/[0-9]{8}$" .

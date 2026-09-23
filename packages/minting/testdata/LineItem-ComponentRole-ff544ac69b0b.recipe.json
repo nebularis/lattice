@@ -1,0 +1,14 @@
+{
+  "iriTemplate": "urn:ex:line-item:{surrogate}",
+  "recipeDigest": "sha256:ff544ac69b0b490d40cd5a01aeec8a34caf6864b8672c5168f05b0ea57bdec0a",
+  "recipeFormat": "lattice-minting-recipe/1",
+  "role": "ComponentRole",
+  "strategy": "RandomSurrogateIdentity",
+  "surrogate": {
+    "kind": "UuidV4Surrogate"
+  },
+  "target": {
+    "class": "https://example.org/lending#LineItem",
+    "deployment": null
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "epochWidth": 19,
+  "iriTemplate": "urn:ev:{namespace}/e{epoch}/{seq}",
+  "namespace": {
+    "derivation": "HashedTargetDerivation",
+    "digest": {
+      "encoding": "lowercase-hex",
+      "function": "SHA-256",
+      "widthBits": 64
+    }
+  },
+  "recipeDigest": "sha256:624294a5bd3a577a9d42f6980dae675dc7dfb5636b1651085da4b530dca5e260",
+  "recipeFormat": "lattice-minting-recipe/1",
+  "role": "EventOccurrenceRole",
+  "sequenceWidth": 19,
+  "strategy": "PositionDerivedEvent",
+  "target": {
+    "class": "https://example.org/lending#Order",
+    "deployment": null
+  }
+}

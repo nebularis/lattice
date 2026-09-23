@@ -1,0 +1,12 @@
+{
+  "acceptedPattern": "^https://register[.]example/party/[0-9]{8}$",
+  "namingAuthority": "national party register",
+  "recipeDigest": "sha256:7d6a343a279e6bf2d6e73eb0e1979a313d4d1184b8ecb9d520de1b0f10f1ac0e",
+  "recipeFormat": "lattice-minting-recipe/1",
+  "role": "EntityRole",
+  "strategy": "AdoptedIdentity",
+  "target": {
+    "class": "https://example.org/lending#Party",
+    "deployment": null
+  }
+}

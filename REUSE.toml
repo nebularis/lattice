@@ -1,0 +1,18 @@
+# SPDX-License-Identifier: MPL-2.0
+# REUSE annotations for files that cannot carry an SPDX comment header.
+# See CONTRIBUTING.md, "SPDX headers", and https://reuse.software/spec-3.3/
+version = 1
+
+# JSON contracts: schemas, anchor vectors and fixtures. JSON has no comment
+# syntax, so their licence is declared here. They are consumed by code, so
+# they are MPL-2.0 like the code that reads them (ADR-A71, ADR-A84).
+[[annotations]]
+path = ["contracts/**/*.json"]
+precedence = "aggregate"
+SPDX-License-Identifier = "MPL-2.0"
+
+# Recipes and conformance vectors generated for the minting libraries.
+[[annotations]]
+path = ["packages/minting/testdata/*.json"]
+precedence = "aggregate"
+SPDX-License-Identifier = "MPL-2.0"

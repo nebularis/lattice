@@ -112,6 +112,12 @@ lattice/
 │   ├── clinical-trial.ttl
 │   └── insure-o/            # Applied validation package for insurance-style substrate checks
 │
+├── contracts/
+│   └── identity/            # Minting recipe and vector schemas, anchor vectors, independent verifier
+│
+├── packages/
+│   └── minting/             # Standalone identity minting libraries (Python, Java), no LATTICE dependency
+│
 ├── test/                    # Whole-graph CI
 │
 └── tools/                   # Reference implementation
@@ -201,6 +207,11 @@ mise run check:workers
 mise run check:java
 mise run check:frontend
 mise run check:spc
+mise run check:persistence
+mise run check:minting-anchors
+mise run check:minting-python
+mise run build:mtp
+mise run check:mtp
 ```
 
 ### Build and test all frontend workspaces
@@ -235,6 +246,17 @@ mise run check:persistence
 ```
 
 Compiles `ontology/persistence`'s own worked examples, runs the resolver/validator/capability/boundary unit tests, the injection corpus, the determinism checks, and the Python architecture-policy checks, and validates every example fixture against `ontology/persistence/shapes/constraints.ttl`. See [`tools/persistence/README.md`](tools/persistence/README.md).
+
+### Validate the identity minting libraries
+
+```bash
+mise run bootstrap:minting-python
+mise run check:minting-anchors
+mise run check:minting-python
+mise run check:minting-tables
+```
+
+Verifies the hand-authored anchor vectors with `openssl`, runs the Python minting library against the anchors and the vectors generated from the compiler's recipes, and checks the pinned Unicode 16.0.0 tables against the Unicode Character Database. See [`packages/minting/README.md`](packages/minting/README.md) and the [identity minting specification](docs/architecture/identity-minting-specification.md).
 
 ### Work on the docs site locally (Jekyll)
 
@@ -302,7 +324,7 @@ The canonical active documentation locations are `plans`, `status`, and `review`
 
 Two licences govern the artefacts in the repository:
 
-- **Ontology artefacts (`.ttl`) and the reference implementation (`tools/`)** — [Mozilla Public License 2.0](LICENSE). Derivative works, commercial or otherwise, are permitted with no obligation to share what you build. If you modify one of these files and redistribute the modified version, that modification carries the same licence forward.
+- **Ontology artefacts (`.ttl`), code (`tools/`, `platform/`, `packages/`, `workers/`) and machine-readable contracts (`contracts/`)** — [Mozilla Public License 2.0](LICENSE). Derivative works, commercial or otherwise, are permitted with no obligation to share what you build. If you modify one of these files and redistribute the modified version, that modification carries the same licence forward. JSON files cannot carry a licence header, so `REUSE.toml` declares theirs.
 - **Documentation and specifications (`.md`)** — [CC BY-SA 4.0](LICENSE-DOCS.md). Use freely, share modifications to the text itself under the same terms.
 
 ---

@@ -154,6 +154,9 @@ ex:ClaimantIdentity a dal:IdentityProfile ;
     dal:appliesTo          ex:ClaimantEntity ;
     dal:resourceRole       dal:EntityRole ;
     dal:identityStrategy   dal:SurrogateClaimedIdentity ;      # mutable, sensitive key (an email)
+    dal:surrogateKind      dal:UuidV4Surrogate ;
+    dal:mintedIriTemplate  "urn:claimant:{surrogate}" ;
+    dal:claimsConstraint   ex:ClaimantEmailUnique ;            # the claim minted with the surrogate
     dal:namingAuthority    "adopter" .
 
 ex:ClaimantEmailUnique a dal:UniquenessConstraint ;           # the key the claimed surrogate is minted from;
@@ -162,7 +165,15 @@ ex:ClaimantEmailUnique a dal:UniquenessConstraint ;           # the key the clai
     dal:keyProperty          ( ex:email ) ;
     dal:scopeProperty        ex:tenant ;
     dal:normalizePipeline    dal:NfkcTrimCasefold ;
-    dal:onViolation          dal:Reject .
+    dal:onViolation          dal:Reject ;
+    dal:claimScheme          ex:ClaimantEmailSchemeV1 .
+
+ex:ClaimantEmailSchemeV1 a dal:ClaimScheme ;                   # every byte of a claim IRI is fixed here,
+    dal:schemeVersion      "v1" ;                              # so it changes only through rotation
+    dal:schemeState        dal:Accepting ;
+    dal:claimKeyId         "claimant-email-key-v1" ;           # names the secret, never holds it
+    dal:claimDigestScheme  ex:ClaimantEmailMac ;               # HMAC-SHA-256, 128 bits, base32
+    dal:claimIriTemplate   "urn:key:claimant-email:{schemeVersion}:{mac}" .
 
 ex:ClaimantEvents a dal:IdentityProfile ;                      # a second role for the same class
     dal:appliesTo                     ex:ClaimantEntity ;
@@ -171,7 +182,10 @@ ex:ClaimantEvents a dal:IdentityProfile ;                      # a second role f
     dal:eventIdentityStrategy         dal:PositionDerivedEvent ;
     dal:occurrenceNamespaceDerivation dal:HashedTargetDerivation ;
     dal:uniquenessWitnessRequired     true ;
-    dal:digestScheme                  ex:ClaimantEventDigest .     # SHA-256, 128 bits, base32
+    dal:digestScheme                  ex:ClaimantEventDigest ;     # SHA-256, 128 bits, base32
+    dal:mintedIriTemplate             "urn:ev:claimant:{namespace}/e{epoch}/{seq}" ;
+    dal:epochWidth                    19 ;
+    dal:sequenceWidth                 19 .
 
 ex:ClaimantEpoch a dal:EpochProfile ;
     dal:appliesTo          ex:ClaimantEntity ;
@@ -195,9 +209,9 @@ ex:ClaimantReceipts a dal:DataAccessProfile ;
 
 `dal:PersonalDataReceiptCompatibilityShape` (`shapes/constraints.ttl`) rejects this same scope if `dal:receiptModel` were `dal:PatchLog` or `dal:SnapshotPerRevision` without `dal:perSubjectScoped true` or `dal:erasureStrategy dal:CryptoShred` — not because the framework prefers `dal:ReceiptOnly`, but because the other two models keep a second, immutable copy of the payload that a per-subject graph drop cannot reach. An adopter who genuinely needs replay over personal data selects `dal:CryptoShred` instead and specifies key custody and an as-of failure policy for shredded revisions.
 
-The compiler resolves the two identity roles independently, `identity:EntityRole` and `identity:EventOccurrenceRole` (`persistence-compiler-iri-sync` Slice 3). The privacy profile is validated by SHACL and is resolved by the compiler from Slice 4.
+The compiler resolves the two identity roles independently, `identity:EntityRole` and `identity:EventOccurrenceRole` (`persistence-compiler-iri-sync` Slice 3), and emits a self-contained minting recipe for each (`identity-minting` M1): every member above that a recipe needs is required, and missing ones are refused by name. `python -m persistence export-recipes` writes the recipes as JSON, for the minting libraries or any implementation of the [identity minting specification](../../docs/architecture/identity-minting-specification.md). The privacy profile is validated by SHACL and is resolved by the compiler from Slice 4.
 
-Full fixture: [`examples/identity-epoch-privacy-profile.ttl`](examples/identity-epoch-privacy-profile.ttl), with two Slice 3 negative fixtures, [`examples/invalid-claimed-identity-without-key.ttl`](examples/invalid-claimed-identity-without-key.ttl) and [`examples/invalid-position-event-without-derivation.ttl`](examples/invalid-position-event-without-derivation.ttl). Slice 1 authored two epoch-only fixtures: [`examples/epoch-dataset-level-guard.ttl`](examples/epoch-dataset-level-guard.ttl) and [`examples/warning-epoch-unsafe-restore.ttl`](examples/warning-epoch-unsafe-restore.ttl). [`examples/append-stream-dataset-guard.ttl`](examples/append-stream-dataset-guard.ttl) covers an append-only stream under the dataset-level guard. Slice 2 added [`examples/extension-properties.ttl`](examples/extension-properties.ttl), every extension property declared on its own profile node, and [`examples/invalid-lagwindow-missing.ttl`](examples/invalid-lagwindow-missing.ttl), refused by `dal:LagWindowRequiredShape` and by the compiler.
+Full fixture: [`examples/identity-epoch-privacy-profile.ttl`](examples/identity-epoch-privacy-profile.ttl), with two Slice 3 negative fixtures, [`examples/invalid-claimed-identity-without-key.ttl`](examples/invalid-claimed-identity-without-key.ttl) and [`examples/invalid-position-event-without-derivation.ttl`](examples/invalid-position-event-without-derivation.ttl). Slice 1 authored two epoch-only fixtures: [`examples/epoch-dataset-level-guard.ttl`](examples/epoch-dataset-level-guard.ttl) and [`examples/warning-epoch-unsafe-restore.ttl`](examples/warning-epoch-unsafe-restore.ttl). [`examples/append-stream-dataset-guard.ttl`](examples/append-stream-dataset-guard.ttl) covers an append-only stream under the dataset-level guard. [`examples/identity-minting-anchors.ttl`](examples/identity-minting-anchors.ttl) compiles to exactly the six recipes of `contracts/identity/anchor-vectors.json`, one per recipe strategy. Slice 2 added [`examples/extension-properties.ttl`](examples/extension-properties.ttl), every extension property declared on its own profile node, and [`examples/invalid-lagwindow-missing.ttl`](examples/invalid-lagwindow-missing.ttl), refused by `dal:LagWindowRequiredShape` and by the compiler.
 
 ## 10. Repository layout
 

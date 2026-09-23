@@ -1,0 +1,39 @@
+{
+  "digest": {
+    "encoding": "base32",
+    "function": "SHA-256",
+    "widthBits": 160
+  },
+  "iriTemplate": "urn:ex:sku:{digest}",
+  "key": {
+    "pipeline": {
+      "id": "NfkcTrimUppercase",
+      "steps": [
+        "reject_unassigned",
+        "nfkc",
+        "trim_white_space",
+        "uppercase_full",
+        "nfkc"
+      ],
+      "unicodeVersion": "16.0.0"
+    },
+    "properties": [
+      "https://example.org/lending#sku"
+    ],
+    "scopeProperty": null
+  },
+  "recipeDigest": "sha256:38ce5a73f929a647583c587442c3d493afd79223d8162056acea43a75a403546",
+  "recipeFormat": "lattice-minting-recipe/1",
+  "role": "EntityRole",
+  "strategy": "DerivedHashIdentity",
+  "target": {
+    "class": "https://example.org/lending#Product",
+    "deployment": null
+  },
+  "tupleEncoding": "length-prefixed-utf8/1",
+  "tuplePrefix": [
+    "iri",
+    "v1",
+    "sku"
+  ]
+}

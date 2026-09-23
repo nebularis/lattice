@@ -2,7 +2,7 @@
 
 # Tools
 
-Python 3.11+. The executable Python tools are sibling projects under `tools/`.
+Python 3.14+. The executable Python tools are sibling projects under `tools/`.
 `tools/mork/`, `tools/mork_compilers/`, and `tools/surface/` each own a
 `pyproject.toml` and a conventional `src/<package>/` layout. Run everything
 from the repository root.

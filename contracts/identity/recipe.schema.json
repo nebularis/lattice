@@ -1,0 +1,927 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.nebularis.org/lattice/identity/minting-recipe/1.0.0",
+  "title": "LATTICE identity minting recipe",
+  "description": "A self-contained recipe for minting or validating the IRIs of one resource role at one target. Normative definition: docs/architecture/identity-minting-specification.md. Recipes contain only strings, integers, booleans, null, arrays, and objects with ASCII keys, so that RFC 8785 canonicalization needs no number formatting.",
+  "oneOf": [
+    {
+      "title": "Natural key",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "recipeFormat",
+        "recipeDigest",
+        "role",
+        "target",
+        "strategy",
+        "iriTemplate",
+        "key"
+      ],
+      "properties": {
+        "recipeFormat": {
+          "const": "lattice-minting-recipe/1"
+        },
+        "recipeDigest": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "description": "SHA-256 of the RFC 8785 canonical JSON of this recipe with recipeDigest removed."
+        },
+        "role": {
+          "enum": [
+            "EntityRole",
+            "AggregateRootRole",
+            "ComponentRole",
+            "LineageRole",
+            "ContentRevisionRole",
+            "GraphLocatorRole",
+            "KeyClaimRole",
+            "EventOccurrenceRole"
+          ]
+        },
+        "target": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "class",
+            "deployment"
+          ],
+          "properties": {
+            "class": {
+              "type": "string",
+              "minLength": 1
+            },
+            "deployment": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        },
+        "strategy": {
+          "const": "NaturalKeyIdentity"
+        },
+        "iriTemplate": {
+          "type": "string",
+          "pattern": "\\{key\\}"
+        },
+        "key": {
+          "$ref": "#/$defs/key"
+        }
+      }
+    },
+    {
+      "title": "Derived hash",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "recipeFormat",
+        "recipeDigest",
+        "role",
+        "target",
+        "strategy",
+        "iriTemplate",
+        "key",
+        "tuplePrefix",
+        "tupleEncoding",
+        "digest"
+      ],
+      "properties": {
+        "recipeFormat": {
+          "const": "lattice-minting-recipe/1"
+        },
+        "recipeDigest": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "description": "SHA-256 of the RFC 8785 canonical JSON of this recipe with recipeDigest removed."
+        },
+        "role": {
+          "enum": [
+            "EntityRole",
+            "AggregateRootRole",
+            "ComponentRole",
+            "LineageRole",
+            "ContentRevisionRole",
+            "GraphLocatorRole",
+            "KeyClaimRole",
+            "EventOccurrenceRole"
+          ]
+        },
+        "target": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "class",
+            "deployment"
+          ],
+          "properties": {
+            "class": {
+              "type": "string",
+              "minLength": 1
+            },
+            "deployment": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        },
+        "strategy": {
+          "const": "DerivedHashIdentity"
+        },
+        "iriTemplate": {
+          "type": "string",
+          "pattern": "\\{digest\\}"
+        },
+        "key": {
+          "$ref": "#/$defs/key"
+        },
+        "tuplePrefix": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        "tupleEncoding": {
+          "const": "length-prefixed-utf8/1"
+        },
+        "digest": {
+          "$ref": "#/$defs/digest"
+        }
+      }
+    },
+    {
+      "title": "Surrogate, claimed",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "recipeFormat",
+        "recipeDigest",
+        "role",
+        "target",
+        "strategy",
+        "iriTemplate",
+        "surrogate",
+        "claims"
+      ],
+      "properties": {
+        "recipeFormat": {
+          "const": "lattice-minting-recipe/1"
+        },
+        "recipeDigest": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "description": "SHA-256 of the RFC 8785 canonical JSON of this recipe with recipeDigest removed."
+        },
+        "role": {
+          "enum": [
+            "EntityRole",
+            "AggregateRootRole",
+            "ComponentRole",
+            "LineageRole",
+            "ContentRevisionRole",
+            "GraphLocatorRole",
+            "KeyClaimRole",
+            "EventOccurrenceRole"
+          ]
+        },
+        "target": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "class",
+            "deployment"
+          ],
+          "properties": {
+            "class": {
+              "type": "string",
+              "minLength": 1
+            },
+            "deployment": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        },
+        "strategy": {
+          "const": "SurrogateClaimedIdentity"
+        },
+        "iriTemplate": {
+          "type": "string",
+          "pattern": "\\{surrogate\\}"
+        },
+        "surrogate": {
+          "$ref": "#/$defs/surrogate"
+        },
+        "claims": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 2,
+          "items": {
+            "$ref": "#/$defs/claim"
+          }
+        }
+      }
+    },
+    {
+      "title": "Random surrogate",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "recipeFormat",
+        "recipeDigest",
+        "role",
+        "target",
+        "strategy",
+        "iriTemplate",
+        "surrogate"
+      ],
+      "properties": {
+        "recipeFormat": {
+          "const": "lattice-minting-recipe/1"
+        },
+        "recipeDigest": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "description": "SHA-256 of the RFC 8785 canonical JSON of this recipe with recipeDigest removed."
+        },
+        "role": {
+          "enum": [
+            "EntityRole",
+            "AggregateRootRole",
+            "ComponentRole",
+            "LineageRole",
+            "ContentRevisionRole",
+            "GraphLocatorRole",
+            "KeyClaimRole",
+            "EventOccurrenceRole"
+          ]
+        },
+        "target": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "class",
+            "deployment"
+          ],
+          "properties": {
+            "class": {
+              "type": "string",
+              "minLength": 1
+            },
+            "deployment": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        },
+        "strategy": {
+          "const": "RandomSurrogateIdentity"
+        },
+        "iriTemplate": {
+          "type": "string",
+          "pattern": "\\{surrogate\\}"
+        },
+        "surrogate": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind"
+          ],
+          "properties": {
+            "kind": {
+              "const": "UuidV4Surrogate"
+            }
+          }
+        }
+      }
+    },
+    {
+      "title": "Position-derived occurrence",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "recipeFormat",
+        "recipeDigest",
+        "role",
+        "target",
+        "strategy",
+        "iriTemplate",
+        "namespace",
+        "epochWidth",
+        "sequenceWidth"
+      ],
+      "properties": {
+        "recipeFormat": {
+          "const": "lattice-minting-recipe/1"
+        },
+        "recipeDigest": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "description": "SHA-256 of the RFC 8785 canonical JSON of this recipe with recipeDigest removed."
+        },
+        "role": {
+          "enum": [
+            "EntityRole",
+            "AggregateRootRole",
+            "ComponentRole",
+            "LineageRole",
+            "ContentRevisionRole",
+            "GraphLocatorRole",
+            "KeyClaimRole",
+            "EventOccurrenceRole"
+          ]
+        },
+        "target": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "class",
+            "deployment"
+          ],
+          "properties": {
+            "class": {
+              "type": "string",
+              "minLength": 1
+            },
+            "deployment": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        },
+        "strategy": {
+          "const": "PositionDerivedEvent"
+        },
+        "iriTemplate": {
+          "type": "string",
+          "allOf": [
+            {
+              "pattern": "\\{namespace\\}"
+            },
+            {
+              "pattern": "\\{epoch\\}"
+            },
+            {
+              "pattern": "\\{seq\\}"
+            }
+          ]
+        },
+        "namespace": {
+          "oneOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "derivation",
+                "digest"
+              ],
+              "properties": {
+                "derivation": {
+                  "const": "HashedTargetDerivation"
+                },
+                "digest": {
+                  "$ref": "#/$defs/digest"
+                }
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "derivation"
+              ],
+              "properties": {
+                "derivation": {
+                  "const": "RegistryTokenDerivation"
+                }
+              }
+            }
+          ]
+        },
+        "epochWidth": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 19
+        },
+        "sequenceWidth": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 19
+        }
+      }
+    },
+    {
+      "title": "Content-addressed",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "recipeFormat",
+        "recipeDigest",
+        "role",
+        "target",
+        "strategy",
+        "iriTemplate",
+        "digest",
+        "canonicalization",
+        "selfReference",
+        "workBudget",
+        "verifyFullDigest",
+        "callerObligations"
+      ],
+      "properties": {
+        "recipeFormat": {
+          "const": "lattice-minting-recipe/1"
+        },
+        "recipeDigest": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "description": "SHA-256 of the RFC 8785 canonical JSON of this recipe with recipeDigest removed."
+        },
+        "role": {
+          "enum": [
+            "EntityRole",
+            "AggregateRootRole",
+            "ComponentRole",
+            "LineageRole",
+            "ContentRevisionRole",
+            "GraphLocatorRole",
+            "KeyClaimRole",
+            "EventOccurrenceRole"
+          ]
+        },
+        "target": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "class",
+            "deployment"
+          ],
+          "properties": {
+            "class": {
+              "type": "string",
+              "minLength": 1
+            },
+            "deployment": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        },
+        "strategy": {
+          "const": "ContentAddressedIdentity"
+        },
+        "iriTemplate": {
+          "type": "string",
+          "pattern": "\\{digest\\}"
+        },
+        "digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "canonicalization": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "algorithm",
+            "serialization"
+          ],
+          "properties": {
+            "algorithm": {
+              "const": "RDFC-1.0"
+            },
+            "serialization": {
+              "const": "canonical-n-quads-utf8"
+            }
+          }
+        },
+        "selfReference": {
+          "enum": [
+            "disallowed",
+            "exclude-header-subgraph",
+            "placeholder-substitution"
+          ]
+        },
+        "workBudget": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "verifyFullDigest": {
+          "type": "boolean"
+        },
+        "callerObligations": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/obligation"
+          }
+        }
+      }
+    },
+    {
+      "title": "Adopted identifier",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "recipeFormat",
+        "recipeDigest",
+        "role",
+        "target",
+        "strategy",
+        "namingAuthority",
+        "acceptedPattern"
+      ],
+      "properties": {
+        "recipeFormat": {
+          "const": "lattice-minting-recipe/1"
+        },
+        "recipeDigest": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "description": "SHA-256 of the RFC 8785 canonical JSON of this recipe with recipeDigest removed."
+        },
+        "role": {
+          "enum": [
+            "EntityRole",
+            "AggregateRootRole",
+            "ComponentRole",
+            "LineageRole",
+            "ContentRevisionRole",
+            "GraphLocatorRole",
+            "KeyClaimRole",
+            "EventOccurrenceRole"
+          ]
+        },
+        "target": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "class",
+            "deployment"
+          ],
+          "properties": {
+            "class": {
+              "type": "string",
+              "minLength": 1
+            },
+            "deployment": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        },
+        "strategy": {
+          "const": "AdoptedIdentity"
+        },
+        "iriTemplate": {
+          "type": "string",
+          "minLength": 1
+        },
+        "namingAuthority": {
+          "type": "string",
+          "minLength": 1
+        },
+        "acceptedPattern": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    {
+      "title": "External registry",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "recipeFormat",
+        "recipeDigest",
+        "role",
+        "target",
+        "strategy",
+        "namingAuthority",
+        "acceptedPattern"
+      ],
+      "properties": {
+        "recipeFormat": {
+          "const": "lattice-minting-recipe/1"
+        },
+        "recipeDigest": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "description": "SHA-256 of the RFC 8785 canonical JSON of this recipe with recipeDigest removed."
+        },
+        "role": {
+          "enum": [
+            "EntityRole",
+            "AggregateRootRole",
+            "ComponentRole",
+            "LineageRole",
+            "ContentRevisionRole",
+            "GraphLocatorRole",
+            "KeyClaimRole",
+            "EventOccurrenceRole"
+          ]
+        },
+        "target": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "class",
+            "deployment"
+          ],
+          "properties": {
+            "class": {
+              "type": "string",
+              "minLength": 1
+            },
+            "deployment": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        },
+        "strategy": {
+          "const": "ExternalRegistryIdentity"
+        },
+        "iriTemplate": {
+          "type": "string",
+          "minLength": 1
+        },
+        "namingAuthority": {
+          "type": "string",
+          "minLength": 1
+        },
+        "acceptedPattern": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "digest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "function",
+        "widthBits",
+        "encoding"
+      ],
+      "properties": {
+        "function": {
+          "const": "SHA-256"
+        },
+        "widthBits": {
+          "type": "integer",
+          "minimum": 8,
+          "maximum": 256,
+          "multipleOf": 8
+        },
+        "encoding": {
+          "enum": [
+            "lowercase-hex",
+            "base32",
+            "base64url"
+          ]
+        }
+      }
+    },
+    "mac": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "function",
+        "widthBits",
+        "encoding"
+      ],
+      "properties": {
+        "function": {
+          "const": "HMAC-SHA-256"
+        },
+        "widthBits": {
+          "type": "integer",
+          "minimum": 64,
+          "maximum": 256,
+          "multipleOf": 8
+        },
+        "encoding": {
+          "enum": [
+            "lowercase-hex",
+            "base32",
+            "base64url"
+          ]
+        }
+      }
+    },
+    "pipeline": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "unicodeVersion",
+        "steps"
+      ],
+      "properties": {
+        "id": {
+          "enum": [
+            "NfkcTrimCasefold",
+            "NfkcTrimUppercase",
+            "NfkcTrimLowercase"
+          ]
+        },
+        "unicodeVersion": {
+          "const": "16.0.0"
+        },
+        "steps": {
+          "type": "array",
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "const": "reject_unassigned"
+            }
+          ],
+          "items": {
+            "enum": [
+              "reject_unassigned",
+              "nfc",
+              "nfkc",
+              "nfkc_casefold",
+              "trim_white_space",
+              "uppercase_full",
+              "lowercase_full"
+            ]
+          }
+        }
+      }
+    },
+    "key": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "properties",
+        "scopeProperty",
+        "pipeline"
+      ],
+      "properties": {
+        "properties": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "scopeProperty": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "When not null, the request's value for this property is the first key component, used as given (not normalized)."
+        },
+        "pipeline": {
+          "$ref": "#/$defs/pipeline"
+        }
+      }
+    },
+    "claimKey": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "properties",
+        "scopeProperty",
+        "pipeline"
+      ],
+      "properties": {
+        "properties": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "scopeProperty": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "pipeline": {
+          "$ref": "#/$defs/pipeline"
+        }
+      }
+    },
+    "claim": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "constraintId",
+        "schemeVersion",
+        "schemeState",
+        "keyId",
+        "key",
+        "tupleEncoding",
+        "mac",
+        "iriTemplate"
+      ],
+      "properties": {
+        "constraintId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "schemeVersion": {
+          "type": "string",
+          "minLength": 1
+        },
+        "schemeState": {
+          "enum": [
+            "Accepting",
+            "Dual"
+          ],
+          "description": "Only scheme versions that still mint appear in a recipe. Retiring and Retired versions are omitted."
+        },
+        "keyId": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Identifies the secret. Never the secret itself."
+        },
+        "key": {
+          "$ref": "#/$defs/claimKey"
+        },
+        "tupleEncoding": {
+          "const": "length-prefixed-utf8/1"
+        },
+        "mac": {
+          "$ref": "#/$defs/mac"
+        },
+        "iriTemplate": {
+          "type": "string",
+          "pattern": "\\{mac\\}"
+        }
+      }
+    },
+    "obligation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "text"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^CA-[0-9]+$"
+        },
+        "text": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "surrogate": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind"
+          ],
+          "properties": {
+            "kind": {
+              "const": "UuidV4Surrogate"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "pattern"
+          ],
+          "properties": {
+            "kind": {
+              "const": "CallerSuppliedSurrogate"
+            },
+            "pattern": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        }
+      ]
+    }
+  }
+}

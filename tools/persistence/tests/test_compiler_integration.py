@@ -33,6 +33,7 @@ POSITIVE_FIXTURES = [
     ("append-stream-dataset-guard.ttl", "https://example.org/lending#DecisionStream"),
     ("extension-properties.ttl", "https://example.org/lending#Facility"),
     ("identity-epoch-privacy-profile.ttl", "https://example.org/lending#Claimant"),
+    ("identity-minting-anchors.ttl", "https://example.org/lending#Person"),
 ]
 
 NEGATIVE_FIXTURES = [
@@ -50,6 +51,7 @@ SHACL_NEGATIVE_FIXTURES = [
     "invalid-compositeboundary-missing-shape.ttl",
     "invalid-lagwindow-missing.ttl",
     "invalid-position-event-without-derivation.ttl",
+    "invalid-claimed-identity-without-key.ttl",
 ]
 
 ALL_FIXTURES = [p.name for p in EXAMPLES_DIR.glob("*.ttl")]
@@ -119,6 +121,20 @@ class TestShaclSelfValidation:
             data, shacl_graph=shapes, inference="none", advanced=True, allow_warnings=True
         )
         assert conforms, f"{fixture} does not conform:\n{report}"
+
+    @pytest.mark.parametrize("fixture", ALL_FIXTURES)
+    def test_shapes_run_without_engine_errors(self, shapes, fixture):
+        """A shape the SHACL engine cannot run (for example a VALUES clause
+        inside sh:select, which SHACL-SPARQL forbids) also makes a graph
+        'not conform', so a negative fixture could pass for the wrong
+        reason. Every fixture must validate without a Validation Failure."""
+        data = Graph()
+        data.parse(SPEC_TTL, format="turtle")
+        data.parse(EXAMPLES_DIR / fixture, format="turtle")
+        _, _, report = pyshacl.validate(
+            data, shacl_graph=shapes, inference="none", advanced=True, allow_warnings=True
+        )
+        assert "Validation Failure" not in report, report
 
     @pytest.mark.parametrize("fixture", SHACL_NEGATIVE_FIXTURES)
     def test_does_not_conform(self, shapes, fixture):

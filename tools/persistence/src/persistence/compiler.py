@@ -26,7 +26,10 @@ from .capability import (
 from .model import DIMENSIONS, Diagnostic, ResolvedDimension
 from .namespaces import DAL
 from .operations import GeneratedOperation, select_operations
+from .recipes import build_recipes, canonical_json
 from .resolver import resolve_dimension, resolve_identity, resolve_uniqueness
+
+RDF_JSON = URIRef("http://www.w3.org/1999/02/22-rdf-syntax-ns#JSON")
 from .scopes import Target, discover_targets
 
 
@@ -43,6 +46,8 @@ class CompiledTarget:
     # Slice 3: role-qualified identity dimensions, identity:<Role> -> resolved
     # strategy. Only declared roles appear (no baseline identity strategy).
     identity: dict[str, ResolvedDimension] = field(default_factory=dict)
+    # identity-minting M1: one sealed minting recipe per identity role.
+    recipes: list[dict] = field(default_factory=list)
 
 
 class CompileError(Exception):
@@ -87,6 +92,7 @@ def compile_targets(
 
             diagnostics = validator.check_cross_axis(graph, target, dimensions, uniqueness)
             diagnostics += validator.check_identity(graph, target, dimensions, identity, uniqueness)
+            recipes = build_recipes(graph, target, identity, uniqueness)
 
             requirement = compute_requirement(dimensions, uniqueness)
             check = check_requirement(requirement, spec) if spec is not None else None
@@ -106,6 +112,7 @@ def compile_targets(
                     check=check,
                     diagnostics=diagnostics,
                     identity=identity,
+                    recipes=recipes,
                 )
             )
         except Exception as e:
@@ -156,6 +163,17 @@ def emit_compiled_profile(out: Graph, compiled: CompiledTarget) -> URIRef:
 
     for constraint in compiled.uniqueness:
         out.add((profile, DAL.appliedUniquenessConstraint, URIRef(constraint["constraint"])))
+
+    for recipe in compiled.recipes:
+        node = BNode()
+        out.add((node, RDF.type, DAL.MintingRecipe))
+        out.add((node, DAL.forRole, DAL[recipe["role"]]))
+        out.add((node, DAL.recipeStrategy, DAL[recipe["strategy"]]))
+        out.add((node, DAL.recipeDigest, RdfLiteral(recipe["recipeDigest"])))
+        # The canonical form of the recipe (plan decision P1): export-recipes
+        # extracts exactly this text, so the TTL and the JSON cannot drift.
+        out.add((node, DAL.recipeDocument, RdfLiteral(canonical_json(recipe).decode("utf-8"), datatype=RDF_JSON)))
+        out.add((profile, DAL.mintingRecipe, node))
 
     for op in compiled.operations:
         op_node = BNode()

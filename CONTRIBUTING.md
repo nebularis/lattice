@@ -7,6 +7,8 @@ LATTICE uses two licences, split by content type:
 | Content | Licence | Applies to |
 |---|---|---|
 | Ontology artefacts | [MPL 2.0](LICENSE) | every `.ttl` file, and everything under `tools/` |
+| Code | [MPL 2.0](LICENSE) | everything under `platform/` (ADR-A71), `packages/` (ADR-A84) and `workers/` |
+| Machine-readable contracts | [MPL 2.0](LICENSE) | everything under `contracts/`: JSON schemas, anchor vectors, fixtures. JSON cannot carry a comment header, so these are annotated in [`REUSE.toml`](REUSE.toml) instead |
 | Documentation and specifications | [CC BY-SA 4.0](LICENSE-DOCS.md) | every `.md` file, including each layer's `README.md` and the planning docs inside `execution/` |
 
 Both are the same shape of licence: permissive to build on, copyleft only on the file itself. You can use LATTICE — ontologies, shapes, vocabulary-inclusion mechanism, reference implementation, specification text — as the foundation of a commercial product, a hosted service, or an internal tool, without any obligation to open-source what you build. The obligation runs the other way: if you take a file from this repository, modify it, and redistribute that modified file, the modification has to carry the same licence forward. Building something that merely *uses* an unmodified LATTICE file, however extensively, never triggers this.
@@ -39,7 +41,9 @@ Every file in this repository needs a one-line `SPDX-License-Identifier` header 
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 ```
 
-**Reference implementation source files (`tools/`):** use the header convention native to the language — a `#` comment for Python, `//` for JavaScript/TypeScript, and so on — with the same `MPL-2.0` identifier.
+**JSON files (`contracts/`):** no header. Their licence is declared by path in [`REUSE.toml`](REUSE.toml). A new directory of JSON outside `contracts/` needs its own annotation there.
+
+**Reference implementation and library source files (`tools/`, `platform/`, `packages/`, `workers/`):** use the header convention native to the language — a `#` comment for Python, `//` for JavaScript/TypeScript, and so on — with the same `MPL-2.0` identifier.
 
 A CI check (`reuse lint`) runs on every pull request and fails the build if a file is missing its header or carries one that doesn't match its location. Add the header when you create the file, not as a cleanup step afterward — it's one line and it's much easier to get right the first time than to retrofit across a growing tree.
 

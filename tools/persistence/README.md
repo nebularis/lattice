@@ -30,6 +30,12 @@ python -m persistence compile \
 python -m persistence instantiate compiled-profile.ttl --out ./rq
 ```
 
+**`export-recipes`** reads a compiled profile and writes each identity minting recipe it contains as a JSON file, for the [minting libraries](../../docs/architecture/decisions/ADR-A84-standalone-minting-libraries.md) or any implementation of the [identity minting specification](../../docs/architecture/identity-minting-specification.md).
+
+```bash
+python -m persistence export-recipes compiled-profile.ttl --out ./recipes
+```
+
 Neither subcommand assumes you will ever run the other, or run any further LATTICE component at all. An adopter who wants only the ontology and the generated SPARQL can run both once and walk away with the `.rq` files.
 
 ## What `compile` actually does
@@ -48,7 +54,7 @@ Every one of these is a real, tested Python module: [`persistence.resolver`](src
 
 A `dal:IdentityProfile` names exactly one `dal:ResourceRole`, and one class often needs a different minting strategy per role: an entity's own IRI may be a claimed surrogate while its event occurrences are position-derived. Each role is therefore its own dimension, `identity:<Role>` (for example `identity:EntityRole`), resolved per target by the same precedence algorithm as every other dimension, among the `dal:IdentityProfile` nodes naming that role. The winning node wins as a unit, so its digest scheme and event settings always come from the node whose strategy they qualify. A role no profile declares is absent from the compiled profile: there is no default identity strategy (ADR-A82).
 
-Identity generates no SPARQL. The compiled profile records the resolved strategy (`dal:resolvedValue`) and the winning profile node (`dal:wonBy`) per role, and the caller that mints IRIs reads them. Minting needs the normalization pipeline and, for claims, the HMAC secret, which live in the application (guide §6.1, §8.1). The compiler refuses a derived-hash or content-addressed identity without a well-formed digest scheme, a position-derived occurrence identity without a uniqueness witness or an occurrence-namespace derivation, and a claimed surrogate entity with no uniqueness constraint to claim from. It warns when position-derived occurrence identity runs under a row-level epoch guard or a store-local epoch.
+Identity generates no SPARQL. For each resolved role the compiled profile records the strategy and the winning profile node, and a self-contained **minting recipe** (`dal:MintingRecipe`, built by [`persistence.recipes`](src/persistence/recipes.py), `identity-minting` M1). The recipe is stored as its RFC 8785 canonical JSON (a literal of datatype `rdf:JSON`) with a SHA-256 digest, and `export-recipes` writes it out unchanged. Building a recipe validates it: anything a recipe would lack is refused by name (`MintedIriTemplateRequired`, `KeyConstraintRequired`, `KeyConstraintNotApplicable`, `TuplePrefixRequired`, `ClaimedIdentityWithoutKey`, `ClaimSchemeIncomplete`, `SurrogateKindRequired`, `CallerSuppliedPatternRequired`, `PositionWidthsRequired`, `ContentAddressedMembersRequired`, `AcceptedPatternRequired`, `DigestFunctionUnsupported`, `NormalizePipelineRequired`, and others). A content-addressed recipe also raises a `ContentAddressedCallerObligations` warning, because its correctness rests on how the caller canonicalizes RDF (specification §7). Minting needs the normalization pipeline and, for claims, the HMAC secret, which live in the application (guide §6.1, §8.1). The compiler refuses a derived-hash or content-addressed identity without a well-formed digest scheme, a position-derived occurrence identity without a uniqueness witness or an occurrence-namespace derivation, and a claimed surrogate whose `dal:claimsConstraint` is missing, applies to another target, or has no complete claim scheme. It warns when position-derived occurrence identity runs under a row-level epoch guard or a store-local epoch.
 
 ## A `Target` is a class, plus a deployment when there is more than one
 
@@ -126,4 +132,5 @@ The test suite includes:
 - **`test_template_alignment.py`** — the template contract from the post-3866b21 review: epoch rebase, request digests, optional heads, typed rows, key-claim graph, audits, and the request-time slot rules.
 - **`test_slice_2_extensions.py`** — per-property resolution of the extension properties, baseline defaults, every Slice 2 check with a positive and negative case, `dal:firstWrite` and `dal:registryGraph` behaviour.
 - **`test_slice_3_identity.py`** — role-qualified identity resolution, whole-node winners, no default role, emission, and every identity check with a positive and negative case.
+- **`test_identity_minting_m1.py`** — the compiler reproduces the hand-authored anchor recipes of `contracts/identity/anchor-vectors.json` byte for byte; every recipe satisfies the published schema; digests are recomputed independently and invariant under triple order; emission, export, rotation, and one refusal per missing recipe member.
 - **`test_architecture.py`** — the Python equivalent of an ArchUnit rule: only `persistence.render` may import `chevron`, no wall-clock call exists in any resolution-critical module, and `chevron.render`'s template argument is never dynamically assembled.

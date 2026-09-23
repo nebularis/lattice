@@ -1,0 +1,25 @@
+# SPDX-License-Identifier: MPL-2.0
+[build-system]
+requires = ["setuptools>=77", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lattice-minting"
+version = "0.1.0"
+description = "Standalone identity minting for LATTICE minting recipes (ADR-A84). No runtime dependencies."
+readme = "README.md"
+license = "MPL-2.0"
+requires-python = ">=3.14"
+dependencies = []
+
+[project.optional-dependencies]
+test = ["pytest>=8.0"]
+
+[project.scripts]
+lattice-mint = "lattice_minting.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+lattice_minting = ["ucd/*/*.txt"]

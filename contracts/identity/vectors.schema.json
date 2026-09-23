@@ -1,0 +1,199 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.nebularis.org/lattice/identity/minting-vectors/1.0.0",
+  "title": "LATTICE identity minting conformance vectors",
+  "description": "Conformance vectors for one recipe. Normative definition: docs/architecture/identity-minting-specification.md, 'Conformance vectors'. An implementation is conformant for a recipe when it reproduces every positive vector's trace and IRI, raises the named error for every negative vector, and satisfies every format vector.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "vectorsFormat",
+    "description",
+    "recipe",
+    "testSecrets",
+    "positive",
+    "negative",
+    "format"
+  ],
+  "properties": {
+    "vectorsFormat": {
+      "const": "lattice-minting-vectors/1"
+    },
+    "description": {
+      "type": "string"
+    },
+    "recipe": {
+      "$ref": "https://schemas.nebularis.org/lattice/identity/minting-recipe/1.0.0"
+    },
+    "testSecrets": {
+      "type": "object",
+      "description": "Published test secrets, by key id. Never production secrets.",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "hex",
+          "note"
+        ],
+        "properties": {
+          "utf8": {
+            "type": "string"
+          },
+          "hex": {
+            "type": "string",
+            "pattern": "^([0-9a-f]{2})+$"
+          },
+          "note": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "positive": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/positive"
+      }
+    },
+    "negative": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/negative"
+      }
+    },
+    "format": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/format"
+      }
+    }
+  },
+  "$defs": {
+    "positive": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "category",
+        "inputs",
+        "trace",
+        "iri"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9-]+$"
+        },
+        "category": {
+          "type": "string"
+        },
+        "inputs": {
+          "type": "object"
+        },
+        "trace": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": [
+              "step"
+            ],
+            "properties": {
+              "step": {
+                "enum": [
+                  "normalize",
+                  "tuple",
+                  "digest",
+                  "mac",
+                  "truncate",
+                  "encode",
+                  "percent-encode",
+                  "pad",
+                  "validate-surrogate",
+                  "render",
+                  "validate-iri",
+                  "generate-surrogate",
+                  "validate-token"
+                ]
+              }
+            }
+          }
+        },
+        "iri": {
+          "type": "string"
+        },
+        "claimIris": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "negative": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "category",
+        "inputs",
+        "error"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9-]+$"
+        },
+        "category": {
+          "type": "string"
+        },
+        "inputs": {
+          "type": "object"
+        },
+        "error": {
+          "enum": [
+            "UnassignedCodePoint",
+            "EmptyKeyComponent",
+            "MissingKeyComponent",
+            "MissingSecret",
+            "PatternMismatch",
+            "PositionOutOfRange",
+            "RecipeDigestMismatch",
+            "UnsupportedRecipeFormat",
+            "RuntimeUnicodeTooOld",
+            "CanonicalizerNotDeclared"
+          ]
+        }
+      }
+    },
+    "format": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "pattern",
+        "accept",
+        "reject"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "pattern": {
+          "type": "string"
+        },
+        "accept": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "reject": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

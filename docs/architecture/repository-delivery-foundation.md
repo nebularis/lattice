@@ -6,7 +6,7 @@ Phase 0 establishes repeatable entry points without replacing language-native bu
 
 ## Components
 
-- `mise.toml` selects Java 21, Maven 3.9, Node 22, Python 3.11, Erlang 27, and Elixir 1.17. Its tasks invoke native package managers and checks.
+- `mise.toml` selects Java 25 (LTS), Maven 3.9, Node 22, Python 3.14, Erlang 27, and Elixir 1.17. Java 25 and Python 3.14 were chosen together on 2026-09-23 because both ship Unicode 16.0, the version the identity-minting libraries pin (`docs/developer/status/toolchain-jdk25-python314.md`). Its tasks invoke native package managers and checks.
 - Root `package.json`, `.yarnrc.yml`, and `yarn.lock` reserve the Yarn workspace for `apps/*` and `packages/*`.
 - Root `pyproject.toml` and `requirements-lock.txt` retain ontology validation dependencies. `workers/pyproject.toml` is a separate deployable Python package.
 - `platform/pom.xml` is the Java reactor. Its modules do not change the existing ontology or Python compiler layout.

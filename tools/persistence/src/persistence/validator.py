@@ -328,14 +328,20 @@ def check_identity(
                     "(iri-identity-patterns.md §10.3).",
                 ))
 
-        # Joins the uniqueness constraints: a claimed surrogate needs a key.
-        if strategy == "SurrogateClaimedIdentity" and name in ("identity:EntityRole", "identity:AggregateRootRole"):
-            if not uniqueness:
-                raise CrossAxisViolation(
-                    "ClaimedIdentityWithoutKey", str(target),
-                    f"{where}: dal:SurrogateClaimedIdentity needs at least one dal:UniquenessConstraint on "
-                    "the target to supply the key the claim is minted from (iri-identity-patterns.md §6.4).",
-                )
+        # A claimed surrogate's key is checked exactly by persistence.recipes,
+        # through dal:claimsConstraint (identity-minting M1), which replaced
+        # Slice 3's interim "at least one uniqueness constraint" check here.
+
+        # identity-minting sketch §6a: the obligation reaches the compile output too.
+        if strategy == "ContentAddressedIdentity":
+            out.append(_warning(
+                "ContentAddressedCallerObligations", target,
+                f"{where}: minters hash canonical bytes the caller supplies and never canonicalize RDF. The "
+                "caller must use an RDFC-1.0 implementation that passes the W3C test suite, apply the "
+                "self-reference rule first, enforce the work budget, and compare full digests where declared "
+                "(identity-minting-specification.md §7). Two callers who canonicalize differently mint "
+                "different IRIs for one graph, and no conformance vector can detect it.",
+            ))
     return out
 
 

@@ -1,0 +1,41 @@
+{
+  "callerObligations": [
+    {
+      "id": "CA-1",
+      "text": "The bytes are the output of an RDFC-1.0 implementation that passes the W3C RDFC-1.0 test suite, serialized as canonical N-Quads in UTF-8, one line per quad, each terminated by a single LF, with no other bytes."
+    },
+    {
+      "id": "CA-2",
+      "text": "The recipe's self-reference rule is applied before canonicalization."
+    },
+    {
+      "id": "CA-3",
+      "text": "Canonicalization stops at the recipe's work budget and the graph is refused, never hashed on a best-effort basis."
+    },
+    {
+      "id": "CA-4",
+      "text": "Where verifyFullDigest is true, the full digest is stored and compared on every re-registration of the identifier."
+    }
+  ],
+  "canonicalization": {
+    "algorithm": "RDFC-1.0",
+    "serialization": "canonical-n-quads-utf8"
+  },
+  "digest": {
+    "encoding": "lowercase-hex",
+    "function": "SHA-256",
+    "widthBits": 256
+  },
+  "iriTemplate": "urn:rev:content:{digest}",
+  "recipeDigest": "sha256:042aa02a35bdc4c7357e38288144a2667afbc9bf1b465d1332e7694955dea4cb",
+  "recipeFormat": "lattice-minting-recipe/1",
+  "role": "ContentRevisionRole",
+  "selfReference": "disallowed",
+  "strategy": "ContentAddressedIdentity",
+  "target": {
+    "class": "https://example.org/lending#Contract",
+    "deployment": null
+  },
+  "verifyFullDigest": true,
+  "workBudget": 100000
+}

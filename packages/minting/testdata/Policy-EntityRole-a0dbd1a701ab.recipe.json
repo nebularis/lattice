@@ -1,0 +1,29 @@
+{
+  "iriTemplate": "urn:ex:policy:{key}",
+  "key": {
+    "pipeline": {
+      "id": "NfkcTrimUppercase",
+      "steps": [
+        "reject_unassigned",
+        "nfkc",
+        "trim_white_space",
+        "uppercase_full",
+        "nfkc"
+      ],
+      "unicodeVersion": "16.0.0"
+    },
+    "properties": [
+      "https://example.org/lending#tenantCode",
+      "https://example.org/lending#policyNumber"
+    ],
+    "scopeProperty": null
+  },
+  "recipeDigest": "sha256:a0dbd1a701ab2b974bc7826ffdae3a8a40fc191e7ce53a7bf751e8a8cfd7a372",
+  "recipeFormat": "lattice-minting-recipe/1",
+  "role": "EntityRole",
+  "strategy": "NaturalKeyIdentity",
+  "target": {
+    "class": "https://example.org/lending#Policy",
+    "deployment": null
+  }
+}

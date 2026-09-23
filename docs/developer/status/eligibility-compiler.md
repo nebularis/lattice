@@ -6,7 +6,7 @@
 **State:** Implemented, awaiting validation in network environment
 **Sketch:** [mork-eligibility-compiler.md](../sketches/mork-eligibility-compiler.md)
 **Plan:** [eligibility-compiler.md](../plans/eligibility-compiler.md) (2026-09-23) — verification steps below are now slices A1–A5 there; step 5's Drools/Pellet dependency is redesigned as a shared, test-scope-only module (Part B), never a dependency of `tools/mork_compilers` itself
-**Governing ADRs:** [ADR-A23](../../architecture/decisions/ADR-A23-mork-compiler-family-completion-policy.md), [ADR-A24](../../architecture/decisions/ADR-A24-eligibility-executable-semantics-backend-strategy.md), ADR-A81 (proposed, test-only reasoning/rules engine isolation)
+**Governing ADRs:** [ADR-A23](../../architecture/decisions/ADR-A23-mork-compiler-family-completion-policy.md), [ADR-A24](../../architecture/decisions/ADR-A24-eligibility-executable-semantics-backend-strategy.md), ADR-A83 (proposed, test-only reasoning/rules engine isolation; renumbered from A81 on 2026-09-23 to avoid the collision with the Control Plane HTTP runtime ADR)
 
 ## What was built
 

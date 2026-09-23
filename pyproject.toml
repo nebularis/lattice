@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "lattice-tooling"
 version = "0.1.0"
 description = "Shared development and validation environment for LATTICE tooling"
-requires-python = ">=3.9"
+requires-python = ">=3.14"
 dependencies = [
   "rdflib>=7.0,<8",
   "pyshacl>=0.26,<1",

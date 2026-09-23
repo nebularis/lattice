@@ -118,5 +118,5 @@ Result as of 2026-09-23 (after Slice 3): `570 passed`.
 
 ## Next steps
 
-1. Proceed to Slice 4 or 5 (independent of each other). Slice 4 also takes the G3 remainder listed above and exercises Worked example 4's privacy profile.
+1. Proceed to Slice 4 or 5 (independent of each other). Minting recipes, conformance vectors and `dal:claimsConstraint` moved to the separate unit [`identity-minting`](../sketches/identity-minting.md) (sketch, 2026-09-23); Slice 3's interim "at least one uniqueness constraint" check is replaced there. Slice 4 also takes the G3 remainder listed above and exercises Worked example 4's privacy profile.
 3. Update this file after every slice lands, per the Documentation Lifecycle rule that this status record is the sole authoritative live state for this unit.

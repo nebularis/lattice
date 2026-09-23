@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 name = "spc-toolchain"
 version = "0.1.0"
 description = "Design-time toolchain for Subject Process Calculus"
-requires-python = ">=3.11"
+requires-python = ">=3.14"
 dependencies = [
     "rdflib>=7.0",
     "parsimonious>=0.10",       # PEG parser

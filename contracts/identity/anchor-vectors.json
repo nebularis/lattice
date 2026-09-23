@@ -1,0 +1,1636 @@
+{
+  "anchorsFormat": "lattice-minting-anchors/1",
+  "unicodeVersion": "16.0.0",
+  "ucdSource": "https://www.unicode.org/Public/16.0.0/ucd/",
+  "description": "Hand-authored anchor vectors. Every byte is recomputed by verify-anchors.sh with openssl, sharing no code with the LATTICE minting libraries. Normalization outputs cite the UCD 16.0.0 lines that justify them.",
+  "sets": [
+    {
+      "vectorsFormat": "lattice-minting-vectors/1",
+      "description": "Derived hash: the SKU example of rdf-sparql-patterns-guide.md Chapter 5.",
+      "recipe": {
+        "recipeFormat": "lattice-minting-recipe/1",
+        "role": "EntityRole",
+        "target": {
+          "class": "https://example.org/lending#Product",
+          "deployment": null
+        },
+        "strategy": "DerivedHashIdentity",
+        "iriTemplate": "urn:ex:sku:{digest}",
+        "key": {
+          "properties": [
+            "https://example.org/lending#sku"
+          ],
+          "scopeProperty": null,
+          "pipeline": {
+            "id": "NfkcTrimUppercase",
+            "unicodeVersion": "16.0.0",
+            "steps": [
+              "reject_unassigned",
+              "nfkc",
+              "trim_white_space",
+              "uppercase_full",
+              "nfkc"
+            ]
+          }
+        },
+        "tuplePrefix": [
+          "iri",
+          "v1",
+          "sku"
+        ],
+        "tupleEncoding": "length-prefixed-utf8/1",
+        "digest": {
+          "function": "SHA-256",
+          "widthBits": 160,
+          "encoding": "base32"
+        },
+        "recipeDigest": "sha256:38ce5a73f929a647583c587442c3d493afd79223d8162056acea43a75a403546"
+      },
+      "testSecrets": {},
+      "positive": [
+        {
+          "id": "dh-ascii",
+          "category": "ascii",
+          "inputs": {
+            "key": [
+              "widget-9"
+            ]
+          },
+          "trace": [
+            {
+              "step": "normalize",
+              "component": 0,
+              "pipeline": "NfkcTrimUppercase",
+              "input": "widget-9",
+              "after": [
+                {
+                  "step": "reject_unassigned",
+                  "output": "widget-9"
+                },
+                {
+                  "step": "nfkc",
+                  "output": "widget-9"
+                },
+                {
+                  "step": "trim_white_space",
+                  "output": "widget-9"
+                },
+                {
+                  "step": "uppercase_full",
+                  "output": "WIDGET-9"
+                },
+                {
+                  "step": "nfkc",
+                  "output": "WIDGET-9"
+                }
+              ],
+              "output": "WIDGET-9",
+              "ucd": []
+            },
+            {
+              "step": "tuple",
+              "components": [
+                "iri",
+                "v1",
+                "sku",
+                "WIDGET-9"
+              ],
+              "hex": "333a697269323a7631333a736b75383a5749444745542d39"
+            },
+            {
+              "step": "digest",
+              "function": "SHA-256",
+              "hex": "b823783f51e7dfe63cab9d45cd6958849de216ccda6bf467e5c7c753ec1bb0f5"
+            },
+            {
+              "step": "truncate",
+              "widthBits": 160,
+              "hex": "b823783f51e7dfe63cab9d45cd6958849de216cc"
+            },
+            {
+              "step": "encode",
+              "encoding": "base32",
+              "value": "XARXQP2R47P6MPFLTVC422KYQSO6EFWM"
+            },
+            {
+              "step": "render",
+              "iri": "urn:ex:sku:XARXQP2R47P6MPFLTVC422KYQSO6EFWM"
+            }
+          ],
+          "iri": "urn:ex:sku:XARXQP2R47P6MPFLTVC422KYQSO6EFWM"
+        },
+        {
+          "id": "dh-trim-case",
+          "category": "whitespace-and-case",
+          "inputs": {
+            "key": [
+              " Widget-9 "
+            ]
+          },
+          "trace": [
+            {
+              "step": "normalize",
+              "component": 0,
+              "pipeline": "NfkcTrimUppercase",
+              "input": " Widget-9 ",
+              "after": [
+                {
+                  "step": "reject_unassigned",
+                  "output": " Widget-9 "
+                },
+                {
+                  "step": "nfkc",
+                  "output": " Widget-9 "
+                },
+                {
+                  "step": "trim_white_space",
+                  "output": "Widget-9"
+                },
+                {
+                  "step": "uppercase_full",
+                  "output": "WIDGET-9"
+                },
+                {
+                  "step": "nfkc",
+                  "output": "WIDGET-9"
+                }
+              ],
+              "output": "WIDGET-9",
+              "ucd": [
+                "PropList.txt 0020 ; White_Space"
+              ]
+            },
+            {
+              "step": "tuple",
+              "components": [
+                "iri",
+                "v1",
+                "sku",
+                "WIDGET-9"
+              ],
+              "hex": "333a697269323a7631333a736b75383a5749444745542d39"
+            },
+            {
+              "step": "digest",
+              "function": "SHA-256",
+              "hex": "b823783f51e7dfe63cab9d45cd6958849de216ccda6bf467e5c7c753ec1bb0f5"
+            },
+            {
+              "step": "truncate",
+              "widthBits": 160,
+              "hex": "b823783f51e7dfe63cab9d45cd6958849de216cc"
+            },
+            {
+              "step": "encode",
+              "encoding": "base32",
+              "value": "XARXQP2R47P6MPFLTVC422KYQSO6EFWM"
+            },
+            {
+              "step": "render",
+              "iri": "urn:ex:sku:XARXQP2R47P6MPFLTVC422KYQSO6EFWM"
+            }
+          ],
+          "iri": "urn:ex:sku:XARXQP2R47P6MPFLTVC422KYQSO6EFWM"
+        },
+        {
+          "id": "dh-fullwidth",
+          "category": "compatibility-forms",
+          "inputs": {
+            "key": [
+              "\uff57idget-\uff19"
+            ]
+          },
+          "trace": [
+            {
+              "step": "normalize",
+              "component": 0,
+              "pipeline": "NfkcTrimUppercase",
+              "input": "\uff57idget-\uff19",
+              "after": [
+                {
+                  "step": "reject_unassigned",
+                  "output": "\uff57idget-\uff19"
+                },
+                {
+                  "step": "nfkc",
+                  "output": "widget-9"
+                },
+                {
+                  "step": "trim_white_space",
+                  "output": "widget-9"
+                },
+                {
+                  "step": "uppercase_full",
+                  "output": "WIDGET-9"
+                },
+                {
+                  "step": "nfkc",
+                  "output": "WIDGET-9"
+                }
+              ],
+              "output": "WIDGET-9",
+              "ucd": [
+                "DerivedNormalizationProps.txt FF57 NFKC compatibility -> 0077",
+                "UnicodeData.txt FF19 <wide> 0039"
+              ]
+            },
+            {
+              "step": "tuple",
+              "components": [
+                "iri",
+                "v1",
+                "sku",
+                "WIDGET-9"
+              ],
+              "hex": "333a697269323a7631333a736b75383a5749444745542d39"
+            },
+            {
+              "step": "digest",
+              "function": "SHA-256",
+              "hex": "b823783f51e7dfe63cab9d45cd6958849de216ccda6bf467e5c7c753ec1bb0f5"
+            },
+            {
+              "step": "truncate",
+              "widthBits": 160,
+              "hex": "b823783f51e7dfe63cab9d45cd6958849de216cc"
+            },
+            {
+              "step": "encode",
+              "encoding": "base32",
+              "value": "XARXQP2R47P6MPFLTVC422KYQSO6EFWM"
+            },
+            {
+              "step": "render",
+              "iri": "urn:ex:sku:XARXQP2R47P6MPFLTVC422KYQSO6EFWM"
+            }
+          ],
+          "iri": "urn:ex:sku:XARXQP2R47P6MPFLTVC422KYQSO6EFWM"
+        }
+      ],
+      "negative": [
+        {
+          "id": "dh-empty",
+          "category": "empty",
+          "inputs": {
+            "key": [
+              "   "
+            ]
+          },
+          "error": "EmptyKeyComponent"
+        },
+        {
+          "id": "dh-unassigned",
+          "category": "unassigned",
+          "inputs": {
+            "key": [
+              "widget-\u0378"
+            ]
+          },
+          "error": "UnassignedCodePoint"
+        }
+      ],
+      "format": []
+    },
+    {
+      "vectorsFormat": "lattice-minting-vectors/1",
+      "description": "Claimed surrogate: the email claim of rdf-sparql-patterns-guide.md \u00a76.1, with a caller-supplied surrogate.",
+      "recipe": {
+        "recipeFormat": "lattice-minting-recipe/1",
+        "role": "EntityRole",
+        "target": {
+          "class": "https://example.org/lending#Person",
+          "deployment": null
+        },
+        "strategy": "SurrogateClaimedIdentity",
+        "iriTemplate": "urn:person:{surrogate}",
+        "surrogate": {
+          "kind": "CallerSuppliedSurrogate",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "claims": [
+          {
+            "constraintId": "person-email-unique",
+            "schemeVersion": "v1",
+            "schemeState": "Accepting",
+            "keyId": "example-key-v1",
+            "key": {
+              "properties": [
+                "https://example.org/lending#email"
+              ],
+              "scopeProperty": "https://example.org/lending#tenant",
+              "pipeline": {
+                "id": "NfkcTrimCasefold",
+                "unicodeVersion": "16.0.0",
+                "steps": [
+                  "reject_unassigned",
+                  "nfkc_casefold",
+                  "trim_white_space"
+                ]
+              }
+            },
+            "tupleEncoding": "length-prefixed-utf8/1",
+            "mac": {
+              "function": "HMAC-SHA-256",
+              "widthBits": 128,
+              "encoding": "base32"
+            },
+            "iriTemplate": "urn:key:person-email:{schemeVersion}:{mac}"
+          }
+        ],
+        "recipeDigest": "sha256:ea6fa49ff46d789e8b5d0e8491e2f5ab77a813437d253767d336f06e553519e7"
+      },
+      "testSecrets": {
+        "example-key-v1": {
+          "utf8": "lattice-guide-example-secret-not-for-production",
+          "hex": "6c6174746963652d67756964652d6578616d706c652d7365637265742d6e6f742d666f722d70726f64756374696f6e",
+          "note": "Published test secret. Never use in production."
+        }
+      },
+      "positive": [
+        {
+          "id": "cl-ascii",
+          "category": "ascii",
+          "inputs": {
+            "key": [
+              "ada@example.org"
+            ],
+            "scope": "acme",
+            "surrogate": "8f2c1b7e-3e4a-4f7c-9a6d-2b1e0c5d7f90"
+          },
+          "trace": [
+            {
+              "step": "validate-surrogate",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+              "value": "8f2c1b7e-3e4a-4f7c-9a6d-2b1e0c5d7f90"
+            },
+            {
+              "step": "render",
+              "iri": "urn:person:8f2c1b7e-3e4a-4f7c-9a6d-2b1e0c5d7f90"
+            },
+            {
+              "step": "normalize",
+              "component": 0,
+              "pipeline": "NfkcTrimCasefold",
+              "input": "ada@example.org",
+              "after": [
+                {
+                  "step": "reject_unassigned",
+                  "output": "ada@example.org"
+                },
+                {
+                  "step": "nfkc_casefold",
+                  "output": "ada@example.org"
+                },
+                {
+                  "step": "trim_white_space",
+                  "output": "ada@example.org"
+                }
+              ],
+              "output": "ada@example.org",
+              "ucd": []
+            },
+            {
+              "step": "tuple",
+              "claim": 0,
+              "components": [
+                "v1",
+                "person-email-unique",
+                "acme",
+                "ada@example.org"
+              ],
+              "hex": "323a763131393a706572736f6e2d656d61696c2d756e69717565343a61636d6531353a616461406578616d706c652e6f7267"
+            },
+            {
+              "step": "mac",
+              "claim": 0,
+              "function": "HMAC-SHA-256",
+              "keyId": "example-key-v1",
+              "hex": "bd02928d6b0fcb3377ba2e045432348f36d7c7ae4786045ddea7cd0cf8c7f70c"
+            },
+            {
+              "step": "truncate",
+              "claim": 0,
+              "widthBits": 128,
+              "hex": "bd02928d6b0fcb3377ba2e045432348f"
+            },
+            {
+              "step": "encode",
+              "claim": 0,
+              "encoding": "base32",
+              "value": "XUBJFDLLB7FTG552FYCFIMRUR4"
+            },
+            {
+              "step": "render",
+              "claim": 0,
+              "iri": "urn:key:person-email:v1:XUBJFDLLB7FTG552FYCFIMRUR4"
+            }
+          ],
+          "iri": "urn:person:8f2c1b7e-3e4a-4f7c-9a6d-2b1e0c5d7f90",
+          "claimIris": [
+            "urn:key:person-email:v1:XUBJFDLLB7FTG552FYCFIMRUR4"
+          ]
+        },
+        {
+          "id": "cl-case-trim",
+          "category": "whitespace-and-case",
+          "inputs": {
+            "key": [
+              "Ada@Example.org "
+            ],
+            "scope": "acme",
+            "surrogate": "8f2c1b7e-3e4a-4f7c-9a6d-2b1e0c5d7f90"
+          },
+          "trace": [
+            {
+              "step": "validate-surrogate",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+              "value": "8f2c1b7e-3e4a-4f7c-9a6d-2b1e0c5d7f90"
+            },
+            {
+              "step": "render",
+              "iri": "urn:person:8f2c1b7e-3e4a-4f7c-9a6d-2b1e0c5d7f90"
+            },
+            {
+              "step": "normalize",
+              "component": 0,
+              "pipeline": "NfkcTrimCasefold",
+              "input": "Ada@Example.org ",
+              "after": [
+                {
+                  "step": "reject_unassigned",
+                  "output": "Ada@Example.org "
+                },
+                {
+                  "step": "nfkc_casefold",
+                  "output": "ada@example.org "
+                },
+                {
+                  "step": "trim_white_space",
+                  "output": "ada@example.org"
+                }
+              ],
+              "output": "ada@example.org",
+              "ucd": [
+                "DerivedNormalizationProps.txt 0041 ; NFKC_CF; 0061",
+                "DerivedNormalizationProps.txt 0045 ; NFKC_CF; 0065",
+                "PropList.txt 0020 ; White_Space"
+              ]
+            },
+            {
+              "step": "tuple",
+              "claim": 0,
+              "components": [
+                "v1",
+                "person-email-unique",
+                "acme",
+                "ada@example.org"
+              ],
+              "hex": "323a763131393a706572736f6e2d656d61696c2d756e69717565343a61636d6531353a616461406578616d706c652e6f7267"
+            },
+            {
+              "step": "mac",
+              "claim": 0,
+              "function": "HMAC-SHA-256",
+              "keyId": "example-key-v1",
+              "hex": "bd02928d6b0fcb3377ba2e045432348f36d7c7ae4786045ddea7cd0cf8c7f70c"
+            },
+            {
+              "step": "truncate",
+              "claim": 0,
+              "widthBits": 128,
+              "hex": "bd02928d6b0fcb3377ba2e045432348f"
+            },
+            {
+              "step": "encode",
+              "claim": 0,
+              "encoding": "base32",
+              "value": "XUBJFDLLB7FTG552FYCFIMRUR4"
+            },
+            {
+              "step": "render",
+              "claim": 0,
+              "iri": "urn:key:person-email:v1:XUBJFDLLB7FTG552FYCFIMRUR4"
+            }
+          ],
+          "iri": "urn:person:8f2c1b7e-3e4a-4f7c-9a6d-2b1e0c5d7f90",
+          "claimIris": [
+            "urn:key:person-email:v1:XUBJFDLLB7FTG552FYCFIMRUR4"
+          ]
+        },
+        {
+          "id": "cl-zero-width",
+          "category": "default-ignorable",
+          "inputs": {
+            "key": [
+              "ada@example.org\u200b"
+            ],
+            "scope": "acme",
+            "surrogate": "8f2c1b7e-3e4a-4f7c-9a6d-2b1e0c5d7f90"
+          },
+          "trace": [
+            {
+              "step": "validate-surrogate",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+              "value": "8f2c1b7e-3e4a-4f7c-9a6d-2b1e0c5d7f90"
+            },
+            {
+              "step": "render",
+              "iri": "urn:person:8f2c1b7e-3e4a-4f7c-9a6d-2b1e0c5d7f90"
+            },
+            {
+              "step": "normalize",
+              "component": 0,
+              "pipeline": "NfkcTrimCasefold",
+              "input": "ada@example.org\u200b",
+              "after": [
+                {
+                  "step": "reject_unassigned",
+                  "output": "ada@example.org\u200b"
+                },
+                {
+                  "step": "nfkc_casefold",
+                  "output": "ada@example.org"
+                },
+                {
+                  "step": "trim_white_space",
+                  "output": "ada@example.org"
+                }
+              ],
+              "output": "ada@example.org",
+              "ucd": [
+                "DerivedNormalizationProps.txt 200B..200F ; NFKC_CF; (empty)"
+              ]
+            },
+            {
+              "step": "tuple",
+              "claim": 0,
+              "components": [
+                "v1",
+                "person-email-unique",
+                "acme",
+                "ada@example.org"
+              ],
+              "hex": "323a763131393a706572736f6e2d656d61696c2d756e69717565343a61636d6531353a616461406578616d706c652e6f7267"
+            },
+            {
+              "step": "mac",
+              "claim": 0,
+              "function": "HMAC-SHA-256",
+              "keyId": "example-key-v1",
+              "hex": "bd02928d6b0fcb3377ba2e045432348f36d7c7ae4786045ddea7cd0cf8c7f70c"
+            },
+            {
+              "step": "truncate",
+              "claim": 0,
+              "widthBits": 128,
+              "hex": "bd02928d6b0fcb3377ba2e045432348f"
+            },
+            {
+              "step": "encode",
+              "claim": 0,
+              "encoding": "base32",
+              "value": "XUBJFDLLB7FTG552FYCFIMRUR4"
+            },
+            {
+              "step": "render",
+              "claim": 0,
+              "iri": "urn:key:person-email:v1:XUBJFDLLB7FTG552FYCFIMRUR4"
+            }
+          ],
+          "iri": "urn:person:8f2c1b7e-3e4a-4f7c-9a6d-2b1e0c5d7f90",
+          "claimIris": [
+            "urn:key:person-email:v1:XUBJFDLLB7FTG552FYCFIMRUR4"
+          ]
+        },
+        {
+          "id": "cl-soft-hyphen",
+          "category": "default-ignorable",
+          "inputs": {
+            "key": [
+              "ada@exam\u00adple.org"
+            ],
+            "scope": "acme",
+            "surrogate": "8f2c1b7e-3e4a-4f7c-9a6d-2b1e0c5d7f90"
+          },
+          "trace": [
+            {
+              "step": "validate-surrogate",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+              "value": "8f2c1b7e-3e4a-4f7c-9a6d-2b1e0c5d7f90"
+            },
+            {
+              "step": "render",
+              "iri": "urn:person:8f2c1b7e-3e4a-4f7c-9a6d-2b1e0c5d7f90"
+            },
+            {
+              "step": "normalize",
+              "component": 0,
+              "pipeline": "NfkcTrimCasefold",
+              "input": "ada@exam\u00adple.org",
+              "after": [
+                {
+                  "step": "reject_unassigned",
+                  "output": "ada@exam\u00adple.org"
+                },
+                {
+                  "step": "nfkc_casefold",
+                  "output": "ada@example.org"
+                },
+                {
+                  "step": "trim_white_space",
+                  "output": "ada@example.org"
+                }
+              ],
+              "output": "ada@example.org",
+              "ucd": [
+                "DerivedNormalizationProps.txt 00AD ; NFKC_CF; (empty)"
+              ]
+            },
+            {
+              "step": "tuple",
+              "claim": 0,
+              "components": [
+                "v1",
+                "person-email-unique",
+                "acme",
+                "ada@example.org"
+              ],
+              "hex": "323a763131393a706572736f6e2d656d61696c2d756e69717565343a61636d6531353a616461406578616d706c652e6f7267"
+            },
+            {
+              "step": "mac",
+              "claim": 0,
+              "function": "HMAC-SHA-256",
+              "keyId": "example-key-v1",
+              "hex": "bd02928d6b0fcb3377ba2e045432348f36d7c7ae4786045ddea7cd0cf8c7f70c"
+            },
+            {
+              "step": "truncate",
+              "claim": 0,
+              "widthBits": 128,
+              "hex": "bd02928d6b0fcb3377ba2e045432348f"
+            },
+            {
+              "step": "encode",
+              "claim": 0,
+              "encoding": "base32",
+              "value": "XUBJFDLLB7FTG552FYCFIMRUR4"
+            },
+            {
+              "step": "render",
+              "claim": 0,
+              "iri": "urn:key:person-email:v1:XUBJFDLLB7FTG552FYCFIMRUR4"
+            }
+          ],
+          "iri": "urn:person:8f2c1b7e-3e4a-4f7c-9a6d-2b1e0c5d7f90",
+          "claimIris": [
+            "urn:key:person-email:v1:XUBJFDLLB7FTG552FYCFIMRUR4"
+          ]
+        },
+        {
+          "id": "cl-sharp-s",
+          "category": "full-case-folding",
+          "inputs": {
+            "key": [
+              "stra\u00dfe@example.org"
+            ],
+            "scope": "acme",
+            "surrogate": "8f2c1b7e-3e4a-4f7c-9a6d-2b1e0c5d7f90"
+          },
+          "trace": [
+            {
+              "step": "validate-surrogate",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+              "value": "8f2c1b7e-3e4a-4f7c-9a6d-2b1e0c5d7f90"
+            },
+            {
+              "step": "render",
+              "iri": "urn:person:8f2c1b7e-3e4a-4f7c-9a6d-2b1e0c5d7f90"
+            },
+            {
+              "step": "normalize",
+              "component": 0,
+              "pipeline": "NfkcTrimCasefold",
+              "input": "stra\u00dfe@example.org",
+              "after": [
+                {
+                  "step": "reject_unassigned",
+                  "output": "stra\u00dfe@example.org"
+                },
+                {
+                  "step": "nfkc_casefold",
+                  "output": "strasse@example.org"
+                },
+                {
+                  "step": "trim_white_space",
+                  "output": "strasse@example.org"
+                }
+              ],
+              "output": "strasse@example.org",
+              "ucd": [
+                "DerivedNormalizationProps.txt 00DF ; NFKC_CF; 0073 0073"
+              ]
+            },
+            {
+              "step": "tuple",
+              "claim": 0,
+              "components": [
+                "v1",
+                "person-email-unique",
+                "acme",
+                "strasse@example.org"
+              ],
+              "hex": "323a763131393a706572736f6e2d656d61696c2d756e69717565343a61636d6531393a73747261737365406578616d706c652e6f7267"
+            },
+            {
+              "step": "mac",
+              "claim": 0,
+              "function": "HMAC-SHA-256",
+              "keyId": "example-key-v1",
+              "hex": "79e7ac2404d46170adc798d3c7425e98f3054255285fc27ecaa7373bc7286384"
+            },
+            {
+              "step": "truncate",
+              "claim": 0,
+              "widthBits": 128,
+              "hex": "79e7ac2404d46170adc798d3c7425e98"
+            },
+            {
+              "step": "encode",
+              "claim": 0,
+              "encoding": "base32",
+              "value": "PHT2YJAE2RQXBLOHTDJ4OQS6TA"
+            },
+            {
+              "step": "render",
+              "claim": 0,
+              "iri": "urn:key:person-email:v1:PHT2YJAE2RQXBLOHTDJ4OQS6TA"
+            }
+          ],
+          "iri": "urn:person:8f2c1b7e-3e4a-4f7c-9a6d-2b1e0c5d7f90",
+          "claimIris": [
+            "urn:key:person-email:v1:PHT2YJAE2RQXBLOHTDJ4OQS6TA"
+          ]
+        },
+        {
+          "id": "cl-control-not-trimmed",
+          "category": "whitespace-disagreement",
+          "inputs": {
+            "key": [
+              "ada@example.org\u001f"
+            ],
+            "scope": "acme",
+            "surrogate": "8f2c1b7e-3e4a-4f7c-9a6d-2b1e0c5d7f90"
+          },
+          "trace": [
+            {
+              "step": "validate-surrogate",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+              "value": "8f2c1b7e-3e4a-4f7c-9a6d-2b1e0c5d7f90"
+            },
+            {
+              "step": "render",
+              "iri": "urn:person:8f2c1b7e-3e4a-4f7c-9a6d-2b1e0c5d7f90"
+            },
+            {
+              "step": "normalize",
+              "component": 0,
+              "pipeline": "NfkcTrimCasefold",
+              "input": "ada@example.org\u001f",
+              "after": [
+                {
+                  "step": "reject_unassigned",
+                  "output": "ada@example.org\u001f"
+                },
+                {
+                  "step": "nfkc_casefold",
+                  "output": "ada@example.org\u001f"
+                },
+                {
+                  "step": "trim_white_space",
+                  "output": "ada@example.org\u001f"
+                }
+              ],
+              "output": "ada@example.org\u001f",
+              "ucd": [
+                "PropList.txt: U+001F is not White_Space (Python str.strip removes it; this pipeline must not)"
+              ]
+            },
+            {
+              "step": "tuple",
+              "claim": 0,
+              "components": [
+                "v1",
+                "person-email-unique",
+                "acme",
+                "ada@example.org\u001f"
+              ],
+              "hex": "323a763131393a706572736f6e2d656d61696c2d756e69717565343a61636d6531363a616461406578616d706c652e6f72671f"
+            },
+            {
+              "step": "mac",
+              "claim": 0,
+              "function": "HMAC-SHA-256",
+              "keyId": "example-key-v1",
+              "hex": "4ff5524602b61946350f3b08b53e92f8042e9ca2d06570f25b81e77bb4f176de"
+            },
+            {
+              "step": "truncate",
+              "claim": 0,
+              "widthBits": 128,
+              "hex": "4ff5524602b61946350f3b08b53e92f8"
+            },
+            {
+              "step": "encode",
+              "claim": 0,
+              "encoding": "base32",
+              "value": "J72VERQCWYMUMNIPHMELKPUS7A"
+            },
+            {
+              "step": "render",
+              "claim": 0,
+              "iri": "urn:key:person-email:v1:J72VERQCWYMUMNIPHMELKPUS7A"
+            }
+          ],
+          "iri": "urn:person:8f2c1b7e-3e4a-4f7c-9a6d-2b1e0c5d7f90",
+          "claimIris": [
+            "urn:key:person-email:v1:J72VERQCWYMUMNIPHMELKPUS7A"
+          ]
+        },
+        {
+          "id": "cl-unicode-16",
+          "category": "unicode-16-addition",
+          "inputs": {
+            "key": [
+              "\u1c89@example.org"
+            ],
+            "scope": "acme",
+            "surrogate": "8f2c1b7e-3e4a-4f7c-9a6d-2b1e0c5d7f90"
+          },
+          "trace": [
+            {
+              "step": "validate-surrogate",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+              "value": "8f2c1b7e-3e4a-4f7c-9a6d-2b1e0c5d7f90"
+            },
+            {
+              "step": "render",
+              "iri": "urn:person:8f2c1b7e-3e4a-4f7c-9a6d-2b1e0c5d7f90"
+            },
+            {
+              "step": "normalize",
+              "component": 0,
+              "pipeline": "NfkcTrimCasefold",
+              "input": "\u1c89@example.org",
+              "after": [
+                {
+                  "step": "reject_unassigned",
+                  "output": "\u1c89@example.org"
+                },
+                {
+                  "step": "nfkc_casefold",
+                  "output": "\u1c8a@example.org"
+                },
+                {
+                  "step": "trim_white_space",
+                  "output": "\u1c8a@example.org"
+                }
+              ],
+              "output": "\u1c8a@example.org",
+              "ucd": [
+                "UnicodeData.txt 1C89 CYRILLIC CAPITAL LETTER TJE (new in 16.0)",
+                "DerivedNormalizationProps.txt 1C89 ; NFKC_CF; 1C8A"
+              ]
+            },
+            {
+              "step": "tuple",
+              "claim": 0,
+              "components": [
+                "v1",
+                "person-email-unique",
+                "acme",
+                "\u1c8a@example.org"
+              ],
+              "hex": "323a763131393a706572736f6e2d656d61696c2d756e69717565343a61636d6531353ae1b28a406578616d706c652e6f7267"
+            },
+            {
+              "step": "mac",
+              "claim": 0,
+              "function": "HMAC-SHA-256",
+              "keyId": "example-key-v1",
+              "hex": "be60da9a2fd6cd43d16490c541b95d9d3a18e494f463847d190fc56926ee880c"
+            },
+            {
+              "step": "truncate",
+              "claim": 0,
+              "widthBits": 128,
+              "hex": "be60da9a2fd6cd43d16490c541b95d9d"
+            },
+            {
+              "step": "encode",
+              "claim": 0,
+              "encoding": "base32",
+              "value": "XZQNVGRP23GUHULESDCUDOK5TU"
+            },
+            {
+              "step": "render",
+              "claim": 0,
+              "iri": "urn:key:person-email:v1:XZQNVGRP23GUHULESDCUDOK5TU"
+            }
+          ],
+          "iri": "urn:person:8f2c1b7e-3e4a-4f7c-9a6d-2b1e0c5d7f90",
+          "claimIris": [
+            "urn:key:person-email:v1:XZQNVGRP23GUHULESDCUDOK5TU"
+          ]
+        }
+      ],
+      "negative": [
+        {
+          "id": "cl-unassigned",
+          "category": "unassigned",
+          "inputs": {
+            "key": [
+              "ada\u0378@example.org"
+            ],
+            "scope": "acme",
+            "surrogate": "8f2c1b7e-3e4a-4f7c-9a6d-2b1e0c5d7f90"
+          },
+          "error": "UnassignedCodePoint"
+        },
+        {
+          "id": "cl-bad-surrogate",
+          "category": "pattern",
+          "inputs": {
+            "key": [
+              "ada@example.org"
+            ],
+            "scope": "acme",
+            "surrogate": "not-a-uuid"
+          },
+          "error": "PatternMismatch"
+        },
+        {
+          "id": "cl-no-secret",
+          "category": "secret",
+          "inputs": {
+            "key": [
+              "ada@example.org"
+            ],
+            "scope": "acme",
+            "surrogate": "8f2c1b7e-3e4a-4f7c-9a6d-2b1e0c5d7f90",
+            "omitSecret": "example-key-v1"
+          },
+          "error": "MissingSecret"
+        }
+      ],
+      "format": []
+    },
+    {
+      "vectorsFormat": "lattice-minting-vectors/1",
+      "description": "Natural key with two components, percent-encoded and joined by '/'.",
+      "recipe": {
+        "recipeFormat": "lattice-minting-recipe/1",
+        "role": "EntityRole",
+        "target": {
+          "class": "https://example.org/lending#Policy",
+          "deployment": null
+        },
+        "strategy": "NaturalKeyIdentity",
+        "iriTemplate": "urn:ex:policy:{key}",
+        "key": {
+          "properties": [
+            "https://example.org/lending#tenantCode",
+            "https://example.org/lending#policyNumber"
+          ],
+          "scopeProperty": null,
+          "pipeline": {
+            "id": "NfkcTrimUppercase",
+            "unicodeVersion": "16.0.0",
+            "steps": [
+              "reject_unassigned",
+              "nfkc",
+              "trim_white_space",
+              "uppercase_full",
+              "nfkc"
+            ]
+          }
+        },
+        "recipeDigest": "sha256:a0dbd1a701ab2b974bc7826ffdae3a8a40fc191e7ce53a7bf751e8a8cfd7a372"
+      },
+      "testSecrets": {},
+      "positive": [
+        {
+          "id": "nk-basic",
+          "category": "ascii",
+          "inputs": {
+            "key": [
+              "acme",
+              "pol-000123"
+            ]
+          },
+          "trace": [
+            {
+              "step": "normalize",
+              "component": 0,
+              "pipeline": "NfkcTrimUppercase",
+              "input": "acme",
+              "after": [
+                {
+                  "step": "reject_unassigned",
+                  "output": "acme"
+                },
+                {
+                  "step": "nfkc",
+                  "output": "acme"
+                },
+                {
+                  "step": "trim_white_space",
+                  "output": "acme"
+                },
+                {
+                  "step": "uppercase_full",
+                  "output": "ACME"
+                },
+                {
+                  "step": "nfkc",
+                  "output": "ACME"
+                }
+              ],
+              "output": "ACME",
+              "ucd": []
+            },
+            {
+              "step": "normalize",
+              "component": 1,
+              "pipeline": "NfkcTrimUppercase",
+              "input": "pol-000123",
+              "after": [
+                {
+                  "step": "reject_unassigned",
+                  "output": "pol-000123"
+                },
+                {
+                  "step": "nfkc",
+                  "output": "pol-000123"
+                },
+                {
+                  "step": "trim_white_space",
+                  "output": "pol-000123"
+                },
+                {
+                  "step": "uppercase_full",
+                  "output": "POL-000123"
+                },
+                {
+                  "step": "nfkc",
+                  "output": "POL-000123"
+                }
+              ],
+              "output": "POL-000123",
+              "ucd": []
+            },
+            {
+              "step": "percent-encode",
+              "components": [
+                "ACME",
+                "POL-000123"
+              ]
+            },
+            {
+              "step": "render",
+              "iri": "urn:ex:policy:ACME/POL-000123"
+            }
+          ],
+          "iri": "urn:ex:policy:ACME/POL-000123"
+        },
+        {
+          "id": "nk-reserved-chars",
+          "category": "reserved-characters",
+          "inputs": {
+            "key": [
+              "acme",
+              "pol/000 123"
+            ]
+          },
+          "trace": [
+            {
+              "step": "normalize",
+              "component": 0,
+              "pipeline": "NfkcTrimUppercase",
+              "input": "acme",
+              "after": [
+                {
+                  "step": "reject_unassigned",
+                  "output": "acme"
+                },
+                {
+                  "step": "nfkc",
+                  "output": "acme"
+                },
+                {
+                  "step": "trim_white_space",
+                  "output": "acme"
+                },
+                {
+                  "step": "uppercase_full",
+                  "output": "ACME"
+                },
+                {
+                  "step": "nfkc",
+                  "output": "ACME"
+                }
+              ],
+              "output": "ACME",
+              "ucd": []
+            },
+            {
+              "step": "normalize",
+              "component": 1,
+              "pipeline": "NfkcTrimUppercase",
+              "input": "pol/000 123",
+              "after": [
+                {
+                  "step": "reject_unassigned",
+                  "output": "pol/000 123"
+                },
+                {
+                  "step": "nfkc",
+                  "output": "pol/000 123"
+                },
+                {
+                  "step": "trim_white_space",
+                  "output": "pol/000 123"
+                },
+                {
+                  "step": "uppercase_full",
+                  "output": "POL/000 123"
+                },
+                {
+                  "step": "nfkc",
+                  "output": "POL/000 123"
+                }
+              ],
+              "output": "POL/000 123",
+              "ucd": []
+            },
+            {
+              "step": "percent-encode",
+              "components": [
+                "ACME",
+                "POL%2F000%20123"
+              ]
+            },
+            {
+              "step": "render",
+              "iri": "urn:ex:policy:ACME/POL%2F000%20123"
+            }
+          ],
+          "iri": "urn:ex:policy:ACME/POL%2F000%20123"
+        },
+        {
+          "id": "nk-non-ascii",
+          "category": "non-ascii",
+          "inputs": {
+            "key": [
+              "acme",
+              "\u00e9t\u00e9-1"
+            ]
+          },
+          "trace": [
+            {
+              "step": "normalize",
+              "component": 0,
+              "pipeline": "NfkcTrimUppercase",
+              "input": "acme",
+              "after": [
+                {
+                  "step": "reject_unassigned",
+                  "output": "acme"
+                },
+                {
+                  "step": "nfkc",
+                  "output": "acme"
+                },
+                {
+                  "step": "trim_white_space",
+                  "output": "acme"
+                },
+                {
+                  "step": "uppercase_full",
+                  "output": "ACME"
+                },
+                {
+                  "step": "nfkc",
+                  "output": "ACME"
+                }
+              ],
+              "output": "ACME",
+              "ucd": []
+            },
+            {
+              "step": "normalize",
+              "component": 1,
+              "pipeline": "NfkcTrimUppercase",
+              "input": "\u00e9t\u00e9-1",
+              "after": [
+                {
+                  "step": "reject_unassigned",
+                  "output": "\u00e9t\u00e9-1"
+                },
+                {
+                  "step": "nfkc",
+                  "output": "\u00e9t\u00e9-1"
+                },
+                {
+                  "step": "trim_white_space",
+                  "output": "\u00e9t\u00e9-1"
+                },
+                {
+                  "step": "uppercase_full",
+                  "output": "\u00c9T\u00c9-1"
+                },
+                {
+                  "step": "nfkc",
+                  "output": "\u00c9T\u00c9-1"
+                }
+              ],
+              "output": "\u00c9T\u00c9-1",
+              "ucd": [
+                "UnicodeData.txt 00E9 uppercase 00C9"
+              ]
+            },
+            {
+              "step": "percent-encode",
+              "components": [
+                "ACME",
+                "%C3%89T%C3%89-1"
+              ]
+            },
+            {
+              "step": "render",
+              "iri": "urn:ex:policy:ACME/%C3%89T%C3%89-1"
+            }
+          ],
+          "iri": "urn:ex:policy:ACME/%C3%89T%C3%89-1"
+        }
+      ],
+      "negative": [
+        {
+          "id": "nk-missing",
+          "category": "missing",
+          "inputs": {
+            "key": [
+              "acme"
+            ]
+          },
+          "error": "MissingKeyComponent"
+        }
+      ],
+      "format": []
+    },
+    {
+      "vectorsFormat": "lattice-minting-vectors/1",
+      "description": "Position-derived occurrence with a hashed target namespace, 19-digit widths.",
+      "recipe": {
+        "recipeFormat": "lattice-minting-recipe/1",
+        "role": "EventOccurrenceRole",
+        "target": {
+          "class": "https://example.org/lending#Order",
+          "deployment": null
+        },
+        "strategy": "PositionDerivedEvent",
+        "iriTemplate": "urn:ev:{namespace}/e{epoch}/{seq}",
+        "namespace": {
+          "derivation": "HashedTargetDerivation",
+          "digest": {
+            "function": "SHA-256",
+            "widthBits": 64,
+            "encoding": "lowercase-hex"
+          }
+        },
+        "epochWidth": 19,
+        "sequenceWidth": 19,
+        "recipeDigest": "sha256:624294a5bd3a577a9d42f6980dae675dc7dfb5636b1651085da4b530dca5e260"
+      },
+      "testSecrets": {},
+      "positive": [
+        {
+          "id": "pe-basic",
+          "category": "position",
+          "inputs": {
+            "target": "urn:g:orders/1",
+            "epoch": 3,
+            "seq": 42
+          },
+          "trace": [
+            {
+              "step": "tuple",
+              "components": [
+                "occurrence-namespace/1",
+                "urn:g:orders/1"
+              ],
+              "hex": "32323a6f6363757272656e63652d6e616d6573706163652f3131343a75726e3a673a6f72646572732f31"
+            },
+            {
+              "step": "digest",
+              "function": "SHA-256",
+              "hex": "ebd9dd1bf675bb71675b5ff9352ade51b2e27779c6de890bcaf6777fc0fe19b9"
+            },
+            {
+              "step": "truncate",
+              "widthBits": 64,
+              "hex": "ebd9dd1bf675bb71"
+            },
+            {
+              "step": "encode",
+              "encoding": "lowercase-hex",
+              "value": "ebd9dd1bf675bb71"
+            },
+            {
+              "step": "pad",
+              "epoch": "0000000000000000003",
+              "seq": "0000000000000000042"
+            },
+            {
+              "step": "render",
+              "iri": "urn:ev:ebd9dd1bf675bb71/e0000000000000000003/0000000000000000042"
+            }
+          ],
+          "iri": "urn:ev:ebd9dd1bf675bb71/e0000000000000000003/0000000000000000042"
+        },
+        {
+          "id": "pe-max",
+          "category": "position",
+          "inputs": {
+            "target": "urn:g:orders/1",
+            "epoch": 9223372036854775807,
+            "seq": 9223372036854775807
+          },
+          "trace": [
+            {
+              "step": "tuple",
+              "components": [
+                "occurrence-namespace/1",
+                "urn:g:orders/1"
+              ],
+              "hex": "32323a6f6363757272656e63652d6e616d6573706163652f3131343a75726e3a673a6f72646572732f31"
+            },
+            {
+              "step": "digest",
+              "function": "SHA-256",
+              "hex": "ebd9dd1bf675bb71675b5ff9352ade51b2e27779c6de890bcaf6777fc0fe19b9"
+            },
+            {
+              "step": "truncate",
+              "widthBits": 64,
+              "hex": "ebd9dd1bf675bb71"
+            },
+            {
+              "step": "encode",
+              "encoding": "lowercase-hex",
+              "value": "ebd9dd1bf675bb71"
+            },
+            {
+              "step": "pad",
+              "epoch": "9223372036854775807",
+              "seq": "9223372036854775807"
+            },
+            {
+              "step": "render",
+              "iri": "urn:ev:ebd9dd1bf675bb71/e9223372036854775807/9223372036854775807"
+            }
+          ],
+          "iri": "urn:ev:ebd9dd1bf675bb71/e9223372036854775807/9223372036854775807"
+        }
+      ],
+      "negative": [
+        {
+          "id": "pe-negative-seq",
+          "category": "range",
+          "inputs": {
+            "target": "urn:g:orders/1",
+            "epoch": 3,
+            "seq": -1
+          },
+          "error": "PositionOutOfRange"
+        }
+      ],
+      "format": []
+    },
+    {
+      "vectorsFormat": "lattice-minting-vectors/1",
+      "description": "Content-addressed identity over bytes the caller has already canonicalized. These vectors test hashing only, never canonicalization (see callerObligations).",
+      "recipe": {
+        "recipeFormat": "lattice-minting-recipe/1",
+        "role": "ContentRevisionRole",
+        "target": {
+          "class": "https://example.org/lending#Contract",
+          "deployment": null
+        },
+        "strategy": "ContentAddressedIdentity",
+        "iriTemplate": "urn:rev:content:{digest}",
+        "digest": {
+          "function": "SHA-256",
+          "widthBits": 256,
+          "encoding": "lowercase-hex"
+        },
+        "canonicalization": {
+          "algorithm": "RDFC-1.0",
+          "serialization": "canonical-n-quads-utf8"
+        },
+        "selfReference": "disallowed",
+        "workBudget": 100000,
+        "verifyFullDigest": true,
+        "callerObligations": [
+          {
+            "id": "CA-1",
+            "text": "The bytes are the output of an RDFC-1.0 implementation that passes the W3C RDFC-1.0 test suite, serialized as canonical N-Quads in UTF-8, one line per quad, each terminated by a single LF, with no other bytes."
+          },
+          {
+            "id": "CA-2",
+            "text": "The recipe's self-reference rule is applied before canonicalization."
+          },
+          {
+            "id": "CA-3",
+            "text": "Canonicalization stops at the recipe's work budget and the graph is refused, never hashed on a best-effort basis."
+          },
+          {
+            "id": "CA-4",
+            "text": "Where verifyFullDigest is true, the full digest is stored and compared on every re-registration of the identifier."
+          }
+        ],
+        "recipeDigest": "sha256:042aa02a35bdc4c7357e38288144a2667afbc9bf1b465d1332e7694955dea4cb"
+      },
+      "testSecrets": {},
+      "positive": [
+        {
+          "id": "ca-basic",
+          "category": "already-canonical",
+          "inputs": {
+            "canonicalNQuads": "<urn:order:1> <https://example.org/ns#status> \"paid\" <urn:g:orders/1> .\n",
+            "canonicalizer": "declared by caller"
+          },
+          "trace": [
+            {
+              "step": "digest",
+              "function": "SHA-256",
+              "hex": "314be7984dc3e13394ee6b2baf457fb3f940049f4359f43e1ec4a1edbb20ce12"
+            },
+            {
+              "step": "truncate",
+              "widthBits": 256,
+              "hex": "314be7984dc3e13394ee6b2baf457fb3f940049f4359f43e1ec4a1edbb20ce12"
+            },
+            {
+              "step": "encode",
+              "encoding": "lowercase-hex",
+              "value": "314be7984dc3e13394ee6b2baf457fb3f940049f4359f43e1ec4a1edbb20ce12"
+            },
+            {
+              "step": "render",
+              "iri": "urn:rev:content:314be7984dc3e13394ee6b2baf457fb3f940049f4359f43e1ec4a1edbb20ce12"
+            }
+          ],
+          "iri": "urn:rev:content:314be7984dc3e13394ee6b2baf457fb3f940049f4359f43e1ec4a1edbb20ce12"
+        }
+      ],
+      "negative": [
+        {
+          "id": "ca-no-canonicalizer",
+          "category": "caller-obligation",
+          "inputs": {
+            "canonicalNQuads": "<urn:order:1> <https://example.org/ns#status> \"paid\" <urn:g:orders/1> .\n"
+          },
+          "error": "CanonicalizerNotDeclared"
+        }
+      ],
+      "format": []
+    },
+    {
+      "vectorsFormat": "lattice-minting-vectors/1",
+      "description": "Random surrogate. Real minting draws 16 bytes from a cryptographically secure source, so real output is testable only by format; these vectors supply the 16 bytes (randomHex) to test the UUIDv4 construction itself.",
+      "recipe": {
+        "recipeFormat": "lattice-minting-recipe/1",
+        "role": "ComponentRole",
+        "target": {
+          "class": "https://example.org/lending#LineItem",
+          "deployment": null
+        },
+        "strategy": "RandomSurrogateIdentity",
+        "iriTemplate": "urn:ex:line-item:{surrogate}",
+        "surrogate": {
+          "kind": "UuidV4Surrogate"
+        },
+        "recipeDigest": "sha256:ff544ac69b0b490d40cd5a01aeec8a34caf6864b8672c5168f05b0ea57bdec0a"
+      },
+      "testSecrets": {},
+      "positive": [
+        {
+          "id": "rs-supplied-randomness",
+          "category": "supplied-randomness",
+          "inputs": {
+            "randomHex": "00112233445566778899aabbccddeeff"
+          },
+          "trace": [
+            {
+              "step": "generate-surrogate",
+              "randomHex": "00112233445566778899aabbccddeeff",
+              "value": "00112233-4455-4677-8899-aabbccddeeff"
+            },
+            {
+              "step": "render",
+              "iri": "urn:ex:line-item:00112233-4455-4677-8899-aabbccddeeff"
+            }
+          ],
+          "iri": "urn:ex:line-item:00112233-4455-4677-8899-aabbccddeeff"
+        },
+        {
+          "id": "rs-bits-forced",
+          "category": "supplied-randomness",
+          "inputs": {
+            "randomHex": "ffffffffffffffffffffffffffffffff"
+          },
+          "trace": [
+            {
+              "step": "generate-surrogate",
+              "randomHex": "ffffffffffffffffffffffffffffffff",
+              "value": "ffffffff-ffff-4fff-bfff-ffffffffffff"
+            },
+            {
+              "step": "render",
+              "iri": "urn:ex:line-item:ffffffff-ffff-4fff-bfff-ffffffffffff"
+            }
+          ],
+          "iri": "urn:ex:line-item:ffffffff-ffff-4fff-bfff-ffffffffffff"
+        }
+      ],
+      "negative": [],
+      "format": [
+        {
+          "id": "rs-format",
+          "pattern": "^urn:ex:line-item:[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+          "accept": [
+            "urn:ex:line-item:2b6f9e34-9a41-4d7a-8b2e-3f6c1a9d7e40"
+          ],
+          "reject": [
+            "urn:ex:line-item:2B6F9E34-9A41-4D7A-8B2E-3F6C1A9D7E40",
+            "urn:ex:line-item:2b6f9e34-9a41-7d7a-8b2e-3f6c1a9d7e40"
+          ]
+        }
+      ]
+    },
+    {
+      "vectorsFormat": "lattice-minting-vectors/1",
+      "description": "Adopted identity: nothing is minted, the supplied IRI is validated.",
+      "recipe": {
+        "recipeFormat": "lattice-minting-recipe/1",
+        "role": "EntityRole",
+        "target": {
+          "class": "https://example.org/lending#Party",
+          "deployment": null
+        },
+        "strategy": "AdoptedIdentity",
+        "namingAuthority": "national party register",
+        "acceptedPattern": "^https://register[.]example/party/[0-9]{8}$",
+        "recipeDigest": "sha256:7d6a343a279e6bf2d6e73eb0e1979a313d4d1184b8ecb9d520de1b0f10f1ac0e"
+      },
+      "testSecrets": {},
+      "positive": [
+        {
+          "id": "ad-valid",
+          "category": "valid",
+          "inputs": {
+            "iri": "https://register.example/party/01234567"
+          },
+          "trace": [
+            {
+              "step": "validate-iri",
+              "pattern": "^https://register[.]example/party/[0-9]{8}$",
+              "value": "https://register.example/party/01234567"
+            }
+          ],
+          "iri": "https://register.example/party/01234567"
+        }
+      ],
+      "negative": [
+        {
+          "id": "ad-short",
+          "category": "pattern",
+          "inputs": {
+            "iri": "https://register.example/party/123"
+          },
+          "error": "PatternMismatch"
+        },
+        {
+          "id": "ad-other-host",
+          "category": "pattern",
+          "inputs": {
+            "iri": "https://register.example.evil/party/01234567"
+          },
+          "error": "PatternMismatch"
+        }
+      ],
+      "format": []
+    }
+  ]
+}

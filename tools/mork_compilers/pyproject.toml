@@ -7,7 +7,7 @@ name = "mork-compilers"
 version = "0.1.0"
 description = "MORK executable backend compiler family"
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.14"
 dependencies = [
   "rdflib>=7.0,<8",
 ]

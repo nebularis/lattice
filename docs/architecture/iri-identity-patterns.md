@@ -767,7 +767,7 @@ The compiler should:
 
 The compiler must not infer a profile from a string prefix, ontology class name, or current storage location.
 
-**Implemented today** (`tools/persistence`, `persistence-compiler-iri-sync` Slice 3, 2026-09-23): item 1, with each role resolved as its own dimension and the winning profile node taken as a unit, and item 2 for digest schemes, uniqueness witnesses, occurrence-namespace derivation, a claimed surrogate with no uniqueness constraint, and the epoch warning. Not yet implemented: the alias-policy check (`dal:AliasResolutionStrategy` is still a candidate term) and items 3–5. The compiler records the resolved identity profile per role in the compiled profile, and the application mints from it, because minting needs the normalization pipeline and the claim secret.
+**Implemented today** (`tools/persistence`, `persistence-compiler-iri-sync` Slice 3, 2026-09-23): item 1, with each role resolved as its own dimension and the winning profile node taken as a unit, and item 2 for digest schemes, uniqueness witnesses, occurrence-namespace derivation, a claimed surrogate with no uniqueness constraint, and the epoch warning. Item 3 is split, per the amended [ADR-A82](decisions/ADR-A82-framework-neutral-identity-pattern-selection.md) point 5: the compiler emits a self-contained **minting recipe** per role (`identity-minting` M1) and publishes conformance vectors, and minting itself runs in the standalone libraries ([ADR-A84](decisions/ADR-A84-standalone-minting-libraries.md)) or any implementation of the [identity minting specification](identity-minting-specification.md). Not yet implemented: the alias-policy check (`dal:AliasResolutionStrategy` is still a candidate term) and items 4–5.
 
 ### 14.3 Validation requirements
 

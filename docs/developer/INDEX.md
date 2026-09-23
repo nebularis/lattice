@@ -32,9 +32,12 @@ Is it complete? **No.** The documentation is complete and every review is closed
 | `rdf-sparql-patterns-phase` Slices 1–2 (guide, `ontology/persistence`, `tools/persistence`) | ✅ Complete | — | — |
 | `rdf-sparql-patterns-remediation` (first review of the guide) | ✅ Complete, closed | nothing; deferred items handed to the units below | — |
 | `iri-patterns-post-3866b21-remediation` (second review, plus template alignment) | ✅ Complete, closed | nothing; follow-ons listed in its [status](status/iri-patterns-post-3866b21-remediation.md#is-this-unit-complete) | — |
-| `persistence-compiler-iri-sync` (compiler catches up with the vocabulary) | 🚧 Slices 1–3 of 6 done, 570 tests | Slice 4 privacy/epoch bindings, Slice 5 uniqueness policies, Slice 6 close-out. Gap table in its [status](status/persistence-compiler-iri-sync.md#is-this-unit-complete) | — |
+| `persistence-compiler-iri-sync` (compiler catches up with the vocabulary) | 🚧 Slices 1–3 of 6 done (629 tests in the suite after `identity-minting` M1) | Slice 4 privacy/epoch bindings, Slice 5 uniqueness policies, Slice 6 close-out. Gap table in its [status](status/persistence-compiler-iri-sync.md#is-this-unit-complete) | — |
 | `rdf-sparql-patterns-phase` Slice 3 / `platform-housekeeping` | ⏳ Not started | the whole slice, including the retention and audit changes noted in its plan | — |
-| P0.1.3: ADR-A82 and `iri-identity-patterns.md` | 📝 Drafted and revised, Proposed | human ratification | Phase 0 ratification pass |
+| P0.1.3: ADR-A82 and `iri-identity-patterns.md` | 📝 Drafted and revised, Proposed | human ratification, and the point 5 amendment proposed by `identity-minting` | Phase 0 ratification pass |
+| `identity-minting` (minting recipes, conformance vectors, standalone Java and Python libraries, `dal:claimsConstraint`) | 🚧 M0–M2 of M0–M4 done: [plan](plans/identity-minting.md), [status](status/identity-minting.md) | M3 Java library, M4 specification and human walk-through. One open question: default-ignorables in the upper- and lowercase pipelines | — |
+| `toolchain-jdk25-python314` (JDK 25 LTS, Python 3.14, Unicode 16.0) | ✅ Complete: [plan](plans/toolchain-jdk25-python314.md), [status](status/toolchain-jdk25-python314.md) | — | — |
+| `identity-minting-shared-core` (one Rust minting engine, WebAssembly-hosted in each runtime) | 🅿️ [Sketch](sketches/identity-minting-shared-core.md), deferred | revisit after `persistence-compiler-iri-sync` Slice 6. M2 and M3 proceed with native libraries | `persistence-compiler-iri-sync` Slice 6 first (priority) |
 
 ## 1. RDF/SPARQL Implementation Patterns and Persistence Compiler
 
@@ -173,7 +176,7 @@ All 7 critical (A), 14 major (B), 9 safety (C), 7 cross-document (D) and 10 edit
 - SWRL positive-only per ADR-A24
 
 ### Blocks
-- SWRL/OWL-reasoner validation needs `platform/reasoning-testkit` (new, proposed by the plan above, ADR-A81) — a shared, test-scope-only Maven module wrapping an OWL/SWRL reasoner and, if a second consumer emerges, Drools (Apache-2.0, no licence concern), consumed by Python test suites via a CLI subprocess rather than a direct dependency. Explicitly never a runtime dependency of any product package.
+- SWRL/OWL-reasoner validation needs `platform/reasoning-testkit` (new, proposed by the plan above, ADR-A83, renumbered from A81 to avoid the collision with the Control Plane ADR) — a shared, test-scope-only Maven module wrapping an OWL/SWRL reasoner and, if a second consumer emerges, Drools (Apache-2.0, no licence concern), consumed by Python test suites via a CLI subprocess rather than a direct dependency. Explicitly never a runtime dependency of any product package.
 - Licence check complete (2026-09-23): Openllet is **AGPL-3.0** (inherited from Pellet, not Apache-2.0 as an earlier draft wrongly stated), usable only because the module's isolation design (test-scope + subprocess CLI, never linked or distributed) avoids creating a combined/derivative work. **HermiT (LGPL-3.0)** is a lower-risk alternative but supports DL-safe SWRL rules only — open question is whether ADR-A24's SWRL subset is DL-safe. See [eligibility-compiler.md](plans/eligibility-compiler.md) §B.4
 
 ---
@@ -499,7 +502,7 @@ The unratified universal IRI policy in ADR-A51 was superseded by [ADR-A82](../ar
 | Surface compiler | 61 passing | `pytest tools/surface/src/surface/test_surface.py -v` |
 | MORK compiler backends | 15 passing | `pytest tools/mork_compilers/src/mork_compilers/test_mork_compilers.py -v` |
 | LLM/MTP | 346 passing | `mise run check:mtp` |
-| Persistence compiler | 570 passing (2026-09-23) | `mise run check:persistence` |
+| Persistence compiler | 629 passing (2026-09-23) | `mise run check:persistence` |
 | Eligibility compiler | Present | `mise run check:eligibility-compiler` |
 
 ---

@@ -392,13 +392,13 @@ No component other than the Control Plane and the worker tier writes any of thes
 |---|---|---|---|---|---|
 | Surface Contract Studio | React, TypeScript, Vite | Static bundle served to browser | Nothing (client) | Control Plane HTTPS API | Nothing, holds only in-memory UI state |
 | MORK Review Workbench | React, TypeScript, Vite | Static bundle served to browser | Nothing (client) | Control Plane HTTPS API | Nothing |
-| Control Plane | Java 21, new HTTP module (decided in [§4.2](#42-control-plane-runtime-decided-here)) | One JVM process per environment | HTTPS JSON API (Surface, Release, MORK) | PostgreSQL (JDBC), RabbitMQ (AMQP), Fuseki (SPARQL/graph store protocol, indirectly through workers only for job execution, directly for read APIs) | Nothing itself, it is the sole writer into PostgreSQL |
+| Control Plane | Java 25, new HTTP module (decided in [§4.2](#42-control-plane-runtime-decided-here)) | One JVM process per environment | HTTPS JSON API (Surface, Release, MORK) | PostgreSQL (JDBC), RabbitMQ (AMQP), Fuseki (SPARQL/graph store protocol, indirectly through workers only for job execution, directly for read APIs) | Nothing itself, it is the sole writer into PostgreSQL |
 | `semantic-dataset-spi` / `semantic-dataset-fuseki` | Java library | Linked into Control Plane and worker-adjacent Java code | N/A (library) | Fuseki | N/A |
 | `semantic-policy` | Java library | Linked into Control Plane | N/A (library) | N/A | N/A |
 | `platform-outbox` | Java library | Linked into Control Plane | N/A (library) | RabbitMQ (publisher), PostgreSQL (outbox table, once implemented per [data-architecture.md §7](data-architecture.md#7-open-gaps)) | N/A |
 | `surface-workflow` | Java library | Linked into Control Plane | N/A (library, `SurfaceRevisionApi` is the transport-neutral boundary) | PostgreSQL | Surface revision ledger and graph-family registry, via the Control Plane |
 | `release-integration` | Java library | Linked into Control Plane | N/A (library) | PostgreSQL (ledger), filesystem/OCI registry (packaging), Fuseki (provenance, once wired) | Release ledger, via the Control Plane |
-| Worker tier | Python 3.11, `lattice_workers` package | One or more OS processes, containerized | Nothing (consumes from RabbitMQ, publishes to RabbitMQ) | RabbitMQ, Fuseki, PostgreSQL (processed-job store) | Processed-job idempotency table |
+| Worker tier | Python 3.14, `lattice_workers` package | One or more OS processes, containerized | Nothing (consumes from RabbitMQ, publishes to RabbitMQ) | RabbitMQ, Fuseki, PostgreSQL (processed-job store) | Processed-job idempotency table |
 | RabbitMQ | Message broker | One broker (clustering deferred, [§7](#7-robustness-reliability-design)) | AMQP | N/A | Transient message state only |
 | PostgreSQL | Relational database | One primary instance | JDBC/SQL | N/A | See [§3](#3-data-architecture-summary) |
 | Fuseki | RDF triple store | One dataset | SPARQL 1.1, graph store protocol | N/A | RDF graph content |

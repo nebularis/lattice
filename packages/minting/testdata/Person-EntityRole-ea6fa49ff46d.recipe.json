@@ -1,0 +1,45 @@
+{
+  "claims": [
+    {
+      "constraintId": "person-email-unique",
+      "iriTemplate": "urn:key:person-email:{schemeVersion}:{mac}",
+      "key": {
+        "pipeline": {
+          "id": "NfkcTrimCasefold",
+          "steps": [
+            "reject_unassigned",
+            "nfkc_casefold",
+            "trim_white_space"
+          ],
+          "unicodeVersion": "16.0.0"
+        },
+        "properties": [
+          "https://example.org/lending#email"
+        ],
+        "scopeProperty": "https://example.org/lending#tenant"
+      },
+      "keyId": "example-key-v1",
+      "mac": {
+        "encoding": "base32",
+        "function": "HMAC-SHA-256",
+        "widthBits": 128
+      },
+      "schemeState": "Accepting",
+      "schemeVersion": "v1",
+      "tupleEncoding": "length-prefixed-utf8/1"
+    }
+  ],
+  "iriTemplate": "urn:person:{surrogate}",
+  "recipeDigest": "sha256:ea6fa49ff46d789e8b5d0e8491e2f5ab77a813437d253767d336f06e553519e7",
+  "recipeFormat": "lattice-minting-recipe/1",
+  "role": "EntityRole",
+  "strategy": "SurrogateClaimedIdentity",
+  "surrogate": {
+    "kind": "CallerSuppliedSurrogate",
+    "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+  },
+  "target": {
+    "class": "https://example.org/lending#Person",
+    "deployment": null
+  }
+}

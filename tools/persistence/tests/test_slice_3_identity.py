@@ -34,6 +34,16 @@ KEY = """
 ex:ThingKey a dal:UniquenessConstraint ; dal:constraintId "thing-key" ; dal:appliesTo ex:ThingScope ;
     dal:keyProperty ( ex:code ) ; dal:normalizePipeline dal:NfkcTrimUppercase ; dal:onViolation dal:Reject .
 """
+# identity-minting M1: a claimed identity is complete only with a claim scheme
+# on the constraint it names, plus a template and a surrogate kind.
+CLAIM_SCHEME = """
+ex:ThingKey dal:claimScheme ex:ThingScheme .
+ex:ThingScheme a dal:ClaimScheme ; dal:schemeVersion "v1" ; dal:schemeState dal:Accepting ;
+    dal:claimKeyId "thing-key-v1" ; dal:claimDigestScheme ex:ThingMac ;
+    dal:claimIriTemplate "urn:key:thing:{schemeVersion}:{mac}" .
+ex:ThingMac a dal:DigestScheme ; dal:digestFunction "HMAC-SHA-256" ; dal:digestWidthBits 128 ; dal:digestEncoding "base32" .
+"""
+CLAIMED = '; dal:surrogateKind dal:UuidV4Surrogate ; dal:mintedIriTemplate "urn:thing:{surrogate}" '
 DIGEST = 'ex:D a dal:DigestScheme ; dal:digestFunction "SHA-256" ; dal:digestWidthBits 128 ; dal:digestEncoding "lowercase-hex" .'
 
 
@@ -138,8 +148,9 @@ def test_identity_dimensions_are_emitted_to_the_compiled_profile():
 def test_identity_generates_no_operations():
     """Decision 2: resolve, check, emit. The operation set is unchanged by an identity profile."""
     plain = compile_to_graph(_graph(KEY), classes={CLS})[1][0].operations
-    with_identity = compile_to_graph(_graph(KEY + _profile("P", "EntityRole", "SurrogateClaimedIdentity")),
-                                     classes={CLS})[1][0].operations
+    complete = KEY + CLAIM_SCHEME + _profile("P", "EntityRole", "SurrogateClaimedIdentity",
+                                             more=CLAIMED + "; dal:claimsConstraint ex:ThingKey ")
+    with_identity = compile_to_graph(_graph(complete), classes={CLS})[1][0].operations
     assert [o.template_id for o in plain] == [o.template_id for o in with_identity]
 
 
@@ -202,16 +213,21 @@ def test_position_derived_event_warns_under_unsafe_epoch(epoch):
     assert "PositionEventUnsafeEpoch" in kinds
 
 
-@pytest.mark.parametrize("role", ["EntityRole", "AggregateRootRole"])
-def test_claimed_identity_requires_a_key(role):
-    with pytest.raises(CrossAxisViolation) as e:
-        _check(_profile("P", role, "SurrogateClaimedIdentity"))
-    assert e.value.kind == "ClaimedIdentityWithoutKey"
-    _check(_profile("P", role, "SurrogateClaimedIdentity"), uniqueness=[{"constraintId": "k"}])
-
-
-def test_claimed_identity_on_other_roles_is_not_checked_for_a_key():
-    _check(_profile("P", "ComponentRole", "SurrogateClaimedIdentity"))
+@pytest.mark.parametrize("role", ["EntityRole", "AggregateRootRole", "ComponentRole"])
+def test_claimed_identity_requires_a_named_key(role):
+    """identity-minting M1 replaced Slice 3's interim check (at least one
+    uniqueness constraint on the target, entity and aggregate roles only)
+    with the exact one: dal:claimsConstraint must name an applicable
+    constraint, on every role that uses a claimed surrogate, because the
+    recipe cannot be built otherwise."""
+    without = KEY + CLAIM_SCHEME + _profile("P", role, "SurrogateClaimedIdentity", more=CLAIMED)
+    with pytest.raises(CompileError) as e:
+        compile_to_graph(_graph(without), classes={CLS})
+    assert e.value.__cause__.kind == "ClaimedIdentityWithoutKey"
+    complete = KEY + CLAIM_SCHEME + _profile("P", role, "SurrogateClaimedIdentity",
+                                             more=CLAIMED + "; dal:claimsConstraint ex:ThingKey ")
+    compiled = compile_to_graph(_graph(complete), classes={CLS})[1][0]
+    assert [r["strategy"] for r in compiled.recipes] == ["SurrogateClaimedIdentity"]
 
 
 @pytest.mark.parametrize(

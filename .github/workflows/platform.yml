@@ -19,7 +19,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.14"
       - run: python -m pip install -c requirements-lock.txt ".[reasoning]"
       - run: python tools/literate_extract.py ontology/surface/README.md --layer surface --root . --shapes shapes/structural.ttl shapes/constraints.ttl --check
       - run: python -m pip install -e ./tools/mork -e ./tools/mork_compilers -e ./tools/surface
@@ -32,7 +32,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.14"
       - run: python -m pip install -e ./workers[test]
       - run: python -m pytest workers/tests
 
@@ -42,7 +42,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.14"
       - run: python -m pip install -e ./tools/mork
       - run: python -m pytest tools/mork/src/test_mtp.py
       - run: python -m mtp.cli build --out ontology/mork/mtp/out
@@ -56,7 +56,7 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: "21"
+          java-version: "25"
           cache: maven
       - run: mvn -f platform/pom.xml verify
 
