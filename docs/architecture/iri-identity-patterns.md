@@ -1,3 +1,12 @@
+---
+layout: architecture
+title: IRI & Identity Patterns
+eyebrow: Identity management under RDF/OWL based storage
+dek: "Authoritative patterns for building appropriate IRIs and identity schemes."
+description: "Design patterns and techniques for IRI minting and identity handling for Lattice."
+note: ""
+---
+
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
 # IRI and Identity Patterns
