@@ -1,0 +1,28 @@
+# Positive fixture: dal:PersonalData with a dal:PatchLog receipt model and
+# dal:perSubjectScoped true correctly passes both
+# dal:PersonalDataReceiptCompatibilityShape and the compiler's Python
+# mirror (persistence-compiler-iri-sync Slice 4): the delta graphs are
+# per-subject and enumerable, so per-subject graph drop can still reach
+# them even though the receipt model retains a second copy of the payload.
+@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix ex:  <https://example.org/lending#> .
+
+ex:BeneficiaryScope a dal:ClassScope ;
+    dal:priority 10 ;
+    dal:targetClass ex:Beneficiary .
+
+ex:BeneficiaryProfile a dal:DataAccessProfile ;
+    dal:appliesTo           ex:BeneficiaryScope ;
+    dal:strategy            dal:NamedGraphBoundary ;
+    dal:graphIriTemplate    "urn:g:beneficiary/{id}" ;
+    dal:concurrencyProfile  dal:Optimistic ;
+    dal:orderingGrain       dal:EventGrain ;
+    dal:receiptModel        dal:PatchLog ;
+    dal:metaTopology        dal:SharedSharded ;
+    dal:perSubjectScoped    true .
+
+ex:BeneficiaryPrivacy a dal:PrivacyProfile ;
+    dal:appliesTo          ex:BeneficiaryScope ;
+    dal:privacyClass       dal:PersonalData ;
+    dal:erasureStrategy    dal:PerSubjectGraphDrop ;
+    dal:erasurePrecedence  dal:MonotonicityWins .

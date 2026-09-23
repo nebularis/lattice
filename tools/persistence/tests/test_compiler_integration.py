@@ -34,6 +34,7 @@ POSITIVE_FIXTURES = [
     ("extension-properties.ttl", "https://example.org/lending#Facility"),
     ("identity-epoch-privacy-profile.ttl", "https://example.org/lending#Claimant"),
     ("identity-minting-anchors.ttl", "https://example.org/lending#Person"),
+    ("privacy-receipt-compatible.ttl", "https://example.org/lending#Beneficiary"),
 ]
 
 NEGATIVE_FIXTURES = [
@@ -45,6 +46,8 @@ NEGATIVE_FIXTURES = [
     "invalid-lagwindow-missing.ttl",
     "invalid-claimed-identity-without-key.ttl",
     "invalid-position-event-without-derivation.ttl",
+    "invalid-personaldata-no-erasure.ttl",
+    "invalid-personaldata-receipt-conflict.ttl",
 ]
 
 SHACL_NEGATIVE_FIXTURES = [
@@ -52,6 +55,8 @@ SHACL_NEGATIVE_FIXTURES = [
     "invalid-lagwindow-missing.ttl",
     "invalid-position-event-without-derivation.ttl",
     "invalid-claimed-identity-without-key.ttl",
+    "invalid-personaldata-no-erasure.ttl",
+    "invalid-personaldata-receipt-conflict.ttl",
 ]
 
 ALL_FIXTURES = [p.name for p in EXAMPLES_DIR.glob("*.ttl")]
