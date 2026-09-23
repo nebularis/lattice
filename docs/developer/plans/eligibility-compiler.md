@@ -6,7 +6,7 @@
 **Status record:** [eligibility-compiler.md](../status/eligibility-compiler.md)
 **Sketch:** [mork-eligibility-compiler.md](../sketches/mork-eligibility-compiler.md)
 **Governing ADRs:** [ADR-A23](../../architecture/decisions/ADR-A23-mork-compiler-family-completion-policy.md) (compiler family completion policy), [ADR-A24](../../architecture/decisions/ADR-A24-eligibility-executable-semantics-backend-strategy.md) (backend strategy — SPARQL/SHACL native-and-first, SHACL readiness second, SWRL positive-only third)
-**New ADR proposed by this plan:** ADR-A81 (below)
+**New ADR proposed by this plan:** ADR-A83 (below)
 
 ## 0. Why this plan exists
 
@@ -43,7 +43,7 @@ A2's OWL-reasoner half and A5 do not start until Part B's shared harness exists 
 
 ### B.2 Why this needs an ADR, not just a plan decision
 
-This establishes a repeatable pattern for how the repository isolates any future test-only dependency with licensing, weight, or ecosystem-crossing concerns, not just this one. That is exactly the kind of decision the Design First rule reserves for an ADR. **ADR-A81 (proposed, drafted as Slice B1 below)** — working title: "Test-only reasoning and rules engine isolation." A81 is free (A45–A76 are reserved by the platform epic's own decision slate per its Part 4 P0.1, A77–A80 are filed).
+This establishes a repeatable pattern for how the repository isolates any future test-only dependency with licensing, weight, or ecosystem-crossing concerns, not just this one. That is exactly the kind of decision the Design First rule reserves for an ADR. **ADR-A83 (proposed, drafted as Slice B1 below)** — working title: "Test-only reasoning and rules engine isolation." A83 is free (A45–A76 are reserved by the platform epic's own decision slate per its Part 4 P0.1, A77–A82 are filed — A81 was originally proposed here but was taken by the control-plane HTTP runtime ADR in the same period, so this plan was renumbered on 2026-09-23).
 
 ### B.3 Design
 
@@ -56,7 +56,7 @@ The module ships two things:
 
 ```
 platform/reasoning-testkit/
-├── README.md              # states plainly: test-only, never a runtime dependency, see ADR-A81
+├── README.md              # states plainly: test-only, never a runtime dependency, see ADR-A83
 ├── pom.xml                 # Pellet/Openllet + Drools declared <scope>test</scope>, nowhere else
 └── src/
     ├── main/java/.../      # the CLI + library surface itself has NO dependency on the reasoners —
@@ -66,9 +66,9 @@ platform/reasoning-testkit/
     └── test/java/.../      # the module's own self-tests, which DO exercise real Pellet/Drools calls
 ```
 
-### B.4 Engine choice and licence compatibility (researched 2026-09-23, confirm at the ADR-A81 slice)
+### B.4 Engine choice and licence compatibility (researched 2026-09-23, confirm at the ADR-A83 slice)
 
-Per "Pause for Architectural Guidance," the specific engine choice is still a decision for the ADR-A81 slice, not something this plan pre-empts — but the licence question below was resolved by checking primary sources (Openllet's own `LICENSE.txt`, its README, and its published Maven Central POM metadata), not assumed, since an assumption here was wrong in an earlier draft of this plan.
+Per "Pause for Architectural Guidance," the specific engine choice is still a decision for the ADR-A83 slice, not something this plan pre-empts — but the licence question below was resolved by checking primary sources (Openllet's own `LICENSE.txt`, its README, and its published Maven Central POM metadata), not assumed, since an assumption here was wrong in an earlier draft of this plan.
 
 - **Openllet's actual licence is AGPL-3.0**, with a commercial-alternative option, inherited unchanged from Pellet — Openllet is a maintenance fork of Pellet, not a relicense, and carries the identical dual-licence text forward. An earlier draft of this plan stated Openllet was "Apache-2.0-licensed"; that was incorrect and is corrected here.
 - **AGPL-3.0 is not directly compatible with MPL-2.0 for a combined/distributed work.** MPL-2.0 §3.3's secondary-licence mechanism reaches GPL/LGPL/AGPL only where the licensor marks a file "Not Incompatible With Secondary Licenses," and that does not change what AGPL itself requires once code is linked or distributed together — including AGPL §13's network-use clause, which extends the copyleft obligation to running the program as a network-accessible service, not just to distributing it.
@@ -84,7 +84,7 @@ Per "Pause for Architectural Guidance," the specific engine choice is still a de
 
 | Slice | Scope | Depends on |
 |---|---|---|
-| **B1** | Draft and ratify ADR-A81 (engine choice, licence check, isolation pattern). Human validation focus: is the isolation boundary (test-scope Maven + subprocess CLI for non-JVM consumers) actually sufficient, or does some future consumer need direct in-process access this design does not offer? | None |
+| **B1** | Draft and ratify ADR-A83 (engine choice, licence check, isolation pattern). Human validation focus: is the isolation boundary (test-scope Maven + subprocess CLI for non-JVM consumers) actually sufficient, or does some future consumer need direct in-process access this design does not offer? | None |
 | **B2** | `platform/reasoning-testkit` module skeleton: `pom.xml` with the ratified engine(s) at `<scope>test</scope>`, CLI entry point, no-op self-test, plus the guardrail CI check (grep-based: no other `pom.xml`/`pyproject.toml` may reference the chosen engine artifacts) | B1 |
 | **B3** | Wire the OWL/SWRL engine adapter behind the CLI's `infer` command; self-tests using a trivial fixture ontology, not yet the eligibility compiler's own output | B2 |
 | **B4** | `tools/mork_compilers` test suite calls the CLI as a subprocess for A2 (OWL-reasoner consistency half) and A5 (SWRL inference); document the subprocess-invocation pattern in `tools/mork_compilers/README.md` so the next Python package needing this copies a documented pattern, not a bespoke one | B3, A1–A4 |
@@ -93,7 +93,7 @@ Per "Pause for Architectural Guidance," the specific engine choice is still a de
 
 | Document | Change | Producing slice |
 |---|---|---|
-| `docs/architecture/decisions/ADR-A81-*.md` | New | B1 |
+| `docs/architecture/decisions/ADR-A83-*.md` | New | B1 |
 | `platform/reasoning-testkit/README.md` | New — states test-only status prominently, per B.5 | B2 |
 | Root `README.md` | New row/mention for `platform/reasoning-testkit` under whatever module-tree listing already documents `platform/*`, explicit "test-only, not a runtime dependency" note | B2 |
 | `tools/mork_compilers/README.md` | New — did not exist as a documented convention before; add install/test commands (`mise run bootstrap:mork-compilers`, `mise run check:mork-compilers` — both proposed new `mise.toml` tasks, mirroring the `tools/persistence` precedent) and the subprocess-invocation pattern from B4 | B4 |
@@ -107,7 +107,7 @@ Per copilot-instructions' L0–L8 table: A1 (L1, unit), A2 syntax half (L1), A2 
 
 ## Phase gate / acceptance
 
-This unit closes when: all of A1–A5 pass with their VPs signed off; ADR-A81 is ratified; the guardrail check (B2) is green and has a demonstrated violating fixture that fails, per copilot-instructions' adversarial-probe step; [eligibility-compiler.md](../status/eligibility-compiler.md)'s state line changes from "awaiting validation" to a dated, evidenced "Verified."
+This unit closes when: all of A1–A5 pass with their VPs signed off; ADR-A83 is ratified; the guardrail check (B2) is green and has a demonstrated violating fixture that fails, per copilot-instructions' adversarial-probe step; [eligibility-compiler.md](../status/eligibility-compiler.md)'s state line changes from "awaiting validation" to a dated, evidenced "Verified."
 
 ## Open questions requiring human decision (summary)
 
@@ -117,6 +117,6 @@ This unit closes when: all of A1–A5 pass with their VPs signed off; ADR-A81 is
 
 ## Next steps
 
-1. Human resolves the three open questions above, or delegates that resolution to the ADR-A81 slice (B1) itself.
+1. Human resolves the three open questions above, or delegates that resolution to the ADR-A83 slice (B1) itself.
 2. Begin A1–A4 in parallel with B1 — none of the four depend on Part B.
 3. B2–B4 and A2/A5 follow once B1 is ratified.

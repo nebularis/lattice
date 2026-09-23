@@ -60,6 +60,17 @@ Once resolved:
 - Wire `dal:ClaimScheme`/`dal:schemeVersion`/`dal:SchemeState`; extend `key-claim-write.mustache` to guard-and-insert both the current and next scheme version's claim IRI when `dal:schemeState` is `dal:Dual`.
 - Tests: one fixture per `onViolation` value showing distinct generated operations; a `Dual`-state fixture proving both scheme versions are guarded in one operation, not two.
 
+## Slice 7 — Template drift from the remediated guide (G9, added 2026-09-23)
+
+Found while designing [persistence-mbt](../sketches/persistence-mbt.md), after this plan was written. Scope:
+
+- Sweep every template against guide findings B1–B13 and F1–F13 as remediated, and record each discrepancy before fixing any.
+- Replace `fork-detection-audit`'s `pat:prevRev` grouping with the guide F5 txn-cardinality form. Until then, the shipped audit cannot detect a fork.
+- Bring `append-event` in line with guide §10.1 (dataset guard, head and chain maintenance, `STRDT` re-typing, epoch-scoped fixed-width revision IRIs), and add a stream-bootstrap template.
+- Tests: a fork deliberately injected into a fixture dataset must be reported by the new audit and was not by the old one. The first append to a fresh stream succeeds using compiler output alone.
+
+Independent of Slices 1–5. Severity is comparable to Slice 1, since the fork audit currently reports a clean history regardless of what happened.
+
 ## Slice 6 — Documentation close-out
 
 - Rewrite `tools/persistence/README.md`'s "Known limitations" section to reflect what Slices 1–5 actually shipped (not what this plan proposed — write it after, not before).

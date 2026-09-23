@@ -24,7 +24,7 @@ One finding is more serious than "missing feature": the compiler's existing CAS/
 
 ## What is confirmed *not* a gap (checked, to keep this analysis honest)
 
-- `operations.py`'s SHA-256 usage (`_shard_for()`) computes a shard-routing number, not an identity-bearing digest. The new `dal:DigestScheme`'s width/encoding/full-verification requirements govern identity-minting digests only. Collisions in shard routing are correct and expected; this is not the same concern and needed no change.
+- `operations.py`'s SHA-256 usage (`_shard_for()`) computes a shard-routing number, not an identity-bearing digest. The new `dal:DigestScheme`'s width/encoding/full-verification requirements govern identity-minting digests only. Collisions in shard routing are correct and expected. This is not the same concern and needed no change.
 - The guide's dataset-level epoch guard (§19.1) is **fully specified**, down to the exact SPARQL shape (`GRAPH <urn:g:dataset> { <urn:ds:prod> pat:epoch "3"^^xsd:long }` as an added `WHERE`-clause condition). This is a compiler-catch-up gap (G1), not a specification gap.
 
 ## Gap catalogue
@@ -45,7 +45,7 @@ This is exactly `dal:RowLevelGuardOnly` — the value the new `RowLevelGuardOnly
 
 `dal:IdentityProfile`, `dal:ResourceRole` (8 values), `dal:IdentityStrategy` (7 values), `dal:DigestScheme`, `dal:OccurrenceNamespaceDerivation`, `dal:EventIdentityStrategy`, `dal:uniquenessWitnessRequired` — zero references anywhere in `tools/persistence/src`.
 
-This is not a simple "add a row to `_DIMENSION_SPEC`" fix like G5/G6 below. `dal:resourceRole` has `sh:minCount 1 ; sh:maxCount 1` on `IdentityProfileShape`, meaning **one target class needs different identity strategies for different resource roles simultaneously** — an aggregate root's own identity (`dal:AggregateRootRole`) is minted differently from its event occurrences' identity (`dal:EventOccurrenceRole`), for the same class. The resolver's current model resolves one value per `(Target, dimension)` pair; `Target` is `(class, deployment)` with no resource-role axis. Whether `resourceRole` becomes a third resolution key, a new `ScopeInfo` kind, or something else is a genuine design decision, not an implementation detail — flagged for the plan's Slice 3, not resolved here.
+This is not a simple "add a row to `_DIMENSION_SPEC`" fix like G5/G6 below. `dal:resourceRole` has `sh:minCount 1 ; sh:maxCount 1` on `IdentityProfileShape`, meaning **one target class needs different identity strategies for different resource roles simultaneously** — an aggregate root's own identity (`dal:AggregateRootRole`) is minted differently from its event occurrences' identity (`dal:EventOccurrenceRole`), for the same class. The resolver's current model resolves one value per `(Target, dimension)` pair. `Target` is `(class, deployment)` with no resource-role axis. Whether `resourceRole` becomes a third resolution key, a new `ScopeInfo` kind, or something else is a genuine design decision, not an implementation detail — flagged for the plan's Slice 3, not resolved here.
 
 ### G3 — Epoch/restore-safety configuration surface unresolved, distinct from G1 (severity: missing dimension)
 
@@ -62,7 +62,7 @@ These attach to profile classes the resolver already knows how to resolve (`_DIM
 - `dal:OrderingProfile`: `dal:globalReadStrategy` (4 values), `dal:lagWindowMillis`, `dal:contiguityCheckMode` (2 values, one discouraged).
 - `dal:ReceiptProfile`: `dal:retentionMode` (2 values, one incompatible with as-of replay), `dal:asOfFloorSource`.
 - `dal:ConcurrencyProfile`: `dal:etagForm` (2 values, one invalid for CAS), `dal:etagRepresentation` (2 values), `dal:deadlockPolicy` (3 values).
-- `dal:AggregateBoundaryProfile`: `dal:firstWrite` (2 values). This one has a real behavioural consequence already described in the guide (§19.1's comment on `dal:PreCreatedRow`): `select_operations()` currently has no concept of `dal:firstWrite` at all, so it cannot know that a `dal:PreCreatedRow` target must never be offered `create-if-absent-named-graph.mustache` (no row is ever "absent" for such a target; only the CAS shape is legitimate).
+- `dal:AggregateBoundaryProfile`: `dal:firstWrite` (2 values). This one has a real behavioural consequence already described in the guide (§19.1's comment on `dal:PreCreatedRow`): `select_operations()` currently has no concept of `dal:firstWrite` at all, so it cannot know that a `dal:PreCreatedRow` target must never be offered `create-if-absent-named-graph.mustache` (no row is ever "absent" for such a target. Only the CAS shape is legitimate).
 
 Five new SHACL shapes correspond to these: `WeakEtagCasWarningShape`, `NoGlobalReadWarningShape`, `AdvisoryContiguityWarningShape`, `AsOfFloorRetentionCompatibilityShape`. None has a Python-level equivalent (same defense-in-depth gap as G4, smaller blast radius).
 
@@ -81,6 +81,17 @@ Two distinct problems, one old and one new:
 ### G8 — `tools/persistence/README.md` is now stale (severity: documentation)
 
 The "Known limitations" section predates this commit entirely and describes none of G1–G7. An adopter reading the README today would not learn that identity minting, epoch/restore safety, or privacy/erasure are unresolved by this compiler at all.
+
+### G9 — Template drift from the remediated guide (severity: correctness, found 2026-09-23 while designing [persistence-mbt](persistence-mbt.md))
+
+G1–G8 compare the compiler against the `dal:` vocabulary diff. The same remediation also rewrote SPARQL in `rdf-sparql-patterns-guide.md` (findings B1–B13), and several templates were never updated to match:
+
+- `fork-detection-audit.mustache` groups receipts by `pat:prevRev`. Guide F5 now states this query "can never fire" once revision IRIs are deterministic from `(aggregate, epoch, seq)`, because colliding writers mint the same revision subject. The prescribed replacement counts distinct txn claims per revision. The audit as shipped reports zero forks whether or not any exist.
+- `append-event.mustache` lacks the dataset-level epoch guard (B1), does not maintain `pat:head`/`pat:prevRev` (B6), computes `?n + 1` without `STRDT` re-typing (B4), and mints `<stream>/<n>` revision IRIs instead of epoch-scoped, fixed-width ones (F3), all against guide §10.1.
+- No template bootstraps a stream's counter row. `append-event` requires `$stream pat:seq ?n` to exist, and guide §10.1 requires eager bootstrap, so the first append to a new stream cannot succeed using compiler output alone.
+- CAS templates require `pat:head` in `WHERE`, where guide §19.1 wraps it in `OPTIONAL` for `dal:PreCreatedRow` (B5). Latent until `dal:firstWrite` is wired (G5).
+
+Not exhaustive. Found by reading templates, not by a systematic sweep of B1–B13 against every template, which is the first task of the slice that fixes this.
 
 ## Non-goals of the eventual fix (explicitly out of scope for the plan this analysis produces)
 

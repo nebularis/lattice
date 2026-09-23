@@ -33,7 +33,8 @@ Nothing blocks starting Slices 1, 2, 4, or 5.
 | 3 | Identity minting profile resolution (G2) | Blocked on human decision |
 | 4 | Privacy/erasure profile + cross-profile compatibility (G3 partial, G4) | Not started |
 | 5 | Uniqueness `onViolation` branching, `mergeRelation`, `ClaimScheme` rotation (G7) | Not started |
-| 6 | Documentation close-out | Not started, waits on 1–5 |
+| 6 | Documentation close-out | Not started, waits on 1–5 and 7 |
+| 7 | Template drift from the remediated guide (G9): fork audit blind to forks, `append-event` behind guide §10.1, no stream bootstrap | Not started. Added 2026-09-23, found while designing [persistence-mbt](../sketches/persistence-mbt.md). Severity comparable to Slice 1 |
 
 ## Slice 1 delivery detail
 

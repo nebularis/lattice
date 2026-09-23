@@ -78,6 +78,7 @@ Three new profile dimensions (`dal:IdentityProfile`, `dal:EpochProfile`, `dal:Pr
 4. Privacy/erasure profile + cross-profile compatibility
 5. Uniqueness `onViolation` branching, `mergeRelation`, `ClaimScheme` rotation
 6. Documentation close-out (README, this index, the two status files above)
+7. Template drift from the remediated guide (G9, added 2026-09-23): the fork audit cannot detect forks, `append-event` lags guide §10.1, no stream-bootstrap template. Severity comparable to Slice 1
 
 ---
 
@@ -147,7 +148,7 @@ Three new profile dimensions (`dal:IdentityProfile`, `dal:EpochProfile`, `dal:Pr
 - SWRL positive-only per ADR-A24
 
 ### Blocks
-- SWRL/OWL-reasoner validation needs `platform/reasoning-testkit` (new, proposed by the plan above, ADR-A81) — a shared, test-scope-only Maven module wrapping an OWL/SWRL reasoner and, if a second consumer emerges, Drools (Apache-2.0, no licence concern), consumed by Python test suites via a CLI subprocess rather than a direct dependency. Explicitly never a runtime dependency of any product package.
+- SWRL/OWL-reasoner validation needs `platform/reasoning-testkit` (new, proposed by the plan above, ADR-A83) — a shared, test-scope-only Maven module wrapping an OWL/SWRL reasoner and, if a second consumer emerges, Drools (Apache-2.0, no licence concern), consumed by Python test suites via a CLI subprocess rather than a direct dependency. Explicitly never a runtime dependency of any product package.
 - Licence check complete (2026-09-23): Openllet is **AGPL-3.0** (inherited from Pellet, not Apache-2.0 as an earlier draft wrongly stated), usable only because the module's isolation design (test-scope + subprocess CLI, never linked or distributed) avoids creating a combined/derivative work. **HermiT (LGPL-3.0)** is a lower-risk alternative but supports DL-safe SWRL rules only — open question is whether ADR-A24's SWRL subset is DL-safe. See [eligibility-compiler.md](plans/eligibility-compiler.md) §B.4
 
 ---
@@ -327,6 +328,23 @@ The unratified universal IRI policy in ADR-A51 was superseded by [ADR-A82](../ar
 
 ### Blockers
 - Awaits completion of persistence compiler (Slice 2 complete ✅)
+- Fork-detection audit: the compiler's `fork-detection-audit` template uses the pre-F5 `pat:prevRev` grouping and cannot detect forks. Fixed by persistence-compiler-iri-sync Slice 7 (G9), which housekeeping should wait for rather than schedule a blind audit.
+
+## 8a. Persistence Model-Based Testing Library
+
+| Field | Value |
+|-------|-------|
+| **Status** | ⏳ Design sketch (2026-09-23). Proposes ADR-A84. No plan or status record yet |
+| **Unit ID** | `persistence-mbt` |
+| **Sketch** | [persistence-mbt.md](sketches/persistence-mbt.md) |
+| **Working location** | `tools/persistence_mbt` (proposed, decision D1) |
+| **Depends On** | `tools/persistence` prerequisites: `dal:templateVersion` emission, template semantic contracts, read and audit templates, persistence-compiler-iri-sync Slice 7 (G9) |
+
+### Summary
+Model-based stress testing of an adopter's `dal:` configuration against their own domain ontology and backend. Derives an executable model from the resolved profile, generates keys, shape-conforming payloads, schedules and faults, drives the SUT only with compiler-generated SPARQL, and classifies every observation as guarantee held, guarantee violated, permitted anomaly observed, or unmodelled behaviour. The same run format feeds performance profiling and growth/cost projection.
+
+### Decisions awaiting the human (sketch §14)
+D1 location and language, D2 workload format, D3 where template contracts live, D4 compiler read/audit templates (ADR-A79 scope), D5 optional copyleft checkers, D6 shared checker with the TCK, D7 whether permitted anomalies fail CI.
 
 ---
 
