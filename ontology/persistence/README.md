@@ -20,18 +20,26 @@ This ontology targets classes, graphs, and shapes **by IRI reference only**. It 
 
 The directory is named `persistence` because the compiler, and any future housekeeping or runtime component, all belong to that subsystem. The ontology inside it is named for what it is: a **Data Access Layer** configuration vocabulary, hence `dal:`.
 
-## 3. Six independently scopable dimensions
+## 3. Independently scopable dimensions
 
 | Dimension | Class | Values |
 |---|---|---|
 | Aggregate boundary | `dal:AggregateBoundaryProfile` | `dal:NamedGraphBoundary`, `dal:CompositePropertyBoundary`, `dal:NoBoundary` |
+| First-write policy | `dal:AggregateBoundaryProfile` | `dal:PreCreatedRow`, `dal:AbsentRow` |
 | Concurrency | `dal:ConcurrencyProfile` | `dal:ProvidedConcurrency`, `dal:Optimistic`, `dal:AppendOnly`, `dal:LockingConcurrency` (marker only) |
+| Deadlock policy | `dal:ConcurrencyProfile` | `dal:EngineDetectAndRetry`, `dal:SortedAcquisition`, `dal:PartitionedWriter` |
+| HTTP conditional form | `dal:ConcurrencyProfile` | `dal:StrongEtag`/`dal:WeakEtag`, `dal:SingleRepresentation`/`dal:TaggedRepresentation` |
 | Ordering grain | `dal:OrderingProfile` | `dal:CommitGrain`, `dal:EventGrain` |
+| Global-read strategy | `dal:OrderingProfile` | `dal:WatermarkedRead`, `dal:LagWindowRead`, `dal:DenseFeedRead`, `dal:NoGlobalRead` |
 | Receipt model | `dal:ReceiptProfile` | `dal:ReceiptOnly`, `dal:PatchLog`, `dal:SnapshotPerRevision` |
-| Meta topology | `dal:MetaTopologyProfile` | `dal:SharedSharded`, `dal:PerAggregate` |
-| Uniqueness | `dal:UniquenessConstraint` | many-valued: a target may carry zero, one, or several distinct keyed constraints |
+| Retention mode | `dal:ReceiptProfile` | `dal:PrefixOnlyRetention`, `dal:BucketAnyRetention` |
+| Meta topology | `dal:MetaTopologyProfile` | `dal:SharedSharded`, `dal:PerAggregate`, plus `dal:txnShards`/`dal:logShards`/`dal:keyShards`/`dal:registryGraph` |
+| Uniqueness | `dal:UniquenessConstraint` | many-valued: a target may carry zero, one, or several distinct keyed constraints; each may carry a `dal:mergeRelation` and a `dal:claimScheme` |
+| Identity minting | `dal:IdentityProfile` | one `dal:IdentityStrategy` per `dal:ResourceRole` — see §10 |
+| Epoch authority | `dal:EpochProfile` | `dal:ExternalHighWaterMark`, `dal:RestoreControlledEpoch`, `dal:WriterStartRefusal`, `dal:StoreLocalEpoch` (warned) |
+| Privacy and erasure | `dal:PrivacyProfile` | `dal:PersonalData`/`dal:InternalData`/`dal:PublicData`, `dal:PerSubjectGraphDrop`/`dal:CryptoShred`/`dal:NoErasure` |
 
-A composite `dal:DataAccessProfile` is sugar declaring several dimensions at one scope; it decomposes into the same six-dimension model, never a special case of its own.
+A composite `dal:DataAccessProfile` is sugar declaring several dimensions at one scope; it decomposes into the same per-dimension model, never a special case of its own.
 
 ## 4. Five scope kinds, ranked by whether they need reasoning
 
@@ -132,7 +140,46 @@ ex:MyFusekiEnvironment a dal:CapabilitySpec ;
 
 Compiling without a spec never drops a candidate scope or downgrades a strategy: the compiler behaves as if the maximum any backend could provide is available, and simply records what the resolution actually depended on. See sketch [§3.6](../../docs/developer/sketches/persistence-profile-substrate.md#36-reasoning-dependency-and-capability-self-checks) for the full design and the rationale for why this compiler cannot and does not verify a spec's accuracy against anything real.
 
-## 9. Repository layout
+## 9. Worked example 4: identity, epoch and privacy configuration
+
+LATTICE does not pick an epoch authority, an erasure mechanism, or an identity-minting pattern for an adopter (ADR-A82, [iri-identity-patterns.md](../../docs/architecture/iri-identity-patterns.md)). It documents the options and their consequences, and this vocabulary is where an adopter's choice becomes explicit, so the compiler and any runtime component that needs to know — for example, whether to guard a write against a dataset-level epoch, or whether a graph is safe to drop for erasure — can read it instead of assuming a default.
+
+```turtle
+ex:ClaimantEntity a dal:ClassScope ;
+    dal:targetClass ex:Claimant ;
+    dal:priority "20"^^xsd:integer .
+
+ex:ClaimantIdentity a dal:IdentityProfile ;
+    dal:appliesTo          ex:ClaimantEntity ;
+    dal:resourceRole       dal:EntityRole ;
+    dal:identityStrategy   dal:SurrogateClaimedIdentity ;      # mutable, sensitive key (an email)
+    dal:namingAuthority    "adopter" .
+
+ex:ClaimantEpoch a dal:EpochProfile ;
+    dal:appliesTo          ex:ClaimantEntity ;
+    dal:epochAuthority     dal:ExternalHighWaterMark ;
+    dal:epochCoordinatorBinding "postgres://coord/epoch_watermark" ;
+    dal:epochGuardScope    dal:DatasetLevelGuard ;
+    dal:erasureRegisterBinding  "postgres://coord/erasure_register" ;
+    dal:erasureReplayOnRestore  true .
+
+ex:ClaimantPrivacy a dal:PrivacyProfile ;
+    dal:appliesTo          ex:ClaimantEntity ;
+    dal:privacyClass       dal:PersonalData ;
+    dal:erasureStrategy    dal:PerSubjectGraphDrop ;
+    dal:erasurePrecedence  dal:ErasureWins .
+
+ex:ClaimantReceipts a dal:DataAccessProfile ;
+    dal:appliesTo          ex:ClaimantEntity ;
+    dal:receiptModel       dal:ReceiptOnly ;          # required, given personal data + graph-drop erasure below
+    dal:perSubjectScoped   true .
+```
+
+`dal:PersonalDataReceiptCompatibilityShape` (`shapes/constraints.ttl`) rejects this same scope if `dal:receiptModel` were `dal:PatchLog` or `dal:SnapshotPerRevision` without `dal:perSubjectScoped true` or `dal:erasureStrategy dal:CryptoShred` — not because the framework prefers `dal:ReceiptOnly`, but because the other two models keep a second, immutable copy of the payload that a per-subject graph drop cannot reach. An adopter who genuinely needs replay over personal data selects `dal:CryptoShred` instead and specifies key custody and an as-of failure policy for shredded revisions.
+
+Full fixture set for this and the other new dimensions: [`examples/identity-epoch-privacy-profile.ttl`](examples/identity-epoch-privacy-profile.ttl) (to be authored alongside the compiler wiring — see [ADR-A82](../../docs/architecture/decisions/ADR-A82-framework-neutral-identity-pattern-selection.md)'s consequence that this is a separately scoped slice).
+
+## 10. Repository layout
 
 ```
 ontology/persistence/

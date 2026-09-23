@@ -11,7 +11,7 @@ note: "Comprehensive guide with running examples. Start with 'How to read this g
 
 ## Uniqueness, Ordering and Concurrency in RDF — The LATTICE Pattern Guide
 
-**Status:** Authoritative architectural guide. See [Appendix D](#appendix-d--traceability-to-the-source-notes) for disagreement with other documentation, and [docs/developer/review/ADR-A51-review-disposition.md](../developer/review/ADR-A51-review-disposition.md) for the identity-related corrections applied on 2026-09-23 (revision IRIs now carry the dataset epoch; HMAC claim IRIs widened to 128 bits; the normalization pipeline strips default-ignorable Unicode characters; the S6 as-of query and S3 gap scan are corrected).
+**Status:** Authoritative architectural guide. Identity and IRI minting is a framework-neutral pattern catalogue, not a platform mandate: see [iri-identity-patterns.md](iri-identity-patterns.md) and [ADR-A82](decisions/ADR-A82-framework-neutral-identity-pattern-selection.md). See [Appendix D](#appendix-d--traceability-to-the-source-notes) for disagreement with other documentation, and [docs/developer/status/rdf-sparql-patterns-remediation.md](../developer/status/rdf-sparql-patterns-remediation.md) for the correctness remediation applied on 2026-09-23 (dataset-level epoch guards, corrected fork detection, portable datatype arithmetic, strong ETags, and the other findings tracked there).
 
 **Audience:** anyone designing, implementing, reviewing or operating a LATTICE component that writes to an RDF store: the store SPI (A75), the Surface workflow, MORK governance, ingestion workers, and the ontology authors who decide where aggregate boundaries fall.
 
@@ -469,9 +469,20 @@ def claim_iri(constraint_id: str, scope: str, normalized_key: str,
     index of every email in the tenant, and a plain SHA-256 of a
     normalized email is reversible by dictionary. With an HMAC the IRI is
     a stable pseudonym that cannot be inverted without the platform key.
-    Rotating the secret is a re-keying and needs a new version salt.
+    Rotating the secret is a dal:ClaimScheme rotation, never a single
+    atomic cutover: both the old and new `version` mint different IRIs
+    for the same key, so a rotation runs both in parallel (dal:Dual
+    scheme state: every claim acquisition guards and inserts both the
+    old and new version's claim IRI in one operation), moving to
+    dal:Retiring once new claims stop accepting the old version, and
+    dal:Retired once the backfill of existing claims to the new version
+    is complete.
 
-    nbytes=16 (128 bits) matches ADR-A51's minimum content-hash width;
+    nbytes=16 (128 bits) is one reasonable default digest width for a
+    dal:DigestScheme (see iri-identity-patterns.md §7.4 and §10.2: an
+    exact, declared width, never "at least N bits", is what keeps two
+    independent implementations from minting different IRIs for the
+    same key);
     an earlier draft of this function truncated to 10 bytes (80 bits),
     which is adequate against accidental collision but leaves less
     margin than the entity-IRI recommendation, since claim IRIs drive
@@ -603,7 +614,10 @@ WHERE {
   BIND(<urn:keyshard:817> AS ?shard)                       # sha256(claim IRI) mod 1024
   BIND(<urn:key:person-email:v1:MFRGGZDFMZTWQ2LK> AS ?claim)
   GRAPH <urn:g:keys> { ?shard pat:counter ?n }
-  BIND(?n + 1 AS ?n1)
+  BIND(STRDT(STR(?n + 1), xsd:long) AS ?n1)                # portable re-typing: xsd:long(?n+1) is a
+                                                            # vendor extension, not a SPARQL 1.1 constructor
+                                                            # function; plain ?n + 1 on an xsd:long returns
+                                                            # xsd:integer per XPath F&O numeric promotion
   FILTER NOT EXISTS {
     GRAPH <urn:g:keys> { ?claim pat:claimedBy ?other . FILTER(?other != ex:person-42) }
   }
@@ -680,6 +694,8 @@ ex:PersonEmailUnique
             }""" ] .
 ```
 
+This shape groups on the **raw** `?email` literal, so it cannot detect a normalization-variant duplicate (`ada@example.org` next to `Ada@Example.org`) — exactly the K4 example §4 opens with. §8.1 already states SPARQL's string functions cannot do the Unicode normalization or casefold a constraint's own frozen pipeline requires; this shape is therefore a cheap first pass for byte-identical duplicates, not the constraint's primary detector. The P1 claim (§6.1), keyed on the normalized value, is what actually enforces the constraint; keep this shape, if at all, as a secondary audit and say so.
+
 Use shapes in two ways, and be clear which one a given deployment has:
 
 | Mode | Where | What it is |
@@ -717,15 +733,20 @@ INSERT INTO outbox (aggregate, payload) VALUES ('urn:person:8f2c…', '{...quads
 
 Equivalents: DynamoDB `ConditionExpression: attribute_not_exists(pk)`; Redis `SET key val NX PX ttl` for a lease. Then write to RDF **idempotently** (P0 or P2), through an outbox or CDC so the projection is at-least-once safe.
 
-A lease needs a **fencing token**. A lock service alone is not safe under GC pauses: a writer can acquire a lease, stall, lose the lease, and then apply its write after another writer has acquired the lease. Write the lease token into the claim and reject stale tokens in the guard:
+A lease needs a **fencing token**. A lock service alone is not safe under GC pauses: a writer can acquire a lease, stall, lose the lease, and then apply its write after another writer has acquired the lease. Write the lease token into the claim, reject stale tokens in the guard, and **advance the token in the same operation that checks it** — checking without advancing lets any later token pass and fences no one:
 
 ```sparql
+DELETE { GRAPH <urn:g:keys> { ?claim pat:fence ?current } }
+INSERT { GRAPH <urn:g:keys> { ?claim pat:fence 7184 } }
 WHERE {
   …
   GRAPH <urn:g:keys> { ?claim pat:fence ?current }
-  FILTER(?current < 7183)          # my token; anything newer means I lost the lease
+  FILTER(?current <= 7184)          # my token; anything newer means I lost the lease.
+                                     # <= admits my own next write; a strict < would reject it
 }
 ```
+
+Bootstrap the fence eagerly (`pat:fence 0` alongside the claim), for the same reason the P3 sentinel counter above is bootstrapped: a lazy first write reintroduces the race it is meant to remove.
 
 Partitioning the writer by `hash(key) mod N` (a Kafka key, an actor per key, a RabbitMQ consistent-hash exchange) removes contention entirely and is often simpler than distributed locking. It is also the only option on non-ACID backends.
 
@@ -745,6 +766,8 @@ GROUP BY ?tenant ?email
 HAVING (COUNT(DISTINCT ?p) > 1)
 ```
 
+This groups on the **raw** `?email` literal, the same blind spot as §7.3's shape: it cannot detect a normalization-variant duplicate, because SPARQL cannot apply the frozen pipeline's Unicode normalization or casefold (§8.1). The primary reconciler is an **application-side** job that reads the payload, applies the same frozen pipeline the write path uses, recomputes the claim IRI, and groups on that; the query above is a cheap, SPARQL-only first pass for exact duplicates, useful as a fast metric but not a substitute.
+
 And the claim-registry version of the same check, which is cheaper because it is a single-graph scan over a small graph:
 
 ```sparql
@@ -754,7 +777,7 @@ GROUP BY ?claim
 HAVING (COUNT(?owner) > 1)
 ```
 
-Ship both as metrics and alert on `> 0`. Decide the policy per constraint and write it down: `reject | merge (fnd:replacedBy + rewrite) | quarantine`. Prefer `fnd:replacedBy` over `owl:sameAs` for the merge case: under reasoning, `owl:sameAs` produces sameAs-clique explosion and cannot be retracted cleanly if the merge is later found to be wrong, whereas `fnd:replacedBy` is a plain, revocable pointer (ADR-A51). The reconciler is **never the only strategy**, and it is **never absent**.
+Ship both as metrics and alert on `> 0`. Decide the policy per constraint and write it down: `reject | merge (dal:mergeRelation + rewrite) | quarantine`. A merge policy must name the actual relation it writes rather than assume one: `fnd:replacedBy` is not currently defined in Foundation, so `ontology/persistence` requires `dal:mergeRelation` on any constraint whose `dal:onViolation` is `dal:Merge` (`dal:MergeRelationRequiredShape`), pointing at whichever relation the adopter's own ontology defines. Prefer that plain, revocable relation over `owl:sameAs` for the merge case: under reasoning, `owl:sameAs` produces sameAs-clique explosion and cannot be retracted cleanly if the merge is later found to be wrong. The reconciler is **never the only strategy**, and it is **never absent**.
 
 ## Chapter 8 — Normalization, and the uniqueness portability table
 
@@ -831,7 +854,7 @@ Per-triple guarded writes are two to four orders of magnitude too slow for load.
 
 ### 8.4 Recommended default for uniqueness
 
-1. **Opaque UUID entity IRIs**, plus a **P1 key-claim registry** (keyed-hash claim IRIs) for every unique key. This is what ADR-A51 names `surrogate-claimed` and adopts as its own recommended default for mutable or sensitive keys — one mechanism, two names in two documents, kept consistent deliberately.
+1. **Opaque UUID entity IRIs**, plus a **P1 key-claim registry** (keyed-hash claim IRIs) for every unique key. This is what [iri-identity-patterns.md §6.4](iri-identity-patterns.md#64-surrogate-claimed-pattern) names `surrogate-claimed` and recommends as the general-purpose default for mutable or sensitive keys — one mechanism, two names in two documents, kept consistent deliberately.
 2. **Guarded single-request update (P2)** as the write primitive, with post-`ASK` confirmation, relying on ownership monotonicity.
 3. **Per-backend upgrade** to commit-time SHACL (`sh:maxCount 1` on the claim) or native ICV where available; **P3** where the engine has write–write detection but not write-skew detection; **P6** where contention is high or the backend is non-ACID.
 4. **P7 reconciler and duplicate-count metric always on**, with a quarantine graph and an explicit merge policy per constraint.
@@ -925,9 +948,9 @@ PREFIX ex:  <https://example.org/ns#>
 PREFIX pat: <https://example.org/lattice/patterns#>
 PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 
-DELETE { GRAPH <urn:g:meta/17> { ?stream pat:seq ?n } }
+DELETE { GRAPH <urn:g:meta/17> { ?stream pat:seq ?n ; pat:head ?prev } }
 INSERT {
-  GRAPH <urn:g:meta/17> { ?stream pat:seq ?n1 }
+  GRAPH <urn:g:meta/17> { ?stream pat:seq ?n1 ; pat:head ?rev }
 
   GRAPH <urn:g:txn> { <urn:txn:01J8Q4A7C2M9X1V5B3N8K6P0T4> pat:rev ?rev }
 
@@ -936,6 +959,7 @@ INSERT {
           pat:target     ?stream ;
           pat:epoch      "3"^^xsd:long ;
           pat:seq        ?n1 ;
+          pat:prevRev    ?prev ;
           pat:txn        "01J8Q4A7C2M9X1V5B3N8K6P0T4" ;
           pat:hlc        "1758445702450:0001:n7" ;
           pat:recordedAt ?now .
@@ -950,11 +974,20 @@ INSERT {
   }
 }
 WHERE {
-  BIND(<urn:stream:orders/1> AS ?stream)
-  GRAPH <urn:g:meta/17> { ?stream pat:epoch "3"^^xsd:long ; pat:seq ?n }     # counter + epoch guard
-  FILTER NOT EXISTS { GRAPH <urn:g:meta/17> { <urn:stream:orders/1> pat:deleted true } }
+  BIND(<urn:g:orders/1> AS ?stream)                                          # the same target IRI the CAS
+                                                                              # form (Chapter 19) uses for this
+                                                                              # aggregate, not a second form
+                                                                              # (B3): two keying schemes for
+                                                                              # one target collide in the same
+                                                                              # revision namespace
+  GRAPH <urn:g:dataset> { <urn:ds:prod> pat:epoch "3"^^xsd:long }            # dataset-level epoch guard (B1)
+  GRAPH <urn:g:meta/17> { ?stream pat:epoch "3"^^xsd:long ; pat:seq ?n }     # counter + row epoch guard
+  OPTIONAL { GRAPH <urn:g:meta/17> { ?stream pat:head ?prev } }              # read the current head (B6)
+  FILTER NOT EXISTS { GRAPH <urn:g:meta/17> { <urn:g:orders/1> pat:deleted true } }
   FILTER NOT EXISTS { GRAPH <urn:g:txn> { <urn:txn:01J8Q4A7C2M9X1V5B3N8K6P0T4> pat:rev ?any } }
-  BIND(?n + 1 AS ?n1)
+  BIND(STRDT(STR(?n + 1), xsd:long) AS ?n1)                                  # portable re-typing (B4): plain
+                                                                              # ?n + 1 on an xsd:long returns
+                                                                              # xsd:integer per XPath F&O
   BIND(IRI(CONCAT("urn:rev:orders/1/e3/", SUBSTR(CONCAT("0000000000000000", STR(?n1)),
                                               STRLEN(STR(?n1)) + 1))) AS ?rev)   # zero-padded, epoch-scoped (F3)
   BIND(NOW() AS ?now)
@@ -970,16 +1003,17 @@ Points to notice:
 
 - **`?stream` is bound explicitly.** Without the `BIND`, `?stream pat:seq ?n` matches every counter in the shard and the update increments all of them. (The pre-amendment snippet in the sketch had this bug.)
 - **The counter and the payload are one operation on one statement.** That is the G2 fix. The transaction that commits `seq 18` read `seq 17` from a committed transaction, so order is dense by construction.
+- **The head and the chain are maintained here too, not only in the CAS form.** A stream this chapter's append form writes to and Chapter 19's CAS form also writes to shares one version row; if either form skipped `pat:head`/`pat:prevRev`, the other would read a stale head and the receipt chain would have holes (T-4).
 - **Idempotency guard.** `FILTER NOT EXISTS` on the txn claim means a retry after an ambiguous timeout neither burns a sequence number nor duplicates the events. The txn claim node is also how the outcome is read back ([Chapter 15](#chapter-15--learning-whether-it-applied)).
 - **`VALUES` carries `opSeq`.** The store cannot mint distinct ordinals. Three events, three rows, three client-supplied ordinals.
-- **Server-side arithmetic and padding are used here because the client does not know `?n`.** When it does, as in the CAS form, everything is computed client-side and the template is ground ([Chapter 18, F8](#f8--moderate-server-side-arithmetic-is-unnecessary)). The `SUBSTR`/`CONCAT` padding is ugly, and pinning `xsd:long` everywhere is what keeps `?n + 1` from drifting to `xsd:integer` or `xsd:decimal` ([Chapter 13](#chapter-13--sparql-gotchas-that-break-ordering)).
+- **Server-side arithmetic is used here because the client does not know `?n`.** When it does, as in the CAS form, everything is computed client-side and the template is ground ([Chapter 18, F8](#f8--moderate-server-side-arithmetic-is-unnecessary)). The `SUBSTR`/`CONCAT` padding is ugly; the width itself (16 digits, illustrative here) is a profile decision fixed once per deployment, never a mix of two documented widths (see [iri-identity-patterns.md §10.2](iri-identity-patterns.md#102-fixed-width-positions)).
 
 **Requirements and caveats**
 
 - The engine must either serialise writers or detect write–write conflicts. Verify with the TCK; do not trust the documentation.
 - **Bootstrap counters eagerly** (`?stream pat:seq "0"`). Lazy `OPTIONAL` initialisation reintroduces a race on the first write.
 - Retry on conflict with jittered backoff; the idempotency guard makes the retry safe.
-- **Acquire multiple counters in sorted order** if one commit touches several streams, or two commits touching the same two streams in opposite orders will deadlock on engines that lock.
+- **Deadlock avoidance across multiple streams in one commit does not come from listing counters in a particular order in `WHERE`.** SPARQL specifies no evaluation order and no lock order; a query optimiser is free to reorder patterns freely. If the engine detects and aborts deadlocks, treat the abort as an ordinary conflict and retry with jitter. If it does not, route the commit through an external lock acquired in a fixed order, or through a single partitioned writer per stream (S8); see `dal:deadlockPolicy` ([§19.6](#196-multi-aggregate-writes)).
 
 ### 10.2 The amended log model
 
@@ -995,7 +1029,7 @@ GRAPH <urn:g:dataset> {
 GRAPH <urn:g:txlog/2026-09> {
   <urn:rev:orders/1/e3/0000000000000018>
       a              pat:Revision ;
-      pat:target     <urn:stream:orders/1> ;
+      pat:target     <urn:g:orders/1> ;
       pat:epoch      "3"^^xsd:long ;
       pat:seq        "18"^^xsd:long ;             # dense per stream, allocated in-transaction
       pat:prevRev    <urn:rev:orders/1/e3/0000000000000017> ;
@@ -1054,8 +1088,13 @@ Always carry the full composite position `(epoch, seq, opSeq)`, and make the cli
 
 ```sparql
 SELECT ?stream (MIN(?seq) AS ?lo) (MAX(?seq) AS ?hi) (COUNT(DISTINCT ?seq) AS ?n)
-WHERE  { GRAPH ?log { ?r a pat:Revision ; pat:epoch "3"^^xsd:long ; pat:target ?stream ; pat:seq ?seq }
-         FILTER(STRSTARTS(STR(?log), "urn:g:txlog/")) }
+WHERE  { VALUES ?log { <urn:g:txlog/2026-09> }           # every bucket this family's dal:registryGraph
+                                                          # lists, never an unbound GRAPH filtered by
+                                                          # STRSTARTS: that scans every graph in the
+                                                          # dataset (F6) and matches any graph that
+                                                          # happens to share the prefix, including a
+                                                          # renamed or foreign one
+         GRAPH ?log { ?r a pat:Revision ; pat:epoch "3"^^xsd:long ; pat:target ?stream ; pat:seq ?seq } }
 GROUP BY ?stream
 HAVING (COUNT(DISTINCT ?seq) != MAX(?seq) - MIN(?seq) + 1)
 ```
@@ -1067,8 +1106,8 @@ Ship this as a metric and alert on any row. It is the single best argument for d
 ```sparql
 SELECT ?stream ?lo ?expectedLo WHERE {
   { SELECT ?stream (MIN(?seq) AS ?lo) WHERE {
-      GRAPH ?log { ?r a pat:Revision ; pat:epoch "3"^^xsd:long ; pat:target ?stream ; pat:seq ?seq }
-      FILTER(STRSTARTS(STR(?log), "urn:g:txlog/")) }
+      VALUES ?log { <urn:g:txlog/2026-09> }
+      GRAPH ?log { ?r a pat:Revision ; pat:epoch "3"^^xsd:long ; pat:target ?stream ; pat:seq ?seq } }
     GROUP BY ?stream }
   GRAPH <urn:g:retention> { ?stream pat:retentionLowWaterMark ?expectedLo }
   FILTER (?lo > ?expectedLo)
@@ -1079,16 +1118,20 @@ A non-empty result means retention has not yet pruned that range, but the receip
 
 ### S4 — Latest revision per stream
 
+The normative lookup is the materialised head pointer below, a single-triple read. The `MAX(?seq)` form that follows it is a **repair or audit** query only, never the primary path: hard-coding one month's bucket returns the wrong answer, silently, for any stream last written in an earlier bucket, so an audit run enumerates every bucket this family's `dal:registryGraph` lists, not one hard-coded graph.
+
 ```sparql
 SELECT ?stream ?rev WHERE {
   { SELECT ?stream (MAX(?seq) AS ?max) WHERE {
-      GRAPH <urn:g:txlog/2026-09> { ?r pat:target ?stream ; pat:epoch "3"^^xsd:long ; pat:seq ?seq } }
+      VALUES ?log { <urn:g:txlog/2026-09> }              # enumerate every registry-listed bucket in an
+                                                          # actual audit run, not this one illustrative month
+      GRAPH ?log { ?r pat:target ?stream ; pat:epoch "3"^^xsd:long ; pat:seq ?seq } }
     GROUP BY ?stream }
   GRAPH <urn:g:txlog/2026-09> { ?rev pat:target ?stream ; pat:epoch "3"^^xsd:long ; pat:seq ?max }
 }
 ```
 
-Portable and index-friendly, and better than `ORDER BY … LIMIT 1` inside a correlated subquery, which several optimisers handle badly. Cheaper still: a materialised head pointer, upserted in the same transaction as the write and constrained to `sh:maxCount 1`:
+Portable and index-friendly, and better than `ORDER BY … LIMIT 1` inside a correlated subquery, which several optimisers handle badly. Cheaper still, and the form to actually use: a materialised head pointer, upserted in the same transaction as the write and constrained to `sh:maxCount 1`:
 
 ```sparql
 SELECT ?rev WHERE { GRAPH <urn:g:meta/17> { <urn:stream:orders/1> pat:head ?rev } }
@@ -1118,6 +1161,8 @@ The failure this prevents, concretely: a payment captured on the 18th is backfil
 
 A valid-time query lists the late event first; a replay query lists it last. Both are correct. Using `?seq` for the former is the most common modelling bug in this whole area, and TCK test 8 in [Chapter 27](#chapter-27--the-conformance-tck) exists to catch it.
 
+`pat:opSeq` is required in the pattern above, not `OPTIONAL`: an event that genuinely lacks it (a commit-grain family, `dal:orderingGrain dal:CommitGrain`) is silently excluded from this result rather than sorted first or last. If a family's grain is mixed, wrap the triple in `OPTIONAL` and `BIND(COALESCE(?op, 0) AS ?opk)` exactly as S2's keyset query already does, and order on `?opk`, never on a possibly-unbound `?op` directly — an unbound sort key sorts before everything and silently reorders the page (Chapter 13).
+
 ### S6 — As-of reads
 
 Log replay, the portable form. The naive version compares `pat:retracts ?g` against the *asserted* delta graph `?g` itself, which is wrong in the patch-log model of [§20.2](#202-patch-log): a revision's `pat:asserts` and `pat:retracts` point at two *different* delta graphs (`.../add` and `.../del`), so a retraction never shares a graph with the assertion it undoes, and `FILTER NOT EXISTS` over `pat:retracts ?g` never matches — every asserted triple looks permanently un-retracted, including ones a later revision removed. The correct form is triple-level, not graph-level: a triple asserted at or before the as-of position is included only if no revision at or before that same position retracted **that specific triple** for **that specific target**:
@@ -1125,11 +1170,14 @@ Log replay, the portable form. The naive version compares `pat:retracts ?g` agai
 ```sparql
 # state of the stream as of position (3, 17) - triple-level as-of (corrected)
 CONSTRUCT { ?s ?p ?o } WHERE {
-  GRAPH ?log { ?r pat:epoch "3"^^xsd:long ; pat:target <urn:stream:orders/1> ;
+  VALUES ?log { <urn:g:txlog/2026-09> }
+  VALUES ?log2 { <urn:g:txlog/2026-09> }                # every registry-listed bucket in the as-of range,
+                                                          # never an unbound GRAPH/GRAPH2 (F6)
+  GRAPH ?log { ?r pat:epoch "3"^^xsd:long ; pat:target <urn:g:orders/1> ;
                pat:seq ?seq ; pat:asserts ?g  FILTER(?seq <= 17) }
   GRAPH ?g { ?s ?p ?o }
   FILTER NOT EXISTS {
-    GRAPH ?log2 { ?r2 pat:epoch "3"^^xsd:long ; pat:target <urn:stream:orders/1> ;
+    GRAPH ?log2 { ?r2 pat:epoch "3"^^xsd:long ; pat:target <urn:g:orders/1> ;
                   pat:seq ?s2 ; pat:retracts ?g2  FILTER(?s2 > ?seq && ?s2 <= 17) }
     GRAPH ?g2 { ?s ?p ?o }
   }
@@ -1160,8 +1208,13 @@ class Hlc:
         now = int(time.time() * 1000)
         if now > self.l:
             self.l, self.c = now, 0
-        else:
+        elif self.c < 9999:
             self.c += 1
+        else:
+            # logical counter exhausted within one millisecond: borrow from the
+            # physical component rather than overflow the fixed-width field,
+            # which would break both pat:hlc's sh:pattern and lexical order
+            self.l, self.c = self.l + 1, 0
         return self.fmt()
 
     def receive(self, remote: str) -> None:
@@ -1173,6 +1226,8 @@ class Hlc:
         elif m == self.l:       self.c += 1
         elif m == rl:           self.c = rc + 1
         else:                   self.c = 0
+        if self.c > 9999:                          # same borrow-from-physical clamp as send()
+            m, self.c = m + 1, 0
         self.l = m
 
     def fmt(self) -> str:
@@ -1297,6 +1352,8 @@ WHERE  { BIND(1 AS ?_)
 
 This is a **uniqueness** problem, not a CAS problem: it is P2 from Part II, with the same write-skew caveat. On MVCC backends, pre-create the meta row (`pat:seq "0"`) at aggregate-id allocation time so that *every* write, including the first, is a rewrite of an existing statement and the race disappears.
 
+A family picks exactly one of these two paths, never both silently: `dal:firstWrite dal:PreCreatedRow` (this variant; the create-if-absent shape above is then dead code for that family, and Chapter 19's CAS guard never needs to treat `pat:head` as optional because a row always exists) or `dal:firstWrite dal:AbsentRow` (no row exists until the first write; the create-if-absent shape here applies, and Chapter 19.1's CAS guard must treat `pat:head` as `OPTIONAL` for a freshly created row's very first CAS, since it has no predecessor to point at).
+
 **Delete-if-version.** Symmetric: the guard, plus `DELETE { GRAPH <g> { ?s ?p ?o } }`, plus a tombstone on the version row rather than deleting it ([Chapter 24](#241-tombstones-f10)).
 
 **Value-based CAS for state machines.** Skip the version triple and guard on the old value:
@@ -1360,9 +1417,9 @@ Prune the txn graph with a TTL at least as long as the longest retry window; a c
 
 ### 15.3 Making the store *enforce* the invariant: the SHACL trick
 
-If the store validates SHACL or ICV at commit **against committed state**, install the shapes of [Appendix B](#appendix-b--shacl-shapes): `sh:maxCount 1` on the version row's `pat:seq`, and the fork shape `pat:NoForkShape` on receipts. Then a lost update, two writers both deleting version 41 and inserting their own 42, leaves two receipts with the same `pat:prevRev`, the fork shape matches, and the second committer's transaction is rejected. (With a counter, the version row itself collapses to one triple by set semantics, [§1.1](#11-set-semantics-hide-lost-updates), so `sh:maxCount 1` on `pat:seq` only catches the case where the two writers wrote *different* values, as with random ETags. The receipt chain is what makes the counter case detectable.)
+Because revision IRIs are deterministic from `(aggregate, epoch, seq)` ([Chapter 19.1](#191-the-write)), two writers who both win a broken-isolation CAS from the same prior version mint the **same** revision subject, not two receipts sharing one `pat:prevRev` — an earlier, non-deterministic-IRI assumption corrected here. If the store validates SHACL or ICV at commit **against committed state**, install the shapes of [Appendix B](#appendix-b--shacl-shapes): `pat:RevisionShape`'s `sh:maxCount 1` on `pat:txn` is the effective constraint, because a merged receipt from two colliding writers carries two `pat:txn` literals, one per writer. The second committer's transaction is rejected outright.
 
-This converts a silent lost update into a loud error on stores whose isolation is too weak. Caveat: under pure snapshot isolation where each transaction validates only against *its own* snapshot, both pass and the merge is never validated. Verify empirically.
+This converts a silent lost update into a loud error on stores whose isolation is too weak. Caveat: under pure snapshot isolation where each transaction validates only against *its own* snapshot, both pass and the merge is never validated; the standing txn-cardinality audit in [Chapter 18, F5](#f5--major-prev-e1-is-a-string-so-the-chain-is-not-traversable) is what catches it there instead. Verify empirically.
 
 ### 15.4 HTTP-level CAS: Graph Store Protocol, LDP, Solid
 
@@ -1371,19 +1428,21 @@ If each aggregate is one graph, concurrency control can be pushed up to HTTP, wh
 ```http
 GET /rdf-graph-store?graph=urn:g:orders/1
 → 200 OK
-  ETag: W/"3-41"
+  ETag: "3-41"
 ```
 
 ```http
 PUT /rdf-graph-store?graph=urn:g:orders/1
-If-Match: W/"3-41"
+If-Match: "3-41"
 Content-Type: text/turtle
 
 <urn:order:1> a ex:Order ; ex:status "paid" .
 
-→ 204 No Content, ETag: W/"3-42"       (applied)
+→ 204 No Content, ETag: "3-42"       (applied)
 → 412 Precondition Failed              (someone else won)
 ```
+
+The tag is a **strong** validator, never `W/"..."`: RFC 9110 §13.1.1 requires strong comparison for `If-Match`, and a weak validator never satisfies it, so a store that emitted weak tags would fail every conditional write unconditionally, regardless of whether the precondition actually held. A weak tag remains valid for `If-None-Match` caching on `GET`, which this mapping does not use for its CAS path. If more than one serialisation is served for the same graph, either serve exactly one representation for conditional requests, or fold the representation into the tag (`"3-41.ttl"`) and emit `Vary: Accept`; the family declaration states which.
 
 ```http
 PUT /rdf-graph-store?graph=urn:g:orders/2
@@ -1405,7 +1464,7 @@ If-None-Match: *                        (create-if-absent)
 
   Combined with `If-Match`, it is the cleanest standardised conditional patch in the RDF world.
 
-The ETag is derived, `W/"{epoch}-{seq}"`, never stored ([Chapter 18, F4](#f4--major-patetag-and-patseq-are-two-sources-of-truth)). That is what makes HTTP and SPARQL agree by construction.
+The ETag is derived, `"{epoch}-{seq}"`, never stored ([Chapter 18, F4](#f4--major-patetag-and-patseq-are-two-sources-of-truth)). That is what makes HTTP and SPARQL agree by construction.
 
 ## Chapter 16 — Escape hatches that do not depend on store isolation
 
@@ -1426,14 +1485,18 @@ GRAPH <urn:g:meta/17> {
 ```
 
 ```sparql
+DELETE { GRAPH <urn:g:meta/17> { <urn:g:orders/1> pat:fence ?f } }
+INSERT { GRAPH <urn:g:meta/17> { <urn:g:orders/1> pat:fence "7184"^^xsd:long } }
 WHERE {
   GRAPH <urn:g:meta/17> { <urn:g:orders/1> pat:seq "41"^^xsd:long ; pat:fence ?f }
-  FILTER(?f < 7184)                 # my token is 7184; a newer token means my lease expired
+  FILTER(?f <= 7184)                # my token is 7184; anything newer means my lease expired.
+                                     # <= admits my own next write; a strict < would reject it,
+                                     # and checking without advancing the token fences no one
   …
 }
 ```
 
-Without the token, a writer that acquires the lease, stalls for a GC pause, loses the lease to a second writer, and then wakes up, will apply a stale write over the second writer's work. The lock service cannot prevent that; only the token can.
+Without advancing the token in the same operation that checks it, a writer that acquires the lease, stalls for a GC pause, loses the lease to a second writer, and then wakes up, will apply a stale write over the second writer's work: the check alone lets any later token pass, it does not fence anything. Bootstrap `pat:fence "0"` alongside the claim, for the same reason the P3 sentinel counter is bootstrapped eagerly.
 
 ### 16.3 Lease or checkout locks in the graph
 
@@ -1510,6 +1573,8 @@ Two topologies are valid and must both be documented as selectable:
 
 Neither is universally superior. The projected profiles in [Chapter 29](#292-by-workload-profile) show where each is likely to win, and the TCK ([Chapter 27](#chapter-27--the-conformance-tck), test T3) is how you find out on a given engine.
 
+**Sharding the meta graph is not sufficient by itself.** Every write also inserts into the single txn-claim graph, the single monthly log-bucket graph, and P3's single key-shard graph. On an engine whose conflict detection is graph- or page-granular, every write in the dataset conflicts on those three graphs regardless of how finely the meta graph is sharded, and A6 is lost anyway. Shard them too, `dal:txnShards`/`dal:logShards`/`dal:keyShards` on `dal:MetaTopologyProfile`, and extend T3 to measure conflict rate on all four graph kinds independently, not the meta graph alone.
+
 ## Chapter 18 — Thirteen findings against the first combined pattern
 
 The first combined pattern, as written in the concurrency note and carried into the LATTICE framing note:
@@ -1581,23 +1646,21 @@ Nothing keeps them consistent. A partial failure or a buggy client leaves the ro
 
 ### F5 — MAJOR: `:prev "E1"` is a string, so the chain is not traversable
 
-**Fix:** `pat:prevRev <urn:rev:orders/1/e3/0000000000000041>` as an IRI. This upgrades the receipt log from a flat table into a **verifiable chain**, and yields the strongest integrity check available:
+**Fix:** `pat:prevRev <urn:rev:orders/1/e3/0000000000000041>` as an IRI. This upgrades the receipt log from a flat table into a **verifiable chain**.
+
+The obvious next step, a query grouping on `?prev` to find two receipts that share a predecessor, does not work once revision IRIs are deterministic from `(aggregate, epoch, seq)` (the F2/F3 fix below): two writers who both win a broken-isolation CAS from the same prior version mint the **identical** revision subject, not two siblings. There is only ever one `?r` for a given `?prev`, so a `GROUP BY ?prev HAVING (COUNT(*) > 1)` query can never fire, and a corrupt merge looks exactly like a clean history. The detectable signal moves one level down, to the transaction claims that point at the (single, merged) revision subject:
 
 ```sparql
 # fork detection: must always return zero rows
-SELECT ?prev (COUNT(*) AS ?n) (GROUP_CONCAT(STR(?r); separator=" ") AS ?forks)
-WHERE  { GRAPH ?log { ?r pat:prevRev ?prev } FILTER(STRSTARTS(STR(?log), "urn:g:txlog/")) }
-GROUP BY ?prev
-HAVING (COUNT(*) > 1)
+SELECT ?rev (COUNT(DISTINCT ?t) AS ?n)
+WHERE  { VALUES ?txn { <urn:g:txn> }                     # this family's registry-listed txn shard(s),
+                                                          # never an unbound GRAPH scanned by prefix
+         GRAPH ?txn { ?t pat:rev ?rev } }
+GROUP BY ?rev
+HAVING (COUNT(DISTINCT ?t) > 1)
 ```
 
-Two receipts with the same `pat:prevRev` means two writers both won a CAS against the same version: the isolation guarantee is broken, or the backend lied about its capabilities. This catches lost updates *after the fact*, independently of the counter, and it is the test that would have caught F2 and F3 in production. Run it as a standing alert.
-
-```turtle
-# what a fork looks like
-<urn:rev:orders/1/e3/0000000000000042>  pat:prevRev <urn:rev:orders/1/e3/0000000000000041> .
-<urn:rev:orders/1/e3/0000000000000042-b> pat:prevRev <urn:rev:orders/1/e3/0000000000000041> .   # two children of 41
-```
+Two transaction claims pointing at the same revision means two writers both believed they won a CAS against the same prior version: the isolation guarantee is broken, or the backend lied about its capabilities. `pat:RevisionShape`'s existing `sh:maxCount 1` on `pat:txn` ([Appendix B](#appendix-b--shacl-shapes)) enforces the same invariant at commit time on validating stores; this query is the portable, standing-audit form for stores that only report it after the fact. Run it as a metric and alert on `> 0`.
 
 If tamper-evidence is wanted rather than just consistency, add `pat:hash = H(prevHash ‖ canonicalised change)` and the chain is a ledger.
 
@@ -1698,10 +1761,19 @@ INSERT {
   }
 }
 WHERE {
+  GRAPH <urn:g:dataset> { <urn:ds:prod> pat:epoch "3"^^xsd:long }               # dataset-level epoch guard (B1):
+                                                                                # a restore that resets the dataset
+                                                                                # epoch invalidates every stale
+                                                                                # ETag at once, not just this row
   GRAPH <urn:g:meta/17> {
-    <urn:g:orders/1> pat:epoch "3"^^xsd:long ;                                 # epoch guard   (F3)
-                     pat:seq   "41"^^xsd:long ;                                # CAS guard     (F4, F7, F8)
-                     pat:head  ?prevRev .
+    <urn:g:orders/1> pat:epoch "3"^^xsd:long ;                                 # per-aggregate epoch guard (F3)
+                     pat:seq   "41"^^xsd:long .                                # CAS guard     (F4, F7, F8)
+    OPTIONAL { <urn:g:orders/1> pat:head ?prevRev }                            # unbound only on a pre-created
+                                                                                # row's first CAS (dal:firstWrite
+                                                                                # dal:PreCreatedRow, §14.2); a
+                                                                                # mandatory pat:head here would
+                                                                                # wrongly reject that legitimate
+                                                                                # first write
     FILTER NOT EXISTS { <urn:g:orders/1> pat:deleted true }                    # tombstone     (F10)
   }
   FILTER NOT EXISTS {                                                          # idempotency   (F1, F6)
@@ -1719,7 +1791,7 @@ ASK { GRAPH <urn:g:txn> { <urn:txn:01J8Q5B2D8N4Y7W1Z3M6K9R2V5>
                             pat:rev <urn:rev:orders/1/e3/0000000000000042> } }
 ```
 
-- `true`: applied, this attempt or a previous one. Respond `204 No Content`, `ETag: W/"3-42"`.
+- `true`: applied, this attempt or a previous one. Respond `204 No Content`, `ETag: "3-42"`.
 - `false`: the guard failed. Respond `412 Precondition Failed` and include the current ETag, read from the version row.
 
 If the store reports affected rows (Blazegraph's mutation count, Virtuoso's per-graph message, RDF4J's `SIZE` inside a transaction), the adapter may skip the `ASK` when the count is unambiguous. The `ASK` is still the portable path, and it is the *only* path after a timeout.
@@ -1744,7 +1816,7 @@ WHERE {
 }
 ```
 
-The create path is a **uniqueness** problem, not a CAS problem: it is P2, with P2's write-skew caveat. On MVCC backends, **pre-create the version row** (`pat:seq "0"`, no head) when the aggregate id is allocated, so that every write, including the first, is a rewrite of an existing statement and the CAS shape above is the only shape ever used.
+The create path is a **uniqueness** problem, not a CAS problem: it is P2, with P2's write-skew caveat. On MVCC backends, **pre-create the version row** (`pat:seq "0"`, no head) when the aggregate id is allocated, so that every write, including the first, is a rewrite of an existing statement and the CAS shape above is the only shape ever used. This is `dal:firstWrite dal:PreCreatedRow`. This section's own shape, no row until the first write lands, is `dal:firstWrite dal:AbsentRow`, and it is the reason §19.1's CAS `WHERE` wraps `pat:head` in `OPTIONAL`: that variant's very first CAS on a freshly created aggregate has no predecessor to read.
 
 ### 19.4 The client side
 
@@ -1758,14 +1830,18 @@ import ulid   # any ULID/UUIDv7 library
 # CAS_TEMPLATE, ASK_TXN (prepared, parameterised; Chapter 28), clock (an Hlc, §S7)
 # and today_month() are elided.
 #
-# Note on ULID here versus ADR-A51: txn ids are ephemeral, TTL-pruned
-# correlation ids (§24.2), not entity identity. A ULID's embedded
-# millisecond timestamp is a legitimate benefit for this specific,
-# short-lived, non-personal-data case (time-ordered pruning). This is
-# the opposite case from ADR-A51's `surrogate`/`surrogate-claimed`
-# entity strategies, which use UUIDv4 specifically because entity
-# identity must never leak a creation timestamp (ADR-A51 rule 2).
-REV_WIDTH = 16   # zero-padding width for revision IRIs (19 for full int64 in production)
+# Note on ULID here: txn ids are ephemeral, TTL-pruned correlation ids
+# (§24.2), not entity identity, so a ULID's embedded millisecond
+# timestamp is a legitimate benefit for this specific, short-lived,
+# non-personal-data case (time-ordered pruning). This is the opposite
+# case from the `surrogate`/`surrogate-claimed` entity strategies of
+# [iri-identity-patterns.md §6.3](iri-identity-patterns.md#63-surrogate-pattern),
+# which use UUIDv4 specifically because entity identity must never leak
+# a creation timestamp ([§10.6](iri-identity-patterns.md#106-timestamp-leakage)).
+REV_WIDTH = 16   # illustrative width for this chapter's worked examples only. The real width is a
+                 # per-deployment profile decision (`dal:DigestScheme`'s width facet,
+                 # iri-identity-patterns.md §10.2), fixed once and never mixed within one dataset;
+                 # do not read "16" here as a recommendation or "19" anywhere else as a correction.
 
 class Outcome(Enum):
     APPLIED = "applied"
@@ -1778,12 +1854,14 @@ class Version:
     seq: int
 
     @property
-    def etag(self) -> str:                      # F4: derived, never stored
-        return f'W/"{self.epoch}-{self.seq}"'
+    def etag(self) -> str:                      # F4: derived, never stored. Strong validator: RFC 9110
+                                                 # §13.1.1 requires strong comparison for If-Match, and a
+                                                 # weak W/"..." tag never satisfies it (§15.4)
+        return f'"{self.epoch}-{self.seq}"'
 
     @staticmethod
     def parse_etag(etag: str) -> "Version":
-        e, s = etag.removeprefix('W/"').rstrip('"').split("-")
+        e, s = etag.strip('"').split("-")
         return Version(int(e), int(s))
 
 def rev_iri(aggregate: str, epoch: int, seq: int) -> str:   # F2+F3: namespaced, epoch-scoped, zero-padded
@@ -1812,12 +1890,23 @@ def compare_and_set(store, aggregate: str, expected: Version, payload_quads, txn
     try:
         store.update(CAS_TEMPLATE, params)         # a PreparedUpdate, never string concatenation (Chapter 28)
     except TimeoutError:
-        return resolve(store, txn_id, params["rev"])      # F1: never retry an unknown outcome blindly
+        return resolve(store, txn_id, params["rev"], after_timeout=True)   # F1: never retry an unknown outcome blindly
     return resolve(store, txn_id, params["rev"])
 
-def resolve(store, txn_id: str, rev: str):
+def resolve(store, txn_id: str, rev: str, after_timeout: bool = False):
     applied = store.ask(ASK_TXN, {"txn": txn_id, "rev": rev})
-    return (Outcome.APPLIED, rev) if applied else (Outcome.CONFLICT, None)
+    if applied:
+        return (Outcome.APPLIED, rev)
+    if not after_timeout:
+        return (Outcome.CONFLICT, None)          # the WHERE clause guard failed synchronously: definitive
+    return (Outcome.UNKNOWN, None)                # a timeout leaves the commit's fate genuinely unknown; a
+                                                   # negative ASK here does not distinguish "rejected" from
+                                                   # "not yet visible". Two valid resolutions exist, and a
+                                                   # family declares which: poll ASK_TXN again after a bounded
+                                                   # wait, or resubmit only once the store's own transaction
+                                                   # log confirms txn_id is no longer pending. Never collapse
+                                                   # this case to CONFLICT: a caller that retries on CONFLICT
+                                                   # would then duplicate a write that actually applied.
 ```
 
 Retry rules that matter in practice ([Chapter 25](#255-composition-decorators-and-retry-rules) has the adapter-side version):
@@ -1831,9 +1920,9 @@ Retry rules that matter in practice ([Chapter 25](#255-composition-decorators-an
 
 | Client sends | Adapter does | Response |
 |---|---|---|
-| `GET` graph | read payload and version row | `200`, `ETag: W/"3-41"` |
-| `PUT` + `If-Match: W/"3-41"` | parse ETag → `(3, 41)`; run the §19.1 update; `ASK` | `204` + `ETag: W/"3-42"`, or `412` + current ETag |
-| `PUT` + `If-None-Match: *` | §19.3 create path; `ASK` | `201` + `ETag: W/"3-1"`, or `412` |
+| `GET` graph | read payload and version row | `200`, `ETag: "3-41"` |
+| `PUT` + `If-Match: "3-41"` | parse ETag → `(3, 41)`; run the §19.1 update; `ASK` | `204` + `ETag: "3-42"`, or `412` + current ETag |
+| `PUT` + `If-None-Match: *` | §19.3 create path; `ASK` | `201` + `ETag: "3-1"`, or `412` |
 | `PUT` with no precondition | rejected, unless the caller explicitly requested `Expectation.any` | `428 Precondition Required` |
 | `DELETE` + `If-Match` | guard + payload sweep + tombstone ([Chapter 24](#241-tombstones-f10)) | `204`, or `412` |
 
@@ -1841,7 +1930,7 @@ Retry rules that matter in practice ([Chapter 25](#255-composition-decorators-an
 
 ### 19.6 Multi-aggregate writes
 
-Two version rows in one commit is a lock-ordering problem. **Acquire (that is, list in the `WHERE` clause and rewrite) the version rows in sorted IRI order**, always. Two commits that touch `orders/1` and `orders/2` in opposite orders will otherwise deadlock on engines that lock, or produce a livelock of mutual conflicts on engines that abort. And expose multi-aggregate atomicity only when the backend has it ([Chapter 25](#256-cross-aggregate-writes)); a saga through the outbox is the alternative, never a silent best-effort.
+Two version rows in one commit is a lock-ordering problem, and SPARQL Update specifies no evaluation order within a `WHERE` clause: listing the version rows in sorted IRI order in the query text does not make the engine acquire them in that order underneath. Two commits that touch `orders/1` and `orders/2` in opposite orders can still deadlock on engines that lock, or livelock on engines that abort and retry. Declare `dal:deadlockPolicy` per family instead of relying on query-text ordering: `dal:EngineDetectAndRetry` (deadlock avoidance is the engine's responsibility; the adapter treats an abort as `Conflict` and retries with jitter, and sorted acquisition order in the query text is a readability convention only, never a guarantee, under this policy) is the default for a single guarded SPARQL Update. `dal:SortedAcquisition` (the client itself controls acquisition order, keyed by the sorted aggregate IRIs) is valid only for multi-request transaction strategies and external-lock strategies, where the client genuinely issues separate acquisition steps. `dal:PartitionedWriter` routes every target of a multi-target write through one partition key so no lock ordering is needed. And expose multi-aggregate atomicity only when the backend has it ([Chapter 25](#256-cross-aggregate-writes)); a saga through the outbox is the alternative, never a silent best-effort.
 
 ### 19.7 The shapes that hold it together
 
@@ -1922,6 +2011,8 @@ The CAS guard is unchanged (it is still on the version row); only the payload wr
 | Patch log (`asserts`/`retracts`) | replay, CDC, as-of reconstruction | about 2× write volume; delta graph management | downstream replay or deterministic change history is needed |
 | Snapshot per revision | strongest point-in-time simplicity; immutable evidence | highest storage and write amplification; graph proliferation | compliance and forensics; anything already addressed by revision hash |
 
+A family carrying personal data declares its receipt model alongside its `dal:PrivacyProfile`: patch-log and snapshot-per-revision retain the payload itself inside history, so an erasure strategy that must not leave the value recoverable from an old revision (`dal:PerSubjectGraphDrop` or `dal:CryptoShred`, never `dal:NoErasure`, ADR-A68 point 7) is incompatible with those two models unless every graph holding the subject's payload, including deltas and snapshots, is itself per-subject and enumerable. `dal:PersonalDataReceiptCompatibilityShape` (`ontology/persistence/shapes/constraints.ttl`) flags the combination.
+
 The rule the sketch set and this guide keeps: **decision records (MORK outcomes, admissions, behaviour state changes) are always append-only and immutable.** For them, "receipt-only with whole-graph replace" is not an option, because replace discards the diff; they are patch-log or snapshot-per-revision. Projection-source data may be receipt-only if the family declares it.
 
 ## Chapter 21 — Two tiers of order
@@ -1950,9 +2041,16 @@ BEST_EFFORT_TIME  wall-clock plus tiebreak; no guarantees               <- audit
 
 Note that change feeds are **dense**, not sparse; the earlier sketch had this backwards. Neptune Streams' `(commitNum, opNum)` and rdf-delta's patch versions are gap-detectable.
 
-### 21.3 The pragmatic default
+### 21.3 Options for the dataset tier, and the contiguity check
 
-**Global reads ordered by `pat:hlc`; completeness verified per target by `pat:seq` contiguity.** Sparse across streams, dense within them. A consumer can make progress globally *and* prove it missed nothing on any given aggregate. That combination is only possible because the per-aggregate counter is dense, which is only cheap because the version row is separated out. The three decisions reinforce each other.
+A single query shape is not universally correct here: the right choice depends on whether consumers need a total order, can tolerate gaps, and how much latency they can absorb waiting for stragglers. `dal:GlobalReadStrategy` names the options a family picks between:
+
+- **`dal:WatermarkedRead`**: read only up to a watermark known to be safe (no writer can still land behind it), trading latency for a guarantee that nothing arrives out of order after the fact. Needs a watermark source (a store's native low-water mark, or a heartbeat-derived one).
+- **`dal:LagWindowRead`**: read up to `now - lag`, accepting a fixed delay in exchange for not needing a watermark source. The pragmatic default when no native watermark exists.
+- **`dal:DenseFeedRead`**: read the store's own dense change feed directly ([§21.2](#212-where-the-dataset-tier-comes-from)'s `TOTAL_DENSE`/`TOTAL_SPARSE` rows), when the backend has one; strongest guarantee, least portable.
+- **`dal:NoGlobalRead`**: no dataset-tier consumer exists; only per-stream reads are supported. Valid for a family with no cross-aggregate consumers.
+
+Whichever is chosen, HLC order plus per-target `pat:seq` contiguity is the shape of the read itself:
 
 ```sparql
 # a global consumer's page: HLC order, epoch-pinned, keyset-resumed
@@ -1963,7 +2061,7 @@ SELECT ?rev ?target ?seq ?hlc WHERE {
 ORDER BY ?hlc LIMIT 500
 ```
 
-The consumer then asserts, per `?target`, that the `?seq` values it has seen are contiguous, and raises the S3 alarm if not.
+The consumer then asserts, per `?target`, that the `?seq` values it has seen are contiguous. `dal:ContiguityCheckMode` declares whether that check is `dal:BlockingContiguityCheck` (the consumer halts and raises S3's alarm on a gap, the default this guide recommends, because a silently skipped gap is indistinguishable from data loss until an unrelated audit finds it) or `dal:AdvisoryContiguityCheck` (the consumer logs and continues, chosen only when a downstream reconciliation pass already re-derives completeness independently).
 
 ## Chapter 22 — Append versus compare-and-set
 
@@ -2082,6 +2180,7 @@ INSERT {
   }
 }
 WHERE {
+  GRAPH <urn:g:dataset> { <urn:ds:prod> pat:epoch "3"^^xsd:long }               # dataset-level epoch guard (B1)
   GRAPH <urn:g:meta/17> { <urn:g:orders/1> pat:epoch "3"^^xsd:long ; pat:seq "42"^^xsd:long ; pat:head ?prevRev
                           FILTER NOT EXISTS { <urn:g:orders/1> pat:deleted true } }
   FILTER NOT EXISTS { GRAPH <urn:g:txn> { <urn:txn:01J8Q6…> pat:rev ?any } }
@@ -2111,7 +2210,9 @@ Key claims are retired the same way ([§6.2](#62-p2-the-guarded-write-in-one-req
 | Payload | policy per family | delete via §24.1 |
 | Meta (version rows) | forever, per stream key | never deleted; tombstoned |
 | Txn claims | ≥ longest retry window (hours to days) | TTL prune; a pruned claim turns a late retry into a safe `412` |
-| Receipts | policy per family (`retention.log: 400d` in the declaration) | drop whole monthly buckets; never delete individual receipts, which would break the `pat:prevRev` chain in the middle |
+| Receipts | policy per family (`retention.log: 400d` in the declaration) | drop whole monthly buckets **only as a contiguous prefix from the oldest end** (`dal:PrefixOnlyRetention`), advancing the as-of floor atomically with each drop; never delete individual receipts, which would break the `pat:prevRev` chain in the middle |
+
+`dal:BucketAnyRetention` (dropping any bucket regardless of position) is incompatible with as-of log replay and is flagged by `dal:AsOfFloorRetentionCompatibilityShape`: because the live `pat:head` is always in the newest bucket, only prefix-only pruning from the oldest end can guarantee a live head's bucket is never dropped. A pruned bucket still leaves `pat:prevRev` pointing at a subject that no longer has any triples in the store: a dangling but semantically valid reference to archived history, not a data error. `pat:RevisionShape`'s `sh:property [ sh:path pat:prevRev ; sh:nodeKind sh:IRI ]` ([§19.7](#197-the-shapes-that-hold-it-together)) already only requires an IRI, not resolvability, so pruning does not violate it; a stricter shape that added `sh:class pat:Revision` on the `pat:prevRev` value would break under pruning and must not be added. `dal:asOfFloorSource` declares which job advances the as-of floor and is where a consumer learns the retained floor.
 | Delta graphs (patch-log model) | same as receipts | drop with the bucket |
 | Snapshot graphs | policy per family | prune sealed snapshots older than the window; `pat:head` and `pat:current` never point at a pruned graph |
 
@@ -2133,10 +2234,13 @@ Backfill of *valid time* (loading events that happened in the past) does not bum
 
 Any of: restore from backup, reload into a fresh repository, vendor migration, stream re-keying, changing the normalization version of a key or stream.
 
-1. Bump `pat:epoch` on `<urn:ds:prod>` **before** accepting writes.
-2. Every open ETag is now stale by construction (`W/"3-42"` cannot match epoch 4). Every consumer position is now stale by construction. This is intended.
-3. Consumers receive `EpochChanged` and resynchronise from the head of each stream they follow.
-4. Run the P7 reconciler, S3 gap scan and F5 fork query before declaring the dataset healthy.
+"Bump `pat:epoch`" is the write-path *effect*, not the whole answer: where the new epoch value comes from, and whether every write actually guards on it, are the two questions `dal:EpochProfile` ([iri-identity-patterns.md §10.3](iri-identity-patterns.md#103-epoch-durability)) makes explicit rather than assuming.
+
+1. Allocate the new epoch from the family's declared `dal:epochAuthority`: `dal:ExternalHighWaterMark` (an external system tracks the highest epoch ever issued and restore reads current-max-plus-one, safe under a double restore from the same backup), `dal:RestoreControlledEpoch` (the restore tooling itself is the sole allocator, reading its own operational log rather than the dataset being restored), `dal:WriterStartRefusal` (writers refuse to start until their cached epoch matches a durable external watermark, combinable with either of the above), or `dal:StoreLocalEpoch` (the epoch lives only inside the dataset being restored; unsafe under a double restore, discouraged, flagged by `dal:StoreLocalEpochWarningShape`). Write the new value **before** accepting writes.
+2. Confirm `dal:epochGuardScope` is `dal:DatasetLevelGuard`, not `dal:RowLevelGuardOnly`: every write must compare the dataset node's current epoch ([§19.1](#191-the-write), [§24.1](#241-tombstones-f10)), not only the target's own version row, or a stale client can still match an unrestored row after a bump that never reaches it.
+3. Every open ETag is now stale by construction (`"3-42"` cannot match epoch 4). Every consumer position is now stale by construction. This is intended.
+4. Consumers receive `EpochChanged` and resynchronise from the head of each stream they follow.
+5. Run the P7 reconciler, S3 gap scan and F5 fork query before declaring the dataset healthy.
 
 ---
 
@@ -2833,9 +2937,9 @@ pat:lockExpires a owl:DatatypeProperty ; rdfs:range xsd:dateTime ; rdfs:comment 
 
 pat:target     a owl:ObjectProperty ;   rdfs:comment "The aggregate or stream graph this revision wrote." .
 pat:opSeq      a owl:DatatypeProperty ; rdfs:range xsd:long ;
-    rdfs:comment "Client-supplied ordinal of an event within its revision (G1). The store cannot mint it." .
+    rdfs:comment "Client-supplied ordinal of an event within its revision (G1). The store cannot mint it. Authoritative on the event; also valid, as a denormalised convenience, directly on the pat:Revision itself, but only when that revision covers exactly one event (§19.1's single-event write). A multi-event revision (§10.1's P3 pattern) has no single representative opSeq and must omit it at the revision level, carrying it only on each event." .
 pat:prevRev    a owl:ObjectProperty ; rdfs:range pat:Revision ;
-    rdfs:comment "The previous revision of the same target, as an IRI (F5). Two revisions sharing a prevRev is a fork: proof of a lost update." .
+    rdfs:comment "The previous revision of the same target, as an IRI (F5). Because revision IRIs are deterministic from (aggregate, epoch, seq), two colliding writers produce two txn claims on the *same* revision subject, not two revisions sharing one prevRev; a fork is detected on pat:txn cardinality (§18, F5), not on shared prevRev values." .
 pat:txn        a owl:DatatypeProperty ; rdfs:range xsd:string ;
     rdfs:comment "The client transaction id that produced this revision. Also the subject of a claim in the txn graph." .
 pat:hlc        a owl:DatatypeProperty ; rdfs:range xsd:string ;
@@ -2843,7 +2947,7 @@ pat:hlc        a owl:DatatypeProperty ; rdfs:range xsd:string ;
 pat:recordedAt a owl:DatatypeProperty ; rdfs:range xsd:dateTime ;
     rdfs:comment "Transaction time. Audit only; never an order key. Compare fnd:recordedAt." .
 pat:occurredAt a owl:DatatypeProperty ; rdfs:range xsd:dateTime ;
-    rdfs:comment "Valid time of the change the revision records, when the family declares valid time. Compare fnd:validFrom." .
+    rdfs:comment "Valid time, when the family declares valid time. On the revision, the default valid time for the whole commit; compare fnd:validFrom. A domain event may carry its own ex:occurredAt when its valid time differs from the revision's (a backfill, or a multi-event commit whose events did not all occur at once), which then takes precedence for that event." .
 pat:actor      a owl:ObjectProperty ;   rdfs:comment "The principal responsible for the write." .
 pat:cause      a owl:ObjectProperty ;   rdfs:comment "The decision record that authorised this write; required on deletions (§24.0)." .
 pat:hash       a owl:DatatypeProperty ; rdfs:range xsd:string ;
@@ -2873,7 +2977,11 @@ pat:counter    a owl:DatatypeProperty ; rdfs:range xsd:long ;
 
 pat:orderModel      a owl:DatatypeProperty ; rdfs:range xsd:string ; rdfs:comment "e.g. per-stream-dense+hlc-global." .
 pat:stableWatermark a owl:DatatypeProperty ; rdfs:range xsd:string ;
-    rdfs:comment "Only for PRE_COMMIT sparse tiers: highest fully committed contiguous position, as {epoch}:{seq}." .
+    rdfs:comment "Only for PRE_COMMIT sparse tiers ([Chapter 25](#chapter-25--capabilities-strategies-planners-and-the-unknown-outcome)): highest fully committed *dataset-wide* position, as {epoch}:{position}, where position is a store-native feed offset or a single-writer's global counter ([§21.2](#212-where-the-dataset-tier-comes-from)) — never a per-target pat:seq value, which has no single dataset-wide instance to report." .
+pat:retentionLowWaterMark a owl:DatatypeProperty ; rdfs:range xsd:long ;
+    rdfs:comment "Per-target: the lowest pat:seq the retention job ([§24.2](#242-retention-and-pruning)) has pruned up to. Maintained by the retention job itself, so an audit comparing it against the log's actual lowest surviving pat:seq (S3) can never drift apart from different sources of truth." .
+pat:etag       a owl:DatatypeProperty ; rdfs:range xsd:string ;
+    rdfs:comment "Deprecated, forbidden by pat:VersionRowShape (Appendix B). An ETag is always derived from (epoch, seq), never stored (F4); this term exists only to be the subject of that shape's sh:maxCount 0 constraint." .
 ```
 
 ## Appendix B — SHACL shapes
@@ -3052,8 +3160,12 @@ A review of ADR-A51 ([docs/developer/review/ADR-A51-review.md](../developer/revi
 | Normalization pipeline strips default-ignorable Unicode characters (zero-width space etc.) before NFKC | NFKC + `.strip()` + `.casefold()` only | Reviewer: the QP4 determinism test's own third input (a trailing zero-width space) does not normalize equal under the documented pipeline |
 | S6 as-of query compares a later revision's *retraction delta graph* against the *same triple*, constrained to the same target | Compared `pat:retracts ?g` against the asserting revision's own graph `?g`, which never matches under the patch-log model | Reviewer: "the FILTER NOT EXISTS never matches... retracted triples are therefore returned" |
 | S3 gap scan is paired with a retention low-water-mark check | `MAX - MIN + 1 = COUNT` only | Reviewer: a missing *prefix* (not just an internal gap) passes the original check |
-| P7's merge policy is `fnd:replacedBy`, never `owl:sameAs` | `owl:sameAs + rewrite` | Consistency with ADR-A51's finding F-8 (`owl:sameAs` produces clique explosion and cannot be retracted cleanly) |
+| P7's merge policy is a family-declared `dal:mergeRelation`, never `owl:sameAs` | `owl:sameAs + rewrite` | Consistency with ADR-A51's finding F-8 (`owl:sameAs` produces clique explosion and cannot be retracted cleanly). Superseded again in [D.2](#d2-the-iri-patterns-remediation-pass-2026-09): `fnd:replacedBy` does not exist in the Foundation ontology, so the guide no longer names a specific predicate at all |
 | `pat:NoForkShape`'s `sh:prefixes pat:` requires a `sh:declare` triple on `pat:`, stated explicitly (Appendix B) | Assumed without stating the requirement | Reviewer: "`sh:prefixes ex:`/`sh:prefixes pat:` requires those IRIs to carry `sh:declare` blocks, which are not shown" |
+
+### D.2 The IRI-patterns remediation pass (2026-09)
+
+A second review ([docs/developer/review/IRI-patterns-remediation.md](../developer/review/IRI-patterns-remediation.md)), following the replacement of ADR-A51 by ADR-A82 and the framework-neutral rewrite of [iri-identity-patterns.md](iri-identity-patterns.md), found this guide had accumulated its own defects independent of the identity-policy question: non-portable datatype arithmetic, unbound-graph prefix scans, a fencing token that never advanced, a fork-detection query invalidated by the guide's own deterministic-IRI design, weak ETags, and several places where a genuine deployment trade-off was written as a single mandated answer rather than a declared choice. All mechanical defects are fixed in this pass; every trade-off is now a pointer to a `dal:` property on `ontology/persistence/spec/persistence.ttl`, never a mandated fix. Not attempted in this pass: a full renumbering of every illustrative 16-digit zero-padded worked example to a production-representative width (the self-contradiction in the prose is fixed instead, see [§10.1](#101-the-workhorse-operation) and [§19.4](#194-the-client-side)), wiring the new `dal:` terms into the `tools/persistence` compiler, and new TCK test bodies for the corrected behaviours (T-4 through T-13 remain as before; new cases belong in a follow-up slice). See `docs/developer/status/rdf-sparql-patterns-remediation.md` for the itemised disposition.
 
 Content carried over faithfully from the sketch and kept here: the three clocks; the dense-per-stream / sparse-across-streams decision; the in-transaction counter insight; the missing return value; the F1–F6 severities; A1–A5 and A7; HTTP-level CAS; the portability gotchas; P0–P3 and P5–P7 as concepts; the baseline/strong profile scoping; the configurable topology and receipt-model notes; the scale-profile table; and the bi-temporal and deletion positions.
 
@@ -3065,7 +3177,7 @@ Items the sources do not settle and that need a decision, in the order they bloc
 2. **Store SPI target breadth.** Jena/Fuseki alone, or GraphDB (or RDF4J) as a second Core-SPI target from Phase 0? This guide's position: the TCK must run against at least one MVCC engine before the capability model is trusted, even if TDB2 is the only production target.
 3. **`pat:` namespace and Foundation alignment.** Whether `pat:Revision` is a `fnd:Evidence`, whether `pat:recordedAt` is `fnd:recordedAt`, and whether the receipt chain and `fnd:supersededBy` are layered or unified.
 4. **`recordedAt` source.** Server `NOW()` (audit-only, lint-warned) or client-injected timestamp. Must be uniform.
-5. **Claim-hash secret management.** Where the HMAC key for P1 claim IRIs lives, how it rotates (a rotation is a re-key with a new version salt and a backfill), and who may read `urn:g:keys`.
+5. **Claim-hash secret management.** Where the HMAC key for P1 claim IRIs lives, how it rotates (a rotation runs both the old and new key in parallel via `dal:ClaimScheme`'s `dal:Dual` scheme state, then `dal:Retiring` once new claims stop accepting the old version, then `dal:Retired` once the backfill completes), and who may read `urn:g:keys`.
 6. **Default shard counts.** 64 meta shards and 1024 key shards are starting points; T-3 and K-2 on each target engine decide the real numbers.
 7. **Temporal analytics path per profile.** Materialised current state versus as-of by log replay or native time travel, with declared SLA and cost, per family, following the S6 preference order.
 8. **Which PostgreSQL ledgers move under A74, and when.** [§30.2](#302-the-postgresql-rules-are-already-these-patterns) shows the translation is mechanical; the migration sequencing and the cut-over of `GraphReference` are not decided.

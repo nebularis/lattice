@@ -244,6 +244,8 @@ There are at least three common event classes:
 
 The event profile must state whether the event IRI is position-derived or a random surrogate. Position-derived events make range scans and diagnostics easy but require a collision-safe scope including the stream or environment where needed. Random event UUIDs avoid grammar coupling but require indexed properties for ordering and range scans.
 
+A position-derived occurrence identity carries a hazard that does not apply to a random one. If two writers both believe they won a write under a broken isolation guarantee, and the occurrence IRI is deterministic from `(target, epoch, position)`, both writers mint the identical subject rather than two distinct ones. Detection schemes built on comparing subject counts ("do two occurrences share the same predecessor") therefore cannot fire: there is only ever one subject to compare. A position-derived profile must declare a separate per-occurrence uniqueness witness, for example a transaction-claim cardinality check on the occurrence subject, and treat multiplicity on that witness, not on the occurrence subject count, as the corruption signal. A random-surrogate profile does not need this, because two colliding writers already produce two distinct subjects.
+
 ## 6. Entity minting patterns
 
 ### 6.1 Natural-key pattern
@@ -519,9 +521,11 @@ If the profile uses `pat:Revision`, it should declare `pat:Revision rdfs:subClas
 
 A position-derived event IRI needs one exact width per profile when lexical ordering or prefix-range scans are relied on. For signed 64-bit sequences, 19 decimal digits is sufficient. A profile may select another width or a base encoding, but it must enforce the choice in validators and examples. A documentation-only distinction such as "16 for examples, 19 in production" is not valid for identity-bearing strings.
 
+The fixed-width requirement applies to **every** identity-bearing component of a position, not only the sequence. An epoch that is left unpadded (`e3`, `e10`) sorts incorrectly under plain lexical comparison: the character `1` orders before `3`, so `e10` sorts before `e3` even though epoch 10 is later. A profile that relies on lexical range scans across epochs must zero-pad the epoch component to the same fixed width as the sequence, or state explicitly that cross-epoch lexical scans are unsupported and every prefix scan is pinned to one epoch.
+
 ### 10.3 Epoch durability
 
-An epoch protects occurrence identifiers across restore, rebuild, migration, re-key, or any rollback of an allocation counter. It is only safe if the post-restore writer cannot reuse an epoch from restored data.
+An epoch protects occurrence identifiers across restore, rebuild, migration, re-key, or any rollback of an allocation counter. It is only safe if the post-restore writer cannot reuse an epoch from restored data, and only if **every write compares the current dataset epoch**, not only a version row's or receipt's own epoch property. A guard that reads only the target's own row can still match an unrestored row after a bump that never reached that row, because the row itself is part of what got restored.
 
 Select one durable-epoch strategy:
 
@@ -530,9 +534,11 @@ Select one durable-epoch strategy:
 | External high-water mark | writer compares the dataset epoch with durable state outside the restored store | fail-safe | requires coordination store or restore service |
 | Restore-controlled epoch | restore tooling allocates and records a new epoch before writers start | strong operational control | depends on runbook enforcement |
 | Writer-start refusal | writer will not start until it sees a new externally acknowledged epoch | fail-safe | availability impact during recovery |
-| Store-local epoch only | epoch stored only in restored dataset metadata | unsafe by itself | must not be selected for collision safety |
+| Store-local epoch only | epoch stored only in restored dataset metadata | unsafe | **prohibited** for any position-derived occurrence identity: restoring the same backup twice reuses the epoch the first restore just allocated, inside the very dataset being restored |
 
 An as-of query across a restore boundary must state whether it is limited to one epoch, returns a stitched multi-epoch history, or reports the earlier segment as non-reproducible. It must not silently treat sequence numbers from distinct epochs as one continuous history.
+
+The candidate `dal:EpochProfile` vocabulary (`dal:epochAuthority`, `dal:epochGuardScope`) in `ontology/persistence` is specified in §14.1. A deployment selecting `dal:StoreLocalEpoch` or `dal:RowLevelGuardOnly` receives a SHACL warning naming this hazard rather than a silent default; it is a deliberate, informed choice, never an unstated one.
 
 ### 10.4 Current pointers and activation bindings
 
@@ -624,6 +630,20 @@ A relation such as `fnd:replacedBy` must exist in the selected ontology or confi
 
 Erasure can require deletion or crypto-shredding of personal data, including HMAC-derived key claims. A retention or immutability policy cannot overrule a legal erasure policy. The configuration must name which evidence survives, whether it is structurally anonymized, and how allocation or ownership reconciliation reacts when a claim is removed.
 
+### 11.6 Erasure and history-model compatibility
+
+A receipt or history model that keeps a second, immutable copy of a payload defeats a per-subject graph-drop erasure mechanism, because the copy survives the drop. This is not a hypothetical interaction: it is the default outcome of pairing the guide's own strongest replay guarantees with personal data.
+
+| Receipt or history model | Compatible with `dal:PersonalData` and `dal:PerSubjectGraphDrop`? | Condition |
+|---|---|---|
+| Receipt-only | Yes | Receipts carry pseudonymous references only; no personal payload in the receipt itself |
+| Patch log (`asserts`/`retracts`) | Only if scoped per subject | Delta graphs must be per-subject and individually enumerable from the erasure register, or the payload must be `dal:CryptoShred`-protected instead |
+| Snapshot per revision | Only if scoped per subject | Same reasoning: an unscoped snapshot graph is a second full copy of the payload at every revision |
+
+A decision record, ledger entry, or audit trail that references a data subject must do so only pseudonymously; any personal payload belongs in the per-subject graph the record points at, never inside the record or its own deltas. Applies regardless of whether the family otherwise requires patch-log or snapshot-per-revision history for its own audit reasons — those requirements do not override the erasure obligation, they must be met by scoping, not by exemption.
+
+An erasure mechanism must also survive restore. If erasure is recorded only as a graph drop inside the dataset itself, restoring an earlier backup silently reinstates the erased payload, and nothing in the restored dataset reveals that this happened. A deployment with any erasure obligation needs an erasure register held outside the dataset (alongside the durable epoch authority of §10.3) and replayed by restore tooling before readers or writers are admitted. This is `dal:erasureRegisterBinding`/`dal:erasureReplayOnRestore` in §14.1.
+
 ## 12. Topology, imports, and graph grammar
 
 ### 12.1 No global graph grammar
@@ -702,26 +722,33 @@ The following are examples, not framework defaults.
 - Select physical deletion or crypto-shredding for claims and payload according to legal policy.
 - Never use an unkeyed email, phone, national identifier, or low-entropy person-derived hash in a public or broadly replicated IRI.
 
-## 14. Future `dal:` identity profile extension
+## 14. The `dal:` identity profile extension
 
-This guide specifies the design target, not an immediate ontology change. A subsequent bounded slice may extend `ontology/persistence` with an identity dimension. It should be additive, independently scoped, and compiled into explicit minting plans.
+An initial slice now specifies most of this extension in `ontology/persistence` (`spec/persistence.ttl` §12-§18, `shapes/constraints.ttl`). It is additive and independently scoped from the six original persistence dimensions: nothing here changes the meaning of `dal:AggregateBoundaryProfile`, `dal:ConcurrencyProfile`, `dal:OrderingProfile`, `dal:ReceiptProfile`, `dal:MetaTopologyProfile`, or `dal:UniquenessConstraint` as they already existed; it only adds new, orthogonal dimensions and a small number of properties on the existing ones (`dal:firstWrite`, `dal:etagForm`, `dal:mergeRelation`, `dal:claimScheme`, `dal:retentionMode`, `dal:globalReadStrategy`, and the topology shard extensions). Compiler wiring, generated test vectors, and TCK integration remain a follow-on slice.
 
-### 14.1 Candidate configuration concepts
+### 14.1 Configuration concepts
 
-| Candidate concept | Purpose |
-|---|---|
-| `dal:IdentityProfile` | Composite profile for a resource role at one scope |
-| `dal:IdentityStrategy` | Adopted, NaturalKey, DerivedHash, Surrogate, SurrogateClaimed, ContentAddressed |
-| `dal:ResourceRole` | Entity, AggregateRoot, Component, Lineage, ContentRevision, GraphLocator, KeyClaim, EventOccurrence |
-| `dal:NamingAuthority` | Authority and authority-specific base or resolver |
-| `dal:ScopeDimension` | Tenant, Project, Environment, Dataset, SourceSystem, None |
-| `dal:ComponentEncoding` | Restricted token, percent encoded, base64url tuple, canonical binary tuple |
-| `dal:NormalizationPipeline` | Frozen pipeline reference and version |
-| `dal:DigestScheme` | Function, input format, encoding, exact width, verification-digest policy |
-| `dal:SkolemizationStrategy` | RetainBlankNode, SourceLocalDeterministic, RandomSurrogate, RevisionLocalCanonicalLabel, TripleTerm |
-| `dal:EventIdentityStrategy` | PositionDerived, RandomOccurrence, ExternalEventId |
-| `dal:AliasResolutionStrategy` | ReadTime, LazyRewrite, ExternalResolver |
-| `dal:ErasurePolicy` | Tombstone, DeleteClaim, CryptoShred, retained evidence shape |
+| Concept | Purpose | Status |
+|---|---|---|
+| `dal:IdentityProfile` | Composite profile for a resource role at one scope | Specified |
+| `dal:IdentityStrategy` | Adopted, NaturalKey, DerivedHash, RandomSurrogate, SurrogateClaimed, ExternalRegistry, ContentAddressed | Specified |
+| `dal:ResourceRole` | Entity, AggregateRoot, Component, Lineage, ContentRevision, GraphLocator, KeyClaim, EventOccurrence | Specified |
+| `dal:namingAuthority` | Free-text description of who owns and may mint a role's identifiers | Specified, as a datatype property rather than a separate class |
+| `dal:DigestScheme` | Function, width, encoding, full-digest verification policy | Specified |
+| `dal:OccurrenceNamespaceDerivation` | RegistryToken, HashedTarget | Specified |
+| `dal:EventIdentityStrategy` | PositionDerived, RandomOccurrence, ExternalEventId, plus `dal:uniquenessWitnessRequired` | Specified |
+| `dal:EpochProfile` / `dal:EpochAuthority` | ExternalHighWaterMark, RestoreControlledEpoch, WriterStartRefusal, StoreLocalEpoch (warned); `dal:epochGuardScope` | Specified |
+| `dal:PrivacyProfile` / `dal:PrivacyClass` / `dal:ErasureStrategy` / `dal:ErasurePrecedence` | PersonalData/InternalData/PublicData; PerSubjectGraphDrop/CryptoShred/NoErasure; ErasureWins/MonotonicityWins | Specified |
+| `dal:GlobalReadStrategy` / `dal:ContiguityCheckMode` | WatermarkedRead, LagWindowRead, DenseFeedRead, NoGlobalRead (warned); Blocking/Advisory | Specified |
+| `dal:RetentionMode` / `dal:asOfFloorSource` | PrefixOnlyRetention, BucketAnyRetention | Specified |
+| `dal:EtagForm` / `dal:EtagRepresentation` | StrongEtag/WeakEtag (warned with CAS); Single/Tagged representation | Specified |
+| `dal:FirstWriteMode` | PreCreatedRow, AbsentRow | Specified |
+| `dal:DeadlockPolicy` | EngineDetectAndRetry, SortedAcquisition, PartitionedWriter | Specified |
+| `dal:mergeRelation` / `dal:ClaimScheme` | Names the ontology relation a merge writes; claim-scheme rotation state machine (Accepting/Dual/Retiring/Retired) | Specified |
+| `dal:ScopeDimension` | Tenant, Project, Environment, Dataset, SourceSystem, None | Candidate — folded into existing scope-kind vocabulary (`dal:GraphPatternScope` etc.) rather than a new enumeration; revisit if that proves insufficient |
+| `dal:ComponentEncoding` / `dal:NormalizationPipeline` | Restricted token, percent encoded, base64url tuple; frozen pipeline reference | Candidate — reuses the existing `dal:normalizePipeline` enumeration (`dal:NfkcTrimUppercase` etc.) for identity components rather than introducing a parallel vocabulary |
+| `dal:SkolemizationStrategy` | RetainBlankNode, SourceLocalDeterministic, RandomSurrogate, RevisionLocalCanonicalLabel, TripleTerm | Candidate — not yet specified |
+| `dal:AliasResolutionStrategy` | ReadTime, LazyRewrite, ExternalResolver | Candidate — not yet specified |
 
 ### 14.2 Compilation responsibilities
 
@@ -764,6 +791,12 @@ The following combinations require explicit refusal or an additional selected pa
 | environment activation | environment binding and event identity strategy | lineage pointer used as activation state |
 | named graph boundary | graph-locator template and dataset binding | graph name treated as portable entity without declaration |
 | merge alias | existing replacement relation, read policy, retention policy | sealed revisions must be rewritten |
+| deterministic (position-derived) occurrence identity | a per-occurrence uniqueness witness distinct from subject-count comparison | no witness declared (`dal:UniquenessWitnessRequiredShape`) |
+| `dal:PatchLog` or `dal:SnapshotPerRevision` with `dal:PersonalData` | per-subject scoping, or `dal:CryptoShred` | neither declared (`dal:PersonalDataReceiptCompatibilityShape`) |
+| claim-scheme rotation | a dual-write phase covering both scheme versions | rotation described only as "a new salt and a backfill" with no uniqueness guarantee across the window |
+| position-derived event | an external epoch authority, per §10.3 | `dal:StoreLocalEpoch` selected (warned, not refused, since a fully isolated deployment may accept the risk) |
+| conditional HTTP write | a strong ETag and a stated representation policy | `dal:WeakEtag` combined with `dal:Optimistic` concurrency (warned) |
+| as-of log replay | `dal:PrefixOnlyRetention` and an `dal:asOfFloorSource` | `dal:BucketAnyRetention` selected alongside an as-of strategy (`dal:AsOfFloorRetentionCompatibilityShape`) |
 
 ## 16. Migration and adoption sequence
 
@@ -785,7 +818,7 @@ This guide intentionally does not decide the following for every adopter:
 - the final namespace and Foundation alignment for the illustrative `pat:` vocabulary;
 - a universal graph-name grammar;
 - whether RDF 1.2 triple terms are supported by a selected store profile;
-- the exact `dal:` vocabulary names and shapes for the future identity-profile extension.
+- the `dal:` vocabulary and shapes for skolemization strategy and alias resolution strategy, which remain candidate (\u00a714.1) pending a follow-on slice.
 
 These are configuration or follow-on ADR decisions, not defaults the framework should silently make.
 

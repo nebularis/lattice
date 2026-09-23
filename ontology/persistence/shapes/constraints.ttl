@@ -117,3 +117,155 @@ dal:SharedClassProfileWarningShape
               BIND(STRBEFORE(STR(?cls), "#") AS ?clsNamespace)
               FILTER(?thisNamespace != ?clsNamespace)
             }""" ] .
+
+#################################################################
+#    Identity, epoch, privacy and lifecycle configuration shapes.
+#    Structural shapes mirror the pattern above: sh:maxCount 1 on
+#    every functional profile property, sh:class on every object
+#    property pointing at an enumeration. Compatibility shapes flag
+#    combinations that are internally contradictory (sh:Violation)
+#    or merely discouraged and worth a second look (sh:Warning) —
+#    the framework never refuses a deployment choice outright unless
+#    the combination cannot function at all.
+#################################################################
+
+dal:IdentityProfileShape
+    a sh:NodeShape ;
+    sh:targetClass dal:IdentityProfile ;
+    sh:property [ sh:path dal:resourceRole ; sh:minCount 1 ; sh:maxCount 1 ; sh:class dal:ResourceRole ] ;
+    sh:property [ sh:path dal:identityStrategy ; sh:minCount 1 ; sh:maxCount 1 ; sh:class dal:IdentityStrategy ] ;
+    sh:property [ sh:path dal:digestScheme ; sh:maxCount 1 ; sh:class dal:DigestScheme ] ;
+    sh:property [ sh:path dal:occurrenceNamespaceDerivation ; sh:maxCount 1 ; sh:class dal:OccurrenceNamespaceDerivation ] ;
+    sh:property [ sh:path dal:eventIdentityStrategy ; sh:maxCount 1 ; sh:class dal:EventIdentityStrategy ] ;
+    sh:property [ sh:path dal:uniquenessWitnessRequired ; sh:maxCount 1 ; sh:datatype xsd:boolean ] .
+
+dal:DigestSchemeRequiredShape
+    a sh:NodeShape ;
+    sh:targetClass dal:IdentityProfile ;
+    sh:sparql [
+        sh:message "dal:DerivedHashIdentity and dal:ContentAddressedIdentity require a dal:digestScheme with an exact function, width and encoding: 'at least N bits' is not a valid width, because it lets two implementations mint different IRIs for the same input." ;
+        sh:prefixes dal: ;
+        sh:select """
+            SELECT $this WHERE {
+              $this dal:identityStrategy ?s .
+              FILTER (?s = dal:DerivedHashIdentity || ?s = dal:ContentAddressedIdentity)
+              FILTER NOT EXISTS { $this dal:digestScheme ?d . ?d dal:digestFunction ?f ; dal:digestWidthBits ?w ; dal:digestEncoding ?e }
+            }""" ] .
+
+dal:UniquenessWitnessRequiredShape
+    a sh:NodeShape ;
+    sh:targetClass dal:IdentityProfile ;
+    sh:sparql [
+        sh:message "dal:PositionDerivedEvent occurrence identity requires dal:uniquenessWitnessRequired true: under broken isolation, two writers merge into one occurrence subject rather than producing two, so subject-count fork detection cannot fire and a per-occurrence witness (for example a transaction-claim cardinality check) is the only remaining signal." ;
+        sh:prefixes dal: ;
+        sh:select """
+            SELECT $this WHERE {
+              $this dal:eventIdentityStrategy dal:PositionDerivedEvent .
+              FILTER NOT EXISTS { $this dal:uniquenessWitnessRequired true }
+            }""" ] .
+
+dal:EpochProfileShape
+    a sh:NodeShape ;
+    sh:targetClass dal:EpochProfile ;
+    sh:property [ sh:path dal:epochAuthority ; sh:minCount 1 ; sh:maxCount 1 ; sh:class dal:EpochAuthority ] ;
+    sh:property [ sh:path dal:epochGuardScope ; sh:minCount 1 ; sh:maxCount 1 ; sh:class dal:EpochGuardScope ] ;
+    sh:property [ sh:path dal:erasureReplayOnRestore ; sh:maxCount 1 ; sh:datatype xsd:boolean ] .
+
+dal:StoreLocalEpochWarningShape
+    a sh:NodeShape ;
+    sh:targetClass dal:EpochProfile ;
+    sh:severity sh:Warning ;
+    sh:sparql [
+        sh:message "dal:epochAuthority is dal:StoreLocalEpoch. This is unsafe under a double restore from the same backup: the second restore reuses the epoch the first one just allocated inside the same dataset. Acceptable only for deployments that never restore into a live epoch space, or that accept the residual risk explicitly." ;
+        sh:prefixes dal: ;
+        sh:select "SELECT $this WHERE { $this dal:epochAuthority dal:StoreLocalEpoch }" ] .
+
+dal:RowLevelGuardOnlyWarningShape
+    a sh:NodeShape ;
+    sh:targetClass dal:EpochProfile ;
+    sh:severity sh:Warning ;
+    sh:sparql [
+        sh:message "dal:epochGuardScope is dal:RowLevelGuardOnly. A write guarded only on the version row's own epoch can still match an unrestored row after a dataset-level bump that never reaches that row. dal:DatasetLevelGuard is required for restore safety to actually hold." ;
+        sh:prefixes dal: ;
+        sh:select "SELECT $this WHERE { $this dal:epochGuardScope dal:RowLevelGuardOnly }" ] .
+
+dal:PrivacyProfileShape
+    a sh:NodeShape ;
+    sh:targetClass dal:PrivacyProfile ;
+    sh:property [ sh:path dal:privacyClass ; sh:minCount 1 ; sh:maxCount 1 ; sh:class dal:PrivacyClass ] ;
+    sh:property [ sh:path dal:erasureStrategy ; sh:minCount 1 ; sh:maxCount 1 ; sh:class dal:ErasureStrategy ] ;
+    sh:property [ sh:path dal:erasurePrecedence ; sh:maxCount 1 ; sh:class dal:ErasurePrecedence ] .
+
+dal:PersonalDataRequiresErasureShape
+    a sh:NodeShape ;
+    sh:targetClass dal:PrivacyProfile ;
+    sh:sparql [
+        sh:message "dal:privacyClass dal:PersonalData with dal:erasureStrategy dal:NoErasure has no lawful erasure path. Select dal:PerSubjectGraphDrop or dal:CryptoShred." ;
+        sh:prefixes dal: ;
+        sh:select "SELECT $this WHERE { $this dal:privacyClass dal:PersonalData ; dal:erasureStrategy dal:NoErasure }" ] .
+
+# Joins a PrivacyProfile to a ReceiptProfile sharing the same dal:appliesTo
+# scope: personal data plus a replay-capable receipt model without
+# per-subject scoping or crypto-shredding means the delta or snapshot
+# graphs are a second, immutable copy of the personal data that the
+# graph-drop erasure mechanism cannot reach.
+dal:PersonalDataReceiptCompatibilityShape
+    a sh:NodeShape ;
+    sh:targetClass dal:PrivacyProfile ;
+    sh:sparql [
+        sh:message "This scope declares dal:PersonalData alongside a dal:PatchLog or dal:SnapshotPerRevision receipt model with neither dal:perSubjectScoped true nor dal:erasureStrategy dal:CryptoShred. The delta or snapshot graphs are then a second, immutable copy of the personal data that per-subject graph drop cannot reach." ;
+        sh:prefixes dal: ;
+        sh:select """
+            SELECT $this WHERE {
+              $this dal:privacyClass dal:PersonalData ; dal:appliesTo ?scope .
+              ?receipts a dal:ReceiptProfile ; dal:appliesTo ?scope ; dal:receiptModel ?model .
+              FILTER (?model = dal:PatchLog || ?model = dal:SnapshotPerRevision)
+              FILTER NOT EXISTS { ?receipts dal:perSubjectScoped true }
+              FILTER NOT EXISTS { $this dal:erasureStrategy dal:CryptoShred }
+            }""" ] .
+
+dal:AsOfFloorRetentionCompatibilityShape
+    a sh:NodeShape ;
+    sh:targetClass dal:ReceiptProfile ;
+    sh:sparql [
+        sh:message "dal:retentionMode dal:BucketAnyRetention combined with an as-of log-replay strategy silently returns wrong state: pruning a retraction's bucket while its assertion's bucket survives resurrects a deleted triple with no error. Select dal:PrefixOnlyRetention wherever as-of replay is offered, or compact to a snapshot before pruning." ;
+        sh:prefixes dal: ;
+        sh:select """
+            SELECT $this WHERE {
+              $this dal:retentionMode dal:BucketAnyRetention ; dal:asOfFloorSource ?src .
+            }""" ] .
+
+dal:MergeRelationRequiredShape
+    a sh:NodeShape ;
+    sh:targetClass dal:UniquenessConstraint ;
+    sh:sparql [
+        sh:message "dal:onViolation dal:Merge requires dal:mergeRelation naming the relation the merge writes (for example fnd:replacedBy, if the selected ontology defines it). A merge policy that names no relation writes an undefined term." ;
+        sh:prefixes dal: ;
+        sh:select "SELECT $this WHERE { $this dal:onViolation dal:Merge . FILTER NOT EXISTS { $this dal:mergeRelation ?r } }" ] .
+
+dal:WeakEtagCasWarningShape
+    a sh:NodeShape ;
+    sh:targetClass dal:ConcurrencyProfile ;
+    sh:severity sh:Warning ;
+    sh:sparql [
+        sh:message "dal:etagForm dal:WeakEtag with dal:concurrencyProfile dal:Optimistic: RFC 9110 section 13.1.1 requires strong comparison for If-Match, so a weak validator never satisfies a conditional write and every CAS attempt over HTTP fails unconditionally. Weak tags remain valid for If-None-Match caching only." ;
+        sh:prefixes dal: ;
+        sh:select "SELECT $this WHERE { $this dal:etagForm dal:WeakEtag ; dal:concurrencyProfile dal:Optimistic }" ] .
+
+dal:NoGlobalReadWarningShape
+    a sh:NodeShape ;
+    sh:targetClass dal:OrderingProfile ;
+    sh:severity sh:Warning ;
+    sh:sparql [
+        sh:message "dal:globalReadStrategy dal:NoGlobalRead. Confirm this family genuinely has no dataset-tier consumer; otherwise select dal:WatermarkedRead, dal:LagWindowRead or dal:DenseFeedRead so a cross-stream reader cannot silently skip a receipt whose HLC commits after a later one was already read." ;
+        sh:prefixes dal: ;
+        sh:select "SELECT $this WHERE { $this dal:globalReadStrategy dal:NoGlobalRead }" ] .
+
+dal:AdvisoryContiguityWarningShape
+    a sh:NodeShape ;
+    sh:targetClass dal:OrderingProfile ;
+    sh:severity sh:Warning ;
+    sh:sparql [
+        sh:message "dal:contiguityCheckMode dal:AdvisoryContiguityCheck only raises a metric on a gap. dal:BlockingContiguityCheck is recommended: it rescans from the affected stream's last known-good position before the consumer advances its global watermark, so a gap cannot be silently absorbed." ;
+        sh:prefixes dal: ;
+        sh:select "SELECT $this WHERE { $this dal:contiguityCheckMode dal:AdvisoryContiguityCheck }" ] .
