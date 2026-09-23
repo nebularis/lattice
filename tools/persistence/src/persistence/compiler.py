@@ -136,7 +136,11 @@ def emit_compiled_profile(out: Graph, compiled: CompiledTarget) -> URIRef:
         rd = compiled.dimensions[dim]
         node = BNode()
         out.add((node, DAL.dimension, RdfLiteral(dim)))
-        if rd.value is not None:
+        if isinstance(rd.value, RdfLiteral):
+            # literal-valued dimensions (LITERAL_DIMENSIONS): dal:resolvedValue
+            # is an object property, so the literal gets its own property
+            out.add((node, DAL.resolvedLiteral, rd.value))
+        elif rd.value is not None:
             value = rd.value if isinstance(rd.value, URIRef) else DAL[str(rd.value)]
             out.add((node, DAL.resolvedValue, value))
         if rd.won_by is not None:

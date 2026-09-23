@@ -226,7 +226,7 @@ dal:PersonalDataReceiptCompatibilityShape
 
 dal:AsOfFloorRetentionCompatibilityShape
     a sh:NodeShape ;
-    sh:targetClass dal:ReceiptProfile ;
+    sh:targetClass dal:ReceiptProfile , dal:DataAccessProfile ;
     sh:sparql [
         sh:message "dal:retentionMode dal:BucketAnyRetention combined with an as-of log-replay strategy silently returns wrong state: pruning a retraction's bucket while its assertion's bucket survives resurrects a deleted triple with no error. Select dal:PrefixOnlyRetention wherever as-of replay is offered, or compact to a snapshot before pruning." ;
         sh:prefixes dal: ;
@@ -243,18 +243,33 @@ dal:MergeRelationRequiredShape
         sh:prefixes dal: ;
         sh:select "SELECT $this WHERE { $this dal:onViolation dal:Merge . FILTER NOT EXISTS { $this dal:mergeRelation ?r } }" ] .
 
+# Checks one profile node. tools/persistence checks the resolved values
+# across nodes, which also catches the two properties declared on
+# different nodes; that check is authoritative.
 dal:WeakEtagCasWarningShape
     a sh:NodeShape ;
-    sh:targetClass dal:ConcurrencyProfile ;
+    sh:targetClass dal:ConcurrencyProfile , dal:DataAccessProfile ;
     sh:severity sh:Warning ;
     sh:sparql [
         sh:message "dal:etagForm dal:WeakEtag with dal:concurrencyProfile dal:Optimistic: RFC 9110 section 13.1.1 requires strong comparison for If-Match, so a weak validator never satisfies a conditional write and every CAS attempt over HTTP fails unconditionally. Weak tags remain valid for If-None-Match caching only." ;
         sh:prefixes dal: ;
         sh:select "SELECT $this WHERE { $this dal:etagForm dal:WeakEtag ; dal:concurrencyProfile dal:Optimistic }" ] .
 
+dal:LagWindowRequiredShape
+    a sh:NodeShape ;
+    sh:targetClass dal:OrderingProfile , dal:DataAccessProfile ;
+    sh:sparql [
+        sh:message "dal:globalReadStrategy dal:LagWindowRead requires a positive dal:lagWindowMillis. The window must cover the server-enforced maximum transaction duration plus maximum clock skew plus replica lag plus a margin (guide section 21.3); without it the read has no upper bound and skips late-committing writes." ;
+        sh:prefixes dal: ;
+        sh:select """
+            SELECT $this WHERE {
+              $this dal:globalReadStrategy dal:LagWindowRead .
+              FILTER NOT EXISTS { $this dal:lagWindowMillis ?w . FILTER (?w > 0) }
+            }""" ] .
+
 dal:NoGlobalReadWarningShape
     a sh:NodeShape ;
-    sh:targetClass dal:OrderingProfile ;
+    sh:targetClass dal:OrderingProfile , dal:DataAccessProfile ;
     sh:severity sh:Warning ;
     sh:sparql [
         sh:message "dal:globalReadStrategy dal:NoGlobalRead. Confirm this family genuinely has no dataset-tier consumer; otherwise select dal:WatermarkedRead, dal:LagWindowRead or dal:DenseFeedRead so a cross-stream reader cannot silently skip a receipt whose HLC commits after a later one was already read." ;
@@ -263,7 +278,7 @@ dal:NoGlobalReadWarningShape
 
 dal:AdvisoryContiguityWarningShape
     a sh:NodeShape ;
-    sh:targetClass dal:OrderingProfile ;
+    sh:targetClass dal:OrderingProfile , dal:DataAccessProfile ;
     sh:severity sh:Warning ;
     sh:sparql [
         sh:message "dal:contiguityCheckMode dal:AdvisoryContiguityCheck only raises a metric on a gap. dal:BlockingContiguityCheck is recommended: it rescans from the affected stream's last known-good position before the consumer advances its global watermark, so a gap cannot be silently absorbed." ;

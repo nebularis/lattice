@@ -64,7 +64,9 @@ These attach to profile classes the resolver already knows how to resolve (`_DIM
 - `dal:ConcurrencyProfile`: `dal:etagForm` (2 values, one invalid for CAS), `dal:etagRepresentation` (2 values), `dal:deadlockPolicy` (3 values).
 - `dal:AggregateBoundaryProfile`: `dal:firstWrite` (2 values). This one has a real behavioural consequence already described in the guide (§19.1's comment on `dal:PreCreatedRow`): `select_operations()` currently has no concept of `dal:firstWrite` at all, so it cannot know that a `dal:PreCreatedRow` target must never be offered `create-if-absent-named-graph.mustache` (no row is ever "absent" for such a target; only the CAS shape is legitimate).
 
-Five new SHACL shapes correspond to these: `WeakEtagCasWarningShape`, `NoGlobalReadWarningShape`, `AdvisoryContiguityWarningShape`, `AsOfFloorRetentionCompatibilityShape`. None has a Python-level equivalent (same defense-in-depth gap as G4, smaller blast radius).
+Four new SHACL shapes correspond to these: `WeakEtagCasWarningShape`, `NoGlobalReadWarningShape`, `AdvisoryContiguityWarningShape`, `AsOfFloorRetentionCompatibilityShape`. None has a Python-level equivalent (same defense-in-depth gap as G4, smaller blast radius).
+
+**Resolution-model caveat, found when scoping Slice 2 (2026-09-23):** the resolver reads extra properties only from the node that wins the dimension's primary value, and never emits them. "Pure extras-tuple additions" would therefore drop a property declared on its own profile node without a diagnostic. The plan resolves each property as its own dimension instead.
 
 ### G6 — Meta-topology sharding extension not threaded through (severity: missing coverage, low risk)
 

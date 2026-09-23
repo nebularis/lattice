@@ -22,7 +22,7 @@ SPEC_TTL = REPO_ROOT / "ontology" / "persistence" / "spec" / "persistence.ttl"
 SHAPES_TTL = REPO_ROOT / "ontology" / "persistence" / "shapes" / "constraints.ttl"
 EXAMPLES_DIR = REPO_ROOT / "ontology" / "persistence" / "examples"
 
-PAYLOAD_SUBSTITUTE = "<urn:example:s> <urn:example:p> <urn:example:o> ."
+from request_slots import fill_request_slots
 
 POSITIVE_FIXTURES = [
     ("baseline-single-class.ttl", "https://example.org/lending#LoanApplication"),
@@ -31,6 +31,7 @@ POSITIVE_FIXTURES = [
     ("composite-property-boundary-shacl.ttl", "https://example.org/lending#Order"),
     ("epoch-dataset-level-guard.ttl", "https://example.org/lending#LoanApplication"),
     ("append-stream-dataset-guard.ttl", "https://example.org/lending#DecisionStream"),
+    ("extension-properties.ttl", "https://example.org/lending#Facility"),
 ]
 
 NEGATIVE_FIXTURES = [
@@ -39,9 +40,10 @@ NEGATIVE_FIXTURES = [
     "invalid-metashards-changed-no-ack.ttl",
     "invalid-commitgrain-opseq.ttl",
     "invalid-uniqueness-outside-boundary.ttl",
+    "invalid-lagwindow-missing.ttl",
 ]
 
-SHACL_NEGATIVE_FIXTURES = ["invalid-compositeboundary-missing-shape.ttl"]
+SHACL_NEGATIVE_FIXTURES = ["invalid-compositeboundary-missing-shape.ttl", "invalid-lagwindow-missing.ttl"]
 
 ALL_FIXTURES = [p.name for p in EXAMPLES_DIR.glob("*.ttl")]
 
@@ -61,7 +63,7 @@ def test_end_to_end_compile_instantiate_parse(fixture, target_iri):
     assert rendered, f"no operations instantiated for {fixture}"
 
     for op_name, text in rendered.items():
-        testable = text.replace("#PAYLOAD#", PAYLOAD_SUBSTITUTE)
+        testable = fill_request_slots(text)
         try:
             if any(k in testable for k in ["INSERT", "DELETE"]):
                 prepareUpdate(testable)
@@ -188,7 +190,7 @@ class TestEpochGuardScopeTemplateSelection:
         rendered = instantiate_profile(out)
         text = rendered["cas-replace"]
         assert "urn:g:dataset" in text
-        prepareUpdate(text.replace("#PAYLOAD#", PAYLOAD_SUBSTITUTE))
+        prepareUpdate(fill_request_slots(text))
 
     def test_baseline_selects_original_named_graph_template(self):
         from rdflib import URIRef

@@ -9,13 +9,17 @@ files in reverse order and via a shuffled copy of the graph's triples."""
 from __future__ import annotations
 
 import random
+from pathlib import Path
 
 from rdflib import Graph, URIRef
 
 from persistence.compiler import compile_to_graph
 
-REPO_ROOT_EXAMPLES = "ontology/persistence/examples"
-SPEC = "ontology/persistence/spec/persistence.ttl"
+# Absolute, so the suite passes from any working directory, not only the
+# repository root that mise runs it from.
+_REPO_ROOT = Path(__file__).resolve().parents[3]
+REPO_ROOT_EXAMPLES = str(_REPO_ROOT / "ontology" / "persistence" / "examples")
+SPEC = str(_REPO_ROOT / "ontology" / "persistence" / "spec" / "persistence.ttl")
 
 
 def _load(paths: list[str]) -> Graph:

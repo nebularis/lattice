@@ -18,7 +18,7 @@ from rdflib.plugins.sparql import prepareQuery, prepareUpdate
 
 from persistence.compiler import compile_to_graph
 from persistence.instantiate import instantiate_profile
-from persistence.render import load_template, render
+from persistence.render import REQUEST_TIME_SLOTS, load_template, render
 from persistence.terms import Iri, Literal
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -26,8 +26,7 @@ SPEC_TTL = REPO_ROOT / "ontology" / "persistence" / "spec" / "persistence.ttl"
 EXAMPLES_DIR = REPO_ROOT / "ontology" / "persistence" / "examples"
 TEMPLATE_DIR = REPO_ROOT / "tools" / "persistence" / "src" / "persistence" / "templates"
 
-PAYLOAD_SUBSTITUTE = "<urn:example:s> <urn:example:p> <urn:example:o> ."
-LOG_GRAPHS_SUBSTITUTE = "<urn:g:txlog/2026-08> <urn:g:txlog/2026-09>"
+from request_slots import fill_request_slots
 
 ALL_TEMPLATES = sorted(p.name for p in TEMPLATE_DIR.glob("*.mustache"))
 DATASET_GUARD_ROW_WRITERS = [
@@ -66,7 +65,7 @@ def _full_context() -> dict:
 
 
 def _parse(text: str) -> None:
-    text = text.replace("#PAYLOAD#", PAYLOAD_SUBSTITUTE).replace("#LOG_GRAPHS#", LOG_GRAPHS_SUBSTITUTE)
+    text = fill_request_slots(text)
     if any(k in text for k in ["INSERT", "DELETE"]):
         prepareUpdate(text)
     else:
@@ -85,15 +84,36 @@ def test_every_template_parses_with_a_complete_context(template):
 
 
 @pytest.mark.parametrize("template", ALL_TEMPLATES)
-def test_unsubstituted_markers_still_parse(template):
-    """A marker left unsubstituted is a SPARQL comment, and the closing
-    brace sits on the next line, so the query stays well formed (an empty
-    VALUES block or an empty payload), never a syntax error."""
+def test_request_time_slots_are_the_only_mustache_left_after_instantiate(template):
+    """Slice 2: the instantiated SPARQL carries standard Mustache tags for
+    request-time values and nothing else a second Mustache pass could
+    misread."""
     text = render(_raw(template), _full_context())
-    if any(k in text for k in ["INSERT", "DELETE"]):
-        prepareUpdate(text)
-    else:
-        prepareQuery(text)
+    stripped = text
+    for slot in REQUEST_TIME_SLOTS:
+        stripped = stripped.replace("{{{" + slot + "}}}", "")
+    assert "{{" not in stripped and "}}" not in stripped
+
+
+@pytest.mark.parametrize(
+    "template", [t for t in ALL_TEMPLATES if any("{{{" + s + "}}}" in _raw(t) for s in REQUEST_TIME_SLOTS)]
+)
+def test_unrendered_request_time_slot_fails_closed(template):
+    """A caller that forgets to render a request-time slot gets a parse
+    error, never a silently empty payload or an empty VALUES block."""
+    text = render(_raw(template), _full_context())
+    with pytest.raises(Exception):
+        if any(k in text for k in ["INSERT", "DELETE"]):
+            prepareUpdate(text)
+        else:
+            prepareQuery(text)
+
+
+def test_request_time_slot_cannot_be_bound_at_compile_time():
+    ctx = _full_context()
+    ctx["payloadTriples"] = Literal.encode("x")
+    with pytest.raises(ValueError):
+        render(_raw("unconditional-write.mustache"), ctx)
 
 
 @pytest.mark.parametrize("template", DATASET_GUARD_ROW_WRITERS)

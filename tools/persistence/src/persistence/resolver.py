@@ -60,6 +60,22 @@ _DIMENSION_SPEC: dict[str, tuple[URIRef, URIRef, tuple[URIRef, ...]]] = {
         DAL.epochGuardScope,
         (DAL.epochAuthority,),
     ),
+    # Slice 2 (plan decision 1): one dimension per extension property, so
+    # a property declared on its own profile node, or on a lower-priority
+    # node than the one that wins a related dimension, is still resolved.
+    "firstWrite": (DAL.AggregateBoundaryProfile, DAL.firstWrite, ()),
+    "etagForm": (DAL.ConcurrencyProfile, DAL.etagForm, ()),
+    "etagRepresentation": (DAL.ConcurrencyProfile, DAL.etagRepresentation, ()),
+    "deadlockPolicy": (DAL.ConcurrencyProfile, DAL.deadlockPolicy, ()),
+    "globalReadStrategy": (DAL.OrderingProfile, DAL.globalReadStrategy, ()),
+    "lagWindowMillis": (DAL.OrderingProfile, DAL.lagWindowMillis, ()),
+    "contiguityCheckMode": (DAL.OrderingProfile, DAL.contiguityCheckMode, ()),
+    "retentionMode": (DAL.ReceiptProfile, DAL.retentionMode, ()),
+    "asOfFloorSource": (DAL.ReceiptProfile, DAL.asOfFloorSource, ()),
+    "txnShards": (DAL.MetaTopologyProfile, DAL.txnShards, ()),
+    "logShards": (DAL.MetaTopologyProfile, DAL.logShards, ()),
+    "keyShards": (DAL.MetaTopologyProfile, DAL.keyShards, ()),
+    "registryGraph": (DAL.MetaTopologyProfile, DAL.registryGraph, ()),
 }
 
 

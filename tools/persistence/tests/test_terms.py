@@ -26,7 +26,7 @@ from persistence.render import load_template, render
 from persistence.terms import Integer, Iri, Literal, SparqlTermError, Var
 
 TEMPLATE_DIR = Path(__file__).resolve().parents[1] / "src" / "persistence" / "templates"
-PAYLOAD_SUBSTITUTE = "<urn:example:s> <urn:example:p> <urn:example:o> ."
+from request_slots import fill_request_slots
 
 # Adversarial IRI values: unbalanced braces, embedded SPARQL keywords,
 # quote and backslash sequences, bidirectional-override and zero-width
@@ -162,7 +162,7 @@ class TestFullTemplateInjectionCorpus:
             except SparqlTermError:
                 continue  # rejection is a pass, nothing to render
             rendered = render(text, ctx)
-            testable = rendered.replace("#PAYLOAD#", PAYLOAD_SUBSTITUTE)
+            testable = fill_request_slots(rendered)
             # Parsing must either fail outright (safe: the hostile value
             # broke syntax in a way that produces no operation at all) or
             # succeed as exactly one update/query. What must never happen

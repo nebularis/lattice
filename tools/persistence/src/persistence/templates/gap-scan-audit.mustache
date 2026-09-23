@@ -4,11 +4,10 @@
     receipts with seq in the closed range L to S must number exactly
     S - L + 1. Groups by target across epochs, since pat:seq continues
     across an epoch bump. The pinned-head graph is always included.
-    The LOG_GRAPHS marker is a text-substitution
-    marker like PAYLOAD: whatever executes this query replaces it with the
-    IRIs of every log bucket the family's registry lists (dal:registryGraph),
-    never an unbound GRAPH filtered by prefix. Left unsubstituted, it is a
-    SPARQL comment and the VALUES block is empty.}}
+    logGraphs is a request-time Mustache slot: the caller
+    renders it with the IRIs of every log bucket the family's registry lists
+    (dal:registryGraph, carried as a parameter binding on this operation),
+    never an unbound GRAPH filtered by prefix.}}
 PREFIX pat: <https://example.org/lattice/patterns#>
 PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 
@@ -19,7 +18,7 @@ WHERE {
   BIND(COALESCE(?lwm, "1"^^xsd:long) AS ?L)
   OPTIONAL {
     VALUES ?log { {{{pinnedGraph}}}
-#LOG_GRAPHS#
+      {{{logGraphs}}}
     }
     GRAPH ?log { ?r a pat:Revision ; pat:target ?target ; pat:seq ?seq }
     FILTER (?seq >= ?L && ?seq <= ?S)

@@ -79,6 +79,14 @@ def select_operations(
     # guide §19.1's worked example. Not independently configurable in
     # this slice -- see persistence-compiler-iri-sync's status record.
     dataset_level_guard = _local(dimensions["epochGuardScope"].value) == "DatasetLevelGuard"
+    guard_suffix = "-dataset-guard" if dataset_level_guard else ""
+    # dal:firstWrite (Slice 2): a pre-created row exists from id allocation,
+    # so the target never gets create-if-absent. It gets the bootstrap
+    # operation instead, which the caller runs when the id is allocated.
+    pre_created_row = _local(dimensions["firstWrite"].value) == "PreCreatedRow"
+    bootstrap_op = GeneratedOperation(
+        "bootstrap-version-row", f"bootstrap-version-row{guard_suffix}.mustache", []
+    )
 
     ops: list[GeneratedOperation] = []
     # Fixed, well-known infrastructure graphs (rdf-sparql-patterns-guide.md
@@ -126,11 +134,12 @@ def select_operations(
                 "tombstone-delete-named-graph-dataset-guard.mustache" if dataset_level_guard
                 else "tombstone-delete-named-graph.mustache"
             )
-            create_template = (
-                "create-if-absent-named-graph-dataset-guard.mustache" if dataset_level_guard
-                else "create-if-absent-named-graph.mustache"
-            )
-            ops.append(GeneratedOperation("create-if-absent", create_template, common_bindings))
+            if pre_created_row:
+                ops.append(GeneratedOperation(bootstrap_op.operation, bootstrap_op.template_id, common_bindings))
+            else:
+                ops.append(GeneratedOperation(
+                    "create-if-absent", f"create-if-absent-named-graph{guard_suffix}.mustache", common_bindings
+                ))
             ops.append(GeneratedOperation("cas-replace", cas_template, common_bindings))
             ops.append(GeneratedOperation("tombstone-delete", tombstone_template, common_bindings))
         elif boundary == "CompositePropertyBoundary":
@@ -154,6 +163,8 @@ def select_operations(
                 "cas-replace-composite-property-dataset-guard.mustache" if dataset_level_guard
                 else "cas-replace-composite-property.mustache"
             )
+            if pre_created_row:
+                ops.append(GeneratedOperation(bootstrap_op.operation, bootstrap_op.template_id, bindings))
             ops.append(GeneratedOperation("cas-replace", composite_template, bindings))
         elif boundary == "NoBoundary":
             guard_prop = dimensions["concurrencyProfile"].extra.get("valueGuardProperty")
@@ -166,9 +177,8 @@ def select_operations(
     elif concurrency == "AppendOnly" or ordering == "EventGrain":
         # A stream's version row is bootstrapped eagerly before any append
         # (guide §10.1): a lazy first write would reintroduce the race.
-        suffix = "-dataset-guard" if dataset_level_guard else ""
-        ops.append(GeneratedOperation("bootstrap-version-row", f"bootstrap-version-row{suffix}.mustache", common_bindings))
-        ops.append(GeneratedOperation("append", f"append-event{suffix}.mustache", common_bindings))
+        ops.append(GeneratedOperation(bootstrap_op.operation, bootstrap_op.template_id, common_bindings))
+        ops.append(GeneratedOperation("append", f"append-event{guard_suffix}.mustache", common_bindings))
     else:
         # ProvidedConcurrency or LockingConcurrency (a marker only, sketch
         # §3.3.1): no guard is generated either way.
@@ -189,12 +199,19 @@ def select_operations(
             )
         )
 
-    ops.append(GeneratedOperation("gap-scan-audit", "gap-scan-audit.mustache", common_bindings))
-    ops.append(GeneratedOperation("fork-detection-audit", "fork-detection-audit.mustache", common_bindings))
+    # dal:registryGraph (Slice 2) rides on every audit as a binding, so the
+    # caller that renders the logGraphs request-time slot knows which
+    # registry lists the family's log buckets (guide §24.2).
+    audit_bindings = list(common_bindings)
+    registry = dimensions["registryGraph"].value
+    if registry is not None:
+        audit_bindings.append(ParameterBinding("registryGraph", "Iri", Iri.encode(str(registry))))
+    ops.append(GeneratedOperation("gap-scan-audit", "gap-scan-audit.mustache", audit_bindings))
+    ops.append(GeneratedOperation("fork-detection-audit", "fork-detection-audit.mustache", audit_bindings))
     # Receipt-side forms of the fork audit, which survive txn-claim pruning
     # (guide §24.2).
-    ops.append(GeneratedOperation("revision-multi-txn-audit", "revision-multi-txn-audit.mustache", common_bindings))
-    ops.append(GeneratedOperation("txn-multi-revision-audit", "txn-multi-revision-audit.mustache", common_bindings))
+    ops.append(GeneratedOperation("revision-multi-txn-audit", "revision-multi-txn-audit.mustache", audit_bindings))
+    ops.append(GeneratedOperation("txn-multi-revision-audit", "txn-multi-revision-audit.mustache", audit_bindings))
 
     return ops
 

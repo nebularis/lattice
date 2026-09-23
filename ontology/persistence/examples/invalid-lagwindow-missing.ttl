@@ -1,0 +1,23 @@
+# Negative fixture for persistence-compiler-iri-sync Slice 2:
+# dal:LagWindowRead with no dal:lagWindowMillis. The global read has no
+# upper bound (guide §21.3). Refused by the compiler (LagWindowMissing)
+# and by dal:LagWindowRequiredShape.
+@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix ex:  <https://example.org/lending#> .
+
+ex:LedgerScope a dal:ClassScope ;
+    dal:priority 10 ;
+    dal:targetClass ex:Ledger .
+
+ex:LedgerProfile a dal:DataAccessProfile ;
+    dal:appliesTo           ex:LedgerScope ;
+    dal:strategy            dal:NamedGraphBoundary ;
+    dal:graphIriTemplate    "urn:g:ledger/{id}" ;
+    dal:concurrencyProfile  dal:AppendOnly ;
+    dal:receiptModel        dal:PatchLog ;
+    dal:metaTopology        dal:SharedSharded .
+
+ex:LedgerOrdering a dal:OrderingProfile ;
+    dal:appliesTo           ex:LedgerScope ;
+    dal:orderingGrain       dal:EventGrain ;
+    dal:globalReadStrategy  dal:LagWindowRead .

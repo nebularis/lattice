@@ -125,6 +125,8 @@ def check_cross_axis(
             )
         )
 
+    diagnostics.extend(_check_slice_2(target, dimensions))
+
     # Row 5: a uniqueness key property outside the declared boundary.
     if boundary_local == "CompositePropertyBoundary" and boundary is not None:
         boundary_shape = boundary.extra.get("boundaryShape")
@@ -146,6 +148,105 @@ def check_cross_axis(
                     )
 
     return diagnostics
+
+
+def _value(dimensions: dict[str, ResolvedDimension], name: str):
+    rd = dimensions.get(name)
+    return rd.value if rd is not None else None
+
+
+def _warning(kind: str, target: Target, message: str) -> Diagnostic:
+    return Diagnostic(kind=kind, severity="WARNING", target=str(target), message=message)
+
+
+def _check_slice_2(target: Target, dimensions: dict[str, ResolvedDimension]) -> list[Diagnostic]:
+    """persistence-compiler-iri-sync Slice 2: the extension-property checks.
+    Each runs on resolved values, so it also catches two properties
+    declared on different profile nodes, which the node-local SHACL shapes
+    cannot see. Raises :class:`CrossAxisViolation` for the two
+    configurations that produce wrong reads; returns warnings otherwise."""
+    out: list[Diagnostic] = []
+    concurrency = _local(_value(dimensions, "concurrencyProfile"))
+    global_read = _local(_value(dimensions, "globalReadStrategy"))
+
+    # Mirrors dal:AsOfFloorRetentionCompatibilityShape.
+    if _local(_value(dimensions, "retentionMode")) == "BucketAnyRetention" and _value(dimensions, "asOfFloorSource") is not None:
+        raise CrossAxisViolation(
+            "AsOfFloorRetentionConflict",
+            str(target),
+            "dal:retentionMode dal:BucketAnyRetention with an as-of floor (dal:asOfFloorSource): pruning a "
+            "retraction's bucket while its assertion's bucket survives resurrects a deleted triple in "
+            "as-of replay. Select dal:PrefixOnlyRetention (guide §24.2).",
+        )
+
+    # Mirrors dal:LagWindowRequiredShape.
+    if global_read == "LagWindowRead":
+        window = _value(dimensions, "lagWindowMillis")
+        if window is None or int(window) <= 0:
+            raise CrossAxisViolation(
+                "LagWindowMissing",
+                str(target),
+                "dal:globalReadStrategy dal:LagWindowRead without a positive dal:lagWindowMillis: the "
+                "read has no upper bound and skips writes that commit after a reader passed their HLC. "
+                "The window covers the server-enforced maximum transaction duration plus clock skew, "
+                "replica lag and a margin (guide §21.3).",
+            )
+
+    # Mirrors dal:WeakEtagCasWarningShape, across nodes.
+    if _local(_value(dimensions, "etagForm")) == "WeakEtag" and concurrency == "Optimistic":
+        out.append(_warning(
+            "WeakEtagCas", target,
+            "dal:etagForm dal:WeakEtag with dal:Optimistic concurrency: RFC 9110 §13.1.1 requires strong "
+            "comparison for If-Match, so every conditional write over HTTP fails (guide §15.4).",
+        ))
+
+    # Mirrors dal:NoGlobalReadWarningShape.
+    if global_read == "NoGlobalRead":
+        out.append(_warning(
+            "NoGlobalRead", target,
+            "dal:globalReadStrategy dal:NoGlobalRead: confirm this family has no dataset-tier consumer, "
+            "otherwise a cross-stream reader can skip late-committing writes (guide §21.3).",
+        ))
+
+    # Plan decision 2: a dataset tier with no declared way to read it safely.
+    ordering = dimensions.get("orderingGrain")
+    if ordering is not None and ordering.extra.get("datasetTierModel") is not None and global_read is None:
+        out.append(_warning(
+            "DatasetTierWithoutGlobalRead", target,
+            "a dal:datasetTierModel is declared but no dal:globalReadStrategy: select dal:WatermarkedRead, "
+            "dal:LagWindowRead or dal:DenseFeedRead so cross-stream readers are bounded (guide §21.3), or "
+            "dal:NoGlobalRead if there is no such reader.",
+        ))
+
+    # Mirrors dal:AdvisoryContiguityWarningShape.
+    if _local(_value(dimensions, "contiguityCheckMode")) == "AdvisoryContiguityCheck":
+        out.append(_warning(
+            "AdvisoryContiguity", target,
+            "dal:contiguityCheckMode dal:AdvisoryContiguityCheck only raises a metric on a gap; "
+            "dal:BlockingContiguityCheck stops the consumer before a gap is absorbed (guide §21.3).",
+        ))
+
+    # Guide §19.6: sorted acquisition is meaningful only where the client
+    # issues separate acquisition steps (multi-request transactions,
+    # external locks), never inside one guarded SPARQL Update.
+    if _local(_value(dimensions, "deadlockPolicy")) == "SortedAcquisition" and concurrency in ("Optimistic", "AppendOnly"):
+        out.append(_warning(
+            "SortedAcquisitionIneffective", target,
+            f"dal:deadlockPolicy dal:SortedAcquisition with dal:{concurrency}: a single guarded SPARQL "
+            "Update specifies no acquisition order, so sorting targets in the query text orders nothing. "
+            "Use dal:EngineDetectAndRetry or dal:PartitionedWriter (guide §19.6).",
+        ))
+
+    # Plan decision 3: shard counts are resolved but no template shards yet.
+    for name, graph in (("txnShards", "urn:g:txn"), ("logShards", "urn:g:txlog/{month}"), ("keyShards", "urn:g:keys")):
+        count = _value(dimensions, name)
+        if count is not None and int(count) > 1:
+            out.append(_warning(
+                "ShardingNotHonoured", target,
+                f"dal:{name} is {int(count)}, but the generated SPARQL writes a single {graph} graph. "
+                "The declaration is recorded in the compiled profile and not yet applied.",
+            ))
+    return out
 
 
 def check_mixed_receipt_model(graph: Graph, resolved_by_target: dict[Target, dict[str, ResolvedDimension]]) -> list[Diagnostic]:

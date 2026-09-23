@@ -1,0 +1,54 @@
+# Positive fixture for persistence-compiler-iri-sync Slice 2: every
+# extension property on the four existing profile classes, declared on
+# their own profile nodes rather than on the node that carries the
+# primary value, which is the case the per-property resolution exists for.
+# They are dal:DataAccessProfile nodes: a node typed with a specific profile
+# class must carry that class's primary value (ontology/persistence shapes).
+# An optimistic, pre-created-row aggregate under the dataset-level guard,
+# with a lag-window global read, prefix-only retention and a registry.
+@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix ex:  <https://example.org/lending#> .
+
+ex:FacilityScope a dal:ClassScope ;
+    dal:priority 10 ;
+    dal:targetClass ex:Facility .
+
+ex:FacilityProfile a dal:DataAccessProfile ;
+    dal:appliesTo           ex:FacilityScope ;
+    dal:strategy            dal:NamedGraphBoundary ;
+    dal:graphIriTemplate    "urn:g:facility/{id}" ;
+    dal:concurrencyProfile  dal:Optimistic ;
+    dal:orderingGrain       dal:EventGrain ;
+    dal:datasetTierModel    dal:HybridLogicalClock ;
+    dal:receiptModel        dal:PatchLog ;
+    dal:metaTopology        dal:SharedSharded .
+
+ex:FacilityBoundaryExtras a dal:DataAccessProfile ;
+    dal:appliesTo  ex:FacilityScope ;
+    dal:firstWrite dal:PreCreatedRow .
+
+ex:FacilityConcurrencyExtras a dal:DataAccessProfile ;
+    dal:appliesTo          ex:FacilityScope ;
+    dal:etagForm           dal:StrongEtag ;
+    dal:etagRepresentation dal:TaggedRepresentation ;
+    dal:deadlockPolicy     dal:EngineDetectAndRetry .
+
+ex:FacilityOrderingExtras a dal:DataAccessProfile ;
+    dal:appliesTo           ex:FacilityScope ;
+    dal:globalReadStrategy  dal:LagWindowRead ;
+    dal:lagWindowMillis     30000 ;
+    dal:contiguityCheckMode dal:BlockingContiguityCheck .
+
+ex:FacilityReceiptExtras a dal:DataAccessProfile ;
+    dal:appliesTo       ex:FacilityScope ;
+    dal:retentionMode   dal:PrefixOnlyRetention ;
+    dal:asOfFloorSource "platform/housekeeping retention job" .
+
+ex:FacilityTopologyExtras a dal:DataAccessProfile ;
+    dal:appliesTo     ex:FacilityScope ;
+    dal:registryGraph "urn:g:registry/facility" .
+
+ex:FacilityEpoch a dal:EpochProfile ;
+    dal:appliesTo        ex:FacilityScope ;
+    dal:epochGuardScope  dal:DatasetLevelGuard ;
+    dal:epochAuthority   dal:ExternalHighWaterMark .

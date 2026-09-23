@@ -8,12 +8,11 @@
     seq and sorted canonical N-Triples of the skolemized payload (guide
     §15.2), and recorded on the txn claim so a confirmation can tell a
     replay from a different request reusing the txn id.
-    The PAYLOAD marker is a non-SPARQL text-substitution
-    marker, not a bindable variable: a set of triples cannot be bound
-    through a single SPARQL variable. Whatever executes this instantiated
-    template splices in the caller's already-serialised, trusted payload
-    triples before submission, see tools/persistence/README.md "Known
-    limitations".
+    payloadTriples is a request-time Mustache slot, not a
+    SPARQL variable: a set of triples cannot be bound through one variable.
+    Instantiate leaves it in place, and the caller renders it with the
+    already-serialised, trusted payload triples before submission (see
+    tools/persistence/README.md, "Using the generated SPARQL directly").
     Note for template authors: never put a Mustache tag inside this
     comment block. Chevron's comment parser ends at the first closing
     double-brace it sees, which silently truncates the comment. }}
@@ -25,8 +24,7 @@ DELETE {
   GRAPH {{{metaGraphPrefix}}} { $root pat:epoch ?rowEpoch ; pat:seq $expectedSeq ; pat:head ?prevRev }
 }
 INSERT {
-  GRAPH ?g { #PAYLOAD#
-  }
+  GRAPH ?g { {{{payloadTriples}}} }
   GRAPH {{{metaGraphPrefix}}} { $root pat:epoch $epoch ; pat:seq $nextSeq ; pat:head $newRev }
   GRAPH {{{txnGraph}}}        { $txnId pat:rev $newRev ; pat:requestDigest $requestDigest }
   GRAPH ?logGraph {

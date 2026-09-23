@@ -385,6 +385,10 @@ dal:dimension a owl:DatatypeProperty ;
 dal:resolvedValue a owl:ObjectProperty ;
     rdfs:domain dal:ResolvedDimension .
 
+dal:resolvedLiteral a owl:DatatypeProperty ;
+    rdfs:domain dal:ResolvedDimension ;
+    rdfs:comment "The winning value of a literal-valued dimension (for example dal:lagWindowMillis, dal:txnShards, dal:registryGraph), which dal:resolvedValue, an object property, cannot carry. A resolved dimension has at most one of the two." .
+
 dal:wonBy a owl:ObjectProperty ;
     rdfs:domain dal:ResolvedDimension .
 
@@ -651,7 +655,7 @@ dal:etagRepresentation a owl:ObjectProperty ;
 
 dal:FirstWriteMode a owl:Class .
 dal:PreCreatedRow a dal:FirstWriteMode ;
-    rdfs:comment "A version row with seq 0 and no head is created when the aggregate id is allocated. The CAS shape is the only shape ever used; create-if-absent is unavailable for this family." .
+    rdfs:comment "A version row with seq 0 and no head is created when the aggregate id is allocated, before any write. The CAS shape is the only write shape ever used, and create-if-absent is unavailable for this family. tools/persistence emits the bootstrap-version-row operation for the row creation; a caller that runs the generated SPARQL directly must execute it at id allocation." .
 dal:AbsentRow a dal:FirstWriteMode ;
     rdfs:comment "No row exists until the first write. Create-if-absent applies, with P2's write-skew caveat." .
 

@@ -3,7 +3,7 @@
 # Persistence Compiler / IRI-Patterns Sync — Plan
 
 **Unit ID:** `persistence-compiler-iri-sync`
-**Status:** Not started — see [persistence-compiler-iri-sync.md](../status/persistence-compiler-iri-sync.md)
+**Status:** Slices 1 and 2 complete — see [persistence-compiler-iri-sync.md](../status/persistence-compiler-iri-sync.md)
 **Sketch (gap analysis):** [persistence-compiler-iri-sync.md](../sketches/persistence-compiler-iri-sync.md)
 **Governing ADRs:** ADR-A78 (persistence substrate), ADR-A79 (compiler toolchain), ADR-A82 (framework-neutral identity pattern selection)
 **New ADR required for this plan itself:** No. Every dimension this plan wires already exists, ratified, in `ontology/persistence/spec/persistence.ttl`. This is compiler catch-up, not a new design.
@@ -12,7 +12,7 @@
 
 Bring `tools/persistence` back into sync with the `dal:` vocabulary as it exists after commit `c276afb`, per the gap analysis. Six slices, sequenced by severity and dependency. Each follows copilot-instructions' mandatory slice shape: code, a Validation Pack at `docs/developer/validation/persistence-compiler-iri-sync-<slice>.md`, a traceability update to `docs/developer/INDEX.md`, and doc deltas in the same slice (not deferred).
 
-**Non-weakening rule applies**: none of these slices may loosen or delete any of the 239 existing tests in `tools/persistence/tests`. Every slice adds tests; it does not replace them.
+**Non-weakening rule applies**: no slice may loosen or delete an existing test in `tools/persistence/tests` (471 passing on 2026-09-23, after Slice 1 and the `iri-patterns-post-3866b21-remediation` template alignment). Every slice adds tests. A test may be rewritten only where a documented change of contract makes its assertion obsolete, and the slice's VP names it.
 
 ## Slice 1 — Dataset-level epoch guard (G1)
 
@@ -26,15 +26,50 @@ Bring `tools/persistence` back into sync with the `dal:` vocabulary as it exists
 
 ## Slice 2 — Ordering/receipt/concurrency/aggregate-boundary extension properties, and meta-topology sharding (G5, G6)
 
-Pure extras-tuple additions to `_DIMENSION_SPEC`, following the exact pattern already used for `metaShards`/`opSeqRequired`/etc.:
+**Mode:** autonomous (granted 2026-09-23).
 
-- `orderingGrain` extras: `globalReadStrategy`, `lagWindowMillis`, `contiguityCheckMode`.
-- `receiptModel` extras: `retentionMode`, `asOfFloorSource`.
-- `concurrencyProfile` extras: `etagForm`, `etagRepresentation`, `deadlockPolicy`.
-- `aggregateBoundary` extras: `firstWrite`, **plus** a behavioural fix in `select_operations()`: a target resolving `dal:firstWrite dal:PreCreatedRow` must never be offered `create-if-absent-named-graph.mustache`, only the CAS shape.
-- `metaTopology` extras: `txnShards`, `logShards`, `keyShards`, `registryGraph`.
-- Python-level checks mirroring `WeakEtagCasWarningShape`, `NoGlobalReadWarningShape`, `AdvisoryContiguityWarningShape`, `AsOfFloorRetentionCompatibilityShape` in `validator.py`.
-- Tests: one positive/negative pair per new warning shape's Python equivalent; a fixture proving a `dal:PreCreatedRow` target's operation set excludes `create-if-absent`.
+### Decisions (agreed 2026-09-23)
+
+1. **Each new property is its own resolved dimension.** The resolver today reads extra properties only from the profile node that wins the dimension's primary value, so a property declared on a separate or lower-priority profile node is dropped silently, and extras never reach the compiled profile. Every Slice 2 property is therefore added as a dimension of its own, resolved by the existing precedence algorithm (priority, reasoning-aware tie break, `ProfileAmbiguityError`) and emitted as a `dal:ResolvedDimension`. Candidates are nodes typed with the property's profile class, or `dal:DataAccessProfile` nodes, that declare the property. Literal-valued dimensions are emitted with a new `dal:resolvedLiteral` datatype property, since `dal:resolvedValue` is an object property.
+2. **Baseline defaults**, following Slice 1's precedent that absence of configuration is an explicit, documented value: `firstWrite` → `dal:AbsentRow` (today's behaviour), `etagForm` → `dal:StrongEtag`, `etagRepresentation` → `dal:SingleRepresentation`, `deadlockPolicy` → `dal:EngineDetectAndRetry`, `contiguityCheckMode` → `dal:BlockingContiguityCheck`, `retentionMode` → `dal:PrefixOnlyRetention`. No default for `globalReadStrategy`, `lagWindowMillis`, `asOfFloorSource`, the three shard counts or `registryGraph`.
+3. **Shard counts are resolved but not yet honoured.** Every template writes to one txn, keys and log-bucket graph. A declared `dal:txnShards`, `dal:logShards` or `dal:keyShards` greater than 1 raises a `ShardingNotHonoured` warning rather than being ignored silently.
+
+### Dimensions added
+
+| Dimension | Profile class | Property | Kind |
+|---|---|---|---|
+| `firstWrite` | `dal:AggregateBoundaryProfile` | `dal:firstWrite` | object |
+| `etagForm`, `etagRepresentation`, `deadlockPolicy` | `dal:ConcurrencyProfile` | same names | object |
+| `globalReadStrategy`, `contiguityCheckMode` | `dal:OrderingProfile` | same names | object |
+| `lagWindowMillis` | `dal:OrderingProfile` | `dal:lagWindowMillis` | literal |
+| `retentionMode` | `dal:ReceiptProfile` | `dal:retentionMode` | object |
+| `asOfFloorSource` | `dal:ReceiptProfile` | `dal:asOfFloorSource` | literal |
+| `txnShards`, `logShards`, `keyShards`, `registryGraph` | `dal:MetaTopologyProfile` | same names | literal |
+
+### Behaviour
+
+- **`dal:firstWrite dal:PreCreatedRow`.** `select_operations()` never offers `create-if-absent` for the target. It emits `bootstrap-version-row` (the dataset-guard variant under `dal:DatasetLevelGuard`) instead: the row is created at `seq 0` with no head when the aggregate id is allocated, and every later write is a CAS (guide §14.2). This applies to `dal:NamedGraphBoundary` and `dal:CompositePropertyBoundary`. `tools/persistence/README.md` documents the obligation for a caller that runs the generated SPARQL without LATTICE's query layer.
+- **Request-time slots use Mustache.** The `#PAYLOAD#` and `#LOG_GRAPHS#` text markers become the Mustache tags `{{{payloadTriples}}}` and `{{{logGraphs}}}`. `persistence instantiate` renders compile-time slots and passes request-time slots through verbatim, so the instantiated SPARQL carries standard Mustache tags that any language's Mustache library can fill. An instantiated operation contains no other `{{` or `}}` sequence, which a test enforces.
+- **`dal:registryGraph`** is emitted as a resolved dimension and, when declared, as an `Iri` parameter binding on every audit operation, so whatever fills `{{{logGraphs}}}` knows which registry to read.
+
+### Checks (Python mirrors, on resolved values)
+
+| Check | Severity | Mirrors |
+|---|---|---|
+| `dal:etagForm dal:WeakEtag` with `dal:Optimistic` | WARNING | `dal:WeakEtagCasWarningShape` |
+| `dal:globalReadStrategy dal:NoGlobalRead` | WARNING | `dal:NoGlobalReadWarningShape` |
+| a `dal:datasetTierModel` declared with no `dal:globalReadStrategy` | WARNING | new, decision 2 |
+| `dal:contiguityCheckMode dal:AdvisoryContiguityCheck` | WARNING | `dal:AdvisoryContiguityWarningShape` |
+| `dal:retentionMode dal:BucketAnyRetention` with a `dal:asOfFloorSource` | ERROR (`CrossAxisViolation`) | `dal:AsOfFloorRetentionCompatibilityShape` |
+| `dal:LagWindowRead` without a positive `dal:lagWindowMillis` | ERROR (`CrossAxisViolation`) | new `dal:LagWindowRequiredShape` |
+| `dal:deadlockPolicy dal:SortedAcquisition` with `dal:Optimistic` or `dal:AppendOnly` | WARNING | new: sorted acquisition needs multi-request or external-lock strategies (guide §19.6) |
+| a shard count greater than 1 | WARNING (`ShardingNotHonoured`) | new, decision 3 |
+
+The SHACL shapes check one profile node at a time, and the Python checks check resolved values across nodes. Where they differ, for example a weak ETag and optimistic concurrency declared on two different nodes, the Python check is authoritative and the SHACL shape is the same-node subset.
+
+### Tests
+
+A positive and negative pair per check. Per-property resolution from a separate profile node and from a lower-priority node. Baseline defaults. Literal dimension emission. `dal:PreCreatedRow` excluding `create-if-absent` and emitting `bootstrap-version-row`. The request-time slot contract. `registryGraph` binding. Determinism over the new dimensions.
 
 ## Slice 3 — Identity minting profile resolution (G2)
 

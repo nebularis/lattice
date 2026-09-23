@@ -80,7 +80,7 @@ Run in autonomous mode, 2026-09-23. `mise run check:persistence`: **471 passed**
 | Fork audit counts txn claims per revision | `fork-detection-audit` | A6 |
 | Receipt-side duplicate audits | new `revision-multi-txn-audit`, `txn-multi-revision-audit` | A4 |
 | Row-driven, cross-epoch gap scan with low-water mark and pinned heads | `gap-scan-audit` | B7, A7 |
-| Registry-listed log buckets via a `#LOG_GRAPHS#` marker, never `STRSTARTS` | all audits | S3, F6 |
+| Registry-listed log buckets via a request-time slot (originally `#LOG_GRAPHS#`, now the Mustache slot `{{{logGraphs}}}` after `persistence-compiler-iri-sync` Slice 2), never `STRSTARTS` | all audits | S3, F6 |
 | `pat:txn` written as a string, not the claim IRI | all receipt-writing templates | Appendix B datatype |
 
 A pre-existing defect was fixed on the way: `key-claim-write` and `key-claim-retire` wrote claims into the txn graph (`urn:g:txn`). They now write `urn:g:keys`.

@@ -3,8 +3,8 @@
 # Persistence Compiler / IRI-Patterns Sync — Status
 
 **Unit ID:** `persistence-compiler-iri-sync`
-**Status:** ✅ Slice 1 complete, 290/290 tests passing. Slices 2–6 not started, Slice 3 blocked on a human decision
-**Last updated:** 2026-09-23 (template alignment by `iri-patterns-post-3866b21-remediation`)
+**Status:** ✅ Slices 1 and 2 complete, 526/526 tests passing. Slices 4–6 not started, Slice 3 blocked on a human decision
+**Last updated:** 2026-09-23 (Slice 2)
 **Plan:** [persistence-compiler-iri-sync.md](../plans/persistence-compiler-iri-sync.md)
 **Sketch (gap analysis):** [persistence-compiler-iri-sync.md](../sketches/persistence-compiler-iri-sync.md)
 
@@ -24,14 +24,14 @@ Slice 1 was implemented the same day, in Default Mode: code and tests were writt
 |---|---|---|
 | Slice 3 resolution-model decision | Does `dal:IdentityProfile` need a `resourceRole` axis on `Target`, or a different mechanism? See [plan](../plans/persistence-compiler-iri-sync.md#human-decision-required-before-slice-3) | Human |
 
-Nothing blocks starting Slices 1, 2, 4, or 5.
+Nothing blocks starting Slices 4 or 5.
 
 ## Slice status
 
 | Slice | Scope | Status |
 |---|---|---|
 | 1 | Dataset-level epoch guard (G1 — correctness) | ✅ Complete, 290/290 passing — see [VP](../validation/persistence-compiler-iri-sync-slice-1.md) |
-| 2 | Ordering/receipt/concurrency/aggregate-boundary extras + meta-topology sharding (G5, G6) | Not started |
+| 2 | Ordering/receipt/concurrency/aggregate-boundary extension properties + meta-topology sharding (G5, G6) | ✅ Complete, 526/526 passing — see [VP](../validation/persistence-compiler-iri-sync-slice-2.md) |
 | 3 | Identity minting profile resolution (G2) | Blocked on human decision |
 | 4 | Privacy/erasure profile + cross-profile compatibility (G3 partial, G4) | Not started |
 | 5 | Uniqueness `onViolation` branching, `mergeRelation`, `ClaimScheme` rotation (G7) | Not started |
@@ -49,6 +49,20 @@ Nothing blocks starting Slices 1, 2, 4, or 5.
 
 **Deliberately not touched**: `unconditional-write`, `cas-replace-value-guard`, `append-event` (no dataset-guard variant — see VP's "Deliberate non-coverage"); `dal:epochCoordinatorBinding`/`erasureRegisterBinding`/`erasureReplayOnRestore` (deferred to Slice 4, per the plan).
 
+## Slice 2 delivery detail
+
+Run in autonomous mode, 2026-09-23, after the plan was revised with three agreed decisions (per-property resolution, baseline defaults, warn on unhonoured shard counts).
+
+**Code**: `model.py` (13 new dimensions, `LITERAL_DIMENSIONS`, six baseline defaults), `resolver.py` (one `_DIMENSION_SPEC` entry per property), `compiler.py` (`dal:resolvedLiteral` emission), `validator.py` (`_check_slice_2`: two refusals, six warning kinds), `operations.py` (`dal:firstWrite dal:PreCreatedRow` emits `bootstrap-version-row` instead of `create-if-absent`; `registryGraph` bound on every audit), `render.py` (`REQUEST_TIME_SLOTS`: `payloadTriples` and `logGraphs` pass through instantiate as Mustache tags).
+
+**Vocabulary**: `dal:resolvedLiteral`, `dal:LagWindowRequiredShape`, the Slice 2 shapes widened to `dal:DataAccessProfile` targets, `dal:PreCreatedRow` comment.
+
+**Templates**: `#PAYLOAD#` and `#LOG_GRAPHS#` replaced by `{{{payloadTriples}}}` and `{{{logGraphs}}}`. `bootstrap-version-row` generalised from streams to any version row (`$target`).
+
+**Docs**: `tools/persistence/README.md` gains "Using the generated SPARQL directly" (value kinds, request-time slots, SPARQL variables per operation, the obligations a caller outside LATTICE's query layer carries, first among them running `bootstrap-version-row` at id allocation). `ontology/persistence/README.md` §3 records per-property resolution.
+
+**Found on the way**: the resolver's extras model would have dropped any property declared off the winning node (now the reason for decision 1); a new negative fixture initially failed on an unrelated `orderingGrain` tie, caught and pinned by a dedicated test; `test_determinism.py` depended on the working directory.
+
 ## Severity note
 
 Slice 1 addresses a live correctness gap, not a coverage gap: the compiler's existing CAS/tombstone templates generate the epoch-guard shape the vocabulary now explicitly documents as unsafe (`dal:RowLevelGuardOnly`), unconditionally, for every deployment, with no way to configure the safe alternative (`dal:DatasetLevelGuard`). Recommend prioritising Slice 1 ahead of the others regardless of overall sequencing.
@@ -60,7 +74,7 @@ Slice 1 addresses a live correctness gap, not a coverage gap: the compiler's exi
 | Before this unit (Slice 2 of `rdf-sparql-patterns-phase`) | 239 |
 | After Slice 1 | **290 passing, 0 failing** (confirmed by an actual run, 2026-09-23) |
 | After `iri-patterns-post-3866b21-remediation` template alignment | **471 passing** (2026-09-23, see [that unit's status](iri-patterns-post-3866b21-remediation.md)) |
-| After Slice 2 | TBD |
+| After Slice 2 | **526 passing, 0 failing** (autonomous run, 2026-09-23) |
 | After Slice 3 | TBD |
 | After Slice 4 | TBD |
 | After Slice 5 | TBD |
@@ -76,5 +90,5 @@ Result as of 2026-09-23: `290 passed`.
 ## Next steps
 
 1. Human resolves the Slice 3 blocker (can happen in parallel with Slices 2/4/5 starting).
-2. Proceed to Slice 2, 4, or 5 (independent of each other and of Slice 3).
+2. Proceed to Slice 4 or 5 (independent of each other and of Slice 3).
 3. Update this file after every slice lands, per the Documentation Lifecycle rule that this status record is the sole authoritative live state for this unit.

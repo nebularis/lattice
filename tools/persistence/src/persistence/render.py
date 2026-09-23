@@ -20,6 +20,17 @@ from .terms import SparqlTerm
 
 ContextValue = Union[SparqlTerm, int, Sequence[SparqlTerm]]
 
+# Request-time slots: Mustache tags whose values exist only when a request
+# is made (the payload triples, the registry-listed log buckets), so they
+# cannot be compile-time bindings and cannot be SPARQL variables either (a
+# set of triples or a list of graph IRIs is not one RDF term). The
+# instantiate stage passes them through verbatim, so the instantiated
+# SPARQL carries standard Mustache tags that any language's Mustache
+# library can render. Always triple-brace (no HTML escaping). The values
+# are trusted, already-serialised SPARQL text supplied by the caller, see
+# tools/persistence/README.md "Using the generated SPARQL directly".
+REQUEST_TIME_SLOTS: tuple[str, ...] = ("payloadTriples", "logGraphs")
+
 
 def _template_dir_default() -> Path:
     return Path(__file__).resolve().parent / "templates"
@@ -51,8 +62,11 @@ def render(template_text: str, context: Mapping[str, ContextValue]) -> str:
     what it should have been encoded as (ADR-A79 point 4).
     """
     for key, value in context.items():
+        if key in REQUEST_TIME_SLOTS:
+            raise ValueError(f"{key!r} is a request-time slot and cannot be bound at compile time")
         _check_value(key, value)
-    return chevron.render(template_text, dict(context))
+    passthrough = {name: SparqlTerm("{{{" + name + "}}}") for name in REQUEST_TIME_SLOTS}
+    return chevron.render(template_text, {**passthrough, **context})
 
 
 def _check_value(key: str, value: ContextValue) -> None:
@@ -74,4 +88,4 @@ def _check_value(key: str, value: ContextValue) -> None:
     raise TypeError(f"context key {key!r} has unsupported type {type(value)!r}")
 
 
-__all__ = ["render", "load_template"]
+__all__ = ["render", "load_template", "REQUEST_TIME_SLOTS"]

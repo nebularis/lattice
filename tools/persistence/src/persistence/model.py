@@ -19,6 +19,11 @@ from typing import Any, Optional
 # sync unit (Slice 1, 2026-09-23) to resolve ``dal:EpochProfile``'s
 # ``dal:epochGuardScope``, added to ``ontology/persistence`` by commit
 # c276afb (iri-identity-patterns.md §10.3).
+#
+# Slice 2 of the same unit adds one dimension per extension property
+# (plan decision 1): each is resolved by the same precedence algorithm as
+# the original six, from any node that declares it, instead of being read
+# only as an "extra" of whichever node won a related dimension.
 DIMENSIONS = (
     "aggregateBoundary",
     "concurrencyProfile",
@@ -26,6 +31,25 @@ DIMENSIONS = (
     "receiptModel",
     "metaTopology",
     "epochGuardScope",
+    "firstWrite",
+    "etagForm",
+    "etagRepresentation",
+    "deadlockPolicy",
+    "globalReadStrategy",
+    "lagWindowMillis",
+    "contiguityCheckMode",
+    "retentionMode",
+    "asOfFloorSource",
+    "txnShards",
+    "logShards",
+    "keyShards",
+    "registryGraph",
+)
+
+# Dimensions whose resolved value is an RDF literal, emitted with
+# ``dal:resolvedLiteral`` rather than ``dal:resolvedValue``.
+LITERAL_DIMENSIONS = frozenset(
+    {"lagWindowMillis", "asOfFloorSource", "txnShards", "logShards", "keyShards", "registryGraph"}
 )
 
 # Platform baseline defaults (sketch §3.4.1). Every dimension resolves to
@@ -47,6 +71,15 @@ BASELINE_DEFAULTS: dict[str, str] = {
     "receiptModel": "ReceiptOnly",
     "metaTopology": "SharedSharded",
     "epochGuardScope": "RowLevelGuardOnly",
+    # Slice 2 (plan decision 2). No default for globalReadStrategy,
+    # lagWindowMillis, asOfFloorSource, the shard counts or registryGraph:
+    # their absence is itself meaningful and checked where it matters.
+    "firstWrite": "AbsentRow",
+    "etagForm": "StrongEtag",
+    "etagRepresentation": "SingleRepresentation",
+    "deadlockPolicy": "EngineDetectAndRetry",
+    "contiguityCheckMode": "BlockingContiguityCheck",
+    "retentionMode": "PrefixOnlyRetention",
 }
 
 
@@ -126,6 +159,7 @@ class BoundaryConflict(Exception):
 __all__ = [
     "DIMENSIONS",
     "BASELINE_DEFAULTS",
+    "LITERAL_DIMENSIONS",
     "Candidate",
     "ResolvedDimension",
     "Diagnostic",

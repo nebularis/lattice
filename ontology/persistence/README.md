@@ -4,8 +4,6 @@
 
 Literate specification for the persistence profile substrate.
 
-Full narrative design: [persistence-profile-substrate.md](../../docs/developer/sketches/persistence-profile-substrate.md) (the sketch), [rdf-sparql-patterns-guide.md](../../docs/architecture/rdf-sparql-patterns-guide.md) (the persistence patterns), and [iri-identity-patterns.md](../../docs/architecture/iri-identity-patterns.md) (the identity patterns a future profile dimension will configure). Governing decisions: [ADR-A78](../../docs/architecture/decisions/ADR-A78-persistence-profile-substrate-and-aggregate-boundaries.md), [ADR-A79](../../docs/architecture/decisions/ADR-A79-persistence-compiler-toolchain.md), [ADR-A80](../../docs/architecture/decisions/ADR-A80-housekeeping-component-boundary.md), and [ADR-A82](../../docs/architecture/decisions/ADR-A82-framework-neutral-identity-pattern-selection.md).
-
 ## 1. Purpose and scope
 
 LATTICE ships ontologies, libraries, and control-plane infrastructure the way a framework does, not the way a single application does. An adopter builds their own applied ontology on the substrate layers and decides, per class or per deployment, whether a population of individuals is an aggregate, what its containment boundary is, whether it needs compare-and-set, what ordering grain it needs, and what receipt model it needs. The patterns guide answers *what the options are and their consequences*. This ontology answers *how one adopter selects among them*, and the `tools/persistence` compiler turns that selection into generated SPARQL.
@@ -30,9 +28,10 @@ The directory is named `persistence` because the compiler, and any future housek
 | Deadlock policy | `dal:ConcurrencyProfile` | `dal:EngineDetectAndRetry`, `dal:SortedAcquisition`, `dal:PartitionedWriter` |
 | HTTP conditional form | `dal:ConcurrencyProfile` | `dal:StrongEtag`/`dal:WeakEtag`, `dal:SingleRepresentation`/`dal:TaggedRepresentation` |
 | Ordering grain | `dal:OrderingProfile` | `dal:CommitGrain`, `dal:EventGrain` |
-| Global-read strategy | `dal:OrderingProfile` | `dal:WatermarkedRead`, `dal:LagWindowRead`, `dal:DenseFeedRead`, `dal:NoGlobalRead` |
+| Global-read strategy | `dal:OrderingProfile` | `dal:WatermarkedRead`, `dal:LagWindowRead` (with `dal:lagWindowMillis`), `dal:DenseFeedRead`, `dal:NoGlobalRead` |
+| Contiguity check | `dal:OrderingProfile` | `dal:BlockingContiguityCheck`, `dal:AdvisoryContiguityCheck` |
 | Receipt model | `dal:ReceiptProfile` | `dal:ReceiptOnly`, `dal:PatchLog`, `dal:SnapshotPerRevision` |
-| Retention mode | `dal:ReceiptProfile` | `dal:PrefixOnlyRetention`, `dal:BucketAnyRetention` |
+| Retention mode | `dal:ReceiptProfile` | `dal:PrefixOnlyRetention`, `dal:BucketAnyRetention`, plus `dal:asOfFloorSource` |
 | Meta topology | `dal:MetaTopologyProfile` | `dal:SharedSharded`, `dal:PerAggregate`, plus `dal:txnShards`/`dal:logShards`/`dal:keyShards`/`dal:registryGraph` |
 | Uniqueness | `dal:UniquenessConstraint` | many-valued: a target may carry zero, one, or several distinct keyed constraints; each may carry a `dal:mergeRelation` and a `dal:claimScheme` |
 | Identity minting | `dal:IdentityProfile` | one `dal:IdentityStrategy` per `dal:ResourceRole` — see §10 |
@@ -40,6 +39,8 @@ The directory is named `persistence` because the compiler, and any future housek
 | Privacy and erasure | `dal:PrivacyProfile` | `dal:PersonalData`/`dal:InternalData`/`dal:PublicData`, `dal:PerSubjectGraphDrop`/`dal:CryptoShred`/`dal:NoErasure` |
 
 A composite `dal:DataAccessProfile` is sugar declaring several dimensions at one scope; it decomposes into the same per-dimension model, never a special case of its own.
+
+Every row above resolves on its own, including the extension properties that share a class with another row (`dal:firstWrite`, `dal:etagForm`, `dal:lagWindowMillis`, `dal:txnShards` and the rest). A property declared on a lower-priority node than the node that wins a neighbouring row is still resolved. A node typed with a specific profile class must carry that class's primary value (for example `dal:concurrencyProfile` on a `dal:ConcurrencyProfile`), so an extension property declared on its own goes on a `dal:DataAccessProfile` node. The compiled profile records each resolved value, with `dal:resolvedLiteral` for literal-valued properties.
 
 ## 4. Five scope kinds, ranked by whether they need reasoning
 
@@ -177,7 +178,7 @@ ex:ClaimantReceipts a dal:DataAccessProfile ;
 
 `dal:PersonalDataReceiptCompatibilityShape` (`shapes/constraints.ttl`) rejects this same scope if `dal:receiptModel` were `dal:PatchLog` or `dal:SnapshotPerRevision` without `dal:perSubjectScoped true` or `dal:erasureStrategy dal:CryptoShred` — not because the framework prefers `dal:ReceiptOnly`, but because the other two models keep a second, immutable copy of the payload that a per-subject graph drop cannot reach. An adopter who genuinely needs replay over personal data selects `dal:CryptoShred` instead and specifies key custody and an as-of failure policy for shredded revisions.
 
-Full fixture set for this and the other new dimensions: [`examples/identity-epoch-privacy-profile.ttl`](examples/identity-epoch-privacy-profile.ttl) (still to be authored — it spans identity, epoch, and privacy together, and as of `persistence-compiler-iri-sync` Slice 1, 2026-09-23, only the epoch dimension's compiler wiring exists; see [ADR-A82](../../docs/architecture/decisions/ADR-A82-framework-neutral-identity-pattern-selection.md)'s consequence that this is a separately scoped slice). Slice 1 authored two narrower, epoch-only fixtures instead: [`examples/epoch-dataset-level-guard.ttl`](examples/epoch-dataset-level-guard.ttl) and [`examples/warning-epoch-unsafe-restore.ttl`](examples/warning-epoch-unsafe-restore.ttl). [`examples/append-stream-dataset-guard.ttl`](examples/append-stream-dataset-guard.ttl) covers an append-only stream under the dataset-level guard.
+Full fixture set for this and the other new dimensions: [`examples/identity-epoch-privacy-profile.ttl`](examples/identity-epoch-privacy-profile.ttl) (still to be authored — it spans identity, epoch, and privacy together, and as of `persistence-compiler-iri-sync` Slice 1, 2026-09-23, only the epoch dimension's compiler wiring exists; see [ADR-A82](../../docs/architecture/decisions/ADR-A82-framework-neutral-identity-pattern-selection.md)'s consequence that this is a separately scoped slice). Slice 1 authored two narrower, epoch-only fixtures instead: [`examples/epoch-dataset-level-guard.ttl`](examples/epoch-dataset-level-guard.ttl) and [`examples/warning-epoch-unsafe-restore.ttl`](examples/warning-epoch-unsafe-restore.ttl). [`examples/append-stream-dataset-guard.ttl`](examples/append-stream-dataset-guard.ttl) covers an append-only stream under the dataset-level guard. Slice 2 added [`examples/extension-properties.ttl`](examples/extension-properties.ttl), every extension property declared on its own profile node, and [`examples/invalid-lagwindow-missing.ttl`](examples/invalid-lagwindow-missing.ttl), refused by `dal:LagWindowRequiredShape` and by the compiler.
 
 ## 10. Repository layout
 
@@ -187,11 +188,23 @@ ontology/persistence/
   shapes/constraints.ttl     SHACL shapes validating dal: instance data (§3.9)
   examples/                  worked examples 1-3 above, plus one negative
                              fixture per cross-axis check (see the guide's
-                             §3.5 table), two SHACL-level fixtures, and two
-                             epoch-guard-scope fixtures (persistence-
-                             compiler-iri-sync Slice 1)
+                             §3.5 table), SHACL-level fixtures, and the
+                             epoch, append-stream and extension-property
+                             fixtures of persistence-compiler-iri-sync
   docs/                      the precedence algorithm and boundary-strategy
                              design, for a reader who has not read the sketch
 ```
 
 The compiler that consumes this ontology lives in `tools/persistence`, per the repository's `ontology/` (semantic assets) versus `tools/` (executable reference implementations) split.
+
+## 11. Appendix
+
+### Cross References
+
+| Document/Link | Details |
+|---|---|
+| [rdf-sparql-patterns-guide.md](../../docs/architecture/rdf-sparql-patterns-guide.md) | RDF persistence patterns |
+| [persistence-profile-substrate.md](../../docs/developer/sketches/persistence-profile-substrate.md) | Original design sketch |
+| [iri-identity-patterns.md](../../docs/architecture/iri-identity-patterns.md) | identity patterns a future profile dimension will configure |
+| [ADR-A78](../../docs/architecture/decisions/ADR-A78-persistence-profile-substrate-and-aggregate-boundaries.md), [ADR-A79](../../docs/architecture/decisions/ADR-A79-persistence-compiler-toolchain.md), [ADR-A80](../../docs/architecture/decisions/ADR-A80-housekeeping-component-boundary.md), and [ADR-A82](../../docs/architecture/decisions/ADR-A82-framework-neutral-identity-pattern-selection.md) | Governing Decisions |
+

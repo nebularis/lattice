@@ -1,7 +1,12 @@
-{{! bootstrap-version-row-dataset-guard: eager creation of a stream's version row at seq 0
-    with no head (guide §10.1, §14.2), before any append. A lazy OPTIONAL
-    initialisation inside the append would reintroduce the first-write
-    race. Idempotent: a no-op if the row exists.
+{{! bootstrap-version-row-dataset-guard: eager creation of a version row at seq 0 with no
+    head (guide §10.1, §14.2), before the first write to it. Guards on the dataset epoch, so a writer started under an older epoch cannot create a row after a bump.
+    Emitted for every append stream, and for every aggregate declared
+    dal:firstWrite dal:PreCreatedRow, which gets this operation instead of
+    create-if-absent. Run it when the aggregate or stream id is allocated.
+    Bind $target to the same IRI later bound as $root (CAS, tombstone) or
+    $stream (append). The first CAS then expects seq 0 and finds no head.
+    A lazy initialisation inside the first write would reintroduce the
+    first-write race. Idempotent: a no-op if the row exists.
     Note for template authors: never put a Mustache tag inside this
     comment block. Chevron's comment parser ends at the first closing
     double-brace it sees, which silently truncates the comment. }}
@@ -9,9 +14,9 @@ PREFIX pat: <https://example.org/lattice/patterns#>
 PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 
 INSERT {
-  GRAPH {{{metaGraphPrefix}}} { $stream a pat:VersionRow ; pat:epoch $epoch ; pat:seq "0"^^xsd:long }
+  GRAPH {{{metaGraphPrefix}}} { $target a pat:VersionRow ; pat:epoch $epoch ; pat:seq "0"^^xsd:long }
 }
 WHERE {
   GRAPH {{{datasetGraph}}} { {{{datasetNode}}} pat:epoch $epoch }
-  FILTER NOT EXISTS { GRAPH {{{metaGraphPrefix}}} { $stream pat:seq ?any } }
+  FILTER NOT EXISTS { GRAPH {{{metaGraphPrefix}}} { $target pat:seq ?any } }
 }

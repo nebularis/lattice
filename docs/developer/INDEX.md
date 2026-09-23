@@ -47,7 +47,7 @@ Each work unit has:
 
 ### Key Findings
 - **Target model discovery:** Classes need paired `(class, deployment)` targets within each graph scope, added `dal:coversClass` property
-- **SPARQL validity bugs fixed:** Property paths invalid in DELETE/INSERT blocks; payload triples need `#PAYLOAD#` marker instead of SPARQL variables
+- **SPARQL validity bugs fixed:** Property paths invalid in DELETE/INSERT blocks; payload triples need a text slot instead of SPARQL variables (originally `#PAYLOAD#`, since `persistence-compiler-iri-sync` Slice 2 the Mustache slot `{{{payloadTriples}}}`)
 - **Mustache parsing gotcha:** Comments cannot contain bare `}}` without breaking parsing
 - **pyshacl semantics:** `allow_warnings=True` needed for non-blocking `sh:Warning` severity
 
@@ -60,12 +60,12 @@ Epic decomposition into phase plans is **no longer blocked**: the required Phase
 
 | Field | Value |
 |-------|-------|
-| **Status** | ✅ Slice 1 complete (2026-09-23), 290/290 tests passing. Slice 3 blocked on a human decision; 2/4/5 not started |
+| **Status** | ✅ Slices 1 and 2 complete (2026-09-23), 526/526 tests passing. Slice 3 blocked on a human decision, 4 and 5 not started |
 | **Unit ID** | `persistence-compiler-iri-sync` |
 | **Sketch (gap analysis)** | [persistence-compiler-iri-sync.md](sketches/persistence-compiler-iri-sync.md) |
 | **Plan** | [persistence-compiler-iri-sync.md](plans/persistence-compiler-iri-sync.md) |
 | **Status Record** | [persistence-compiler-iri-sync.md](status/persistence-compiler-iri-sync.md) |
-| **Validation Pack (Slice 1)** | [persistence-compiler-iri-sync-slice-1.md](validation/persistence-compiler-iri-sync-slice-1.md) |
+| **Validation Packs** | [Slice 1](validation/persistence-compiler-iri-sync-slice-1.md), [Slice 2](validation/persistence-compiler-iri-sync-slice-2.md) |
 | **Triggering commit** | `c276afb` "[iri-patterns] remediate docs and update persistence ontology vocabulary" |
 
 ### Gap summary
@@ -73,7 +73,7 @@ Three new profile dimensions (`dal:IdentityProfile`, `dal:EpochProfile`, `dal:Pr
 
 ### Slices
 1. **✅ Complete, 290/290 passing.** Dataset-level epoch guard — `dal:epochGuardScope` resolvable, `dal:DatasetLevelGuard` template variant for the three named write shapes, warning diagnostic fires even on the platform baseline default. See the [VP](validation/persistence-compiler-iri-sync-slice-1.md).
-2. Ordering/receipt/concurrency/aggregate-boundary extras + meta-topology sharding (low risk)
+2. **✅ Complete, 526/526 passing.** Extension properties resolved one dimension each, baseline defaults, two refusals and six warnings mirroring the SHACL shapes, `dal:PreCreatedRow` emits `bootstrap-version-row`, request-time values as Mustache slots. See the [VP](validation/persistence-compiler-iri-sync-slice-2.md).
 3. Identity minting profile resolution — **blocked on a human decision**: does `dal:resourceRole` need a third resolution-key axis on `Target`?
 4. Privacy/erasure profile + cross-profile compatibility
 5. Uniqueness `onViolation` branching, `mergeRelation`, `ClaimScheme` rotation
