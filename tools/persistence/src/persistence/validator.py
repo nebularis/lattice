@@ -249,6 +249,96 @@ def _check_slice_2(target: Target, dimensions: dict[str, ResolvedDimension]) -> 
     return out
 
 
+DIGEST_ENCODINGS = frozenset({"lowercase-hex", "base32", "base64url"})
+
+
+def check_identity(
+    graph: Graph,
+    target: Target,
+    dimensions: dict[str, ResolvedDimension],
+    identity: dict[str, ResolvedDimension],
+    uniqueness: list[dict],
+) -> list[Diagnostic]:
+    """persistence-compiler-iri-sync Slice 3: checks on the resolved,
+    role-qualified identity dimensions. Raises :class:`CrossAxisViolation`
+    for a configuration that cannot mint a correct IRI; returns warnings
+    otherwise. The first four mirror SHACL shapes on one dal:IdentityProfile
+    node; the last two join the identity profile to other resolved
+    dimensions, which SHACL cannot do."""
+    out: list[Diagnostic] = []
+    for name, rd in identity.items():
+        strategy = _local(rd.value)
+        extra = rd.extra
+        where = f"{name} (won by {rd.won_by})"
+
+        # Mirrors dal:DigestSchemeRequiredShape and dal:DigestSchemeWellFormedShape.
+        if strategy in ("DerivedHashIdentity", "ContentAddressedIdentity"):
+            scheme = extra.get("digestScheme")
+            function = graph.value(scheme, DAL.digestFunction) if scheme is not None else None
+            width = graph.value(scheme, DAL.digestWidthBits) if scheme is not None else None
+            encoding = graph.value(scheme, DAL.digestEncoding) if scheme is not None else None
+            if function is None or width is None or encoding is None:
+                raise CrossAxisViolation(
+                    "DigestSchemeRequired", str(target),
+                    f"{where}: dal:{strategy} requires a dal:digestScheme with dal:digestFunction, "
+                    "dal:digestWidthBits and dal:digestEncoding. An unstated width or encoding lets two "
+                    "implementations mint different IRIs for one input (iri-identity-patterns.md §7.4).",
+                )
+            try:
+                width_ok = int(width) > 0 and int(width) % 8 == 0
+            except (TypeError, ValueError):
+                width_ok = False
+            if not width_ok or str(encoding) not in DIGEST_ENCODINGS:
+                raise CrossAxisViolation(
+                    "DigestSchemeMalformed", str(target),
+                    f"{where}: dal:digestWidthBits must be a positive multiple of 8 (got {width!s}) and "
+                    f"dal:digestEncoding one of {sorted(DIGEST_ENCODINGS)} (got {encoding!s}).",
+                )
+
+        event_strategy = _local(extra.get("eventIdentityStrategy"))
+        if event_strategy == "PositionDerivedEvent":
+            # Mirrors dal:UniquenessWitnessRequiredShape.
+            if not bool(extra.get("uniquenessWitnessRequired", False)):
+                raise CrossAxisViolation(
+                    "UniquenessWitnessRequired", str(target),
+                    f"{where}: dal:PositionDerivedEvent requires dal:uniquenessWitnessRequired true. Two "
+                    "writers that both win merge into one occurrence subject, so only a per-occurrence "
+                    "witness (txn-claim cardinality) reveals the fork (guide F5).",
+                )
+            # Mirrors dal:OccurrenceNamespaceDerivationRequiredShape.
+            if extra.get("occurrenceNamespaceDerivation") is None:
+                raise CrossAxisViolation(
+                    "OccurrenceNamespaceDerivationRequired", str(target),
+                    f"{where}: dal:PositionDerivedEvent requires dal:occurrenceNamespaceDerivation, so that "
+                    "two targets never share an occurrence namespace (iri-identity-patterns.md §10.1).",
+                )
+            # Joins the epoch dimension: position-derived IRIs are reused after
+            # a double restore unless the epoch is durable and guarded.
+            epoch = dimensions.get("epochGuardScope")
+            unsafe = []
+            if epoch is not None and _local(epoch.value) == "RowLevelGuardOnly":
+                unsafe.append("dal:RowLevelGuardOnly")
+            if epoch is not None and _local(epoch.extra.get("epochAuthority")) == "StoreLocalEpoch":
+                unsafe.append("dal:StoreLocalEpoch")
+            if unsafe:
+                out.append(_warning(
+                    "PositionEventUnsafeEpoch", target,
+                    f"{where}: position-derived occurrence IRIs with {' and '.join(unsafe)}: a restore can "
+                    "reissue a position already used in an IRI that left the dataset "
+                    "(iri-identity-patterns.md §10.3).",
+                ))
+
+        # Joins the uniqueness constraints: a claimed surrogate needs a key.
+        if strategy == "SurrogateClaimedIdentity" and name in ("identity:EntityRole", "identity:AggregateRootRole"):
+            if not uniqueness:
+                raise CrossAxisViolation(
+                    "ClaimedIdentityWithoutKey", str(target),
+                    f"{where}: dal:SurrogateClaimedIdentity needs at least one dal:UniquenessConstraint on "
+                    "the target to supply the key the claim is minted from (iri-identity-patterns.md §6.4).",
+                )
+    return out
+
+
 def check_mixed_receipt_model(graph: Graph, resolved_by_target: dict[Target, dict[str, ResolvedDimension]]) -> list[Diagnostic]:
     """Row 6 (sketch §3.5): a warning, not an error. Two targets covered by
     the same GraphPatternScope resolving to different receipt models."""

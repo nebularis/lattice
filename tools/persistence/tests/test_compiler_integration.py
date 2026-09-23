@@ -32,6 +32,7 @@ POSITIVE_FIXTURES = [
     ("epoch-dataset-level-guard.ttl", "https://example.org/lending#LoanApplication"),
     ("append-stream-dataset-guard.ttl", "https://example.org/lending#DecisionStream"),
     ("extension-properties.ttl", "https://example.org/lending#Facility"),
+    ("identity-epoch-privacy-profile.ttl", "https://example.org/lending#Claimant"),
 ]
 
 NEGATIVE_FIXTURES = [
@@ -41,9 +42,15 @@ NEGATIVE_FIXTURES = [
     "invalid-commitgrain-opseq.ttl",
     "invalid-uniqueness-outside-boundary.ttl",
     "invalid-lagwindow-missing.ttl",
+    "invalid-claimed-identity-without-key.ttl",
+    "invalid-position-event-without-derivation.ttl",
 ]
 
-SHACL_NEGATIVE_FIXTURES = ["invalid-compositeboundary-missing-shape.ttl", "invalid-lagwindow-missing.ttl"]
+SHACL_NEGATIVE_FIXTURES = [
+    "invalid-compositeboundary-missing-shape.ttl",
+    "invalid-lagwindow-missing.ttl",
+    "invalid-position-event-without-derivation.ttl",
+]
 
 ALL_FIXTURES = [p.name for p in EXAMPLES_DIR.glob("*.ttl")]
 

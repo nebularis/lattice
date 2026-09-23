@@ -34,7 +34,7 @@ The directory is named `persistence` because the compiler, and any future housek
 | Retention mode | `dal:ReceiptProfile` | `dal:PrefixOnlyRetention`, `dal:BucketAnyRetention`, plus `dal:asOfFloorSource` |
 | Meta topology | `dal:MetaTopologyProfile` | `dal:SharedSharded`, `dal:PerAggregate`, plus `dal:txnShards`/`dal:logShards`/`dal:keyShards`/`dal:registryGraph` |
 | Uniqueness | `dal:UniquenessConstraint` | many-valued: a target may carry zero, one, or several distinct keyed constraints; each may carry a `dal:mergeRelation` and a `dal:claimScheme` |
-| Identity minting | `dal:IdentityProfile` | one `dal:IdentityStrategy` per `dal:ResourceRole` — see §10 |
+| Identity minting | `dal:IdentityProfile` | one `dal:IdentityStrategy` per `dal:ResourceRole`, each role resolved as its own dimension `identity:<Role>`, the winning profile node as a unit — see §9 |
 | Epoch authority | `dal:EpochProfile` | `dal:ExternalHighWaterMark`, `dal:RestoreControlledEpoch`, `dal:WriterStartRefusal`, `dal:StoreLocalEpoch` (warned) |
 | Privacy and erasure | `dal:PrivacyProfile` | `dal:PersonalData`/`dal:InternalData`/`dal:PublicData`, `dal:PerSubjectGraphDrop`/`dal:CryptoShred`/`dal:NoErasure` |
 
@@ -156,6 +156,23 @@ ex:ClaimantIdentity a dal:IdentityProfile ;
     dal:identityStrategy   dal:SurrogateClaimedIdentity ;      # mutable, sensitive key (an email)
     dal:namingAuthority    "adopter" .
 
+ex:ClaimantEmailUnique a dal:UniquenessConstraint ;           # the key the claimed surrogate is minted from;
+    dal:constraintId        "claimant-email-unique" ;          # without it the compiler refuses the identity profile
+    dal:appliesTo            ex:ClaimantEntity ;
+    dal:keyProperty          ( ex:email ) ;
+    dal:scopeProperty        ex:tenant ;
+    dal:normalizePipeline    dal:NfkcTrimCasefold ;
+    dal:onViolation          dal:Reject .
+
+ex:ClaimantEvents a dal:IdentityProfile ;                      # a second role for the same class
+    dal:appliesTo                     ex:ClaimantEntity ;
+    dal:resourceRole                  dal:EventOccurrenceRole ;
+    dal:identityStrategy              dal:DerivedHashIdentity ;
+    dal:eventIdentityStrategy         dal:PositionDerivedEvent ;
+    dal:occurrenceNamespaceDerivation dal:HashedTargetDerivation ;
+    dal:uniquenessWitnessRequired     true ;
+    dal:digestScheme                  ex:ClaimantEventDigest .     # SHA-256, 128 bits, base32
+
 ex:ClaimantEpoch a dal:EpochProfile ;
     dal:appliesTo          ex:ClaimantEntity ;
     dal:epochAuthority     dal:ExternalHighWaterMark ;
@@ -178,7 +195,9 @@ ex:ClaimantReceipts a dal:DataAccessProfile ;
 
 `dal:PersonalDataReceiptCompatibilityShape` (`shapes/constraints.ttl`) rejects this same scope if `dal:receiptModel` were `dal:PatchLog` or `dal:SnapshotPerRevision` without `dal:perSubjectScoped true` or `dal:erasureStrategy dal:CryptoShred` — not because the framework prefers `dal:ReceiptOnly`, but because the other two models keep a second, immutable copy of the payload that a per-subject graph drop cannot reach. An adopter who genuinely needs replay over personal data selects `dal:CryptoShred` instead and specifies key custody and an as-of failure policy for shredded revisions.
 
-Full fixture set for this and the other new dimensions: [`examples/identity-epoch-privacy-profile.ttl`](examples/identity-epoch-privacy-profile.ttl) (still to be authored — it spans identity, epoch, and privacy together, and as of `persistence-compiler-iri-sync` Slice 1, 2026-09-23, only the epoch dimension's compiler wiring exists; see [ADR-A82](../../docs/architecture/decisions/ADR-A82-framework-neutral-identity-pattern-selection.md)'s consequence that this is a separately scoped slice). Slice 1 authored two narrower, epoch-only fixtures instead: [`examples/epoch-dataset-level-guard.ttl`](examples/epoch-dataset-level-guard.ttl) and [`examples/warning-epoch-unsafe-restore.ttl`](examples/warning-epoch-unsafe-restore.ttl). [`examples/append-stream-dataset-guard.ttl`](examples/append-stream-dataset-guard.ttl) covers an append-only stream under the dataset-level guard. Slice 2 added [`examples/extension-properties.ttl`](examples/extension-properties.ttl), every extension property declared on its own profile node, and [`examples/invalid-lagwindow-missing.ttl`](examples/invalid-lagwindow-missing.ttl), refused by `dal:LagWindowRequiredShape` and by the compiler.
+The compiler resolves the two identity roles independently, `identity:EntityRole` and `identity:EventOccurrenceRole` (`persistence-compiler-iri-sync` Slice 3). The privacy profile is validated by SHACL and is resolved by the compiler from Slice 4.
+
+Full fixture: [`examples/identity-epoch-privacy-profile.ttl`](examples/identity-epoch-privacy-profile.ttl), with two Slice 3 negative fixtures, [`examples/invalid-claimed-identity-without-key.ttl`](examples/invalid-claimed-identity-without-key.ttl) and [`examples/invalid-position-event-without-derivation.ttl`](examples/invalid-position-event-without-derivation.ttl). Slice 1 authored two epoch-only fixtures: [`examples/epoch-dataset-level-guard.ttl`](examples/epoch-dataset-level-guard.ttl) and [`examples/warning-epoch-unsafe-restore.ttl`](examples/warning-epoch-unsafe-restore.ttl). [`examples/append-stream-dataset-guard.ttl`](examples/append-stream-dataset-guard.ttl) covers an append-only stream under the dataset-level guard. Slice 2 added [`examples/extension-properties.ttl`](examples/extension-properties.ttl), every extension property declared on its own profile node, and [`examples/invalid-lagwindow-missing.ttl`](examples/invalid-lagwindow-missing.ttl), refused by `dal:LagWindowRequiredShape` and by the compiler.
 
 ## 10. Repository layout
 

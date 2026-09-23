@@ -26,7 +26,7 @@ from .capability import (
 from .model import DIMENSIONS, Diagnostic, ResolvedDimension
 from .namespaces import DAL
 from .operations import GeneratedOperation, select_operations
-from .resolver import resolve_dimension, resolve_uniqueness
+from .resolver import resolve_dimension, resolve_identity, resolve_uniqueness
 from .scopes import Target, discover_targets
 
 
@@ -40,6 +40,9 @@ class CompiledTarget:
     capability_spec: CapabilitySpec | None
     check: CapabilityCheckResult | None
     diagnostics: list[Diagnostic] = field(default_factory=list)
+    # Slice 3: role-qualified identity dimensions, identity:<Role> -> resolved
+    # strategy. Only declared roles appear (no baseline identity strategy).
+    identity: dict[str, ResolvedDimension] = field(default_factory=dict)
 
 
 class CompileError(Exception):
@@ -79,9 +82,11 @@ def compile_targets(
                 dim: resolve_dimension(graph, target, dim, spec) for dim in DIMENSIONS
             }
             uniqueness = resolve_uniqueness(graph, target)
+            identity = resolve_identity(graph, target, spec)
             resolved_by_target[target] = dimensions
 
             diagnostics = validator.check_cross_axis(graph, target, dimensions, uniqueness)
+            diagnostics += validator.check_identity(graph, target, dimensions, identity, uniqueness)
 
             requirement = compute_requirement(dimensions, uniqueness)
             check = check_requirement(requirement, spec) if spec is not None else None
@@ -100,6 +105,7 @@ def compile_targets(
                     capability_spec=spec,
                     check=check,
                     diagnostics=diagnostics,
+                    identity=identity,
                 )
             )
         except Exception as e:
@@ -132,8 +138,8 @@ def emit_compiled_profile(out: Graph, compiled: CompiledTarget) -> URIRef:
     if compiled.target.deployment is not None:
         out.add((profile, DAL.forDeployment, compiled.target.deployment))
 
-    for dim in DIMENSIONS:
-        rd = compiled.dimensions[dim]
+    all_dimensions = [(dim, compiled.dimensions[dim]) for dim in DIMENSIONS] + list(compiled.identity.items())
+    for dim, rd in all_dimensions:
         node = BNode()
         out.add((node, DAL.dimension, RdfLiteral(dim)))
         if isinstance(rd.value, RdfLiteral):

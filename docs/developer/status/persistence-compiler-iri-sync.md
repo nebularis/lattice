@@ -3,8 +3,8 @@
 # Persistence Compiler / IRI-Patterns Sync — Status
 
 **Unit ID:** `persistence-compiler-iri-sync`
-**Status:** ✅ Slices 1 and 2 complete, 526/526 tests passing. Slices 4–6 not started, Slice 3 blocked on a human decision
-**Last updated:** 2026-09-23 (Slice 2)
+**Status:** ✅ Slices 1–3 complete, 570/570 tests passing. Slices 4–6 not started, nothing blocked
+**Last updated:** 2026-09-23 (Slice 3)
 **Plan:** [persistence-compiler-iri-sync.md](../plans/persistence-compiler-iri-sync.md)
 **Sketch (gap analysis):** [persistence-compiler-iri-sync.md](../sketches/persistence-compiler-iri-sync.md)
 
@@ -12,12 +12,12 @@
 
 ## Is this unit complete?
 
-**No.** Two of six slices are done. Of the eight gaps in the [gap analysis](../sketches/persistence-compiler-iri-sync.md), three are closed, one is partly closed, three are open, and one (documentation) is kept current slice by slice with a final pass in Slice 6. The one live correctness gap (G1) is closed. What remains is missing coverage, and one slice (3) is blocked on a human decision.
+**No.** Three of six slices are done. Of the eight gaps in the [gap analysis](../sketches/persistence-compiler-iri-sync.md), four are closed, one is partly closed, two are open, and one (documentation) is kept current slice by slice with a final pass in Slice 6. The one live correctness gap (G1) is closed, and nothing is blocked. What remains is missing coverage in Slices 4 and 5, then the close-out.
 
 | Gap | Summary | Disposition | Where |
 |---|---|---|---|
 | G1 | Epoch guard generated the discouraged row-level shape unconditionally | ✅ Closed | Slice 1, then revised by [`iri-patterns-post-3866b21-remediation`](iri-patterns-post-3866b21-remediation.md) (row epoch rebased, not guarded) |
-| G2 | Identity minting profile unresolved | ⛔ Open, blocked | Slice 3, human decision on the resolution model |
+| G2 | Identity minting profile unresolved | ✅ Closed | Slice 3: role-qualified resolution, emitted to the compiled profile, six checks. Minting stays with the caller (decision 2) |
 | G3 | Epoch/restore configuration surface | ◐ Partly closed | Slice 1 resolves `dal:epochGuardScope` and reads `dal:epochAuthority` with its `StoreLocalEpoch` warning. Open for Slice 4: `dal:epochCoordinatorBinding`, `dal:erasureRegisterBinding`, `dal:erasureReplayOnRestore`, and making `dal:epochAuthority` its own dimension (it is still an extra, so it has the drop-off-the-winning-node problem Slice 2 fixed for the others) |
 | G4 | Privacy/erasure profile and cross-profile checks | ⏳ Open | Slice 4 |
 | G5 | Extension properties on existing profile classes | ✅ Closed | Slice 2 |
@@ -37,7 +37,7 @@ Slice 1 was implemented the same day, in Default Mode: code and tests were writt
 
 | Blocker | Detail | Resolution owner |
 |---|---|---|
-| Slice 3 resolution-model decision | Does `dal:IdentityProfile` need a `resourceRole` axis on `Target`, or a different mechanism? See [plan](../plans/persistence-compiler-iri-sync.md#human-decision-required-before-slice-3) | Human |
+| ~~Slice 3 resolution-model decision~~ | Resolved 2026-09-23: role-qualified dimensions, see [plan](../plans/persistence-compiler-iri-sync.md#slice-3--identity-minting-profile-resolution-g2) | — |
 
 Nothing blocks starting Slices 4 or 5.
 
@@ -47,7 +47,7 @@ Nothing blocks starting Slices 4 or 5.
 |---|---|---|
 | 1 | Dataset-level epoch guard (G1 — correctness) | ✅ Complete, 290/290 passing — see [VP](../validation/persistence-compiler-iri-sync-slice-1.md) |
 | 2 | Ordering/receipt/concurrency/aggregate-boundary extension properties + meta-topology sharding (G5, G6) | ✅ Complete, 526/526 passing — see [VP](../validation/persistence-compiler-iri-sync-slice-2.md) |
-| 3 | Identity minting profile resolution (G2) | Blocked on human decision |
+| 3 | Identity minting profile resolution (G2) | ✅ Complete, 570/570 passing — see [VP](../validation/persistence-compiler-iri-sync-slice-3.md) |
 | 4 | Privacy/erasure profile + cross-profile compatibility (G3 partial, G4) | Not started |
 | 5 | Uniqueness `onViolation` branching, `mergeRelation`, `ClaimScheme` rotation (G7) | Not started |
 | 6 | Documentation close-out | Not started, waits on 3–5. Items already done early are listed in the [plan](../plans/persistence-compiler-iri-sync.md#slice-6--documentation-close-out) |
@@ -78,6 +78,20 @@ Run in autonomous mode, 2026-09-23, after the plan was revised with three agreed
 
 **Found on the way**: the resolver's extras model would have dropped any property declared off the winning node (now the reason for decision 1); a new negative fixture initially failed on an unrelated `orderingGrain` tie, caught and pinned by a dedicated test; `test_determinism.py` depended on the working directory.
 
+## Slice 3 delivery detail
+
+Decisions taken with the human on 2026-09-23: role-qualified dimensions, resolve/check/emit only, four cross-checks, autonomous mode.
+
+**Code**: `resolver.py` (precedence step factored into `_select`, reused by `resolve_identity`, which resolves one `identity:<Role>` dimension per declared role, winning node as a unit), `validator.py` (`check_identity`: five refusals, one warning), `compiler.py` (identity resolved and checked per target, emitted as resolved dimensions).
+
+**Vocabulary**: `dal:DigestSchemeWellFormedShape`, `dal:OccurrenceNamespaceDerivationRequiredShape`.
+
+**Fixtures**: `identity-epoch-privacy-profile.ttl` (Worked example 4, handed over from `rdf-sparql-patterns-remediation`), `invalid-claimed-identity-without-key.ttl`, `invalid-position-event-without-derivation.ttl`.
+
+**Docs**: `tools/persistence/README.md` "Identity is resolved per resource role"; `ontology/persistence/README.md` §3 and §9 (the worked example gained the uniqueness constraint its claimed identity needs, and a second role); `iri-identity-patterns.md` §14.2 records which compilation responsibilities are implemented, and now says "warn", consistent with §10.3, for a position-derived event without a durable epoch.
+
+**Found on the way**: Worked example 4 as written would have been refused by the new claimed-key check; `iri-identity-patterns.md` §14.2 asked the compiler to refuse where §10.3 says warn, and to generate minting functions, which decision 2 defers.
+
 ## Severity note
 
 Slice 1 addresses a live correctness gap, not a coverage gap: the compiler's existing CAS/tombstone templates generate the epoch-guard shape the vocabulary now explicitly documents as unsafe (`dal:RowLevelGuardOnly`), unconditionally, for every deployment, with no way to configure the safe alternative (`dal:DatasetLevelGuard`). Recommend prioritising Slice 1 ahead of the others regardless of overall sequencing.
@@ -90,7 +104,7 @@ Slice 1 addresses a live correctness gap, not a coverage gap: the compiler's exi
 | After Slice 1 | **290 passing, 0 failing** (confirmed by an actual run, 2026-09-23) |
 | After `iri-patterns-post-3866b21-remediation` template alignment | **471 passing** (2026-09-23, see [that unit's status](iri-patterns-post-3866b21-remediation.md)) |
 | After Slice 2 | **526 passing, 0 failing** (autonomous run, 2026-09-23) |
-| After Slice 3 | TBD |
+| After Slice 3 | **570 passing, 0 failing** (autonomous run, 2026-09-23) |
 | After Slice 4 | TBD |
 | After Slice 5 | TBD |
 
@@ -100,10 +114,9 @@ Slice 1 addresses a live correctness gap, not a coverage gap: the compiler's exi
 mise run check:persistence
 ```
 
-Result as of 2026-09-23 (after Slice 2): `526 passed`.
+Result as of 2026-09-23 (after Slice 3): `570 passed`.
 
 ## Next steps
 
-1. Human resolves the Slice 3 blocker (can happen in parallel with Slices 4 and 5).
-2. Proceed to Slice 4 or 5 (independent of each other and of Slice 3). Slice 4 also takes the G3 remainder listed above.
+1. Proceed to Slice 4 or 5 (independent of each other). Slice 4 also takes the G3 remainder listed above and exercises Worked example 4's privacy profile.
 3. Update this file after every slice lands, per the Documentation Lifecycle rule that this status record is the sole authoritative live state for this unit.

@@ -3,7 +3,7 @@
 # RDF/SPARQL Implementation Patterns — Status Record
 
 **Unit:** `rdf-sparql-patterns-phase`
-**Status:** Slices 1 and 2 complete. ADR-A78/A79/A80 ratified. The compiler's re-sync with the vocabulary extended on 2026-09-23 is in progress in [`persistence-compiler-iri-sync`](persistence-compiler-iri-sync.md) (Slices 1–2 of 6 done). Slice 3 (housekeeping first cut) not started.
+**Status:** Slices 1 and 2 complete. ADR-A78/A79/A80 ratified. The compiler's re-sync with the vocabulary extended on 2026-09-23 is in progress in [`persistence-compiler-iri-sync`](persistence-compiler-iri-sync.md) (Slices 1–3 of 6 done). Slice 3 (housekeeping first cut) not started.
 **Last updated:** 2026-09-23 (disposition pass; Slice 2 content below is as delivered on 2026-09-22)
 **Owner:** Agent (autonomous execution authorised by the human; Slice 2 delivered without further pause)
 
@@ -19,7 +19,7 @@ ADR-A78, ADR-A79, and ADR-A80 are ratified (Status: Accepted).
 
 **2026-09-23 update (superseded by the paragraph that follows)**: `ontology/persistence/spec/persistence.ttl` and `shapes/constraints.ttl` were substantially extended by the IRI-patterns remediation (commit `c276afb`) — three new profile dimensions, extensions to six existing ones, eight new SHACL shapes. None of it is consumed by `tools/persistence`; the 239 passing tests above exercise only the pre-`c276afb` vocabulary subset, which is still valid and unmodified, but no longer the complete picture. See [persistence-compiler-iri-sync.md](persistence-compiler-iri-sync.md) for the gap analysis and fix plan.
 
-**2026-09-23, current position**: the sync unit has closed the epoch-guard correctness gap and the extension-property gap (526 tests), and a second review of the guide ([`iri-patterns-post-3866b21-remediation`](iri-patterns-post-3866b21-remediation.md), complete) corrected the guide and realigned the templates. The generated SPARQL's caller contract changed: payload and log-bucket lists are Mustache request-time slots, and every write records a request digest (see `tools/persistence/README.md`, "Using the generated SPARQL directly"). Identity, privacy and claim-scheme profiles are still unwired (sync Slices 3–5).
+**2026-09-23, current position**: the sync unit has closed the epoch-guard correctness gap and the extension-property gap (526 tests), and a second review of the guide ([`iri-patterns-post-3866b21-remediation`](iri-patterns-post-3866b21-remediation.md), complete) corrected the guide and realigned the templates. The generated SPARQL's caller contract changed: payload and log-bucket lists are Mustache request-time slots, and every write records a request digest (see `tools/persistence/README.md`, "Using the generated SPARQL directly"). Identity profiles are resolved per resource role (sync Slice 3); privacy and claim-scheme profiles are still unwired (sync Slices 4–5).
 
 **Slice 3 (housekeeping first cut) has not been started** and remains scoped as written in the plan.
 

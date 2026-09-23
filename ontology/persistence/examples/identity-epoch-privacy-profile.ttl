@@ -1,0 +1,63 @@
+# Worked example 4 (README section 9): identity, epoch and privacy for one
+# class holding personal data. Identity is resolved per resource role
+# (persistence-compiler-iri-sync Slice 3): the claimant's own IRI is an
+# opaque surrogate claimed by email, while its event occurrences are
+# position-derived. The privacy profile is validated by SHACL now and
+# resolved by the compiler from Slice 4.
+@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix ex:  <https://example.org/lending#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ex:ClaimantEntity a dal:ClassScope ;
+    dal:targetClass ex:Claimant ;
+    dal:priority "20"^^xsd:integer .
+
+ex:ClaimantIdentity a dal:IdentityProfile ;
+    dal:appliesTo          ex:ClaimantEntity ;
+    dal:resourceRole       dal:EntityRole ;
+    dal:identityStrategy   dal:SurrogateClaimedIdentity ;
+    dal:namingAuthority    "adopter" .
+
+ex:ClaimantEmailUnique a dal:UniquenessConstraint ;
+    dal:constraintId        "claimant-email-unique" ;
+    dal:appliesTo            ex:ClaimantEntity ;
+    dal:keyProperty          ( ex:email ) ;
+    dal:scopeProperty        ex:tenant ;
+    dal:normalizePipeline    dal:NfkcTrimCasefold ;
+    dal:onViolation          dal:Reject ;
+    dal:minEnforcementLevel  dal:Transactional .
+
+ex:ClaimantEvents a dal:IdentityProfile ;
+    dal:appliesTo                     ex:ClaimantEntity ;
+    dal:resourceRole                  dal:EventOccurrenceRole ;
+    dal:identityStrategy              dal:DerivedHashIdentity ;
+    dal:eventIdentityStrategy         dal:PositionDerivedEvent ;
+    dal:occurrenceNamespaceDerivation dal:HashedTargetDerivation ;
+    dal:uniquenessWitnessRequired     true ;
+    dal:digestScheme                  ex:ClaimantEventDigest ;
+    dal:namingAuthority               "LATTICE runtime service" .
+
+ex:ClaimantEventDigest a dal:DigestScheme ;
+    dal:digestFunction          "SHA-256" ;
+    dal:digestWidthBits         128 ;
+    dal:digestEncoding          "base32" ;
+    dal:verifyFullDigestOnWrite true .
+
+ex:ClaimantEpoch a dal:EpochProfile ;
+    dal:appliesTo               ex:ClaimantEntity ;
+    dal:epochAuthority          dal:ExternalHighWaterMark ;
+    dal:epochCoordinatorBinding "postgres://coord/epoch_watermark" ;
+    dal:epochGuardScope         dal:DatasetLevelGuard ;
+    dal:erasureRegisterBinding  "postgres://coord/erasure_register" ;
+    dal:erasureReplayOnRestore  true .
+
+ex:ClaimantPrivacy a dal:PrivacyProfile ;
+    dal:appliesTo          ex:ClaimantEntity ;
+    dal:privacyClass       dal:PersonalData ;
+    dal:erasureStrategy    dal:PerSubjectGraphDrop ;
+    dal:erasurePrecedence  dal:ErasureWins .
+
+ex:ClaimantReceipts a dal:DataAccessProfile ;
+    dal:appliesTo          ex:ClaimantEntity ;
+    dal:receiptModel       dal:ReceiptOnly ;
+    dal:perSubjectScoped   true .

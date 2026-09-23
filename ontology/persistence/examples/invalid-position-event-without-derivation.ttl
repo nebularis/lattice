@@ -1,0 +1,16 @@
+# Negative fixture for persistence-compiler-iri-sync Slice 3: position-
+# derived occurrence identity with no occurrence-namespace derivation, so
+# two targets could mint the same occurrence IRI. Refused by the compiler
+# (OccurrenceNamespaceDerivationRequired) and by
+# dal:OccurrenceNamespaceDerivationRequiredShape.
+@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix ex:  <https://example.org/lending#> .
+
+ex:RepaymentScope a dal:ClassScope ; dal:priority 10 ; dal:targetClass ex:Repayment .
+
+ex:RepaymentEvents a dal:IdentityProfile ;
+    dal:appliesTo                 ex:RepaymentScope ;
+    dal:resourceRole              dal:EventOccurrenceRole ;
+    dal:identityStrategy          dal:RandomSurrogateIdentity ;
+    dal:eventIdentityStrategy     dal:PositionDerivedEvent ;
+    dal:uniquenessWitnessRequired true .

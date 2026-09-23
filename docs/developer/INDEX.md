@@ -25,14 +25,14 @@ Each work unit has:
 
 ## Persistence and IRI patterns: the change package at a glance
 
-Is it complete? **No.** The documentation is complete and every review is closed. The compiler is two slices into a six-slice re-sync, housekeeping has not started, and the identity decisions await ratification. Row by row (as of 2026-09-23):
+Is it complete? **No.** The documentation is complete and every review is closed. The compiler is three slices into a six-slice re-sync, housekeeping has not started, and the identity decisions await ratification. Row by row (as of 2026-09-23):
 
 | Unit | State | Remaining | Blocked on |
 |---|---|---|---|
 | `rdf-sparql-patterns-phase` Slices 1–2 (guide, `ontology/persistence`, `tools/persistence`) | ✅ Complete | — | — |
 | `rdf-sparql-patterns-remediation` (first review of the guide) | ✅ Complete, closed | nothing; deferred items handed to the units below | — |
 | `iri-patterns-post-3866b21-remediation` (second review, plus template alignment) | ✅ Complete, closed | nothing; follow-ons listed in its [status](status/iri-patterns-post-3866b21-remediation.md#is-this-unit-complete) | — |
-| `persistence-compiler-iri-sync` (compiler catches up with the vocabulary) | 🚧 Slices 1–2 of 6 done, 526 tests | Slice 3 identity, Slice 4 privacy/epoch bindings, Slice 5 uniqueness policies, Slice 6 close-out. Gap table in its [status](status/persistence-compiler-iri-sync.md#is-this-unit-complete) | Slice 3: human decision on the resolution model |
+| `persistence-compiler-iri-sync` (compiler catches up with the vocabulary) | 🚧 Slices 1–3 of 6 done, 570 tests | Slice 4 privacy/epoch bindings, Slice 5 uniqueness policies, Slice 6 close-out. Gap table in its [status](status/persistence-compiler-iri-sync.md#is-this-unit-complete) | — |
 | `rdf-sparql-patterns-phase` Slice 3 / `platform-housekeeping` | ⏳ Not started | the whole slice, including the retention and audit changes noted in its plan | — |
 | P0.1.3: ADR-A82 and `iri-identity-patterns.md` | 📝 Drafted and revised, Proposed | human ratification | Phase 0 ratification pass |
 
@@ -47,7 +47,7 @@ Is it complete? **No.** The documentation is complete and every review is closed
 | **Status Record** | [rdf-sparql-patterns-status.md](status/rdf-sparql-patterns-status.md) |
 | **Architecture Guide** | [docs/architecture/rdf-sparql-patterns-guide.md](../architecture/rdf-sparql-patterns-guide.md) (Slice 1) |
 | **ADRs** | ADR-A78 (persistence substrate), ADR-A79 (compiler), ADR-A80 (housekeeping) — all Accepted |
-| **Implementation** | `ontology/persistence` (Turtle vocabulary + SHACL shapes + 19 example fixtures, extended 2026-09-23), `tools/persistence` (Python compiler, 526 tests passing; identity, privacy and claim-scheme profiles not yet wired, see unit 1a) |
+| **Implementation** | `ontology/persistence` (Turtle vocabulary + SHACL shapes + 22 example fixtures, extended 2026-09-23), `tools/persistence` (Python compiler, 570 tests passing; privacy and claim-scheme profiles not yet wired, see unit 1a) |
 | **Validation Pack** | [persistence-substrate-and-compiler.md](validation/persistence-substrate-and-compiler.md) |
 | **Sync gap** | See unit 1a below |
 | **Earlier review** | `rdf-sparql-patterns-remediation`: [plan](plans/rdf-sparql-patterns-remediation.md), [status](status/rdf-sparql-patterns-remediation.md) — ✅ complete, closed |
@@ -74,12 +74,12 @@ Epic decomposition into phase plans is **no longer blocked**: the required Phase
 
 | Field | Value |
 |-------|-------|
-| **Status** | ✅ Slices 1 and 2 complete (2026-09-23), 526/526 tests passing. Slice 3 blocked on a human decision, 4 and 5 not started |
+| **Status** | ✅ Slices 1–3 complete (2026-09-23), 570/570 tests passing. Slices 4 and 5 not started, nothing blocked |
 | **Unit ID** | `persistence-compiler-iri-sync` |
 | **Sketch (gap analysis)** | [persistence-compiler-iri-sync.md](sketches/persistence-compiler-iri-sync.md) |
 | **Plan** | [persistence-compiler-iri-sync.md](plans/persistence-compiler-iri-sync.md) |
 | **Status Record** | [persistence-compiler-iri-sync.md](status/persistence-compiler-iri-sync.md) |
-| **Validation Packs** | [Slice 1](validation/persistence-compiler-iri-sync-slice-1.md), [Slice 2](validation/persistence-compiler-iri-sync-slice-2.md) |
+| **Validation Packs** | [Slice 1](validation/persistence-compiler-iri-sync-slice-1.md), [Slice 2](validation/persistence-compiler-iri-sync-slice-2.md), [Slice 3](validation/persistence-compiler-iri-sync-slice-3.md) |
 | **Triggering commit** | `c276afb` "[iri-patterns] remediate docs and update persistence ontology vocabulary" |
 
 ### Gap summary
@@ -88,7 +88,7 @@ Three new profile dimensions (`dal:IdentityProfile`, `dal:EpochProfile`, `dal:Pr
 ### Slices
 1. **✅ Complete, 290/290 passing.** Dataset-level epoch guard — `dal:epochGuardScope` resolvable, `dal:DatasetLevelGuard` template variant for the three named write shapes, warning diagnostic fires even on the platform baseline default. See the [VP](validation/persistence-compiler-iri-sync-slice-1.md).
 2. **✅ Complete, 526/526 passing.** Extension properties resolved one dimension each, baseline defaults, two refusals and six warnings mirroring the SHACL shapes, `dal:PreCreatedRow` emits `bootstrap-version-row`, request-time values as Mustache slots. See the [VP](validation/persistence-compiler-iri-sync-slice-2.md).
-3. ⛔ Identity minting profile resolution — **blocked on a human decision**: does `dal:resourceRole` need a third resolution-key axis on `Target`?
+3. **✅ Complete, 570/570 passing.** Identity resolved per resource role (`identity:<Role>`), winning profile node as a unit, emitted to the compiled profile, five refusals and one warning. See the [VP](validation/persistence-compiler-iri-sync-slice-3.md).
 4. ⏳ Privacy/erasure profile + cross-profile compatibility, plus the G3 remainder (epoch bindings, `dal:epochAuthority` as its own dimension) and the Worked example 4 fixture
 5. ⏳ Uniqueness `onViolation` branching, `mergeRelation`, `ClaimScheme` rotation
 6. ⏳ Documentation close-out (final pass; the cross-document updates it listed were done early on 2026-09-23)
@@ -259,7 +259,7 @@ No code was written and no new Phase 0→Phase 2 dependency was introduced — t
 
 ### IRI and Identity Patterns — Proposed (2026-09-23)
 
-The unratified universal IRI policy in ADR-A51 was superseded by [ADR-A82](../architecture/decisions/ADR-A82-framework-neutral-identity-pattern-selection.md). The new [IRI and Identity Patterns](../architecture/iri-identity-patterns.md) guide treats entity, aggregate, component, lineage, content-revision, graph-locator, key-claim, and event-occurrence identities as independently configurable patterns. It crosswalks those choices to the K/O/C/T/QP RDF and SPARQL patterns and specifies the future `dal:` identity-profile vocabulary boundary. The `dal:IdentityProfile` vocabulary is specified in `ontology/persistence`. Its compiler wiring is `persistence-compiler-iri-sync` Slice 3, blocked on a human decision about the resolution model. The guide and ADR-A82 were revised on 2026-09-23 by `iri-patterns-post-3866b21-remediation` and await ratification (P0.1.3). `iri-policy.md` is now a short historical record.
+The unratified universal IRI policy in ADR-A51 was superseded by [ADR-A82](../architecture/decisions/ADR-A82-framework-neutral-identity-pattern-selection.md). The new [IRI and Identity Patterns](../architecture/iri-identity-patterns.md) guide treats entity, aggregate, component, lineage, content-revision, graph-locator, key-claim, and event-occurrence identities as independently configurable patterns. It crosswalks those choices to the K/O/C/T/QP RDF and SPARQL patterns and specifies the future `dal:` identity-profile vocabulary boundary. The `dal:IdentityProfile` vocabulary is specified in `ontology/persistence`, and the compiler resolves it per resource role (`persistence-compiler-iri-sync` Slice 3, complete). The guide and ADR-A82 were revised on 2026-09-23 by `iri-patterns-post-3866b21-remediation` and await ratification (P0.1.3). `iri-policy.md` is now a short historical record.
 
 ---
 
@@ -434,7 +434,7 @@ The unratified universal IRI policy in ADR-A51 was superseded by [ADR-A82](../ar
 
 ### ✅ Complete (Ready for Handoff or Integration)
 1. RDF/SPARQL patterns guide (Slice 1)
-2. Persistence compiler (Slice 2) — 526 tests passing after the 2026-09-23 sync and remediation work; the sync itself is still in progress (see "In Progress")
+2. Persistence compiler (Slice 2) — 570 tests passing after the 2026-09-23 sync and remediation work; the sync itself is still in progress (see "In Progress")
 3. LLM training / MTP generation — 346 tests passing
 4. Repository topology (ADR-A77)
 5. MORK eligibility compiler (awaiting runtime validation, not handoff)
@@ -443,7 +443,7 @@ The unratified universal IRI policy in ADR-A51 was superseded by [ADR-A82](../ar
 
 ### 🚧 In Progress
 1. Epic decomposition (Phase 0-9 plans)
-2. Persistence compiler / IRI-patterns sync (`persistence-compiler-iri-sync`) — Slices 1–2 of 6 done, Slice 3 blocked on a human decision
+2. Persistence compiler / IRI-patterns sync (`persistence-compiler-iri-sync`) — Slices 1–3 of 6 done, nothing blocked
 3. Housekeeping first cut (Slice 3, scoped but not started)
 4. Surface MORK Phase 8 verification (SWRL reasoner integration, 1/8 items pending)
 
@@ -468,7 +468,6 @@ The unratified universal IRI policy in ADR-A51 was superseded by [ADR-A82](../ar
 | **Surface MORK Phase 8 verification** | SWRL rule load into OWL reasoner (final verification item) | 7/8 verification items complete; SWRL backend generates rules but integration needed | Resolve before Phase 9 sign-off |
 | **Surface MORK Phase 9 decomposition** | Break migration and phased rollout into slices | Phase 8 complete (except SWRL integration); Phase 9 is planned but not decomposed | Decompose after Phase 8 verification complete |
 | **Housekeeping first cut (Slice 3)** | Scaffold `platform/housekeeping` module | Compiler ready; module contracts defined in ADR-A80; job duties extended by the 2026-09-23 guide remediation | Author Slice 3 (housekeeping scaffolding) |
-| **Identity resolution model** | Decide how `dal:IdentityProfile` resolves per resource role (`persistence-compiler-iri-sync` Slice 3) | Blocks Slice 3 and epic P2.1.5 | Human decision, see the [plan](plans/persistence-compiler-iri-sync.md#human-decision-required-before-slice-3) |
 | **Store SPI** | Design runtime SPI for query execution | Compiler produces templates; runtime binding TBD | Separate epic/phase after housekeeping |
 | **MTP backend integration (Phase 7)** | Runtime API for LLM curriculum delivery | MTP generation complete; needs HTTP endpoint | Post-Phase-6 work |
 
@@ -480,6 +479,7 @@ The unratified universal IRI policy in ADR-A51 was superseded by [ADR-A82](../ar
 - [persistence-substrate-and-compiler.md](validation/persistence-substrate-and-compiler.md) — RDF patterns Slice 2
 - [persistence-compiler-iri-sync-slice-1.md](validation/persistence-compiler-iri-sync-slice-1.md) — compiler sync Slice 1
 - [persistence-compiler-iri-sync-slice-2.md](validation/persistence-compiler-iri-sync-slice-2.md) — compiler sync Slice 2
+- [persistence-compiler-iri-sync-slice-3.md](validation/persistence-compiler-iri-sync-slice-3.md) — compiler sync Slice 3
 - More to be created as each slice/phase completes
 
 ## Test Taxonomy (L0–L8)
@@ -499,7 +499,7 @@ The unratified universal IRI policy in ADR-A51 was superseded by [ADR-A82](../ar
 | Surface compiler | 61 passing | `pytest tools/surface/src/surface/test_surface.py -v` |
 | MORK compiler backends | 15 passing | `pytest tools/mork_compilers/src/mork_compilers/test_mork_compilers.py -v` |
 | LLM/MTP | 346 passing | `mise run check:mtp` |
-| Persistence compiler | 526 passing (2026-09-23) | `mise run check:persistence` |
+| Persistence compiler | 570 passing (2026-09-23) | `mise run check:persistence` |
 | Eligibility compiler | Present | `mise run check:eligibility-compiler` |
 
 ---

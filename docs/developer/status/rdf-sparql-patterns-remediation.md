@@ -62,9 +62,9 @@ The guide's worked examples use a 16-digit zero-padded revision-IRI width throug
 
 ## Deferred (not attempted in this pass)
 
-1. **Compiler wiring.** Handed over to [`persistence-compiler-iri-sync`](persistence-compiler-iri-sync.md), which owns it from here (Slices 1–2 of 6 done, 2026-09-23).
+1. **Compiler wiring.** Handed over to [`persistence-compiler-iri-sync`](persistence-compiler-iri-sync.md), which owns it from here.
 2. **New TCK test bodies.** Written as specifications in guide Chapter 27 by `iri-patterns-post-3866b21-remediation` (T-12 to T-17, the S-suite and the R-suite). The note above that "T-1 through T-13" existed was wrong: only T-1 to T-11 existed then. Executable TCK code belongs to the store SPI TCK (epic P0.5.6).
-3. **Fixture file for Worked example 4** (`examples/identity-epoch-privacy-profile.ttl`). Handed over to [`persistence-compiler-iri-sync`](persistence-compiler-iri-sync.md): the fixture spans the identity and privacy profiles, so it is authored with Slices 3 and 4.
+3. **Fixture file for Worked example 4** (`examples/identity-epoch-privacy-profile.ttl`). Handed over to [`persistence-compiler-iri-sync`](persistence-compiler-iri-sync.md) and authored in its Slice 3 (2026-09-23); its privacy part is exercised by Slice 4.
 
 ## Validation performed
 

@@ -43,7 +43,7 @@ Nothing else blocks P0.2 starting, once a human has reviewed the P0.1 ADRs (or e
 |---|---|---|---|
 | P0.1.1 | ADR-A74 | Drafted, Proposed | `data-architecture.md` §1–3, §5–7 rewrite still outstanding |
 | P0.1.2 | ADR-A75 | Drafted, Proposed | |
-| P0.1.3 | ADR-A82 + `iri-identity-patterns.md` | Drafted, Proposed, pending human review | ADR-A51's universal policy was superseded before ratification. The new guide describes configurable identity patterns and their `ontology/persistence` configuration surface (`dal:IdentityProfile`, specified; compiler wiring is `persistence-compiler-iri-sync` Slice 3, blocked on a human decision). Revised on 2026-09-23 by [`iri-patterns-post-3866b21-remediation`](iri-patterns-post-3866b21-remediation.md) (normalization, tuple-encoded digests, key rotation, store-local epoch, revision-class alignment). Ready for review. |
+| P0.1.3 | ADR-A82 + `iri-identity-patterns.md` | Drafted, Proposed, pending human review | ADR-A51's universal policy was superseded before ratification. The new guide describes configurable identity patterns and their `ontology/persistence` configuration surface (`dal:IdentityProfile`, specified, and resolved per resource role by the compiler since `persistence-compiler-iri-sync` Slice 3). Revised on 2026-09-23 by [`iri-patterns-post-3866b21-remediation`](iri-patterns-post-3866b21-remediation.md) (normalization, tuple-encoded digests, key rotation, store-local epoch, revision-class alignment). Ready for review. |
 | P0.1.4 | ADR-A54 | Drafted, Proposed | Graph-name validator (P0.3.7) not yet built |
 | P0.1.5 | ADR-A65 | Drafted, Proposed | `ontology/governance/shapes/provenance.ttl` (P0.3.6) not yet built |
 | P0.1.6 | ADR-A67 | Drafted, Proposed | |

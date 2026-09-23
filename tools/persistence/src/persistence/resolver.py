@@ -91,10 +91,15 @@ def _extras(graph: Graph, subject: URIRef, props: tuple[URIRef, ...]) -> dict:
 
 def collect_candidates(graph: Graph, target: Target, dimension: str) -> list[Candidate]:
     dedicated_class, value_prop, extra_props = _DIMENSION_SPEC[dimension]
+    subjects = set(graph.subjects(RDF.type, dedicated_class)) | set(graph.subjects(RDF.type, DAL.DataAccessProfile))
+    return _candidates_from(graph, target, subjects, value_prop, extra_props)
+
+
+def _candidates_from(
+    graph: Graph, target: Target, subjects, value_prop: URIRef, extra_props: tuple[URIRef, ...]
+) -> list[Candidate]:
     scopes_by_iri = {s.iri: s for s in all_scopes(graph)}
     candidates: list[Candidate] = []
-
-    subjects = set(graph.subjects(RDF.type, dedicated_class)) | set(graph.subjects(RDF.type, DAL.DataAccessProfile))
     for subject in subjects:
         value = graph.value(subject, value_prop)
         if value is None:
@@ -128,7 +133,20 @@ def resolve_dimension(
     capability_spec: Optional[CapabilitySpec],
 ) -> ResolvedDimension:
     candidates = collect_candidates(graph, target, dimension)
+    return _select(graph, target, dimension, candidates, capability_spec, BASELINE_DEFAULTS.get(dimension))
 
+
+def _select(
+    graph: Graph,
+    target: Target,
+    dimension: str,
+    candidates: list[Candidate],
+    capability_spec: Optional[CapabilitySpec],
+    default,
+) -> ResolvedDimension:
+    """The precedence algorithm (sketch §3.4), shared by every dimension:
+    capability filtering, highest priority, non-reasoning over reasoning,
+    and a refusal on any remaining tie."""
     dropped: list[str] = []
     if capability_spec is not None:
         kept = []
@@ -144,7 +162,7 @@ def resolve_dimension(
     if not candidates:
         return ResolvedDimension(
             dimension=dimension,
-            value=BASELINE_DEFAULTS.get(dimension),
+            value=default,
             won_by=None,
             candidate_count=0,
             dropped_for_reasoning=dropped,
@@ -184,6 +202,49 @@ def resolve_dimension(
     )
 
 
+# persistence-compiler-iri-sync Slice 3 (plan decision 1): identity is
+# resolved per resource role. Each role is its own dimension, named
+# identity:<RoleLocalName>, and the winning dal:IdentityProfile node wins as
+# a unit, so its digest scheme and event settings always travel with the
+# strategy they qualify. Only dal:IdentityProfile nodes are candidates: a
+# role-less dal:DataAccessProfile cannot say which role it configures.
+IDENTITY_EXTRAS: tuple[URIRef, ...] = (
+    DAL.digestScheme,
+    DAL.occurrenceNamespaceDerivation,
+    DAL.eventIdentityStrategy,
+    DAL.uniquenessWitnessRequired,
+    DAL.namingAuthority,
+)
+
+
+def identity_dimension(role: URIRef) -> str:
+    return "identity:" + str(role).rsplit("#", 1)[-1]
+
+
+def resolve_identity(
+    graph: Graph, target: Target, capability_spec: Optional[CapabilitySpec]
+) -> dict[str, ResolvedDimension]:
+    """Returns one resolved dimension per resource role that at least one
+    matching dal:IdentityProfile declares, keyed by ``identity:<Role>`` and
+    ordered by role IRI. Undeclared roles are absent: there is no baseline
+    identity strategy (ADR-A82)."""
+    by_role: dict[URIRef, list[URIRef]] = {}
+    for profile in graph.subjects(RDF.type, DAL.IdentityProfile):
+        role = graph.value(profile, DAL.resourceRole)
+        if isinstance(role, URIRef):
+            by_role.setdefault(role, []).append(profile)
+    out: dict[str, ResolvedDimension] = {}
+    for role in sorted(by_role, key=str):
+        name = identity_dimension(role)
+        candidates = _candidates_from(graph, target, by_role[role], DAL.identityStrategy, IDENTITY_EXTRAS)
+        if not candidates:
+            continue
+        resolved = _select(graph, target, name, candidates, capability_spec, None)
+        if resolved.value is not None:
+            out[name] = resolved
+    return out
+
+
 def resolve_uniqueness(graph: Graph, target: Target) -> list[dict]:
     """Uniqueness is many-valued, not single-winner (sketch §3.3): a target
     may carry zero, one, or several distinct keyed constraints."""
@@ -211,4 +272,11 @@ def resolve_uniqueness(graph: Graph, target: Target) -> list[dict]:
     return out
 
 
-__all__ = ["resolve_dimension", "resolve_uniqueness", "collect_candidates"]
+__all__ = [
+    "resolve_dimension",
+    "resolve_uniqueness",
+    "resolve_identity",
+    "identity_dimension",
+    "collect_candidates",
+    "IDENTITY_EXTRAS",
+]

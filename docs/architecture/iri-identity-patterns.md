@@ -23,7 +23,7 @@ The framework has three responsibilities:
 
 ## 2. Core distinctions
 
-The following distinctions are non-negotiable. A configuration may choose different concrete forms, but it must not collapse the concepts.
+The following distinctions apply throughout this document. A configuration may choose different concrete forms, but it must not collapse the concepts.
 
 | Concept | Question answered | Typical stability | Examples |
 |---|---|---|---|
@@ -53,7 +53,7 @@ RDF and OWL do not apply a unique-name assumption. A minting system can create t
 
 ## 3. Configuration model
 
-Identity configuration is a set of independently selectable dimensions. It follows the same design principle as the persistence profiles: a profile applies at a declared scope, the compiler resolves it deterministically, and a conflicting or incomplete configuration is a refusal rather than an unstated default.
+Identity configuration is a set of independently selectable dimensions. It follows the same design principle as the persistence profiles: a profile applies at a declared scope, the compiler resolves it deterministically, and a conflicting or incomplete configuration refused.
 
 | Dimension | Selection question | Examples |
 |---|---|---|
@@ -760,12 +760,14 @@ An initial slice now specifies most of this extension in `ontology/persistence` 
 The compiler should:
 
 1. Resolve one identity profile per target and resource role.
-2. Refuse incompatible selections, such as a mutable-key strategy without alias policy, a position-derived event without epoch durability, or a derived hash without exact digest parameters.
+2. Refuse incompatible selections, such as a mutable-key strategy without alias policy or a derived hash without exact digest parameters, and warn on a position-derived event without a durable, dataset-guarded epoch (warned, not refused, per §10.3).
 3. Generate minting functions, validators, test vectors, claim templates, and structured metadata bindings.
 4. Preserve adopted identifiers and emit adapters rather than transforming them.
 5. Emit explicit requirements for store capabilities, allocation services, key management, and retention behavior.
 
 The compiler must not infer a profile from a string prefix, ontology class name, or current storage location.
+
+**Implemented today** (`tools/persistence`, `persistence-compiler-iri-sync` Slice 3, 2026-09-23): item 1, with each role resolved as its own dimension and the winning profile node taken as a unit, and item 2 for digest schemes, uniqueness witnesses, occurrence-namespace derivation, a claimed surrogate with no uniqueness constraint, and the epoch warning. Not yet implemented: the alias-policy check (`dal:AliasResolutionStrategy` is still a candidate term) and items 3–5. The compiler records the resolved identity profile per role in the compiled profile, and the application mints from it, because minting needs the normalization pipeline and the claim secret.
 
 ### 14.3 Validation requirements
 

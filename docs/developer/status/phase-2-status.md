@@ -21,7 +21,7 @@ Decomposed from the epic on 2026-09-22 as a rolling-wave placeholder, per the ep
 |---|---|
 | Phase 1 exit gate | Hard dependency |
 | Full VP-level slice expansion | Scheduled at P1.11.3, not yet done |
-| Identity-profile resolution in `tools/persistence` | P2.1.5 mints IRIs per the target's `dal:IdentityProfile`, which the compiler does not resolve until [`persistence-compiler-iri-sync`](persistence-compiler-iri-sync.md) Slice 3 lands. That slice is blocked on a human decision |
+| ~~Identity-profile resolution in `tools/persistence`~~ | Resolved 2026-09-23: [`persistence-compiler-iri-sync`](persistence-compiler-iri-sync.md) Slice 3 resolves `dal:IdentityProfile` per resource role, which P2.1.5 reads. Minting stays in P2.1.5 |
 
 ## Milestone tracker
 

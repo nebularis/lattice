@@ -3,7 +3,7 @@
 # Persistence Compiler / IRI-Patterns Sync — Plan
 
 **Unit ID:** `persistence-compiler-iri-sync`
-**Status:** Slices 1 and 2 complete — see [persistence-compiler-iri-sync.md](../status/persistence-compiler-iri-sync.md)
+**Status:** Slices 1–3 complete — see [persistence-compiler-iri-sync.md](../status/persistence-compiler-iri-sync.md)
 **Sketch (gap analysis):** [persistence-compiler-iri-sync.md](../sketches/persistence-compiler-iri-sync.md)
 **Governing ADRs:** ADR-A78 (persistence substrate), ADR-A79 (compiler toolchain), ADR-A82 (framework-neutral identity pattern selection)
 **New ADR required for this plan itself:** No. Every dimension this plan wires already exists, ratified, in `ontology/persistence/spec/persistence.ttl`. This is compiler catch-up, not a new design.
@@ -73,13 +73,26 @@ A positive and negative pair per check. Per-property resolution from a separate 
 
 ## Slice 3 — Identity minting profile resolution (G2)
 
-**Blocked on a human decision**, per the sketch's G2 finding: does `dal:resourceRole` become a third resolution key alongside `Target`, a new `ScopeInfo`/scope-kind concept, or something else? This is an architecture question, not an implementation detail — do not start this slice until that is settled.
+**Mode:** autonomous (granted 2026-09-23).
 
-Once resolved:
+### Decisions (agreed 2026-09-23)
 
-- Wire `dal:IdentityProfile` (`resourceRole`, `identityStrategy`, `namingAuthority`) and its dependent classes (`dal:DigestScheme`, `dal:OccurrenceNamespaceDerivation`, `dal:EventIdentityStrategy`, `dal:uniquenessWitnessRequired`) into resolution, per whatever resolution-key shape the decision settles on.
-- Python-level checks mirroring `DigestSchemeRequiredShape` and `UniquenessWitnessRequiredShape`.
-- Tests: at minimum, one fixture per `dal:ResourceRole` value showing distinct identity strategies resolve correctly for the same target class at different roles (the scenario that motivates the resolution-key question in the first place).
+1. **Role-qualified dimensions.** `Target` stays `(class, deployment)`. Each `dal:ResourceRole` is its own dimension, named `identity:<RoleLocalName>` (for example `identity:EntityRole`), resolved per target by the existing precedence algorithm among `dal:IdentityProfile` nodes that name that role. The winning `dal:IdentityProfile` node wins as a unit: its `dal:digestScheme`, `dal:occurrenceNamespaceDerivation`, `dal:eventIdentityStrategy`, `dal:uniquenessWitnessRequired` and `dal:namingAuthority` come from the same node, because they only have meaning next to its strategy. This differs deliberately from Slice 2's per-property resolution. Only roles that some profile declares are emitted, with no baseline default (ADR-A82: the framework does not pick an identity pattern).
+2. **Resolve, check, emit.** Slice 3 generates no SPARQL. Resolved identity dimensions go into the compiled profile (`dal:resolvedValue` the strategy, `dal:wonBy` the profile node) for the caller that mints IRIs (epic P2.1.5). Minting stays in the application, where the normalization pipeline and HMAC secret live.
+3. **Checks** (Python, on resolved values):
+
+| Check | Severity | SHACL |
+|---|---|---|
+| `dal:DerivedHashIdentity` or `dal:ContentAddressedIdentity` without a digest scheme giving function, width and encoding | ERROR | existing `dal:DigestSchemeRequiredShape` |
+| a digest scheme whose `dal:digestWidthBits` is not a positive multiple of 8, or whose `dal:digestEncoding` is not `lowercase-hex`, `base32` or `base64url` | ERROR | new `dal:DigestSchemeWellFormedShape` |
+| `dal:PositionDerivedEvent` without `dal:uniquenessWitnessRequired true` | ERROR | existing `dal:UniquenessWitnessRequiredShape` |
+| `dal:PositionDerivedEvent` without `dal:occurrenceNamespaceDerivation` | ERROR | new `dal:OccurrenceNamespaceDerivationRequiredShape` |
+| `dal:EntityRole` or `dal:AggregateRootRole` resolved to `dal:SurrogateClaimedIdentity` with no `dal:UniquenessConstraint` on the target | ERROR | Python only (a resolved cross-profile join) |
+| `dal:PositionDerivedEvent` while the resolved epoch configuration is `dal:StoreLocalEpoch` or `dal:RowLevelGuardOnly` (the baseline included) | WARNING | Python only |
+
+### Tests
+
+One fixture per `dal:ResourceRole` resolving independently for one class. A namespace-wide profile overridden per role by a class-level one. Equal-priority ambiguity within one role. Whole-node resolution (a digest scheme never mixes across nodes). No default for an undeclared role. Emission of `identity:` dimensions. A positive and negative case per check. Worked example 4's fixture (`identity-epoch-privacy-profile.ttl`) is authored here, since its identity and epoch parts compile now; its privacy part is exercised by Slice 4.
 
 ## Slice 4 — Privacy/erasure profile and cross-profile compatibility (G3 partial, G4)
 
@@ -87,7 +100,7 @@ Once resolved:
 - Wire the remaining `dal:EpochProfile` surface not needed for Slice 1's guard-shape decision: `epochCoordinatorBinding`, `erasureRegisterBinding`, `erasureReplayOnRestore`.
 - Python-level checks mirroring `PersonalDataRequiresErasureShape` and `PersonalDataReceiptCompatibilityShape` — the latter is a genuine cross-profile-type join (a `PrivacyProfile` and a `ReceiptProfile` sharing one `dal:appliesTo` scope), which no existing Python check does today; this is new shape of validation for `validator.py`, not just a new rule.
 - Make `dal:epochAuthority` its own resolved dimension, as Slice 2 did for the extension properties (today it is read only from the node that declares `dal:epochGuardScope`).
-- Author `ontology/persistence/examples/identity-epoch-privacy-profile.ttl`, the fixture for `ontology/persistence/README.md` Worked example 4, handed over from `rdf-sparql-patterns-remediation`'s Deferred item 3. Its identity part compiles only once Slice 3 lands.
+- Exercise the privacy part of `ontology/persistence/examples/identity-epoch-privacy-profile.ttl` (Worked example 4, authored in Slice 3).
 - Tests: the cross-profile join is the interesting case — a fixture with matching scope but incompatible receipt model, and a fixture with matching scope and `dal:CryptoShred`/`dal:perSubjectScoped true` that correctly passes.
 
 ## Slice 5 — Uniqueness: `onViolation` branching, `mergeRelation`, `ClaimScheme` rotation (G7)
@@ -123,6 +136,8 @@ Slice 1 should land first given its severity, but nothing structurally blocks st
 ## Human decision required before Slice 3
 
 **Does resolving `dal:IdentityProfile` require extending the `Target` model with a `resourceRole` axis, or is there a better-fitting mechanism?** See the sketch's G2 finding for the concrete scenario that forces the question (one aggregate class needing different identity strategies for its own entity identity versus its event occurrences' identity, simultaneously).
+
+**Resolved 2026-09-23:** neither a `Target` axis nor a new scope kind. Each role is its own resolved dimension (Slice 3, decision 1).
 
 ## Validation approach
 

@@ -164,6 +164,31 @@ dal:UniquenessWitnessRequiredShape
               FILTER NOT EXISTS { $this dal:uniquenessWitnessRequired true }
             }""" ] .
 
+dal:DigestSchemeWellFormedShape
+    a sh:NodeShape ;
+    sh:targetClass dal:DigestScheme ;
+    sh:sparql [
+        sh:message "dal:digestWidthBits must be a positive multiple of 8, and dal:digestEncoding one of lowercase-hex, base32 or base64url: width and alphabet are identity-bearing (iri-identity-patterns.md section 7.4)." ;
+        sh:prefixes dal: ;
+        sh:select """
+            SELECT $this WHERE {
+              { $this dal:digestWidthBits ?w . FILTER (?w <= 0 || FLOOR(?w / 8) * 8 != ?w) }
+              UNION
+              { $this dal:digestEncoding ?e . FILTER (?e NOT IN ("lowercase-hex", "base32", "base64url")) }
+            }""" ] .
+
+dal:OccurrenceNamespaceDerivationRequiredShape
+    a sh:NodeShape ;
+    sh:targetClass dal:IdentityProfile ;
+    sh:sparql [
+        sh:message "dal:PositionDerivedEvent requires dal:occurrenceNamespaceDerivation, so that two targets never share an occurrence namespace (iri-identity-patterns.md section 10.1)." ;
+        sh:prefixes dal: ;
+        sh:select """
+            SELECT $this WHERE {
+              $this dal:eventIdentityStrategy dal:PositionDerivedEvent .
+              FILTER NOT EXISTS { $this dal:occurrenceNamespaceDerivation ?d }
+            }""" ] .
+
 dal:EpochProfileShape
     a sh:NodeShape ;
     sh:targetClass dal:EpochProfile ;

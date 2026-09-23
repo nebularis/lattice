@@ -18,7 +18,7 @@ What the corrected documents specify but this unit did not build, and where it i
 |---|---|
 | Retention job (low-water marks, pinned-head copies, prefix-only drops), epoch-bump quiesce, erasure-register replay on restore | Housekeeping first cut, [rdf-sparql-patterns-phase-plan.md Slice 3](../plans/rdf-sparql-patterns-phase-plan.md#13-slice-3--housekeeping-first-cut); erasure bindings also in `persistence-compiler-iri-sync` Slice 4 |
 | `dal:firstWrite dal:PreCreatedRow` in the compiler | ✅ Done in [`persistence-compiler-iri-sync`](persistence-compiler-iri-sync.md) Slice 2 |
-| Identity, privacy and claim-scheme profiles in the compiler | [`persistence-compiler-iri-sync`](persistence-compiler-iri-sync.md) Slices 3–5 |
+| Identity, privacy and claim-scheme profiles in the compiler | [`persistence-compiler-iri-sync`](persistence-compiler-iri-sync.md): identity ✅ Slice 3; privacy and claim schemes Slices 4–5 |
 | Request-time execution: `$requestDigest`, confirmation reads, outcome classification | The store SPI and the ingestion gateway (epic P2.3.1, P2.3.6). The caller contract is documented in `tools/persistence/README.md`, "Using the generated SPARQL directly" |
 | TCK tests T-12 to T-17, S-suite, R-suite | Written into guide Chapter 27 as specifications. Executable tests belong to the store SPI TCK (epic P0.5.6) |
 | Ratification of `iri-identity-patterns.md` and ADR-A82 | [phase-0-status.md](phase-0-status.md), P0.1.3 |

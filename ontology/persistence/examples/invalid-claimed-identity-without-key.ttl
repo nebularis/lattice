@@ -1,0 +1,13 @@
+# Negative fixture for persistence-compiler-iri-sync Slice 3: an entity
+# minted as a claimed surrogate with no uniqueness constraint to claim
+# from. Refused by the compiler (ClaimedIdentityWithoutKey). SHACL cannot
+# see this: it is a join between two resolved profiles.
+@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix ex:  <https://example.org/lending#> .
+
+ex:BorrowerScope a dal:ClassScope ; dal:priority 10 ; dal:targetClass ex:Borrower .
+
+ex:BorrowerIdentity a dal:IdentityProfile ;
+    dal:appliesTo        ex:BorrowerScope ;
+    dal:resourceRole     dal:EntityRole ;
+    dal:identityStrategy dal:SurrogateClaimedIdentity .
