@@ -86,6 +86,8 @@ Once resolved:
 - Wire `dal:PrivacyProfile` (`privacyClass`, `erasureStrategy`, `erasurePrecedence`) into resolution.
 - Wire the remaining `dal:EpochProfile` surface not needed for Slice 1's guard-shape decision: `epochCoordinatorBinding`, `erasureRegisterBinding`, `erasureReplayOnRestore`.
 - Python-level checks mirroring `PersonalDataRequiresErasureShape` and `PersonalDataReceiptCompatibilityShape` — the latter is a genuine cross-profile-type join (a `PrivacyProfile` and a `ReceiptProfile` sharing one `dal:appliesTo` scope), which no existing Python check does today; this is new shape of validation for `validator.py`, not just a new rule.
+- Make `dal:epochAuthority` its own resolved dimension, as Slice 2 did for the extension properties (today it is read only from the node that declares `dal:epochGuardScope`).
+- Author `ontology/persistence/examples/identity-epoch-privacy-profile.ttl`, the fixture for `ontology/persistence/README.md` Worked example 4, handed over from `rdf-sparql-patterns-remediation`'s Deferred item 3. Its identity part compiles only once Slice 3 lands.
 - Tests: the cross-profile join is the interesting case — a fixture with matching scope but incompatible receipt model, and a fixture with matching scope and `dal:CryptoShred`/`dal:perSubjectScoped true` that correctly passes.
 
 ## Slice 5 — Uniqueness: `onViolation` branching, `mergeRelation`, `ClaimScheme` rotation (G7)
@@ -98,9 +100,11 @@ Once resolved:
 ## Slice 6 — Documentation close-out
 
 - Rewrite `tools/persistence/README.md`'s "Known limitations" section to reflect what Slices 1–5 actually shipped (not what this plan proposed — write it after, not before).
-- Update [rdf-sparql-patterns-remediation.md status](../status/rdf-sparql-patterns-remediation.md)'s Deferred item 1 to point at this unit's completion.
-- Update [rdf-sparql-patterns-status.md](../status/rdf-sparql-patterns-status.md) (the Slice 2 status record, currently reads "✅ Complete" with 239 tests) to note the compiler was re-synced against the post-`c276afb` vocabulary, with the new test count.
+- Mark [rdf-sparql-patterns-remediation.md status](../status/rdf-sparql-patterns-remediation.md)'s Deferred item 1 closed.
+- Update [rdf-sparql-patterns-status.md](../status/rdf-sparql-patterns-status.md) to record that the compiler is re-synced against the post-`c276afb` vocabulary, with the final test count.
 - Final `docs/developer/INDEX.md` traceability pass across all five preceding slices.
+
+Done early, on 2026-09-23, during a cross-document disposition pass: both status records above and the INDEX already point at this unit's live progress, and the README "Known limitations" is current as of Slice 2. Slice 6 remains the final pass once Slices 3–5 land.
 
 ## Dependencies and sequencing
 

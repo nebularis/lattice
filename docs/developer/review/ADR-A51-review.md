@@ -1,5 +1,7 @@
 # Review: ADR-A51 (IRI and Identity Policy) and the RDF & SPARQL Patterns Guide
 
+**Review state:** Closed. Dispositioned in [ADR-A51-agent-review-disposition.md](ADR-A51-agent-review-disposition.md) and [ADR-A51-2nd-agent-review.md](ADR-A51-2nd-agent-review.md). ADR-A51 was then superseded by ADR-A82 before ratification, so no ratification is pending against this review. Current state: [phase-0-status.md](../status/phase-0-status.md), P0.1.3.
+
 ## 1. Verdict
 
 **The core of ADR-A51 is sound.** It separates a stable lineage identity from an immutable, content-addressed revision. It keeps versions out of entity identifiers. It offers a small set of minting strategies with named risks, bans PII, and gates surrogate use. All of this matches good RDF and OWL practice and closely mirrors established models:

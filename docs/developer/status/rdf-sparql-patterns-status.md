@@ -3,8 +3,8 @@
 # RDF/SPARQL Implementation Patterns — Status Record
 
 **Unit:** `rdf-sparql-patterns-phase`
-**Status:** Slice 1 complete. ADR-A78/A79/A80 ratified. Slice 2 complete as of 2026-09-22, **now out of sync with the vocabulary** after the 2026-09-23 IRI-patterns remediation (commit `c276afb`) — see [persistence-compiler-iri-sync.md](persistence-compiler-iri-sync.md). Slice 3 (housekeeping first cut) not started.
-**Last updated:** 2026-09-22 (Slice 2 content below); sync gap noted 2026-09-23
+**Status:** Slices 1 and 2 complete. ADR-A78/A79/A80 ratified. The compiler's re-sync with the vocabulary extended on 2026-09-23 is in progress in [`persistence-compiler-iri-sync`](persistence-compiler-iri-sync.md) (Slices 1–2 of 6 done). Slice 3 (housekeeping first cut) not started.
+**Last updated:** 2026-09-23 (disposition pass; Slice 2 content below is as delivered on 2026-09-22)
 **Owner:** Agent (autonomous execution authorised by the human; Slice 2 delivered without further pause)
 
 ---
@@ -17,14 +17,16 @@ ADR-A78, ADR-A79, and ADR-A80 are ratified (Status: Accepted).
 
 **Slice 2 is complete** as delivered on 2026-09-22. `ontology/persistence` is authored (vocabulary, self-validating SHACL shapes, 14 example fixtures, two design-note documents) and `tools/persistence` is a working Python compiler: 239 tests pass under `mise run check:persistence`, covering the resolver, validator, capability self-check, boundary-shape walker, an 11-template Mustache library, a 164-case injection corpus, determinism under triple-order permutation, full compile→instantiate→parse round trips, and three Python architecture-policy checks. Doc deltas (root `README.md`, `ontology-architecture.md`, `mise.toml`) are done. Traceability matrix and validation pack are in place.
 
-**2026-09-23 update**: `ontology/persistence/spec/persistence.ttl` and `shapes/constraints.ttl` were substantially extended by the IRI-patterns remediation (commit `c276afb`) — three new profile dimensions, extensions to six existing ones, eight new SHACL shapes. None of it is consumed by `tools/persistence`; the 239 passing tests above exercise only the pre-`c276afb` vocabulary subset, which is still valid and unmodified, but no longer the complete picture. See [persistence-compiler-iri-sync.md](persistence-compiler-iri-sync.md) for the gap analysis and fix plan.
+**2026-09-23 update (superseded by the paragraph that follows)**: `ontology/persistence/spec/persistence.ttl` and `shapes/constraints.ttl` were substantially extended by the IRI-patterns remediation (commit `c276afb`) — three new profile dimensions, extensions to six existing ones, eight new SHACL shapes. None of it is consumed by `tools/persistence`; the 239 passing tests above exercise only the pre-`c276afb` vocabulary subset, which is still valid and unmodified, but no longer the complete picture. See [persistence-compiler-iri-sync.md](persistence-compiler-iri-sync.md) for the gap analysis and fix plan.
+
+**2026-09-23, current position**: the sync unit has closed the epoch-guard correctness gap and the extension-property gap (526 tests), and a second review of the guide ([`iri-patterns-post-3866b21-remediation`](iri-patterns-post-3866b21-remediation.md), complete) corrected the guide and realigned the templates. The generated SPARQL's caller contract changed: payload and log-bucket lists are Mustache request-time slots, and every write records a request digest (see `tools/persistence/README.md`, "Using the generated SPARQL directly"). Identity, privacy and claim-scheme profiles are still unwired (sync Slices 3–5).
 
 **Slice 3 (housekeeping first cut) has not been started** and remains scoped as written in the plan.
 
 **Key findings from building Slice 2, beyond what the sketch anticipated:**
 
 - **A class alone cannot be the unit of resolution.** The sketch's lending/credit worked example needed an actual implementation decision the sketch's prose did not spell out mechanically: a `Target` is a `(class, deployment)` pair, one per distinct `dal:GraphPatternScope` a class has (via a new `dal:coversClass` property, added during implementation), plus one unscoped/fallback target. Documented in `tools/persistence/README.md` and `ontology/persistence/docs/precedence-and-resolution.md`.
-- **Two real SPARQL-validity bugs existed in the design as sketched**, both caught only by actually rendering and parsing the templates with `rdflib`'s own SPARQL parser: (1) SPARQL 1.1 permits a property path only inside `WHERE`, never inside a `DELETE`/`INSERT` template block, and has no bounded `{n,m}` repetition at all — the sketch's `CompositePropertyBoundary` worked SPARQL used both incorrectly. (2) A single SPARQL variable cannot stand in for an entire set of triples (`GRAPH ?g { $payload }` is not valid SPARQL) — every template needing to accept caller-supplied payload triples now uses a documented, non-SPARQL `#PAYLOAD#` text marker instead, which whatever eventually executes the template must splice in before submission.
+- **Two real SPARQL-validity bugs existed in the design as sketched**, both caught only by actually rendering and parsing the templates with `rdflib`'s own SPARQL parser: (1) SPARQL 1.1 permits a property path only inside `WHERE`, never inside a `DELETE`/`INSERT` template block, and has no bounded `{n,m}` repetition at all — the sketch's `CompositePropertyBoundary` worked SPARQL used both incorrectly. (2) A single SPARQL variable cannot stand in for an entire set of triples (`GRAPH ?g { $payload }` is not valid SPARQL) — every template needing to accept caller-supplied payload triples now uses a documented, non-SPARQL `#PAYLOAD#` text marker instead, which whatever eventually executes the template must splice in before submission. (Since 2026-09-23 this is the Mustache request-time slot `{{{payloadTriples}}}`.)
 - **`ontology/persistence/spec/persistence.ttl` had one property the sketch's Appendix A never declared** (`dal:aggregateBoundary`, used inconsistently against the actually-declared `dal:strategy`), found and fixed in both the ontology and the sketch itself during implementation.
 - **Mustache double-brace tags must never appear inside a `{{! comment }}` block**, including when the comment is *describing* Mustache syntax for documentation purposes — chevron's comment parser ends at the first closing double-brace it finds, silently truncating the comment and corrupting everything after it. Found by the template test suite, not by inspection.
 - **`pyshacl`'s `conforms` flag treats any result, including `sh:Warning` severity, as non-conformant unless `allow_warnings=True` is passed** — needed for the `SharedClassProfileWarningShape` design to work as a non-blocking warning at all.
@@ -141,7 +143,7 @@ See [`docs/traceability/matrix.csv`](../../traceability/matrix.csv).
 
 ## Next steps
 
-1. **Slice 3 (housekeeping first cut)**, per the plan: `platform/housekeeping` Maven module, job contracts, configuration model split, generated queries via `persistence instantiate`, README, and `docs/architecture/platform-housekeeping.md`.
+1. **Slice 3 (housekeeping first cut)**, per the plan, including the job changes listed in the plan's Slice 3 "Changes since this slice was scoped" note: `platform/housekeeping` Maven module, job contracts, configuration model split, generated queries via `persistence instantiate`, README, and `docs/architecture/platform-housekeeping.md`.
 2. Resolve or continue deferring the two new open questions found during Slice 2 (items 6 and 7 above) before Slice 3 generates housekeeping job queries against `CompositePropertyBoundary` targets, if any exist.
 
 ---

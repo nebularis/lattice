@@ -1,5 +1,7 @@
 # Review: RDF operational-patterns documentation set
 
+**Review state:** Closed 2026-09-23. Dispositioned through the remediation specification [IRI-patterns-remediation.md](IRI-patterns-remediation.md) and executed as unit `rdf-sparql-patterns-remediation` ([status](../status/rdf-sparql-patterns-remediation.md)). Several fixes were later corrected by [`iri-patterns-post-3866b21-remediation`](../status/iri-patterns-post-3866b21-remediation.md).
+
 ## Scope and limits
 
 I reviewed all five documents against each other, against the standards they cite (SPARQL 1.1, SHACL, RFC 9110, RFC 4648, XPath F&O numeric semantics, GDPR Recital 26), and against the rules the documents set for themselves.

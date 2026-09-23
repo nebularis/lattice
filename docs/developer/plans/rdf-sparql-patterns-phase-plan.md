@@ -4,7 +4,7 @@
 
 **Unit type:** Plan
 **Identifier:** `rdf-sparql-patterns-phase`
-**Status:** Slice 1 complete. ADR-A78/A79/A80 ratified. Slice 2 complete (see [validation pack](../validation/persistence-substrate-and-compiler.md)). Slice 3 not started.
+**Status:** Slice 1 complete. ADR-A78/A79/A80 ratified. Slice 2 complete (see [validation pack](../validation/persistence-substrate-and-compiler.md)), and since re-synced against the extended vocabulary by the follow-on unit [`persistence-compiler-iri-sync`](../status/persistence-compiler-iri-sync.md) (in progress). Slice 3 not started. Live state: [status record](../status/rdf-sparql-patterns-status.md).
 **Blocks:** `ontology/persistence` authoring, `tools/persistence` compiler, `platform/housekeeping` first cut, and (once the store SPI exists) the Request Query Mapping and Query Execution work items this plan explicitly excludes.
 **Estimated scope:** see [Part 2](#part-2--execution-plan-and-dependencies) for a per-slice token estimate. These are planning estimates, not commitments, and are to be checked against actual consumption once each slice completes.
 
@@ -19,7 +19,7 @@
 
 **Success criteria:**
 - `ontology/persistence` authored, validated against its own SHACL shapes, documented — ✅ done (Slice 2)
-- `tools/persistence` compiler implemented, passing its injection corpus and its own test suite — ✅ done (Slice 2): 239 tests passing under `mise run check:persistence`
+- `tools/persistence` compiler implemented, passing its injection corpus and its own test suite — ✅ done (Slice 2): 239 tests passing under `mise run check:persistence` at the time; 526 after the follow-on sync and remediation units (2026-09-23)
 - `platform/housekeeping` module scaffolded with the contracts, configuration model, and generated queries described in [ADR-A80](../../architecture/decisions/ADR-A80-housekeeping-component-boundary.md) — not started (Slice 3)
 - `ontology-architecture.md` and the root `README.md` updated per the Design First contract's "kept up to date" list — ✅ done (Slice 2)
 - Status recorded in `docs/developer/status/rdf-sparql-patterns-status.md` — ✅ done
@@ -114,6 +114,14 @@ All three are recorded as open design questions in [lattice-platform-agentic-dev
 **Slice identifier:** `housekeeping-first-cut`
 
 **Objective:** deliver the contracts, configuration model, and generated queries described in [ADR-A80](../../architecture/decisions/ADR-A80-housekeeping-component-boundary.md), with no store-calling execution.
+
+**Changes since this slice was scoped (2026-09-23).** The post-3866b21 review remediation ([status](../status/iri-patterns-post-3866b21-remediation.md)) changed what the jobs must do. Read [rdf-sparql-patterns-guide.md](../../architecture/rdf-sparql-patterns-guide.md) §24.2 and §24.4 before starting:
+
+- `ForkDetectionJob` runs three generated audits, not one: `fork-detection-audit` (txn claims per revision) plus the receipt-side `revision-multi-txn-audit` and `txn-multi-revision-audit`, which survive txn-claim pruning.
+- `GapCompletenessScanJob` runs the row-driven `gap-scan-audit`, which reads the retention low-water mark.
+- `RetentionSweepJob` must, before dropping a bucket, advance each affected target's `pat:retentionLowWaterMark` and copy any live-head receipt into `urn:g:txlog/pinned`, and must prune only a contiguous prefix. None of this is a generated query yet: the job's own write queries are a deliverable of this slice.
+- The audits' `{{{logGraphs}}}` request-time slot is filled from the family's `dal:registryGraph`, which the compiled profile carries as a binding. The job contract must include that step.
+- The epoch bump (with writer quiesce) and erasure-register replay are restore-runbook steps (§24.4). Decide in this slice whether they belong to housekeeping or to restore tooling, and record the answer against ADR-A80.
 
 **Deliverables:**
 

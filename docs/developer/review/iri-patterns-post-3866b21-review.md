@@ -1,5 +1,7 @@
 # Review: RDF & SPARQL Patterns Guide, IRI and Identity Patterns, and IRI Policy
 
+**Review state:** Closed 2026-09-23. Every finding is dispositioned in [iri-patterns-post-3866b21-remediation.md](../status/iri-patterns-post-3866b21-remediation.md), which also lists the follow-on work and where it is tracked.
+
 ## Summary
 
 The set is unusually strong. It explains why each pattern exists, marks most portability hazards, and correctly treats the TCK as the source of truth rather than vendor documentation. The remediation passes in D.1 and D.2 fixed many real bugs.

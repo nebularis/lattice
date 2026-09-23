@@ -3,7 +3,7 @@
 # RDF & SPARQL Patterns Guide — Remediation Status
 
 **Unit ID:** `rdf-sparql-patterns-remediation`
-**State:** Executed. All mechanical defects and all design-decision-shaped findings from the governing review are resolved in `rdf-sparql-patterns-guide.md`, either as direct fixes or as reframings pointing at the `dal:` configuration vocabulary in `ontology/persistence`. Two follow-on items remain deferred (see Deferred, below).
+**State:** ✅ Complete and closed. Executed on 2026-09-23. Several of its fixes were later found incomplete or wrong by a further review and corrected by [`iri-patterns-post-3866b21-remediation`](iri-patterns-post-3866b21-remediation.md) (see "Later corrections", below). All three deferred items are now dispositioned (see Deferred, below). Nothing further is owed by this unit.
 **Plan:** [rdf-sparql-patterns-remediation.md](../plans/rdf-sparql-patterns-remediation.md) — superseded in execution by [docs/developer/review/IRI-patterns-remediation.md](../review/IRI-patterns-remediation.md), which the human designated authoritative when comparing it against this plan
 **Sketch:** None
 **Governing review:** [docs/developer/review/IRI-patterns-remediation.md](../review/IRI-patterns-remediation.md), executed against `iri-identity-patterns.md`/ADR-A82 as the identity authority
@@ -41,15 +41,30 @@ The original plan (still preserved unmodified for its analysis) treated several 
 | A-13 | Fixed. Appendix A's `pat:occurredAt` comment clarifies the revision-level default vs event-level override relationship |
 | A-14 | Fixed. `pat:stableWatermark`'s format corrected from a per-target-looking `{epoch}:{seq}` to a dataset-wide `{epoch}:{position}`; missing `pat:retentionLowWaterMark` and deprecated `pat:etag` added to Appendix A |
 
+## Later corrections (2026-09-23, `iri-patterns-post-3866b21-remediation`)
+
+The rows above record what this unit did. Where a later review found the fix incomplete or wrong, the current position is:
+
+| This unit's finding | Later finding | Current position |
+|---|---|---|
+| B1 dataset-level guard added *alongside* the row guard | A1, B3, C4 | The dual guard wedged every row after an epoch bump. Writes now guard on the dataset epoch only and rebase the row epoch; create paths are guarded too; writers are quiesced for a bump |
+| B5 `OPTIONAL pat:head` tied to `dal:AbsentRow` | B2 | Inverted: the pre-created row is the one with no head on its first CAS. Delete also reads the head optionally |
+| B7 weak ETags replaced | B1 | Four weak forms had survived (F3, F4, glossary, §30.2); now strong everywhere, with deterministic serialisation required |
+| B8 poll-versus-resubmit left as a declared choice | B8 | Every transport failure is `Unknown`, resolved by resending the identical request then confirming on the primary; the outcome set is split further |
+| B9 prefix-only retention "keeps the live head safe by construction" | A7, B7 | False for dormant streams: live heads are now copied into a pinned-head graph before a drop, and the retention low-water mark has defined semantics |
+| B11 global-read strategies | A3 | The read now requires an upper bound, with a lag budget and a late-arrival audit |
+| B2 fork detection by txn cardinality | A6 | Appendix B still shipped the old shape; replaced by `pat:TxnCardinalityShape`, plus receipt-side audits |
+| C3 width contradiction fixed by wording only | B14 | Every example regenerated at 19 digits, epoch included (see Deliberate scope reduction, below) |
+
 ## Deliberate scope reduction
 
-The guide's worked examples use a 16-digit zero-padded revision-IRI width throughout as an illustrative simplification, while several places also claimed "19 digits in production" — a self-contradiction (C3/A-1). Mechanically regenerating every worked example in this ~3000-line guide to a consistent width was judged disproportionate to the defect: the actual bug is the guide asserting two widths are both normative. The fix applied throughout (§10.1, §19.4, Chapter 13) states the width is a per-deployment profile decision (`dal:DigestScheme`, [iri-identity-patterns.md §10.2](../../architecture/iri-identity-patterns.md#102-fixed-width-positions)), fixed once and never mixed, and stops presenting 16 or 19 as competing recommendations. A follow-up slice can regenerate every example to a single width if a consistent visual convention is wanted; this pass did not do that.
+The guide's worked examples use a 16-digit zero-padded revision-IRI width throughout as an illustrative simplification, while several places also claimed "19 digits in production" — a self-contradiction (C3/A-1). Mechanically regenerating every worked example in this ~3000-line guide to a consistent width was judged disproportionate to the defect: the actual bug is the guide asserting two widths are both normative. The fix applied throughout (§10.1, §19.4, Chapter 13) states the width is a per-deployment profile decision (`dal:DigestScheme`, [iri-identity-patterns.md §10.2](../../architecture/iri-identity-patterns.md#102-fixed-width-positions)), fixed once and never mixed, and stops presenting 16 or 19 as competing recommendations. A follow-up slice can regenerate every example to a single width if a consistent visual convention is wanted; this pass did not do that. **Done later** by `iri-patterns-post-3866b21-remediation` (B14): every example is now 19 digits.
 
 ## Deferred (not attempted in this pass)
 
-1. **Compiler wiring.** The new `dal:` classes/properties added to `ontology/persistence/spec/persistence.ttl` this session are not yet consumed by the `tools/persistence` compiler. They are documentation- and SHACL-validation-only until a compiler-wiring slice lands. **Scoped 2026-09-23**: see [persistence-compiler-iri-sync.md](persistence-compiler-iri-sync.md) (status), [plan](../plans/persistence-compiler-iri-sync.md), and [gap analysis](../sketches/persistence-compiler-iri-sync.md).
-2. **New TCK test bodies.** Chapter 27's TCK table is unchanged; new test cases for the corrected behaviours (datatype round-trip, fencing-token advance, opposite-order deadlock probe, restore/epoch guard, fork-by-txn-cardinality) are not written. The existing T-1 through T-13 rows remain valid; this is additive work for a follow-up slice.
-3. **Fixture file for Worked example 4.** `ontology/persistence/README.md`'s Worked example 4 (added this session) documents a Turtle configuration but the promised machine-readable fixture is not yet created.
+1. **Compiler wiring.** Handed over to [`persistence-compiler-iri-sync`](persistence-compiler-iri-sync.md), which owns it from here (Slices 1–2 of 6 done, 2026-09-23).
+2. **New TCK test bodies.** Written as specifications in guide Chapter 27 by `iri-patterns-post-3866b21-remediation` (T-12 to T-17, the S-suite and the R-suite). The note above that "T-1 through T-13" existed was wrong: only T-1 to T-11 existed then. Executable TCK code belongs to the store SPI TCK (epic P0.5.6).
+3. **Fixture file for Worked example 4** (`examples/identity-epoch-privacy-profile.ttl`). Handed over to [`persistence-compiler-iri-sync`](persistence-compiler-iri-sync.md): the fixture spans the identity and privacy profiles, so it is authored with Slices 3 and 4.
 
 ## Validation performed
 

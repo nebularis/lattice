@@ -15,7 +15,7 @@
 
 P0.1 (decision pack) was executed autonomously on 2026-09-23: 17 ADRs drafted (A48, A50, A51, A54, A57, A59, A62, A63, A65 through A69, A71, A74, A75, A81), all filed with **Status: Proposed**, none marked Accepted. The human was unavailable during this session and asked the agent to work autonomously and make good decisions for later review — no ADR here is self-ratified; ratification remains a human act per the Agentic Development Contract. ADR-A62's namespace harmonisation (the one part of P0.1.12 that is a mechanical change, not a decision) was executed directly: `ontology/spc/spec/spc.ttl`, `ontology/spc/README.md`, and `tools/spc/python/src/spc/ontologies/spc.owl.ttl` now use the harmonised `nebularis.org` namespace, and `ontology-architecture.md` §3 was updated to match.
 
-No code slice (P0.2 onward) has started. The original P0.1.3 deliverable, `docs/architecture/iri-policy.md`, is retained as historical profile material. Its replacement is `docs/architecture/iri-identity-patterns.md` under ADR-A82.
+No code slice (P0.2 onward) has started. The original P0.1.3 deliverable, `docs/architecture/iri-policy.md`, is now a short historical record: its body was removed on 2026-09-23 because it still read as guidance and contradicted the current catalogue. Its replacement is `docs/architecture/iri-identity-patterns.md` under ADR-A82.
 
 **2026-09-23, later same day:** ADR-A51 was reviewed ([docs/developer/review/ADR-A51-review.md](../review/ADR-A51-review.md)) and found to conflict with RDF identity semantics (environment-scoped IRIs), overclaim uniqueness safety with a truncated hash, and disagree internally with `rdf-sparql-patterns-guide.md`'s own entity-identity default. An initial disposition claimed all findings resolved, but the second review ([ADR-A51-2nd-agent-review.md](../review/ADR-A51-2nd-agent-review.md)) identified unresolved grammar, hash, skolemization, scope, and lifecycle issues. Human architectural direction then reframed the concern: LATTICE is a framework and cannot mandate one identifier scheme for every adopter. [ADR-A82](../../architecture/decisions/ADR-A82-framework-neutral-identity-pattern-selection.md) supersedes the unratified ADR-A51. [iri-identity-patterns.md](../../architecture/iri-identity-patterns.md) is now the proposed pattern catalogue. `iri-policy.md` is retained only as historical profile material.
 
@@ -43,7 +43,7 @@ Nothing else blocks P0.2 starting, once a human has reviewed the P0.1 ADRs (or e
 |---|---|---|---|
 | P0.1.1 | ADR-A74 | Drafted, Proposed | `data-architecture.md` §1–3, §5–7 rewrite still outstanding |
 | P0.1.2 | ADR-A75 | Drafted, Proposed | |
-| P0.1.3 | ADR-A82 + `iri-identity-patterns.md` | Drafted, Proposed, pending human review | ADR-A51's universal policy was superseded before ratification. The new guide describes configurable identity patterns and a future `ontology/persistence` configuration extension. |
+| P0.1.3 | ADR-A82 + `iri-identity-patterns.md` | Drafted, Proposed, pending human review | ADR-A51's universal policy was superseded before ratification. The new guide describes configurable identity patterns and their `ontology/persistence` configuration surface (`dal:IdentityProfile`, specified; compiler wiring is `persistence-compiler-iri-sync` Slice 3, blocked on a human decision). Revised on 2026-09-23 by [`iri-patterns-post-3866b21-remediation`](iri-patterns-post-3866b21-remediation.md) (normalization, tuple-encoded digests, key rotation, store-local epoch, revision-class alignment). Ready for review. |
 | P0.1.4 | ADR-A54 | Drafted, Proposed | Graph-name validator (P0.3.7) not yet built |
 | P0.1.5 | ADR-A65 | Drafted, Proposed | `ontology/governance/shapes/provenance.ttl` (P0.3.6) not yet built |
 | P0.1.6 | ADR-A67 | Drafted, Proposed | |
@@ -96,7 +96,7 @@ Tracks [phase-0-plan.md §3–5](../plans/phase-0-plan.md#3-documentation-obliga
 
 | Item | Status |
 |---|---|
-| `docs/architecture/iri-identity-patterns.md` (P0.1.3) | Done — `iri-policy.md` retained as historical profile material |
+| `docs/architecture/iri-identity-patterns.md` (P0.1.3) | Drafted and revised (2026-09-23), pending ratification with ADR-A82. `iri-policy.md` reduced to a historical record |
 | `data-architecture.md` §1–3, §5–7 rewrite for A74 (P0.1.1) | Outstanding |
 | `solution-design-specification.md` §7 rewrite for A48 (P0.1.9) | Outstanding |
 | `ontology-architecture.md` SPC section update for A62 | Done |

@@ -5,6 +5,7 @@
 **Unit ID:** `rdf-sparql-patterns-remediation`
 **Unit type:** Plan (documentation remediation, no code)
 **Status record:** [rdf-sparql-patterns-remediation.md](../status/rdf-sparql-patterns-remediation.md)
+**Plan state:** Executed and closed (2026-09-23). Superseded in execution by [IRI-patterns-remediation.md](../review/IRI-patterns-remediation.md); preserved for its analysis. Several proposals below (for example retaining `pat:NoForkShape`) were not adopted or were later corrected; the status record is authoritative
 **Sketch:** None. The defects are fully specified by the governing review; no design exploration is needed to locate them, only to resolve the handful of items flagged below as design decisions.
 **Governing review:** [ADR-A68-A82-iri-patterns-review.md](../review/ADR-A68-A82-iri-patterns-review.md) (2026-09-23). Treated as current and authoritative for this plan. Where that review's own text is incomplete (§C3), this plan says so rather than inventing content.
 **Primary target document:** [rdf-sparql-patterns-guide.md](../../architecture/rdf-sparql-patterns-guide.md)

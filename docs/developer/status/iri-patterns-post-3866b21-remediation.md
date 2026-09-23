@@ -3,10 +3,29 @@
 # IRI and RDF Patterns, Post-3866b21 Remediation — Status
 
 **Unit ID:** `iri-patterns-post-3866b21-remediation`
-**Status:** ✅ Documentation remediation complete. Compiler templates aligned, 471/471 `tools/persistence` tests passing
+**Status:** ✅ Complete. Every review finding is dispositioned, and the compiler templates are aligned. Follow-on work lives in other units (see "Is this unit complete?")
 **Last updated:** 2026-09-23
 **Review:** [iri-patterns-post-3866b21-review.md](../review/iri-patterns-post-3866b21-review.md)
 **Documents changed:** [rdf-sparql-patterns-guide.md](../../architecture/rdf-sparql-patterns-guide.md) (summary in its Appendix D.3), [iri-identity-patterns.md](../../architecture/iri-identity-patterns.md), [iri-policy.md](../../architecture/iri-policy.md), `ontology/persistence/spec/persistence.ttl` (comments), `ontology/persistence/shapes/` (`StoreLocalEpochWarningShape` message)
+
+## Is this unit complete?
+
+**Yes.** All 47 findings of the review (A1–A7, B1–B14, C1–C9, D1–D7, E ×10) are fixed in the documents, and the compiler templates generate the corrected shapes (471 tests at the end of this unit, 526 after the follow-on Slice 2 of `persistence-compiler-iri-sync`).
+
+What the corrected documents specify but this unit did not build, and where it is tracked:
+
+| Follow-on | Tracked in |
+|---|---|
+| Retention job (low-water marks, pinned-head copies, prefix-only drops), epoch-bump quiesce, erasure-register replay on restore | Housekeeping first cut, [rdf-sparql-patterns-phase-plan.md Slice 3](../plans/rdf-sparql-patterns-phase-plan.md#13-slice-3--housekeeping-first-cut); erasure bindings also in `persistence-compiler-iri-sync` Slice 4 |
+| `dal:firstWrite dal:PreCreatedRow` in the compiler | ✅ Done in [`persistence-compiler-iri-sync`](persistence-compiler-iri-sync.md) Slice 2 |
+| Identity, privacy and claim-scheme profiles in the compiler | [`persistence-compiler-iri-sync`](persistence-compiler-iri-sync.md) Slices 3–5 |
+| Request-time execution: `$requestDigest`, confirmation reads, outcome classification | The store SPI and the ingestion gateway (epic P2.3.1, P2.3.6). The caller contract is documented in `tools/persistence/README.md`, "Using the generated SPARQL directly" |
+| TCK tests T-12 to T-17, S-suite, R-suite | Written into guide Chapter 27 as specifications. Executable tests belong to the store SPI TCK (epic P0.5.6) |
+| Ratification of `iri-identity-patterns.md` and ADR-A82 | [phase-0-status.md](phase-0-status.md), P0.1.3 |
+| `pat:Revision` alignment (`prov:Activity` or `fnd:Evidence`) | Guide Appendix E item 3 |
+| `dal:` terms for the YAML-only declaration keys | Guide Appendix E item 10 |
+
+The review record [iri-patterns-post-3866b21-review.md](../review/iri-patterns-post-3866b21-review.md) is closed against this status.
 
 ## Design decisions taken in this pass
 
@@ -85,11 +104,11 @@ Run in autonomous mode, 2026-09-23. `mise run check:persistence`: **471 passed**
 
 A pre-existing defect was fixed on the way: `key-claim-write` and `key-claim-retire` wrote claims into the txn graph (`urn:g:txn`). They now write `urn:g:keys`.
 
-**Tests added** (`tools/persistence/tests/test_template_alignment.py`): every template parses with a complete context and with markers unsubstituted; dataset-guard row writers rebase rather than guard the row epoch; heads are optional; every txn claim carries the digest; row creation is typed; key claims use the keys graph; no template scans by prefix; the gap scan is row-driven; append typing and padding; template selection for the new fixture `ontology/persistence/examples/append-stream-dataset-guard.ttl`. The injection corpus context in `test_terms.py` now binds every slot.
+**Tests added** (`tools/persistence/tests/test_template_alignment.py`): every template parses with a complete context (the "markers unsubstituted" test was later replaced by a fail-closed test when the markers became Mustache slots); dataset-guard row writers rebase rather than guard the row epoch; heads are optional; every txn claim carries the digest; row creation is typed; key claims use the keys graph; no template scans by prefix; the gap scan is row-driven; append typing and padding; template selection for the new fixture `ontology/persistence/examples/append-stream-dataset-guard.ttl`. The injection corpus context in `test_terms.py` now binds every slot.
 
 **Adversarial probe:** reverting `cas-replace-named-graph-dataset-guard` to guard the row epoch and require `pat:head` fails `test_dataset_guard_rebases_row_epoch_instead_of_guarding_it` and `test_head_is_read_optionally`. The template was restored and the full suite re-run green.
 
-**Not in scope, still open:** the retention job and epoch bump (housekeeping, ADR-A80); `dal:firstWrite dal:PreCreatedRow` suppressing `create-if-absent` (`persistence-compiler-iri-sync` Slice 2); `pat:hlc` on receipts; configurable infrastructure graph IRIs. Recorded in `tools/persistence/README.md` "Known limitations".
+**Not in scope for this unit:** see "Is this unit complete?" above. `pat:hlc` on receipts and configurable infrastructure graph IRIs are recorded in `tools/persistence/README.md` "Known limitations".
 
 ## Commands to reproduce
 

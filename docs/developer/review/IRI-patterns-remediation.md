@@ -1,5 +1,7 @@
 # Remediation Plan — RDF Operational Patterns & Identity Documentation Set
 
+**Review state:** Executed and closed 2026-09-23 as unit `rdf-sparql-patterns-remediation` ([status](../status/rdf-sparql-patterns-remediation.md), which records the disposition and the later corrections). The "proposed remediation specification" wording below is historical.
+
 **Applies to:** `rdf-sparql-patterns-guide.md`, `iri-identity-patterns.md`, `ADR-A82`, `ADR-A68`
 **Inputs:** `ADR-A68-A82-iri-patterns-review.md` (findings B1–B13, C1–C3; document truncated mid-C3)
 **Status of this plan:** proposed remediation specification. It does not rewrite the guides; it specifies the changes, their exact location, and the evidence required to close each gap.
