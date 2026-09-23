@@ -1,11 +1,14 @@
-{{! fork-detection-audit: guide F5. Two receipts sharing a pat:prevRev is
-    proof of a lost update. Read-only, run as a standing alert. }}
+{{! fork-detection-audit: guide F5. Revision IRIs are deterministic, so
+    two writers that both win a CAS from one version mint the same
+    revision subject: a fork shows as two txn claims on one revision,
+    never as two revisions sharing a prevRev. Read-only standing alert.
+    Reads txn claims, which are pruned; the receipt-side audits cover
+    older history.}}
 PREFIX pat: <https://example.org/lattice/patterns#>
 
-SELECT ?prev (COUNT(*) AS ?n) (GROUP_CONCAT(STR(?r); separator=" ") AS ?forks)
+SELECT ?rev (COUNT(DISTINCT ?t) AS ?n)
 WHERE {
-  GRAPH ?log { ?r pat:prevRev ?prev }
-  FILTER(STRSTARTS(STR(?log), STR({{{logGraphPrefix}}})))
+  GRAPH {{{txnGraph}}} { ?t pat:rev ?rev }
 }
-GROUP BY ?prev
-HAVING (COUNT(*) > 1)
+GROUP BY ?rev
+HAVING (COUNT(DISTINCT ?t) > 1)

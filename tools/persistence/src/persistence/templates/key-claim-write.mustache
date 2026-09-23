@@ -1,14 +1,17 @@
-{{! key-claim-write: guide §6.2 (P2), the guarded write in one request.
-    Ownership monotonicity makes the post-write ASK race-free. }}
+{{! key-claim-write: guide §6.2 (P2), the guarded write in one request,
+    into the key-claim graph. Ownership monotonicity makes the post-write
+    ASK race-free. $claim is the HMAC claim IRI computed by the caller over
+    the tuple-encoded version, constraint id, scope and normalized key
+    (guide §6.1).}}
 PREFIX pat: <https://example.org/lattice/patterns#>
 
 INSERT {
-  GRAPH {{{txnGraph}}} {
+  GRAPH {{{keysGraph}}} {
       $claim a pat:KeyClaim ; pat:constraint {{{constraintId}}} ; pat:claimedBy $owner
   }
 }
 WHERE {
   FILTER NOT EXISTS {
-      GRAPH {{{txnGraph}}} { $claim pat:claimedBy ?other . FILTER(?other != $owner) }
+      GRAPH {{{keysGraph}}} { $claim pat:claimedBy ?other . FILTER(?other != $owner) }
   }
 }

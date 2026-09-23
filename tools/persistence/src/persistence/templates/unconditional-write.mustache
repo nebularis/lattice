@@ -4,5 +4,6 @@
     guard). Either way this is a plain, unguarded write.  #PAYLOAD# is a non-SPARQL text-substitution marker, not a bindable variable: a set of triples cannot be bound through a single SPARQL variable. Whatever executes this instantiated template must splice in the caller's already-serialised, trusted payload triples before submission -- see tools/persistence/README.md "Known limitations". }}
 PREFIX pat: <https://example.org/lattice/patterns#>
 
-INSERT { GRAPH ?g { #PAYLOAD# } }
+INSERT { GRAPH ?g { #PAYLOAD#
+  } }
 WHERE  { BIND(IRI(CONCAT({{{graphPrefix}}}, REPLACE(STR($root), "^.*[/#]", ""))) AS ?g) }

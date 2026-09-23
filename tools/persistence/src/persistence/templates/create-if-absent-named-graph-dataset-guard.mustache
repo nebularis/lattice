@@ -1,5 +1,5 @@
-{{! create-if-absent-named-graph: guide §19.3, dal:RowLevelGuardOnly variant: no dataset
-    epoch guard.
+{{! create-if-absent-named-graph-dataset-guard: guide §19.3, dal:DatasetLevelGuard variant: a writer
+    started under an older epoch cannot create a row after a bump.
     This is a P2 uniqueness problem, not a CAS problem: it guards on the
     absence of a version row (dal:firstWrite dal:AbsentRow). The row is
     typed pat:VersionRow so row shapes target rows only (guide Appendix B),
@@ -34,6 +34,7 @@ INSERT {
 WHERE {
   BIND(IRI(CONCAT({{{graphPrefix}}}, REPLACE(STR($root), "^.*[/#]", ""))) AS ?g)
   BIND(IRI(CONCAT(STR({{{logGraphPrefix}}}), SUBSTR(STR(NOW()), 1, 7))) AS ?logGraph)
+  GRAPH {{{datasetGraph}}} { {{{datasetNode}}} pat:epoch $epoch }
   FILTER NOT EXISTS { GRAPH {{{metaGraphPrefix}}} { $root pat:seq ?any } }
   FILTER NOT EXISTS { GRAPH {{{txnGraph}}} { $txnId pat:rev ?any } }
   BIND(STR($txnId) AS ?txnKey)

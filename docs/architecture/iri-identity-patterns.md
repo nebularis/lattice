@@ -4,7 +4,7 @@
 
 **Status:** Proposed architecture patterns guide
 **Purpose:** Framework-neutral identity and IRI design guidance
-**Related:** [RDF & SPARQL Patterns Guide](rdf-sparql-patterns-guide.md), [ADR-A51](decisions/ADR-A51-iri-and-identity-policy.md), [ADR-A54](decisions/ADR-A54-dataset-topology.md), [ADR-A63](decisions/ADR-A63-project-vs-environment-scoping.md), [ADR-A68](decisions/ADR-A68-pii-and-erasure.md), [ADR-A78](decisions/ADR-A78-persistence-profile-substrate-and-aggregate-boundaries.md)
+**Related:** [RDF & SPARQL Patterns Guide](rdf-sparql-patterns-guide.md), [ADR-A82](decisions/ADR-A82-framework-neutral-identity-pattern-selection.md), [ADR-A51](decisions/ADR-A51-iri-and-identity-policy.md) (superseded by ADR-A82), [ADR-A54](decisions/ADR-A54-dataset-topology.md), [ADR-A63](decisions/ADR-A63-project-vs-environment-scoping.md), [ADR-A68](decisions/ADR-A68-pii-and-erasure.md), [ADR-A78](decisions/ADR-A78-persistence-profile-substrate-and-aggregate-boundaries.md)
 **Supersedes in scope:** [iri-policy.md](iri-policy.md). That document records one proposed platform profile. This guide is the complete pattern catalogue from which an adopter, or a future LATTICE platform profile, selects a compatible configuration.
 
 ## 1. Purpose and boundary
@@ -19,7 +19,7 @@ The framework has three responsibilities:
 2. Make an adopter's selected combination explicit and machine-checkable.
 3. Generate and validate only the minting behaviour configured for that deployment, without changing an adopted identifier behind its back.
 
-A future extension to `ontology/persistence` is the configuration surface for these choices. Until then, no generic runtime component may assume an IRI grammar merely because it is convenient for a reference deployment.
+`ontology/persistence` is the configuration surface for these choices. An initial slice of that vocabulary is specified (§14), and the rest remains candidate. No generic runtime component may assume an IRI grammar merely because it is convenient for a reference deployment.
 
 ## 2. Core distinctions
 
@@ -294,7 +294,7 @@ A position-derived occurrence identity carries a hazard that does not apply to a
 
 **Costs:** claim allocation needs P2 plus P3, P5, P6, or another backend-appropriate concurrency guarantee. Cross-environment convergence is absent unless the claim registry is shared or an external authority coordinates allocation.
 
-**Key rotation:** rotation changes the claim derivation, not the entity IRI. The profile must declare a key identifier and claim scheme version. Rotate by writing a new claim under the new key, backfilling eligible records, and retaining an authorized mapping long enough to resolve old claims. A compromised key demands a rotation path. Never define a secret as unrotatable.
+**Key rotation:** rotation changes the claim derivation, not the entity IRI. The profile must declare a key identifier and claim scheme version (`dal:ClaimScheme`). Rotation passes through four scheme states. Under `dal:Accepting`, only the current version is claimed. Under `dal:Dual`, every claim acquisition guards and inserts the claim IRIs of both the current and the next version in one operation, so uniqueness holds across the rotation window. Under `dal:Retiring`, new claims use only the next version while a backfill writes next-version claims for existing owners. Under `dal:Retired`, old-version claims are tombstoned, or deleted under an erasure policy. A compromised key demands this rotation path. Never define a secret as unrotatable.
 
 **Erasure:** tombstoning a claim preserves a pseudonymous personal-data artifact. A privacy profile may require physical deletion of the claim node and restricted audit evidence that contains no reversible or pseudonymous key derivative. This can break strict ownership monotonicity, so the configuration must declare the erasure precedence and reconciliation behavior.
 
@@ -364,22 +364,27 @@ The number is the byte length of the normalized UTF-8 component. The parser read
 
 Each uniqueness or derived-identity constraint declares a frozen, versioned normalization pipeline. The write path, audit, backfill, and claim issuer use the same pipeline.
 
-A Unicode-aware baseline for human text is:
+A Unicode-aware baseline for caseless human text is:
 
 ```text
-NFKC(strip-default-ignorable(NFKC(input)).casefold())
+trim(NFKC_Casefold(input))
 ```
 
-This is only a candidate. Email local parts, identifiers, legal names, and product codes have domain-specific case and whitespace semantics. The profile must state each transformation and may choose no case transformation at all.
+`NFKC_Casefold` is the Unicode-defined mapping (UCD `DerivedNormalizationProps.txt`) that applies NFKC, full case folding and removal of every `Default_Ignorable_Code_Point` in one idempotent step. ICU implements it as `Normalizer2.getNFKCCasefoldInstance()`. A composition of separate steps, such as `NFKC(casefold(NFKC(x)))` followed by removing the `Default_Ignorable_Code_Point` set, is close to it but is a different pipeline: it must be declared under its own pipeline identifier and property-tested for idempotence and for agreement with the reference. A hand-maintained list of invisible characters is never acceptable. The implementation pins the Unicode version of its normalization data, because a pipeline is identified by its behaviour, not by its description.
 
-Use the Unicode `Default_Ignorable_Code_Point` property rather than a hand-maintained subset. The implementation must version the Unicode data source used by the pipeline or otherwise demonstrate stable behavior across supported runtimes.
+This is only a candidate. Email local parts, identifiers, legal names, and product codes have domain-specific case and whitespace semantics. The profile must state each transformation and may choose no case transformation at all. In particular:
+
+- Case folding an email local part is a business rule, not a correctness fix. RFC 5321 makes the local part case-sensitive, and full folding maps `ß` to `ss`.
+- A pipeline that applies case *mapping* (upper or lower) re-applies NFKC afterwards, because case mapping is not closed under NFKC.
+- Internationalized domains are mapped with UTS #46 `ToASCII` in the first version of a pipeline, or rejected. A first version that admits both the Unicode and the `xn--` forms as distinct keys cannot be repaired without a re-key.
+- UTS #39 confusable detection is an advisory review signal feeding reconciliation, never part of the identity pipeline.
 
 ### 7.4 Digest derivation pattern
 
 A hash-derived identifier profile must specify all of:
 
 - hash function, for example `SHA-256`;
-- input bytes, including literals such as a scheme label and separators;
+- input bytes, including literals such as a scheme label, always assembled with a self-delimiting tuple encoding (§7.2);
 - tuple encoding and normalization pipeline version;
 - output encoding, for example lowercase hexadecimal or unpadded RFC 4648 base32;
 - exact output width in bits and characters;
@@ -388,7 +393,7 @@ A hash-derived identifier profile must specify all of:
 For example:
 
 ```text
-SHA-256(UTF-8("iri-v1|" + namespaceToken + "|" + enc(normalizedTuple)))
+SHA-256(enc(["iri-v1", namespaceToken, ...normalizedTuple]))
 ```
 
 A 128-bit, lowercase-hex prefix is exactly 32 characters. "At least 128 bits" is not a valid interoperable rule because it allows different implementations to mint different IRIs. A profile either fixes its width or defines a versioned transition.
@@ -515,7 +520,7 @@ Identity choices must fit the RDF and SPARQL patterns selected for persistence. 
 
 Content revision IDs name states. Event IDs name occurrences. A history chain uses event relations such as `pat:prevRev` or a configured successor property. The event points to its resulting content revision. It must never use `fnd:supersededBy` between content revisions because A -> B -> A would create a cycle.
 
-If the profile uses `pat:Revision`, it should declare `pat:Revision rdfs:subClassOf prov:Activity` or an equivalent alignment. It must not alternate between two unrelated event classes in different documents.
+The alignment of `pat:Revision` to an upper ontology is one open decision, tracked as item 3 of the patterns guide's [Appendix E](rdf-sparql-patterns-guide.md#appendix-e--what-remains-open): `prov:Activity`, `fnd:Evidence`, or neither. Whatever is chosen is declared once, in the vocabulary, and used uniformly. A profile must not alternate between two unrelated event classes in different documents.
 
 ### 10.2 Fixed-width positions
 
@@ -534,9 +539,9 @@ Select one durable-epoch strategy:
 | External high-water mark | writer compares the dataset epoch with durable state outside the restored store | fail-safe | requires coordination store or restore service |
 | Restore-controlled epoch | restore tooling allocates and records a new epoch before writers start | strong operational control | depends on runbook enforcement |
 | Writer-start refusal | writer will not start until it sees a new externally acknowledged epoch | fail-safe | availability impact during recovery |
-| Store-local epoch only | epoch stored only in restored dataset metadata | unsafe | **prohibited** for any position-derived occurrence identity: restoring the same backup twice reuses the epoch the first restore just allocated, inside the very dataset being restored |
+| Store-local epoch only | epoch stored only in restored dataset metadata | unsafe: restoring the same backup twice reuses the epoch the first restore just allocated, inside the very dataset being restored | warned, not refused (`dal:StoreLocalEpochWarningShape`). Acceptable only when the same backup is never restored twice into a live epoch space and no position-derived identifier leaves the dataset |
 
-An as-of query across a restore boundary must state whether it is limited to one epoch, returns a stitched multi-epoch history, or reports the earlier segment as non-reproducible. It must not silently treat sequence numbers from distinct epochs as one continuous history.
+Within the live dataset, a target's sequence continues across an epoch bump and its receipt chain crosses the boundary: writes guard on the dataset epoch, and a row's own epoch is rebased on its next write (patterns guide §10.1). What does not survive a bump is any position recorded *outside* the dataset under an earlier epoch, because the restore may have discarded the writes it refers to. A consumer holding such a position resynchronises. It never stitches its own pre-bump positions onto post-bump history. Writers are quiesced while the epoch is bumped, because under snapshot isolation a write that only reads the dataset epoch does not conflict with the bump (patterns guide §24.4).
 
 The candidate `dal:EpochProfile` vocabulary (`dal:epochAuthority`, `dal:epochGuardScope`) in `ontology/persistence` is specified in §14.1. A deployment selecting `dal:StoreLocalEpoch` or `dal:RowLevelGuardOnly` receives a SHACL warning naming this hazard rather than a silent default; it is a deliberate, informed choice, never an unstated one.
 
@@ -818,7 +823,7 @@ This guide intentionally does not decide the following for every adopter:
 - the final namespace and Foundation alignment for the illustrative `pat:` vocabulary;
 - a universal graph-name grammar;
 - whether RDF 1.2 triple terms are supported by a selected store profile;
-- the `dal:` vocabulary and shapes for skolemization strategy and alias resolution strategy, which remain candidate (\u00a714.1) pending a follow-on slice.
+- the `dal:` vocabulary and shapes for skolemization strategy and alias resolution strategy, which remain candidate (§14.1) pending a follow-on slice.
 
 These are configuration or follow-on ADR decisions, not defaults the framework should silently make.
 

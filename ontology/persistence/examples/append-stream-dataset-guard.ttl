@@ -1,0 +1,26 @@
+# Positive fixture: an append-only event stream under dal:DatasetLevelGuard
+# (rdf-sparql-patterns-guide.md §10.1). The compiler must select the
+# dataset-guard variants of the append and bootstrap templates: the append
+# guards on the dataset epoch, rebases the stream row's own epoch lazily,
+# and maintains pat:head and pat:prevRev. Declared in full, like every
+# fixture in this directory, because each is loaded on its own.
+@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix ex:  <https://example.org/lending#> .
+
+ex:DecisionStreamScope a dal:ClassScope ;
+    dal:priority 10 ;
+    dal:targetClass ex:DecisionStream .
+
+ex:DecisionStreamProfile a dal:DataAccessProfile ;
+    dal:appliesTo           ex:DecisionStreamScope ;
+    dal:strategy            dal:NamedGraphBoundary ;
+    dal:graphIriTemplate    "urn:g:decision-stream/{id}" ;
+    dal:concurrencyProfile  dal:AppendOnly ;
+    dal:orderingGrain       dal:EventGrain ;
+    dal:receiptModel        dal:PatchLog ;
+    dal:metaTopology        dal:SharedSharded .
+
+ex:DecisionStreamEpoch a dal:EpochProfile ;
+    dal:appliesTo        ex:DecisionStreamScope ;
+    dal:epochGuardScope  dal:DatasetLevelGuard ;
+    dal:epochAuthority   dal:ExternalHighWaterMark .

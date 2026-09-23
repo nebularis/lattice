@@ -1,31 +1,45 @@
-{{! cas-replace-composite-property-dataset-guard: sketch section 4.3's
-    CompositePropertyBoundary variant, dal:DatasetLevelGuard variant
-    (persistence-compiler-iri-sync Slice 1). Identical to
-    cas-replace-composite-property.mustache except for the added
-    dataset-level epoch guard in WHERE (iri-identity-patterns.md §10.3).
-    See that template's own comment for the property-path and PAYLOAD
-    marker rationale, not repeated here.
-
+{{! cas-replace-composite-property-dataset-guard: CompositePropertyBoundary CAS, dal:DatasetLevelGuard
+    variant: guards on the dataset epoch, rebases the row epoch lazily
+    (guide §10.1).
+    There is no single graph to sweep: the closure is a property-path walk
+    over the composite property, a compile-time slot holding the first
+    composite property found by walking the target's boundary shape (see
+    persistence.boundary). SPARQL 1.1 permits a property path only inside
+    WHERE, never inside a DELETE or INSERT template, so the path binds
+    ?member there for the DELETE template to consume. A path cannot be a
+    variable and has no bounded repetition, so depth is enforced at compile
+    time by the shape walk's cycle detection. The version row's subject is
+    the root instance IRI, never a graph IRI (sketch section 4.3).
+    requestDigest is computed by the caller as lower-case
+    hex SHA-256 over the tuple-encoded operation kind, target, expected
+    seq and sorted canonical N-Triples of the skolemized payload (guide
+    §15.2), and recorded on the txn claim so a confirmation can tell a
+    replay from a different request reusing the txn id.
+    The PAYLOAD marker is a non-SPARQL text-substitution
+    marker, not a bindable variable: a set of triples cannot be bound
+    through a single SPARQL variable. Whatever executes this instantiated
+    template splices in the caller's already-serialised, trusted payload
+    triples before submission, see tools/persistence/README.md "Known
+    limitations".
     Note for template authors: never put a Mustache tag inside this
-    comment block, including inside prose describing a slot by name in
-    braces. Chevron's comment parser ends at the first closing double-brace
-    it sees, even one nested inside a triple-brace tag, which silently
-    truncates the comment and corrupts everything after it. }}
+    comment block. Chevron's comment parser ends at the first closing
+    double-brace it sees, which silently truncates the comment. }}
 PREFIX pat: <https://example.org/lattice/patterns#>
 PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 
 DELETE {
   ?root ?p1 ?o1 .
   ?member ?p2 ?o2 .
-  GRAPH {{{metaGraphPrefix}}} { $root pat:seq $expectedSeq ; pat:head ?prevRev }
+  GRAPH {{{metaGraphPrefix}}} { $root pat:epoch ?rowEpoch ; pat:seq $expectedSeq ; pat:head ?prevRev }
 }
 INSERT {
-  GRAPH ?logGraph { #PAYLOAD# }
+  GRAPH ?logGraph { #PAYLOAD#
+  }
   GRAPH {{{metaGraphPrefix}}} { $root pat:epoch $epoch ; pat:seq $nextSeq ; pat:head $newRev }
-  GRAPH {{{txnGraph}}}        { $txnId pat:rev $newRev }
+  GRAPH {{{txnGraph}}}        { $txnId pat:rev $newRev ; pat:requestDigest $requestDigest }
   GRAPH ?logGraph2 {
       $newRev a pat:Revision ; pat:target $root ; pat:epoch $epoch ; pat:seq $nextSeq ;
-              pat:prevRev ?prevRev ; pat:txn $txnId ; pat:recordedAt ?now
+              pat:prevRev ?prevRev ; pat:txn ?txnKey ; pat:recordedAt ?now
   }
 }
 WHERE {
@@ -33,10 +47,12 @@ WHERE {
   BIND(?logGraph AS ?logGraph2)
   GRAPH {{{datasetGraph}}} { {{{datasetNode}}} pat:epoch $epoch }
   GRAPH {{{metaGraphPrefix}}} {
-      $root pat:epoch $epoch ; pat:seq $expectedSeq ; pat:head ?prevRev
+      $root pat:epoch ?rowEpoch ; pat:seq $expectedSeq .
+      OPTIONAL { $root pat:head ?prevRev }
       FILTER NOT EXISTS { $root pat:deleted true }
   }
   FILTER NOT EXISTS { GRAPH {{{txnGraph}}} { $txnId pat:rev ?any } }
+  BIND(STR($txnId) AS ?txnKey)
   BIND(NOW() AS ?now)
   OPTIONAL { $root ?p1 ?o1 }
   OPTIONAL {

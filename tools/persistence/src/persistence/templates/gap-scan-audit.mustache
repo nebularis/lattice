@@ -1,14 +1,29 @@
-{{! gap-scan-audit: guide S3, the gap and completeness check. Reads only;
-    the payoff of a dense per-stream sequence. Run by platform/housekeeping
-    (ADR-A80) or by an adopter's own reconciliation job. }}
+{{! gap-scan-audit: guide S3, driven from the version rows so a target
+    whose receipts are missing entirely is still examined. For each row
+    with sequence S and retention low-water mark L (default 1), the
+    receipts with seq in the closed range L to S must number exactly
+    S - L + 1. Groups by target across epochs, since pat:seq continues
+    across an epoch bump. The pinned-head graph is always included.
+    The LOG_GRAPHS marker is a text-substitution
+    marker like PAYLOAD: whatever executes this query replaces it with the
+    IRIs of every log bucket the family's registry lists (dal:registryGraph),
+    never an unbound GRAPH filtered by prefix. Left unsubstituted, it is a
+    SPARQL comment and the VALUES block is empty.}}
 PREFIX pat: <https://example.org/lattice/patterns#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 
-SELECT ?stream (MIN(?seq) AS ?lo) (MAX(?seq) AS ?hi) (COUNT(DISTINCT ?seq) AS ?n)
+SELECT ?target ?S ?L (COUNT(DISTINCT ?seq) AS ?n)
 WHERE {
-  GRAPH ?log {
-      ?r a pat:Revision ; pat:epoch $epoch ; pat:target ?stream ; pat:seq ?seq .
+  GRAPH {{{metaGraphPrefix}}} { ?target a pat:VersionRow ; pat:seq ?S }
+  OPTIONAL { GRAPH {{{retentionGraph}}} { ?target pat:retentionLowWaterMark ?lwm } }
+  BIND(COALESCE(?lwm, "1"^^xsd:long) AS ?L)
+  OPTIONAL {
+    VALUES ?log { {{{pinnedGraph}}}
+#LOG_GRAPHS#
+    }
+    GRAPH ?log { ?r a pat:Revision ; pat:target ?target ; pat:seq ?seq }
+    FILTER (?seq >= ?L && ?seq <= ?S)
   }
-  FILTER(STRSTARTS(STR(?log), STR({{{logGraphPrefix}}})))
 }
-GROUP BY ?stream
-HAVING (COUNT(DISTINCT ?seq) != MAX(?seq) - MIN(?seq) + 1)
+GROUP BY ?target ?S ?L
+HAVING (COUNT(DISTINCT ?seq) != ?S - ?L + 1)

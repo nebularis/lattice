@@ -30,6 +30,7 @@ POSITIVE_FIXTURES = [
     ("value-based-cas.ttl", "https://example.org/lending#Order"),
     ("composite-property-boundary-shacl.ttl", "https://example.org/lending#Order"),
     ("epoch-dataset-level-guard.ttl", "https://example.org/lending#LoanApplication"),
+    ("append-stream-dataset-guard.ttl", "https://example.org/lending#DecisionStream"),
 ]
 
 NEGATIVE_FIXTURES = [

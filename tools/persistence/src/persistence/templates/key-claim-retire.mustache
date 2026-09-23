@@ -1,7 +1,9 @@
-{{! key-claim-retire: the owner retires its own claim by tombstone, never
-    by deletion (guide §6.2). Only the current owner may retire. }}
+{{! key-claim-retire: the owner retires its own claim by tombstone
+    (guide §6.2). Only the current owner may retire. Physical deletion of a
+    personal-data claim under an erasure policy is a separate procedure
+    (guide §24.5).}}
 PREFIX pat: <https://example.org/lattice/patterns#>
 
-DELETE { GRAPH {{{txnGraph}}} { $claim pat:claimedBy $owner } }
-INSERT { GRAPH {{{txnGraph}}} { $claim pat:retiredBy $owner ; pat:retiredAt $now } }
-WHERE  { GRAPH {{{txnGraph}}} { $claim pat:claimedBy $owner } }
+DELETE { GRAPH {{{keysGraph}}} { $claim pat:claimedBy $owner } }
+INSERT { GRAPH {{{keysGraph}}} { $claim pat:retiredBy $owner ; pat:retiredAt $now } }
+WHERE  { GRAPH {{{keysGraph}}} { $claim pat:claimedBy $owner } }

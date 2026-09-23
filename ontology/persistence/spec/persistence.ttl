@@ -235,10 +235,14 @@ dal:scopeProperty a owl:ObjectProperty ;
     rdfs:comment "Optional: narrows the key to be unique within this property's value (a composite/scoped key, guide K3)." .
 
 dal:normalizePipeline a owl:ObjectProperty ;
-    rdfs:domain dal:UniquenessConstraint .
-dal:NfkcTrimUppercase a owl:NamedIndividual .
-dal:NfkcTrimLowercase a owl:NamedIndividual .
-dal:NfkcTrimCasefold  a owl:NamedIndividual .
+    rdfs:domain dal:UniquenessConstraint ;
+    rdfs:comment "The frozen normalization pipeline applied to every key component before claim derivation (guide §8.1). A pipeline is identified by its implementation and pinned Unicode data version, not by its description: two implementations that disagree on one input mint two claim IRIs for one key." .
+dal:NfkcTrimUppercase a owl:NamedIndividual ;
+    rdfs:comment "NFKC, then trim, then Unicode uppercase mapping, then NFKC again (case mapping is not closed under NFKC). Case-insensitive codes such as SKUs and order numbers." .
+dal:NfkcTrimLowercase a owl:NamedIndividual ;
+    rdfs:comment "NFKC, then trim, then Unicode lowercase mapping, then NFKC again. Case mapping, not case folding: prefer dal:NfkcTrimCasefold for caseless matching of human text." .
+dal:NfkcTrimCasefold  a owl:NamedIndividual ;
+    rdfs:comment "trim(NFKC_Casefold(x)): the Unicode NFKC_Casefold mapping (NFKC, full case folding and removal of every Default_Ignorable_Code_Point, idempotent), as ICU Normalizer2.getNFKCCasefoldInstance() implements it, then trim. The canonical pipeline for caseless human text (guide §8.1). Folding an email local part with it is a declared business rule, not a generic correctness fix." .
 
 dal:onViolation a owl:ObjectProperty ;
     rdfs:domain dal:UniquenessConstraint .
@@ -514,7 +518,7 @@ dal:RestoreControlledEpoch a dal:EpochAuthority ;
 dal:WriterStartRefusal a dal:EpochAuthority ;
     rdfs:comment "Writers refuse to start, or fail in-flight, until their cached epoch matches a durable external watermark. Combinable with dal:ExternalHighWaterMark for defence in depth." .
 dal:StoreLocalEpoch a dal:EpochAuthority ;
-    rdfs:comment "The epoch lives only inside the dataset being restored. Unsafe under a double restore from the same backup: the second restore reuses the epoch the first one just allocated. Discouraged; see dal:StoreLocalEpochWarningShape." .
+    rdfs:comment "The epoch lives only inside the dataset being restored. Unsafe under a double restore from the same backup: the second restore reuses the epoch the first one just allocated. Warned, not refused (dal:StoreLocalEpochWarningShape): acceptable only when the same backup is never restored twice into a live epoch space and no position-derived identifier leaves the dataset." .
 
 dal:epochAuthority a owl:ObjectProperty ;
     rdfs:domain dal:EpochProfile ; rdfs:range dal:EpochAuthority .
@@ -525,8 +529,8 @@ dal:epochCoordinatorBinding a owl:DatatypeProperty ;
 
 dal:EpochGuardScope a owl:Class ;
     rdfs:comment "Which epoch value a write's guard compares against." .
-dal:DatasetLevelGuard  a dal:EpochGuardScope ; rdfs:comment "Every write compares the dataset node's current epoch, not only the target's own version row. Required for restore-safety to hold at all." .
-dal:RowLevelGuardOnly  a dal:EpochGuardScope ; rdfs:comment "Only the version row's own epoch is guarded. A stale client can still match an unrestored row after a bump that never reaches the row. Discouraged; see dal:RowLevelGuardOnlyWarningShape." .
+dal:DatasetLevelGuard  a dal:EpochGuardScope ; rdfs:comment "Every write, including create paths, compares the dataset node's current epoch. The version row's own pat:epoch is read and rewritten to the current epoch on the row's next write, and pat:seq continues, so rows are rebased lazily after a bump instead of being guarded on (guide §10.1). Required for restore-safety to hold at all." .
+dal:RowLevelGuardOnly  a dal:EpochGuardScope ; rdfs:comment "Only the version row's own epoch is guarded. A bump never reaches a row until it is written, so a stale client can still match an unrestored row. Discouraged; see dal:RowLevelGuardOnlyWarningShape." .
 
 dal:epochGuardScope a owl:ObjectProperty ;
     rdfs:domain dal:EpochProfile ; rdfs:range dal:EpochGuardScope .
@@ -589,7 +593,7 @@ dal:GlobalReadStrategy a owl:Class ;
 dal:WatermarkedRead a dal:GlobalReadStrategy ;
     rdfs:comment "Read only below a published stable watermark computed from active writers' in-flight positions. Requires writer registration and heartbeats." .
 dal:LagWindowRead a dal:GlobalReadStrategy ;
-    rdfs:comment "Read only below observed-max minus a declared lag window covering clock skew, commit duration and stamp-to-commit delay, with a late-arrival alarm on any violation." .
+    rdfs:comment "Read only below now minus a declared lag window of at least the server-enforced maximum transaction duration (measured from HLC stamp to commit) plus maximum clock skew plus replica lag plus margin, with a late-arrival audit over a trailing window (guide §21.3)." .
 dal:DenseFeedRead a dal:GlobalReadStrategy ;
     rdfs:comment "Use a store-native dense change feed as the dataset tier directly. Preferred where available." .
 dal:NoGlobalRead a dal:GlobalReadStrategy ;
@@ -613,7 +617,7 @@ dal:contiguityCheckMode a owl:ObjectProperty ;
 
 dal:RetentionMode a owl:Class .
 dal:PrefixOnlyRetention a dal:RetentionMode ;
-    rdfs:comment "Retention prunes only a contiguous prefix and advances the as-of floor atomically with each drop. Required wherever as-of log replay is offered." .
+    rdfs:comment "Retention prunes only a contiguous prefix of receipt buckets. Before each drop it advances each affected target's retention low-water mark and the as-of floor, and carries any receipt that is still a live head into the pinned-head graph (guide §24.2). Required wherever as-of log replay is offered." .
 dal:BucketAnyRetention a dal:RetentionMode ;
     rdfs:comment "Retention may drop any bucket regardless of position. Incompatible with as-of log replay; see dal:AsOfFloorRetentionCompatibilityShape." .
 

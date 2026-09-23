@@ -1,0 +1,19 @@
+{{! txn-multi-revision-audit: guide §24.2 receipt-side audit (2). One
+    transaction id on several revisions is a request applied twice,
+    typically an append retried after its txn claim was pruned.
+    The LOG_GRAPHS marker is a text-substitution
+    marker like PAYLOAD: whatever executes this query replaces it with the
+    IRIs of every log bucket the family's registry lists (dal:registryGraph),
+    never an unbound GRAPH filtered by prefix. Left unsubstituted, it is a
+    SPARQL comment and the VALUES block is empty.}}
+PREFIX pat: <https://example.org/lattice/patterns#>
+
+SELECT ?t (COUNT(DISTINCT ?rev) AS ?n)
+WHERE {
+  VALUES ?log { {{{pinnedGraph}}}
+#LOG_GRAPHS#
+  }
+  GRAPH ?log { ?rev a pat:Revision ; pat:txn ?t }
+}
+GROUP BY ?t
+HAVING (COUNT(DISTINCT ?rev) > 1)

@@ -16,6 +16,7 @@ computed here; they stay unbound in the emitted templates for the
 from __future__ import annotations
 
 import hashlib
+import re
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -47,6 +48,13 @@ def _local(value) -> str | None:
     return str(value).rsplit("#", 1)[-1] if value is not None else None
 
 
+def _family_token(cls) -> str:
+    """A class IRI's local name as a lowercase ``[a-z0-9-]`` token, for
+    the fixed event-graph prefix (guide §2.3)."""
+    local = re.split(r"[#/:]", str(cls).rstrip("/#"))[-1]
+    return re.sub(r"[^a-z0-9-]", "-", local.lower()) or "family"
+
+
 def _shard_for(target: Target, shard_count: int) -> int:
     key = str(target)
     digest = hashlib.sha256(key.encode("utf-8")).digest()
@@ -73,12 +81,21 @@ def select_operations(
     dataset_level_guard = _local(dimensions["epochGuardScope"].value) == "DatasetLevelGuard"
 
     ops: list[GeneratedOperation] = []
+    # Fixed, well-known infrastructure graphs (rdf-sparql-patterns-guide.md
+    # §2.3). None is derived from a dal: property yet; see
+    # tools/persistence/README.md "Known limitations".
     common_bindings = [
         ParameterBinding("shard", "Integer", Integer.encode(shard)),
         ParameterBinding(
             "logGraphPrefix", "Iri", Iri.encode("urn:g:txlog/")
         ),
         ParameterBinding("txnGraph", "Iri", Iri.encode("urn:g:txn")),
+        ParameterBinding("keysGraph", "Iri", Iri.encode("urn:g:keys")),
+        ParameterBinding("retentionGraph", "Iri", Iri.encode("urn:g:retention")),
+        ParameterBinding("pinnedGraph", "Iri", Iri.encode("urn:g:txlog/pinned")),
+        ParameterBinding(
+            "eventGraphPrefix", "Iri", Iri.encode(f"urn:g:events/{_family_token(target.cls)}/")
+        ),
         ParameterBinding("metaGraphPrefix", "Iri", Iri.encode(f"urn:g:meta/{shard}")),
         ParameterBinding("datasetGraph", "Iri", Iri.encode("urn:g:dataset")),
         ParameterBinding("datasetNode", "Iri", Iri.encode("urn:g:dataset")),
@@ -109,7 +126,11 @@ def select_operations(
                 "tombstone-delete-named-graph-dataset-guard.mustache" if dataset_level_guard
                 else "tombstone-delete-named-graph.mustache"
             )
-            ops.append(GeneratedOperation("create-if-absent", "create-if-absent-named-graph.mustache", common_bindings))
+            create_template = (
+                "create-if-absent-named-graph-dataset-guard.mustache" if dataset_level_guard
+                else "create-if-absent-named-graph.mustache"
+            )
+            ops.append(GeneratedOperation("create-if-absent", create_template, common_bindings))
             ops.append(GeneratedOperation("cas-replace", cas_template, common_bindings))
             ops.append(GeneratedOperation("tombstone-delete", tombstone_template, common_bindings))
         elif boundary == "CompositePropertyBoundary":
@@ -143,7 +164,11 @@ def select_operations(
             )
             ops.append(GeneratedOperation("cas-replace", "cas-replace-value-guard.mustache", bindings))
     elif concurrency == "AppendOnly" or ordering == "EventGrain":
-        ops.append(GeneratedOperation("append", "append-event.mustache", common_bindings))
+        # A stream's version row is bootstrapped eagerly before any append
+        # (guide §10.1): a lazy first write would reintroduce the race.
+        suffix = "-dataset-guard" if dataset_level_guard else ""
+        ops.append(GeneratedOperation("bootstrap-version-row", f"bootstrap-version-row{suffix}.mustache", common_bindings))
+        ops.append(GeneratedOperation("append", f"append-event{suffix}.mustache", common_bindings))
     else:
         # ProvidedConcurrency or LockingConcurrency (a marker only, sketch
         # §3.3.1): no guard is generated either way.
@@ -166,6 +191,10 @@ def select_operations(
 
     ops.append(GeneratedOperation("gap-scan-audit", "gap-scan-audit.mustache", common_bindings))
     ops.append(GeneratedOperation("fork-detection-audit", "fork-detection-audit.mustache", common_bindings))
+    # Receipt-side forms of the fork audit, which survive txn-claim pruning
+    # (guide §24.2).
+    ops.append(GeneratedOperation("revision-multi-txn-audit", "revision-multi-txn-audit.mustache", common_bindings))
+    ops.append(GeneratedOperation("txn-multi-revision-audit", "txn-multi-revision-audit.mustache", common_bindings))
 
     return ops
 

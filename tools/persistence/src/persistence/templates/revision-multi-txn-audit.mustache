@@ -1,0 +1,18 @@
+{{! revision-multi-txn-audit: guide §24.2 receipt-side audit (1). One
+    revision carrying several pat:txn values is a merged fork. Survives
+    txn-claim pruning. The LOG_GRAPHS marker is a text-substitution
+    marker like PAYLOAD: whatever executes this query replaces it with the
+    IRIs of every log bucket the family's registry lists (dal:registryGraph),
+    never an unbound GRAPH filtered by prefix. Left unsubstituted, it is a
+    SPARQL comment and the VALUES block is empty.}}
+PREFIX pat: <https://example.org/lattice/patterns#>
+
+SELECT ?rev (COUNT(DISTINCT ?t) AS ?n)
+WHERE {
+  VALUES ?log { {{{pinnedGraph}}}
+#LOG_GRAPHS#
+  }
+  GRAPH ?log { ?rev a pat:Revision ; pat:txn ?t }
+}
+GROUP BY ?rev
+HAVING (COUNT(DISTINCT ?t) > 1)

@@ -176,7 +176,7 @@ dal:StoreLocalEpochWarningShape
     sh:targetClass dal:EpochProfile ;
     sh:severity sh:Warning ;
     sh:sparql [
-        sh:message "dal:epochAuthority is dal:StoreLocalEpoch. This is unsafe under a double restore from the same backup: the second restore reuses the epoch the first one just allocated inside the same dataset. Acceptable only for deployments that never restore into a live epoch space, or that accept the residual risk explicitly." ;
+        sh:message "dal:epochAuthority is dal:StoreLocalEpoch. This is unsafe under a double restore from the same backup: the second restore reuses the epoch the first one just allocated inside the same dataset. Acceptable only when the same backup is never restored twice into a live epoch space and no position-derived identifier (revision IRI, ETag, consumer position) leaves the dataset." ;
         sh:prefixes dal: ;
         sh:select "SELECT $this WHERE { $this dal:epochAuthority dal:StoreLocalEpoch }" ] .
 

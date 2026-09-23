@@ -79,6 +79,18 @@ Three new profile dimensions (`dal:IdentityProfile`, `dal:EpochProfile`, `dal:Pr
 5. Uniqueness `onViolation` branching, `mergeRelation`, `ClaimScheme` rotation
 6. Documentation close-out (README, this index, the two status files above)
 
+## 1b. IRI and RDF Patterns, Post-3866b21 Remediation
+
+| Field | Value |
+|-------|-------|
+| **Status** | ✅ Documentation remediation complete, and `tools/persistence` templates aligned (2026-09-23), 471/471 tests passing |
+| **Unit ID** | `iri-patterns-post-3866b21-remediation` |
+| **Review** | [iri-patterns-post-3866b21-review.md](review/iri-patterns-post-3866b21-review.md) |
+| **Status Record** | [iri-patterns-post-3866b21-remediation.md](status/iri-patterns-post-3866b21-remediation.md) |
+| **Documents** | [rdf-sparql-patterns-guide.md](../architecture/rdf-sparql-patterns-guide.md) (Appendix D.3), [iri-identity-patterns.md](../architecture/iri-identity-patterns.md), [iri-policy.md](../architecture/iri-policy.md) (body removed) |
+
+All 7 critical (A), 14 major (B), 9 safety (C), 7 cross-document (D) and 10 editorial (E) findings are fixed in the documents. The main design choices (lazy epoch rebase, request digest, pinned heads, row-driven gap audit, `NFKC_Casefold`) are recorded once in the status record. The compiler templates now generate the corrected write shapes and audits. A pre-existing bug that wrote key claims into the txn graph is fixed.
+
 ---
 
 ## 2. LLM Training and MORK Teaching Pack (MTP) Generation

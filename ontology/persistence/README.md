@@ -73,7 +73,7 @@ ex:LoanApplicationStrongProfile a dal:DataAccessProfile ;
     dal:uniqueness          ex:LoanApplicationNumberPerBranch .
 ```
 
-Full fixture: [`examples/baseline-single-class.ttl`](examples/baseline-single-class.ttl). Compiling this (`python -m persistence compile spec/persistence.ttl examples/baseline-single-class.ttl --out /tmp/compiled.ttl`) produces a `dal:CompiledProfile` with seven generated operations (create-if-absent, cas-replace, tombstone-delete, key-claim write and retire, gap-scan and fork-detection audits), each pointing at a named template with reified parameter bindings, never embedded SPARQL text.
+Full fixture: [`examples/baseline-single-class.ttl`](examples/baseline-single-class.ttl). Compiling this (`python -m persistence compile spec/persistence.ttl examples/baseline-single-class.ttl --out /tmp/compiled.ttl`) produces a `dal:CompiledProfile` with nine generated operations (create-if-absent, cas-replace, tombstone-delete, key-claim write and retire, and the gap-scan, fork-detection, revision-multi-txn and txn-multi-revision audits), each pointing at a named template with reified parameter bindings, never embedded SPARQL text.
 
 ## 6. Worked example 2: a shared substrate class, two deployments
 
@@ -177,7 +177,7 @@ ex:ClaimantReceipts a dal:DataAccessProfile ;
 
 `dal:PersonalDataReceiptCompatibilityShape` (`shapes/constraints.ttl`) rejects this same scope if `dal:receiptModel` were `dal:PatchLog` or `dal:SnapshotPerRevision` without `dal:perSubjectScoped true` or `dal:erasureStrategy dal:CryptoShred` — not because the framework prefers `dal:ReceiptOnly`, but because the other two models keep a second, immutable copy of the payload that a per-subject graph drop cannot reach. An adopter who genuinely needs replay over personal data selects `dal:CryptoShred` instead and specifies key custody and an as-of failure policy for shredded revisions.
 
-Full fixture set for this and the other new dimensions: [`examples/identity-epoch-privacy-profile.ttl`](examples/identity-epoch-privacy-profile.ttl) (still to be authored — it spans identity, epoch, and privacy together, and as of `persistence-compiler-iri-sync` Slice 1, 2026-09-23, only the epoch dimension's compiler wiring exists; see [ADR-A82](../../docs/architecture/decisions/ADR-A82-framework-neutral-identity-pattern-selection.md)'s consequence that this is a separately scoped slice). Slice 1 authored two narrower, epoch-only fixtures instead: [`examples/epoch-dataset-level-guard.ttl`](examples/epoch-dataset-level-guard.ttl) and [`examples/warning-epoch-unsafe-restore.ttl`](examples/warning-epoch-unsafe-restore.ttl).
+Full fixture set for this and the other new dimensions: [`examples/identity-epoch-privacy-profile.ttl`](examples/identity-epoch-privacy-profile.ttl) (still to be authored — it spans identity, epoch, and privacy together, and as of `persistence-compiler-iri-sync` Slice 1, 2026-09-23, only the epoch dimension's compiler wiring exists; see [ADR-A82](../../docs/architecture/decisions/ADR-A82-framework-neutral-identity-pattern-selection.md)'s consequence that this is a separately scoped slice). Slice 1 authored two narrower, epoch-only fixtures instead: [`examples/epoch-dataset-level-guard.ttl`](examples/epoch-dataset-level-guard.ttl) and [`examples/warning-epoch-unsafe-restore.ttl`](examples/warning-epoch-unsafe-restore.ttl). [`examples/append-stream-dataset-guard.ttl`](examples/append-stream-dataset-guard.ttl) covers an append-only stream under the dataset-level guard.
 
 ## 10. Repository layout
 

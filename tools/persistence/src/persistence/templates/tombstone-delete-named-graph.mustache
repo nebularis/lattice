@@ -1,6 +1,16 @@
-{{! tombstone-delete-named-graph: guide §24.1. Deleting an aggregate must
-    not delete its version row, or the counter resets and revision IRIs
-    are reused (F3 at the aggregate level). }}
+{{! tombstone-delete-named-graph: guide §24.1, dal:RowLevelGuardOnly variant.
+    Deleting an aggregate must not delete its version row, or the counter
+    resets and revision IRIs are reused (F3 at the aggregate level).
+    pat:head is OPTIONAL so a pre-created row that was never written can be
+    deleted. $cause names a decision record written before the delete.
+    requestDigest is computed by the caller as lower-case
+    hex SHA-256 over the tuple-encoded operation kind, target, expected
+    seq and sorted canonical N-Triples of the skolemized payload (guide
+    §15.2), and recorded on the txn claim so a confirmation can tell a
+    replay from a different request reusing the txn id.
+    Note for template authors: never put a Mustache tag inside this
+    comment block. Chevron's comment parser ends at the first closing
+    double-brace it sees, which silently truncates the comment. }}
 PREFIX pat: <https://example.org/lattice/patterns#>
 PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 
@@ -10,10 +20,10 @@ DELETE {
 }
 INSERT {
   GRAPH {{{metaGraphPrefix}}} { $root pat:epoch $epoch ; pat:seq $nextSeq ; pat:head $newRev ; pat:deleted true }
-  GRAPH {{{txnGraph}}}        { $txnId pat:rev $newRev }
+  GRAPH {{{txnGraph}}}        { $txnId pat:rev $newRev ; pat:requestDigest $requestDigest }
   GRAPH ?logGraph {
       $newRev a pat:Revision , pat:Deletion ; pat:target $root ; pat:epoch $epoch ;
-              pat:seq $nextSeq ; pat:prevRev ?prevRev ; pat:txn $txnId ;
+              pat:seq $nextSeq ; pat:prevRev ?prevRev ; pat:txn ?txnKey ;
               pat:recordedAt ?now ; pat:cause $cause ; pat:actor $actor
   }
 }
@@ -21,10 +31,12 @@ WHERE {
   BIND(IRI(CONCAT({{{graphPrefix}}}, REPLACE(STR($root), "^.*[/#]", ""))) AS ?g)
   BIND(IRI(CONCAT(STR({{{logGraphPrefix}}}), SUBSTR(STR(NOW()), 1, 7))) AS ?logGraph)
   GRAPH {{{metaGraphPrefix}}} {
-      $root pat:epoch $epoch ; pat:seq $expectedSeq ; pat:head ?prevRev
+      $root pat:epoch $epoch ; pat:seq $expectedSeq .
+      OPTIONAL { $root pat:head ?prevRev }
       FILTER NOT EXISTS { $root pat:deleted true }
   }
   FILTER NOT EXISTS { GRAPH {{{txnGraph}}} { $txnId pat:rev ?any } }
+  BIND(STR($txnId) AS ?txnKey)
   BIND(NOW() AS ?now)
   OPTIONAL { GRAPH ?g { ?s ?p ?o } }
 }

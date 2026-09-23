@@ -1,0 +1,16 @@
+{{! bootstrap-version-row: eager creation of a stream's version row at seq 0
+    with no head (guide §10.1, §14.2), before any append. A lazy OPTIONAL
+    initialisation inside the append would reintroduce the first-write
+    race. Idempotent: a no-op if the row exists.
+    Note for template authors: never put a Mustache tag inside this
+    comment block. Chevron's comment parser ends at the first closing
+    double-brace it sees, which silently truncates the comment. }}
+PREFIX pat: <https://example.org/lattice/patterns#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+INSERT {
+  GRAPH {{{metaGraphPrefix}}} { $stream a pat:VersionRow ; pat:epoch $epoch ; pat:seq "0"^^xsd:long }
+}
+WHERE {
+  FILTER NOT EXISTS { GRAPH {{{metaGraphPrefix}}} { $stream pat:seq ?any } }
+}
