@@ -60,7 +60,7 @@ Epic decomposition into phase plans is **no longer blocked**: the required Phase
 
 | Field | Value |
 |-------|-------|
-| **Status** | 🚧 Slice 1 implemented (2026-09-23), awaiting human test run and sign-off. Slice 3 blocked on a human decision; 2/4/5 not started |
+| **Status** | ✅ Slice 1 complete (2026-09-23), 290/290 tests passing. Slice 3 blocked on a human decision; 2/4/5 not started |
 | **Unit ID** | `persistence-compiler-iri-sync` |
 | **Sketch (gap analysis)** | [persistence-compiler-iri-sync.md](sketches/persistence-compiler-iri-sync.md) |
 | **Plan** | [persistence-compiler-iri-sync.md](plans/persistence-compiler-iri-sync.md) |
@@ -72,7 +72,7 @@ Epic decomposition into phase plans is **no longer blocked**: the required Phase
 Three new profile dimensions (`dal:IdentityProfile`, `dal:EpochProfile`, `dal:PrivacyProfile`), extensions to six existing ones, and eight new SHACL shapes were added to `ontology/persistence`, none consumed by `tools/persistence`. One finding (G1) is a live correctness issue, not just missing coverage: the compiler's CAS/tombstone templates generate the epoch-guard shape the vocabulary now documents as unsafe (`dal:RowLevelGuardOnly`), unconditionally, with no way to configure the safe `dal:DatasetLevelGuard` alternative.
 
 ### Slices
-1. **🚧 Implemented, awaiting test run.** Dataset-level epoch guard — `dal:epochGuardScope` resolvable, `dal:DatasetLevelGuard` template variant for the three named write shapes, warning diagnostic fires even on the platform baseline default. Run `mise run check:persistence` and see the [VP](validation/persistence-compiler-iri-sync-slice-1.md) for sign-off.
+1. **✅ Complete, 290/290 passing.** Dataset-level epoch guard — `dal:epochGuardScope` resolvable, `dal:DatasetLevelGuard` template variant for the three named write shapes, warning diagnostic fires even on the platform baseline default. See the [VP](validation/persistence-compiler-iri-sync-slice-1.md).
 2. Ordering/receipt/concurrency/aggregate-boundary extras + meta-topology sharding (low risk)
 3. Identity minting profile resolution — **blocked on a human decision**: does `dal:resourceRole` need a third resolution-key axis on `Target`?
 4. Privacy/erasure profile + cross-profile compatibility

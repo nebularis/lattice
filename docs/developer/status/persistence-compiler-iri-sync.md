@@ -3,7 +3,7 @@
 # Persistence Compiler / IRI-Patterns Sync — Status
 
 **Unit ID:** `persistence-compiler-iri-sync`
-**Status:** 🚧 Slice 1 implemented, awaiting human test run and sign-off. Slices 2–6 not started, Slice 3 blocked on a human decision
+**Status:** ✅ Slice 1 complete, 290/290 tests passing. Slices 2–6 not started, Slice 3 blocked on a human decision
 **Last updated:** 2026-09-23
 **Plan:** [persistence-compiler-iri-sync.md](../plans/persistence-compiler-iri-sync.md)
 **Sketch (gap analysis):** [persistence-compiler-iri-sync.md](../sketches/persistence-compiler-iri-sync.md)
@@ -14,7 +14,7 @@
 
 Scoped on 2026-09-23 in response to commit `c276afb`, which added three new profile dimensions, extended six existing ones, and added eight new SHACL shapes to `ontology/persistence`, none of it consumed by `tools/persistence`. This was anticipated, not a surprise: [rdf-sparql-patterns-remediation.md](rdf-sparql-patterns-remediation.md)'s own "Deferred item 1" named this exact gap the day it was created.
 
-Slice 1 was implemented the same day, in Default Mode: code and tests were written and the underlying logic was verified by direct script execution (compiling real example fixtures through the resolver/validator/operations pipeline and parsing the rendered SPARQL), but the committed pytest suite itself has not been run by the agent — per this repository's Default Mode, that is the human's step. See [Commands to run](#commands-to-run) below.
+Slice 1 was implemented the same day, in Default Mode: code and tests were written and the underlying logic was verified by direct script execution, but the committed pytest suite was handed off unrun (per Default Mode). The human ran `mise run check:persistence` and reported one failure: `TestEpochGuardScopeTemplateSelection::test_dataset_level_guard_selects_dataset_guard_templates` — `epoch-dataset-level-guard.ttl` declared only a `dal:EpochProfile`, no concurrency/boundary profile, so the target's `concurrencyProfile` fell back to the platform baseline (`ProvidedConcurrency`) and never entered the CAS branch at all; `select_operations()` generated `unconditional-write`, not `cas-replace`. Not a logic bug in the epoch-guard code — a fixture bug: the file wasn't a complete, self-contained positive example the way every other fixture in this directory is. Fixed by giving the fixture its own full `dal:DataAccessProfile` (matching `baseline-single-class.ttl`'s shape) alongside the `EpochProfile`, both scoped to the same target. Human then granted autonomous mode for this fix; re-ran the suite directly: **290/290 passing.**
 
 ## Blockers
 
@@ -28,7 +28,7 @@ Nothing blocks starting Slices 1, 2, 4, or 5.
 
 | Slice | Scope | Status |
 |---|---|---|
-| 1 | Dataset-level epoch guard (G1 — correctness) | 🚧 Implemented, awaiting human test run and sign-off — see [VP](../validation/persistence-compiler-iri-sync-slice-1.md) |
+| 1 | Dataset-level epoch guard (G1 — correctness) | ✅ Complete, 290/290 passing — see [VP](../validation/persistence-compiler-iri-sync-slice-1.md) |
 | 2 | Ordering/receipt/concurrency/aggregate-boundary extras + meta-topology sharding (G5, G6) | Not started |
 | 3 | Identity minting profile resolution (G2) | Blocked on human decision |
 | 4 | Privacy/erasure profile + cross-profile compatibility (G3 partial, G4) | Not started |
@@ -56,25 +56,22 @@ Slice 1 addresses a live correctness gap, not a coverage gap: the compiler's exi
 | Point in time | `tools/persistence` test count |
 |---|---|
 | Before this unit (Slice 2 of `rdf-sparql-patterns-phase`) | 239 |
-| After Slice 1 | ~254 (10 new explicit test functions + 5 additional parametrised instances from 2 new example fixtures joining existing generic suites) — **not yet confirmed by an actual run**, see Commands to run |
+| After Slice 1 | **290 passing, 0 failing** (confirmed by an actual run, 2026-09-23) |
 | After Slice 2 | TBD |
 | After Slice 3 | TBD |
 | After Slice 4 | TBD |
 | After Slice 5 | TBD |
 
-## Commands to run
-
-From the repository root:
+## Commands to run (already run and passing, kept for reproducibility)
 
 ```bash
 mise run check:persistence
 ```
 
-Expected: all existing tests still pass (non-weakening rule — Slice 1 added tests, it did not modify or remove any), plus the new tests named in [the Slice 1 Validation Pack](../validation/persistence-compiler-iri-sync-slice-1.md). A failure most likely means either an assertion mismatch in the newly written test code (not yet run by the agent) or a namespace/property-name typo against `persistence.ttl` — the same failure mode this project's own history names repeatedly.
+Result as of 2026-09-23: `290 passed`.
 
 ## Next steps
 
-1. Human runs `mise run check:persistence` and reports the result.
-2. Human resolves the Slice 3 blocker (can happen in parallel with Slices 2/4/5 starting).
-3. On a clean Slice 1 run, proceed to Slice 2, 4, or 5 (independent of each other and of Slice 3).
-4. Update this file after every slice lands, per the Documentation Lifecycle rule that this status record is the sole authoritative live state for this unit.
+1. Human resolves the Slice 3 blocker (can happen in parallel with Slices 2/4/5 starting).
+2. Proceed to Slice 2, 4, or 5 (independent of each other and of Slice 3).
+3. Update this file after every slice lands, per the Documentation Lifecycle rule that this status record is the sole authoritative live state for this unit.

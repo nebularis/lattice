@@ -1,13 +1,28 @@
-# Positive fixture: dal:EpochProfile explicitly declaring the safe
-# dal:DatasetLevelGuard scope and a restore-safe dal:epochAuthority
-# (persistence-compiler-iri-sync Slice 1, iri-identity-patterns.md §10.3).
-# No warning shape should fire against this configuration.
+# Positive fixture: a complete, self-contained NamedGraphBoundary/Optimistic
+# profile (matching baseline-single-class.ttl's shape) plus a
+# dal:EpochProfile explicitly declaring the safe dal:DatasetLevelGuard
+# scope and a restore-safe dal:epochAuthority (persistence-compiler-iri-
+# sync Slice 1, iri-identity-patterns.md §10.3). No warning shape should
+# fire against this configuration. The profile is declared in full here,
+# not layered onto baseline-single-class.ttl, because every example
+# fixture in this directory is loaded on its own (conftest.py's
+# load_example()), never combined with another.
 @prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
 @prefix ex:  <https://example.org/lending#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
 ex:LoanApplicationScope a dal:ClassScope ;
     dal:priority 10 ;
     dal:targetClass ex:LoanApplication .
+
+ex:LoanApplicationProfile a dal:DataAccessProfile ;
+    dal:appliesTo           ex:LoanApplicationScope ;
+    dal:strategy            dal:NamedGraphBoundary ;
+    dal:graphIriTemplate    "urn:g:loan-application/{id}" ;
+    dal:concurrencyProfile  dal:Optimistic ;
+    dal:orderingGrain       dal:EventGrain ;
+    dal:receiptModel        dal:PatchLog ;
+    dal:metaTopology        dal:SharedSharded .
 
 ex:LoanApplicationEpoch a dal:EpochProfile ;
     dal:appliesTo        ex:LoanApplicationScope ;

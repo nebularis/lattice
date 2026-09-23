@@ -34,8 +34,12 @@ mise run check:persistence
 
 ## Expected artifacts
 
-- All 11 new/modified test cases above pass, alongside the pre-existing suite (239 tests before this slice; see the status record for the count after).
-- `python3 -c "..."` scratch verification (not part of the committed suite, run during authoring, not a substitute for the command above): compiling `baseline-single-class.ttl` yields `epochGuardScope -> RowLevelGuardOnly` with a `RowLevelGuardOnly` warning present and `cas-replace-named-graph.mustache` selected; compiling `epoch-dataset-level-guard.ttl` yields `DatasetLevelGuard` with no warnings and `cas-replace-named-graph-dataset-guard.mustache` selected.
+- All test cases above pass, alongside the pre-existing suite: **confirmed, 290 passed, 0 failed** (`mise run check:persistence`, 2026-09-23).
+- `python3 -c "..."` scratch verification (not part of the committed suite, run during authoring): compiling `baseline-single-class.ttl` yields `epochGuardScope -> RowLevelGuardOnly` with a `RowLevelGuardOnly` warning present and `cas-replace-named-graph.mustache` selected; compiling `epoch-dataset-level-guard.ttl` yields `DatasetLevelGuard` with no warnings and `cas-replace-named-graph-dataset-guard.mustache` selected.
+
+## Fixture bug found by the human's first run, fixed under autonomous mode
+
+The first human-run pass failed T8 (`test_dataset_level_guard_selects_dataset_guard_templates`): `epoch-dataset-level-guard.ttl` declared only a `dal:EpochProfile`, no concurrency/boundary profile, so `concurrencyProfile` resolved to the platform baseline (`ProvidedConcurrency`) rather than `Optimistic`, and `select_operations()` never entered the CAS branch at all — `cas_ops` was empty. Not a defect in the epoch-guard resolution or template logic itself; the fixture was not a complete, self-contained positive example the way every other fixture in `ontology/persistence/examples/` is (each is loaded alone, never layered with another). Fixed by giving the fixture its own full `dal:DataAccessProfile` matching `baseline-single-class.ttl`'s shape. Re-run after the fix: 290/290 passing.
 
 ## Deliberate non-coverage
 
