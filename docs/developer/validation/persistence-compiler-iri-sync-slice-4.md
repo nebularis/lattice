@@ -9,7 +9,7 @@
 
 ## Not yet run in this environment
 
-This sandbox has no system Python, no `mise` on `PATH`, and no PyPI (`files.pythonhosted.org`) access: every package download is 307-redirected to a corporate ("MMC") block-notice page, confirmed with `uv pip install -v` showing the exact redirect target and `CATEGORY_DENIED` reason. This is a deliberate network policy, not a transient fault, and the code in this Validation Pack was not executed against it — only checked for syntax and import errors via the editor's static diagnostics (`get_errors`), which found none, across every new and modified file. Every "Pass criterion" below names the test that must be run to actually confirm the row; none of them have been confirmed yet. See the status record's Blockers section.
+This sandbox has no system Python, no `mise` on `PATH`, and no PyPI (`files.pythonhosted.org`) access: every package download is 307-redirected to a block-notice page, confirmed with `uv pip install -v` showing the exact redirect target and `CATEGORY_DENIED` reason. This is a deliberate network policy, not a transient fault, and the code in this Validation Pack was not executed against it — only checked for syntax and import errors via the editor's static diagnostics (`get_errors`), which found none, across every new and modified file. Every "Pass criterion" below names the test that must be run to actually confirm the row; none of them have been confirmed yet. See the status record's Blockers section.
 
 ## What invariants does this slice protect?
 

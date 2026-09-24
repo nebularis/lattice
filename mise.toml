@@ -44,7 +44,7 @@ run = "corepack enable && yarn install --immutable"
 
 [tasks.check]
 description = "Run all repository validation tasks"
-depends = ["check:python-root", "check:workers", "check:java", "check:frontend", "check:spc", "check:persistence", "check:minting-anchors", "check:minting-python", "build:mtp", "check:mtp"]
+depends = ["check:python-root", "check:workers", "check:java", "check:frontend", "check:spc", "check:persistence", "check:minting", "build:mtp", "check:mtp"]
 
 [tasks.test]
 description = "Run the repository test suites"
@@ -97,14 +97,22 @@ description = "Install the standalone Python minting library (ADR-A84) with its 
 run = "python -m pip install -e './packages/minting/python[test]'"
 
 [tasks."check:minting-python"]
-description = "Run the Python minting library against the anchors, the generated vectors and the Unicode 16.0 table checks"
+description = "Run the Python minting library against the anchors, the generated vectors and the Unicode 16.0 cross-checks"
 run = "python -m pytest packages/minting/python/tests -q"
 
+[tasks."check:minting-java"]
+description = "Build the standalone Java minting library and run it against the anchors, the generated vectors and the Unicode 16.0 table checks"
+run = "mvn -q -f packages/minting/java/pom.xml verify"
+
+[tasks."check:minting"]
+description = "Check both identity minting libraries and the anchor vectors (the table check, which downloads the UCD, is check:minting-tables)"
+depends = ["check:minting-anchors", "check:minting-python", "check:minting-java"]
+
 [tasks."build:minting-vectors"]
-description = "Compile the identity-minting anchor fixture and regenerate the committed recipes and conformance vectors in packages/minting/testdata"
+description = "Compile the identity-minting anchor and coverage fixtures and regenerate the committed recipes and conformance vectors in packages/minting/testdata"
 run = """
 t=$(mktemp -d)
-python -m persistence compile ontology/persistence/spec/persistence.ttl ontology/persistence/examples/identity-minting-anchors.ttl --out "$t/compiled.ttl"
+python -m persistence compile ontology/persistence/spec/persistence.ttl ontology/persistence/examples/identity-minting-anchors.ttl ontology/persistence/examples/identity-minting-coverage.ttl --out "$t/compiled.ttl"
 rm -f packages/minting/testdata/*.recipe.json packages/minting/testdata/*.vectors.json
 python -m persistence export-recipes "$t/compiled.ttl" --vectors --out packages/minting/testdata
 rm -rf "$t"

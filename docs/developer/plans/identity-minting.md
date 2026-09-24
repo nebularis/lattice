@@ -96,6 +96,7 @@ Validation: the schemas validate the anchor file; `verify-anchors.py` passes wit
 1. **`packages/minting/java`**: standalone `pom.xml` (not a child of `platform/pom.xml`), JDK 25, no runtime dependencies, JUnit test-scope only. Package `org.nebularis.lattice.minting`, same concepts and names as Python. Tables loaded from the resources M2 generated. A minimal JSON reader inside the library, since there is no JDK JSON API.
 2. **Tests**: the same anchor and generated vector files, run through a JUnit harness, and UTF-8 byte-length tests with non-BMP input.
 3. **`mise` tasks** `check:minting-java`; an aggregate `check:minting`.
+4. **Coverage fixture** (added during M3): `identity-minting-coverage.ttl`, so that the generated vectors exercise every pipeline, encoding, surrogate kind, namespace derivation and rotation state, not only one recipe per strategy.
 
 ### M4 — Specification completion and walk-through
 

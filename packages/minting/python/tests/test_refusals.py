@@ -97,3 +97,19 @@ def test_minter_does_not_share_secrets_with_the_caller():
     minted = minter.mint({"key": ["ada@example.org"], "scope": "acme",
                           "surrogate": "8f2c1b7e-3e4a-4f7c-9a6d-2b1e0c5d7f90"})
     assert minted.claim_iris
+
+
+def test_an_empty_secret_is_no_secret():
+    recipe = Recipe.parse(_recipe("Person"))
+    minter = Minter(recipe, {"example-key-v1": b""})
+    assert _kind(lambda: minter.mint({"key": ["ada@example.org"], "scope": "acme",
+                                      "surrogate": "8f2c1b7e-3e4a-4f7c-9a6d-2b1e0c5d7f90"})) == "MissingSecret"
+
+
+def test_a_blank_canonicalizer_is_judged_by_white_space():
+    """Blank means White_Space only, the same in every language (NO-BREAK
+    SPACE is White_Space, INFORMATION SEPARATOR ONE is not)."""
+    minter = Minter(Recipe.parse(_recipe("Contract")))
+    nquads = '<urn:a> <urn:b> "c" .\n'
+    assert _kind(lambda: minter.mint({"canonicalNQuads": nquads, "canonicalizer": chr(0x00A0)})) == "CanonicalizerNotDeclared"
+    assert minter.mint({"canonicalNQuads": nquads, "canonicalizer": chr(0x1F)}).iri

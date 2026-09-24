@@ -159,7 +159,7 @@ Generate a version 4 UUID as in §6.3 step 1 and render `iriTemplate` with `{sur
 
 **A minter hashes bytes. It does not canonicalize RDF.** The request supplies canonical N-Quads that the caller has already produced, and the correctness of the resulting identity rests on the caller's obligations in [§7](#7-content-addressed-identity-the-callers-obligations).
 
-1. The request must name the RDFC-1.0 implementation that produced the bytes in `canonicalizer`, a non-blank string, or the minter fails with `CanonicalizerNotDeclared`. The minter cannot check the statement. It exists so that every content-addressed call records who is answerable for CA-1, and so that no caller reaches a digest without meeting §7.
+1. The request must name the RDFC-1.0 implementation that produced the bytes in `canonicalizer`, a string containing at least one code point without the `White_Space` property, or the minter fails with `CanonicalizerNotDeclared`. "Blank" is judged by `White_Space`, never by a language's own whitespace test (§11). The minter cannot check the statement. It exists so that every content-addressed call records who is answerable for CA-1, and so that no caller reaches a digest without meeting §7.
 2. SHA-256 the UTF-8 bytes of `canonicalNQuads` (missing: `MissingKeyComponent`), truncate to `digest.widthBits`, encode with `digest.encoding`.
 3. Render `iriTemplate` with `{digest}`.
 
@@ -184,7 +184,7 @@ Two parties who canonicalize the same graph differently mint different IRIs for 
 
 ## 8. Secrets
 
-A recipe names a claim secret by `keyId` and never contains it. A minter receives the secret's bytes from its caller for each call and does not retain them. The vectors publish a **test secret** (`testSecrets`), clearly labelled: it exists so that anyone can reproduce the claim vectors, and must never be used in production.
+A recipe names a claim secret by `keyId` and never contains it. A minter receives the secret's bytes from its caller and does not return, log or persist them. A secret of zero bytes is treated as no secret (`MissingSecret`). The vectors publish a **test secret** (`testSecrets`), clearly labelled: it exists so that anyone can reproduce the claim vectors, and must never be used in production.
 
 ## 9. Named errors
 
@@ -196,7 +196,7 @@ A recipe names a claim secret by `keyId` and never contains it. A minter receive
 | `MissingKeyComponent` | a request lacks a key value, the scope value, the target IRI, an integer epoch or sequence, or the canonical N-Quads |
 | `UnassignedCodePoint` | a key component contains a code point unassigned in Unicode 16.0.0 |
 | `EmptyKeyComponent` | a key component is empty after its pipeline |
-| `MissingSecret` | no secret is supplied for a claim's `keyId` |
+| `MissingSecret` | no secret, or an empty one, is supplied for a claim's `keyId` |
 | `PatternMismatch` | a caller-supplied surrogate, registry token or adopted IRI does not match its pattern |
 | `PositionOutOfRange` | an epoch or sequence is negative or above 9223372036854775807 |
 | `CanonicalizerNotDeclared` | a content-addressed request does not name its RDFC-1.0 implementation (§6.6) |
@@ -234,6 +234,8 @@ Trace steps, in the order a strategy produces them:
 Test secrets in generated vectors are SHA-256 of the UTF-8 text `lattice-minting-test-secret/` followed by the key id. Vector files write every non-ASCII character as a JSON `\u` escape, so that invisible characters in the inputs can be read in review. Any JSON parser restores them.
 
 ### 10.2 Anchor vectors
+
+Generated vectors cover the seven anchor recipes and four coverage recipes ([`identity-minting-coverage.ttl`](../../ontology/persistence/examples/identity-minting-coverage.ttl)) that exercise what the anchors leave out: the lowercase pipeline, base64url, a generated surrogate with two claims in rotation, a registry-token namespace and an external registry identifier. The coverage recipes have no anchors.
 
 [`anchor-vectors.json`](../../contracts/identity/anchor-vectors.json) holds hand-authored vector sets, one per deterministic strategy, whose every byte is recomputed by [`verify-anchors.py`](../../contracts/identity/verify-anchors.py) with `openssl` and the Python standard library, sharing no code with any minting library. Vectors generated from a library can only show that other implementations agree with it; the anchors are what show that it is right. A conformant implementation passes the anchors **and** the generated vectors for every recipe it serves.
 

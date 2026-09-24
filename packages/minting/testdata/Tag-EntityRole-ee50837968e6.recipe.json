@@ -1,0 +1,39 @@
+{
+  "digest": {
+    "encoding": "base64url",
+    "function": "SHA-256",
+    "widthBits": 128
+  },
+  "iriTemplate": "urn:ex:tag:{digest}",
+  "key": {
+    "pipeline": {
+      "id": "NfkcTrimLowercase",
+      "steps": [
+        "reject_unassigned",
+        "nfkc",
+        "trim_white_space",
+        "lowercase_full",
+        "nfkc"
+      ],
+      "unicodeVersion": "16.0.0"
+    },
+    "properties": [
+      "https://example.org/lending#label"
+    ],
+    "scopeProperty": "https://example.org/lending#tenant"
+  },
+  "recipeDigest": "sha256:ee50837968e69c9b3341ccd79edb90c9cde975241da1763e14d61ed5a639e29f",
+  "recipeFormat": "lattice-minting-recipe/1",
+  "role": "EntityRole",
+  "strategy": "DerivedHashIdentity",
+  "target": {
+    "class": "https://example.org/lending#Tag",
+    "deployment": null
+  },
+  "tupleEncoding": "length-prefixed-utf8/1",
+  "tuplePrefix": [
+    "iri",
+    "v1",
+    "tag"
+  ]
+}

@@ -25,14 +25,20 @@ def _assigned_chars():
     return [chr(cp) for cp in CODE_POINTS if cp in ucd.ASSIGNED and unicodedata.category(chr(cp)) != "Cs"]
 
 
-def _pipelines() -> dict[str, list[str]]:
-    out = {}
+# The three pipelines of specification §3.2.
+PIPELINES = {
+    "NfkcTrimCasefold": ["reject_unassigned", "nfkc_casefold", "trim_white_space"],
+    "NfkcTrimUppercase": ["reject_unassigned", "nfkc", "trim_white_space", "uppercase_full", "nfkc"],
+    "NfkcTrimLowercase": ["reject_unassigned", "nfkc", "trim_white_space", "lowercase_full", "nfkc"],
+}
+
+
+def test_recipes_use_the_pipelines_of_the_specification():
     for path in RECIPE_FILES:
         r = load(path)
         for key in [r.get("key")] + [c["key"] for c in r.get("claims", [])]:
             if key:
-                out[key["pipeline"]["id"]] = key["pipeline"]["steps"]
-    return out
+                assert key["pipeline"]["steps"] == PIPELINES[key["pipeline"]["id"]], path.name
 
 
 def _run(steps: list[str], s: str) -> str:
@@ -86,7 +92,7 @@ def test_white_space_differs_from_isspace_only_at_the_information_separators():
 
 def test_every_pipeline_is_idempotent():
     corpus = _assigned_chars()
-    for pid, steps in _pipelines().items():
+    for pid, steps in PIPELINES.items():
         for ch in corpus:
             once = _run(steps, ch)
             assert _run(steps, once) == once, f"{pid} U+{ord(ch):04X}"
