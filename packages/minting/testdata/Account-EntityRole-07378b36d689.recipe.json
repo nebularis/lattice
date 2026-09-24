@@ -1,0 +1,74 @@
+{
+  "claims": [
+    {
+      "constraintId": "account-handle-unique",
+      "iriTemplate": "urn:key:{constraintId}:{schemeVersion}:{mac}",
+      "key": {
+        "pipeline": {
+          "id": "NfkcTrimCasefold",
+          "steps": [
+            "reject_unassigned",
+            "nfkc_casefold",
+            "trim_white_space"
+          ],
+          "unicodeVersion": "16.0.0"
+        },
+        "properties": [
+          "https://example.org/lending#handle",
+          "https://example.org/lending#realm"
+        ],
+        "scopeProperty": null
+      },
+      "keyId": "example-account-key-v1",
+      "mac": {
+        "encoding": "lowercase-hex",
+        "function": "HMAC-SHA-256",
+        "widthBits": 128
+      },
+      "schemeState": "Dual",
+      "schemeVersion": "v1",
+      "tupleEncoding": "length-prefixed-utf8/1"
+    },
+    {
+      "constraintId": "account-handle-unique",
+      "iriTemplate": "urn:key:{constraintId}:{schemeVersion}:{mac}",
+      "key": {
+        "pipeline": {
+          "id": "NfkcTrimCasefold",
+          "steps": [
+            "reject_unassigned",
+            "nfkc_casefold",
+            "trim_white_space"
+          ],
+          "unicodeVersion": "16.0.0"
+        },
+        "properties": [
+          "https://example.org/lending#handle",
+          "https://example.org/lending#realm"
+        ],
+        "scopeProperty": null
+      },
+      "keyId": "example-account-key-v2",
+      "mac": {
+        "encoding": "base64url",
+        "function": "HMAC-SHA-256",
+        "widthBits": 256
+      },
+      "schemeState": "Dual",
+      "schemeVersion": "v2",
+      "tupleEncoding": "length-prefixed-utf8/1"
+    }
+  ],
+  "iriTemplate": "urn:account:{surrogate}",
+  "recipeDigest": "sha256:07378b36d6893d6877dcf8807bc536757f14204ff63af1091c90a9f6beb1d752",
+  "recipeFormat": "lattice-minting-recipe/1",
+  "role": "EntityRole",
+  "strategy": "SurrogateClaimedIdentity",
+  "surrogate": {
+    "kind": "UuidV4Surrogate"
+  },
+  "target": {
+    "class": "https://example.org/lending#Account",
+    "deployment": null
+  }
+}

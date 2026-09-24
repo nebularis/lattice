@@ -1,0 +1,109 @@
+# Positive fixture for identity-minting M3: recipe features the anchor
+# fixture (identity-minting-anchors.ttl) leaves out, so that the generated
+# conformance vectors in packages/minting/testdata exercise every pipeline,
+# output encoding, surrogate kind, namespace derivation and strategy:
+# NfkcTrimLowercase with a scope, base64url, a generated surrogate with two
+# claims during a Dual rotation, a registry-token namespace, and an external
+# registry identifier. These recipes have no hand-authored anchors. Their
+# vectors come from the reference library and are cross-checked by the
+# second library.
+@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix ex:  <https://example.org/lending#> .
+
+# ---- Derived hash, lowercase pipeline, scoped, base64url ---------------------------------------
+ex:TagScope a dal:ClassScope ; dal:priority 10 ; dal:targetClass ex:Tag .
+
+ex:TagLabelUnique a dal:UniquenessConstraint ;
+    dal:constraintId       "tag-label-unique" ;
+    dal:appliesTo          ex:TagScope ;
+    dal:keyProperty        ( ex:label ) ;
+    dal:scopeProperty      ex:tenant ;
+    dal:normalizePipeline  dal:NfkcTrimLowercase ;
+    dal:onViolation        dal:Reject .
+
+ex:TagIdentity a dal:IdentityProfile ;
+    dal:appliesTo         ex:TagScope ;
+    dal:resourceRole      dal:EntityRole ;
+    dal:identityStrategy  dal:DerivedHashIdentity ;
+    dal:keyConstraint     ex:TagLabelUnique ;
+    dal:tuplePrefix       ( "iri" "v1" "tag" ) ;
+    dal:digestScheme      ex:TagDigest ;
+    dal:mintedIriTemplate "urn:ex:tag:{digest}" .
+
+ex:TagDigest a dal:DigestScheme ;
+    dal:digestFunction "SHA-256" ; dal:digestWidthBits 128 ; dal:digestEncoding "base64url" .
+
+# ---- Claimed identity, generated surrogate, two claims during rotation ------------------------
+ex:AccountScope a dal:ClassScope ; dal:priority 10 ; dal:targetClass ex:Account .
+
+ex:AccountHandleUnique a dal:UniquenessConstraint ;
+    dal:constraintId       "account-handle-unique" ;
+    dal:appliesTo          ex:AccountScope ;
+    dal:keyProperty        ( ex:handle ex:realm ) ;
+    dal:normalizePipeline  dal:NfkcTrimCasefold ;
+    dal:onViolation        dal:Reject ;
+    dal:claimScheme        ex:AccountHandleSchemeV1 , ex:AccountHandleSchemeV2 .
+
+ex:AccountHandleSchemeV1 a dal:ClaimScheme ;
+    dal:schemeVersion     "v1" ;
+    dal:schemeState       dal:Dual ;
+    dal:claimKeyId        "example-account-key-v1" ;
+    dal:claimDigestScheme ex:AccountHandleMacV1 ;
+    dal:claimIriTemplate  "urn:key:{constraintId}:{schemeVersion}:{mac}" .
+
+ex:AccountHandleSchemeV2 a dal:ClaimScheme ;
+    dal:schemeVersion     "v2" ;
+    dal:schemeState       dal:Dual ;
+    dal:claimKeyId        "example-account-key-v2" ;
+    dal:claimDigestScheme ex:AccountHandleMacV2 ;
+    dal:claimIriTemplate  "urn:key:{constraintId}:{schemeVersion}:{mac}" .
+
+ex:AccountHandleMacV1 a dal:DigestScheme ;
+    dal:digestFunction "HMAC-SHA-256" ; dal:digestWidthBits 128 ; dal:digestEncoding "lowercase-hex" .
+
+ex:AccountHandleMacV2 a dal:DigestScheme ;
+    dal:digestFunction "HMAC-SHA-256" ; dal:digestWidthBits 256 ; dal:digestEncoding "base64url" .
+
+ex:AccountIdentity a dal:IdentityProfile ;
+    dal:appliesTo         ex:AccountScope ;
+    dal:resourceRole      dal:EntityRole ;
+    dal:identityStrategy  dal:SurrogateClaimedIdentity ;
+    dal:surrogateKind     dal:UuidV4Surrogate ;
+    dal:claimsConstraint  ex:AccountHandleUnique ;
+    dal:mintedIriTemplate "urn:account:{surrogate}" .
+
+# ---- Position-derived occurrence with a registry token -----------------------------------------
+ex:ShipmentScope a dal:ClassScope ; dal:priority 10 ; dal:targetClass ex:Shipment .
+
+ex:ShipmentEvents a dal:IdentityProfile ;
+    dal:appliesTo                     ex:ShipmentScope ;
+    dal:resourceRole                  dal:EventOccurrenceRole ;
+    dal:identityStrategy              dal:DerivedHashIdentity ;
+    dal:eventIdentityStrategy         dal:PositionDerivedEvent ;
+    dal:occurrenceNamespaceDerivation dal:RegistryTokenDerivation ;
+    dal:uniquenessWitnessRequired     true ;
+    dal:digestScheme                  ex:ShipmentDigest ;
+    dal:epochWidth                    4 ;
+    dal:sequenceWidth                 8 ;
+    dal:mintedIriTemplate             "urn:ev:shipment:{namespace}:{epoch}:{seq}" .
+
+# Unused by the recipe, since the namespace is a registry token. The Slice 3
+# identity check requires it of every dal:DerivedHashIdentity profile (recorded
+# in the identity-minting status record).
+ex:ShipmentDigest a dal:DigestScheme ;
+    dal:digestFunction "SHA-256" ; dal:digestWidthBits 64 ; dal:digestEncoding "lowercase-hex" .
+
+ex:ShipmentEpoch a dal:EpochProfile ;
+    dal:appliesTo       ex:ShipmentScope ;
+    dal:epochGuardScope dal:DatasetLevelGuard ;
+    dal:epochAuthority  dal:ExternalHighWaterMark .
+
+# ---- External registry identifier: validation only ---------------------------------------------
+ex:InstrumentScope a dal:ClassScope ; dal:priority 10 ; dal:targetClass ex:Instrument .
+
+ex:InstrumentIdentity a dal:IdentityProfile ;
+    dal:appliesTo          ex:InstrumentScope ;
+    dal:resourceRole       dal:EntityRole ;
+    dal:identityStrategy   dal:ExternalRegistryIdentity ;
+    dal:namingAuthority    "example instrument registry" ;
+    dal:acceptedIriPattern "^urn:isin:[A-Z]{2}[A-Z0-9]{9}[0-9]$" .

@@ -1,0 +1,16 @@
+{
+  "epochWidth": 4,
+  "iriTemplate": "urn:ev:shipment:{namespace}:{epoch}:{seq}",
+  "namespace": {
+    "derivation": "RegistryTokenDerivation"
+  },
+  "recipeDigest": "sha256:c0d524d42dc606daf7ee89f00c6ec1787389f290c31413e29d7b6dad7cc9157c",
+  "recipeFormat": "lattice-minting-recipe/1",
+  "role": "EventOccurrenceRole",
+  "sequenceWidth": 8,
+  "strategy": "PositionDerivedEvent",
+  "target": {
+    "class": "https://example.org/lending#Shipment",
+    "deployment": null
+  }
+}

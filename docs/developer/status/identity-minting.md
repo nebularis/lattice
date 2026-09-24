@@ -3,7 +3,7 @@
 # Identity Minting — Status
 
 **Unit ID:** `identity-minting`
-**Status:** 🚧 In progress, M0–M2 complete (M2 on 2026-09-24), M3 next
+**Status:** 🚧 In progress, M0–M3 complete (M2 and M3 on 2026-09-24), M4 next
 **Plan:** [identity-minting.md](../plans/identity-minting.md)
 **Sketch:** [identity-minting.md](../sketches/identity-minting.md)
 
@@ -16,7 +16,7 @@
 | M0 | ADR-A82 amendment, ADR-A84, licence tracking, contracts and schemas, anchor vectors, specification skeleton | ✅ Complete — see [VP](../validation/identity-minting-m0.md) |
 | M1 | Vocabulary, compiler recipe emission, `dal:claimsConstraint` checks, `export-recipes` | ✅ Complete, 629/629 `tools/persistence` tests — see [VP](../validation/identity-minting-m1.md) |
 | M2 | Pinned Unicode 16.0 tables, Python library, vector generation | ✅ Complete, 51/51 library tests, 7 generated vectors files — see [VP](../validation/identity-minting-m2.md) |
-| M3 | Java library | ⏳ Not started |
+| M3 | Java library, vector coverage of every recipe feature | ✅ Complete, 43/43 Java tests, 66/66 Python, 11 vectors files — see [VP](../validation/identity-minting-m3.md) |
 | M4 | Specification completion, READMEs, human walk-through | ⏳ Not started |
 
 ## Decisions awaiting human review
@@ -25,7 +25,17 @@ The plan records six agent design decisions (P1–P6): recipe stored as canonica
 
 ## Open question for the human
 
-**Should `NfkcTrimUppercase` and `NfkcTrimLowercase` remove default-ignorable code points?** Today they do not, because NFKC keeps them. A SKU typed with a zero-width space therefore mints a different IRI from the same SKU without one, and a key of nothing but default-ignorables mints rather than failing with `EmptyKeyComponent`. `NfkcTrimCasefold` removes them. Options: (a) keep this, documented as specification §11 pitfall and vector `key-default-ignorable-only-survives`, (b) add a `remove_default_ignorable` step to both pipelines, which changes every recipe digest using them and needs a Default_Ignorable_Code_Point table. My recommendation is (b), before any adopter mints with these pipelines, since changing it later is a re-key. M3 proceeds on the current definition either way, and the change would touch the tables, both libraries, the anchors and the specification together.
+**Should `NfkcTrimUppercase` and `NfkcTrimLowercase` remove default-ignorable code points?** Today they do not, because NFKC keeps them. A SKU typed with a zero-width space therefore mints a different IRI from the same SKU without one, and a key of nothing but default-ignorables mints rather than failing with `EmptyKeyComponent`. `NfkcTrimCasefold` removes them. Options: (a) keep this, documented as specification §11 pitfall and vector `key-default-ignorable-only-survives`, (b) add a `remove_default_ignorable` step to both pipelines, which changes every recipe digest using them and needs a Default_Ignorable_Code_Point table. My recommendation is (b), before any adopter mints with these pipelines, since changing it later is a re-key. Both libraries implement the current definition, and the change would touch the tables, both libraries, the anchors and the specification together.
+
+## Agent decisions taken in M3 (for human review)
+
+- **An empty secret is no secret** (`MissingSecret`), in both libraries.
+- **"Blank" means `White_Space` only** for the content-addressed `canonicalizer` input.
+- **Coverage fixture:** `identity-minting-coverage.ttl` adds four recipes with generated vectors but no anchors. Anchoring them would need a further hand-authored set per recipe.
+
+## Found in M3, for `persistence-compiler-iri-sync`
+
+A position-derived event profile using `dal:RegistryTokenDerivation` must still declare a `dal:digestScheme`, because the Slice 3 check requires one on every `dal:DerivedHashIdentity` profile. The scheme is unused. Relaxing the check for registry-token events is a small validator change, left for that unit.
 
 ## M0 delivery detail
 
@@ -51,3 +61,11 @@ The plan records six agent design decisions (P1–P6): recipe stored as canonica
 - **Vectors:** `mise run build:minting-vectors` compiles `identity-minting-anchors.ttl` and writes seven recipes and seven vectors files to `packages/minting/testdata`, annotated MPL-2.0 in `REUSE.toml`.
 - **Docs:** specification §6, §6.3–§6.6, §9, §10.1, §11 updated; `packages/minting/README.md` and `python/README.md`; root README layout and check list.
 - **Tasks:** `bootstrap:minting-python` and `check:minting-python`, both in the aggregates.
+
+## M3 delivery detail
+
+- **Library:** `packages/minting/java`, standalone `pom.xml` (JDK 25, JUnit 5.11 at test scope), package `org.nebularis.lattice.minting`: `Recipe`, `Minter`, `Minted`, `MintException` with `MintError`, `Ucd` (tables from the shared resources, runtime check on U+1C89), `Canonical`, a restricted `Json` reader and canonical writer, `Conformance`, and `Main` (`verify`).
+- **Coverage:** `ontology/persistence/examples/identity-minting-coverage.ttl` (lowercase scoped derived hash with base64url, UUID-surrogate claims in `Dual` rotation, registry-token events, external registry), compiled with the anchor fixture by `build:minting-vectors`. Added to the persistence positive fixtures.
+- **Parity:** empty secrets and blank canonicalizers handled the same way in both libraries, and the specification says so.
+- **Docs:** `java/README.md` (including what the library does not borrow from the JDK), `packages/minting/README.md`, specification §6.6, §8, §9, §10.2, `ontology/persistence/README.md`, root README.
+- **Tasks:** `check:minting-java`, and `check:minting` (anchors, Python, Java) in the aggregate `check`.

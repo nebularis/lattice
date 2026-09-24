@@ -161,7 +161,7 @@ class Minter:
         claim_iris = []
         for ix, c in enumerate(claims):
             key = self._secrets.get(c["keyId"])
-            if key is None:
+            if not key:
                 raise MintError("MissingSecret", f"no secret supplied for key id {c['keyId']!r}")
             components = [c["schemeVersion"], c["constraintId"], scope[0] if scope else "", *normalized]
             data = tuple_bytes(components)
@@ -201,7 +201,7 @@ class Minter:
 
     def _content(self, inputs: Mapping, trace: list) -> Minted:
         canonicalizer = inputs.get("canonicalizer")
-        if not isinstance(canonicalizer, str) or not canonicalizer.strip():
+        if not isinstance(canonicalizer, str) or not ucd.trim_white_space(canonicalizer):
             raise MintError("CanonicalizerNotDeclared",
                             "content-addressed minting needs a statement of which RDFC-1.0 implementation produced "
                             "the bytes (identity-minting-specification.md §7, CA-1)")

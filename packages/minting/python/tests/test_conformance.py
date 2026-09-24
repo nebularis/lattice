@@ -21,7 +21,7 @@ def test_anchors_pass():
 
 
 def test_testdata_present():
-    assert len(RECIPE_FILES) == len(VECTOR_FILES) == 7
+    assert len(RECIPE_FILES) == len(VECTOR_FILES) == 11
 
 
 @pytest.mark.parametrize("path", VECTOR_FILES, ids=lambda p: p.name.split("-")[0])
@@ -49,9 +49,11 @@ def test_recipe_files_match_vectors(path):
 
 def test_anchor_recipes_equal_compiled_recipes(anchors):
     """The compiler reproduces every anchor recipe byte for byte (M1), so the
-    generated vectors and the anchors test the same recipes."""
+    generated vectors test the anchor recipes, plus four coverage recipes."""
     compiled = {load(p)["recipeDigest"] for p in RECIPE_FILES}
-    assert {s["recipe"]["recipeDigest"] for s in anchors["sets"]} == compiled
+    anchored = {s["recipe"]["recipeDigest"] for s in anchors["sets"]}
+    assert anchored <= compiled
+    assert len(compiled - anchored) == 4
 
 
 def test_default_ignorable_only_depends_on_pipeline():
@@ -65,6 +67,7 @@ def test_default_ignorable_only_depends_on_pipeline():
         by_pipeline.setdefault(key["pipeline"]["id"], set()).update(ids)
     assert "neg-default-ignorable-only" in by_pipeline["NfkcTrimCasefold"]
     assert "key-default-ignorable-only-survives" in by_pipeline["NfkcTrimUppercase"]
+    assert "key-default-ignorable-only-survives" in by_pipeline["NfkcTrimLowercase"]
 
 
 def test_a_changed_expectation_is_reported(tmp_path):

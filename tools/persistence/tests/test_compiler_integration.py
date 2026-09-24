@@ -34,6 +34,7 @@ POSITIVE_FIXTURES = [
     ("extension-properties.ttl", "https://example.org/lending#Facility"),
     ("identity-epoch-privacy-profile.ttl", "https://example.org/lending#Claimant"),
     ("identity-minting-anchors.ttl", "https://example.org/lending#Person"),
+    ("identity-minting-coverage.ttl", "https://example.org/lending#Account"),
     ("privacy-receipt-compatible.ttl", "https://example.org/lending#Beneficiary"),
 ]
 

@@ -208,8 +208,7 @@ mise run check:java
 mise run check:frontend
 mise run check:spc
 mise run check:persistence
-mise run check:minting-anchors
-mise run check:minting-python
+mise run check:minting
 mise run build:mtp
 mise run check:mtp
 ```
@@ -251,12 +250,11 @@ Compiles `ontology/persistence`'s own worked examples, runs the resolver/validat
 
 ```bash
 mise run bootstrap:minting-python
-mise run check:minting-anchors
-mise run check:minting-python
+mise run check:minting
 mise run check:minting-tables
 ```
 
-Verifies the hand-authored anchor vectors with `openssl`, runs the Python minting library against the anchors and the vectors generated from the compiler's recipes, and checks the pinned Unicode 16.0.0 tables against the Unicode Character Database. See [`packages/minting/README.md`](packages/minting/README.md) and the [identity minting specification](docs/architecture/identity-minting-specification.md).
+Verifies the hand-authored anchor vectors with `openssl`, runs the Python and Java minting libraries against the anchors and the vectors generated from the compiler's recipes, and checks the pinned Unicode 16.0.0 tables against the Unicode Character Database. See [`packages/minting/README.md`](packages/minting/README.md) and the [identity minting specification](docs/architecture/identity-minting-specification.md).
 
 ### Work on the docs site locally (Jekyll)
 

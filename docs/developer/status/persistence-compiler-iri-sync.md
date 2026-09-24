@@ -49,7 +49,7 @@ Nothing blocks starting Slice 5's implementation work, but its own test run will
 | 1 | Dataset-level epoch guard (G1 — correctness) | ✅ Complete, 290/290 passing — see [VP](../validation/persistence-compiler-iri-sync-slice-1.md) |
 | 2 | Ordering/receipt/concurrency/aggregate-boundary extension properties + meta-topology sharding (G5, G6) | ✅ Complete, 526/526 passing — see [VP](../validation/persistence-compiler-iri-sync-slice-2.md) |
 | 3 | Identity minting profile resolution (G2) | ✅ Complete, 570/570 passing — see [VP](../validation/persistence-compiler-iri-sync-slice-3.md) |
-| 4 | Privacy/erasure profile + cross-profile compatibility (G3 partial, G4) | ⚠️ Implemented, unverified — test run blocked in this sandbox, see Blockers |
+| 4 | Privacy/erasure profile + cross-profile compatibility (G3 partial, G4) | ⚠️ Implemented. Suite green on 2026-09-24 (669 passed, run from the `identity-minting` M3 session), awaiting human review of the slice |
 | 5 | Uniqueness `onViolation` branching, `mergeRelation`, `ClaimScheme` rotation (G7) | Not started |
 | 6 | Documentation close-out | Not started, waits on 3–5. Items already done early are listed in the [plan](../plans/persistence-compiler-iri-sync.md#slice-6--documentation-close-out) |
 
@@ -121,6 +121,7 @@ Slice 1 addresses a live correctness gap, not a coverage gap: the compiler's exi
 | After Slice 2 | **526 passing, 0 failing** (autonomous run, 2026-09-23) |
 | After Slice 3 | **570 passing, 0 failing** (autonomous run, 2026-09-23) |
 | After Slice 4 | **Not run.** Code adds 24 new dedicated test cases (`test_slice_4_privacy.py`) plus additional parametrised cases from three new fixture files across `test_compiler_integration.py`'s existing suites (end-to-end, negative-compile, SHACL conformance and non-conformance, turtle-parse). Expected total is therefore comfortably above 594, but this is arithmetic, not a confirmed run — see Blockers |
+| After Slice 4 and `identity-minting` M3 | **669 passing, 0 failing** (run 2026-09-24 on Python 3.14.7, in the `identity-minting` session). Includes the 24 cases of `test_slice_4_privacy.py` and 4 parametrised cases for `identity-minting-coverage.ttl` |
 | After Slice 5 | TBD |
 
 ## Commands to run
@@ -136,4 +137,5 @@ Result as of 2026-09-23 (after Slice 3, the last point this was actually run): `
 1. Minting recipes, conformance vectors and `dal:claimsConstraint` moved to the separate unit [`identity-minting`](../sketches/identity-minting.md) (sketch, 2026-09-23); Slice 3's interim "at least one uniqueness constraint" check is replaced there. Slice 4 also takes the G3 remainder listed above and exercises Worked example 4's privacy profile.
 2. **Human runs `mise run check:persistence`** and reports the result, so Slice 4 can move from "implemented" to "complete" (or so any failure can be diagnosed from the pasted output, per this repository's Default Mode).
 3. Proceed to Slice 5 once Slice 4 is confirmed (or in parallel, since the plan marks them independent — but its own test run will hit the identical sandbox blocker until run somewhere with PyPI access).
-4. Update this file after every slice lands, per the Documentation Lifecycle rule that this status record is the sole authoritative live state for this unit.
+4. **Registry-token events need an unused digest scheme** (found in `identity-minting` M3). The Slice 3 check requires `dal:digestScheme` on every `dal:DerivedHashIdentity` profile, including a position-derived event profile whose namespace is a `dal:RegistryTokenDerivation` token, where the digest is never used. `identity-minting-coverage.ttl` carries one with a comment. Relax the check for that case in Slice 5 or 6.
+5. Update this file after every slice lands, per the Documentation Lifecycle rule that this status record is the sole authoritative live state for this unit.
