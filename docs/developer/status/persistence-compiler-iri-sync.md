@@ -5,6 +5,8 @@
 **Unit ID:** `persistence-compiler-iri-sync`
 **Status:** ✅ Slices 1–3 complete, 570/570 tests passing (confirmed by an actual run). ⚠️ Slice 4 implemented (code, fixtures and tests written) but **not yet executed**: this sandbox has no working Python/mise and no PyPI access (see Blockers). Slices 5–6 not started.
 **Last updated:** 2026-09-23 (Slice 4)
+**Status:** ✅ Slices 1–3 complete, 570/570 tests passing (confirmed by an actual run). ⚠️ Slice 4 implemented (code, fixtures and tests written) but **not yet executed**: this sandbox has no working Python/mise and no PyPI access (see Blockers). Slices 5–6 not started.
+**Last updated:** 2026-09-23 (Slice 4)
 **Plan:** [persistence-compiler-iri-sync.md](../plans/persistence-compiler-iri-sync.md)
 **Sketch (gap analysis):** [persistence-compiler-iri-sync.md](../sketches/persistence-compiler-iri-sync.md)
 
@@ -13,11 +15,14 @@
 ## Is this unit complete?
 
 **No.** Three of six slices are done and verified by an actual test run; a fourth is implemented but unverified in this environment. Of the eight gaps in the [gap analysis](../sketches/persistence-compiler-iri-sync.md), four are closed and verified, two more are implemented pending a test run, and one (documentation) is kept current slice by slice with a final pass in Slice 6. The one live correctness gap (G1) is closed and verified. What remains before this unit can move past Slice 4 is a human running the test suite, per the Blockers section below, then Slice 5.
+**No.** Three of six slices are done and verified by an actual test run; a fourth is implemented but unverified in this environment. Of the eight gaps in the [gap analysis](../sketches/persistence-compiler-iri-sync.md), four are closed and verified, two more are implemented pending a test run, and one (documentation) is kept current slice by slice with a final pass in Slice 6. The one live correctness gap (G1) is closed and verified. What remains before this unit can move past Slice 4 is a human running the test suite, per the Blockers section below, then Slice 5.
 
 | Gap | Summary | Disposition | Where |
 |---|---|---|---|
 | G1 | Epoch guard generated the discouraged row-level shape unconditionally | ✅ Closed | Slice 1, then revised by [`iri-patterns-post-3866b21-remediation`](iri-patterns-post-3866b21-remediation.md) (row epoch rebased, not guarded) |
 | G2 | Identity minting profile unresolved | ✅ Closed | Slice 3: role-qualified resolution, emitted to the compiled profile, six checks. Minting stays with the caller (decision 2) |
+| G3 | Epoch/restore configuration surface | ⚠️ Implemented, unverified | Slice 4: `dal:epochAuthority` promoted to its own resolved dimension; `dal:epochCoordinatorBinding`, `dal:erasureRegisterBinding`, `dal:erasureReplayOnRestore` wired as its extras. Code/tests written, not yet run (see Blockers) |
+| G4 | Privacy/erasure profile and cross-profile checks | ⚠️ Implemented, unverified | Slice 4: `dal:privacyClass`/`dal:erasureStrategy`/`dal:erasurePrecedence`/`dal:perSubjectScoped` each resolved as their own dimension; two checks (`PersonalDataRequiresErasure`, `PersonalDataReceiptConflict`) mirroring the two named SHACL shapes. Code/tests written, not yet run (see Blockers) |
 | G3 | Epoch/restore configuration surface | ⚠️ Implemented, unverified | Slice 4: `dal:epochAuthority` promoted to its own resolved dimension; `dal:epochCoordinatorBinding`, `dal:erasureRegisterBinding`, `dal:erasureReplayOnRestore` wired as its extras. Code/tests written, not yet run (see Blockers) |
 | G4 | Privacy/erasure profile and cross-profile checks | ⚠️ Implemented, unverified | Slice 4: `dal:privacyClass`/`dal:erasureStrategy`/`dal:erasurePrecedence`/`dal:perSubjectScoped` each resolved as their own dimension; two checks (`PersonalDataRequiresErasure`, `PersonalDataReceiptConflict`) mirroring the two named SHACL shapes. Code/tests written, not yet run (see Blockers) |
 | G5 | Extension properties on existing profile classes | ✅ Closed | Slice 2 |
@@ -41,6 +46,7 @@ Slice 1 was implemented the same day, in Default Mode: code and tests were writt
 | **Slice 4's test run** | This sandbox has no system Python, no `mise` on `PATH`, and no PyPI/`files.pythonhosted.org` access (the proxy 307-redirects every package download to a block-notice page — a deliberate network policy, not a transient fault, and not something to route around). `uv python install --system-certs` can fetch a Python interpreter from GitHub releases, but installing `rdflib`/`pytest`/`pyshacl`/`chevron` from PyPI to actually run the suite fails the same way regardless of installer (`uv pip`, plain `pip`) or cache state. Slice 4's code, fixtures and tests were authored and checked for syntax/import errors only (editor-level `get_errors`, no errors found); the actual `mise run check:persistence` run is unconfirmed. | Human — run `mise run check:persistence` in an environment with working PyPI access and report the result |
 
 Nothing blocks starting Slice 5's implementation work, but its own test run will hit the identical environment blocker.
+Nothing blocks starting Slice 5's implementation work, but its own test run will hit the identical environment blocker.
 
 ## Slice status
 
@@ -49,6 +55,7 @@ Nothing blocks starting Slice 5's implementation work, but its own test run will
 | 1 | Dataset-level epoch guard (G1 — correctness) | ✅ Complete, 290/290 passing — see [VP](../validation/persistence-compiler-iri-sync-slice-1.md) |
 | 2 | Ordering/receipt/concurrency/aggregate-boundary extension properties + meta-topology sharding (G5, G6) | ✅ Complete, 526/526 passing — see [VP](../validation/persistence-compiler-iri-sync-slice-2.md) |
 | 3 | Identity minting profile resolution (G2) | ✅ Complete, 570/570 passing — see [VP](../validation/persistence-compiler-iri-sync-slice-3.md) |
+| 4 | Privacy/erasure profile + cross-profile compatibility (G3 partial, G4) | ⚠️ Implemented. Suite green on 2026-09-24 (669 passed, run from the `identity-minting` M3 session), awaiting human review of the slice |
 | 4 | Privacy/erasure profile + cross-profile compatibility (G3 partial, G4) | ⚠️ Implemented. Suite green on 2026-09-24 (669 passed, run from the `identity-minting` M3 session), awaiting human review of the slice |
 | 5 | Uniqueness `onViolation` branching, `mergeRelation`, `ClaimScheme` rotation (G7) | Not started |
 | 6 | Documentation close-out | Not started, waits on 3–5. Items already done early are listed in the [plan](../plans/persistence-compiler-iri-sync.md#slice-6--documentation-close-out) |
@@ -107,6 +114,20 @@ Implemented 2026-09-23, autonomous mode (granted for this slice explicitly). No 
 
 **Not executed**: per the Blockers section above, this sandbox cannot install `rdflib`/`pytest`/`pyshacl`/`chevron` from PyPI (network policy block, not a code problem), so `mise run check:persistence` has not been run against these changes. Every new and modified Python file was checked for syntax/import errors via the editor's static diagnostics only, with none found. A human must run the suite and report the result before this slice's status can move from "implemented" to "complete".
 
+## Slice 4 delivery detail
+
+Implemented 2026-09-23, autonomous mode (granted for this slice explicitly). No design decision was needed: every dimension this slice wires already exists, ratified, in `ontology/persistence/spec/persistence.ttl`, matching the plan's own framing ("compiler catch-up, not a new design").
+
+**Code**: `model.py` (five new dimensions — `epochAuthority`, `privacyClass`, `erasureStrategy`, `erasurePrecedence`, `perSubjectScoped` — appended to `DIMENSIONS`; `perSubjectScoped` added to `LITERAL_DIMENSIONS`; no baseline defaults, matching Slice 2 decision 2's precedent that an undeclared privacy stance is meaningfully absent, not `PublicData` by default), `resolver.py` (`_DIMENSION_SPEC`: `epochAuthority` promoted out of `epochGuardScope`'s extras into its own entry, carrying the three remaining restore-surface properties — `epochCoordinatorBinding`, `erasureRegisterBinding`, `erasureReplayOnRestore` — as its own extras; four new one-property-per-dimension entries for the privacy/receipt properties), `validator.py` (`_check_slice_4`: two checks, both raised as `CrossAxisViolation` because neither mirrored shape declares `sh:severity sh:Warning`; the `StoreLocalEpoch` warning in `check_cross_axis` and the `PositionEventUnsafeEpoch` join in `check_identity` both repointed from `epoch_guard.extra.get("epochAuthority")` to the new top-level `epochAuthority` dimension). `compiler.py` and `operations.py` needed no changes: the former emits every `DIMENSIONS` entry generically, and Slice 4 generates no SPARQL, matching Slice 3's "resolve, check, emit" precedent for a profile class that is adopter-facing configuration, not a template input.
+
+**Fixtures**: `invalid-personaldata-no-erasure.ttl` (mirrors `PersonalDataRequiresErasureShape`), `invalid-personaldata-receipt-conflict.ttl` (mirrors `PersonalDataReceiptCompatibilityShape`, `dal:PrivacyProfile` and `dal:ReceiptProfile` declared on separate individuals sharing one scope), `privacy-receipt-compatible.ttl` (positive: `dal:PatchLog` with `dal:perSubjectScoped true`). All three registered in `test_compiler_integration.py`'s `POSITIVE_FIXTURES`/`NEGATIVE_FIXTURES`/`SHACL_NEGATIVE_FIXTURES` lists as appropriate.
+
+**Tests**: `test_slice_4_privacy.py` (24 test cases counting parametrisation: per-property resolution including the lower-priority-node case, no-default absence, both checks positive and negative including the cross-node join, the two new negative fixtures asserting the exact `CrossAxisViolation.kind`, the positive fixture, literal emission, and Worked example 4's privacy profile resolving and being emitted cleanly). `test_resolver.py`'s two existing `TestEpochGuardScope` tests that asserted `rd.extra["epochAuthority"]` were rewritten, not weakened, to assert the new dimension instead — the documented contract change this slice makes deliberately (epochAuthority is no longer an extra of any dimension).
+
+**Docs**: `tools/persistence/README.md` gains "Privacy and erasure are resolved and checked" (mirroring the identity section's structure) and a "Known limitations" bullet for the three still-unchecked restore-surface extras; its test list and "A `Target` is a class..." section ordering updated accordingly. `ontology/persistence/README.md` §9's worked-example narrative updated from "resolved by the compiler from Slice 4" (future tense) to what Slice 4 actually resolves and checks, and its fixture-list paragraph extended with the three new files.
+
+**Not executed**: per the Blockers section above, this sandbox cannot install `rdflib`/`pytest`/`pyshacl`/`chevron` from PyPI (network policy block, not a code problem), so `mise run check:persistence` has not been run against these changes. Every new and modified Python file was checked for syntax/import errors via the editor's static diagnostics only, with none found. A human must run the suite and report the result before this slice's status can move from "implemented" to "complete".
+
 ## Severity note
 
 Slice 1 addresses a live correctness gap, not a coverage gap: the compiler's existing CAS/tombstone templates generate the epoch-guard shape the vocabulary now explicitly documents as unsafe (`dal:RowLevelGuardOnly`), unconditionally, for every deployment, with no way to configure the safe alternative (`dal:DatasetLevelGuard`). Recommend prioritising Slice 1 ahead of the others regardless of overall sequencing.
@@ -122,8 +143,11 @@ Slice 1 addresses a live correctness gap, not a coverage gap: the compiler's exi
 | After Slice 3 | **570 passing, 0 failing** (autonomous run, 2026-09-23) |
 | After Slice 4 | **Not run.** Code adds 24 new dedicated test cases (`test_slice_4_privacy.py`) plus additional parametrised cases from three new fixture files across `test_compiler_integration.py`'s existing suites (end-to-end, negative-compile, SHACL conformance and non-conformance, turtle-parse). Expected total is therefore comfortably above 594, but this is arithmetic, not a confirmed run — see Blockers |
 | After Slice 4 and `identity-minting` M3 | **669 passing, 0 failing** (run 2026-09-24 on Python 3.14.7, in the `identity-minting` session). Includes the 24 cases of `test_slice_4_privacy.py` and 4 parametrised cases for `identity-minting-coverage.ttl` |
+| After Slice 4 | **Not run.** Code adds 24 new dedicated test cases (`test_slice_4_privacy.py`) plus additional parametrised cases from three new fixture files across `test_compiler_integration.py`'s existing suites (end-to-end, negative-compile, SHACL conformance and non-conformance, turtle-parse). Expected total is therefore comfortably above 594, but this is arithmetic, not a confirmed run — see Blockers |
+| After Slice 4 and `identity-minting` M3 | **669 passing, 0 failing** (run 2026-09-24 on Python 3.14.7, in the `identity-minting` session). Includes the 24 cases of `test_slice_4_privacy.py` and 4 parametrised cases for `identity-minting-coverage.ttl` |
 | After Slice 5 | TBD |
 
+## Commands to run
 ## Commands to run
 
 ```bash
@@ -131,9 +155,15 @@ mise run check:persistence
 ```
 
 Result as of 2026-09-23 (after Slice 3, the last point this was actually run): `570 passed`. **Slice 4's changes have not been run against this command in this environment** (see Blockers). Expected: all previously-passing tests still pass, plus the new Slice 4 cases, all green.
+Result as of 2026-09-23 (after Slice 3, the last point this was actually run): `570 passed`. **Slice 4's changes have not been run against this command in this environment** (see Blockers). Expected: all previously-passing tests still pass, plus the new Slice 4 cases, all green.
 
 ## Next steps
 
+1. Minting recipes, conformance vectors and `dal:claimsConstraint` moved to the separate unit [`identity-minting`](../sketches/identity-minting.md) (sketch, 2026-09-23); Slice 3's interim "at least one uniqueness constraint" check is replaced there. Slice 4 also takes the G3 remainder listed above and exercises Worked example 4's privacy profile.
+2. **Human runs `mise run check:persistence`** and reports the result, so Slice 4 can move from "implemented" to "complete" (or so any failure can be diagnosed from the pasted output, per this repository's Default Mode).
+3. Proceed to Slice 5 once Slice 4 is confirmed (or in parallel, since the plan marks them independent — but its own test run will hit the identical sandbox blocker until run somewhere with PyPI access).
+4. **Registry-token events need an unused digest scheme** (found in `identity-minting` M3). The Slice 3 check requires `dal:digestScheme` on every `dal:DerivedHashIdentity` profile, including a position-derived event profile whose namespace is a `dal:RegistryTokenDerivation` token, where the digest is never used. `identity-minting-coverage.ttl` carries one with a comment. Relax the check for that case in Slice 5 or 6.
+5. Update this file after every slice lands, per the Documentation Lifecycle rule that this status record is the sole authoritative live state for this unit.
 1. Minting recipes, conformance vectors and `dal:claimsConstraint` moved to the separate unit [`identity-minting`](../sketches/identity-minting.md) (sketch, 2026-09-23); Slice 3's interim "at least one uniqueness constraint" check is replaced there. Slice 4 also takes the G3 remainder listed above and exercises Worked example 4's privacy profile.
 2. **Human runs `mise run check:persistence`** and reports the result, so Slice 4 can move from "implemented" to "complete" (or so any failure can be diagnosed from the pasted output, per this repository's Default Mode).
 3. Proceed to Slice 5 once Slice 4 is confirmed (or in parallel, since the plan marks them independent — but its own test run will hit the identical sandbox blocker until run somewhere with PyPI access).
