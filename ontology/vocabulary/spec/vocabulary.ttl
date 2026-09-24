@@ -19,6 +19,23 @@
 #    Object Properties
 #################################################################
 
+###  https://www.nebularis.org/neuro-semantic/lattice/vocabulary#bindingScope
+voc:bindingScope rdf:type owl:ObjectProperty ;
+                 rdfs:domain voc:SchemeBinding ;
+                 rdfs:range voc:BindingScope ;
+                 rdfs:comment "A scope within which a scheme binding applies." ;
+                 fnd:utility "Names a scope within which a SchemeBinding applies. Several values mean the binding applies only where all of them hold; express alternatives as separate bindings. Leave unset for a binding that applies in every scope." .
+
+
+###  https://www.nebularis.org/neuro-semantic/lattice/vocabulary#bindsScheme
+voc:bindsScheme rdf:type owl:ObjectProperty ,
+                         owl:FunctionalProperty ;
+                rdfs:domain voc:SchemeBinding ;
+                rdfs:range voc:ConceptScheme ;
+                rdfs:comment "The concept scheme a scheme binding supplies." ;
+                fnd:utility "Points a SchemeBinding at the specific scheme edition it supplies. Point at the edition itself, the ConceptScheme version, so the binding keeps its meaning when a later edition of the same scheme is published." .
+
+
 ###  https://www.nebularis.org/neuro-semantic/lattice/vocabulary#boundScheme
 voc:boundScheme rdf:type owl:ObjectProperty ,
                          owl:FunctionalProperty ;
@@ -36,12 +53,28 @@ voc:constrainsProperty rdf:type owl:ObjectProperty ;
                        fnd:utility "Names the property a SchemeContract governs. Point this at whichever property needs its values to come from a conformant concept scheme." .
 
 
+###  https://www.nebularis.org/neuro-semantic/lattice/vocabulary#forContract
+voc:forContract rdf:type owl:ObjectProperty ,
+                         owl:FunctionalProperty ;
+                rdfs:domain voc:SchemeBinding ;
+                rdfs:range voc:SchemeContract ;
+                rdfs:comment "The scheme contract a scheme binding satisfies." ;
+                fnd:utility "Names the contract a SchemeBinding satisfies. Every binding names exactly one contract; a contract may have any number of bindings." .
+
+
 ###  https://www.nebularis.org/neuro-semantic/lattice/vocabulary#requiresGovernanceState
 voc:requiresGovernanceState rdf:type owl:ObjectProperty ;
                             rdfs:domain voc:SchemeContract ;
                             rdfs:range fnd:GovernanceState ;
                             rdfs:comment "A governance state the bound scheme must currently hold for this contract to be considered satisfied." ;
                             fnd:utility "States which governance state(s) the bound scheme must currently hold — any one value given is sufficient if more than one is stated. Leave unset if the contract doesn't care about governance status at all." .
+
+
+###  https://www.nebularis.org/neuro-semantic/lattice/vocabulary#resolvedUnder
+voc:resolvedUnder rdf:type owl:ObjectProperty ;
+                  rdfs:range voc:SchemeBinding ;
+                  rdfs:comment "A scheme binding in force when a record's concept values were resolved." ;
+                  fnd:utility "Records, on any versioned record in any layer, which SchemeBinding its concept values were drawn under, so their meaning survives later changes to bindings or scheme editions. Give one value per contract the record draws on." .
 
 
 #################################################################
@@ -56,14 +89,34 @@ rdf:Property rdf:type owl:Class .
 skos:Concept owl:disjointWith voc:ConceptScheme .
 
 
+###  https://www.nebularis.org/neuro-semantic/lattice/vocabulary#BindingScope
+voc:BindingScope rdf:type owl:Class ;
+                 rdfs:comment "A declared context within which a scheme binding applies." ;
+                 fnd:utility "Declare one for each context in which bindings may differ, such as a deployment, tenant, jurisdiction or product. Vocabulary ships no scope individuals and does not decide which scopes hold for a given value." .
+
+
 ###  https://www.nebularis.org/neuro-semantic/lattice/vocabulary#ConceptScheme
 voc:ConceptScheme rdf:type owl:Class ;
                   rdfs:subClassOf skos:ConceptScheme ,
                                   fnd:Governable ,
                                   fnd:Version ;
-                  owl:disjointWith voc:SchemeContract ;
                   rdfs:comment "A published, identified, governed collection of concepts." ;
                   fnd:utility "A published, versioned, governed collection of concepts. Use fnd:hasIdentity and fnd:supersededBy to track successive editions of the same scheme over time, and fnd:hasGovernanceState to record its review status." .
+
+
+###  https://www.nebularis.org/neuro-semantic/lattice/vocabulary#SchemeBinding
+voc:SchemeBinding rdf:type owl:Class ;
+                  rdfs:subClassOf fnd:TemporallyScoped ,
+                                  [ rdf:type owl:Restriction ;
+                                    owl:onProperty voc:bindsScheme ;
+                                    owl:cardinality "1"^^xsd:nonNegativeInteger
+                                  ] ,
+                                  [ rdf:type owl:Restriction ;
+                                    owl:onProperty voc:forContract ;
+                                    owl:cardinality "1"^^xsd:nonNegativeInteger
+                                  ] ;
+                  rdfs:comment "A statement that a scheme contract is satisfied by a specific concept scheme, within zero or more named scopes, for a stated period." ;
+                  fnd:utility "Author one of these when a contract's scheme differs between contexts or must change over time. Set forContract, bindsScheme (a specific scheme edition), bindingScope for each scope it applies within (none means everywhere), and a temporal scope. To change the scheme in use, end this binding's validity and add a new one rather than editing it." .
 
 
 ###  https://www.nebularis.org/neuro-semantic/lattice/vocabulary#SchemeContract
@@ -76,6 +129,19 @@ voc:SchemeContract rdf:type owl:Class ;
                                    ] ;
                    rdfs:comment "A declared requirement binding a property, defined in some other layer, to concepts drawn from a conformant scheme." ;
                    fnd:utility "Author one of these when a property should take concept values but you don't yet know which scheme those concepts will come from. Set constrainsProperty to name the property, requiresGovernanceState if needed, and leave boundScheme empty until an implementation supplies one." .
+
+
+#################################################################
+#    General axioms
+#################################################################
+
+[ rdf:type owl:AllDisjointClasses ;
+  owl:members ( voc:BindingScope
+                voc:ConceptScheme
+                voc:SchemeBinding
+                voc:SchemeContract
+              )
+] .
 
 
 ###  Generated by the OWL API (version 4.5.29.2024-05-13T12:11:03Z) https://github.com/owlcs/owlapi
