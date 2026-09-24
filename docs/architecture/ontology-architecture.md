@@ -113,7 +113,7 @@ This is the section to read before recommending any change. What follows is the 
 | Layer / area | README (spec prose) | `spec/*.ttl` | `shapes/*.ttl` | `vocab/*.ttl` | `projection/*.ttl` | Status |
 |---|---|---|---|---|---|---|
 | Foundation | 434 lines, complete | 230 lines, complete | empty | empty (no individuals yet — `Draft/Reviewed/Active/Superseded` not declared) | n/a | **Fully specified T-box** |
-| Vocabulary | complete | 81 lines, complete | empty | n/a | n/a (contracts belong in consuming layers) | **Fully specified T-box** |
+| Vocabulary | complete | 147 lines, complete | empty placeholders (`constraints.ttl`, `rules.ttl`, `structural.ttl`) | n/a | n/a (contracts belong in consuming layers) | **T-box specified. Binding conformance package planned.** |
 | Quantification | 1277 lines, complete | 561 lines, complete | populated (`constraints.ttl`, `rules.ttl`, `structural.ttl`) | populated | empty (`.gitkeep` only — imported by everything above it, imports nothing back) | **Fully specified T-box + shapes.** Previously missing `owl:Ontology` header/imports fixed under ADR-A01/Gate 1. |
 | Party | 359 lines, complete | 202 lines, complete | empty | 75 lines, 7 named individuals, complete | `behaviour.ttl` empty | **Fully specified T-box + vocab.** Now also imports Quantification (ADR-A01/Gate 1). |
 | Eligibility | authored | authored | populated (`constraints.ttl`, `rules.ttl`, `structural.ttl`) | populated | populated (`party.ttl`, `quantification.ttl`) | **Authored in Gate 2.** Includes baseline admission profiles, interval-containment fixtures, and rule/constraint surface. |
@@ -224,7 +224,7 @@ An ordinary populated instance does *not* take `fnd:Governable` — that mixin i
 
 ### 5.1 Purpose
 
-Governs how external, domain-specific concept schemes bind into other layers' concept-valued properties, without those layers naming a domain concept directly. Builds on W3C SKOS, adding governed scheme-level versioning and a structural contract mechanism binding a property to a scheme neither side knows about in advance. Vocabulary does **not** resolve a fuzzy label to a concept (that is MORK's job) — it only defines what a valid binding looks like structurally.
+Governs how external, domain-specific concept schemes bind into other layers' concept-valued properties, without those layers naming a domain concept directly. Builds on W3C SKOS, adding governed scheme-level versioning, a structural contract mechanism, and scoped, time-bounded bindings for contexts where the scheme differs or changes over time. Vocabulary does **not** resolve a fuzzy label to a concept (that is MORK's job) — it defines the structural binding model and the inputs to resolution.
 
 ### 5.2 Design decisions
 
@@ -232,6 +232,9 @@ Governs how external, domain-specific concept schemes bind into other layers' co
 - **`SchemeContract` is structural only — never encodes what a scheme is *about*.** It constrains which property, which scheme, and what governance state that scheme must hold; the aboutness is prose, supplied by whichever domain ontology extends the framework.
 - **Concept-level constraints (excluding deprecated concepts, requiring leaf concepts) deliberately deferred** as a plausible future `SchemeContract` extension.
 - SKOS alignment is stated once, in the Alignments section, not duplicated inline (a stricter convention than Foundation's own document follows for its PROV-O alignment — noted as a tidy-up item against Foundation).
+- **Scoped and time-bounded binding is reified.** `SchemeBinding` connects one contract to one scheme edition, zero or more conjunctive opaque scopes, and one temporal scope. Multiple bindings are separate nodes because `boundScheme` is functional.
+- **Resolution precedence is a consuming rule, not an OWL axiom.** Applicable bindings must match every named scope and the resolution time. A strict scope superset wins. Equal-specificity survivors are a conflict. `boundScheme` is the fallback when no binding applies, and a scopeless binding must agree with it when both exist.
+- **Historical meaning is explicit.** A versioned record can use `resolvedUnder` to retain the binding that supplied its concept values. It is not re-resolved when current bindings change. Binding resolution, conflict, and provenance checks require SHACL-SPARQL or an equivalent reference implementation.
 
 ### 5.3 DL Encoding
 
@@ -239,26 +242,38 @@ Governs how external, domain-specific concept schemes bind into other layers' co
 Classes:
   voc:ConceptScheme   ⊑ skos:ConceptScheme ⊓ fnd:Version ⊓ fnd:Governable
   voc:SchemeContract  ⊑ fnd:Version ⊓ fnd:Governable ⊓ ≥1 constrainsProperty
+  voc:SchemeBinding   ⊑ fnd:TemporallyScoped ⊓ =1 forContract.SchemeContract ⊓ =1 bindsScheme.ConceptScheme
+  voc:BindingScope    (bare, opaque to Vocabulary; no individuals shipped)
 
 Disjointness:
-  ConceptScheme ⊥ SchemeContract
+  AllDisjoint( ConceptScheme, SchemeContract, SchemeBinding, BindingScope )
   ConceptScheme ⊥ skos:Concept
 
 Object properties:
   constrainsProperty     : SchemeContract → rdf:Property                (punning — points at a property defined elsewhere)
   requiresGovernanceState: SchemeContract → fnd:GovernanceState          (disjunctive if multi-valued: any one value suffices; optional)
   boundScheme            : SchemeContract → ConceptScheme, Func          (optional — unbound is the normal starting state)
+  forContract            : SchemeBinding → SchemeContract, Func
+  bindsScheme            : SchemeBinding → ConceptScheme, Func
+  bindingScope           : SchemeBinding → BindingScope                  (optional, conjunctive when multi-valued)
+  resolvedUnder          : any versioned record → SchemeBinding           (one value per contract drawn on)
 ```
 
 ### 5.4 Axiom Index
 
 | Term | Kind | Key characteristics |
 |---|---|---|
-| `voc:ConceptScheme` | Class | `⊑ fnd:Version, fnd:Governable, skos:ConceptScheme`; `⊥ voc:SchemeContract, skos:Concept` |
+| `voc:ConceptScheme` | Class | `⊑ fnd:Version, fnd:Governable, skos:ConceptScheme`; `⊥ voc:SchemeContract, voc:SchemeBinding, voc:BindingScope, skos:Concept` |
 | `voc:SchemeContract` | Class | `⊑ fnd:Version, fnd:Governable`; `constrainsProperty` ≥ 1 |
+| `voc:SchemeBinding` | Class | `⊑ fnd:TemporallyScoped`; `forContract` = 1; `bindsScheme` = 1 |
+| `voc:BindingScope` | Class | Opaque context marker; no individuals shipped |
 | `voc:constrainsProperty` | Obj. prop. | dom `SchemeContract`, range `rdf:Property` |
 | `voc:requiresGovernanceState` | Obj. prop. | dom `SchemeContract`, range `fnd:GovernanceState`; optional, disjunctive |
 | `voc:boundScheme` | Obj. prop. | Functional; optional |
+| `voc:forContract` | Obj. prop. | Functional; domain `SchemeBinding`, range `SchemeContract` |
+| `voc:bindsScheme` | Obj. prop. | Functional; domain `SchemeBinding`, range `ConceptScheme` |
+| `voc:bindingScope` | Obj. prop. | Domain `SchemeBinding`, range `BindingScope`; optional and conjunctive |
+| `voc:resolvedUnder` | Obj. prop. | No domain; range `SchemeBinding`; historical resolution provenance |
 
 ### 5.5 Worked pattern (illustrative)
 
@@ -277,10 +292,33 @@ ex:peril-contract voc:boundScheme ex:acme-peril-codes-v2 .
 
 `ins:hasPerilType` itself is never named in Vocabulary's own spec — only in this illustration, demonstrating the contract mechanism constrains a property without ever knowing what it is about.
 
+**Scoped and temporal binding** — two contexts can use different scheme editions, and one context can change edition without rewriting earlier records:
+
+```
+ex:job-family-contract a voc:SchemeContract ;
+  voc:constrainsProperty ex:hasJobFamily .
+ex:north a voc:BindingScope .
+ex:north-2026a a voc:SchemeBinding ;
+  voc:forContract ex:job-family-contract ;
+  voc:bindsScheme ex:north-v1 ;
+  voc:bindingScope ex:north ;
+  fnd:hasTemporalScope ex:jan-to-jul .
+ex:north-2026b a voc:SchemeBinding ;
+  voc:forContract ex:job-family-contract ;
+  voc:bindsScheme ex:north-v2 ;
+  voc:bindingScope ex:north ;
+  fnd:hasTemporalScope ex:from-jul .
+ex:offer-letter-117-v1 voc:resolvedUnder ex:north-2026a .
+```
+
+The example is illustrative and is not part of the extracted Vocabulary specification. A consumer supplies the active scopes and resolution time. It must reject equal-specificity conflicts rather than choosing an arbitrary scheme.
+
 ### 5.6 Open items
 
-- Named `SchemeContract`/`ConceptScheme` individuals (the actual authored contracts, e.g. Instrument's peril-type contract) belong in each consuming layer's own files and in `ontology/governance/scheme-contracts/` — none exist yet (both Instrument and `ontology/governance/scheme-contracts/` are empty).
-- Same "not run through a parser" caveat as Foundation.
+- Named `SchemeContract`/`ConceptScheme` individuals belong in consuming layers and in `ontology/governance/scheme-contracts/`, not in this T-box.
+- Binding resolution shapes are not yet authored. They must cover temporal validity, strict-superset precedence, equal-specificity conflicts, scopeless fallback agreement, and historical provenance time checks.
+- Consumers of `boundScheme` remain correct for unscoped inputs, but Surface and Eligibility must resolve an applicable binding first when they support scoped or temporal inputs.
+- The committed Turtle has been extracted from the layer README but still needs parser, SHACL, fixture, and deterministic resolution validation.
 
 ---
 

@@ -359,6 +359,39 @@ The unratified universal IRI policy in ADR-A51 was superseded by [ADR-A82](../ar
 
 ---
 
+# Vocabulary Scoped and Temporal Binding — Proposed (2026-09-24)
+
+| Field | Value |
+|-------|-------|
+| **Status** | ⏳ Planned, awaiting human review. Implementation not started |
+| **Unit ID** | `vocabulary-temporal-binding` |
+| **Trigger** | `65ac4a85e11cc1f8616e3e0c24efd59bf4ca410d` (`[vocabulary] time-bound binding`) |
+| **Sketch** | [vocabulary-temporal-binding.md](sketches/vocabulary-temporal-binding.md) |
+| **Plan** | [vocabulary-temporal-fixes.md](plans/vocabulary-temporal-fixes.md) |
+| **Status Record** | [vocabulary-temporal-binding.md](status/vocabulary-temporal-binding.md) |
+| **Validation Pack** | [vocabulary-temporal-binding.md](validation/vocabulary-temporal-binding.md) |
+| **ADR** | [ADR-A85](../architecture/decisions/ADR-A85-vocabulary-scoped-temporal-binding-resolution.md), Proposed |
+
+The source ontology change is present, but its conformance package is not. The
+planned unit adds domain-neutral positive and negative examples, populates the
+three empty Vocabulary SHACL files, tests strict-superset precedence and
+equal-specificity conflicts, adds a deterministic reference resolver, and
+checks historical `resolvedUnder` provenance at a consumer boundary. The first
+implementation slice is blocked on human review of the plan, ADR-A85, and the
+validation context.
+
+### Planned slices
+
+1. ADR-A85, architecture mirror, fixture and traceability skeleton
+2. Examples plus structural and SHACL-SPARQL validation
+3. Reference resolver and deterministic test suite
+4. Consumer/provenance checks and documentation close-out
+
+## 8.5 Vocabulary Conformance — Proposed
+
+See the unit record above. This heading is intentionally a navigation anchor
+between active platform work and archived material.
+
 # Part III — Archived/Historical Work
 
 ## 8. Phase Handoff Documents (0-6)
@@ -409,6 +442,13 @@ The unratified universal IRI policy in ADR-A51 was superseded by [ADR-A82](../ar
 - Slice 2 (complete): `ontology/persistence` + `tools/persistence`
 - Slice 3 (planned): Housekeeping
 
+### Vocabulary Binding
+- Sketch: [vocabulary-temporal-binding.md](sketches/vocabulary-temporal-binding.md)
+- Plan: [vocabulary-temporal-fixes.md](plans/vocabulary-temporal-fixes.md)
+- Status: [vocabulary-temporal-binding.md](status/vocabulary-temporal-binding.md)
+- Validation pack: [vocabulary-temporal-binding.md](validation/vocabulary-temporal-binding.md)
+- ADR: [A85](../architecture/decisions/ADR-A85-vocabulary-scoped-temporal-binding-resolution.md), Proposed
+
 ### MTP & LLM Training
 - Status: [llm-training-mtp.md](status/llm-training-mtp.md)
 - Execution: [mtp-execution.md](status/mtp-execution.md)
@@ -456,6 +496,7 @@ The unratified universal IRI policy in ADR-A51 was superseded by [ADR-A82](../ar
 3. Phase 0-9 implementation
 4. Surface MORK Phase 9 — Migration guides and phased rollout
 5. Surface MORK Phase 10 — Scale and performance optimization
+6. Vocabulary scoped and temporal binding conformance — awaiting human review
 
 ### 🗄️ Archived
 1. Phase 0-6 handoff documents (refer to individual status records)
@@ -473,6 +514,7 @@ The unratified universal IRI policy in ADR-A51 was superseded by [ADR-A82](../ar
 | **Housekeeping first cut (Slice 3)** | Scaffold `platform/housekeeping` module | Compiler ready; module contracts defined in ADR-A80; job duties extended by the 2026-09-23 guide remediation | Author Slice 3 (housekeeping scaffolding) |
 | **Store SPI** | Design runtime SPI for query execution | Compiler produces templates; runtime binding TBD | Separate epic/phase after housekeeping |
 | **MTP backend integration (Phase 7)** | Runtime API for LLM curriculum delivery | MTP generation complete; needs HTTP endpoint | Post-Phase-6 work |
+| **Vocabulary temporal binding conformance** | Examples, SHACL, resolver, consumer provenance checks | Source ontology landed, conformance package absent | Review plan, ADR-A85, and validation context |
 
 ---
 
