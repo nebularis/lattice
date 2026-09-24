@@ -1,0 +1,51 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Negative fixture. Two bindings for the same contract name exactly the
+# same single scope and overlap in validity from 2026-02-01 onward, so
+# neither is a strict superset of the other and both are applicable in that
+# window: a governance conflict, not a choice for a reasoner or a SHACL
+# rule to make silently (README §4 invariant 4, ADR-A85). Violates
+# voc:EqualSpecificityScopeConflictShape (constraints.ttl).
+# Covers VTB-07.
+
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix voc:  <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex:   <https://example.org/lattice/vocabulary/examples#> .
+
+ex:conflict-region a voc:BindingScope ; skos:prefLabel "Region"@en .
+
+ex:conflict-contract a voc:SchemeContract ;
+    fnd:hasIdentity ex:conflict-contract-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    voc:constrainsProperty ex:hasCategory ;
+    voc:requiresGovernanceState fnd:Active .
+
+ex:conflict-scheme-x a voc:ConceptScheme ;
+    fnd:hasIdentity ex:conflict-scheme-x-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Category scheme X"@en .
+
+ex:conflict-scheme-y a voc:ConceptScheme ;
+    fnd:hasIdentity ex:conflict-scheme-y-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Category scheme Y"@en .
+
+ex:conflict-binding-x a voc:SchemeBinding ;
+    voc:forContract ex:conflict-contract ;
+    voc:bindsScheme ex:conflict-scheme-x ;
+    voc:bindingScope ex:conflict-region ;
+    fnd:hasTemporalScope [
+        a fnd:TemporalScope ;
+        fnd:validFrom "2026-01-01T00:00:00Z"^^xsd:dateTime
+    ] .
+
+ex:conflict-binding-y a voc:SchemeBinding ;
+    voc:forContract ex:conflict-contract ;
+    voc:bindsScheme ex:conflict-scheme-y ;
+    voc:bindingScope ex:conflict-region ;
+    fnd:hasTemporalScope [
+        a fnd:TemporalScope ;
+        fnd:validFrom "2026-02-01T00:00:00Z"^^xsd:dateTime
+    ] .

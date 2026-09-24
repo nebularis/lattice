@@ -1,0 +1,76 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Consumer/provenance boundary fixture (plan §5, sketch "Cross-layer
+# consumer checks"). Exercised by tools/vocabulary/tests/test_consumer_boundary.py,
+# not by SHACL. Demonstrates three things about a caller reading a
+# concept-valued property through a voc:SchemeContract:
+#
+# 1. A caller that never resolves a scoped binding and reads only
+#    voc:boundScheme (the pattern ontology/eligibility/shapes/rules.ttl's
+#    elg:HierarchyWellFoundednessShape already uses) keeps working exactly
+#    as before for a context with no applicable scoped binding.
+# 2. A caller in a context that does have an applicable, more specific
+#    voc:SchemeBinding must resolve it before reading a scheme, or it will
+#    read the wrong one (the fallback, not the scoped edition).
+# 3. A voc:resolvedUnder record keeps the binding it was resolved under
+#    after the contract's current bindings move on.
+#
+# This is the narrowest useful proof the plan calls for. It does not modify
+# ontology/eligibility or ontology/surface, and does not change what either
+# layer's own SHACL currently checks.
+
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix voc:  <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
+@prefix vvp:  <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/validation-profile#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex:   <https://example.org/lattice/vocabulary/examples#> .
+
+ex:consumer-region-north a voc:BindingScope ; skos:prefLabel "North region"@en .
+
+ex:consumer-scheme-fallback a voc:ConceptScheme ;
+    fnd:hasIdentity ex:consumer-scheme-fallback-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Fallback category scheme"@en .
+
+ex:consumer-scheme-north-v1 a voc:ConceptScheme ;
+    fnd:hasIdentity ex:consumer-scheme-north-v1-identity ;
+    fnd:hasGovernanceState fnd:Superseded ;
+    skos:prefLabel "North category scheme, edition 1"@en .
+
+ex:consumer-scheme-north-v2 a voc:ConceptScheme ;
+    fnd:hasIdentity ex:consumer-scheme-north-v2-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "North category scheme, edition 2"@en .
+
+ex:consumer-contract a voc:SchemeContract ;
+    fnd:hasIdentity ex:consumer-contract-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    voc:constrainsProperty ex:hasCategory ;
+    voc:requiresGovernanceState fnd:Active ;
+    voc:boundScheme ex:consumer-scheme-fallback .
+
+ex:consumer-binding-north-v1 a voc:SchemeBinding ;
+    voc:forContract ex:consumer-contract ;
+    voc:bindsScheme ex:consumer-scheme-north-v1 ;
+    voc:bindingScope ex:consumer-region-north ;
+    fnd:hasTemporalScope [
+        a fnd:TemporalScope ;
+        fnd:validFrom "2026-01-01T00:00:00Z"^^xsd:dateTime ;
+        fnd:validTo   "2026-07-01T00:00:00Z"^^xsd:dateTime
+    ] .
+
+ex:consumer-binding-north-v2 a voc:SchemeBinding ;
+    voc:forContract ex:consumer-contract ;
+    voc:bindsScheme ex:consumer-scheme-north-v2 ;
+    voc:bindingScope ex:consumer-region-north ;
+    fnd:hasTemporalScope [
+        a fnd:TemporalScope ;
+        fnd:validFrom "2026-07-01T00:00:00Z"^^xsd:dateTime
+    ] .
+
+# A record resolved under the north region's first edition in March 2026,
+# kept unchanged after the July 2026 handover to the second edition.
+ex:consumer-record-42 a ex:VersionedRecord ;
+    voc:resolvedUnder ex:consumer-binding-north-v1 ;
+    vvp:resolvedAt "2026-03-01T00:00:00Z"^^xsd:dateTime .

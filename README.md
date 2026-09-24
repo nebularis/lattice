@@ -37,7 +37,7 @@ LATTICE is organised as seven layers, each an independent OWL/SHACL/SKOS module:
 | Layer | Kind | What it models |
 |---|---|---|
 | **Foundation** | Substrate | Identity, versioning, provenance and evidence, governance state, temporal scoping. |
-| **Vocabulary** | Substrate | The governed mechanism by which external, domain-specific concept schemes get bound into the other layers without touching their core specifications. |
+| **Vocabulary** | Substrate | The governed mechanism by which external, domain-specific concept schemes get bound into the other layers without touching their core specifications, including scoped and time-bounded bindings. The vocabulary and SHACL shapes live under `ontology/vocabulary/`; a reference resolver for the scoped/temporal binding precedence law lives under `tools/vocabulary/`. See [ADR-A85](docs/architecture/decisions/ADR-A85-vocabulary-scoped-temporal-binding-resolution.md). |
 | **Quantification** | Substrate | Declared value spaces, quantities, ordered values, bounds, ranges, conversion, granularity, and recurrence — the mechanism behind any magnitude, interval, or ordinal comparison the other layers need. |
 | **Party** | Substrate | 	Actors, the roles they occupy, and the direction and composition of obligation between them (e.g., modelling independently capped shares, joint obligation with a right of recourse, delegated accountability, or contingent role occupancy). |
 | **Eligibility** | Substrate | admissibility criteria (conditions, unresolved questions, and decisions). |

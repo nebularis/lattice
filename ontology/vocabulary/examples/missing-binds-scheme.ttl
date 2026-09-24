@@ -1,0 +1,23 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Negative fixture. A voc:SchemeBinding with no voc:bindsScheme. Violates
+# voc:SchemeBindingShape (structural.ttl): bindsScheme sh:minCount 1.
+# Covers VTB-03.
+
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix voc:  <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex:   <https://example.org/lattice/vocabulary/examples#> .
+
+ex:missing-bs-contract a voc:SchemeContract ;
+    fnd:hasIdentity ex:missing-bs-contract-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    voc:constrainsProperty ex:hasCategory ;
+    voc:requiresGovernanceState fnd:Active .
+
+ex:missing-bs-binding a voc:SchemeBinding ;
+    voc:forContract ex:missing-bs-contract ;
+    fnd:hasTemporalScope [
+        a fnd:TemporalScope ;
+        fnd:validFrom "2026-01-01T00:00:00Z"^^xsd:dateTime
+    ] .

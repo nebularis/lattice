@@ -1,0 +1,116 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# SHACL-SPARQL constraints for the resolution law stated in prose in
+# ontology/vocabulary/README.md §4 and decided in ADR-A85. Per that ADR, no
+# constraint here selects a winning binding — each shape only ever reports a
+# structural defect or an unresolved ambiguity.
+#
+# Three of these shapes (Temporal interval order, Fallback agreement, Equal
+# specificity conflict) are checkable from the graph alone: an interval's own
+# two endpoints, a contract's own bindings and boundScheme, and two bindings'
+# own scope sets and validity windows never depend on a caller-supplied
+# resolution context. A strict-superset winner cannot be decided this way
+# (that needs the caller's active context, so it belongs to the reference
+# resolver in tools/vocabulary, not here) but two bindings that name exactly
+# the same scopes and share any moment of validity are a conflict in every
+# context where either could ever apply, which a closed, context-independent
+# query can detect on its own.
+#
+# The fourth shape (Historical provenance time) needs a resolution time that
+# belongs to whatever versioned record asserted voc:resolvedUnder, and
+# Vocabulary itself declares no such record class or timestamp property (the
+# sketch, §"SHACL validation", anticipates exactly this and permits fixture
+# metadata or a documented validation profile in its place). This file
+# therefore introduces one validation-profile-only term for that purpose:
+#
+#   vvp:resolvedAt  — the time at which a voc:resolvedUnder-bearing record's
+#   concept values were actually resolved. Not part of the normative
+#   Vocabulary specification (spec/vocabulary.ttl); used only by this shape
+#   and by the fixtures under ontology/vocabulary/examples/ that exercise it.
+#   A real consuming layer states this via its own record's own timestamp
+#   property instead, once one exists.
+
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix voc:  <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
+@prefix vvp:  <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/validation-profile#> .
+
+vvp:resolvedAt a rdf:Property ;
+	rdfs:comment "Validation-profile-only: the time at which a voc:resolvedUnder-bearing record's concept values were resolved. Not part of spec/vocabulary.ttl." .
+
+voc:TemporalIntervalOrderShape a sh:NodeShape ;
+	sh:targetClass voc:SchemeBinding ;
+	sh:sparql [
+		sh:message "A scheme binding's temporal scope must not end before it begins." ;
+		sh:select """
+			PREFIX fnd: <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+			SELECT $this WHERE {
+				$this fnd:hasTemporalScope ?scope .
+				?scope fnd:validFrom ?from ;
+					   fnd:validTo ?to .
+				FILTER (?to < ?from)
+			}
+		"""
+	] .
+
+voc:FallbackAgreementShape a sh:NodeShape ;
+	sh:targetClass voc:SchemeContract ;
+	sh:sparql [
+		sh:message "A scopeless scheme binding must name the same scheme as the contract's boundScheme fallback. Discharges README §4 invariant 6." ;
+		sh:select """
+			PREFIX voc: <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#>
+			SELECT $this WHERE {
+				$this voc:boundScheme ?fallback .
+				?binding voc:forContract $this ;
+						 voc:bindsScheme ?bound .
+				FILTER NOT EXISTS { ?binding voc:bindingScope ?anyScope }
+				FILTER (?bound != ?fallback)
+			}
+		"""
+	] .
+
+voc:EqualSpecificityScopeConflictShape a sh:NodeShape ;
+	sh:targetClass voc:SchemeBinding ;
+	sh:sparql [
+		sh:message "Two bindings for the same contract name exactly the same scopes and share a moment of validity, so neither can ever win by strict-superset precedence. Discharges README §4 invariant 4." ;
+		sh:select """
+			PREFIX voc: <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#>
+			PREFIX fnd: <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+			SELECT $this WHERE {
+				$this voc:forContract ?contract .
+				?other voc:forContract ?contract .
+				FILTER (?other != $this)
+				FILTER NOT EXISTS { $this voc:bindingScope ?s1 . FILTER NOT EXISTS { ?other voc:bindingScope ?s1 } }
+				FILTER NOT EXISTS { ?other voc:bindingScope ?s2 . FILTER NOT EXISTS { $this voc:bindingScope ?s2 } }
+				$this fnd:hasTemporalScope ?t1 .
+				?t1 fnd:validFrom ?from1 .
+				OPTIONAL { ?t1 fnd:validTo ?to1 }
+				?other fnd:hasTemporalScope ?t2 .
+				?t2 fnd:validFrom ?from2 .
+				OPTIONAL { ?t2 fnd:validTo ?to2 }
+				FILTER (!BOUND(?to1) || ?to1 > ?from2)
+				FILTER (!BOUND(?to2) || ?to2 > ?from1)
+			}
+		"""
+	] .
+
+voc:HistoricalProvenanceTimeShape a sh:NodeShape ;
+	sh:targetSubjectsOf voc:resolvedUnder ;
+	sh:sparql [
+		sh:message "A record's resolvedUnder binding must have been valid at the record's own resolution time (validation profile: vvp:resolvedAt). Discharges README §4 invariant 7." ;
+		sh:select """
+			PREFIX voc: <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#>
+			PREFIX fnd: <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+			PREFIX vvp: <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/validation-profile#>
+			SELECT $this WHERE {
+				$this voc:resolvedUnder ?binding ;
+					  vvp:resolvedAt ?at .
+				?binding fnd:hasTemporalScope ?scope .
+				?scope fnd:validFrom ?from .
+				OPTIONAL { ?scope fnd:validTo ?to }
+				FILTER (?at < ?from || (BOUND(?to) && ?at >= ?to))
+			}
+		"""
+	] .

@@ -1,0 +1,18 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Deliberately empty of SHACL rules (sh:rule / sh:SPARQLRule).
+#
+# ADR-A85 is explicit that no mechanism in this layer may silently choose a
+# winning voc:SchemeBinding: a SPARQL CONSTRUCT rule that inferred, say, a
+# materialised voc:resolvedScheme triple would do exactly that — pick one
+# candidate out of several applicable bindings and assert it as if it were
+# the only answer, which is precedent-sensitive, context-sensitive, and can
+# be a governance-reportable conflict rather than a fact to infer. Selection
+# belongs to the caller-driven reference resolver in tools/vocabulary/, which
+# takes the caller's active context and resolution time as explicit
+# arguments and returns a conflict as a decision outcome, not a triple.
+#
+# ontology/vocabulary/shapes/structural.ttl and constraints.ttl carry every
+# validation shape this layer currently needs; revisit this file only if a
+# genuinely non-selecting inference (one that adds no information a
+# validator couldn't already report as a violation) is identified.

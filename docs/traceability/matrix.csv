@@ -16,3 +16,19 @@ G-Injection,persistence-substrate-and-compiler,test_terms.py::*,ADR-A79 point 5 
 G-Determinism,persistence-substrate-and-compiler,test_determinism.py::*,guide QP4 / ADR-A79 determinism under triple-order permutation
 G-EndToEnd,persistence-substrate-and-compiler,test_compiler_integration.py::test_end_to_end_compile_instantiate_parse,full compile -> emit -> instantiate -> parse round trip for every positive fixture
 G-ArchPolicy,persistence-substrate-and-compiler,test_architecture.py::*,plan Slice 2 item 4 policy enforcement (Python ArchUnit-equivalent)
+A-85,vocabulary-temporal-binding,"test_shacl_fixtures.py::*,test_resolver.py::*,test_determinism.py::*,test_consumer_boundary.py::*",ADR-A85 vocabulary scoped and temporal binding resolution
+VTB-01,vocabulary-temporal-binding,test_shacl_fixtures.py::test_positive_fixtures_conform,"README §4: a complete binding conforms structurally"
+VTB-02,vocabulary-temporal-binding,test_shacl_fixtures.py::test_negative_fixtures_do_not_conform,"README §4: forContract is required (missing-for-contract.ttl)"
+VTB-03,vocabulary-temporal-binding,test_shacl_fixtures.py::test_negative_fixtures_do_not_conform,"README §4: bindsScheme is required (missing-binds-scheme.ttl)"
+VTB-04,vocabulary-temporal-binding,test_shacl_fixtures.py::test_negative_fixtures_do_not_conform,"README §4 invariant 3: a temporal scope must not end before it begins"
+VTB-05,vocabulary-temporal-binding,test_resolver.py::test_conjunctive_scope_requires_every_named_scope,"README §4 invariant 2: multiple bindingScope values are conjunctive"
+VTB-06,vocabulary-temporal-binding,test_resolver.py::test_strict_superset_precedence,"README §4 invariant 4: a strict scope superset takes precedence"
+VTB-07,vocabulary-temporal-binding,"test_shacl_fixtures.py::test_negative_fixtures_do_not_conform,test_resolver.py::test_equal_specificity_conflict_raises","README §4 invariant 4: equal-specificity/incomparable applicable bindings are a conflict, not a silent choice"
+VTB-08,vocabulary-temporal-binding,test_resolver.py::test_fallback_used_when_no_binding_applies,"README §4 invariant 5: boundScheme is the fallback when no binding applies"
+VTB-09,vocabulary-temporal-binding,test_shacl_fixtures.py::test_negative_fixtures_do_not_conform,"README §4 invariant 6: a scopeless binding must agree with boundScheme"
+VTB-10,vocabulary-temporal-binding,test_resolver.py::test_open_ended_binding_remains_eligible_after_start,"README §4: an open-ended binding remains eligible after its start"
+VTB-11,vocabulary-temporal-binding,test_determinism.py::test_resolution_is_invariant_under_triple_order,"guide-equivalent determinism: resolution is invariant under triple-order permutation"
+VTB-12,vocabulary-temporal-binding,test_consumer_boundary.py::test_resolved_under_is_retained_after_the_binding_it_named_lapses,"README §4 invariant 7: resolvedUnder is not re-resolved retroactively"
+VTB-13,vocabulary-temporal-binding,test_shacl_fixtures.py::test_negative_fixtures_do_not_conform,"README §4 invariant 7: a historical record's binding must have been valid at its own resolution time"
+VTB-14,vocabulary-temporal-binding,"test_consumer_boundary.py::test_unscoped_context_agrees_with_the_naive_bound_scheme_read,test_consumer_boundary.py::test_scoped_context_diverges_from_the_naive_bound_scheme_read","sketch: a consumer resolves the applicable binding before interpreting a concept-valued property"
+

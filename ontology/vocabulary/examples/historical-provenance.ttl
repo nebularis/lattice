@@ -1,0 +1,58 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Positive fixture. A versioned record resolved under the first of two
+# successive editions, kept even though the contract has since moved on to
+# the second. Illustrates voc:resolvedUnder (README §4 invariant 7); the
+# record class and its vvp:resolvedAt timestamp are illustration only, in
+# the same spirit as README §9's "ex:offer-letter-117-v1" — Vocabulary
+# itself declares no record class or timestamp property (see
+# shapes/constraints.ttl's header note on the validation-profile
+# convention). Conforms against structural.ttl and constraints.ttl, and
+# specifically against voc:HistoricalProvenanceTimeShape.
+# Covers VTB-01 and VTB-12 (no retroactive re-resolution).
+
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix voc:  <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
+@prefix vvp:  <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/validation-profile#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex:   <https://example.org/lattice/vocabulary/examples#> .
+
+ex:hist-contract a voc:SchemeContract ;
+    fnd:hasIdentity ex:hist-contract-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    voc:constrainsProperty ex:hasCategory ;
+    voc:requiresGovernanceState fnd:Active .
+
+ex:hist-scheme-v1 a voc:ConceptScheme ;
+    fnd:hasIdentity ex:hist-scheme-v1-identity ;
+    fnd:hasGovernanceState fnd:Superseded ;
+    skos:prefLabel "Category scheme, edition 1"@en .
+
+ex:hist-scheme-v2 a voc:ConceptScheme ;
+    fnd:hasIdentity ex:hist-scheme-v2-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Category scheme, edition 2"@en .
+
+ex:hist-binding-v1 a voc:SchemeBinding ;
+    voc:forContract ex:hist-contract ;
+    voc:bindsScheme ex:hist-scheme-v1 ;
+    fnd:hasTemporalScope [
+        a fnd:TemporalScope ;
+        fnd:validFrom "2026-01-01T00:00:00Z"^^xsd:dateTime ;
+        fnd:validTo   "2026-07-01T00:00:00Z"^^xsd:dateTime
+    ] .
+
+ex:hist-binding-v2 a voc:SchemeBinding ;
+    voc:forContract ex:hist-contract ;
+    voc:bindsScheme ex:hist-scheme-v2 ;
+    fnd:hasTemporalScope [
+        a fnd:TemporalScope ;
+        fnd:validFrom "2026-07-01T00:00:00Z"^^xsd:dateTime
+    ] .
+
+# Illustration only. ex:VersionedRecord is not part of Vocabulary; any
+# versioned record in any layer may carry voc:resolvedUnder.
+ex:hist-record-117 a ex:VersionedRecord ;
+    voc:resolvedUnder ex:hist-binding-v1 ;
+    vvp:resolvedAt "2026-03-01T00:00:00Z"^^xsd:dateTime .

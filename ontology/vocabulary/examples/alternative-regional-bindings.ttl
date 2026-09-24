@@ -1,0 +1,52 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Positive fixture. Two bindings for one contract whose scopes never both
+# hold at once (a caller's context names one region or the other, never
+# both), so they coexist without conflict even though both are unscoped-in-
+# time (open-ended) and both name a different scheme. Conforms against
+# structural.ttl and constraints.ttl. Mirrors README §9's own worked
+# illustration, kept separate from it so the SHACL/resolver conformance
+# package does not depend on copying the layer's own documentation example.
+
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix voc:  <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex:   <https://example.org/lattice/vocabulary/examples#> .
+
+ex:alt-region-north a voc:BindingScope ; skos:prefLabel "North region"@en .
+ex:alt-region-south a voc:BindingScope ; skos:prefLabel "South region"@en .
+
+ex:alt-scheme-north a voc:ConceptScheme ;
+    fnd:hasIdentity ex:alt-scheme-north-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "North category scheme"@en .
+
+ex:alt-scheme-south a voc:ConceptScheme ;
+    fnd:hasIdentity ex:alt-scheme-south-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "South category scheme"@en .
+
+ex:alt-contract a voc:SchemeContract ;
+    fnd:hasIdentity ex:alt-contract-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    voc:constrainsProperty ex:hasCategory ;
+    voc:requiresGovernanceState fnd:Active .
+
+ex:alt-binding-north a voc:SchemeBinding ;
+    voc:forContract ex:alt-contract ;
+    voc:bindsScheme ex:alt-scheme-north ;
+    voc:bindingScope ex:alt-region-north ;
+    fnd:hasTemporalScope [
+        a fnd:TemporalScope ;
+        fnd:validFrom "2026-01-01T00:00:00Z"^^xsd:dateTime
+    ] .
+
+ex:alt-binding-south a voc:SchemeBinding ;
+    voc:forContract ex:alt-contract ;
+    voc:bindsScheme ex:alt-scheme-south ;
+    voc:bindingScope ex:alt-region-south ;
+    fnd:hasTemporalScope [
+        a fnd:TemporalScope ;
+        fnd:validFrom "2026-01-01T00:00:00Z"^^xsd:dateTime
+    ] .

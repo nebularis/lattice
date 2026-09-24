@@ -1,0 +1,63 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Positive fixture. One contract with three eligible outcomes depending on
+# the caller's active context: a fallback (voc:boundScheme, no context
+# needed), a single-scope binding, and a two-scope conjunctive binding whose
+# scope set is a strict superset of the single-scope one. Conforms against
+# structural.ttl and constraints.ttl (bindings never conflict: their scope
+# sets differ, and one is a strict superset of the other).
+#
+# Covers VTB-01, VTB-05 (both named scopes are required — a context naming
+# only one of them does not satisfy the two-scope binding), VTB-06 (the
+# strict superset wins when both scopes hold), and VTB-08 (fallback is used
+# when no scoped binding applies at all). Intended for the reference
+# resolver's tests (tools/vocabulary), not only SHACL.
+
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix voc:  <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex:   <https://example.org/lattice/vocabulary/examples#> .
+
+ex:cnj-region-north a voc:BindingScope ; skos:prefLabel "North region"@en .
+ex:cnj-tier-gold a voc:BindingScope ; skos:prefLabel "Gold tier"@en .
+
+ex:cnj-scheme-fallback a voc:ConceptScheme ;
+    fnd:hasIdentity ex:cnj-scheme-fallback-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Fallback category scheme"@en .
+
+ex:cnj-scheme-region a voc:ConceptScheme ;
+    fnd:hasIdentity ex:cnj-scheme-region-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "North category scheme"@en .
+
+ex:cnj-scheme-region-tier a voc:ConceptScheme ;
+    fnd:hasIdentity ex:cnj-scheme-region-tier-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "North gold-tier category scheme"@en .
+
+ex:cnj-contract a voc:SchemeContract ;
+    fnd:hasIdentity ex:cnj-contract-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    voc:constrainsProperty ex:hasCategory ;
+    voc:requiresGovernanceState fnd:Active ;
+    voc:boundScheme ex:cnj-scheme-fallback .
+
+ex:cnj-binding-region a voc:SchemeBinding ;
+    voc:forContract ex:cnj-contract ;
+    voc:bindsScheme ex:cnj-scheme-region ;
+    voc:bindingScope ex:cnj-region-north ;
+    fnd:hasTemporalScope [
+        a fnd:TemporalScope ;
+        fnd:validFrom "2026-01-01T00:00:00Z"^^xsd:dateTime
+    ] .
+
+ex:cnj-binding-region-tier a voc:SchemeBinding ;
+    voc:forContract ex:cnj-contract ;
+    voc:bindsScheme ex:cnj-scheme-region-tier ;
+    voc:bindingScope ex:cnj-region-north , ex:cnj-tier-gold ;
+    fnd:hasTemporalScope [
+        a fnd:TemporalScope ;
+        fnd:validFrom "2026-01-01T00:00:00Z"^^xsd:dateTime
+    ] .

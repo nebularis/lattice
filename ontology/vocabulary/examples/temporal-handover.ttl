@@ -1,0 +1,47 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Positive fixture. One contract, one scheme edition handed over to a second
+# edition at a stated instant, both unscoped. The first binding's validTo
+# equals the second's validFrom exactly: a resolution time before the
+# instant sees only the first as applicable, a resolution time at or after
+# the instant sees only the second, and the two are never simultaneously
+# applicable. Conforms against structural.ttl and constraints.ttl.
+
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix voc:  <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex:   <https://example.org/lattice/vocabulary/examples#> .
+
+ex:handover-contract a voc:SchemeContract ;
+    fnd:hasIdentity ex:handover-contract-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    voc:constrainsProperty ex:hasCategory ;
+    voc:requiresGovernanceState fnd:Active .
+
+ex:handover-scheme-v1 a voc:ConceptScheme ;
+    fnd:hasIdentity ex:handover-scheme-v1-identity ;
+    fnd:hasGovernanceState fnd:Superseded ;
+    skos:prefLabel "Category scheme, edition 1"@en .
+
+ex:handover-scheme-v2 a voc:ConceptScheme ;
+    fnd:hasIdentity ex:handover-scheme-v2-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Category scheme, edition 2"@en .
+
+ex:handover-binding-v1 a voc:SchemeBinding ;
+    voc:forContract ex:handover-contract ;
+    voc:bindsScheme ex:handover-scheme-v1 ;
+    fnd:hasTemporalScope [
+        a fnd:TemporalScope ;
+        fnd:validFrom "2026-01-01T00:00:00Z"^^xsd:dateTime ;
+        fnd:validTo   "2026-07-01T00:00:00Z"^^xsd:dateTime
+    ] .
+
+ex:handover-binding-v2 a voc:SchemeBinding ;
+    voc:forContract ex:handover-contract ;
+    voc:bindsScheme ex:handover-scheme-v2 ;
+    fnd:hasTemporalScope [
+        a fnd:TemporalScope ;
+        fnd:validFrom "2026-07-01T00:00:00Z"^^xsd:dateTime
+    ] .

@@ -363,7 +363,7 @@ The unratified universal IRI policy in ADR-A51 was superseded by [ADR-A82](../ar
 
 | Field | Value |
 |-------|-------|
-| **Status** | ⏳ Planned, awaiting human review. Implementation not started |
+| **Status** | 🔶 Slices 1-4 authored, not yet executed or human-reviewed |
 | **Unit ID** | `vocabulary-temporal-binding` |
 | **Trigger** | `65ac4a85e11cc1f8616e3e0c24efd59bf4ca410d` (`[vocabulary] time-bound binding`) |
 | **Sketch** | [vocabulary-temporal-binding.md](sketches/vocabulary-temporal-binding.md) |
@@ -372,22 +372,25 @@ The unratified universal IRI policy in ADR-A51 was superseded by [ADR-A82](../ar
 | **Validation Pack** | [vocabulary-temporal-binding.md](validation/vocabulary-temporal-binding.md) |
 | **ADR** | [ADR-A85](../architecture/decisions/ADR-A85-vocabulary-scoped-temporal-binding-resolution.md), Proposed |
 
-The source ontology change is present, but its conformance package is not. The
-planned unit adds domain-neutral positive and negative examples, populates the
-three empty Vocabulary SHACL files, tests strict-superset precedence and
-equal-specificity conflicts, adds a deterministic reference resolver, and
-checks historical `resolvedUnder` provenance at a consumer boundary. The first
-implementation slice is blocked on human review of the plan, ADR-A85, and the
-validation context.
+The source ontology change is present and its conformance package is now
+authored: 12 domain-neutral fixtures under `ontology/vocabulary/examples/`,
+the three Vocabulary SHACL files populated (`rules.ttl` deliberately documents
+why no rule is defined), a deterministic reference resolver and pytest suite
+under `tools/vocabulary/` covering strict-superset precedence,
+equal-specificity conflicts, and historical `resolvedUnder` provenance at a
+consumer boundary. This sandbox cannot install `rdflib`/`pyshacl`/`pytest`
+(network-restricted), so `mise run check:vocabulary` has not been run, and the
+human validation gate (review + mutation probe) has not happened. See the
+status record for the full position and the decisions flagged for review.
 
-### Planned slices
+### Slices
 
-1. ADR-A85, architecture mirror, fixture and traceability skeleton
-2. Examples plus structural and SHACL-SPARQL validation
-3. Reference resolver and deterministic test suite
-4. Consumer/provenance checks and documentation close-out
+1. ADR-A85, architecture mirror, fixture and traceability skeleton — done
+2. Examples plus structural and SHACL-SPARQL validation — authored, not executed
+3. Reference resolver and deterministic test suite — authored, not executed
+4. Consumer/provenance checks and documentation close-out — authored, not executed
 
-## 8.5 Vocabulary Conformance — Proposed
+## 8.5 Vocabulary Conformance — Authored, pending execution and review
 
 See the unit record above. This heading is intentionally a navigation anchor
 between active platform work and archived material.
@@ -447,6 +450,7 @@ between active platform work and archived material.
 - Plan: [vocabulary-temporal-fixes.md](plans/vocabulary-temporal-fixes.md)
 - Status: [vocabulary-temporal-binding.md](status/vocabulary-temporal-binding.md)
 - Validation pack: [vocabulary-temporal-binding.md](validation/vocabulary-temporal-binding.md)
+- Implementation: `ontology/vocabulary/shapes/`, `ontology/vocabulary/examples/` (12 fixtures), `tools/vocabulary/` (reference resolver + pytest suite) — authored, not yet executed
 - ADR: [A85](../architecture/decisions/ADR-A85-vocabulary-scoped-temporal-binding-resolution.md), Proposed
 
 ### MTP & LLM Training
@@ -514,7 +518,7 @@ between active platform work and archived material.
 | **Housekeeping first cut (Slice 3)** | Scaffold `platform/housekeeping` module | Compiler ready; module contracts defined in ADR-A80; job duties extended by the 2026-09-23 guide remediation | Author Slice 3 (housekeeping scaffolding) |
 | **Store SPI** | Design runtime SPI for query execution | Compiler produces templates; runtime binding TBD | Separate epic/phase after housekeeping |
 | **MTP backend integration (Phase 7)** | Runtime API for LLM curriculum delivery | MTP generation complete; needs HTTP endpoint | Post-Phase-6 work |
-| **Vocabulary temporal binding conformance** | Examples, SHACL, resolver, consumer provenance checks | Source ontology landed, conformance package absent | Review plan, ADR-A85, and validation context |
+| **Vocabulary temporal binding conformance** | Examples, SHACL, resolver, consumer provenance checks | Authored (2026-09-25); not yet executed (sandbox network-restricted) or human-reviewed | Run `mise run check:vocabulary`, then the human validation gate (review + mutation probe) |
 
 ---
 

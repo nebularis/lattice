@@ -1,0 +1,32 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Positive fixture. A single, open-ended, unscoped voc:SchemeBinding — the
+# time-bounded counterpart of voc:boundScheme (README §4). Conforms against
+# ontology/vocabulary/shapes/structural.ttl and constraints.ttl.
+# Covers VTB-01 (a complete binding conforms) and VTB-10 (an open-ended
+# binding remains eligible after its start).
+
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix voc:  <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex:   <https://example.org/lattice/vocabulary/examples#> .
+
+ex:utb-contract a voc:SchemeContract ;
+    fnd:hasIdentity ex:utb-contract-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    voc:constrainsProperty ex:hasCategory ;
+    voc:requiresGovernanceState fnd:Active .
+
+ex:utb-scheme a voc:ConceptScheme ;
+    fnd:hasIdentity ex:utb-scheme-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Unscoped category scheme"@en .
+
+ex:utb-binding a voc:SchemeBinding ;
+    voc:forContract ex:utb-contract ;
+    voc:bindsScheme ex:utb-scheme ;
+    fnd:hasTemporalScope [
+        a fnd:TemporalScope ;
+        fnd:validFrom "2026-01-01T00:00:00Z"^^xsd:dateTime
+    ] .

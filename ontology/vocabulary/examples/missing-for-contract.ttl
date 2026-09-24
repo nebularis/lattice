@@ -1,0 +1,23 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Negative fixture. A voc:SchemeBinding with no voc:forContract. Violates
+# voc:SchemeBindingShape (structural.ttl): forContract sh:minCount 1.
+# Covers VTB-02.
+
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix voc:  <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex:   <https://example.org/lattice/vocabulary/examples#> .
+
+ex:missing-fc-scheme a voc:ConceptScheme ;
+    fnd:hasIdentity ex:missing-fc-scheme-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Category scheme"@en .
+
+ex:missing-fc-binding a voc:SchemeBinding ;
+    voc:bindsScheme ex:missing-fc-scheme ;
+    fnd:hasTemporalScope [
+        a fnd:TemporalScope ;
+        fnd:validFrom "2026-01-01T00:00:00Z"^^xsd:dateTime
+    ] .

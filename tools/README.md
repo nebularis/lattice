@@ -161,3 +161,25 @@ nominal-class definition over a read path containing an inverse step, which
 would leave OWL 2 EL; a closure relation over a multi-hop path, which should
 promote first and index the promoted property; a stack depth above the
 profile's permitted depth (`srf:S10`).
+
+## `tools/vocabulary/` — the scoped/temporal binding resolver
+
+Reference resolver for the Vocabulary layer's scoped and temporal
+`voc:SchemeBinding` resolution law (`ontology/vocabulary`, [ADR-A85](../docs/architecture/decisions/ADR-A85-vocabulary-scoped-temporal-binding-resolution.md)).
+`vocabulary.resolver.resolve(graph, contract, context, at)` returns the one
+`voc:ConceptScheme` that applies given a caller-supplied active context and
+resolution time, or raises a named exception (`BindingConflictError`,
+`NoApplicableBindingError`) rather than choosing silently. See
+[`tools/vocabulary/README.md`](vocabulary/README.md) for the full precedence
+law and what this package deliberately leaves to SHACL instead.
+
+```bash
+mise exec -- python -m pip install -e ./tools/vocabulary[test]
+python -m pytest tools/vocabulary/tests -q
+```
+
+**Not yet executed** — this sandbox has no network access to install
+`rdflib`/`pyshacl`/`pytest` (see `docs/developer/status/vocabulary-temporal-binding.md`);
+treat the first run as part of review, same as `tools/surface`'s own test
+suite above.
+

@@ -1,0 +1,38 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Negative fixture. A scopeless (applies-everywhere) voc:SchemeBinding names
+# a different scheme edition than the same contract's voc:boundScheme
+# fallback. Violates voc:FallbackAgreementShape (constraints.ttl); README
+# §4 invariant 6 requires the two to agree.
+# Covers VTB-09.
+
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix voc:  <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex:   <https://example.org/lattice/vocabulary/examples#> .
+
+ex:disagree-scheme-fallback a voc:ConceptScheme ;
+    fnd:hasIdentity ex:disagree-scheme-fallback-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Fallback category scheme"@en .
+
+ex:disagree-scheme-other a voc:ConceptScheme ;
+    fnd:hasIdentity ex:disagree-scheme-other-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Disagreeing category scheme"@en .
+
+ex:disagree-contract a voc:SchemeContract ;
+    fnd:hasIdentity ex:disagree-contract-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    voc:constrainsProperty ex:hasCategory ;
+    voc:requiresGovernanceState fnd:Active ;
+    voc:boundScheme ex:disagree-scheme-fallback .
+
+ex:disagree-binding a voc:SchemeBinding ;
+    voc:forContract ex:disagree-contract ;
+    voc:bindsScheme ex:disagree-scheme-other ;
+    fnd:hasTemporalScope [
+        a fnd:TemporalScope ;
+        fnd:validFrom "2026-01-01T00:00:00Z"^^xsd:dateTime
+    ] .

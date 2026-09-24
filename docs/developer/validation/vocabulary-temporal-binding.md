@@ -2,8 +2,10 @@
 
 # Validation Pack - `vocabulary-temporal-binding`
 
-**Status:** Draft for human review. This pack defines implementation acceptance
-criteria. It is not evidence of a passing implementation.
+**Status:** Test cases authored against a full implementation (`ontology/vocabulary/shapes/`,
+`ontology/vocabulary/examples/`, `tools/vocabulary/`). Not yet executed in this
+sandbox (no dependency-install access) and not yet human-reviewed. This pack
+is not evidence of a passing implementation.
 **Plan:** [vocabulary-temporal-fixes.md](../plans/vocabulary-temporal-fixes.md)
 **Status:** [vocabulary-temporal-binding.md](../status/vocabulary-temporal-binding.md)
 
@@ -38,18 +40,37 @@ silent chooser.
 
 ## One command to run everything
 
-To be finalised when the resolver package and task entry point are selected.
-The planned command is `mise run check:vocabulary` from the repository root.
+```bash
+mise run bootstrap:vocabulary
+mise run check:vocabulary
+```
+
+Equivalently, without `mise`: `python -m pip install -e ./tools/vocabulary[test]`
+then `python -m pytest tools/vocabulary/tests -q`. VTB-01 through 04, 07 (the
+context-independent form), 09, and 13 run in `test_shacl_fixtures.py`; VTB-05,
+06, 07 (the context-dependent form), 08, and 10 in `test_resolver.py`; VTB-11
+in `test_determinism.py`; VTB-12 and 14 in `test_consumer_boundary.py`.
 
 ## Expected artefacts
 
-- SHACL report for every positive and negative fixture.
-- Resolver decision trace naming candidate bindings, matching scopes, temporal
-  result, precedence comparison, and final outcome or conflict.
-- Determinism result for permuted triple order.
-- Cross-layer provenance fixture showing `resolvedUnder` retained.
+- The pytest run's own output: SHACL `pyshacl.validate` reports embedded in
+  `test_shacl_fixtures.py`'s assertion messages for every positive and
+  negative fixture on failure (pyshacl's third return value).
+- A resolver decision trace for any `Resolution`: `Resolution.describe()`
+  (`tools/vocabulary/src/vocabulary/model.py`) prints every candidate binding
+  considered, its scope match, temporal match, applicability, and the final
+  outcome — naming candidate bindings, matching scopes, temporal result, and
+  precedence comparison, as required below.
+- The determinism result: `test_determinism.py`'s assertions that resolving a
+  triple-order-permuted copy of the same graph produces an identical scheme,
+  winning binding, and candidate set.
+- The cross-layer provenance fixture: `test_consumer_boundary.py` reads
+  `ex:consumer-record-42`'s `voc:resolvedUnder` directly out of the graph
+  after resolving the same contract at a later time, and asserts it is
+  unchanged.
 - Traceability rows linking VTB-01 through VTB-14 to ADR-A85 and the sketch
-  invariants.
+  invariants: see `docs/traceability/matrix.csv`.
+
 
 ## Deliberate non-coverage
 

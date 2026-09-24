@@ -1,0 +1,40 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Negative fixture. A versioned record's voc:resolvedUnder binding was not
+# valid at the record's own resolution time (vvp:resolvedAt falls after
+# the binding's validTo). Violates voc:HistoricalProvenanceTimeShape
+# (constraints.ttl). See constraints.ttl's header for the vvp: validation
+# profile this exercises.
+# Covers VTB-13.
+
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix voc:  <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
+@prefix vvp:  <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/validation-profile#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex:   <https://example.org/lattice/vocabulary/examples#> .
+
+ex:hist-bad-contract a voc:SchemeContract ;
+    fnd:hasIdentity ex:hist-bad-contract-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    voc:constrainsProperty ex:hasCategory ;
+    voc:requiresGovernanceState fnd:Active .
+
+ex:hist-bad-scheme a voc:ConceptScheme ;
+    fnd:hasIdentity ex:hist-bad-scheme-identity ;
+    fnd:hasGovernanceState fnd:Superseded ;
+    skos:prefLabel "Category scheme, edition 1"@en .
+
+ex:hist-bad-binding a voc:SchemeBinding ;
+    voc:forContract ex:hist-bad-contract ;
+    voc:bindsScheme ex:hist-bad-scheme ;
+    fnd:hasTemporalScope [
+        a fnd:TemporalScope ;
+        fnd:validFrom "2026-01-01T00:00:00Z"^^xsd:dateTime ;
+        fnd:validTo   "2026-07-01T00:00:00Z"^^xsd:dateTime
+    ] .
+
+# Illustration only, as in historical-provenance.ttl.
+ex:hist-bad-record-117 a ex:VersionedRecord ;
+    voc:resolvedUnder ex:hist-bad-binding ;
+    vvp:resolvedAt "2026-09-01T00:00:00Z"^^xsd:dateTime .

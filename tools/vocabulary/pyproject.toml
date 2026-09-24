@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lattice-vocabulary-resolver"
+version = "0.1.0"
+description = "Reference resolver for the LATTICE Vocabulary layer's scoped and temporal binding law (ontology/vocabulary, ADR-A85)"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+  "rdflib>=7.0,<8",
+]
+
+[project.optional-dependencies]
+test = [
+  "pytest>=8.0",
+  "pyshacl>=0.25",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]

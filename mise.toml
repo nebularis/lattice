@@ -12,7 +12,7 @@ PYTHONUNBUFFERED = "1"
 
 [tasks.bootstrap]
 description = "Install configured toolchains and dependency sets"
-depends = ["bootstrap:python-root", "bootstrap:mork", "bootstrap:mork-compilers", "bootstrap:surface", "bootstrap:persistence", "bootstrap:minting-python", "bootstrap:workers", "bootstrap:frontend"]
+depends = ["bootstrap:python-root", "bootstrap:mork", "bootstrap:mork-compilers", "bootstrap:surface", "bootstrap:persistence", "bootstrap:vocabulary", "bootstrap:minting-python", "bootstrap:workers", "bootstrap:frontend"]
 
 [tasks."bootstrap:python-root"]
 description = "Install root ontology validation dependencies"
@@ -38,13 +38,17 @@ run = "python -m pip install -e ./tools/surface"
 description = "Install the persistence profile compiler package (ADR-A78/A79)"
 run = "python -m pip install -e './tools/persistence[test]'"
 
+[tasks."bootstrap:vocabulary"]
+description = "Install the Vocabulary scoped/temporal binding reference resolver (ADR-A85)"
+run = "python -m pip install -e './tools/vocabulary[test]'"
+
 [tasks."bootstrap:frontend"]
 description = "Install the Yarn workspace through Corepack"
 run = "corepack enable && yarn install --immutable"
 
 [tasks.check]
 description = "Run all repository validation tasks"
-depends = ["check:python-root", "check:workers", "check:java", "check:frontend", "check:spc", "check:persistence", "check:minting", "build:mtp", "check:mtp"]
+depends = ["check:python-root", "check:workers", "check:java", "check:frontend", "check:spc", "check:persistence", "check:vocabulary", "check:minting", "build:mtp", "check:mtp"]
 
 [tasks.test]
 description = "Run the repository test suites"
@@ -125,6 +129,10 @@ run = "python packages/minting/tools/generate_ucd_tables.py --check"
 [tasks."check:persistence"]
 description = "Run the persistence profile compiler test suite (resolver, validator, capability, injection corpus, determinism)"
 run = "python -m pytest tools/persistence/tests -q"
+
+[tasks."check:vocabulary"]
+description = "Run the Vocabulary scoped/temporal binding conformance package (SHACL fixtures, resolver, determinism, consumer boundary; ADR-A85)"
+run = "python -m pytest tools/vocabulary/tests -q"
 
 [tasks."services:up"]
 description = "Start the reference platform services"

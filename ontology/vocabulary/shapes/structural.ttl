@@ -1,0 +1,41 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Structural (closed-world) node shapes mirroring the OWL cardinality
+# restrictions in ontology/vocabulary/spec/vocabulary.ttl. OWL's open-world
+# assumption cannot itself reject an instance for omitting a required
+# property; these shapes make the same requirements checkable against a
+# concrete graph. See ADR-A85 and the layer README §4.
+
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix voc:  <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
+
+# fnd:Version (hasIdentity exactly 1) and fnd:Governable (hasGovernanceState
+# exactly 1) are both mixins declared in Foundation; Foundation's own shapes
+# package does not yet mirror them (tracked there, not by this unit), so
+# ConceptScheme and SchemeContract restate both checks locally rather than
+# depending on a Foundation shape that does not exist yet.
+
+voc:ConceptSchemeShape a sh:NodeShape ;
+	sh:targetClass voc:ConceptScheme ;
+	sh:property [ sh:path fnd:hasIdentity ; sh:minCount 1 ; sh:maxCount 1 ] ;
+	sh:property [ sh:path fnd:hasGovernanceState ; sh:minCount 1 ; sh:maxCount 1 ] .
+
+voc:SchemeContractShape a sh:NodeShape ;
+	sh:targetClass voc:SchemeContract ;
+	sh:property [ sh:path fnd:hasIdentity ; sh:minCount 1 ; sh:maxCount 1 ] ;
+	sh:property [ sh:path fnd:hasGovernanceState ; sh:minCount 1 ; sh:maxCount 1 ] ;
+	sh:property [ sh:path voc:constrainsProperty ; sh:minCount 1 ] ;
+	sh:property [ sh:path voc:boundScheme ; sh:maxCount 1 ] .
+
+# fnd:TemporallyScoped requires hasTemporalScope exactly 1; restated here for
+# the same reason as above.
+
+voc:SchemeBindingShape a sh:NodeShape ;
+	sh:targetClass voc:SchemeBinding ;
+	sh:property [ sh:path voc:forContract ; sh:minCount 1 ; sh:maxCount 1 ] ;
+	sh:property [ sh:path voc:bindsScheme ; sh:minCount 1 ; sh:maxCount 1 ] ;
+	sh:property [ sh:path fnd:hasTemporalScope ; sh:minCount 1 ; sh:maxCount 1 ] .
+
+# voc:BindingScope carries no restrictions in the spec (§6) and ships no
+# individuals; there is nothing structural to check, so it has no shape here.
