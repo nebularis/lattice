@@ -1,15 +1,14 @@
 # SPDX-License-Identifier: MPL-2.0
 """Consumer/provenance boundary check (plan §5; validation-pack VTB-14).
 
-ontology/eligibility/shapes/rules.ttl's elg:HierarchyWellFoundednessShape is
-today's one real consumer of voc:boundScheme in this repository: it reads
-`?schemeContract voc:boundScheme ?scheme` directly and never resolves a
-voc:SchemeBinding. This test does not load or modify that file — it proves,
-against ontology/vocabulary/examples/consumer-boundary.ttl, the boundary that
-pattern relies on: correct only where a contract's context has no applicable
-scoped binding, and increasingly wrong the moment one exists. Extending
-Eligibility itself to call this resolver is future work (sketch, "Cross-layer
-consumer checks"), not this test's job.
+Both real consumers now honour scoped bindings: the Surface compiler resolves
+a contract-bound population's scheme via `vocabulary.resolve` before
+enumerating members (`tools/surface/src/surface/compile.py`), and
+`ontology/eligibility/shapes/rules.ttl`'s `elg:HierarchyWellFoundednessShape`
+checks every scheme a contract could resolve to (`boundScheme` or any
+`SchemeBinding`), not only the unscoped fallback. This test keeps proving the
+underlying divergence a naive `boundScheme`-only read would still produce, as
+the reference the fix above is measured against.
 """
 
 from __future__ import annotations
@@ -27,9 +26,7 @@ NORTH = URIRef(EX + "consumer-region-north")
 
 
 def _naive_bound_scheme_read(graph, contract):
-    """What ontology/eligibility/shapes/rules.ttl's
-    elg:HierarchyWellFoundednessShape does: read voc:boundScheme directly,
-    ignoring any voc:SchemeBinding."""
+    """A boundScheme-only read, ignoring any voc:SchemeBinding."""
     return graph.value(contract, VOC.boundScheme)
 
 

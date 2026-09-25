@@ -2,10 +2,10 @@
 
 # Validation Pack - `vocabulary-temporal-binding`
 
-**Status:** Test cases authored against a full implementation (`ontology/vocabulary/shapes/`,
-`ontology/vocabulary/examples/`, `tools/vocabulary/`). Not yet executed in this
-sandbox (no dependency-install access) and not yet human-reviewed. This pack
-is not evidence of a passing implementation.
+**Status:** Executed. All 14 cases pass under `mise run check:vocabulary`.
+Surface and Eligibility consumer integration (VTB-14 and beyond) is also
+verified — see the status record's "Verification findings". Human review and
+ADR-A85 ratification are the remaining steps.
 **Plan:** [vocabulary-temporal-fixes.md](../plans/vocabulary-temporal-fixes.md)
 **Status:** [vocabulary-temporal-binding.md](../status/vocabulary-temporal-binding.md)
 

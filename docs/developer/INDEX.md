@@ -359,11 +359,11 @@ The unratified universal IRI policy in ADR-A51 was superseded by [ADR-A82](../ar
 
 ---
 
-# Vocabulary Scoped and Temporal Binding — Proposed (2026-09-24)
+# Vocabulary Scoped and Temporal Binding — Complete, pending ratification (2026-09-25)
 
 | Field | Value |
 |-------|-------|
-| **Status** | 🔶 Slices 1-4 authored, not yet executed or human-reviewed |
+| **Status** | ✅ Vocabulary suite, Surface, and Eligibility consumers all verified green. ADR-A85 ratification and human sign-off pending |
 | **Unit ID** | `vocabulary-temporal-binding` |
 | **Trigger** | `65ac4a85e11cc1f8616e3e0c24efd59bf4ca410d` (`[vocabulary] time-bound binding`) |
 | **Sketch** | [vocabulary-temporal-binding.md](sketches/vocabulary-temporal-binding.md) |
@@ -372,25 +372,24 @@ The unratified universal IRI policy in ADR-A51 was superseded by [ADR-A82](../ar
 | **Validation Pack** | [vocabulary-temporal-binding.md](validation/vocabulary-temporal-binding.md) |
 | **ADR** | [ADR-A85](../architecture/decisions/ADR-A85-vocabulary-scoped-temporal-binding-resolution.md), Proposed |
 
-The source ontology change is present and its conformance package is now
-authored: 12 domain-neutral fixtures under `ontology/vocabulary/examples/`,
-the three Vocabulary SHACL files populated (`rules.ttl` deliberately documents
-why no rule is defined), a deterministic reference resolver and pytest suite
-under `tools/vocabulary/` covering strict-superset precedence,
-equal-specificity conflicts, and historical `resolvedUnder` provenance at a
-consumer boundary. This sandbox cannot install `rdflib`/`pyshacl`/`pytest`
-(network-restricted), so `mise run check:vocabulary` has not been run, and the
-human validation gate (review + mutation probe) has not happened. See the
-status record for the full position and the decisions flagged for review.
+The conformance package (12 fixtures, populated Vocabulary SHACL files, a
+deterministic reference resolver) is authored and verified: `mise run
+check:vocabulary` passes 14/14. Both real consumers now resolve scoped
+bindings instead of reading `voc:boundScheme` directly: Surface's compiler
+calls the resolver in `enumerate_population`, and Eligibility's
+`HierarchyWellFoundednessShape` checks every scheme a contract could resolve
+to. `python -m unittest surface.test_surface -q` passes 62/62 (including a new
+scoped-binding fixture and test), and `mise run check:python-root` passes
+77/77 plus Phase 8 conformance. See the status record for exact findings.
 
 ### Slices
 
 1. ADR-A85, architecture mirror, fixture and traceability skeleton — done
-2. Examples plus structural and SHACL-SPARQL validation — authored, not executed
-3. Reference resolver and deterministic test suite — authored, not executed
-4. Consumer/provenance checks and documentation close-out — authored, not executed
+2. Examples plus structural and SHACL-SPARQL validation — done, verified
+3. Reference resolver and deterministic test suite — done, verified
+4. Consumer/provenance checks and documentation close-out — done, verified (Surface and Eligibility both resolve scoped bindings)
 
-## 8.5 Vocabulary Conformance — Authored, pending execution and review
+## 8.5 Vocabulary Conformance — Complete, pending ADR ratification
 
 See the unit record above. This heading is intentionally a navigation anchor
 between active platform work and archived material.

@@ -9,7 +9,7 @@
 elg:HierarchyWellFoundednessShape a sh:NodeShape ;
 	sh:targetClass elg:Condition ;
 	sh:sparql [
-		sh:message "The scheme bound to a hierarchically-matched condition contains a cycle in its ordering relation, so hierarchical match has no truth condition. Discharges elg:L9 clause (a)." ;
+		sh:message "A scheme this hierarchically-matched condition's contract could resolve to, via boundScheme or a voc:SchemeBinding, contains a cycle in its ordering relation, so hierarchical match has no truth condition under that scheme. Discharges elg:L9 clause (a)." ;
 		sh:select """
 			PREFIX elg: <https://www.nebularis.org/neuro-semantic/lattice/eligibility#>
 			PREFIX voc: <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#>
@@ -17,7 +17,12 @@ elg:HierarchyWellFoundednessShape a sh:NodeShape ;
 			SELECT $this WHERE {
 				$this elg:matchStrategy elg:HierarchicalMatch ;
 					  elg:constrainedByContract ?schemeContract .
-				?schemeContract voc:boundScheme ?scheme .
+				{
+					?schemeContract voc:boundScheme ?scheme .
+				} UNION {
+					?binding voc:forContract ?schemeContract ;
+							 voc:bindsScheme ?scheme .
+				}
 				?concept skos:inScheme ?scheme ;
 						 skos:broader+ ?concept .
 			}

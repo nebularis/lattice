@@ -96,6 +96,7 @@ class Population:
     iri: URIRef
     kind: str
     scheme_contract: Optional[URIRef] = None
+    active_binding_scope: Tuple[URIRef, ...] = field(default_factory=tuple)
     from_class: Optional[URIRef] = None
     extent_kind: Optional[str] = None
     members: Sequence[URIRef] = field(default_factory=tuple)
@@ -287,10 +288,15 @@ class SurfaceGraphAnalyser:
     def population(self, iri: URIRef) -> Population:
         types = self._types(iri)
         if str(SRF.ContractBoundPopulation) in types:
+            scopes = sorted(
+                (s for s in self.g.objects(iri, SRF.activeBindingScope) if isinstance(s, URIRef)),
+                key=str,
+            )
             return Population(
                 iri=iri,
                 kind="contract-bound",
                 scheme_contract=self._iri(iri, SRF.fromSchemeContract),
+                active_binding_scope=tuple(scopes),
             )
         if str(SRF.ClassExtentPopulation) in types:
             return Population(

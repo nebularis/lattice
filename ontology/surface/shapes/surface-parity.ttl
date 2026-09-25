@@ -2,7 +2,6 @@
 
 @prefix sh:   <http://www.w3.org/ns/shacl#> .
 @prefix srf:  <https://www.nebularis.org/neuro-semantic/lattice/surface#> .
-@prefix voc:  <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 
@@ -16,14 +15,14 @@ srf:SurfaceCoverageParityShape a sh:NodeShape ;
 		sh:message "A member of the bound scheme has no nominal symbol in the surface generated for that contract. Discharges srf:S5." ;
 		sh:select """
 			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
-			PREFIX voc: <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#>
 			PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 			SELECT $this WHERE {
-				$this srf:coversContract ?contract .
-				?contract srf:indexForm srf:NominalClass ;
-						  srf:valuePopulation ?population .
-				?population srf:fromSchemeContract ?schemeContract .
-				?schemeContract voc:boundScheme ?scheme .
+				$this srf:coversContract ?contract ;
+					  srf:hasReadSetEntry ?entry .
+				?contract srf:indexForm srf:NominalClass .
+				# The scheme actually resolved when this surface was generated (ADR-A85), not recomputed via boundScheme.
+				?entry srf:readSourceKind srf:BoundSchemeSource ;
+					   srf:readsSource ?scheme .
 				?member skos:inScheme ?scheme .
 				FILTER NOT EXISTS {
 					?symbol srf:inSurface $this ;
@@ -54,15 +53,13 @@ srf:SurfaceOrphanSymbolShape a sh:NodeShape ;
 		sh:message "A symbol record denotes a value that is no longer in its contract's bound scheme. The surface is stale and must be regenerated. Discharges srf:R3." ;
 		sh:select """
 			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
-			PREFIX voc: <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#>
 			PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 			SELECT $this WHERE {
 				$this srf:fromValue ?value ;
 					  srf:inSurface ?surface .
-				?surface srf:coversContract ?contract .
-				?contract srf:valuePopulation ?population .
-				?population srf:fromSchemeContract ?schemeContract .
-				?schemeContract voc:boundScheme ?scheme .
+				?surface srf:hasReadSetEntry ?entry .
+				?entry srf:readSourceKind srf:BoundSchemeSource ;
+					   srf:readsSource ?scheme .
 				FILTER NOT EXISTS { ?value skos:inScheme ?scheme }
 			}
 		"""

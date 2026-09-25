@@ -38,7 +38,7 @@ srf:PathStepIndexUniqueShape a sh:NodeShape ;
 srf:BoundSchemePresentShape a sh:NodeShape ;
 	sh:targetClass srf:IndexContract ;
 	sh:sparql [
-		sh:message "A contract-bound population names a scheme contract with no bound scheme. Discharges srf:S2." ;
+		sh:message "A contract-bound population names a scheme contract with no bound scheme and no scheme binding, so it can never resolve. Discharges srf:S2." ;
 		sh:select """
 			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
 			PREFIX voc: <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#>
@@ -47,6 +47,7 @@ srf:BoundSchemePresentShape a sh:NodeShape ;
 				?population a srf:ContractBoundPopulation ;
 							srf:fromSchemeContract ?schemeContract .
 				FILTER NOT EXISTS { ?schemeContract voc:boundScheme ?scheme }
+				FILTER NOT EXISTS { ?binding voc:forContract ?schemeContract }
 			}
 		"""
 	] .
@@ -54,7 +55,7 @@ srf:BoundSchemePresentShape a sh:NodeShape ;
 srf:BoundSchemeGovernanceShape a sh:NodeShape ;
 	sh:targetClass srf:IndexContract ;
 	sh:sparql [
-		sh:message "The scheme bound to a contract-bound population's scheme contract holds none of the governance states that contract requires. Discharges srf:S2." ;
+		sh:message "A scheme this contract-bound population could resolve to, via boundScheme or a voc:SchemeBinding, holds none of the governance states the contract requires. Discharges srf:S2." ;
 		sh:select """
 			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
 			PREFIX voc: <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#>
@@ -62,8 +63,13 @@ srf:BoundSchemeGovernanceShape a sh:NodeShape ;
 			SELECT $this WHERE {
 				$this srf:valuePopulation ?population .
 				?population srf:fromSchemeContract ?schemeContract .
-				?schemeContract voc:boundScheme ?scheme ;
-								voc:requiresGovernanceState ?required .
+				?schemeContract voc:requiresGovernanceState ?required .
+				{
+					?schemeContract voc:boundScheme ?scheme .
+				} UNION {
+					?binding voc:forContract ?schemeContract ;
+							 voc:bindsScheme ?scheme .
+				}
 				FILTER NOT EXISTS {
 					?schemeContract voc:requiresGovernanceState ?permitted .
 					?scheme fnd:hasGovernanceState ?permitted .

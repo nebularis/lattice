@@ -12,7 +12,7 @@ PYTHONUNBUFFERED = "1"
 
 [tasks.bootstrap]
 description = "Install configured toolchains and dependency sets"
-depends = ["bootstrap:python-root", "bootstrap:mork", "bootstrap:mork-compilers", "bootstrap:surface", "bootstrap:persistence", "bootstrap:vocabulary", "bootstrap:minting-python", "bootstrap:workers", "bootstrap:frontend"]
+depends = ["bootstrap:python-root", "bootstrap:mork", "bootstrap:mork-compilers", "bootstrap:vocabulary", "bootstrap:surface", "bootstrap:persistence", "bootstrap:minting-python", "bootstrap:workers", "bootstrap:frontend"]
 
 [tasks."bootstrap:python-root"]
 description = "Install root ontology validation dependencies"

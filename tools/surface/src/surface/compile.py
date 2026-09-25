@@ -45,10 +45,13 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
+from datetime import datetime
 from typing import Dict, List, Optional, Sequence, Set, Tuple
 
 from rdflib import BNode, Graph, Literal, URIRef
 from rdflib.term import Node
+
+from vocabulary import BindingConflictError, NoApplicableBindingError, resolve
 
 from . import canonical
 from .model import Contract, ContractError, Population, SurfaceGraphAnalyser
@@ -63,7 +66,6 @@ from .namespaces import (
     SKOS,
     SRF,
     SURFACE_ONTOLOGY,
-    VOC,
     XSD,
 )
 from .naming import Minter, check_injective, local_name
@@ -154,20 +156,31 @@ def carrier_instances(graph: Graph, carrier: URIRef) -> List[URIRef]:
 
 
 def enumerate_population(
-    graph: Graph, population: Population
+    graph: Graph, population: Population, at: Optional[str] = None
 ) -> Tuple[List[URIRef], Optional[URIRef]]:
     """The population's members in IRI order, and the scheme they came from."""
     if population.kind == "enumerated":
         return list(population.members), None
 
     if population.kind == "contract-bound":
-        scheme = graph.value(population.scheme_contract, VOC.boundScheme, any=False)
-        if not isinstance(scheme, URIRef):
+        if at is None:
             raise CompileError(
-                f"{population.scheme_contract} has no bound scheme, so its population "
-                f"cannot be enumerated (law srf:S2)"
+                f"{population.scheme_contract} needs a resolution time to resolve its "
+                f"scheme binding (law srf:S2, ADR-A85)"
             )
-        return _query_iris(graph, SCHEME_MEMBERS, scheme=scheme), scheme
+        try:
+            resolution = resolve(
+                graph,
+                population.scheme_contract,
+                context=population.active_binding_scope,
+                at=datetime.fromisoformat(at),
+            )
+        except (BindingConflictError, NoApplicableBindingError) as error:
+            raise CompileError(
+                f"{population.scheme_contract} has no scheme to enumerate its population "
+                f"from (law srf:S2): {error}"
+            ) from error
+        return _query_iris(graph, SCHEME_MEMBERS, scheme=resolution.scheme), resolution.scheme
 
     if population.kind == "class-extent":
         query = {
@@ -359,7 +372,7 @@ class SurfaceCompiler:
     def _scope_members(self, population: Optional[Population]) -> Optional[Set[str]]:
         if population is None:
             return None
-        members, _ = enumerate_population(self.source, population)
+        members, _ = enumerate_population(self.source, population, at=self.produced_at)
         return {str(m) for m in members}
 
     # -- public API ---------------------------------------------------------
@@ -435,7 +448,9 @@ class SurfaceCompiler:
 
     def _compile_index(self) -> None:
         contract = self.contract
-        self.population, scheme = enumerate_population(self.source, contract.population)
+        self.population, scheme = enumerate_population(
+            self.source, contract.population, at=self.produced_at
+        )
 
         if scheme is not None:
             scheme_graph = self._subgraph([scheme, *self.population])
