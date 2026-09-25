@@ -93,3 +93,26 @@ whichever future decision asserts a layer's public API stable.
   question are the two open points this ADR states a recommendation for
   rather than treating as beyond dispute; ratification is the point at which
   either is confirmed or amended.
+
+## Proposed addendum (2026-09-25): guarantees consumers rely on
+
+Raised by the [`applied-ontology-readiness`](../../developer/plans/applied-ontology-readiness.md)
+unit. An applied ontology pins LATTICE by version IRI and relies on a version
+IRI identifying one content. This addendum is ratified or amended together
+with the decision above.
+
+1. **Bump level propagates through imports.** A document whose only change is
+   an `owl:imports` update takes the bump level of the imported change, since
+   its own consumers see that change through its import closure. Every bump,
+   PATCH included, runs the cascade checklist. This replaces the policy's
+   statement that a PATCH never changes the version IRI, which contradicts its
+   own "PATCH still bumps the version" section.
+2. **A missing version IRI is flagged.** `tools/ontology_version_check.py`
+   fails for an in-scope document that declares `owl:Ontology` without an
+   `owl:versionIRI`, instead of skipping it.
+3. **The check runs in CI**, against the merge base of the change.
+4. **Ontology IRIs stay as they are.** The ontology IRIs
+   (`…/neuro-semantic/<layer>`) differ from the version-IRI base
+   (`…/neuro-semantic/lattice/<layer>/<version>`). Changing them is MAJOR for
+   every layer and buys nothing until documents are served at their IRIs, which
+   [ADR-A88](ADR-A88-ontology-import-resolution-for-consumers.md) defers.

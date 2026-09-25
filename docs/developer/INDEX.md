@@ -2,7 +2,7 @@
 
 # LATTICE Developer Coordination Index
 
-**Last updated:** 2026-09-25 — added the `ontology-semantic-versioning` unit (sketch, plan, ADR-A86 Proposed)  
+**Last updated:** 2026-09-25 — added the `applied-ontology-readiness` unit (sketch, plan, status, ADRs A-87 to A-92 Proposed)  
 **Purpose:** Single source of truth for all active units of work: sketches, plans, status, reviews, and validation packs.  
 **Format:** By unit identifier, with links to all related documents and current status.
 
@@ -465,6 +465,32 @@ transaction-time convention, and (4) an architecture/no-wall-clock test for
 `tools/vocabulary`, mirroring `tools/persistence`. A fifth finding (terminology
 overload of "scope" across layers) is explicitly accepted, no action planned.
 
+# Applied Ontology Readiness — Planned (2026-09-25)
+
+| Field | Value |
+|-------|-------|
+| **Status** | ⏳ Planned. AOR-1 (governance records) awaiting review. No implementation started |
+| **Unit ID** | `applied-ontology-readiness` |
+| **Trigger** | Human request, 2026-09-25 — close the gaps an applied (domain) ontology meets when built on LATTICE |
+| **Sketch** | [applied-ontology-readiness.md](sketches/applied-ontology-readiness.md) |
+| **Plan** | [applied-ontology-readiness.md](plans/applied-ontology-readiness.md) |
+| **Status Record** | [applied-ontology-readiness.md](status/applied-ontology-readiness.md) |
+| **ADRs** | [A-87](../architecture/decisions/ADR-A87-eligibility-concept-inclusion-and-exclusion.md), [A-88](../architecture/decisions/ADR-A88-ontology-import-resolution-for-consumers.md), [A-89](../architecture/decisions/ADR-A89-eligibility-ir-concept-conditions-and-profile-aggregation.md), [A-90](../architecture/decisions/ADR-A90-eligibility-design-time-owl-class-backend.md), [A-91](../architecture/decisions/ADR-A91-eligibility-candidate-evidence-binding.md), [A-92](../architecture/decisions/ADR-A92-derived-artefact-contract-and-prov-o-alignment.md), and a proposed [A-86 addendum](../architecture/decisions/ADR-A86-ontology-semantic-versioning.md#proposed-addendum-2026-09-25-guarantees-consumers-rely-on), all Proposed |
+
+Thirteen gaps (AO1 to AO13) that any applied ontology meets: Eligibility
+examples that warn or violate since `9a12da4`, no reproducible way to load
+LATTICE's import closure, versioning guarantees not enforced in CI, compilers
+limited to interval conditions and to candidates held on questions, no OWL
+backend for design-time checks, provenance not aligned with PROV-O, and four
+substrate extensions (derived rates, calendar binding, per-unit alternative
+bounds, one obligation in several provisions).
+
+### Slices
+
+1. Phase A, consumable baseline: AOR-1 governance records (written), AOR-2 Eligibility examples and the declaration warning, AOR-3 versioning guarantees, AOR-4 consumer catalog and import resolution
+2. Phase B, executable coverage: AOR-5 to AOR-11 (concept conditions, hierarchical match, SHACL and SWRL, profile aggregation, evidence binding, OWL backend and checks). Carries the `eligibility-compiler` unit's deferred items
+3. Phase C, substrate extensions: AOR-12 to AOR-17 (Foundation derived-artefact contract and PROV-O, Quantification and Instrument extensions)
+
 # Part III — Archived/Historical Work
 
 ## 8. Phase Handoff Documents (0-6)
@@ -530,6 +556,12 @@ overload of "scope" across layers) is explicitly accepted, no action planned.
 - Status: [ontology-semantic-versioning.md](status/ontology-semantic-versioning.md)
 - Policy: [ontology-versioning-policy.md](../architecture/ontology-versioning-policy.md)
 - ADR: [A86](../architecture/decisions/ADR-A86-ontology-semantic-versioning.md), Proposed
+
+### Applied Ontology Readiness
+- Sketch: [applied-ontology-readiness.md](sketches/applied-ontology-readiness.md)
+- Plan: [applied-ontology-readiness.md](plans/applied-ontology-readiness.md)
+- Status: [applied-ontology-readiness.md](status/applied-ontology-readiness.md)
+- ADRs: A87 to A92 and the A86 addendum, Proposed
 - Implementation: `docs/architecture/ontology-versioning-policy.md`, `tools/ontology_version_check.py` (`mise run check:ontology-versioning`), every in-scope `.ttl` document reset to `0.2.0` — done, ADR ratification still pending
 
 ### MTP & LLM Training
@@ -582,6 +614,7 @@ overload of "scope" across layers) is explicitly accepted, no action planned.
 6. Vocabulary scoped and temporal binding conformance — closed 2026-09-25
 7. Vocabulary consumer hardening (`temporal-binding-consumer-hardening`) — planned, follow-on to item 6
 8. Ontology semantic versioning (ADR-A86) — implemented; ADR ratification pending
+9. Applied ontology readiness (`applied-ontology-readiness`) — planned, AOR-1 awaiting review
 
 ### 🗄️ Archived
 1. Phase 0-6 handoff documents (refer to individual status records)
@@ -602,6 +635,7 @@ overload of "scope" across layers) is explicitly accepted, no action planned.
 | **Vocabulary temporal binding conformance** | Examples, SHACL, resolver, consumer provenance checks | Closed 2026-09-25: executed and verified, ADR-A85 Accepted | None. Follow-on hardening tracked as `temporal-binding-consumer-hardening` |
 | **Vocabulary consumer hardening** | `produced_at`/hash conflation, missing resolution trace, `vvp:resolvedAt` naming, vocabulary architecture test | Surfaced by the closure cross-reference against [rdf-sparql-patterns-guide.md](../architecture/rdf-sparql-patterns-guide.md) | Author `temporal-binding-consumer-hardening` plan (this session); implementation is separately scheduled |
 | **Ontology semantic versioning** | ADR-A86, versioning-policy doc, baseline reset, narrow enforcement check | Implemented (2026-09-25): policy doc, `0.2.0` baseline reset across 29 ontology documents, `check:ontology-versioning` tooling | Ratify ADR-A86; decide whether the discovered `literate_extract.py` drift becomes its own unit |
+| **Applied ontology readiness** | ADRs A-87 to A-92, A-86 addendum, 17 slices in three phases | Gaps any applied ontology meets when built on LATTICE (loading, examples, compilation, provenance, substrate extensions) | Ratify the ADRs, answer the sketch's open questions, and choose where to start (AOR-2 needs only A-87) |
 
 ---
 
@@ -643,7 +677,7 @@ overload of "scope" across layers) is explicitly accepted, no action planned.
 3. **MTP backend integration** — What HTTP API shape for LLM curriculum consumption? (Phase 7, post-Phase-6)
 4. **Housekeeping execution** — When is the housekeeping component itself executed (real-time vs. batch)? (ADR-A80 defers to future phase)
 5. **Surface MORK Phase 9 decomposition** — How to slice migration guides and phased rollout? (Blocking Phase 9, needs decomposition after Phase 8 SWRL verification)
-6. **Foundation migration for `srf:DerivedArtefact`** — Should profile identity be a Foundation concept or Surface-only? (Blocking profile identity assertion in Surface; see [surface-outstanding-items.md](status/surface-outstanding-items.md#33-profile-identity-assertion--blocked))
+6. **Foundation migration for `srf:DerivedArtefact`** — Should profile identity be a Foundation concept or Surface-only? (Blocking profile identity assertion in Surface; see [surface-outstanding-items.md](status/surface-outstanding-items.md#33-profile-identity-assertion--blocked)). Proposed resolution: [ADR-A92](../architecture/decisions/ADR-A92-derived-artefact-contract-and-prov-o-alignment.md)
 7. **MORK toolchain join assumptions** — Pre-production verification checklist for join operations in mapping compilation (see [surface-outstanding-items.md](status/surface-outstanding-items.md#34-mork-toolchain-join-assumptions--needed))
 
 ---
