@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import unittest
 from dataclasses import replace
+from datetime import datetime
 from pathlib import Path
 
 from rdflib import Graph, URIRef
@@ -346,7 +347,11 @@ class CompilationTests(unittest.TestCase):
             if manifest.value(e, SRF.readSourceKind) == SRF.BoundSchemeSource
         )
         namespace = "https://example.org/lattice/surface/employment-scoped#"
-        self.assertEqual(str(manifest.value(entry, SRF.resolvedAt)), AT)
+        # xsd:dateTime literals round-trip Z as +00:00 (rdflib literal normalisation); compare instants, not strings
+        self.assertEqual(
+            datetime.fromisoformat(str(manifest.value(entry, SRF.resolvedAt))),
+            datetime.fromisoformat(AT),
+        )
         self.assertEqual(
             {str(s) for s in manifest.objects(entry, SRF.resolvedBindingScope)},
             {namespace + "region-north"},

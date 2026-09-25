@@ -131,7 +131,7 @@ def check_parity(compiled: CompiledSurface, source: Graph) -> ParityReport:
         naming_prefix=contract.naming_prefix,
     )
     instances = carrier_instances(source, contract.carrier)
-    population, _ = enumerate_population(source, contract.population, at=compiled.produced_at)
+    population, _, _ = enumerate_population(source, contract.population, at=compiled.produced_at)
 
     reached: Dict[str, Set[str]] = {
         str(instance): {
@@ -165,7 +165,7 @@ def check_parity(compiled: CompiledSurface, source: Graph) -> ParityReport:
     if contract.has_form(CLOSURE):
         scope: Optional[Set[str]] = None
         if contract.closure_scope is not None:
-            scope_members, _ = enumerate_population(
+            scope_members, _, _ = enumerate_population(
                 source, contract.closure_scope, at=compiled.produced_at
             )
             scope = {str(m) for m in scope_members}
