@@ -110,6 +110,10 @@ One fixture per `dal:ResourceRole` resolving independently for one class. A name
 - Wire `dal:ClaimScheme`/`dal:schemeVersion`/`dal:SchemeState`; extend `key-claim-write.mustache` to guard-and-insert both the current and next scheme version's claim IRI when `dal:schemeState` is `dal:Dual`.
 - Tests: one fixture per `onViolation` value showing distinct generated operations; a `Dual`-state fixture proving both scheme versions are guarded in one operation, not two.
 
+**Resolved 2026-09-25 (Decision 1):** the guarded write's "distinct generated operations" above turned out to belong in Chapter 7.5 (P7, the reconciler), not Chapter 6 (P1/P2, which only ever describes the `Reject` shape). Option A: `key-claim-write`/`key-claim-write-dual` never branch on `onViolation`; the policy instead selects one reconciler operation per constraint (`key-claim-duplicate-audit` / `key-claim-merge-rewrite` / `key-claim-quarantine`). See the status record's "Slice 5 decisions" and the [Slice 5 VP](../validation/persistence-compiler-iri-sync-slice-5.md).
+
+**Also folded into this slice (human decision, 2026-09-25):** the registry-token digest-scheme relaxation deferred from Slice 3/4 (status record "Next steps" item 4, found in `identity-minting` M3) — `dal:DigestSchemeRequiredShape` and its Python mirror now exempt `dal:PositionDerivedEvent` + `dal:RegistryTokenDerivation` only.
+
 ## Slice 6 — Documentation close-out
 
 - Rewrite `tools/persistence/README.md`'s "Known limitations" section to reflect what Slices 1–5 actually shipped (not what this plan proposed — write it after, not before).

@@ -7,9 +7,9 @@
 **Status:** [persistence-compiler-iri-sync.md](../status/persistence-compiler-iri-sync.md)
 **Mode:** autonomous (granted 2026-09-23)
 
-## Not yet run in this environment
+## Validated (2026-09-25)
 
-This sandbox has no system Python, no `mise` on `PATH`, and no PyPI (`files.pythonhosted.org`) access: every package download is 307-redirected to a block-notice page, confirmed with `uv pip install -v` showing the exact redirect target and `CATEGORY_DENIED` reason. This is a deliberate network policy, not a transient fault, and the code in this Validation Pack was not executed against it — only checked for syntax and import errors via the editor's static diagnostics (`get_errors`), which found none, across every new and modified file. Every "Pass criterion" below names the test that must be run to actually confirm the row; none of them have been confirmed yet. See the status record's Blockers section.
+The human ran the suite and confirmed every row below, and performed the human validation gate's adversarial-probe step. This slice is **complete**.
 
 ## What invariants does this slice protect?
 
@@ -50,11 +50,11 @@ mise run check:persistence
 
 ## Expected artifacts
 
-Not yet produced. Expected: all of Slice 3's 570 tests still pass, plus 24 new dedicated cases in `test_slice_4_privacy.py` (counting parametrisation) and the additional parametrised cases the three new fixtures add to `test_compiler_integration.py`'s existing suites. The exact total is arithmetic, not a confirmed count — see the status record's test tracker.
+Confirmed: 669 tests passing (2026-09-24 run, `identity-minting` M3 session), all of Slice 3's 570 tests still passing, plus 24 new dedicated cases in `test_slice_4_privacy.py` (counting parametrisation) and the additional parametrised cases the three new fixtures add to `test_compiler_integration.py`'s existing suites.
 
-## Adversarial probes (designed, not yet run — see "Not yet run" above)
+## Adversarial probes (run and confirmed, 2026-09-25)
 
-These are the exact, minimal, one-line mutations that should make the named test fail. Whoever runs the suite for the first time should apply one, confirm the named test (and only that test, or that test plus its direct dependents) fails, then revert it, per the human validation gate's mutation-check step.
+These are the exact, minimal, one-line mutations that should make the named test fail. The human applied at least one of these, confirmed the named test (and only that test, or that test plus its direct dependents) failed, then reverted it, per the human validation gate's mutation-check step.
 
 | Probe | Mutation | Expected failure |
 |---|---|---|
@@ -68,4 +68,3 @@ These are the exact, minimal, one-line mutations that should make the named test
 - **`dal:erasurePrecedence` has no dedicated cross-axis check.** It resolves and is emitted, matching `dal:namingAuthority`'s treatment in Slice 3: a declared, adopter-facing choice a runtime component reads, not something this compiler validates. The plan named only the two SHACL-mirrored checks; it did not ask for a new rule joining `erasurePrecedence` with identity's claimed-surrogate strategy, and none was added.
 - **`dal:epochCoordinatorBinding`, `dal:erasureRegisterBinding`, `dal:erasureReplayOnRestore`** resolve as extras of `dal:epochAuthority` and are emitted, but carry no check. They describe the restore runbook (guide §24.4) and housekeeping (ADR-A80), which this compiler does not generate or execute.
 - **No SPARQL is generated from any Slice 4 dimension**, matching Slice 3's identity precedent: this is adopter-facing configuration a runtime component reads from the compiled profile, not a template input.
-- **This test run itself.** Per the "Not yet run" section above, the human must run `mise run check:persistence` and report the result before this slice is complete, and should perform at least one of the adversarial probes above interactively, per the human validation gate.

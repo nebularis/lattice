@@ -1,0 +1,15 @@
+# Negative fixture (persistence-compiler-iri-sync Slice 5, mirrors
+# dal:MergeRelationRequiredShape): dal:onViolation dal:Merge with no
+# dal:mergeRelation names no relation for the merge to write, so the
+# compiler refuses it (CrossAxisViolation "MergeRelationRequired").
+@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix ex:  <https://example.org/lending#> .
+
+ex:VendorClass a dal:ClassScope ; dal:targetClass ex:Vendor ; dal:priority 20 .
+
+ex:VendorTaxIdUnique a dal:UniquenessConstraint ;
+    dal:constraintId      "vendor-tax-id-unique" ;
+    dal:appliesTo         ex:VendorClass ;
+    dal:keyProperty       ( ex:taxId ) ;
+    dal:normalizePipeline dal:NfkcTrimUppercase ;
+    dal:onViolation       dal:Merge .

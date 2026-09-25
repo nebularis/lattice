@@ -262,6 +262,19 @@ def resolve_identity(
     return out
 
 
+# persistence-compiler-iri-sync Slice 5: the states recipes.py's own
+# claims() already treats as an active minting scheme (identity-minting
+# M1). A constraint's dal:claimScheme is a dal:Dual rotation, for the
+# write-time template's purposes, exactly when two of its claim schemes
+# are active at once -- mirroring that existing filter rather than a
+# second, potentially divergent rule (for example "any scheme is Dual").
+_MINTING_ACTIVE_STATES = frozenset({"Accepting", "Dual"})
+
+
+def _local_name(value) -> str | None:
+    return str(value).rsplit("#", 1)[-1] if value is not None else None
+
+
 def resolve_uniqueness(graph: Graph, target: Target) -> list[dict]:
     """Uniqueness is many-valued, not single-winner (sketch §3.3): a target
     may carry zero, one, or several distinct keyed constraints."""
@@ -276,6 +289,11 @@ def resolve_uniqueness(graph: Graph, target: Target) -> list[dict]:
             continue
         key_list_head = graph.value(constraint, DAL.keyProperty)
         key_props = list(graph.items(key_list_head)) if key_list_head is not None else []
+        active_schemes = [
+            s
+            for s in graph.objects(constraint, DAL.claimScheme)
+            if _local_name(graph.value(s, DAL.schemeState)) in _MINTING_ACTIVE_STATES
+        ]
         out.append(
             {
                 "constraint": str(constraint),
@@ -284,6 +302,9 @@ def resolve_uniqueness(graph: Graph, target: Target) -> list[dict]:
                 "scopeProperty": graph.value(constraint, DAL.scopeProperty),
                 "onViolation": graph.value(constraint, DAL.onViolation),
                 "minEnforcementLevel": graph.value(constraint, DAL.minEnforcementLevel),
+                # persistence-compiler-iri-sync Slice 5 (G7 items 2 and 3).
+                "mergeRelation": graph.value(constraint, DAL.mergeRelation),
+                "dualClaimScheme": len(active_schemes) == 2,
             }
         )
     return out

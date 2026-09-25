@@ -1,0 +1,19 @@
+# persistence-compiler-iri-sync Slice 5 (decision 1, Option A): the
+# guarded write (key-claim-write) is unchanged by dal:onViolation; the
+# policy instead selects which reconciler operation is generated.
+# dal:Merge generates key-claim-merge-rewrite, which records
+# dal:mergeRelation from every non-canonical owner to a deterministic
+# canonical one (guide §7.5). Everything else is left to the platform
+# baseline defaults.
+@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix ex:  <https://example.org/lending#> .
+
+ex:CustomerClass a dal:ClassScope ; dal:targetClass ex:Customer ; dal:priority 20 .
+
+ex:CustomerEmailUnique a dal:UniquenessConstraint ;
+    dal:constraintId      "customer-email-unique" ;
+    dal:appliesTo         ex:CustomerClass ;
+    dal:keyProperty       ( ex:email ) ;
+    dal:normalizePipeline dal:NfkcTrimCasefold ;
+    dal:onViolation       dal:Merge ;
+    dal:mergeRelation     ex:supersededBy .

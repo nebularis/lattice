@@ -1,0 +1,32 @@
+{{! key-claim-merge-rewrite: guide §7.5 (P7), dal:onViolation dal:Merge.
+    Records the merge, never resolves it silently: {{{mergeRelation}}} is
+    the adopter-named relation (dal:mergeRelation), pointing from every
+    non-canonical owner to a canonical one, so the merge is a plain,
+    revocable statement -- never owl:sameAs (dal:MergeRelationRequiredShape).
+    The lexicographically lowest owner IRI is the canonical choice:
+    arbitrary but deterministic and total, documented here rather than
+    left implicit (the same convention as the dataset-guard graph IRI in
+    operations.py). Idempotent: re-running after the relation is already
+    recorded is a no-op. This operation records the merge edge only --
+    rewriting payload references to the canonical IRI, and retiring the
+    losing claim, are the caller's own follow-up: only the owner of a
+    claim may retire it (guide §6.2), and a background reconciler acts
+    without an owner's authority.}}
+PREFIX pat: <https://example.org/lattice/patterns#>
+
+INSERT {
+  GRAPH {{{keysGraph}}} { ?other {{{mergeRelation}}} ?canonical }
+}
+WHERE {
+  {
+    SELECT ?claim (MIN(?owner) AS ?canonical)
+    WHERE {
+      GRAPH {{{keysGraph}}} { ?claim a pat:KeyClaim ; pat:constraint {{{constraintId}}} ; pat:claimedBy ?owner }
+    }
+    GROUP BY ?claim
+    HAVING (COUNT(?owner) > 1)
+  }
+  GRAPH {{{keysGraph}}} { ?claim pat:claimedBy ?other }
+  FILTER (?other != ?canonical)
+  FILTER NOT EXISTS { GRAPH {{{keysGraph}}} { ?other {{{mergeRelation}}} ?canonical } }
+}

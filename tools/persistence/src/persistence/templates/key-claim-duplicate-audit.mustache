@@ -1,0 +1,15 @@
+{{! key-claim-duplicate-audit: guide §7.5 (P7), the claim-registry
+    reconciler for dal:onViolation dal:Reject, the baseline default.
+    Read-only standing alert, scoped to one constraint since the keys
+    graph carries every family's claims together: a claim node with more
+    than one owner is a leak that got past the guarded write (a bulk
+    load, an administrative LOAD, a restore). "The reconciler is never
+    the only strategy, and it is never absent."}}
+PREFIX pat: <https://example.org/lattice/patterns#>
+
+SELECT ?claim (COUNT(?owner) AS ?n) (GROUP_CONCAT(STR(?owner); separator=" ") AS ?owners)
+WHERE {
+  GRAPH {{{keysGraph}}} { ?claim a pat:KeyClaim ; pat:constraint {{{constraintId}}} ; pat:claimedBy ?owner }
+}
+GROUP BY ?claim
+HAVING (COUNT(?owner) > 1)

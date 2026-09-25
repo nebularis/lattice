@@ -51,6 +51,7 @@ def _full_context() -> dict:
         "logGraphPrefix": Iri.encode("urn:g:txlog/"),
         "txnGraph": Iri.encode("urn:g:txn"),
         "keysGraph": Iri.encode("urn:g:keys"),
+        "keyQuarantineGraph": Iri.encode("urn:g:key-quarantine"),
         "retentionGraph": Iri.encode("urn:g:retention"),
         "pinnedGraph": Iri.encode("urn:g:txlog/pinned"),
         "eventGraphPrefix": Iri.encode("urn:g:events/order/"),
@@ -61,6 +62,8 @@ def _full_context() -> dict:
         "guardProperty": Iri.encode("https://example.org/lending#status"),
         "compositeProperty": Iri.encode("https://example.org/lending#lineItem"),
         "constraintId": Literal.encode("example-constraint"),
+        # persistence-compiler-iri-sync Slice 5.
+        "mergeRelation": Iri.encode("https://example.org/lending#supersededBy"),
     }
 
 
@@ -175,7 +178,17 @@ def test_dataset_guard_row_creation_checks_the_epoch(template):
     assert "{{{datasetGraph}}} { {{{datasetNode}}} pat:epoch $epoch }" in _raw(template)
 
 
-@pytest.mark.parametrize("template", ["key-claim-write.mustache", "key-claim-retire.mustache"])
+@pytest.mark.parametrize(
+    "template",
+    [
+        "key-claim-write.mustache",
+        "key-claim-write-dual.mustache",
+        "key-claim-retire.mustache",
+        "key-claim-duplicate-audit.mustache",
+        "key-claim-merge-rewrite.mustache",
+        "key-claim-quarantine.mustache",
+    ],
+)
 def test_key_claims_live_in_the_keys_graph(template):
     text = _raw(template)
     assert "{{{keysGraph}}}" in text

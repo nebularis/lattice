@@ -143,12 +143,16 @@ dal:DigestSchemeRequiredShape
     a sh:NodeShape ;
     sh:targetClass dal:IdentityProfile ;
     sh:sparql [
-        sh:message "dal:DerivedHashIdentity and dal:ContentAddressedIdentity require a dal:digestScheme with an exact function, width and encoding: 'at least N bits' is not a valid width, because it lets two implementations mint different IRIs for the same input." ;
+        sh:message "dal:DerivedHashIdentity and dal:ContentAddressedIdentity require a dal:digestScheme with an exact function, width and encoding: 'at least N bits' is not a valid width, because it lets two implementations mint different IRIs for the same input. Exempt when dal:eventIdentityStrategy is dal:PositionDerivedEvent and dal:occurrenceNamespaceDerivation is dal:RegistryTokenDerivation: the namespace is a registry-allocated token, not digest-derived, so no digest scheme is ever used." ;
         sh:prefixes dal: ;
         sh:select """
             SELECT $this WHERE {
               $this dal:identityStrategy ?s .
               FILTER (?s = dal:DerivedHashIdentity || ?s = dal:ContentAddressedIdentity)
+              FILTER NOT EXISTS {
+                $this dal:eventIdentityStrategy dal:PositionDerivedEvent ;
+                      dal:occurrenceNamespaceDerivation dal:RegistryTokenDerivation .
+              }
               FILTER NOT EXISTS { $this dal:digestScheme ?d . ?d dal:digestFunction ?f ; dal:digestWidthBits ?w ; dal:digestEncoding ?e }
             }""" ] .
 

@@ -8,7 +8,7 @@
 
 <https://www.nebularis.org/neuro-semantic/lattice/persistence>
     a owl:Ontology ;
-    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/persistence/0.2.0> ;
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/persistence/0.2.1> ;
     rdfs:label "LATTICE Data Access Layer (persistence profile substrate)" ;
     rdfs:comment "Cross-cutting configuration vocabulary letting an adopter declare, per scope, which of the guide's uniqueness/ordering/concurrency/receipt/meta-topology/boundary patterns apply to a population of RDF resources. Targets classes, graphs, and shapes by IRI reference only. Imports nothing from Foundation-to-Behaviour and is imported by none of them (ADR-A78). See docs/architecture/rdf-sparql-patterns-guide.md and docs/developer/sketches/persistence-profile-substrate.md for the design this vocabulary encodes." .
 
@@ -485,7 +485,7 @@ dal:namingAuthority a owl:DatatypeProperty ;
     rdfs:comment "Free-text or IRI-shaped description of who owns and may mint this role's identifiers (adopter, external registry, source system, LATTICE runtime service)." .
 
 dal:DigestScheme a owl:Class ;
-    rdfs:comment "The exact bytes for a derived-hash or content-addressed identity (iri-identity-patterns.md §7.4). Required whenever dal:identityStrategy is dal:DerivedHashIdentity or dal:ContentAddressedIdentity." .
+    rdfs:comment "The exact bytes for a derived-hash or content-addressed identity (iri-identity-patterns.md §7.4). Required whenever dal:identityStrategy is dal:DerivedHashIdentity or dal:ContentAddressedIdentity, except when dal:eventIdentityStrategy is dal:PositionDerivedEvent and dal:occurrenceNamespaceDerivation is dal:RegistryTokenDerivation: the namespace is a registry-allocated token, not digest-derived, so no digest scheme is ever used for that role (persistence-compiler-iri-sync Slice 5)." .
 
 dal:digestScheme a owl:ObjectProperty ;
     rdfs:domain dal:IdentityProfile ; rdfs:range dal:DigestScheme .

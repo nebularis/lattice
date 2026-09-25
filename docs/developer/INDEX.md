@@ -32,7 +32,7 @@ Is it complete? **No.** The documentation is complete and every review is closed
 | `rdf-sparql-patterns-phase` Slices 1–2 (guide, `ontology/persistence`, `tools/persistence`) | ✅ Complete | — | — |
 | `rdf-sparql-patterns-remediation` (first review of the guide) | ✅ Complete, closed | nothing; deferred items handed to the units below | — |
 | `iri-patterns-post-3866b21-remediation` (second review, plus template alignment) | ✅ Complete, closed | nothing; follow-ons listed in its [status](status/iri-patterns-post-3866b21-remediation.md#is-this-unit-complete) | — |
-| `persistence-compiler-iri-sync` (compiler catches up with the vocabulary) | 🚧 Slices 1–3 of 6 done. Slice 4 implemented, suite green (669 passed, 2026-09-24) | Human review of Slice 4, Slice 5 uniqueness policies, Slice 6 close-out. Gap table in its [status](status/persistence-compiler-iri-sync.md#is-this-unit-complete) | — |
+| `persistence-compiler-iri-sync` (compiler catches up with the vocabulary) | 🚧 Slices 1–4 done (Slice 4 human-validated 2026-09-25). Slice 5 implemented 2026-09-25, not yet run | Human review/test-run of Slice 5, Slice 6 close-out. Gap table in its [status](status/persistence-compiler-iri-sync.md#is-this-unit-complete) | — |
 | `rdf-sparql-patterns-phase` Slice 3 / `platform-housekeeping` | ⏳ Not started | the whole slice, including the retention and audit changes noted in its plan | — |
 | P0.1.3: ADR-A82 and `iri-identity-patterns.md` | 📝 Drafted and revised, Proposed | human ratification, and the point 5 amendment proposed by `identity-minting` | Phase 0 ratification pass |
 | `identity-minting` (minting recipes, conformance vectors, standalone Java and Python libraries, `dal:claimsConstraint`) | 🚧 M0–M3 of M0–M4 done: [plan](plans/identity-minting.md), [status](status/identity-minting.md) | M4 specification and human walk-through. One open question: default-ignorables in the upper- and lowercase pipelines | — |
@@ -77,12 +77,12 @@ Epic decomposition into phase plans is **no longer blocked**: the required Phase
 
 | Field | Value |
 |-------|-------|
-| **Status** | ✅ Slices 1–3 complete (2026-09-23), 570/570 tests passing. ⚠️ Slice 4 implemented (2026-09-23) but not yet run in this environment — see its status record's Blockers. Slice 5 not started |
+| **Status** | ✅ Slices 1–4 complete (Slice 4 human-validated 2026-09-25: 669 passed, adversarial probes checked). 🚧 Slice 5 implemented 2026-09-25 (autonomous mode), not yet run in this sandbox. Slice 6 not started |
 | **Unit ID** | `persistence-compiler-iri-sync` |
 | **Sketch (gap analysis)** | [persistence-compiler-iri-sync.md](sketches/persistence-compiler-iri-sync.md) |
 | **Plan** | [persistence-compiler-iri-sync.md](plans/persistence-compiler-iri-sync.md) |
 | **Status Record** | [persistence-compiler-iri-sync.md](status/persistence-compiler-iri-sync.md) |
-| **Validation Packs** | [Slice 1](validation/persistence-compiler-iri-sync-slice-1.md), [Slice 2](validation/persistence-compiler-iri-sync-slice-2.md), [Slice 3](validation/persistence-compiler-iri-sync-slice-3.md), [Slice 4](validation/persistence-compiler-iri-sync-slice-4.md) |
+| **Validation Packs** | [Slice 1](validation/persistence-compiler-iri-sync-slice-1.md), [Slice 2](validation/persistence-compiler-iri-sync-slice-2.md), [Slice 3](validation/persistence-compiler-iri-sync-slice-3.md), [Slice 4](validation/persistence-compiler-iri-sync-slice-4.md), [Slice 5](validation/persistence-compiler-iri-sync-slice-5.md) |
 | **Triggering commit** | `c276afb` "[iri-patterns] remediate docs and update persistence ontology vocabulary" |
 
 ### Gap summary
@@ -92,8 +92,8 @@ Three new profile dimensions (`dal:IdentityProfile`, `dal:EpochProfile`, `dal:Pr
 1. **✅ Complete, 290/290 passing.** Dataset-level epoch guard — `dal:epochGuardScope` resolvable, `dal:DatasetLevelGuard` template variant for the three named write shapes, warning diagnostic fires even on the platform baseline default. See the [VP](validation/persistence-compiler-iri-sync-slice-1.md).
 2. **✅ Complete, 526/526 passing.** Extension properties resolved one dimension each, baseline defaults, two refusals and six warnings mirroring the SHACL shapes, `dal:PreCreatedRow` emits `bootstrap-version-row`, request-time values as Mustache slots. See the [VP](validation/persistence-compiler-iri-sync-slice-2.md).
 3. **✅ Complete, 570/570 passing.** Identity resolved per resource role (`identity:<Role>`), winning profile node as a unit, emitted to the compiled profile, five refusals and one warning. See the [VP](validation/persistence-compiler-iri-sync-slice-3.md).
-4. **⚠️ Implemented, not yet run.** Privacy/erasure profile (`dal:privacyClass`/`dal:erasureStrategy`/`dal:erasurePrecedence`/`dal:perSubjectScoped`, one dimension each) plus the G3 remainder (`dal:epochAuthority` promoted to its own dimension, carrying the remaining restore-surface properties as its extras), two refusals mirroring `dal:PersonalDataRequiresErasureShape` and `dal:PersonalDataReceiptCompatibilityShape`, and Worked example 4's privacy profile now resolving and emitting cleanly. Code, fixtures and 24 test cases written; this sandbox cannot install `rdflib`/`pytest`/`pyshacl` from PyPI (corporate network policy block, not a code issue), so `mise run check:persistence` has not been run against it. See the [VP](validation/persistence-compiler-iri-sync-slice-4.md) and the status record's Blockers section.
-5. ⏳ Uniqueness `onViolation` branching, `mergeRelation`, `ClaimScheme` rotation
+4. **✅ Complete, human-validated 2026-09-25 (669 passed, adversarial probes checked).** Privacy/erasure profile (`dal:privacyClass`/`dal:erasureStrategy`/`dal:erasurePrecedence`/`dal:perSubjectScoped`, one dimension each) plus the G3 remainder (`dal:epochAuthority` promoted to its own dimension, carrying the remaining restore-surface properties as its extras), two refusals mirroring `dal:PersonalDataRequiresErasureShape` and `dal:PersonalDataReceiptCompatibilityShape`, and Worked example 4's privacy profile now resolving and emitting cleanly. See the [VP](validation/persistence-compiler-iri-sync-slice-4.md).
+5. **🚧 Implemented 2026-09-25, autonomous mode, not yet run.** Uniqueness `dal:onViolation` selects a reconciler operation, never the guarded write itself (decision 1, Option A — guide §7.5, not §6): `key-claim-duplicate-audit` (`dal:Reject`, the default), `key-claim-merge-rewrite` (`dal:Merge`, with `MergeRelationRequired`), `key-claim-quarantine` (`dal:Quarantine`). `dal:ClaimScheme` `dal:Dual` rotation selects `key-claim-write-dual.mustache`. The registry-token digest-scheme relaxation (found in `identity-minting` M3) is also folded in: `dal:DigestSchemeRequiredShape` now exempts `dal:PositionDerivedEvent` + `dal:RegistryTokenDerivation` only. `ontology/persistence` bumped PATCH, 0.2.0 → 0.2.1. See the [VP](validation/persistence-compiler-iri-sync-slice-5.md) and the status record's Blockers section.
 6. ⏳ Documentation close-out (final pass; the cross-document updates it listed were done early on 2026-09-23)
 
 ## 1b. IRI and RDF Patterns, Post-3866b21 Remediation
@@ -703,7 +703,7 @@ longer exist. Five slices, about 180k tokens.
 | Surface compiler | 61 passing | `pytest tools/surface/src/surface/test_surface.py -v` |
 | MORK compiler backends | 74 passing (2026-09-25) | `mise run check:mork-compilers` |
 | LLM/MTP | 346 passing | `mise run check:mtp` |
-| Persistence compiler | 629 passing (2026-09-23) | `mise run check:persistence` |
+| Persistence compiler | 669 passing (confirmed 2026-09-25, after Slice 4). Slice 5 adds more, not yet run | `mise run check:persistence` |
 | Ontology tools (catalog, versioning, Eligibility examples, PROV-O alignment) | 35 passing | `mise run check:ontology-catalog` |
 | Ontology versioning | tool run | `mise run check:ontology-versioning` |
 

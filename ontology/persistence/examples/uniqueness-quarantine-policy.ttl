@@ -1,0 +1,15 @@
+# persistence-compiler-iri-sync Slice 5 (decision 1, Option A):
+# dal:onViolation dal:Quarantine generates key-claim-quarantine, which
+# copies every over-claimed key's owners into a dedicated quarantine
+# graph for human review (guide §7.5's intro), deleting nothing.
+@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix ex:  <https://example.org/lending#> .
+
+ex:DeviceClass a dal:ClassScope ; dal:targetClass ex:Device ; dal:priority 20 .
+
+ex:DeviceSerialUnique a dal:UniquenessConstraint ;
+    dal:constraintId      "device-serial-unique" ;
+    dal:appliesTo         ex:DeviceClass ;
+    dal:keyProperty       ( ex:serialNumber ) ;
+    dal:normalizePipeline dal:NfkcTrimUppercase ;
+    dal:onViolation       dal:Quarantine .

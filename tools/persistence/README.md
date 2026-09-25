@@ -67,6 +67,20 @@ The compiler refuses two configurations, both raised as `CrossAxisViolation` bec
 
 `dal:epochCoordinatorBinding`, `dal:erasureRegisterBinding` and `dal:erasureReplayOnRestore` resolve as extras of `dal:epochAuthority` and are emitted, but carry no cross-axis check of their own yet: they inform the restore runbook (guide §24.4) and housekeeping (ADR-A80), not this compiler's generated SPARQL. `dal:erasurePrecedence` resolves and is emitted for the same reason `dal:namingAuthority` is (Slice 3): a declared, adopter-facing choice a runtime component reads, not something this compiler validates on its own.
 
+## Uniqueness violations select a reconciler, not a different guarded write
+
+`dal:onViolation` (Reject/Merge/Quarantine) never changes the guarded write itself: `key-claim-write` always prevents the race at write time, regardless of policy. What it selects is which **reconciler** operation `select_operations()` generates for that constraint (guide §7.5, P7), since a bulk load, an administrative `LOAD`, or a restore can all create a duplicate the guarded write never saw. Undeclared `dal:onViolation` defaults to `dal:Reject`, the same explicit-baseline-default convention as every other dimension in this compiler.
+
+| `dal:onViolation` | Template | Behaviour |
+|---|---|---|
+| `dal:Reject` (baseline default) | `key-claim-duplicate-audit.mustache` | Read-only: reports every over-claimed key, scoped to the one constraint |
+| `dal:Merge` | `key-claim-merge-rewrite.mustache` | Records `dal:mergeRelation` (required — `MergeRelationRequired`) from every non-canonical owner to the lexicographically lowest owner IRI. Idempotent. Records the merge edge only: rewriting payload references, and retiring the losing claim, stay with the caller |
+| `dal:Quarantine` | `key-claim-quarantine.mustache` | Copies every over-claimed key's owners into `urn:g:key-quarantine` with a timestamp. Idempotent per owner. Deletes nothing |
+
+`dal:ClaimScheme` rotation (guide §6.1) is a second, independent axis, resolved as `dualClaimScheme` (true when a constraint's active schemes — state `dal:Accepting` or `dal:Dual` — number exactly two, mirroring `persistence.recipes`' own filter rather than a second, potentially divergent rule). It selects the guarded write's own template: `key-claim-write-dual.mustache` guards and inserts both scheme versions' claim IRIs for the same owner in one operation, so no window opens where the key is claimed under only one version while the secret rotates. `key-claim-retire.mustache` is unaffected either way: retiring is always per claim IRI, one version at a time.
+
+A derived-hash or content-addressed identity's `dal:digestScheme` is required unless the identity is a `dal:PositionDerivedEvent` whose `dal:occurrenceNamespaceDerivation` is `dal:RegistryTokenDerivation`: the namespace is then a registry-allocated token, not digest-derived, so the digest is never used (`dal:DigestSchemeRequiredShape`, narrowed by persistence-compiler-iri-sync Slice 5). A scheme declared anyway is still checked for well-formedness, never merely ignored.
+
 ## A `Target` is a class, plus a deployment when there is more than one
 
 A class alone cannot distinguish "`beh:Behaviour` as lending deploys it" from "`beh:Behaviour` as credit deploys it" (sketch §3.4.3's worked conflict): that distinction lives in which graph the instances are written to, which is exactly what a `dal:GraphPatternScope` declares via `dal:coversClass`. `discover_targets()` therefore yields one `Target` per distinct `GraphPatternScope` deployment a class has, plus one unscoped/fallback target — a class with no graph-pattern deployment at all gets exactly one target. This is an implementation-level refinement not spelled out explicitly in the sketch's prose; see `persistence.scopes.Target`'s docstring for the full reasoning.
@@ -99,8 +113,10 @@ This section is for a caller that runs the instantiated `.rq` files without LATT
 | `append` | `$stream`, `$epoch`, `$revBase`, `$txnId`, `$requestDigest`, `$event`, `$eventType`, `$opSeq`, `$occurredAt` |
 | `cas-replace` (value guard) | `$root`, `$oldValue`, `$newValue` |
 | `unconditional-write` | `$root` |
-| `key-claim-write`, `key-claim-retire` | `$claim`, `$owner`, and `$now` for retire |
-| audits | none |
+| `key-claim-write` (single scheme) | `$claim`, `$owner` |
+| `key-claim-write-dual` (`dal:Dual` scheme state) | `$claimCurrent`, `$claimNext`, `$owner` |
+| `key-claim-retire` | `$claim`, `$owner`, `$now` |
+| audits, including `key-claim-duplicate-audit`, `key-claim-merge-rewrite`, `key-claim-quarantine` | none |
 
 - `$epoch` is the dataset epoch read at the start of the request, typed `xsd:long`. So are `$expectedSeq`, `$nextSeq` and `$opSeq`. An untyped integer is a different RDF term and never matches (guide Chapter 13).
 - `$txnId` is the transaction claim IRI (`urn:txn:{id}`). Receipts record its string form in `pat:txn`.
@@ -122,12 +138,13 @@ This section is for a caller that runs the instantiated `.rq` files without LATT
 - **`cas-replace-composite-property`** uses only the *first* composite property found by walking a target's `dal:boundaryShape`, with `+` (one-or-more) traversal. A shape with several sibling composite properties at the same level needs a property-path alternation (`p1|p2|...`) this first cut does not yet generate.
 - **`dal:EquivalentClassScope` matching** is a syntactic approximation (does the target class appear inside the equivalence expression's `owl:intersectionOf`), not full OWL entailment. No reasoner dependency is introduced anywhere in this compiler, by design (sketch non-goals).
 - **The log-bucket month** (`urn:g:txlog/{month}`) is computed at request time via `NOW()`, inside the generated `WHERE` clause, not baked in as a compile-time constant — this differs from an earlier, since-corrected version of the worked example in the sketch, which would have hard-coded a single month into a template meant to be reused across many months.
-- **Infrastructure graph IRIs are fixed constants, not per-deployment configurable.** `urn:g:dataset` (dataset epoch graph and node), `urn:g:txn`, `urn:g:keys`, `urn:g:txlog/` (log bucket prefix), `urn:g:txlog/pinned`, `urn:g:retention`, `urn:g:events/{class-local-name}/` and `urn:g:meta/{shard}` match `rdf-sparql-patterns-guide.md` §2.3. No `dal:` property names them yet.
+- **Infrastructure graph IRIs are fixed constants, not per-deployment configurable.** `urn:g:dataset` (dataset epoch graph and node), `urn:g:txn`, `urn:g:keys`, `urn:g:key-quarantine`, `urn:g:txlog/` (log bucket prefix), `urn:g:txlog/pinned`, `urn:g:retention`, `urn:g:events/{class-local-name}/` and `urn:g:meta/{shard}` match `rdf-sparql-patterns-guide.md` §2.3. No `dal:` property names them yet.
 - **`dal:epochGuardScope`** selects between a `-dataset-guard` template variant and the original for every row-writing operation: `create-if-absent`, `cas-replace` (named graph and composite property), `tombstone-delete`, `append` and `bootstrap-version-row`. The dataset-guard variants guard on the dataset epoch only and rebase the row's own `pat:epoch` on write, continuing `pat:seq` (guide §10.1). `unconditional-write` and `cas-replace-value-guard` write no version row, so they have no epoch guard.
 - **Not generated:** the retention job (low-water marks, pinned-head copies, bucket drops) and the epoch bump belong to housekeeping (ADR-A80), not to this compiler. `pat:hlc` is not written by any template.
 - **Declared shard counts are recorded, not applied.** `dal:txnShards`, `dal:logShards` and `dal:keyShards` resolve into the compiled profile, and a value above 1 raises a `ShardingNotHonoured` warning, because every template still writes one txn, keys and log-bucket graph.
 - **`dal:firstWrite dal:AbsentRow` with `dal:CompositePropertyBoundary`** generates no create operation: there is no composite-boundary create template yet. `dal:PreCreatedRow` works for both boundaries.
 - **`dal:epochCoordinatorBinding`, `dal:erasureRegisterBinding` and `dal:erasureReplayOnRestore`** (Slice 4) resolve and are emitted as extras of `dal:epochAuthority`, but no cross-axis check reads them yet: they describe the restore runbook (guide §24.4), which this compiler does not generate or execute.
+- **`key-claim-merge-rewrite` records the merge edge only** (Slice 5): it never rewrites payload references to the canonical IRI, and never retires the losing claim, since only a claim's own owner may retire it (guide §6.2) and a background reconciler has no such authority. The canonical owner is the lexicographically lowest IRI among a claim's owners — an arbitrary but deterministic and total choice, the same convention as the dataset-guard graph IRI's own documented arbitrariness.
 
 ## Development
 
@@ -146,4 +163,5 @@ The test suite includes:
 - **`test_slice_3_identity.py`** — role-qualified identity resolution, whole-node winners, no default role, emission, and every identity check with a positive and negative case.
 - **`test_identity_minting_m1.py`** — the compiler reproduces the hand-authored anchor recipes of `contracts/identity/anchor-vectors.json` byte for byte; every recipe satisfies the published schema; digests are recomputed independently and invariant under triple order; emission, export, rotation, and one refusal per missing recipe member.
 - **`test_slice_4_privacy.py`** — per-property resolution of `dal:PrivacyProfile` and `dal:perSubjectScoped`, `dal:epochAuthority`'s promotion out of `dal:epochGuardScope`'s extras, and both privacy/erasure checks with a positive and negative case, including the two profile classes declared on separate individuals.
+- **`test_slice_5_uniqueness.py`** — `dal:onViolation` defaulting to `dal:Reject`, the three reconciler templates selected and bound, `MergeRelationRequired` positive and negative, `dualClaimScheme` mirroring `persistence.recipes`' active-scheme filter and selecting the dual-guard write template, and the registry-token digest-scheme exemption's positive case plus its `dal:HashedTargetDerivation` boundary negative case.
 - **`test_architecture.py`** — the Python equivalent of an ArchUnit rule: only `persistence.render` may import `chevron`, no wall-clock call exists in any resolution-critical module, and `chevron.render`'s template argument is never dynamically assembled.

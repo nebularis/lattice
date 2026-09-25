@@ -127,6 +127,7 @@ def check_cross_axis(
 
     diagnostics.extend(_check_slice_2(target, dimensions))
     diagnostics.extend(_check_slice_4(target, dimensions))
+    _check_slice_5(target, uniqueness)
 
     # Row 5: a uniqueness key property outside the declared boundary.
     if boundary_local == "CompositePropertyBoundary" and boundary is not None:
@@ -300,6 +301,22 @@ def _check_slice_4(target: Target, dimensions: dict[str, ResolvedDimension]) -> 
     return []
 
 
+def _check_slice_5(target: Target, uniqueness: list[dict]) -> None:
+    """persistence-compiler-iri-sync Slice 5: mirrors
+    dal:MergeRelationRequiredShape on resolved values. A hard refusal, like
+    every other un-severitied shape this compiler mirrors: a merge policy
+    that names no relation would write an undefined term."""
+    for constraint in uniqueness:
+        if _local(constraint.get("onViolation")) == "Merge" and constraint.get("mergeRelation") is None:
+            raise CrossAxisViolation(
+                "MergeRelationRequired",
+                str(target),
+                f"uniqueness constraint {constraint['constraintId']!r}: dal:onViolation dal:Merge requires "
+                "dal:mergeRelation naming the relation the merge writes (for example fnd:replacedBy, if the "
+                "adopter's ontology defines it). A merge policy that names no relation writes an undefined term.",
+            )
+
+
 DIGEST_ENCODINGS = frozenset({"lowercase-hex", "base32", "base64url"})
 
 
@@ -325,26 +342,41 @@ def check_identity(
         # Mirrors dal:DigestSchemeRequiredShape and dal:DigestSchemeWellFormedShape.
         if strategy in ("DerivedHashIdentity", "ContentAddressedIdentity"):
             scheme = extra.get("digestScheme")
-            function = graph.value(scheme, DAL.digestFunction) if scheme is not None else None
-            width = graph.value(scheme, DAL.digestWidthBits) if scheme is not None else None
-            encoding = graph.value(scheme, DAL.digestEncoding) if scheme is not None else None
-            if function is None or width is None or encoding is None:
-                raise CrossAxisViolation(
-                    "DigestSchemeRequired", str(target),
-                    f"{where}: dal:{strategy} requires a dal:digestScheme with dal:digestFunction, "
-                    "dal:digestWidthBits and dal:digestEncoding. An unstated width or encoding lets two "
-                    "implementations mint different IRIs for one input (iri-identity-patterns.md §7.4).",
-                )
-            try:
-                width_ok = int(width) > 0 and int(width) % 8 == 0
-            except (TypeError, ValueError):
-                width_ok = False
-            if not width_ok or str(encoding) not in DIGEST_ENCODINGS:
-                raise CrossAxisViolation(
-                    "DigestSchemeMalformed", str(target),
-                    f"{where}: dal:digestWidthBits must be a positive multiple of 8 (got {width!s}) and "
-                    f"dal:digestEncoding one of {sorted(DIGEST_ENCODINGS)} (got {encoding!s}).",
-                )
+            # persistence-compiler-iri-sync Slice 5: a registry-token
+            # namespace is never digest-derived, so no digest scheme is
+            # ever used for this exact role -- requiring one would be
+            # requiring a value nothing reads (identity-minting M3 found
+            # this in identity-minting-coverage.ttl). A scheme declared
+            # anyway is still checked for well-formedness below; only the
+            # "must be present" branch is exempted.
+            digest_unused = (
+                _local(extra.get("eventIdentityStrategy")) == "PositionDerivedEvent"
+                and _local(extra.get("occurrenceNamespaceDerivation")) == "RegistryTokenDerivation"
+            )
+            if not (scheme is None and digest_unused):
+                function = graph.value(scheme, DAL.digestFunction) if scheme is not None else None
+                width = graph.value(scheme, DAL.digestWidthBits) if scheme is not None else None
+                encoding = graph.value(scheme, DAL.digestEncoding) if scheme is not None else None
+                if function is None or width is None or encoding is None:
+                    raise CrossAxisViolation(
+                        "DigestSchemeRequired", str(target),
+                        f"{where}: dal:{strategy} requires a dal:digestScheme with dal:digestFunction, "
+                        "dal:digestWidthBits and dal:digestEncoding. An unstated width or encoding lets two "
+                        "implementations mint different IRIs for one input (iri-identity-patterns.md §7.4). "
+                        "Exempt when dal:eventIdentityStrategy is dal:PositionDerivedEvent and "
+                        "dal:occurrenceNamespaceDerivation is dal:RegistryTokenDerivation: the namespace is a "
+                        "registry-allocated token, not digest-derived.",
+                    )
+                try:
+                    width_ok = int(width) > 0 and int(width) % 8 == 0
+                except (TypeError, ValueError):
+                    width_ok = False
+                if not width_ok or str(encoding) not in DIGEST_ENCODINGS:
+                    raise CrossAxisViolation(
+                        "DigestSchemeMalformed", str(target),
+                        f"{where}: dal:digestWidthBits must be a positive multiple of 8 (got {width!s}) and "
+                        f"dal:digestEncoding one of {sorted(DIGEST_ENCODINGS)} (got {encoding!s}).",
+                    )
 
         event_strategy = _local(extra.get("eventIdentityStrategy"))
         if event_strategy == "PositionDerivedEvent":

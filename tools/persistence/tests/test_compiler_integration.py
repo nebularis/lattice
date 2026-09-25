@@ -36,6 +36,10 @@ POSITIVE_FIXTURES = [
     ("identity-minting-anchors.ttl", "https://example.org/lending#Person"),
     ("identity-minting-coverage.ttl", "https://example.org/lending#Account"),
     ("privacy-receipt-compatible.ttl", "https://example.org/lending#Beneficiary"),
+    # persistence-compiler-iri-sync Slice 5.
+    ("uniqueness-merge-policy.ttl", "https://example.org/lending#Customer"),
+    ("uniqueness-quarantine-policy.ttl", "https://example.org/lending#Device"),
+    ("claim-scheme-dual-rotation.ttl", "https://example.org/lending#Member"),
 ]
 
 NEGATIVE_FIXTURES = [
@@ -49,6 +53,8 @@ NEGATIVE_FIXTURES = [
     "invalid-position-event-without-derivation.ttl",
     "invalid-personaldata-no-erasure.ttl",
     "invalid-personaldata-receipt-conflict.ttl",
+    # persistence-compiler-iri-sync Slice 5.
+    "invalid-merge-policy-no-relation.ttl",
 ]
 
 SHACL_NEGATIVE_FIXTURES = [
@@ -58,6 +64,8 @@ SHACL_NEGATIVE_FIXTURES = [
     "invalid-claimed-identity-without-key.ttl",
     "invalid-personaldata-no-erasure.ttl",
     "invalid-personaldata-receipt-conflict.ttl",
+    # persistence-compiler-iri-sync Slice 5.
+    "invalid-merge-policy-no-relation.ttl",
 ]
 
 ALL_FIXTURES = [p.name for p in EXAMPLES_DIR.glob("*.ttl")]

@@ -1,0 +1,37 @@
+# persistence-compiler-iri-sync Slice 5: a claim-secret rotation in
+# progress (guide §6.1). Both scheme versions are dal:Dual at once, so
+# key-claim-write-dual.mustache guards and inserts both versions' claim
+# IRIs for the same owner in one operation, instead of the single-scheme
+# key-claim-write.mustache.
+@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix ex:  <https://example.org/lending#> .
+
+ex:MemberClass a dal:ClassScope ; dal:targetClass ex:Member ; dal:priority 20 .
+
+ex:MemberHandleUnique a dal:UniquenessConstraint ;
+    dal:constraintId      "member-handle-unique" ;
+    dal:appliesTo         ex:MemberClass ;
+    dal:keyProperty       ( ex:handle ) ;
+    dal:normalizePipeline dal:NfkcTrimCasefold ;
+    dal:onViolation       dal:Reject ;
+    dal:claimScheme       ex:MemberHandleV1, ex:MemberHandleV2 .
+
+ex:MemberHandleV1 a dal:ClaimScheme ;
+    dal:schemeVersion     "v1" ;
+    dal:schemeState       dal:Dual ;
+    dal:claimKeyId        "member-handle-v1" ;
+    dal:claimDigestScheme ex:MemberHandleMacV1 ;
+    dal:claimIriTemplate  "urn:key:member-handle:v1:{mac}" .
+
+ex:MemberHandleV2 a dal:ClaimScheme ;
+    dal:schemeVersion     "v2" ;
+    dal:schemeState       dal:Dual ;
+    dal:claimKeyId        "member-handle-v2" ;
+    dal:claimDigestScheme ex:MemberHandleMacV2 ;
+    dal:claimIriTemplate  "urn:key:member-handle:v2:{mac}" .
+
+ex:MemberHandleMacV1 a dal:DigestScheme ;
+    dal:digestFunction "HMAC-SHA-256" ; dal:digestWidthBits 128 ; dal:digestEncoding "base32" .
+
+ex:MemberHandleMacV2 a dal:DigestScheme ;
+    dal:digestFunction "HMAC-SHA-256" ; dal:digestWidthBits 256 ; dal:digestEncoding "base64url" .

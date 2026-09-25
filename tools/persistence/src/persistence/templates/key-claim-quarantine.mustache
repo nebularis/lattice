@@ -1,0 +1,29 @@
+{{! key-claim-quarantine: guide §7.5 (P7) intro, dal:onViolation
+    dal:Quarantine. Every owner of an over-claimed key is copied into a
+    dedicated quarantine graph for human review, alongside every other
+    duplicate this constraint has found; nothing is deleted from the
+    keys graph, since the reconciler is never the only strategy and
+    quarantine is a review queue, not an automatic remediation.
+    Idempotent per owner: a duplicate already recorded is not
+    re-inserted, so re-running this audit does not manufacture new
+    pat:quarantinedAt timestamps for findings a human has already seen.}}
+PREFIX pat: <https://example.org/lattice/patterns#>
+
+INSERT {
+  GRAPH {{{keyQuarantineGraph}}} {
+      ?claim pat:quarantinedOwner ?other ; pat:quarantinedAt ?now ; pat:constraint {{{constraintId}}}
+  }
+}
+WHERE {
+  {
+    SELECT ?claim
+    WHERE {
+      GRAPH {{{keysGraph}}} { ?claim a pat:KeyClaim ; pat:constraint {{{constraintId}}} ; pat:claimedBy ?owner }
+    }
+    GROUP BY ?claim
+    HAVING (COUNT(?owner) > 1)
+  }
+  GRAPH {{{keysGraph}}} { ?claim pat:claimedBy ?other }
+  FILTER NOT EXISTS { GRAPH {{{keyQuarantineGraph}}} { ?claim pat:quarantinedOwner ?other } }
+  BIND(NOW() AS ?now)
+}

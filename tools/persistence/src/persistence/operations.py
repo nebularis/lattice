@@ -99,6 +99,10 @@ def select_operations(
         ),
         ParameterBinding("txnGraph", "Iri", Iri.encode("urn:g:txn")),
         ParameterBinding("keysGraph", "Iri", Iri.encode("urn:g:keys")),
+        # persistence-compiler-iri-sync Slice 5: a fixed constant, like
+        # every other infrastructure graph above -- no dal: property names
+        # it yet (tools/persistence/README.md "Known limitations").
+        ParameterBinding("keyQuarantineGraph", "Iri", Iri.encode("urn:g:key-quarantine")),
         ParameterBinding("retentionGraph", "Iri", Iri.encode("urn:g:retention")),
         ParameterBinding("pinnedGraph", "Iri", Iri.encode("urn:g:txlog/pinned")),
         ParameterBinding(
@@ -188,16 +192,54 @@ def select_operations(
         key_bindings = common_bindings + [
             ParameterBinding("constraintId", "String", Literal.encode(constraint["constraintId"])),
         ]
+        # persistence-compiler-iri-sync Slice 5: dal:ClaimScheme rotation
+        # (guide §6.1). Two active scheme versions mean the guarded write
+        # must guard-and-insert both claim IRIs in one operation.
+        write_template = (
+            "key-claim-write-dual.mustache" if constraint.get("dualClaimScheme") else "key-claim-write.mustache"
+        )
         ops.append(
-            GeneratedOperation(
-                f"key-claim-write:{constraint['constraintId']}", "key-claim-write.mustache", key_bindings
-            )
+            GeneratedOperation(f"key-claim-write:{constraint['constraintId']}", write_template, key_bindings)
         )
         ops.append(
             GeneratedOperation(
                 f"key-claim-retire:{constraint['constraintId']}", "key-claim-retire.mustache", key_bindings
             )
         )
+        # persistence-compiler-iri-sync Slice 5 (decision 1, Option A): the
+        # guarded write above always prevents the race regardless of
+        # dal:onViolation; the policy instead selects which reconciler
+        # operation runs to detect, and where named, remediate whatever
+        # slips past it anyway -- bulk loads, administrative LOAD, restores
+        # (guide §7.5: "the reconciler is never the only strategy, and it
+        # is never absent"). Undeclared dal:onViolation defaults to
+        # dal:Reject, the same explicit-baseline-default convention as
+        # every other dimension in this compiler.
+        on_violation = _local(constraint.get("onViolation")) or "Reject"
+        if on_violation == "Merge":
+            merge_bindings = key_bindings + [
+                ParameterBinding("mergeRelation", "Iri", Iri.encode(str(constraint["mergeRelation"]))),
+            ]
+            ops.append(
+                GeneratedOperation(
+                    f"key-claim-merge-rewrite:{constraint['constraintId']}",
+                    "key-claim-merge-rewrite.mustache", merge_bindings,
+                )
+            )
+        elif on_violation == "Quarantine":
+            ops.append(
+                GeneratedOperation(
+                    f"key-claim-quarantine:{constraint['constraintId']}",
+                    "key-claim-quarantine.mustache", key_bindings,
+                )
+            )
+        else:
+            ops.append(
+                GeneratedOperation(
+                    f"key-claim-duplicate-audit:{constraint['constraintId']}",
+                    "key-claim-duplicate-audit.mustache", key_bindings,
+                )
+            )
 
     # dal:registryGraph (Slice 2) rides on every audit as a binding, so the
     # caller that renders the logGraphs request-time slot knows which

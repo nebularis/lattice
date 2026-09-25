@@ -82,16 +82,16 @@ ex:ShipmentEvents a dal:IdentityProfile ;
     dal:eventIdentityStrategy         dal:PositionDerivedEvent ;
     dal:occurrenceNamespaceDerivation dal:RegistryTokenDerivation ;
     dal:uniquenessWitnessRequired     true ;
-    dal:digestScheme                  ex:ShipmentDigest ;
     dal:epochWidth                    4 ;
     dal:sequenceWidth                 8 ;
     dal:mintedIriTemplate             "urn:ev:shipment:{namespace}:{epoch}:{seq}" .
 
-# Unused by the recipe, since the namespace is a registry token. The Slice 3
-# identity check requires it of every dal:DerivedHashIdentity profile (recorded
-# in the identity-minting status record).
-ex:ShipmentDigest a dal:DigestScheme ;
-    dal:digestFunction "SHA-256" ; dal:digestWidthBits 64 ; dal:digestEncoding "lowercase-hex" .
+# No dal:digestScheme: the namespace is a registry token, not a hash, so no
+# digest is ever used for this role. persistence-compiler-iri-sync Slice 5
+# narrowed dal:DigestSchemeRequiredShape (and its Python mirror in
+# check_identity) to exempt exactly this combination
+# (dal:PositionDerivedEvent + dal:RegistryTokenDerivation); see
+# ontology/persistence/README.md and the identity-minting status record.
 
 ex:ShipmentEpoch a dal:EpochProfile ;
     dal:appliesTo       ex:ShipmentScope ;

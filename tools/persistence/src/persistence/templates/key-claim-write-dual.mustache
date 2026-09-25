@@ -1,0 +1,24 @@
+{{! key-claim-write-dual: guide §6.1's dal:Dual claim-scheme rotation.
+    Both the old and new scheme version's claim IRI are guarded and
+    inserted for the same owner in one operation, so no window opens
+    where the key is claimed under only one version while the secret
+    rotates. $claimCurrent and $claimNext are the two HMAC claim IRIs the
+    caller computes over the same normalized key with each scheme
+    version's own secret (guide §6.1); $owner is the one entity claiming
+    both.}}
+PREFIX pat: <https://example.org/lattice/patterns#>
+
+INSERT {
+  GRAPH {{{keysGraph}}} {
+      $claimCurrent a pat:KeyClaim ; pat:constraint {{{constraintId}}} ; pat:claimedBy $owner .
+      $claimNext    a pat:KeyClaim ; pat:constraint {{{constraintId}}} ; pat:claimedBy $owner .
+  }
+}
+WHERE {
+  FILTER NOT EXISTS {
+      GRAPH {{{keysGraph}}} { $claimCurrent pat:claimedBy ?otherCurrent . FILTER(?otherCurrent != $owner) }
+  }
+  FILTER NOT EXISTS {
+      GRAPH {{{keysGraph}}} { $claimNext pat:claimedBy ?otherNext . FILTER(?otherNext != $owner) }
+  }
+}
