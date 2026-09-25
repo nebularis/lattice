@@ -8,9 +8,9 @@
 **Mode:** fully autonomous (granted 2026-09-25)
 **Decisions:** taken by the human 2026-09-25, recorded in the status record's "Slice 5 decisions" section — Option A for `dal:onViolation` semantics, the registry-token digest relaxation, and autonomous mode with no install/test-run this tranche.
 
-## Not yet run in this environment
+## Validated (2026-09-25)
 
-Per explicit instruction, no Python install or test-run was attempted this tranche; the sandbox's PyPI block (recorded in the unit status record's Blockers table) is unchanged regardless. Every new and modified file was checked for syntax/import errors via the editor's static diagnostics (`get_errors`), which found none. Every "Pass criterion" below names the test that must be run to actually confirm the row; none of them are confirmed yet.
+The human ran the suite and confirmed **774 passed**, after one fix found by the run itself (see "Found on the way" below). This slice is **complete**.
 
 ## What invariants does this slice protect?
 
@@ -49,7 +49,11 @@ mise run check:persistence
 
 ## Expected artifacts
 
-Not yet produced. Expected: all 669 previously-passing tests still pass (per Slice 4's confirmed run), plus the new cases in `test_slice_5_uniqueness.py`, the extended parametrisations in `test_template_alignment.py` and `test_compiler_integration.py`. The exact total is arithmetic, not a confirmed count.
+Confirmed: **774 passed** (2026-09-25 run). All previously-passing tests still pass, plus the new cases in `test_slice_5_uniqueness.py` and the extended parametrisations in `test_template_alignment.py` and `test_compiler_integration.py`.
+
+## Found on the way
+
+`key-claim-merge-rewrite.mustache`'s `{{! ... }}` header comment originally repeated the literal tag text `{{{mergeRelation}}}` inline, as prose, inside the comment. Mustache comments do not suppress tag parsing of their own content in this compiler's rendering path (`chevron`), so the literal braces inside the comment were treated as a second, spurious tag occurrence and failed to render/parse correctly. Fixed by rephrasing the comment to describe the slot in words ("the merge relation is the adopter-named relation…") rather than quoting its Mustache syntax. This is the same class of gotcha already recorded for this compiler in `docs/developer/INDEX.md`'s Key Findings ("Mustache parsing gotcha: Comments cannot contain bare `}}` without breaking parsing") — confirmed here to extend to a full `{{{name}}}` tag quoted inside a comment, not only a bare `}}`.
 
 ## Artefacts to inspect
 
@@ -60,7 +64,7 @@ Not yet produced. Expected: all 669 previously-passing tests still pass (per Sli
 - `ontology/persistence/shapes/constraints.ttl`'s narrowed `dal:DigestSchemeRequiredShape`, and `spec/persistence.ttl`'s `dal:DigestScheme` comment and version bump (0.2.0 → 0.2.1).
 - `ontology/persistence/examples/identity-minting-coverage.ttl`'s `ex:ShipmentEvents`, now without `dal:digestScheme`/`ex:ShipmentDigest`.
 
-## Adversarial probes (designed, not yet run)
+## Adversarial probes (designed, ready for a mutation-check pass)
 
 | Probe | Mutation | Expected failure |
 |---|---|---|
@@ -75,4 +79,3 @@ Not yet produced. Expected: all 669 previously-passing tests still pass (per Sli
 - **`key-claim-merge-rewrite` never retires the losing claim or rewrites payload references.** It records the merge relation only, per Decision 1's framing: a background reconciler cannot legitimately act with a claim owner's authority (guide §6.2), and rewriting arbitrary payload references needs domain knowledge this compiler does not have.
 - **`urn:g:key-quarantine` is a fixed constant**, matching every other infrastructure graph IRI this compiler already treats as fixed (`tools/persistence/README.md` "Known limitations"). No `dal:` property names it yet.
 - **Declared shard counts (`dal:keyShards`) are still not honoured** by any key-claim template, including the four new ones, unchanged from Slice 2's own non-coverage.
-- **This test run itself.** Per the "Not yet run" section above, a human must run `mise run check:persistence` and report the result before this slice is complete, and should perform at least one of the adversarial probes above interactively, per the human validation gate.

@@ -3,8 +3,8 @@
 # Persistence Compiler / IRI-Patterns Sync — Status
 
 **Unit ID:** `persistence-compiler-iri-sync`
-**Status:** ✅ Slices 1–4 complete (Slice 4 human-validated 2026-09-25: all tests pass, adversarial probes checked). 🚧 Slice 5 in progress (decisions taken 2026-09-25, autonomous mode granted). Slice 6 not started.
-**Last updated:** 2026-09-25 (Slice 5 decisions and implementation)
+**Status:** ✅ Complete. All six slices done, 774/774 tests passing (human-validated 2026-09-25).
+**Last updated:** 2026-09-25 (Slice 6 documentation close-out, unit complete)
 **Plan:** [persistence-compiler-iri-sync.md](../plans/persistence-compiler-iri-sync.md)
 **Sketch (gap analysis):** [persistence-compiler-iri-sync.md](../sketches/persistence-compiler-iri-sync.md)
 
@@ -12,7 +12,7 @@
 
 ## Is this unit complete?
 
-**No.** Four of six slices are done and verified by an actual test run. Of the eight gaps in the [gap analysis](../sketches/persistence-compiler-iri-sync.md), six are closed and verified (G1–G6), one (G7) is implemented in Slice 5 pending a test run, and one (documentation) is kept current slice by slice with a final pass in Slice 6. The one live correctness gap (G1) is closed and verified.
+**Yes.** All six slices are done. Every gap in the [gap analysis](../sketches/persistence-compiler-iri-sync.md) (G1–G8) is closed and verified, the last (G7, Slice 5) by an actual, human-confirmed test run (774/774 passing). Nothing further is owed by this unit.
 
 ### Slice 5 decisions (human, 2026-09-25)
 
@@ -28,8 +28,8 @@
 | G4 | Privacy/erasure profile and cross-profile checks | ✅ Closed | Slice 4: `dal:privacyClass`/`dal:erasureStrategy`/`dal:erasurePrecedence`/`dal:perSubjectScoped` each resolved as their own dimension; two checks (`PersonalDataRequiresErasure`, `PersonalDataReceiptConflict`) mirroring the two named SHACL shapes. Human-validated 2026-09-25 |
 | G5 | Extension properties on existing profile classes | ✅ Closed | Slice 2 |
 | G6 | Meta-topology sharding extension | ✅ Closed as resolution and warning | Slice 2. The counts are recorded, not applied to the generated SPARQL (plan Slice 2 decision 3) |
-| G7 | Uniqueness `onViolation`, `mergeRelation`, `ClaimScheme` rotation | ⚠️ Implemented, unverified | Slice 5 (2026-09-25): reconciler operations per policy (decision 1, Option A), `dal:mergeRelation` read and checked, `key-claim-write-dual.mustache` selected when a constraint's active `dal:ClaimScheme`s are both `dal:Dual`. Not yet run in this sandbox, per instruction — see Blockers |
-| G8 | `tools/persistence/README.md` stale | ◐ Kept current | Updated in Slices 1 and 2 and by the post-3866b21 remediation. Final pass in Slice 6 |
+| G7 | Uniqueness `onViolation`, `mergeRelation`, `ClaimScheme` rotation | ✅ Closed | Slice 5 (2026-09-25): reconciler operations per policy (decision 1, Option A), `dal:mergeRelation` read and checked, `key-claim-write-dual.mustache` selected when a constraint's active `dal:ClaimScheme`s are both `dal:Dual`. Human-validated 2026-09-25, 774 passed |
+| G8 | `tools/persistence/README.md` stale | ✅ Closed | Updated in Slices 1, 2 and 4, by the post-3866b21 remediation, and finalised in Slice 6 (2026-09-25): "Known limitations" reflects exactly what Slices 1–5 shipped, `rdf-sparql-patterns-remediation.md`'s Deferred item 1 marked closed, `rdf-sparql-patterns-status.md` records the final 774-test count, and `docs/developer/INDEX.md` had its final traceability pass |
 
 ## Current state
 
@@ -45,7 +45,9 @@ Slice 1 was implemented the same day, in Default Mode: code and tests were writt
 |---|---|---|
 | ~~Slice 3 resolution-model decision~~ | Resolved 2026-09-23: role-qualified dimensions, see [plan](../plans/persistence-compiler-iri-sync.md#slice-3--identity-minting-profile-resolution-g2) | — |
 | ~~Slice 4's test run~~ | Resolved 2026-09-25: human ran `mise run check:persistence`, confirmed all tests pass, and checked the adversarial probes. | — |
-| **Slice 5's test run** | Same sandbox constraint as Slice 4 (no system Python, no `mise` on `PATH`, no PyPI access), and per explicit instruction for this tranche no install or test-run was attempted. Code, fixtures, templates and tests are authored and checked for syntax/import errors only (editor-level `get_errors`). | Human — run `mise run check:persistence` and report the result |
+| ~~Slice 5's test run~~ | Resolved 2026-09-25: human ran `mise run check:persistence`, confirmed **774 passed** after fixing a mustache-comment parsing issue in `key-claim-merge-rewrite.mustache` (found by the run itself, see Slice 5 VP's "Found on the way"). | — |
+
+No open blockers remain.
 
 ## Slice status
 
@@ -55,8 +57,8 @@ Slice 1 was implemented the same day, in Default Mode: code and tests were writt
 | 2 | Ordering/receipt/concurrency/aggregate-boundary extension properties + meta-topology sharding (G5, G6) | ✅ Complete, 526/526 passing — see [VP](../validation/persistence-compiler-iri-sync-slice-2.md) |
 | 3 | Identity minting profile resolution (G2) | ✅ Complete, 570/570 passing — see [VP](../validation/persistence-compiler-iri-sync-slice-3.md) |
 | 4 | Privacy/erasure profile + cross-profile compatibility (G3 partial, G4) | ✅ Complete, human-validated 2026-09-25 (669 passed, adversarial probes checked) — see [VP](../validation/persistence-compiler-iri-sync-slice-4.md) |
-| 5 | Uniqueness `onViolation` reconciler operations, `mergeRelation`, `ClaimScheme` `dal:Dual` rotation, registry-token digest relaxation (G7) | ⚠️ Implemented 2026-09-25, autonomous mode, not yet run in this sandbox — see [VP](../validation/persistence-compiler-iri-sync-slice-5.md) |
-| 6 | Documentation close-out | Not started, waits on Slice 5 confirmation. Items already done early are listed in the [plan](../plans/persistence-compiler-iri-sync.md#slice-6--documentation-close-out) |
+| 5 | Uniqueness `onViolation` reconciler operations, `mergeRelation`, `ClaimScheme` `dal:Dual` rotation, registry-token digest relaxation (G7) | ✅ Complete, human-validated 2026-09-25 (774 passed) — see [VP](../validation/persistence-compiler-iri-sync-slice-5.md) |
+| 6 | Documentation close-out | ✅ Complete, 2026-09-25 | no VP (L0, documentation only — same precedent as `applied-ontology-readiness` AOR-1) |
 
 ## Slice 1 delivery detail
 
@@ -130,6 +132,17 @@ Implemented 2026-09-25, fully autonomous mode (granted for this slice explicitly
 
 **Not executed**: per instruction for this tranche, no install or test-run was attempted. Every new and modified file was checked for syntax/import errors via the editor's static diagnostics (`get_errors`), none found. A human must run the suite and report the result, per the Blockers table above.
 
+**Confirmed**: the human ran `mise run check:persistence` on 2026-09-25 and reported **774 passed**, after fixing one issue the run itself surfaced: `key-claim-merge-rewrite.mustache`'s header comment quoted the literal Mustache tag `{{{mergeRelation}}}` as prose inside a `{{! ... }}` comment, which this compiler's renderer (`chevron`) does not treat as inert — the braces inside the comment were parsed as a second, spurious tag. Fixed by rephrasing the comment in words instead of quoting the tag syntax. Recorded as a general gotcha for this compiler's templates in the Slice 5 VP and `docs/developer/INDEX.md`'s Key Findings. This slice is complete.
+
+## Slice 6 delivery detail
+
+Completed 2026-09-25, the same session as Slice 5's validation. Documentation-only (L0), no VP file, matching the `applied-ontology-readiness` AOR-1 precedent for a governance/documentation-only slice.
+
+- **`tools/persistence/README.md` "Known limitations"**: already current as of Slice 5 (each slice updated it as it landed, per the plan's own note that Slice 6 "remains the final pass" only if something drifted). Reviewed line by line against what Slices 1–5 actually shipped; no correction needed.
+- **[`rdf-sparql-patterns-remediation.md`](rdf-sparql-patterns-remediation.md)**'s Deferred item 1 ("Compiler wiring") marked closed, citing this unit's Slices 1–5 completion and the 774/774 result.
+- **[`rdf-sparql-patterns-status.md`](rdf-sparql-patterns-status.md)** updated: header status line, and a new "2026-09-25, re-sync complete" paragraph recording that the compiler is fully re-synced against the post-`c276afb` vocabulary, with the final 774-test count.
+- **`docs/developer/INDEX.md`** final traceability pass: the "change package at a glance" summary, unit 1a's full slice table, the Validation Packs list, the Complete/In Progress lists, the Key Findings (added the Slice 5 mustache-comment gotcha), the Persistence compiler test-coverage row, and the document's own "Last updated" footer.
+
 ## Severity note
 
 Slice 1 addresses a live correctness gap, not a coverage gap: the compiler's existing CAS/tombstone templates generate the epoch-guard shape the vocabulary now explicitly documents as unsafe (`dal:RowLevelGuardOnly`), unconditionally, for every deployment, with no way to configure the safe alternative (`dal:DatasetLevelGuard`). Recommend prioritising Slice 1 ahead of the others regardless of overall sequencing.
@@ -144,7 +157,7 @@ Slice 1 addresses a live correctness gap, not a coverage gap: the compiler's exi
 | After Slice 2 | **526 passing, 0 failing** (autonomous run, 2026-09-23) |
 | After Slice 3 | **570 passing, 0 failing** (autonomous run, 2026-09-23) |
 | After Slice 4 and `identity-minting` M3 | **669 passing, 0 failing** (run 2026-09-24 on Python 3.14.7, in the `identity-minting` session). Includes the 24 cases of `test_slice_4_privacy.py` and 4 parametrised cases for `identity-minting-coverage.ttl`. Human-confirmed 2026-09-25 as Slice 4's own result |
-| After Slice 5 | **Not run** (see Blockers). Adds `test_slice_5_uniqueness.py` plus parametrised cases from four new fixtures across `test_compiler_integration.py`'s existing suites |
+| After Slice 5 | **774 passing, 0 failing** (human-confirmed run, 2026-09-25). Adds `test_slice_5_uniqueness.py` plus parametrised cases from four new fixtures across `test_compiler_integration.py`'s existing suites |
 
 ## Commands to run
 
@@ -152,10 +165,8 @@ Slice 1 addresses a live correctness gap, not a coverage gap: the compiler's exi
 mise run check:persistence
 ```
 
-Result as of 2026-09-25 (after Slice 4, the last point this was actually run): `669 passed`. **Slice 5's changes have not been run against this command in this environment** (see Blockers). Expected: all previously-passing tests still pass, plus the new Slice 5 cases, all green.
+Result as of 2026-09-25 (after Slice 5, the last point this was actually run): `774 passed`.
 
 ## Next steps
 
-1. **Human runs `mise run check:persistence`** and reports the result, so Slice 5 can move from "implemented" to "complete".
-2. Proceed to Slice 6 (documentation close-out) once Slice 5 is confirmed.
-3. Update this file after every slice lands, per the Documentation Lifecycle rule that this status record is the sole authoritative live state for this unit.
+None. This unit is complete. `identity-minting-shared-core` (deferred sketch) can now revisit its own next steps, which named this unit's Slice 6 as the thing it was waiting on.

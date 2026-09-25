@@ -3,7 +3,7 @@
 # Persistence Compiler / IRI-Patterns Sync — Plan
 
 **Unit ID:** `persistence-compiler-iri-sync`
-**Status:** Slices 1–3 complete — see [persistence-compiler-iri-sync.md](../status/persistence-compiler-iri-sync.md)
+**Status:** Complete — all six slices done, 774/774 tests passing, human-validated 2026-09-25. See [persistence-compiler-iri-sync.md](../status/persistence-compiler-iri-sync.md)
 **Sketch (gap analysis):** [persistence-compiler-iri-sync.md](../sketches/persistence-compiler-iri-sync.md)
 **Governing ADRs:** ADR-A78 (persistence substrate), ADR-A79 (compiler toolchain), ADR-A82 (framework-neutral identity pattern selection)
 **New ADR required for this plan itself:** No. Every dimension this plan wires already exists, ratified, in `ontology/persistence/spec/persistence.ttl`. This is compiler catch-up, not a new design.
