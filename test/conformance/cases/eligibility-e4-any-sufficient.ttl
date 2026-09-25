@@ -1,0 +1,45 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# A subscription discount for a premium tier or annual billing. One condition
+# answered Permitted suffices. An unanswered condition counts as Undetermined.
+
+@prefix elg:  <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix ex:   <https://example.org/lattice/test/conformance/> .
+
+ex:tier-free a skos:Concept .
+ex:tier-premium a skos:Concept .
+ex:billing-monthly a skos:Concept .
+ex:billing-annual a skos:Concept .
+
+ex:tier-condition a elg:SetMembershipCondition ;
+    elg:matchStrategy elg:SetMembership ;
+    elg:compatibilityOperation elg:AllRequired ;
+    elg:wildcardSemantics elg:NoWildcard ;
+    elg:requiredConcept ex:tier-premium .
+
+ex:billing-condition a elg:SetMembershipCondition ;
+    elg:matchStrategy elg:SetMembership ;
+    elg:compatibilityOperation elg:AllRequired ;
+    elg:wildcardSemantics elg:NoWildcard ;
+    elg:requiredConcept ex:billing-annual .
+
+ex:profile-e4
+    a elg:AdmissionProfile ;
+    elg:hasCondition ex:tier-condition , ex:billing-condition ;
+    elg:matchStrategy elg:SetMembership ;
+    elg:compatibilityOperation elg:AnySufficient ;
+    elg:wildcardSemantics elg:NoWildcard .
+
+ex:q-e4-a-tier a elg:Question ; elg:forCondition ex:tier-condition ; elg:candidateConcept ex:tier-premium .
+ex:q-e4-a-billing a elg:Question ; elg:forCondition ex:billing-condition ; elg:candidateConcept ex:billing-monthly .
+ex:q-e4-b-tier a elg:Question ; elg:forCondition ex:tier-condition ; elg:candidateConcept ex:tier-free .
+ex:q-e4-b-billing a elg:Question ; elg:forCondition ex:billing-condition ; elg:candidateConcept ex:billing-monthly .
+ex:q-e4-c-tier a elg:Question ; elg:forCondition ex:tier-condition ; elg:candidateConcept ex:tier-free .
+
+ex:decision-e4-a a elg:EligibilityDecision ; elg:forProfile ex:profile-e4 ;
+    elg:hasQuestion ex:q-e4-a-tier , ex:q-e4-a-billing ; elg:usesOperationalProfile elg:E4 .
+ex:decision-e4-b a elg:EligibilityDecision ; elg:forProfile ex:profile-e4 ;
+    elg:hasQuestion ex:q-e4-b-tier , ex:q-e4-b-billing ; elg:usesOperationalProfile elg:E4 .
+ex:decision-e4-c a elg:EligibilityDecision ; elg:forProfile ex:profile-e4 ;
+    elg:hasQuestion ex:q-e4-c-tier ; elg:usesOperationalProfile elg:E4 .

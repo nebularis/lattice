@@ -49,6 +49,8 @@ gate, which reads `interval-containment.ttl`).
 - The PATCH cascade: seven documents 0.3.0 → 0.3.1 (Eligibility spec and
   vocab, Instrument spec and vocab, Behaviour spec and vocab, the applied
   capacity execution spec), with READMEs mirrored.
+  Committed at 0.3.1 in `6e36586`. AOR-5 then takes the cascade to 0.4.0
+  (MINOR).
 
 ## Adversarial probe (run by the agent)
 

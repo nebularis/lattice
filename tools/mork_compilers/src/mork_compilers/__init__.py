@@ -10,10 +10,16 @@ see ``namespaces.py``'s module docstring for why.
 """
 
 from .eligibility_ir import (
+    ConceptPlan,
+    EvidencePath,
     IntervalPlan,
+    ResolutionContext,
+    SchemeResolution,
     IRCompileError,
     ProfilePlan,
     RequiredInterval,
+    compile_any_condition,
+    compile_concept_condition,
     compile_condition,
     compile_profile,
 )
@@ -22,10 +28,16 @@ from .sparql_backend import compile_query_template
 from .swrl_backend import compile_rules
 
 __all__ = [
+    "ConceptPlan",
+    "EvidencePath",
     "IntervalPlan",
+    "ResolutionContext",
+    "SchemeResolution",
     "IRCompileError",
     "ProfilePlan",
     "RequiredInterval",
+    "compile_any_condition",
+    "compile_concept_condition",
     "compile_condition",
     "compile_profile",
     "compile_query_template",

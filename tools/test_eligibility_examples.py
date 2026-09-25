@@ -26,7 +26,7 @@ SH = Namespace("http://www.w3.org/ns/shacl#")
 
 DECLARATION = ELG.ConceptConditionDeclarationShape
 REACHABLE = ELG.ReachableExclusionShape
-EXAMPLES = ["hierarchical-match", "condition-taxonomy", "interval-containment"]
+EXAMPLES = ["hierarchical-match", "condition-taxonomy", "interval-containment", "evidence-binding"]
 
 PREFIXES = """
 @prefix elg: <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .

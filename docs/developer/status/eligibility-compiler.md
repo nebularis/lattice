@@ -67,6 +67,19 @@ Implementation is complete and internally coherent. Runtime validation in a netw
 - Runtime result tracking and diagnostics
 - Other condition types (`ExactCondition`, `SetMembership`, `Wildcard` with semantics)
 
+## Carried forward (2026-09-25)
+
+The deferred condition kinds and profile aggregation are carried by the
+`applied-ontology-readiness` unit, Phase B ([plan](../plans/applied-ontology-readiness.md),
+[status](applied-ontology-readiness.md)), under ADR-A89 and ADR-A91. AOR-5 to
+AOR-9 added `ExactMatch`, `SetMembership` and `HierarchicalMatch` concept plans
+on all three backends, profile aggregation (`AllRequired`, `AnySufficient`),
+diagnostic codes on every `Undetermined`, evidence bindings, a CLI for concept
+conditions, and `mise run check:mork-compilers` (74 tests, generated SPARQL
+executed against fixtures). The Phase 8 gate now runs the Eligibility
+conformance cases through SPARQL and SHACL. Verification step 5 (a reasoner
+loading the SWRL) still waits on this unit's Part B.
+
 ## Next steps
 
 Run the verification plan in a network-enabled environment. On pass, move to Phase 5 validation gate. On failure, diagnose and record results in this status file.

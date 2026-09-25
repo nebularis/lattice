@@ -24,10 +24,10 @@ jobs:
           python-version: "3.14"
       - run: python -m pip install -c requirements-lock.txt ".[reasoning,test]"
       - run: python tools/literate_extract.py ontology/surface/README.md --layer surface --root . --shapes shapes/structural.ttl shapes/constraints.ttl --check
-      - run: python -m pip install -e ./tools/mork -e ./tools/mork_compilers -e ./tools/surface
+      - run: python -m pip install -e ./tools/vocabulary -e ./tools/mork -e ./tools/mork_compilers -e ./tools/surface
       - run: python -m unittest surface.test_surface mork_compilers.test_mork_compilers -v
       - run: python -m tools.phase8_conformance
-      - run: python -m pytest tools/test_ontology_version_check.py tools/test_eligibility_examples.py tools/test_ontology_catalog.py -q
+      - run: python -m pytest tools/test_ontology_version_check.py tools/test_eligibility_examples.py tools/test_ontology_catalog.py tools/mork_compilers -q
       - run: python tools/ontology_catalog.py check
       - run: python tools/ontology_version_check.py --base-ref origin/main
 

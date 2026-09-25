@@ -19,7 +19,7 @@ jobs:
       - name: Check Surface extraction
         run: python tools/literate_extract.py ontology/surface/README.md --layer surface --root . --shapes shapes/structural.ttl shapes/constraints.ttl --check
       - name: Run compiler tests
-        run: python -m pip install -e ./tools/mork_compilers -e ./tools/surface
+        run: python -m pip install -e ./tools/vocabulary -e ./tools/mork_compilers -e ./tools/surface
       - run: python -m unittest surface.test_surface mork_compilers.test_mork_compilers -v
       - name: Run Phase 8 conformance gate
         run: python -m tools.phase8_conformance

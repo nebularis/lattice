@@ -17,16 +17,39 @@ a non-conforming one failed readiness, containment, or both, and a decision
 adapter (not built here) would still be needed to turn a validation report
 into ``elg:Permitted``/``elg:Denied``/``elg:Undetermined``. This backend
 produces the validating shapes only, per delivery-plan Phase 5's own scope.
+
+Concept plans (ADR-A89) get three shapes over the plan's enumerated sets.
+Readiness reports a question with no candidate concept or several.
+Determinacy reports one whose candidate the plan leaves Undetermined (outside
+the resolved scheme, or above an exclusion). Admission reports one whose
+candidate is not admitted. Read in that order, the first shape to report a
+question gives its outcome (Undetermined, Undetermined, Denied), and a
+question no shape reports is Permitted.
+
+Profile plans get two shapes on ``elg:EligibilityDecision`` records of the
+profile, each wrapping the profile's SPARQL aggregation: one reports an
+Undetermined record, the other a Denied one. A record neither reports is
+Permitted.
 """
 
 from __future__ import annotations
 
-from rdflib import BNode, Graph, Literal
+from typing import List, Sequence, Tuple, Union
+
+from rdflib import BNode, Graph, Literal, URIRef
 from rdflib.namespace import RDF
 
 from .common import mint
-from .eligibility_ir import IntervalPlan, RequiredInterval
+from .eligibility_ir import PERMITTED, UNDETERMINED, ConceptPlan, IntervalPlan, ProfilePlan, RequiredInterval
 from .namespaces import ELG, EXE, MORK, SH
+from .sparql_backend import PREFIXES as QUERY_PREFIXES
+from .sparql_backend import evidence_path, literal_readable, profile_select
+
+PREFIXES = (
+    "PREFIX elg: <https://www.nebularis.org/neuro-semantic/lattice/eligibility#>\n"
+    "PREFIX qnt: <https://www.nebularis.org/neuro-semantic/lattice/quantification#>\n"
+    "PREFIX skos: <http://www.w3.org/2004/02/skos/core#>\n"
+)
 
 
 def _containment_filter(plan: IntervalPlan) -> str:
@@ -78,8 +101,204 @@ def render_readiness_select(plan: IntervalPlan) -> str:
     )
 
 
-def compile_shapes(plan: IntervalPlan) -> Graph:
-    """Emit the readiness and containment shapes, and the mapping that generates them."""
+def concept_sets(plan: ConceptPlan) -> Tuple[List[URIRef], List[URIRef]]:
+    """(admitted, undetermined) concepts. Without a resolved scheme the plan
+    admits its required concepts less its exclusions and leaves none undetermined."""
+    if plan.scheme is None:
+        return [c for c in plan.required if c not in plan.excluded], []
+    admitted = [concept for concept, decision in plan.expansion if decision == PERMITTED]
+    undetermined = [concept for concept, decision in plan.expansion if decision == UNDETERMINED]
+    return admitted, undetermined
+
+
+def _in_list(concepts: Sequence[URIRef]) -> str:
+    return ", ".join(f"<{concept}>" for concept in concepts)
+
+
+def _source(plan: Union[IntervalPlan, ConceptPlan]) -> Tuple[str, str, URIRef]:
+    """(anchor pattern, path to the candidate, target class). A question is
+    anchored to its condition. A bound subject is selected by the target class
+    alone and reached through the binding's path (ADR-A91)."""
+    if plan.evidence is None:
+        via = "elg:candidateConcept" if isinstance(plan, ConceptPlan) else "elg:candidateRangeSet"
+        return f"  $this elg:forCondition <{plan.condition}> .\n", via, ELG.Question
+    return "", evidence_path(plan.evidence), plan.evidence.subject_class
+
+
+def _single_candidate(plan: Union[IntervalPlan, ConceptPlan], name: str = "?candidate") -> str:
+    anchor, via, _ = _source(plan)
+    return (
+        f"{anchor}  $this {via} {name} .\n"
+        f"  FILTER NOT EXISTS {{ $this {via} ?other FILTER (?other != {name}) }}\n"
+    )
+
+
+def _readiness(plan: Union[IntervalPlan, ConceptPlan]) -> Tuple[str, str, str]:
+    anchor, via, _ = _source(plan)
+    return (
+        "readiness",
+        f"No candidate, or several ({EXE.MissingCandidate}, {EXE.SeveralCandidates}).",
+        PREFIXES
+        + "SELECT $this WHERE {\n"
+        + anchor
+        + f"  {{ FILTER NOT EXISTS {{ $this {via} ?any }} }}\n"
+        f"  UNION {{ $this {via} ?first , ?second . FILTER (?first != ?second) }}\n"
+        "}\n",
+    )
+
+
+def render_concept_selects(plan: ConceptPlan) -> List[Tuple[str, str, str]]:
+    """(role, message, select) for each concept shape, in reading order."""
+    admitted, undetermined = concept_sets(plan)
+    selects = [_readiness(plan)]
+    undecided = []
+    if plan.scheme is not None:
+        undecided.append(f"NOT EXISTS {{ ?candidate skos:inScheme <{plan.scheme.scheme}> }}")
+    if undetermined:
+        undecided.append(f"?candidate IN ({_in_list(undetermined)})")
+    if undecided:
+        selects.append(
+            (
+                "determinacy",
+                f"The candidate is outside the resolved scheme or above an exclusion ({EXE.OutsideScheme}, {EXE.AboveExclusion}).",
+                PREFIXES + "SELECT $this WHERE {\n" + _single_candidate(plan)
+                + f"  FILTER ({' || '.join(undecided)})\n" + "}\n",
+            )
+        )
+    admission = f"  FILTER (?candidate NOT IN ({_in_list(admitted)}))\n" if admitted else ""
+    selects.append(
+        (
+            "admission",
+            "The candidate concept is not admitted by this condition.",
+            PREFIXES + "SELECT $this WHERE {\n" + _single_candidate(plan) + admission + "}\n",
+        )
+    )
+    return selects
+
+
+def _compile_concept_shapes(plan: ConceptPlan) -> Graph:
+    graph = Graph()
+    for prefix, namespace in (("mork", MORK), ("exe", EXE), ("elg", ELG), ("sh", SH)):
+        graph.bind(prefix, namespace)
+
+    plan_node = mint(plan.condition, "execplan")
+    mapping = mint(plan.condition, "shape-mapping")
+    graph.add((plan_node, RDF.type, EXE.ConceptMatchPlan))
+    graph.add((plan_node, EXE.implementsCondition, plan.condition))
+    graph.add((plan_node, EXE.compiledFromMapping, mapping))
+    graph.add((plan_node, EXE.derivedFromEligibilityNode, plan.condition))
+    for node in plan.source_nodes:
+        if node != plan.condition:
+            graph.add((plan_node, EXE.derivedFromVocabularyNode, node))
+    graph.add((mapping, RDF.type, MORK.DataMapping))
+    graph.add((mapping, MORK.mappingFor, plan.condition))
+
+    _emit(graph, plan_node, mapping, plan.condition, render_concept_selects(plan), _source(plan)[2])
+    return graph
+
+
+def _emit(graph: Graph, plan_node: URIRef, mapping: URIRef, owner: URIRef, selects, target: URIRef) -> None:
+    """One sh:NodeShape per (role, message, select), targeting ``target``."""
+    for role, message, select in selects:
+        shape = mint(owner, f"{role}-shape")
+        constraint = BNode()
+        graph.add((mapping, MORK.generatesShapeDefinition, shape))
+        graph.add((plan_node, EXE.producesArtefact, shape))
+        graph.add((shape, RDF.type, SH.NodeShape))
+        graph.add((shape, RDF.type, EXE.ShaclArtefact))
+        graph.add((shape, SH.targetClass, target))
+        graph.add((shape, SH.sparql, constraint))
+        graph.add((constraint, SH.message, Literal(message)))
+        graph.add((constraint, SH.select, Literal(select)))
+
+
+def render_bound_interval_selects(plan: IntervalPlan) -> List[Tuple[str, str, str]]:
+    """(role, message, select) for a bound interval condition, in reading order:
+    readiness and determinacy give Undetermined, containment gives Denied."""
+    literal = "isLiteral(?reading)" if literal_readable(plan) else "false"
+    reading = (
+        _single_candidate(plan, "?reading")
+        + f"  OPTIONAL {{ ?reading qnt:numericValue ?quantity ; qnt:onSpace <{plan.value_space}> }}\n"
+        + f"  BIND(IF({literal}, ?reading, ?quantity) AS ?candLower)\n"
+        + "  BIND(?candLower AS ?candUpper)\n"
+    )
+    return [
+        _readiness(plan),
+        (
+            "determinacy",
+            f"The value is not read on the condition's value space ({EXE.ValueSpaceMismatch}).",
+            PREFIXES + "SELECT $this WHERE {\n" + reading + "  FILTER (!BOUND(?candLower))\n}\n",
+        ),
+        (
+            "containment",
+            "The value is not contained by any required interval.",
+            PREFIXES + "SELECT $this WHERE {\n" + reading
+            + f"  FILTER (BOUND(?candLower) && !({_containment_filter(plan)}))\n}}\n",
+        ),
+    ]
+
+
+def _compile_bound_interval_shapes(plan: IntervalPlan) -> Graph:
+    graph = Graph()
+    for prefix, namespace in (("mork", MORK), ("exe", EXE), ("elg", ELG), ("sh", SH)):
+        graph.bind(prefix, namespace)
+    plan_node = mint(plan.condition, "execplan")
+    mapping = mint(plan.condition, "shape-mapping")
+    graph.add((plan_node, RDF.type, EXE.IntervalContainmentPlan))
+    graph.add((plan_node, EXE.implementsCondition, plan.condition))
+    graph.add((plan_node, EXE.compiledFromMapping, mapping))
+    graph.add((plan_node, EXE.derivedFromEligibilityNode, plan.condition))
+    graph.add((plan_node, EXE.derivedFromEligibilityNode, plan.evidence.binding))
+    for node in plan.source_nodes:
+        if node != plan.condition:
+            graph.add((plan_node, EXE.derivedFromQuantificationNode, node))
+    graph.add((mapping, RDF.type, MORK.DataMapping))
+    graph.add((mapping, MORK.mappingFor, plan.condition))
+    _emit(graph, plan_node, mapping, plan.condition, render_bound_interval_selects(plan), plan.evidence.subject_class)
+    return graph
+
+
+def render_profile_selects(plan: ProfilePlan) -> List[Tuple[str, str, str]]:
+    """(role, message, select) for each profile shape."""
+    return [
+        (
+            f"profile-{outcome.lower()}",
+            f"The profile's outcome for this record is {outcome}.",
+            QUERY_PREFIXES + "SELECT $this WHERE {\n  {\n" + profile_select(plan, "$this")
+            + f'  }}\n  FILTER (?decision = "{outcome}")\n}}\n',
+        )
+        for outcome in (UNDETERMINED, "Denied")
+    ]
+
+
+def _compile_profile_shapes(plan: ProfilePlan) -> Graph:
+    graph = Graph()
+    for prefix, namespace in (("mork", MORK), ("exe", EXE), ("elg", ELG), ("sh", SH)):
+        graph.bind(prefix, namespace)
+    plan_node = mint(plan.profile, "execplan")
+    mapping = mint(plan.profile, "shape-mapping")
+    graph.add((plan_node, RDF.type, EXE.ProfilePlan))
+    graph.add((plan_node, EXE.implementsProfile, plan.profile))
+    graph.add((plan_node, EXE.usesCompatibilityOperation, plan.aggregation))
+    graph.add((plan_node, EXE.compiledFromMapping, mapping))
+    graph.add((plan_node, EXE.derivedFromEligibilityNode, plan.profile))
+    for condition in plan.conditions:
+        graph.add((plan_node, EXE.hasConditionPlan, mint(condition.condition, "execplan")))
+    graph.add((mapping, RDF.type, MORK.DataMapping))
+    graph.add((mapping, MORK.mappingFor, plan.profile))
+    target = plan.subject_class or ELG.EligibilityDecision
+    _emit(graph, plan_node, mapping, plan.profile, render_profile_selects(plan), target)
+    return graph
+
+
+def compile_shapes(plan: Union[IntervalPlan, ConceptPlan, ProfilePlan]) -> Graph:
+    """Emit the plan's shapes, and the mapping that generates them."""
+    if isinstance(plan, ProfilePlan):
+        return _compile_profile_shapes(plan)
+    if isinstance(plan, ConceptPlan):
+        return _compile_concept_shapes(plan)
+    if plan.evidence is not None:
+        return _compile_bound_interval_shapes(plan)
     graph = Graph()
     for prefix, namespace in (("mork", MORK), ("exe", EXE), ("elg", ELG), ("sh", SH)):
         graph.bind(prefix, namespace)

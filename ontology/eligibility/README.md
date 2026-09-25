@@ -43,15 +43,17 @@ Eligibility imports Foundation, Vocabulary, Quantification, and Party. Quantific
 
 `HierarchicalMatch` is valid when a dimension is backed by a concept scheme whose membership is resolved against a well-founded `skos:broader` hierarchy. Evaluation may compute closure at query time or use a generated surface, provided closure is interpreted over the bound scheme.
 
-Conditions matching by `ExactMatch`, `SetMembership`, or `HierarchicalMatch` state what they match against with `elg:requiredConcept` and `elg:excludedConcept`. A candidate *matches* a concept by equality under `ExactMatch` and `SetMembership`, and by standing at or below it in the bound scheme's ordering under `HierarchicalMatch`. Several required concepts are alternatives to one another, and each excluded concept excludes independently. Neither reading changes how the condition's compatibility operation is interpreted. An admission profile declares no concepts of its own, since its conditions do. `IntervalContainment` needs no exclusion construct: a `qnt:RangeSet` is a union of ranges and already expresses gaps.
+Conditions matching by `ExactMatch`, `SetMembership`, or `HierarchicalMatch` state what they match against with `elg:requiredConcept` and `elg:excludedConcept`. A candidate *matches* a concept by equality under `ExactMatch` and `SetMembership`, and by standing at or below it in the bound scheme's ordering under `HierarchicalMatch`. Several required concepts are alternatives to one another, and each excluded concept excludes independently. Neither reading changes how the condition's compatibility operation is interpreted. An admission profile declares no concepts of its own, since its conditions do. A question offers its candidate with `elg:candidateConcept`. `IntervalContainment` needs no exclusion construct: a `qnt:RangeSet` is a union of ranges and already expresses gaps.
 
 | Candidate | Decision | Law |
 |---|---|---|
-| absent or unresolved | `Undetermined` | |
+| absent, unresolved, more than one per question, or outside the bound scheme where the decision needs that scheme | `Undetermined` | |
 | matches an excluded concept | `Denied`, whether or not it also matches a required concept | L10 |
 | under `HierarchicalMatch`, stands strictly above an excluded concept and is otherwise admitted | `Undetermined`, since its true value may fall under the exclusion | L11 |
 | matches a required concept, or the condition declares exclusions only and the candidate is a member of the bound scheme | `Permitted` | L12 for the second case |
 | otherwise | `Denied` | |
+
+**Evidence bindings.** A condition reads its candidate from an `elg:Question` unless an `elg:EvidenceBinding` binds it. A binding names the class of subjects the condition evaluates (`elg:subjectClass`) and an ordered path of `elg:EvidenceStep`s from each subject to its candidate, over the applied ontology's own properties (ADR-A91). The path ends at a `skos:Concept` for a concept condition. For an interval condition it ends at a `qnt:Quantity` on the condition's value space, or at a literal where the binding reads on that space (`elg:readOnSpace`). A subject with no value at the end of the path, or several, is `Undetermined`, as is one whose value is on another space. A profile evaluates either questions or one class of bound subjects.
 
 ## 5. Core Model
 
@@ -60,7 +62,7 @@ Conditions matching by `ExactMatch`, `SetMembership`, or `HierarchicalMatch` sta
 
 <https://www.nebularis.org/neuro-semantic/eligibility>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.3.1> ;
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.4.0> ;
 	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.2.0> ,
 				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.2.0> ,
 				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.3.0> ,
@@ -122,6 +124,10 @@ elg:candidateRangeSet a owl:ObjectProperty ;
 elg:candidateValue a owl:ObjectProperty ;
 	rdfs:domain elg:Question ; rdfs:range qnt:Value .
 
+elg:candidateConcept a owl:ObjectProperty ;
+	rdfs:domain elg:Question ; rdfs:range skos:Concept ;
+	rdfs:comment "The concept a question offers to a condition matching by ExactMatch, SetMembership or HierarchicalMatch." .
+
 elg:matchStrategy a owl:ObjectProperty, owl:FunctionalProperty ;
 	rdfs:domain elg:Condition ; rdfs:range elg:MatchStrategy .
 
@@ -155,8 +161,42 @@ elg:subjectRoleOccupancy a owl:ObjectProperty ;
 elg:conditionKey a owl:DatatypeProperty, owl:FunctionalProperty ;
 	rdfs:domain elg:Condition ; rdfs:range xsd:string .
 
+elg:EvidenceBinding a owl:Class ;
+	rdfs:comment "Binds a condition to the class of subjects it evaluates and to the path that reaches each subject's candidate on the applied ontology's own properties (ADR-A91)." .
+
+elg:EvidenceStep a owl:Class ;
+	rdfs:comment "One positioned traversal within an evidence binding's path, in a stated direction. Shaped like srf:PathStep." .
+
+elg:StepDirection a owl:Class .
+
+rdf:Property a owl:Class .
+
+elg:bindsCondition a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain elg:EvidenceBinding ; rdfs:range elg:Condition .
+
+elg:subjectClass a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain elg:EvidenceBinding ;
+	rdfs:comment "The class whose instances the bound condition evaluates." .
+
+elg:evidenceStep a owl:ObjectProperty ;
+	rdfs:domain elg:EvidenceBinding ; rdfs:range elg:EvidenceStep .
+
+elg:stepIndex a owl:DatatypeProperty, owl:FunctionalProperty ;
+	rdfs:domain elg:EvidenceStep ; rdfs:range xsd:nonNegativeInteger ;
+	rdfs:comment "Zero-based position of the step in traversal order." .
+
+elg:stepProperty a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain elg:EvidenceStep ; rdfs:range rdf:Property .
+
+elg:stepDirection a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain elg:EvidenceStep ; rdfs:range elg:StepDirection .
+
+elg:readOnSpace a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain elg:EvidenceBinding ; rdfs:range qnt:ValueSpace ;
+	rdfs:comment "The value space a literal at the end of an interval condition's path is read on. A qnt:Quantity at the end of the path states its own space." .
+
 [] a owl:AllDisjointClasses ;
-	owl:members ( elg:Condition elg:Question elg:EligibilityDecision elg:MatchStrategy elg:CompatibilityOperation elg:WildcardSemantics elg:Decision elg:OperationalProfile elg:Law ) .
+	owl:members ( elg:Condition elg:Question elg:EligibilityDecision elg:MatchStrategy elg:CompatibilityOperation elg:WildcardSemantics elg:Decision elg:OperationalProfile elg:Law elg:EvidenceBinding elg:EvidenceStep elg:StepDirection ) .
 ```
 
 ## 6. Mechanism Vocabulary
@@ -183,6 +223,9 @@ elg:MultiDimensionWildcard a elg:WildcardSemantics .
 elg:Permitted a elg:Decision .
 elg:Denied a elg:Decision .
 elg:Undetermined a elg:Decision .
+
+elg:Forward a elg:StepDirection ; rdfs:comment "Traversed from subject to object." .
+elg:Inverse a elg:StepDirection ; rdfs:comment "Traversed from object to subject." .
 
 elg:E1 a elg:OperationalProfile ; rdfs:comment "Exact-match profile" .
 elg:E2 a elg:OperationalProfile ; rdfs:comment "Interval-containment profile" .
@@ -284,6 +327,18 @@ elg:ReachableExclusionShape a sh:NodeShape ;
 			}
 		"""
 	] .
+
+elg:EvidenceBindingShape a sh:NodeShape ;
+	sh:targetClass elg:EvidenceBinding ;
+	sh:property [ sh:path elg:bindsCondition ; sh:minCount 1 ; sh:maxCount 1 ] ;
+	sh:property [ sh:path elg:subjectClass ; sh:minCount 1 ; sh:maxCount 1 ] ;
+	sh:property [ sh:path elg:evidenceStep ; sh:minCount 1 ] .
+
+elg:EvidenceStepShape a sh:NodeShape ;
+	sh:targetClass elg:EvidenceStep ;
+	sh:property [ sh:path elg:stepIndex ; sh:minCount 1 ; sh:maxCount 1 ] ;
+	sh:property [ sh:path elg:stepProperty ; sh:minCount 1 ; sh:maxCount 1 ] ;
+	sh:property [ sh:path elg:stepDirection ; sh:minCount 1 ; sh:maxCount 1 ; sh:in ( elg:Forward elg:Inverse ) ] .
 ```
 
 ## 8. Worked Examples
@@ -293,6 +348,7 @@ Illustrative non-domain examples are authored in:
 - `ontology/eligibility/examples/condition-taxonomy.ttl`
 - `ontology/eligibility/examples/interval-containment.ttl`
 - `ontology/eligibility/examples/hierarchical-match.ttl`
+- `ontology/eligibility/examples/evidence-binding.ttl`
 
 ```turtle-example
 @prefix elg: <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .

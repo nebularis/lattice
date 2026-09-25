@@ -14,9 +14,9 @@ This document defines how an IRI is minted from a LATTICE minting recipe, precis
 
 ## 1. Where a recipe comes from, and what a minter does
 
-An adopter configures identity in `ontology/persistence` (`dal:IdentityProfile`, [iri-identity-patterns.md](iri-identity-patterns.md)). The LATTICE persistence compiler resolves that configuration per target class and resource role and emits one **recipe** per role: a JSON document that says everything needed to mint that role's IRIs, and nothing about where it came from. `persistence export-recipes` writes the recipes to files, together with conformance vectors for each.
+An adopter configures identity in `ontology/persistence` (`dal:IdentityProfile`, [iri-identity-patterns.md](iri-identity-patterns.md)). The LATTICE persistence compiler resolves that configuration per target class and resource role and emits one **recipe** per role: a JSON document that says everything needed to mint that role's IRIs. `persistence export-recipes` writes the recipes along with conformance vectors.
 
-A **minter** takes a recipe and a request's inputs, and returns an IRI (and, for claimed identity, one or two claim IRIs), or a named error. A minter never reads the adopter's configuration, never stores a secret, and never calls a network service.
+A **minter** takes a recipe and a request's inputs, and returns an IRI (and, for claimed identity, one or two claim IRIs), or a named error.
 
 ## 2. Recipe documents
 

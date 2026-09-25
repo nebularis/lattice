@@ -32,17 +32,17 @@
     <uri name="https://www.nebularis.org/neuro-semantic/instrument" uri="instrument/spec/instrument.ttl"/>
     <uri name="https://www.nebularis.org/neuro-semantic/instrument-vocab" uri="instrument/vocab/instrument-vocab.ttl"/>
     <uri name="https://www.nebularis.org/neuro-semantic/lattice/applied/capacity/execution" uri="applied/capacity/spec/applied_capacity_execution_spec_capx_Version2.ttl"/>
-    <uri name="https://www.nebularis.org/neuro-semantic/lattice/applied/capacity/execution/0.3.1" uri="applied/capacity/spec/applied_capacity_execution_spec_capx_Version2.ttl"/>
-    <uri name="https://www.nebularis.org/neuro-semantic/lattice/behaviour-vocab/0.3.1" uri="behaviour/vocab/behaviour-vocab.ttl"/>
-    <uri name="https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.3.1" uri="behaviour/spec/behaviour.ttl"/>
-    <uri name="https://www.nebularis.org/neuro-semantic/lattice/eligibility-vocab/0.3.1" uri="eligibility/vocab/eligibility-vocab.ttl"/>
-    <uri name="https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.3.1" uri="eligibility/spec/eligibility.ttl"/>
+    <uri name="https://www.nebularis.org/neuro-semantic/lattice/applied/capacity/execution/0.4.0" uri="applied/capacity/spec/applied_capacity_execution_spec_capx_Version2.ttl"/>
+    <uri name="https://www.nebularis.org/neuro-semantic/lattice/behaviour-vocab/0.4.0" uri="behaviour/vocab/behaviour-vocab.ttl"/>
+    <uri name="https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.4.0" uri="behaviour/spec/behaviour.ttl"/>
+    <uri name="https://www.nebularis.org/neuro-semantic/lattice/eligibility-vocab/0.4.0" uri="eligibility/vocab/eligibility-vocab.ttl"/>
+    <uri name="https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.4.0" uri="eligibility/spec/eligibility.ttl"/>
     <uri name="https://www.nebularis.org/neuro-semantic/lattice/executable" uri="mork/spec/Executable.ttl"/>
-    <uri name="https://www.nebularis.org/neuro-semantic/lattice/executable/0.2.0" uri="mork/spec/Executable.ttl"/>
+    <uri name="https://www.nebularis.org/neuro-semantic/lattice/executable/0.3.0" uri="mork/spec/Executable.ttl"/>
     <uri name="https://www.nebularis.org/neuro-semantic/lattice/foundation-vocab/0.2.0" uri="foundation/vocab/foundation-vocab.ttl"/>
     <uri name="https://www.nebularis.org/neuro-semantic/lattice/foundation/0.2.0" uri="foundation/spec/foundation.ttl"/>
-    <uri name="https://www.nebularis.org/neuro-semantic/lattice/instrument-vocab/0.3.1" uri="instrument/vocab/instrument-vocab.ttl"/>
-    <uri name="https://www.nebularis.org/neuro-semantic/lattice/instrument/0.3.1" uri="instrument/spec/instrument.ttl"/>
+    <uri name="https://www.nebularis.org/neuro-semantic/lattice/instrument-vocab/0.4.0" uri="instrument/vocab/instrument-vocab.ttl"/>
+    <uri name="https://www.nebularis.org/neuro-semantic/lattice/instrument/0.4.0" uri="instrument/spec/instrument.ttl"/>
     <uri name="https://www.nebularis.org/neuro-semantic/lattice/party-vocab/0.3.0" uri="party/vocab/party-vocab.ttl"/>
     <uri name="https://www.nebularis.org/neuro-semantic/lattice/party/0.3.0" uri="party/spec/party.ttl"/>
     <uri name="https://www.nebularis.org/neuro-semantic/lattice/persistence" uri="persistence/spec/persistence.ttl"/>

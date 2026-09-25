@@ -10,7 +10,7 @@ The corpus does not assume a compiled evaluator. It defines a profile-neutral se
 
 ## Profiles covered
 
-- Eligibility: `elg:E1`, `elg:E2`
+- Eligibility: `elg:E1`, `elg:E2`, `elg:E4`, `elg:E5`
 - Behaviour: `bhv:B-P1`, `bhv:B-P2`
 - Surface: employment index, multi-hop promotion, and crosswalk promotion
 
@@ -73,8 +73,12 @@ Ignore:
 
 - [cases/eligibility-e1-undetermined.ttl](cases/eligibility-e1-undetermined.ttl)
 - [cases/eligibility-e2-contained.ttl](cases/eligibility-e2-contained.ttl)
+- [cases/eligibility-e3-hierarchical-exclusion.ttl](cases/eligibility-e3-hierarchical-exclusion.ttl)
+- [cases/eligibility-e4-any-sufficient.ttl](cases/eligibility-e4-any-sufficient.ttl)
 - [cases/behaviour-bp1-transition.ttl](cases/behaviour-bp1-transition.ttl)
 - [cases/behaviour-bp2-sequential-allowance.ttl](cases/behaviour-bp2-sequential-allowance.ttl)
+
+Eligibility cases are evaluated by compiling each case's admission profiles with `tools/mork_compilers` and running the profile's SPARQL query and SHACL shapes. Both must produce the expected decision for every record.
 
 Surface cases are declared in [manifest.ttl](manifest.ttl) with
 `ex:surfaceContractFile` and `ex:surfaceContractKey`. They use the Surface
@@ -85,6 +89,8 @@ parity harness.
 
 - [expected/eligibility-e1-undetermined.ttl](expected/eligibility-e1-undetermined.ttl)
 - [expected/eligibility-e2-contained.ttl](expected/eligibility-e2-contained.ttl)
+- [expected/eligibility-e3-hierarchical-exclusion.ttl](expected/eligibility-e3-hierarchical-exclusion.ttl)
+- [expected/eligibility-e4-any-sufficient.ttl](expected/eligibility-e4-any-sufficient.ttl)
 - [expected/behaviour-bp1-transition.ttl](expected/behaviour-bp1-transition.ttl)
 - [expected/behaviour-bp2-sequential-allowance.ttl](expected/behaviour-bp2-sequential-allowance.ttl)
 

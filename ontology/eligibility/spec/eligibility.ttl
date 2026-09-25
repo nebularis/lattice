@@ -14,7 +14,7 @@
 
 <https://www.nebularis.org/neuro-semantic/eligibility>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.3.1> ;
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.4.0> ;
 	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.2.0> ,
 				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.2.0> ,
 				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.3.0> ,
@@ -76,6 +76,10 @@ elg:candidateRangeSet a owl:ObjectProperty ;
 elg:candidateValue a owl:ObjectProperty ;
 	rdfs:domain elg:Question ; rdfs:range qnt:Value .
 
+elg:candidateConcept a owl:ObjectProperty ;
+	rdfs:domain elg:Question ; rdfs:range skos:Concept ;
+	rdfs:comment "The concept a question offers to a condition matching by ExactMatch, SetMembership or HierarchicalMatch." .
+
 elg:matchStrategy a owl:ObjectProperty, owl:FunctionalProperty ;
 	rdfs:domain elg:Condition ; rdfs:range elg:MatchStrategy .
 
@@ -109,5 +113,39 @@ elg:subjectRoleOccupancy a owl:ObjectProperty ;
 elg:conditionKey a owl:DatatypeProperty, owl:FunctionalProperty ;
 	rdfs:domain elg:Condition ; rdfs:range xsd:string .
 
+elg:EvidenceBinding a owl:Class ;
+	rdfs:comment "Binds a condition to the class of subjects it evaluates and to the path that reaches each subject's candidate on the applied ontology's own properties (ADR-A91)." .
+
+elg:EvidenceStep a owl:Class ;
+	rdfs:comment "One positioned traversal within an evidence binding's path, in a stated direction. Shaped like srf:PathStep." .
+
+elg:StepDirection a owl:Class .
+
+rdf:Property a owl:Class .
+
+elg:bindsCondition a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain elg:EvidenceBinding ; rdfs:range elg:Condition .
+
+elg:subjectClass a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain elg:EvidenceBinding ;
+	rdfs:comment "The class whose instances the bound condition evaluates." .
+
+elg:evidenceStep a owl:ObjectProperty ;
+	rdfs:domain elg:EvidenceBinding ; rdfs:range elg:EvidenceStep .
+
+elg:stepIndex a owl:DatatypeProperty, owl:FunctionalProperty ;
+	rdfs:domain elg:EvidenceStep ; rdfs:range xsd:nonNegativeInteger ;
+	rdfs:comment "Zero-based position of the step in traversal order." .
+
+elg:stepProperty a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain elg:EvidenceStep ; rdfs:range rdf:Property .
+
+elg:stepDirection a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain elg:EvidenceStep ; rdfs:range elg:StepDirection .
+
+elg:readOnSpace a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain elg:EvidenceBinding ; rdfs:range qnt:ValueSpace ;
+	rdfs:comment "The value space a literal at the end of an interval condition's path is read on. A qnt:Quantity at the end of the path states its own space." .
+
 [] a owl:AllDisjointClasses ;
-	owl:members ( elg:Condition elg:Question elg:EligibilityDecision elg:MatchStrategy elg:CompatibilityOperation elg:WildcardSemantics elg:Decision elg:OperationalProfile elg:Law ) .
+	owl:members ( elg:Condition elg:Question elg:EligibilityDecision elg:MatchStrategy elg:CompatibilityOperation elg:WildcardSemantics elg:Decision elg:OperationalProfile elg:Law elg:EvidenceBinding elg:EvidenceStep elg:StepDirection ) .

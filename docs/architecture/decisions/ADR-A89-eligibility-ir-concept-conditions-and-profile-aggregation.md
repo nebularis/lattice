@@ -80,3 +80,8 @@ resolution context and instant that the compiler does not receive.
   compiler treat the instant the same way.
 - The source of candidate evidence (the question, or a domain property) is
   decided separately, in ADR-A91.
+- The Executable vocabulary's header had left diagnostic codes out as unused.
+  Item 6 gives them a consumer and declares them.
+- SWRL cannot tell one candidate from several. Its rules assume one candidate
+  per question, and a question with several can derive both `Permitted` and
+  `Denied`. SPARQL and SHACL give `Undetermined` for several.

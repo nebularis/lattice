@@ -210,7 +210,7 @@ removed in the same change.
 ```bash
 mise run build:ontology-catalog
 mise run check:ontology-catalog
-python tools/ontology_catalog.py closure https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.3.1
+python tools/ontology_catalog.py closure https://www.nebularis.org/neuro-semantic/behaviour
 ```
 
 ## `tools/ontology_version_check.py` — version hygiene

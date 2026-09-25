@@ -17,6 +17,18 @@ ex:eligibility-e2-contained a ex:ConformanceCase ;
     ex:caseFile "cases/eligibility-e2-contained.ttl" ;
     ex:expectedFile "expected/eligibility-e2-contained.ttl" .
 
+ex:eligibility-e3-hierarchical-exclusion a ex:ConformanceCase ;
+    rdfs:label "Eligibility hierarchical match with an exclusion" ;
+    ex:usesProfile elg:E5 ;
+    ex:caseFile "cases/eligibility-e3-hierarchical-exclusion.ttl" ;
+    ex:expectedFile "expected/eligibility-e3-hierarchical-exclusion.ttl" .
+
+ex:eligibility-e4-any-sufficient a ex:ConformanceCase ;
+    rdfs:label "Eligibility any-sufficient profile" ;
+    ex:usesProfile elg:E4 ;
+    ex:caseFile "cases/eligibility-e4-any-sufficient.ttl" ;
+    ex:expectedFile "expected/eligibility-e4-any-sufficient.ttl" .
+
 ex:behaviour-bp1-transition a ex:ConformanceCase ;
     rdfs:label "Behaviour B-P1 transition" ;
     ex:usesProfile bhv:B-P1 ;

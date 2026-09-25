@@ -1,13 +1,19 @@
 # SPDX-License-Identifier: MPL-2.0
 
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 @prefix elg: <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
 @prefix ex:  <https://example.org/lattice/test/conformance/> .
+
+ex:full-time a skos:Concept .
 
 ex:condition-e1
     a elg:ExactCondition ;
     elg:matchStrategy elg:ExactMatch ;
     elg:compatibilityOperation elg:AllRequired ;
-    elg:wildcardSemantics elg:NoWildcard .
+    elg:wildcardSemantics elg:NoWildcard ;
+    # Removing elg:requiredConcept raises elg:ConceptConditionDeclarationShape
+    # (sh:Warning), and the compilers refuse a condition that states nothing to match.
+    elg:requiredConcept ex:full-time .
 
 ex:profile-e1
     a elg:AdmissionProfile ;

@@ -34,7 +34,7 @@ ex:hierarchical-condition
 ex:subject-question
     a elg:Question ;
     elg:forCondition ex:hierarchical-condition ;
-    elg:candidateValue ex:industrial-fire .
+    elg:candidateConcept ex:industrial-fire .
 
 ex:decision
     a elg:EligibilityDecision ;
