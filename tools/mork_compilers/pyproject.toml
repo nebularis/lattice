@@ -10,6 +10,13 @@ readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
   "rdflib>=7.0,<8",
+  "lattice-vocabulary-resolver>=0.1,<0.2",
+]
+
+[project.optional-dependencies]
+test = [
+  "pyshacl>=0.26,<1",
+  "pytest>=8.0",
 ]
 
 [tool.setuptools.packages.find]

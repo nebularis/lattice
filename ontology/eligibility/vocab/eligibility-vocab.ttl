@@ -7,8 +7,8 @@
 
 <https://www.nebularis.org/neuro-semantic/eligibility-vocab>
 	a owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/eligibility-vocab/0.3.0> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.3.0> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/eligibility-vocab/0.4.0> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.4.0> .
 
 elg:ExactMatch a elg:MatchStrategy .
 elg:SetMembership a elg:MatchStrategy .
@@ -27,6 +27,9 @@ elg:MultiDimensionWildcard a elg:WildcardSemantics .
 elg:Permitted a elg:Decision .
 elg:Denied a elg:Decision .
 elg:Undetermined a elg:Decision .
+
+elg:Forward a elg:StepDirection ; rdfs:comment "Traversed from subject to object." .
+elg:Inverse a elg:StepDirection ; rdfs:comment "Traversed from object to subject." .
 
 elg:E1 a elg:OperationalProfile ; rdfs:comment "Exact-match profile" .
 elg:E2 a elg:OperationalProfile ; rdfs:comment "Interval-containment profile" .

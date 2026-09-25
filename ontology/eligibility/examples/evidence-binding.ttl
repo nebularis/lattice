@@ -1,0 +1,93 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# A relocation benefit evaluated directly over an employment ontology's own
+# properties (ADR-A91). Every engineering job family qualifies except
+# contractor grades, and the employee needs at least two years' tenure. Each
+# condition is bound to ex:Employee by an elg:EvidenceBinding, so no
+# elg:Question is authored: the compilers read each employee's job family
+# through their role, and their tenure from a literal.
+
+@prefix elg:  <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
+@prefix qnt:  <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix voc:  <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex:   <https://example.org/lattice/eligibility/employment/> .
+
+# The applied ontology's own terms.
+ex:Employee a owl:Class .
+ex:Role a owl:Class .
+ex:holdsRole a owl:ObjectProperty .
+ex:inJobFamily a owl:ObjectProperty .
+ex:tenureYears a owl:DatatypeProperty .
+
+ex:job-families a voc:ConceptScheme ;
+    fnd:hasIdentity ex:job-families-identity ;
+    fnd:hasGovernanceState fnd:Active .
+ex:job-family-contract a voc:SchemeContract ;
+    fnd:hasIdentity ex:job-family-contract-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    voc:constrainsProperty ex:inJobFamily ;
+    voc:boundScheme ex:job-families .
+ex:engineering a skos:Concept ; skos:inScheme ex:job-families .
+ex:platform-engineering a skos:Concept ; skos:inScheme ex:job-families ; skos:broader ex:engineering .
+ex:contractor-engineering a skos:Concept ; skos:inScheme ex:job-families ; skos:broader ex:engineering .
+
+ex:tenure-space a qnt:ValueSpace ;
+    qnt:spaceKey "tenure-years" ;
+    qnt:orderKind qnt:TotalOrder ;
+    qnt:densityKind qnt:Discrete ;
+    qnt:spaceHash "tenure-years-v1" .
+ex:two-years a qnt:Quantity ; qnt:onSpace ex:tenure-space ; qnt:numericValue "2"^^xsd:decimal .
+ex:at-least-two a qnt:Bound ; qnt:onSpace ex:tenure-space ; qnt:boundValue ex:two-years ;
+    qnt:boundSense qnt:Lower ; qnt:boundClosure qnt:Closed .
+ex:two-or-more a qnt:Range ; qnt:onSpace ex:tenure-space ; qnt:lowerBound ex:at-least-two ; qnt:hasBound ex:at-least-two .
+ex:required-tenure a qnt:RangeSet ; qnt:onSpace ex:tenure-space ; qnt:hasRange ex:two-or-more .
+
+# The conditions.
+ex:engineering-family a elg:Condition ;
+    elg:matchStrategy elg:HierarchicalMatch ;
+    elg:compatibilityOperation elg:AllRequired ;
+    elg:wildcardSemantics elg:NoWildcard ;
+    elg:constrainedByContract ex:job-family-contract ;
+    # Removing elg:requiredConcept raises elg:ConceptConditionDeclarationShape
+    # (sh:Warning), because the condition would state nothing to match against.
+    elg:requiredConcept ex:engineering ;
+    elg:excludedConcept ex:contractor-engineering .
+
+ex:minimum-tenure a elg:IntervalCondition ;
+    elg:matchStrategy elg:IntervalContainment ;
+    elg:compatibilityOperation elg:AllRequired ;
+    elg:wildcardSemantics elg:NoWildcard ;
+    elg:requiredRangeSet ex:required-tenure .
+
+ex:relocation-benefit a elg:AdmissionProfile ;
+    elg:hasCondition ex:engineering-family , ex:minimum-tenure ;
+    elg:matchStrategy elg:HierarchicalMatch ;
+    elg:compatibilityOperation elg:AllRequired ;
+    elg:wildcardSemantics elg:NoWildcard .
+
+# The bindings: which instances each condition evaluates, and the path to
+# each instance's candidate.
+ex:family-binding a elg:EvidenceBinding ;
+    elg:bindsCondition ex:engineering-family ;
+    elg:subjectClass ex:Employee ;
+    elg:evidenceStep [ a elg:EvidenceStep ; elg:stepIndex 0 ; elg:stepProperty ex:holdsRole ; elg:stepDirection elg:Forward ] ,
+                     [ a elg:EvidenceStep ; elg:stepIndex 1 ; elg:stepProperty ex:inJobFamily ; elg:stepDirection elg:Forward ] .
+
+ex:tenure-binding a elg:EvidenceBinding ;
+    elg:bindsCondition ex:minimum-tenure ;
+    elg:subjectClass ex:Employee ;
+    elg:readOnSpace ex:tenure-space ;
+    elg:evidenceStep [ a elg:EvidenceStep ; elg:stepIndex 0 ; elg:stepProperty ex:tenureYears ; elg:stepDirection elg:Forward ] .
+
+# The applied ontology's data, unchanged by evaluation. The relocation
+# benefit permits ex:alice, denies ex:bob (contractor grade) and ex:carol
+# (one year), and leaves ex:dan undetermined, since his role names the
+# engineering family itself, which stands above the exclusion (L11).
+ex:alice a ex:Employee ; ex:holdsRole [ a ex:Role ; ex:inJobFamily ex:platform-engineering ] ; ex:tenureYears 3 .
+ex:bob a ex:Employee ; ex:holdsRole [ a ex:Role ; ex:inJobFamily ex:contractor-engineering ] ; ex:tenureYears 5 .
+ex:carol a ex:Employee ; ex:holdsRole [ a ex:Role ; ex:inJobFamily ex:platform-engineering ] ; ex:tenureYears 1 .
+ex:dan a ex:Employee ; ex:holdsRole [ a ex:Role ; ex:inJobFamily ex:engineering ] ; ex:tenureYears 4 .

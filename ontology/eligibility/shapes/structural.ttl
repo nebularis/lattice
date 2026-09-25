@@ -19,3 +19,15 @@ elg:EligibilityDecisionShape a sh:NodeShape ;
 	sh:property [ sh:path elg:hasQuestion ; sh:minCount 1 ] ;
 	sh:property [ sh:path elg:decisionValue ; sh:minCount 1 ; sh:maxCount 1 ] ;
 	sh:property [ sh:path elg:usesOperationalProfile ; sh:minCount 1 ; sh:maxCount 1 ] .
+
+elg:EvidenceBindingShape a sh:NodeShape ;
+	sh:targetClass elg:EvidenceBinding ;
+	sh:property [ sh:path elg:bindsCondition ; sh:minCount 1 ; sh:maxCount 1 ] ;
+	sh:property [ sh:path elg:subjectClass ; sh:minCount 1 ; sh:maxCount 1 ] ;
+	sh:property [ sh:path elg:evidenceStep ; sh:minCount 1 ] .
+
+elg:EvidenceStepShape a sh:NodeShape ;
+	sh:targetClass elg:EvidenceStep ;
+	sh:property [ sh:path elg:stepIndex ; sh:minCount 1 ; sh:maxCount 1 ] ;
+	sh:property [ sh:path elg:stepProperty ; sh:minCount 1 ; sh:maxCount 1 ] ;
+	sh:property [ sh:path elg:stepDirection ; sh:minCount 1 ; sh:maxCount 1 ; sh:in ( elg:Forward elg:Inverse ) ] .

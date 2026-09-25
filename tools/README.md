@@ -183,3 +183,42 @@ python -m pytest tools/vocabulary/tests -q
 treat the first run as part of review, same as `tools/surface`'s own test
 suite above.
 
+
+## `tools/test_eligibility_examples.py` — Eligibility example checks
+
+Validates each example under `ontology/eligibility/examples/` against the
+layer's shape files, with the layer's spec as ontology graph so class targets
+reach subclass instances, and expects no result at all. Probe cases remove a
+declared concept and check that `elg:ConceptConditionDeclarationShape` warns
+where [ADR-A87](../docs/architecture/decisions/ADR-A87-eligibility-concept-inclusion-and-exclusion.md)
+says it should, and nowhere else.
+
+```bash
+mise run check:eligibility-examples
+```
+
+## `tools/ontology_catalog.py` — import resolution
+
+Generates `ontology/catalog-v001.xml` and the stub catalogs in every `spec/`
+and `vocab/` directory, checks that every `owl:imports` target under
+`ontology/` resolves, and loads an import closure into `rdflib` through a
+catalog chain ([ADR-A88](../docs/architecture/decisions/ADR-A88-ontology-import-resolution-for-consumers.md)).
+Pre-existing defects are listed in `KNOWN_DEFECTS` and reported without
+failing. The check fails once a listed defect is fixed, so the entry is
+removed in the same change.
+
+```bash
+mise run build:ontology-catalog
+mise run check:ontology-catalog
+python tools/ontology_catalog.py closure https://www.nebularis.org/neuro-semantic/behaviour
+```
+
+## `tools/ontology_version_check.py` — version hygiene
+
+Fails when an ontology document's content changed without its version IRI,
+or when a document under `spec/` or `vocab/` has no version IRI
+([ADR-A86](../docs/architecture/decisions/ADR-A86-ontology-semantic-versioning.md)).
+
+```bash
+mise run check:ontology-versioning
+```

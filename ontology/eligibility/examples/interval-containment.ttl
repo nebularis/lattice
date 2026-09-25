@@ -65,4 +65,7 @@ ex:decision-1
     a elg:EligibilityDecision ;
     elg:forProfile ex:profile-a ;
     elg:hasQuestion ex:question-1 ;
+    elg:usesOperationalProfile ex:reference-profile ;
     elg:decisionValue elg:Permitted .
+
+ex:reference-profile a elg:OperationalProfile .

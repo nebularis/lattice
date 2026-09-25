@@ -63,6 +63,10 @@ ontology/mork/mtp/out/
 **/.DS_Store
 **/catalog*.xml
 **/*Catalog*.xml
+# Generated import catalogs are tracked (ADR-A88, tools/ontology_catalog.py)
+!ontology/catalog-v001.xml
+!ontology/**/spec/catalog-v001.xml
+!ontology/**/vocab/catalog-v001.xml
 WINGMAN
 .local/**
 *.patch

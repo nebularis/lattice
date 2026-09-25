@@ -2,7 +2,7 @@
 
 # LATTICE Developer Coordination Index
 
-**Last updated:** 2026-09-25 — added the `applied-ontology-readiness` unit (sketch, plan, status, ADRs A-87 to A-92 Proposed)  
+**Last updated:** 2026-09-25 — `applied-ontology-readiness` AOR-2 to AOR-9 implemented (autonomous), review requested  
 **Purpose:** Single source of truth for all active units of work: sketches, plans, status, reviews, and validation packs.  
 **Format:** By unit identifier, with links to all related documents and current status.
 
@@ -486,16 +486,17 @@ review, all implemented:
 
 Finding 5 (terminology overload of "scope") remains accepted, no action.
 
-# Applied Ontology Readiness — Planned (2026-09-25)
+# Applied Ontology Readiness — Phase A and B (to AOR-9) implemented, review requested (2026-09-25)
 
 | Field | Value |
 |-------|-------|
-| **Status** | ⏳ Planned. AOR-1 (governance records) awaiting review. No implementation started |
+| **Status** | 🚧 AOR-2 to AOR-9 implemented and self-validated (autonomous, 2026-09-25), human gate pending. AOR-10 onwards paused for decisions and the ADR-A83 harness |
 | **Unit ID** | `applied-ontology-readiness` |
 | **Trigger** | Human request, 2026-09-25 — close the gaps an applied (domain) ontology meets when built on LATTICE |
 | **Sketch** | [applied-ontology-readiness.md](sketches/applied-ontology-readiness.md) |
 | **Plan** | [applied-ontology-readiness.md](plans/applied-ontology-readiness.md) |
 | **Status Record** | [applied-ontology-readiness.md](status/applied-ontology-readiness.md) |
+| **Review** | [applied-ontology-readiness-review.md](review/applied-ontology-readiness-review.md) |
 | **ADRs** | [A-87](../architecture/decisions/ADR-A87-eligibility-concept-inclusion-and-exclusion.md), [A-88](../architecture/decisions/ADR-A88-ontology-import-resolution-for-consumers.md), [A-89](../architecture/decisions/ADR-A89-eligibility-ir-concept-conditions-and-profile-aggregation.md), [A-90](../architecture/decisions/ADR-A90-eligibility-design-time-owl-class-backend.md), [A-91](../architecture/decisions/ADR-A91-eligibility-candidate-evidence-binding.md), [A-92](../architecture/decisions/ADR-A92-derived-artefact-contract-and-prov-o-alignment.md), and a proposed [A-86 addendum](../architecture/decisions/ADR-A86-ontology-semantic-versioning.md#proposed-addendum-2026-09-25-guarantees-consumers-rely-on), all Proposed |
 
 Thirteen gaps (AO1 to AO13) that any applied ontology meets: Eligibility
@@ -508,9 +509,9 @@ bounds, one obligation in several provisions).
 
 ### Slices
 
-1. Phase A, consumable baseline: AOR-1 governance records (written), AOR-2 Eligibility examples and the declaration warning, AOR-3 versioning guarantees, AOR-4 consumer catalog and import resolution
-2. Phase B, executable coverage: AOR-5 to AOR-11 (concept conditions, hierarchical match, SHACL and SWRL, profile aggregation, evidence binding, OWL backend and checks). Carries the `eligibility-compiler` unit's deferred items
-3. Phase C, substrate extensions: AOR-12 to AOR-17 (Foundation derived-artefact contract and PROV-O, Quantification and Instrument extensions)
+1. Phase A, consumable baseline: AOR-1 governance records — done. AOR-2 examples and the declaration warning, AOR-3 versioning guarantees, AOR-4 import catalog — implemented, [VPs](validation/applied-ontology-readiness-aor-2.md)
+2. Phase B, executable coverage: AOR-5 to AOR-9 (concept conditions, hierarchical match, SHACL and SWRL, diagnostics, profile aggregation, conformance corpus, evidence bindings) — implemented. AOR-10 and AOR-11 (OWL backend) — paused on the ADR-A83 harness and an encoding decision
+3. Phase C, substrate extensions: AOR-12 to AOR-17 — paused on decisions (status record)
 
 # Part III — Archived/Historical Work
 
@@ -635,7 +636,7 @@ bounds, one obligation in several provisions).
 6. Vocabulary scoped and temporal binding conformance — closed 2026-09-25
 7. Vocabulary consumer hardening (`temporal-binding-consumer-hardening`) — implemented, not yet executed in this sandbox
 8. Ontology semantic versioning (ADR-A86) — implemented; ADR ratification pending
-9. Applied ontology readiness (`applied-ontology-readiness`) — planned, AOR-1 awaiting review
+9. Applied ontology readiness (`applied-ontology-readiness`) — AOR-2 to AOR-9 implemented, review requested
 
 ### 🗄️ Archived
 1. Phase 0-6 handoff documents (refer to individual status records)
@@ -656,7 +657,7 @@ bounds, one obligation in several provisions).
 | **Vocabulary temporal binding conformance** | Examples, SHACL, resolver, consumer provenance checks | Closed 2026-09-25: executed and verified, ADR-A85 Accepted | None. Follow-on hardening tracked as `temporal-binding-consumer-hardening` |
 | **Vocabulary consumer hardening** | `produced_at`/hash conflation, missing resolution trace, `vvp:resolvedAt` naming, vocabulary architecture test | Implemented 2026-09-25 (all 4 findings); not yet executed in this sandbox (no rdflib) | Run `mise run check:vocabulary` and `python -m unittest surface.test_surface -v`, then close out |
 | **Ontology semantic versioning** | ADR-A86, versioning-policy doc, baseline reset, narrow enforcement check | Implemented (2026-09-25): policy doc, `0.2.0` baseline reset across 29 ontology documents, `check:ontology-versioning` tooling | Ratify ADR-A86; decide whether the discovered `literate_extract.py` drift becomes its own unit |
-| **Applied ontology readiness** | ADRs A-87 to A-92, A-86 addendum, 17 slices in three phases | Gaps any applied ontology meets when built on LATTICE (loading, examples, compilation, provenance, substrate extensions) | Ratify the ADRs, answer the sketch's open questions, and choose where to start (AOR-2 needs only A-87) |
+| **Applied ontology readiness** | ADRs A-87 to A-92, A-86 addendum, 17 slices in three phases | Gaps any applied ontology meets when built on LATTICE (loading, examples, compilation, provenance, substrate extensions) | Review AOR-2 to AOR-9, ratify the ADRs, and decide the four gating questions in the review request |
 
 ---
 
@@ -667,6 +668,7 @@ bounds, one obligation in several provisions).
 - [persistence-compiler-iri-sync-slice-1.md](validation/persistence-compiler-iri-sync-slice-1.md) — compiler sync Slice 1
 - [persistence-compiler-iri-sync-slice-2.md](validation/persistence-compiler-iri-sync-slice-2.md) — compiler sync Slice 2
 - [persistence-compiler-iri-sync-slice-3.md](validation/persistence-compiler-iri-sync-slice-3.md) — compiler sync Slice 3
+- [applied-ontology-readiness-aor-2.md](validation/applied-ontology-readiness-aor-2.md) to [aor-9](validation/applied-ontology-readiness-aor-9.md) — applied ontology readiness, AOR-2 to AOR-9
 - More to be created as each slice/phase completes
 
 ## Test Taxonomy (L0–L8)
@@ -684,10 +686,12 @@ bounds, one obligation in several provisions).
 | Unit | Tests | Command |
 |------|-------|---------|
 | Surface compiler | 61 passing | `pytest tools/surface/src/surface/test_surface.py -v` |
-| MORK compiler backends | 15 passing | `pytest tools/mork_compilers/src/mork_compilers/test_mork_compilers.py -v` |
+| MORK compiler backends | 74 passing (2026-09-25) | `mise run check:mork-compilers` |
 | LLM/MTP | 346 passing | `mise run check:mtp` |
 | Persistence compiler | 629 passing (2026-09-23) | `mise run check:persistence` |
-| Eligibility compiler | Present | `mise run check:eligibility-compiler` |
+| Eligibility examples | 12 passing | `mise run check:eligibility-examples` |
+| Ontology catalog | 11 passing | `mise run check:ontology-catalog` |
+| Ontology versioning | 7 passing | `mise run check:ontology-versioning` |
 
 ---
 

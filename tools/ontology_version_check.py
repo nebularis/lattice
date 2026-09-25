@@ -10,6 +10,10 @@ ref, at least one ``owl:versionIRI`` literal in the file must also differ.
 "Content changed, version literal did not" is always a defect; "content
 changed, version literal also changed" is not evaluated further here.
 
+It also checks that every ontology document under a ``spec/`` or ``vocab/``
+directory carries an ``owl:versionIRI`` at all. Examples and test fixtures
+may declare ``owl:Ontology`` without one (ADR-A86 proposed addendum, item 2).
+
 Usage::
 
     python tools/ontology_version_check.py [--root .] [--base-ref HEAD]
@@ -29,6 +33,7 @@ ONTOLOGY_ROOT = "ontology"
 
 VERSION_IRI_RE = re.compile(r"owl:versionIRI\s+<([^>]+)>")
 ONTOLOGY_MARKER_RE = re.compile(r"\bowl:Ontology\b")
+VERSIONED_DIRECTORIES = frozenset({"spec", "vocab"})
 
 
 def find_in_scope_ttl_files(root: Path) -> list[Path]:
@@ -67,6 +72,25 @@ def extract_version_iris(text: str) -> Set[str]:
     return set(VERSION_IRI_RE.findall(text))
 
 
+def requires_version_iri(relative: Path) -> bool:
+    """A document under a ``spec/`` or ``vocab/`` directory is a published
+    ontology document and must carry its own version IRI."""
+    return bool(VERSIONED_DIRECTORIES & set(relative.parts[:-1]))
+
+
+def check_unversioned(root: Path) -> list[str]:
+    """Return one message per ontology document that must carry an
+    ``owl:versionIRI`` and does not."""
+    problems: list[str] = []
+    for path in find_in_scope_ttl_files(root):
+        relative = path.relative_to(root)
+        if not requires_version_iri(relative):
+            continue
+        if not extract_version_iris(path.read_text(encoding="utf-8")):
+            problems.append(f"{relative.as_posix()}: declares owl:Ontology without owl:versionIRI")
+    return problems
+
+
 def check(root: Path, base_ref: str) -> list[str]:
     """Return one message per file whose content changed relative to
     ``base_ref`` but whose set of ``owl:versionIRI`` literals did not."""
@@ -102,14 +126,18 @@ def main(argv: Optional[list[str]] = None) -> int:
     args = parser.parse_args(argv)
 
     root = Path(args.root).resolve()
-    problems = check(root, args.base_ref)
+    unbumped = check(root, args.base_ref)
+    unversioned = check_unversioned(root)
 
-    if problems:
-        for problem in problems:
-            print(f"UNBUMPED {problem}", file=sys.stderr)
+    for problem in unbumped:
+        print(f"UNBUMPED {problem}", file=sys.stderr)
+    for problem in unversioned:
+        print(f"UNVERSIONED {problem}", file=sys.stderr)
+    if unbumped or unversioned:
         print(
-            f"{len(problems)} ontology file(s) changed without a version bump "
-            f"relative to {args.base_ref}. See docs/architecture/ontology-versioning-policy.md.",
+            f"{len(unbumped)} ontology file(s) changed without a version bump "
+            f"relative to {args.base_ref}, {len(unversioned)} without a version IRI. "
+            "See docs/architecture/ontology-versioning-policy.md.",
             file=sys.stderr,
         )
         return 1

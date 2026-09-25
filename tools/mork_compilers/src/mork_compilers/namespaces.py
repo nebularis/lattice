@@ -23,12 +23,13 @@ than invented here.
 from __future__ import annotations
 
 from rdflib import Namespace
-from rdflib.namespace import OWL, RDF, RDFS, SH, XSD
+from rdflib.namespace import OWL, RDF, RDFS, SH, SKOS, XSD
 
 MORK = Namespace("http://www.nebularis.org/ontologies/Mork#")
 EXE = Namespace("https://www.nebularis.org/neuro-semantic/lattice/executable#")
 ELG = Namespace("https://www.nebularis.org/neuro-semantic/lattice/eligibility#")
 QNT = Namespace("https://www.nebularis.org/neuro-semantic/lattice/quantification#")
+VOC = Namespace("https://www.nebularis.org/neuro-semantic/lattice/vocabulary#")
 SWRL = Namespace("http://www.w3.org/2003/11/swrl#")
 SWRLB = Namespace("http://www.w3.org/2003/11/swrlb#")
 
@@ -37,6 +38,8 @@ OUTPUT_PREFIXES = {
     "exe": EXE,
     "elg": ELG,
     "qnt": QNT,
+    "voc": VOC,
+    "skos": SKOS,
     "swrl": SWRL,
     "swrlb": SWRLB,
     "sh": SH,
@@ -56,7 +59,9 @@ __all__ = [
     "RDF",
     "RDFS",
     "SH",
+    "SKOS",
     "SWRL",
     "SWRLB",
+    "VOC",
     "XSD",
 ]

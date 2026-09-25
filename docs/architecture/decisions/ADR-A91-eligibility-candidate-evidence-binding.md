@@ -60,3 +60,15 @@ Option A, with D remaining available.
   records the Foundation lift as a candidate for the same Foundation change
   that introduces the derived-artefact contract.
 - Alternation and zero-or-more paths stay out of scope, as for Surface.
+
+## Implementation notes (2026-09-25, `applied-ontology-readiness` AOR-9)
+
+- The compiled artefacts key their rows and shape reports by the subject
+  itself and mint no question or decision record. `elg:aboutSubject` (item 3)
+  therefore has no producer yet and is not declared.
+- Subjects are the instances of the subject class and of its subclasses, as a
+  SHACL `sh:targetClass` selects them.
+- SWRL records a bound outcome per condition with `exe:permittedUnder` and
+  `exe:deniedUnder`, since `exe:impliesDecision` on a subject would not say
+  which condition decided it. A bound interval rule reads one terminal form: a
+  literal where the binding names `elg:readOnSpace`, else a `qnt:Quantity`.

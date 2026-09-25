@@ -16,6 +16,9 @@ dependencies = [
 reasoning = [
   "owlrl>=7.1,<8",
 ]
+test = [
+  "pytest>=8.0",
+]
 community = [
   "numpy>=1.24,<3",
   "networkx>=3,<4",

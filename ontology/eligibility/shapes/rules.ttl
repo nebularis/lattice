@@ -42,6 +42,7 @@ elg:UndeterminedWhenNoCandidateInput a sh:NodeShape ;
 				$this elg:hasQuestion ?q .
 				FILTER NOT EXISTS { ?q elg:candidateValue ?v }
 				FILTER NOT EXISTS { ?q elg:candidateRangeSet ?r }
+				FILTER NOT EXISTS { ?q elg:candidateConcept ?c }
 			}
 		"""
 	] .

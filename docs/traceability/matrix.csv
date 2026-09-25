@@ -42,3 +42,12 @@ TBCH-F1a,temporal-binding-consumer-hardening,"test_surface.py::ResolutionTimeGua
 TBCH-F1b,temporal-binding-consumer-hardening,test_surface.py::ResolutionTimeGuardTests::test_regeneration_of_an_unscoped_contract_is_deterministic_across_different_times,"srf:R1 (updated text): an unscoped contract-bound population's output is independent of the resolution instant"
 TBCH-F2a,temporal-binding-consumer-hardening,test_surface.py::CompilationTests::test_manifest_records_the_resolution_trace_for_a_bound_scheme_source,"Finding 2: a BoundSchemeSource read-set entry records resolvedAt/resolvedBindingScope/resolvedBinding/resolvedViaFallback"
 TBCH-F2b,temporal-binding-consumer-hardening,test_surface.py::CompilationTests::test_resolution_trace_changes_when_the_context_does,"Finding 2 mutation probe: the recorded trace changes when the caller's active binding scope does"
+A-87,applied-ontology-readiness-aor-2,"test_eligibility_examples.py::*",ADR-A87 concept inclusion and exclusion: examples conform and the declaration warning skips profiles
+A-86-addendum,applied-ontology-readiness-aor-3,"test_ontology_version_check.py::*",ADR-A86 proposed addendum: missing version IRIs flagged and the check runs in CI
+A-88,applied-ontology-readiness-aor-4,"test_ontology_catalog.py::*",ADR-A88 generated import catalog and resolution check
+A-89,applied-ontology-readiness-aor-5,"test_concept_conditions.py::*",ADR-A89 flat concept plans and SPARQL decisions
+A-89,applied-ontology-readiness-aor-6,"test_hierarchical_conditions.py::*",ADR-A89 hierarchical match and explicit scheme resolution
+A-89,applied-ontology-readiness-aor-7,"test_concept_backends.py::*",ADR-A89 SHACL and SWRL for concept plans and diagnostics
+A-89,applied-ontology-readiness-aor-8,"test_profiles.py::*,tools/phase8_conformance.py::run_eligibility_cases",ADR-A89 profile aggregation and corpus parity
+A-91,applied-ontology-readiness-aor-9,"test_evidence_bindings.py::*",ADR-A91 evidence bindings on all three backends
+

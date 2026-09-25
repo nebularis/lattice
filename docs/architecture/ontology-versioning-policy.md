@@ -51,6 +51,12 @@ Two categories do not reduce to axiom-diffing:
   every importing layer's `owl:imports` statement (and README `turtle-spec`
   source, where one mirrors it) in the *same* change, or the graph stops
   resolving.
+- **Import-only changes take the imported level.** A document whose only
+  change is an updated `owl:imports` takes the bump level of the change it
+  imports, applied transitively, because its own consumers see that change
+  through its import closure. Proposed in the
+  [ADR-A86 addendum](decisions/ADR-A86-ontology-semantic-versioning.md#proposed-addendum-2026-09-25-guarantees-consumers-rely-on),
+  item 1, and applied since the `applied-ontology-readiness` unit's AOR-2.
 
 ## The import-pinning cascade checklist
 
@@ -162,12 +168,13 @@ or an oversight. Not decided by this reset.
    that actually redefines what a term means.
 2. Bump the correct document(s) only — `spec` and `vocab` are independent;
    bumping one because the other changed is itself a documentation error.
-3. Run the import-pinning cascade checklist if the change is anything other
-   than PATCH-with-no-visible-IRI-change (a PATCH never changes the
-   `owl:versionIRI` value it is describing a fix within — see "The one
-   subtlety," below).
+3. Run the import-pinning cascade checklist for every bump, PATCH included
+   (see "The one subtlety," below).
 4. Where a README mirrors the ontology header, edit both, keeping them
    identical for that block.
+5. Regenerate the catalogs with `mise run build:ontology-catalog`, since a new
+   version IRI needs a catalog entry before any importer resolves it
+   ([ADR-A88](decisions/ADR-A88-ontology-import-resolution-for-consumers.md)).
 
 ### The one subtlety: PATCH still bumps the version
 
@@ -184,5 +191,8 @@ No tool in this repository classifies a change as MAJOR/MINOR/PATCH
 automatically — that is a research problem, not a checklist, and this policy
 does not attempt it. What is enforced is narrower and purely mechanical: a
 change to an in-scope `.ttl` file's content must be accompanied by a change to
-that file's own `owl:versionIRI` literal. See `tools/ontology_version_check.py`
-and `mise run check:ontology-versioning`.
+that file's own `owl:versionIRI` literal. A document under a `spec/` or
+`vocab/` directory must also carry an `owl:versionIRI` at all. Examples and
+test fixtures are exempt. See `tools/ontology_version_check.py` and
+`mise run check:ontology-versioning`. The `platform` workflow runs the same
+check against `origin/main`.

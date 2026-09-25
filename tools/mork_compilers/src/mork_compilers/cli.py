@@ -12,7 +12,9 @@ Usage::
         --backend sparql --out artefact.ttl
 
 ``--backend`` may be repeated; omitting it compiles all three backends
-(sparql, shacl, swrl) into one combined output graph. There is no "native"
+(sparql, shacl, swrl) into one combined output graph. A concept condition
+whose scheme contract has bindings needs ``--at`` (an ISO 8601 instant) and
+any number of ``--scope`` binding-scope IRIs (ADR-A89 item 2). There is no "native"
 backend — see this package's ``namespaces.py`` module docstring for why.
 """
 
@@ -23,10 +25,14 @@ import sys
 from pathlib import Path
 from typing import Optional, Sequence
 
+from datetime import datetime
+
 from rdflib import Graph, URIRef
+from rdflib.namespace import RDF
 
 from . import shacl_backend, sparql_backend, swrl_backend
-from .eligibility_ir import IRCompileError, compile_condition
+from .eligibility_ir import IRCompileError, ResolutionContext, compile_concept_condition, compile_condition
+from .namespaces import ELG
 from .namespaces import OUTPUT_PREFIXES
 
 BACKENDS = {
@@ -45,8 +51,17 @@ def _load(paths: Sequence[str]) -> Graph:
 
 def command_compile_condition(args: argparse.Namespace) -> int:
     graph = _load(args.declarations)
+    condition = URIRef(args.condition)
+    context = None
+    if args.at:
+        context = ResolutionContext(
+            at=datetime.fromisoformat(args.at), scope=frozenset(URIRef(s) for s in args.scope or ())
+        )
     try:
-        plan = compile_condition(graph, URIRef(args.condition))
+        if (condition, RDF.type, ELG.IntervalCondition) in graph:
+            plan = compile_condition(graph, condition)
+        else:
+            plan = compile_concept_condition(graph, condition, context)
     except IRCompileError as error:
         print(f"error: {error}", file=sys.stderr)
         return 2
@@ -73,12 +88,14 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     )
     sub = parser.add_subparsers(dest="command", required=True)
 
-    condition = sub.add_parser("compile-condition", help="compile one elg:IntervalCondition")
+    condition = sub.add_parser("compile-condition", help="compile one interval or concept condition")
     condition.add_argument(
         "--declarations", nargs="+", required=True,
         help="Eligibility/Quantification declaration graph files",
     )
-    condition.add_argument("--condition", required=True, help="the elg:IntervalCondition IRI")
+    condition.add_argument("--condition", required=True, help="the condition IRI")
+    condition.add_argument("--at", default=None, help="resolution instant, ISO 8601, for contracts with bindings")
+    condition.add_argument("--scope", action="append", help="repeatable voc:BindingScope IRI active at resolution")
     condition.add_argument(
         "--backend", action="append", choices=list(BACKENDS),
         help="repeatable; omit to compile all backends",

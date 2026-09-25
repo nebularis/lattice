@@ -2,19 +2,31 @@
 
 @prefix elg: <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
 @prefix qnt: <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 @prefix ex:  <https://example.org/lattice/eligibility/> .
+
+ex:full-time a skos:Concept ; skos:prefLabel "Full time"@en .
+ex:part-time a skos:Concept ; skos:prefLabel "Part time"@en .
+ex:tier-standard a skos:Concept ; skos:prefLabel "Standard tier"@en .
+ex:tier-premium a skos:Concept ; skos:prefLabel "Premium tier"@en .
 
 ex:exact-condition
     a elg:ExactCondition ;
     elg:matchStrategy elg:ExactMatch ;
     elg:compatibilityOperation elg:AllRequired ;
-    elg:wildcardSemantics elg:NoWildcard .
+    elg:wildcardSemantics elg:NoWildcard ;
+    # Removing elg:requiredConcept raises elg:ConceptConditionDeclarationShape
+    # (sh:Warning), because the condition would state nothing to match against.
+    elg:requiredConcept ex:full-time .
 
 ex:set-condition
     a elg:SetMembershipCondition ;
     elg:matchStrategy elg:SetMembership ;
     elg:compatibilityOperation elg:AnySufficient ;
-    elg:wildcardSemantics elg:NoWildcard .
+    elg:wildcardSemantics elg:NoWildcard ;
+    # Removing elg:requiredConcept raises elg:ConceptConditionDeclarationShape
+    # (sh:Warning), because the condition would state nothing to match against.
+    elg:requiredConcept ex:tier-standard , ex:tier-premium .
 
 ex:interval-condition
     a elg:IntervalCondition ;

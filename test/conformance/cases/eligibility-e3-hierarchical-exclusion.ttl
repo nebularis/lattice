@@ -1,0 +1,43 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# A relocation benefit for every engineering job family except contractor
+# grades (ADR-A87). Engineering itself stands above the exclusion (L11).
+
+@prefix elg:  <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
+@prefix voc:  <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix ex:   <https://example.org/lattice/test/conformance/> .
+
+ex:job-families a voc:ConceptScheme .
+ex:engineering a skos:Concept ; skos:inScheme ex:job-families .
+ex:platform-engineering a skos:Concept ; skos:inScheme ex:job-families ; skos:broader ex:engineering .
+ex:contractor-engineering a skos:Concept ; skos:inScheme ex:job-families ; skos:broader ex:engineering .
+
+ex:job-family-contract a voc:SchemeContract ; voc:boundScheme ex:job-families .
+
+ex:condition-e3
+    a elg:Condition ;
+    elg:matchStrategy elg:HierarchicalMatch ;
+    elg:compatibilityOperation elg:AllRequired ;
+    elg:wildcardSemantics elg:NoWildcard ;
+    elg:constrainedByContract ex:job-family-contract ;
+    elg:requiredConcept ex:engineering ;
+    elg:excludedConcept ex:contractor-engineering .
+
+ex:profile-e3
+    a elg:AdmissionProfile ;
+    elg:hasCondition ex:condition-e3 ;
+    elg:matchStrategy elg:HierarchicalMatch ;
+    elg:compatibilityOperation elg:AllRequired ;
+    elg:wildcardSemantics elg:NoWildcard .
+
+ex:question-e3-platform a elg:Question ; elg:forCondition ex:condition-e3 ; elg:candidateConcept ex:platform-engineering .
+ex:question-e3-contractor a elg:Question ; elg:forCondition ex:condition-e3 ; elg:candidateConcept ex:contractor-engineering .
+ex:question-e3-engineering a elg:Question ; elg:forCondition ex:condition-e3 ; elg:candidateConcept ex:engineering .
+
+ex:decision-e3-platform a elg:EligibilityDecision ; elg:forProfile ex:profile-e3 ;
+    elg:hasQuestion ex:question-e3-platform ; elg:usesOperationalProfile elg:E5 .
+ex:decision-e3-contractor a elg:EligibilityDecision ; elg:forProfile ex:profile-e3 ;
+    elg:hasQuestion ex:question-e3-contractor ; elg:usesOperationalProfile elg:E5 .
+ex:decision-e3-engineering a elg:EligibilityDecision ; elg:forProfile ex:profile-e3 ;
+    elg:hasQuestion ex:question-e3-engineering ; elg:usesOperationalProfile elg:E5 .

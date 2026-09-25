@@ -32,6 +32,7 @@ elg:ConceptConditionDeclarationShape a sh:NodeShape ;
 				FILTER (?strategy IN (elg:ExactMatch, elg:SetMembership, elg:HierarchicalMatch))
 				FILTER NOT EXISTS { $this elg:requiredConcept ?required }
 				FILTER NOT EXISTS { $this elg:excludedConcept ?excluded }
+				FILTER NOT EXISTS { $this elg:hasCondition ?member }
 			}
 		"""
 	] ;

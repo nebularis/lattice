@@ -40,7 +40,7 @@ LATTICE is organised as seven layers, each an independent OWL/SHACL/SKOS module:
 | **Vocabulary** | Substrate | The governed mechanism by which external, domain-specific concept schemes get bound into the other layers without touching their core specifications, including scoped and time-bounded bindings. The vocabulary and SHACL shapes live under `ontology/vocabulary/`; a reference resolver for the scoped/temporal binding precedence law lives under `tools/vocabulary/`. See [ADR-A85](docs/architecture/decisions/ADR-A85-vocabulary-scoped-temporal-binding-resolution.md). |
 | **Quantification** | Substrate | Declared value spaces, quantities, ordered values, bounds, ranges, conversion, granularity, and recurrence — the mechanism behind any magnitude, interval, or ordinal comparison the other layers need. |
 | **Party** | Substrate | 	Actors, the roles they occupy, and the direction and composition of obligation between them (e.g., modelling independently capped shares, joint obligation with a right of recourse, delegated accountability, or contingent role occupancy). |
-| **Eligibility** | Substrate | admissibility criteria (conditions, unresolved questions, and decisions). |
+| **Eligibility** | Substrate | Admissibility criteria (conditions, unresolved questions, and decisions), including concept inclusion and exclusion and evidence bindings that evaluate an applied ontology's own properties. `tools/mork_compilers` compiles conditions and profiles to SPARQL, SHACL, and SWRL through one IR. See [ADR-A87](docs/architecture/decisions/ADR-A87-eligibility-concept-inclusion-and-exclusion.md), [ADR-A89](docs/architecture/decisions/ADR-A89-eligibility-ir-concept-conditions-and-profile-aggregation.md) and [ADR-A91](docs/architecture/decisions/ADR-A91-eligibility-candidate-evidence-binding.md). |
 | **Behaviour** | Substrate | State, transition, trigger, and effect, including a usable `Sequential` allowance profile. `Proportional` allowance semantics and reset edge cases remain explicitly deferred. |
 | **Instrument** | Applied domain ontology | A primary domain ontology built on the substrates, giving the generic shape of a governing document, e.g., Provision → Obligation → Qualifier. |
 
@@ -85,6 +85,7 @@ lattice/
 ├── LICENSE-DOCS.md          # CC BY-SA 4.0 — documentation, specifications
 ├── CONTRIBUTING.md
 │
+├── ontology/catalog-v001.xml         # Generated import catalog, every ontology and version IRI (ADR-A88)
 ├── ontology/foundation/              # Foundation Layers (provenance, versioning)
 ├── ontology/vocabulary/              # Inclusion of Domain-specific Vocabularies
 ├── ontology/quantification/          # Value Spaces, Quantities, Ranges, Recurrence
