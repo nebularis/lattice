@@ -809,8 +809,9 @@ qnt:comparisonResult a owl:ObjectProperty, owl:FunctionalProperty ;
     rdfs:comment "The truth value produced by a Comparison." .
 
 qnt:unresolvedReason a owl:ObjectProperty ;
-    rdfs:domain qnt:Comparison ; rdfs:range qnt:UnresolvedReason ;
-    rdfs:comment "A declared reason why a Comparison is indeterminate." .
+    rdfs:domain [ a owl:Class ; owl:unionOf ( qnt:Comparison qnt:UnresolvedValue ) ] ;
+    rdfs:range qnt:UnresolvedReason ;
+    rdfs:comment "A declared reason why a Comparison is indeterminate, or why an UnresolvedValue has no definite value." .
 
 qnt:comparisonProfile a owl:ObjectProperty, owl:FunctionalProperty ;
     rdfs:domain qnt:Comparison ; rdfs:range qnt:OperationalProfile ;

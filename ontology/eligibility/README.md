@@ -24,6 +24,7 @@ Eligibility imports Foundation, Vocabulary, Quantification, and Party. Quantific
 @prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 ```
 
 ## 3. Extraction Contract
@@ -42,6 +43,16 @@ Eligibility imports Foundation, Vocabulary, Quantification, and Party. Quantific
 
 `HierarchicalMatch` is valid when a dimension is backed by a concept scheme whose membership is resolved against a well-founded `skos:broader` hierarchy. Evaluation may compute closure at query time or use a generated surface, provided closure is interpreted over the bound scheme.
 
+Conditions matching by `ExactMatch`, `SetMembership`, or `HierarchicalMatch` state what they match against with `elg:requiredConcept` and `elg:excludedConcept`. A candidate *matches* a concept by equality under `ExactMatch` and `SetMembership`, and by standing at or below it in the bound scheme's ordering under `HierarchicalMatch`. Several required concepts are alternatives to one another, and each excluded concept excludes independently. Neither reading changes how the condition's compatibility operation is interpreted. `IntervalContainment` needs no exclusion construct: a `qnt:RangeSet` is a union of ranges and already expresses gaps.
+
+| Candidate | Decision | Law |
+|---|---|---|
+| absent or unresolved | `Undetermined` | |
+| matches an excluded concept | `Denied`, whether or not it also matches a required concept | L10 |
+| under `HierarchicalMatch`, stands strictly above an excluded concept and is otherwise admitted | `Undetermined`, since its true value may fall under the exclusion | L11 |
+| matches a required concept, or the condition declares exclusions only and the candidate is a member of the bound scheme | `Permitted` | L12 for the second case |
+| otherwise | `Denied` | |
+
 ## 5. Core Model
 
 ```turtle-spec
@@ -49,11 +60,11 @@ Eligibility imports Foundation, Vocabulary, Quantification, and Party. Quantific
 
 <https://www.nebularis.org/neuro-semantic/eligibility>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.2.0> ;
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.3.0> ;
 	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.2.0> ,
 				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.2.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.2.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/party/0.2.0> .
+				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.3.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/party/0.3.0> .
 
 elg:Condition a owl:Class ;
 	rdfs:comment "A declared admissibility condition." .
@@ -96,6 +107,14 @@ elg:forCondition a owl:ObjectProperty, owl:FunctionalProperty ;
 
 elg:requiredRangeSet a owl:ObjectProperty ;
 	rdfs:domain elg:Condition ; rdfs:range qnt:RangeSet .
+
+elg:requiredConcept a owl:ObjectProperty ;
+	rdfs:domain elg:Condition ; rdfs:range skos:Concept ;
+	rdfs:comment "A concept a candidate must match, under the condition's match strategy. Several required concepts are alternatives to one another." .
+
+elg:excludedConcept a owl:ObjectProperty ;
+	rdfs:domain elg:Condition ; rdfs:range skos:Concept ;
+	rdfs:comment "A concept a candidate must not match, under the condition's match strategy. Each excluded concept excludes independently of the others." .
 
 elg:candidateRangeSet a owl:ObjectProperty ;
 	rdfs:domain elg:Question ; rdfs:range qnt:RangeSet .
@@ -173,6 +192,7 @@ elg:E5 a elg:OperationalProfile ; rdfs:comment "Compatibility-all profile" .
 elg:E6 a elg:OperationalProfile ; rdfs:comment "Dimension-consistency profile" .
 
 elg:SemanticLaw a elg:LawRegister ; rdfs:comment "Discharged by formal argument." .
+elg:StaticConstraint a elg:LawRegister ; rdfs:comment "Discharged by SHACL, SPARQL, or other static analysis of declarations." .
 
 elg:L1 a elg:Law ; rdfs:comment "Each condition declares exactly one match strategy." .
 elg:L2 a elg:Law ; rdfs:comment "Each condition declares exactly one compatibility operation." .
@@ -185,6 +205,18 @@ elg:L8 a elg:Law ; rdfs:comment "EligibilityDecision names one operational profi
 elg:L9 a elg:Law ;
 	elg:lawRegister elg:SemanticLaw ;
 	rdfs:comment "Hierarchical match closure. A candidate value satisfies a condition under hierarchical match exactly when it stands in the reflexive-transitive closure of the bound scheme's ordering relation, restricted to that scheme's members, below the asserted value. The ordering relation is acyclic over the bound scheme; a scheme carrying a cycle is not evaluable under hierarchical match." .
+elg:L10 a elg:Law ;
+	elg:lawRegister elg:SemanticLaw ;
+	rdfs:comment "Exclusion precedence. A candidate that matches an excluded concept of a condition, under the condition's match strategy, does not satisfy the condition, whether or not it also matches a required concept." .
+elg:L11 a elg:Law ;
+	elg:lawRegister elg:SemanticLaw ;
+	rdfs:comment "Exclusion granularity. Under hierarchical match, a candidate that stands strictly above an excluded concept in the bound scheme's ordering, and is otherwise admitted, leaves the condition undetermined for that candidate. Its true value may or may not fall under the exclusion." .
+elg:L12 a elg:Law ;
+	elg:lawRegister elg:SemanticLaw ;
+	rdfs:comment "Default inclusion. A condition that declares excluded concepts and no required concept requires every member of its bound scheme, so it admits any member not excluded." .
+elg:L13 a elg:Law ;
+	elg:lawRegister elg:StaticConstraint ;
+	rdfs:comment "Reachable exclusions. Where a condition declares required concepts, each of its excluded concepts matches at least one of them under the condition's match strategy. An exclusion outside every inclusion excludes nothing." .
 ```
 
 ## 7. Shapes
@@ -202,6 +234,55 @@ elg:ConditionShape a sh:NodeShape ;
 elg:IntervalConditionShape a sh:NodeShape ;
 	sh:targetClass elg:IntervalCondition ;
 	sh:property [ sh:path elg:requiredRangeSet ; sh:minCount 1 ] .
+
+elg:ConceptConditionDeclarationShape a sh:NodeShape ;
+	sh:targetClass elg:Condition ;
+	sh:severity sh:Warning ;
+	sh:sparql [
+		sh:message "A condition matching by ExactMatch, SetMembership or HierarchicalMatch declares neither a required nor an excluded concept, so it states nothing to match against." ;
+		sh:select """
+			PREFIX elg: <https://www.nebularis.org/neuro-semantic/lattice/eligibility#>
+			SELECT $this WHERE {
+				$this elg:matchStrategy ?strategy .
+				FILTER (?strategy IN (elg:ExactMatch, elg:SetMembership, elg:HierarchicalMatch))
+				FILTER NOT EXISTS { $this elg:requiredConcept ?required }
+				FILTER NOT EXISTS { $this elg:excludedConcept ?excluded }
+			}
+		"""
+	] ;
+	sh:sparql [
+		sh:message "A required or excluded concept is declared on a condition whose match strategy does not match concepts. IntervalContainment expresses gaps through its range set instead." ;
+		sh:select """
+			PREFIX elg: <https://www.nebularis.org/neuro-semantic/lattice/eligibility#>
+			SELECT $this WHERE {
+				$this elg:matchStrategy ?strategy .
+				FILTER (?strategy IN (elg:IntervalContainment, elg:Wildcard))
+				{ $this elg:requiredConcept ?concept } UNION { $this elg:excludedConcept ?concept }
+			}
+		"""
+	] .
+
+elg:ReachableExclusionShape a sh:NodeShape ;
+	sh:targetClass elg:Condition ;
+	sh:severity sh:Warning ;
+	sh:sparql [
+		sh:message "An excluded concept matches none of the condition's required concepts, so it excludes nothing. Discharges elg:L13." ;
+		sh:select """
+			PREFIX elg: <https://www.nebularis.org/neuro-semantic/lattice/eligibility#>
+			PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+			SELECT $this ?value WHERE {
+				$this elg:excludedConcept ?value ;
+					  elg:requiredConcept ?anyRequired .
+				FILTER NOT EXISTS {
+					$this elg:requiredConcept ?required .
+					FILTER (?value = ?required || EXISTS {
+						$this elg:matchStrategy elg:HierarchicalMatch .
+						?value skos:broader+ ?required .
+					})
+				}
+			}
+		"""
+	] .
 ```
 
 ## 8. Worked Examples

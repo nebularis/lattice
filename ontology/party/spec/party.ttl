@@ -9,9 +9,9 @@
 @base <https://www.nebularis.org/neuro-semantic/party> .
 
 <https://www.nebularis.org/neuro-semantic/party> rdf:type owl:Ontology ;
-                                                  owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/party/0.2.0> ;
+                                                  owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/party/0.3.0> ;
                                                   owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.2.0> ,
-                                                              <https://www.nebularis.org/neuro-semantic/lattice/quantification/0.2.0> .
+                                                              <https://www.nebularis.org/neuro-semantic/lattice/quantification/0.3.0> .
 
 #################################################################
 #    Object Properties

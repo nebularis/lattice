@@ -41,12 +41,12 @@ It imports Foundation, Vocabulary, Quantification, Party, and Eligibility.
 
 <https://www.nebularis.org/neuro-semantic/instrument>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.2.0> ;
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.3.0> ;
 	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.2.0> ,
 				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.2.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.2.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/party/0.2.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.2.0> .
+				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.3.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/party/0.3.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.3.0> .
 
 ins:Element a owl:Class ;
 	rdfs:subClassOf fnd:Version ;
@@ -65,7 +65,7 @@ ins:Qualifier a owl:Class ;
 	rdfs:comment "A qualifier constraining or refining another element." .
 
 [] a owl:AllDisjointClasses ;
-	owl:members ( ins:Element ins:Provision ins:Obligation ins:Qualifier ) .
+	owl:members ( ins:Provision ins:Obligation ins:Qualifier ) .
 
 ins:hasProvision a owl:ObjectProperty ;
 	rdfs:domain ins:Element ;
@@ -128,8 +128,8 @@ Instrument uses Foundation versioning without in-place mutation.
 
 <https://www.nebularis.org/neuro-semantic/instrument-vocab>
 	a owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/instrument-vocab/0.2.0> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.2.0> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/instrument-vocab/0.3.0> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.3.0> .
 ```
 
 ## 7. Shapes

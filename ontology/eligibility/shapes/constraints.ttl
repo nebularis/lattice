@@ -19,3 +19,52 @@ elg:WildcardPolicyConsistency a sh:NodeShape ;
 			}
 		"""
 	] .
+
+elg:ConceptConditionDeclarationShape a sh:NodeShape ;
+	sh:targetClass elg:Condition ;
+	sh:severity sh:Warning ;
+	sh:sparql [
+		sh:message "A condition matching by ExactMatch, SetMembership or HierarchicalMatch declares neither a required nor an excluded concept, so it states nothing to match against." ;
+		sh:select """
+			PREFIX elg: <https://www.nebularis.org/neuro-semantic/lattice/eligibility#>
+			SELECT $this WHERE {
+				$this elg:matchStrategy ?strategy .
+				FILTER (?strategy IN (elg:ExactMatch, elg:SetMembership, elg:HierarchicalMatch))
+				FILTER NOT EXISTS { $this elg:requiredConcept ?required }
+				FILTER NOT EXISTS { $this elg:excludedConcept ?excluded }
+			}
+		"""
+	] ;
+	sh:sparql [
+		sh:message "A required or excluded concept is declared on a condition whose match strategy does not match concepts. IntervalContainment expresses gaps through its range set instead." ;
+		sh:select """
+			PREFIX elg: <https://www.nebularis.org/neuro-semantic/lattice/eligibility#>
+			SELECT $this WHERE {
+				$this elg:matchStrategy ?strategy .
+				FILTER (?strategy IN (elg:IntervalContainment, elg:Wildcard))
+				{ $this elg:requiredConcept ?concept } UNION { $this elg:excludedConcept ?concept }
+			}
+		"""
+	] .
+
+elg:ReachableExclusionShape a sh:NodeShape ;
+	sh:targetClass elg:Condition ;
+	sh:severity sh:Warning ;
+	sh:sparql [
+		sh:message "An excluded concept matches none of the condition's required concepts, so it excludes nothing. Discharges elg:L13." ;
+		sh:select """
+			PREFIX elg: <https://www.nebularis.org/neuro-semantic/lattice/eligibility#>
+			PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+			SELECT $this ?value WHERE {
+				$this elg:excludedConcept ?value ;
+					  elg:requiredConcept ?anyRequired .
+				FILTER NOT EXISTS {
+					$this elg:requiredConcept ?required .
+					FILTER (?value = ?required || EXISTS {
+						$this elg:matchStrategy elg:HierarchicalMatch .
+						?value skos:broader+ ?required .
+					})
+				}
+			}
+		"""
+	] .

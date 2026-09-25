@@ -7,8 +7,8 @@
 
 <https://www.nebularis.org/neuro-semantic/eligibility-vocab>
 	a owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/eligibility-vocab/0.2.0> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.2.0> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/eligibility-vocab/0.3.0> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.3.0> .
 
 elg:ExactMatch a elg:MatchStrategy .
 elg:SetMembership a elg:MatchStrategy .
@@ -36,6 +36,7 @@ elg:E5 a elg:OperationalProfile ; rdfs:comment "Compatibility-all profile" .
 elg:E6 a elg:OperationalProfile ; rdfs:comment "Dimension-consistency profile" .
 
 elg:SemanticLaw a elg:LawRegister ; rdfs:comment "Discharged by formal argument." .
+elg:StaticConstraint a elg:LawRegister ; rdfs:comment "Discharged by SHACL, SPARQL, or other static analysis of declarations." .
 
 elg:L1 a elg:Law ; rdfs:comment "Each condition declares exactly one match strategy." .
 elg:L2 a elg:Law ; rdfs:comment "Each condition declares exactly one compatibility operation." .
@@ -48,3 +49,15 @@ elg:L8 a elg:Law ; rdfs:comment "EligibilityDecision names one operational profi
 elg:L9 a elg:Law ;
 	elg:lawRegister elg:SemanticLaw ;
 	rdfs:comment "Hierarchical match closure. A candidate value satisfies a condition under hierarchical match exactly when it stands in the reflexive-transitive closure of the bound scheme's ordering relation, restricted to that scheme's members, below the asserted value. The ordering relation is acyclic over the bound scheme; a scheme carrying a cycle is not evaluable under hierarchical match." .
+elg:L10 a elg:Law ;
+	elg:lawRegister elg:SemanticLaw ;
+	rdfs:comment "Exclusion precedence. A candidate that matches an excluded concept of a condition, under the condition's match strategy, does not satisfy the condition, whether or not it also matches a required concept." .
+elg:L11 a elg:Law ;
+	elg:lawRegister elg:SemanticLaw ;
+	rdfs:comment "Exclusion granularity. Under hierarchical match, a candidate that stands strictly above an excluded concept in the bound scheme's ordering, and is otherwise admitted, leaves the condition undetermined for that candidate. Its true value may or may not fall under the exclusion." .
+elg:L12 a elg:Law ;
+	elg:lawRegister elg:SemanticLaw ;
+	rdfs:comment "Default inclusion. A condition that declares excluded concepts and no required concept requires every member of its bound scheme, so it admits any member not excluded." .
+elg:L13 a elg:Law ;
+	elg:lawRegister elg:StaticConstraint ;
+	rdfs:comment "Reachable exclusions. Where a condition declares required concepts, each of its excluded concepts matches at least one of them under the condition's match strategy. An exclusion outside every inclusion excludes nothing." .

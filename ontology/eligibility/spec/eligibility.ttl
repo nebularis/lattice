@@ -9,15 +9,16 @@
 @prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 @base <https://www.nebularis.org/neuro-semantic/eligibility> .
 
 <https://www.nebularis.org/neuro-semantic/eligibility>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.2.0> ;
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.3.0> ;
 	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.2.0> ,
 				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.2.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.2.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/party/0.2.0> .
+				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.3.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/party/0.3.0> .
 
 elg:Condition a owl:Class ;
 	rdfs:comment "A declared admissibility condition." .
@@ -60,6 +61,14 @@ elg:forCondition a owl:ObjectProperty, owl:FunctionalProperty ;
 
 elg:requiredRangeSet a owl:ObjectProperty ;
 	rdfs:domain elg:Condition ; rdfs:range qnt:RangeSet .
+
+elg:requiredConcept a owl:ObjectProperty ;
+	rdfs:domain elg:Condition ; rdfs:range skos:Concept ;
+	rdfs:comment "A concept a candidate must match, under the condition's match strategy. Several required concepts are alternatives to one another." .
+
+elg:excludedConcept a owl:ObjectProperty ;
+	rdfs:domain elg:Condition ; rdfs:range skos:Concept ;
+	rdfs:comment "A concept a candidate must not match, under the condition's match strategy. Each excluded concept excludes independently of the others." .
 
 elg:candidateRangeSet a owl:ObjectProperty ;
 	rdfs:domain elg:Question ; rdfs:range qnt:RangeSet .

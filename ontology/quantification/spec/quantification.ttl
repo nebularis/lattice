@@ -10,7 +10,7 @@
 
 <https://www.nebularis.org/neuro-semantic/quantification>
     rdf:type owl:Ontology ;
-    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/quantification/0.2.0> ;
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/quantification/0.3.0> ;
     owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.2.0> ,
                 <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.2.0> .
 
@@ -528,8 +528,9 @@ qnt:comparisonResult a owl:ObjectProperty, owl:FunctionalProperty ;
     rdfs:comment "The truth value produced by a Comparison." .
 
 qnt:unresolvedReason a owl:ObjectProperty ;
-    rdfs:domain qnt:Comparison ; rdfs:range qnt:UnresolvedReason ;
-    rdfs:comment "A declared reason why a Comparison is indeterminate." .
+    rdfs:domain [ a owl:Class ; owl:unionOf ( qnt:Comparison qnt:UnresolvedValue ) ] ;
+    rdfs:range qnt:UnresolvedReason ;
+    rdfs:comment "A declared reason why a Comparison is indeterminate, or why an UnresolvedValue has no definite value." .
 
 qnt:comparisonProfile a owl:ObjectProperty, owl:FunctionalProperty ;
     rdfs:domain qnt:Comparison ; rdfs:range qnt:OperationalProfile ;
