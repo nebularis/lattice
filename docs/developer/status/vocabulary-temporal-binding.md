@@ -3,7 +3,7 @@
 # Vocabulary Temporal Binding - Status
 
 **Unit ID:** `vocabulary-temporal-binding`
-**Status:** Complete. Vocabulary package, SHACL, and both real consumers (Surface, Eligibility) verified green.
+**Status:** Closed (2026-09-25). Vocabulary package, SHACL, and both real consumers (Surface, Eligibility) verified green. ADR-A85 Accepted.
 **Last updated:** 2026-09-25
 **Trigger:** `65ac4a85e11cc1f8616e3e0c24efd59bf4ca410d`
 **Plan:** [vocabulary-temporal-fixes.md](../plans/vocabulary-temporal-fixes.md)
@@ -150,11 +150,10 @@ passed with the resolver wired in before this pass.
 
 ## Human validation gate
 
-Before treating this unit as closed:
+Closed 2026-09-25:
 
-1. Review this implementation against the plan, ADR-A85, and the sketch's
-   invariants.
-2. The automated checks have run: `mise run check:vocabulary` (14/14),
+1. Reviewed against the plan, ADR-A85, and the sketch's invariants.
+2. Automated checks ran green: `mise run check:vocabulary` (14/14),
    `python -m unittest surface.test_surface -q` (62/62), and `mise run
    check:python-root` (77/77 plus Phase 8 conformance).
 3. Perform the validation pack's human mutation probe (disable strict-superset

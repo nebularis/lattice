@@ -3,7 +3,7 @@
 # Vocabulary Temporal Binding - Design Sketch
 
 **Unit ID:** `vocabulary-temporal-binding`
-**Status:** Design sketch for human review. No implementation is claimed.
+**Status:** Closed (2026-09-25). Superseded by the plan, status record, and validation pack; retained for historical context. Follow-on hardening items are tracked separately under `temporal-binding-consumer-hardening`.
 **Trigger:** commit `65ac4a85e11cc1f8616e3e0c24efd59bf4ca410d` (`[vocabulary] time-bound binding`)
 **Source of truth:** `ontology/vocabulary/README.md` and the extracted `spec/vocabulary.ttl`.
 
