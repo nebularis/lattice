@@ -16,7 +16,7 @@ depends = ["bootstrap:python-root", "bootstrap:mork", "bootstrap:mork-compilers"
 
 [tasks."bootstrap:python-root"]
 description = "Install root ontology validation dependencies"
-run = "python -m pip install -c requirements-lock.txt '.[reasoning]'"
+run = "python -m pip install -c requirements-lock.txt '.[reasoning,test]'"
 
 [tasks."bootstrap:workers"]
 description = "Install the worker package with test dependencies"
@@ -48,7 +48,7 @@ run = "corepack enable && yarn install --immutable"
 
 [tasks.check]
 description = "Run all repository validation tasks"
-depends = ["check:python-root", "check:workers", "check:java", "check:frontend", "check:spc", "check:persistence", "check:vocabulary", "check:ontology-versioning", "check:minting", "build:mtp", "check:mtp"]
+depends = ["check:python-root", "check:workers", "check:java", "check:frontend", "check:spc", "check:persistence", "check:vocabulary", "check:eligibility-examples", "check:ontology-versioning", "check:ontology-catalog", "check:minting", "build:mtp", "check:mtp"]
 
 [tasks.test]
 description = "Run the repository test suites"
@@ -134,9 +134,21 @@ run = "python -m pytest tools/persistence/tests -q"
 description = "Run the Vocabulary scoped/temporal binding conformance package (SHACL fixtures, resolver, determinism, consumer boundary; ADR-A85)"
 run = "python -m pytest tools/vocabulary/tests -q"
 
+[tasks."check:eligibility-examples"]
+description = "Validate the Eligibility examples against the layer's shapes, with warning-probe cases (ADR-A87)"
+run = "python -m pytest tools/test_eligibility_examples.py -q"
+
 [tasks."check:ontology-versioning"]
-description = "Flag any ontology.ttl file whose content changed without its owl:versionIRI moving too (ADR-A86)"
-run = "python tools/ontology_version_check.py"
+description = "Flag any ontology .ttl file whose content changed without its owl:versionIRI moving too, or a spec/vocab document with no owl:versionIRI (ADR-A86)"
+run = "python -m pytest tools/test_ontology_version_check.py -q && python tools/ontology_version_check.py"
+
+[tasks."build:ontology-catalog"]
+description = "Regenerate ontology/catalog-v001.xml and the spec/vocab stub catalogs (ADR-A88)"
+run = "python tools/ontology_catalog.py write"
+
+[tasks."check:ontology-catalog"]
+description = "Fail when a catalog drifts, an import does not resolve, or a known defect is fixed but still listed (ADR-A88)"
+run = "python -m pytest tools/test_ontology_catalog.py -q && python tools/ontology_catalog.py check"
 
 [tasks."services:up"]
 description = "Start the reference platform services"

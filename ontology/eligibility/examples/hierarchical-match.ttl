@@ -1,18 +1,35 @@
 # SPDX-License-Identifier: MPL-2.0
 
 @prefix elg: <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
+@prefix fnd: <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix voc: <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 @prefix ex:  <https://example.org/lattice/eligibility/> .
 
-ex:peril-root a skos:Concept ; skos:prefLabel "Peril"@en .
-ex:fire a skos:Concept ; skos:prefLabel "Fire"@en ; skos:broader ex:peril-root .
-ex:industrial-fire a skos:Concept ; skos:prefLabel "Industrial Fire"@en ; skos:broader ex:fire .
+ex:hazard-scheme a voc:ConceptScheme ;
+    fnd:hasIdentity ex:hazard-scheme-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Hazard scheme"@en .
+
+ex:hazard-contract a voc:SchemeContract ;
+    fnd:hasIdentity ex:hazard-contract-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    voc:constrainsProperty ex:hasHazard ;
+    voc:boundScheme ex:hazard-scheme .
+
+ex:peril-root a skos:Concept ; skos:prefLabel "Peril"@en ; skos:inScheme ex:hazard-scheme .
+ex:fire a skos:Concept ; skos:prefLabel "Fire"@en ; skos:broader ex:peril-root ; skos:inScheme ex:hazard-scheme .
+ex:industrial-fire a skos:Concept ; skos:prefLabel "Industrial Fire"@en ; skos:broader ex:fire ; skos:inScheme ex:hazard-scheme .
 
 ex:hierarchical-condition
     a elg:Condition ;
     elg:matchStrategy elg:HierarchicalMatch ;
     elg:compatibilityOperation elg:AllRequired ;
-    elg:wildcardSemantics elg:NoWildcard .
+    elg:wildcardSemantics elg:NoWildcard ;
+    elg:constrainedByContract ex:hazard-contract ;
+    # Removing elg:requiredConcept raises elg:ConceptConditionDeclarationShape
+    # (sh:Warning), because the condition would state nothing to match against.
+    elg:requiredConcept ex:fire .
 
 ex:subject-question
     a elg:Question ;
@@ -23,8 +40,14 @@ ex:decision
     a elg:EligibilityDecision ;
     elg:forProfile ex:hierarchical-profile ;
     elg:hasQuestion ex:subject-question ;
+    elg:usesOperationalProfile ex:reference-profile ;
     elg:decisionValue elg:Permitted .
+
+ex:reference-profile a elg:OperationalProfile .
 
 ex:hierarchical-profile
     a elg:AdmissionProfile ;
-    elg:hasCondition ex:hierarchical-condition .
+    elg:hasCondition ex:hierarchical-condition ;
+    elg:matchStrategy elg:HierarchicalMatch ;
+    elg:compatibilityOperation elg:AllRequired ;
+    elg:wildcardSemantics elg:NoWildcard .
