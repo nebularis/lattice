@@ -10,7 +10,7 @@
 
 <https://www.nebularis.org/neuro-semantic/foundation> 
     rdf:type owl:Ontology ;
-    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.2.0> ;
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.3.0> ;
     owl:imports <http://www.w3.org/ns/prov-o-20130430> .
 
 #################################################################
@@ -217,8 +217,37 @@ fnd:Version rdf:type owl:Class ;
 #    General axioms
 #################################################################
 
+###  https://www.nebularis.org/neuro-semantic/lattice/foundation#DerivedArtefact
+fnd:DerivedArtefact rdf:type owl:Class ;
+                    rdfs:subClassOf prov:Entity ;
+                    rdfs:comment "Something produced from declared sources by a derivation, not authored directly." ;
+                    fnd:utility "A compiled, generated, validated or materialised product. Subclass it for a layer's own derived records. Name the kind with derivationKind, the run that produced it with prov:wasGeneratedBy, and its sources with prov:wasDerivedFrom." .
+
+
+###  https://www.nebularis.org/neuro-semantic/lattice/foundation#DerivationRun
+fnd:DerivationRun rdf:type owl:Class ;
+                  rdfs:subClassOf prov:Activity ;
+                  rdfs:comment "One execution of a derivation." ;
+                  fnd:utility "The activity that produced one or more derived artefacts. Link the sources it read with prov:used." .
+
+
+###  https://www.nebularis.org/neuro-semantic/lattice/foundation#DerivationKind
+fnd:DerivationKind rdf:type owl:Class ;
+                   rdfs:comment "The kind of derivation that produced an artefact." ;
+                   fnd:utility "One of the derivation kinds ADR-A12 names: inferred, validated, materialised, projected, indexed, generated, compiled, or a decision or execution record." .
+
+
+###  https://www.nebularis.org/neuro-semantic/lattice/foundation#derivationKind
+fnd:derivationKind rdf:type owl:ObjectProperty ;
+                   rdfs:domain fnd:DerivedArtefact ;
+                   rdfs:range fnd:DerivationKind ;
+                   rdfs:comment "The kind of derivation that produced a derived artefact." ;
+                   fnd:utility "Points a derived artefact at the kind of derivation that produced it." .
+
+
 [ rdf:type owl:AllDisjointClasses ;
-  owl:members ( fnd:Evidence
+  owl:members ( fnd:DerivationKind
+                fnd:Evidence
                 fnd:GovernanceState
                 fnd:PersistentIdentity
                 fnd:TemporalScope

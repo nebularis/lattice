@@ -5,6 +5,7 @@
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 @base <https://www.nebularis.org/neuro-semantic/lattice/executable#> .
 
@@ -31,8 +32,9 @@
 
 <https://www.nebularis.org/neuro-semantic/lattice/executable>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/executable/0.3.0> ;
-	owl:imports <http://www.nebularis.org/ontologies/Mork> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/executable/0.4.0> ;
+	owl:imports <http://www.nebularis.org/ontologies/Mork> ,
+		<http://www.w3.org/ns/prov-o-20130430> .
 
 #################################################################
 #    Classes
@@ -156,6 +158,21 @@
 	rdfs:range elg:Decision ;
 	rdfs:comment "A positive, monotonic profile outcome a SWRL rule derived for an elg:EligibilityDecision record from its questions' exe:impliesDecision facts, or for a bound subject from its exe:permittedUnder and exe:deniedUnder facts (ADR-A89 item 5, ADR-A91)." ;
 	skos:scopeNote "Separate from elg:decisionValue, which is functional: a record that already asserts a value would otherwise be forced to equate two decision individuals." .
+
+#################################################################
+#    PROV-O alignment (ADR-A92)
+#################################################################
+# Direct, with no Foundation import. PROV-O declares no functional or
+# inverse-functional property, so this adds none. It does make every node a
+# plan derives from a prov:Entity, and PROV-O declares prov:Entity disjoint
+# with prov:Activity.
+
+:ExecutablePlan rdfs:subClassOf prov:Entity .
+:GeneratedArtefact rdfs:subClassOf prov:Entity .
+:derivedFromEligibilityNode rdfs:subPropertyOf prov:wasDerivedFrom .
+:derivedFromQuantificationNode rdfs:subPropertyOf prov:wasDerivedFrom .
+:derivedFromVocabularyNode rdfs:subPropertyOf prov:wasDerivedFrom .
+:compiledFromMapping rdfs:subPropertyOf prov:wasDerivedFrom .
 
 #################################################################
 #    Disjointness

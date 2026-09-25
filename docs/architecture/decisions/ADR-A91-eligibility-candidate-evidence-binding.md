@@ -2,8 +2,8 @@
 
 # ADR-A91: Eligibility candidate evidence binding
 
-**Status:** Proposed
-**Date:** 2026-09-25
+**Status:** Accepted
+**Date:** 2026-09-25 (proposed), 2026-09-25 (accepted)
 **Related:** ADR-A01 (layer dependency order), ADR-A17 (unified projection
 authoring), ADR-A24, ADR-A89, ADR-A90
 **Unit:** [`applied-ontology-readiness`](../../developer/plans/applied-ontology-readiness.md)

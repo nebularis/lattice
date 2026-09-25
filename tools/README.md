@@ -77,6 +77,10 @@ input, which is what makes a surface stacked; `--now` fixes the production
 timestamp, which is the only non-reproducible value emitted;
 `--mork-mapping` additionally writes the `mrk:ProjectionMapping` record.
 
+Each written module carries a content-addressed `owl:versionIRI`: its ontology
+IRI followed by the first 16 hex digits of its canonical hash, taken without
+the version IRI (ADR-A86 proposed addendum, item 5).
+
 `--verify-determinism` compiles twice, compares artefact hashes, fails the run
 on mismatch, and records a discharge of law `srf:R1` on success. The production
 timestamp sits outside the artefact hash precisely so that this comparison
@@ -194,7 +198,7 @@ where [ADR-A87](../docs/architecture/decisions/ADR-A87-eligibility-concept-inclu
 says it should, and nowhere else.
 
 ```bash
-mise run check:eligibility-examples
+mise run check:ontology-catalog
 ```
 
 ## `tools/ontology_catalog.py` — import resolution
@@ -203,8 +207,8 @@ Generates `ontology/catalog-v001.xml` and the stub catalogs in every `spec/`
 and `vocab/` directory, checks that every `owl:imports` target under
 `ontology/` resolves, and loads an import closure into `rdflib` through a
 catalog chain ([ADR-A88](../docs/architecture/decisions/ADR-A88-ontology-import-resolution-for-consumers.md)).
-Pre-existing defects are listed in `KNOWN_DEFECTS` and reported without
-failing. The check fails once a listed defect is fixed, so the entry is
+`check:ontology-catalog` first runs every `tools/test_*.py`. Pre-existing
+defects are listed in `KNOWN_DEFECTS` and reported without failing. The check fails once a listed defect is fixed, so the entry is
 removed in the same change.
 
 ```bash
@@ -221,4 +225,14 @@ or when a document under `spec/` or `vocab/` has no version IRI
 
 ```bash
 mise run check:ontology-versioning
+```
+
+## `tools/test_provenance_alignment.py` — PROV-O alignment
+
+Checks Foundation's derived-artefact contract, Surface's alignment to it, and
+Executable's direct alignment to PROV-O, including an RDFS entailment run over
+a compiled plan ([ADR-A92](../docs/architecture/decisions/ADR-A92-derived-artefact-contract-and-prov-o-alignment.md)).
+
+```bash
+mise run check:ontology-catalog
 ```

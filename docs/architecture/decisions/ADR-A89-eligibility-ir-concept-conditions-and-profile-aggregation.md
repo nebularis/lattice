@@ -2,8 +2,8 @@
 
 # ADR-A89: Eligibility IR for concept conditions and profile aggregation
 
-**Status:** Proposed
-**Date:** 2026-09-25
+**Status:** Accepted
+**Date:** 2026-09-25 (proposed), 2026-09-25 (accepted)
 **Extends:** ADR-A24 (Eligibility executable semantics and backend strategy)
 **Related:** ADR-A23 (compiler family completion), ADR-A27 (invalidation),
 ADR-A28 (parity gate), ADR-A05 (compatibility operations), ADR-A85 (binding

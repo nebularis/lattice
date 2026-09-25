@@ -104,7 +104,8 @@ directly (ADR-A87 item 4).
    The enumeration is re-run before and after editing.
 6. New `tools/test_eligibility_examples.py` (pytest, rdflib and pySHACL, both
    existing root dependencies).
-7. `mise.toml`: new task `check:eligibility-examples`
+7. `mise.toml`: new task `check:eligibility-examples` (folded into
+   `check:ontology-catalog` on 2026-09-25, which runs every `tools/test_*.py`)
    (`python -m pytest tools/test_eligibility_examples.py -q`), added to the
    aggregate `check`.
 8. `tools/README.md` lists the new test.
@@ -126,7 +127,7 @@ Examples declare no `owl:Ontology`, so changes 1 to 3 carry no version impact.
 | AOR2-09 | a condition whose excluded concept lies outside every required concept / validated / one `elg:ReachableExclusionShape` warning | L1 | - |
 | AOR2-10 | the shape in `constraints.ttl` and the README §7 block / parsed / isomorphic | L3 | + |
 
-**One command:** `mise run check:eligibility-examples`.
+**One command:** `mise run check:ontology-catalog` (originally `check:eligibility-examples`).
 **Also run:** `mise run check:ontology-versioning`, and
 `grep -rl 'lattice/eligibility/0.3.0' ontology tools` returns nothing.
 **Artefacts to inspect:** the three example diffs and their comments.
@@ -228,7 +229,7 @@ Each depends on AOR-2 and on the ADRs named.
 | AOR-7 | `Expanded` closure. SHACL and SWRL backends for concept plans. `exe:ConceptMatchPlan` and the diagnostic vocabulary. Executable MINOR | `tools/mork_compilers`, `ontology/mork` | AOR-6 | L1, L2 | 180k |
 | AOR-8 | Profile aggregation for `AllRequired` and `AnySufficient` on all three backends. `DimensionConsistent` refused with a diagnostic | `tools/mork_compilers` | AOR-7 | L1, L2 | 130k |
 | AOR-9 | `elg:EvidenceBinding`, `elg:EvidenceStep`, `elg:aboutSubject`. The IR reads candidates through bindings. Eligibility MINOR with cascade | `ontology/eligibility`, `tools/mork_compilers` | A-91, AOR-8 | L1, L2 | 180k |
-| AOR-10 | OWL backend: hierarchy and condition classes, `exe:OwlArtefact`, sibling-disjointness option | `tools/mork_compilers`, `ontology/mork` | A-90, AOR-9, `eligibility-compiler` B3 (ADR-A83 harness) | L1, L4 | 170k |
+| AOR-10 | OWL backend: hierarchy and condition classes, `exe:OwlArtefact`, sibling-disjointness option | `tools/mork_compilers`, `ontology/mork` | A-90, AOR-9, the path encoding decision, and the ADR-A83 harness | L1, L4 | 170k |
 | AOR-11 | Profile classes and the subsumption, satisfiability and overlap checks through the harness CLI | `tools/mork_compilers` | AOR-10 | L4 | 150k |
 
 **Test-case outline for Phase B.** Each slice's VP carries, as applicable:
@@ -256,18 +257,18 @@ Each Phase B slice's single command is `mise run check:python-root` until a
 
 ## Phase C: Substrate extensions
 
-Each slice starts by drafting its ADR, or is gated on the one named. Each is
+Each slice is gated on the ADR named, drafted 2026-09-25. Each is
 an ontology change with the ADR-A86 cascade. Test cases are fixed when the ADR
 is ratified.
 
 | Slice | Scope | Decision | Version impact | Estimate |
 |---|---|---|---|---|
 | AOR-12 | `fnd:DerivedArtefact`, `fnd:DerivationRun`, derivation kinds in Foundation vocab. `srf:DerivedArtefact` alignment. Carries the ADR-A91 step-list lift if accepted by then | A-92 | Foundation, Surface MINOR. Foundation cascades to every layer | 200k |
-| AOR-13 | Executable imports Foundation. `exe:` plans, artefacts and derivation properties aligned with PROV-O | A-92 | Executable MINOR | 90k |
-| AOR-14 | Derived rate spaces (sketch AO10) | new ADR | Quantification MINOR, cascades | 150k |
-| AOR-15 | Calendar binding through `qnt:UnitContract` (AO11) | new ADR | Quantification MINOR, cascades | 150k |
-| AOR-16 | Alternative bounds stated per unit (AO12) | new ADR | Quantification MINOR, cascades | 120k |
-| AOR-17 | `ins:inProvision` no longer functional (AO13) | new ADR | Instrument MINOR, cascades | 60k |
+| AOR-13 | Executable aligned directly to PROV-O, without importing Foundation (ADR-A92 item 3 as rewritten) | A-92 | Executable MINOR | 90k |
+| AOR-14 | Derived rate spaces (sketch AO10) | [A-93](../../architecture/decisions/ADR-A93-quantification-derived-rate-spaces.md) | Quantification MINOR, cascades | 150k |
+| AOR-15 | Calendar binding through `qnt:UnitContract` (AO11) | [A-94](../../architecture/decisions/ADR-A94-quantification-calendar-binding.md) | Quantification MINOR, cascades | 150k |
+| AOR-16 | Alternative bounds stated per unit (AO12) | [A-95](../../architecture/decisions/ADR-A95-quantification-alternative-bounds.md) | Quantification MINOR, cascades | 120k |
+| AOR-17 | `ins:inProvision` no longer functional (AO13) | [A-96](../../architecture/decisions/ADR-A96-instrument-provision-attachment.md) | Instrument MINOR, cascades | 60k |
 
 AOR-14 to AOR-16 each change Quantification. If ratified together they should
 land as one Quantification bump, to cascade once.

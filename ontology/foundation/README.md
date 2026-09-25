@@ -221,18 +221,56 @@ fnd:GovernanceState a owl:Class ;
     fnd:utility "The current status of a Governable thing within its review lifecycle — draft, reviewed, active, or superseded. Point hasGovernanceState at whichever value currently applies. Tracking the transition itself is a separate concern from recording the current value; pair with a state-machine mechanism elsewhere if you need it." .
 ```
 
+#### `fnd:DerivedArtefact`
+
+**Definition.** Something produced from declared sources by a derivation, not authored directly.
+
+**Utility.** A compiled, generated, validated or materialised product (ADR-A12, ADR-A92). Subclass it for a layer's own derived records. Name the kind with `derivationKind`, the run that produced it with `prov:wasGeneratedBy`, and its sources with `prov:wasDerivedFrom`.
+
+```turtle-spec
+fnd:DerivedArtefact a owl:Class ;
+    rdfs:subClassOf prov:Entity ;
+    rdfs:comment "Something produced from declared sources by a derivation, not authored directly." ;
+    fnd:utility "A compiled, generated, validated or materialised product. Subclass it for a layer's own derived records. Name the kind with derivationKind, the run that produced it with prov:wasGeneratedBy, and its sources with prov:wasDerivedFrom." .
+```
+
+#### `fnd:DerivationRun`
+
+**Definition.** One execution of a derivation.
+
+**Utility.** The activity that produced one or more derived artefacts. Link the sources it read with `prov:used`.
+
+```turtle-spec
+fnd:DerivationRun a owl:Class ;
+    rdfs:subClassOf prov:Activity ;
+    rdfs:comment "One execution of a derivation." ;
+    fnd:utility "The activity that produced one or more derived artefacts. Link the sources it read with prov:used." .
+```
+
+#### `fnd:DerivationKind`
+
+**Definition.** The kind of derivation that produced an artefact.
+
+**Utility.** One of the derivation kinds ADR-A12 names, declared in `vocab/foundation-vocab.ttl`: inferred, validated, materialised, projected, indexed, generated, compiled, or a decision or execution record.
+
+```turtle-spec
+fnd:DerivationKind a owl:Class ;
+    rdfs:comment "The kind of derivation that produced an artefact." ;
+    fnd:utility "One of the derivation kinds ADR-A12 names: inferred, validated, materialised, projected, indexed, generated, compiled, or a decision or execution record." .
+```
+
 ### Disjointness
 
 ```turtle-spec
 [] a owl:AllDisjointClasses ;
-    owl:members ( fnd:Version fnd:PersistentIdentity fnd:Evidence fnd:TemporalScope fnd:GovernanceState ) .
+    owl:members ( fnd:Version fnd:PersistentIdentity fnd:Evidence fnd:TemporalScope fnd:GovernanceState fnd:DerivationKind ) .
 
 fnd:Evidenced owl:disjointWith fnd:Evidence .
 fnd:TemporallyScoped owl:disjointWith fnd:TemporalScope .
 fnd:Governable owl:disjointWith fnd:GovernanceState .
 ```
 
-**Utility.** `Version`, `PersistentIdentity`, `Evidence`, `TemporalScope`, and `GovernanceState` should never be classified as one another. Separately, `Evidenced`, `TemporallyScoped`, and `Governable` should each not be classified as the value object they point at, while still being combinable with one another and with `Version`.
+**Utility.** `Version`, `PersistentIdentity`, `Evidence`, `TemporalScope`, `GovernanceState`, and `DerivationKind` should never be classified as one another. Separately, `Evidenced`, `TemporallyScoped`, and `Governable` should each not be classified as the value object they point at, while still being combinable with one another and with `Version`.
 
 ## 7. Object and Data Properties
 
@@ -365,6 +403,18 @@ fnd:hasGovernanceState a owl:ObjectProperty, owl:FunctionalProperty ;
     fnd:utility "Points a Governable thing at its current governance status. Keep one current value at a time and update it as review status changes." .
 ```
 
+#### `fnd:derivationKind`
+
+**Definition.** The kind of derivation that produced a derived artefact.
+
+```turtle-spec
+fnd:derivationKind a owl:ObjectProperty ;
+    rdfs:domain fnd:DerivedArtefact ;
+    rdfs:range fnd:DerivationKind ;
+    rdfs:comment "The kind of derivation that produced a derived artefact." ;
+    fnd:utility "Points a derived artefact at the kind of derivation that produced it." .
+```
+
 ## 8. Alignments
 
 Collected here for visibility, and to make them easy to extract into a separate optional module later if that split (discussed in §4) is taken up. Nothing in this section introduces new LATTICE classes or properties — it only relates existing ones to PROV-O.
@@ -372,6 +422,8 @@ Collected here for visibility, and to make them easy to extract into a separate 
 ```turtle-spec
 fnd:Evidence rdfs:subClassOf prov:Entity .
 fnd:assertedBy rdfs:subPropertyOf prov:wasAttributedTo .
+fnd:DerivedArtefact rdfs:subClassOf prov:Entity .
+fnd:DerivationRun rdfs:subClassOf prov:Activity .
 ```
 
 ## 9. Worked Micro-Example
@@ -423,12 +475,12 @@ ex:ob1
 | `fnd:validTo` | Data property | Functional, optional |
 | `fnd:hasGovernanceState` | Object property | Functional |
 
-Five classes mutually disjoint (`Version`, `PersistentIdentity`, `Evidence`, `TemporalScope`, `GovernanceState`); each of the three "points-to" mixins disjoint from its own value class.
+Six classes mutually disjoint (`Version`, `PersistentIdentity`, `Evidence`, `TemporalScope`, `GovernanceState`, `DerivationKind`); each of the three "points-to" mixins disjoint from its own value class.
 
 ## 11. Open Items
 
 - **Alignment module split.** §8's PROV-O alignment axioms are candidates for a separate, optional file a consumer could choose not to import, keeping `spec/foundation.ttl` itself free of external dependencies. Not built yet — a decision for whoever builds `tools/`.
-- **`fnd:GovernanceState`'s named individuals** (`Draft`, `Reviewed`, `Active`, `Superseded`) belong in `vocab/foundation-vocab.ttl`, not written here — this document only establishes the class and property they'll populate.
+- **`fnd:GovernanceState`'s named individuals** (`Draft`, `Reviewed`, `Active`, `Superseded`) and **`fnd:DerivationKind`'s** (`Inferred`, `Validated`, `Materialised`, `Projected`, `Indexed`, `Generated`, `Compiled`, `DecisionRecord`) belong in `vocab/foundation-vocab.ttl`, not written here — this document only establishes the classes and properties they populate.
 - **The `same-identity` integrity check** on `fnd:supersededBy` (§7) belongs in `shapes/constraints.ttl` as a SHACL-SPARQL rule, not attempted here as an OWL property chain.
 - **This Turtle has been checked by manual syntax review, not by an actual OWL/Turtle parser** — no parser was available in the environment this document was drafted in. Running it through `riot` (Apache Jena) or `rdflib` before merging into `spec/foundation.ttl` is a needed step, not an optional one.
 - ~~Extraction tooling should assert its section filter explicitly~~ — **Resolved.** Spec content is now fenced ` ```turtle-spec `; illustration is fenced ` ```turtle-example `. Extraction filters on the fence tag alone; no section-number knowledge is required.

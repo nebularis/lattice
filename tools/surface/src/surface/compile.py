@@ -717,7 +717,6 @@ class SurfaceCompiler:
         self, graph: Graph, iri: URIRef, imports: Sequence[URIRef], comment: str
     ) -> None:
         graph.add((iri, RDF.type, OWL.Ontology))
-        graph.add((iri, OWL.versionIRI, URIRef(f"{iri}/0.0.1")))
         for target in imports:
             graph.add((iri, OWL.imports, target))
         graph.add((iri, RDFS.comment, Literal(comment)))
@@ -923,8 +922,23 @@ def discharge_determinism(compiled: CompiledSurface, produced_at: str, run: str)
     compiler.discharge(compiled.modules["manifest"], SRF.R1, run)
 
 
+def stamp_content_version(graph: Graph) -> Graph:
+    """Give a generated module a content-addressed version IRI: its ontology IRI
+    followed by the first 16 hex digits of the module's canonical hash, taken
+    without any version IRI. A regeneration that changes the module changes its
+    version IRI, and one that does not keeps it (ADR-A86 addendum, item 5)."""
+    ontologies = sorted(graph.subjects(RDF.type, OWL.Ontology))
+    for ontology in ontologies:
+        graph.remove((ontology, OWL.versionIRI, None))
+    digest = canonical.hash_graph(graph)
+    for ontology in ontologies:
+        graph.add((ontology, OWL.versionIRI, URIRef(f"{ontology}/{digest[:16]}")))
+    return graph
+
+
 def render(compiled: CompiledSurface) -> Dict[str, str]:
-    """Serialise every non-empty module, deterministically."""
+    """Serialise every non-empty module, deterministically, each stamped with
+    its content-addressed version IRI."""
     prefixes = dict(OUTPUT_PREFIXES)
     prefixes["exec"] = URIRef(str(compiled.contract.target_namespace))
     carrier = str(compiled.contract.carrier)
@@ -942,7 +956,7 @@ def render(compiled: CompiledSurface) -> Dict[str, str]:
         "",
     ]
     return {
-        name: serialise(graph, prefixes, header)
+        name: serialise(stamp_content_version(graph), prefixes, header)
         for name, graph in compiled.modules.items()
         if len(graph) > 0
     }

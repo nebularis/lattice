@@ -2,7 +2,7 @@
 
 # LATTICE Developer Coordination Index
 
-**Last updated:** 2026-09-25 — `applied-ontology-readiness` AOR-2 to AOR-9 implemented (autonomous), review requested  
+**Last updated:** 2026-09-25 — `applied-ontology-readiness` AOR-12/13 and ADRs A-83, A-93 to A-96 drafted. `documentation-link-repair` planned  
 **Purpose:** Single source of truth for all active units of work: sketches, plans, status, reviews, and validation packs.  
 **Format:** By unit identifier, with links to all related documents and current status.
 
@@ -321,7 +321,7 @@ The unratified universal IRI policy in ADR-A51 was superseded by [ADR-A82](../ar
 | Item | Status | Link |
 |------|--------|------|
 | Signature scope and law X6 | ✅ Closed | [Outstanding items §3.1](status/surface-outstanding-items.md#31-signature-scope-and-law-x6--closed) |
-| Foundation migration (`srf:DerivedArtefact`) | ⏳ Needed | [Outstanding items §3.2](status/surface-outstanding-items.md#32-adr-a01-convention-conflict--closed) |
+| Foundation migration (`srf:DerivedArtefact`) | ✅ Done (ADR-A92) | [Outstanding items §3.2](status/surface-outstanding-items.md#32-adr-a01-convention-conflict--closed) |
 | Profile identity assertion | ⏳ Blocked | [Outstanding items §3.3](status/surface-outstanding-items.md#33-profile-identity-assertion--blocked) |
 | MORK toolchain join assumptions | ⏳ Needed | [Outstanding items §3.4](status/surface-outstanding-items.md#34-mork-toolchain-join-assumptions--needed) |
 
@@ -486,11 +486,11 @@ review, all implemented:
 
 Finding 5 (terminology overload of "scope") remains accepted, no action.
 
-# Applied Ontology Readiness — Phase A and B (to AOR-9) implemented, review requested (2026-09-25)
+# Applied Ontology Readiness — AOR-2 to AOR-9 committed, AOR-12/13 implemented (2026-09-25)
 
 | Field | Value |
 |-------|-------|
-| **Status** | 🚧 AOR-2 to AOR-9 implemented and self-validated (autonomous, 2026-09-25), human gate pending. AOR-10 onwards paused for decisions and the ADR-A83 harness |
+| **Status** | 🚧 AOR-2 to AOR-9 committed. AOR-3b, AOR-12, AOR-13 implemented, uncommitted. AOR-10/11 wait on ADR-A83 and a path-encoding decision. AOR-14 to AOR-17 wait on ADRs A-93 to A-96 |
 | **Unit ID** | `applied-ontology-readiness` |
 | **Trigger** | Human request, 2026-09-25 — close the gaps an applied (domain) ontology meets when built on LATTICE |
 | **Sketch** | [applied-ontology-readiness.md](sketches/applied-ontology-readiness.md) |
@@ -511,7 +511,21 @@ bounds, one obligation in several provisions).
 
 1. Phase A, consumable baseline: AOR-1 governance records — done. AOR-2 examples and the declaration warning, AOR-3 versioning guarantees, AOR-4 import catalog — implemented, [VPs](validation/applied-ontology-readiness-aor-2.md)
 2. Phase B, executable coverage: AOR-5 to AOR-9 (concept conditions, hierarchical match, SHACL and SWRL, diagnostics, profile aggregation, conformance corpus, evidence bindings) — implemented. AOR-10 and AOR-11 (OWL backend) — paused on the ADR-A83 harness and an encoding decision
-3. Phase C, substrate extensions: AOR-12 to AOR-17 — paused on decisions (status record)
+3. Phase C, substrate extensions: AOR-12 (Foundation derived-artefact contract) and AOR-13 (Executable to PROV-O) — implemented. AOR-14 to AOR-17 — ADRs A-93 to A-96 drafted
+
+# Documentation Link Repair — Pending (2026-09-25)
+
+| Field | Value |
+|-------|-------|
+| **Status** | ⏳ Pending. Not started |
+| **Unit ID** | `documentation-link-repair` |
+| **Plan** | [documentation-link-repair.md](plans/documentation-link-repair.md) |
+| **Status Record** | [documentation-link-repair.md](status/documentation-link-repair.md) |
+
+`mise run topology:links` reports 419 broken links (340 distinct). 290 are in
+the ignored Jekyll output `docs/_site/`, which the checker should not scan.
+The other 50 are wrong relative depths, moved targets, and targets that no
+longer exist. Five slices, about 180k tokens.
 
 # Part III — Archived/Historical Work
 
@@ -636,7 +650,8 @@ bounds, one obligation in several provisions).
 6. Vocabulary scoped and temporal binding conformance — closed 2026-09-25
 7. Vocabulary consumer hardening (`temporal-binding-consumer-hardening`) — implemented, not yet executed in this sandbox
 8. Ontology semantic versioning (ADR-A86) — implemented; ADR ratification pending
-9. Applied ontology readiness (`applied-ontology-readiness`) — AOR-2 to AOR-9 implemented, review requested
+9. Applied ontology readiness (`applied-ontology-readiness`) — AOR-2 to AOR-9 committed, AOR-12/13 implemented, review requested
+10. Documentation link repair (`documentation-link-repair`) — pending
 
 ### 🗄️ Archived
 1. Phase 0-6 handoff documents (refer to individual status records)
@@ -657,7 +672,7 @@ bounds, one obligation in several provisions).
 | **Vocabulary temporal binding conformance** | Examples, SHACL, resolver, consumer provenance checks | Closed 2026-09-25: executed and verified, ADR-A85 Accepted | None. Follow-on hardening tracked as `temporal-binding-consumer-hardening` |
 | **Vocabulary consumer hardening** | `produced_at`/hash conflation, missing resolution trace, `vvp:resolvedAt` naming, vocabulary architecture test | Implemented 2026-09-25 (all 4 findings); not yet executed in this sandbox (no rdflib) | Run `mise run check:vocabulary` and `python -m unittest surface.test_surface -v`, then close out |
 | **Ontology semantic versioning** | ADR-A86, versioning-policy doc, baseline reset, narrow enforcement check | Implemented (2026-09-25): policy doc, `0.2.0` baseline reset across 29 ontology documents, `check:ontology-versioning` tooling | Ratify ADR-A86; decide whether the discovered `literate_extract.py` drift becomes its own unit |
-| **Applied ontology readiness** | ADRs A-87 to A-92, A-86 addendum, 17 slices in three phases | Gaps any applied ontology meets when built on LATTICE (loading, examples, compilation, provenance, substrate extensions) | Review AOR-2 to AOR-9, ratify the ADRs, and decide the four gating questions in the review request |
+| **Applied ontology readiness** | ADRs A-87 to A-92, A-86 addendum, 17 slices in three phases | Gaps any applied ontology meets when built on LATTICE (loading, examples, compilation, provenance, substrate extensions) | Ratify ADR-A83 and A-93 to A-96, choose the OWL path encoding (ADR-A90 open question) |
 
 ---
 
@@ -668,7 +683,7 @@ bounds, one obligation in several provisions).
 - [persistence-compiler-iri-sync-slice-1.md](validation/persistence-compiler-iri-sync-slice-1.md) — compiler sync Slice 1
 - [persistence-compiler-iri-sync-slice-2.md](validation/persistence-compiler-iri-sync-slice-2.md) — compiler sync Slice 2
 - [persistence-compiler-iri-sync-slice-3.md](validation/persistence-compiler-iri-sync-slice-3.md) — compiler sync Slice 3
-- [applied-ontology-readiness-aor-2.md](validation/applied-ontology-readiness-aor-2.md) to [aor-9](validation/applied-ontology-readiness-aor-9.md) — applied ontology readiness, AOR-2 to AOR-9
+- [applied-ontology-readiness-aor-2.md](validation/applied-ontology-readiness-aor-2.md) to [aor-9](validation/applied-ontology-readiness-aor-9.md), [aor-3b](validation/applied-ontology-readiness-aor-3b.md), [aor-12](validation/applied-ontology-readiness-aor-12.md), [aor-13](validation/applied-ontology-readiness-aor-13.md) — applied ontology readiness
 - More to be created as each slice/phase completes
 
 ## Test Taxonomy (L0–L8)
@@ -689,9 +704,8 @@ bounds, one obligation in several provisions).
 | MORK compiler backends | 74 passing (2026-09-25) | `mise run check:mork-compilers` |
 | LLM/MTP | 346 passing | `mise run check:mtp` |
 | Persistence compiler | 629 passing (2026-09-23) | `mise run check:persistence` |
-| Eligibility examples | 12 passing | `mise run check:eligibility-examples` |
-| Ontology catalog | 11 passing | `mise run check:ontology-catalog` |
-| Ontology versioning | 7 passing | `mise run check:ontology-versioning` |
+| Ontology tools (catalog, versioning, Eligibility examples, PROV-O alignment) | 35 passing | `mise run check:ontology-catalog` |
+| Ontology versioning | tool run | `mise run check:ontology-versioning` |
 
 ---
 
@@ -702,7 +716,7 @@ bounds, one obligation in several provisions).
 3. **MTP backend integration** — What HTTP API shape for LLM curriculum consumption? (Phase 7, post-Phase-6)
 4. **Housekeeping execution** — When is the housekeeping component itself executed (real-time vs. batch)? (ADR-A80 defers to future phase)
 5. **Surface MORK Phase 9 decomposition** — How to slice migration guides and phased rollout? (Blocking Phase 9, needs decomposition after Phase 8 SWRL verification)
-6. **Foundation migration for `srf:DerivedArtefact`** — Should profile identity be a Foundation concept or Surface-only? (Blocking profile identity assertion in Surface; see [surface-outstanding-items.md](status/surface-outstanding-items.md#33-profile-identity-assertion--blocked)). Proposed resolution: [ADR-A92](../architecture/decisions/ADR-A92-derived-artefact-contract-and-prov-o-alignment.md)
+6. ~~**Foundation migration for `srf:DerivedArtefact`**~~ — resolved 2026-09-25 by ADR-A92 (AOR-12). Original question: Should profile identity be a Foundation concept or Surface-only? (Blocking profile identity assertion in Surface; see [surface-outstanding-items.md](status/surface-outstanding-items.md#33-profile-identity-assertion--blocked)). Proposed resolution: [ADR-A92](../architecture/decisions/ADR-A92-derived-artefact-contract-and-prov-o-alignment.md)
 7. **MORK toolchain join assumptions** — Pre-production verification checklist for join operations in mapping compilation (see [surface-outstanding-items.md](status/surface-outstanding-items.md#34-mork-toolchain-join-assumptions--needed))
 
 ---

@@ -16,7 +16,7 @@
 
 <http://www.nebularis.org/ontologies/Governance> rdf:type owl:Ontology ;
     owl:imports <http://www.nebularis.org/ontologies/Mork#> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.2.0> .
+                <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.3.0> .
 
 # --- a production-mode mapping scheme ---------------------------------------
 

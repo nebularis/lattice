@@ -13,10 +13,10 @@
 
 <https://www.nebularis.org/neuro-semantic/surface>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/surface/0.3.0> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.2.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.2.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.3.0> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/surface/0.4.0> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.3.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.3.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.4.0> .
 
 rdf:Property rdf:type owl:Class .
 rdfs:Class rdf:type owl:Class .
@@ -123,7 +123,7 @@ srf:generatedAttribute a owl:DatatypeProperty ;
 	fnd:utility "Every generated literal-valued property, including promoted datatype-valued properties, is a subproperty of this." .
 
 srf:DerivedArtefact a owl:Class ;
-	rdfs:subClassOf fnd:Evidenced ,
+	rdfs:subClassOf fnd:Evidenced , fnd:DerivedArtefact ,
 		[ a owl:Restriction ; owl:onProperty srf:generatedByProfile ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
 		[ a owl:Restriction ; owl:onProperty srf:derivationAuthority ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
 		[ a owl:Restriction ; owl:onProperty srf:producedAt ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ;

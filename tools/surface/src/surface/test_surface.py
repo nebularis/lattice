@@ -276,6 +276,29 @@ class CompilationTests(unittest.TestCase):
         self.assertEqual(first.artefact_hash, second.artefact_hash)
         self.assertEqual(first.semantic_hash, second.semantic_hash)
 
+    def test_generated_modules_carry_content_addressed_version_iris(self) -> None:
+        import re
+
+        from .compile import discharge_determinism, render
+
+        def version(module: Graph) -> str:
+            return str(module.value(next(module.subjects(RDF.type, OWL.Ontology)), OWL.versionIRI))
+
+        compiled, _ = compile_example("employment-job-family.ttl", "job-family")
+        render(compiled)
+        versions = {name: version(m) for name, m in compiled.modules.items() if len(m) > 0}
+        for name, value in versions.items():
+            ontology = next(compiled.modules[name].subjects(RDF.type, OWL.Ontology))
+            self.assertRegex(value, "^" + re.escape(str(ontology)) + "/[0-9a-f]{16}$")
+        # rendering again leaves every version unchanged
+        render(compiled)
+        self.assertEqual({name: version(compiled.modules[name]) for name in versions}, versions)
+        # content added after compilation (a law discharge) moves the manifest's version only
+        discharge_determinism(compiled, "2026-09-18T00:00:00Z", "probe")
+        render(compiled)
+        self.assertNotEqual(version(compiled.modules["manifest"]), versions["manifest"])
+        self.assertEqual(version(compiled.modules["core"]), versions["core"])
+
     def test_serialisation_is_byte_stable(self) -> None:
         from .compile import render
 

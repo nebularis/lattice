@@ -8,21 +8,13 @@
     <uri name="http://www.nebularis.org/hyperthunk/examples/Contract" uri="mork/test/data/Contracts.ttl"/>
     <uri name="http://www.nebularis.org/ontologies/Governance" uri="mork/examples/Governance/GovernanceAndVersioning.ttl"/>
     <uri name="http://www.nebularis.org/ontologies/Mork" uri="mork/spec/Mork.ttl"/>
-    <uri name="http://www.nebularis.org/ontologies/Mork/0.2.0" uri="mork/spec/Mork.ttl"/>
+    <uri name="http://www.nebularis.org/ontologies/Mork/0.3.0" uri="mork/spec/Mork.ttl"/>
     <uri name="http://www.nebularis.org/ontologies/Petstore" uri="mork/examples/Zoo/Petstore.ttl"/>
     <uri name="http://www.nebularis.org/ontologies/UncertainMappings" uri="mork/examples/Zoo/UncertainMappings.ttl"/>
     <uri name="http://www.nebularis.org/ontologies/Zoo" uri="mork/examples/Zoo/Zoo.ttl"/>
     <uri name="http://www.nebularis.org/ontologies/Zoo/PropertyGeneration" uri="mork/examples/Zoo/PropertyGeneration.ttl"/>
     <uri name="http://www.nebularis.org/ontologies/mapping/RMLMap" uri="mork/examples/Meta_RML/RMLMap.ttl"/>
     <uri name="http://www.nebularis.org/ontologies/mapping/RMLMapping" uri="mork/examples/Meta_RML/GPTAttempt.ttl"/>
-    <uri name="https://example.org/lattice/surface/employment/exec/job-family/assertions" uri="surface/execution/job-family/assertions.ttl"/>
-    <uri name="https://example.org/lattice/surface/employment/exec/job-family/assertions/0.0.1" uri="surface/execution/job-family/assertions.ttl"/>
-    <uri name="https://example.org/lattice/surface/employment/exec/job-family/closure" uri="surface/execution/job-family/closure.ttl"/>
-    <uri name="https://example.org/lattice/surface/employment/exec/job-family/closure/0.0.1" uri="surface/execution/job-family/closure.ttl"/>
-    <uri name="https://example.org/lattice/surface/employment/exec/job-family/core" uri="surface/execution/job-family/core.ttl"/>
-    <uri name="https://example.org/lattice/surface/employment/exec/job-family/core/0.0.1" uri="surface/execution/job-family/core.ttl"/>
-    <uri name="https://example.org/lattice/surface/employment/exec/job-family/manifest" uri="surface/execution/job-family/manifest.ttl"/>
-    <uri name="https://example.org/lattice/surface/employment/exec/job-family/manifest/0.0.1" uri="surface/execution/job-family/manifest.ttl"/>
     <uri name="https://www.nebularis.org/neuro-semantic/behaviour" uri="behaviour/spec/behaviour.ttl"/>
     <uri name="https://www.nebularis.org/neuro-semantic/behaviour-vocab" uri="behaviour/vocab/behaviour-vocab.ttl"/>
     <uri name="https://www.nebularis.org/neuro-semantic/eligibility" uri="eligibility/spec/eligibility.ttl"/>
@@ -32,25 +24,25 @@
     <uri name="https://www.nebularis.org/neuro-semantic/instrument" uri="instrument/spec/instrument.ttl"/>
     <uri name="https://www.nebularis.org/neuro-semantic/instrument-vocab" uri="instrument/vocab/instrument-vocab.ttl"/>
     <uri name="https://www.nebularis.org/neuro-semantic/lattice/applied/capacity/execution" uri="applied/capacity/spec/applied_capacity_execution_spec_capx_Version2.ttl"/>
-    <uri name="https://www.nebularis.org/neuro-semantic/lattice/applied/capacity/execution/0.4.0" uri="applied/capacity/spec/applied_capacity_execution_spec_capx_Version2.ttl"/>
-    <uri name="https://www.nebularis.org/neuro-semantic/lattice/behaviour-vocab/0.4.0" uri="behaviour/vocab/behaviour-vocab.ttl"/>
-    <uri name="https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.4.0" uri="behaviour/spec/behaviour.ttl"/>
-    <uri name="https://www.nebularis.org/neuro-semantic/lattice/eligibility-vocab/0.4.0" uri="eligibility/vocab/eligibility-vocab.ttl"/>
-    <uri name="https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.4.0" uri="eligibility/spec/eligibility.ttl"/>
+    <uri name="https://www.nebularis.org/neuro-semantic/lattice/applied/capacity/execution/0.5.0" uri="applied/capacity/spec/applied_capacity_execution_spec_capx_Version2.ttl"/>
+    <uri name="https://www.nebularis.org/neuro-semantic/lattice/behaviour-vocab/0.5.0" uri="behaviour/vocab/behaviour-vocab.ttl"/>
+    <uri name="https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.5.0" uri="behaviour/spec/behaviour.ttl"/>
+    <uri name="https://www.nebularis.org/neuro-semantic/lattice/eligibility-vocab/0.5.0" uri="eligibility/vocab/eligibility-vocab.ttl"/>
+    <uri name="https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.5.0" uri="eligibility/spec/eligibility.ttl"/>
     <uri name="https://www.nebularis.org/neuro-semantic/lattice/executable" uri="mork/spec/Executable.ttl"/>
-    <uri name="https://www.nebularis.org/neuro-semantic/lattice/executable/0.3.0" uri="mork/spec/Executable.ttl"/>
-    <uri name="https://www.nebularis.org/neuro-semantic/lattice/foundation-vocab/0.2.0" uri="foundation/vocab/foundation-vocab.ttl"/>
-    <uri name="https://www.nebularis.org/neuro-semantic/lattice/foundation/0.2.0" uri="foundation/spec/foundation.ttl"/>
-    <uri name="https://www.nebularis.org/neuro-semantic/lattice/instrument-vocab/0.4.0" uri="instrument/vocab/instrument-vocab.ttl"/>
-    <uri name="https://www.nebularis.org/neuro-semantic/lattice/instrument/0.4.0" uri="instrument/spec/instrument.ttl"/>
-    <uri name="https://www.nebularis.org/neuro-semantic/lattice/party-vocab/0.3.0" uri="party/vocab/party-vocab.ttl"/>
-    <uri name="https://www.nebularis.org/neuro-semantic/lattice/party/0.3.0" uri="party/spec/party.ttl"/>
+    <uri name="https://www.nebularis.org/neuro-semantic/lattice/executable/0.4.0" uri="mork/spec/Executable.ttl"/>
+    <uri name="https://www.nebularis.org/neuro-semantic/lattice/foundation-vocab/0.3.0" uri="foundation/vocab/foundation-vocab.ttl"/>
+    <uri name="https://www.nebularis.org/neuro-semantic/lattice/foundation/0.3.0" uri="foundation/spec/foundation.ttl"/>
+    <uri name="https://www.nebularis.org/neuro-semantic/lattice/instrument-vocab/0.5.0" uri="instrument/vocab/instrument-vocab.ttl"/>
+    <uri name="https://www.nebularis.org/neuro-semantic/lattice/instrument/0.5.0" uri="instrument/spec/instrument.ttl"/>
+    <uri name="https://www.nebularis.org/neuro-semantic/lattice/party-vocab/0.4.0" uri="party/vocab/party-vocab.ttl"/>
+    <uri name="https://www.nebularis.org/neuro-semantic/lattice/party/0.4.0" uri="party/spec/party.ttl"/>
     <uri name="https://www.nebularis.org/neuro-semantic/lattice/persistence" uri="persistence/spec/persistence.ttl"/>
     <uri name="https://www.nebularis.org/neuro-semantic/lattice/persistence/0.2.0" uri="persistence/spec/persistence.ttl"/>
-    <uri name="https://www.nebularis.org/neuro-semantic/lattice/quantification/0.3.0" uri="quantification/spec/quantification.ttl"/>
-    <uri name="https://www.nebularis.org/neuro-semantic/lattice/surface-vocab/0.3.0" uri="surface/vocab/surface-vocab.ttl"/>
-    <uri name="https://www.nebularis.org/neuro-semantic/lattice/surface/0.3.0" uri="surface/spec/surface.ttl"/>
-    <uri name="https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.2.0" uri="vocabulary/spec/vocabulary.ttl"/>
+    <uri name="https://www.nebularis.org/neuro-semantic/lattice/quantification/0.4.0" uri="quantification/spec/quantification.ttl"/>
+    <uri name="https://www.nebularis.org/neuro-semantic/lattice/surface-vocab/0.4.0" uri="surface/vocab/surface-vocab.ttl"/>
+    <uri name="https://www.nebularis.org/neuro-semantic/lattice/surface/0.4.0" uri="surface/spec/surface.ttl"/>
+    <uri name="https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.3.0" uri="vocabulary/spec/vocabulary.ttl"/>
     <uri name="https://www.nebularis.org/neuro-semantic/party" uri="party/spec/party.ttl"/>
     <uri name="https://www.nebularis.org/neuro-semantic/party-vocab" uri="party/vocab/party-vocab.ttl"/>
     <uri name="https://www.nebularis.org/neuro-semantic/quantification" uri="quantification/spec/quantification.ttl"/>
@@ -59,7 +51,7 @@
     <uri name="https://www.nebularis.org/neuro-semantic/vocabulary" uri="vocabulary/spec/vocabulary.ttl"/>
     <!-- External imports, not held in this repository -->
     <uri name="http://w3id.org/rml" uri="http://w3id.org/rml"/>
-    <uri name="http://www.w3.org/2003/11/swrl" uri="http://www.w3.org/2003/11/swrl"/>
+    <uri name="http://www.w3.org/2003/11/swrl" uri="https://www.w3.org/Submission/SWRL/swrl.owl"/>
     <uri name="http://www.w3.org/2004/02/skos/core" uri="https://www.w3.org/2009/08/skos-reference/skos.rdf"/>
     <uri name="http://www.w3.org/ns/prov-o-20130430" uri="https://www.w3.org/ns/prov-o-20130430"/>
     <uri name="http://www.w3.org/ns/shacl" uri="https://www.w3.org/ns/shacl.ttl"/>
