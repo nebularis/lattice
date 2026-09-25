@@ -555,7 +555,7 @@ Category-theoretic framing (profunctors, Galois connections; the README is expli
 
 ### 8.5 Relationship to Semantica (external, complementary, not part of this repo)
 
-Semantica (referenced, not present here) is positioned as handling data *acquisition* — ingestion, normalisation, entity extraction, dedup — which MORK deliberately does not address; MORK owns schema modelling, ontological alignment, artefact generation, and AI-output governance. The stated integration point is an adapter layer between Semantica's entity-extraction output and MORK's mapping pipeline — not built, not this repository's concern.
+Semantica (referenced, not present here) is positioned as handling data *acquisition* — ingestion, normalisation, entity extraction, dedup — which MORK deliberately does not address; MORK owns schema modelling, ontological alignment, artefact generation, and AI-output governance. The stated integration point is an adapter layer between Semantica's entity-extraction output and MORK's mapping pipeline — not built, not this repository's concern. The [ingestion vision](ingestion-vision.md) refines this for document-scale ingestion: the model authors MORK content directly, and Semantica-like services supply grounding and memory behind interfaces LATTICE owns.
 
 ### 8.6 Assessment for a reviewing agent
 

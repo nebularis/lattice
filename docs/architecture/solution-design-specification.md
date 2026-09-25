@@ -43,7 +43,7 @@ This document is maintained as a living design record, alongside the ADR catalog
 | [ux-design.md](ux-design.md) | UX Design of platform components (e.g., MORK Workbench, Surface Contract Studio) |
 | [ontology-architecture.md](ontology-architecture.md) | Ontology layers, DL encodings, layer dependency order |
 | [rdf-sparql-patterns-guide.md](rdf-sparql-patterns-guide.md) | RDF implementation patterns |
-| [semantic-platform.md](semantic-platform.md), [surface-workflow.md](surface-workflow.md), [release-stack-integration.md](release-stack-integration.md), [surface-projection-mork.md](surface-projection-mork.md), [mork-review-workbench.md](mork-review-workbench.md), [mork-queue-calibration-governance.md](mork-queue-calibration-governance.md) | Per-component design notes this document synthesizes and cross-references rather than repeats |
+| [semantic-platform.md](semantic-platform.md), [surface-workflow.md](surface-workflow.md), [release-stack-integration.md](release-stack-integration.md), [surface-projection-mork.md](surface-projection-mork.md), [mork-review-workbench.md](mork-review-workbench.md), [mork-queue-calibration-governance.md](mork-queue-calibration-governance.md), [ingestion-vision.md](ingestion-vision.md) | Per-component design notes this document synthesizes and cross-references rather than repeats |
 | ADR-A29 through ADR-A43 | Individual accepted decisions this document assembles into one coherent picture |
 
 Read this document top to bottom once, then use it as a reference.
