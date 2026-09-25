@@ -3,7 +3,7 @@
 # Plan: Vocabulary scoped and temporal binding conformance
 
 **Unit ID:** `vocabulary-temporal-binding`
-**Status:** Proposed, awaiting human review before implementation
+**Status:** Closed (2026-09-25). Executed, verified, and ratified (ADR-A85 Accepted). Follow-on hardening items identified during closure review are tracked under a new unit, `temporal-binding-consumer-hardening` (see its plan and status).
 **Trigger:** `65ac4a85e11cc1f8616e3e0c24efd59bf4ca410d`
 **Sketch:** [vocabulary-temporal-binding.md](../sketches/vocabulary-temporal-binding.md)
 **Status record:** [vocabulary-temporal-binding.md](../status/vocabulary-temporal-binding.md)
@@ -154,3 +154,16 @@ deferred-scope document, `.github/copilot-instructions.md`, and
 mechanism inventory that this unit must synchronise. This remains an explicit
 assumption for human review, not a claim that the files are permanently out of
 scope.
+
+## Closure (2026-09-25)
+
+All four slices executed and verified: `mise run check:vocabulary` (14/14),
+`python -m unittest surface.test_surface -q` (62/62), `mise run
+check:python-root` (77/77 plus Phase 8 conformance). ADR-A85 is Accepted. A
+subsequent cross-reference of this work against
+[docs/architecture/rdf-sparql-patterns-guide.md](../../architecture/rdf-sparql-patterns-guide.md)
+found the implementation internally consistent, with four follow-on hardening
+items and one accepted non-issue, none of which block this unit's closure.
+Those items are scoped under the new `temporal-binding-consumer-hardening`
+unit: [plan](temporal-binding-consumer-hardening.md),
+[status](../status/temporal-binding-consumer-hardening.md).

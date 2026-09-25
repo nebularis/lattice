@@ -2,10 +2,9 @@
 
 # Validation Pack - `vocabulary-temporal-binding`
 
-**Status:** Test cases authored against a full implementation (`ontology/vocabulary/shapes/`,
-`ontology/vocabulary/examples/`, `tools/vocabulary/`). Not yet executed in this
-sandbox (no dependency-install access) and not yet human-reviewed. This pack
-is not evidence of a passing implementation.
+**Status:** Closed (2026-09-25). All 14 cases passed under `mise run check:vocabulary`.
+Surface and Eligibility consumer integration (VTB-14 and beyond) verified —
+see the status record's "Verification findings". ADR-A85 is Accepted.
 **Plan:** [vocabulary-temporal-fixes.md](../plans/vocabulary-temporal-fixes.md)
 **Status:** [vocabulary-temporal-binding.md](../status/vocabulary-temporal-binding.md)
 
@@ -83,3 +82,12 @@ Disable the strict-superset comparison in the resolver and rerun VTB-06. The
 specific binding must no longer be accepted as the selected result. Retarget or
 disable the equal-specificity SHACL-SPARQL constraint and rerun VTB-07. The
 fixture must become conformant only when that constraint is genuinely inactive.
+
+## Sign-off
+
+Closed 2026-09-25. All 14 cases and both consumer integrations (Surface,
+Eligibility) verified green in the working environment. A follow-up
+cross-reference against
+[docs/architecture/rdf-sparql-patterns-guide.md](../../architecture/rdf-sparql-patterns-guide.md)
+found no defects blocking closure; four hardening items are tracked under
+`temporal-binding-consumer-hardening`.

@@ -179,7 +179,7 @@ class PopulationAndPathTests(unittest.TestCase):
         self.contract = only_contract(self.graph, "job-family")
 
     def test_population_follows_the_scheme_contract(self) -> None:
-        members, scheme = enumerate_population(self.graph, self.contract.population)
+        members, scheme = enumerate_population(self.graph, self.contract.population, at=AT)
         self.assertEqual(scheme, URIRef(EMPLOYMENT + "JobFamilyScheme"))
         self.assertEqual(len(members), 6)
         self.assertIn(URIRef(EMPLOYMENT + "AnyJobFamily"), members)
@@ -286,6 +286,17 @@ class CompilationTests(unittest.TestCase):
         kinds = {local_name(str(entry.kind)) for entry in compiled.read_set}
         self.assertEqual(
             kinds, {"DeclarationSource", "BoundSchemeSource", "InstanceGraphSource"}
+        )
+
+    def test_contract_bound_population_resolves_the_scoped_binding(self) -> None:
+        compiled, _ = compile_example(
+            "employment-job-family-scoped.ttl", "job-family-scoped"
+        )
+        minted = {str(s.term) for s in compiled.symbols}
+        namespace = "https://example.org/lattice/surface/employment-scoped/exec#"
+        self.assertIn(f"{namespace}RoleAssignment_job-family-scoped_NorthOnly", minted)
+        self.assertNotIn(
+            f"{namespace}RoleAssignment_job-family-scoped_FallbackOnly", minted
         )
 
 

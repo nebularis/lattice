@@ -2,8 +2,8 @@
 
 # ADR-A85: Vocabulary scoped and temporal binding resolution
 
-**Status:** Proposed
-**Date:** 2026-09-24
+**Status:** Accepted
+**Date:** 2026-09-24 (proposed), 2026-09-25 (accepted)
 
 ## Context
 

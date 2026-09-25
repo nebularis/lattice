@@ -444,8 +444,8 @@ srf:ValuePopulation a owl:Class ;
 srf:ContractBoundPopulation a owl:Class ;
 	rdfs:subClassOf srf:ValuePopulation ,
 		[ a owl:Restriction ; owl:onProperty srf:fromSchemeContract ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ;
-	rdfs:comment "A population comprising the members of whichever scheme currently satisfies a named scheme contract." ;
-	fnd:utility "Point fromSchemeContract at the voc:SchemeContract governing the read path's value property. The population is the membership of that contract's bound scheme, in whatever governance state the contract requires." .
+	rdfs:comment "A population comprising the members of whichever concept scheme resolves for a named scheme contract, given the population's declared active binding scopes and the compiler's resolution time." ;
+	fnd:utility "Point fromSchemeContract at the voc:SchemeContract governing the read path's value property, and declare activeBindingScope for each voc:BindingScope this population is generated within, if any. The population is the membership of whichever scheme the Vocabulary resolver selects for that contract — the most specific applicable voc:SchemeBinding, or the contract's boundScheme fallback — in whatever governance state the contract requires (ADR-A85)." .
 
 srf:ClassExtentPopulation a owl:Class ;
 	rdfs:subClassOf srf:ValuePopulation ,
@@ -669,7 +669,12 @@ srf:closureScope a owl:ObjectProperty, owl:FunctionalProperty ;
 
 srf:fromSchemeContract a owl:ObjectProperty, owl:FunctionalProperty ;
 	rdfs:domain srf:ContractBoundPopulation ; rdfs:range voc:SchemeContract ;
-	rdfs:comment "The scheme contract whose bound scheme supplies a population's members." .
+	rdfs:comment "The scheme contract whose resolved scheme supplies a population's members." .
+
+srf:activeBindingScope a owl:ObjectProperty ;
+	rdfs:domain srf:ContractBoundPopulation ; rdfs:range voc:BindingScope ;
+	rdfs:comment "A scope this population's caller is active within, for resolving which voc:SchemeBinding applies." ;
+	fnd:utility "Declare one value per scope this population is generated within. None declared means the unscoped context, where only a scopeless SchemeBinding or the contract's boundScheme fallback can apply (ADR-A85)." .
 
 srf:fromClass a owl:ObjectProperty, owl:FunctionalProperty ;
 	rdfs:domain srf:ClassExtentPopulation ; rdfs:range rdfs:Class ;
@@ -1256,7 +1261,7 @@ srf:PathStepIndexUniqueShape a sh:NodeShape ;
 srf:BoundSchemePresentShape a sh:NodeShape ;
 	sh:targetClass srf:IndexContract ;
 	sh:sparql [
-		sh:message "A contract-bound population names a scheme contract with no bound scheme. Discharges srf:S2." ;
+		sh:message "A contract-bound population names a scheme contract with no bound scheme and no scheme binding, so it can never resolve. Discharges srf:S2." ;
 		sh:select """
 			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
 			PREFIX voc: <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#>
@@ -1265,6 +1270,7 @@ srf:BoundSchemePresentShape a sh:NodeShape ;
 				?population a srf:ContractBoundPopulation ;
 							srf:fromSchemeContract ?schemeContract .
 				FILTER NOT EXISTS { ?schemeContract voc:boundScheme ?scheme }
+				FILTER NOT EXISTS { ?binding voc:forContract ?schemeContract }
 			}
 		"""
 	] .
@@ -1272,7 +1278,7 @@ srf:BoundSchemePresentShape a sh:NodeShape ;
 srf:BoundSchemeGovernanceShape a sh:NodeShape ;
 	sh:targetClass srf:IndexContract ;
 	sh:sparql [
-		sh:message "The scheme bound to a contract-bound population's scheme contract holds none of the governance states that contract requires. Discharges srf:S2." ;
+		sh:message "A scheme this contract-bound population could resolve to, via boundScheme or a voc:SchemeBinding, holds none of the governance states the contract requires. Discharges srf:S2." ;
 		sh:select """
 			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
 			PREFIX voc: <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#>
@@ -1280,8 +1286,13 @@ srf:BoundSchemeGovernanceShape a sh:NodeShape ;
 			SELECT $this WHERE {
 				$this srf:valuePopulation ?population .
 				?population srf:fromSchemeContract ?schemeContract .
-				?schemeContract voc:boundScheme ?scheme ;
-								voc:requiresGovernanceState ?required .
+				?schemeContract voc:requiresGovernanceState ?required .
+				{
+					?schemeContract voc:boundScheme ?scheme .
+				} UNION {
+					?binding voc:forContract ?schemeContract ;
+							 voc:bindsScheme ?scheme .
+				}
 				FILTER NOT EXISTS {
 					?schemeContract voc:requiresGovernanceState ?permitted .
 					?scheme fnd:hasGovernanceState ?permitted .

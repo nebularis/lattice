@@ -1,0 +1,85 @@
+# SPDX-License-Identifier: MPL-2.0
+
+@prefix srf:  <https://www.nebularis.org/neuro-semantic/lattice/surface#> .
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix voc:  <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex:   <https://example.org/lattice/surface/employment-scoped#> .
+
+# Proves the compiler resolves a scoped voc:SchemeBinding (ADR-A85) rather
+# than reading the contract's unscoped voc:boundScheme fallback directly.
+
+ex:RoleAssignment a owl:Class .
+
+ex:hasJobFamily a owl:ObjectProperty ;
+    rdfs:domain ex:RoleAssignment ;
+    rdfs:range skos:Concept .
+
+ex:FallbackScheme a voc:ConceptScheme ;
+    fnd:hasIdentity ex:fallback-scheme-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Fallback job family scheme"@en .
+
+ex:FallbackOnly a skos:Concept ;
+    skos:inScheme ex:FallbackScheme ;
+    skos:prefLabel "Fallback only"@en .
+
+ex:NorthScheme a voc:ConceptScheme ;
+    fnd:hasIdentity ex:north-scheme-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "North job family scheme"@en .
+
+ex:NorthOnly a skos:Concept ;
+    skos:inScheme ex:NorthScheme ;
+    skos:prefLabel "North only"@en .
+
+ex:job-family-contract a voc:SchemeContract ;
+    fnd:hasIdentity ex:job-family-contract-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    voc:constrainsProperty ex:hasJobFamily ;
+    voc:requiresGovernanceState fnd:Active ;
+    voc:boundScheme ex:FallbackScheme .
+
+ex:region-north a voc:BindingScope .
+
+ex:north-binding a voc:SchemeBinding ;
+    voc:forContract ex:job-family-contract ;
+    voc:bindsScheme ex:NorthScheme ;
+    voc:bindingScope ex:region-north ;
+    fnd:hasTemporalScope [
+        a fnd:TemporalScope ;
+        fnd:validFrom "2026-01-01T00:00:00Z"^^xsd:dateTime
+    ] .
+
+ex:profile-v1 a srf:SurfaceProfile ;
+    fnd:hasIdentity ex:profile-identity ;
+    srf:generatorVersion "lattice-surface-compiler/0.2.0" ;
+    srf:canonicalisationVersion "srf-canon/1" ;
+    srf:entailmentRegime srf:NoEntailment ;
+    srf:namingNormalisation srf:SanitisedLocalName ;
+    srf:symbolMode srf:PunnedSymbols ;
+    srf:permittedStackDepth 0 ;
+    srf:defaultPopulationBudget 5000 .
+
+ex:job-family-population a srf:ContractBoundPopulation ;
+    srf:fromSchemeContract ex:job-family-contract ;
+    srf:activeBindingScope ex:region-north .
+
+ex:job-family-scoped-index a srf:IndexContract ;
+    fnd:hasIdentity ex:job-family-scoped-index-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    srf:contractKey "job-family-scoped" ;
+    srf:carrier ex:RoleAssignment ;
+    srf:readProperty ex:hasJobFamily ;
+    srf:targetNamespace "https://example.org/lattice/surface/employment-scoped/exec#"^^xsd:anyURI ;
+    srf:realisationMode srf:DefinitionAndMaterialised ;
+    srf:surfaceProfile ex:profile-v1 ;
+    srf:valuePopulation ex:job-family-population ;
+    srf:indexForm srf:NominalClass , srf:MembershipAssertion ;
+    srf:namingPolicy srf:LocalNameFromValue .
+
+ex:assignment-1 a ex:RoleAssignment ;
+    ex:hasJobFamily ex:NorthOnly .

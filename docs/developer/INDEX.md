@@ -359,38 +359,46 @@ The unratified universal IRI policy in ADR-A51 was superseded by [ADR-A82](../ar
 
 ---
 
-# Vocabulary Scoped and Temporal Binding — Proposed (2026-09-24)
+# Vocabulary Scoped and Temporal Binding — Closed (2026-09-25)
 
 | Field | Value |
 |-------|-------|
-| **Status** | 🔶 Slices 1-4 authored, not yet executed or human-reviewed |
+| **Status** | ✅ Closed. Vocabulary suite, Surface, and Eligibility consumers all verified green. ADR-A85 Accepted |
 | **Unit ID** | `vocabulary-temporal-binding` |
 | **Trigger** | `65ac4a85e11cc1f8616e3e0c24efd59bf4ca410d` (`[vocabulary] time-bound binding`) |
 | **Sketch** | [vocabulary-temporal-binding.md](sketches/vocabulary-temporal-binding.md) |
 | **Plan** | [vocabulary-temporal-fixes.md](plans/vocabulary-temporal-fixes.md) |
 | **Status Record** | [vocabulary-temporal-binding.md](status/vocabulary-temporal-binding.md) |
 | **Validation Pack** | [vocabulary-temporal-binding.md](validation/vocabulary-temporal-binding.md) |
-| **ADR** | [ADR-A85](../architecture/decisions/ADR-A85-vocabulary-scoped-temporal-binding-resolution.md), Proposed |
+| **ADR** | [ADR-A85](../architecture/decisions/ADR-A85-vocabulary-scoped-temporal-binding-resolution.md), Accepted |
 
-The source ontology change is present and its conformance package is now
-authored: 12 domain-neutral fixtures under `ontology/vocabulary/examples/`,
-the three Vocabulary SHACL files populated (`rules.ttl` deliberately documents
-why no rule is defined), a deterministic reference resolver and pytest suite
-under `tools/vocabulary/` covering strict-superset precedence,
-equal-specificity conflicts, and historical `resolvedUnder` provenance at a
-consumer boundary. This sandbox cannot install `rdflib`/`pyshacl`/`pytest`
-(network-restricted), so `mise run check:vocabulary` has not been run, and the
-human validation gate (review + mutation probe) has not happened. See the
-status record for the full position and the decisions flagged for review.
+The conformance package (12 fixtures, populated Vocabulary SHACL files, a
+deterministic reference resolver) is authored and verified: `mise run
+check:vocabulary` passes 14/14. Both real consumers now resolve scoped
+bindings instead of reading `voc:boundScheme` directly: Surface's compiler
+calls the resolver in `enumerate_population`, and Eligibility's
+`HierarchyWellFoundednessShape` checks every scheme a contract could resolve
+to. `python -m unittest surface.test_surface -q` passes 62/62 (including a new
+scoped-binding fixture and test), and `mise run check:python-root` passes
+77/77 plus Phase 8 conformance. See the status record for exact findings.
 
 ### Slices
 
 1. ADR-A85, architecture mirror, fixture and traceability skeleton — done
-2. Examples plus structural and SHACL-SPARQL validation — authored, not executed
-3. Reference resolver and deterministic test suite — authored, not executed
-4. Consumer/provenance checks and documentation close-out — authored, not executed
+2. Examples plus structural and SHACL-SPARQL validation — done, verified
+3. Reference resolver and deterministic test suite — done, verified
+4. Consumer/provenance checks and documentation close-out — done, verified (Surface and Eligibility both resolve scoped bindings)
 
-## 8.5 Vocabulary Conformance — Authored, pending execution and review
+### Closure cross-reference (2026-09-25)
+
+A cross-reference of this unit's Surface/Eligibility integration against
+[docs/architecture/rdf-sparql-patterns-guide.md](../architecture/rdf-sparql-patterns-guide.md)
+found the work internally consistent, with four follow-on hardening items and
+one accepted terminology note. None block closure. See
+[Vocabulary Consumer Hardening](#vocabulary-consumer-hardening--planned-2026-09-25)
+below.
+
+## 8.5 Vocabulary Conformance — Closed
 
 See the unit record above. This heading is intentionally a navigation anchor
 between active platform work and archived material.
@@ -437,6 +445,25 @@ policy document as a candidate future remediation unit.
 
 See the unit record above. This heading is intentionally a navigation anchor
 between active platform work and archived material.
+
+# Vocabulary Consumer Hardening — Planned (2026-09-25)
+
+| Field | Value |
+|-------|-------|
+| **Status** | ⏳ Planned. No implementation started |
+| **Unit ID** | `temporal-binding-consumer-hardening` |
+| **Trigger** | Cross-reference of `vocabulary-temporal-binding`'s Surface/Eligibility integration against [rdf-sparql-patterns-guide.md](../architecture/rdf-sparql-patterns-guide.md) |
+| **Plan** | [temporal-binding-consumer-hardening.md](plans/temporal-binding-consumer-hardening.md) |
+| **Status Record** | [temporal-binding-consumer-hardening.md](status/temporal-binding-consumer-hardening.md) |
+
+Four items carried forward from the `vocabulary-temporal-binding` closure
+review: (1) a resolution plan for Surface's `produced_at` doubling as a
+semantic input to the artefact/semantic hash, (2) a resolution plan for the
+missing binding-resolution trace in Surface's manifest, (3) a documentation
+clarification for `vvp:resolvedAt`'s naming against the guide's valid-time /
+transaction-time convention, and (4) an architecture/no-wall-clock test for
+`tools/vocabulary`, mirroring `tools/persistence`. A fifth finding (terminology
+overload of "scope" across layers) is explicitly accepted, no action planned.
 
 # Part III — Archived/Historical Work
 
@@ -493,8 +520,9 @@ between active platform work and archived material.
 - Plan: [vocabulary-temporal-fixes.md](plans/vocabulary-temporal-fixes.md)
 - Status: [vocabulary-temporal-binding.md](status/vocabulary-temporal-binding.md)
 - Validation pack: [vocabulary-temporal-binding.md](validation/vocabulary-temporal-binding.md)
-- Implementation: `ontology/vocabulary/shapes/`, `ontology/vocabulary/examples/` (12 fixtures), `tools/vocabulary/` (reference resolver + pytest suite) — authored, not yet executed
-- ADR: [A85](../architecture/decisions/ADR-A85-vocabulary-scoped-temporal-binding-resolution.md), Proposed
+- Implementation: `ontology/vocabulary/shapes/`, `ontology/vocabulary/examples/` (12 fixtures), `tools/vocabulary/` (reference resolver + pytest suite) — verified, 14/14 tests passing
+- ADR: [A85](../architecture/decisions/ADR-A85-vocabulary-scoped-temporal-binding-resolution.md), Accepted
+- Follow-on: [temporal-binding-consumer-hardening.md](plans/temporal-binding-consumer-hardening.md) (planned)
 
 ### Ontology Semantic Versioning
 - Sketch: [ontology-semantic-versioning.md](sketches/ontology-semantic-versioning.md)
@@ -551,8 +579,9 @@ between active platform work and archived material.
 3. Phase 0-9 implementation
 4. Surface MORK Phase 9 — Migration guides and phased rollout
 5. Surface MORK Phase 10 — Scale and performance optimization
-6. Vocabulary scoped and temporal binding conformance — awaiting human review
-7. Ontology semantic versioning (ADR-A86) — implemented; ADR ratification pending
+6. Vocabulary scoped and temporal binding conformance — closed 2026-09-25
+7. Vocabulary consumer hardening (`temporal-binding-consumer-hardening`) — planned, follow-on to item 6
+8. Ontology semantic versioning (ADR-A86) — implemented; ADR ratification pending
 
 ### 🗄️ Archived
 1. Phase 0-6 handoff documents (refer to individual status records)
@@ -570,7 +599,8 @@ between active platform work and archived material.
 | **Housekeeping first cut (Slice 3)** | Scaffold `platform/housekeeping` module | Compiler ready; module contracts defined in ADR-A80; job duties extended by the 2026-09-23 guide remediation | Author Slice 3 (housekeeping scaffolding) |
 | **Store SPI** | Design runtime SPI for query execution | Compiler produces templates; runtime binding TBD | Separate epic/phase after housekeeping |
 | **MTP backend integration (Phase 7)** | Runtime API for LLM curriculum delivery | MTP generation complete; needs HTTP endpoint | Post-Phase-6 work |
-| **Vocabulary temporal binding conformance** | Examples, SHACL, resolver, consumer provenance checks | Authored (2026-09-25); not yet executed (sandbox network-restricted) or human-reviewed | Run `mise run check:vocabulary`, then the human validation gate (review + mutation probe) |
+| **Vocabulary temporal binding conformance** | Examples, SHACL, resolver, consumer provenance checks | Closed 2026-09-25: executed and verified, ADR-A85 Accepted | None. Follow-on hardening tracked as `temporal-binding-consumer-hardening` |
+| **Vocabulary consumer hardening** | `produced_at`/hash conflation, missing resolution trace, `vvp:resolvedAt` naming, vocabulary architecture test | Surfaced by the closure cross-reference against [rdf-sparql-patterns-guide.md](../architecture/rdf-sparql-patterns-guide.md) | Author `temporal-binding-consumer-hardening` plan (this session); implementation is separately scheduled |
 | **Ontology semantic versioning** | ADR-A86, versioning-policy doc, baseline reset, narrow enforcement check | Implemented (2026-09-25): policy doc, `0.2.0` baseline reset across 29 ontology documents, `check:ontology-versioning` tooling | Ratify ADR-A86; decide whether the discovered `literate_extract.py` drift becomes its own unit |
 
 ---
