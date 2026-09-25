@@ -59,6 +59,8 @@ Each layer follows the shared template described in the top-level README. Two bo
 
 **`ontology/applied/` is the place for new domain ontologies.** If you wish to contribute a new domain, put it under here.
 
+**Bumping an ontology's `owl:versionIRI` follows a documented rule, not intuition.** Every `owl:Ontology` document under `ontology/` is versioned per [Semantic Versioning 2.0.0](https://semver.org/), classified against the MAJOR/MINOR/PATCH table in [`docs/architecture/ontology-versioning-policy.md`](docs/architecture/ontology-versioning-policy.md). Read it before any change to a layer's `spec/`, `vocab/`, `shapes/`, or `projection/` content — it also covers the import-pinning cascade a version bump obliges.
+
 ---
 
 ## Pull request process

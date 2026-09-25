@@ -7,8 +7,8 @@
 
 <https://www.nebularis.org/neuro-semantic/behaviour-vocab>
 	a owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/behaviour-vocab/0.0.1> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/behaviour/0.0.1> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/behaviour-vocab/0.2.0> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.2.0> .
 
 bhv:ExternalStimulus a bhv:TriggerKind .
 bhv:ScheduledTrigger a bhv:TriggerKind .

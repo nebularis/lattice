@@ -26,6 +26,7 @@
 #################################################################
 
 spc:Ontology a owl:Ontology ;
+  owl:versionIRI <http://example.org/spc/0.2.0> ;
   rdfs:comment "SPC OWL Ontology: Structural encoding of sorts, Behaviours, session types (global/local), configurations, interfaces/open systems, typing assertions, domain bridge, and selected invariants. See foundation and DL papers for formal semantics and proofs." ;
   rdfs:comment "Design principles: structural layer in OWL 2 DL; domain layer (refinement predicates) in tractable fragment (EL++); use of keys for intra-parent uniqueness (branch/label), property chains for participant extraction, qualified cardinality for structural exactness." ;
   rdfs:comment "Contravariant functor 𝒪: SPC^op → DL is realized by conservative extension patterns; narrowing Behaviour in SPC corresponds to expanding knowledge in DL." .

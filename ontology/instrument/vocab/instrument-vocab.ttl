@@ -6,5 +6,5 @@
 
 <https://www.nebularis.org/neuro-semantic/instrument-vocab>
 	a owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/instrument-vocab/0.0.1> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/instrument/0.0.1> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/instrument-vocab/0.2.0> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.2.0> .

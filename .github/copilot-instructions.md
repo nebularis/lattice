@@ -26,6 +26,8 @@ When writing a plan for coding, the plan must be VERY detailed. This allows us t
 
 Lattice is a framework. It should not impose design decisions on its users unless they are materially vital for correctness. Instead, Lattice should provide the user with options and, where possible, configuration and capabilities that operate on the user's chosen configuration set.
 
+If you are changing an ontology, you need to consider the semantic versioning impact of your change (see ADR-A86).
+
 ### Two Agentic Execution Modes: Default and Autonomous
 
 In both modes, the Agentic Development Contract still applies. The agent should not run off and build multiple sub-systems, but should follow the `Agentic Development Approach` instead.

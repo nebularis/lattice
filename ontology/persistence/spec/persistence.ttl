@@ -8,7 +8,7 @@
 
 <https://www.nebularis.org/neuro-semantic/lattice/persistence>
     a owl:Ontology ;
-    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/persistence/0.1.0> ;
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/persistence/0.2.0> ;
     rdfs:label "LATTICE Data Access Layer (persistence profile substrate)" ;
     rdfs:comment "Cross-cutting configuration vocabulary letting an adopter declare, per scope, which of the guide's uniqueness/ordering/concurrency/receipt/meta-topology/boundary patterns apply to a population of RDF resources. Targets classes, graphs, and shapes by IRI reference only. Imports nothing from Foundation-to-Behaviour and is imported by none of them (ADR-A78). See docs/architecture/rdf-sparql-patterns-guide.md and docs/developer/sketches/persistence-profile-substrate.md for the design this vocabulary encodes." .
 

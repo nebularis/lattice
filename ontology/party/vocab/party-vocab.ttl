@@ -9,8 +9,8 @@
 @base <https://www.nebularis.org/neuro-semantic/party-vocab> .
 
 <https://www.nebularis.org/neuro-semantic/party-vocab> rdf:type owl:Ontology ;
-                                                        owl:versionIRI <https://www.nebularis.org/neuro-semantic/party-vocab/0.0.1> ;
-                                                        owl:imports <https://www.nebularis.org/neuro-semantic/party/0.0.3> .
+                                                        owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/party-vocab/0.2.0> ;
+                                                        owl:imports <https://www.nebularis.org/neuro-semantic/lattice/party/0.2.0> .
 
 #################################################################
 #    Individuals

@@ -118,18 +118,21 @@ names:
 
 ## Slice plan
 
-| Slice | Scope | Test level | Gate |
-|---|---|---|---|
-| 1 | ADR-A86, sketch, plan, status record, ADR-index and INDEX.md entries | L0 | Human review of the mapping table, versioning unit, and `0.2.0` baseline number |
-| 2 | `ontology-versioning-policy.md`, `CONTRIBUTING.md` and `ontology-architecture.md` §2 cross-references | L0 | `mise run topology:links` finds no broken cross-reference; a second reader can classify a change using only the new document |
-| 3 | Baseline reset (version numbers, base-URI normalisation, `owl:imports` cascade, per-layer changelog notes) | L0, L3 | Every affected README's `turtle-spec` block still extracts cleanly (`tools/literate_extract.py --check`); every `owl:imports` target IRI resolves to a document that exists in the tree; `reuse lint` still passes |
-| 4 | The "changed but not bumped" check, wired into `mise` | L0 | The check fires against a fixture with content changed and version literal held constant, and stays silent against a fixture with both changed together (mutation probe) |
+| Slice | Scope | Test level | Gate | Status |
+|---|---|---|---|---|
+| 1 | ADR-A86, sketch, plan, status record, ADR-index and INDEX.md entries | L0 | Human review of the mapping table, versioning unit, and `0.2.0` baseline number | Done |
+| 2 | `ontology-versioning-policy.md`, `CONTRIBUTING.md` and `ontology-architecture.md` §2 cross-references | L0 | `mise run topology:links` finds no broken cross-reference; a second reader can classify a change using only the new document | Done |
+| 3 | Baseline reset (version numbers, base-URI normalisation, `owl:imports` cascade, per-layer changelog notes) | L0, L3 | Every affected README's `turtle-spec` block still extracts cleanly (`tools/literate_extract.py --check`); every `owl:imports` target IRI resolves to a document that exists in the tree; `reuse lint` still passes | Done, with one recorded deviation (see status record) |
+| 4 | The "changed but not bumped" check, wired into `mise` | L0 | The check fires against a fixture with content changed and version literal held constant, and stays silent against a fixture with both changed together (mutation probe) | Done |
 
-Slice 3 touches many files but each file's edit is the same three mechanical
-operations (version segment, base URI, importer cascade); it is not split
-further because splitting by layer would multiply cross-file import-cascade
-coordination rather than reduce it. Slice 4 is independent, small, and does
-not block Slices 1–3 landing first.
+Slice 3 touched every file the sketch's inventory named plus one additional
+reference-implementation constant (`tools/surface/src/surface/namespaces.py`)
+discovered while enumerating importers. See the
+[status record](../status/ontology-semantic-versioning.md) for the full
+account, including the one place this slice deviated from the plan's literal
+text (it did not run `tools/literate_extract.py` in write mode, because doing
+so would have overwritten large amounts of unrelated, already-drifted content
+that predates this unit).
 
 ## Acceptance and validation
 

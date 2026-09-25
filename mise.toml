@@ -48,7 +48,7 @@ run = "corepack enable && yarn install --immutable"
 
 [tasks.check]
 description = "Run all repository validation tasks"
-depends = ["check:python-root", "check:workers", "check:java", "check:frontend", "check:spc", "check:persistence", "check:vocabulary", "check:minting", "build:mtp", "check:mtp"]
+depends = ["check:python-root", "check:workers", "check:java", "check:frontend", "check:spc", "check:persistence", "check:vocabulary", "check:ontology-versioning", "check:minting", "build:mtp", "check:mtp"]
 
 [tasks.test]
 description = "Run the repository test suites"
@@ -133,6 +133,10 @@ run = "python -m pytest tools/persistence/tests -q"
 [tasks."check:vocabulary"]
 description = "Run the Vocabulary scoped/temporal binding conformance package (SHACL fixtures, resolver, determinism, consumer boundary; ADR-A85)"
 run = "python -m pytest tools/vocabulary/tests -q"
+
+[tasks."check:ontology-versioning"]
+description = "Flag any ontology.ttl file whose content changed without its owl:versionIRI moving too (ADR-A86)"
+run = "python tools/ontology_version_check.py"
 
 [tasks."services:up"]
 description = "Start the reference platform services"

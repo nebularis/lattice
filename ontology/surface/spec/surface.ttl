@@ -13,10 +13,10 @@
 
 <https://www.nebularis.org/neuro-semantic/surface>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/surface/0.0.1> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/foundation/0.0.7> ,
-				<https://www.nebularis.org/neuro-semantic/vocabulary/0.0.2> ,
-				<https://www.nebularis.org/neuro-semantic/quantification/0.0.1> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/surface/0.2.0> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.2.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.2.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.2.0> .
 
 rdf:Property rdf:type owl:Class .
 rdfs:Class rdf:type owl:Class .

@@ -104,6 +104,8 @@ Layer-crossing composition rules (stated once here, they recur throughout the la
 
 **Namespace convention.** Base `https://www.nebularis.org/neuro-semantic/lattice/`, one hash namespace per layer under that base (hash rather than slash namespaces, so every term in a layer resolves with one retrieval of that layer's document). See the prefix table in §1.
 
+**Versioning convention.** Every `owl:Ontology` document under `ontology/` carries an `owl:versionIRI` following [Semantic Versioning 2.0.0](https://semver.org/), one version per document (`spec/<layer>.ttl` and `vocab/<layer>-vocab.ttl` independently). The full MAJOR/MINOR/PATCH classification, the import-pinning cascade obligation, and the 2026-09-25 baseline reset to `0.2.0` are recorded in [ADR-A86](decisions/ADR-A86-ontology-semantic-versioning.md) and the [ontology versioning policy](ontology-versioning-policy.md) — read the policy document before bumping any layer's version.
+
 ---
 
 ## 3. Implementation Status

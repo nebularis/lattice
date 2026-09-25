@@ -1233,7 +1233,7 @@ MCN can carry `Mork.ttl` itself, which is useful for placing the vocabulary's fo
 ```
 @b <http://www.nebularis.org/ontologies/Mork#>
 @o <http://www.nebularis.org/ontologies/Mork>
-@i <http://www.w3.org/2004/02/skos/core>,<http://www.w3.org/ns/shacl>,<http://www.w3.org/2003/11/swrl>,<https://www.nebularis.org/neuro-semantic/foundation/0.0.7>
+@i <http://www.w3.org/2004/02/skos/core>,<http://www.w3.org/ns/shacl>,<http://www.w3.org/2003/11/swrl>,<https://www.nebularis.org/neuro-semantic/lattice/foundation/0.2.0>
 !A mappingNote < skos:note lb "mapping note"
 !O compositeNarrowerMapping < narrowerMapping lb "has composite narrower mapping"
 !O compositeBroaderMapping < broaderMapping inv compositeNarrowerMapping

@@ -397,40 +397,43 @@ between active platform work and archived material.
 
 ---
 
-# Ontology Semantic Versioning — Proposed (2026-09-25)
+# Ontology Semantic Versioning — Implemented, ADR pending ratification (2026-09-25)
 
 | Field | Value |
 |-------|-------|
-| **Status** | ⏳ Sketch, plan, and ADR-A86 authored; awaiting human review. Implementation not started |
+| **Status** | ✅ Slices 1-4 implemented (human directed autonomous implementation, 2026-09-25). ADR-A86 remains Proposed pending ratification |
 | **Unit ID** | `ontology-semantic-versioning` |
 | **Trigger** | Human request, 2026-09-25 — adopt SemVer 2.0.0 for ontology documents |
 | **Sketch** | [ontology-semantic-versioning.md](sketches/ontology-semantic-versioning.md) |
 | **Plan** | [ontology-semantic-versioning.md](plans/ontology-semantic-versioning.md) |
 | **Status Record** | [ontology-semantic-versioning.md](status/ontology-semantic-versioning.md) |
+| **Policy** | [ontology-versioning-policy.md](../architecture/ontology-versioning-policy.md) |
 | **ADR** | [ADR-A86](../architecture/decisions/ADR-A86-ontology-semantic-versioning.md), Proposed |
 
-Every `owl:Ontology` document under `ontology/` carries an ungoverned
-`owl:versionIRI`, or none, with no documented rule for when it changes. The
+Every `owl:Ontology` document under `ontology/` carried an ungoverned
+`owl:versionIRI`, or none, with no documented rule for when it changed. The
 sketch's inventory found four distinct problems: no bump rule beyond one ad
 hoc note in `vocabulary/README.md`; an already-inconsistent versioning unit
 (`spec/*.ttl` vs `vocab/*.ttl` independently versioned and already drifted);
 two ontologies (MORK, SPC) with no version identity at all; and one
 (`applied/insurance/contract.ttl`) with two disagreeing version signals and a
-namespace base outside the `lattice/` tree. ADR-A86 proposes SemVer 2.0.0 per
+namespace base outside the `lattice/` tree. ADR-A86 adopted SemVer 2.0.0 per
 `owl:Ontology` document, a MAJOR/MINOR/PATCH mapping table, a one-time
-baseline reset to `0.2.0` (recommended, not yet ratified), and a narrow
-"changed but not bumped" check. No implementation slice begins until the ADR
-and its two open questions (baseline number, applied-insurance namespace
-family) are confirmed.
+baseline reset to `0.2.0`, and a narrow "changed but not bumped" check.
 
-### Planned slices
+### Slices
 
 1. ADR-A86, sketch, plan, status record, ADR-index and INDEX.md entries — done
-2. Developer/agent guidance (`ontology-versioning-policy.md` + cross-references)
-3. Baseline reset (version numbers, base-URI normalisation, `owl:imports` cascade)
-4. Narrow "changed but not bumped" enforcement tooling
+2. Developer/agent guidance (`ontology-versioning-policy.md` + `CONTRIBUTING.md`/`ontology-architecture.md` cross-references) — done
+3. Baseline reset (every in-scope document to `0.2.0`, `lattice/` base-URI normalisation, full `owl:imports` cascade, one discovered non-ontology importer fixed: `tools/surface`'s `SURFACE_ONTOLOGY` constant) — done, with one recorded deviation (README⇄spec extraction was not re-run; see status record)
+4. Narrow "changed but not bumped" enforcement tooling (`tools/ontology_version_check.py`, `mise run check:ontology-versioning`) — done, validated by mutation probe
 
-## 8.6 Ontology Semantic Versioning — Proposed
+**Discovered while implementing, not yet acted on:** `tools/literate_extract.py --check`
+does not currently pass for any of the seven core literate-spec layers
+(pre-existing README⇄spec drift, unrelated to this unit). Recorded in the
+policy document as a candidate future remediation unit.
+
+## 8.6 Ontology Semantic Versioning — Implemented, ADR pending ratification
 
 See the unit record above. This heading is intentionally a navigation anchor
 between active platform work and archived material.
@@ -497,8 +500,9 @@ between active platform work and archived material.
 - Sketch: [ontology-semantic-versioning.md](sketches/ontology-semantic-versioning.md)
 - Plan: [ontology-semantic-versioning.md](plans/ontology-semantic-versioning.md)
 - Status: [ontology-semantic-versioning.md](status/ontology-semantic-versioning.md)
+- Policy: [ontology-versioning-policy.md](../architecture/ontology-versioning-policy.md)
 - ADR: [A86](../architecture/decisions/ADR-A86-ontology-semantic-versioning.md), Proposed
-- Implementation: none yet — design-only, awaiting human review of the ADR and its two open questions
+- Implementation: `docs/architecture/ontology-versioning-policy.md`, `tools/ontology_version_check.py` (`mise run check:ontology-versioning`), every in-scope `.ttl` document reset to `0.2.0` — done, ADR ratification still pending
 
 ### MTP & LLM Training
 - Status: [llm-training-mtp.md](status/llm-training-mtp.md)
@@ -548,7 +552,7 @@ between active platform work and archived material.
 4. Surface MORK Phase 9 — Migration guides and phased rollout
 5. Surface MORK Phase 10 — Scale and performance optimization
 6. Vocabulary scoped and temporal binding conformance — awaiting human review
-7. Ontology semantic versioning (ADR-A86) — sketch and plan authored, awaiting human review
+7. Ontology semantic versioning (ADR-A86) — implemented; ADR ratification pending
 
 ### 🗄️ Archived
 1. Phase 0-6 handoff documents (refer to individual status records)
@@ -567,7 +571,7 @@ between active platform work and archived material.
 | **Store SPI** | Design runtime SPI for query execution | Compiler produces templates; runtime binding TBD | Separate epic/phase after housekeeping |
 | **MTP backend integration (Phase 7)** | Runtime API for LLM curriculum delivery | MTP generation complete; needs HTTP endpoint | Post-Phase-6 work |
 | **Vocabulary temporal binding conformance** | Examples, SHACL, resolver, consumer provenance checks | Authored (2026-09-25); not yet executed (sandbox network-restricted) or human-reviewed | Run `mise run check:vocabulary`, then the human validation gate (review + mutation probe) |
-| **Ontology semantic versioning** | ADR-A86, versioning-policy doc, baseline reset, narrow enforcement check | Sketch, plan, and ADR authored (2026-09-25); no ontology or doc file changed yet | Review ADR-A86, confirm the `0.2.0` baseline and the applied-insurance namespace question, then begin Slice 2 |
+| **Ontology semantic versioning** | ADR-A86, versioning-policy doc, baseline reset, narrow enforcement check | Implemented (2026-09-25): policy doc, `0.2.0` baseline reset across 29 ontology documents, `check:ontology-versioning` tooling | Ratify ADR-A86; decide whether the discovered `literate_extract.py` drift becomes its own unit |
 
 ---
 

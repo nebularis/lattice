@@ -41,12 +41,12 @@ It imports Foundation, Vocabulary, Quantification, Party, and Eligibility.
 
 <https://www.nebularis.org/neuro-semantic/instrument>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/instrument/0.0.1> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/foundation/0.0.7> ,
-				<https://www.nebularis.org/neuro-semantic/vocabulary/0.0.2> ,
-				<https://www.nebularis.org/neuro-semantic/quantification/0.0.1> ,
-				<https://www.nebularis.org/neuro-semantic/party/0.0.3> ,
-				<https://www.nebularis.org/neuro-semantic/eligibility/0.0.1> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.2.0> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.2.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.2.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.2.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/party/0.2.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.2.0> .
 
 ins:Element a owl:Class ;
 	rdfs:subClassOf fnd:Version ;
@@ -128,8 +128,8 @@ Instrument uses Foundation versioning without in-place mutation.
 
 <https://www.nebularis.org/neuro-semantic/instrument-vocab>
 	a owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/instrument-vocab/0.0.1> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/instrument/0.0.1> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/instrument-vocab/0.2.0> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.2.0> .
 ```
 
 ## 7. Shapes

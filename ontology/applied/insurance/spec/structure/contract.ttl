@@ -21,8 +21,8 @@
 
 <https://www.nebularis.org/neuro-semantic/insurance/contract>
   a owl:Ontology ;
-  owl:versionIRI <https://www.nebularis.org/neuro-semantic/insurance/contract/0.1.1> ;
-  owl:priorVersion <https://www.nebularis.org/neuro-semantic/insurance/contract/0.1.0> ;
+  owl:versionIRI <https://www.nebularis.org/neuro-semantic/insurance/contract/0.2.0> ;
+  owl:priorVersion <https://www.nebularis.org/neuro-semantic/insurance/contract/0.1.1> ;
   owl:imports <https://www.nebularis.org/ontology/nsd/core> ;
   owl:imports <https://www.nebularis.org/ontology/nsd/skos> ;
   dct:title "Insurance Contract Structure Ontology"@en ;
@@ -31,7 +31,6 @@ and reinsurance contracts using a minimal T-Box with semantic function reificati
 structural flow directives, and faceted financial terms. Serves demand projection
 (submissions), supply capture (quotes/indications), and bound contract representation."""@en ;
   dct:creator "Tim Watson" ;
-  owl:versionInfo "3.5.1" ;
   rdfs:comment """Occupies the Structural Stratum (S^s / S₃). Incorporates Submission 
   properties, MonetaryExtent/Limit/Retention class declarations, Contract-level 
   FlowDirective domain extension, surety party roles, extended DefenseCostTreatment 

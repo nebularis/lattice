@@ -31,4 +31,8 @@ VTB-11,vocabulary-temporal-binding,test_determinism.py::test_resolution_is_invar
 VTB-12,vocabulary-temporal-binding,test_consumer_boundary.py::test_resolved_under_is_retained_after_the_binding_it_named_lapses,"README §4 invariant 7: resolvedUnder is not re-resolved retroactively"
 VTB-13,vocabulary-temporal-binding,test_shacl_fixtures.py::test_negative_fixtures_do_not_conform,"README §4 invariant 7: a historical record's binding must have been valid at its own resolution time"
 VTB-14,vocabulary-temporal-binding,"test_consumer_boundary.py::test_unscoped_context_agrees_with_the_naive_bound_scheme_read,test_consumer_boundary.py::test_scoped_context_diverges_from_the_naive_bound_scheme_read","sketch: a consumer resolves the applicable binding before interpreting a concept-valued property"
-
+A-86,ontology-semantic-versioning,ontology_version_check.py::check,ADR-A86 semantic versioning for ontology documents
+OSV-01,ontology-semantic-versioning,ontology_version_check.py::check (mutation probe),"policy §Enforcement: a content change with an unchanged owl:versionIRI is flagged"
+OSV-02,ontology-semantic-versioning,ontology_version_check.py::check (mutation probe),"policy §Enforcement: a content change accompanied by a version bump is not flagged"
+OSV-03,ontology-semantic-versioning,manual review of ontology-versioning-policy.md baseline-reset table,"ADR-A86: every in-scope document reset to 0.2.0, base URI normalised to lattice/ where applicable"
+OSV-04,ontology-semantic-versioning,manual grep for pre-reset IRIs across ontology/ and tools/,"ADR-A86 import-pinning cascade: every owl:imports reference to a bumped IRI updated in the same change"
