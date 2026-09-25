@@ -550,9 +550,12 @@ srf:ReadSetEntry a owl:Class ;
 		[ a owl:Restriction ; owl:onProperty srf:readsSource ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
 		[ a owl:Restriction ; owl:onProperty srf:readSourceKind ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
 		[ a owl:Restriction ; owl:onProperty srf:readHash ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
-		[ a owl:Restriction ; owl:onProperty srf:readVersion ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ;
+		[ a owl:Restriction ; owl:onProperty srf:readVersion ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ,
+		[ a owl:Restriction ; owl:onProperty srf:resolvedAt ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ,
+		[ a owl:Restriction ; owl:onProperty srf:resolvedBinding ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ,
+		[ a owl:Restriction ; owl:onProperty srf:resolvedViaFallback ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ;
 	rdfs:comment "One input a generation run depended on, with the version and hash it was read at." ;
-	fnd:utility "The unit of invalidation. A surface is stale when any entry's current hash differs from the recorded one; nothing else needs to be classified to know that." .
+	fnd:utility "The unit of invalidation. A surface is stale when any entry's current hash differs from the recorded one; nothing else needs to be classified to know that. resolvedAt/resolvedBindingScope/resolvedBinding/resolvedViaFallback are populated on a BoundSchemeSource entry to record why its scheme was the one resolved (Finding 2), never to redecide invalidation." .
 
 srf:SymbolCount a owl:Class ;
 	rdfs:subClassOf
@@ -731,6 +734,15 @@ srf:readSourceKind a owl:ObjectProperty, owl:FunctionalProperty ;
 	rdfs:comment "What kind of input a read-set entry names." ;
 	fnd:utility "SurfaceSource entries are what make a surface stacked; the depth they imply is checked against the profile's permitted stack depth." .
 
+srf:resolvedBindingScope a owl:ObjectProperty ;
+	rdfs:domain srf:ReadSetEntry ; rdfs:range voc:BindingScope ;
+	rdfs:comment "A scope that was active when a BoundSchemeSource read-set entry's scheme was resolved." ;
+	fnd:utility "Recorded on every BoundSchemeSource entry for a contract-bound population, whether or not any value is present — an empty set here means the unscoped context, exactly as for srf:activeBindingScope, so the two are always directly comparable (Finding 2, docs/developer/plans/temporal-binding-consumer-hardening.md)." .
+
+srf:resolvedBinding a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:ReadSetEntry ; rdfs:range voc:SchemeBinding ;
+	rdfs:comment "The voc:SchemeBinding a BoundSchemeSource read-set entry's scheme was resolved from, absent when the contract's boundScheme fallback was used instead." .
+
 srf:signatureScope a owl:ObjectProperty, owl:FunctionalProperty ;
 	rdfs:domain srf:GeneratedSurface ; rdfs:range srf:SignatureScope ;
 	rdfs:comment "Whether a generated surface's output stays within its own minted terms or reaches the authored signature." ;
@@ -838,6 +850,15 @@ srf:readVersion a owl:DatatypeProperty, owl:FunctionalProperty ;
 srf:readHash a owl:DatatypeProperty, owl:FunctionalProperty ;
 	rdfs:domain srf:ReadSetEntry ; rdfs:range xsd:string ;
 	rdfs:comment "The hash of an input's canonical content at the time it was read." .
+
+srf:resolvedAt a owl:DatatypeProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:ReadSetEntry ; rdfs:range xsd:dateTime ;
+	rdfs:comment "The resolution instant used to resolve a BoundSchemeSource read-set entry's scheme." ;
+	fnd:utility "Recorded on every BoundSchemeSource entry, so an auditor can recover why a given compile resolved the scheme it did without re-running the compiler (Finding 2). Distinct from srf:producedAt: the same production run's resolution instant, named explicitly here as the semantic input it is, per srf:R1's updated text." .
+
+srf:resolvedViaFallback a owl:DatatypeProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:ReadSetEntry ; rdfs:range xsd:boolean ;
+	rdfs:comment "Whether a BoundSchemeSource read-set entry's scheme came from the contract's boundScheme fallback rather than a resolved voc:SchemeBinding." .
 
 srf:countValue a owl:DatatypeProperty, owl:FunctionalProperty ;
 	rdfs:domain srf:SymbolCount ; rdfs:range xsd:nonNegativeInteger ;
@@ -1106,7 +1127,7 @@ srf:S8 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "Generate
 srf:S9 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "No generated surface declares an authority above cached-reproducible." .
 srf:S10 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "A generated surface's stack depth does not exceed its profile's permitted stack depth." .
 
-srf:R1 a srf:Law ; srf:lawRegister srf:RuntimeConformance ; rdfs:comment "Regeneration determinism. The same read set under the same profile yields an identical symbol inventory and an identical artefact hash. Composition: every surface in a stack shares one profile identity, checked statically; a mixed-profile stack is not a conformant regeneration." .
+srf:R1 a srf:Law ; srf:lawRegister srf:RuntimeConformance ; rdfs:comment "Regeneration determinism. The same read set under the same profile yields an identical symbol inventory and an identical artefact hash. Composition: every surface in a stack shares one profile identity, checked statically; a mixed-profile stack is not a conformant regeneration. For a contract-bound population that could resolve a caller-scoped voc:SchemeBinding (ADR-A85), the resolution instant is part of that read set as a required, explicit input, not an incidental reuse of the production timestamp: the law holds relative to a fixed resolution instant, and the compiler refuses to supply one implicitly for such a population." .
 srf:R2 a srf:Law ; srf:lawRegister srf:RuntimeConformance ; rdfs:comment "Surface and source parity. Every question in the shared conformance corpus is answered identically against the surface and against the source under a direct evaluation profile." .
 srf:R3 a srf:Law ; srf:lawRegister srf:RuntimeConformance ; rdfs:comment "Invalidation minimality. A scoped change regenerates only the computed impact set and leaves every other surface byte-identical." .
 srf:R4 a srf:Law ; srf:lawRegister srf:RuntimeConformance ; rdfs:comment "Materialisation idempotence. Re-running a materialisation over an unchanged read set adds no triples." .
@@ -1191,7 +1212,10 @@ srf:ReadSetEntryShape a sh:NodeShape ;
 	sh:property [ sh:path srf:readsSource ; sh:minCount 1 ; sh:maxCount 1 ] ;
 	sh:property [ sh:path srf:readSourceKind ; sh:minCount 1 ; sh:maxCount 1 ] ;
 	sh:property [ sh:path srf:readHash ; sh:minCount 1 ; sh:maxCount 1 ] ;
-	sh:property [ sh:path srf:readVersion ; sh:maxCount 1 ] .
+	sh:property [ sh:path srf:readVersion ; sh:maxCount 1 ] ;
+	sh:property [ sh:path srf:resolvedAt ; sh:maxCount 1 ] ;
+	sh:property [ sh:path srf:resolvedBinding ; sh:maxCount 1 ] ;
+	sh:property [ sh:path srf:resolvedViaFallback ; sh:maxCount 1 ] .
 
 srf:SymbolCountShape a sh:NodeShape ;
 	sh:targetClass srf:SymbolCount ;
@@ -1297,6 +1321,19 @@ srf:BoundSchemeGovernanceShape a sh:NodeShape ;
 					?schemeContract voc:requiresGovernanceState ?permitted .
 					?scheme fnd:hasGovernanceState ?permitted .
 				}
+			}
+		"""
+	] .
+
+srf:BoundSchemeSourceResolutionRecordedShape a sh:NodeShape ;
+	sh:targetClass srf:ReadSetEntry ;
+	sh:sparql [
+		sh:message "A BoundSchemeSource read-set entry must record the resolution instant that selected its scheme, so an auditor can recover why without re-running the compiler. Discharges Finding 2 (docs/developer/plans/temporal-binding-consumer-hardening.md)." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this WHERE {
+				$this srf:readSourceKind srf:BoundSchemeSource .
+				FILTER NOT EXISTS { $this srf:resolvedAt ?at }
 			}
 		"""
 	] .

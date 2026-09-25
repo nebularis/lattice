@@ -26,7 +26,16 @@ stack, the ordering is over whole contracts and is the caller's business.
 The compiler is deterministic. Population order is IRI order, blank-node labels
 are minted from the term they belong to, and the production timestamp is the
 only non-reproducible value emitted — which is why it sits outside the artefact
-hash.
+hash. **This holds for an unscoped population.** A contract-bound population
+that could resolve a caller-scoped ``voc:SchemeBinding`` (ADR-A85) instead
+takes its resolution instant as a required, explicit semantic input — not a
+provenance timestamp incidentally reused for that purpose — because which
+scheme resolves, and therefore the population, the emitted content, and both
+hashes, can depend on it. ``cli.py`` refuses to default this value silently
+for exactly these contracts (Finding 1,
+``docs/developer/plans/temporal-binding-consumer-hardening.md``); an unscoped
+contract keeps today's wall-clock-default ergonomics unchanged. See law
+``srf:R1``'s updated text for the precise statement.
 
 **Staged pipeline (ADR-A19).** A Promotion or Index contract's run maps onto
 the staged model as: validate (``model.py``'s analyser, at read time) →
@@ -51,7 +60,7 @@ from typing import Dict, List, Optional, Sequence, Set, Tuple
 from rdflib import BNode, Graph, Literal, URIRef
 from rdflib.term import Node
 
-from vocabulary import BindingConflictError, NoApplicableBindingError, resolve
+from vocabulary import BindingConflictError, NoApplicableBindingError, Resolution, resolve
 
 from . import canonical
 from .model import Contract, ContractError, Population, SurfaceGraphAnalyser
@@ -157,10 +166,15 @@ def carrier_instances(graph: Graph, carrier: URIRef) -> List[URIRef]:
 
 def enumerate_population(
     graph: Graph, population: Population, at: Optional[str] = None
-) -> Tuple[List[URIRef], Optional[URIRef]]:
-    """The population's members in IRI order, and the scheme they came from."""
+) -> Tuple[List[URIRef], Optional[URIRef], Optional[Resolution]]:
+    """The population's members in IRI order, the scheme they came from, and
+    (for a contract-bound population only) the full Resolution that produced
+    it — the caller-supplied context and instant, the winning binding or
+    fallback, and the full candidate trace, for a caller to record rather
+    than discard (Finding 2, docs/developer/plans/temporal-binding-consumer-hardening.md).
+    """
     if population.kind == "enumerated":
-        return list(population.members), None
+        return list(population.members), None, None
 
     if population.kind == "contract-bound":
         if at is None:
@@ -180,7 +194,7 @@ def enumerate_population(
                 f"{population.scheme_contract} has no scheme to enumerate its population "
                 f"from (law srf:S2): {error}"
             ) from error
-        return _query_iris(graph, SCHEME_MEMBERS, scheme=resolution.scheme), resolution.scheme
+        return _query_iris(graph, SCHEME_MEMBERS, scheme=resolution.scheme), resolution.scheme, resolution
 
     if population.kind == "class-extent":
         query = {
@@ -190,7 +204,7 @@ def enumerate_population(
         }.get(population.extent_kind)
         if query is None:
             raise CompileError(f"unknown extent kind: {population.extent_kind}")
-        return _query_iris(graph, query, **{"class": population.from_class}), None
+        return _query_iris(graph, query, **{"class": population.from_class}), None, None
 
     raise CompileError(f"population kind {population.kind} cannot be enumerated")
 
@@ -253,6 +267,10 @@ class ReadSetRecord:
     source: Node
     digest: str
     version: Optional[str] = None
+    resolved_at: Optional[str] = None
+    resolved_binding_scope: Tuple[URIRef, ...] = ()
+    resolved_binding: Optional[URIRef] = None
+    resolved_via_fallback: Optional[bool] = None
 
     def key(self) -> Tuple[str, str]:
         return (str(self.kind), str(self.source))
@@ -372,7 +390,7 @@ class SurfaceCompiler:
     def _scope_members(self, population: Optional[Population]) -> Optional[Set[str]]:
         if population is None:
             return None
-        members, _ = enumerate_population(self.source, population, at=self.produced_at)
+        members, _, _ = enumerate_population(self.source, population, at=self.produced_at)
         return {str(m) for m in members}
 
     # -- public API ---------------------------------------------------------
@@ -448,7 +466,7 @@ class SurfaceCompiler:
 
     def _compile_index(self) -> None:
         contract = self.contract
-        self.population, scheme = enumerate_population(
+        self.population, scheme, resolution = enumerate_population(
             self.source, contract.population, at=self.produced_at
         )
 
@@ -456,13 +474,22 @@ class SurfaceCompiler:
             scheme_graph = self._subgraph([scheme, *self.population])
             for triple in self.source.triples((None, SKOS.inScheme, scheme)):
                 scheme_graph.add(triple)
-            self.read_set.append(
-                ReadSetRecord(
-                    kind=SRF.BoundSchemeSource,
-                    source=scheme,
-                    digest=canonical.hash_graph(scheme_graph),
-                )
+            entry = ReadSetRecord(
+                kind=SRF.BoundSchemeSource,
+                source=scheme,
+                digest=canonical.hash_graph(scheme_graph),
             )
+            if resolution is not None:
+                # Finding 2: record why this scheme was the one resolved, not
+                # only that it was, so an auditor never needs to re-run the
+                # compiler to recover the resolution context (docs/developer/
+                # plans/temporal-binding-consumer-hardening.md).
+                entry.resolved_at = self.produced_at
+                entry.resolved_binding_scope = contract.population.active_binding_scope
+                entry.resolved_via_fallback = resolution.used_fallback
+                if not resolution.used_fallback:
+                    entry.resolved_binding = resolution.winning_binding
+            self.read_set.append(entry)
 
         if len(self.population) > WARN_POPULATION:
             self.warnings.append(
@@ -825,6 +852,20 @@ class SurfaceCompiler:
             graph.add((node, SRF.readHash, Literal(entry.digest)))
             if entry.version is not None:
                 graph.add((node, SRF.readVersion, Literal(entry.version)))
+            if entry.resolved_at is not None:
+                graph.add((node, SRF.resolvedAt, Literal(entry.resolved_at, datatype=XSD.dateTime)))
+            for scope in entry.resolved_binding_scope:
+                graph.add((node, SRF.resolvedBindingScope, scope))
+            if entry.resolved_binding is not None:
+                graph.add((node, SRF.resolvedBinding, entry.resolved_binding))
+            if entry.resolved_via_fallback is not None:
+                graph.add(
+                    (
+                        node,
+                        SRF.resolvedViaFallback,
+                        Literal(entry.resolved_via_fallback, datatype=XSD.boolean),
+                    )
+                )
 
         counts: Dict[str, int] = {}
         for symbol in compiled.symbols:

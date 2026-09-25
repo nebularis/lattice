@@ -34,7 +34,7 @@ silent chooser.
 | VTB-10 | Given an open-ended binding, when resolving after its start, then it remains eligible | L1 | Binding selected | + |
 | VTB-11 | Given the same graph in permuted triple order, when resolving, then the result is identical | L2 | Stable result and digest | + |
 | VTB-12 | Given a historical record with `resolvedUnder`, when current bindings change, then the recorded binding remains unchanged | L3 | No retroactive re-resolution | + |
-| VTB-13 | Given a historical record whose binding is outside its recorded time, when validating, then it fails | L3 | Provenance-time violation | - |
+| VTB-13 | Given a historical record whose binding is outside its valid-time "as-of" resolution point (`vvp:resolvedAt`, not a transaction-time "recorded when"), when validating, then it fails | L3 | Provenance-time violation | - |
 | VTB-14 | Given a consumer concept-valued property, when the consumer resolves its contract, then it uses the selected binding before the scheme | L4 | Cross-layer fixture passes | + |
 
 ## One command to run everything

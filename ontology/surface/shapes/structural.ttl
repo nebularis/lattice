@@ -67,7 +67,10 @@ srf:ReadSetEntryShape a sh:NodeShape ;
 	sh:property [ sh:path srf:readsSource ; sh:minCount 1 ; sh:maxCount 1 ] ;
 	sh:property [ sh:path srf:readSourceKind ; sh:minCount 1 ; sh:maxCount 1 ] ;
 	sh:property [ sh:path srf:readHash ; sh:minCount 1 ; sh:maxCount 1 ] ;
-	sh:property [ sh:path srf:readVersion ; sh:maxCount 1 ] .
+	sh:property [ sh:path srf:readVersion ; sh:maxCount 1 ] ;
+	sh:property [ sh:path srf:resolvedAt ; sh:maxCount 1 ] ;
+	sh:property [ sh:path srf:resolvedBinding ; sh:maxCount 1 ] ;
+	sh:property [ sh:path srf:resolvedViaFallback ; sh:maxCount 1 ] .
 
 srf:SymbolCountShape a sh:NodeShape ;
 	sh:targetClass srf:SymbolCount ;

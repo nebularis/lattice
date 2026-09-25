@@ -51,6 +51,13 @@ runs the fixtures under `ontology/vocabulary/examples/` against those shapes;
 resolver against the same fixtures for the context-dependent cases SHACL
 cannot decide.
 
+The historical-provenance-time shape's `vvp:resolvedAt` term is a valid-time
+"as-of" query point (the same axis as `fnd:validFrom`/`fnd:validTo` and
+`resolve()`'s own `at` parameter), not a transaction-time "recorded when"
+timestamp — see `constraints.ttl`'s header for why it is named `resolvedAt`
+rather than `recordedAt`, and why it is a validation-profile placeholder
+rather than a normative Vocabulary term.
+
 ## Modules
 
 - [`vocabulary.namespaces`](src/vocabulary/namespaces.py) — the `VOC`, `FND`,

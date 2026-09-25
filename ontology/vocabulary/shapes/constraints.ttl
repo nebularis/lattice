@@ -23,12 +23,19 @@
 # metadata or a documented validation profile in its place). This file
 # therefore introduces one validation-profile-only term for that purpose:
 #
-#   vvp:resolvedAt  — the time at which a voc:resolvedUnder-bearing record's
-#   concept values were actually resolved. Not part of the normative
-#   Vocabulary specification (spec/vocabulary.ttl); used only by this shape
-#   and by the fixtures under ontology/vocabulary/examples/ that exercise it.
-#   A real consuming layer states this via its own record's own timestamp
-#   property instead, once one exists.
+#   vvp:resolvedAt — a valid-time "as-of" query point: the instant a
+#   voc:resolvedUnder-bearing record wants its binding resolved as of, on the
+#   same axis as fnd:validFrom/fnd:validTo and resolve()'s own `at` parameter.
+#   It is not a transaction-time "recorded when" timestamp (the guide's own
+#   convention for that axis is fnd:recordedAt/an ex:occurredAt-shaped
+#   property, guide §23.3) — naming it vvp:resolvedAt rather than
+#   vvp:recordedAt is deliberate, to avoid suggesting it answers "when was
+#   this written down" when it answers "resolved as of when." Not part of the
+#   normative Vocabulary specification (spec/vocabulary.ttl); used only by
+#   this shape and by the fixtures under ontology/vocabulary/examples/ that
+#   exercise it. A real consuming layer states this via its own record's own
+#   valid-time property instead, once one exists, following the same
+#   recordedAt/occurredAt naming precedent rather than this placeholder's.
 
 @prefix sh:   <http://www.w3.org/ns/shacl#> .
 @prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
@@ -38,7 +45,7 @@
 @prefix vvp:  <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/validation-profile#> .
 
 vvp:resolvedAt a rdf:Property ;
-	rdfs:comment "Validation-profile-only: the time at which a voc:resolvedUnder-bearing record's concept values were resolved. Not part of spec/vocabulary.ttl." .
+	rdfs:comment "Validation-profile-only: the valid-time \"as-of\" instant at which a voc:resolvedUnder-bearing record's concept values were resolved (compared against fnd:validFrom/fnd:validTo, the same axis as resolve()'s `at` parameter) — not a transaction-time \"recorded when\" timestamp. Not part of spec/vocabulary.ttl." .
 
 voc:TemporalIntervalOrderShape a sh:NodeShape ;
 	sh:targetClass voc:SchemeBinding ;

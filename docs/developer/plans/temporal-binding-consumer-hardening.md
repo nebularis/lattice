@@ -3,7 +3,7 @@
 # Plan: Vocabulary temporal-binding consumer hardening
 
 **Unit ID:** `temporal-binding-consumer-hardening`
-**Status:** Planned. No implementation started.
+**Status:** Implemented (2026-09-25). See the [status record](../status/temporal-binding-consumer-hardening.md) for the full account, including one deliberate non-coverage (`command_parity --shared-corpus`).
 **Trigger:** Cross-reference of the closed `vocabulary-temporal-binding` unit's
 Surface/Eligibility consumer integration against
 [docs/architecture/rdf-sparql-patterns-guide.md](../../architecture/rdf-sparql-patterns-guide.md),
@@ -92,6 +92,8 @@ this option choice is confirmed with the human, and the accepted option's
 effect on `ontology/surface/README.md`'s law register (R1, S2) should be
 reflected in the same slice that implements it.
 
+**Human Input:** Agree to proceed with option B, and doc corrections per A, as recommended.
+
 ## Finding 2 — resolution plan: no resolution trace in Surface's provenance
 
 ### Problem restated
@@ -169,12 +171,12 @@ would catch a future regression the way persistence's test would.
 
 ## Slice plan
 
-| Slice | Scope | Depends on | Gate |
-|---|---|---|---|
-| 1 | Finding 3 (documentation only) | none | Human review of the wording |
-| 2 | Finding 4 (test implementation) | none | Test passes and demonstrably fails against a deliberately introduced `datetime.now()` call (mutation probe) |
-| 3 | Finding 1 (Surface compiler + CLI + ontology law text) | Human decision between Options A/B/C above | Existing Surface suite stays green; a new test proves two runs with different wall-clock time and an identical source graph now either produce identical output (if the fallback default is used) or the same `CompileError` in both directions (Option B) |
-| 4 | Finding 2 (Surface ontology + compiler + manifest) | Slice 3 (needs the resolution-instant decision) | Manifest for a scoped-binding compile records the winning binding/context; a mutation probe on the recorded trace demonstrates it changes when the context does |
+| Slice | Scope | Depends on | Gate | Status |
+|---|---|---|---|---|
+| 1 | Finding 3 (documentation only) | none | Human review of the wording | Done |
+| 2 | Finding 4 (test implementation) | none | Test passes and demonstrably fails against a deliberately introduced `datetime.now()` call (mutation probe) | Done, mutation-probed in-session |
+| 3 | Finding 1 (Surface compiler + CLI + ontology law text) | Human decision between Options A/B/C above | Existing Surface suite stays green; a new test proves two runs with different wall-clock time and an identical source graph now either produce identical output (if the fallback default is used) or the same `CompileError` in both directions (Option B) | Done, statically verified; execution pending (no `rdflib` in this sandbox) |
+| 4 | Finding 2 (Surface ontology + compiler + manifest) | Slice 3 (needs the resolution-instant decision) | Manifest for a scoped-binding compile records the winning binding/context; a mutation probe on the recorded trace demonstrates it changes when the context does | Done, statically verified; execution pending |
 
 Slices 3 and 4 require human sign-off on the design option before their own
 implementation starts, consistent with the Agentic Development Contract's

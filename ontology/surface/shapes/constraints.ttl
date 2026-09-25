@@ -78,6 +78,19 @@ srf:BoundSchemeGovernanceShape a sh:NodeShape ;
 		"""
 	] .
 
+srf:BoundSchemeSourceResolutionRecordedShape a sh:NodeShape ;
+	sh:targetClass srf:ReadSetEntry ;
+	sh:sparql [
+		sh:message "A BoundSchemeSource read-set entry must record the resolution instant that selected its scheme, so an auditor can recover why without re-running the compiler. Discharges Finding 2 (docs/developer/plans/temporal-binding-consumer-hardening.md)." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this WHERE {
+				$this srf:readSourceKind srf:BoundSchemeSource .
+				FILTER NOT EXISTS { $this srf:resolvedAt ?at }
+			}
+		"""
+	] .
+
 srf:ClosureBasisAgreementShape a sh:NodeShape ;
 	sh:targetClass srf:IndexContract ;
 	sh:sparql [

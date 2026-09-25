@@ -51,8 +51,8 @@ from rdflib import Graph, Literal, URIRef
 from . import mork as mork_interop
 from .compile import CompileError, StackedInput, SurfaceCompiler, discharge_determinism, render
 from .lowering import lower_all
-from .model import ContractError, SurfaceGraphAnalyser, read_contracts, read_projection_contracts
-from .namespaces import OUTPUT_PREFIXES, RDF, SRF
+from .model import Contract, ContractError, SurfaceGraphAnalyser, read_contracts, read_projection_contracts
+from .namespaces import OUTPUT_PREFIXES, RDF, SRF, VOC
 from .parity import check_parity, run_shared_surface_parity
 from .serialise import parse_files, serialise
 
@@ -71,6 +71,59 @@ def _now(explicit: Optional[str]) -> str:
         .isoformat()
         .replace("+00:00", "Z")
     )
+
+
+def contracts_needing_explicit_resolution_time(
+    source: Graph, contracts: Sequence[Contract]
+) -> List[URIRef]:
+    """Every contract whose value population is contract-bound and could
+    resolve a caller-scoped voc:SchemeBinding: either its population
+    declares one or more srf:activeBindingScope values, or its scheme
+    contract is named by voc:forContract from any binding in the source
+    graph at all. For exactly these, and only these, the CLI's wall-clock
+    produced_at default is refused (Finding 1, Option B,
+    docs/developer/plans/temporal-binding-consumer-hardening.md): once a
+    voc:SchemeBinding exists to resolve against, the resolution instant is a
+    semantic input to the compiled output, not merely a provenance
+    timestamp, and must be supplied explicitly rather than implied by
+    whatever moment the command happened to run. An unscoped contract with
+    no reachable binding keeps today's default ergonomics unchanged.
+    """
+    needing: List[URIRef] = []
+    for contract in contracts:
+        population = contract.population
+        if population is None or population.kind != "contract-bound":
+            continue
+        if population.active_binding_scope:
+            needing.append(contract.iri)
+            continue
+        if population.scheme_contract is not None and any(
+            source.subjects(VOC.forContract, population.scheme_contract)
+        ):
+            needing.append(contract.iri)
+    return needing
+
+
+def _refuse_implicit_now_for_scoped_contracts(
+    source: Graph, contracts: Sequence[Contract], explicit_now: Optional[str]
+) -> Optional[int]:
+    """Returns a process exit code (and prints a FAIL line per contract) when
+    the caller must supply --now explicitly and did not; returns None when it
+    is safe to proceed to _now()'s wall-clock default."""
+    if explicit_now:
+        return None
+    needing = contracts_needing_explicit_resolution_time(source, contracts)
+    if not needing:
+        return None
+    for iri in needing:
+        print(
+            f"FAIL {iri}\n  needs an explicit --now: its value population can resolve a "
+            f"caller-scoped voc:SchemeBinding, so the resolution instant is a semantic input "
+            f"to the compiled output and the wall-clock default is refused (srf:R1, ADR-A85; "
+            f"Finding 1, docs/developer/plans/temporal-binding-consumer-hardening.md).",
+            file=sys.stderr,
+        )
+    return 1
 
 
 def _input_surfaces(paths: Sequence[str], declarations: Graph) -> List[StackedInput]:
@@ -121,12 +174,17 @@ def command_compile(args: argparse.Namespace) -> int:
     declarations = parse_files(args.contracts)
     source = _load(args, args.input_surface)
     stacked = _input_surfaces(args.input_surface, declarations)
+    contracts = read_contracts(declarations, only=args.contract)
+
+    guard = _refuse_implicit_now_for_scoped_contracts(source, contracts, args.now)
+    if guard is not None:
+        return guard
     produced_at = _now(args.now)
 
     out_root = Path(args.out)
     failures = 0
 
-    for contract in read_contracts(declarations, only=args.contract):
+    for contract in contracts:
         try:
             compiled = SurfaceCompiler(contract, source, produced_at, stacked).compile()
         except (CompileError, ContractError, ValueError) as error:
@@ -196,11 +254,15 @@ def command_check(args: argparse.Namespace) -> int:
     manifests = parse_files(args.manifest)
     declarations = parse_files(args.contracts)
     source = _load(args)
-    produced_at = _now(args.now)
     stale = 0
 
     for record in manifests.subjects(RDF.type, SRF.GeneratedSurface):
         contract_iri = manifests.value(record, SRF.coversContract)
+        contracts = read_contracts(declarations, only=str(contract_iri))
+        guard = _refuse_implicit_now_for_scoped_contracts(source, contracts, args.now)
+        if guard is not None:
+            return guard
+        produced_at = _now(args.now)
         recorded: Dict[Tuple[str, str], str] = {}
         for entry in manifests.objects(record, SRF.hasReadSetEntry):
             kind = manifests.value(entry, SRF.readSourceKind)
@@ -208,7 +270,6 @@ def command_check(args: argparse.Namespace) -> int:
             digest = manifests.value(entry, SRF.readHash)
             recorded[(str(kind), str(origin))] = str(digest)
 
-        contracts = read_contracts(declarations, only=str(contract_iri))
         compiled = SurfaceCompiler(contracts[0], source, produced_at).compile()
         current = {entry.key(): entry.digest for entry in compiled.read_set}
 
@@ -237,9 +298,13 @@ def command_parity(args: argparse.Namespace) -> int:
 
     declarations = parse_files(args.contracts)
     source = _load(args)
+    contracts = read_contracts(declarations, only=args.contract)
+    guard = _refuse_implicit_now_for_scoped_contracts(source, contracts, args.now)
+    if guard is not None:
+        return guard
     produced_at = _now(args.now)
     failures = 0
-    for contract in read_contracts(declarations, only=args.contract):
+    for contract in contracts:
         compiled = SurfaceCompiler(contract, source, produced_at).compile()
         report = check_parity(compiled, source)
         print(report.describe())
@@ -255,9 +320,13 @@ def command_mork(args: argparse.Namespace) -> int:
 
     declarations = parse_files(args.contracts)
     source = _load(args)
+    contracts = read_contracts(declarations, only=args.contract)
+    guard = _refuse_implicit_now_for_scoped_contracts(source, contracts, args.now)
+    if guard is not None:
+        return guard
     produced_at = _now(args.now)
     combined = Graph()
-    for contract in read_contracts(declarations, only=args.contract):
+    for contract in contracts:
         compiled = SurfaceCompiler(contract, source, produced_at).compile()
         for triple in mork_interop.lift(compiled, mapping_scheme=args.mapping_scheme):
             combined.add(triple)

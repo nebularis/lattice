@@ -43,6 +43,7 @@ from .compile import (
 from .model import ContractError, SurfaceGraphAnalyser, read_contracts, read_projection_contracts
 from .mork import HAS_PROJECTION_PROVENANCE, PROJECTION_MAPPING, lift, lower
 from .lowering import lower_all, lower_contract, lower_projection
+from .cli import contracts_needing_explicit_resolution_time
 from .invalidation import (
     compare_read_set,
     impacted_mappings,
@@ -52,7 +53,7 @@ from .invalidation import (
     read_set_from_manifest,
 )
 from .parity import run_shared_surface_parity
-from .namespaces import MORK, OWL, RDF, RDFS, SRF
+from .namespaces import MORK, OWL, RDF, RDFS, SRF, VOC
 from .naming import (
     DIGEST_LOCAL_NAME,
     LOCAL_NAME_FROM_VALUE,
@@ -179,10 +180,19 @@ class PopulationAndPathTests(unittest.TestCase):
         self.contract = only_contract(self.graph, "job-family")
 
     def test_population_follows_the_scheme_contract(self) -> None:
-        members, scheme = enumerate_population(self.graph, self.contract.population, at=AT)
+        members, scheme, resolution = enumerate_population(
+            self.graph, self.contract.population, at=AT
+        )
         self.assertEqual(scheme, URIRef(EMPLOYMENT + "JobFamilyScheme"))
         self.assertEqual(len(members), 6)
         self.assertIn(URIRef(EMPLOYMENT + "AnyJobFamily"), members)
+        # This fixture's contract has no voc:SchemeBinding at all, so
+        # resolution always falls back to boundScheme (Finding 1/2,
+        # docs/developer/plans/temporal-binding-consumer-hardening.md) — the
+        # Resolution object is still returned, not discarded, for the
+        # compiler to record.
+        self.assertTrue(resolution.used_fallback)
+        self.assertIsNone(resolution.winning_binding)
 
     def test_carrier_instances_include_subclass_instances(self) -> None:
         self.assertEqual(len(carrier_instances(self.graph, self.contract.carrier)), 3)
@@ -298,6 +308,103 @@ class CompilationTests(unittest.TestCase):
         self.assertNotIn(
             f"{namespace}RoleAssignment_job-family-scoped_FallbackOnly", minted
         )
+
+    def test_manifest_records_the_resolution_trace_for_a_bound_scheme_source(self) -> None:
+        """Finding 2 (docs/developer/plans/temporal-binding-consumer-hardening.md):
+        the manifest must record why a BoundSchemeSource entry's scheme was
+        the one resolved, not only that it was."""
+        compiled, _ = compile_example(
+            "employment-job-family-scoped.ttl", "job-family-scoped"
+        )
+        manifest = compiled.modules["manifest"]
+        entry = next(
+            e
+            for e in manifest.subjects(RDF.type, SRF.ReadSetEntry)
+            if manifest.value(e, SRF.readSourceKind) == SRF.BoundSchemeSource
+        )
+        namespace = "https://example.org/lattice/surface/employment-scoped#"
+        self.assertEqual(str(manifest.value(entry, SRF.resolvedAt)), AT)
+        self.assertEqual(
+            {str(s) for s in manifest.objects(entry, SRF.resolvedBindingScope)},
+            {namespace + "region-north"},
+        )
+        self.assertEqual(
+            str(manifest.value(entry, SRF.resolvedBinding)), namespace + "north-binding"
+        )
+        self.assertFalse(bool(manifest.value(entry, SRF.resolvedViaFallback)))
+
+    def test_resolution_trace_changes_when_the_context_does(self) -> None:
+        """Mutation probe for Finding 2: dropping the population's declared
+        activeBindingScope must change the recorded trace from a winning
+        binding to a recorded fallback, proving the manifest reflects the
+        actual resolution rather than a fixed or vacuous value."""
+        graph = load("employment-job-family-scoped.ttl")
+        contract = only_contract(graph, "job-family-scoped")
+        unscoped_population = replace(contract.population, active_binding_scope=())
+        unscoped_contract = replace(contract, population=unscoped_population)
+
+        compiled = SurfaceCompiler(unscoped_contract, graph, AT).compile()
+        manifest = compiled.modules["manifest"]
+        entry = next(
+            e
+            for e in manifest.subjects(RDF.type, SRF.ReadSetEntry)
+            if manifest.value(e, SRF.readSourceKind) == SRF.BoundSchemeSource
+        )
+        self.assertTrue(bool(manifest.value(entry, SRF.resolvedViaFallback)))
+        self.assertIsNone(manifest.value(entry, SRF.resolvedBinding))
+        self.assertEqual(list(manifest.objects(entry, SRF.resolvedBindingScope)), [])
+        namespace = "https://example.org/lattice/surface/employment-scoped/exec#"
+        minted = {str(s.term) for s in compiled.symbols}
+        self.assertIn(f"{namespace}RoleAssignment_job-family-scoped_FallbackOnly", minted)
+
+
+class ResolutionTimeGuardTests(unittest.TestCase):
+    """Finding 1, Option B (docs/developer/plans/temporal-binding-consumer-hardening.md):
+    the CLI must refuse to default produced_at to wall-clock time for a
+    contract whose population could resolve a caller-scoped voc:SchemeBinding,
+    regardless of what time it happens to be — the guard is a structural
+    check on the declaration and source graphs, not a time-dependent one."""
+
+    def test_scoped_contract_needs_an_explicit_resolution_time(self) -> None:
+        graph = load("employment-job-family-scoped.ttl")
+        contract = only_contract(graph, "job-family-scoped")
+        self.assertEqual(
+            contracts_needing_explicit_resolution_time(graph, [contract]), [contract.iri]
+        )
+
+    def test_unscoped_contract_with_no_reachable_binding_keeps_the_default(self) -> None:
+        graph = load("employment-job-family.ttl")
+        contract = only_contract(graph, "job-family")
+        self.assertFalse(any(graph.subjects(VOC.forContract, contract.population.scheme_contract)))
+        self.assertEqual(contracts_needing_explicit_resolution_time(graph, [contract]), [])
+
+    def test_a_reachable_binding_alone_is_enough_even_without_a_declared_scope(self) -> None:
+        """A contract-bound population naming no srf:activeBindingScope but
+        whose contract has a voc:SchemeBinding reachable in the source graph
+        still needs an explicit resolution time: an unscoped caller can still
+        match a scopeless binding, so the outcome remains a function of the
+        resolution instant, not only of scope."""
+        graph = load("employment-job-family-scoped.ttl")
+        contract = only_contract(graph, "job-family-scoped")
+        unscoped_population = replace(contract.population, active_binding_scope=())
+        unscoped_contract = replace(contract, population=unscoped_population)
+        self.assertEqual(
+            contracts_needing_explicit_resolution_time(graph, [unscoped_contract]),
+            [contract.iri],
+        )
+
+    def test_regeneration_of_an_unscoped_contract_is_deterministic_across_different_times(
+        self,
+    ) -> None:
+        """The unscoped case keeps R1's original guarantee unconditionally:
+        no voc:SchemeBinding exists to resolve against, so the resolution
+        instant cannot affect the outcome at all, for any two instants."""
+        graph = load("employment-job-family.ttl")
+        contract = only_contract(graph, "job-family")
+        first = SurfaceCompiler(contract, graph, "2026-01-01T00:00:00Z").compile()
+        second = SurfaceCompiler(contract, graph, "2030-06-15T00:00:00Z").compile()
+        self.assertEqual(first.artefact_hash, second.artefact_hash)
+        self.assertEqual(first.semantic_hash, second.semantic_hash)
 
 
 class ParityTests(unittest.TestCase):
