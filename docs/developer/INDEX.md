@@ -2,7 +2,7 @@
 
 # LATTICE Developer Coordination Index
 
-**Last updated:** 2026-09-23 — persistence and IRI patterns change package disposition pass (see "Persistence and IRI patterns: the change package at a glance")  
+**Last updated:** 2026-09-25 — added the `ontology-semantic-versioning` unit (sketch, plan, ADR-A86 Proposed)  
 **Purpose:** Single source of truth for all active units of work: sketches, plans, status, reviews, and validation packs.  
 **Format:** By unit identifier, with links to all related documents and current status.
 
@@ -395,6 +395,46 @@ status record for the full position and the decisions flagged for review.
 See the unit record above. This heading is intentionally a navigation anchor
 between active platform work and archived material.
 
+---
+
+# Ontology Semantic Versioning — Proposed (2026-09-25)
+
+| Field | Value |
+|-------|-------|
+| **Status** | ⏳ Sketch, plan, and ADR-A86 authored; awaiting human review. Implementation not started |
+| **Unit ID** | `ontology-semantic-versioning` |
+| **Trigger** | Human request, 2026-09-25 — adopt SemVer 2.0.0 for ontology documents |
+| **Sketch** | [ontology-semantic-versioning.md](sketches/ontology-semantic-versioning.md) |
+| **Plan** | [ontology-semantic-versioning.md](plans/ontology-semantic-versioning.md) |
+| **Status Record** | [ontology-semantic-versioning.md](status/ontology-semantic-versioning.md) |
+| **ADR** | [ADR-A86](../architecture/decisions/ADR-A86-ontology-semantic-versioning.md), Proposed |
+
+Every `owl:Ontology` document under `ontology/` carries an ungoverned
+`owl:versionIRI`, or none, with no documented rule for when it changes. The
+sketch's inventory found four distinct problems: no bump rule beyond one ad
+hoc note in `vocabulary/README.md`; an already-inconsistent versioning unit
+(`spec/*.ttl` vs `vocab/*.ttl` independently versioned and already drifted);
+two ontologies (MORK, SPC) with no version identity at all; and one
+(`applied/insurance/contract.ttl`) with two disagreeing version signals and a
+namespace base outside the `lattice/` tree. ADR-A86 proposes SemVer 2.0.0 per
+`owl:Ontology` document, a MAJOR/MINOR/PATCH mapping table, a one-time
+baseline reset to `0.2.0` (recommended, not yet ratified), and a narrow
+"changed but not bumped" check. No implementation slice begins until the ADR
+and its two open questions (baseline number, applied-insurance namespace
+family) are confirmed.
+
+### Planned slices
+
+1. ADR-A86, sketch, plan, status record, ADR-index and INDEX.md entries — done
+2. Developer/agent guidance (`ontology-versioning-policy.md` + cross-references)
+3. Baseline reset (version numbers, base-URI normalisation, `owl:imports` cascade)
+4. Narrow "changed but not bumped" enforcement tooling
+
+## 8.6 Ontology Semantic Versioning — Proposed
+
+See the unit record above. This heading is intentionally a navigation anchor
+between active platform work and archived material.
+
 # Part III — Archived/Historical Work
 
 ## 8. Phase Handoff Documents (0-6)
@@ -453,6 +493,13 @@ between active platform work and archived material.
 - Implementation: `ontology/vocabulary/shapes/`, `ontology/vocabulary/examples/` (12 fixtures), `tools/vocabulary/` (reference resolver + pytest suite) — authored, not yet executed
 - ADR: [A85](../architecture/decisions/ADR-A85-vocabulary-scoped-temporal-binding-resolution.md), Proposed
 
+### Ontology Semantic Versioning
+- Sketch: [ontology-semantic-versioning.md](sketches/ontology-semantic-versioning.md)
+- Plan: [ontology-semantic-versioning.md](plans/ontology-semantic-versioning.md)
+- Status: [ontology-semantic-versioning.md](status/ontology-semantic-versioning.md)
+- ADR: [A86](../architecture/decisions/ADR-A86-ontology-semantic-versioning.md), Proposed
+- Implementation: none yet — design-only, awaiting human review of the ADR and its two open questions
+
 ### MTP & LLM Training
 - Status: [llm-training-mtp.md](status/llm-training-mtp.md)
 - Execution: [mtp-execution.md](status/mtp-execution.md)
@@ -501,6 +548,7 @@ between active platform work and archived material.
 4. Surface MORK Phase 9 — Migration guides and phased rollout
 5. Surface MORK Phase 10 — Scale and performance optimization
 6. Vocabulary scoped and temporal binding conformance — awaiting human review
+7. Ontology semantic versioning (ADR-A86) — sketch and plan authored, awaiting human review
 
 ### 🗄️ Archived
 1. Phase 0-6 handoff documents (refer to individual status records)
@@ -519,6 +567,7 @@ between active platform work and archived material.
 | **Store SPI** | Design runtime SPI for query execution | Compiler produces templates; runtime binding TBD | Separate epic/phase after housekeeping |
 | **MTP backend integration (Phase 7)** | Runtime API for LLM curriculum delivery | MTP generation complete; needs HTTP endpoint | Post-Phase-6 work |
 | **Vocabulary temporal binding conformance** | Examples, SHACL, resolver, consumer provenance checks | Authored (2026-09-25); not yet executed (sandbox network-restricted) or human-reviewed | Run `mise run check:vocabulary`, then the human validation gate (review + mutation probe) |
+| **Ontology semantic versioning** | ADR-A86, versioning-policy doc, baseline reset, narrow enforcement check | Sketch, plan, and ADR authored (2026-09-25); no ontology or doc file changed yet | Review ADR-A86, confirm the `0.2.0` baseline and the applied-insurance namespace question, then begin Slice 2 |
 
 ---
 
