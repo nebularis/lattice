@@ -2,8 +2,8 @@
 
 # ADR-A83: Test-only reasoning engine isolation
 
-**Status:** Proposed
-**Date:** 2026-09-25
+**Status:** Accepted
+**Date:** 2026-09-25 (proposed), 2026-09-25 (accepted, delivered through the `eligibility-compiler` plan's Part B)
 **Related:** ADR-A24 (backend strategy), ADR-A28 (parity gate), ADR-A29
 (toolchain boundary), ADR-A71 (platform licence and SPI seam), ADR-A90
 (design-time OWL backend)
@@ -71,9 +71,26 @@ HermiT LGPL-3.0, and left the engine choice to this ADR.
 - `platform/reasoning-testkit` is a new directory, introduced by this decision
   under an existing root.
 
+## Implementation notes (2026-09-25, `eligibility-compiler` Part B)
+
+- HermiT 1.4.5.519 with OWL API 5.1.9 runs on Java 25. The CLI commands are
+  `consistent`, `satisfiable`, `subsumes` and `values` (entailed pairs of an
+  object property).
+- The CLI ignores `owl:imports` and merges the files it is given. The OWL API
+  parses each file on its own, so `tools/mork_compilers/src/mork_compilers/reasoning.py`
+  passes one merged file, built from the catalog closure or the test fixtures.
+- The OWL API parses a SWRL rule only when its `swrl:Imp` node is anonymous.
+  The compilers name their rules for provenance, so the Python helper
+  anonymises them before calling the CLI.
+- DL-safe rules bind only named individuals. A path through a blank node
+  derives nothing under HermiT (ADR-A91 implementation notes).
+- The guardrail targets JVM reasoners, rules engines and JVM bridges. The root
+  `reasoning` extra's `owlrl`, a pure-Python OWL RL engine, is outside its scope.
+
 ## Open questions
 
-- Confirm, in the skeleton slice, that HermiT and the OWL API run on Java 25,
-  and that HermiT refuses rather than ignores a rule with builtins.
-- Whether the CLI should also accept Turtle and resolve imports through the
-  catalog, or require a pre-merged closure. This ADR proposes the catalog.
+- ~~HermiT and the OWL API on Java 25~~: confirmed. Whether HermiT refuses or
+  ignores a rule with builtins is still unverified. Interval rules are not
+  loaded until the Openllet adapter exists.
+- ~~Whether the CLI resolves imports through the catalog~~: resolved by passing a
+  pre-merged closure (implementation notes).

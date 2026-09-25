@@ -250,7 +250,8 @@ def check_precedence_acyclicity(graph: Graph) -> Optional[str]:
     """
     Check for cycles in the precedence graph.
 
-    Implements SHACL Shape M7 programmatically.
+    The same check as SHACL Shape M7, mork:PrecedenceAcyclicityShape in
+    ontology/mork/shapes/constraints.ttl (ADR-A97).
     Returns a description of the cycle if found, None otherwise.
     """
     # Collect all precedence edges from structural relationships

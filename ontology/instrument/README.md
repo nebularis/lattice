@@ -41,12 +41,12 @@ It imports Foundation, Vocabulary, Quantification, Party, and Eligibility.
 
 <https://www.nebularis.org/neuro-semantic/instrument>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.5.0> ;
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.6.0> ;
 	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.3.0> ,
 				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.3.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.4.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/party/0.4.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.5.0> .
+				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.5.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/party/0.5.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.6.0> .
 
 ins:Element a owl:Class ;
 	rdfs:subClassOf fnd:Version ;
@@ -80,7 +80,7 @@ ins:hasObligation a owl:ObjectProperty ;
 	rdfs:domain ins:Provision ;
 	rdfs:range ins:Obligation .
 
-ins:inProvision a owl:ObjectProperty, owl:FunctionalProperty ;
+ins:inProvision a owl:ObjectProperty ;
 	rdfs:domain ins:Obligation ;
 	rdfs:range ins:Provision ;
 	owl:inverseOf ins:hasObligation .
@@ -128,8 +128,8 @@ Instrument uses Foundation versioning without in-place mutation.
 
 <https://www.nebularis.org/neuro-semantic/instrument-vocab>
 	a owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/instrument-vocab/0.5.0> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.5.0> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/instrument-vocab/0.6.0> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.6.0> .
 ```
 
 ## 7. Shapes
@@ -152,3 +152,5 @@ ins:ObligationShape a sh:NodeShape ;
 	sh:property [ sh:path ins:obligor ; sh:minCount 1 ] ;
 	sh:property [ sh:path ins:obligee ; sh:minCount 1 ] .
 ```
+
+An obligation may be attached to several provisions, for example to both authoritative language versions of one instrument (ADR-A96). A deployment that attaches each obligation once loads the optional `shapes/single-provision.ttl`, which declares `ins:SingleProvisionShape` (`sh:maxCount 1` on `ins:inProvision`).

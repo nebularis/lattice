@@ -177,7 +177,7 @@ MORK handles this through a **directed acyclic graph (DAG)** of mapping nodes co
 - `templateMapping` — "I'm an instance of this reusable pattern"
 - `hypothesisMapping` — "this other mapping provides supporting evidence for me"
 
-Each of these relationships implies an execution ordering, and MORK derives the complete precedence relation automatically.
+Each of these relationships implies an execution ordering, and MORK derives the complete precedence relation automatically. The graph must stay acyclic, and `shapes/constraints.ttl` rejects any cycle (ADR-A97).
 
 ### Templates: Don't Repeat Yourself
 

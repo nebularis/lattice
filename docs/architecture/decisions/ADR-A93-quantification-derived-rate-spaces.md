@@ -2,8 +2,8 @@
 
 # ADR-A93: Quantification derived rate spaces
 
-**Status:** Proposed
-**Date:** 2026-09-25
+**Status:** Accepted
+**Date:** 2026-09-25 (proposed), 2026-09-25 (accepted)
 **Related:** Quantification open question 4, ADR-A24, ADR-A89
 **Unit:** [`applied-ontology-readiness`](../../developer/plans/applied-ontology-readiness.md) (AOR-14)
 

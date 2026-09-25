@@ -14,7 +14,7 @@
 @base <http://www.nebularis.org/ontologies/Mork#> .
 
 <http://www.nebularis.org/ontologies/Mork> rdf:type owl:Ontology ;
-                                            owl:versionIRI <http://www.nebularis.org/ontologies/Mork/0.3.0> ;
+                                            owl:versionIRI <http://www.nebularis.org/ontologies/Mork/0.4.0> ;
                                             owl:imports <http://www.w3.org/2004/02/skos/core> ,
                                                         <http://www.w3.org/ns/shacl> ,
                                                         <http://www.w3.org/2003/11/swrl> ,
@@ -918,9 +918,7 @@ If the composite narrower mappings of either subject or object are members of th
 
 ###  http://www.nebularis.org/ontologies/Mork#precedes
 :precedes rdf:type owl:ObjectProperty ;
-          rdf:type owl:TransitiveProperty ,
-                   owl:AsymmetricProperty ,
-                   owl:IrreflexiveProperty ;
+          rdf:type owl:TransitiveProperty ;
           rdfs:domain :DataMapping ;
           rdfs:range :DataMapping ;
           rdfs:label "precedes" ;
@@ -928,18 +926,17 @@ If the composite narrower mappings of either subject or object are members of th
           skos:scopeNote """The precedence relation is the transitive closure of structural dependency relationships. 
 It is derived from: compositeBroaderMapping (inverse), broaderApplicative (inverse), dependentMapping (inverse), and templateMapping (inverse) via subproperty axioms, plus conditional rules (SWRL) for T-Box before A-Box, identity resolution, and template child correlation.
 
-Acyclicity of this property's extension must be enforced by SHACL, since OWL 2 DL cannot express graph-structural acyclicity constraints.""" .
+A transitive property cannot also be asymmetric or irreflexive in OWL 2 DL, and neither characteristic would catch a cycle of three or more mappings. mork:PrecedenceAcyclicityShape (shapes/constraints.ttl) rejects every cycle instead, through this property and the properties it is derived from (ADR-A97).""" .
 
 
 ###  http://www.nebularis.org/ontologies/Mork#softPrecedes
 :softPrecedes rdf:type owl:ObjectProperty ;
-              rdf:type owl:TransitiveProperty ,
-                       owl:AsymmetricProperty ,
-                       owl:IrreflexiveProperty ;
+              rdf:type owl:TransitiveProperty ;
               rdfs:domain :DataMapping ;
               rdfs:range :DataMapping ;
               rdfs:label "soft precedes" ;
-              skos:definition "Advisory precedence relation: m1 :softPrecedes m2 means m1 should be evaluated before m2 when possible, but m2 may proceed (with reduced confidence) if m1 is unavailable." .
+              skos:definition "Advisory precedence relation: m1 :softPrecedes m2 means m1 should be evaluated before m2 when possible, but m2 may proceed (with reduced confidence) if m1 is unavailable." ;
+              skos:scopeNote "Acyclic, checked by mork:SoftPrecedenceAcyclicityShape independently of :precedes (ADR-A97)." .
 
 
 ###  http://www.nebularis.org/ontologies/Mork#resolvesIdentityFor
@@ -948,7 +945,7 @@ Acyclicity of this property's extension must be enforced by SHACL, since OWL 2 D
                      rdfs:domain :DataMapping ;
                      rdfs:range :Datum ;
                      rdfs:label "resolves identity for" ;
-                     skos:definition "m :resolvesIdentityFor d means m must complete (producing an IRI or identity) before d can be individuated. This is a subproperty of :precedes and thus inherits transitivity, asymmetry, and irreflexivity." .
+                     skos:definition "m :resolvesIdentityFor d means m must complete (producing an IRI or identity) before d can be individuated. As a subproperty of :precedes, each of its edges is a :precedes edge, so it counts towards the precedence acyclicity check (ADR-A97)." .
 
 
 ###  http://www.nebularis.org/ontologies/Mork#templateBinding
@@ -1056,15 +1053,13 @@ _:invHypothesisMapping rdf:type owl:ObjectProperty ;
 
 ###  http://www.nebularis.org/ontologies/Mork#refinesIntent
 :refinesIntent rdf:type owl:ObjectProperty ;
-               rdf:type owl:AsymmetricProperty ,
-                        owl:IrreflexiveProperty ,
-                        owl:TransitiveProperty ;
+               rdf:type owl:TransitiveProperty ;
                rdfs:domain :IntentNode ;
                rdfs:range :IntentNode ;
                rdfs:label "refines intent" ;
                skos:definition """Expresses that the subject elaborates or specialises the object. The transitive closure of :refinesIntent gives the composition structure of compound intents.
 
-This property generates the morphisms of the preorder category Int(I) (Foundations §2.5a). The intent nodes under this relation form a bounded join-semilattice.""" .
+This property is the strict refinement order between distinct intent nodes, and is acyclic (mork:IntentRefinementAcyclicityShape, ADR-A97). Its reflexive-transitive closure generates the morphisms of the preorder category Int(I) (Foundations §2.5a). The intent nodes under that closure form a bounded join-semilattice.""" .
 
 ###  http://www.nebularis.org/ontologies/Mork#intentMapping
 :intentMapping rdf:type owl:ObjectProperty ;
@@ -2901,11 +2896,7 @@ Also supports optional jurisdiction scoping (appliesInJurisdiction) and effectiv
 ### Axiom 2.14a: broaderApplicative co-occurrence
 ### ∃broaderApplicative.DataMapping ⊑ ∃exactRBoxMatch.owl:Thing
 ### Any mapping that declares a broaderApplicative relationship must also declare an exactRBoxMatch.
-[ rdf:type owl:Axiom ;
-  rdfs:comment "GCI Axiom 2.14a (Foundations §2.4.2): broaderApplicative co-occurrence. Since inverseRBoxMatch ⊑ exactRBoxMatch, this covers both direct and inverse cases."
-] .
-
-[ rdf:type owl:Class ;
+_:gci_2_14a rdf:type owl:Class ;
   owl:intersectionOf ( [ rdf:type owl:Restriction ;
                          owl:onProperty :broaderApplicative ;
                          owl:someValuesFrom :DataMapping
@@ -2917,16 +2908,18 @@ Also supports optional jurisdiction scoping (appliesInJurisdiction) and effectiv
                                          ]
                        ]
                      ) ;
-  rdfs:subClassOf owl:Nothing
+  rdfs:subClassOf owl:Nothing .
+
+[ rdf:type owl:Axiom ;
+  owl:annotatedSource _:gci_2_14a ;
+  owl:annotatedProperty rdfs:subClassOf ;
+  owl:annotatedTarget owl:Nothing ;
+  rdfs:comment "GCI Axiom 2.14a (Foundations §2.4.2): broaderApplicative co-occurrence. Since inverseRBoxMatch ⊑ exactRBoxMatch, this covers both direct and inverse cases."
 ] .
 
 ### Axiom 2.14b: Conditional A-Box co-occurrence
 ### (∃broadABoxCategoryMatch.⊤ ⊓ ∃compositeBroaderMapping.DataMapping) ⊑ ∃exactRBoxMatch.⊤
-[ rdf:type owl:Axiom ;
-  rdfs:comment "GCI Axiom 2.14b (Foundations §2.4.2): A mapping with broadABoxCategoryMatch in a compositional context must declare an exactRBoxMatch."
-] .
-
-[ rdf:type owl:Class ;
+_:gci_2_14b rdf:type owl:Class ;
   owl:intersectionOf ( [ rdf:type owl:Restriction ;
                          owl:onProperty :broadABoxCategoryMatch ;
                          owl:someValuesFrom owl:Thing
@@ -2942,16 +2935,18 @@ Also supports optional jurisdiction scoping (appliesInJurisdiction) and effectiv
                                          ]
                        ]
                      ) ;
-  rdfs:subClassOf owl:Nothing
+  rdfs:subClassOf owl:Nothing .
+
+[ rdf:type owl:Axiom ;
+  owl:annotatedSource _:gci_2_14b ;
+  owl:annotatedProperty rdfs:subClassOf ;
+  owl:annotatedTarget owl:Nothing ;
+  rdfs:comment "GCI Axiom 2.14b (Foundations §2.4.2): A mapping with broadABoxCategoryMatch in a compositional context must declare an exactRBoxMatch."
 ] .
 
 ### Axiom 2.14d: broadRBoxCategoryMatch with compositional context
 ### (∃broadRBoxCategoryMatch.⊤ ⊓ ∃compositeBroaderMapping.DataMapping) ⊑ (∃exactABoxMatch.⊤ ⊔ ∃broadABoxCategoryMatch.⊤)
-[ rdf:type owl:Axiom ;
-  rdfs:comment "GCI Axiom 2.14d (Foundations §2.4.2): A mapping with broadRBoxCategoryMatch in a compositional context should reference an A-Box target."
-] .
-
-[ rdf:type owl:Class ;
+_:gci_2_14d rdf:type owl:Class ;
   owl:intersectionOf ( [ rdf:type owl:Restriction ;
                          owl:onProperty :broadRBoxCategoryMatch ;
                          owl:someValuesFrom owl:Thing
@@ -2974,16 +2969,20 @@ Also supports optional jurisdiction scoping (appliesInJurisdiction) and effectiv
                                          ]
                        ]
                      ) ;
-  rdfs:subClassOf owl:Nothing
+  rdfs:subClassOf owl:Nothing .
+
+[ rdf:type owl:Axiom ;
+  owl:annotatedSource _:gci_2_14d ;
+  owl:annotatedProperty rdfs:subClassOf ;
+  owl:annotatedTarget owl:Nothing ;
+  rdfs:comment "GCI Axiom 2.14d (Foundations §2.4.2): A mapping with broadRBoxCategoryMatch in a compositional context should reference an A-Box target."
 ] .
 
 ### Axiom 2.7a: Datum requires T-Box ancestry
 ### Datum ⊑ ∃deferredMapping.(∃exactTBoxMatch.⊤ ⊔ ∃broadTBoxCategoryMatch.⊤)
-[ rdf:type owl:Axiom ;
-  rdfs:comment "GCI Axiom 2.7a (Foundations §2.7): A Datum must defer to a mapping that establishes a T-Box axiom. Multi-hop T-Box ancestry requires SHACL validation."
-] .
+:Datum rdfs:subClassOf _:gci_2_7a_super .
 
-:Datum rdfs:subClassOf [ rdf:type owl:Restriction ;
+_:gci_2_7a_super rdf:type owl:Restriction ;
                           owl:onProperty :deferredMapping ;
                           owl:someValuesFrom [ rdf:type owl:Class ;
                                                owl:unionOf ( [ rdf:type owl:Restriction ;
@@ -2995,16 +2994,18 @@ Also supports optional jurisdiction scoping (appliesInJurisdiction) and effectiv
                                                                owl:someValuesFrom owl:Thing
                                                              ]
                                                            )
-                                             ]
-                        ] .
+                                             ] .
+
+[ rdf:type owl:Axiom ;
+  owl:annotatedSource :Datum ;
+  owl:annotatedProperty rdfs:subClassOf ;
+  owl:annotatedTarget _:gci_2_7a_super ;
+  rdfs:comment "GCI Axiom 2.7a (Foundations §2.7): A Datum must defer to a mapping that establishes a T-Box axiom. Multi-hop T-Box ancestry requires SHACL validation."
+] .
 
 ### Axiom 5.10a: Version consistency
 ### ∃supersedes.DataMapping ⊑ ∃effectiveFrom.xsd:dateTime
-[ rdf:type owl:Axiom ;
-  rdfs:comment "GCI Axiom 5.10a (Foundations §5.10a): Any mapping that supersedes another must have an effective-from date."
-] .
-
-[ rdf:type owl:Class ;
+_:gci_5_10a rdf:type owl:Class ;
   owl:intersectionOf ( [ rdf:type owl:Restriction ;
                          owl:onProperty :supersedes ;
                          owl:someValuesFrom :DataMapping
@@ -3016,7 +3017,13 @@ Also supports optional jurisdiction scoping (appliesInJurisdiction) and effectiv
                                          ]
                        ]
                      ) ;
-  rdfs:subClassOf owl:Nothing
+  rdfs:subClassOf owl:Nothing .
+
+[ rdf:type owl:Axiom ;
+  owl:annotatedSource _:gci_5_10a ;
+  owl:annotatedProperty rdfs:subClassOf ;
+  owl:annotatedTarget owl:Nothing ;
+  rdfs:comment "GCI Axiom 5.10a (Foundations §5.10a): Any mapping that supersedes another must have an effective-from date."
 ] .
 
 

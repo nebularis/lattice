@@ -17,7 +17,7 @@
 # mapping scheme is explicitly in mork:ProductionMode (ADR-A22). Draft- and
 # review-mode compilation are unaffected by GenerativeMappingProductionGovernanceShape.
 #
-# None of these shapes have been executed. No SHACL engine is available in
+# The shapes before M7 have not been executed. No SHACL engine was available in
 # the environment this was written in; see
 # ontology/mork/docs/governance-and-versioning-migration.md for the verification plan
 # and the backward-compatibility story with the pre-existing reviewStatus,
@@ -63,6 +63,51 @@ mork:GenerativeMappingSupersessionEffectiveFromShape a sh:NodeShape ;
 			SELECT $this WHERE {
 				?older fnd:supersededBy $this .
 				FILTER NOT EXISTS { $this mork:effectiveFrom ?from }
+			}
+		""" ;
+	] .
+
+# Shape M7 and its siblings (ADR-A97). The order relations are transitive,
+# which OWL 2 DL forbids from also being asymmetric or irreflexive, so their
+# acyclicity is checked here. Each shape follows the relation and the named
+# properties it is derived from, so a cycle is found whether or not the
+# relation has been materialised. The two precedence relations are checked
+# separately, as declared.
+
+mork:PrecedenceAcyclicityShape a sh:NodeShape ;
+	sh:targetSubjectsOf mork:precedes , mork:resolvesIdentityFor ;
+	sh:targetObjectsOf mork:compositeBroaderMapping , mork:broaderApplicative , mork:dependentMapping , mork:templateMapping ;
+	sh:sparql [
+		sh:message "The mapping precedes itself: mork:precedes, directly or through the properties it is derived from (Axioms P1, P2, P3, P10), forms a cycle, so no execution schedule exists." ;
+		sh:select """
+			PREFIX mork: <http://www.nebularis.org/ontologies/Mork#>
+			SELECT $this WHERE {
+				$this (mork:precedes|mork:resolvesIdentityFor|^mork:compositeBroaderMapping|^mork:broaderApplicative|^mork:dependentMapping|^mork:templateMapping)+ $this .
+			}
+		""" ;
+	] .
+
+mork:SoftPrecedenceAcyclicityShape a sh:NodeShape ;
+	sh:targetSubjectsOf mork:softPrecedes ;
+	sh:targetObjectsOf mork:hypothesisMapping ;
+	sh:sparql [
+		sh:message "The mapping soft-precedes itself: mork:softPrecedes, directly or through inverse mork:hypothesisMapping (Axiom P5), forms a cycle." ;
+		sh:select """
+			PREFIX mork: <http://www.nebularis.org/ontologies/Mork#>
+			SELECT $this WHERE {
+				$this (mork:softPrecedes|^mork:hypothesisMapping)+ $this .
+			}
+		""" ;
+	] .
+
+mork:IntentRefinementAcyclicityShape a sh:NodeShape ;
+	sh:targetSubjectsOf mork:refinesIntent ;
+	sh:sparql [
+		sh:message "The intent node refines itself through a cycle of mork:refinesIntent. Refinement is a strict order, and its reflexive closure is the preorder." ;
+		sh:select """
+			PREFIX mork: <http://www.nebularis.org/ontologies/Mork#>
+			SELECT $this WHERE {
+				$this mork:refinesIntent+ $this .
 			}
 		""" ;
 	] .

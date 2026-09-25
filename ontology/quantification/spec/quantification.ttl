@@ -10,7 +10,7 @@
 
 <https://www.nebularis.org/neuro-semantic/quantification>
     rdf:type owl:Ontology ;
-    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/quantification/0.4.0> ;
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/quantification/0.5.0> ;
     owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.3.0> ,
                 <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.3.0> .
 
@@ -126,6 +126,24 @@ qnt:ConversionContext a owl:Class ;
     rdfs:subClassOf fnd:Evidenced, fnd:TemporallyScoped ;
     rdfs:comment "An evidenced context supplying the observation or reference required for a contextual conversion." ;
     fnd:utility "Use where conversion depends on an external observation or reference position. Required for a Contextual conversion; optional provenance for any other kind. Its absence makes a dependent comparison indeterminate, not the underlying data invalid." .
+
+qnt:DerivedValueSpace a owl:Class ;
+    rdfs:subClassOf qnt:ValueSpace ;
+    rdfs:comment "A value space whose values are quotients of values in two other spaces (ADR-A93)." ;
+    fnd:utility "Declare one for a rate or a proportion: point numeratorSpace and denominatorSpace at the spaces it divides. A proportion names the same space twice, so 10% of a fee and 10% of an income stay different spaces." ;
+    rdfs:subClassOf
+        [ a owl:Restriction ; owl:onProperty qnt:numeratorSpace ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty qnt:denominatorSpace ; owl:cardinality "1"^^xsd:nonNegativeInteger ] .
+
+qnt:CalendarUnit a owl:Class ;
+    rdfs:subClassOf qnt:Unit ;
+    rdfs:comment "A unit whose relation to elapsed time depends on a calendar, such as a business day (ADR-A94)." ;
+    fnd:utility "Use for business days or working hours. Any conversion to or from it is Contextual: its ConversionContext names the calendar with underCalendar and the position counted from with fromPosition." .
+
+qnt:Calendar a owl:Class ;
+    rdfs:subClassOf voc:ConceptScheme ;
+    rdfs:comment "A deployment-supplied calendar edition, governed and resolved as a concept scheme edition (ADR-A94)." ;
+    fnd:utility "Declare each calendar edition as a Calendar and bind it to a SchemeContract, so the calendar in force for a context's scope and time is resolved as any scheme is. Its working-day content stays with the deployment." .
 
 qnt:OperationCapability a owl:Class ;
     rdfs:subClassOf fnd:Version ;
@@ -567,3 +585,23 @@ qnt:staticAnalysisMethod a owl:ObjectProperty, owl:FunctionalProperty ;
 qnt:executedTestRun a owl:ObjectProperty ;
     rdfs:domain qnt:RuntimeConformanceDischarge ;
     rdfs:comment "A reference to an executed test run evidencing a RuntimeConformanceDischarge." .
+
+qnt:numeratorSpace a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain qnt:DerivedValueSpace ; rdfs:range qnt:ValueSpace ;
+    rdfs:comment "The space a derived space's values are the numerator of." .
+
+qnt:denominatorSpace a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain qnt:DerivedValueSpace ; rdfs:range qnt:ValueSpace ;
+    rdfs:comment "The space a derived space's values are the denominator of." .
+
+qnt:underCalendar a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:range voc:SchemeContract ;
+    rdfs:comment "The scheme contract whose resolution, for the context's scope and time, gives the calendar a ConversionContext or Recurrence counts in (ADR-A94)." .
+
+qnt:fromPosition a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain qnt:ConversionContext ; rdfs:range qnt:Value ;
+    rdfs:comment "The position a calendar conversion counts from." .
+
+qnt:alternativeBound a owl:ObjectProperty, owl:SymmetricProperty ;
+    rdfs:domain qnt:Bound ; rdfs:range qnt:Bound ;
+    rdfs:comment "Another statement of the same limit in a different unit, sharing the bound's space, sense and closure. A candidate is compared with the statement in its own unit, never through a conversion (ADR-A95)." .

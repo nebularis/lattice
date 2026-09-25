@@ -59,12 +59,23 @@ def _interval_clause(interval: RequiredInterval) -> str:
     if interval.upper is not None:
         op = "<=" if interval.upper_closed else "<"
         clauses.append(f"?candUpper {op} {interval.upper!r}")
+    if interval.unit is not None:
+        clauses.append(f"BOUND(?candUnit) && ?candUnit = <{interval.unit}>")
     return "(" + " && ".join(clauses) + ")" if clauses else "true"
 
 
-def _containment_expression(plan: IntervalPlan) -> str:
+def containment_expression(plan: IntervalPlan) -> str:
     """A SPARQL boolean expression: the candidate is contained by *some* required interval."""
     return " || ".join(_interval_clause(interval) for interval in plan.required)
+
+
+def applicable(plan: IntervalPlan) -> str:
+    """A SPARQL boolean expression: some required interval is stated in the
+    candidate's unit (ADR-A95). Always true when an interval states no unit."""
+    units = sorted({i.unit for i in plan.required}, key=lambda u: str(u or ""))
+    if None in units:
+        return "true"
+    return f"(BOUND(?candUnit) && ?candUnit IN ({_in_list(units)}))"
 
 
 def render_query(plan: IntervalPlan) -> str:
@@ -97,13 +108,15 @@ def interval_select(plan: IntervalPlan, carry: str = "", key: str = "?question")
         "    ?candidateRangeSet qnt:hasRange ?candidateRange .\n"
         "    ?candidateRange qnt:lowerBound/qnt:boundValue/qnt:numericValue ?candLower .\n"
         "    ?candidateRange qnt:upperBound/qnt:boundValue/qnt:numericValue ?candUpper .\n"
+        "    OPTIONAL { ?candidateRange qnt:lowerBound/qnt:boundValue/qnt:inUnit ?candUnit }\n"
         "  }\n"
         "  BIND(\n"
         "    IF(!BOUND(?candLower) || !BOUND(?candUpper), \"Undetermined\",\n"
-        f"       IF({_containment_expression(plan)}, \"Permitted\", \"Denied\")\n"
+        f"       IF(!{applicable(plan)}, \"Undetermined\", IF({containment_expression(plan)}, \"Permitted\", \"Denied\"))\n"
         "    ) AS ?decision\n"
         "  )\n"
-        f"  BIND(IF(!BOUND(?candLower) || !BOUND(?candUpper), <{EXE.MissingCandidate}>, ?none) AS ?diagnostic)\n"
+        f"  BIND(IF(!BOUND(?candLower) || !BOUND(?candUpper), <{EXE.MissingCandidate}>, "
+        f"IF(!{applicable(plan)}, <{EXE.NoBoundInUnit}>, ?none)) AS ?diagnostic)\n"
         "}\n"
     )
 
@@ -122,19 +135,20 @@ def _bound_interval_select(plan: IntervalPlan, carry: str, key: str) -> str:
         f"SELECT {carry}{key} ?decision ?diagnostic WHERE {{\n"
         "  {\n"
         f"    SELECT {carry}{key} (COUNT(DISTINCT ?value) AS ?candidates) (SAMPLE(?value) AS ?reading)"
-        " (SAMPLE(?number) AS ?quantity) WHERE {\n"
+        " (SAMPLE(?number) AS ?quantity) (SAMPLE(?unitOfValue) AS ?candUnit) WHERE {\n"
         f"      {_subjects(plan.evidence, key)}\n"
         f"      OPTIONAL {{ {key} {evidence_path(plan.evidence)} ?value .\n"
-        f"        OPTIONAL {{ ?value qnt:numericValue ?number ; qnt:onSpace <{plan.value_space}> }} }}\n"
+        f"        OPTIONAL {{ ?value qnt:numericValue ?number ; qnt:onSpace <{plan.value_space}> }}\n"
+        "        OPTIONAL { ?value qnt:inUnit ?unitOfValue } }\n"
         "    }\n"
         f"    GROUP BY {carry}{key}\n"
         "  }\n"
         f"  BIND(IF({literal}, ?reading, ?quantity) AS ?candLower)\n"
         "  BIND(?candLower AS ?candUpper)\n"
         f'  BIND(IF(?candidates != 1 || !BOUND(?candLower), "Undetermined", '
-        f'IF({_containment_expression(plan)}, "Permitted", "Denied")) AS ?decision)\n'
+        f'IF(!{applicable(plan)}, "Undetermined", IF({containment_expression(plan)}, "Permitted", "Denied"))) AS ?decision)\n'
         f"  BIND(IF(?candidates = 0, <{EXE.MissingCandidate}>, IF(?candidates > 1, <{EXE.SeveralCandidates}>, "
-        f"IF(!BOUND(?candLower), <{EXE.ValueSpaceMismatch}>, ?none))) AS ?diagnostic)\n"
+        f"IF(!BOUND(?candLower), <{EXE.ValueSpaceMismatch}>, IF(!{applicable(plan)}, <{EXE.NoBoundInUnit}>, ?none)))) AS ?diagnostic)\n"
         "}\n"
     )
 

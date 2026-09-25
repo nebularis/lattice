@@ -13,7 +13,7 @@
 [A-90](../../architecture/decisions/ADR-A90-eligibility-design-time-owl-class-backend.md),
 [A-91](../../architecture/decisions/ADR-A91-eligibility-candidate-evidence-binding.md),
 [A-92](../../architecture/decisions/ADR-A92-derived-artefact-contract-and-prov-o-alignment.md),
-and the [ADR-A86 proposed addendum](../../architecture/decisions/ADR-A86-ontology-semantic-versioning.md#proposed-addendum-2026-09-25-guarantees-consumers-rely-on).
+and the [ADR-A86 addendum](../../architecture/decisions/ADR-A86-ontology-semantic-versioning.md#addendum-2026-09-25-guarantees-consumers-rely-on).
 All Proposed.
 
 ## Scope
@@ -47,7 +47,7 @@ ADRs are drafted.
 
 ### AOR-1: Governance records (this slice)
 
-ADRs A-87 to A-92 (Proposed), the ADR-A86 proposed addendum, the sketch, this
+ADRs A-87 to A-92 (Proposed), the ADR-A86 addendum, the sketch, this
 plan, the status record, the ADR catalogue rows, and `INDEX.md` entries. L0.
 Gate: human review of the ADRs and of the open questions in the sketch.
 
@@ -270,8 +270,9 @@ is ratified.
 | AOR-16 | Alternative bounds stated per unit (AO12) | [A-95](../../architecture/decisions/ADR-A95-quantification-alternative-bounds.md) | Quantification MINOR, cascades | 120k |
 | AOR-17 | `ins:inProvision` no longer functional (AO13) | [A-96](../../architecture/decisions/ADR-A96-instrument-provision-attachment.md) | Instrument MINOR, cascades | 60k |
 
-AOR-14 to AOR-16 each change Quantification. If ratified together they should
-land as one Quantification bump, to cascade once.
+AOR-14 to AOR-16 land as one Quantification change, cascading once (human
+decision, 2026-09-25). AOR-16 includes the compiler work that selects required
+intervals by the candidate's unit.
 
 ## Documentation obligations
 

@@ -51,13 +51,13 @@ Behaviour distinguishes four tiers:
 
 <https://www.nebularis.org/neuro-semantic/behaviour>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.5.0> ;
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.6.0> ;
 	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.3.0> ,
 				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.3.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.4.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/party/0.4.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.5.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/instrument/0.5.0> .
+				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.5.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/party/0.5.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.6.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/instrument/0.6.0> .
 
 bhv:StateSpace a owl:Class ;
 	rdfs:subClassOf fnd:Version ;

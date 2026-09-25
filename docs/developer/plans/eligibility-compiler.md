@@ -109,10 +109,19 @@ Per copilot-instructions' L0–L8 table: A1 (L1, unit), A2 syntax half (L1), A2 
 
 This unit closes when: all of A1–A5 pass with their VPs signed off; ADR-A83 is ratified; the guardrail check (B2) is green and has a demonstrated violating fixture that fails, per copilot-instructions' adversarial-probe step; [eligibility-compiler.md](../status/eligibility-compiler.md)'s state line changes from "awaiting validation" to a dated, evidenced "Verified."
 
+## Progress (2026-09-25)
+
+B1 to B4 are done. ADR-A83 is Accepted with HermiT as the first engine, and
+Drools and Openllet deferred. A2's reasoner half passes after the Mork repairs of
+ADR-A97. A5 is verified for the builtin-free rules
+([VP](../validation/eligibility-compiler-part-b.md)). Interval rules wait on
+an Openllet adapter. The CLI commands differ from B.3's sketch: see the
+[module README](../../../platform/reasoning-testkit/README.md).
+
 ## Open questions requiring human decision (summary)
 
-1. Openllet (AGPL-3.0, under the B.3 isolation design) vs. HermiT (LGPL-3.0, DL-safe SWRL only) — resolve by checking whether ADR-A24's SWRL subset is DL-safe (B.4).
-2. Whether Drools (Apache-2.0, no licence concern) is needed now or deferred until a concrete second consumer exists (B.4).
+1. ~~Openllet vs. HermiT~~: HermiT first (ADR-A83).
+2. ~~Drools now or later~~: deferred (ADR-A83).
 3. If Openllet is chosen: confirm the B.5 guardrail is treated as load-bearing, not advisory, given AGPL leaves no margin for a module quietly acquiring a direct dependency later (B.4).
 
 ## Next steps

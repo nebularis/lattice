@@ -2,6 +2,7 @@
 
 @prefix sh:   <http://www.w3.org/ns/shacl#> .
 @prefix elg:  <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
 
 elg:ConditionShape a sh:NodeShape ;
 	sh:targetClass elg:Condition ;
@@ -24,7 +25,8 @@ elg:EvidenceBindingShape a sh:NodeShape ;
 	sh:targetClass elg:EvidenceBinding ;
 	sh:property [ sh:path elg:bindsCondition ; sh:minCount 1 ; sh:maxCount 1 ] ;
 	sh:property [ sh:path elg:subjectClass ; sh:minCount 1 ; sh:maxCount 1 ] ;
-	sh:property [ sh:path elg:evidenceStep ; sh:minCount 1 ] .
+	sh:property [ sh:path elg:evidenceStep ; sh:minCount 1 ] ;
+	sh:property [ sh:path elg:singleValued ; sh:maxCount 1 ; sh:datatype xsd:boolean ] .
 
 elg:EvidenceStepShape a sh:NodeShape ;
 	sh:targetClass elg:EvidenceStep ;

@@ -967,7 +967,7 @@ Axiom lines carry OWL content that is not an individual's property assertion. Th
 | Line | Meaning |
 |---|---|
 | `!C id clause*` | `owl:Class` declaration. Clauses: `= CE` equivalentClass, `< CE` subClassOf, `! CE` disjointWith, or any `code value` pair (annotations). |
-| `!O pe clause*` | `owl:ObjectProperty`. `pe` is a `PE` (§10.5): normally a plain id, but `^id` makes the subject `ObjectInverseOf(id)` (a minted, typed blank node) — used for `Mork.ttl`'s own precedence axioms, e.g. `!O ^compositeBroaderMapping < precedes` for Axiom P1 (`SubObjectPropertyOf(ObjectInverseOf(:compositeBroaderMapping) :precedes)`). Clauses: `< PE` subPropertyOf, `= PE` equivalentProperty, `inv PE` inverseOf, `dom CE`, `rng CE`, `+F` `+IF` `+S` `+AS` `+T` `+R` `+IR` characteristics (combinable: `+T+AS+IR`), `chain PE,PE,…` propertyChainAxiom, or `code value` pairs. |
+| `!O pe clause*` | `owl:ObjectProperty`. `pe` is a `PE` (§10.5): normally a plain id, but `^id` makes the subject `ObjectInverseOf(id)` (a minted, typed blank node) — used for `Mork.ttl`'s own precedence axioms, e.g. `!O ^compositeBroaderMapping < precedes` for Axiom P1 (`SubObjectPropertyOf(ObjectInverseOf(:compositeBroaderMapping) :precedes)`). Clauses: `< PE` subPropertyOf, `= PE` equivalentProperty, `inv PE` inverseOf, `dom CE`, `rng CE`, `+F` `+IF` `+S` `+AS` `+T` `+R` `+IR` characteristics (combinable: `+AS+IR`, but OWL 2 DL forbids `+AS` and `+IR` alongside `+T`, ADR-A97), `chain PE,PE,…` propertyChainAxiom, or `code value` pairs. |
 | `!D id clause*` | `owl:DatatypeProperty`. Clauses as `!O` minus `inv`/`chain`, plus `rng` taking a data range. |
 | `!A id clause*` | `owl:AnnotationProperty`. Clauses: `< id`, `dom`, `rng`, `code value` pairs. |
 | `!I id (: types)? (code value)*` | `owl:NamedIndividual` outside any block: `: type+type` gives class assertions, where each type is a type code or any identifier (local ids allowed without `+`); the rest as a node line. |
@@ -1238,7 +1238,7 @@ MCN can carry `Mork.ttl` itself, which is useful for placing the vocabulary's fo
 !O compositeNarrowerMapping < narrowerMapping lb "has composite narrower mapping"
 !O compositeBroaderMapping < broaderMapping inv compositeNarrowerMapping
 !O broaderApplicative < broaderMapping +AS
-!O precedes +T+AS+IR dom DataMapping rng DataMapping
+!O precedes +T dom DataMapping rng DataMapping
 !O ^compositeBroaderMapping < precedes
 !D weighting rng xsd:integer sd "confidence score out of 100"
 !C DataMapping < skos:Concept & mappingScheme>MappingScheme

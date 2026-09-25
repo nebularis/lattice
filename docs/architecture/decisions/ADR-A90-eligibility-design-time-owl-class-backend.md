@@ -79,7 +79,9 @@ conditions with each other.
   to every layer. This ADR recommends the compile option until a second
   consumer needs the declaration.
 
-## Open question (2026-09-25): conditions read through evidence paths
+## Addendum (2026-09-25): conditions read through evidence paths
+
+**Resolved:** option B, chosen by the human on 2026-09-25.
 
 This ADR encodes a condition over one dimension property R. ADR-A91 lets a
 condition read its candidate through a path of several steps, and a subject
@@ -110,4 +112,29 @@ Options:
 SKOS is not involved in any option. `skos:broader` is used only inside the
 hierarchy classes of item 2, which allow several broader concepts per concept.
 The restriction concerns the path from a subject to its candidate, which
-belongs to the applied ontology, not to the concept scheme. Recommended: B.
+belongs to the applied ontology, not to the concept scheme.
+
+## Implementation notes (2026-09-25, AOR-10 and AOR-11)
+
+- `tools/mork_compilers/src/mork_compilers/owl_backend.py`. `Within(c)` is a
+  class of concepts, with `{c} ⊑ Within(c)`. Item 2's `Within_R(c)` is
+  `∃R.Within(c)` at the path's last step R, so one hierarchy serves every
+  property that reads the scheme.
+- Flat strategies use nominals. Every concept a module names is declared
+  distinct (`owl:AllDifferent`), matching the SPARQL reference's comparison
+  by IRI.
+- Sibling disjointness treats a scheme's top concepts as siblings, and is
+  refused for a member with several broader concepts, where it would make
+  that member's nominal inconsistent.
+- Interval conditions restrict `owl:real`, on a `qnt:Quantity`'s numeric
+  value or on the literal where the binding reads on the condition's space.
+- One module per compilation. Several plans may share one, which the checks
+  need. A concept whose broader concepts differ between the plans' schemes is
+  refused.
+- Every module is declared OWL 2 DL. The per-step `≤1` restriction of option
+  B is outside EL, so no condition class is in EL.
+- Each claimed binding gets a shape with `sh:maxCount 1` on each prefix of
+  its path, which is the per-step claim for every node reached from a
+  subject.
+- `check-classes` on the package CLI runs one check and prints its
+  `exe:DesignTimeCheck` record.

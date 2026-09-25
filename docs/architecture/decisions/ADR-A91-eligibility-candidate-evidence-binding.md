@@ -72,3 +72,7 @@ Option A, with D remaining available.
   `exe:deniedUnder`, since `exe:impliesDecision` on a subject would not say
   which condition decided it. A bound interval rule reads one terminal form: a
   literal where the binding names `elg:readOnSpace`, else a `qnt:Quantity`.
+- SWRL rules are DL-safe, so under a reasoner their variables bind only named
+  individuals. A path through a blank node (an anonymous role, say) derives
+  nothing, while SPARQL and SHACL still read it. Name intermediate nodes where
+  SWRL must reach them.

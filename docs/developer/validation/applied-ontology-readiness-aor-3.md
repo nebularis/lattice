@@ -4,7 +4,7 @@
 
 **Unit:** [`applied-ontology-readiness`](../status/applied-ontology-readiness.md)
 **Plan section:** [AOR-3](../plans/applied-ontology-readiness.md#aor-3-versioning-guarantees)
-**Decision:** [ADR-A86 proposed addendum](../../architecture/decisions/ADR-A86-ontology-semantic-versioning.md#proposed-addendum-2026-09-25-guarantees-consumers-rely-on), items 1 to 3
+**Decision:** [ADR-A86 addendum](../../architecture/decisions/ADR-A86-ontology-semantic-versioning.md#addendum-2026-09-25-guarantees-consumers-rely-on), items 1 to 3
 
 ## Invariant
 

@@ -53,7 +53,7 @@ Conditions matching by `ExactMatch`, `SetMembership`, or `HierarchicalMatch` sta
 | matches a required concept, or the condition declares exclusions only and the candidate is a member of the bound scheme | `Permitted` | L12 for the second case |
 | otherwise | `Denied` | |
 
-**Evidence bindings.** A condition reads its candidate from an `elg:Question` unless an `elg:EvidenceBinding` binds it. A binding names the class of subjects the condition evaluates (`elg:subjectClass`) and an ordered path of `elg:EvidenceStep`s from each subject to its candidate, over the applied ontology's own properties (ADR-A91). The path ends at a `skos:Concept` for a concept condition. For an interval condition it ends at a `qnt:Quantity` on the condition's value space, or at a literal where the binding reads on that space (`elg:readOnSpace`). A subject with no value at the end of the path, or several, is `Undetermined`, as is one whose value is on another space. A profile evaluates either questions or one class of bound subjects.
+**Evidence bindings.** A condition reads its candidate from an `elg:Question` unless an `elg:EvidenceBinding` binds it. A binding names the class of subjects the condition evaluates (`elg:subjectClass`) and an ordered path of `elg:EvidenceStep`s from each subject to its candidate, over the applied ontology's own properties (ADR-A91). The path ends at a `skos:Concept` for a concept condition. For an interval condition it ends at a `qnt:Quantity` on the condition's value space, or at a literal where the binding reads on that space (`elg:readOnSpace`). A subject with no value at the end of the path, or several, is `Undetermined`, as is one whose value is on another space. A profile evaluates either questions or one class of bound subjects. A binding may claim that each step of its path yields at most one value (`elg:singleValued`). The design-time OWL backend compiles only claimed paths (ADR-A90).
 
 ## 5. Core Model
 
@@ -62,11 +62,11 @@ Conditions matching by `ExactMatch`, `SetMembership`, or `HierarchicalMatch` sta
 
 <https://www.nebularis.org/neuro-semantic/eligibility>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.5.0> ;
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.6.0> ;
 	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.3.0> ,
 				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.3.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.4.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/party/0.4.0> .
+				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.5.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/party/0.5.0> .
 
 elg:Condition a owl:Class ;
 	rdfs:comment "A declared admissibility condition." .
@@ -195,6 +195,10 @@ elg:readOnSpace a owl:ObjectProperty, owl:FunctionalProperty ;
 	rdfs:domain elg:EvidenceBinding ; rdfs:range qnt:ValueSpace ;
 	rdfs:comment "The value space a literal at the end of an interval condition's path is read on. A qnt:Quantity at the end of the path states its own space." .
 
+elg:singleValued a owl:DatatypeProperty, owl:FunctionalProperty ;
+	rdfs:domain elg:EvidenceBinding ; rdfs:range xsd:boolean ;
+	rdfs:comment "The author's claim that each step of the binding's path yields at most one value. The design-time OWL backend compiles only claimed paths, and checks the claim on data with a generated shape (ADR-A90 addendum, option B)." .
+
 [] a owl:AllDisjointClasses ;
 	owl:members ( elg:Condition elg:Question elg:EligibilityDecision elg:MatchStrategy elg:CompatibilityOperation elg:WildcardSemantics elg:Decision elg:OperationalProfile elg:Law elg:EvidenceBinding elg:EvidenceStep elg:StepDirection ) .
 ```
@@ -267,6 +271,7 @@ elg:L13 a elg:Law ;
 ```turtle-shapes
 @prefix sh:   <http://www.w3.org/ns/shacl#> .
 @prefix elg:  <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
 
 elg:ConditionShape a sh:NodeShape ;
 	sh:targetClass elg:Condition ;
@@ -332,7 +337,8 @@ elg:EvidenceBindingShape a sh:NodeShape ;
 	sh:targetClass elg:EvidenceBinding ;
 	sh:property [ sh:path elg:bindsCondition ; sh:minCount 1 ; sh:maxCount 1 ] ;
 	sh:property [ sh:path elg:subjectClass ; sh:minCount 1 ; sh:maxCount 1 ] ;
-	sh:property [ sh:path elg:evidenceStep ; sh:minCount 1 ] .
+	sh:property [ sh:path elg:evidenceStep ; sh:minCount 1 ] ;
+	sh:property [ sh:path elg:singleValued ; sh:maxCount 1 ; sh:datatype xsd:boolean ] .
 
 elg:EvidenceStepShape a sh:NodeShape ;
 	sh:targetClass elg:EvidenceStep ;

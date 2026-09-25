@@ -2,8 +2,8 @@
 
 # ADR-A95: Quantification alternative bounds
 
-**Status:** Proposed
-**Date:** 2026-09-25
+**Status:** Accepted
+**Date:** 2026-09-25 (proposed), 2026-09-25 (accepted)
 **Related:** Quantification §9.2 (containment), §9.6 (conversion), ADR-A89
 **Unit:** [`applied-ontology-readiness`](../../developer/plans/applied-ontology-readiness.md) (AOR-16)
 
@@ -34,8 +34,8 @@ the other needs a contextual conversion the agreement never made.
 ## Consequences
 
 - Quantification takes a MINOR bump, with the ADR-A86 cascade.
-- The Eligibility IR's interval plan gains one required interval per unit.
-  The compilers must select intervals by the candidate's unit, which they do
-  not do today, so bounds with alternatives are refused until they do.
+- The Eligibility IR's interval plan gains one set of required intervals per
+  unit, and every backend selects the set by the candidate's unit. This
+  compiler work is part of the same slice (AOR-16).
 - Examples: a facility limit in two currencies and a tier price in two
   currencies.

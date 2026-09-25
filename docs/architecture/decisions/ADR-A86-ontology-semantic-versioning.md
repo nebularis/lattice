@@ -2,8 +2,8 @@
 
 # ADR-A86: Semantic versioning for ontology documents
 
-**Status:** Proposed
-**Date:** 2026-09-25
+**Status:** Accepted
+**Date:** 2026-09-25 (proposed), 2026-09-25 (accepted, with the addendum below)
 **Related:** ADR-A07b (Instrument's per-instance `fnd:Version`/`supersededBy`
 versioning contract — a distinct concern, see "Consequences"), ADR-A22 (MORK
 governance/versioning via Foundation alignment — likewise instance-level, not
@@ -94,12 +94,11 @@ whichever future decision asserts a layer's public API stable.
   rather than treating as beyond dispute; ratification is the point at which
   either is confirmed or amended.
 
-## Proposed addendum (2026-09-25): guarantees consumers rely on
+## Addendum (2026-09-25): guarantees consumers rely on
 
 Raised by the [`applied-ontology-readiness`](../../developer/plans/applied-ontology-readiness.md)
 unit. An applied ontology pins LATTICE by version IRI and relies on a version
-IRI identifying one content. This addendum is ratified or amended together
-with the decision above.
+IRI identifying one content. Accepted with the decision above on 2026-09-25.
 
 1. **Bump level propagates through imports.** A document whose only change is
    an `owl:imports` update takes the bump level of the imported change, since

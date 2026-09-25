@@ -50,7 +50,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Dict, FrozenSet, List, Optional, Sequence, Set, Tuple, Union
 
-from rdflib import Graph, URIRef
+from rdflib import Graph, Literal, URIRef
 from rdflib.namespace import RDF, SKOS
 from vocabulary import BindingConflictError, NoApplicableBindingError, resolve
 
@@ -71,12 +71,15 @@ class RequiredInterval:
 
     ``lower``/``upper`` of ``None`` means unbounded on that side; closure
     flags are meaningless on an unbounded side and should be ignored there.
+    ``unit`` is the unit the bounds are stated in. It applies only to a
+    candidate in that unit (ADR-A95). ``None`` applies to any candidate.
     """
 
     lower: Optional[float]
     lower_closed: bool
     upper: Optional[float]
     upper_closed: bool
+    unit: Optional[URIRef] = None
 
 
 @dataclass(frozen=True)
@@ -88,6 +91,7 @@ class EvidencePath:
     subject_class: URIRef
     steps: Tuple[Tuple[URIRef, bool], ...]
     space: Optional[URIRef] = None  # elg:readOnSpace, for a literal at the path's end
+    single_valued: bool = False  # elg:singleValued, the claim the OWL backend needs
 
 
 @dataclass(frozen=True)
@@ -133,7 +137,8 @@ class ConceptPlan:
     independently and takes precedence over any required concept (L10).
     ``scheme`` and ``expansion`` are set when the decision table needs the
     bound scheme. ``expansion`` pairs every member of the resolved scheme
-    with its decision, sorted by concept.
+    with its decision, sorted by concept. ``hierarchy`` pairs every member
+    with its broader members, both sorted.
     """
 
     condition: URIRef
@@ -144,6 +149,7 @@ class ConceptPlan:
     scheme: Optional[SchemeResolution] = None
     expansion: Tuple[Tuple[URIRef, str], ...] = ()
     evidence: Optional[EvidencePath] = None
+    hierarchy: Tuple[Tuple[URIRef, Tuple[URIRef, ...]], ...] = ()
 
     @property
     def hierarchical(self) -> bool:
@@ -192,6 +198,18 @@ def _bound_value(graph: Graph, bound: URIRef, source_nodes: List[URIRef]) -> tup
     return _numeric(graph, value_node), closure == QNT.Closed
 
 
+def _statements(graph: Graph, bound: URIRef, source_nodes: List[URIRef]) -> Dict[Optional[URIRef], tuple]:
+    """The bound and its ``qnt:alternativeBound`` statements, keyed by unit (ADR-A95)."""
+    statements: Dict[Optional[URIRef], tuple] = {}
+    peers = {bound} | set(graph.objects(bound, QNT.alternativeBound)) | set(graph.subjects(QNT.alternativeBound, bound))
+    for statement in sorted(peers, key=str):
+        unit = graph.value(graph.value(statement, QNT.boundValue), QNT.inUnit)
+        if unit in statements:
+            raise IRCompileError(f"{bound} is stated twice in unit {unit}")
+        statements[unit] = _bound_value(graph, statement, source_nodes)
+    return statements
+
+
 def read_evidence(graph: Graph, condition: URIRef) -> Optional[EvidencePath]:
     """The condition's ``elg:EvidenceBinding``, if it has one."""
     bindings = sorted(graph.subjects(ELG.bindsCondition, condition), key=str)
@@ -218,6 +236,7 @@ def read_evidence(graph: Graph, condition: URIRef) -> Optional[EvidencePath]:
         subject_class=subject_class,
         steps=tuple((prop, inverse) for _, prop, inverse in steps),
         space=graph.value(binding, ELG.readOnSpace),
+        single_valued=graph.value(binding, ELG.singleValued) == Literal(True),
     )
 
 
@@ -264,17 +283,16 @@ def compile_condition(graph: Graph, condition: URIRef) -> IntervalPlan:
         if lower_bound is None and upper_bound is None:
             raise IRCompileError(f"{range_node} has neither a lower nor an upper bound")
 
-        lower_value: Optional[float] = None
-        lower_closed = False
-        if lower_bound is not None:
-            lower_value, lower_closed = _bound_value(graph, lower_bound, source_nodes)
-
-        upper_value: Optional[float] = None
-        upper_closed = False
-        if upper_bound is not None:
-            upper_value, upper_closed = _bound_value(graph, upper_bound, source_nodes)
-
-        required.append(RequiredInterval(lower_value, lower_closed, upper_value, upper_closed))
+        lower = _statements(graph, lower_bound, source_nodes) if lower_bound is not None else None
+        upper = _statements(graph, upper_bound, source_nodes) if upper_bound is not None else None
+        # a unit counts only where every declared bound of the range is stated in it
+        units = set(lower or upper) & set(upper or lower)
+        if not units:
+            raise IRCompileError(f"{range_node}'s bounds share no unit (qnt:NoBoundInUnit)")
+        for unit in sorted(units, key=lambda u: str(u or "")):
+            lower_value, lower_closed = lower[unit] if lower else (None, False)
+            upper_value, upper_closed = upper[unit] if upper else (None, False)
+            required.append(RequiredInterval(lower_value, lower_closed, upper_value, upper_closed, unit))
 
     evidence = read_evidence(graph, condition)
     if evidence is not None and evidence.space is not None and evidence.space != value_space:
@@ -409,11 +427,13 @@ def compile_concept_condition(
     hierarchical = strategy == ELG.HierarchicalMatch
     scheme: Optional[SchemeResolution] = None
     expansion: Tuple[Tuple[URIRef, str], ...] = ()
+    hierarchy: Tuple[Tuple[URIRef, Tuple[URIRef, ...]], ...] = ()
     if hierarchical or not required:
         scheme = _resolve_scheme(graph, condition, context)
         ordering = _ordering(graph, scheme.scheme)
         _refuse_cycles(ordering, scheme.scheme)
         expansion = _expand(ordering, hierarchical, required, excluded)
+        hierarchy = tuple((m, tuple(sorted(ordering[m], key=str))) for m in sorted(ordering, key=str))
 
     resolution_nodes: Tuple[URIRef, ...] = ()
     if scheme is not None:
@@ -427,6 +447,7 @@ def compile_concept_condition(
         scheme=scheme,
         expansion=expansion,
         evidence=read_evidence(graph, condition),
+        hierarchy=hierarchy,
     )
 
 

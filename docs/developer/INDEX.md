@@ -2,7 +2,7 @@
 
 # LATTICE Developer Coordination Index
 
-**Last updated:** 2026-09-25 — `applied-ontology-readiness` AOR-12/13 and ADRs A-83, A-93 to A-96 drafted. `documentation-link-repair` planned  
+**Last updated:** 2026-09-25 — ADR-A97 makes MORK OWL 2 DL (Mork 0.4.0). ADR-A83 reasoning harness delivered (`eligibility-compiler` Part B). `applied-ontology-readiness` AOR-10, AOR-11 and AOR-14 to AOR-17 implemented, ADRs A-83, A-86, A-93 to A-96 accepted. `documentation-link-repair` planned  
 **Purpose:** Single source of truth for all active units of work: sketches, plans, status, reviews, and validation packs.  
 **Format:** By unit identifier, with links to all related documents and current status.
 
@@ -161,11 +161,11 @@ All 7 critical (A), 14 major (B), 9 safety (C), 7 cross-document (D) and 10 edit
 
 | Field | Value |
 |-------|-------|
-| **Status** | ⏳ Source complete; verification plan authored (2026-09-23), not yet executed |
+| **Status** | 🚧 A1, A3, A4 covered by `check:mork-compilers`. Part B delivered and A2's reasoner half passes after ADR-A97's Mork repairs. A5 verified for builtin-free rules (2026-09-25, [VP](validation/eligibility-compiler-part-b.md)) |
 | **Unit ID** | `eligibility-compiler` |
 | **Plan** | [eligibility-compiler.md](plans/eligibility-compiler.md) — verification (Part A) + shared test-only reasoning/rules-engine infrastructure (Part B) |
 | **Status Record** | [eligibility-compiler.md](status/eligibility-compiler.md) |
-| **Implementation** | `tools/mork_compilers/` — three backends (SPARQL, SHACL, SWRL) |
+| **Implementation** | `tools/mork_compilers/` — SPARQL, SHACL, SWRL, and the design-time OWL backend (ADR-A90). `platform/reasoning-testkit` (ADR-A83), test-only |
 | **Coverage** | IntervalCondition only (other condition types deferred); positive-only per ADR-A24 |
 | **Tests** | Unit tests present; need runtime validation. SPARQL (`rdflib`) and SHACL (`pyshacl`) validation need no new dependency; SWRL/OWL-reasoner validation is gated on Part B's new shared test-only module |
 
@@ -176,8 +176,7 @@ All 7 critical (A), 14 major (B), 9 safety (C), 7 cross-document (D) and 10 edit
 - SWRL positive-only per ADR-A24
 
 ### Blocks
-- SWRL/OWL-reasoner validation needs `platform/reasoning-testkit` (new, proposed by the plan above, ADR-A83, renumbered from A81 to avoid the collision with the Control Plane ADR) — a shared, test-scope-only Maven module wrapping an OWL/SWRL reasoner and, if a second consumer emerges, Drools (Apache-2.0, no licence concern), consumed by Python test suites via a CLI subprocess rather than a direct dependency. Explicitly never a runtime dependency of any product package.
-- Licence check complete (2026-09-23): Openllet is **AGPL-3.0** (inherited from Pellet, not Apache-2.0 as an earlier draft wrongly stated), usable only because the module's isolation design (test-scope + subprocess CLI, never linked or distributed) avoids creating a combined/derivative work. **HermiT (LGPL-3.0)** is a lower-risk alternative but supports DL-safe SWRL rules only — open question is whether ADR-A24's SWRL subset is DL-safe. See [eligibility-compiler.md](plans/eligibility-compiler.md) §B.4
+- Interval SWRL rules use `swrlb` builtins, which HermiT does not evaluate. They wait on an Openllet adapter (AGPL-3.0, usable only behind the ADR-A83 isolation, [plan](plans/eligibility-compiler.md) §B.4).
 
 ---
 
@@ -486,18 +485,18 @@ review, all implemented:
 
 Finding 5 (terminology overload of "scope") remains accepted, no action.
 
-# Applied Ontology Readiness — AOR-2 to AOR-9 committed, AOR-12/13 implemented (2026-09-25)
+# Applied Ontology Readiness — all slices implemented (2026-09-25)
 
 | Field | Value |
 |-------|-------|
-| **Status** | 🚧 AOR-2 to AOR-9 committed. AOR-3b, AOR-12, AOR-13 implemented, uncommitted. AOR-10/11 wait on ADR-A83 and a path-encoding decision. AOR-14 to AOR-17 wait on ADRs A-93 to A-96 |
+| **Status** | 🚧 AOR-2 to AOR-9, AOR-3b, AOR-12, AOR-13 committed. AOR-10, AOR-11, AOR-14 to AOR-17 implemented and self-validated, awaiting the human's commands |
 | **Unit ID** | `applied-ontology-readiness` |
 | **Trigger** | Human request, 2026-09-25 — close the gaps an applied (domain) ontology meets when built on LATTICE |
 | **Sketch** | [applied-ontology-readiness.md](sketches/applied-ontology-readiness.md) |
 | **Plan** | [applied-ontology-readiness.md](plans/applied-ontology-readiness.md) |
 | **Status Record** | [applied-ontology-readiness.md](status/applied-ontology-readiness.md) |
 | **Review** | [applied-ontology-readiness-review.md](review/applied-ontology-readiness-review.md) |
-| **ADRs** | [A-87](../architecture/decisions/ADR-A87-eligibility-concept-inclusion-and-exclusion.md), [A-88](../architecture/decisions/ADR-A88-ontology-import-resolution-for-consumers.md), [A-89](../architecture/decisions/ADR-A89-eligibility-ir-concept-conditions-and-profile-aggregation.md), [A-90](../architecture/decisions/ADR-A90-eligibility-design-time-owl-class-backend.md), [A-91](../architecture/decisions/ADR-A91-eligibility-candidate-evidence-binding.md), [A-92](../architecture/decisions/ADR-A92-derived-artefact-contract-and-prov-o-alignment.md), and a proposed [A-86 addendum](../architecture/decisions/ADR-A86-ontology-semantic-versioning.md#proposed-addendum-2026-09-25-guarantees-consumers-rely-on), all Proposed |
+| **ADRs** | [A-87](../architecture/decisions/ADR-A87-eligibility-concept-inclusion-and-exclusion.md), [A-88](../architecture/decisions/ADR-A88-ontology-import-resolution-for-consumers.md), [A-89](../architecture/decisions/ADR-A89-eligibility-ir-concept-conditions-and-profile-aggregation.md), [A-90](../architecture/decisions/ADR-A90-eligibility-design-time-owl-class-backend.md), [A-91](../architecture/decisions/ADR-A91-eligibility-candidate-evidence-binding.md), [A-92](../architecture/decisions/ADR-A92-derived-artefact-contract-and-prov-o-alignment.md), [A-93](../architecture/decisions/ADR-A93-quantification-derived-rate-spaces.md) to [A-96](../architecture/decisions/ADR-A96-instrument-provision-attachment.md), [A-83](../architecture/decisions/ADR-A83-test-only-reasoning-engine-isolation.md) and the [A-86 addendum](../architecture/decisions/ADR-A86-ontology-semantic-versioning.md#addendum-2026-09-25-guarantees-consumers-rely-on), all Accepted |
 
 Thirteen gaps (AO1 to AO13) that any applied ontology meets: Eligibility
 examples that warn or violate since `9a12da4`, no reproducible way to load
@@ -510,8 +509,8 @@ bounds, one obligation in several provisions).
 ### Slices
 
 1. Phase A, consumable baseline: AOR-1 governance records — done. AOR-2 examples and the declaration warning, AOR-3 versioning guarantees, AOR-4 import catalog — implemented, [VPs](validation/applied-ontology-readiness-aor-2.md)
-2. Phase B, executable coverage: AOR-5 to AOR-9 (concept conditions, hierarchical match, SHACL and SWRL, diagnostics, profile aggregation, conformance corpus, evidence bindings) — implemented. AOR-10 and AOR-11 (OWL backend) — paused on the ADR-A83 harness and an encoding decision
-3. Phase C, substrate extensions: AOR-12 (Foundation derived-artefact contract) and AOR-13 (Executable to PROV-O) — implemented. AOR-14 to AOR-17 — ADRs A-93 to A-96 drafted
+2. Phase B, executable coverage: AOR-5 to AOR-9 (concept conditions, hierarchical match, SHACL and SWRL, diagnostics, profile aggregation, conformance corpus, evidence bindings) — implemented. AOR-10 and AOR-11 (OWL backend and its checks) — implemented, [VP](validation/applied-ontology-readiness-aor-10-11.md)
+3. Phase C, substrate extensions: AOR-12 (Foundation derived-artefact contract) and AOR-13 (Executable to PROV-O) — implemented. AOR-14 to AOR-16 (one Quantification change) and AOR-17 — implemented, [VPs](validation/applied-ontology-readiness-aor-14-16.md)
 
 # Documentation Link Repair — Pending (2026-09-25)
 
@@ -649,8 +648,8 @@ longer exist. Five slices, about 180k tokens.
 5. Surface MORK Phase 10 — Scale and performance optimization
 6. Vocabulary scoped and temporal binding conformance — closed 2026-09-25
 7. Vocabulary consumer hardening (`temporal-binding-consumer-hardening`) — implemented, not yet executed in this sandbox
-8. Ontology semantic versioning (ADR-A86) — implemented; ADR ratification pending
-9. Applied ontology readiness (`applied-ontology-readiness`) — AOR-2 to AOR-9 committed, AOR-12/13 implemented, review requested
+8. Ontology semantic versioning (ADR-A86) — implemented, ADR accepted 2026-09-25
+9. Applied ontology readiness (`applied-ontology-readiness`) — AOR-2 to AOR-9, AOR-3b, AOR-12/13 committed, the rest implemented, review requested
 10. Documentation link repair (`documentation-link-repair`) — pending
 
 ### 🗄️ Archived
@@ -671,8 +670,8 @@ longer exist. Five slices, about 180k tokens.
 | **MTP backend integration (Phase 7)** | Runtime API for LLM curriculum delivery | MTP generation complete; needs HTTP endpoint | Post-Phase-6 work |
 | **Vocabulary temporal binding conformance** | Examples, SHACL, resolver, consumer provenance checks | Closed 2026-09-25: executed and verified, ADR-A85 Accepted | None. Follow-on hardening tracked as `temporal-binding-consumer-hardening` |
 | **Vocabulary consumer hardening** | `produced_at`/hash conflation, missing resolution trace, `vvp:resolvedAt` naming, vocabulary architecture test | Implemented 2026-09-25 (all 4 findings); not yet executed in this sandbox (no rdflib) | Run `mise run check:vocabulary` and `python -m unittest surface.test_surface -v`, then close out |
-| **Ontology semantic versioning** | ADR-A86, versioning-policy doc, baseline reset, narrow enforcement check | Implemented (2026-09-25): policy doc, `0.2.0` baseline reset across 29 ontology documents, `check:ontology-versioning` tooling | Ratify ADR-A86; decide whether the discovered `literate_extract.py` drift becomes its own unit |
-| **Applied ontology readiness** | ADRs A-87 to A-92, A-86 addendum, 17 slices in three phases | Gaps any applied ontology meets when built on LATTICE (loading, examples, compilation, provenance, substrate extensions) | Ratify ADR-A83 and A-93 to A-96, choose the OWL path encoding (ADR-A90 open question) |
+| **Ontology semantic versioning** | ADR-A86, versioning-policy doc, baseline reset, narrow enforcement check | Implemented (2026-09-25): policy doc, `0.2.0` baseline reset across 29 ontology documents, `check:ontology-versioning` tooling | Decide whether the discovered `literate_extract.py` drift becomes its own unit |
+| **Applied ontology readiness** | ADRs A-83, A-86 addendum, A-87 to A-96, 17 slices in three phases | Gaps any applied ontology meets when built on LATTICE (loading, examples, compilation, provenance, substrate extensions) | Run the review's commands, record sign-off in `LOG.md` |
 
 ---
 

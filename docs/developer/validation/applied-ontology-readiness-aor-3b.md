@@ -4,7 +4,7 @@
 
 **Unit:** [`applied-ontology-readiness`](../status/applied-ontology-readiness.md)
 **Follows:** [AOR-3](applied-ontology-readiness-aor-3.md), whose job-family item was deferred
-**Decision:** [ADR-A86 proposed addendum](../../architecture/decisions/ADR-A86-ontology-semantic-versioning.md#proposed-addendum-2026-09-25-guarantees-consumers-rely-on), item 5 (content-hash versions, agreed by the human 2026-09-25)
+**Decision:** [ADR-A86 addendum](../../architecture/decisions/ADR-A86-ontology-semantic-versioning.md#addendum-2026-09-25-guarantees-consumers-rely-on), item 5 (content-hash versions, agreed by the human 2026-09-25)
 
 ## Invariant
 

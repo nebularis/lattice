@@ -11,6 +11,7 @@
     <module>platform-outbox</module>
     <module>release-integration</module>
     <module>surface-workflow</module>
+    <module>reasoning-testkit</module>
   </modules>
   <properties>
     <maven.compiler.release>25</maven.compiler.release>

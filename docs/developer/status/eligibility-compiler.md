@@ -6,7 +6,7 @@
 **State:** Implemented, awaiting validation in network environment
 **Sketch:** [mork-eligibility-compiler.md](../sketches/mork-eligibility-compiler.md)
 **Plan:** [eligibility-compiler.md](../plans/eligibility-compiler.md) (2026-09-23) — verification steps below are now slices A1–A5 there; step 5's Drools/Pellet dependency is redesigned as a shared, test-scope-only module (Part B), never a dependency of `tools/mork_compilers` itself
-**Governing ADRs:** [ADR-A23](../../architecture/decisions/ADR-A23-mork-compiler-family-completion-policy.md), [ADR-A24](../../architecture/decisions/ADR-A24-eligibility-executable-semantics-backend-strategy.md), ADR-A83 (proposed, test-only reasoning/rules engine isolation; renumbered from A81 on 2026-09-23 to avoid the collision with the Control Plane HTTP runtime ADR)
+**Governing ADRs:** [ADR-A23](../../architecture/decisions/ADR-A23-mork-compiler-family-completion-policy.md), [ADR-A24](../../architecture/decisions/ADR-A24-eligibility-executable-semantics-backend-strategy.md), [ADR-A83](../../architecture/decisions/ADR-A83-test-only-reasoning-engine-isolation.md) (Accepted 2026-09-25, test-only reasoning engine isolation)
 
 ## What was built
 
@@ -80,6 +80,21 @@ executed against fixtures). The Phase 8 gate now runs the Eligibility
 conformance cases through SPARQL and SHACL. Verification step 5 (a reasoner
 loading the SWRL) still waits on this unit's Part B, now drafted as
 [ADR-A83](../../architecture/decisions/ADR-A83-test-only-reasoning-engine-isolation.md) (Proposed).
+
+## Part B delivered (2026-09-25)
+
+`platform/reasoning-testkit` wraps HermiT behind a test-only jar.
+`tools/reasoning_isolation_check.py` keeps every other module free of
+reasoners. A5 passes for concept, profile and bound-subject rules
+([VP](../validation/eligibility-compiler-part-b.md)). Interval rules use
+`swrlb` builtins, which HermiT does not evaluate, and wait on an Openllet
+adapter.
+
+A2's reasoner half passes: Mork and the Executable closure are consistent
+under HermiT. It needed two Mork repairs (0.3.0 → 0.4.0): five comment-only
+GCI annotations now annotate their axioms, and three transitive order
+relations lost the asymmetry and irreflexivity OWL 2 DL forbids them, with
+acyclicity moved to SHACL shapes ([ADR-A97](../../architecture/decisions/ADR-A97-mork-order-relations-in-owl-2-dl.md)).
 
 ## Next steps
 

@@ -47,13 +47,12 @@ swap. Undetermined is never derived.
 
 from __future__ import annotations
 
-from typing import List
+from typing import List, Optional, Union
 
 from rdflib import BNode, Graph, Literal, URIRef
 from rdflib.collection import Collection
 from rdflib.namespace import RDF, XSD
 
-from typing import Union
 
 from .common import mint
 from .eligibility_ir import (
@@ -160,11 +159,13 @@ def _comparisons(graph: Graph, number: URIRef, interval: RequiredInterval) -> Li
     return atoms
 
 
-def _bound_interval_rule(graph: Graph, plan: IntervalPlan, interval: RequiredInterval, index: int) -> URIRef:
+def _bound_interval_rule(graph: Graph, plan: IntervalPlan, interval: RequiredInterval, index: int) -> Optional[URIRef]:
     """A bound subject whose one value lies in ``interval`` is permitted: a
     literal where the binding reads on the condition's space, else a
     qnt:Quantity on that space."""
     condition, evidence = plan.condition, plan.evidence
+    if literal_readable(plan) and interval.unit is not None:
+        return None  # a literal carries no unit, so a unit-specific interval never applies (ADR-A95)
     subject = _variable(condition, index, "subject")
     number = _variable(condition, index, "number")
     for var in (subject, number):
@@ -178,12 +179,14 @@ def _bound_interval_rule(graph: Graph, plan: IntervalPlan, interval: RequiredInt
         body += _path_atoms(graph, condition, f"{index}", evidence, subject, reading)
         body.append(_individual_property_atom(graph, QNT.onSpace, reading, plan.value_space))
         body.append(_datavalued_property_atom(graph, QNT.numericValue, reading, number))
+        if interval.unit is not None:
+            body.append(_individual_property_atom(graph, QNT.inUnit, reading, interval.unit))
     body += _comparisons(graph, number, interval)
     head = [_individual_property_atom(graph, EXE.permittedUnder, subject, condition)]
     return _imp(graph, mint(condition, f"swrl-rule-{index}"), body, head)
 
 
-def _rule_for_interval(graph: Graph, plan: IntervalPlan, interval: RequiredInterval, index: int) -> URIRef:
+def _rule_for_interval(graph: Graph, plan: IntervalPlan, interval: RequiredInterval, index: int) -> Optional[URIRef]:
     if plan.evidence is not None:
         return _bound_interval_rule(graph, plan, interval, index)
     condition = plan.condition
@@ -232,6 +235,9 @@ def _rule_for_interval(graph: Graph, plan: IntervalPlan, interval: RequiredInter
             )
         )
 
+    if interval.unit is not None:
+        value = lower_value if interval.lower is not None else upper_value
+        body.append(_individual_property_atom(graph, QNT.inUnit, value, interval.unit))
     head = [_individual_property_atom(graph, EXE.impliesDecision, question, ELG.Permitted)]
 
     imp = mint(condition, f"swrl-rule-{index}")
@@ -425,6 +431,8 @@ def compile_rules(plan: Union[IntervalPlan, ConceptPlan, ProfilePlan]) -> Graph:
 
     for index, interval in enumerate(plan.required):
         imp = _rule_for_interval(graph, plan, interval, index)
+        if imp is None:
+            continue
         graph.add((mapping, MORK.generatesRuleDefinition, imp))
         graph.add((plan_node, EXE.producesArtefact, imp))
         graph.add((imp, RDF.type, EXE.SwrlArtefact))

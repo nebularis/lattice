@@ -39,3 +39,44 @@ qnt:OperationCapabilityMeetShape
             }
         """
     ] .
+
+qnt:DerivedValueSpaceShape
+    a sh:NodeShape ;
+    sh:targetClass qnt:DerivedValueSpace ;
+    sh:property [ sh:path qnt:numeratorSpace ; sh:minCount 1 ; sh:maxCount 1 ; sh:class qnt:ValueSpace ] ;
+    sh:property [ sh:path qnt:denominatorSpace ; sh:minCount 1 ; sh:maxCount 1 ; sh:class qnt:ValueSpace ] .
+
+qnt:CalendarConversionShape
+    a sh:NodeShape ;
+    sh:targetClass qnt:Conversion ;
+    sh:sparql [
+        sh:message "A conversion from or to a calendar unit must be Contextual (ADR-A94)." ;
+        sh:select """
+            PREFIX qnt: <https://www.nebularis.org/neuro-semantic/lattice/quantification#>
+            SELECT $this WHERE {
+                { $this qnt:fromUnit ?unit } UNION { $this qnt:toUnit ?unit }
+                ?unit a qnt:CalendarUnit .
+                FILTER NOT EXISTS { $this qnt:conversionKind qnt:Contextual }
+            }
+        """
+    ] .
+
+qnt:AlternativeBoundShape
+    a sh:NodeShape ;
+    sh:targetClass qnt:Bound ;
+    sh:sparql [
+        sh:message "Alternative bounds must share space, sense and closure, and state the limit in different units (ADR-A95)." ;
+        sh:select """
+            PREFIX qnt: <https://www.nebularis.org/neuro-semantic/lattice/quantification#>
+            SELECT $this WHERE {
+                { $this qnt:alternativeBound ?other } UNION { ?other qnt:alternativeBound $this }
+                FILTER (?other != $this)
+                FILTER (
+                    NOT EXISTS { $this qnt:onSpace ?s . ?other qnt:onSpace ?s }
+                    || NOT EXISTS { $this qnt:boundSense ?d . ?other qnt:boundSense ?d }
+                    || NOT EXISTS { $this qnt:boundClosure ?c . ?other qnt:boundClosure ?c }
+                    || EXISTS { $this qnt:boundValue/qnt:inUnit ?u . ?other qnt:boundValue/qnt:inUnit ?u }
+                )
+            }
+        """
+    ] .

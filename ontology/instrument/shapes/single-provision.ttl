@@ -1,0 +1,12 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Optional (ADR-A96). Load this file only where every obligation is attached to
+# one provision. An obligation may otherwise appear in several, for example in
+# two authoritative language versions of one instrument.
+
+@prefix sh:  <http://www.w3.org/ns/shacl#> .
+@prefix ins: <https://www.nebularis.org/neuro-semantic/lattice/instrument#> .
+
+ins:SingleProvisionShape a sh:NodeShape ;
+	sh:targetClass ins:Obligation ;
+	sh:property [ sh:path ins:inProvision ; sh:maxCount 1 ] .

@@ -336,6 +336,40 @@ qnt:ConversionContext a owl:Class ;
     fnd:utility "Use where conversion depends on an external observation or reference position. Required for a Contextual conversion; optional provenance for any other kind. Its absence makes a dependent comparison indeterminate, not the underlying data invalid." .
 ```
 
+### `qnt:DerivedValueSpace`
+
+**Definition.** A value space whose values are quotients of values in two other spaces.
+
+**Utility.** Rates and proportions (ADR-A93): a dose per body weight, a credit as a share of a fee. `qnt:Scale` applies a rate to a base value, and `qnt:Ratio` of two values names the derived space as its result space.
+
+```turtle-spec
+qnt:DerivedValueSpace a owl:Class ;
+    rdfs:subClassOf qnt:ValueSpace ;
+    rdfs:comment "A value space whose values are quotients of values in two other spaces (ADR-A93)." ;
+    fnd:utility "Declare one for a rate or a proportion: point numeratorSpace and denominatorSpace at the spaces it divides. A proportion names the same space twice, so 10% of a fee and 10% of an income stay different spaces." ;
+    rdfs:subClassOf
+        [ a owl:Restriction ; owl:onProperty qnt:numeratorSpace ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty qnt:denominatorSpace ; owl:cardinality "1"^^xsd:nonNegativeInteger ] .
+```
+
+### `qnt:CalendarUnit` and `qnt:Calendar`
+
+**Definition.** `CalendarUnit` is a unit whose relation to elapsed time depends on a calendar. `Calendar` is a calendar edition, governed and resolved as a concept scheme edition.
+
+**Utility.** Business-day extents (ADR-A94). Converting one to elapsed time is a `Contextual` conversion whose context names the calendar's scheme contract and the starting position. Without that context a dependent comparison is `Undetermined` (§9.6).
+
+```turtle-spec
+qnt:CalendarUnit a owl:Class ;
+    rdfs:subClassOf qnt:Unit ;
+    rdfs:comment "A unit whose relation to elapsed time depends on a calendar, such as a business day (ADR-A94)." ;
+    fnd:utility "Use for business days or working hours. Any conversion to or from it is Contextual: its ConversionContext names the calendar with underCalendar and the position counted from with fromPosition." .
+
+qnt:Calendar a owl:Class ;
+    rdfs:subClassOf voc:ConceptScheme ;
+    rdfs:comment "A deployment-supplied calendar edition, governed and resolved as a concept scheme edition (ADR-A94)." ;
+    fnd:utility "Declare each calendar edition as a Calendar and bind it to a SchemeContract, so the calendar in force for a context's scope and time is resolved as any scheme is. Its working-day content stays with the deployment." .
+```
+
 ### `qnt:OperationCapability`
 
 **Definition.** A declared permission and signature for applying one operation to values in specified ValueSpaces.
@@ -848,6 +882,26 @@ qnt:staticAnalysisMethod a owl:ObjectProperty, owl:FunctionalProperty ;
 qnt:executedTestRun a owl:ObjectProperty ;
     rdfs:domain qnt:RuntimeConformanceDischarge ;
     rdfs:comment "A reference to an executed test run evidencing a RuntimeConformanceDischarge." .
+
+qnt:numeratorSpace a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain qnt:DerivedValueSpace ; rdfs:range qnt:ValueSpace ;
+    rdfs:comment "The space a derived space's values are the numerator of." .
+
+qnt:denominatorSpace a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain qnt:DerivedValueSpace ; rdfs:range qnt:ValueSpace ;
+    rdfs:comment "The space a derived space's values are the denominator of." .
+
+qnt:underCalendar a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:range voc:SchemeContract ;
+    rdfs:comment "The scheme contract whose resolution, for the context's scope and time, gives the calendar a ConversionContext or Recurrence counts in (ADR-A94)." .
+
+qnt:fromPosition a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain qnt:ConversionContext ; rdfs:range qnt:Value ;
+    rdfs:comment "The position a calendar conversion counts from." .
+
+qnt:alternativeBound a owl:ObjectProperty, owl:SymmetricProperty ;
+    rdfs:domain qnt:Bound ; rdfs:range qnt:Bound ;
+    rdfs:comment "Another statement of the same limit in a different unit, sharing the bound's space, sense and closure. A candidate is compared with the statement in its own unit, never through a conversion (ADR-A95)." .
 ```
 ## 8. Mechanism-Intrinsic Vocabulary
 
@@ -928,6 +982,8 @@ qnt:Ratio a qnt:OperationKind .
 qnt:Minimum a qnt:OperationKind .
 qnt:Maximum a qnt:OperationKind .
 qnt:Count a qnt:OperationKind .
+qnt:Scale a qnt:OperationKind ;
+    rdfs:comment "Scaling a value on a derived space's denominator space by a rate on the derived space, yielding a value on its numerator space (ADR-A93)." .
 qnt:BinOf a qnt:OperationKind ;
     rdfs:comment "The operation returning the unique RecurrenceBin containing a given position, or Undetermined with a reason." .
 
@@ -956,6 +1012,8 @@ qnt:GranularityInsufficient a qnt:UnresolvedReason .
 qnt:ConversionContextAbsent a qnt:UnresolvedReason .
 qnt:OutsideDeclaredSpace a qnt:UnresolvedReason .
 qnt:OperationNotPermitted a qnt:UnresolvedReason .
+qnt:NoBoundInUnit a qnt:UnresolvedReason ;
+    rdfs:comment "No statement of a bound, among it and its alternatives, is in the candidate's unit (ADR-A95)." .
 
 qnt:BinContiguity a owl:Class ;
     rdfs:comment "A mechanism-intrinsic policy governing whether recurrence bins are contiguous." .
@@ -1024,7 +1082,7 @@ The substrate ships these mechanism values only. It ships no unit, unit family, 
 
 ### 9.2 Range containment
 
-For a non-cyclic `Range`, a value is contained if it's in the same ValueSpace, not below the lower bound (respecting closure), not above the upper bound (respecting closure), and every required comparison is definite.
+For a non-cyclic `Range`, a value is contained if it's in the same ValueSpace, not below the lower bound (respecting closure), not above the upper bound (respecting closure), and every required comparison is definite. Where a bound has `alternativeBound` statements, the value is compared with the statement in its own unit, with no conversion, and the comparison is `Undetermined` with `NoBoundInUnit` if none is in its unit (ADR-A95).
 
 ### 9.3 Cyclic range membership
 
@@ -1040,7 +1098,7 @@ A value with declared granularity stands for a region around its represented poi
 
 ### 9.6 Conversion
 
-A comparison between values in distinct units is permitted only when both units are allowed by the relevant `UnitContract`; a declared `Conversion` relates them directly or through an allowed chain, with its transformation stated via `conversionFactor` or a registered `ConversionFunction` — never left undeclared; a `ConversionContext` is present where any step of that chain is `Contextual`; and the declared operational profile supports the required conversion path. An absent context produces `Undetermined`; it does not make the underlying values invalid RDF.
+A comparison between values in distinct units is permitted only when both units are allowed by the relevant `UnitContract`; a declared `Conversion` relates them directly or through an allowed chain, with its transformation stated via `conversionFactor` or a registered `ConversionFunction` — never left undeclared; a `ConversionContext` is present where any step of that chain is `Contextual`; and the declared operational profile supports the required conversion path. An absent context produces `Undetermined`; it does not make the underlying values invalid RDF. A conversion from or to a `CalendarUnit` is always `Contextual`, and its context names the calendar's scheme contract (`underCalendar`) and the starting position (`fromPosition`) (ADR-A94).
 
 ### 9.7 Recurrence and `binOf`
 
@@ -1179,6 +1237,47 @@ qnt:OperationCapabilityMeetShape
             }
         """
     ] .
+
+qnt:DerivedValueSpaceShape
+    a sh:NodeShape ;
+    sh:targetClass qnt:DerivedValueSpace ;
+    sh:property [ sh:path qnt:numeratorSpace ; sh:minCount 1 ; sh:maxCount 1 ; sh:class qnt:ValueSpace ] ;
+    sh:property [ sh:path qnt:denominatorSpace ; sh:minCount 1 ; sh:maxCount 1 ; sh:class qnt:ValueSpace ] .
+
+qnt:CalendarConversionShape
+    a sh:NodeShape ;
+    sh:targetClass qnt:Conversion ;
+    sh:sparql [
+        sh:message "A conversion from or to a calendar unit must be Contextual (ADR-A94)." ;
+        sh:select """
+            PREFIX qnt: <https://www.nebularis.org/neuro-semantic/lattice/quantification#>
+            SELECT $this WHERE {
+                { $this qnt:fromUnit ?unit } UNION { $this qnt:toUnit ?unit }
+                ?unit a qnt:CalendarUnit .
+                FILTER NOT EXISTS { $this qnt:conversionKind qnt:Contextual }
+            }
+        """
+    ] .
+
+qnt:AlternativeBoundShape
+    a sh:NodeShape ;
+    sh:targetClass qnt:Bound ;
+    sh:sparql [
+        sh:message "Alternative bounds must share space, sense and closure, and state the limit in different units (ADR-A95)." ;
+        sh:select """
+            PREFIX qnt: <https://www.nebularis.org/neuro-semantic/lattice/quantification#>
+            SELECT $this WHERE {
+                { $this qnt:alternativeBound ?other } UNION { ?other qnt:alternativeBound $this }
+                FILTER (?other != $this)
+                FILTER (
+                    NOT EXISTS { $this qnt:onSpace ?s . ?other qnt:onSpace ?s }
+                    || NOT EXISTS { $this qnt:boundSense ?d . ?other qnt:boundSense ?d }
+                    || NOT EXISTS { $this qnt:boundClosure ?c . ?other qnt:boundClosure ?c }
+                    || EXISTS { $this qnt:boundValue/qnt:inUnit ?u . ?other qnt:boundValue/qnt:inUnit ?u }
+                )
+            }
+        """
+    ] .
 ```
 
 Substrate shapes are `qnt:`-named, as above; deployment shapes illustrating them (§14) are `ex:`-named — the two are never conflated in this document.
@@ -1211,9 +1310,9 @@ Instrument may consume Quantification values and ranges for declared qualifiers 
 ## 13. Open Questions
 
 1. **External unit alignment.** The layer should support deployment bindings to QUDT, OM, or another vocabulary, without importing one by default.
-2. **Calendar binding.** A deployment needs a way to identify the calendar or temporal convention used by a recurrence, as deployment content, shipping no calendar inventory. Lean toward binding this via `UnitContract` rather than a distinct temporal contract, for the same reason `Conversion` reuses one mechanism rather than a parallel one — but this deserves the argument stated prominently once it's settled, not assumed here.
+2. ~~**Calendar binding.**~~ Resolved by [ADR-A94](../../docs/architecture/decisions/ADR-A94-quantification-calendar-binding.md): calendar units, contextual conversion, and calendars resolved as concept scheme editions.
 3. **Contextual conversion observations.** The precise RDF shape for an external conversion observation should be designed alongside the first implementation profile, preserving the rule that a context is required for `Contextual` conversion.
-4. **Derived rate spaces.** A rate is a quotient of two declared spaces. Whether this needs a first-release `qnt:DerivedValueSpace` declaration, or can remain expressible through operation capabilities alone, is deferred — declared-and-unusable rather than left as prose, so a deployment doesn't invent one privately in the meantime.
+4. ~~**Derived rate spaces.**~~ Resolved by [ADR-A93](../../docs/architecture/decisions/ADR-A93-quantification-derived-rate-spaces.md): `qnt:DerivedValueSpace` and the `Scale` operation.
 5. **Precision and rounding policy vocabulary.** `precisionPolicy` and `roundingPolicy` (§7) exist as properties but have no declared vocabulary of values yet — `rdfs:Literal`-valued for the first release, with a closed vocabulary to follow once a real implementation profile needs to interpret them rather than merely record them.
 
 **Resolved, not reopened:** partial orders (omitted, §8); the L5a/L5b-equivalent classification for containment versus overlap (§9, `Q4a`/`Q4b`/`Q5`); cyclic range endpoint closure (§6); ordering tie-breakers (§6, `OrderingComponent`); range-set adjacency (§6, `densityKind`); the Gate prerequisite mapping (§10).

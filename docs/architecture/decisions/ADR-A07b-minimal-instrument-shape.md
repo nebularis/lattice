@@ -17,7 +17,7 @@ Instrument defines the smallest required substrate-facing model:
 - Classes: `ins:Element`, `ins:Provision`, `ins:Obligation`, `ins:Qualifier`.
 - `ins:Element` subclasses `fnd:Version`.
 - `ins:Provision`, `ins:Obligation`, and `ins:Qualifier` subclass `ins:Element`.
-- These four classes are mutually disjoint.
+- `ins:Provision`, `ins:Obligation`, and `ins:Qualifier` are mutually disjoint. `ins:Element` is their common superclass, so it is not in the disjointness axiom (corrected 2026-09-25: including it made every subclass unsatisfiable, fixed in `9a12da4`).
 - Cross-reference properties include:
   - `ins:hasProvision` / `ins:partOfInstrument`
   - `ins:hasObligation` / `ins:inProvision`

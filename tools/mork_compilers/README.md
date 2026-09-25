@@ -70,6 +70,33 @@ python -m mork_compilers.cli compile-condition \
 Add `--at <ISO 8601 instant>` and `--scope <IRI>` when the condition's
 contract has scheme bindings.
 
+The OWL backend (`owl_backend.py`, ADR-A90) turns bound conditions and
+profiles into design-time classes, one `exe:OwlArtefact` module per
+compilation. It compiles only bindings that claim `elg:singleValued`, and
+emits a shape that checks the claim on data. `check` asks whether one class
+is subsumed by another, whether a class is satisfiable, and whether two
+overlap, returning an `exe:DesignTimeCheck` record:
+
+```bash
+python -m mork_compilers.cli check-classes \
+    --declarations ontology/eligibility/examples/evidence-binding.ttl \
+    --context my-applied-ontology.ttl --kind satisfiability \
+    --class https://example.org/lattice/eligibility/employment/relocation-benefit
+```
+
+`--context` names the applied ontology's class and property declarations.
+`--disjoint-siblings` declares sibling concepts disjoint.
+
+No reasoner is a dependency of this package (ADR-A83). `reasoning.py` calls
+the test-only `platform/reasoning-testkit` jar as a subprocess, passing one
+merged Turtle file and reading one JSON line back. Tests that need it are
+decorated `@unittest.skipUnless(reasoning.available(), ...)`. Build the jar
+with `mise run bootstrap:reasoning-testkit`, or point
+`LATTICE_REASONING_TESTKIT` at one. `test_reasoner.py` checks that HermiT
+derives what the SWRL rules derive, and `test_owl_backend.py` runs the OWL
+checks. Interval rules use `swrlb` builtins,
+which HermiT does not evaluate, so they are not checked under a reasoner.
+
 Install the editable package from the repository root with:
 
 ```bash

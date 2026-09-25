@@ -74,12 +74,14 @@ ex:relocation-benefit a elg:AdmissionProfile ;
 ex:family-binding a elg:EvidenceBinding ;
     elg:bindsCondition ex:engineering-family ;
     elg:subjectClass ex:Employee ;
+    elg:singleValued true ;
     elg:evidenceStep [ a elg:EvidenceStep ; elg:stepIndex 0 ; elg:stepProperty ex:holdsRole ; elg:stepDirection elg:Forward ] ,
                      [ a elg:EvidenceStep ; elg:stepIndex 1 ; elg:stepProperty ex:inJobFamily ; elg:stepDirection elg:Forward ] .
 
 ex:tenure-binding a elg:EvidenceBinding ;
     elg:bindsCondition ex:minimum-tenure ;
     elg:subjectClass ex:Employee ;
+    elg:singleValued true ;
     elg:readOnSpace ex:tenure-space ;
     elg:evidenceStep [ a elg:EvidenceStep ; elg:stepIndex 0 ; elg:stepProperty ex:tenureYears ; elg:stepDirection elg:Forward ] .
 

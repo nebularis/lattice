@@ -2,8 +2,8 @@
 
 # ADR-A94: Quantification calendar binding
 
-**Status:** Proposed
-**Date:** 2026-09-25
+**Status:** Accepted
+**Date:** 2026-09-25 (proposed), 2026-09-25 (accepted)
 **Related:** Quantification open question 2, §9.6 (conversion), §9.7
 (recurrence), ADR-A85 (binding resolution)
 **Unit:** [`applied-ontology-readiness`](../../developer/plans/applied-ontology-readiness.md) (AOR-15)
@@ -29,12 +29,12 @@ reusing the conversion mechanism instead of adding a temporal contract.
    position counted from with `qnt:fromPosition`. §9.6's existing rule
    applies unchanged: without the context, a comparison needing the
    conversion is `Undetermined`.
-3. **`qnt:Calendar ⊑ fnd:Version, fnd:Governable`** identifies a calendar and
-   its edition. Its content (which dates are working days) stays with the
-   deployment, as a concept scheme, a dataset or a service. Quantification
-   declares no content property. Which calendar applies in a context is chosen
-   the way a scheme is: a `voc:SchemeContract` for calendars, resolved under
-   ADR-A85 for scope and time.
+3. **`qnt:Calendar ⊑ voc:ConceptScheme`**, so a calendar edition is a
+   governed, versioned scheme edition and is resolved exactly as one:
+   `qnt:underCalendar` names a `voc:SchemeContract`, and the calendar that
+   applies is the scheme it resolves to under ADR-A85 for the context's scope
+   and time. The calendar's content (which dates are working days) stays with
+   the deployment. Quantification declares no content property.
 4. **Recurrences reuse it.** A recurrence whose period is in a calendar unit
    names its calendar the same way, which is the "calendar binding" §9.7
    already lists among the inputs to bin-key stability.

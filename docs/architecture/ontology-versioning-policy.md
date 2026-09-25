@@ -55,7 +55,7 @@ Two categories do not reduce to axiom-diffing:
   change is an updated `owl:imports` takes the bump level of the change it
   imports, applied transitively, because its own consumers see that change
   through its import closure. Proposed in the
-  [ADR-A86 addendum](decisions/ADR-A86-ontology-semantic-versioning.md#proposed-addendum-2026-09-25-guarantees-consumers-rely-on),
+  [ADR-A86 addendum](decisions/ADR-A86-ontology-semantic-versioning.md#addendum-2026-09-25-guarantees-consumers-rely-on),
   item 1, and applied since the `applied-ontology-readiness` unit's AOR-2.
 
 ## The import-pinning cascade checklist
@@ -198,7 +198,7 @@ track, so ignored build output is out of scope.
 
 A generated document carries a content-addressed version IRI instead of a
 semantic version: its ontology IRI followed by the first 16 hex digits of its
-canonical hash, taken without the version IRI (ADR-A86 proposed addendum,
+canonical hash, taken without the version IRI (ADR-A86 addendum,
 item 5). The Surface compiler stamps it when it writes a module. See `tools/ontology_version_check.py` and
 `mise run check:ontology-versioning`. The `platform` workflow runs the same
 check against `origin/main`.

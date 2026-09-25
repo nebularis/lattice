@@ -27,13 +27,13 @@ environment and can be installed with `.[community]` when needed.
 
 Regenerates a layer's compiled Turtle from its README, which is the
 authoritative specification. Fenced blocks are extracted in document order:
-`turtle-spec` → `spec/<layer>.ttl`, `turtle-vocab` → `vocab/<layer>-vocab.ttl`,
+`turtle-spec` → `ontology/<layer>/spec/<layer>.ttl`, `turtle-vocab` → `ontology/<layer>/vocab/<layer>-vocab.ttl`,
 `turtle-shapes` → the shape files named on the command line, in order.
 `turtle-example` blocks are never extracted. Each output gains the SPDX header
 as its first line.
 
 ```bash
-python3 tools/lattice/literate_extract.py ontology/surface/README.md \
+python3 tools/literate_extract.py ontology/surface/README.md \
     --layer surface --root . \
     --shapes shapes/structural.ttl shapes/constraints.ttl
 ```
@@ -79,7 +79,7 @@ timestamp, which is the only non-reproducible value emitted;
 
 Each written module carries a content-addressed `owl:versionIRI`: its ontology
 IRI followed by the first 16 hex digits of its canonical hash, taken without
-the version IRI (ADR-A86 proposed addendum, item 5).
+the version IRI (ADR-A86 addendum, item 5).
 
 `--verify-determinism` compiles twice, compares artefact hashes, fails the run
 on mismatch, and records a discharge of law `srf:R1` on success. The production

@@ -50,7 +50,7 @@ run = "corepack enable && yarn install --immutable"
 
 [tasks.check]
 description = "Run all repository validation tasks"
-depends = ["check:python-root", "check:workers", "check:java", "check:frontend", "check:spc", "check:persistence", "check:vocabulary", "check:mork-compilers", "check:ontology-versioning", "check:ontology-catalog", "check:minting", "build:mtp", "check:mtp"]
+depends = ["check:python-root", "check:workers", "check:java", "check:frontend", "check:spc", "check:persistence", "check:vocabulary", "check:mork-compilers", "check:ontology-versioning", "check:ontology-catalog", "check:reasoning-isolation", "check:minting", "build:mtp", "check:mtp"]
 
 [tasks.test]
 description = "Run the repository test suites"
@@ -151,6 +151,18 @@ run = "python tools/ontology_catalog.py write"
 [tasks."check:ontology-catalog"]
 description = "Run the ontology tool tests (catalog, versioning, Eligibility examples, PROV-O alignment), then fail when a catalog drifts, an import does not resolve, or a known defect is fixed but still listed (ADR-A88)"
 run = "python -m pytest tools/test_*.py -q && python tools/ontology_catalog.py check"
+
+[tasks."bootstrap:reasoning-testkit"]
+description = "Build the test-only reasoning harness jar (ADR-A83). Tests that need it skip without it"
+run = "mvn -q -f platform/pom.xml -pl reasoning-testkit -am package -DskipTests"
+
+[tasks."check:reasoning-testkit"]
+description = "Run the reasoning harness self-tests (ADR-A83)"
+run = "mvn -q -f platform/pom.xml -pl reasoning-testkit -am verify"
+
+[tasks."check:reasoning-isolation"]
+description = "Fail when a reasoner, rules engine or JVM bridge is declared outside platform/reasoning-testkit (ADR-A83)"
+run = "python tools/reasoning_isolation_check.py"
 
 [tasks."services:up"]
 description = "Start the reference platform services"

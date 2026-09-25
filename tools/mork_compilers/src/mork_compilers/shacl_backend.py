@@ -40,10 +40,10 @@ from rdflib import BNode, Graph, Literal, URIRef
 from rdflib.namespace import RDF
 
 from .common import mint
-from .eligibility_ir import PERMITTED, UNDETERMINED, ConceptPlan, IntervalPlan, ProfilePlan, RequiredInterval
+from .eligibility_ir import PERMITTED, UNDETERMINED, ConceptPlan, IntervalPlan, ProfilePlan
 from .namespaces import ELG, EXE, MORK, SH
 from .sparql_backend import PREFIXES as QUERY_PREFIXES
-from .sparql_backend import evidence_path, literal_readable, profile_select
+from .sparql_backend import applicable, containment_expression, evidence_path, literal_readable, profile_select
 
 PREFIXES = (
     "PREFIX elg: <https://www.nebularis.org/neuro-semantic/lattice/eligibility#>\n"
@@ -52,27 +52,9 @@ PREFIXES = (
 )
 
 
-def _containment_filter(plan: IntervalPlan) -> str:
-    clauses = []
-    for interval in plan.required:
-        clauses.append(_interval_clause(interval))
-    return " || ".join(clauses)
-
-
-def _interval_clause(interval: RequiredInterval) -> str:
-    parts = []
-    if interval.lower is not None:
-        op = ">=" if interval.lower_closed else ">"
-        parts.append(f"?candLower {op} {interval.lower!r}")
-    if interval.upper is not None:
-        op = "<=" if interval.upper_closed else "<"
-        parts.append(f"?candUpper {op} {interval.upper!r}")
-    return "(" + " && ".join(parts) + ")" if parts else "true"
-
-
 def render_containment_select(plan: IntervalPlan) -> str:
     """A SPARQL-based SHACL constraint: reports ``$this`` when its candidate is NOT contained."""
-    containment = _containment_filter(plan)
+    containment = containment_expression(plan)
     return (
         "PREFIX elg: <https://www.nebularis.org/neuro-semantic/lattice/eligibility#>\n"
         "PREFIX qnt: <https://www.nebularis.org/neuro-semantic/lattice/quantification#>\n"
@@ -82,21 +64,31 @@ def render_containment_select(plan: IntervalPlan) -> str:
         "  ?candidateRangeSet qnt:hasRange ?candidateRange .\n"
         "  ?candidateRange qnt:lowerBound/qnt:boundValue/qnt:numericValue ?candLower .\n"
         "  ?candidateRange qnt:upperBound/qnt:boundValue/qnt:numericValue ?candUpper .\n"
-        f"  FILTER (!({containment}))\n"
+        "  OPTIONAL { ?candidateRange qnt:lowerBound/qnt:boundValue/qnt:inUnit ?candUnit }\n"
+        f"  FILTER ({applicable(plan)} && !({containment}))\n"
         "}\n"
     )
 
 
 def render_readiness_select(plan: IntervalPlan) -> str:
     """A SPARQL-based SHACL constraint: reports a Question of this condition with no
-    candidate range set at all — scoped to this condition, not every Question, since
-    a Question for a different condition may legitimately use elg:candidateValue instead.
+    candidate range set at all, or one whose candidate has no bound in its unit —
+    scoped to this condition, not every Question, since a Question for a different
+    condition may legitimately use elg:candidateValue instead.
     """
+    missing = "  { FILTER NOT EXISTS { $this elg:candidateRangeSet ?candidateRangeSet } }\n"
+    if applicable(plan) != "true":  # also report a candidate with no bound in its unit (ADR-A95)
+        missing += (
+            "  UNION { $this elg:candidateRangeSet/qnt:hasRange ?candidateRange .\n"
+            "    OPTIONAL { ?candidateRange qnt:lowerBound/qnt:boundValue/qnt:inUnit ?candUnit }\n"
+            f"    FILTER (!{applicable(plan)}) }}\n"
+        )
     return (
         "PREFIX elg: <https://www.nebularis.org/neuro-semantic/lattice/eligibility#>\n"
+        "PREFIX qnt: <https://www.nebularis.org/neuro-semantic/lattice/quantification#>\n"
         "SELECT $this WHERE {\n"
         f"  $this elg:forCondition <{plan.condition}> .\n"
-        "  FILTER NOT EXISTS { $this elg:candidateRangeSet ?candidateRangeSet }\n"
+        + missing +
         "}\n"
     )
 
@@ -219,6 +211,7 @@ def render_bound_interval_selects(plan: IntervalPlan) -> List[Tuple[str, str, st
     reading = (
         _single_candidate(plan, "?reading")
         + f"  OPTIONAL {{ ?reading qnt:numericValue ?quantity ; qnt:onSpace <{plan.value_space}> }}\n"
+        + "  OPTIONAL { ?reading qnt:inUnit ?candUnit }\n"
         + f"  BIND(IF({literal}, ?reading, ?quantity) AS ?candLower)\n"
         + "  BIND(?candLower AS ?candUpper)\n"
     )
@@ -226,14 +219,14 @@ def render_bound_interval_selects(plan: IntervalPlan) -> List[Tuple[str, str, st
         _readiness(plan),
         (
             "determinacy",
-            f"The value is not read on the condition's value space ({EXE.ValueSpaceMismatch}).",
-            PREFIXES + "SELECT $this WHERE {\n" + reading + "  FILTER (!BOUND(?candLower))\n}\n",
+            f"The value is not read on the condition's value space, or no bound is stated in its unit ({EXE.ValueSpaceMismatch}, {EXE.NoBoundInUnit}).",
+            PREFIXES + "SELECT $this WHERE {\n" + reading + f"  FILTER (!BOUND(?candLower) || !{applicable(plan)})\n}}\n",
         ),
         (
             "containment",
             "The value is not contained by any required interval.",
             PREFIXES + "SELECT $this WHERE {\n" + reading
-            + f"  FILTER (BOUND(?candLower) && !({_containment_filter(plan)}))\n}}\n",
+            + f"  FILTER (BOUND(?candLower) && {applicable(plan)} && !({containment_expression(plan)}))\n}}\n",
         ),
     ]
 

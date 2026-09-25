@@ -14,12 +14,12 @@
 
 <https://www.nebularis.org/neuro-semantic/instrument>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.5.0> ;
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.6.0> ;
 	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.3.0> ,
 				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.3.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.4.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/party/0.4.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.5.0> .
+				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.5.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/party/0.5.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.6.0> .
 
 ins:Element a owl:Class ;
 	rdfs:subClassOf fnd:Version ;
@@ -53,7 +53,7 @@ ins:hasObligation a owl:ObjectProperty ;
 	rdfs:domain ins:Provision ;
 	rdfs:range ins:Obligation .
 
-ins:inProvision a owl:ObjectProperty, owl:FunctionalProperty ;
+ins:inProvision a owl:ObjectProperty ;
 	rdfs:domain ins:Obligation ;
 	rdfs:range ins:Provision ;
 	owl:inverseOf ins:hasObligation .

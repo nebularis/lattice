@@ -3,8 +3,8 @@
 
 """The MORK backend compiler family (ADR-A23, ADR-A24, delivery-plan Phase 5).
 
-Compiles ``elg:IntervalCondition`` declarations into SPARQL, SHACL, and SWRL
-artefacts through a shared executable IR. See ``eligibility_ir.py``'s module
+Compiles Eligibility conditions and profiles into SPARQL, SHACL, SWRL and
+design-time OWL artefacts through a shared executable IR. See ``eligibility_ir.py``'s module
 docstring for what is, and is not, in scope. There is no "native" backend —
 see ``namespaces.py``'s module docstring for why.
 """
@@ -23,6 +23,7 @@ from .eligibility_ir import (
     compile_condition,
     compile_profile,
 )
+from .owl_backend import compile_classes
 from .shacl_backend import compile_shapes
 from .sparql_backend import compile_query_template
 from .swrl_backend import compile_rules
@@ -37,6 +38,7 @@ __all__ = [
     "ProfilePlan",
     "RequiredInterval",
     "compile_any_condition",
+    "compile_classes",
     "compile_concept_condition",
     "compile_condition",
     "compile_profile",

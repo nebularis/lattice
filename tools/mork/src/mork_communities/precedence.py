@@ -175,7 +175,7 @@ class PrecedenceDeriver:
         Implements Definition 2.19 (Execution Schedule) and Chapter 10.3
         of the algorithms paper.
 
-        Raises ValueError if a cycle is detected (SHACL Shape M7 violation).
+        Raises ValueError if a cycle is detected (a mork:PrecedenceAcyclicityShape, Shape M7, violation).
         """
         # Compute in-degrees
         in_degree: Dict[URIRef, int] = {m: 0 for m in mapping_iris}

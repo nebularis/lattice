@@ -28,6 +28,8 @@ Lattice is a framework. It should not impose design decisions on its users unles
 
 If you are changing an ontology, you need to consider the semantic versioning impact of your change (see ADR-A86).
 
+Whenever any ontology document changes, follow every step of `docs/architecture/ontology-versioning-policy.md` in the same change, including the import cascade and regenerating the import catalog (`mise run build:ontology-catalog`). Run `mise run check:ontology-versioning` and `mise run check:ontology-catalog` before handing off. A skipped step breaks consumers silently, and has done so before.
+
 ### Two Agentic Execution Modes: Default and Autonomous
 
 In both modes, the Agentic Development Contract still applies. The agent should not run off and build multiple sub-systems, but should follow the `Agentic Development Approach` instead.

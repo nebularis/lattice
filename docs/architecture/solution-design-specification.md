@@ -398,6 +398,7 @@ No component other than the Control Plane and the worker tier writes any of thes
 | `platform-outbox` | Java library | Linked into Control Plane | N/A (library) | RabbitMQ (publisher), PostgreSQL (outbox table, once implemented per [data-architecture.md §7](data-architecture.md#7-open-gaps)) | N/A |
 | `surface-workflow` | Java library | Linked into Control Plane | N/A (library, `SurfaceRevisionApi` is the transport-neutral boundary) | PostgreSQL | Surface revision ledger and graph-family registry, via the Control Plane |
 | `release-integration` | Java library | Linked into Control Plane | N/A (library) | PostgreSQL (ledger), filesystem/OCI registry (packaging), Fuseki (provenance, once wired) | Release ledger, via the Control Plane |
+| `reasoning-testkit` | Java library and CLI jar, HermiT ([ADR-A83](decisions/ADR-A83-test-only-reasoning-engine-isolation.md)) | Never deployed, Maven `test` scope and test subprocesses only | Command line, one JSON line per call | N/A | N/A |
 | Worker tier | Python 3.14, `lattice_workers` package | One or more OS processes, containerized | Nothing (consumes from RabbitMQ, publishes to RabbitMQ) | RabbitMQ, Fuseki, PostgreSQL (processed-job store) | Processed-job idempotency table |
 | RabbitMQ | Message broker | One broker (clustering deferred, [§7](#7-robustness-reliability-design)) | AMQP | N/A | Transient message state only |
 | PostgreSQL | Relational database | One primary instance | JDBC/SQL | N/A | See [§3](#3-data-architecture-summary) |

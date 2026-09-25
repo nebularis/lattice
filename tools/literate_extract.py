@@ -116,11 +116,11 @@ def plan(
 
     outputs: Dict[str, str] = {}
     if spec_bodies:
-        outputs[f"{layer}/spec/{layer}.ttl"] = render(spec_bodies)
+        outputs[f"ontology/{layer}/spec/{layer}.ttl"] = render(spec_bodies)
     if vocab_bodies:
-        outputs[f"{layer}/vocab/{layer}-vocab.ttl"] = render(vocab_bodies)
+        outputs[f"ontology/{layer}/vocab/{layer}-vocab.ttl"] = render(vocab_bodies)
     for block, target in zip(shape_blocks, shape_targets):
-        outputs[f"{layer}/{target}"] = render([block.body])
+        outputs[f"ontology/{layer}/{target}"] = render([block.body])
     return outputs
 
 

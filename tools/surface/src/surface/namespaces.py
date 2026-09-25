@@ -27,7 +27,7 @@ QNT = Namespace(LATTICE + "quantification#")
 MORK = Namespace("http://www.nebularis.org/ontologies/Mork#")
 MORK_LATTICE = Namespace(LATTICE + "mork#")
 
-SURFACE_ONTOLOGY = "https://www.nebularis.org/neuro-semantic/lattice/surface/0.4.0"
+SURFACE_ONTOLOGY = "https://www.nebularis.org/neuro-semantic/lattice/surface/0.5.0"
 
 #: Prefixes bound on every emitted module, so that generated Turtle reads the
 #: same way whichever module it came from.

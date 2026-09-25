@@ -74,6 +74,8 @@ qnt:Ratio a qnt:OperationKind .
 qnt:Minimum a qnt:OperationKind .
 qnt:Maximum a qnt:OperationKind .
 qnt:Count a qnt:OperationKind .
+qnt:Scale a qnt:OperationKind ;
+    rdfs:comment "Scaling a value on a derived space's denominator space by a rate on the derived space, yielding a value on its numerator space (ADR-A93)." .
 qnt:BinOf a qnt:OperationKind ;
     rdfs:comment "The operation returning the unique RecurrenceBin containing a given position, or Undetermined with a reason." .
 
@@ -102,6 +104,8 @@ qnt:GranularityInsufficient a qnt:UnresolvedReason .
 qnt:ConversionContextAbsent a qnt:UnresolvedReason .
 qnt:OutsideDeclaredSpace a qnt:UnresolvedReason .
 qnt:OperationNotPermitted a qnt:UnresolvedReason .
+qnt:NoBoundInUnit a qnt:UnresolvedReason ;
+    rdfs:comment "No statement of a bound, among it and its alternatives, is in the candidate's unit (ADR-A95)." .
 
 qnt:BinContiguity a owl:Class ;
     rdfs:comment "A mechanism-intrinsic policy governing whether recurrence bins are contiguous." .

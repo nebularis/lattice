@@ -1,0 +1,47 @@
+<!-- SPDX-License-Identifier: MPL-2.0 -->
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+  <modelVersion>4.0.0</modelVersion>
+  <parent><groupId>org.nebularis.lattice</groupId><artifactId>lattice-platform</artifactId><version>0.1.0-SNAPSHOT</version><relativePath>../pom.xml</relativePath></parent>
+  <artifactId>reasoning-testkit</artifactId>
+  <description>Test-only OWL reasoning harness (ADR-A83). Other modules may depend on it in test scope only.</description>
+  <dependencies>
+    <dependency><groupId>net.sourceforge.owlapi</groupId><artifactId>org.semanticweb.hermit</artifactId><version>1.4.5.519</version></dependency>
+    <!-- the OWL API logs through slf4j-api 1.7, silence it -->
+    <dependency><groupId>org.slf4j</groupId><artifactId>slf4j-nop</artifactId><version>1.7.22</version><scope>runtime</scope></dependency>
+    <dependency><groupId>org.junit.jupiter</groupId><artifactId>junit-jupiter</artifactId><scope>test</scope></dependency>
+  </dependencies>
+  <build>
+    <finalName>reasoning-testkit</finalName>
+    <plugins>
+      <plugin>
+        <!-- Caffeine, under the OWL API, uses sun.misc.Unsafe, which Java 25 warns about -->
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration><argLine>--sun-misc-unsafe-memory-access=allow</argLine></configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>3.6.0</version>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals><goal>shade</goal></goals>
+            <configuration>
+              <createDependencyReducedPom>false</createDependencyReducedPom>
+              <transformers>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                  <mainClass>org.nebularis.lattice.reasoning.ReasoningTestkit</mainClass>
+                </transformer>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+              </transformers>
+              <filters>
+                <filter><artifact>*:*</artifact><excludes><exclude>META-INF/*.SF</exclude><exclude>META-INF/*.DSA</exclude><exclude>META-INF/*.RSA</exclude></excludes></filter>
+              </filters>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+</project>

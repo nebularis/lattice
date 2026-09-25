@@ -76,7 +76,7 @@ Eligibility honouring `voc:SchemeBinding` (`vocabulary-temporal-binding`).
 | Gaps | Decision | Deliverable |
 |---|---|---|
 | AO1, AO2 | [ADR-A87](../../architecture/decisions/ADR-A87-eligibility-concept-inclusion-and-exclusion.md) | Examples declare concepts, each with a comment naming the warning its removal raises. The declaration warning skips profiles. An example check in `mise` |
-| AO5 | [ADR-A86 proposed addendum](../../architecture/decisions/ADR-A86-ontology-semantic-versioning.md#proposed-addendum-2026-09-25-guarantees-consumers-rely-on) | Check flags missing version IRIs and runs in CI. Policy corrected. Job-family modules regenerated |
+| AO5 | [ADR-A86 addendum](../../architecture/decisions/ADR-A86-ontology-semantic-versioning.md#addendum-2026-09-25-guarantees-consumers-rely-on) | Check flags missing version IRIs and runs in CI. Policy corrected. Job-family modules regenerated |
 | AO4 | [ADR-A88](../../architecture/decisions/ADR-A88-ontology-import-resolution-for-consumers.md) | Generated root catalog, directory stubs, resolution check, consumer guide |
 | AO3, AO6 | [ADR-A89](../../architecture/decisions/ADR-A89-eligibility-ir-concept-conditions-and-profile-aggregation.md) | Concept candidate, concept plans, closure modes, profile aggregation, diagnostics |
 | AO7 | [ADR-A91](../../architecture/decisions/ADR-A91-eligibility-candidate-evidence-binding.md) | Evidence bindings from domain properties |

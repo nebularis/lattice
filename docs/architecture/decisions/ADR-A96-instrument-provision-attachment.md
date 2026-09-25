@@ -2,8 +2,8 @@
 
 # ADR-A96: Instrument provision attachment
 
-**Status:** Proposed
-**Date:** 2026-09-25
+**Status:** Accepted
+**Date:** 2026-09-25 (proposed), 2026-09-25 (accepted)
 **Related:** ADR-A07b (minimal Instrument shape), ADR-A86
 **Unit:** [`applied-ontology-readiness`](../../developer/plans/applied-ontology-readiness.md) (AOR-17)
 

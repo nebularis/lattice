@@ -116,6 +116,9 @@ lattice/
 ├── contracts/
 │   └── identity/            # Minting recipe and vector schemas, anchor vectors, independent verifier
 │
+├── platform/
+│   └── reasoning-testkit/   # Test-only OWL reasoner harness, never a runtime dependency (ADR-A83)
+│
 ├── packages/
 │   └── minting/             # Standalone identity minting libraries (Python, Java), no LATTICE dependency
 │
@@ -246,6 +249,16 @@ mise run check:persistence
 ```
 
 Compiles `ontology/persistence`'s own worked examples, runs the resolver/validator/capability/boundary unit tests, the injection corpus, the determinism checks, and the Python architecture-policy checks, and validates every example fixture against `ontology/persistence/shapes/constraints.ttl`. See [`tools/persistence/README.md`](tools/persistence/README.md).
+
+### Validate the reasoning harness
+
+```bash
+mise run bootstrap:reasoning-testkit
+mise run check:reasoning-testkit
+mise run check:reasoning-isolation
+```
+
+Builds and tests the test-only HermiT harness, and checks that no other module declares a reasoner. With the jar built, `mise run check:mork-compilers` also checks generated SWRL and OWL under HermiT. See [`platform/reasoning-testkit/README.md`](platform/reasoning-testkit/README.md).
 
 ### Validate the identity minting libraries
 
