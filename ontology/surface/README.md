@@ -327,10 +327,10 @@ A contract must be able to name any class or property in the estate without impo
 
 <https://www.nebularis.org/neuro-semantic/surface>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/surface/0.3.0> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.2.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.2.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.3.0> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/surface/0.4.0> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.3.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.3.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.4.0> .
 
 rdf:Property rdf:type owl:Class .
 rdfs:Class rdf:type owl:Class .
@@ -517,7 +517,7 @@ srf:generatedAttribute a owl:DatatypeProperty ;
 
 ```turtle-spec
 srf:DerivedArtefact a owl:Class ;
-	rdfs:subClassOf fnd:Evidenced ,
+	rdfs:subClassOf fnd:Evidenced , fnd:DerivedArtefact ,
 		[ a owl:Restriction ; owl:onProperty srf:generatedByProfile ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
 		[ a owl:Restriction ; owl:onProperty srf:derivationAuthority ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
 		[ a owl:Restriction ; owl:onProperty srf:producedAt ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ;
@@ -1011,8 +1011,8 @@ Injectivity is not assumed. `LocalNameFromValue` is injective only while value l
 
 <https://www.nebularis.org/neuro-semantic/surface-vocab>
 	a owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/surface-vocab/0.3.0> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/surface/0.3.0> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/surface-vocab/0.4.0> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/surface/0.4.0> .
 
 srf:NominalClass a srf:IndexForm ; rdfs:comment "One generated class per value, defined as the carrier restricted to that value." .
 srf:MembershipAssertion a srf:IndexForm ; rdfs:comment "Asserted typing of each carrier instance into the generated class for its value." .

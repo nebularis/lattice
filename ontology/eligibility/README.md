@@ -62,11 +62,11 @@ Conditions matching by `ExactMatch`, `SetMembership`, or `HierarchicalMatch` sta
 
 <https://www.nebularis.org/neuro-semantic/eligibility>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.4.0> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.2.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.2.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.3.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/party/0.3.0> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.5.0> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.3.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.3.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.4.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/party/0.4.0> .
 
 elg:Condition a owl:Class ;
 	rdfs:comment "A declared admissibility condition." .

@@ -28,7 +28,7 @@ SHACL agree on every subject. SWRL derives a sound subset.
 | AOR9-09 | a profile mixing bound and question-read conditions / compiled / refused | L1 | - |
 | AOR9-10 | an inverse first step (team membership) / compiled and executed / steps recorded with direction, a contractor team `Denied`, no team `Undetermined` | L1 | + |
 | AOR9-11 | bound condition and profile / three backends compiled twice / isomorphic | L2 | + |
-| AOR9-12 | `evidence-binding.ttl` / Eligibility shapes / no results (in `check:eligibility-examples`) | L1 | + |
+| AOR9-12 | `evidence-binding.ttl` / Eligibility shapes / no results (in `check:ontology-catalog`) | L1 | + |
 
 ## One command
 
@@ -36,7 +36,7 @@ SHACL agree on every subject. SWRL derives a sound subset.
 mise run check:mork-compilers
 ```
 
-Pass: `74 passed`. Also `mise run check:eligibility-examples` (12 passed).
+Pass: `74 passed`. Also `mise run check:ontology-catalog`, which runs the example tests.
 
 ## Artefacts to inspect
 

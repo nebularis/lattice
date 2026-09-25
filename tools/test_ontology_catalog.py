@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 import os
+import subprocess
 import sys
 from pathlib import Path
 
@@ -39,8 +40,10 @@ def ontology(iri: str, imports: tuple[str, ...] = (), body: str = "") -> str:
 
 @pytest.fixture()
 def tree(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
-    """Two published documents, a importing b, and no known defects."""
+    """Two published documents, a importing b, and no known defects, in a git
+    repository, since the tool reads only files git tracks or would track."""
     monkeypatch.setattr(ontology_catalog, "KNOWN_DEFECTS", {})
+    subprocess.run(["git", "init", "-q"], cwd=tmp_path, check=True)
     (tmp_path / "ontology/a/spec").mkdir(parents=True)
     (tmp_path / "ontology/b/spec").mkdir(parents=True)
     (tmp_path / "ontology/a/spec/a.ttl").write_text(ontology("https://example.org/a", ("https://example.org/b/1.0.0",)))
@@ -104,6 +107,14 @@ def test_stale_known_defect_is_reported(tree: Path, monkeypatch: pytest.MonkeyPa
     problems, known = check(tree)
     assert known == []
     assert problems == ["ontology/a/spec/a.ttl: listed in KNOWN_DEFECTS (was broken) but no longer defective, remove the entry"]
+
+
+def test_ignored_build_output_is_not_catalogued(tree: Path) -> None:
+    (tree / ".gitignore").write_text("**/execution/*\n")
+    (tree / "ontology/b/execution").mkdir()
+    (tree / "ontology/b/execution/generated.ttl").write_text(ontology("https://example.org/generated", ("https://example.org/gone",)))
+    assert check(tree) == ([], [])
+    assert "generated" not in (tree / "ontology/catalog-v001.xml").read_text()
 
 
 def test_generation_is_deterministic() -> None:

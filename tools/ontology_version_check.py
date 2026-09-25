@@ -36,6 +36,19 @@ ONTOLOGY_MARKER_RE = re.compile(r"\bowl:Ontology\b")
 VERSIONED_DIRECTORIES = frozenset({"spec", "vocab"})
 
 
+def repository_files(root: Path, suffix: str) -> list[Path]:
+    """Every file under ``ontology/`` ending in ``suffix`` that git tracks or
+    would track: tracked files and untracked files that are not ignored.
+    Ignored build output (``**/execution/*``) exists only on the machine that
+    built it, so no check may depend on it."""
+    result = subprocess.run(
+        ["git", "ls-files", "--cached", "--others", "--exclude-standard", "--", ONTOLOGY_ROOT],
+        cwd=root, capture_output=True, text=True, check=True,
+    )
+    paths = {root / line for line in result.stdout.splitlines() if line.endswith(suffix)}
+    return sorted(path for path in paths if path.exists())
+
+
 def find_in_scope_ttl_files(root: Path) -> list[Path]:
     """Every ``.ttl`` file under ``ontology/`` that declares an
     ``owl:Ontology`` somewhere in its content. A file with no such
@@ -44,7 +57,7 @@ def find_in_scope_ttl_files(root: Path) -> list[Path]:
     of its own and is out of this check's scope, per the versioning-unit
     rule in the policy document."""
     files: list[Path] = []
-    for path in sorted((root / ONTOLOGY_ROOT).rglob("*.ttl")):
+    for path in repository_files(root, ".ttl"):
         text = path.read_text(encoding="utf-8", errors="ignore")
         if ONTOLOGY_MARKER_RE.search(text):
             files.append(path)

@@ -78,7 +78,8 @@ diagnostic codes on every `Undetermined`, evidence bindings, a CLI for concept
 conditions, and `mise run check:mork-compilers` (74 tests, generated SPARQL
 executed against fixtures). The Phase 8 gate now runs the Eligibility
 conformance cases through SPARQL and SHACL. Verification step 5 (a reasoner
-loading the SWRL) still waits on this unit's Part B.
+loading the SWRL) still waits on this unit's Part B, now drafted as
+[ADR-A83](../../architecture/decisions/ADR-A83-test-only-reasoning-engine-isolation.md) (Proposed).
 
 ## Next steps
 

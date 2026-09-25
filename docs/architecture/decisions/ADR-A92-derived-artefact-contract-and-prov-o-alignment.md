@@ -2,8 +2,8 @@
 
 # ADR-A92: Foundation derived-artefact contract and PROV-O alignment
 
-**Status:** Proposed
-**Date:** 2026-09-25
+**Status:** Accepted
+**Date:** 2026-09-25 (proposed), 2026-09-25 (accepted, item 3 rewritten on acceptance)
 **Related:** ADR-A12 (identity and derivation-authority model), ADR-A13
 (dataset, graph-role and provenance model), ADR-A22 (MORK governance and
 Foundation alignment), ADR-A26 (provenance chain completeness), ADR-A65
@@ -43,10 +43,14 @@ records and the artefacts LATTICE generated for it.
    fnd:DerivedArtefact`. Where `srf:ReadSetEntry` fits PROV-O's qualified
    usage pattern it is aligned, and the implementing slice records any part
    that does not fit.
-3. **Executable** imports Foundation and adds `exe:ExecutablePlan ⊑
-   fnd:DerivedArtefact`, `exe:GeneratedArtefact ⊑ fnd:DerivedArtefact`, and
-   `exe:derivedFromEligibilityNode`, `exe:derivedFromQuantificationNode` and
-   `exe:compiledFromMapping ⊑ prov:wasDerivedFrom`.
+3. **Executable** aligns directly to PROV-O and does not import Foundation.
+   It imports PROV-O and adds `exe:ExecutablePlan ⊑ prov:Entity`,
+   `exe:GeneratedArtefact ⊑ prov:Entity`, and `exe:derivedFromEligibilityNode`,
+   `exe:derivedFromQuantificationNode`, `exe:derivedFromVocabularyNode` and
+   `exe:compiledFromMapping ⊑ prov:wasDerivedFrom`. Direct alignment was
+   accepted on the condition that it imposes no functional restriction on
+   implementors. PROV-O declares no functional or inverse-functional property,
+   so it imposes none.
 4. No existing term is renamed or removed.
 
 ## Consequences
@@ -54,9 +58,26 @@ records and the artefacts LATTICE generated for it.
 - One PROV-O query spans applied-ontology records, Surface outputs and
   compiled plans.
 - Foundation, Surface and Executable each take a MINOR bump. Foundation's
-  bump cascades to every layer under ADR-A86, so other pending Foundation
-  additions should ride in the same change. The step-list lift proposed in
-  ADR-A91 is one candidate.
+  bump cascades to every layer under ADR-A86. ADR-A91 did not lift its
+  step-list pattern to Foundation, so nothing else rides in this bump.
+- Every node an executable plan derives from (a condition, a range, a concept,
+  a mapping) is inferred to be a `prov:Entity`. PROV-O declares `prov:Entity`
+  disjoint with `prov:Activity`, so an implementor must not also type such a
+  node as an activity. This is the one restriction the alignment adds.
+- Executable already reached Foundation, and PROV-O through it, via MORK's own
+  import of Foundation. The direct PROV-O import states the dependency Executable
+  relies on without depending on MORK's.
 - Surface profile identity can proceed, as a Surface change, once this is
   accepted.
 - The named-graph-per-batch model of ADR-A65 is compatible and unaffected.
+
+## Implementation notes (2026-09-25, `applied-ontology-readiness` AOR-12, AOR-13)
+
+- `srf:ReadSetEntry` is not aligned. PROV-O's `prov:Usage` qualifies an
+  activity's use of an entity, while a read-set entry hangs off the derived
+  artefact itself, so the two patterns do not match.
+- `fnd:derivationKind` is not functional. ADR-A12 describes one kind per
+  product, but nothing here needs a reasoner to enforce it.
+- The kinds are `fnd:Inferred`, `fnd:Validated`, `fnd:Materialised`,
+  `fnd:Projected`, `fnd:Indexed`, `fnd:Generated`, `fnd:Compiled` and
+  `fnd:DecisionRecord`.

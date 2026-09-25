@@ -1188,7 +1188,7 @@ Substrate shapes are `qnt:`-named, as above; deployment shapes illustrating them
 
 Quantification uses `fnd:Version` for declarations whose meaning changes over time, `fnd:Governable` for declarations needing review before operational use, `fnd:Evidenced` for unresolved values, conversion contexts, comparisons, conversion functions, and law discharges, and `fnd:TemporallyScoped` for conversion contexts.
 
-**Foundation needs to provide, and does not yet:** a derived-artefact and content-hash contract (`fnd:DerivedArtefact`), referenced throughout this document (`RecurrenceBin`, materialised range sets, projection records) but not yet built in Foundation's own delivered specification. This is a genuine, blocking gap for real use, not a documentation nicety — see the migration report accompanying this revision. Foundation also needs ordered-collection support or an equivalent canonical-ordering convention, and temporal scoping capable of representing a position known only to a declared granularity.
+**Foundation provides** `fnd:DerivedArtefact`, `fnd:DerivationRun` and `fnd:DerivationKind` since ADR-A92, which this document's derived records (`RecurrenceBin`, materialised range sets, projection records) can subclass. A content-hash contract is not part of it: Surface's read-set hashes remain the only implemented one. Foundation also needs ordered-collection support or an equivalent canonical-ordering convention, and temporal scoping capable of representing a position known only to a declared granularity.
 
 ### Vocabulary
 

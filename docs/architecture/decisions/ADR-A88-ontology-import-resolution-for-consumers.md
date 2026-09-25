@@ -2,8 +2,8 @@
 
 # ADR-A88: Ontology import resolution for consumers
 
-**Status:** Proposed
-**Date:** 2026-09-25
+**Status:** Accepted
+**Date:** 2026-09-25 (proposed), 2026-09-25 (accepted)
 **Related:** ADR-A86 (ontology semantic versioning), ADR-A77 (repository
 topology)
 **Unit:** [`applied-ontology-readiness`](../../developer/plans/applied-ontology-readiness.md)

@@ -45,7 +45,9 @@ All items listed here are **deliberately not in shipped artefacts** — no READM
 
 ---
 
-### 1.3 Derivation contract location — ⏳ Decision Needed
+### 1.3 Derivation contract location — ✅ Closed (2026-09-25)
+
+**Resolution:** Foundation declares `fnd:DerivedArtefact`, `fnd:DerivationRun` and `fnd:DerivationKind`, and `srf:DerivedArtefact` subclasses it ([ADR-A92](../../architecture/decisions/ADR-A92-derived-artefact-contract-and-prov-o-alignment.md), AOR-12).
 
 **Question:** Does derived-artefact contract eventually move to Foundation per ADR-A12, or does each generating layer declare its own?
 
@@ -137,9 +139,9 @@ All items listed here are **deliberately not in shipped artefacts** — no READM
 
 ## 3. Known Gaps
 
-### 3.1 Foundation migration for derived-artefact contract — ⏳ Decision Needed
+### 3.1 Foundation migration for derived-artefact contract — ✅ Closed (2026-09-25)
 
-See §1.3 above. This is an ADR-scale decision affecting multiple layers.
+See §1.3 above. Resolved by [ADR-A92](../../architecture/decisions/ADR-A92-derived-artefact-contract-and-prov-o-alignment.md): `srf:DerivedArtefact ⊑ fnd:DerivedArtefact` (`applied-ontology-readiness` AOR-12). §3.3 (profile identity) is no longer blocked on it.
 
 ---
 
@@ -149,13 +151,13 @@ See §1.3 above. This is an ADR-scale decision affecting multiple layers.
 
 ---
 
-### 3.3 Profile identity is computed, not modelled — ⏳ Blocked
+### 3.3 Profile identity is computed, not modelled — ⏳ Unblocked, not started
 
 **Current state:** `Profile.identity()` in compiler concatenates profile IRI, generator version, canonicalisation version, entailment regime, naming normalisation, symbol mode, and permitted stack depth. Pure computation, not represented in graph.
 
 **Missing:** `srf:profileIdentityHash` asserted on generated surface would close this.
 
-**Blocker:** Depends on §3.1 Foundation migration decision.
+**Blocker:** None since §3.1 closed (2026-09-25). A Surface change adding `srf:profileIdentityHash` remains to be scheduled.
 
 ---
 

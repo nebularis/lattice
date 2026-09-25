@@ -2,8 +2,8 @@
 
 # ADR-A90: Design-time OWL class backend for Eligibility
 
-**Status:** Proposed
-**Date:** 2026-09-25
+**Status:** Accepted
+**Date:** 2026-09-25 (proposed), 2026-09-25 (accepted)
 **Related:** ADR-A23 (compiler family completion), ADR-A24 (backend
 strategy), ADR-A83 (test-only reasoning engine isolation, reserved), ADR-A87,
 ADR-A89, ADR-A91
@@ -78,3 +78,36 @@ conditions with each other.
   argues for the graph. It would also be a Vocabulary MINOR bump that cascades
   to every layer. This ADR recommends the compile option until a second
   consumer needs the declaration.
+
+## Open question (2026-09-25): conditions read through evidence paths
+
+This ADR encodes a condition over one dimension property R. ADR-A91 lets a
+condition read its candidate through a path of several steps, and a subject
+may have several values at its end. The SPARQL reference treats a subject with
+no value or several as `Undetermined`, and one with a single value by the
+decision table. Two OWL readings of an exclusion then differ:
+`¬∃path.Within(e)` (no value is excluded) and `∃path.¬Within(e)` (some value
+is not excluded). Neither reproduces "several values give Undetermined", and
+the same gap affects inclusions.
+
+Options:
+
+- **A. Require functional properties.** Compile only paths whose every step
+  the applied ontology declares `owl:FunctionalProperty` (inverse steps:
+  `owl:InverseFunctionalProperty`). The readings then coincide. This puts an
+  OWL axiom on the applied ontology's own properties.
+- **B. Single-valued claim on the binding.** The binding states that each
+  step of its path yields at most one value (for example
+  `elg:singleValued true`). The generated classes build the claim in with a
+  cardinality at each step (`≤1 p₁ ⊓ ∃p₁.(≤1 p₂ ⊓ ∃p₂.Within(c))`), and a
+  generated SHACL shape checks the same per-step claim on data, so the classes
+  and the data agree. The applied ontology's properties are untouched, and a
+  path the author does not claim single-valued is refused.
+- **C. No restriction.** Choose the `∃` reading and document that design-time
+  answers describe "some value" semantics, which differ from runtime decisions
+  for subjects with several values.
+
+SKOS is not involved in any option. `skos:broader` is used only inside the
+hierarchy classes of item 2, which allow several broader concepts per concept.
+The restriction concerns the path from a subject to its candidate, which
+belongs to the applied ontology, not to the concept scheme. Recommended: B.

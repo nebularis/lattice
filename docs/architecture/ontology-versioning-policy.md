@@ -193,6 +193,12 @@ does not attempt it. What is enforced is narrower and purely mechanical: a
 change to an in-scope `.ttl` file's content must be accompanied by a change to
 that file's own `owl:versionIRI` literal. A document under a `spec/` or
 `vocab/` directory must also carry an `owl:versionIRI` at all. Examples and
-test fixtures are exempt. See `tools/ontology_version_check.py` and
+test fixtures are exempt. Both checks read only files git tracks or would
+track, so ignored build output is out of scope.
+
+A generated document carries a content-addressed version IRI instead of a
+semantic version: its ontology IRI followed by the first 16 hex digits of its
+canonical hash, taken without the version IRI (ADR-A86 proposed addendum,
+item 5). The Surface compiler stamps it when it writes a module. See `tools/ontology_version_check.py` and
 `mise run check:ontology-versioning`. The `platform` workflow runs the same
 check against `origin/main`.

@@ -116,3 +116,11 @@ with the decision above.
    (`…/neuro-semantic/lattice/<layer>/<version>`). Changing them is MAJOR for
    every layer and buys nothing until documents are served at their IRIs, which
    [ADR-A88](ADR-A88-ontology-import-resolution-for-consumers.md) defers.
+5. **Generated documents are content-addressed.** A document a compiler
+   generates cannot be classified MAJOR, MINOR or PATCH by whoever runs the
+   compiler. Its version IRI is its ontology IRI followed by the first 16 hex
+   digits of the document's canonical hash, taken without the version IRI
+   (`tools/surface`, `stamp_content_version`). Every content change changes
+   the version IRI, and a regeneration that changes nothing keeps it.
+   Generated documents that are ignored build output (`**/execution/*`) are
+   outside every check, since they exist only where they were built.

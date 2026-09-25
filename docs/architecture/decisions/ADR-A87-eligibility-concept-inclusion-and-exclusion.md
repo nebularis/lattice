@@ -2,8 +2,8 @@
 
 # ADR-A87: Eligibility concept inclusion and exclusion
 
-**Status:** Proposed
-**Date:** 2026-09-25
+**Status:** Accepted
+**Date:** 2026-09-25 (proposed), 2026-09-25 (accepted)
 **Related:** ADR-A03 (condition taxonomy), ADR-A06 (wildcard semantics),
 ADR-A85 (scoped and temporal binding resolution), ADR-A86 (ontology semantic
 versioning)

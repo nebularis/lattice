@@ -38,8 +38,8 @@ mise run check:mork-compilers
 ```
 
 Pass: `27 passed` (the 15 existing compiler tests and the 12 above). Also
-run `mise run check:eligibility-examples` (11 passed) and
-`mise run check:ontology-catalog`.
+run `mise run check:ontology-catalog`, which includes the Eligibility example
+tests.
 
 ## Artefacts to inspect
 

@@ -31,10 +31,11 @@ admission profile, whose concepts belong to its conditions (ADR-A87 item 4).
 ## One command
 
 ```bash
-mise run check:eligibility-examples
+mise run check:ontology-catalog
 ```
 
-Pass: `11 passed`. Also run `mise run check:ontology-versioning` (no unbumped
+Pass: every tool test passes, `tools/test_eligibility_examples.py` among them
+(the examples task was folded into `check:ontology-catalog` on 2026-09-25). Also run `mise run check:ontology-versioning` (no unbumped
 changes) and `mise run check:python-root` (unchanged 77 tests and the Phase 8
 gate, which reads `interval-containment.ttl`).
 
