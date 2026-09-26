@@ -61,5 +61,23 @@ Fixes made on R:
 2. `tools/ontology_catalog.py`: the `_UNPARSEABLE` constant, unused once its only entry went, is
    removed. Its tests pass (12).
 
-To repeat after the rebase onto `main` (AIR-3.1): regenerate the catalog and re-run the command.
-Expect 59 tool tests.
+After the rebase onto `main` (AIR-3.1 and the AIR-1.2 and AIR-3.2 briefs), clean, no conflicts:
+
+| Check | Result |
+|---|---|
+| `mise run build:ontology-catalog` | no catalog changed |
+| `mise run check:ontology-catalog` | 59 tool tests passed (57, plus AIR-3.1's two examples), catalog consistent, 2 known defects |
+| `mise run check:ontology-versioning` | exit 0, 28 in-scope documents, no unbumped changes, every version listed |
+| AIR11-03 search | no match |
+
+Gate, run on R at the human's request, 2026-09-26:
+
+1. Pack reviewed: AIR11-01 to 04 pin the invariant. The negative case (AIR11-03) is the one that
+   matters, since a stale reference would keep the dropped namespaces alive.
+2. The command passes (above).
+3. Artefacts inspected: both READMEs agree with ADR-A98. The release tags the domain README cites
+   (`insurance-contract-v0.2.0`, `applied-insurance-shapes-v0.1.0`) exist.
+4. Adversarial probe: putting the removed `KNOWN_DEFECTS` entry back makes
+   `python tools/ontology_catalog.py check` exit 1 ("listed in KNOWN_DEFECTS … but no longer
+   defective"). Restored, it exits 0.
+5. Sign-off in `LOG.md` is the human's.

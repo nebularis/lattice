@@ -36,8 +36,8 @@ AIR-2.1. AIR-1.2 and AIR-3.2 need briefs on `main` before their branches.
 | 21 | AIR-3.5 | `air/3.5-m2-check` | waiting | |
 | 23+ | substrate ADRs, S1, S2, S4, S5, S7 | `air/s<n>-<slug>` | waiting | ADRs drafted in round 4 |
 
-Verifying queue (S branches handed over and not yet merged): `air/1.1-layout`, verified before
-its rebase. Needs the human's rebase onto `main`, then a re-run.
+Verifying queue (S branches handed over and not yet merged): `air/1.1-layout`, verified and
+gated after its rebase, awaiting sign-off. `air/2.1-peril-spec` expected from S.
 
 ## Machine S
 
@@ -49,7 +49,7 @@ bundle, verify and merge. Blocked on the human switching this checkout to `air/2
 
 | Seq | Slice | Branch | State | Note |
 |---|---|---|---|---|
-| 3 | AIR-1.1 | `air/1.1-layout` | verifying | set by R: checks pass before rebase, two small fixes (Validation Pack Results) |
+| 3 | AIR-1.1 | `air/1.1-layout` | verifying | set by R: rebased, checks and gate probe pass. Awaiting `LOG.md` sign-off |
 | 4 | AIR-1.2 | `air/1.2-shared-contracts` | waiting | |
 | 5 | AIR-2.1 | `air/2.1-peril-spec` | waiting for branch | branch exists, brief ready, needs the checkout switched here next |
 | 6 | AIR-2.2 | `air/2.2-characteristics` | waiting | |
