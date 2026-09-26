@@ -49,19 +49,25 @@ Run on machine R, 2026-09-26, on `air/2.1-peril-spec` after its rebase onto `mai
 AIR-1.1). The rebase conflicted only in the status record's Machine S section, resolved to the
 newest state of each row.
 
-S's 13 tests passed before any change on R. Review found two defects in the shapes, both fixed:
+S's 13 tests passed before any change on R. Review found three defects in the shapes, all fixed:
 
 1. **`prl:PrimaryParentShape` let a non-top cause concept with no primary parent pass.** It
    counted parents in a sub-query grouped by `$this`, which returns no row for a concept with
-   none, so the count filter never ran. Rewritten to count with `OPTIONAL` and `HAVING` at the top
-   level. A new test, `test_non_top_concept_without_a_primary_parent_is_rejected` (AIR21-07,
+   none, so the count filter never ran. It counts one thing, so it is rewritten as a flat query:
+   `OPTIONAL`, then `GROUP BY` and `HAVING`. A new test, `test_non_top_concept_without_a_primary_parent_is_rejected` (AIR21-07,
    second case), failed against the original shape and passes against the fix.
 2. **Every constraint declared its prefixes with `sh:prefixes` pointing at namespace IRIs**, which
    needs `sh:declare` triples. pySHACL fell back to the file's `@prefix` lines, but other SHACL
    engines would reject the queries. Every query now carries `PREFIX` lines, as the repository's
    other shapes do.
+3. **The editorial-note rule had the same zero trap.** It compares two independent counts
+   (`skos:broader` links against primary parents), so one grouped sub-query per count is the right
+   design. But neither sub-query anchored the concept, so a concept with no primary parent dropped
+   out of the join. Each sub-query now anchors the concept and makes its counted pattern
+   `OPTIONAL`. A new test, `test_extra_broader_without_a_primary_parent_needs_an_editorial_note`,
+   failed against the original query and passes against the fix.
 
-Both lessons are now rules in `.github/copilot-instructions.md` ("Authoring SHACL-SPARQL
+The lessons are now rules in `.github/copilot-instructions.md` ("Authoring SHACL-SPARQL
 shapes"), which every agent on both machines reads.
 
 Also on R: the peril row of `insurance/domain-README.md` and the applied insurance row of
@@ -72,7 +78,7 @@ Also on R: the peril row of `insurance/domain-README.md` and the applied insuran
 |---|---|
 | `mise run build:ontology-catalog` | root catalog and two stub catalogs written |
 | `mise run build:ontology-releases` | three rows. Tags to create at merge: `applied-insurance-peril-shapes-v0.1.0`, `insurance-peril-v0.1.0`, `insurance-peril-vocab-v0.1.0` |
-| `mise run check:ontology-catalog` | 73 tool tests passed (14 peril), catalog consistent, 2 known defects |
+| `mise run check:ontology-catalog` | 74 tool tests passed (15 peril), catalog consistent, 2 known defects |
 | `mise run check:ontology-versioning` | passes once the fixes are committed. The shapes stay at 0.1.0: it is unreleased, and against `main` the check reports no unbumped change |
-| AIR21-01 to AIR21-12 | pass, AIR21-07 with its new zero-parent case |
-| probe | the zero-parent case fails against S's original `PrimaryParentShape` |
+| AIR21-01 to AIR21-12 | pass, AIR21-07 with two new zero cases (primary parent, editorial note) |
+| probes | both zero cases fail against S's original `PrimaryParentShape` queries |

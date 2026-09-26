@@ -95,13 +95,19 @@ prl:PrimaryParentShape
             PREFIX prl-voc: <https://www.nebularis.org/neuro-semantic/insurance/peril/vocab#>
             PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
             SELECT $this WHERE {
+              # Two independent counts, one sub-query each. Each anchors $this and makes
+              # the counted pattern OPTIONAL, so a concept with none still gets a row (0).
               $this skos:inScheme prl-voc:CauseScheme .
               {
-                SELECT $this (COUNT(DISTINCT ?b) AS ?nb) WHERE { $this skos:broader ?b } GROUP BY $this
+                SELECT $this (COUNT(DISTINCT ?b) AS ?nb) WHERE {
+                  $this skos:inScheme prl-voc:CauseScheme .
+                  OPTIONAL { $this skos:broader ?b }
+                } GROUP BY $this
               }
               {
                 SELECT $this (COUNT(DISTINCT ?p) AS ?np) WHERE {
-                  { $this prl:broaderGeneric ?p } UNION { $this prl:broaderPartitive ?p }
+                  $this skos:inScheme prl-voc:CauseScheme .
+                  OPTIONAL { { $this prl:broaderGeneric ?p } UNION { $this prl:broaderPartitive ?p } }
                 } GROUP BY $this
               }
               FILTER (?nb > ?np)

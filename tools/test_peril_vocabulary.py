@@ -89,6 +89,16 @@ def shapes_for(focus: URIRef, data: Graph) -> set[URIRef]:
     return {shape for _, shape, f in results(data) if f == focus}
 
 
+def messages_for(focus: URIRef, data: Graph) -> set[str]:
+    """The result messages for one focus node, to tell apart constraints on one shape."""
+    _, report, _ = validate(data, shacl_graph=SHAPES, advanced=True, inference="none", allow_warnings=True)
+    return {
+        str(report.value(result, SH.resultMessage))
+        for result in report.subjects(RDF.type, SH.ValidationResult)
+        if report.value(result, SH.focusNode) == focus
+    }
+
+
 # ---- AIR21-01: parse and imports --------------------------------------------------------------
 
 
@@ -193,6 +203,13 @@ def test_non_top_concept_without_a_primary_parent_is_rejected():
     data.remove((PRLV["N.MET.TC.HUR"], PRL.broaderGeneric, None))
     data.remove((PRLV["N.MET.TC.HUR"], SKOS.broader, None))
     assert PRIMARY_PARENT in shapes_for(PRLV["N.MET.TC.HUR"], data)
+
+
+def test_extra_broader_without_a_primary_parent_needs_an_editorial_note():
+    # zero primary parents and one skos:broader: the editorial-note count must still run
+    data = _fixture()
+    data.remove((PRLV["N.MET.TC.HUR"], PRL.broaderGeneric, None))
+    assert any("editorialNote" in message for message in messages_for(PRLV["N.MET.TC.HUR"], data))
 
 
 # ---- AIR21-08: materialised broader -------------------------------------------------------------

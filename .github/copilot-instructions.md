@@ -184,8 +184,12 @@ Try not to explain your design decisions in multiple places. Avoid explaining wh
 These rules come from defects found at verification. Follow them in every `sh:sparql` constraint.
 
 - **Declare prefixes inside the query**, with `PREFIX` lines at the top of `sh:select`, as `ontology/eligibility/shapes/constraints.ttl` does. Do not use `sh:prefixes` pointing at a namespace IRI: it needs `sh:declare` triples, and pySHACL silently falls back to the file's `@prefix` lines where other SHACL engines fail.
-- **Count with `OPTIONAL` and `HAVING` at the top level**, never with a grouped sub-query. A sub-query grouped by `$this` returns no row for a subject with zero matches, so a filter on its count never runs and "exactly one" passes when there are none. Write `OPTIONAL { … ?x … } } GROUP BY $this HAVING (COUNT(DISTINCT ?x) != 1)`.
-- **Test every cardinality rule at zero, not only at too many.** A negative case with two values does not catch a query that ignores subjects with none.
+- **Make sure a subject with zero matches still produces a row.** A pattern that must match before it is counted returns no row for a subject with none, so a check on the count never runs and "exactly one" passes when there are none. Put the counted pattern in `OPTIONAL`, so the count is 0.
+- **Choose the counting form by the number of counts.**
+  - One count: a flat query, `OPTIONAL { … ?x … }` then `GROUP BY $this HAVING (COUNT(DISTINCT ?x) != 1)`.
+  - Two or more independent counts, or high cardinality: one grouped sub-query per count, so the counts do not multiply each other and the store can plan them separately. Each sub-query anchors the subject and makes its counted pattern optional, for example `{ SELECT $this (COUNT(DISTINCT ?x) AS ?n) WHERE { $this a ex:C . OPTIONAL { $this ex:p ?x } } GROUP BY $this }`. A sub-query without the anchor drops zero-count subjects from the join.
+  - Several flat `OPTIONAL`s in one group multiply rows. `COUNT(DISTINCT …)` still counts correctly over them, but plain `COUNT` and `SUM` do not.
+- **Test every cardinality rule at zero, not only at too many.** A negative case with two values does not catch a query that drops subjects with none.
 
 ### Thinking / Reasoning for Coding
 
