@@ -19,9 +19,19 @@ Three rules follow:
   gives for creating, switching, fetching, pulling, pushing, bundling, rebasing or merging
   branches (§3, §6). They may run any other local git command their normal workflow needs, such
   as `git status`, `git diff`, `git log` or committing on the branch the human has checked out.
-  When a step needs one of the human's commands, the agent stops and says so.
+  When a step needs one of the human's commands, the agent stops and says so. The one exception:
+  machine R's agent may run them when the human explicitly asks it to. Machine S's agent never
+  does.
 - **Branches are created, pushed and merged on R only.** S pulls, works and hands its commits
   back as a bundle (§3).
+- **Brief before branch.** A slice's branch is created only once its brief is written: an "in
+  detail" section in its phase plan and a Validation Pack skeleton, both on `main`. Rolling-wave
+  slices are outlines until R drafts them. Whenever machine R's agent reports what comes next, it
+  ends with exactly one of these, on its own line:
+  - `🔴 PLAN FIRST: AIR-x.y needs its brief drafted on main before you branch.` It lists every
+    such slice, and R drafts them before anything else.
+  - `🟢 READY TO BRANCH: create and push air/<slice>, …` It names every branch whose brief is
+    on `main` and whose "Branch after" slices have merged.
 - **Every S branch is verified on R before it merges.** S cannot regenerate catalogs or run the
   versioning check, so it bumps `owl:versionIRI` literals and `.version` files by hand under
   ADR-A86, and R checks them.
@@ -105,7 +115,8 @@ Several S branches can travel in one trip: bundle each one, carry them together.
 ## 4. Rounds
 
 A round is one working session on each machine, ending with R verifying and merging what both
-produced. R and S work at the same time within a round. The plan assumes every verification
+produced. A round's last step is R's 🔴 or 🟢 announcement (§1) for the branches
+in its last column. R and S work at the same time within a round. The plan assumes every verification
 passes. A failed one moves that branch's merge to the next round.
 
 | Round | R builds (Claude) | S builds (Copilot Business) | R verifies, then merges in this order | R then creates and pushes |
@@ -169,8 +180,10 @@ For each branch, in the order of the round's merge column:
 
 1. **Rebase (human).** `git rebase main` on the branch, then `git push --force-with-lease`. The
    agent may help resolve conflicting files, and the human continues the rebase.
-2. **Regenerate catalogs (agent):** `mise run build:ontology-catalog`. Commit the result on the
-   branch.
+2. **Regenerate catalogs and release rows (agent):** `mise run build:ontology-catalog`, and after
+   any version bump `mise run build:ontology-releases`, which adds a row to
+   `docs/architecture/ontology-releases.md` for each new version and lists the tags to create.
+   Commit the result on the branch.
 3. **Re-bump versions if needed (agent).** If a merge since the branch was created bumped a document
    this branch also changes, take `main`'s version, bump again under ADR-A86, and re-pin the
    importers already on `main`.
@@ -185,7 +198,7 @@ For each branch, in the order of the round's merge column:
    section, a merge log row is added, and at a round's last merge the Round section and the
    epic's `INDEX.md` entry are updated.
 8. **Merge (human).** `git switch main && git merge --ff-only air/<slice>`, then `git push`.
-   Delete the branch.
+   Create and push the release tags step 2 listed. Delete the branch.
 
 ## 7. Critical path
 

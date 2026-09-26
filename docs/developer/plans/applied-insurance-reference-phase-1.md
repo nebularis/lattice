@@ -27,19 +27,53 @@ D2).
 
 ### AIR-1.1: Drop the legacy contract module, create the layout
 
-**Invariant:** each applied insurance module has its own spec, shapes and `.version`, the catalog
-and versioning checks cover it, and no known defect remains in applied insurance.
+**Machine:** S (Copilot Business). **Branch:** `air/1.1-layout`. **Validation Pack:**
+[applied-insurance-reference-1.1](../validation/applied-insurance-reference-1.1.md), whose Handoff
+section S fills in.
 
-1. `git rm` the legacy spec, vocab, shapes and `.version` under `ontology/applied/insurance/`.
-2. Remove its `KNOWN_DEFECTS` entry from `tools/ontology_catalog.py`, and regenerate catalogs.
-3. Write `applied/README.md` (domains, and how common elements are shared, per A-98) and the
-   insurance domain README.
+**Invariant:** the legacy module and its known defect are gone, no ontology or tool file refers to
+it, and the applied layer's READMEs describe the layout of ADR-A98.
+
+**Remove** (`git rm`):
+
+| Path under `ontology/applied/insurance/` | |
+|---|---|
+| `spec/structure/contract.ttl`, `spec/structure/README.md`, `spec/structure/catalog-v001.xml` | the legacy spec |
+| `vocab/structure-vocab.ttl` | its vocabulary |
+| `shapes/structural.ttl`, `shapes/constraints.ttl`, `shapes/.version` | its shapes |
+
+**Edit:**
+
+1. `tools/ontology_catalog.py`: delete the `KNOWN_DEFECTS` entry for
+   `ontology/applied/insurance/spec/structure/contract.ttl`. Nothing else in that file changes.
+2. `ontology/applied/README.md`: rewrite it. Cover the domains and the cross-domain modules, the
+   three levels of sharing (ADR-A98 decision 1), the one-way dependency direction (decision 5 as
+   amended), namespaces (decision 6), per-module versioning (ADR-A86), and a module table:
+   `capacity/` (cross-domain, present), `classification/` (cross-domain, AIR-1.2), `insurance/`
+   (domain, see its `domain-README.md`).
+3. `ontology/applied/insurance/domain-README.md`: new. The insurance domain, its modules with
+   their state and slice (`common/` AIR-1.2, `peril/` Phase 2, `exposure/` Phase 4, `submission/`
+   AIR-6.1, `claims/` and `contract/` deferred by epic D2), the dependency order, the prefixes of
+   ADR-A98 decision 6, and links to the epic and the sketches. One sentence records that the
+   legacy contract module was dropped (epic D1) and remains available at its release tags.
+4. `docs/architecture/ontology-architecture.md` §3: add a row for the applied insurance domain,
+   stating the legacy module is dropped and the modules are planned under the epic.
+5. `docs/architecture/ontology-versioning-policy.md`: the "Still open" paragraph on the
+   `insurance/` namespace family is answered by ADR-A98 decision 6 (deliberate). Replace it with
+   one sentence saying so. Leave the table rows above it, which are history.
+
+**Leave unchanged:** `docs/architecture/ontology-releases.md` (released history), every ADR, and
+other units' plans, status records and validation packs.
+
+**On R at verification:** `mise run build:ontology-catalog` (regenerates the root catalog without
+the legacy entries).
 
 | ID | Given / When / Then | Level | +/- |
 |---|---|---|---|
-| AIR11-01 | the tree / `check:ontology-catalog` / passes, with no applied insurance known defect | L1 | + |
-| AIR11-02 | the tree / `check:ontology-versioning` / passes | L1 | + |
-| AIR11-03 | the repository / search for the legacy namespaces `…/ontology/nsd/` and `…/insurance/contract` / no remaining reference outside history | L1 | − |
+| AIR11-01 | the tree / `mise run check:ontology-catalog` / passes, and `KNOWN_DEFECTS` has no applied insurance entry | L1 | + |
+| AIR11-02 | the tree / `mise run check:ontology-versioning` / passes | L1 | + |
+| AIR11-03 | `ontology/` and `tools/` / search for `ontology/nsd`, `neuro-semantic/insurance/contract` and `structure-vocab` / no match | L1 | − |
+| AIR11-04 | `ontology/applied/README.md` and `insurance/domain-README.md` / read against ADR-A98 / every module, level and prefix agrees | L0 | + |
 
 ### AIR-1.2: Shared contracts, `insurance/common/` and `applied/classification/`
 

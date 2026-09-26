@@ -46,6 +46,76 @@ Tests at L1 and L2:
 Order and lanes: [machines, branches and merges](applied-insurance-reference-lanes.md). Substrate item
 S2 also changes Eligibility, and rebases onto AIR-3.2.
 
+## AIR-3.1 in detail
+
+**Machine:** R (Claude Code). **Branch:** `air/3.1-flat-hierarchy`. **Validation Pack:**
+[applied-insurance-reference-3.1](../validation/applied-insurance-reference-3.1.md).
+**Decision:** ADR-A100, with its implementation note.
+
+**Invariant:** under `elg:HierarchicalMatch`, a resolved scheme in which no member has a
+`skos:broader` link to another member decides only the concepts a condition names. Every other
+member is Undetermined with `exe:NoHierarchy`, in every backend, and hierarchical schemes
+evaluate exactly as before.
+
+Authored in ADR-A-C2 order: the two example fixtures first, then the law, then the code.
+
+1. **Examples** in `ontology/eligibility/examples/`, no `owl:Ontology`, no insurance terms:
+   - `flat-scheme-lending.ttl`: a contract whose unscoped `voc:boundScheme` is a hierarchical
+     industry classification (manufacturing above food processing and textiles, plus retail),
+     and a `voc:SchemeBinding` scoped to one lender that binds the lender's flat sector list
+     (the same concepts, no `skos:broader`). One `HierarchicalMatch` condition requires
+     manufacturing and excludes textiles. Recorded decisions: under the classification, food
+     processing is Permitted. Under the lender's list, manufacturing is Permitted, textiles Denied,
+     food processing and retail Undetermined with `exe:NoHierarchy`.
+   - `flat-scheme-employment.ttl`: an exclusion-only condition ("every role except contractors")
+     over a flat job-title list. Contractors are Denied, and every other title is Undetermined,
+     not Permitted, since L12's default inclusion needs the hierarchy to know a title is not a
+     kind of contractor.
+2. **The law** `elg:L14` in `ontology/eligibility/vocab/eligibility-vocab.ttl` and its README
+   mirror (§4 law list and the decision table, next to L11), with `elg:lawRegister
+   elg:SemanticLaw`: "Hierarchy precondition. Under hierarchical match, when no member of the
+   resolved scheme has a broader concept within the scheme, a candidate that is a member and is
+   neither a required nor an excluded concept leaves the condition undetermined." The README's
+   "`HierarchicalMatch` is valid when…" sentence cites L14. Eligibility vocab 0.6.0 → 0.7.0
+   (MINOR, a new individual).
+3. **The diagnostic** `exe:NoHierarchy` in `ontology/mork/spec/Executable.ttl`, beside
+   `exe:AboveExclusion`, citing `elg:L14`. Executable 0.5.0 → 0.6.0 (MINOR). No ontology imports
+   either document, so the cascade is the catalog and the release register only.
+4. **The IR** (`tools/mork_compilers/src/mork_compilers/eligibility_ir.py`): `_expand` takes
+   whether the resolved ordering has any `skos:broader` link. When the match is hierarchical and it
+   has none, a member is Denied if it is an excluded concept, Permitted if it is a required
+   concept, and Undetermined otherwise. `ConceptPlan` gains a derived `no_hierarchy` property
+   the backends read.
+5. **SPARQL** (`sparql_backend.concept_select`): a plan with `no_hierarchy` uses the equality
+   decision with Undetermined as its last branch, and reports `exe:NoHierarchy` as the diagnostic.
+   Scheme membership still wraps it, so a non-member stays `exe:OutsideScheme`.
+6. **SHACL** (`shacl_backend`): reads the expansion already. Its Undetermined message names
+   `exe:NoHierarchy` for such a plan.
+7. **SWRL**: no change. `concept_facts` reads the expansion, so Undetermined members derive nothing.
+8. **OWL** (`owl_backend`): refuse a plan with `no_hierarchy` with an `IRCompileError` citing
+   ADR-A100, since a design-time class cannot express Undetermined.
+9. **Tests**: new cases in `test_hierarchical_conditions.py`, and the two examples added to
+   `tools/test_eligibility_examples.py`'s `EXAMPLES`. No existing test changes.
+10. **Docs**: `tools/mork_compilers/README.md` (L14 in each backend), and the Eligibility row of
+    `docs/architecture/ontology-architecture.md` §3. Then `mise run build:ontology-catalog` and
+    `mise run build:ontology-releases`.
+
+| ID | Given / When / Then | Level | +/- |
+|---|---|---|---|
+| AIR31-01 | the lending example under the classification / expanded / food processing Permitted | L1 | + |
+| AIR31-02 | the lending example under the lender's list / expanded / manufacturing Permitted, textiles Denied | L1 | + |
+| AIR31-03 | the same / expanded / food processing and retail Undetermined, plan has `no_hierarchy` | L1 | + |
+| AIR31-04 | the employment example / expanded / contractors Denied, every other title Undetermined | L1 | − |
+| AIR31-05 | a candidate outside the lender's list / SPARQL / Undetermined with `exe:OutsideScheme` | L1 | − |
+| AIR31-06 | the lender's list / SPARQL / every member's decision equals the expansion, Undetermined rows carry `exe:NoHierarchy` | L2 | + |
+| AIR31-07 | the same / SHACL / admitted and undetermined sets equal the expansion's | L2 | + |
+| AIR31-08 | the same / SWRL / derives Permitted for manufacturing and Denied for textiles only | L1 | + |
+| AIR31-09 | a `no_hierarchy` plan / OWL backend / `IRCompileError` | L1 | − |
+| AIR31-10 | both examples / Eligibility shapes / no result | L1 | + |
+| AIR31-11 | the existing hierarchical tests / unchanged / pass (non-weakening) | L1 | + |
+
+Adversarial probe for the gate: remove the flat branch from `_expand` and AIR31-03 fails.
+
 ## Documentation deltas
 
 | Document | Change | Slice |

@@ -75,3 +75,12 @@ needs to know which structure a scheme lacks.
   their own: a flat list's codes carry no such values, and missing evidence is already
   Undetermined (`exe:MissingCandidate`).
 - No applied `scheme-profile/` module exists (ADR-A98 addendum).
+
+## Implementation note (2026-09-26, AIR-3.1 planning)
+
+Two consequences above are corrected here. They change no decision:
+
+- The law is declared as `elg:L14` in `eligibility-vocab.ttl`, as L10 to L13 are, so Eligibility's
+  vocabulary document does change: 0.6.0 → 0.7.0.
+- Adding a named individual is MINOR under the versioning policy, so Executable takes 0.5.0 →
+  0.6.0, not a PATCH bump.

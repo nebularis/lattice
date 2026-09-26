@@ -129,8 +129,10 @@ Open CBAA resolves it through its catalog by release tag, as it does LATTICE's l
 | `shapes/` | vocabulary well-formedness (§10), versioned by `.version` | |
 
 `…` is `https://www.nebularis.org/neuro-semantic`. Namespace
-`https://www.nebularis.org/neuro-semantic/insurance/peril#`, prefix `prl:`. Concepts live in
-the same namespace. Each scheme carries `skos:editorialNote` stating it is a reference
+`https://www.nebularis.org/neuro-semantic/insurance/peril#`, prefix `prl:`, for properties and
+datatypes. Schemes and concepts live in the vocabulary's own namespace,
+`https://www.nebularis.org/neuro-semantic/insurance/peril/vocab#`, prefix `prl-voc:` (ADR-A98
+decision 6). Examples in this sketch write concepts as `prl:`: read them as `prl-voc:`. Each scheme carries `skos:editorialNote` stating it is a reference
 edition, and `fnd:hasGovernanceState` Active.
 
 Every concept carries:

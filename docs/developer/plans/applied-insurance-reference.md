@@ -49,7 +49,7 @@ Each is stated once in the sketch cited, and every phase plan inherits them.
 | E5 | Names: "characteristic" for peril axes, "term parameter" and "term relation" for contract terms. "Facet" is not used | term-parameters §2 |
 | E6 | Applied content is not substrate. Every substrate change it motivates follows the clean-room procedure (ADR-A-C2) and the restatement boundary (ADR-A-C1) | whitepaper §7.2 |
 | E7 | Every ontology change is classified under ADR-A86 and runs the import-pinning cascade | ontology-versioning-policy |
-| E8 | Agents must not run the git commands this plan uses for branching and merging (creating, switching, fetching, pulling, pushing, bundling, rebasing, merging). The human runs them. Agents may run any other local git command their normal workflow needs | lanes §1 |
+| E8 | Agents do not run the git commands this plan uses for branching and merging (creating, switching, fetching, pulling, pushing, bundling, rebasing, merging). The human runs them. The one exception is machine R's agent, when the human explicitly asks it to. Agents may run any other local git command their normal workflow needs | lanes §1 |
 
 ## 3. Phase map
 

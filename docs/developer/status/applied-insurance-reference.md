@@ -13,19 +13,24 @@ Validation Pack, never here.
 
 ## Round
 
-**Current round:** 0 (machine R advances it when a round's merges are done)
-**Branches ready to work on:** `air/3.1-flat-hierarchy` (R), `air/1.1-layout` (S), `air/2.1-peril-spec` (S),
-once the human has created and pushed them (round 0)
+**Current round:** 1 (machine R advances it when a round's merges are done)
+**Branches ready to work on:** `air/3.1-flat-hierarchy` (R), `air/1.1-layout` (S), `air/2.1-peril-spec` (S).
+Created and pushed by the human. Their detailed briefs (phase plans and Validation Pack
+skeletons) were written on `main` and are merged into each branch before work starts.
+**Briefs ready on `main`:** AIR-1.1, AIR-2.1, AIR-3.1.
+**Briefs to draft before their branches (lanes §1):** AIR-1.2 and AIR-3.2, the next branches
+after round 1. Every later slice is still an outline.
 
 ## Machine R
 
-**Position:** round 0. Waiting for the human to create the round 0 branches, then building AIR-3.1.
+**Position:** round 1. AIR-1.1, AIR-2.1 and AIR-3.1 detailed to implementation level on `main`.
+AIR-3.1 starts when the human switches R to autonomous mode on `air/3.1-flat-hierarchy`.
 **Last updated:** 2026-09-26
 **Blockers:** none
 
 | Seq | Slice | Branch | State | Note |
 |---|---|---|---|---|
-| 2 | AIR-3.1 | `air/3.1-flat-hierarchy` | waiting for branch | |
+| 2 | AIR-3.1 | `air/3.1-flat-hierarchy` | waiting for branch | brief: Phase 3 plan, AIR-3.1 in detail |
 | 8 | AIR-3.2 | `air/3.2-set-readings` | waiting | |
 | 13 | AIR-3.3 | `air/3.3-readings-swrl-owl` | waiting | |
 | 21 | AIR-3.5 | `air/3.5-m2-check` | waiting | |
