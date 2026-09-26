@@ -23,8 +23,8 @@ created after round 2. Every later slice is still an outline.
 
 ## Machine R
 
-**Position:** round 1. AIR-3.1 signed off and recorded as merged. Next: verify S's AIR-1.1, then
-AIR-2.1. AIR-1.2 and AIR-3.2 need briefs on `main` before their branches.
+**Position:** round 1. AIR-3.1 and AIR-1.1 merged. Verifying S's AIR-2.1 (bundle taken onto
+`air/2.1-peril-spec`, 13 peril tests pass before rebase). Next: build AIR-3.2.
 **Last updated:** 2026-09-26
 **Blockers:** none
 
@@ -36,8 +36,8 @@ AIR-2.1. AIR-1.2 and AIR-3.2 need briefs on `main` before their branches.
 | 21 | AIR-3.5 | `air/3.5-m2-check` | waiting | |
 | 23+ | substrate ADRs, S1, S2, S4, S5, S7 | `air/s<n>-<slug>` | waiting | ADRs drafted in round 4 |
 
-Verifying queue (S branches handed over and not yet merged): `air/1.1-layout`, verified and
-gated after its rebase, awaiting sign-off. `air/2.1-peril-spec` expected from S.
+Verifying queue (S branches handed over and not yet merged): `air/2.1-peril-spec`, awaiting its
+rebase onto `main`.
 
 ## Machine S
 
@@ -49,7 +49,7 @@ bundle, verify and merge. Blocked on the human switching this checkout to `air/2
 
 | Seq | Slice | Branch | State | Note |
 |---|---|---|---|---|
-| 3 | AIR-1.1 | `air/1.1-layout` | verifying | set by R: rebased, checks and gate probe pass. Awaiting `LOG.md` sign-off |
+| 3 | AIR-1.1 | `air/1.1-layout` | merged | set by R. No version bumps, no tags |
 | 4 | AIR-1.2 | `air/1.2-shared-contracts` | waiting | |
 | 5 | AIR-2.1 | `air/2.1-peril-spec` | waiting for branch | branch exists, brief ready, needs the checkout switched here next |
 | 6 | AIR-2.2 | `air/2.2-characteristics` | waiting | |
@@ -74,13 +74,14 @@ bundle, verify and merge. Blocked on the human switching this checkout to `air/2
 |---|---|---|---|---|
 | 1 | AIR-0.1 | — | `3377a71` | signed off |
 | 2 | AIR-3.1 | 1 | fast-forward to the head of `air/3.1-flat-hierarchy` | signed off |
+| 3 | AIR-1.1 | 1 | fast-forward to `651fbfa` | signed off |
 
 ## Phases (machine R only)
 
 | Phase | Plan | State |
 |---|---|---|
 | 0 Decisions | [plan](../plans/applied-insurance-reference-phase-0.md) | ✅ complete |
-| 1 Module split | [plan](../plans/applied-insurance-reference-phase-1.md) | ⏳ |
+| 1 Module split | [plan](../plans/applied-insurance-reference-phase-1.md) | 🚧 AIR-1.1 merged |
 | 2 Peril vocabulary | [plan](../plans/applied-insurance-reference-phase-2.md) | ⏳ |
 | 3 Readings and crosswalks | [plan](../plans/applied-insurance-reference-phase-3.md) | 🚧 AIR-3.1 merged |
 | 4 Exposure | [plan](../plans/applied-insurance-reference-phase-4.md) | ⏳ |
