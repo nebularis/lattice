@@ -29,6 +29,7 @@ REACHABLE = ELG.ReachableExclusionShape
 EXAMPLES = [
     "hierarchical-match", "condition-taxonomy", "interval-containment", "evidence-binding",
     "flat-scheme-lending", "flat-scheme-employment",  # AIR31-10
+    "set-reading-admissions", "set-reading-trial",  # AIR32-12
 ]
 
 PREFIXES = """
@@ -170,3 +171,31 @@ def test_readme_mirrors_shape_file(shape: URIRef) -> None:
     # AOR2-10
     constraints = Graph().parse(LAYER / "shapes" / "constraints.ttl")
     assert isomorphic(_readme_shapes().cbd(shape), constraints.cbd(shape))
+
+
+def test_two_readings_and_a_double_negation_are_rejected() -> None:
+    # AIR32-13
+    data = Graph().parse(
+        data=PREFIXES
+        + """
+        ex:c a elg:Condition ;
+            elg:matchStrategy elg:SetMembership ;
+            elg:compatibilityOperation elg:AllRequired ;
+            elg:wildcardSemantics elg:NoWildcard ;
+            elg:requiredConcept ex:a ;
+            elg:negated true , false .
+        ex:b a elg:EvidenceBinding ;
+            elg:bindsCondition ex:c ;
+            elg:subjectClass ex:Thing ;
+            elg:valueReading elg:SomeValue , elg:EveryValue ;
+            elg:evidenceStep [ a elg:EvidenceStep ; elg:stepIndex 0 ; elg:stepProperty ex:p ; elg:stepDirection elg:Forward ] .
+        """,
+        format="turtle",
+    )
+    def violated(graph: Graph) -> set:
+        return {focus for severity, _, focus in results(graph) if severity == SH.Violation}
+
+    assert {EX.c, EX.b} <= violated(data)
+    data.remove((EX.c, ELG.negated, None))
+    data.remove((EX.b, ELG.valueReading, ELG.EveryValue))
+    assert not {EX.c, EX.b} & violated(data)  # one reading and no negation conform

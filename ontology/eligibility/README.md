@@ -54,7 +54,7 @@ Conditions matching by `ExactMatch`, `SetMembership`, or `HierarchicalMatch` sta
 | matches a required concept, or the condition declares exclusions only and the candidate is a member of the bound scheme | `Permitted` | L12 for the second case |
 | otherwise | `Denied` | |
 
-**Evidence bindings.** A condition reads its candidate from an `elg:Question` unless an `elg:EvidenceBinding` binds it. A binding names the class of subjects the condition evaluates (`elg:subjectClass`) and an ordered path of `elg:EvidenceStep`s from each subject to its candidate, over the applied ontology's own properties (ADR-A91). The path ends at a `skos:Concept` for a concept condition. For an interval condition it ends at a `qnt:Quantity` on the condition's value space, or at a literal where the binding reads on that space (`elg:readOnSpace`). A subject with no value at the end of the path, or several, is `Undetermined`, as is one whose value is on another space. A profile evaluates either questions or one class of bound subjects. A binding may claim that each step of its path yields at most one value (`elg:singleValued`). The design-time OWL backend compiles only claimed paths (ADR-A90).
+**Evidence bindings.** A condition reads its candidate from an `elg:Question` unless an `elg:EvidenceBinding` binds it. A binding names the class of subjects the condition evaluates (`elg:subjectClass`) and an ordered path of `elg:EvidenceStep`s from each subject to its candidate, over the applied ontology's own properties (ADR-A91). The path ends at a `skos:Concept` for a concept condition. For an interval condition it ends at a `qnt:Quantity` on the condition's value space, or at a literal where the binding reads on that space (`elg:readOnSpace`). A subject with no value at the end of the path, or several, is `Undetermined`, as is one whose value is on another space, unless the binding declares how several values are read (`elg:valueReading`, ADR-A103). Under `elg:SomeValue` or `elg:EveryValue` each value is decided as a single candidate would be, and the outcomes are combined by strong Kleene logic (L15). A subject with no value stays `Undetermined`. A condition may be negated (`elg:negated true`): it is evaluated as it stands, including its reading, and Permitted and Denied are then swapped, while `Undetermined` stays `Undetermined` (L16). A profile evaluates either questions or one class of bound subjects. A binding may claim that each step of its path yields at most one value (`elg:singleValued`). The design-time OWL backend compiles only claimed paths (ADR-A90).
 
 ## 5. Core Model
 
@@ -63,7 +63,7 @@ Conditions matching by `ExactMatch`, `SetMembership`, or `HierarchicalMatch` sta
 
 <https://www.nebularis.org/neuro-semantic/eligibility>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.6.0> ;
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.7.0> ;
 	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.3.0> ,
 				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.3.0> ,
 				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.5.0> ,
@@ -200,8 +200,19 @@ elg:singleValued a owl:DatatypeProperty, owl:FunctionalProperty ;
 	rdfs:domain elg:EvidenceBinding ; rdfs:range xsd:boolean ;
 	rdfs:comment "The author's claim that each step of the binding's path yields at most one value. The design-time OWL backend compiles only claimed paths, and checks the claim on data with a generated shape (ADR-A90 addendum, option B)." .
 
+elg:ValueReading a owl:Class ;
+	rdfs:comment "How a bound condition reads the values its binding's path reaches: one value, some value, or every value (ADR-A103, L15)." .
+
+elg:valueReading a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain elg:EvidenceBinding ; rdfs:range elg:ValueReading ;
+	rdfs:comment "The binding's value reading. A binding without one reads a single value (elg:SingleValue)." .
+
+elg:negated a owl:DatatypeProperty, owl:FunctionalProperty ;
+	rdfs:domain elg:Condition ; rdfs:range xsd:boolean ;
+	rdfs:comment "When true, the condition is evaluated as it stands, including its value reading, and then Permitted and Denied are swapped. Undetermined stays Undetermined (ADR-A103, L16)." .
+
 [] a owl:AllDisjointClasses ;
-	owl:members ( elg:Condition elg:Question elg:EligibilityDecision elg:MatchStrategy elg:CompatibilityOperation elg:WildcardSemantics elg:Decision elg:OperationalProfile elg:Law elg:EvidenceBinding elg:EvidenceStep elg:StepDirection ) .
+	owl:members ( elg:Condition elg:Question elg:EligibilityDecision elg:MatchStrategy elg:CompatibilityOperation elg:WildcardSemantics elg:Decision elg:OperationalProfile elg:Law elg:EvidenceBinding elg:EvidenceStep elg:StepDirection elg:ValueReading ) .
 ```
 
 ## 6. Mechanism Vocabulary
@@ -220,6 +231,13 @@ elg:Wildcard a elg:MatchStrategy .
 elg:AllRequired a elg:CompatibilityOperation .
 elg:AnySufficient a elg:CompatibilityOperation .
 elg:DimensionConsistent a elg:CompatibilityOperation .
+
+elg:SingleValue a elg:ValueReading ;
+	rdfs:comment "The path reaches one value. None, or several, leaves the condition undetermined. The default reading." .
+elg:SomeValue a elg:ValueReading ;
+	rdfs:comment "Permitted when any value is Permitted, Denied when every value is Denied, otherwise, or with no value, Undetermined (L15)." .
+elg:EveryValue a elg:ValueReading ;
+	rdfs:comment "Denied when any value is Denied, Permitted when every value is Permitted, otherwise, or with no value, Undetermined (L15)." .
 
 elg:NoWildcard a elg:WildcardSemantics .
 elg:SingleDimensionWildcard a elg:WildcardSemantics .
@@ -268,6 +286,12 @@ elg:L13 a elg:Law ;
 elg:L14 a elg:Law ;
 	elg:lawRegister elg:SemanticLaw ;
 	rdfs:comment "Hierarchy precondition. Under hierarchical match, when no member of the resolved scheme has a broader concept within that scheme, a candidate that is a member and is neither a required nor an excluded concept leaves the condition undetermined. The scheme cannot say whether the candidate falls under a required or an excluded concept. This takes precedence over default inclusion (L12)." .
+elg:L15 a elg:Law ;
+	elg:lawRegister elg:SemanticLaw ;
+	rdfs:comment "Set readings. A bound condition whose binding reads some or every value decides each value it reaches as a single candidate would be decided, then combines the outcomes by strong Kleene logic: under some value, Permitted if any is Permitted and Denied if all are Denied, under every value, Denied if any is Denied and Permitted if all are Permitted, and Undetermined otherwise or when there is no value." .
+elg:L16 a elg:Law ;
+	elg:lawRegister elg:SemanticLaw ;
+	rdfs:comment "Negation. A negated condition is evaluated as it stands, including its value reading, and its outcome is then swapped: Permitted becomes Denied and Denied becomes Permitted. Undetermined stays Undetermined, with its reason." .
 ```
 
 ## 7. Shapes
@@ -281,7 +305,8 @@ elg:ConditionShape a sh:NodeShape ;
 	sh:targetClass elg:Condition ;
 	sh:property [ sh:path elg:matchStrategy ; sh:minCount 1 ; sh:maxCount 1 ] ;
 	sh:property [ sh:path elg:compatibilityOperation ; sh:minCount 1 ; sh:maxCount 1 ] ;
-	sh:property [ sh:path elg:wildcardSemantics ; sh:minCount 1 ; sh:maxCount 1 ] .
+	sh:property [ sh:path elg:wildcardSemantics ; sh:minCount 1 ; sh:maxCount 1 ] ;
+	sh:property [ sh:path elg:negated ; sh:maxCount 1 ; sh:datatype xsd:boolean ] .
 
 elg:IntervalConditionShape a sh:NodeShape ;
 	sh:targetClass elg:IntervalCondition ;
@@ -342,7 +367,8 @@ elg:EvidenceBindingShape a sh:NodeShape ;
 	sh:property [ sh:path elg:bindsCondition ; sh:minCount 1 ; sh:maxCount 1 ] ;
 	sh:property [ sh:path elg:subjectClass ; sh:minCount 1 ; sh:maxCount 1 ] ;
 	sh:property [ sh:path elg:evidenceStep ; sh:minCount 1 ] ;
-	sh:property [ sh:path elg:singleValued ; sh:maxCount 1 ; sh:datatype xsd:boolean ] .
+	sh:property [ sh:path elg:singleValued ; sh:maxCount 1 ; sh:datatype xsd:boolean ] ;
+	sh:property [ sh:path elg:valueReading ; sh:maxCount 1 ; sh:in ( elg:SingleValue elg:SomeValue elg:EveryValue ) ] .
 
 elg:EvidenceStepShape a sh:NodeShape ;
 	sh:targetClass elg:EvidenceStep ;

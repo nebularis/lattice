@@ -92,6 +92,7 @@ class EvidencePath:
     steps: Tuple[Tuple[URIRef, bool], ...]
     space: Optional[URIRef] = None  # elg:readOnSpace, for a literal at the path's end
     single_valued: bool = False  # elg:singleValued, the claim the OWL backend needs
+    reading: URIRef = ELG.SingleValue  # elg:valueReading (ADR-A103, L15)
 
 
 @dataclass(frozen=True)
@@ -103,6 +104,7 @@ class IntervalPlan:
     required: Sequence[RequiredInterval]
     source_nodes: Sequence[URIRef]  # provenance: every declaration node read, condition first
     evidence: Optional[EvidencePath] = None
+    negated: bool = False  # elg:negated (ADR-A103, L16)
 
 
 @dataclass(frozen=True)
@@ -149,6 +151,7 @@ class ConceptPlan:
     scheme: Optional[SchemeResolution] = None
     expansion: Tuple[Tuple[URIRef, str], ...] = ()
     evidence: Optional[EvidencePath] = None
+    negated: bool = False  # elg:negated (ADR-A103, L16)
     hierarchy: Tuple[Tuple[URIRef, Tuple[URIRef, ...]], ...] = ()
 
     @property
@@ -243,7 +246,31 @@ def read_evidence(graph: Graph, condition: URIRef) -> Optional[EvidencePath]:
         steps=tuple((prop, inverse) for _, prop, inverse in steps),
         space=graph.value(binding, ELG.readOnSpace),
         single_valued=graph.value(binding, ELG.singleValued) == Literal(True),
+        reading=_reading(graph, binding),
     )
+
+
+READINGS = (ELG.SingleValue, ELG.SomeValue, ELG.EveryValue)
+
+
+def _reading(graph: Graph, binding: URIRef) -> URIRef:
+    reading = graph.value(binding, ELG.valueReading, default=ELG.SingleValue)
+    if reading not in READINGS:
+        raise IRCompileError(f"{binding} declares elg:valueReading {reading}, which is none of {READINGS}")
+    return reading
+
+
+def _negated(graph: Graph, condition: URIRef) -> bool:
+    return graph.value(condition, ELG.negated) == Literal(True)
+
+
+def has_readings(plan) -> bool:
+    """Whether a plan, or any condition of a profile plan, reads several values
+    or is negated (ADR-A103). The SWRL and OWL backends refuse such plans."""
+    if isinstance(plan, ProfilePlan):
+        return any(has_readings(condition) for condition in plan.conditions)
+    reading = plan.evidence.reading if plan.evidence is not None else ELG.SingleValue
+    return plan.negated or reading != ELG.SingleValue
 
 
 def compile_condition(graph: Graph, condition: URIRef) -> IntervalPlan:
@@ -309,7 +336,7 @@ def compile_condition(graph: Graph, condition: URIRef) -> IntervalPlan:
     deduplicated = tuple(dict.fromkeys(source_nodes))
     return IntervalPlan(
         condition=condition, value_space=value_space, required=tuple(required),
-        source_nodes=deduplicated, evidence=evidence,
+        source_nodes=deduplicated, evidence=evidence, negated=_negated(graph, condition),
     )
 
 
@@ -457,6 +484,7 @@ def compile_concept_condition(
         expansion=expansion,
         evidence=read_evidence(graph, condition),
         hierarchy=hierarchy,
+        negated=_negated(graph, condition),
     )
 
 

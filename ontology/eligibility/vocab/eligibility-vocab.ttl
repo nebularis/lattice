@@ -7,8 +7,8 @@
 
 <https://www.nebularis.org/neuro-semantic/eligibility-vocab>
 	a owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/eligibility-vocab/0.7.0> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.6.0> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/eligibility-vocab/0.8.0> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.7.0> .
 
 elg:ExactMatch a elg:MatchStrategy .
 elg:SetMembership a elg:MatchStrategy .
@@ -19,6 +19,13 @@ elg:Wildcard a elg:MatchStrategy .
 elg:AllRequired a elg:CompatibilityOperation .
 elg:AnySufficient a elg:CompatibilityOperation .
 elg:DimensionConsistent a elg:CompatibilityOperation .
+
+elg:SingleValue a elg:ValueReading ;
+	rdfs:comment "The path reaches one value. None, or several, leaves the condition undetermined. The default reading." .
+elg:SomeValue a elg:ValueReading ;
+	rdfs:comment "Permitted when any value is Permitted, Denied when every value is Denied, otherwise, or with no value, Undetermined (L15)." .
+elg:EveryValue a elg:ValueReading ;
+	rdfs:comment "Denied when any value is Denied, Permitted when every value is Permitted, otherwise, or with no value, Undetermined (L15)." .
 
 elg:NoWildcard a elg:WildcardSemantics .
 elg:SingleDimensionWildcard a elg:WildcardSemantics .
@@ -67,3 +74,9 @@ elg:L13 a elg:Law ;
 elg:L14 a elg:Law ;
 	elg:lawRegister elg:SemanticLaw ;
 	rdfs:comment "Hierarchy precondition. Under hierarchical match, when no member of the resolved scheme has a broader concept within that scheme, a candidate that is a member and is neither a required nor an excluded concept leaves the condition undetermined. The scheme cannot say whether the candidate falls under a required or an excluded concept. This takes precedence over default inclusion (L12)." .
+elg:L15 a elg:Law ;
+	elg:lawRegister elg:SemanticLaw ;
+	rdfs:comment "Set readings. A bound condition whose binding reads some or every value decides each value it reaches as a single candidate would be decided, then combines the outcomes by strong Kleene logic: under some value, Permitted if any is Permitted and Denied if all are Denied, under every value, Denied if any is Denied and Permitted if all are Permitted, and Undetermined otherwise or when there is no value." .
+elg:L16 a elg:Law ;
+	elg:lawRegister elg:SemanticLaw ;
+	rdfs:comment "Negation. A negated condition is evaluated as it stands, including its value reading, and its outcome is then swapped: Permitted becomes Denied and Denied becomes Permitted. Undetermined stays Undetermined, with its reason." .

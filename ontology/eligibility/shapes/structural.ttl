@@ -8,7 +8,8 @@ elg:ConditionShape a sh:NodeShape ;
 	sh:targetClass elg:Condition ;
 	sh:property [ sh:path elg:matchStrategy ; sh:minCount 1 ; sh:maxCount 1 ] ;
 	sh:property [ sh:path elg:compatibilityOperation ; sh:minCount 1 ; sh:maxCount 1 ] ;
-	sh:property [ sh:path elg:wildcardSemantics ; sh:minCount 1 ; sh:maxCount 1 ] .
+	sh:property [ sh:path elg:wildcardSemantics ; sh:minCount 1 ; sh:maxCount 1 ] ;
+	sh:property [ sh:path elg:negated ; sh:maxCount 1 ; sh:datatype xsd:boolean ] .
 
 elg:AdmissionProfileShape a sh:NodeShape ;
 	sh:targetClass elg:AdmissionProfile ;
@@ -26,7 +27,8 @@ elg:EvidenceBindingShape a sh:NodeShape ;
 	sh:property [ sh:path elg:bindsCondition ; sh:minCount 1 ; sh:maxCount 1 ] ;
 	sh:property [ sh:path elg:subjectClass ; sh:minCount 1 ; sh:maxCount 1 ] ;
 	sh:property [ sh:path elg:evidenceStep ; sh:minCount 1 ] ;
-	sh:property [ sh:path elg:singleValued ; sh:maxCount 1 ; sh:datatype xsd:boolean ] .
+	sh:property [ sh:path elg:singleValued ; sh:maxCount 1 ; sh:datatype xsd:boolean ] ;
+	sh:property [ sh:path elg:valueReading ; sh:maxCount 1 ; sh:in ( elg:SingleValue elg:SomeValue elg:EveryValue ) ] .
 
 elg:EvidenceStepShape a sh:NodeShape ;
 	sh:targetClass elg:EvidenceStep ;

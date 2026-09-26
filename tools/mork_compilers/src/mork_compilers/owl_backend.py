@@ -42,7 +42,7 @@ from rdflib.namespace import OWL, RDF, RDFS, SH, XSD
 
 from . import reasoning
 from .common import local_name, mint
-from .eligibility_ir import ConceptPlan, IntervalPlan, IRCompileError, ProfilePlan, RequiredInterval
+from .eligibility_ir import ConceptPlan, IntervalPlan, IRCompileError, ProfilePlan, RequiredInterval, has_readings
 from .namespaces import ELG, EXE, QNT
 from .sparql_backend import literal_readable
 
@@ -282,6 +282,12 @@ def _hierarchy(graph: Graph, concepts: Sequence[ConceptPlan], disjoint_siblings:
 def compile_classes(*plans: Plan, disjoint_siblings: bool = False) -> Graph:
     """One OWL module holding every plan's classes, for plans bound to
     subjects through claimed single-valued paths."""
+    for plan in plans:
+        if has_readings(plan):
+            raise IRCompileError(
+                f"{getattr(plan, 'profile', None) or plan.condition} reads several values or is negated (ADR-A103), "
+                f"which this backend does not compile until AIR-3.3"
+            )
     graph = Graph()
     first = plans[0]
     artefact = mint(first.profile if isinstance(first, ProfilePlan) else first.condition, "owl")

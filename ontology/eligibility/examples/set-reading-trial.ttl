@@ -1,0 +1,74 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# A clinical trial enrols a patient only when every recorded diagnosis is on
+# its permitted list, and refuses any patient with a diagnosis the protocol
+# excludes. Patients carry several diagnoses, so both bindings read the set
+# with elg:EveryValue (ADR-A103, elg:L15).
+#
+# Recorded decisions:
+#
+# | Patient | Diagnoses              | all-permitted | none-excluded |
+# |---------|------------------------|---------------|---------------|
+# | pat-1   | asthma, eczema         | Permitted     | Permitted     |
+# | pat-2   | asthma, diabetes       | Denied        | Denied        |
+# | pat-3   | hypertension           | Permitted     | Permitted     |
+#
+# none-excluded is an exclusion-only condition: under elg:EveryValue one
+# excluded diagnosis is enough to refuse (ADR-A103 decision 2).
+
+@prefix elg:  <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix voc:  <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix ex:   <https://example.org/lattice/eligibility/trial/> .
+
+# The applied ontology's own terms.
+ex:Patient a owl:Class .
+ex:hasDiagnosis a owl:ObjectProperty .
+
+ex:diagnoses a voc:ConceptScheme ;
+    fnd:hasIdentity ex:diagnoses-identity ;
+    fnd:hasGovernanceState fnd:Active .
+ex:diagnosis-contract a voc:SchemeContract ;
+    fnd:hasIdentity ex:diagnosis-contract-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    voc:constrainsProperty ex:hasDiagnosis ;
+    voc:boundScheme ex:diagnoses .
+ex:asthma a skos:Concept ; skos:inScheme ex:diagnoses .
+ex:eczema a skos:Concept ; skos:inScheme ex:diagnoses .
+ex:hypertension a skos:Concept ; skos:inScheme ex:diagnoses .
+ex:diabetes a skos:Concept ; skos:inScheme ex:diagnoses .
+
+# The conditions.
+ex:all-permitted a elg:Condition ;
+    elg:matchStrategy elg:SetMembership ;
+    elg:compatibilityOperation elg:AllRequired ;
+    elg:wildcardSemantics elg:NoWildcard ;
+    elg:constrainedByContract ex:diagnosis-contract ;
+    elg:requiredConcept ex:asthma , ex:eczema , ex:hypertension .
+
+ex:none-excluded a elg:Condition ;
+    elg:matchStrategy elg:SetMembership ;
+    elg:compatibilityOperation elg:AllRequired ;
+    elg:wildcardSemantics elg:NoWildcard ;
+    elg:constrainedByContract ex:diagnosis-contract ;
+    elg:excludedConcept ex:diabetes .
+
+# The bindings.
+ex:permitted-binding a elg:EvidenceBinding ;
+    elg:bindsCondition ex:all-permitted ;
+    elg:subjectClass ex:Patient ;
+    elg:valueReading elg:EveryValue ;
+    elg:evidenceStep [ a elg:EvidenceStep ; elg:stepIndex 0 ; elg:stepProperty ex:hasDiagnosis ; elg:stepDirection elg:Forward ] .
+
+ex:excluded-binding a elg:EvidenceBinding ;
+    elg:bindsCondition ex:none-excluded ;
+    elg:subjectClass ex:Patient ;
+    elg:valueReading elg:EveryValue ;
+    elg:evidenceStep [ a elg:EvidenceStep ; elg:stepIndex 0 ; elg:stepProperty ex:hasDiagnosis ; elg:stepDirection elg:Forward ] .
+
+# The applied ontology's data.
+ex:pat-1 a ex:Patient ; ex:hasDiagnosis ex:asthma , ex:eczema .
+ex:pat-2 a ex:Patient ; ex:hasDiagnosis ex:asthma , ex:diabetes .
+ex:pat-3 a ex:Patient ; ex:hasDiagnosis ex:hypertension .

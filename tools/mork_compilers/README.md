@@ -42,6 +42,18 @@ refuses such a plan. See `ontology/eligibility/examples/flat-scheme-lending.ttl`
 where one condition meets a hierarchical scheme or a flat list depending on
 the binding scope.
 
+A binding may read several values (`elg:valueReading`, `elg:L15`, ADR-A103). The
+IR carries the reading on the evidence path. SPARQL then decides each value as
+a single candidate, groups by subject, and combines by strong Kleene logic:
+`SomeValue` is Permitted when any value is, `EveryValue` Denied when any value
+is, and a subject with no value is `Undetermined` with `exe:MissingCandidate`.
+A negated condition (`elg:negated`, `elg:L16`) has its final decision swapped,
+Permitted for Denied, keeping `Undetermined` and its diagnostic. For such a
+condition SHACL emits two shapes wrapping its SPARQL decision, as it does for a
+profile. SWRL and OWL refuse it until AIR-3.3. See
+`ontology/eligibility/examples/set-reading-admissions.ttl` and
+`set-reading-trial.ttl`.
+
 SHACL and SWRL read the expansion. SHACL emits readiness, determinacy and
 admission shapes: the first to report a question gives `Undetermined`,
 `Undetermined` or `Denied`, and a question none reports is `Permitted`. SWRL

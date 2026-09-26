@@ -64,6 +64,7 @@ from .eligibility_ir import (
     IRCompileError,
     ProfilePlan,
     RequiredInterval,
+    has_readings,
 )
 from .sparql_backend import literal_readable
 from .namespaces import ELG, EXE, MORK, QNT, SWRL, SWRLB
@@ -394,6 +395,11 @@ def _compile_profile_rules(plan: ProfilePlan) -> Graph:
 
 def compile_rules(plan: Union[IntervalPlan, ConceptPlan, ProfilePlan]) -> Graph:
     """Emit the plan's ``swrl:Imp`` rules, and the mapping that generates them."""
+    if has_readings(plan):
+        raise IRCompileError(
+            f"{getattr(plan, 'profile', None) or plan.condition} reads several values or is negated (ADR-A103), "
+            f"which this backend does not compile until AIR-3.3"
+        )
     if isinstance(plan, ProfilePlan):
         return _compile_profile_rules(plan)
     if isinstance(plan, ConceptPlan):

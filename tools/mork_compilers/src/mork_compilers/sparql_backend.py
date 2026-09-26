@@ -100,9 +100,14 @@ def _subjects(evidence: EvidencePath, key: str) -> str:
 def interval_select(plan: IntervalPlan, carry: str = "", key: str = "?question") -> str:
     """The SELECT block, without prefixes, projecting ``key`` ?decision ?diagnostic.
     ``key`` is the question, or the subject when the condition is bound.
-    ``carry`` is prepended to every projection (see ``profile_select``)."""
+    ``carry`` is prepended to every projection (see ``profile_select``).
+    A set reading and negation are applied around the per-candidate decision (L15, L16)."""
+    return _finish(plan, carry, key, lambda per_value: _interval_core(plan, carry, key, per_value))
+
+
+def _interval_core(plan: IntervalPlan, carry: str, key: str, per_value: bool) -> str:
     if plan.evidence is not None:
-        return _bound_interval_select(plan, carry, key)
+        return _bound_interval_select(plan, carry, key, per_value)
     return (
         f"SELECT {carry}{key} ?decision ?diagnostic WHERE {{\n"
         f"  {key} elg:forCondition <{plan.condition}> .\n"
@@ -129,22 +134,23 @@ def literal_readable(plan: IntervalPlan) -> bool:
     return plan.evidence is not None and plan.evidence.space == plan.value_space
 
 
-def _bound_interval_select(plan: IntervalPlan, carry: str, key: str) -> str:
+def _bound_interval_select(plan: IntervalPlan, carry: str, key: str, per_value: bool = False) -> str:
     """A bound interval condition reads one value per subject: a qnt:Quantity on
     the condition's space, or a literal where the binding reads on that space.
     Any other value leaves the subject Undetermined (exe:ValueSpaceMismatch)."""
     literal = "isLiteral(?reading)" if literal_readable(plan) else "false"
+    value = " ?value" if per_value else ""
     return (
         f"SELECT {carry}{key} ?decision ?diagnostic WHERE {{\n"
         "  {\n"
-        f"    SELECT {carry}{key} (COUNT(DISTINCT ?value) AS ?candidates) (SAMPLE(?value) AS ?reading)"
+        f"    SELECT {carry}{key}{value} (COUNT(DISTINCT ?value) AS ?candidates) (SAMPLE(?value) AS ?reading)"
         " (SAMPLE(?number) AS ?quantity) (SAMPLE(?unitOfValue) AS ?candUnit) WHERE {\n"
         f"      {_subjects(plan.evidence, key)}\n"
         f"      OPTIONAL {{ {key} {evidence_path(plan.evidence)} ?value .\n"
         f"        OPTIONAL {{ ?value qnt:numericValue ?number ; qnt:onSpace <{plan.value_space}> }}\n"
         "        OPTIONAL { ?value qnt:inUnit ?unitOfValue } }\n"
         "    }\n"
-        f"    GROUP BY {carry}{key}\n"
+        f"    GROUP BY {carry}{key}{value}\n"
         "  }\n"
         f"  BIND(IF({literal}, ?reading, ?quantity) AS ?candLower)\n"
         "  BIND(?candLower AS ?candUpper)\n"
@@ -198,7 +204,14 @@ def render_concept_query(plan: ConceptPlan) -> str:
 def concept_select(plan: ConceptPlan, carry: str = "", key: str = "?question") -> str:
     """The SELECT block, without prefixes, projecting ``key`` ?decision ?diagnostic.
     ``key`` is the question, or the subject when the condition is bound.
-    ``carry`` is prepended to every projection and grouping (see ``profile_select``)."""
+    ``carry`` is prepended to every projection and grouping (see ``profile_select``).
+    A set reading and negation are applied around the per-candidate decision (L15, L16)."""
+    return _finish(plan, carry, key, lambda per_value: _concept_core(plan, carry, key, per_value))
+
+
+def _concept_core(plan: ConceptPlan, carry: str, key: str, per_value: bool) -> str:
+    """The per-candidate decision. With ``per_value``, one row per value the
+    binding's path reaches, each decided as a single candidate (L15)."""
     if plan.no_hierarchy:
         decision = _no_hierarchy_decision(plan)
     else:
@@ -223,16 +236,70 @@ def concept_select(plan: ConceptPlan, carry: str = "", key: str = "?question") -
             f"      {_subjects(plan.evidence, key)}\n"
             f"      OPTIONAL {{ {key} {evidence_path(plan.evidence)} ?offered }}\n"
         )
+    value = " ?offered" if per_value else ""
     return (
         f"SELECT {carry}{key} ?decision ?diagnostic WHERE {{\n"
         "  {\n"
-        f"    SELECT {carry}{key} (COUNT(DISTINCT ?offered) AS ?candidates) (SAMPLE(?offered) AS ?candidate) WHERE {{\n"
+        f"    SELECT {carry}{key}{value} (COUNT(DISTINCT ?offered) AS ?candidates) (SAMPLE(?offered) AS ?candidate) WHERE {{\n"
         f"{source}"
         "    }\n"
-        f"    GROUP BY {carry}{key}\n"
+        f"    GROUP BY {carry}{key}{value}\n"
         "  }\n"
         f'  BIND(IF(?candidates != 1, "Undetermined", {decision}) AS ?decision)\n'
         f"  BIND({diagnostic} AS ?diagnostic)\n"
+        "}\n"
+    )
+
+
+def _finish(plan: Union[IntervalPlan, ConceptPlan], carry: str, key: str, core) -> str:
+    """Apply the binding's set reading (L15), then negation (L16), to ``core``,
+    a function of ``per_value`` returning the per-candidate SELECT."""
+    reading = plan.evidence.reading if plan.evidence is not None else ELG.SingleValue
+    select = core(reading != ELG.SingleValue)
+    if reading != ELG.SingleValue:
+        select = _read_set(reading, carry, key, select)
+    if plan.negated:
+        select = _negate(carry, key, select)
+    return select
+
+
+def _read_set(reading: URIRef, carry: str, key: str, per_value: str) -> str:
+    """Strong Kleene over the per-value decisions of one subject (L15). A subject
+    with no value has one row, Undetermined with exe:MissingCandidate. An
+    Undetermined set reports the diagnostic of one of its Undetermined values."""
+    if reading == ELG.SomeValue:
+        decide = 'IF(?permitted > 0, "Permitted", IF(?undetermined > 0, "Undetermined", "Denied"))'
+    else:
+        decide = 'IF(?denied > 0, "Denied", IF(?undetermined > 0, "Undetermined", "Permitted"))'
+
+    def count(outcome: str) -> str:
+        return f'(SUM(IF(?decision = "{outcome}", 1, 0)) AS ?{outcome.lower()})'
+
+    return (
+        f"SELECT {carry}{key} ?decision ?diagnostic WHERE {{\n"
+        "  {\n"
+        f"    SELECT {carry}{key} {count('Permitted')} {count('Denied')} {count('Undetermined')}\n"
+        '      (MAX(IF(?decision = "Undetermined", COALESCE(STR(?diagnostic), ""), "")) AS ?reason) WHERE {\n'
+        "      {\n" + per_value + "      }\n"
+        "    }\n"
+        f"    GROUP BY {carry}{key}\n"
+        "  }\n"
+        f"  BIND({decide} AS ?decision)\n"
+        '  BIND(IF(?decision = "Undetermined", IRI(?reason), ?none) AS ?diagnostic)\n'
+        "}\n"
+    )
+
+
+def _negate(carry: str, key: str, select: str) -> str:
+    """Swap Permitted and Denied, keeping Undetermined and its diagnostic (L16)."""
+    return (
+        f"SELECT {carry}{key} ?decision ?diagnostic WHERE {{\n"
+        "  {\n"
+        f"    SELECT {carry}{key} (?decision AS ?raw) ?diagnostic WHERE {{\n"
+        "      {\n" + select + "      }\n"
+        "    }\n"
+        "  }\n"
+        '  BIND(IF(?raw = "Permitted", "Denied", IF(?raw = "Denied", "Permitted", ?raw)) AS ?decision)\n'
         "}\n"
     )
 

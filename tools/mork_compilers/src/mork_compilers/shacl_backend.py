@@ -26,6 +26,10 @@ candidate is not admitted. Read in that order, the first shape to report a
 question gives its outcome (Undetermined, Undetermined, Denied), and a
 question no shape reports is Permitted.
 
+A condition that reads several values or is negated (ADR-A103) gets two
+shapes wrapping its SPARQL decision instead, as profiles do: one reports an
+Undetermined subject, the other a Denied one.
+
 Profile plans get two shapes on ``elg:EligibilityDecision`` records of the
 profile, each wrapping the profile's SPARQL aggregation: one reports an
 Undetermined record, the other a Denied one. A record neither reports is
@@ -40,10 +44,10 @@ from rdflib import BNode, Graph, Literal, URIRef
 from rdflib.namespace import RDF
 
 from .common import mint
-from .eligibility_ir import PERMITTED, UNDETERMINED, ConceptPlan, IntervalPlan, ProfilePlan
+from .eligibility_ir import PERMITTED, UNDETERMINED, ConceptPlan, IntervalPlan, ProfilePlan, has_readings
 from .namespaces import ELG, EXE, MORK, SH
 from .sparql_backend import PREFIXES as QUERY_PREFIXES
-from .sparql_backend import applicable, containment_expression, evidence_path, literal_readable, profile_select
+from .sparql_backend import applicable, condition_select, containment_expression, evidence_path, literal_readable, profile_select
 
 PREFIXES = (
     "PREFIX elg: <https://www.nebularis.org/neuro-semantic/lattice/eligibility#>\n"
@@ -252,6 +256,40 @@ def _compile_bound_interval_shapes(plan: IntervalPlan) -> Graph:
     return graph
 
 
+def render_decided_selects(plan: Union[IntervalPlan, ConceptPlan]) -> List[Tuple[str, str, str]]:
+    """(role, message, select) for a condition with a set reading or negation
+    (ADR-A103): its SPARQL decision, reported as Undetermined or Denied."""
+    return [
+        (
+            role,
+            f"The condition's outcome for this subject is {outcome}.",
+            QUERY_PREFIXES + "SELECT $this WHERE {\n  {\n" + condition_select(plan, "", "$this")
+            + f'  }}\n  FILTER (?decision = "{outcome}")\n}}\n',
+        )
+        for role, outcome in (("determinacy", UNDETERMINED), ("admission", "Denied"))
+    ]
+
+
+def _compile_decided_shapes(plan: Union[IntervalPlan, ConceptPlan]) -> Graph:
+    graph = Graph()
+    for prefix, namespace in (("mork", MORK), ("exe", EXE), ("elg", ELG), ("sh", SH)):
+        graph.bind(prefix, namespace)
+    plan_node = mint(plan.condition, "execplan")
+    mapping = mint(plan.condition, "shape-mapping")
+    kind = EXE.ConceptMatchPlan if isinstance(plan, ConceptPlan) else EXE.IntervalContainmentPlan
+    graph.add((plan_node, RDF.type, kind))
+    graph.add((plan_node, EXE.implementsCondition, plan.condition))
+    graph.add((plan_node, EXE.compiledFromMapping, mapping))
+    graph.add((plan_node, EXE.derivedFromEligibilityNode, plan.condition))
+    if plan.evidence is not None:
+        graph.add((plan_node, EXE.derivedFromEligibilityNode, plan.evidence.binding))
+    graph.add((mapping, RDF.type, MORK.DataMapping))
+    graph.add((mapping, MORK.mappingFor, plan.condition))
+    target = plan.evidence.subject_class if plan.evidence is not None else ELG.Question
+    _emit(graph, plan_node, mapping, plan.condition, render_decided_selects(plan), target)
+    return graph
+
+
 def render_profile_selects(plan: ProfilePlan) -> List[Tuple[str, str, str]]:
     """(role, message, select) for each profile shape."""
     return [
@@ -289,6 +327,8 @@ def compile_shapes(plan: Union[IntervalPlan, ConceptPlan, ProfilePlan]) -> Graph
     """Emit the plan's shapes, and the mapping that generates them."""
     if isinstance(plan, ProfilePlan):
         return _compile_profile_shapes(plan)
+    if has_readings(plan):
+        return _compile_decided_shapes(plan)
     if isinstance(plan, ConceptPlan):
         return _compile_concept_shapes(plan)
     if plan.evidence is not None:

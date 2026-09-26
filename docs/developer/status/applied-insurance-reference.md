@@ -31,7 +31,7 @@ exists, and verify S's AIR-1.2 when it arrives.
 | Seq | Slice | Branch | State | Note |
 |---|---|---|---|---|
 | 2 | AIR-3.1 | `air/3.1-flat-hierarchy` | merged | tags `eligibility-vocab-v0.7.0`, `executable-v0.6.0` |
-| 8 | AIR-3.2 | `air/3.2-set-readings` | waiting | |
+| 8 | AIR-3.2 | `air/3.2-set-readings` | in progress | brief: Phase 3 plan, AIR-3.2 in detail |
 | 13 | AIR-3.3 | `air/3.3-readings-swrl-owl` | waiting | |
 | 21 | AIR-3.5 | `air/3.5-m2-check` | waiting | |
 | 23+ | substrate ADRs, S1, S2, S4, S5, S7 | `air/s<n>-<slug>` | waiting | ADRs drafted in round 4 |

@@ -1,0 +1,86 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# An engineering course admits an applicant who holds some qualification in
+# mathematics or physics, and who holds no qualification in medicine (a
+# separate programme). Applicants hold several qualifications, so each
+# binding declares how the set is read (ADR-A103, elg:L15), and the second
+# condition is negated (elg:L16).
+#
+# Recorded decisions:
+#
+# | Applicant | Qualifications     | stem-qualification | no-medicine  | profile      |
+# |-----------|--------------------|--------------------|--------------|--------------|
+# | ada       | history, physics   | Permitted          | Permitted    | Permitted    |
+# | ben       | history            | Denied             | Permitted    | Denied       |
+# | cai       | none               | Undetermined       | Undetermined | Undetermined |
+# | dee       | medicine, physics  | Permitted          | Denied       | Denied       |
+#
+# no-medicine requires medicine, read elg:SomeValue, and is negated: it is
+# Denied exactly when some qualification is medicine. With no qualification
+# the reading is Undetermined (exe:MissingCandidate), and negation keeps it so.
+
+@prefix elg:  <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix voc:  <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex:   <https://example.org/lattice/eligibility/admissions/> .
+
+# The applied ontology's own terms.
+ex:Applicant a owl:Class .
+ex:holdsQualification a owl:ObjectProperty .
+
+ex:subjects a voc:ConceptScheme ;
+    fnd:hasIdentity ex:subjects-identity ;
+    fnd:hasGovernanceState fnd:Active .
+ex:subject-contract a voc:SchemeContract ;
+    fnd:hasIdentity ex:subject-contract-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    voc:constrainsProperty ex:holdsQualification ;
+    voc:boundScheme ex:subjects .
+ex:mathematics a skos:Concept ; skos:inScheme ex:subjects .
+ex:physics a skos:Concept ; skos:inScheme ex:subjects .
+ex:history a skos:Concept ; skos:inScheme ex:subjects .
+ex:medicine a skos:Concept ; skos:inScheme ex:subjects .
+
+# The conditions.
+ex:stem-qualification a elg:Condition ;
+    elg:matchStrategy elg:SetMembership ;
+    elg:compatibilityOperation elg:AllRequired ;
+    elg:wildcardSemantics elg:NoWildcard ;
+    elg:constrainedByContract ex:subject-contract ;
+    elg:requiredConcept ex:mathematics , ex:physics .
+
+ex:no-medicine a elg:Condition ;
+    elg:matchStrategy elg:SetMembership ;
+    elg:compatibilityOperation elg:AllRequired ;
+    elg:wildcardSemantics elg:NoWildcard ;
+    elg:constrainedByContract ex:subject-contract ;
+    elg:requiredConcept ex:medicine ;
+    elg:negated true .
+
+ex:engineering-admission a elg:AdmissionProfile ;
+    elg:hasCondition ex:stem-qualification , ex:no-medicine ;
+    elg:matchStrategy elg:SetMembership ;
+    elg:compatibilityOperation elg:AllRequired ;
+    elg:wildcardSemantics elg:NoWildcard .
+
+# The bindings: each reads the applicant's qualifications as a set.
+ex:stem-binding a elg:EvidenceBinding ;
+    elg:bindsCondition ex:stem-qualification ;
+    elg:subjectClass ex:Applicant ;
+    elg:valueReading elg:SomeValue ;
+    elg:evidenceStep [ a elg:EvidenceStep ; elg:stepIndex 0 ; elg:stepProperty ex:holdsQualification ; elg:stepDirection elg:Forward ] .
+
+ex:medicine-binding a elg:EvidenceBinding ;
+    elg:bindsCondition ex:no-medicine ;
+    elg:subjectClass ex:Applicant ;
+    elg:valueReading elg:SomeValue ;
+    elg:evidenceStep [ a elg:EvidenceStep ; elg:stepIndex 0 ; elg:stepProperty ex:holdsQualification ; elg:stepDirection elg:Forward ] .
+
+# The applied ontology's data, unchanged by evaluation.
+ex:ada a ex:Applicant ; ex:holdsQualification ex:history , ex:physics .
+ex:ben a ex:Applicant ; ex:holdsQualification ex:history .
+ex:cai a ex:Applicant .
+ex:dee a ex:Applicant ; ex:holdsQualification ex:medicine , ex:physics .
