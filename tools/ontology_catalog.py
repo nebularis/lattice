@@ -57,7 +57,6 @@ EXTERNAL: dict[str, str] = {
 # the change that fixes it. The check fails on an entry whose file no longer
 # has a problem, so this list only shrinks.
 _MORK_FRAGMENT = "imports http://www.nebularis.org/ontologies/Mork# (stray fragment) instead of the Mork ontology IRI"
-_UNPARSEABLE = "does not parse as Turtle"
 KNOWN_DEFECTS: dict[str, str] = {
     "ontology/mork/examples/Governance/GovernanceAndVersioning.ttl": _MORK_FRAGMENT,
     "ontology/mork/examples/Zoo/PropertyGeneration.ttl": _MORK_FRAGMENT,

@@ -44,4 +44,22 @@ Written by the building machine when the work is committed. S could not run the 
 
 ## Results
 
-Written on machine R at verification.
+Run on machine R, 2026-09-26, on `air/1.1-layout` before its rebase onto `main`:
+
+| Check | Result |
+|---|---|
+| `mise run build:ontology-catalog` | no catalog changed: the legacy files had no root catalog entries |
+| `mise run check:ontology-catalog` | 57 tool tests passed, catalog consistent, known defects 3 → 2 (AIR11-01) |
+| `mise run check:ontology-versioning` | 28 in-scope documents (29 before), no unbumped changes, every version listed (AIR11-02) |
+| search for `ontology/nsd`, `neuro-semantic/insurance/contract`, `structure-vocab` in `ontology/` and `tools/` | no match (AIR11-03) |
+| both READMEs against ADR-A98 | agree, after one fix below (AIR11-04) |
+
+Fixes made on R:
+
+1. `ontology/applied/README.md` said `spec/` and `vocab/` carry a `.version` file. They are versioned
+   by `owl:versionIRI`, and only `shapes/` and `projection/` carry `.version`. Corrected.
+2. `tools/ontology_catalog.py`: the `_UNPARSEABLE` constant, unused once its only entry went, is
+   removed. Its tests pass (12).
+
+To repeat after the rebase onto `main` (AIR-3.1): regenerate the catalog and re-run the command.
+Expect 59 tool tests.

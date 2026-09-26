@@ -29,9 +29,9 @@ cross-domain module never imports a domain module.
 
 ## Namespaces and versioning
 
-Each module versions independently under ADR-A86: `spec/`, `vocab/`, `shapes/` and `projection/`
-each carry their own `.version`, and a shapes change in one module never moves another module's
-number. Namespaces and prefixes follow ADR-A98 decision 6:
+Each module versions independently under ADR-A86: its `spec/` and `vocab/` documents by their
+`owl:versionIRI`, its `shapes/` and `projection/` directories by their own `.version` file. A
+shapes change in one module never moves another module's number. Namespaces and prefixes follow ADR-A98 decision 6:
 
 | Module | Namespace | Prefix |
 |---|---|---|
