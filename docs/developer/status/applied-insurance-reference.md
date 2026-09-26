@@ -23,15 +23,15 @@ created after round 2. Every later slice is still an outline.
 
 ## Machine R
 
-**Position:** round 2. Round 1 complete. Next: build AIR-3.2 on `air/3.2-set-readings` once it
-exists, and verify S's AIR-1.2 when it arrives.
+**Position:** round 2. AIR-3.2 built and self-validated on `air/3.2-set-readings`. Waiting for the
+human's gate, and for S's AIR-1.2 bundle to verify.
 **Last updated:** 2026-09-26
 **Blockers:** none
 
 | Seq | Slice | Branch | State | Note |
 |---|---|---|---|---|
 | 2 | AIR-3.1 | `air/3.1-flat-hierarchy` | merged | tags `eligibility-vocab-v0.7.0`, `executable-v0.6.0` |
-| 8 | AIR-3.2 | `air/3.2-set-readings` | in progress | brief: Phase 3 plan, AIR-3.2 in detail |
+| 8 | AIR-3.2 | `air/3.2-set-readings` | built | eight tags to create at merge (Validation Pack Results) |
 | 13 | AIR-3.3 | `air/3.3-readings-swrl-owl` | waiting | |
 | 21 | AIR-3.5 | `air/3.5-m2-check` | waiting | |
 | 23+ | substrate ADRs, S1, S2, S4, S5, S7 | `air/s<n>-<slug>` | waiting | ADRs drafted in round 4 |

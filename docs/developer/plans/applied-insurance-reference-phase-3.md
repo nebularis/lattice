@@ -174,8 +174,8 @@ Authored in ADR-A-C2 order: examples, then laws and README, then code.
 10. **Tests:** `tools/mork_compilers/src/mork_compilers/test_set_readings.py`, and both examples
     in `tools/test_eligibility_examples.py`.
 11. **Docs:** Eligibility README, `tools/mork_compilers/README.md`, the Eligibility row of
-    `docs/architecture/ontology-architecture.md` §3, and `solution-design-specification.md` (set
-    readings as an evaluation feature). Then `mise run build:ontology-catalog` and `mise run
+    `docs/architecture/ontology-architecture.md` §3. (`solution-design-specification.md` does not
+    cover Eligibility's semantics, so it is unchanged.) Then `mise run build:ontology-catalog` and `mise run
     build:ontology-releases`.
 
 | ID | Given / When / Then | Level | +/- |
@@ -203,7 +203,6 @@ Authored in ADR-A-C2 order: examples, then laws and README, then code.
 | `ontology/eligibility/README.md`, examples | the A-100 law, the A-103 readings | 3.1, 3.2 |
 | `tools/mork_compilers/README.md` | both laws in every backend | 3.1 to 3.3 |
 | `docs/architecture/ontology-architecture.md` | Eligibility section, and the MORK section on proposals that end as crosswalks | 3.2, 3.4 |
-| `docs/architecture/solution-design-specification.md` | set readings as an evaluation feature | 3.2 |
 
 ## Exit gate
 
