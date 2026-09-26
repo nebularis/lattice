@@ -5,7 +5,7 @@
 **Unit ID:** `applied-insurance-reference-phase-1`
 **Epic:** [applied-insurance-reference](applied-insurance-reference.md)
 **Status:** Proposed. Starts when A-98 is Accepted.
-**Status record:** `status/applied-insurance-reference-phase-1.md`, created when the phase starts
+**Status record:** the epic [status record](../status/applied-insurance-reference.md) (lanes §5)
 
 ## Starting point
 

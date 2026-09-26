@@ -49,6 +49,7 @@ Each is stated once in the sketch cited, and every phase plan inherits them.
 | E5 | Names: "characteristic" for peril axes, "term parameter" and "term relation" for contract terms. "Facet" is not used | term-parameters §2 |
 | E6 | Applied content is not substrate. Every substrate change it motivates follows the clean-room procedure (ADR-A-C2) and the restatement boundary (ADR-A-C1) | whitepaper §7.2 |
 | E7 | Every ontology change is classified under ADR-A86 and runs the import-pinning cascade | ontology-versioning-policy |
+| E8 | Agents must not run the git commands this plan uses for branching and merging (creating, switching, fetching, pulling, pushing, bundling, rebasing, merging). The human runs them. Agents may run any other local git command their normal workflow needs | lanes §1 |
 
 ## 3. Phase map
 
@@ -83,6 +84,15 @@ flowchart LR
 
 Phases 2, 3 and 4 overlap. Which machine and agent builds each slice, on which branch, in which
 round, and the rules for merging are in [machines, branches and merges](applied-insurance-reference-lanes.md).
+
+## 3a. Tracking progress
+
+Two machines build this epic (lanes §1). The [status record](../status/applied-insurance-reference.md)
+has one section per machine, and each machine's agent edits only its own. An agent reads the
+record at the start of a session and updates its section, in the same commit as its work, at the
+end. Handoff notes for a slice go in its Validation Pack. How the sections, states and handoffs
+work is in lanes §5. There are no per-phase status records, a deliberate deviation from the
+epic model in `.github/copilot-instructions.md`, agreed with the human on 2026-09-26.
 
 ## 4. Milestones
 

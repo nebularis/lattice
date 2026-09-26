@@ -5,7 +5,7 @@
 **Unit ID:** `applied-insurance-reference-phase-0`
 **Epic:** [applied-insurance-reference](applied-insurance-reference.md)
 **Status:** Complete. AIR-0.1 signed off and merged (`3377a71`). All five ADRs Accepted
-**Status record:** epic [status](../status/applied-insurance-reference.md) until the phase starts
+**Status record:** the epic [status record](../status/applied-insurance-reference.md) (lanes §5)
 
 ## Scope
 

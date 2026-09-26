@@ -13,10 +13,15 @@ merges what. Slice content stays in the phase plans.
 | **R**, runtime | run `mise`, Python, Java, every check. Push to GitHub. Merge | — | **Claude Code**, **Copilot Pro+** | Claude: compiler and substrate code, ADRs, verifying design-heavy branches. Copilot Pro+: running a branch's checks and fixing simple failures |
 | **S**, sandbox | edit anything, commit, pull from GitHub | run tests or checks, push | **Copilot Business** (the largest budget) | Turtle, SHACL, examples, READMEs, and simple code edits. Never complex code, since it cannot be tested there |
 
-Two rules follow:
+Three rules follow:
 
-- **Only R creates branches, pushes and merges.** S pulls, works and hands its commits back as a
-  bundle (§3).
+- **The human runs the branching and merging.** Agents must not run the git commands this plan
+  gives for creating, switching, fetching, pulling, pushing, bundling, rebasing or merging
+  branches (§3, §6). They may run any other local git command their normal workflow needs, such
+  as `git status`, `git diff`, `git log` or committing on the branch the human has checked out.
+  When a step needs one of the human's commands, the agent stops and says so.
+- **Branches are created, pushed and merged on R only.** S pulls, works and hands its commits
+  back as a bundle (§3).
 - **Every S branch is verified on R before it merges.** S cannot regenerate catalogs or run the
   versioning check, so it bumps `owl:versionIRI` literals and `.version` files by hand under
   ADR-A86, and R checks them.
@@ -53,10 +58,12 @@ Branch names are fixed here, so both machines use the same ones.
 
 Sequence 1 is AIR-0.1, merged as `3377a71`. "Branch after" lists the sequence numbers that must
 be on `main` before R creates the branch. A branch merges once it is verified and signed off
-(§5). When several are ready, R merges them in sequence order. Substrate branches merge after
+(§6). When several are ready, R merges them in sequence order. Substrate branches merge after
 AIR-6.1, because each substrate bump makes every merged applied module re-pin its imports.
 
 ## 3. The round trip for an S slice
+
+Every command in this section is run by the human.
 
 **On R**, create and push the branch:
 
@@ -68,7 +75,7 @@ git switch main && git pull --ff-only
 git switch -c air/1.1-layout && git push -u origin air/1.1-layout
 ```
 
-**On S**, pick it up, work, and bundle the commits:
+**On S**, pick it up, let the agent work, and bundle the commits:
 
 ```bash
 git fetch origin && git switch air/1.1-layout
@@ -86,7 +93,7 @@ Carry the bundle file to R.
 git switch air/1.1-layout && git pull --ff-only /path/to/air-1.1.bundle air/1.1-layout && git push
 ```
 
-Then verify, sign off and merge (§5). After R pushes `main`, **on S** refresh before the next
+Then verify, sign off and merge (§6). After R pushes `main`, **on S** refresh before the next
 slice:
 
 ```bash
@@ -118,38 +125,82 @@ S is the bottleneck, carrying 17 slices to R's 4 plus the substrate. In rounds 4
 capacity goes to substrate work, which is off the critical path. If S falls behind, move 4.4 and
 4.5 to R: they are Turtle and examples, which Claude or Copilot Pro+ can build.
 
-## 5. Verifying and merging on R
+## 5. Tracking progress: the status record
+
+The [status record](../status/applied-insurance-reference.md) is the single record for the epic.
+No per-phase status records are created. It has one section per machine, so the two machines'
+edits never touch the same lines:
+
+| Section | Written by | Content |
+|---|---|---|
+| Round | R | the current round, and the branches ready to work on |
+| Machine R | R | position, blockers, R's slice board, the queue of S branches awaiting verification |
+| Machine S | S | position, blockers, S's slice board |
+| Merge log, Phases | R | one row per merge, and each phase's state |
+
+A slice moves through these states. The machine named in the last column sets each one:
+
+| State | Meaning | Set by |
+|---|---|---|
+| `waiting` | its "Branch after" slices are not all on `main` | — |
+| `waiting for branch` | it may start once the human creates its branch | R, at the end of a round |
+| `in progress` | the agent is building it on its branch | the building machine |
+| `handed over` | S's work is committed and the human has bundled it to R | S |
+| `built` | R's own work is committed and ready to verify | R |
+| `verifying` | R is running its checks (§6) | R |
+| `signed off` | the human has recorded it in `LOG.md` | R |
+| `merged` | it is on `main`, with a row in the merge log | R |
+
+**Handoff notes go in the Validation Pack**, `docs/developer/validation/applied-insurance-reference-<slice>.md`,
+which each slice creates. The building machine adds a "Handoff" section: what it built, what it
+could not run, and anything R should check first. On S that section is required, since nothing
+there was tested. Keeping these notes out of the status record means two branches never edit
+the same lines of it.
+
+**At the start of a session**, an agent reads the status record on its checked-out branch, then
+its slice's phase plan and Validation Pack. **At the end**, it updates its own section (position,
+the slice's state, blockers) in the same commit as its work. Machine S never edits the Round,
+Machine R, Merge log or Phases sections. When a rebase conflicts in the status record, keep each
+section's newest version: the sections are disjoint, so this never loses information.
+
+## 6. Verifying and merging on R
 
 For each branch, in the order of the round's merge column:
 
-1. **Rebase** onto the current `main`, then `git push --force-with-lease`.
-2. **Regenerate catalogs:** `mise run build:ontology-catalog`. Commit the result on the branch.
-3. **Re-bump versions if needed.** If a merge since the branch was created bumped a document
+1. **Rebase (human).** `git rebase main` on the branch, then `git push --force-with-lease`. The
+   agent may help resolve conflicting files, and the human continues the rebase.
+2. **Regenerate catalogs (agent):** `mise run build:ontology-catalog`. Commit the result on the
+   branch.
+3. **Re-bump versions if needed (agent).** If a merge since the branch was created bumped a document
    this branch also changes, take `main`'s version, bump again under ADR-A86, and re-pin the
    importers already on `main`.
-4. **Run the checks:** the Validation Pack's single command, plus `mise run
+4. **Run the checks (agent):** the Validation Pack's single command, plus `mise run
    check:ontology-catalog` and `mise run check:ontology-versioning` when the slice touches
    `ontology/`.
-5. **Fix failures.** Copilot Pro+ first for simple ones. Claude when the fix needs a design
+5. **Fix failures (agent).** Copilot Pro+ first for simple ones. Claude when the fix needs a design
    judgement.
-6. **Sign off.** The human runs the validation gate (review the pack, run the command, inspect
+6. **Sign off (human).** The human runs the validation gate (review the pack, run the command, inspect
    the artefacts, one adversarial probe) and adds the slice to `docs/developer/validation/LOG.md`.
-7. **Merge:** update the slice's rows in its phase status record and `INDEX.md` on the branch,
-   then `git switch main && git merge --ff-only air/<slice>` and `git push`. Delete the branch.
+7. **Record (agent).** On the branch: the slice's state becomes `merged` in its machine's
+   section, a merge log row is added, and at a round's last merge the Round section and the
+   epic's `INDEX.md` entry are updated.
+8. **Merge (human).** `git switch main && git merge --ff-only air/<slice>`, then `git push`.
+   Delete the branch.
 
-## 6. Critical path
+## 7. Critical path
 
 2.1 and 1.1 → 1.2 → 2.2 → 2.4 → 3.4 → 3.5 (M2), all but the last on S. Loss history (4.4) is
 also on the path, because 3.5 reads `aeo:LossCause`.
 
-## 7. Rules for shared files
+## 8. Rules for shared files
 
 | File | Rule |
 |---|---|
-| `ontology/catalog-v001.xml` and the stub catalogs | regenerated on R only (§5 step 2). Never edited or merged by hand |
-| `owl:versionIRI` literals and `.version` files | S bumps them by hand. R checks them, and re-bumps after rebasing where §5 step 3 applies |
+| `ontology/catalog-v001.xml` and the stub catalogs | regenerated on R only (§6 step 2). Never edited or merged by hand |
+| `owl:versionIRI` literals and `.version` files | S bumps them by hand. R checks them, and re-bumps after rebasing where §6 step 3 applies |
 | `insurance/peril/vocab/peril-vocab.ttl` | AIR-2.1 creates it with one delimited region per characteristic scheme, one per cause family and a final cross-group links region. AIR-2.2 writes the characteristic regions, AIR-2.3 the N, T and E regions, AIR-2.4 the H, P, C, F and L regions and every link between the two groups. Intensity links (AIR-2.6) go in `peril-intensity.ttl` |
 | `insurance/exposure/spec/exposure.ttl` and its shapes | AIR-4.1 creates one region per slice of Phase 4. Each slice writes only its region |
 | `ontology/applied/README.md`, `ontology-architecture.md` §3 | one row per module, added by the slice that creates the module |
-| `docs/developer/INDEX.md`, phase status records | each slice edits only its own rows, at merge (§5 step 7) |
+| the status record | each machine edits only its own section (§5) |
+| `docs/developer/INDEX.md` | R updates the epic's entry at each round's last merge (§6 step 7) |
 | `docs/developer/validation/LOG.md` | the human's only |
