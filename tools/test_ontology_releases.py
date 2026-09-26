@@ -32,8 +32,10 @@ def test_unlisted_version_fails_until_written_and_rows_are_kept(repo: Path) -> N
     assert "shapes/structural.ttl" in (repo / REGISTER).read_text()
     write_file(repo, "ontology/layer/spec/layer.ttl", document("0.2.0"))
     write(repo)
-    rows = [line for line in (repo / REGISTER).read_text().splitlines() if line.startswith("| `doc`")]
-    assert [row.split("|")[2].strip() for row in rows] == ["`0.1.0`", "`0.2.0`"]
+    rows = [line for line in (repo / REGISTER).read_text().splitlines() if line.startswith("| doc |")]
+    assert [row.split("|")[2].strip() for row in rows] == ["0.1.0", "0.2.0"]
+    assert "[doc-spec-v0.2.0.ttl](" in rows[1]
+    assert "[layer-shapes-structural-v0.1.0.ttl](" in (repo / REGISTER).read_text()
 
 
 def test_tag_on_another_version_fails(repo: Path) -> None:
