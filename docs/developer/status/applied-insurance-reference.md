@@ -23,15 +23,15 @@ created after round 2. Every later slice is still an outline.
 
 ## Machine R
 
-**Position:** round 2. AIR-3.2 built and self-validated on `air/3.2-set-readings`. Waiting for the
-human's gate, and for S's AIR-1.2 bundle to verify.
+**Position:** round 2. AIR-3.2 merged. Next: draft the AIR-2.2, AIR-4.1 and AIR-3.3 briefs on
+`main`, and verify S's AIR-1.2 when it arrives.
 **Last updated:** 2026-09-26
 **Blockers:** none
 
 | Seq | Slice | Branch | State | Note |
 |---|---|---|---|---|
 | 2 | AIR-3.1 | `air/3.1-flat-hierarchy` | merged | tags `eligibility-vocab-v0.7.0`, `executable-v0.6.0` |
-| 8 | AIR-3.2 | `air/3.2-set-readings` | built | eight tags to create at merge (Validation Pack Results) |
+| 8 | AIR-3.2 | `air/3.2-set-readings` | merged | eight tags (Validation Pack Results) |
 | 13 | AIR-3.3 | `air/3.3-readings-swrl-owl` | waiting | |
 | 21 | AIR-3.5 | `air/3.5-m2-check` | waiting | |
 | 23+ | substrate ADRs, S1, S2, S4, S5, S7 | `air/s<n>-<slug>` | waiting | ADRs drafted in round 4 |
@@ -74,6 +74,7 @@ Verifying queue (S branches handed over and not yet merged): none.
 | 2 | AIR-3.1 | 1 | fast-forward to the head of `air/3.1-flat-hierarchy` | signed off |
 | 3 | AIR-1.1 | 1 | fast-forward to `651fbfa` | signed off |
 | 5 | AIR-2.1 | 1 | fast-forward to the head of `air/2.1-peril-spec` | signed off |
+| 8 | AIR-3.2 | 2 | fast-forward to the head of `air/3.2-set-readings` | signed off |
 
 ## Phases (machine R only)
 
@@ -82,7 +83,7 @@ Verifying queue (S branches handed over and not yet merged): none.
 | 0 Decisions | [plan](../plans/applied-insurance-reference-phase-0.md) | ✅ complete |
 | 1 Module split | [plan](../plans/applied-insurance-reference-phase-1.md) | 🚧 AIR-1.1 merged |
 | 2 Peril vocabulary | [plan](../plans/applied-insurance-reference-phase-2.md) | 🚧 AIR-2.1 merged |
-| 3 Readings and crosswalks | [plan](../plans/applied-insurance-reference-phase-3.md) | 🚧 AIR-3.1 merged |
+| 3 Readings and crosswalks | [plan](../plans/applied-insurance-reference-phase-3.md) | 🚧 AIR-3.1 and AIR-3.2 merged |
 | 4 Exposure | [plan](../plans/applied-insurance-reference-phase-4.md) | ⏳ |
 | 5 Contract module | [plan](../plans/applied-insurance-reference-phase-5.md) | 🅿️ deferred until Open CBAA integration of 1 to 4 (D2) |
 | 6 Submission, claims | [plan](../plans/applied-insurance-reference-phase-6.md) | ⏳ |
