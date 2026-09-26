@@ -81,8 +81,8 @@ flowchart LR
     S -. "enables, not blocking" .-> P6
 ```
 
-Phases 2, 3 and 4 overlap. Lanes, the slice-level merge order and the rules for shared files are
-in [lanes and merge order](applied-insurance-reference-lanes.md).
+Phases 2, 3 and 4 overlap. Which machine and agent builds each slice, on which branch, in which
+round, and the rules for merging are in [machines, branches and merges](applied-insurance-reference-lanes.md).
 
 ## 4. Milestones
 

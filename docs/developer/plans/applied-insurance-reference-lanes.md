@@ -1,147 +1,155 @@
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
-# Applied Insurance Reference — Lanes and Merge Order
+# Applied Insurance Reference — Machines, Branches and Merges
 
 **Epic:** [applied-insurance-reference](applied-insurance-reference.md)
-**Purpose:** who builds which slice, on which branch, what each waits for, and the order in which
-branches merge to `main`. Slice content stays in the phase plans. This file holds only the
-coordination.
+**Purpose:** which machine and agent builds each slice, on which branch, in which round, and who
+merges what. Slice content stays in the phase plans.
 
-## 1. Lanes
+## 1. Machines and agents
 
-A lane is a role, not a person. One participant may hold several lanes, or pick up another lane
-when theirs is done (lane L finishes early, for example).
-
-| Lane | Owns | Slices |
-|---|---|---|
-| G | governance and merging. Held by the human or an integrator agent | AIR-0.1, every merge, every gate |
-| L | layout and shared contracts | AIR-1.1, AIR-1.2 |
-| P1 | peril vocabulary: spec, characteristics, natural and technical causes | AIR-2.1, AIR-2.2, AIR-2.3, AIR-2.6 |
-| P2 | peril vocabulary: human, political, cyber, financial and life causes, editions, collections | AIR-2.4, AIR-2.7, AIR-2.5 |
-| B | Eligibility readings (A-100, A-103) and crosswalks | AIR-3.1 to AIR-3.5 |
-| E1 | exposure core, units and profiles, then submission | AIR-4.1, AIR-4.2, AIR-4.3, AIR-4.6, AIR-6.1 |
-| E2 | exposure history and liability | AIR-4.4, AIR-4.5 |
-| U | substrate track, one branch per item | S1, S2, S4 to S7 |
-
-Phase 5 and AIR-6.2 onwards are deferred (epic D2) and have no lane.
-
-## 2. Merge order
-
-A branch is created from `main` once everything in "Branch after" has merged and the named ADR
-is Accepted. It is then developed alongside every other open branch. It merges, after rebasing
-onto `main`, when every slice with a lower sequence number has merged. G may swap two adjacent
-entries only when neither appears in the other's "Branch after" column and they share no region
-of §5.
-
-| Seq | Slice | Lane | Branch after | Milestone |
+| Machine | Can | Cannot | Agents | Used for |
 |---|---|---|---|---|
-| 1 | AIR-0.1 ADRs A-98, A-99, A-100, A-102, A-103 | G | — | |
-| 2 | AIR-3.1 hierarchical match over flat schemes, `exe:NoHierarchy` | B | 1, A-100 | |
-| 3 | AIR-1.1 drop legacy module, layout | L | 1, A-98 | |
-| 4 | AIR-1.2 `classification/`, `insurance/common/` | L | 3, A-102 | |
-| 5 | AIR-2.1 `prl:` spec, shapes, file regions | P1 | 1, A-99 | |
-| 6 | AIR-2.2 characteristic and companion schemes | P1 | 4, 5 | |
-| 7 | AIR-4.1 exposure core, file regions | E1 | 4 | |
-| 8 | AIR-3.2 set readings: Eligibility, IR, SPARQL, SHACL | B | 2, A-103 | |
-| 9 | AIR-2.3 causes N, T, E | P1 | 6 | |
-| 10 | AIR-2.4 causes H, P, C, F, L, cross-group links | P2 | 6 | |
-| 11 | AIR-4.2 zones, pools, attributes, assessments | E1 | 5, 7 | |
-| 12 | AIR-4.4 loss history, loss event, requirements, cover, metrics | E2 | 6, 7 | |
-| 13 | AIR-3.3 set readings: SWRL, OWL | B | 8 | |
-| 14 | AIR-2.6 intensity measures and thresholds | P1 | 9 | |
-| 15 | AIR-2.7 pools scheme, example edition, precedence | P2 | 9, 10 | |
-| 16 | AIR-4.3 dependencies, peril metrics, exposure units | E1 | 9, 11 | |
-| 17 | AIR-4.5 liability exposure | E2 | 12 | |
-| 18 | AIR-2.5 collections, open-perils example | P2 | 10 | M1 |
-| 19 | AIR-3.4 crosswalk of a market list, lift at ingestion | B | 10 | |
-| 20 | AIR-4.6 London and US profiles, examples | E1 | 15, 16, 17 | M3 |
-| 21 | AIR-3.5 lower, list to list, the cross-characteristic check | B | 12, 19 | M2 |
-| 22 | AIR-6.1 submission | E1 | 20 | |
-| 23+ | S6, S1, S7, S2, S5, S4, in this order | U | 1, the item's own ADR | |
+| **R**, runtime | run `mise`, Python, Java, every check. Push to GitHub. Merge | — | **Claude Code**, **Copilot Pro+** | Claude: compiler and substrate code, ADRs, verifying design-heavy branches. Copilot Pro+: running a branch's checks and fixing simple failures |
+| **S**, sandbox | edit anything, commit, pull from GitHub | run tests or checks, push | **Copilot Business** (the largest budget) | Turtle, SHACL, examples, READMEs, and simple code edits. Never complex code, since it cannot be tested there |
 
-AIR-3.1 to AIR-3.3 are substrate changes inside the epic. AIR-3.1 merges second: it changes no
-Eligibility `.ttl`, and Executable's PATCH bump cascades before any applied module exists.
-AIR-3.2 bumps Eligibility at sequence 8 and runs the cascade over the modules merged by then.
+Two rules follow:
 
-Substrate items merge last because each bump of a substrate layer triggers the import-pinning
-cascade over every applied module already merged. S6 is guidance only and may merge at any point.
-S2 rebases onto AIR-3.2, since both change Eligibility.
+- **Only R creates branches, pushes and merges.** S pulls, works and hands its commits back as a
+  bundle (§3).
+- **Every S branch is verified on R before it merges.** S cannot regenerate catalogs or run the
+  versioning check, so it bumps `owl:versionIRI` literals and `.version` files by hand under
+  ADR-A86, and R checks them.
 
-## 3. When a branch may merge
+## 2. Slices
 
-### 3.1 The merge gate
+Branch names are fixed here, so both machines use the same ones.
 
-A branch merges only when all of the following hold, checked by G in this order:
+| Seq | Slice | Branch | Built on | Agent | Branch after |
+|---|---|---|---|---|---|
+| 2 | AIR-3.1 hierarchical match over flat schemes | `air/3.1-flat-hierarchy` | R | Claude | 1 (merged) |
+| 3 | AIR-1.1 drop legacy module, layout | `air/1.1-layout` | S | Copilot Business | 1 (merged) |
+| 4 | AIR-1.2 `classification/`, `insurance/common/` | `air/1.2-shared-contracts` | S | Copilot Business | 3 |
+| 5 | AIR-2.1 `prl:` spec, shapes, file regions | `air/2.1-peril-spec` | S | Copilot Business | 1 (merged) |
+| 6 | AIR-2.2 characteristic and companion schemes | `air/2.2-characteristics` | S | Copilot Business | 4, 5 |
+| 7 | AIR-4.1 exposure core, file regions | `air/4.1-exposure-core` | S | Copilot Business | 4 |
+| 8 | AIR-3.2 set readings and negation: Eligibility, IR, SPARQL, SHACL | `air/3.2-set-readings` | R | Claude | 2 |
+| 9 | AIR-2.3 causes N, T, E | `air/2.3-causes-n-t-e` | S | Copilot Business | 6 |
+| 10 | AIR-2.4 causes H, P, C, F, L, cross-group links | `air/2.4-causes-h-p-c-f-l` | S | Copilot Business | 6 |
+| 11 | AIR-4.2 zones, pools, attributes, assessments | `air/4.2-zones-attributes` | S | Copilot Business | 5, 7 |
+| 12 | AIR-4.4 loss history, `aeo:LossCause`, requirements, cover | `air/4.4-loss-history` | S | Copilot Business | 6, 7 |
+| 13 | AIR-3.3 set readings and negation: SWRL, OWL | `air/3.3-readings-swrl-owl` | R | Claude | 8 |
+| 14 | AIR-2.6 intensity measures and thresholds | `air/2.6-intensity` | S | Copilot Business | 9 |
+| 15 | AIR-2.7 pools scheme, example edition, precedence | `air/2.7-pools-editions` | S | Copilot Business | 9, 10 |
+| 16 | AIR-4.3 dependencies, peril metrics, exposure units | `air/4.3-exposure-units` | S | Copilot Business | 9, 11 |
+| 17 | AIR-4.5 liability exposure | `air/4.5-liability` | S | Copilot Business | 12 |
+| 18 | AIR-2.5 collections, open-perils example (M1) | `air/2.5-collections` | S | Copilot Business | 10 |
+| 19 | AIR-3.4 crosswalk of a market list, lift at ingestion | `air/3.4-crosswalk` | S | Copilot Business | 10 |
+| 20 | AIR-4.6 London and US profiles, examples (M3) | `air/4.6-market-profiles` | S | Copilot Business | 15, 16, 17 |
+| 21 | AIR-3.5 lowering, list to list, M2 check | `air/3.5-m2-check` | R | Claude | 12, 19 |
+| 22 | AIR-6.1 submission | `air/6.1-submission` | S | Copilot Business | 20 |
+| 23+ | substrate items: ADR drafts, then S1, S2, S4, S5, S7 | `air/s<n>-<slug>` | R | Claude | 1, each item's ADR |
+| 23+ | substrate item S6, spatial guidance (text only) | `air/s6-spatial-guidance` | S | Copilot Business | 1 |
 
-1. **Its turn.** Every slice with a lower sequence number has merged. A branch that is ready early
-   waits, fully rebased, and is not merged out of turn except by the swap rule of §2.
-2. **Rebased.** The branch is rebased onto the current `main`. The catalogs are regenerated, and
-   any document another merge has bumped since the branch was created is re-bumped and its
-   importers re-pinned (§5).
-3. **Its command passes on the rebased branch.** The Validation Pack's single command, plus
-   `mise run check:ontology-catalog` and `mise run check:ontology-versioning` when the slice
-   touches `ontology/`.
-4. **Signed off.** The human has run the validation gate (review the pack, run the command,
-   inspect the artefacts, one adversarial probe) and recorded the slice in
-   `docs/developer/validation/LOG.md`.
-5. **Records current.** The slice's rows in its phase status record and in `INDEX.md` say it is
-   merged, in the merge commit itself.
+Sequence 1 is AIR-0.1, merged as `3377a71`. "Branch after" lists the sequence numbers that must
+be on `main` before R creates the branch. A branch merges once it is verified and signed off
+(§5). When several are ready, R merges them in sequence order. Substrate branches merge after
+AIR-6.1, because each substrate bump makes every merged applied module re-pin its imports.
 
-G then merges the branch and announces the new `main`. Every open branch rebases before its own
-merge, not after each merge of another.
+## 3. The round trip for an S slice
 
-### 3.2 Merge points
+**On R**, create and push the branch:
 
-Each merge is a point at which new branches may be created. The table lists, for each merge,
-the branches it makes creatable, assuming every ADR named in §2 is Accepted (A-98, A-99, A-100,
-A-102 and A-103 are, as of 2026-09-26). A branch not listed at a point keeps waiting for a later
-one.
+```bash
+git switch main && git pull --ff-only
+```
 
-| After merge of | Branches that may now be created |
-|---|---|
-| 1 AIR-0.1 | 3.1, 1.1, 2.1, and the substrate items S1, S2, S4 to S7 once each item's ADR is Accepted |
-| 2 AIR-3.1 | 3.2 |
-| 3 AIR-1.1 | 1.2 |
-| 4 AIR-1.2 | 4.1 |
-| 5 AIR-2.1 | 2.2 |
-| 6 AIR-2.2 | 2.3, 2.4 |
-| 7 AIR-4.1 | 4.2, 4.4 |
-| 8 AIR-3.2 | 3.3 |
-| 9 AIR-2.3 | 2.6 |
-| 10 AIR-2.4 | 2.7, 2.5, 3.4 |
-| 11 AIR-4.2 | 4.3 |
-| 12 AIR-4.4 | 4.5 |
-| 13 to 16 | none |
-| 17 AIR-4.5 | 4.6 |
-| 18 | none |
-| 19 AIR-3.4 | 3.5 |
-| 20 AIR-4.6 | 6.1 |
-| 21 | none |
-| 22 AIR-6.1 | none. Substrate branches merge from here, in the order of §2 |
+```bash
+git switch -c air/1.1-layout && git push -u origin air/1.1-layout
+```
 
-Most parallel work opens at merge 6 (2.3 and 2.4) and merge 10 (2.5, 2.7 and 3.4). At its peak,
-after merge 10, seven applied branches are open at once (2.5, 2.6, 2.7, 3.3, 3.4, 4.2 and 4.4),
-plus any substrate items.
+**On S**, pick it up, work, and bundle the commits:
 
-## 4. Critical path
+```bash
+git fetch origin && git switch air/1.1-layout
+```
 
-1 → 3 → 4 → 6 → 10 → 19 → 21. The exposure lanes (7 → 11 → 16 → 20 → 22) run alongside and
-are the next longest. B starts at sequence 2 and needs no peril content until AIR-3.4.
+```bash
+git bundle create air-1.1.bundle origin/air/1.1-layout..air/1.1-layout
+```
 
-## 5. Rules for shared files
+Carry the bundle file to R.
+
+**On R**, take the commits and push them:
+
+```bash
+git switch air/1.1-layout && git pull --ff-only /path/to/air-1.1.bundle air/1.1-layout && git push
+```
+
+Then verify, sign off and merge (§5). After R pushes `main`, **on S** refresh before the next
+slice:
+
+```bash
+git fetch origin && git switch main && git pull --ff-only
+```
+
+Several S branches can travel in one trip: bundle each one, carry them together.
+
+## 4. Rounds
+
+A round is one working session on each machine, ending with R verifying and merging what both
+produced. R and S work at the same time within a round. The plan assumes every verification
+passes. A failed one moves that branch's merge to the next round.
+
+| Round | R builds (Claude) | S builds (Copilot Business) | R verifies, then merges in this order | R then creates and pushes |
+|---|---|---|---|---|
+| 0 | — | — | — | `air/3.1-flat-hierarchy`, `air/1.1-layout`, `air/2.1-peril-spec` |
+| 1 | 3.1 | 1.1, then 2.1 | 3.1, 1.1, 2.1 | `air/1.2-shared-contracts`, `air/3.2-set-readings` |
+| 2 | 3.2 | 1.2 | 1.2, 3.2 | `air/2.2-characteristics`, `air/4.1-exposure-core`, `air/3.3-readings-swrl-owl` |
+| 3 | 3.3 | 2.2, then 4.1 | 2.2, 4.1, 3.3 | `air/2.3-causes-n-t-e`, `air/2.4-causes-h-p-c-f-l`, `air/4.2-zones-attributes`, `air/4.4-loss-history` |
+| 4 | substrate ADRs (S1, S2, S4, S5, S7) | 2.3, then 2.4 | 2.3, 2.4 | `air/2.5-collections`, `air/2.6-intensity`, `air/2.7-pools-editions`, `air/3.4-crosswalk` |
+| 5 | substrate S2 | 4.2, 4.4, then 3.4 | 4.2, 4.4, 3.4 | `air/4.3-exposure-units`, `air/4.5-liability`, `air/3.5-m2-check` |
+| 6 | 3.5 | 2.6, 2.7, then 2.5 | 2.6, 2.7, 2.5 (M1), 3.5 (M2) | — |
+| 7 | substrate S1, S7 | 4.3, then 4.5 | 4.3, 4.5 | `air/4.6-market-profiles` |
+| 8 | substrate S5, S4 | 4.6, then S6 | 4.6 (M3) | `air/6.1-submission` |
+| 9 | verification | 6.1 | 6.1, then S6, S1, S7, S2, S5, S4 | — |
+
+S is the bottleneck, carrying 17 slices to R's 4 plus the substrate. In rounds 4 to 8, R's spare
+capacity goes to substrate work, which is off the critical path. If S falls behind, move 4.4 and
+4.5 to R: they are Turtle and examples, which Claude or Copilot Pro+ can build.
+
+## 5. Verifying and merging on R
+
+For each branch, in the order of the round's merge column:
+
+1. **Rebase** onto the current `main`, then `git push --force-with-lease`.
+2. **Regenerate catalogs:** `mise run build:ontology-catalog`. Commit the result on the branch.
+3. **Re-bump versions if needed.** If a merge since the branch was created bumped a document
+   this branch also changes, take `main`'s version, bump again under ADR-A86, and re-pin the
+   importers already on `main`.
+4. **Run the checks:** the Validation Pack's single command, plus `mise run
+   check:ontology-catalog` and `mise run check:ontology-versioning` when the slice touches
+   `ontology/`.
+5. **Fix failures.** Copilot Pro+ first for simple ones. Claude when the fix needs a design
+   judgement.
+6. **Sign off.** The human runs the validation gate (review the pack, run the command, inspect
+   the artefacts, one adversarial probe) and adds the slice to `docs/developer/validation/LOG.md`.
+7. **Merge:** update the slice's rows in its phase status record and `INDEX.md` on the branch,
+   then `git switch main && git merge --ff-only air/<slice>` and `git push`. Delete the branch.
+
+## 6. Critical path
+
+2.1 and 1.1 → 1.2 → 2.2 → 2.4 → 3.4 → 3.5 (M2), all but the last on S. Loss history (4.4) is
+also on the path, because 3.5 reads `aeo:LossCause`.
+
+## 7. Rules for shared files
 
 | File | Rule |
 |---|---|
-| `ontology/catalog-v001.xml` and the stub catalogs | never merged by hand. Regenerate with `mise run build:ontology-catalog` after each rebase |
-| `owl:versionIRI` literals and `.version` files | `check:ontology-versioning` compares with the base ref, so two branches bumping one document collide. The later branch takes `main`'s version after rebasing, bumps again under ADR-A86, and runs the import-pinning cascade for merged importers |
-| `insurance/peril/vocab/peril-vocab.ttl` | AIR-2.1 creates it with one delimited region per characteristic scheme, one per cause family and a final cross-group links region. AIR-2.2 writes the characteristic regions, AIR-2.3 the N, T and E regions, AIR-2.4 the H, P, C, F and L regions and every link between the two groups. Intensity links (AIR-2.6) go in `peril-intensity.ttl`, not in the family regions |
+| `ontology/catalog-v001.xml` and the stub catalogs | regenerated on R only (§5 step 2). Never edited or merged by hand |
+| `owl:versionIRI` literals and `.version` files | S bumps them by hand. R checks them, and re-bumps after rebasing where §5 step 3 applies |
+| `insurance/peril/vocab/peril-vocab.ttl` | AIR-2.1 creates it with one delimited region per characteristic scheme, one per cause family and a final cross-group links region. AIR-2.2 writes the characteristic regions, AIR-2.3 the N, T and E regions, AIR-2.4 the H, P, C, F and L regions and every link between the two groups. Intensity links (AIR-2.6) go in `peril-intensity.ttl` |
 | `insurance/exposure/spec/exposure.ttl` and its shapes | AIR-4.1 creates one region per slice of Phase 4. Each slice writes only its region |
-| `ontology/applied/README.md`, `ontology-architecture.md` §3 | one row per module, added by the slice that creates the module. Conflicts keep both rows |
-| `docs/developer/INDEX.md` | each slice edits only its own row |
-| phase status records | one per phase (units rule). Lanes sharing a phase (P1 and P2, E1 and E2) each update only their own slice rows. B creates the Phase 3 record at sequence 2 |
+| `ontology/applied/README.md`, `ontology-architecture.md` §3 | one row per module, added by the slice that creates the module |
+| `docs/developer/INDEX.md`, phase status records | each slice edits only its own rows, at merge (§5 step 7) |
 | `docs/developer/validation/LOG.md` | the human's only |
-
-## 6. Branches
-
-`air/<slice>-<slug>`, for example `air/2.3-causes-n-t-e`. One branch per slice, deleted after
-merge. The merge gate is §3.1.

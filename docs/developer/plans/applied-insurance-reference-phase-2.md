@@ -26,7 +26,8 @@ example edition used by the binding tests.
 | AIR-2.6 | intensity measure scheme, value spaces, defining thresholds, customary event windows, all in `peril-intensity.ttl` | §6.4 | Quantification only, no substrate change |
 | AIR-2.7 | pools scheme and the example market edition bound by a scoped `voc:SchemeBinding` | §9.1, §9.4 | precedence tests: scoped binding wins, reference is the fallback |
 
-Order, lanes and branches: [lanes and merge order](applied-insurance-reference-lanes.md). 2.3 and 2.4 run in parallel, as do 2.6 and 2.7.
+Branches, machines and rounds: [machines, branches and merges](applied-insurance-reference-lanes.md).
+Each slice is its own branch, even where one machine builds several in a row.
 
 Each slice's pack includes an SKOS integrity case (no `skos:related` and no `prl:canTrigger`
 within one `broaderTransitive` chain) and a reasoner-free parse and shapes run through

@@ -29,7 +29,7 @@ Plans change only when planned work changes. Status changes after every material
 | `ontology-root-relocation` | [plan](plans/repository-topology-and-documentation-governance.md) | [status](status/ontology-root-relocation.md) | [review](review/ontology-root-relocation-review.md) |
 | `mork-package-split` | [plan](plans/repository-topology-and-documentation-governance.md) | [status](status/mork-package-split.md) | — |
 | `spc-package-split` | [plan](plans/repository-topology-and-documentation-governance.md) | [status](status/spc-package-split.md) | — |
-| `applied-insurance-reference` | [epic](plans/applied-insurance-reference.md) | [status](status/applied-insurance-reference.md) | [review](review/applied-insurance-reference-review.md) |
+| `applied-insurance-reference` | [epic](plans/applied-insurance-reference.md), [lanes](plans/applied-insurance-reference-lanes.md) | [status](status/applied-insurance-reference.md) | Phase 0 review closed |
 
 ## Architecture Decisions
 

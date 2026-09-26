@@ -4,8 +4,7 @@
 
 **Unit ID:** `applied-insurance-reference-phase-0`
 **Epic:** [applied-insurance-reference](applied-insurance-reference.md)
-**Status:** AIR-0.1 implemented 2026-09-26. A-98, A-99 and A-102 Accepted. A-100 (reduced), A-103
-and A-98's addendum awaiting ratification
+**Status:** Complete. AIR-0.1 signed off and merged (`3377a71`). All five ADRs Accepted
 **Status record:** epic [status](../status/applied-insurance-reference.md) until the phase starts
 
 ## Scope

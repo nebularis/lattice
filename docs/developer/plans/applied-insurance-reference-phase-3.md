@@ -43,7 +43,7 @@ Tests at L1 and L2:
   is Undetermined with a reason on a flat list, and decides exactly mapped codes of a crosswalked
   list. A risk whose perils are all of sudden onset is Permitted under `EveryValue`
 
-Order and lanes: [lanes and merge order](applied-insurance-reference-lanes.md). Substrate item
+Order and lanes: [machines, branches and merges](applied-insurance-reference-lanes.md). Substrate item
 S2 also changes Eligibility, and rebases onto AIR-3.2.
 
 ## Documentation deltas

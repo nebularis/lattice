@@ -23,9 +23,9 @@ about the world, not about cover. No class the substrate already provides.
 | AIR-4.5 | liability exposure: counterparty populations, relationship depth, exposure bases | §5.15 |
 | AIR-4.6 | London and US profiles as scheme bindings and shapes, and the worked examples | §10, §12 |
 
-After 4.1, two lanes run in parallel: 4.2, 4.3 and 4.6 in one, 4.4 and 4.5 in the other. 4.2
+After 4.1, the slices form two independent chains: 4.2, 4.3 and 4.6, and 4.4 and 4.5. 4.2
 needs AIR-2.1, 4.3 needs AIR-2.3, 4.4 needs AIR-2.2, and 4.6 needs AIR-2.7. Order and lanes:
-[lanes and merge order](applied-insurance-reference-lanes.md).
+[machines, branches and merges](applied-insurance-reference-lanes.md).
 
 Milestone M3 closes in 4.3 and 4.6. Personal data of individual insureds is declared through a
 `dal:PrivacyProfile` in 4.1.

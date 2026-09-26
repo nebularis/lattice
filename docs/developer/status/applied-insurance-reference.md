@@ -3,8 +3,8 @@
 # Applied Insurance Reference - Status
 
 **Unit ID:** `applied-insurance-reference` (epic)
-**Status:** Phase 0 decisions complete. A-98 (with addendum), A-99, A-100, A-102 and A-103
-Accepted 2026-09-26. AIR-0.1 awaits its `LOG.md` sign-off.
+**Status:** Phase 0 complete. AIR-0.1 signed off in `LOG.md` and on `main` (`3377a71`). Phase 1
+and Phase 3 branches may be created (lanes §4, round 0).
 **Last updated:** 2026-09-26
 **Trigger:** human request, 2026-09-26
 **Plan:** [applied-insurance-reference.md](../plans/applied-insurance-reference.md)
@@ -58,11 +58,15 @@ The human accepted A-100 and A-98's addendum, and A-103 with negation added
 (`elg:negated`: evaluate, then swap Permitted and Denied, keeping Undetermined). The lanes file
 gained the merge gate and the merge points (§3).
 
+AIR-0.1 was signed off and committed (`3377a71`). The lanes plan was rewritten around the two
+machines and three agents actually available (runtime machine: Claude Code, Copilot Pro+.
+Sandbox machine: Copilot Business, no runtime, pull only).
+
 ## Phases
 
 | Phase | Plan | State | Status record |
 |---|---|---|---|
-| 0 Decisions | [plan](../plans/applied-insurance-reference-phase-0.md) | 🚧 AIR-0.1 implemented, ADRs awaiting ratification | this file |
+| 0 Decisions | [plan](../plans/applied-insurance-reference-phase-0.md) | ✅ AIR-0.1 merged (`3377a71`) | this file |
 | 1 Module split | [plan](../plans/applied-insurance-reference-phase-1.md) | ⏳ | created at phase start |
 | 2 Peril vocabulary | [plan](../plans/applied-insurance-reference-phase-2.md) | ⏳ | created at phase start |
 | 3 Readings and crosswalks | [plan](../plans/applied-insurance-reference-phase-3.md) | ⏳ | created at phase start |
@@ -77,5 +81,5 @@ None.
 
 ## Next action
 
-Human records AIR-0.1 in `LOG.md` and commits it (merge point 1). Branches 3.1, 1.1 and 2.1 may
-then be created (lanes §3.2).
+Round 0 of the lanes plan: on the runtime machine, create and push `air/1.1-layout`,
+`air/2.1-peril-spec` and `air/3.1-flat-hierarchy`. Then round 1.

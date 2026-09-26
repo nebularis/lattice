@@ -35,5 +35,5 @@ The command prints nothing, and each ADR is accepted, amended or rejected.
 
 A-98 (with addendum), A-99, A-100, A-102 and A-103 (with negation) were accepted on 2026-09-26.
 Earlier defaults stand: nested scopes (A-99), crosswalks published only where the owner's terms
-allow (A-100), and a violation for a direction without a derivation (A-102). Remaining: record
-AIR-0.1 in `LOG.md`, then close this request.
+allow (A-100), and a violation for a direction without a derivation (A-102). AIR-0.1 is recorded in
+`LOG.md` and merged (`3377a71`). This request is closed.
