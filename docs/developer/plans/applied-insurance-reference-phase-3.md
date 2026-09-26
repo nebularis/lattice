@@ -61,12 +61,15 @@ Authored in ADR-A-C2 order: the two example fixtures first, then the law, then t
 
 1. **Examples** in `ontology/eligibility/examples/`, no `owl:Ontology`, no insurance terms:
    - `flat-scheme-lending.ttl`: a contract whose unscoped `voc:boundScheme` is a hierarchical
-     industry classification (manufacturing above food processing and textiles, plus retail),
-     and a `voc:SchemeBinding` scoped to one lender that binds the lender's flat sector list
-     (the same concepts, no `skos:broader`). One `HierarchicalMatch` condition requires
-     manufacturing and excludes textiles. Recorded decisions: under the classification, food
-     processing is Permitted. Under the lender's list, manufacturing is Permitted, textiles Denied,
-     food processing and retail Undetermined with `exe:NoHierarchy`.
+     industry classification (manufacturing above food processing and textiles, plus retail and
+     wholesale), and a `voc:SchemeBinding` scoped to one lender that binds the lender's flat
+     sector list. The list reuses only concepts whose broader concept lies outside it (food
+     processing, textiles, retail, wholesale), because `skos:broader` belongs to concepts and a
+     reused parent and child would carry their link into the list. One `HierarchicalMatch`
+     condition requires manufacturing or retail and excludes textiles. Recorded decisions: under
+     the classification, food processing and retail Permitted, textiles and wholesale Denied.
+     Under the lender's list, retail Permitted, textiles Denied, food processing and wholesale
+     Undetermined with `exe:NoHierarchy`.
    - `flat-scheme-employment.ttl`: an exclusion-only condition ("every role except contractors")
      over a flat job-title list. Contractors are Denied, and every other title is Undetermined,
      not Permitted, since L12's default inclusion needs the hierarchy to know a title is not a
@@ -94,27 +97,31 @@ Authored in ADR-A-C2 order: the two example fixtures first, then the law, then t
 7. **SWRL**: no change. `concept_facts` reads the expansion, so Undetermined members derive nothing.
 8. **OWL** (`owl_backend`): refuse a plan with `no_hierarchy` with an `IRCompileError` citing
    ADR-A100, since a design-time class cannot express Undetermined.
-9. **Tests**: new cases in `test_hierarchical_conditions.py`, and the two examples added to
-   `tools/test_eligibility_examples.py`'s `EXAMPLES`. No existing test changes.
+9. **Tests**: a new `test_flat_schemes.py`, reusing the SHACL and SWRL helpers of
+   `test_concept_backends.py` (which already imports `test_hierarchical_conditions.py`, so new
+   cases there would import in a cycle), and the two examples added to
+   `tools/test_eligibility_examples.py`'s `EXAMPLES`. The one existing change registers
+   `exe:NoHierarchy` in `test_concept_backends.py`'s closed set of diagnostics.
 10. **Docs**: `tools/mork_compilers/README.md` (L14 in each backend), and the Eligibility row of
     `docs/architecture/ontology-architecture.md` §3. Then `mise run build:ontology-catalog` and
     `mise run build:ontology-releases`.
 
 | ID | Given / When / Then | Level | +/- |
 |---|---|---|---|
-| AIR31-01 | the lending example under the classification / expanded / food processing Permitted | L1 | + |
-| AIR31-02 | the lending example under the lender's list / expanded / manufacturing Permitted, textiles Denied | L1 | + |
-| AIR31-03 | the same / expanded / food processing and retail Undetermined, plan has `no_hierarchy` | L1 | + |
+| AIR31-01 | the lending example under the classification / SPARQL / food processing and retail Permitted, textiles and wholesale Denied | L1 | + |
+| AIR31-02 | the lending example under the lender's list / SPARQL / retail Permitted, textiles Denied | L1 | + |
+| AIR31-03 | the same / SPARQL / food processing and wholesale Undetermined with `exe:NoHierarchy`, plan has `no_hierarchy` | L1 | + |
 | AIR31-04 | the employment example / expanded / contractors Denied, every other title Undetermined | L1 | − |
 | AIR31-05 | a candidate outside the lender's list / SPARQL / Undetermined with `exe:OutsideScheme` | L1 | − |
 | AIR31-06 | the lender's list / SPARQL / every member's decision equals the expansion, Undetermined rows carry `exe:NoHierarchy` | L2 | + |
 | AIR31-07 | the same / SHACL / admitted and undetermined sets equal the expansion's | L2 | + |
-| AIR31-08 | the same / SWRL / derives Permitted for manufacturing and Denied for textiles only | L1 | + |
+| AIR31-08 | the same / SWRL / derives Permitted for retail and Denied for textiles only | L1 | + |
 | AIR31-09 | a `no_hierarchy` plan / OWL backend / `IRCompileError` | L1 | − |
 | AIR31-10 | both examples / Eligibility shapes / no result | L1 | + |
 | AIR31-11 | the existing hierarchical tests / unchanged / pass (non-weakening) | L1 | + |
 
-Adversarial probe for the gate: remove the flat branch from `_expand` and AIR31-03 fails.
+Adversarial probes for the gate: disabling the L14 branch in `_expand` fails AIR31-06, 07 and 08.
+Disabling it in `sparql_backend.concept_select` fails AIR31-03, 04, 06 and 07.
 
 ## Documentation deltas
 

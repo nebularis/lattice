@@ -155,6 +155,12 @@ class ConceptPlan:
     def hierarchical(self) -> bool:
         return self.strategy == ELG.HierarchicalMatch
 
+    @property
+    def no_hierarchy(self) -> bool:
+        """Hierarchical match over a resolved scheme in which no member has a
+        broader member (L14, ADR-A100)."""
+        return self.hierarchical and self.scheme is not None and not any(above for _, above in self.hierarchy)
+
 
 CONCEPT_STRATEGIES = (ELG.ExactMatch, ELG.SetMembership, ELG.HierarchicalMatch)
 
@@ -385,6 +391,7 @@ def _expand(
 ) -> Tuple[Tuple[URIRef, str], ...]:
     """The ADR-A87 decision for every member of the resolved scheme."""
     ancestors = {member: _ancestors(ordering, member) for member in ordering}
+    no_hierarchy = hierarchical and not any(ordering.values())
 
     def matches(candidate: URIRef, concept: URIRef) -> bool:
         return concept in ancestors[candidate] if hierarchical else concept == candidate
@@ -393,6 +400,8 @@ def _expand(
     for candidate in sorted(ordering, key=str):
         if any(matches(candidate, concept) for concept in excluded):
             decision = DENIED  # L10
+        elif no_hierarchy:
+            decision = PERMITTED if candidate in required else UNDETERMINED  # L14, before L12
         elif required and not any(matches(candidate, concept) for concept in required):
             decision = DENIED
         elif hierarchical and any(

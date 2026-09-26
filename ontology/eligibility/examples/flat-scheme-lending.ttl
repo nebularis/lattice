@@ -1,0 +1,85 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# A credit policy admits borrowers in manufacturing or retail, except
+# textiles, under a hierarchical industry classification. For one lender the
+# contract resolves instead to that lender's flat list of sector codes, which
+# reuses some of the classification's concepts but asserts no hierarchy of its
+# own. The same condition is evaluated under both (ADR-A100, elg:L14).
+#
+# Recorded decisions, one question per candidate:
+#
+# | Candidate       | Classification (no scope) | Lender B's list (scope lender-b) |
+# |-----------------|---------------------------|----------------------------------|
+# | food processing | Permitted (below manufacturing) | Undetermined, exe:NoHierarchy |
+# | textiles        | Denied (excluded)         | Denied (excluded)                |
+# | retail          | Permitted (required)      | Permitted (required)             |
+# | wholesale       | Denied (outside both)     | Undetermined, exe:NoHierarchy    |
+#
+# The list holds only concepts whose broader concept is outside it, so no
+# member has a broader concept within the list. Hierarchical match reads the
+# ordering among a scheme's members only (elg:L9), so the list has no
+# hierarchy even though the classification's links remain in the graph.
+
+@prefix elg: <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
+@prefix fnd: <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix voc: <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex:  <https://example.org/lattice/eligibility/> .
+
+ex:industry-classification a voc:ConceptScheme ;
+    fnd:hasIdentity ex:industry-classification-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Industry classification"@en .
+
+ex:lender-b-sectors a voc:ConceptScheme ;
+    fnd:hasIdentity ex:lender-b-sectors-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Lender B sector codes"@en .
+
+ex:manufacturing a skos:Concept ; skos:prefLabel "Manufacturing"@en ;
+    skos:inScheme ex:industry-classification .
+ex:food-processing a skos:Concept ; skos:prefLabel "Food processing"@en ;
+    skos:broader ex:manufacturing ;
+    skos:inScheme ex:industry-classification , ex:lender-b-sectors .
+ex:textiles a skos:Concept ; skos:prefLabel "Textiles"@en ;
+    skos:broader ex:manufacturing ;
+    skos:inScheme ex:industry-classification , ex:lender-b-sectors .
+ex:retail a skos:Concept ; skos:prefLabel "Retail"@en ;
+    skos:inScheme ex:industry-classification , ex:lender-b-sectors .
+ex:wholesale a skos:Concept ; skos:prefLabel "Wholesale"@en ;
+    skos:inScheme ex:industry-classification , ex:lender-b-sectors .
+
+ex:lender-b a voc:BindingScope ; skos:prefLabel "Lender B"@en .
+
+ex:sector-contract a voc:SchemeContract ;
+    fnd:hasIdentity ex:sector-contract-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    voc:constrainsProperty ex:hasSector ;
+    voc:boundScheme ex:industry-classification .
+
+ex:lender-b-binding a voc:SchemeBinding ;
+    voc:forContract ex:sector-contract ;
+    voc:bindsScheme ex:lender-b-sectors ;
+    voc:bindingScope ex:lender-b ;
+    fnd:hasTemporalScope [
+        a fnd:TemporalScope ;
+        fnd:validFrom "2026-01-01T00:00:00Z"^^xsd:dateTime
+    ] .
+
+ex:eligible-sector a elg:Condition ;
+    elg:matchStrategy elg:HierarchicalMatch ;
+    elg:compatibilityOperation elg:AllRequired ;
+    elg:wildcardSemantics elg:NoWildcard ;
+    elg:constrainedByContract ex:sector-contract ;
+    elg:requiredConcept ex:manufacturing , ex:retail ;
+    elg:excludedConcept ex:textiles .
+
+ex:q-food-processing a elg:Question ;
+    elg:forCondition ex:eligible-sector ; elg:candidateConcept ex:food-processing .
+ex:q-textiles a elg:Question ;
+    elg:forCondition ex:eligible-sector ; elg:candidateConcept ex:textiles .
+ex:q-retail a elg:Question ;
+    elg:forCondition ex:eligible-sector ; elg:candidateConcept ex:retail .
+ex:q-wholesale a elg:Question ;
+    elg:forCondition ex:eligible-sector ; elg:candidateConcept ex:wholesale .

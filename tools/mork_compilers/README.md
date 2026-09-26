@@ -33,6 +33,15 @@ resolved scheme ("Expanded" in ADR-A89). The SPARQL backend walks the
 hierarchy at query time instead ("QueryTime"). The tests check that the two
 agree on every member.
 
+A hierarchical plan whose resolved scheme has no member with a broader member
+in the scheme (`plan.no_hierarchy`) follows `elg:L14` (ADR-A100): a required
+concept is `Permitted`, an excluded one `Denied`, and every other member
+`Undetermined` with `exe:NoHierarchy`, before default inclusion (L12)
+applies. The expansion and the SPARQL query both apply it, and the OWL backend
+refuses such a plan. See `ontology/eligibility/examples/flat-scheme-lending.ttl`,
+where one condition meets a hierarchical scheme or a flat list depending on
+the binding scope.
+
 SHACL and SWRL read the expansion. SHACL emits readiness, determinacy and
 admission shapes: the first to report a question gives `Undetermined`,
 `Undetermined` or `Denied`, and a question none reports is `Permitted`. SWRL
@@ -72,7 +81,8 @@ contract has scheme bindings.
 
 The OWL backend (`owl_backend.py`, ADR-A90) turns bound conditions and
 profiles into design-time classes, one `exe:OwlArtefact` module per
-compilation. It compiles only bindings that claim `elg:singleValued`, and
+compilation. It refuses a plan without a hierarchy (L14 above). It compiles
+only bindings that claim `elg:singleValued`, and
 emits a shape that checks the claim on data. `check` asks whether one class
 is subsumed by another, whether a class is satisfiable, and whether two
 overlap, returning an `exe:DesignTimeCheck` record:

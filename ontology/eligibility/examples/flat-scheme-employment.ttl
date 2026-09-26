@@ -1,0 +1,53 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# A benefits rule applies to every role except contractors. It is written
+# against an occupational classification, and for one employer the contract
+# resolves to a flat list of job titles with no hierarchy (ADR-A100,
+# elg:L14).
+#
+# Recorded decisions:
+#
+# | Candidate   | Decision                                         |
+# |-------------|--------------------------------------------------|
+# | contractor  | Denied (excluded)                                |
+# | ward nurse  | Undetermined, exe:NoHierarchy                    |
+# | site agent  | Undetermined, exe:NoHierarchy                    |
+#
+# Under a hierarchy, an exclusion-only condition admits every member not at
+# or below the exclusion (elg:L12). Without one, the list cannot say whether
+# a site agent is a kind of contractor, so only the exclusion itself decides.
+
+@prefix elg: <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
+@prefix fnd: <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix voc: <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix ex:  <https://example.org/lattice/eligibility/> .
+
+ex:employer-titles a voc:ConceptScheme ;
+    fnd:hasIdentity ex:employer-titles-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Employer job titles"@en .
+
+ex:contractor a skos:Concept ; skos:prefLabel "Contractor"@en ; skos:inScheme ex:employer-titles .
+ex:ward-nurse a skos:Concept ; skos:prefLabel "Ward nurse"@en ; skos:inScheme ex:employer-titles .
+ex:site-agent a skos:Concept ; skos:prefLabel "Site agent"@en ; skos:inScheme ex:employer-titles .
+
+ex:title-contract a voc:SchemeContract ;
+    fnd:hasIdentity ex:title-contract-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    voc:constrainsProperty ex:hasJobTitle ;
+    voc:boundScheme ex:employer-titles .
+
+ex:benefit-roles a elg:Condition ;
+    elg:matchStrategy elg:HierarchicalMatch ;
+    elg:compatibilityOperation elg:AllRequired ;
+    elg:wildcardSemantics elg:NoWildcard ;
+    elg:constrainedByContract ex:title-contract ;
+    elg:excludedConcept ex:contractor .
+
+ex:q-contractor a elg:Question ;
+    elg:forCondition ex:benefit-roles ; elg:candidateConcept ex:contractor .
+ex:q-ward-nurse a elg:Question ;
+    elg:forCondition ex:benefit-roles ; elg:candidateConcept ex:ward-nurse .
+ex:q-site-agent a elg:Question ;
+    elg:forCondition ex:benefit-roles ; elg:candidateConcept ex:site-agent .

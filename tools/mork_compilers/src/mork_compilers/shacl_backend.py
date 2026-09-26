@@ -152,7 +152,8 @@ def render_concept_selects(plan: ConceptPlan) -> List[Tuple[str, str, str]]:
         selects.append(
             (
                 "determinacy",
-                f"The candidate is outside the resolved scheme or above an exclusion ({EXE.OutsideScheme}, {EXE.AboveExclusion}).",
+                f"The candidate is outside the resolved scheme or cannot be placed in it ({EXE.OutsideScheme}, "
+                f"{EXE.NoHierarchy if plan.no_hierarchy else EXE.AboveExclusion}).",
                 PREFIXES + "SELECT $this WHERE {\n" + _single_candidate(plan)
                 + f"  FILTER ({' || '.join(undecided)})\n" + "}\n",
             )

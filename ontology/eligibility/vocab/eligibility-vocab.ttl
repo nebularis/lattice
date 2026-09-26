@@ -7,7 +7,7 @@
 
 <https://www.nebularis.org/neuro-semantic/eligibility-vocab>
 	a owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/eligibility-vocab/0.6.0> ;
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/eligibility-vocab/0.7.0> ;
 	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.6.0> .
 
 elg:ExactMatch a elg:MatchStrategy .
@@ -64,3 +64,6 @@ elg:L12 a elg:Law ;
 elg:L13 a elg:Law ;
 	elg:lawRegister elg:StaticConstraint ;
 	rdfs:comment "Reachable exclusions. Where a condition declares required concepts, each of its excluded concepts matches at least one of them under the condition's match strategy. An exclusion outside every inclusion excludes nothing." .
+elg:L14 a elg:Law ;
+	elg:lawRegister elg:SemanticLaw ;
+	rdfs:comment "Hierarchy precondition. Under hierarchical match, when no member of the resolved scheme has a broader concept within that scheme, a candidate that is a member and is neither a required nor an excluded concept leaves the condition undetermined. The scheme cannot say whether the candidate falls under a required or an excluded concept. This takes precedence over default inclusion (L12)." .

@@ -23,14 +23,14 @@ after round 1. Every later slice is still an outline.
 
 ## Machine R
 
-**Position:** round 1. AIR-1.1, AIR-2.1 and AIR-3.1 detailed to implementation level on `main`.
-AIR-3.1 starts when the human switches R to autonomous mode on `air/3.1-flat-hierarchy`.
+**Position:** round 1. AIR-3.1 built and self-validated on `air/3.1-flat-hierarchy` (Validation
+Pack Results). Waiting for the human's gate, and for S's AIR-1.1 and AIR-2.1 bundles to verify.
 **Last updated:** 2026-09-26
 **Blockers:** none
 
 | Seq | Slice | Branch | State | Note |
 |---|---|---|---|---|
-| 2 | AIR-3.1 | `air/3.1-flat-hierarchy` | waiting for branch | brief: Phase 3 plan, AIR-3.1 in detail |
+| 2 | AIR-3.1 | `air/3.1-flat-hierarchy` | built | tags to create at merge: `eligibility-vocab-v0.7.0`, `executable-v0.6.0` |
 | 8 | AIR-3.2 | `air/3.2-set-readings` | waiting | |
 | 13 | AIR-3.3 | `air/3.3-readings-swrl-owl` | waiting | |
 | 21 | AIR-3.5 | `air/3.5-m2-check` | waiting | |

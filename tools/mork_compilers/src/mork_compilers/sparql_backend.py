@@ -29,7 +29,10 @@ Where the plan resolved a scheme, a candidate outside it is Undetermined, and
 hierarchical match walks ``skos:broader`` at query time (the "QueryTime" form
 of ADR-A89 item 3). The walk does not check that intermediate concepts belong
 to the scheme. The plan's own expansion does, and the two agree on any scheme
-whose members are broader only than other members.
+whose members are broader only than other members. Over a scheme whose members
+have no broader member (L14, ADR-A100), no walk happens: the named concepts
+decide by equality and every other member is Undetermined with
+``exe:NoHierarchy``.
 """
 
 from __future__ import annotations
@@ -179,6 +182,14 @@ def _hierarchical_decision(plan: ConceptPlan) -> str:
     )
 
 
+def _no_hierarchy_decision(plan: ConceptPlan) -> str:
+    """L14: over a scheme with no hierarchy, only the named concepts decide."""
+    decision = f'IF(?candidate IN ({_in_list(plan.required)}), "Permitted", "Undetermined")' if plan.required else '"Undetermined"'
+    if plan.excluded:
+        decision = f'IF(?candidate IN ({_in_list(plan.excluded)}), "Denied", {decision})'
+    return decision
+
+
 def render_concept_query(plan: ConceptPlan) -> str:
     """The SPARQL query text for one concept plan."""
     return PREFIXES + concept_select(plan)
@@ -188,8 +199,12 @@ def concept_select(plan: ConceptPlan, carry: str = "", key: str = "?question") -
     """The SELECT block, without prefixes, projecting ``key`` ?decision ?diagnostic.
     ``key`` is the question, or the subject when the condition is bound.
     ``carry`` is prepended to every projection and grouping (see ``profile_select``)."""
-    decision = _hierarchical_decision(plan) if plan.hierarchical else _flat_decision(plan)
-    determined = f'IF(?decision = "Undetermined", <{EXE.AboveExclusion}>, ?none)'
+    if plan.no_hierarchy:
+        decision = _no_hierarchy_decision(plan)
+    else:
+        decision = _hierarchical_decision(plan) if plan.hierarchical else _flat_decision(plan)
+    reason = EXE.NoHierarchy if plan.no_hierarchy else EXE.AboveExclusion
+    determined = f'IF(?decision = "Undetermined", <{reason}>, ?none)'
     if plan.scheme is not None:
         membership = f"EXISTS {{ ?candidate skos:inScheme <{plan.scheme.scheme}> }}"
         decision = f'IF({membership}, {decision}, "Undetermined")'

@@ -203,6 +203,11 @@ def _condition(graph: Graph, plan: Union[IntervalPlan, ConceptPlan], artefact: U
         raise IRCompileError(f"{plan.condition} has no elg:EvidenceBinding, and the OWL backend compiles bound conditions only")
     if not evidence.single_valued:
         raise IRCompileError(f"{evidence.binding} does not claim elg:singleValued, so its path has no OWL reading (ADR-A90)")
+    if isinstance(plan, ConceptPlan) and plan.no_hierarchy:
+        raise IRCompileError(
+            f"{plan.condition} matches hierarchically over a scheme with no hierarchy, so members it does not "
+            f"name are Undetermined (elg:L14), which a design-time class cannot express (ADR-A100)"
+        )
     filler = _concept_filler(graph, plan) if isinstance(plan, ConceptPlan) else _interval_filler(graph, plan)
     cls = owl_class(plan.condition)
     graph.add((cls, RDF.type, OWL.Class))
