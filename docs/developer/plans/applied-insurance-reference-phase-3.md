@@ -1,42 +1,59 @@
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
-# Plan: Applied Insurance Reference — Phase 3, Scheme Profiles and MORK Bridge
+# Plan: Applied Insurance Reference — Phase 3, Eligibility Readings and Crosswalks
 
 **Unit ID:** `applied-insurance-reference-phase-3`
 **Epic:** [applied-insurance-reference](applied-insurance-reference.md)
-**Status:** Rolling-wave outline. AIR-3.1 to AIR-3.3 need only A-100 and Phase 1, and are detailed
-at the Phase 0 gate. AIR-3.4 and AIR-3.5 need the cause scheme and are detailed at AIR-2.4.
-**Sketch:** [mork-bridge.md](../sketches/mork-bridge.md)
+**Status:** Rolling-wave outline. AIR-3.1 to AIR-3.3 are substrate slices, detailed when their
+ADRs are accepted. AIR-3.4 and AIR-3.5 need the cause scheme and are detailed at AIR-2.4.
+**Decisions:** [ADR-A100](../../architecture/decisions/ADR-A100-hierarchical-match-over-flat-schemes.md) (D11), [ADR-A103](../../architecture/decisions/ADR-A103-eligibility-set-readings.md) (D12)
+**Sketches:** [mork-bridge.md](../sketches/mork-bridge.md), [peril-vocabulary.md](../sketches/peril-vocabulary.md) §6.8
 
 ## Scope
 
-Let a consumer bind a flat or simply taxonomic peril list and get correct, tier-gated answers,
-and let reviewed MORK crosswalks lift such a list towards the reference. The profile
-vocabulary lives in the cross-domain module `applied/scheme-profile/` (epic D10).
+Make Eligibility decide correctly when a peril list is flat (A-100) and when a path reaches
+several values (A-103), then let reviewed crosswalks carry a flat or simply taxonomic list to the
+reference. Milestone M2 is a check across cause, agency and mechanism, run against the reference,
+a flat list and a crosswalked list.
+
+AIR-3.1 to AIR-3.3 change substrate. Each follows ADR-A-C2: the ADR's non-insurance examples are
+authored as fixtures before the README prose, and no insurance term enters either layer.
 
 ## Slices
 
-| Slice | Content | Sketch | Modules |
-|---|---|---|---|
-| AIR-3.1 | scheme profile vocabulary: tier (F, H, R, N), capabilities, coverage shares, `InsufficientSchemeStructure`, crosswalk artefact. No insurance terms, as the module is cross-domain | §3.3, §8 | `applied/scheme-profile/` |
-| AIR-3.2 | profile derivation as a `fnd:DerivedArtefact` from a bound scheme and its crosswalks | §3.1, §3.3 | `tools/`, location fixed in A-100 |
-| AIR-3.3 | tier-gated evaluation: each check declares its required capability, and returns Undetermined with the reason when the profile lacks it | §3.2 | Eligibility tooling, applied |
-| AIR-3.4 | lift: MORK mapping graphs from a flat list code to cause concept plus characteristic values, with review and provenance, promoted to a crosswalk | §4.1, §7 | `ontology/mork` examples, crosswalk artefact |
-| AIR-3.5 | lower and list-to-list via the reference | §4.2, §4.3 | as 3.4 |
+| Slice | Content | Modules |
+|---|---|---|
+| AIR-3.1 | A-100: the law beside L11 in the Eligibility README, its two example fixtures, `exe:NoHierarchy` (Executable PATCH), the rule in the IR's expansion and in the SPARQL backend, and the OWL backend's refusal | `ontology/eligibility` (README, examples), `tools/mork_compilers`. `Executable.ttl` gains one individual, a stated deviation from the two-module rule |
+| AIR-3.2 | A-103: `elg:ValueReading`, its three individuals and `elg:valueReading` (Eligibility MINOR, cascade), fixtures, the IR, SPARQL and SHACL | `ontology/eligibility`, `tools/mork_compilers` |
+| AIR-3.3 | A-103 in the SWRL (sound subset) and OWL (`∃`, `∀ ⊓ ∃`) backends | `tools/mork_compilers` |
+| AIR-3.4 | crosswalk format: reviewed SKOS triples plus characteristic values on codes that name several things, as a `fnd:DerivedArtefact`. A crosswalk of one market list, and the lookup that lifts codes to reference concepts at ingestion | `insurance/peril/crosswalk/`, `ontology/mork` examples |
+| AIR-3.5 | lowering to a market list, list-to-list through the reference, and milestone M2 | as 3.4, `insurance/exposure/examples/` |
 
-AIR-3.1 to AIR-3.3 use non-insurance test schemes, since the module is cross-domain. Order and
-lanes: [lanes and merge order](applied-insurance-reference-lanes.md).
+Tests at L1 and L2:
 
-Tests at L1 and L2: the same condition over a tier F, H, R and N scheme (milestone M2),
-crosswalk invalidation when either edition changes, and a negative case where an inexact mapping
-must not be treated as exact.
+- 3.1: on a flat scheme, a required code matches, an excluded code is excluded, every other member
+  is Undetermined with `exe:NoHierarchy`, and a hierarchical scheme evaluates as before. SPARQL,
+  SHACL and SWRL agree. The OWL backend refuses
+- 3.2: each reading over zero, one and several values, including an exclusion read `EveryValue`,
+  and a binding without a reading behaving as today. SPARQL and SHACL agree
+- 3.3: SWRL derives only the sound subset. OWL classes stand in the expected subsumptions
+- 3.4: a crosswalk is stale when either edition changes. An inexact mapping never decides
+- 3.5 (M2): the cyber write-back profile of peril vocabulary §6.8 decides on the reference,
+  is Undetermined with a reason on a flat list, and decides exactly mapped codes of a crosswalked
+  list. A risk whose perils are all of sudden onset is Permitted under `EveryValue`
+
+Order and lanes: [lanes and merge order](applied-insurance-reference-lanes.md). Substrate item
+S2 also changes Eligibility, and rebases onto AIR-3.2.
 
 ## Documentation deltas
 
-`docs/architecture/ontology-architecture.md` (MORK section: crosswalk promotion from the Mapping
-role), the profile module's README, and `solution-design-specification.md` if 3.3 changes the
-evaluation contract.
+| Document | Change | Slice |
+|---|---|---|
+| `ontology/eligibility/README.md`, examples | the A-100 law, the A-103 readings | 3.1, 3.2 |
+| `tools/mork_compilers/README.md` | both laws in every backend | 3.1 to 3.3 |
+| `docs/architecture/ontology-architecture.md` | Eligibility section, and the MORK section on proposals that end as crosswalks | 3.2, 3.4 |
+| `docs/architecture/solution-design-specification.md` | set readings as an evaluation feature | 3.2 |
 
 ## Exit gate
 
-M2 demonstrated. MB-Q2 answered.
+A-100 and A-103 Accepted and implemented. M2 demonstrated. MB-Q2 answered.

@@ -54,7 +54,6 @@ precedence.
 ontology/applied/
     capacity/           cross-domain: finite resources and their allocation
     classification/     cross-domain: territory, asset class and industry contracts (§7)
-    scheme-profile/     cross-domain: scheme profiles and capability tiers (MORK bridge §8)
     insurance/
         common/         insurance scheme contracts, liability role types, loss event (§7)
         peril/          the reference peril vocabulary (peril vocabulary §4)
@@ -74,8 +73,9 @@ a shapes directory is versioned by its `.version` file, so two modules sharing o
 would bump each other. Each sub-folder above is therefore a module with its own spec, vocab,
 shapes and `.version`. A module sits at the lowest level of sharing that covers its users:
 cross-domain modules beside the domains, insurance-only shared content in `insurance/common/`.
-Dependencies run one way: `classification/` and `scheme-profile/` on the substrate only,
-`insurance/common/` on those, `peril/` on `common/`, `exposure/` on `common/` and `peril/`,
+Scheme structural capabilities are part of Vocabulary, not an applied module (ADR-A100).
+Dependencies run one way: `classification/` on the substrate only, `insurance/common/` on it and
+the substrate, `peril/` on `common/`, `exposure/` on `common/` and `peril/`,
 `submission/` on `exposure/`, `claims/` on `exposure/` and `contract/`.
 
 ## 4. Dependencies
@@ -364,7 +364,8 @@ generated (a derived artefact, reproducible from the exposure set and the peril 
 graph never asserts them by hand. Generation is lazy: a check may compute the units it needs from
 the source graph on the fly (route R1, term parameters §5), and only a deployment that profiles
 a need materialises them. The peril is read in the operative scheme of the contract being
-checked, at that scheme's tier (MORK bridge §6). They are what "flood cover for every property in a special
+checked, and peril-dependent checks require only the capabilities that scheme's profile has
+(MORK bridge §3, §6). They are what "flood cover for every property in a special
 flood hazard area with TIV over a threshold" is evaluated against, and what a percentage-of-TIV
 deductible reads its base from. Open CBAA's `rsk:Risk` is the bound counterpart: one location,
 one deemed peril set, one sum insured (§11).
@@ -377,16 +378,34 @@ aeo:LossRecord ⊑ fnd:Evidenced ⊓ =1 aeo:lossDate ⊓ ≤1 aeo:lossAt.aeo:Loc
 
 | Property | Note |
 |---|---|
-| `aeo:initiatingPeril` | the event family concept (tropical cyclone) |
-| `aeo:proximatePeril` | the peril the record attributes the loss to (surge), where known |
-| `aeo:mechanism`, `aeo:agency` | characteristic values of this loss, from the peril vocabulary's schemes |
+| `aeo:hasCause` | one `aeo:LossCause` per link of the cause chain (below) |
 | `aeo:consequence` | heads of loss (physical damage, business interruption) |
 | `aeo:paid`, `aeo:reserved`, `aeo:incurred` | money quantities in one unit. A shape checks incurred equals paid plus reserved when all three are present |
 | `aeo:lossStatus` | open, closed, reopened, in litigation |
 | `aeo:lossEvent` | an optional shared event node, so losses from one catastrophe group together |
 
-The chain (initiating, proximate, mechanism) is recorded because London and US causation rules
-read different elements of it (whitepaper §3.8).
+The chain is recorded because London and US causation rules read different elements of it
+(whitepaper §3.8). Each link is a node, so that a check across cause and characteristics reads
+values that belong together:
+
+```
+aeo:LossCause ⊑ fnd:Evidenced
+    ⊓ =1 aeo:peril.skos:Concept ⊓ =1 aeo:causePosition.skos:Concept
+    ⊓ ≤1 aeo:agency.skos:Concept
+```
+
+| Property | Note |
+|---|---|
+| `aeo:peril` | the cause concept of this link, in the operative scheme |
+| `aeo:causePosition` | initiating, intermediate or proximate |
+| `aeo:mechanism` | how this link did harm (fire, inundation). Several are allowed, read by a set reading (ADR-A103) |
+| `aeo:agency` | who or what acted in this link |
+
+An Eligibility profile whose subject class is `aeo:LossCause` then evaluates one link at a time
+(peril vocabulary §6.8). Where the source records no agency or mechanism, an effective value is
+filled from the cause concept's `prl:typicalAgency` or `prl:typicalMechanism` as a
+`fnd:DerivedArtefact`, so a reviewer can see it was defaulted. A drafter's code that carries no
+typical values leaves the link without one, and a check reading it is Undetermined.
 
 ### 5.13 Coverage requirements
 
@@ -470,7 +489,7 @@ the relationship graph from which a claim's direction is derived when its roles 
 | `aeo:perilScope` | not functional | metrics cover peril sets |
 
 Disjointness: exposure set, location, asset, interest, valuation, assessment, attribute value,
-dependency, peril metric, exposure unit, loss record, requirement, existing cover, counterparty population and control
+dependency, peril metric, exposure unit, loss record, loss cause, requirement, existing cover, counterparty population and control
 relation are pairwise disjoint, and disjoint with `pty:Actor`.
 
 Chains are not declared in the T-Box. The shortcuts consumers want (an insured exposed in a
@@ -485,7 +504,7 @@ materialisation and puts every shortcut under provenance.
 | `aeo:assetClass` | `cls:AssetClassContract` | V2 plus V3 | crosswalked to the CBAA insurable interest hierarchy |
 | `aeo:territory` | `cls:TerritoryContract` | V2 plus V3 | same edition Open CBAA binds for `rsk:riskLocation` |
 | `aeo:zone` | `aeo-voc:HazardZoneContract` | V2 per jurisdiction | territory-scoped bindings |
-| `aeo:initiatingPeril`, `aeo:proximatePeril`, `aeo:perilScope`, `aeo:unitPeril` | `icm:PerilContract` | reference, market or drafter | the `insurance/peril` edition as unscoped fallback, drafter and market editions by scope (peril vocabulary §9) |
+| `aeo:peril` (on a loss cause), `aeo:perilScope`, `aeo:unitPeril` | `icm:PerilContract` | reference, market or drafter | the `insurance/peril` edition as unscoped fallback, drafter and market editions by scope (peril vocabulary §9) |
 | `aeo:mechanism`, `aeo:agency` | `icm:PerilMechanismContract`, `icm:PerilAgencyContract` | reference | peril vocabulary characteristic schemes |
 | `aeo:populationKind`, `aeo:relationshipDepth` | `aeo-voc:` contracts | V1 plus V3 | |
 | `aeo:consequence` | `icm:ConsequenceContract` | reference | peril vocabulary consequence scheme |
@@ -578,7 +597,7 @@ binds the US profile's schemes under a binding scoped to the London market and t
 | `rsk:insurableInterest` | crosswalked from `aeo:assetClass` and `aeo:interestKind` |
 | SoUA included and excluded perils per segment | exposure units' perils evaluated against the segment's scope |
 | SoUA applicable pool schemes | `aeo:PoolParticipation` |
-| a drafter's flat or taxonomic peril list | exposure units carry perils in that list's scheme, and peril-dependent exposure checks run at its tier (MORK bridge §6) |
+| a drafter's flat or taxonomic peril list | exposure units carry perils in that list's scheme, and peril-dependent exposure checks run where that scheme's profile has the capabilities they require (MORK bridge §3, §6) |
 | SoUA vacant property segments | `aeo:occupancyState` on the location's assessment |
 | M5 5.15.1 (natural catastrophe cover must be offered in France with fire cover) | a requirement of source regulation, scope French locations, triggered by the fire peril in the bound policy's scope |
 | aggregate GWP limits and catastrophe accumulation | peril metrics and exposure units summed per territory and peril grouping, as derived artefacts feeding the accumulators of design-spec §6.4 |

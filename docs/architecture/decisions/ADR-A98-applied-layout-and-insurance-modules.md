@@ -2,8 +2,8 @@
 
 # ADR-A98: Applied layout and insurance modules
 
-**Status:** Proposed
-**Date:** 2026-09-26 (proposed)
+**Status:** Accepted
+**Date:** 2026-09-26 (proposed), 2026-09-26 (accepted)
 **Related:** ADR-A86 (semantic versioning), ADR-A88 (import resolution), ADR-A-C1, ADR-A-C2, ADR-A99, ADR-A100, ADR-A102
 **Unit:** [`applied-insurance-reference`](../../developer/plans/applied-insurance-reference.md) (AIR-0.1, epic decisions D1, D5 to D9)
 
@@ -39,8 +39,8 @@ importer.
 3. **Domains.** A domain is a directory `applied/<domain>/` with a `domain-README.md` and one
    directory per module. Each module has `spec/<module>.ttl`, `vocab/` where it declares concepts,
    `shapes/` with its own `.version`, and a `README.md`. `applied/README.md` explains the domains
-   and the levels of sharing.
-4. **Insurance modules.** `common/` (insurance scheme contracts, liability role types per
+   and the levels of sharing. Additional directories (e.g., `examples/`, `projection`) are permitted where required.
+4. **Insurance modules.** `applied/insurance/common/` (insurance scheme contracts, liability role types per
    ADR-A102, the loss event), `peril/` (ADR-A99), `exposure/`, `submission/` and `claims/`. A new
    `contract/` module is deferred (epic D2).
 5. **Dependencies run one way.** `classification/` and `scheme-profile/` import the substrate
@@ -80,3 +80,11 @@ importer.
 - Applied content is not substrate, so ADR-A-C2 governs only the substrate changes it motivates.
   Cross-domain modules keep their text and examples free of domain vocabulary so that promotion
   stays possible.
+
+## Addendum (2026-09-26): no scheme profile module
+
+Revised ADR-A100 handles schemes without a hierarchy in Eligibility and its compilers (epic
+decision D11, reversing D10). No `applied/scheme-profile/` module exists. Decision 2 therefore
+lists two cross-domain modules, `capacity/` and `classification/`, and decision 5 reads:
+`classification/` imports the substrate only, and `insurance/common/` imports it and the
+substrate. Every other decision stands.

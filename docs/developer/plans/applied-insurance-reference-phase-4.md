@@ -19,7 +19,7 @@ about the world, not about cover. No class the substrate already provides.
 | AIR-4.1 | exposure set, location, legal entity, control relations, asset, interest, valuation. Spec and shapes created with one region per slice (lanes §4) | §5.1 to §5.6 |
 | AIR-4.2 | zones and pool participation, hazard attributes, assessments and profile shapes | §5.4, §5.7, §5.8 |
 | AIR-4.3 | dependencies, peril metrics, exposure units derived on demand (no materialisation required) | §5.9 to §5.11 |
-| AIR-4.4 | loss history with initiating and proximate peril and characteristic values, the loss event class in `insurance/common/` (D7), coverage requirements, existing cover, financial metrics | §5.12 to §5.14 |
+| AIR-4.4 | loss history with one `aeo:LossCause` node per link of the cause chain (peril, position, mechanism, agency), effective characteristic values defaulted from the cause's typical values as derived artefacts (epic D12), the loss event class in `insurance/common/` (D7), coverage requirements, existing cover, financial metrics | §5.12 to §5.14 |
 | AIR-4.5 | liability exposure: counterparty populations, relationship depth, exposure bases | §5.15 |
 | AIR-4.6 | London and US profiles as scheme bindings and shapes, and the worked examples | §10, §12 |
 

@@ -2,8 +2,8 @@
 
 # ADR-A99: Reference vocabularies and peril structure
 
-**Status:** Proposed
-**Date:** 2026-09-26 (proposed)
+**Status:** Accepted
+**Date:** 2026-09-26 (proposed), 2026-09-26 (accepted)
 **Related:** ADR-A85 (scoped binding resolution), ADR-A87 (concept exclusion), ADR-A98, ADR-A100
 **Unit:** [`applied-insurance-reference`](../../developer/plans/applied-insurance-reference.md) (AIR-0.1)
 **Sketches:** [peril-vocabulary.md](../../developer/sketches/peril-vocabulary.md), [peril-structure-whitepaper.md](../../developer/sketches/peril-structure-whitepaper.md)
@@ -12,8 +12,8 @@
 
 What a peril means in a contract is fixed by the contract's drafter (a carrier, an MGA, a broker)
 or by its market, which may publish its own list. Consumers bring those lists, most of them flat
-or two-level. LATTICE's applied insurance domain still needs a reference peril vocabulary: a
-default where nothing else is bound, a target for crosswalks, and the structure that contract
+or limited to a few levels. Lattice's applied insurance domain still needs a reference peril vocabulary: a
+default where no other vocabulary is bound/available, to provide a target for crosswalks and the structure that contract
 checks need. The whitepaper shows that a SKOS hierarchy alone cannot carry that structure: kinds
 and parts differ, triggering is directed, some perils overlap without subsumption, cyber and
 flood wordings select by mechanism and agency, bundles are sets, and some perils are defined by

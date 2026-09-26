@@ -18,7 +18,7 @@ slices are outlined and detailed at the preceding phase gate.
 | [peril-vocabulary.md](../sketches/peril-vocabulary.md) | reference peril vocabulary `prl:`: cause scheme, kind and part links, typed relations, characteristic and companion schemes, collections, Quantification links, crosswalks |
 | [asset-exposure-ontology.md](../sketches/asset-exposure-ontology.md) | exposure ontology `aeo:`: locations, assets, values, zones, dependencies, exposure units, loss history, requirements, liability exposure |
 | [term-parameters.md](../sketches/term-parameters.md) | contract term parameters on `ins:Qualifier`, term relations, optional compilation, liability direction from party roles |
-| [mork-bridge.md](../sketches/mork-bridge.md) | scheme profiles and capability tiers, MORK crosswalks between flat or taxonomic lists and the reference |
+| [mork-bridge.md](../sketches/mork-bridge.md) | checks against flat, taxonomic and reference-structured peril lists, and reviewed crosswalks between them |
 | [peril-structure-whitepaper.md](../sketches/peril-structure-whitepaper.md) | why a hierarchy alone is insufficient, where each structural notion lives, inter-layer cost, upstream changes L-P1 to L-P6 |
 
 The sketches use Open CBAA, a binding-authority consumer, and its real contractual
@@ -43,7 +43,7 @@ Each is stated once in the sketch cited, and every phase plan inherits them.
 | # | Principle | Source |
 |---|---|---|
 | E1 | Reference editions are the unscoped fallback. Agreement, drafter and market bindings take precedence, and a market-published view (an LMA edition, for example) is welcome | mork-bridge §2 |
-| E2 | The operative scheme is the contract's. Checks run at the structure that scheme has, and return Undetermined when they need structure it lacks | mork-bridge §1, §3 |
+| E2 | The operative scheme is the contract's. Checks run at the structure that scheme has, and return Undetermined when they need structure it lacks (ADR-A100, and missing evidence under ADR-A91) | mork-bridge §1, §3 |
 | E3 | The source graph is normative. Compilation to Surface, generated classes or Capacity runtime forms is optional, parity-tested and never synchronised back | term-parameters §5 |
 | E4 | Liability direction is derived from party roles, never recorded as a peril or characteristic | term-parameters §7 |
 | E5 | Names: "characteristic" for peril axes, "term parameter" and "term relation" for contract terms. "Facet" is not used | term-parameters §2 |
@@ -57,7 +57,7 @@ Each is stated once in the sketch cited, and every phase plan inherits them.
 | 0 | [phase 0](applied-insurance-reference-phase-0.md) | decisions ratified | nothing | — |
 | 1 | [phase 1](applied-insurance-reference-phase-1.md) | legacy contract module dropped, applied layout, `insurance/common/` and `classification/` | 0 | — |
 | 2 | [phase 2](applied-insurance-reference-phase-2.md) | reference peril vocabulary | 1 | M1 |
-| 3 | [phase 3](applied-insurance-reference-phase-3.md) | scheme profiles, tier-gated checks, MORK crosswalks | 1 (3.1 to 3.3), 2 (3.4, 3.5) | M2 |
+| 3 | [phase 3](applied-insurance-reference-phase-3.md) | Eligibility over flat schemes and several values (substrate), crosswalks, a check across cause and characteristics | 0 (3.1 to 3.3), 2 (3.4, 3.5), 4.4 (M2) | M2 |
 | 4 | [phase 4](applied-insurance-reference-phase-4.md) | exposure ontology | 1, and slices of 2 per the phase plan | M3 |
 | 5 | [phase 5](applied-insurance-reference-phase-5.md) | contract module: term parameters, liability direction in contract terms, optional compilation. Deferred (D2) | 1, 2, Open CBAA integration of 1 to 4 | M4, M5 |
 | 6 | [phase 6](applied-insurance-reference-phase-6.md) | submission (after 4), claims (after 5) | 4, 5 | M6 |
@@ -67,7 +67,7 @@ Each is stated once in the sketch cited, and every phase plan inherits them.
 flowchart LR
     P0["0 Decisions"] --> P1["1 Module split"]
     P1 --> P2["2 Peril vocabulary"]
-    P1 -- "3.1 to 3.3" --> P3["3 Bridge and tiers"]
+    P0 -- "3.1 to 3.3" --> P3["3 Readings and crosswalks"]
     P2 -- "3.4, 3.5" --> P3
     P1 --> P4["4 Exposure"]
     P2 -- "2.1 to 2.3, 2.7" --> P4
@@ -89,7 +89,7 @@ in [lanes and merge order](applied-insurance-reference-lanes.md).
 | # | Outcome, exercised end to end over example graphs | Closes in |
 |---|---|---|
 | M1 | the reference cause scheme validates, and a hierarchical-match condition with exclusions admits and denies perils as the sketch's open-perils example states | phase 2 |
-| M2 | one condition evaluated against a flat list (tier F), a two-level taxonomy (tier H) and the reference (tier N), with the crosswalked flat list reaching tier R. Checks needing structure a tier lacks return Undetermined with reason `InsufficientSchemeStructure` | phase 3 |
+| M2 | the cyber write-back profile (cause, agency and mechanism of one loss cause, peril vocabulary §6.8) decides against the reference, is Undetermined with a reason against a flat list, and decides exactly mapped codes of a crosswalked list. A risk whose perils are all of sudden onset is Permitted under an every-value reading | phase 3 |
 | M3 | exposure units derived on demand for a location set, and a zone-and-peril requirement evaluated over them without materialising units | phase 4 |
 | M4 | (deferred with Phase 5) a D&O programme example: Side A, B and C terms, and a claim by a claimant unknown at binding whose direction (third, fourth, insured against insured) is derived from roles and the relationship graph | phase 5 |
 | M5 | (deferred with Phase 5) one check run directly (route R1) and compiled (route R2) with equal results under the parity suite | phase 5 |
@@ -118,14 +118,15 @@ its scope.
 | D7 | `insurance/common/` holds what means something only in insurance and is used by two or more insurance sub-domains: the insurance scheme contracts (peril, mechanism, agency, consequence, harm subject, pool), the liability role types (harmed, liable, claimant, payee), and the loss event shared by exposure and claims |
 | D8 | Classifications other domains also need (territory, asset class, industry) go in a cross-domain `applied/classification/` module from the start, so no IRI moves when lending arrives |
 | D9 | The peril vocabulary is an insurance sub-domain, `insurance/peril/`, with its own release cycle for editions and crosswalks. There is no `reference/` level. Its scheme contract stays in `common/`, so modules that only classify by peril need not import the vocabulary |
-| D10 | Scheme profiles and capability tiers (A-100) are a cross-domain module, `applied/scheme-profile/`, promotable into Vocabulary as Capacity is into Behaviour |
+| D10 | Reversed by D11. (Scheme profiles as a cross-domain applied module, `applied/scheme-profile/`.) |
+| D11 | Hierarchical match over a scheme without a hierarchy leaves unnamed members Undetermined, with a diagnostic, in Eligibility's law and compilers (ADR-A100). No Vocabulary change. Crosswalks are reviewed SKOS graphs with Foundation provenance, and MORK is where proposals wait for review. Human, 2026-09-26 |
+| D12 | Checks across cause and characteristics are Eligibility profiles with one condition per axis over one subject. Set readings (ADR-A103, formerly substrate item S3) move into Phase 3, and each link of a loss's cause chain is its own node (`aeo:LossCause`). Human, 2026-09-26 |
 
 ```text
 applied/
     README.md             domains, the three levels of sharing, dependency direction
     capacity/             shapes/, spec/, README.md
     classification/       shapes/, spec/classification.ttl, README.md
-    scheme-profile/       shapes/, spec/scheme-profile.ttl, README.md
     insurance/
         domain-README.md  the insurance domain
         common/           shapes/, spec/common.ttl, README.md
@@ -136,8 +137,8 @@ applied/
         contract/         deferred (D2)
 ```
 
-Dependencies run one way: `classification/` and `scheme-profile/` on the substrate only,
-`insurance/common/` on those, `peril/` on `common/`, `exposure/` on `common/` and `peril/`,
+Dependencies run one way: `classification/` on the substrate only, `insurance/common/` on
+it and the substrate, `peril/` on `common/`, `exposure/` on `common/` and `peril/`,
 `submission/` on `exposure/`, `claims/` on `exposure/` and `contract/`. Namespaces follow the
 existing pattern: `…/neuro-semantic/lattice/applied/<module>` for cross-domain modules (as
 Capacity), `…/neuro-semantic/insurance/<module>` for insurance modules. Prefixes are fixed in ADR-A98 and
@@ -145,16 +146,17 @@ ADR-A100.
 
 ### 5.3 ADRs
 
-| Proposed ADR | Decision | Sketch | Drafted in |
+| ADR | Decision | Sketch | Drafted in |
 |---|---|---|---|
-| A-98 | applied layout, the three levels of sharing and the insurance module structure (§5.2, D5 to D9), one-way dependencies, one `.version` per module, LATTICE layers imported by exact version IRI | asset-exposure-ontology §3, §13 | Phase 0 |
-| A-99 | reference vocabularies and scheme precedence: LATTICE reference editions as unscoped fallback, the peril vocabulary's structure beyond SKOS, and the name "characteristic" | peril-vocabulary §2, §6, §9 | Phase 0 |
-| A-100 | scheme profiles and capability tiers in `applied/scheme-profile/` (D10) | mork-bridge §3, §8 | Phase 0 |
-| A-102 | liability direction from party roles with unfilled occupancies | term-parameters §7, asset-exposure-ontology §5.15 | Phase 0 |
-| A-101 | term parameters on `ins:Qualifier`, term relations, optional compilation routes R1 to R3 | term-parameters §3 to §5 | Phase 5 start (D2) |
+| A-98, Accepted with addendum | applied layout, the three levels of sharing and the insurance module structure (§5.2, D5 to D9, addendum for D11), one-way dependencies, one `.version` per module, LATTICE layers imported by exact version IRI | asset-exposure-ontology §3, §13 | Phase 0 |
+| A-99, Accepted | reference vocabularies and scheme precedence: LATTICE reference editions as unscoped fallback, the peril vocabulary's structure beyond SKOS, and the name "characteristic" | peril-vocabulary §2, §6, §9 | Phase 0 |
+| A-100, Proposed | hierarchical match over schemes without a hierarchy, crosswalks (D11). A substrate decision under ADR-A-C2 | mork-bridge §3, §8 | Phase 0 |
+| A-103, Proposed | set readings for evidence bindings (D12). A substrate decision under ADR-A-C2 | whitepaper L-P3 | Phase 0 |
+| A-102, Accepted | liability direction from party roles with unfilled occupancies | term-parameters §7, asset-exposure-ontology §5.15 | Phase 0 |
+| A-101, reserved | term parameters on `ins:Qualifier`, term relations, optional compilation routes R1 to R3 | term-parameters §3 to §5 | Phase 5 start (D2) |
 
-Numbers are provisional and assigned when filed. The substrate track's ADRs are filed in that
-track, not here.
+The substrate track's ADRs are filed in that track, not here. A-100 and A-103 are substrate decisions
+filed here because Phase 3 implements them.
 
 ## 6. Open questions carried from the sketches
 

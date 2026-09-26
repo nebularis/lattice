@@ -29,9 +29,11 @@ structure: characteristics, collections, typed causal and overlap relations, and
 links to Quantification. Four belong elsewhere and must not be forced into the vocabulary:
 contract-relative classification and definition (Open CBAA statements), causation rules
 (evaluation profiles by governing law), peril-by-location conditions (exposure units), and
-occurrence grouping (contract terms, with informative defaults). Two upstream capabilities are
-missing in LATTICE for the rest: reading a set of values (the risk's several perils, a loss's
-chain of causes) and matching over kind links only. Neither blocks a first release.
+occurrence grouping (contract terms, with informative defaults). Three upstream changes to
+Eligibility serve the rest: reading a set of values (the risk's several perils, a loss's
+mechanisms), leaving undecided what a flat list cannot decide, and matching over kind links
+only. The first two are in LATTICE's plan (ADR-A103, ADR-A100). The third does not block a first
+release.
 
 The rich structure belongs to LATTICE's applied insurance reference, not to Open CBAA. CBAA
 perils are defined by each agreement's drafter or by the market, and arrive as flat lists or
@@ -51,7 +53,7 @@ generated forms is optional and never the source of truth.
 | causation profiles by governing law | Open CBAA, evaluation | high | mixed-cause losses, claims authority |
 | exposure units (location × asset class × peril) | asset exposure ontology | moderate | zone-dependent scopes, percentage deductibles, covenants |
 | every-value and some-value readings | LATTICE Eligibility | high, upstream | design-time classes for perils (I7), anti-concurrent exclusion |
-| scheme profiles and capability tiers | Open CBAA, MORK bridge | low | drafter and market lists that are flat or simply taxonomic |
+| hierarchical match over flat lists, and set readings, both returning Undetermined rather than refusing | LATTICE Eligibility and its compilers (ADR-A100, ADR-A103) | moderate, upstream | drafter and market lists that are flat or simply taxonomic, checks across several values |
 | party roles for liability direction | term parameters, LATTICE Party | low | D&O sides, insured against insured, parties unknown at binding |
 
 ---
@@ -278,7 +280,7 @@ Each notion: what it is, why CBAA needs it, the ways it could be expressed, and 
 | N13 | Market editions and decomposition | London and US framings, the flat list (§3.1) | fork, override editions, decomposition mappings | override editions bound by market and regime, flat lists decomposed by MORK mapping |
 | N14 | Active hazard events | US binders commonly suspend binding while a named storm threatens (general practice, not in the drafts) | a peril property, a Behaviour state | a Behaviour trigger from an external advisory, with an Eligibility guard on the risk's territory (mode S) |
 | N15 | Liability direction | liability, D&O and E&O segments scoped by who harmed whom, with claimants unknown at binding | agency characteristic, harm subject, party roles | party roles (harmed, liable, claimant, payee) with occupancies that may be unfilled, direction derived from them (term parameters §7). Agency stays a cause characteristic |
-| N16 | Scheme structure | drafter and market lists range from flat to structured | require the reference structure, degrade silently, profile each scheme | a scheme profile declaring the structure present, and checks gated by the resulting tier (MORK bridge §3) |
+| N16 | Scheme structure | drafter and market lists range from flat to structured | require the reference structure, degrade silently, profile each scheme | no profile. Eligibility leaves codes a flat list cannot decide Undetermined (ADR-A100), and characteristics a list lacks are missing evidence, also Undetermined. Reviewed crosswalks lift exactly mapped codes to the reference (MORK bridge §3) |
 
 ## 6. Where Each Notion Lives
 
@@ -291,7 +293,7 @@ flowchart LR
     end
     subgraph Stm["Open CBAA statements and agreements"]
         N9["N9 definitions, classifications"] --- N10["N10 causation profiles"] --- N7["N7 occurrence grouping terms"]
-        OP["operative scheme: drafter or market"] --- N16["N16 scheme profile, tier"]
+        OP["operative scheme: drafter or market"]
     end
     subgraph Tp["Term parameters"]
         N15["N15 party roles, liability direction"]
@@ -301,6 +303,7 @@ flowchart LR
     end
     subgraph Lattice["LATTICE substrate"]
         E["Eligibility: hierarchical match, exclusions"] --- Q["Quantification: thresholds, windows"]
+        N16["N16 flat lists and missing evidence: Undetermined"] --- E
         B["Behaviour: advisory triggers (N14)"] --- S["Surface: generated classes"]
         M["MORK: decomposition mappings"] --- V["Vocabulary: editions, scoped bindings"]
     end
@@ -310,6 +313,7 @@ flowchart LR
     N8 --> E
     N13 --> M
     OP -- "reviewed crosswalk" --> M
+    OP -- "evaluated" --> N16
     N15 --> P["Party: roles, occupancies"]
 ```
 
@@ -320,7 +324,7 @@ CBAA has one property (`rsk:peril`):
 |---|---|---|
 | perils a policy or risk covers | `rsk:peril` (renamed in meaning to "covered peril") | Open CBAA risk |
 | perils an exposure is subject to | `aeo:unitPeril`, `aeo:perilScope` | asset exposure ontology |
-| perils that caused a loss | `aeo:initiatingPeril`, `aeo:proximatePeril` and, for CBAA claims, a claims module property | exposure and claims |
+| perils that caused a loss | `aeo:peril` on each `aeo:LossCause` of a loss's cause chain and, for CBAA claims, a claims module property | exposure and claims |
 
 All three name the same scheme contract, so one binding serves them, and none is mistaken for
 another.
@@ -345,7 +349,7 @@ another.
 | N13 | market editions, crosswalk mapping graphs | Vocabulary (scoped bindings), MORK | none: scoped bindings exist (L3a) | resolution by scope precedence, per bind | the largest ongoing cost: each market edition and each external list needs a maintained crosswalk, reviewed by people |
 | N14 | agreement lifecycle, advisory events | Behaviour, Eligibility | none | a trigger per advisory, a guard per bind | an advisory feed, out of scope for the ontology |
 | N15 | segment scopes on direction, party role parameters | Party, Instrument, Eligibility | none: roles and unfilled occupancies exist | one derivation per claim, from the relationship graph | relationship data (subsidiaries, contracting chains) must be captured for fourth-party checks |
-| N16 | scheme profiles, bridge graphs | Vocabulary, MORK | none | one tier lookup per check | a profile per bound scheme, reviewed with its crosswalk |
+| N16 | crosswalks, bound drafter lists | Eligibility, Foundation, MORK for proposals | L-P7 | none: the compiler already resolves the scheme | one reviewed crosswalk per list edition |
 
 ### 7.2 Upstream changes
 
@@ -353,16 +357,19 @@ another.
 |---|---|---|---|---|
 | L-P1 | Vocabulary | concept-level lifecycle: deprecation, replacement and split across editions | splitting or retiring a peril without breaking recorded values | already an open item in Vocabulary |
 | L-P2 | Eligibility | `HierarchicalMatch` with a chosen traversal: all broader links, or a named sub-property of `skos:broader` only | a hurricane deductible applies to kinds of tropical cyclone, not to its parts | new |
-| L-P3 | Eligibility | every-value and some-value readings for evidence bindings, and an exclusion that denies when any value is excluded | several perils on a risk (I7), anti-concurrent causation over a loss's causes | extends I7 |
+| L-P3 | Eligibility | every-value and some-value readings for evidence bindings, and an exclusion that denies when any value is excluded | several perils on a risk (I7), anti-concurrent causation over a loss's causes, checks across cause and characteristics | ADR-A103, Phase 3 |
 | L-P4 | Surface | generated classes from collections and characteristic conjunctions | design-time checks over bundles and write-back scopes | new |
 | L-P5 | Quantification or Capacity | grouping of occurrences into episodes by a window anchored on the first occurrence | hours clauses, event-based aggregates | new. Capacity (applied) first, per its promotion criteria |
 | L-P6 | none, guidance | spatial pattern: geometry by GeoSPARQL alignment, zones as concepts, joins as derived artefacts | zone-dependent scopes | new |
+| L-P7 | Eligibility | hierarchical match over a scheme without a hierarchy leaves unnamed members Undetermined, with a diagnostic | a flat list bound under hierarchical match is silently read as refusing every candidate it does not name (N16) | ADR-A100, Phase 3 |
 
 Each substrate change follows the clean-room procedure (ADR-A-C2): a domain-neutral premise and
 two non-insurance examples before any mechanism prose. The premises exist without insurance:
 kind against part-of matching (anatomy, organisational units), set readings (a patient's several
 diagnoses, an applicant's several qualifications), episode grouping (clinical episodes of care,
-incident grouping in operations).
+incident grouping in operations), hierarchical match over a flat list (a lender's sector codes
+against an industry classification, an employer's job titles against an occupational
+classification).
 
 ### 7.3 The cost of not doing it
 
@@ -374,7 +381,7 @@ incident grouping in operations).
 | causation profiles | mixed-cause losses (the costly ones) are decided by the first code on the claim |
 | exposure units | zone-dependent scopes and covenants are checked by hand |
 | editions and crosswalks | a London binder writing US risks gets London framings for US forms |
-| scheme profiles | a flat list is either rejected or silently treated as structured, and checks that need structure it lacks return wrong answers instead of Undetermined |
+| Undetermined over flat lists | a flat list is either rejected or silently treated as structured, and checks that need structure it lacks return wrong answers instead of Undetermined |
 | party roles | D&O Side A, B and C and insured-against-insured exclusions are unevaluable, and a claim by an unknown fourth party cannot be placed |
 
 ### 7.4 Optional compilation
@@ -420,7 +427,7 @@ For Open CBAA, to be added to the design specification's decision log once agree
 | D32 | Peril definitions, classifications and write-backs in wording as statements, with an overlap shape asking for them |
 | D33 | Governing law on agreement and policy, selecting a causation profile, pending legal review |
 | D34 | Exposure units as the case for zone-dependent and location-dependent peril scopes |
-| D35 | Every bound peril scheme has a scheme profile. Checks are gated by its tier (flat, taxonomic, reference-aligned, native) and return Undetermined when a check needs structure the tier lacks |
+| D35 | Drafter and market lists are bound as they are. Checks against them return Undetermined with a diagnostic where the list cannot decide (LATTICE ADR-A100), and reviewed crosswalks lift exactly mapped codes to the reference |
 | D36 | Compilation is optional. The source graph is normative, compiled forms are parity-tested caches, and nothing synchronises back |
 | D37 | Liability direction is derived from party roles, never recorded as a peril or characteristic |
 
@@ -428,11 +435,11 @@ For Open CBAA, to be added to the design specification's decision log once agree
 
 | Phase | Scope | Depends on |
 |---|---|---|
-| 1 | Open CBAA: scheme profiles and tiers F and H, binding of drafter and market lists. LATTICE: cause hierarchy with kind and part links, collections, reference codes. Crosswalk of the CBAA list (tier R) | nothing |
+| 1 | LATTICE: hierarchical match over flat lists (L-P7) and set readings (L-P3), cause hierarchy with kind and part links, collections, reference codes. Open CBAA: binding of drafter and market lists. Crosswalk of the CBAA list | nothing |
 | 2 | characteristic schemes, party roles for liability direction, triggers and overlaps, overlap shape, classification and definition statement patterns | phase 1 |
 | 3 | intensity scheme and thresholds, pool scheme, exposure units in the asset exposure ontology | phase 2, Quantification (done) |
 | 4 | causation profiles, loss cause chains in claims | legal review, L-P3 |
-| 5 | design-time classes for multi-valued perils, episode grouping | L-P3, L-P4, L-P5 |
+| 5 | design-time classes from collections and characteristics, episode grouping | L-P4, L-P5 |
 
 ## 11. Open Questions
 

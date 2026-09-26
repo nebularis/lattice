@@ -601,6 +601,61 @@ note, or, if the meaning differs, a narrower concept of its own with a crosswalk
 | One polyhierarchy carrying every axis | the approach the whitepaper's §3 dissects: a concept with two parents meaning two different things cannot be matched or excluded predictably |
 | Reifying causal chains in the vocabulary | chains are facts about occurrences and contract rules about them. The vocabulary supplies the possible links (`canTrigger`), the data supplies the chain |
 
+### 6.8 Checks across cause and characteristics
+
+Eligibility never reads the vocabulary's structure beyond `skos:broader`. A check that accounts
+for a cause and its characteristics is a profile with one condition per axis, each bound to the
+same subject (ADR-A91). The London cyber write-back, "a non-malicious cyber event that results in
+fire or explosion", evaluates each link of a loss's cause chain (asset exposure ontology §5.12):
+
+```turtle-example
+ex:cyber-write-back a elg:AdmissionProfile ;
+    elg:compatibilityOperation elg:AllRequired ;
+    elg:hasCondition ex:is-cyber , ex:not-malicious , ex:burns .
+
+ex:is-cyber a elg:Condition ;
+    elg:matchStrategy elg:HierarchicalMatch ;
+    elg:constrainedByContract icm:PerilContract ;
+    elg:requiredConcept prl:C .
+ex:not-malicious a elg:Condition ;
+    elg:matchStrategy elg:SetMembership ;
+    elg:constrainedByContract icm:PerilAgencyContract ;
+    elg:requiredConcept prl:Accidental , prl:Negligent .
+ex:burns a elg:Condition ;
+    elg:matchStrategy elg:SetMembership ;
+    elg:constrainedByContract icm:PerilMechanismContract ;
+    elg:requiredConcept prl:Fire , prl:Explosion .
+
+ex:is-cyber-binding a elg:EvidenceBinding ;
+    elg:bindsCondition ex:is-cyber ;
+    elg:subjectClass aeo:LossCause ;
+    elg:evidenceStep [ a elg:EvidenceStep ; elg:stepIndex 0 ;
+                       elg:stepProperty aeo:peril ; elg:stepDirection elg:Forward ] .
+ex:burns-binding a elg:EvidenceBinding ;
+    elg:bindsCondition ex:burns ;
+    elg:subjectClass aeo:LossCause ;
+    elg:valueReading elg:SomeValue ;         # a link may record several mechanisms (ADR-A103)
+    elg:evidenceStep [ a elg:EvidenceStep ; elg:stepIndex 0 ;
+                       elg:stepProperty aeo:mechanism ; elg:stepDirection elg:Forward ] .
+# ex:not-malicious binds to aeo:LossCause through aeo:agency the same way.
+```
+
+The other uses of the structure reduce to things Eligibility already does:
+
+| Structure | How a check uses it |
+|---|---|
+| characteristics of the cause concept | a two-step path, for example `aeo:peril` then `prl:onset`. "Every covered peril is of sudden onset" reads the covered perils then `prl:onset` with `elg:EveryValue` |
+| collections | expanded into required or excluded concepts when the wording is bound (§7.2) |
+| thresholds | an interval condition on an intensity quantity (§6.4) |
+| overlaps | a design-time shape asking the wording for a classification (§8), not an evaluation |
+| kind links only | substrate item S2 |
+
+Against a drafter's list, the same profile degrades without new rules. The list's codes carry no
+characteristics, so conditions reading them are Undetermined (`exe:MissingCandidate`), and
+hierarchical match over a list without a hierarchy leaves unnamed codes Undetermined
+(`exe:NoHierarchy`, ADR-A100). A reviewed crosswalk that maps a code exactly lets it be decided
+against the reference (MORK bridge §3).
+
 ## 7. Collections
 
 ### 7.1 Kinds
@@ -698,8 +753,8 @@ LATTICE's precedence rule (a binding whose scopes are a strict superset wins) ma
 win over a London-only binding for US risks written in London, without any Open CBAA logic.
 
 A drafter's flat list or simple taxonomy is bound the same way, at agreement or organisation
-scope. It need not extend the reference. Its scheme profile states the structure it has, and
-checks run at that tier ([MORK bridge](mork-bridge.md) §3).
+scope. It need not extend the reference. Checks run at the structure it has, and are Undetermined
+where they need more (§6.8, [MORK bridge](mork-bridge.md) §3).
 
 ### 9.2 Crosswalk kinds
 
@@ -737,7 +792,9 @@ schemes" row and the exposure ontology's pool participation both use it.
 
 ## 10. Shapes
 
-Vocabulary well-formedness, run over the reference and each edition that extends it before publication. Schemes bound at tiers F or H get only their tier's profile checks (MORK bridge §3).
+Vocabulary well-formedness, run over the reference and each edition that extends it before
+publication. They are publication rules for structured editions. A drafter's list bound for use
+is not required to pass them.
 
 | Shape | Rule |
 |---|---|
@@ -799,5 +856,5 @@ prl:N.MET.NS a skos:Concept ;
 | PV-O3 | Concept deprecation and splitting across editions needs LATTICE concept-level lifecycle (Vocabulary open item) | whitepaper §7, L-P1 |
 | PV-O4 | Matching over generic links only needs an Eligibility traversal option | whitepaper §7, L-P2 |
 | PV-O5 | The crosswalk of the CBAA cause-of-loss list is a MORK mapping graph, whose review is a human task (design-spec §3.7) | MORK bridge §4 |
-| PV-O6 | Publish that crosswalk with the reference edition, so every deployment using the list starts at tier R | MORK bridge MB-Q3 |
+| PV-O6 | Publish that crosswalk with the reference edition where the list owner's terms allow, so every deployment using the list starts aligned | ADR-A100 decision 10 |
 | PV-O7 | Invite the LMA to publish its view, and map it when published | MORK bridge §2 |

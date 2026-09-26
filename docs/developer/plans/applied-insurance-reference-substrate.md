@@ -18,7 +18,7 @@ mechanism prose, and no insurance vocabulary in substrate text (ADR-A-C1).
 |---|---|---|---|---|
 | S1 | Vocabulary | concept-level lifecycle: deprecation, replacement and split across editions (already a Vocabulary open item) | L-P1, PV-O3 | edition upgrades of Phase 2 without breaking recorded values |
 | S2 | Eligibility | `HierarchicalMatch` with a chosen traversal: all broader links, or one named sub-property of `skos:broader` | L-P2, PV-O4 | kind-only matching (Phase 2 and 3 checks) |
-| S3 | Eligibility | every-value and some-value readings for evidence bindings, and exclusion when any value is excluded | L-P3, AL-2 | multi-valued perils on a case, anti-concurrent causation (Phase 6) |
+| S3 | Eligibility | moved into Phase 3 as AIR-3.2 and AIR-3.3 (ADR-A103, epic D12) | L-P3, AL-2 | checks across cause and characteristics (M2) |
 | S4 | Capacity first, then Quantification per promotion criteria | grouping occurrences into episodes by a window anchored on the first occurrence | L-P5 | hours clauses, event aggregates (5.7, 6.3) |
 | S5 | Surface | generated classes from collections and characteristic conjunctions, optional per E3 | L-P4 | design-time checks over bundles and write-back scopes |
 | S6 | guidance only | spatial pattern: GeoSPARQL alignment, zones as concepts, spatial joins as derived artefacts | L-P6, AL-1 | Phase 4 zones |

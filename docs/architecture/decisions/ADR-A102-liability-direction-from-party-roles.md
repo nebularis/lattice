@@ -2,8 +2,8 @@
 
 # ADR-A102: Liability direction from party roles
 
-**Status:** Proposed
-**Date:** 2026-09-26 (proposed)
+**Status:** Accepted
+**Date:** 2026-09-26 (proposed), 2026-09-26 (accepted)
 **Related:** ADR-A92 (derived artefacts), ADR-A98, ADR-A99
 **Unit:** [`applied-insurance-reference`](../../developer/plans/applied-insurance-reference.md) (AIR-0.1)
 **Sketches:** [term-parameters.md](../../developer/sketches/term-parameters.md) §7, [asset-exposure-ontology.md](../../developer/sketches/asset-exposure-ontology.md) §5.15

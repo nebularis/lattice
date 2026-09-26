@@ -18,10 +18,10 @@ when theirs is done (lane L finishes early, for example).
 | L | layout and shared contracts | AIR-1.1, AIR-1.2 |
 | P1 | peril vocabulary: spec, characteristics, natural and technical causes | AIR-2.1, AIR-2.2, AIR-2.3, AIR-2.6 |
 | P2 | peril vocabulary: human, political, cyber, financial and life causes, editions, collections | AIR-2.4, AIR-2.7, AIR-2.5 |
-| B | scheme profiles and MORK bridge | AIR-3.1 to AIR-3.5 |
+| B | Eligibility readings (A-100, A-103) and crosswalks | AIR-3.1 to AIR-3.5 |
 | E1 | exposure core, units and profiles, then submission | AIR-4.1, AIR-4.2, AIR-4.3, AIR-4.6, AIR-6.1 |
 | E2 | exposure history and liability | AIR-4.4, AIR-4.5 |
-| U | substrate track, one branch per item | S1 to S7 |
+| U | substrate track, one branch per item | S1, S2, S4 to S7 |
 
 Phase 5 and AIR-6.2 onwards are deferred (epic D2) and have no lane.
 
@@ -35,39 +35,43 @@ of §4.
 
 | Seq | Slice | Lane | Branch after | Milestone |
 |---|---|---|---|---|
-| 1 | AIR-0.1 ADRs A-98, A-99, A-100, A-102 | G | — | |
-| 2 | AIR-1.1 drop legacy module, layout | L | 1, A-98 | |
-| 3 | AIR-1.2 `classification/`, `insurance/common/` | L | 2, A-102 | |
-| 4 | AIR-2.1 `prl:` spec, shapes, file regions | P1 | 1, A-99 | |
-| 5 | AIR-3.1 scheme profile vocabulary | B | 1, A-100 | |
-| 6 | AIR-2.2 characteristic and companion schemes | P1 | 3, 4 | |
-| 7 | AIR-4.1 exposure core, file regions | E1 | 3 | |
-| 8 | AIR-3.2 profile derivation | B | 5 | |
+| 1 | AIR-0.1 ADRs A-98, A-99, A-100, A-102, A-103 | G | — | |
+| 2 | AIR-3.1 hierarchical match over flat schemes, `exe:NoHierarchy` | B | 1, A-100 | |
+| 3 | AIR-1.1 drop legacy module, layout | L | 1, A-98 | |
+| 4 | AIR-1.2 `classification/`, `insurance/common/` | L | 3, A-102 | |
+| 5 | AIR-2.1 `prl:` spec, shapes, file regions | P1 | 1, A-99 | |
+| 6 | AIR-2.2 characteristic and companion schemes | P1 | 4, 5 | |
+| 7 | AIR-4.1 exposure core, file regions | E1 | 4 | |
+| 8 | AIR-3.2 set readings: Eligibility, IR, SPARQL, SHACL | B | 2, A-103 | |
 | 9 | AIR-2.3 causes N, T, E | P1 | 6 | |
 | 10 | AIR-2.4 causes H, P, C, F, L, cross-group links | P2 | 6 | |
-| 11 | AIR-4.2 zones, pools, attributes, assessments | E1 | 4, 7 | |
+| 11 | AIR-4.2 zones, pools, attributes, assessments | E1 | 5, 7 | |
 | 12 | AIR-4.4 loss history, loss event, requirements, cover, metrics | E2 | 6, 7 | |
-| 13 | AIR-3.3 tier-gated evaluation | B | 8 | |
+| 13 | AIR-3.3 set readings: SWRL, OWL | B | 8 | |
 | 14 | AIR-2.6 intensity measures and thresholds | P1 | 9 | |
 | 15 | AIR-2.7 pools scheme, example edition, precedence | P2 | 9, 10 | |
 | 16 | AIR-4.3 dependencies, peril metrics, exposure units | E1 | 9, 11 | |
 | 17 | AIR-4.5 liability exposure | E2 | 12 | |
 | 18 | AIR-2.5 collections, open-perils example | P2 | 10 | M1 |
-| 19 | AIR-3.4 lift from a flat list | B | 10, 13 | |
+| 19 | AIR-3.4 crosswalk of a market list, lift at ingestion | B | 10 | |
 | 20 | AIR-4.6 London and US profiles, examples | E1 | 15, 16, 17 | M3 |
-| 21 | AIR-3.5 lower, list to list | B | 19 | M2 |
+| 21 | AIR-3.5 lower, list to list, the cross-characteristic check | B | 12, 19 | M2 |
 | 22 | AIR-6.1 submission | E1 | 20 | |
-| 23+ | S6, S1, S7, S2, S3, S5, S4, in this order | U | 1, the item's own ADR | |
+| 23+ | S6, S1, S7, S2, S5, S4, in this order | U | 1, the item's own ADR | |
+
+AIR-3.1 to AIR-3.3 are substrate changes inside the epic. AIR-3.1 merges second: it changes no
+Eligibility `.ttl`, and Executable's PATCH bump cascades before any applied module exists. If
+A-100 is accepted after A-98, G swaps sequences 2 and 3, which share no dependency or region.
+AIR-3.2 bumps Eligibility at sequence 8 and runs the cascade over the modules merged by then.
 
 Substrate items merge last because each bump of a substrate layer triggers the import-pinning
 cascade over every applied module already merged. S6 is guidance only and may merge at any point.
-S3 rebases onto S2, since both change Eligibility.
+S2 rebases onto AIR-3.2, since both change Eligibility.
 
 ## 3. Critical path
 
-1 → 2 → 3 → 6 → 10 → 18 → 19 → 21. The exposure lanes (7 → 11 → 16 → 20 → 22) run alongside and
-are the next longest. Starting B at sequence 5, instead of after Phase 2, removes the whole of
-Phase 2 from Phase 3's first three slices.
+1 → 3 → 4 → 6 → 10 → 19 → 21. The exposure lanes (7 → 11 → 16 → 20 → 22) run alongside and
+are the next longest. B starts at sequence 2 and needs no peril content until AIR-3.4.
 
 ## 4. Rules for shared files
 
@@ -79,7 +83,7 @@ Phase 2 from Phase 3's first three slices.
 | `insurance/exposure/spec/exposure.ttl` and its shapes | AIR-4.1 creates one region per slice of Phase 4. Each slice writes only its region |
 | `ontology/applied/README.md`, `ontology-architecture.md` §3 | one row per module, added by the slice that creates the module. Conflicts keep both rows |
 | `docs/developer/INDEX.md` | each slice edits only its own row |
-| phase status records | one per phase (units rule). Lanes sharing a phase (P1 and P2, E1 and E2) each update only their own slice rows. B creates the Phase 3 record at sequence 5 |
+| phase status records | one per phase (units rule). Lanes sharing a phase (P1 and P2, E1 and E2) each update only their own slice rows. B creates the Phase 3 record at sequence 2 |
 | `docs/developer/validation/LOG.md` | the human's only |
 
 ## 5. Branches

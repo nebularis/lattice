@@ -4,7 +4,8 @@
 
 **Unit ID:** `applied-insurance-reference-phase-0`
 **Epic:** [applied-insurance-reference](applied-insurance-reference.md)
-**Status:** AIR-0.1 implemented 2026-09-26, awaiting ADR ratification
+**Status:** AIR-0.1 implemented 2026-09-26. A-98, A-99 and A-102 Accepted. A-100 (reduced), A-103
+and A-98's addendum awaiting ratification
 **Status record:** epic [status](../status/applied-insurance-reference.md) until the phase starts
 
 ## Scope
@@ -14,11 +15,12 @@ Open CBAA stays as written (epic D3).
 
 ## Slices
 
-### AIR-0.1: ADRs A-98, A-99, A-100 and A-102
+### AIR-0.1: ADRs A-98, A-99, A-100, A-102 and A-103
 
-Draft the four ADRs as `Proposed`, add catalogue rows, and write up in them the decisions
-already taken: the applied layout (epic §5.2, D5 to D9) in A-98, and the scheme profile module's
-home (D10) in A-100, with MB-Q3 answered there. In the same slice, make the sketches' citations of
+Draft the five ADRs as `Proposed`, add catalogue rows, and write up in them the decisions
+already taken: the applied layout (epic §5.2, D5 to D9) in A-98, hierarchical match over flat
+schemes and crosswalks (D11) in A-100, with MB-Q3 answered there, and set readings (D12) in
+A-103. A-100 and A-103 are substrate decisions and follow ADR-A-C2. In the same slice, make the sketches' citations of
 Open CBAA documents (design-spec, integration specification) name that repository.
 
 L0: `mise run topology:links` reports no failure under `docs/developer/sketches/`. Gate: human
@@ -28,9 +30,9 @@ ratification of each ADR.
 
 | Document | Change | Slice |
 |---|---|---|
-| `docs/architecture/decisions/README.md` | rows for A-98, A-99, A-100, A-102 | 0.1 |
+| `docs/architecture/decisions/README.md` | rows for A-98, A-99, A-100, A-102, A-103 | 0.1 |
 | `docs/developer/INDEX.md` | slice row under the epic entry | 0.1 |
 
 ## Exit gate
 
-A-98, A-99, A-100 and A-102 Accepted.
+A-98, A-99, A-100, A-102 and A-103 Accepted, with the sketches in agreement.

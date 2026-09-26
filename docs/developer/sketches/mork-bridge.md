@@ -1,6 +1,6 @@
 # The MORK Bridge: Industry Models and the LATTICE Reference
 
-Version 0.1, draft for review. Specifies how Open CBAA works with the vocabularies and data the
+Version 0.2, draft for review. Specifies how Open CBAA works with the vocabularies and data the
 market brings today (flat code lists, simple taxonomies, spreadsheet rows, bordereaux) and, where
 a deployment wants it, with LATTICE's applied insurance reference implementation (the
 [reference peril vocabulary](peril-vocabulary.md), [term parameters](term-parameters.md) and the
@@ -36,9 +36,9 @@ forced on a deployment. The bridge is how the two meet without either rewriting 
 | # | Principle |
 |---|---|
 | B1 | **The operative vocabulary is the contract's.** The scheme a wording's values are drawn from is authoritative for that wording. A reference vocabulary is a lens, never an override |
-| B2 | **Capability follows structure.** A check runs at the level of detail the operative scheme supports, and no further |
-| B3 | **Never guess.** A check that needs structure the operative scheme lacks returns `Undetermined` with a reason naming the missing capability, which becomes a referral (design-spec §6.3) |
-| B4 | **Mapping is data.** Every bridge between worlds is a MORK mapping graph: proposed, validated, reviewed and versioned, in the Mapping graph role (ADR-A13), never code |
+| B2 | **Capability follows structure.** A check runs at the level of detail the operative scheme supports, and no further. A flat list supports membership only. A taxonomy supports hierarchical match. Characteristics, collections and thresholds exist only where the scheme or a crosswalk supplies them |
+| B3 | **Never guess.** A check that needs structure the operative scheme lacks returns `Undetermined` with a reason naming the missing capability (`exe:NoHierarchy` under ADR-A100, `exe:MissingCandidate` for absent characteristics), which becomes a referral (design-spec §6.3) |
+| B4 | **Mapping is data.** Every bridge between worlds is reviewed data: a crosswalk of SKOS triples for vocabularies, a MORK mapping graph compiled to RML for recurring data formats. Never code |
 | B5 | **Exactness sets authority.** A value reached through an exact correspondence may decide. One reached through a broader, narrower or close correspondence may only advise (Surface source fidelity and derivation authority) |
 | B6 | **Consumers declare what they trust.** Each check states which graph roles and which mapping fidelities it accepts (ADR-A13) |
 
@@ -62,86 +62,65 @@ change what an accepted agreement meant.
 A published LMA view is welcome and fits at precedence 3. If it is richer than the reference, it
 serves directly. If it is flat, the bridge maps it to the reference as it would any other list.
 
-## 3. Capability Tiers
+## 3. What a Check Can Do
 
-### 3.1 Tiers
+### 3.1 Kinds of peril scheme
 
-A bound scheme is profiled when it is bound. The profile is a derived artefact over the scheme
-and its crosswalks, recomputed when either changes.
-
-| Tier | Structure present | Examples |
+| Kind of scheme | Structure it has | Examples |
 |---|---|---|
-| F, flat | concepts with labels and codes, no `skos:broader` | the market cause-of-loss list behind the SoUA "Perils List" |
-| H, taxonomic | an acyclic `skos:broader` hierarchy | a house list grouped into families |
-| R, reference-aligned | F or H, plus a reviewed crosswalk into the reference vocabulary | a house list mapped by the bridge (§4) |
-| N, native | a scheme with the reference's structure (characteristics, collections, overlaps, thresholds) | the reference edition, a market edition built as an override of it |
+| flat list | codes and labels, no `skos:broader` | the market cause-of-loss list behind the SoUA "Perils List" |
+| taxonomy | a `skos:broader` hierarchy | a house list grouped into families |
+| crosswalked list | either of the above, plus a reviewed crosswalk to the reference (§4) | a house list mapped once, at onboarding |
+| reference-structured | kind and part links, characteristics, collections, overlaps, thresholds | the reference edition, a market edition built as an override of it |
 
-Tier R is per concept: a list may be 90% exactly mapped and 10% unmapped. The profile records
-coverage by mapping fidelity, and a check on an unmapped or inexactly mapped concept behaves as
-tier F or H for that concept.
+A crosswalk does not give a list the reference's structure. A code mapped exactly is lifted to the
+reference concept when data is ingested (§6), and is then decided against the reference. A code
+mapped inexactly may advise, never decide (B5). A list may be 90% exactly mapped and 10% not, and
+each code is treated by its own mapping.
 
-### 3.2 What each check can do per tier
+### 3.2 What each check can do
 
-| CBAA check | F | H | R | N |
+| CBAA check | flat list | taxonomy | crosswalked list | reference-structured |
 |---|---|---|---|---|
-| segment included and excluded perils (SoUA U1, U2) | exact set membership | hierarchical match with exclusions | as H, plus reference collections for bundles named in wording | full |
-| open grant with exclusions ("all perils excluding flood and earthquake") | membership in the list minus exclusions | hierarchical | as H | full |
+| segment included and excluded perils (SoUA U1, U2) | exact set membership | hierarchical match with exclusions | as its own structure, and as the reference for exactly mapped codes | full |
+| open grant with exclusions ("all perils excluding flood and earthquake") | membership in the list minus exclusions | hierarchical | as above | full |
 | standard exclusions present and unchanged (U4) | code set comparison | hierarchical comparison | comparison with the reference standard set through the crosswalk | full |
-| cyber inclusion or exclusion (U5) | membership of the listed cyber code | hierarchical | agency and mechanism characteristics through the crosswalk, for write-backs | full |
-| overlap needing a classification statement (surge and flood) | not detectable | not detectable | detectable for exactly mapped concepts | full |
-| materiality of a change to perils (M3) | set difference | subsumption between old and new scopes | as H, plus collections | full, with design-time classes |
+| cyber inclusion, exclusion and write-back (U5) | membership of the listed cyber code | hierarchical | cause, agency and mechanism through the crosswalk | full (peril vocabulary §6.8) |
+| overlap needing a classification statement (surge and flood) | not detectable | not detectable | detectable for exactly mapped codes | full |
+| materiality of a change to perils (M3) | set difference | subsumption between old and new scopes | as its own structure, plus collections | full, with design-time classes |
 | accumulation by peril grouping (U9, GWP limits) | groupings declared by the drafter | by family | reference model groupings | full |
 | natural catastrophe obligation (U8) | a drafter-declared set | family "natural hazard" if the taxonomy has one | reference natural hazard family | full |
 | threshold-defined peril against event data | no | no | exact mappings only | full |
 
-A cell that says "no" returns `Undetermined` with the reason `InsufficientSchemeStructure`, the
-capability it needed, and the concept it could not place. A referral carries the reason, so an
-underwriter sees why the system could not decide.
-
-### 3.3 The profile
-
-```turtle-example
-ex:peril-edition-profile a spf:SchemeProfile , fnd:DerivedArtefact ;
-    spf:profiles ex:house-peril-list-2026 ;
-    spf:tier spf:ReferenceAligned ;
-    spf:hierarchical true ;
-    spf:polyhierarchical false ;
-    spf:crosswalk ex:house-to-reference-crosswalk ;
-    spf:exactCoverage   [ a qnt:Quantity ; qnt:onSpace spf:Proportion ; qnt:numericValue 0.87 ] ;
-    spf:inexactCoverage [ a qnt:Quantity ; qnt:onSpace spf:Proportion ; qnt:numericValue 0.09 ] ;
-    spf:capability spf:HierarchicalMatch , spf:ReferenceCollections , spf:ReferenceCharacteristics .
-```
-
-`spf:` is a small cross-domain LATTICE module (§8). Each check declares the capabilities it needs,
-and the evaluator compares them with the profile before running.
+No check needs a rule of its own to degrade. A hierarchical match written for the reference and
+evaluated against a flat list leaves every code it does not name Undetermined with
+`exe:NoHierarchy` (ADR-A100). A condition on a characteristic finds no value on a flat list's code
+and is Undetermined with `exe:MissingCandidate`. A cell that says "no" is one of these. A referral
+carries the diagnostic, so an underwriter sees why the system could not decide.
 
 ## 4. Bridging Peril Schemes
 
 ### 4.1 From a drafter's list to the reference
 
+A crosswalk is authored once per list edition, when a drafter's organisation is onboarded, and
+reused for every agreement and bordereau that uses the list. A person reviews every mapping. A
+model may propose them, in which case the proposals wait in MORK's review queue (ADR-A13) and only
+accepted ones enter the crosswalk.
+
 ```mermaid
 flowchart LR
-    SRC["Drafter's list<br/>codes, labels, definitions"] -->|"MORK intent layer"| INT["Intent nodes<br/>label, definition, context"]
-    INT -->|"propose (human or machine)"| MAP["Mapping nodes<br/>per code: exact, broad, narrow,<br/>or decomposition"]
-    MAP -->|"validation gate"| VAL{"validated?"}
-    VAL -->|"yes, reviewed"| ART["Crosswalk artefact<br/>skos:*Match, characteristic values"]
-    VAL -->|"no"| REV["Review queue"]
-    ART --> PROF["Scheme profile"]
+    SRC["Drafter's list<br/>codes, labels, definitions"] -->|"author, or a model proposes"| PROP["Proposed mappings<br/>(MORK review queue, when proposed)"]
+    PROP -->|"a person reviews"| ART["Crosswalk<br/>SKOS triples, characteristic values<br/>fnd:DerivedArtefact"]
+    ART -->|"lookup at ingestion"| ING["Risk and loss records<br/>drafter code and reference concept"]
 ```
 
-| Source code shape | MORK construct | Artefact |
-|---|---|---|
-| one code, one reference concept | `mork:DataMapping` with a reference data mapping to the concept | `skos:exactMatch` or `skos:closeMatch` |
-| a code broader or narrower than any concept | same, with the broad or narrow category match | `skos:broadMatch` or `skos:narrowMatch` |
-| a code naming several axes ("accident railway crossing", "arson by a third person") | `mork:compositeNarrowerMapping` with one sub-mapping per axis | a cause match plus characteristic values (mechanism, agency) and, where present, a consequence or harm subject |
-| a code with no cause ("delay", "no details", "liability for buildings") | mapping to characteristic or consequence schemes only | no cause match. The profile counts it as unmapped for cause checks |
-| a group code | mapping to a collection | a `prl:ModelGrouping` carrying the code |
-| many codes following one pattern | `mork:templateMapping` | one template, many instantiations |
-
-Each mapping carries MORK's confidence. Effective confidence compounds through composite
-mappings, and a mapping below the deployment's threshold stays a hypothesis
-(`mork:hypothesisMapping`) until reviewed. Reviewed mappings are promoted into the crosswalk
-artefact, which is what the profile and the checks read.
+| Source code shape | Crosswalk content |
+|---|---|
+| one code, one reference concept | `skos:exactMatch` or `skos:closeMatch` |
+| a code broader or narrower than any concept | `skos:broadMatch` or `skos:narrowMatch` |
+| a code naming several axes ("accident railway crossing", "arson by a third person") | a cause match plus characteristic values on the code (`prl:typicalAgency`, `prl:typicalMechanism`) and, where present, a consequence or harm subject |
+| a code with no cause ("delay", "no details", "liability for buildings") | characteristic or consequence values only. No cause match, so cause checks leave it Undetermined |
+| a group code | membership of a `prl:ModelGrouping` |
 
 ### 4.2 From the reference to a drafter's list
 
@@ -186,33 +165,29 @@ exposed perils and a segment's covered perils are compared in one scheme.
 
 | Concern | Rule |
 |---|---|
-| where mappings live | the Mapping graph role (ADR-A13), outside the library plane. Only reviewed mappings are promoted to the crosswalk artefacts checks read |
-| review | every first mapping of a list or row type is reviewed by a person. Template instantiations above the confidence threshold may be accepted without individual review, and are sampled |
-| versioning | a crosswalk is versioned with both its source list edition and the reference edition. Either changing invalidates the crosswalk and the scheme profile |
-| provenance | each crosswalk triple traces to its mapping node, intent node and source code (MORK provenance chain) |
+| where mappings live | a crosswalk is a reviewed graph in `insurance/peril/crosswalk/` or in a deployment. Proposals, when a model makes them, live in MORK's Mapping graph role (ADR-A13) until reviewed |
+| review | every crosswalk mapping is reviewed by a person. For recurring data formats (§5, §6), template instantiations above the confidence threshold may be accepted without individual review, and are sampled |
+| versioning | a crosswalk is versioned with both its source list edition and the reference edition. Either changing makes the crosswalk stale, which its read set shows |
+| provenance | the crosswalk is a `fnd:DerivedArtefact` with its evidence and reviewer. A crosswalk from model proposals also cites the MORK proposals it accepted |
 | disagreement | when the drafter's definition and the reference concept differ, the mapping is inexact (close or broad), never exact. The contract's definition stands (B1) |
 | machine proposals | extraction and proposal follow design-spec §3.7: a proposal is not meaning until reviewed |
 
-## 8. The Bridge Module
+## 8. What LATTICE Provides
 
-A small cross-domain module of LATTICE's applied layer, `applied/scheme-profile/` (prefix `spf:`,
-ADR-A100), holds only what the bridge needs to describe itself. It uses no insurance
-terms, since any domain binding its own lists against a reference needs it. Mappings are MORK's, crosswalks are SKOS, and bindings are Vocabulary's.
+No bridge module exists. Each piece lives where its concern already lives:
 
-| Term | Meaning |
+| Piece | Home |
 |---|---|
-| `spf:SchemeProfile` | the derived profile of a bound scheme (§3.3), a `fnd:DerivedArtefact` |
-| `spf:tier` | F, H, R or N |
-| `spf:capability` | the checks the scheme supports (hierarchical match, reference collections, reference characteristics, overlap detection, thresholds) |
-| `spf:exactCoverage`, `spf:inexactCoverage` | share of the scheme's concepts mapped at each fidelity |
-| `spf:requiresCapability` | on a check (a shape, a compiled profile), what it needs |
-| `spf:InsufficientSchemeStructure` | the undetermined reason a check returns when the profile lacks a capability |
-| `spf:Crosswalk` | a versioned crosswalk artefact, citing its source and target editions and its mapping graph |
+| hierarchical match over a list without a hierarchy, and `exe:NoHierarchy` | Eligibility and its compilers (ADR-A100) |
+| some-value and every-value readings for checks across several values | Eligibility and its compilers (ADR-A103) |
+| crosswalks as reviewed SKOS graphs with Foundation provenance, and published crosswalks | `insurance/peril/crosswalk/` (ADR-A100) |
+| loss cause links carrying peril, mechanism and agency together | `insurance/exposure/` (`aeo:LossCause`) |
+| proposals awaiting review, and ingestion of recurring formats compiled to RML | MORK |
 
 ## 9. Open Questions
 
 | # | Question |
 |---|---|
 | MB-Q1 | Should an agreement-scoped peril binding be created for every agreement, or only when the drafter supplies a list other than their organisation's? |
-| MB-Q2 | What confidence threshold, and what sampling rate, for accepting template mappings without individual review? |
-| MB-Q3 | Should the crosswalk of the CBAA SoUA reference list be published with LATTICE's reference edition, so every deployment starts at tier R for that list? |
+| MB-Q2 | What confidence threshold, and what sampling rate, for accepting template mappings of recurring data formats without individual review? |
+| MB-Q3 | Answered (ADR-A100 decision 10): a reviewed crosswalk of a widely used list may be published beside the reference edition where the list owner's terms allow, so a deployment using the list starts aligned |

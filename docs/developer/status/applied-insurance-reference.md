@@ -3,8 +3,8 @@
 # Applied Insurance Reference - Status
 
 **Unit ID:** `applied-insurance-reference` (epic)
-**Status:** Phase 0 (AIR-0.1) implemented and self-validated, awaiting the human's review of
-ADRs A-98, A-99, A-100 and A-102.
+**Status:** Phase 0. A-98, A-99 and A-102 Accepted 2026-09-26. A-100 (reduced), A-103 and A-98's
+addendum awaiting ratification together.
 **Last updated:** 2026-09-26
 **Trigger:** human request, 2026-09-26
 **Plan:** [applied-insurance-reference.md](../plans/applied-insurance-reference.md)
@@ -37,6 +37,23 @@ Open CBAA's documents, and the sketches' prefixes aligned (`brg:` to `spf:`, `co
 The [validation pack](../validation/applied-insurance-reference-0.1.md) command was run by the
 agent and printed nothing. Nothing is committed.
 
+The human then accepted A-98, A-99 and A-102, and challenged A-100's applied placement. A-100
+was rewritten: structural capabilities, profiles and crosswalks belong to Vocabulary, and the gate
+that reads them to Eligibility, closing a defect in Eligibility's hierarchical match (epic D11,
+reversing D10). A-98 gained an addendum removing `applied/scheme-profile/`. Phase 3 and the lanes
+were re-planned (AIR-3.1 merges second, AIR-3.3 is an Eligibility slice), and the sketches were
+revised to agree: MORK bridge §1, §3 and §8, peril vocabulary §6.8, §9.1 and §10, the whitepaper's
+N16, D35 and phasing, and the exposure ontology's layout.
+
+A walkthrough with the human then reduced A-100 to Eligibility's law and compilers (the
+compilers already resolve the scheme and expand its decisions, so no Vocabulary profile is
+needed), moved crosswalks to SKOS with Foundation provenance and MORK as the proposal channel,
+and confirmed that checks across cause and characteristics are Eligibility profiles over one
+subject. That needs set readings (ADR-A103, formerly substrate item S3, now AIR-3.2 and AIR-3.3)
+and one node per link of a loss's cause chain (`aeo:LossCause`). Epic D11 was reworded and D12
+added. Phase 3, the lanes, and the peril vocabulary (§6.8 now the worked check), MORK bridge,
+whitepaper and exposure sketches were revised to agree.
+
 ## Phases
 
 | Phase | Plan | State | Status record |
@@ -44,7 +61,7 @@ agent and printed nothing. Nothing is committed.
 | 0 Decisions | [plan](../plans/applied-insurance-reference-phase-0.md) | 🚧 AIR-0.1 implemented, ADRs awaiting ratification | this file |
 | 1 Module split | [plan](../plans/applied-insurance-reference-phase-1.md) | ⏳ | created at phase start |
 | 2 Peril vocabulary | [plan](../plans/applied-insurance-reference-phase-2.md) | ⏳ | created at phase start |
-| 3 Bridge and tiers | [plan](../plans/applied-insurance-reference-phase-3.md) | ⏳ | created at phase start |
+| 3 Readings and crosswalks | [plan](../plans/applied-insurance-reference-phase-3.md) | ⏳ | created at phase start |
 | 4 Exposure | [plan](../plans/applied-insurance-reference-phase-4.md) | ⏳ | created at phase start |
 | 5 Contract module | [plan](../plans/applied-insurance-reference-phase-5.md) | 🅿️ deferred until Open CBAA integration of 1 to 4 (D2) | created at phase start |
 | 6 Submission, claims | [plan](../plans/applied-insurance-reference-phase-6.md) | ⏳ | created at phase start |
@@ -56,6 +73,5 @@ None.
 
 ## Next action
 
-Human reviews the ADRs and answers the review request's questions, then records AIR-0.1 in
-`LOG.md`. Each accepted ADR opens its lanes: A-98 for L, A-99 for P1, A-100 for B, A-102 for
-AIR-1.2.
+Human ratifies A-100, A-103 and A-98's addendum, then records AIR-0.1 in `LOG.md`. Lanes L
+(A-98), P1 (A-99) and AIR-1.2 (A-102) are open. Lane B opens with A-100, and AIR-3.2 needs A-103.
