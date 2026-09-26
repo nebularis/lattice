@@ -123,6 +123,79 @@ Authored in ADR-A-C2 order: the two example fixtures first, then the law, then t
 Adversarial probes for the gate: disabling the L14 branch in `_expand` fails AIR31-06, 07 and 08.
 Disabling it in `sparql_backend.concept_select` fails AIR31-03, 04, 06 and 07.
 
+## AIR-3.2 in detail
+
+**Machine:** R (Claude Code). **Branch:** `air/3.2-set-readings`. **Validation Pack:**
+[applied-insurance-reference-3.2](../validation/applied-insurance-reference-3.2.md).
+**Decision:** ADR-A103.
+
+**Invariant:** a bound condition reads several values by the reading its binding declares, a
+negated condition swaps Permitted and Denied and keeps Undetermined with its diagnostic, a
+binding without a reading and a condition without negation evaluate exactly as before, and the
+SWRL and OWL backends refuse what they cannot yet compile.
+
+Authored in ADR-A-C2 order: examples, then laws and README, then code.
+
+1. **Examples** in `ontology/eligibility/examples/`, no insurance terms:
+   - `set-reading-admissions.ttl`: applicants bound through `ex:holdsQualification`. One
+     condition, read `elg:SomeValue`, requires mathematics or physics. A second, read
+     `elg:SomeValue` and `elg:negated true`, requires medicine ("holds no qualification in
+     medicine"). Recorded: history and physics admitted, history alone refused, no
+     qualification Undetermined, a medic refused by the negated condition.
+   - `set-reading-trial.ttl`: patients bound through `ex:hasDiagnosis`, read `elg:EveryValue`,
+     over a permitted list that excludes one diagnosis. Recorded: all permitted admitted, one
+     excluded refused.
+2. **Eligibility spec** (`spec/eligibility.ttl` and its README mirror, 0.6.0 → 0.7.0, MINOR):
+   `elg:ValueReading` (a class, added to the disjoint classes axiom), `elg:valueReading`
+   (functional object property, domain `elg:EvidenceBinding`, range `elg:ValueReading`),
+   `elg:negated` (functional datatype property, domain `elg:Condition`, range `xsd:boolean`).
+3. **Eligibility vocabulary** (0.7.0 → 0.8.0, MINOR): `elg:SingleValue`, `elg:SomeValue`,
+   `elg:EveryValue`, and the laws `elg:L15` (set readings, as ADR-A103 decision 1 states them)
+   and `elg:L16` (negation, decision 4). README: the evidence bindings paragraph and the law
+   list.
+4. **Eligibility shapes** (`.version` 0.1.0 → 0.2.0, MINOR): the structural shapes gain
+   `sh:maxCount 1` for `elg:valueReading` and `elg:negated`, mirroring the functional axioms.
+5. **Cascade** (ADR-A86 addendum item 1, each MINOR): every importer of `eligibility/0.6.0`
+   re-pins, and so on through their importers: `eligibility-vocab`, Instrument 0.6.0 → 0.7.0,
+   Behaviour 0.6.0 → 0.7.0 (it imports Eligibility and Instrument), and the Capacity execution
+   profile 0.6.0 → 0.7.0, with their README mirrors. The list is re-derived with `grep` before and
+   after editing.
+6. **IR:** `EvidencePath.reading` (default `elg:SingleValue`), and `negated` on concept and
+   interval plans. Readings apply to bound conditions only. A question offering several
+   candidates stays Undetermined (`exe:SeveralCandidates`).
+7. **SPARQL:** for `SomeValue` and `EveryValue`, decide each value as a single candidate is
+   decided, then group by subject and aggregate by strong Kleene logic. No value is Undetermined
+   with `exe:MissingCandidate`. A set that is Undetermined reports a diagnostic of one of its
+   Undetermined values. Negation swaps the final decision. Profiles read the condition's final
+   decision.
+8. **SHACL:** the same readings and negation, through the SPARQL-based constraints.
+9. **SWRL and OWL:** refuse a plan with a reading other than `SingleValue`, or with negation, with
+   an `IRCompileError` naming AIR-3.3, until that slice lands.
+10. **Tests:** `tools/mork_compilers/src/mork_compilers/test_set_readings.py`, and both examples
+    in `tools/test_eligibility_examples.py`.
+11. **Docs:** Eligibility README, `tools/mork_compilers/README.md`, the Eligibility row of
+    `docs/architecture/ontology-architecture.md` §3, and `solution-design-specification.md` (set
+    readings as an evaluation feature). Then `mise run build:ontology-catalog` and `mise run
+    build:ontology-releases`.
+
+| ID | Given / When / Then | Level | +/- |
+|---|---|---|---|
+| AIR32-01 | `SomeValue` over {Permitted, Denied}, {Denied, Denied}, {Denied, Undetermined} / SPARQL / Permitted, Denied, Undetermined | L1 | + |
+| AIR32-02 | `EveryValue` over {Permitted, Permitted}, {Permitted, Denied}, {Permitted, Undetermined} / SPARQL / Permitted, Denied, Undetermined | L1 | + |
+| AIR32-03 | an exclusion read `EveryValue`, one value excluded / SPARQL / Denied | L1 | − |
+| AIR32-04 | a subject with no value under each reading / SPARQL / Undetermined, `exe:MissingCandidate` | L1 | − |
+| AIR32-05 | a binding without a reading, and one read `SingleValue`, reaching two values / SPARQL / Undetermined, `exe:SeveralCandidates`, as before | L1 | − |
+| AIR32-06 | a negated condition, question-based and bound / SPARQL / Permitted and Denied swap, Undetermined keeps its diagnostic | L1 | + |
+| AIR32-07 | the negated `SomeValue` medicine condition / SPARQL / a medic Denied, a non-medic Permitted | L1 | + |
+| AIR32-08 | an interval condition read `EveryValue` / SPARQL / Denied when one value is outside | L1 | − |
+| AIR32-09 | an `AllRequired` profile over a set-read and a negated condition / SPARQL / strong Kleene over their final decisions | L1 | + |
+| AIR32-10 | both examples / SHACL / agrees with SPARQL for every subject | L2 | + |
+| AIR32-11 | a plan with a reading or negation / SWRL and OWL backends / `IRCompileError` naming AIR-3.3 | L1 | − |
+| AIR32-12 | both examples / Eligibility shapes / no result | L1 | + |
+| AIR32-13 | a binding with two readings, a condition negated twice / Eligibility shapes / violation | L1 | − |
+| AIR32-14 | the existing compiler and examples tests / unchanged / pass (non-weakening) | L1 | + |
+| AIR32-15 | the cascade / `check:ontology-versioning` / every importer re-pinned and bumped, every version listed | L1 | + |
+
 ## Documentation deltas
 
 | Document | Change | Slice |

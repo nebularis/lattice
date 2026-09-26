@@ -75,26 +75,63 @@ the legacy entries).
 | AIR11-03 | `ontology/` and `tools/` / search for `ontology/nsd`, `neuro-semantic/insurance/contract` and `structure-vocab` / no match | L1 | − |
 | AIR11-04 | `ontology/applied/README.md` and `insurance/domain-README.md` / read against ADR-A98 / every module, level and prefix agrees | L0 | + |
 
-### AIR-1.2: Shared contracts, `insurance/common/` and `applied/classification/`
+### AIR-1.2: Shared contracts, `applied/classification/` and `insurance/common/`
 
-**Invariant:** every classification has one `voc:SchemeContract`, at the lowest level of sharing
-that covers its users (epic D5).
+**Machine:** S (Copilot Business). **Branch:** `air/1.2-shared-contracts`, created after AIR-1.1
+merges. **Validation Pack:**
+[applied-insurance-reference-1.2](../validation/applied-insurance-reference-1.2.md), whose Handoff
+section S fills in. **Decisions:** ADR-A98 (decisions 1, 5, 6), ADR-A102.
 
-1. `applied/classification/`: territory, asset class and industry contracts (D8). Imports
-   Foundation and Vocabulary by exact version IRI.
-2. `applied/insurance/common/`: peril, peril mechanism, peril agency, consequence, harm subject
-   and pool contracts, and the party role types of A-102 (harmed, liable, claimant, payee) (D7).
-   Imports Foundation, Vocabulary, Party and `classification/`. Prefix per A-98 (not `ins:`,
-   which Instrument owns). The loss event class is added by AIR-4.4, when exposure first needs
-   it.
+**Invariant:** every classification the epic needs has one `voc:SchemeContract`, at the lowest
+level of sharing that covers its users (epic D5), and the liability role types exist as
+`pty:Role` individuals. A cross-domain module imports nothing from a domain.
+
+A scheme contract must name the property it constrains (`voc:constrainsProperty`, required by
+Vocabulary's shapes). The modules that will use these classifications (peril, exposure) do not
+exist yet, so each module declares one general property per classification, and later modules
+declare theirs as sub-properties of it (for example `aeo:peril rdfs:subPropertyOf icm:peril`).
+No contract has a `voc:boundScheme` here: reference editions bind themselves when they arrive
+(AIR-2.2 and later), and deployments bind their own.
+
+**`ontology/applied/classification/`** (cross-domain, no insurance terms anywhere in it):
+
+| File | Ontology IRI, version IRI | Content |
+|---|---|---|
+| `spec/classification.ttl` | `https://www.nebularis.org/neuro-semantic/lattice/applied/classification`, `…/lattice/applied/classification/0.1.0` | prefix `cls:` (`…/applied/classification#`). Imports Foundation 0.3.0 and Vocabulary 0.3.0. Three `owl:ObjectProperty`s with range `skos:Concept` and no domain: `cls:territory`, `cls:assetClass`, `cls:industry`. Each has `rdfs:label`, `rdfs:comment` and `fnd:utility` |
+| `vocab/classification-vocab.ttl` | `…/lattice/applied/classification/vocab`, `…/lattice/applied/classification-vocab/0.1.0` | prefix `cls-voc:` (`…/applied/classification/vocab#`). Imports the spec 0.1.0. Three `voc:SchemeContract`s: `cls-voc:TerritoryContract`, `cls-voc:AssetClassContract`, `cls-voc:IndustryContract`, each with `fnd:hasIdentity` (a `fnd:PersistentIdentity` node), `fnd:hasGovernanceState fnd:Active`, `skos:prefLabel` and `voc:constrainsProperty` its property |
+| `README.md` | | purpose, the three contracts, how a domain specialises the properties, and the no-domain-terms rule |
+
+**`ontology/applied/insurance/common/`:**
+
+| File | Ontology IRI, version IRI | Content |
+|---|---|---|
+| `spec/common.ttl` | `https://www.nebularis.org/neuro-semantic/insurance/common`, `…/insurance/common/0.1.0` | prefix `icm:` (`…/insurance/common#`). Imports Foundation 0.3.0, Vocabulary 0.3.0, Party 0.5.0 and `…/lattice/applied/classification/0.1.0`. Six `owl:ObjectProperty`s with range `skos:Concept`: `icm:peril`, `icm:mechanism`, `icm:agency`, `icm:consequence`, `icm:harmSubject`, `icm:pool` |
+| `vocab/common-vocab.ttl` | `…/insurance/common/vocab`, `…/insurance/common-vocab/0.1.0` | prefix `icm-voc:`. Imports the spec 0.1.0. Six contracts as in classification: `icm-voc:PerilContract`, `icm-voc:MechanismContract`, `icm-voc:AgencyContract`, `icm-voc:ConsequenceContract`, `icm-voc:HarmSubjectContract`, `icm-voc:PoolContract`. Four roles declared as `pty:Obligor` is in `ontology/party/vocab/party-vocab.ttl` (`owl:NamedIndividual`, `pty:Role`, label, comment, `fnd:utility`): `icm-voc:HarmedParty`, `icm-voc:LiableParty`, `icm-voc:Claimant`, `icm-voc:Payee` |
+| `README.md` | | purpose, the contracts and roles, the specialisation rule, and what arrives later: the loss event (AIR-4.4) and the liability direction scheme (Phase 5, ADR-A102) |
+
+No `shapes/` directory in either module: neither has a shape of its own yet, and Vocabulary's
+and Party's shapes cover the contracts and roles. ADR-A98 decision 3 lists the directories a
+module has once it needs them.
+
+**Edit:** `ontology/applied/README.md` (classification now present), `insurance/domain-README.md`
+(common now built, with its prefixes), and the applied insurance row of
+`docs/architecture/ontology-architecture.md` §3.
+
+**Test:** `tools/test_applied_shared_contracts.py`, modelled on
+`tools/test_eligibility_examples.py`. Data is each module's two documents, shapes are Vocabulary's
+and Party's shape files, pySHACL with `advanced=True` and `inference="none"`.
+
+**On R at verification:** `mise run build:ontology-catalog` and `mise run build:ontology-releases`
+(four new documents).
 
 | ID | Given / When / Then | Level | +/- |
 |---|---|---|---|
-| AIR12-01 | `classification` and `common` / loaded with their closures / parse, no unresolved import | L1 | + |
-| AIR12-02 | each contract / Vocabulary shapes / conforms | L1 | + |
-| AIR12-03 | a contract with no `voc:boundScheme` and no binding / Vocabulary shapes / reported | L1 | − |
-| AIR12-04 | the role types / Party shapes / each is a `pty:Role`, occupancies may be unfilled | L1 | + |
-| AIR12-05 | `classification` / import closure / contains no insurance module | L1 | − |
+| AIR12-01 | the four documents / loaded with their import closures (`tools/ontology_catalog.py`) / parse, every import resolves | L1 | + |
+| AIR12-02 | the nine contracts / Vocabulary's shapes / conform | L1 | + |
+| AIR12-03 | a contract without `voc:constrainsProperty` / Vocabulary's shapes / violation | L1 | − |
+| AIR12-04 | the four roles / read / each is a `pty:Role` and an `owl:NamedIndividual` | L1 | + |
+| AIR12-05 | `classification`'s import closure / read / contains no document under `neuro-semantic/insurance/` | L1 | − |
+| AIR12-06 | every term in `classification/` / searched for insurance terms (peril, policy, premium, claim, insur) / no match | L0 | − |
 
 ## Documentation deltas
 

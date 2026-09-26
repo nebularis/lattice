@@ -17,9 +17,9 @@ Validation Pack, never here.
 **Branches ready to work on:** `air/3.1-flat-hierarchy` (R), `air/1.1-layout` (S), `air/2.1-peril-spec` (S).
 Created and pushed by the human. Their detailed briefs (phase plans and Validation Pack
 skeletons) were written on `main` and are merged into each branch before work starts.
-**Briefs ready on `main`:** AIR-1.1, AIR-2.1, AIR-3.1.
-**Briefs to draft before their branches (lanes §1):** AIR-1.2 and AIR-3.2, the next branches
-after round 1. Every later slice is still an outline.
+**Briefs ready on `main`:** AIR-1.1, AIR-2.1, AIR-3.1, AIR-1.2, AIR-3.2.
+**Briefs to draft before their branches (lanes §1):** AIR-2.2, AIR-4.1 and AIR-3.3, the branches
+created after round 2. Every later slice is still an outline.
 
 ## Machine R
 

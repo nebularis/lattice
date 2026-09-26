@@ -73,7 +73,8 @@ AIR-6.1, because each substrate bump makes every merged applied module re-pin it
 
 ## 3. The round trip for an S slice
 
-Every command in this section is run by the human.
+Every command in this section is run by the human. Machine R pushes to the `origin-ssh` remote
+(SSH avoids GitHub's HTTP authentication). Machine S only fetches, from `origin`.
 
 **On R**, create and push the branch:
 
@@ -82,7 +83,7 @@ git switch main && git pull --ff-only
 ```
 
 ```bash
-git switch -c air/1.1-layout && git push -u origin air/1.1-layout
+git switch -c air/1.1-layout && git push -u origin-ssh air/1.1-layout
 ```
 
 **On S**, pick it up, let the agent work, and bundle the commits:
@@ -100,7 +101,7 @@ Carry the bundle file to R.
 **On R**, take the commits and push them:
 
 ```bash
-git switch air/1.1-layout && git pull --ff-only /path/to/air-1.1.bundle air/1.1-layout && git push
+git switch air/1.1-layout && git pull --ff-only /path/to/air-1.1.bundle air/1.1-layout && git push origin-ssh
 ```
 
 Then verify, sign off and merge (§6). After R pushes `main`, **on S** refresh before the next
@@ -178,7 +179,7 @@ section's newest version: the sections are disjoint, so this never loses informa
 
 For each branch, in the order of the round's merge column:
 
-1. **Rebase (human).** `git rebase main` on the branch, then `git push --force-with-lease`. The
+1. **Rebase (human).** `git rebase main` on the branch, then `git push --force-with-lease origin-ssh air/<slice>`. The
    agent may help resolve conflicting files, and the human continues the rebase.
 2. **Regenerate catalogs and release rows (agent):** `mise run build:ontology-catalog`, and after
    any version bump `mise run build:ontology-releases`, which adds a row to
@@ -197,8 +198,8 @@ For each branch, in the order of the round's merge column:
 7. **Record (agent).** On the branch: the slice's state becomes `merged` in its machine's
    section, a merge log row is added, and at a round's last merge the Round section and the
    epic's `INDEX.md` entry are updated.
-8. **Merge (human).** `git switch main && git merge --ff-only air/<slice>`, then `git push`.
-   Create and push the release tags step 2 listed. Delete the branch.
+8. **Merge (human).** `git switch main && git merge --ff-only air/<slice>`, then `git push origin-ssh main`.
+   Create the release tags step 2 listed and push them to `origin-ssh`. Delete the branch.
 
 ## 7. Critical path
 
