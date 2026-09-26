@@ -13,18 +13,18 @@ Validation Pack, never here.
 
 ## Round
 
-**Current round:** 2 (machine R advances it when a round's merges are done). Round 1 merged
-AIR-3.1, AIR-1.1 and AIR-2.1.
-**Branches ready to work on:** `air/3.2-set-readings` (R) and `air/1.2-shared-contracts` (S), once
-the human has created and pushed them from `main`.
+**Current round:** 3 (machine R advances it when a round's merges are done). Round 1 merged
+AIR-3.1, AIR-1.1 and AIR-2.1. Round 2 merged AIR-3.2 and AIR-1.2.
+**Branches ready to work on:** none yet. Round 3's branches (`air/2.2-characteristics`,
+`air/4.1-exposure-core`, `air/3.3-readings-swrl-owl`) wait for their briefs.
 **Briefs ready on `main`:** AIR-1.1, AIR-2.1, AIR-3.1, AIR-1.2, AIR-3.2.
-**Briefs to draft before their branches (lanes §1):** AIR-2.2, AIR-4.1 and AIR-3.3, the branches
-created after round 2. Every later slice is still an outline.
+**Briefs to draft before their branches (lanes §1):** AIR-2.2 (which also adds `peril/`'s import
+of `common/`, flagged at AIR-1.2), AIR-4.1 and AIR-3.3.
 
 ## Machine R
 
-**Position:** round 2. AIR-3.2 merged. Next: draft the AIR-2.2, AIR-4.1 and AIR-3.3 briefs on
-`main`, and verify S's AIR-1.2 when it arrives.
+**Position:** round 3. Rounds 1 and 2 complete, Phase 1 complete. Next: draft the AIR-2.2,
+AIR-4.1 and AIR-3.3 briefs on `main`.
 **Last updated:** 2026-09-26
 **Blockers:** none
 
@@ -36,20 +36,19 @@ created after round 2. Every later slice is still an outline.
 | 21 | AIR-3.5 | `air/3.5-m2-check` | waiting | |
 | 23+ | substrate ADRs, S1, S2, S4, S5, S7 | `air/s<n>-<slug>` | waiting | ADRs drafted in round 4 |
 
-Verifying queue (S branches handed over and not yet merged): `air/1.2-shared-contracts`, verified,
-awaiting sign-off.
+Verifying queue (S branches handed over and not yet merged): none.
 
 ## Machine S
 
-**Position:** round 2. AIR-1.1 and AIR-2.1 merged. AIR-1.2 built on `air/1.2-shared-contracts`,
-left uncommitted for human review before it is committed.
+**Position:** round 3. AIR-1.1, AIR-2.1 and AIR-1.2 merged. Next: AIR-2.2 and AIR-4.1, once R has
+drafted their briefs and the human has created their branches.
 **Last updated:** 2026-09-26
 **Blockers:** none.
 
 | Seq | Slice | Branch | State | Note |
 |---|---|---|---|---|
 | 3 | AIR-1.1 | `air/1.1-layout` | merged | set by R. No version bumps, no tags |
-| 4 | AIR-1.2 | `air/1.2-shared-contracts` | verifying | set by R: rebased, one fix, checks and probe pass. Awaiting `LOG.md` sign-off |
+| 4 | AIR-1.2 | `air/1.2-shared-contracts` | merged | set by R. Tags `applied-classification-v0.1.0`, `applied-classification-vocab-v0.1.0`, `insurance-common-v0.1.0`, `insurance-common-vocab-v0.1.0` |
 | 5 | AIR-2.1 | `air/2.1-peril-spec` | merged | set by R: three shape defects fixed at verification. Tags `applied-insurance-peril-shapes-v0.1.0`, `insurance-peril-v0.1.0`, `insurance-peril-vocab-v0.1.0` |
 | 6 | AIR-2.2 | `air/2.2-characteristics` | waiting | |
 | 7 | AIR-4.1 | `air/4.1-exposure-core` | waiting | |
@@ -76,13 +75,14 @@ left uncommitted for human review before it is committed.
 | 3 | AIR-1.1 | 1 | fast-forward to `651fbfa` | signed off |
 | 5 | AIR-2.1 | 1 | fast-forward to the head of `air/2.1-peril-spec` | signed off |
 | 8 | AIR-3.2 | 2 | fast-forward to the head of `air/3.2-set-readings` | signed off |
+| 4 | AIR-1.2 | 2 | fast-forward to the head of `air/1.2-shared-contracts` | signed off |
 
 ## Phases (machine R only)
 
 | Phase | Plan | State |
 |---|---|---|
 | 0 Decisions | [plan](../plans/applied-insurance-reference-phase-0.md) | ✅ complete |
-| 1 Module split | [plan](../plans/applied-insurance-reference-phase-1.md) | 🚧 AIR-1.1 merged |
+| 1 Module split | [plan](../plans/applied-insurance-reference-phase-1.md) | ✅ AIR-1.1 and AIR-1.2 merged |
 | 2 Peril vocabulary | [plan](../plans/applied-insurance-reference-phase-2.md) | 🚧 AIR-2.1 merged |
 | 3 Readings and crosswalks | [plan](../plans/applied-insurance-reference-phase-3.md) | 🚧 AIR-3.1 and AIR-3.2 merged |
 | 4 Exposure | [plan](../plans/applied-insurance-reference-phase-4.md) | ⏳ |
