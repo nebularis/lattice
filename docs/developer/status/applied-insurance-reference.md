@@ -40,16 +40,17 @@ Verifying queue (S branches handed over and not yet merged): none.
 
 ## Machine S
 
-**Position:** round 0. Waiting for the human to create the round 0 branches, then building AIR-1.1
-and AIR-2.1.
+**Position:** round 1. AIR-1.1 built and committed on `air/1.1-layout`, handed over for R to
+bundle, verify and merge. Blocked on the human switching this checkout to `air/2.1-peril-spec`
+(agents do not run `git switch`) before AIR-2.1 can start.
 **Last updated:** 2026-09-26
-**Blockers:** none
+**Blockers:** waiting for the human to switch the checkout to `air/2.1-peril-spec` for AIR-2.1.
 
 | Seq | Slice | Branch | State | Note |
 |---|---|---|---|---|
-| 3 | AIR-1.1 | `air/1.1-layout` | waiting for branch | |
+| 3 | AIR-1.1 | `air/1.1-layout` | handed over | Validation Pack's Handoff section filled in |
 | 4 | AIR-1.2 | `air/1.2-shared-contracts` | waiting | |
-| 5 | AIR-2.1 | `air/2.1-peril-spec` | waiting for branch | |
+| 5 | AIR-2.1 | `air/2.1-peril-spec` | waiting for branch | branch exists, brief ready, needs the checkout switched here next |
 | 6 | AIR-2.2 | `air/2.2-characteristics` | waiting | |
 | 7 | AIR-4.1 | `air/4.1-exposure-core` | waiting | |
 | 9 | AIR-2.3 | `air/2.3-causes-n-t-e` | waiting | |

@@ -59,7 +59,6 @@ EXTERNAL: dict[str, str] = {
 _MORK_FRAGMENT = "imports http://www.nebularis.org/ontologies/Mork# (stray fragment) instead of the Mork ontology IRI"
 _UNPARSEABLE = "does not parse as Turtle"
 KNOWN_DEFECTS: dict[str, str] = {
-    "ontology/applied/insurance/spec/structure/contract.ttl": _UNPARSEABLE,
     "ontology/mork/examples/Governance/GovernanceAndVersioning.ttl": _MORK_FRAGMENT,
     "ontology/mork/examples/Zoo/PropertyGeneration.ttl": _MORK_FRAGMENT,
 }
