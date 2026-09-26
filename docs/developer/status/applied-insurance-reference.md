@@ -23,14 +23,14 @@ after round 1. Every later slice is still an outline.
 
 ## Machine R
 
-**Position:** round 1. AIR-3.1 built and self-validated on `air/3.1-flat-hierarchy` (Validation
-Pack Results). Waiting for the human's gate, and for S's AIR-1.1 and AIR-2.1 bundles to verify.
+**Position:** round 1. AIR-3.1 signed off and recorded as merged. Next: verify S's AIR-1.1, then
+AIR-2.1. AIR-1.2 and AIR-3.2 need briefs on `main` before their branches.
 **Last updated:** 2026-09-26
 **Blockers:** none
 
 | Seq | Slice | Branch | State | Note |
 |---|---|---|---|---|
-| 2 | AIR-3.1 | `air/3.1-flat-hierarchy` | built | tags to create at merge: `eligibility-vocab-v0.7.0`, `executable-v0.6.0` |
+| 2 | AIR-3.1 | `air/3.1-flat-hierarchy` | merged | tags `eligibility-vocab-v0.7.0`, `executable-v0.6.0` |
 | 8 | AIR-3.2 | `air/3.2-set-readings` | waiting | |
 | 13 | AIR-3.3 | `air/3.3-readings-swrl-owl` | waiting | |
 | 21 | AIR-3.5 | `air/3.5-m2-check` | waiting | |
@@ -71,6 +71,7 @@ and AIR-2.1.
 | Seq | Slice | Round | Merged | `LOG.md` |
 |---|---|---|---|---|
 | 1 | AIR-0.1 | — | `3377a71` | signed off |
+| 2 | AIR-3.1 | 1 | fast-forward to the head of `air/3.1-flat-hierarchy` | signed off |
 
 ## Phases (machine R only)
 
@@ -79,7 +80,7 @@ and AIR-2.1.
 | 0 Decisions | [plan](../plans/applied-insurance-reference-phase-0.md) | ✅ complete |
 | 1 Module split | [plan](../plans/applied-insurance-reference-phase-1.md) | ⏳ |
 | 2 Peril vocabulary | [plan](../plans/applied-insurance-reference-phase-2.md) | ⏳ |
-| 3 Readings and crosswalks | [plan](../plans/applied-insurance-reference-phase-3.md) | ⏳ |
+| 3 Readings and crosswalks | [plan](../plans/applied-insurance-reference-phase-3.md) | 🚧 AIR-3.1 merged |
 | 4 Exposure | [plan](../plans/applied-insurance-reference-phase-4.md) | ⏳ |
 | 5 Contract module | [plan](../plans/applied-insurance-reference-phase-5.md) | 🅿️ deferred until Open CBAA integration of 1 to 4 (D2) |
 | 6 Submission, claims | [plan](../plans/applied-insurance-reference-phase-6.md) | ⏳ |
