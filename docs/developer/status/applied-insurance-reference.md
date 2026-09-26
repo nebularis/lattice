@@ -3,8 +3,8 @@
 # Applied Insurance Reference - Status
 
 **Unit ID:** `applied-insurance-reference` (epic)
-**Status:** Phase 0. A-98, A-99 and A-102 Accepted 2026-09-26. A-100 (reduced), A-103 and A-98's
-addendum awaiting ratification together.
+**Status:** Phase 0 decisions complete. A-98 (with addendum), A-99, A-100, A-102 and A-103
+Accepted 2026-09-26. AIR-0.1 awaits its `LOG.md` sign-off.
 **Last updated:** 2026-09-26
 **Trigger:** human request, 2026-09-26
 **Plan:** [applied-insurance-reference.md](../plans/applied-insurance-reference.md)
@@ -12,7 +12,7 @@ addendum awaiting ratification together.
 
 ## Current position
 
-The five sketches were moved into `docs/developer/sketches/` by the human. The epic and its phase
+The five sketches were moved into `docs/developer/sketches/`. The epic and its phase
 plans were written on 2026-09-26. In the same session `prl:canTrigger` was corrected in the
 peril vocabulary and whitepaper sketches: it is now a sub-property of `skos:semanticRelation`,
 because `skos:related` is symmetric, and `prl:overlaps` is declared symmetric itself.
@@ -54,6 +54,10 @@ and one node per link of a loss's cause chain (`aeo:LossCause`). Epic D11 was re
 added. Phase 3, the lanes, and the peril vocabulary (§6.8 now the worked check), MORK bridge,
 whitepaper and exposure sketches were revised to agree.
 
+The human accepted A-100 and A-98's addendum, and A-103 with negation added
+(`elg:negated`: evaluate, then swap Permitted and Denied, keeping Undetermined). The lanes file
+gained the merge gate and the merge points (§3).
+
 ## Phases
 
 | Phase | Plan | State | Status record |
@@ -73,5 +77,5 @@ None.
 
 ## Next action
 
-Human ratifies A-100, A-103 and A-98's addendum, then records AIR-0.1 in `LOG.md`. Lanes L
-(A-98), P1 (A-99) and AIR-1.2 (A-102) are open. Lane B opens with A-100, and AIR-3.2 needs A-103.
+Human records AIR-0.1 in `LOG.md` and commits it (merge point 1). Branches 3.1, 1.1 and 2.1 may
+then be created (lanes §3.2).

@@ -3,7 +3,7 @@
 # ADR-A98: Applied layout and insurance modules
 
 **Status:** Accepted
-**Date:** 2026-09-26 (proposed), 2026-09-26 (accepted)
+**Date:** 2026-09-26 (proposed), 2026-09-26 (accepted, including addendum) 
 **Related:** ADR-A86 (semantic versioning), ADR-A88 (import resolution), ADR-A-C1, ADR-A-C2, ADR-A99, ADR-A100, ADR-A102
 **Unit:** [`applied-insurance-reference`](../../developer/plans/applied-insurance-reference.md) (AIR-0.1, epic decisions D1, D5 to D9)
 

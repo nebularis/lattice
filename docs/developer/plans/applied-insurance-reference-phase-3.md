@@ -24,8 +24,8 @@ authored as fixtures before the README prose, and no insurance term enters eithe
 | Slice | Content | Modules |
 |---|---|---|
 | AIR-3.1 | A-100: the law beside L11 in the Eligibility README, its two example fixtures, `exe:NoHierarchy` (Executable PATCH), the rule in the IR's expansion and in the SPARQL backend, and the OWL backend's refusal | `ontology/eligibility` (README, examples), `tools/mork_compilers`. `Executable.ttl` gains one individual, a stated deviation from the two-module rule |
-| AIR-3.2 | A-103: `elg:ValueReading`, its three individuals and `elg:valueReading` (Eligibility MINOR, cascade), fixtures, the IR, SPARQL and SHACL | `ontology/eligibility`, `tools/mork_compilers` |
-| AIR-3.3 | A-103 in the SWRL (sound subset) and OWL (`∃`, `∀ ⊓ ∃`) backends | `tools/mork_compilers` |
+| AIR-3.2 | A-103: `elg:ValueReading`, its three individuals, `elg:valueReading` and `elg:negated` (Eligibility MINOR, cascade), fixtures, the IR, SPARQL and SHACL | `ontology/eligibility`, `tools/mork_compilers` |
+| AIR-3.3 | A-103 in the SWRL (sound subset, swapped heads under negation) and OWL (`∃`, `∀ ⊓ ∃`, complement) backends | `tools/mork_compilers` |
 | AIR-3.4 | crosswalk format: reviewed SKOS triples plus characteristic values on codes that name several things, as a `fnd:DerivedArtefact`. A crosswalk of one market list, and the lookup that lifts codes to reference concepts at ingestion | `insurance/peril/crosswalk/`, `ontology/mork` examples |
 | AIR-3.5 | lowering to a market list, list-to-list through the reference, and milestone M2 | as 3.4, `insurance/exposure/examples/` |
 
@@ -35,7 +35,8 @@ Tests at L1 and L2:
   is Undetermined with `exe:NoHierarchy`, and a hierarchical scheme evaluates as before. SPARQL,
   SHACL and SWRL agree. The OWL backend refuses
 - 3.2: each reading over zero, one and several values, including an exclusion read `EveryValue`,
-  and a binding without a reading behaving as today. SPARQL and SHACL agree
+  and a binding without a reading behaving as today. A negated condition swaps Permitted and
+  Denied and keeps Undetermined with its diagnostic. SPARQL and SHACL agree
 - 3.3: SWRL derives only the sound subset. OWL classes stand in the expected subsumptions
 - 3.4: a crosswalk is stale when either edition changes. An inexact mapping never decides
 - 3.5 (M2): the cyber write-back profile of peril vocabulary §6.8 decides on the reference,

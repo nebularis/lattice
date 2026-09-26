@@ -2,9 +2,12 @@
 
 # ADR-A100: Hierarchical match over schemes without a hierarchy
 
-**Status:** Proposed
-**Date:** 2026-09-26 (proposed, then twice rewritten the same day: first to place the concern in the substrate, then to reduce it to Eligibility and its compilers)
+**Status:** Accepted
+
+**Date:** 2026-09-26 (accepted in its final form, 2026-09-26) (NB: twice rewritten: first to place the concern in the substrate, then to reduce it to Eligibility and its compilers)
+
 **Related:** ADR-A85 (scoped binding resolution), ADR-A87 (concept exclusion), ADR-A89 (concept IR), ADR-A92 (derived artefacts), ADR-A13 (graph roles), ADR-A103 (set readings), ADR-A-C2, ADR-A98 (addendum)
+
 **Unit:** [`applied-insurance-reference`](../../developer/plans/applied-insurance-reference.md) (AIR-0.1, epic decision D11)
 
 ## Context

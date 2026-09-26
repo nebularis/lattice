@@ -1,9 +1,9 @@
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
-# ADR-A103: Eligibility set readings
+# ADR-A103: Eligibility set readings and negation
 
-**Status:** Proposed
-**Date:** 2026-09-26 (proposed)
+**Status:** Accepted
+**Date:** 2026-09-26 (proposed), 2026-09-26 (accepted, with negation added)
 **Related:** ADR-A87 (concept exclusion), ADR-A89 (profile aggregation), ADR-A90 (design-time OWL classes), ADR-A91 (evidence binding), ADR-A100, ADR-A-C2
 **Unit:** [`applied-insurance-reference`](../../developer/plans/applied-insurance-reference.md) (Phase 3, epic decision D12)
 
@@ -45,13 +45,21 @@ rule that means "some value qualifies" or "every value qualifies" cannot be stat
    `EveryValue`. The OWL backend compiles `SomeValue` as `∃path.C` and `EveryValue` as
    `∀path.C ⊓ ∃path.⊤`, for design-time checks only, relaxing ADR-A90's single-valued claim for
    bindings that declare a reading.
-4. **Correlation is out of scope.** Each condition in a profile reads its own path. A rule that
+4. **Negation.** `elg:negated true` on a condition evaluates the condition as it stands, including
+   its value reading, and then swaps Permitted and Denied. Undetermined stays Undetermined, with
+   its diagnostic. The compilers apply the swap to the condition's outcome: the IR's expansion,
+   the SPARQL and SHACL decisions, the SWRL rule heads (a rule that derived Permitted derives
+   Denied), and the OWL class (its complement, for design-time checks only). "An applicant who
+   holds no qualification in medicine" is the medicine condition read `elg:SomeValue` and
+   negated, without enumerating every other qualification.
+5. **Correlation is out of scope.** Each condition in a profile reads its own path. A rule that
    needs two values to come from the same intermediate node binds its subject to that node.
 
 ## Consequences
 
-- Eligibility takes a MINOR bump: a class, three individuals and a property are added, and a
-  binding without a reading behaves as today. The import-pinning cascade runs.
+- Eligibility takes a MINOR bump: a class, three individuals and two properties are added. A
+  binding without a reading, and a condition without `elg:negated`, behave as today. The
+  import-pinning cascade runs.
 - Examples and README text follow ADR-A-C2: the two examples above are authored as fixtures before
   the law's prose.
 - Every backend changes. The IR and SPARQL and SHACL are one slice, SWRL and OWL another.

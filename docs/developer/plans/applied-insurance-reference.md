@@ -150,8 +150,8 @@ ADR-A100.
 |---|---|---|---|
 | A-98, Accepted with addendum | applied layout, the three levels of sharing and the insurance module structure (§5.2, D5 to D9, addendum for D11), one-way dependencies, one `.version` per module, LATTICE layers imported by exact version IRI | asset-exposure-ontology §3, §13 | Phase 0 |
 | A-99, Accepted | reference vocabularies and scheme precedence: LATTICE reference editions as unscoped fallback, the peril vocabulary's structure beyond SKOS, and the name "characteristic" | peril-vocabulary §2, §6, §9 | Phase 0 |
-| A-100, Proposed | hierarchical match over schemes without a hierarchy, crosswalks (D11). A substrate decision under ADR-A-C2 | mork-bridge §3, §8 | Phase 0 |
-| A-103, Proposed | set readings for evidence bindings (D12). A substrate decision under ADR-A-C2 | whitepaper L-P3 | Phase 0 |
+| A-100, Accepted | hierarchical match over schemes without a hierarchy, crosswalks (D11). A substrate decision under ADR-A-C2 | mork-bridge §3, §8 | Phase 0 |
+| A-103, Accepted | set readings for evidence bindings, and condition negation (D12). A substrate decision under ADR-A-C2 | whitepaper L-P3 | Phase 0 |
 | A-102, Accepted | liability direction from party roles with unfilled occupancies | term-parameters §7, asset-exposure-ontology §5.15 | Phase 0 |
 | A-101, reserved | term parameters on `ins:Qualifier`, term relations, optional compilation routes R1 to R3 | term-parameters §3 to §5 | Phase 5 start (D2) |
 

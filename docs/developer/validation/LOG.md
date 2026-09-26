@@ -17,3 +17,4 @@ One row per slice passing its human validation gate (see `.github/copilot-instru
 | applied-ontology-readiness AOR-3b | 2026-09-25 | as above | none |
 | applied-ontology-readiness AOR-12 | 2026-09-25 | as above | `srf:ReadSetEntry` not aligned with PROV-O |
 | applied-ontology-readiness AOR-13 | 2026-09-25 | as above | none |
+| AIR-0.1 | 2026-09-25 | Tim Watson | Covered by commit message & plan updates |
