@@ -36,7 +36,8 @@ created after round 2. Every later slice is still an outline.
 | 21 | AIR-3.5 | `air/3.5-m2-check` | waiting | |
 | 23+ | substrate ADRs, S1, S2, S4, S5, S7 | `air/s<n>-<slug>` | waiting | ADRs drafted in round 4 |
 
-Verifying queue (S branches handed over and not yet merged): none.
+Verifying queue (S branches handed over and not yet merged): `air/1.2-shared-contracts`, verified,
+awaiting sign-off.
 
 ## Machine S
 
@@ -48,7 +49,7 @@ left uncommitted for human review before it is committed.
 | Seq | Slice | Branch | State | Note |
 |---|---|---|---|---|
 | 3 | AIR-1.1 | `air/1.1-layout` | merged | set by R. No version bumps, no tags |
-| 4 | AIR-1.2 | `air/1.2-shared-contracts` | built, uncommitted | Validation Pack's Handoff section filled in. A sequencing gap noted there, not fixed (`peril/` does not yet import `common/`, ADR-A98 decision 5). Human review requested before commit |
+| 4 | AIR-1.2 | `air/1.2-shared-contracts` | verifying | set by R: rebased, one fix, checks and probe pass. Awaiting `LOG.md` sign-off |
 | 5 | AIR-2.1 | `air/2.1-peril-spec` | merged | set by R: three shape defects fixed at verification. Tags `applied-insurance-peril-shapes-v0.1.0`, `insurance-peril-v0.1.0`, `insurance-peril-vocab-v0.1.0` |
 | 6 | AIR-2.2 | `air/2.2-characteristics` | waiting | |
 | 7 | AIR-4.1 | `air/4.1-exposure-core` | waiting | |

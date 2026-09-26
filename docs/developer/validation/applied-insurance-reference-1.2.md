@@ -44,4 +44,27 @@ Written by the building machine when the work is committed. S could not run the 
 
 ## Results
 
-Written on machine R at verification.
+Run on machine R, 2026-09-26, on `air/1.2-shared-contracts` after its rebase onto `main`
+(AIR-3.2), which was clean.
+
+S's own AIR12-06 caught one defect, fixed on R: the classification spec's `rdfs:comment` used
+`aeo:peril rdfs:subPropertyOf icm:peril` as its example, an insurance term in the cross-domain
+module. It now uses a lending module's `collateralTerritory rdfs:subPropertyOf cls:territory`.
+The README's example, which also illustrated specialisation with an `icm:` property rather than
+a `cls:` one, is replaced the same way.
+
+AIR12-01 checks each document's pinned imports by name. Resolution of the full closure through
+the catalog is covered by `mise run check:ontology-catalog`, which fails on any unresolved
+import, so the test is kept as S wrote it.
+
+| Check | Result |
+|---|---|
+| `mise run build:ontology-catalog` | root catalog and four stub catalogs written |
+| `mise run build:ontology-releases` | four rows. Tags to create at merge: `applied-classification-v0.1.0`, `applied-classification-vocab-v0.1.0`, `insurance-common-v0.1.0`, `insurance-common-vocab-v0.1.0` |
+| `mise run check:ontology-catalog` | 84 tool tests passed (7 in this slice), catalog consistent, every import resolves |
+| `mise run check:ontology-versioning` | 35 in-scope documents, no unbumped changes against HEAD or `main`, every version listed |
+| AIR12-01 to AIR12-06 | pass, AIR12-06 after the fix above |
+| probe | removing `voc:constrainsProperty` from `icm-voc:PerilContract` fails AIR12-02 |
+
+S's handoff flags that `peril/` does not yet import `common/` (ADR-A98 decision 5), because it
+was built first. That is carried into the AIR-2.2 brief.
