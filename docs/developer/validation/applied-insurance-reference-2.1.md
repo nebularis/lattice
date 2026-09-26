@@ -45,4 +45,34 @@ Written by the building machine when the work is committed. S could not run the 
 
 ## Results
 
-Written on machine R at verification.
+Run on machine R, 2026-09-26, on `air/2.1-peril-spec` after its rebase onto `main` (AIR-3.1 and
+AIR-1.1). The rebase conflicted only in the status record's Machine S section, resolved to the
+newest state of each row.
+
+S's 13 tests passed before any change on R. Review found two defects in the shapes, both fixed:
+
+1. **`prl:PrimaryParentShape` let a non-top cause concept with no primary parent pass.** It
+   counted parents in a sub-query grouped by `$this`, which returns no row for a concept with
+   none, so the count filter never ran. Rewritten to count with `OPTIONAL` and `HAVING` at the top
+   level. A new test, `test_non_top_concept_without_a_primary_parent_is_rejected` (AIR21-07,
+   second case), failed against the original shape and passes against the fix.
+2. **Every constraint declared its prefixes with `sh:prefixes` pointing at namespace IRIs**, which
+   needs `sh:declare` triples. pySHACL fell back to the file's `@prefix` lines, but other SHACL
+   engines would reject the queries. Every query now carries `PREFIX` lines, as the repository's
+   other shapes do.
+
+Both lessons are now rules in `.github/copilot-instructions.md` ("Authoring SHACL-SPARQL
+shapes"), which every agent on both machines reads.
+
+Also on R: the peril row of `insurance/domain-README.md` and the applied insurance row of
+`ontology-architecture.md` §3 (the latter also loses a semicolon), stub catalogs for `spec/` and
+`vocab/`, and three release rows.
+
+| Check | Result |
+|---|---|
+| `mise run build:ontology-catalog` | root catalog and two stub catalogs written |
+| `mise run build:ontology-releases` | three rows. Tags to create at merge: `applied-insurance-peril-shapes-v0.1.0`, `insurance-peril-v0.1.0`, `insurance-peril-vocab-v0.1.0` |
+| `mise run check:ontology-catalog` | 73 tool tests passed (14 peril), catalog consistent, 2 known defects |
+| `mise run check:ontology-versioning` | passes once the fixes are committed. The shapes stay at 0.1.0: it is unreleased, and against `main` the check reports no unbumped change |
+| AIR21-01 to AIR21-12 | pass, AIR21-07 with its new zero-parent case |
+| probe | the zero-parent case fails against S's original `PrimaryParentShape` |

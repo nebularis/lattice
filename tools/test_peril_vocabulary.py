@@ -188,6 +188,13 @@ def test_concept_with_both_a_generic_and_a_partitive_parent_is_rejected():
     assert PRIMARY_PARENT in shapes_for(PRLV["N.MET.TC.HUR"], data)
 
 
+def test_non_top_concept_without_a_primary_parent_is_rejected():
+    data = _fixture()
+    data.remove((PRLV["N.MET.TC.HUR"], PRL.broaderGeneric, None))
+    data.remove((PRLV["N.MET.TC.HUR"], SKOS.broader, None))
+    assert PRIMARY_PARENT in shapes_for(PRLV["N.MET.TC.HUR"], data)
+
+
 # ---- AIR21-08: materialised broader -------------------------------------------------------------
 
 

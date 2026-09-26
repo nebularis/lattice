@@ -12,7 +12,7 @@ epic, whose sketches describe the design each module implements.
 | Module | Content | State | Built in |
 |---|---|---|---|
 | `common/` | insurance scheme contracts (peril, mechanism, agency, consequence, harm subject, pool), liability role types (ADR-A102), the loss event | not yet built | AIR-1.2 |
-| `peril/` | reference peril vocabulary: cause scheme, characteristics, collections, crosswalks | not yet built | Phase 2 |
+| [`peril/`](peril/README.md) | reference peril vocabulary: cause scheme, characteristics, collections, crosswalks | properties, the eight scheme declarations and the well-formedness shapes built (AIR-2.1). Concepts arrive from AIR-2.2 | Phase 2 |
 | `exposure/` | locations, assets, values, zones, dependencies, exposure units, loss history, requirements, liability exposure | not yet built | Phase 4 |
 | `submission/` | packaging an exposure set version for underwriting | not yet built | AIR-6.1 |
 | `claims/` | loss cause chains recorded against a responding contract | deferred with `contract/` (epic D2) | Phase 6 |

@@ -179,6 +179,14 @@ The level of testing discipline for a slice should be verified during planning.
 
 Try not to explain your design decisions in multiple places. Avoid explaining why you did not use a certain pattern or construct, especially if you've just explained why you did use a different one. If you feel the need to explain your design decisions, do so in a single place and cross-reference it from other places.
 
+### Authoring SHACL-SPARQL shapes
+
+These rules come from defects found at verification. Follow them in every `sh:sparql` constraint.
+
+- **Declare prefixes inside the query**, with `PREFIX` lines at the top of `sh:select`, as `ontology/eligibility/shapes/constraints.ttl` does. Do not use `sh:prefixes` pointing at a namespace IRI: it needs `sh:declare` triples, and pySHACL silently falls back to the file's `@prefix` lines where other SHACL engines fail.
+- **Count with `OPTIONAL` and `HAVING` at the top level**, never with a grouped sub-query. A sub-query grouped by `$this` returns no row for a subject with zero matches, so a filter on its count never runs and "exactly one" passes when there are none. Write `OPTIONAL { … ?x … } } GROUP BY $this HAVING (COUNT(DISTINCT ?x) != 1)`.
+- **Test every cardinality rule at zero, not only at too many.** A negative case with two values does not catch a query that ignores subjects with none.
+
 ### Thinking / Reasoning for Coding
 
 Your user may present design collateral, architectural guidance, and coding standards. These must be adhered to at all times. Readability and clarity of intent is as important as working code that passes tests.

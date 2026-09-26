@@ -16,8 +16,10 @@ prl:ReferenceCodeShape
     sh:targetClass skos:Concept ;
     sh:sparql [
         sh:message "A cause concept needs exactly one skos:notation typed prl:ReferenceCode, unique among cause concepts, equal to its primary parent's code plus one '.'-separated segment, or to its family letter if it is a top concept (ADR-A99 §10, sketch §5)." ;
-        sh:prefixes prl: , prl-voc: , skos: ;
         sh:select """
+            PREFIX prl: <https://www.nebularis.org/neuro-semantic/insurance/peril#>
+            PREFIX prl-voc: <https://www.nebularis.org/neuro-semantic/insurance/peril/vocab#>
+            PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
             SELECT $this WHERE {
               $this skos:inScheme prl-voc:CauseScheme .
               OPTIONAL { $this skos:notation ?n . FILTER (DATATYPE(?n) = prl:ReferenceCode) }
@@ -27,8 +29,10 @@ prl:ReferenceCodeShape
         """ ] ;
     sh:sparql [
         sh:message "A cause concept's reference code must be unique among cause concepts (ADR-A99 §10)." ;
-        sh:prefixes prl: , prl-voc: , skos: ;
         sh:select """
+            PREFIX prl: <https://www.nebularis.org/neuro-semantic/insurance/peril#>
+            PREFIX prl-voc: <https://www.nebularis.org/neuro-semantic/insurance/peril/vocab#>
+            PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
             SELECT $this WHERE {
               $this skos:inScheme prl-voc:CauseScheme ; skos:notation ?code .
               FILTER (DATATYPE(?code) = prl:ReferenceCode)
@@ -38,8 +42,10 @@ prl:ReferenceCodeShape
         """ ] ;
     sh:sparql [
         sh:message "A non-top cause concept's reference code must equal its primary parent's code plus exactly one '.'-separated segment (ADR-A99 §10, sketch §5)." ;
-        sh:prefixes prl: , prl-voc: , skos: ;
         sh:select """
+            PREFIX prl: <https://www.nebularis.org/neuro-semantic/insurance/peril#>
+            PREFIX prl-voc: <https://www.nebularis.org/neuro-semantic/insurance/peril/vocab#>
+            PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
             SELECT $this WHERE {
               $this skos:inScheme prl-voc:CauseScheme ; skos:notation ?code .
               FILTER (DATATYPE(?code) = prl:ReferenceCode)
@@ -52,8 +58,10 @@ prl:ReferenceCodeShape
         """ ] ;
     sh:sparql [
         sh:message "A top concept of the cause scheme's reference code must be exactly its family letter (N, T, E, H, P, C, F or L) (ADR-A99 §10, sketch §5)." ;
-        sh:prefixes prl: , prl-voc: , skos: ;
         sh:select """
+            PREFIX prl: <https://www.nebularis.org/neuro-semantic/insurance/peril#>
+            PREFIX prl-voc: <https://www.nebularis.org/neuro-semantic/insurance/peril/vocab#>
+            PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
             SELECT $this WHERE {
               $this skos:inScheme prl-voc:CauseScheme ; skos:notation ?code .
               FILTER (DATATYPE(?code) = prl:ReferenceCode)
@@ -68,23 +76,24 @@ prl:PrimaryParentShape
     sh:targetClass skos:Concept ;
     sh:sparql [
         sh:message "A cause concept that is not a top concept of prl-voc:CauseScheme needs exactly one value across prl:broaderGeneric and prl:broaderPartitive together (ADR-A99 §10)." ;
-        sh:prefixes prl: , prl-voc: , skos: ;
         sh:select """
+            PREFIX prl: <https://www.nebularis.org/neuro-semantic/insurance/peril#>
+            PREFIX prl-voc: <https://www.nebularis.org/neuro-semantic/insurance/peril/vocab#>
+            PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
             SELECT $this WHERE {
               $this skos:inScheme prl-voc:CauseScheme .
               FILTER NOT EXISTS { prl-voc:CauseScheme skos:hasTopConcept $this }
-              {
-                SELECT $this (COUNT(DISTINCT ?p) AS ?n) WHERE {
-                  { $this prl:broaderGeneric ?p } UNION { $this prl:broaderPartitive ?p }
-                } GROUP BY $this
-              }
-              FILTER (?n != 1)
+              OPTIONAL { { $this prl:broaderGeneric ?p } UNION { $this prl:broaderPartitive ?p } }
             }
+            GROUP BY $this
+            HAVING (COUNT(DISTINCT ?p) != 1)
         """ ] ;
     sh:sparql [
         sh:message "A cause concept with more skos:broader values than its primary (broaderGeneric/broaderPartitive) values needs a skos:editorialNote explaining the extra one (ADR-A99 §10)." ;
-        sh:prefixes prl: , prl-voc: , skos: ;
         sh:select """
+            PREFIX prl: <https://www.nebularis.org/neuro-semantic/insurance/peril#>
+            PREFIX prl-voc: <https://www.nebularis.org/neuro-semantic/insurance/peril/vocab#>
+            PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
             SELECT $this WHERE {
               $this skos:inScheme prl-voc:CauseScheme .
               {
@@ -105,8 +114,9 @@ prl:MaterialisedBroaderShape
     sh:targetClass skos:Concept ;
     sh:sparql [
         sh:message "Every prl:broaderGeneric or prl:broaderPartitive link must also appear as skos:broader, so a plain SKOS consumer sees it (ADR-A99 §10)." ;
-        sh:prefixes prl: , skos: ;
         sh:select """
+            PREFIX prl: <https://www.nebularis.org/neuro-semantic/insurance/peril#>
+            PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
             SELECT $this WHERE {
               { $this prl:broaderGeneric ?p } UNION { $this prl:broaderPartitive ?p }
               FILTER NOT EXISTS { $this skos:broader ?p }
@@ -118,8 +128,9 @@ prl:AssociativeIntegrityShape
     sh:targetClass skos:Concept ;
     sh:sparql [
         sh:message "skos:related, prl:overlaps and prl:canTrigger must never link two concepts where one is skos:broader+ of the other, in either direction (ADR-A99 §10)." ;
-        sh:prefixes prl: , skos: ;
         sh:select """
+            PREFIX prl: <https://www.nebularis.org/neuro-semantic/insurance/peril#>
+            PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
             SELECT $this WHERE {
               {
                 { $this skos:related ?other } UNION { ?other skos:related $this }
@@ -135,8 +146,8 @@ prl:AcyclicShape
     sh:targetClass skos:Concept ;
     sh:sparql [
         sh:message "No concept may be skos:broader+ of itself (ADR-A99 §10)." ;
-        sh:prefixes skos: ;
         sh:select """
+            PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
             SELECT $this WHERE {
               $this skos:broader+ $this .
             }
@@ -147,8 +158,9 @@ prl:ThresholdDefinitionShape
     sh:targetClass skos:Concept ;
     sh:sparql [
         sh:message "A concept whose prl:definitionBasis is prl-voc:Threshold needs a prl:definingThreshold (ADR-A99 §10, PV6)." ;
-        sh:prefixes prl: , prl-voc: ;
         sh:select """
+            PREFIX prl: <https://www.nebularis.org/neuro-semantic/insurance/peril#>
+            PREFIX prl-voc: <https://www.nebularis.org/neuro-semantic/insurance/peril/vocab#>
             SELECT $this WHERE {
               $this prl:definitionBasis prl-voc:Threshold .
               FILTER NOT EXISTS { $this prl:definingThreshold ?t }

@@ -51,7 +51,7 @@ branch after AIR-2.1 merges.
 |---|---|---|---|---|
 | 3 | AIR-1.1 | `air/1.1-layout` | merged | set by R. No version bumps, no tags |
 | 4 | AIR-1.2 | `air/1.2-shared-contracts` | waiting for branch | brief on `main`. Branch created after AIR-2.1 merges |
-| 5 | AIR-2.1 | `air/2.1-peril-spec` | verifying | set by R: 13 peril tests pass. Validation Pack's Handoff section filled in |
+| 5 | AIR-2.1 | `air/2.1-peril-spec` | verifying | set by R: rebased, two shape defects fixed, checks pass. Awaiting `LOG.md` sign-off |
 | 6 | AIR-2.2 | `air/2.2-characteristics` | waiting | |
 | 7 | AIR-4.1 | `air/4.1-exposure-core` | waiting | |
 | 9 | AIR-2.3 | `air/2.3-causes-n-t-e` | waiting | |

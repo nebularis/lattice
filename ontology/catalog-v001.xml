@@ -23,6 +23,10 @@
     <uri name="https://www.nebularis.org/neuro-semantic/foundation-vocab" uri="foundation/vocab/foundation-vocab.ttl"/>
     <uri name="https://www.nebularis.org/neuro-semantic/instrument" uri="instrument/spec/instrument.ttl"/>
     <uri name="https://www.nebularis.org/neuro-semantic/instrument-vocab" uri="instrument/vocab/instrument-vocab.ttl"/>
+    <uri name="https://www.nebularis.org/neuro-semantic/insurance/peril" uri="applied/insurance/peril/spec/peril.ttl"/>
+    <uri name="https://www.nebularis.org/neuro-semantic/insurance/peril-vocab/0.1.0" uri="applied/insurance/peril/vocab/peril-vocab.ttl"/>
+    <uri name="https://www.nebularis.org/neuro-semantic/insurance/peril/0.1.0" uri="applied/insurance/peril/spec/peril.ttl"/>
+    <uri name="https://www.nebularis.org/neuro-semantic/insurance/peril/vocab" uri="applied/insurance/peril/vocab/peril-vocab.ttl"/>
     <uri name="https://www.nebularis.org/neuro-semantic/lattice/applied/capacity/execution" uri="applied/capacity/spec/applied_capacity_execution_spec_capx_Version2.ttl"/>
     <uri name="https://www.nebularis.org/neuro-semantic/lattice/applied/capacity/execution/0.6.0" uri="applied/capacity/spec/applied_capacity_execution_spec_capx_Version2.ttl"/>
     <uri name="https://www.nebularis.org/neuro-semantic/lattice/behaviour-vocab/0.6.0" uri="behaviour/vocab/behaviour-vocab.ttl"/>
