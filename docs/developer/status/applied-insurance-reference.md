@@ -3,10 +3,12 @@
 # Applied Insurance Reference - Status
 
 **Unit ID:** `applied-insurance-reference` (epic)
-**Status:** Proposed. Decisions D1 to D10 recorded 2026-09-26. Ready for Phase 0.
+**Status:** Phase 0 (AIR-0.1) implemented and self-validated, awaiting the human's review of
+ADRs A-98, A-99, A-100 and A-102.
 **Last updated:** 2026-09-26
 **Trigger:** human request, 2026-09-26
 **Plan:** [applied-insurance-reference.md](../plans/applied-insurance-reference.md)
+**Review request:** [applied-insurance-reference-review.md](../review/applied-insurance-reference-review.md)
 
 ## Current position
 
@@ -29,11 +31,17 @@ merge order are in [lanes and merge order](../plans/applied-insurance-reference-
 dependency errors were corrected: the characteristic schemes now precede the cause families
 (renumbered AIR-2.2), and AIR-3.1 to AIR-3.3 no longer wait for Phase 2.
 
+AIR-0.1 was carried out autonomously on 2026-09-26: ADRs A-98, A-99, A-100 and A-102 drafted as
+Proposed, catalogue rows added with A-101 reserved, a citation note added to each sketch naming
+Open CBAA's documents, and the sketches' prefixes aligned (`brg:` to `spf:`, `common:` to `icm:`).
+The [validation pack](../validation/applied-insurance-reference-0.1.md) command was run by the
+agent and printed nothing. Nothing is committed.
+
 ## Phases
 
 | Phase | Plan | State | Status record |
 |---|---|---|---|
-| 0 Decisions | [plan](../plans/applied-insurance-reference-phase-0.md) | ⏳ ready: AIR-0.1 | this file |
+| 0 Decisions | [plan](../plans/applied-insurance-reference-phase-0.md) | 🚧 AIR-0.1 implemented, ADRs awaiting ratification | this file |
 | 1 Module split | [plan](../plans/applied-insurance-reference-phase-1.md) | ⏳ | created at phase start |
 | 2 Peril vocabulary | [plan](../plans/applied-insurance-reference-phase-2.md) | ⏳ | created at phase start |
 | 3 Bridge and tiers | [plan](../plans/applied-insurance-reference-phase-3.md) | ⏳ | created at phase start |
@@ -48,4 +56,6 @@ None.
 
 ## Next action
 
-AIR-0.1: draft ADRs A-98, A-99, A-100 and A-102.
+Human reviews the ADRs and answers the review request's questions, then records AIR-0.1 in
+`LOG.md`. Each accepted ADR opens its lanes: A-98 for L, A-99 for P1, A-100 for B, A-102 for
+AIR-1.2.

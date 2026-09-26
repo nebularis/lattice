@@ -8,6 +8,15 @@ how liability direction is modelled when claimants are unknown at binding. Compa
 [MORK bridge](mork-bridge.md), which connects the two treatments, and to the
 [peril whitepaper](peril-structure-whitepaper.md).
 
+
+Citations of `design-spec` and of codes AP, DP, D and I refer to Open CBAA's [design
+specification](https://github.com/nebularis/open-cbaa/blob/main/docs/design/design-spec.md) and
+[LATTICE integration
+specification](https://github.com/nebularis/open-cbaa/blob/main/docs/design/lattice-integration.md).
+Where this sketch and the [applied insurance reference
+epic](../plans/applied-insurance-reference.md) or its ADRs (A-98 to A-102) differ, they take
+precedence.
+
 ---
 
 ## 1. Summary

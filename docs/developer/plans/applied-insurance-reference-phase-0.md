@@ -4,7 +4,7 @@
 
 **Unit ID:** `applied-insurance-reference-phase-0`
 **Epic:** [applied-insurance-reference](applied-insurance-reference.md)
-**Status:** Proposed, awaiting human review
+**Status:** AIR-0.1 implemented 2026-09-26, awaiting ADR ratification
 **Status record:** epic [status](../status/applied-insurance-reference.md) until the phase starts
 
 ## Scope

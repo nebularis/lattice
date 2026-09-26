@@ -530,12 +530,12 @@ longer exist. Five slices, about 180k tokens.
 
 | Field | Value |
 |-------|-------|
-| **Status** | ⏳ Epic and phase plans written 2026-09-26. Decisions D1 to D10 recorded. Ready for Phase 0 |
+| **Status** | 🚧 Phase 0 (AIR-0.1) implemented 2026-09-26, ADRs A-98, A-99, A-100, A-102 Proposed. [Review](review/applied-insurance-reference-review.md), [VP](validation/applied-insurance-reference-0.1.md) |
 | **Unit ID** | `applied-insurance-reference` (epic) |
 | **Sketches** | [peril-vocabulary.md](sketches/peril-vocabulary.md), [asset-exposure-ontology.md](sketches/asset-exposure-ontology.md), [term-parameters.md](sketches/term-parameters.md), [mork-bridge.md](sketches/mork-bridge.md), [peril-structure-whitepaper.md](sketches/peril-structure-whitepaper.md) |
 | **Plan** | [applied-insurance-reference.md](plans/applied-insurance-reference.md), with phase plans 0 to 6, a substrate track, and [lanes and merge order](plans/applied-insurance-reference-lanes.md) |
 | **Status Record** | [applied-insurance-reference.md](status/applied-insurance-reference.md) |
-| **ADRs** | A-98, A-99, A-100, A-102 to be drafted in Phase 0 (AIR-0.1). A-101 at Phase 5 start |
+| **ADRs** | A-98, A-99, A-100, A-102 Proposed. A-101 reserved for Phase 5 |
 
 Reference implementation of the applied insurance domain: module split, reference peril
 vocabulary, scheme profiles and MORK crosswalks for flat or taxonomic peril lists, exposure
@@ -689,7 +689,7 @@ non-blocking track.
 | **Vocabulary consumer hardening** | `produced_at`/hash conflation, missing resolution trace, `vvp:resolvedAt` naming, vocabulary architecture test | Implemented 2026-09-25 (all 4 findings); not yet executed in this sandbox (no rdflib) | Run `mise run check:vocabulary` and `python -m unittest surface.test_surface -v`, then close out |
 | **Ontology semantic versioning** | ADR-A86, versioning-policy doc, baseline reset, narrow enforcement check | Implemented (2026-09-25): policy doc, `0.2.0` baseline reset across 29 ontology documents, `check:ontology-versioning` tooling | Decide whether the discovered `literate_extract.py` drift becomes its own unit |
 | **Applied ontology readiness** | ADRs A-83, A-86 addendum, A-87 to A-96, 17 slices in three phases | Gaps any applied ontology meets when built on LATTICE (loading, examples, compilation, provenance, substrate extensions) | Run the review's commands, record sign-off in `LOG.md` |
-| **Applied insurance reference** | Epic: applied insurance module split, peril vocabulary, bridge tiers, exposure, term parameters | Sketches consolidated into an epic, 2026-09-26. Legacy contract module dropped, new one deferred until Open CBAA integration | Phase 0 (AIR-0.1) |
+| **Applied insurance reference** | Epic: applied insurance module split, peril vocabulary, bridge tiers, exposure, term parameters | Sketches consolidated into an epic, 2026-09-26. Legacy contract module dropped, new one deferred until Open CBAA integration | Ratify A-98, A-99, A-100, A-102, then Phase 1 |
 
 ---
 

@@ -5,6 +5,15 @@ insurance reference implementation, and how Open CBAA uses it as one of the peri
 agreement may bind. Open CBAA authors no peril scheme: the contract's drafter or the market
 supplies it, and the [MORK bridge](mork-bridge.md) connects what they supply to this reference. The companion [whitepaper](peril-structure-whitepaper.md) argues why the vocabulary has the shape it has, and the [asset exposure ontology](asset-exposure-ontology.md) is its main consumer outside the contract.
 
+
+Citations of `design-spec` and of codes AP, DP, D and I refer to Open CBAA's [design
+specification](https://github.com/nebularis/open-cbaa/blob/main/docs/design/design-spec.md) and
+[LATTICE integration
+specification](https://github.com/nebularis/open-cbaa/blob/main/docs/design/lattice-integration.md).
+Where this sketch and the [applied insurance reference
+epic](../plans/applied-insurance-reference.md) or its ADRs (A-98 to A-102) differ, they take
+precedence.
+
 ---
 
 ## 1. Purpose and Position

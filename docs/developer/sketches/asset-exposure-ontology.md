@@ -8,6 +8,15 @@ construct onto LATTICE, and it is the main consumer of the
 [reference peril vocabulary](peril-vocabulary.md) outside the contract. The
 [whitepaper](peril-structure-whitepaper.md) covers the structural questions the two share.
 
+
+Citations of `design-spec` and of codes AP, DP, D and I refer to Open CBAA's [design
+specification](https://github.com/nebularis/open-cbaa/blob/main/docs/design/design-spec.md) and
+[LATTICE integration
+specification](https://github.com/nebularis/open-cbaa/blob/main/docs/design/lattice-integration.md).
+Where this sketch and the [applied insurance reference
+epic](../plans/applied-insurance-reference.md) or its ADRs (A-98 to A-102) differ, they take
+precedence.
+
 ---
 
 ## 1. Purpose and Position
@@ -476,18 +485,18 @@ materialisation and puts every shortcut under provenance.
 | `aeo:assetClass` | `cls:AssetClassContract` | V2 plus V3 | crosswalked to the CBAA insurable interest hierarchy |
 | `aeo:territory` | `cls:TerritoryContract` | V2 plus V3 | same edition Open CBAA binds for `rsk:riskLocation` |
 | `aeo:zone` | `aeo-voc:HazardZoneContract` | V2 per jurisdiction | territory-scoped bindings |
-| `aeo:initiatingPeril`, `aeo:proximatePeril`, `aeo:perilScope`, `aeo:unitPeril` | `common:PerilContract` | reference, market or drafter | the `insurance/peril` edition as unscoped fallback, drafter and market editions by scope (peril vocabulary §9) |
-| `aeo:mechanism`, `aeo:agency` | `common:PerilMechanismContract`, `common:PerilAgencyContract` | reference | peril vocabulary characteristic schemes |
+| `aeo:initiatingPeril`, `aeo:proximatePeril`, `aeo:perilScope`, `aeo:unitPeril` | `icm:PerilContract` | reference, market or drafter | the `insurance/peril` edition as unscoped fallback, drafter and market editions by scope (peril vocabulary §9) |
+| `aeo:mechanism`, `aeo:agency` | `icm:PerilMechanismContract`, `icm:PerilAgencyContract` | reference | peril vocabulary characteristic schemes |
 | `aeo:populationKind`, `aeo:relationshipDepth` | `aeo-voc:` contracts | V1 plus V3 | |
-| `aeo:consequence` | `common:ConsequenceContract` | reference | peril vocabulary consequence scheme |
+| `aeo:consequence` | `icm:ConsequenceContract` | reference | peril vocabulary consequence scheme |
 | `aeo:attributeType` | `aeo-voc:AttributeTypeContract` | V1 core plus V3 | |
 | construction class, occupancy class values | per attribute type | V2, market-scoped | London and US schemes differ |
 | `aeo:valueType`, `aeo:valuationBasis`, `aeo:valuationMethod` | `aeo-voc:` contracts | V1 | |
 | `aeo:geoPrecision`, `aeo:assessmentKind`, `aeo:dependencyKind`, `aeo:interestKind`, `aeo:controlKind`, `aeo:requirementSource`, `aeo:metricKind`, `aeo:perspective`, `aeo:lossStatus` | `aeo-voc:` contracts | V1 | closed sets |
-| pool | `common:PoolContract` | V2 per territory | peril vocabulary pool scheme |
+| pool | `icm:PoolContract` | V2 per territory | peril vocabulary pool scheme |
 
-`common:` is `insurance/common/` and `cls:` is the cross-domain `classification/` module (§3).
-Prefixes are provisional until the layout ADR fixes them. One set of scheme contracts, on
+`icm:` is `insurance/common/` and `cls:` is the cross-domain `classification/` module (§3).
+Prefixes are fixed by ADR-A98. One set of scheme contracts, on
 `voc:SchemeContract`, serves every insurance module and Open CBAA's bindings, replacing the
 private governance vocabulary and duplicate schemes of the legacy contract module, which is
 dropped.

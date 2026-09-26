@@ -7,6 +7,15 @@ a deployment wants it, with LATTICE's applied insurance reference implementation
 [asset exposure ontology](asset-exposure-ontology.md)), with MORK mappings between the two.
 Nothing here is implemented yet.
 
+
+Citations of `design-spec` and of codes AP, DP, D and I refer to Open CBAA's [design
+specification](https://github.com/nebularis/open-cbaa/blob/main/docs/design/design-spec.md) and
+[LATTICE integration
+specification](https://github.com/nebularis/open-cbaa/blob/main/docs/design/lattice-integration.md).
+Where this sketch and the [applied insurance reference
+epic](../plans/applied-insurance-reference.md) or its ADRs (A-98 to A-102) differ, they take
+precedence.
+
 ---
 
 ## 1. Two Worlds
@@ -92,18 +101,18 @@ underwriter sees why the system could not decide.
 ### 3.3 The profile
 
 ```turtle-example
-ex:peril-edition-profile a brg:SchemeProfile , fnd:DerivedArtefact ;
-    brg:profiles ex:house-peril-list-2026 ;
-    brg:tier brg:ReferenceAligned ;
-    brg:hierarchical true ;
-    brg:polyhierarchical false ;
-    brg:crosswalk ex:house-to-reference-crosswalk ;
-    brg:exactCoverage   [ a qnt:Quantity ; qnt:onSpace brg:Proportion ; qnt:numericValue 0.87 ] ;
-    brg:inexactCoverage [ a qnt:Quantity ; qnt:onSpace brg:Proportion ; qnt:numericValue 0.09 ] ;
-    brg:capability brg:HierarchicalMatch , brg:ReferenceCollections , brg:ReferenceCharacteristics .
+ex:peril-edition-profile a spf:SchemeProfile , fnd:DerivedArtefact ;
+    spf:profiles ex:house-peril-list-2026 ;
+    spf:tier spf:ReferenceAligned ;
+    spf:hierarchical true ;
+    spf:polyhierarchical false ;
+    spf:crosswalk ex:house-to-reference-crosswalk ;
+    spf:exactCoverage   [ a qnt:Quantity ; qnt:onSpace spf:Proportion ; qnt:numericValue 0.87 ] ;
+    spf:inexactCoverage [ a qnt:Quantity ; qnt:onSpace spf:Proportion ; qnt:numericValue 0.09 ] ;
+    spf:capability spf:HierarchicalMatch , spf:ReferenceCollections , spf:ReferenceCharacteristics .
 ```
 
-`brg:` is a small cross-domain LATTICE module (§8). Each check declares the capabilities it needs,
+`spf:` is a small cross-domain LATTICE module (§8). Each check declares the capabilities it needs,
 and the evaluator compares them with the profile before running.
 
 ## 4. Bridging Peril Schemes
@@ -186,19 +195,19 @@ exposed perils and a segment's covered perils are compared in one scheme.
 
 ## 8. The Bridge Module
 
-A small cross-domain module of LATTICE's applied layer, `applied/scheme-profile/` (prefix `brg:`
-here, fixed in its ADR), holds only what the bridge needs to describe itself. It uses no insurance
+A small cross-domain module of LATTICE's applied layer, `applied/scheme-profile/` (prefix `spf:`,
+ADR-A100), holds only what the bridge needs to describe itself. It uses no insurance
 terms, since any domain binding its own lists against a reference needs it. Mappings are MORK's, crosswalks are SKOS, and bindings are Vocabulary's.
 
 | Term | Meaning |
 |---|---|
-| `brg:SchemeProfile` | the derived profile of a bound scheme (§3.3), a `fnd:DerivedArtefact` |
-| `brg:tier` | F, H, R or N |
-| `brg:capability` | the checks the scheme supports (hierarchical match, reference collections, reference characteristics, overlap detection, thresholds) |
-| `brg:exactCoverage`, `brg:inexactCoverage` | share of the scheme's concepts mapped at each fidelity |
-| `brg:requiresCapability` | on a check (a shape, a compiled profile), what it needs |
-| `brg:InsufficientSchemeStructure` | the undetermined reason a check returns when the profile lacks a capability |
-| `brg:Crosswalk` | a versioned crosswalk artefact, citing its source and target editions and its mapping graph |
+| `spf:SchemeProfile` | the derived profile of a bound scheme (§3.3), a `fnd:DerivedArtefact` |
+| `spf:tier` | F, H, R or N |
+| `spf:capability` | the checks the scheme supports (hierarchical match, reference collections, reference characteristics, overlap detection, thresholds) |
+| `spf:exactCoverage`, `spf:inexactCoverage` | share of the scheme's concepts mapped at each fidelity |
+| `spf:requiresCapability` | on a check (a shape, a compiled profile), what it needs |
+| `spf:InsufficientSchemeStructure` | the undetermined reason a check returns when the profile lacks a capability |
+| `spf:Crosswalk` | a versioned crosswalk artefact, citing its source and target editions and its mapping graph |
 
 ## 9. Open Questions
 

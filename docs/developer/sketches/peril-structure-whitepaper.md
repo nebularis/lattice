@@ -4,8 +4,13 @@ Structure, semantics and inter-layer cost of perils for the CBAA modules
 
 Version 0.2, draft for review. Companion to the [reference peril vocabulary](peril-vocabulary.md),
 the [asset exposure ontology](asset-exposure-ontology.md), [term parameters](term-parameters.md)
-and the [MORK bridge](mork-bridge.md), which implement its recommendations. Cites the design specification (AP, DP, D), the LATTICE integration
-specification (I, L) and LATTICE ADRs by number.
+and the [MORK bridge](mork-bridge.md), which implement its recommendations. Cites Open CBAA's [design
+specification](https://github.com/nebularis/open-cbaa/blob/main/docs/design/design-spec.md) (AP,
+DP, D) and [LATTICE integration
+specification](https://github.com/nebularis/open-cbaa/blob/main/docs/design/lattice-integration.md)
+(I, L), and LATTICE ADRs by number. Where this sketch and the [applied insurance reference
+epic](../plans/applied-insurance-reference.md) or its ADRs (A-98 to A-102) differ, they take
+precedence.
 
 ---
 

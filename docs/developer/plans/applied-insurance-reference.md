@@ -140,8 +140,8 @@ Dependencies run one way: `classification/` and `scheme-profile/` on the substra
 `insurance/common/` on those, `peril/` on `common/`, `exposure/` on `common/` and `peril/`,
 `submission/` on `exposure/`, `claims/` on `exposure/` and `contract/`. Namespaces follow the
 existing pattern: `…/neuro-semantic/lattice/applied/<module>` for cross-domain modules (as
-Capacity), `…/neuro-semantic/insurance/<module>` for insurance modules. Prefixes are fixed in the
-ADRs. The sketches use `brg:` for the scheme profile module.
+Capacity), `…/neuro-semantic/insurance/<module>` for insurance modules. Prefixes are fixed in ADR-A98 and
+ADR-A100.
 
 ### 5.3 ADRs
 
