@@ -1,0 +1,89 @@
+# SPDX-License-Identifier: MPL-2.0
+
+@prefix icm:     <https://www.nebularis.org/neuro-semantic/insurance/common#> .
+@prefix icm-voc: <https://www.nebularis.org/neuro-semantic/insurance/common/vocab#> .
+@prefix voc:     <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
+@prefix fnd:     <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix pty:     <https://www.nebularis.org/neuro-semantic/lattice/party#> .
+@prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
+@prefix owl:     <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@base <https://www.nebularis.org/neuro-semantic/insurance/common/vocab> .
+
+<https://www.nebularis.org/neuro-semantic/insurance/common/vocab>
+    rdf:type owl:Ontology ;
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/insurance/common-vocab/0.1.0> ;
+    owl:imports <https://www.nebularis.org/neuro-semantic/insurance/common/0.1.0> .
+
+#################################################################
+#    One voc:SchemeContract per common:spec property (ADR-A98
+#    decision 1). No voc:boundScheme here: reference editions bind
+#    themselves when they arrive (peril's AIR-2.2 onwards), and a
+#    deployment binds its own.
+#################################################################
+
+icm-voc:PerilContract a voc:SchemeContract ;
+    fnd:hasIdentity icm-voc:PerilContract-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Peril scheme contract"@en ;
+    voc:constrainsProperty icm:peril .
+
+icm-voc:MechanismContract a voc:SchemeContract ;
+    fnd:hasIdentity icm-voc:MechanismContract-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Mechanism scheme contract"@en ;
+    voc:constrainsProperty icm:mechanism .
+
+icm-voc:AgencyContract a voc:SchemeContract ;
+    fnd:hasIdentity icm-voc:AgencyContract-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Agency scheme contract"@en ;
+    voc:constrainsProperty icm:agency .
+
+icm-voc:ConsequenceContract a voc:SchemeContract ;
+    fnd:hasIdentity icm-voc:ConsequenceContract-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Consequence scheme contract"@en ;
+    voc:constrainsProperty icm:consequence .
+
+icm-voc:HarmSubjectContract a voc:SchemeContract ;
+    fnd:hasIdentity icm-voc:HarmSubjectContract-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Harm subject scheme contract"@en ;
+    voc:constrainsProperty icm:harmSubject .
+
+icm-voc:PoolContract a voc:SchemeContract ;
+    fnd:hasIdentity icm-voc:PoolContract-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Pool scheme contract"@en ;
+    voc:constrainsProperty icm:pool .
+
+#################################################################
+#    Liability role types (ADR-A102 decision 1). pty:Role
+#    individuals, declared the same way Party declares its own
+#    (ontology/party/vocab/party-vocab.ttl's pty:Obligor and
+#    pty:Obligee). Occupancies of these roles are created and
+#    filled at claim time (ADR-A102 decision 2); this slice
+#    declares the role types only.
+#################################################################
+
+icm-voc:HarmedParty a owl:NamedIndividual , pty:Role ;
+    rdfs:label "Harmed party"@en ;
+    rdfs:comment "The role of having suffered the harm a cause of loss occasioned." ;
+    fnd:utility "Type a pty:RoleOccupancy with this role for whoever was harmed, independently of who is alleged liable, who claims, or who is paid (ADR-A102)." .
+
+icm-voc:LiableParty a owl:NamedIndividual , pty:Role ;
+    rdfs:label "Liable party"@en ;
+    rdfs:comment "The role of being alleged or found liable for the harm." ;
+    fnd:utility "Type a pty:RoleOccupancy with this role for whoever is alleged or found liable. Distinct from the harmed party and from any peril's agency characteristic (ADR-A102 decision 4: agency is not direction)." .
+
+icm-voc:Claimant a owl:NamedIndividual , pty:Role ;
+    rdfs:label "Claimant"@en ;
+    rdfs:comment "The role of making a claim under the contract." ;
+    fnd:utility "Type a pty:RoleOccupancy with this role for whoever claims. May be created unfilled when a notice names the role before an actor is known (ADR-A102 decision 2)." .
+
+icm-voc:Payee a owl:NamedIndividual , pty:Role ;
+    rdfs:label "Payee"@en ;
+    rdfs:comment "The role of receiving payment under the contract." ;
+    fnd:utility "Type a pty:RoleOccupancy with this role for whoever is paid, which need not be the claimant (for example a loss payee)." .

@@ -1,0 +1,40 @@
+# SPDX-License-Identifier: MPL-2.0
+
+@prefix cls:     <https://www.nebularis.org/neuro-semantic/lattice/applied/classification#> .
+@prefix cls-voc: <https://www.nebularis.org/neuro-semantic/lattice/applied/classification/vocab#> .
+@prefix voc:     <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
+@prefix fnd:     <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
+@prefix owl:     <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@base <https://www.nebularis.org/neuro-semantic/lattice/applied/classification/vocab> .
+
+<https://www.nebularis.org/neuro-semantic/lattice/applied/classification/vocab>
+    rdf:type owl:Ontology ;
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/applied/classification-vocab/0.1.0> ;
+    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/applied/classification/0.1.0> .
+
+#################################################################
+#    One dal:SchemeContract per classification property (ADR-A98
+#    decision 1). No voc:boundScheme here: reference editions and
+#    deployment bindings arrive later, from the modules that publish
+#    or consume them.
+#################################################################
+
+cls-voc:TerritoryContract a voc:SchemeContract ;
+    fnd:hasIdentity cls-voc:TerritoryContract-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Territory scheme contract"@en ;
+    voc:constrainsProperty cls:territory .
+
+cls-voc:AssetClassContract a voc:SchemeContract ;
+    fnd:hasIdentity cls-voc:AssetClassContract-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Asset class scheme contract"@en ;
+    voc:constrainsProperty cls:assetClass .
+
+cls-voc:IndustryContract a voc:SchemeContract ;
+    fnd:hasIdentity cls-voc:IndustryContract-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Industry scheme contract"@en ;
+    voc:constrainsProperty cls:industry .

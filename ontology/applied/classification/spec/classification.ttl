@@ -1,0 +1,35 @@
+# SPDX-License-Identifier: MPL-2.0
+
+@prefix cls:  <https://www.nebularis.org/neuro-semantic/lattice/applied/classification#> .
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@base <https://www.nebularis.org/neuro-semantic/lattice/applied/classification> .
+
+<https://www.nebularis.org/neuro-semantic/lattice/applied/classification>
+    rdf:type owl:Ontology ;
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/applied/classification/0.1.0> ;
+    rdfs:label "Cross-domain classification properties"@en ;
+    rdfs:comment "Territory, asset class and industry: classifications more than one applied domain needs (ADR-A98 decision 1, epic D8). Domain-neutral: no domain vocabulary anywhere in this document. A domain declares its own sub-properties to specialise these once it needs to (for example aeo:peril rdfs:subPropertyOf icm:peril, the same pattern this module's own consumers use)." ;
+    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.3.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.3.0> .
+
+cls:territory a owl:ObjectProperty ;
+    rdfs:range skos:Concept ;
+    rdfs:label "territory"@en ;
+    rdfs:comment "A classification by geographic or jurisdictional territory." ;
+    fnd:utility "Link anything needing a territory classification to a concept in a territory scheme. Declared with no domain, so any applied module may use it directly or specialise it with a sub-property." .
+
+cls:assetClass a owl:ObjectProperty ;
+    rdfs:range skos:Concept ;
+    rdfs:label "asset class"@en ;
+    rdfs:comment "A classification by kind of asset." ;
+    fnd:utility "Link anything needing an asset-class classification to a concept in an asset-class scheme. Declared with no domain, for the same reason as cls:territory." .
+
+cls:industry a owl:ObjectProperty ;
+    rdfs:range skos:Concept ;
+    rdfs:label "industry"@en ;
+    rdfs:comment "A classification by industry or economic activity." ;
+    fnd:utility "Link anything needing an industry classification to a concept in an industry scheme. Declared with no domain, for the same reason as cls:territory." .

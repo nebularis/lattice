@@ -47,7 +47,7 @@ A module's `vocab/` document, where it has one, uses the namespace without its `
 | Module | Level | State |
 |---|---|---|
 | `capacity/` | cross-domain | present |
-| `classification/` | cross-domain | planned, `applied-insurance-reference` AIR-1.2 |
+| [`classification/`](classification/README.md) | cross-domain | present, `applied-insurance-reference` AIR-1.2 |
 | `insurance/` | domain | see [`insurance/domain-README.md`](insurance/domain-README.md) |
 
 Every applied module imports LATTICE layers and other applied modules by exact version IRI,

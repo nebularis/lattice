@@ -40,15 +40,15 @@ Verifying queue (S branches handed over and not yet merged): none.
 
 ## Machine S
 
-**Position:** round 2. AIR-1.1 and AIR-2.1 merged. Next: AIR-1.2, once the human creates
-`air/1.2-shared-contracts` and this machine pulls `main` and the branch.
+**Position:** round 2. AIR-1.1 and AIR-2.1 merged. AIR-1.2 built on `air/1.2-shared-contracts`,
+left uncommitted for human review before it is committed.
 **Last updated:** 2026-09-26
-**Blockers:** none. Waiting for the `air/1.2-shared-contracts` branch.
+**Blockers:** none.
 
 | Seq | Slice | Branch | State | Note |
 |---|---|---|---|---|
 | 3 | AIR-1.1 | `air/1.1-layout` | merged | set by R. No version bumps, no tags |
-| 4 | AIR-1.2 | `air/1.2-shared-contracts` | waiting for branch | brief on `main` |
+| 4 | AIR-1.2 | `air/1.2-shared-contracts` | built, uncommitted | Validation Pack's Handoff section filled in. A sequencing gap noted there, not fixed (`peril/` does not yet import `common/`, ADR-A98 decision 5). Human review requested before commit |
 | 5 | AIR-2.1 | `air/2.1-peril-spec` | merged | set by R: three shape defects fixed at verification. Tags `applied-insurance-peril-shapes-v0.1.0`, `insurance-peril-v0.1.0`, `insurance-peril-vocab-v0.1.0` |
 | 6 | AIR-2.2 | `air/2.2-characteristics` | waiting | |
 | 7 | AIR-4.1 | `air/4.1-exposure-core` | waiting | |

@@ -1,0 +1,55 @@
+# SPDX-License-Identifier: MPL-2.0
+
+@prefix icm:  <https://www.nebularis.org/neuro-semantic/insurance/common#> .
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@base <https://www.nebularis.org/neuro-semantic/insurance/common> .
+
+<https://www.nebularis.org/neuro-semantic/insurance/common>
+    rdf:type owl:Ontology ;
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/insurance/common/0.1.0> ;
+    rdfs:label "Insurance domain shared contracts"@en ;
+    rdfs:comment "Insurance scheme contracts shared by two or more of the domain's modules (ADR-A98 decision 1, epic D7): peril, mechanism, agency, consequence, harm subject and pool classifications. The liability role types of ADR-A102 are declared in vocab/common-vocab.ttl, alongside these properties' scheme contracts. The loss event (AIR-4.4) and the liability direction scheme (Phase 5) are not yet declared here." ;
+    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.3.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.3.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/party/0.5.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/applied/classification/0.1.0> .
+
+icm:peril a owl:ObjectProperty ;
+    rdfs:range skos:Concept ;
+    rdfs:label "peril"@en ;
+    rdfs:comment "A classification by peril (initiating cause)." ;
+    fnd:utility "Link anything needing a peril classification to a concept in a cause scheme, most often the reference peril vocabulary's prl-voc:CauseScheme. Declared with no domain, so peril, exposure and later modules may specialise it with a sub-property (for example aeo:peril rdfs:subPropertyOf icm:peril) rather than each inventing an unrelated one." .
+
+icm:mechanism a owl:ObjectProperty ;
+    rdfs:range skos:Concept ;
+    rdfs:label "mechanism"@en ;
+    rdfs:comment "A classification by mechanism of harm." ;
+    fnd:utility "Link anything needing a mechanism classification to a concept in a mechanism scheme, for the same reason as icm:peril." .
+
+icm:agency a owl:ObjectProperty ;
+    rdfs:range skos:Concept ;
+    rdfs:label "agency"@en ;
+    rdfs:comment "A classification by agency (natural, accidental, negligent, malicious, sovereign, belligerent, undetermined)." ;
+    fnd:utility "Link anything needing an agency classification to a concept in an agency scheme, for the same reason as icm:peril." .
+
+icm:consequence a owl:ObjectProperty ;
+    rdfs:range skos:Concept ;
+    rdfs:label "consequence"@en ;
+    rdfs:comment "A classification by consequence (head of loss)." ;
+    fnd:utility "Link anything needing a consequence classification to a concept in a consequence scheme, for the same reason as icm:peril." .
+
+icm:harmSubject a owl:ObjectProperty ;
+    rdfs:range skos:Concept ;
+    rdfs:label "harm subject"@en ;
+    rdfs:comment "A classification by what was harmed." ;
+    fnd:utility "Link anything needing a harm-subject classification to a concept in a harm-subject scheme, for the same reason as icm:peril. Never used to derive liability direction (ADR-A102 decision 4)." .
+
+icm:pool a owl:ObjectProperty ;
+    rdfs:range skos:Concept ;
+    rdfs:label "pool"@en ;
+    rdfs:comment "A classification by risk pool (a national terrorism or flood pool, for example)." ;
+    fnd:utility "Link anything needing a pool classification to a concept in a pool scheme, for the same reason as icm:peril." .
