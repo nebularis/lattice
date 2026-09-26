@@ -30,8 +30,9 @@ exists and which property it governs.
 
 Each property is declared with no domain and range `skos:Concept`, so any applied module may use
 it directly. A module with its own, narrower classification need declares a sub-property instead
-of a fresh, unrelated one — for example `aeo:peril rdfs:subPropertyOf icm:peril` in the insurance
-exposure module (Phase 4), so a query over `icm:peril` still reaches it. This module is not itself
+of a fresh, unrelated one, for example a lending module's
+`collateralTerritory rdfs:subPropertyOf cls:territory`, so a query over `cls:territory` still
+reaches it. This module is not itself
 an example of that pattern: `cls:territory`, `cls:assetClass` and `cls:industry` are the properties
 being specialised, not specialisations themselves.
 
