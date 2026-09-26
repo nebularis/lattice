@@ -19,3 +19,4 @@ One row per slice passing its human validation gate (see `.github/copilot-instru
 | applied-ontology-readiness AOR-13 | 2026-09-25 | as above | none |
 | AIR-0.1 | 2026-09-25 | Tim Watson | Covered by commit message & plan updates |
 | AIR-3.1 | 2026-09-25 | Tim Watson | Covered by commit message & plan updates |
+| AIR-1.1 | 2026-09-25 | Tim Watson | Covered by commit message & plan updates |
