@@ -223,8 +223,24 @@ Fails when an ontology document's content changed without its version IRI,
 or when a document under `spec/` or `vocab/` has no version IRI
 ([ADR-A86](../docs/architecture/decisions/ADR-A86-ontology-semantic-versioning.md)).
 
+It also fails when a file in a layer's `shapes/` or `projection/` directory
+changed without that directory's `.version`, or when the `.version` is missing.
+
 ```bash
 mise run check:ontology-versioning
+```
+
+## `tools/ontology_releases.py` — release register
+
+Keeps [docs/architecture/ontology-releases.md](../docs/architecture/ontology-releases.md):
+one row per released version of an ontology document or artefact directory,
+with its tag `<name>-vX.Y.Z` and raw links to its files at that tag.
+`write` adds rows for unreleased current versions. `check` fails for a current
+version with no row, or a tag naming a commit with another version. Both list
+the tags a person still has to create.
+
+```bash
+mise run build:ontology-releases
 ```
 
 ## `tools/test_provenance_alignment.py` — PROV-O alignment

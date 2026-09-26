@@ -123,3 +123,38 @@ IRI identifying one content. Accepted with the decision above on 2026-09-25.
    the version IRI, and a regeneration that changes nothing keeps it.
    Generated documents that are ignored build output (`**/execution/*`) are
    outside every check, since they exist only where they were built.
+
+## Addendum (2026-09-26): releases by tag
+
+**Status:** Accepted, human decision on 2026-09-26.
+
+A consumer that knows the version it binds to must be able to fetch that
+version, with its shapes and projections, before LATTICE hosts its IRIs.
+
+1. **A version is released by a git tag.** Each document version is tagged
+   `<name>-vX.Y.Z` on the commit where it is in force, with the name derived
+   from its version IRI (the policy's "Releasing a version").
+2. **A register links every release.** `docs/architecture/ontology-releases.md`,
+   published on the GitHub Pages site, lists each released version with raw
+   links at its tag. `tools/ontology_releases.py` writes rows and never edits
+   one.
+3. **Artefact directories are versioned on their own.** A layer's `shapes/`
+   and `projection/` directories declare no ontology, so each holds a
+   `.version` file with one semantic version shared by its files. A change to
+   any of them bumps that file, never the `spec` or `vocab` version IRI, so an
+   ontology's identity moves only when its axioms or documentation do. Each
+   directory is released with its own tag. This replaces the policy's
+   statement that a shapes change is covered by a `spec` or `vocab` bump.
+4. **Only a person creates tags.** An agent adds release rows and ends its
+   handoff with a notice listing the tags to create. The checks fail for a
+   current version with no row and for a tag naming a commit with another
+   version. They list missing tags without failing, since tags follow the
+   commit.
+5. **The first releases are the current versions.** On 2026-09-26 each
+   document's current version is released, and each artefact directory at
+   its first version, `0.1.0`. Earlier versions are not.
+
+Consequences: tags are immutable only by convention, and the version check is
+what keeps them correct, so a skipped check can make a tag misleading. The
+register moves to served IRIs, and this addendum is superseded, when LATTICE
+hosts its ontologies at their own IRIs.

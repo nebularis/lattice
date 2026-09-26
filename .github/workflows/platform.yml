@@ -30,6 +30,7 @@ jobs:
       - run: python -m pytest tools/test_*.py tools/mork_compilers -q
       - run: python tools/ontology_catalog.py check
       - run: python tools/ontology_version_check.py --base-ref origin/main
+      - run: python tools/ontology_releases.py check
 
   workers:
     runs-on: ubuntu-latest

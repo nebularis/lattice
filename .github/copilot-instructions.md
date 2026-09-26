@@ -28,7 +28,9 @@ Lattice is a framework. It should not impose design decisions on its users unles
 
 If you are changing an ontology, you need to consider the semantic versioning impact of your change (see ADR-A86).
 
-Whenever any ontology document changes, follow every step of `docs/architecture/ontology-versioning-policy.md` in the same change, including the import cascade and regenerating the import catalog (`mise run build:ontology-catalog`). Run `mise run check:ontology-versioning` and `mise run check:ontology-catalog` before handing off. A skipped step breaks consumers silently, and has done so before.
+Whenever any ontology document changes, follow every step of `docs/architecture/ontology-versioning-policy.md` in the same change, including the import cascade, regenerating the import catalog (`mise run build:ontology-catalog`) and adding release rows (`mise run build:ontology-releases`). A change to a file in a layer's `shapes/` or `projection/` directory bumps that directory's `.version` (semver), never the spec or vocab version IRI. Run `mise run check:ontology-versioning` and `mise run check:ontology-catalog` before handing off. A skipped step breaks consumers silently, and has done so before.
+
+**Release tags are the user's to create, never the agent's.** Whenever `build:ontology-releases` adds a row, or `check:ontology-versioning` lists pending tags, end your handoff with a prominent notice headed `🔴 RELEASE TAGS REQUIRED`, listing each tag as a, b, c and the commands to create and push them after the user commits. Repeat the notice in every handoff until the tags exist.
 
 ### Two Agentic Execution Modes: Default and Autonomous
 

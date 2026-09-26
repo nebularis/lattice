@@ -141,8 +141,12 @@ description = "Run the MORK backend compiler tests, including generated SPARQL e
 run = "python -m pytest tools/mork_compilers -q"
 
 [tasks."check:ontology-versioning"]
-description = "Flag any ontology .ttl file whose content changed without its owl:versionIRI moving too, or a spec/vocab document with no owl:versionIRI (ADR-A86)"
-run = "python tools/ontology_version_check.py"
+description = "Flag any ontology .ttl file changed without its owl:versionIRI, any shapes/projection file changed without its directory's .version, a missing version, or a current version with no release row (ADR-A86)"
+run = "python tools/ontology_version_check.py && python tools/ontology_releases.py check"
+
+[tasks."build:ontology-releases"]
+description = "Add a row to docs/architecture/ontology-releases.md for each unreleased ontology version, and list the release tags a person must create (ADR-A86)"
+run = "python tools/ontology_releases.py write"
 
 [tasks."build:ontology-catalog"]
 description = "Regenerate ontology/catalog-v001.xml and the spec/vocab stub catalogs (ADR-A88)"

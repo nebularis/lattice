@@ -19,11 +19,13 @@ terms.
 
 **One `owl:versionIRI` per `owl:Ontology` document.** `spec/<layer>.ttl` and
 `vocab/<layer>-vocab.ttl` are two independently versioned documents — a
-change to one never bumps the other. `shapes/*.ttl` and `projection/*.ttl`
-declare no `owl:Ontology` of their own; a change there is covered by whichever
-of the layer's `spec` or `vocab` version it motivates a bump of (usually
-`spec`, since most SHACL shapes constrain classes and properties `spec`
-declares).
+change to one never bumps the other. A layer's `shapes/` and `projection/`
+directories declare no `owl:Ontology`, so each directory is a versioning unit
+of its own: a `.version` file in the directory holds one semantic version
+(`X.Y.Z`) shared by every file in it. A change to any of those files bumps the
+directory's `.version`, and never the `spec` or `vocab` version IRI, which
+move only when the ontology itself changes. The table below classifies a
+shapes change exactly as it classifies one to an ontology document.
 
 ## What changes the number
 
@@ -166,8 +168,9 @@ or an oversight. Not decided by this reset.
    redefinition, say so explicitly in the PR, with the reasoning — do not
    rely on the table alone to justify a PATCH or MINOR label for a change
    that actually redefines what a term means.
-2. Bump the correct document(s) only — `spec` and `vocab` are independent;
-   bumping one because the other changed is itself a documentation error.
+2. Bump the correct unit(s) only — `spec`, `vocab`, and each `shapes/` or
+   `projection/` directory's `.version` are independent. Bumping one because
+   another changed is itself a documentation error.
 3. Run the import-pinning cascade checklist for every bump, PATCH included
    (see "The one subtlety," below).
 4. Where a README mirrors the ontology header, edit both, keeping them
@@ -175,7 +178,40 @@ or an oversight. Not decided by this reset.
 5. Regenerate the catalogs with `mise run build:ontology-catalog`, since a new
    version IRI needs a catalog entry before any importer resolves it
    ([ADR-A88](decisions/ADR-A88-ontology-import-resolution-for-consumers.md)).
+6. Add release rows with `mise run build:ontology-releases`. It lists the tags
+   the new versions need.
+7. After committing, create and push those tags (next section). An agent
+   never creates them. It ends its handoff with a notice listing them.
 
+## Releasing a version
+
+Version IRIs do not dereference yet (ADR-A88 defers serving them). Until they
+do, a version is released by a git tag on the commit where it is in force, and
+fetched from GitHub at that tag.
+
+- **Tag name:** `<name>-vX.Y.Z`. The name is the version IRI's path without its
+  version, with `neuro-semantic/lattice/`, `neuro-semantic/` or `ontologies/`
+  dropped, segments joined by `-`, in lower case: `foundation-v0.3.0`,
+  `foundation-vocab-v0.3.0`, `mork-v0.4.0`, `applied-capacity-execution-v0.6.0`.
+- **Register:** [ontology-releases.md](ontology-releases.md), published on the
+  GitHub Pages site, has one row per released version: its name, version, tag,
+  version IRI, and raw links at the tag, of the form
+  `https://raw.githubusercontent.com/nebularis/lattice/refs/tags/<tag>/<path>`.
+  Rows are written by `tools/ontology_releases.py` and never edited.
+- **Artefact directories** are released the same way, named after the layer
+  path and the directory (`foundation-shapes-v0.1.0`,
+  `applied-insurance-shapes-v0.1.0`, `behaviour-projection-v0.1.0`), with a
+  row linking every file in the directory and no version IRI.
+- **Who tags:** a person, after committing the change that adds the rows. A
+  tag names a whole commit, so the document, its artefacts, and the import
+  catalog at that tag are all frozen with it. One commit may carry several tags.
+- **Why this is safe:** a version IRI identifies one content only while no
+  document changes without a bump. The checks below enforce that, so a tag
+  never has to move.
+
+The first releases, on 2026-09-26, cover the version current at that date for
+each document, and each artefact directory's first version, `0.1.0`. Earlier
+versions are not released.
 ### The one subtlety: PATCH still bumps the version
 
 A PATCH bump changes the *version number*, even though the change itself was
@@ -191,14 +227,19 @@ No tool in this repository classifies a change as MAJOR/MINOR/PATCH
 automatically — that is a research problem, not a checklist, and this policy
 does not attempt it. What is enforced is narrower and purely mechanical: a
 change to an in-scope `.ttl` file's content must be accompanied by a change to
-that file's own `owl:versionIRI` literal. A document under a `spec/` or
-`vocab/` directory must also carry an `owl:versionIRI` at all. Examples and
-test fixtures are exempt. Both checks read only files git tracks or would
+that file's own `owl:versionIRI` literal, and a change to a file in a layer's
+`shapes/` or `projection/` directory by a change to that directory's
+`.version`. A document under a `spec/` or `vocab/` directory must also carry
+an `owl:versionIRI` at all, and every artefact directory a valid `.version`.
+Examples and test fixtures are exempt. Every current version must have a
+release row, and an existing release tag must name a commit where its
+document has that version. Missing tags are listed, not failed, since they
+are created after the commit. Both checks read only files git tracks or would
 track, so ignored build output is out of scope.
 
 A generated document carries a content-addressed version IRI instead of a
 semantic version: its ontology IRI followed by the first 16 hex digits of its
 canonical hash, taken without the version IRI (ADR-A86 addendum,
-item 5). The Surface compiler stamps it when it writes a module. See `tools/ontology_version_check.py` and
+item 5). The Surface compiler stamps it when it writes a module. See `tools/ontology_version_check.py`, `tools/ontology_releases.py` and
 `mise run check:ontology-versioning`. The `platform` workflow runs the same
-check against `origin/main`.
+checks against `origin/main`.

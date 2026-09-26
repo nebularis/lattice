@@ -12,7 +12,12 @@ changed, version literal also changed" is not evaluated further here.
 
 It also checks that every ontology document under a ``spec/`` or ``vocab/``
 directory carries an ``owl:versionIRI`` at all. Examples and test fixtures
-may declare ``owl:Ontology`` without one (ADR-A86 proposed addendum, item 2).
+may declare ``owl:Ontology`` without one (ADR-A86 addendum, item 2).
+
+A layer's ``shapes/`` and ``projection/`` directories declare no ontology,
+so each carries a ``.version`` file holding one semantic version shared by
+all its files. A change to any file in the directory must change its
+``.version`` too, and the file must exist (ADR-A86 second addendum).
 
 Usage::
 
@@ -34,6 +39,9 @@ ONTOLOGY_ROOT = "ontology"
 VERSION_IRI_RE = re.compile(r"owl:versionIRI\s+<([^>]+)>")
 ONTOLOGY_MARKER_RE = re.compile(r"\bowl:Ontology\b")
 VERSIONED_DIRECTORIES = frozenset({"spec", "vocab"})
+ARTEFACT_DIRECTORIES = ("shapes", "projection")
+VERSION_FILE = ".version"
+SEMVER_RE = re.compile(r"^\d+\.\d+\.\d+$")
 
 
 def repository_files(root: Path, suffix: str) -> list[Path]:
@@ -93,14 +101,61 @@ def requires_version_iri(relative: Path) -> bool:
 
 def check_unversioned(root: Path) -> list[str]:
     """Return one message per ontology document that must carry an
-    ``owl:versionIRI`` and does not."""
+    ``owl:versionIRI`` and does not, and per artefact directory without a
+    valid ``.version``."""
     problems: list[str] = []
+    for directory in artefact_directories(root):
+        version = artefact_version(root, directory)
+        if version is None or not SEMVER_RE.match(version):
+            problems.append(f"{directory}/{VERSION_FILE}: missing, or not a semantic version X.Y.Z")
     for path in find_in_scope_ttl_files(root):
         relative = path.relative_to(root)
         if not requires_version_iri(relative):
             continue
         if not extract_version_iris(path.read_text(encoding="utf-8")):
             problems.append(f"{relative.as_posix()}: declares owl:Ontology without owl:versionIRI")
+    return problems
+
+
+def git_lines(root: Path, *args: str) -> list[str]:
+    result = subprocess.run(["git", *args], cwd=root, capture_output=True, text=True, check=True)
+    return result.stdout.splitlines()
+
+
+def artefact_directories(root: Path) -> list[str]:
+    """Every ``shapes/`` or ``projection/`` directory beside a layer's
+    ``spec/`` directory. Examples and fixtures have no ``spec/``."""
+    layers = set()
+    for path in find_in_scope_ttl_files(root):
+        parts = path.relative_to(root).parts
+        if "spec" in parts[:-1]:
+            layers.add("/".join(parts[: parts.index("spec")]))
+    return sorted(f"{layer}/{name}" for layer in layers for name in ARTEFACT_DIRECTORIES if (root / layer / name).is_dir())
+
+
+def artefact_files(root: Path, directory: str) -> list[str]:
+    """The directory's tracked or trackable files, without its ``.version``."""
+    files = git_lines(root, "ls-files", "--cached", "--others", "--exclude-standard", "--", directory)
+    return sorted({f for f in files if Path(f).name != VERSION_FILE and (root / f).exists()})
+
+
+def artefact_version(root: Path, directory: str) -> Optional[str]:
+    path = root / directory / VERSION_FILE
+    return path.read_text(encoding="utf-8").strip() if path.exists() else None
+
+
+def check_artefacts(root: Path, base_ref: str) -> list[str]:
+    """Return one message per artefact directory whose files changed relative
+    to ``base_ref`` while its ``.version`` did not."""
+    problems: list[str] = []
+    for directory in artefact_directories(root):
+        version_path = f"{directory}/{VERSION_FILE}"
+        changed = set(git_lines(root, "diff", "--name-only", base_ref, "--", directory))
+        changed |= set(git_lines(root, "ls-files", "--others", "--exclude-standard", "--", directory))
+        changed.discard(version_path)
+        old = git_show(root, base_ref, version_path)
+        if changed and old is not None and old.strip() == artefact_version(root, directory):
+            problems.append(f"{', '.join(sorted(changed))}: changed since {base_ref} but {version_path} is unchanged ({old.strip()})")
     return problems
 
 
@@ -139,7 +194,7 @@ def main(argv: Optional[list[str]] = None) -> int:
     args = parser.parse_args(argv)
 
     root = Path(args.root).resolve()
-    unbumped = check(root, args.base_ref)
+    unbumped = check(root, args.base_ref) + check_artefacts(root, args.base_ref)
     unversioned = check_unversioned(root)
 
     for problem in unbumped:
