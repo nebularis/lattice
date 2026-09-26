@@ -20,3 +20,4 @@ One row per slice passing its human validation gate (see `.github/copilot-instru
 | AIR-0.1 | 2026-09-25 | Tim Watson | Covered by commit message & plan updates |
 | AIR-3.1 | 2026-09-25 | Tim Watson | Covered by commit message & plan updates |
 | AIR-1.1 | 2026-09-25 | Tim Watson | Covered by commit message & plan updates |
+| AIR-2.1 | 2026-09-25 | Tim Watson | Covered by commit message & plan updates |

@@ -13,18 +13,18 @@ Validation Pack, never here.
 
 ## Round
 
-**Current round:** 1 (machine R advances it when a round's merges are done)
-**Branches ready to work on:** `air/3.1-flat-hierarchy` (R), `air/1.1-layout` (S), `air/2.1-peril-spec` (S).
-Created and pushed by the human. Their detailed briefs (phase plans and Validation Pack
-skeletons) were written on `main` and are merged into each branch before work starts.
+**Current round:** 2 (machine R advances it when a round's merges are done). Round 1 merged
+AIR-3.1, AIR-1.1 and AIR-2.1.
+**Branches ready to work on:** `air/3.2-set-readings` (R) and `air/1.2-shared-contracts` (S), once
+the human has created and pushed them from `main`.
 **Briefs ready on `main`:** AIR-1.1, AIR-2.1, AIR-3.1, AIR-1.2, AIR-3.2.
 **Briefs to draft before their branches (lanes §1):** AIR-2.2, AIR-4.1 and AIR-3.3, the branches
 created after round 2. Every later slice is still an outline.
 
 ## Machine R
 
-**Position:** round 1. AIR-3.1 and AIR-1.1 merged. Verifying S's AIR-2.1 (bundle taken onto
-`air/2.1-peril-spec`, 13 peril tests pass before rebase). Next: build AIR-3.2.
+**Position:** round 2. Round 1 complete. Next: build AIR-3.2 on `air/3.2-set-readings` once it
+exists, and verify S's AIR-1.2 when it arrives.
 **Last updated:** 2026-09-26
 **Blockers:** none
 
@@ -36,22 +36,20 @@ created after round 2. Every later slice is still an outline.
 | 21 | AIR-3.5 | `air/3.5-m2-check` | waiting | |
 | 23+ | substrate ADRs, S1, S2, S4, S5, S7 | `air/s<n>-<slug>` | waiting | ADRs drafted in round 4 |
 
-Verifying queue (S branches handed over and not yet merged): `air/2.1-peril-spec`, awaiting its
-rebase onto `main`.
+Verifying queue (S branches handed over and not yet merged): none.
 
 ## Machine S
 
-**Position:** round 1. AIR-1.1 merged. AIR-2.1 handed over as a bundle and taken onto
-`air/2.1-peril-spec` on R, where it is being verified. Next: AIR-1.2, once the human creates its
-branch after AIR-2.1 merges.
+**Position:** round 2. AIR-1.1 and AIR-2.1 merged. Next: AIR-1.2, once the human creates
+`air/1.2-shared-contracts` and this machine pulls `main` and the branch.
 **Last updated:** 2026-09-26
 **Blockers:** none. Waiting for the `air/1.2-shared-contracts` branch.
 
 | Seq | Slice | Branch | State | Note |
 |---|---|---|---|---|
 | 3 | AIR-1.1 | `air/1.1-layout` | merged | set by R. No version bumps, no tags |
-| 4 | AIR-1.2 | `air/1.2-shared-contracts` | waiting for branch | brief on `main`. Branch created after AIR-2.1 merges |
-| 5 | AIR-2.1 | `air/2.1-peril-spec` | verifying | set by R: rebased, two shape defects fixed, checks pass. Awaiting `LOG.md` sign-off |
+| 4 | AIR-1.2 | `air/1.2-shared-contracts` | waiting for branch | brief on `main` |
+| 5 | AIR-2.1 | `air/2.1-peril-spec` | merged | set by R: three shape defects fixed at verification. Tags `applied-insurance-peril-shapes-v0.1.0`, `insurance-peril-v0.1.0`, `insurance-peril-vocab-v0.1.0` |
 | 6 | AIR-2.2 | `air/2.2-characteristics` | waiting | |
 | 7 | AIR-4.1 | `air/4.1-exposure-core` | waiting | |
 | 9 | AIR-2.3 | `air/2.3-causes-n-t-e` | waiting | |
@@ -75,6 +73,7 @@ branch after AIR-2.1 merges.
 | 1 | AIR-0.1 | — | `3377a71` | signed off |
 | 2 | AIR-3.1 | 1 | fast-forward to the head of `air/3.1-flat-hierarchy` | signed off |
 | 3 | AIR-1.1 | 1 | fast-forward to `651fbfa` | signed off |
+| 5 | AIR-2.1 | 1 | fast-forward to the head of `air/2.1-peril-spec` | signed off |
 
 ## Phases (machine R only)
 
@@ -82,7 +81,7 @@ branch after AIR-2.1 merges.
 |---|---|---|
 | 0 Decisions | [plan](../plans/applied-insurance-reference-phase-0.md) | ✅ complete |
 | 1 Module split | [plan](../plans/applied-insurance-reference-phase-1.md) | 🚧 AIR-1.1 merged |
-| 2 Peril vocabulary | [plan](../plans/applied-insurance-reference-phase-2.md) | ⏳ |
+| 2 Peril vocabulary | [plan](../plans/applied-insurance-reference-phase-2.md) | 🚧 AIR-2.1 merged |
 | 3 Readings and crosswalks | [plan](../plans/applied-insurance-reference-phase-3.md) | 🚧 AIR-3.1 merged |
 | 4 Exposure | [plan](../plans/applied-insurance-reference-phase-4.md) | ⏳ |
 | 5 Contract module | [plan](../plans/applied-insurance-reference-phase-5.md) | 🅿️ deferred until Open CBAA integration of 1 to 4 (D2) |
