@@ -1,0 +1,50 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Structural (per-concept) shapes for the reference peril vocabulary (ADR-A99
+# §10, applied-insurance-reference AIR-2.1). Cross-concept and hierarchy
+# shapes are in constraints.ttl. "Cause concept" means a concept with
+# skos:inScheme prl-voc:CauseScheme. Every sh:sparql query is SHACL-SPARQL,
+# validated with pySHACL advanced=True (tools/test_peril_vocabulary.py).
+
+@prefix sh:      <http://www.w3.org/ns/shacl#> .
+@prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
+@prefix prl:     <https://www.nebularis.org/neuro-semantic/insurance/peril#> .
+@prefix prl-voc: <https://www.nebularis.org/neuro-semantic/insurance/peril/vocab#> .
+
+prl:LabelAndDefinitionShape
+    a sh:NodeShape ;
+    sh:targetClass skos:Concept ;
+    sh:sparql [
+        sh:message "A concept in a reference peril scheme needs exactly one skos:prefLabel and exactly one skos:definition, each tagged @en (ADR-A99 §10)." ;
+        sh:prefixes prl: , prl-voc: , skos: ;
+        sh:select """
+            SELECT $this WHERE {
+              $this skos:inScheme ?scheme .
+              FILTER (?scheme IN (prl-voc:CauseScheme, prl-voc:AgencyScheme, prl-voc:MechanismScheme,
+                                  prl-voc:OnsetScheme, prl-voc:DefinitionBasisScheme,
+                                  prl-voc:AccumulationClassScheme, prl-voc:ConsequenceScheme,
+                                  prl-voc:HarmSubjectScheme))
+              OPTIONAL { $this skos:prefLabel ?l . FILTER (LANG(?l) = "en") }
+              OPTIONAL { $this skos:definition ?d . FILTER (LANG(?d) = "en") }
+            }
+            GROUP BY $this
+            HAVING (COUNT(DISTINCT ?l) != 1 || COUNT(DISTINCT ?d) != 1)
+        """ ] .
+
+prl:CharacteristicsShape
+    a sh:NodeShape ;
+    sh:targetClass skos:Concept ;
+    sh:sparql [
+        sh:message "A cause concept needs at least one prl:typicalAgency (in the agency scheme), exactly one prl:onset (in the onset scheme), exactly one prl:definitionBasis (in the definition-basis scheme), and at most one prl:accumulationClass (in the accumulation-class scheme) (ADR-A99 §10)." ;
+        sh:prefixes prl: , prl-voc: , skos: ;
+        sh:select """
+            SELECT $this WHERE {
+              $this skos:inScheme prl-voc:CauseScheme .
+              OPTIONAL { $this prl:typicalAgency ?ag . ?ag skos:inScheme prl-voc:AgencyScheme }
+              OPTIONAL { $this prl:onset ?on . ?on skos:inScheme prl-voc:OnsetScheme }
+              OPTIONAL { $this prl:definitionBasis ?db . ?db skos:inScheme prl-voc:DefinitionBasisScheme }
+              OPTIONAL { $this prl:accumulationClass ?ac . ?ac skos:inScheme prl-voc:AccumulationClassScheme }
+            }
+            GROUP BY $this
+            HAVING (COUNT(DISTINCT ?ag) < 1 || COUNT(DISTINCT ?on) != 1 || COUNT(DISTINCT ?db) != 1 || COUNT(DISTINCT ?ac) > 1)
+        """ ] .

@@ -1,0 +1,121 @@
+# SPDX-License-Identifier: MPL-2.0
+
+@prefix prl:     <https://www.nebularis.org/neuro-semantic/insurance/peril#> .
+@prefix prl-voc: <https://www.nebularis.org/neuro-semantic/insurance/peril/vocab#> .
+@prefix voc:     <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
+@prefix fnd:     <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
+@prefix owl:     <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@base <https://www.nebularis.org/neuro-semantic/insurance/peril/vocab> .
+
+<https://www.nebularis.org/neuro-semantic/insurance/peril/vocab>
+    rdf:type owl:Ontology ;
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/insurance/peril-vocab/0.1.0> ;
+    owl:imports <https://www.nebularis.org/neuro-semantic/insurance/peril/0.1.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.3.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.3.0> .
+
+#################################################################
+#    The eight reference schemes (ADR-A99 §5, §6). Each is an
+#    unscoped-fallback reference edition (ADR-A99 decision 1): never
+#    a market standard, always the default when nothing more specific
+#    is bound. No concepts in this slice: the cause scheme's own
+#    members are added region by region, AIR-2.2 to AIR-2.4.
+#################################################################
+
+prl-voc:CauseScheme a voc:ConceptScheme ;
+    fnd:hasIdentity prl-voc:CauseScheme-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Reference cause of loss scheme"@en ;
+    skos:editorialNote "Reference edition published by LATTICE. Not a market standard."@en .
+
+prl-voc:AgencyScheme a voc:ConceptScheme ;
+    fnd:hasIdentity prl-voc:AgencyScheme-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Reference agency scheme"@en ;
+    skos:editorialNote "Reference edition published by LATTICE. Not a market standard."@en .
+
+prl-voc:MechanismScheme a voc:ConceptScheme ;
+    fnd:hasIdentity prl-voc:MechanismScheme-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Reference mechanism scheme"@en ;
+    skos:editorialNote "Reference edition published by LATTICE. Not a market standard."@en .
+
+prl-voc:OnsetScheme a voc:ConceptScheme ;
+    fnd:hasIdentity prl-voc:OnsetScheme-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Reference onset scheme"@en ;
+    skos:editorialNote "Reference edition published by LATTICE. Not a market standard."@en .
+
+prl-voc:DefinitionBasisScheme a voc:ConceptScheme ;
+    fnd:hasIdentity prl-voc:DefinitionBasisScheme-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Reference definition-basis scheme"@en ;
+    skos:editorialNote "Reference edition published by LATTICE. Not a market standard."@en .
+
+prl-voc:AccumulationClassScheme a voc:ConceptScheme ;
+    fnd:hasIdentity prl-voc:AccumulationClassScheme-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Reference accumulation-class scheme"@en ;
+    skos:editorialNote "Reference edition published by LATTICE. Not a market standard."@en .
+
+prl-voc:ConsequenceScheme a voc:ConceptScheme ;
+    fnd:hasIdentity prl-voc:ConsequenceScheme-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Reference consequence scheme"@en ;
+    skos:editorialNote "Reference edition published by LATTICE. Not a market standard."@en .
+
+prl-voc:HarmSubjectScheme a voc:ConceptScheme ;
+    fnd:hasIdentity prl-voc:HarmSubjectScheme-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Reference harm-subject scheme"@en ;
+    skos:editorialNote "Reference edition published by LATTICE. Not a market standard."@en .
+
+# ==== BEGIN REGION agency (AIR-2.2) ====
+# ==== END REGION agency ====
+
+# ==== BEGIN REGION mechanism (AIR-2.2) ====
+# ==== END REGION mechanism ====
+
+# ==== BEGIN REGION onset (AIR-2.2) ====
+# ==== END REGION onset ====
+
+# ==== BEGIN REGION definition-basis (AIR-2.2) ====
+# ==== END REGION definition-basis ====
+
+# ==== BEGIN REGION accumulation-class (AIR-2.2) ====
+# ==== END REGION accumulation-class ====
+
+# ==== BEGIN REGION consequence (AIR-2.2) ====
+# ==== END REGION consequence ====
+
+# ==== BEGIN REGION harm-subject (AIR-2.2) ====
+# ==== END REGION harm-subject ====
+
+# ==== BEGIN REGION cause-N (AIR-2.3) ====
+# ==== END REGION cause-N ====
+
+# ==== BEGIN REGION cause-T (AIR-2.3) ====
+# ==== END REGION cause-T ====
+
+# ==== BEGIN REGION cause-E (AIR-2.3) ====
+# ==== END REGION cause-E ====
+
+# ==== BEGIN REGION cause-H (AIR-2.4) ====
+# ==== END REGION cause-H ====
+
+# ==== BEGIN REGION cause-P (AIR-2.4) ====
+# ==== END REGION cause-P ====
+
+# ==== BEGIN REGION cause-C (AIR-2.4) ====
+# ==== END REGION cause-C ====
+
+# ==== BEGIN REGION cause-F (AIR-2.4) ====
+# ==== END REGION cause-F ====
+
+# ==== BEGIN REGION cause-L (AIR-2.4) ====
+# ==== END REGION cause-L ====
+
+# ==== BEGIN REGION cross-group-links (AIR-2.4) ====
+# ==== END REGION cross-group-links ====

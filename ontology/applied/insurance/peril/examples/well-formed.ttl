@@ -1,0 +1,119 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Positive fixture (applied-insurance-reference AIR-2.1): a small, real
+# fragment of the cause scheme that passes every shape in structural.ttl and
+# constraints.ttl. No owl:Ontology header: not a released document.
+#
+# Six cause concepts: two family tops (N, T), the N.MET / N.MET.TC path to
+# them, N.MET.TC.SRG as a partitive part of N.MET.TC, and N.MET.TC.HUR as a
+# generic kind of N.MET.TC, threshold-defined with a prl:definingThreshold.
+# Four characteristic concepts it uses (Natural, Sudden, Physical,
+# Threshold), declared here since AIR-2.2 has not landed. Reference codes
+# follow sketch §5. The Quantification range set behind N.MET.TC.HUR's
+# threshold is a minimal placeholder in its own example namespace, not the
+# peril vocabulary's: the real intensity-measure value spaces are AIR-2.6.
+
+@prefix prl:     <https://www.nebularis.org/neuro-semantic/insurance/peril#> .
+@prefix prl-voc: <https://www.nebularis.org/neuro-semantic/insurance/peril/vocab#> .
+@prefix qnt:     <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
+@prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
+@prefix ex:      <https://example.org/lattice/insurance/peril/examples#> .
+
+# ---- Characteristic placeholders (AIR-2.2 builds the real schemes) -------
+
+prl-voc:Natural a skos:Concept ;
+    skos:inScheme prl-voc:AgencyScheme ;
+    skos:prefLabel "Natural"@en ;
+    skos:definition "Caused by a natural process, without human involvement."@en .
+
+prl-voc:Sudden a skos:Concept ;
+    skos:inScheme prl-voc:OnsetScheme ;
+    skos:prefLabel "Sudden"@en ;
+    skos:definition "Onset within a short, identifiable period."@en .
+
+prl-voc:Physical a skos:Concept ;
+    skos:inScheme prl-voc:DefinitionBasisScheme ;
+    skos:prefLabel "Physical"@en ;
+    skos:definition "Exists as a distinct thing by its own physical character, needing no external designation or threshold."@en .
+
+prl-voc:Threshold a skos:Concept ;
+    skos:inScheme prl-voc:DefinitionBasisScheme ;
+    skos:prefLabel "Threshold"@en ;
+    skos:definition "Exists as a distinct thing only once a measured intensity crosses a stated threshold."@en .
+
+# ---- Cause concepts --------------------------------------------------------
+
+prl-voc:N a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:prefLabel "Natural hazard"@en ;
+    skos:definition "A peril whose initiating event arises from a natural process."@en ;
+    skos:notation "N"^^prl:ReferenceCode ;
+    prl:typicalAgency prl-voc:Natural ;
+    prl:onset prl-voc:Sudden ;
+    prl:definitionBasis prl-voc:Physical .
+
+prl-voc:T a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:prefLabel "Technological and accidental event"@en ;
+    skos:definition "A peril whose initiating event is accidental, or arises from human technology or activity."@en ;
+    skos:notation "T"^^prl:ReferenceCode ;
+    prl:typicalAgency prl-voc:Natural ;
+    prl:onset prl-voc:Sudden ;
+    prl:definitionBasis prl-voc:Physical .
+
+prl-voc:CauseScheme skos:hasTopConcept prl-voc:N , prl-voc:T .
+prl-voc:N skos:topConceptOf prl-voc:CauseScheme .
+prl-voc:T skos:topConceptOf prl-voc:CauseScheme .
+
+prl-voc:N.MET a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:prefLabel "Meteorological hazard"@en ;
+    skos:definition "A natural hazard arising from atmospheric processes."@en ;
+    skos:notation "N.MET"^^prl:ReferenceCode ;
+    prl:broaderGeneric prl-voc:N ;
+    skos:broader prl-voc:N ;
+    prl:typicalAgency prl-voc:Natural ;
+    prl:onset prl-voc:Sudden ;
+    prl:definitionBasis prl-voc:Physical .
+
+prl-voc:N.MET.TC a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:prefLabel "Tropical cyclone"@en ;
+    skos:definition "An organised, warm-cored cyclonic storm system originating over tropical or sub-tropical waters. Its own event family: several of its concepts are its parts."@en ;
+    skos:notation "N.MET.TC"^^prl:ReferenceCode ;
+    prl:broaderGeneric prl-voc:N.MET ;
+    skos:broader prl-voc:N.MET ;
+    prl:typicalAgency prl-voc:Natural ;
+    prl:onset prl-voc:Sudden ;
+    prl:definitionBasis prl-voc:Physical .
+
+prl-voc:N.MET.TC.SRG a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:prefLabel "Tropical cyclone storm surge"@en ;
+    skos:definition "The rise in sea level caused by a tropical cyclone's winds and pressure, part of a tropical cyclone occurrence."@en ;
+    skos:notation "N.MET.TC.SRG"^^prl:ReferenceCode ;
+    prl:broaderPartitive prl-voc:N.MET.TC ;
+    skos:broader prl-voc:N.MET.TC ;
+    prl:typicalAgency prl-voc:Natural ;
+    prl:onset prl-voc:Sudden ;
+    prl:definitionBasis prl-voc:Physical .
+
+prl-voc:N.MET.TC.HUR a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:prefLabel "Hurricane"@en ;
+    skos:definition "A tropical cyclone at or above hurricane strength in the North Atlantic and eastern North Pacific basins."@en ;
+    skos:notation "N.MET.TC.HUR"^^prl:ReferenceCode ;
+    prl:broaderGeneric prl-voc:N.MET.TC ;
+    skos:broader prl-voc:N.MET.TC ;
+    prl:typicalAgency prl-voc:Natural ;
+    prl:onset prl-voc:Sudden ;
+    prl:definitionBasis prl-voc:Threshold ;
+    prl:definingThreshold ex:hurricane-wind-threshold .
+
+# ---- Quantification placeholder for N.MET.TC.HUR's threshold --------------
+# Minimal: only what prl:definingThreshold's own range (qnt:RangeSet) needs
+# to exist as. The real sustained-wind value space is AIR-2.6.
+
+ex:sustained-wind-space a qnt:ValueSpace .
+ex:hurricane-wind-threshold a qnt:RangeSet ;
+    qnt:onSpace ex:sustained-wind-space .

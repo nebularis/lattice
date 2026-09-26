@@ -41,17 +41,17 @@ rebase onto `main`.
 
 ## Machine S
 
-**Position:** round 1. AIR-1.1 built and committed on `air/1.1-layout`, handed over for R to
-bundle, verify and merge. Blocked on the human switching this checkout to `air/2.1-peril-spec`
-(agents do not run `git switch`) before AIR-2.1 can start.
+**Position:** round 1. AIR-1.1 merged. AIR-2.1 handed over as a bundle and taken onto
+`air/2.1-peril-spec` on R, where it is being verified. Next: AIR-1.2, once the human creates its
+branch after AIR-2.1 merges.
 **Last updated:** 2026-09-26
-**Blockers:** waiting for the human to switch the checkout to `air/2.1-peril-spec` for AIR-2.1.
+**Blockers:** none. Waiting for the `air/1.2-shared-contracts` branch.
 
 | Seq | Slice | Branch | State | Note |
 |---|---|---|---|---|
 | 3 | AIR-1.1 | `air/1.1-layout` | merged | set by R. No version bumps, no tags |
-| 4 | AIR-1.2 | `air/1.2-shared-contracts` | waiting | |
-| 5 | AIR-2.1 | `air/2.1-peril-spec` | waiting for branch | branch exists, brief ready, needs the checkout switched here next |
+| 4 | AIR-1.2 | `air/1.2-shared-contracts` | waiting for branch | brief on `main`. Branch created after AIR-2.1 merges |
+| 5 | AIR-2.1 | `air/2.1-peril-spec` | verifying | set by R: 13 peril tests pass. Validation Pack's Handoff section filled in |
 | 6 | AIR-2.2 | `air/2.2-characteristics` | waiting | |
 | 7 | AIR-4.1 | `air/4.1-exposure-core` | waiting | |
 | 9 | AIR-2.3 | `air/2.3-causes-n-t-e` | waiting | |

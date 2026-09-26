@@ -1,0 +1,156 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Cross-concept and hierarchy shapes for the reference peril vocabulary
+# (ADR-A99 §10, applied-insurance-reference AIR-2.1). Per-concept shapes are
+# in structural.ttl. "Cause concept" means a concept with skos:inScheme
+# prl-voc:CauseScheme. Every sh:sparql query is SHACL-SPARQL, validated with
+# pySHACL advanced=True (tools/test_peril_vocabulary.py).
+
+@prefix sh:      <http://www.w3.org/ns/shacl#> .
+@prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
+@prefix prl:     <https://www.nebularis.org/neuro-semantic/insurance/peril#> .
+@prefix prl-voc: <https://www.nebularis.org/neuro-semantic/insurance/peril/vocab#> .
+
+prl:ReferenceCodeShape
+    a sh:NodeShape ;
+    sh:targetClass skos:Concept ;
+    sh:sparql [
+        sh:message "A cause concept needs exactly one skos:notation typed prl:ReferenceCode, unique among cause concepts, equal to its primary parent's code plus one '.'-separated segment, or to its family letter if it is a top concept (ADR-A99 §10, sketch §5)." ;
+        sh:prefixes prl: , prl-voc: , skos: ;
+        sh:select """
+            SELECT $this WHERE {
+              $this skos:inScheme prl-voc:CauseScheme .
+              OPTIONAL { $this skos:notation ?n . FILTER (DATATYPE(?n) = prl:ReferenceCode) }
+            }
+            GROUP BY $this
+            HAVING (COUNT(DISTINCT ?n) != 1)
+        """ ] ;
+    sh:sparql [
+        sh:message "A cause concept's reference code must be unique among cause concepts (ADR-A99 §10)." ;
+        sh:prefixes prl: , prl-voc: , skos: ;
+        sh:select """
+            SELECT $this WHERE {
+              $this skos:inScheme prl-voc:CauseScheme ; skos:notation ?code .
+              FILTER (DATATYPE(?code) = prl:ReferenceCode)
+              ?other skos:inScheme prl-voc:CauseScheme ; skos:notation ?code .
+              FILTER (DATATYPE(?code) = prl:ReferenceCode && ?other != $this)
+            }
+        """ ] ;
+    sh:sparql [
+        sh:message "A non-top cause concept's reference code must equal its primary parent's code plus exactly one '.'-separated segment (ADR-A99 §10, sketch §5)." ;
+        sh:prefixes prl: , prl-voc: , skos: ;
+        sh:select """
+            SELECT $this WHERE {
+              $this skos:inScheme prl-voc:CauseScheme ; skos:notation ?code .
+              FILTER (DATATYPE(?code) = prl:ReferenceCode)
+              { $this prl:broaderGeneric ?parent } UNION { $this prl:broaderPartitive ?parent }
+              ?parent skos:notation ?parentCode .
+              FILTER (DATATYPE(?parentCode) = prl:ReferenceCode)
+              FILTER (!STRSTARTS(STR(?code), CONCAT(STR(?parentCode), "."))
+                      || CONTAINS(STRAFTER(STR(?code), CONCAT(STR(?parentCode), ".")), "."))
+            }
+        """ ] ;
+    sh:sparql [
+        sh:message "A top concept of the cause scheme's reference code must be exactly its family letter (N, T, E, H, P, C, F or L) (ADR-A99 §10, sketch §5)." ;
+        sh:prefixes prl: , prl-voc: , skos: ;
+        sh:select """
+            SELECT $this WHERE {
+              $this skos:inScheme prl-voc:CauseScheme ; skos:notation ?code .
+              FILTER (DATATYPE(?code) = prl:ReferenceCode)
+              FILTER NOT EXISTS { $this prl:broaderGeneric ?p1 }
+              FILTER NOT EXISTS { $this prl:broaderPartitive ?p2 }
+              FILTER (!REGEX(STR(?code), "^[NTEHPCFL]$"))
+            }
+        """ ] .
+
+prl:PrimaryParentShape
+    a sh:NodeShape ;
+    sh:targetClass skos:Concept ;
+    sh:sparql [
+        sh:message "A cause concept that is not a top concept of prl-voc:CauseScheme needs exactly one value across prl:broaderGeneric and prl:broaderPartitive together (ADR-A99 §10)." ;
+        sh:prefixes prl: , prl-voc: , skos: ;
+        sh:select """
+            SELECT $this WHERE {
+              $this skos:inScheme prl-voc:CauseScheme .
+              FILTER NOT EXISTS { prl-voc:CauseScheme skos:hasTopConcept $this }
+              {
+                SELECT $this (COUNT(DISTINCT ?p) AS ?n) WHERE {
+                  { $this prl:broaderGeneric ?p } UNION { $this prl:broaderPartitive ?p }
+                } GROUP BY $this
+              }
+              FILTER (?n != 1)
+            }
+        """ ] ;
+    sh:sparql [
+        sh:message "A cause concept with more skos:broader values than its primary (broaderGeneric/broaderPartitive) values needs a skos:editorialNote explaining the extra one (ADR-A99 §10)." ;
+        sh:prefixes prl: , prl-voc: , skos: ;
+        sh:select """
+            SELECT $this WHERE {
+              $this skos:inScheme prl-voc:CauseScheme .
+              {
+                SELECT $this (COUNT(DISTINCT ?b) AS ?nb) WHERE { $this skos:broader ?b } GROUP BY $this
+              }
+              {
+                SELECT $this (COUNT(DISTINCT ?p) AS ?np) WHERE {
+                  { $this prl:broaderGeneric ?p } UNION { $this prl:broaderPartitive ?p }
+                } GROUP BY $this
+              }
+              FILTER (?nb > ?np)
+              FILTER NOT EXISTS { $this skos:editorialNote ?note }
+            }
+        """ ] .
+
+prl:MaterialisedBroaderShape
+    a sh:NodeShape ;
+    sh:targetClass skos:Concept ;
+    sh:sparql [
+        sh:message "Every prl:broaderGeneric or prl:broaderPartitive link must also appear as skos:broader, so a plain SKOS consumer sees it (ADR-A99 §10)." ;
+        sh:prefixes prl: , skos: ;
+        sh:select """
+            SELECT $this WHERE {
+              { $this prl:broaderGeneric ?p } UNION { $this prl:broaderPartitive ?p }
+              FILTER NOT EXISTS { $this skos:broader ?p }
+            }
+        """ ] .
+
+prl:AssociativeIntegrityShape
+    a sh:NodeShape ;
+    sh:targetClass skos:Concept ;
+    sh:sparql [
+        sh:message "skos:related, prl:overlaps and prl:canTrigger must never link two concepts where one is skos:broader+ of the other, in either direction (ADR-A99 §10)." ;
+        sh:prefixes prl: , skos: ;
+        sh:select """
+            SELECT $this WHERE {
+              {
+                { $this skos:related ?other } UNION { ?other skos:related $this }
+                UNION { $this prl:overlaps ?other } UNION { ?other prl:overlaps $this }
+                UNION { $this prl:canTrigger ?other } UNION { ?other prl:canTrigger $this }
+              }
+              { $this skos:broader+ ?other } UNION { ?other skos:broader+ $this }
+            }
+        """ ] .
+
+prl:AcyclicShape
+    a sh:NodeShape ;
+    sh:targetClass skos:Concept ;
+    sh:sparql [
+        sh:message "No concept may be skos:broader+ of itself (ADR-A99 §10)." ;
+        sh:prefixes skos: ;
+        sh:select """
+            SELECT $this WHERE {
+              $this skos:broader+ $this .
+            }
+        """ ] .
+
+prl:ThresholdDefinitionShape
+    a sh:NodeShape ;
+    sh:targetClass skos:Concept ;
+    sh:sparql [
+        sh:message "A concept whose prl:definitionBasis is prl-voc:Threshold needs a prl:definingThreshold (ADR-A99 §10, PV6)." ;
+        sh:prefixes prl: , prl-voc: ;
+        sh:select """
+            SELECT $this WHERE {
+              $this prl:definitionBasis prl-voc:Threshold .
+              FILTER NOT EXISTS { $this prl:definingThreshold ?t }
+            }
+        """ ] .
