@@ -106,7 +106,7 @@ academic partners publish in LegalRuleML. A one-way lossy import is cheap. A rou
 and this sketch is largely about establishing which of those is worth paying for.
 
 **What this document deliberately does not do.** It does not pick an answer to the gaps in §17.
-Those are architectural decisions for the human, and are listed as proposed ADRs in §24.
+Those are architectural decisions and are listed as proposed ADRs in §24.
 
 ### 1.4 Companion sketches, and what they settle
 
@@ -1053,7 +1053,7 @@ context selecting one.
 
 There is no notion of competing readings of the same source in LATTICE. There is something
 adjacent: MORK's proposal-and-review model, where mappings are proposed by recognition, community
-or projection strata and wait for human review before becoming authoritative, and ADR-A100's
+or projection strata and wait for review before becoming authoritative, and ADR-A100's
 crosswalks, which are reviewed graphs carrying Foundation provenance.
 
 The shapes differ in an important way. MORK proposals are **candidates pending resolution**, and
@@ -1296,8 +1296,7 @@ portfolio-level duties. No conflict arises, and the composition is worth a worke
 
 ## 17. Gaps, each with options
 
-Consolidated from the sections above. Each is a decision for the human. None should be made
-unilaterally.
+Consolidated from the sections above.
 
 | # | Gap | Where | Options | Sketch's hypothesis |
 |---|---|---|---|---|
@@ -1805,14 +1804,13 @@ That judgement may be right, and this document does not overturn it. It does off
 evidence against it, in §22.3: without a priority relation the audit answer to "why was this risk
 refused" degrades from "because endorsement 3 excluded Italy and endorsement 3 prevails over the
 schedule" to "because Italy was excluded". The first cites a document, the second cites a
-modelling decision with no provenance. Whether that loss is tolerable until Phase 5 is the human's
-call, and it is Q4 below.
+modelling decision with no provenance. Whether that loss is tolerable until Phase 5 remains undecided, and it is Q4 below.
 
 ---
 
 ## 25. Open questions
 
-The cross-check already asks four questions of the human. Those are not repeated here, except
+The cross-check already asks four questions. Those are not repeated here, except
 where this analysis adds evidence. Its Q1 (R1's home) is treated as answered in favour of
 Instrument, per §18.1.
 
