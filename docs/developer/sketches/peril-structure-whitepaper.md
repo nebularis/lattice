@@ -380,7 +380,7 @@ classification).
 | overlaps and classification statements | surge and similar losses are decided by whichever side the vocabulary chose, silently |
 | causation profiles | mixed-cause losses (the costly ones) are decided by the first code on the claim |
 | exposure units | zone-dependent scopes and covenants are checked by hand |
-| editions and crosswalks | a London binder writing US risks gets London framings for US forms |
+| editions and crosswalks | a London binding authority writing US risks gets London framings for US forms |
 | Undetermined over flat lists | a flat list is either rejected or silently treated as structured, and checks that need structure it lacks return wrong answers instead of Undetermined |
 | party roles | D&O Side A, B and C and insured-against-insured exclusions are unevaluable, and a claim by an unknown fourth party cannot be placed |
 
@@ -408,10 +408,10 @@ opt-in per deployment, and its absence costs latency, not correctness.
 | residual markets and pools | pool scheme | pool participation | SoUA pool row | none |
 | board appetite by return period (London) | none | requirements on peril metrics | none | Quantification derived rates (done) |
 
-A CBAA binder is written in London, but its risks may be US risks written as surplus lines. Both
-framings can apply to one agreement, which is why market editions are bound by market and
-regime scopes together (peril vocabulary §9.1), and why the exposure ontology keeps its core
-market-neutral.
+A CBAA binding authority contract is written in London, but its risks may be US risks written as 
+surplus lines. Both framings can apply to one agreement, which is why market editions are bound by 
+market and regime scopes together (peril vocabulary §9.1), and why the exposure ontology keeps its 
+core market-neutral.
 
 ## 9. Proposed Decisions
 

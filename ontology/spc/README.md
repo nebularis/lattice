@@ -42,7 +42,7 @@ If regenerating `spec/spc.ttl` from this document, concatenate the prefix block 
 
 - The ontology targets **OWL 2 DL**, and uses qualified cardinalities, keys, and property chains in the structural layer.
 - Domain refinement predicates are intended to remain in a more tractable fragment, described in the source comments as **EL++** plus arithmetic-style constraints.
-- Several important invariants are documented but left to external validation, including recursion contractiveness, binder matching, participant-set coherence in parallel types, duality involution, and full preservation or deadlock checks.
+- Several important invariants are documented but left to external validation, including recursion contractiveness, binding authority matching, participant-set coherence in parallel types, duality involution, and full preservation or deadlock checks.
 - The current README documents the ontology in grouped sections that mirror the compiled Turtle file, so the specification can be extracted from the README without re-authoring the ontology by hand.
 
 ## 5. Ontology Header

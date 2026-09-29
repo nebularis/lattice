@@ -583,7 +583,7 @@ market and legal regime) and a set of shapes that make market-required data mand
 | peril metrics | model perils per region (European windstorm, European flood, Taiwan earthquake) | wind and surge combined, surge only, inland flood excluding surge, per basin |
 | loss records | proximate cause under English law | initiating and proximate causes both, because the causation rule varies by state |
 
-For a CBAA binding authority, both profiles can apply at once: a London binder writing US risks
+For a CBAA binding authority, both profiles can apply at once: a London binding authority writing US risks
 binds the US profile's schemes under a binding scoped to the London market and the US regime
 (peril vocabulary §9.1).
 
