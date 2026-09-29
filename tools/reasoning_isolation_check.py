@@ -36,18 +36,19 @@ def check(root: Path) -> list[str]:
         relative = pom.relative_to(root)
         if relative == TESTKIT:
             continue
+        relative_posix = relative.as_posix()
         for dep in ET.parse(pom).getroot().iter(f"{POM}dependency"):
             artifact = dep.findtext(f"{POM}artifactId", "")
             if ENGINE.search(artifact) or ENGINE.search(dep.findtext(f"{POM}groupId", "")):
-                problems.append(f"{relative}: declares {artifact}")
+                problems.append(f"{relative_posix}: declares {artifact}")
             if artifact == "reasoning-testkit" and dep.findtext(f"{POM}scope") != "test":
-                problems.append(f"{relative}: depends on reasoning-testkit outside test scope")
+                problems.append(f"{relative_posix}: depends on reasoning-testkit outside test scope")
     for project in files(root, "pyproject.toml"):
         data = tomllib.loads(project.read_text())
         declared = list(data.get("project", {}).get("dependencies", []))
         for extra in data.get("project", {}).get("optional-dependencies", {}).values():
             declared += extra
-        problems += [f"{project.relative_to(root)}: declares {d}" for d in declared if ENGINE.search(d)]
+        problems += [f"{project.relative_to(root).as_posix()}: declares {d}" for d in declared if ENGINE.search(d)]
     return problems
 
 

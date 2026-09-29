@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
 package org.nebularis.lattice.reasoning;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -9,7 +10,7 @@ import java.util.stream.Collectors;
 
 import org.semanticweb.HermiT.ReasonerFactory;
 import org.semanticweb.owlapi.apibinding.OWLManager;
-import org.semanticweb.owlapi.io.FileDocumentSource;
+import org.semanticweb.owlapi.io.StringDocumentSource;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.MissingImportHandlingStrategy;
 import org.semanticweb.owlapi.model.OWLDataFactory;
@@ -44,13 +45,14 @@ public final class ReasoningTestkit {
     private ReasoningTestkit() {}
 
     /** The files, merged, under a HermiT reasoner. */
-    public static OWLReasoner reasoner(List<Path> files) throws OWLOntologyCreationException {
+    public static OWLReasoner reasoner(List<Path> files) throws OWLOntologyCreationException, java.io.IOException {
         OWLOntology merged = OWLManager.createOWLOntologyManager().createOntology();
         OWLOntologyLoaderConfiguration config = new OWLOntologyLoaderConfiguration()
                 .setMissingImportHandlingStrategy(MissingImportHandlingStrategy.SILENT);
         for (Path file : files) {
             OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
-            merged.addAxioms(manager.loadOntologyFromOntologyDocument(new FileDocumentSource(file.toFile()), config).axioms());
+            String content = Files.readString(file);
+            merged.addAxioms(manager.loadOntologyFromOntologyDocument(new StringDocumentSource(content), config).axioms());
         }
         return new ReasonerFactory().createReasoner(merged);
     }

@@ -168,6 +168,48 @@ The level of testing discipline for a slice should be verified during planning.
 - `mise` is the only task-orchestration entry point unless ADR-A29 is superseded.
 - Maven, Yarn 4, Python project tooling, and Mix remain their own dependency authorities.
 
+#### Shell activation
+
+Installing `mise` is not enough on its own — a freshly opened shell will not have `mise`-managed
+tools (`mvn`, `python`, `node`, etc.) on `PATH` until the shell profile activates it.
+
+- If a package manager installed `mise` somewhere it did not add to `PATH` itself, locate the
+  installed binary first and add its directory to `PATH` before activating.
+- POSIX shells (`bash`/`zsh`): add `eval "$(mise activate bash)"` (or `zsh`) to the shell's rc file.
+- PowerShell: add `mise activate pwsh | Out-String | Invoke-Expression` to `$PROFILE`. On Windows
+  PowerShell 5.1 (not PowerShell 7+), also set `$env:MISE_PWSH_CHPWD_WARNING = "0"` first to
+  silence an unsupported-feature warning that otherwise prints on every new session.
+- Verify with a brand-new shell (not the current one), not by patching `$env:PATH`/`PATH` in the
+  already-open session, which does not prove the profile change actually works.
+
+#### Restricted or mirrored package registries
+
+Some networks block direct access to public package registries (PyPI, npm's registry, etc.) and
+require going through an internal mirror instead. If package installs fail in a way that looks
+like a network policy block:
+
+- A plain connection failure or an HTTP redirect to an unrelated page is an obvious block.
+- A **hash mismatch reported by `pip` even though no hash-pinned requirements file was given** is
+  a less obvious symptom of the same thing — some network intermediaries substitute a different
+  response body (e.g. a block notice) for the blocked file while leaving the package index
+  metadata (and therefore the expected hash) untouched. Confirm by fetching the exact failing
+  URL directly and inspecting the body before concluding it is a corrupted download.
+- If TLS interception is in play, a downstream tool (e.g. Node/Corepack) may fail with something
+  like `UNABLE_TO_GET_ISSUER_CERT_LOCALLY` even though the OS trusts the intercepting certificate.
+  That tool needs to be told about the relevant CA bundle separately (e.g. Node's
+  `NODE_EXTRA_CA_CERTS`).
+- Fix this by pointing the package manager's **user-level** config at an approved internal mirror
+  or index, never by editing files in this repository and never by trying to route around the
+  network policy. For `pip` specifically, this is a `pip.ini`/`pip.conf` file outside the repo
+  (`pip config file -f user` prints the exact path for the current OS).
+- Any index URL, mirror hostname, or credential needed to reach such a mirror is
+  environment-specific. Keep it in user-level configuration or a secret store, never in a file
+  tracked by this repository, and never in an agent's persisted notes that might get published.
+- `mise.toml` task `run` strings are interpreted by `cmd.exe` on Windows and by a POSIX shell
+  elsewhere. Use double quotes, not single quotes, around any argument containing shell-special
+  characters such as `[`, `]`, or `,` (e.g. pip extras like `"./pkg[test]"`) — `cmd.exe` does not
+  strip single quotes, so they end up passed through literally to the underlying command.
+
 ## General Guidelines
 
 - Do not use semi-colons in English text. Use periods or commas instead.
