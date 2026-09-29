@@ -793,6 +793,31 @@ produces abstention, not explosion. That agreement is the foundation on which a 
 could be built without abandoning LATTICE's semantics, and it is the most encouraging finding in
 this analysis.
 
+**And the priority model is stratified, given the closure.** The
+[logic encodings note](../notes/logic-encodings.md) shows that if the override closure is
+precomputed, as §19.2's `PriorityPlan` already proposes, sceptical priority is expressible without
+leaving stratified Datalog:
+
+```prolog
+blocked(N, X)     :- overrides(M, N), opposes(M, N), not inactive(M, X).
+applies(N, X)     :- activated(N, X), not blocked(N, X).
+conflict(N, M, X) :- applies(N, X), applies(M, X), opposes(N, M).
+```
+
+Every negation is over a **derived** predicate in a lower stratum, which §16.5's rule makes sound
+without a closure licence. `conflict` yields N7's `exe:IncomparablePriority` directly.
+
+The `not inactive` rather than `activated` choice carries a semantic decision that should be a law
+rather than an accident: **when it is uncertain whether a superior norm applies, the inferior is
+withheld rather than applied.** That is the sceptical reading and it is the conservative one, but it
+is a choice, and A-107 should state it. It is listed as a decision in the
+[research sketch](logic-encoding-research.md), D4.
+
+One caveat worth carrying: this holds for the **explicit-superiority** subset, which is §9.4's
+Option B. Full defeasible logic with team defeat, defeaters and ambiguity propagation has known
+translations into logic programs, and those are not always stratified. Staying inside the explicit
+form is what keeps the result.
+
 ### 9.4 Four options for priority
 
 **Option A: refuse.** LATTICE does not model defeasibility. Conflicting norms produce Undetermined,
@@ -1292,6 +1317,83 @@ compensation chain whose primary duty is evaluated under `EveryValue` over a set
 "breach on any one triggers the compensation", which is the reading contracts normally intend for
 portfolio-level duties. No conflict arises, and the composition is worth a worked test case.
 
+### 16.5 The dual-predicate encoding, and what it settles
+
+The [logic encodings note](../notes/logic-encodings.md) supplies a result that strengthens this
+whole section, and it is the most useful technical finding in the set. It is recorded here because
+it changes what §16.3 and §9 can claim.
+
+**Encode each outcome as two independently derived positive predicates** rather than as one
+three-valued one. This is extended logic programming with strong negation, in Gelfond and
+Lifschitz's sense.
+
+| Derived | Meaning |
+|---|---|
+| `permitted` only | Permitted |
+| `denied` only | Denied |
+| **neither** | **Undetermined**, the default when evidence is absent |
+| both | conflict. A fourth value, free, reportable as an integrity violation |
+
+Under this encoding, **strong Kleene combination needs no negation at all**:
+
+```prolog
+% AllRequired over conditions c1..c3
+permitted(p, X) :- permitted(c1, X), permitted(c2, X), permitted(c3, X).
+denied(p, X)    :- denied(c1, X).
+denied(p, X)    :- denied(c2, X).
+denied(p, X)    :- denied(c3, X).
+
+% L16 negation is a swap, which is why it preserves Undetermined
+permitted(n, X) :- denied(c, X).
+denied(n, X)    :- permitted(c, X).
+```
+
+That L16 falls out as a *swap of two predicates*, rather than needing a special rule to preserve
+Undetermined, is a good sign the encoding is the natural one rather than a contrivance.
+
+**Checked against the hardest existing law.** Hierarchical match with exclusion, where L11 requires
+Undetermined for a candidate standing strictly above an exclusion:
+
+```prolog
+permitted(loc, X) :- riskLocation(X, L), below(L, fr),
+                     not below(L, fr20r), not below(fr20r, L).
+denied(loc, X)    :- riskLocation(X, L), below(L, fr20r).
+denied(loc, X)    :- riskLocation(X, L), not below(L, fr), not below(fr, L).
+```
+
+| Candidate | permitted | denied | Result | Law |
+|---|---|---|---|---|
+| Lyon | fires | no | Permitted | L12 |
+| Ajaccio | blocked | fires | Denied | L10 |
+| `fr` itself | blocked by `not below(fr20r, L)` | no | **Undetermined** | **L11** |
+| Belgium | no | fires | Denied | — |
+| no location at all | no | no | Undetermined | `exe:MissingCandidate` |
+
+It reproduces L10, L11, L12 and the missing-candidate diagnostic exactly, with no special cases.
+
+**What settles the closure question.** Every negation above is over `below`, the scheme's
+reflexive-transitive closure. A bound scheme edition is authoritative and complete by construction,
+so in R2's terms the Vocabulary layer already holds that closure declaration implicitly.
+
+So the rule for §16.3 can be stated much more sharply than "absence needs a licence":
+
+> **Negation as failure over a derived predicate is sound in a complete stratified evaluation.**
+> **Negation as failure over an evidence predicate needs a closure licence.**
+
+That distinction is mechanical and compile-time checkable: `not p(…)` is admissible if and only if
+`p` sits in a lower stratum **and** is either derived, or is an evidence predicate covered by a
+closure declaration. `exe:NoClosureLicence` becomes a syntactic check rather than a judgement,
+which is a considerable simplification of what A-105 has to specify.
+
+**And the fragment turns out to be positive.** Under the dual encoding the single-subject
+Eligibility fragment compiles to positive Datalog plus negation over closed predicates only. The
+deep worry about Datalog's closed-world minimal model, and about conflating the well-founded
+semantics' "undefined" with Undetermined, applies to the *obvious* encoding and not to this one.
+
+This does **not** propose a Datalog runtime. It proposes Datalog as the **reference semantics** of
+the existing IR, against which the evaluator can be property-tested. See
+[research item R2](logic-encoding-research.md).
+
 ---
 
 ## 17. Gaps, each with options
@@ -1312,6 +1414,21 @@ Consolidated from the sections above.
 | **G10** | Violation is derivable but not assertable | §8.4 | derive only / `fnd:Evidenced` record supporting both | support both. Disputes require assertion |
 | **G11** | Violations cannot be derived at all without a closure licence | §16.3, §18.3 N5 | **R2 closure declarations** | R2. A hard prerequisite for G1 and G2, not a parallel concern |
 | **G12** | Deadlines have no replayable input form | §19.4 | **R3 positioned stimuli** / wall clock / side channel | R3. Adopted from the cross-check |
+| **G13** | **`elg:EveryValue` and `elg:SingleValue` may assume a closed value set without saying so** | §16.5 | cite a closure / return Undetermined without one / confirm L15 already assumes closure | **unresolved, and sharp.** See below |
+
+**G13 deserves expanding, because it is a defect probe rather than a missing feature.** Written in
+Datalog, two of the existing set readings turn out to be negation in disguise:
+
+- **`EveryValue` Permitted** means "every value of the path is Permitted". Concluding that requires
+  knowing no unseen value exists, which is a negation over the evidence path.
+- **`SingleValue`** means "exactly one value, else Undetermined". Counting requires the same
+  knowledge.
+
+So either L15 already assumes the value set is closed and does not say so, or these readings should
+cite a closure declaration and return Undetermined without one. The translation makes the question
+impossible to miss, and it is much cheaper to settle in A-105 than to discover in a parity test
+between the SPARQL and Datalog readings. `SomeValue` is unaffected: "any value is Permitted" is
+positive and needs no closure.
 
 ---
 

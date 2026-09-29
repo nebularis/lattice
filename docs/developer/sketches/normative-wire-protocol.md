@@ -324,14 +324,16 @@ and nothing is lost because the lift knows the shape.
 This is where the instinct about embedding LegalRuleML pays off, and it is the most interesting part
 of the design.
 
-A term declares its **form**, and each form has a declared lift into the same internal graph. Four
+A term declares its **form**, and each form has a declared lift into the same internal graph. Five
 forms, escalating in fidelity downward:
 
 ```json
-{ "key": "notice-1", "form": "conditions",  "modality": "obligation", "activatedBy": { … } }
+{ "key": "uw-authority", "form": "conditions",  "modality": "permission", "activatedBy": { … } }
 
-{ "key": "notice-2", "form": "legalruleml", "dialect": "oasis-lrml-1.0-compact",
-  "payload": "<lrml:PrescriptiveStatement key=\"ps2\">…</lrml:PrescriptiveStatement>" }
+{ "key": "aggregate-cap", "form": "rules", "dialect": "lattice-rules-0.1", … }
+
+{ "key": "notice-2", "form": "legalruleml", "dialect": "lrml-json-1.0",
+  "statement": { "kind": "PrescriptiveStatement", "key": "ps2", "rule": { … } } }
 
 { "key": "notice-3", "form": "insurle",     "dialect": "insurle-0.1",
   "text": "The Coverholder must transfer a notification within 1 business day of receiving it." }
@@ -339,6 +341,97 @@ forms, escalating in fidelity downward:
 { "key": "notice-4", "form": "prose",       "text": "The Coverholder shall …",
   "meaning": "unextracted" }
 ```
+
+### 8.0 LegalRuleML as JSON, not as an escaped string
+
+**Normalised LegalRuleML is a strict alternation of typed nodes and role edges**, which is a JSON object model already:
+
+| Normalised XML | JSON |
+|---|---|
+| Node element (`Rule`, `Atom`, `Obligation`) | object with a `kind` discriminator. No `@type` |
+| edge element (`if`, `then`, `arg`, `hasTemplate`) | property name |
+| repeated edges, or `@index` | array, order preserved |
+| `@key` | `key`, document-local per §9 |
+| `@keyref` | `ref` |
+| `@iri` | `iri`, a plain string |
+
+```json
+{
+  "kind": "PrescriptiveStatement", "key": "ps1",
+  "rule": {
+    "kind": "Rule", "strength": "defeasible",
+    "if": { "kind": "And", "formulas": [
+      { "kind": "Atom", "rel": "Risk", "args": [ { "var": "x" } ] },
+      { "kind": "Neg", "formula": { "kind": "Atom", "rel": "within",
+          "args": [ { "var": "x" }, { "ind": "FR-20R" } ] } }
+    ] },
+    "then": { "kind": "SuborderList", "items": [
+      { "kind": "Permission", "bearer": { "ref": "coverholder" },
+        "formula": { "kind": "Atom", "rel": "bind", "args": [ { "var": "x" } ] } }
+    ] }
+  }
+}
+```
+
+Four properties make this strictly better than the escaped form.
+
+- **It is codegen-clean.** A discriminated `oneOf` on `kind` is what OpenAPI 3.1 and every JSON
+  binding tool handle well. An escaped string is `String` in every generated model.
+- **It round-trips deterministically to normalised XML**, so Route B of the ingress pipeline and the
+  XML egress kit both stay available. Generate the XML, then run the OASIS transforms.
+- **Malformed content fails at schema validation**, not three layers later inside a reparse. An
+  escaped string is opaque to every validator between the sender and the parser.
+- **No escaping defect can corrupt a legal document**, which is the failure mode that made the
+  string form unacceptable.
+
+The cost is real and worth stating: this skin is *faithful* to LegalRuleML, so it carries all of
+LegalRuleML's generality, including joins, `Naf`, deontic bodies and `Alternatives`. The refiner
+still refuses everything outside the fragment. That is acceptable for an **interchange** form and is
+the wrong shape for the **default** form, which is why `conditions` and `rules` exist beside it.
+
+**To verify:** whether a maintained normative JSON serialisation of RuleML already exists. Defining
+one where a standard exists would be a mistake. See the [research sketch](logic-encoding-research.md), R1.
+
+### 8.0.1 The `rules` tier
+
+`conditions` covers the single-subject fragment. Some real terms need a join or an aggregate, and
+the honest answer is a tier that admits them explicitly rather than pretending the fragment is
+enough.
+
+```json
+{
+  "key": "aggregate-cap",
+  "form": "rules",
+  "dialect": "lattice-rules-0.1",
+  "modality": "prohibition",
+  "bearer": "coverholder",
+  "activity": "bind",
+  "activatedBy": {
+    "let": { "i": { "read": "insured" } },
+    "all": [
+      { "aggregate": "sum",
+        "over": { "var": "p", "read": "i.policies", "closure": "policy-register" },
+        "of": "p.sumInsured", "as": "total" },
+      { "read": "total", "atLeast": [ { "amount": 10000000, "unit": "GBP" } ] }
+    ]
+  }
+}
+```
+
+Three properties, each deliberate.
+
+- **No `@` keys and no strings of logic.** Every node is a typed object, so codegen stays clean and
+  the DMN mistake of putting an expression language in a string attribute is avoided.
+- **Variables appear only through `let` and `over`, always rooted in a path** from the subject or
+  another variable. That keeps every rule *safe* in the Datalog sense, every variable bound by a
+  positive atom, and keeps explanations readable.
+- **Closure is named, not assumed.** `"closure": "policy-register"` cites the declaration that
+  licenses aggregating over a set. Omitting it is a submission-time refusal with
+  `noClosureLicence`, never a silently wrong total. An aggregate over an incomplete set is the
+  arithmetic equivalent of reasoning from absence.
+
+`rules` is a strict superset of `conditions` and shares its lift, its refusals and its term table.
+A `conditions` body is a `rules` body with no `let`, no `over` and no `aggregate`.
 
 ### 8.1 Why this is the right shape
 
@@ -353,7 +446,8 @@ structure that exists.
 | Form | Decidable at runtime? | Design-time checks? | Renderable to English? | Round-trips? |
 |---|---|---|---|---|
 | `conditions` | yes | yes | yes (R5) | yes |
-| `legalruleml` | **only what lifts into the fragment** | for the lifted part | for the lifted part | payload retained verbatim |
+| `rules` | yes, on SPARQL and Datalog backends | **no** for joins and aggregates | yes | yes |
+| `legalruleml` | **only what lifts into the fragment** | for the lifted part | for the lifted part | **yes**, as JSON AST to normalised XML |
 | `insurle` | once a translator exists. Refused today | no | it is already English | text retained |
 | `prose` | no | no | it is already English | text retained |
 
@@ -374,14 +468,31 @@ A submission returns per-term disposition, never a bare 201:
   "instrument": { "key": "BA-2026-001", "version": 2, "ref": "sha256:9f3a…" },
   "terms": [
     { "key": "uw-authority", "form": "conditions",  "lifted": "full",
-      "decidable": true },
+      "decidable": true,
+      "capabilities": { "runtime": true, "designTime": true } },
+
+    { "key": "aggregate-cap", "form": "rules", "lifted": "full",
+      "decidable": true,
+      "capabilities": { "runtime": true, "designTime": false },
+      "notes": [ { "diagnostic": "joinExceedsDesignTimeFragment",
+                   "message": "Aggregates are decided at runtime and excluded from OWL subsumption and overlap checks." } ] },
+
     { "key": "notice-2",     "form": "legalruleml", "lifted": "partial",
       "decidable": true,
+      "capabilities": { "runtime": true, "designTime": true },
       "refusals": [ { "sourceKey": "ps2-override",
                       "diagnostic": "priorityUnsupported",
                       "message": "lrml:Override has no LATTICE counterpart until norm priority is modelled." } ] },
+
+    { "key": "cap-no-closure", "form": "rules", "lifted": "none",
+      "decidable": false,
+      "capabilities": { "runtime": false, "designTime": false },
+      "refusals": [ { "diagnostic": "noClosureLicence",
+                      "message": "Aggregating over insured.policies needs a closure declaration for the policy register." } ] },
+
     { "key": "notice-3",     "form": "insurle",     "lifted": "none",
       "decidable": false,
+      "capabilities": { "runtime": false, "designTime": false },
       "refusals": [ { "diagnostic": "dialectUnsupported",
                       "message": "insurle-0.1 has no translator. Text is retained and the term is inert." } ] }
   ]
@@ -393,8 +504,35 @@ reading diagnostics, whether a term will participate in decisions. Anything that
 ambiguous produces the failure mode where a broker believes a clause is being enforced and it is
 inert.
 
+**`capabilities` surfaces the declared non-capability pattern on the wire.** ADR-A24 already
+requires a backend to refuse what it cannot carry rather than emit something weaker that looks
+equivalent. A term that decides correctly at runtime but cannot participate in design-time
+subsumption or overlap checks is exactly that situation, and a caller relying on "did my amendment
+expand authority" needs to know which terms the answer covered. Hiding it produces a design-time
+check that is silently partial, which is worse than one that is absent.
+
+**`notes` and `refusals` are separate.** A note reports a limitation on a term that still works. A
+refusal reports a term that does not. Collapsing them would make `aggregate-cap` above look broken
+when it is not.
+
 Diagnostics are **compact names**, not `exe:` IRIs. The mapping between them is generated from the
 same term table, so a new `exe:` diagnostic gets a wire name automatically.
+
+### 8.3 ODRL as a projection, not an adoption
+
+ODRL 2.2 is the closest existing standard to the `conditions` form: it is a W3C policy language,
+natively JSON-LD, with `Duty`, `Permission` and `Prohibition`, constraints as operator-plus-operand
+over a left operand, and a one-step `consequence`. Its deontic-as-data shape matches the decision to
+reify modality as `ins:DeonticSpecification` rather than reach for a modal logic.
+
+The [logic encodings note](../notes/logic-encodings.md) raises making the Market Profile an
+ODRL-compatible profile, so that a published context turns one into the other. That is attractive
+and should not be adopted without checking what it costs, because ODRL cannot carry multi-step
+compensation chains, priority, or aggregates, and a profile that silently drops them would mislead.
+
+**Treated here as a projection of the `conditions` form**, in the same sense as the LegalRuleML and
+RIF projections, with the losses enumerated. Whether to go further and make the wire format itself
+ODRL-shaped is [research item R4](logic-encoding-research.md).
 
 ---
 

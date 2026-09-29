@@ -49,13 +49,30 @@ The JSON sketch's audience table has a gap. Two consumer classes want XML and wi
 |---|---|
 | Established market platforms | ACORD is XML. A policy administration system bought in 2011 has an XML ingest and no JSON path |
 | Regulatory and market-body filings | submission formats are XSD-defined, and validation against a published schema is the acceptance criterion |
-| LegalRuleML-native partners | the standard is XML. Handing them JSON containing escaped XML is worse than handing them XML |
+| LegalRuleML-native partners | the standard is XML, and a partner with an XSD-driven toolchain wants the element tree their tooling already binds |
 | Document toolchains | XSLT to PDF, XSL-FO, and print pipelines are XML-native and will not change |
 
-The third row is the interesting one. A consumer who sends LegalRuleML and receives JSON with the
-payload as an escaped string has to unescape and reparse, and any escaping defect corrupts a legal
-document silently. **XML egress is the only skin where an embedded LegalRuleML statement stays a
-first-class parsed subtree end to end.** That is a correctness argument, not a preference.
+### 1.1 A correction to an earlier argument
+
+An earlier draft of this sketch claimed XML was **the only skin** where an embedded LegalRuleML
+statement stays a first-class parsed subtree end to end, because the JSON skin carried it as an
+escaped string. That claim is now false and the argument is withdrawn.
+
+The [logic encodings note](../notes/logic-encodings.md) showed that normalised LegalRuleML is a
+strict alternation of typed nodes and role edges, so it maps deterministically to plain JSON with a
+`kind` discriminator. The wire-protocol sketch §8.0 has adopted that, and the escaped string is
+gone. **Both skins now carry LegalRuleML as structure.**
+
+So XML's case rests on the other three rows of the table above, which are enough on their own:
+
+- **XSD validation as an acceptance criterion.** A filing accepted because it validates against a
+  published schema is an XML workflow. JSON Schema does not occupy that role in these markets.
+- **Existing binding toolchains.** JAXB and `xsd.exe` against the OASIS schema give a partner typed
+  LegalRuleML classes today, with no work from us.
+- **Document pipelines.** XSL-FO to PDF for a filing or a policy document is XML end to end.
+
+That is a weaker case than "only skin", and it is the honest one. It still justifies the work for
+the consumers who need it, and it removes the argument that XML is *necessary* for correctness.
 
 ---
 
@@ -109,11 +126,25 @@ now carries part of the contract, which §8 turns into a feature rather than a c
 ### 2.3 The rejected third option
 
 Deriving XML from the Market Profile JSON via XSLT 3.0's `fn:json-to-xml()` would guarantee the two
-skins never diverge, and it is genuinely tempting. It fails on the LegalRuleML case: the Market
-Profile carries a payload as a JSON string, so an XML document derived from it would carry escaped
-text, losing exactly the property §1 identifies as XML's reason to exist.
+skins never diverge, and it is genuinely tempting.
 
-**XML is projected from the graph, not from the JSON.** §9 addresses the drift this creates.
+An earlier draft rejected it on the grounds that the Market Profile carried LegalRuleML as an
+escaped string, so XML derived from it would lose the element tree. **That objection has gone**,
+because the JSON skin now carries a LegalRuleML JSON AST (§1.1). `json-to-xml()` over that AST
+produces XPath-navigable structure, and a second template could rebuild LegalRuleML XML from it.
+
+The option is therefore **reopened, and still not recommended**, for two remaining reasons:
+
+- **Two lossy hops instead of one.** The Market Profile is a deliberate projection that omits
+  provenance, read sets and graph identity. Anything XML wants that JSON omits would have to be
+  added to JSON first, distorting the JSON skin to serve XML.
+- **`json-to-xml()` output is not the target vocabulary.** It produces the XPath 3.1 JSON-to-XML
+  vocabulary (`<map>`, `<array>`, `<string>`), so a second transform is needed anyway. Two
+  transforms from JSON is not simpler than one from SPARQL results.
+
+**XML stays projected from the graph.** §9 addresses the drift this creates, and §9's answer
+(generate both skins from one term table) is what actually prevents divergence, rather than
+chaining one skin off the other.
 
 ---
 
@@ -273,6 +304,22 @@ single root. `xsl:copy-of` carries the subtree including its namespace nodes, so
 
 This is the whole mechanism. No CDATA, no escaping, no string concatenation, and no custom
 extension function.
+
+**Which storage form the payload has is now a live question.** Since the wire-protocol sketch
+adopted a LegalRuleML JSON AST, a payload may be stored either as a verbatim XML literal (what a
+caller sent as XML) or as a lifted AST in the graph (what a caller sent as JSON). The stylesheet
+needs both paths:
+
+| Stored as | Egress route | Note |
+|---|---|---|
+| verbatim XML literal | `parse-xml()`, as above | faithful to what arrived. Re-serialisation is not byte-preserving (§10) |
+| lifted AST in the graph | reconstruct XML from the AST by ordinary templates | deterministic by construction, and normalised by definition |
+
+The second route is the better one where both are available, because it needs no parsing of stored
+text at egress time and so removes an entire class of security exposure (§11.1). **Prefer the AST
+where it exists, fall back to `parse-xml()` where only the verbatim literal was retained.** Which
+form the ingress pipeline should store, or whether it should store both, is
+[research item R6](logic-encoding-research.md).
 
 ### 5.2 Admitting it: two schema strategies
 
