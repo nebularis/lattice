@@ -11,7 +11,7 @@ merges what. Slice content stays in the phase plans.
 | Machine | Can | Cannot | Agents | Used for |
 |---|---|---|---|---|
 | **R**, runtime | run `mise`, Python, Java, every check. Push to GitHub. Merge | — | **Claude Code**, **Copilot Pro+** | Claude: compiler and substrate code, ADRs, verifying design-heavy branches. Copilot Pro+: running a branch's checks and fixing simple failures |
-| **S**, sandbox | edit anything, commit, pull from GitHub | run tests or checks, push | **Copilot Business** (the largest budget) | Turtle, SHACL, examples, READMEs, and simple code edits. Never complex code, since it cannot be tested there |
+| **S**, sandbox | edit anything, commit, pull from GitHub, run `mise` and every repository check locally (confirmed durable 2026-09-29) | push | **Copilot Business** (the largest budget) | Turtle, SHACL, examples, READMEs, and code of any complexity, since S now verifies its own work before handoff. Push, merge, catalog regeneration and release tagging stay on R regardless of what S can run |
 
 Three rules follow:
 
@@ -32,9 +32,17 @@ Three rules follow:
     such slice, and R drafts them before anything else.
   - `🟢 READY TO BRANCH: create and push air/<slice>, …` It names every branch whose brief is
     on `main` and whose "Branch after" slices have merged.
-- **Every S branch is verified on R before it merges.** S cannot regenerate catalogs or run the
-  versioning check, so it bumps `owl:versionIRI` literals and `.version` files by hand under
-  ADR-A86, and R checks them.
+- **S verifies its own slice before marking it `handed over`.** Run the Validation Pack's single
+  command, plus `mise run check:ontology-catalog` and `mise run check:ontology-versioning` when
+  the slice touches `ontology/`, and record the result in the Validation Pack's Handoff section.
+  If a specific check cannot run in S's environment (for example, a dependency that will not
+  resolve even through the configured package mirror), name exactly which command and why, so R
+  knows to run that one first. S still cannot regenerate catalogs or create release tags, so it
+  bumps `owl:versionIRI` literals and `.version` files by hand under ADR-A86 as before.
+- **R re-verifies as the merge gate, not as the first run.** Because S already ran the checks,
+  R's run should confirm rather than discover. A failure at this stage that S's own run did not
+  catch is worth a note in the Validation Pack — it usually means environment drift between S
+  and R, not a routine defect.
 
 ## 2. Slices
 
@@ -86,17 +94,24 @@ git switch main && git pull --ff-only
 git switch -c air/1.1-layout && git push -u origin-ssh air/1.1-layout
 ```
 
-**On S**, pick it up, let the agent work, and bundle the commits:
+**On S**, pick it up, let the agent work, verify locally, and bundle the commits:
 
 ```bash
 git fetch origin && git switch air/1.1-layout
 ```
 
+Before bundling, run the slice's Validation Pack command, plus the ontology catalog and
+versioning checks if the slice touches `ontology/`. Record the result in the Validation Pack's
+Handoff section (lanes §5) — a pass here means R's later verification is a confirmation, not a
+first attempt.
+
 ```bash
 git bundle create air-1.1.bundle origin/air/1.1-layout..air/1.1-layout
 ```
 
-Carry the bundle file to R.
+Carry the bundle file to R. **Prefer carrying a round's worth of self-verified branches in one
+trip** over carrying each one the moment it finishes (§2) — since S already caught most defects
+locally, batching the carry no longer costs a feedback-loop delay, only the physical handoff.
 
 **On R**, take the commits and push them:
 
@@ -188,11 +203,14 @@ For each branch, in the order of the round's merge column:
 3. **Re-bump versions if needed (agent).** If a merge since the branch was created bumped a document
    this branch also changes, take `main`'s version, bump again under ADR-A86, and re-pin the
    importers already on `main`.
-4. **Run the checks (agent):** the Validation Pack's single command, plus `mise run
-   check:ontology-catalog` and `mise run check:ontology-versioning` when the slice touches
-   `ontology/`.
+4. **Re-run the checks (agent):** the same commands S already ran on its branch — the Validation
+   Pack's single command, plus `mise run check:ontology-catalog` and `mise run
+   check:ontology-versioning` when the slice touches `ontology/`. For an S branch this confirms
+   S's own recorded result rather than running it for the first time, unless S's Handoff section
+   named a check it could not run, in which case R runs that one for the first time here.
 5. **Fix failures (agent).** Copilot Pro+ first for simple ones. Claude when the fix needs a design
-   judgement.
+   judgement. A failure on an S branch that S's own self-verification already passed is worth
+   flagging as environment drift, not just fixing and moving on.
 6. **Sign off (human).** The human runs the validation gate (review the pack, run the command, inspect
    the artefacts, one adversarial probe) and adds the slice to `docs/developer/validation/LOG.md`.
 7. **Record (agent).** On the branch: the slice's state becomes `merged` in its machine's
