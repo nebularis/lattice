@@ -560,9 +560,9 @@ non-blocking track.
 
 | Field | Value |
 |-------|-------|
-| **Status** | 📝 Proposed 2026-09-30. Blocked on CC-D1 to CC-D8 |
+| **Status** | 📝 Proposed 2026-09-30. Blocked on CC-D1 to CC-D11 |
 | **Unit ID** | `computable-contract-substrate` |
-| **Sketches** | [computable-contract-substrate.md](sketches/computable-contract-substrate.md) (design, scenarios S1 to S91), [contract-amounts.md](sketches/contract-amounts.md) (A1 to A50), [instrument-terms-and-legal-relations.md](sketches/instrument-terms-and-legal-relations.md) (superseded) |
+| **Sketches** | [computable-contract-substrate.md](sketches/computable-contract-substrate.md) (design, scenarios S1 to S101), [contract-amounts.md](sketches/contract-amounts.md) (A1 to A50), [instrument-terms-and-legal-relations.md](sketches/instrument-terms-and-legal-relations.md) (superseded) |
 | **Plan** | [computable-contract-substrate.md](plans/computable-contract-substrate.md) |
 | **Status Record** | [computable-contract-substrate.md](status/computable-contract-substrate.md) |
 | **ADRs** | A-104, A-106, A-112, A-113 to be drafted |

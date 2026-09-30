@@ -27,6 +27,7 @@ ratified.
 | AIG Dummy Policy | AIG dummy non-profit package policy: General Terms and Conditions, Non-Profit D&O, EPL, Fiduciary, Corporate Counsel, CrisisFund, 33 endorsements | `wingman/Nebularis/Ontologies/specification/sample-policy-blended.md` |
 | IUA | IUA 09-069 BAA2018 (Broker) non-marine binding authority agreement and its schedule | `open-dare/.copilot/UIA_Broker_BAA.md` |
 | CBAA | Lloyd's proposed computable binding authority agreement, modules M1 to M6, M8 to M10, M12 to M14, with the Insurer Capacity Table and Scope of Underwriting Authority base tables | `open-dare/.copilot/cbaa/`, extracted by `open-dare/tools/cbaa_extract.py` |
+| SCHED | the schedule of a sectioned Lloyd's binding authority (its agreement number and UMR are not recorded here): coverholders, persons responsible, classes and locations per section | image supplied in review, 2026-09-30 |
 | LEND, TRIAL | the clean-room examples of the first sketch: a facility agreement and a trial protocol | [instrument-terms-and-legal-relations.md](instrument-terms-and-legal-relations.md) §7 |
 
 Clause references below use these codes, for example AIG Dummy Policy D&O 9.A(2), IUA 36.6, CBAA M3 3.9.1.
@@ -106,7 +107,7 @@ first sketch's.
 | Word | Its senses in contracts | Where each sense lands |
 |---|---|---|
 | **term** | (a) a provision the parties are bound by, express or implied. (b) a duration ("policy term") | (a) `ins:Term`. (b) `fnd:TemporalScope` |
-| **condition** | (a) a heading ("General Conditions"). (b) a class of term by breach consequence (condition, warranty, innominate, condition precedent). (c) a contingency | (a) a wording element type. (b) a term classification (§5.10) whose legal effect is modelled as relations (S27). (c) `elg:Condition`. No `ins:` or `wrd:` class is named Condition |
+| **condition** | (a) a heading ("General Conditions"). (b) a class of term by breach consequence (condition, warranty, innominate, condition precedent). (c) a contingency | (a) a wording element type. (b) a term classification (`ins:classification`, §5.1) whose legal effect is modelled as relations (S27). (c) `elg:Condition`. No `ins:` or `wrd:` class is named Condition |
 | **provision** | both a clause and what it provides | retired. `wrd:Element` and `ins:Term` replace it |
 | **clause, section, schedule, module, endorsement, annex, appendix** | parts of a document | element types (concepts), never classes (DP2) |
 | **wording, form** | the text of a contract, and a standard text published for reuse | `wrd:Wording`. A form is a library wording (`wrd:Wording` not assembled) |
@@ -125,6 +126,8 @@ first sketch's.
 | **amend, delete, replace, insert** | a change to wording, and its legal effect | `wrd:Amendment` (text), `ins:Amendment` (effect) |
 | **liability** | an insurer's liability to pay, and Hohfeld's correlative of a power | never a name. The power's other end is `ins:counterparty` |
 | **permission, Permitted** | a legal relation, and an Eligibility decision value | kept, with a disambiguating comment on both |
+| **section** | a part of a contract with a determined meaning, as in Lloyd's and the MRC: "Section B2", with its own parties, authority, classes or capacity. The CBAA calls it an "Agreement Segment" | a wording element of type Section, which terms name with `ins:appliesWithin` and `ins:notWithin` (§5.10). Pieces of text are `wrd:TextPart`s |
+| **the Coverholder, the Insured, the Lender** (a defined party word) | a role whose occupant the instrument defines, sometimes per section | an `ins:Definition` whose meaning is one or more occupancies (§5.10) |
 | **norm, statement** | legal theory, and Open CBAA's term for attached meaning | not used in the substrate. Open CBAA's `stm:Statement` maps to terms and relations (§3) |
 
 ---
@@ -160,7 +163,7 @@ L17).
 | `wim:directlyComprises` ⊑ `wim:comprises` (transitive), the simple/non-simple split | Wording | `wrd:directlyComprises` ⊑ `wrd:comprises`, same characteristics, same reason |
 | `wim:rankKey`, `wim:objectId` | Wording | `wrd:rankKey`, `wrd:objectId` |
 | `wim:contractCategory`, `componentGroupType`, `componentType`, `elementType`, `clauseClassification`, `documentKind`, `applicableTo` | Wording | `wrd:elementType` (functional, every element and the root), `wrd:classification` (polyhierarchy), `wrd:documentKind`, `wrd:applicableTo`. Contracts unbound in the substrate |
-| `wim:Text`, `wim:Segment`, `segmentIndex`, `segmentText`, `refersToVariable`, `refersToObject` | Wording | same, `wrd:` |
+| `wim:Text`, `wim:Segment`, `segmentIndex`, `segmentText`, `refersToVariable`, `refersToObject` | Wording | `wrd:Text`, `wrd:TextPart`, `wrd:partIndex`, `wrd:partText`, `wrd:refersToVariable`, `wrd:refersToObject`. Renamed so that "segment" keeps its market meaning, a section of business (§5.10) |
 | `wim:Table` (dynamic, static) | Wording | `wrd:Table` with rows, columns and cells (§4.3, CC-D6) |
 | `wim:Variable`, `EmbeddedVariable`, `GoverningVariable`, `variableKey`, `populationMethod`, `populatedFrom`, `valueContract`, `valueSpace`, `admissibleValues`, `multiValued` | Wording | same, `wrd:` |
 | `wim:Metadata`, `wim:Reference`, `wim:DocumentObject`, `wim:ExternalDocument`, `wim:linksTo` | Wording | same, `wrd:` |
@@ -218,7 +221,7 @@ Content kinds that differ in properties are classes (DP2), each `⊑ wrd:Element
 
 | Class | Content |
 |---|---|
-| `wrd:Text` | ordered `wrd:Segment`s: literal text, a variable reference or an object reference, indexed 0..n−1 |
+| `wrd:Text` | ordered `wrd:TextPart`s: literal text, a variable reference or an object reference, indexed 0..n−1 |
 | `wrd:Table` | rows, columns and cells (§4.3) |
 | `wrd:Variable` | a declaration of what an instance supplies (§4.2) |
 | `wrd:Reference` | a link to a definition, another element, a table, a document object or an external document |
@@ -244,22 +247,31 @@ shape.
 
 ### 4.3 Tables
 
-Open CBAA's `wim:Table` has no internal structure. Authority tables (CBAA Scope of Underwriting
-Authority, with segments as columns), capacity tables (Insurer Capacity Table, insurers as columns)
-and role tables (Multiple Reporting Arrangements, parties by segment) need one, because a parameter
-binds to a column or a row:
+Decided 2026-09-30 (CC-D6): **rows in the wording, columns at the instance, cells as variable
+values**, with long lists as multi-valued variables.
+
+The collateral shows why. The Scope of Underwriting Authority base table fixes its rows in the
+standard form, each Mandatory, Optional or Conditional, while its columns are supplied per agreement:
+"Rows above this point will dictate the number of columns (or segments) required" (row 14). The
+Insurer Capacity Table has one column per insurer. Territory tables are long lists whose rows are
+just values.
 
 ```text
 wrd:Table        ⊑ wrd:Element
-wrd:Row, wrd:Column ⊑ wrd:Element     rows and columns are wording elements, so they carry inclusion
-                                      modes (an optional SoUA row) and rank keys
-wrd:Cell         wrd:inRow, wrd:inColumn (each exactly one), wrd:content → wrd:Text or wrd:Variable
-wrd:rowKey, wrd:columnKey             the row's meaning ("Maximum Limits of Liability"), the column's
-                                      key ("Agreement Segment 2")
+wrd:Row          ⊑ wrd:Element     declared in the template, with inclusion modes, rank keys and
+                                   wrd:rowKey (the row's meaning, "Maximum Limits of Liability")
+  wrd:rowVariable  → wrd:Variable  the variable each column supplies a value for
+wrd:VariableValue (§4.5)
+  wrd:forColumn    → the column key: a section, an insurer's occupancy, a lot
+                                   so a cell is the value of a row's variable for one column
+long lists       a multi-valued wrd:Variable (a territory table), not a wrd:Table
 ```
 
-The detail is decision CC-D6. The constraint that must hold: a template parameter can bind "the
-value in this row for each column", so one table row yields one parameter per segment (S44).
+Rejected options, for the record: an opaque table whose cells are separately named variables (Open
+CBAA's `wim:Table` today, which cannot say "row X for every column"), rows and columns both as
+wording elements (treats instance columns as template text), and the whole table as one record-set
+value (loses optional and conditional rows). The constraint that must hold: a template parameter can
+bind "the value in this row for each column", so one row yields one parameter per column (S44).
 
 ### 4.4 Assembly: variants and conditional clauses
 
@@ -315,7 +327,7 @@ the same, and both amendments are recorded.
 | Law | Statement | Register |
 |---|---|---|
 | W1 | `wrd:directlyComprises` forms a tree from each root. Every element reaches exactly one root | SHACL |
-| W2 | A text's segment indices run 0..n−1 and each segment is exactly one of three forms | SHACL |
+| W2 | A text's part indices run 0..n−1 and each part is exactly one of three forms | SHACL |
 | W3 | A variant has mode Variation and a slot, and vice versa. An assembled wording includes exactly one variant per slot | SHACL |
 | W4 | Only conditional elements and variants state an inclusion condition, and each condition reads a governing variable | SHACL |
 | W5 | An assembled wording includes every mandatory child of every included element | SHACL |
@@ -502,7 +514,75 @@ A template names roles. A bound relation names occupancies and carries the insta
 only bound relations are evaluated (Open CBAA D22). A bespoke clause has bound meaning with no
 template.
 
-### 5.10 Laws of the Instrument layer
+### 5.10 Sectioned instruments
+
+A sectioned binder, a multi-lot framework or a facility with tranches is divided into **sections**,
+and states parties, persons responsible, classes of business, locations, capacity and forms per
+section. We imagine a Lloyd's schedule to port forth this model (called SCHED below):
+"The Coverholder" is Imagine Underwriting Limited for "All sections (Excluding Section B5)", Imagine
+Underwriting Limited and Imagine Underwriting Inc for "Sections B2, D2, E2, F2, G2 only", Imagine
+Underwriting Limited for "Sections A1, D1, E1, F1 & G1 only", and a fourth party with three
+addresses for B5. Persons responsible, authorised classes and risk locations are stated per section
+the same way.
+
+In Lloyd's usage the parts of a contract are **sections**, with a determined meaning, as in the MRC.
+Binding authorities have sections too, and sections may or may not have terms that interact across
+them. A section is modelled as a part of one instrument, not as an instrument of its own. The
+"contract of contracts" (master and child contracts, as APEX's placement notes sketch) is
+deliberately not introduced here, so that the later applied broking and carrier models can choose
+that abstraction freely (CC-D11). APEX's own notes keep per-section scoping within one contract as
+the less disruptive pattern for cross-layer single contracts.
+
+```text
+section                 a wording element of element type Section, with its code (A1, B5) as
+                        wrd:objectId. Sections may nest (section D, then D1, D2)
+ins:appliesWithin       Term ⊔ LegalRelation ⊔ Definition ⊔ Qualifier → wrd:Element   (multi-valued)
+ins:notWithin           the same → wrd:Element   an excluded part ("excluding Section B5")
+ins:sectionOf           the case's section: derived from the power it was bound under
+                        (case → instrument → boundUnder → power → arisesUnder → term → appliesWithin)
+```
+
+A case falls within a term when its section is at or below one of the term's `appliesWithin` parts
+and not at or below any `notWithin` part. That is Eligibility's hierarchical match with exclusion
+(ADR-A87) applied to the wording tree instead of a concept scheme, and a case under a part above an
+exclusion is Undetermined in the same way.
+
+- **Section sets with exclusions.** "All sections (Excluding Section B5)" is `appliesWithin` the
+  agreement and `notWithin` B5. "Sections A1, D1, E1, F1 & G1 only" is `appliesWithin` those five.
+- **Per-section authority.** Each section has its own authority `Power`, whose scope is that
+  section's classes and locations (S44). The power a case is bound under fixes its section for
+  every later relation: reporting, claims, remuneration.
+- **Terms that interact across sections.** An aggregate limit or a shared duty is `appliesWithin`
+  several sections or the whole agreement. A term with no `appliesWithin` governs the whole.
+- **Per-section parties.** "The Coverholder" is a defined party word. Each schedule column is an
+  `ins:Definition` that `ins:defines` the word, whose `ins:means` is one or more occupancies and
+  which `appliesWithin` its sections. A template relation whose party is the role resolves it per
+  case through the definition applicable to the case's section (`ins:resolvedBy`, law I11).
+- **Overlapping definitions.** Imagine Underwriting Limited is defined for "all sections excluding
+  B5" and again for B2 and for A1. Definitions of one word whose parts overlap combine by union
+  unless one `ins:prevailsOver` the other. The design-time overlap check reports every overlap for
+  review, since "only" may have been meant to exclude.
+- **A word meaning several parties.** For B2, D2, E2, F2 and G2 "the Coverholder" means two
+  entities. For a power, the group holds it with a consent rule of any one member ("either may
+  bind"). For a duty, the group's composition rule decides (several, joint and several). Where the
+  instrument is silent, relations resolving to the group are Undetermined until the graph holds an
+  assertion of how the parties act (CC-D10).
+- **Party details.** An address for notices, several trading addresses (B5's three) and the
+  locations authority depends on (S91) are details of the party in this instrument:
+  `ins:noticeAddress` and `ins:operatesAt` on the occupancy. Party identity is by identifier (the
+  Coverholder PIN), not by address text: SCHED gives "1 Example Street, London EC1 1AA" and "EC1A 1AA"
+  for one entity with one PIN. Identifiers are a Foundation construct (CC-D9).
+- **Forms per section.** "LMA3113A / LMA3114 / LMA3115 as applicable" incorporates one of several
+  standard forms, chosen by applicability (the market of each section's capacity). This is
+  `ins:incorporates` within sections, or an assembly-time variation slot whose variants are the
+  forms.
+- **Instrument identifiers.** An agreement number and a UMR are two identifiers of one instrument
+  identity (Open CBAA's `agr:umr`, generalised by `fnd:identifier`).
+- **Terminology.** The CBAA's "Agreement Segment" (SoUA row 14, Insurer Capacity Table row 8)
+  appears to name the same thing as a section. Its "Placing Section" (row 9) may be a different
+  one. Both are to be confirmed against the collateral before C7.
+
+### 5.11 Laws of the Instrument layer
 
 | Law | Statement | Register |
 |---|---|---|
@@ -520,6 +600,8 @@ template.
 | I12 | Nothing is implied between relations. A relation depends on another only through an explicit trigger or state reading (IUA 36.7, "any failure … shall not affect the automatic termination") | design |
 | I13 | Only bound relations are evaluated. A template names roles, a bound relation names occupancies | SHACL |
 | I14 | An amendment does not change bound instruments or arisen occasions unless it says so | semantic |
+| I15 | A case has exactly one section where the instrument is sectioned, fixed by the power it was bound under | SHACL and semantic |
+| I16 | Definitions of one word whose parts or scopes overlap combine by union unless one prevails, and every overlap is reported at design time | SHACL, design-time check |
 
 ---
 
@@ -707,9 +789,11 @@ One modal verb per class, so a rendering never guesses (R5):
 
 ## 9. Neutral example instruments
 
-The clean-room rule (ADR-A-C2) requires the substrate's examples to be domain-neutral. Every
-scenario of §10 is therefore shown in one of eight neutral instruments in the substrate, and in its
-insurance rendering in AIR Phase 5 (policy scenarios) or Open CBAA (binding authority scenarios).
+Under CC-D7 (decided 2026-09-30, an addendum to ADR-A-C2) the substrate may hold insurance
+examples, provided every scenario of §10 is also shown in one of the eight other-domain instruments
+below, and the insurance examples are not substantially more comprehensive than those. Fuller
+insurance renderings still live in AIR Phase 5 (policy scenarios) and Open CBAA (binding authority
+scenarios).
 
 | Code | Neutral instrument | Carries |
 |---|---|---|
@@ -729,10 +813,7 @@ like `set-reading-admissions.ttl`.
 
 ## 10. Scenario catalogue
 
-Every construct found in the four instruments. Each row names its sources, the modelling pattern,
-the neutral example that shows it, and the how-to entry that explains it (§11). "Rendering" names
-where the insurance form is shown: AIR Phase 5 for policy scenarios, Open CBAA for binding
-authority scenarios.
+Every construct found in the four instruments and the described sectioned Lloyd's schedule (SCHED, §5.10). Each row names its sources, the modelling pattern, the neutral example that shows it, and the how-to entry that explains it (§11). "Rendering" names where the insurance form is shown: AIR Phase 5 for policy scenarios, Open CBAA for binding authority scenarios.
 
 ### 10.1 Duties
 
@@ -817,6 +898,11 @@ Numbers are stable identifiers, not an order. S79 ("not treated as contravening 
 | S52 | parties changing over time: annual transfer of benefit and burden, a replaced follow insurer liable for existing policies and live quotes | CBAA M2 2.9, M3 3.23, 3.24.3 | time-scoped occupancies, and I11 (parties fixed at arising) | E2 | Open CBAA |
 | S58 | performers assigned by a role table per segment | CBAA M10 10.4B, 10.5E, M8 8.1B, Multiple Reporting Arrangements and Multiple Claims Handling Arrangements tables | a party end resolved through the table's cells for the case's segment | E3 | Open CBAA |
 | S34 | subrogation: claims against third parties pass to the payer on payment, and are not pursued against an insured unless an exclusion applies | AIG Dummy Policy D&O 12.C, a guarantor's subrogation | the third-party relation's obligee end is resolved at each occasion (I11), with a `Deeming` that the payer stands in the creditor's place on payment. A `Prohibition` on pursuing insureds, excepted by a `Permission` whose scope reads the conduct exclusion | E6 | AIR |
+| S94 | a defined party word with section-scoped definitions | SCHED "The Coverholder" per section, persons responsible per section | `ins:Definition` per column, meaning occupancies, `appliesWithin` its sections. Resolution per case (§5.10) | E3 | Open CBAA |
+| S95 | overlapping definitions of one word | SCHED Imagine Underwriting Limited under "all excluding B5" and under B2 and A1 | union unless `prevailsOver`, overlap reported (I16) | E3 | Open CBAA |
+| S96 | a defined word meaning several parties | SCHED B2, D2, E2, F2, G2: two coverholder entities | a group: consent rule "any one" for powers, composition rule for duties, a recorded finding where silent | E3 | Open CBAA |
+| S97 | party details in the instrument: notice address, several trading addresses | SCHED B5 with three addresses, CBAA M1 1.4A.2.2, IUA 36.2 | `ins:noticeAddress`, `ins:operatesAt` on the occupancy | E4 | Open CBAA |
+| S98 | party identity by a market identifier, not by address text | SCHED one PIN under two address spellings | `fnd:identifier` (CC-D9) | E3 | Open CBAA |
 | S82 | a party leaving remains bound on occasions already arisen | CBAA M3 3.24.3, 3.24.4 | I11 and I3 | E3 | Open CBAA |
 | S90 | several parties on one side, each executing separately | CBAA M1 1.4B, 1.4C, M2 2.4B, 2.7B | `ins:party` per entity, acceptance per entity | E2 | Open CBAA |
 | S91 | authority that differs by trading location | CBAA M1 1.4A.3, M9 9.1.4, SoUA row 17 | scope reads the acting occupancy's location | E4 | Open CBAA |
@@ -854,6 +940,11 @@ Numbers are stable identifiers, not an order. S79 ("not treated as contravening 
 | S70 | precedence: agreement over annexes, instructions unless they expressly say otherwise, endorsements notwithstanding, regardless of order | CBAA M1 1.2.1, M12 12.7.1, AIG Dummy Policy End. 13 "whether such endorsement precedes or follows", GTC 1 | `ins:prevailsOver`, with its own priority where a later statement overrides (N10) | E3 | both |
 | S71 | interpretation rules | AIG Dummy Policy GTC 15, IUA 38, CBAA M14 14.1 | terms with no relation | E7 | both |
 | S61 | status declarations | IUA 4.7, 27.1, 25.1, CBAA M1 1.13, 1.14, 1.18, M14 14.19 | terms with no relation, consequences implied by law | E4 | Open CBAA |
+| S92 | a sectioned instrument: per-section authority, parties, persons, classes, locations, capacity, and terms that interact across sections | SCHED, CBAA SoUA segments and Insurer Capacity Table row 8, Multiple Claims Handling and Multiple Reporting Arrangements tables | sections as wording elements, `ins:appliesWithin`, the case's section from the power it was bound under (§5.10, I15) | E3 | both |
+| S93 | section sets with exclusions | SCHED "All sections (Excluding Section B5)", "Sections A1, D1, E1, F1 & G1 only" | `ins:appliesWithin` and `ins:notWithin`, hierarchical match with exclusion over the wording tree | E3 | both |
+| S99 | one of several forms incorporated "as applicable" | SCHED "LMA3113A / LMA3114 / LMA3115 as applicable" | `ins:incorporates` within sections, or a variation slot whose variants are forms | E3 | Open CBAA |
+| S100 | persons responsible, classes of business and locations per section | SCHED later parts, IUA 3, 7, 9 per section | S94 for persons, S44 per-segment power scopes for classes and locations | E3 | Open CBAA |
+| S101 | several identifiers for one instrument | SCHED agreement number and UMR | `fnd:identifier` on the instrument identity | E3 | Open CBAA |
 | S88 | notice formalities: in writing, to a named address, copies for information only | AIG Dummy Policy GTC 9, IUA 36.2 to 36.4, CBAA M12 12.9 to 12.13 | conditions on the exercise act, separate information obligations (I12) | E7 | both |
 
 ### 10.8 Amounts (catalogued in contract-amounts.md)
@@ -909,9 +1000,11 @@ example's Turtle, the expected decisions, and the controlled-English rendering.
 | retroactive effect | S19 |
 | lifecycle states: notice, suspension, run-off | S54, S55 |
 | parties that depend on the case | S20, S58 |
+| sectioned instruments: sections, per-section parties and authority | S92, S93, S94, S95, S96, S100 |
+| party details and identifiers | S97, S98, S101 |
 | several and joint parties, parties that change over time, and subrogation | S34, S35, S52, S80, S90 |
 | severability between parties | S22 |
-| incorporation by reference, and documents or lists one party may vary | S33, S53 |
+| incorporation by reference, forms "as applicable", and documents or lists one party may vary | S33, S53, S99 |
 | precedence between terms | S70 |
 | amendments: text, effect, dates, consent | S23, S68, S69 |
 | definitions, status declarations and interpretation rules | S61, S71 |
@@ -936,6 +1029,7 @@ S79 merged into S4. The amounts group (S32, S34's amounts, S39, S73, S81, S85) i
 | `ontology/wording` | new, 0.1.0: spec, vocab (inclusion modes, population methods, amendment operations, scheme contracts), shapes, examples, README, how-to | A-112 |
 | `ontology/instrument` | rewritten, 0.x breaking MINOR under A-113 | A-104, A-113 |
 | `ontology/behaviour` | occasions, records, `bhv:forSubject` widened, `bhv:targets`, state concepts, compiled wiring. Breaking MINOR under A-113 | A-106 (retitled), A-113 |
+| `ontology/foundation` | `fnd:identifier` (CC-D9). One MINOR, cascading to every layer and its 14 importers, so batched with NRS N9 in the Foundation window after Phase 2 | A-86 |
 | `behaviour-vocab`, `applied/capacity` | re-pin, cascade | A-86 |
 | `tools/mork_compilers` | relation plans, per-class evaluation, burden diagnostics, stratification | A-104, A-109 |
 | NRS | N4 is delivered here. N2, N5, N6 and N8 change (plan) | A-109, A-105, A-106 |
@@ -965,16 +1059,19 @@ item 4 and ADR-A86's closing paragraph already allow.
 
 | # | Question | Proposal |
 |---|---|---|
-| CC-D1 | Name of the lower layer | Wording (`wrd:`), with "computable contract" for the composition |
-| CC-D2 | Its position | between Eligibility and Instrument |
-| CC-D3 | Home of the LMA WIM profile (four levels, containment rules, LMA typing schemes) | `applied/insurance/wording/` in LATTICE, since it serves policies and agreements alike. Open CBAA imports it |
-| CC-D4 | Scope of A-113 | every layer at 0.x, not Instrument alone, since Behaviour and Wording need it too |
-| CC-D5 | Templates in the substrate | yes (§5.9) |
-| CC-D6 | Table structure | rows, columns and cells as elements (§4.3) |
-| CC-D7 | Clean-room examples | neutral instruments E1 to E8 in the substrate, insurance renderings in AIR Phase 5 and Open CBAA |
+| CC-D1 | Name of the lower layer | Wording (`wrd:`), with "computable contract" for the composition. Decided 2026-09-30 |
+| CC-D2 | Its position | between Eligibility and Instrument. Decided 2026-09-30 |
+| CC-D3 | Home of the LMA WIM profile (four levels, containment rules, LMA typing schemes) | `applied/insurance/wording/` in LATTICE, since it serves policies and agreements alike. Open CBAA imports it. Decided 2026-09-30 |
+| CC-D4 | Scope of A-113 | every layer at 0.x, not Instrument alone, since Behaviour and Wording need it too. Decided 2026-09-30 |
+| CC-D5 | Templates in the substrate | yes (§5.9). Decided 2026-09-30 |
+| CC-D6 | Table structure | decided 2026-09-30: rows in the wording, columns at the instance, cells as variable values, long lists as multi-valued variables (§4.3) |
+| CC-D7 | Clean-room examples | decided 2026-09-30: insurance examples allowed in the substrate when every scenario also has an other-domain example and the insurance ones are not substantially more comprehensive. Previously proposed: neutral instruments E1 to E8 in the substrate, insurance renderings in AIR Phase 5 and Open CBAA |
 | CC-D8 | Lifecycle gating | `ins:appliesInState` over concepts, `bhv:realisesConcept` on states |
 | CC-Q1 | Does `ins:prevailsOver` need its own priority (a later statement overriding an earlier precedence clause, CBAA M12 12.7.1)? | carried to N10 |
 | CC-Q2 | Is `wrd:Wording` also an `ins:Instrument` for single-document instruments, or always two nodes? | always two: an instrument may have several wordings (bilingual, consolidated) and a form is wording with no instrument |
+| CC-D9 | Identifiers | decided 2026-09-30: Foundation, `fnd:identifier` for any identified thing (actors, instruments), with a scheme and a value. Its cascade reaches every layer, so it lands in the Foundation window after Phase 2, batched with NRS N9 |
+| CC-D10 | A defined word meaning several parties when the instrument is silent on how they act | Undetermined until the graph holds an assertion of how the parties act (several, joint, joint and several, any one), from any accepted source: an amendment, a deeming, a market default declared as data, or a recorded reading. Decided 2026-09-30 |
+| CC-D11 | Pieces of text, and parts of a contract | decided 2026-09-30: `wrd:TextPart` for pieces of text. Sections are parts of one instrument (wording elements of type Section), named by terms with `ins:appliesWithin` and `ins:notWithin`, with no contract-of-contracts for now (§5.10) |
 | CC-Q3 | Fixed calendar dates without a recurrence | `ins:dueOn` when an example needs it |
 | CC-Q4 | Should `ins:party` gain a privity shape (an obligor is a party to the term's instrument)? | no. Third-party beneficiaries and regulators' powers (S84) make it an applied choice |
 | CC-Q5 | Is `ins:obligee` required, given regulatory duties owed to no party? | required, with the regulator as an occupancy |

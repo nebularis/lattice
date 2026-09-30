@@ -9,7 +9,7 @@
 **Trigger:** human request, 2026-09-30, after testing the Instrument redesign against a package
 policy, an IUA binding authority and the Lloyd's CBAA collateral
 **Sketches:** [computable-contract-substrate.md](../sketches/computable-contract-substrate.md) (the
-design and the scenario catalogue S1 to S91), [contract-amounts.md](../sketches/contract-amounts.md)
+design and the scenario catalogue S1 to S101), [contract-amounts.md](../sketches/contract-amounts.md)
 (the amounts catalogue A1 to A50),
 [instrument-terms-and-legal-relations.md](../sketches/instrument-terms-and-legal-relations.md) (the
 first design, superseded)
@@ -23,12 +23,12 @@ revised in NRS
 
 ## 1. Problem
 
-LATTICE's Instrument layer is 86 lines with a structural `ins:Obligation`, and has no model of
-contract wording, legal relations beyond one class, templates, amendments or time. Open CBAA built
-the wording and meaning it needed locally (`wim:`, `stm:`, `agr:`), and those are general to every
-computable contract, not specific to binding authorities. Testing a relational redesign against
-four instruments found 91 scenarios the substrate must model, 13 of which the first redesign got
-wrong or missed, and a separate catalogue of 50 amount constructs.
+LATTICE's Instrument layer holds a structural `ins:Obligation`, but no model of contract wording, 
+legal relations beyond one class, templates, amendments or time. Open CBAA built the wording and 
+meaning it needed locally (`wim:`, `stm:`, `agr:`), and those are general to every computable contract, 
+not specific to binding authorities. Testing a relational redesign against four instruments found 91 
+scenarios the substrate must model, 13 of which the first redesign got wrong or missed, and a separate
+catalogue of 50 amount constructs.
 
 ## 2. Scope
 
@@ -65,8 +65,8 @@ branch.
 
 | Slice | Content | Output |
 |---|---|---|
-| C0 | draft A-112 and A-113 | two ADRs, Proposed |
-| C1 | draft A-104 from the sketch §5, §6, laws I1 to I14 | ADR, Proposed |
+| C0 | draft A-112, A-113, and the ADR-A-C2 addendum (CC-D7) | three documents, Proposed |
+| C1 | draft A-104 from the sketch §5, §6, laws I1 to I16 | ADR, Proposed |
 | C2 | draft A-106 from the sketch §7, laws B1 to B5 | ADR, Proposed |
 
 Gate A: the human accepts A-104, A-106, A-112 and A-113, and takes CC-D1 to CC-D8.
@@ -82,14 +82,18 @@ Gate A: the human accepts A-104, A-106, A-112 and A-113, and takes CC-D1 to CC-D
 Wording imports Foundation, Vocabulary, Quantification and Eligibility. Nothing imports it until
 C6, so tranche B cascades nowhere.
 
+| Slice | Content | Version impact |
+|---|---|---|
+| F1 | Identifiers (CC-D9): `fnd:identifier` → `fnd:Identifier` with a scheme concept (under a scheme contract) and a value, usable on any identified thing: Coverholder PIN, LEI, syndicate number, agreement number, UMR. Uniqueness within a scheme among current versions as a shape | Foundation MINOR, cascading to all 14 importers. Runs in the Foundation window after Phase 2, in one cascade with NRS N9. C6 and C9 do not wait for it: instrument identifiers stay open-cbaa's `agr:umr` and AIR's `aeo:identifier` until F1, which then generalises them |
+
 ### Tranche C: Instrument rewrite
 
 | Slice | Content | Version impact |
 |---|---|---|
-| C6 | instrument and term, the five relation classes with Exclusion, parties with groups, roles and `resolvedBy`, activity, scope, `maintains`, `fulfilledWhen`, `excepts`, qualifiers (§5.1 to §5.4, §5.7) | Instrument 0.7.0 to 0.8.0, breaking MINOR (A-113). Imports Wording |
-| C7 | arising, due, recurrence, ending, `appliesInState`, survival, constitutive terms (Definition, Deeming), `appliesWithin`, classification (§5.5, §5.6) | 0.9.0 MINOR |
+| C6 | instrument and term, the five relation classes with Exclusion, parties with groups, roles and `resolvedBy`, party details (`noticeAddress`, `operatesAt`), instrument identifiers, activity, scope, `maintains`, `fulfilledWhen`, `excepts`, qualifiers (§5.1 to §5.4, §5.7) | Instrument 0.7.0 to 0.8.0, breaking MINOR (A-113). Imports Wording |
+| C7 | arising, due, recurrence, ending, `appliesInState`, survival, constitutive terms (Definition, Deeming), `appliesWithin`, classification, segments and per-segment definitions with union and overlap reporting (§5.5, §5.6, §5.10, I15, I16) | 0.9.0 MINOR |
 | C8 | templates and binding, parameter bindings, encoding status (§5.9) | 0.10.0 MINOR |
-| C9 | amendments, consent rules, incorporation, `boundUnder`, `takesEffectWhen` (§5.8). Shapes for I1 to I14 | 0.11.0 MINOR, shapes |
+| C9 | amendments, consent rules, incorporation (with segment scope), `boundUnder`, `takesEffectWhen` (§5.8). Shapes for I1 to I16 | 0.11.0 MINOR, shapes |
 
 C6's re-pin cascades to Behaviour, `behaviour-vocab` and `applied/capacity`'s execution profile
 (C10 absorbs Behaviour's own change). No applied insurance module imports Instrument.
@@ -113,7 +117,7 @@ C6's re-pin cascades to Behaviour, `behaviour-vocab` and `applied/capacity`'s ex
 | Slice | Content |
 |---|---|
 | C14 | neutral examples E1 to E4 (sketch §9) with expected-decision tables and Behaviour traces, covering their scenarios |
-| C15 | neutral examples E5 to E8, and a coverage test that every scenario S1 to S91 (except the amounts group) is shown by at least one example |
+| C15 | neutral examples E5 to E8, and a coverage test that every scenario S1 to S101 (except the amounts group and the merged S79) is shown by at least one example |
 | C16 | how-to guides for Wording and Instrument (sketch §11), the substrate README's "computable contract" section, ontology architecture, SDS, data architecture |
 | C17 | handoff: the insurance renderings list for AIR Phase 5 (policy scenarios) and Open CBAA (binding authority scenarios), and the Open CBAA migration notes (§7) |
 
@@ -159,20 +163,34 @@ Recorded here so the other repository can plan it. Details in the sketch §3 and
 | example BA-2026-001 | re-expressed, joined by the binding authority scenario renderings |
 | decisions | D22 holds as I13. D23 resolved. D25 changed. I6 closed. L15 fixed upstream |
 
-## 8. Decisions owed before C0
+## 8. Decisions
 
 None of these may be taken by the agent.
 
-| # | Decision | Recommendation |
-|---|---|---|
-| CC-D1 | Name of the lower layer | Wording (`wrd:`), "computable contract" for the composition (sketch §1.1) |
-| CC-D2 | Position of Wording | between Eligibility and Instrument |
-| CC-D3 | Home of the LMA WIM profile | `applied/insurance/wording/` in LATTICE |
-| CC-D4 | Scope of A-113 | every 0.x layer |
-| CC-D5 | Templates in the substrate | yes |
-| CC-D6 | Table structure | rows, columns and cells as elements |
-| CC-D7 | Clean-room examples | neutral in the substrate, insurance renderings in AIR and Open CBAA |
-| CC-D8 | Lifecycle gating | concepts, with `bhv:realisesConcept` |
+| # | Decision | Recommendation | State |
+|---|---|---|---|
+| CC-D1 | Name of the lower layer | Wording (`wrd:`), "computable contract" for the composition (sketch §1.1) | **decided 2026-09-30** |
+| CC-D2 | Position of Wording | between Eligibility and Instrument | **decided 2026-09-30** |
+| CC-D3 | Home of the LMA WIM profile | `applied/insurance/wording/` in LATTICE | **decided 2026-09-30** |
+| CC-D4 | Scope of A-113 | every 0.x layer | **decided 2026-09-30** |
+| CC-D5 | Templates in the substrate | yes | **decided 2026-09-30** |
+| CC-D6 | Table structure | rows in the wording, columns at the instance, cells as variable values | **decided 2026-09-30**, with long lists as multi-valued variables |
+| CC-D7 | Clean-room examples | insurance examples allowed in the substrate beside other-domain ones | **decided 2026-09-30, amended** (below) |
+| CC-D8 | Lifecycle gating | concepts, with `bhv:realisesConcept` | open, in discussion |
+| CC-D9 | Where identifiers live | Party | **decided 2026-09-30: Foundation**, slice F1 |
+| CC-D10 | A defined word meaning several parties when the instrument is silent | Undetermined until the graph holds an assertion of how the parties act | **decided 2026-09-30, amended** (below) |
+| CC-D11 | Pieces of text, and parts of a contract | `wrd:TextPart`. Sections as parts of one instrument, named Section, no contract-of-contracts for now | **decided 2026-09-30** (sketch §5.10) |
+
+**As recorded on 2026-09-30:**
+- **CC-D7.** ADR-A-C2 is relaxed for this unit's examples. Insurance examples may sit in the
+  substrate provided every scenario is also shown in another domain's example, and the insurance
+  examples are not substantially more comprehensive than the others. The relaxation is an
+  addendum to ADR-A-C2, drafted in C0, and C15's coverage test checks both conditions per scenario.
+- **CC-D10.** A relation that resolves to a group whose mode of acting the instrument does not state
+  is Undetermined until the graph holds an assertion of that mode (several, joint, joint and
+  several, any one). The assertion may come from any source the graph accepts, a later amendment,
+  a deeming, a market default declared as data, or a recorded reading. It is not a person's
+  approval step.
 
 ## 9. Validation
 
@@ -209,3 +227,4 @@ records), the ADR catalogue.
 | R3 | Scope grows into contract amounts | amounts stay a catalogue until their own unit |
 | R4 | Examples drift into insurance terms | ADR-A-C2 check in every Validation Pack |
 | R5 | The scenario catalogue loses rows as slices are cut | C15's coverage test fails on any scenario without an example |
+| R6 | The Foundation cascade collides with Phase 2's peril authoring | F1 waits for Phase 2 and shares one cascade with NRS N9 |

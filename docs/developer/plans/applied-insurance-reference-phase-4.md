@@ -41,6 +41,10 @@ asset exposure ontology §3, §5.1 to §5.3, §5.5, §5.6, §6, §8.
 parties and control relations behind them, exist on LATTICE's own constructs, with the regions
 later Phase 4 slices fill.
 
+**Coordination (2026-09-30).** The computable-contract-substrate unit adds `fnd:identifier` to
+Foundation (its decision CC-D9, slice F1) in the Foundation window after Phase 2. `aeo:identifier`
+then becomes a sub-property of it. Nothing in this brief changes now.
+
 ### Namespaces
 
 | Document | Ontology IRI | Version IRI | Prefix |

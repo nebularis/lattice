@@ -374,6 +374,9 @@ gives every later slice a baseline. Cheap, and the highest-information slice in 
 
 **Must not start while applied-insurance Phase 2 is live.** See §4.5.
 
+**Shares its cascade with CCS slice F1 (2026-09-30),** which adds `fnd:identifier`. Both Foundation
+changes land in one window and one re-pin of the 14 importers.
+
 **Touches** `ontology/foundation/spec/`, `shapes/`, `vocab/`, plus a re-pin in all 14 importers.
 
 Norms need several time axes. LegalRuleML names in-force, efficacy and applicability. Open CBAA
