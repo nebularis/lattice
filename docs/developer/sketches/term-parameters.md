@@ -1,5 +1,7 @@
 # Term Parameters: Meeting the Facet Design's Aims in LATTICE and Open CBAA
 
+> **Note, 2026-09-30.** Under [computable-contract-substrate.md](computable-contract-substrate.md) `ins:Provision` is retired: a term is an `ins:Term`, and `ctr:TermParameter ⊑ ins:Qualifier` qualifies an `ins:Term` or a legal relation. Wording (forms, endorsements, schedules) moves to a new Wording layer, and amount semantics are catalogued in [contract-amounts.md](contract-amounts.md).
+
 Version 0.1, draft for review. Works through the contract structure and financial behaviour
 design supplied for review (its parameter carriers are called "facets"), states the aims it
 achieves, and shows how LATTICE's applied insurance reference implementation meets every aim in

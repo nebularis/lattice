@@ -2,6 +2,8 @@
 
 # Runtime pipeline: ingesting LegalRuleML through MORK and RML
 
+> **Note, 2026-09-30.** The mapping targets in §4.1 change under [computable-contract-substrate.md](computable-contract-substrate.md): `lrmlmm:Obligation` maps to `ins:Obligation` (class to class), `lrmlmm:hasBearer` to `ins:obligor` or `ins:holder` chosen by the refiner from the modality, strength has no target (a lossy note or refusal), and a suborder list becomes a chain of `ins:arisesOnBreachOf`. An override that puts a permission over a prohibition maps to `ins:excepts`.
+
 Version 0.1, draft for review. Explores whether the construct mapping in
 [legalruleml-mapping.md](legalruleml-mapping.md) can be delivered as a **MORK mapping graph**
 compiled by `tools/mork2rml.py` into **RML**, and executed at runtime to ingest LegalRuleML

@@ -545,6 +545,32 @@ non-blocking track.
 
 # Part III — Archived/Historical Work
 
+## 8.8 Normative Rule Substrate — Proposed
+
+| Field | Value |
+|-------|-------|
+| **Status** | 📝 Proposed. D2 and D3 answered 2026-09-30. N4 moved to the computable contract substrate unit |
+| **Unit ID** | `normative-rule-substrate` |
+| **Sketches** | [legalruleml-mapping.md](sketches/legalruleml-mapping.md), [rule-layers.md](sketches/rule-layers.md), [rule-layers-cross-check.md](sketches/rule-layers-cross-check.md) |
+| **Plan** | [normative-rule-substrate.md](plans/normative-rule-substrate.md) |
+| **Status Record** | [normative-rule-substrate.md](status/normative-rule-substrate.md) |
+| **ADRs** | A-105, A-107 to A-111 to be drafted. A-104 and A-106 drafted in CCS |
+
+## 8.9 Computable Contract Substrate — Proposed
+
+| Field | Value |
+|-------|-------|
+| **Status** | 📝 Proposed 2026-09-30. Blocked on CC-D1 to CC-D8 |
+| **Unit ID** | `computable-contract-substrate` |
+| **Sketches** | [computable-contract-substrate.md](sketches/computable-contract-substrate.md) (design, scenarios S1 to S91), [contract-amounts.md](sketches/contract-amounts.md) (A1 to A50), [instrument-terms-and-legal-relations.md](sketches/instrument-terms-and-legal-relations.md) (superseded) |
+| **Plan** | [computable-contract-substrate.md](plans/computable-contract-substrate.md) |
+| **Status Record** | [computable-contract-substrate.md](status/computable-contract-substrate.md) |
+| **ADRs** | A-104, A-106, A-112, A-113 to be drafted |
+
+A new Wording layer (from Open CBAA's `wim:`), Instrument rewritten around terms and legal
+relations, and Behaviour extended with occasions and records, tested against a package policy, an
+IUA binding authority and the Lloyd's CBAA.
+
 ## 8. Phase Handoff Documents (0-6)
 
 | Phase | Status Record | Key Outcome |

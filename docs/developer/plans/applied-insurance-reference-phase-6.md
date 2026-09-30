@@ -15,6 +15,11 @@ for Phase 5 (epic D2).
 placement. `claims/` records claims, loss cause chains and the filling of claimant, harmed and
 payee roles against the responding contract.
 
+**Changed by CCS (2026-09-30).** A claim is a case for the responding policy's relations, and its
+handling is a set of occasions in Behaviour ([computable-contract-substrate](computable-contract-substrate.md)
+tranche D): notice as a condition precedent, advancement duties, relation back as a deeming, and
+parties resolved per claim.
+
 ## Slices
 
 | Slice | Content |

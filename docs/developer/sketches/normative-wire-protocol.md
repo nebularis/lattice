@@ -2,6 +2,8 @@
 
 # A normative wire protocol for the markets
 
+> **Note, 2026-09-30.** Under [computable-contract-substrate.md](computable-contract-substrate.md) the wire's polymorphic term body attaches to `ins:Term`, and a term's `encodingStatus` and bound relations say what lifted. The Market Profile's `modality` and `kind` select the relation class, `bearer` and `beneficiary` map to obligor or holder and obligee or counterparty, `compensatedBy` is inverted into `arisesOnBreachOf`, `activatedBy` maps to `ins:scope` and `deadline.after` to `ins:arisesOn`, and `fulfilledWhen` maps to `ins:fulfilledWhen`.
+
 Version 0.1, draft for review. Explores how LATTICE and Open CBAA expose contract terms over an API
 that a market implementor will actually adopt. Takes as given that the internal model is RDF and
 OWL, and that the wire should not be.

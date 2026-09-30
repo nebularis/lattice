@@ -5,8 +5,9 @@
 **Unit ID:** `applied-insurance-reference-phase-5`
 **Epic:** [applied-insurance-reference](applied-insurance-reference.md)
 **Status:** Deferred (epic D2). Starts after Phases 1 to 4 are wired into Open CBAA and after
-[normative-rule-substrate](normative-rule-substrate.md) N4 (ADR-A104, the deontic extension of
-Instrument) is accepted, and is detailed then, with ADR A-101 built on A-104 (epic §3b).
+[computable-contract-substrate](computable-contract-substrate.md) C9 (ADR-A104 Instrument and
+ADR-A112 Wording) is merged, and is detailed then, with ADR A-101 built on A-104 (epic §3b). NRS N4
+moved into that unit on 2026-09-30.
 **Sketch:** [term-parameters.md](../sketches/term-parameters.md)
 
 ## Scope
@@ -14,6 +15,12 @@ Instrument) is accepted, and is detailed then, with ADR A-101 built on A-104 (ep
 A new contract module (the legacy one is dropped in Phase 1): terms, term parameters and term relations on Instrument, party roles and
 derived liability direction in `common/`, and the optional compiled route into Capacity with
 parity against the direct route.
+
+**Changed by CCS (2026-09-30).** The contract module builds on the Wording layer (policy wordings,
+forms, endorsements as wording amendments) and the rewritten Instrument (`ins:Term`, the legal
+relation classes, templates). `ctr:TermParameter ⊑ ins:Qualifier` qualifies an `ins:Term` or a
+legal relation, not an `ins:Provision` (retired). Amount semantics come from
+[contract-amounts.md](../sketches/contract-amounts.md).
 
 ## Slices
 
@@ -26,6 +33,8 @@ parity against the direct route.
 | AIR-5.5 | party role parameters and direction derivation over roles and the exposure relationship graph, with the D&O example | §7, milestone M4 |
 | AIR-5.6 | defect catalogue as shapes | §8 |
 | AIR-5.7 | route R2: compile one check family into Capacity runtime forms, parity suite against R1, no write-back | §5, milestone M5 |
+| AIR-5.8 | insurance renderings of the policy scenarios of the CCS sketch §10 (the AIG rows: S10 to S14, S18 to S26, S28, S29, S33, S34, S37, S42 and the shared rows), as examples with expected decisions | CCS sketch §9, §10 |
+| AIR-5.9 | the LMA WIM profile (four levels, containment rules, LMA typing schemes), if CCS decision CC-D3 places it in `applied/insurance/wording/` | CCS sketch §3.2 |
 
 5.7 needs L-P5 (substrate track S4) only if the chosen check family groups occurrences. The
 default candidate is bind-time authority, which does not.

@@ -46,3 +46,15 @@ Standard per [epic Part 12](lattice-platform-agentic-development-v0.2.md#part-12
 ## 6. Dependencies
 
 Depends on Phase 2 exit gate. Blocks Phase 4 (maturity work measures against this phase's benchmarks, per P3.6.1–P3.6.3).
+
+**Behaviour model changes to absorb at the P2.11.4 expansion (2026-09-30).** The
+[computable-contract-substrate](computable-contract-substrate.md) unit, tranche D (ADR-A106), adds
+to the behaviour engine's input model:
+- occasions (one legal relation for one case) with a derived state space
+- act, breach, exercise, determination, deemed-fact and acceptance records
+- transitions compiled from instrument relations: triggers and positioned stimuli, breach chains,
+  power exercises with per-occasion effects
+- state occupancies keyed by occasion or instrument, not only by role occupancy
+
+[normative-rule-substrate](normative-rule-substrate.md) N6 (deadlines as positioned stimuli) is built
+with it. The engine never reads a clock (law B3).

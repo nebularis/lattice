@@ -4,7 +4,7 @@
 
 **Unit ID:** `normative-rule-substrate`
 **Status:** 📝 Proposed. Nothing implemented. Blocked on the seven decisions in the plan's §9
-**Last updated:** 2026-09-29
+**Last updated:** 2026-09-30
 **Trigger:** human request, 2026-09-29, following the LegalRuleML mapping analysis
 **Plan:** [normative-rule-substrate.md](../plans/normative-rule-substrate.md)
 **Sketches:** [legalruleml-mapping.md](../sketches/legalruleml-mapping.md),
@@ -24,8 +24,11 @@ The unit is waiting on decision **D2** above all others: whether `ins:Obligation
 operator or a structural document element. ADR-A07b chose Instrument's minimal shape deliberately
 but did not decide this question, and slice N4 cannot be authored without the answer.
 
-**Next action, for the human:** take decisions D1, D2 and D3 in the plan's §9. D1 and D3 are
-cheap. D2 is the architectural question this whole unit rests on.
+**2026-09-30:** D2 and D3 are answered, and slice N4 moves to the new
+[computable-contract-substrate](../plans/computable-contract-substrate.md) unit (CCS), which also
+takes N8's Behaviour work and revises N2, N5 and N6 (the plan's slice notes).
+
+**Next action, for the human:** take D1, and CCS's CC-D1 to CC-D8.
 
 **Next action, for the agent, once D1 to D3 are taken:** draft ADR-A109 (slice N2, the importable
 rule-body fragment), which needs no ontology change and is independent of everything else.
@@ -58,14 +61,14 @@ un-deferred.
 
 | # | Slice | Tranche | State | Blocked on |
 |---|---|---|---|---|
-| N2 | Declare the importable rule-body fragment (A-109) | A | waiting | D1, D2 |
-| N4 | Deontic extension of Instrument (A-104, R1) | B | waiting | D2, D3 |
+| N2 | Declare the importable rule-body fragment (A-109), revised for stratified state reads | A | waiting | D1 |
+| N4 | Deontic extension of Instrument (A-104, R1) | B | moved to CCS | CCS C1, C6 to C9 |
 | N1 | Condition composition acyclicity (R4) | A | waiting | AIR-3.3 merge |
-| N6 | Scheduled triggers as positioned stimuli (R3) | B | waiting | N4 |
-| N3 | Self-contradiction design-time check | B | waiting | N4 |
+| N6 | Scheduled triggers as positioned stimuli (R3), built with CCS C12 | B | waiting | CCS C11 |
+| N3 | Self-contradiction design-time check | B | waiting | CCS C9 |
 | N5 | Closure declarations (A-105, R2) | C | waiting | D6, D7, substrate S2 |
-| N7 | Measure the OASIS conformance corpus | C | waiting | N4, N1 |
-| N8 | Compensation chains and violation records (A-106) | B | waiting | N5, N6 |
+| N7 | Measure the OASIS conformance corpus | C | waiting | CCS C9, N1 |
+| N8 | Breach-chain checks (Behaviour records and wiring moved to CCS C11, C12) | B | waiting | N5, CCS C12 |
 | N9 | Multi-axis temporal scope (A-108) | D | waiting | **D4, Phase 2 complete** |
 | N10 | Norm priority and defeasibility (A-107) | E | deferred | D5 |
 | N11 | Controlled-English rendering (R5) | E | deferred | ingestion vision Phase 2 |
@@ -77,8 +80,8 @@ un-deferred.
 | # | Decision | State |
 |---|---|---|
 | D1 | Unit rather than epic, with tranche gates | open |
-| D2 | Is `ins:Obligation` deontic or structural? | **open, blocking** |
-| D3 | How far should ODRL alignment go? | open |
+| D2 | Is `ins:Obligation` deontic or structural? | answered 2026-09-30: deontic (CCS sketch) |
+| D3 | How far should ODRL alignment go? | answered 2026-09-30: align where free, map through MORK otherwise |
 | D4 | Does N9 wait for Phase 2, or does the epic accept a freeze? | open |
 | D5 | Does priority wait for Phase 5? | open |
 | D6 | Is substrate S2 authored together with N5? | open |
@@ -116,3 +119,4 @@ No. Nothing has started. The plan is proposed and the decisions in its §9 are o
   rather than a refusal, and closure declarations are a prerequisite for the deontic work.
 - 2026-09-29: plan and this status record written. Dependency check against the applied-insurance
   epic measured rather than assumed, by enumerating per-layer external importers.
+- 2026-09-30: D2 and D3 answered. N4 moved to CCS, N2, N5, N6 and N8 revised.

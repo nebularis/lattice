@@ -2,6 +2,8 @@
 
 # LegalRuleML and LATTICE: An Exhaustive Mapping
 
+> **Note, 2026-09-30.** §6.3's resolution, §18.2 and §18.3 are superseded by [computable-contract-substrate.md](computable-contract-substrate.md): modality is the class of a legal relation (`ins:Obligation`, `ins:Prohibition`, `ins:Permission`, `ins:Exclusion`, `ins:Power`), not an `ins:DeonticSpecification` qualifier. `nrm:compensatedBy` becomes `ins:arisesOnBreachOf` on the secondary relation. Strength is not modelled. The deadline anchor no longer ranges over `bhv:TriggerDefinition`, which would have made Instrument import Behaviour.
+
 Version 0.1, draft for review. Maps every construct of the OASIS LegalRuleML Core Specification
 v1.0 onto LATTICE's layers, states where the mapping is native, where it is composed from several
 layers, and where LATTICE has no counterpart and a decision is owed. Written against the

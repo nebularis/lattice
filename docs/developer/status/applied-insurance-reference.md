@@ -20,8 +20,10 @@ wait for the human to create them, as does `air/3.3-readings-swrl-owl`.
 **Briefs ready on `main`:** AIR-1.1, AIR-2.1, AIR-3.1, AIR-1.2, AIR-3.2, AIR-2.2, AIR-4.1, AIR-3.3.
 **Briefs to draft before their branches (lanes §1):** round 4's (AIR-2.3, AIR-2.4, AIR-4.2,
 AIR-4.4).
-**Concurrent work:** from round 3, machine R also builds the normative-rule-substrate unit. R
-verifies S's bundles first, AIR-3.3 lands before NRS N1, and NRS N9 waits for Phase 2 (epic §3b).
+**Concurrent work:** from round 3, machine R also builds the normative-rule-substrate unit, and
+from 2026-09-30 the computable-contract-substrate unit (CCS), which took over NRS N4. R verifies
+S's bundles first, AIR-3.3 lands before NRS N1 and CCS C13, NRS N9 waits for Phase 2, and CCS C9
+merges before Phase 5 (epic §3b).
 
 ## Machine R
 

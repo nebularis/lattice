@@ -2,6 +2,8 @@
 
 # Instrument: structure, terms and legal relations
 
+> **Superseded as the working design on 2026-09-30** by [computable-contract-substrate.md](computable-contract-substrate.md), which keeps everything here and adds the thirteen fixes found by testing it against a package policy, an IUA binding authority and the Lloyd's CBAA, the Wording layer, and the scenario catalogue. Kept as the record of the answer to NRS D2.
+
 Draft for review, 2026-09-30. A from-scratch design for `ontology/instrument`, answering
 [normative-rule-substrate](../plans/normative-rule-substrate.md) decision D2 and replacing the
 design in [legalruleml-mapping.md](legalruleml-mapping.md) §6.3's resolution, §18.2 and §18.3.
