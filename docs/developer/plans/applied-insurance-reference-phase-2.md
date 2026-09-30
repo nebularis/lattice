@@ -156,6 +156,72 @@ shapes directory).
 | AIR21-11 | a `skos:broader` cycle / validated / acyclic violation | L1 | − |
 | AIR21-12 | a threshold-basis concept without `prl:definingThreshold` / validated / threshold violation | L1 | − |
 
+## AIR-2.2 in detail
+
+**Machine:** S (Copilot Business). **Branch:** `air/2.2-characteristics`. **Validation Pack:**
+[applied-insurance-reference-2.2](../validation/applied-insurance-reference-2.2.md), whose Handoff
+section S fills in. **Decisions:** ADR-A98 (decision 5), ADR-A99. **Sketch:** peril vocabulary §3,
+§6.3.
+
+**Invariant:** every characteristic and companion scheme holds its reference concepts, the four
+schemes `insurance/common/` has contracts for are bound to them, and the characteristic
+properties specialise `common/`'s properties so those contracts govern their values.
+
+### Spec changes (`spec/peril.ttl`, 0.1.0 → 0.2.0, MINOR)
+
+1. Import `…/insurance/common/0.1.0` as well. ADR-A98 decision 5 has `peril/` import `common/`,
+   and AIR-2.1 was built before `common/` existed (flagged at AIR-1.2).
+2. Four sub-property axioms, so a check on a `common/` property also reads the peril vocabulary:
+   `prl:typicalAgency ⊑ icm:agency`, `prl:typicalMechanism ⊑ icm:mechanism`,
+   `prl:typicalConsequence ⊑ icm:consequence`, `prl:harmSubject ⊑ icm:harmSubject`.
+   `prl:onset`, `prl:definitionBasis` and `prl:accumulationClass` stay as they are: `common/` has
+   no property for them, because only the peril vocabulary uses those axes.
+
+### Vocabulary changes (`vocab/peril-vocab.ttl`, 0.1.0 → 0.2.0, MINOR)
+
+1. Re-pin the spec import to `…/insurance/peril/0.2.0`, and add `…/insurance/common-vocab/0.1.0`
+   (the contracts the bindings name).
+2. Fill the seven characteristic and companion regions, and no other region. Every concept is
+   `skos:Concept`, `skos:inScheme` its scheme, `skos:topConceptOf` its scheme (each scheme is flat),
+   with one `skos:prefLabel` and one `skos:definition` in `@en`. Local names in UpperCamelCase:
+
+   | Region | Scheme | Concepts |
+   |---|---|---|
+   | `agency` | `prl-voc:AgencyScheme` | `Natural`, `Accidental`, `Negligent`, `MaliciousCriminal`, `MaliciousPolitical`, `Sovereign`, `Belligerent`, `UndeterminedAgency` |
+   | `mechanism` | `prl-voc:MechanismScheme` | `Shaking`, `Inundation`, `WindLoad`, `Fire`, `Explosion`, `Impact`, `Contamination`, `ElectricalOverstress`, `DataEncryption` |
+   | `onset` | `prl-voc:OnsetScheme` | `Sudden`, `Gradual`, `Latent`, `Recurrent` |
+   | `definition-basis` | `prl-voc:DefinitionBasisScheme` | `Physical`, `Designation`, `Threshold`, `WordingDefined`, `Statutory`, `Index` |
+   | `accumulation-class` | `prl-voc:AccumulationClassScheme` | `Catastrophe`, `Systemic`, `Attritional` |
+   | `consequence` | `prl-voc:ConsequenceScheme` | `DirectPhysicalDamage`, `BusinessInterruption`, `ExtraExpense`, `Recall`, `CleanUp`, `LiabilityToOthers`, `DefenceCosts` |
+   | `harm-subject` | `prl-voc:HarmSubjectScheme` | `Property`, `Persons`, `FinancialInterest`, `DataAndSystems`, `Environment`, `Reputation` |
+
+   `Explosion` is added to the sketch's mechanism list because peril vocabulary §6.8's cyber
+   write-back names it. `UndeterminedAgency` avoids a clash with Eligibility's `Undetermined`.
+3. Four bindings, after the scheme declarations: `icm-voc:AgencyContract voc:boundScheme
+   prl-voc:AgencyScheme`, and likewise Mechanism, Consequence and HarmSubject. They are the
+   reference fallback (ADR-A99 decision 1). A deployment binds its own editions by scope.
+
+### Fixture and tests
+
+1. `examples/well-formed.ttl` stops declaring `Natural`, `Sudden`, `Physical` and `Threshold`: the
+   vocabulary now does. The test already loads the vocabulary with the fixture.
+2. `tools/test_peril_vocabulary.py` gains AIR22-01 to AIR22-08 below. The existing tests stay
+   unchanged.
+
+**On R at verification:** catalogs, release rows and tags for `insurance-peril-v0.2.0` and
+`insurance-peril-vocab-v0.2.0`. The shapes directory does not change.
+
+| ID | Given / When / Then | Level | +/- |
+|---|---|---|---|
+| AIR22-01 | the spec and vocabulary / loaded with their import closures / parse, every import resolves, the spec imports `common/` | L1 | + |
+| AIR22-02 | the spec / read / the four sub-property axioms hold, and `prl:onset` specialises nothing | L1 | + |
+| AIR22-03 | each of the seven schemes / read / holds exactly the concepts in the table, each a top concept of it | L1 | + |
+| AIR22-04 | the vocabulary alone / the peril shapes / no result | L1 | + |
+| AIR22-05 | the four contracts with the peril vocabulary / Vocabulary's shapes / conform, each bound to its scheme | L1 | + |
+| AIR22-06 | the well-formed fixture, now without local characteristic concepts / the peril shapes / no result | L1 | + |
+| AIR22-07 | a characteristic concept without `skos:definition` / the peril shapes / violation | L1 | − |
+| AIR22-08 | a cause concept whose `prl:onset` is a mechanism concept / the peril shapes / characteristics violation | L1 | − |
+
 ## Documentation deltas
 
 `ontology/applied/README.md` (module row), the module's own README (generated tables of §5),

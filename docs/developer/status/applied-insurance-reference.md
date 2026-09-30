@@ -15,19 +15,19 @@ Validation Pack, never here.
 
 **Current round:** 3 (machine R advances it when a round's merges are done). Round 1 merged
 AIR-3.1, AIR-1.1 and AIR-2.1. Round 2 merged AIR-3.2 and AIR-1.2.
-**Branches ready to work on:** none yet. Round 3's branches (`air/2.2-characteristics`,
-`air/4.1-exposure-core`, `air/3.3-readings-swrl-owl`) wait for their briefs.
-**Briefs ready on `main`:** AIR-1.1, AIR-2.1, AIR-3.1, AIR-1.2, AIR-3.2.
-**Briefs to draft before their branches (lanes §1):** AIR-2.2 (which also adds `peril/`'s import
-of `common/`, flagged at AIR-1.2), AIR-4.1 and AIR-3.3.
+**Branches ready to work on:** none yet. `air/2.2-characteristics` and `air/4.1-exposure-core`
+wait for the human to create them. `air/3.3-readings-swrl-owl` waits for its brief.
+**Briefs ready on `main`:** AIR-1.1, AIR-2.1, AIR-3.1, AIR-1.2, AIR-3.2, AIR-2.2, AIR-4.1.
+**Briefs to draft before their branches (lanes §1):** AIR-3.3, then round 4's (AIR-2.3, AIR-2.4,
+AIR-4.2, AIR-4.4).
 **Concurrent work:** from round 3, machine R also builds the normative-rule-substrate unit. R
 verifies S's bundles first, AIR-3.3 lands before NRS N1, and NRS N9 waits for Phase 2 (epic §3b).
 
 ## Machine R
 
-**Position:** round 3. Rounds 1 and 2 complete, Phase 1 complete. Next: draft the AIR-2.2,
-AIR-4.1 and AIR-3.3 briefs on `main`.
-**Last updated:** 2026-09-26
+**Position:** round 3. Rounds 1 and 2 complete, Phase 1 complete. AIR-2.2 and AIR-4.1 briefs
+drafted. Next: the AIR-3.3 brief, then NRS N2 once the human takes NRS D1 to D3.
+**Last updated:** 2026-09-30
 **Blockers:** none
 
 | Seq | Slice | Branch | State | Note |
@@ -45,15 +45,15 @@ Verifying queue (S branches handed over and not yet merged): none.
 **Position:** round 3. AIR-1.1, AIR-2.1 and AIR-1.2 merged. Next: AIR-2.2 and AIR-4.1, once R has
 drafted their briefs and the human has created their branches.
 **Last updated:** 2026-09-26
-**Blockers:** waiting for the AIR-2.2 and AIR-4.1 briefs.
+**Blockers:** waiting for the `air/2.2-characteristics` and `air/4.1-exposure-core` branches.
 
 | Seq | Slice | Branch | State | Note |
 |---|---|---|---|---|
 | 3 | AIR-1.1 | `air/1.1-layout` | merged | set by R. No version bumps, no tags |
 | 4 | AIR-1.2 | `air/1.2-shared-contracts` | merged | set by R. Tags `applied-classification-v0.1.0`, `applied-classification-vocab-v0.1.0`, `insurance-common-v0.1.0`, `insurance-common-vocab-v0.1.0` |
 | 5 | AIR-2.1 | `air/2.1-peril-spec` | merged | set by R: three shape defects fixed at verification. Tags `applied-insurance-peril-shapes-v0.1.0`, `insurance-peril-v0.1.0`, `insurance-peril-vocab-v0.1.0` |
-| 6 | AIR-2.2 | `air/2.2-characteristics` | waiting | |
-| 7 | AIR-4.1 | `air/4.1-exposure-core` | waiting | |
+| 6 | AIR-2.2 | `air/2.2-characteristics` | waiting for branch | brief on `main` |
+| 7 | AIR-4.1 | `air/4.1-exposure-core` | waiting for branch | brief on `main` |
 | 9 | AIR-2.3 | `air/2.3-causes-n-t-e` | waiting | |
 | 10 | AIR-2.4 | `air/2.4-causes-h-p-c-f-l` | waiting | |
 | 11 | AIR-4.2 | `air/4.2-zones-attributes` | waiting | |
