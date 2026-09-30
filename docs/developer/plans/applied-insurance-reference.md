@@ -94,6 +94,19 @@ end. Handoff notes for a slice go in its Validation Pack. How the sections, stat
 work is in lanes §5. There are no per-phase status records, a deliberate deviation from the
 epic model in `.github/copilot-instructions.md`, agreed with the human on 2026-09-26.
 
+## 3b. Concurrent unit: normative rule substrate
+
+From round 3, machine R also builds the [normative-rule-substrate](normative-rule-substrate.md) unit (NRS), a single-machine
+unit on R. Its §4 measures the interference with this epic. The constraints that bind this epic:
+
+| Constraint | Why |
+|---|---|
+| R verifies an S bundle before continuing an NRS slice | S carries 17 of this epic's slices and has no runtime. A waiting bundle idles S |
+| AIR-3.3 merges before NRS N1 starts | both change `tools/mork_compilers/` |
+| Phase 2 (AIR-2.2 to AIR-2.7) completes before NRS N9 starts | N9 is a MAJOR Foundation bump that re-pins `insurance/peril/spec` and `vocab`, which Phase 2 is authoring |
+| NRS N4 (ADR-A104, the deontic extension of Instrument) is accepted before Phase 5 starts | A-101's term parameters qualify obligations, which need N4's normative model (ADR-A-C1) |
+| Substrate S2 is authored with NRS N5, and S7 with NRS N10 | both pairs change the same layer's semantics: Eligibility well-foundedness, and precedence |
+
 ## 4. Milestones
 
 | # | Outcome, exercised end to end over example graphs | Closes in |

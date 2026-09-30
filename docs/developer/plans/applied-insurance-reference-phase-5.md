@@ -4,8 +4,9 @@
 
 **Unit ID:** `applied-insurance-reference-phase-5`
 **Epic:** [applied-insurance-reference](applied-insurance-reference.md)
-**Status:** Deferred (epic D2). Starts after Phases 1 to 4 are wired into Open CBAA, and is
-detailed then, with ADR A-101.
+**Status:** Deferred (epic D2). Starts after Phases 1 to 4 are wired into Open CBAA and after
+[normative-rule-substrate](normative-rule-substrate.md) N4 (ADR-A104, the deontic extension of
+Instrument) is accepted, and is detailed then, with ADR A-101 built on A-104 (epic §3b).
 **Sketch:** [term-parameters.md](../sketches/term-parameters.md)
 
 ## Scope

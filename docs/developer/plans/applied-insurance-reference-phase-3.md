@@ -44,7 +44,9 @@ Tests at L1 and L2:
   list. A risk whose perils are all of sudden onset is Permitted under `EveryValue`
 
 Order and lanes: [machines, branches and merges](applied-insurance-reference-lanes.md). Substrate item
-S2 also changes Eligibility, and rebases onto AIR-3.2.
+S2 also changes Eligibility, and rebases onto AIR-3.2. AIR-3.3 merges before
+[normative-rule-substrate](normative-rule-substrate.md) N1, which also changes `tools/mork_compilers/`
+(epic §3b).
 
 ## AIR-3.1 in detail
 

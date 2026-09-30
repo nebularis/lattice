@@ -20,6 +20,8 @@ AIR-3.1, AIR-1.1 and AIR-2.1. Round 2 merged AIR-3.2 and AIR-1.2.
 **Briefs ready on `main`:** AIR-1.1, AIR-2.1, AIR-3.1, AIR-1.2, AIR-3.2.
 **Briefs to draft before their branches (lanes §1):** AIR-2.2 (which also adds `peril/`'s import
 of `common/`, flagged at AIR-1.2), AIR-4.1 and AIR-3.3.
+**Concurrent work:** from round 3, machine R also builds the normative-rule-substrate unit. R
+verifies S's bundles first, AIR-3.3 lands before NRS N1, and NRS N9 waits for Phase 2 (epic §3b).
 
 ## Machine R
 
@@ -43,7 +45,7 @@ Verifying queue (S branches handed over and not yet merged): none.
 **Position:** round 3. AIR-1.1, AIR-2.1 and AIR-1.2 merged. Next: AIR-2.2 and AIR-4.1, once R has
 drafted their briefs and the human has created their branches.
 **Last updated:** 2026-09-26
-**Blockers:** none.
+**Blockers:** waiting for the AIR-2.2 and AIR-4.1 briefs.
 
 | Seq | Slice | Branch | State | Note |
 |---|---|---|---|---|

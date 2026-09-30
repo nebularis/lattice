@@ -161,7 +161,8 @@ determining factor is cascade blast radius rather than subject matter.
 **Which goes first, stated plainly.** The rule work goes first, and specifically the Instrument
 deontic extension (N4) goes first, for three independent reasons:
 
-1. **It is the cheapest change available.** One re-pin, in `behaviour/spec/behaviour.ttl`.
+1. **It is the cheapest change available.** Its cascade reaches Behaviour, Behaviour's vocabulary
+   and `applied/capacity`, none of which this epic is authoring (N4, version impact).
 2. **The epic needs it.** The cross-check's sequencing constraint is that R1 must be accepted and
    Instrument bumped **before applied-insurance Phase 5 starts**, because A-101 expects to draft
    term parameters on `ins:Qualifier` without a normative model of the obligation they qualify.
@@ -277,8 +278,11 @@ slice inherits N9's quiet-window constraint and the plan's parallel-safe verdict
 reporting duty with a cure period and a trial adverse-event reporting duty. Insurance examples
 come later and must not drive the design.
 
-**Version impact:** `instrument/spec` MINOR 0.7.0 to 0.8.0, vocab mirrored, shapes MINOR. One
-re-pin in `behaviour/spec/behaviour.ttl`. No applied module affected.
+**Version impact:** `instrument/spec` MINOR 0.7.0 to 0.8.0, vocab mirrored, shapes MINOR. The re-pin
+in `behaviour/spec/behaviour.ttl` bumps Behaviour too (an import-only change takes the imported
+bump level, ADR-A86 addendum item 1), which re-pins `behaviour-vocab` and
+`applied/capacity`'s execution profile. No applied insurance module is affected. AIR-3.2 ran this
+exact cascade.
 
 **Laws:** N1, N2, N4, N10 from the sketch §18.3.
 
