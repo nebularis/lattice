@@ -198,6 +198,70 @@ Authored in ADR-A-C2 order: examples, then laws and README, then code.
 | AIR32-14 | the existing compiler and examples tests / unchanged / pass (non-weakening) | L1 | + |
 | AIR32-15 | the cascade / `check:ontology-versioning` / every importer re-pinned and bumped, every version listed | L1 | + |
 
+## AIR-3.3 in detail
+
+**Machine:** R (Claude Code). **Branch:** `air/3.3-readings-swrl-owl`. **Validation Pack:**
+[applied-insurance-reference-3.3](../validation/applied-insurance-reference-3.3.md).
+**Decision:** ADR-A103 decisions 3 and 4.
+
+**Invariant:** the SWRL backend derives only outcomes a set reading fixes from positive facts,
+with heads swapped under negation, and every outcome it derives is the SPARQL reference's. The
+OWL backend compiles `elg:SomeValue` as `∃path.C`, `elg:EveryValue` as `∀path.C ⊓ ∃path.⊤`,
+and negation as a complement, for design-time checks only. Plans without a reading or negation
+compile exactly as before.
+
+No ontology changes, so no version bumps, catalog rows or tags. The examples are AIR-3.2's.
+
+1. **Refusals removed.** `compile_rules` and `compile_classes` stop refusing plans for which
+   `has_readings` holds. The IR's `has_readings` docstring stops naming the refusal. The other
+   OWL refusals stay: unbound conditions, `elg:L14` plans (ADR-A100), and a `SingleValue` binding
+   without the `elg:singleValued` claim.
+2. **SWRL, concept plans.** The admitted rule is emitted under `SingleValue` and `SomeValue`.
+   The denied rule is emitted under `SingleValue` and `EveryValue`. Each rule fires on one value,
+   and one Permitted value fixes `SomeValue`, as one Denied value fixes `EveryValue`, so each
+   derivation stays sound when a subject has several values.
+3. **SWRL, interval plans.** The permit rules are emitted under `SingleValue` and `SomeValue`.
+   Under `EveryValue` no rule is emitted: SWRL derives no Denied for an interval today, and
+   Permitted needs every value. The mapping note says so, as it does for a unit-specific
+   interval on a literal.
+4. **SWRL, negation.** A negated plan's rules swap their heads: `exe:permittedUnder` and
+   `exe:deniedUnder` for bound plans, `exe:impliesDecision` Permitted and Denied for question
+   plans. Which rules are emitted is decided by the reading first (steps 2 and 3), then the heads
+   are swapped. The negated medicine condition therefore derives Denied for a medic, and nothing
+   else. Profile rules are unchanged: they read the condition's final decision.
+5. **SWRL mapping notes** name the reading and negation. The module docstring gains a paragraph
+   stating steps 2 to 4.
+6. **OWL, readings.** `_along` gains the reading. Under `SingleValue` it is unchanged
+   (`≤1 p ⊓ ∃p.…`, with the single-valued shape). Under `SomeValue` it is `∃p₁.∃p₂.…filler`, and
+   under `EveryValue` `∀p₁.∀p₂.…filler ⊓ ∃p₁.∃p₂.…⊤`, with `rdfs:Literal` in place of
+   `owl:Thing` where the path ends at a literal. A set-read binding needs no `elg:singleValued`
+   claim, and gets no single-valued shape (ADR-A103 decision 3 relaxes ADR-A90 for it).
+7. **OWL, negation.** A negated condition's class is its subject class intersected with the
+   complement of the path restriction: `S ⊓ ¬(…)`. Under the open world this class also holds
+   subjects the SPARQL reference leaves Undetermined, which is acceptable for design-time checks
+   and stated in the module docstring.
+8. **Tests:** `test_set_readings.py` loses AIR32-11's refusal test and gains the rows below. The
+   reasoner rows skip when the harness jar is not built, as `test_reasoner.py` does.
+9. **Docs:** `tools/mork_compilers/README.md` (the readings paragraph gains SWRL and OWL), the
+   Eligibility README's evidence bindings paragraph (the OWL backend compiles claimed paths, and
+   set-read paths without a claim), and ADR-A103 gains an implementation note as ADR-A100's.
+
+| ID | Given / When / Then | Level | +/- |
+|---|---|---|---|
+| AIR33-01 | a concept plan read `SomeValue`, and one read `EveryValue` / SWRL / the first has only the admitted rule, the second only the denied rule | L1 | + |
+| AIR33-02 | an interval plan read `SomeValue`, and one read `EveryValue` / SWRL / permit rules, and no rule with a mapping note | L1 | + |
+| AIR33-03 | a negated concept plan, question-based and bound / SWRL / heads swapped | L1 | + |
+| AIR33-04 | the admissions example / SWRL through the harness / stem Permitted for ada and dee, no-medicine and the profile Denied for dee, nothing else | L2 | + |
+| AIR33-05 | the trial example / SWRL through the harness / none-excluded Denied for pat-2, no Permitted derived | L2 | + |
+| AIR33-06 | both examples, every condition and profile / SWRL and SPARQL / every SWRL derivation equals SPARQL's decision (soundness) | L2 | + |
+| AIR33-07 | a `SomeValue` binding without the claim / OWL / `∃` restrictions, no `≤1`, no single-valued shape | L1 | + |
+| AIR33-08 | an `EveryValue` binding over a two-step path, and one ending at a literal / OWL / `∀ ⊓ ∃⊤`, with `rdfs:Literal` at the literal end | L1 | + |
+| AIR33-09 | one condition compiled under each reading / reasoner / `EveryValue` ⊑ `SomeValue`, claimed `SingleValue` ⊑ both, `SomeValue` ⋢ `EveryValue` | L2 | + |
+| AIR33-10 | the admissions example / reasoner / stem ⊓ no-medicine satisfiable, the medicine condition ⊓ its negation unsatisfiable | L2 | + |
+| AIR33-11 | a `SingleValue` binding without the claim, an unbound condition, an `elg:L14` plan / OWL / refused as before | L1 | − |
+| AIR33-12 | a plan with readings / compiled twice / identical graphs | L1 | + |
+| AIR33-13 | the existing compiler tests / unchanged / pass (non-weakening) | L1 | + |
+
 ## Documentation deltas
 
 | Document | Change | Slice |

@@ -16,17 +16,17 @@ Validation Pack, never here.
 **Current round:** 3 (machine R advances it when a round's merges are done). Round 1 merged
 AIR-3.1, AIR-1.1 and AIR-2.1. Round 2 merged AIR-3.2 and AIR-1.2.
 **Branches ready to work on:** none yet. `air/2.2-characteristics` and `air/4.1-exposure-core`
-wait for the human to create them. `air/3.3-readings-swrl-owl` waits for its brief.
-**Briefs ready on `main`:** AIR-1.1, AIR-2.1, AIR-3.1, AIR-1.2, AIR-3.2, AIR-2.2, AIR-4.1.
-**Briefs to draft before their branches (lanes §1):** AIR-3.3, then round 4's (AIR-2.3, AIR-2.4,
-AIR-4.2, AIR-4.4).
+wait for the human to create them, as does `air/3.3-readings-swrl-owl`.
+**Briefs ready on `main`:** AIR-1.1, AIR-2.1, AIR-3.1, AIR-1.2, AIR-3.2, AIR-2.2, AIR-4.1, AIR-3.3.
+**Briefs to draft before their branches (lanes §1):** round 4's (AIR-2.3, AIR-2.4, AIR-4.2,
+AIR-4.4).
 **Concurrent work:** from round 3, machine R also builds the normative-rule-substrate unit. R
 verifies S's bundles first, AIR-3.3 lands before NRS N1, and NRS N9 waits for Phase 2 (epic §3b).
 
 ## Machine R
 
-**Position:** round 3. Rounds 1 and 2 complete, Phase 1 complete. AIR-2.2 and AIR-4.1 briefs
-drafted. Next: the AIR-3.3 brief, then NRS N2 once the human takes NRS D1 to D3.
+**Position:** round 3. Rounds 1 and 2 complete, Phase 1 complete. AIR-2.2, AIR-4.1 and AIR-3.3
+briefs drafted. Next: AIR-3.3 once its branch exists, and NRS N2 once the human takes NRS D1 to D3.
 **Last updated:** 2026-09-30
 **Blockers:** none
 
@@ -34,7 +34,7 @@ drafted. Next: the AIR-3.3 brief, then NRS N2 once the human takes NRS D1 to D3.
 |---|---|---|---|---|
 | 2 | AIR-3.1 | `air/3.1-flat-hierarchy` | merged | tags `eligibility-vocab-v0.7.0`, `executable-v0.6.0` |
 | 8 | AIR-3.2 | `air/3.2-set-readings` | merged | eight tags (Validation Pack Results) |
-| 13 | AIR-3.3 | `air/3.3-readings-swrl-owl` | waiting | |
+| 13 | AIR-3.3 | `air/3.3-readings-swrl-owl` | waiting for branch | brief on `main` |
 | 21 | AIR-3.5 | `air/3.5-m2-check` | waiting | |
 | 23+ | substrate ADRs, S1, S2, S4, S5, S7 | `air/s<n>-<slug>` | waiting | ADRs drafted in round 4 |
 
