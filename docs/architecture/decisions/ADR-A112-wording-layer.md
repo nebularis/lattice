@@ -2,8 +2,8 @@
 
 # ADR-A112: Wording layer
 
-**Status:** Proposed
-**Date:** 2026-10-01 (proposed)
+**Status:** Accepted
+**Date:** 2026-10-01 (proposed), 2026-10-01 (accepted, Gate A)
 **Related:** ADR-A01 (amended by the addendum there), ADR-A07b, ADR-A86, ADR-A104, ADR-A106,
 ADR-A113, ADR-A-C2
 **Unit:** [`computable-contract-substrate`](../../developer/plans/computable-contract-substrate.md)

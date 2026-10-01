@@ -2,9 +2,9 @@
 
 # ADR-A104: Instrument: terms and legal relations
 
-**Status:** Proposed
-**Date:** 2026-10-01 (proposed)
-**Supersedes:** ADR-A07b, on acceptance. Carries ADR-A96 onto terms
+**Status:** Accepted
+**Date:** 2026-10-01 (proposed), 2026-10-01 (accepted, Gate A)
+**Supersedes:** ADR-A07b. Carries ADR-A96 onto terms
 **Related:** ADR-A01 (addendum), ADR-A86, ADR-A92, ADR-A102, ADR-A103, ADR-A105, ADR-A106,
 ADR-A109, ADR-A112, ADR-A113, ADR-A-C2
 **Unit:** [`computable-contract-substrate`](../../developer/plans/computable-contract-substrate.md)

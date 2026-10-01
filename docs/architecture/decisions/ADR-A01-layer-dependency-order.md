@@ -49,7 +49,7 @@ Concretely:
 
 ## Addendum (2026-10-01): Wording, and Behaviour below Instrument
 
-**Status:** Proposed, with [ADR-A112](ADR-A112-wording-layer.md).
+**Status:** Accepted 2026-10-01 (Gate A), with [ADR-A112](ADR-A112-wording-layer.md).
 
 The dependency order becomes:
 

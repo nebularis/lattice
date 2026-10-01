@@ -4,7 +4,7 @@
 
 ## Status
 
-Accepted
+Superseded by [ADR-A104](ADR-A104-instrument-terms-and-legal-relations.md) (2026-10-01). Its versioning contract carries to `ins:Instrument`.
 
 ## Context
 

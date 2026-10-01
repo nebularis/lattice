@@ -2,8 +2,8 @@
 
 # ADR-A106: Behaviour configuration, runtime, occasions and records
 
-**Status:** Proposed
-**Date:** 2026-10-01 (proposed)
+**Status:** Accepted
+**Date:** 2026-10-01 (proposed), 2026-10-01 (accepted, Gate A)
 **Amends:** ADR-A11 (target binding). Applies ADR-A08's tiers to documents
 **Related:** ADR-A01 (addendum), ADR-A08, ADR-A09, ADR-A10, ADR-A67, ADR-A92, ADR-A102, ADR-A104,
 ADR-A105, ADR-A112, ADR-A113, ADR-A-C2

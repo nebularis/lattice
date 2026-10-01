@@ -3,7 +3,7 @@
 # Computable contract substrate - Status
 
 **Unit ID:** `computable-contract-substrate`
-**Status:** 📝 Proposed. Tranche A drafted on `ccs/c0-adrs`, uncommitted, awaiting human review
+**Status:** 🔨 In progress. Gate A passed. Tranche B and C briefed (C3, C10)
 **Last updated:** 2026-10-01
 **Plan:** [computable-contract-substrate.md](../plans/computable-contract-substrate.md)
 **Sketches:** [computable-contract-substrate.md](../sketches/computable-contract-substrate.md),
@@ -13,25 +13,25 @@
 
 ## Current position
 
-The design is sketched and tested against four instruments and a proposed Lloyd's schedule 
-(101 scenarios, S79 merged, and 58 amount constructs). Every decision is taken. Tranche A is drafted
-on `ccs/c0-adrs`: ADR-A104, A-106, A-112 and A-113, and addenda to A-01 and A-C2, all `Proposed`.
-No ontology document is touched.
+Gate A passed on 2026-10-01: ADR-A104, A-106, A-112 and A-113, and the A-01 and A-C2 addenda, are
+accepted. A-07b is superseded and A-11 amended. No ontology document is touched yet. C3 and C10 are
+briefed, with their Validation Packs.
 
-**Next action, for the human:** review the uncommitted tranche (CC-D12 and the three open points
-are now written in), commit, then Gate A.
-**Next action, for the agent, after Gate A:** brief C3 (Wording spec) and C10 (Behaviour split),
-which may run side by side.
+**Next action, for the human:** answer or accept C3-Q1, C3-Q2, C10-Q1 and C10-Q2, then create
+`ccs/c3-wording-spec` and `ccs/c10-behaviour-split`.
+**Next action, for the agent:** build C3 and C10 on those branches. C4 and C11 briefs follow.
 
 ## Slice board
 
 | # | Slice | Tranche | State | Blocked on |
 |---|---|---|---|---|
-| C0 | A-112, A-113, A-01 and ADR-A-C2 addenda | A | drafted, verified | human review |
-| C1 | A-104 | A | drafted, verified | human review |
-| C2 | A-106 | A | drafted, verified | human review |
-| C3 to C5 | Wording layer | B | waiting | Gate A |
-| C10, C10a, C11, C11a | Behaviour below Instrument, import guard, records, nested states | C | waiting | Gate A |
+| C0 | A-112, A-113, A-01 and ADR-A-C2 addenda | A | accepted | |
+| C1 | A-104 | A | accepted | |
+| C2 | A-106 | A | accepted | |
+| C3 | Wording spec and vocab | B | briefed, waiting for branch | C3-Q1, C3-Q2 |
+| C4, C5 | Wording tables, assembly, amendments, shapes | B | waiting | C3 |
+| C10 | Behaviour split and layer flip | C | briefed, waiting for branch | C10-Q1, C10-Q2 |
+| C10a, C11, C11a | import guard, records, nested states | C | waiting | C10 |
 | F1 | Foundation identifiers | Foundation window | waiting | AIR Phase 2 complete, with NRS N9 |
 | C6 to C9, C8a | Instrument rewrite, template library | D | waiting | C5, C10 |
 | C12, C13 | runtime evaluator, relation plans | E | waiting | C9, C11, C11a, AIR-3.3, NRS N1 |
@@ -51,3 +51,4 @@ which may run side by side.
 - 2026-10-01: Logical English alignment sketched (unplanned, CCS sketch §14). C0 briefed with its Validation Pack skeleton, raising C0-Q1 (A-01 addendum or supersession), C0-Q2 (measuring CC-D7) and C0-Q3 (marking a breaking 0.x change).
 - 2026-10-01: C0-Q1 to C0-Q3 accepted as recommended. Tranche A drafted on `ccs/c0-adrs` in one run: A-112, A-113, the A-01 and A-C2 addenda (C0), A-104 (C1), A-106 (C2), with C1 and C2 briefs and all three Validation Packs verified. Not committed, pending review.
 - 2026-10-01: CC-D12 decided: meaning belongs to its text (stated meaning owned by an element version, bound meaning by an instrument version, only wordings, elements and instruments versioned). Sketch §5.1, §5.2, §5.8, §5.9, laws I2, I13, I17, I18 and A-104 decisions 1, 2 and 13 rewritten. A-106 gains the identity rule for runtime state. `ins:Element` retired, `ins:fulfilledBy` replaced, engine settings stay explicit (A-09, A-10 stand).
+- 2026-10-01: Gate A passed. The four ADRs and two addenda accepted, A-07b superseded, A-11 amended. C3 and C10 briefed with Validation Pack skeletons. The plan's C3 row gains the vocab and the README's start, C4 takes vocab 0.2.0.

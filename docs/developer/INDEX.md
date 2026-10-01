@@ -556,11 +556,11 @@ non-blocking track.
 | **Status Record** | [normative-rule-substrate.md](status/normative-rule-substrate.md) |
 | **ADRs** | A-105, A-107 to A-111 to be drafted. A-104 and A-106 drafted in CCS |
 
-## 8.9 Computable Contract Substrate — Proposed
+## 8.9 Computable Contract Substrate — In progress
 
 | Field | Value |
 |-------|-------|
-| **Status** | 📝 Proposed 2026-09-30. Blocked on CC-D1 to CC-D11 |
+| **Status** | 🔨 In progress. Gate A passed 2026-10-01 (ADR-A104, A-106, A-112, A-113 accepted). C3 and C10 briefed |
 | **Unit ID** | `computable-contract-substrate` |
 | **Sketches** | [computable-contract-substrate.md](sketches/computable-contract-substrate.md) (design, scenarios S1 to S101), [contract-amounts.md](sketches/contract-amounts.md) (A1 to A58), [instrument-terms-and-legal-relations.md](sketches/instrument-terms-and-legal-relations.md) (superseded), [logical-english-alignment.md](sketches/logical-english-alignment.md) (unplanned) |
 | **Plan** | [computable-contract-substrate.md](plans/computable-contract-substrate.md) |

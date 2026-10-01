@@ -4,7 +4,7 @@
 
 ## Status
 
-Accepted
+Accepted. Target binding amended by [ADR-A106](ADR-A106-behaviour-configuration-runtime-occasions-and-records.md) decision 2 (2026-10-01): a target is any resource through `bhv:targets`, checked by the shapes of the layer that declares the target kind.
 
 ## Context
 

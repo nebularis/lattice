@@ -2,8 +2,8 @@
 
 # ADR-A113: Breaking changes at major version zero
 
-**Status:** Proposed
-**Date:** 2026-10-01 (proposed)
+**Status:** Accepted
+**Date:** 2026-10-01 (proposed), 2026-10-01 (accepted, Gate A)
 **Related:** ADR-A86 (semantic versioning, clarified here), ADR-A104, ADR-A106, ADR-A112
 **Unit:** [`computable-contract-substrate`](../../developer/plans/computable-contract-substrate.md)
 (C0, decision CC-D4)

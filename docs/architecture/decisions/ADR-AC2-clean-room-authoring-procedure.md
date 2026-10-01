@@ -29,7 +29,7 @@ Applied-layer or deployment-specific material may be read for context and to san
 
 ## Addendum (2026-10-01): insurance examples in the computable contract substrate
 
-**Status:** Proposed, with ADR-A112 (CCS decision CC-D7).
+**Status:** Accepted 2026-10-01 (Gate A), with ADR-A112 (CCS decision CC-D7).
 
 **Scope.** The examples and templates of the layers the computable contract substrate unit
 authors: Wording, Instrument and Behaviour (`ontology/<layer>/examples/`, and

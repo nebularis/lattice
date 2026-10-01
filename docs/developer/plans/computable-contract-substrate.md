@@ -230,12 +230,92 @@ history and concurrent regimes are left to C11a.
 
 | Slice | Content | Version impact |
 |---|---|---|
-| C3 | `ontology/wording` spec: wordings, elements, part-whole, rank keys, typing properties and contracts, content classes, segments, references, document objects, variables (sketch §4.1, §4.2) | new, 0.1.0 |
-| C4 | tables (§4.3), assembly: inclusion modes, variation slots, inclusion conditions, assembled wordings, variable values (§4.4, §4.5) | 0.2.0 MINOR, vocab 0.1.0 |
-| C5 | wording amendments (§4.6), shapes for W1 to W7, README | 0.3.0 MINOR, shapes 0.1.0 |
+| C3 | `ontology/wording` spec: wordings, elements, part-whole, rank keys, typing properties and their scheme contracts, content classes, text parts, references, document objects, variables. Sections are an element type (CC-D11), not a class. The README starts here as the literate source (sketch §4.1, §4.2) | new: spec 0.1.0, vocab 0.1.0 |
+| C4 | tables (§4.3), assembly: inclusion modes, variation slots, inclusion conditions, assembled wordings, variable values (§4.4, §4.5) | 0.2.0 MINOR, vocab 0.2.0 |
+| C5 | wording amendments (§4.6), shapes for W1 to W7, the README completed (laws, how-to) | 0.3.0 MINOR, shapes 0.1.0 |
 
 Wording imports Foundation, Vocabulary, Quantification and Eligibility. Nothing imports it until
 C6, so tranche B cascades nowhere.
+
+#### C3 in detail
+
+**Machine:** R (Claude Code). **Branch:** `ccs/c3-wording-spec`, created by the human.
+**Validation Pack:** [computable-contract-substrate-c3](../validation/computable-contract-substrate-c3.md).
+**Decisions:** ADR-A112 (decisions 1 to 4), ADR-A113, ADR-A-C2 and its addendum, CC-D6, CC-D11.
+
+**Invariant:** a new layer, `ontology/wording`, whose spec imports exactly Foundation 0.3.0,
+Vocabulary 0.3.0, Quantification 0.5.0 and Eligibility 0.7.0, names no term of a higher layer, and
+holds the structure, text and variables of a contract's documents. Nothing imports it, so no
+other document changes version.
+
+**Questions for the human before the branch** (the brief follows the recommendation unless told
+otherwise):
+
+| # | Question | Options | Recommendation |
+|---|---|---|---|
+| C3-Q1 | Does Wording ship baseline element types? Instrument must recognise a section (I15), so one concept at least is needed | (a) a small baseline scheme in `wrd-voc`, not closed, as Party's vocabulary is: Section, Clause, Schedule, Annex, Definition. Deployments and the LMA profile add more. (b) the contract only, with Section declared where Instrument needs it | (a): sections need a shared concept, and the other four are neutral across domains |
+| C3-Q2 | Open CBAA's `wim:applicableTo` marks a typing concept as belonging to policy wordings, agreement wordings or both. Substrate or profile? | (a) the LMA WIM profile (CC-D3). (b) the substrate, as `wrd:applicableTo` | (a): it distinguishes two kinds of insurance wording, which is a market distinction |
+
+1. **Versioning policy (ADR-A113).** `docs/architecture/ontology-versioning-policy.md` gains the
+   major-version-zero rule beside its bump table, and the "Release notes" README section it
+   requires. This is A-113's own consequence, landed here because C3 is the first slice after
+   Gate A.
+2. **Examples first (ADR-A-C2).** `ontology/wording/examples/` gains, before any README prose:
+   - `facility-agreement.ttl`: a wording with a section holding clauses 4.1 and 4.2, clause 4.1
+     as five text parts (literal, object reference to the Borrower's definition, literal,
+     variable reference to the margin, literal), clause 4.2 linking to an annex as a document
+     object (sketch §4.1 diagram)
+   - `trial-protocol.ttl`: a protocol wording with sections, a schedule, a reference to an
+     external regulation, an embedded and a governing variable with a value space and admissible
+     values
+   
+   Each is a premise comment, then data. Neither names insurance.
+3. **Spec** (`spec/wording.ttl`, ontology IRI `https://www.nebularis.org/neuro-semantic/wording`,
+   version IRI `…/lattice/wording/0.1.0`), from the sketch §4.1 and §4.2, with names from the
+   sketch §3.2 mapping and definitions written fresh:
+   - `wrd:Wording` and `wrd:Element`, each `⊑ fnd:Version ⊓ fnd:Governable`, disjoint
+   - `wrd:directlyComprises` (irreflexive, asymmetric, domain `Wording ⊔ Element`, range `Element`)
+     `⊑ wrd:comprises` (transitive, never asserted), with inverses
+   - `wrd:rankKey` and `wrd:objectId` (functional data properties)
+   - `wrd:elementType` (functional) and `wrd:classification`, ranging over `skos:Concept`
+   - content classes `wrd:Text`, `wrd:Table` (declared only, rows and columns are C4),
+     `wrd:Variable`, `wrd:Reference` and `wrd:Metadata`, each `⊑ wrd:Element`, pairwise disjoint
+   - `wrd:TextPart` with `wrd:hasTextPart` (inverse functional), `wrd:partIndex`,
+     `wrd:partText`, `wrd:refersToVariable` and `wrd:refersToObject`
+   - `wrd:DocumentObject` and `wrd:ExternalDocument` (`⊑ prov:Entity`), `wrd:documentKind`,
+     `wrd:linksTo`
+   - `wrd:EmbeddedVariable` and `wrd:GoverningVariable` (disjoint), `wrd:variableKey`,
+     `wrd:populationMethod` (its class only, individuals are C4), `wrd:populatedFrom`,
+     `wrd:valueContract` (to `voc:SchemeContract`), `wrd:valueSpace` (to `qnt:ValueSpace`),
+     `wrd:admissibleValues` (to `qnt:RangeSet`), `wrd:multiValued`
+4. **Vocab** (`vocab/wording-vocab.ttl`, `0.1.0`): `wrd-voc:ElementTypeContract`,
+   `ClassificationContract` and `DocumentKindContract`, as `cls-voc`'s contracts are declared,
+   and under C3-Q1 (a) the baseline element type scheme.
+5. **README** (`ontology/wording/README.md`): purpose, imports, the extraction contract, the
+   model with `turtle-spec` and `turtle-vocab` blocks identical to the files, and the examples.
+   Laws W1 to W7 and the how-to follow in C5. `tools/literate_extract.py --check` passes for this
+   layer.
+6. **Catalog and releases:** `mise run build:ontology-catalog`, then
+   `mise run build:ontology-releases` for the two new versions. Tags are the human's.
+7. **Tests:** `tools/test_wording.py`, added to `check:ontology-catalog`'s list, for the rows
+   below. The reasoner rows skip when the harness jar is not built, as `mork_compilers`' `test_reasoner.py` does.
+8. **Docs** (ADR-A112's consequences): the root README and `ontology-architecture.md` take the
+   A-01 addendum's order and a Wording row. `docs/developer/INDEX.md` is unchanged.
+
+| ID | Given / When / Then | Level | +/- |
+|---|---|---|---|
+| C3-01 | the spec / parsed / its ontology and version IRIs, and imports of exactly Foundation 0.3.0, Vocabulary 0.3.0, Quantification 0.5.0 and Eligibility 0.7.0 | L1 | + |
+| C3-02 | spec and vocab / catalog closure / every import resolves | L1 | + |
+| C3-03 | every Wording file / scanned / no `ins:` or `bhv:` term, and no Instrument or Behaviour namespace | L1 | + |
+| C3-04 | the facility example / loaded with the closure / clause 4.1 has five parts, indexed 0 to 4, each with exactly one of text, variable or object | L1 | + |
+| C3-05 | both examples / reasoner / consistent | L2 | + |
+| C3-06 | an element that directly comprises itself / reasoner / inconsistent | L2 | − |
+| C3-07 | a node typed both `wrd:Wording` and `wrd:Element`, and a node both `wrd:Text` and `wrd:Table` / reasoner / inconsistent | L2 | − |
+| C3-08 | the vocab / parsed / three contracts, each with identity, governance state and the property it constrains, and the baseline scheme under C3-Q1 | L1 | + |
+| C3-09 | the README / literate check / its blocks equal the spec and vocab | L1 | + |
+| C3-10 | `check:ontology-versioning` / run / both versions have release rows | L1 | + |
+| C3-11 | the examples / git history of the branch / committed before the README's model prose (ADR-A-C2) | paper | + |
+| C3-12 | the existing tool tests / unchanged / pass (non-weakening) | L1 | + |
 
 | Slice | Content | Version impact |
 |---|---|---|
@@ -252,6 +332,77 @@ and may run beside tranche B.
 | C10a | import guard (B7): a design-time check that no layer imports or names a term of a layer above it, run over every catalogue entry | `tools/`, a `mise` check |
 | C11 | runtime records: act, breach (derived and asserted), exercise, determination, deemed fact, acceptance. Occasions and their state space. The evidence rule (B6) as shapes (sketch §7.5, §7.6) | MINOR |
 | C11a | deep dive: nested states, history and concurrent regimes (sketch §7.10). A sketch and an A-106 amendment first, then the ontology change. Settles B5 | MINOR. Blocks C12 only |
+
+#### C10 in detail
+
+**Machine:** R (Claude Code). **Branch:** `ccs/c10-behaviour-split`, created by the human. May run
+beside C3: the two share no file except the architecture documents, which C10 edits after C3
+merges. **Validation Pack:**
+[computable-contract-substrate-c10](../validation/computable-contract-substrate-c10.md).
+**Decisions:** ADR-A106 decisions 1 to 3 and 6, ADR-A11 as amended, ADR-A01's addendum, ADR-A113.
+
+**Invariant:** Behaviour imports nothing above Eligibility and names no Instrument term. Its
+configuration and runtime are two documents in one namespace, split by ADR-A08's tiers. Effects
+target any resource, occupancies may be for any subject, and a transition needs no effect.
+Selection and activation policies stay required (ADR-A09, ADR-A10). Every existing Behaviour
+example, fixture and conformance case means what it meant before, apart from the renamed
+property.
+
+| # | Question | Options | Recommendation |
+|---|---|---|---|
+| C10-Q1 | The runtime document's name and first version | (a) `spec/behaviour-runtime.ttl`, version IRI `…/lattice/behaviour-runtime/0.8.0`, beside configuration at `…/lattice/behaviour/0.8.0`, so a consumer pins the pair at one number. (b) runtime starts at `0.1.0` as a new document | (a): both halves come from `behaviour` 0.7.0 |
+| C10-Q2 | `bhv:targetsOccupancy` and `bhv:targetsAllowance` beside the new `bhv:targets` | (a) both become sub-properties of `bhv:targets`, and the "at least one target" rule is a Core shape over the three as alternative paths, needing no inference. (b) they stay separate | (a): A-106 says every effect names at least one target through `bhv:targets` |
+
+1. **Configuration** (`spec/behaviour.ttl`, `0.7.0` → `0.8.0`, breaking under ADR-A113):
+   - the Instrument import, the `ins:` prefix and `bhv:targetsElement` removed
+   - `bhv:targets` added, with no range, and C10-Q2 applied
+   - `bhv:forSubject`'s range removed (it moves to runtime, step 2)
+   - the minimum-one restriction on `bhv:hasEffect` removed
+   - declaration-tier classes and properties only: state spaces, states, transitions, triggers,
+     guards, effects, allowance definitions, policies, kinds and operational profiles, with
+     their disjointness
+2. **Runtime** (`spec/behaviour-runtime.ttl`, under C10-Q1), importing configuration only:
+   `Stimulus`, `TransitionExecution`, `EffectApplication`, `StateOccupancy`, `AllowanceAccount`
+   and their properties (`occupiesState`, `forSubject` with no range, `executedTransition`,
+   `appliesEffect`, `causedByStimulus`, `usesProfile`, `isHypothetical`, `isCurrent`,
+   `tracksAllowance`, `availableBalance`), disjoint from each other and from the configuration
+   classes. Occasions and records are C11.
+3. **Vocab** (`behaviour-vocab` `0.8.0`): re-pinned to configuration 0.8.0. `bhv:InstrumentTarget`
+   gains `owl:deprecated true` and a comment naming its replacement in Instrument (C6).
+4. **Shapes** (`.version` `0.1.0` → `0.2.0`): `hasEffect`'s minimum removed. A new
+   `EffectDefinitionShape`: exactly one `bhv:targetKind`, and at least one target under C10-Q2.
+   The policy shapes and `PriorityOrderedNeedsPriority` unchanged.
+5. **Projection:** `projection/instrument.ttl` deleted, since it only restated the removed range.
+   `.version` `0.1.0` → `0.2.0`.
+6. **Fixtures:** `examples/state-transition.ttl`, `test/B-P1-basic-transition.ttl` and
+   `test/conformance/cases/behaviour-bp1-transition.ttl` replace `bhv:targetsElement` with
+   `bhv:targets`. Nothing else in them changes.
+7. **Cascade:** `applied/capacity`'s execution profile (`0.7.0` → `0.8.0`) imports runtime
+   0.8.0, since it ranges over `bhv:TransitionExecution` and `bhv:EffectApplication`. Catalog,
+   release rows, and the tag list for the human.
+8. **README** (`ontology/behaviour/README.md`): imports, the two documents mapped to the four
+   tiers, the target rule, and a "Release notes" section with the 0.8.0 breaking entry (ADR-A113).
+   `ontology-architecture.md` and the root README already carry the new order after C3. C10
+   corrects only what they say about Behaviour's imports and documents.
+9. **Tests:** `tools/test_behaviour_split.py`, added to `check:ontology-catalog`'s list. Before the
+   change, record whether each fixture conforms. After it, compare (risk R8).
+
+| ID | Given / When / Then | Level | +/- |
+|---|---|---|---|
+| C10-01 | configuration / parsed / imports Foundation, Vocabulary, Quantification, Party and Eligibility, and not Instrument. Runtime imports configuration only | L1 | + |
+| C10-02 | every Behaviour file / scanned / no `ins:` term and no Instrument namespace | L1 | + |
+| C10-03 | both documents / parsed / no `rdfs:range` on `bhv:targets` or `bhv:forSubject` | L1 | + |
+| C10-04 | a class list per document / compared with ADR-A08's tiers / declaration tier in configuration only, the other three in runtime only | L1 | + |
+| C10-05 | a transition with no effect / shapes / conforms | L1 | + |
+| C10-06 | a transition without `bhv:selectionPolicy`, and a `PriorityOrdered` one without `bhv:priority` / shapes / each fails (A-09, A-10 stand) | L1 | − |
+| C10-07 | an effect targeting an arbitrary node through `bhv:targets`, and one through `bhv:targetsAllowance` / shapes / both conform | L1 | + |
+| C10-08 | an effect with a target kind and no target / shapes / fails | L1 | − |
+| C10-09 | an occupancy for a subject that is not a role occupancy / RDFS closure / no new type is inferred for the subject | L1 | + |
+| C10-10 | every Behaviour example and fixture, the conformance case and capacity's execution profile / validated before and after / same outcomes (R8) | L1 | + |
+| C10-11 | capacity's execution profile / catalog closure / resolves through runtime to configuration | L1 | + |
+| C10-12 | `bhv:InstrumentTarget` / vocab / present and deprecated | L1 | + |
+| C10-13 | `check:ontology-versioning` / run / every changed document and directory bumped, with release rows | L1 | + |
+| C10-14 | the existing tool tests and `check:python-root` / unchanged / pass (non-weakening) | L1 | + |
 
 ### Tranche D: Instrument rewrite
 
