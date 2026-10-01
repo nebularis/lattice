@@ -100,6 +100,11 @@ run = "yarn check"
 description = "Type-check and unit-test the Word authoring add-in"
 run = "yarn workspace @lattice/word-authoring-addin run check"
 
+[tasks."test:authoring-addin"]
+description = "Type-check, unit-test and run the harness tests of the Word authoring add-in"
+depends = ["check:authoring-addin"]
+run = "yarn workspace @lattice/word-authoring-addin run test"
+
 [tasks."test:frontend"]
 run = "yarn test"
 

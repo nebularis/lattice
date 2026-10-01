@@ -52,9 +52,12 @@ export class HttpApiClient implements ApiClient {
   private readonly fetchImpl: FetchLike;
   private readonly timeoutMs: number;
 
-  constructor(baseUrl: string, fetchImpl: FetchLike = fetch, timeoutMs = 10000) {
+  constructor(baseUrl: string, fetchImpl?: FetchLike, timeoutMs = 10000) {
     this.baseUrl = baseUrl;
-    this.fetchImpl = fetchImpl;
+    // The global `fetch` throws "Illegal invocation" if called detached from `window` (it relies
+    // on internal slots only the real global call site has), which `this.fetchImpl(...)` below
+    // is. Wrapping it keeps the default usable without every caller remembering to bind it.
+    this.fetchImpl = fetchImpl ?? ((...args) => fetch(...args));
     this.timeoutMs = timeoutMs;
   }
 

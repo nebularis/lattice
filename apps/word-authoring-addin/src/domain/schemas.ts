@@ -5,23 +5,23 @@
  * use: the file name without `.schema.json`. This is the only place the set of schema resources is
  * listed on the add-in side.
  */
-import Ajv2020 from "ajv/dist/2020";
+import Ajv2020 from "ajv/dist/2020.js";
 import type { ErrorObject } from "ajv";
 
-import common from "../../../../contracts/authoring/common.schema.json";
-import documentSnapshot from "../../../../contracts/authoring/document-snapshot.schema.json";
-import snapshotSubmission from "../../../../contracts/authoring/snapshot-submission.schema.json";
-import snapshotAccepted from "../../../../contracts/authoring/snapshot-accepted.schema.json";
-import authoringTemplate from "../../../../contracts/authoring/authoring-template.schema.json";
-import templateList from "../../../../contracts/authoring/template-list.schema.json";
-import sampleList from "../../../../contracts/authoring/sample-list.schema.json";
-import documentView from "../../../../contracts/authoring/document-view.schema.json";
-import jobView from "../../../../contracts/authoring/job-view.schema.json";
-import analysisView from "../../../../contracts/authoring/analysis-view.schema.json";
-import health from "../../../../contracts/authoring/health.schema.json";
-import errorSchema from "../../../../contracts/authoring/error.schema.json";
-import wordingAnalysisRequest from "../../../../contracts/events/wording-analysis-request.schema.json";
-import wordingAnalysisResult from "../../../../contracts/events/wording-analysis-result.schema.json";
+import common from "../../../../contracts/authoring/common.schema.json" with { type: "json" };
+import documentSnapshot from "../../../../contracts/authoring/document-snapshot.schema.json" with { type: "json" };
+import snapshotSubmission from "../../../../contracts/authoring/snapshot-submission.schema.json" with { type: "json" };
+import snapshotAccepted from "../../../../contracts/authoring/snapshot-accepted.schema.json" with { type: "json" };
+import authoringTemplate from "../../../../contracts/authoring/authoring-template.schema.json" with { type: "json" };
+import templateList from "../../../../contracts/authoring/template-list.schema.json" with { type: "json" };
+import sampleList from "../../../../contracts/authoring/sample-list.schema.json" with { type: "json" };
+import documentView from "../../../../contracts/authoring/document-view.schema.json" with { type: "json" };
+import jobView from "../../../../contracts/authoring/job-view.schema.json" with { type: "json" };
+import analysisView from "../../../../contracts/authoring/analysis-view.schema.json" with { type: "json" };
+import health from "../../../../contracts/authoring/health.schema.json" with { type: "json" };
+import errorSchema from "../../../../contracts/authoring/error.schema.json" with { type: "json" };
+import wordingAnalysisRequest from "../../../../contracts/events/wording-analysis-request.schema.json" with { type: "json" };
+import wordingAnalysisResult from "../../../../contracts/events/wording-analysis-result.schema.json" with { type: "json" };
 
 export const SCHEMAS: Record<string, object> = {
   common,

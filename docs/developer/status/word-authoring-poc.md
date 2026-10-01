@@ -3,8 +3,8 @@
 # Word authoring proof of concept - Status
 
 **Unit ID:** `word-authoring-poc`
-**Status:** 🚧 In progress. WA0 to WA8 done. WA9 is next
-**Last updated:** 2026-10-01
+**Status:** 🚧 In progress. WA0 to WA9 done. WA9a is next
+**Last updated:** 2026-10-02
 **Plan:** [word-authoring-poc.md](../plans/word-authoring-poc.md)
 **Sketch:** [word-authoring-poc.md](../sketches/word-authoring-poc.md)
 **ADR:** [A-114](../../architecture/decisions/ADR-A114-word-authoring-proof-of-concept.md), Proposed
@@ -14,22 +14,21 @@
 
 The design and a one-shot plan of thirteen slices (WA0 to WA11, with WA9a) are written. Decisions
 WA-D1 to WA-D13 were recorded by the human on 2026-10-01: WA-D4 is Javalin, the rest follow the
-recommendations. ADR-A114 stays Proposed. WA0 to WA6 are done: preflight, the WA1 contracts, the
+recommendations. ADR-A114 stays Proposed. WA0 to WA9 are done: preflight, the WA1 contracts, the
 WA2 service module that maps a snapshot to the Wording graph and validates it with SHACL, the WA3
 detection, template and conformance checks, the WA4 HTTP API over Javalin with an in-memory store,
 bus, registry and job tracking, WA5's real Fuseki store, RabbitMQ bus, configuration and entry
 point, WA6's Logical English reading of the Wording graph (the Python worker's sentence-form
-matcher, keyword fallback and proposal graph), and WA7's worker runtime (the Fuseki Graph Store
-Protocol client, the RabbitMQ consumer/publisher adapter, and the `wording_analysis_main` entry
-point, WA6's Logical English reading of the Wording graph (the Python worker's sentence-form
 matcher, keyword fallback and proposal graph), WA7's worker runtime (the Fuseki Graph Store
 Protocol client, the RabbitMQ consumer/publisher adapter, and the `wording_analysis_main` entry
-point that wires the WA6 reading into a real job loop), and WA8's add-in domain (the OOXML
+point that wires the WA6 reading into a real job loop), WA8's add-in domain (the OOXML
 parser/writer, the tag codec, the hand-written contract types and Ajv validation, the HTTP client,
-the `DocumentPort` seam, and the manifest), with no UI yet.
+the `DocumentPort` seam, and the manifest), and WA9's task pane and harness (`App.tsx` and five
+panels, `fakePort.ts`/`officePort.ts`, `main.tsx`/`harness.tsx`, the Playwright suite over a real
+`msedge` channel).
 
-**Next action, for the human:** ask for WA9.
-**Next action, for the agent:** WA9 (add-in task pane and harness: `App.tsx`, the five panels, `officePort.ts`/`fakePort.ts`, Playwright), when asked.
+**Next action, for the human:** ask for WA9a.
+**Next action, for the agent:** WA9a (ribbon and right-click commands), when asked, once decision WA-D13 is confirmed recorded.
 
 ## Open question raised by WA3
 
@@ -60,12 +59,34 @@ synthetic forms, deliberately ordered the other way round, was added and does fa
 Detail in the [WA6 Validation Pack](../validation/word-authoring-poc-wa6.md) under Self-probe.
 Three of three slices with a prescribed probe have now needed a replacement.
 
-## Note for WA9
+## Note for WA9 (done in WA9)
 
 WA8 implements `writeTemplate` (plan WA8 OOXML rules) but it has no dedicated test in WA8, since
-the "Apply template" flow it serves is a WA9 UI feature with no committed golden yet. Exercise it
-directly once WA9's S9-03 ("Apply template on the licence") runs, and add a focused unit test
-alongside if S9-03 alone does not pin its behaviour precisely enough.
+the "Apply template" flow it serves is a WA9 UI feature with no committed golden yet. WA9's S9-03
+exercises it directly (Apply template on the licence). WA9 also found and fixed a real defect in
+`writeTemplate`'s own placeholder element (see "Open question raised by WA9" below).
+
+## Open question raised by WA9
+
+Unlike WA3, WA5 and WA6, WA9's prescribed self-probe ("render span text with
+`dangerouslySetInnerHTML`, S9-13 fails") bites exactly as written: run against the real Playwright
+suite, S9-13 fails (the malicious string stops appearing as text, since the browser parses it into
+a real `<img>` instead), and passes again once reverted. No replacement test was needed, the third
+such slice after WA7 and WA8. Detail in the
+[WA9 Validation Pack](../validation/word-authoring-poc-wa9.md) under Self-probe.
+
+Separately, WA9 found and fixed two real defects discovered only by actually running the Playwright
+suite in a real browser, not by static review:
+
+1. `HttpApiClient`'s default `fetchImpl` was a bare reference to the global `fetch`, which threw
+   "Illegal invocation" once extracted and called as `this.fetchImpl(...)` — the native `fetch`
+   needs `window` as its receiver. Fixed by wrapping it in an arrow function.
+2. `ooxml.ts`'s `writeTemplate` wrote a literally empty placeholder paragraph for each section's
+   first element. WA8's own parser drops a zero-parts element with a warning (confirmed by S8-04),
+   so every section ended up with no element at all on round trip, silently contradicting WA9's
+   own "each element empty" expectation. Fixed by writing a single space instead, which is
+   schema-valid (`LiteralPart` requires at least one character) and survives the round trip as one
+   element with one (visually blank) part.
 
 ## Note for WA3 (done in WA6)
 
@@ -116,7 +137,7 @@ reverted. No replacement test was needed. Detail in the
 | WA6 | Logical English reading | done | `0128ca2` | |
 | WA7 | Worker runtime | done | `ab8e1a1` | |
 | WA8 | Add-in domain | done | `451fc93` | WA1 |
-| WA9 | Add-in task pane and harness | waiting | | WA8 |
+| WA9 | Add-in task pane and harness | done | | WA8 |
 | WA9a | Ribbon and right-click commands | waiting | | WA9, WA-D13 |
 | WA10 | Compose stack | waiting | | WA5, WA7, WA9a |
 | WA11 | Documentation and close-out | waiting | | WA10 |
@@ -135,6 +156,7 @@ reverted. No replacement test was needed. Detail in the
 | WA6 | 450k | about 480k |
 | WA7 | 200k | about 230k |
 | WA8 | 450k | about 420k |
+| WA9 | 550k | about 600k |
 
 ## History
 
@@ -249,3 +271,21 @@ reverted. No replacement test was needed. Detail in the
   were not re-run (WA8 touches none of their paths); `yarn check` across all three workspaces
   (`mork-review-workbench`, `surface-contract-studio`, `word-authoring-addin`) passes.
 - 2026-10-01: WA8 committed as `451fc93`.
+- 2026-10-02: WA9 done: `src/app/App.tsx` and five panels (`DocumentPanel`, `MarkupPanel`,
+  `AnalysePanel`, `LogicalEnglishPanel`, `GraphPanel`), `app.css`, `src/word/fakePort.ts`
+  (an in-memory `DocumentPort`) and `officePort.ts` (a real one, over the actual `Word`/
+  `OfficeExtension` ambient types `@types/office-js` declares), `src/main.tsx`/`harness.tsx`,
+  `taskpane.html`/`harness.html`, `playwright.config.ts` (real `msedge` channel), `e2e/support.ts`
+  and `e2e/taskpane.spec.ts` (mocking `/api/**` from the real WA1 samples/templates and the WA6
+  goldens, validating request bodies with the WA8 Ajv module), `test:authoring-addin` in
+  `mise.toml`. `ux-design.md` section 4 added. 7 new Vitest tests (`fakePort.test.ts` 5,
+  `main.test.ts` 2; 45 total with WA8's 38), 11 new Playwright tests (S9-02 to S9-11, S9-13), all
+  pass. Found and fixed two real defects only visible when actually running the suite in a real
+  browser: `HttpApiClient`'s default `fetchImpl` threw "Illegal invocation" once detached from
+  `window`; `writeTemplate`'s placeholder element round-tripped to zero parts and was silently
+  dropped by WA8's own "empty literals are dropped" rule. Self-probe (render span text with
+  `dangerouslySetInnerHTML`) bites exactly as written, the third slice running (after WA7, WA8)
+  with no replacement test needed. Validation Pack at
+  `docs/developer/validation/word-authoring-poc-wa9.md`. `check:java`, `check:authoring-service`,
+  `check:authoring-worker` and `check:authoring-contracts` were not re-run (WA9 touches none of
+  their paths).

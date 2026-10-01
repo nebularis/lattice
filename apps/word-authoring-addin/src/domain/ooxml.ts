@@ -7,6 +7,7 @@
  */
 import { decode, encode, title, TAG_APPEARANCE, TAG_COLOUR, type TagKind } from "./tags";
 import type { DocumentElement, ElementKind, Part, Section, Unmarked } from "./types";
+import { newUuid } from "./uuid";
 import { escapeXml, parseXmlDocument } from "./xml";
 
 const W_NS = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
@@ -448,30 +449,27 @@ export function writeSections(sections: WritableSection[]): string {
 }
 
 function newTemplateElementId(): string {
-  // A plain, dependency-free UUID v4 generator (not cryptographically strong, which is fine for a
-  // proof of concept): avoids relying on a global `crypto.randomUUID` whose availability varies
-  // across the Node/jsdom/Office.js runtimes this module is used from.
-  const hex = (): string => Math.floor(Math.random() * 16).toString(16);
-  const digits = Array.from({ length: 32 }, hex);
-  digits[12] = "4";
-  digits[16] = ["8", "9", "a", "b"][Math.floor(Math.random() * 4)];
-  const s = digits.join("");
-  return `${s.slice(0, 8)}-${s.slice(8, 12)}-${s.slice(12, 16)}-${s.slice(16, 20)}-${s.slice(20, 32)}`;
+  return newUuid();
 }
 
 interface WritableTemplate {
   sections: { sectionKey: string; heading: string; elementKinds: ElementKind[] }[];
 }
 
-/** Writes an empty document from a template: per section, the heading and one empty element of
- * the section's first admitted element kind, each with a fresh element id. */
+/** Writes an empty document from a template: per section, the heading and one placeholder
+ * element of the section's first admitted element kind, each with a fresh element id. The
+ * element's paragraph carries a single space, not truly empty text: an empty paragraph has zero
+ * parts once parsed back, and "empty literals are dropped" (plan WA8 OOXML rules) would silently
+ * lose the element the author is meant to fill in; a single space is schema-valid (`LiteralPart`
+ * requires at least one character) and survives the round trip as one element with one part. */
 export function writeTemplate(template: WritableTemplate): string {
   nextIdCounter = 1000000001;
   return template.sections
     .map((section) => {
       const kind = section.elementKinds[0];
       const elementId = newTemplateElementId();
-      const elementXml = writeBlockSdt(kind, elementId, title(kind), "<w:p/>");
+      const placeholderParagraph = `<w:p><w:r><w:t xml:space="preserve"> </w:t></w:r></w:p>`;
+      const elementXml = writeBlockSdt(kind, elementId, title(kind), placeholderParagraph);
       return writeBlockSdt(
         "section",
         section.sectionKey,
