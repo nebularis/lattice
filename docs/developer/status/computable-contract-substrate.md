@@ -13,17 +13,15 @@
 
 ## Current position
 
-Gate A passed on 2026-10-01. C3 (Wording 0.1.0) and C10 (Behaviour below Instrument, 0.8.0) are
-merged and tagged. C4, C10a and C11 are briefed, with Validation Pack skeletons. They share no file
-but `mise.toml`'s test lists and this record, so they may run side by side.
+Gate A passed on 2026-10-01. C3, C10, C4, C10a and C11 are merged to `main` (the last three
+squashed as `c9bfbea`) and tagged: Wording 0.2.0, Behaviour 0.9.0, shapes 0.3.0, the import guard
+in `mise run check`. C5 and C11a are briefed. From these slices on, the agent builds and verifies,
+and the human commits by hand.
 
-**Decided 2026-10-01:** C4-Q1 to C4-Q3, C10a-Q1, C10a-Q2, C11-Q1 (a fixed occasion core refined by
-sub-states) and C11-Q2 (declared initial states). CC-D3 confirmed: the LMA WIM profile is in
-LATTICE. The Open CBAA migration notes are current in both repositories.
-
-**Next action, for the human:** commit the briefs to `main` (and Open CBAA's plan in `open-dare`),
-then create `ccs/c4-wording-assembly`, `ccs/c10a-import-guard` and `ccs/c11-runtime-records`.
-**Next action, for the agent:** build the three slices on their branches. C5 and C11a briefs follow.
+**Next action, for the human:** commit the briefs, then create
+`ccs/c5-wording-laws` and `ccs/c11a-nested-states`.
+**Next action, for the agent:** C5's examples, then, once the human has committed them, its model.
+C11a's sketch and A-106 addendum. Both stop before committing.
 
 ## Slice board
 
@@ -33,15 +31,16 @@ then create `ccs/c4-wording-assembly`, `ccs/c10a-import-guard` and `ccs/c11-runt
 | C1 | A-104 | A | accepted | |
 | C2 | A-106 | A | accepted | |
 | C3 | Wording spec, vocab and shapes | B | merged, tagged | |
-| C4 | Wording tables, assembly, variable values | B | built, verified on `ccs/c4-wording-assembly` | human review, tags |
-| C5 | Wording amendments, law shapes, how-to | B | waiting | C4 |
+| C4 | Wording tables, assembly, variable values | B | merged, tagged | |
+| C5 | Wording amendments, law shapes, how-to | B | briefed, decided | branch |
 | C10 | Behaviour split and layer flip | C | merged, tagged | |
-| C10a | import guard | C | built, verified on `ccs/c10a-import-guard` | human review |
-| C11 | runtime records, occasions, initial states | C | built, verified on `ccs/c11-runtime-records` | human review, tags |
-| C11a | nested states, history, concurrent regimes | C | waiting | C11 |
+| C10a | import guard | C | merged | |
+| C11 | runtime records, occasions, initial states | C | merged, tagged | |
+| C11a | nested states, history, concurrent regimes | C | briefed: phase 1 (sketch, A-106 addendum), then a gate | branch |
 | F1 | Foundation identifiers | Foundation window | waiting | AIR Phase 2 complete, with NRS N9 |
 | C6 to C9, C8a | Instrument rewrite, template library | D | waiting | C5, C10 |
 | C12, C13 | runtime evaluator, relation plans | E | waiting | C9, C11, C11a, AIR-3.3, NRS N1 |
+| C13a | design-time joint satisfiability: slot conditions by reasoner, the task NRS N3 reuses (deferred from C5) | E | waiting | C5, NRS N1 |
 | C14 to C17 | examples, docs, handoff | F | waiting | C8a, C9, C12 |
 
 ## History
@@ -68,3 +67,5 @@ then create `ccs/c4-wording-assembly`, `ccs/c10a-import-guard` and `ccs/c11-runt
 - 2026-10-01: C4 built and verified on `ccs/c4-wording-assembly`: Wording, its vocab and shapes at 0.2.0, the facility form example, 15 tests.
 - 2026-10-01: C10a built and verified on `ccs/c10a-import-guard`: `check:import-guard`, part of `mise run check`, finds no violation today.
 - 2026-10-01: C11 built and verified on `ccs/c11-runtime-records`: occasions, six record kinds, declared initial states, B6, B1 and I11 as shapes, 15 tests.
+- 2026-10-01: C4, C10a and C11 rebased into one chain, merged to `main` (squashed, `c9bfbea`) and tagged. C5 and C11a briefed, with Validation Pack skeletons. From here the human commits by hand.
+- 2026-10-02: C5 decided: SHACL-SPARQL slot checks for intervals now, the full reasoner check deferred to a new slice C13a (tranche E, before NRS N3, risk R9). Amendment operations closed, recorded with PROV, library elements amended in an instance as bespoke revisions, which a draft library release may adopt upstream as a new version or a variant.

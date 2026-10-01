@@ -65,7 +65,7 @@ un-deferred.
 | N4 | Deontic extension of Instrument (A-104, R1) | B | moved to CCS | CCS C1, C6 to C9 |
 | N1 | Condition composition acyclicity (R4) | A | waiting | AIR-3.3 merge |
 | N6 | Scheduled triggers as positioned stimuli (R3), built with CCS C12 | B | waiting | CCS C11 |
-| N3 | Self-contradiction design-time check | B | waiting | CCS C9 |
+| N3 | Self-contradiction design-time check | B | waiting | CCS C9, CCS C13a |
 | N5 | Closure declarations (A-105, R2) | C | waiting | D6, D7, substrate S2 |
 | N7 | Measure the OASIS conformance corpus | C | waiting | CCS C9, N1 |
 | N8 | Breach-chain checks (Behaviour records and evaluator moved to CCS C11, C12) | B | waiting | N5, CCS C12 |

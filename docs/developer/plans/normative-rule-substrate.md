@@ -265,6 +265,11 @@ Depends on N4 for the modality vocabulary, so it is sequenced after N4 despite s
 tranche A conceptually. Under the CCS design the pairs compared are an Obligation and a Prohibition
 over the same activity, and an exception (Permission or Exclusion) that excepts nothing in scope. Listed here because it needs no gap closed beyond N4.
 
+**Prerequisite added 2026-10-02: CCS C13a.** The OWL backend compiles only conditions bound to
+the case by an evidence path. CCS slice C13a teaches it question-form conditions and builds the
+joint-satisfiability task (`P ⊓ Q`) for variation slots. N3 uses the same task for clashes, so it
+follows C13a or is built with it.
+
 ### Tranche B — Instrument and Behaviour, parallel-safe
 
 #### N4. Deontic extension of Instrument (A-104, R1)

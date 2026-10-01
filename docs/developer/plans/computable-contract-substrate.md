@@ -232,7 +232,7 @@ history and concurrent regimes are left to C11a.
 |---|---|---|
 | C3 | `ontology/wording` spec: wordings, elements, part-whole, rank keys, typing properties and their scheme contracts, content classes, text parts, references, document objects, variables. Sections are an element type (CC-D11), not a class. The README starts here as the literate source. Unions named once, each property's subject and value stated in its comment and checked by SHACL Core shapes (sketch §4.1, §4.2) | new: spec 0.1.0, vocab 0.1.0, shapes 0.1.0 |
 | C4 | tables (§4.3), assembly: inclusion modes, variation slots, inclusion conditions, assembled wordings, variable values (§4.4, §4.5), with subject and value comments and SHACL Core shapes as in C3 | 0.2.0 MINOR, vocab 0.2.0, shapes 0.2.0 |
-| C5 | wording amendments (§4.6), shapes for W1 to W7, the README completed (laws, how-to) | 0.3.0 MINOR, shapes 0.3.0 |
+| C5 | wording amendments (§4.6), shapes for laws W1 to W6 (W7 is a design rule), the slot condition-set check under C5-Q1, the README completed (laws, how-to) | 0.3.0 MINOR (breaking: new violations), vocab 0.3.0, shapes 0.3.0 |
 
 Wording imports Foundation, Vocabulary, Quantification and Eligibility. Nothing imports it until
 C6, so tranche B cascades nowhere.
@@ -393,6 +393,104 @@ Core, as in C3. Assembly is design time: nothing here is evaluated per event.
 | C4-09 | `check:ontology-versioning` / run / three bumps, three release rows | L1 | + |
 | C4-10 | the examples / git history / committed before the model | paper | + |
 | C4-11 | the existing tool tests / unchanged / pass (non-weakening) | L1 | + |
+
+#### C5 in detail
+
+**Machine:** R (Claude Code). **Branch:** `ccs/c5-wording-laws`, created by the human. May run beside
+C11a, which shares no file but the status record. **Commits are the human's** (2026-10-01): the
+agent builds and verifies, then stops before committing, including between the examples and the
+model, which ADR-A-C2 orders.
+**Validation Pack:** [computable-contract-substrate-c5](../validation/computable-contract-substrate-c5.md).
+**Decisions:** ADR-A112 decision 3, ADR-A113, C4-Q2's refinement (the slot checks its conditions).
+
+**Invariant:** Wording gains textual amendments, and its laws W1 to W6 become shapes, so a
+consumer without the LATTICE runtime can check a wording and an assembled instance completely. New
+violation-level shapes are breaking under ADR-A113, so the README gains a Release notes section.
+
+**Decided by the human, 2026-10-02:**
+
+- **C5-Q1.** SHACL-SPARQL now: where every variant of a slot has an interval condition over the
+  same single governing variable, the ranges must be pairwise disjoint and together cover the
+  variable's admissible values. Every other slot gets the structural check (all its variants'
+  conditions read the same governing variables), and a report lists it as unchecked. The full
+  check, by reasoner for every kind of condition, is slice **C13a** (tranche E), not dropped.
+  Open CBAA planned it (integration spec §5.6) but never built it, because the OWL backend refuses
+  question-form conditions.
+- **C5-Q2a.** The five operations are a closed set of named individuals: Insert, Delete, Replace,
+  Strike and substitute, Append. Each has its own shape for the properties it requires.
+- **C5-Q2b.** Every amendment records its before and after with PROV: `prov:used` for what it
+  changed, `prov:generated` for every version it produced. `wrd:amendsElement ⊑ prov:used` and
+  `wrd:replacement ⊑ prov:generated` keep their names. Insert and Append generate the new child
+  and the parent's new version, Delete the parent's new version, Strike and substitute the text's.
+- **C5-Q2c.** Amending a library element inside one instance produces a bespoke element, with its
+  own identity, `prov:wasRevisionOf` the library version, which the instance's new assembled
+  wording includes instead. Only a library release versions a library element, and it changes no
+  existing instance. **Proposing a revision upstream** needs no new term: the bespoke element's
+  `prov:wasRevisionOf` lets a library steward find every instance's revision of a clause, and a
+  proposal is a draft library release (`fnd:Draft`, then Reviewed, then Active) whose new element
+  is `prov:wasDerivedFrom` the bespoke one. The release either supersedes the library clause, or
+  turns it into a variation slot with the original and the revision as variants.
+- **C5-Q2d.** A replacement is a new version of the same element identity. Whether the legal
+  relation it states continues is `ins:Amendment`'s to say (`prov:wasRevisionOf` on stated
+  meaning, CC-D12).
+
+1. **Examples first (ADR-A-C2).** The human commits these before the model is written:
+   - `facility-amendment.ttl`: an amendment letter that replaces clause 5.2's chosen variant text,
+     strikes "0.05%" for "0.10%" in clause 5.3, and appends a clause 12.2, giving a second
+     assembled facility version superseding the first
+   - `trial-protocol.ttl` gains a protocol amendment that inserts an assessment row
+   - two endorsements stating the same change, both recorded, one resulting version (sketch §4.6)
+   - the facility amendment revises library clause 5.2B, so it produces a bespoke element
+     (C5-Q2c), and a draft release of the facility form adopts that revision as a third variant
+     of slot 5.2
+   - the baseline element type scheme gains Endorsement, which the examples use (C3-Q1)
+2. **Spec** (`wording` 0.3.0), sketch §4.6: `wrd:Amendment ⊑ prov:Activity`,
+   `wrd:amendsElement`, `wrd:operation`, `wrd:replacement`, `wrd:struckText`, `wrd:substitutedText`,
+   `wrd:expressedIn`, each property stating its subject and value, with `wrd:amendsElement ⊑
+   prov:used` and `wrd:replacement ⊑ prov:generated` (C5-Q2b). The legal effect is ADR-A104's
+   `ins:Amendment` with `ins:textChanges`, built in C9.
+3. **Vocab** (`wording-vocab` 0.3.0) under C5-Q2.
+4. **Shapes** (`wording-shapes` 0.3.0): the C3 pattern for the new properties, and the laws:
+   - **W1**: from every element, `wrd:isDirectlyComprisedBy` (or `wrd:hasVariant` inverted) reaches
+     exactly one wording, with no cycle
+   - **W2**: a text's part indices run 0 to n−1 without gaps or repeats (the one-form half is C3's)
+   - **W3**: a variant has mode Variation and is a slot's variant, and the reverse. An assembled
+     wording that includes a slot includes exactly one of its variants
+   - **W4**: only conditional elements and variants have an inclusion condition, and every
+     condition of it reads a governing variable
+   - **W5**: an assembled wording includes every mandatory child of every element it includes
+   - **W6**: a value matches its variable: a concept is in the contract's bound scheme, a quantity is
+     on the variable's value space, a numeric value lies within the admissible ranges, and a variable
+     not multi-valued has one value per record
+   - **the slot set check** under C5-Q1
+   - each per amendment operation: Insert, Append and Replace have a replacement, Strike and
+     substitute has both texts, Delete has neither, and every operation generates at least one
+     version (C5-Q2b)
+   - an instance's amendment never generates a new version of a library element (C5-Q2c)
+   
+   W7 (clause numbers derived after assembly) is a design rule, stated in the README.
+5. **README:** §4.6's model, the laws section (W1 to W7, each with its shape), a how-to guide
+   (author a form, assemble an instance, amend it, propose a revision upstream), and Release notes
+   with the 0.3.0 breaking entry.
+6. **Tests:** `tools/test_wording.py` gains the rows below.
+7. **Catalog, releases and the tag list.** The agent stops here, before any commit.
+
+| ID | Given / When / Then | Level | +/- |
+|---|---|---|---|
+| C5-01 | all examples / shapes / conform | L1 | + |
+| C5-02 | an element in two trees, a cycle of two elements / shapes / W1 reported | L1 | − |
+| C5-03 | part indices 0, 1, 3, and 0, 1, 1 / shapes / W2 reported | L1 | − |
+| C5-04 | a variant without mode Variation, an assembled wording with no variant of an included slot, one with two / shapes / W3 reported | L1 | − |
+| C5-05 | a mandatory element with a condition, a condition reading an embedded variable / shapes / W4 reported | L1 | − |
+| C5-06 | an assembled wording missing a mandatory child of an included section / shapes / W5 reported | L1 | − |
+| C5-07 | a concept outside the bound scheme, a quantity on another space, a value outside the admissible ranges, two values for a single-valued variable / shapes / W6 reported | L1 | − |
+| C5-08 | two variants whose ranges overlap, and two that leave a gap / shapes / reported. A slot of concept conditions / report / listed as unchecked (C5-Q1) | L1 | − |
+| C5-09 | each operation missing a required property / shapes / reported | L1 | − |
+| C5-10 | the facility amendment / queried / the second version includes the replacement and not the replaced element, and supersedes the first | L1 | + |
+| C5-11 | the README / literate check / spec, vocab and shapes equal their blocks. Its Release notes mark 0.3.0 breaking | L1 | + |
+| C5-12 | the existing tool tests / unchanged / pass (non-weakening) | L1 | + |
+| C5-13 | an instance's amendment that generates a new version of a library element / shapes / reported (C5-Q2c) | L1 | − |
+| C5-14 | the draft form release / queried / its new variant is `prov:wasDerivedFrom` the bespoke element, which is `prov:wasRevisionOf` the library version | L1 | + |
 
 | Slice | Content | Version impact |
 |---|---|---|
@@ -612,6 +710,45 @@ probe).
 | C11-10 | `check:ontology-versioning` / run / runtime, vocab and shapes bumped, and the README's release notes mark shapes 0.3.0 breaking | L1 | + |
 | C11-11 | the existing tool tests, `check:python-root`, `check:mork-compilers` / unchanged / pass (non-weakening) | L1 | + |
 
+#### C11a in detail
+
+**Machine:** R (Claude Code). **Branch:** `ccs/c11a-nested-states`, created by the human. **Commits are
+the human's.** The slice has two phases with a human gate between them, because its design is not
+yet written.
+**Validation Pack:** [computable-contract-substrate-c11a](../validation/computable-contract-substrate-c11a.md).
+**Decisions:** ADR-A106 (decisions 5 and 7, law B5), C11-Q1 (occasions refined by sub-states),
+C11-Q2 (initial states, reused for composite states).
+
+**Invariant:** Behaviour can express a state that contains states of its own, re-entering the
+sub-state it left (history), and several regimes active on one subject at once with stated rules
+for how they interact, in configuration as data, evaluated by C12 without inference.
+
+**Phase 1, paper: a sketch and an A-106 amendment.** `docs/developer/sketches/nested-states-and-history.md`:
+
+| Topic | What the sketch decides |
+|---|---|
+| reference semantics | how far Behaviour follows a published statechart standard (W3C SCXML: compound and parallel states, initial states, shallow and deep history), and where it departs |
+| composite states | how a state holds sub-states: a sub-state space per composite state, or a parent property on states, and how `bhv:initialState` (C11) names a composite state's initial sub-state |
+| history | shallow or deep, declared per composite state, and what an occupancy records so a re-entry can find its prior sub-state. This replaces law B5's interim rule |
+| occupancies | one occupancy per active state at each level, or one per leaf, and how law B6 applies to entries caused by a parent's entry |
+| concurrent regimes | whether concurrency is parallel regions within one state space, separate regimes on one subject, or both, and the interaction rules: which regime's state gates a relation when two apply, and evaluation order |
+| occasions | how a deployment's sub-states refine the six core occasion states (C11-Q1) without reaching their transitions, which stay the evaluator's |
+| worked cases | garden leave within a notice period, a cure period within default, suspension within run-off, reinstatement after suspension from either "in force" or "notice", force majeure overlapping notice, a disputed occasion as a parallel regime |
+| laws | B5 restated, and any new law |
+
+The ADR amendment is an addendum to ADR-A106, Proposed, carrying the sketch's decisions.
+
+**Gate:** the human accepts the sketch and the addendum. Phase 2 is briefed then, in this section,
+with its test cases. It touches Behaviour configuration and runtime, their shapes, and the
+README, and is expected to be additive.
+
+| ID | Given / When / Then | Level | +/- |
+|---|---|---|---|
+| C11a-01 | the sketch / read / every topic above decided or raised as a question for the human | paper | + |
+| C11a-02 | the worked cases / read against the sketch's model / each expressible, step by step | paper | + |
+| C11a-03 | the A-106 addendum / read / Proposed, decides only what the sketch decides | paper | + |
+| C11a-04 | links and prose / checks / pass | L1 | + |
+
 ### Tranche D: Instrument rewrite
 
 | Slice | Content | Version impact |
@@ -631,6 +768,7 @@ Instrument's own documents and examples. No applied insurance module imports Ins
 |---|---|---|
 | C12 | the runtime evaluator for regimes and occasions: positioned stimuli for scheduled triggers (with NRS N6), derived triggers for `ins:OnBreach` and `ins:OnCondition`, occasion derivation, state occupancies with evidence (B6), history per C11a. B3 and B6 shown | `tools/`, after C9 and C11a |
 | C13 | relation plans in the shared IR: per-class algorithms (§6.1), exception burden and `exe:ExceptionNotEstablished`, stratified state reading (§6.2), regime gating per state (§6.3, B8), finding, determination and deeming reads (§6.4). SPARQL reference first, SWRL for the positive subset | `tools/mork_compilers`. After AIR-3.3 and NRS N1 |
+| C13a | **design-time joint satisfiability (deferred from C5, decided 2026-10-02).** The OWL backend learns to compile question-form conditions, whose subject is the value they are posed, which it refuses today (`owl_backend.py`: "compiles bound conditions only"). On that: a variation slot's conditions checked as a set by the reasoner, no two jointly satisfiable and their union covering the governing variables' admissible values, for every kind of condition, which C5's SHACL-SPARQL covers only for intervals over one variable. NRS N3's clash check (an obligation and a prohibition over overlapping scopes) and segment overlap use the same task, satisfiability of `P ⊓ Q`. Reasoner in the test-only harness (ADR-A83), so this serves LATTICE tooling, beside C5's consumer-runnable shapes | `tools/mork_compilers`. After C5 and NRS N1, with or before NRS N3 |
 
 ### Tranche F: examples and documentation
 
@@ -653,6 +791,8 @@ flowchart TB
     C8 --> C9
     C9 & C11a --> C12
     C9 & C11 --> C13
+    C5 & N1 --> C13a
+    C13a --> N3["NRS N3"]
     AIR33["AIR-3.3"] --> C13
     N1["NRS N1"] --> C13
     C9 & C12 --> C14 --> C15 --> C16 --> C17
@@ -783,3 +923,4 @@ records), the ADR catalogue.
 | R6 | The Foundation cascade collides with Phase 2's peril authoring | F1 waits for Phase 2 and shares one cascade with NRS N9 |
 | R7 | The nested-states deep dive grows | C11a blocks only C12. Instrument, templates and examples without history proceed |
 | R8 | Removing Behaviour's range axioms breaks data relying on inferred types | C10's Validation Pack runs every Behaviour example and capacity fixture before and after |
+| R9 | The design-time satisfiability check (C13a) is deferred and forgotten | it is a slice in tranche E with its own row on the status board, NRS N3 names it as its prerequisite, and C5's Validation Pack lists it under deliberate non-coverage |
