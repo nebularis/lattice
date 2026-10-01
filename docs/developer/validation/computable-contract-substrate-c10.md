@@ -56,13 +56,16 @@ Written by the building machine when the work is committed.
   - The README is again the literate source of configuration, vocab and structural shapes, which
     repairs their existing drift (a missing property, the vocab header, a missing shape). The
     runtime document is authored as a file, since the extractor writes one spec per layer.
-  - Three fixtures still type their effect targets as `ins:Obligation`. They are data, not the
-    layer, so C10-02 checks the layer's documents only. C10a's import guard may decide whether
-    fixtures should use a neutral class.
+  - The three fixtures that targeted `ins:Obligation` now declare their own target kind and target
+    class (`ex:ApplicationTarget`, `ex:RecordTarget`), as ADR-A106 decision 2 has the owner of a
+    target declare its kind. None uses the deprecated `bhv:InstrumentTarget`. Revised in review.
   - `tools/test_ontology_catalog.py`'s closure test encoded ADR-A01's old order. It now asserts
     the accepted one: Behaviour reaches the layers below it and not Instrument.
-  - `applied/capacity` has no README, so its import-only bump has no release notes section.
-- **Deviations from the plan:** C10-02's scope, as above.
+  - `applied/capacity` gains a README (added in review): what is authored (the `capx` execution
+    profile) and what is only designed (the `cap:` source ontology), where it sits, and release
+    notes with the 0.8.0 breaking entry.
+- **Deviations from the plan:** none. C10-02 was first scoped to the layer's documents, then
+  restored to every file once the fixtures were made neutral.
 - **Tags for the human:** `behaviour-v0.8.0`, `behaviour-runtime-v0.8.0`, `behaviour-vocab-v0.8.0`,
   `behaviour-shapes-v0.2.0`, `behaviour-projection-v0.2.0`, `applied-capacity-execution-v0.8.0`.
 
@@ -73,7 +76,7 @@ Verified on machine R, 2026-10-01.
 | ID | Result |
 |---|---|
 | C10-01 | pass |
-| C10-02 | pass, the layer's documents |
+| C10-02 | pass: every Behaviour file and the conformance case, no deprecated kind in a fixture |
 | C10-03 | pass, `targets` and `forSubject` |
 | C10-04 | pass: 13 declaration classes in configuration, 5 runtime classes in runtime |
 | C10-05 | pass |

@@ -397,7 +397,7 @@ property.
 | ID | Given / When / Then | Level | +/- |
 |---|---|---|---|
 | C10-01 | configuration / parsed / imports Foundation, Vocabulary, Quantification, Party and Eligibility, and not Instrument. Runtime imports configuration only | L1 | + |
-| C10-02 | the layer's own documents (README, spec, vocab, shapes, projection) / scanned / no `ins:` term and no Instrument namespace. Fixtures are data and keep their `ins:Obligation` targets (step 6) | L1 | + |
+| C10-02 | every Behaviour file and the shared conformance case / scanned / no `ins:` term and no Instrument namespace, and no fixture uses the deprecated `bhv:InstrumentTarget` | L1 | + |
 | C10-03 | both documents / parsed / no `rdfs:range` on `bhv:targets` or `bhv:forSubject` | L1 | + |
 | C10-04 | a class list per document / compared with ADR-A08's tiers / declaration tier in configuration only, the other three in runtime only | L1 | + |
 | C10-05 | a transition with no effect / shapes / conforms | L1 | + |

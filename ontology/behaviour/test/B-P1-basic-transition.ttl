@@ -2,7 +2,7 @@
 
 @prefix bhv: <https://www.nebularis.org/neuro-semantic/lattice/behaviour#> .
 @prefix elg: <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
-@prefix ins: <https://www.nebularis.org/neuro-semantic/lattice/instrument#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix ex:  <https://example.org/lattice/behaviour/test/> .
 
 ex:space a bhv:StateSpace .
@@ -11,7 +11,7 @@ ex:end a bhv:State ; bhv:inStateSpace ex:space .
 
 ex:trigger a bhv:TriggerDefinition ; bhv:triggerKind bhv:ExternalStimulus .
 ex:guard a bhv:GuardDefinition ; bhv:requiresEligibility ex:profile .
-ex:effect a bhv:EffectDefinition ; bhv:targetKind bhv:InstrumentTarget ; bhv:targets ex:obligation .
+ex:effect a bhv:EffectDefinition ; bhv:targetKind ex:RecordTarget ; bhv:targets ex:record .
 
 ex:transition a bhv:TransitionDefinition ;
     bhv:fromState ex:start ;
@@ -30,4 +30,5 @@ ex:execution a bhv:TransitionExecution ;
     bhv:usesProfile bhv:B-P1 .
 
 ex:profile a elg:AdmissionProfile .
-ex:obligation a ins:Obligation .
+ex:record a ex:Record .
+ex:RecordTarget a bhv:TargetKind ; rdfs:comment "A record the effect updates, declared by the fixture that owns it (ADR-A106 decision 2)." .

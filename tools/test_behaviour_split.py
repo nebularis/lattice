@@ -80,13 +80,14 @@ def test_c10_01_imports() -> None:
 
 
 def test_c10_02_names_no_instrument_term() -> None:
-    """The layer's own documents (B7). Fixtures under examples/ and test/ are data, and may show
-    an effect targeting another layer's node."""
-    files = [LAYER / "README.md", *(p for d in ("spec", "vocab", "shapes", "projection") for p in (LAYER / d).glob("*.ttl"))]
-    assert len(files) > 6
+    """Every Behaviour file, fixtures included (B7), and the shared conformance case."""
+    files = [p for p in LAYER.rglob("*") if p.suffix in {".ttl", ".md"}]
+    files.append(ROOT / "test" / "conformance" / "cases" / "behaviour-bp1-transition.ttl")
     for path in files:
         text = path.read_text()
         assert "lattice/instrument" not in text and "ins:" not in text, path.relative_to(ROOT)
+        if path.parent.name in {"examples", "test", "cases"}:
+            assert "bhv:InstrumentTarget" not in text, path.relative_to(ROOT)
 
 
 @pytest.mark.parametrize("prop", ["targets", "forSubject"])

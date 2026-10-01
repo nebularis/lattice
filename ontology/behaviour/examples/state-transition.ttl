@@ -2,7 +2,7 @@
 
 @prefix bhv: <https://www.nebularis.org/neuro-semantic/lattice/behaviour#> .
 @prefix elg: <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
-@prefix ins: <https://www.nebularis.org/neuro-semantic/lattice/instrument#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix ex:  <https://example.org/lattice/behaviour/> .
 
 ex:approval-space a bhv:StateSpace .
@@ -16,8 +16,8 @@ ex:eligibility-guard a bhv:GuardDefinition ;
     bhv:requiresEligibility ex:profile-a .
 
 ex:activate-effect a bhv:EffectDefinition ;
-    bhv:targetKind bhv:InstrumentTarget ;
-    bhv:targets ex:obligation-1 .
+    bhv:targetKind ex:ApplicationTarget ;
+    bhv:targets ex:application-1 .
 
 ex:transition-1 a bhv:TransitionDefinition ;
     bhv:fromState ex:pending ;
@@ -30,4 +30,9 @@ ex:transition-1 a bhv:TransitionDefinition ;
     bhv:priority 1 .
 
 ex:profile-a a elg:AdmissionProfile .
-ex:obligation-1 a ins:Obligation .
+ex:application-1 a ex:Application .
+
+# The target kind belongs to whoever owns the target, here the example itself
+# (ADR-A106 decision 2). Behaviour names no other layer's target kinds.
+ex:ApplicationTarget a bhv:TargetKind ;
+    rdfs:comment "An application whose approval the transition records." .
