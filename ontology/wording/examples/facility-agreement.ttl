@@ -1,0 +1,133 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Premise. A contract's text has a structure of its own, independent of what
+# it means in law. Parts nest and are ordered, text embeds values supplied per
+# instance and refers to defined words, and a document the text relies on may
+# sit outside the text altogether.
+#
+# A facility agreement's section 4 holds two clauses. Clause 4.1 reads
+#
+#   The Borrower shall pay interest at {margin} per annum.
+#
+# "Borrower" refers to the agreement's definition, and the margin is a value
+# supplied when the facility is signed. Clause 4.2 relies on a repayment plan
+# attached as an annex, which is a scanned document, not digitised text.
+#
+# What the example shows:
+#
+# | Construct                         | Where                               |
+# |-----------------------------------|-------------------------------------|
+# | a wording tree, ordered by rank   | ex:facility-wording, ex:sec-4       |
+# | a clause as five text parts       | ex:cl-4-1                           |
+# | an object reference to a definition | ex:cl-4-1-p1 → ex:def-borrower    |
+# | a variable reference              | ex:cl-4-1-p3 → ex:var-margin        |
+# | a reference to a document object  | ex:annex-1-ref → ex:repayment-plan  |
+#
+# Clause numbers are object ids. Inserting a clause before 4.1 would change
+# what a reader sees, never the clause's identity.
+
+@prefix wrd:     <https://www.nebularis.org/neuro-semantic/lattice/wording#> .
+@prefix wrd-voc: <https://www.nebularis.org/neuro-semantic/lattice/wording/vocab#> .
+@prefix fnd:     <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix voc:     <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
+@prefix qnt:     <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
+@prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex:      <https://example.org/lattice/wording/facility/> .
+
+ex:facility-wording a wrd:Wording ;
+    fnd:hasIdentity ex:facility-wording-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    wrd:directlyComprises ex:sec-1 , ex:sec-4 , ex:annex-1 .
+
+# ---- Section 1: definitions ------------------------------------------------
+
+ex:sec-1 a wrd:Element ;
+    fnd:hasIdentity ex:sec-1-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Section ;
+    wrd:objectId "1" ;
+    wrd:rankKey "a0" ;
+    wrd:directlyComprises ex:def-borrower .
+
+ex:def-borrower a wrd:Text ;
+    fnd:hasIdentity ex:def-borrower-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Definition ;
+    wrd:objectId "1.1" ;
+    wrd:rankKey "a0" ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ; wrd:partText "\"Borrower\" means the company named as borrower in the schedule." ] .
+
+# ---- Section 4: interest ---------------------------------------------------
+
+ex:sec-4 a wrd:Element ;
+    fnd:hasIdentity ex:sec-4-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Section ;
+    wrd:objectId "4" ;
+    wrd:rankKey "d0" ;
+    wrd:directlyComprises ex:cl-4-1 , ex:cl-4-2 , ex:var-margin .
+
+ex:cl-4-1 a wrd:Text ;
+    fnd:hasIdentity ex:cl-4-1-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ;
+    wrd:objectId "4.1" ;
+    wrd:rankKey "a0" ;
+    wrd:hasTextPart ex:cl-4-1-p0 , ex:cl-4-1-p1 , ex:cl-4-1-p2 , ex:cl-4-1-p3 , ex:cl-4-1-p4 .
+
+ex:cl-4-1-p0 a wrd:TextPart ; wrd:partIndex 0 ; wrd:partText "The " .
+ex:cl-4-1-p1 a wrd:TextPart ; wrd:partIndex 1 ; wrd:refersToObject ex:def-borrower .
+ex:cl-4-1-p2 a wrd:TextPart ; wrd:partIndex 2 ; wrd:partText " shall pay interest at " .
+ex:cl-4-1-p3 a wrd:TextPart ; wrd:partIndex 3 ; wrd:refersToVariable ex:var-margin .
+ex:cl-4-1-p4 a wrd:TextPart ; wrd:partIndex 4 ; wrd:partText " per annum." .
+
+ex:var-margin a wrd:EmbeddedVariable ;
+    fnd:hasIdentity ex:var-margin-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    wrd:variableKey "margin" ;
+    wrd:rankKey "z0" ;
+    wrd:valueSpace ex:annual-rate-space ;
+    wrd:multiValued false .
+
+ex:annual-rate-space a qnt:ValueSpace .
+
+ex:cl-4-2 a wrd:Text ;
+    fnd:hasIdentity ex:cl-4-2-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ;
+    wrd:objectId "4.2" ;
+    wrd:rankKey "b0" ;
+    wrd:hasTextPart ex:cl-4-2-p0 , ex:cl-4-2-p1 .
+
+ex:cl-4-2-p0 a wrd:TextPart ; wrd:partIndex 0 ; wrd:partText "Each loan is repaid in the instalments set out in " .
+ex:cl-4-2-p1 a wrd:TextPart ; wrd:partIndex 1 ; wrd:refersToObject ex:annex-1 .
+
+# ---- Annex 1: a scanned repayment plan -------------------------------------
+
+ex:annex-1 a wrd:Element ;
+    fnd:hasIdentity ex:annex-1-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Annex ;
+    wrd:objectId "Annex 1" ;
+    wrd:rankKey "z0" ;
+    wrd:directlyComprises ex:annex-1-ref .
+
+ex:annex-1-ref a wrd:Reference ;
+    fnd:hasIdentity ex:annex-1-ref-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    wrd:rankKey "a0" ;
+    wrd:linksTo ex:repayment-plan .
+
+ex:repayment-plan a wrd:DocumentObject ;
+    wrd:documentKind ex:repayment-schedule .
+
+# A deployment's own document kinds, bound to Wording's document kind contract.
+ex:document-kinds a voc:ConceptScheme ;
+    fnd:hasIdentity ex:document-kinds-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Lender document kinds"@en .
+
+ex:repayment-schedule a skos:Concept ;
+    skos:prefLabel "Repayment schedule"@en ;
+    skos:inScheme ex:document-kinds .

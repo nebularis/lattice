@@ -1,0 +1,125 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Premise. A protocol is drafted once from a sponsor's template and filled in
+# per trial. Some values are shown in the text, others decide which parts of
+# the text apply, and the text relies on documents outside it.
+#
+# A clinical trial protocol has a schedule of assessments and a section on
+# visits. Clause 6.2 reads
+#
+#   Each follow-up visit takes place within {visit window} of its scheduled date.
+#
+# The visit window is shown in the text and must fall between 1 and 14 days.
+# The number of study arms is a governing value: it is never shown, and later
+# decides whether the arm-comparison section is included (assembly, slice C4). Clause 6.3 refers to an external regulation on
+# reporting.
+#
+# What the example shows:
+#
+# | Construct                                   | Where                       |
+# |---------------------------------------------|-----------------------------|
+# | a schedule as an element type               | ex:schedule-1               |
+# | an embedded variable with admissible values | ex:var-visit-window         |
+# | a governing variable, never shown in text   | ex:gv-study-arms            |
+# | a reference to an external document         | ex:cl-6-3 → ex:gcp-regulation |
+# | a classification beside the element type    | ex:cl-6-3                   |
+
+@prefix wrd:     <https://www.nebularis.org/neuro-semantic/lattice/wording#> .
+@prefix wrd-voc: <https://www.nebularis.org/neuro-semantic/lattice/wording/vocab#> .
+@prefix fnd:     <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix voc:     <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
+@prefix qnt:     <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
+@prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
+@prefix ex:      <https://example.org/lattice/wording/trial/> .
+
+ex:protocol-wording a wrd:Wording ;
+    fnd:hasIdentity ex:protocol-wording-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    wrd:directlyComprises ex:schedule-1 , ex:sec-6 , ex:gv-study-arms .
+
+# ---- Schedule 1: assessments (rows and columns are slice C4's tables) ------
+
+ex:schedule-1 a wrd:Element ;
+    fnd:hasIdentity ex:schedule-1-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Schedule ;
+    wrd:objectId "Schedule 1" ;
+    wrd:rankKey "a0" ;
+    wrd:directlyComprises ex:schedule-1-intro .
+
+ex:schedule-1-intro a wrd:Text ;
+    fnd:hasIdentity ex:schedule-1-intro-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ;
+    wrd:objectId "S1.1" ;
+    wrd:rankKey "a0" ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ; wrd:partText "Assessments are made at each visit listed below." ] .
+
+# ---- Section 6: visits -----------------------------------------------------
+
+ex:sec-6 a wrd:Element ;
+    fnd:hasIdentity ex:sec-6-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Section ;
+    wrd:objectId "6" ;
+    wrd:rankKey "f0" ;
+    wrd:directlyComprises ex:cl-6-2 , ex:cl-6-3 , ex:var-visit-window .
+
+ex:cl-6-2 a wrd:Text ;
+    fnd:hasIdentity ex:cl-6-2-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ;
+    wrd:objectId "6.2" ;
+    wrd:rankKey "b0" ;
+    wrd:hasTextPart ex:cl-6-2-p0 , ex:cl-6-2-p1 , ex:cl-6-2-p2 .
+
+ex:cl-6-2-p0 a wrd:TextPart ; wrd:partIndex 0 ; wrd:partText "Each follow-up visit takes place within " .
+ex:cl-6-2-p1 a wrd:TextPart ; wrd:partIndex 1 ; wrd:refersToVariable ex:var-visit-window .
+ex:cl-6-2-p2 a wrd:TextPart ; wrd:partIndex 2 ; wrd:partText " of its scheduled date." .
+
+ex:var-visit-window a wrd:EmbeddedVariable ;
+    fnd:hasIdentity ex:var-visit-window-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    wrd:variableKey "visit-window" ;
+    wrd:rankKey "z0" ;
+    wrd:valueSpace ex:days-space ;
+    wrd:admissibleValues ex:one-to-fourteen-days ;
+    wrd:multiValued false .
+
+ex:days-space a qnt:ValueSpace .
+# The bounds (1 and 14 days, both closed) are Quantification's concern.
+ex:one-to-fourteen-days a qnt:RangeSet ; qnt:onSpace ex:days-space .
+
+ex:gv-study-arms a wrd:GoverningVariable ;
+    fnd:hasIdentity ex:gv-study-arms-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    wrd:variableKey "study-arms" ;
+    wrd:rankKey "z0" ;
+    wrd:valueSpace ex:count-space ;
+    wrd:multiValued false .
+
+ex:count-space a qnt:ValueSpace .
+
+ex:cl-6-3 a wrd:Text ;
+    fnd:hasIdentity ex:cl-6-3-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ;
+    wrd:classification ex:safety-reporting ;
+    wrd:objectId "6.3" ;
+    wrd:rankKey "c0" ;
+    wrd:hasTextPart ex:cl-6-3-p0 , ex:cl-6-3-p1 .
+
+ex:cl-6-3-p0 a wrd:TextPart ; wrd:partIndex 0 ; wrd:partText "Adverse events are reported as required by " .
+ex:cl-6-3-p1 a wrd:TextPart ; wrd:partIndex 1 ; wrd:refersToObject ex:gcp-regulation .
+
+ex:gcp-regulation a wrd:ExternalDocument .
+
+# A sponsor's own clause classification, bound to Wording's classification contract.
+ex:sponsor-classes a voc:ConceptScheme ;
+    fnd:hasIdentity ex:sponsor-classes-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Sponsor clause classes"@en .
+
+ex:safety-reporting a skos:Concept ;
+    skos:prefLabel "Safety reporting"@en ;
+    skos:inScheme ex:sponsor-classes .
