@@ -20,7 +20,7 @@ run = "python -m pip install -c requirements-lock.txt \".[reasoning,test]\""
 
 [tasks."bootstrap:workers"]
 description = "Install the worker package with test dependencies"
-run = "python -m pip install -e ./workers[test]"
+run = "python -m pip install -e \"./workers[test,authoring]\""
 
 [tasks."bootstrap:mork"]
 description = "Install the MORK package and MTP structural dependencies"
@@ -73,6 +73,10 @@ run = "python -m unittest surface.test_surface mork_compilers.test_mork_compiler
 
 [tasks."check:workers"]
 run = "python -m pytest workers/tests"
+
+[tasks."check:authoring-contracts"]
+description = "Validate the word authoring POC contracts, templates, samples and fixtures"
+run = "python -m pytest workers/tests/test_authoring_contracts.py -q"
 
 [tasks."check:mtp"]
 description = "Check the committed MORK Teaching Pack structure and pins"

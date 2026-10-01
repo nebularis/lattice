@@ -1,0 +1,253 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.nebularis.org/lattice/authoring/common/0.1.0",
+  "title": "Word authoring POC: shared definitions",
+  "$defs": {
+    "Uuid": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "Key": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]{0,39}$"
+    },
+    "SectionKey": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]{0,31}$"
+    },
+    "RevisionHash": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "Timestamp": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,9})?Z$"
+    },
+    "ValueType": {
+      "type": "string",
+      "enum": ["money", "percentage", "date", "duration", "number", "text", "party"]
+    },
+    "TermKind": {
+      "type": "string",
+      "enum": ["Obligation", "Prohibition", "Permission", "Exclusion", "Power", "Definition", "Deeming"]
+    },
+    "ElementKind": {
+      "type": "string",
+      "enum": ["clause", "definition"]
+    },
+    "Severity": {
+      "type": "string",
+      "enum": ["violation", "warning", "info"]
+    },
+    "GraphRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tenantId", "projectId", "graphIri", "revisionHash"],
+      "properties": {
+        "tenantId": {"type": "string", "const": "poc"},
+        "projectId": {"type": "string", "const": "word-authoring"},
+        "graphIri": {"type": "string", "minLength": 1, "maxLength": 500},
+        "revisionHash": {"$ref": "#/$defs/RevisionHash"}
+      }
+    },
+    "VariableDeclaration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["variableKey", "label", "valueType"],
+      "properties": {
+        "variableKey": {"$ref": "#/$defs/Key"},
+        "label": {"type": "string", "minLength": 1, "maxLength": 100},
+        "valueType": {"$ref": "#/$defs/ValueType"}
+      }
+    },
+    "ValidationResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["shapeId", "severity", "focusNode", "elementId", "message"],
+      "properties": {
+        "shapeId": {"type": "string", "pattern": "^WS[0-9]{1,2}$"},
+        "severity": {"$ref": "#/$defs/Severity"},
+        "focusNode": {"type": "string", "minLength": 1, "maxLength": 500},
+        "elementId": {"oneOf": [{"$ref": "#/$defs/Uuid"}, {"type": "null"}]},
+        "message": {"type": "string", "minLength": 1, "maxLength": 1000}
+      }
+    },
+    "ValidationReport": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["conforms", "results"],
+      "properties": {
+        "conforms": {"type": "boolean"},
+        "results": {"type": "array", "maxItems": 1000, "items": {"$ref": "#/$defs/ValidationResult"}}
+      }
+    },
+    "Suggestion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["action", "valueType", "suggestedKey", "targetElementId"],
+      "properties": {
+        "action": {"type": "string", "enum": ["mark-variable", "mark-reference", "none"]},
+        "valueType": {"oneOf": [{"$ref": "#/$defs/ValueType"}, {"type": "null"}]},
+        "suggestedKey": {"oneOf": [{"$ref": "#/$defs/Key"}, {"type": "null"}]},
+        "targetElementId": {"oneOf": [{"$ref": "#/$defs/Uuid"}, {"type": "null"}]}
+      }
+    },
+    "Detection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["elementId", "partIndex", "start", "end", "text", "kind", "suggestion"],
+      "properties": {
+        "elementId": {"$ref": "#/$defs/Uuid"},
+        "partIndex": {"type": "integer", "minimum": 0},
+        "start": {"type": "integer", "minimum": 0},
+        "end": {"type": "integer", "minimum": 1},
+        "text": {"type": "string", "minLength": 1, "maxLength": 200},
+        "kind": {
+          "type": "string",
+          "enum": ["placeholder", "money", "percentage", "date", "duration", "defined-term", "cross-reference"]
+        },
+        "suggestion": {"$ref": "#/$defs/Suggestion"}
+      }
+    },
+    "Finding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "severity", "sectionKey", "elementId", "message"],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": [
+            "unknown-section",
+            "required-section-empty",
+            "element-kind-not-allowed",
+            "unmarked-text",
+            "term-kind-not-allowed",
+            "no-term-kind"
+          ]
+        },
+        "severity": {"$ref": "#/$defs/Severity"},
+        "sectionKey": {"oneOf": [{"$ref": "#/$defs/SectionKey"}, {"type": "null"}]},
+        "elementId": {"oneOf": [{"$ref": "#/$defs/Uuid"}, {"type": "null"}]},
+        "message": {"type": "string", "minLength": 1, "maxLength": 1000}
+      }
+    },
+    "Span": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["start", "end", "role", "partIndex"],
+      "properties": {
+        "start": {"type": "integer", "minimum": 0},
+        "end": {"type": "integer", "minimum": 1},
+        "role": {
+          "type": "string",
+          "enum": ["fixed", "ignorable", "slot-variable", "slot-constant", "slot-text", "modal", "connective", "unmatched"]
+        },
+        "partIndex": {"type": "integer", "minimum": 0}
+      }
+    },
+    "ElementAnalysis": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "elementId", "objectId", "sectionKey", "kind", "text", "relationClass", "basis", "formId",
+        "leTemplate", "leSentence", "spans"
+      ],
+      "properties": {
+        "elementId": {"$ref": "#/$defs/Uuid"},
+        "objectId": {"type": "string", "minLength": 1, "maxLength": 20},
+        "sectionKey": {"$ref": "#/$defs/SectionKey"},
+        "kind": {"$ref": "#/$defs/ElementKind"},
+        "text": {"type": "string", "maxLength": 10000},
+        "relationClass": {"oneOf": [{"$ref": "#/$defs/TermKind"}, {"type": "null"}]},
+        "basis": {"type": "string", "enum": ["form", "keyword", "none"]},
+        "formId": {"oneOf": [{"type": "string", "minLength": 1, "maxLength": 60}, {"type": "null"}]},
+        "leTemplate": {"oneOf": [{"type": "string", "minLength": 1, "maxLength": 500}, {"type": "null"}]},
+        "leSentence": {"oneOf": [{"type": "string", "minLength": 1, "maxLength": 10000}, {"type": "null"}]},
+        "spans": {"type": "array", "maxItems": 2000, "items": {"$ref": "#/$defs/Span"}}
+      }
+    },
+    "GraphNode": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "label", "kind"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1, "maxLength": 200},
+        "label": {"type": "string", "minLength": 1, "maxLength": 200},
+        "kind": {"type": "string", "enum": ["relation", "element", "role", "variable"]}
+      }
+    },
+    "GraphEdge": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["from", "to", "label"],
+      "properties": {
+        "from": {"type": "string", "minLength": 1, "maxLength": 200},
+        "to": {"type": "string", "minLength": 1, "maxLength": 200},
+        "label": {"type": "string", "minLength": 1, "maxLength": 200}
+      }
+    },
+    "GraphView": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["nodes", "edges"],
+      "properties": {
+        "nodes": {"type": "array", "maxItems": 2000, "items": {"$ref": "#/$defs/GraphNode"}},
+        "edges": {"type": "array", "maxItems": 4000, "items": {"$ref": "#/$defs/GraphEdge"}}
+      }
+    },
+    "FormsProfile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["profileId", "version"],
+      "properties": {
+        "profileId": {"type": "string", "minLength": 1, "maxLength": 60},
+        "version": {"type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$"}
+      }
+    },
+    "Analysis": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["formsProfile", "elements", "leProgram", "graphView"],
+      "properties": {
+        "formsProfile": {"$ref": "#/$defs/FormsProfile"},
+        "elements": {"type": "array", "maxItems": 200, "items": {"$ref": "#/$defs/ElementAnalysis"}},
+        "leProgram": {"type": "string", "maxLength": 200000},
+        "graphView": {"$ref": "#/$defs/GraphView"}
+      }
+    },
+    "JobStatus": {
+      "type": "string",
+      "enum": ["queued", "completed", "failed"]
+    },
+    "Job": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["jobId", "status"],
+      "properties": {
+        "jobId": {"$ref": "#/$defs/Uuid"},
+        "status": {"$ref": "#/$defs/JobStatus"}
+      }
+    },
+    "TemplateSummary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["templateId", "title", "domain", "version"],
+      "properties": {
+        "templateId": {"$ref": "#/$defs/Key"},
+        "title": {"type": "string", "minLength": 1, "maxLength": 200},
+        "domain": {"$ref": "#/$defs/Key"},
+        "version": {"type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$"}
+      }
+    },
+    "SampleSummary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sampleId", "title", "templateId"],
+      "properties": {
+        "sampleId": {"$ref": "#/$defs/Key"},
+        "title": {"type": "string", "minLength": 1, "maxLength": 200},
+        "templateId": {"$ref": "#/$defs/Key"}
+      }
+    }
+  }
+}

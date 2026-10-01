@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.nebularis.org/lattice/authoring/document-view/0.1.0",
+  "title": "Word authoring POC: document view",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["documentId", "title", "templateId", "latestRevision"],
+  "properties": {
+    "documentId": {"$ref": "https://schemas.nebularis.org/lattice/authoring/common/0.1.0#/$defs/Uuid"},
+    "title": {"type": "string", "minLength": 1, "maxLength": 200},
+    "templateId": {"$ref": "https://schemas.nebularis.org/lattice/authoring/common/0.1.0#/$defs/Key"},
+    "latestRevision": {"type": "integer", "minimum": 1}
+  }
+}

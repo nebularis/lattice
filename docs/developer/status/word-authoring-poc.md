@@ -3,8 +3,7 @@
 # Word authoring proof of concept - Status
 
 **Unit ID:** `word-authoring-poc`
-**Status:** 🚧 In progress. Decisions recorded, WA0 preflight passed (P5 and P6 on re-run). WA1 is
-next
+**Status:** 🚧 In progress. WA0 and WA1 done. WA2 is next
 **Last updated:** 2026-10-01
 **Plan:** [word-authoring-poc.md](../plans/word-authoring-poc.md)
 **Sketch:** [word-authoring-poc.md](../sketches/word-authoring-poc.md)
@@ -17,8 +16,8 @@ The design and a one-shot plan of thirteen slices (WA0 to WA11, with WA9a) are w
 WA-D1 to WA-D13 were recorded by the human on 2026-10-01: WA-D4 is Javalin, the rest follow the
 recommendations. ADR-A114 stays Proposed. WA0 (preflight) is done. No code exists yet.
 
-**Next action, for the human:** ask for WA1 onward.
-**Next action, for the agent:** WA1, when asked. No preflight blocker remains.
+**Next action, for the human:** ask for WA2 onward.
+**Next action, for the agent:** WA2 (service model, mapping and shapes), when asked.
 
 ## Preflight (WA0, 2026-10-01)
 
@@ -36,8 +35,9 @@ recommendations. ADR-A114 stays Proposed. WA0 (preflight) is done. No code exist
 
 | # | Slice | State | Commit | Blocked on |
 |---|---|---|---|---|
-| WA0 | Preflight | done | this commit | |
-| WA1 | Contracts, templates and samples | ready | | |
+| WA0 | Preflight | done | `c82d019` | |
+| WA1 | Contracts, templates and samples | done | (this commit) | |
+| WA2 | Service model, mapping and shapes | ready | | WA1 |
 | WA2 | Service model, mapping and shapes | waiting | | WA1 |
 | WA3 | Detection, templates and conformance | waiting | | WA2 |
 | WA4 | API and HTTP adapter | waiting | | WA3 |
@@ -56,6 +56,7 @@ recommendations. ADR-A114 stays Proposed. WA0 (preflight) is done. No code exist
 |---|---|---|
 | WA0 to WA11 | about 4.35M in total (plan §4) | |
 | WA0 | 60k | about 60k |
+| WA1 | 300k | about 220k |
 
 ## History
 
@@ -69,3 +70,9 @@ recommendations. ADR-A114 stays Proposed. WA0 (preflight) is done. No code exist
   Committed with the unit's planning documents as `[wap] WA0: preflight` (`a0758ae`).
 - 2026-10-01: P5 and P6 re-run after the human set `NODE_EXTRA_CA_CERTS` and started Docker
   Desktop. Both pass. All preflight checks now pass.
+- 2026-10-01: WA1 done: `contracts/authoring` (12 schemas, templates, samples, fixtures,
+  `amqp-topology.json`), `contracts/events` (2 event schemas), `contracts/openapi`, worker test
+  `test_authoring_contracts.py` (35 tests, all pass), `check:authoring-contracts` wired into
+  `mise.toml`. Validation Pack at `docs/developer/validation/word-authoring-poc-wa1.md`. Self-probe
+  confirmed (AC-02 catches a missing `additionalProperties: false`). Full `check:workers` (73
+  tests) still passes.

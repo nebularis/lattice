@@ -1,0 +1,14 @@
+{
+  "documentId": "00000009-0000-4000-8000-000000000000",
+  "revision": 1,
+  "wordingGraph": {
+    "tenantId": "poc",
+    "projectId": "word-authoring",
+    "graphIri": "https://example.org/lattice/authoring/doc/00000009-0000-4000-8000-000000000000/rev/1/wording-graph",
+    "revisionHash": "sha256:abababababababababababababababababababababababababababababababab"
+  },
+  "validation": {"conforms": true, "results": []},
+  "detections": [],
+  "templateFindings": [],
+  "job": {"jobId": "00000009-0000-4000-8000-000000000099", "status": "queued"}
+}

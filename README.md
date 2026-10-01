@@ -114,7 +114,8 @@ lattice/
 │   └── insure-o/            # Applied validation package for insurance-style substrate checks
 │
 ├── contracts/
-│   └── identity/            # Minting recipe and vector schemas, anchor vectors, independent verifier
+│   ├── identity/            # Minting recipe and vector schemas, anchor vectors, independent verifier
+│   └── authoring/           # Word authoring POC contracts, templates and samples (ADR-A114)
 │
 ├── platform/
 │   └── reasoning-testkit/   # Test-only OWL reasoner harness, never a runtime dependency (ADR-A83)

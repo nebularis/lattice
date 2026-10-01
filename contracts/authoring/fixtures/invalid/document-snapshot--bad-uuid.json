@@ -1,0 +1,9 @@
+{
+  "schemaVersion": "0.1.0",
+  "documentId": "not-a-uuid",
+  "templateId": "facility-agreement",
+  "title": "Bad uuid",
+  "sections": [],
+  "variables": [],
+  "unmarked": []
+}

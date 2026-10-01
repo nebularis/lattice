@@ -1,0 +1,16 @@
+{
+  "jobId": "00000009-0000-4000-8000-000000000099",
+  "correlationId": "00000009-0000-4000-8000-000000000099",
+  "documentId": "00000009-0000-4000-8000-000000000000",
+  "revision": 1,
+  "status": "failed",
+  "error": null,
+  "proposalGraph": null,
+  "analysis": {
+    "formsProfile": {"profileId": "wap-le-forms", "version": "0.1.0"},
+    "elements": [],
+    "leProgram": "% empty\n",
+    "graphView": {"nodes": [], "edges": []}
+  },
+  "completedAt": "2026-10-01T00:00:01Z"
+}
