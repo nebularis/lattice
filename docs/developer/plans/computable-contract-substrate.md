@@ -55,7 +55,7 @@ N12). A native evaluation engine.
 | ADR | Title | Decides | Drafted in |
 |---|---|---|---|
 | A-112 | Wording layer | the layer, its position between Eligibility and Instrument, and Behaviour moved below Instrument (both amend A-01), its contents | C0 |
-| A-113 | Breaking changes at major version zero | a breaking change to a 0.x layer takes a MINOR bump, marked breaking in its release row and ADR (clarifies A-86) | C0 |
+| A-113 | Breaking changes at major version zero | a breaking change to a 0.x layer takes a MINOR bump, marked breaking (C0-Q3) (clarifies A-86) | C0 |
 | A-104 | Instrument: terms and legal relations (retitled from "Deontic extension of Instrument") | the rewrite, superseding A-07b, carrying A-96 onto terms. Regimes, legal triggers, `ins:appliesInState`, `ins:computedBy`, the template library and `ontology/instrument/templates/` | C1 |
 | A-106 | Behaviour configuration, runtime, occasions and records (retitled from "Compensation chains and violation records") | the configuration and runtime split, `bhv:targets` with no range, `bhv:forSubject` relaxed, engine-setting defaults, no required effect, the evidence rule (B6), occasions, act, breach, exercise, determination and deemed-fact records, laws B1 to B8. Alignment with Instrument is by sub-class and sub-property (sketch §7.3), with no compiled wiring | C2 |
 | A-109 | The importable rule-body fragment (NRS N2) | revised: a read of a recorded occasion state is admitted when stratified | NRS N2 |
@@ -71,11 +71,101 @@ branch.
 
 | Slice | Content | Output |
 |---|---|---|
-| C0 | draft A-112, A-113, and the ADR-A-C2 addendum (CC-D7) | three documents, Proposed |
+| C0 | draft A-112, A-113, and the A-01 and ADR-A-C2 addenda (CC-D7) | four documents, Proposed |
 | C1 | draft A-104 from the sketch §5, §6, §7.3, §7.4, laws I1 to I16 | ADR, Proposed |
 | C2 | draft A-106 from the sketch §7, laws B1 to B8 | ADR, Proposed |
 
 Gate A: the human accepts A-104, A-106, A-112 and A-113.
+
+#### C0 in detail
+
+**Machine:** R (Claude Code). **Branch:** `ccs/c0-adrs`, created by the human. **Validation Pack:**
+[computable-contract-substrate-c0](../validation/computable-contract-substrate-c0.md).
+**Decisions carried:** CC-D1, CC-D2 and CC-D8's layer order (A-112), CC-D4 (A-113), CC-D7 (the
+ADR-A-C2 addendum).
+
+**Invariant:** paper only. Two new ADRs and two addenda, all `Proposed`, plus the ADR index. No
+ontology, tool, README or architecture document changes: those follow acceptance at Gate A, in the
+slices that build what the ADRs decide (C3, C10, C16). Each ADR states what was decided and cites
+the sketch for the argument, so the rationale lives in one place.
+
+**Questions for the human before the branch** (the brief follows the recommendation unless told
+otherwise):
+
+| # | Question | Options | Recommendation |
+|---|---|---|---|
+| C0-Q1 | How does A-112 change A-01's layer order? The ADR README says a changed decision is a new ADR that supersedes the old one | (a) A-112 decides, and A-01 gains a short addendum giving the new order and pointing to A-112, as A-86 and A-98 gained addenda. (b) A-112 supersedes A-01 and restates every layer's import rule | (a): A-01's other rules (no upward import, projections from the higher layer, the rejected composition module) stand, and readers of A-01 find the current order |
+| C0-Q2 | How is "not substantially more comprehensive" (CC-D7) measured, so C15 can test it? | (a) every class and property an insurance example uses for a scenario is also used by an other-domain example for that scenario. (b) a reviewer's judgement, recorded per example | (a), mechanical and checkable |
+| C0-Q3 | Where is a breaking 0.x change marked (A-113)? The release register is generated and has no notes column | (a) in the ADR that authorises the change and in the layer README's release note, with the register unchanged. (b) a register column written by `tools/ontology_releases.py` | (a): no tool change, and the register keeps its add-only rows |
+
+1. **ADR-A112, Wording layer** (`ADR-A112-wording-layer.md`). Shape as A-103: Status, Date,
+   Related, Unit, then Context, Decision, Consequences.
+   - **Context**, in ADR-A-C2 order: a domain-neutral premise (a contract's text has structure,
+     variables, tables, variants and amendments, independent of what it means in law), then two
+     non-insurance examples, the facility agreement (LEND) and the trial protocol (TRIAL), then
+     the problem: Instrument holds no wording, and Open CBAA built `wim:` locally.
+   - **Decision 1:** a Wording layer, prefix `wrd:`. "Computable contract" names the composition of
+     Wording, Instrument and Behaviour (CC-D1, sketch §1.1).
+   - **Decision 2, the layer order** (CC-D2, CC-D8), as the sketch §1 diagram: Wording imports
+     Foundation, Vocabulary, Quantification and Eligibility. Behaviour imports the layers up to
+     Eligibility and no longer imports Instrument. Its configuration and runtime documents are
+     A-106's. Instrument imports Wording and Behaviour configuration. A-01's rule that no layer
+     imports upward stands.
+   - **Decision 3, contents:** a table of the sketch's §4.1 to §4.6 (structure, text parts,
+     variables, tables under CC-D6, assembly, the assembled wording, amendments), with laws W1 to
+     W7 listed by number and linked, not restated.
+   - **Decision 4, what Wording does not hold:** legal meaning (Instrument), the LMA WIM typing
+     (an applied profile, CC-D3), identifiers (Foundation, F1).
+   - **Rejected:** a layer named Contract, and wording inside Instrument. One sentence each, citing
+     sketch §1.1 and DP3 (§3.1).
+   - **Consequences:** `ontology/wording/` is created at C3 under this ADR (the topology rule).
+     A-01's promised import-closure check is built at C10a. Documentation follows at C3 and C16.
+     Open CBAA's `wim:` migrates (plan §7).
+2. **ADR-A01 addendum**, under C0-Q1 (a): `## Addendum (2026-10-01): Wording, and Behaviour below
+   Instrument`, **Status:** Proposed, with ADR-A112. The new order as a text tree in A-01's own
+   style, one sentence per changed import list, and "every other decision stands".
+3. **ADR-A113, breaking changes at major version zero**
+   (`ADR-A113-breaking-changes-at-major-version-zero.md`).
+   - **Decision:** for any ontology document at major version zero, a change that ADR-A86's table
+     classes as MAJOR takes a MINOR bump instead, marked breaking under C0-Q3. Importers re-pin in
+     the same change and take the same level, by A-86's import-only rule. `1.0.0` stays reserved
+     for a stability decision.
+   - **Scope:** every 0.x document (CC-D4), not Instrument alone.
+   - **Context:** SemVer item 4 and A-86's closing paragraph already allow it, and the Wording,
+     Instrument and Behaviour rewrites need it.
+   - **Consequences:** `ontology-versioning-policy.md` gains the rule when the ADR is accepted,
+     before C3.
+4. **ADR-A-C2 addendum** (CC-D7): `## Addendum (2026-10-01): insurance examples in the computable
+   contract substrate`, **Status:** Proposed.
+   - **Scope:** the examples and templates of the layers this unit authors (Wording, Instrument,
+     Behaviour).
+   - **The rule:** insurance examples may sit beside other-domain ones when every scenario they
+     show is also shown by an other-domain example, and they are not substantially more
+     comprehensive, measured under C0-Q2.
+   - **Unchanged:** the authoring order (premise, then two non-domain examples, then mechanism),
+     and the ban on any deployment, brand or closed-estate identifier in substrate text.
+   - **Consequences:** C15's coverage test checks both conditions per scenario.
+5. **ADR index** (`docs/architecture/decisions/README.md`):
+   - rows for A-112 and A-113 (Proposed)
+   - A-01 and A-C2 titles marked "(with addendum)"
+   - one sentence in the numbering paragraph: A-104 to A-111 are reserved by NRS, A-104 and A-106
+     are drafted in CCS C1 and C2, and A-112 and A-113 are CCS's
+6. **Handoff:** the Validation Pack's Handoff block and the status record. There are no tags,
+   since no version changes.
+
+| ID | Given / When / Then | Level | +/- |
+|---|---|---|---|
+| C0-01 | A-112 and A-113 / read / each has Status `Proposed`, Date, Related, Unit, Context, Decision, Consequences | paper | + |
+| C0-02 | A-112's Context / read / a domain-neutral premise and two non-insurance examples precede any mechanism prose (ADR-A-C2) | paper | + |
+| C0-03 | A-112's order and the A-01 addendum / compared with the sketch §1 diagram / the same import lists, and no layer imports a higher one | paper | + |
+| C0-04 | A-112 / read / decides only CC-D1, CC-D2 and CC-D8's order. Behaviour's split is cited as A-106's, not decided here | paper | + |
+| C0-05 | A-113 / read / applies to every 0.x document, keeps `1.0.0` reserved, and agrees with A-86's bump table and import-only rule | paper | + |
+| C0-06 | the A-C2 addendum / compared with the plan's CC-D7 record / the same two conditions, the same scope, the authoring order and brand ban unchanged | paper | + |
+| C0-07 | the ADR index / read / both new rows, both "(with addendum)" titles and the numbering sentence | paper | + |
+| C0-08 | the link check / run / the broken-link count is the baseline (427) and none is in a changed file | L1 | + |
+| C0-09 | the changed files / prose check / no semicolons in English text, no superlatives | L1 | + |
+| C0-10 | `git diff --stat main` / read / only the four ADR files, the ADR index, the Validation Pack and the status record change | L1 | + |
+| C0-11 | each ADR / read / it cites the sketch for its argument and does not restate it | paper | + |
 
 ### Tranche B: Wording layer
 

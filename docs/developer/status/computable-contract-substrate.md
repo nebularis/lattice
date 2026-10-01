@@ -15,20 +15,19 @@
 
 The design is sketched and tested against four instruments and a proposed Lloyd's schedule 
 (101 scenarios, S79 merged, and 58 amount constructs). Every decision is taken. No ADR is drafted
-and no ontology document is touched.
+and no ontology document is touched. The C0 brief and Validation Pack are on `main`.
 
-**Next action, for the human:** review the CC-D8 write-up (sketch §6.3, §7, §5.11, contract-amounts
-§1.7) and the reordered plan, uncommitted.
-**Next action, for the agent, after the review:** brief and draft C0 (A-112, A-113, the ADR-A-C2
-addendum).
+**Next action, for the human:** answer the C0 brief's questions C0-Q1 to C0-Q3 (or accept their
+recommendations), then create `ccs/c0-adrs`.
+**Next action, for the agent:** draft C0 on that branch. C1 and C2 briefs follow.
 
 ## Slice board
 
 | # | Slice | Tranche | State | Blocked on |
 |---|---|---|---|---|
-| C0 | A-112, A-113, ADR-A-C2 addendum | A | waiting | human review of the write-up |
-| C1 | A-104 | A | waiting | human review of the write-up |
-| C2 | A-106 | A | waiting | human review of the write-up |
+| C0 | A-112, A-113, A-01 and ADR-A-C2 addenda | A | waiting for branch | brief on `main`, C0-Q1 to C0-Q3 |
+| C1 | A-104 | A | waiting | its brief |
+| C2 | A-106 | A | waiting | its brief |
 | C3 to C5 | Wording layer | B | waiting | Gate A |
 | C10, C10a, C11, C11a | Behaviour below Instrument, import guard, records, nested states | C | waiting | Gate A |
 | F1 | Foundation identifiers | Foundation window | waiting | AIR Phase 2 complete, with NRS N9 |
@@ -47,3 +46,4 @@ addendum).
 - 2026-09-30: CC-D6 decided (rows in the wording, columns at the instance, long lists as variables). CC-D9 decided: identifiers in Foundation, slice F1 in the Foundation window with NRS N9. Sections proposed as parts of one instrument, no contract-of-contracts (APEX negotiation-thread excerpt reviewed).
 - 2026-09-30: CC-D11 decided: sections as parts of one instrument. The sectioned schedule's names, numbers and addresses anonymised in the sketch.
 - 2026-10-01: CC-D8 decided: Behaviour below Instrument, split into configuration and runtime, regimes (synonym dispensation) and legal triggers specialising Behaviour, DP6 restated as B8, evidence rule B6, import guard B7. Sketch §6.3, §7 and §5.11 written with diagrams. Bases catalogued in contract-amounts §1.7 (A51 to A58). Plan reordered: tranche C (Behaviour) before tranche D (Instrument), new slices C8a, C10a, C11a. NRS, AIR, phase-3 and phase-5 notes updated.
+- 2026-10-01: Logical English alignment sketched (unplanned, CCS sketch §14). C0 briefed with its Validation Pack skeleton, raising C0-Q1 (A-01 addendum or supersession), C0-Q2 (measuring CC-D7) and C0-Q3 (marking a breaking 0.x change).
