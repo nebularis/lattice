@@ -115,7 +115,7 @@ reverted. No replacement test was needed. Detail in the
 | WA5 | Fuseki, RabbitMQ and the runnable service | done | `187fea4` | |
 | WA6 | Logical English reading | done | `0128ca2` | |
 | WA7 | Worker runtime | done | `ab8e1a1` | |
-| WA8 | Add-in domain | done | | WA1 |
+| WA8 | Add-in domain | done | `451fc93` | WA1 |
 | WA9 | Add-in task pane and harness | waiting | | WA8 |
 | WA9a | Ribbon and right-click commands | waiting | | WA9, WA-D13 |
 | WA10 | Compose stack | waiting | | WA5, WA7, WA9a |
@@ -248,3 +248,4 @@ reverted. No replacement test was needed. Detail in the
   `check:java`, `check:authoring-service`, `check:authoring-worker` and `check:authoring-contracts`
   were not re-run (WA8 touches none of their paths); `yarn check` across all three workspaces
   (`mork-review-workbench`, `surface-contract-studio`, `word-authoring-addin`) passes.
+- 2026-10-01: WA8 committed as `451fc93`.
