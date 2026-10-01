@@ -57,7 +57,7 @@ their head noun: `borrower`, `rate`. In LATTICE the same types come from the var
 `wrd:valueContract` or `wrd:valueSpace`, and from the role the definition names.
 
 ```mermaid
-flowchart LR
+flowchart TB
     subgraph WRD["Wording: ex:cl-4-1 as wrd:TextParts"]
         direction TB
         P0["0 literal: The"]
