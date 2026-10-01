@@ -55,7 +55,7 @@ add that file to WA6's own path list and extend it there.
 | WA0 | Preflight | done | `c82d019` | |
 | WA1 | Contracts, templates and samples | done | `3db3911` | |
 | WA2 | Service model, mapping and shapes | done | `52eae70` | |
-| WA3 | Detection, templates and conformance | done | | |
+| WA3 | Detection, templates and conformance | done | `8c4aa65` | |
 | WA4 | API and HTTP adapter | ready | | WA3 |
 | WA5 | Fuseki, RabbitMQ and the runnable service | waiting | | WA4 |
 | WA6 | Logical English reading | waiting | | WA2 |
@@ -106,11 +106,12 @@ add that file to WA6's own path list and extend it there.
   change: `WordingMapper` holds one `IriMinter`, `CanonicalHash.canonicalText` is the single place
   the fixture text is formed, `SnapshotReader` uses one list helper, `IriMinter` one validator.
   `check:authoring-service`, `check:java` and `check:authoring-contracts` all green, and
-  `build:authoring-fixtures` reproduced the three `.nt` goldens byte for byte.
-- 2026-10-01: WA3 done: `detection` (`ConstructDetector`, `Detection`, `Suggestion`) and `template`
-  (`TemplateCatalog`, `SampleCatalog`, `AuthoringTemplate`, `TemplateSection`, `TemplateFindings`,
-  `ConformanceChecker`, `Finding`, the two summaries) packages, plus `ContractSchemas.readValidated`
-  shared by the catalogs. 15 new tests, 63 in the module, all pass first run. Validation Pack at
-  `docs/developer/validation/word-authoring-poc-wa3.md`. The plan's self-probe was found to be
-  vacuous (see above) and a probe that bites was run in its place. `check:java` (9 modules) and
-  `check:authoring-contracts` still pass.
+  `build:authoring-fixtures` reproduced the three `.nt` goldens byte for byte. Committed as
+  `278f23e`.
+- 2026-10-01: WA3 done (`8c4aa65`): `detection` (`ConstructDetector`, `Detection`, `Suggestion`)
+  and `template` (`TemplateCatalog`, `SampleCatalog`, `AuthoringTemplate`, `TemplateSection`,
+  `TemplateFindings`, `ConformanceChecker`, `Finding`, the two summaries) packages, plus
+  `ContractSchemas.readValidated` shared by the catalogs. 15 new tests, 63 in the module, all pass
+  first run. Validation Pack at `docs/developer/validation/word-authoring-poc-wa3.md`. The plan's
+  self-probe was found to be vacuous (see above) and a probe that bites was run in its place.
+  `check:java` (9 modules) and `check:authoring-contracts` still pass.
