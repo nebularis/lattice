@@ -19,8 +19,8 @@ Wording imports Foundation, Vocabulary, Quantification and Eligibility, and is i
 Instrument. It names no term of a higher layer.
 
 This release (`0.1.0`) holds structure, text parts, references, document objects and variables.
-Tables, assembly and variable values follow in `0.2.0`, amendments and the layer's shapes in
-`0.3.0` (the computable contract substrate plan, slices C4 and C5).
+Tables, assembly and variable values follow in `0.2.0`, amendments and the shapes for the
+layer's laws in `0.3.0` (the computable contract substrate plan, slices C4 and C5).
 
 ## 2. Namespace and prefixes
 
@@ -41,10 +41,12 @@ Tables, assembly and variable values follow in `0.2.0`, amendments and the layer
 
 - `turtle-spec` blocks generate `spec/wording.ttl`.
 - `turtle-vocab` blocks generate `vocab/wording-vocab.ttl`.
+- `turtle-shapes` blocks generate `shapes/structural.ttl`.
 - `turtle-example` blocks are illustrative only. The worked examples live in `examples/`.
 
 ```bash
-python3 tools/literate_extract.py ontology/wording/README.md --layer wording --root . --check
+python3 tools/literate_extract.py ontology/wording/README.md --layer wording --root . \
+    --shapes shapes/structural.ttl --check
 ```
 
 ## 4. Worked examples
@@ -92,16 +94,22 @@ What kind of part an element is (a section, a clause, a schedule) is a concept, 
 
 ```turtle-spec
 wrd:Wording a owl:Class ;
-	rdfs:subClassOf fnd:Version , fnd:Governable ;
+	rdfs:subClassOf fnd:Version , fnd:Governable , wrd:WordingNode ;
 	rdfs:label "Wording"@en ;
 	rdfs:comment "The root of one document's wording tree." ;
 	fnd:utility "One per document: an agreement, a policy wording, a standard form, a protocol. A changed text is a new wording version with the same fnd:hasIdentity, superseding the old." .
 
 wrd:Element a owl:Class ;
-	rdfs:subClassOf fnd:Version , fnd:Governable ;
+	rdfs:subClassOf fnd:Version , fnd:Governable , wrd:WordingNode ;
 	rdfs:label "Element"@en ;
 	rdfs:comment "A nestable part of a wording." ;
 	fnd:utility "Type it with wrd:elementType (section, clause, schedule, annex, definition). Use one of the content classes of §5.6 where the part carries content of its own. A changed element is a new element version." .
+
+wrd:WordingNode a owl:Class ;
+	owl:equivalentClass [ a owl:Class ; owl:unionOf ( wrd:Wording wrd:Element ) ] ;
+	rdfs:label "Wording node"@en ;
+	rdfs:comment "Anything in a wording tree: a wording or one of its elements." ;
+	fnd:utility "Never assert it. It names the subject of the properties that apply to a whole wording and to its parts alike. wrd:Wording and wrd:Element are declared its subclasses explicitly as well, so a SHACL engine sees the same hierarchy a reasoner infers." .
 ```
 
 ### 5.3 Part and whole
@@ -113,25 +121,27 @@ irreflexive and asymmetric.
 ```turtle-spec
 wrd:comprises a owl:ObjectProperty , owl:TransitiveProperty ;
 	rdfs:label "comprises"@en ;
-	rdfs:domain [ a owl:Class ; owl:unionOf ( wrd:Wording wrd:Element ) ] ;
+	rdfs:domain wrd:WordingNode ;
 	rdfs:range wrd:Element ;
-	rdfs:comment "The transitive part-whole relation of a wording tree." ;
+	rdfs:comment "The transitive part-whole relation of a wording tree. Subject: a wording node. Value: an element at any depth below it." ;
 	fnd:utility "Never assert it. Assert wrd:directlyComprises and let a reasoner or a compiled closure supply skip-level containment." .
 
 wrd:isComprisedBy a owl:ObjectProperty , owl:TransitiveProperty ;
 	rdfs:label "is comprised by"@en ;
+	rdfs:comment "Subject: an element. Value: a wording node at any depth above it." ;
 	owl:inverseOf wrd:comprises .
 
 wrd:directlyComprises a owl:ObjectProperty , owl:IrreflexiveProperty , owl:AsymmetricProperty ;
 	rdfs:label "directly comprises"@en ;
 	rdfs:subPropertyOf wrd:comprises ;
-	rdfs:domain [ a owl:Class ; owl:unionOf ( wrd:Wording wrd:Element ) ] ;
+	rdfs:domain wrd:WordingNode ;
 	rdfs:range wrd:Element ;
-	rdfs:comment "A direct edge of a wording tree." .
+	rdfs:comment "A direct edge of a wording tree. Subject: a wording node. Value: one of its immediate parts, an element." .
 
 wrd:isDirectlyComprisedBy a owl:ObjectProperty , owl:IrreflexiveProperty , owl:AsymmetricProperty ;
 	rdfs:label "is directly comprised by"@en ;
 	rdfs:subPropertyOf wrd:isComprisedBy ;
+	rdfs:comment "Subject: an element. Value: the wording node immediately above it." ;
 	owl:inverseOf wrd:directlyComprises .
 ```
 
@@ -145,13 +155,13 @@ sees ("4.1", "Schedule 1"). It is derived after assembly and never used as ident
 wrd:rankKey a owl:DatatypeProperty , owl:FunctionalProperty ;
 	rdfs:label "rank key"@en ;
 	rdfs:domain wrd:Element ; rdfs:range xsd:string ;
-	rdfs:comment "A lexicographic key placing an element among its siblings." ;
+	rdfs:comment "A lexicographic key placing an element among its siblings. Subject: an element. Value: a string, at most one." ;
 	fnd:utility "Choose keys that leave room between them (a0, b0), so an insertion takes a key in between and no sibling changes." .
 
 wrd:objectId a owl:DatatypeProperty , owl:FunctionalProperty ;
 	rdfs:label "object id"@en ;
-	rdfs:domain [ a owl:Class ; owl:unionOf ( wrd:Wording wrd:Element ) ] ; rdfs:range xsd:string ;
-	rdfs:comment "The number or label a reader sees: 4.1, 4.B(2), Schedule 1." ;
+	rdfs:domain wrd:WordingNode ; rdfs:range xsd:string ;
+	rdfs:comment "The number or label a reader sees: 4.1, 4.B(2), Schedule 1. Subject: a wording node. Value: a string, at most one." ;
 	fnd:utility "Presentation only. Two versions of a clause may carry different object ids and remain the same clause." .
 ```
 
@@ -164,16 +174,16 @@ layer.
 ```turtle-spec
 wrd:elementType a owl:ObjectProperty , owl:FunctionalProperty ;
 	rdfs:label "element type"@en ;
-	rdfs:domain [ a owl:Class ; owl:unionOf ( wrd:Wording wrd:Element ) ] ;
+	rdfs:domain wrd:WordingNode ;
 	rdfs:range skos:Concept ;
-	rdfs:comment "What kind of part a wording or element is: a section, a clause, a schedule." ;
+	rdfs:comment "What kind of part a wording or element is: a section, a clause, a schedule. Subject: a wording node. Value: a concept under wrd-voc:ElementTypeContract, at most one." ;
 	fnd:utility "Drawn under wrd-voc:ElementTypeContract. A section is a part with a determined meaning of its own (its parties, authority or capacity), as the Instrument layer reads it." .
 
 wrd:classification a owl:ObjectProperty ;
 	rdfs:label "classification"@en ;
-	rdfs:domain [ a owl:Class ; owl:unionOf ( wrd:Wording wrd:Element ) ] ;
+	rdfs:domain wrd:WordingNode ;
 	rdfs:range skos:Concept ;
-	rdfs:comment "A classification of a wording or element, beside its type: safety reporting, governing law, data protection." ;
+	rdfs:comment "A classification of a wording or element, beside its type: safety reporting, governing law, data protection. Subject: a wording node. Value: a concept under wrd-voc:ClassificationContract, any number." ;
 	fnd:utility "Drawn under wrd-voc:ClassificationContract. An element may carry several (a polyhierarchy)." .
 ```
 
@@ -228,28 +238,28 @@ wrd:TextPart a owl:Class ;
 wrd:hasTextPart a owl:ObjectProperty , owl:InverseFunctionalProperty ;
 	rdfs:label "has text part"@en ;
 	rdfs:domain wrd:Text ; rdfs:range wrd:TextPart ;
-	rdfs:comment "A part of a text. Each part belongs to exactly one text." .
+	rdfs:comment "A part of a text. Each part belongs to exactly one text. Subject: a text. Value: a text part, which belongs to no other text." .
 
 wrd:partIndex a owl:DatatypeProperty , owl:FunctionalProperty ;
 	rdfs:label "part index"@en ;
 	rdfs:domain wrd:TextPart ; rdfs:range xsd:nonNegativeInteger ;
-	rdfs:comment "The part's position in its text, from 0." .
+	rdfs:comment "The part's position in its text, from 0. Subject: a text part. Value: a non-negative integer, exactly one." .
 
 wrd:partText a owl:DatatypeProperty , owl:FunctionalProperty ;
 	rdfs:label "part text"@en ;
 	rdfs:domain wrd:TextPart ; rdfs:range xsd:string ;
-	rdfs:comment "The literal text of a part, spaces included." .
+	rdfs:comment "The literal text of a part, spaces included. Subject: a text part. Value: a string, at most one." .
 
 wrd:refersToVariable a owl:ObjectProperty , owl:FunctionalProperty ;
 	rdfs:label "refers to variable"@en ;
 	rdfs:domain wrd:TextPart ; rdfs:range wrd:Variable ;
-	rdfs:comment "The variable whose value the part shows." .
+	rdfs:comment "The variable whose value the part shows. Subject: a text part. Value: a variable, at most one." .
 
 wrd:refersToObject a owl:ObjectProperty , owl:FunctionalProperty ;
 	rdfs:label "refers to object"@en ;
 	rdfs:domain wrd:TextPart ;
-	rdfs:range [ a owl:Class ; owl:unionOf ( wrd:Wording wrd:Element wrd:DocumentObject wrd:ExternalDocument ) ] ;
-	rdfs:comment "The part, wording or document the part names: a defined word's definition, another clause, an annex, a regulation." .
+	rdfs:range wrd:ReferenceTarget ;
+	rdfs:comment "The part, wording or document the part names: a defined word's definition, another clause, an annex, a regulation. Subject: a text part. Value: a reference target, at most one." .
 ```
 
 ### 5.8 References and documents
@@ -260,26 +270,41 @@ Both are outside the wording tree, reached by a reference element or a text part
 
 ```turtle-spec
 wrd:DocumentObject a owl:Class ;
-	rdfs:subClassOf prov:Entity ;
+	rdfs:subClassOf prov:Entity , wrd:LinkedDocument ;
 	rdfs:label "Document object"@en ;
 	rdfs:comment "An attachment the wording relies on whose content is not digitised." .
 
 wrd:ExternalDocument a owl:Class ;
-	rdfs:subClassOf prov:Entity ;
+	rdfs:subClassOf prov:Entity , wrd:LinkedDocument ;
 	rdfs:label "External document"@en ;
 	rdfs:comment "A document outside the contract that its wording relies on: a regulation, a standard, a separate agreement." .
 
+wrd:LinkedDocument a owl:Class ;
+	owl:equivalentClass [ a owl:Class ; owl:unionOf ( wrd:DocumentObject wrd:ExternalDocument ) ] ;
+	rdfs:label "Linked document"@en ;
+	rdfs:comment "A document outside the wording tree that the wording relies on: a document object or an external document." ;
+	fnd:utility "Never assert it. Its two subclasses are declared explicitly, for SHACL." .
+
+wrd:ReferenceTarget a owl:Class ;
+	owl:equivalentClass [ a owl:Class ; owl:unionOf ( wrd:WordingNode wrd:LinkedDocument ) ] ;
+	rdfs:label "Reference target"@en ;
+	rdfs:comment "Anything a text part or a reference element may point to: a wording, an element, or a linked document." ;
+	fnd:utility "Never assert it. wrd:WordingNode and wrd:LinkedDocument are declared its subclasses explicitly, for SHACL." .
+
+wrd:WordingNode rdfs:subClassOf wrd:ReferenceTarget .
+wrd:LinkedDocument rdfs:subClassOf wrd:ReferenceTarget .
+
 wrd:documentKind a owl:ObjectProperty , owl:FunctionalProperty ;
 	rdfs:label "document kind"@en ;
-	rdfs:domain [ a owl:Class ; owl:unionOf ( wrd:DocumentObject wrd:ExternalDocument ) ] ;
+	rdfs:domain wrd:LinkedDocument ;
 	rdfs:range skos:Concept ;
-	rdfs:comment "What kind of document it is, drawn under wrd-voc:DocumentKindContract." .
+	rdfs:comment "What kind of document it is, drawn under wrd-voc:DocumentKindContract. Subject: a linked document. Value: a concept under wrd-voc:DocumentKindContract, at most one." .
 
 wrd:linksTo a owl:ObjectProperty ;
 	rdfs:label "links to"@en ;
 	rdfs:domain wrd:Reference ;
-	rdfs:range [ a owl:Class ; owl:unionOf ( wrd:Wording wrd:Element wrd:DocumentObject wrd:ExternalDocument ) ] ;
-	rdfs:comment "What a reference element points to." .
+	rdfs:range wrd:ReferenceTarget ;
+	rdfs:comment "What a reference element points to. Subject: a reference element. Value: a reference target." .
 
 [] a owl:AllDisjointClasses ;
 	owl:members ( wrd:Wording wrd:Element wrd:TextPart wrd:DocumentObject wrd:ExternalDocument wrd:PopulationMethod ) .
@@ -314,36 +339,37 @@ wrd:PopulationMethod a owl:Class ;
 wrd:variableKey a owl:DatatypeProperty , owl:FunctionalProperty ;
 	rdfs:label "variable key"@en ;
 	rdfs:domain wrd:Variable ; rdfs:range xsd:string ;
-	rdfs:comment "The variable's stable key within its wording." .
+	rdfs:comment "The variable's stable key within its wording. Subject: a variable. Value: a string, at most one." .
 
 wrd:populationMethod a owl:ObjectProperty ;
 	rdfs:label "population method"@en ;
-	rdfs:domain wrd:Variable ; rdfs:range wrd:PopulationMethod .
+	rdfs:domain wrd:Variable ; rdfs:range wrd:PopulationMethod ;
+	rdfs:comment "Subject: a variable. Value: a population method." .
 
 wrd:populatedFrom a owl:ObjectProperty , owl:FunctionalProperty ;
 	rdfs:label "populated from"@en ;
 	rdfs:domain wrd:Variable ; rdfs:range wrd:Variable ;
-	rdfs:comment "Another variable, often in another part, whose value this one takes." .
+	rdfs:comment "Another variable, often in another part, whose value this one takes. Subject: a variable. Value: another variable, at most one." .
 
 wrd:valueContract a owl:ObjectProperty , owl:FunctionalProperty ;
 	rdfs:label "value contract"@en ;
 	rdfs:domain wrd:Variable ; rdfs:range voc:SchemeContract ;
-	rdfs:comment "For a concept-valued variable, the scheme contract its values are drawn under." .
+	rdfs:comment "For a concept-valued variable, the scheme contract its values are drawn under. Subject: a variable. Value: a scheme contract, at most one." .
 
 wrd:valueSpace a owl:ObjectProperty , owl:FunctionalProperty ;
 	rdfs:label "value space"@en ;
 	rdfs:domain wrd:Variable ; rdfs:range qnt:ValueSpace ;
-	rdfs:comment "For a quantity-valued variable, the value space its values are in." .
+	rdfs:comment "For a quantity-valued variable, the value space its values are in. Subject: a variable. Value: a value space, at most one." .
 
 wrd:admissibleValues a owl:ObjectProperty ;
 	rdfs:label "admissible values"@en ;
 	rdfs:domain wrd:Variable ; rdfs:range qnt:RangeSet ;
-	rdfs:comment "A range set every value must fall in." .
+	rdfs:comment "A range set every value must fall in. Subject: a variable. Value: a range set." .
 
 wrd:multiValued a owl:DatatypeProperty , owl:FunctionalProperty ;
 	rdfs:label "multi-valued"@en ;
 	rdfs:domain wrd:Variable ; rdfs:range xsd:boolean ;
-	rdfs:comment "True when an instance may supply several values, as for a list of territories. Single-valued when absent." .
+	rdfs:comment "True when an instance may supply several values, as for a list of territories. Single-valued when absent. Subject: a variable. Value: a boolean, at most one." .
 ```
 
 ## 6. Vocabulary
@@ -419,8 +445,119 @@ wrd-voc:Annex a skos:Concept ;
 	skos:definition "A part attached to the body of the wording, often referring to a document object."@en .
 ```
 
-## 7. Laws, shapes and how-to
+## 7. Shapes
 
-The layer's laws (W1 to W7), its shapes and a how-to guide are added in `0.3.0`. Until then the
-rules of §5.7 are stated in `fnd:utility` and checked by the layer's tests
-(`tools/test_wording.py`).
+The domains and ranges of §5 describe the model for a reasoner. They never verify data: a domain
+axiom infers a type, it does not report a missing one. These shapes check the same intent in SHACL
+Core, with no reasoning, and every property's comment states it in words. Validate with the spec in
+the data graph (or passed as the ontology graph), so that `sh:class` sees the subclass hierarchy.
+
+Each `…SubjectShape` checks that a property is used on the kind of node it belongs to. Each class
+shape checks the values and cardinalities on that kind of node. The laws W1 to W7 (a single tree,
+contiguous part indices, assembly) are SHACL-SPARQL and follow in `0.3.0`.
+
+```turtle-shapes
+@prefix wrd:  <https://www.nebularis.org/neuro-semantic/lattice/wording#> .
+@prefix voc:  <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
+@prefix qnt:  <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+
+# ---- Wording nodes ----------------------------------------------------------
+
+wrd:WordingNodeSubjectShape a sh:NodeShape ;
+	sh:targetSubjectsOf wrd:directlyComprises , wrd:comprises , wrd:objectId , wrd:elementType , wrd:classification ;
+	sh:class wrd:WordingNode ;
+	sh:message "Only a wording or an element has parts, an object id, an element type or a classification." .
+
+wrd:WordingNodeShape a sh:NodeShape ;
+	sh:targetClass wrd:WordingNode ;
+	sh:property [ sh:path wrd:directlyComprises ; sh:class wrd:Element ;
+		sh:message "A wording node's parts are elements." ] ;
+	sh:property [ sh:path wrd:objectId ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+	sh:property [ sh:path wrd:elementType ; sh:maxCount 1 ; sh:nodeKind sh:IRI ] ;
+	sh:property [ sh:path wrd:classification ; sh:nodeKind sh:IRI ] .
+
+wrd:ElementSubjectShape a sh:NodeShape ;
+	sh:targetSubjectsOf wrd:rankKey ;
+	sh:class wrd:Element ;
+	sh:message "Only an element has a rank key: it orders siblings, and a wording has none." .
+
+wrd:ElementShape a sh:NodeShape ;
+	sh:targetClass wrd:Element ;
+	sh:property [ sh:path wrd:rankKey ; sh:maxCount 1 ; sh:datatype xsd:string ] .
+
+# ---- Texts and text parts ---------------------------------------------------
+
+wrd:TextSubjectShape a sh:NodeShape ;
+	sh:targetSubjectsOf wrd:hasTextPart ;
+	sh:class wrd:Text ;
+	sh:message "Only a text has text parts." .
+
+wrd:TextShape a sh:NodeShape ;
+	sh:targetClass wrd:Text ;
+	sh:property [ sh:path wrd:hasTextPart ; sh:class wrd:TextPart ] .
+
+wrd:TextPartSubjectShape a sh:NodeShape ;
+	sh:targetSubjectsOf wrd:partIndex , wrd:partText , wrd:refersToVariable , wrd:refersToObject ;
+	sh:class wrd:TextPart ;
+	sh:message "Only a text part has a part index, text or a reference." .
+
+wrd:TextPartShape a sh:NodeShape ;
+	sh:targetClass wrd:TextPart ;
+	sh:property [ sh:path [ sh:inversePath wrd:hasTextPart ] ; sh:minCount 1 ; sh:maxCount 1 ;
+		sh:message "A text part belongs to exactly one text." ] ;
+	sh:property [ sh:path wrd:partIndex ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:Literal ; sh:minInclusive 0 ;
+		sh:message "A text part has exactly one index, from 0." ] ;
+	sh:property [ sh:path wrd:partText ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+	sh:property [ sh:path wrd:refersToVariable ; sh:maxCount 1 ; sh:class wrd:Variable ] ;
+	sh:property [ sh:path wrd:refersToObject ; sh:maxCount 1 ; sh:class wrd:ReferenceTarget ] ;
+	sh:xone (
+		[ sh:path wrd:partText ; sh:minCount 1 ]
+		[ sh:path wrd:refersToVariable ; sh:minCount 1 ]
+		[ sh:path wrd:refersToObject ; sh:minCount 1 ]
+	) ;
+	sh:message "A text part is exactly one of literal text, a variable reference or an object reference." .
+
+# ---- References and linked documents ------------------------------------------
+
+wrd:ReferenceSubjectShape a sh:NodeShape ;
+	sh:targetSubjectsOf wrd:linksTo ;
+	sh:class wrd:Reference ;
+	sh:message "Only a reference element links to a target." .
+
+wrd:ReferenceShape a sh:NodeShape ;
+	sh:targetClass wrd:Reference ;
+	sh:property [ sh:path wrd:linksTo ; sh:class wrd:ReferenceTarget ] .
+
+wrd:LinkedDocumentSubjectShape a sh:NodeShape ;
+	sh:targetSubjectsOf wrd:documentKind ;
+	sh:class wrd:LinkedDocument ;
+	sh:message "Only a document object or an external document has a document kind." .
+
+wrd:LinkedDocumentShape a sh:NodeShape ;
+	sh:targetClass wrd:LinkedDocument ;
+	sh:property [ sh:path wrd:documentKind ; sh:maxCount 1 ; sh:nodeKind sh:IRI ] .
+
+# ---- Variables ----------------------------------------------------------------
+
+wrd:VariableSubjectShape a sh:NodeShape ;
+	sh:targetSubjectsOf wrd:variableKey , wrd:populationMethod , wrd:populatedFrom , wrd:valueContract ,
+		wrd:valueSpace , wrd:admissibleValues , wrd:multiValued ;
+	sh:class wrd:Variable ;
+	sh:message "Only a variable has a key, a population method, a value contract, space or admissible values." .
+
+wrd:VariableShape a sh:NodeShape ;
+	sh:targetClass wrd:Variable ;
+	sh:property [ sh:path wrd:variableKey ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+	sh:property [ sh:path wrd:populationMethod ; sh:class wrd:PopulationMethod ] ;
+	sh:property [ sh:path wrd:populatedFrom ; sh:maxCount 1 ; sh:class wrd:Variable ] ;
+	sh:property [ sh:path wrd:valueContract ; sh:maxCount 1 ; sh:class voc:SchemeContract ] ;
+	sh:property [ sh:path wrd:valueSpace ; sh:maxCount 1 ; sh:class qnt:ValueSpace ] ;
+	sh:property [ sh:path wrd:admissibleValues ; sh:class qnt:RangeSet ] ;
+	sh:property [ sh:path wrd:multiValued ; sh:maxCount 1 ; sh:datatype xsd:boolean ] .
+```
+
+## 8. Laws and how-to
+
+The layer's laws (W1 to W7), their SHACL-SPARQL shapes and a how-to guide are added in `0.3.0`.

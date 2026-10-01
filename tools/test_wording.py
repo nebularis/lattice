@@ -14,7 +14,8 @@ from pathlib import Path
 import pytest
 from pyshacl import validate
 from rdflib import BNode, Graph, Literal, Namespace, URIRef
-from rdflib.namespace import OWL, RDF, SKOS
+from rdflib.collection import Collection
+from rdflib.namespace import OWL, RDF, RDFS, SH, SKOS
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(Path(__file__).resolve().parent / "mork_compilers" / "src"))
@@ -156,12 +157,13 @@ def test_c3_08_three_contracts_each_constraining_its_property() -> None:
 # ---- C3-09, C3-10: literate source and releases -------------------------------
 
 def test_c3_09_readme_blocks_equal_the_files() -> None:
-    assert literate_extract.main([str(LAYER / "README.md"), "--layer", "wording", "--root", str(ROOT), "--check"]) == 0
+    assert literate_extract.main([str(LAYER / "README.md"), "--layer", "wording", "--root", str(ROOT),
+                                  "--shapes", "shapes/structural.ttl", "--check"]) == 0
 
 
 def test_c3_10_both_versions_have_release_rows() -> None:
     register = (ROOT / "docs" / "architecture" / "ontology-releases.md").read_text()
-    for tag in ("wording-v0.1.0", "wording-vocab-v0.1.0"):
+    for tag in ("wording-v0.1.0", "wording-vocab-v0.1.0", "wording-shapes-v0.1.0"):
         assert f"| {tag} |" in register
 
 
@@ -179,3 +181,66 @@ def test_c3_13_every_element_type_used_is_in_the_baseline_scheme() -> None:
                                   format="turtle").objects(None, WRD.elementType))
     assert used
     assert used <= baseline, used - baseline
+
+
+# ---- C3-14 to C3-17: shapes, named unions, comments -----------------------------
+
+SHAPES = _graph(LAYER / "shapes" / "structural.ttl")
+
+
+def _violations(data: Graph) -> set:
+    """Focus-node local names of every violation, with the spec closure in the data graph."""
+    _, report, _ = validate(_vocab_closure() + data, shacl_graph=SHAPES, inference="none", advanced=True)
+    return {str(node).rsplit("/", 1)[-1] for node in report.objects(None, SH.focusNode)}
+
+
+@pytest.mark.parametrize("example", EXAMPLES, ids=lambda p: p.stem)
+def test_c3_14_examples_conform_to_the_shapes(example: Path) -> None:
+    assert _violations(_graph(example)) == set()
+
+
+SHAPE_PREFIXES = PREFIXES + f"@prefix wrd-voc: <{WRD_VOC}> .\n@prefix qnt: <{LATTICE}quantification#> .\n"
+
+
+@pytest.mark.parametrize("data, focus", [
+    ("ex:t a wrd:Text ; wrd:hasTextPart ex:p . ex:p a wrd:TextPart ; wrd:partIndex 0 ; wrd:elementType wrd-voc:Clause .", "p"),
+    ("ex:t a wrd:Text ; wrd:hasTextPart ex:p . ex:v a wrd:EmbeddedVariable . "
+     "ex:p a wrd:TextPart ; wrd:partIndex 0 ; wrd:partText \"x\" ; wrd:refersToVariable ex:v .", "p"),
+    ("ex:t a wrd:Text ; wrd:hasTextPart ex:p . ex:p a wrd:TextPart ; wrd:partIndex 0 .", "p"),
+    ("ex:t a wrd:Text ; wrd:hasTextPart ex:p . ex:u a wrd:Text ; wrd:hasTextPart ex:p . "
+     "ex:p a wrd:TextPart ; wrd:partIndex 0 ; wrd:partText \"x\" .", "p"),
+    ("ex:t a wrd:Text ; wrd:hasTextPart ex:p . ex:p a wrd:TextPart ; wrd:partIndex -1 ; wrd:partText \"x\" .", "p"),
+    ("ex:w a wrd:Wording ; wrd:rankKey \"a0\" .", "w"),
+    ("ex:t a wrd:Text ; wrd:linksTo ex:d . ex:d a wrd:ExternalDocument .", "t"),
+    ("ex:w a wrd:Wording ; wrd:directlyComprises ex:p . ex:p a wrd:TextPart .", "w"),
+    ("ex:e a wrd:Element ; wrd:elementType wrd-voc:Clause , wrd-voc:Section .", "e"),
+    ("ex:v a wrd:EmbeddedVariable ; wrd:valueSpace ex:not-a-space .", "v"),
+], ids=["type-on-a-part", "two-forms", "no-form", "two-texts", "negative-index",
+        "rank-key-on-a-wording", "links-from-a-text", "part-is-not-an-element", "two-types", "space-not-a-space"])
+def test_c3_15_ill_formed_data_is_reported(data: str, focus: str) -> None:
+    assert focus in _violations(Graph().parse(data=SHAPE_PREFIXES + data, format="turtle"))
+
+
+@pytest.mark.parametrize("name, members", [
+    ("WordingNode", ["Wording", "Element"]),
+    ("LinkedDocument", ["DocumentObject", "ExternalDocument"]),
+    ("ReferenceTarget", ["WordingNode", "LinkedDocument"]),
+])
+def test_c3_16_each_union_is_named_once_with_explicit_subclasses(name: str, members: list) -> None:
+    spec = _graph(LAYER / "spec" / "wording.ttl")
+    union = spec.value(WRD[name], OWL.equivalentClass)
+    assert union is not None
+    assert set(Collection(spec, spec.value(union, OWL.unionOf))) == {WRD[m] for m in members}
+    for member in members:
+        assert (WRD[member], RDFS.subClassOf, WRD[name]) in spec
+    assert not [u for u in spec.objects(None, OWL.unionOf) if spec.value(predicate=OWL.unionOf, object=u) not in
+                set(spec.objects(None, OWL.equivalentClass))]
+
+
+def test_c3_17_every_property_states_its_subject_and_value() -> None:
+    spec = _graph(LAYER / "spec" / "wording.ttl")
+    props = set(spec.subjects(RDF.type, OWL.ObjectProperty)) | set(spec.subjects(RDF.type, OWL.DatatypeProperty))
+    assert len(props) > 20
+    for prop in props:
+        comment = str(spec.value(prop, RDFS.comment) or "")
+        assert "Subject:" in comment and "Value:" in comment, prop

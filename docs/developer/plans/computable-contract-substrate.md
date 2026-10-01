@@ -230,9 +230,9 @@ history and concurrent regimes are left to C11a.
 
 | Slice | Content | Version impact |
 |---|---|---|
-| C3 | `ontology/wording` spec: wordings, elements, part-whole, rank keys, typing properties and their scheme contracts, content classes, text parts, references, document objects, variables. Sections are an element type (CC-D11), not a class. The README starts here as the literate source (sketch §4.1, §4.2) | new: spec 0.1.0, vocab 0.1.0 |
+| C3 | `ontology/wording` spec: wordings, elements, part-whole, rank keys, typing properties and their scheme contracts, content classes, text parts, references, document objects, variables. Sections are an element type (CC-D11), not a class. The README starts here as the literate source. Unions named once, each property's subject and value stated in its comment and checked by SHACL Core shapes (sketch §4.1, §4.2) | new: spec 0.1.0, vocab 0.1.0, shapes 0.1.0 |
 | C4 | tables (§4.3), assembly: inclusion modes, variation slots, inclusion conditions, assembled wordings, variable values (§4.4, §4.5) | 0.2.0 MINOR, vocab 0.2.0 |
-| C5 | wording amendments (§4.6), shapes for W1 to W7, the README completed (laws, how-to) | 0.3.0 MINOR, shapes 0.1.0 |
+| C5 | wording amendments (§4.6), shapes for W1 to W7, the README completed (laws, how-to) | 0.3.0 MINOR, shapes 0.2.0 |
 
 Wording imports Foundation, Vocabulary, Quantification and Eligibility. Nothing imports it until
 C6, so tranche B cascades nowhere.
@@ -317,6 +317,10 @@ other document changes version.
 | C3-11 | the examples / git history of the branch / committed before the README's model prose (ADR-A-C2) | paper | + |
 | C3-12 | the existing tool tests / unchanged / pass (non-weakening) | L1 | + |
 | C3-13 | every `wrd:elementType` value in the examples and in the README's example blocks / checked against the baseline scheme / each is a concept of it (C3-Q1) | L1 | + |
+| C3-14 | both examples, with the spec closure / SHACL Core shapes, no inference / conform | L1 | + |
+| C3-15 | a property on the wrong kind of node, a text part with two forms or none, in two texts or with a negative index, a part that is not an element, two element types, a value space that is not one / shapes / each reported on its focus node | L1 | − |
+| C3-16 | `wrd:WordingNode`, `wrd:LinkedDocument`, `wrd:ReferenceTarget` / spec / each the one named union of its members, with the members' subclass triples asserted, and no anonymous union used as a domain or range | L1 | + |
+| C3-17 | every property / spec / its comment states its subject and value | L1 | + |
 
 | Slice | Content | Version impact |
 |---|---|---|

@@ -52,9 +52,16 @@ Written by the building machine when the work is committed.
 - **Check first:** the vocab's baseline scheme (Section, Clause, Definition, Schedule, Annex), and
   the governing variable in the trial example, which is a count of study arms, since a
   concept-valued one needs variable values (C4) to say anything.
-- **Deviations from the plan:** none of substance. The root README and `ontology-architecture.md`
+- **Revised after review (2026-10-01):** the unions are named once (`wrd:WordingNode`,
+  `wrd:LinkedDocument`, `wrd:ReferenceTarget`), each with its members' subclass triples asserted so
+  SHACL sees what a reasoner infers. Every property's comment states its subject and value, for
+  readers and for a training pack. `shapes/structural.ttl` (`0.1.0`) checks the same intent in
+  SHACL Core, so verification needs no reasoner. The spec stays `0.1.0`: it is not yet tagged or
+  released.
+- **Deviations from the plan:** the shapes directory starts here rather than in C5, which now takes
+  it to `0.2.0`. The root README and `ontology-architecture.md`
   show the accepted order with a note that Behaviour's move lands in C10.
-- **Tags for the human:** `wording-v0.1.0`, `wording-vocab-v0.1.0`.
+- **Tags for the human:** `wording-v0.1.0`, `wording-vocab-v0.1.0`, `wording-shapes-v0.1.0`.
 
 ## Results
 
@@ -71,9 +78,13 @@ Verified on machine R, 2026-10-01, with the reasoning harness built.
 | C3-07 | pass: Wording and Element, Text and Table, and embedded and governing variable are each inconsistent |
 | C3-08 | pass, and the vocab closure conforms to Vocabulary's shapes |
 | C3-09 | pass (`literate_extract --check`) |
-| C3-10 | pass. `check:ontology-versioning` exits 0 and lists the two tags |
+| C3-10 | pass. `check:ontology-versioning` exits 0 once the revision is committed, and lists the three tags |
 | C3-11 | pass: `6a0509c` commits the examples alone, before the README and spec |
-| C3-12 | pass: `check:ontology-catalog`, 102 tests |
+| C3-12 | pass: `check:ontology-catalog`, 118 tests |
 | C3-13 | pass: the five element types the examples use are all in the baseline scheme |
+| C3-14 | pass, both examples |
+| C3-15 | pass, all ten cases reported on their focus node |
+| C3-16 | pass, all three unions |
+| C3-17 | pass, 22 properties |
 
 `mise run topology:links`: 427 broken links, the baseline, none in a changed file.

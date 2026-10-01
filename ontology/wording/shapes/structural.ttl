@@ -1,0 +1,101 @@
+# SPDX-License-Identifier: MPL-2.0
+
+@prefix wrd:  <https://www.nebularis.org/neuro-semantic/lattice/wording#> .
+@prefix voc:  <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
+@prefix qnt:  <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+
+# ---- Wording nodes ----------------------------------------------------------
+
+wrd:WordingNodeSubjectShape a sh:NodeShape ;
+	sh:targetSubjectsOf wrd:directlyComprises , wrd:comprises , wrd:objectId , wrd:elementType , wrd:classification ;
+	sh:class wrd:WordingNode ;
+	sh:message "Only a wording or an element has parts, an object id, an element type or a classification." .
+
+wrd:WordingNodeShape a sh:NodeShape ;
+	sh:targetClass wrd:WordingNode ;
+	sh:property [ sh:path wrd:directlyComprises ; sh:class wrd:Element ;
+		sh:message "A wording node's parts are elements." ] ;
+	sh:property [ sh:path wrd:objectId ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+	sh:property [ sh:path wrd:elementType ; sh:maxCount 1 ; sh:nodeKind sh:IRI ] ;
+	sh:property [ sh:path wrd:classification ; sh:nodeKind sh:IRI ] .
+
+wrd:ElementSubjectShape a sh:NodeShape ;
+	sh:targetSubjectsOf wrd:rankKey ;
+	sh:class wrd:Element ;
+	sh:message "Only an element has a rank key: it orders siblings, and a wording has none." .
+
+wrd:ElementShape a sh:NodeShape ;
+	sh:targetClass wrd:Element ;
+	sh:property [ sh:path wrd:rankKey ; sh:maxCount 1 ; sh:datatype xsd:string ] .
+
+# ---- Texts and text parts ---------------------------------------------------
+
+wrd:TextSubjectShape a sh:NodeShape ;
+	sh:targetSubjectsOf wrd:hasTextPart ;
+	sh:class wrd:Text ;
+	sh:message "Only a text has text parts." .
+
+wrd:TextShape a sh:NodeShape ;
+	sh:targetClass wrd:Text ;
+	sh:property [ sh:path wrd:hasTextPart ; sh:class wrd:TextPart ] .
+
+wrd:TextPartSubjectShape a sh:NodeShape ;
+	sh:targetSubjectsOf wrd:partIndex , wrd:partText , wrd:refersToVariable , wrd:refersToObject ;
+	sh:class wrd:TextPart ;
+	sh:message "Only a text part has a part index, text or a reference." .
+
+wrd:TextPartShape a sh:NodeShape ;
+	sh:targetClass wrd:TextPart ;
+	sh:property [ sh:path [ sh:inversePath wrd:hasTextPart ] ; sh:minCount 1 ; sh:maxCount 1 ;
+		sh:message "A text part belongs to exactly one text." ] ;
+	sh:property [ sh:path wrd:partIndex ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:Literal ; sh:minInclusive 0 ;
+		sh:message "A text part has exactly one index, from 0." ] ;
+	sh:property [ sh:path wrd:partText ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+	sh:property [ sh:path wrd:refersToVariable ; sh:maxCount 1 ; sh:class wrd:Variable ] ;
+	sh:property [ sh:path wrd:refersToObject ; sh:maxCount 1 ; sh:class wrd:ReferenceTarget ] ;
+	sh:xone (
+		[ sh:path wrd:partText ; sh:minCount 1 ]
+		[ sh:path wrd:refersToVariable ; sh:minCount 1 ]
+		[ sh:path wrd:refersToObject ; sh:minCount 1 ]
+	) ;
+	sh:message "A text part is exactly one of literal text, a variable reference or an object reference." .
+
+# ---- References and linked documents ------------------------------------------
+
+wrd:ReferenceSubjectShape a sh:NodeShape ;
+	sh:targetSubjectsOf wrd:linksTo ;
+	sh:class wrd:Reference ;
+	sh:message "Only a reference element links to a target." .
+
+wrd:ReferenceShape a sh:NodeShape ;
+	sh:targetClass wrd:Reference ;
+	sh:property [ sh:path wrd:linksTo ; sh:class wrd:ReferenceTarget ] .
+
+wrd:LinkedDocumentSubjectShape a sh:NodeShape ;
+	sh:targetSubjectsOf wrd:documentKind ;
+	sh:class wrd:LinkedDocument ;
+	sh:message "Only a document object or an external document has a document kind." .
+
+wrd:LinkedDocumentShape a sh:NodeShape ;
+	sh:targetClass wrd:LinkedDocument ;
+	sh:property [ sh:path wrd:documentKind ; sh:maxCount 1 ; sh:nodeKind sh:IRI ] .
+
+# ---- Variables ----------------------------------------------------------------
+
+wrd:VariableSubjectShape a sh:NodeShape ;
+	sh:targetSubjectsOf wrd:variableKey , wrd:populationMethod , wrd:populatedFrom , wrd:valueContract ,
+		wrd:valueSpace , wrd:admissibleValues , wrd:multiValued ;
+	sh:class wrd:Variable ;
+	sh:message "Only a variable has a key, a population method, a value contract, space or admissible values." .
+
+wrd:VariableShape a sh:NodeShape ;
+	sh:targetClass wrd:Variable ;
+	sh:property [ sh:path wrd:variableKey ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+	sh:property [ sh:path wrd:populationMethod ; sh:class wrd:PopulationMethod ] ;
+	sh:property [ sh:path wrd:populatedFrom ; sh:maxCount 1 ; sh:class wrd:Variable ] ;
+	sh:property [ sh:path wrd:valueContract ; sh:maxCount 1 ; sh:class voc:SchemeContract ] ;
+	sh:property [ sh:path wrd:valueSpace ; sh:maxCount 1 ; sh:class qnt:ValueSpace ] ;
+	sh:property [ sh:path wrd:admissibleValues ; sh:class qnt:RangeSet ] ;
+	sh:property [ sh:path wrd:multiValued ; sh:maxCount 1 ; sh:datatype xsd:boolean ] .
