@@ -77,7 +77,7 @@ invalid kind (plan S4-12's own scope). Exercise `proposal` end to end once the w
 | WA2 | Service model, mapping and shapes | done | `52eae70` | |
 | WA3 | Detection, templates and conformance | done | `8c4aa65` | |
 | WA4 | API and HTTP adapter | done | `c82bcc2` | |
-| WA5 | Fuseki, RabbitMQ and the runnable service | done | | |
+| WA5 | Fuseki, RabbitMQ and the runnable service | done | `187fea4` | |
 | WA6 | Logical English reading | ready | | WA2 |
 | WA7 | Worker runtime | waiting | | WA6 |
 | WA8 | Add-in domain | waiting | | WA1 |
@@ -166,3 +166,4 @@ invalid kind (plan S4-12's own scope). Exercise `proposal` end to end once the w
   `JenaSubsystemLifecycle` services file directly; it fails correctly when the transformer is
   removed. Validation Pack at `docs/developer/validation/word-authoring-poc-wa5.md`. `check:java`
   (9 modules) and `check:authoring-contracts` still pass.
+- 2026-10-01: WA5 committed as `187fea4`.
