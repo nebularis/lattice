@@ -1471,7 +1471,7 @@ authoring job does not import. Images build with no network access beyond the ba
 
 | Service | Image or build | Host ports (all `127.0.0.1`) | Environment | Health | Depends on |
 |---|---|---|---|---|---|
-| `fuseki` | `stain/jena-fuseki:5.1.0` | 3130 → 3030 | `ADMIN_PASSWORD: lattice` | `wget -qO- http://localhost:3030/$$/ping` (use `curl -fs` if the image lacks `wget`, and record it) | |
+| `fuseki` | `stain/jena-fuseki:5.1.0` | 3130 → 3030 | `ADMIN_PASSWORD: lattice` | `wget -qO- http://localhost:3030/$$/ping` (the image has `wget`, checked in WA0) | |
 | `rabbitmq` | `rabbitmq:3.13-management-alpine` | 5673 → 5672, 15673 → 15672 | `RABBITMQ_DEFAULT_USER`, `_PASS`: `lattice` | `rabbitmq-diagnostics -q ping` | |
 | `authoring-service` | build `../../../.build/authoring/service`, `platform: linux/amd64` | 8088 → 8080 | the WA5 variables: Fuseki `http://fuseki:3030`, AMQP `amqp://lattice:lattice@rabbitmq:5672/%2F`, admin password `lattice`, seed `true` | `java -cp /app/authoring-service.jar org.nebularis.lattice.authoring.app.HealthProbe http://localhost:8080/api/health`, interval 10s, retries 12, start period 20s | fuseki, rabbitmq healthy |
 | `authoring-worker` | build `../../../.build/authoring/worker` | none | AMQP and Fuseki as the service, dataset `authoring`, `LATTICE_FUSEKI_USER` `admin`, `LATTICE_FUSEKI_PASSWORD` `lattice` | none | rabbitmq healthy, authoring-service healthy |
