@@ -2,7 +2,10 @@
 @prefix owl:   <http://www.w3.org/2002/07/owl#> .
 @prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix skos:  <http://www.w3.org/2004/02/skos/core#> .
+@prefix prov:  <http://www.w3.org/ns/prov#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
 @prefix wrd:   <https://www.nebularis.org/neuro-semantic/lattice/wording#> .
+@prefix ins:   <https://www.nebularis.org/neuro-semantic/lattice/instrument#> .
 @prefix wap:   <https://www.nebularis.org/neuro-semantic/lattice/poc/word-authoring#> .
 
 # Word authoring proof of concept (ADR-A114): a provisional vocabulary, not an ontology document.
@@ -13,8 +16,10 @@
 # gaps plan \u00a72.6 lists between what the sketch names and what the service needs to build a graph.
 # Neither this file nor the IRIs it documents are platform contracts: see ADR-A114.
 #
-# ins: terms (for the proposed meaning graph, sketch \u00a74.4) are added when WA6 builds the worker
-# that writes them, not here.
+# The ins: terms below are the proposed meaning graph's relation classes (CCS sketch section 4.4,
+# section 5.2), read provisionally ahead of CCS's own rewrite of the Instrument layer, and are
+# written only by the WA6 worker (workers/src/lattice_workers/wording_le/proposal.py), never by
+# this Java service.
 
 wap:provisional-vocabulary a owl:Ontology ;
 	rdfs:comment "Word authoring POC provisional vocabulary (ADR-A114). Not published under ontology/." .
@@ -141,3 +146,71 @@ wap:displayText a owl:DatatypeProperty ;
 wap:valueType a owl:ObjectProperty ;
 	rdfs:label "value type" ;
 	rdfs:comment "POC gap (plan \u00a72.6): stands in for wrd:valueContract, which the sketch leaves to a scheme CCS has not yet published." .
+
+# --- ins: classes, the proposed relation kinds (plan WA6, CCS sketch section 5.2) ---------------
+
+ins:Obligation a owl:Class ; rdfs:label "Obligation" .
+ins:Prohibition a owl:Class ; rdfs:label "Prohibition" .
+ins:Permission a owl:Class ; rdfs:label "Permission" .
+ins:Exclusion a owl:Class ; rdfs:label "Exclusion" .
+ins:Power a owl:Class ; rdfs:label "Power" .
+ins:Definition a owl:Class ; rdfs:label "Definition" .
+ins:Deeming a owl:Class ; rdfs:label "Deeming" .
+ins:ParameterBinding a owl:Class ;
+	rdfs:label "Parameter binding" ;
+	rdfs:comment "CCS sketch section 5.9: a variable slot's binding to a declared wrd:EmbeddedVariable." .
+
+# --- ins: properties, written only by the WA6 worker --------------------------------------------
+
+ins:expressedIn a owl:ObjectProperty ;
+	rdfs:label "expressed in" ;
+	rdfs:comment "CCS sketch section 5.1: a proposed relation's one stated element." .
+
+ins:obligor a owl:ObjectProperty ;
+	rdfs:label "obligor" ;
+	rdfs:comment "CCS sketch section 5.3: Obligation, Prohibition and Exclusion's party end." .
+
+ins:holder a owl:ObjectProperty ;
+	rdfs:label "holder" ;
+	rdfs:comment "CCS sketch section 5.3: Permission and Power's party end." .
+
+ins:hasParameterBinding a owl:ObjectProperty ;
+	rdfs:label "has parameter binding" .
+
+ins:parameterKind a owl:ObjectProperty ;
+	rdfs:label "parameter kind" ;
+	rdfs:comment "Range a wap: concept named for the matched sentence form's slot, e.g. wap:rate." .
+
+ins:fromVariable a owl:ObjectProperty ;
+	rdfs:label "from variable" ;
+	rdfs:comment "CCS sketch section 5.9: the declared wrd:EmbeddedVariable a parameter binding reads." .
+
+# --- wap: classes and properties the proposal graph writes (POC gap, plan WA6) ------------------
+
+wap:PartyRole a owl:Class ;
+	rdfs:label "Party role" ;
+	rdfs:comment "POC gap: a proposed relation's party, named by a defined term, ahead of CCS's pty:RoleOccupancy." .
+
+wap:proposalBasis a owl:DatatypeProperty ;
+	rdfs:label "proposal basis" ;
+	rdfs:comment "POC gap: how a relation was read, 'form' or 'keyword' (plan WA6 'Element analysis fields')." .
+
+wap:sentenceForm a owl:DatatypeProperty ;
+	rdfs:label "sentence form" ;
+	rdfs:comment "POC gap: the matched form's id, present only when wap:proposalBasis is 'form'." .
+
+wap:definesTerm a owl:DatatypeProperty ;
+	rdfs:label "defines term" ;
+	rdfs:comment "POC gap: a Definition relation's defined term." .
+
+wap:activityText a owl:DatatypeProperty ;
+	rdfs:label "activity text" ;
+	rdfs:comment "POC gap: the element-text substring an 'activity' slot matched." .
+
+wap:namedBy a owl:ObjectProperty ;
+	rdfs:label "named by" ;
+	rdfs:comment "POC gap: a wap:PartyRole's defining element." .
+
+wap:formsProfile a owl:DatatypeProperty ;
+	rdfs:label "forms profile" ;
+	rdfs:comment "POC gap: the sentence-form profile id and version that generated an activity, as one string." .

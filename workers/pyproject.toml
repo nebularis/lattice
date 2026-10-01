@@ -19,6 +19,9 @@ authoring = ["rdflib>=7.1,<8"]
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[tool.setuptools.package-data]
+"lattice_workers.wording_le" = ["forms/*.json"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 cache_dir = "../.build/pytest-cache"

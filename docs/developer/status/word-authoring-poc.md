@@ -3,7 +3,7 @@
 # Word authoring proof of concept - Status
 
 **Unit ID:** `word-authoring-poc`
-**Status:** 🚧 In progress. WA0 to WA5 done. WA6 is next
+**Status:** 🚧 In progress. WA0 to WA6 done. WA7 is next
 **Last updated:** 2026-10-01
 **Plan:** [word-authoring-poc.md](../plans/word-authoring-poc.md)
 **Sketch:** [word-authoring-poc.md](../sketches/word-authoring-poc.md)
@@ -14,14 +14,15 @@
 
 The design and a one-shot plan of thirteen slices (WA0 to WA11, with WA9a) are written. Decisions
 WA-D1 to WA-D13 were recorded by the human on 2026-10-01: WA-D4 is Javalin, the rest follow the
-recommendations. ADR-A114 stays Proposed. WA0 to WA5 are done: preflight, the WA1 contracts, the
+recommendations. ADR-A114 stays Proposed. WA0 to WA6 are done: preflight, the WA1 contracts, the
 WA2 service module that maps a snapshot to the Wording graph and validates it with SHACL, the WA3
 detection, template and conformance checks, the WA4 HTTP API over Javalin with an in-memory store,
-bus, registry and job tracking, and WA5's real Fuseki store, RabbitMQ bus, configuration and entry
-point.
+bus, registry and job tracking, WA5's real Fuseki store, RabbitMQ bus, configuration and entry
+point, and WA6's Logical English reading of the Wording graph (the Python worker's sentence-form
+matcher, keyword fallback and proposal graph).
 
-**Next action, for the human:** ask for WA6.
-**Next action, for the agent:** WA6 (Logical English reading, the Python worker), when asked.
+**Next action, for the human:** ask for WA7.
+**Next action, for the agent:** WA7 (worker runtime: Fuseki GSP client, RabbitMQ adapter, entry point), when asked.
 
 ## Open question raised by WA3
 
@@ -42,19 +43,31 @@ asserts its merged `JenaSubsystemLifecycle` services file, which does fail corre
 with a prescribed probe have now needed a replacement; read every later one with the same scepticism
 before trusting it.
 
-## Note for WA3
+## Open question raised by WA6
+
+WA6's prescribed self-probe (in `best_match`, prefer the earliest form instead of the most fixed
+words) also does not fail: for every ambiguous pair the three samples' 30 elements produce, the
+more specific form already sits earlier in the profile's own table, independently of fixed-word
+count, so neither S6-04 nor S6-08 can tell the two tie-break rules apart. A dedicated test with two
+synthetic forms, deliberately ordered the other way round, was added and does fail correctly.
+Detail in the [WA6 Validation Pack](../validation/word-authoring-poc-wa6.md) under Self-probe.
+Three of three slices with a prescribed probe have now needed a replacement.
+
+## Note for WA3 (done in WA6)
 
 WA2's provisional vocabulary (`platform/authoring-service/src/main/resources/vocab/wording-provisional.ttl`)
-declares only the `wrd:`/`wap:` terms WA2 itself mints. When WA6 builds the worker that writes the
-proposed meaning graph (sketch §4.4: `ins:` classes, `wap:proposalBasis`, `wap:activityText`, etc.),
-add that file to WA6's own path list and extend it there.
+declared only the `wrd:`/`wap:` terms WA2 itself minted. WA6 extended it with the `ins:` relation
+classes and the `wap:` proposal-graph terms (sketch §4.4: `wap:proposalBasis`, `wap:activityText`,
+etc.), adding `platform/authoring-service/**` to its own path list as this note asked.
 
-## Note for WA5
+## Note for WA7
 
 WA4's `GET .../graph/proposal` route reads `store.getGraph(minter.proposalGraph(...))`, but nothing
-in WA4 ever writes to that IRI: the worker writes the proposal graph directly to Fuseki, keyed by
-the `proposalGraphIri` the request event already carries. WA4's tests cover only `wording` and an
-invalid kind (plan S4-12's own scope). Exercise `proposal` end to end once the worker exists.
+yet writes to that IRI: WA6 only builds the `rdflib.Graph` in memory. WA7's `fuseki_gsp.py` and
+`wording_analysis_worker.py` are what `put_graph(proposalGraphIri, graph)` the request event
+already carries. WA4's tests cover only `wording` and an invalid kind (plan S4-12's own scope).
+Exercise `proposal` end to end once WA7 is done, ideally extending WA5's S5-05 stand-in worker to
+call the real `consume()` instead of a fixture.
 
 ## Preflight (WA0, 2026-10-01)
 
@@ -78,7 +91,8 @@ invalid kind (plan S4-12's own scope). Exercise `proposal` end to end once the w
 | WA3 | Detection, templates and conformance | done | `8c4aa65` | |
 | WA4 | API and HTTP adapter | done | `c82bcc2` | |
 | WA5 | Fuseki, RabbitMQ and the runnable service | done | `187fea4` | |
-| WA6 | Logical English reading | ready | | WA2 |
+| WA6 | Logical English reading | done | | |
+| WA7 | Worker runtime | ready | | WA6 |
 | WA7 | Worker runtime | waiting | | WA6 |
 | WA8 | Add-in domain | waiting | | WA1 |
 | WA9 | Add-in task pane and harness | waiting | | WA8 |
@@ -97,6 +111,7 @@ invalid kind (plan S4-12's own scope). Exercise `proposal` end to end once the w
 | WA3 | 300k | about 230k |
 | WA4 | 450k | about 520k |
 | WA5 | 350k | about 400k |
+| WA6 | 450k | about 480k |
 
 ## History
 
@@ -167,3 +182,17 @@ invalid kind (plan S4-12's own scope). Exercise `proposal` end to end once the w
   removed. Validation Pack at `docs/developer/validation/word-authoring-poc-wa5.md`. `check:java`
   (9 modules) and `check:authoring-contracts` still pass.
 - 2026-10-01: WA5 committed as `187fea4`.
+- 2026-10-01: WA6 done: `workers/src/lattice_workers/wording_le` (`namespaces`, `offsets`, `model`,
+  `tokens`, `forms` plus the packaged `forms/sentence-forms.json`, `matcher`, `classify`,
+  `analyse`, `render`, `proposal`), `check:authoring-worker` in `mise.toml`, `workers/README.md`
+  created. 67 tests (33 new, plus WA1's 34-test `test_authoring_contracts.py`), all pass first
+  run against the real facility, software-licence and property-policy fixtures with no reading
+  corrected: every element's class, basis and form matched plan WA6's expected facility readings
+  exactly, and all twelve forms were exercised across the three samples unprompted. Extended
+  `platform/authoring-service/src/main/resources/vocab/wording-provisional.ttl` with the `ins:`
+  relation classes and `wap:` proposal-graph terms, and `ins:`/`prov:`/`dcterms:` prefixes, per the
+  WA3 note above (path list amended to include `platform/authoring-service/**`). The plan's
+  self-probe was found vacuous a third time (see "Open question raised by WA6" above); a dedicated
+  tie-break test using two synthetic forms was added and does fail correctly. Validation Pack at
+  `docs/developer/validation/word-authoring-poc-wa6.md`. `check:java` (9 modules),
+  `check:authoring-service` (85) and `check:authoring-contracts` still pass.

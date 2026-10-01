@@ -78,6 +78,10 @@ run = "python -m pytest workers/tests"
 description = "Validate the word authoring POC contracts, templates, samples and fixtures"
 run = "python -m pytest workers/tests/test_authoring_contracts.py -q"
 
+[tasks."check:authoring-worker"]
+description = "Test the word authoring POC worker (ADR-A114)"
+run = "python -m pytest workers/tests/test_wording_le.py workers/tests/test_authoring_contracts.py -q"
+
 [tasks."check:mtp"]
 description = "Check the committed MORK Teaching Pack structure and pins"
 run = "python -m mtp.cli check --out ontology/mork/mtp/out"
