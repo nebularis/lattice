@@ -190,3 +190,26 @@ vision; every span role's legend entry is its own name as text, not a colour swa
   Mermaid diagram, which renders Mermaid's own sanitized SVG output (`securityLevel: "strict"`)
   rather than arbitrary API text, a different and narrower code path, not a loophole in this rule.
 
+### 4.6 Ribbon and right-click commands
+
+The author can mark text without the task pane open (decision WA-D13: a shared runtime, so a
+command and the task pane share one JavaScript context). A command needing input (a variable's key
+and type, or which definition a term refers to) opens the task pane with its form already filled
+in, rather than guessing or failing silently:
+
+| Id | Ribbon | Right-click | Does |
+|---|---|---|---|
+| `showPane` | Show pane | | opens the task pane |
+| `markClause` | Clause | Mark as clause | wraps the selected paragraphs as a clause |
+| `markDefinition` | Definition | Mark as definition | wraps the selected paragraphs as a definition |
+| `markTerm` | Term | Mark as defined term (in its definition) | marks the selection as the defined term |
+| `markVariable` | Variable… | Mark as variable… | drafts a variable (key, label, guessed value type) from the selection, opens the pane on the Markup tab |
+| `markDefinedTerm` | Defined term… | Mark as reference to a defined term… | marks a reference when exactly one definition matches; otherwise drafts one and opens the pane |
+| `unmark` | Unmark | Remove LATTICE mark | removes the mark, keeping the text |
+| `analyse` | Analyse | | opens the pane on the Analyse tab and starts the analysis |
+
+**A command never fails silently.** A `MarkResult` that is not `ok`, or an exception, always posts
+its reason to the Markup tab and opens the pane, so the author is never left wondering why nothing
+happened. Every handler calls `event.completed()` in a `finally` block, since Word waits for it
+before considering the command finished.
+

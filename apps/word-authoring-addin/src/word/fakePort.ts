@@ -19,6 +19,11 @@ interface FakeSelection {
   end: number;
 }
 
+interface FakeUnmarkedSelection {
+  sectionKey: string;
+  text: string;
+}
+
 /** Extracts each section's `Heading1` paragraph text directly from a flat-OPC package, since the
  * parsed model (by design) drops it. A small amount of duplicated DOM-walking versus
  * `domain/ooxml.ts`, acceptable in a test double. */
@@ -44,12 +49,6 @@ function extractHeadings(packageXml: string): Map<string, string> {
   return headings;
 }
 
-function elementTextLength(element: DocumentElement): number {
-  return element.parts.reduce((total, part) => total + part.text.length, 0);
-}
-
-/** Locates the single part containing `[start, end)`, and its own local offsets within that
- * part's text. Returns `null` when the range spans more than one part. */
 function locatePart(element: DocumentElement, start: number, end: number): { index: number; localStart: number; localEnd: number } | null {
   let offset = 0;
   for (let index = 0; index < element.parts.length; index += 1) {
@@ -69,6 +68,7 @@ export class FakeWordPort implements DocumentPort {
   private readonly sectionOrder: string[] = [];
   private metadata: AuthoringMetadata | null = null;
   private selection: FakeSelection | null = null;
+  private unmarkedSelection: FakeUnmarkedSelection | null = null;
 
   async readBodyOoxml(): Promise<string> {
     const writable: WritableSection[] = this.sectionOrder.map((sectionKey) => {
@@ -101,6 +101,14 @@ export class FakeWordPort implements DocumentPort {
   /** Harness-only: sets the simulated selection, in element-text offsets (plan WA9). */
   select(elementId: string, start: number, end: number): void {
     this.selection = { elementId, start, end };
+    this.unmarkedSelection = null;
+  }
+
+  /** Harness-only: simulates selecting unmarked text within a section, for
+   * `wrapSelectionAsElement` (plan WA9a). */
+  selectUnmarked(sectionKey: string, text: string): void {
+    this.unmarkedSelection = { sectionKey, text };
+    this.selection = null;
   }
 
   /** Harness-only: the current in-memory model, as `ParsedDocument`-shaped sections. */
@@ -132,13 +140,22 @@ export class FakeWordPort implements DocumentPort {
   }
 
   async wrapSelectionAsElement(kind: "clause" | "definition", elementId: string): Promise<MarkResult> {
-    // The fake port's selection model only ever points at an existing element (plan WA9's
-    // "Selections are (elementId, start, end) in element-text offsets"), so there is never a
-    // selection outside one to wrap. No S9 test exercises this path; see the Validation Pack's
-    // deliberate non-coverage.
-    void kind;
-    void elementId;
-    return { ok: false, reason: "outside-section" };
+    if (!this.unmarkedSelection) {
+      return { ok: false, reason: "outside-section" };
+    }
+    const section = this.sections.get(this.unmarkedSelection.sectionKey);
+    if (!section) {
+      return { ok: false, reason: "outside-section" };
+    }
+    const element: DocumentElement = {
+      elementId,
+      kind,
+      definedTerm: null,
+      parts: [{ kind: "literal", text: this.unmarkedSelection.text }],
+    };
+    section.elements.push(element);
+    this.unmarkedSelection = null;
+    return { ok: true };
   }
 
   async markSelection(mark: InlineMark): Promise<MarkResult> {

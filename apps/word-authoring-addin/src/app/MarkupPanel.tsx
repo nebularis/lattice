@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { DocumentElement, ValueType } from "../domain/types";
+import type { ReferenceDraft, VariableDraft } from "./uiBridge";
 
 const VALUE_TYPES: ValueType[] = ["money", "percentage", "date", "duration", "number", "text", "party"];
 
@@ -7,6 +8,8 @@ export interface MarkupPanelProps {
   markMessage: string | null;
   definitions: DocumentElement[];
   existingVariableKeys: string[];
+  variableDraft: VariableDraft | null;
+  referenceDraft: ReferenceDraft | null;
   onMarkClause: () => void;
   onMarkDefinition: () => void;
   onMarkTerm: () => void;
@@ -15,11 +18,14 @@ export interface MarkupPanelProps {
   onUnmark: () => void;
 }
 
-/** The Markup tab (plan WA9 "Panels"). */
+/** The Markup tab (plan WA9 "Panels"), with the ribbon commands' drafts (plan WA9a) filling its
+ * forms. */
 export function MarkupPanel({
   markMessage,
   definitions,
   existingVariableKeys,
+  variableDraft,
+  referenceDraft,
   onMarkClause,
   onMarkDefinition,
   onMarkTerm,
@@ -30,6 +36,14 @@ export function MarkupPanel({
   const [variableKey, setVariableKey] = useState("");
   const [variableLabel, setVariableLabel] = useState("");
   const [valueType, setValueType] = useState<ValueType>("text");
+
+  useEffect(() => {
+    if (variableDraft) {
+      setVariableKey(variableDraft.key);
+      setVariableLabel(variableDraft.label);
+      setValueType(variableDraft.valueType);
+    }
+  }, [variableDraft]);
 
   return (
     <section aria-label="Markup">
@@ -94,6 +108,13 @@ export function MarkupPanel({
           </li>
         ))}
       </ul>
+
+      {referenceDraft && (
+        <p>
+          No single definition matched &quot;{referenceDraft.text}&quot;. Pick one above, or mark the selection as a
+          variable instead.
+        </p>
+      )}
 
       {markMessage && <p role="status">{markMessage}</p>}
     </section>

@@ -8,9 +8,10 @@ review the proposed `ins:` graph against [`platform/authoring-service`](../../pl
 Not a platform contract; its code, markup and manifest may change or be withdrawn without
 deprecation.
 
-This slice (WA8) is the add-in's domain layer only: the OOXML parser/writer, the tag codec, the
-contract types and Ajv validation, the HTTP client and the `DocumentPort` seam. The task pane UI
-(WA9) and the ribbon/right-click commands (WA9a) are not implemented yet.
+The add-in has a domain layer (WA8: OOXML parser/writer, tag codec, contract types and Ajv
+validation, HTTP client, `DocumentPort` seam), a task pane UI (WA9: `App.tsx` and five panels,
+`officePort.ts`/`fakePort.ts`, a Playwright harness), and ribbon/right-click commands (WA9a, this
+slice), running in a shared JavaScript runtime with the task pane (decision WA-D13).
 
 ## Modules (`src/`)
 
@@ -20,14 +21,25 @@ contract types and Ajv validation, the HTTP client and the `DocumentPort` seam. 
 | `domain/schemas.ts` | one Ajv 2020-12 instance over the same 14 schemas, `validate(name, value): string[]` |
 | `domain/tags.ts` | the content-control tag codec: `encode`/`decode`, and `title` |
 | `domain/offsets.ts` | `occurrenceIndex` and `escapeWordSearch`, for `Range.search` |
+| `domain/keys.ts` | `suggestKey`/`guessValueType`, ported from WA3's Java detector |
 | `domain/xml.ts` | small shared DOM helpers used by `ooxml.ts` and `metadata.ts` |
 | `domain/ooxml.ts` | `parseBody`, `writeSections`, `writeTemplate`, `writePackage` |
 | `domain/snapshot.ts` | `buildSnapshot(parsed, metadata)`, validated against `document-snapshot` |
 | `domain/metadata.ts` | `toXml`/`fromXml` for the document's custom XML metadata part |
 | `domain/mermaid.ts` | `toMermaid(graphView)`, a deterministic Mermaid `flowchart` renderer |
 | `domain/poll.ts` | `pollJob(api, jobId, options)` |
+| `domain/uuid.ts` | a dependency-free UUID v4 generator |
 | `api/client.ts` | `ApiClient`, `HttpApiClient`, `ApiError` |
 | `word/port.ts` | the `DocumentPort` interface, `MarkResult`, `InlineMark`, `AuthoringMetadata` |
+| `word/officePort.ts` | `DocumentPort` over the real Word API |
+| `word/fakePort.ts` | `DocumentPort` over an in-memory model, for tests and the harness |
+| `app/App.tsx` | the task pane root: tabs, error banner, all shared state |
+| `app/DocumentPanel.tsx`, `MarkupPanel.tsx`, `AnalysePanel.tsx`, `LogicalEnglishPanel.tsx`, `GraphPanel.tsx` | one component per tab |
+| `app/uiBridge.ts` | the observable store bridging ribbon/right-click commands and the task pane |
+| `commands/ids.ts` | `COMMAND_IDS`, the eight command ids |
+| `commands/handlers.ts` | `createHandlers(deps)`, one handler per command (no Office global touched) |
+| `commands/register.ts` | `registerCommands(handlers)`, the only module that calls `Office.actions.associate` |
+| `main.tsx` / `harness.tsx` | the real and harness entry points |
 
 ## Tag codec
 
@@ -42,13 +54,27 @@ contract types and Ajv validation, the HTTP client and the `DocumentPort` seam. 
 
 ## Commands
 
-Today the manifest declares one ribbon button, "Show pane" (`manifest/manifest.xml`), which opens
-the task pane. WA9a adds the mark-up and right-click commands.
+| Id | Ribbon | Right-click | Does |
+|---|---|---|---|
+| `showPane` | Show pane | | opens the task pane |
+| `markClause` | Clause | Mark as clause | wraps the selected paragraphs as a clause |
+| `markDefinition` | Definition | Mark as definition | wraps the selected paragraphs as a definition |
+| `markTerm` | Term | Mark as defined term (in its definition) | marks the selection as the defined term |
+| `markVariable` | Variable… | Mark as variable… | drafts a variable from the selection, opens the pane on the Markup tab |
+| `markDefinedTerm` | Defined term… | Mark as reference to a defined term… | marks a reference when exactly one definition matches, otherwise drafts one |
+| `unmark` | Unmark | Remove LATTICE mark | removes the mark, keeping the text |
+| `analyse` | Analyse | | opens the pane on the Analyse tab and starts the analysis |
+
+A command never fails silently: a `MarkResult` that is not `ok`, or an exception, posts the reason
+to the Markup tab and opens the pane.
 
 ## Running the tests
 
 ```
 mise run check:authoring-addin
+mise run test:authoring-addin
 ```
 
-Type-checks with `tsc --noEmit` and runs the Vitest unit suite (`vitest run`).
+`check:authoring-addin` type-checks with `tsc --noEmit` and runs the Vitest unit suite.
+`test:authoring-addin` additionally runs the Playwright suite (`e2e/`) against a real `msedge`
+channel and the harness.

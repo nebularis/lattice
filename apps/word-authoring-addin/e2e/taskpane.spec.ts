@@ -47,6 +47,13 @@ function tab(page: Page, name: string) {
   return page.locator("nav.tab-bar").getByRole("button", { name });
 }
 
+function harnessCommand(page: Page, id: string) {
+  return page.evaluate(
+    (commandId) => (window as unknown as { __harness: { command(id: string): Promise<void> } }).__harness.command(commandId),
+    id,
+  );
+}
+
 test("S9-02: health ok shows Connected and the catalogue loads", async ({ page }) => {
   await mockHealthOk(page);
   await mockCatalog(page);
@@ -330,3 +337,53 @@ test("S9-13: Logical English never renders document text as HTML (self-probe tar
   const xss = await page.evaluate(() => (window as unknown as { __xss?: number }).__xss);
   expect(xss).toBeUndefined();
 });
+
+test("S9a-07: markVariable command fills the Markup form, then Mark variable marks the text", async ({ page }) => {
+  await mockHealthOk(page);
+  await mockCatalog(page);
+  await page.goto("harness.html");
+  await insertFacilitySample(page);
+
+  const sample = loadSample("facility-agreement");
+  const { start, end } = textOffsetOf(sample, FACILITY_ELEMENT_11, "GBP 250");
+  await harnessSelect(page, FACILITY_ELEMENT_11, start, end);
+
+  await harnessCommand(page, "markVariable");
+
+  await expect(tab(page, "Markup")).toHaveClass(/active/);
+  const markup = page.locator('section[aria-label="Markup"]');
+  await expect(markup.getByLabel("Key")).toHaveValue("gbp-250");
+  await expect(markup.getByLabel("Value type")).toHaveValue("money");
+
+  await markup.getByRole("button", { name: "Mark variable" }).click();
+
+  const model = (await harnessModel(page)) as {
+    sections: { elements: { elementId: string; parts: { kind: string; variableKey?: string }[] }[] }[];
+  };
+  const element = model.sections.flatMap((section) => section.elements).find((candidate) => candidate.elementId === FACILITY_ELEMENT_11)!;
+  expect(element.parts.some((part) => part.kind === "variable" && part.variableKey === "gbp-250")).toBe(true);
+});
+
+test("S9a-08: the analyse command switches to the Analyse tab and sends one PUT", async ({ page }) => {
+  await mockHealthOk(page);
+  await mockCatalog(page);
+  await mockSnapshotSubmission(page, {});
+  await mockJob(page, ["completed"]);
+  await mockAnalysis(page);
+
+  const puts: unknown[] = [];
+  page.on("request", (request) => {
+    if (request.method() === "PUT" && request.url().includes("/snapshot")) {
+      puts.push(request.postDataJSON());
+    }
+  });
+
+  await page.goto("harness.html");
+  await insertFacilitySample(page);
+
+  await harnessCommand(page, "analyse");
+
+  await expect(tab(page, "Analyse")).toHaveClass(/active/);
+  await expect.poll(() => puts.length).toBe(1);
+});
+

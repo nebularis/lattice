@@ -3,7 +3,7 @@
 # Word authoring proof of concept - Status
 
 **Unit ID:** `word-authoring-poc`
-**Status:** 🚧 In progress. WA0 to WA9 done. WA9a is next
+**Status:** 🚧 In progress. WA0 to WA9a done. WA10 is next
 **Last updated:** 2026-10-02
 **Plan:** [word-authoring-poc.md](../plans/word-authoring-poc.md)
 **Sketch:** [word-authoring-poc.md](../sketches/word-authoring-poc.md)
@@ -23,12 +23,14 @@ matcher, keyword fallback and proposal graph), WA7's worker runtime (the Fuseki 
 Protocol client, the RabbitMQ consumer/publisher adapter, and the `wording_analysis_main` entry
 point that wires the WA6 reading into a real job loop), WA8's add-in domain (the OOXML
 parser/writer, the tag codec, the hand-written contract types and Ajv validation, the HTTP client,
-the `DocumentPort` seam, and the manifest), and WA9's task pane and harness (`App.tsx` and five
+the `DocumentPort` seam, and the manifest), WA9's task pane and harness (`App.tsx` and five
 panels, `fakePort.ts`/`officePort.ts`, `main.tsx`/`harness.tsx`, the Playwright suite over a real
-`msedge` channel).
+`msedge` channel), and WA9a's ribbon and right-click commands (`commands/ids.ts`/`handlers.ts`/
+`register.ts`, the `uiBridge.ts` observable store, `domain/keys.ts`, the shared-runtime `V1_1`
+manifest override with the ribbon group and context menu).
 
-**Next action, for the human:** ask for WA9a.
-**Next action, for the agent:** WA9a (ribbon and right-click commands), when asked, once decision WA-D13 is confirmed recorded.
+**Next action, for the human:** ask for WA10.
+**Next action, for the agent:** WA10 (compose stack), when asked.
 
 ## Open question raised by WA3
 
@@ -88,6 +90,24 @@ suite in a real browser, not by static review:
    schema-valid (`LiteralPart` requires at least one character) and survives the round trip as one
    element with one (visually blank) part.
 
+## Open question raised by WA9a
+
+WA9a's prescribed self-probe ("move `event.completed()` out of the `finally` block into the
+success path, S9a-03's throwing case fails") also bites exactly as written: run against
+`handlers.test.ts` alone, the throwing-port test fails (`completedCount()` is `0`, not `1`), and
+passes again once reverted. No replacement test needed, the fourth such slice after WA7, WA8 and
+WA9. Detail in the [WA9a Validation Pack](../validation/word-authoring-poc-wa9a.md) under
+Self-probe.
+
+Separately, WA9a found and fixed a real defect only visible once the `analyse` ribbon command was
+actually exercised end to end (S9a-08): `App.tsx`'s bridge subscription effect ran once (`[bridge]`
+never changes) and called `handleAnalyse()` directly, closing over the *initial* (`null`)
+`metadata` forever, so Analyse silently did nothing when triggered from the bridge. Fixed with the
+standard ref pattern (`handleAnalyseRef`, kept fresh by an unconditional `useEffect`). WA9a also
+closed a gap WA9 itself had flagged: `FakeWordPort.wrapSelectionAsElement` was a stub that always
+returned `outside-section`; it now has a real implementation (`selectUnmarked`), since WA9a's
+`markClause`/`markDefinition` commands are the first thing in this unit to actually exercise it.
+
 ## Note for WA3 (done in WA6)
 
 WA2's provisional vocabulary (`platform/authoring-service/src/main/resources/vocab/wording-provisional.ttl`)
@@ -138,7 +158,7 @@ reverted. No replacement test was needed. Detail in the
 | WA7 | Worker runtime | done | `ab8e1a1` | |
 | WA8 | Add-in domain | done | `451fc93` | WA1 |
 | WA9 | Add-in task pane and harness | done | `e567990` | WA8 |
-| WA9a | Ribbon and right-click commands | waiting | | WA9, WA-D13 |
+| WA9a | Ribbon and right-click commands | done | | WA9, WA-D13 |
 | WA10 | Compose stack | waiting | | WA5, WA7, WA9a |
 | WA11 | Documentation and close-out | waiting | | WA10 |
 
@@ -157,6 +177,7 @@ reverted. No replacement test was needed. Detail in the
 | WA7 | 200k | about 230k |
 | WA8 | 450k | about 420k |
 | WA9 | 550k | about 600k |
+| WA9a | 250k | about 270k |
 
 ## History
 
@@ -290,3 +311,22 @@ reverted. No replacement test was needed. Detail in the
   `check:authoring-worker` and `check:authoring-contracts` were not re-run (WA9 touches none of
   their paths).
 - 2026-10-02: WA9 committed as `e567990`.
+- 2026-10-02: WA9a done: `src/commands/ids.ts`, `handlers.ts` (`createHandlers`, no Office global
+  touched), `register.ts` (the only module that calls `Office.actions.associate`),
+  `src/app/uiBridge.ts` (the observable store), `src/domain/keys.ts` (`suggestKey`/
+  `guessValueType`, ported from WA3's Java `ConstructDetector` exactly), the nested
+  `VersionOverridesV1_1` manifest override (`SharedRuntime` 1.1, one long-lived runtime, eight
+  ribbon controls in `LatticeGroup`, six context-menu items, four new icon colour sets).
+  `main.tsx`/`harness.tsx` updated to register commands and expose `window.__harness.command(id)`.
+  `ux-design.md` §4.6 and the add-in README's command table added. 24 new Vitest tests
+  (`keys.test.ts` 7, `register.test.ts` 1, `handlers.test.ts` 9, `manifest.test.ts` 7 new; 69
+  total), 2 new Playwright tests (S9a-07, S9a-08; 13 total), all pass. Found and fixed two real
+  defects: `App.tsx`'s bridge subscription closed over a stale (`null`) `metadata` forever (fixed
+  with a ref kept fresh every render); `FakeWordPort.wrapSelectionAsElement` was a stub WA9 left
+  always failing, now genuinely implemented (`selectUnmarked`) since WA9a's `markClause`/
+  `markDefinition` are the first callers that need it to work. Self-probe (move `event.completed()`
+  out of `finally`) bites exactly as written, the fourth slice running (after WA7, WA8, WA9) with
+  no replacement test needed. Validation Pack at
+  `docs/developer/validation/word-authoring-poc-wa9a.md`. `check:java`, `check:authoring-service`,
+  `check:authoring-worker` and `check:authoring-contracts` were not re-run (WA9a touches none of
+  their paths).

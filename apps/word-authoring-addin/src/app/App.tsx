@@ -2,7 +2,7 @@
  * The task pane's root component (plan WA9): tabs Document, Markup, Analyse, Logical English,
  * Graph, and an error banner. Holds all shared state; each panel is a plain function of props.
  */
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ApiClient } from "../api/client";
 import { ApiError } from "../api/client";
 import { buildSnapshot } from "../domain/snapshot";
@@ -30,8 +30,8 @@ import { GraphPanel } from "./GraphPanel";
 import { LogicalEnglishPanel } from "./LogicalEnglishPanel";
 import { MarkupPanel } from "./MarkupPanel";
 import { markResultMessage } from "./markMessages";
-
-export type Tab = "document" | "markup" | "analyse" | "le" | "graph";
+import type { Tab } from "./tabs";
+import type { UiBridge, VariableDraft, ReferenceDraft } from "./uiBridge";
 
 export interface AppOptions {
   pollTimeoutMs?: number;
@@ -40,10 +40,11 @@ export interface AppOptions {
 export interface AppProps {
   port: DocumentPort;
   api: ApiClient;
+  bridge: UiBridge;
   options?: AppOptions;
 }
 
-export function App({ port, api, options }: AppProps): JSX.Element {
+export function App({ port, api, bridge, options }: AppProps): JSX.Element {
   const [activeTab, setActiveTab] = useState<Tab>("document");
   const [error, setError] = useState<string | null>(null);
   const [connected, setConnected] = useState<boolean | null>(null);
@@ -57,12 +58,33 @@ export function App({ port, api, options }: AppProps): JSX.Element {
   const [job, setJob] = useState<JobView | null>(null);
   const [analysis, setAnalysis] = useState<AnalysisView | null>(null);
   const [graphTurtle, setGraphTurtle] = useState<string | null>(null);
+  const [variableDraft, setVariableDraft] = useState<VariableDraft | null>(null);
+  const [referenceDraft, setReferenceDraft] = useState<ReferenceDraft | null>(null);
+  const handleAnalyseRef = useRef(handleAnalyse);
+
+  useEffect(() => {
+    handleAnalyseRef.current = handleAnalyse;
+  });
 
   useEffect(() => {
     void refreshHealth();
     void loadCatalog();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    const unsubscribe = bridge.subscribe((state) => {
+      if (state.tab) setActiveTab(state.tab);
+      if (state.message !== null) setMarkMessage(state.message);
+      if (state.variableDraft) setVariableDraft(state.variableDraft);
+      if (state.referenceDraft) setReferenceDraft(state.referenceDraft);
+      if (state.runAnalyse) {
+        void handleAnalyseRef.current().finally(() => bridge.post({ runAnalyse: false }));
+      }
+    });
+    return unsubscribe;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bridge]);
 
   async function refreshHealth(): Promise<void> {
     try {
@@ -325,6 +347,8 @@ export function App({ port, api, options }: AppProps): JSX.Element {
           markMessage={markMessage}
           definitions={definitions}
           existingVariableKeys={metadata?.variables.map((variable) => variable.variableKey) ?? []}
+          variableDraft={variableDraft}
+          referenceDraft={referenceDraft}
           onMarkClause={() => handleWrap("clause")}
           onMarkDefinition={() => handleWrap("definition")}
           onMarkTerm={() => handleMark({ kind: "term" })}
