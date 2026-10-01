@@ -93,6 +93,47 @@ CBAA (Lloyd's computable binding authority collateral).
 | A49 | one limit stated in several currencies, each read in its own unit | CBAA SoUA row 42, ADR-A95 |
 | A50 | taxes shown separately and not concealed | IUA 28.2 |
 
+### 1.7 Bases, aggregation and grouping
+
+An amount rarely stands alone. A limit or a retention applies **on a basis**: per occurrence, per
+claim, any one event, per policy year. An aggregate applies over a **window**, counting by a
+**counting basis**. An hours clause **groups** losses into events. The idea is general, not
+insurance-specific: a facility's commitment fee per annum, a licence fee per seat per year, a
+notice period extended per year of service, a drawing limit per drawing.
+
+The machinery a basis needs, independent of any domain:
+
+| Part | What it says | Insurance example | Other domains |
+|---|---|---|---|
+| counting unit | what one application of the amount is measured against | occurrence, claim, event, risk, location | drawing, seat, employee, shipment |
+| accumulation window | the period over which applications sum against an aggregate | policy year, calendar year, per event, custom | per annum, per quarter, per contract year |
+| grouping rule | how separate happenings count as one unit | hours clause: 72 hours, selection by the insured, no overlap, maximum windows | related claims as one, a series of drawings as one |
+| companion parameters | what a basis requires beside the amount | an aggregate basis needs a window. A linear payout needs a floor and a ceiling | an annual fee needs an anniversary |
+
+| # | Construct | Source |
+|---|---|---|
+| A51 | a limit or retention on a basis: per occurrence, per claim ("any one claim"), per event, per risk, per location | AIG D&O 6 per-executive sublimits, GTC 2 "each Claim or group of Related Claims", CBAA SoUA row 21 limit or sum insured basis |
+| A52 | an aggregate limit over a window: policy year, calendar year, per event, custom | AIG GTC 3, CBAA SoUA row 45 GWP income limit period |
+| A53 | an aggregate deductible (annual aggregate deductible), distinct from the aggregate limit, with its own window and counting basis | term-parameters `ctr:AggregateParameter` |
+| A54 | an aggregate counting basis: per occurrence, per claim, per event | term-parameters T2 (basis on aggregate parameters) |
+| A55 | an hours clause: window duration, selection method (insured's choice, largest loss, first event), non-overlap, maximum windows | term-parameters `ctr:OccurrenceGroupingParameter` |
+| A56 | reinstatements: count, percentage, automatic or optional, pro rata as to time, pro rata as to amount (independent elections, multiplicative when both apply) | term-parameters `ctr:ReinstatementParameter` |
+| A57 | a parametric payout structure: binary, linear between a floor and a ceiling, graduated by tiers | parametric covers in general, no tested instrument |
+| A58 | a premium basis: flat, rate on line, adjustable, minimum and deposit | term-parameters `ctr:PremiumParameter` |
+
+**What exists.** The term-parameters sketch (A-101, applied insurance) already designs most of
+this as insurance term parameters: a basis on every limit, retention and aggregate parameter (its
+T2), companion parameters required by basis (T4), `ctr:AggregateParameter`,
+`ctr:OccurrenceGroupingParameter` with maximum windows, and `ctr:ReinstatementParameter` with both
+pro rata elections.
+
+**What is missing.** The substrate has no general notion of a basis. Every domain would otherwise
+restate the counting unit, window and grouping rule. The design of this catalogue should decide
+whether the four parts above are a substrate qualifier pattern (a basis node with a counting unit
+concept, a `qnt:Recurrence` or anchored window, and a grouping rule tied to substrate S4's
+occurrence grouping), with insurance's bases as applied schemes. The CCS template library
+(computable-contract-substrate §5.11) needs the answer for its term and qualifier templates.
+
 ## 2. What LATTICE already has
 
 | Need | Existing construct |
@@ -123,7 +164,8 @@ CBAA (Lloyd's computable binding authority collateral).
    instruments `ins:boundUnder` a power, with the notification threshold as a derived trigger.
 6. **Remuneration formulas.** Commission, fees and profit commission (A35 to A46) as derived
    amounts with a declared basis, adjustable with the premium they derive from.
-7. **Where each lives.** Which parts are substrate (accounts, combinators, derived amounts) and
+7. **Bases.** The general basis pattern of §1.7, and whether it belongs in the substrate.
+8. **Where each lives.** Which parts are substrate (accounts, combinators, derived amounts) and
    which applied (insurance limit kinds, capacity).
 
 Each row above becomes a test case when the design is written.

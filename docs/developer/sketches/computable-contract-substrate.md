@@ -27,7 +27,7 @@ ratified.
 | AIG Dummy Policy | AIG dummy non-profit package policy: General Terms and Conditions, Non-Profit D&O, EPL, Fiduciary, Corporate Counsel, CrisisFund, 33 endorsements | `wingman/Nebularis/Ontologies/specification/sample-policy-blended.md` |
 | IUA | IUA 09-069 BAA2018 (Broker) non-marine binding authority agreement and its schedule | `open-dare/.copilot/UIA_Broker_BAA.md` |
 | CBAA | Lloyd's proposed computable binding authority agreement, modules M1 to M6, M8 to M10, M12 to M14, with the Insurer Capacity Table and Scope of Underwriting Authority base tables | `open-dare/.copilot/cbaa/`, extracted by `open-dare/tools/cbaa_extract.py` |
-| SCHED | the schedule of a sectioned Lloyd's binding authority (its agreement number and UMR are not recorded here): coverholders, persons responsible, classes and locations per section | image supplied in review, 2026-09-30 |
+| SCHED | the schedule of a sectioned Lloyd's binding authority template : coverholders, persons responsible, classes and locations per section | image supplied in review, 2026-09-30 |
 | LEND, TRIAL | the clean-room examples of the first sketch: a facility agreement and a trial protocol | [instrument-terms-and-legal-relations.md](instrument-terms-and-legal-relations.md) §7 |
 
 Clause references below use these codes, for example AIG Dummy Policy D&O 9.A(2), IUA 36.6, CBAA M3 3.9.1.
@@ -55,16 +55,16 @@ A computable contract is three things, and each is a layer:
 | **Instrument** | what does it mean in law: which terms bind, which legal relations they create, between whom? | Instrument, rewritten | `ins:` |
 | **Behaviour** | what happens over time: arisings, acts, breaches, exercises, states? | Behaviour, extended | `bhv:` |
 
-The substrate README calls the composition a **computable contract**. No single layer carries that
-name.
+The substrate README calls the composition a **computable contract**.
 
 ```mermaid
 flowchart BT
     FND["Foundation"] --> VOC["Vocabulary"] --> QNT["Quantification"] --> PTY["Party"] --> ELG["Eligibility"]
     ELG --> WRD["Wording<br/>structure, text, variables,<br/>tables, assembly"]
-    WRD --> INS["Instrument<br/>terms, legal relations,<br/>templates, amendments"]
-    INS --> BHV["Behaviour<br/>occasions, acts, breaches,<br/>exercises, lifecycles"]
-    PTY --> BHV
+    ELG --> BCF["Behaviour configuration<br/>state spaces, transitions,<br/>triggers, guards, effects"]
+    BCF --> BRT["Behaviour runtime<br/>occasions, acts, records,<br/>state occupancies"]
+    WRD --> INS["Instrument<br/>terms, legal relations,<br/>regimes, templates, amendments"]
+    BCF --> INS
 ```
 
 **Why the wording is a layer of its own.** Contract structure and wording are general to every
@@ -76,11 +76,13 @@ variation slots and conditional clauses, the IUA's form and schedule). Nothing i
 T-Box is specific to binding authorities (§3). The London market's WIM typing is specific to the
 London market, not to binding authorities, and becomes a profile (CC-D3).
 
-**Why wording sits between Eligibility and Instrument.** Wording needs Foundation (versions,
-governance), Vocabulary (typing by scheme contract), Quantification (a variable's value space and
-admissible range) and Eligibility (a conditional clause's inclusion condition). Instrument needs
-Wording, because a term is expressed in wording. Behaviour needs both. This inserts one layer into
-ADR-A01's order, which ADR-A112 amends.
+**Why the layers sit where they do.** Wording needs Foundation (versions, governance), Vocabulary
+(typing by scheme contract), Quantification (a variable's value space and admissible range) and
+Eligibility (a conditional clause's inclusion condition). Behaviour, once it stops importing
+Instrument (§7.1), needs only the layers below Eligibility and Eligibility itself. Instrument needs
+Wording, because a term is expressed in wording, and Behaviour's configuration, because its
+regimes and legal triggers specialise it. This inserts Wording into ADR-A01's order and moves
+Behaviour below Instrument, which ADR-A112 amends.
 
 ### 1.1 Naming: wording, instrument, contract
 
@@ -128,6 +130,8 @@ first sketch's.
 | **permission, Permitted** | a legal relation, and an Eligibility decision value | kept, with a disambiguating comment on both |
 | **section** | a part of a contract with a determined meaning, as in Lloyd's and the MRC: "Section B2", with its own parties, authority, classes or capacity. The CBAA calls it an "Agreement Segment" | a wording element of type Section, which terms name with `ins:appliesWithin` and `ins:notWithin` (§5.10). Pieces of text are `wrd:TextPart`s |
 | **the Coverholder, the Insured, the Lender** (a defined party word) | a role whose occupant the instrument defines, sometimes per section | an `ins:Definition` whose meaning is one or more occupancies (§5.10) |
+| **regime, dispensation** | a set of states under which different rules apply: the notice regime, a territorial regime | `ins:Regime` (`skos:altLabel` "Dispensation"), a specialised Behaviour state space (§7.4). The T-Box never says "lifecycle" |
+| **basis** | the unit and window an amount applies on: per occurrence, per claim, any one event, per policy year | an amount's basis ([contract-amounts.md](contract-amounts.md) §1.7). Never a name for a regime |
 | **norm, statement** | legal theory, and Open CBAA's term for attached meaning | not used in the substrate. Open CBAA's `stm:Statement` maps to terms and relations (§3) |
 
 ---
@@ -147,7 +151,7 @@ L17).
 | DP2 class or concept | kept: element types are concepts, content kinds that differ in properties are classes |
 | DP3 wording and meaning are separate strata | becomes the Wording and Instrument layers, disjoint |
 | DP4 intrinsic on nodes, relational on edges | kept: parameters on relations, qualifiers as nodes |
-| DP5 compile, do not interpret, on hot paths | kept for Behaviour's compiled wiring (§7) |
+| DP5 compile, do not interpret, on hot paths | kept for the runtime evaluator (§7, plan C12). Instrument needs no compiled wiring, since its triggers are Behaviour triggers |
 | DP6 state never enters structural comparison | kept: `ins:appliesInState` is separate from scope and never enters design-time comparison |
 | DP7 open world for terminology, closed world for transitions | kept |
 | DP8 every concept-valued property names a scheme contract | kept |
@@ -177,8 +181,8 @@ L17).
 | `stm:StatementTemplate`, `stm:BoundStatement`, `boundFrom`, `expresses`, `expressedBy` | Instrument | templates and binding (§5.9): `ins:Template`, `ins:boundFrom`, `ins:expressedIn` |
 | `stm:bearer`, `counterparty`, `bearerOccupancy`, `counterpartyOccupancy` | Instrument | `ins:obligor` or `ins:holder`, and `ins:obligee` or `ins:counterparty`. Roles on templates, occupancies on bound relations |
 | `stm:activity`, `stm:scope`, `stm:level`, `stm:deadline`, `stm:recurrence` | Instrument | `ins:activity`, `ins:scope`, a level qualifier, `ins:due`, `ins:recurrence` |
-| `stm:trigger` (range `bhv:TriggerDefinition`) | Instrument | `ins:arisesOn`, range `elg:Condition`, since Instrument cannot import Behaviour. Behaviour compiles the trigger from it |
-| `stm:appliesInState` (range a Behaviour state) | Instrument | `ins:appliesInState`, range a lifecycle state concept. Behaviour states name their concept (§7.6) |
+| `stm:trigger` (range `bhv:TriggerDefinition`) | Instrument | a legal trigger (`ins:OnExercise`, `ins:OnBreach`, `ins:OnAct`, `ins:OnCondition`, `ins:OnExpiry`), each a `bhv:TriggerDefinition` (§7.3) |
+| `stm:appliesInState` (range a Behaviour state) | Instrument | `ins:appliesInState`, range a state of an `ins:Regime` (§7.4). Instrument imports Behaviour's configuration, so no concept indirection is needed |
 | `stm:breachTreatment` | Instrument | `ins:classification` on a term, bound in insurance to the breach-treatment scheme |
 | `stm:ParameterBinding`, `ParameterKind`, `fromVariable`, `scopeSubject`, `scopeStep`, `scopeStrategy` | Instrument | `ins:ParameterBinding` and its properties (§5.9) |
 | `stm:EncodingStatus`, `encodingStatus` | Instrument | `ins:encodingStatus` on a wording element |
@@ -187,7 +191,7 @@ L17).
 | `agr:hasOccupancy`, `agr:insurers` | Instrument | `ins:party` |
 | `agr:Amendment` (`amends`, `resultsIn`, `agreedOn`, `operationalFrom`, `materiality`) | Instrument | `ins:Amendment`, with the Foundation gap Open CBAA recorded (integration spec §4.1) closed here, not in Foundation |
 | `agr:umr`, `agr:inMarket` | Open CBAA | the market-specific key stays. Markets are `voc:BindingScope`s, and `ins:bindingScope` is the general hook |
-| `agr` M12 lifecycle declared on Behaviour | Open CBAA, on the extended Behaviour | unchanged as data. L15 is fixed upstream (§7.1) |
+| `agr` M12 lifecycle declared on Behaviour | Instrument's template library | the notice, suspension, non-renewal and run-off regimes as templates (§5.11, §7.7). L15 is fixed upstream (§7.1) |
 | `rsk:BoundPolicy`, `rsk:boundUnder`, `rsk:boundAt` | Instrument for the general part | `ins:boundUnder` (an instrument created by exercising a power, S48). `rsk:BoundPolicy ⊑ ins:Instrument` stays in Open CBAA |
 | `rsk:Risk` and its dimensions | Open CBAA, and AIR's exposure module | the case |
 
@@ -229,6 +233,39 @@ Content kinds that differ in properties are classes (DP2), each `⊑ wrd:Element
 
 `wrd:DocumentObject` (an analogue attachment, content not digitised) and `wrd:ExternalDocument` (a
 regulation, a separate agreement) are `prov:Entity`s outside the tree, reached by `wrd:linksTo`.
+
+A wording is a tree of versioned elements. Only `wrd:directlyComprises` is asserted, and
+`wrd:comprises` is derived from it. Siblings are ordered by rank key, and the clause number a reader
+sees is an object id, never the element's identity, so inserting a clause renumbers nothing that
+other graphs point to. A text is a sequence of parts, each a literal, a variable reference or an
+object reference.
+
+```mermaid
+flowchart TB
+    W["ex:facility-wording-v1<br/>a wrd:Wording"]
+    S4["ex:sec-4<br/>a wrd:Element<br/>elementType Section<br/>objectId 4, rankKey a0"]
+    C1["ex:cl-4-1<br/>a wrd:Text<br/>elementType Clause<br/>objectId 4.1, rankKey a0"]
+    C2["ex:cl-4-2<br/>a wrd:Text<br/>elementType Clause<br/>objectId 4.2, rankKey b0"]
+    VM["ex:var-margin<br/>a wrd:EmbeddedVariable"]
+    DF["ex:def-borrower<br/>a wrd:Text<br/>elementType Definition"]
+    AX["ex:annex-plan<br/>a wrd:DocumentObject"]
+    subgraph PARTS["ex:cl-4-1 as wrd:TextParts"]
+        direction LR
+        P0["0: literal<br/>The"]
+        P1["1: object reference"]
+        P2["2: literal<br/>shall pay interest at"]
+        P3["3: variable reference"]
+        P4["4: literal<br/>per annum."]
+    end
+    W -- "directlyComprises" --> S4
+    S4 -- "directlyComprises" --> C1
+    S4 -- "directlyComprises" --> C2
+    W -. "comprises (derived)" .-> C1
+    C1 --- PARTS
+    P1 --> DF
+    P3 --> VM
+    C2 -- "linksTo" --> AX
+```
 
 ### 4.2 Variables
 
@@ -273,6 +310,39 @@ wording elements (treats instance columns as template text), and the whole table
 value (loses optional and conditional rows). The constraint that must hold: a template parameter can
 bind "the value in this row for each column", so one row yields one parameter per column (S44).
 
+The rows, with their inclusion modes, belong to the standard form. The columns exist only in an
+instance: each cell is a `wrd:VariableValue` for the row's variable and one column key. A long list
+such as a territory table is one multi-valued variable, not a table.
+
+```mermaid
+flowchart TB
+    subgraph FORM["In the standard form (the wording)"]
+        T["ex:soua<br/>a wrd:Table"]
+        R1["ex:row-limits<br/>a wrd:Row<br/>rowKey Maximum Limits of Liability<br/>inclusionMode Mandatory"]
+        R2["ex:row-territory<br/>a wrd:Row<br/>inclusionMode Optional"]
+        V1["ex:var-limit<br/>a wrd:Variable"]
+        V2["ex:var-territory<br/>a wrd:Variable<br/>multiValued true"]
+        T -- "directlyComprises" --> R1
+        T -- "directlyComprises" --> R2
+        R1 -- "rowVariable" --> V1
+        R2 -- "rowVariable" --> V2
+    end
+    subgraph INST["In one agreement (the assembled wording)"]
+        AW["ex:agreement-wording-v1<br/>a wrd:Wording"]
+        VA["ex:val-1<br/>a wrd:VariableValue<br/>value GBP 5,000,000<br/>forColumn Section A1"]
+        VB["ex:val-2<br/>a wrd:VariableValue<br/>value GBP 2,000,000<br/>forColumn Section B5"]
+        VC["ex:val-3<br/>a wrd:VariableValue<br/>values UK, IE, FR<br/>forColumn Section A1"]
+        AW -- "hasValue" --> VA
+        AW -- "hasValue" --> VB
+        AW -- "hasValue" --> VC
+    end
+    VA -- "forVariable" --> V1
+    VB -- "forVariable" --> V1
+    VC -- "forVariable" --> V2
+    style FORM fill:#BBDEFB
+    style INST fill:#bcdee1
+```
+
 ### 4.4 Assembly: variants and conditional clauses
 
 Assembly is design time. It selects wording from a library and never runs per event (Open CBAA
@@ -304,6 +374,49 @@ wrd:VariableValue      wrd:forVariable (exactly one), wrd:value or wrd:literalVa
 
 An assembled wording is immutable once the instrument it expresses takes effect. A later version
 is a new assembled wording, a `fnd:Version` of the same identity.
+
+Assembly reads the library once, at design time, and records what it chose. A mandatory element is
+always included, a variation slot contributes exactly one variant (W3), an optional element is
+included when the instance selects it, and a conditional element when its condition, read over a
+governing variable's value, is Permitted.
+
+```mermaid
+flowchart LR
+    subgraph LIB["Library wording"]
+        L["ex:baa-form<br/>a wrd:Wording"]
+        M["ex:cl-claims<br/>inclusionMode Mandatory"]
+        VS["ex:slot-binding<br/>a wrd:VariationSlot"]
+        VP["ex:binding-permitted<br/>inclusionMode Variation"]
+        VN["ex:binding-not-permitted<br/>inclusionMode Variation"]
+        OP["ex:end-war<br/>inclusionMode Optional"]
+        CN["ex:cl-lead-insurer<br/>inclusionMode Conditional"]
+        AP["elg:AdmissionProfile<br/>insurer count more than 1"]
+        GV["ex:gv-insurer-count<br/>a wrd:GoverningVariable"]
+        L -- "directlyComprises" --> M
+        L -- "directlyComprises" --> VS
+        L -- "directlyComprises" --> OP
+        L -- "directlyComprises" --> CN
+        VS -- "hasVariant" --> VP
+        VS -- "hasVariant" --> VN
+        CN -- "includedWhen" --> AP
+        AP -- "readsVariable" --> GV
+    end
+    subgraph INST["Assembled wording of one instance"]
+        AW["ex:baa-0042-v1<br/>a wrd:Wording"]
+        VV["ex:val-9<br/>a wrd:VariableValue<br/>value 3"]
+        AW -- "hasValue" --> VV
+    end
+    AW -- "assembledFrom" --> L
+    AW -- "includes" --> M
+    AW -- "includes" --> VN
+    AW -- "includes" --> CN
+    VV -- "forVariable" --> GV
+    style LIB fill:#BBDEFB
+    style INST fill:#bcdee1
+```
+
+The war endorsement was not selected and the binding variant chosen was "Not permitted", so neither
+of the others is included. The lead insurer clause is included because three insurers subscribe.
 
 ### 4.6 Amendments to wording
 
@@ -386,6 +499,41 @@ Permission and Exclusion are both Hohfeldian privileges: a liberty to act despit
 and a liberty not to act despite a duty to (or an immunity against a power). Contract English names
 them differently, so the T-Box does too.
 
+The Instrument T-Box in one picture. Every relation and every constitutive construct arises under
+exactly one term, a term belongs to one instrument, and both are expressed in Wording. An exception
+names what it excepts.
+
+```mermaid
+flowchart LR
+    IN["ins:Instrument"]
+    TM["ins:Term"]
+    LR["ins:LegalRelation"]
+    OB["ins:Obligation"]
+    CO["ins:ContinuingObligation"]
+    PR["ins:Prohibition"]
+    PE["ins:Permission"]
+    EX["ins:Exclusion"]
+    PO["ins:Power"]
+    CT["ins:Definition, ins:Deeming"]
+    WW["wrd:Wording"]
+    WE["wrd:Element"]
+    OB -- "⊑" --> LR
+    PE -- "⊑" --> LR
+    EX -- "⊑" --> LR
+    PO -- "⊑" --> LR
+    CO -- "⊑" --> OB
+    PR -- "⊑" --> OB
+    LR -- "arisesUnder (exactly one)" --> TM
+    CT -- "arisesUnder" --> TM
+    TM -- "termOf" --> IN
+    TM -- "expressedIn" --> WE
+    IN -- "expressedIn" --> WW
+    IN -. "boundUnder" .-> PO
+    PE -. "excepts" .-> PR
+    EX -. "excepts" .-> OB
+    EX -. "excepts" .-> PO
+```
+
 ### 5.3 Parties
 
 ```text
@@ -407,6 +555,54 @@ ins:consentRule   Power → ins:ConsentRule           joint exercise (S50)
   arises, which is how outgoing and incoming syndicate members of a Lloyd's annual transfer, and a
   replaced follow insurer, stay bound for their own occasions (S52).
 
+A facility agreement (LEND) shows groups at both ends. The borrower owes repayment to the lenders
+severally, each for its share, and the lenders hold the power to accelerate jointly, exercised when
+lenders holding two thirds by share consent.
+
+```mermaid
+flowchart TB
+    RP["ex:repay<br/>a ins:Obligation<br/>activity: repay the loan"]
+    AC["ex:accelerate<br/>a ins:Power<br/>activity: declare the loan due"]
+    BO["ex:borrower-occ<br/>a pty:RoleOccupancy<br/>inRole Borrower<br/>occupiedBy ex:acme"]
+    LG["ex:lenders<br/>a pty:ParticipationGroup<br/>hasCompositionRule pty:SeveralOnly"]
+    M1["a pty:GroupMembership<br/>share 0.6"]
+    M2["a pty:GroupMembership<br/>share 0.4"]
+    O1["ex:lender-1-occ"]
+    O2["ex:lender-2-occ"]
+    CR["ex:majority<br/>a ins:ConsentRule<br/>threshold 0.667 by share"]
+    RP -- "obligor" --> BO
+    RP -- "obligee" --> LG
+    AC -- "holder" --> LG
+    AC -- "counterparty" --> BO
+    AC -- "consentRule" --> CR
+    LG -- "hasParticipant" --> M1
+    LG -- "hasParticipant" --> M2
+    M1 -- "memberOccupancy" --> O1
+    M2 -- "memberOccupancy" --> O2
+```
+
+A party that depends on the case resolves when an occasion arises, and stays fixed (I11):
+
+```mermaid
+flowchart LR
+    subgraph AGREED["What was agreed"]
+        IP["ex:indemnify-ip<br/>a ins:Obligation"]
+        AI["ex:any-insured-person<br/>a contingent pty:RoleOccupancy"]
+        EB["ex:claim-to-defendant<br/>a elg:EvidenceBinding<br/>case → claim → person claimed against"]
+        IP -- "obligee" --> AI
+        AI -- "resolvedBy" --> EB
+    end
+    subgraph HAPPENED["What has happened"]
+        CL["ex:claim-5<br/>act record: claim made<br/>against ex:jane, 2027-04-02"]
+        OC["ex:occ-31<br/>occasion of ex:indemnify-ip<br/>obligee ex:jane-occ, fixed at arising"]
+        CL --> OC
+    end
+    OC -- "of" --> IP
+    OC -. "resolved through" .-> EB
+    style AGREED fill:#BBDEFB
+    style HAPPENED fill:#bcdee1
+```
+
 ### 5.4 Content of a relation
 
 ```text
@@ -422,21 +618,59 @@ ins:qualifies      Qualifier → Term ⊔ LegalRelation   limits, levels, retent
 ### 5.5 Arising, due and ending
 
 ```text
-ins:arisesOn            LegalRelation → elg:Condition   an occurrence matching a condition
+ins:arisesOn            LegalRelation → a legal trigger (§7.3): OnCondition, OnAct, OnExercise, OnBreach
 ins:arisesOnBreachOf    LegalRelation → ins:Obligation   values are alternatives
 ins:arisesOnExerciseOf  LegalRelation → ins:Power
-ins:endsOn              LegalRelation → elg:Condition   (S16)
+ins:endsOn              LegalRelation → a legal trigger   (S16)
 ins:ends                Power → ins:Instrument ⊔ ins:Term ⊔ ins:LegalRelation   (S6, per occasion S46)
 ins:due                 Obligation → qnt:Range   anchored by qnt:relativeToAnchor on a named valid
                                                 time: the arising by default, or inception, expiry,
                                                 a period end (S17)
 ins:recurrence          Obligation → qnt:Recurrence   reporting periods, test dates
-ins:appliesInState      LegalRelation → concept   a lifecycle state of the instrument (S54, DP6)
+ins:appliesInState      LegalRelation → bhv:State   a state of an ins:Regime (S54, §6.3, §7.4)
 ```
 
-`ins:appliesInState` gates evaluation and never enters a design-time comparison (DP6). Its values
-are concepts in a lifecycle scheme, and Behaviour's states name the concept they realise (§7.6), so
-Instrument never imports Behaviour.
+`ins:appliesInState` gates evaluation and never enters a design-time comparison (DP6, §6.3). It
+usually sits on the exceptions and state-specific powers a regime's clause creates, not on the
+grants they gate. `ins:arisesOnBreachOf` and `ins:arisesOnExerciseOf` read as before, and are the
+short forms of `ins:arisesOn` with an `ins:OnBreach` or `ins:OnExercise` trigger.
+
+A notice duty shows the whole path. It arises when a claim is made, falls due thirty days after
+arising, and ends if the policy is cancelled. A breach of it gives rise to an exclusion, so the
+insurer need not indemnify that claim. On the happened side each step is a record, and the deadline
+enters as a positioned stimulus, never as a clock read (I9, B3).
+
+```mermaid
+flowchart TB
+    subgraph AGREED["What was agreed"]
+        direction LR
+        NT["ex:give-notice<br/>a ins:Obligation<br/>activity: notify a claim<br/>obligor ex:insured-occ"]
+        T1["a ins:OnAct<br/>activity: make a claim<br/>by: any claimant"]
+        DU["a qnt:Range<br/>0 to P30D<br/>relativeToAnchor: the arising"]
+        T2["a ins:OnExercise<br/>ofPower ex:cancel"]
+        LN["ex:late-notice<br/>a ins:Exclusion<br/>excepts ex:indemnify"]
+        NT -- "arisesOn" --> T1
+        NT -- "due" --> DU
+        NT -- "endsOn" --> T2
+        LN -- "arisesOnBreachOf" --> NT
+    end
+    subgraph HAPPENED["What has happened"]
+        direction LR
+        CM["ex:act-71<br/>act record: claim made<br/>valid 2027-02-01"]
+        O1["ex:occ-12<br/>occasion of ex:give-notice<br/>Arisen 2027-02-01"]
+        SD["positioned stimulus<br/>due range ends<br/>valid 2027-03-03"]
+        BR["ex:breach-4<br/>breach record<br/>of ex:occ-12"]
+        O2["ex:occ-13<br/>occasion of ex:late-notice<br/>Arisen 2027-03-03"]
+        CM -- "matches OnAct" --> O1
+        O1 --> SD
+        SD -- "no fulfilment by then" --> BR
+        BR -- "matches OnBreach" --> O2
+    end
+    O1 -. "of" .-> NT
+    O2 -. "of" .-> LN
+    style AGREED fill:#BBDEFB
+    style HAPPENED fill:#bcdee1
+```
 
 ### 5.6 Constitutive terms
 
@@ -458,6 +692,57 @@ Deemings are how a contract licenses absence (S25): "deemed failed if … not pr
 sixty (60) days" is a deeming whose condition reads the absence of an act within a window, and the
 instrument itself is the closure licence (A-105).
 
+```mermaid
+flowchart TB
+    TM["ins:Term"]
+    DM["ins:Deeming<br/>ins:arisesUnder → ins:Term<br/>ins:deems → elg:Condition or record kind<br/>ins:when → elg:Condition<br/>ins:conclusive → xsd:boolean"]
+    CO["elg:Condition"]
+    CL["closure declaration (A-105)<br/>fact family, authoritative source,<br/>scope, up to a position"]
+    AR["act record (bhv runtime, C11)"]
+    DF["deemed-fact record (bhv runtime, C11)<br/>deeming, condition satisfied,<br/>position, closure relied on"]
+    DM -- "arisesUnder" --> TM
+    DM -- "when" --> CO
+    subgraph ABOX["A-Box"]
+        subgraph AGREED["What was agreed"]
+            direction LR
+            IV["ex:instrument-v1<br/>a ins:Instrument"]
+            T3["ex:term-3a<br/>a ins:Term"]
+            DD["ex:deemed-failed<br/>a ins:Deeming<br/>conclusive false"]
+            WC["ex:no-docs-in-60-days<br/>a elg:Condition<br/>no act of ex:provide-documents<br/>by the requested party within<br/>P60D of the request"]
+            FC["ex:request-failed<br/>a elg:Condition"]
+            CD["ex:closure-docs<br/>fact family: acts of ex:provide-documents<br/>source: ex:instrument-v1<br/>scope: the 60-day window"]
+            T3 -- "partOf" --> IV
+            DD -- "arisesUnder" --> T3
+            DD -- "when" --> WC
+            DD -- "deems" --> FC
+            CD -- "licenses absence for" --> WC
+            CD -- "source" --> IV
+        end
+        subgraph HAPPENED["What has happened"]
+            RQ["ex:act-41<br/>act record: request made<br/>valid 2027-01-10"]
+            NA["no act of ex:provide-documents<br/>in 2027-01-10 to 2027-03-11"]
+            DR["ex:deemed-7<br/>deemed-fact record<br/>position p, 2027-03-12"]
+            LT["ex:act-58 (late)<br/>act record: documents provided<br/>valid 2027-03-01, recorded 2027-03-20"]
+            RQ -- "anchors the window" --> NA
+            NA -- "absence decides" --> DR
+            LT -. "supersedes" .-> DR
+        end
+        DR -- "deeming" --> DD
+        DR -- "condition satisfied" --> WC
+        DR -- "closure relied on" --> CD
+    end
+
+    IV -. "a" .-> TM
+    DD -. "a" .-> DM
+    WC -. "a" .-> CO
+    CD -. "a" .-> CL
+    RQ -. "a" .-> AR
+    DR -. "a" .-> DF
+
+    style AGREED fill:#BBDEFB
+    style HAPPENED fill:#bcdee1
+```
+
 Status declarations ("acts as agent of the Insurers", "held in a fiduciary capacity", "records
 remain the property of", "nothing … creating the relationship of employer and employee") are terms
 with no relation whose legal consequences enter as terms implied by law (S61). Interpretation rules
@@ -472,6 +757,17 @@ breach: the result is Undetermined with the diagnostic `exe:ExceptionNotEstablis
 party that bears the burden (law I7). A contract that allocates the burden differently says so with
 a deeming, or by writing the exception's condition over an authoritative record under a closure
 licence (AIG Dummy Policy D&O 4.B(1), "if established by any final, non-appealable adjudication").
+
+```mermaid
+flowchart TB
+    Q{"Breached if no exception applied?"}
+    Q -- "no" --> NB["no breach"]
+    Q -- "Undetermined" --> U1["Undetermined"]
+    Q -- "yes" --> X{"Scope of each exception<br/>for the case"}
+    X -- "any Permitted" --> AP["the exception applies<br/>no breach"]
+    X -- "all Denied" --> BR["breach derived"]
+    X -- "none Permitted,<br/>some Undetermined" --> U2["Undetermined<br/>exe:ExceptionNotEstablished<br/>naming the party with the burden"]
+```
 
 ### 5.8 Change and composition
 
@@ -496,6 +792,41 @@ is a `pty:Delegation` from each follower's occupancy to the lead's. A power that
 immune from (CBAA M3 3.2, "does not permit … replacement of … the Lead Insurer") is an Exclusion
 excepting the amendment power in that scope (S51).
 
+An amendment acts on both layers. Its text change is a `wrd:Amendment` stated in an endorsement,
+and its legal effect is an `ins:Amendment` from one instrument version to the next, made by
+exercising a power under its consent rule. Each instrument version is expressed in its own
+assembled wording.
+
+```mermaid
+flowchart TB
+    subgraph INS["Instrument: what it means in law"]
+        direction LR
+        I1["ex:policy-v1<br/>a ins:Instrument"]
+        I2["ex:policy-v2<br/>a ins:Instrument"]
+        IA["ex:amend-1<br/>a ins:Amendment<br/>effectiveFrom 2027-01-01<br/>affectsExisting false<br/>materiality: derived"]
+        PW["ex:power-to-amend<br/>a ins:Power"]
+        CR["a ins:ConsentRule<br/>requiredFrom: every insurer if material,<br/>the lead alone if not"]
+        IA -- "amends" --> I1
+        IA -- "resultsIn" --> I2
+        IA -- "byExerciseOf" --> PW
+        PW -- "consentRule" --> CR
+    end
+    subgraph WRD["Wording: what the text says"]
+        direction LR
+        W1["ex:policy-wording-v1<br/>a wrd:Wording"]
+        W2["ex:policy-wording-v2<br/>a wrd:Wording"]
+        CL["ex:cl-3a<br/>a wrd:Text"]
+        EN["ex:end-18<br/>a wrd:Element<br/>elementType Endorsement"]
+        WA["ex:wa-1<br/>a wrd:Amendment<br/>operation StrikeAndSubstitute<br/>struckText 30 days<br/>substitutedText 60 days"]
+        WA -- "amendsElement" --> CL
+        WA -- "expressedIn" --> EN
+        W2 -- "fnd:Version of the same identity as" --> W1
+    end
+    IA -- "textChanges" --> WA
+    I1 -- "expressedIn" --> W1
+    I2 -- "expressedIn" --> W2
+```
+
 ### 5.9 Templates and binding
 
 Meaning is attached once to library wording and bound per instance (Open CBAA design-spec §3.4).
@@ -513,6 +844,31 @@ ins:encodingStatus         wrd:Element → Expresses, NoMeaning, NotAssessed   (
 A template names roles. A bound relation names occupancies and carries the instance's values, so
 only bound relations are evaluated (Open CBAA D22). A bespoke clause has bound meaning with no
 template.
+
+```mermaid
+flowchart LR
+    subgraph LIB["Template (library meaning)"]
+        LW["ex:lib-cl-remit<br/>a wrd:Text<br/>The Coverholder shall remit premium<br/>within [days] days"]
+        LV["ex:var-days<br/>a wrd:EmbeddedVariable"]
+        TR["tmpl:remit-premium<br/>a ins:Obligation, ins:Template<br/>obligor pty:Role Coverholder<br/>obligee pty:Role Insurer"]
+        PB["a ins:ParameterBinding<br/>parameterKind: due length<br/>fromVariable ex:var-days"]
+        LW -- "contains a reference to" --> LV
+        TR -- "hasParameterBinding" --> PB
+        PB -- "fromVariable" --> LV
+    end
+    subgraph INST["Bound in one agreement"]
+        BR["ex:remit-premium<br/>a ins:Obligation<br/>obligor ex:coverholder-occ<br/>obligee ex:insurers<br/>due 0 to P30D"]
+        VV["a wrd:VariableValue<br/>value 30"]
+    end
+    BR -- "boundFrom" --> TR
+    VV -- "forVariable" --> LV
+    VV -. "supplies the due length" .-> BR
+    style LIB fill:#BBDEFB
+    style INST fill:#bcdee1
+```
+
+Only `ex:remit-premium` is evaluated (I13). The template names roles, and the bound relation names
+occupancies and carries the value the instance supplied.
 
 ### 5.10 Sectioned instruments
 
@@ -582,7 +938,62 @@ exclusion is Undetermined in the same way.
   appears to name the same thing as a section. Its "Placing Section" (row 9) may be a different
   one. Both are to be confirmed against the collateral before C7.
 
-### 5.11 Laws of the Instrument layer
+The SCHED pattern, reduced to two sections. Two definitions of "the Coverholder" overlap at B2: one
+applies to every section except B5, the other to B2 alone. A risk bound under B2's authority has
+section B2, so the word resolves to the union of both definitions, and the design-time check reports
+the overlap.
+
+```mermaid
+flowchart TB
+    subgraph WORDING["Wording tree"]
+        AG["ex:agreement<br/>a wrd:Wording"]
+        SB["ex:sec-b<br/>elementType Section"]
+        B2["ex:sec-b2<br/>objectId B2"]
+        B5["ex:sec-b5<br/>objectId B5"]
+        AG -- "directlyComprises" --> SB
+        SB -- "directlyComprises" --> B2
+        SB -- "directlyComprises" --> B5
+    end
+    subgraph AGREED["Instrument"]
+        D1["<b>ex:def-cov-1 a ins:Definition</b><br/>defines the Coverholder as ex:imagine-ltd-occ"]
+        D2["<b>ex:def-cov-2 a ins:Definition</b><br/>defines the Coverholder as ex:imagine-ltd-occ, and ex:imagine-inc-occ"]
+        PB2["ex:authority-b2<br/>a ins:Power"]
+    end
+    subgraph HAPPENED["Case"]
+        RK["ex:risk-77<br/>a ins:Instrument"]
+        SO["sectionOf B2 (derived)"]
+        RV["the Coverholder for ex:risk-77:<br/>imagine-ltd and imagine-inc<br/>(union, overlap reported)"]
+        RK --> SO --> RV
+    end
+    D1 -- "appliesWithin" --> AG
+    D1 -- "notWithin" --> B5
+    D2 -- "appliesWithin" --> B2
+    PB2 -- "appliesWithin" --> B2
+    RK -- "boundUnder" --> PB2
+    style AGREED fill:#BBDEFB
+    style HAPPENED fill:#bcdee1
+```
+
+### 5.11 The template library
+
+Contract authors work from templates: library wording with bound meaning, regimes and blanks to
+fill (§5.9, CC-D5). The library is also the documentation for authors extending it, in the
+substrate or in an applied layer.
+
+| Family | Templates | Blanks |
+|---|---|---|
+| periods (§7.4) | notice, cure, probation, garden leave, discovery, run-off, survival | the starting trigger, the length or end trigger, the state that follows |
+| switching regimes | suspension and reinstatement, restriction with exception, force majeure | the conditions each state carries, the triggers between them |
+| threshold regimes | notification threshold, exhaustion | the partition of the measured value |
+| relation patterns | consent regime (S30), authority grant (S43), condition precedent (S14), breach chain (S7), exception with carve-back (S10) | parties, activity, scope, deadlines |
+| term and qualifier templates | limits and retentions with their bases ([contract-amounts.md](contract-amounts.md) §1.7), territorial restrictions | amounts, bases, windows, regions |
+
+A template is A-Box content in `ontology/instrument/templates/` (a new directory, carried by
+ADR-A104 under the topology rule). Insurance templates (the CBAA M12 regimes, policy limits) live
+in `applied/insurance`. Binding a template asserts the explicit `bhv:` types beside the `ins:` ones
+(law B4).
+
+### 5.12 Laws of the Instrument layer
 
 | Law | Statement | Register |
 |---|---|---|
@@ -630,10 +1041,130 @@ D&O 12.A). It is admitted when the graph of all three edge kinds is acyclic (I6)
 slice N2 (A-109): deontic formulas in a condition stay refused, and a read of a recorded occasion
 state, which is a fact, is admitted.
 
-### 6.3 Lifecycle gating
+```mermaid
+flowchart LR
+    subgraph S0["Stratum 0"]
+        OI["ex:org-indemnify<br/>a ins:Obligation (D&O 12.A)<br/>the Organization indemnifies<br/>the Insured Person"]
+    end
+    subgraph S1["Stratum 1"]
+        SA["ex:side-a<br/>a ins:Obligation (D&O 14)<br/>the Insurer pays<br/>Non-Indemnifiable Loss"]
+        SC["scope: an elg:Condition<br/>reading the recorded state<br/>of ex:org-indemnify for the case"]
+        SA -- "scope" --> SC
+    end
+    SC -- "state read" --> OI
+    OI -. "a read back would make a cycle,<br/>refused by I6" .-> SA
+```
 
-`ins:appliesInState` decides whether a relation applies in the instrument's current lifecycle
-state: in force, notice period, suspended, run-off (CBAA M12 12.16, 12.24, 12.26, 12.39, IUA 37).
+Evaluation runs stratum by stratum: occasions of `ex:org-indemnify` reach a recorded state first,
+and only then is `ex:side-a`'s scope read.
+
+### 6.3 Regimes and the separation of structure from state (DP6)
+
+Decided 2026-10-01 (CC-D8). Open CBAA's design principle DP6 is kept, and restated:
+
+> **State never enters structural comparison.** A regime's state gates evaluation. It never takes
+> part in comparing what has been agreed: authority envelopes, materiality, overlaps or gaps. A
+> state may be a fixed **parameter** of a comparison ("compare the two versions as they stand in
+> the notice period"), never a **variable** inside one.
+
+#### Two questions, two code paths
+
+Every contract system asks two different questions of the same graph, and they run at different
+times over different inputs:
+
+```mermaid
+flowchart LR
+    subgraph G["The graph"]
+        direction TB
+        TB["T-Box<br/>ins:Power, ins:Exclusion,<br/>bhv:TransitionDefinition, …"]
+        AB1["A-Box: what was agreed<br/>grants and their scopes,<br/>exclusions and appliesInState,<br/>regimes and their transitions"]
+        AB2["A-Box: what has happened<br/>acts, transition executions,<br/>state occupancies, occasions"]
+    end
+    DT["Design-time checker<br/>(OWL classes, subsumption)<br/>'What has been agreed?'"]
+    RT["Runtime evaluator<br/>(SPARQL, compiled plans)<br/>'What applies to this case now?'"]
+    TB --> DT
+    AB1 --> DT
+    TB --> RT
+    AB1 --> RT
+    AB2 --> RT
+    AB2 -. "never read" .-> DT
+```
+
+The design-time checker reads only what was agreed. It never reads state occupancies, because at
+design time there is no current state, and because state changes are not agreements.
+
+#### Why state inside a scope breaks the first question
+
+A binding authority, version 1, grants authority to bind risks in France up to GBP 5,000,000. Its
+notice clause says that during the notice period the coverholder has no authority to bind. Version
+2 is proposed, raising the limit to GBP 6,000,000. Materiality (CBAA M3 3.9.1) asks whether version
+2's envelope is contained in version 1's.
+
+```mermaid
+flowchart TB
+    subgraph WRONG["If state were inside the grant's scope"]
+        direction TB
+        W1["Env₁ = France ∧ ≤ 5M ∧ agreement in force"]
+        W2["Env₂ = France ∧ ≤ 6M ∧ agreement in force"]
+        W3{"Compared while the agreement<br/>is in its notice period"}
+        W4["Env₁ = ∅<br/>every amendment looks like an expansion"]
+        W5["Serving notice looks like an amendment<br/>that reduced authority"]
+        W1 --> W3
+        W2 --> W3
+        W3 --> W4
+        W3 --> W5
+    end
+    subgraph RIGHT["With gating held on separate relations"]
+        direction TB
+        R1["Env₁ = France ∧ ≤ 5M<br/>(the grant's scope)"]
+        R2["Env₂ = France ∧ ≤ 6M"]
+        R3{"Env₂ ⊑ Env₁ ?"}
+        R4["No: authority expanded.<br/>Material. Follow insurers consent"]
+        R5["Exclusion: no binding,<br/>appliesInState notice period.<br/>Read only at runtime"]
+        R1 --> R3
+        R2 --> R3
+        R3 --> R4
+    end
+```
+
+Three failures follow from the left-hand design. The comparison depends on an unknown, or on
+whatever state holds when it runs. Overlap and gap checks flicker as states change. And the
+system cannot tell an amendment (agreed, needs consent, recorded in the amendment summary) from
+the operation of the contract (serving notice, which needs no consent and is not an amendment).
+
+#### How the model keeps the separation
+
+The grant carries its scope. The gate is a separate relation, arising under the clause that states
+it, which is also where the wording puts it:
+
+```mermaid
+flowchart LR
+    subgraph TERMS["Terms (A-Box, what was agreed)"]
+        G["ins:Power<br/>bind policies<br/>scope: France, ≤ 5M<br/>arisesUnder M5 SoUA"]
+        X["ins:Exclusion<br/>excepts the binding power<br/>appliesInState: notice period<br/>arisesUnder M12 12.24.1"]
+        S["ins:Power<br/>service existing policies<br/>appliesInState: notice period<br/>arisesUnder M12 12.24.2"]
+        X -- "ins:excepts" --> G
+    end
+    subgraph REG["Notice regime (A-Box, a template instance)"]
+        IF["state: in force"]
+        NP["state: notice period"]
+        TM["state: terminated"]
+        IF -- "on exercise of the<br/>power to terminate" --> NP
+        NP -- "on expiry of<br/>30 business days" --> TM
+    end
+    X -- "ins:appliesInState" --> NP
+    S -- "ins:appliesInState" --> NP
+```
+
+- **Design time** reads `G`'s scope for envelopes, and ignores `appliesInState`.
+- **Runtime** reads the instrument's current state occupancy in the notice regime, then applies `X`
+  and `S` only while that state holds.
+- **Per-state comparison**, the refinement DP6 permits: to ask whether version 2 widens authority
+  *during notice*, compare `Env(G) minus the exclusions in force in that state` across versions. The
+  state is a fixed parameter of the comparison, so the answer is stable. If version 2 also let
+  renewals be bound during notice, the comparison would show an expansion within that state, and
+  that change is material too.
+
 Suspension (CBAA M12 12.15 to 12.19) is a state, not an ending, because it can be reinstated.
 
 ### 6.4 Determinations, findings and deemings
@@ -644,6 +1175,19 @@ Suspension (CBAA M12 12.15 to 12.19) is a state, not an ending, because it can b
 | a standard the contract hands to one party | "to the Lead Insurer's satisfaction" (CBAA M12 12.19, 12.22.9), "materiality is defined by the aggrieved Agreement Party" (12.22.2) | the exercise record of that party's power to determine. Decisive, not evidence |
 | a deeming | deemed failed (AIG Dummy Policy D&O 3.A), deemed received (IUA 36.3, CBAA M12 12.10), automatic extension (CBAA M12 12.37.2), relation back (AIG Dummy Policy D&O 7(b), 7(c)) | a derived record produced by the deeming, citing the deeming term and the position |
 | a matter outside computation | conformance to law (AIG Dummy Policy GTC 13), Global Liberalization (AIG Dummy Policy D&O 2.D), "where insurable by law" | Undetermined, with the matter recorded for a person |
+
+```mermaid
+flowchart LR
+    FR["finding record<br/>fnd:assertedBy an adjudicator<br/>evidenced"]
+    XR["exercise record<br/>of a power to determine<br/>decisive"]
+    DR["deemed-fact record<br/>cites the deeming term<br/>and the position"]
+    NONE["no record"]
+    CN["an elg:Condition<br/>in a relation's scope<br/>or fulfilment test"]
+    FR --> CN
+    XR --> CN
+    DR --> CN
+    NONE -- "Undetermined" --> CN
+```
 
 ### 6.5 What the A-Box answers
 
@@ -660,73 +1204,396 @@ SELECT ?element ?op WHERE { ?a wrd:expressedIn ex:endorsement-18 ; wrd:amendsEle
 
 ---
 
-## 7. The Behaviour layer: what moves and what changes
+## 7. The Behaviour layer: configuration, runtime and regimes
 
-Everything that grows with time lives in Behaviour. Instrument declares relations over cases.
-Behaviour holds each occasion, each act and each record.
+Decided 2026-10-01 (CC-D8). Behaviour is a generic model of state that changes. Instrument
+specialises it where a legal construct adds axioms or shapes, and otherwise uses it through
+templates, so a contract author never builds a state machine.
 
-### 7.1 Occasions
+### 7.1 The layer flip
 
-An **occasion** is one relation for one case: the lender's reporting duty for financial year 2027.
-Its state space is `Pending → Arisen → (Performed | Breached | Ended)`, with `Suspended` reachable
-from `Arisen` and `Pending`. Occasion state occupancies are derived artefacts (ADR-A92, following
-ADR-A102's pattern).
+Behaviour named Instrument in one place: `bhv:targetsElement`'s `rdfs:range ins:Element`. An
+`rdfs:range` on an object property is an inference axiom, not a check: anything an effect targets
+would be classified as an `ins:Element`, and under Instrument's disjointness axioms an effect
+targeting a relation or an occasion would make the graph inconsistent. Removing it removes
+Behaviour's only reason to import Instrument.
 
-Behaviour today cannot key a state occupancy by anything but a role occupancy (`bhv:forSubject` has
-range `pty:RoleOccupancy`, Open CBAA L15). The change: an occupancy is for a subject, and a subject
-is a role occupancy, an instrument, or an **occasion** (relation × case). This is a breaking change
-to Behaviour under 0.x (A-113).
+| Change | Why |
+|---|---|
+| `bhv:targetsElement` becomes `bhv:targets`, with no range | effects may target anything. SHACL checks proper use per profile |
+| `bhv:forSubject` loses its range (`pty:RoleOccupancy`, Open CBAA L15) | a state occupancy may be for an instrument, a section, a term, a party's position or an occasion |
+| `bhv:InstrumentTarget` moves from `behaviour-vocab` to Instrument's vocabulary | a target kind is declared by the layer that owns the target |
+| Behaviour stops importing Instrument | the cycle is gone, and Instrument may import Behaviour |
 
-### 7.2 Records
+```mermaid
+flowchart LR
+    subgraph BEFORE["Before (ADR-A01)"]
+        direction BT
+        b1["Eligibility"] --> b2["Instrument"] --> b3["Behaviour<br/>(top layer)"]
+    end
+    subgraph AFTER["After (A-112 amends A-01)"]
+        direction BT
+        a1["Eligibility"] --> a2["Behaviour<br/>configuration"]
+        a2 --> a3["Behaviour<br/>runtime"]
+        a1 --> a4["Wording"]
+        a2 --> a5["Instrument"]
+        a4 --> a5
+    end
+```
+
+Applied layers may now build directly on Behaviour without passing through Instrument.
+
+### 7.2 Configuration and runtime
+
+Behaviour is split into two documents in one namespace:
+
+| Document | Holds | Imported by |
+|---|---|---|
+| **configuration** | state spaces, states, transitions, triggers, guards, effects, allowance definitions, the policy individuals | Instrument, applied layers |
+| **runtime** | stimuli, transition executions, effect applications, state occupancies, allowance accounts, occasions, and the records of §7.6 | the runtime evaluator, applied runtime modules. Imports configuration |
+
+Instrument's import closure therefore holds no runtime records, and an author browsing it never
+meets a stimulus or an execution record.
+
+```mermaid
+flowchart TB
+    subgraph TBOX["T-Box"]
+        subgraph CFG["bhv configuration"]
+            SS["bhv:StateSpace"]
+            TD["bhv:TransitionDefinition"]
+            TG["bhv:TriggerDefinition"]
+        end
+        subgraph INS["ins (imports configuration only)"]
+            RG["ins:Regime ⊑ bhv:StateSpace"]
+            RT["ins:RegimeTransition ⊑ bhv:TransitionDefinition"]
+            LT["ins:OnExercise, OnBreach, OnAct,<br/>OnCondition, OnExpiry ⊑ bhv:TriggerDefinition"]
+        end
+        RG -.-> SS
+        RT -.-> TD
+        LT -.-> TG
+    end
+
+    style CFG fill:#FFE0B2
+    style INS fill:#E1BEE7
+```
+
+```mermaid
+flowchart LR
+    subgraph ABOX["A-Box"]
+        subgraph AGREED["what was agreed"]
+            nr["ex:notice-regime a ins:Regime"]
+            np["ex:notice-period a bhv:State"]
+            sn["ex:serve-notice a ins:RegimeTransition"]
+            ot["[ a ins:OnExercise ; ins:ofPower ex:terminate-with-notice ]"]
+        end
+        subgraph HAPPENED["what has happened"]
+            st["ex:notice-served-2026-05-01 a bhv:Stimulus"]
+            ex["ex:exec-17 a bhv:TransitionExecution"]
+            oc["ex:occ-9 a bhv:StateOccupancy<br/>forSubject ex:agreement-v3<br/>occupiesState ex:notice-period"]
+        end
+        sn --> ot
+        ex -- "executedTransition" --> sn
+        ex -- "causedByStimulus" --> st
+        oc -- "occupiesState" --> np
+    end
+
+    style AGREED fill:#BBDEFB
+    style HAPPENED fill:#bcdee1
+```
+
+### 7.3 Alignment by sub-class and sub-property
+
+Instrument adds a Behaviour specialisation only where the legal construct adds axioms or shapes
+(DP2), never to rename one. Each specialisation sets ranges to the legal construct it reads, and
+SHACL enforces proper use, so nothing depends on reasoning at runtime.
+
+| Instrument term | Specialises | Adds |
+|---|---|---|
+| `ins:Regime` (`skos:altLabel "Dispensation"`) | `bhv:StateSpace` | a regime's states may be named by `ins:appliesInState`, and its transitions must be `ins:RegimeTransition`s |
+| `ins:RegimeTransition` | `bhv:TransitionDefinition` | value restrictions for the engine settings (selection `bhv:SingleMatch`, activation `bhv:ImmediateActivation`) so authors never state them, legal triggers only, and the evidence rule of §7.5 |
+| `ins:OnExercise` | `bhv:TriggerDefinition`, kind external stimulus | `ins:ofPower`, range `ins:Power` |
+| `ins:OnBreach` | `bhv:TriggerDefinition`, kind derived | `ins:ofObligation`, range `ins:Obligation` |
+| `ins:OnAct` | `bhv:TriggerDefinition`, kind external stimulus | `ins:activity` (a concept), `ins:by` (a party) |
+| `ins:OnCondition` | `bhv:TriggerDefinition`, kind derived | `ins:condition`, range `elg:Condition` |
+| `ins:OnExpiry` | `bhv:TriggerDefinition`, kind scheduled | `ins:after`, a duration anchored at entering the state, or `ins:computedBy` (§7.9) |
+
+States stay `bhv:State`s, typed by a kind concept (`ins:stateKind`: notice period, run-off,
+suspension, probation, garden leave), so a domain adds kinds without a T-Box release (DP1).
+
+**One trigger vocabulary for relations and regimes.** The legal triggers also say when a legal
+relation arises or ends: `ins:arisesOn` and `ins:endsOn` take a legal trigger. The same rules
+therefore define a contract's relations and its regimes, as the substrate's aim requires: a legal
+rule that applies to a contract element applies equally to a behaviour element.
+
+**No inference needed at runtime.** The engine reads Behaviour's terms. An `ins:OnExercise` must
+also be a `bhv:TriggerDefinition` in the data. Template binding asserts both types, and for
+hand-written data a SHACL shape requires the explicit `bhv:` type beside the `ins:` type.
+
+```mermaid
+flowchart BT
+    subgraph CFG["bhv configuration"]
+        SS["bhv:StateSpace"]
+        ST["bhv:State"]
+        TD["bhv:TransitionDefinition"]
+        TG["bhv:TriggerDefinition"]
+    end
+    subgraph INS["ins"]
+        RG["ins:Regime<br/>altLabel Dispensation"]
+        RT["ins:RegimeTransition<br/>selection SingleMatch<br/>activation ImmediateActivation"]
+        OE["ins:OnExercise"]
+        OB["ins:OnBreach"]
+        OA["ins:OnAct"]
+        OC["ins:OnCondition"]
+        OX["ins:OnExpiry"]
+        LR["ins:LegalRelation"]
+    end
+    RG -- "⊑" --> SS
+    RT -- "⊑" --> TD
+    OE -- "⊑" --> TG
+    OB -- "⊑" --> TG
+    OA -- "⊑" --> TG
+    OC -- "⊑" --> TG
+    OX -- "⊑" --> TG
+    LR -. "appliesInState" .-> ST
+    LR -. "arisesOn, endsOn" .-> TG
+    OE -. "ofPower" .-> PW["ins:Power"]
+    OB -. "ofObligation" .-> OG["ins:Obligation"]
+    OC -. "condition" .-> EC["elg:Condition"]
+    style CFG fill:#BBDEFB
+```
+
+The ⊑ edges are the whole of the alignment. States stay `bhv:State`s, and a regime's states are
+named by `ins:appliesInState` without a subclass of their own.
+
+### 7.4 Regimes
+
+A **regime** (synonym *dispensation*) is a state space whose states gate legal relations. An
+instrument may have several at once, overlapping, and a section may have its own. The outermost
+regime of an instrument (in force, notice, run-off, closed) is what a reader would call its
+lifecycle, but the T-Box never uses that word.
+
+| Regime kind | Example | States and transitions |
+|---|---|---|
+| **period** | notice, cure, probation, garden leave, discovery, run-off, survival | entered on a legal trigger, ends at a duration anchored on entry or on an end trigger, whichever first, then leads to a named state |
+| **switching** | suspension and reinstatement, a territorial restriction lifted by a court order and restored, force majeure | states that each carry a condition (the region that applies), switched by legal triggers |
+| **threshold** | a GPI notification threshold, aggregate exhaustion | states defined by a `qnt:RangeSet` partition of a measured value, each admitted by an Eligibility interval condition, entered by `ins:OnCondition`. The measured value is dynamic and lives in `capacity` (§7.8) |
+
+A static classification of a case (is this risk inside the territory?) is an Eligibility decision,
+not a regime. A regime exists where something switches over time.
+
+A **period** regime: notice of termination (CBAA M12 as a template, §7.7).
+
+```mermaid
+stateDiagram-v2
+    direction TB
+    state "in force" as InForce
+    state "notice period" as Notice
+    state "terminated" as Terminated
+    [*] --> InForce : instrument takes effect
+    InForce --> Notice : OnExercise of the power to terminate with notice
+    Notice --> Terminated : OnExpiry after 30 business days
+    Notice --> Terminated : OnExercise of the power to terminate for cause
+```
+
+A **switching** regime: suspension and reinstatement. Which state "suspended" returns to, when it
+was entered from more than one, is the history question of §7.10.
+
+```mermaid
+stateDiagram-v2
+    direction TB
+    state "in force" as InForce
+    state "suspended" as Suspended
+    [*] --> InForce
+    InForce --> Suspended : OnExercise of the power to suspend
+    Suspended --> InForce : OnExercise of the power to reinstate
+```
+
+A **threshold** regime: states partition a measured value, which lives in capacity (§7.8).
+
+```mermaid
+stateDiagram-v2
+    direction TB
+    state "below threshold" as Below
+    state "notification due" as Notify
+    state "exhausted" as Exhausted
+    [*] --> Below
+    Below --> Notify : OnCondition, income at or above 80% of the limit
+    Notify --> Exhausted : OnCondition, income at or above the limit
+    Notify --> Below : OnCondition, income below 80% after an adjustment
+```
+
+### 7.5 Every state change leaves a record
+
+```mermaid
+sequenceDiagram
+    participant P as Party (actor)
+    participant L as Stimulus log
+    participant E as Runtime evaluator
+    participant G as Graph (runtime records)
+    participant K as External log (optional)
+    P->>L: notice of termination served (an act)
+    L->>E: positioned stimulus
+    E->>E: match ins:OnExercise of the power to terminate
+    E->>G: bhv:TransitionExecution (transition, stimulus, valid time)
+    E->>G: bhv:StateOccupancy (subject: the agreement, state: notice period)
+    E-->>K: full event detail, if the deployment streams elsewhere
+    G-->>K: fnd:Evidence on the occupancy points to topic and offset
+```
+
+The rule (law B6): **every entry into a state is recorded, at minimum, as a state occupancy that
+names its transition execution and cause, or carries evidence pointing to an external log**. The
+initial state is recorded too, when the instrument takes effect. A deployment may stream the full
+history to an external log, but the graph always holds the initial record. Behaviour's "at least
+one effect" restriction on `bhv:TransitionDefinition` is removed: being in a state is often the
+whole effect, and the evidence rule gives the historical record the restriction was standing in
+for.
+
+### 7.6 Records, occasions and roles filled later
+
+Runtime records, all in the runtime document:
 
 | Record | From | Carries |
 |---|---|---|
-| act | a stimulus: an act of an activity by an actor for a case | activity, actor occupancy, case, valid time. Acts are what `fulfilledWhen` and prohibition breach read |
-| breach | derived per §6.1, or asserted by an adjudicator | the occasion, the position, the closure it relied on if any, `fnd:assertedBy` when asserted |
-| exercise | an act that exercises a power | the power, holder or consenters, case, whether it took effect and why not |
+| act | a stimulus: an act of an activity by an actor for a case | activity, actor occupancy, case, valid time |
+| transition execution and state occupancy | a regime or occasion transition | §7.5 |
+| breach | derived per §6.1, or asserted by an adjudicator | the occasion, position, closure relied on, `fnd:assertedBy` |
+| exercise | an act exercising a power | the power, holder or consenters, case, whether it took effect and why not |
 | determination | the exercise of a power to determine | the matter, the determiner, the value |
-| deemed fact | a deeming's derivation | the deeming term, the condition it satisfied, the position |
-| amendment acceptance | a party's acceptance of an instrument version | the party, the version, the time (CBAA M2 2.3 to 2.8) |
+| deemed fact | a deeming's derivation | the deeming term, the condition satisfied, the position |
+| amendment acceptance | a party's acceptance of a version | the party, the version, the time |
 
-### 7.3 Compiled wiring
+An **occasion** is one relation for one case. Its state space is `Pending → Arisen → (Performed |
+Breached | Ended)`, with `Suspended` reachable from `Arisen` and `Pending`, and its occupancies are
+derived artefacts (ADR-A92, following ADR-A102).
 
-Behaviour's transitions and effects are compiled from Instrument, never hand-built (DP5, NRS N8):
+```mermaid
+stateDiagram-v2
+    direction LR
+    [*] --> Pending
+    Pending --> Arisen : arising trigger Permitted, parties fixed (I11)
+    Arisen --> Performed : fulfilledWhen Permitted
+    Arisen --> Breached : due range ends unfulfilled, or a prohibited act
+    Arisen --> Ended : endsOn trigger
+    Pending --> Suspended
+    Arisen --> Suspended
+    Suspended --> Arisen : reinstated, prior state resumed (B5)
+    Suspended --> Pending : reinstated, prior state resumed (B5)
+```
 
-- `arisesOn` compiles to a trigger. `due` compiles to a scheduled trigger written to the stimulus
-  log as a positioned stimulus (R3, NRS N6).
-- `arisesOnBreachOf` compiles to a transition on the breach record. Its compiled form agrees with
-  direct evaluation (law N9 of the first sketch, now B4).
-- A power's exercise compiles to a transition whose effects end relations, end or vary occasions
-  (a per-claim withdrawal of authority, IUA 21.2, CBAA M9 9.2.6), or create relations
-  (`arisesOnExerciseOf`).
+**A role filled later** (a claimant unknown when the policy is written, a third or fourth party
+owed a duty) lives in Party, not Behaviour, and the split leaves it untouched:
 
-### 7.4 Effects retargeted
+```mermaid
+flowchart LR
+    subgraph AGREED["What was agreed"]
+        R["ex:claimant-occ-v1<br/>a pty:RoleOccupancy<br/>pty:inRole Claimant<br/>(no pty:occupiedBy)"]
+        D["ins:Obligation<br/>indemnify<br/>obligee: ex:claimant-occ"]
+        T["bhv:EffectDefinition<br/>bhv:targetsOccupancy ex:claimant-occ"]
+        D --> R
+    end
+    subgraph HAPPENED["What happened"]
+        C["act: claim made by Acme<br/>2027-03-04"]
+        A["bhv:EffectApplication"]
+        R2["ex:claimant-occ-v2<br/>pty:occupiedBy ex:acme<br/>valid from 2027-03-04"]
+        C --> A --> R2
+    end
+    R2 -- "fnd:supersededBy (from v1)" --- R
 
-`bhv:targetsElement` has range `ins:Element`, which the rewrite removes. Effects target an
-instrument, a term, a relation or an occasion, and a wording amendment is not a Behaviour effect
-(it is an `ins:Amendment` with `wrd:Amendment`s). The property becomes `bhv:targets` with that
-range.
+    style AGREED fill:#BBDEFB
+    style HAPPENED fill:#bcdee1
+```
 
-### 7.5 Instrument lifecycles
+`pty:RoleOccupancy` is a temporally scoped `fnd:Version`, so filling the role is a new version
+with `pty:occupiedBy` and a valid time, superseding the unfilled one. Who held the role, and from
+when, is bitemporal by construction (law I11 fixes the occasion's parties at arising).
 
-An instrument's lifecycle (in force, notice served, suspended, run-off, closed) is a Behaviour
-state space declared as data, as Open CBAA's agreement-vocab already declares M12. The
-instrument's execution condition (`ins:takesEffectWhen`) guards the transition into force.
+### 7.7 Templates, not hand-built machines
 
-### 7.6 State concepts
+Contract authors pick regimes from the template library (§5.11) and fill their blanks: the period
+length, the power that starts it, the state it leads to. Raw Behaviour terms are used only by
+template writers. CBAA M12 is the reference case: its notice, suspension, non-renewal and run-off
+regimes are library templates with variables (30 business days, 60 business days, six years).
 
-`bhv:State` gains `bhv:realisesConcept` → the lifecycle concept that `ins:appliesInState` names.
-This keeps Instrument below Behaviour.
+```mermaid
+flowchart LR
+    subgraph LIB["Library: ontology/instrument/templates"]
+        TP["tmpl:notice-period<br/>a ins:Regime, ins:Template<br/>blanks: starting power,<br/>length, following state"]
+    end
+    subgraph INST["Bound in one agreement"]
+        NR["ex:notice-regime<br/>a ins:Regime, bhv:StateSpace"]
+        NP["ex:notice-period<br/>a bhv:State<br/>stateKind notice period"]
+        TT["ex:serve-notice<br/>a ins:RegimeTransition,<br/>bhv:TransitionDefinition"]
+        TX["a ins:OnExercise, bhv:TriggerDefinition<br/>ofPower ex:terminate-with-notice"]
+        TE["ex:notice-expires<br/>a ins:RegimeTransition,<br/>bhv:TransitionDefinition"]
+        TY["a ins:OnExpiry, bhv:TriggerDefinition<br/>after 30 business days"]
+        NR --> NP
+        TT -- "trigger" --> TX
+        TT -- "to" --> NP
+        TE -- "from" --> NP
+        TE -- "trigger" --> TY
+    end
+    NR -- "boundFrom" --> TP
+    style LIB fill:#BBDEFB
+    style INST fill:#bcdee1
+```
 
-### 7.7 Laws of the Behaviour changes
+Binding writes both types on every node (B4), so the runtime engine reads only `bhv:` terms.
+
+### 7.8 Static parameters and dynamic state
+
+**Instrument holds static parameters. Dynamic quantities live in `capacity` or in Behaviour
+allowances.** A limit regime holds the limit (static) and nothing else. The running total of losses
+against it is dynamic, and belongs to `applied/capacity`. A projection that `capacity` (or an applied
+layer on it, such as `applied/insurance`) defines through Surface creates the dynamic variable from
+the instrument's static limit.
+
+```mermaid
+flowchart LR
+    I["Instrument (static)<br/>ins:Qualifier: limit GBP 5M,<br/>basis per occurrence,<br/>threshold regime partition"]
+    S["Surface projection<br/>(defined by capacity<br/>or applied/insurance)"]
+    C["applied/capacity (dynamic)<br/>tank: limit 5M,<br/>drawn to date 3.2M"]
+    R["threshold regime state<br/>derived from the tank's value<br/>(below threshold, above, exhausted)"]
+    I --> S --> C --> R
+```
+
+**History**, in the statechart sense of returning to the state that was active before an
+interruption (reinstatement after a suspension entered from either "in force" or "notice"), is about
+which state, not about data. It belongs to the nested-states work of §7.10. A regime whose states
+hold only static content (the territorial restriction) needs no data history: it switches back.
+
+### 7.9 Calculated values
+
+Durations computed from case data ("three months plus one week per year of service"), commissions,
+coinsurance and derived limits need calculated values. Quantification already gives percentages of
+a base (ADR-A93) and proportional offsets. A general expression construct is a separate decision.
+Until it is taken, every Instrument slot that takes a duration or an amount also admits
+`ins:computedBy`, whose target is defined with the contract-amounts work. A case that needs a value
+not yet computable evaluates Undetermined with a diagnostic. This blocks only that case's
+evaluation, not the build.
+
+### 7.10 Requirements for a dedicated deep dive
+
+| Requirement | Evidence |
+|---|---|
+| **nested states**: a state containing a regime of its own | garden leave within a notice period, a cure period within a default state, suspension within run-off |
+| **history**: re-entering the sub-state that was active before an interruption | reinstatement after suspension (CBAA M12 12.17), resumption after force majeure |
+| **concurrent regimes per subject** confirmed, with their interaction rules | force majeure overlapping notice, suspension overlapping a cure period |
+
+These need careful design (statechart semantics, conflict between concurrent regimes,
+evaluation order) and are a slice of their own (plan C11a).
+
+### 7.11 Laws of the Behaviour changes
 
 | Law | Statement |
 |---|---|
 | B1 | An occasion occupancy is derived, never asserted, and records its read set |
 | B2 | An occasion's state follows only from records: acts, breaches, exercises, deemed facts, determinations |
 | B3 | Every scheduled trigger is a positioned stimulus. The engine never reads a clock |
-| B4 | Compiled wiring for a breach chain or a power agrees with direct evaluation (parity) |
-| B5 | A suspended occasion resumes its prior state on reinstatement |
+| B4 | Every `ins:` specialisation in the data also carries its `bhv:` type explicitly (no runtime inference) |
+| B5 | A suspended occasion or regime resumes its prior state on reinstatement (pending the history design, §7.10) |
+| B6 | Every entry into a state is recorded as a state occupancy naming its transition execution and cause, or carrying evidence of an external log entry |
+| B7 | Behaviour names no Instrument or Wording term, and no layer names a higher one (checked at design time) |
+| B8 | Design-time comparisons never read runtime records. A state may parameterise a comparison, never vary within one (DP6) |
 
 ---
 
@@ -800,7 +1667,7 @@ scenarios).
 | E1 | facility agreement: reporting, financial covenants, negative pledge, events of default, acceleration | obligations, continuing obligations, prohibitions, permissions, breach chains, powers |
 | E2 | syndicated facility: several commitments, majority and all-lender consents, the agent, lender transfers, sanctions | joint powers and consent rules, delegated consent, determinations by the agent, party change over time, immunity from amendment |
 | E3 | framework supply agreement with lots, call-off orders, a price list the supplier may vary, and offers | instruments created under a power, powers of acceptance, incorporation of a mutable document, segments and role tables, precedence between framework and call-off |
-| E4 | commercial agency agreement: authority to conclude contracts, sub-agency, reporting, termination, run-off | authority as a power with a prohibition outside it, referral, per-occasion withdrawal, directions, lifecycle gating, automatic suspension, regulator access |
+| E4 | commercial agency agreement: authority to conclude contracts, sub-agency, reporting, termination, run-off | authority as a power with a prohibition outside it, referral, per-occasion withdrawal, directions, regime gating, automatic suspension, regulator access |
 | E5 | commercial product warranty with sections, exclusions and carve-backs, and claims-made notification | exclusions and carve-backs, condition precedent, section-scoped definitions, relation back, burden of proof, case-dependent parties, terms implied by statute and excluded |
 | E6 | guarantee and indemnity | a condition reading another relation's state, subrogation, continuing indemnities, limitation of loss with a carve-back |
 | E7 | software licence: assignment with consent, audit, suspension, termination for breach, perpetual licence, optional support purchase | consent regimes, termination procedure, option exercisable in a window, immunity, severability, interpretation rules, notices and deemed receipt |
@@ -874,7 +1741,7 @@ Numbers are stable identifiers, not an order. S79 ("not treated as contravening 
 | S87 | governing law with one party's option to choose another forum | IUA 42, CBAA M14 14.5 | `Power` | E7 | both |
 | S42 | duty to offer on terms the offeror reasonably decides | AIG Dummy Policy GTC 4 transaction discovery offer, 5(b) waiver by endorsement | `Obligation` (activity make offer) with an open-textured content test | E7 | AIR |
 
-### 10.4 Time and lifecycle
+### 10.4 Time and regimes
 
 | # | Scenario | Sources | Pattern | E | Rendering |
 |---|---|---|---|---|---|
@@ -883,7 +1750,7 @@ Numbers are stable identifiers, not an order. S79 ("not treated as contravening 
 | S18 | arising window beyond the in-force period, survival and run-off with a cap | AIG Dummy Policy D&O 7(a) report within 90 days after the period, GTC 4 discovery up to six years, CBAA M12 12.X1, 12.X2, M14 14.49, 14.50, IUA 37.2.2, 35.7 | the arising condition compares case dates with the windows, `ins:survives` with a limit and an until-condition | E5 | both |
 | S19 | retroactive effect | AIG Dummy Policy D&O 11.C rescission ab initio, CBAA M3 3.20 retrospective amendments | effects with a valid time before the exercise, ADR-A67 | E7 | both |
 | S40 | effect only on execution or acceptance by all parties | AIG Dummy Policy declarations signature, IUA 1.1, CBAA M2 2.3 to 2.8 | `ins:takesEffectWhen` over acceptance records | all | both |
-| S54 | relations that apply only in some lifecycle states | CBAA M12 12.16, 12.24, 12.26, 12.39, 12.40, IUA 37.1, 37.2 | `ins:appliesInState` | E4 | Open CBAA |
+| S54 | relations that apply only in some states of a regime | CBAA M12 12.16, 12.24, 12.26, 12.39, 12.40, IUA 37.1, 37.2 | an `Exclusion` or state-specific `Power` arising under the regime's clause, `ins:appliesInState` a state of an `ins:Regime` (§6.3) | E4 | Open CBAA |
 | S62 | a term disapplied as invalid, the rest continuing | IUA 39, CBAA M14 14.2 | a term state (disapplied) in Behaviour | E7 | both |
 | S72 | survival notwithstanding limitation periods | CBAA M14 14.50 | `ins:survives` with no limit | E6 | Open CBAA |
 | S74 | business days, calendars, time zones, 00:00 and 24:00 conventions, local time at an address | AIG Dummy Policy declarations "12:01 A.M. at the Named Entity Address", CBAA M2 2.1, 2.2 guidance, M3, M8, M12 | Quantification calendars (ADR-A94), contextual time-zone conversion | E3 | both |
@@ -998,7 +1865,7 @@ example's Turtle, the expected decisions, and the controlled-English rendering.
 | deadlines before a future date, calendars and time zones | S17, S74 |
 | survival, run-off and discovery periods | S18, S72 |
 | retroactive effect | S19 |
-| lifecycle states: notice, suspension, run-off | S54, S55 |
+| regimes: periods, suspension, run-off, thresholds | S54, S55 |
 | parties that depend on the case | S20, S58 |
 | sectioned instruments: sections, per-section parties and authority | S92, S93, S94, S95, S96, S100 |
 | party details and identifiers | S97, S98, S101 |
@@ -1025,10 +1892,10 @@ S79 merged into S4. The amounts group (S32, S34's amounts, S39, S73, S81, S85) i
 
 | Artefact | Change | ADR |
 |---|---|---|
-| layer order | Wording inserted between Eligibility and Instrument | A-112 amends A-01 |
+| layer order | Wording inserted between Eligibility and Instrument. Behaviour moves below Instrument and splits into configuration and runtime | A-112 amends A-01 |
 | `ontology/wording` | new, 0.1.0: spec, vocab (inclusion modes, population methods, amendment operations, scheme contracts), shapes, examples, README, how-to | A-112 |
 | `ontology/instrument` | rewritten, 0.x breaking MINOR under A-113 | A-104, A-113 |
-| `ontology/behaviour` | occasions, records, `bhv:forSubject` widened, `bhv:targets`, state concepts, compiled wiring. Breaking MINOR under A-113 | A-106 (retitled), A-113 |
+| `ontology/behaviour` | split into configuration and runtime, `bhv:targets` with no range, `bhv:forSubject` relaxed, the Instrument import removed, engine-setting defaults, no required effect, occasions and records. Breaking MINOR under A-113 | A-106 (retitled), A-113 |
 | `ontology/foundation` | `fnd:identifier` (CC-D9). One MINOR, cascading to every layer and its 14 importers, so batched with NRS N9 in the Foundation window after Phase 2 | A-86 |
 | `behaviour-vocab`, `applied/capacity` | re-pin, cascade | A-86 |
 | `tools/mork_compilers` | relation plans, per-class evaluation, burden diagnostics, stratification | A-104, A-109 |
@@ -1036,14 +1903,14 @@ S79 merged into S4. The amounts group (S32, S34's amounts, S39, S73, S81, S85) i
 | AIR | Phase 5 builds on this. The LMA WIM profile may land in `applied/insurance` (CC-D3) | A-101 |
 | ADR-A07b, A-96 | superseded by A-104. A-96's many-provision attachment carries onto terms | A-104 |
 
-No Foundation change is needed: the amendment dates Open CBAA found missing (its integration spec
+No Foundation change beyond `fnd:identifier` is needed: the amendment dates Open CBAA found missing (its integration spec
 §4.1) sit on `ins:Amendment`.
 
 ### 12.2 Open CBAA
 
 `wim:` shrinks to the LMA WIM profile, or disappears if CC-D3 places the profile in LATTICE. `stm:`
 keeps `AuthorityGrant ⊑ ins:Power` and its envelope mechanism. `agr:` keeps the UMR, markets and the
-CBAA role scheme. `rsk:` keeps the case. The M12 lifecycle stays data on the extended Behaviour. The
+CBAA role scheme. `rsk:` keeps the case. The M12 regimes become templates in `applied/insurance`, built on the library. The
 worked example BA-2026-001 is re-expressed, and the binding authority renderings of §10 are its
 examples.
 
@@ -1066,7 +1933,7 @@ item 4 and ADR-A86's closing paragraph already allow.
 | CC-D5 | Templates in the substrate | yes (§5.9). Decided 2026-09-30 |
 | CC-D6 | Table structure | decided 2026-09-30: rows in the wording, columns at the instance, cells as variable values, long lists as multi-valued variables (§4.3) |
 | CC-D7 | Clean-room examples | decided 2026-09-30: insurance examples allowed in the substrate when every scenario also has an other-domain example and the insurance ones are not substantially more comprehensive. Previously proposed: neutral instruments E1 to E8 in the substrate, insurance renderings in AIR Phase 5 and Open CBAA |
-| CC-D8 | Lifecycle gating | `ins:appliesInState` over concepts, `bhv:realisesConcept` on states |
+| CC-D8 | State gating and Behaviour | decided 2026-10-01: Behaviour moves below Instrument and splits into configuration and runtime. Instrument specialises it with `ins:Regime` (altLabel "Dispensation"), `ins:RegimeTransition` and legal triggers, enforced by SHACL with no runtime inference. Regimes come from a template library. Every state entry is recorded. Static parameters in Instrument, dynamic state in `capacity`. DP6 restated (§6.3) |
 | CC-Q1 | Does `ins:prevailsOver` need its own priority (a later statement overriding an earlier precedence clause, CBAA M12 12.7.1)? | carried to N10 |
 | CC-Q2 | Is `wrd:Wording` also an `ins:Instrument` for single-document instruments, or always two nodes? | always two: an instrument may have several wordings (bilingual, consolidated) and a form is wording with no instrument |
 | CC-D9 | Identifiers | decided 2026-09-30: Foundation, `fnd:identifier` for any identified thing (actors, instruments), with a scheme and a value. Its cascade reaches every layer, so it lands in the Foundation window after Phase 2, batched with NRS N9 |
