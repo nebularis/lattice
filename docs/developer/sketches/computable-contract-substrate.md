@@ -256,6 +256,7 @@ flowchart TB
         P2["2: literal<br/>shall pay interest at"]
         P3["3: variable reference"]
         P4["4: literal<br/>per annum."]
+        P0 ~~~ P1 ~~~ P2 ~~~ P3 ~~~ P4
     end
     W -- "directlyComprises" --> S4
     S4 -- "directlyComprises" --> C1
@@ -1943,3 +1944,60 @@ item 4 and ADR-A86's closing paragraph already allow.
 | CC-Q4 | Should `ins:party` gain a privity shape (an obligor is a party to the term's instrument)? | no. Third-party beneficiaries and regulators' powers (S84) make it an applied choice |
 | CC-Q5 | Is `ins:obligee` required, given regulatory duties owed to no party? | required, with the regulator as an occupancy |
 | CC-Q6 | Should a relation name its case class, rather than reading it from its conditions' bindings? | read it from the bindings, checked by I4 |
+
+---
+
+## 14. Addendum, unplanned: Logical English
+
+Added 2026-10-01 as an exploration, with no decision, plan or slice behind it. The detail is in
+[logical-english-alignment.md](logical-english-alignment.md).
+
+A text's parts (§4.1) are the three things a Logical English sentence is made of: fixed words, a
+slot and a constant. Clause 4.1, "The Borrower shall pay interest at {margin} per annum", is a
+sentence of the LE template `*a borrower* shall pay interest at *a rate* per annum`, with "the
+Borrower" as a global constant (the object reference) and the margin as the slot (the variable
+reference).
+
+```mermaid
+flowchart LR
+    subgraph TP["wrd:TextParts of ex:cl-4-1"]
+        direction LR
+        A0["literal<br/>The"]
+        A1["object reference<br/>→ ex:def-borrower"]
+        A2["literal<br/>shall pay interest at"]
+        A3["variable reference<br/>→ ex:var-margin"]
+        A4["literal<br/>per annum."]
+        A0 ~~~ A1 ~~~ A2 ~~~ A3 ~~~ A4
+    end
+    subgraph LT["Logical English template"]
+        direction LR
+        B1["*a borrower*"]
+        B2["shall pay interest at"]
+        B3["*a rate*"]
+        B4["per annum."]
+        B1 ~~~ B2 ~~~ B3 ~~~ B4
+    end
+    A0 -. "ignorable word" .-> B1
+    A1 -- "a constant fills the slot" --> B1
+    A2 -- "fixed words" --> B2
+    A3 -- "a variable fills the slot" --> B3
+    A4 -- "fixed words" --> B4
+    style TP fill:#BBDEFB
+    style LT fill:#bcdee1
+```
+
+Because the parts already separate fixed words from arguments, matching a conforming text to a
+declared sentence form is a comparison of literal sequences, with no parser. The sketch finds that:
+
+- most of LE's Prolog target is stratified Datalog with built-ins, within the substrate's reach.
+  Recursion over data, sentences as arguments, abduction and embedded Prolog are not
+- the semantics agree only once closure is explicit. LE is closed-world unless a template says
+  `; unknown`, and LATTICE is open-world unless a closure licence (A-105) says otherwise. A
+  translation gives each `; undefined` scenario element a licence, maps `; unknown` to Undetermined
+  and `; judged` to a finding record (§6.4)
+- LE's `unless` and LATTICE's exceptions disagree on burden (law I7), by design
+- LE's deontic library is timeless, and its LPS target lacks an obligation library. The occasion
+  model of §7.6 is that library
+- four routes keep Prolog out of the runtime: rendering the IR as runnable LE, importing LE
+  through MORK at the edge, differential testing against LE2's examples and their expected
+  answers, and matching wording text parts to sentence forms
