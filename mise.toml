@@ -176,6 +176,10 @@ run = "python tools/reasoning_isolation_check.py"
 description = "Build and unit-test the word authoring POC service (ADR-A114)"
 run = "mvn -f platform/pom.xml -pl authoring-service -am verify"
 
+[tasks."check:authoring-service-it"]
+description = "Integration-test the word authoring POC service against Fuseki and RabbitMQ containers"
+run = "mvn -f platform/pom.xml -pl authoring-service -am -Pauthoring-it verify"
+
 [tasks."build:authoring-fixtures"]
 description = "Regenerate the word authoring POC's generated wording fixtures from the samples (ADR-A114)"
 run = "mvn -q -f platform/pom.xml -pl authoring-service -am package -DskipTests && java -cp platform/authoring-service/target/authoring-service.jar org.nebularis.lattice.authoring.app.FixtureWriter contracts/authoring"

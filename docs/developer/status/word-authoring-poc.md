@@ -3,7 +3,7 @@
 # Word authoring proof of concept - Status
 
 **Unit ID:** `word-authoring-poc`
-**Status:** 🚧 In progress. WA0 to WA4 done. WA5 is next
+**Status:** 🚧 In progress. WA0 to WA5 done. WA6 is next
 **Last updated:** 2026-10-01
 **Plan:** [word-authoring-poc.md](../plans/word-authoring-poc.md)
 **Sketch:** [word-authoring-poc.md](../sketches/word-authoring-poc.md)
@@ -14,13 +14,14 @@
 
 The design and a one-shot plan of thirteen slices (WA0 to WA11, with WA9a) are written. Decisions
 WA-D1 to WA-D13 were recorded by the human on 2026-10-01: WA-D4 is Javalin, the rest follow the
-recommendations. ADR-A114 stays Proposed. WA0 to WA4 are done: preflight, the WA1 contracts, the
+recommendations. ADR-A114 stays Proposed. WA0 to WA5 are done: preflight, the WA1 contracts, the
 WA2 service module that maps a snapshot to the Wording graph and validates it with SHACL, the WA3
-detection, template and conformance checks, and the WA4 HTTP API over Javalin with an in-memory
-store, bus, registry and job tracking.
+detection, template and conformance checks, the WA4 HTTP API over Javalin with an in-memory store,
+bus, registry and job tracking, and WA5's real Fuseki store, RabbitMQ bus, configuration and entry
+point.
 
-**Next action, for the human:** ask for WA5.
-**Next action, for the agent:** WA5 (Fuseki, RabbitMQ and the runnable service), when asked.
+**Next action, for the human:** ask for WA6.
+**Next action, for the agent:** WA6 (Logical English reading, the Python worker), when asked.
 
 ## Open question raised by WA3
 
@@ -29,6 +30,17 @@ cannot, because the seven detection rules can overlap only by containment. A pro
 invariant was run instead and does fail. The detail is in the
 [WA3 Validation Pack](../validation/word-authoring-poc-wa3.md) under Self-probe. Nothing is blocked,
 but later slices that prescribe a probe should be read with the same scepticism.
+
+## Open question raised by WA5
+
+WA5's prescribed self-probe (remove `ServicesResourceTransformer`, expect `--self-check` to fail)
+also does not fail: the self-check's code path does not happen to need the two Jena subsystem
+registrations (`InitJenaCore`, `InitShacl`) that a plain shade drops. Confirmed directly by running
+the broken jar by hand, not only through the test. A second test was added that opens the jar and
+asserts its merged `JenaSubsystemLifecycle` services file, which does fail correctly. Detail in the
+[WA5 Validation Pack](../validation/word-authoring-poc-wa5.md) under Self-probe. Two of two slices
+with a prescribed probe have now needed a replacement; read every later one with the same scepticism
+before trusting it.
 
 ## Note for WA3
 
@@ -65,8 +77,8 @@ invalid kind (plan S4-12's own scope). Exercise `proposal` end to end once the w
 | WA2 | Service model, mapping and shapes | done | `52eae70` | |
 | WA3 | Detection, templates and conformance | done | `8c4aa65` | |
 | WA4 | API and HTTP adapter | done | `c82bcc2` | |
-| WA5 | Fuseki, RabbitMQ and the runnable service | ready | | WA4 |
-| WA6 | Logical English reading | waiting | | WA2 |
+| WA5 | Fuseki, RabbitMQ and the runnable service | done | | |
+| WA6 | Logical English reading | ready | | WA2 |
 | WA7 | Worker runtime | waiting | | WA6 |
 | WA8 | Add-in domain | waiting | | WA1 |
 | WA9 | Add-in task pane and harness | waiting | | WA8 |
@@ -84,6 +96,7 @@ invalid kind (plan S4-12's own scope). Exercise `proposal` end to end once the w
 | WA2 | 450k | about 480k |
 | WA3 | 300k | about 230k |
 | WA4 | 450k | about 520k |
+| WA5 | 350k | about 400k |
 
 ## History
 
@@ -141,3 +154,15 @@ invalid kind (plan S4-12's own scope). Exercise `proposal` end to end once the w
   `docs/developer/validation/word-authoring-poc-wa4.md`. `check:java` (9 modules) and
   `check:authoring-contracts` still pass.
 - 2026-10-01: WA4 committed as `c82bcc2`.
+- 2026-10-01: WA5 done: `FusekiAuthoringStore` (Graph Store Protocol, retrying `ensureReady`),
+  `Topology` and `RabbitMqAnalysisBus` (retrying connect, dead-lettering unparseable results),
+  `AuthoringConfig`, `AuthoringServiceMain` (`--self-check` and the real entry point), `HealthProbe`.
+  Testcontainers 2.0.2 added (test scope), `authoring-it` Maven profile with failsafe 3.5.0,
+  `check:authoring-service-it` in `mise.toml`. 8 new unit tests (85 total) and 6 IT tests against
+  real Fuseki and RabbitMQ containers, all green first run. The plan's self-probe (remove
+  `ServicesResourceTransformer`, expect `--self-check` to fail) was found vacuous a second time:
+  confirmed by running the broken jar directly, not just the test. A second test was added
+  (`theShadedJarMergesEveryJenaSubsystemRegistration`) that opens the jar and checks the merged
+  `JenaSubsystemLifecycle` services file directly; it fails correctly when the transformer is
+  removed. Validation Pack at `docs/developer/validation/word-authoring-poc-wa5.md`. `check:java`
+  (9 modules) and `check:authoring-contracts` still pass.

@@ -10,14 +10,14 @@ See the [sketch](../../docs/developer/sketches/word-authoring-poc.md), the
 [plan](../../docs/developer/plans/word-authoring-poc.md) and
 [ADR-A114](../../docs/architecture/decisions/ADR-A114-word-authoring-proof-of-concept.md).
 
-## What this slice (WA4) builds
+## What this slice (WA5) builds
 
 WA2 maps a validated `document-snapshot` (plan WA1) to the Wording-layer graph the sketch §4
 describes, validates it with SHACL, and writes the canonical fixtures used as goldens. WA3 adds the
 structural feedback an author sees without waiting for the worker. WA4 adds the HTTP surface
-(decision WA-D4: Javalin) and everything behind it: a document registry, in-memory job tracking,
-and the service's own test seams for the store and the analysis bus (not an SPI, ADR-A114 decision
-4). WA5 makes the service runnable against real Fuseki and RabbitMQ.
+(decision WA-D4: Javalin) and everything behind it, against in-memory test seams. WA5 makes the
+service runnable: a real Fuseki-backed store and RabbitMQ-backed bus, configuration from the
+environment, and the entry point (`AuthoringServiceMain`) that wires all of it together.
 
 | Package | Holds |
 |---|---|
@@ -27,12 +27,29 @@ and the service's own test seams for the store and the analysis bus (not an SPI,
 | `validation` | `WordingValidator`, which runs the SHACL shapes of `shapes/wording-poc-shapes.ttl` |
 | `detection` | `ConstructDetector`, which finds unmarked constructs in literal parts |
 | `template` | `TemplateCatalog` and `SampleCatalog` (the shipped templates and samples, validated on load), `TemplateFindings` (a snapshot against its template) and `ConformanceChecker` (a worker's analysis against its template) |
-| `store` | `AuthoringStore` (a test seam), `InMemoryAuthoringStore`, `DocumentRegistry` and `DocumentView` |
-| `messaging` | `AnalysisBus` (a test seam), `InMemoryAnalysisBus` |
+| `store` | `AuthoringStore` (a test seam), `InMemoryAuthoringStore`, `FusekiAuthoringStore` (decision WA-D5, over the Graph Store Protocol), `DocumentRegistry` and `DocumentView` |
+| `messaging` | `AnalysisBus` (a test seam), `InMemoryAnalysisBus`, `Topology` (the AMQP exchanges and queues of `contracts/authoring/amqp-topology.json`), `RabbitMqAnalysisBus` |
 | `jobs` | `JobRegistry`, `JobView`, `JobSummary` |
 | `api` | `AuthoringApi` (every route, framework neutral), `ApiResponse`, `ErrorBody`, `HealthView`, `AnalysisView`, `SnapshotAccepted` |
 | `http` | `AuthoringHttpServer` (Javalin), the only class that knows this runs over HTTP |
-| `app` | `FixtureWriter`, which regenerates `contracts/authoring/fixtures/wording/*.nt` from the samples. `SampleSeeder`, which submits every sample the registry does not already hold |
+| `app` | `FixtureWriter` (regenerates the `.nt` goldens), `SampleSeeder` (submits every sample the registry does not already hold), `AuthoringConfig` (the environment variables below), `AuthoringServiceMain` (the entry point, and `--self-check`), `HealthProbe` (a container health check) |
+
+### Configuration
+
+`AuthoringServiceMain` reads these from the environment (`AuthoringConfig`). A missing required
+variable, or an invalid value, throws naming the variable; a secret's value is never included in
+the message.
+
+| Variable | Default | Required |
+|---|---|---|
+| `LATTICE_AUTHORING_PORT` | `8080` | |
+| `LATTICE_AUTHORING_BASE_IRI` | `https://example.org/lattice/authoring/` (must end with `/`) | |
+| `LATTICE_FUSEKI_URL` | `http://localhost:3030` | |
+| `LATTICE_FUSEKI_DATASET` | `authoring` | |
+| `LATTICE_FUSEKI_ADMIN_USER` | `admin` | |
+| `LATTICE_FUSEKI_ADMIN_PASSWORD` | none | yes |
+| `LATTICE_AMQP_URI` | none | yes |
+| `LATTICE_AUTHORING_SEED_SAMPLES` | `false` | |
 
 ### HTTP routes
 
@@ -73,7 +90,12 @@ overlap the longer wins, then the earlier kind in this table.
 | Command | Does |
 |---|---|
 | `mise run check:authoring-service` | builds and runs the unit tests |
+| `mise run check:authoring-service-it` | integration-tests against real Fuseki and RabbitMQ containers (Testcontainers), and the shaded jar's `--self-check` |
 | `mise run build:authoring-fixtures` | regenerates the committed `.nt` golden fixtures from the three samples |
+
+Running the service directly: `java -jar target/authoring-service.jar` (needs the configuration
+above in the environment), or `java -jar target/authoring-service.jar --self-check` to validate
+every shipped sample offline and exit, with no Fuseki or RabbitMQ needed.
 
 ## The provisional vocabulary
 
@@ -89,6 +111,7 @@ them.
 ## Store
 
 `WordingValidator` and `WordingMapper` work on an in-memory Jena `Model`. `InMemoryAuthoringStore`
-and `InMemoryAnalysisBus` back every WA4 test. A Fuseki-backed store and a RabbitMQ-backed bus,
-over the Graph Store Protocol, arrive in WA5 (decisions WA-D5, WA-D6). The service does not use or
-extend the semantic dataset SPI (ADR-A71, ADR-A75): see ADR-A114 decision 4.
+and `InMemoryAnalysisBus` back every unit test. `FusekiAuthoringStore` (Graph Store Protocol) and
+`RabbitMqAnalysisBus` back the running service and the WA5 integration tests, each retrying its
+connection for up to a minute so compose startup ordering does not matter. The service does not use
+or extend the semantic dataset SPI (ADR-A71, ADR-A75): see ADR-A114 decision 4.
