@@ -46,11 +46,29 @@ the root README) changes after acceptance, not in C0. A-104 and A-106 are C1 and
 
 Written by the building machine when the work is committed.
 
-- **Built:**
-- **Not run:**
-- **Check first:**
-- **Deviations from the plan:**
+- **Built:** ADR-A112, ADR-A113, the addenda to ADR-A01 and ADR-A-C2, the index rows and the
+  numbering sentence.
+- **Not run:** nothing beyond the link and prose checks, as planned.
+- **Check first:** A-113 decision 2, which creates a "Release notes" section in a layer's README
+  on its first breaking change, since no layer README has one today.
+- **Deviations from the plan:** C0-10's scope is wider, because C1 and C2 were done on the same
+  branch at the human's instruction. The plan also gained the C1 and C2 briefs and the C10 row's
+  wording.
 
 ## Results
 
-Written on machine R at verification.
+Verified on machine R, 2026-10-01.
+
+| ID | Result |
+|---|---|
+| C0-01 | pass |
+| C0-02 | pass: premise, facility agreement, trial protocol, then the problem |
+| C0-03 | pass: Wording, Behaviour and Instrument import lists match the sketch §1 diagram. No upward import |
+| C0-04 | pass: the split is cited as A-106's |
+| C0-05 | pass |
+| C0-06 | pass: CC-D7's two conditions, measured under C0-Q2, authoring order and brand ban unchanged |
+| C0-07 | pass, with A-104 and A-106 rows added by C1 and C2 |
+| C0-08 | pass: no broken link names a changed file. Repository total 427, the baseline |
+| C0-09 | pass: no semicolons or superlatives in new prose. The index paragraph's two semicolons predate C0 |
+| C0-10 | deviation, as above: the tranche's files only, no ontology or tool change |
+| C0-11 | pass |

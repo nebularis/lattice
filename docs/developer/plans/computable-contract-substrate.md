@@ -167,6 +167,66 @@ otherwise):
 | C0-10 | `git diff --stat main` / read / only the four ADR files, the ADR index, the Validation Pack and the status record change | L1 | + |
 | C0-11 | each ADR / read / it cites the sketch for its argument and does not restate it | paper | + |
 
+#### C1 in detail
+
+**Machine:** R. **Branch:** `ccs/c0-adrs` (the human ran tranche A on one branch, 2026-10-01).
+**Validation Pack:** [computable-contract-substrate-c1](../validation/computable-contract-substrate-c1.md).
+**Decisions carried:** CC-D5, CC-D8 (regimes and legal triggers), CC-D10, CC-D11.
+
+**Invariant:** paper only. ADR-A104 `Proposed`, superseding ADR-A07b on acceptance and carrying
+ADR-A96 onto terms, decides what the sketch §5, §6, §7.3 and §7.4 decide and cites them.
+
+1. **Context** in ADR-A-C2 order: premise, then the facility agreement (E1) and the trial protocol
+   (E8), then the problem (A-07b's minimal shape).
+2. **Decision**, one numbered item per sketch section: instrument and term, the five relations,
+   parties (with CC-D10), content and static parameters, legal triggers, regimes, structure apart
+   from state, constitutive terms, exceptions and burden, change, sections (CC-D11), templates and
+   `ontology/instrument/templates/`, calculated values, evaluation, laws I1 to I16.
+3. **Consequences:** slices C6 to C9 and C8a, the A-113 bumps, `ins:InstrumentTarget`, NRS N4,
+   A-105 and A-109 revisions, ADR-A-C2 and its addendum for E1 to E8.
+4. **Open points at acceptance** for what the sketch leaves undecided: the fate of `ins:Element`
+   and of `ins:fulfilledBy`, each with a recommendation.
+5. **Index:** the A-104 row, and A-07b marked as superseded on acceptance.
+
+| ID | Given / When / Then | Level | +/- |
+|---|---|---|---|
+| C1-01 | A-104 / read / Status `Proposed`, Supersedes, Related, Unit, Context, Decision, Consequences | paper | + |
+| C1-02 | its Context / read / premise and two non-insurance examples precede mechanism prose | paper | + |
+| C1-03 | each Decision item / compared with the sketch section it cites / no item decides more than the sketch, and none contradicts CC-D5, CC-D8, CC-D10 or CC-D11 | paper | + |
+| C1-04 | laws I1 to I16 / read / listed by reference, not restated | paper | + |
+| C1-05 | A-07b's terms (`Element`, `Provision`, `Obligation`, `Qualifier`, the cross-reference properties, `fulfilledBy`, R-B7) / checked / each is carried, replaced or raised as an open point | paper | + |
+| C1-06 | links and prose / the checks of C0-08 and C0-09 / pass | L1 | + |
+
+#### C2 in detail
+
+**Machine:** R. **Branch:** `ccs/c0-adrs`. **Validation Pack:**
+[computable-contract-substrate-c2](../validation/computable-contract-substrate-c2.md).
+**Decisions carried:** CC-D8.
+
+**Invariant:** paper only. ADR-A106 `Proposed`, amending ADR-A11 and mapping ADR-A08's tiers onto
+the configuration and runtime documents, decides what the sketch §7 decides. Nested states,
+history and concurrent regimes are left to C11a.
+
+1. **Context** in ADR-A-C2 order: premise, then a software licence (E7) and the trial protocol
+   (E8), then the problem (the range, the import, `forSubject`, one document).
+2. **Decision:** the layer flip, A-11's target binding amended, the two documents by tier, the
+   evidence rule, occasions and records, alignment without runtime inference, roles filled later,
+   laws B1 to B8, and what is not decided.
+3. **Consequences:** C10, C10a, C11, C12, the re-pins, risk R8, the Phase 3 engine.
+4. **Open point at acceptance:** the engine settings. A-09 and A-10 require explicit policies,
+   and the sketch's "engine-setting defaults" are read as `ins:RegimeTransition`'s restrictions
+   asserted by template binding, not as a Behaviour default.
+5. **Index:** the A-106 row, and A-11 marked as amended on acceptance.
+
+| ID | Given / When / Then | Level | +/- |
+|---|---|---|---|
+| C2-01 | A-106 / read / Status `Proposed`, Amends, Related, Unit, Context, Decision, Consequences | paper | + |
+| C2-02 | its Context / read / premise and two non-insurance examples precede mechanism prose | paper | + |
+| C2-03 | its tier table / compared with ADR-A08 / every tier in exactly one document | paper | + |
+| C2-04 | laws B1 to B8 / compared with the sketch §7.11 / the same eight, same meaning | paper | + |
+| C2-05 | the A-01 addendum, A-112 and A-106 / compared / one layer order, stated identically | paper | + |
+| C2-06 | links and prose / the checks of C0-08 and C0-09 / pass | L1 | + |
+
 ### Tranche B: Wording layer
 
 | Slice | Content | Version impact |
@@ -189,7 +249,7 @@ and may run beside tranche B.
 
 | Slice | Content | Version impact |
 |---|---|---|
-| C10 | the layer flip and the split (sketch §7.1, §7.2): configuration and runtime documents in one namespace, `bhv:targetsElement` replaced by `bhv:targets` with no range, `bhv:forSubject` range removed (Open CBAA L15), the Instrument import removed, `bhv:InstrumentTarget` deprecated in `behaviour-vocab` (C6 declares its replacement), engine-setting defaults, the at-least-one-effect restriction removed | Behaviour breaking MINOR (A-113). Re-pins `behaviour-vocab`, `applied/capacity`'s execution profile |
+| C10 | the layer flip and the split (sketch §7.1, §7.2): configuration and runtime documents in one namespace, `bhv:targetsElement` replaced by `bhv:targets` with no range, `bhv:forSubject` range removed (Open CBAA L15), the Instrument import removed, `bhv:InstrumentTarget` deprecated in `behaviour-vocab` (C6 declares its replacement), the at-least-one-effect restriction removed. Policies stay explicit (ADR-A106's open point) | Behaviour breaking MINOR (A-113). Re-pins `behaviour-vocab`, `applied/capacity`'s execution profile |
 | C10a | import guard (B7): a design-time check that no layer imports or names a term of a layer above it, run over every catalogue entry | `tools/`, a `mise` check |
 | C11 | runtime records: act, breach (derived and asserted), exercise, determination, deemed fact, acceptance. Occasions and their state space. The evidence rule (B6) as shapes (sketch §7.5, §7.6) | MINOR |
 | C11a | deep dive: nested states, history and concurrent regimes (sketch §7.10). A sketch and an A-106 amendment first, then the ontology change. Settles B5 | MINOR. Blocks C12 only |

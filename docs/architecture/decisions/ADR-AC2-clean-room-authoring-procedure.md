@@ -26,3 +26,27 @@ Applied-layer or deployment-specific material may be read for context and to san
 - Gate 2 (Eligibility) and Gate 3 (Behaviour) both author `ontology/examples/` before `README.md`.
 - No substrate `README.md`, `spec/*.ttl`, or `vocab/*.ttl` names a specific commercial deployment, brand, or closed-estate identifier, in any form.
 - This procedure replaces the heavier "two-role clean-room" and "physical repository split" machinery considered earlier in this programme's planning; those are not required given the relaxed containment posture, and are not implemented.
+
+## Addendum (2026-10-01): insurance examples in the computable contract substrate
+
+**Status:** Proposed, with ADR-A112 (CCS decision CC-D7).
+
+**Scope.** The examples and templates of the layers the computable contract substrate unit
+authors: Wording, Instrument and Behaviour (`ontology/<layer>/examples/`, and
+`ontology/instrument/templates/` under ADR-A104).
+
+**The relaxation.** Insurance examples may sit in those layers beside other-domain examples when
+both conditions hold, per scenario of the unit's catalogue:
+
+1. every scenario an insurance example shows is also shown by an other-domain example, and
+2. the insurance example is not more comprehensive: every class and property it uses for that
+   scenario is also used by an other-domain example of the same scenario.
+
+**Unchanged.** The authoring order of the Decision above: the premise, then two non-domain
+examples, then mechanism prose. Insurance examples are added after them. No substrate text names a
+specific commercial deployment, brand or closed-estate identifier, in any form, so an insurance
+example is generic: no insurer's or broker's name, policy or agreement number, or market reference.
+
+**Consequences.** The unit's scenario coverage test (CCS slice C15) checks both conditions for
+every scenario and fails on either. Fuller insurance renderings stay in `applied/insurance` and in
+Open CBAA.

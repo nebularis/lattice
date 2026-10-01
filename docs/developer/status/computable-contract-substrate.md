@@ -3,7 +3,7 @@
 # Computable contract substrate - Status
 
 **Unit ID:** `computable-contract-substrate`
-**Status:** 📝 Proposed. CC-D1 to CC-D11 decided. Sketches and plan awaiting human review
+**Status:** 📝 Proposed. Tranche A drafted on `ccs/c0-adrs`, uncommitted, awaiting human review
 **Last updated:** 2026-10-01
 **Plan:** [computable-contract-substrate.md](../plans/computable-contract-substrate.md)
 **Sketches:** [computable-contract-substrate.md](../sketches/computable-contract-substrate.md),
@@ -14,20 +14,22 @@
 ## Current position
 
 The design is sketched and tested against four instruments and a proposed Lloyd's schedule 
-(101 scenarios, S79 merged, and 58 amount constructs). Every decision is taken. No ADR is drafted
-and no ontology document is touched. The C0 brief and Validation Pack are on `main`.
+(101 scenarios, S79 merged, and 58 amount constructs). Every decision is taken. Tranche A is drafted
+on `ccs/c0-adrs`: ADR-A104, A-106, A-112 and A-113, and addenda to A-01 and A-C2, all `Proposed`.
+No ontology document is touched.
 
-**Next action, for the human:** answer the C0 brief's questions C0-Q1 to C0-Q3 (or accept their
-recommendations), then create `ccs/c0-adrs`.
-**Next action, for the agent:** draft C0 on that branch. C1 and C2 briefs follow.
+**Next action, for the human:** review the uncommitted tranche, settle the three open points at
+acceptance (A-104: `ins:Element`, `ins:fulfilledBy`. A-106: engine settings), commit, then Gate A.
+**Next action, for the agent, after Gate A:** brief C3 (Wording spec) and C10 (Behaviour split),
+which may run side by side.
 
 ## Slice board
 
 | # | Slice | Tranche | State | Blocked on |
 |---|---|---|---|---|
-| C0 | A-112, A-113, A-01 and ADR-A-C2 addenda | A | waiting for branch | brief on `main`, C0-Q1 to C0-Q3 |
-| C1 | A-104 | A | waiting | its brief |
-| C2 | A-106 | A | waiting | its brief |
+| C0 | A-112, A-113, A-01 and ADR-A-C2 addenda | A | drafted, verified | human review |
+| C1 | A-104 | A | drafted, verified | human review, two open points |
+| C2 | A-106 | A | drafted, verified | human review, one open point |
 | C3 to C5 | Wording layer | B | waiting | Gate A |
 | C10, C10a, C11, C11a | Behaviour below Instrument, import guard, records, nested states | C | waiting | Gate A |
 | F1 | Foundation identifiers | Foundation window | waiting | AIR Phase 2 complete, with NRS N9 |
@@ -47,3 +49,4 @@ recommendations), then create `ccs/c0-adrs`.
 - 2026-09-30: CC-D11 decided: sections as parts of one instrument. The sectioned schedule's names, numbers and addresses anonymised in the sketch.
 - 2026-10-01: CC-D8 decided: Behaviour below Instrument, split into configuration and runtime, regimes (synonym dispensation) and legal triggers specialising Behaviour, DP6 restated as B8, evidence rule B6, import guard B7. Sketch §6.3, §7 and §5.11 written with diagrams. Bases catalogued in contract-amounts §1.7 (A51 to A58). Plan reordered: tranche C (Behaviour) before tranche D (Instrument), new slices C8a, C10a, C11a. NRS, AIR, phase-3 and phase-5 notes updated.
 - 2026-10-01: Logical English alignment sketched (unplanned, CCS sketch §14). C0 briefed with its Validation Pack skeleton, raising C0-Q1 (A-01 addendum or supersession), C0-Q2 (measuring CC-D7) and C0-Q3 (marking a breaking 0.x change).
+- 2026-10-01: C0-Q1 to C0-Q3 accepted as recommended. Tranche A drafted on `ccs/c0-adrs` in one run: A-112, A-113, the A-01 and A-C2 addenda (C0), A-104 (C1), A-106 (C2), with C1 and C2 briefs and all three Validation Packs verified. Not committed, pending review.

@@ -46,3 +46,29 @@ Concretely:
 - `ontology/party/spec/party.ttl` gains an `owl:imports` of Quantification.
 - The root README and `docs/architecture/ontology-architecture.md` are corrected to state this same seven-link order, so the layer table, the dependency diagram, and the compiled imports agree.
 - A future CI check (documented in [../../validation-and-test-plan.md](../../validation-and-test-plan.md), not yet built) can verify import closure mechanically once Eligibility, Instrument, and Behaviour exist and declare their own imports.
+
+## Addendum (2026-10-01): Wording, and Behaviour below Instrument
+
+**Status:** Proposed, with [ADR-A112](ADR-A112-wording-layer.md).
+
+The dependency order becomes:
+
+```
+Foundation
+  └── Vocabulary
+        └── Quantification
+              └── Party
+                    └── Eligibility
+                          ├── Wording
+                          │     └── Instrument   (also imports Behaviour configuration)
+                          └── Behaviour configuration
+                                └── Behaviour runtime
+```
+
+- Wording imports Foundation, Vocabulary, Quantification and Eligibility.
+- Behaviour imports Foundation, Vocabulary, Quantification, Party and Eligibility, and no longer
+  Instrument. Its configuration and runtime documents are [ADR-A106](ADR-A106-behaviour-configuration-runtime-occasions-and-records.md)'s.
+- Instrument also imports Wording and Behaviour configuration. Behaviour is no longer the top
+  substrate layer.
+
+Every other decision stands.
