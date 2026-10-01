@@ -3,7 +3,7 @@
 # Word authoring proof of concept - Status
 
 **Unit ID:** `word-authoring-poc`
-**Status:** 🚧 In progress. WA0 and WA1 done. WA2 is next
+**Status:** 🚧 In progress. WA0 to WA2 done. WA3 is next
 **Last updated:** 2026-10-01
 **Plan:** [word-authoring-poc.md](../plans/word-authoring-poc.md)
 **Sketch:** [word-authoring-poc.md](../sketches/word-authoring-poc.md)
@@ -14,10 +14,18 @@
 
 The design and a one-shot plan of thirteen slices (WA0 to WA11, with WA9a) are written. Decisions
 WA-D1 to WA-D13 were recorded by the human on 2026-10-01: WA-D4 is Javalin, the rest follow the
-recommendations. ADR-A114 stays Proposed. WA0 (preflight) is done. No code exists yet.
+recommendations. ADR-A114 stays Proposed. WA0 to WA2 are done: preflight, the WA1 contracts, and
+the WA2 service module that maps a snapshot to the Wording graph and validates it with SHACL.
 
-**Next action, for the human:** ask for WA2 onward.
-**Next action, for the agent:** WA2 (service model, mapping and shapes), when asked.
+**Next action, for the human:** ask for WA3 onward.
+**Next action, for the agent:** WA3 (detection, templates and conformance), when asked.
+
+## Note for WA3
+
+WA2's provisional vocabulary (`platform/authoring-service/src/main/resources/vocab/wording-provisional.ttl`)
+declares only the `wrd:`/`wap:` terms WA2 itself mints. When WA6 builds the worker that writes the
+proposed meaning graph (sketch §4.4: `ins:` classes, `wap:proposalBasis`, `wap:activityText`, etc.),
+add that file to WA6's own path list and extend it there.
 
 ## Preflight (WA0, 2026-10-01)
 
@@ -37,9 +45,8 @@ recommendations. ADR-A114 stays Proposed. WA0 (preflight) is done. No code exist
 |---|---|---|---|---|
 | WA0 | Preflight | done | `c82d019` | |
 | WA1 | Contracts, templates and samples | done | `3db3911` | |
-| WA2 | Service model, mapping and shapes | ready | | WA1 |
-| WA2 | Service model, mapping and shapes | waiting | | WA1 |
-| WA3 | Detection, templates and conformance | waiting | | WA2 |
+| WA2 | Service model, mapping and shapes | done | (this commit) | |
+| WA3 | Detection, templates and conformance | ready | | WA2 |
 | WA4 | API and HTTP adapter | waiting | | WA3 |
 | WA5 | Fuseki, RabbitMQ and the runnable service | waiting | | WA4 |
 | WA6 | Logical English reading | waiting | | WA2 |
@@ -57,6 +64,7 @@ recommendations. ADR-A114 stays Proposed. WA0 (preflight) is done. No code exist
 | WA0 to WA11 | about 4.35M in total (plan §4) | |
 | WA0 | 60k | about 60k |
 | WA1 | 300k | about 220k |
+| WA2 | 450k | about 480k |
 
 ## History
 
@@ -70,6 +78,14 @@ recommendations. ADR-A114 stays Proposed. WA0 (preflight) is done. No code exist
   Committed with the unit's planning documents as `[wap] WA0: preflight` (`a0758ae`).
 - 2026-10-01: P5 and P6 re-run after the human set `NODE_EXTRA_CA_CERTS` and started Docker
   Desktop. Both pass. All preflight checks now pass.
+- 2026-10-01: WA1 done (`3db3911`, hash recorded `07acc66`).
+- 2026-10-01: WA2 done: `platform/authoring-service` (new Maven module: `json`, `model`, `rdf`,
+  `validation`, `app` packages), the provisional vocabulary and 11 SHACL shapes, 48 tests, fixed
+  fixtures regenerated and committed. Found and fixed a real defect: Jena reports a nested
+  `sh:property [...]` blank node, not the enclosing named shape, as `sh:sourceShape`, so seven
+  shapes were flattened to top-level named property shapes (Validation Pack "Implementer
+  choices"). Self-probe confirmed (WS10's `OPTIONAL` removal breaks the zero case). `check:java`
+  (all 8 modules) and `check:authoring-contracts` (WA1) still pass.
 - 2026-10-01: WA1 done: `contracts/authoring` (12 schemas, templates, samples, fixtures,
   `amqp-topology.json`), `contracts/events` (2 event schemas), `contracts/openapi`, worker test
   `test_authoring_contracts.py` (35 tests, all pass), `check:authoring-contracts` wired into

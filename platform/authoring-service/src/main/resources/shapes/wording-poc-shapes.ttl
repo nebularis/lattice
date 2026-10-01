@@ -1,0 +1,133 @@
+# SPDX-License-Identifier: MPL-2.0
+#
+# Word authoring proof of concept (ADR-A114): SHACL shapes for the mapped wording graph (plan
+# §2.3, WA2 "Shapes"). Not published under ontology/governance/; a POC artefact only.
+
+@prefix sh:    <http://www.w3.org/ns/shacl#> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+@prefix wrd:   <https://www.nebularis.org/neuro-semantic/lattice/wording#> .
+@prefix wap:   <https://www.nebularis.org/neuro-semantic/lattice/poc/word-authoring#> .
+
+wap:shape-WS1 a sh:PropertyShape ;
+	sh:targetClass wrd:TextPart ;
+	sh:path wrd:partIndex ;
+	sh:minCount 1 ;
+	sh:maxCount 1 ;
+	sh:datatype xsd:integer ;
+	sh:minInclusive 0 ;
+	sh:message "a text part has exactly one non-negative integer wrd:partIndex" .
+
+wap:shape-WS2 a sh:NodeShape ;
+	sh:targetClass wrd:TextPart ;
+	sh:xone (
+		[
+			sh:property [ sh:path wrd:partText ; sh:minCount 1 ; sh:maxCount 1 ] ;
+			sh:property [ sh:path wrd:refersToVariable ; sh:maxCount 0 ] ;
+			sh:property [ sh:path wrd:refersToObject ; sh:maxCount 0 ] ;
+		]
+		[
+			sh:property [ sh:path wrd:refersToVariable ; sh:minCount 1 ; sh:maxCount 1 ] ;
+			sh:property [ sh:path wrd:partText ; sh:maxCount 0 ] ;
+			sh:property [ sh:path wrd:refersToObject ; sh:maxCount 0 ] ;
+		]
+		[
+			sh:property [ sh:path wrd:refersToObject ; sh:minCount 1 ; sh:maxCount 1 ] ;
+			sh:property [ sh:path wrd:partText ; sh:maxCount 0 ] ;
+			sh:property [ sh:path wrd:refersToVariable ; sh:maxCount 0 ] ;
+		]
+	) ;
+	sh:message "a text part is exactly one of literal, variable reference or object reference (law W2)" .
+
+wap:shape-WS3 a sh:NodeShape ;
+	sh:targetClass wrd:Text ;
+	sh:sparql [
+		sh:message "a text's part indices run 0..n-1 (law W2)" ;
+		sh:select """
+			PREFIX wrd: <https://www.nebularis.org/neuro-semantic/lattice/wording#>
+			PREFIX wap: <https://www.nebularis.org/neuro-semantic/lattice/poc/word-authoring#>
+			SELECT $this WHERE {
+				$this a wrd:Text .
+				{
+					SELECT $this (COUNT(?p) AS ?n) (COUNT(DISTINCT ?i) AS ?d) (MAX(?i) AS ?m) WHERE {
+						$this a wrd:Text .
+						OPTIONAL { $this wap:hasPart ?p . ?p wrd:partIndex ?i }
+					}
+					GROUP BY $this
+				}
+				FILTER (?n > 0 && (?d != ?n || ?m != ?n - 1))
+			}
+		""" ;
+	] .
+
+wap:shape-WS4 a sh:PropertyShape ;
+	sh:targetClass wrd:Text ;
+	sh:path wap:hasPart ;
+	sh:minCount 1 ;
+	sh:message "a text has at least one part" .
+
+wap:shape-WS5 a sh:PropertyShape ;
+	sh:targetClass wrd:Element, wrd:Text, wrd:EmbeddedVariable ;
+	sh:path [ sh:inversePath wrd:directlyComprises ] ;
+	sh:minCount 1 ;
+	sh:maxCount 1 ;
+	sh:message "every element reaches exactly one parent via wrd:directlyComprises (law W1)" .
+
+wap:shape-WS6 a sh:PropertyShape ;
+	sh:targetSubjectsOf wrd:refersToVariable ;
+	sh:path wrd:refersToVariable ;
+	sh:class wrd:EmbeddedVariable ;
+	sh:message "a variable reference's target is a wrd:EmbeddedVariable" .
+
+wap:shape-WS7 a sh:PropertyShape ;
+	sh:targetSubjectsOf wrd:refersToObject ;
+	sh:path wrd:refersToObject ;
+	sh:class wap:DefinitionText ;
+	sh:message "an object reference's target is a wap:DefinitionText" .
+
+wap:shape-WS8 a sh:PropertyShape ;
+	sh:targetClass wap:DefinitionText ;
+	sh:path wap:definedTerm ;
+	sh:minCount 1 ;
+	sh:maxCount 1 ;
+	sh:datatype xsd:string ;
+	sh:minLength 1 ;
+	sh:message "a definition has exactly one non-empty wap:definedTerm" .
+
+wap:shape-WS9 a sh:NodeShape ;
+	sh:targetClass wap:DefinitionText ;
+	sh:sparql [
+		sh:message "another definition in this document declares the same term" ;
+		sh:select """
+			PREFIX wap: <https://www.nebularis.org/neuro-semantic/lattice/poc/word-authoring#>
+			SELECT $this WHERE {
+				$this wap:definedTerm ?term .
+				?other wap:definedTerm ?term .
+				FILTER (?other != $this)
+			}
+		""" ;
+	] .
+
+wap:shape-WS10 a sh:NodeShape ;
+	sh:targetClass wrd:EmbeddedVariable ;
+	sh:severity sh:Warning ;
+	sh:sparql [
+		sh:message "no text part refers to this variable" ;
+		sh:select """
+			PREFIX wrd: <https://www.nebularis.org/neuro-semantic/lattice/wording#>
+			SELECT $this WHERE {
+				$this a wrd:EmbeddedVariable .
+				OPTIONAL { ?part wrd:refersToVariable $this }
+			}
+			GROUP BY $this
+			HAVING (COUNT(DISTINCT ?part) = 0)
+		""" ;
+	] .
+
+wap:shape-WS11 a sh:PropertyShape ;
+	sh:targetClass wrd:EmbeddedVariable ;
+	sh:path wrd:variableKey ;
+	sh:minCount 1 ;
+	sh:maxCount 1 ;
+	sh:datatype xsd:string ;
+	sh:pattern "^[a-z][a-z0-9-]{0,39}$" ;
+	sh:message "a variable has exactly one key matching the Key pattern (plan §2.4)" .

@@ -172,6 +172,14 @@ run = "mvn -q -f platform/pom.xml -pl reasoning-testkit -am verify"
 description = "Fail when a reasoner, rules engine or JVM bridge is declared outside platform/reasoning-testkit (ADR-A83)"
 run = "python tools/reasoning_isolation_check.py"
 
+[tasks."check:authoring-service"]
+description = "Build and unit-test the word authoring POC service (ADR-A114)"
+run = "mvn -f platform/pom.xml -pl authoring-service -am verify"
+
+[tasks."build:authoring-fixtures"]
+description = "Regenerate the word authoring POC's generated wording fixtures from the samples (ADR-A114)"
+run = "mvn -q -f platform/pom.xml -pl authoring-service -am package -DskipTests && java -cp platform/authoring-service/target/authoring-service.jar org.nebularis.lattice.authoring.app.FixtureWriter contracts/authoring"
+
 [tasks."services:up"]
 description = "Start the reference platform services"
 run = "docker compose -f deployment/compose/docker-compose.yml up -d"

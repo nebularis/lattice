@@ -1,0 +1,143 @@
+# SPDX-License-Identifier: MPL-2.0
+@prefix owl:   <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos:  <http://www.w3.org/2004/02/skos/core#> .
+@prefix wrd:   <https://www.nebularis.org/neuro-semantic/lattice/wording#> .
+@prefix wap:   <https://www.nebularis.org/neuro-semantic/lattice/poc/word-authoring#> .
+
+# Word authoring proof of concept (ADR-A114): a provisional vocabulary, not an ontology document.
+#
+# The wrd: terms are taken from the computable contract substrate sketch
+# (docs/developer/sketches/computable-contract-substrate.md) \u00a74, ahead of CCS slice C3, which
+# will publish ontology/wording/ under ADR-A112. The wap: terms are this POC's own, filling the
+# gaps plan \u00a72.6 lists between what the sketch names and what the service needs to build a graph.
+# Neither this file nor the IRIs it documents are platform contracts: see ADR-A114.
+#
+# ins: terms (for the proposed meaning graph, sketch \u00a74.4) are added when WA6 builds the worker
+# that writes them, not here.
+
+wap:provisional-vocabulary a owl:Ontology ;
+	rdfs:comment "Word authoring POC provisional vocabulary (ADR-A114). Not published under ontology/." .
+
+# --- wrd: classes, from the sketch --------------------------------------------------------------
+
+wrd:Wording a owl:Class ;
+	rdfs:label "Wording" ;
+	rdfs:comment "CCS sketch \u00a74.1: the root of a wording tree." .
+
+wrd:Element a owl:Class ;
+	rdfs:label "Element" ;
+	rdfs:comment "CCS sketch \u00a74.1: a nestable part of a wording. Asserted here only on sections; a clause or definition is a wrd:Text instead (DP2, sketch \u00a74.1)." .
+
+wrd:Text a owl:Class ;
+	rdfs:label "Text" ;
+	rdfs:comment "CCS sketch \u00a74.1: an element whose content is ordered text parts." .
+
+wrd:TextPart a owl:Class ;
+	rdfs:label "Text part" ;
+	rdfs:comment "CCS sketch \u00a74.1: one literal, variable reference or object reference within a wrd:Text (law W2)." .
+
+wrd:EmbeddedVariable a owl:Class ;
+	rdfs:label "Embedded variable" ;
+	rdfs:comment "CCS sketch \u00a74.2: a variable shown in text." .
+
+# --- wrd: properties, from the sketch ------------------------------------------------------------
+
+wrd:directlyComprises a owl:ObjectProperty ;
+	rdfs:label "directly comprises" ;
+	rdfs:comment "CCS sketch \u00a74.1: the asserted parent-to-child edge a wording tree is built from (law W1)." .
+
+wrd:rankKey a owl:DatatypeProperty ;
+	rdfs:label "rank key" ;
+	rdfs:comment "CCS sketch \u00a74.1: lexicographic sibling order. Identity is not position (law W7)." .
+
+wrd:objectId a owl:DatatypeProperty ;
+	rdfs:label "object id" ;
+	rdfs:comment "CCS sketch \u00a74.1: the clause number a reader sees, derived from position and never used to build an IRI (law W7)." .
+
+wrd:elementType a owl:ObjectProperty ;
+	rdfs:label "element type" ;
+	rdfs:comment "CCS sketch \u00a74.1: a concept naming what kind of element this is, e.g. wap:Section." .
+
+wrd:partIndex a owl:DatatypeProperty ;
+	rdfs:label "part index" ;
+	rdfs:comment "CCS sketch \u00a74.1: a text part's 0-based position within its text (law W2)." .
+
+wrd:partText a owl:DatatypeProperty ;
+	rdfs:label "part text" ;
+	rdfs:comment "CCS sketch \u00a74.1: a literal part's text." .
+
+wrd:refersToVariable a owl:ObjectProperty ;
+	rdfs:label "refers to variable" ;
+	rdfs:comment "CCS sketch \u00a74.1: a variable-reference part's target." .
+
+wrd:refersToObject a owl:ObjectProperty ;
+	rdfs:label "refers to object" ;
+	rdfs:comment "CCS sketch \u00a74.1: an object-reference part's target." .
+
+wrd:variableKey a owl:DatatypeProperty ;
+	rdfs:label "variable key" ;
+	rdfs:comment "CCS sketch \u00a74.2: a variable's declared key." .
+
+# --- wap: classes (POC gaps, plan \u00a72.6) -------------------------------------------------------
+
+wap:DefinitionText a owl:Class ;
+	rdfs:subClassOf wrd:Text ;
+	rdfs:label "Definition text" ;
+	rdfs:comment "POC gap (plan \u00a72.6): a definition and its term. The sketch names wrd:Text's definedTerm nowhere; CCS C3 will decide where this lives." .
+
+# --- wap: concepts, values of wrd:elementType and wap:valueType ----------------------------------
+
+wap:Section a skos:Concept ; rdfs:label "Section" .
+wap:Clause a skos:Concept ; rdfs:label "Clause" .
+wap:Definition a skos:Concept ; rdfs:label "Definition" .
+wap:Money a skos:Concept ; rdfs:label "Money" .
+wap:Percentage a skos:Concept ; rdfs:label "Percentage" .
+wap:Date a skos:Concept ; rdfs:label "Date" .
+wap:Duration a skos:Concept ; rdfs:label "Duration" .
+wap:Number a skos:Concept ; rdfs:label "Number" .
+wap:Text a skos:Concept ; rdfs:label "Text" .
+wap:Party a skos:Concept ; rdfs:label "Party" .
+
+# --- wap: properties (POC gaps, plan \u00a72.6) -----------------------------------------------------
+
+wap:documentId a owl:DatatypeProperty ;
+	rdfs:label "document id" ;
+	rdfs:comment "POC gap (plan \u00a72.6): the snapshot's document id, as a literal on its wrd:Wording." .
+
+wap:templateId a owl:DatatypeProperty ;
+	rdfs:label "template id" ;
+	rdfs:comment "POC gap (plan \u00a72.6): the template a wording was authored from." .
+
+wap:revisionNumber a owl:DatatypeProperty ;
+	rdfs:label "revision number" ;
+	rdfs:comment "POC gap (plan \u00a72.6): the revision this graph was mapped from." .
+
+wap:sectionKey a owl:DatatypeProperty ;
+	rdfs:label "section key" ;
+	rdfs:comment "POC gap (plan \u00a72.6): the template section a wrd:Element of type wap:Section belongs to." .
+
+wap:elementId a owl:DatatypeProperty ;
+	rdfs:label "element id" ;
+	rdfs:comment "POC gap (plan \u00a72.6): an element's snapshot-assigned id, redundant with its IRI but kept as a literal for convenient querying." .
+
+wap:plainText a owl:DatatypeProperty ;
+	rdfs:label "plain text" ;
+	rdfs:comment "POC gap (plan \u00a72.6): an element's text, its parts' display text concatenated in order (plan \u00a72.5)." .
+
+wap:definedTerm a owl:DatatypeProperty ;
+	rdfs:domain wap:DefinitionText ;
+	rdfs:label "defined term" ;
+	rdfs:comment "POC gap (plan \u00a72.6): the term a wap:DefinitionText defines." .
+
+wap:hasPart a owl:ObjectProperty ;
+	rdfs:label "has part" ;
+	rdfs:comment "POC gap (plan \u00a72.6): text to part. The sketch names no property for this edge." .
+
+wap:displayText a owl:DatatypeProperty ;
+	rdfs:label "display text" ;
+	rdfs:comment "POC gap (plan \u00a72.6): the shown text of a variable or reference part, kept apart from wrd:partText so law W2's three forms stay exclusive." .
+
+wap:valueType a owl:ObjectProperty ;
+	rdfs:label "value type" ;
+	rdfs:comment "POC gap (plan \u00a72.6): stands in for wrd:valueContract, which the sketch leaves to a scheme CCS has not yet published." .

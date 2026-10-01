@@ -118,7 +118,8 @@ lattice/
 │   └── authoring/           # Word authoring POC contracts, templates and samples (ADR-A114)
 │
 ├── platform/
-│   └── reasoning-testkit/   # Test-only OWL reasoner harness, never a runtime dependency (ADR-A83)
+│   ├── reasoning-testkit/   # Test-only OWL reasoner harness, never a runtime dependency (ADR-A83)
+│   └── authoring-service/   # Word authoring POC service (ADR-A114)
 │
 ├── packages/
 │   └── minting/             # Standalone identity minting libraries (Python, Java), no LATTICE dependency

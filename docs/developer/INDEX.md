@@ -575,7 +575,7 @@ IUA binding authority and the Lloyd's CBAA.
 
 | Field | Value |
 |-------|-------|
-| **Status** | 🚧 WA0 and WA1 done. See the status record |
+| **Status** | 🚧 WA0 to WA2 done. See the status record |
 | **Unit ID** | `word-authoring-poc` |
 | **Sketch** | [word-authoring-poc.md](sketches/word-authoring-poc.md) |
 | **Plan** | [word-authoring-poc.md](plans/word-authoring-poc.md) |
