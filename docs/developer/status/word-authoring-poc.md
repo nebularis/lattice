@@ -45,7 +45,7 @@ add that file to WA6's own path list and extend it there.
 |---|---|---|---|---|
 | WA0 | Preflight | done | `c82d019` | |
 | WA1 | Contracts, templates and samples | done | `3db3911` | |
-| WA2 | Service model, mapping and shapes | done | (this commit) | |
+| WA2 | Service model, mapping and shapes | done | `52eae70` | |
 | WA3 | Detection, templates and conformance | ready | | WA2 |
 | WA4 | API and HTTP adapter | waiting | | WA3 |
 | WA5 | Fuseki, RabbitMQ and the runnable service | waiting | | WA4 |
