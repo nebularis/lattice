@@ -248,13 +248,13 @@ Vocabulary 0.3.0, Quantification 0.5.0 and Eligibility 0.7.0, names no term of a
 holds the structure, text and variables of a contract's documents. Nothing imports it, so no
 other document changes version.
 
-**Questions for the human before the branch** (the brief follows the recommendation unless told
-otherwise):
+**Decided by the human, 2026-10-01:**
 
-| # | Question | Options | Recommendation |
-|---|---|---|---|
-| C3-Q1 | Does Wording ship baseline element types? Instrument must recognise a section (I15), so one concept at least is needed | (a) a small baseline scheme in `wrd-voc`, not closed, as Party's vocabulary is: Section, Clause, Schedule, Annex, Definition. Deployments and the LMA profile add more. (b) the contract only, with Section declared where Instrument needs it | (a): sections need a shared concept, and the other four are neutral across domains |
-| C3-Q2 | Open CBAA's `wim:applicableTo` marks a typing concept as belonging to policy wordings, agreement wordings or both. Substrate or profile? | (a) the LMA WIM profile (CC-D3). (b) the substrate, as `wrd:applicableTo` | (a): it distinguishes two kinds of insurance wording, which is a market distinction |
+- **C3-Q1.** Wording ships a baseline element type scheme in `wrd-voc`, not closed, with every
+  element type that Wording's README, how-to and examples use (Section, Clause, Schedule, Annex and
+  Definition at least). Deployments and the LMA profile add more. C3-13 checks it.
+- **C3-Q2.** `applicableTo` belongs in the LMA WIM profile, drafted as a reference implementation
+  for the CBAA after this unit.
 
 1. **Versioning policy (ADR-A113).** `docs/architecture/ontology-versioning-policy.md` gains the
    major-version-zero rule beside its bump table, and the "Release notes" README section it
@@ -290,7 +290,7 @@ otherwise):
      `wrd:admissibleValues` (to `qnt:RangeSet`), `wrd:multiValued`
 4. **Vocab** (`vocab/wording-vocab.ttl`, `0.1.0`): `wrd-voc:ElementTypeContract`,
    `ClassificationContract` and `DocumentKindContract`, as `cls-voc`'s contracts are declared,
-   and under C3-Q1 (a) the baseline element type scheme.
+   and the baseline element type scheme (C3-Q1).
 5. **README** (`ontology/wording/README.md`): purpose, imports, the extraction contract, the
    model with `turtle-spec` and `turtle-vocab` blocks identical to the files, and the examples.
    Laws W1 to W7 and the how-to follow in C5. `tools/literate_extract.py --check` passes for this
@@ -311,11 +311,12 @@ otherwise):
 | C3-05 | both examples / reasoner / consistent | L2 | + |
 | C3-06 | an element that directly comprises itself / reasoner / inconsistent | L2 | − |
 | C3-07 | a node typed both `wrd:Wording` and `wrd:Element`, and a node both `wrd:Text` and `wrd:Table` / reasoner / inconsistent | L2 | − |
-| C3-08 | the vocab / parsed / three contracts, each with identity, governance state and the property it constrains, and the baseline scheme under C3-Q1 | L1 | + |
+| C3-08 | the vocab / parsed / three contracts, each with identity, governance state and the property it constrains | L1 | + |
 | C3-09 | the README / literate check / its blocks equal the spec and vocab | L1 | + |
 | C3-10 | `check:ontology-versioning` / run / both versions have release rows | L1 | + |
 | C3-11 | the examples / git history of the branch / committed before the README's model prose (ADR-A-C2) | paper | + |
 | C3-12 | the existing tool tests / unchanged / pass (non-weakening) | L1 | + |
+| C3-13 | every `wrd:elementType` value in the examples and in the README's example blocks / checked against the baseline scheme / each is a concept of it (C3-Q1) | L1 | + |
 
 | Slice | Content | Version impact |
 |---|---|---|
@@ -348,10 +349,12 @@ Selection and activation policies stay required (ADR-A09, ADR-A10). Every existi
 example, fixture and conformance case means what it meant before, apart from the renamed
 property.
 
-| # | Question | Options | Recommendation |
-|---|---|---|---|
-| C10-Q1 | The runtime document's name and first version | (a) `spec/behaviour-runtime.ttl`, version IRI `…/lattice/behaviour-runtime/0.8.0`, beside configuration at `…/lattice/behaviour/0.8.0`, so a consumer pins the pair at one number. (b) runtime starts at `0.1.0` as a new document | (a): both halves come from `behaviour` 0.7.0 |
-| C10-Q2 | `bhv:targetsOccupancy` and `bhv:targetsAllowance` beside the new `bhv:targets` | (a) both become sub-properties of `bhv:targets`, and the "at least one target" rule is a Core shape over the three as alternative paths, needing no inference. (b) they stay separate | (a): A-106 says every effect names at least one target through `bhv:targets` |
+**Decided by the human, 2026-10-01:**
+
+- **C10-Q1.** The runtime document is `spec/behaviour-runtime.ttl`, version IRI
+  `…/lattice/behaviour-runtime/0.8.0`, beside configuration at `…/lattice/behaviour/0.8.0`.
+- **C10-Q2.** `bhv:targetsOccupancy` and `bhv:targetsAllowance` become sub-properties of
+  `bhv:targets`, and the target rule is a Core shape over the three as alternative paths.
 
 1. **Configuration** (`spec/behaviour.ttl`, `0.7.0` → `0.8.0`, breaking under ADR-A113):
    - the Instrument import, the `ins:` prefix and `bhv:targetsElement` removed

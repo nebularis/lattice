@@ -5,7 +5,7 @@
 **Unit:** [`computable-contract-substrate`](../status/computable-contract-substrate.md)
 **Machine:** R (Claude Code). **Branch:** `ccs/c3-wording-spec`
 **Plan and test cases:** [CCS plan](../plans/computable-contract-substrate.md) (C3 in detail)
-**Decisions:** ADR-A112, ADR-A113, ADR-A-C2 and its addendum, CC-D6, CC-D11. Brief questions C3-Q1, C3-Q2
+**Decisions:** ADR-A112, ADR-A113, ADR-A-C2 and its addendum, CC-D6, CC-D11. C3-Q1, C3-Q2 decided 2026-10-01
 
 ## Invariant
 

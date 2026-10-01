@@ -5,7 +5,7 @@
 **Unit:** [`computable-contract-substrate`](../status/computable-contract-substrate.md)
 **Machine:** R (Claude Code). **Branch:** `ccs/c10-behaviour-split`
 **Plan and test cases:** [CCS plan](../plans/computable-contract-substrate.md) (C10 in detail)
-**Decisions:** ADR-A106, ADR-A11 as amended, ADR-A01's addendum, ADR-A113. Brief questions C10-Q1, C10-Q2
+**Decisions:** ADR-A106, ADR-A11 as amended, ADR-A01's addendum, ADR-A113. C10-Q1, C10-Q2 decided 2026-10-01
 
 ## Invariant
 
