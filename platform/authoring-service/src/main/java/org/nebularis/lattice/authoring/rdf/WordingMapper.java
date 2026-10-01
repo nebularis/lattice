@@ -20,14 +20,13 @@ import org.nebularis.lattice.authoring.model.VariablePart;
 
 /** Maps a {@link DocumentSnapshot} to the Wording-layer graph (plan \u00a72.3's "Mapping rules" table). */
 public final class WordingMapper {
-    private final String base;
+    private final IriMinter minter;
 
     public WordingMapper(String base) {
-        this.base = base;
+        this.minter = new IriMinter(base);
     }
 
     public Model map(DocumentSnapshot snapshot, int revision) {
-        IriMinter minter = new IriMinter(base);
         Model model = ModelFactory.createDefaultModel();
         String documentId = snapshot.documentId();
 
@@ -40,20 +39,20 @@ public final class WordingMapper {
 
         List<Section> sections = snapshot.sections();
         for (int s = 0; s < sections.size(); s++) {
-            Resource sectionResource = mapSection(model, minter, documentId, sections.get(s), s);
+            Resource sectionResource = mapSection(model, documentId, sections.get(s), s);
             wording.addProperty(Vocab.WRD_DIRECTLY_COMPRISES, sectionResource);
         }
 
         List<VariableDeclaration> variables = snapshot.variables();
         for (int v = 0; v < variables.size(); v++) {
-            Resource variableResource = mapVariable(model, minter, documentId, variables.get(v), v);
+            Resource variableResource = mapVariable(model, documentId, variables.get(v), v);
             wording.addProperty(Vocab.WRD_DIRECTLY_COMPRISES, variableResource);
         }
 
         return model;
     }
 
-    private Resource mapSection(Model model, IriMinter minter, String documentId, Section section, int s) {
+    private Resource mapSection(Model model, String documentId, Section section, int s) {
         Resource resource = model.createResource(minter.section(documentId, section.sectionKey()));
         resource.addProperty(RDF.type, Vocab.WRD_ELEMENT);
         resource.addProperty(Vocab.WRD_ELEMENT_TYPE, Vocab.WAP_SECTION);
@@ -63,13 +62,13 @@ public final class WordingMapper {
 
         List<Element> elements = section.elements();
         for (int e = 0; e < elements.size(); e++) {
-            Resource elementResource = mapElement(model, minter, documentId, elements.get(e), s, e);
+            Resource elementResource = mapElement(model, documentId, elements.get(e), s, e);
             resource.addProperty(Vocab.WRD_DIRECTLY_COMPRISES, elementResource);
         }
         return resource;
     }
 
-    private Resource mapElement(Model model, IriMinter minter, String documentId, Element element, int s, int e) {
+    private Resource mapElement(Model model, String documentId, Element element, int s, int e) {
         Resource resource = model.createResource(minter.element(documentId, element.elementId()));
         resource.addProperty(RDF.type, Vocab.WRD_TEXT);
         boolean isDefinition = element.kind() == ElementKind.DEFINITION;
@@ -87,13 +86,13 @@ public final class WordingMapper {
 
         List<Part> parts = element.parts();
         for (int i = 0; i < parts.size(); i++) {
-            Resource partResource = mapPart(model, minter, documentId, element.elementId(), parts.get(i), i);
+            Resource partResource = mapPart(model, documentId, element.elementId(), parts.get(i), i);
             resource.addProperty(Vocab.WAP_HAS_PART, partResource);
         }
         return resource;
     }
 
-    private Resource mapPart(Model model, IriMinter minter, String documentId, String elementId, Part part, int index) {
+    private Resource mapPart(Model model, String documentId, String elementId, Part part, int index) {
         Resource resource = model.createResource(minter.textPart(documentId, elementId, index));
         resource.addProperty(RDF.type, Vocab.WRD_TEXT_PART);
         resource.addProperty(Vocab.WRD_PART_INDEX, integerLiteral(model, index));
@@ -113,7 +112,7 @@ public final class WordingMapper {
         return resource;
     }
 
-    private Resource mapVariable(Model model, IriMinter minter, String documentId, VariableDeclaration variable, int v) {
+    private Resource mapVariable(Model model, String documentId, VariableDeclaration variable, int v) {
         Resource resource = model.createResource(minter.variable(documentId, variable.variableKey()));
         resource.addProperty(RDF.type, Vocab.WRD_EMBEDDED_VARIABLE);
         resource.addProperty(Vocab.WRD_VARIABLE_KEY, variable.variableKey());

@@ -4,6 +4,7 @@ package org.nebularis.lattice.authoring.model;
 import com.fasterxml.jackson.databind.JsonNode;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 
 /** Reads a {@link DocumentSnapshot} from an already schema-validated JSON node, by hand. */
 public final class SnapshotReader {
@@ -11,48 +12,32 @@ public final class SnapshotReader {
     }
 
     public static DocumentSnapshot read(JsonNode node) {
-        List<Section> sections = new ArrayList<>();
-        for (JsonNode sectionNode : node.get("sections")) {
-            sections.add(readSection(sectionNode));
-        }
-        List<VariableDeclaration> variables = new ArrayList<>();
-        for (JsonNode variableNode : node.get("variables")) {
-            variables.add(new VariableDeclaration(
-                variableNode.get("variableKey").asText(),
-                variableNode.get("label").asText(),
-                ValueType.fromJson(variableNode.get("valueType").asText())
-            ));
-        }
-        List<Unmarked> unmarked = new ArrayList<>();
-        for (JsonNode unmarkedNode : node.get("unmarked")) {
-            unmarked.add(new Unmarked(textOrNull(unmarkedNode.get("sectionKey")), unmarkedNode.get("text").asText()));
-        }
         return new DocumentSnapshot(
             node.get("schemaVersion").asText(),
             node.get("documentId").asText(),
             node.get("templateId").asText(),
             node.get("title").asText(),
-            sections,
-            variables,
-            unmarked
+            each(node.get("sections"), SnapshotReader::readSection),
+            each(node.get("variables"), v -> new VariableDeclaration(
+                v.get("variableKey").asText(),
+                v.get("label").asText(),
+                ValueType.fromJson(v.get("valueType").asText())
+            )),
+            each(node.get("unmarked"), u -> new Unmarked(textOrNull(u.get("sectionKey")), u.get("text").asText()))
         );
     }
 
     private static Section readSection(JsonNode node) {
-        List<Element> elements = new ArrayList<>();
-        for (JsonNode elementNode : node.get("elements")) {
-            elements.add(readElement(elementNode));
-        }
-        return new Section(node.get("sectionKey").asText(), elements);
+        return new Section(node.get("sectionKey").asText(), each(node.get("elements"), SnapshotReader::readElement));
     }
 
     private static Element readElement(JsonNode node) {
-        ElementKind kind = ElementKind.fromJson(node.get("kind").asText());
-        List<Part> parts = new ArrayList<>();
-        for (JsonNode partNode : node.get("parts")) {
-            parts.add(readPart(partNode));
-        }
-        return new Element(node.get("elementId").asText(), kind, textOrNull(node.get("definedTerm")), parts);
+        return new Element(
+            node.get("elementId").asText(),
+            ElementKind.fromJson(node.get("kind").asText()),
+            textOrNull(node.get("definedTerm")),
+            each(node.get("parts"), SnapshotReader::readPart)
+        );
     }
 
     private static Part readPart(JsonNode node) {
@@ -67,5 +52,13 @@ public final class SnapshotReader {
 
     private static String textOrNull(JsonNode node) {
         return (node == null || node.isNull()) ? null : node.asText();
+    }
+
+    private static <T> List<T> each(JsonNode array, Function<JsonNode, T> read) {
+        List<T> values = new ArrayList<>();
+        for (JsonNode node : array) {
+            values.add(read.apply(node));
+        }
+        return values;
     }
 }

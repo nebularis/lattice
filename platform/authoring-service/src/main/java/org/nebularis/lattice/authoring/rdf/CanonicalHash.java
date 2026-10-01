@@ -22,9 +22,12 @@ public final class CanonicalHash {
     }
 
     public static String of(Model model) {
-        List<String> lines = sortedNTriplesLines(model);
-        String joined = String.join("\n", lines) + "\n";
-        return "sha256:" + sha256Hex(joined);
+        return "sha256:" + sha256Hex(canonicalText(model));
+    }
+
+    /** The bytes the hash is taken over, and the content of a generated {@code .nt} fixture. */
+    public static String canonicalText(Model model) {
+        return String.join("\n", sortedNTriplesLines(model)) + "\n";
     }
 
     public static List<String> sortedNTriplesLines(Model model) {

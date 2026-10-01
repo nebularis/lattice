@@ -14,7 +14,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * Loads every JSON Schema the word authoring POC uses from the classpath, keyed by both schema
@@ -72,7 +71,7 @@ public final class ContractSchemas {
             throw new IllegalArgumentException("unknown schema: " + schemaName);
         }
         Set<ValidationMessage> messages = schema.validate(node);
-        return messages.stream().map(ValidationMessage::getMessage).limit(MAX_MESSAGES).collect(Collectors.toList());
+        return messages.stream().map(ValidationMessage::getMessage).limit(MAX_MESSAGES).toList();
     }
 
     private static String nameOf(String resource) {

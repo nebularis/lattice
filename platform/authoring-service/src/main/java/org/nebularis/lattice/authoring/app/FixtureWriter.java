@@ -3,7 +3,6 @@ package org.nebularis.lattice.authoring.app;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -45,14 +44,8 @@ public final class FixtureWriter {
             JsonNode node = Json.MAPPER.readTree(samplePath.toFile());
             DocumentSnapshot snapshot = SnapshotReader.read(node);
             Model model = mapper.map(snapshot, 1);
-            List<String> lines = CanonicalHash.sortedNTriplesLines(model);
-            String content = String.join("\n", lines) + "\n";
             Path outputPath = outputDir.resolve(sampleId + ".nt");
-            try {
-                Files.writeString(outputPath, content, StandardCharsets.UTF_8);
-            } catch (IOException e) {
-                throw new UncheckedIOException(e);
-            }
+            Files.writeString(outputPath, CanonicalHash.canonicalText(model), StandardCharsets.UTF_8);
             System.out.println("wrote " + outputPath);
         }
     }

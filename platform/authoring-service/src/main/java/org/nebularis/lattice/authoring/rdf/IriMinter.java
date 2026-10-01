@@ -35,27 +35,27 @@ public final class IriMinter {
     }
 
     public String section(String documentId, String sectionKey) {
-        requireSectionKey(sectionKey, "sectionKey");
+        require(SECTION_KEY_PATTERN, sectionKey, "sectionKey", "SectionKey");
         return doc(documentId) + "section/" + sectionKey;
     }
 
     public String element(String documentId, String elementId) {
-        requireUuid(elementId, "elementId");
+        require(UUID_PATTERN, elementId, "elementId", "Uuid");
         return doc(documentId) + "element/" + elementId;
     }
 
     public String textPart(String documentId, String elementId, int index) {
-        requireNonNegative(index, "index");
+        requireAtLeast(index, 0, "index");
         return element(documentId, elementId) + "/part/" + index;
     }
 
     public String variable(String documentId, String variableKey) {
-        requireKey(variableKey, "variableKey");
+        require(KEY_PATTERN, variableKey, "variableKey", "Key");
         return doc(documentId) + "variable/" + variableKey;
     }
 
     public String revision(String documentId, int revision) {
-        requirePositive(revision, "revision");
+        requireAtLeast(revision, 1, "revision");
         return doc(documentId) + "rev/" + revision;
     }
 
@@ -76,12 +76,12 @@ public final class IriMinter {
     }
 
     public String parameterBinding(String documentId, String elementId, String slotName) {
-        requireKey(slotName, "slotName");
+        require(KEY_PATTERN, slotName, "slotName", "Key");
         return proposedRelation(documentId, elementId) + "/binding/" + slotName;
     }
 
     public String partyRole(String documentId, String definitionElementId) {
-        requireUuid(definitionElementId, "definitionElementId");
+        require(UUID_PATTERN, definitionElementId, "definitionElementId", "Uuid");
         return doc(documentId) + "role/" + definitionElementId;
     }
 
@@ -90,37 +90,19 @@ public final class IriMinter {
     }
 
     private String doc(String documentId) {
-        requireUuid(documentId, "documentId");
+        require(UUID_PATTERN, documentId, "documentId", "Uuid");
         return base + "doc/" + documentId + "/";
     }
 
-    private static void requireUuid(String value, String name) {
-        if (value == null || !UUID_PATTERN.matcher(value).matches()) {
-            throw new IllegalArgumentException(name + " is not a Uuid: " + value);
+    private static void require(Pattern pattern, String value, String name, String type) {
+        if (value == null || !pattern.matcher(value).matches()) {
+            throw new IllegalArgumentException(name + " is not a " + type + ": " + value);
         }
     }
 
-    private static void requireKey(String value, String name) {
-        if (value == null || !KEY_PATTERN.matcher(value).matches()) {
-            throw new IllegalArgumentException(name + " is not a Key: " + value);
-        }
-    }
-
-    private static void requireSectionKey(String value, String name) {
-        if (value == null || !SECTION_KEY_PATTERN.matcher(value).matches()) {
-            throw new IllegalArgumentException(name + " is not a SectionKey: " + value);
-        }
-    }
-
-    private static void requireNonNegative(int value, String name) {
-        if (value < 0) {
-            throw new IllegalArgumentException(name + " must be >= 0: " + value);
-        }
-    }
-
-    private static void requirePositive(int value, String name) {
-        if (value < 1) {
-            throw new IllegalArgumentException(name + " must be >= 1: " + value);
+    private static void requireAtLeast(int value, int minimum, String name) {
+        if (value < minimum) {
+            throw new IllegalArgumentException(name + " must be >= " + minimum + ": " + value);
         }
     }
 }
