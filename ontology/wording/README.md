@@ -86,37 +86,34 @@ ex:cl-4-1-p4 a wrd:TextPart ; wrd:partIndex 4 ; wrd:partText " per annum." .
 
 ### 5.2 Wordings and elements
 
-A wording is the root of one document's tree: an agreement, a policy, a form, a protocol, an
-endorsement issued as a document of its own. An element is any part beneath it. Both are
-versions: a new text is a new version superseding the old, under the same persistent identity.
-What kind of part an element is (a section, a clause, a schedule) is a concept, never a class
-(§5.5).
+A wording is the root of one document's tree: an agreement, policy, form, protocol, or endorsement issued as a document of its own. An element is any part beneath it. Any new text is a new version superseding the old, under the same persistent identity. What kind of part an element is (a section, a clause, a schedule) is modelled as a concept, 
+rather than a class.
+
+The equivalence assertion on `WordingNode` also says something the reduntant subclass triples alone cannot: that every `WordingNode` is a `Wording` or an `Element`, and nothing else. Used for `rdfs:range` assertions.
 
 ```turtle-spec
 wrd:Wording a owl:Class ;
 	rdfs:subClassOf fnd:Version , fnd:Governable , wrd:WordingNode ;
 	rdfs:label "Wording"@en ;
 	rdfs:comment "The root of one document's wording tree." ;
-	fnd:utility "One per document: an agreement, a policy wording, a standard form, a protocol. A changed text is a new wording version with the same fnd:hasIdentity, superseding the old." .
+	fnd:utility "One should exist per document. Changed text leads to a new wording version with the same fnd:hasIdentity superseding the old." .
 
 wrd:Element a owl:Class ;
 	rdfs:subClassOf fnd:Version , fnd:Governable , wrd:WordingNode ;
 	rdfs:label "Element"@en ;
 	rdfs:comment "A nestable part of a wording." ;
-	fnd:utility "Type it with wrd:elementType (section, clause, schedule, annex, definition). Use one of the content classes of §5.6 where the part carries content of its own. A changed element is a new element version." .
+	fnd:utility "Typed with wrd:elementType. Use one of the content classes of §5.6 where the part carries content of its own. A changed element requires a new element version." .
 
 wrd:WordingNode a owl:Class ;
 	owl:equivalentClass [ a owl:Class ; owl:unionOf ( wrd:Wording wrd:Element ) ] ;
 	rdfs:label "Wording node"@en ;
 	rdfs:comment "Anything in a wording tree: a wording or one of its elements." ;
-	fnd:utility "Never assert it. It names the subject of the properties that apply to a whole wording and to its parts alike. wrd:Wording and wrd:Element are declared its subclasses explicitly as well, so a SHACL engine sees the same hierarchy a reasoner infers." .
+	fnd:utility "WordingNode is NOT meant to be used to make assertions. It names the subject of properties that apply to a whole wording and to its parts alike." .
 ```
 
 ### 5.3 Part and whole
 
-`wrd:directlyComprises` is the only part-whole edge ever asserted. `wrd:comprises` is its
-transitive closure. The direct edge has no transitive sub-property, so OWL 2 DL lets it be
-irreflexive and asymmetric.
+`wrd:directlyComprises` is the only part-whole edge intended for making assertions, whilst `wrd:comprises` provides its transitive closure. The direct edge has no transitive sub-property, so that OWL 2 DL allows it be irreflexive and asymmetric.
 
 ```turtle-spec
 wrd:comprises a owl:ObjectProperty , owl:TransitiveProperty ;
@@ -124,7 +121,7 @@ wrd:comprises a owl:ObjectProperty , owl:TransitiveProperty ;
 	rdfs:domain wrd:WordingNode ;
 	rdfs:range wrd:Element ;
 	rdfs:comment "The transitive part-whole relation of a wording tree. Subject: a wording node. Value: an element at any depth below it." ;
-	fnd:utility "Never assert it. Assert wrd:directlyComprises and let a reasoner or a compiled closure supply skip-level containment." .
+	fnd:utility "wrd:comprises is NOT intended to be used for making assertions. Instead, wrd:directlyComprises should be used, whilst a reasoner or a compiled closure can supply skip-level containment." .
 
 wrd:isComprisedBy a owl:ObjectProperty , owl:TransitiveProperty ;
 	rdfs:label "is comprised by"@en ;
@@ -147,9 +144,7 @@ wrd:isDirectlyComprisedBy a owl:ObjectProperty , owl:IrreflexiveProperty , owl:A
 
 ### 5.4 Order and identity
 
-Identity is not position. A rank key orders siblings lexicographically, so a part can be inserted
-between two others without renumbering anything. An object id is the number or label a reader
-sees ("4.1", "Schedule 1"). It is derived after assembly and never used as identity.
+Identity is not position. A rank key orders siblings lexicographically, so a part can be inserted between two others without renumbering anything. An object id is the number or label a reader sees ("4.1", "Schedule 1"), derived after assembly. The object id should not be used as an identity.
 
 ```turtle-spec
 wrd:rankKey a owl:DatatypeProperty , owl:FunctionalProperty ;
@@ -167,9 +162,7 @@ wrd:objectId a owl:DatatypeProperty , owl:FunctionalProperty ;
 
 ### 5.5 Typing
 
-What kind of part an element is, and how it is classified, are concepts drawn under scheme
-contracts (§6). A deployment binds its own schemes. The baseline element types ship with this
-layer.
+What kind of part an element is, and how it is classified, are concepts drawn under scheme contracts. A deployment typically binds its own schemes. A basic set of element types ship with this layer.
 
 ```turtle-spec
 wrd:elementType a owl:ObjectProperty , owl:FunctionalProperty ;
@@ -184,18 +177,18 @@ wrd:classification a owl:ObjectProperty ;
 	rdfs:domain wrd:WordingNode ;
 	rdfs:range skos:Concept ;
 	rdfs:comment "A classification of a wording or element, beside its type: safety reporting, governing law, data protection. Subject: a wording node. Value: a concept under wrd-voc:ClassificationContract, any number." ;
-	fnd:utility "Drawn under wrd-voc:ClassificationContract. An element may carry several (a polyhierarchy)." .
+	fnd:utility "Drawn under wrd-voc:ClassificationContract. An element may carry several." .
 ```
 
 ### 5.6 Content classes
 
-Kinds of content that differ in their properties are classes. Each is an element.
+Kinds of content that differ in their properties. Each is an element.
 
 ```turtle-spec
 wrd:Text a owl:Class ;
 	rdfs:subClassOf wrd:Element ;
 	rdfs:label "Text"@en ;
-	rdfs:comment "An element whose content is an ordered sequence of text parts (§5.7)." .
+	rdfs:comment "An element whose content is an ordered sequence of text parts." .
 
 wrd:Table a owl:Class ;
 	rdfs:subClassOf wrd:Element ;
@@ -205,12 +198,12 @@ wrd:Table a owl:Class ;
 wrd:Variable a owl:Class ;
 	rdfs:subClassOf wrd:Element ;
 	rdfs:label "Variable"@en ;
-	rdfs:comment "A declaration of a value an instance supplies (§5.9)." .
+	rdfs:comment "A declaration of a value an instance supplies." .
 
 wrd:Reference a owl:Class ;
 	rdfs:subClassOf wrd:Element ;
 	rdfs:label "Reference"@en ;
-	rdfs:comment "An element linking to another part, a document object or an external document (§5.8)." .
+	rdfs:comment "An element linking to another part, a document object or an external document." .
 
 wrd:Metadata a owl:Class ;
 	rdfs:subClassOf wrd:Element ;
@@ -223,10 +216,7 @@ wrd:Metadata a owl:Class ;
 
 ### 5.7 Text parts
 
-A text is a sequence of parts, each exactly one of three forms: literal text, a reference to a
-variable, or a reference to another part or document. Parts are indexed from 0 without gaps, which
-gives a closed-world order without an RDF list. A part belongs to one text and is not a version:
-a changed text is a new text version with new parts.
+Text is represented as a sequence of parts, with each part being one of three forms: literal text, a reference to a variable, or a reference to another part or document. Parts are indexed from 0 without gaps, which gives a closed-world order without an RDF list. A part belongs to one text and is not a version. Changed text is a new text version with new parts. 
 
 ```turtle-spec
 wrd:TextPart a owl:Class ;
@@ -264,9 +254,7 @@ wrd:refersToObject a owl:ObjectProperty , owl:FunctionalProperty ;
 
 ### 5.8 References and documents
 
-A document object is an attachment whose content is not digitised: a scanned plan, a certificate.
-An external document sits outside the contract altogether: a regulation, a separate agreement.
-Both are outside the wording tree, reached by a reference element or a text part.
+A document object is an attachment whose content is not digitised: a scanned plan, a certificate. An external document sits outside the contract altogether: a regulation, a separate agreement. Both are outside the wording tree, reached by a reference element or a text part.
 
 ```turtle-spec
 wrd:DocumentObject a owl:Class ;
@@ -277,19 +265,19 @@ wrd:DocumentObject a owl:Class ;
 wrd:ExternalDocument a owl:Class ;
 	rdfs:subClassOf prov:Entity , wrd:LinkedDocument ;
 	rdfs:label "External document"@en ;
-	rdfs:comment "A document outside the contract that its wording relies on: a regulation, a standard, a separate agreement." .
+	rdfs:comment "A document outside the contract, that its wording relies on." .
 
 wrd:LinkedDocument a owl:Class ;
 	owl:equivalentClass [ a owl:Class ; owl:unionOf ( wrd:DocumentObject wrd:ExternalDocument ) ] ;
 	rdfs:label "Linked document"@en ;
-	rdfs:comment "A document outside the wording tree that the wording relies on: a document object or an external document." ;
-	fnd:utility "Never assert it. Its two subclasses are declared explicitly, for SHACL." .
+	rdfs:comment "A document outside the wording tree that the wording relies on." ;
+	fnd:utility "Assertions should NOT be made using this class. Its subclasses are declared explicitly. For use by SHACL validators." .
 
 wrd:ReferenceTarget a owl:Class ;
 	owl:equivalentClass [ a owl:Class ; owl:unionOf ( wrd:WordingNode wrd:LinkedDocument ) ] ;
 	rdfs:label "Reference target"@en ;
-	rdfs:comment "Anything a text part or a reference element may point to: a wording, an element, or a linked document." ;
-	fnd:utility "Never assert it. wrd:WordingNode and wrd:LinkedDocument are declared its subclasses explicitly, for SHACL." .
+	rdfs:comment "Anything a text part or a reference element may point to (e.g., a wording, element, or linked document." ;
+	fnd:utility "Assertions should NOT be made using this class. Its subclasses are declared explicitly. For use by SHACL validators." .
 
 wrd:WordingNode rdfs:subClassOf wrd:ReferenceTarget .
 wrd:LinkedDocument rdfs:subClassOf wrd:ReferenceTarget .
@@ -447,14 +435,9 @@ wrd-voc:Annex a skos:Concept ;
 
 ## 7. Shapes
 
-The domains and ranges of §5 describe the model for a reasoner. They never verify data: a domain
-axiom infers a type, it does not report a missing one. These shapes check the same intent in SHACL
-Core, with no reasoning, and every property's comment states it in words. Validate with the spec in
-the data graph (or passed as the ontology graph), so that `sh:class` sees the subclass hierarchy.
+The following shapes check the same intent in SHACL Core, with no reasoning. Validate with the spec in the data graph (or passed as the ontology graph), so that `sh:class` sees the subclass hierarchy.
 
-Each `…SubjectShape` checks that a property is used on the kind of node it belongs to. Each class
-shape checks the values and cardinalities on that kind of node. The laws W1 to W7 (a single tree,
-contiguous part indices, assembly) are SHACL-SPARQL and follow in `0.3.0`.
+Each `…SubjectShape` checks that a property is used on the kind of node it belongs to. Each class shape checks the values and cardinalities on that kind of node. The laws W1 to W7 (a single tree, contiguous part indices, assembly) are SHACL-SPARQL and follow in `0.3.0`.
 
 ```turtle-shapes
 @prefix wrd:  <https://www.nebularis.org/neuro-semantic/lattice/wording#> .

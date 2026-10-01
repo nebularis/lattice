@@ -23,26 +23,26 @@ wrd:Wording a owl:Class ;
 	rdfs:subClassOf fnd:Version , fnd:Governable , wrd:WordingNode ;
 	rdfs:label "Wording"@en ;
 	rdfs:comment "The root of one document's wording tree." ;
-	fnd:utility "One per document: an agreement, a policy wording, a standard form, a protocol. A changed text is a new wording version with the same fnd:hasIdentity, superseding the old." .
+	fnd:utility "One should exist per document. Changed text leads to a new wording version with the same fnd:hasIdentity superseding the old." .
 
 wrd:Element a owl:Class ;
 	rdfs:subClassOf fnd:Version , fnd:Governable , wrd:WordingNode ;
 	rdfs:label "Element"@en ;
 	rdfs:comment "A nestable part of a wording." ;
-	fnd:utility "Type it with wrd:elementType (section, clause, schedule, annex, definition). Use one of the content classes of §5.6 where the part carries content of its own. A changed element is a new element version." .
+	fnd:utility "Typed with wrd:elementType. Use one of the content classes of §5.6 where the part carries content of its own. A changed element requires a new element version." .
 
 wrd:WordingNode a owl:Class ;
 	owl:equivalentClass [ a owl:Class ; owl:unionOf ( wrd:Wording wrd:Element ) ] ;
 	rdfs:label "Wording node"@en ;
 	rdfs:comment "Anything in a wording tree: a wording or one of its elements." ;
-	fnd:utility "Never assert it. It names the subject of the properties that apply to a whole wording and to its parts alike. wrd:Wording and wrd:Element are declared its subclasses explicitly as well, so a SHACL engine sees the same hierarchy a reasoner infers." .
+	fnd:utility "WordingNode is NOT meant to be used to make assertions. It names the subject of properties that apply to a whole wording and to its parts alike." .
 
 wrd:comprises a owl:ObjectProperty , owl:TransitiveProperty ;
 	rdfs:label "comprises"@en ;
 	rdfs:domain wrd:WordingNode ;
 	rdfs:range wrd:Element ;
 	rdfs:comment "The transitive part-whole relation of a wording tree. Subject: a wording node. Value: an element at any depth below it." ;
-	fnd:utility "Never assert it. Assert wrd:directlyComprises and let a reasoner or a compiled closure supply skip-level containment." .
+	fnd:utility "wrd:comprises is NOT intended to be used for making assertions. Instead, wrd:directlyComprises should be used, whilst a reasoner or a compiled closure can supply skip-level containment." .
 
 wrd:isComprisedBy a owl:ObjectProperty , owl:TransitiveProperty ;
 	rdfs:label "is comprised by"@en ;
@@ -86,12 +86,12 @@ wrd:classification a owl:ObjectProperty ;
 	rdfs:domain wrd:WordingNode ;
 	rdfs:range skos:Concept ;
 	rdfs:comment "A classification of a wording or element, beside its type: safety reporting, governing law, data protection. Subject: a wording node. Value: a concept under wrd-voc:ClassificationContract, any number." ;
-	fnd:utility "Drawn under wrd-voc:ClassificationContract. An element may carry several (a polyhierarchy)." .
+	fnd:utility "Drawn under wrd-voc:ClassificationContract. An element may carry several." .
 
 wrd:Text a owl:Class ;
 	rdfs:subClassOf wrd:Element ;
 	rdfs:label "Text"@en ;
-	rdfs:comment "An element whose content is an ordered sequence of text parts (§5.7)." .
+	rdfs:comment "An element whose content is an ordered sequence of text parts." .
 
 wrd:Table a owl:Class ;
 	rdfs:subClassOf wrd:Element ;
@@ -101,12 +101,12 @@ wrd:Table a owl:Class ;
 wrd:Variable a owl:Class ;
 	rdfs:subClassOf wrd:Element ;
 	rdfs:label "Variable"@en ;
-	rdfs:comment "A declaration of a value an instance supplies (§5.9)." .
+	rdfs:comment "A declaration of a value an instance supplies." .
 
 wrd:Reference a owl:Class ;
 	rdfs:subClassOf wrd:Element ;
 	rdfs:label "Reference"@en ;
-	rdfs:comment "An element linking to another part, a document object or an external document (§5.8)." .
+	rdfs:comment "An element linking to another part, a document object or an external document." .
 
 wrd:Metadata a owl:Class ;
 	rdfs:subClassOf wrd:Element ;
@@ -156,19 +156,19 @@ wrd:DocumentObject a owl:Class ;
 wrd:ExternalDocument a owl:Class ;
 	rdfs:subClassOf prov:Entity , wrd:LinkedDocument ;
 	rdfs:label "External document"@en ;
-	rdfs:comment "A document outside the contract that its wording relies on: a regulation, a standard, a separate agreement." .
+	rdfs:comment "A document outside the contract, that its wording relies on." .
 
 wrd:LinkedDocument a owl:Class ;
 	owl:equivalentClass [ a owl:Class ; owl:unionOf ( wrd:DocumentObject wrd:ExternalDocument ) ] ;
 	rdfs:label "Linked document"@en ;
-	rdfs:comment "A document outside the wording tree that the wording relies on: a document object or an external document." ;
-	fnd:utility "Never assert it. Its two subclasses are declared explicitly, for SHACL." .
+	rdfs:comment "A document outside the wording tree that the wording relies on." ;
+	fnd:utility "Assertions should NOT be made using this class. Its subclasses are declared explicitly. For use by SHACL validators." .
 
 wrd:ReferenceTarget a owl:Class ;
 	owl:equivalentClass [ a owl:Class ; owl:unionOf ( wrd:WordingNode wrd:LinkedDocument ) ] ;
 	rdfs:label "Reference target"@en ;
-	rdfs:comment "Anything a text part or a reference element may point to: a wording, an element, or a linked document." ;
-	fnd:utility "Never assert it. wrd:WordingNode and wrd:LinkedDocument are declared its subclasses explicitly, for SHACL." .
+	rdfs:comment "Anything a text part or a reference element may point to (e.g., a wording, element, or linked document." ;
+	fnd:utility "Assertions should NOT be made using this class. Its subclasses are declared explicitly. For use by SHACL validators." .
 
 wrd:WordingNode rdfs:subClassOf wrd:ReferenceTarget .
 wrd:LinkedDocument rdfs:subClassOf wrd:ReferenceTarget .
