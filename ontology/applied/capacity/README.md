@@ -9,22 +9,14 @@ decision 2). It holds no domain vocabulary.
 
 ## 1. Purpose and scope
 
-A finite capacity is not specific to any domain. A loan facility, an insurance limit, a service
-quota, a credit line, an inventory allocation, a grant budget and an emissions allowance are each a
-resource that is declared with a quantity, has a balance that changes over time, is consumed by
-demands, may reset or be replenished, may be gated by eligibility, and may bound, deplete or gate
-other resources. Capacity models such networks of resources, on top of Behaviour's allowances
-(`bhv:AllowanceDefinition`, `bhv:AllowanceAccount`) and Quantification's values.
+Models finite capacity that can be drawn upon. Example uses include a loan facility, an insurance limit, a service quota, a credit line, an inventory allocation, a grant budget, or an emissions allowance. Each are a resource that is declared with a quantity, has a balance that changes over time, is consumed by demands, may reset or be replenished, may be gated by eligibility, and may bound, deplete, or gate other resources.
 
-**Static and dynamic.** An instrument states a limit, a static parameter. The running total drawn
-against it is dynamic, and lives here: a projection that Capacity defines, through Surface, creates
-the dynamic resource from the instrument's static limit
-([computable contract substrate](../../../docs/developer/sketches/computable-contract-substrate.md)
+Capacity models networks of such resources, atop [`behaviour`](../../behaviour/) allowances and [`quantification`](../../quantification/)'s handling of value spaces.
+
+**Static and dynamic.** An instrument states a limit, a static parameter. The running total drawn against it is dynamic, and lives here: a projection that Capacity defines, through Surface, creates the dynamic resource from the instrument's static limit ([computable contract substrate](../../../docs/developer/sketches/computable-contract-substrate.md)
 §7.8). A threshold regime's state is then derived from the resource's value.
 
-The design, its principles (CP-1 to CP-9) and its laws are in
-[`docs/architecture-overview.md`](docs/architecture-overview.md). The runtime performance
-constraints are in [`docs/perf.md`](docs/perf.md).
+The design, its principles, and laws, are located in [`docs/architecture-overview.md`](docs/architecture-overview.md), with runtime performance constraints documented in [`docs/perf.md`](docs/perf.md).
 
 ## 2. What is authored
 
