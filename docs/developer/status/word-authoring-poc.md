@@ -3,7 +3,7 @@
 # Word authoring proof of concept - Status
 
 **Unit ID:** `word-authoring-poc`
-**Status:** 🚧 In progress. WA0 to WA7 done. WA8 is next
+**Status:** 🚧 In progress. WA0 to WA8 done. WA9 is next
 **Last updated:** 2026-10-01
 **Plan:** [word-authoring-poc.md](../plans/word-authoring-poc.md)
 **Sketch:** [word-authoring-poc.md](../sketches/word-authoring-poc.md)
@@ -21,10 +21,15 @@ bus, registry and job tracking, WA5's real Fuseki store, RabbitMQ bus, configura
 point, WA6's Logical English reading of the Wording graph (the Python worker's sentence-form
 matcher, keyword fallback and proposal graph), and WA7's worker runtime (the Fuseki Graph Store
 Protocol client, the RabbitMQ consumer/publisher adapter, and the `wording_analysis_main` entry
-point that wires the WA6 reading into a real job loop).
+point, WA6's Logical English reading of the Wording graph (the Python worker's sentence-form
+matcher, keyword fallback and proposal graph), WA7's worker runtime (the Fuseki Graph Store
+Protocol client, the RabbitMQ consumer/publisher adapter, and the `wording_analysis_main` entry
+point that wires the WA6 reading into a real job loop), and WA8's add-in domain (the OOXML
+parser/writer, the tag codec, the hand-written contract types and Ajv validation, the HTTP client,
+the `DocumentPort` seam, and the manifest), with no UI yet.
 
-**Next action, for the human:** ask for WA8.
-**Next action, for the agent:** WA8 (add-in domain: TypeScript types, schemas, tag codec, OOXML parser/writer), when asked.
+**Next action, for the human:** ask for WA9.
+**Next action, for the agent:** WA9 (add-in task pane and harness: `App.tsx`, the five panels, `officePort.ts`/`fakePort.ts`, Playwright), when asked.
 
 ## Open question raised by WA3
 
@@ -54,6 +59,13 @@ count, so neither S6-04 nor S6-08 can tell the two tie-break rules apart. A dedi
 synthetic forms, deliberately ordered the other way round, was added and does fail correctly.
 Detail in the [WA6 Validation Pack](../validation/word-authoring-poc-wa6.md) under Self-probe.
 Three of three slices with a prescribed probe have now needed a replacement.
+
+## Note for WA9
+
+WA8 implements `writeTemplate` (plan WA8 OOXML rules) but it has no dedicated test in WA8, since
+the "Apply template" flow it serves is a WA9 UI feature with no committed golden yet. Exercise it
+directly once WA9's S9-03 ("Apply template on the licence") runs, and add a focused unit test
+alongside if S9-03 alone does not pin its behaviour precisely enough.
 
 ## Note for WA3 (done in WA6)
 
@@ -103,7 +115,7 @@ reverted. No replacement test was needed. Detail in the
 | WA5 | Fuseki, RabbitMQ and the runnable service | done | `187fea4` | |
 | WA6 | Logical English reading | done | `0128ca2` | |
 | WA7 | Worker runtime | done | `ab8e1a1` | |
-| WA8 | Add-in domain | waiting | | WA1 |
+| WA8 | Add-in domain | done | | WA1 |
 | WA9 | Add-in task pane and harness | waiting | | WA8 |
 | WA9a | Ribbon and right-click commands | waiting | | WA9, WA-D13 |
 | WA10 | Compose stack | waiting | | WA5, WA7, WA9a |
@@ -122,6 +134,7 @@ reverted. No replacement test was needed. Detail in the
 | WA5 | 350k | about 400k |
 | WA6 | 450k | about 480k |
 | WA7 | 200k | about 230k |
+| WA8 | 450k | about 420k |
 
 ## History
 
@@ -218,3 +231,20 @@ reverted. No replacement test was needed. Detail in the
   `docs/developer/validation/word-authoring-poc-wa7.md`. `check:java` (9 modules),
   `check:authoring-service` (85) and `check:authoring-contracts` still pass.
 - 2026-10-01: WA7 committed as `ab8e1a1`.
+- 2026-10-01: WA8 done: new Yarn workspace `apps/word-authoring-addin` (`package.json`,
+  `tsconfig.json`, `vite.config.ts`, `vitest.config.ts`, `manifest/manifest.xml`, four generated
+  icon PNGs, `public/help.html`), `check:authoring-addin` in `mise.toml`, `yarn.lock` updated.
+  Domain modules: `domain/types.ts` (hand-written, all 14 schemas), `domain/schemas.ts` (one Ajv
+  2020-12 instance), `domain/tags.ts` (the content-control tag codec), `domain/offsets.ts`,
+  `domain/xml.ts` (shared DOM helpers), `domain/ooxml.ts` (`parseBody`/`writeSections`/
+  `writeTemplate`/`writePackage`), `domain/snapshot.ts` (`buildSnapshot`), `domain/metadata.ts`
+  (the custom XML part codec), `domain/mermaid.ts` (`toMermaid`), `domain/poll.ts` (`pollJob`),
+  `api/client.ts` (`HttpApiClient`, `ApiError`), `word/port.ts` (the `DocumentPort` interface).
+  38 tests, all pass first run, including a full `writeSections` → `writePackage` → `parseBody` →
+  `buildSnapshot` round trip against all three WA1 samples (with headings looked up from their
+  templates) reproducing each sample exactly byte-for-structure. Self-probe (make the parser read
+  `w:delText`) bites exactly as written, the second slice running (after WA7) with no replacement
+  test needed. Validation Pack at `docs/developer/validation/word-authoring-poc-wa8.md`.
+  `check:java`, `check:authoring-service`, `check:authoring-worker` and `check:authoring-contracts`
+  were not re-run (WA8 touches none of their paths); `yarn check` across all three workspaces
+  (`mork-review-workbench`, `surface-contract-studio`, `word-authoring-addin`) passes.

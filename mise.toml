@@ -96,6 +96,10 @@ run = "mvn -f platform/pom.xml verify"
 [tasks."check:frontend"]
 run = "yarn check"
 
+[tasks."check:authoring-addin"]
+description = "Type-check and unit-test the Word authoring add-in"
+run = "yarn workspace @lattice/word-authoring-addin run check"
+
 [tasks."test:frontend"]
 run = "yarn test"
 

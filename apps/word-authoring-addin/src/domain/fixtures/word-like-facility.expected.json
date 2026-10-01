@@ -1,0 +1,19 @@
+{
+  "sections": [
+    {
+      "sectionKey": "commitment",
+      "elements": [
+        {
+          "elementId": "00000009-0000-4000-8000-000000000001",
+          "kind": "clause",
+          "definedTerm": null,
+          "parts": [
+            { "kind": "literal", "text": "Borrower\tshall pay lender." }
+          ]
+        }
+      ]
+    }
+  ],
+  "unmarked": [],
+  "warnings": []
+}
