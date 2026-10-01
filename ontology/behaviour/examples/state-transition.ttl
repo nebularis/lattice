@@ -17,7 +17,7 @@ ex:eligibility-guard a bhv:GuardDefinition ;
 
 ex:activate-effect a bhv:EffectDefinition ;
     bhv:targetKind bhv:InstrumentTarget ;
-    bhv:targetsElement ex:obligation-1 .
+    bhv:targets ex:obligation-1 .
 
 ex:transition-1 a bhv:TransitionDefinition ;
     bhv:fromState ex:pending ;

@@ -11,7 +11,7 @@ ex:end a bhv:State ; bhv:inStateSpace ex:space .
 
 ex:trigger a bhv:TriggerDefinition ; bhv:triggerKind bhv:ExternalStimulus .
 ex:guard a bhv:GuardDefinition ; bhv:requiresEligibility ex:profile .
-ex:effect a bhv:EffectDefinition ; bhv:targetKind bhv:InstrumentTarget ; bhv:targetsElement ex:obligation .
+ex:effect a bhv:EffectDefinition ; bhv:targetKind bhv:InstrumentTarget ; bhv:targets ex:obligation .
 
 ex:transition a bhv:TransitionDefinition ;
     bhv:fromState ex:start ;

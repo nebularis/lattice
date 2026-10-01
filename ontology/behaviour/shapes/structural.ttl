@@ -8,9 +8,15 @@ bhv:TransitionDefinitionShape a sh:NodeShape ;
 	sh:property [ sh:path bhv:fromState ; sh:minCount 1 ; sh:maxCount 1 ] ;
 	sh:property [ sh:path bhv:toState ; sh:minCount 1 ; sh:maxCount 1 ] ;
 	sh:property [ sh:path bhv:hasTrigger ; sh:minCount 1 ] ;
-	sh:property [ sh:path bhv:hasEffect ; sh:minCount 1 ] ;
 	sh:property [ sh:path bhv:selectionPolicy ; sh:minCount 1 ; sh:maxCount 1 ] ;
 	sh:property [ sh:path bhv:activationPolicy ; sh:minCount 1 ; sh:maxCount 1 ] .
+
+bhv:EffectDefinitionShape a sh:NodeShape ;
+	sh:targetClass bhv:EffectDefinition ;
+	sh:property [ sh:path bhv:targetKind ; sh:minCount 1 ; sh:maxCount 1 ;
+		sh:message "An effect declares exactly one target kind." ] ;
+	sh:property [ sh:path [ sh:alternativePath ( bhv:targets bhv:targetsOccupancy bhv:targetsAllowance ) ] ; sh:minCount 1 ;
+		sh:message "An effect names at least one target, through bhv:targets or one of its sub-properties." ] .
 
 bhv:AllowanceDefinitionShape a sh:NodeShape ;
 	sh:targetClass bhv:AllowanceDefinition ;

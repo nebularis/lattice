@@ -148,7 +148,7 @@ spc  — standalone today; not yet imported by, or importing, any layer above
 spc  — leverages domain ontology axioms to form session types once a separate integration effort defines the needed contracts
 ```
 
-The order is [ADR-A01](docs/architecture/decisions/ADR-A01-layer-dependency-order.md)'s as its 2026-10-01 addendum amends it (ADR-A112). Wording is authored. Behaviour's move below Instrument, and its split into configuration and runtime, land in the computable contract substrate's slice C10.
+The order is [ADR-A01](docs/architecture/decisions/ADR-A01-layer-dependency-order.md)'s as its 2026-10-01 addendum amends it (ADR-A112). Wording is authored. Behaviour sits below Instrument, in configuration and runtime documents (ADR-A106). Instrument's own imports of Wording and Behaviour configuration arrive with its rewrite.
 
 A few commmon compositions are worth noting:
 

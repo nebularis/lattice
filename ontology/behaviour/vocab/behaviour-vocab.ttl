@@ -7,8 +7,8 @@
 
 <https://www.nebularis.org/neuro-semantic/behaviour-vocab>
 	a owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/behaviour-vocab/0.7.0> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.7.0> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/behaviour-vocab/0.8.0> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.8.0> .
 
 bhv:ExternalStimulus a bhv:TriggerKind .
 bhv:ScheduledTrigger a bhv:TriggerKind .
@@ -22,7 +22,9 @@ bhv:ImmediateActivation a bhv:ActivationPolicy .
 bhv:DeferredActivation a bhv:ActivationPolicy .
 bhv:ManualActivation a bhv:ActivationPolicy .
 
-bhv:InstrumentTarget a bhv:TargetKind .
+bhv:InstrumentTarget a bhv:TargetKind ;
+	owl:deprecated true ;
+	rdfs:comment "Deprecated in behaviour-vocab 0.8.0. A target kind is declared by the layer that owns the target, so Instrument declares its own (ADR-A104, ADR-A106)." .
 bhv:PartyTarget a bhv:TargetKind .
 bhv:AllowanceTarget a bhv:TargetKind .
 

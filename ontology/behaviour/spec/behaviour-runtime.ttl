@@ -1,0 +1,62 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Behaviour's runtime document (ADR-A106 decision 3): the occurrence, execution
+# and state record tiers of ADR-A08, in the configuration document's namespace.
+# Authored as a file, since the literate extractor writes one spec document per
+# layer. The README's §5.2 describes it.
+
+@prefix bhv:  <https://www.nebularis.org/neuro-semantic/lattice/behaviour#> .
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix qnt:  <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@base <https://www.nebularis.org/neuro-semantic/behaviour-runtime> .
+
+<https://www.nebularis.org/neuro-semantic/behaviour-runtime>
+	rdf:type owl:Ontology ;
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/behaviour-runtime/0.8.0> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.8.0> .
+
+# ---- Occurrence ---------------------------------------------------------------
+
+bhv:Stimulus a owl:Class ; rdfs:subClassOf fnd:Evidenced ; rdfs:comment "An observed stimulus or event." .
+
+# ---- Execution ----------------------------------------------------------------
+
+bhv:TransitionExecution a owl:Class ; rdfs:subClassOf fnd:Evidenced ; rdfs:comment "A recorded transition execution." .
+bhv:EffectApplication a owl:Class ; rdfs:subClassOf fnd:Evidenced ; rdfs:comment "A recorded effect application." .
+
+bhv:executedTransition a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain bhv:TransitionExecution ; rdfs:range bhv:TransitionDefinition .
+bhv:appliesEffect a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain bhv:EffectApplication ; rdfs:range bhv:EffectDefinition .
+bhv:causedByStimulus a owl:ObjectProperty ; rdfs:domain bhv:TransitionExecution ; rdfs:range bhv:Stimulus .
+bhv:usesProfile a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain bhv:TransitionExecution ; rdfs:range bhv:OperationalProfile .
+
+# ---- State record -------------------------------------------------------------
+
+bhv:StateOccupancy a owl:Class ; rdfs:subClassOf fnd:Evidenced, fnd:TemporallyScoped ; rdfs:comment "A current or hypothetical occupancy of a state." .
+
+bhv:AllowanceAccount a owl:Class ;
+	rdfs:subClassOf fnd:Evidenced,
+		[ a owl:Restriction ; owl:onProperty bhv:tracksAllowance ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+		[ a owl:Restriction ; owl:onProperty bhv:availableBalance ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ;
+	rdfs:comment "A durable state record tracking allowance balance." .
+
+bhv:occupiesState a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain bhv:StateOccupancy ; rdfs:range bhv:State .
+
+bhv:forSubject a owl:ObjectProperty ;
+	rdfs:domain bhv:StateOccupancy ;
+	rdfs:comment "What is in the state. Subject: a state occupancy. Value: any resource." ;
+	fnd:utility "Deliberately has no range: a role occupancy, an instrument's persistent identity, a section, a term or an occasion may each be in a state. Where the subject is versioned, use its persistent identity, so the state outlives a new version (ADR-A106 decision 5)." .
+
+bhv:isHypothetical a owl:DatatypeProperty, owl:FunctionalProperty ; rdfs:domain bhv:StateOccupancy ; rdfs:range xsd:boolean .
+bhv:isCurrent a owl:DatatypeProperty, owl:FunctionalProperty ; rdfs:domain bhv:StateOccupancy ; rdfs:range xsd:boolean .
+bhv:tracksAllowance a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain bhv:AllowanceAccount ; rdfs:range bhv:AllowanceDefinition .
+bhv:availableBalance a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain bhv:AllowanceAccount ; rdfs:range qnt:Quantity .
+
+# ---- Disjointness: every runtime class from every other Behaviour class -------
+
+[] a owl:AllDisjointClasses ;
+	owl:members ( bhv:StateSpace bhv:State bhv:TransitionDefinition bhv:TriggerDefinition bhv:GuardDefinition bhv:EffectDefinition bhv:AllowanceDefinition bhv:SelectionPolicy bhv:ActivationPolicy bhv:TriggerKind bhv:TargetKind bhv:AbsorptionPolicy bhv:OperationalProfile
+		bhv:Stimulus bhv:TransitionExecution bhv:EffectApplication bhv:StateOccupancy bhv:AllowanceAccount ) .

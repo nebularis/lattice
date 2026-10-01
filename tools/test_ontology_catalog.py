@@ -122,10 +122,12 @@ def test_generation_is_deterministic() -> None:
 
 
 def test_behaviour_closure_reaches_every_layer_below_it() -> None:
+    """ADR-A01 as its 2026-10-01 addendum amends it: Behaviour sits below Instrument."""
     graph = closure(Catalog(ROOT_CATALOG), version_iri("ontology/behaviour/spec/behaviour.ttl"))
     subjects = {str(s) for s in graph.subjects()}
-    for layer in ("foundation", "vocabulary", "quantification", "party", "eligibility", "instrument", "behaviour"):
+    for layer in ("foundation", "vocabulary", "quantification", "party", "eligibility", "behaviour"):
         assert any(s.startswith(f"{LATTICE}{layer}#") for s in subjects), layer
+    assert not any(s.startswith(f"{LATTICE}instrument#") for s in subjects)
 
 
 def test_applied_ontology_chains_to_lattice_catalog(tmp_path: Path) -> None:

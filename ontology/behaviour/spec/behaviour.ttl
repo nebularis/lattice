@@ -6,22 +6,21 @@
 @prefix qnt:  <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
 @prefix pty:  <https://www.nebularis.org/neuro-semantic/lattice/party#> .
 @prefix elg:  <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
-@prefix ins:  <https://www.nebularis.org/neuro-semantic/lattice/instrument#> .
 @prefix owl:  <http://www.w3.org/2002/07/owl#> .
 @prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+
 @base <https://www.nebularis.org/neuro-semantic/behaviour> .
 
 <https://www.nebularis.org/neuro-semantic/behaviour>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.7.0> ;
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.8.0> ;
 	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.3.0> ,
 				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.3.0> ,
 				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.5.0> ,
 				<https://www.nebularis.org/neuro-semantic/lattice/party/0.5.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.7.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/instrument/0.7.0> .
+				<https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.7.0> .
 
 bhv:StateSpace a owl:Class ;
 	rdfs:subClassOf fnd:Version ;
@@ -36,30 +35,19 @@ bhv:TransitionDefinition a owl:Class ;
 		[ a owl:Restriction ; owl:onProperty bhv:fromState ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
 		[ a owl:Restriction ; owl:onProperty bhv:toState ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
 		[ a owl:Restriction ; owl:onProperty bhv:hasTrigger ; owl:minCardinality "1"^^xsd:nonNegativeInteger ] ,
-		[ a owl:Restriction ; owl:onProperty bhv:hasEffect ; owl:minCardinality "1"^^xsd:nonNegativeInteger ] ,
 		[ a owl:Restriction ; owl:onProperty bhv:selectionPolicy ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
 		[ a owl:Restriction ; owl:onProperty bhv:activationPolicy ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ;
-	rdfs:comment "A declared transition between states." .
+	rdfs:comment "A declared transition between states. It may have no effect: entering the state is often the whole effect (ADR-A106 decision 4)." .
 
 bhv:TriggerDefinition a owl:Class ; rdfs:comment "A declared trigger condition for a transition." .
 bhv:GuardDefinition a owl:Class ; rdfs:comment "A declared eligibility or policy guard." .
-bhv:EffectDefinition a owl:Class ; rdfs:comment "A declared cross-layer effect." .
-bhv:Stimulus a owl:Class ; rdfs:subClassOf fnd:Evidenced ; rdfs:comment "An observed stimulus or event." .
-bhv:TransitionExecution a owl:Class ; rdfs:subClassOf fnd:Evidenced ; rdfs:comment "A recorded transition execution." .
-bhv:EffectApplication a owl:Class ; rdfs:subClassOf fnd:Evidenced ; rdfs:comment "A recorded effect application." .
-bhv:StateOccupancy a owl:Class ; rdfs:subClassOf fnd:Evidenced, fnd:TemporallyScoped ; rdfs:comment "A current or hypothetical occupancy of a state." .
+bhv:EffectDefinition a owl:Class ; rdfs:comment "A declared effect on a target, of one target kind." .
 
 bhv:AllowanceDefinition a owl:Class ;
 	rdfs:subClassOf fnd:Version,
 		[ a owl:Restriction ; owl:onProperty bhv:allowanceSpace ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
 		[ a owl:Restriction ; owl:onProperty bhv:absorptionPolicy ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ;
 	rdfs:comment "A declared allowance or quota model." .
-
-bhv:AllowanceAccount a owl:Class ;
-	rdfs:subClassOf fnd:Evidenced,
-		[ a owl:Restriction ; owl:onProperty bhv:tracksAllowance ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
-		[ a owl:Restriction ; owl:onProperty bhv:availableBalance ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ;
-	rdfs:comment "A durable state record tracking allowance balance." .
 
 bhv:SelectionPolicy a owl:Class .
 bhv:ActivationPolicy a owl:Class .
@@ -80,24 +68,27 @@ bhv:activationPolicy a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain 
 bhv:priority a owl:DatatypeProperty, owl:FunctionalProperty ; rdfs:domain bhv:TransitionDefinition ; rdfs:range xsd:integer .
 bhv:requiresEligibility a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain bhv:GuardDefinition ; rdfs:range elg:AdmissionProfile .
 bhv:targetKind a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain bhv:EffectDefinition ; rdfs:range bhv:TargetKind .
-bhv:targetsElement a owl:ObjectProperty ; rdfs:domain bhv:EffectDefinition ; rdfs:range ins:Element .
-bhv:targetsOccupancy a owl:ObjectProperty ; rdfs:domain bhv:EffectDefinition ; rdfs:range pty:RoleOccupancy .
-bhv:targetsAllowance a owl:ObjectProperty ; rdfs:domain bhv:EffectDefinition ; rdfs:range bhv:AllowanceDefinition .
+
+bhv:targets a owl:ObjectProperty ;
+	rdfs:domain bhv:EffectDefinition ;
+	rdfs:comment "What an effect acts on. Subject: an effect definition. Value: any resource." ;
+	fnd:utility "Deliberately has no range: an effect may target a relation, an occasion, an instrument or anything else, and a range would classify every target as one kind. The layer that declares a target kind checks proper targets with its own shapes (ADR-A106 decision 2). Use bhv:targetsOccupancy or bhv:targetsAllowance where they fit." .
+
+bhv:targetsOccupancy a owl:ObjectProperty ;
+	rdfs:subPropertyOf bhv:targets ;
+	rdfs:domain bhv:EffectDefinition ; rdfs:range pty:RoleOccupancy ;
+	rdfs:comment "An effect's target that is a role occupancy. Subject: an effect definition. Value: a role occupancy." .
+
+bhv:targetsAllowance a owl:ObjectProperty ;
+	rdfs:subPropertyOf bhv:targets ;
+	rdfs:domain bhv:EffectDefinition ; rdfs:range bhv:AllowanceDefinition ;
+	rdfs:comment "An effect's target that is an allowance. Subject: an effect definition. Value: an allowance definition." .
+
 bhv:usesAllowance a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain bhv:EffectDefinition ; rdfs:range bhv:AllowanceDefinition .
 bhv:consumesAmount a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain bhv:EffectDefinition ; rdfs:range qnt:Quantity .
 bhv:allowanceSpace a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain bhv:AllowanceDefinition ; rdfs:range qnt:ValueSpace .
 bhv:resetRecurrence a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain bhv:AllowanceDefinition ; rdfs:range qnt:Recurrence .
 bhv:absorptionPolicy a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain bhv:AllowanceDefinition ; rdfs:range bhv:AbsorptionPolicy .
-bhv:tracksAllowance a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain bhv:AllowanceAccount ; rdfs:range bhv:AllowanceDefinition .
-bhv:availableBalance a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain bhv:AllowanceAccount ; rdfs:range qnt:Quantity .
-bhv:occupiesState a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain bhv:StateOccupancy ; rdfs:range bhv:State .
-bhv:forSubject a owl:ObjectProperty ; rdfs:domain bhv:StateOccupancy ; rdfs:range pty:RoleOccupancy .
-bhv:executedTransition a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain bhv:TransitionExecution ; rdfs:range bhv:TransitionDefinition .
-bhv:appliesEffect a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain bhv:EffectApplication ; rdfs:range bhv:EffectDefinition .
-bhv:causedByStimulus a owl:ObjectProperty ; rdfs:domain bhv:TransitionExecution ; rdfs:range bhv:Stimulus .
-bhv:usesProfile a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain bhv:TransitionExecution ; rdfs:range bhv:OperationalProfile .
-bhv:isHypothetical a owl:DatatypeProperty, owl:FunctionalProperty ; rdfs:domain bhv:StateOccupancy ; rdfs:range xsd:boolean .
-bhv:isCurrent a owl:DatatypeProperty, owl:FunctionalProperty ; rdfs:domain bhv:StateOccupancy ; rdfs:range xsd:boolean .
 
 [] a owl:AllDisjointClasses ;
-	owl:members ( bhv:StateSpace bhv:State bhv:TransitionDefinition bhv:TriggerDefinition bhv:GuardDefinition bhv:EffectDefinition bhv:Stimulus bhv:TransitionExecution bhv:EffectApplication bhv:StateOccupancy bhv:AllowanceDefinition bhv:AllowanceAccount bhv:SelectionPolicy bhv:ActivationPolicy bhv:TriggerKind bhv:TargetKind bhv:AbsorptionPolicy bhv:OperationalProfile ) .
+	owl:members ( bhv:StateSpace bhv:State bhv:TransitionDefinition bhv:TriggerDefinition bhv:GuardDefinition bhv:EffectDefinition bhv:AllowanceDefinition bhv:SelectionPolicy bhv:ActivationPolicy bhv:TriggerKind bhv:TargetKind bhv:AbsorptionPolicy bhv:OperationalProfile ) .
