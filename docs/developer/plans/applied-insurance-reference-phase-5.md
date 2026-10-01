@@ -22,6 +22,12 @@ relation classes, templates). `ctr:TermParameter ⊑ ins:Qualifier` qualifies an
 legal relation, not an `ins:Provision` (retired). Amount semantics come from
 [contract-amounts.md](../sketches/contract-amounts.md).
 
+**Changed by CCS CC-D8 (2026-10-01).** Insurance regimes (policy period, discovery period, run-off,
+suspension) are templates on the CCS template library (C8a), not new classes. Bases (per occurrence,
+per claim, aggregate windows, hours clauses) stay on term parameters as designed, and the substrate's
+general basis pattern, if any, comes from contract-amounts §1.7. The running totals against a limit
+are dynamic and live in `applied/capacity` through a Surface projection.
+
 ## Slices
 
 | Slice | Content | Sketch |

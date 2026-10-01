@@ -47,14 +47,19 @@ Standard per [epic Part 12](lattice-platform-agentic-development-v0.2.md#part-12
 
 Depends on Phase 2 exit gate. Blocks Phase 4 (maturity work measures against this phase's benchmarks, per P3.6.1–P3.6.3).
 
-**Behaviour model changes to absorb at the P2.11.4 expansion (2026-09-30).** The
-[computable-contract-substrate](computable-contract-substrate.md) unit, tranche D (ADR-A106), adds
-to the behaviour engine's input model:
+**Behaviour model changes to absorb at the P2.11.4 expansion (2026-09-30, revised 2026-10-01).**
+The [computable-contract-substrate](computable-contract-substrate.md) unit (ADR-A106, slices C10 to
+C12) changes the behaviour engine's input model:
+- Behaviour splits into a configuration document (state spaces, transitions, triggers, effects),
+  which the engine loads, and a runtime document (stimuli, executions, occupancies, records), which
+  it writes
+- Instrument's regimes and legal triggers are Behaviour state spaces and triggers, so the engine
+  reads them directly, with no compiled wiring
 - occasions (one legal relation for one case) with a derived state space
 - act, breach, exercise, determination, deemed-fact and acceptance records
-- transitions compiled from instrument relations: triggers and positioned stimuli, breach chains,
-  power exercises with per-occasion effects
-- state occupancies keyed by occasion or instrument, not only by role occupancy
+- every state entry recorded as an occupancy naming its execution and cause, or evidence in an
+  external log (law B6)
+- state occupancies keyed by any subject: occasion, instrument, section or role occupancy
 
 [normative-rule-substrate](normative-rule-substrate.md) N6 (deadlines as positioned stimuli) is built
 with it. The engine never reads a clock (law B3).

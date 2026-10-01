@@ -105,7 +105,7 @@ unit on R. Its §4 measures the interference with this epic. The constraints tha
 | AIR-3.3 merges before NRS N1 starts | both change `tools/mork_compilers/` |
 | Phase 2 (AIR-2.2 to AIR-2.7) completes before NRS N9 and CCS F1 start | both change Foundation (N9 a MAJOR bump, F1 adds identifiers), re-pinning `insurance/peril/spec` and `vocab`, which Phase 2 is authoring. They share one cascade |
 | [CCS](computable-contract-substrate.md) C9 (Instrument rewrite, ADR-A104, with the Wording layer, ADR-A112) is merged before Phase 5 starts. NRS N4 moved into CCS on 2026-09-30 | A-101's term parameters qualify terms and legal relations, which need the new model (ADR-A-C1) |
-| CCS C6 and C10 re-pin `applied/capacity` | Instrument and Behaviour bumps cascade to its execution profile. The epic does not author `applied/capacity` before Phase 5 |
+| CCS C10 re-pins `applied/capacity` | Behaviour's breaking MINOR cascades to its execution profile. After C10 Behaviour no longer imports Instrument, so the Instrument rewrite cascades nowhere outside Instrument. The epic does not author `applied/capacity` before Phase 5 |
 | Substrate S2 is authored with NRS N5, and S7 with NRS N10 | both pairs change the same layer's semantics: Eligibility well-foundedness, and precedence |
 
 ## 4. Milestones

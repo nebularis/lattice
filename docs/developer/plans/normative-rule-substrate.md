@@ -200,7 +200,7 @@ existing ADR and A-101 is reserved by the applied-insurance epic for term parame
 |---|---|---|---|
 | A-104 | Instrument: terms and legal relations (retitled from "Deontic extension of Instrument") | CCS C1 | cross-check R1, and the CCS sketch |
 | A-105 | Closure declarations and the licence for absence | N5 | cross-check R2 |
-| A-106 | Relation occasions and records in Behaviour (retitled from "Compensation chains and violation records") | CCS C2 | extends R1. Breach chains are `ins:arisesOnBreachOf`, violation is "breach" |
+| A-106 | Behaviour configuration, runtime, occasions and records (retitled from "Compensation chains and violation records") | CCS C2 | extends R1. Breach chains are `ins:arisesOnBreachOf`, violation is "breach" |
 | A-107 | Norm priority and defeasibility | N10 | extends R1 |
 | A-108 | Multi-axis temporal scope | N9 | new, from the LegalRuleML analysis |
 | A-109 | The importable rule-body fragment | N2 | new |
@@ -249,7 +249,7 @@ proceeds.
 **Revised 2026-09-30 (CCS sketch §6.2).** A condition may read the recorded state of another
 relation's occasion, which is a fact, when the graph of breach, exercise and state-read edges is
 acyclic. Deontic formulas stay refused. Needed for Side A D&O cover ("Non-Indemnifiable Loss", AIG
-D&O 14), guarantees, and lifecycle-dependent authority.
+D&O 14), guarantees, and authority that depends on a regime's state.
 
 #### N3. Self-contradiction design-time check
 
@@ -313,7 +313,7 @@ backdated fact is ordered by the same rules as any other input. Allowance resets
 
 **Version impact:** `behaviour/spec` MINOR. One re-pin in `applied/capacity`.
 
-**Built with CCS C12 (2026-09-30)**, which compiles `ins:arisesOn` and `ins:due` into triggers and positioned stimuli.
+**Built with CCS C12 (2026-09-30, revised 2026-10-01).** The legal triggers are Behaviour triggers (`ins:OnExpiry ⊑ bhv:TriggerDefinition`, CCS CC-D8), so nothing is compiled from `ins:arisesOn` or `ins:due`. C12's runtime evaluator turns each scheduled trigger into a positioned stimulus.
 
 #### N8. Compensation chains and violation records (A-106)
 
@@ -328,8 +328,9 @@ carrying `fnd:assertedBy`).
 is inert.
 
 **Revised 2026-09-30.** The chain is `ins:arisesOnBreachOf` on the secondary relation (it fans out,
-where a `compensatedBy` list cannot), and the Behaviour records and compiled wiring are CCS C11 and
-C12. N8 keeps the chain checks: acyclicity, and a permission, exclusion or power never breached.
+where a `compensatedBy` list cannot), the Behaviour records are CCS C11 and the runtime evaluator
+C12. Revised 2026-10-01: `ins:arisesOn` takes an `ins:OnBreach` trigger, a Behaviour trigger, so
+there is no compiled wiring. N8 keeps the chain checks: acyclicity, and a permission, exclusion or power never breached.
 
 **Laws:** N3, N5, N9.
 

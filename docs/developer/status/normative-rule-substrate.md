@@ -68,7 +68,7 @@ un-deferred.
 | N3 | Self-contradiction design-time check | B | waiting | CCS C9 |
 | N5 | Closure declarations (A-105, R2) | C | waiting | D6, D7, substrate S2 |
 | N7 | Measure the OASIS conformance corpus | C | waiting | CCS C9, N1 |
-| N8 | Breach-chain checks (Behaviour records and wiring moved to CCS C11, C12) | B | waiting | N5, CCS C12 |
+| N8 | Breach-chain checks (Behaviour records and evaluator moved to CCS C11, C12) | B | waiting | N5, CCS C12 |
 | N9 | Multi-axis temporal scope (A-108) | D | waiting | **D4, Phase 2 complete** |
 | N10 | Norm priority and defeasibility (A-107) | E | deferred | D5 |
 | N11 | Controlled-English rendering (R5) | E | deferred | ingestion vision Phase 2 |
