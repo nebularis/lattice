@@ -158,7 +158,7 @@ reverted. No replacement test was needed. Detail in the
 | WA7 | Worker runtime | done | `ab8e1a1` | |
 | WA8 | Add-in domain | done | `451fc93` | WA1 |
 | WA9 | Add-in task pane and harness | done | `e567990` | WA8 |
-| WA9a | Ribbon and right-click commands | done | | WA9, WA-D13 |
+| WA9a | Ribbon and right-click commands | done | `d16c4e0` | WA9, WA-D13 |
 | WA10 | Compose stack | waiting | | WA5, WA7, WA9a |
 | WA11 | Documentation and close-out | waiting | | WA10 |
 
@@ -330,3 +330,4 @@ reverted. No replacement test was needed. Detail in the
   `docs/developer/validation/word-authoring-poc-wa9a.md`. `check:java`, `check:authoring-service`,
   `check:authoring-worker` and `check:authoring-contracts` were not re-run (WA9a touches none of
   their paths).
+- 2026-10-02: WA9a committed as `d16c4e0`.
