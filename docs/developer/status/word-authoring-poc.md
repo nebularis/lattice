@@ -36,7 +36,7 @@ recommendations. ADR-A114 stays Proposed. WA0 (preflight) is done. No code exist
 | # | Slice | State | Commit | Blocked on |
 |---|---|---|---|---|
 | WA0 | Preflight | done | `c82d019` | |
-| WA1 | Contracts, templates and samples | done | (this commit) | |
+| WA1 | Contracts, templates and samples | done | `3db3911` | |
 | WA2 | Service model, mapping and shapes | ready | | WA1 |
 | WA2 | Service model, mapping and shapes | waiting | | WA1 |
 | WA3 | Detection, templates and conformance | waiting | | WA2 |
