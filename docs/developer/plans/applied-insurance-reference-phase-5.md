@@ -40,7 +40,7 @@ are dynamic and live in `applied/capacity` through a Surface projection.
 | AIR-5.6 | defect catalogue as shapes | §8 |
 | AIR-5.7 | route R2: compile one check family into Capacity runtime forms, parity suite against R1, no write-back | §5, milestone M5 |
 | AIR-5.8 | insurance renderings of the policy scenarios of the CCS sketch §10 (the AIG rows: S10 to S14, S18 to S26, S28, S29, S33, S34, S37, S42 and the shared rows), as examples with expected decisions | CCS sketch §9, §10 |
-| AIR-5.9 | the LMA WIM profile (four levels, containment rules, LMA typing schemes), if CCS decision CC-D3 places it in `applied/insurance/wording/` | CCS sketch §3.2 |
+| AIR-5.9 | the LMA WIM profile in `applied/insurance/wording/` (CCS decision CC-D3): the four levels as element types, their containment rules as shapes, the LMA typing schemes and `applicableTo`. Open CBAA imports it | CCS sketch §3.2, CCS plan §7 |
 
 5.7 needs L-P5 (substrate track S4) only if the chosen check family groups occurrences. The
 default candidate is bind-time authority, which does not.

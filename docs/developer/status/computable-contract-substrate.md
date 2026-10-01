@@ -13,13 +13,17 @@
 
 ## Current position
 
-Gate A passed on 2026-10-01. C3 is merged and tagged: Wording 0.1.0, its vocab and shapes. C10 is
-built and verified on `ccs/c10-behaviour-split`: Behaviour sits below Instrument, in configuration
-and runtime documents.
+Gate A passed on 2026-10-01. C3 (Wording 0.1.0) and C10 (Behaviour below Instrument, 0.8.0) are
+merged and tagged. C4, C10a and C11 are briefed, with Validation Pack skeletons. They share no file
+but `mise.toml`'s test lists and this record, so they may run side by side.
 
-**Next action, for the human:** review C10, merge, and create its six tags.
-**Next action, for the agent:** brief C4 (Wording tables and assembly) and C11 (runtime records,
-occasions), which may run side by side. C10a (import guard) can be briefed with them.
+**Decided 2026-10-01:** C4-Q1 to C4-Q3, C10a-Q1, C10a-Q2, C11-Q1 (a fixed occasion core refined by
+sub-states) and C11-Q2 (declared initial states). CC-D3 confirmed: the LMA WIM profile is in
+LATTICE. The Open CBAA migration notes are current in both repositories.
+
+**Next action, for the human:** commit the briefs to `main` (and Open CBAA's plan in `open-dare`),
+then create `ccs/c4-wording-assembly`, `ccs/c10a-import-guard` and `ccs/c11-runtime-records`.
+**Next action, for the agent:** build the three slices on their branches. C5 and C11a briefs follow.
 
 ## Slice board
 
@@ -29,9 +33,12 @@ occasions), which may run side by side. C10a (import guard) can be briefed with 
 | C1 | A-104 | A | accepted | |
 | C2 | A-106 | A | accepted | |
 | C3 | Wording spec, vocab and shapes | B | merged, tagged | |
-| C4, C5 | Wording tables, assembly, amendments, shapes | B | waiting | C3 |
-| C10 | Behaviour split and layer flip | C | built, verified on `ccs/c10-behaviour-split` | human review, tags |
-| C10a, C11, C11a | import guard, records, nested states | C | waiting | C10 |
+| C4 | Wording tables, assembly, variable values | B | briefed, decided | branch |
+| C5 | Wording amendments, law shapes, how-to | B | waiting | C4 |
+| C10 | Behaviour split and layer flip | C | merged, tagged | |
+| C10a | import guard | C | briefed, decided | branch |
+| C11 | runtime records, occasions, initial states | C | briefed, decided | branch |
+| C11a | nested states, history, concurrent regimes | C | waiting | C11 |
 | F1 | Foundation identifiers | Foundation window | waiting | AIR Phase 2 complete, with NRS N9 |
 | C6 to C9, C8a | Instrument rewrite, template library | D | waiting | C5, C10 |
 | C12, C13 | runtime evaluator, relation plans | E | waiting | C9, C11, C11a, AIR-3.3, NRS N1 |
@@ -56,3 +63,5 @@ occasions), which may run side by side. C10a (import guard) can be briefed with 
 - 2026-10-01: C3 built and verified on `ccs/c3-wording-spec`: Wording 0.1.0 and its vocab 0.1.0, two examples, `tools/test_wording.py` (18 tests, reasoner rows run), the versioning policy's major-version-zero rule, and the layer order in the root README and ontology architecture.
 - 2026-10-01: C3 revised in review: unions named once, each property's subject and value in its comment, and SHACL Core shapes (`wording-shapes` 0.1.0) so verification needs no reasoner. 34 Wording tests.
 - 2026-10-01: C10 built and verified on `ccs/c10-behaviour-split`: Behaviour below Instrument, configuration and runtime 0.8.0, `bhv:targets`, vocab, shapes, projection and capacity bumps, 21 tests. C3 merged and tagged.
+- 2026-10-01: C10 merged and tagged, with neutral fixture targets and a README for `applied/capacity`. C4, C10a and C11 briefed with Validation Pack skeletons.
+- 2026-10-01: C4, C10a and C11 questions decided. C11-Q1 became a fixed occasion core refined by sub-states (C11a), and C11-Q2 declared initial states. CC-D3 confirmed. Open CBAA migration notes brought up to date in this plan's §7, the sketch §12.2, AIR-5.9 and Open CBAA's plan.

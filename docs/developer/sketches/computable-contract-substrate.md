@@ -175,7 +175,7 @@ L17).
 | `wim:Metadata`, `wim:Reference`, `wim:DocumentObject`, `wim:ExternalDocument`, `wim:linksTo` | Wording | same, `wrd:` |
 | `wim:InclusionMode`, `inclusionMode`, `VariationSlot`, `hasVariant`, `variantOf`, `includedWhen`, `readsVariable` | Wording | same, `wrd:` (assembly, §4.4) |
 | `wim-vocab` individuals (inclusion modes, population methods) | Wording vocab | same |
-| `lma:` WIM typing schemes | applied insurance, or Open CBAA | the LMA WIM profile (CC-D3) |
+| `lma:` WIM typing schemes | applied insurance | the LMA WIM profile in `applied/insurance/wording/` (CC-D3) |
 | `stm:Statement` kinds Obligation, Prohibition, Permission, Power | Instrument | the legal relation classes |
 | `stm:AuthorityGrant` | Open CBAA | `⊑ ins:Power`, with level and limits as qualifiers. Its envelope mechanism hangs off it unchanged |
 | `stm:Definition`, `stm:Classification` | Instrument | `ins:Definition`, `ins:Deeming` (classification that counts something as a category, deemed receipt) |
@@ -2035,7 +2035,7 @@ S79 merged into S4. The amounts group (S32, S34's amounts, S39, S73, S81, S85) i
 | `behaviour-vocab`, `applied/capacity` | re-pin, cascade | A-86 |
 | `tools/mork_compilers` | relation plans, per-class evaluation, burden diagnostics, stratification | A-104, A-109 |
 | NRS | N4 is delivered here. N2, N5, N6 and N8 change (plan) | A-109, A-105, A-106 |
-| AIR | Phase 5 builds on this. The LMA WIM profile may land in `applied/insurance` (CC-D3) | A-101 |
+| AIR | Phase 5 builds on this. The LMA WIM profile lands in `applied/insurance/wording/` (CC-D3, AIR-5.9) | A-101 |
 | ADR-A07b, A-96 | superseded by A-104. A-96's many-provision attachment carries onto terms | A-104 |
 
 No Foundation change beyond `fnd:identifier` is needed: the amendment dates Open CBAA found missing (its integration spec
@@ -2043,7 +2043,7 @@ No Foundation change beyond `fnd:identifier` is needed: the amendment dates Open
 
 ### 12.2 Open CBAA
 
-`wim:` shrinks to the LMA WIM profile, or disappears if CC-D3 places the profile in LATTICE. `stm:`
+`wim:` disappears: its structure is the Wording layer, and the LMA WIM profile is in LATTICE (CC-D3). Plan §7 lists what else changes in the data. `stm:`
 keeps `AuthorityGrant ⊑ ins:Power` and its envelope mechanism. `agr:` keeps the UMR, markets and the
 CBAA role scheme. `rsk:` keeps the case. The M12 regimes become templates in `applied/insurance`, built on the library. The
 worked example BA-2026-001 is re-expressed, and the binding authority renderings of §10 are its

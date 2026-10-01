@@ -231,8 +231,8 @@ history and concurrent regimes are left to C11a.
 | Slice | Content | Version impact |
 |---|---|---|
 | C3 | `ontology/wording` spec: wordings, elements, part-whole, rank keys, typing properties and their scheme contracts, content classes, text parts, references, document objects, variables. Sections are an element type (CC-D11), not a class. The README starts here as the literate source. Unions named once, each property's subject and value stated in its comment and checked by SHACL Core shapes (sketch §4.1, §4.2) | new: spec 0.1.0, vocab 0.1.0, shapes 0.1.0 |
-| C4 | tables (§4.3), assembly: inclusion modes, variation slots, inclusion conditions, assembled wordings, variable values (§4.4, §4.5) | 0.2.0 MINOR, vocab 0.2.0 |
-| C5 | wording amendments (§4.6), shapes for W1 to W7, the README completed (laws, how-to) | 0.3.0 MINOR, shapes 0.2.0 |
+| C4 | tables (§4.3), assembly: inclusion modes, variation slots, inclusion conditions, assembled wordings, variable values (§4.4, §4.5), with subject and value comments and SHACL Core shapes as in C3 | 0.2.0 MINOR, vocab 0.2.0, shapes 0.2.0 |
+| C5 | wording amendments (§4.6), shapes for W1 to W7, the README completed (laws, how-to) | 0.3.0 MINOR, shapes 0.3.0 |
 
 Wording imports Foundation, Vocabulary, Quantification and Eligibility. Nothing imports it until
 C6, so tranche B cascades nowhere.
@@ -322,6 +322,78 @@ other document changes version.
 | C3-16 | `wrd:WordingNode`, `wrd:LinkedDocument`, `wrd:ReferenceTarget` / spec / each the one named union of its members, with the members' subclass triples asserted, and no anonymous union used as a domain or range | L1 | + |
 | C3-17 | every property / spec / its comment states its subject and value | L1 | + |
 
+#### C4 in detail
+
+**Machine:** R (Claude Code). **Branch:** `ccs/c4-wording-assembly`, created by the human. May run
+beside C11 and C10a: they share no file except `mise.toml`'s test list and the status record.
+**Validation Pack:** [computable-contract-substrate-c4](../validation/computable-contract-substrate-c4.md).
+**Decisions:** ADR-A112 decision 3, CC-D6 (tables), ADR-A-C2 and its addendum.
+
+**Invariant:** Wording gains tables, assembly and variable values, all additive (MINOR, not
+breaking). Every new property states its subject and value in its comment and is checked by SHACL
+Core, as in C3. Assembly is design time: nothing here is evaluated per event.
+
+**Decided by the human, 2026-10-01:**
+
+- **C4-Q1.** An instance's wording is asserted as `wrd:AssembledWording ⊑ wrd:Wording`. Law I1
+  (an instrument version is expressed in one), laws W3, W5 and W6, law I17 and the amendment and
+  library-release flows all depend on telling one contract's text from a reusable form, and a
+  fully bespoke contract is assembled from nothing, so the distinction is stated, not inferred.
+- **C4-Q2.** `wrd:VariationSlot ⊑ wrd:Element`, ranked among its siblings, with
+  `wrd:hasVariant ⊑ wrd:directlyComprises` to its variants. The slot carries the shared object id
+  ("1.4"). Each variant carries its letter ("1.4A") only in the library form, and the assembled
+  numbering shows "1.4". The slot is where C5's law shapes check its conditions as a set: no two
+  overlap, and together they cover every case. Open CBAA's D19 had no recorded rationale and
+  could not give the slot a rank. The LMA drafts number the position and letter the variants.
+- **C4-Q3.** One `wrd:VariableValue` per variable, and per column where the variable is a table
+  row's, holding several `wrd:value`s when the variable is multi-valued. Single-valuedness is then a
+  Core count on that one node.
+
+1. **Examples first (ADR-A-C2)**, in their own commit:
+   - `trial-protocol.ttl` gains the schedule of assessments as a `wrd:Table` whose rows (screening,
+     week 4, week 12) each declare a `wrd:rowVariable`, and an assembled protocol for one trial with
+     two arms as columns, its cells as `wrd:VariableValue`s with `wrd:forColumn`
+   - a new `facility-form.ttl`: a library facility form with a mandatory clause, a variation slot
+     (monthly or quarterly interest periods), an optional clause (a margin ratchet) and a
+     conditional clause (an agent clause, included when there is more than one lender, read from
+     a governing variable), and the assembled facility drawn from it, including its multi-valued
+     list of permitted jurisdictions
+2. **Spec** (`wording` 0.2.0), sketch §4.3 to §4.5:
+   - `wrd:Row ⊑ wrd:Element`, `wrd:rowKey` (the row's meaning), `wrd:rowVariable`
+   - `wrd:InclusionMode`, `wrd:inclusionMode` (functional), `wrd:VariationSlot` under C4-Q2 (the
+     slot an element with the shared object id, variants beneath it),
+     `wrd:hasVariant` and `wrd:variantOf`, `wrd:includedWhen` (to `elg:AdmissionProfile`),
+     `wrd:readsVariable` (from `elg:Condition` to `wrd:GoverningVariable`)
+   - the assembled wording under C4-Q1, `wrd:assembledFrom`, `wrd:includes` (to element versions),
+     `wrd:hasValue` (inverse functional)
+   - `wrd:VariableValue`, `wrd:forVariable` (exactly one), `wrd:value` (any resource),
+     `wrd:literalValue`, `wrd:forColumn` (any resource, only for a table row's variable), under C4-Q3
+3. **Vocab** (`wording-vocab` 0.2.0): the four inclusion modes (Mandatory, Variation, Optional,
+   Conditional) and the eight population methods, as named individuals, with comments written
+   fresh and no market references.
+4. **Shapes** (`wording-shapes` 0.2.0): a subject shape and a class shape per new property, as in
+   C3, and a Core check that a variable value has exactly one variable and at least one value. The
+   laws that need SPARQL (one variant per slot, W3. Conditions read governing variables, W4.
+   Mandatory children included, W5. A value matches its declaration, W6) stay in C5.
+5. **README:** the model sections for §4.3 to §4.5, the shapes, and the example table. The literate
+   check covers all three files.
+6. **Tests:** `tools/test_wording.py` gains the rows below.
+7. **Catalog and releases**, and the tags for the human.
+
+| ID | Given / When / Then | Level | +/- |
+|---|---|---|---|
+| C4-01 | the spec / parsed / imports unchanged, version `0.2.0` | L1 | + |
+| C4-02 | both examples and the new one / shapes / conform | L1 | + |
+| C4-03 | all examples / reasoner / consistent | L2 | + |
+| C4-04 | a row with no row variable, a value for no variable or for two, a value with no value, an inclusion mode outside the four, a variant of two slots / shapes / each reported | L1 | − |
+| C4-05 | the trial example / queried / one cell per row and arm: "the value in this row for each column" (S44) | L1 | + |
+| C4-06 | every new property / spec / its comment states subject and value | L1 | + |
+| C4-07 | the vocab / parsed / four inclusion modes and eight population methods, pairwise different | L1 | + |
+| C4-08 | the README / literate check / spec, vocab and shapes equal their blocks | L1 | + |
+| C4-09 | `check:ontology-versioning` / run / three bumps, three release rows | L1 | + |
+| C4-10 | the examples / git history / committed before the model | paper | + |
+| C4-11 | the existing tool tests / unchanged / pass (non-weakening) | L1 | + |
+
 | Slice | Content | Version impact |
 |---|---|---|
 | F1 | Identifiers (CC-D9): `fnd:identifier` → `fnd:Identifier` with a scheme concept (under a scheme contract) and a value, usable on any identified thing: Coverholder PIN, LEI, syndicate number, agreement number, UMR. Uniqueness within a scheme among current versions as a shape | Foundation MINOR, cascading to all 14 importers. Runs in the Foundation window after Phase 2, in one cascade with NRS N9. C6 and C9 do not wait for it: instrument identifiers stay open-cbaa's `agr:umr` and AIR's `aeo:identifier` until F1, which then generalises them |
@@ -335,8 +407,8 @@ and may run beside tranche B.
 |---|---|---|
 | C10 | the layer flip and the split (sketch §7.1, §7.2): configuration and runtime documents in one namespace, `bhv:targetsElement` replaced by `bhv:targets` with no range, `bhv:forSubject` range removed (Open CBAA L15), the Instrument import removed, `bhv:InstrumentTarget` deprecated in `behaviour-vocab` (C6 declares its replacement), the at-least-one-effect restriction removed. Policies stay explicit (ADR-A106's open point) | Behaviour breaking MINOR (A-113). Re-pins `behaviour-vocab`, `applied/capacity`'s execution profile |
 | C10a | import guard (B7): a design-time check that no layer imports or names a term of a layer above it, run over every catalogue entry | `tools/`, a `mise` check |
-| C11 | runtime records: act, breach (derived and asserted), exercise, determination, deemed fact, acceptance. Occasions and their state space. The evidence rule (B6) as shapes (sketch §7.5, §7.6) | MINOR |
-| C11a | deep dive: nested states, history and concurrent regimes (sketch §7.10). A sketch and an A-106 amendment first, then the ontology change. Settles B5 | MINOR. Blocks C12 only |
+| C11 | runtime records: act, breach (derived and asserted), exercise, determination, deemed fact, acceptance. Occasions with a fixed core state space refined by sub-states (C11a). Declared initial states. The evidence rule (B6), derivation (B1) and fixed parties (I11) as shapes (sketch §7.5, §7.6) | configuration 0.9.0, runtime 0.9.0, vocab 0.9.0, shapes 0.3.0 (breaking) |
+| C11a | deep dive: nested states, history and concurrent regimes (sketch §7.10), including the sub-states by which a deployment refines an occasion's fixed core (C11-Q1). A sketch and an A-106 amendment first, then the ontology change. Settles B5 | MINOR. Blocks C12 only |
 
 #### C10 in detail
 
@@ -411,6 +483,135 @@ property.
 | C10-13 | `check:ontology-versioning` / run / every changed document and directory bumped, with release rows | L1 | + |
 | C10-14 | the existing tool tests and `check:python-root` / unchanged / pass (non-weakening) | L1 | + |
 
+#### C10a in detail
+
+**Machine:** R (Claude Code). **Branch:** `ccs/c10a-import-guard`, created by the human.
+**Validation Pack:** [computable-contract-substrate-c10a](../validation/computable-contract-substrate-c10a.md).
+**Decisions:** ADR-A01 and its addendum (the order), ADR-A106 law B7.
+
+**Invariant:** a design-time check fails when a layer's document imports a higher layer, or when
+any Turtle file under a layer names a higher layer's namespace without importing it. Wording and
+Behaviour are siblings: neither may name the other. It covers the substrate layers only
+(C10a-Q2), and a substrate layer naming an applied namespace is a violation. Run today, it finds nothing: a scan on `main` at `a804fda` found no layer naming a higher one.
+
+**Decided by the human, 2026-10-01:**
+
+- **C10a-Q1.** The order is one table in the tool, mirroring ADR-A01's addendum, with a test that
+  it agrees with the diagram in `ontology-architecture.md`. No ontology change.
+- **C10a-Q2.** The guard covers the substrate layers of the order only. Applied modules, MORK,
+  SPC, Surface, Persistence and `ontology/examples` stay outside for now.
+
+1. **The tool** (`tools/import_guard.py`):
+   - the order table (C10a-Q1): Foundation, Vocabulary, Quantification, Party, Eligibility, then
+     Wording and Behaviour configuration as siblings, Behaviour runtime above configuration,
+     Instrument above both. Any `…/lattice/applied/` namespace counts as above them all
+   - for each document in the catalog that belongs to a covered module, its direct `owl:imports`
+     must name only the same or lower layers
+   - for every `.ttl` under a covered module, a namespace of a higher or sibling layer is a
+     violation, so a projection that names a lower layer passes and one that names a higher layer
+     fails
+   - output lists each violation as file, line and the namespace named. Exit 1 on any
+2. **Task:** `check:import-guard` in `mise.toml`, added to `check`'s dependencies.
+3. **Fixtures:** `tools/fixtures/import_guard/`, a small tree with one passing layer and four
+   failing ones (an upward import, an upward namespace in a spec, in a shape, in an example, and a
+   sibling reference between Wording and Behaviour).
+4. **Tests:** `tools/test_import_guard.py`, in `check:ontology-catalog`'s list, for the rows below.
+5. **Docs:** `ontology-architecture.md` names the check beside the order. ADR-A01's consequence
+   ("a future CI check … can verify import closure") gains an implementation note.
+
+| ID | Given / When / Then | Level | +/- |
+|---|---|---|---|
+| C10a-01 | the repository / guard / exit 0, no violations | L1 | + |
+| C10a-02 | each of the five failing fixtures / guard / exit 1, naming the file, line and namespace | L1 | − |
+| C10a-03 | a lower layer's namespace in a projection file / guard / passes | L1 | + |
+| C10a-04 | the tool's order table / compared with the `ontology-architecture.md` diagram / agree | L1 | + |
+| C10a-05 | `mise run check` / dependency list / includes `check:import-guard` | L1 | + |
+
+#### C11 in detail
+
+**Machine:** R (Claude Code). **Branch:** `ccs/c11-runtime-records`, created by the human.
+**Validation Pack:** [computable-contract-substrate-c11](../validation/computable-contract-substrate-c11.md).
+**Decisions:** ADR-A106 decisions 4 and 5, laws B1, B2, B6, ADR-A92, ADR-A113.
+
+**Invariant:** the runtime document gains occasions and the records that change their state, all
+named without any Instrument term (B7): an occasion is for any declared subject and case, and a
+record points at what it is about through properties with no range. Every state entry is recorded
+(B6): an occupancy names the execution that entered it, or carries evidence. Occasion occupancies
+are derived artefacts (B1), and an occasion's parties are fixed when it arises (I11, the mandatory
+probe).
+
+**Decided by the human, 2026-10-01:**
+
+- **C11-Q1, a fixed core refined by sub-states.** `bhv:OccasionStates` holds six states, `bhv:Pending`,
+  `bhv:Arisen`, `bhv:Performed`, `bhv:Breached`, `bhv:Ended` and `bhv:Suspended`, as
+  `behaviour-vocab` individuals. Their transitions are the evaluator's (C12), derived from the
+  sketch §6.1's algorithms and protected by law I7, so no deployment adds a top-level state to
+  this space. A deployment refines a core state with sub-states of its own (C11a) and adds
+  parallel regimes on the occasion (a dispute, a cure period, force majeure). Every other state
+  space stays open: anyone declares states, transitions and triggers as configuration.
+- **C11-Q2, a declared initial state.** Configuration gains `bhv:initialState` on a state space
+  (additive). An occupancy that no execution entered either occupies its space's initial state,
+  carrying evidence of the subject taking effect, or carries evidence of an external log entry.
+  `bhv:Pending` is the occasion space's initial state. Nested states (C11a) reuse the property
+  for initial sub-states.
+
+0. **Configuration** (`behaviour` 0.8.0 → 0.9.0, additive): `bhv:initialState` (a state space to
+   one of its states, at most one), with its comment and Core shape, and a SPARQL shape that the
+   initial state belongs to the space.
+1. **Runtime** (`behaviour-runtime` 0.8.0 → 0.9.0, additive):
+   - `bhv:Occasion`, `bhv:occasionOf` (the declaration it applies, no range), `bhv:forCase` (no
+     range), `bhv:occasionParty` (a `pty:RoleOccupancy` version, any number)
+   - records, each `⊑ fnd:Evidenced`, with `fnd:recordedAt` and a valid time:
+     `bhv:ActRecord` (`bhv:activity`, a concept. `bhv:actor`, an occupancy. `bhv:forCase`),
+     `bhv:BreachRecord` (`bhv:ofOccasion`, `bhv:closureReliedOn` with no range, `fnd:assertedBy`
+     when asserted), `bhv:ExerciseRecord` (`bhv:exercised` with no range, `bhv:actor`,
+     `bhv:tookEffect`, `bhv:reasonNotTaken`), `bhv:DeterminationRecord` (`bhv:matter`,
+     `bhv:determiner`, `bhv:determinedValue`), `bhv:DeemedFactRecord` (`bhv:deeming` with no
+     range, `bhv:conditionSatisfied`, an `elg:Condition`), `bhv:AcceptanceRecord`
+     (`bhv:accepted`, a `fnd:Version`, `bhv:actor`)
+   - `bhv:fromStimulus` (any record to the `bhv:Stimulus` it came from) and `bhv:enteredBy` (an
+     occupancy to the `bhv:TransitionExecution` that entered it)
+   - every new property states subject and value in its comment
+2. **Vocab** (`behaviour-vocab` 0.9.0) under C11-Q1: `bhv:OccasionStates`, a state space with
+   `bhv:initialState bhv:Pending`, and its six states, each commented as the evaluator's. Its
+   transitions are the evaluator's (C12), not declared here. The README states the extension rule:
+   sub-states and parallel regimes, never a new top-level occasion state.
+3. **Shapes** (`behaviour-shapes` 0.3.0, breaking under ADR-A113: B6 adds a violation an existing
+   graph could fail. No fixture in the repository has a state occupancy today):
+   - **B6**, Core: a state occupancy has `bhv:enteredBy` an execution that `bhv:causedByStimulus`
+     a stimulus, or `fnd:hasEvidence` (`sh:or`). Under C11-Q2 the evidence is of the subject taking
+     effect when the occupancy is in its space's initial state, and of an external log entry
+     otherwise
+   - **B1**: an occupancy of an occasion state is also a `fnd:DerivedArtefact` with at least one
+     `prov:wasDerivedFrom` a record
+   - **I11 probe**: an occasion's parties are role occupancy versions, never persistent
+     identities, so a later version of an occupancy cannot change them
+   - a subject shape and a class shape per new property, as in C3
+4. **Examples first (ADR-A-C2):** the trial protocol's adverse event reporting duty, run once: an
+   act record of the event, an occasion arising, a stimulus for the deadline, and a breach record.
+   A software licence suspension and reinstatement: an exercise record that took effect, and one
+   that did not and says why. Each occupancy carries its execution or evidence.
+5. **README:** the runtime section's records table, and the 0.9.0 release notes. The runtime
+   document stays a file (C10).
+6. **Tests:** `tools/test_behaviour_split.py` gains the rows below (or a sibling
+   `test_behaviour_records.py` if it grows past one concern).
+
+| ID | Given / When / Then | Level | +/- |
+|---|---|---|---|
+| C11-01 | the runtime document / parsed / `0.9.0`, imports configuration only, no `ins:` term (B7) | L1 | + |
+| C11-02 | both examples / shapes / conform | L1 | + |
+| C11-03 | an occupancy with neither execution nor evidence / shapes / fails (B6, mandatory probe) | L1 | − |
+| C11-04 | an occupancy entered by an execution with no stimulus / shapes / fails | L1 | − |
+| C11-05 | an occasion occupancy that is not derived from a record / shapes / fails (B1) | L1 | − |
+| C11-06 | an occasion whose party is a persistent identity, and one whose party is later superseded / shapes / the first fails, the second still conforms (I11, mandatory probe) | L1 | − |
+| C11-07 | every new property / runtime spec / comment states subject and value, and none has a range naming a higher layer | L1 | + |
+| C11-08 | the vocab / parsed / one occasion state space with six states, Pending its initial state | L1 | + |
+| C11-12 | an initial state outside its own space / shapes / fails | L1 | − |
+| C11-13 | configuration / parsed / `0.9.0`, `bhv:initialState` added, every existing fixture still conforms (it is optional) | L1 | + |
+| C11-09 | all examples / reasoner / consistent | L2 | + |
+| C11-10 | `check:ontology-versioning` / run / runtime, vocab and shapes bumped, and the README's release notes mark shapes 0.3.0 breaking | L1 | + |
+| C11-11 | the existing tool tests, `check:python-root`, `check:mork-compilers` / unchanged / pass (non-weakening) | L1 | + |
+
 ### Tranche D: Instrument rewrite
 
 | Slice | Content | Version impact |
@@ -476,16 +677,30 @@ existing ontology checks and touches no AIR file.
 
 ## 7. Open CBAA migration
 
-Recorded here so the other repository can plan it. Details in the sketch §3 and §12.2.
+Recorded here so the other repository can plan it. Details in the sketch §3 and §12.2. Open CBAA
+pins release tags, and its migration starts once C9 and C12 are merged (risk R1). Open CBAA's own
+plan (`docs/development/plan.md`, "Upstream") mirrors this section.
 
 | Open CBAA module | After migration |
 |---|---|
-| `wim` | removed or reduced to the LMA WIM profile if CC-D3 places the profile in Open CBAA |
+| `wim` | removed. Its structure is LATTICE's Wording layer (ADR-A112). The LMA WIM profile (the four levels as element types, their containment rules as shapes, the LMA typing schemes and `applicableTo`) is in LATTICE's `applied/insurance/wording/` (CC-D3, AIR-5.9), and Open CBAA imports it |
 | `stm` | `AuthorityGrant ⊑ ins:Power` with its envelope mechanism. Other kinds, templates, parameter bindings and encoding status come from Instrument |
 | `agr` | UMR, markets, CBAA roles. The M12 regimes become `applied/insurance` templates on the C8a library. Agreement versions become `ins:Instrument`s expressed in `wrd:Wording`s |
 | `rsk` | unchanged, with `rsk:BoundPolicy ⊑ ins:Instrument` and `rsk:boundUnder ⊑ ins:boundUnder` |
 | example BA-2026-001 | re-expressed, joined by the binding authority scenario renderings |
-| decisions | D22 holds as I13. D23 resolved. D25 changed. I6 closed. L15 fixed upstream |
+| decisions | D22 holds as I13. D23 resolved. D25 changed. I6 closed. L15 fixed upstream (C10). D19 replaced (below) |
+
+What changes in the data, beyond renaming:
+
+| Open CBAA | LATTICE | Decided by |
+|---|---|---|
+| `wim:Segment`, `segmentIndex`, `segmentText` | `wrd:TextPart`, `partIndex`, `partText` | sketch §3.2 |
+| a variation slot outside the tree, its variants comprised by the slot's parent (D19) | `wrd:VariationSlot`, an element ranked among its siblings with the shared object id, its variants beneath it | C4-Q2 |
+| `agr:VariableValue` | `wrd:VariableValue` on a `wrd:AssembledWording`, one per variable and column | C4-Q1, C4-Q3 |
+| `stm:` templates and bound statements | stated meaning owned by a library element version, bound meaning owned by an instrument version | CC-D12, ADR-A104 decision 2 |
+| the M12 lifecycle in `agr` | regimes (`ins:Regime`) from the template library | CC-D8 |
+| an agreement as the subject of its own state | a state occupancy for the instrument's persistent identity, `bhv:forSubject` having no range | ADR-A106, C10 |
+
 
 ## 8. Decisions
 
