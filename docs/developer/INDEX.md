@@ -575,11 +575,12 @@ IUA binding authority and the Lloyd's CBAA.
 
 | Field | Value |
 |-------|-------|
-| **Status** | 🚧 WA0 to WA2 done. See the status record |
+| **Status** | 🚧 WA0 to WA3 done. See the status record |
 | **Unit ID** | `word-authoring-poc` |
 | **Sketch** | [word-authoring-poc.md](sketches/word-authoring-poc.md) |
 | **Plan** | [word-authoring-poc.md](plans/word-authoring-poc.md) |
 | **Status Record** | [word-authoring-poc.md](status/word-authoring-poc.md) |
+| **Validation Packs** | [WA1](validation/word-authoring-poc-wa1.md), [WA2](validation/word-authoring-poc-wa2.md), [WA3](validation/word-authoring-poc-wa3.md) |
 | **ADRs** | A-114, Proposed |
 
 A Word add-in, loaded without installation, for writing wordings into templates with marked text

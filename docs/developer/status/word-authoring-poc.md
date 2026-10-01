@@ -3,7 +3,7 @@
 # Word authoring proof of concept - Status
 
 **Unit ID:** `word-authoring-poc`
-**Status:** 🚧 In progress. WA0 to WA2 done. WA3 is next
+**Status:** 🚧 In progress. WA0 to WA3 done. WA4 is next
 **Last updated:** 2026-10-01
 **Plan:** [word-authoring-poc.md](../plans/word-authoring-poc.md)
 **Sketch:** [word-authoring-poc.md](../sketches/word-authoring-poc.md)
@@ -14,11 +14,20 @@
 
 The design and a one-shot plan of thirteen slices (WA0 to WA11, with WA9a) are written. Decisions
 WA-D1 to WA-D13 were recorded by the human on 2026-10-01: WA-D4 is Javalin, the rest follow the
-recommendations. ADR-A114 stays Proposed. WA0 to WA2 are done: preflight, the WA1 contracts, and
-the WA2 service module that maps a snapshot to the Wording graph and validates it with SHACL.
+recommendations. ADR-A114 stays Proposed. WA0 to WA3 are done: preflight, the WA1 contracts, the
+WA2 service module that maps a snapshot to the Wording graph and validates it with SHACL, and the
+WA3 detection, template and conformance checks.
 
-**Next action, for the human:** ask for WA3 onward.
-**Next action, for the agent:** WA3 (detection, templates and conformance), when asked.
+**Next action, for the human:** ask for WA4.
+**Next action, for the agent:** WA4 (API and HTTP adapter, Javalin behind `AuthoringApi`), when asked.
+
+## Open question raised by WA3
+
+WA3's prescribed self-probe ("change the overlap sort to start-first") does not fail any test, and
+cannot, because the seven detection rules can overlap only by containment. A probe against the same
+invariant was run instead and does fail. The detail is in the
+[WA3 Validation Pack](../validation/word-authoring-poc-wa3.md) under Self-probe. Nothing is blocked,
+but later slices that prescribe a probe should be read with the same scepticism.
 
 ## Note for WA3
 
@@ -46,8 +55,8 @@ add that file to WA6's own path list and extend it there.
 | WA0 | Preflight | done | `c82d019` | |
 | WA1 | Contracts, templates and samples | done | `3db3911` | |
 | WA2 | Service model, mapping and shapes | done | `52eae70` | |
-| WA3 | Detection, templates and conformance | ready | | WA2 |
-| WA4 | API and HTTP adapter | waiting | | WA3 |
+| WA3 | Detection, templates and conformance | done | | |
+| WA4 | API and HTTP adapter | ready | | WA3 |
 | WA5 | Fuseki, RabbitMQ and the runnable service | waiting | | WA4 |
 | WA6 | Logical English reading | waiting | | WA2 |
 | WA7 | Worker runtime | waiting | | WA6 |
@@ -65,12 +74,12 @@ add that file to WA6's own path list and extend it there.
 | WA0 | 60k | about 60k |
 | WA1 | 300k | about 220k |
 | WA2 | 450k | about 480k |
+| WA3 | 300k | about 230k |
 
 ## History
 
 - 2026-10-01: sketch, plan, status record and ADR-A114 (Proposed) written on `ux/auth-le`. No
-  ontology change, so no release tag is due.
-- 2026-10-01: slice WA9a added at the human's request: ribbon group and right-click commands for
+  ontology change, so no release tag is due.- 2026-10-01: slice WA9a added at the human's request: ribbon group and right-click commands for
   marking text, decision WA-D13 (shared runtime), checklist steps M11 to M14, risk R8.
 - 2026-10-01: decisions WA-D1 to WA-D13 recorded by the human. WA-D4 is Javalin (pinned 6.7.0, the
   plan's WA4 adapter rewritten for it), the rest as recommended. ADR-A114 decision 6 names Javalin.
@@ -92,3 +101,16 @@ add that file to WA6's own path list and extend it there.
   `mise.toml`. Validation Pack at `docs/developer/validation/word-authoring-poc-wa1.md`. Self-probe
   confirmed (AC-02 catches a missing `additionalProperties: false`). Full `check:workers` (73
   tests) still passes.
+- 2026-10-01: the WA2 Java sources reviewed for simplicity at the human's request, in "ponytail"
+  mode (`.github/prompts/ponytail.md`). Seven files, 57 insertions and 91 deletions, no behaviour
+  change: `WordingMapper` holds one `IriMinter`, `CanonicalHash.canonicalText` is the single place
+  the fixture text is formed, `SnapshotReader` uses one list helper, `IriMinter` one validator.
+  `check:authoring-service`, `check:java` and `check:authoring-contracts` all green, and
+  `build:authoring-fixtures` reproduced the three `.nt` goldens byte for byte.
+- 2026-10-01: WA3 done: `detection` (`ConstructDetector`, `Detection`, `Suggestion`) and `template`
+  (`TemplateCatalog`, `SampleCatalog`, `AuthoringTemplate`, `TemplateSection`, `TemplateFindings`,
+  `ConformanceChecker`, `Finding`, the two summaries) packages, plus `ContractSchemas.readValidated`
+  shared by the catalogs. 15 new tests, 63 in the module, all pass first run. Validation Pack at
+  `docs/developer/validation/word-authoring-poc-wa3.md`. The plan's self-probe was found to be
+  vacuous (see above) and a probe that bites was run in its place. `check:java` (9 modules) and
+  `check:authoring-contracts` still pass.

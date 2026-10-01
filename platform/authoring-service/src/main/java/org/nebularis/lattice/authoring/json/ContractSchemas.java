@@ -74,6 +74,19 @@ public final class ContractSchemas {
         return messages.stream().map(ValidationMessage::getMessage).limit(MAX_MESSAGES).toList();
     }
 
+    /**
+     * Reads a classpath resource and validates it, for content shipped with the service. Throws
+     * {@link IllegalStateException} naming the resource when it is missing or does not validate.
+     */
+    public JsonNode readValidated(String schemaName, String resource) {
+        JsonNode node = readResource(resource);
+        List<String> messages = validate(schemaName, node);
+        if (!messages.isEmpty()) {
+            throw new IllegalStateException(resource + " is not a valid " + schemaName + ": " + messages);
+        }
+        return node;
+    }
+
     private static String nameOf(String resource) {
         String fileName = resource.substring(resource.lastIndexOf('/') + 1);
         return fileName.substring(0, fileName.length() - ".schema.json".length());
