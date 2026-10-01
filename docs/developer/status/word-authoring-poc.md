@@ -64,7 +64,7 @@ invalid kind (plan S4-12's own scope). Exercise `proposal` end to end once the w
 | WA1 | Contracts, templates and samples | done | `3db3911` | |
 | WA2 | Service model, mapping and shapes | done | `52eae70` | |
 | WA3 | Detection, templates and conformance | done | `8c4aa65` | |
-| WA4 | API and HTTP adapter | done | | |
+| WA4 | API and HTTP adapter | done | `c82bcc2` | |
 | WA5 | Fuseki, RabbitMQ and the runnable service | ready | | WA4 |
 | WA6 | Logical English reading | waiting | | WA2 |
 | WA7 | Worker runtime | waiting | | WA6 |
@@ -140,3 +140,4 @@ invalid kind (plan S4-12's own scope). Exercise `proposal` end to end once the w
   `solution-design-specification.md` \u00a74.7. Validation Pack at
   `docs/developer/validation/word-authoring-poc-wa4.md`. `check:java` (9 modules) and
   `check:authoring-contracts` still pass.
+- 2026-10-01: WA4 committed as `c82bcc2`.
