@@ -91,7 +91,7 @@ call the real `consume()` instead of a fixture.
 | WA3 | Detection, templates and conformance | done | `8c4aa65` | |
 | WA4 | API and HTTP adapter | done | `c82bcc2` | |
 | WA5 | Fuseki, RabbitMQ and the runnable service | done | `187fea4` | |
-| WA6 | Logical English reading | done | | |
+| WA6 | Logical English reading | done | `0128ca2` | |
 | WA7 | Worker runtime | ready | | WA6 |
 | WA7 | Worker runtime | waiting | | WA6 |
 | WA8 | Add-in domain | waiting | | WA1 |
@@ -196,3 +196,4 @@ call the real `consume()` instead of a fixture.
   tie-break test using two synthetic forms was added and does fail correctly. Validation Pack at
   `docs/developer/validation/word-authoring-poc-wa6.md`. `check:java` (9 modules),
   `check:authoring-service` (85) and `check:authoring-contracts` still pass.
+- 2026-10-01: WA6 committed as `0128ca2`.
