@@ -15,6 +15,7 @@ import org.nebularis.lattice.authoring.model.Severity;
 
 class ConformanceCheckerTest {
     private static final TemplateCatalog CATALOG = new TemplateCatalog(new ContractSchemas());
+    private static final ConformanceChecker CHECKER = new ConformanceChecker();
 
     /** S3-11: a term kind the section does not allow, beside one it does. */
     @Test
@@ -23,7 +24,7 @@ class ConformanceCheckerTest {
             element("01", "1.1", "grant", "\"Prohibition\""),
             element("02", "1.2", "grant", "\"Permission\""));
 
-        List<Finding> findings = ConformanceChecker.check(analysis, CATALOG.get("software-licence").orElseThrow());
+        List<Finding> findings = CHECKER.check(analysis, CATALOG.get("software-licence").orElseThrow());
 
         assertEquals(1, findings.size(), findings.toString());
         assertEquals("term-kind-not-allowed", findings.get(0).kind());
@@ -40,7 +41,7 @@ class ConformanceCheckerTest {
             element("01", "3.1", "interest", "null"),
             element("02", "7.1", "miscellaneous", "null"));
 
-        List<Finding> findings = ConformanceChecker.check(analysis, CATALOG.get("facility-agreement").orElseThrow());
+        List<Finding> findings = CHECKER.check(analysis, CATALOG.get("facility-agreement").orElseThrow());
 
         assertEquals(1, findings.size(), findings.toString());
         assertEquals("no-term-kind", findings.get(0).kind());

@@ -14,10 +14,8 @@ import org.nebularis.lattice.authoring.model.TermKind;
  * the template does not name are left to {@link TemplateFindings}.
  */
 public final class ConformanceChecker {
-    private ConformanceChecker() {
-    }
 
-    public static List<Finding> check(JsonNode analysis, AuthoringTemplate template) {
+    public List<Finding> check(JsonNode analysis, AuthoringTemplate template) {
         List<Finding> findings = new ArrayList<>();
         for (JsonNode element : analysis.get("elements")) {
             String sectionKey = element.get("sectionKey").asText();

@@ -18,6 +18,7 @@ import org.nebularis.lattice.authoring.model.Severity;
 class TemplateFindingsTest {
     private static final TemplateCatalog CATALOG = new TemplateCatalog(new ContractSchemas());
     private static final AuthoringTemplate LICENCE = CATALOG.get("software-licence").orElseThrow();
+    private static final TemplateFindings TEMPLATE_FINDINGS = new TemplateFindings();
 
     /** S3-09: a missing section, an empty one, an unknown one and an element of the wrong kind. */
     @Test
@@ -30,7 +31,7 @@ class TemplateFindingsTest {
             new Section("termination", List.of(element("04", ElementKind.CLAUSE, null)))
         );
 
-        List<Finding> findings = TemplateFindings.check(snapshot, LICENCE);
+        List<Finding> findings = TEMPLATE_FINDINGS.check(snapshot, LICENCE);
 
         assertEquals(List.of("element-kind-not-allowed", "required-section-empty", "required-section-empty",
             "unknown-section"), findings.stream().map(Finding::kind).sorted().toList(), findings.toString());
@@ -47,7 +48,7 @@ class TemplateFindingsTest {
     /** S3-10: the zero case, one finding per required template section. */
     @Test
     void reportsEveryRequiredSectionWhenThereAreNone() {
-        List<Finding> findings = TemplateFindings.check(snapshot(), LICENCE);
+        List<Finding> findings = TEMPLATE_FINDINGS.check(snapshot(), LICENCE);
 
         List<String> required = LICENCE.sections().stream()
             .filter(TemplateSection::required).map(TemplateSection::sectionKey).toList();
@@ -58,7 +59,7 @@ class TemplateFindingsTest {
     /** S3-13: the licence sample is clean apart from its one piece of unmarked text. */
     @Test
     void reportsOnlyUnmarkedTextForTheLicenceSample() {
-        List<Finding> findings = TemplateFindings.check(TestSamples.read(TestSamples.SOFTWARE_LICENCE), LICENCE);
+        List<Finding> findings = TEMPLATE_FINDINGS.check(TestSamples.read(TestSamples.SOFTWARE_LICENCE), LICENCE);
 
         assertEquals(1, findings.size(), findings.toString());
         assertEquals("unmarked-text", findings.get(0).kind());

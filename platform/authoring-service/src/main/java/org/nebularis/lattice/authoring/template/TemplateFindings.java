@@ -15,10 +15,8 @@ import org.nebularis.lattice.authoring.model.Unmarked;
  * come in template section order, then in snapshot order.
  */
 public final class TemplateFindings {
-    private TemplateFindings() {
-    }
 
-    public static List<Finding> check(DocumentSnapshot snapshot, AuthoringTemplate template) {
+    public List<Finding> check(DocumentSnapshot snapshot, AuthoringTemplate template) {
         List<Finding> findings = new ArrayList<>();
         List<Section> sections = snapshot.sections();
 

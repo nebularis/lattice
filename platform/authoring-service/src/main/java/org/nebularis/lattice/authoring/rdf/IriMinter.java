@@ -30,6 +30,11 @@ public final class IriMinter {
         return base + "registry";
     }
 
+    /** The document resource itself: {@code D}, the namespace every other node of this document sits under. */
+    public String document(String documentId) {
+        return doc(documentId);
+    }
+
     public String wording(String documentId) {
         return doc(documentId) + "wording";
     }

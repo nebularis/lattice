@@ -39,6 +39,8 @@ public final class Vocab {
 
     // wap: classes
     public static final Resource WAP_DEFINITION_TEXT = resource(WAP_NS, "DefinitionText");
+    public static final Resource WAP_AUTHORING_DOCUMENT = resource(WAP_NS, "AuthoringDocument");
+    public static final Resource WAP_REVISION = resource(WAP_NS, "Revision");
 
     // wap: concepts (values of wrd:elementType and wap:valueType, not rdf:type targets)
     public static final Resource WAP_SECTION = resource(WAP_NS, "Section");
@@ -56,9 +58,15 @@ public final class Vocab {
     public static final Property WAP_HAS_PART = property(WAP_NS, "hasPart");
     public static final Property WAP_DISPLAY_TEXT = property(WAP_NS, "displayText");
     public static final Property WAP_VALUE_TYPE = property(WAP_NS, "valueType");
+    public static final Property WAP_LATEST_REVISION = property(WAP_NS, "latestRevision");
+    public static final Property WAP_REVISION_OF = property(WAP_NS, "revisionOf");
+    public static final Property WAP_WORDING_GRAPH = property(WAP_NS, "wordingGraph");
+    public static final Property WAP_REVISION_HASH = property(WAP_NS, "revisionHash");
+    public static final Property WAP_ANALYSIS_JSON = property(WAP_NS, "analysisJson");
 
     // external properties this layer writes
     public static final Property DCTERMS_TITLE = property(DCTERMS_NS, "title");
+    public static final Property DCTERMS_CREATED = property(DCTERMS_NS, "created");
     public static final Property RDFS_LABEL = property(RDFS_NS, "label");
 
     private Vocab() {

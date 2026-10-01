@@ -3,7 +3,7 @@
 # Word authoring proof of concept - Status
 
 **Unit ID:** `word-authoring-poc`
-**Status:** 🚧 In progress. WA0 to WA3 done. WA4 is next
+**Status:** 🚧 In progress. WA0 to WA4 done. WA5 is next
 **Last updated:** 2026-10-01
 **Plan:** [word-authoring-poc.md](../plans/word-authoring-poc.md)
 **Sketch:** [word-authoring-poc.md](../sketches/word-authoring-poc.md)
@@ -14,12 +14,13 @@
 
 The design and a one-shot plan of thirteen slices (WA0 to WA11, with WA9a) are written. Decisions
 WA-D1 to WA-D13 were recorded by the human on 2026-10-01: WA-D4 is Javalin, the rest follow the
-recommendations. ADR-A114 stays Proposed. WA0 to WA3 are done: preflight, the WA1 contracts, the
-WA2 service module that maps a snapshot to the Wording graph and validates it with SHACL, and the
-WA3 detection, template and conformance checks.
+recommendations. ADR-A114 stays Proposed. WA0 to WA4 are done: preflight, the WA1 contracts, the
+WA2 service module that maps a snapshot to the Wording graph and validates it with SHACL, the WA3
+detection, template and conformance checks, and the WA4 HTTP API over Javalin with an in-memory
+store, bus, registry and job tracking.
 
-**Next action, for the human:** ask for WA4.
-**Next action, for the agent:** WA4 (API and HTTP adapter, Javalin behind `AuthoringApi`), when asked.
+**Next action, for the human:** ask for WA5.
+**Next action, for the agent:** WA5 (Fuseki, RabbitMQ and the runnable service), when asked.
 
 ## Open question raised by WA3
 
@@ -35,6 +36,13 @@ WA2's provisional vocabulary (`platform/authoring-service/src/main/resources/voc
 declares only the `wrd:`/`wap:` terms WA2 itself mints. When WA6 builds the worker that writes the
 proposed meaning graph (sketch §4.4: `ins:` classes, `wap:proposalBasis`, `wap:activityText`, etc.),
 add that file to WA6's own path list and extend it there.
+
+## Note for WA5
+
+WA4's `GET .../graph/proposal` route reads `store.getGraph(minter.proposalGraph(...))`, but nothing
+in WA4 ever writes to that IRI: the worker writes the proposal graph directly to Fuseki, keyed by
+the `proposalGraphIri` the request event already carries. WA4's tests cover only `wording` and an
+invalid kind (plan S4-12's own scope). Exercise `proposal` end to end once the worker exists.
 
 ## Preflight (WA0, 2026-10-01)
 
@@ -56,8 +64,8 @@ add that file to WA6's own path list and extend it there.
 | WA1 | Contracts, templates and samples | done | `3db3911` | |
 | WA2 | Service model, mapping and shapes | done | `52eae70` | |
 | WA3 | Detection, templates and conformance | done | `8c4aa65` | |
-| WA4 | API and HTTP adapter | ready | | WA3 |
-| WA5 | Fuseki, RabbitMQ and the runnable service | waiting | | WA4 |
+| WA4 | API and HTTP adapter | done | | |
+| WA5 | Fuseki, RabbitMQ and the runnable service | ready | | WA4 |
 | WA6 | Logical English reading | waiting | | WA2 |
 | WA7 | Worker runtime | waiting | | WA6 |
 | WA8 | Add-in domain | waiting | | WA1 |
@@ -75,6 +83,7 @@ add that file to WA6's own path list and extend it there.
 | WA1 | 300k | about 220k |
 | WA2 | 450k | about 480k |
 | WA3 | 300k | about 230k |
+| WA4 | 450k | about 520k |
 
 ## History
 
@@ -115,3 +124,19 @@ add that file to WA6's own path list and extend it there.
   first run. Validation Pack at `docs/developer/validation/word-authoring-poc-wa3.md`. The plan's
   self-probe was found to be vacuous (see above) and a probe that bites was run in its place.
   `check:java` (9 modules) and `check:authoring-contracts` still pass.
+- 2026-10-01: WA4 done: `store`, `messaging`, `jobs`, `api` and `http` packages, Javalin 6.7.0
+  added to the module, ten routes behind `AuthoringApi`, `AuthoringHttpServer`, `SampleSeeder`.
+  `TemplateFindings` and `ConformanceChecker` changed from WA3's static-utility shape to
+  instantiable classes, since plan WA4 holds them as `AuthoringApi` constructor collaborators
+  (no behaviour change, WA3 tests updated). `@JsonValue` added to `ValueType`, `ElementKind`,
+  `Severity`, `TermKind`, `JobStatus`, needed now that these enums are written into HTTP response
+  bodies. Found and fixed a real defect: `ApiResponse.TEXT_TURTLE` carried no charset, so the
+  Servlet response encoded the Turtle body as ISO-8859-1, corrupting the samples' smart quotes;
+  the tell was `Model.isIsomorphicWith` returning false while `Model.difference` was empty both
+  ways. Fixed by setting `"text/turtle; charset=utf-8"` in the one shared constant, and S4-12 now
+  compares `CanonicalHash.sortedNTriplesLines` rather than `isIsomorphicWith` (Validation Pack
+  "Implementer choices"). 14 new tests, 77 in the module, self-probe confirmed (the prescribed
+  409 removal fails S4-02 exactly as the plan predicts, unlike WA3's probe). Docs delta:
+  `solution-design-specification.md` \u00a74.7. Validation Pack at
+  `docs/developer/validation/word-authoring-poc-wa4.md`. `check:java` (9 modules) and
+  `check:authoring-contracts` still pass.

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
 package org.nebularis.lattice.authoring.model;
 
+import com.fasterxml.jackson.annotation.JsonValue;
 import java.util.Locale;
 
 public enum ElementKind {
@@ -14,6 +15,7 @@ public enum ElementKind {
         };
     }
 
+    @JsonValue
     public String toJson() {
         return name().toLowerCase(Locale.ROOT);
     }

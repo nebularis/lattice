@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MPL-2.0
 package org.nebularis.lattice.authoring.model;
 
+import com.fasterxml.jackson.annotation.JsonValue;
+
 /** The relation classes a clause may be read as. Not produced by WA2, used from WA3 onward. */
 public enum TermKind {
     OBLIGATION("Obligation"),
@@ -17,6 +19,7 @@ public enum TermKind {
         this.jsonValue = jsonValue;
     }
 
+    @JsonValue
     public String jsonValue() {
         return jsonValue;
     }
