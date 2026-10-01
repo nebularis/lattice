@@ -14,7 +14,7 @@
 
 <https://www.nebularis.org/neuro-semantic/wording>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/wording/0.2.0> ;
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/wording/0.3.0> ;
 	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.3.0> ,
 				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.3.0> ,
 				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.5.0> ,
@@ -97,7 +97,7 @@ wrd:Text a owl:Class ;
 wrd:Table a owl:Class ;
 	rdfs:subClassOf wrd:Element ;
 	rdfs:label "Table"@en ;
-	rdfs:comment "An element whose content is rows and columns. Rows are declared in the wording, columns are supplied per instance." .
+	rdfs:comment "An element whose content is fields and entries, with a cell for each field and entry. Fields are declared in the wording, entries in the wording or per instance." .
 
 wrd:Variable a owl:Class ;
 	rdfs:subClassOf wrd:Element ;
@@ -115,7 +115,7 @@ wrd:Metadata a owl:Class ;
 	rdfs:comment "Descriptive or system metadata carried in the wording." .
 
 [] a owl:AllDisjointClasses ;
-	owl:members ( wrd:Text wrd:Table wrd:Variable wrd:Reference wrd:Metadata wrd:Row wrd:VariationSlot ) .
+	owl:members ( wrd:Text wrd:Table wrd:Variable wrd:Reference wrd:Metadata wrd:Field wrd:Entry wrd:VariationSlot ) .
 
 wrd:TextPart a owl:Class ;
 	rdfs:label "Text part"@en ;
@@ -187,7 +187,8 @@ wrd:linksTo a owl:ObjectProperty ;
 	rdfs:comment "What a reference element points to. Subject: a reference element. Value: a reference target." .
 
 [] a owl:AllDisjointClasses ;
-	owl:members ( wrd:Wording wrd:Element wrd:TextPart wrd:DocumentObject wrd:ExternalDocument wrd:PopulationMethod wrd:InclusionMode wrd:VariableValue ) .
+	owl:members ( wrd:Wording wrd:Element wrd:TextPart wrd:DocumentObject wrd:ExternalDocument wrd:PopulationMethod wrd:InclusionMode wrd:VariableValue
+		wrd:FieldOrientation wrd:Amendment wrd:AmendmentOperation ) .
 
 wrd:EmbeddedVariable a owl:Class ;
 	rdfs:subClassOf wrd:Variable ;
@@ -241,21 +242,41 @@ wrd:multiValued a owl:DatatypeProperty , owl:FunctionalProperty ;
 	rdfs:domain wrd:Variable ; rdfs:range xsd:boolean ;
 	rdfs:comment "True when an instance may supply several values, as for a list of territories. Single-valued when absent. Subject: a variable. Value: a boolean, at most one." .
 
-wrd:Row a owl:Class ;
+wrd:Field a owl:Class ;
 	rdfs:subClassOf wrd:Element ;
-	rdfs:label "Row"@en ;
-	rdfs:comment "A row of a table, declared in the wording." ;
-	fnd:utility "A table directly comprises its rows, in rank order. A row usually comprises its own variable too, so the variable has a place in the tree." .
+	rdfs:label "Field"@en ;
+	rdfs:comment "A field of a table, declared in the wording: what each entry records a value for." ;
+	fnd:utility "A table directly comprises its fields, in rank order. A field usually comprises its own variable too, so the variable has a place in the tree." .
 
-wrd:rowKey a owl:DatatypeProperty , owl:FunctionalProperty ;
-	rdfs:label "row key"@en ;
-	rdfs:domain wrd:Row ; rdfs:range xsd:string ;
-	rdfs:comment "What the row means, as its label reads: Maximum limits, Screening sample volume. Subject: a row. Value: a string, at most one." .
+wrd:fieldKey a owl:DatatypeProperty , owl:FunctionalProperty ;
+	rdfs:label "field key"@en ;
+	rdfs:domain wrd:Field ; rdfs:range xsd:string ;
+	rdfs:comment "What the field means, as its heading reads: Maximum limits, Screening sample volume. Subject: a field. Value: a string, at most one." .
 
-wrd:rowVariable a owl:ObjectProperty , owl:FunctionalProperty ;
-	rdfs:label "row variable"@en ;
-	rdfs:domain wrd:Row ; rdfs:range wrd:Variable ;
-	rdfs:comment "The variable every column supplies a value for in this row. Subject: a row. Value: a variable, exactly one." .
+wrd:fieldVariable a owl:ObjectProperty , owl:FunctionalProperty ;
+	rdfs:label "field variable"@en ;
+	rdfs:domain wrd:Field ; rdfs:range wrd:Variable ;
+	rdfs:comment "The variable every entry supplies a value for in this field. Subject: a field. Value: a variable, exactly one." .
+
+wrd:Entry a owl:Class ;
+	rdfs:subClassOf wrd:Element ;
+	rdfs:label "Entry"@en ;
+	rdfs:comment "An entry of a table that the wording declares, so every instance has it." ;
+	fnd:utility "Declare entries only when the form fixes them. Entries an instance supplies are not elements: a cell names them with wrd:forEntry." .
+
+wrd:entryKey a owl:DatatypeProperty , owl:FunctionalProperty ;
+	rdfs:label "entry key"@en ;
+	rdfs:domain wrd:Entry ; rdfs:range xsd:string ;
+	rdfs:comment "What the entry is, as its heading reads: Safety reporting. Subject: an entry. Value: a string, at most one." .
+
+wrd:FieldOrientation a owl:Class ;
+	rdfs:label "Field orientation"@en ;
+	rdfs:comment "Whether a table draws its fields as rows or as columns: Rows or Columns (wrd-voc)." .
+
+wrd:fieldsAs a owl:ObjectProperty , owl:FunctionalProperty ;
+	rdfs:label "fields as"@en ;
+	rdfs:domain wrd:Table ; rdfs:range wrd:FieldOrientation ;
+	rdfs:comment "Whether the table draws its fields as rows or as columns. Presentation only. Subject: a table. Value: a field orientation, at most one." .
 
 wrd:InclusionMode a owl:Class ;
 	rdfs:label "Inclusion mode"@en ;
@@ -270,7 +291,7 @@ wrd:VariationSlot a owl:Class ;
 	rdfs:subClassOf wrd:Element ;
 	rdfs:label "Variation slot"@en ;
 	rdfs:comment "A position in a form that holds exactly one of several variants in any instance." ;
-	fnd:utility "Give the slot the shared object id (1.4) and a rank key. Its variants carry inclusion mode Variation and a lettered object id (1.4A), and no rank key: they are alternatives, not siblings. The slot's variants' conditions are checked as a set, no two overlapping and together covering every case (wording 0.3.0)." .
+	fnd:utility "Give the slot the shared object id (1.4) and a rank key. Its variants carry inclusion mode Variation and a lettered object id (1.4A), and no rank key: they are alternatives, not siblings. The slot's variants' conditions are checked as a set (§8)." .
 
 wrd:hasVariant a owl:ObjectProperty ;
 	rdfs:label "has variant"@en ;
@@ -279,10 +300,10 @@ wrd:hasVariant a owl:ObjectProperty ;
 	rdfs:comment "One of the slot's variants. A variant is part of the slot, so it is in the tree. Subject: a variation slot. Value: an element, the variant of no other slot." ;
 	fnd:utility "Assert wrd:hasVariant, not wrd:directlyComprises, from a slot to its variants. A reasoner derives the part-whole edge. Shapes read both." .
 
-wrd:variantOf a owl:ObjectProperty , owl:FunctionalProperty ;
+wrd:variantOf a owl:ObjectProperty ;
 	rdfs:label "variant of"@en ;
 	owl:inverseOf wrd:hasVariant ;
-	rdfs:comment "The slot an element is a variant of. Subject: an element. Value: a variation slot, at most one." .
+	rdfs:comment "The slot an element is a variant of. Subject: an element. Value: a variation slot, several only when they are versions of one slot (law W1)." .
 
 wrd:includedWhen a owl:ObjectProperty , owl:FunctionalProperty ;
 	rdfs:label "included when"@en ;
@@ -317,7 +338,7 @@ wrd:hasValue a owl:ObjectProperty , owl:InverseFunctionalProperty ;
 
 wrd:VariableValue a owl:Class ;
 	rdfs:label "Variable value"@en ;
-	rdfs:comment "An instance's value or values for one variable, and for one column when the variable is a table row's." ;
+	rdfs:comment "An instance's value or values for one variable, and for one entry when the variable is a table field's." ;
 	rdfs:subClassOf [ a owl:Restriction ; owl:onProperty wrd:forVariable ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ;
 	fnd:utility "Not a version: it is part of its assembled wording, and changes only with it." .
 
@@ -337,7 +358,54 @@ wrd:literalValue a owl:DatatypeProperty ;
 	rdfs:domain wrd:VariableValue ;
 	rdfs:comment "A value that is a literal: a number, a date, a string. Subject: a variable value. Value: a literal, several for a multi-valued variable." .
 
-wrd:forColumn a owl:ObjectProperty , owl:FunctionalProperty ;
-	rdfs:label "for column"@en ;
+wrd:forEntry a owl:ObjectProperty , owl:FunctionalProperty ;
+	rdfs:label "for entry"@en ;
 	rdfs:domain wrd:VariableValue ;
-	rdfs:comment "The column a table cell's value is for: a section, a party's occupancy, a study arm. Only for a table row's variable. Subject: a variable value. Value: any resource, at most one." .
+	rdfs:comment "The entry a table cell's value is for: a declared entry, or a section, a party's occupancy, a study arm. Only for a table field's variable. Subject: a variable value. Value: any resource, at most one." .
+
+wrd:Amendment a owl:Class ;
+	rdfs:subClassOf prov:Activity ;
+	rdfs:label "Amendment"@en ;
+	rdfs:comment "A change to the text of a wording, stated in a document." ;
+	fnd:utility "Record what it changed with wrd:amendsElement and every version it produced with prov:generated or wrd:replacement." .
+
+wrd:AmendmentOperation a owl:Class ;
+	rdfs:label "Amendment operation"@en ;
+	rdfs:comment "What an amendment does: Insert, Delete, Replace, Strike and substitute, or Append (wrd-voc)." .
+
+wrd:operation a owl:ObjectProperty , owl:FunctionalProperty ;
+	rdfs:label "operation"@en ;
+	rdfs:domain wrd:Amendment ; rdfs:range wrd:AmendmentOperation ;
+	rdfs:comment "What the amendment does. Subject: an amendment. Value: one of the five operations, exactly one." .
+
+wrd:amendsElement a owl:ObjectProperty , owl:FunctionalProperty ;
+	rdfs:label "amends element"@en ;
+	rdfs:subPropertyOf prov:used ;
+	rdfs:domain wrd:Amendment ; rdfs:range wrd:Element ;
+	rdfs:comment "The element version the amendment changed: the replaced or struck element, or the parent of an inserted or appended one. Subject: an amendment. Value: an element, exactly one." .
+
+wrd:replacement a owl:ObjectProperty , owl:FunctionalProperty ;
+	rdfs:label "replacement"@en ;
+	rdfs:subPropertyOf prov:generated ;
+	rdfs:domain wrd:Amendment ; rdfs:range wrd:Element ;
+	rdfs:comment "The new element of an insert, append or replace. Subject: an amendment. Value: an element, at most one." .
+
+wrd:struckText a owl:DatatypeProperty , owl:FunctionalProperty ;
+	rdfs:label "struck text"@en ;
+	rdfs:domain wrd:Amendment ; rdfs:range xsd:string ;
+	rdfs:comment "The words a strike and substitute removes. Subject: an amendment. Value: a string, at most one." .
+
+wrd:substitutedText a owl:DatatypeProperty , owl:FunctionalProperty ;
+	rdfs:label "substituted text"@en ;
+	rdfs:domain wrd:Amendment ; rdfs:range xsd:string ;
+	rdfs:comment "The words a strike and substitute puts in their place. Subject: an amendment. Value: a string, at most one." .
+
+wrd:expressedIn a owl:ObjectProperty , owl:FunctionalProperty ;
+	rdfs:label "expressed in"@en ;
+	rdfs:domain wrd:Amendment ; rdfs:range wrd:WordingNode ;
+	rdfs:comment "The part of the amending document that states the change. Subject: an amendment. Value: a wording node, exactly one." .
+
+wrd:placedUnder a owl:ObjectProperty , owl:FunctionalProperty ;
+	rdfs:label "placed under"@en ;
+	rdfs:domain wrd:Element ; rdfs:range wrd:Element ;
+	rdfs:comment "The library element an instance's own new element is presented under. Not a part-whole edge: the element's parent is the instance's assembled wording. Subject: an element. Value: an element, at most one." .

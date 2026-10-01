@@ -434,11 +434,30 @@ violation-level shapes are breaking under ADR-A113, so the README gains a Releas
   relation it states continues is `ins:Amendment`'s to say (`prov:wasRevisionOf` on stated
   meaning, CC-D12).
 
+**Agreed while writing the examples, 2026-10-02:**
+
+- **New elements in a library parent.** An element an instance adds is the instance's own, placed
+  with `wrd:placedUnder` the library element it was added to. Insert and Append into a library
+  parent generate only the child, never the parent's new version (C5-Q2c). An instance's
+  assembled wording `wrd:directlyComprises` its own bespoke elements.
+- **W5 accepts a revision.** An assembled wording that includes a revision of a mandatory child, in
+  place of the child, satisfies W5.
+- **W1 reads:** an element's parents are all versions of one parent, and its root is a version of
+  exactly one wording.
+- **CC-D6 amended: fields and entries.** A table's axes are its fields, always in the form, and its
+  entries, at the instance or in the form. Which is drawn as rows is presentation, stated by
+  `wrd:fieldsAs` (`wrd-voc:Rows`, `wrd-voc:Columns`). Breaking renames, folded into 0.3.0:
+  `wrd:Row` → `wrd:Field`, `wrd:rowKey` → `wrd:fieldKey`, `wrd:rowVariable` → `wrd:fieldVariable`,
+  `wrd:forColumn` → `wrd:forEntry`. New: `wrd:Entry ⊑ wrd:Element` with `wrd:entryKey`, for
+  entries the form fixes (sketch §4.3, kind 3).
+
 1. **Examples first (ADR-A-C2).** The human commits these before the model is written:
    - `facility-amendment.ttl`: an amendment letter that replaces clause 5.2's chosen variant text,
-     strikes "0.05%" for "0.10%" in clause 5.3, and appends a clause 12.2, giving a second
-     assembled facility version superseding the first
-   - `trial-protocol.ttl` gains a protocol amendment that inserts an assessment row
+     strikes "daily" for "on each business day" in clause 5.1, and appends a clause 12.2, giving a
+     second assembled facility version superseding the first
+   - `trial-protocol.ttl` gains a protocol amendment that inserts a week 24 field, the visit
+     window's bounds in full, the tables in fields and entries, and a kind 3 table
+     (`ex:responsibilities`) whose entries the form fixes
    - two endorsements stating the same change, both recorded, one resulting version (sketch §4.6)
    - the facility amendment revises library clause 5.2B, so it produces a bespoke element
      (C5-Q2c), and a draft release of the facility form adopts that revision as a third variant
@@ -446,19 +465,20 @@ violation-level shapes are breaking under ADR-A113, so the README gains a Releas
    - the baseline element type scheme gains Endorsement, which the examples use (C3-Q1)
 2. **Spec** (`wording` 0.3.0), sketch §4.6: `wrd:Amendment ⊑ prov:Activity`,
    `wrd:amendsElement`, `wrd:operation`, `wrd:replacement`, `wrd:struckText`, `wrd:substitutedText`,
-   `wrd:expressedIn`, each property stating its subject and value, with `wrd:amendsElement ⊑
+   `wrd:expressedIn`, `wrd:placedUnder`, and the table renames and terms above, each property stating its subject and value, with `wrd:amendsElement ⊑
    prov:used` and `wrd:replacement ⊑ prov:generated` (C5-Q2b). The legal effect is ADR-A104's
    `ins:Amendment` with `ins:textChanges`, built in C9.
-3. **Vocab** (`wording-vocab` 0.3.0) under C5-Q2.
+3. **Vocab** (`wording-vocab` 0.3.0): the operations under C5-Q2a, Endorsement, Rows and Columns.
 4. **Shapes** (`wording-shapes` 0.3.0): the C3 pattern for the new properties, and the laws:
-   - **W1**: from every element, `wrd:isDirectlyComprisedBy` (or `wrd:hasVariant` inverted) reaches
-     exactly one wording, with no cycle
+   - **W1**: an element's parents (`wrd:isDirectlyComprisedBy`, or `wrd:hasVariant` inverted) are all
+     versions of one parent, and its root is a version of exactly one wording, with no cycle
    - **W2**: a text's part indices run 0 to n−1 without gaps or repeats (the one-form half is C3's)
    - **W3**: a variant has mode Variation and is a slot's variant, and the reverse. An assembled
      wording that includes a slot includes exactly one of its variants
    - **W4**: only conditional elements and variants have an inclusion condition, and every
      condition of it reads a governing variable
-   - **W5**: an assembled wording includes every mandatory child of every element it includes
+   - **W5**: an assembled wording includes every mandatory child of every element it includes, or a
+     revision of it
    - **W6**: a value matches its variable: a concept is in the contract's bound scheme, a quantity is
      on the variable's value space, a numeric value lies within the admissible ranges, and a variable
      not multi-valued has one value per record
@@ -491,6 +511,8 @@ violation-level shapes are breaking under ADR-A113, so the README gains a Releas
 | C5-12 | the existing tool tests / unchanged / pass (non-weakening) | L1 | + |
 | C5-13 | an instance's amendment that generates a new version of a library element / shapes / reported (C5-Q2c) | L1 | − |
 | C5-14 | the draft form release / queried / its new variant is `prov:wasDerivedFrom` the bespoke element, which is `prov:wasRevisionOf` the library version | L1 | + |
+| C5-15 | a cell whose `wrd:forEntry` is a declared entry of another table, a `wrd:fieldsAs` outside Rows and Columns / shapes / reported | L1 | − |
+| C5-16 | the trial protocol / queried / every declared field and entry of the responsibilities table has one cell per assembled version | L1 | + |
 
 | Slice | Content | Version impact |
 |---|---|---|
@@ -853,7 +875,7 @@ None of these may be taken by the agent.
 | CC-D3 | Home of the LMA WIM profile | `applied/insurance/wording/` in LATTICE | **decided 2026-09-30** |
 | CC-D4 | Scope of A-113 | every 0.x layer | **decided 2026-09-30** |
 | CC-D5 | Templates in the substrate | yes | **decided 2026-09-30** |
-| CC-D6 | Table structure | rows in the wording, columns at the instance, cells as variable values | **decided 2026-09-30**, with long lists as multi-valued variables |
+| CC-D6 | Table structure | fields in the wording, entries at the instance or in the wording, in either orientation, cells as variable values | **decided 2026-09-30**, amended 2026-10-02 (fields and entries replace rows and columns, C5), with long lists as multi-valued variables |
 | CC-D7 | Clean-room examples | insurance examples allowed in the substrate beside other-domain ones | **decided 2026-09-30, amended** (below) |
 | CC-D8 | Gating by state, and the Behaviour and Instrument relationship | Behaviour below Instrument, split into configuration and runtime. Regimes and legal triggers specialise Behaviour (sketch §6.3, §7) | **decided 2026-10-01** (below) |
 | CC-D9 | Where identifiers live | Party | **decided 2026-09-30: Foundation**, slice F1 |

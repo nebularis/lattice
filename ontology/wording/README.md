@@ -18,9 +18,10 @@ decision 2).
 Wording imports Foundation, Vocabulary, Quantification and Eligibility, and is imported by
 Instrument. It names no term of a higher layer.
 
-This release (`0.2.0`) holds structure, text parts, references, document objects and variables
-(since `0.1.0`), and tables, assembly and the values an instance supplies. Amendments and the shapes
-for the layer's laws follow in `0.3.0` (the computable contract substrate plan, slice C5).
+This release (`0.3.0`) holds structure, text parts, references, document objects and variables
+(since `0.1.0`), tables, assembly and the values an instance supplies (since `0.2.0`), and textual
+amendments with the shapes for the layer's laws. Breaking changes are listed in the release notes
+(§10).
 
 ## 2. Namespace and prefixes
 
@@ -42,12 +43,13 @@ for the layer's laws follow in `0.3.0` (the computable contract substrate plan, 
 
 - `turtle-spec` blocks generate `spec/wording.ttl`.
 - `turtle-vocab` blocks generate `vocab/wording-vocab.ttl`.
-- `turtle-shapes` blocks generate `shapes/structural.ttl`.
+- `turtle-shapes` blocks generate, in order, `shapes/structural.ttl` (§7) and
+  `shapes/constraints.ttl` (§8).
 - `turtle-example` blocks are illustrative only. The worked examples live in `examples/`.
 
 ```bash
 python3 tools/literate_extract.py ontology/wording/README.md --layer wording --root . \
-    --shapes shapes/structural.ttl --check
+    --shapes shapes/structural.ttl shapes/constraints.ttl --check
 ```
 
 ## 4. Worked examples
@@ -58,8 +60,9 @@ Each file opens with its premise.
 | Example | Shows |
 |---|---|
 | [`facility-agreement.ttl`](examples/facility-agreement.ttl) | a wording tree ordered by rank key, a clause as five text parts with a reference to a definition and to a variable, an annex that refers to a scanned document |
-| [`trial-protocol.ttl`](examples/trial-protocol.ttl) | a schedule, an embedded variable with admissible values, a governing variable never shown in text, a reference to an external regulation, a clause classification, a table whose rows the form declares and whose columns (study arms) one trial supplies, and that trial's assembled protocol |
+| [`trial-protocol.ttl`](examples/trial-protocol.ttl) | a schedule, an embedded variable with admissible values, a governing variable never shown in text, a reference to an external regulation, a clause classification, a table whose fields the form declares and whose entries (study arms) one trial supplies, a table whose fields and entries the form both declares, that trial's assembled protocol, and an amendment inserting a field |
 | [`facility-form.ttl`](examples/facility-form.ttl) | a library form with a mandatory clause, a variation slot of two variants, an optional clause and a conditional clause reading a governing variable, and a facility assembled from it, with a multi-valued list of jurisdictions |
+| [`facility-amendment.ttl`](examples/facility-amendment.ttl) | an amendment letter that replaces, strikes and substitutes, and appends, producing the facility's own revisions of library clauses, the same change stated twice, and a draft release of the form adopting one revision as a new variant. Read with `facility-form.ttl` |
 
 Clause 4.1 of the facility agreement, "The Borrower shall pay interest at {margin} per annum", is
 five text parts:
@@ -79,7 +82,7 @@ ex:cl-4-1-p4 a wrd:TextPart ; wrd:partIndex 4 ; wrd:partText " per annum." .
 ```turtle-spec
 <https://www.nebularis.org/neuro-semantic/wording>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/wording/0.2.0> ;
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/wording/0.3.0> ;
 	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.3.0> ,
 				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.3.0> ,
 				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.5.0> ,
@@ -195,7 +198,7 @@ wrd:Text a owl:Class ;
 wrd:Table a owl:Class ;
 	rdfs:subClassOf wrd:Element ;
 	rdfs:label "Table"@en ;
-	rdfs:comment "An element whose content is rows and columns. Rows are declared in the wording, columns are supplied per instance." .
+	rdfs:comment "An element whose content is fields and entries, with a cell for each field and entry. Fields are declared in the wording, entries in the wording or per instance." .
 
 wrd:Variable a owl:Class ;
 	rdfs:subClassOf wrd:Element ;
@@ -213,7 +216,7 @@ wrd:Metadata a owl:Class ;
 	rdfs:comment "Descriptive or system metadata carried in the wording." .
 
 [] a owl:AllDisjointClasses ;
-	owl:members ( wrd:Text wrd:Table wrd:Variable wrd:Reference wrd:Metadata wrd:Row wrd:VariationSlot ) .
+	owl:members ( wrd:Text wrd:Table wrd:Variable wrd:Reference wrd:Metadata wrd:Field wrd:Entry wrd:VariationSlot ) .
 ```
 
 ### 5.7 Text parts
@@ -297,7 +300,8 @@ wrd:linksTo a owl:ObjectProperty ;
 	rdfs:comment "What a reference element points to. Subject: a reference element. Value: a reference target." .
 
 [] a owl:AllDisjointClasses ;
-	owl:members ( wrd:Wording wrd:Element wrd:TextPart wrd:DocumentObject wrd:ExternalDocument wrd:PopulationMethod wrd:InclusionMode wrd:VariableValue ) .
+	owl:members ( wrd:Wording wrd:Element wrd:TextPart wrd:DocumentObject wrd:ExternalDocument wrd:PopulationMethod wrd:InclusionMode wrd:VariableValue
+		wrd:FieldOrientation wrd:Amendment wrd:AmendmentOperation ) .
 ```
 
 ### 5.9 Variables
@@ -364,28 +368,50 @@ wrd:multiValued a owl:DatatypeProperty , owl:FunctionalProperty ;
 
 ### 5.10 Tables
 
-A table's rows are declared in the wording, each with what it means and the variable its cells
-take a value for. Its columns exist only in an instance: a section, a party's occupancy, a study
-arm, a lot. So a cell is the value of a row's variable for one column (§5.12), and one row yields
-one value per column. A long list whose rows are only values, such as a list of territories, is a
-multi-valued variable, not a table.
+A table has two axes. Its fields say what is recorded, and are always declared in the wording, each
+with what it means and the variable its cells take a value for. Its entries are what a value is
+recorded for: a section, a party's occupancy, a study arm, a lot, which exist only in an instance,
+or a fixed list the form declares itself, such as a list of duties. A cell is the value of a
+field's variable for one entry (§5.12), so one field yields one value per entry. Which axis is
+drawn as rows is presentation, stated by `wrd:fieldsAs`. A long list whose rows are only values,
+such as a list of territories, is a multi-valued variable, not a table.
 
 ```turtle-spec
-wrd:Row a owl:Class ;
+wrd:Field a owl:Class ;
 	rdfs:subClassOf wrd:Element ;
-	rdfs:label "Row"@en ;
-	rdfs:comment "A row of a table, declared in the wording." ;
-	fnd:utility "A table directly comprises its rows, in rank order. A row usually comprises its own variable too, so the variable has a place in the tree." .
+	rdfs:label "Field"@en ;
+	rdfs:comment "A field of a table, declared in the wording: what each entry records a value for." ;
+	fnd:utility "A table directly comprises its fields, in rank order. A field usually comprises its own variable too, so the variable has a place in the tree." .
 
-wrd:rowKey a owl:DatatypeProperty , owl:FunctionalProperty ;
-	rdfs:label "row key"@en ;
-	rdfs:domain wrd:Row ; rdfs:range xsd:string ;
-	rdfs:comment "What the row means, as its label reads: Maximum limits, Screening sample volume. Subject: a row. Value: a string, at most one." .
+wrd:fieldKey a owl:DatatypeProperty , owl:FunctionalProperty ;
+	rdfs:label "field key"@en ;
+	rdfs:domain wrd:Field ; rdfs:range xsd:string ;
+	rdfs:comment "What the field means, as its heading reads: Maximum limits, Screening sample volume. Subject: a field. Value: a string, at most one." .
 
-wrd:rowVariable a owl:ObjectProperty , owl:FunctionalProperty ;
-	rdfs:label "row variable"@en ;
-	rdfs:domain wrd:Row ; rdfs:range wrd:Variable ;
-	rdfs:comment "The variable every column supplies a value for in this row. Subject: a row. Value: a variable, exactly one." .
+wrd:fieldVariable a owl:ObjectProperty , owl:FunctionalProperty ;
+	rdfs:label "field variable"@en ;
+	rdfs:domain wrd:Field ; rdfs:range wrd:Variable ;
+	rdfs:comment "The variable every entry supplies a value for in this field. Subject: a field. Value: a variable, exactly one." .
+
+wrd:Entry a owl:Class ;
+	rdfs:subClassOf wrd:Element ;
+	rdfs:label "Entry"@en ;
+	rdfs:comment "An entry of a table that the wording declares, so every instance has it." ;
+	fnd:utility "Declare entries only when the form fixes them. Entries an instance supplies are not elements: a cell names them with wrd:forEntry." .
+
+wrd:entryKey a owl:DatatypeProperty , owl:FunctionalProperty ;
+	rdfs:label "entry key"@en ;
+	rdfs:domain wrd:Entry ; rdfs:range xsd:string ;
+	rdfs:comment "What the entry is, as its heading reads: Safety reporting. Subject: an entry. Value: a string, at most one." .
+
+wrd:FieldOrientation a owl:Class ;
+	rdfs:label "Field orientation"@en ;
+	rdfs:comment "Whether a table draws its fields as rows or as columns: Rows or Columns (wrd-voc)." .
+
+wrd:fieldsAs a owl:ObjectProperty , owl:FunctionalProperty ;
+	rdfs:label "fields as"@en ;
+	rdfs:domain wrd:Table ; rdfs:range wrd:FieldOrientation ;
+	rdfs:comment "Whether the table draws its fields as rows or as columns. Presentation only. Subject: a table. Value: a field orientation, at most one." .
 ```
 
 ### 5.11 Assembly
@@ -416,7 +442,7 @@ wrd:VariationSlot a owl:Class ;
 	rdfs:subClassOf wrd:Element ;
 	rdfs:label "Variation slot"@en ;
 	rdfs:comment "A position in a form that holds exactly one of several variants in any instance." ;
-	fnd:utility "Give the slot the shared object id (1.4) and a rank key. Its variants carry inclusion mode Variation and a lettered object id (1.4A), and no rank key: they are alternatives, not siblings. The slot's variants' conditions are checked as a set, no two overlapping and together covering every case (wording 0.3.0)." .
+	fnd:utility "Give the slot the shared object id (1.4) and a rank key. Its variants carry inclusion mode Variation and a lettered object id (1.4A), and no rank key: they are alternatives, not siblings. The slot's variants' conditions are checked as a set (§8)." .
 
 wrd:hasVariant a owl:ObjectProperty ;
 	rdfs:label "has variant"@en ;
@@ -425,10 +451,10 @@ wrd:hasVariant a owl:ObjectProperty ;
 	rdfs:comment "One of the slot's variants. A variant is part of the slot, so it is in the tree. Subject: a variation slot. Value: an element, the variant of no other slot." ;
 	fnd:utility "Assert wrd:hasVariant, not wrd:directlyComprises, from a slot to its variants. A reasoner derives the part-whole edge. Shapes read both." .
 
-wrd:variantOf a owl:ObjectProperty , owl:FunctionalProperty ;
+wrd:variantOf a owl:ObjectProperty ;
 	rdfs:label "variant of"@en ;
 	owl:inverseOf wrd:hasVariant ;
-	rdfs:comment "The slot an element is a variant of. Subject: an element. Value: a variation slot, at most one." .
+	rdfs:comment "The slot an element is a variant of. Subject: an element. Value: a variation slot, several only when they are versions of one slot (law W1)." .
 
 wrd:includedWhen a owl:ObjectProperty , owl:FunctionalProperty ;
 	rdfs:label "included when"@en ;
@@ -449,8 +475,8 @@ form at all. An instrument version is expressed in exactly one assembled wording
 ([ADR-A104](../../docs/architecture/decisions/ADR-A104-instrument-terms-and-legal-relations.md)).
 Library elements are included, not copied: many instances include the same element version.
 
-A variable value records an instance's value for one variable, and for one column when the
-variable is a table row's. A multi-valued variable's values all sit on its one value record, so a
+A variable value records an instance's value for one variable, and for one entry when the
+variable is a table field's. A multi-valued variable's values all sit on its one value record, so a
 single-valued variable is a variable whose record holds one value.
 
 ```turtle-spec
@@ -477,7 +503,7 @@ wrd:hasValue a owl:ObjectProperty , owl:InverseFunctionalProperty ;
 
 wrd:VariableValue a owl:Class ;
 	rdfs:label "Variable value"@en ;
-	rdfs:comment "An instance's value or values for one variable, and for one column when the variable is a table row's." ;
+	rdfs:comment "An instance's value or values for one variable, and for one entry when the variable is a table field's." ;
 	rdfs:subClassOf [ a owl:Restriction ; owl:onProperty wrd:forVariable ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ;
 	fnd:utility "Not a version: it is part of its assembled wording, and changes only with it." .
 
@@ -497,15 +523,85 @@ wrd:literalValue a owl:DatatypeProperty ;
 	rdfs:domain wrd:VariableValue ;
 	rdfs:comment "A value that is a literal: a number, a date, a string. Subject: a variable value. Value: a literal, several for a multi-valued variable." .
 
-wrd:forColumn a owl:ObjectProperty , owl:FunctionalProperty ;
-	rdfs:label "for column"@en ;
+wrd:forEntry a owl:ObjectProperty , owl:FunctionalProperty ;
+	rdfs:label "for entry"@en ;
 	rdfs:domain wrd:VariableValue ;
-	rdfs:comment "The column a table cell's value is for: a section, a party's occupancy, a study arm. Only for a table row's variable. Subject: a variable value. Value: any resource, at most one." .
+	rdfs:comment "The entry a table cell's value is for: a declared entry, or a section, a party's occupancy, a study arm. Only for a table field's variable. Subject: a variable value. Value: any resource, at most one." .
+```
+
+### 5.13 Amendments
+
+An amendment is a change to text, stated in a document: an endorsement, an amendment letter. Each
+records one of five operations, the element it changed (`wrd:amendsElement`, a `prov:used`) and
+every version it produced (`prov:generated`, with `wrd:replacement` for the new element of an
+insert, append or replace). Two documents stating the same change are two amendments generating
+the same version. What a change means in law is the Instrument layer's
+([ADR-A104](../../docs/architecture/decisions/ADR-A104-instrument-terms-and-legal-relations.md)).
+
+A library element is shared by every instance that includes it, so an instance's amendment never
+produces a new version of one. Amending a library element produces a bespoke element, with an
+identity of its own, `prov:wasRevisionOf` the library version, which the instance's new assembled
+wording includes in its place. A new element an instance adds to a library parent is likewise the
+instance's own, `wrd:placedUnder` that parent. The instance's assembled wording directly comprises
+its bespoke elements. Deleting a library element generates only the new assembled wording, which
+leaves it out.
+
+A revision may be proposed back to the library as a draft release of the form whose new element is
+`prov:wasDerivedFrom` the bespoke one. The release supersedes the library element, or turns it into
+a variation slot with the original and the revision as variants. It changes no existing instance.
+
+```turtle-spec
+wrd:Amendment a owl:Class ;
+	rdfs:subClassOf prov:Activity ;
+	rdfs:label "Amendment"@en ;
+	rdfs:comment "A change to the text of a wording, stated in a document." ;
+	fnd:utility "Record what it changed with wrd:amendsElement and every version it produced with prov:generated or wrd:replacement." .
+
+wrd:AmendmentOperation a owl:Class ;
+	rdfs:label "Amendment operation"@en ;
+	rdfs:comment "What an amendment does: Insert, Delete, Replace, Strike and substitute, or Append (wrd-voc)." .
+
+wrd:operation a owl:ObjectProperty , owl:FunctionalProperty ;
+	rdfs:label "operation"@en ;
+	rdfs:domain wrd:Amendment ; rdfs:range wrd:AmendmentOperation ;
+	rdfs:comment "What the amendment does. Subject: an amendment. Value: one of the five operations, exactly one." .
+
+wrd:amendsElement a owl:ObjectProperty , owl:FunctionalProperty ;
+	rdfs:label "amends element"@en ;
+	rdfs:subPropertyOf prov:used ;
+	rdfs:domain wrd:Amendment ; rdfs:range wrd:Element ;
+	rdfs:comment "The element version the amendment changed: the replaced or struck element, or the parent of an inserted or appended one. Subject: an amendment. Value: an element, exactly one." .
+
+wrd:replacement a owl:ObjectProperty , owl:FunctionalProperty ;
+	rdfs:label "replacement"@en ;
+	rdfs:subPropertyOf prov:generated ;
+	rdfs:domain wrd:Amendment ; rdfs:range wrd:Element ;
+	rdfs:comment "The new element of an insert, append or replace. Subject: an amendment. Value: an element, at most one." .
+
+wrd:struckText a owl:DatatypeProperty , owl:FunctionalProperty ;
+	rdfs:label "struck text"@en ;
+	rdfs:domain wrd:Amendment ; rdfs:range xsd:string ;
+	rdfs:comment "The words a strike and substitute removes. Subject: an amendment. Value: a string, at most one." .
+
+wrd:substitutedText a owl:DatatypeProperty , owl:FunctionalProperty ;
+	rdfs:label "substituted text"@en ;
+	rdfs:domain wrd:Amendment ; rdfs:range xsd:string ;
+	rdfs:comment "The words a strike and substitute puts in their place. Subject: an amendment. Value: a string, at most one." .
+
+wrd:expressedIn a owl:ObjectProperty , owl:FunctionalProperty ;
+	rdfs:label "expressed in"@en ;
+	rdfs:domain wrd:Amendment ; rdfs:range wrd:WordingNode ;
+	rdfs:comment "The part of the amending document that states the change. Subject: an amendment. Value: a wording node, exactly one." .
+
+wrd:placedUnder a owl:ObjectProperty , owl:FunctionalProperty ;
+	rdfs:label "placed under"@en ;
+	rdfs:domain wrd:Element ; rdfs:range wrd:Element ;
+	rdfs:comment "The library element an instance's own new element is presented under. Not a part-whole edge: the element's parent is the instance's assembled wording. Subject: an element. Value: an element, at most one." .
 ```
 
 ## 6. Vocabulary
 
-The inclusion modes and population methods are closed sets of named individuals. Three scheme
+The inclusion modes, population methods, amendment operations and field orientations are closed sets of named individuals. Three scheme
 contracts govern the typing properties. Element types have a baseline scheme bound
 as each contract's fallback. It holds every element type this layer's documentation and examples
 use, and is not closed: a deployment binds a scheme of its own, which may extend it, through a
@@ -523,8 +619,8 @@ use, and is not closed: a deployment binds a scheme of its own, which may extend
 
 <https://www.nebularis.org/neuro-semantic/wording-vocab>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/wording-vocab/0.2.0> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/wording/0.2.0> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/wording-vocab/0.3.0> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/wording/0.3.0> .
 
 wrd-voc:ElementTypeContract a voc:SchemeContract ;
 	fnd:hasIdentity wrd-voc:ElementTypeContract-identity ;
@@ -576,6 +672,12 @@ wrd-voc:Annex a skos:Concept ;
 	skos:prefLabel "Annex"@en ;
 	skos:altLabel "Appendix"@en ;
 	skos:definition "A part attached to the body of the wording, often referring to a document object."@en .
+
+wrd-voc:Endorsement a skos:Concept ;
+	skos:inScheme wrd-voc:ElementTypes ;
+	skos:prefLabel "Endorsement"@en ;
+	skos:altLabel "Amendment letter"@en ;
+	skos:definition "A document issued after a contract is made, stating changes to its wording."@en .
 
 # ---- Inclusion modes: a closed set -------------------------------------------
 
@@ -632,6 +734,44 @@ wrd-voc:FromAnotherVariable a owl:NamedIndividual , wrd:PopulationMethod ;
 	rdfs:label "From another variable"@en ;
 	rdfs:comment "Takes the value of the variable named by wrd:populatedFrom." .
 
+# ---- Amendment operations: a closed set ---------------------------------------
+
+wrd-voc:Insert a owl:NamedIndividual , wrd:AmendmentOperation ;
+	rdfs:label "Insert"@en ;
+	rdfs:comment "Adds a new element among the children of the amended element, at the rank key it carries." .
+
+wrd-voc:Append a owl:NamedIndividual , wrd:AmendmentOperation ;
+	rdfs:label "Append"@en ;
+	rdfs:comment "Adds a new element after the last child of the amended element." .
+
+wrd-voc:Replace a owl:NamedIndividual , wrd:AmendmentOperation ;
+	rdfs:label "Replace"@en ;
+	rdfs:comment "Puts a new element in the place of the amended one." .
+
+wrd-voc:StrikeAndSubstitute a owl:NamedIndividual , wrd:AmendmentOperation ;
+	rdfs:label "Strike and substitute"@en ;
+	rdfs:comment "Removes words from the amended text and puts others in their place, producing a new text version." .
+
+wrd-voc:Delete a owl:NamedIndividual , wrd:AmendmentOperation ;
+	rdfs:label "Delete"@en ;
+	rdfs:comment "Removes the amended element. In an instance, generates the new assembled wording that leaves it out." .
+
+[] a owl:AllDifferent ;
+	owl:distinctMembers ( wrd-voc:Insert wrd-voc:Append wrd-voc:Replace wrd-voc:StrikeAndSubstitute wrd-voc:Delete ) .
+
+# ---- Field orientations: a closed set -----------------------------------------
+
+wrd-voc:Rows a owl:NamedIndividual , wrd:FieldOrientation ;
+	rdfs:label "Fields as rows"@en ;
+	rdfs:comment "Each field is drawn as a row, each entry as a column." .
+
+wrd-voc:Columns a owl:NamedIndividual , wrd:FieldOrientation ;
+	rdfs:label "Fields as columns"@en ;
+	rdfs:comment "Each field is drawn as a column, each entry as a row." .
+
+[] a owl:AllDifferent ;
+	owl:distinctMembers ( wrd-voc:Rows wrd-voc:Columns ) .
+
 [] a owl:AllDifferent ;
 	owl:distinctMembers ( wrd-voc:FreeEntry wrd-voc:PickList wrd-voc:ReferenceTableLookup wrd-voc:TablePopulated
 		wrd-voc:SignatureProcess wrd-voc:DerivedByRule wrd-voc:DefaultedOverridable wrd-voc:FromAnotherVariable ) .
@@ -641,7 +781,7 @@ wrd-voc:FromAnotherVariable a owl:NamedIndividual , wrd:PopulationMethod ;
 
 The following shapes check the same intent in SHACL Core, with no reasoning. Validate with the spec in the data graph (or passed as the ontology graph), so that `sh:class` sees the subclass hierarchy.
 
-Each `…SubjectShape` checks that a property is used on the kind of node it belongs to. Each class shape checks the values and cardinalities on that kind of node. The laws W1 to W7 (a single tree, contiguous part indices, one variant per slot, mandatory parts included, values matching their declarations) are SHACL-SPARQL and follow in `0.3.0`. A slot asserts `wrd:hasVariant`, so the shapes check its variants on that property, without deriving `wrd:directlyComprises`.
+Each `…SubjectShape` checks that a property is used on the kind of node it belongs to. Each class shape checks the values and cardinalities on that kind of node. The laws are §8's. A slot asserts `wrd:hasVariant`, so the shapes check its variants on that property, without deriving `wrd:directlyComprises`.
 
 ```turtle-shapes
 @prefix wrd:  <https://www.nebularis.org/neuro-semantic/lattice/wording#> .
@@ -649,6 +789,7 @@ Each `…SubjectShape` checks that a property is used on the kind of node it bel
 @prefix qnt:  <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
 @prefix elg:  <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
 @prefix wrd-voc: <https://www.nebularis.org/neuro-semantic/lattice/wording/vocab#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
 @prefix sh:   <http://www.w3.org/ns/shacl#> .
 @prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
 
@@ -748,16 +889,35 @@ wrd:VariableShape a sh:NodeShape ;
 
 # ---- Tables -------------------------------------------------------------------
 
-wrd:RowSubjectShape a sh:NodeShape ;
-	sh:targetSubjectsOf wrd:rowKey , wrd:rowVariable ;
-	sh:class wrd:Row ;
-	sh:message "Only a row has a row key or a row variable." .
+wrd:FieldSubjectShape a sh:NodeShape ;
+	sh:targetSubjectsOf wrd:fieldKey , wrd:fieldVariable ;
+	sh:class wrd:Field ;
+	sh:message "Only a field has a field key or a field variable." .
 
-wrd:RowShape a sh:NodeShape ;
-	sh:targetClass wrd:Row ;
-	sh:property [ sh:path wrd:rowKey ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
-	sh:property [ sh:path wrd:rowVariable ; sh:minCount 1 ; sh:maxCount 1 ; sh:class wrd:Variable ;
-		sh:message "A row declares exactly one variable, which every column supplies a value for." ] .
+wrd:FieldShape a sh:NodeShape ;
+	sh:targetClass wrd:Field ;
+	sh:property [ sh:path wrd:fieldKey ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+	sh:property [ sh:path wrd:fieldVariable ; sh:minCount 1 ; sh:maxCount 1 ; sh:class wrd:Variable ;
+		sh:message "A field declares exactly one variable, which every entry supplies a value for." ] .
+
+wrd:EntrySubjectShape a sh:NodeShape ;
+	sh:targetSubjectsOf wrd:entryKey ;
+	sh:class wrd:Entry ;
+	sh:message "Only a declared entry has an entry key." .
+
+wrd:EntryShape a sh:NodeShape ;
+	sh:targetClass wrd:Entry ;
+	sh:property [ sh:path wrd:entryKey ; sh:maxCount 1 ; sh:datatype xsd:string ] .
+
+wrd:TableSubjectShape a sh:NodeShape ;
+	sh:targetSubjectsOf wrd:fieldsAs ;
+	sh:class wrd:Table ;
+	sh:message "Only a table draws its fields as rows or columns." .
+
+wrd:TableShape a sh:NodeShape ;
+	sh:targetClass wrd:Table ;
+	sh:property [ sh:path wrd:fieldsAs ; sh:maxCount 1 ; sh:in ( wrd-voc:Rows wrd-voc:Columns ) ;
+		sh:message "A table draws its fields as Rows or as Columns." ] .
 
 # ---- Assembly -----------------------------------------------------------------
 
@@ -771,9 +931,7 @@ wrd:AssemblyShape a sh:NodeShape ;
 	sh:property [ sh:path wrd:inclusionMode ; sh:maxCount 1 ;
 		sh:in ( wrd-voc:Mandatory wrd-voc:Variation wrd-voc:Optional wrd-voc:Conditional ) ;
 		sh:message "An element has at most one inclusion mode, one of the four." ] ;
-	sh:property [ sh:path wrd:includedWhen ; sh:maxCount 1 ; sh:class elg:AdmissionProfile ] ;
-	sh:property [ sh:path [ sh:inversePath wrd:hasVariant ] ; sh:maxCount 1 ;
-		sh:message "An element is the variant of at most one slot." ] .
+	sh:property [ sh:path wrd:includedWhen ; sh:maxCount 1 ; sh:class elg:AdmissionProfile ] .
 
 wrd:VariationSlotSubjectShape a sh:NodeShape ;
 	sh:targetSubjectsOf wrd:hasVariant ;
@@ -805,9 +963,9 @@ wrd:AssembledWordingShape a sh:NodeShape ;
 	sh:property [ sh:path wrd:hasValue ; sh:class wrd:VariableValue ] .
 
 wrd:VariableValueSubjectShape a sh:NodeShape ;
-	sh:targetSubjectsOf wrd:forVariable , wrd:value , wrd:literalValue , wrd:forColumn ;
+	sh:targetSubjectsOf wrd:forVariable , wrd:value , wrd:literalValue , wrd:forEntry ;
 	sh:class wrd:VariableValue ;
-	sh:message "Only a variable value has a variable, a value or a column." .
+	sh:message "Only a variable value has a variable, a value or an entry." .
 
 wrd:VariableValueShape a sh:NodeShape ;
 	sh:targetClass wrd:VariableValue ;
@@ -815,7 +973,7 @@ wrd:VariableValueShape a sh:NodeShape ;
 		sh:message "A variable value is for exactly one variable." ] ;
 	sh:property [ sh:path [ sh:inversePath wrd:hasValue ] ; sh:minCount 1 ; sh:maxCount 1 ;
 		sh:message "A variable value belongs to exactly one assembled wording." ] ;
-	sh:property [ sh:path wrd:forColumn ; sh:maxCount 1 ] ;
+	sh:property [ sh:path wrd:forEntry ; sh:maxCount 1 ] ;
 	sh:property [ sh:path wrd:value ; sh:nodeKind sh:BlankNodeOrIRI ] ;
 	sh:property [ sh:path wrd:literalValue ; sh:nodeKind sh:Literal ] ;
 	sh:or (
@@ -824,12 +982,426 @@ wrd:VariableValueShape a sh:NodeShape ;
 	) ;
 	sh:message "A variable value holds at least one value." .
 
-wrd:ForColumnShape a sh:NodeShape ;
-	sh:targetSubjectsOf wrd:forColumn ;
-	sh:property [ sh:path ( wrd:forVariable [ sh:inversePath wrd:rowVariable ] ) ; sh:minCount 1 ;
-		sh:message "A column applies only to a table row's variable." ] .
+wrd:ForEntryShape a sh:NodeShape ;
+	sh:targetSubjectsOf wrd:forEntry ;
+	sh:property [ sh:path ( wrd:forVariable [ sh:inversePath wrd:fieldVariable ] ) ; sh:minCount 1 ;
+		sh:message "An entry applies only to a table field's variable." ] .
+
+# ---- Amendments -----------------------------------------------------------------
+
+wrd:AmendmentSubjectShape a sh:NodeShape ;
+	sh:targetSubjectsOf wrd:operation , wrd:amendsElement , wrd:replacement , wrd:struckText ,
+		wrd:substitutedText , wrd:expressedIn ;
+	sh:class wrd:Amendment ;
+	sh:message "Only an amendment has an operation, an amended element, a replacement, struck or substituted text, or a statement." .
+
+wrd:AmendmentShape a sh:NodeShape ;
+	sh:targetClass wrd:Amendment ;
+	sh:property [ sh:path wrd:operation ; sh:minCount 1 ; sh:maxCount 1 ;
+		sh:in ( wrd-voc:Insert wrd-voc:Append wrd-voc:Replace wrd-voc:StrikeAndSubstitute wrd-voc:Delete ) ;
+		sh:message "An amendment has exactly one of the five operations." ] ;
+	sh:property [ sh:path wrd:amendsElement ; sh:minCount 1 ; sh:maxCount 1 ; sh:class wrd:Element ;
+		sh:message "An amendment changes exactly one element." ] ;
+	sh:property [ sh:path wrd:replacement ; sh:maxCount 1 ; sh:class wrd:Element ] ;
+	sh:property [ sh:path wrd:struckText ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+	sh:property [ sh:path wrd:substitutedText ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+	sh:property [ sh:path wrd:expressedIn ; sh:minCount 1 ; sh:maxCount 1 ; sh:class wrd:WordingNode ;
+		sh:message "An amendment is stated in exactly one part of a document." ] ;
+	sh:property [ sh:path [ sh:alternativePath ( wrd:replacement prov:generated ) ] ; sh:minCount 1 ;
+		sh:message "An amendment generates at least one version." ] .
+
+wrd:PlacedUnderShape a sh:NodeShape ;
+	sh:targetSubjectsOf wrd:placedUnder ;
+	sh:class wrd:Element ;
+	sh:property [ sh:path wrd:placedUnder ; sh:maxCount 1 ; sh:class wrd:Element ;
+		sh:message "An element is placed under at most one element." ] .
 ```
 
-## 8. Laws and how-to
+## 8. Laws
 
-The layer's laws (W1 to W7), their SHACL-SPARQL shapes and a how-to guide are added in `0.3.0`.
+A consumer without the LATTICE runtime checks a wording, and every instance assembled from it, with
+the shapes of §7 and these. They are SHACL-SPARQL, need no reasoning, and run with the spec in the
+data graph.
+
+| Law | Statement | Shape |
+|---|---|---|
+| W1 | An element's parents are all versions of one parent, and its root is a version of exactly one wording. No element comprises itself | `wrd:W1Shape` |
+| W2 | A text's part indices run 0 to n−1, without gaps or repeats. Each part takes one form (§7) | `wrd:W2Shape` |
+| W3 | A variant has mode Variation and is a slot's variant, and the reverse. An assembled wording that includes a slot includes exactly one of its variants, or a revision of one | `wrd:W3VariantShape`, `wrd:W3Shape`, `wrd:W3AssembledShape` |
+| W4 | Only conditional elements and variants have an inclusion condition, and every condition of it reads a governing variable | `wrd:W4Shape` |
+| W5 | An assembled wording includes every mandatory child of every element it includes, or a revision of it, unless a delete that generated it removed the child. Variables are declarations, shown by their values, and are not included | `wrd:W5Shape` |
+| W6 | A value matches its variable: a concept is in a scheme bound to the value contract, a quantity is on the value space, a number lies within the admissible values, and a variable not multi-valued has one value | `wrd:W6Shape` |
+| — | A cell's declared entry belongs to the table of the cell's field | `wrd:CellShape` |
+| W7 | Object ids are derived after assembly, never stored as identity | a design rule (§5.4) |
+
+**A slot's conditions** are checked as a set. Every variant's conditions read the same governing
+variables. Where each variant has one interval condition over the same governing variable, no two
+variants' ranges overlap, and together they cover the variable's admissible values (every value,
+when it declares none). Any other slot is reported, at severity Info, as unchecked. The reasoner's
+check of every kind of condition is the computable contract substrate plan's slice C13a.
+
+**Amendments** carry what each operation needs: an insert, append or replace a replacement, a strike
+and substitute both texts, a delete neither. An instance's amendment never generates a new version
+of a library element (§5.13).
+
+```turtle-shapes
+@prefix wrd:  <https://www.nebularis.org/neuro-semantic/lattice/wording#> .
+@prefix wrd-voc: <https://www.nebularis.org/neuro-semantic/lattice/wording/vocab#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+
+wrd:LawPrefixes
+	sh:declare [ sh:prefix "wrd" ; sh:namespace "https://www.nebularis.org/neuro-semantic/lattice/wording#"^^xsd:anyURI ] ,
+		[ sh:prefix "wrd-voc" ; sh:namespace "https://www.nebularis.org/neuro-semantic/lattice/wording/vocab#"^^xsd:anyURI ] ,
+		[ sh:prefix "fnd" ; sh:namespace "https://www.nebularis.org/neuro-semantic/lattice/foundation#"^^xsd:anyURI ] ,
+		[ sh:prefix "voc" ; sh:namespace "https://www.nebularis.org/neuro-semantic/lattice/vocabulary#"^^xsd:anyURI ] ,
+		[ sh:prefix "qnt" ; sh:namespace "https://www.nebularis.org/neuro-semantic/lattice/quantification#"^^xsd:anyURI ] ,
+		[ sh:prefix "elg" ; sh:namespace "https://www.nebularis.org/neuro-semantic/lattice/eligibility#"^^xsd:anyURI ] ,
+		[ sh:prefix "prov" ; sh:namespace "http://www.w3.org/ns/prov#"^^xsd:anyURI ] ,
+		[ sh:prefix "skos" ; sh:namespace "http://www.w3.org/2004/02/skos/core#"^^xsd:anyURI ] ,
+		[ sh:prefix "rdfs" ; sh:namespace "http://www.w3.org/2000/01/rdf-schema#"^^xsd:anyURI ] .
+
+# ---- W1: one tree -----------------------------------------------------------------
+
+wrd:W1Shape a sh:NodeShape ;
+	sh:targetClass wrd:Element ;
+	sh:sparql [ sh:prefixes wrd:LawPrefixes ;
+		sh:message "W1: an element's parents are versions of one parent." ;
+		sh:select """
+			SELECT $this ?value WHERE {
+				?p wrd:directlyComprises|wrd:hasVariant $this .
+				?value wrd:directlyComprises|wrd:hasVariant $this .
+				FILTER (?p != ?value)
+				FILTER NOT EXISTS { ?p fnd:hasIdentity ?i . ?value fnd:hasIdentity ?i }
+			}""" ] ;
+	sh:sparql [ sh:prefixes wrd:LawPrefixes ;
+		sh:message "W1: an element is in a wording's tree." ;
+		sh:select """
+			SELECT $this ?value WHERE {
+				$this ^(wrd:directlyComprises|wrd:hasVariant)* ?value .
+				FILTER NOT EXISTS { ?parent wrd:directlyComprises|wrd:hasVariant ?value }
+				FILTER NOT EXISTS { ?value a/rdfs:subClassOf* wrd:Wording }
+			}""" ] ;
+	sh:sparql [ sh:prefixes wrd:LawPrefixes ;
+		sh:message "W1: an element's root is a version of exactly one wording." ;
+		sh:select """
+			SELECT $this ?value WHERE {
+				$this ^(wrd:directlyComprises|wrd:hasVariant)+ ?root , ?value .
+				FILTER NOT EXISTS { ?a wrd:directlyComprises|wrd:hasVariant ?root }
+				FILTER NOT EXISTS { ?b wrd:directlyComprises|wrd:hasVariant ?value }
+				FILTER (STR(?root) < STR(?value))
+				FILTER NOT EXISTS { ?root fnd:hasIdentity ?i . ?value fnd:hasIdentity ?i }
+			}""" ] ;
+	sh:sparql [ sh:prefixes wrd:LawPrefixes ;
+		sh:message "W1: an element does not comprise itself." ;
+		sh:select """
+			SELECT $this WHERE { $this (wrd:directlyComprises|wrd:hasVariant)+ $this }""" ] .
+
+# ---- W2: part indices 0 to n-1 ------------------------------------------------------
+
+wrd:W2Shape a sh:NodeShape ;
+	sh:targetClass wrd:Text ;
+	sh:sparql [ sh:prefixes wrd:LawPrefixes ;
+		sh:message "W2: a text's part indices run from 0 without gaps or repeats." ;
+		sh:select """
+			SELECT $this ?value WHERE {
+				$this wrd:hasTextPart ?part . ?part wrd:partIndex ?value .
+				FILTER (EXISTS { $this wrd:hasTextPart ?other . ?other wrd:partIndex ?value . FILTER (?other != ?part) }
+					|| (?value > 0 && NOT EXISTS { $this wrd:hasTextPart/wrd:partIndex ?before . FILTER (?before = ?value - 1) }))
+			}""" ] .
+
+# ---- W3: variants -----------------------------------------------------------------
+
+wrd:W3VariantShape a sh:NodeShape ;
+	sh:targetObjectsOf wrd:hasVariant ;
+	sh:property [ sh:path wrd:inclusionMode ; sh:hasValue wrd-voc:Variation ;
+		sh:message "W3: a slot's variant has inclusion mode Variation." ] .
+
+wrd:W3Shape a sh:NodeShape ;
+	sh:targetClass wrd:Element ;
+	sh:sparql [ sh:prefixes wrd:LawPrefixes ;
+		sh:message "W3: an element of mode Variation is a slot's variant." ;
+		sh:select """
+			SELECT $this WHERE {
+				$this wrd:inclusionMode wrd-voc:Variation .
+				FILTER NOT EXISTS { ?slot wrd:hasVariant $this }
+			}""" ] .
+
+wrd:W3AssembledShape a sh:NodeShape ;
+	sh:targetClass wrd:AssembledWording ;
+	sh:sparql [ sh:prefixes wrd:LawPrefixes ;
+		sh:message "W3: an assembled wording includes one variant, or a revision of one, of every slot it includes." ;
+		sh:select """
+			SELECT $this ?value WHERE {
+				$this wrd:includes ?value . ?value wrd:hasVariant ?any .
+				FILTER NOT EXISTS { $this wrd:includes ?e . ?e prov:wasRevisionOf* ?v . ?value wrd:hasVariant ?v }
+			}""" ] ;
+	sh:sparql [ sh:prefixes wrd:LawPrefixes ;
+		sh:message "W3: an assembled wording includes no more than one variant of a slot." ;
+		sh:select """
+			SELECT DISTINCT $this ?value WHERE {
+				$this wrd:includes ?value , ?e1 , ?e2 .
+				?value wrd:hasVariant ?v1 , ?v2 .
+				?e1 prov:wasRevisionOf* ?v1 . ?e2 prov:wasRevisionOf* ?v2 .
+				FILTER (?e1 != ?e2)
+			}""" ] .
+
+# ---- W4: inclusion conditions -----------------------------------------------------
+
+wrd:W4Shape a sh:NodeShape ;
+	sh:targetClass wrd:Element ;
+	sh:sparql [ sh:prefixes wrd:LawPrefixes ;
+		sh:message "W4: only a conditional element or a variant has an inclusion condition." ;
+		sh:select """
+			SELECT $this ?value WHERE {
+				$this wrd:includedWhen ?value .
+				FILTER NOT EXISTS { $this wrd:inclusionMode ?m . FILTER (?m IN (wrd-voc:Conditional, wrd-voc:Variation)) }
+			}""" ] ;
+	sh:sparql [ sh:prefixes wrd:LawPrefixes ;
+		sh:message "W4: every condition of an inclusion condition reads a governing variable." ;
+		sh:select """
+			SELECT $this ?value WHERE {
+				$this wrd:includedWhen/elg:hasCondition ?value .
+				FILTER NOT EXISTS { ?value wrd:readsVariable ?g . ?g a/rdfs:subClassOf* wrd:GoverningVariable }
+			}""" ] .
+
+# ---- W5: mandatory parts ----------------------------------------------------------
+
+wrd:W5Shape a sh:NodeShape ;
+	sh:targetClass wrd:AssembledWording ;
+	sh:sparql [ sh:prefixes wrd:LawPrefixes ;
+		sh:message "W5: an assembled wording includes every mandatory child of an element it includes, or a revision of it." ;
+		sh:select """
+			SELECT $this ?value WHERE {
+				$this wrd:includes ?parent . ?parent wrd:directlyComprises ?value .
+				FILTER NOT EXISTS { ?value wrd:inclusionMode ?m . FILTER (?m != wrd-voc:Mandatory) }
+				FILTER NOT EXISTS { ?value a/rdfs:subClassOf* wrd:Variable }
+				FILTER NOT EXISTS { $this wrd:includes ?r . ?r prov:wasRevisionOf* ?value }
+				FILTER NOT EXISTS { ?a wrd:operation wrd-voc:Delete ; wrd:amendsElement ?value ; prov:generated $this }
+			}""" ] .
+
+# ---- W6: values match their variables ---------------------------------------------
+
+wrd:W6Shape a sh:NodeShape ;
+	sh:targetClass wrd:VariableValue ;
+	sh:sparql [ sh:prefixes wrd:LawPrefixes ;
+		sh:message "W6: a concept value is in a scheme bound to the variable's value contract." ;
+		sh:select """
+			SELECT $this ?value WHERE {
+				$this wrd:forVariable/wrd:valueContract ?contract ; wrd:value ?value .
+				FILTER NOT EXISTS {
+					{ ?contract voc:boundScheme ?scheme } UNION { ?binding voc:forContract ?contract ; voc:bindsScheme ?scheme }
+					?value skos:inScheme ?scheme }
+			}""" ] ;
+	sh:sparql [ sh:prefixes wrd:LawPrefixes ;
+		sh:message "W6: a quantity value is on the variable's value space." ;
+		sh:select """
+			SELECT $this ?value WHERE {
+				$this wrd:forVariable/wrd:valueSpace ?space ; wrd:value ?value .
+				?value qnt:onSpace ?other . FILTER (?other != ?space)
+			}""" ] ;
+	sh:sparql [ sh:prefixes wrd:LawPrefixes ;
+		sh:message "W6: a numeric value lies within the variable's admissible values." ;
+		sh:select """
+			SELECT $this ?value WHERE {
+				$this wrd:forVariable/wrd:admissibleValues ?set .
+				{ $this wrd:literalValue ?value } UNION { $this wrd:value/qnt:numericValue ?value }
+				FILTER (isNumeric(?value))
+				FILTER NOT EXISTS { ?set qnt:hasRange ?r .
+					FILTER NOT EXISTS { ?r qnt:lowerBound ?b . ?b qnt:boundValue/qnt:numericValue ?n .
+						FILTER (?value < ?n || (?value = ?n && NOT EXISTS { ?b qnt:boundClosure qnt:Closed })) }
+					FILTER NOT EXISTS { ?r qnt:upperBound ?b . ?b qnt:boundValue/qnt:numericValue ?n .
+						FILTER (?value > ?n || (?value = ?n && NOT EXISTS { ?b qnt:boundClosure qnt:Closed })) }
+				}
+			}""" ] ;
+	sh:sparql [ sh:prefixes wrd:LawPrefixes ;
+		sh:message "W6: a variable that is not multi-valued has one value." ;
+		sh:select """
+			SELECT DISTINCT $this WHERE {
+				$this wrd:forVariable ?variable ; wrd:value|wrd:literalValue ?a , ?b .
+				FILTER (?a != ?b)
+				FILTER NOT EXISTS { ?variable wrd:multiValued true }
+			}""" ] .
+
+# ---- Table cells --------------------------------------------------------------------
+
+wrd:CellShape a sh:NodeShape ;
+	sh:targetSubjectsOf wrd:forEntry ;
+	sh:sparql [ sh:prefixes wrd:LawPrefixes ;
+		sh:message "A cell's declared entry belongs to the table of the cell's field." ;
+		sh:select """
+			SELECT $this ?value WHERE {
+				$this wrd:forVariable ?variable ; wrd:forEntry ?value .
+				?value a wrd:Entry .
+				FILTER NOT EXISTS {
+					?field wrd:fieldVariable ?variable .
+					{ ?table wrd:directlyComprises ?field } UNION { ?field wrd:placedUnder ?table }
+					{ ?table wrd:directlyComprises ?value } UNION { ?value wrd:placedUnder ?table } }
+			}""" ] .
+
+# ---- A slot's conditions, as a set (C5-Q1) ----------------------------------------
+# ponytail: interval conditions over one governing variable only, by candidate points
+# (endpoints, a step either side, midpoints on dense spaces). The reasoner's check for
+# every kind of condition is slice C13a.
+
+wrd:SlotConditionsShape a sh:NodeShape ;
+	sh:targetClass wrd:VariationSlot ;
+	sh:sparql [ sh:prefixes wrd:LawPrefixes ;
+		sh:message "A slot's variants' conditions all read the same governing variables." ;
+		sh:select """
+			SELECT $this ?value WHERE {
+				$this wrd:hasVariant ?other , ?value .
+				?other wrd:includedWhen/elg:hasCondition/wrd:readsVariable ?g .
+				FILTER NOT EXISTS { ?value wrd:includedWhen/elg:hasCondition/wrd:readsVariable ?g }
+			}""" ] ;
+	sh:sparql [ sh:prefixes wrd:LawPrefixes ;
+		sh:message "Two variants of a slot can both apply: their ranges overlap." ;
+		sh:select """
+			SELECT DISTINCT $this ?value WHERE {
+				$this wrd:hasVariant/wrd:includedWhen/elg:hasCondition/wrd:readsVariable ?g .
+				FILTER NOT EXISTS { $this wrd:hasVariant ?v . FILTER NOT EXISTS { ?v wrd:includedWhen/elg:hasCondition ?c } }
+				FILTER NOT EXISTS { $this wrd:hasVariant/wrd:includedWhen/elg:hasCondition ?c .
+					FILTER NOT EXISTS { ?c a elg:IntervalCondition ; wrd:readsVariable ?g } }
+				FILTER NOT EXISTS { $this wrd:hasVariant/wrd:includedWhen ?p . ?p elg:hasCondition ?c1 , ?c2 . FILTER (?c1 != ?c2) }
+				$this wrd:hasVariant ?va , ?value . FILTER (STR(?va) < STR(?value))
+				?va wrd:includedWhen/elg:hasCondition/elg:requiredRangeSet/qnt:hasRange ?ra .
+				?value wrd:includedWhen/elg:hasCondition/elg:requiredRangeSet/qnt:hasRange ?rb .
+				{ ?ra (qnt:lowerBound|qnt:upperBound)/qnt:boundValue/qnt:numericValue ?e1 } UNION { ?rb (qnt:lowerBound|qnt:upperBound)/qnt:boundValue/qnt:numericValue ?e1 }
+				{ ?ra (qnt:lowerBound|qnt:upperBound)/qnt:boundValue/qnt:numericValue ?e2 } UNION { ?rb (qnt:lowerBound|qnt:upperBound)/qnt:boundValue/qnt:numericValue ?e2 }
+				OPTIONAL { ?g wrd:valueSpace/qnt:granularityFloor/qnt:numericValue ?grain }
+				BIND (COALESCE(?grain, 1) AS ?step)
+				BIND (EXISTS { ?g wrd:valueSpace/qnt:densityKind qnt:Discrete } AS ?discrete)
+				{ BIND (0 AS ?k) } UNION { BIND (1 AS ?k) } UNION { BIND (2 AS ?k) } UNION { BIND (3 AS ?k) }
+				FILTER (?k != 3 || !?discrete)
+				BIND (IF(?k = 0, ?e1, IF(?k = 1, ?e1 + ?step, IF(?k = 2, ?e1 - ?step, (?e1 + ?e2) / 2))) AS ?x)
+				FILTER NOT EXISTS { ?ra qnt:lowerBound ?b . ?b qnt:boundValue/qnt:numericValue ?n .
+					FILTER (?x < ?n || (?x = ?n && NOT EXISTS { ?b qnt:boundClosure qnt:Closed })) }
+				FILTER NOT EXISTS { ?ra qnt:upperBound ?b . ?b qnt:boundValue/qnt:numericValue ?n .
+					FILTER (?x > ?n || (?x = ?n && NOT EXISTS { ?b qnt:boundClosure qnt:Closed })) }
+				FILTER NOT EXISTS { ?rb qnt:lowerBound ?b . ?b qnt:boundValue/qnt:numericValue ?n .
+					FILTER (?x < ?n || (?x = ?n && NOT EXISTS { ?b qnt:boundClosure qnt:Closed })) }
+				FILTER NOT EXISTS { ?rb qnt:upperBound ?b . ?b qnt:boundValue/qnt:numericValue ?n .
+					FILTER (?x > ?n || (?x = ?n && NOT EXISTS { ?b qnt:boundClosure qnt:Closed })) }
+			}""" ] ;
+	sh:sparql [ sh:prefixes wrd:LawPrefixes ;
+		sh:message "No variant of a slot applies to some admissible value of its governing variable." ;
+		sh:select """
+			SELECT DISTINCT $this ?value WHERE {
+				$this wrd:hasVariant/wrd:includedWhen/elg:hasCondition/wrd:readsVariable ?g .
+				FILTER NOT EXISTS { $this wrd:hasVariant ?v . FILTER NOT EXISTS { ?v wrd:includedWhen/elg:hasCondition ?c } }
+				FILTER NOT EXISTS { $this wrd:hasVariant/wrd:includedWhen/elg:hasCondition ?c .
+					FILTER NOT EXISTS { ?c a elg:IntervalCondition ; wrd:readsVariable ?g } }
+				FILTER NOT EXISTS { $this wrd:hasVariant/wrd:includedWhen ?p . ?p elg:hasCondition ?c1 , ?c2 . FILTER (?c1 != ?c2) }
+				{ $this wrd:hasVariant/wrd:includedWhen/elg:hasCondition/elg:requiredRangeSet/qnt:hasRange ?r1 } UNION { ?g wrd:admissibleValues/qnt:hasRange ?r1 }
+				{ $this wrd:hasVariant/wrd:includedWhen/elg:hasCondition/elg:requiredRangeSet/qnt:hasRange ?r2 } UNION { ?g wrd:admissibleValues/qnt:hasRange ?r2 }
+				?r1 (qnt:lowerBound|qnt:upperBound)/qnt:boundValue/qnt:numericValue ?e1 . ?r2 (qnt:lowerBound|qnt:upperBound)/qnt:boundValue/qnt:numericValue ?e2 .
+				OPTIONAL { ?g wrd:valueSpace/qnt:granularityFloor/qnt:numericValue ?grain }
+				BIND (COALESCE(?grain, 1) AS ?step)
+				BIND (EXISTS { ?g wrd:valueSpace/qnt:densityKind qnt:Discrete } AS ?discrete)
+				{ BIND (0 AS ?k) } UNION { BIND (1 AS ?k) } UNION { BIND (2 AS ?k) } UNION { BIND (3 AS ?k) }
+				FILTER (?k != 3 || !?discrete)
+				BIND (IF(?k = 0, ?e1, IF(?k = 1, ?e1 + ?step, IF(?k = 2, ?e1 - ?step, (?e1 + ?e2) / 2))) AS ?x)
+				FILTER NOT EXISTS { ?g wrd:admissibleValues ?set . FILTER NOT EXISTS { ?set qnt:hasRange ?ar .
+					FILTER NOT EXISTS { ?ar qnt:lowerBound ?b . ?b qnt:boundValue/qnt:numericValue ?n .
+						FILTER (?x < ?n || (?x = ?n && NOT EXISTS { ?b qnt:boundClosure qnt:Closed })) }
+					FILTER NOT EXISTS { ?ar qnt:upperBound ?b . ?b qnt:boundValue/qnt:numericValue ?n .
+						FILTER (?x > ?n || (?x = ?n && NOT EXISTS { ?b qnt:boundClosure qnt:Closed })) }
+				} }
+				FILTER NOT EXISTS { $this wrd:hasVariant/wrd:includedWhen/elg:hasCondition/elg:requiredRangeSet/qnt:hasRange ?ur .
+					FILTER NOT EXISTS { ?ur qnt:lowerBound ?b . ?b qnt:boundValue/qnt:numericValue ?n .
+						FILTER (?x < ?n || (?x = ?n && NOT EXISTS { ?b qnt:boundClosure qnt:Closed })) }
+					FILTER NOT EXISTS { ?ur qnt:upperBound ?b . ?b qnt:boundValue/qnt:numericValue ?n .
+						FILTER (?x > ?n || (?x = ?n && NOT EXISTS { ?b qnt:boundClosure qnt:Closed })) }
+				}
+				BIND (?x AS ?value)
+			}""" ] .
+
+wrd:SlotUncheckedShape a sh:NodeShape ;
+	sh:targetClass wrd:VariationSlot ;
+	sh:severity sh:Info ;
+	sh:sparql [ sh:prefixes wrd:LawPrefixes ;
+		sh:message "Unchecked: this slot's conditions are not all interval conditions over one governing variable (slice C13a checks them)." ;
+		sh:select """
+			SELECT $this WHERE {
+				$this wrd:hasVariant/wrd:includedWhen ?profile .
+				FILTER NOT EXISTS {
+					$this wrd:hasVariant/wrd:includedWhen/elg:hasCondition/wrd:readsVariable ?g .
+					FILTER NOT EXISTS { $this wrd:hasVariant ?v . FILTER NOT EXISTS { ?v wrd:includedWhen/elg:hasCondition ?c } }
+					FILTER NOT EXISTS { $this wrd:hasVariant/wrd:includedWhen/elg:hasCondition ?c .
+						FILTER NOT EXISTS { ?c a elg:IntervalCondition ; wrd:readsVariable ?g } }
+					FILTER NOT EXISTS { $this wrd:hasVariant/wrd:includedWhen ?p . ?p elg:hasCondition ?c1 , ?c2 . FILTER (?c1 != ?c2) }
+				}
+			}""" ] .
+
+# ---- Amendments -------------------------------------------------------------------
+
+wrd:AmendmentOperationShape a sh:NodeShape ;
+	sh:targetClass wrd:Amendment ;
+	sh:sparql [ sh:prefixes wrd:LawPrefixes ;
+		sh:message "An insert, append or replace names its new element with wrd:replacement." ;
+		sh:select """
+			SELECT $this WHERE {
+				$this wrd:operation ?op . FILTER (?op IN (wrd-voc:Insert, wrd-voc:Append, wrd-voc:Replace))
+				FILTER NOT EXISTS { $this wrd:replacement ?new }
+			}""" ] ;
+	sh:sparql [ sh:prefixes wrd:LawPrefixes ;
+		sh:message "A strike and substitute states both the struck and the substituted text, and only it states either." ;
+		sh:select """
+			SELECT $this WHERE {
+				$this wrd:operation ?op .
+				BIND (EXISTS { $this wrd:struckText ?s } AS ?struck)
+				BIND (EXISTS { $this wrd:substitutedText ?t } AS ?substituted)
+				FILTER (IF(?op = wrd-voc:StrikeAndSubstitute, !(?struck && ?substituted), ?struck || ?substituted))
+			}""" ] ;
+	sh:sparql [ sh:prefixes wrd:LawPrefixes ;
+		sh:message "A delete or a strike and substitute has no replacement." ;
+		sh:select """
+			SELECT $this WHERE {
+				$this wrd:operation ?op ; wrd:replacement ?new .
+				FILTER (?op IN (wrd-voc:Delete, wrd-voc:StrikeAndSubstitute))
+			}""" ] ;
+	sh:sparql [ sh:prefixes wrd:LawPrefixes ;
+		sh:message "An instance's amendment generates no new version of a library element: amend it with a bespoke element instead." ;
+		sh:select """
+			SELECT DISTINCT $this ?value WHERE {
+				$this wrd:replacement|prov:generated ?value .
+				?value fnd:hasIdentity ?i . ?library fnd:hasIdentity ?i . FILTER (?library != ?value)
+				?form (wrd:directlyComprises|wrd:hasVariant)* ?library .
+				?form a/rdfs:subClassOf* wrd:Wording . FILTER NOT EXISTS { ?form a wrd:AssembledWording }
+				?instance (wrd:directlyComprises|wrd:hasVariant)* ?value . ?instance a wrd:AssembledWording .
+			}""" ] .
+```
+
+## 9. How-to
+
+**Author a form.** Make one `wrd:Wording` and its elements, each a `fnd:Version` with an identity
+and a governance state, joined by `wrd:directlyComprises` and ordered by rank key. Give each element
+its inclusion mode. For alternatives, add a `wrd:VariationSlot` carrying the shared number, with its
+variants under `wrd:hasVariant`. For a conditional part, give it `wrd:includedWhen` an admission
+profile whose conditions each read one governing variable (`facility-form.ttl`).
+
+**Assemble an instance.** Make a `wrd:AssembledWording`, `wrd:assembledFrom` the form, that
+`wrd:includes` every element version it uses: every mandatory child of what it includes, one variant
+of every slot, and the optional and conditional parts that apply. Record each value as a
+`wrd:VariableValue`, and each table cell as one for a field's variable and one entry.
+
+**Amend it.** Record each change as a `wrd:Amendment`, `wrd:expressedIn` the part of the amending
+document that states it. A change to a library element is a bespoke element `prov:wasRevisionOf`
+it. A new element is the instance's own, `wrd:placedUnder` the library element it joins. The
+instance's next assembled wording, with the same identity, directly comprises its bespoke elements,
+includes them in place of what they revise, and supersedes the last (`facility-amendment.ttl`).
+
+**Propose a revision upstream.** Draft a release of the form (`fnd:Draft`) whose new element is
+`prov:wasDerivedFrom` the bespoke one, as a new version of the library element or as a new variant
+of a slot. A steward finds every instance's revisions of a clause by `prov:wasRevisionOf`.
+
+## 10. Release notes
+
+Breaking versions at major version zero ([ADR-A113](../../docs/architecture/decisions/ADR-A113-breaking-changes-at-major-version-zero.md)):
+
+- 0.3.0 (breaking): tables take fields and entries in place of rows and columns (CC-D6 amended).
+  `wrd:Row`, `wrd:rowKey`, `wrd:rowVariable` and `wrd:forColumn` are renamed `wrd:Field`,
+  `wrd:fieldKey`, `wrd:fieldVariable` and `wrd:forEntry`. New: `wrd:Entry`, `wrd:entryKey`,
+  `wrd:fieldsAs`, amendments (§5.13) and `wrd:placedUnder`. `wrd:variantOf` is no longer functional,
+  since a variant may sit in several versions of one slot. Shapes 0.3.0 add the laws of §8, which
+  report data the 0.2.0 shapes accepted.

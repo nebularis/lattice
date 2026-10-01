@@ -170,7 +170,7 @@ L17).
 | `wim:rankKey`, `wim:objectId` | Wording | `wrd:rankKey`, `wrd:objectId` |
 | `wim:contractCategory`, `componentGroupType`, `componentType`, `elementType`, `clauseClassification`, `documentKind`, `applicableTo` | Wording | `wrd:elementType` (functional, every element and the root), `wrd:classification` (polyhierarchy), `wrd:documentKind`, `wrd:applicableTo`. Contracts unbound in the substrate |
 | `wim:Text`, `wim:Segment`, `segmentIndex`, `segmentText`, `refersToVariable`, `refersToObject` | Wording | `wrd:Text`, `wrd:TextPart`, `wrd:partIndex`, `wrd:partText`, `wrd:refersToVariable`, `wrd:refersToObject`. Renamed so that "segment" keeps its market meaning, a section of business (§5.10) |
-| `wim:Table` (dynamic, static) | Wording | `wrd:Table` with rows, columns and cells (§4.3, CC-D6) |
+| `wim:Table` (dynamic, static) | Wording | `wrd:Table` with fields, entries and cells (§4.3, CC-D6) |
 | `wim:Variable`, `EmbeddedVariable`, `GoverningVariable`, `variableKey`, `populationMethod`, `populatedFrom`, `valueContract`, `valueSpace`, `admissibleValues`, `multiValued` | Wording | same, `wrd:` |
 | `wim:Metadata`, `wim:Reference`, `wim:DocumentObject`, `wim:ExternalDocument`, `wim:linksTo` | Wording | same, `wrd:` |
 | `wim:InclusionMode`, `inclusionMode`, `VariationSlot`, `hasVariant`, `variantOf`, `includedWhen`, `readsVariable` | Wording | same, `wrd:` (assembly, §4.4) |
@@ -287,54 +287,64 @@ shape.
 
 ### 4.3 Tables
 
-Decided 2026-09-30 (CC-D6): **rows in the wording, columns at the instance, cells as variable
-values**, with long lists as multi-valued variables.
+Decided 2026-09-30 (CC-D6), amended 2026-10-02: **fields in the wording, entries at the instance or
+in the wording, in either orientation, cells as variable values**, with long lists as multi-valued
+variables.
 
-The collateral shows why. The Scope of Underwriting Authority base table fixes its rows in the
-standard form, each Mandatory, Optional or Conditional, while its columns are supplied per agreement:
-"Rows above this point will dictate the number of columns (or segments) required" (row 14). The
-Insurer Capacity Table has one column per insurer. Territory tables are long lists whose rows are
-just values.
+A table has two axes. Its **fields** say what is recorded and are always fixed by the form. Its
+**entries** are the things a value is recorded for. Which axis is drawn as rows is presentation, so
+the table states it with `wrd:fieldsAs`. The collateral has three kinds:
+
+| Kind | Fields | Entries | Example |
+|---|---|---|---|
+| 1 | in the form, drawn as rows | per agreement (segments, insurers) | Scope of Underwriting Authority, Insurer Capacity Table |
+| 2 | in the form, drawn as columns | per agreement | most tables in a word-processed form |
+| 3 | in the form | in the form | Coverholder Responsibilities: fixed duties, fixed headings, cells per agreement |
+
+The Scope of Underwriting Authority base table fixes its fields in the standard form, each
+Mandatory, Optional or Conditional, while its entries are supplied per agreement: "Rows above this
+point will dictate the number of columns (or segments) required" (row 14). Territory tables are
+long lists whose rows are just values.
 
 ```text
 wrd:Table        ⊑ wrd:Element
-wrd:Row          ⊑ wrd:Element     declared in the template, with inclusion modes, rank keys and
-                                   wrd:rowKey (the row's meaning, "Maximum Limits of Liability")
-  wrd:rowVariable  → wrd:Variable  the variable each column supplies a value for
+  wrd:fieldsAs     → wrd-voc:Rows or wrd-voc:Columns, presentation only
+wrd:Field        ⊑ wrd:Element     declared in the form, with inclusion modes, rank keys and
+                                   wrd:fieldKey (the field's meaning, "Maximum Limits of Liability")
+  wrd:fieldVariable → wrd:Variable the variable each entry supplies a value for
+wrd:Entry        ⊑ wrd:Element     an entry the form fixes (kind 3), with wrd:entryKey
 wrd:VariableValue (§4.5)
-  wrd:forColumn    → the column key: a section, an insurer's occupancy, a lot
-                                   so a cell is the value of a row's variable for one column
+  wrd:forEntry     → the entry: a declared wrd:Entry, or at the instance a section, an insurer's
+                                   occupancy, a lot. A cell is the value of a field's variable for
+                                   one entry
 long lists       a multi-valued wrd:Variable (a territory table), not a wrd:Table
 ```
 
 Rejected options, for the record: an opaque table whose cells are separately named variables (Open
-CBAA's `wim:Table` today, which cannot say "row X for every column"), rows and columns both as
-wording elements (treats instance columns as template text), and the whole table as one record-set
-value (loses optional and conditional rows). The constraint that must hold: a template parameter can
-bind "the value in this row for each column", so one row yields one parameter per column (S44).
-
-The rows, with their inclusion modes, belong to the standard form. The columns exist only in an
-instance: each cell is a `wrd:VariableValue` for the row's variable and one column key. A long list
-such as a territory table is one multi-valued variable, not a table.
+CBAA's `wim:Table` today, which cannot say "field X for every entry"), instance entries as wording
+elements (treats them as form text), the whole table as one record-set value (loses optional and
+conditional fields), and naming the axes rows and columns (fixes the presentation in the model,
+and kind 2 then reads back to front). The constraint that must hold: a template parameter can bind
+"the value in this field for each entry", so one field yields one parameter per entry (S44).
 
 ```mermaid
 flowchart TB
     subgraph FORM["In the standard form (the wording)"]
-        T["ex:soua<br/>a wrd:Table"]
-        R1["ex:row-limits<br/>a wrd:Row<br/>rowKey Maximum Limits of Liability<br/>inclusionMode Mandatory"]
-        R2["ex:row-territory<br/>a wrd:Row<br/>inclusionMode Optional"]
+        T["ex:soua<br/>a wrd:Table<br/>fieldsAs Rows"]
+        R1["ex:field-limits<br/>a wrd:Field<br/>fieldKey Maximum Limits of Liability<br/>inclusionMode Mandatory"]
+        R2["ex:field-territory<br/>a wrd:Field<br/>inclusionMode Optional"]
         V1["ex:var-limit<br/>a wrd:Variable"]
         V2["ex:var-territory<br/>a wrd:Variable<br/>multiValued true"]
         T -- "directlyComprises" --> R1
         T -- "directlyComprises" --> R2
-        R1 -- "rowVariable" --> V1
-        R2 -- "rowVariable" --> V2
+        R1 -- "fieldVariable" --> V1
+        R2 -- "fieldVariable" --> V2
     end
     subgraph INST["In one agreement (the assembled wording)"]
-        AW["ex:agreement-wording-v1<br/>a wrd:Wording"]
-        VA["ex:val-1<br/>a wrd:VariableValue<br/>value GBP 5,000,000<br/>forColumn Section A1"]
-        VB["ex:val-2<br/>a wrd:VariableValue<br/>value GBP 2,000,000<br/>forColumn Section B5"]
-        VC["ex:val-3<br/>a wrd:VariableValue<br/>values UK, IE, FR<br/>forColumn Section A1"]
+        AW["ex:agreement-wording-v1<br/>a wrd:AssembledWording"]
+        VA["ex:val-1<br/>a wrd:VariableValue<br/>value GBP 5,000,000<br/>forEntry Section A1"]
+        VB["ex:val-2<br/>a wrd:VariableValue<br/>value GBP 2,000,000<br/>forEntry Section B5"]
+        VC["ex:val-3<br/>a wrd:VariableValue<br/>values UK, IE, FR<br/>forEntry Section A1"]
         AW -- "hasValue" --> VA
         AW -- "hasValue" --> VB
         AW -- "hasValue" --> VC
@@ -345,6 +355,9 @@ flowchart TB
     style FORM fill:#BBDEFB
     style INST fill:#bcdee1
 ```
+
+For a kind 3 table the form's `wrd:Table` also comprises its `wrd:Entry` nodes, and each cell's
+`wrd:forEntry` names one of them (the responsibilities table in `trial-protocol.ttl`).
 
 ### 4.4 Assembly: variants and conditional clauses
 
@@ -2066,7 +2079,7 @@ item 4 and ADR-A86's closing paragraph already allow.
 | CC-D3 | Home of the LMA WIM profile (four levels, containment rules, LMA typing schemes) | `applied/insurance/wording/` in LATTICE, since it serves policies and agreements alike. Open CBAA imports it. Decided 2026-09-30 |
 | CC-D4 | Scope of A-113 | every layer at 0.x, not Instrument alone, since Behaviour and Wording need it too. Decided 2026-09-30 |
 | CC-D5 | Templates in the substrate | yes (§5.9). Decided 2026-09-30 |
-| CC-D6 | Table structure | decided 2026-09-30: rows in the wording, columns at the instance, cells as variable values, long lists as multi-valued variables (§4.3) |
+| CC-D6 | Table structure | decided 2026-09-30, amended 2026-10-02: fields in the wording, entries at the instance or in the wording, in either orientation, cells as variable values, long lists as multi-valued variables (§4.3) |
 | CC-D7 | Clean-room examples | decided 2026-09-30: insurance examples allowed in the substrate when every scenario also has an other-domain example and the insurance ones are not substantially more comprehensive. Previously proposed: neutral instruments E1 to E8 in the substrate, insurance renderings in AIR Phase 5 and Open CBAA |
 | CC-D8 | State gating and Behaviour | decided 2026-10-01: Behaviour moves below Instrument and splits into configuration and runtime. Instrument specialises it with `ins:Regime` (altLabel "Dispensation"), `ins:RegimeTransition` and legal triggers, enforced by SHACL with no runtime inference. Regimes come from a template library. Every state entry is recorded. Static parameters in Instrument, dynamic state in `capacity`. DP6 restated (§6.3) |
 | CC-Q1 | Does `ins:prevailsOver` need its own priority (a later statement overriding an earlier precedence clause, CBAA M12 12.7.1)? | carried to N10 |

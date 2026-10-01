@@ -4,7 +4,7 @@
 
 **Unit ID:** `computable-contract-substrate`
 **Status:** 🔨 In progress. Gate A passed. Tranche B and C briefed (C3, C10)
-**Last updated:** 2026-10-01
+**Last updated:** 2026-10-02
 **Plan:** [computable-contract-substrate.md](../plans/computable-contract-substrate.md)
 **Sketches:** [computable-contract-substrate.md](../sketches/computable-contract-substrate.md),
 [contract-amounts.md](../sketches/contract-amounts.md)
@@ -15,13 +15,12 @@
 
 Gate A passed on 2026-10-01. C3, C10, C4, C10a and C11 are merged to `main` (the last three
 squashed as `c9bfbea`) and tagged: Wording 0.2.0, Behaviour 0.9.0, shapes 0.3.0, the import guard
-in `mise run check`. C5 and C11a are briefed. From these slices on, the agent builds and verifies,
+in `mise run check`. C5 is built and C11a briefed. From these slices on, the agent builds and verifies,
 and the human commits by hand.
 
-**Next action, for the human:** commit the briefs, then create
-`ccs/c5-wording-laws` and `ccs/c11a-nested-states`.
-**Next action, for the agent:** C5's examples, then, once the human has committed them, its model.
-C11a's sketch and A-106 addendum. Both stop before committing.
+**Next action, for the human:** review and commit C5's model, then tag `wording-v0.3.0`,
+`wording-vocab-v0.3.0` and `wording-shapes-v0.3.0` after merging. **For the agent:** C11a phase 1,
+its sketch and the A-106 addendum, stopping before committing.
 
 ## Slice board
 
@@ -32,7 +31,7 @@ C11a's sketch and A-106 addendum. Both stop before committing.
 | C2 | A-106 | A | accepted | |
 | C3 | Wording spec, vocab and shapes | B | merged, tagged | |
 | C4 | Wording tables, assembly, variable values | B | merged, tagged | |
-| C5 | Wording amendments, law shapes, how-to | B | briefed, decided | branch |
+| C5 | Wording amendments, law shapes, how-to | B | built and verified, awaiting the human's commit | branch |
 | C10 | Behaviour split and layer flip | C | merged, tagged | |
 | C10a | import guard | C | merged | |
 | C11 | runtime records, occasions, initial states | C | merged, tagged | |
@@ -69,3 +68,5 @@ C11a's sketch and A-106 addendum. Both stop before committing.
 - 2026-10-01: C11 built and verified on `ccs/c11-runtime-records`: occasions, six record kinds, declared initial states, B6, B1 and I11 as shapes, 15 tests.
 - 2026-10-01: C4, C10a and C11 rebased into one chain, merged to `main` (squashed, `c9bfbea`) and tagged. C5 and C11a briefed, with Validation Pack skeletons. From here the human commits by hand.
 - 2026-10-02: C5 decided: SHACL-SPARQL slot checks for intervals now, the full reasoner check deferred to a new slice C13a (tranche E, before NRS N3, risk R9). Amendment operations closed, recorded with PROV, library elements amended in an instance as bespoke revisions, which a draft library release may adopt upstream as a new version or a variant.
+- 2026-10-02: C5 examples written and committed by the human (`9515254`), with rows and columns. The CC-D6 amendment followed in the working tree. Agreed with the human: `wrd:placedUnder` for an instance's new elements, W5 accepts a revision, W1 reworded. CC-D6 amended: tables in fields and entries with `wrd:fieldsAs`, replacing rows and columns, folded into wording 0.3.0. Sketch §4.3, A-112 and the C5 brief updated.
+- 2026-10-02: C5 model built: wording, wording-vocab and wording-shapes 0.3.0 (breaking), laws W1 to W6 and the slot range check in a new `shapes/constraints.ttl`, amendments, tables in fields and entries. `test_wording.py` 94 passed. Deviations in the Validation Pack. Not committed.

@@ -57,7 +57,7 @@ four instruments are in the [sketch](../../developer/sketches/computable-contrac
    | wordings and versioned elements in a tree, ordered by rank key, numbered by a derived object id | §4.1 |
    | content classes: text as ordered text parts (literal, variable reference, object reference), table, variable, reference, metadata | §4.1 |
    | variables, embedded and governing, with value contracts, spaces and admissible values | §4.2 |
-   | tables: rows in the wording, columns at the instance, long lists as multi-valued variables (CC-D6) | §4.3 |
+   | tables: fields in the wording, entries at the instance or in the wording, in either orientation, long lists as multi-valued variables (CC-D6, amended 2026-10-02) | §4.3 |
    | assembly: inclusion modes, variation slots, inclusion conditions over governing variables | §4.4 |
    | the assembled wording of an instance, with its variable values | §4.5 |
    | textual amendments | §4.6 |
