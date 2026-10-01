@@ -571,6 +571,21 @@ A new Wording layer (from Open CBAA's `wim:`), Instrument rewritten around terms
 relations, and Behaviour extended with occasions and records, tested against a package policy, an
 IUA binding authority and the Lloyd's CBAA.
 
+## 8.10 Word Authoring Proof of Concept — In progress
+
+| Field | Value |
+|-------|-------|
+| **Status** | � Decisions recorded 2026-10-01, WA0 preflight run. See the status record |
+| **Unit ID** | `word-authoring-poc` |
+| **Sketch** | [word-authoring-poc.md](sketches/word-authoring-poc.md) |
+| **Plan** | [word-authoring-poc.md](plans/word-authoring-poc.md) |
+| **Status Record** | [word-authoring-poc.md](status/word-authoring-poc.md) |
+| **ADRs** | A-114, Proposed |
+
+A Word add-in, loaded without installation, for writing wordings into templates with marked text
+parts, backed by a Java and Jena service and a Python Logical English job over RabbitMQ, run as a
+local compose stack.
+
 ## 8. Phase Handoff Documents (0-6)
 
 | Phase | Status Record | Key Outcome |
