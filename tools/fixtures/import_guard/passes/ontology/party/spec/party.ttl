@@ -1,0 +1,3 @@
+# SPDX-License-Identifier: MPL-2.0
+
+<https://example.org/party> a <http://www.w3.org/2002/07/owl#Ontology> ; <http://www.w3.org/2002/07/owl#imports> <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.3.0> .

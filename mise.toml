@@ -50,7 +50,7 @@ run = "corepack enable && yarn install --immutable"
 
 [tasks.check]
 description = "Run all repository validation tasks"
-depends = ["check:python-root", "check:workers", "check:java", "check:frontend", "check:spc", "check:persistence", "check:vocabulary", "check:mork-compilers", "check:ontology-versioning", "check:ontology-catalog", "check:reasoning-isolation", "check:minting", "build:mtp", "check:mtp"]
+depends = ["check:python-root", "check:workers", "check:java", "check:frontend", "check:spc", "check:persistence", "check:vocabulary", "check:mork-compilers", "check:ontology-versioning", "check:ontology-catalog", "check:import-guard", "check:reasoning-isolation", "check:minting", "build:mtp", "check:mtp"]
 
 [tasks.test]
 description = "Run the repository test suites"
@@ -148,13 +148,17 @@ run = "python tools/ontology_version_check.py && python tools/ontology_releases.
 description = "Add a row to docs/architecture/ontology-releases.md for each unreleased ontology version, and list the release tags a person must create (ADR-A86)"
 run = "python tools/ontology_releases.py write"
 
+[tasks."check:import-guard"]
+description = "Fail when a substrate layer imports or names a layer above it, or a sibling (ADR-A01 addendum, law B7)"
+run = "python tools/import_guard.py"
+
 [tasks."build:ontology-catalog"]
 description = "Regenerate ontology/catalog-v001.xml and the spec/vocab stub catalogs (ADR-A88)"
 run = "python tools/ontology_catalog.py write"
 
 [tasks."check:ontology-catalog"]
 description = "Run the ontology tool tests (catalog, versioning, Eligibility examples, PROV-O alignment, Wording, Behaviour split), then fail when a catalog drifts, an import does not resolve, or a known defect is fixed but still listed (ADR-A88)"
-run = "python -m pytest tools/test_applied_shared_contracts.py tools/test_eligibility_examples.py tools/test_mork_order_relations.py tools/test_ontology_catalog.py tools/test_ontology_releases.py tools/test_ontology_version_check.py tools/test_peril_vocabulary.py tools/test_provenance_alignment.py tools/test_reasoning_isolation.py tools/test_substrate_extensions.py tools/test_wording.py tools/test_behaviour_split.py -q && python tools/ontology_catalog.py check"
+run = "python -m pytest tools/test_applied_shared_contracts.py tools/test_eligibility_examples.py tools/test_mork_order_relations.py tools/test_ontology_catalog.py tools/test_ontology_releases.py tools/test_ontology_version_check.py tools/test_peril_vocabulary.py tools/test_provenance_alignment.py tools/test_reasoning_isolation.py tools/test_substrate_extensions.py tools/test_wording.py tools/test_behaviour_split.py tools/test_import_guard.py tools/test_behaviour_records.py -q && python tools/ontology_catalog.py check"
 
 [tasks."bootstrap:reasoning-testkit"]
 description = "Build the test-only reasoning harness jar (ADR-A83). Tests that need it skip without it"

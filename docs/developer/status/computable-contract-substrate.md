@@ -33,11 +33,11 @@ then create `ccs/c4-wording-assembly`, `ccs/c10a-import-guard` and `ccs/c11-runt
 | C1 | A-104 | A | accepted | |
 | C2 | A-106 | A | accepted | |
 | C3 | Wording spec, vocab and shapes | B | merged, tagged | |
-| C4 | Wording tables, assembly, variable values | B | briefed, decided | branch |
+| C4 | Wording tables, assembly, variable values | B | built, verified on `ccs/c4-wording-assembly` | human review, tags |
 | C5 | Wording amendments, law shapes, how-to | B | waiting | C4 |
 | C10 | Behaviour split and layer flip | C | merged, tagged | |
-| C10a | import guard | C | briefed, decided | branch |
-| C11 | runtime records, occasions, initial states | C | briefed, decided | branch |
+| C10a | import guard | C | built, verified on `ccs/c10a-import-guard` | human review |
+| C11 | runtime records, occasions, initial states | C | built, verified on `ccs/c11-runtime-records` | human review, tags |
 | C11a | nested states, history, concurrent regimes | C | waiting | C11 |
 | F1 | Foundation identifiers | Foundation window | waiting | AIR Phase 2 complete, with NRS N9 |
 | C6 to C9, C8a | Instrument rewrite, template library | D | waiting | C5, C10 |
@@ -65,3 +65,6 @@ then create `ccs/c4-wording-assembly`, `ccs/c10a-import-guard` and `ccs/c11-runt
 - 2026-10-01: C10 built and verified on `ccs/c10-behaviour-split`: Behaviour below Instrument, configuration and runtime 0.8.0, `bhv:targets`, vocab, shapes, projection and capacity bumps, 21 tests. C3 merged and tagged.
 - 2026-10-01: C10 merged and tagged, with neutral fixture targets and a README for `applied/capacity`. C4, C10a and C11 briefed with Validation Pack skeletons.
 - 2026-10-01: C4, C10a and C11 questions decided. C11-Q1 became a fixed occasion core refined by sub-states (C11a), and C11-Q2 declared initial states. CC-D3 confirmed. Open CBAA migration notes brought up to date in this plan's §7, the sketch §12.2, AIR-5.9 and Open CBAA's plan.
+- 2026-10-01: C4 built and verified on `ccs/c4-wording-assembly`: Wording, its vocab and shapes at 0.2.0, the facility form example, 15 tests.
+- 2026-10-01: C10a built and verified on `ccs/c10a-import-guard`: `check:import-guard`, part of `mise run check`, finds no violation today.
+- 2026-10-01: C11 built and verified on `ccs/c11-runtime-records`: occasions, six record kinds, declared initial states, B6, B1 and I11 as shapes, 15 tests.

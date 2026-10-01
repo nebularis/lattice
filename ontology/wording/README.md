@@ -18,9 +18,9 @@ decision 2).
 Wording imports Foundation, Vocabulary, Quantification and Eligibility, and is imported by
 Instrument. It names no term of a higher layer.
 
-This release (`0.1.0`) holds structure, text parts, references, document objects and variables.
-Tables, assembly and variable values follow in `0.2.0`, amendments and the shapes for the
-layer's laws in `0.3.0` (the computable contract substrate plan, slices C4 and C5).
+This release (`0.2.0`) holds structure, text parts, references, document objects and variables
+(since `0.1.0`), and tables, assembly and the values an instance supplies. Amendments and the shapes
+for the layer's laws follow in `0.3.0` (the computable contract substrate plan, slice C5).
 
 ## 2. Namespace and prefixes
 
@@ -29,6 +29,7 @@ layer's laws in `0.3.0` (the computable contract substrate plan, slices C4 and C
 @prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
 @prefix voc:  <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
 @prefix qnt:  <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
+@prefix elg:  <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
 @prefix prov: <http://www.w3.org/ns/prov#> .
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 @prefix owl:  <http://www.w3.org/2002/07/owl#> .
@@ -57,7 +58,8 @@ Each file opens with its premise.
 | Example | Shows |
 |---|---|
 | [`facility-agreement.ttl`](examples/facility-agreement.ttl) | a wording tree ordered by rank key, a clause as five text parts with a reference to a definition and to a variable, an annex that refers to a scanned document |
-| [`trial-protocol.ttl`](examples/trial-protocol.ttl) | a schedule, an embedded variable with admissible values, a governing variable never shown in text, a reference to an external regulation, a clause classification |
+| [`trial-protocol.ttl`](examples/trial-protocol.ttl) | a schedule, an embedded variable with admissible values, a governing variable never shown in text, a reference to an external regulation, a clause classification, a table whose rows the form declares and whose columns (study arms) one trial supplies, and that trial's assembled protocol |
+| [`facility-form.ttl`](examples/facility-form.ttl) | a library form with a mandatory clause, a variation slot of two variants, an optional clause and a conditional clause reading a governing variable, and a facility assembled from it, with a multi-valued list of jurisdictions |
 
 Clause 4.1 of the facility agreement, "The Borrower shall pay interest at {margin} per annum", is
 five text parts:
@@ -77,7 +79,7 @@ ex:cl-4-1-p4 a wrd:TextPart ; wrd:partIndex 4 ; wrd:partText " per annum." .
 ```turtle-spec
 <https://www.nebularis.org/neuro-semantic/wording>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/wording/0.1.0> ;
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/wording/0.2.0> ;
 	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.3.0> ,
 				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.3.0> ,
 				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.5.0> ,
@@ -211,7 +213,7 @@ wrd:Metadata a owl:Class ;
 	rdfs:comment "Descriptive or system metadata carried in the wording." .
 
 [] a owl:AllDisjointClasses ;
-	owl:members ( wrd:Text wrd:Table wrd:Variable wrd:Reference wrd:Metadata ) .
+	owl:members ( wrd:Text wrd:Table wrd:Variable wrd:Reference wrd:Metadata wrd:Row wrd:VariationSlot ) .
 ```
 
 ### 5.7 Text parts
@@ -295,7 +297,7 @@ wrd:linksTo a owl:ObjectProperty ;
 	rdfs:comment "What a reference element points to. Subject: a reference element. Value: a reference target." .
 
 [] a owl:AllDisjointClasses ;
-	owl:members ( wrd:Wording wrd:Element wrd:TextPart wrd:DocumentObject wrd:ExternalDocument wrd:PopulationMethod ) .
+	owl:members ( wrd:Wording wrd:Element wrd:TextPart wrd:DocumentObject wrd:ExternalDocument wrd:PopulationMethod wrd:InclusionMode wrd:VariableValue ) .
 ```
 
 ### 5.9 Variables
@@ -304,7 +306,7 @@ A variable declares a value an instance supplies. An embedded variable is shown 
 governing variable is never shown, and decides which parts of a library wording an instance
 includes. A value is a concept (drawn under a scheme contract), a quantity (in a value space,
 optionally within admissible ranges), a literal, a party or another instrument. The value itself
-is recorded per instance, from `0.2.0`.
+is recorded per instance (§5.12).
 
 ```turtle-spec
 wrd:EmbeddedVariable a owl:Class ;
@@ -360,9 +362,151 @@ wrd:multiValued a owl:DatatypeProperty , owl:FunctionalProperty ;
 	rdfs:comment "True when an instance may supply several values, as for a list of territories. Single-valued when absent. Subject: a variable. Value: a boolean, at most one." .
 ```
 
+### 5.10 Tables
+
+A table's rows are declared in the wording, each with what it means and the variable its cells
+take a value for. Its columns exist only in an instance: a section, a party's occupancy, a study
+arm, a lot. So a cell is the value of a row's variable for one column (§5.12), and one row yields
+one value per column. A long list whose rows are only values, such as a list of territories, is a
+multi-valued variable, not a table.
+
+```turtle-spec
+wrd:Row a owl:Class ;
+	rdfs:subClassOf wrd:Element ;
+	rdfs:label "Row"@en ;
+	rdfs:comment "A row of a table, declared in the wording." ;
+	fnd:utility "A table directly comprises its rows, in rank order. A row usually comprises its own variable too, so the variable has a place in the tree." .
+
+wrd:rowKey a owl:DatatypeProperty , owl:FunctionalProperty ;
+	rdfs:label "row key"@en ;
+	rdfs:domain wrd:Row ; rdfs:range xsd:string ;
+	rdfs:comment "What the row means, as its label reads: Maximum limits, Screening sample volume. Subject: a row. Value: a string, at most one." .
+
+wrd:rowVariable a owl:ObjectProperty , owl:FunctionalProperty ;
+	rdfs:label "row variable"@en ;
+	rdfs:domain wrd:Row ; rdfs:range wrd:Variable ;
+	rdfs:comment "The variable every column supplies a value for in this row. Subject: a row. Value: a variable, exactly one." .
+```
+
+### 5.11 Assembly
+
+Assembly happens at design time: an instance is drawn from a library form once, and its wording is
+then fixed. Nothing here is evaluated per event. Each element of a form comes into an instance in
+one of four ways, its inclusion mode: always (Mandatory, the default), as the one chosen variant
+of a variation slot (Variation), at the drafter's choice (Optional), or when an inclusion
+condition over the instance's governing variables holds (Conditional).
+
+A variation slot is an element in its own right, ranked among its siblings and carrying the number
+its variants share ("1.4"). Its variants sit beneath it, unranked, each lettered ("1.4A") in the
+form only. An instance includes exactly one of them, numbered as the slot. An inclusion condition is
+an Eligibility admission profile, each of whose conditions reads one governing variable. Assembly
+poses the instance's value for that variable as an `elg:Question`.
+
+```turtle-spec
+wrd:InclusionMode a owl:Class ;
+	rdfs:label "Inclusion mode"@en ;
+	rdfs:comment "How an element comes to be in an instance: Mandatory, Variation, Optional or Conditional (wrd-voc)." .
+
+wrd:inclusionMode a owl:ObjectProperty , owl:FunctionalProperty ;
+	rdfs:label "inclusion mode"@en ;
+	rdfs:domain wrd:Element ; rdfs:range wrd:InclusionMode ;
+	rdfs:comment "How the element comes to be in an instance. Mandatory when absent. Subject: an element. Value: one of the four inclusion modes, at most one." .
+
+wrd:VariationSlot a owl:Class ;
+	rdfs:subClassOf wrd:Element ;
+	rdfs:label "Variation slot"@en ;
+	rdfs:comment "A position in a form that holds exactly one of several variants in any instance." ;
+	fnd:utility "Give the slot the shared object id (1.4) and a rank key. Its variants carry inclusion mode Variation and a lettered object id (1.4A), and no rank key: they are alternatives, not siblings. The slot's variants' conditions are checked as a set, no two overlapping and together covering every case (wording 0.3.0)." .
+
+wrd:hasVariant a owl:ObjectProperty ;
+	rdfs:label "has variant"@en ;
+	rdfs:subPropertyOf wrd:directlyComprises ;
+	rdfs:domain wrd:VariationSlot ; rdfs:range wrd:Element ;
+	rdfs:comment "One of the slot's variants. A variant is part of the slot, so it is in the tree. Subject: a variation slot. Value: an element, the variant of no other slot." ;
+	fnd:utility "Assert wrd:hasVariant, not wrd:directlyComprises, from a slot to its variants. A reasoner derives the part-whole edge. Shapes read both." .
+
+wrd:variantOf a owl:ObjectProperty , owl:FunctionalProperty ;
+	rdfs:label "variant of"@en ;
+	owl:inverseOf wrd:hasVariant ;
+	rdfs:comment "The slot an element is a variant of. Subject: an element. Value: a variation slot, at most one." .
+
+wrd:includedWhen a owl:ObjectProperty , owl:FunctionalProperty ;
+	rdfs:label "included when"@en ;
+	rdfs:domain wrd:Element ; rdfs:range elg:AdmissionProfile ;
+	rdfs:comment "The inclusion condition of a conditional element or a variant, over the instance's governing variables. Subject: an element. Value: an admission profile, at most one." .
+
+wrd:readsVariable a owl:ObjectProperty , owl:FunctionalProperty ;
+	rdfs:label "reads variable"@en ;
+	rdfs:domain elg:Condition ; rdfs:range wrd:GoverningVariable ;
+	rdfs:comment "The governing variable whose instance value an inclusion condition is decided against. Subject: an Eligibility condition. Value: a governing variable, at most one." .
+```
+
+### 5.12 The assembled wording and its values
+
+An assembled wording is one instance's text: the elements it includes, and the values it supplies.
+It is asserted as such, never inferred, since a contract written from scratch is assembled from no
+form at all. An instrument version is expressed in exactly one assembled wording
+([ADR-A104](../../docs/architecture/decisions/ADR-A104-instrument-terms-and-legal-relations.md)).
+Library elements are included, not copied: many instances include the same element version.
+
+A variable value records an instance's value for one variable, and for one column when the
+variable is a table row's. A multi-valued variable's values all sit on its one value record, so a
+single-valued variable is a variable whose record holds one value.
+
+```turtle-spec
+wrd:AssembledWording a owl:Class ;
+	rdfs:subClassOf wrd:Wording ;
+	rdfs:label "Assembled wording"@en ;
+	rdfs:comment "The wording of one instance, drawn from forms or written for it alone." ;
+	fnd:utility "Assert it on every instance's wording. A wording not so typed is a library form. A changed instance text is a new assembled wording version with the same fnd:hasIdentity." .
+
+wrd:assembledFrom a owl:ObjectProperty ;
+	rdfs:label "assembled from"@en ;
+	rdfs:domain wrd:AssembledWording ; rdfs:range wrd:Wording ;
+	rdfs:comment "A library form the instance was drawn from. Subject: an assembled wording. Value: a wording, any number, none for a contract written from scratch." .
+
+wrd:includes a owl:ObjectProperty ;
+	rdfs:label "includes"@en ;
+	rdfs:domain wrd:AssembledWording ; rdfs:range wrd:Element ;
+	rdfs:comment "An element version the instance includes. Recorded at assembly, never recomputed. Subject: an assembled wording. Value: an element." .
+
+wrd:hasValue a owl:ObjectProperty , owl:InverseFunctionalProperty ;
+	rdfs:label "has value"@en ;
+	rdfs:domain wrd:AssembledWording ; rdfs:range wrd:VariableValue ;
+	rdfs:comment "A value the instance supplies. Each value record belongs to one assembled wording. Subject: an assembled wording. Value: a variable value." .
+
+wrd:VariableValue a owl:Class ;
+	rdfs:label "Variable value"@en ;
+	rdfs:comment "An instance's value or values for one variable, and for one column when the variable is a table row's." ;
+	rdfs:subClassOf [ a owl:Restriction ; owl:onProperty wrd:forVariable ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ;
+	fnd:utility "Not a version: it is part of its assembled wording, and changes only with it." .
+
+wrd:forVariable a owl:ObjectProperty , owl:FunctionalProperty ;
+	rdfs:label "for variable"@en ;
+	rdfs:domain wrd:VariableValue ; rdfs:range wrd:Variable ;
+	rdfs:comment "The variable the record supplies a value for. Subject: a variable value. Value: a variable, exactly one." .
+
+wrd:value a owl:ObjectProperty ;
+	rdfs:label "value"@en ;
+	rdfs:domain wrd:VariableValue ;
+	rdfs:comment "A value that is a resource: a concept, a quantity, a party's occupancy, an instrument. Subject: a variable value. Value: any resource, several for a multi-valued variable." ;
+	fnd:utility "Deliberately has no range: what a value is depends on the variable's declaration, which a shape checks (wording 0.3.0, law W6)." .
+
+wrd:literalValue a owl:DatatypeProperty ;
+	rdfs:label "literal value"@en ;
+	rdfs:domain wrd:VariableValue ;
+	rdfs:comment "A value that is a literal: a number, a date, a string. Subject: a variable value. Value: a literal, several for a multi-valued variable." .
+
+wrd:forColumn a owl:ObjectProperty , owl:FunctionalProperty ;
+	rdfs:label "for column"@en ;
+	rdfs:domain wrd:VariableValue ;
+	rdfs:comment "The column a table cell's value is for: a section, a party's occupancy, a study arm. Only for a table row's variable. Subject: a variable value. Value: any resource, at most one." .
+```
+
 ## 6. Vocabulary
 
-Three scheme contracts govern the typing properties. Element types have a baseline scheme bound
+The inclusion modes and population methods are closed sets of named individuals. Three scheme
+contracts govern the typing properties. Element types have a baseline scheme bound
 as each contract's fallback. It holds every element type this layer's documentation and examples
 use, and is not closed: a deployment binds a scheme of its own, which may extend it, through a
 `voc:SchemeBinding`. Classifications and document kinds have no baseline.
@@ -375,11 +519,12 @@ use, and is not closed: a deployment binds a scheme of its own, which may extend
 @prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
 @prefix owl:     <http://www.w3.org/2002/07/owl#> .
 @prefix rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
 
 <https://www.nebularis.org/neuro-semantic/wording-vocab>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/wording-vocab/0.1.0> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/wording/0.1.0> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/wording-vocab/0.2.0> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/wording/0.2.0> .
 
 wrd-voc:ElementTypeContract a voc:SchemeContract ;
 	fnd:hasIdentity wrd-voc:ElementTypeContract-identity ;
@@ -431,18 +576,79 @@ wrd-voc:Annex a skos:Concept ;
 	skos:prefLabel "Annex"@en ;
 	skos:altLabel "Appendix"@en ;
 	skos:definition "A part attached to the body of the wording, often referring to a document object."@en .
+
+# ---- Inclusion modes: a closed set -------------------------------------------
+
+wrd-voc:Mandatory a owl:NamedIndividual , wrd:InclusionMode ;
+	rdfs:label "Mandatory"@en ;
+	rdfs:comment "Always in an instance that includes its parent. The default when an element states no mode." .
+
+wrd-voc:Variation a owl:NamedIndividual , wrd:InclusionMode ;
+	rdfs:label "Variation"@en ;
+	rdfs:comment "One variant of a variation slot. An instance includes exactly one variant of each slot it includes." .
+
+wrd-voc:Optional a owl:NamedIndividual , wrd:InclusionMode ;
+	rdfs:label "Optional"@en ;
+	rdfs:comment "In an instance only when the drafter chooses it." .
+
+wrd-voc:Conditional a owl:NamedIndividual , wrd:InclusionMode ;
+	rdfs:label "Conditional"@en ;
+	rdfs:comment "In an instance only when its inclusion condition (wrd:includedWhen) holds over the instance's governing variables." .
+
+[] a owl:AllDifferent ;
+	owl:distinctMembers ( wrd-voc:Mandatory wrd-voc:Variation wrd-voc:Optional wrd-voc:Conditional ) .
+
+# ---- Population methods: a closed set ----------------------------------------
+
+wrd-voc:FreeEntry a owl:NamedIndividual , wrd:PopulationMethod ;
+	rdfs:label "Free entry"@en ;
+	rdfs:comment "Entered by the drafter, within the variable's value space and admissible values." .
+
+wrd-voc:PickList a owl:NamedIndividual , wrd:PopulationMethod ;
+	rdfs:label "Pick list"@en ;
+	rdfs:comment "Chosen from the concepts the variable's value contract allows." .
+
+wrd-voc:ReferenceTableLookup a owl:NamedIndividual , wrd:PopulationMethod ;
+	rdfs:label "Reference table lookup"@en ;
+	rdfs:comment "Looked up from reference data held outside the wording, such as a party register." .
+
+wrd-voc:TablePopulated a owl:NamedIndividual , wrd:PopulationMethod ;
+	rdfs:label "Populated from a table"@en ;
+	rdfs:comment "Filled from a table of the same wording." .
+
+wrd-voc:SignatureProcess a owl:NamedIndividual , wrd:PopulationMethod ;
+	rdfs:label "From the signature process"@en ;
+	rdfs:comment "Supplied when the instance is signed or accepted, such as the date of acceptance." .
+
+wrd-voc:DerivedByRule a owl:NamedIndividual , wrd:PopulationMethod ;
+	rdfs:label "Derived by rule"@en ;
+	rdfs:comment "Computed from other values by a declared rule." .
+
+wrd-voc:DefaultedOverridable a owl:NamedIndividual , wrd:PopulationMethod ;
+	rdfs:label "Defaulted, overridable"@en ;
+	rdfs:comment "Defaulted from other facts, and changeable by the drafter within the admissible values." .
+
+wrd-voc:FromAnotherVariable a owl:NamedIndividual , wrd:PopulationMethod ;
+	rdfs:label "From another variable"@en ;
+	rdfs:comment "Takes the value of the variable named by wrd:populatedFrom." .
+
+[] a owl:AllDifferent ;
+	owl:distinctMembers ( wrd-voc:FreeEntry wrd-voc:PickList wrd-voc:ReferenceTableLookup wrd-voc:TablePopulated
+		wrd-voc:SignatureProcess wrd-voc:DerivedByRule wrd-voc:DefaultedOverridable wrd-voc:FromAnotherVariable ) .
 ```
 
 ## 7. Shapes
 
 The following shapes check the same intent in SHACL Core, with no reasoning. Validate with the spec in the data graph (or passed as the ontology graph), so that `sh:class` sees the subclass hierarchy.
 
-Each `…SubjectShape` checks that a property is used on the kind of node it belongs to. Each class shape checks the values and cardinalities on that kind of node. The laws W1 to W7 (a single tree, contiguous part indices, assembly) are SHACL-SPARQL and follow in `0.3.0`.
+Each `…SubjectShape` checks that a property is used on the kind of node it belongs to. Each class shape checks the values and cardinalities on that kind of node. The laws W1 to W7 (a single tree, contiguous part indices, one variant per slot, mandatory parts included, values matching their declarations) are SHACL-SPARQL and follow in `0.3.0`. A slot asserts `wrd:hasVariant`, so the shapes check its variants on that property, without deriving `wrd:directlyComprises`.
 
 ```turtle-shapes
 @prefix wrd:  <https://www.nebularis.org/neuro-semantic/lattice/wording#> .
 @prefix voc:  <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
 @prefix qnt:  <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
+@prefix elg:  <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
+@prefix wrd-voc: <https://www.nebularis.org/neuro-semantic/lattice/wording/vocab#> .
 @prefix sh:   <http://www.w3.org/ns/shacl#> .
 @prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
 
@@ -539,6 +745,89 @@ wrd:VariableShape a sh:NodeShape ;
 	sh:property [ sh:path wrd:valueSpace ; sh:maxCount 1 ; sh:class qnt:ValueSpace ] ;
 	sh:property [ sh:path wrd:admissibleValues ; sh:class qnt:RangeSet ] ;
 	sh:property [ sh:path wrd:multiValued ; sh:maxCount 1 ; sh:datatype xsd:boolean ] .
+
+# ---- Tables -------------------------------------------------------------------
+
+wrd:RowSubjectShape a sh:NodeShape ;
+	sh:targetSubjectsOf wrd:rowKey , wrd:rowVariable ;
+	sh:class wrd:Row ;
+	sh:message "Only a row has a row key or a row variable." .
+
+wrd:RowShape a sh:NodeShape ;
+	sh:targetClass wrd:Row ;
+	sh:property [ sh:path wrd:rowKey ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+	sh:property [ sh:path wrd:rowVariable ; sh:minCount 1 ; sh:maxCount 1 ; sh:class wrd:Variable ;
+		sh:message "A row declares exactly one variable, which every column supplies a value for." ] .
+
+# ---- Assembly -----------------------------------------------------------------
+
+wrd:AssemblySubjectShape a sh:NodeShape ;
+	sh:targetSubjectsOf wrd:inclusionMode , wrd:includedWhen ;
+	sh:class wrd:Element ;
+	sh:message "Only an element has an inclusion mode or an inclusion condition." .
+
+wrd:AssemblyShape a sh:NodeShape ;
+	sh:targetClass wrd:Element ;
+	sh:property [ sh:path wrd:inclusionMode ; sh:maxCount 1 ;
+		sh:in ( wrd-voc:Mandatory wrd-voc:Variation wrd-voc:Optional wrd-voc:Conditional ) ;
+		sh:message "An element has at most one inclusion mode, one of the four." ] ;
+	sh:property [ sh:path wrd:includedWhen ; sh:maxCount 1 ; sh:class elg:AdmissionProfile ] ;
+	sh:property [ sh:path [ sh:inversePath wrd:hasVariant ] ; sh:maxCount 1 ;
+		sh:message "An element is the variant of at most one slot." ] .
+
+wrd:VariationSlotSubjectShape a sh:NodeShape ;
+	sh:targetSubjectsOf wrd:hasVariant ;
+	sh:class wrd:VariationSlot ;
+	sh:message "Only a variation slot has variants." .
+
+wrd:VariationSlotShape a sh:NodeShape ;
+	sh:targetClass wrd:VariationSlot ;
+	sh:property [ sh:path wrd:hasVariant ; sh:minCount 1 ; sh:class wrd:Element ;
+		sh:message "A variation slot has at least one variant, an element." ] .
+
+wrd:ReadsVariableSubjectShape a sh:NodeShape ;
+	sh:targetSubjectsOf wrd:readsVariable ;
+	sh:class elg:Condition ;
+	sh:property [ sh:path wrd:readsVariable ; sh:maxCount 1 ; sh:class wrd:GoverningVariable ;
+		sh:message "An inclusion condition reads at most one variable, a governing one." ] .
+
+# ---- The assembled wording and its values -------------------------------------
+
+wrd:AssembledWordingSubjectShape a sh:NodeShape ;
+	sh:targetSubjectsOf wrd:assembledFrom , wrd:includes , wrd:hasValue ;
+	sh:class wrd:AssembledWording ;
+	sh:message "Only an assembled wording is drawn from forms, includes elements or supplies values." .
+
+wrd:AssembledWordingShape a sh:NodeShape ;
+	sh:targetClass wrd:AssembledWording ;
+	sh:property [ sh:path wrd:assembledFrom ; sh:class wrd:Wording ] ;
+	sh:property [ sh:path wrd:includes ; sh:class wrd:Element ] ;
+	sh:property [ sh:path wrd:hasValue ; sh:class wrd:VariableValue ] .
+
+wrd:VariableValueSubjectShape a sh:NodeShape ;
+	sh:targetSubjectsOf wrd:forVariable , wrd:value , wrd:literalValue , wrd:forColumn ;
+	sh:class wrd:VariableValue ;
+	sh:message "Only a variable value has a variable, a value or a column." .
+
+wrd:VariableValueShape a sh:NodeShape ;
+	sh:targetClass wrd:VariableValue ;
+	sh:property [ sh:path wrd:forVariable ; sh:minCount 1 ; sh:maxCount 1 ; sh:class wrd:Variable ;
+		sh:message "A variable value is for exactly one variable." ] ;
+	sh:property [ sh:path [ sh:inversePath wrd:hasValue ] ; sh:minCount 1 ; sh:maxCount 1 ;
+		sh:message "A variable value belongs to exactly one assembled wording." ] ;
+	sh:property [ sh:path wrd:forColumn ; sh:maxCount 1 ] ;
+	sh:property [ sh:path wrd:value ; sh:nodeKind sh:BlankNodeOrIRI ] ;
+	sh:property [ sh:path wrd:literalValue ; sh:nodeKind sh:Literal ] ;
+	sh:or (
+		[ sh:path wrd:value ; sh:minCount 1 ]
+		[ sh:path wrd:literalValue ; sh:minCount 1 ]
+	) ;
+	sh:message "A variable value holds at least one value." .
+
+wrd:ForColumnShape a sh:NodeShape ;
+	sh:targetSubjectsOf wrd:forColumn ;
+	sh:property [ sh:path ( wrd:forVariable [ sh:inversePath wrd:rowVariable ] ) ; sh:minCount 1 ;
+		sh:message "A column applies only to a table row's variable." ] .
 ```
 
 ## 8. Laws and how-to

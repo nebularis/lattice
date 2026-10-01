@@ -23,7 +23,7 @@ The design, its principles, and laws, are located in [`docs/architecture-overvie
 | Part | Namespace | File | State |
 |---|---|---|---|
 | source ontology: arrangements, resources, demands, draws, dependencies, rules | `cap:` | `spec/capacity.ttl` | **designed, not authored** (architecture overview §"Proposed applied ontology") |
-| runtime execution profile | `capx:` | [`spec/applied_capacity_execution_spec_capx_Version2.ttl`](spec/applied_capacity_execution_spec_capx_Version2.ttl) | authored, `0.8.0` |
+| runtime execution profile | `capx:` | [`spec/applied_capacity_execution_spec_capx_Version2.ttl`](spec/applied_capacity_execution_spec_capx_Version2.ttl) | authored, `0.9.0` |
 
 The execution profile's `capx:projectsFrom…` properties range over `cap:` classes that no document
 declares yet. They resolve when the source ontology is authored.

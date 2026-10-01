@@ -1,0 +1,3 @@
+# SPDX-License-Identifier: MPL-2.0
+
+<https://example.org/shape> <http://www.w3.org/ns/shacl#targetClass> <https://www.nebularis.org/neuro-semantic/lattice/behaviour#StateOccupancy> .

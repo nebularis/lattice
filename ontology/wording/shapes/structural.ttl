@@ -3,6 +3,8 @@
 @prefix wrd:  <https://www.nebularis.org/neuro-semantic/lattice/wording#> .
 @prefix voc:  <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
 @prefix qnt:  <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
+@prefix elg:  <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
+@prefix wrd-voc: <https://www.nebularis.org/neuro-semantic/lattice/wording/vocab#> .
 @prefix sh:   <http://www.w3.org/ns/shacl#> .
 @prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
 
@@ -99,3 +101,86 @@ wrd:VariableShape a sh:NodeShape ;
 	sh:property [ sh:path wrd:valueSpace ; sh:maxCount 1 ; sh:class qnt:ValueSpace ] ;
 	sh:property [ sh:path wrd:admissibleValues ; sh:class qnt:RangeSet ] ;
 	sh:property [ sh:path wrd:multiValued ; sh:maxCount 1 ; sh:datatype xsd:boolean ] .
+
+# ---- Tables -------------------------------------------------------------------
+
+wrd:RowSubjectShape a sh:NodeShape ;
+	sh:targetSubjectsOf wrd:rowKey , wrd:rowVariable ;
+	sh:class wrd:Row ;
+	sh:message "Only a row has a row key or a row variable." .
+
+wrd:RowShape a sh:NodeShape ;
+	sh:targetClass wrd:Row ;
+	sh:property [ sh:path wrd:rowKey ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+	sh:property [ sh:path wrd:rowVariable ; sh:minCount 1 ; sh:maxCount 1 ; sh:class wrd:Variable ;
+		sh:message "A row declares exactly one variable, which every column supplies a value for." ] .
+
+# ---- Assembly -----------------------------------------------------------------
+
+wrd:AssemblySubjectShape a sh:NodeShape ;
+	sh:targetSubjectsOf wrd:inclusionMode , wrd:includedWhen ;
+	sh:class wrd:Element ;
+	sh:message "Only an element has an inclusion mode or an inclusion condition." .
+
+wrd:AssemblyShape a sh:NodeShape ;
+	sh:targetClass wrd:Element ;
+	sh:property [ sh:path wrd:inclusionMode ; sh:maxCount 1 ;
+		sh:in ( wrd-voc:Mandatory wrd-voc:Variation wrd-voc:Optional wrd-voc:Conditional ) ;
+		sh:message "An element has at most one inclusion mode, one of the four." ] ;
+	sh:property [ sh:path wrd:includedWhen ; sh:maxCount 1 ; sh:class elg:AdmissionProfile ] ;
+	sh:property [ sh:path [ sh:inversePath wrd:hasVariant ] ; sh:maxCount 1 ;
+		sh:message "An element is the variant of at most one slot." ] .
+
+wrd:VariationSlotSubjectShape a sh:NodeShape ;
+	sh:targetSubjectsOf wrd:hasVariant ;
+	sh:class wrd:VariationSlot ;
+	sh:message "Only a variation slot has variants." .
+
+wrd:VariationSlotShape a sh:NodeShape ;
+	sh:targetClass wrd:VariationSlot ;
+	sh:property [ sh:path wrd:hasVariant ; sh:minCount 1 ; sh:class wrd:Element ;
+		sh:message "A variation slot has at least one variant, an element." ] .
+
+wrd:ReadsVariableSubjectShape a sh:NodeShape ;
+	sh:targetSubjectsOf wrd:readsVariable ;
+	sh:class elg:Condition ;
+	sh:property [ sh:path wrd:readsVariable ; sh:maxCount 1 ; sh:class wrd:GoverningVariable ;
+		sh:message "An inclusion condition reads at most one variable, a governing one." ] .
+
+# ---- The assembled wording and its values -------------------------------------
+
+wrd:AssembledWordingSubjectShape a sh:NodeShape ;
+	sh:targetSubjectsOf wrd:assembledFrom , wrd:includes , wrd:hasValue ;
+	sh:class wrd:AssembledWording ;
+	sh:message "Only an assembled wording is drawn from forms, includes elements or supplies values." .
+
+wrd:AssembledWordingShape a sh:NodeShape ;
+	sh:targetClass wrd:AssembledWording ;
+	sh:property [ sh:path wrd:assembledFrom ; sh:class wrd:Wording ] ;
+	sh:property [ sh:path wrd:includes ; sh:class wrd:Element ] ;
+	sh:property [ sh:path wrd:hasValue ; sh:class wrd:VariableValue ] .
+
+wrd:VariableValueSubjectShape a sh:NodeShape ;
+	sh:targetSubjectsOf wrd:forVariable , wrd:value , wrd:literalValue , wrd:forColumn ;
+	sh:class wrd:VariableValue ;
+	sh:message "Only a variable value has a variable, a value or a column." .
+
+wrd:VariableValueShape a sh:NodeShape ;
+	sh:targetClass wrd:VariableValue ;
+	sh:property [ sh:path wrd:forVariable ; sh:minCount 1 ; sh:maxCount 1 ; sh:class wrd:Variable ;
+		sh:message "A variable value is for exactly one variable." ] ;
+	sh:property [ sh:path [ sh:inversePath wrd:hasValue ] ; sh:minCount 1 ; sh:maxCount 1 ;
+		sh:message "A variable value belongs to exactly one assembled wording." ] ;
+	sh:property [ sh:path wrd:forColumn ; sh:maxCount 1 ] ;
+	sh:property [ sh:path wrd:value ; sh:nodeKind sh:BlankNodeOrIRI ] ;
+	sh:property [ sh:path wrd:literalValue ; sh:nodeKind sh:Literal ] ;
+	sh:or (
+		[ sh:path wrd:value ; sh:minCount 1 ]
+		[ sh:path wrd:literalValue ; sh:minCount 1 ]
+	) ;
+	sh:message "A variable value holds at least one value." .
+
+wrd:ForColumnShape a sh:NodeShape ;
+	sh:targetSubjectsOf wrd:forColumn ;
+	sh:property [ sh:path ( wrd:forVariable [ sh:inversePath wrd:rowVariable ] ) ; sh:minCount 1 ;
+		sh:message "A column applies only to a table row's variable." ] .

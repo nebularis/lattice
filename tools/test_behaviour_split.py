@@ -76,7 +76,7 @@ def test_c10_01_imports() -> None:
     config, runtime = _graph(CONFIG), _graph(RUNTIME)
     assert set(config.objects(None, OWL.imports)) == {URIRef(LATTICE + f"{layer}") for layer in (
         "foundation/0.3.0", "vocabulary/0.3.0", "quantification/0.5.0", "party/0.5.0", "eligibility/0.7.0")}
-    assert set(runtime.objects(None, OWL.imports)) == {URIRef(LATTICE + "behaviour/0.8.0")}
+    assert {str(i).rsplit("/", 1)[0] for i in runtime.objects(None, OWL.imports)} == {LATTICE + "behaviour"}
 
 
 def test_c10_02_names_no_instrument_term() -> None:
@@ -97,7 +97,8 @@ def test_c10_03_no_range(prop: str) -> None:
 
 def test_c10_04_each_tier_in_one_document() -> None:
     assert _declared_classes(CONFIG) == DECLARATION
-    assert _declared_classes(RUNTIME) == RUNTIME_TIERS
+    runtime = _declared_classes(RUNTIME)
+    assert RUNTIME_TIERS <= runtime and not runtime & DECLARATION  # C11 adds occasions and records
 
 
 # ---- C10-05 to C10-08: shapes -------------------------------------------------

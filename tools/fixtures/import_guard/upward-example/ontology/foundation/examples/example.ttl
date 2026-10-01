@@ -1,0 +1,3 @@
+# SPDX-License-Identifier: MPL-2.0
+
+<https://example.org/x> a <https://www.nebularis.org/neuro-semantic/lattice/applied/capacity/execution#ExecutableResource> .

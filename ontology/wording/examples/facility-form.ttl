@@ -1,0 +1,173 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Premise. A lender publishes one facility form and draws every facility from
+# it. Some clauses appear in every facility, some offer alternatives of which
+# exactly one is chosen, some are added only when asked for, and some appear
+# only when the facility's particulars call for them. Once drawn, a facility's
+# text is fixed, with the values its particulars supplied.
+#
+# The form:
+#
+# | Clause | Inclusion | Text |
+# |--------|-----------|------|
+# | 5.1    | mandatory | interest accrues daily |
+# | 5.2    | a slot of two variants, 5.2A and 5.2B | interest periods of one month, or of three months |
+# | 5.3    | optional  | the margin steps down if a sustainability target is met |
+# | 9.1    | conditional, when there is more than one lender | the agent acts for the lenders |
+# | 12.1   | mandatory | the borrower may operate in {permitted jurisdictions}, a list |
+#
+# The facility for Acme chooses three-month periods (5.2B), declines the
+# ratchet (5.3), has three lenders, so the agent clause (9.1) applies, and
+# lists three jurisdictions. Its assembled wording records what it includes
+# and the values supplied. The slot holds the number 5.2: the facility shows
+# its chosen variant as 5.2, and the letters exist only in the form.
+
+@prefix wrd:     <https://www.nebularis.org/neuro-semantic/lattice/wording#> .
+@prefix wrd-voc: <https://www.nebularis.org/neuro-semantic/lattice/wording/vocab#> .
+@prefix fnd:     <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix voc:     <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
+@prefix qnt:     <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
+@prefix elg:     <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
+@prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex:      <https://example.org/lattice/wording/facility-form/> .
+
+# ---- The library form --------------------------------------------------------
+
+ex:form a wrd:Wording ;
+    fnd:hasIdentity ex:form-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    wrd:directlyComprises ex:sec-5 , ex:sec-9 , ex:sec-12 , ex:gv-lender-count .
+
+ex:sec-5 a wrd:Element ;
+    fnd:hasIdentity ex:sec-5-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Section ; wrd:objectId "5" ; wrd:rankKey "e0" ;
+    wrd:directlyComprises ex:cl-5-1 , ex:slot-5-2 , ex:cl-5-3 .
+
+ex:cl-5-1 a wrd:Text ;
+    fnd:hasIdentity ex:cl-5-1-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "5.1" ; wrd:rankKey "a0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ; wrd:partText "Interest accrues daily on each loan." ] .
+
+# A slot: an element, ranked among its siblings, holding the shared number.
+# Its variants sit beneath it, unranked, lettered only here in the form.
+ex:slot-5-2 a wrd:VariationSlot ;
+    fnd:hasIdentity ex:slot-5-2-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "5.2" ; wrd:rankKey "b0" ;
+    wrd:hasVariant ex:cl-5-2a , ex:cl-5-2b .
+
+ex:cl-5-2a a wrd:Text ;
+    fnd:hasIdentity ex:cl-5-2a-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "5.2A" ;
+    wrd:inclusionMode wrd-voc:Variation ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ; wrd:partText "Each interest period is one month." ] .
+
+ex:cl-5-2b a wrd:Text ;
+    fnd:hasIdentity ex:cl-5-2b-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "5.2B" ;
+    wrd:inclusionMode wrd-voc:Variation ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ; wrd:partText "Each interest period is three months." ] .
+
+ex:cl-5-3 a wrd:Text ;
+    fnd:hasIdentity ex:cl-5-3-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "5.3" ; wrd:rankKey "c0" ;
+    wrd:inclusionMode wrd-voc:Optional ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ; wrd:partText "The margin steps down by 0.05% for each year the sustainability target is met." ] .
+
+ex:sec-9 a wrd:Element ;
+    fnd:hasIdentity ex:sec-9-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Section ; wrd:objectId "9" ; wrd:rankKey "i0" ;
+    wrd:directlyComprises ex:cl-9-1 .
+
+ex:cl-9-1 a wrd:Text ;
+    fnd:hasIdentity ex:cl-9-1-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "9.1" ; wrd:rankKey "a0" ;
+    wrd:inclusionMode wrd-voc:Conditional ;
+    wrd:includedWhen ex:when-syndicated ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ; wrd:partText "The agent acts for the lenders in every dealing with the borrower." ] .
+
+ex:sec-12 a wrd:Element ;
+    fnd:hasIdentity ex:sec-12-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Section ; wrd:objectId "12" ; wrd:rankKey "l0" ;
+    wrd:directlyComprises ex:cl-12-1 , ex:var-jurisdictions .
+
+ex:cl-12-1 a wrd:Text ;
+    fnd:hasIdentity ex:cl-12-1-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "12.1" ; wrd:rankKey "a0" ;
+    wrd:hasTextPart ex:cl-12-1-p0 , ex:cl-12-1-p1 .
+ex:cl-12-1-p0 a wrd:TextPart ; wrd:partIndex 0 ; wrd:partText "The borrower may operate in " .
+ex:cl-12-1-p1 a wrd:TextPart ; wrd:partIndex 1 ; wrd:refersToVariable ex:var-jurisdictions .
+
+ex:var-jurisdictions a wrd:EmbeddedVariable ;
+    fnd:hasIdentity ex:var-jurisdictions-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:variableKey "permitted-jurisdictions" ; wrd:rankKey "z0" ;
+    wrd:valueContract ex:jurisdiction-contract ;
+    wrd:populationMethod wrd-voc:PickList ;
+    wrd:multiValued true .
+
+ex:gv-lender-count a wrd:GoverningVariable ;
+    fnd:hasIdentity ex:gv-lender-count-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:variableKey "lender-count" ; wrd:rankKey "z0" ;
+    wrd:valueSpace ex:count-space ;
+    wrd:populationMethod wrd-voc:FreeEntry ;
+    wrd:multiValued false .
+
+# ---- The inclusion condition: more than one lender ------------------------
+
+ex:count-space a qnt:ValueSpace ;
+    qnt:spaceKey "lender-count" ; qnt:orderKind qnt:TotalOrder ; qnt:densityKind qnt:Discrete ;
+    qnt:spaceHash "space-lender-count-v1" .
+
+ex:two a qnt:Quantity ; qnt:onSpace ex:count-space ; qnt:numericValue "2"^^xsd:decimal .
+ex:at-least-two-bound a qnt:Bound ;
+    qnt:onSpace ex:count-space ; qnt:boundValue ex:two ; qnt:boundSense qnt:Lower ; qnt:boundClosure qnt:Closed .
+ex:at-least-two-range a qnt:Range ;
+    qnt:onSpace ex:count-space ; qnt:lowerBound ex:at-least-two-bound ; qnt:hasBound ex:at-least-two-bound .
+ex:at-least-two a qnt:RangeSet ; qnt:onSpace ex:count-space ; qnt:hasRange ex:at-least-two-range .
+
+ex:more-than-one-lender a elg:IntervalCondition ;
+    elg:matchStrategy elg:IntervalContainment ;
+    elg:compatibilityOperation elg:AllRequired ;
+    elg:wildcardSemantics elg:NoWildcard ;
+    elg:requiredRangeSet ex:at-least-two ;
+    wrd:readsVariable ex:gv-lender-count .
+
+ex:when-syndicated a elg:AdmissionProfile ;
+    elg:hasCondition ex:more-than-one-lender ;
+    elg:matchStrategy elg:SetMembership ;
+    elg:compatibilityOperation elg:AllRequired ;
+    elg:wildcardSemantics elg:NoWildcard .
+
+# ---- The lender's jurisdictions -------------------------------------------
+
+ex:jurisdictions a voc:ConceptScheme ;
+    fnd:hasIdentity ex:jurisdictions-identity ; fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Lender jurisdictions"@en .
+ex:uk a skos:Concept ; skos:prefLabel "United Kingdom"@en ; skos:inScheme ex:jurisdictions .
+ex:ie a skos:Concept ; skos:prefLabel "Ireland"@en ; skos:inScheme ex:jurisdictions .
+ex:fr a skos:Concept ; skos:prefLabel "France"@en ; skos:inScheme ex:jurisdictions .
+
+ex:jurisdiction-contract a voc:SchemeContract ;
+    fnd:hasIdentity ex:jurisdiction-contract-identity ; fnd:hasGovernanceState fnd:Active ;
+    voc:constrainsProperty wrd:value ;
+    voc:boundScheme ex:jurisdictions .
+
+# ---- The facility for Acme, assembled from the form ---------------------
+
+ex:acme-facility-v1 a wrd:AssembledWording ;
+    fnd:hasIdentity ex:acme-facility-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    wrd:assembledFrom ex:form ;
+    wrd:includes ex:sec-5 , ex:cl-5-1 , ex:slot-5-2 , ex:cl-5-2b ,
+        ex:sec-9 , ex:cl-9-1 , ex:sec-12 , ex:cl-12-1 ;
+    wrd:hasValue ex:v-lender-count , ex:v-jurisdictions .
+
+ex:v-lender-count a wrd:VariableValue ;
+    wrd:forVariable ex:gv-lender-count ;
+    wrd:literalValue "3"^^xsd:decimal .
+
+# One value record for the list, holding every value.
+ex:v-jurisdictions a wrd:VariableValue ;
+    wrd:forVariable ex:var-jurisdictions ;
+    wrd:value ex:uk , ex:ie , ex:fr .

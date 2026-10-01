@@ -1,0 +1,105 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Premise. An agreement moves between states when a party exercises a power,
+# and an attempted exercise that does not take effect is a fact worth keeping.
+# The agreement's first state has no transition behind it: it is the state its
+# state space declares initial, entered when the agreement took effect.
+#
+# A software licence is active until the licensor suspends it for non-payment.
+# The licensee asks for reinstatement before paying, which does not take
+# effect. Once paid, the licensor reinstates it. Along the way the licensee
+# accepts a new version of the terms, the licensor determines a breach to be
+# material, and a notice is deemed received.
+#
+# | Record                    | What it shows                                       |
+# |---------------------------|-----------------------------------------------------|
+# | ex:suspend                | an exercise that took effect                        |
+# | ex:early-reinstatement    | an exercise that did not, and why                   |
+# | ex:reinstate              | an exercise that took effect                        |
+# | ex:accept-terms-2         | acceptance of a version                             |
+# | ex:materiality            | a determination by the party the contract names     |
+# | ex:notice-received        | a deemed fact, and the condition that deemed it     |
+
+@prefix bhv:  <https://www.nebularis.org/neuro-semantic/lattice/behaviour#> .
+@prefix pty:  <https://www.nebularis.org/neuro-semantic/lattice/party#> .
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix elg:  <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex:   <https://example.org/lattice/behaviour/licence/> .
+
+# ---- Configuration: the licence's state space, with its initial state ---------
+
+ex:licence-states a bhv:StateSpace ;
+    fnd:hasIdentity ex:licence-states-identity ;
+    bhv:initialState ex:active .
+ex:active a bhv:State ; bhv:inStateSpace ex:licence-states .
+ex:suspended a bhv:State ; bhv:inStateSpace ex:licence-states .
+
+ex:on-exercise a bhv:TriggerDefinition ; bhv:triggerKind bhv:ExternalStimulus .
+
+ex:suspension a bhv:TransitionDefinition ;
+    bhv:fromState ex:active ; bhv:toState ex:suspended ; bhv:hasTrigger ex:on-exercise ;
+    bhv:selectionPolicy bhv:SingleMatch ; bhv:activationPolicy bhv:ImmediateActivation .
+ex:reinstatement a bhv:TransitionDefinition ;
+    bhv:fromState ex:suspended ; bhv:toState ex:active ; bhv:hasTrigger ex:on-exercise ;
+    bhv:selectionPolicy bhv:SingleMatch ; bhv:activationPolicy bhv:ImmediateActivation .
+
+# ---- Parties and the licence ----------------------------------------------------
+
+ex:licensor-occ a pty:RoleOccupancy .
+ex:licensee-occ a pty:RoleOccupancy .
+ex:licence a fnd:PersistentIdentity .
+ex:terms-v2 a fnd:Version ; fnd:hasIdentity ex:licence .
+
+# ---- Stimuli and records ----------------------------------------------------------
+
+ex:stimulus-1 a bhv:Stimulus .
+ex:stimulus-2 a bhv:Stimulus .
+ex:stimulus-3 a bhv:Stimulus .
+
+ex:suspend a bhv:ExerciseRecord ;
+    bhv:exercised ex:power-to-suspend ; bhv:actor ex:licensor-occ ;
+    bhv:tookEffect true ; bhv:fromStimulus ex:stimulus-1 .
+
+ex:early-reinstatement a bhv:ExerciseRecord ;
+    bhv:exercised ex:power-to-reinstate ; bhv:actor ex:licensee-occ ;
+    bhv:tookEffect false ; bhv:reasonNotTaken "Payment had not been received." ;
+    bhv:fromStimulus ex:stimulus-2 .
+
+ex:reinstate a bhv:ExerciseRecord ;
+    bhv:exercised ex:power-to-reinstate ; bhv:actor ex:licensor-occ ;
+    bhv:tookEffect true ; bhv:fromStimulus ex:stimulus-3 .
+
+ex:accept-terms-2 a bhv:AcceptanceRecord ;
+    bhv:accepted ex:terms-v2 ; bhv:actor ex:licensee-occ .
+
+ex:materiality a bhv:DeterminationRecord ;
+    bhv:matter ex:breach-of-payment-terms ; bhv:determiner ex:licensor-occ ;
+    bhv:determinedValue ex:material .
+
+ex:posted-two-days-ago a elg:Condition .
+ex:notice-received a bhv:DeemedFactRecord ;
+    bhv:deeming ex:deemed-receipt-clause ;
+    bhv:conditionSatisfied ex:posted-two-days-ago .
+
+# ---- State entries: the first by evidence, the rest by execution (B6) ------------
+
+ex:execution-suspend a bhv:TransitionExecution ;
+    bhv:executedTransition ex:suspension ; bhv:causedByStimulus ex:stimulus-1 .
+ex:execution-reinstate a bhv:TransitionExecution ;
+    bhv:executedTransition ex:reinstatement ; bhv:causedByStimulus ex:stimulus-3 .
+
+ex:in-force a bhv:StateOccupancy ;
+    bhv:forSubject ex:licence ; bhv:occupiesState ex:active ;
+    bhv:isHypothetical false ; bhv:isCurrent false ;
+    fnd:hasEvidence [ a fnd:Evidence ; fnd:recordedAt "2027-01-01T00:00:00Z"^^xsd:dateTime ] .
+
+ex:suspended-1 a bhv:StateOccupancy ;
+    bhv:forSubject ex:licence ; bhv:occupiesState ex:suspended ;
+    bhv:isHypothetical false ; bhv:isCurrent false ;
+    bhv:enteredBy ex:execution-suspend .
+
+ex:reinstated a bhv:StateOccupancy ;
+    bhv:forSubject ex:licence ; bhv:occupiesState ex:active ;
+    bhv:isHypothetical false ; bhv:isCurrent true ;
+    bhv:enteredBy ex:execution-reinstate .

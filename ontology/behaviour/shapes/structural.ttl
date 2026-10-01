@@ -2,6 +2,10 @@
 
 @prefix sh:   <http://www.w3.org/ns/shacl#> .
 @prefix bhv:  <https://www.nebularis.org/neuro-semantic/lattice/behaviour#> .
+@prefix pty:  <https://www.nebularis.org/neuro-semantic/lattice/party#> .
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix elg:  <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
 
 bhv:TransitionDefinitionShape a sh:NodeShape ;
 	sh:targetClass bhv:TransitionDefinition ;
@@ -27,3 +31,107 @@ bhv:AllowanceAccountShape a sh:NodeShape ;
 	sh:targetClass bhv:AllowanceAccount ;
 	sh:property [ sh:path bhv:tracksAllowance ; sh:minCount 1 ; sh:maxCount 1 ] ;
 	sh:property [ sh:path bhv:availableBalance ; sh:minCount 1 ; sh:maxCount 1 ] .
+
+bhv:InitialStateShape a sh:NodeShape ;
+	sh:targetClass bhv:StateSpace ;
+	sh:property [ sh:path bhv:initialState ; sh:maxCount 1 ; sh:class bhv:State ;
+		sh:message "A state space has at most one initial state." ] .
+
+# ---- B6: every state entry is recorded ---------------------------------------
+
+bhv:StateEntryRecordedShape a sh:NodeShape ;
+	sh:targetClass bhv:StateOccupancy ;
+	sh:or (
+		[ sh:path bhv:enteredBy ; sh:minCount 1 ]
+		[ sh:path fnd:hasEvidence ; sh:minCount 1 ]
+	) ;
+	sh:message "A state occupancy names the execution that entered it, or carries evidence (law B6)." ;
+	sh:property [ sh:path bhv:enteredBy ; sh:maxCount 1 ; sh:class bhv:TransitionExecution ;
+		sh:node [ sh:property [ sh:path bhv:causedByStimulus ; sh:minCount 1 ;
+			sh:message "An execution that entered a state names the stimulus that caused it (law B6)." ] ] ] .
+
+bhv:EnteredBySubjectShape a sh:NodeShape ;
+	sh:targetSubjectsOf bhv:enteredBy ;
+	sh:class bhv:StateOccupancy ;
+	sh:message "Only a state occupancy is entered by an execution." .
+
+# ---- Occasions, with parties fixed at arising (I11) -------------------------------
+
+bhv:OccasionSubjectShape a sh:NodeShape ;
+	sh:targetSubjectsOf bhv:occasionOf , bhv:occasionParty ;
+	sh:class bhv:Occasion ;
+	sh:message "Only an occasion applies a declaration or has occasion parties." .
+
+bhv:ForCaseSubjectShape a sh:NodeShape ;
+	sh:targetSubjectsOf bhv:forCase ;
+	sh:or ( [ sh:class bhv:Occasion ] [ sh:class bhv:ActRecord ] ) ;
+	sh:message "Only an occasion or an act record is for a case." .
+
+bhv:OccasionShape a sh:NodeShape ;
+	sh:targetClass bhv:Occasion ;
+	sh:property [ sh:path bhv:occasionOf ; sh:minCount 1 ; sh:maxCount 1 ] ;
+	sh:property [ sh:path bhv:forCase ; sh:minCount 1 ; sh:maxCount 1 ] ;
+	sh:property [ sh:path bhv:occasionParty ; sh:class pty:RoleOccupancy ;
+		sh:not [ sh:class fnd:PersistentIdentity ] ;
+		sh:message "An occasion's parties are role occupancy versions, fixed at arising, never persistent identities (law I11)." ] .
+
+# ---- Records ----------------------------------------------------------------------
+
+bhv:RecordSubjectShape a sh:NodeShape ;
+	sh:targetSubjectsOf bhv:fromStimulus , bhv:actor ;
+	sh:class bhv:Record ;
+	sh:message "Only a record comes from a stimulus or names an actor." .
+
+bhv:RecordShape a sh:NodeShape ;
+	sh:targetClass bhv:Record ;
+	sh:property [ sh:path bhv:fromStimulus ; sh:maxCount 1 ; sh:class bhv:Stimulus ] ;
+	sh:property [ sh:path bhv:actor ; sh:class pty:RoleOccupancy ] .
+
+bhv:ActRecordSubjectShape a sh:NodeShape ;
+	sh:targetSubjectsOf bhv:activity ; sh:class bhv:ActRecord ;
+	sh:message "Only an act record names an activity." .
+bhv:ActRecordShape a sh:NodeShape ;
+	sh:targetClass bhv:ActRecord ;
+	sh:property [ sh:path bhv:activity ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:IRI ] ;
+	sh:property [ sh:path bhv:forCase ; sh:minCount 1 ; sh:maxCount 1 ] .
+
+bhv:BreachRecordSubjectShape a sh:NodeShape ;
+	sh:targetSubjectsOf bhv:ofOccasion , bhv:closureReliedOn ; sh:class bhv:BreachRecord ;
+	sh:message "Only a breach record names an occasion or a closure relied on." .
+bhv:BreachRecordShape a sh:NodeShape ;
+	sh:targetClass bhv:BreachRecord ;
+	sh:property [ sh:path bhv:ofOccasion ; sh:minCount 1 ; sh:maxCount 1 ; sh:class bhv:Occasion ] .
+
+bhv:ExerciseRecordSubjectShape a sh:NodeShape ;
+	sh:targetSubjectsOf bhv:exercised , bhv:tookEffect , bhv:reasonNotTaken ; sh:class bhv:ExerciseRecord ;
+	sh:message "Only an exercise record names what was exercised and whether it took effect." .
+bhv:ExerciseRecordShape a sh:NodeShape ;
+	sh:targetClass bhv:ExerciseRecord ;
+	sh:property [ sh:path bhv:exercised ; sh:minCount 1 ; sh:maxCount 1 ] ;
+	sh:property [ sh:path bhv:tookEffect ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:boolean ] ;
+	sh:property [ sh:path bhv:reasonNotTaken ; sh:maxCount 1 ; sh:datatype xsd:string ] .
+
+bhv:DeterminationRecordSubjectShape a sh:NodeShape ;
+	sh:targetSubjectsOf bhv:matter , bhv:determiner , bhv:determinedValue ; sh:class bhv:DeterminationRecord ;
+	sh:message "Only a determination record names a matter, a determiner or a determined value." .
+bhv:DeterminationRecordShape a sh:NodeShape ;
+	sh:targetClass bhv:DeterminationRecord ;
+	sh:property [ sh:path bhv:matter ; sh:minCount 1 ; sh:maxCount 1 ] ;
+	sh:property [ sh:path bhv:determiner ; sh:minCount 1 ; sh:maxCount 1 ; sh:class pty:RoleOccupancy ] ;
+	sh:property [ sh:path bhv:determinedValue ; sh:minCount 1 ] .
+
+bhv:DeemedFactRecordSubjectShape a sh:NodeShape ;
+	sh:targetSubjectsOf bhv:deeming , bhv:conditionSatisfied ; sh:class bhv:DeemedFactRecord ;
+	sh:message "Only a deemed-fact record names a deeming or the condition satisfied." .
+bhv:DeemedFactRecordShape a sh:NodeShape ;
+	sh:targetClass bhv:DeemedFactRecord ;
+	sh:property [ sh:path bhv:deeming ; sh:minCount 1 ; sh:maxCount 1 ] ;
+	sh:property [ sh:path bhv:conditionSatisfied ; sh:maxCount 1 ; sh:class elg:Condition ] .
+
+bhv:AcceptanceRecordSubjectShape a sh:NodeShape ;
+	sh:targetSubjectsOf bhv:accepted ; sh:class bhv:AcceptanceRecord ;
+	sh:message "Only an acceptance record names a version accepted." .
+bhv:AcceptanceRecordShape a sh:NodeShape ;
+	sh:targetClass bhv:AcceptanceRecord ;
+	sh:property [ sh:path bhv:accepted ; sh:minCount 1 ; sh:maxCount 1 ; sh:class fnd:Version ] ;
+	sh:property [ sh:path bhv:actor ; sh:minCount 1 ] .

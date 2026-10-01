@@ -23,6 +23,13 @@
 # | a governing variable, never shown in text   | ex:gv-study-arms            |
 # | a reference to an external document         | ex:cl-6-3 → ex:gcp-regulation |
 # | a classification beside the element type    | ex:cl-6-3                   |
+# | a table: rows in the form, columns per trial | ex:soa                     |
+# | an assembled protocol for one trial          | ex:protocol-trial-7         |
+#
+# The schedule of assessments fixes its rows (screening, week 4, week 12) in the
+# sponsor's template. The columns are the study arms, which exist only once a
+# trial is set up: trial 7 has two. Each cell is the value of a row's variable
+# for one arm, here the blood sample volume in millilitres.
 
 @prefix wrd:     <https://www.nebularis.org/neuro-semantic/lattice/wording#> .
 @prefix wrd-voc: <https://www.nebularis.org/neuro-semantic/lattice/wording/vocab#> .
@@ -30,6 +37,7 @@
 @prefix voc:     <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
 @prefix qnt:     <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
 @prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
 @prefix ex:      <https://example.org/lattice/wording/trial/> .
 
 ex:protocol-wording a wrd:Wording ;
@@ -45,7 +53,7 @@ ex:schedule-1 a wrd:Element ;
     wrd:elementType wrd-voc:Schedule ;
     wrd:objectId "Schedule 1" ;
     wrd:rankKey "a0" ;
-    wrd:directlyComprises ex:schedule-1-intro .
+    wrd:directlyComprises ex:schedule-1-intro , ex:soa .
 
 ex:schedule-1-intro a wrd:Text ;
     fnd:hasIdentity ex:schedule-1-intro-identity ;
@@ -123,3 +131,61 @@ ex:sponsor-classes a voc:ConceptScheme ;
 ex:safety-reporting a skos:Concept ;
     skos:prefLabel "Safety reporting"@en ;
     skos:inScheme ex:sponsor-classes .
+
+# ---- Schedule 1's table: rows declared here, columns supplied per trial ----
+
+ex:soa a wrd:Table ;
+    fnd:hasIdentity ex:soa-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    wrd:objectId "Table S1" ;
+    wrd:rankKey "b0" ;
+    wrd:directlyComprises ex:row-screening , ex:row-week-4 , ex:row-week-12 .
+
+ex:row-screening a wrd:Row ;
+    fnd:hasIdentity ex:row-screening-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:rankKey "a0" ; wrd:rowKey "Screening sample volume (ml)" ;
+    wrd:rowVariable ex:var-screening ; wrd:directlyComprises ex:var-screening .
+ex:row-week-4 a wrd:Row ;
+    fnd:hasIdentity ex:row-week-4-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:rankKey "b0" ; wrd:rowKey "Week 4 sample volume (ml)" ;
+    wrd:rowVariable ex:var-week-4 ; wrd:directlyComprises ex:var-week-4 .
+ex:row-week-12 a wrd:Row ;
+    fnd:hasIdentity ex:row-week-12-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:rankKey "c0" ; wrd:rowKey "Week 12 sample volume (ml)" ;
+    wrd:rowVariable ex:var-week-12 ; wrd:directlyComprises ex:var-week-12 .
+
+ex:var-screening a wrd:EmbeddedVariable ;
+    fnd:hasIdentity ex:var-screening-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:variableKey "soa-screening" ; wrd:valueSpace ex:millilitre-space ; wrd:populationMethod wrd-voc:FreeEntry .
+ex:var-week-4 a wrd:EmbeddedVariable ;
+    fnd:hasIdentity ex:var-week-4-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:variableKey "soa-week-4" ; wrd:valueSpace ex:millilitre-space ; wrd:populationMethod wrd-voc:FreeEntry .
+ex:var-week-12 a wrd:EmbeddedVariable ;
+    fnd:hasIdentity ex:var-week-12-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:variableKey "soa-week-12" ; wrd:valueSpace ex:millilitre-space ; wrd:populationMethod wrd-voc:FreeEntry .
+
+ex:millilitre-space a qnt:ValueSpace .
+
+# ---- Trial 7: the protocol assembled for one trial, with two arms ---------
+
+ex:arm-a a ex:StudyArm .
+ex:arm-b a ex:StudyArm .
+
+ex:protocol-trial-7 a wrd:AssembledWording ;
+    fnd:hasIdentity ex:protocol-trial-7-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    wrd:assembledFrom ex:protocol-wording ;
+    wrd:includes ex:schedule-1 , ex:schedule-1-intro , ex:soa , ex:row-screening , ex:row-week-4 , ex:row-week-12 ,
+        ex:sec-6 , ex:cl-6-2 , ex:cl-6-3 ;
+    wrd:hasValue ex:v-screening-a , ex:v-screening-b , ex:v-week-4-a , ex:v-week-4-b , ex:v-week-12-a , ex:v-week-12-b ,
+        ex:v-visit-window , ex:v-study-arms .
+
+ex:v-screening-a a wrd:VariableValue ; wrd:forVariable ex:var-screening ; wrd:forColumn ex:arm-a ; wrd:literalValue "20"^^xsd:decimal .
+ex:v-screening-b a wrd:VariableValue ; wrd:forVariable ex:var-screening ; wrd:forColumn ex:arm-b ; wrd:literalValue "20"^^xsd:decimal .
+ex:v-week-4-a    a wrd:VariableValue ; wrd:forVariable ex:var-week-4    ; wrd:forColumn ex:arm-a ; wrd:literalValue "10"^^xsd:decimal .
+ex:v-week-4-b    a wrd:VariableValue ; wrd:forVariable ex:var-week-4    ; wrd:forColumn ex:arm-b ; wrd:literalValue "15"^^xsd:decimal .
+ex:v-week-12-a   a wrd:VariableValue ; wrd:forVariable ex:var-week-12   ; wrd:forColumn ex:arm-a ; wrd:literalValue "10"^^xsd:decimal .
+ex:v-week-12-b   a wrd:VariableValue ; wrd:forVariable ex:var-week-12   ; wrd:forColumn ex:arm-b ; wrd:literalValue "15"^^xsd:decimal .
+
+ex:v-visit-window a wrd:VariableValue ; wrd:forVariable ex:var-visit-window ; wrd:literalValue "7"^^xsd:decimal .
+ex:v-study-arms   a wrd:VariableValue ; wrd:forVariable ex:gv-study-arms ; wrd:literalValue "2"^^xsd:decimal .

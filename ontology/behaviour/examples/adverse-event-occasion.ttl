@@ -1,0 +1,85 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Premise. A duty arises once for each case it applies to, and each of those
+# occasions has a history of its own: it is pending until its trigger happens,
+# arises, and is then performed, breached or ended. Every state it enters must
+# be traceable to the record that put it there.
+#
+# A clinical trial protocol obliges an investigator to report each serious
+# adverse event to the sponsor within 24 hours. Event 17 happens, and no
+# report follows within the window. What this example records:
+#
+# | Step                       | Record                     | Occasion state |
+# |----------------------------|----------------------------|----------------|
+# | the occasion is created     | evidence of the case       | Pending        |
+# | the event happens           | ex:act-event-17            | Arisen         |
+# | the reporting window closes | ex:breach-1                | Breached       |
+#
+# The duty itself is another layer's declaration. Behaviour points at it
+# without a range (bhv:occasionOf), so this file names no Instrument term.
+
+@prefix bhv:  <https://www.nebularis.org/neuro-semantic/lattice/behaviour#> .
+@prefix pty:  <https://www.nebularis.org/neuro-semantic/lattice/party#> .
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex:   <https://example.org/lattice/behaviour/adverse-event/> .
+
+# ---- The parties, the duty and the case ------------------------------------
+
+ex:investigator-occ a pty:RoleOccupancy .
+ex:sponsor-occ a pty:RoleOccupancy .
+ex:report-within-24-hours a ex:ReportingDuty .
+ex:event-17 a ex:AdverseEvent .
+ex:adverse-event-occurs a skos:Concept ; skos:prefLabel "A serious adverse event occurs"@en .
+
+# ---- The occasion: the duty for event 17, its parties fixed at arising -------
+
+ex:occasion-17 a bhv:Occasion ;
+    bhv:occasionOf ex:report-within-24-hours ;
+    bhv:forCase ex:event-17 ;
+    bhv:occasionParty ex:investigator-occ , ex:sponsor-occ .
+
+# ---- Stimuli and records ------------------------------------------------------
+
+ex:stimulus-event a bhv:Stimulus .
+ex:stimulus-window-closes a bhv:Stimulus .
+
+ex:act-event-17 a bhv:ActRecord ;
+    bhv:activity ex:adverse-event-occurs ;
+    bhv:actor ex:investigator-occ ;
+    bhv:forCase ex:event-17 ;
+    bhv:fromStimulus ex:stimulus-event ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-03-02T09:00:00Z"^^xsd:dateTime ] ;
+    fnd:hasEvidence [ a fnd:Evidence ; fnd:recordedAt "2027-03-02T09:05:00Z"^^xsd:dateTime ] .
+
+ex:breach-1 a bhv:BreachRecord ;
+    bhv:ofOccasion ex:occasion-17 ;
+    bhv:fromStimulus ex:stimulus-window-closes ;
+    bhv:closureReliedOn ex:sponsor-safety-inbox ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-03-03T09:00:00Z"^^xsd:dateTime ] ;
+    fnd:hasEvidence [ a fnd:Evidence ; fnd:recordedAt "2027-03-03T09:00:01Z"^^xsd:dateTime ] .
+
+# ---- Every state entry recorded (B6), every occasion state derived (B1) --------
+
+ex:execution-arises a bhv:TransitionExecution ; bhv:causedByStimulus ex:stimulus-event .
+ex:execution-breached a bhv:TransitionExecution ; bhv:causedByStimulus ex:stimulus-window-closes .
+
+ex:pending a bhv:StateOccupancy , fnd:DerivedArtefact ;
+    bhv:forSubject ex:occasion-17 ; bhv:occupiesState bhv:Pending ;
+    bhv:isHypothetical false ; bhv:isCurrent false ;
+    fnd:hasEvidence [ a fnd:Evidence ; fnd:recordedAt "2027-03-02T09:05:00Z"^^xsd:dateTime ] ;
+    prov:wasDerivedFrom ex:act-event-17 .
+
+ex:arisen a bhv:StateOccupancy , fnd:DerivedArtefact ;
+    bhv:forSubject ex:occasion-17 ; bhv:occupiesState bhv:Arisen ;
+    bhv:isHypothetical false ; bhv:isCurrent false ;
+    bhv:enteredBy ex:execution-arises ;
+    prov:wasDerivedFrom ex:act-event-17 .
+
+ex:breached a bhv:StateOccupancy , fnd:DerivedArtefact ;
+    bhv:forSubject ex:occasion-17 ; bhv:occupiesState bhv:Breached ;
+    bhv:isHypothetical false ; bhv:isCurrent true ;
+    bhv:enteredBy ex:execution-breached ;
+    prov:wasDerivedFrom ex:breach-1 .

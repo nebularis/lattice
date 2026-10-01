@@ -57,7 +57,7 @@ def _vocab_closure() -> Graph:
 def test_c3_01_imports_exactly_the_layers_below() -> None:
     spec = _graph(LAYER / "spec" / "wording.ttl")
     ontology = URIRef(SPEC_IRI)
-    assert spec.value(ontology, OWL.versionIRI) == URIRef(LATTICE + "wording/0.1.0")
+    assert spec.value(ontology, OWL.versionIRI) == URIRef(LATTICE + "wording/0.2.0")  # C4-01
     assert set(spec.objects(ontology, OWL.imports)) == {
         URIRef(LATTICE + "foundation/0.3.0"),
         URIRef(LATTICE + "vocabulary/0.3.0"),
@@ -244,3 +244,66 @@ def test_c3_17_every_property_states_its_subject_and_value() -> None:
     for prop in props:
         comment = str(spec.value(prop, RDFS.comment) or "")
         assert "Subject:" in comment and "Value:" in comment, prop
+
+
+# ---- C4-02 to C4-09: tables, assembly, variable values -------------------------
+
+ASSEMBLY_PREFIXES = SHAPE_PREFIXES + f"@prefix elg: <{LATTICE}eligibility#> .\n@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .\n"
+TRIAL = Namespace("https://example.org/lattice/wording/trial/")
+
+
+def test_c4_02_every_example_conforms() -> None:
+    assert len(EXAMPLES) == 3
+    for example in EXAMPLES:
+        assert _violations(_graph(example)) == set(), example.name
+
+
+@pytest.mark.parametrize("data, focus", [
+    ("ex:t a wrd:Table ; wrd:directlyComprises ex:r . ex:r a wrd:Row ; wrd:rowKey \"x\" .", "r"),
+    ("ex:w a wrd:AssembledWording ; wrd:hasValue ex:v . ex:v a wrd:VariableValue ; wrd:literalValue 1 .", "v"),
+    ("ex:w a wrd:AssembledWording ; wrd:hasValue ex:v . ex:a a wrd:EmbeddedVariable . ex:b a wrd:EmbeddedVariable . "
+     "ex:v a wrd:VariableValue ; wrd:forVariable ex:a , ex:b ; wrd:literalValue 1 .", "v"),
+    ("ex:w a wrd:AssembledWording ; wrd:hasValue ex:v . ex:a a wrd:EmbeddedVariable . "
+     "ex:v a wrd:VariableValue ; wrd:forVariable ex:a .", "v"),
+    ("ex:e a wrd:Element ; wrd:inclusionMode ex:Sometimes .", "e"),
+    ("ex:s a wrd:VariationSlot ; wrd:hasVariant ex:e . ex:t a wrd:VariationSlot ; wrd:hasVariant ex:e . "
+     "ex:e a wrd:Element ; wrd:inclusionMode wrd-voc:Variation .", "e"),
+    ("ex:w a wrd:AssembledWording ; wrd:hasValue ex:v . ex:a a wrd:EmbeddedVariable . "
+     "ex:v a wrd:VariableValue ; wrd:forVariable ex:a ; wrd:forColumn ex:col ; wrd:literalValue 1 .", "v"),
+    ("ex:v a wrd:VariableValue ; wrd:forVariable ex:a ; wrd:literalValue 1 . ex:a a wrd:EmbeddedVariable .", "v"),
+], ids=["row-without-variable", "value-for-no-variable", "value-for-two-variables", "value-with-no-value",
+        "mode-outside-the-four", "variant-of-two-slots", "column-for-a-non-row-variable", "value-in-no-wording"])
+def test_c4_04_ill_formed_tables_and_assembly_are_reported(data: str, focus: str) -> None:
+    assert focus in _violations(Graph().parse(data=ASSEMBLY_PREFIXES + data, format="turtle"))
+
+
+def test_c4_05_one_cell_per_row_and_arm() -> None:
+    graph = _graph(LAYER / "examples" / "trial-protocol.ttl")
+    cells = {}
+    for record in graph.subjects(WRD.forColumn, None):
+        key = (graph.value(record, WRD.forVariable), graph.value(record, WRD.forColumn))
+        assert key not in cells, key
+        cells[key] = graph.value(record, WRD.literalValue)
+    rows = list(graph.objects(TRIAL.soa, WRD.directlyComprises))
+    arms = {TRIAL["arm-a"], TRIAL["arm-b"]}
+    assert len(rows) == 3
+    for row in rows:
+        variable = graph.value(row, WRD.rowVariable)
+        assert {arm for (v, arm) in cells if v == variable} == arms, row
+
+
+def test_c4_07_closed_vocab_sets() -> None:
+    vocab = _graph(LAYER / "vocab" / "wording-vocab.ttl")
+    modes = set(vocab.subjects(RDF.type, WRD.InclusionMode))
+    methods = set(vocab.subjects(RDF.type, WRD.PopulationMethod))
+    assert {m.split("#")[-1] for m in modes} == {"Mandatory", "Variation", "Optional", "Conditional"}
+    assert len(methods) == 8
+    for members in (modes, methods):
+        different = [set(Collection(vocab, vocab.value(n, OWL.distinctMembers))) for n in vocab.subjects(RDF.type, OWL.AllDifferent)]
+        assert members in different
+
+
+def test_c4_09_new_versions_have_release_rows() -> None:
+    register = (ROOT / "docs" / "architecture" / "ontology-releases.md").read_text()
+    for tag in ("wording-v0.2.0", "wording-vocab-v0.2.0", "wording-shapes-v0.2.0"):
+        assert f"| {tag} |" in register, tag

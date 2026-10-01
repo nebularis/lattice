@@ -3,12 +3,13 @@
 @prefix bhv:  <https://www.nebularis.org/neuro-semantic/lattice/behaviour#> .
 @prefix owl:  <http://www.w3.org/2002/07/owl#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
 @base <https://www.nebularis.org/neuro-semantic/behaviour-vocab> .
 
 <https://www.nebularis.org/neuro-semantic/behaviour-vocab>
 	a owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/behaviour-vocab/0.8.0> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.8.0> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/behaviour-vocab/0.9.0> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.9.0> .
 
 bhv:ExternalStimulus a bhv:TriggerKind .
 bhv:ScheduledTrigger a bhv:TriggerKind .
@@ -33,3 +34,34 @@ bhv:Proportional a bhv:AbsorptionPolicy .
 
 bhv:B-P1 a bhv:OperationalProfile ; rdfs:comment "Direct transition-evaluation profile" .
 bhv:B-P2 a bhv:OperationalProfile ; rdfs:comment "Sequential allowance-evaluation profile" .
+
+# ---- The occasion state space: a fixed core, refined by sub-states ----------
+# Its transitions are the runtime evaluator's, derived from the legal
+# algorithms and protected by law I7, so they are not declared here. A
+# deployment refines a core state with sub-states of its own and adds parallel
+# regimes, never a new state of this space (CCS C11-Q1).
+
+bhv:OccasionStates a bhv:StateSpace ;
+	fnd:hasIdentity bhv:OccasionStates-identity ;
+	bhv:initialState bhv:Pending ;
+	rdfs:label "Occasion states"@en ;
+	rdfs:comment "The states of an occasion: one legal relation applied to one case." .
+
+bhv:Pending a bhv:State ; bhv:inStateSpace bhv:OccasionStates ;
+	rdfs:label "Pending"@en ;
+	rdfs:comment "The relation applies to the case, and has not yet arisen. The initial state. The evaluator's." .
+bhv:Arisen a bhv:State ; bhv:inStateSpace bhv:OccasionStates ;
+	rdfs:label "Arisen"@en ;
+	rdfs:comment "The relation has arisen for the case and is live. The evaluator's." .
+bhv:Performed a bhv:State ; bhv:inStateSpace bhv:OccasionStates ;
+	rdfs:label "Performed"@en ;
+	rdfs:comment "The relation has been fulfilled for the case. The evaluator's." .
+bhv:Breached a bhv:State ; bhv:inStateSpace bhv:OccasionStates ;
+	rdfs:label "Breached"@en ;
+	rdfs:comment "The relation has been breached for the case, as derived or as asserted by an adjudicator. The evaluator's." .
+bhv:Ended a bhv:State ; bhv:inStateSpace bhv:OccasionStates ;
+	rdfs:label "Ended"@en ;
+	rdfs:comment "The relation ended for the case without being performed or breached. The evaluator's." .
+bhv:Suspended a bhv:State ; bhv:inStateSpace bhv:OccasionStates ;
+	rdfs:label "Suspended"@en ;
+	rdfs:comment "The relation is suspended for the case, from Pending or Arisen, and resumes its prior state on reinstatement (law B5). The evaluator's." .

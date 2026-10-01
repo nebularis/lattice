@@ -47,6 +47,13 @@ Concretely:
 - The root README and `docs/architecture/ontology-architecture.md` are corrected to state this same seven-link order, so the layer table, the dependency diagram, and the compiled imports agree.
 - A future CI check (documented in [../../validation-and-test-plan.md](../../validation-and-test-plan.md), not yet built) can verify import closure mechanically once Eligibility, Instrument, and Behaviour exist and declare their own imports.
 
+  **Implementation note (2026-10-01):** built as `mise run check:import-guard`
+  (`tools/import_guard.py`, computable contract substrate slice C10a), part of `mise run check`. It
+  checks each substrate layer's imports and the namespaces its Turtle names against the order as
+  this ADR's addendum states it, and fails on a higher layer, a sibling (Wording and Behaviour) or an
+  applied module. Applied modules, MORK, SPC, Surface and Persistence are outside the order and not
+  checked.
+
 ## Addendum (2026-10-01): Wording, and Behaviour below Instrument
 
 **Status:** Accepted 2026-10-01 (Gate A), with [ADR-A112](ADR-A112-wording-layer.md).

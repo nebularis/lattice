@@ -66,3 +66,36 @@ bhv:SingleCurrentOccupancyPerStateSpace a sh:NodeShape ;
 			}
 		"""
 	] .
+
+bhv:InitialStateInItsSpace a sh:NodeShape ;
+	sh:targetSubjectsOf bhv:initialState ;
+	sh:sparql [
+		sh:message "A state space's initial state is one of its own states." ;
+		sh:select """
+			PREFIX bhv: <https://www.nebularis.org/neuro-semantic/lattice/behaviour#>
+			SELECT $this WHERE {
+				$this bhv:initialState ?state .
+				FILTER NOT EXISTS { ?state bhv:inStateSpace $this }
+			}
+		"""
+	] .
+
+bhv:OccasionOccupancyDerived a sh:NodeShape ;
+	sh:targetClass bhv:StateOccupancy ;
+	sh:sparql [
+		sh:message "An occupancy of an occasion state is a derived artefact, derived from at least one record (law B1)." ;
+		sh:select """
+			PREFIX bhv: <https://www.nebularis.org/neuro-semantic/lattice/behaviour#>
+			PREFIX fnd: <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+			PREFIX prov: <http://www.w3.org/ns/prov#>
+			PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+			SELECT $this WHERE {
+				$this bhv:occupiesState ?state .
+				?state bhv:inStateSpace bhv:OccasionStates .
+				FILTER NOT EXISTS {
+					$this a fnd:DerivedArtefact ; prov:wasDerivedFrom ?record .
+					?record a/rdfs:subClassOf* bhv:Record .
+				}
+			}
+		"""
+	] .

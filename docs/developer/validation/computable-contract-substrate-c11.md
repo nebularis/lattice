@@ -40,10 +40,50 @@ The evaluator that derives occasions and records (C12). Nested states and histor
 Written by the building machine when the work is committed.
 
 - **Built:**
-- **Not run:**
+  - configuration `behaviour` 0.9.0 with `bhv:initialState`
+  - runtime `behaviour-runtime` 0.9.0 with `bhv:Occasion`, `bhv:Record` and six record kinds,
+    `bhv:enteredBy` and 18 properties, each stating its subject and value
+  - `behaviour-vocab` 0.9.0 with `bhv:OccasionStates`, its six states and `bhv:Pending` initial
+  - shapes 0.3.0 (breaking): B6 and I11 in SHACL Core, B1 and the initial-state rule in SHACL-SPARQL,
+    and a subject and a class shape per new property
+  - capacity's execution profile 0.9.0, re-pinned to runtime 0.9.0
+  - two examples, the README's records table, extension rule and release notes, and
+    `tools/test_behaviour_records.py`
+- **Not run:** nothing skipped. The reasoner rows ran.
 - **Check first:**
-- **Deviations from the plan:**
+  - The brief put `fnd:recordedAt` and `fnd:assertedBy` on records. Foundation declares both on
+    `fnd:Evidence`, so a record carries them on its evidence, and its valid time on a
+    `fnd:TemporalScope`, as state occupancies already do. Putting them on the record would have
+    inferred every record a piece of evidence.
+  - `bhv:Record` is added above the six record kinds, so `fromStimulus` and `actor` have one domain.
+  - `bhv:forCase` has no domain, since an occasion and an act record both use it. A Core shape checks
+    its subject is one of the two.
+  - An occasion's executions name no transition definition, because its transitions are the
+    evaluator's (C12), not declared.
+  - B6 cannot tell evidence of taking effect from evidence of an external log: both are
+    `fnd:hasEvidence`. Telling them apart needs the evidence kinds C12 will write.
+- **Deviations from the plan:** the record evidence and `bhv:Record`, as above.
+- **Tags for the human:** `behaviour-v0.9.0`, `behaviour-runtime-v0.9.0`, `behaviour-vocab-v0.9.0`,
+  `behaviour-shapes-v0.3.0`, `applied-capacity-execution-v0.9.0`.
 
 ## Results
 
-Written on machine R at verification.
+Verified on machine R, 2026-10-01, with the reasoning harness built.
+
+| ID | Result |
+|---|---|
+| C11-01 | pass |
+| C11-02 | pass: all four Behaviour examples conform |
+| C11-03 | pass (B6 mandatory probe) |
+| C11-04 | pass |
+| C11-05 | pass (B1) |
+| C11-06 | pass: a persistent identity as party fails, a later-superseded occupancy version conforms (I11 mandatory probe) |
+| C11-07 | pass, 19 properties |
+| C11-08 | pass |
+| C11-09 | pass, both new examples consistent |
+| C11-10 | pass: five release rows, shapes 0.3.0 marked breaking in the README |
+| C11-11 | pass: `check:ontology-catalog` 155, `check:python-root` 84 and Phase 8 conformance, `check:mork-compilers` 114 |
+| C11-12 | pass |
+| C11-13 | pass: `0.9.0`, and every existing fixture and the conformance case still conform |
+
+`mise run topology:links`: 427, the baseline.

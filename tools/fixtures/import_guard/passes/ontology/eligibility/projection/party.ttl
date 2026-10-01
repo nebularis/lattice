@@ -1,0 +1,3 @@
+# SPDX-License-Identifier: MPL-2.0
+
+<https://www.nebularis.org/neuro-semantic/lattice/eligibility#candidateOccupancy> <http://www.w3.org/2000/01/rdf-schema#range> <https://www.nebularis.org/neuro-semantic/lattice/party#RoleOccupancy> .
