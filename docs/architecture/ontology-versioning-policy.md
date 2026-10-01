@@ -60,6 +60,20 @@ Two categories do not reduce to axiom-diffing:
   [ADR-A86 addendum](decisions/ADR-A86-ontology-semantic-versioning.md#addendum-2026-09-25-guarantees-consumers-rely-on),
   item 1, and applied since the `applied-ontology-readiness` unit's AOR-2.
 
+### Major version zero
+
+Every document is at `0.x`, and `1.0.0` is reserved for a decision declaring a layer's interface
+stable ([ADR-A113](decisions/ADR-A113-breaking-changes-at-major-version-zero.md)). Until then:
+
+- A change the table above classes as **MAJOR** takes a **MINOR** bump instead, for an ontology
+  document, a `shapes/` directory or a `projection/` directory alike.
+- The change is marked breaking in the ADR that authorises it, and in a **Release notes** section
+  of the layer's README, one line per breaking version:
+  `- 0.8.0 (breaking): bhv:targetsElement replaced by bhv:targets. ADR-A106.`
+  The layer's first breaking change creates the section. The release register is unchanged.
+- An importer re-pinned to a breaking `0.x` version takes a MINOR bump by the rule above, and is
+  marked breaking where its own consumers are affected.
+
 ## The import-pinning cascade checklist
 
 Before bumping any layer's version:

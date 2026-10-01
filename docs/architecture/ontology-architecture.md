@@ -39,7 +39,7 @@ It is the middle of a three-part picture:
 - **LATTICE proper** — the seven-layer ontology stack this document mostly covers, designed to be extended per-industry.
 - **SPC** (Subject-oriented Process Calculus) — a formal mechanism for session-typed orchestration between agents (human, AI, computational) whose data MORK has mapped and whose roles/obligations/eligibility LATTICE models. SPC gives the live exchange between agents a contract grounded in the same ontology. **SPC has a substantial standalone ontology** (`ontology/spc/spec/spc.ttl`, ~1227 lines; `ontology/spc/README.md`, ~1393 lines; plus an architecture note and a paper under `ontology/spc/docs/`). Its namespace was harmonised to the shared `nebularis.org` base under [ADR-A62](decisions/ADR-A62-spc-namespace-harmonisation.md); its `projection/` directory remains empty — no contract to Party or Behaviour exists yet. Integration as an orchestration substrate is deferred to Phase 4, per ADR-A62; treat it as a separately developed body of work pending projection authoring, not as part of the dependency graph below.
 
-### The seven LATTICE layers
+### The LATTICE layers
 
 | Layer | Kind | Models | Namespace prefix | Depends on |
 |---|---|---|---|---|
@@ -48,19 +48,22 @@ It is the middle of a three-part picture:
 | Quantification | Substrate | Declared value spaces, quantities, ordered values, bounds, ranges, conversion, granularity, recurrence | `qnt:` | Foundation, Vocabulary |
 | Party | Substrate | Actors, roles, role occupancy, participation groups, delegation | `pty:` | Foundation, Vocabulary, Quantification |
 | Eligibility | Substrate | Admissibility: conditions, unresolved questions, decisions | `elg:` | Foundation, Vocabulary, Quantification, Party |
+| Wording | Substrate | What a contract's documents say and how they are built: wordings, elements, text parts, references, variables | `wrd:` | Foundation, Vocabulary, Quantification, Eligibility |
 | Instrument | Applied domain ontology | Generic governing-document shape: Provision → Obligation → Qualifier | `ins:` | Foundation, Vocabulary, Party, Eligibility |
 | Behaviour | Substrate | State, transition, trigger, guard, effect | `bhv:` | Foundation, Vocabulary, Quantification, Party, Eligibility, Instrument |
 
-Dependency order, per [ADR-A01](decisions/ADR-A01-layer-dependency-order.md):
+Dependency order, per [ADR-A01](decisions/ADR-A01-layer-dependency-order.md) as its 2026-10-01 addendum amends it ([ADR-A112](decisions/ADR-A112-wording-layer.md)). Behaviour's move below Instrument lands in the computable contract substrate's slice C10, so until then Behaviour still imports Instrument:
 
 ```
 foundation
     └── vocabulary
             └── quantification
                     └── party
-                            ├── eligibility
-                            │       └── instrument
-                            └── behaviour   (imports instrument, eligibility, party, quantification)
+                            └── eligibility
+                                    ├── wording
+                                    │       └── instrument   (also imports behaviour configuration)
+                                    └── behaviour configuration
+                                            └── behaviour runtime
 ```
 
 Instrument is a first applied ontology on the substrates, not the only possible one — a different applied domain (device lifecycle, access-control entitlement, asset maintenance) could sit atop Instrument or replace it, composing with Party/Eligibility/Behaviour through its own `projection/` contracts without touching the core layers.
@@ -121,6 +124,7 @@ This is the section to read before recommending any change. What follows is the 
 | Quantification | 1277 lines, complete | 561 lines, complete | populated (`constraints.ttl`, `rules.ttl`, `structural.ttl`) | populated | empty (`.gitkeep` only — imported by everything above it, imports nothing back) | **Fully specified T-box + shapes.** Previously missing `owl:Ontology` header/imports fixed under ADR-A01/Gate 1. |
 | Party | 359 lines, complete | 202 lines, complete | empty | 75 lines, 7 named individuals, complete | `behaviour.ttl` empty | **Fully specified T-box + vocab.** Now also imports Quantification (ADR-A01/Gate 1). |
 | Eligibility | authored | authored | populated (`constraints.ttl`, `rules.ttl`, `structural.ttl`) | populated | populated (`party.ttl`, `quantification.ttl`) | **Authored in Gate 2.** Includes baseline admission profiles, interval-containment fixtures, and rule/constraint surface. Concept inclusion and exclusion ([ADR-A87](decisions/ADR-A87-eligibility-concept-inclusion-and-exclusion.md)), hierarchical match over a scheme without a hierarchy (`elg:L14`, [ADR-A100](decisions/ADR-A100-hierarchical-match-over-flat-schemes.md)), set readings and negation (`elg:L15`, `elg:L16`, [ADR-A103](decisions/ADR-A103-eligibility-set-readings.md)), and evidence bindings over an applied ontology's own properties ([ADR-A91](decisions/ADR-A91-eligibility-candidate-evidence-binding.md)). `tools/mork_compilers` compiles every condition kind except `Wildcard`, and `AllRequired`/`AnySufficient` profiles, to SPARQL, SHACL, and SWRL ([ADR-A89](decisions/ADR-A89-eligibility-ir-concept-conditions-and-profile-aggregation.md)). Bound conditions with a claimed single-valued path (`elg:singleValued`) also compile to design-time OWL classes, checked for subsumption, satisfiability and overlap through the test-only reasoning harness ([ADR-A90](decisions/ADR-A90-eligibility-design-time-owl-class-backend.md), [ADR-A83](decisions/ADR-A83-test-only-reasoning-engine-isolation.md)). |
+| Wording | authored (literate source) | `wording.ttl` 0.1.0: structure, text parts, references, document objects, variables | none yet (0.3.0, CCS C5) | `wording-vocab.ttl` 0.1.0: three scheme contracts and the baseline element types | n/a | **Authored in CCS C3** (ADR-A112). Tables, assembly and variable values follow in C4, amendments and shapes in C5 |
 | Instrument | authored | authored | populated (`constraints.ttl`, `rules.ttl`, `structural.ttl`) | populated | populated (`party.ttl`) | **Authored in Gate 2.5.** Minimal applied ontology sufficient for Behaviour target binding and supersession constraints. |
 | Behaviour | authored | authored | populated (`constraints.ttl`, `rules.ttl`, `structural.ttl`) | populated | populated (`eligibility.ttl`, `instrument.ttl`, `party.ttl`, `quantification.ttl`) | **Authored in Gate 3.** Includes transition, guard, effect, and `Sequential` allowance support. `Proportional` remains declared but rejected. |
 | Governance | scaffold + cross-layer docs | n/a | scaffold | n/a | n/a | **Partially authored.** Governance policy lives in `docs/GOVERNANCE.md`; automated governance shapes remain future work. |

@@ -17,7 +17,7 @@ Gate A passed on 2026-10-01: ADR-A104, A-106, A-112 and A-113, and the A-01 and 
 accepted. A-07b is superseded and A-11 amended. No ontology document is touched yet. C3 and C10 are
 briefed, with their Validation Packs.
 
-**Next action, for the human:** push `main` and the two branches.
+**Next action, for the human:** review C3 on `ccs/c3-wording-spec`, merge, and create tags `wording-v0.1.0` and `wording-vocab-v0.1.0`.
 **Branches ready:** `ccs/c3-wording-spec`, `ccs/c10-behaviour-split` (created from `main`).
 **Next action, for the agent:** build C3 and C10 on those branches. C4 and C11 briefs follow.
 
@@ -28,7 +28,7 @@ briefed, with their Validation Packs.
 | C0 | A-112, A-113, A-01 and ADR-A-C2 addenda | A | accepted | |
 | C1 | A-104 | A | accepted | |
 | C2 | A-106 | A | accepted | |
-| C3 | Wording spec and vocab | B | branch ready | |
+| C3 | Wording spec and vocab | B | built, verified on `ccs/c3-wording-spec` | human review, tags |
 | C4, C5 | Wording tables, assembly, amendments, shapes | B | waiting | C3 |
 | C10 | Behaviour split and layer flip | C | branch ready | |
 | C10a, C11, C11a | import guard, records, nested states | C | waiting | C10 |
@@ -53,3 +53,4 @@ briefed, with their Validation Packs.
 - 2026-10-01: CC-D12 decided: meaning belongs to its text (stated meaning owned by an element version, bound meaning by an instrument version, only wordings, elements and instruments versioned). Sketch §5.1, §5.2, §5.8, §5.9, laws I2, I13, I17, I18 and A-104 decisions 1, 2 and 13 rewritten. A-106 gains the identity rule for runtime state. `ins:Element` retired, `ins:fulfilledBy` replaced, engine settings stay explicit (A-09, A-10 stand).
 - 2026-10-01: Gate A passed. The four ADRs and two addenda accepted, A-07b superseded, A-11 amended. C3 and C10 briefed with Validation Pack skeletons. The plan's C3 row gains the vocab and the README's start, C4 takes vocab 0.2.0.
 - 2026-10-01: C3-Q1 (a baseline element type scheme covering every type Wording's docs and examples use), C3-Q2 (`applicableTo` in the LMA WIM profile), C10-Q1 and C10-Q2 decided. Tranche A merged to `main`, branches `ccs/c3-wording-spec` and `ccs/c10-behaviour-split` created.
+- 2026-10-01: C3 built and verified on `ccs/c3-wording-spec`: Wording 0.1.0 and its vocab 0.1.0, two examples, `tools/test_wording.py` (18 tests, reasoner rows run), the versioning policy's major-version-zero rule, and the layer order in the root README and ontology architecture.

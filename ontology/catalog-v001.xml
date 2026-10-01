@@ -55,12 +55,16 @@
     <uri name="https://www.nebularis.org/neuro-semantic/lattice/surface-vocab/0.5.0" uri="surface/vocab/surface-vocab.ttl"/>
     <uri name="https://www.nebularis.org/neuro-semantic/lattice/surface/0.5.0" uri="surface/spec/surface.ttl"/>
     <uri name="https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.3.0" uri="vocabulary/spec/vocabulary.ttl"/>
+    <uri name="https://www.nebularis.org/neuro-semantic/lattice/wording-vocab/0.1.0" uri="wording/vocab/wording-vocab.ttl"/>
+    <uri name="https://www.nebularis.org/neuro-semantic/lattice/wording/0.1.0" uri="wording/spec/wording.ttl"/>
     <uri name="https://www.nebularis.org/neuro-semantic/party" uri="party/spec/party.ttl"/>
     <uri name="https://www.nebularis.org/neuro-semantic/party-vocab" uri="party/vocab/party-vocab.ttl"/>
     <uri name="https://www.nebularis.org/neuro-semantic/quantification" uri="quantification/spec/quantification.ttl"/>
     <uri name="https://www.nebularis.org/neuro-semantic/surface" uri="surface/spec/surface.ttl"/>
     <uri name="https://www.nebularis.org/neuro-semantic/surface-vocab" uri="surface/vocab/surface-vocab.ttl"/>
     <uri name="https://www.nebularis.org/neuro-semantic/vocabulary" uri="vocabulary/spec/vocabulary.ttl"/>
+    <uri name="https://www.nebularis.org/neuro-semantic/wording" uri="wording/spec/wording.ttl"/>
+    <uri name="https://www.nebularis.org/neuro-semantic/wording-vocab" uri="wording/vocab/wording-vocab.ttl"/>
     <!-- External imports, not held in this repository -->
     <uri name="http://w3id.org/rml" uri="http://w3id.org/rml"/>
     <uri name="http://www.w3.org/2003/11/swrl" uri="https://www.w3.org/Submission/SWRL/swrl.owl"/>

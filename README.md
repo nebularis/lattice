@@ -92,6 +92,7 @@ lattice/
 ├── ontology/party/                   # Parties, Roles, & Participation Modelling
 ├── ontology/instrument/              # Governing Instrument (Upper Domain Ontology)
 ├── ontology/eligibility/             # Eligibility Criteria Modelling
+├── ontology/wording/                 # Contract Wording: structure, text, variables (ADR-A112)
 ├── ontology/behaviour/               # Behaviour Modelling
 │   ├── mork/                # Mapping vocabulary and semantic fixtures
 │   ├── spc/                 # Orchestration ontology, standalone and unintegrated
@@ -136,14 +137,18 @@ foundation
     └── vocabulary
             └── quantification
                     └── party
-                            ├── eligibility
-                            │       └── instrument
-                            └── behaviour   (imports instrument, eligibility, party, quantification)
+                            └── eligibility
+                                    ├── wording
+                                    │       └── instrument   (also imports behaviour configuration)
+                                    └── behaviour configuration
+                                            └── behaviour runtime
 
 mork — targets any layer
 spc  — standalone today; not yet imported by, or importing, any layer above
 spc  — leverages domain ontology axioms to form session types once a separate integration effort defines the needed contracts
 ```
+
+The order is [ADR-A01](docs/architecture/decisions/ADR-A01-layer-dependency-order.md)'s as its 2026-10-01 addendum amends it (ADR-A112). Wording is authored. Behaviour's move below Instrument, and its split into configuration and runtime, land in the computable contract substrate's slice C10.
 
 A few commmon compositions are worth noting:
 
