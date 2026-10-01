@@ -3,7 +3,7 @@
 # Word authoring proof of concept - Status
 
 **Unit ID:** `word-authoring-poc`
-**Status:** 🚧 In progress. WA0 to WA6 done. WA7 is next
+**Status:** 🚧 In progress. WA0 to WA7 done. WA8 is next
 **Last updated:** 2026-10-01
 **Plan:** [word-authoring-poc.md](../plans/word-authoring-poc.md)
 **Sketch:** [word-authoring-poc.md](../sketches/word-authoring-poc.md)
@@ -18,11 +18,13 @@ recommendations. ADR-A114 stays Proposed. WA0 to WA6 are done: preflight, the WA
 WA2 service module that maps a snapshot to the Wording graph and validates it with SHACL, the WA3
 detection, template and conformance checks, the WA4 HTTP API over Javalin with an in-memory store,
 bus, registry and job tracking, WA5's real Fuseki store, RabbitMQ bus, configuration and entry
-point, and WA6's Logical English reading of the Wording graph (the Python worker's sentence-form
-matcher, keyword fallback and proposal graph).
+point, WA6's Logical English reading of the Wording graph (the Python worker's sentence-form
+matcher, keyword fallback and proposal graph), and WA7's worker runtime (the Fuseki Graph Store
+Protocol client, the RabbitMQ consumer/publisher adapter, and the `wording_analysis_main` entry
+point that wires the WA6 reading into a real job loop).
 
-**Next action, for the human:** ask for WA7.
-**Next action, for the agent:** WA7 (worker runtime: Fuseki GSP client, RabbitMQ adapter, entry point), when asked.
+**Next action, for the human:** ask for WA8.
+**Next action, for the agent:** WA8 (add-in domain: TypeScript types, schemas, tag codec, OOXML parser/writer), when asked.
 
 ## Open question raised by WA3
 
@@ -60,14 +62,22 @@ declared only the `wrd:`/`wap:` terms WA2 itself minted. WA6 extended it with th
 classes and the `wap:` proposal-graph terms (sketch §4.4: `wap:proposalBasis`, `wap:activityText`,
 etc.), adding `platform/authoring-service/**` to its own path list as this note asked.
 
-## Note for WA7
+## Note for WA7 (done in WA7)
 
 WA4's `GET .../graph/proposal` route reads `store.getGraph(minter.proposalGraph(...))`, but nothing
 yet writes to that IRI: WA6 only builds the `rdflib.Graph` in memory. WA7's `fuseki_gsp.py` and
 `wording_analysis_worker.py` are what `put_graph(proposalGraphIri, graph)` the request event
 already carries. WA4's tests cover only `wording` and an invalid kind (plan S4-12's own scope).
-Exercise `proposal` end to end once WA7 is done, ideally extending WA5's S5-05 stand-in worker to
-call the real `consume()` instead of a fixture.
+Exercising `proposal` end to end against the real Java HTTP route (replacing WA5's S5-05 fixture
+stand-in with the real worker's `consume()`) is left to WA10's compose-stack suite, where a real
+Fuseki and RabbitMQ are already wired up.
+
+## Note for WA7's self-probe
+
+Unlike WA3, WA5 and WA6, WA7's prescribed self-probe ("make the adapter requeue on `ValueError`,
+S7-03 fails") bites exactly as written: both S7-03 tests fail when tried, and pass again once
+reverted. No replacement test was needed. Detail in the
+[WA7 Validation Pack](../validation/word-authoring-poc-wa7.md) under Self-probe.
 
 ## Preflight (WA0, 2026-10-01)
 
@@ -92,8 +102,7 @@ call the real `consume()` instead of a fixture.
 | WA4 | API and HTTP adapter | done | `c82bcc2` | |
 | WA5 | Fuseki, RabbitMQ and the runnable service | done | `187fea4` | |
 | WA6 | Logical English reading | done | `0128ca2` | |
-| WA7 | Worker runtime | ready | | WA6 |
-| WA7 | Worker runtime | waiting | | WA6 |
+| WA7 | Worker runtime | done | | |
 | WA8 | Add-in domain | waiting | | WA1 |
 | WA9 | Add-in task pane and harness | waiting | | WA8 |
 | WA9a | Ribbon and right-click commands | waiting | | WA9, WA-D13 |
@@ -112,6 +121,7 @@ call the real `consume()` instead of a fixture.
 | WA4 | 450k | about 520k |
 | WA5 | 350k | about 400k |
 | WA6 | 450k | about 480k |
+| WA7 | 200k | about 230k |
 
 ## History
 
@@ -197,3 +207,13 @@ call the real `consume()` instead of a fixture.
   `docs/developer/validation/word-authoring-poc-wa6.md`. `check:java` (9 modules),
   `check:authoring-service` (85) and `check:authoring-contracts` still pass.
 - 2026-10-01: WA6 committed as `0128ca2`.
+- 2026-10-01: WA7 done: `workers/src/lattice_workers/fuseki_gsp.py` (`FusekiGraphStore`, Graph
+  Store Protocol over `urllib.request`), `wording_analysis_worker.py` (`WordingAnalysisConsumer`,
+  `RabbitMqResultPublisher`, `RabbitMqWordingAnalysisWorker`, `declare_topology`, the packaged
+  `amqp-topology.json`), `wording_analysis_main.py` (`read_config`, retrying connect, the
+  `python -m lattice_workers.wording_analysis_main` entry point). 16 new tests, `check:authoring-
+  worker` now 83 (32 WA6, 16 new, 35 contracts). WA7 is the first slice whose prescribed self-probe
+  bites exactly as written (see "Note for WA7's self-probe" above): no replacement test needed, a
+  first in this unit after WA3, WA5 and WA6 all needing one. Validation Pack at
+  `docs/developer/validation/word-authoring-poc-wa7.md`. `check:java` (9 modules),
+  `check:authoring-service` (85) and `check:authoring-contracts` still pass.
