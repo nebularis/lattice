@@ -27,7 +27,7 @@ mise run topology:links 2>&1 | grep -E "ADR-A106|decisions/README|computable-con
 ## Artefacts to inspect
 
 - `docs/architecture/decisions/ADR-A106-behaviour-configuration-runtime-occasions-and-records.md`:
-  decision 2 (A-11 amended), the tier table, and the open point on engine settings.
+  decision 2 (A-11 amended), the tier table, and decision 6's engine settings.
 
 ## Deliberate non-coverage
 
@@ -38,8 +38,8 @@ Nested states, history and concurrent regimes, left to C11a, which amends A-106.
 - **Built:** ADR-A106, its index row, A-11 marked amended on acceptance. The plan's C10 row no
   longer says "engine-setting defaults".
 - **Not run:** nothing beyond the link and prose checks, as planned.
-- **Check first:** the open point on engine settings, which reads the sketch's "engine-setting
-  defaults" as `ins:RegimeTransition`'s restrictions, so ADR-A09 and ADR-A10 stand.
+- **Check first:** decision 5's rule that runtime state belongs to persistent identities, added
+  after CC-D12. Engine settings were settled in review: A-09 and A-10 stand.
 - **Deviations from the plan:** the brief was written on the tranche branch, not on `main`.
 
 ## Results

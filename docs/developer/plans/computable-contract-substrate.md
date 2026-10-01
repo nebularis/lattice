@@ -72,7 +72,7 @@ branch.
 | Slice | Content | Output |
 |---|---|---|
 | C0 | draft A-112, A-113, and the A-01 and ADR-A-C2 addenda (CC-D7) | four documents, Proposed |
-| C1 | draft A-104 from the sketch §5, §6, §7.3, §7.4, laws I1 to I16 | ADR, Proposed |
+| C1 | draft A-104 from the sketch §5, §6, §7.3, §7.4, laws I1 to I18 | ADR, Proposed |
 | C2 | draft A-106 from the sketch §7, laws B1 to B8 | ADR, Proposed |
 
 Gate A: the human accepts A-104, A-106, A-112 and A-113.
@@ -184,8 +184,8 @@ ADR-A96 onto terms, decides what the sketch §5, §6, §7.3 and §7.4 decide and
    `ontology/instrument/templates/`, calculated values, evaluation, laws I1 to I16.
 3. **Consequences:** slices C6 to C9 and C8a, the A-113 bumps, `ins:InstrumentTarget`, NRS N4,
    A-105 and A-109 revisions, ADR-A-C2 and its addendum for E1 to E8.
-4. **Open points at acceptance** for what the sketch leaves undecided: the fate of `ins:Element`
-   and of `ins:fulfilledBy`, each with a recommendation.
+4. **Decided in review (2026-10-01):** `ins:Element` retired under CC-D12, and `ins:fulfilledBy`
+   replaced by `ins:fulfilledWhen` with delegated performance.
 5. **Index:** the A-104 row, and A-07b marked as superseded on acceptance.
 
 | ID | Given / When / Then | Level | +/- |
@@ -213,9 +213,8 @@ history and concurrent regimes are left to C11a.
    evidence rule, occasions and records, alignment without runtime inference, roles filled later,
    laws B1 to B8, and what is not decided.
 3. **Consequences:** C10, C10a, C11, C12, the re-pins, risk R8, the Phase 3 engine.
-4. **Open point at acceptance:** the engine settings. A-09 and A-10 require explicit policies,
-   and the sketch's "engine-setting defaults" are read as `ins:RegimeTransition`'s restrictions
-   asserted by template binding, not as a Behaviour default.
+4. **Decided in review (2026-10-01):** engine settings stay explicit. A-09 and A-10 stand, with no
+   Behaviour-wide default.
 5. **Index:** the A-106 row, and A-11 marked as amended on acceptance.
 
 | ID | Given / When / Then | Level | +/- |
@@ -260,7 +259,7 @@ and may run beside tranche B.
 |---|---|---|
 | C6 | instrument and term, the five relation classes with Exclusion, parties with groups, roles and `resolvedBy`, party details (`noticeAddress`, `operatesAt`), instrument identifiers, activity, scope, `maintains`, `fulfilledWhen`, `excepts`, qualifiers (§5.1 to §5.4, §5.7). `ins:InstrumentTarget` in Instrument's vocabulary | Instrument 0.7.0 to 0.8.0, breaking MINOR (A-113). Imports Wording and Behaviour configuration |
 | C7 | legal triggers (`OnExercise`, `OnBreach`, `OnAct`, `OnCondition`, `OnExpiry`), `ins:Regime`, `ins:RegimeTransition`, `ins:stateKind`, `ins:computedBy`. Arising and ending on legal triggers, due, recurrence, `appliesInState`, survival, constitutive terms (Definition, Deeming), `appliesWithin`, classification, segments and per-segment definitions with union and overlap reporting (§5.5, §5.6, §5.10, §7.3, §7.4, §7.9, I15, I16). The explicit `bhv:` type shape (B4) | 0.9.0 MINOR |
-| C8 | templates and binding, parameter bindings, encoding status (§5.9) | 0.10.0 MINOR |
+| C8 | stated and bound meaning (CC-D12): `ins:Template`, `ins:expressedIn` as owner, `ins:boundIn`, `ins:boundFrom`, `ins:alsoExpressedIn`, parameter bindings, encoding status, the ownership shapes in SHACL Core and law I17's two SHACL-SPARQL shapes (§5.9, I17, I18) | 0.10.0 MINOR |
 | C8a | the template library (§5.11) in `ontology/instrument/templates/`: periods, switching and threshold regimes, relation patterns. Term and qualifier templates wait for the bases decision in [contract-amounts.md](../sketches/contract-amounts.md) §1.7 | templates 0.1.0 |
 | C9 | amendments, consent rules, incorporation (with segment scope), `boundUnder`, `takesEffectWhen` (§5.8). Shapes for I1 to I16 | 0.11.0 MINOR, shapes |
 
@@ -347,6 +346,7 @@ None of these may be taken by the agent.
 | CC-D9 | Where identifiers live | Party | **decided 2026-09-30: Foundation**, slice F1 |
 | CC-D10 | A defined word meaning several parties when the instrument is silent | Undetermined until the graph holds an assertion of how the parties act | **decided 2026-09-30, amended** (below) |
 | CC-D11 | Pieces of text, and parts of a contract | `wrd:TextPart`. Sections as parts of one instrument, named Section, no contract-of-contracts for now | **decided 2026-09-30** (sketch §5.10) |
+| CC-D12 | Who owns the nodes that carry a contract's meaning | meaning belongs to its text: stated meaning part of one element version, bound meaning part of one instrument version. Only wordings, elements and instruments are versions | **decided 2026-10-01** (sketch §5.9, A-104 decision 2) |
 
 **As recorded on 2026-09-30 and 2026-10-01:**
 - **CC-D7.** ADR-A-C2 is relaxed for this unit's examples. Insurance examples may sit in the

@@ -67,10 +67,19 @@ The design is the [sketch](../../developer/sketches/computable-contract-substrat
    execution and state occupancy, breach (derived, or asserted with `fnd:assertedBy`), exercise
    (of a power, with whether it took effect and why not), determination, deemed fact, and
    amendment acceptance. Their properties are the sketch's table.
+   **Runtime state belongs to persistent things.** A state occupancy is for a subject's persistent
+   identity where the subject is versioned, so a regime's state outlives a new version of the
+   instrument it governs (ADR-A104 decision 2). An occasion is for the bound relation in force when
+   it arose, and moves to a later version's relation only when an amendment affects existing
+   occasions (sketch §5.8, §5.9).
 6. **Alignment by subclass, no runtime inference** (sketch §7.3). Instrument specialises
    Behaviour only where a legal construct adds axioms or shapes (ADR-A104). The runtime engine
    reads Behaviour's terms only, so every specialised node carries its `bhv:` type explicitly
    (law B4). Instrument needs no compiled wiring: its triggers are Behaviour triggers.
+   **Engine settings stay explicit.** ADR-A09 and ADR-A10 stand: every transition definition
+   declares its selection and activation policy, with no Behaviour-wide default. Regime authors
+   never state them, because `ins:RegimeTransition` restricts them (ADR-A104) and template binding
+   asserts them (B4).
 7. **Roles filled later** stay in Party. A role occupancy is a temporally scoped version, so
    filling a role is a new version with `pty:occupiedBy`, superseding the unfilled one (sketch
    §7.6). The split does not touch it.
@@ -103,12 +112,3 @@ this ADR. Until then B5 holds for one level of suspension.
 - The platform's behaviour engine loads configuration and writes runtime records (Phase 3 plan).
 - ADR-A105 (closure declarations) and the evidence rule meet in B6: the external log an occupancy
   cites is a fact source a closure may name.
-
-**Open point at acceptance**, with a recommendation:
-
-- **Engine settings.** ADR-A09 and ADR-A10 require every transition definition to declare its
-  selection and activation policy, so that ambiguity is visible in data. Recommended: they stand,
-  with no Behaviour default. Authors of regimes never state the policies because
-  `ins:RegimeTransition` restricts them (ADR-A104) and template binding asserts them (B4). The
-  plan's "engine-setting defaults" means exactly this. A Behaviour-wide default is the alternative,
-  and would amend A-09 and A-10.

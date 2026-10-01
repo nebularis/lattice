@@ -126,6 +126,8 @@ first sketch's.
 | **means, shall mean** | a definition | `ins:Definition` |
 | **prevail, notwithstanding** | precedence between terms | `ins:prevailsOver` (N10, D5) |
 | **amend, delete, replace, insert** | a change to wording, and its legal effect | `wrd:Amendment` (text), `ins:Amendment` (effect) |
+| **template, standard clause, bespoke clause** | wording reused across contracts, or written for one | stated meaning (`ins:Template`), owned by the clause's element version. A bespoke clause is a template used once (§5.9) |
+| **correction, re-encoding** | fixing how a clause was read, with no change to the contract | regenerated stated meaning, never an `ins:Amendment` (§5.8) |
 | **liability** | an insurer's liability to pay, and Hohfeld's correlative of a power | never a name. The power's other end is `ins:counterparty` |
 | **permission, Permitted** | a legal relation, and an Eligibility decision value | kept, with a disambiguating comment on both |
 | **section** | a part of a contract with a determined meaning, as in Lloyd's and the MRC: "Section B2", with its own parties, authority, classes or capacity. The CBAA calls it an "Agreement Segment" | a wording element of type Section, which terms name with `ins:appliesWithin` and `ins:notWithin` (§5.10). Pieces of text are `wrd:TextPart`s |
@@ -464,22 +466,27 @@ ins:Instrument   ⊑ fnd:Version          a legal instrument: contract, policy, 
   ins:takesEffectWhen    → elg:Condition  execution: signature, acceptance by all parties, receipt
   ins:incorporates       → ins:Instrument ⊔ wrd:Wording ⊔ wrd:Element   (S53)
   ins:boundUnder         → ins:Power      created by exercising a power (S48)
-ins:Term         ⊑ fnd:Version          a provision the parties are bound by
-  ins:termOf             → ins:Instrument (exactly one)
-  ins:expressedIn        → wrd:Element   the clause, row or table stating it
-  ins:impliedBy          → a statute, custom or course of dealing
+ins:Term                                a provision the parties are bound by. Not a version: it is
+                                        part of its owner, and changes only with it (§5.9)
+  stated term: ins:expressedIn → wrd:Element   exactly one element version, its owner
+               ins:alsoExpressedIn → wrd:Element   the same term in another language or a
+                                              consolidated text (A-96)
+  bound term:  ins:boundIn → ins:Instrument    exactly one instrument version, its owner
+               ins:boundFrom → ins:Term        the stated term it binds
+               ins:impliedBy → a statute, custom or course of dealing, in place of boundFrom
   ins:appliesWithin      → wrd:Element   the part of the wording it governs, default the whole (S21)
   ins:classification     → concept        condition, warranty, innominate, condition precedent
   ins:survives           → ins:Survival  (S18)
   ins:prevailsOver       → ins:Term      reserved for N10 (D5)
 ```
 
-A term is expressed in at least one element or implied by at least one source (law I2).
+A stated term belongs to one element version, and a bound term to one instrument version (law I2).
+Only `ins:Instrument` is a version in this layer. The text carries the history (§5.9).
 
 ### 5.2 Legal relations
 
-Five classes, pairwise disjoint where the table says so, each a `fnd:Version` arising under exactly
-one term:
+Five classes, pairwise disjoint where the table says so, each arising under exactly one term and
+owned with it (§5.9):
 
 | Class | Reads as | Parties | Required content |
 |---|---|---|---|
@@ -501,8 +508,8 @@ and a liberty not to act despite a duty to (or an immunity against a power). Con
 them differently, so the T-Box does too.
 
 The Instrument T-Box in one picture. Every relation and every constitutive construct arises under
-exactly one term, a term belongs to one instrument, and both are expressed in Wording. An exception
-names what it excepts.
+exactly one term. A stated term belongs to the element version that expresses it, and a bound term
+to the instrument version that binds it (§5.9). An exception names what it excepts.
 
 ```mermaid
 flowchart LR
@@ -526,8 +533,9 @@ flowchart LR
     PR -- "⊑" --> OB
     LR -- "arisesUnder (exactly one)" --> TM
     CT -- "arisesUnder" --> TM
-    TM -- "termOf" --> IN
-    TM -- "expressedIn" --> WE
+    TM -- "boundIn (bound term)" --> IN
+    TM -- "expressedIn (stated term)" --> WE
+    TM -- "boundFrom (bound term)" --> TM
     IN -- "expressedIn" --> WW
     IN -. "boundUnder" .-> PO
     PE -. "excepts" .-> PR
@@ -828,27 +836,149 @@ flowchart TB
     I2 -- "expressedIn" --> W2
 ```
 
-### 5.9 Templates and binding
+**How an amendment flows** (CC-D12). An endorsement or mid-term adjustment changes text or values.
+Changed text is a new element version, which states new meaning (§5.9). The new assembled wording
+includes it, and the new instrument version binds the meaning its wording states. No term or
+relation is edited anywhere, because none is a version: each belongs to an immutable owner.
 
-Meaning is attached once to library wording and bound per instance (Open CBAA design-spec §3.4).
+**What changed is computed, never recorded.** Comparing two instrument versions is comparing their
+wordings:
+
+| Change | Seen as |
+|---|---|
+| a clause amended | an element identity included at two versions |
+| a clause added or removed | an element identity included by only one wording version |
+| a value changed (a rate, a limit, a date) | a different `wrd:VariableValue` for the same variable |
+| a party changed | a different definition, itself an amended clause, or a filled role (Party) |
+
+`ins:materiality` is derived from this report.
+
+**Continuity is stated, where it matters.** Bound meaning of an unchanged clause is bound from the
+same stated nodes in both versions, so it corresponds automatically. When a clause is replaced,
+whether the new obligation continues the old one is a legal question, and the amendment answers it:
+`prov:wasRevisionOf` from the new stated relation to the old. It is needed only where
+`ins:affectsExisting` moves live occasions to the new version. A library release may state these
+links once for every instrument using the form.
+
+**An amendment is not a correction.** A clause encoded wrongly has its stated meaning regenerated
+for the same element version, recorded by a `fnd:DerivationRun`, and every instrument version
+binding it is rebound (ADR-A27). The contract's valid-time history is unchanged, so no
+`ins:Amendment` is made. This is the line between an endorsement and a data correction.
+
+### 5.9 Stated and bound meaning
+
+Decided 2026-10-01 (CC-D12). **Meaning belongs to its text.** Every clause has meaning in two tiers,
+and each tier has exactly one owner:
+
+| Tier | What it says | Names | Owner | Changes |
+|---|---|---|---|---|
+| **stated meaning** | what the clause says, in its own words: "the Borrower shall pay interest at {margin}" | roles, defined words, variables | exactly one element version | never: new text is a new element version, which states new meaning |
+| **bound meaning** | what it says for this instrument: Acme owes 2.5% | occupancies, values | exactly one instrument version | never: built anew for each instrument version |
+
+Stated meaning is what Open CBAA calls a template. A library clause's stated meaning is shared by
+every instrument whose wording includes that clause. A bespoke clause's stated meaning is a
+template used once, so every bound node comes from a stated node, except a term implied by law.
+Bound meaning is a derived artefact (ADR-A92) of three inputs: stated meaning, the assembled
+wording's variable values and the instance's definitions. It can be rebuilt at any time and is
+never the source of truth.
 
 ```text
-ins:Template               a mixin on Term and LegalRelation: library meaning
-  parties are pty:Roles, parameters come through ins:ParameterBinding
-ins:boundFrom              bound Term or relation → its template (exactly one), ⊑ prov:wasDerivedFrom
+ins:Template               stated meaning: a mixin on Term, LegalRelation, Definition, Deeming,
+                           Qualifier and Regime. Names pty:Roles, defined words and variables
+ins:expressedIn            stated term → wrd:Element: exactly one element version, its owner
+ins:boundIn                bound node → ins:Instrument: exactly one instrument version, its owner
+ins:boundFrom              bound node → the stated node it binds (exactly one), ⊑ prov:wasDerivedFrom
 ins:ParameterBinding       ins:parameterKind, ins:fromVariable → wrd:Variable, for a scope parameter
                            ins:scopeSubject (the case class), ins:scopeStep (evidence steps),
                            ins:scopeStrategy (match strategy)
 ins:encodingStatus         wrd:Element → Expresses, NoMeaning, NotAssessed   (ins-voc, closed)
 ```
 
-A template names roles. A bound relation names occupancies and carries the instance's values, so
-only bound relations are evaluated (Open CBAA D22). A bespoke clause has bound meaning with no
-template.
+Relations, definitions, deemings, qualifiers and regimes arise under a term, and belong to it.
+Only bound meaning is evaluated (I13).
+
+```mermaid
+flowchart TB
+    subgraph WRD["Wording (versioned)"]
+        W1["assembled wording v1"]
+        W2["assembled wording v2"]
+        E1["clause 4.1 v1"]
+        E2["clause 4.1 v2"]
+        E5["clause 5 v1, unchanged"]
+        W1 -- "includes" --> E1
+        W1 -- "includes" --> E5
+        W2 -- "includes" --> E2
+        W2 -- "includes" --> E5
+        E2 -. "supersedes" .-> E1
+    end
+    subgraph STATED["Stated meaning: part of one element version"]
+        S1["term and obligation of 4.1 v1<br/>names roles and variables"]
+        S2["term and obligation of 4.1 v2"]
+        S5["term and power of clause 5"]
+    end
+    subgraph INS["Instrument (versioned)"]
+        I1["instrument v1"]
+        I2["instrument v2"]
+        AM["ins:Amendment<br/>textChanges a wrd:Amendment"]
+        AM -- "amends" --> I1
+        AM -- "resultsIn" --> I2
+    end
+    subgraph BOUND["Bound meaning: part of one instrument version"]
+        B1["obligation: Acme, 2.5%"]
+        B5a["power: the lenders"]
+        B2["obligation: Acme, 3.0%"]
+        B5b["power: the lenders"]
+    end
+    E1 -- "states" --> S1
+    E2 -- "states" --> S2
+    E5 -- "states" --> S5
+    I1 -- "expressedIn" --> W1
+    I2 -- "expressedIn" --> W2
+    B1 -- "boundFrom" --> S1
+    B5a -- "boundFrom" --> S5
+    B2 -- "boundFrom" --> S2
+    B5b -- "boundFrom" --> S5
+    B1 -- "boundIn" --> I1
+    B5a -- "boundIn" --> I1
+    B2 -- "boundIn" --> I2
+    B5b -- "boundIn" --> I2
+    style WRD fill:#BBDEFB
+    style STATED fill:#BBDEFB
+    style INS fill:#bcdee1
+    style BOUND fill:#bcdee1
+```
+
+**Why a term cannot change on its own.** A stated term is part of an immutable element version, so
+changing it means new text. New text reaches an instrument only through a new assembled wording,
+and so a new instrument version made by an amendment (§5.8). A bound term is part of an immutable
+instrument version. There is no other place to put a changed term.
+
+**Why text and meaning stay in sync.** Two shapes, both shipped for consumers who do not use the
+LATTICE runtime (law I17):
+
+| Check | Register |
+|---|---|
+| a stated term has exactly one `ins:expressedIn`. A stated relation arises under exactly one stated term. A bound node has exactly one `ins:boundIn`, and exactly one `ins:boundFrom` or an `ins:impliedBy` (`sh:xone`). An element marked `Expresses` has stated meaning (an inverse path) | SHACL Core |
+| nothing bound in an instrument version comes from text its wording does not include | SHACL-SPARQL |
+| every element marked `Expresses` that the wording includes has its stated meaning bound in the instrument version | SHACL-SPARQL |
+
+No shape reasons about supersession, because no term or relation is superseded.
+
+**Controlled text.** Where a clause is written in a controlled language such as Logical English
+([logical-english-alignment.md](logical-english-alignment.md)), parsing it is a
+`fnd:DerivationRun` whose output is that element version's stated meaning. The same text gives the
+same stated meaning, and new text is a new element version whose meaning the Core shape requires.
+
+**Runtime state belongs to identities.** A regime's state occupancy is for the instrument's
+persistent identity, not a version, so a notice period survives a mid-term amendment. An occasion
+keeps the bound relation in force when it arose (I14), and moves to the one bound from the same
+stated node, or a stated revision of it, only when the amendment affects existing occasions.
+
+A worked binding, from a library clause:
 
 ```mermaid
 flowchart LR
-    subgraph LIB["Template (library meaning)"]
+    subgraph LIB["Stated meaning, owned by the library clause"]
         LW["ex:lib-cl-remit<br/>a wrd:Text<br/>The Coverholder shall remit premium<br/>within [days] days"]
         LV["ex:var-days<br/>a wrd:EmbeddedVariable"]
         TR["tmpl:remit-premium<br/>a ins:Obligation, ins:Template<br/>obligor pty:Role Coverholder<br/>obligee pty:Role Insurer"]
@@ -856,8 +986,9 @@ flowchart LR
         LW -- "contains a reference to" --> LV
         TR -- "hasParameterBinding" --> PB
         PB -- "fromVariable" --> LV
+        TR -. "its term is expressedIn" .-> LW
     end
-    subgraph INST["Bound in one agreement"]
+    subgraph INST["Bound meaning, owned by one instrument version"]
         BR["ex:remit-premium<br/>a ins:Obligation<br/>obligor ex:coverholder-occ<br/>obligee ex:insurers<br/>due 0 to P30D"]
         VV["a wrd:VariableValue<br/>value 30"]
     end
@@ -869,7 +1000,8 @@ flowchart LR
 ```
 
 Only `ex:remit-premium` is evaluated (I13). The template names roles, and the bound relation names
-occupancies and carries the value the instance supplied.
+occupancies and carries the value the instance supplied. It also carries `ins:boundIn` the
+agreement's instrument version.
 
 ### 5.10 Sectioned instruments
 
@@ -990,7 +1122,7 @@ substrate or in an applied layer.
 | term and qualifier templates | limits and retentions with their bases ([contract-amounts.md](contract-amounts.md) §1.7), territorial restrictions | amounts, bases, windows, regions |
 
 A template is A-Box content in `ontology/instrument/templates/` (a new directory, carried by
-ADR-A104 under the topology rule). Insurance templates (the CBAA M12 regimes, policy limits) live
+ADR-A104 under the topology rule): library wording elements and the stated meaning they own (§5.9). Insurance templates (the CBAA M12 regimes, policy limits) live
 in `applied/insurance`. Binding a template asserts the explicit `bhv:` types beside the `ins:` ones
 (law B4).
 
@@ -999,7 +1131,7 @@ in `applied/insurance`. Binding a template asserts the explicit `bhv:` types bes
 | Law | Statement | Register |
 |---|---|---|
 | I1 | An instrument version is expressed in exactly one assembled wording | SHACL |
-| I2 | A term is expressed in at least one element or implied by at least one source | SHACL |
+| I2 | A stated term is part of exactly one element version. A bound term is part of exactly one instrument version, and is bound from exactly one stated term or implied by a source | SHACL Core |
 | I3 | A relation arises under exactly one term. It can arise only while its arising condition allows, which may extend beyond the term's in-force period (a discovery period, a run-off). Once arisen, an occasion persists until performed, breached or ended, unless its term's survival says otherwise | OWL and semantic |
 | I4 | All conditions on one relation bind one subject class, the case | SHACL |
 | I5 | An obligation has exactly one due range unless continuing or a prohibition, which have none | SHACL and OWL |
@@ -1010,10 +1142,12 @@ in `applied/insurance`. Binding a template asserts the explicit `bhv:` types bes
 | I10 | A power's exercise takes effect only when its scope is Permitted at the exercise position and its consent rule is met | semantic |
 | I11 | An occasion's parties are resolved at the valid time it arises | semantic |
 | I12 | Nothing is implied between relations. A relation depends on another only through an explicit trigger or state reading (IUA 36.7, "any failure … shall not affect the automatic termination") | design |
-| I13 | Only bound relations are evaluated. A template names roles, a bound relation names occupancies | SHACL |
+| I13 | Only bound meaning is evaluated. Stated meaning names roles, defined words and variables. Bound meaning names occupancies and values | SHACL |
 | I14 | An amendment does not change bound instruments or arisen occasions unless it says so | semantic |
 | I15 | A case has exactly one section where the instrument is sectioned, fixed by the power it was bound under | SHACL and semantic |
 | I16 | Definitions of one word whose parts or scopes overlap combine by union unless one prevails, and every overlap is reported at design time | SHACL, design-time check |
+| I17 | An instrument version binds exactly the stated meaning of the elements its wording includes: nothing from text it does not include, and every element marked `Expresses` | SHACL-SPARQL |
+| I18 | Meaning changes only with its owner: a new element version (an amendment) or regenerated stated meaning of the same element version (a correction). No term, relation or regime is a version | design, and I2 |
 
 ---
 
@@ -1310,7 +1444,7 @@ SHACL enforces proper use, so nothing depends on reasoning at runtime.
 
 | Instrument term | Specialises | Adds |
 |---|---|---|
-| `ins:Regime` (`skos:altLabel "Dispensation"`) | `bhv:StateSpace` | a regime's states may be named by `ins:appliesInState`, and its transitions must be `ins:RegimeTransition`s |
+| `ins:Regime` (`skos:altLabel "Dispensation"`) | `bhv:StateSpace` | a regime arises under a term and belongs to it, like a relation (§5.9). Its states may be named by `ins:appliesInState`, and its transitions must be `ins:RegimeTransition`s |
 | `ins:RegimeTransition` | `bhv:TransitionDefinition` | value restrictions for the engine settings (selection `bhv:SingleMatch`, activation `bhv:ImmediateActivation`) so authors never state them, legal triggers only, and the evidence rule of §7.5 |
 | `ins:OnExercise` | `bhv:TriggerDefinition`, kind external stimulus | `ins:ofPower`, range `ins:Power` |
 | `ins:OnBreach` | `bhv:TriggerDefinition`, kind derived | `ins:ofObligation`, range `ins:Obligation` |
@@ -1939,6 +2073,7 @@ item 4 and ADR-A86's closing paragraph already allow.
 | CC-Q2 | Is `wrd:Wording` also an `ins:Instrument` for single-document instruments, or always two nodes? | always two: an instrument may have several wordings (bilingual, consolidated) and a form is wording with no instrument |
 | CC-D9 | Identifiers | decided 2026-09-30: Foundation, `fnd:identifier` for any identified thing (actors, instruments), with a scheme and a value. Its cascade reaches every layer, so it lands in the Foundation window after Phase 2, batched with NRS N9 |
 | CC-D10 | A defined word meaning several parties when the instrument is silent on how they act | Undetermined until the graph holds an assertion of how the parties act (several, joint, joint and several, any one), from any accepted source: an amendment, a deeming, a market default declared as data, or a recorded reading. Decided 2026-09-30 |
+| CC-D12 | Who owns the nodes that carry a contract's meaning | decided 2026-10-01: meaning belongs to its text. Stated meaning is part of one element version, bound meaning part of one instrument version, and only wordings, elements and instruments are versions (§5.9, laws I17, I18) |
 | CC-D11 | Pieces of text, and parts of a contract | decided 2026-09-30: `wrd:TextPart` for pieces of text. Sections are parts of one instrument (wording elements of type Section), named by terms with `ins:appliesWithin` and `ins:notWithin`, with no contract-of-contracts for now (§5.10) |
 | CC-Q3 | Fixed calendar dates without a recurrence | `ins:dueOn` when an example needs it |
 | CC-Q4 | Should `ins:party` gain a privity shape (an obligor is a party to the term's instrument)? | no. Third-party beneficiaries and regulators' powers (S84) make it an applied choice |
