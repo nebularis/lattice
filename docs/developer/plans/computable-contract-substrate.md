@@ -516,7 +516,83 @@ violation-level shapes are breaking under ADR-A113, so the README gains a Releas
 
 | Slice | Content | Version impact |
 |---|---|---|
-| F1 | External and natural keys ([ADR-A114](../../architecture/decisions/ADR-A114-external-and-natural-keys.md), CC-D9): `fnd:Key` with a `fnd:KeyScheme` and a value, `fnd:externalKey` (locates) and `fnd:naturalKey` (identifies), the common mixin `fnd:NaturallyKeyed` with its uniqueness shapes, `fnd:MergedOnNaturalKey` with `owl:hasKey`, and Persistence's optional `persistent-foundation` with `dal:PersistentlyKeyed`. Taken now, while no AIR branch has work (ADR-A114 Consequences). **Impact analyses first:** before ADR-A114 is accepted, F1 writes an analysis of its effect on Persistence (uniqueness constraints, key claims and merge policy, identity profiles and minting recipes for key nodes, normalisation, privacy of personal-data schemes) and on Surface (index and promotion contracts over keys, generated lookups), each with the changes it needs | Foundation MINOR, cascading to 17 documents. Persistence gains `persistent-foundation`. NRS N9 keeps its own later cascade |
+| F1 | External and natural keys ([ADR-A114](../../architecture/decisions/ADR-A114-external-and-natural-keys.md), CC-D9): `fnd:Key` with a `fnd:KeyScheme` and a value, `fnd:externalKey` (locates) and `fnd:naturalKey` (identifies), the common mixin `fnd:NaturallyKeyed` with its uniqueness shapes, `fnd:MergedOnNaturalKey` with `owl:hasKey`, and Persistence's optional `persistent-foundation` with `dal:PersistenceKeyed`. Taken now, while no AIR branch has work (ADR-A114 Consequences). **Impact analyses first:** before ADR-A114 is accepted, F1 writes an analysis of its effect on Persistence (uniqueness constraints, key claims and merge policy, identity profiles and minting recipes for key nodes, normalisation, privacy of personal-data schemes) and on Surface (index and promotion contracts over keys, generated lookups), each with the changes it needs | Foundation MINOR, cascading to 17 documents. Persistence gains `persistent-foundation`. NRS N9 keeps its own later cascade |
+
+#### F1 in detail
+
+**Machine:** R (Claude Code). **Branch:** `ccs/f1-keys`, created by the human once this brief is on
+`main`. **Commits are the human's**, examples first (ADR-A-C2). Runs before C6, in the quiet window
+of ADR-A114's Consequences: no branch may edit a Foundation importer until F1 merges.
+**Validation Pack:** [computable-contract-substrate-f1](../validation/computable-contract-substrate-f1.md).
+**Decisions:** [ADR-A114](../../architecture/decisions/ADR-A114-external-and-natural-keys.md)
+(Proposed, reviewed 2026-10-03), CC-D9, ADR-A51, ADR-A84, ADR-A86, ADR-A113.
+
+**Invariant:** any thing in a LATTICE graph can carry the names the world gives it, as key nodes
+with a scheme and a value, either locating it (`fnd:externalKey`) or identifying it
+(`fnd:naturalKey`), so it can be found, cited and matched by the value people quote. A natural key
+identifies one thing, checked by SHACL everywhere, merged by OWL for adopters who choose
+`fnd:MergedOnNaturalKey`, and enforced at write time by Persistence for those who choose
+`dal:PersistenceKeyed`. No LATTICE IRI is ever read for meaning, and identity stays ADR-A51's.
+
+**Phase 0, analysis, then a gate.** Before the examples, `docs/developer/sketches/keys-impact.md`
+analyses the effect on:
+
+| Subsystem | Questions the analysis answers |
+|---|---|
+| Persistence | whether `dal:UniquenessConstraint` takes an object-valued key property (`fnd:naturalKey`, compared as the key node's IRI) as the compiler and validator stand (`tools/persistence/src/persistence/recipes.py`, `resolver.py`, `validator.py`), or needs a change. How each `onViolation` policy and claim scheme applies to key nodes. The identity profile and recipe per strategy of ADR-A114 decision 6, and how `fnd:keyNormalisation` meets `dal:normalizePipeline`. How `fnd:personalDataScheme` meets `dal:PrivacyProfile` and erasure. Where `persistent-foundation` sits in Persistence's layout and catalog, as its first document importing a layer |
+| Surface | an index contract over `fnd:externalKey` (retrieval by key) and a promotion contract restating an identity's natural key onto its versions (one-step lookup), and whether either needs a Surface change |
+| the cascade | every document pinning `foundation/0.3.0` (17 at 2026-10-03), transitively every document pinning those, the version each takes under ADR-A86, the tags, and the test suites that name versions |
+
+Each finding states the change it needs and whether it belongs in F1 or a follow-up. **Gate:** the
+human accepts the analysis and ADR-A114. Changes the analysis finds in `tools/persistence` are
+briefed into this section then, with their test rows.
+
+1. **Examples first (ADR-A-C2).** The human commits them before the model.
+
+   | File | Shows |
+   |---|---|
+   | `ontology/foundation/examples/keys.ttl` | key schemes with and without patterns, one that reissues values, one of personal data. A versioned agreement whose identity carries an agreement number and a market reference as natural keys, declarations and a claim locating it by the market reference, a company with two natural keys, a personal-data key with a surrogate IRI, and the path query that reaches each. Neutral classes only (`ex:`), Foundation naming no layer above it |
+   | `ontology/persistence/examples/persistent-foundation-keys.ttl` | `dal:PersistenceKeyed`, a `dal:UniquenessConstraint` on `fnd:naturalKey`, and an identity profile per minting strategy for key nodes: derived hash, natural key, and a surrogate with a keyed claim for the personal-data scheme |
+   | `ontology/surface/examples/keys.ttl` | the index and promotion contracts of the analysis |
+
+2. **Spec** (`foundation` 0.3.0 → 0.4.0, additive): `fnd:Key`, `fnd:keyValue`, `fnd:keyScheme`,
+   `fnd:KeyScheme`, `fnd:reissuesValues`, `fnd:personalDataScheme`, `fnd:valuePattern`,
+   `fnd:keyNormalisation` (a string naming one of the minting specification's three pipelines),
+   `fnd:externalKey`, `fnd:naturalKey ⊑ fnd:externalKey`, `fnd:NaturallyKeyed` (the domain of
+   `fnd:naturalKey`), `fnd:MergedOnNaturalKey ⊑ fnd:NaturallyKeyed` with
+   `owl:hasKey ( fnd:naturalKey )`. Each property's comment states its subject and value.
+3. **Shapes** (Foundation's shapes, breaking under ADR-A113 only where they reject data the 0.1.0
+   shapes accepted, which none should): a key has one scheme and one value, a scheme states
+   `fnd:reissuesValues` and `fnd:personalDataScheme` once each, a value matches its scheme's pattern,
+   a normalisation is one of the three, a natural key's scheme does not reissue values, and no two
+   different `fnd:NaturallyKeyed` things share a natural key.
+4. **Persistence:** `persistent-foundation`, importing Foundation 0.4.0, with
+   `dal:PersistenceKeyed ⊑ fnd:NaturallyKeyed`, a default `dal:UniquenessConstraint` on
+   `fnd:naturalKey` (`dal:Reject`) an adopter may adopt or replace, and a shape refusing an identity
+   profile for a personal-data scheme's keys that is not a surrogate with a keyed claim. Its README
+   section recommends Persistence for any deployment writing keyed data (ADR-A114 decision 8).
+5. **The cascade:** every pinned importer re-pins, with its release row and tag, as the analysis
+   lists. No document pins `foundation/0.3.0` afterwards.
+6. **Elsewhere:** Foundation's README gains a section on keys with diagrams and the example walked
+   through. AIR-4.1's brief uses `fnd:Key` in place of `aeo:Identifier`. C6's brief records
+   instruments' keys. The plan's §7 notes Open CBAA's `agr:umr` as a key scheme.
+7. **Tests:** `tools/test_keys.py`, with the rows below. Catalog, releases and the tag list. The
+   agent stops before any commit.
+
+| ID | Given / When / Then | Level | +/- |
+|---|---|---|---|
+| F1-01 | the Foundation spec / parsed / `0.4.0`, every new property's comment states subject and value, Foundation names no layer above it | L1 | + |
+| F1-02 | the three examples / their layers' shapes / conform | L1 | + |
+| F1-03 | the examples / reasoner / consistent | L2 | + |
+| F1-04 | two named `fnd:MergedOnNaturalKey` members sharing a natural key / reasoner / entailed `owl:sameAs` | L2 | + |
+| F1-05 | two `dal:PersistenceKeyed` members sharing a natural key / reasoner / no `owl:sameAs` entailed. Foundation's SHACL / reported. Persistence / the uniqueness constraint compiles to a guarded key-claim write and a reject audit | L1, L2 | − |
+| F1-06 | a key with no scheme, one with two values, a value outside its scheme's pattern, a normalisation outside the three, a natural key from a scheme that reissues values / shapes / each reported | L1 | − |
+| F1-07 | every key IRI in the examples / minted by `packages/minting/python` from its recipe / equal, and each is a valid IRI | L1 | + |
+| F1-08 | an identity profile minting a personal-data scheme's keys by natural key or derived hash / Persistence shapes / reported | L1 | − |
+| F1-09 | the example's path query `fnd:hasIdentity?/fnd:naturalKey` / run / finds the versioned agreement and the unversioned company, and `fnd:externalKey` finds the agreement, its declarations and its claim | L1 | + |
+| F1-10 | the repository / searched / no document pins `foundation/0.3.0` outside history. Catalog, versioning, releases and import guard pass | L1 | + |
+| F1-11 | the Foundation and Persistence READMEs / literate checks where they apply / pass. Release notes record Foundation 0.4.0 and every re-pin | L1 | + |
+| F1-12 | every existing tool and compiler suite / updated only where a version is named / pass | L1 | + |
 
 Slice numbers are kept stable because other plans cite them. Tranche C now runs before tranche D,
 and may run beside tranche B.
@@ -874,9 +950,11 @@ written and checked as data. Only `ins:Instrument` is a version. Every relation 
 one term and belongs to it. Nothing here evaluates: arising, due and ending (C7b), regimes and
 gating (C7a), parameter bindings (C8) and amendments (C9) follow.
 
-**Answered by the human, 2026-10-02:** C6-Q1 (b), ownership's core moves into C6. C6-Q3 and
-C6-Q4 as recommended. C6-Q2 is under discussion: taking slice F1 now, before C6's examples, so that
-instruments have identifiers from the start.
+**Answered by the human, 2026-10-02 and 2026-10-03:** C6-Q1 (b), ownership's core moves into C6.
+C6-Q3 and C6-Q4 as recommended. C6-Q2: slice F1 runs first (ADR-A114), so C6 records an
+instrument's keys from its first examples: the agreement number and market reference as natural
+keys on its persistent identity, and amendments, declarations and notices locating it with
+`fnd:externalKey`. C6's branch is recreated from `main` after F1 merges.
 
 **Questions for the human:**
 

@@ -18,9 +18,10 @@ Behaviour 0.10.0 (shapes 0.4.0) with nested states and history, the import guard
 check`. Tranche D begins with C6, briefed. From C5 on, the agent builds and verifies, and the human
 commits by hand.
 
-**Next action, for the human:** answer C6-Q1 to C6-Q4 (plan, C6 in detail), commit the brief and
-its Validation Pack on `main`, then create `ccs/c6-instrument-relations`. **Then, for the agent:**
-C6's four examples, stopping for the human's commit before the model.
+**Next action, for the human:** review ADR-A114 and F1's brief, commit them on `main`, then
+create `ccs/f1-keys`. Hold every branch that would edit a Foundation importer until F1 merges.
+**Then, for the agent:** F1's phase 0 analysis (Persistence, Surface, the cascade), stopping at its
+gate.
 
 ## Slice board
 
@@ -36,8 +37,8 @@ C6's four examples, stopping for the human's commit before the model.
 | C10a | import guard | C | merged | |
 | C11 | runtime records, occasions, initial states | C | merged, tagged | |
 | C11a | nested states, history, concurrent regimes | C | merged, tagged | |
-| F1 | Foundation identifiers | Foundation window | waiting | AIR Phase 2 complete, with NRS N9 |
-| C6 | instrument, terms, the five relations, parties, content | D | briefed. C6-Q1, Q3, Q4 answered. Q2 under discussion (F1 first?) | the human |
+| F1 | external and natural keys (ADR-A114) | Foundation, now | briefed, ADR-A114 Proposed | the human: brief on `main`, branch |
+| C6 | instrument, terms, the five relations, parties, content | D | briefed, questions answered | F1 |
 | C7b, C8, C9, C8a | Instrument rewrite, template library | D | waiting | C6. C8 after C7a and C7b |
 | C7a | regimes and gating, split from C7 | D | waiting | C6 |
 | C12, C13 | runtime evaluator, relation plans | E | waiting | C9, C11, C11a, AIR-3.3, NRS N1 |
@@ -82,3 +83,4 @@ C6's four examples, stopping for the human's commit before the model.
 - 2026-10-02: C11a phase 2 built: Behaviour 0.10.0 with regions, history, internal transitions, guards on states, `bhv:Live`, shapes 0.4.0 with B5, B9, B11 and the `AllMatches` rules, the README's worked state machines. All checks pass. Not committed.
 - 2026-10-02: C11a merged to `main` (`a236207`) and tagged by the human. C6 briefed with its Validation Pack: four examples first, Instrument 0.8.0, four questions (ownership in C6, identifiers to F1, party details, the party union's name).
 - 2026-10-02: C6-Q1 (ownership's core in C6), C6-Q3 and C6-Q4 answered. C6-Q2 opened the question of taking F1 now: no AIR branch has work in flight, so Foundation has a quiet window.
+- 2026-10-03: Keys designed with the human: `externalKey` locates, `naturalKey` identifies, the word "identifier" avoided beside "identity". Two mixins, `fnd:MergedOnNaturalKey` with `owl:hasKey` and Persistence's optional `dal:PersistenceKeyed` without, over a common `fnd:NaturallyKeyed`. ADR-A114 "External and natural keys" drafted, Proposed. F1 briefed to run now, before C6, with a phase 0 impact analysis of Persistence, Surface and the cascade. C6-Q2 answered. AIR-4.1's coordination note revised.

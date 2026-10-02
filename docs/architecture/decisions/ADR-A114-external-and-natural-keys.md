@@ -62,9 +62,10 @@ locations (applied exposure) all carry keys. Only Foundation is below all of the
    scheme is one node wherever it is recorded, and it can carry evidence and governance of its own.
 2. **A scheme is declared once.** `fnd:KeyScheme` is a class whose individuals are the schemes: the
    LEI, a company register, a market's PIN, the unique market reference, one insurer's own
-   references. A scheme may state `fnd:valuePattern` (a regular expression its values match, checked
-   by a shape) and states `fnd:reissuesValues`, whether a value it withdrew may later name something
-   else. Foundation declares no scheme. Whoever uses one declares it.
+   references. A scheme states `fnd:reissuesValues` (whether a value it withdrew may later name
+   something else) and `fnd:personalDataScheme` (whether its values are personal data), and may
+   state `fnd:valuePattern` (a regular expression its values match, checked by a shape) and
+   `fnd:keyNormalisation` (decision 6). Foundation declares no scheme. Whoever uses one declares it.
 3. **An external key locates.** `fnd:externalKey` links anything to a key it carries: the contract,
    its declarations, its bordereau rows and its claims each carry the unique market reference. It is
    neither functional nor inverse-functional. Many things may share one key, and one thing may carry
@@ -110,13 +111,24 @@ locations (applied exposure) all carry keys. Only Foundation is below all of the
 
    | Scheme | Strategy | Two sources reach one node |
    |---|---|---|
-   | not personal data (UMR, LEI, a company number) | natural key or derived hash of scheme and value | by computation, in any tenant |
-   | personal data (a national ID, a tax number) | a surrogate with a keyed claim (HMAC under a tenant secret) | by looking up the claim, within one tenant only |
+   | not personal data (UMR, LEI, a company number) | natural key or derived hash of scheme and value | by computation, within one tenant. Across tenants only where the recipe declares no scope |
+   | personal data (`fnd:personalDataScheme true`) | a surrogate with a keyed claim (HMAC under a tenant secret) | by looking up the claim, within one tenant only |
 
    ADR-A51 forbids putting personal data in an IRI and forbids an unkeyed hash of a low-entropy
    personal value, which can be reversed by trying every value. A keyed claim can be computed only
    by the tenant that holds the secret, so records of one person never correlate across tenants.
-   The constraint is the scheme's, never the natural key's.
+   The constraint is the scheme's, never the natural key's. Persistence's `dal:PrivacyProfile` decides
+   what a deployment does with personal-data keys. The flag states the fact for adopters without
+   Persistence.
+
+   **Normalisation and valid IRIs.** A key's value is held as issued in `fnd:keyValue`. Matching
+   uses a normalised form: a scheme names one of the minting specification's pipelines with
+   `fnd:keyNormalisation` (`NfkcTrimCasefold`, `NfkcTrimUppercase`, `NfkcTrimLowercase`, §3.2), and
+   the minting recipe and the uniqueness constraint for its keys must both use it. Validity of the
+   minted IRI is the recipe's encoding step, never the scheme's: the natural-key strategy
+   percent-encodes every byte outside RFC 3986's unreserved characters, and the hash strategies
+   emit hex or base32 (§5, §6.2). A normalisation outside the three pipelines (removing inner
+   spaces, a check digit) is a change to the minting specification, out of this ADR's scope.
 7. **Uniqueness has two homes, by intent** (decision 8, option (c) of the review, 2026-10-03):
    - **`fnd:NaturallyKeyed`** is the common mixin: the domain of `fnd:naturalKey`, the target of
      Foundation's SHACL shapes. Two different things never share a natural key, a key has one scheme
@@ -124,7 +136,7 @@ locations (applied exposure) all carry keys. Only Foundation is below all of the
      pattern.
    - **`fnd:MergedOnNaturalKey ⊑ fnd:NaturallyKeyed`** adds `owl:hasKey ( fnd:naturalKey )`. To an OWL
      reasoner, two named members sharing a natural key are the same individual.
-   - **`dal:PersistentlyKeyed ⊑ fnd:NaturallyKeyed`**, in a new optional document of Persistence,
+   - **`dal:PersistenceKeyed ⊑ fnd:NaturallyKeyed`**, in a new optional document of Persistence,
      `persistent-foundation`, adds no key axiom. Uniqueness is enforced at write time by a
      `dal:UniquenessConstraint` on `fnd:naturalKey`, through Persistence's guarded key-claim write,
      and a violation is rejected, quarantined or recorded by an explicit, reviewable
@@ -132,7 +144,7 @@ locations (applied exposure) all carry keys. Only Foundation is below all of the
 8. **Why two mixins.** Persistence is optional. An adopter who uses LATTICE's ontologies alone, with
    a reasoner and without the compiler or runtime services, still needs a natural key to mean
    something: `fnd:MergedOnNaturalKey` gives it OWL's meaning. An adopter who uses Persistence must
-   not have a reasoner silently merge what Persistence keeps apart for review: `dal:PersistentlyKeyed`
+   not have a reasoner silently merge what Persistence keeps apart for review: `dal:PersistenceKeyed`
    leaves the merge to Persistence. **LATTICE recommends Persistence** for any deployment that writes
    keyed data: `owl:hasKey` merges on any collision, including a mistaken one, and nothing in OWL can
    undo a merge or say why it happened.
@@ -141,7 +153,7 @@ locations (applied exposure) all carry keys. Only Foundation is below all of the
    flowchart TB
        NK["fnd:NaturallyKeyed<br/>domain of fnd:naturalKey<br/>SHACL: uniqueness, scheme, pattern"]
        MK["fnd:MergedOnNaturalKey<br/>owl:hasKey ( fnd:naturalKey )<br/>for ontology-only adopters"]
-       PK["dal:PersistentlyKeyed<br/>persistent-foundation (optional)<br/>enforced by dal:UniquenessConstraint"]
+       PK["dal:PersistenceKeyed<br/>persistent-foundation (optional)<br/>enforced by dal:UniquenessConstraint"]
        MK -- "⊑" --> NK
        PK -- "⊑" --> NK
    ```
@@ -175,17 +187,9 @@ locations (applied exposure) all carry keys. Only Foundation is below all of the
 - *A single mixin with `owl:hasKey`.* It forces OWL's silent merge on Persistence's adopters.
 - *No `owl:hasKey` at all.* It leaves an ontology-only adopter's natural keys with no formal meaning.
 
-**Open at proposal.**
-
-- **A114-Q1. Where a scheme's sensitivity is stated.** Persistence already classifies data with
-  `dal:PrivacyProfile` (personal, internal, public) and its erasure rules. Options: a Foundation flag
-  on `fnd:KeyScheme`, so an ontology-only adopter sees it, or Persistence's privacy profile alone,
-  scoped to a scheme's keys. Recommended: a Foundation flag `fnd:personalDataScheme`, stating the
-  fact, with Persistence's privacy profile deciding what to do about it.
-- **A114-Q2. Normalisation.** A key's value is held as issued, but matching may need it normalised
-  (case, spaces, check digits). Persistence's uniqueness constraints declare a normalisation pipeline,
-  and so do ADR-A84's minting recipes. Recommended: a scheme may name its normalisation, which the
-  minting recipe and the uniqueness constraint for its keys must both use.
+**Answered at review, 2026-10-03.** Sensitivity is a Foundation flag, `fnd:personalDataScheme`
+(A114-Q1). Normalisation is named by the scheme from the minting specification's closed set, and
+IRI validity stays with the recipe's encoding (A114-Q2, decision 6).
 
 ## Consequences
 
