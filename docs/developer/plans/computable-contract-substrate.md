@@ -859,6 +859,129 @@ are the human's, examples first.
 Nothing outside Instrument imports Instrument once C10 lands, so tranche D cascades only to
 Instrument's own documents and examples. No applied insurance module imports Instrument.
 
+#### C6 in detail
+
+**Machine:** R (Claude Code). **Branch:** `ccs/c6-instrument-relations`, created by the human once
+this brief is on `main` and its questions are answered. **Commits are the human's**, examples first
+(ADR-A-C2).
+**Validation Pack:** [computable-contract-substrate-c6](../validation/computable-contract-substrate-c6.md).
+**Decisions:** ADR-A104 decisions 1 to 5 and 10, CC-D10, CC-D12, ADR-A96, ADR-A102, ADR-A113.
+
+**Invariant:** Instrument states what an agreement binds its parties to: an instrument expressed in
+one assembled wording, terms, and the five legal relations with their parties and content, so
+that an obligation, a prohibition and its permitted exception, an exclusion and a power can each be
+written and checked as data. Only `ins:Instrument` is a version. Every relation arises under exactly
+one term and belongs to it. Nothing here evaluates: arising, due and ending (C7b), regimes and
+gating (C7a), parameter bindings (C8) and amendments (C9) follow.
+
+**Questions for the human:**
+
+- **C6-Q1. Where term ownership is built.** The plan puts CC-D12's ownership (stated and bound
+  terms, `ins:boundIn`, `ins:boundFrom`) in C8. Without it, a C6 term has no owner, and C6's
+  examples would name occupancies directly in one tier, to be rewritten into two tiers in C8.
+  Options:
+  - (a) keep the plan: C6 terms are owned by `ins:expressedIn` a wording element only, with
+    occupancies named directly. C8 splits them into stated and bound meaning and rewrites the
+    examples
+  - (b) move ownership's core into C6: `ins:Template` (the stated-meaning mixin),
+    `ins:expressedIn` and `ins:alsoExpressedIn` for stated terms, `ins:boundIn`, `ins:boundFrom`
+    and `ins:impliedBy` for bound terms, with law I2's Core shapes. C8 keeps parameter bindings,
+    encoding status and law I17's shapes
+  - (c) reorder: C8 before C7a and C7b. C6's examples still lack ownership
+
+  **Recommendation: (b).** Ownership is what makes a relation belong to its text (CC-D12), the
+  examples are written once in the two tiers they keep, and ADR-A96's many-element attachment
+  moves to `ins:alsoExpressedIn` in the same slice that retires `ins:inProvision`.
+- **C6-Q2. Instrument identifiers.** The plan row lists them, but they are `fnd:identifier`
+  (CC-D9), built by slice F1, which waits for AIR Phase 2. **Recommendation:** drop them from C6.
+  An instrument's identifiers arrive with F1 and need nothing from Instrument.
+- **C6-Q3. Party details.** `ins:noticeAddress` and `ins:operatesAt` on an occupancy (S97). Party
+  has no address or place. **Recommendation:** `ins:noticeAddress` takes a string (the address as
+  written, identity being by identifier, CC-D9), and `ins:operatesAt` a concept under a new scheme
+  contract `ins-voc:LocationContract`, which a deployment binds to its territory or site scheme.
+- **C6-Q4. The name of the party union.** The four party properties range over role occupancies,
+  participation groups and, on stated meaning only, roles: a union named once, as Wording's
+  `wrd:WordingNode` is. **Recommendation:** `ins:RelationParty`. `ins:Party` would read as a person
+  and sit beside the property `ins:party`.
+
+**Decided by precedent, not asked:**
+
+- the activity scheme follows C3-Q1: `ins-voc:ActivityContract` constrains `ins:activity`, with a
+  baseline scheme bound as fallback that holds every activity the examples and README use
+- unions are named once with explicit subclass triples (C3), and every property states its subject
+  and value in its comment
+- law I8 (a permission's holder is the excepted prohibition's obligor with the same activity, and
+  an exclusion's holder is the excepted obligation's obligor or the power's counterparty) ships in
+  C6, since every term it reads is built here. I1 to I16's other shapes stay with the slices that
+  build their terms (C9 for the rest)
+- the legacy minimal shape (ADR-A07b) is removed, as ADR-A104 decides: `ins:Element`,
+  `ins:Provision`, `ins:hasProvision`, `ins:partOfInstrument`, `ins:hasObligation`,
+  `ins:inProvision`, `ins:hasQualifier`, `ins:hasCondition` and `ins:fulfilledBy`. The projection
+  file `projection/party.ttl` is retired (Instrument now imports Party, so its ranges move into the
+  spec). `shapes/single-provision.ttl` becomes `shapes/single-expression.ttl`, the same optional
+  check on `ins:alsoExpressedIn` for a deployment that expresses each term once (ADR-A96). The stub
+  `shapes/rules.ttl` is removed. The supersession shape retargets `ins:Instrument`
+- the README is rewritten in the style of the Behaviour README after C11a: narrative, diagrams,
+  and a worked section per example. The comment markers of the
+  [documentation sketch](../sketches/improved-ontology-documentation.md) wait for that sketch's plan
+
+1. **Examples first (ADR-A-C2).** In `ontology/instrument/examples/`, each with a small wording of
+   its own and the instrument it expresses, drawn from the neutral instruments of the sketch §9
+   (CC-D7). The human commits them before the model. Under C6-Q1 (b), each states its clauses'
+   meaning on the form and binds it for one instrument:
+
+   | File | From | Shows |
+   |---|---|---|
+   | `facility-agreement.ttl` | E1, E2 | an obligation owed to a group severally, a continuing obligation, a prohibition (negative pledge) and the permission excepting it, a power held jointly by a group, stated meaning on the form and bound meaning for one facility |
+   | `trial-protocol.ttl` | E8 | a reporting obligation, a prohibition with a waiver as a permission (law I8), a power to end a site's participation |
+   | `product-warranty.ttl` | E5 | an exclusion excepting the duty to repair, its carve-back in its scope, a party that depends on the case (a contingent occupancy `ins:resolvedBy` an evidence binding) |
+   | `software-licence.ttl` | E7 | an exclusion excepting a power (immunity: a perpetual licence the licensor cannot end for convenience), party details |
+
+2. **Spec** (`instrument` 0.7.0 → 0.8.0, breaking under ADR-A113), sketch §5.1 to §5.4: imports
+   Foundation, Vocabulary, Quantification, Party, Eligibility, Wording 0.3.0 and Behaviour
+   configuration 0.10.0, never the runtime document.
+   - `ins:Instrument ⊑ fnd:Version`, `ins:expressedIn` one `wrd:AssembledWording` (I1), `ins:party`
+   - `ins:Term`, not a version. Under C6-Q1 (b): `ins:Template`, `ins:expressedIn` (stated term to
+     one element version), `ins:alsoExpressedIn`, `ins:boundIn`, `ins:boundFrom`, `ins:impliedBy`
+   - `ins:LegalRelation ≡ Obligation ⊔ Permission ⊔ Exclusion ⊔ Power`, pairwise disjoint,
+     `ins:ContinuingObligation` and `ins:Prohibition` under `ins:Obligation` and disjoint, each
+     relation `ins:arisesUnder` exactly one term
+   - parties: `ins:obligor`, `ins:obligee`, `ins:holder`, `ins:counterparty` over the C6-Q4 union,
+     `ins:resolvedBy` an `elg:EvidenceBinding`. Under C6-Q3: `ins:noticeAddress`, `ins:operatesAt`
+   - content: `ins:activity`, `ins:scope` (an `elg:Condition`, at most one), `ins:maintains`,
+     `ins:fulfilledWhen`, `ins:excepts` (a permission to a prohibition, an exclusion to an
+     obligation or a power), `ins:Qualifier` with `ins:qualifies` a term or a relation
+3. **Vocab** (`instrument-vocab` 0.8.0): `ins-voc:ActivityContract` and its baseline scheme,
+   `ins-voc:LocationContract` (C6-Q3), and `ins:InstrumentTarget` as a `bhv:TargetKind`.
+4. **Shapes** (`instrument-shapes` 0.1.0 → 0.2.0, breaking): Core shapes for each property's subject
+   and value, a relation's single term, its required content per class (an obligation's obligor
+   and obligees, a continuing obligation's `ins:maintains`, an exclusion's `ins:excepts`), I2
+   under C6-Q1 (b), the supersession shape on `ins:Instrument`, and I8 in SHACL-SPARQL.
+5. **Elsewhere:** Party's README stops naming `ins:fulfilledBy`. The gate-4 supersession fixture and
+   query move to `ins:Instrument`. The ADR-A96 test in `test_substrate_extensions.py` moves to
+   `ins:alsoExpressedIn`.
+6. **README:** the model with diagrams, a worked section per example, and release notes.
+7. **Tests:** `tools/test_instrument.py`, with the rows below. Catalog, releases and the tag list.
+   The agent stops before any commit.
+
+| ID | Given / When / Then | Level | +/- |
+|---|---|---|---|
+| C6-01 | the spec / parsed / `0.8.0`, imports exactly the seven documents above, Behaviour's configuration and not its runtime. The import guard passes | L1 | + |
+| C6-02 | every example / shapes / conform | L1 | + |
+| C6-03 | every example / reasoner / consistent | L2 | + |
+| C6-04 | a relation under two terms, one under none, an obligation with two obligors, a continuing obligation without `ins:maintains`, an exclusion without `ins:excepts`, a permission excepting an obligation that is not a prohibition, a scope that is not a condition / shapes / each reported | L1 | − |
+| C6-05 | a node that is both an obligation and a power, both a continuing obligation and a prohibition / reasoner / inconsistent | L2 | − |
+| C6-06 | a permission whose holder is not the excepted prohibition's obligor, or whose activity differs, an exclusion of a power held by the power's holder / shapes / reported (I8) | L1 | − |
+| C6-07 | under C6-Q1 (b): a stated term in two element versions, a bound term in two instrument versions, a bound term from two stated terms or from none and not implied, a relation typed `fnd:Version` / shapes / each reported (I2) | L1 | − |
+| C6-08 | each named union / spec / named once, its members explicit subclasses | L1 | + |
+| C6-09 | every property / spec / comment states subject and value, no range names the runtime document or a higher layer | L1 | + |
+| C6-10 | the repository outside history documents / searched / no `ins:Element`, `ins:Provision`, `ins:fulfilledBy` or other retired term | L1 | + |
+| C6-11 | the vocab / parsed / the activity contract constrains `ins:activity`, every activity used is in the baseline, `ins:InstrumentTarget` is a `bhv:TargetKind` | L1 | + |
+| C6-12 | a superseding instrument version with another identity / shapes and the gate-4 query / reported | L1 | − |
+| C6-13 | one stated term expressed in two languages / core shapes / conform, and the optional `single-expression.ttl` refuses it (ADR-A96) | L1 | + |
+| C6-14 | the README / literate check / blocks equal the files. Release notes mark 0.8.0 and shapes 0.2.0 breaking | L1 | + |
+| C6-15 | the existing tool tests / updated only where a retired term is named / pass | L1 | + |
+
 ### Tranche E: evaluation
 
 | Slice | Content | Where |

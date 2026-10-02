@@ -13,15 +13,14 @@
 
 ## Current position
 
-Gate A passed on 2026-10-01. C3, C4, C5, C10, C10a and C11 are merged to `main` and tagged:
-Wording 0.3.0, Behaviour 0.9.0, shapes 0.3.0, the import guard in `mise run check`. Tranche D is
-unblocked. C11a phase 1 is drafted. From C5 on, the agent builds and verifies, and the human
+Gate A passed on 2026-10-01. Tranches B and C are merged to `main` and tagged: Wording 0.3.0,
+Behaviour 0.10.0 (shapes 0.4.0) with nested states and history, the import guard in `mise run
+check`. Tranche D begins with C6, briefed. From C5 on, the agent builds and verifies, and the human
 commits by hand.
 
-**Next action, for the human:** review and commit C11a phase 2's model, then merge and tag
-`behaviour-v0.10.0`, `behaviour-runtime-v0.10.0`, `behaviour-vocab-v0.10.0`,
-`behaviour-shapes-v0.4.0` and `applied-capacity-execution-v0.10.0`. **Then:** tranche D (C6, then
-C7a and C7b).
+**Next action, for the human:** answer C6-Q1 to C6-Q4 (plan, C6 in detail), commit the brief and
+its Validation Pack on `main`, then create `ccs/c6-instrument-relations`. **Then, for the agent:**
+C6's four examples, stopping for the human's commit before the model.
 
 ## Slice board
 
@@ -36,10 +35,11 @@ C7a and C7b).
 | C10 | Behaviour split and layer flip | C | merged, tagged | |
 | C10a | import guard | C | merged | |
 | C11 | runtime records, occasions, initial states | C | merged, tagged | |
-| C11a | nested states, history, concurrent regimes | C | phase 2 built and verified, awaiting the human's commit | branch |
+| C11a | nested states, history, concurrent regimes | C | merged, tagged | |
 | F1 | Foundation identifiers | Foundation window | waiting | AIR Phase 2 complete, with NRS N9 |
-| C6, C7b, C8, C9, C8a | Instrument rewrite, template library | D | waiting | C5 and C10 done. C8 after C7a and C7b |
-| C7a | regimes and gating, split from C7 | D | waiting | C6, C11a phase 2 |
+| C6 | instrument, terms, the five relations, parties, content | D | briefed, C6-Q1 to Q4 open | the human |
+| C7b, C8, C9, C8a | Instrument rewrite, template library | D | waiting | C6. C8 after C7a and C7b |
+| C7a | regimes and gating, split from C7 | D | waiting | C6 |
 | C12, C13 | runtime evaluator, relation plans | E | waiting | C9, C11, C11a, AIR-3.3, NRS N1 |
 | C13a | design-time joint satisfiability: slot conditions by reasoner, the task NRS N3 reuses (deferred from C5) | E | waiting | C5, NRS N1 |
 | C14 to C17 | examples, docs, handoff | F | waiting | C8a, C9, C12 |
@@ -80,3 +80,4 @@ C7a and C7b).
 - 2026-10-02: C11a gate passed (addendum accepted, committed `c40df81`). Phase 2 briefed: eight examples first, then configuration, runtime and vocab 0.10.0, shapes 0.4.0, the README's worked state machines.
 - 2026-10-02: C11a phase 2's eight examples written: covenant default, run-off, standstill, garden leave, force majeure, occasion refinement, disputed occasion, ordered draws. All conform to the 0.3.0 shapes and are consistent. The brief gains B1 over the occasion tree and B5 for the evaluator's reinstatement.
 - 2026-10-02: C11a phase 2 built: Behaviour 0.10.0 with regions, history, internal transitions, guards on states, `bhv:Live`, shapes 0.4.0 with B5, B9, B11 and the `AllMatches` rules, the README's worked state machines. All checks pass. Not committed.
+- 2026-10-02: C11a merged to `main` (`a236207`) and tagged by the human. C6 briefed with its Validation Pack: four examples first, Instrument 0.8.0, four questions (ownership in C6, identifiers to F1, party details, the party union's name).
