@@ -71,3 +71,5 @@ WINGMAN
 .local/**
 *.patch
 /.yarn
+/.build/authoring
+.build/word-authoring-addin-test-results/.last-run.json
