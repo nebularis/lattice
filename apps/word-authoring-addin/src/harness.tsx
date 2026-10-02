@@ -18,7 +18,7 @@ const params = new URLSearchParams(window.location.search);
 const pollTimeoutMs = Number(params.get("pollTimeoutMs") ?? "20000");
 
 const port = new FakeWordPort();
-const api = new HttpApiClient("/api");
+const api = new HttpApiClient("");
 const bridge = new UiBridge();
 const showPaneCalls: number[] = [];
 const handlers: Handlers = createHandlers({

@@ -27,7 +27,7 @@ export function render(container: HTMLElement): void {
     root.render(<p>This add-in requires a newer version of Word.</p>);
     return;
   }
-  root.render(<App port={port} api={new HttpApiClient("/api")} bridge={bridge} />);
+  root.render(<App port={port} api={new HttpApiClient("")} bridge={bridge} />);
 }
 
 Office.onReady(() => {

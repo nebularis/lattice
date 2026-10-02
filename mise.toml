@@ -50,7 +50,7 @@ run = "corepack enable && yarn install --immutable"
 
 [tasks.check]
 description = "Run all repository validation tasks"
-depends = ["check:python-root", "check:workers", "check:java", "check:frontend", "check:spc", "check:persistence", "check:vocabulary", "check:mork-compilers", "check:ontology-versioning", "check:ontology-catalog", "check:reasoning-isolation", "check:minting", "build:mtp", "check:mtp"]
+depends = ["check:python-root", "check:workers", "check:java", "check:frontend", "check:spc", "check:persistence", "check:vocabulary", "check:mork-compilers", "check:ontology-versioning", "check:ontology-catalog", "check:reasoning-isolation", "check:minting", "build:mtp", "check:mtp", "check:authoring-tools"]
 
 [tasks.test]
 description = "Run the repository test suites"
@@ -196,6 +196,39 @@ run = "mvn -f platform/pom.xml -pl authoring-service -am -Pauthoring-it verify"
 [tasks."build:authoring-fixtures"]
 description = "Regenerate the word authoring POC's generated wording fixtures from the samples (ADR-A114)"
 run = "mvn -q -f platform/pom.xml -pl authoring-service -am package -DskipTests && java -cp platform/authoring-service/target/authoring-service.jar org.nebularis.lattice.authoring.app.FixtureWriter contracts/authoring"
+
+[tasks."build:authoring"]
+description = "Build the POC service jar and add-in, and stage the image inputs"
+run = "mvn -q -f platform/pom.xml -pl authoring-service -am package -DskipTests && yarn workspace @lattice/word-authoring-addin run build && python tools/authoring_stage.py"
+
+[tasks."authoring:up"]
+description = "Start the Word authoring POC stack and seed the samples"
+depends = ["build:authoring"]
+run = "docker compose -f deployment/compose/authoring/docker-compose.yml up -d --build --wait"
+
+[tasks."authoring:down"]
+run = "docker compose -f deployment/compose/authoring/docker-compose.yml down"
+
+[tasks."authoring:reset"]
+description = "Stop the POC stack and delete its data and local CA"
+run = "docker compose -f deployment/compose/authoring/docker-compose.yml down -v"
+
+[tasks."authoring:ca"]
+description = "Copy the POC proxy's local root certificate to .build/authoring"
+run = "docker compose -f deployment/compose/authoring/docker-compose.yml cp authoring-proxy:/data/caddy/pki/authorities/local/root.crt .build/authoring/lattice-authoring-root.crt"
+
+[tasks."check:authoring-tools"]
+description = "Test the word authoring POC staging script (ADR-A114)"
+run = "python -m pytest tools/test_authoring_stage.py -q"
+
+[tasks."check:authoring-stack"]
+description = "Start the POC stack and run its end-to-end suite"
+depends = ["authoring:up"]
+run = "yarn workspace @lattice/word-authoring-addin run test:stack"
+
+[tasks."check:authoring"]
+description = "All Word authoring POC checks that need no running stack"
+depends = ["check:authoring-contracts", "check:authoring-service", "check:authoring-worker", "check:authoring-addin", "test:authoring-addin", "check:authoring-tools"]
 
 [tasks."services:up"]
 description = "Start the reference platform services"

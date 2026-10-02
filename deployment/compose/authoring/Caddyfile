@@ -1,0 +1,22 @@
+{
+	local_certs
+	skip_install_trust
+	admin off
+}
+
+https://localhost:3443 {
+	tls internal
+	header {
+		X-Content-Type-Options nosniff
+		Referrer-Policy no-referrer
+		Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-eval' https://appsforoffice.microsoft.com; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'self' https://*.officeapps.live.com https://*.office.com https://*.microsoft365.com https://*.sharepoint.com https://*.cloud.microsoft"
+	}
+	handle /api/* {
+		reverse_proxy authoring-service:8080
+	}
+	handle_path /addin/* {
+		root * /srv/addin
+		file_server
+	}
+	redir / /addin/harness.html
+}

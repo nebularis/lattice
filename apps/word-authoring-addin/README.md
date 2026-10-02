@@ -77,4 +77,21 @@ mise run test:authoring-addin
 
 `check:authoring-addin` type-checks with `tsc --noEmit` and runs the Vitest unit suite.
 `test:authoring-addin` additionally runs the Playwright suite (`e2e/`) against a real `msedge`
-channel and the harness.
+channel and the harness, using fake/mocked API responses.
+
+`e2e-stack/` (plan WA10) is a second Playwright suite that runs against the real compose stack in
+[`deployment/compose/authoring`](../../deployment/compose/authoring) instead — the real service,
+worker, Fuseki and RabbitMQ, through the real Caddy proxy, no mocking. Run it with:
+
+```
+mise run check:authoring-stack
+```
+
+See [`deployment/compose/authoring/README.md`](../../deployment/compose/authoring/README.md) for
+what the stack is and how to browse it directly.
+
+## Loading the add-in in real Word
+
+Sideloading `manifest/manifest.xml` into real Word is a separate step from running the compose
+stack above (plan WA11); it is not yet documented here.
+

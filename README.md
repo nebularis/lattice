@@ -124,6 +124,10 @@ lattice/
 ├── apps/
 │   └── word-authoring-addin/  # Word add-in, proof of concept (ADR-A114)
 │
+├── deployment/
+│   └── compose/
+│       └── authoring/        # Word authoring POC compose stack (ADR-A114)
+│
 ├── packages/
 │   └── minting/             # Standalone identity minting libraries (Python, Java), no LATTICE dependency
 │
@@ -332,6 +336,29 @@ mise run services:down
 ```
 
 The service checks confirm container startup and reachability. They do not replace end-to-end integration tests.
+
+### Run the Word authoring POC
+
+```bash
+mise run authoring:up
+```
+
+Builds the service jar and the add-in, stages the Docker build inputs, and brings up a standalone
+compose stack (Fuseki, RabbitMQ, the authoring service and worker, and a Caddy TLS proxy) bound to
+`127.0.0.1` only. Browse to [`https://localhost:3443`](https://localhost:3443) — it redirects to the
+harness, a browser-only stand-in for the real Word task pane backed by the real service. The
+browser will warn about the proxy's local certificate; either accept the warning or run
+`mise run authoring:ca` first and trust `.build/authoring/lattice-authoring-root.crt`.
+
+```bash
+mise run check:authoring-stack   # starts the stack and runs its end-to-end suite
+mise run authoring:down          # stop the stack, keep its data
+mise run authoring:reset         # stop the stack and delete its data and local CA
+```
+
+See [`deployment/compose/authoring/README.md`](deployment/compose/authoring/README.md) for the
+service/port/volume reference. Loading the add-in inside real Word requires sideloading the
+manifest — a separate step covered in [`apps/word-authoring-addin/README.md`](apps/word-authoring-addin/README.md).
 
 The canonical active documentation locations are `plans`, `status`, and `review`.
 

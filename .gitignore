@@ -15,6 +15,7 @@
 .build/word-authoring-addin-test-results/*
 !.build/word-authoring-addin-test-results/.gitkeep
 .build/authoring/
+workers/build/
 
 # Node and Yarn installs, caches, and build output
 node_modules/
