@@ -874,6 +874,10 @@ written and checked as data. Only `ins:Instrument` is a version. Every relation 
 one term and belongs to it. Nothing here evaluates: arising, due and ending (C7b), regimes and
 gating (C7a), parameter bindings (C8) and amendments (C9) follow.
 
+**Answered by the human, 2026-10-02:** C6-Q1 (b), ownership's core moves into C6. C6-Q3 and
+C6-Q4 as recommended. C6-Q2 is under discussion: taking slice F1 now, before C6's examples, so that
+instruments have identifiers from the start.
+
 **Questions for the human:**
 
 - **C6-Q1. Where term ownership is built.** The plan puts CC-D12's ownership (stated and bound

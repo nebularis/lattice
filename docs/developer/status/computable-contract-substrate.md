@@ -37,7 +37,7 @@ C6's four examples, stopping for the human's commit before the model.
 | C11 | runtime records, occasions, initial states | C | merged, tagged | |
 | C11a | nested states, history, concurrent regimes | C | merged, tagged | |
 | F1 | Foundation identifiers | Foundation window | waiting | AIR Phase 2 complete, with NRS N9 |
-| C6 | instrument, terms, the five relations, parties, content | D | briefed, C6-Q1 to Q4 open | the human |
+| C6 | instrument, terms, the five relations, parties, content | D | briefed. C6-Q1, Q3, Q4 answered. Q2 under discussion (F1 first?) | the human |
 | C7b, C8, C9, C8a | Instrument rewrite, template library | D | waiting | C6. C8 after C7a and C7b |
 | C7a | regimes and gating, split from C7 | D | waiting | C6 |
 | C12, C13 | runtime evaluator, relation plans | E | waiting | C9, C11, C11a, AIR-3.3, NRS N1 |
@@ -81,3 +81,4 @@ C6's four examples, stopping for the human's commit before the model.
 - 2026-10-02: C11a phase 2's eight examples written: covenant default, run-off, standstill, garden leave, force majeure, occasion refinement, disputed occasion, ordered draws. All conform to the 0.3.0 shapes and are consistent. The brief gains B1 over the occasion tree and B5 for the evaluator's reinstatement.
 - 2026-10-02: C11a phase 2 built: Behaviour 0.10.0 with regions, history, internal transitions, guards on states, `bhv:Live`, shapes 0.4.0 with B5, B9, B11 and the `AllMatches` rules, the README's worked state machines. All checks pass. Not committed.
 - 2026-10-02: C11a merged to `main` (`a236207`) and tagged by the human. C6 briefed with its Validation Pack: four examples first, Instrument 0.8.0, four questions (ownership in C6, identifiers to F1, party details, the party union's name).
+- 2026-10-02: C6-Q1 (ownership's core in C6), C6-Q3 and C6-Q4 answered. C6-Q2 opened the question of taking F1 now: no AIR branch has work in flight, so Foundation has a quiet window.
