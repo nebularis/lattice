@@ -302,13 +302,15 @@ does not depend on any stage of the notice period. So the employment has two reg
 ```mermaid
 stateDiagram-v2
     direction LR
-    state "termination regime" as T {
+    state "termination regime" as T
+    state T {
         [*] --> InForce
         InForce --> Notice : OnExercise, terminate with notice
         Notice --> InForce : OnExercise, notice withdrawn by agreement
         Notice --> Terminated : OnExpiry, 3 months after entry
     }
-    state "attendance regime" as A {
+    state "attendance regime" as A
+    state A {
         [*] --> Working
         Working --> GardenLeave : OnExercise, place on garden leave
         GardenLeave --> Working : OnExercise, recall to work
@@ -336,12 +338,12 @@ suspension had to restore it (§3.1, third test).
 stateDiagram-v2
     direction LR
     [*] --> Performing
-    Performing --> Default : OnBreach, financial covenant
-    state Default {
+    Performing --> InDefault : OnBreach, financial covenant
+    state InDefault {
         [*] --> CurePeriod
         CurePeriod --> Uncured : OnExpiry, 20 business days after entry
     }
-    Default --> Performing : OnCondition, covenant met again
+    InDefault --> Performing : OnCondition, covenant met again
 ```
 
 The power to accelerate applies in `Uncured` only. The transition back to `Performing` leaves from
@@ -383,12 +385,12 @@ stateDiagram-v2
     [*] --> Operative
     state Operative {
         [*] --> InForce
-        InForce --> Default : OnBreach, financial covenant
-        state Default {
+        InForce --> InDefault : OnBreach, financial covenant
+        state InDefault {
             [*] --> CurePeriod
             CurePeriod --> Uncured : OnExpiry, 20 business days after entry
         }
-        Default --> InForce : OnCondition, covenant met again
+        InDefault --> InForce : OnCondition, covenant met again
     }
     Operative --> Standstill : OnExercise, standstill agreed
     Standstill --> Operative : OnExpiry, standstill ends (DeepHistory)
@@ -414,12 +416,14 @@ Two separate regimes on the agreement:
 ```mermaid
 stateDiagram-v2
     direction LR
-    state "termination regime" as T {
+    state "termination regime" as T
+    state T {
         [*] --> InForce
         InForce --> Notice : OnExercise, terminate with notice
         Notice --> Terminated : OnExpiry, 30 business days
     }
-    state "force majeure regime" as F {
+    state "force majeure regime" as F
+    state F {
         [*] --> Normal
         Normal --> ForceMajeure : OnAct, force majeure notified
         ForceMajeure --> Prolonged : OnExpiry, 90 days after entry

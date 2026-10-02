@@ -56,3 +56,34 @@ Written on machine R, 2026-10-02.
 | C11a-02 | the six worked cases (§9) are each written as configuration and, where they turn on history or sequence, as records step by step. 9.5 and 9.6 rest on C11a-Q2 and C11a-Q4 for one detail each |
 | C11a-03 | the addendum is Proposed and restates only the sketch's decisions, listing the four questions as open |
 | C11a-04 | `mise run topology:links` reports no broken link in the files touched. It fails on links elsewhere in the repository that were already broken |
+
+## Phase 2
+
+Built on machine R, 2026-10-02, after the human committed the brief and examples (`03d8e8e`).
+Not committed, pending the human.
+
+- **Built:** `behaviour` and `behaviour-runtime` 0.10.0 (additive), `behaviour-vocab` 0.10.0
+  (breaking: `bhv:Live` and `bhv:LiveStates`), shapes 0.4.0 (breaking), `applied/capacity`'s
+  execution profile re-pinned at 0.10.0, the README's §5.3 model, §6 occasion statechart and §10
+  worked state machines (20 Mermaid diagrams, Turtle fragments, occupancy timelines), release notes,
+  `tools/test_behaviour_nested.py`, catalog and release rows.
+- **Check first:** B11's rule that a refinement region applies only to its own relation's
+  occasions, and B5's acceptance of the evaluator's executions, which name no transition.
+- **Deviations from the plan:** none beyond the two refinements the brief recorded when the examples
+  were written. The C10 and C11 tests take the new versions and the seventh occasion state. Two
+  sketch diagrams were corrected so Mermaid parses them (an aliased composite state, and `Default`,
+  a Mermaid keyword, as a state id).
+
+| ID | Test | Result |
+|---|---|---|
+| C11a-05 | `test_c11a_05_every_example_conforms` (12 examples), `..._the_eight_worked_examples_exist` | pass |
+| C11a-06 | `test_c11a_06_examples_are_consistent` (8, reasoner) | pass |
+| C11a-07 to C11a-09 | `test_c11a_07_to_09_configuration_rules` (10 cases, each matched on its message) | pass |
+| C11a-10, C11a-11 | `test_c11a_10_11_runtime_rules` (7 cases), `..._refinement_applies_only_to_its_relation_s_occasions` | pass |
+| C11a-12 | `test_c11a_12_deep_and_shallow_history_in_the_standstill` | pass |
+| C11a-13 | `test_c11a_13_ordered_draws_read_what_the_draw_before_left` | pass |
+| C11a-14 | `test_c11a_14_the_occasion_states_with_live` | pass |
+| C11a-15 | `test_c11a_15_readme_blocks_and_release_notes`, `..._versions_and_release_rows` | pass |
+| C11a-16 | `mise run check:ontology-catalog` (276 tests), `check:ontology-versioning`, `check:import-guard`, `check:reasoning-isolation` | pass |
+
+Every Mermaid diagram in the Behaviour README and both C11a sketches (30) parses under Mermaid 11.

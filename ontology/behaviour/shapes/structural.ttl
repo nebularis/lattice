@@ -13,7 +13,36 @@ bhv:TransitionDefinitionShape a sh:NodeShape ;
 	sh:property [ sh:path bhv:toState ; sh:minCount 1 ; sh:maxCount 1 ] ;
 	sh:property [ sh:path bhv:hasTrigger ; sh:minCount 1 ] ;
 	sh:property [ sh:path bhv:selectionPolicy ; sh:minCount 1 ; sh:maxCount 1 ] ;
-	sh:property [ sh:path bhv:activationPolicy ; sh:minCount 1 ; sh:maxCount 1 ] .
+	sh:property [ sh:path bhv:activationPolicy ; sh:minCount 1 ; sh:maxCount 1 ] ;
+	sh:property [ sh:path bhv:entryMode ; sh:maxCount 1 ;
+		sh:in ( bhv:DefaultEntry bhv:ShallowHistory bhv:DeepHistory ) ;
+		sh:message "A transition has at most one entry mode: default, shallow history or deep history." ] ;
+	sh:property [ sh:path bhv:transitionType ; sh:maxCount 1 ;
+		sh:in ( bhv:Internal bhv:External ) ;
+		sh:message "A transition is Internal or External, at most one." ] .
+
+bhv:TransitionSubjectShape a sh:NodeShape ;
+	sh:targetSubjectsOf bhv:entryMode , bhv:transitionType ;
+	sh:class bhv:TransitionDefinition ;
+	sh:message "Only a transition definition has an entry mode or a transition type." .
+
+# ---- Regions and occasions -------------------------------------------------------
+
+bhv:RegionShape a sh:NodeShape ;
+	sh:targetSubjectsOf bhv:regionOf , bhv:perOccasionOf ;
+	sh:class bhv:StateSpace ;
+	sh:property [ sh:path bhv:regionOf ; sh:maxCount 1 ; sh:class bhv:State ;
+		sh:message "A region refines at most one state." ] ;
+	sh:message "Only a state space is a region or is instantiated per occasion." .
+
+# ---- Guards that read a state ----------------------------------------------------
+
+bhv:StateGuardShape a sh:NodeShape ;
+	sh:targetSubjectsOf bhv:requiresState , bhv:excludesState ;
+	sh:class bhv:GuardDefinition ;
+	sh:property [ sh:path bhv:requiresState ; sh:class bhv:State ] ;
+	sh:property [ sh:path bhv:excludesState ; sh:class bhv:State ] ;
+	sh:message "Only a guard requires or excludes a state." .
 
 bhv:EffectDefinitionShape a sh:NodeShape ;
 	sh:targetClass bhv:EffectDefinition ;
@@ -51,9 +80,17 @@ bhv:StateEntryRecordedShape a sh:NodeShape ;
 			sh:message "An execution that entered a state names the stimulus that caused it (law B6)." ] ] ] .
 
 bhv:EnteredBySubjectShape a sh:NodeShape ;
-	sh:targetSubjectsOf bhv:enteredBy ;
+	sh:targetSubjectsOf bhv:enteredBy , bhv:exitedBy , bhv:resumedFrom ;
 	sh:class bhv:StateOccupancy ;
-	sh:message "Only a state occupancy is entered by an execution." .
+	sh:message "Only a state occupancy is entered, exited or resumed." .
+
+bhv:StateExitRecordedShape a sh:NodeShape ;
+	sh:targetClass bhv:StateOccupancy ;
+	sh:property [ sh:path bhv:exitedBy ; sh:maxCount 1 ; sh:class bhv:TransitionExecution ;
+		sh:node [ sh:property [ sh:path bhv:causedByStimulus ; sh:minCount 1 ] ] ;
+		sh:message "An execution that ended a state names the stimulus that caused it (law B6), and an occupancy is ended at most once." ] ;
+	sh:property [ sh:path bhv:resumedFrom ; sh:maxCount 1 ; sh:class bhv:StateOccupancy ;
+		sh:message "An occupancy resumes at most one earlier occupancy." ] .
 
 # ---- Occasions, with parties fixed at arising (I11) -------------------------------
 

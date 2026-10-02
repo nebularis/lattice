@@ -30,7 +30,8 @@ CAPACITY_IRI = "https://www.nebularis.org/neuro-semantic/lattice/applied/capacit
 
 DECLARATION = {"StateSpace", "State", "TransitionDefinition", "TriggerDefinition", "GuardDefinition",
                "EffectDefinition", "AllowanceDefinition", "SelectionPolicy", "ActivationPolicy",
-               "TriggerKind", "TargetKind", "AbsorptionPolicy", "OperationalProfile"}
+               "TriggerKind", "TargetKind", "AbsorptionPolicy", "OperationalProfile",
+               "EntryMode", "TransitionType"}  # C11a
 RUNTIME_TIERS = {"Stimulus", "TransitionExecution", "EffectApplication", "StateOccupancy", "AllowanceAccount"}
 
 # Every fixture conformed before C10 (recorded on a122915, before any change).

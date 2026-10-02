@@ -18,8 +18,10 @@ Wording 0.3.0, Behaviour 0.9.0, shapes 0.3.0, the import guard in `mise run chec
 unblocked. C11a phase 1 is drafted. From C5 on, the agent builds and verifies, and the human
 commits by hand.
 
-**Next action, for the human:** review and commit C11a phase 2's brief and its eight examples
-(ADR-A-C2). **Then, for the agent:** the model, the README's worked state machines, shapes and tests.
+**Next action, for the human:** review and commit C11a phase 2's model, then merge and tag
+`behaviour-v0.10.0`, `behaviour-runtime-v0.10.0`, `behaviour-vocab-v0.10.0`,
+`behaviour-shapes-v0.4.0` and `applied-capacity-execution-v0.10.0`. **Then:** tranche D (C6, then
+C7a and C7b).
 
 ## Slice board
 
@@ -34,7 +36,7 @@ commits by hand.
 | C10 | Behaviour split and layer flip | C | merged, tagged | |
 | C10a | import guard | C | merged | |
 | C11 | runtime records, occasions, initial states | C | merged, tagged | |
-| C11a | nested states, history, concurrent regimes | C | phase 2 examples written, awaiting the human's commit | branch |
+| C11a | nested states, history, concurrent regimes | C | phase 2 built and verified, awaiting the human's commit | branch |
 | F1 | Foundation identifiers | Foundation window | waiting | AIR Phase 2 complete, with NRS N9 |
 | C6, C7b, C8, C9, C8a | Instrument rewrite, template library | D | waiting | C5 and C10 done. C8 after C7a and C7b |
 | C7a | regimes and gating, split from C7 | D | waiting | C6, C11a phase 2 |
@@ -77,3 +79,4 @@ commits by hand.
 - 2026-10-02: C11a-Q3 answered: `AllMatches` over internal transitions, sequential environment only. The unplanned [evaluation context](../sketches/evaluation-context.md) sketch written, linked from the CCS and AIR plans: ledger, combinators, sequential and parallel environments, stratification and a stratified Datalog form.
 - 2026-10-02: C11a gate passed (addendum accepted, committed `c40df81`). Phase 2 briefed: eight examples first, then configuration, runtime and vocab 0.10.0, shapes 0.4.0, the README's worked state machines.
 - 2026-10-02: C11a phase 2's eight examples written: covenant default, run-off, standstill, garden leave, force majeure, occasion refinement, disputed occasion, ordered draws. All conform to the 0.3.0 shapes and are consistent. The brief gains B1 over the occasion tree and B5 for the evaluator's reinstatement.
+- 2026-10-02: C11a phase 2 built: Behaviour 0.10.0 with regions, history, internal transitions, guards on states, `bhv:Live`, shapes 0.4.0 with B5, B9, B11 and the `AllMatches` rules, the README's worked state machines. All checks pass. Not committed.
