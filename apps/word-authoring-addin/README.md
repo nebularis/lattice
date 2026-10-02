@@ -267,6 +267,38 @@ else) and restart Word.
 Remove-ItemProperty -Path "HKCU:\Software\Microsoft\Office\16.0\WEF\Developer" -Name "LatticeAuthoring"
 ```
 
+### Desktop Word on macOS (sideload via the manifest folder)
+
+Quit Word completely with **Word** → **Quit Word**. From the repository root, run these commands
+in Terminal as your normal user, without `sudo`:
+
+```sh
+mkdir -p "$HOME/Library/Containers/com.microsoft.Word/Data/Documents/wef"
+cp apps/word-authoring-addin/manifest/manifest.xml \
+    "$HOME/Library/Containers/com.microsoft.Word/Data/Documents/wef/lattice-authoring.xml"
+```
+
+Word reads manifests from this `wef` folder. This is a copy, so repeat the `cp` command whenever
+the repository's manifest changes.
+
+Before loading the add-in, run `mise run authoring:ca` from the repository root. Import
+`.build/authoring/lattice-authoring-root.crt` into your login keychain using **Keychain Access**.
+Open the imported certificate, expand **Trust**, and set **When using this certificate** to
+**Always Trust**. Only trust the CA exported by your own local stack.
+
+Reopen Word and open a document. Select **Home** → **Add-ins** and choose **LATTICE Authoring**.
+The LATTICE group appears on the Home tab.
+
+To remove it, quit Word, run the following command, then reopen Word:
+
+```sh
+rm "$HOME/Library/Containers/com.microsoft.Word/Data/Documents/wef/lattice-authoring.xml"
+```
+
+If Word still lists a cached copy, follow Microsoft's
+[Office cache clearing instructions](https://learn.microsoft.com/office/dev/add-ins/testing/clear-cache).
+See also Microsoft's [macOS sideloading guide](https://learn.microsoft.com/office/dev/add-ins/testing/sideload-an-office-add-in-on-mac).
+
 ### Central deployment (an administrator, for a whole tenant)
 
 An Microsoft 365 administrator can publish `manifest/manifest.xml` through the
