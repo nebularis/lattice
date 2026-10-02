@@ -3,7 +3,8 @@
 # Word authoring proof of concept - Status
 
 **Unit ID:** `word-authoring-poc`
-**Status:** 🚧 In progress. WA0 to WA10 done. WA11 is next
+**Status:** 🟡 Awaiting human validation. WA0 to WA11 done (WA11 is documentation and the manual Word
+checklist, M1 to M14, which only the human can run)
 **Last updated:** 2026-10-02
 **Plan:** [word-authoring-poc.md](../plans/word-authoring-poc.md)
 **Sketch:** [word-authoring-poc.md](../sketches/word-authoring-poc.md)
@@ -32,10 +33,18 @@ manifest override with the ribbon group and context menu), and WA10's compose st
 `tools/authoring_stage.py`, the `authoring:*`/`check:authoring-tools`/`check:authoring-stack`
 `mise` tasks, and `apps/word-authoring-addin/e2e-stack/stack.spec.ts` run for real against the live
 stack). Browsing `https://localhost:3443` after `mise run authoring:up` is the demo: it redirects
-to the harness, not the real Word task pane (that needs sideloading, which is WA11).
+to the harness, not the real Word task pane (that needs sideloading, which is WA11). WA11 itself
+added "How the proof of concept fits together" and "Load the add-in in Word" to the add-in's
+README (architecture, request-flow and data-construction Mermaid diagrams, plus sideloading for
+Word on the web, desktop Word, and central deployment), re-ran every automated check
+(`check:authoring`, `check:java`, `check:workers`, `check:ontology-versioning`,
+`check:ontology-catalog`, `topology:links`), and recorded the manual Word checklist for the human
+to complete.
 
-**Next action, for the human:** ask for WA11.
-**Next action, for the agent:** WA11 (documentation and close-out), when asked.
+**Next action, for the human:** complete the manual checklist (M1 to M14) in the
+[WA11 Validation Pack](../validation/word-authoring-poc-wa11.md), sign off, then decide whether to
+push `ux/auth-le`.
+**Next action, for the agent:** none. The unit is complete pending the human's manual validation.
 
 ## Open question raised by WA3
 
@@ -192,7 +201,7 @@ reverted. No replacement test was needed. Detail in the
 | WA9 | Add-in task pane and harness | done | `e567990` | WA8 |
 | WA9a | Ribbon and right-click commands | done | `d16c4e0` | WA9, WA-D13 |
 | WA10 | Compose stack | done | `9a34ced` | WA5, WA7, WA9a |
-| WA11 | Documentation and close-out | waiting | | WA10 |
+| WA11 | Documentation and close-out | done, pending human sign-off | `678c9b9` | WA10 |
 
 ## Token use
 
@@ -211,6 +220,7 @@ reverted. No replacement test was needed. Detail in the
 | WA9 | 550k | about 600k |
 | WA9a | 250k | about 270k |
 | WA10 | 400k | about 550k |
+| WA11 | 150k | about 450k |
 
 ## History
 
@@ -386,3 +396,19 @@ reverted. No replacement test was needed. Detail in the
   (69 Vitest) and the mocked `e2e/` Playwright suite (13 tests) were re-run and still pass,
   confirming the `HttpApiClient` fix caused no regression.
 - 2026-10-02: WA10 committed as `9a34ced`.
+- 2026-10-02: the stack taken down (`docker compose down`) at the human's request, then WA11 done:
+  the add-in's `README.md` gained "How the proof of concept fits together" (an architecture
+  diagram, a request-flow sequence diagram, and a data-construction diagram, all Mermaid) and
+  "Load the add-in in Word" (Word on the web, desktop Word's registry sideload, and central
+  deployment, each with how to remove it). The Mermaid diagrams go beyond the plan's own WA11
+  scope, at the human's explicit request ("awash with mermaid diagrams... how everything is glued
+  together... how the data has been constructed"). One-line cross-references added to
+  `platform/authoring-service/README.md` and `workers/README.md`, pointing back to the add-in's
+  diagrams rather than duplicating them. `mise run check:authoring` (contracts 35, tools 4, worker
+  83, addin 69 Vitest + 13 Playwright, service BUILD SUCCESS), `check:java` (9 modules),
+  `check:workers` (121), `check:ontology-versioning` (35 documents, none unbumped) and
+  `check:ontology-catalog` (84) all pass. `topology:links` fails with 62 pre-existing broken links
+  in unrelated sketches, status files and one ADR, none touched by this unit, recorded rather than
+  silently dropped. Validation Pack at `docs/developer/validation/word-authoring-poc-wa11.md`,
+  with the manual Word checklist (M1 to M14) left for the human to complete and sign off.
+- 2026-10-02: WA11 committed as `678c9b9`.
