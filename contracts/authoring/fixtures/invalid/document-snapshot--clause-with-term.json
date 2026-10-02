@@ -1,0 +1,23 @@
+{
+  "schemaVersion": "0.1.0",
+  "documentId": "00000009-0000-4000-8000-000000000000",
+  "templateId": "facility-agreement",
+  "title": "Clause with term",
+  "sections": [
+    {
+      "sectionKey": "commitment",
+      "elements": [
+        {
+          "elementId": "00000009-0000-4000-8000-000000000001",
+          "kind": "clause",
+          "definedTerm": "Borrower",
+          "parts": [
+            {"kind": "literal", "text": "The Borrower shall pay."}
+          ]
+        }
+      ]
+    }
+  ],
+  "variables": [],
+  "unmarked": []
+}

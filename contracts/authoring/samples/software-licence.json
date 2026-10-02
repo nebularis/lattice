@@ -1,0 +1,168 @@
+{
+  "schemaVersion": "0.1.0",
+  "documentId": "00000002-0000-4000-8000-000000000000",
+  "templateId": "software-licence",
+  "title": "Software Licence (sample)",
+  "sections": [
+    {
+      "sectionKey": "definitions",
+      "elements": [
+        {
+          "elementId": "00000002-0000-4000-8000-000000000001",
+          "kind": "definition",
+          "definedTerm": "Licensor",
+          "parts": [
+            {"kind": "literal", "text": "\u201cLicensor\u201d means the party granting rights under this Agreement."}
+          ]
+        },
+        {
+          "elementId": "00000002-0000-4000-8000-000000000002",
+          "kind": "definition",
+          "definedTerm": "Licensee",
+          "parts": [
+            {"kind": "literal", "text": "\u201cLicensee\u201d means the party receiving rights under this Agreement."}
+          ]
+        },
+        {
+          "elementId": "00000002-0000-4000-8000-000000000003",
+          "kind": "definition",
+          "definedTerm": "Software",
+          "parts": [
+            {"kind": "literal", "text": "\u201cSoftware\u201d means the computer program licensed under this Agreement."}
+          ]
+        },
+        {
+          "elementId": "00000002-0000-4000-8000-000000000004",
+          "kind": "definition",
+          "definedTerm": "Documentation",
+          "parts": [
+            {"kind": "literal", "text": "\u201cDocumentation\u201d means the user manuals supplied with the "},
+            {"kind": "reference", "targetElementId": "00000002-0000-4000-8000-000000000003", "text": "Software"},
+            {"kind": "literal", "text": "."}
+          ]
+        }
+      ]
+    },
+    {
+      "sectionKey": "grant",
+      "elements": [
+        {
+          "elementId": "00000002-0000-4000-8000-000000000005",
+          "kind": "clause",
+          "definedTerm": null,
+          "parts": [
+            {"kind": "reference", "targetElementId": "00000002-0000-4000-8000-000000000002", "text": "Licensee"},
+            {"kind": "literal", "text": " may use the "},
+            {"kind": "reference", "targetElementId": "00000002-0000-4000-8000-000000000003", "text": "Software"},
+            {"kind": "literal", "text": " for its internal business purposes."}
+          ]
+        },
+        {
+          "elementId": "00000002-0000-4000-8000-000000000006",
+          "kind": "clause",
+          "definedTerm": null,
+          "parts": [
+            {"kind": "reference", "targetElementId": "00000002-0000-4000-8000-000000000002", "text": "Licensee"},
+            {"kind": "literal", "text": " may permit up to "},
+            {"kind": "variable", "variableKey": "user-limit", "text": "10"},
+            {"kind": "literal", "text": " users to access the "},
+            {"kind": "reference", "targetElementId": "00000002-0000-4000-8000-000000000003", "text": "Software"},
+            {"kind": "literal", "text": "."}
+          ]
+        },
+        {
+          "elementId": "00000002-0000-4000-8000-000000000007",
+          "kind": "clause",
+          "definedTerm": null,
+          "parts": [
+            {"kind": "reference", "targetElementId": "00000002-0000-4000-8000-000000000002", "text": "Licensee"},
+            {"kind": "literal", "text": " shall not sublicense the "},
+            {"kind": "reference", "targetElementId": "00000002-0000-4000-8000-000000000003", "text": "Software"},
+            {"kind": "literal", "text": "."}
+          ]
+        }
+      ]
+    },
+    {
+      "sectionKey": "restrictions",
+      "elements": [
+        {
+          "elementId": "00000002-0000-4000-8000-000000000008",
+          "kind": "clause",
+          "definedTerm": null,
+          "parts": [
+            {"kind": "reference", "targetElementId": "00000002-0000-4000-8000-000000000002", "text": "Licensee"},
+            {"kind": "literal", "text": " shall not reverse engineer the "},
+            {"kind": "reference", "targetElementId": "00000002-0000-4000-8000-000000000003", "text": "Software"},
+            {"kind": "literal", "text": "."}
+          ]
+        }
+      ]
+    },
+    {
+      "sectionKey": "fees",
+      "elements": [
+        {
+          "elementId": "00000002-0000-4000-8000-000000000009",
+          "kind": "clause",
+          "definedTerm": null,
+          "parts": [
+            {"kind": "reference", "targetElementId": "00000002-0000-4000-8000-000000000002", "text": "Licensee"},
+            {"kind": "literal", "text": " shall pay the "},
+            {"kind": "variable", "variableKey": "licence-fee", "text": "GBP 5,000"},
+            {"kind": "literal", "text": " annually in advance."}
+          ]
+        },
+        {
+          "elementId": "00000002-0000-4000-8000-000000000010",
+          "kind": "clause",
+          "definedTerm": null,
+          "parts": [
+            {"kind": "reference", "targetElementId": "00000002-0000-4000-8000-000000000002", "text": "Licensee"},
+            {"kind": "literal", "text": " shall pay each invoice within "},
+            {"kind": "variable", "variableKey": "payment-days", "text": "30 days"},
+            {"kind": "literal", "text": "."}
+          ]
+        }
+      ]
+    },
+    {
+      "sectionKey": "warranty-exclusions",
+      "elements": [
+        {
+          "elementId": "00000002-0000-4000-8000-000000000011",
+          "kind": "clause",
+          "definedTerm": null,
+          "parts": [
+            {"kind": "reference", "targetElementId": "00000002-0000-4000-8000-000000000001", "text": "Licensor"},
+            {"kind": "literal", "text": " is not liable for any loss of profits."}
+          ]
+        }
+      ]
+    },
+    {
+      "sectionKey": "termination",
+      "elements": [
+        {
+          "elementId": "00000002-0000-4000-8000-000000000012",
+          "kind": "clause",
+          "definedTerm": null,
+          "parts": [
+            {"kind": "reference", "targetElementId": "00000002-0000-4000-8000-000000000001", "text": "Licensor"},
+            {"kind": "literal", "text": " may terminate this Agreement if "},
+            {"kind": "reference", "targetElementId": "00000002-0000-4000-8000-000000000002", "text": "Licensee"},
+            {"kind": "literal", "text": " fails to pay any fee."}
+          ]
+        }
+      ]
+    }
+  ],
+  "variables": [
+    {"variableKey": "licence-fee", "label": "Licence fee", "valueType": "money"},
+    {"variableKey": "payment-days", "label": "Payment days", "valueType": "duration"},
+    {"variableKey": "user-limit", "label": "User limit", "valueType": "number"}
+  ],
+  "unmarked": [
+    {"sectionKey": "fees", "text": "Fees are exclusive of VAT."}
+  ]
+}

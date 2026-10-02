@@ -1,0 +1,373 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<OfficeApp xmlns="http://schemas.microsoft.com/office/appforoffice/1.1"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xmlns:bt="http://schemas.microsoft.com/office/officeappbasictypes/1.0"
+           xmlns:ov="http://schemas.microsoft.com/office/taskpaneappversionoverrides"
+           xsi:type="TaskPaneApp">
+  <Id>3f1a9b2e-6c4d-4e7a-9b1f-2d6a8c3e5f70</Id>
+  <Version>0.1.0.0</Version>
+  <ProviderName>Nebularis</ProviderName>
+  <DefaultLocale>en-GB</DefaultLocale>
+  <DisplayName DefaultValue="LATTICE Authoring"/>
+  <Description DefaultValue="Mark up a wording in Word, read it as Logical English, and review the proposed instrument graph (proof of concept, ADR-A114)."/>
+  <IconUrl DefaultValue="https://localhost:3443/addin/assets/icon-32.png"/>
+  <HighResolutionIconUrl DefaultValue="https://localhost:3443/addin/assets/icon-80.png"/>
+  <SupportUrl DefaultValue="https://localhost:3443/addin/help.html"/>
+  <AppDomains>
+    <AppDomain>https://localhost:3443</AppDomain>
+  </AppDomains>
+  <Hosts>
+    <Host Name="Document"/>
+  </Hosts>
+  <Requirements>
+    <Sets DefaultMinVersion="1.1">
+      <Set Name="WordApi" MinVersion="1.4"/>
+    </Sets>
+  </Requirements>
+  <DefaultSettings>
+    <SourceLocation DefaultValue="https://localhost:3443/addin/taskpane.html"/>
+  </DefaultSettings>
+  <Permissions>ReadWriteDocument</Permissions>
+  <VersionOverrides xmlns="http://schemas.microsoft.com/office/taskpaneappversionoverrides" xsi:type="VersionOverridesV1_0">
+    <Hosts>
+      <Host xsi:type="Document">
+        <DesktopFormFactor>
+          <GetStarted>
+            <Title resid="GetStarted.Title"/>
+            <Description resid="GetStarted.Description"/>
+            <LearnMoreUrl resid="GetStarted.LearnMoreUrl"/>
+          </GetStarted>
+          <FunctionFile resid="Taskpane.Url"/>
+          <ExtensionPoint xsi:type="PrimaryCommandSurface">
+            <OfficeTab id="TabHome">
+              <Group id="LatticeGroup">
+                <Label resid="LatticeGroup.Label"/>
+                <Icon>
+                  <bt:Image size="16" resid="Icon.16x16"/>
+                  <bt:Image size="32" resid="Icon.32x32"/>
+                  <bt:Image size="80" resid="Icon.80x80"/>
+                </Icon>
+                <Control xsi:type="Button" id="ShowPaneButton">
+                  <Label resid="ShowPaneButton.Label"/>
+                  <Supertip>
+                    <Title resid="ShowPaneButton.Label"/>
+                    <Description resid="ShowPaneButton.Tooltip"/>
+                  </Supertip>
+                  <Icon>
+                    <bt:Image size="16" resid="Icon.16x16"/>
+                    <bt:Image size="32" resid="Icon.32x32"/>
+                    <bt:Image size="80" resid="Icon.80x80"/>
+                  </Icon>
+                  <Action xsi:type="ShowTaskpane">
+                    <TaskpaneId>ButtonId1</TaskpaneId>
+                    <SourceLocation resid="Taskpane.Url"/>
+                  </Action>
+                </Control>
+              </Group>
+            </OfficeTab>
+          </ExtensionPoint>
+        </DesktopFormFactor>
+      </Host>
+    </Hosts>
+    <Resources>
+      <bt:Images>
+        <bt:Image id="Icon.16x16" DefaultValue="https://localhost:3443/addin/assets/icon-16.png"/>
+        <bt:Image id="Icon.32x32" DefaultValue="https://localhost:3443/addin/assets/icon-32.png"/>
+        <bt:Image id="Icon.80x80" DefaultValue="https://localhost:3443/addin/assets/icon-80.png"/>
+      </bt:Images>
+      <bt:Urls>
+        <bt:Url id="Taskpane.Url" DefaultValue="https://localhost:3443/addin/taskpane.html"/>
+        <bt:Url id="GetStarted.LearnMoreUrl" DefaultValue="https://localhost:3443/addin/help.html"/>
+      </bt:Urls>
+      <bt:ShortStrings>
+        <bt:String id="GetStarted.Title" DefaultValue="Get started with LATTICE Authoring"/>
+        <bt:String id="LatticeGroup.Label" DefaultValue="LATTICE"/>
+        <bt:String id="ShowPaneButton.Label" DefaultValue="Show pane"/>
+      </bt:ShortStrings>
+      <bt:LongStrings>
+        <bt:String id="GetStarted.Description" DefaultValue="Mark up a wording and analyse it (proof of concept)."/>
+        <bt:String id="ShowPaneButton.Tooltip" DefaultValue="Open the LATTICE Authoring task pane."/>
+      </bt:LongStrings>
+    </Resources>
+
+    <VersionOverrides xmlns="http://schemas.microsoft.com/office/taskpaneappversionoverrides/1.1" xsi:type="VersionOverridesV1_1">
+      <Requirements>
+        <bt:Sets>
+          <bt:Set Name="SharedRuntime" MinVersion="1.1"/>
+        </bt:Sets>
+      </Requirements>
+      <Hosts>
+        <Host xsi:type="Document">
+          <Runtimes>
+            <Runtime resid="Taskpane.Url" lifetime="long"/>
+          </Runtimes>
+          <DesktopFormFactor>
+            <FunctionFile resid="Taskpane.Url"/>
+            <ExtensionPoint xsi:type="PrimaryCommandSurface">
+              <OfficeTab id="TabHome">
+                <Group id="LatticeGroup">
+                  <Label resid="LatticeGroup.Label"/>
+                  <Icon>
+                    <bt:Image size="16" resid="Icon.16x16"/>
+                    <bt:Image size="32" resid="Icon.32x32"/>
+                    <bt:Image size="80" resid="Icon.80x80"/>
+                  </Icon>
+                  <Control xsi:type="Button" id="ShowPaneButton1">
+                    <Label resid="ShowPaneButton.Label"/>
+                    <Supertip>
+                      <Title resid="ShowPaneButton.Label"/>
+                      <Description resid="ShowPaneButton.Tooltip"/>
+                    </Supertip>
+                    <Icon>
+                      <bt:Image size="16" resid="Icon.16x16"/>
+                      <bt:Image size="32" resid="Icon.32x32"/>
+                      <bt:Image size="80" resid="Icon.80x80"/>
+                    </Icon>
+                    <Action xsi:type="ShowTaskpane">
+                      <TaskpaneId>ButtonId2</TaskpaneId>
+                      <SourceLocation resid="Taskpane.Url"/>
+                    </Action>
+                  </Control>
+                  <Control xsi:type="Button" id="MarkClauseButton">
+                    <Label resid="MarkClauseButton.Label"/>
+                    <Supertip>
+                      <Title resid="MarkClauseButton.Label"/>
+                      <Description resid="MarkClauseButton.Tooltip"/>
+                    </Supertip>
+                    <Icon>
+                      <bt:Image size="16" resid="Icon.16x16"/>
+                      <bt:Image size="32" resid="Icon.32x32"/>
+                      <bt:Image size="80" resid="Icon.80x80"/>
+                    </Icon>
+                    <Action xsi:type="ExecuteFunction">
+                      <FunctionName>markClause</FunctionName>
+                    </Action>
+                  </Control>
+                  <Control xsi:type="Button" id="MarkDefinitionButton">
+                    <Label resid="MarkDefinitionButton.Label"/>
+                    <Supertip>
+                      <Title resid="MarkDefinitionButton.Label"/>
+                      <Description resid="MarkDefinitionButton.Tooltip"/>
+                    </Supertip>
+                    <Icon>
+                      <bt:Image size="16" resid="Icon.Purple.16x16"/>
+                      <bt:Image size="32" resid="Icon.Purple.32x32"/>
+                      <bt:Image size="80" resid="Icon.Purple.80x80"/>
+                    </Icon>
+                    <Action xsi:type="ExecuteFunction">
+                      <FunctionName>markDefinition</FunctionName>
+                    </Action>
+                  </Control>
+                  <Control xsi:type="Button" id="MarkTermButton">
+                    <Label resid="MarkTermButton.Label"/>
+                    <Supertip>
+                      <Title resid="MarkTermButton.Label"/>
+                      <Description resid="MarkTermButton.Tooltip"/>
+                    </Supertip>
+                    <Icon>
+                      <bt:Image size="16" resid="Icon.Purple.16x16"/>
+                      <bt:Image size="32" resid="Icon.Purple.32x32"/>
+                      <bt:Image size="80" resid="Icon.Purple.80x80"/>
+                    </Icon>
+                    <Action xsi:type="ExecuteFunction">
+                      <FunctionName>markTerm</FunctionName>
+                    </Action>
+                  </Control>
+                  <Control xsi:type="Button" id="MarkVariableButton">
+                    <Label resid="MarkVariableButton.Label"/>
+                    <Supertip>
+                      <Title resid="MarkVariableButton.Label"/>
+                      <Description resid="MarkVariableButton.Tooltip"/>
+                    </Supertip>
+                    <Icon>
+                      <bt:Image size="16" resid="Icon.Orange.16x16"/>
+                      <bt:Image size="32" resid="Icon.Orange.32x32"/>
+                      <bt:Image size="80" resid="Icon.Orange.80x80"/>
+                    </Icon>
+                    <Action xsi:type="ExecuteFunction">
+                      <FunctionName>markVariable</FunctionName>
+                    </Action>
+                  </Control>
+                  <Control xsi:type="Button" id="MarkDefinedTermButton">
+                    <Label resid="MarkDefinedTermButton.Label"/>
+                    <Supertip>
+                      <Title resid="MarkDefinedTermButton.Label"/>
+                      <Description resid="MarkDefinedTermButton.Tooltip"/>
+                    </Supertip>
+                    <Icon>
+                      <bt:Image size="16" resid="Icon.Green.16x16"/>
+                      <bt:Image size="32" resid="Icon.Green.32x32"/>
+                      <bt:Image size="80" resid="Icon.Green.80x80"/>
+                    </Icon>
+                    <Action xsi:type="ExecuteFunction">
+                      <FunctionName>markDefinedTerm</FunctionName>
+                    </Action>
+                  </Control>
+                  <Control xsi:type="Button" id="UnmarkButton">
+                    <Label resid="UnmarkButton.Label"/>
+                    <Supertip>
+                      <Title resid="UnmarkButton.Label"/>
+                      <Description resid="UnmarkButton.Tooltip"/>
+                    </Supertip>
+                    <Icon>
+                      <bt:Image size="16" resid="Icon.Grey.16x16"/>
+                      <bt:Image size="32" resid="Icon.Grey.32x32"/>
+                      <bt:Image size="80" resid="Icon.Grey.80x80"/>
+                    </Icon>
+                    <Action xsi:type="ExecuteFunction">
+                      <FunctionName>unmark</FunctionName>
+                    </Action>
+                  </Control>
+                  <Control xsi:type="Button" id="AnalyseButton">
+                    <Label resid="AnalyseButton.Label"/>
+                    <Supertip>
+                      <Title resid="AnalyseButton.Label"/>
+                      <Description resid="AnalyseButton.Tooltip"/>
+                    </Supertip>
+                    <Icon>
+                      <bt:Image size="16" resid="Icon.Grey.16x16"/>
+                      <bt:Image size="32" resid="Icon.Grey.32x32"/>
+                      <bt:Image size="80" resid="Icon.Grey.80x80"/>
+                    </Icon>
+                    <Action xsi:type="ExecuteFunction">
+                      <FunctionName>analyse</FunctionName>
+                    </Action>
+                  </Control>
+                </Group>
+              </OfficeTab>
+            </ExtensionPoint>
+            <ExtensionPoint xsi:type="ContextMenu">
+              <OfficeMenu id="ContextMenuText">
+                <Menu id="LatticeContextMenu">
+                  <Label resid="LatticeGroup.Label"/>
+                  <Icon>
+                    <bt:Image size="16" resid="Icon.16x16"/>
+                    <bt:Image size="32" resid="Icon.32x32"/>
+                    <bt:Image size="80" resid="Icon.80x80"/>
+                  </Icon>
+                  <Items>
+                    <Item id="ContextMarkClause">
+                      <Label resid="ContextMarkClause.Label"/>
+                      <Icon>
+                        <bt:Image size="16" resid="Icon.16x16"/>
+                        <bt:Image size="32" resid="Icon.32x32"/>
+                        <bt:Image size="80" resid="Icon.80x80"/>
+                      </Icon>
+                      <Action xsi:type="ExecuteFunction">
+                        <FunctionName>markClause</FunctionName>
+                      </Action>
+                    </Item>
+                    <Item id="ContextMarkDefinition">
+                      <Label resid="ContextMarkDefinition.Label"/>
+                      <Icon>
+                        <bt:Image size="16" resid="Icon.Purple.16x16"/>
+                        <bt:Image size="32" resid="Icon.Purple.32x32"/>
+                        <bt:Image size="80" resid="Icon.Purple.80x80"/>
+                      </Icon>
+                      <Action xsi:type="ExecuteFunction">
+                        <FunctionName>markDefinition</FunctionName>
+                      </Action>
+                    </Item>
+                    <Item id="ContextMarkTerm">
+                      <Label resid="ContextMarkTerm.Label"/>
+                      <Icon>
+                        <bt:Image size="16" resid="Icon.Purple.16x16"/>
+                        <bt:Image size="32" resid="Icon.Purple.32x32"/>
+                        <bt:Image size="80" resid="Icon.Purple.80x80"/>
+                      </Icon>
+                      <Action xsi:type="ExecuteFunction">
+                        <FunctionName>markTerm</FunctionName>
+                      </Action>
+                    </Item>
+                    <Item id="ContextMarkVariable">
+                      <Label resid="ContextMarkVariable.Label"/>
+                      <Icon>
+                        <bt:Image size="16" resid="Icon.Orange.16x16"/>
+                        <bt:Image size="32" resid="Icon.Orange.32x32"/>
+                        <bt:Image size="80" resid="Icon.Orange.80x80"/>
+                      </Icon>
+                      <Action xsi:type="ExecuteFunction">
+                        <FunctionName>markVariable</FunctionName>
+                      </Action>
+                    </Item>
+                    <Item id="ContextMarkDefinedTerm">
+                      <Label resid="ContextMarkDefinedTerm.Label"/>
+                      <Icon>
+                        <bt:Image size="16" resid="Icon.Green.16x16"/>
+                        <bt:Image size="32" resid="Icon.Green.32x32"/>
+                        <bt:Image size="80" resid="Icon.Green.80x80"/>
+                      </Icon>
+                      <Action xsi:type="ExecuteFunction">
+                        <FunctionName>markDefinedTerm</FunctionName>
+                      </Action>
+                    </Item>
+                    <Item id="ContextUnmark">
+                      <Label resid="ContextUnmark.Label"/>
+                      <Icon>
+                        <bt:Image size="16" resid="Icon.Grey.16x16"/>
+                        <bt:Image size="32" resid="Icon.Grey.32x32"/>
+                        <bt:Image size="80" resid="Icon.Grey.80x80"/>
+                      </Icon>
+                      <Action xsi:type="ExecuteFunction">
+                        <FunctionName>unmark</FunctionName>
+                      </Action>
+                    </Item>
+                  </Items>
+                </Menu>
+              </OfficeMenu>
+            </ExtensionPoint>
+          </DesktopFormFactor>
+        </Host>
+      </Hosts>
+      <Resources>
+        <bt:Images>
+          <bt:Image id="Icon.16x16" DefaultValue="https://localhost:3443/addin/assets/icon-16.png"/>
+          <bt:Image id="Icon.32x32" DefaultValue="https://localhost:3443/addin/assets/icon-32.png"/>
+          <bt:Image id="Icon.80x80" DefaultValue="https://localhost:3443/addin/assets/icon-80.png"/>
+          <bt:Image id="Icon.Purple.16x16" DefaultValue="https://localhost:3443/addin/assets/icon-purple-16.png"/>
+          <bt:Image id="Icon.Purple.32x32" DefaultValue="https://localhost:3443/addin/assets/icon-purple-32.png"/>
+          <bt:Image id="Icon.Purple.80x80" DefaultValue="https://localhost:3443/addin/assets/icon-purple-80.png"/>
+          <bt:Image id="Icon.Orange.16x16" DefaultValue="https://localhost:3443/addin/assets/icon-orange-16.png"/>
+          <bt:Image id="Icon.Orange.32x32" DefaultValue="https://localhost:3443/addin/assets/icon-orange-32.png"/>
+          <bt:Image id="Icon.Orange.80x80" DefaultValue="https://localhost:3443/addin/assets/icon-orange-80.png"/>
+          <bt:Image id="Icon.Green.16x16" DefaultValue="https://localhost:3443/addin/assets/icon-green-16.png"/>
+          <bt:Image id="Icon.Green.32x32" DefaultValue="https://localhost:3443/addin/assets/icon-green-32.png"/>
+          <bt:Image id="Icon.Green.80x80" DefaultValue="https://localhost:3443/addin/assets/icon-green-80.png"/>
+          <bt:Image id="Icon.Grey.16x16" DefaultValue="https://localhost:3443/addin/assets/icon-grey-16.png"/>
+          <bt:Image id="Icon.Grey.32x32" DefaultValue="https://localhost:3443/addin/assets/icon-grey-32.png"/>
+          <bt:Image id="Icon.Grey.80x80" DefaultValue="https://localhost:3443/addin/assets/icon-grey-80.png"/>
+        </bt:Images>
+        <bt:Urls>
+          <bt:Url id="Taskpane.Url" DefaultValue="https://localhost:3443/addin/taskpane.html"/>
+        </bt:Urls>
+        <bt:ShortStrings>
+          <bt:String id="LatticeGroup.Label" DefaultValue="LATTICE"/>
+          <bt:String id="ShowPaneButton.Label" DefaultValue="Show pane"/>
+          <bt:String id="MarkClauseButton.Label" DefaultValue="Clause"/>
+          <bt:String id="MarkDefinitionButton.Label" DefaultValue="Definition"/>
+          <bt:String id="MarkTermButton.Label" DefaultValue="Term"/>
+          <bt:String id="MarkVariableButton.Label" DefaultValue="Variable..."/>
+          <bt:String id="MarkDefinedTermButton.Label" DefaultValue="Defined term..."/>
+          <bt:String id="UnmarkButton.Label" DefaultValue="Unmark"/>
+          <bt:String id="AnalyseButton.Label" DefaultValue="Analyse"/>
+          <bt:String id="ContextMarkClause.Label" DefaultValue="Mark as clause"/>
+          <bt:String id="ContextMarkDefinition.Label" DefaultValue="Mark as definition"/>
+          <bt:String id="ContextMarkTerm.Label" DefaultValue="Mark as defined term"/>
+          <bt:String id="ContextMarkVariable.Label" DefaultValue="Mark as variable..."/>
+          <bt:String id="ContextMarkDefinedTerm.Label" DefaultValue="Mark as reference to a defined term..."/>
+          <bt:String id="ContextUnmark.Label" DefaultValue="Remove LATTICE mark"/>
+        </bt:ShortStrings>
+        <bt:LongStrings>
+          <bt:String id="ShowPaneButton.Tooltip" DefaultValue="Open the LATTICE Authoring task pane."/>
+          <bt:String id="MarkClauseButton.Tooltip" DefaultValue="Mark the selected paragraphs as a clause."/>
+          <bt:String id="MarkDefinitionButton.Tooltip" DefaultValue="Mark the selected paragraphs as a definition."/>
+          <bt:String id="MarkTermButton.Tooltip" DefaultValue="Mark the selected text as the defined term, inside its definition."/>
+          <bt:String id="MarkVariableButton.Tooltip" DefaultValue="Open the pane with a variable drafted from the selection."/>
+          <bt:String id="MarkDefinedTermButton.Tooltip" DefaultValue="Mark the selected text as a reference to a defined term."/>
+          <bt:String id="UnmarkButton.Tooltip" DefaultValue="Remove the LATTICE mark from the selection."/>
+          <bt:String id="AnalyseButton.Tooltip" DefaultValue="Open the pane and analyse the document."/>
+        </bt:LongStrings>
+      </Resources>
+    </VersionOverrides>
+  </VersionOverrides>
+</OfficeApp>

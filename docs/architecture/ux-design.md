@@ -134,3 +134,82 @@ Both products share these, stated once here rather than in each product's sectio
 - **Optimistic concurrency is visible, not hidden.** A stale-write conflict is shown as a conflict with a diff, never silently retried or silently dropped.
 - **Async work has a visible state machine.** Pending, running, succeeded, and failed are distinct, persisted states, not a single spinner.
 - **No client-side security.** Every redaction, permission check, and role-scoping rule lives in the Control Plane or worker tier. The browser renders what it is given.
+
+## 4. Word authoring add-in (proof of concept)
+
+**Not a platform contract.** The word authoring POC (ADR-A114, `docs/developer/plans/word-authoring-poc.md`), under `apps/word-authoring-addin`. Its code, markup and manifest may change or be withdrawn without deprecation.
+
+### 4.1 Tabs
+
+A single task pane, five tabs, one error banner:
+
+| Tab | Shows and does |
+|---|---|
+| Document | connection status, the template and sample catalogue, the current template's sections (heading, admitted term kinds, guidance) |
+| Markup | mark the selection as a clause, definition, term, variable, or a reference to a defined term; unmark; each action shows its `MarkResult` reason in plain words |
+| Analyse | submit the current document as a snapshot, show validation, template findings and detections, accept a detection's suggested mark |
+| Logical English | each element's class, basis, form and text with role-coloured spans, a legend, and the rendered LE program |
+| Graph | the proposed `ins:` graph as a Mermaid diagram, and a Turtle toggle |
+
+### 4.2 Tag colours
+
+The content control a kind of marked text is written with (`domain/tags.ts`):
+
+| Kind | Tag | Appearance | Colour |
+|---|---|---|---|
+| section | `lat:s:<sectionKey>` | BoundingBox | `#5B6B7F` |
+| clause | `lat:e:<uuid>` | BoundingBox | `#1F6FB2` |
+| definition | `lat:d:<uuid>` | BoundingBox | `#6A3FB5` |
+| term | `lat:term` | Tags | `#6A3FB5` |
+| variable | `lat:v:<variableKey>` | Tags | `#C46A00` |
+| reference | `lat:r:<uuid>` | Tags | `#2E7D32` |
+
+### 4.3 Role colours (Logical English spans)
+
+Eight span roles, each with its own colour (`app/app.css`), distinct from the tag colours above
+since they annotate a reading, not a document structure: `fixed` (near-black, bold), `ignorable`
+(grey), `slot-variable` (orange, matching the variable tag), `slot-constant` (blue, matching the
+clause/reference tags), `slot-text` (teal), `modal` (purple, matching the definition/term tags),
+`connective` (green, matching the reference tag), `unmatched` (red, underlined).
+
+### 4.4 Accessibility rule
+
+Colour is never the only cue. Every content control's **title** text names its kind (`Clause`,
+`Variable: <label>`, `Defined term: <term>`, ...), shown by Word's own UI regardless of colour
+vision; every span role's legend entry is its own name as text, not a colour swatch alone.
+
+### 4.5 Anti-patterns
+
+- **Writing formatting into the document.** The add-in writes semantic content controls (tag,
+  title, appearance, colour) only. It never writes direct character or paragraph formatting
+  (bold, highlight colour, font) to convey a mark; Word's own content control appearance is the
+  only visual signal, so removing a mark never leaves stray formatting behind.
+- **Rendering document or API text as HTML.** Every piece of text that originates in the document
+  or an API response is rendered as React text (`{text}`), never through
+  `dangerouslySetInnerHTML` or an equivalent. The one deliberate exception is the Graph tab's
+  Mermaid diagram, which renders Mermaid's own sanitized SVG output (`securityLevel: "strict"`)
+  rather than arbitrary API text, a different and narrower code path, not a loophole in this rule.
+
+### 4.6 Ribbon and right-click commands
+
+The author can mark text without the task pane open (decision WA-D13: a shared runtime, so a
+command and the task pane share one JavaScript context). A command needing input (a variable's key
+and type, or which definition a term refers to) opens the task pane with its form already filled
+in, rather than guessing or failing silently:
+
+| Id | Ribbon | Right-click | Does |
+|---|---|---|---|
+| `showPane` | Show pane | | opens the task pane |
+| `markClause` | Clause | Mark as clause | wraps the selected paragraphs as a clause |
+| `markDefinition` | Definition | Mark as definition | wraps the selected paragraphs as a definition |
+| `markTerm` | Term | Mark as defined term (in its definition) | marks the selection as the defined term |
+| `markVariable` | Variable… | Mark as variable… | drafts a variable (key, label, guessed value type) from the selection, opens the pane on the Markup tab |
+| `markDefinedTerm` | Defined term… | Mark as reference to a defined term… | marks a reference when exactly one definition matches; otherwise drafts one and opens the pane |
+| `unmark` | Unmark | Remove LATTICE mark | removes the mark, keeping the text |
+| `analyse` | Analyse | | opens the pane on the Analyse tab and starts the analysis |
+
+**A command never fails silently.** A `MarkResult` that is not `ok`, or an exception, always posts
+its reason to the Markup tab and opens the pane, so the author is never left wondering why nothing
+happened. Every handler calls `event.completed()` in a `finally` block, since Word waits for it
+before considering the command finished.
+

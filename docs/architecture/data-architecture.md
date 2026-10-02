@@ -156,6 +156,21 @@ Each arrow from a worker back to the Control Plane is a result event consumed on
 - Ledger tables (`release_ledger_event`, `mork_review_decision`, `governance_ledger_entry`) are append-only audit trails. They are the mechanism by which "who inspected this evidence and what did they do with it" stays answerable, per the Robustness and Component Design sections of the master specification.
 - `surface_revision_ledger` and `mork_review_snapshot` currently overwrite the row's current-state columns rather than retaining a full state-transition history table. This is flagged as a gap in §7, because it limits point-in-time reconstruction of "what did the revision look like when approval X was granted" to what the ledger event trail (once implemented per §7) can reconstruct.
 
+### 6.1 Word authoring POC graphs
+
+The word authoring proof of concept (ADR-A114) writes named graphs to its own Fuseki dataset,
+outside ADR-A54's layout. With `B` the configured base IRI and `D` = `B` + `doc/` + documentId:
+
+| Graph | IRI |
+|---|---|
+| wording (the mapped snapshot) | `D/rev/<n>/wording-graph` |
+| proposal (the worker's reading, WA6) | `D/rev/<n>/proposal-graph` |
+| analysis (findings and the LE program, WA4) | `D/rev/<n>/analysis-graph` |
+| registry (one per deployment) | `B` + `registry` |
+
+These graphs are not platform contracts, carry no `dal:` claims and are not subject to the Store
+SPI (ADR-A71, ADR-A75). They exist only for the unit's own service and worker to read and write.
+
 ## 7. Open Gaps
 
 These are implementation gaps, not design ambiguity. Each has a resolution direction so the next implementation slice has a concrete target.

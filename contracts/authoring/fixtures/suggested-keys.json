@@ -1,0 +1,9 @@
+[
+  {"text": "[Agent]", "valueType": "text", "suggestedKey": "agent"},
+  {"text": "GBP 250", "valueType": "money", "suggestedKey": "gbp-250"},
+  {"text": "2.5 per cent", "valueType": "percentage", "suggestedKey": "percentage-2-5-per-cent"},
+  {"text": "1 March 2027", "valueType": "date", "suggestedKey": "date-1-march-2027"},
+  {"text": "120 days", "valueType": "duration", "suggestedKey": "duration-120-days"},
+  {"text": "sixty (60) days", "valueType": "duration", "suggestedKey": "sixty-60-days"},
+  {"text": "Facility Agent", "valueType": "text", "suggestedKey": "facility-agent"}
+]

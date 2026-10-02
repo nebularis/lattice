@@ -1,0 +1,17 @@
+{
+  "documentId": "00000009-0000-4000-8000-000000000000",
+  "revision": 1,
+  "analysis": {
+    "formsProfile": {"profileId": "wap-le-forms", "version": "0.1.0"},
+    "elements": [],
+    "leProgram": "% empty\n",
+    "graphView": {"nodes": [], "edges": []}
+  },
+  "conformance": [],
+  "proposalGraph": {
+    "tenantId": "poc",
+    "projectId": "word-authoring",
+    "graphIri": "https://example.org/lattice/authoring/doc/00000009-0000-4000-8000-000000000000/rev/1/proposal-graph",
+    "revisionHash": "sha256:abababababababababababababababababababababababababababababababab"
+  }
+}

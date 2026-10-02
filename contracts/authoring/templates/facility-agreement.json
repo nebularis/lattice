@@ -1,0 +1,62 @@
+{
+  "templateId": "facility-agreement",
+  "version": "0.1.0",
+  "title": "Facility Agreement",
+  "domain": "finance",
+  "sections": [
+    {
+      "sectionKey": "definitions",
+      "heading": "Definitions",
+      "elementKinds": ["definition"],
+      "allowedTermKinds": ["Definition"],
+      "required": true,
+      "guidance": "Define each defined term used elsewhere in the agreement."
+    },
+    {
+      "sectionKey": "commitment",
+      "heading": "Commitment",
+      "elementKinds": ["clause"],
+      "allowedTermKinds": ["Obligation", "Permission"],
+      "required": true,
+      "guidance": "State the lender's commitment to lend and the borrower's right to cancel it."
+    },
+    {
+      "sectionKey": "interest",
+      "heading": "Interest",
+      "elementKinds": ["clause"],
+      "allowedTermKinds": ["Obligation"],
+      "required": true,
+      "guidance": "State how interest is calculated and paid."
+    },
+    {
+      "sectionKey": "repayment",
+      "heading": "Repayment",
+      "elementKinds": ["clause"],
+      "allowedTermKinds": ["Obligation"],
+      "required": true,
+      "guidance": "State when and how the loan is repaid."
+    },
+    {
+      "sectionKey": "undertakings",
+      "heading": "Undertakings",
+      "elementKinds": ["clause"],
+      "allowedTermKinds": ["Obligation", "Prohibition"],
+      "required": true,
+      "guidance": "State what the borrower must do and must not do while the facility is outstanding."
+    },
+    {
+      "sectionKey": "events-of-default",
+      "heading": "Events of Default",
+      "elementKinds": ["clause"],
+      "allowedTermKinds": ["Power", "Deeming"],
+      "required": false,
+      "guidance": "State the lender's powers on default and when a default is deemed to occur."
+    }
+  ],
+  "variables": [
+    {"variableKey": "facility-amount", "label": "Facility amount", "valueType": "money"},
+    {"variableKey": "margin", "label": "Margin", "valueType": "percentage"},
+    {"variableKey": "notice-period", "label": "Notice period", "valueType": "duration"},
+    {"variableKey": "repayment-period", "label": "Repayment period", "valueType": "duration"}
+  ]
+}

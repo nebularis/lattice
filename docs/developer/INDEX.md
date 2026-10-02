@@ -571,6 +571,22 @@ A new Wording layer (from Open CBAA's `wim:`), Instrument rewritten around terms
 relations, and Behaviour extended with occasions and records, tested against a package policy, an
 IUA binding authority and the Lloyd's CBAA.
 
+## 8.10 Word Authoring Proof of Concept — Awaiting human validation
+
+| Field | Value |
+|-------|-------|
+| **Status** | 🟡 WA0 to WA11 done. Awaiting the human's manual Word checklist, see the status record |
+| **Unit ID** | `word-authoring-poc` |
+| **Sketch** | [word-authoring-poc.md](sketches/word-authoring-poc.md) |
+| **Plan** | [word-authoring-poc.md](plans/word-authoring-poc.md) |
+| **Status Record** | [word-authoring-poc.md](status/word-authoring-poc.md) |
+| **Validation Packs** | [WA1](validation/word-authoring-poc-wa1.md), [WA2](validation/word-authoring-poc-wa2.md), [WA3](validation/word-authoring-poc-wa3.md), [WA4](validation/word-authoring-poc-wa4.md), [WA5](validation/word-authoring-poc-wa5.md), [WA6](validation/word-authoring-poc-wa6.md), [WA7](validation/word-authoring-poc-wa7.md), [WA8](validation/word-authoring-poc-wa8.md), [WA9](validation/word-authoring-poc-wa9.md), [WA9a](validation/word-authoring-poc-wa9a.md), [WA10](validation/word-authoring-poc-wa10.md), [WA11](validation/word-authoring-poc-wa11.md) |
+| **ADRs** | A-114, Proposed |
+
+A Word add-in, loaded without installation, for writing wordings into templates with marked text
+parts, backed by a Java and Jena service and a Python Logical English job over RabbitMQ, run as a
+local compose stack.
+
 ## 8. Phase Handoff Documents (0-6)
 
 | Phase | Status Record | Key Outcome |

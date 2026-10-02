@@ -1,0 +1,71 @@
+<!-- SPDX-License-Identifier: MPL-2.0 -->
+
+# LATTICE workers
+
+Graph-reference workers for the LATTICE semantic platform: each reads a job naming a graph by
+reference (never carrying RDF or credentials on the wire), does its work, and publishes a result.
+See the module docstrings under `src/lattice_workers/` for the MORK, Surface and projection jobs.
+
+## Word authoring POC: Logical English reading (ADR-A114)
+
+**Not a platform contract.** A proof-of-concept job for the
+[word authoring add-in](../apps/word-authoring-addin): reads a Wording-layer graph (built by
+[`platform/authoring-service`](../platform/authoring-service)), reads each clause as Logical
+English against a small sentence-form profile, and proposes the meaning it reads as an `ins:`
+graph. See the
+[sketch](../docs/developer/sketches/word-authoring-poc.md),
+[plan](../docs/developer/plans/word-authoring-poc.md) WA6 and
+[ADR-A114](../docs/architecture/decisions/ADR-A114-word-authoring-proof-of-concept.md). Its code,
+vocabulary and graph layout may be removed or rewritten without deprecation. For how this worker
+fits with the service, the add-in and the compose stack, including the architecture and data-flow
+diagrams, see the add-in's
+[README](../apps/word-authoring-addin/README.md#how-the-proof-of-concept-fits-together).
+
+### Modules (`src/lattice_workers/wording_le/`)
+
+| Module | Holds |
+|---|---|
+| `namespaces.py` | the five namespaces this job reads or writes, and the base-free IRI helpers that mint a proposal's nodes from a wording IRI |
+| `offsets.py` | UTF-16 code unit conversions, since Python strings count code points but every offset on the wire counts UTF-16 units (plan §2.5) |
+| `model.py` | `load_wording(graph, wording_iri)`, reading the Wording layer the Java service wrote: elements, their parts, and the document's declared variables |
+| `tokens.py` | `tokenise(element)`: a variable or reference part is one token, literal text splits into words and punctuation, keeping element-text offsets |
+| `forms.py` | `load_profile()`, reading the packaged `forms/sentence-forms.json`: twelve sentence forms, each a relation class, an English template and typed slots |
+| `matcher.py` | `best_match(tokens, profile, element, variable_types)`: matches an element's tokens against every form, preferring the one with the most fixed words, then the earliest in the profile |
+| `classify.py` | `keyword_class(tokens, element_kind)`: a fallback reading by keyword, when no form matches |
+| `analyse.py` | `analyse_wording(wording, profile)`: the `Analysis` shape (without `graphView`), one reading and span set per element |
+| `render.py` | `le_program(wording, element_analyses, profile)`: the elements rendered as an LE-shaped program text, for a human to read or paste into LE2's own editor |
+| `proposal.py` | `proposal_graph(...)`: the proposed `ins:` relations, re-deriving each match's party, activity text and variable bindings since the `Analysis` shape itself carries only `formId`. `graph_view(...)`: the same graph as nodes and edges, for the task pane's diagram |
+
+### Worker runtime (`src/lattice_workers/`)
+
+The runnable job: `python -m lattice_workers.wording_analysis_main`, reading `wording-analysis-request`
+events off RabbitMQ and publishing `wording-analysis-result` events, per
+[plan](../docs/developer/plans/word-authoring-poc.md) WA7.
+
+| Module | Holds |
+|---|---|
+| `fuseki_gsp.py` | `FusekiGraphStore`: a Graph Store Protocol client over `urllib.request` only. `get_graph`/`put_graph` against `{base}/{dataset}/data?graph=<encoded iri>`, `GraphNotFound` on a 404, Basic auth when a user is configured |
+| `wording_analysis_worker.py` | `TOPOLOGY` (the packaged copy of `contracts/authoring/amqp-topology.json`), `declare_topology(channel, topology)`, `WordingAnalysisConsumer` (validate, read, analyse, write back, publish), `RabbitMqResultPublisher`, `RabbitMqWordingAnalysisWorker` (ack after a successful publish, nack without requeue on a malformed or invalid message, nack with requeue and re-raise on anything else) |
+| `wording_analysis_main.py` | `read_config(env)` and `main()`: connects to RabbitMQ with retry, declares the topology, consumes `lattice.authoring.analysis.requested` with manual ack and `prefetch_count=1` |
+
+Environment variables read by `wording_analysis_main`:
+
+| Variable | Required | Default |
+|---|---|---|
+| `LATTICE_AMQP_URI` | yes | — |
+| `LATTICE_FUSEKI_URL` | yes | — |
+| `LATTICE_FUSEKI_DATASET` | no | `authoring` |
+| `LATTICE_FUSEKI_USER` | no | none (no auth header) |
+| `LATTICE_FUSEKI_PASSWORD` | no | none |
+
+### Running the tests
+
+```
+mise run check:authoring-worker
+```
+
+Runs `test_wording_le.py` and `test_wording_analysis_worker.py` (this job) and
+`test_authoring_contracts.py` (the shared contracts). Goldens live under
+`tests/fixtures/wording_le/`: each sample's full `Analysis` object, the facility sample's LE
+program and its proposal graph. These are generated once by hand, reviewed, and never
+regenerated by a script, since reviewing the reading is the point.

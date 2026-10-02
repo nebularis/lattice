@@ -20,7 +20,7 @@ run = "python -m pip install -c requirements-lock.txt \".[reasoning,test]\""
 
 [tasks."bootstrap:workers"]
 description = "Install the worker package with test dependencies"
-run = "python -m pip install -e ./workers[test]"
+run = "python -m pip install -e \"./workers[test,authoring]\""
 
 [tasks."bootstrap:mork"]
 description = "Install the MORK package and MTP structural dependencies"
@@ -50,7 +50,7 @@ run = "corepack enable && yarn install --immutable"
 
 [tasks.check]
 description = "Run all repository validation tasks"
-depends = ["check:python-root", "check:workers", "check:java", "check:frontend", "check:spc", "check:persistence", "check:vocabulary", "check:mork-compilers", "check:ontology-versioning", "check:ontology-catalog", "check:import-guard", "check:reasoning-isolation", "check:minting", "build:mtp", "check:mtp"]
+depends = ["check:python-root", "check:workers", "check:java", "check:frontend", "check:spc", "check:persistence", "check:vocabulary", "check:mork-compilers", "check:ontology-versioning", "check:ontology-catalog", "check:import-guard", "check:reasoning-isolation", "check:minting", "build:mtp", "check:mtp", "check:authoring-tools"]
 
 [tasks.test]
 description = "Run the repository test suites"
@@ -74,6 +74,14 @@ run = "python -m unittest surface.test_surface mork_compilers.test_mork_compiler
 [tasks."check:workers"]
 run = "python -m pytest workers/tests"
 
+[tasks."check:authoring-contracts"]
+description = "Validate the word authoring POC contracts, templates, samples and fixtures"
+run = "python -m pytest workers/tests/test_authoring_contracts.py -q"
+
+[tasks."check:authoring-worker"]
+description = "Test the word authoring POC worker (ADR-A114)"
+run = "python -m pytest workers/tests/test_wording_le.py workers/tests/test_wording_analysis_worker.py workers/tests/test_authoring_contracts.py -q"
+
 [tasks."check:mtp"]
 description = "Check the committed MORK Teaching Pack structure and pins"
 run = "python -m mtp.cli check --out ontology/mork/mtp/out"
@@ -87,6 +95,15 @@ run = "mvn -f platform/pom.xml verify"
 
 [tasks."check:frontend"]
 run = "yarn check"
+
+[tasks."check:authoring-addin"]
+description = "Type-check and unit-test the Word authoring add-in"
+run = "yarn workspace @lattice/word-authoring-addin run check"
+
+[tasks."test:authoring-addin"]
+description = "Type-check, unit-test and run the harness tests of the Word authoring add-in"
+depends = ["check:authoring-addin"]
+run = "yarn workspace @lattice/word-authoring-addin run test"
 
 [tasks."test:frontend"]
 run = "yarn test"
@@ -171,6 +188,51 @@ run = "mvn -q -f platform/pom.xml -pl reasoning-testkit -am verify"
 [tasks."check:reasoning-isolation"]
 description = "Fail when a reasoner, rules engine or JVM bridge is declared outside platform/reasoning-testkit (ADR-A83)"
 run = "python tools/reasoning_isolation_check.py"
+
+[tasks."check:authoring-service"]
+description = "Build and unit-test the word authoring POC service (ADR-A114)"
+run = "mvn -f platform/pom.xml -pl authoring-service -am verify"
+
+[tasks."check:authoring-service-it"]
+description = "Integration-test the word authoring POC service against Fuseki and RabbitMQ containers"
+run = "mvn -f platform/pom.xml -pl authoring-service -am -Pauthoring-it verify"
+
+[tasks."build:authoring-fixtures"]
+description = "Regenerate the word authoring POC's generated wording fixtures from the samples (ADR-A114)"
+run = "mvn -q -f platform/pom.xml -pl authoring-service -am package -DskipTests && java -cp platform/authoring-service/target/authoring-service.jar org.nebularis.lattice.authoring.app.FixtureWriter contracts/authoring"
+
+[tasks."build:authoring"]
+description = "Build the POC service jar and add-in, and stage the image inputs"
+run = "mvn -q -f platform/pom.xml -pl authoring-service -am package -DskipTests && yarn workspace @lattice/word-authoring-addin run build && python tools/authoring_stage.py"
+
+[tasks."authoring:up"]
+description = "Start the Word authoring POC stack and seed the samples"
+depends = ["build:authoring"]
+run = "docker compose -f deployment/compose/authoring/docker-compose.yml up -d --build --wait"
+
+[tasks."authoring:down"]
+run = "docker compose -f deployment/compose/authoring/docker-compose.yml down"
+
+[tasks."authoring:reset"]
+description = "Stop the POC stack and delete its data and local CA"
+run = "docker compose -f deployment/compose/authoring/docker-compose.yml down -v"
+
+[tasks."authoring:ca"]
+description = "Copy the POC proxy's local root certificate to .build/authoring"
+run = "docker compose -f deployment/compose/authoring/docker-compose.yml cp authoring-proxy:/data/caddy/pki/authorities/local/root.crt .build/authoring/lattice-authoring-root.crt"
+
+[tasks."check:authoring-tools"]
+description = "Test the word authoring POC staging script (ADR-A114)"
+run = "python -m pytest tools/test_authoring_stage.py -q"
+
+[tasks."check:authoring-stack"]
+description = "Start the POC stack and run its end-to-end suite"
+depends = ["authoring:up"]
+run = "yarn workspace @lattice/word-authoring-addin run test:stack"
+
+[tasks."check:authoring"]
+description = "All Word authoring POC checks that need no running stack"
+depends = ["check:authoring-contracts", "check:authoring-service", "check:authoring-worker", "check:authoring-addin", "test:authoring-addin", "check:authoring-tools"]
 
 [tasks."services:up"]
 description = "Start the reference platform services"

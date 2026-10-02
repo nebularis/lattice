@@ -1,0 +1,26 @@
+{
+  "baseRevision": null,
+  "snapshot": {
+    "schemaVersion": "0.1.0",
+    "documentId": "00000009-0000-4000-8000-000000000000",
+    "templateId": "facility-agreement",
+    "title": "Minimal valid snapshot",
+    "sections": [
+      {
+        "sectionKey": "definitions",
+        "elements": [
+          {
+            "elementId": "00000009-0000-4000-8000-000000000001",
+            "kind": "definition",
+            "definedTerm": "Borrower",
+            "parts": [
+              {"kind": "literal", "text": "\u201cBorrower\u201d means the company named as borrower."}
+            ]
+          }
+        ]
+      }
+    ],
+    "variables": [],
+    "unmarked": []
+  }
+}

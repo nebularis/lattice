@@ -1,0 +1,103 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.nebularis.org/lattice/authoring/document-snapshot/0.1.0",
+  "title": "Word authoring POC: document snapshot",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "documentId", "templateId", "title", "sections", "variables", "unmarked"],
+  "properties": {
+    "schemaVersion": {"const": "0.1.0"},
+    "documentId": {"$ref": "https://schemas.nebularis.org/lattice/authoring/common/0.1.0#/$defs/Uuid"},
+    "templateId": {"$ref": "https://schemas.nebularis.org/lattice/authoring/common/0.1.0#/$defs/Key"},
+    "title": {"type": "string", "minLength": 1, "maxLength": 200},
+    "sections": {"type": "array", "maxItems": 50, "items": {"$ref": "#/$defs/Section"}},
+    "variables": {
+      "type": "array",
+      "maxItems": 200,
+      "items": {"$ref": "https://schemas.nebularis.org/lattice/authoring/common/0.1.0#/$defs/VariableDeclaration"}
+    },
+    "unmarked": {"type": "array", "maxItems": 500, "items": {"$ref": "#/$defs/Unmarked"}}
+  },
+  "$defs": {
+    "Section": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sectionKey", "elements"],
+      "properties": {
+        "sectionKey": {"$ref": "https://schemas.nebularis.org/lattice/authoring/common/0.1.0#/$defs/SectionKey"},
+        "elements": {"type": "array", "maxItems": 200, "items": {"$ref": "#/$defs/Element"}}
+      }
+    },
+    "Element": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["elementId", "kind", "definedTerm", "parts"],
+      "properties": {
+        "elementId": {"$ref": "https://schemas.nebularis.org/lattice/authoring/common/0.1.0#/$defs/Uuid"},
+        "kind": {"$ref": "https://schemas.nebularis.org/lattice/authoring/common/0.1.0#/$defs/ElementKind"},
+        "definedTerm": {"oneOf": [{"type": "string", "minLength": 1, "maxLength": 100}, {"type": "null"}]},
+        "parts": {"type": "array", "minItems": 1, "maxItems": 400, "items": {"$ref": "#/$defs/Part"}}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"kind": {"const": "definition"}}, "required": ["kind"]},
+          "then": {"properties": {"definedTerm": {"type": "string", "minLength": 1, "maxLength": 100}}}
+        },
+        {
+          "if": {"properties": {"kind": {"const": "clause"}}, "required": ["kind"]},
+          "then": {"properties": {"definedTerm": {"type": "null"}}}
+        }
+      ]
+    },
+    "Part": {
+      "oneOf": [
+        {"$ref": "#/$defs/LiteralPart"},
+        {"$ref": "#/$defs/VariablePart"},
+        {"$ref": "#/$defs/ReferencePart"}
+      ]
+    },
+    "LiteralPart": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "text"],
+      "properties": {
+        "kind": {"const": "literal"},
+        "text": {"type": "string", "minLength": 1, "maxLength": 10000}
+      }
+    },
+    "VariablePart": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "variableKey", "text"],
+      "properties": {
+        "kind": {"const": "variable"},
+        "variableKey": {"$ref": "https://schemas.nebularis.org/lattice/authoring/common/0.1.0#/$defs/Key"},
+        "text": {"type": "string", "minLength": 0, "maxLength": 1000, "pattern": "^[^\\n\\r]*$"}
+      }
+    },
+    "ReferencePart": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "targetElementId", "text"],
+      "properties": {
+        "kind": {"const": "reference"},
+        "targetElementId": {"$ref": "https://schemas.nebularis.org/lattice/authoring/common/0.1.0#/$defs/Uuid"},
+        "text": {"type": "string", "minLength": 1, "maxLength": 200, "pattern": "^[^\\n\\r]*$"}
+      }
+    },
+    "Unmarked": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sectionKey", "text"],
+      "properties": {
+        "sectionKey": {
+          "oneOf": [
+            {"$ref": "https://schemas.nebularis.org/lattice/authoring/common/0.1.0#/$defs/SectionKey"},
+            {"type": "null"}
+          ]
+        },
+        "text": {"type": "string", "minLength": 1, "maxLength": 10000}
+      }
+    }
+  }
+}

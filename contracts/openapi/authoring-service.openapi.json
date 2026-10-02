@@ -1,0 +1,307 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Word authoring POC service",
+    "version": "0.1.0",
+    "description": "Proof-of-concept HTTP API for the word authoring add-in (ADR-A114). Not a platform contract."
+  },
+  "paths": {
+    "/api/health": {
+      "get": {
+        "operationId": "getHealth",
+        "responses": {
+          "200": {
+            "description": "The service is healthy",
+            "content": {
+              "application/json": {"schema": {"$ref": "https://schemas.nebularis.org/lattice/authoring/health/0.1.0#"}}
+            }
+          },
+          "503": {
+            "description": "A dependency is unavailable",
+            "content": {
+              "application/json": {"schema": {"$ref": "https://schemas.nebularis.org/lattice/authoring/health/0.1.0#"}}
+            }
+          }
+        }
+      }
+    },
+    "/api/templates": {
+      "get": {
+        "operationId": "listTemplates",
+        "responses": {
+          "200": {
+            "description": "The authoring templates",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "https://schemas.nebularis.org/lattice/authoring/template-list/0.1.0#"}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/templates/{templateId}": {
+      "get": {
+        "operationId": "getTemplate",
+        "parameters": [
+          {
+            "name": "templateId",
+            "in": "path",
+            "required": true,
+            "schema": {"$ref": "https://schemas.nebularis.org/lattice/authoring/common/0.1.0#/$defs/Key"}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The template",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "https://schemas.nebularis.org/lattice/authoring/authoring-template/0.1.0#"}
+              }
+            }
+          },
+          "400": {
+            "description": "The template id is malformed",
+            "content": {"application/json": {"schema": {"$ref": "https://schemas.nebularis.org/lattice/authoring/error/0.1.0#"}}}
+          },
+          "404": {
+            "description": "No such template",
+            "content": {"application/json": {"schema": {"$ref": "https://schemas.nebularis.org/lattice/authoring/error/0.1.0#"}}}
+          }
+        }
+      }
+    },
+    "/api/samples": {
+      "get": {
+        "operationId": "listSamples",
+        "responses": {
+          "200": {
+            "description": "The sample documents",
+            "content": {
+              "application/json": {"schema": {"$ref": "https://schemas.nebularis.org/lattice/authoring/sample-list/0.1.0#"}}
+            }
+          }
+        }
+      }
+    },
+    "/api/samples/{sampleId}": {
+      "get": {
+        "operationId": "getSample",
+        "parameters": [
+          {
+            "name": "sampleId",
+            "in": "path",
+            "required": true,
+            "schema": {"$ref": "https://schemas.nebularis.org/lattice/authoring/common/0.1.0#/$defs/Key"}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The sample's document snapshot",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "https://schemas.nebularis.org/lattice/authoring/document-snapshot/0.1.0#"}
+              }
+            }
+          },
+          "400": {
+            "description": "The sample id is malformed",
+            "content": {"application/json": {"schema": {"$ref": "https://schemas.nebularis.org/lattice/authoring/error/0.1.0#"}}}
+          },
+          "404": {
+            "description": "No such sample",
+            "content": {"application/json": {"schema": {"$ref": "https://schemas.nebularis.org/lattice/authoring/error/0.1.0#"}}}
+          }
+        }
+      }
+    },
+    "/api/documents/{documentId}": {
+      "get": {
+        "operationId": "getDocument",
+        "parameters": [
+          {
+            "name": "documentId",
+            "in": "path",
+            "required": true,
+            "schema": {"$ref": "https://schemas.nebularis.org/lattice/authoring/common/0.1.0#/$defs/Uuid"}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The document's summary",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "https://schemas.nebularis.org/lattice/authoring/document-view/0.1.0#"}
+              }
+            }
+          },
+          "400": {
+            "description": "The document id is malformed",
+            "content": {"application/json": {"schema": {"$ref": "https://schemas.nebularis.org/lattice/authoring/error/0.1.0#"}}}
+          },
+          "404": {
+            "description": "No such document",
+            "content": {"application/json": {"schema": {"$ref": "https://schemas.nebularis.org/lattice/authoring/error/0.1.0#"}}}
+          }
+        }
+      }
+    },
+    "/api/documents/{documentId}/snapshot": {
+      "put": {
+        "operationId": "submitSnapshot",
+        "parameters": [
+          {
+            "name": "documentId",
+            "in": "path",
+            "required": true,
+            "schema": {"$ref": "https://schemas.nebularis.org/lattice/authoring/common/0.1.0#/$defs/Uuid"}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {"$ref": "https://schemas.nebularis.org/lattice/authoring/snapshot-submission/0.1.0#"}
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The snapshot was accepted as a new revision",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "https://schemas.nebularis.org/lattice/authoring/snapshot-accepted/0.1.0#"}
+              }
+            }
+          },
+          "400": {
+            "description": "The submission is malformed",
+            "content": {"application/json": {"schema": {"$ref": "https://schemas.nebularis.org/lattice/authoring/error/0.1.0#"}}}
+          },
+          "404": {
+            "description": "The snapshot names a template that does not exist",
+            "content": {"application/json": {"schema": {"$ref": "https://schemas.nebularis.org/lattice/authoring/error/0.1.0#"}}}
+          },
+          "409": {
+            "description": "The base revision is stale",
+            "content": {"application/json": {"schema": {"$ref": "https://schemas.nebularis.org/lattice/authoring/error/0.1.0#"}}}
+          },
+          "413": {
+            "description": "The request body is too large",
+            "content": {"application/json": {"schema": {"$ref": "https://schemas.nebularis.org/lattice/authoring/error/0.1.0#"}}}
+          },
+          "415": {
+            "description": "The request body is not JSON",
+            "content": {"application/json": {"schema": {"$ref": "https://schemas.nebularis.org/lattice/authoring/error/0.1.0#"}}}
+          }
+        }
+      }
+    },
+    "/api/jobs/{jobId}": {
+      "get": {
+        "operationId": "getJob",
+        "parameters": [
+          {
+            "name": "jobId",
+            "in": "path",
+            "required": true,
+            "schema": {"$ref": "https://schemas.nebularis.org/lattice/authoring/common/0.1.0#/$defs/Uuid"}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The job's status",
+            "content": {
+              "application/json": {"schema": {"$ref": "https://schemas.nebularis.org/lattice/authoring/job-view/0.1.0#"}}
+            }
+          },
+          "400": {
+            "description": "The job id is malformed",
+            "content": {"application/json": {"schema": {"$ref": "https://schemas.nebularis.org/lattice/authoring/error/0.1.0#"}}}
+          },
+          "404": {
+            "description": "No such job",
+            "content": {"application/json": {"schema": {"$ref": "https://schemas.nebularis.org/lattice/authoring/error/0.1.0#"}}}
+          }
+        }
+      }
+    },
+    "/api/documents/{documentId}/revisions/{revision}/analysis": {
+      "get": {
+        "operationId": "getAnalysis",
+        "parameters": [
+          {
+            "name": "documentId",
+            "in": "path",
+            "required": true,
+            "schema": {"$ref": "https://schemas.nebularis.org/lattice/authoring/common/0.1.0#/$defs/Uuid"}
+          },
+          {
+            "name": "revision",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string", "pattern": "^[1-9][0-9]{0,8}$"}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The revision's analysis",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "https://schemas.nebularis.org/lattice/authoring/analysis-view/0.1.0#"}
+              }
+            }
+          },
+          "400": {
+            "description": "The document id or revision is malformed",
+            "content": {"application/json": {"schema": {"$ref": "https://schemas.nebularis.org/lattice/authoring/error/0.1.0#"}}}
+          },
+          "404": {
+            "description": "No such revision, or its analysis is not yet available",
+            "content": {"application/json": {"schema": {"$ref": "https://schemas.nebularis.org/lattice/authoring/error/0.1.0#"}}}
+          }
+        }
+      }
+    },
+    "/api/documents/{documentId}/revisions/{revision}/graph/{kind}": {
+      "get": {
+        "operationId": "getGraph",
+        "parameters": [
+          {
+            "name": "documentId",
+            "in": "path",
+            "required": true,
+            "schema": {"$ref": "https://schemas.nebularis.org/lattice/authoring/common/0.1.0#/$defs/Uuid"}
+          },
+          {
+            "name": "revision",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string", "pattern": "^[1-9][0-9]{0,8}$"}
+          },
+          {
+            "name": "kind",
+            "in": "path",
+            "required": true,
+            "description": "wording or proposal. Any other value answers 400",
+            "schema": {"type": "string"}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The graph as Turtle",
+            "content": {"text/turtle": {"schema": {"type": "string"}}}
+          },
+          "400": {
+            "description": "The document id, revision or kind is malformed",
+            "content": {"application/json": {"schema": {"$ref": "https://schemas.nebularis.org/lattice/authoring/error/0.1.0#"}}}
+          },
+          "404": {
+            "description": "No such revision or graph",
+            "content": {"application/json": {"schema": {"$ref": "https://schemas.nebularis.org/lattice/authoring/error/0.1.0#"}}}
+          }
+        }
+      }
+    }
+  }
+}

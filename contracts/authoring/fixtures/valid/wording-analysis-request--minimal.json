@@ -1,0 +1,15 @@
+{
+  "jobId": "00000009-0000-4000-8000-000000000099",
+  "correlationId": "00000009-0000-4000-8000-000000000099",
+  "documentId": "00000009-0000-4000-8000-000000000000",
+  "revision": 1,
+  "wordingGraph": {
+    "tenantId": "poc",
+    "projectId": "word-authoring",
+    "graphIri": "https://example.org/lattice/authoring/doc/00000009-0000-4000-8000-000000000000/rev/1/wording-graph",
+    "revisionHash": "sha256:abababababababababababababababababababababababababababababababab"
+  },
+  "wordingIri": "https://example.org/lattice/authoring/doc/00000009-0000-4000-8000-000000000000/wording",
+  "proposalGraphIri": "https://example.org/lattice/authoring/doc/00000009-0000-4000-8000-000000000000/rev/1/proposal-graph",
+  "requestedAt": "2026-10-01T00:00:00Z"
+}

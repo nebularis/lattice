@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.nebularis.org/lattice/authoring/analysis-view/0.1.0",
+  "title": "Word authoring POC: analysis view",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["documentId", "revision", "analysis", "conformance", "proposalGraph"],
+  "properties": {
+    "documentId": {"$ref": "https://schemas.nebularis.org/lattice/authoring/common/0.1.0#/$defs/Uuid"},
+    "revision": {"type": "integer", "minimum": 1},
+    "analysis": {"$ref": "https://schemas.nebularis.org/lattice/authoring/common/0.1.0#/$defs/Analysis"},
+    "conformance": {
+      "type": "array",
+      "maxItems": 500,
+      "items": {"$ref": "https://schemas.nebularis.org/lattice/authoring/common/0.1.0#/$defs/Finding"}
+    },
+    "proposalGraph": {"$ref": "https://schemas.nebularis.org/lattice/authoring/common/0.1.0#/$defs/GraphRef"}
+  }
+}

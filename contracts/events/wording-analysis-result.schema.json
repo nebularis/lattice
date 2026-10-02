@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.nebularis.org/lattice/events/wording-analysis-result/0.1.0",
+  "title": "Word authoring POC: wording analysis result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "jobId", "correlationId", "documentId", "revision", "status", "error", "proposalGraph", "analysis",
+    "completedAt"
+  ],
+  "properties": {
+    "jobId": {"$ref": "https://schemas.nebularis.org/lattice/authoring/common/0.1.0#/$defs/Uuid"},
+    "correlationId": {"type": "string", "minLength": 1, "maxLength": 100},
+    "documentId": {"$ref": "https://schemas.nebularis.org/lattice/authoring/common/0.1.0#/$defs/Uuid"},
+    "revision": {"type": "integer", "minimum": 1},
+    "status": {"type": "string", "enum": ["completed", "failed"]},
+    "error": {"oneOf": [{"type": "string", "minLength": 1, "maxLength": 1000}, {"type": "null"}]},
+    "proposalGraph": {
+      "oneOf": [
+        {"$ref": "https://schemas.nebularis.org/lattice/authoring/common/0.1.0#/$defs/GraphRef"},
+        {"type": "null"}
+      ]
+    },
+    "analysis": {
+      "oneOf": [
+        {"$ref": "https://schemas.nebularis.org/lattice/authoring/common/0.1.0#/$defs/Analysis"},
+        {"type": "null"}
+      ]
+    },
+    "completedAt": {"$ref": "https://schemas.nebularis.org/lattice/authoring/common/0.1.0#/$defs/Timestamp"}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"status": {"const": "completed"}}, "required": ["status"]},
+      "then": {
+        "properties": {
+          "error": {"type": "null"},
+          "proposalGraph": {"$ref": "https://schemas.nebularis.org/lattice/authoring/common/0.1.0#/$defs/GraphRef"},
+          "analysis": {"$ref": "https://schemas.nebularis.org/lattice/authoring/common/0.1.0#/$defs/Analysis"}
+        }
+      }
+    },
+    {
+      "if": {"properties": {"status": {"const": "failed"}}, "required": ["status"]},
+      "then": {
+        "properties": {
+          "error": {"type": "string", "minLength": 1, "maxLength": 1000},
+          "proposalGraph": {"type": "null"},
+          "analysis": {"type": "null"}
+        }
+      }
+    }
+  ]
+}

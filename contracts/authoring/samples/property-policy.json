@@ -1,0 +1,157 @@
+{
+  "schemaVersion": "0.1.0",
+  "documentId": "00000003-0000-4000-8000-000000000000",
+  "templateId": "property-policy",
+  "title": "Property Policy (sample)",
+  "sections": [
+    {
+      "sectionKey": "definitions",
+      "elements": [
+        {
+          "elementId": "00000003-0000-4000-8000-000000000001",
+          "kind": "definition",
+          "definedTerm": "Insurer",
+          "parts": [
+            {"kind": "literal", "text": "\u201cInsurer\u201d means the underwriter providing cover under this Policy."}
+          ]
+        },
+        {
+          "elementId": "00000003-0000-4000-8000-000000000002",
+          "kind": "definition",
+          "definedTerm": "Insured",
+          "parts": [
+            {"kind": "literal", "text": "\u201cInsured\u201d means the person named as insured in the schedule."}
+          ]
+        },
+        {
+          "elementId": "00000003-0000-4000-8000-000000000003",
+          "kind": "definition",
+          "definedTerm": "Premises",
+          "parts": [
+            {"kind": "literal", "text": "\u201cPremises\u201d means the building described in the schedule."}
+          ]
+        },
+        {
+          "elementId": "00000003-0000-4000-8000-000000000004",
+          "kind": "definition",
+          "definedTerm": "Damage",
+          "parts": [
+            {"kind": "literal", "text": "\u201cDamage\u201d means physical loss of or damage to the "},
+            {"kind": "reference", "targetElementId": "00000003-0000-4000-8000-000000000003", "text": "Premises"},
+            {"kind": "literal", "text": "."}
+          ]
+        }
+      ]
+    },
+    {
+      "sectionKey": "insuring-clause",
+      "elements": [
+        {
+          "elementId": "00000003-0000-4000-8000-000000000005",
+          "kind": "clause",
+          "definedTerm": null,
+          "parts": [
+            {"kind": "reference", "targetElementId": "00000003-0000-4000-8000-000000000001", "text": "Insurer"},
+            {"kind": "literal", "text": " shall indemnify "},
+            {"kind": "reference", "targetElementId": "00000003-0000-4000-8000-000000000002", "text": "Insured"},
+            {"kind": "literal", "text": " against "},
+            {"kind": "reference", "targetElementId": "00000003-0000-4000-8000-000000000004", "text": "Damage"},
+            {"kind": "literal", "text": " to the "},
+            {"kind": "reference", "targetElementId": "00000003-0000-4000-8000-000000000003", "text": "Premises"},
+            {"kind": "literal", "text": " up to the "},
+            {"kind": "variable", "variableKey": "sum-insured", "text": "GBP 500,000"},
+            {"kind": "literal", "text": "."}
+          ]
+        }
+      ]
+    },
+    {
+      "sectionKey": "exclusions",
+      "elements": [
+        {
+          "elementId": "00000003-0000-4000-8000-000000000006",
+          "kind": "clause",
+          "definedTerm": null,
+          "parts": [
+            {"kind": "literal", "text": "This policy does not cover "},
+            {"kind": "reference", "targetElementId": "00000003-0000-4000-8000-000000000004", "text": "Damage"},
+            {"kind": "literal", "text": " caused by wear and tear."}
+          ]
+        },
+        {
+          "elementId": "00000003-0000-4000-8000-000000000007",
+          "kind": "clause",
+          "definedTerm": null,
+          "parts": [
+            {"kind": "reference", "targetElementId": "00000003-0000-4000-8000-000000000001", "text": "Insurer"},
+            {"kind": "literal", "text": " is not liable for the "},
+            {"kind": "variable", "variableKey": "excess", "text": "GBP 500"},
+            {"kind": "literal", "text": " of each claim."}
+          ]
+        }
+      ]
+    },
+    {
+      "sectionKey": "conditions",
+      "elements": [
+        {
+          "elementId": "00000003-0000-4000-8000-000000000008",
+          "kind": "clause",
+          "definedTerm": null,
+          "parts": [
+            {"kind": "reference", "targetElementId": "00000003-0000-4000-8000-000000000002", "text": "Insured"},
+            {"kind": "literal", "text": " shall take reasonable precautions to prevent "},
+            {"kind": "reference", "targetElementId": "00000003-0000-4000-8000-000000000004", "text": "Damage"},
+            {"kind": "literal", "text": "."}
+          ]
+        },
+        {
+          "elementId": "00000003-0000-4000-8000-000000000009",
+          "kind": "clause",
+          "definedTerm": null,
+          "parts": [
+            {"kind": "reference", "targetElementId": "00000003-0000-4000-8000-000000000002", "text": "Insured"},
+            {"kind": "literal", "text": " shall not leave the "},
+            {"kind": "reference", "targetElementId": "00000003-0000-4000-8000-000000000003", "text": "Premises"},
+            {"kind": "literal", "text": " unoccupied for more than 30 days."}
+          ]
+        }
+      ]
+    },
+    {
+      "sectionKey": "claims",
+      "elements": [
+        {
+          "elementId": "00000003-0000-4000-8000-000000000010",
+          "kind": "clause",
+          "definedTerm": null,
+          "parts": [
+            {"kind": "reference", "targetElementId": "00000003-0000-4000-8000-000000000002", "text": "Insured"},
+            {"kind": "literal", "text": " shall notify "},
+            {"kind": "reference", "targetElementId": "00000003-0000-4000-8000-000000000001", "text": "Insurer"},
+            {"kind": "literal", "text": " of any "},
+            {"kind": "reference", "targetElementId": "00000003-0000-4000-8000-000000000004", "text": "Damage"},
+            {"kind": "literal", "text": " within "},
+            {"kind": "variable", "variableKey": "notification-days", "text": "30 days"},
+            {"kind": "literal", "text": "."}
+          ]
+        },
+        {
+          "elementId": "00000003-0000-4000-8000-000000000011",
+          "kind": "clause",
+          "definedTerm": null,
+          "parts": [
+            {"kind": "literal", "text": "A claim is deemed notified on the date Insurer receives written notice."}
+          ]
+        }
+      ]
+    }
+  ],
+  "variables": [
+    {"variableKey": "sum-insured", "label": "Sum insured", "valueType": "money"},
+    {"variableKey": "excess", "label": "Excess", "valueType": "money"},
+    {"variableKey": "notification-days", "label": "Notification days", "valueType": "duration"},
+    {"variableKey": "period-start", "label": "Period start", "valueType": "date"}
+  ],
+  "unmarked": []
+}
