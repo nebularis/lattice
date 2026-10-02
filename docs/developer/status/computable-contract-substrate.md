@@ -13,14 +13,16 @@
 
 ## Current position
 
-Gate A passed on 2026-10-01. C3, C10, C4, C10a and C11 are merged to `main` (the last three
-squashed as `c9bfbea`) and tagged: Wording 0.2.0, Behaviour 0.9.0, shapes 0.3.0, the import guard
-in `mise run check`. C5 is built and C11a briefed. From these slices on, the agent builds and verifies,
-and the human commits by hand.
+Gate A passed on 2026-10-01. C3, C4, C5, C10, C10a and C11 are merged to `main` and tagged:
+Wording 0.3.0, Behaviour 0.9.0, shapes 0.3.0, the import guard in `mise run check`. Tranche D is
+unblocked. C11a phase 1 is drafted. From C5 on, the agent builds and verifies, and the human
+commits by hand.
 
-**Next action, for the human:** review and commit C5's model, then tag `wording-v0.3.0`,
-`wording-vocab-v0.3.0` and `wording-shapes-v0.3.0` after merging. **For the agent:** C11a phase 1,
-its sketch and the A-106 addendum, stopping before committing.
+**Next action, for the human:** the C11a gate: review the
+[nested states sketch](../sketches/nested-states-and-history.md), the ADR-A106 addendum (questions
+answered), the [evaluation context](../sketches/evaluation-context.md) sketch and the C7 split, then
+commit. **For the agent:** brief C11a phase 2 (examples first, then the README's worked state
+machines) once the gate passes.
 
 ## Slice board
 
@@ -31,13 +33,14 @@ its sketch and the A-106 addendum, stopping before committing.
 | C2 | A-106 | A | accepted | |
 | C3 | Wording spec, vocab and shapes | B | merged, tagged | |
 | C4 | Wording tables, assembly, variable values | B | merged, tagged | |
-| C5 | Wording amendments, law shapes, how-to | B | built and verified, awaiting the human's commit | branch |
+| C5 | Wording amendments, law shapes, how-to | B | merged, tagged | |
 | C10 | Behaviour split and layer flip | C | merged, tagged | |
 | C10a | import guard | C | merged | |
 | C11 | runtime records, occasions, initial states | C | merged, tagged | |
-| C11a | nested states, history, concurrent regimes | C | briefed: phase 1 (sketch, A-106 addendum), then a gate | branch |
+| C11a | nested states, history, concurrent regimes | C | phase 1 drafted, questions answered, awaiting the human's review and commit | the human |
 | F1 | Foundation identifiers | Foundation window | waiting | AIR Phase 2 complete, with NRS N9 |
-| C6 to C9, C8a | Instrument rewrite, template library | D | waiting | C5, C10 |
+| C6, C7b, C8, C9, C8a | Instrument rewrite, template library | D | waiting | C5 and C10 done. C8 after C7a and C7b |
+| C7a | regimes and gating, split from C7 | D | waiting | C6, C11a phase 2 |
 | C12, C13 | runtime evaluator, relation plans | E | waiting | C9, C11, C11a, AIR-3.3, NRS N1 |
 | C13a | design-time joint satisfiability: slot conditions by reasoner, the task NRS N3 reuses (deferred from C5) | E | waiting | C5, NRS N1 |
 | C14 to C17 | examples, docs, handoff | F | waiting | C8a, C9, C12 |
@@ -70,3 +73,8 @@ its sketch and the A-106 addendum, stopping before committing.
 - 2026-10-02: C5 decided: SHACL-SPARQL slot checks for intervals now, the full reasoner check deferred to a new slice C13a (tranche E, before NRS N3, risk R9). Amendment operations closed, recorded with PROV, library elements amended in an instance as bespoke revisions, which a draft library release may adopt upstream as a new version or a variant.
 - 2026-10-02: C5 examples written and committed by the human (`9515254`), with rows and columns. The CC-D6 amendment followed in the working tree. Agreed with the human: `wrd:placedUnder` for an instance's new elements, W5 accepts a revision, W1 reworded. CC-D6 amended: tables in fields and entries with `wrd:fieldsAs`, replacing rows and columns, folded into wording 0.3.0. Sketch §4.3, A-112 and the C5 brief updated.
 - 2026-10-02: C5 model built: wording, wording-vocab and wording-shapes 0.3.0 (breaking), laws W1 to W6 and the slot range check in a new `shapes/constraints.ttl`, amendments, tables in fields and entries. `test_wording.py` 94 passed. Deviations in the Validation Pack. Not committed.
+- 2026-10-02: C5 merged to `main` (`0def0e9`) and tagged 0.3.0 by the human.
+- 2026-10-02: C11a phase 1 drafted: the nested states sketch (SCXML as reference, regions by `bhv:regionOf`, history per transition, occupancies per level, both forms of concurrency, the macrostep, occasions by `bhv:perOccasionOf`, six worked cases, B5 restated, B9 to B11) and the ADR-A106 addendum, Proposed. Four questions raised. Not committed.
+- 2026-10-02: Garden leave reworked as two regimes, giving the rule for when to nest (sketch §3.1). C11a-Q1, Q2 and Q4 answered as recommended. C11a-Q3 under discussion. Phase 2 to give the Behaviour README a section of worked state machines with diagrams and Turtle.
+- 2026-10-02: C7 split into C7a (regimes and gating, after C11a phase 2) and C7b (terms in time and constitutive terms). Instrument versions after C7 shift by one MINOR. Internal transitions decided: a self-transition is internal unless declared External. C11a-Q3 (b or c) pending a discussion of contract amounts.
+- 2026-10-02: C11a-Q3 answered: `AllMatches` over internal transitions, sequential environment only. The unplanned [evaluation context](../sketches/evaluation-context.md) sketch written, linked from the CCS and AIR plans: ledger, combinators, sequential and parallel environments, stratification and a stratified Datalog form.

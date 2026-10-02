@@ -1082,7 +1082,7 @@ exclusion is Undetermined in the same way.
   identity (Open CBAA's `agr:umr`, generalised by `fnd:identifier`).
 - **Terminology.** The CBAA's "Agreement Segment" (SoUA row 14, Insurer Capacity Table row 8)
   appears to name the same thing as a section. Its "Placing Section" (row 9) may be a different
-  one. Both are to be confirmed against the collateral before C7.
+  one. Both are to be confirmed against the collateral before C7b.
 
 The SCHED pattern, reduced to two sections. Two definitions of "the Coverholder" overlap at B2: one
 applies to every section except B5, the other to B2 alone. A risk bound under B2's authority has
@@ -1717,18 +1717,20 @@ a base (ADR-A93) and proportional offsets. A general expression construct is a s
 Until it is taken, every Instrument slot that takes a duration or an amount also admits
 `ins:computedBy`, whose target is defined with the contract-amounts work. A case that needs a value
 not yet computable evaluates Undetermined with a diagnostic. This blocks only that case's
-evaluation, not the build.
+evaluation, not the build. The unplanned [evaluation context](evaluation-context.md) sketch
+outlines the target: combinators, a ledger and environments.
 
 ### 7.10 Requirements for a dedicated deep dive
 
 | Requirement | Evidence |
 |---|---|
-| **nested states**: a state containing a regime of its own | garden leave within a notice period, a cure period within a default state, suspension within run-off |
+| **nested states**: a state containing a regime of its own | a cure period within a default state, suspension within run-off. Garden leave during notice turned out to be two regimes ([nested states sketch](nested-states-and-history.md) §3.1) |
 | **history**: re-entering the sub-state that was active before an interruption | reinstatement after suspension (CBAA M12 12.17), resumption after force majeure |
 | **concurrent regimes per subject** confirmed, with their interaction rules | force majeure overlapping notice, suspension overlapping a cure period |
 
 These need careful design (statechart semantics, conflict between concurrent regimes,
-evaluation order) and are a slice of their own (plan C11a).
+evaluation order) and are a slice of their own (plan C11a), designed in the
+[nested states sketch](nested-states-and-history.md).
 
 ### 7.11 Laws of the Behaviour changes
 

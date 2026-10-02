@@ -776,10 +776,11 @@ README, and is expected to be additive.
 | Slice | Content | Version impact |
 |---|---|---|
 | C6 | instrument and term, the five relation classes with Exclusion, parties with groups, roles and `resolvedBy`, party details (`noticeAddress`, `operatesAt`), instrument identifiers, activity, scope, `maintains`, `fulfilledWhen`, `excepts`, qualifiers (§5.1 to §5.4, §5.7). `ins:InstrumentTarget` in Instrument's vocabulary | Instrument 0.7.0 to 0.8.0, breaking MINOR (A-113). Imports Wording and Behaviour configuration |
-| C7 | legal triggers (`OnExercise`, `OnBreach`, `OnAct`, `OnCondition`, `OnExpiry`), `ins:Regime`, `ins:RegimeTransition`, `ins:stateKind`, `ins:computedBy`. Arising and ending on legal triggers, due, recurrence, `appliesInState`, survival, constitutive terms (Definition, Deeming), `appliesWithin`, classification, segments and per-segment definitions with union and overlap reporting (§5.5, §5.6, §5.10, §7.3, §7.4, §7.9, I15, I16). The explicit `bhv:` type shape (B4) | 0.9.0 MINOR |
-| C8 | stated and bound meaning (CC-D12): `ins:Template`, `ins:expressedIn` as owner, `ins:boundIn`, `ins:boundFrom`, `ins:alsoExpressedIn`, parameter bindings, encoding status, the ownership shapes in SHACL Core and law I17's two SHACL-SPARQL shapes (§5.9, I17, I18) | 0.10.0 MINOR |
+| C7a | **regimes and gating** (split from C7, 2026-10-02): legal triggers (`OnExercise`, `OnBreach`, `OnAct`, `OnCondition`, `OnExpiry`, with the states in which a period does not run, C11a-Q2), `ins:Regime`, `ins:RegimeTransition`, `ins:stateKind`, `appliesInState` with the gating rule of the nested states sketch §6.2 and per-occasion resolution (C11a-Q4). The explicit `bhv:` type shape (B4) (§7.3, §7.4) | 0.9.0 MINOR. After C6 and C11a phase 2 |
+| C7b | **terms in time and constitutive terms** (split from C7): arising and ending on legal triggers, due, recurrence, survival, constitutive terms (Definition, Deeming), `appliesWithin`, classification, segments and per-segment definitions with union and overlap reporting, `ins:computedBy` (§5.5, §5.6, §5.10, §7.9, I15, I16) | 0.10.0 MINOR. After C6, beside C11a phase 2 |
+| C8 | stated and bound meaning (CC-D12): `ins:Template`, `ins:expressedIn` as owner, `ins:boundIn`, `ins:boundFrom`, `ins:alsoExpressedIn`, parameter bindings, encoding status, the ownership shapes in SHACL Core and law I17's two SHACL-SPARQL shapes (§5.9, I17, I18) | 0.11.0 MINOR |
 | C8a | the template library (§5.11) in `ontology/instrument/templates/`: periods, switching and threshold regimes, relation patterns. Term and qualifier templates wait for the bases decision in [contract-amounts.md](../sketches/contract-amounts.md) §1.7 | templates 0.1.0 |
-| C9 | amendments, consent rules, incorporation (with segment scope), `boundUnder`, `takesEffectWhen` (§5.8). Shapes for I1 to I16 | 0.11.0 MINOR, shapes |
+| C9 | amendments, consent rules, incorporation (with segment scope), `boundUnder`, `takesEffectWhen` (§5.8). Shapes for I1 to I16 | 0.12.0 MINOR, shapes |
 
 Nothing outside Instrument imports Instrument once C10 lands, so tranche D cascades only to
 Instrument's own documents and examples. No applied insurance module imports Instrument.
@@ -809,7 +810,9 @@ flowchart TB
     GA --> C3 --> C4 --> C5
     GA --> C10 --> C11 --> C11a
     C10 --> C10a
-    C5 & C10 --> C6 --> C7 --> C8 --> C8a
+    C5 & C10 --> C6 --> C7b
+    C6 & C11a --> C7a
+    C7a & C7b --> C8 --> C8a
     C8 --> C9
     C9 & C11a --> C12
     C9 & C11 --> C13
@@ -836,6 +839,7 @@ existing ontology checks and touches no AIR file.
 | [phase 6](applied-insurance-reference-phase-6.md) | claims are occasions of the policy's relations |
 | [phase-3-plan](phase-3-plan.md) (platform operation plane) | the behaviour engine loads Behaviour configuration and writes runtime records, occasions and evidence (C10, C11, C12) |
 | Open CBAA plan and integration spec | migration of §7 |
+| [evaluation-context](../sketches/evaluation-context.md) (unplanned sketch, 2026-10-02) | the ledger, combinators and environments that runtime passes run in. Comes back in at C7b (the target of `ins:computedBy`), C8a (bases), C12 (a pass as a run of the context, the sequential environment) and C13 (a Datalog form beside the SPARQL reference), and at AIR Phase 5. Its §13 |
 
 ## 7. Open CBAA migration
 

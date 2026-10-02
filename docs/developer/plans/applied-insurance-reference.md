@@ -18,6 +18,7 @@ slices are outlined and detailed at the preceding phase gate.
 | [peril-vocabulary.md](../sketches/peril-vocabulary.md) | reference peril vocabulary `prl:`: cause scheme, kind and part links, typed relations, characteristic and companion schemes, collections, Quantification links, crosswalks |
 | [asset-exposure-ontology.md](../sketches/asset-exposure-ontology.md) | exposure ontology `aeo:`: locations, assets, values, zones, dependencies, exposure units, loss history, requirements, liability exposure |
 | [term-parameters.md](../sketches/term-parameters.md) | contract term parameters on `ins:Qualifier`, term relations, optional compilation, liability direction from party roles |
+| [evaluation-context.md](../sketches/evaluation-context.md) | unplanned, shared with CCS: the ledger, combinators and environments that limits, retentions and aggregates run in. Comes back in at Phase 5 |
 | [mork-bridge.md](../sketches/mork-bridge.md) | checks against flat, taxonomic and reference-structured peril lists, and reviewed crosswalks between them |
 | [peril-structure-whitepaper.md](../sketches/peril-structure-whitepaper.md) | why a hierarchy alone is insufficient, where each structural notion lives, inter-layer cost, upstream changes L-P1 to L-P6 |
 
