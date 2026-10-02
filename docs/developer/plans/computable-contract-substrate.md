@@ -760,9 +760,71 @@ for how they interact, in configuration as data, evaluated by C12 without infere
 
 The ADR amendment is an addendum to ADR-A106, Proposed, carrying the sketch's decisions.
 
-**Gate:** the human accepts the sketch and the addendum. Phase 2 is briefed then, in this section,
-with its test cases. It touches Behaviour configuration and runtime, their shapes, and the
-README, and is expected to be additive.
+**Gate:** passed 2026-10-02. The human accepted the sketch and the addendum, with C11a-Q1 to Q4
+answered, internal transitions decided and `AllMatches` limited to the sequential environment.
+
+**Phase 2, the model.** Same branch. The design is the
+[nested states sketch](../sketches/nested-states-and-history.md) and ADR-A106's addendum. Commits
+are the human's, examples first.
+
+1. **Examples first (ADR-A-C2).** In `ontology/behaviour/examples/`, each a full configuration and
+   a full record of a sequence of stimuli, with every occupancy, execution, exit and resumption
+   written out and given its valid time. The human commits them before the model is written.
+
+   | File | Shows | Sketch |
+   |---|---|---|
+   | `covenant-default.ttl` | a compound state (default, with a cure period then uncured), entry by default, a cure from either sub-state leaving the composite, a second default | §3, §9.2 |
+   | `run-off.ttl` | a parallel state: claims servicing and premium collection as two regions of run-off, suspension and reinstatement inside one region, and the whole composite left on expiry | §3, §6.1, §9.3 |
+   | `standstill.ttl` | deep and shallow history: two facilities, one resuming its uncured default when its standstill ends, one given a fresh cure period by the lenders | §4, §9.4 |
+   | `garden-leave.ttl` | two separate regimes on one subject, a guard requiring another regime's state, an end caused through a trigger, both orders of events, and an external self-transition (notice re-served) | §3.1, §6, §9.1 |
+   | `force-majeure.ttl` | two overlapping regimes, a period within one, and one regime acting on the other only through an exercise | §6.2, §9.5 |
+   | `occasion-refinement.ttl` | a refinement of `bhv:Arisen` for one relation's occasions, a suspension of the occasion, and reinstatement into `bhv:Live` by deep history, restoring the refined sub-state | §8, C11a-Q1 |
+   | `disputed-occasion.ttl` | a regime per occasion (`bhv:perOccasionOf`), two occasions each with its own instance, the core state untouched by the dispute | §8, §9.6 |
+   | `ordered-draws.ttl` | `AllMatches` over internal transitions in the sequential environment: two guarded draws on one stimulus in priority order, the second guard reading what the first left, then a state change in the same pass | §4.1, §7, C11a-Q3 |
+
+   Behaviour files name no Instrument term (B7, `test_c10_02`), so the examples and the README
+   describe the gating relations in words and point at them with `ex:` names.
+   Written 2026-10-02. Each parses, conforms to the 0.3.0 shapes (whose open world ignores the new
+   terms) and is consistent under the reasoner.
+2. **Configuration** (`behaviour` 0.9.0 → 0.10.0, additive): `bhv:regionOf`,
+   `bhv:perOccasionOf`, `bhv:EntryMode` and `bhv:entryMode`, `bhv:TransitionType` and
+   `bhv:transitionType`, `bhv:requiresState`, `bhv:excludesState`, each with its subject and value.
+3. **Runtime** (`behaviour-runtime` 0.9.0 → 0.10.0, additive): `bhv:exitedBy`, `bhv:resumedFrom`.
+4. **Vocab** (`behaviour-vocab` 0.9.0 → 0.10.0, breaking under ADR-A113): the three entry modes,
+   the two transition types, and `bhv:Live` in `bhv:OccasionStates` with its region
+   `bhv:LiveStates` holding `bhv:Pending` (its initial state) and `bhv:Arisen`. `bhv:Live` becomes
+   the space's initial state.
+5. **Shapes** (`behaviour` shapes 0.3.0 → 0.4.0, breaking): Core shapes for every new property,
+   and SHACL-SPARQL for:
+   - regions: a region refines at most one state, regions nest without a cycle, an entry mode other
+     than default targets a state that has a region
+   - internal transitions: `bhv:Internal` only where source and target are one state
+   - B9: a transition's source and target share one top-level space, and a refinement's
+     transitions stay inside it
+   - `AllMatches`: only on internal transitions, with distinct priorities among transitions from
+     one state on one trigger. State-changing transitions from one state on one trigger declare
+     one selection policy
+   - B5: a resumed occupancy is of the same subject and state as the occupancy it resumes, was
+     entered by an execution of a history transition, and resumes an occupancy that was exited
+   - B6 extended: every `bhv:exitedBy` execution names its stimulus
+   - B1 extended to the occasion tree: an occupancy of any state in `bhv:OccasionStates`, its
+     region `bhv:LiveStates`, or a deployment's refinement of them, is derived from a record. The
+     0.3.0 shape reads `bhv:inStateSpace bhv:OccasionStates` only, which would miss `Pending` and
+     `Arisen` once they move into `bhv:LiveStates`
+   - B5's history check accepts an evaluator's execution, which names no declared transition, where
+     it enters a core occasion state (the reinstatement into `bhv:Live`)
+   - B11: for a current occupancy in a region, the parent state is currently occupied for the same
+     subject, and a region of a currently occupied state holds exactly one current state
+
+   B10 (no cycle of derived triggers) needs what each derived trigger reads, which Instrument
+   declares, so it is checked by C12's compile step, not by these shapes.
+6. **README.** §5 gains the model with diagrams: a class diagram of states, regions and
+   transitions, the pass as a flowchart, history as a sequence diagram. A new section, **Worked
+   state machines**, takes each example in turn: its premise, a Mermaid statechart, the
+   configuration in Turtle fragments, an occupancy timeline (Mermaid Gantt) and the records of each
+   step, and what it proves. Release notes for 0.10.0 and shapes 0.4.0.
+7. **Tests:** `tools/test_behaviour_nested.py`, with the rows below. Catalog, releases and the tag
+   list. The agent stops before any commit.
 
 | ID | Given / When / Then | Level | +/- |
 |---|---|---|---|
@@ -770,6 +832,18 @@ README, and is expected to be additive.
 | C11a-02 | the worked cases / read against the sketch's model / each expressible, step by step | paper | + |
 | C11a-03 | the A-106 addendum / read / Proposed, decides only what the sketch decides | paper | + |
 | C11a-04 | links and prose / checks / pass | L1 | + |
+| C11a-05 | every example, with the configuration, vocab and runtime documents / shapes / conform | L1 | + |
+| C11a-06 | every example / reasoner / consistent | L2 | + |
+| C11a-07 | a region refining two states, regions in a cycle, a history entry into an atomic state / shapes / each reported | L1 | − |
+| C11a-08 | `bhv:Internal` between two states, `AllMatches` on a state-changing transition, two `AllMatches` competitors with one priority, two state-changing competitors with different policies / shapes / each reported | L1 | − |
+| C11a-09 | a transition between two top-level spaces, a refinement transition leaving its refinement / shapes / each reported (B9) | L1 | − |
+| C11a-10 | a resumed occupancy of another state, one resuming an occupancy never exited, one entered by a default transition / shapes / each reported (B5) | L1 | − |
+| C11a-11 | a current sub-state whose parent is not current, a region with two current states, an occupied composite whose region has none / shapes / each reported (B11) | L1 | − |
+| C11a-12 | `standstill.ttl` / queried / facility A resumes `Uncured` with each resumed occupancy pointing at the one the standstill exited, facility B re-enters at `CurePeriod` | L1 | + |
+| C11a-13 | `ordered-draws.ttl` / queried / the second draw's guard reads the balance the first left, the state change follows both, in one pass | L1 | + |
+| C11a-14 | the vocab / parsed / seven occasion states, `bhv:Live` initial, its region holding Pending (initial) and Arisen | L1 | + |
+| C11a-15 | the README / literate check / blocks equal the files. Release notes mark vocab 0.10.0 and shapes 0.4.0 breaking | L1 | + |
+| C11a-16 | the existing Behaviour, capacity and import-guard tests / unchanged except the occasion state count / pass | L1 | + |
 
 ### Tranche D: Instrument rewrite
 
