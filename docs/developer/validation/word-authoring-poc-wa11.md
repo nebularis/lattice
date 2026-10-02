@@ -18,14 +18,14 @@ in the one place (real Word) no automated test in this unit has ever reached.
 
 ## What this slice adds
 
-- [`apps/word-authoring-addin/README.md`](../../apps/word-authoring-addin/README.md) gained "How
+- [`apps/word-authoring-addin/README.md`](../../../apps/word-authoring-addin/README.md) gained "How
   the proof of concept fits together" (an architecture diagram, a request-flow sequence diagram,
   and a data-construction diagram, all Mermaid) and "Load the add-in in Word" (Word on the web,
   desktop Word's registry sideload, and central deployment, each with how to remove it). This goes
   beyond the plan's own WA11 scope, at the human's explicit request.
 - One-line cross-references added to
-  [`platform/authoring-service/README.md`](../../platform/authoring-service/README.md) and
-  [`workers/README.md`](../../workers/README.md), pointing back to the add-in's new diagrams
+  [`platform/authoring-service/README.md`](../../../platform/authoring-service/README.md) and
+  [`workers/README.md`](../../../workers/README.md), pointing back to the add-in's new diagrams
   rather than duplicating them.
 - `docs/developer/INDEX.md` and the status record updated (this pack included).
 
@@ -77,7 +77,7 @@ the manual checklist, which has no command.
 
 ## Artefacts to inspect
 
-- [`apps/word-authoring-addin/README.md`](../../apps/word-authoring-addin/README.md)'s new
+- [`apps/word-authoring-addin/README.md`](../../../apps/word-authoring-addin/README.md)'s new
   sections, and in particular whether the three Mermaid diagrams render (GitHub and VS Code's
   Markdown preview both support Mermaid, so a renderer failure here is a real defect in this
   slice).

@@ -588,6 +588,24 @@ A Word add-in, loaded without installation, for writing wordings into templates 
 parts, backed by a Java and Jena service and a Python Logical English job over RabbitMQ, run as a
 local compose stack.
 
+## 8.11 Bidirectional XSLT Transformation Sidecar — Drafted, not started
+
+| Field | Value |
+|-------|-------|
+| **Status** | 🔵 Sketch and plan drafted 2026-10-02. Decisions XS-D1 to XS-D7 awaiting the human, see the status record |
+| **Unit ID** | `xslt-sidecar` |
+| **Sketch** | [xslt-sidecar.md](sketches/xslt-sidecar.md) |
+| **Plan** | [xslt-sidecar.md](plans/xslt-sidecar.md) |
+| **Status Record** | [xslt-sidecar.md](status/xslt-sidecar.md) |
+| **ADRs** | A-115, Proposed |
+
+A Saxon-hosted XSLT 3.0 engine, published as a Java library and a standalone sidecar process,
+projecting known-shape SPI data (from the persistence and Surface compilers) to documents on
+egress, and lifting external, non-OWL XML into canonical triples on ingress, with a new MORK
+compiler backend compiling a mapping graph into an ingress kit's stylesheet. Builds on
+[xml-egress-and-transformation-kits.md](sketches/xml-egress-and-transformation-kits.md) without
+revising it. A utility meant to be glued into other stacks, not a vertical proof of concept.
+
 ## 8. Phase Handoff Documents (0-6)
 
 | Phase | Status Record | Key Outcome |
