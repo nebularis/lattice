@@ -3,7 +3,7 @@
 # Word authoring proof of concept - Status
 
 **Unit ID:** `word-authoring-poc`
-**Status:** 🚧 In progress. WA0 to WA9a done. WA10 is next
+**Status:** 🚧 In progress. WA0 to WA10 done. WA11 is next
 **Last updated:** 2026-10-02
 **Plan:** [word-authoring-poc.md](../plans/word-authoring-poc.md)
 **Sketch:** [word-authoring-poc.md](../sketches/word-authoring-poc.md)
@@ -25,12 +25,17 @@ point that wires the WA6 reading into a real job loop), WA8's add-in domain (the
 parser/writer, the tag codec, the hand-written contract types and Ajv validation, the HTTP client,
 the `DocumentPort` seam, and the manifest), WA9's task pane and harness (`App.tsx` and five
 panels, `fakePort.ts`/`officePort.ts`, `main.tsx`/`harness.tsx`, the Playwright suite over a real
-`msedge` channel), and WA9a's ribbon and right-click commands (`commands/ids.ts`/`handlers.ts`/
+`msedge` channel), WA9a's ribbon and right-click commands (`commands/ids.ts`/`handlers.ts`/
 `register.ts`, the `uiBridge.ts` observable store, `domain/keys.ts`, the shared-runtime `V1_1`
-manifest override with the ribbon group and context menu).
+manifest override with the ribbon group and context menu), and WA10's compose stack
+(`deployment/compose/authoring/` with its two Dockerfiles, compose file and Caddyfile,
+`tools/authoring_stage.py`, the `authoring:*`/`check:authoring-tools`/`check:authoring-stack`
+`mise` tasks, and `apps/word-authoring-addin/e2e-stack/stack.spec.ts` run for real against the live
+stack). Browsing `https://localhost:3443` after `mise run authoring:up` is the demo: it redirects
+to the harness, not the real Word task pane (that needs sideloading, which is WA11).
 
-**Next action, for the human:** ask for WA10.
-**Next action, for the agent:** WA10 (compose stack), when asked.
+**Next action, for the human:** ask for WA11.
+**Next action, for the agent:** WA11 (documentation and close-out), when asked.
 
 ## Open question raised by WA3
 
@@ -108,6 +113,33 @@ closed a gap WA9 itself had flagged: `FakeWordPort.wrapSelectionAsElement` was a
 returned `outside-section`; it now has a real implementation (`selectUnmarked`), since WA9a's
 `markClause`/`markDefinition` commands are the first thing in this unit to actually exercise it.
 
+## Open question raised by WA10
+
+WA10's prescribed self-probe (stop `authoring-worker`, confirm S10-06 fails; restart it, confirm
+it passes again) bites exactly as written, confirmed by actually stopping and restarting the
+container, not only by reasoning about it. The fifth slice running (after WA7, WA8, WA9, WA9a)
+with no replacement test needed. Detail in the
+[WA10 Validation Pack](../validation/word-authoring-poc-wa10.md) under Self-probe.
+
+Separately, WA10 found and fixed two real defects that only running the real compose stack (not
+mocked Playwright tests) could surface, both pre-dating this slice:
+
+1. `HttpApiClient` was constructed with `"/api"` as its base URL in both `main.tsx` and
+   `harness.tsx`, but every one of its own methods already includes `/api/...` in the path it
+   requests. Every real request went to a doubled `/api/api/...` path, which Javalin correctly
+   404s. Every earlier Playwright test used a `page.route("**/api/health", ...)` style wildcard
+   glob, which matches a URL *containing* that suffix, including a doubled one, so none of them
+   caught it. Fixed by constructing both clients with `""`.
+2. The add-in's bundled Ajv compiles validators via `new Function` at runtime (the standard way
+   Ajv achieves its speed), which the proxy's initial `script-src` (without `'unsafe-eval'`)
+   silently blocked, throwing a `pageerror` that stopped the whole React app from rendering past
+   catalogue load. No earlier test caught this either, since none of them ran the add-in behind a
+   real CSP-enforcing proxy. Fixed by adding `'unsafe-eval'` to the proxy's `script-src` directive.
+
+Neither bug is specific to the compose stack: both would affect the add-in running for real inside
+Word too, once sideloaded (WA11). Finding them here, rather than there, is the reason this slice's
+tests run against a real stack (L5/L6) instead of stopping at mocked L1 tests.
+
 ## Note for WA3 (done in WA6)
 
 WA2's provisional vocabulary (`platform/authoring-service/src/main/resources/vocab/wording-provisional.ttl`)
@@ -159,7 +191,7 @@ reverted. No replacement test was needed. Detail in the
 | WA8 | Add-in domain | done | `451fc93` | WA1 |
 | WA9 | Add-in task pane and harness | done | `e567990` | WA8 |
 | WA9a | Ribbon and right-click commands | done | `d16c4e0` | WA9, WA-D13 |
-| WA10 | Compose stack | waiting | | WA5, WA7, WA9a |
+| WA10 | Compose stack | done | `9a34ced` | WA5, WA7, WA9a |
 | WA11 | Documentation and close-out | waiting | | WA10 |
 
 ## Token use
@@ -178,6 +210,7 @@ reverted. No replacement test was needed. Detail in the
 | WA8 | 450k | about 420k |
 | WA9 | 550k | about 600k |
 | WA9a | 250k | about 270k |
+| WA10 | 400k | about 550k |
 
 ## History
 
@@ -331,3 +364,25 @@ reverted. No replacement test was needed. Detail in the
   `check:authoring-worker` and `check:authoring-contracts` were not re-run (WA9a touches none of
   their paths).
 - 2026-10-02: WA9a committed as `d16c4e0`.
+- 2026-10-02: WA10 done: `deployment/compose/authoring/` (`docker-compose.yml`, `service.Dockerfile`,
+  `worker.Dockerfile`, `Caddyfile`, `README.md`), `tools/authoring_stage.py` and
+  `test_authoring_stage.py` (4 tests), the `build:authoring`/`authoring:up`/`authoring:down`/
+  `authoring:reset`/`authoring:ca`/`check:authoring-tools`/`check:authoring-stack` `mise` tasks
+  (`check:authoring-tools` added to the root `check` task), `apps/word-authoring-addin/
+  playwright.stack.config.ts` and `e2e-stack/stack.spec.ts` (7 tests, S10-03 to S10-09). Root
+  `README.md` and the add-in's own `README.md` updated; new
+  `deployment/compose/authoring/README.md`. The stack was actually built and brought up
+  (`mise run authoring:up`), not just authored: all five containers healthy, every seeded sample
+  analysed, a fresh snapshot submitted and analysed, the harness exercised in a real browser
+  through the real proxy with no mocking, and `authoring-service` restarted mid-suite without
+  losing or duplicating data. Found and fixed two real, pre-existing defects that only running the
+  real stack (not mocked Playwright tests) could surface: `HttpApiClient` was constructed with a
+  doubled `/api` base URL in both entry points, silently masked everywhere else by wildcard route
+  mocks; the add-in's bundled Ajv needs `'unsafe-eval'` in `script-src`, which the proxy's CSP
+  initially lacked, breaking the entire React app before the fix. Self-probe (stop
+  `authoring-worker`, confirm S10-06 fails; restart it, confirm it passes again) bites exactly as
+  written, the fifth slice running (after WA7, WA8, WA9, WA9a) with no replacement test needed.
+  Validation Pack at `docs/developer/validation/word-authoring-poc-wa10.md`. `check:authoring-addin`
+  (69 Vitest) and the mocked `e2e/` Playwright suite (13 tests) were re-run and still pass,
+  confirming the `HttpApiClient` fix caused no regression.
+- 2026-10-02: WA10 committed as `9a34ced`.
