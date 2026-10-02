@@ -582,6 +582,7 @@ IUA binding authority and the Lloyd's CBAA.
 | **Status Record** | [word-authoring-poc.md](status/word-authoring-poc.md) |
 | **Validation Packs** | [WA1](validation/word-authoring-poc-wa1.md), [WA2](validation/word-authoring-poc-wa2.md), [WA3](validation/word-authoring-poc-wa3.md), [WA4](validation/word-authoring-poc-wa4.md), [WA5](validation/word-authoring-poc-wa5.md), [WA6](validation/word-authoring-poc-wa6.md), [WA7](validation/word-authoring-poc-wa7.md), [WA8](validation/word-authoring-poc-wa8.md), [WA9](validation/word-authoring-poc-wa9.md), [WA9a](validation/word-authoring-poc-wa9a.md), [WA10](validation/word-authoring-poc-wa10.md), [WA11](validation/word-authoring-poc-wa11.md) |
 | **ADRs** | A-114, Proposed |
+| **Follow-on tranche** | drafted 2026-10-02, not started: richer nested sample data (deferred on CCS), a web authoring app, add-in parity. Decisions WA-D14 to WA-D20 and slices WA12 to WA20 in the plan, design in sketch §8. Awaiting the human's decisions |
 
 A Word add-in, loaded without installation, for writing wordings into templates with marked text
 parts, backed by a Java and Jena service and a Python Logical English job over RabbitMQ, run as a

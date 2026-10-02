@@ -43,8 +43,19 @@ to complete.
 
 **Next action, for the human:** complete the manual checklist (M1 to M14) in the
 [WA11 Validation Pack](../validation/word-authoring-poc-wa11.md), sign off, then decide whether to
-push `ux/auth-le`.
-**Next action, for the agent:** none. The unit is complete pending the human's manual validation.
+push `ux/auth-le`. Separately, record decisions WA-D14 to WA-D20 (plan §3) if the follow-on
+tranche below is to proceed.
+**Next action, for the agent:** none on WA0 to WA11. WA12 onward wait on WA-D14 to WA-D20.
+
+## Follow-on tranche drafted (2026-10-02)
+
+At the human's request, the sketch and plan were extended with three further enhancements: richer,
+more deeply nested sample data (deferred until the CCS workstream completes), a web authoring app
+editing the same documents without Word, and parity brought back to the Word add-in. See
+[sketch §8](../sketches/word-authoring-poc.md#8-follow-on-enhancements-proposed-2026-10-02) for the
+design and the plan's §3/§4/§5 for decisions WA-D14 to WA-D20 and slices WA12 to WA20. No
+implementation is authorised yet. Token estimates: about 3.15M for WA12 to WA19, plus WA20
+(provisional, re-estimated when the CCS workstream completes and it is scheduled).
 
 ## Open question raised by WA3
 

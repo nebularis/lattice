@@ -287,9 +287,155 @@ and no software on the machine.
 | R4 | Package registries on machine S (TLS interception, mirror gaps) | a preflight slice checks every new dependency before any code, and images are built from artefacts staged on the host |
 | R5 | The provisional `wrd:` terms drift from what C3 decides | the gap table in §4.1 is handed to C3, and the POC code keeps all IRIs in one constants class per runtime |
 | R6 | The proposal is read as meaning | its own graph, `prov:wasGeneratedBy`, and no reader of it outside the task pane |
+| R7 | Nesting rules admit a cycle, an unbounded depth, or a clause inside a definition | a fixed maximum depth and a fixed allowed-parent rule (§8.2), checked by both a SHACL shape and the editor UI, never by convention alone |
+| R8 | The web app and the add-in drift into inconsistent marking or validation behaviour for the same document | both read and write the same contracts and the same service (§8.2 to §8.3). WA-D15 decides whether they share TypeScript modules outright or are kept in parity by a cross-client test |
 
 ---
 
 ## 7. Decisions
 
 The plan's §3 lists the decisions (WA-D1 to WA-D13) with recommendations. None is taken by the agent.
+
+---
+
+## 8. Follow-on enhancements (proposed, 2026-10-02)
+
+**Not authorised for implementation.** The human asked for three further enhancements once WA0 to
+WA11 were running: richer, more deeply nested sample data, a web authoring app, and parity brought
+back to the Word add-in. This section is the design for all three. The plan's §3 gains decisions
+WA-D14 to WA-D20 for the human to record, and its §4/§5 gain slices WA12 to WA20, none started.
+
+Nothing here changes the accepted spike of §1, or narrows what it already proved. It extends the
+same data model (§3, §4.1) and the same three-runtime split (§2) to a second client and a deeper
+document shape. The out-of-scope list in §1 still holds: no assembly, amendments, tables, versioned
+elements, binding meaning, accepting a proposal as fact, multi-user editing, or authentication.
+
+### 8.1 Part 1: a richer, deeply nested sample (deferred on CCS)
+
+**Deferred. Do not start until the CCS workstream (Wording, Instrument and Behaviour refactoring)
+is complete.** The human wants a sample built from a real-world binding authority agreement: not
+every clause of the CBAA, but substantially more than the three existing samples' handful of
+sections each, with clauses nested inside clauses rather than the flat section-to-element shape
+every current sample uses.
+
+The nesting capability itself is **not** deferred: §8.2's web app needs it immediately (a text
+element's children in its left-hand tree), so WA12 builds it as part of the web app tranche, ahead
+of and independent of this sample. Deferring only this sample means:
+
+- the binding authority template and sample are authored once CCS's refactored Instrument and
+  Party layers give a settled vocabulary for roles (insurer, coverholder, reinsurer), delegated
+  authority and underwriting limits to draw on, rather than inventing POC-only terms that would
+  need rework once CCS lands
+- every mechanism it exercises (templates, sections, nested clauses, variables, defined terms,
+  detection, sentence forms, conformance) already exists once WA12 is done, so this becomes a
+  content-authoring slice, not a further mechanism-building one
+
+A rough shape for when it starts: a `binding-authority` template with sections such as grant of
+authority, scope of cover, underwriting limits and referrals, claims handling authority,
+remuneration and deductions, reporting, and termination, each admitting the term kinds that section
+of a real CBAA would. The sample nests at least one clause three levels deep (for example, a
+underwriting limit clause containing exceptions, one of which contains a further proviso), to give
+the web app's tree view and the add-in's nested marking commands a realistic document to exercise.
+
+Scheduling this is the human's decision once CCS completes, not the agent's. See plan WA20.
+
+### 8.2 Part 2: a web authoring app
+
+A second client, alongside the Word add-in, that edits the same documents through the same service
+without Word: open a stored document, see its structure as a tree, select text and mark it up, edit
+a part, a variable or a definition on its own, review an older revision, and insert a clause or
+definition from a small library. The screenshots the human attached, of an unrelated commercial
+contract-authoring tool, are cited below only for the general shape of a feature, never for its
+visual design, its wording, or its data model.
+
+#### Shape
+
+```mermaid
+flowchart LR
+    subgraph WEBAPP["word-authoring-webapp (new)"]
+        LIB["left: library + TOC tree"]
+        MID["middle: text editor"]
+        CTRL["right: markup, definitions,<br/>variables, scope, versions"]
+        LIB --> MID --> CTRL
+    end
+    WEBAPP -- "HTTPS, same origin, /webapp/*" --> PX["authoring-proxy"]
+    PX --> SVC["authoring-service"]
+```
+
+It is a second static site behind the same Caddy proxy (`/webapp/*`, alongside the add-in's
+`/addin/*`), talking to the same `authoring-service` over the same `/api/*` routes the add-in
+already uses, plus the new read routes of §8.2's "Service additions" below. No new store, no new
+event, no new runtime beyond the browser.
+
+#### Screen
+
+Three panes, left to right:
+
+| Pane | Shows | Key interactions |
+|---|---|---|
+| Library and documents | a list of every document the service knows (from the registry, so a document pushed from Word appears here too, §8.3), each with its title, template and latest revision. A tabbed or sectioned library of reusable clause and definition snippets (§8.2 "Library wordings") | open a document (loads its tree and text into the other two panes). Search or filter the library by template, section or kind. Drag or click to insert a library entry at the current position |
+| Document tree (table of contents) | the open document's sections, and within each, its elements nested to whatever depth the document uses (§8.1's nesting) | click a node to scroll the text pane to it and select it. Click an "add below" affordance on a node to insert a new child, offered only from the kinds that node's position allows (a section offers clause or definition, a clause offers a sub-clause to the configured maximum depth, a definition offers nothing, WA-D17) |
+| Text | the open document's text, rendered as continuous prose per section, with every marked span (clause and definition boxes, variable and reference tags) shown in the same tag colours the add-in already uses (plan §2.3's tag table), so a drafter moving between clients sees the same thing | select text to open the markup pane on the right (below). Click an existing marked span to edit it instead of re-marking it |
+
+The right-hand pane is never one undifferentiated form. It is a fixed set of segregated panels, so
+the drafter always knows where to look, matching the add-in's own tab separation (plan WA9's
+Markup/Analyse/Logical English/Graph tabs):
+
+| Panel | Shown when | Edits |
+|---|---|---|
+| Markup (selection) | text is selected in the middle pane, or a span is clicked | what the selection or span is: clause, definition, term, variable, reference, or unmarked. The same actions as the add-in's ribbon and right-click commands (plan WA9a), offered as buttons here instead |
+| Definitions | always, as a standing list | each definition's term and body text. Clicking one selects and scrolls to it in the tree and text panes |
+| Variables | always, as a standing list | each variable's key, label and value type, and (new, not in the add-in today) a bound example value, kept as POC-only metadata (no new contract field is load-bearing elsewhere yet, WA13) |
+| Scope | always | the document's template and its section table (heading, admitted element kinds, admitted term kinds, from the applied template), read-only: a reference while marking, not an editing surface |
+| Versions | always | the revision list for the open document (§8.2 "Versioning"), each with its timestamp and a note of whether it is the one currently shown |
+
+Selecting a span scrolls and highlights it in all three panes at once, and the active panel on the
+right always matches what is selected, so there is one consistent model of "what is selected" the
+whole screen agrees on, not three independent ones.
+
+#### Versioning (light treatment, WA-D18)
+
+A document's revisions are already immutable named graphs (plan §2.3): nothing new needs to exist
+in the store, only a routes to list them. The Versions panel lists every revision with its
+timestamp, and selecting an older one re-renders the tree and text panes from that revision's
+Wording graph, read-only (no "restore" action, no diff view, not in this tranche). This is
+deliberately the same light shape the human asked for, not a full history or comparison tool.
+
+#### Library wordings (WA-D19)
+
+A small, static, seed catalogue, `contracts/authoring/library/*.json`: reusable clauses and
+definitions with a title, a kind (the admitted element kind), tags (for search and filtering, for
+example by template or by the term kind it would propose), and the same part shape a document
+element already has (literal, variable and reference parts). Inserting one copies its parts into
+the document at the selected tree position, exactly as "Insert sample" already copies a whole
+sample today (plan WA9). The catalogue is read-only in this tranche: a drafter cannot save their own
+document text back into the library. That is explicitly a further follow-on, not part of WA-D19.
+
+#### Theming (WA-D20)
+
+Light by default, with a switch to a dark theme, implemented as CSS custom properties toggled by
+one `data-theme` attribute, not a new UI dependency. "Slick, modern" here means consistent spacing,
+type and colour, not a specific visual style copied from the attached screenshots.
+
+#### Service additions
+
+Three read routes `authoring-service` does not yet expose, all additive (no existing route
+changes): a list of every known document (the registry already holds everything needed), a list of
+a document's revisions (the registry already records each one), and the library catalogue (served
+from the same packaged resource the samples and templates already come from). See plan WA13.
+
+### 8.3 Part 3: add-in parity and cross-client visibility
+
+**A document pushed from Word already appears in the web app's document list, with no new backend
+work**, once §8.2's list route exists (WA13): both clients submit snapshots to, and that route
+reads from, the same `DocumentRegistry` the add-in has written to since WA4. This is verified with
+an end-to-end test that pushes from one client and reads from the other (plan WA18), not assumed.
+
+What genuinely needs new work in the add-in, once the web app's screen above is built, is bringing
+its improvements back: nested clause marking (mark the current selection as a sub-clause of the
+clause it is inside, to the same WA-D17 depth and parent rules the web app enforces), inserting a
+library entry from the task pane, and a Markup tab reorganised into the same segregated panels
+(Markup, Definitions, Variables, Scope, Versions) the web app uses, so the two clients present one
+consistent model of editing a document rather than two different ones that happen to share a
+backend. See plan WA17.
+

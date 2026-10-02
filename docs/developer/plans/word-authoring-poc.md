@@ -47,6 +47,23 @@ completed slice instructions below remain a record of the POC as implemented.
 
 ---
 
+## Follow-on tranche: richer data, a web app, and add-in parity
+
+**Recorded 2026-10-02. Awaiting the human's decisions.** The human asked for three further
+enhancements once WA0 to WA11 were running and validated: deeper, more realistic sample data, a
+web authoring app editing the same documents without Word, and parity brought back to the Word
+add-in. The design is in
+[sketch §8](../sketches/word-authoring-poc.md#8-follow-on-enhancements-proposed-2026-10-02).
+
+This plan's §3 gains decisions WA-D14 to WA-D20, §4's slice overview gains WA12 to WA20, and §5
+gains their slice instructions. None of WA12 to WA20 may start until its decisions are recorded,
+exactly as WA0 could not start before WA-D1 to WA-D13 (stop rule S1). WA20 (the richer sample) is
+additionally deferred until the CCS workstream completes, regardless of decisions.
+
+No implementation is authorised by this note.
+
+---
+
 ## 1. Goal and acceptance
 
 A drafter opens Word (web or desktop), loads the add-in from the local stack without installing
@@ -209,6 +226,21 @@ None of these may be taken by the agent. All were recorded by the human on 2026-
 | WA-D12 | Graph drawing | (a) Mermaid, strict security level. (b) a hand-written SVG layout | (a): already the repository's diagram language | **decided 2026-10-01: (a)** |
 | WA-D13 | How ribbon and right-click commands run (WA9a) | (a) a shared runtime: commands and task pane share one JavaScript context, so a command can open the pane with a form filled in. (b) a separate function file: commands cannot talk to the pane, so commands needing input only open the pane | (a). Where a Word build lacks the shared runtime, it ignores the ribbon and menu entries and the task pane still opens from the Add-ins list (R8) | **decided 2026-10-01: (a)** |
 
+### Decisions for the follow-on tranche (sketch §8)
+
+None of these may be taken by the agent. Recorded here 2026-10-02 as proposals, none decided.
+WA12 to WA20 (§4, §5) may not start until the decisions they depend on are recorded.
+
+| # | Decision | Options | Recommendation | State |
+|---|---|---|---|---|
+| WA-D14 | Web app stack | (a) React, Vite and TypeScript, matching the existing `apps/*` workspaces (`surface-contract-studio`, `mork-review-workbench`, `word-authoring-addin`): same Vitest/Playwright conventions, same `mise` task shape. (b) a different frontend stack | (a): no new tooling pattern to learn or maintain | proposed 2026-10-02, awaiting decision |
+| WA-D15 | Web app workspace and code sharing | (a) a new workspace `apps/word-authoring-webapp`, sharing the add-in's domain modules (the tag codec, offsets, schema validation, snapshot types, API client) through a new package the two apps both depend on. (b) the same new workspace, but duplicating those modules instead of sharing them | (a): the two clients cannot silently diverge on what a valid document looks like, since they run the same code | proposed 2026-10-02, awaiting decision |
+| WA-D16 | Nested element representation | (a) a recursive `children: Element[]` field on `Element`, the same shape at every depth. (b) a flat element list per section with an explicit `parentElementId` | (a): matches OOXML's own nested `w:sdt` shape, needs no separate tree-rebuild step in either client | proposed 2026-10-02, awaiting decision |
+| WA-D17 | Nesting rules | (a) a clause may contain clauses as children, to a fixed maximum depth of 4. A definition is always a leaf. A section's direct children stay clauses and definitions only, as today | (a), the only option drafted (sketch §8.2) | proposed 2026-10-02, awaiting decision |
+| WA-D18 | Versioning treatment | (a) a read-only revision list and picker: view an older revision's text and markup, no diff, no restore. (b) full diffing between two chosen revisions | (a): matches "some treatment", bounded scope for a POC | proposed 2026-10-02, awaiting decision |
+| WA-D19 | Library wordings | (a) a static, read-only seed catalogue, `contracts/authoring/library/*.json`, of reusable clauses and definitions, searchable and insertable in both clients. Saving a drafter's own text into the library is out of scope. (b) a persisted, drafter-editable library stored in Fuseki | (a): no new storage concern, and matches the attached tool's library search without its save-back behaviour | proposed 2026-10-02, awaiting decision |
+| WA-D20 | Theming | (a) CSS custom properties switched by one `data-theme` attribute and a header toggle, light by default, no new dependency. (b) a component or theming library | (a): consistent with the hand-rolled CSS already in `apps/word-authoring-addin` | proposed 2026-10-02, awaiting decision |
+
 ---
 
 ## 4. Slice overview
@@ -229,7 +261,7 @@ None of these may be taken by the agent. All were recorded by the human on 2026-
 | WA10 | Compose stack | `deployment/compose/authoring`, `tools/`, `mise.toml`, add-in stack tests | L0, L5, L6 | `mise run check:authoring-stack` | 400k |
 | WA11 | Documentation and close-out | docs only | paper, manual L6 | `mise run check:authoring` and the WA11 checks | 150k |
 
-Total about 4.35M tokens. Record the actual per slice in the status record.
+Total about 4.35M tokens for WA0 to WA11. Record the actual per slice in the status record.
 
 ```mermaid
 flowchart LR
@@ -242,9 +274,41 @@ flowchart LR
 Run them in numeric order. WA8 and WA9 need the frontend precondition P5. If P5 fails, finish WA1
 to WA7 and stop (S1).
 
+### Follow-on tranche: WA12 to WA20 (not started, sketch §8)
+
+| Slice | Title | Paths | Levels | One command | Estimate (tokens) |
+|---|---|---|---|---|---|
+| WA12 | Nested clause data model | `contracts/authoring`, `platform/authoring-service`, `workers/`, `apps/word-authoring-addin` (parser, writer, fake port only) | L1, L2, L3 | `mise run check:authoring` | 550k |
+| WA13 | Service read APIs for the web app | `platform/authoring-service`, `contracts/authoring` | L1, L3 | `mise run check:authoring-service` | 250k |
+| WA14 | Web app shell, library and document list | `apps/word-authoring-webapp` (new), `packages/authoring-domain` (new, if WA-D15 (a)) | L1, L2, L6 | `mise run test:authoring-webapp` | 500k |
+| WA15 | Web app text editor and markup panes | `apps/word-authoring-webapp` | L1, L6 | `mise run test:authoring-webapp` | 650k |
+| WA16 | Web app versioning, library wordings and theming | `apps/word-authoring-webapp`, `contracts/authoring/library` (new) | L1, L6 | `mise run test:authoring-webapp` | 400k |
+| WA17 | Word add-in parity | `apps/word-authoring-addin` | L1, L3, L6 | `mise run test:authoring-addin` | 350k |
+| WA18 | Compose stack and cross-client integration | `deployment/compose/authoring`, `apps/word-authoring-webapp` (e2e only) | L0, L5, L6 | `mise run check:authoring-stack` | 300k |
+| WA19 | Documentation and close-out (tranche 2) | docs only | paper, manual L6 | `mise run check:authoring` and the WA19 checks | 150k |
+| WA20 | Binding authority agreement sample (**deferred on CCS**) | `contracts/authoring/**` | L1, L3 | `mise run check:authoring-contracts` | 350k (provisional) |
+
+Total about 3.15M tokens for WA12 to WA19 (excluding WA20, deferred and re-estimated when
+scheduled). Combined with WA0 to WA11, the unit totals about 7.5M tokens if both tranches run.
+
+```mermaid
+flowchart LR
+    WA11 --> WA12 --> WA13
+    WA12 --> WA14 --> WA15 --> WA16
+    WA13 --> WA15
+    WA12 & WA16 --> WA17
+    WA17 --> WA18 --> WA19
+    WA12 -.deferred.-> WA20
+```
+
+Run WA12 to WA19 in numeric order once their decisions (WA-D14 to WA-D20) are recorded. WA20 has no
+place in that order: it starts only when the CCS workstream completes, independent of WA12 to WA19
+having finished.
+
 ---
 
 ## 5. Slices
+
 
 ### WA0: Preflight
 
@@ -1652,6 +1716,249 @@ Cert:\CurrentUser\Root`, which asks for confirmation and needs no administrator)
 
 ---
 
+## Follow-on tranche slices: WA12 to WA20
+
+These are drafted to the level the plan's stop rule S3 allows before their decisions (WA-D14 to
+WA-D20) are recorded: scope, paths, the design points sketch §8 already fixes, and a token
+estimate. Where a decision is still open, the slice says so rather than guessing a field name, a
+route shape or a file layout the human has not confirmed. The detailed, field-by-field instruction
+WA0 to WA11 have is written into each slice once its decisions land, following the same process
+(§2.2) that produced WA0 to WA11.
+
+### WA12: Nested clause data model
+
+**Preconditions:** WA11 committed. Decisions WA-D16, WA-D17 recorded.
+
+**Paths:** `contracts/authoring/**` (schemas, templates, samples, fixtures), `platform/authoring-service/**`,
+`workers/src/lattice_workers/wording_le/**`, `apps/word-authoring-addin/src/domain/ooxml.ts`,
+`apps/word-authoring-addin/src/word/fakePort.ts` and their tests only (no task pane or command
+changes here, those are WA17's).
+
+The foundational slice the rest of the tranche depends on: every runtime's `Element` gains a
+`children` field of the same shape (WA-D16), so a clause can contain clauses. Scope:
+
+- `document-snapshot.schema.json`: `Element.children` (array, same `Element` schema, present and
+  possibly empty on every element, consistent with WA1 rule 3). A definition's `children` is always
+  empty, checked at the application level (WA-D17), since JSON Schema's own recursion cannot by
+  itself bound depth or restrict which kind may nest.
+- `rdf.WordingMapper`: a child element is `wrd:directlyComprises` **of its parent element**, not of
+  the section, with its rank key and object id extended one level per the existing pattern (plan
+  §2's WA2 object id rule, generalised recursively: `(s+1).(e+1).(c+1)` for the c-th child of
+  element e of section s, and so on to WA-D17's maximum depth).
+- Two new SHACL shapes in `wording-poc-shapes.ttl`: one bounding nesting depth at the WA-D17 maximum
+  (a SPARQL property-path count over `wrd:directlyComprises`/`wap:elementType`), one forbidding a
+  non-empty `children` on anything typed `wap:Definition`.
+- `detection.ConstructDetector`, `template.TemplateFindings`, `template.ConformanceChecker`: recurse
+  into `children`, carrying the section's admitted term kinds down to every depth (a nested clause
+  is still "in" its section for conformance purposes).
+- `wording_le/model.py`'s `Element` gains `children: tuple[Element, ...]`. A clause with children
+  may also carry its own parts (an introductory sentence before its nested sub-clauses), so both the
+  parent and each child are analysed as their own sentence-form candidates, independently. A
+  sentence form never spans a parent and a child.
+- The add-in's OOXML parser and writer: a block `w:sdt` tagged as a clause may itself contain
+  further block `w:sdt`s tagged as clauses (not definitions, WA-D17), read and written recursively.
+  `fakePort.ts`'s in-memory model and its `selectUnmarked`-style test seams grow a nested case.
+
+Test approach: extend WA2's N-Triples fixture regeneration and SHACL tests with a nested fixture (a
+clause two and three levels deep); extend WA6's sentence-form tests with a parent-plus-children
+reading; extend WA8's OOXML round-trip tests with a nested `w:sdt` fixture. A self-probe candidate:
+remove the depth-bound SHACL shape and confirm a five-level fixture, which should fail, no longer
+does.
+
+**Docs:** service README's mapping table gains the child-element row. `data-architecture.md`'s
+"Word authoring POC graphs" section notes that `wrd:directlyComprises` now nests under elements too.
+
+---
+
+### WA13: Service read APIs for the web app
+
+**Preconditions:** WA12 committed.
+
+**Paths:** `platform/authoring-service/**`, `contracts/authoring/**` (new response schemas only).
+
+Three additive read routes, no existing route changed:
+
+| Route | Reads | New schema |
+|---|---|---|
+| `GET /api/documents` | every document the registry holds (already written by both clients' submissions) | `document-list` (array of the existing `document-view`) |
+| `GET /api/documents/{documentId}/revisions` | every revision record the registry already writes per submission (plan §2.3's "revision record") | `revision-list` (`revision`, `createdAt`, `wordingGraph` per entry) |
+| `GET /api/library` | the packaged library catalogue (WA-D19), resourced the same way templates and samples already are | `library-list` / `library-entry` |
+
+`DocumentRegistry` gains `List<DocumentView> all()` and `List<RevisionSummary> revisions(documentId)`
+over data it already stores; no new write path. `template.SampleCatalog`'s loading pattern is
+reused for a new `template.LibraryCatalog` over `contracts/authoring/library/*.json` (WA16 is where
+the catalogue's content is authored. This slice only needs the loader and the route to exist, over
+an initially empty or placeholder catalogue, since WA16 depends on this route existing first, not
+the reverse).
+
+Test approach: as WA4's route tests (each route's schema, a 200 over the seeded samples, an empty
+case for a fresh store).
+
+**Docs:** service README's route table gains the three entries.
+
+---
+
+### WA14: Web app shell, library and document list
+
+**Preconditions:** WA12, WA13 committed. Decisions WA-D14, WA-D15, WA-D20 recorded.
+
+**Paths:** `apps/word-authoring-webapp/**` (new workspace), `packages/authoring-domain/**` (new, only
+if WA-D15 chooses shared modules over duplication), `mise.toml`, `README.md`.
+
+Scaffolds the new workspace exactly as WA8 scaffolded the add-in (`package.json`, `vite.config.ts`,
+`vitest.config.ts`, `tsconfig.json`, Playwright config, `mise run check:authoring-webapp` and
+`test:authoring-webapp`), and builds the left-hand pane of sketch §8.2's screen: the document list
+(from WA13's new route) and the library browser (from WA13's route, over WA16's eventual content),
+plus the theme toggle (WA-D20). Opening a document loads its tree (built from the nested `Element`
+shape WA12 added) into a skeleton middle pane, without yet supporting selection or editing (WA15).
+
+If WA-D15 chose shared modules, this slice is also where `packages/authoring-domain` is carved out
+of the add-in's existing `domain/` modules (tags, offsets, schema validation, snapshot types, API
+client) with both the add-in and the new web app depending on it, and a parity test confirming
+both apps resolve to the same module instance's behaviour.
+
+**Docs:** root `README.md` layout gains the new workspace (and package, if carved out). A new
+`apps/word-authoring-webapp/README.md`, matching the add-in's own style.
+
+---
+
+### WA15: Web app text editor and markup panes
+
+**Preconditions:** WA14 committed.
+
+**Paths:** `apps/word-authoring-webapp/**`.
+
+The middle text pane (continuous prose per section, marked spans in the plan §2.3 tag colours) and
+the right-hand pane's segregated panels from sketch §8.2's table: Markup (selection), Definitions,
+Variables, Scope, each wired to one consistent selection model shared by the tree, text and panel
+panes. The tree's "add below" affordance, filtered to the kinds WA-D17 allows at that position. This
+is the tranche's largest slice, comparable to WA9: a selection anywhere in the three panes must
+update all three consistently, and every edit (mark, unmark, edit a part's text, a variable's
+label, a definition's term) round-trips through the same snapshot submission WA4's API already
+accepts, unchanged by this tranche.
+
+Test approach: as WA9's Playwright harness pattern, mocking `/api/**` from WA1's samples and WA12's
+nested fixtures, covering selection-drives-markup, add-below's kind filtering (including the
+zero-case: a definition offers nothing), and a part edited on the right updating the text pane.
+
+**Docs:** `ux-design.md` gains a section for the web app's screen, panels and selection model,
+cross-referenced from the add-in's own "how it fits together" section rather than repeated there.
+
+---
+
+### WA16: Web app versioning, library wordings and theming
+
+**Preconditions:** WA15 committed. Decisions WA-D18, WA-D19 recorded.
+
+**Paths:** `apps/word-authoring-webapp/**`, `contracts/authoring/library/**` (new).
+
+The Versions panel (WA-D18: a list from WA13's revision route, selecting an older one re-renders
+the tree and text panes read-only, no diff, no restore). The library catalogue's real content
+(WA-D19: a handful of seed clauses and definitions with a kind and tags) and the library browser's
+search and insert-at-tree-position behaviour, which copies a library entry's parts into the open
+document exactly as "Insert sample" already does (plan WA9). Theming's dark variant, if WA14 only
+wired the toggle and not every component's dark styles.
+
+Test approach: a revision picker test (seed two revisions, confirm the older one renders its own
+text), a library insert test (confirm the inserted parts match the catalogue entry and the kind
+filter at the drop position is respected), a theme toggle test (the `data-theme` attribute flips,
+no component left unstyled).
+
+**Docs:** the web app README gains the library catalogue's format and the versioning behaviour.
+
+---
+
+### WA17: Word add-in parity
+
+**Preconditions:** WA12 committed. WA16 committed (library content to insert from).
+
+**Paths:** `apps/word-authoring-addin/**`.
+
+Brings the add-in's own editing experience into parity with the web app's, per sketch §8.3: a
+command to mark the current selection as a sub-clause of the clause it is inside (to WA-D17's
+depth, `outside-clause` or `max-depth` reasons on failure, mirroring the existing `MarkResult`
+reason pattern), a command to insert a library entry at the current position (reusing WA16's
+catalogue route), and the Markup tab reorganised into the same segregated panels (Markup,
+Definitions, Variables, Scope, Versions) sketch §8.2 gives the web app, rather than the single
+mixed tab WA9 built. No new backend behaviour: every command here submits the same snapshot shape
+WA12 already extended.
+
+Test approach: as WA9a's handler tests (the new commands over the fake port, including the
+`max-depth` and `outside-clause` reasons as explicit negative cases) and new Playwright cases for
+the reorganised panels.
+
+**Docs:** the add-in README's commands table gains the two new commands. `ux-design.md`'s add-in
+section is updated to describe the segregated panels, cross-referencing WA15's web app section
+rather than repeating its rules.
+
+---
+
+### WA18: Compose stack and cross-client integration
+
+**Preconditions:** WA14 (web app exists), WA17 (add-in parity) committed.
+
+**Paths:** `deployment/compose/authoring/**`, `apps/word-authoring-webapp/e2e-stack/**` (new),
+`mise.toml`.
+
+Wires the web app into the running stack as a second static path behind the same proxy (`/webapp/*`,
+alongside the add-in's `/addin/*`, sketch §8.2), with a staging step mirroring WA10's
+`authoring_stage.py` for the web app's build output, and a stack-level Playwright suite proving the
+sketch §8.3 claim empirically rather than by inspection: a document submitted through the add-in's
+fake port (or the harness) is visible in the web app's document list and tree with no new backend
+step, and a document edited in the web app is immediately visible through the add-in's own API
+calls. This is the cross-client proof plan §8.3 promises, run against the real stack as WA10's own
+suite already runs.
+
+Test approach: as WA10's `e2e-stack` suite, adding cases for the web app's static paths and the
+cross-client round trip above. Self-probe candidate: stop the `authoring-service` container mid-test
+and confirm the cross-client case fails on the expected timeout, as WA10's own self-probe did for
+the worker.
+
+**Docs:** `deployment/compose/authoring/README.md` gains the web app's service entry and path.
+Root `README.md`'s "Run the Word authoring POC" section gains the web app's URL.
+
+---
+
+### WA19: Documentation and close-out (tranche 2)
+
+**Preconditions:** WA18 committed.
+
+**Paths:** documentation only.
+
+As WA11, for this tranche: a manual checklist (open the web app, open a document pushed from the
+add-in's harness, mark up text in each of the three panes, view an older revision, insert a library
+entry, switch themes, then confirm the same document still opens correctly from the add-in). Status
+record set to "awaiting human validation" with actual token use per slice. `check:authoring`,
+`check:java`, `check:workers`, `check:ontology-versioning`, `check:ontology-catalog`,
+`topology:links` run and recorded. Prose check of every changed Markdown file.
+
+**Commit:** `[wap] WA19: documentation and close-out`.
+
+---
+
+### WA20: Binding authority agreement sample (deferred)
+
+**Preconditions:** WA12 committed (nesting exists). **The CCS workstream (Wording, Instrument and
+Behaviour refactoring) complete.** Do not start before both, regardless of how much of WA12 to WA19
+has run.
+
+**Paths:** `contracts/authoring/**` (a `binding-authority` template and sample, fixtures).
+
+Sketch §8.1's rough shape: sections for grant of authority, scope of cover, underwriting limits and
+referrals, claims handling authority, remuneration and deductions, reporting, and termination, each
+with the term kinds a real CBAA section would admit, and at least one clause nested three levels
+deep. A content-authoring slice once WA12's mechanism exists and CCS's settled Party and Instrument
+vocabulary gives real terms for the roles and limits involved, rather than inventing POC-only ones
+now. The estimate is provisional: it assumes no new mechanism, only content, fixtures and the
+existing contract tests (WA1's AC-01 to AC-11) extended to the new sample.
+
+Test approach: as WA1, extended to the fourth sample, including nesting-specific cases (AC-09's
+cross-checks over a nested element, a demo feature for the deepest nesting case).
+
+**Docs:** `contracts/authoring`'s own documentation (if any exists by then) gains the sample.
+
+---
+
 ## 6. Commands, consolidated
 
 | Task | Runs |
@@ -1664,8 +1971,9 @@ Cert:\CurrentUser\Root`, which asks for confirmation and needs no administrator)
 | `check:authoring-addin`, `test:authoring-addin` | Vitest and harness Playwright (WA8, WA9) |
 | `check:authoring-tools` | the staging tool's tests (WA10) |
 | `build:authoring`, `authoring:up`, `authoring:down`, `authoring:reset`, `authoring:ca` | the stack |
-| `check:authoring-stack` | builds, starts and tests the stack (WA10) |
+| `check:authoring-stack` | builds, starts and tests the stack (WA10, extended WA18) |
 | `check:authoring` | everything except the stack |
+| `check:authoring-webapp`, `test:authoring-webapp` | Vitest and Playwright for the web app (WA14 to WA16) |
 
 ---
 
@@ -1722,6 +2030,8 @@ Real Word, except through WA11's manual checklist.
 | R6 | The goldens encode a wrong reading | the WA6 pack lists the facility readings for human review before sign-off |
 | R7 | Scope grows into accepting proposals or editing meaning | out of scope by the sketch §1. A follow-up unit needs its own plan |
 | R8 | A Word build or Word on the web lacks the shared runtime or the right-click extension point | Word then ignores those manifest entries. The task pane still marks everything, and M14 records which clients show the commands |
+| R9 | The web app duplicates the add-in's marking or validation logic and drifts out of sync with it | WA-D15 decides whether to share the TypeScript modules outright, and WA14 adds a parity test either way |
+| R10 | Deep nesting makes the existing SHACL laws (W1, W5) awkward to re-check, or admits a cycle | WA12 adds an explicit depth bound and an allowed-parent shape before any sample uses nesting (sketch R7) |
 
 ---
 
@@ -1734,3 +2044,7 @@ After WA11 the agent's last message lists, in order: the commits made (`git log 
 > `git push origin ux/auth-le`.
 
 No ontology document changes in this unit, so no release tag is due.
+
+If the follow-on tranche (WA12 to WA19) runs, WA19's handoff follows the same shape, covering the
+commits from WA12 onward and its own manual checklist. WA20 has no handoff of its own: it folds
+into whichever later slice or unit actually schedules it, once the CCS workstream completes.
