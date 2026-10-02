@@ -347,7 +347,7 @@ Builds the service jar and the add-in, stages the Docker build inputs, and bring
 compose stack (Fuseki, RabbitMQ, the authoring service and worker, and a Caddy TLS proxy) bound to
 `127.0.0.1` only. Browse to [`https://localhost:3443`](https://localhost:3443) — it redirects to the
 harness, a browser-only stand-in for the real Word task pane backed by the real service. The
-browser will warn about the proxy's local certificate; either accept the warning or run
+browser will warn about the proxy's local certificate. Either accept the warning or run
 `mise run authoring:ca` first and trust `.build/authoring/lattice-authoring-root.crt`.
 
 ```bash

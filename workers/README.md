@@ -16,7 +16,10 @@ graph. See the
 [sketch](../docs/developer/sketches/word-authoring-poc.md),
 [plan](../docs/developer/plans/word-authoring-poc.md) WA6 and
 [ADR-A114](../docs/architecture/decisions/ADR-A114-word-authoring-proof-of-concept.md). Its code,
-vocabulary and graph layout may be removed or rewritten without deprecation.
+vocabulary and graph layout may be removed or rewritten without deprecation. For how this worker
+fits with the service, the add-in and the compose stack, including the architecture and data-flow
+diagrams, see the add-in's
+[README](../apps/word-authoring-addin/README.md#how-the-proof-of-concept-fits-together).
 
 ### Modules (`src/lattice_workers/wording_le/`)
 

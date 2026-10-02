@@ -43,9 +43,9 @@ All commands run from the repository root, via `mise`:
 ## Browsing the demo
 
 Browse to `https://localhost:3443`. It redirects to `/addin/harness.html`, a browser-only stand-in
-for the real Word task pane (no `Word` object model; its left-hand "Document" panel holds the
-in-memory model instead of a Word document) that talks to the real `authoring-service` over the
-same proxy. This is not the real Word add-in — loading the add-in inside real Word requires
+for the real Word task pane — no `Word` object model, its left-hand "Document" panel holds the
+in-memory model instead of a Word document — that talks to the real `authoring-service` over the
+same proxy. This is not the real Word add-in. Loading the add-in inside real Word requires
 sideloading `apps/word-authoring-addin/manifest/manifest.xml`, which is a separate step (plan
 WA11), not provided by this stack.
 

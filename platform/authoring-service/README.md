@@ -8,7 +8,10 @@ rewritten without deprecation; nothing outside this unit may depend on them.
 
 See the [sketch](../../docs/developer/sketches/word-authoring-poc.md), the
 [plan](../../docs/developer/plans/word-authoring-poc.md) and
-[ADR-A114](../../docs/architecture/decisions/ADR-A114-word-authoring-proof-of-concept.md).
+[ADR-A114](../../docs/architecture/decisions/ADR-A114-word-authoring-proof-of-concept.md). For how
+this service fits with the worker, the add-in and the compose stack, including the architecture
+and data-flow diagrams, see the add-in's
+[README](../../apps/word-authoring-addin/README.md#how-the-proof-of-concept-fits-together).
 
 ## What this slice (WA5) builds
 
