@@ -28,6 +28,11 @@ per claim, aggregate windows, hours clauses) stay on term parameters as designed
 general basis pattern, if any, comes from contract-amounts §1.7. The running totals against a limit
 are dynamic and live in `applied/capacity` through a Surface projection.
 
+**Comes back in: the evaluation context (2026-10-02).** The unplanned
+[evaluation-context.md](../sketches/evaluation-context.md) sketch outlines limits, retentions,
+aggregates, reinstatements and bases as ledger accounts, combinators and environments. This phase
+should not start its contract module until that design is settled (its §13).
+
 ## Slices
 
 | Slice | Content | Sketch |

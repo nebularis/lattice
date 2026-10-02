@@ -6,7 +6,9 @@ Draft for review, 2026-09-30. A requirements catalogue, not yet a design. The de
 [computable-contract-substrate.md](computable-contract-substrate.md) says *that* a party must pay
 or may not exceed something. This sketch collects every construct in the tested instruments that
 decides *how much*, so that none is lost before the design is written. It feeds AIR Phase 5
-(ADR-A101, term parameters) and Open CBAA's binding authority capacity.
+(ADR-A101, term parameters) and Open CBAA's binding authority capacity. The unplanned
+[evaluation context](evaluation-context.md) sketch outlines a design for §3: a ledger of accounts,
+combinators and environments.
 
 Sources use the codes of the substrate sketch: AIG (package policy), IUA (IUA 09-069 BAA2018),
 CBAA (Lloyd's computable binding authority collateral).

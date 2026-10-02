@@ -1,0 +1,416 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Premise. When an interruption ends, what was going on before it may resume
+# where it left off, or start again from the beginning. Which one is a term of
+# the agreement, and it belongs to the transition that ends the interruption,
+# not to the state it returns to.
+#
+# Two facilities on the same terms each fall into default, let the cure period
+# run out, and agree a standstill with their lenders. The standstill suspends
+# the facility. It ends in one of two ways:
+#
+# - on its expiry, when the facility resumes exactly where it was: in default,
+#   uncured (deep history)
+# - by the lenders' reinstatement with a fresh cure period, when the facility
+#   returns to default but its stages start again at the cure period (shallow
+#   history: the default is restored, the stage within it is not)
+#
+# Facility A's standstill expires. Facility B's lenders reinstate it early.
+#
+# Configuration (nested states sketch §3, §4, §9.4):
+#
+#   facility regime:  operative, standstill
+#     operative:      in force, default             (region: operative stages)
+#       default:      cure period, uncured          (region: default stages)
+#
+# | Date       | Stimulus                           | Facility A                                      | Facility B                              |
+# |------------|------------------------------------|-------------------------------------------------|-----------------------------------------|
+# | 2027-01-01 | takes effect                        | operative, in force                              | the same                                 |
+# | 2027-03-31 | covenant breached                   | out of in force, into default, cure period       | the same                                 |
+# | 2027-04-28 | cure period expires                 | out of cure period, into uncured                 | the same                                 |
+# | 2027-05-10 | standstill agreed                   | uncured, default, operative exited by one exec   | the same                                 |
+# | 2027-07-01 | lenders reinstate, fresh cure       |                                                 | operative, default resumed. Cure period entered fresh |
+# | 2027-08-10 | standstill expires                  | operative, default, uncured each resumed         |                                          |
+#
+# The lenders' power to accelerate applies only in ex:uncured. Facility A is
+# exposed to it again from 2027-08-10. Facility B is not, until its fresh cure
+# period runs out.
+
+@prefix bhv:  <https://www.nebularis.org/neuro-semantic/lattice/behaviour#> .
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix pty:  <https://www.nebularis.org/neuro-semantic/lattice/party#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex:   <https://example.org/lattice/behaviour/standstill/> .
+
+# ---- Configuration: three levels -------------------------------------------------
+
+ex:facility-regime a bhv:StateSpace ;
+    fnd:hasIdentity ex:facility-regime-identity ;
+    bhv:initialState ex:operative .
+
+ex:operative a bhv:State ;
+    bhv:inStateSpace ex:facility-regime .
+
+ex:standstill a bhv:State ;
+    bhv:inStateSpace ex:facility-regime .
+
+ex:operative-stages a bhv:StateSpace ;
+    fnd:hasIdentity ex:operative-stages-identity ;
+    bhv:regionOf ex:operative ;
+    bhv:initialState ex:in-force .
+
+ex:in-force a bhv:State ;
+    bhv:inStateSpace ex:operative-stages .
+
+ex:default a bhv:State ;
+    bhv:inStateSpace ex:operative-stages .
+
+ex:default-stages a bhv:StateSpace ;
+    fnd:hasIdentity ex:default-stages-identity ;
+    bhv:regionOf ex:default ;
+    bhv:initialState ex:cure-period .
+
+ex:cure-period a bhv:State ;
+    bhv:inStateSpace ex:default-stages .
+
+ex:uncured a bhv:State ;
+    bhv:inStateSpace ex:default-stages .
+
+# ---- Triggers --------------------------------------------------------------------
+
+ex:on-covenant-breach a bhv:TriggerDefinition ;
+    bhv:triggerKind bhv:DerivedTrigger .
+
+ex:on-cure-period-expiry a bhv:TriggerDefinition ;
+    bhv:triggerKind bhv:ScheduledTrigger ;
+    rdfs:comment "20 business days after entry into the cure period." .
+
+ex:on-covenant-met a bhv:TriggerDefinition ;
+    bhv:triggerKind bhv:DerivedTrigger .
+
+ex:on-standstill-agreed a bhv:TriggerDefinition ;
+    bhv:triggerKind bhv:ExternalStimulus ;
+    rdfs:comment "The borrower and the lenders sign a standstill agreement." .
+
+ex:on-standstill-expiry a bhv:TriggerDefinition ;
+    bhv:triggerKind bhv:ScheduledTrigger ;
+    rdfs:comment "The standstill's end date, as a positioned stimulus." .
+
+ex:on-reinstatement a bhv:TriggerDefinition ;
+    bhv:triggerKind bhv:ExternalStimulus ;
+    rdfs:comment "The lenders exercise their power to reinstate the facility with a fresh cure period." .
+
+# ---- Transitions -----------------------------------------------------------------
+
+ex:breach a bhv:TransitionDefinition ;
+    bhv:fromState ex:in-force ;
+    bhv:toState ex:default ;
+    bhv:hasTrigger ex:on-covenant-breach ;
+    bhv:selectionPolicy bhv:SingleMatch ;
+    bhv:activationPolicy bhv:ImmediateActivation .
+
+ex:cure-period-ends a bhv:TransitionDefinition ;
+    bhv:fromState ex:cure-period ;
+    bhv:toState ex:uncured ;
+    bhv:hasTrigger ex:on-cure-period-expiry ;
+    bhv:selectionPolicy bhv:SingleMatch ;
+    bhv:activationPolicy bhv:ImmediateActivation .
+
+ex:cure a bhv:TransitionDefinition ;
+    bhv:fromState ex:default ;
+    bhv:toState ex:in-force ;
+    bhv:hasTrigger ex:on-covenant-met ;
+    bhv:selectionPolicy bhv:SingleMatch ;
+    bhv:activationPolicy bhv:ImmediateActivation .
+
+# From the outermost composite: leaves every level beneath it.
+ex:agree-standstill a bhv:TransitionDefinition ;
+    bhv:fromState ex:operative ;
+    bhv:toState ex:standstill ;
+    bhv:hasTrigger ex:on-standstill-agreed ;
+    bhv:selectionPolicy bhv:SingleMatch ;
+    bhv:activationPolicy bhv:ImmediateActivation .
+
+# Deep history: every level below operative as it was when the standstill began.
+ex:standstill-expires a bhv:TransitionDefinition ;
+    bhv:fromState ex:standstill ;
+    bhv:toState ex:operative ;
+    bhv:hasTrigger ex:on-standstill-expiry ;
+    bhv:entryMode bhv:DeepHistory ;
+    bhv:selectionPolicy bhv:SingleMatch ;
+    bhv:activationPolicy bhv:ImmediateActivation .
+
+# Shallow history: operative's region resumes the state it held (default), and
+# below that each region starts at its initial state (the cure period).
+ex:reinstate-with-fresh-cure a bhv:TransitionDefinition ;
+    bhv:fromState ex:standstill ;
+    bhv:toState ex:operative ;
+    bhv:hasTrigger ex:on-reinstatement ;
+    bhv:entryMode bhv:ShallowHistory ;
+    bhv:selectionPolicy bhv:SingleMatch ;
+    bhv:activationPolicy bhv:ImmediateActivation .
+
+# ---- The facilities and their lenders --------------------------------------------
+
+ex:facility-a a fnd:PersistentIdentity .
+ex:facility-b a fnd:PersistentIdentity .
+ex:lenders-b-occ a pty:RoleOccupancy .
+
+# ---- Stimuli ---------------------------------------------------------------------
+# The same terms, the same dates up to the standstill, so one stimulus per date
+# per facility.
+
+ex:a-breach a bhv:Stimulus ;
+    fnd:hasEvidence [ a fnd:Evidence ; fnd:recordedAt "2027-03-31T17:00:00Z"^^xsd:dateTime ] .
+ex:a-cure-period-expires a bhv:Stimulus ;
+    fnd:hasEvidence [ a fnd:Evidence ; fnd:recordedAt "2027-04-28T00:00:00Z"^^xsd:dateTime ] .
+ex:a-standstill-agreed a bhv:Stimulus ;
+    fnd:hasEvidence [ a fnd:Evidence ; fnd:recordedAt "2027-05-10T12:00:00Z"^^xsd:dateTime ] .
+ex:a-standstill-expires a bhv:Stimulus ;
+    fnd:hasEvidence [ a fnd:Evidence ; fnd:recordedAt "2027-08-10T00:00:00Z"^^xsd:dateTime ] .
+
+ex:b-breach a bhv:Stimulus ;
+    fnd:hasEvidence [ a fnd:Evidence ; fnd:recordedAt "2027-03-31T17:00:00Z"^^xsd:dateTime ] .
+ex:b-cure-period-expires a bhv:Stimulus ;
+    fnd:hasEvidence [ a fnd:Evidence ; fnd:recordedAt "2027-04-28T00:00:00Z"^^xsd:dateTime ] .
+ex:b-standstill-agreed a bhv:Stimulus ;
+    fnd:hasEvidence [ a fnd:Evidence ; fnd:recordedAt "2027-05-10T12:00:00Z"^^xsd:dateTime ] .
+ex:b-reinstated a bhv:Stimulus ;
+    fnd:hasEvidence [ a fnd:Evidence ; fnd:recordedAt "2027-07-01T09:00:00Z"^^xsd:dateTime ] .
+
+ex:b-reinstatement a bhv:ExerciseRecord ;
+    bhv:exercised ex:power-to-reinstate-with-fresh-cure ;
+    bhv:actor ex:lenders-b-occ ;
+    bhv:tookEffect true ;
+    bhv:fromStimulus ex:b-reinstated .
+
+# ==== Facility A: the standstill expires, deep history ============================
+
+ex:a-exec-1 a bhv:TransitionExecution ;
+    bhv:executedTransition ex:breach ;
+    bhv:causedByStimulus ex:a-breach .
+ex:a-exec-2 a bhv:TransitionExecution ;
+    bhv:executedTransition ex:cure-period-ends ;
+    bhv:causedByStimulus ex:a-cure-period-expires .
+ex:a-exec-3 a bhv:TransitionExecution ;
+    bhv:executedTransition ex:agree-standstill ;
+    bhv:causedByStimulus ex:a-standstill-agreed .
+ex:a-exec-4 a bhv:TransitionExecution ;
+    bhv:executedTransition ex:standstill-expires ;
+    bhv:causedByStimulus ex:a-standstill-expires .
+
+ex:a-occ-operative-1 a bhv:StateOccupancy ;
+    bhv:forSubject ex:facility-a ;
+    bhv:occupiesState ex:operative ;
+    bhv:isHypothetical false ;
+    bhv:isCurrent false ;
+    bhv:exitedBy ex:a-exec-3 ;
+    fnd:hasEvidence [ a fnd:Evidence ; fnd:recordedAt "2027-01-01T00:00:00Z"^^xsd:dateTime ;
+        rdfs:comment "Facility A took effect." ] ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ;
+        fnd:validFrom "2027-01-01T00:00:00Z"^^xsd:dateTime ;
+        fnd:validTo "2027-05-10T12:00:00Z"^^xsd:dateTime ] .
+
+ex:a-occ-in-force a bhv:StateOccupancy ;
+    bhv:forSubject ex:facility-a ;
+    bhv:occupiesState ex:in-force ;
+    bhv:isHypothetical false ;
+    bhv:isCurrent false ;
+    bhv:exitedBy ex:a-exec-1 ;
+    fnd:hasEvidence [ a fnd:Evidence ; fnd:recordedAt "2027-01-01T00:00:00Z"^^xsd:dateTime ;
+        rdfs:comment "Facility A took effect: the initial state of operative's region." ] ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ;
+        fnd:validFrom "2027-01-01T00:00:00Z"^^xsd:dateTime ;
+        fnd:validTo "2027-03-31T17:00:00Z"^^xsd:dateTime ] .
+
+ex:a-occ-default-1 a bhv:StateOccupancy ;
+    bhv:forSubject ex:facility-a ;
+    bhv:occupiesState ex:default ;
+    bhv:isHypothetical false ;
+    bhv:isCurrent false ;
+    bhv:enteredBy ex:a-exec-1 ;
+    bhv:exitedBy ex:a-exec-3 ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ;
+        fnd:validFrom "2027-03-31T17:00:00Z"^^xsd:dateTime ;
+        fnd:validTo "2027-05-10T12:00:00Z"^^xsd:dateTime ] .
+
+ex:a-occ-cure-period a bhv:StateOccupancy ;
+    bhv:forSubject ex:facility-a ;
+    bhv:occupiesState ex:cure-period ;
+    bhv:isHypothetical false ;
+    bhv:isCurrent false ;
+    bhv:enteredBy ex:a-exec-1 ;
+    bhv:exitedBy ex:a-exec-2 ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ;
+        fnd:validFrom "2027-03-31T17:00:00Z"^^xsd:dateTime ;
+        fnd:validTo "2027-04-28T00:00:00Z"^^xsd:dateTime ] .
+
+ex:a-occ-uncured-1 a bhv:StateOccupancy ;
+    bhv:forSubject ex:facility-a ;
+    bhv:occupiesState ex:uncured ;
+    bhv:isHypothetical false ;
+    bhv:isCurrent false ;
+    bhv:enteredBy ex:a-exec-2 ;
+    bhv:exitedBy ex:a-exec-3 ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ;
+        fnd:validFrom "2027-04-28T00:00:00Z"^^xsd:dateTime ;
+        fnd:validTo "2027-05-10T12:00:00Z"^^xsd:dateTime ] .
+
+# ex:a-exec-3 ended uncured, default and operative: these are what history reads.
+ex:a-occ-standstill a bhv:StateOccupancy ;
+    bhv:forSubject ex:facility-a ;
+    bhv:occupiesState ex:standstill ;
+    bhv:isHypothetical false ;
+    bhv:isCurrent false ;
+    bhv:enteredBy ex:a-exec-3 ;
+    bhv:exitedBy ex:a-exec-4 ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ;
+        fnd:validFrom "2027-05-10T12:00:00Z"^^xsd:dateTime ;
+        fnd:validTo "2027-08-10T00:00:00Z"^^xsd:dateTime ] .
+
+# Deep history: each level resumes the occupancy ex:a-exec-3 ended.
+ex:a-occ-operative-2 a bhv:StateOccupancy ;
+    bhv:forSubject ex:facility-a ;
+    bhv:occupiesState ex:operative ;
+    bhv:isHypothetical false ;
+    bhv:isCurrent true ;
+    bhv:enteredBy ex:a-exec-4 ;
+    bhv:resumedFrom ex:a-occ-operative-1 ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ;
+        fnd:validFrom "2027-08-10T00:00:00Z"^^xsd:dateTime ] .
+
+ex:a-occ-default-2 a bhv:StateOccupancy ;
+    bhv:forSubject ex:facility-a ;
+    bhv:occupiesState ex:default ;
+    bhv:isHypothetical false ;
+    bhv:isCurrent true ;
+    bhv:enteredBy ex:a-exec-4 ;
+    bhv:resumedFrom ex:a-occ-default-1 ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ;
+        fnd:validFrom "2027-08-10T00:00:00Z"^^xsd:dateTime ] .
+
+ex:a-occ-uncured-2 a bhv:StateOccupancy ;
+    bhv:forSubject ex:facility-a ;
+    bhv:occupiesState ex:uncured ;
+    bhv:isHypothetical false ;
+    bhv:isCurrent true ;
+    bhv:enteredBy ex:a-exec-4 ;
+    bhv:resumedFrom ex:a-occ-uncured-1 ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ;
+        fnd:validFrom "2027-08-10T00:00:00Z"^^xsd:dateTime ] .
+
+# ==== Facility B: reinstated with a fresh cure period, shallow history ============
+
+ex:b-exec-1 a bhv:TransitionExecution ;
+    bhv:executedTransition ex:breach ;
+    bhv:causedByStimulus ex:b-breach .
+ex:b-exec-2 a bhv:TransitionExecution ;
+    bhv:executedTransition ex:cure-period-ends ;
+    bhv:causedByStimulus ex:b-cure-period-expires .
+ex:b-exec-3 a bhv:TransitionExecution ;
+    bhv:executedTransition ex:agree-standstill ;
+    bhv:causedByStimulus ex:b-standstill-agreed .
+ex:b-exec-4 a bhv:TransitionExecution ;
+    bhv:executedTransition ex:reinstate-with-fresh-cure ;
+    bhv:causedByStimulus ex:b-reinstated .
+
+ex:b-occ-operative-1 a bhv:StateOccupancy ;
+    bhv:forSubject ex:facility-b ;
+    bhv:occupiesState ex:operative ;
+    bhv:isHypothetical false ;
+    bhv:isCurrent false ;
+    bhv:exitedBy ex:b-exec-3 ;
+    fnd:hasEvidence [ a fnd:Evidence ; fnd:recordedAt "2027-01-01T00:00:00Z"^^xsd:dateTime ;
+        rdfs:comment "Facility B took effect." ] ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ;
+        fnd:validFrom "2027-01-01T00:00:00Z"^^xsd:dateTime ;
+        fnd:validTo "2027-05-10T12:00:00Z"^^xsd:dateTime ] .
+
+ex:b-occ-in-force a bhv:StateOccupancy ;
+    bhv:forSubject ex:facility-b ;
+    bhv:occupiesState ex:in-force ;
+    bhv:isHypothetical false ;
+    bhv:isCurrent false ;
+    bhv:exitedBy ex:b-exec-1 ;
+    fnd:hasEvidence [ a fnd:Evidence ; fnd:recordedAt "2027-01-01T00:00:00Z"^^xsd:dateTime ;
+        rdfs:comment "Facility B took effect: the initial state of operative's region." ] ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ;
+        fnd:validFrom "2027-01-01T00:00:00Z"^^xsd:dateTime ;
+        fnd:validTo "2027-03-31T17:00:00Z"^^xsd:dateTime ] .
+
+ex:b-occ-default-1 a bhv:StateOccupancy ;
+    bhv:forSubject ex:facility-b ;
+    bhv:occupiesState ex:default ;
+    bhv:isHypothetical false ;
+    bhv:isCurrent false ;
+    bhv:enteredBy ex:b-exec-1 ;
+    bhv:exitedBy ex:b-exec-3 ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ;
+        fnd:validFrom "2027-03-31T17:00:00Z"^^xsd:dateTime ;
+        fnd:validTo "2027-05-10T12:00:00Z"^^xsd:dateTime ] .
+
+ex:b-occ-cure-period-1 a bhv:StateOccupancy ;
+    bhv:forSubject ex:facility-b ;
+    bhv:occupiesState ex:cure-period ;
+    bhv:isHypothetical false ;
+    bhv:isCurrent false ;
+    bhv:enteredBy ex:b-exec-1 ;
+    bhv:exitedBy ex:b-exec-2 ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ;
+        fnd:validFrom "2027-03-31T17:00:00Z"^^xsd:dateTime ;
+        fnd:validTo "2027-04-28T00:00:00Z"^^xsd:dateTime ] .
+
+ex:b-occ-uncured a bhv:StateOccupancy ;
+    bhv:forSubject ex:facility-b ;
+    bhv:occupiesState ex:uncured ;
+    bhv:isHypothetical false ;
+    bhv:isCurrent false ;
+    bhv:enteredBy ex:b-exec-2 ;
+    bhv:exitedBy ex:b-exec-3 ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ;
+        fnd:validFrom "2027-04-28T00:00:00Z"^^xsd:dateTime ;
+        fnd:validTo "2027-05-10T12:00:00Z"^^xsd:dateTime ] .
+
+ex:b-occ-standstill a bhv:StateOccupancy ;
+    bhv:forSubject ex:facility-b ;
+    bhv:occupiesState ex:standstill ;
+    bhv:isHypothetical false ;
+    bhv:isCurrent false ;
+    bhv:enteredBy ex:b-exec-3 ;
+    bhv:exitedBy ex:b-exec-4 ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ;
+        fnd:validFrom "2027-05-10T12:00:00Z"^^xsd:dateTime ;
+        fnd:validTo "2027-07-01T09:00:00Z"^^xsd:dateTime ] .
+
+# Shallow history: operative and the state its region held are resumed.
+ex:b-occ-operative-2 a bhv:StateOccupancy ;
+    bhv:forSubject ex:facility-b ;
+    bhv:occupiesState ex:operative ;
+    bhv:isHypothetical false ;
+    bhv:isCurrent true ;
+    bhv:enteredBy ex:b-exec-4 ;
+    bhv:resumedFrom ex:b-occ-operative-1 ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ;
+        fnd:validFrom "2027-07-01T09:00:00Z"^^xsd:dateTime ] .
+
+ex:b-occ-default-2 a bhv:StateOccupancy ;
+    bhv:forSubject ex:facility-b ;
+    bhv:occupiesState ex:default ;
+    bhv:isHypothetical false ;
+    bhv:isCurrent true ;
+    bhv:enteredBy ex:b-exec-4 ;
+    bhv:resumedFrom ex:b-occ-default-1 ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ;
+        fnd:validFrom "2027-07-01T09:00:00Z"^^xsd:dateTime ] .
+
+# Below the restored default, its region starts again: a fresh cure period,
+# entered by default, resuming nothing.
+ex:b-occ-cure-period-2 a bhv:StateOccupancy ;
+    bhv:forSubject ex:facility-b ;
+    bhv:occupiesState ex:cure-period ;
+    bhv:isHypothetical false ;
+    bhv:isCurrent true ;
+    bhv:enteredBy ex:b-exec-4 ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ;
+        fnd:validFrom "2027-07-01T09:00:00Z"^^xsd:dateTime ] .
