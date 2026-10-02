@@ -147,6 +147,9 @@ by generating OOXML and inserting it, so the writer and parser are tested as a r
 
 ### 4.1 Mapping to the Wording layer
 
+**Historical baseline:** this section describes the implemented POC's provisional mapping.
+Wording is now published. The deferred adoption assessment below does not change that mapping.
+
 `wrd:` has no ontology document yet (CCS C3 waits for Gate A). The spike uses the sketch's IRIs for
 the terms CCS §4 names, in a provisional vocabulary held by the service, and a POC namespace `wap:`
 for what the sketch leaves unnamed. Nothing is added under `ontology/`, so no version changes.
@@ -167,6 +170,55 @@ for what the sketch leaves unnamed. Nothing is added under `ontology/`, so no ve
 
 The gaps are listed for C3. Element versions (`fnd:Version`) are not modelled: each revision is its
 own named graph.
+
+### 4.1.1 Deferred: adopt the published Wording ontology
+
+**Recorded 2026-10-02. Not scheduled or authorised for implementation.** The human reports that
+the POC runs successfully and that Wording is published and stable. The current repository has
+[Wording 0.2.0](../../../ontology/wording/README.md), its
+[vocabulary](../../../ontology/wording/vocab/wording-vocab.ttl), and
+[structural shapes](../../../ontology/wording/shapes/structural.ttl). Pin the selected published
+versions when this tranche is approved. Revisit ADR-A114 decision 5 and WA-D3 first, since both
+deliberately chose a provisional vocabulary. This note is an impact assessment, not an ADR approval.
+
+The bounded first step would adopt published structure and typing while keeping the existing
+Word tags, OOXML, JSON snapshots, sentence forms and task pane behaviour. It need not introduce
+assembly, tables, amendments, or full Instrument adoption. Full semantic alignment has a larger
+data-model impact than replacing vocabulary constants.
+
+| Surface | Impact |
+|---|---|
+| Java `rdf/Vocab` and `WordingMapper` | Replace `wap:hasPart` with `wrd:hasTextPart`. Map the existing section, clause and definition kinds to `wrd-voc:Section`, `wrd-voc:Clause` and `wrd-voc:Definition`. Preserve `wrd:directlyComprises`, rank keys, object ids and the three text-part forms. |
+| SKOS scheme bindings | Resolve kinds by configured concept IRIs, not labels or local-name parsing. Use the published baseline as the POC default, while allowing a deployment's selected scheme and explicit mappings. Load concept membership and scheme-contract data for validation. Unknown or unbound concepts must produce findings, not silently become a clause. |
+| Python `wording_le/model.py` | Change section selection and element-kind comparisons, and read `wrd:hasTextPart`. Keep the internal `Element`/`Part` model so tokenisation, offsets, matching and LE rendering need not change. Replace `_load_variable`'s namespace-local-name decoding if variable typing is migrated. |
+| Variable declarations | `wap:valueType` is not a direct rename to `wrd:valueContract`. The published model distinguishes concept-valued variables (`voc:SchemeContract`) from quantity-valued variables (`qnt:ValueSpace`), with admissible ranges and population methods. Decide mappings for each POC value type, including text, date and party. Retaining `wap:valueType` temporarily must be documented as partial adoption. |
+| POC extensions | Retain application metadata, definition-term metadata and `wap:displayText` where no published equivalent exists. Display text preserves the exact Word text and UTF-16 offsets. Do not delete the entire provisional resource: it also declares proposal-side `ins:` and `wap:` terms outside this tranche. |
+| Java `validation/WordingValidator` | Package pinned ontology, vocabulary, imports and shapes through the local catalog. Supply the required subclass/type evidence without adding a runtime reasoner (ADR-A83). Compose published structural shapes with POC-specific checks. Published structural shapes alone do not replace all WS1 to WS11 or validate every SKOS scheme binding. Map normative shape IRIs to the existing result contract, whose IDs currently require `WS<n>`, or explicitly version that contract. |
+| Tests and packaging | Update canonical Wording `.nt` fixtures and hashes, cross-runtime vocabulary checks, and any affected proposal fixtures. Add a producer-to-reader contract test that preserves text, offsets, LE readings and conformance results. Package semantic assets offline in the service artifact, with no network import resolution. |
+
+SKOS does not itself require another runtime dependency: Jena and RDFLib can read these triples.
+Concept schemes are data, not new Java subclasses or TypeScript enums. The current JSON enums
+can remain an authoring profile projected onto configured concepts. Exposing arbitrary schemes
+in the UI would be a separately approved contract and UX expansion.
+
+Two decisions control the larger scope:
+
+- **Version identity.** Published `wrd:Wording` and `wrd:Element` are Foundation versions. The POC
+  reuses resource IRIs across revision graphs and has no `fnd:hasIdentity` or supersession model.
+  Named graphs alone do not implement immutable versions. Decide whether the first tranche is
+  explicitly partial adoption or introduces version-specific IRIs and persistent identities,
+  updating `IriMinter`, registry links and proposal `ins:expressedIn` targets together.
+- **Stored data.** Decide between preserving old graphs with an explicit compatibility reader,
+  migrating them, or an explicitly approved disposable-demo reset. Changed triples change hashes.
+  Existing revision records, queued graph references and stored analyses must remain consistent.
+  Reseeding skips documents already registered, so restarting the stack is not a data migration.
+
+Before implementation, propose the ADR amendment and a separate tranche plan with slices of at
+most two modules each. Validation must cover zero-part and dangling-reference failures, scheme
+membership and an alternate configured scheme, unsupported value mappings, cross-runtime
+reading, and the chosen old-data/version policy. Preserve existing tests and POC-only checks.
+Ontology source changes are not needed merely to consume a release. Any later ontology change
+must follow the ontology versioning policy in the same change.
 
 ### 4.2 Checks
 

@@ -17,6 +17,34 @@ ADR-A114 Proposed. Execution started with WA0
 This plan is written so that the code follows from it with as few choices as possible. Where it
 fixes a name, a pattern, an order or a value, use it exactly. Where it does not, choose a plain option and record the choice in the slice's Validation Pack under "Implementer choices".
 
+## Deferred follow-up: published Wording adoption
+
+**Recorded 2026-10-02. Awaiting the human's scheduling decision.** The POC is reported running
+successfully. Wording is now published and stable, superseding the availability assumption behind
+WA-D3, but not automatically changing that decision or the completed WA0 to WA11 scope.
+
+The impact assessment and candidate design are in
+[sketch §4.1.1](../sketches/word-authoring-poc.md#411-deferred-adopt-the-published-wording-ontology).
+The likely code changes are concentrated in the Java RDF mapping/validation and Python Wording
+reader. Word markup, JSON contracts and LE matching can remain unchanged for bounded structural
+adoption. Full alignment also requires decisions on variable value contracts/spaces, Foundation
+version identity and existing Fuseki revisions.
+
+Before starting this tranche:
+
+1. Obtain human approval of a proposed ADR-A114 amendment covering WA-D3, the pinned release,
+  the adopted semantic scope and the retained POC extensions.
+2. Choose configured SKOS concept mappings and scheme validation, variable mappings, the
+  immutable-version policy and the old-data policy. Do not silently reset the demo dataset.
+3. Author a separate detailed tranche plan and Validation Packs, with slices touching at most
+  two modules each. Include offline semantic packaging, Java producer/Python reader alignment,
+  unchanged text and UTF-16 offsets, negative validation cases and stored-data compatibility.
+4. Update the normative architecture documents only for the approved design delta. Consuming
+  published ontology assets does not itself change their versions or require release tags.
+
+No implementation is authorised by this note. The original decisions, mapping tables and
+completed slice instructions below remain a record of the POC as implemented.
+
 ---
 
 ## 1. Goal and acceptance

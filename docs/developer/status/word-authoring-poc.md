@@ -224,6 +224,10 @@ reverted. No replacement test was needed. Detail in the
 
 ## History
 
+- 2026-10-02: the human reports that the POC runs successfully. At their request, a deferred
+  published-Wording adoption assessment was added to sketch section 4.1.1 and the plan's
+  deferred follow-up section. No runtime or ontology changes, no tranche scheduled, and no
+  manual-checklist sign-off inferred. The human will decide when to pick up the work.
 - 2026-10-01: sketch, plan, status record and ADR-A114 (Proposed) written on `ux/auth-le`. No
   ontology change, so no release tag is due.- 2026-10-01: slice WA9a added at the human's request: ribbon group and right-click commands for
   marking text, decision WA-D13 (shared runtime), checklist steps M11 to M14, risk R8.
