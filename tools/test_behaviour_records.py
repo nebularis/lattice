@@ -58,8 +58,8 @@ def _data(text: str) -> Graph:
 
 def test_c11_01_runtime_version_imports_and_no_instrument() -> None:
     runtime = _graph(RUNTIME)
-    assert runtime.value(URIRef("https://www.nebularis.org/neuro-semantic/behaviour-runtime"), OWL.versionIRI) == URIRef(LATTICE + "behaviour-runtime/0.10.0")  # C11a
-    assert set(runtime.objects(None, OWL.imports)) == {URIRef(LATTICE + "behaviour/0.10.0")}
+    assert runtime.value(URIRef("https://www.nebularis.org/neuro-semantic/behaviour-runtime"), OWL.versionIRI) == URIRef(LATTICE + "behaviour-runtime/0.11.0")  # C11a
+    assert set(runtime.objects(None, OWL.imports)) == {URIRef(LATTICE + "behaviour/0.11.0")}
     assert "lattice/instrument" not in RUNTIME.read_text() and "ins:" not in RUNTIME.read_text()
 
 
@@ -111,8 +111,8 @@ def test_c11_08_the_occasion_state_space() -> None:
 @pytest.mark.skipif(not reasoning.available(), reason="reasoning-testkit jar not built")
 @pytest.mark.parametrize("example", EXAMPLES, ids=lambda p: p.stem)
 def test_c11_09_examples_are_consistent(example: Path) -> None:
-    graph = closure(Catalog(ROOT / "ontology" / "catalog-v001.xml"), LATTICE + "behaviour-vocab/0.10.0")
-    graph += closure(Catalog(ROOT / "ontology" / "catalog-v001.xml"), LATTICE + "behaviour-runtime/0.10.0")
+    graph = closure(Catalog(ROOT / "ontology" / "catalog-v001.xml"), LATTICE + "behaviour-vocab/0.11.0")
+    graph += closure(Catalog(ROOT / "ontology" / "catalog-v001.xml"), LATTICE + "behaviour-runtime/0.11.0")
     assert reasoning.run("consistent", graphs=[graph, _graph(example)]) is True
 
 
@@ -131,7 +131,7 @@ def test_c11_12_an_initial_state_outside_its_space_fails() -> None:
 
 def test_c11_13_configuration_adds_an_optional_initial_state() -> None:
     config = _graph(CONFIG)
-    assert config.value(URIRef("https://www.nebularis.org/neuro-semantic/behaviour"), OWL.versionIRI) == URIRef(LATTICE + "behaviour/0.10.0")
+    assert config.value(URIRef("https://www.nebularis.org/neuro-semantic/behaviour"), OWL.versionIRI) == URIRef(LATTICE + "behaviour/0.11.0")
     assert (BHV.initialState, RDF.type, OWL.ObjectProperty) in config
     for fixture in [*(LAYER / "test").glob("*.ttl"), ROOT / "test" / "conformance" / "cases" / "behaviour-bp1-transition.ttl"]:
         assert _violations(_graph(fixture)) == set(), fixture.name

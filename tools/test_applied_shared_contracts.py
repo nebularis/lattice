@@ -74,23 +74,23 @@ def _vocabulary_shapes() -> Graph:
 def test_classification_documents_parse_and_import_the_pinned_versions():
     spec_imports = {str(o) for o in _classification_spec().objects(None, OWL.imports)}
     assert spec_imports == {
-        "https://www.nebularis.org/neuro-semantic/lattice/foundation/0.3.0",
-        "https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.3.0",
+        "https://www.nebularis.org/neuro-semantic/lattice/foundation/0.4.0",
+        "https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.4.0",
     }
     vocab_imports = {str(o) for o in _classification_vocab().objects(None, OWL.imports)}
-    assert vocab_imports == {"https://www.nebularis.org/neuro-semantic/lattice/applied/classification/0.1.0"}
+    assert vocab_imports == {"https://www.nebularis.org/neuro-semantic/lattice/applied/classification/0.2.0"}
 
 
 def test_common_documents_parse_and_import_the_pinned_versions():
     spec_imports = {str(o) for o in _common_spec().objects(None, OWL.imports)}
     assert spec_imports == {
-        "https://www.nebularis.org/neuro-semantic/lattice/foundation/0.3.0",
-        "https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.3.0",
-        "https://www.nebularis.org/neuro-semantic/lattice/party/0.5.0",
-        "https://www.nebularis.org/neuro-semantic/lattice/applied/classification/0.1.0",
+        "https://www.nebularis.org/neuro-semantic/lattice/foundation/0.4.0",
+        "https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.4.0",
+        "https://www.nebularis.org/neuro-semantic/lattice/party/0.6.0",
+        "https://www.nebularis.org/neuro-semantic/lattice/applied/classification/0.2.0",
     }
     vocab_imports = {str(o) for o in _common_vocab().objects(None, OWL.imports)}
-    assert vocab_imports == {"https://www.nebularis.org/neuro-semantic/insurance/common/0.1.0"}
+    assert vocab_imports == {"https://www.nebularis.org/neuro-semantic/insurance/common/0.2.0"}
 
 
 # ---- AIR12-02: the nine contracts conform to Vocabulary's shapes ------------------------------

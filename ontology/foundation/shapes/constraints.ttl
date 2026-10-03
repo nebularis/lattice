@@ -1,0 +1,119 @@
+# SPDX-License-Identifier: MPL-2.0
+
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+
+fnd:KeyShape a sh:NodeShape ;
+    sh:targetClass fnd:Key ;
+    sh:targetSubjectsOf fnd:keyValue , fnd:keyScheme ;
+    sh:property [
+        sh:path fnd:keyValue ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ;
+        sh:message "A key has exactly one fnd:keyValue, a string as issued."
+    ] ;
+    sh:property [
+        sh:path fnd:keyScheme ; sh:minCount 1 ; sh:maxCount 1 ; sh:class fnd:KeyScheme ;
+        sh:message "A key has exactly one fnd:keyScheme, a declared fnd:KeyScheme."
+    ] .
+
+fnd:KeySchemeShape a sh:NodeShape ;
+    sh:targetClass fnd:KeyScheme ;
+    sh:property [
+        sh:path fnd:reissuesValues ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:boolean ;
+        sh:message "A key scheme states fnd:reissuesValues exactly once."
+    ] ;
+    sh:property [
+        sh:path fnd:sensitiveDataScheme ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:boolean ;
+        sh:message "A key scheme states fnd:sensitiveDataScheme exactly once."
+    ] ;
+    sh:property [
+        sh:path fnd:personalDataScheme ; sh:maxCount 1 ; sh:datatype xsd:boolean ;
+        sh:message "A key scheme states fnd:personalDataScheme at most once."
+    ] ;
+    sh:property [
+        sh:path fnd:valuePattern ; sh:maxCount 1 ; sh:datatype xsd:string ;
+        sh:message "A key scheme states at most one fnd:valuePattern."
+    ] ;
+    sh:property [
+        sh:path fnd:keyNormalisation ; sh:maxCount 1 ;
+        sh:in ( "NfkcTrimCasefold" "NfkcTrimUppercase" "NfkcTrimLowercase" ) ;
+        sh:message "fnd:keyNormalisation names one of the minting specification's pipelines: NfkcTrimCasefold, NfkcTrimUppercase or NfkcTrimLowercase."
+    ] ;
+    sh:sparql [
+        sh:message "{$this} states fnd:personalDataScheme true but not fnd:sensitiveDataScheme true. Personal data is sensitive: mark the scheme sensitive as well." ;
+        sh:select """
+            PREFIX fnd: <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+            SELECT $this WHERE {
+                $this fnd:personalDataScheme true .
+                FILTER NOT EXISTS { $this fnd:sensitiveDataScheme true }
+            }
+        """
+    ] .
+
+fnd:KeyValuePatternShape a sh:NodeShape ;
+    sh:targetSubjectsOf fnd:keyValue ;
+    sh:sparql [
+        sh:message "The key value {?value} does not match its scheme {?scheme}'s fnd:valuePattern {?pattern}." ;
+        sh:select """
+            PREFIX fnd: <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+            SELECT $this ?value ?scheme ?pattern WHERE {
+                $this fnd:keyValue ?value ;
+                      fnd:keyScheme ?scheme .
+                ?scheme fnd:valuePattern ?pattern .
+                FILTER (!REGEX(STR(?value), ?pattern))
+            }
+        """
+    ] .
+
+fnd:NaturalKeySchemeShape a sh:NodeShape ;
+    sh:targetSubjectsOf fnd:naturalKey ;
+    sh:sparql [
+        sh:message "{$this} has {?key} as a natural key, but its scheme {?scheme} reissues values, so the key may later name something else. Record it with fnd:externalKey, which locates without identifying." ;
+        sh:select """
+            PREFIX fnd: <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+            SELECT $this ?key ?scheme WHERE {
+                $this fnd:naturalKey ?key .
+                ?key fnd:keyScheme ?scheme .
+                ?scheme fnd:reissuesValues true .
+            }
+        """
+    ] .
+
+fnd:NaturalKeyUniquenessShape a sh:NodeShape ;
+    sh:targetSubjectsOf fnd:naturalKey ;
+    sh:sparql [
+        sh:message "{$this} and {?other} both have {?key} as a natural key. A natural key identifies one thing: either they are one thing recorded under two IRIs, or one of them only carries the key and should record it with fnd:externalKey." ;
+        sh:select """
+            PREFIX fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+            PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+            PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+            SELECT $this ?other ?key WHERE {
+                $this fnd:naturalKey ?key .
+                ?other fnd:naturalKey ?key .
+                FILTER (?other != $this)
+                FILTER NOT EXISTS {
+                    $this rdf:type/rdfs:subClassOf* fnd:MergedOnNaturalKey .
+                    ?other rdf:type/rdfs:subClassOf* fnd:MergedOnNaturalKey .
+                }
+            }
+        """
+    ] .
+
+fnd:MergedNaturalKeyShape a sh:NodeShape ;
+    sh:targetSubjectsOf fnd:naturalKey ;
+    sh:severity sh:Warning ;
+    sh:sparql [
+        sh:message "{$this} and {?other} both have {?key} as a natural key, and both are fnd:MergedOnNaturalKey, so an OWL reasoner will infer they are the same individual (owl:sameAs). Not an error: review the merge. If they are different things, the data is wrong, and this warning is the only report of it." ;
+        sh:select """
+            PREFIX fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+            PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+            PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+            SELECT $this ?other ?key WHERE {
+                $this fnd:naturalKey ?key ;
+                      rdf:type/rdfs:subClassOf* fnd:MergedOnNaturalKey .
+                ?other fnd:naturalKey ?key ;
+                       rdf:type/rdfs:subClassOf* fnd:MergedOnNaturalKey .
+                FILTER (?other != $this)
+            }
+        """
+    ] .

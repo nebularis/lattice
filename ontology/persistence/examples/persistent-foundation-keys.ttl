@@ -1,0 +1,228 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Premise. The adopter of ontology/foundation/examples/keys.ttl writes its keyed
+# data through Persistence, as LATTICE recommends for any deployment writing
+# keyed data (ADR-A114 decision 8). This is its configuration. It is compiled
+# together with that example, which declares the schemes, their key classes
+# and the data.
+#
+# Two kinds of thing are configured here:
+#
+#   1. Key nodes. Each scheme's key class has an identity profile minting its
+#      key IRIs, and a uniqueness constraint on fnd:keyValue, so one value of
+#      one scheme is one key node however many writers record it.
+#   2. Keyed things. Each class whose members carry natural keys takes the
+#      mixin dal:PersistenceKeyed and a uniqueness constraint on
+#      fnd:naturalKey, so two things never claim one natural key. A violation
+#      is rejected at write time and audited after it. No reasoner merges them.
+#
+# What the example shows:
+#
+# | Construct                                            | Where                                   |
+# |------------------------------------------------------|-----------------------------------------|
+# | natural-key minting for a public scheme              | ex:AgreementNumberKeyIdentity           |
+# | natural-key minting with a pattern                   | ex:MarketReferenceKeyIdentity           |
+# | derived-hash minting                                 | ex:CompanyNumberKeyIdentity, ex:LeiKeyIdentity |
+# | a sensitive scheme: claimed surrogate, internal data | ex:AccountNumberKeyIdentity, ex:AccountNumberKeyPrivacy |
+# | a personal-data scheme: claimed surrogate, erasure   | ex:NationalIdKeyIdentity, ex:NationalIdKeyPrivacy |
+# | one key node per value, per scheme                   | ex:*KeyUnique                           |
+# | the mixin on keyed classes                           | ex:AgreementIdentity, ex:Company, ex:Person |
+# | uniqueness of natural keys, rejected on violation    | ex:*NaturalKeyUnique                    |
+#
+# Key IRIs from the public schemes carry no tenant scope, so two tenants that
+# record one agreement number reach one node by computation. The sensitive
+# schemes' claims are keyed by a per-tenant secret, named here by its key id
+# and never held, so their keys never correlate across tenants.
+
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix dal:  <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix ex:   <https://example.org/lattice/foundation/keys#> .
+
+# --- the mixin, chosen by the adopter of Persistence --------------------------
+#
+# In place of fnd:MergedOnNaturalKey: no owl:hasKey, so no reasoner merges two
+# things Persistence keeps apart for review.
+
+ex:AgreementIdentity rdfs:subClassOf dal:PersistenceKeyed .
+ex:Company           rdfs:subClassOf dal:PersistenceKeyed .
+ex:Person            rdfs:subClassOf dal:PersistenceKeyed .
+
+# --- key nodes: public schemes, minted by computation -------------------------
+
+ex:AgreementNumberKeys a dal:ClassScope ; dal:priority 10 ; dal:targetClass ex:AgreementNumberKey .
+
+ex:AgreementNumberKeyUnique a dal:UniquenessConstraint ;
+    dal:constraintId       "agreement-number-key-unique" ;
+    dal:appliesTo          ex:AgreementNumberKeys ;
+    dal:keyProperty        ( fnd:keyValue ) ;
+    dal:normalizePipeline  dal:NfkcTrimUppercase ;      # the scheme's fnd:keyNormalisation
+    dal:onViolation        dal:Reject .
+
+ex:AgreementNumberKeyIdentity a dal:IdentityProfile ;
+    dal:appliesTo         ex:AgreementNumberKeys ;
+    dal:resourceRole      dal:EntityRole ;
+    dal:identityStrategy  dal:NaturalKeyIdentity ;
+    dal:keyConstraint     ex:AgreementNumberKeyUnique ;
+    dal:mintedIriTemplate "https://example.org/lattice/foundation/keys/key/agreement-number/{key}" .
+
+ex:MarketReferenceKeys a dal:ClassScope ; dal:priority 10 ; dal:targetClass ex:MarketReferenceKey .
+
+ex:MarketReferenceKeyUnique a dal:UniquenessConstraint ;
+    dal:constraintId       "market-reference-key-unique" ;
+    dal:appliesTo          ex:MarketReferenceKeys ;
+    dal:keyProperty        ( fnd:keyValue ) ;
+    dal:normalizePipeline  dal:NfkcTrimUppercase ;
+    dal:onViolation        dal:Reject .
+
+ex:MarketReferenceKeyIdentity a dal:IdentityProfile ;
+    dal:appliesTo         ex:MarketReferenceKeys ;
+    dal:resourceRole      dal:EntityRole ;
+    dal:identityStrategy  dal:NaturalKeyIdentity ;
+    dal:keyConstraint     ex:MarketReferenceKeyUnique ;
+    dal:mintedIriTemplate "https://example.org/lattice/foundation/keys/key/market-reference/{key}" .
+
+ex:CompanyNumberKeys a dal:ClassScope ; dal:priority 10 ; dal:targetClass ex:CompanyNumberKey .
+
+ex:CompanyNumberKeyUnique a dal:UniquenessConstraint ;
+    dal:constraintId       "company-number-key-unique" ;
+    dal:appliesTo          ex:CompanyNumberKeys ;
+    dal:keyProperty        ( fnd:keyValue ) ;
+    dal:normalizePipeline  dal:NfkcTrimUppercase ;
+    dal:onViolation        dal:Reject .
+
+ex:CompanyNumberKeyIdentity a dal:IdentityProfile ;
+    dal:appliesTo         ex:CompanyNumberKeys ;
+    dal:resourceRole      dal:EntityRole ;
+    dal:identityStrategy  dal:DerivedHashIdentity ;
+    dal:keyConstraint     ex:CompanyNumberKeyUnique ;
+    dal:tuplePrefix       ( "key" "v1" "company-number" ) ;
+    dal:digestScheme      ex:KeyDigest ;
+    dal:mintedIriTemplate "https://example.org/lattice/foundation/keys/key/company-number/{digest}" .
+
+ex:LeiKeys a dal:ClassScope ; dal:priority 10 ; dal:targetClass ex:LeiKey .
+
+ex:LeiKeyUnique a dal:UniquenessConstraint ;
+    dal:constraintId       "lei-key-unique" ;
+    dal:appliesTo          ex:LeiKeys ;
+    dal:keyProperty        ( fnd:keyValue ) ;
+    dal:normalizePipeline  dal:NfkcTrimUppercase ;
+    dal:onViolation        dal:Reject .
+
+ex:LeiKeyIdentity a dal:IdentityProfile ;
+    dal:appliesTo         ex:LeiKeys ;
+    dal:resourceRole      dal:EntityRole ;
+    dal:identityStrategy  dal:DerivedHashIdentity ;
+    dal:keyConstraint     ex:LeiKeyUnique ;
+    dal:tuplePrefix       ( "key" "v1" "lei" ) ;
+    dal:digestScheme      ex:KeyDigest ;
+    dal:mintedIriTemplate "https://example.org/lattice/foundation/keys/key/lei/{digest}" .
+
+ex:KeyDigest a dal:DigestScheme ;
+    dal:digestFunction "SHA-256" ; dal:digestWidthBits 160 ; dal:digestEncoding "base32" .
+
+# --- key nodes: sensitive schemes, claimed surrogates -------------------------
+#
+# A sensitive value never appears in an IRI, hashed or not (ADR-A51). The key
+# node takes a random surrogate, and a keyed claim makes the value findable
+# and unique within the tenant.
+
+ex:AccountNumberKeys a dal:ClassScope ; dal:priority 10 ; dal:targetClass ex:AccountNumberKey .
+
+ex:AccountNumberKeyUnique a dal:UniquenessConstraint ;
+    dal:constraintId       "account-number-key-unique" ;
+    dal:appliesTo          ex:AccountNumberKeys ;
+    dal:keyProperty        ( fnd:keyValue ) ;
+    dal:normalizePipeline  dal:NfkcTrimUppercase ;
+    dal:onViolation        dal:Reject ;
+    dal:claimScheme        ex:AccountNumberClaimV1 .
+
+ex:AccountNumberClaimV1 a dal:ClaimScheme ;
+    dal:schemeVersion     "v1" ;
+    dal:schemeState       dal:Accepting ;
+    dal:claimKeyId        "tenant-account-number-key-v1" ;
+    dal:claimDigestScheme ex:ClaimMac ;
+    dal:claimIriTemplate  "urn:key:account-number:{schemeVersion}:{mac}" .
+
+ex:AccountNumberKeyIdentity a dal:IdentityProfile ;
+    dal:appliesTo         ex:AccountNumberKeys ;
+    dal:resourceRole      dal:EntityRole ;
+    dal:identityStrategy  dal:SurrogateClaimedIdentity ;
+    dal:surrogateKind     dal:UuidV4Surrogate ;
+    dal:claimsConstraint  ex:AccountNumberKeyUnique ;
+    dal:mintedIriTemplate "https://example.org/lattice/foundation/keys/key/{surrogate}" .
+
+# Sensitive, not personal: an account belongs to a company. Not public, and
+# not subject to a person's erasure rights.
+ex:AccountNumberKeyPrivacy a dal:PrivacyProfile ;
+    dal:appliesTo        ex:AccountNumberKeys ;
+    dal:privacyClass     dal:InternalData ;
+    dal:erasureStrategy  dal:NoErasure .
+
+ex:NationalIdKeys a dal:ClassScope ; dal:priority 10 ; dal:targetClass ex:NationalIdKey .
+
+ex:NationalIdKeyUnique a dal:UniquenessConstraint ;
+    dal:constraintId       "national-id-key-unique" ;
+    dal:appliesTo          ex:NationalIdKeys ;
+    dal:keyProperty        ( fnd:keyValue ) ;
+    dal:normalizePipeline  dal:NfkcTrimUppercase ;
+    dal:onViolation        dal:Reject ;
+    dal:claimScheme        ex:NationalIdClaimV1 .
+
+ex:NationalIdClaimV1 a dal:ClaimScheme ;
+    dal:schemeVersion     "v1" ;
+    dal:schemeState       dal:Accepting ;
+    dal:claimKeyId        "tenant-national-id-key-v1" ;
+    dal:claimDigestScheme ex:ClaimMac ;
+    dal:claimIriTemplate  "urn:key:national-id:{schemeVersion}:{mac}" .
+
+ex:NationalIdKeyIdentity a dal:IdentityProfile ;
+    dal:appliesTo         ex:NationalIdKeys ;
+    dal:resourceRole      dal:EntityRole ;
+    dal:identityStrategy  dal:SurrogateClaimedIdentity ;
+    dal:surrogateKind     dal:UuidV4Surrogate ;
+    dal:claimsConstraint  ex:NationalIdKeyUnique ;
+    dal:mintedIriTemplate "https://example.org/lattice/foundation/keys/key/{surrogate}" .
+
+# Personal data (fnd:personalDataScheme true): erasing the person removes the
+# key node and its value with the person's graph, and the claim with it.
+ex:NationalIdKeyPrivacy a dal:PrivacyProfile ;
+    dal:appliesTo          ex:NationalIdKeys ;
+    dal:privacyClass       dal:PersonalData ;
+    dal:erasureStrategy    dal:PerSubjectGraphDrop ;
+    dal:erasurePrecedence  dal:ErasureWins .
+
+ex:ClaimMac a dal:DigestScheme ;
+    dal:digestFunction "HMAC-SHA-256" ; dal:digestWidthBits 128 ; dal:digestEncoding "base32" .
+
+# --- keyed things: one natural key, one owner ---------------------------------
+#
+# The key component is the key node's IRI. Uniqueness is per class: an
+# agreement's identity, a company and a person never share a scheme here.
+
+ex:AgreementIdentities a dal:ClassScope ; dal:priority 10 ; dal:targetClass ex:AgreementIdentity .
+
+ex:AgreementNaturalKeyUnique a dal:UniquenessConstraint ;
+    dal:constraintId       "agreement-natural-key-unique" ;
+    dal:appliesTo          ex:AgreementIdentities ;
+    dal:keyProperty        ( fnd:naturalKey ) ;
+    dal:normalizePipeline  dal:NfkcTrimCasefold ;       # harmless on minted IRIs, keys-impact P1
+    dal:onViolation        dal:Reject .
+
+ex:Companies a dal:ClassScope ; dal:priority 10 ; dal:targetClass ex:Company .
+
+ex:CompanyNaturalKeyUnique a dal:UniquenessConstraint ;
+    dal:constraintId       "company-natural-key-unique" ;
+    dal:appliesTo          ex:Companies ;
+    dal:keyProperty        ( fnd:naturalKey ) ;
+    dal:normalizePipeline  dal:NfkcTrimCasefold ;
+    dal:onViolation        dal:Reject .
+
+ex:People a dal:ClassScope ; dal:priority 10 ; dal:targetClass ex:Person .
+
+ex:PersonNaturalKeyUnique a dal:UniquenessConstraint ;
+    dal:constraintId       "person-natural-key-unique" ;
+    dal:appliesTo          ex:People ;
+    dal:keyProperty        ( fnd:naturalKey ) ;
+    dal:normalizePipeline  dal:NfkcTrimCasefold ;
+    dal:onViolation        dal:Reject .

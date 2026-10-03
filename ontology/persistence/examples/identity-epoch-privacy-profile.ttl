@@ -1,4 +1,4 @@
-# Worked example 4 (README section 9): identity, epoch and privacy for one
+# Worked example 4 (README §11.4): identity, epoch and privacy for one
 # class holding personal data. Identity is resolved per resource role
 # (persistence-compiler-iri-sync Slice 3): the claimant's own IRI is an
 # opaque surrogate claimed by email, while its event occurrences are

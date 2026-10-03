@@ -4,7 +4,7 @@
 
 **Unit ID:** `computable-contract-substrate`
 **Status:** 🔨 In progress. Gate A passed. Tranche B and C briefed (C3, C10)
-**Last updated:** 2026-10-02
+**Last updated:** 2026-10-03
 **Plan:** [computable-contract-substrate.md](../plans/computable-contract-substrate.md)
 **Sketches:** [computable-contract-substrate.md](../sketches/computable-contract-substrate.md),
 [contract-amounts.md](../sketches/contract-amounts.md)
@@ -18,10 +18,9 @@ Behaviour 0.10.0 (shapes 0.4.0) with nested states and history, the import guard
 check`. Tranche D begins with C6, briefed. From C5 on, the agent builds and verifies, and the human
 commits by hand.
 
-**Next action, for the human:** review ADR-A114 and F1's brief, commit them on `main`, then
-create `ccs/f1-keys`. Hold every branch that would edit a Foundation importer until F1 merges.
-**Then, for the agent:** F1's phase 0 analysis (Persistence, Surface, the cascade), stopping at its
-gate.
+**Next action, for the human:** review and commit F1's model and cascade, then create the 28
+release tags `mise run check:ontology-versioning` lists (Validation Pack, Handoff). Then merge F1.
+**Then, for the agent:** recreate the C6 branch from the merged `main` and build C6.
 
 ## Slice board
 
@@ -37,7 +36,7 @@ gate.
 | C10a | import guard | C | merged | |
 | C11 | runtime records, occasions, initial states | C | merged, tagged | |
 | C11a | nested states, history, concurrent regimes | C | merged, tagged | |
-| F1 | external and natural keys (ADR-A114) | Foundation, now | briefed, ADR-A114 Proposed | the human: brief on `main`, branch |
+| F1 | external and natural keys (ADR-A114) | Foundation, now | built and verified: Foundation 0.4.0, `persistent-foundation` 0.1.0, 24 re-pins. Awaiting commit and tags | the human |
 | C6 | instrument, terms, the five relations, parties, content | D | briefed, questions answered | F1 |
 | C7b, C8, C9, C8a | Instrument rewrite, template library | D | waiting | C6. C8 after C7a and C7b |
 | C7a | regimes and gating, split from C7 | D | waiting | C6 |
@@ -84,3 +83,9 @@ gate.
 - 2026-10-02: C11a merged to `main` (`a236207`) and tagged by the human. C6 briefed with its Validation Pack: four examples first, Instrument 0.8.0, four questions (ownership in C6, identifiers to F1, party details, the party union's name).
 - 2026-10-02: C6-Q1 (ownership's core in C6), C6-Q3 and C6-Q4 answered. C6-Q2 opened the question of taking F1 now: no AIR branch has work in flight, so Foundation has a quiet window.
 - 2026-10-03: Keys designed with the human: `externalKey` locates, `naturalKey` identifies, the word "identifier" avoided beside "identity". Two mixins, `fnd:MergedOnNaturalKey` with `owl:hasKey` and Persistence's optional `dal:PersistenceKeyed` without, over a common `fnd:NaturallyKeyed`. ADR-A114 "External and natural keys" drafted, Proposed. F1 briefed to run now, before C6, with a phase 0 impact analysis of Persistence, Surface and the cascade. C6-Q2 answered. AIR-4.1's coordination note revised.
+- 2026-10-03: F1 phase 0 analysis written (`keys-impact.md`). No change to Persistence's compiler or to Surface. Persistence needs `persistent-foundation` and one key class per scheme. The cascade is 25 documents, and takes Instrument 0.8.0 from C6. MORK's teaching pack lock regenerates. Gate questions G1 to G3.
+- 2026-10-03: F1 gate. G2 (the property chain) and G3 (C6 to C9 shift by one MINOR, Instrument 0.8.0 in the cascade) accepted, plan, ADR-A104 and ADR-A114 updated. G1 revised in answer to the human: a key class per scheme defined by an OWL restriction, replacing `dal:keyClassFor`, with three shapes in `persistent-foundation`. Follow-ups FU-F1a (exact pipeline, `identity-minting`) and FU-F1b (compiler-derived constraint) recorded with owners, risk R10.
+- 2026-10-03: G1 confirmed and ADR-A114 accepted. F1's three examples written, their key IRIs minted by the recipes the Persistence example compiles to. F1-Q1 raised. Not committed.
+- 2026-10-03: Every Persistence example compiled into `ontology/persistence/execution` (`mise run build:persistence-execution`), F1's included, with a crosswalk in the Persistence README §11.5. `instantiate` fixed to write one directory per target (it overwrote repeated operation names). Technical debt register started (`plans/technical-debt.md`, TD-01 to TD-14). Not committed.
+- 2026-10-03: `ontology/persistence/execution` removed from git by the human: it is generated on demand by `mise run build:persistence-execution`, and the README §11.5 says so. The Surface keys example gains a second promotion contract (`fnd:externalKey`), and the Foundation example an external key on the agreement's identity for it to promote. F1-15 added. Not committed.
+- 2026-10-03: F1-Q1 answered (b). F1 built: Foundation 0.4.0 with keys and its first shapes, its README again the literate source; `persistent-foundation` 0.1.0 and its shapes; 24 importers re-pinned with release rows, the catalog and the MTP lock; `tools/test_keys.py` 30 tests. All ontology, Persistence, Surface, MORK and MTP checks pass. Deviations in the Validation Pack. Procedure for ontology changes written into `.github/copilot-instructions.md`. TD-15 and TD-16 added. Not committed.

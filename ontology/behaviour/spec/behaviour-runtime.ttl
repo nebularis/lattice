@@ -19,8 +19,8 @@
 
 <https://www.nebularis.org/neuro-semantic/behaviour-runtime>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/behaviour-runtime/0.10.0> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.10.0> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/behaviour-runtime/0.11.0> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.11.0> .
 
 # ---- Occurrence ---------------------------------------------------------------
 

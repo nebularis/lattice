@@ -237,10 +237,7 @@ Content kinds that differ in properties are classes (DP2), each `⊑ wrd:Element
 regulation, a separate agreement) are `prov:Entity`s outside the tree, reached by `wrd:linksTo`.
 
 A wording is a tree of versioned elements. Only `wrd:directlyComprises` is asserted, and
-`wrd:comprises` is derived from it. Siblings are ordered by rank key, and the clause number a reader
-sees is an object id, never the element's identity, so inserting a clause renumbers nothing that
-other graphs point to. A text is a sequence of parts, each a literal, a variable reference or an
-object reference.
+`wrd:comprises` is derived from it. Siblings are ordered by rank key, and the clause number a reader sees is an object id, never the element's identity, so inserting a clause renumbers nothing that other graphs point to. A text is a sequence of parts, each a literal, a variable reference or an object reference.
 
 ```mermaid
 flowchart TB

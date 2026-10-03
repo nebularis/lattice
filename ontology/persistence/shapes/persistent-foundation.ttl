@@ -1,0 +1,222 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Shapes for persistent-foundation (ADR-A114, CCS F1, keys impact analysis P2
+# to P5). Run them on the adopter's ontology, dal: configuration and data
+# together: they read key classes from the ontology, profiles from the
+# configuration, and keys from the data. The compiler matches asserted types
+# and never reasons, so these shapes are what ties a key to the class whose
+# profiles mint it.
+
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix dal:  <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+# Every scheme has exactly one key class: C rdfs:subClassOf fnd:Key and
+# C owl:equivalentClass [ owl:onProperty fnd:keyScheme ; owl:hasValue S ].
+dal:SchemeKeyClassShape a sh:NodeShape ;
+    sh:targetClass fnd:KeyScheme ;
+    sh:sparql [
+        sh:message "The key scheme {$this} has {?n} key classes. Persistence mints and protects a scheme's keys through exactly one class, defined as fnd:Key with owl:equivalentClass [ owl:onProperty fnd:keyScheme ; owl:hasValue {$this} ]." ;
+        sh:select """
+            PREFIX fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+            PREFIX owl:  <http://www.w3.org/2002/07/owl#>
+            PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+            SELECT $this (COUNT(DISTINCT ?class) AS ?n) WHERE {
+                $this a fnd:KeyScheme .
+                OPTIONAL {
+                    ?class rdfs:subClassOf fnd:Key ;
+                           owl:equivalentClass ?restriction .
+                    ?restriction owl:onProperty fnd:keyScheme ;
+                                 owl:hasValue $this .
+                }
+            }
+            GROUP BY $this
+            HAVING (COUNT(DISTINCT ?class) != 1)
+        """
+    ] .
+
+# Every key class has an identity profile minting its keys, through a scope
+# naming the class.
+dal:KeyClassIdentityShape a sh:NodeShape ;
+    sh:targetClass fnd:KeyScheme ;
+    sh:sparql [
+        sh:message "{?class}, the key class of {$this}, has no dal:IdentityProfile for dal:EntityRole. Every key class needs one, through a scope naming the class, so its key IRIs are minted the same way by every writer." ;
+        sh:select """
+            PREFIX dal:  <https://www.nebularis.org/neuro-semantic/lattice/persistence#>
+            PREFIX fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+            PREFIX owl:  <http://www.w3.org/2002/07/owl#>
+            PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+            SELECT $this ?class WHERE {
+                ?class rdfs:subClassOf fnd:Key ;
+                       owl:equivalentClass [ owl:onProperty fnd:keyScheme ; owl:hasValue $this ] .
+                FILTER NOT EXISTS {
+                    ?scope dal:targetClass|dal:coversClass ?class .
+                    ?profile a dal:IdentityProfile ;
+                             dal:appliesTo ?scope ;
+                             dal:resourceRole dal:EntityRole .
+                }
+            }
+        """
+    ] .
+
+# A sensitive scheme's keys are claimed surrogates, never derived from the
+# value (ADR-A51), and are not public. A personal-data scheme's keys are
+# dal:PersonalData, so Persistence's erasure rules apply (keys impact P5).
+dal:SensitiveKeyClassShape a sh:NodeShape ;
+    sh:targetClass fnd:KeyScheme ;
+    sh:sparql [
+        sh:message "{?class}, the key class of the sensitive scheme {$this}, is minted by {?strategy}. A sensitive value never appears in an IRI, hashed or not: mint its keys with dal:SurrogateClaimedIdentity." ;
+        sh:select """
+            PREFIX dal:  <https://www.nebularis.org/neuro-semantic/lattice/persistence#>
+            PREFIX fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+            PREFIX owl:  <http://www.w3.org/2002/07/owl#>
+            PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+            SELECT $this ?class ?strategy WHERE {
+                $this fnd:sensitiveDataScheme true .
+                ?class rdfs:subClassOf fnd:Key ;
+                       owl:equivalentClass [ owl:onProperty fnd:keyScheme ; owl:hasValue $this ] .
+                ?scope dal:targetClass|dal:coversClass ?class .
+                ?profile a dal:IdentityProfile ;
+                         dal:appliesTo ?scope ;
+                         dal:resourceRole dal:EntityRole ;
+                         dal:identityStrategy ?strategy .
+                FILTER (?strategy != dal:SurrogateClaimedIdentity)
+            }
+        """
+    ] ;
+    sh:sparql [
+        sh:message "{?class}, the key class of the sensitive scheme {$this}, has no dal:PrivacyProfile, or a dal:PublicData one. Declare dal:InternalData, or dal:PersonalData for personal data." ;
+        sh:select """
+            PREFIX dal:  <https://www.nebularis.org/neuro-semantic/lattice/persistence#>
+            PREFIX fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+            PREFIX owl:  <http://www.w3.org/2002/07/owl#>
+            PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+            SELECT $this ?class WHERE {
+                $this fnd:sensitiveDataScheme true .
+                ?class rdfs:subClassOf fnd:Key ;
+                       owl:equivalentClass [ owl:onProperty fnd:keyScheme ; owl:hasValue $this ] .
+                FILTER NOT EXISTS {
+                    ?scope dal:targetClass|dal:coversClass ?class .
+                    ?privacy a dal:PrivacyProfile ;
+                             dal:appliesTo ?scope ;
+                             dal:privacyClass ?privacyClass .
+                    FILTER (?privacyClass != dal:PublicData)
+                }
+            }
+        """
+    ] ;
+    sh:sparql [
+        sh:message "{?class}, the key class of the personal-data scheme {$this}, has no dal:PrivacyProfile of dal:PersonalData. Declare one, so Persistence's erasure rules apply to its keys." ;
+        sh:select """
+            PREFIX dal:  <https://www.nebularis.org/neuro-semantic/lattice/persistence#>
+            PREFIX fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+            PREFIX owl:  <http://www.w3.org/2002/07/owl#>
+            PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+            SELECT $this ?class WHERE {
+                $this fnd:personalDataScheme true .
+                ?class rdfs:subClassOf fnd:Key ;
+                       owl:equivalentClass [ owl:onProperty fnd:keyScheme ; owl:hasValue $this ] .
+                FILTER NOT EXISTS {
+                    ?scope dal:targetClass|dal:coversClass ?class .
+                    ?privacy a dal:PrivacyProfile ;
+                             dal:appliesTo ?scope ;
+                             dal:privacyClass dal:PersonalData .
+                }
+            }
+        """
+    ] .
+
+# Minting and uniqueness use the scheme's normalisation (keys impact P3).
+dal:KeyNormalisationShape a sh:NodeShape ;
+    sh:targetClass fnd:KeyScheme ;
+    sh:sparql [
+        sh:message "{$this} names fnd:keyNormalisation {?declared}, but the uniqueness constraint {?constraint} on its key class {?class} uses {?pipeline}. Minting and uniqueness must normalise a scheme's values the same way." ;
+        sh:select """
+            PREFIX dal:  <https://www.nebularis.org/neuro-semantic/lattice/persistence#>
+            PREFIX fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+            PREFIX owl:  <http://www.w3.org/2002/07/owl#>
+            PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+            SELECT $this ?declared ?class ?constraint ?pipeline WHERE {
+                $this fnd:keyNormalisation ?declared .
+                ?class rdfs:subClassOf fnd:Key ;
+                       owl:equivalentClass [ owl:onProperty fnd:keyScheme ; owl:hasValue $this ] .
+                ?scope dal:targetClass|dal:coversClass ?class .
+                ?constraint a dal:UniquenessConstraint ;
+                            dal:appliesTo ?scope ;
+                            dal:normalizePipeline ?pipeline .
+                FILTER (STRAFTER(STR(?pipeline), "#") != STR(?declared))
+            }
+        """
+    ] .
+
+# Every key is asserted a member of its own scheme's key class, and of no
+# other scheme's: the compiler targets asserted types, and a reasoner would
+# otherwise resolve a mismatch by inferring two schemes owl:sameAs.
+dal:KeyTypedShape a sh:NodeShape ;
+    sh:targetSubjectsOf fnd:keyScheme ;
+    sh:sparql [
+        sh:message "The key {$this} has scheme {?scheme} but is not asserted a member of its key class {?class}. Assert it, so Persistence's profiles for that class apply." ;
+        sh:select """
+            PREFIX fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+            PREFIX owl:  <http://www.w3.org/2002/07/owl#>
+            PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+            SELECT $this ?scheme ?class WHERE {
+                $this fnd:keyScheme ?scheme .
+                ?class rdfs:subClassOf fnd:Key ;
+                       owl:equivalentClass [ owl:onProperty fnd:keyScheme ; owl:hasValue ?scheme ] .
+                FILTER NOT EXISTS { $this a ?class }
+            }
+        """
+    ] ;
+    sh:sparql [
+        sh:message "The key {$this} has scheme {?scheme} but is asserted a member of {?other}, the key class of {?otherScheme}. A key belongs to its own scheme's class only." ;
+        sh:select """
+            PREFIX fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+            PREFIX owl:  <http://www.w3.org/2002/07/owl#>
+            PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+            SELECT $this ?scheme ?other ?otherScheme WHERE {
+                $this fnd:keyScheme ?scheme ;
+                      a ?other .
+                ?other rdfs:subClassOf fnd:Key ;
+                       owl:equivalentClass [ owl:onProperty fnd:keyScheme ; owl:hasValue ?otherScheme ] .
+                FILTER (?otherScheme != ?scheme)
+            }
+        """
+    ] .
+
+# Every PersistenceKeyed class has a uniqueness constraint on fnd:naturalKey,
+# and never also takes fnd:MergedOnNaturalKey.
+dal:PersistenceKeyedClassShape a sh:NodeShape ;
+    sh:targetSubjectsOf rdfs:subClassOf ;
+    sh:sparql [
+        sh:message "{$this} is dal:PersistenceKeyed but no dal:UniquenessConstraint on fnd:naturalKey applies to it through a scope naming the class. Without one, nothing keeps its natural keys unique." ;
+        sh:select """
+            PREFIX dal:  <https://www.nebularis.org/neuro-semantic/lattice/persistence#>
+            PREFIX fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+            PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+            PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+            SELECT $this WHERE {
+                $this rdfs:subClassOf+ dal:PersistenceKeyed .
+                FILTER NOT EXISTS {
+                    ?scope dal:targetClass|dal:coversClass $this .
+                    ?constraint a dal:UniquenessConstraint ;
+                                dal:appliesTo ?scope ;
+                                dal:keyProperty ?list .
+                    ?list rdf:rest*/rdf:first fnd:naturalKey .
+                }
+            }
+        """
+    ] ;
+    sh:sparql [
+        sh:message "{$this} is both dal:PersistenceKeyed and fnd:MergedOnNaturalKey. Choose one: a reasoner would merge on a shared natural key what Persistence keeps apart for review." ;
+        sh:select """
+            PREFIX dal:  <https://www.nebularis.org/neuro-semantic/lattice/persistence#>
+            PREFIX fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+            PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+            SELECT $this WHERE {
+                $this rdfs:subClassOf+ dal:PersistenceKeyed ;
+                      rdfs:subClassOf+ fnd:MergedOnNaturalKey .
+            }
+        """
+    ] .

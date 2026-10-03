@@ -81,3 +81,5 @@ Breaking versions at major version zero ([ADR-A113](../../../docs/architecture/d
 - 0.8.0 (breaking): the execution profile imports `behaviour-runtime` 0.8.0 in place of `behaviour`
   0.7.0. Its import closure no longer includes Instrument, so a consumer that reached Instrument's
   terms through it must import Instrument directly. ADR-A106.
+- 0.11.0: re-pinned to `behaviour-runtime` 0.11.0 and Foundation 0.4.0, with no other change
+  (CCS F1, ADR-A114).

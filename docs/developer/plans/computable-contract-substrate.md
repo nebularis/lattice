@@ -516,7 +516,7 @@ violation-level shapes are breaking under ADR-A113, so the README gains a Releas
 
 | Slice | Content | Version impact |
 |---|---|---|
-| F1 | External and natural keys ([ADR-A114](../../architecture/decisions/ADR-A114-external-and-natural-keys.md), CC-D9): `fnd:Key` with a `fnd:KeyScheme` and a value, `fnd:externalKey` (locates) and `fnd:naturalKey` (identifies), the common mixin `fnd:NaturallyKeyed` with its uniqueness shapes, `fnd:MergedOnNaturalKey` with `owl:hasKey`, and Persistence's optional `persistent-foundation` with `dal:PersistenceKeyed`. Taken now, while no AIR branch has work (ADR-A114 Consequences). **Impact analyses first:** before ADR-A114 is accepted, F1 writes an analysis of its effect on Persistence (uniqueness constraints, key claims and merge policy, identity profiles and minting recipes for key nodes, normalisation, privacy of personal-data schemes) and on Surface (index and promotion contracts over keys, generated lookups), each with the changes it needs | Foundation MINOR, cascading to 17 documents. Persistence gains `persistent-foundation`. NRS N9 keeps its own later cascade |
+| F1 | External and natural keys ([ADR-A114](../../architecture/decisions/ADR-A114-external-and-natural-keys.md), CC-D9): `fnd:Key` with a `fnd:KeyScheme` and a value, `fnd:externalKey` (locates) and `fnd:naturalKey` (identifies), the common mixin `fnd:NaturallyKeyed` with its uniqueness shapes, `fnd:MergedOnNaturalKey` with `owl:hasKey`, and Persistence's optional `persistent-foundation` with `dal:PersistenceKeyed`. Taken now, while no AIR branch has work (ADR-A114 Consequences). **Impact analyses first:** before ADR-A114 is accepted, F1 writes an analysis of its effect on Persistence (uniqueness constraints, key claims and merge policy, identity profiles and minting recipes for key nodes, normalisation, privacy of sensitive schemes) and on Surface (index and promotion contracts over keys, generated lookups), each with the changes it needs | Foundation MINOR, cascading to 24 documents ([keys impact](../sketches/keys-impact.md) §4). Persistence gains `persistent-foundation`. NRS N9 keeps its own later cascade |
 
 #### F1 in detail
 
@@ -525,7 +525,7 @@ violation-level shapes are breaking under ADR-A113, so the README gains a Releas
 of ADR-A114's Consequences: no branch may edit a Foundation importer until F1 merges.
 **Validation Pack:** [computable-contract-substrate-f1](../validation/computable-contract-substrate-f1.md).
 **Decisions:** [ADR-A114](../../architecture/decisions/ADR-A114-external-and-natural-keys.md)
-(Proposed, reviewed 2026-10-03), CC-D9, ADR-A51, ADR-A84, ADR-A86, ADR-A113.
+(Accepted 2026-10-03), CC-D9, ADR-A51, ADR-A84, ADR-A86, ADR-A113.
 
 **Invariant:** any thing in a LATTICE graph can carry the names the world gives it, as key nodes
 with a scheme and a value, either locating it (`fnd:externalKey`) or identifying it
@@ -539,7 +539,7 @@ analyses the effect on:
 
 | Subsystem | Questions the analysis answers |
 |---|---|
-| Persistence | whether `dal:UniquenessConstraint` takes an object-valued key property (`fnd:naturalKey`, compared as the key node's IRI) as the compiler and validator stand (`tools/persistence/src/persistence/recipes.py`, `resolver.py`, `validator.py`), or needs a change. How each `onViolation` policy and claim scheme applies to key nodes. The identity profile and recipe per strategy of ADR-A114 decision 6, and how `fnd:keyNormalisation` meets `dal:normalizePipeline`. How `fnd:personalDataScheme` meets `dal:PrivacyProfile` and erasure. Where `persistent-foundation` sits in Persistence's layout and catalog, as its first document importing a layer |
+| Persistence | whether `dal:UniquenessConstraint` takes an object-valued key property (`fnd:naturalKey`, compared as the key node's IRI) as the compiler and validator stand (`tools/persistence/src/persistence/recipes.py`, `resolver.py`, `validator.py`), or needs a change. How each `onViolation` policy and claim scheme applies to key nodes. The identity profile and recipe per strategy of ADR-A114 decision 6, and how `fnd:keyNormalisation` meets `dal:normalizePipeline`. How `fnd:sensitiveDataScheme` meets `dal:PrivacyProfile` and erasure. Where `persistent-foundation` sits in Persistence's layout and catalog, as its first document importing a layer |
 | Surface | an index contract over `fnd:externalKey` (retrieval by key) and a promotion contract restating an identity's natural key onto its versions (one-step lookup), and whether either needs a Surface change |
 | the cascade | every document pinning `foundation/0.3.0` (17 at 2026-10-03), transitively every document pinning those, the version each takes under ADR-A86, the tags, and the test suites that name versions |
 
@@ -547,29 +547,42 @@ Each finding states the change it needs and whether it belongs in F1 or a follow
 human accepts the analysis and ADR-A114. Changes the analysis finds in `tools/persistence` are
 briefed into this section then, with their test rows.
 
+**At the gate, 2026-10-03.** The analysis found no change to `tools/persistence` or `tools/surface`
+beyond Surface's ontology constant (S4), and 24 importers, not 17. G2 accepted: Foundation gains the
+property chain of ADR-A114 decision 5. G3 accepted: Instrument takes 0.8.0 in the cascade, and C6 to
+C9 shift by one MINOR (tranche D below). G1 revised in answer to the human's question: a scheme's key
+class is defined by an OWL restriction on the scheme (ADR-A114 decision 2), replacing
+`dal:keyClassFor`, with three shapes in `persistent-foundation` (analysis P2), accepted. ADR-A114
+accepted. Two follow-ups are recorded below.
+
 1. **Examples first (ADR-A-C2).** The human commits them before the model.
 
    | File | Shows |
    |---|---|
-   | `ontology/foundation/examples/keys.ttl` | key schemes with and without patterns, one that reissues values, one of personal data. A versioned agreement whose identity carries an agreement number and a market reference as natural keys, declarations and a claim locating it by the market reference, a company with two natural keys, a personal-data key with a surrogate IRI, and the path query that reaches each. Neutral classes only (`ex:`), Foundation naming no layer above it |
-   | `ontology/persistence/examples/persistent-foundation-keys.ttl` | `dal:PersistenceKeyed`, a `dal:UniquenessConstraint` on `fnd:naturalKey`, and an identity profile per minting strategy for key nodes: derived hash, natural key, and a surrogate with a keyed claim for the personal-data scheme |
-   | `ontology/surface/examples/keys.ttl` | the index and promotion contracts of the analysis |
+   | `ontology/foundation/examples/keys.ttl` | key schemes with and without patterns, one that reissues values, one that is sensitive, one of personal data. A versioned agreement whose identity carries an agreement number and a market reference as natural keys, declarations and a claim locating it by the market reference, a company with two natural keys, a sensitive key with a surrogate IRI, and the path query that reaches each. Neutral classes only (`ex:`), Foundation naming no layer above it |
+   | `ontology/persistence/examples/persistent-foundation-keys.ttl` | `dal:PersistenceKeyed`, a `dal:UniquenessConstraint` on `fnd:naturalKey`, a key class per scheme, and an identity profile per minting strategy for key nodes on those classes: derived hash, natural key, and a surrogate with a keyed claim for the sensitive scheme |
+   | `ontology/surface/examples/keys.ttl` | two promotion contracts restating an identity's keys on its versions as `fnd:externalKey`, one per property the identity carries them on (`fnd:naturalKey`, `fnd:externalKey`), since Surface's steps follow asserted triples only. No index contract (analysis S1) |
 
 2. **Spec** (`foundation` 0.3.0 → 0.4.0, additive): `fnd:Key`, `fnd:keyValue`, `fnd:keyScheme`,
-   `fnd:KeyScheme`, `fnd:reissuesValues`, `fnd:personalDataScheme`, `fnd:valuePattern`,
+   `fnd:KeyScheme`, `fnd:reissuesValues`, `fnd:sensitiveDataScheme`, `fnd:personalDataScheme`
+   (optional, implying sensitive), `fnd:valuePattern`,
    `fnd:keyNormalisation` (a string naming one of the minting specification's three pipelines),
    `fnd:externalKey`, `fnd:naturalKey ⊑ fnd:externalKey`, `fnd:NaturallyKeyed` (the domain of
    `fnd:naturalKey`), `fnd:MergedOnNaturalKey ⊑ fnd:NaturallyKeyed` with
-   `owl:hasKey ( fnd:naturalKey )`. Each property's comment states its subject and value.
+   `owl:hasKey ( fnd:naturalKey )`, and the chain `fnd:externalKey owl:propertyChainAxiom
+   ( fnd:hasIdentity fnd:externalKey )` (G2). Each property's comment states its subject and value.
 3. **Shapes** (Foundation's shapes, breaking under ADR-A113 only where they reject data the 0.1.0
    shapes accepted, which none should): a key has one scheme and one value, a scheme states
-   `fnd:reissuesValues` and `fnd:personalDataScheme` once each, a value matches its scheme's pattern,
+   `fnd:reissuesValues` and `fnd:sensitiveDataScheme` once each, a personal-data scheme is sensitive, a value matches its scheme's pattern,
    a normalisation is one of the three, a natural key's scheme does not reissue values, and no two
    different `fnd:NaturallyKeyed` things share a natural key.
 4. **Persistence:** `persistent-foundation`, importing Foundation 0.4.0, with
-   `dal:PersistenceKeyed ⊑ fnd:NaturallyKeyed`, a default `dal:UniquenessConstraint` on
-   `fnd:naturalKey` (`dal:Reject`) an adopter may adopt or replace, and a shape refusing an identity
-   profile for a personal-data scheme's keys that is not a surrogate with a keyed claim. Its README
+   `dal:PersistenceKeyed ⊑ fnd:NaturallyKeyed`, a shape requiring a `dal:UniquenessConstraint` on
+   `fnd:naturalKey` for each `dal:PersistenceKeyed` class (a shipped default was dropped at build:
+   the compiler reads one `dal:appliesTo` per constraint), a shape refusing an identity
+   profile for a sensitive scheme's keys that is not a surrogate with a keyed claim, or with a public privacy profile, or a personal-data scheme's keys without a `dal:PersonalData` profile, and the key
+   class shapes (G1, analysis P2): each scheme has one key class of the restriction's form, each key
+   class has an identity profile, and each key is asserted a member of its scheme's class only. Its README
    section recommends Persistence for any deployment writing keyed data (ADR-A114 decision 8).
 5. **The cascade:** every pinned importer re-pins, with its release row and tag, as the analysis
    lists. No document pins `foundation/0.3.0` afterwards.
@@ -586,13 +599,23 @@ briefed into this section then, with their test rows.
 | F1-03 | the examples / reasoner / consistent | L2 | + |
 | F1-04 | two named `fnd:MergedOnNaturalKey` members sharing a natural key / reasoner / entailed `owl:sameAs` | L2 | + |
 | F1-05 | two `dal:PersistenceKeyed` members sharing a natural key / reasoner / no `owl:sameAs` entailed. Foundation's SHACL / reported. Persistence / the uniqueness constraint compiles to a guarded key-claim write and a reject audit | L1, L2 | − |
-| F1-06 | a key with no scheme, one with two values, a value outside its scheme's pattern, a normalisation outside the three, a natural key from a scheme that reissues values / shapes / each reported | L1 | − |
+| F1-06 | a key with no scheme, one with two values, a value outside its scheme's pattern, a normalisation outside the three, a natural key from a scheme that reissues values, a personal-data scheme not marked sensitive / shapes / each reported | L1 | − |
 | F1-07 | every key IRI in the examples / minted by `packages/minting/python` from its recipe / equal, and each is a valid IRI | L1 | + |
-| F1-08 | an identity profile minting a personal-data scheme's keys by natural key or derived hash / Persistence shapes / reported | L1 | − |
+| F1-08 | an identity profile minting a sensitive scheme's keys by natural key or derived hash, a sensitive scheme's key class with a `dal:PublicData` privacy profile, a personal-data scheme's with `dal:InternalData` / Persistence shapes / reported | L1 | − |
 | F1-09 | the example's path query `fnd:hasIdentity?/fnd:naturalKey` / run / finds the versioned agreement and the unversioned company, and `fnd:externalKey` finds the agreement, its declarations and its claim | L1 | + |
 | F1-10 | the repository / searched / no document pins `foundation/0.3.0` outside history. Catalog, versioning, releases and import guard pass | L1 | + |
 | F1-11 | the Foundation and Persistence READMEs / literate checks where they apply / pass. Release notes record Foundation 0.4.0 and every re-pin | L1 | + |
 | F1-12 | every existing tool and compiler suite / updated only where a version is named / pass | L1 | + |
+| F1-13 | a version whose identity carries a natural key and an external key / reasoner / the version has both as `fnd:externalKey`, and is not `fnd:NaturallyKeyed` (G2) | L2 | + |
+| F1-14 | a scheme with no key class, one with two, a key class with no identity profile, a key typed with one scheme's class and carrying another scheme / `persistent-foundation` shapes / each reported (G1) | L1 | − |
+| F1-15 | the Surface example / compiled over the Foundation example / each agreement version carries both natural keys and the identity's external key as `fnd:externalKey`, and neither version is `fnd:NaturallyKeyed`. With only the natural-key contract, the external key is missing | L1 | + |
+
+**F1 follow-ups.** Found by the analysis, outside F1, each with an owner so it is not lost (risk R10).
+
+| # | Follow-up | Owner | When |
+|---|---|---|---|
+| FU-F1a | an exact normalisation pipeline (no case or compatibility mapping) for IRI-valued key components, such as a uniqueness constraint on `fnd:naturalKey` (analysis P1). The three pipelines are harmless there today | [`identity-minting`](identity-minting.md), deferred items | when a scheme needs it, or with M4's specification completion |
+| FU-F1b | the Persistence compiler derives the natural-key uniqueness constraint for every `dal:PersistenceKeyed` class, so an adopter declares the mixin alone (analysis P7) | a Persistence compiler unit, to be opened | when a deployment has several keyed classes |
 
 Slice numbers are kept stable because other plans cite them. Tranche C now runs before tranche D,
 and may run beside tranche B.
@@ -925,12 +948,12 @@ are the human's, examples first.
 
 | Slice | Content | Version impact |
 |---|---|---|
-| C6 | instrument and term, the five relation classes with Exclusion, parties with groups, roles and `resolvedBy`, party details (`noticeAddress`, `operatesAt`), instrument identifiers, activity, scope, `maintains`, `fulfilledWhen`, `excepts`, qualifiers (§5.1 to §5.4, §5.7). `ins:InstrumentTarget` in Instrument's vocabulary | Instrument 0.7.0 to 0.8.0, breaking MINOR (A-113). Imports Wording and Behaviour configuration |
-| C7a | **regimes and gating** (split from C7, 2026-10-02): legal triggers (`OnExercise`, `OnBreach`, `OnAct`, `OnCondition`, `OnExpiry`, with the states in which a period does not run, C11a-Q2), `ins:Regime`, `ins:RegimeTransition`, `ins:stateKind`, `appliesInState` with the gating rule of the nested states sketch §6.2 and per-occasion resolution (C11a-Q4). The explicit `bhv:` type shape (B4) (§7.3, §7.4) | 0.9.0 MINOR. After C6 and C11a phase 2 |
-| C7b | **terms in time and constitutive terms** (split from C7): arising and ending on legal triggers, due, recurrence, survival, constitutive terms (Definition, Deeming), `appliesWithin`, classification, segments and per-segment definitions with union and overlap reporting, `ins:computedBy` (§5.5, §5.6, §5.10, §7.9, I15, I16) | 0.10.0 MINOR. After C6, beside C11a phase 2 |
-| C8 | stated and bound meaning (CC-D12): `ins:Template`, `ins:expressedIn` as owner, `ins:boundIn`, `ins:boundFrom`, `ins:alsoExpressedIn`, parameter bindings, encoding status, the ownership shapes in SHACL Core and law I17's two SHACL-SPARQL shapes (§5.9, I17, I18) | 0.11.0 MINOR |
+| C6 | instrument and term, the five relation classes with Exclusion, parties with groups, roles and `resolvedBy`, party details (`noticeAddress`, `operatesAt`), instrument keys (from F1), activity, scope, `maintains`, `fulfilledWhen`, `excepts`, qualifiers (§5.1 to §5.4, §5.7). `ins:InstrumentTarget` in Instrument's vocabulary | Instrument 0.8.0 to 0.9.0, breaking MINOR (A-113). Imports Wording and Behaviour configuration. 0.8.0 is F1's cascade (G3) |
+| C7a | **regimes and gating** (split from C7, 2026-10-02): legal triggers (`OnExercise`, `OnBreach`, `OnAct`, `OnCondition`, `OnExpiry`, with the states in which a period does not run, C11a-Q2), `ins:Regime`, `ins:RegimeTransition`, `ins:stateKind`, `appliesInState` with the gating rule of the nested states sketch §6.2 and per-occasion resolution (C11a-Q4). The explicit `bhv:` type shape (B4) (§7.3, §7.4) | 0.10.0 MINOR. After C6 and C11a phase 2 |
+| C7b | **terms in time and constitutive terms** (split from C7): arising and ending on legal triggers, due, recurrence, survival, constitutive terms (Definition, Deeming), `appliesWithin`, classification, segments and per-segment definitions with union and overlap reporting, `ins:computedBy` (§5.5, §5.6, §5.10, §7.9, I15, I16) | 0.11.0 MINOR. After C6, beside C11a phase 2 |
+| C8 | stated and bound meaning (CC-D12): `ins:Template`, `ins:expressedIn` as owner, `ins:boundIn`, `ins:boundFrom`, `ins:alsoExpressedIn`, parameter bindings, encoding status, the ownership shapes in SHACL Core and law I17's two SHACL-SPARQL shapes (§5.9, I17, I18) | 0.12.0 MINOR |
 | C8a | the template library (§5.11) in `ontology/instrument/templates/`: periods, switching and threshold regimes, relation patterns. Term and qualifier templates wait for the bases decision in [contract-amounts.md](../sketches/contract-amounts.md) §1.7 | templates 0.1.0 |
-| C9 | amendments, consent rules, incorporation (with segment scope), `boundUnder`, `takesEffectWhen` (§5.8). Shapes for I1 to I16 | 0.12.0 MINOR, shapes |
+| C9 | amendments, consent rules, incorporation (with segment scope), `boundUnder`, `takesEffectWhen` (§5.8). Shapes for I1 to I16 | 0.13.0 MINOR, shapes |
 
 Nothing outside Instrument imports Instrument once C10 lands, so tranche D cascades only to
 Instrument's own documents and examples. No applied insurance module imports Instrument.
@@ -974,9 +997,9 @@ keys on its persistent identity, and amendments, declarations and notices locati
   **Recommendation: (b).** Ownership is what makes a relation belong to its text (CC-D12), the
   examples are written once in the two tiers they keep, and ADR-A96's many-element attachment
   moves to `ins:alsoExpressedIn` in the same slice that retires `ins:inProvision`.
-- **C6-Q2. Instrument identifiers.** The plan row lists them, but they are `fnd:identifier`
-  (CC-D9), built by slice F1, which waits for AIR Phase 2. **Recommendation:** drop them from C6.
-  An instrument's identifiers arrive with F1 and need nothing from Instrument.
+- **C6-Q2. Instrument identifiers.** The plan row lists them, but they are Foundation's keys
+  (CC-D9, ADR-A114, `fnd:naturalKey` and `fnd:externalKey`), built by slice F1. **Recommendation:**
+  drop them from C6. An instrument's keys arrive with F1 and need nothing from Instrument.
 - **C6-Q3. Party details.** `ins:noticeAddress` and `ins:operatesAt` on an occupancy (S97). Party
   has no address or place. **Recommendation:** `ins:noticeAddress` takes a string (the address as
   written, identity being by identifier, CC-D9), and `ins:operatesAt` a concept under a new scheme
@@ -1019,9 +1042,9 @@ keys on its persistent identity, and amendments, declarations and notices locati
    | `product-warranty.ttl` | E5 | an exclusion excepting the duty to repair, its carve-back in its scope, a party that depends on the case (a contingent occupancy `ins:resolvedBy` an evidence binding) |
    | `software-licence.ttl` | E7 | an exclusion excepting a power (immunity: a perpetual licence the licensor cannot end for convenience), party details |
 
-2. **Spec** (`instrument` 0.7.0 → 0.8.0, breaking under ADR-A113), sketch §5.1 to §5.4: imports
-   Foundation, Vocabulary, Quantification, Party, Eligibility, Wording 0.3.0 and Behaviour
-   configuration 0.10.0, never the runtime document.
+2. **Spec** (`instrument` 0.8.0 → 0.9.0, breaking under ADR-A113), sketch §5.1 to §5.4: imports
+   Foundation, Vocabulary, Quantification, Party, Eligibility, Wording 0.4.0 and Behaviour
+   configuration 0.11.0 (their versions after F1's cascade), never the runtime document.
    - `ins:Instrument ⊑ fnd:Version`, `ins:expressedIn` one `wrd:AssembledWording` (I1), `ins:party`
    - `ins:Term`, not a version. Under C6-Q1 (b): `ins:Template`, `ins:expressedIn` (stated term to
      one element version), `ins:alsoExpressedIn`, `ins:boundIn`, `ins:boundFrom`, `ins:impliedBy`
@@ -1033,7 +1056,7 @@ keys on its persistent identity, and amendments, declarations and notices locati
    - content: `ins:activity`, `ins:scope` (an `elg:Condition`, at most one), `ins:maintains`,
      `ins:fulfilledWhen`, `ins:excepts` (a permission to a prohibition, an exclusion to an
      obligation or a power), `ins:Qualifier` with `ins:qualifies` a term or a relation
-3. **Vocab** (`instrument-vocab` 0.8.0): `ins-voc:ActivityContract` and its baseline scheme,
+3. **Vocab** (`instrument-vocab` 0.9.0): `ins-voc:ActivityContract` and its baseline scheme,
    `ins-voc:LocationContract` (C6-Q3), and `ins:InstrumentTarget` as a `bhv:TargetKind`.
 4. **Shapes** (`instrument-shapes` 0.1.0 → 0.2.0, breaking): Core shapes for each property's subject
    and value, a relation's single term, its required content per class (an obligation's obligor
@@ -1048,7 +1071,7 @@ keys on its persistent identity, and amendments, declarations and notices locati
 
 | ID | Given / When / Then | Level | +/- |
 |---|---|---|---|
-| C6-01 | the spec / parsed / `0.8.0`, imports exactly the seven documents above, Behaviour's configuration and not its runtime. The import guard passes | L1 | + |
+| C6-01 | the spec / parsed / `0.9.0`, imports exactly the seven documents above, Behaviour's configuration and not its runtime. The import guard passes | L1 | + |
 | C6-02 | every example / shapes / conform | L1 | + |
 | C6-03 | every example / reasoner / consistent | L2 | + |
 | C6-04 | a relation under two terms, one under none, an obligation with two obligors, a continuing obligation without `ins:maintains`, an exclusion without `ins:excepts`, a permission excepting an obligation that is not a prohibition, a scope that is not a condition / shapes / each reported | L1 | − |
@@ -1061,7 +1084,7 @@ keys on its persistent identity, and amendments, declarations and notices locati
 | C6-11 | the vocab / parsed / the activity contract constrains `ins:activity`, every activity used is in the baseline, `ins:InstrumentTarget` is a `bhv:TargetKind` | L1 | + |
 | C6-12 | a superseding instrument version with another identity / shapes and the gate-4 query / reported | L1 | − |
 | C6-13 | one stated term expressed in two languages / core shapes / conform, and the optional `single-expression.ttl` refuses it (ADR-A96) | L1 | + |
-| C6-14 | the README / literate check / blocks equal the files. Release notes mark 0.8.0 and shapes 0.2.0 breaking | L1 | + |
+| C6-14 | the README / literate check / blocks equal the files. Release notes mark 0.9.0 and shapes 0.2.0 breaking | L1 | + |
 | C6-15 | the existing tool tests / updated only where a retired term is named / pass | L1 | + |
 
 ### Tranche E: evaluation
@@ -1130,7 +1153,7 @@ plan (`docs/development/plan.md`, "Upstream") mirrors this section.
 |---|---|
 | `wim` | removed. Its structure is LATTICE's Wording layer (ADR-A112). The LMA WIM profile (the four levels as element types, their containment rules as shapes, the LMA typing schemes and `applicableTo`) is in LATTICE's `applied/insurance/wording/` (CC-D3, AIR-5.9), and Open CBAA imports it |
 | `stm` | `AuthorityGrant ⊑ ins:Power` with its envelope mechanism. Other kinds, templates, parameter bindings and encoding status come from Instrument |
-| `agr` | UMR, markets, CBAA roles. The M12 regimes become `applied/insurance` templates on the C8a library. Agreement versions become `ins:Instrument`s expressed in `wrd:Wording`s |
+| `agr` | UMR, markets, CBAA roles. The UMR becomes a `fnd:KeyScheme` and `agr:umr` a natural key on the contract's identity (ADR-A114, F1). The M12 regimes become `applied/insurance` templates on the C8a library. Agreement versions become `ins:Instrument`s expressed in `wrd:Wording`s |
 | `rsk` | unchanged, with `rsk:BoundPolicy ⊑ ins:Instrument` and `rsk:boundUnder ⊑ ins:boundUnder` |
 | example BA-2026-001 | re-expressed, joined by the binding authority scenario renderings |
 | decisions | D22 holds as I13. D23 resolved. D25 changed. I6 closed. L15 fixed upstream (C10). D19 replaced (below) |
@@ -1225,7 +1248,8 @@ records), the ADR catalogue.
 | R3 | Scope grows into contract amounts | amounts stay a catalogue until their own unit |
 | R4 | Examples drift into insurance terms | ADR-A-C2 check in every Validation Pack |
 | R5 | The scenario catalogue loses rows as slices are cut | C15's coverage test fails on any scenario without an example |
-| R6 | The Foundation cascade collides with Phase 2's peril authoring | F1 waits for Phase 2 and shares one cascade with NRS N9 |
+| R6 | The Foundation cascade collides with Phase 2's peril authoring | retired for F1 (ADR-A114 Consequences): no branch edits a Foundation importer while F1 runs. NRS N9 keeps its own later window |
 | R7 | The nested-states deep dive grows | C11a blocks only C12. Instrument, templates and examples without history proceed |
 | R8 | Removing Behaviour's range axioms breaks data relying on inferred types | C10's Validation Pack runs every Behaviour example and capacity fixture before and after |
 | R9 | The design-time satisfiability check (C13a) is deferred and forgotten | it is a slice in tranche E with its own row on the status board, NRS N3 names it as its prerequisite, and C5's Validation Pack lists it under deliberate non-coverage |
+| R10 | F1's follow-ups (FU-F1a, FU-F1b) are forgotten | each has an owner in the F1 follow-ups table, FU-F1a is in the `identity-minting` plan's deferred items, and F1's Validation Pack lists both under deliberate non-coverage |

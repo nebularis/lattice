@@ -1,0 +1,24 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# persistent-foundation: Foundation's keys (ADR-A114), enforced by Persistence.
+# Optional. The dal: configuration ontology (persistence.ttl) imports no layer.
+# This document imports Foundation, for adopters who write keyed data through
+# Persistence. Its shapes are in ../shapes/persistent-foundation.ttl, and the
+# Persistence README §14 explains both.
+
+@prefix dal:  <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+<https://www.nebularis.org/neuro-semantic/lattice/persistent-foundation>
+    a owl:Ontology ;
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/persistent-foundation/0.1.0> ;
+    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.4.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/persistence/0.2.1> .
+
+dal:PersistenceKeyed a owl:Class ;
+    rdfs:subClassOf fnd:NaturallyKeyed ;
+    rdfs:comment "A naturally keyed thing whose natural keys Persistence keeps unique when they are written." ;
+    fnd:utility "Subject: a class whose members carry natural keys and are written through Persistence. Adds no key axiom, so no reasoner merges two members sharing a key. Give the class a dal:UniquenessConstraint on fnd:naturalKey: the guarded key-claim write then refuses a second owner, and dal:onViolation picks the reconciler for duplicates written around it (reject, quarantine, or a reviewable dal:mergeRelation, never owl:sameAs). Never combine with fnd:MergedOnNaturalKey." .

@@ -76,7 +76,7 @@ def _declared_classes(path: Path) -> set:
 def test_c10_01_imports() -> None:
     config, runtime = _graph(CONFIG), _graph(RUNTIME)
     assert set(config.objects(None, OWL.imports)) == {URIRef(LATTICE + f"{layer}") for layer in (
-        "foundation/0.3.0", "vocabulary/0.3.0", "quantification/0.5.0", "party/0.5.0", "eligibility/0.7.0")}
+        "foundation/0.4.0", "vocabulary/0.4.0", "quantification/0.6.0", "party/0.6.0", "eligibility/0.8.0")}
     assert {str(i).rsplit("/", 1)[0] for i in runtime.objects(None, OWL.imports)} == {LATTICE + "behaviour"}
 
 

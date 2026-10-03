@@ -82,11 +82,11 @@ ex:cl-4-1-p4 a wrd:TextPart ; wrd:partIndex 4 ; wrd:partText " per annum." .
 ```turtle-spec
 <https://www.nebularis.org/neuro-semantic/wording>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/wording/0.3.0> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.3.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.3.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.5.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.7.0> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/wording/0.4.0> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.4.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.4.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.6.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.8.0> .
 ```
 
 ### 5.2 Wordings and elements
@@ -619,8 +619,8 @@ use, and is not closed: a deployment binds a scheme of its own, which may extend
 
 <https://www.nebularis.org/neuro-semantic/wording-vocab>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/wording-vocab/0.3.0> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/wording/0.3.0> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/wording-vocab/0.4.0> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/wording/0.4.0> .
 
 wrd-voc:ElementTypeContract a voc:SchemeContract ;
 	fnd:hasIdentity wrd-voc:ElementTypeContract-identity ;
@@ -1405,3 +1405,5 @@ Breaking versions at major version zero ([ADR-A113](../../docs/architecture/deci
   `wrd:fieldsAs`, amendments (§5.13) and `wrd:placedUnder`. `wrd:variantOf` is no longer functional,
   since a variant may sit in several versions of one slot. Shapes 0.3.0 add the laws of §8, which
   report data the 0.2.0 shapes accepted.
+- 0.4.0 (`wording` and `wording-vocab`): re-pinned to Foundation 0.4.0 and the layers re-pinned
+  with it, with no other change (CCS F1, ADR-A114).

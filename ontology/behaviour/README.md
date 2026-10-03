@@ -72,12 +72,12 @@ Behaviour distinguishes four tiers:
 
 <https://www.nebularis.org/neuro-semantic/behaviour>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.10.0> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.3.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.3.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.5.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/party/0.5.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.7.0> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.11.0> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.4.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.4.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.6.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/party/0.6.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.8.0> .
 
 bhv:StateSpace a owl:Class ;
 	rdfs:subClassOf fnd:Version ;
@@ -386,8 +386,8 @@ stateDiagram-v2
 
 <https://www.nebularis.org/neuro-semantic/behaviour-vocab>
 	a owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/behaviour-vocab/0.10.0> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.10.0> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/behaviour-vocab/0.11.0> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.11.0> .
 
 bhv:ExternalStimulus a bhv:TriggerKind .
 bhv:ScheduledTrigger a bhv:TriggerKind .
@@ -1309,3 +1309,5 @@ Breaking versions at major version zero ([ADR-A113](../../docs/architecture/deci
   nothing. Shapes 0.4.0 (breaking): the nested-state rules of §5.3, `AllMatches` only on internal
   transitions with distinct priorities, one selection policy among state-changing competitors, and
   laws B5, B9 and B11. ADR-A106 addendum (2026-10-02).
+- 0.11.0 (`behaviour`, `behaviour-runtime` and `behaviour-vocab`): re-pinned to Foundation 0.4.0
+  and the layers re-pinned with it, with no other change (CCS F1, ADR-A114).

@@ -114,6 +114,29 @@ run = "mvn -q -f packages/minting/java/pom.xml verify"
 description = "Check both identity minting libraries and the anchor vectors (the table check, which downloads the UCD, is check:minting-tables)"
 depends = ["check:minting-anchors", "check:minting-python", "check:minting-java"]
 
+[tasks."build:persistence-execution"]
+description = "Compile every ontology/persistence example and write its SPARQL and minting recipes to ontology/persistence/execution (generated, ignored by git)"
+run = """
+set -e
+t=$(mktemp -d)
+out=ontology/persistence/execution
+rm -rf "$out"/*/
+for f in ontology/persistence/examples/*.ttl; do
+  n=$(basename "$f" .ttl)
+  args="$f"
+  if [ "$n" = capability-spec-example ]; then args="ontology/persistence/examples/baseline-single-class.ttl --capability-spec $f"; fi
+  mkdir -p "$out/$n"
+  if python -m persistence compile ontology/persistence/spec/persistence.ttl $args --out "$t/$n.ttl" > "$t/$n.log" 2>&1; then
+    python -m persistence instantiate "$t/$n.ttl" --out "$out/$n/sparql" > /dev/null 2>&1
+    python -m persistence export-recipes "$t/$n.ttl" --out "$out/$n/recipes" > /dev/null 2>&1 || true
+    rmdir "$out/$n/recipes" 2> /dev/null || true
+  else
+    sed -e "s|$t/||g" "$t/$n.log" > "$out/$n/refused.txt"
+  fi
+done
+rm -rf "$t"
+"""
+
 [tasks."build:minting-vectors"]
 description = "Compile the identity-minting anchor and coverage fixtures and regenerate the committed recipes and conformance vectors in packages/minting/testdata"
 run = """
@@ -158,7 +181,7 @@ run = "python tools/ontology_catalog.py write"
 
 [tasks."check:ontology-catalog"]
 description = "Run the ontology tool tests (catalog, versioning, Eligibility examples, PROV-O alignment, Wording, Behaviour split), then fail when a catalog drifts, an import does not resolve, or a known defect is fixed but still listed (ADR-A88)"
-run = "python -m pytest tools/test_applied_shared_contracts.py tools/test_eligibility_examples.py tools/test_mork_order_relations.py tools/test_ontology_catalog.py tools/test_ontology_releases.py tools/test_ontology_version_check.py tools/test_peril_vocabulary.py tools/test_provenance_alignment.py tools/test_reasoning_isolation.py tools/test_substrate_extensions.py tools/test_wording.py tools/test_behaviour_split.py tools/test_import_guard.py tools/test_behaviour_records.py tools/test_behaviour_nested.py -q && python tools/ontology_catalog.py check"
+run = "python -m pytest tools/test_applied_shared_contracts.py tools/test_eligibility_examples.py tools/test_mork_order_relations.py tools/test_ontology_catalog.py tools/test_ontology_releases.py tools/test_ontology_version_check.py tools/test_peril_vocabulary.py tools/test_provenance_alignment.py tools/test_reasoning_isolation.py tools/test_substrate_extensions.py tools/test_wording.py tools/test_behaviour_split.py tools/test_import_guard.py tools/test_behaviour_records.py tools/test_behaviour_nested.py tools/test_keys.py -q && python tools/ontology_catalog.py check"
 
 [tasks."bootstrap:reasoning-testkit"]
 description = "Build the test-only reasoning harness jar (ADR-A83). Tests that need it skip without it"

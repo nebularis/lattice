@@ -263,7 +263,7 @@ def test_per_subject_scoped_is_emitted_with_resolved_literal():
 
 
 def test_worked_example_4_privacy_profile_resolves_and_is_emitted():
-    """ontology/persistence/README.md §9's worked example, handed over from
+    """ontology/persistence/README.md §11.4's worked example, handed over from
     Slice 3: its privacy profile (dal:PersonalData, dal:PerSubjectGraphDrop,
     dal:ErasureWins) now resolves and is emitted into the compiled profile,
     and its ReceiptProfile's dal:perSubjectScoped true keeps its
