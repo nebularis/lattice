@@ -55,9 +55,11 @@ Written by the building machine when the work is ready for the human to commit.
 - **Check first:**
 - **Deviations from the plan:** examples (phase 1). The Foundation example locates the agreement
   from drawdown requests and a transfer certificate in place of declarations and a claim, keeping to
-  a neutral domain (ADR-A-C2). The Surface example has the promotion contract only, since the
-  analysis found an index adds nothing (S1). Its path ends in `fnd:naturalKey`, since under
-  `srf:NoEntailment` a step on `fnd:externalKey` would not reach keys asserted as natural keys.
+  a neutral domain (ADR-A-C2). The Surface example has no index contract, since the analysis found
+  an index adds nothing (S1). It has two promotion contracts, not one: under `srf:NoEntailment` a
+  step follows asserted triples only, so one contract ends in `fnd:naturalKey` and the other in
+  `fnd:externalKey`. The Foundation example's agreement identity gains the payout account as an
+  external key, so the second contract has something to promote. F1-15 added for it.
 
 ## Results
 

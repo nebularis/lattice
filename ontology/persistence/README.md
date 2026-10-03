@@ -1332,6 +1332,58 @@ The other identity, epoch, privacy and uniqueness fixtures, by the slice that ad
 | [`uniqueness-merge-policy.ttl`](examples/uniqueness-merge-policy.ttl), [`uniqueness-quarantine-policy.ttl`](examples/uniqueness-quarantine-policy.ttl), [`invalid-merge-policy-no-relation.ttl`](examples/invalid-merge-policy-no-relation.ttl) | the violation policies, and a merge naming no relation |
 | [`claim-scheme-dual-rotation.ttl`](examples/claim-scheme-dual-rotation.ttl) | two schemes in state `dal:Dual`, selecting the dual-guard write |
 
+### 11.5 Every example, and the SPARQL it compiles to
+
+Every example in [`examples/`](examples/) compiles to SPARQL, and the table below says where to
+look for each kind of configuration. **The output is generated, not committed**, so on a fresh
+checkout generate it first, from the repository root:
+
+```bash
+mise run bootstrap:persistence
+mise run build:persistence-execution
+```
+
+The first installs this checkout's compiler. The second compiles every example and writes `ontology/persistence/execution/`, which git ignores:
+one directory per example, holding the generated SPARQL in `sparql/`, one directory per target
+(`<Class>`, or `<Class>.<deployment scope>` for a graph-pattern deployment), and any minting
+recipes in `recipes/`. A refused example holds `refused.txt`, the compiler's refusal. Reading an
+example beside its directory shows what each configuration choice does to the SPARQL. Every
+target also gets the four audits (`gap-scan-audit`, `fork-detection-audit`,
+`revision-multi-txn-audit`, `txn-multi-revision-audit`), omitted from the table.
+
+| Mapping | Configuration | Generated, under `execution/<example>/` |
+|---|---|---|
+| named-graph aggregate, compare-and-set, a key per branch | [`baseline-single-class`](examples/baseline-single-class.ttl) | the strong write set: `sparql/LoanApplication/create-if-absent.rq`, `sparql/LoanApplication/cas-replace.rq`, `sparql/LoanApplication/tombstone-delete.rq`, the key claim write and retire, four audits |
+| the same, with a declared capability spec | [`capability-spec-example`](examples/capability-spec-example.ttl) | the same SPARQL as `baseline-single-class`: a capability spec checks a profile, never changes what it generates |
+| named graph under the dataset-level epoch guard | [`epoch-dataset-level-guard`](examples/epoch-dataset-level-guard.ttl) | `sparql/LoanApplication/cas-replace.rq`, which compares `urn:g:dataset`'s epoch |
+| pre-created version rows, every extension property | [`extension-properties`](examples/extension-properties.ttl) | `sparql/Facility/bootstrap-version-row.rq` in place of create-if-absent |
+| composite-property aggregate by SHACL shape | [`composite-property-boundary-shacl`](examples/composite-property-boundary-shacl.ttl) | `sparql/Order/cas-replace.rq`, the closure bound by a property path in `WHERE` |
+| no boundary, value-based guard | [`value-based-cas`](examples/value-based-cas.ttl) | `sparql/Order/cas-replace.rq`, guarded on the property's old value |
+| append-only stream under the dataset guard | [`append-stream-dataset-guard`](examples/append-stream-dataset-guard.ttl) | `sparql/DecisionStream/bootstrap-version-row.rq`, `sparql/DecisionStream/append.rq` |
+| one shared class, two deployments and a fallback | [`lending-credit-shared-class`](examples/lending-credit-shared-class.ttl) | three target directories: `sparql/Behaviour.LendingBehaviourGraphs/` (compare-and-set), `sparql/Behaviour.CreditBehaviourGraphs/` (unconditional), `sparql/Behaviour/` (baseline) |
+| a namespace-wide baseline | [`namespace-wide`](examples/namespace-wide.ttl) | `sparql/CreditDecision/unconditional-write.rq` |
+| uniqueness: reject (the baseline policy) | [`baseline-single-class`](examples/baseline-single-class.ttl) | `sparql/LoanApplication/key-claim-duplicate-audit_loan-application-number-per-branch.rq` |
+| uniqueness: merge | [`uniqueness-merge-policy`](examples/uniqueness-merge-policy.ttl) | `sparql/Customer/key-claim-merge-rewrite_customer-email-unique.rq` |
+| uniqueness: quarantine | [`uniqueness-quarantine-policy`](examples/uniqueness-quarantine-policy.ttl) | `sparql/Device/key-claim-quarantine_device-serial-unique.rq` |
+| claim-secret rotation, two schemes `dal:Dual` | [`claim-scheme-dual-rotation`](examples/claim-scheme-dual-rotation.ttl) | `sparql/Member/key-claim-write_member-handle-unique.rq`, guarding and inserting both versions' claims |
+| identity, epoch and privacy for personal data (§11.4) | [`identity-epoch-privacy-profile`](examples/identity-epoch-privacy-profile.ttl) | `sparql/Claimant/` and two recipes in `recipes/` |
+| one recipe per identity strategy (the anchors) | [`identity-minting-anchors`](examples/identity-minting-anchors.ttl) | seven targets in `sparql/`, seven recipes in `recipes/` |
+| the remaining recipe features | [`identity-minting-coverage`](examples/identity-minting-coverage.ttl) | four targets and four recipes in its directory |
+| personal data with a per-subject patch log | [`privacy-receipt-compatible`](examples/privacy-receipt-compatible.ttl) | `sparql/Beneficiary/` |
+| keys (CCS F1, ADR-A114): key nodes per scheme and natural keys | [`persistent-foundation-keys`](examples/persistent-foundation-keys.ttl) | nine targets in `sparql/`: for each key class, the guarded claim on `fnd:keyValue` and its reject audit, for each keyed class, the claim on `fnd:naturalKey` (`sparql/AgreementIdentity/key-claim-write_agreement-natural-key-unique.rq`). Six key recipes in `recipes/`, which mint every key IRI of `ontology/foundation/examples/keys.ttl` |
+| warning: both discouraged epoch values | [`warning-epoch-unsafe-restore`](examples/warning-epoch-unsafe-restore.ttl) | `sparql/CreditLine/` |
+| warning: mixed receipt models in one family | [`warning-mixed-receipt-model`](examples/warning-mixed-receipt-model.ttl) | `sparql/` |
+| warning: a bare class scope on a shared class | [`warning-shared-class-profile`](examples/warning-shared-class-profile.ttl) | `sparql/Behaviour/` |
+
+Refused, each with its refusal in `refused.txt`: [`invalid-claimed-identity-without-key`](examples/invalid-claimed-identity-without-key.ttl), [`invalid-commitgrain-opseq`](examples/invalid-commitgrain-opseq.ttl), [`invalid-compositeboundary-missing-shape`](examples/invalid-compositeboundary-missing-shape.ttl), [`invalid-compositeboundary-receiptonly`](examples/invalid-compositeboundary-receiptonly.ttl), [`invalid-lagwindow-missing`](examples/invalid-lagwindow-missing.ttl), [`invalid-merge-policy-no-relation`](examples/invalid-merge-policy-no-relation.ttl), [`invalid-metashards-changed-no-ack`](examples/invalid-metashards-changed-no-ack.ttl), [`invalid-noboundary-cas`](examples/invalid-noboundary-cas.ttl), [`invalid-personaldata-no-erasure`](examples/invalid-personaldata-no-erasure.ttl), [`invalid-personaldata-receipt-conflict`](examples/invalid-personaldata-receipt-conflict.ttl), [`invalid-position-event-without-derivation`](examples/invalid-position-event-without-derivation.ttl), [`invalid-uniqueness-outside-boundary`](examples/invalid-uniqueness-outside-boundary.ttl).
+
+**Regenerating.** The output reflects the compiler and the examples at the time it was generated.
+Any change to `spec/persistence.ttl`, to an example, to the compiler or to its templates can change
+it, so regenerate after such a change, and before reading the output against this table. The task
+replaces `execution/` whole. Its output is deterministic, so a copy taken before the change and
+`diff -r` show exactly what the change did to the generated SPARQL. Compiled profiles are not
+written: their blank-node labels differ on every run.
+
 ---
 
 ## 12. Validation
@@ -1373,6 +1425,8 @@ ontology/persistence/
   shapes/constraints.ttl     SHACL shapes validating dal: configuration data (§12)
   examples/                  the worked examples of §11, one negative fixture per refused
                              combination, and the warning fixtures
+  execution/                 the SPARQL and recipes each example compiles to: generated by
+                             mise run build:persistence-execution, ignored by git (§11.5)
   docs/                      the precedence algorithm and the aggregate-boundary design
 ```
 

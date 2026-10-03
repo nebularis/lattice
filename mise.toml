@@ -114,6 +114,29 @@ run = "mvn -q -f packages/minting/java/pom.xml verify"
 description = "Check both identity minting libraries and the anchor vectors (the table check, which downloads the UCD, is check:minting-tables)"
 depends = ["check:minting-anchors", "check:minting-python", "check:minting-java"]
 
+[tasks."build:persistence-execution"]
+description = "Compile every ontology/persistence example and write its SPARQL and minting recipes to ontology/persistence/execution (generated, ignored by git)"
+run = """
+set -e
+t=$(mktemp -d)
+out=ontology/persistence/execution
+rm -rf "$out"/*/
+for f in ontology/persistence/examples/*.ttl; do
+  n=$(basename "$f" .ttl)
+  args="$f"
+  if [ "$n" = capability-spec-example ]; then args="ontology/persistence/examples/baseline-single-class.ttl --capability-spec $f"; fi
+  mkdir -p "$out/$n"
+  if python -m persistence compile ontology/persistence/spec/persistence.ttl $args --out "$t/$n.ttl" > "$t/$n.log" 2>&1; then
+    python -m persistence instantiate "$t/$n.ttl" --out "$out/$n/sparql" > /dev/null 2>&1
+    python -m persistence export-recipes "$t/$n.ttl" --out "$out/$n/recipes" > /dev/null 2>&1 || true
+    rmdir "$out/$n/recipes" 2> /dev/null || true
+  else
+    sed -e "s|$t/||g" "$t/$n.log" > "$out/$n/refused.txt"
+  fi
+done
+rm -rf "$t"
+"""
+
 [tasks."build:minting-vectors"]
 description = "Compile the identity-minting anchor and coverage fixtures and regenerate the committed recipes and conformance vectors in packages/minting/testdata"
 run = """

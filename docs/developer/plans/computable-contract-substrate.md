@@ -561,7 +561,7 @@ accepted. Two follow-ups are recorded below.
    |---|---|
    | `ontology/foundation/examples/keys.ttl` | key schemes with and without patterns, one that reissues values, one that is sensitive, one of personal data. A versioned agreement whose identity carries an agreement number and a market reference as natural keys, declarations and a claim locating it by the market reference, a company with two natural keys, a sensitive key with a surrogate IRI, and the path query that reaches each. Neutral classes only (`ex:`), Foundation naming no layer above it |
    | `ontology/persistence/examples/persistent-foundation-keys.ttl` | `dal:PersistenceKeyed`, a `dal:UniquenessConstraint` on `fnd:naturalKey`, a key class per scheme, and an identity profile per minting strategy for key nodes on those classes: derived hash, natural key, and a surrogate with a keyed claim for the sensitive scheme |
-   | `ontology/surface/examples/keys.ttl` | the index and promotion contracts of the analysis |
+   | `ontology/surface/examples/keys.ttl` | two promotion contracts restating an identity's keys on its versions as `fnd:externalKey`, one per property the identity carries them on (`fnd:naturalKey`, `fnd:externalKey`), since Surface's steps follow asserted triples only. No index contract (analysis S1) |
 
 2. **Spec** (`foundation` 0.3.0 → 0.4.0, additive): `fnd:Key`, `fnd:keyValue`, `fnd:keyScheme`,
    `fnd:KeyScheme`, `fnd:reissuesValues`, `fnd:sensitiveDataScheme`, `fnd:personalDataScheme`
@@ -607,6 +607,7 @@ accepted. Two follow-ups are recorded below.
 | F1-12 | every existing tool and compiler suite / updated only where a version is named / pass | L1 | + |
 | F1-13 | a version whose identity carries a natural key and an external key / reasoner / the version has both as `fnd:externalKey`, and is not `fnd:NaturallyKeyed` (G2) | L2 | + |
 | F1-14 | a scheme with no key class, one with two, a key class with no identity profile, a key typed with one scheme's class and carrying another scheme / `persistent-foundation` shapes / each reported (G1) | L1 | − |
+| F1-15 | the Surface example / compiled over the Foundation example / each agreement version carries both natural keys and the identity's external key as `fnd:externalKey`, and neither version is `fnd:NaturallyKeyed`. With only the natural-key contract, the external key is missing | L1 | + |
 
 **F1 follow-ups.** Found by the analysis, outside F1, each with an owner so it is not lost (risk R10).
 
@@ -1246,7 +1247,7 @@ records), the ADR catalogue.
 | R3 | Scope grows into contract amounts | amounts stay a catalogue until their own unit |
 | R4 | Examples drift into insurance terms | ADR-A-C2 check in every Validation Pack |
 | R5 | The scenario catalogue loses rows as slices are cut | C15's coverage test fails on any scenario without an example |
-| R6 | The Foundation cascade collides with Phase 2's peril authoring | F1 waits for Phase 2 and shares one cascade with NRS N9 |
+| R6 | The Foundation cascade collides with Phase 2's peril authoring | retired for F1 (ADR-A114 Consequences): no branch edits a Foundation importer while F1 runs. NRS N9 keeps its own later window |
 | R7 | The nested-states deep dive grows | C11a blocks only C12. Instrument, templates and examples without history proceed |
 | R8 | Removing Behaviour's range axioms breaks data relying on inferred types | C10's Validation Pack runs every Behaviour example and capacity fixture before and after |
 | R9 | The design-time satisfiability check (C13a) is deferred and forgotten | it is a slice in tranche E with its own row on the status board, NRS N3 names it as its prerequisite, and C5's Validation Pack lists it under deliberate non-coverage |

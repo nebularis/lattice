@@ -88,6 +88,7 @@ Most ideas start out life as `sketches`. Some may be captured as a plan rather t
 - `docs/developer/plans/<unit>.md` defines scope, dependencies, steps, decisions, and planned validation. Change it only when the plan changes. 
 - `docs/developer/status/<unit>.md` is the sole authoritative live state. Update it after every material implementation action, validation result, blocker, or handoff.
 - `docs/developer/review/<unit>-review.md` is the human review request. It contains scope, artifacts, exact `mise` commands, pass criteria, open questions, and a link to the matching status record. Create or refresh it before handoff. Archive or close it after disposition.
+- `docs/developer/plans/technical-debt.md` is a special plan: the register of technical debt spotted with no planned home, a shortcut, a gap between what a component claims and what it does, or a check that does not run. It is not a unit and has no status record. Add an entry when you spot such debt and no plan owns it, and remove it, naming the plan, when a plan takes it on. Never record outstanding work there (features, follow-ups, deferred slices): those belong in their unit's plan.
 - Never create a second active status record for a unit.
 - Every active review record must name an existing matching status record.
 - `docs/developer/` root holds durable guidance only. Do not create a new `current/` directory.

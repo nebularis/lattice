@@ -27,6 +27,7 @@
 # | a personal-data scheme                            | ex:national-id                          |
 # | a key class defined from its scheme               | ex:AgreementNumberKey and the others    |
 # | two natural keys on a versioned thing's identity  | ex:facility-identity                    |
+# | an external key on a versioned thing's identity   | ex:facility-identity → the payout account |
 # | two natural keys on an unversioned thing          | ex:acme                                 |
 # | a natural key from a sensitive scheme             | ex:jane, key:9b1d7e40-…                 |
 # | external keys locating without identifying        | ex:drawdown-1, ex:drawdown-2, ex:transfer-1 |
@@ -184,7 +185,10 @@ key:9b1d7e40-c3a2-456f-8e0b-1c2d3e4f5a6b a fnd:Key , ex:NationalIdKey ;
 # --- the agreement: keys on its identity --------------------------------------
 
 ex:facility-identity a ex:AgreementIdentity , fnd:PersistentIdentity , fnd:NaturallyKeyed ;
-    fnd:naturalKey key-agr:FA-2027-0412 , key-mr:MR-2027-000412 .
+    fnd:naturalKey key-agr:FA-2027-0412 , key-mr:MR-2027-000412 ;
+    # The account drawdowns are paid into. It locates the agreement, and
+    # since the bank may reassign the number, it never identifies it.
+    fnd:externalKey key:3f6a0c9e-2b7d-4e1f-a58c-06d9b2e47f13 .
 
 ex:facility-v1 a ex:Agreement , fnd:Version ;
     fnd:hasIdentity ex:facility-identity ;

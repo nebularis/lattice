@@ -24,7 +24,7 @@ python -m persistence compile \
     --out compiled-profile.ttl
 ```
 
-**`instantiate`** is entirely optional. It reads a compiled profile and the checked-in template library, and mixes each generated operation's parameters into its named template to produce generic, portable SPARQL text.
+**`instantiate`** is entirely optional. It reads a compiled profile and the checked-in template library, and mixes each generated operation's parameters into its named template to produce generic, portable SPARQL text. It writes one directory per target, `<Class>` or `<Class>.<deployment scope>`, since every target has its own operations, the audits included, under the same names. `mise run build:persistence-execution` runs it over every example in `ontology/persistence/examples`, writing to `ontology/persistence/execution`, which is generated and ignored by git (the [Persistence README](../../ontology/persistence/README.md) §11.5).
 
 ```bash
 python -m persistence instantiate compiled-profile.ttl --out ./rq
