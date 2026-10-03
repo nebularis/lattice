@@ -193,8 +193,9 @@ IRI validity stays with the recipe's encoding (A114-Q2, decision 6).
 
 ## Consequences
 
-- Foundation takes an additive MINOR (`0.3.0` to `0.4.0`). Seventeen documents pin
-  `foundation/0.3.0` and re-pin, each with its own release row and tag (ADR-A86), in one cascade.
+- Foundation takes an additive MINOR (`0.3.0` to `0.4.0`). Twenty-four documents import it directly
+  (15) or through another (9), and each takes a MINOR with its own release row and tag (ADR-A86), in
+  one cascade. The [impact analysis](../../developer/sketches/keys-impact.md) §4 lists them.
 - The cascade must not run while another branch edits a Foundation importer. On 2026-10-03 none
   does: `air/2.2-characteristics`, `air/3.3-readings-swrl-owl` and `air/4.1-exposure-core` exist
   without commits. F1 runs now, and those branches start from the `main` it merges into. CCS risk R6

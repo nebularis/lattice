@@ -17,8 +17,7 @@ ex:LoanApplicationStrongProfile a dal:DataAccessProfile ;
     dal:orderingGrain       dal:EventGrain ;
     dal:receiptModel        dal:PatchLog ;
     dal:metaTopology        dal:SharedSharded ;
-    dal:metaShards          "64"^^xsd:long ;
-    dal:uniqueness          ex:LoanApplicationNumberPerBranch .
+    dal:metaShards          "64"^^xsd:long .
 
 ex:LoanApplicationNumberPerBranch a dal:UniquenessConstraint ;
     dal:constraintId        "loan-application-number-per-branch" ;
