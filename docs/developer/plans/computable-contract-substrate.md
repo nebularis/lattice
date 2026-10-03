@@ -577,8 +577,9 @@ accepted. Two follow-ups are recorded below.
    a normalisation is one of the three, a natural key's scheme does not reissue values, and no two
    different `fnd:NaturallyKeyed` things share a natural key.
 4. **Persistence:** `persistent-foundation`, importing Foundation 0.4.0, with
-   `dal:PersistenceKeyed ⊑ fnd:NaturallyKeyed`, a default `dal:UniquenessConstraint` on
-   `fnd:naturalKey` (`dal:Reject`) an adopter may adopt or replace, a shape refusing an identity
+   `dal:PersistenceKeyed ⊑ fnd:NaturallyKeyed`, a shape requiring a `dal:UniquenessConstraint` on
+   `fnd:naturalKey` for each `dal:PersistenceKeyed` class (a shipped default was dropped at build:
+   the compiler reads one `dal:appliesTo` per constraint), a shape refusing an identity
    profile for a sensitive scheme's keys that is not a surrogate with a keyed claim, or with a public privacy profile, or a personal-data scheme's keys without a `dal:PersonalData` profile, and the key
    class shapes (G1, analysis P2): each scheme has one key class of the restriction's form, each key
    class has an identity profile, and each key is asserted a member of its scheme's class only. Its README
@@ -947,7 +948,7 @@ are the human's, examples first.
 
 | Slice | Content | Version impact |
 |---|---|---|
-| C6 | instrument and term, the five relation classes with Exclusion, parties with groups, roles and `resolvedBy`, party details (`noticeAddress`, `operatesAt`), instrument identifiers, activity, scope, `maintains`, `fulfilledWhen`, `excepts`, qualifiers (§5.1 to §5.4, §5.7). `ins:InstrumentTarget` in Instrument's vocabulary | Instrument 0.8.0 to 0.9.0, breaking MINOR (A-113). Imports Wording and Behaviour configuration. 0.8.0 is F1's cascade (G3) |
+| C6 | instrument and term, the five relation classes with Exclusion, parties with groups, roles and `resolvedBy`, party details (`noticeAddress`, `operatesAt`), instrument keys (from F1), activity, scope, `maintains`, `fulfilledWhen`, `excepts`, qualifiers (§5.1 to §5.4, §5.7). `ins:InstrumentTarget` in Instrument's vocabulary | Instrument 0.8.0 to 0.9.0, breaking MINOR (A-113). Imports Wording and Behaviour configuration. 0.8.0 is F1's cascade (G3) |
 | C7a | **regimes and gating** (split from C7, 2026-10-02): legal triggers (`OnExercise`, `OnBreach`, `OnAct`, `OnCondition`, `OnExpiry`, with the states in which a period does not run, C11a-Q2), `ins:Regime`, `ins:RegimeTransition`, `ins:stateKind`, `appliesInState` with the gating rule of the nested states sketch §6.2 and per-occasion resolution (C11a-Q4). The explicit `bhv:` type shape (B4) (§7.3, §7.4) | 0.10.0 MINOR. After C6 and C11a phase 2 |
 | C7b | **terms in time and constitutive terms** (split from C7): arising and ending on legal triggers, due, recurrence, survival, constitutive terms (Definition, Deeming), `appliesWithin`, classification, segments and per-segment definitions with union and overlap reporting, `ins:computedBy` (§5.5, §5.6, §5.10, §7.9, I15, I16) | 0.11.0 MINOR. After C6, beside C11a phase 2 |
 | C8 | stated and bound meaning (CC-D12): `ins:Template`, `ins:expressedIn` as owner, `ins:boundIn`, `ins:boundFrom`, `ins:alsoExpressedIn`, parameter bindings, encoding status, the ownership shapes in SHACL Core and law I17's two SHACL-SPARQL shapes (§5.9, I17, I18) | 0.12.0 MINOR |
@@ -996,9 +997,9 @@ keys on its persistent identity, and amendments, declarations and notices locati
   **Recommendation: (b).** Ownership is what makes a relation belong to its text (CC-D12), the
   examples are written once in the two tiers they keep, and ADR-A96's many-element attachment
   moves to `ins:alsoExpressedIn` in the same slice that retires `ins:inProvision`.
-- **C6-Q2. Instrument identifiers.** The plan row lists them, but they are `fnd:identifier`
-  (CC-D9), built by slice F1, which waits for AIR Phase 2. **Recommendation:** drop them from C6.
-  An instrument's identifiers arrive with F1 and need nothing from Instrument.
+- **C6-Q2. Instrument identifiers.** The plan row lists them, but they are Foundation's keys
+  (CC-D9, ADR-A114, `fnd:naturalKey` and `fnd:externalKey`), built by slice F1. **Recommendation:**
+  drop them from C6. An instrument's keys arrive with F1 and need nothing from Instrument.
 - **C6-Q3. Party details.** `ins:noticeAddress` and `ins:operatesAt` on an occupancy (S97). Party
   has no address or place. **Recommendation:** `ins:noticeAddress` takes a string (the address as
   written, identity being by identifier, CC-D9), and `ins:operatesAt` a concept under a new scheme
@@ -1152,7 +1153,7 @@ plan (`docs/development/plan.md`, "Upstream") mirrors this section.
 |---|---|
 | `wim` | removed. Its structure is LATTICE's Wording layer (ADR-A112). The LMA WIM profile (the four levels as element types, their containment rules as shapes, the LMA typing schemes and `applicableTo`) is in LATTICE's `applied/insurance/wording/` (CC-D3, AIR-5.9), and Open CBAA imports it |
 | `stm` | `AuthorityGrant ⊑ ins:Power` with its envelope mechanism. Other kinds, templates, parameter bindings and encoding status come from Instrument |
-| `agr` | UMR, markets, CBAA roles. The M12 regimes become `applied/insurance` templates on the C8a library. Agreement versions become `ins:Instrument`s expressed in `wrd:Wording`s |
+| `agr` | UMR, markets, CBAA roles. The UMR becomes a `fnd:KeyScheme` and `agr:umr` a natural key on the contract's identity (ADR-A114, F1). The M12 regimes become `applied/insurance` templates on the C8a library. Agreement versions become `ins:Instrument`s expressed in `wrd:Wording`s |
 | `rsk` | unchanged, with `rsk:BoundPolicy ⊑ ins:Instrument` and `rsk:boundUnder ⊑ ins:boundUnder` |
 | example BA-2026-001 | re-expressed, joined by the binding authority scenario renderings |
 | decisions | D22 holds as I13. D23 resolved. D25 changed. I6 closed. L15 fixed upstream (C10). D19 replaced (below) |

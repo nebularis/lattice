@@ -9,8 +9,8 @@
 
 <https://www.nebularis.org/neuro-semantic/foundation-vocab> 
     rdf:type owl:Ontology ;
-    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/foundation-vocab/0.3.0> ;
-    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.3.0> .
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/foundation-vocab/0.4.0> ;
+    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.4.0> .
 
 #################################################################
 #    Individuals

@@ -18,10 +18,9 @@ Behaviour 0.10.0 (shapes 0.4.0) with nested states and history, the import guard
 check`. Tranche D begins with C6, briefed. From C5 on, the agent builds and verifies, and the human
 commits by hand.
 
-**Next action, for the human:** review and commit F1's three examples
-(`ontology/foundation/examples/keys.ttl`, `ontology/persistence/examples/persistent-foundation-keys.ttl`,
-`ontology/surface/examples/keys.ttl`), and answer F1-Q1 in the Validation Pack.
-**Then, for the agent:** F1's model: Foundation 0.4.0, `persistent-foundation` 0.1.0, the cascade.
+**Next action, for the human:** review and commit F1's model and cascade, then create the 28
+release tags `mise run check:ontology-versioning` lists (Validation Pack, Handoff). Then merge F1.
+**Then, for the agent:** recreate the C6 branch from the merged `main` and build C6.
 
 ## Slice board
 
@@ -37,7 +36,7 @@ commits by hand.
 | C10a | import guard | C | merged | |
 | C11 | runtime records, occasions, initial states | C | merged, tagged | |
 | C11a | nested states, history, concurrent regimes | C | merged, tagged | |
-| F1 | external and natural keys (ADR-A114) | Foundation, now | gate passed, ADR-A114 accepted. Examples written, awaiting commit | the human (commit, F1-Q1) |
+| F1 | external and natural keys (ADR-A114) | Foundation, now | built and verified: Foundation 0.4.0, `persistent-foundation` 0.1.0, 24 re-pins. Awaiting commit and tags | the human |
 | C6 | instrument, terms, the five relations, parties, content | D | briefed, questions answered | F1 |
 | C7b, C8, C9, C8a | Instrument rewrite, template library | D | waiting | C6. C8 after C7a and C7b |
 | C7a | regimes and gating, split from C7 | D | waiting | C6 |
@@ -89,3 +88,4 @@ commits by hand.
 - 2026-10-03: G1 confirmed and ADR-A114 accepted. F1's three examples written, their key IRIs minted by the recipes the Persistence example compiles to. F1-Q1 raised. Not committed.
 - 2026-10-03: Every Persistence example compiled into `ontology/persistence/execution` (`mise run build:persistence-execution`), F1's included, with a crosswalk in the Persistence README §11.5. `instantiate` fixed to write one directory per target (it overwrote repeated operation names). Technical debt register started (`plans/technical-debt.md`, TD-01 to TD-14). Not committed.
 - 2026-10-03: `ontology/persistence/execution` removed from git by the human: it is generated on demand by `mise run build:persistence-execution`, and the README §11.5 says so. The Surface keys example gains a second promotion contract (`fnd:externalKey`), and the Foundation example an external key on the agreement's identity for it to promote. F1-15 added. Not committed.
+- 2026-10-03: F1-Q1 answered (b). F1 built: Foundation 0.4.0 with keys and its first shapes, its README again the literate source; `persistent-foundation` 0.1.0 and its shapes; 24 importers re-pinned with release rows, the catalog and the MTP lock; `tools/test_keys.py` 30 tests. All ontology, Persistence, Surface, MORK and MTP checks pass. Deviations in the Validation Pack. Procedure for ontology changes written into `.github/copilot-instructions.md`. TD-15 and TD-16 added. Not committed.

@@ -45,6 +45,13 @@ The unit that shipped it, `persistence-compiler-iri-sync`, is closed.
 | TD-08 | the restore-runbook bindings (`dal:epochCoordinatorBinding`, `dal:erasureRegisterBinding`, `dal:erasureReplayOnRestore`) are emitted but no check reads them, and no template writes `pat:hlc` | 2026-09-25 | a configuration can name a runbook nothing verifies | housekeeping (ADR-A80) |
 | TD-09 | a compiled profile's Turtle is isomorphic between runs but not byte-identical (blank-node labels) | 2026-10-03, CCS F1 | compiled profiles cannot be compared byte for byte, so `mise run build:persistence-execution` writes SPARQL and recipes only | a Persistence compiler unit |
 | TD-10 | `examples/invalid-compositeboundary-missing-shape.ttl` is refused by the compiler with `CompositeBoundaryReceiptConflict` (the receipt-only default), before the missing shape is reached | 2026-10-03, CCS F1 | the compiler's `MissingBoundaryShapeError` has no fixture of its own | the next Persistence change touching fixtures |
+| TD-15 | the compiler reads one `dal:appliesTo` per uniqueness constraint (`graph.value` in `resolver.py`), and silently uses one scope when a constraint names several | 2026-10-03, CCS F1 | a constraint meant for several classes protects one, with no warning | a Persistence compiler unit, with CCS FU-F1b |
+
+### Ontology sources
+
+| # | Debt | Spotted | Cost while it stays | Likely home |
+|---|---|---|---|---|
+| TD-16 | the Eligibility and Instrument READMEs are no longer the literate source of their documents: `tools/literate_extract.py --check` reports drift in `eligibility-vocab.ttl` and `instrument.ttl`, and no test or CI step runs it for them (Foundation's equivalent drift was fixed in CCS F1) | 2026-10-03, CCS F1 | edits to either README or file can diverge unnoticed | Instrument's in CCS C6, Eligibility's a maintenance task |
 
 ### Surface
 

@@ -45,7 +45,7 @@ later Phase 4 slices fill.
 to Foundation (ADR-A114, slice F1) before this slice's branch takes work: `fnd:Key` with a
 `fnd:KeyScheme` and a value, `fnd:externalKey` and `fnd:naturalKey`. An organisation's registration
 and tax numbers and its LEI are then natural keys on the `aeo:LegalEntity`, and `aeo:identifier`
-and `aeo:Identifier` are not built. The brief's rows that name them are revised when F1 merges.
+and `aeo:Identifier` are not built. The rows below use Foundation's keys (revised 2026-10-03, with F1).
 
 ### Namespaces
 
@@ -76,7 +76,7 @@ the mixins and restrictions in the sketch:
 |---|---|---|
 | `aeo:ExposureSet` | §5.2 | `fnd:Version`, `fnd:Governable`, `fnd:TemporallyScoped`, `fnd:Evidenced`. `aeo:reportingUnit` to `qnt:Unit`. Identity class `aeo:ExposureIdentity ⊑ fnd:PersistentIdentity` |
 | `aeo:Location` | §5.3 | `fnd:Version`. Identity `aeo:LocationIdentity`. `aeo:address` to `aeo:Address` (a node), `aeo:geometry` (range left open, GeoSPARQL alignment is optional), `aeo:geoPrecision`, `aeo:territory ⊑ cls:territory` |
-| `aeo:LegalEntity` | §5.1 | `⊑ pty:Actor`. `aeo:identifier` to `aeo:Identifier` (a node with `aeo:identifierScheme` and `aeo:identifierValue`) |
+| `aeo:LegalEntity` | §5.1 | `⊑ pty:Actor`, `⊑ fnd:NaturallyKeyed`. Registration and tax numbers and the LEI are `fnd:naturalKey`s, key nodes of declared `fnd:KeyScheme`s (Foundation README §8). A tax number's scheme is sensitive |
 | `aeo:ControlRelation` | §5.1 | `fnd:TemporallyScoped`, `fnd:Evidenced`. `aeo:controller`, `aeo:controlled` (each exactly one `aeo:LegalEntity`), `aeo:controlKind`, optional `aeo:controlShare` (`qnt:Quantity`) |
 | `aeo:Asset` | §5.5 | `fnd:Version`. Identity `aeo:AssetIdentity`. `aeo:assetClass ⊑ cls:assetClass`, `aeo:locatedAt` (functional) to `aeo:Location`, `aeo:partOf` (asymmetric, irreflexive), `aeo:presence` to `aeo:Presence` (location, temporal scope, optional `aeo:presenceShare`) |
 | `aeo:Interest` | §5.5 | `fnd:TemporallyScoped`, `fnd:Evidenced`. `aeo:interestHolder` (`pty:RoleOccupancy`), `aeo:interestIn` (`aeo:Asset`), `aeo:interestKind`, optional `aeo:extent` (`qnt:Quantity`) |

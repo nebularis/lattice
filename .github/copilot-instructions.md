@@ -157,6 +157,79 @@ The level of testing discipline for a slice should be verified during planning.
 
 **Non-weakening rule:** No slice may delete, skip, `@Disabled`, or loosen a test from a previous slice without an ADR-grade justification recorded in the VP and countersigned at the gate.
 
+### Changing an ontology document
+
+Follow this procedure for any change to a document under `ontology/**/spec/` or `ontology/**/vocab/`, or to a `shapes/` or `projection/` directory. It was written from CCS F1 (2026-10-03), which changed Foundation and re-pinned 24 importers. Read [the versioning policy](../docs/architecture/ontology-versioning-policy.md) (ADR-A86, ADR-A113) first.
+
+**1. Find the source of truth.** Some layers' READMEs are literate specifications: their fenced ` ```turtle-spec `, ` ```turtle-vocab ` and ` ```turtle-shapes ` blocks generate the `.ttl` files, and ` ```turtle-example ` blocks are illustration only. Foundation, Wording, Behaviour and Surface are literate, checked by tests or CI. For those, edit the README, never the generated `.ttl`, then regenerate:
+
+```bash
+python tools/literate_extract.py ontology/<layer>/README.md --layer <layer> --root . --shapes <shape files>
+```
+
+- `--shapes` lists the shape files, relative to the layer, in the order of the README's ` ```turtle-shapes ` blocks: one block per file, and the count must match. Foundation: `shapes/constraints.ttl`. Wording and Surface: `shapes/structural.ttl shapes/constraints.ttl`. Behaviour: `shapes/structural.ttl`.
+- All ` ```turtle-spec ` blocks are concatenated, in document order, into `spec/<layer>.ttl`, and all ` ```turtle-vocab ` blocks into `vocab/<layer>-vocab.ttl`. The ontology header (`owl:Ontology`, `owl:versionIRI`, `owl:imports`) is itself a block, so a version bump is an edit to the README.
+- Add `--check` to compare without writing. It exits non-zero and names each drifted file.
+- Before relying on a README as the source, run `--check` on it unchanged. If it already drifts, the README is not the source yet: compare the extracted and committed graphs (`rdflib.compare.graph_diff` over `to_isomorphic` graphs) before regenerating, and either restore it (as F1 did for Foundation) or record the drift in [technical-debt.md](../docs/developer/plans/technical-debt.md).
+- Persistence and the applied modules are not literate: edit their `.ttl` directly.
+
+**2. Bump the version.** At major version zero an additive change is a MINOR, and a breaking one is a MINOR marked breaking (ADR-A113). Change the document's `owl:versionIRI`. A `shapes/` or `projection/` directory is versioned by its `.version` file: bump it when any file in it changes or is added.
+
+**3. Compute the cascade, never trust a count.** A document whose only change is a re-pinned import takes the imported change's bump level (ADR-A86). Build the import graph from every in-scope document, using `find_in_scope_ttl_files` and `extract_version_iris` from `tools/ontology_version_check.py`, and close it transitively from the changed version IRI. MORK's version IRIs are `http://`, not `https://`. A document with no version of its own (a MORK example) still re-pins, with no release.
+
+**4. Re-pin, in one pass.** Version IRIs appear in spec and vocab files, literate README blocks, `tools/surface/src/surface/namespaces.py` (`SURFACE_ONTOLOGY`), examples and tests. Replace exact IRIs with one regex alternation over the whole old-to-new mapping, so no replaced IRI is replaced again. Leave alone:
+- `docs/architecture/ontology-releases.md`: generated, and its rows are never edited.
+- `tools/test_ontology_releases.py`: unit tests of release names.
+- `tools/fixtures/import_guard/`: self-contained fixtures.
+
+Tests also build IRIs from fragments, such as `LATTICE + "behaviour/0.10.0"`, which a search for full IRIs misses. Move a test that locates the current document, or asserts its current version and imports, to the new version. Keep a test that asserts history, a release row or a release note, unchanged.
+
+**5. Regenerate the derived files.**
+
+```bash
+mise run build:ontology-catalog
+```
+
+```bash
+mise run build:ontology-releases
+```
+
+The second adds a row per new version and prints the tags to create. Tags are the human's: never create or push them.
+
+**6. Record the release.** Add an entry to the "Release notes" section of each README that has one (Foundation, Wording, Behaviour, `applied/capacity` at the time of writing), including re-pin-only entries.
+
+**7. Check.** Run the suites that read ontology versions:
+
+```bash
+mise run check:ontology-catalog
+```
+
+```bash
+mise run check:ontology-versioning
+```
+
+```bash
+mise run check:import-guard
+```
+
+```bash
+mise run build:mtp
+```
+
+```bash
+mise run check:mtp
+```
+
+Also run `mise run check:persistence`, `mise run check:python-root`, `mise run check:vocabulary` and `mise run check:mork-compilers`, and the literate `--check` for every literate layer. `build:mtp` rewrites `ontology/mork/mtp/data/pins.lock.json` whenever MORK's version changes, a re-pin included, since its ontology hash covers the header: commit the regenerated lock. If Persistence's spec, examples or templates changed, regenerate their SPARQL with `mise run build:persistence-execution` (generated, not committed).
+
+**8. Make sure the code under test is this checkout's.** Editable installs can point at another clone. Check before running anything that imports `persistence`, `lattice_minting` or `surface`:
+
+```bash
+python -c "import persistence, lattice_minting, surface; print(persistence.__file__, lattice_minting.__file__, surface.__file__)"
+```
+
+If a path is outside this checkout, ask the human to re-run the matching `mise run bootstrap:*` task, or put `tools/persistence/src`, `packages/minting/python/src` and `tools/surface/src` first on `PYTHONPATH`.
+
 ### Decisions and Links
 
 - Architecture decisions live only in `docs/architecture/decisions/`.

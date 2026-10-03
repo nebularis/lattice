@@ -158,7 +158,8 @@ locations (applied exposure) all carry keys. Only Foundation is below all of the
    spaces, a check digit) is a change to the minting specification, out of this ADR's scope.
 7. **Uniqueness has two homes, by intent** (decision 8, option (c) of the review, 2026-10-03):
    - **`fnd:NaturallyKeyed`** is the common mixin: the domain of `fnd:naturalKey`, the target of
-     Foundation's SHACL shapes. Two different things never share a natural key, a key has one scheme
+     Foundation's SHACL shapes. Two different things never share a natural key (reported as a
+     warning where both are `fnd:MergedOnNaturalKey`, whose merge it announces, F1-Q1), a key has one scheme
      and one value, a natural key's scheme never reissues values, and a value matches its scheme's
      pattern.
    - **`fnd:MergedOnNaturalKey ⊑ fnd:NaturallyKeyed`** adds `owl:hasKey ( fnd:naturalKey )`. To an OWL
@@ -234,8 +235,11 @@ C9 each shift by one MINOR, accepted. G1: the key class of decision 2 replaces t
   is retired for F1.
 - Persistence gains its first document that imports Foundation, `persistent-foundation`, optional and
   separate from the `dal:` configuration ontology, which still imports no layer. It ships the mixin,
-  a default `dal:UniquenessConstraint` on `fnd:naturalKey` an adopter may adopt or replace, and an
-  identity profile per strategy of decision 6 as examples. Its shapes require each scheme whose keys
+  and a shape requiring a `dal:UniquenessConstraint` on `fnd:naturalKey` for each
+  `dal:PersistenceKeyed` class, with an identity profile per strategy of decision 6 in its example.
+  (Built 2026-10-03: a shipped default constraint was dropped, since the compiler reads one
+  `dal:appliesTo` per constraint, so one constraint could serve only one class. The compiler
+  deriving it is CCS follow-up FU-F1b.) Its shapes require each scheme whose keys
   Persistence mints to have a key class (decision 2) with an identity profile, and each key to be
   asserted a member of its scheme's class.
 - F1 writes an impact analysis for Persistence and Surface before this ADR is accepted (CCS plan,
