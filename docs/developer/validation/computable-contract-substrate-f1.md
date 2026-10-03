@@ -5,7 +5,7 @@
 **Unit:** [`computable-contract-substrate`](../status/computable-contract-substrate.md)
 **Machine:** R (Claude Code). **Branch:** `ccs/f1-keys`. Commits are the human's
 **Plan and test cases:** [CCS plan](../plans/computable-contract-substrate.md) (F1 in detail)
-**Decisions:** [ADR-A114](../../architecture/decisions/ADR-A114-external-and-natural-keys.md) (Proposed, accepted at the phase 0 gate), CC-D9, ADR-A51, ADR-A84, ADR-A86, ADR-A113
+**Decisions:** [ADR-A114](../../architecture/decisions/ADR-A114-external-and-natural-keys.md) (Accepted 2026-10-03, at the phase 0 gate), CC-D9, ADR-A51, ADR-A84, ADR-A86, ADR-A113
 
 ## Invariant
 
@@ -35,6 +35,17 @@ mise run build:ontology-catalog && mise run check:ontology-versioning && mise ru
 
 Normalisations outside the minting specification's three pipelines (a change to that specification), including the exact pipeline of follow-up FU-F1a. The compiler deriving the natural-key constraint from `dal:PersistenceKeyed` (FU-F1b). Both are in the plan's F1 follow-ups table. Keys on instruments, made in C6. Revising AIR-4.1's rows that name `aeo:Identifier`, done when F1 merges. Open CBAA's migration of `agr:umr`. NRS N9's Foundation change, which keeps its own window.
 
+## Open questions
+
+- **F1-Q1. Foundation's uniqueness shape and `fnd:MergedOnNaturalKey`.** The shape reports two
+  different `fnd:NaturallyKeyed` things sharing a natural key. For two members of
+  `fnd:MergedOnNaturalKey` that is exactly what `owl:hasKey` merges, but SHACL does not reason, so
+  it sees two IRIs and reports them. Options: (a) report them as a violation, like any other pair,
+  (b) report them at `sh:Warning`, since for an ontology-only adopter the duplicate is the merge
+  announced, or (c) exempt them. Recommended: (b). It keeps the merge visible and does not block
+  data the adopter chose to merge. The examples show no `fnd:MergedOnNaturalKey` member, since under
+  (a) a conforming example of a merge cannot exist. F1-04 constructs its pair in the test.
+
 ## Handoff
 
 Written by the building machine when the work is ready for the human to commit.
@@ -42,7 +53,11 @@ Written by the building machine when the work is ready for the human to commit.
 - **Built:**
 - **Not run:**
 - **Check first:**
-- **Deviations from the plan:**
+- **Deviations from the plan:** examples (phase 1). The Foundation example locates the agreement
+  from drawdown requests and a transfer certificate in place of declarations and a claim, keeping to
+  a neutral domain (ADR-A-C2). The Surface example has the promotion contract only, since the
+  analysis found an index adds nothing (S1). Its path ends in `fnd:naturalKey`, since under
+  `srf:NoEntailment` a step on `fnd:externalKey` would not reach keys asserted as natural keys.
 
 ## Results
 

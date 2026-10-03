@@ -2,7 +2,7 @@
 
 # ADR-A114: External and natural keys
 
-**Status:** Proposed
+**Status:** Accepted (2026-10-03, at the CCS F1 gate)
 **Date:** 2026-10-02 (proposed), revised 2026-10-03, gate questions G2 and G3 answered 2026-10-03
 **Related:** ADR-A12 (identity and derivation), ADR-A51 (IRI and identity policy), ADR-A82, ADR-A83,
 ADR-A84 (minting libraries), ADR-A86 (versioning), ADR-A01 (layer order), ADR-A104, ADR-A112
@@ -221,7 +221,7 @@ IRI validity stays with the recipe's encoding (A114-Q2, decision 6).
 **At the F1 gate, 2026-10-03** ([impact analysis](../../developer/sketches/keys-impact.md) §6). G2:
 the property chain of decision 5, accepted. G3: Instrument takes 0.8.0 in the cascade, and CCS C6 to
 C9 each shift by one MINOR, accepted. G1: the key class of decision 2 replaces the analysis's
-`dal:keyClassFor`, proposed in answer to the human's question and awaiting confirmation.
+`dal:keyClassFor`, accepted.
 
 ## Consequences
 

@@ -18,10 +18,10 @@ Behaviour 0.10.0 (shapes 0.4.0) with nested states and history, the import guard
 check`. Tranche D begins with C6, briefed. From C5 on, the agent builds and verifies, and the human
 commits by hand.
 
-**Next action, for the human:** confirm G1 as revised (a scheme's key class defined by an OWL
-restriction on the scheme, [keys impact](../sketches/keys-impact.md) P2, ADR-A114 decision 2), then
-accept ADR-A114. G2 and G3 are accepted.
-**Then, for the agent:** F1's three examples, stopping for the human's commit before the model.
+**Next action, for the human:** review and commit F1's three examples
+(`ontology/foundation/examples/keys.ttl`, `ontology/persistence/examples/persistent-foundation-keys.ttl`,
+`ontology/surface/examples/keys.ttl`), and answer F1-Q1 in the Validation Pack.
+**Then, for the agent:** F1's model: Foundation 0.4.0, `persistent-foundation` 0.1.0, the cascade.
 
 ## Slice board
 
@@ -37,7 +37,7 @@ accept ADR-A114. G2 and G3 are accepted.
 | C10a | import guard | C | merged | |
 | C11 | runtime records, occasions, initial states | C | merged, tagged | |
 | C11a | nested states, history, concurrent regimes | C | merged, tagged | |
-| F1 | external and natural keys (ADR-A114) | Foundation, now | at the gate: G2, G3 accepted, G1 revised. Follow-ups FU-F1a, FU-F1b recorded | the human (G1) |
+| F1 | external and natural keys (ADR-A114) | Foundation, now | gate passed, ADR-A114 accepted. Examples written, awaiting commit | the human (commit, F1-Q1) |
 | C6 | instrument, terms, the five relations, parties, content | D | briefed, questions answered | F1 |
 | C7b, C8, C9, C8a | Instrument rewrite, template library | D | waiting | C6. C8 after C7a and C7b |
 | C7a | regimes and gating, split from C7 | D | waiting | C6 |
@@ -86,3 +86,4 @@ accept ADR-A114. G2 and G3 are accepted.
 - 2026-10-03: Keys designed with the human: `externalKey` locates, `naturalKey` identifies, the word "identifier" avoided beside "identity". Two mixins, `fnd:MergedOnNaturalKey` with `owl:hasKey` and Persistence's optional `dal:PersistenceKeyed` without, over a common `fnd:NaturallyKeyed`. ADR-A114 "External and natural keys" drafted, Proposed. F1 briefed to run now, before C6, with a phase 0 impact analysis of Persistence, Surface and the cascade. C6-Q2 answered. AIR-4.1's coordination note revised.
 - 2026-10-03: F1 phase 0 analysis written (`keys-impact.md`). No change to Persistence's compiler or to Surface. Persistence needs `persistent-foundation` and one key class per scheme. The cascade is 25 documents, and takes Instrument 0.8.0 from C6. MORK's teaching pack lock regenerates. Gate questions G1 to G3.
 - 2026-10-03: F1 gate. G2 (the property chain) and G3 (C6 to C9 shift by one MINOR, Instrument 0.8.0 in the cascade) accepted, plan, ADR-A104 and ADR-A114 updated. G1 revised in answer to the human: a key class per scheme defined by an OWL restriction, replacing `dal:keyClassFor`, with three shapes in `persistent-foundation`. Follow-ups FU-F1a (exact pipeline, `identity-minting`) and FU-F1b (compiler-derived constraint) recorded with owners, risk R10.
+- 2026-10-03: G1 confirmed and ADR-A114 accepted. F1's three examples written, their key IRIs minted by the recipes the Persistence example compiles to. F1-Q1 raised. Not committed.

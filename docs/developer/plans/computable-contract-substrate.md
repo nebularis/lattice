@@ -525,7 +525,7 @@ violation-level shapes are breaking under ADR-A113, so the README gains a Releas
 of ADR-A114's Consequences: no branch may edit a Foundation importer until F1 merges.
 **Validation Pack:** [computable-contract-substrate-f1](../validation/computable-contract-substrate-f1.md).
 **Decisions:** [ADR-A114](../../architecture/decisions/ADR-A114-external-and-natural-keys.md)
-(Proposed, reviewed 2026-10-03), CC-D9, ADR-A51, ADR-A84, ADR-A86, ADR-A113.
+(Accepted 2026-10-03), CC-D9, ADR-A51, ADR-A84, ADR-A86, ADR-A113.
 
 **Invariant:** any thing in a LATTICE graph can carry the names the world gives it, as key nodes
 with a scheme and a value, either locating it (`fnd:externalKey`) or identifying it
@@ -552,8 +552,8 @@ beyond Surface's ontology constant (S4), and 24 importers, not 17. G2 accepted: 
 property chain of ADR-A114 decision 5. G3 accepted: Instrument takes 0.8.0 in the cascade, and C6 to
 C9 shift by one MINOR (tranche D below). G1 revised in answer to the human's question: a scheme's key
 class is defined by an OWL restriction on the scheme (ADR-A114 decision 2), replacing
-`dal:keyClassFor`, with three shapes in `persistent-foundation` (analysis P2). Awaiting confirmation,
-then ADR-A114's acceptance. Two follow-ups are recorded below.
+`dal:keyClassFor`, with three shapes in `persistent-foundation` (analysis P2), accepted. ADR-A114
+accepted. Two follow-ups are recorded below.
 
 1. **Examples first (ADR-A-C2).** The human commits them before the model.
 
