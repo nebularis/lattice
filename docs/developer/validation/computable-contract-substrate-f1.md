@@ -33,7 +33,7 @@ mise run build:ontology-catalog && mise run check:ontology-versioning && mise ru
 
 ## Deliberate non-coverage
 
-Normalisations outside the minting specification's three pipelines (a change to that specification). Keys on instruments, made in C6. Revising AIR-4.1's rows that name `aeo:Identifier`, done when F1 merges. Open CBAA's migration of `agr:umr`. NRS N9's Foundation change, which keeps its own window.
+Normalisations outside the minting specification's three pipelines (a change to that specification), including the exact pipeline of follow-up FU-F1a. The compiler deriving the natural-key constraint from `dal:PersistenceKeyed` (FU-F1b). Both are in the plan's F1 follow-ups table. Keys on instruments, made in C6. Revising AIR-4.1's rows that name `aeo:Identifier`, done when F1 merges. Open CBAA's migration of `agr:umr`. NRS N9's Foundation change, which keeps its own window.
 
 ## Handoff
 

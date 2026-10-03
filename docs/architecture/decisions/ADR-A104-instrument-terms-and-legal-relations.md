@@ -145,7 +145,7 @@ occasions, the amendment states it with `prov:wasRevisionOf`.
 ## Consequences
 
 - Instrument is rewritten in CCS slices C6 to C9 and C8a, each a breaking MINOR under ADR-A113
-  (`0.7.0` to `0.11.0`). Instrument imports Wording and Behaviour configuration. Once ADR-A106
+  (`0.9.0` to `0.13.0`, after Foundation's keys cascade takes `0.8.0`, ADR-A114). Instrument imports Wording and Behaviour configuration. Once ADR-A106
   lands, nothing outside Instrument imports it, so the rewrite cascades only to its own documents.
 - Instrument's shapes check ownership in SHACL Core and law I17 in two SHACL-SPARQL shapes,
   shipped for consumers who do not use the LATTICE runtime (sketch §5.9).

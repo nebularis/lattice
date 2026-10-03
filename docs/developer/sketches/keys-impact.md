@@ -3,7 +3,7 @@
 # Keys: impact on Persistence, Surface and the Foundation cascade
 
 **Unit:** [`computable-contract-substrate`](../plans/computable-contract-substrate.md), slice F1
-phase 0. **Status:** analysis for the F1 gate, 2026-10-03.
+phase 0. **Status:** analysis for the F1 gate, 2026-10-03. G2 and G3 answered, G1 revised (§6).
 **Reads with:** [ADR-A114](../../architecture/decisions/ADR-A114-external-and-natural-keys.md)
 (Proposed), the [Persistence README](../../../ontology/persistence/README.md), the
 [Surface README](../../../ontology/surface/README.md), the
@@ -15,18 +15,19 @@ phase 0. **Status:** analysis for the F1 gate, 2026-10-03.
 
 ADR-A114 needs **no change to Persistence's compiler, Surface's ontology or Surface's compiler**.
 Persistence needs one new optional document, `persistent-foundation`. Keys need one modelling
-convention Persistence imposes: one key class per scheme. The cascade is larger than the ADR
+convention Persistence imposes: one key class per scheme, defined by an OWL restriction on the
+scheme. The cascade is larger than the ADR
 says, and takes Instrument's next version from C6.
 
 | # | Subsystem | Finding | Change | Where |
 |---|---|---|---|---|
 | P1 | Persistence | a uniqueness constraint on `fnd:naturalKey` works as the compiler stands. Its key component is the key node's IRI, and the mandatory normalisation pipeline is applied to that IRI, harmlessly | none. Record the reasoning | F1, docs |
-| P2 | Persistence | identity and privacy profiles target classes, so minting key IRIs differently per scheme needs one key class per scheme | a convention, and `dal:keyClassFor` in `persistent-foundation` | F1, gate question G1 |
+| P2 | Persistence | identity and privacy profiles target classes, so minting key IRIs differently per scheme needs one key class per scheme | a key class per scheme, `C ≡ ∃fnd:keyScheme.{S}`, required by shapes in `persistent-foundation` | F1, gate question G1 |
 | P3 | Persistence | each scheme's key minting is an existing identity profile, with a uniqueness constraint on `fnd:keyValue` that also guarantees one key node per value | examples and shapes in `persistent-foundation` | F1 |
 | P4 | Persistence | all three violation policies apply to natural keys. Merge records `dal:mergeRelation`, never `owl:sameAs`, as ADR-A114 requires | none | F1, docs |
-| P5 | Persistence | a personal-data scheme's keys take a surrogate with a keyed claim and a personal-data privacy profile on their key class | shapes in `persistent-foundation` | F1 |
+| P5 | Persistence | a sensitive scheme's keys take a surrogate with a keyed claim and a privacy profile other than public on their key class, and a personal-data scheme's a `dal:PersonalData` one | shapes in `persistent-foundation` | F1 |
 | P6 | Persistence | `persistent-foundation` is Persistence's first document importing a layer | new document, catalog entry, README section | F1 |
-| P7 | Persistence | the compiler could derive the natural-key uniqueness constraint from `dal:PersistenceKeyed` on its own | none now | follow-up |
+| P7 | Persistence | the compiler could derive the natural-key uniqueness constraint from `dal:PersistenceKeyed` on its own | none now | follow-up FU-F1b |
 | S1 | Surface | an index over keys adds nothing: the key node is already the lookup symbol, and a key space is not an enumerable population | none | F1, docs |
 | S2 | Surface | a promotion contract can restate an identity's natural key on each version, onto `fnd:externalKey`, never onto `fnd:naturalKey` | example only | F1 |
 | S3 | Surface | the same restatement could instead be a Foundation property chain, for adopters without Surface | none, or one axiom | gate question G2 |
@@ -52,7 +53,7 @@ of one scheme can differ only in case if their values do, and their values are n
 same pipeline before minting, while hash digests use a single-case alphabet (base32) or lowercase
 hex. Two distinct key nodes never fold to one claim. An exact pipeline (no case or compatibility
 mapping) would be the cleaner fit for IRI-valued keys, and is a change to the minting specification,
-out of F1's scope.
+out of F1's scope. Recorded as follow-up FU-F1a in the CCS plan, owned by `identity-minting`.
 
 The CompositePropertyBoundary check (`validator.py`) requires a key property to be reachable within
 the boundary shape. A natural key on a persistent identity is one step from it, so a boundary shape
@@ -61,7 +62,7 @@ naming `fnd:naturalKey` satisfies it.
 ### P2. One key class per scheme
 
 ADR-A114 decision 6 mints key IRIs per scheme: derived hash for one, natural key for another, a
-surrogate with a keyed claim for personal data. Persistence resolves every profile for a **target**,
+surrogate with a keyed claim for a sensitive scheme. Persistence resolves every profile for a **target**,
 and a target is a class, optionally with a graph deployment (`scopes.py`, `Target`). A
 `dal:ShapeScope` is resolved once, at compile time, against classes, not per instance. So all
 `fnd:Key` instances get one identity profile unless the schemes' keys are told apart by class or by
@@ -73,10 +74,44 @@ graph:
 | (b) a graph family per scheme | keys of each scheme written into their own graphs, targeted by `dal:GraphPatternScope` | ties a modelling distinction to storage layout |
 | (c) a target keyed on a value | the compiler learns targets of `(class, keyScheme)` | a compiler change for one use |
 
-**Recommended: (a).** It also gives P5's privacy profile its target. `persistent-foundation`
-declares `dal:keyClassFor` (a key class to its scheme) so a shape can check that every instance of
-the class has that scheme, and that a personal-data scheme's class has the profiles P5 requires.
-`fnd:Key` stays usable without a subclass by an adopter who does not use Persistence.
+**Recommended: (a).** It also gives P5's privacy profile its target.
+
+**How the class is tied to its scheme (revised at the gate).** The first draft linked a key class to
+its scheme with a Persistence property, `dal:keyClassFor`. An OWL axiom does the same job with no new
+term, and means something to adopters without Persistence:
+
+```turtle-example
+ex:UmrKey a owl:Class ;
+    rdfs:subClassOf fnd:Key ;
+    owl:equivalentClass [ a owl:Restriction ;
+        owl:onProperty fnd:keyScheme ; owl:hasValue ex:umr ] .
+```
+
+A scheme stays a plain individual of `fnd:KeyScheme`, an OWL class, not a SKOS concept. Its key class
+is a second IRI defined from it, so no punning is needed. Punning the scheme's IRI as its own key
+class was considered and rejected: OWL 2 DL treats a punned class and individual as unrelated, so a
+reasoner could derive neither the class from `fnd:keyScheme` nor the scheme from `rdf:type`. The `dal:`
+configuration does pun, by design (`dal:targetClass` and `dal:coversClass` are object properties
+whose values are classes, LATTICE's convention for naming another layer's terms without importing
+it), and is read as RDF by the compiler and by SHACL, never by a DL reasoner. A `dal:ClassScope` on
+`ex:UmrKey` is that ordinary case.
+
+Enforcement is by SHACL in `persistent-foundation`, run on the adopter's ontology, configuration and
+data, since the compiler matches asserted types and never reasons:
+
+| Shape | Checks | Graph |
+|---|---|---|
+| scheme has a class | every `fnd:KeyScheme` has exactly one class of the restriction's form. These shapes run only where an adopter uses `persistent-foundation` | ontology |
+| class has a profile | every such class is the `dal:targetClass` of a `dal:ClassScope` with an identity profile, and for a sensitive scheme, the P5 profiles | configuration |
+| key is typed | every `fnd:Key` whose scheme has a key class is asserted a member of it, and of no other scheme's | data |
+
+The third shape matters beyond Persistence's targeting. OWL makes no unique-name assumption, and
+`fnd:keyScheme` is functional, so a key asserted `ex:UmrKey` while carrying `fnd:keyScheme ex:lei`
+would lead a reasoner to infer `ex:umr owl:sameAs ex:lei`, a silent merge of two schemes. The shape
+reports it instead. Foundation's examples also declare their schemes `owl:AllDifferent`, which turns
+the same mistake into an inconsistency for reasoner users.
+
+`fnd:Key` stays usable without a key class by an adopter who does not use Persistence.
 
 ### P3. Minting a scheme's keys
 
@@ -85,7 +120,7 @@ Each key class takes an existing `dal:IdentityProfile`:
 | Scheme | Strategy | Needs |
 |---|---|---|
 | UMR, company number (case-insensitive, public) | `dal:DerivedHashIdentity` or `dal:NaturalKeyIdentity` | a `dal:keyConstraint`: a uniqueness constraint on `( fnd:keyValue )` for the key class, scoped by tenant, with the scheme's normalisation as `dal:normalizePipeline` |
-| a national ID (personal data) | `dal:SurrogateClaimedIdentity` | the same constraint with a `dal:ClaimScheme` (HMAC under a tenant key) |
+| a national ID (sensitive) | `dal:SurrogateClaimedIdentity` | the same constraint with a `dal:ClaimScheme` (HMAC under a tenant key) |
 
 The key constraint does double duty: it is what the recipe mints from, and it guarantees at write
 time that one value of one scheme is one key node. `fnd:keyNormalisation` (a string) and
@@ -100,13 +135,16 @@ follows `dal:onViolation`: `Reject` audits, `Quarantine` copies the owners for r
 `owl:sameAs`. That is exactly the behaviour ADR-A114 decision 8 assigns to `dal:PersistenceKeyed`.
 `persistent-foundation`'s default constraint uses `Reject`.
 
-### P5. Personal-data schemes
+### P5. Sensitive schemes
 
-For a scheme with `fnd:personalDataScheme true`, `persistent-foundation`'s shapes require its key
+For a scheme with `fnd:sensitiveDataScheme true`, `persistent-foundation`'s shapes require its key
 class to have a `dal:SurrogateClaimedIdentity` profile (ADR-A51, ADR-A114 decision 6) and a
-`dal:PrivacyProfile` of `dal:PersonalData`. Persistence's existing rules then apply: no
-`dal:NoErasure`, and a replay-capable receipt model only with per-subject scoping or crypto-shredding.
-Erasing a person removes their key node and its value. A `fnd:naturalKey` triple pointing at it is
+`dal:PrivacyProfile` whose class is not `dal:PublicData`. Sensitive is wider than personal, so a
+second, optional flag says which sensitive schemes hold personal data: for
+`fnd:personalDataScheme true` (which Foundation's shapes allow only with
+`fnd:sensitiveDataScheme true`), the privacy profile must be `dal:PersonalData`. Persistence's
+existing rules then apply: no `dal:NoErasure`, and a replay-capable receipt model only with per-subject
+scoping or crypto-shredding. Erasing a person removes their key node and its value. A `fnd:naturalKey` triple pointing at it is
 removed with the subject's graph under `dal:PerSubjectGraphDrop`, or left dangling where it lives
 outside it, which the privacy profile's scope decides.
 
@@ -117,7 +155,7 @@ outside it, which the privacy profile's scope decides.
 | file | `ontology/persistence/spec/persistent-foundation.ttl`, shapes in `ontology/persistence/shapes/persistent-foundation.ttl`, both authored files beside `persistence.ttl` |
 | version IRI | `…/lattice/persistent-foundation/0.1.0`, its own release row and tag |
 | imports | `foundation/0.4.0` only. The `dal:` configuration ontology still imports no layer (Persistence README §1, updated to say so) |
-| holds | `dal:PersistenceKeyed ⊑ fnd:NaturallyKeyed`, `dal:keyClassFor`, the default natural-key uniqueness constraint (as a template an adopter scopes), the P2 and P5 shapes |
+| holds | `dal:PersistenceKeyed ⊑ fnd:NaturallyKeyed`, the default natural-key uniqueness constraint (as a template an adopter scopes), the P2 and P5 shapes |
 | import guard | Persistence is outside the layer order. The guard's checks do not apply, as for Surface and MORK |
 
 ### P7. A compiler follow-up
@@ -125,7 +163,7 @@ outside it, which the privacy profile's scope decides.
 The compiler could generate the natural-key uniqueness constraint for every class that is
 `dal:PersistenceKeyed`, so an adopter declares the mixin and nothing else. Today the adopter scopes
 the default constraint to their class. Worth doing once a deployment has several keyed classes. Not
-needed for F1.
+needed for F1. Recorded as follow-up FU-F1b in the CCS plan.
 
 ## 3. Surface
 
@@ -250,13 +288,18 @@ and update with it. A test that only names a version to find a document keeps it
 5. ADR-A114 corrected: 25 documents, not 17. Under G3, ADR-A104 and the plan's version numbers for
    C6 to C9.
 
-Follow-up, not F1: P7, and an exact normalisation pipeline (P1), each when a deployment needs it.
+Follow-up, not F1: an exact normalisation pipeline (P1, FU-F1a) and the derived constraint (P7,
+FU-F1b), each when a deployment needs it. Both are in the CCS plan's F1 follow-ups table.
 
 ## 6. Questions for the gate
 
-- **G1 (P2).** One key class per scheme, linked by `dal:keyClassFor`. Recommended.
+- **G1 (P2).** One key class per scheme, linked by `dal:keyClassFor`. Recommended. **Revised at the
+  gate:** linked instead by an OWL restriction on the scheme, with the shapes of P2. Awaiting
+  confirmation.
 - **G2 (S3).** Add `fnd:externalKey owl:propertyChainAxiom ( fnd:hasIdentity fnd:externalKey )` to
   Foundation, so versions locate by their identity's keys for reasoners, with Surface's promotion for
   everyone else. Recommended: yes, for the same reason `fnd:MergedOnNaturalKey` exists.
+  **Accepted** 2026-10-03.
 - **G3 (C2).** C6 takes Instrument 0.9.0, and C7a to C9 shift by one MINOR. Recommended.
+  **Accepted** 2026-10-03.
 - **The gate itself:** accept this analysis and ADR-A114.

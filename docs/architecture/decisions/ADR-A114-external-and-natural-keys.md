@@ -3,7 +3,7 @@
 # ADR-A114: External and natural keys
 
 **Status:** Proposed
-**Date:** 2026-10-02 (proposed), revised 2026-10-03
+**Date:** 2026-10-02 (proposed), revised 2026-10-03, gate questions G2 and G3 answered 2026-10-03
 **Related:** ADR-A12 (identity and derivation), ADR-A51 (IRI and identity policy), ADR-A82, ADR-A83,
 ADR-A84 (minting libraries), ADR-A86 (versioning), ADR-A01 (layer order), ADR-A104, ADR-A112
 **Unit:** [`computable-contract-substrate`](../../developer/plans/computable-contract-substrate.md)
@@ -40,7 +40,7 @@ thing, and RDF's notion of identity. A key is a name some authority outside LATT
 | how many | exactly one per thing | any number, from different schemes |
 | changes | never | a thing may gain keys, and a key may be withdrawn |
 | readable | opaque by design (a surrogate, or a hash of a key) | the value people quote |
-| may be personal data | never, by construction | sometimes (a national ID, a tax number) |
+| may be sensitive | never, by construction | sometimes (a national ID, a tax number, an account number) |
 
 The word "identifier" is avoided for keys: it is too close to "identity" for a reader to keep the
 two apart.
@@ -63,9 +63,31 @@ locations (applied exposure) all carry keys. Only Foundation is below all of the
 2. **A scheme is declared once.** `fnd:KeyScheme` is a class whose individuals are the schemes: the
    LEI, a company register, a market's PIN, the unique market reference, one insurer's own
    references. A scheme states `fnd:reissuesValues` (whether a value it withdrew may later name
-   something else) and `fnd:personalDataScheme` (whether its values are personal data), and may
-   state `fnd:valuePattern` (a regular expression its values match, checked by a shape) and
-   `fnd:keyNormalisation` (decision 6). Foundation declares no scheme. Whoever uses one declares it.
+   something else) and `fnd:sensitiveDataScheme` (whether its values must be kept hidden: personal
+   data, or any other value a deployment must not expose). It may state `fnd:personalDataScheme`
+   (whether its values are also personal data, allowed only on a sensitive scheme),
+   `fnd:valuePattern` (a regular expression its values match) and `fnd:keyNormalisation`
+   (decision 6). Shapes check the pattern and the personal-data rule. Foundation declares no scheme. Whoever uses one declares it.
+
+   **A scheme's key class.** A scheme may also be given the class of its keys, defined by an OWL
+   restriction on the scheme itself, so a reasoner classifies every key of the scheme and a tool
+   without one can target the class:
+
+   ```turtle
+   ex:umr a fnd:KeyScheme ;
+       fnd:reissuesValues false ;
+       fnd:sensitiveDataScheme false .
+
+   ex:UmrKey a owl:Class ;
+       rdfs:subClassOf fnd:Key ;
+       owl:equivalentClass [ a owl:Restriction ;
+           owl:onProperty fnd:keyScheme ; owl:hasValue ex:umr ] .
+   ```
+
+   The scheme and its class are two IRIs joined by an axiom, not one punned IRI: OWL 2 DL treats a
+   punned class and individual as unrelated, so no reasoner could derive one from the other.
+   Foundation does not require a key class. Persistence does, because its profiles target classes
+   (decision 7 and the Consequences).
 3. **An external key locates.** `fnd:externalKey` links anything to a key it carries: the contract,
    its declarations, its bordereau rows and its claims each carry the unique market reference. It is
    neither functional nor inverse-functional. Many things may share one key, and one thing may carry
@@ -78,7 +100,11 @@ locations (applied exposure) all carry keys. Only Foundation is below all of the
 5. **Keys belong to what persists.** On a versioned thing, keys attach to its
    `fnd:PersistentIdentity`, since an agreement number names the agreement across all its versions.
    On an unversioned thing, an actor for example, they attach to the thing itself. The path
-   `fnd:hasIdentity?/fnd:naturalKey` reaches a key from either.
+   `fnd:hasIdentity?/fnd:naturalKey` reaches a key from either. A version locates by every key of its
+   identity through a property chain, `fnd:externalKey owl:propertyChainAxiom ( fnd:hasIdentity
+   fnd:externalKey )`, which natural keys reach through `fnd:naturalKey ⊑ fnd:externalKey`. The chain
+   infers only `fnd:externalKey`, so a version never becomes `fnd:NaturallyKeyed`. Without a reasoner,
+   Surface's promotion contract materialises the same triples.
 
    ```turtle
    ex:facility-v2 a ins:Instrument ;
@@ -111,15 +137,16 @@ locations (applied exposure) all carry keys. Only Foundation is below all of the
 
    | Scheme | Strategy | Two sources reach one node |
    |---|---|---|
-   | not personal data (UMR, LEI, a company number) | natural key or derived hash of scheme and value | by computation, within one tenant. Across tenants only where the recipe declares no scope |
-   | personal data (`fnd:personalDataScheme true`) | a surrogate with a keyed claim (HMAC under a tenant secret) | by looking up the claim, within one tenant only |
+   | not sensitive (UMR, LEI, a company number) | natural key or derived hash of scheme and value | by computation, within one tenant. Across tenants only where the recipe declares no scope |
+   | sensitive (`fnd:sensitiveDataScheme true`) | a surrogate with a keyed claim (HMAC under a tenant secret) | by looking up the claim, within one tenant only |
 
    ADR-A51 forbids putting personal data in an IRI and forbids an unkeyed hash of a low-entropy
-   personal value, which can be reversed by trying every value. A keyed claim can be computed only
-   by the tenant that holds the secret, so records of one person never correlate across tenants.
-   The constraint is the scheme's, never the natural key's. Persistence's `dal:PrivacyProfile` decides
-   what a deployment does with personal-data keys. The flag states the fact for adopters without
-   Persistence.
+   personal value, which can be reversed by trying every value. Keys apply the same rule to every
+   sensitive value, personal or not. A keyed claim can be computed only by the tenant that holds the
+   secret, so records of one person or account never correlate across tenants. The constraint is the
+   scheme's, never the natural key's. Persistence's `dal:PrivacyProfile` decides what a deployment
+   does with sensitive keys, and `fnd:personalDataScheme` tells it which of them are personal data,
+   so erasure rules apply. The flags state the facts for adopters without Persistence.
 
    **Normalisation and valid IRIs.** A key's value is held as issued in `fnd:keyValue`. Matching
    uses a normalised form: a scheme names one of the minting specification's pipelines with
@@ -182,14 +209,19 @@ locations (applied exposure) all carry keys. Only Foundation is below all of the
 - *Keys in Party.* Instruments, forms and assets are not parties.
 - *One construct per layer.* Scheme handling and uniqueness would be repeated, and a thing keyed in
   two layers would carry two.
-- *The key as the identity.* Keys are withdrawn and may be personal data. Identity must not be
+- *The key as the identity.* Keys are withdrawn and may be sensitive. Identity must not be
   (ADR-A51).
 - *A single mixin with `owl:hasKey`.* It forces OWL's silent merge on Persistence's adopters.
 - *No `owl:hasKey` at all.* It leaves an ontology-only adopter's natural keys with no formal meaning.
 
-**Answered at review, 2026-10-03.** Sensitivity is a Foundation flag, `fnd:personalDataScheme`
-(A114-Q1). Normalisation is named by the scheme from the minting specification's closed set, and
+**Answered at review, 2026-10-03.** Sensitivity is a Foundation flag, `fnd:sensitiveDataScheme`, with
+`fnd:personalDataScheme` beside it for the personal data among sensitive schemes (A114-Q1). Normalisation is named by the scheme from the minting specification's closed set, and
 IRI validity stays with the recipe's encoding (A114-Q2, decision 6).
+
+**At the F1 gate, 2026-10-03** ([impact analysis](../../developer/sketches/keys-impact.md) §6). G2:
+the property chain of decision 5, accepted. G3: Instrument takes 0.8.0 in the cascade, and CCS C6 to
+C9 each shift by one MINOR, accepted. G1: the key class of decision 2 replaces the analysis's
+`dal:keyClassFor`, proposed in answer to the human's question and awaiting confirmation.
 
 ## Consequences
 
@@ -203,10 +235,12 @@ IRI validity stays with the recipe's encoding (A114-Q2, decision 6).
 - Persistence gains its first document that imports Foundation, `persistent-foundation`, optional and
   separate from the `dal:` configuration ontology, which still imports no layer. It ships the mixin,
   a default `dal:UniquenessConstraint` on `fnd:naturalKey` an adopter may adopt or replace, and an
-  identity profile per strategy of decision 6 as examples.
+  identity profile per strategy of decision 6 as examples. Its shapes require each scheme whose keys
+  Persistence mints to have a key class (decision 2) with an identity profile, and each key to be
+  asserted a member of its scheme's class.
 - F1 writes an impact analysis for Persistence and Surface before this ADR is accepted (CCS plan,
   F1): uniqueness constraints and merge policy, identity profiles and recipes for key nodes,
   normalisation, privacy, and Surface's index and promotion contracts over keys.
 - NRS N9 (ADR-A108), planned to share this cascade, keeps its own later window.
-- CCS C6 starts after F1 and records keys from its first examples. AIR-4.1's brief drops
+- CCS C6 starts after F1, takes Instrument 0.9.0, and records keys from its first examples. AIR-4.1's brief drops
   `aeo:Identifier`. Open CBAA migrates `agr:umr` (CCS plan §7).
