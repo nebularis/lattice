@@ -244,7 +244,8 @@ run = "docker compose -f deployment/compose/docker-compose.yml down"
 
 [tasks.clean]
 description = "Clean all build artifacts and caches"
-depends = ["clean:java", "clean:python", "clean:frontend", "clean:build", "clean:docs"]
+run = [{ tasks = ["clean:java", "clean:python", "clean:frontend", "clean:build", "clean:docs"] }]
+run_windows = [{ task = "clean-win" }]
 
 [tasks."clean:java"]
 run = "mvn -f platform/pom.xml clean"
@@ -264,6 +265,49 @@ run = "rm -rf build/ ontology/mork/mtp/out/"
 [tasks."clean:docs"]
 description = "Clean local Jekyll/Bundler artifacts under docs/ (never the committed Gemfile/Gemfile.lock)"
 run = "rm -rf docs/vendor docs/.bundle docs/_site docs/.jekyll-cache docs/.jekyll-metadata"
+
+[tasks."clean-win"]
+description = "Clean all build artifacts and caches (Windows PowerShell equivalent of clean). Run directly, or let `clean` fall back to it automatically on Windows."
+depends = ["clean:java", "clean-win:python", "clean-win:frontend", "clean-win:build", "clean-win:docs"]
+
+[tasks."clean-win:python"]
+description = "Clean Python caches, bytecode, and build artifacts (Windows)"
+shell = "powershell -c"
+run = '''
+$ErrorActionPreference = "SilentlyContinue"
+Remove-Item -Recurse -Force .build/pytest-cache, .pytest_cache, build, *.egg-info
+Get-ChildItem -Recurse -Directory -Include __pycache__, *.egg-info |
+    Remove-Item -Recurse -Force
+exit 0
+'''
+
+[tasks."clean-win:frontend"]
+description = "Clean Node/Yarn artifacts (Windows)"
+shell = "powershell -c"
+run = '''
+$ErrorActionPreference = "SilentlyContinue"
+Remove-Item -Recurse -Force node_modules, .yarn, .build/yarn-cache
+Get-ChildItem -Path apps -Directory |
+    ForEach-Object { Remove-Item -Recurse -Force (Join-Path $_.FullName "node_modules") }
+Get-ChildItem -Path .build -Directory -Filter *-test-results |
+    ForEach-Object {
+        Get-ChildItem -Path $_.FullName -Force |
+            Where-Object { $_.Name -notlike ".*" } |
+            Remove-Item -Recurse -Force
+    }
+yarn cache clean
+exit 0
+'''
+
+[tasks."clean-win:build"]
+description = "Clean generated build outputs (Windows)"
+shell = "powershell -c"
+run = '$ErrorActionPreference = "SilentlyContinue"; Remove-Item -Recurse -Force build, ontology/mork/mtp/out; exit 0'
+
+[tasks."clean-win:docs"]
+description = "Clean local Jekyll/Bundler artifacts under docs/ (Windows, never the committed Gemfile/Gemfile.lock)"
+shell = "powershell -c"
+run = '$ErrorActionPreference = "SilentlyContinue"; Remove-Item -Recurse -Force docs/vendor, docs/.bundle, docs/_site, docs/.jekyll-cache, docs/.jekyll-metadata; exit 0'
 
 [tasks."bootstrap:jekyll"]
 description = "Install Ruby/Bundler/Jekyll locally for docs/ (GitHub Pages). Not part of the default bootstrap task — run explicitly when working on docs content."
