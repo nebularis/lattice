@@ -1108,6 +1108,171 @@ keys on its persistent identity, and amendments, declarations and notices locati
 | C6-14 | the README / literate check / blocks equal the files. Release notes mark 0.9.0 and shapes 0.2.0 breaking | L1 | + |
 | C6-15 | the existing tool tests / updated only where a retired term is named / pass | L1 | + |
 
+#### C7a in detail
+
+**Machine:** R (Claude Code). **Branch:** `ccs/c7a-regimes`, created by the human from `main` once
+this brief is on `main` and its questions are answered. **Commits are the human's**, examples first
+(ADR-A-C2). Merged into `main` before its release tags are created.
+**Validation Pack:** [computable-contract-substrate-c7a](../validation/computable-contract-substrate-c7a.md).
+**Decisions:** ADR-A104 decisions 6 (legal triggers), 7 (regimes) and 8 (DP6), ADR-A106 and its addendum (nested states, C11a-Q2 and
+C11a-Q4 answered (a)), CC-D8, DP6 (sketch §6.3), ADR-A113.
+
+**Invariant:** a contract's regimes are Behaviour state spaces that arise under a term and gate legal
+relations: a relation names the states it applies in (`ins:appliesInState`), and the same legal
+triggers (an exercise, a breach, an act, a condition, an expiry) move a regime between states and,
+from C7b, make relations arise and end. State gates evaluation and never enters a design-time
+comparison (DP6). Every regime transition is a legal trigger, with the engine settings fixed, so an
+author states only what the clause says.
+
+**From the sources:**
+
+| Construct | Specialises | Adds | Sketch |
+|---|---|---|---|
+| `ins:Regime` (`skos:altLabel "Dispensation"`) | `bhv:StateSpace` | arises under a term, its transitions are `ins:RegimeTransition`s | §7.3, §7.4 |
+| `ins:RegimeTransition` | `bhv:TransitionDefinition` | selection `bhv:SingleMatch` and activation `bhv:ImmediateActivation` as value restrictions, legal triggers only | §7.3 |
+| `ins:OnExercise` | `bhv:TriggerDefinition`, kind `bhv:ExternalStimulus` | `ins:ofPower` → `ins:Power` | §7.3 |
+| `ins:OnBreach` | `bhv:TriggerDefinition`, kind `bhv:DerivedTrigger` | `ins:ofObligation` → `ins:Obligation` | §7.3 |
+| `ins:OnAct` | `bhv:TriggerDefinition`, kind `bhv:ExternalStimulus` | an activity (C7a-Q2), `ins:by` → a party | §7.3 |
+| `ins:OnCondition` | `bhv:TriggerDefinition`, kind `bhv:DerivedTrigger` | `ins:condition` → `elg:Condition` | §7.3 |
+| `ins:OnExpiry` | `bhv:TriggerDefinition`, kind `bhv:ScheduledTrigger` | `ins:after` → a `qnt:Quantity` of time (calendar units such as business days per ADR-A94), anchored at entering the state. The states in which the period does not run (C11a-Q2 (a), C7a-Q4) | §7.3, nested states §6.4 |
+| `ins:stateKind` | | a state's kind, a concept under `ins-voc:StateKindContract` (notice period, cure period, suspended, run-off, ...) | §7.3 |
+| `ins:appliesInState` | | `ins:LegalRelation` → `bhv:State` of an `ins:Regime`. Grouped by regime: any state within one regime, every regime's group across regimes. A composite holds while any descendant does (nested states §6.2) | §5.5, §6.3 |
+
+**Answered by the human, 2026-10-04:** C7a-Q1 (a), with two refinements: a per-occasion regime
+names the stated relation and covers the occasions of every bound relation instantiated from it,
+and commitment in a proposal is a legal relation (a power of acceptance), with precision and
+completeness an overlay outside the legal model. The reasoning, as an insurance use-case, is the
+sketch's §7.4.1. C7a-Q2 (a), on the principle recorded in `.github/copilot-instructions.md`: a
+domain or range only where it gives useful design-time entailment or restates what a shape checks.
+C7a-Q3 as recommended. C7a-Q5 (a), added at review: the default gating subject now, within one
+legally binding agreement, and qualified gates held (plan, held design questions). C7a-Q4:
+`ins:tolledIn`, the revised recommendation.
+
+**Questions for the human:**
+
+- **C7a-Q1. Are regimes stated meaning only, or stated and bound?** CC-D12 gives terms and relations
+  two tiers, and the sketch's §5.9 lists `ins:Template` as a mixin on regimes too. But a regime
+  cannot be bound the way a relation is:
+  - `bhv:inStateSpace` is functional, so every state belongs to exactly one state space. A bound
+    copy of a regime per instrument version would need its own states and transitions, copied in
+    full (RDF has no override).
+  - Runtime state belongs to the instrument's persistent identity, so that a notice period survives
+    an amendment (§5.9, ADR-A106). If each instrument version had its own bound regime, every
+    amendment would move the instrument's occupancy from one version's "notice period" state to
+    another's, even when the notice clause did not change.
+
+  Options:
+  - (a) **one tier.** A regime is stated meaning only: it arises under the stated term of the clause
+    that states it, and its states and transitions are shared by every instrument whose wording
+    includes that clause. Occupancies (`bhv:forSubject` the instrument's identity) distinguish the
+    instruments. A bound relation names the regime's state directly in `ins:appliesInState`. A value
+    the instance supplies, such as the length of a notice period from a variable, is resolved per
+    instrument at runtime from its assembled wording (C8 parameter bindings). Law I13 is restated:
+    only bound *relations* are evaluated, and regimes are read as stated, per subject
+  - (b) **two tiers.** A bound regime per instrument version, with copied states and transitions,
+    and an occupancy migration on every amendment
+
+  **Recommendation: (a).** It keeps one state per clause, so occupancies survive amendments that do
+  not touch the regime's clause, and a change to the clause itself, a new clause version, is the
+  only thing that moves an occupancy to a new state space. (b) duplicates whole state machines per
+  version and fights Behaviour's own model. (a) needs an addendum to ADR-A104, whose decision 13
+  says only bound meaning is evaluated, and to the sketch's §5.9, which lists `ins:Template` as a
+  mixin on regimes. C7a drafts it.
+- **C7a-Q2. The act of an `ins:OnAct` trigger.** The sketch reuses `ins:activity` on `ins:OnAct`. C6
+  declared `ins:activity`'s domain as `ins:LegalRelation`, so a reasoner would infer that every
+  `ins:OnAct` is a legal relation, and so one of the four disjoint kinds. Options: (a) drop
+  `ins:activity`'s domain (shapes already check which subjects carry it), and use it on `ins:OnAct`
+  too: one property for "the act", from one scheme, whether a relation is about it or a trigger
+  fires on it, (b) a new property for the trigger's act. **Recommendation: (a).** Removing a domain
+  rejects nothing that conformed, and a trigger on "an act of repaying" should name the same
+  `ins-voc:Repay` concept the obligation does
+- **C7a-Q3. Arising and ending move into C7a.** C11a-Q4 (a) resolves a per-occasion gate through the
+  gated relation's arising trigger: an exclusion gated by `Disputed` reads the dispute regime of the
+  occasion its `ins:arisesOnBreachOf` chain reaches. That needs `ins:arisesOn`,
+  `ins:arisesOnBreachOf`, `ins:arisesOnExerciseOf` and `ins:endsOn`, which the plan puts in C7b. They
+  take the triggers C7a defines. **Recommendation:** move those four properties into C7a. C7b keeps
+  due ranges, recurrence, survival, `ins:ends`, constitutive terms, sections and party resolution
+- **C7a-Q4. The name for "the period does not run in these states".** C11a-Q2 (a) puts it on
+  `ins:OnExpiry`: "the notice period does not run while force majeure continues", "the cure period is
+  extended by any period of suspension". The law's word for a period that stops running is
+  *tolled*: a limitation period is tolled, and a tolling agreement stops time running. English
+  drafting says "time shall not run", or uses a "stop the clock" provision. **Recommendation, revised
+  at review: `ins:tolledIn`** (→ `bhv:State`, any number): "the period is tolled while the subject is
+  in any of these states". It names the legal effect, and avoids "suspended", which names Behaviour's
+  core occasion state
+- **C7a-Q5. Whose state gates a relation.** A gate reads the occupancy of some subject. The brief
+  assumed the relation's own instrument, or its occasion. Two other cases exist: one participant's
+  share within an agreement, where several parties are each liable for their own share, and another
+  agreement altogether, where one contract responds only once another is exhausted. Options: (a)
+  state the default now (the relation's own instrument identity, or the occasion its arising chain
+  reaches), and hold the other cases for a qualified gate designed with C12, (b) allow other
+  subjects only through legal triggers (`ins:OnCondition` over the other subject's state), never
+  through `ins:appliesInState`, (c) design qualified gates now. **Recommendation: (a)**. Answered (a):
+  the model is first consistent within one legally binding agreement, and dependencies across
+  agreements may or may not belong in this layer
+
+**Decided by precedent, not asked:**
+
+- the state kind scheme follows the activity scheme (C3-Q1, C6): `ins-voc:StateKindContract`
+  constrains `ins:stateKind`, with a baseline scheme bound as fallback holding every kind the
+  examples and README use
+- every specialisation needs the explicit `bhv:` type beside the `ins:` type (B4, sketch §7.3), so
+  the engine reads Behaviour's terms without a reasoner. A shape requires it
+- the gating rule and the per-occasion resolution are evaluated by C12. C7a states them in the
+  README and comments, and ships design-time shapes: an `ins:appliesInState` value is a state of an
+  `ins:Regime`, and a relation gated by a state of a regime `bhv:perOccasionOf` a relation must
+  arise on that relation's breach or exercise (C11a-Q4 (a))
+- examples are domain-neutral, from at least three domains, under the rule in
+  `.github/copilot-instructions.md`
+
+1. **Examples first (ADR-A-C2).** In `ontology/instrument/examples/`, each a small wording, its
+   stated meaning, and one instrument's bound relations, under the answers above:
+
+   | File | Shows |
+   |---|---|
+   | `licence-notice.ttl` | a period regime: in force, notice period on exercise of the power to terminate on notice, terminated on expiry after 90 days or on exercise of termination for cause. An exclusion of the licensee's power to grant sub-licences, gated by the notice period. The DP6 point: the grant's scope never mentions state |
+   | `supply-suspension.ttl` | a switching regime, in force and suspended, moved by the exercise of powers to suspend and reinstate. A force majeure regime on the same instrument, and a relation gated across both regimes (nested states §6.2) |
+   | `facility-cure-period.ttl` | an event-of-default regime: a cure period entered on a condition (leverage above the covenant), default on expiry after 30 business days unless cured, the period tolled while a force majeure regime is in its affected state (C11a-Q2 (a), C7a-Q4). Acceleration gated by the default state |
+   | `service-dispute.ttl` | a per-occasion dispute regime (`bhv:perOccasionOf` a service obligation), and an exclusion that arises on breach of that obligation and is gated by `Disputed`, read for the occasion its arising chain reaches (C11a-Q4 (a), C7a-Q3) |
+
+2. **Spec** (`instrument` 0.9.0 → 0.10.0, additive): the constructs of the table above, and under
+   C7a-Q3 `ins:arisesOn`, `ins:arisesOnBreachOf`, `ins:arisesOnExerciseOf`, `ins:endsOn`. Under C7a-Q2,
+   `ins:activity` loses its domain, and every domain and range C7a adds follows the principle in
+   `.github/copilot-instructions.md`. Each property's comment states its subject and value. The
+   ADR-A104 addendum for C7a-Q1 (a regime is stated only, law I13 restated, the per-occasion rule and
+   the default gating subject) is drafted with the examples.
+3. **Vocab** (`instrument-vocab` 0.10.0): `ins-voc:StateKindContract` and its baseline scheme.
+4. **Shapes** (`instrument-shapes` 0.2.0 → 0.3.0, additive, rejecting only data using the new
+   terms): a regime arises under exactly one stated term, its transitions are regime transitions
+   whose triggers are legal triggers, each trigger has its one required value, the explicit `bhv:`
+   type (B4), `ins:appliesInState` names a state of a regime, the per-occasion arising rule, and
+   `ins:tolledIn` names states of a different regime from the one its expiry fires in.
+5. **README:** regimes in the terminology (regime, dispensation, legal trigger, gating, tolling), a
+   section explaining why a regime is stated once, with the use-case of the sketch's §7.4.1 as one
+   labelled example among others, a section
+   with state diagrams for each regime kind (period, switching, threshold), the gating rule with a
+   diagram, DP6 and why state never enters a comparison, a worked section per example, release
+   notes.
+6. **Tests:** `tools/test_regimes.py`, with the rows below. Catalog, releases and the tag list. The
+   agent stops before any commit.
+
+| ID | Given / When / Then | Level | +/- |
+|---|---|---|---|
+| C7a-01 | the spec / parsed / `0.10.0`, imports unchanged, every new property states subject and value, nothing names `behaviour-runtime` | L1 | + |
+| C7a-02 | every example / all layers' shapes / conform | L1 | + |
+| C7a-03 | every example / reasoner / consistent | L2 | + |
+| C7a-04 | a regime under two terms or none, a regime transition with a non-legal trigger, a regime transition stating a different selection or activation policy / shapes / each reported | L1 | − |
+| C7a-05 | an `ins:OnExercise` with no power, an `ins:OnBreach` naming a power, an `ins:OnExpiry` with no duration, an `ins:OnCondition` with no condition / shapes / each reported | L1 | − |
+| C7a-06 | an `ins:OnAct` without the explicit `bhv:TriggerDefinition` type, a regime without `bhv:StateSpace` / shapes / reported (B4) | L1 | − |
+| C7a-07 | `ins:appliesInState` naming a state of a plain `bhv:StateSpace` that is not a regime / shapes / reported | L1 | − |
+| C7a-08 | a relation gated by a per-occasion regime's state with no arising trigger reaching that regime's relation / shapes / reported (C11a-Q4) | L1 | − |
+| C7a-09 | `ins:tolledIn` naming a state of the regime its own expiry belongs to / shapes / reported | L1 | − |
+| C7a-10 | an `ins:OnAct` with `ins:activity` / reasoner / not inferred to be an `ins:LegalRelation` (C7a-Q2) | L2 | + |
+| C7a-11 | the stated regime of the licence / design-time envelope comparison of two licence versions / independent of `ins:appliesInState` (DP6) | L1 | + |
+| C7a-12 | the vocab / parsed / the state kind contract constrains `ins:stateKind`, every kind used is in the baseline | L1 | + |
+| C7a-13 | the README / literate check / blocks equal the files. Release notes for 0.10.0 and shapes 0.3.0 | L1 | + |
+| C7a-14 | the existing tool tests / unchanged / pass | L1 | + |
+
 ### Tranche E: evaluation
 
 | Slice | Content | Where |
@@ -1123,8 +1288,18 @@ keys on its persistent identity, and amendments, declarations and notices locati
 | C14 | neutral examples E1 to E4 (sketch §9) with expected-decision tables and Behaviour traces, covering their scenarios |
 | C15 | neutral examples E5 to E8, and a coverage test that every scenario S1 to S101 (except the amounts group and the merged S79) is shown by at least one example |
 | C16 | how-to guides for Wording and Instrument (sketch §11), the substrate README's "computable contract" section, ontology architecture, SDS, data architecture |
-| C16a | **simplification sweep** (from C6's review, 2026-10-03): after C9, review the Instrument model for what can be removed without losing logical correctness, under the Ponytail guardrails in `.github/copilot-instructions.md`. First candidate: the asserted `ins:Template` type, derivable from `ins:expressedIn` and `ins:arisesUnder` but kept because law I13's shapes read it without a reasoner |
+| C16a | **simplification sweep** (from C6's review, 2026-10-03): after C9, review the Instrument model for what can be removed without losing logical correctness, under the Ponytail guardrails in `.github/copilot-instructions.md`. First candidate: the asserted `ins:Template` type, derivable from `ins:expressedIn` and `ins:arisesUnder` but kept because law I13's shapes read it without a reasoner. Second: every domain and range in Instrument reviewed against the principle in `.github/copilot-instructions.md` (from C7a-Q2): kept only where it gives useful design-time entailment or restates what a shape checks |
 | C17 | handoff: the insurance renderings list for AIR Phase 5 (policy scenarios) and Open CBAA (binding authority scenarios), and the Open CBAA migration notes (§7) |
+
+### Held design questions
+
+Questions found while briefing or building a slice, with no slice yet. Each says why it matters,
+so that its implications can be weighed when it is taken up.
+
+| # | Question | Why it matters | Take up |
+|---|---|---|---|
+| HQ-1 | **Instruments without wording.** An instrument, or a fragment of one, may arrive as structured data from another system, mapped in rather than written. A counterparty's proposal sent back in response to a request for terms is the common case: it carries terms, sometimes partial or approximate, and no clause text. Law I1 requires every instrument version to be expressed in exactly one assembled wording, and law I2 requires every stated term to be expressed in a clause version. Options to weigh: (a) ingestion produces wording elements from the data, keeping "the words are the contract", (b) a fragment that is not yet an instrument, with weaker rules until it is accepted, (c) relax I1 for instruments whose source is data | a proposal must be checked by the same shapes as a contract, before anyone accepts it. Related, from C7a-Q1: a proposal's commitment (an indication, a non-binding quote, a binding quote) is a legal relation, whether it confers a power of acceptance and when that power ends. Its precision ("around five million") and completeness are an overlay on its terms, outside the legal model | before an applied ontology ingests proposals, and no later than C9 (instruments made under a power, acceptance) |
+| HQ-2 | **Qualified gates: gating by another subject's state.** C7a gates a relation by the state of its own instrument, or of the occasion its arising chain reaches (C7a-Q5). Two cases are held: one participant's share within one agreement, where several parties are each liable for their own share and each share has its own state, and another agreement altogether, where one contract responds only once another is exhausted | the model must be consistent within one legally binding agreement first. Dependencies across agreements may not belong in this layer at all, and may sit in an applied ontology above it | designed with C12's evaluator, within one agreement first |
 
 ## 5. Sequencing
 

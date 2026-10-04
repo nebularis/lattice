@@ -894,7 +894,8 @@ never the source of truth.
 
 ```text
 ins:Template               stated meaning: a mixin on Term, LegalRelation, Definition, Deeming,
-                           Qualifier and Regime. Names pty:Roles, defined words and variables
+                           Qualifier and Regime. Names pty:Roles, defined words and variables.
+                           A regime is stated only, never bound (§7.4.1, C7a-Q1)
 ins:expressedIn            stated term → wrd:Element: exactly one element version, its owner
 ins:boundIn                bound term → ins:Instrument: exactly one instrument version, its owner.
                            A relation belongs to its term, and through it to the term's owner
@@ -1567,6 +1568,66 @@ stateDiagram-v2
     Notify --> Exhausted : OnCondition, income at or above the limit
     Notify --> Below : OnCondition, income below 80% after an adjustment
 ```
+
+#### 7.4.1 A regime is stated once (decided at C7a-Q1, 2026-10-04)
+
+A regime is stated meaning only. It arises under the stated term of the clause that states it, and
+its states and transitions are shared by every instrument whose wording includes that clause.
+Occupancies tell the instruments apart: each is `bhv:forSubject` the subject the regime runs for,
+usually the instrument's persistent identity. A bound relation names a regime's state directly in
+`ins:appliesInState`. Values an instance supplies, such as the length of a notice period, are
+resolved per instrument from its assembled wording (C8). Law I13 reads accordingly: only bound
+relations are evaluated, and regimes are read as stated, per subject.
+
+Let us consider an example use-case from the world of insurance. A broker assembling cover for a
+large client rarely finds one insurer, or one contract, able to carry the whole risk. The broker
+divides it into layers, each attaching where the one below is exhausted, and places each layer
+with one or more insurers. While a layer is being placed, insurers respond with proposals at
+different levels of commitment: an indication of roughly what they might offer, a non-binding quote
+with full terms, or a binding quote that becomes a contract when accepted. Several insurers may
+share one layer, one leading on the terms and the others following, and a follower may still add
+terms of its own that apply only to its share. Over the life of the cover, contracts are endorsed
+mid-term, and at renewal new contracts replace the old ones while the layered design persists.
+Every proposal has to be checked by the same rules as a contract, because the broker needs to know
+before accepting it whether it behaves as needed: whether it fills its layer, and how its limits
+erode as claims arrive.
+
+That use-case puts four demands on how regimes are modelled, and stating a regime once meets each
+of them:
+
+- **Proposals are many, and are fragments of instruments.** A proposal is structurally the same as
+  a contract and is checked by the same shapes. Its precision ("around five million") and its
+  completeness are recorded beside its terms, never inside them. A layer can attract many
+  proposals at each renewal. If each needed its own copy of every regime's states and transitions,
+  the copies would multiply with every response. Stated once, a proposal's relations are bound as
+  usual, and its regimes are the stated ones from its clauses, checked once. Running a proposal's
+  regimes for a what-if, such as how its limits erode under a claim scenario, means creating
+  occupancies for that proposal as the subject. Nothing is copied.
+- **Shared layers with diverging followers.** A follower's own terms for its share give rise to a
+  regime under its own clause, and the leader's regimes stay shared. State that differs per
+  insurer, such as one insurer's share being exhausted while another's is not, is occupancies of
+  one shared regime for different subjects. `bhv:forSubject` has no range for exactly this
+  reason. Copying regimes per instrument would multiply them again, per insurer and per version.
+- **Structure is shared, and values vary per instance.** The evaluation of a proposal is blind to
+  how precise its values are, and its precision is metadata on a value. Stating a regime once gives
+  the same separation: the states and transitions are the clause's, and the values in them, such
+  as a notice length or an aggregate limit, are resolved per instrument, with any precision
+  qualification attached to the value.
+- **Renewals and amendments leave occupancies alone.** The layered design persists across renewals
+  while the contracts change, and endorsements land mid-term. A stated regime moves an occupancy
+  only when the regime's own clause changes, as a new clause version. With a copy per instrument
+  version, every endorsement would migrate every regime's occupancy.
+
+**Per-occasion regimes.** A regime `bhv:perOccasionOf` a relation names the stated relation, and
+applies to the occasions of every bound relation instantiated from it.
+
+**Whose state gates a relation (C7a-Q5).** A relation gated by `ins:appliesInState` reads the
+occupancy of its own instrument's persistent identity, or, for a per-occasion regime, of the
+occasion its arising chain reaches (C11a-Q4). The model is consistent within one legally binding
+agreement first. Gates whose subject is something else, one participant's share within an
+agreement, or another agreement altogether, are held: a qualified gate is a later design, and
+dependencies across agreements may not belong in this layer at all (CCS plan, held design
+questions).
 
 ### 7.5 Every state change leaves a record
 

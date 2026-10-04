@@ -301,6 +301,13 @@ like a network policy block:
 
 Try not to explain your design decisions in multiple places. Avoid explaining why you did not use a certain pattern or construct, especially if you've just explained why you did use a different one. If you feel the need to explain your design decisions, do so in a single place and cross-reference it from other places.
 
+**Use `rdfs:domain` and `rdfs:range` sparingly.** They are not constraints on how a property may be used. They tell a reasoner something about everything the property is used with: any individual that has the property *is* an instance of the domain, and any value *is* an instance of the range. A domain of `ins:LegalRelation` on `ins:activity` would make every trigger that names an act a legal relation. Declare a domain or range only where it:
+
+- gives useful entailment at design time, or
+- restates something a SHACL shape already validates, so the two say the same thing.
+
+Otherwise leave it out, say the subject and value in the property's comment, and let a shape check use. Before adding one, ask whether *every* individual that could carry the property really is an instance of the class.
+
 ### When running the Ponytail skill
 
 The Ponytail skill pushes for the smallest model and the shortest diff. In an ontology, that must never cost logical correctness. Before proposing or applying a simplification, check each of these:

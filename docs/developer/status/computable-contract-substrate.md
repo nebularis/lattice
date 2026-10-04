@@ -18,9 +18,9 @@ Behaviour 0.10.0 (shapes 0.4.0) with nested states and history, the import guard
 check`. Tranche D begins with C6, briefed. From C5 on, the agent builds and verifies, and the human
 commits by hand.
 
-**Next action, for the human:** review and commit C6's model on `ccs/c6-instrument-relations`, merge it
-into `main`, then create the three tags `mise run check:ontology-versioning` lists on the merged commit.
-**Then, for the agent:** C7a and C7b, in either order (both after C6).
+**Next action, for the human:** commit the C7a brief on `main`, and create `ccs/c7a-regimes` from it.
+**Then, for the agent:** C7a's four examples and the ADR-A104 addendum, stopping for the human's
+commit before the model.
 
 ## Slice board
 
@@ -37,9 +37,9 @@ into `main`, then create the three tags `mise run check:ontology-versioning` lis
 | C11 | runtime records, occasions, initial states | C | merged, tagged | |
 | C11a | nested states, history, concurrent regimes | C | merged, tagged | |
 | F1 | external and natural keys (ADR-A114) | Foundation, now | merged, tagged | |
-| C6 | instrument, terms, the five relations, parties, content | D | built and verified: Instrument 0.9.0, vocab 0.9.0, shapes 0.2.0. Awaiting commit and tags | the human |
+| C6 | instrument, terms, the five relations, parties, content | D | merged, tagged | |
 | C7b, C8, C9, C8a | Instrument rewrite, template library | D | waiting | C6. C8 after C7a and C7b |
-| C7a | regimes and gating, split from C7 | D | waiting | C6 |
+| C7a | regimes and gating, split from C7 | D | briefed, C7a-Q1 to Q5 answered, ready to branch | the human |
 | C12, C13 | runtime evaluator, relation plans | E | waiting | C9, C11, C11a, AIR-3.3, NRS N1 |
 | C13a | design-time joint satisfiability: slot conditions by reasoner, the task NRS N3 reuses (deferred from C5) | E | waiting | C5, NRS N1 |
 | C14 to C17 | examples, docs, handoff | F | waiting | C8a, C9, C12 |
@@ -92,3 +92,6 @@ into `main`, then create the three tags `mise run check:ontology-versioning` lis
 - 2026-10-03: F1 merged to `main` (`76790ad`) and tagged by the human. C6 branch moved to it. C6's four examples written (facility agreement, trial protocol, product warranty, software licence), each conforming to the lower layers' shapes but for one finding, raised as C6-Q5 (a path-only evidence binding). Not committed.
 - 2026-10-03: C6 examples reviewed for simplicity (Ponytail) and simplified as decided by the human: relations carry no `ins:boundIn`, `ins:party` stays authored (a beneficiary who is no party shown), `ins:resolvedBy` and group modes move to C7b (C6-Q5 deferred), activities name acts not scopes, placeholders commented, one term with two relations. Plan gains slice C16a (simplification sweep) and a C9 example. Ponytail guardrails added to `.github/copilot-instructions.md`. Not committed.
 - 2026-10-03: "Bound" kept as a technical term (a bound variable), SPC's "binder" left alone, both in `.github/copilot-instructions.md`. C6 model built: Instrument 0.9.0, its vocab 0.9.0 and shapes 0.2.0, the README as literate source, `tools/test_instrument.py` 41 tests, all ontology and tool checks passing. Not committed.
+- 2026-10-04: C6 squash-merged to `main` (`e931cbf`) and tagged by the human. The rule "merge to `main` before tagging, branch from `main`" added to `.github/copilot-instructions.md`. C7a briefed, before C7b because C7b's arising uses C7a's legal triggers, with its Validation Pack skeleton and four questions: regimes in one tier (C7a-Q1), `ins:activity` on triggers (Q2), arising and ending moved into C7a (Q3), and `ins:pausedIn` (Q4).
+- 2026-10-04: C7a-Q1 to Q3 and the new Q5 answered. Regimes are stated once (Q1 (a) with two refinements), with the reasoning as an insurance use-case in the sketch's §7.4.1. `ins:activity` loses its domain (Q2), and the domain and range principle is recorded in `.github/copilot-instructions.md`. Arising and ending move into C7a (Q3). Gates default to the relation's own agreement or occasion, with qualified gates held (Q5, HQ-2). Instruments without wording held as HQ-1. Q4 revised to `ins:tolledIn`, the legal word for a period that stops running.
+- 2026-10-04: C7a-Q4 answered: `ins:tolledIn`. All five C7a questions answered.
