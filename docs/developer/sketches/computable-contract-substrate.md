@@ -1457,12 +1457,12 @@ SHACL enforces proper use, so nothing depends on reasoning at runtime.
 | Instrument term | Specialises | Adds |
 |---|---|---|
 | `ins:Regime` (`skos:altLabel "Dispensation"`) | `bhv:StateSpace` | a regime arises under a term and belongs to it, like a relation (§5.9). Its states may be named by `ins:appliesInState`, and its transitions must be `ins:RegimeTransition`s |
-| `ins:RegimeTransition` | `bhv:TransitionDefinition` | value restrictions for the engine settings (selection `bhv:SingleMatch`, activation `bhv:ImmediateActivation`) so authors never state them, legal triggers only, and the evidence rule of §7.5 |
-| `ins:OnExercise` | `bhv:TriggerDefinition`, kind external stimulus | `ins:ofPower`, range `ins:Power` |
-| `ins:OnBreach` | `bhv:TriggerDefinition`, kind derived | `ins:ofObligation`, range `ins:Obligation` |
+| `ins:RegimeTransition` | `bhv:TransitionDefinition` | `owl:hasValue` restrictions for the engine settings (selection `bhv:SingleMatch`, activation `bhv:ImmediateActivation`), so an author with a reasoner need not state them, legal triggers only, and the evidence rule of §7.5 |
+| `ins:OnExercise` | `bhv:TriggerDefinition`, kind external stimulus | `ins:ofPower`, range `ins:Power`, domain `ins:OnExercise` |
+| `ins:OnBreach` | `bhv:TriggerDefinition`, kind derived | `ins:ofObligation`, range `ins:Obligation`, domain `ins:OnBreach` |
 | `ins:OnAct` | `bhv:TriggerDefinition`, kind external stimulus | `ins:activity` (a concept), `ins:by` (a party) |
 | `ins:OnCondition` | `bhv:TriggerDefinition`, kind derived | `ins:condition`, range `elg:Condition` |
-| `ins:OnExpiry` | `bhv:TriggerDefinition`, kind scheduled | `ins:after`, a duration anchored at entering the state, or `ins:computedBy` (§7.9) |
+| `ins:OnExpiry` | `bhv:TriggerDefinition`, kind scheduled | `ins:after`, a duration anchored at entering the state, or `ins:computedBy` (§7.9). `ins:tolledIn`, domain `ins:OnExpiry`, the states in which the period does not run |
 
 States stay `bhv:State`s, typed by a kind concept (`ins:stateKind`: notice period, run-off,
 suspension, probation, garden leave), so a domain adds kinds without a T-Box release (DP1).
@@ -1473,8 +1473,15 @@ therefore define a contract's relations and its regimes, as the substrate's aim 
 rule that applies to a contract element applies equally to a behaviour element.
 
 **No inference needed at runtime.** The engine reads Behaviour's terms. An `ins:OnExercise` must
-also be a `bhv:TriggerDefinition` in the data. Template binding asserts both types, and for
-hand-written data a SHACL shape requires the explicit `bhv:` type beside the `ins:` type.
+also be a `bhv:TriggerDefinition` in the data, with its kind, and a regime transition must state
+its two policies. A regime is stated once (§7.4.1), so no instantiation step asserts them. Data
+read without a reasoner asserts them, and a SHACL shape requires the explicit `bhv:` type beside
+the `ins:` type (B4). The kinds and the policies are `owl:hasValue` restrictions on the `ins:`
+classes, and three trigger properties carry domains, so an author working with an OWL 2 RL
+reasoner may write the `ins:` type alone and validate the closed graph. Each fixed value also has
+an `sh:in` shape, which reports a wrong stated value at the node that states it. ADR-A104's
+2026-10-04 addendum, decision 5, gives the axioms, the two validation modes and the reason
+`sh:hasValue` is not used.
 
 ```mermaid
 flowchart BT

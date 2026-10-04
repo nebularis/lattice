@@ -1,0 +1,248 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Premise. A software licence may be ended by the licensor on 90 days' notice,
+# or at once for a material breach. While notice is running, the licence is
+# still in force, but the licensee loses its power to grant sub-licences. Once
+# the notice period ends, the licence is terminated.
+#
+# The licence's clauses:
+#
+# | Clause | Text | Meaning |
+# |--------|------|---------|
+# | 4.1    | The Licensee may grant sub-licences of the Software to its affiliates. | a power |
+# | 11.1   | The Licensor may end this licence by giving 90 days' notice. | a power, and the notice regime it starts |
+# | 11.2   | The Licensor may end this licence at once if the Licensee commits a material breach. | a power, which ends the regime |
+# | 11.3   | Clause 4.1 does not apply while notice of termination is running. | an exclusion of the power in 4.1, gated by the notice period |
+#
+# The notice regime, stated once by clause 11.1 and shared by every licence on
+# this form (a regime is stated meaning only, C7a-Q1):
+#
+#   in force --(exercise of the power in 11.1)--> notice period
+#   notice period --(expiry, 90 days after entering it)--> terminated
+#   in force or notice period --(exercise of the power in 11.2)--> terminated
+#
+# What the example shows:
+#
+# | Construct                                       | Where                                   |
+# |-------------------------------------------------|-----------------------------------------|
+# | a period regime, arising under a stated term    | tmpl:notice-regime, tmpl:term-11-1      |
+# | regime transitions on legal triggers            | ins:OnExercise, ins:OnExpiry            |
+# | a trigger naming a stated power, matching the exercise of any power bound from it | ins:ofPower tmpl:end-on-notice |
+# | a relation gated by a state                     | ex:sublicensing-excluded, ins:appliesInState tmpl:notice-period |
+# | state kinds from the vocab                      | ins:stateKind                           |
+# | structure apart from state (DP6)                | the sub-licensing power's scope never mentions state |
+#
+# Every regime node carries its Behaviour type beside its Instrument type, every
+# trigger its kind, and every transition its two engine settings, so that the
+# regime is read without a reasoner (law B4). With an OWL 2 RL reasoner, the
+# Instrument types alone entail the rest (ADR-A104 2026-10-04 addendum,
+# decision 5), but every example is written to validate without one.
+
+@prefix ins:     <https://www.nebularis.org/neuro-semantic/lattice/instrument#> .
+@prefix ins-voc: <https://www.nebularis.org/neuro-semantic/lattice/instrument/vocab#> .
+@prefix bhv:     <https://www.nebularis.org/neuro-semantic/lattice/behaviour#> .
+@prefix wrd:     <https://www.nebularis.org/neuro-semantic/lattice/wording#> .
+@prefix wrd-voc: <https://www.nebularis.org/neuro-semantic/lattice/wording/vocab#> .
+@prefix fnd:     <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix pty:     <https://www.nebularis.org/neuro-semantic/lattice/party#> .
+@prefix elg:     <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
+@prefix qnt:     <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
+@prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+@prefix tmpl:    <https://example.org/lattice/instrument/licence-notice/form/> .
+@prefix ex:      <https://example.org/lattice/instrument/licence-notice/> .
+
+# ==== The licence form: wording ==============================================
+
+ex:form a wrd:Wording ;
+    fnd:hasIdentity ex:form-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:directlyComprises ex:sec-4 , ex:sec-11 .
+
+ex:sec-4 a wrd:Element ;
+    fnd:hasIdentity ex:sec-4-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Section ; wrd:objectId "4" ; wrd:rankKey "d0" ;
+    wrd:directlyComprises ex:cl-4-1 .
+ex:cl-4-1 a wrd:Text ;
+    fnd:hasIdentity ex:cl-4-1-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "4.1" ; wrd:rankKey "a0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "The Licensee may grant sub-licences of the Software to its affiliates." ] .
+
+ex:sec-11 a wrd:Element ;
+    fnd:hasIdentity ex:sec-11-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Section ; wrd:objectId "11" ; wrd:rankKey "k0" ;
+    wrd:directlyComprises ex:cl-11-1 , ex:cl-11-2 , ex:cl-11-3 .
+ex:cl-11-1 a wrd:Text ;
+    fnd:hasIdentity ex:cl-11-1-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "11.1" ; wrd:rankKey "a0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "The Licensor may end this licence by giving 90 days' notice." ] .
+ex:cl-11-2 a wrd:Text ;
+    fnd:hasIdentity ex:cl-11-2-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "11.2" ; wrd:rankKey "b0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "The Licensor may end this licence at once if the Licensee commits a material breach." ] .
+ex:cl-11-3 a wrd:Text ;
+    fnd:hasIdentity ex:cl-11-3-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "11.3" ; wrd:rankKey "c0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "Clause 4.1 does not apply while notice of termination is running." ] .
+
+# ==== Roles, durations, conditions ===========================================
+
+ex:Licensor a pty:Role ; rdfs:label "Licensor" .
+ex:Licensee a pty:Role ; rdfs:label "Licensee" .
+
+ex:duration-space a qnt:ValueSpace ;
+    qnt:spaceKey "duration-days" ; qnt:orderKind qnt:TotalOrder ; qnt:densityKind qnt:Discrete ;
+    qnt:spaceHash "duration-days-v1" .
+ex:day a qnt:Unit ; rdfs:label "day" .
+
+# Placeholders: scopes stated, not yet evaluable (C7b, C13).
+ex:material-breach a elg:Condition ;
+    elg:conditionKey "licensee-material-breach" ;
+    elg:matchStrategy elg:ExactMatch ; elg:compatibilityOperation elg:AllRequired ;
+    elg:wildcardSemantics elg:NoWildcard ;
+    elg:requiredConcept ex:materially-breached .
+ex:materially-breached a skos:Concept ; rdfs:label "the Licensee has committed a material breach" .
+
+# ==== Stated meaning: relations ==============================================
+
+tmpl:term-4-1 a ins:Term , ins:Template ; ins:expressedIn ex:cl-4-1 .
+tmpl:grant-sublicences a ins:Power , ins:Template ;
+    ins:arisesUnder tmpl:term-4-1 ;
+    ins:holder ex:Licensee ;
+    ins:counterparty ex:Licensor ;
+    ins:activity ins-voc:GrantSublicence .            # its scope never mentions state (DP6)
+
+tmpl:term-11-1 a ins:Term , ins:Template ; ins:expressedIn ex:cl-11-1 .
+tmpl:end-on-notice a ins:Power , ins:Template ;
+    ins:arisesUnder tmpl:term-11-1 ;
+    ins:holder ex:Licensor ;
+    ins:counterparty ex:Licensee ;
+    ins:activity ins-voc:Terminate .
+
+tmpl:term-11-2 a ins:Term , ins:Template ; ins:expressedIn ex:cl-11-2 .
+tmpl:end-for-breach a ins:Power , ins:Template ;
+    ins:arisesUnder tmpl:term-11-2 ;
+    ins:holder ex:Licensor ;
+    ins:counterparty ex:Licensee ;
+    ins:activity ins-voc:Terminate ;
+    ins:scope ex:material-breach .
+
+tmpl:term-11-3 a ins:Term , ins:Template ; ins:expressedIn ex:cl-11-3 .
+tmpl:sublicensing-excluded a ins:Exclusion , ins:Template ;
+    ins:arisesUnder tmpl:term-11-3 ;
+    ins:holder ex:Licensor ;                          # the excepted power's counterparty (I8)
+    ins:counterparty ex:Licensee ;
+    ins:excepts tmpl:grant-sublicences ;
+    ins:appliesInState tmpl:notice-period .           # the gate, held apart from the grant (DP6)
+
+# ==== Stated meaning: the notice regime ======================================
+#
+# Stated once, under the term of clause 11.1, and shared by every licence that
+# includes the clause. Each licence's progress through it is an occupancy for
+# that licence's persistent identity.
+
+tmpl:notice-regime a ins:Regime , bhv:StateSpace , ins:Template ;
+    fnd:hasIdentity tmpl:notice-regime-identity ;
+    ins:arisesUnder tmpl:term-11-1 ;
+    bhv:initialState tmpl:in-force .
+
+tmpl:in-force a bhv:State ;
+    bhv:inStateSpace tmpl:notice-regime ; ins:stateKind ins-voc:InForce .
+tmpl:notice-period a bhv:State ;
+    bhv:inStateSpace tmpl:notice-regime ; ins:stateKind ins-voc:NoticePeriod .
+tmpl:terminated a bhv:State ;
+    bhv:inStateSpace tmpl:notice-regime ; ins:stateKind ins-voc:Terminated .
+
+# Legal triggers. Each names the stated power, and fires on the exercise of any
+# power bound from it.
+tmpl:on-notice-given a ins:OnExercise , bhv:TriggerDefinition ;
+    bhv:triggerKind bhv:ExternalStimulus ;
+    ins:ofPower tmpl:end-on-notice .
+tmpl:on-notice-expiry a ins:OnExpiry , bhv:TriggerDefinition ;
+    bhv:triggerKind bhv:ScheduledTrigger ;
+    ins:after [ a qnt:Quantity ; qnt:onSpace ex:duration-space ;
+                qnt:numericValue "90"^^xsd:decimal ; qnt:inUnit ex:day ] .   # anchored at entering the notice period
+tmpl:on-termination-for-breach a ins:OnExercise , bhv:TriggerDefinition ;
+    bhv:triggerKind bhv:ExternalStimulus ;
+    ins:ofPower tmpl:end-for-breach .
+
+tmpl:give-notice a ins:RegimeTransition , bhv:TransitionDefinition ;
+    bhv:fromState tmpl:in-force ; bhv:toState tmpl:notice-period ;
+    bhv:hasTrigger tmpl:on-notice-given ;
+    bhv:selectionPolicy bhv:SingleMatch ; bhv:activationPolicy bhv:ImmediateActivation .
+tmpl:notice-runs-out a ins:RegimeTransition , bhv:TransitionDefinition ;
+    bhv:fromState tmpl:notice-period ; bhv:toState tmpl:terminated ;
+    bhv:hasTrigger tmpl:on-notice-expiry ;
+    bhv:selectionPolicy bhv:SingleMatch ; bhv:activationPolicy bhv:ImmediateActivation .
+tmpl:terminate-from-in-force a ins:RegimeTransition , bhv:TransitionDefinition ;
+    bhv:fromState tmpl:in-force ; bhv:toState tmpl:terminated ;
+    bhv:hasTrigger tmpl:on-termination-for-breach ;
+    bhv:selectionPolicy bhv:SingleMatch ; bhv:activationPolicy bhv:ImmediateActivation .
+tmpl:terminate-during-notice a ins:RegimeTransition , bhv:TransitionDefinition ;
+    bhv:fromState tmpl:notice-period ; bhv:toState tmpl:terminated ;
+    bhv:hasTrigger tmpl:on-termination-for-breach ;
+    bhv:selectionPolicy bhv:SingleMatch ; bhv:activationPolicy bhv:ImmediateActivation .
+
+# ==== The licence for Fernwood ===============================================
+
+ex:fernwood-wording-v1 a wrd:AssembledWording ;
+    fnd:hasIdentity ex:fernwood-wording-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:assembledFrom ex:form ;
+    wrd:includes ex:sec-4 , ex:cl-4-1 , ex:sec-11 , ex:cl-11-1 , ex:cl-11-2 , ex:cl-11-3 .
+
+ex:fernwood-v1 a ins:Instrument ;
+    fnd:hasIdentity ex:fernwood-identity ;
+    ins:expressedIn ex:fernwood-wording-v1 ;
+    ins:party ex:licensor-occ , ex:licensee-occ .
+
+ex:corvid a pty:Actor ; rdfs:label "Corvid Software Ltd" .
+ex:fernwood a pty:Actor ; rdfs:label "Fernwood Analytics Ltd" .
+
+ex:licensor-occ a pty:RoleOccupancy ;
+    fnd:hasIdentity ex:licensor-occ-identity ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-06-01T00:00:00Z"^^xsd:dateTime ] ;
+    pty:inRole ex:Licensor ; pty:occupiedBy ex:corvid .
+ex:licensee-occ a pty:RoleOccupancy ;
+    fnd:hasIdentity ex:licensee-occ-identity ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-06-01T00:00:00Z"^^xsd:dateTime ] ;
+    pty:inRole ex:Licensee ; pty:occupiedBy ex:fernwood .
+
+# ==== Bound meaning: owned by Fernwood's licence =============================
+#
+# What instantiation produces. The regime is not bound: the bound exclusion
+# names the stated regime's state, and its gate reads the occupancy for this
+# licence's persistent identity (C7a-Q1, C7a-Q5).
+
+ex:term-4-1 a ins:Term ; ins:boundIn ex:fernwood-v1 ; ins:boundFrom tmpl:term-4-1 .
+ex:grant-sublicences a ins:Power ;
+    ins:boundFrom tmpl:grant-sublicences ; ins:arisesUnder ex:term-4-1 ;
+    ins:holder ex:licensee-occ ; ins:counterparty ex:licensor-occ ;
+    ins:activity ins-voc:GrantSublicence .
+
+ex:term-11-1 a ins:Term ; ins:boundIn ex:fernwood-v1 ; ins:boundFrom tmpl:term-11-1 .
+ex:end-on-notice a ins:Power ;
+    ins:boundFrom tmpl:end-on-notice ; ins:arisesUnder ex:term-11-1 ;
+    ins:holder ex:licensor-occ ; ins:counterparty ex:licensee-occ ;
+    ins:activity ins-voc:Terminate .
+
+ex:term-11-2 a ins:Term ; ins:boundIn ex:fernwood-v1 ; ins:boundFrom tmpl:term-11-2 .
+ex:end-for-breach a ins:Power ;
+    ins:boundFrom tmpl:end-for-breach ; ins:arisesUnder ex:term-11-2 ;
+    ins:holder ex:licensor-occ ; ins:counterparty ex:licensee-occ ;
+    ins:activity ins-voc:Terminate ;
+    ins:scope ex:material-breach .
+
+ex:term-11-3 a ins:Term ; ins:boundIn ex:fernwood-v1 ; ins:boundFrom tmpl:term-11-3 .
+ex:sublicensing-excluded a ins:Exclusion ;
+    ins:boundFrom tmpl:sublicensing-excluded ; ins:arisesUnder ex:term-11-3 ;
+    ins:holder ex:licensor-occ ; ins:counterparty ex:licensee-occ ;
+    ins:excepts ex:grant-sublicences ;
+    ins:appliesInState tmpl:notice-period .

@@ -4,7 +4,7 @@
 
 **Unit ID:** `computable-contract-substrate`
 **Status:** 🔨 In progress. Gate A passed. Tranche B and C briefed (C3, C10)
-**Last updated:** 2026-10-03
+**Last updated:** 2026-10-04
 **Plan:** [computable-contract-substrate.md](../plans/computable-contract-substrate.md)
 **Sketches:** [computable-contract-substrate.md](../sketches/computable-contract-substrate.md),
 [contract-amounts.md](../sketches/contract-amounts.md)
@@ -18,9 +18,10 @@ Behaviour 0.10.0 (shapes 0.4.0) with nested states and history, the import guard
 check`. Tranche D begins with C6, briefed. From C5 on, the agent builds and verifies, and the human
 commits by hand.
 
-**Next action, for the human:** commit the C7a brief on `main`, and create `ccs/c7a-regimes` from it.
-**Then, for the agent:** C7a's four examples and the ADR-A104 addendum, stopping for the human's
-commit before the model.
+**Next action, for the human:** review and commit C7a's four examples and the ADR-A104 addendum on
+`ccs/c7a-regimes` (Validation Pack handoff, phase 1).
+**Then, for the agent:** the C7a model: spec 0.10.0, vocab, shapes 0.3.0, README and
+`tools/test_regimes.py`, stopping before any commit.
 
 ## Slice board
 
@@ -39,7 +40,7 @@ commit before the model.
 | F1 | external and natural keys (ADR-A114) | Foundation, now | merged, tagged | |
 | C6 | instrument, terms, the five relations, parties, content | D | merged, tagged | |
 | C7b, C8, C9, C8a | Instrument rewrite, template library | D | waiting | C6. C8 after C7a and C7b |
-| C7a | regimes and gating, split from C7 | D | briefed, C7a-Q1 to Q5 answered, ready to branch | the human |
+| C7a | regimes and gating, split from C7 | D | examples and ADR-A104 addendum written on `ccs/c7a-regimes` | the human's commit |
 | C12, C13 | runtime evaluator, relation plans | E | waiting | C9, C11, C11a, AIR-3.3, NRS N1 |
 | C13a | design-time joint satisfiability: slot conditions by reasoner, the task NRS N3 reuses (deferred from C5) | E | waiting | C5, NRS N1 |
 | C14 to C17 | examples, docs, handoff | F | waiting | C8a, C9, C12 |
@@ -95,3 +96,5 @@ commit before the model.
 - 2026-10-04: C6 squash-merged to `main` (`e931cbf`) and tagged by the human. The rule "merge to `main` before tagging, branch from `main`" added to `.github/copilot-instructions.md`. C7a briefed, before C7b because C7b's arising uses C7a's legal triggers, with its Validation Pack skeleton and four questions: regimes in one tier (C7a-Q1), `ins:activity` on triggers (Q2), arising and ending moved into C7a (Q3), and `ins:pausedIn` (Q4).
 - 2026-10-04: C7a-Q1 to Q3 and the new Q5 answered. Regimes are stated once (Q1 (a) with two refinements), with the reasoning as an insurance use-case in the sketch's §7.4.1. `ins:activity` loses its domain (Q2), and the domain and range principle is recorded in `.github/copilot-instructions.md`. Arising and ending move into C7a (Q3). Gates default to the relation's own agreement or occasion, with qualified gates held (Q5, HQ-2). Instruments without wording held as HQ-1. Q4 revised to `ins:tolledIn`, the legal word for a period that stops running.
 - 2026-10-04: C7a-Q4 answered: `ins:tolledIn`. All five C7a questions answered.
+- 2026-10-04: C7a examples written (licence notice, supply suspension, facility cure period, service dispute) with the ADR-A104 addendum "a regime is stated once". All four conform to the lower layers' shapes. Found while writing: stated regimes must assert Behaviour's types and engine policies themselves, since no binding step does (addendum decision 5).
+- 2026-10-04: C7a-R1 decided: the asserted `bhv:` terms stay the baseline, and `owl:hasValue` restrictions with three trigger domains let an OWL 2 RL reasoner supply them. Value shapes use `sh:in` (tested: `sh:hasValue` fails both modes). `owl:AllDifferent` in Behaviour is follow-up FU-C7a-a (TD-17). Addendum decision 5, sketch §7.3, plan and Validation Pack updated.
