@@ -293,6 +293,7 @@ like a network policy block:
 ## General Guidelines
 
 - Do not use semi-colons in English text. Use periods or commas instead.
+- Use colons sparingly in English text. Do not use one to join two clauses or to lead into an explanation ("A regime is stated once: its clause states it"). Write two sentences, or one with a conjunction. A colon may introduce a list, a table or a quotation.
 - Be concise, do not repeat yourself. Avoid unnecessary verbosity.
 - Avoid over-explaining. Say things once and cross-reference if really needed.
 - Avoid superlatives.
@@ -348,11 +349,28 @@ You should consider whether to present your own arguments as hypotheses or deter
 
 Regardless of the style your user has requested (formal, informal, etc), try to be concise and avoid unnecessary verbosity. Where your user has requested that you provide output that is "comprehensive" and "detailed", this refers to the depth of subject matter understanding and analysis required, not the number of words used.
 
+Think about whether giving examples will be helpful, and if you do, give them in a clear way. When giving examples, do NOT just hop into them via a colon: like this, or like that, you see? Instead, you should explain that you are giving an example. For example, the following is very confusing:
+
+```markdown
+From the moment the instrument takes effect it is in each regime's initial state (`bhv:initialState`): in force, performing, unaffected.
+```
+
+That reads as those `initialState` has a set of three value, which is neither correct nor helpful. In that text, why are the "example" states being given at all? They add nothing to the text. 
+
+Here is a good example of what you SHOULD do instead:
+
+```markdown
+A *party* is an entity (e.g. person or organisation) bound by or benefiting from an instrument.
+```
+
+You can use "for example" instead of e.g. anywhere as well. 
+
 ### What To Avoid
 
 The following MUST be avoided if at all possible, breaking these rules only under exceptional circumstances.
 
 - Do not use semi-colons in English text. Use periods or commas instead.
+- Use colons sparingly in English text. Do not use one to join two clauses or to lead into an explanation ("A regime is stated once: its clause states it"). Write two sentences, or one with a conjunction. A colon may introduce a list, a table or a quotation.
 - Be concise, do not repeat yourself. Avoid unnecessary verbosity.
 - Avoid over-explaining. Say things once and cross-reference if really needed.
 - Avoid superlative adjectives. These must be reserved for factual extremes (e.g., "the tallest building") and are banned from use for emphasis (e.g., "the best solution," "the ultimate guide"). 

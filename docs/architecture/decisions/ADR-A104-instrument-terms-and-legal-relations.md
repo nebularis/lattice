@@ -188,17 +188,19 @@ The examples are `licence-notice.ttl`, `supply-suspension.ttl`, `facility-cure-p
    13, decided 2026-10-04). Behaviour's engine reads only Behaviour's terms: `bhv:StateSpace`,
    `bhv:TransitionDefinition` with its `bhv:selectionPolicy` and `bhv:activationPolicy`, and
    `bhv:TriggerDefinition` with its `bhv:triggerKind`. Behaviour's structural shapes require each
-   policy and the kind (minimum one). Decision 13 had instantiation assert them beside the `ins:`
+   policy (minimum one), and Instrument's require each legal trigger's kind, which Behaviour leaves
+   optional. Decision 13 had instantiation assert them beside the `ins:`
    types. A regime is stated only (decision 1), so nothing instantiates it, and the `bhv:` terms
    come from one of two places:
 
    - **Asserted, for data read without a reasoner.** This is the baseline, and every example
      follows it. Each regime node carries its `bhv:` type beside its `ins:` type. Each
      `ins:RegimeTransition` states `bhv:selectionPolicy bhv:SingleMatch` and `bhv:activationPolicy
-     bhv:ImmediateActivation`. Each legal trigger states its `bhv:triggerKind`. Law B4's shape
-     requires the explicit `bhv:` type, so a consumer with no reasoner never meets a regime that
-     Behaviour's shapes silently skip: those shapes select nodes by `bhv:` class, and a node typed
-     only `ins:RegimeTransition` would pass them without being checked.
+     bhv:ImmediateActivation`. Each legal trigger states its `bhv:triggerKind`. Law B4's shapes
+     require the explicit `bhv:` type, because the engine matches the `rdf:type` triple as
+     written, and a node typed only `ins:RegimeTransition` would be invisible to it. They check
+     the triple itself (`sh:path rdf:type ; sh:hasValue`): `sh:class` follows the subclass axioms
+     in the data graph, and would pass without it.
    - **Entailed, for authors working with a reasoner.** An optional convenience. Each Instrument
      class states its fixed Behaviour terms as axioms, so an author with an OWL 2 RL reasoner (or
      a more expressive one) writes the `ins:` type alone:
@@ -237,14 +239,17 @@ The examples are `licence-notice.ttl`, `supply-suspension.ttl`, `facility-cure-p
      be absent. On the closed graph they report the wrong value at every node the merge reached.
      `sh:hasValue` is not used: it would reject correct data written for a reasoner (the value is
      not yet there), and miss a wrong value after the merge (the right one is also there).
-     Presence stays with Behaviour's minimum counts on the graph the engine reads.
+     Presence stays with the minimum counts, Behaviour's for the policies and Instrument's for the
+   kinds, on the graph the engine reads.
    - **Distinct individuals in Behaviour** (follow-up FU-C7a-a, CCS plan): `owl:AllDifferent` over
      the selection policies, the activation policies and the trigger kinds, so that a reasoner
      reports the merge as an inconsistency at the triple that caused it.
 
 6. **Smaller settlements.** `ins:activity` has no domain, so `ins:OnAct` reuses it for the act a
    trigger fires on (C7a-Q2). Decision 5's three trigger domains follow the same rule. `ins:arisesOn`, `ins:arisesOnBreachOf`, `ins:arisesOnExerciseOf` and
-   `ins:endsOn` (decision 6) land with the triggers in C7a (C7a-Q3). `ins:tolledIn` names the
+   `ins:endsOn` (decision 6) land with the triggers in C7a (C7a-Q3). They take the four triggers
+   other than `ins:OnExpiry`, which counts from entering a state, and a relation has none to enter
+   (sketch §5.5). A relation's own periods are due ranges (C7b). `ins:tolledIn` names the
    states in which an `ins:OnExpiry` period does not run (C7a-Q4, ADR-A106 addendum decision 9).
    `ins:stateKind` takes a concept under `ins-voc:StateKindContract`, with a baseline scheme bound
    as fallback.

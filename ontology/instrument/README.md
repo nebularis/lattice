@@ -233,12 +233,16 @@ A relation is always between parties. "The goods must be delivered" becomes an o
 **Choosing a kind:** Contract wording signals the kind of a relation by its verbs, but the test is what the provision does to the parties' positions:
 
 ```mermaid
-flowchart TB
-    Q1{"Does it require a party<br/>to act, or not to act?"}
-    Q2{"to act, or<br/>to keep a state holding?"}
-    Q3{"Does it free a party<br/>from such a requirement?"}
-    Q4{"from a duty not to act,<br/>or from a duty to act<br/>or a power?"}
-    Q5{"Can a party, by an act,<br/>change another's position?"}
+---
+config:
+  layout: elk
+---
+flowchart LR
+    Q1["Does it require a party<br/>to act, or not to act?"]
+    Q2["to act, or<br/>to keep a state holding?"]
+    Q3["Does it free a party<br/>from such a requirement?"]
+    Q4["from a duty not to act,<br/>or from a duty to act<br/>or a power?"]
+    Q5["Can a party, by an act,<br/>change another's position?"]
     OB["ins:Obligation"]
     CO["ins:ContinuingObligation"]
     PR["ins:Prohibition"]
@@ -263,7 +267,7 @@ relations under one term: a power to terminate, and an obligation about the form
 
 ##### 4.2.4.1 **Arising: when a relation comes into existence.** 
 
-In law a right or a duty *arises* when the facts its source attaches it to come about. Hohfeld called these *operative facts*: the facts that, under a rule or a contract, create, change, or end a legal relation, as against the *evidential facts* that prove them. Giving notice, failing to pay, issuing an invoice, and leverage passing a threshold are all operative facts in some contract. Contract English uses "arise" in two senses, which this layer keeps apart:
+In law, a right or a duty *arises*, or comes into existence, when the facts that bring it into existence occur. The contract or rule that creates it names those facts. "If the Supplier fails to deliver, the Buyer may terminate" gives the buyer a power that arises when the supplier fails to deliver. Hohfeld called such facts *operative facts*, the facts that, under a rule or a contract, create, change, or end a legal relation. He distinguished them from *evidential facts*, which prove them. Giving notice, failing to pay, issuing an invoice, and leverage passing a threshold are all operative facts. Contract English uses "arise" in two senses, which this layer keeps apart.
 
 ```mermaid
 flowchart LR
@@ -283,9 +287,9 @@ flowchart LR
 | Sense | Contract English | Answers | In this layer |
 |---|---|---|---|
 | its **source** | "any obligation arising under this agreement", "liabilities arising under clause 9" | which provision creates it? | `ins:arisesUnder` exactly one term, fixed by the words |
-| its **moment** | "a right to terminate arises if the Supplier fails to deliver", "the duty to pay arises on the issue of each invoice" | from when does it exist? | `ins:arisesOn` a legal trigger (§4.2.15), or its short forms `ins:arisesOnBreachOf` and `ins:arisesOnExerciseOf`: optional |
+| its **moment** | "a right to terminate arises if the Supplier fails to deliver", "the duty to pay arises on the issue of each invoice" | from when does it exist? | `ins:arisesOn` a legal trigger (§4.2.15), or the short forms `ins:arisesOnBreachOf` and `ins:arisesOnExerciseOf`. Optional |
 
-A relation whose words name no operative fact exists from the moment its instrument takes effect. "The Borrower shall repay each loan on its maturity date" binds the borrower from signing, although nothing is payable until maturity. Arising is not falling due: a duty may arise long before it must be performed, as a debt *accrues* before it is *payable*, and its due range (C7b) says when performance is owed. The duty to repay arises at signing and is due only at maturity:
+A relation whose words name no operative fact exists from the moment its instrument takes effect. **Arising is not falling due.** "The Borrower shall repay each loan on its maturity date" binds the borrower from signing, although nothing is payable until maturity, in the way that a debt *accrues* before it is *payable*. The relation's due range (C7b) states when performance is owed.
 
 ```mermaid
 gantt
@@ -298,21 +302,22 @@ gantt
     not yet payable               :n1, 2027-01-04, 2031-12-01
     due on the maturity date      :crit, d1, 2031-12-01, 2031-12-31
 ```
- A relation whose words do name an operative fact does not exist until the fact
-happens, and then exists for the case it happened in:
 
-- **on a breach**: what follows a failure. "If the Supplier fails to deliver, the Buyer may
-  terminate" is a power arising on breach of the duty to deliver, and "the Borrower shall pay default
-  interest on any overdue sum" an obligation arising on breach of the duty to pay. A primary duty and
-  the relations that arise on its breach form a *breach chain*, which may fan out: one failure can
-  give a remedy, a fee and a power to terminate together
-- **on an exercise**: what a power creates. "On acceleration, the Borrower shall repay all loans at
-  once" is an obligation arising on exercise of the power to accelerate
-- **on an act**: "on the issue of each invoice, the Customer shall pay it", where issuing an invoice
-  exercises no power and breaches nothing
-- **on a condition**: "if leverage exceeds 3.5 to 1, the Borrower shall deliver a remediation plan"
+A relation whose words name an operative fact exists only once that fact occurs, and then for the
+case in which it occurred. The fact is of one of four kinds.
 
-A breach chain from a supply agreement, where one failure to deliver gives rise to three relations:
+- **A breach.** "If the Supplier fails to deliver, the Buyer may terminate" is a power arising on
+  breach of the duty to deliver. "The Borrower shall pay default interest on any overdue sum" is an
+  obligation arising on breach of the duty to pay. A primary duty and the relations arising on its
+  breach form a *breach chain*. A chain may fan out, so that one failure gives a remedy, a fee and a
+  power to terminate together.
+- **An exercise.** "On acceleration, the Borrower shall repay all loans at once" is an obligation
+  arising on exercise of the power to accelerate.
+- **An act.** "On the issue of each invoice, the Customer shall pay it." Issuing an invoice
+  exercises no power and breaches nothing.
+- **A condition.** "If leverage exceeds 3.5 to 1, the Borrower shall deliver a remediation plan."
+
+In this breach chain from a supply agreement, one failure to deliver gives rise to three relations.
 
 ```mermaid
 flowchart LR
@@ -325,15 +330,16 @@ flowchart LR
     T -- "arisesOnBreachOf" --> D
 ```
 
-**Ending.** `ins:endsOn` names the operative facts on which a relation ends: "the Supplier's duty
-of exclusivity ends if the Buyer fails to meet its minimum order", "the Lender's power to
-accelerate ends once the Event of Default is waived". A relation with none ends with its instrument (C7b adds termination of whole terms and
-survival after termination). Ending is final for the case it ends for. A relation that recurs, a
-monthly service or an invoice a month, does so as a new occasion, and an ended occasion stays ended.
+**Ending.** `ins:endsOn` names the operative facts on which a relation ends, as in "the Supplier's
+duty of exclusivity ends if the Buyer fails to meet its minimum order" or "the Lender's power to
+accelerate ends once the Event of Default is waived". A relation with none ends with its
+instrument. C7b adds the termination of whole terms, and survival after termination. Ending is
+final for the case concerned, and an ended occasion stays ended. A recurring relation, such as a
+monthly service, recurs as a new occasion.
 
-**What happens at runtime.** For each case a relation applies to, Behaviour keeps an *occasion*:
-the relation applied to that case, with its own state. Arising and ending move it through the core
-occasion states, which the runtime evaluator derives from records (C12):
+**What happens at runtime.** For each case a relation applies to, Behaviour keeps an *occasion*,
+the relation applied to that case, with its own state. Arising and ending move the occasion through
+Behaviour's core occasion states, which the runtime evaluator derives from records (C12).
 
 ```mermaid
 stateDiagram-v2
@@ -352,10 +358,10 @@ stateDiagram-v2
     Arisen --> Breached : no performance when due, or a forbidden act done
 ```
 
-*Pending* means the relation applies to the case and has not yet arisen, *Arisen* that it exists and
-is live. A breach of one occasion is itself an operative fact: an `ins:OnBreach` of it may make
-another relation arise, which is how a breach chain runs. Each relation has an occasion for each
-case, so a monthly duty has twelve occasions a year, each moving on its own:
+*Pending* means that the relation applies to the case but has not yet arisen. *Arisen* means that
+it exists and is live. A breach of one occasion is itself an operative fact, so an `ins:OnBreach` of
+it may make another relation arise. This is how a breach chain runs. A relation has one occasion
+per case, so a monthly duty has twelve occasions a year, each with its own state.
 
 ```mermaid
 flowchart TB
@@ -367,8 +373,9 @@ flowchart TB
     M -- "an OnBreach of it" --> P["the Customer's power to end<br/>arises for March's breach"]
 ```
 
-Arising and ending say *whether* a relation exists. Whether an existing relation applies *now*, in
-the situation the instrument is in, is a second question, answered by regimes (§4.2.13).
+Arising and ending determine *whether* a relation exists. Whether an existing relation applies
+*now*, in the instrument's current situation, is a separate question, which regimes answer
+(§4.2.13).
 
 #### 4.2.5 **`ins:Obligation`.**
 
@@ -655,18 +662,18 @@ flowchart TB
 
 In legal terminology, a regime is a body of rules that applies to a specific situation, or for a specific period of time, for example an insolvency regime, or "the regime that applies during the notice period", and so on. It is synonymous with *dispensation*, in its older sense of an order of things that holds for a period. In this substrate, a *regime* is modelled as a set of states an instrument can be in, along with rules that can be used to move it between states. Some examples include a notice regime (in force, notice period, terminated), suspension regime (in force, suspended), or event-of-default regime (performing, cure period, defaulted).
 
-Arising and ending (§4.2.4) are about events that happen once: a relation comes into existence, later it ends, and it does not come back. Contracts also describe *situations* that an instrument enters and leaves, sometimes more than once, which change what the contract applies while they last. For example:
+Arising and ending (§4.2.4) describe events that happen once. A relation comes into existence, later ends, and does not return. Contracts also describe *situations* that an instrument enters and leaves, sometimes more than once, and that change what applies under the contract while they last. For example:
 
 - while notice of termination is running
 - while deliveries are suspended
 - while an event of default is continuing
 - while a force majeure event prevents performance
 
-A regime models one such family of situations. Its states are the situations (notice period, in force, terminated), and its transitions are the operative facts that move the instrument from one to the next (giving notice, the notice period running out).
+A regime models one such family of situations. Its states are the situations, and its transitions are the operative facts that move the instrument from one to the next.
 
 ##### 4.2.13.1 **Where an instrument's regimes come from.**
 
-A regime arises under the term of the clause that describes the situation (`ins:arisesUnder`), as a relation does. A licence's termination clause states its notice regime, and a supply agreement's suspension clause states its suspension regime. An instrument has a regime only if its wording includes the clause that states it: a licence with no termination on notice has no notice regime, and nothing in it can depend on a notice period. So an instrument has as many regimes as it has clauses describing situations: often none, often several, each independent of the others. A clause may state a regime and relations together (the licence's clause 11.1 states the power to end on notice and the notice regime its exercise starts), or a regime alone (a force majeure clause).
+A regime arises under the term of the clause that describes the situation (`ins:arisesUnder`), as a relation does. A licence's termination clause, for example, states its notice regime. An instrument has a regime only if its wording includes the clause that states it. A licence with no termination on notice has no notice regime, and nothing in it can depend on a notice period. An instrument may therefore have no regimes or several, each independent of the others. A clause may state a regime together with relations, as the licence's clause 11.1 states both the power to end on notice and the notice regime its exercise starts. A clause may also state a regime alone, as a force majeure clause does.
 
 ```mermaid
 flowchart LR
@@ -692,9 +699,9 @@ flowchart LR
 
 A licence on a form without clause 14.1 would have one regime, not two.
 
-**An instrument is always in exactly one state of each of its regimes.** From the moment the instrument takes effect it is in each regime's initial state (`bhv:initialState`). After that it moves only along the regime's transitions, each on a legal trigger, and at every moment it is in exactly one of the regime's states.
+**An instrument is always in exactly one state of each of its regimes.** The instrument enters each regime's initial state (`bhv:initialState`) when it takes effect. After that it moves only along the regime's transitions, each on a legal trigger.
 
-Each regime runs on its own: being in a notice period says nothing about force majeure. The instrument's position is not part of what was agreed. It is a runtime record, a Behaviour *state occupancy* for the instrument's persistent identity, which begins when the instrument enters the state and ends when a transition leaves it (§11.1). One licence, over a year (dates illustrative):
+Each regime runs independently, so being in a notice period says nothing about force majeure. The instrument's position is not part of what was agreed. It is a runtime record, a Behaviour *state occupancy* for the instrument's persistent identity, which begins when the instrument enters the state and ends when a transition leaves it (§11.1). The diagram shows one licence over a year, with illustrative dates.
 
 ```mermaid
 gantt
@@ -714,7 +721,7 @@ gantt
 
 Most relations apply whenever they exist. Some apply only under specific circumstances, and their clauses say so, for example: "during the notice period, the Licensee may not grant sub-licences", or "while an Event of Default is continuing, the Lender may declare the Loan due", or "the Supplier is relieved of clause 3.1 while a force majeure event prevents it from performing". 
 
-Such a relation names the states it applies in (`ins:appliesInState`). Those states are its *gate*. While the instrument is in one of them, the gate is open and the relation applies. Otherwise the gate is closed, and the relation, though it still exists, does not apply. The licence again, with the exclusion of sub-licensing and the power it excepts beneath its notice regime:
+Such a relation names the states it applies in (`ins:appliesInState`). Those states are its *gate*. While the instrument is in one of them, the gate is open and the relation applies. Otherwise the gate is closed, and the relation, though it still exists, does not apply. The diagram shows the licence again, with the exclusion of sub-licensing and the power it excepts beneath the notice regime.
 
 ```mermaid
 gantt
@@ -737,7 +744,7 @@ The exclusion exists all along and applies only while its gate is open. While it
 **A relation's regimes** are those its named states belong to. They are its instrument's, stated by
 the relation's own clause or another. Most relations name no state, so have no gate and no regimes. Like its scope, a relation's gate is fixed by its clause's words.
 
-Three questions about one relation at one moment have separate answers, from separate parts of the model. Taking the licence's exclusion of the power to grant sub-licences (§16.5):
+Three questions about one relation at one moment have separate answers, from separate parts of the model. The table answers them for the licence's exclusion of the power to grant sub-licences (§16.5).
 
 | Question | Answered by | For the exclusion |
 |---|---|---|
@@ -745,7 +752,7 @@ Three questions about one relation at one moment have separate answers, from sep
 | Does it apply now? | its gate (`ins:appliesInState`), read against the instrument's regimes | only while the licence is in its notice period |
 | Does it apply to this case? | its scope (`ins:scope`) | to every sub-licence, since it has no scope |
 
-For an obligation, a fourth question, whether it is due, performed or breached for a case, is answered by its occasion's state (§4.2.4, C7b, C12). The questions are asked in order, and a relation takes effect for a case only when every answer is yes:
+For an obligation, its occasion's state answers a fourth question, whether it is due, performed or breached for a case (§4.2.4, C7b, C12). The questions are asked in order, and a relation takes effect for a case only when every answer is yes.
 
 ```mermaid
 flowchart LR
@@ -762,9 +769,9 @@ flowchart LR
     Q3 -- "no" --> N
 ```
 
-**Why a gate, and not arising and ending.** "During the notice period, the Licensee may not grant sub-licences" could also be read as an exclusion that arises when notice is given and ends when the licence terminates. For a regime that only moves forward, the two readings agree. They part in three ways:
+**Why a gate, and not arising and ending.** "During the notice period, the Licensee may not grant sub-licences" could also be read as an exclusion that arises when notice is given and ends when the licence terminates. For a regime that only moves forward, the two readings agree. They differ in three ways.
 
-- **Situations recur.** A supply agreement can be suspended, reinstated and suspended again. Ending is final, so a relation that ended on suspension would not return on reinstatement. A gate opens and closes as often as the instrument enters and leaves the state. This is why a suspension is a state and not an ending: it can be reinstated.
+- **Situations recur.** A supply agreement can be suspended, reinstated and suspended again. Ending is final, so a relation that ended on suspension would not return on reinstatement. A gate opens and closes each time the instrument enters and leaves the state. A suspension is therefore a state and not an ending, because it can be reinstated.
 
   ```mermaid
   gantt
@@ -784,9 +791,10 @@ flowchart LR
       exists                        :active, e1, 2027-01-01, 2027-03-01
       ended for good                :done, e2, 2027-03-01, 2027-12-31
   ```
-- **Situations are shared.** Several relations often depend on one situation: during a notice period
-  a licensee may lose its power to sub-license and gain a duty to help migrate its users. With a gate,
-  the situation is stated once, in its regime, and each relation names the state. With arising and
+- **Situations are shared.** Several relations often depend on one situation. During a notice
+  period, for example, a licensee may lose its power to sub-license and gain a duty to help migrate
+  its users. With a gate, the situation is stated once, in its regime, and each relation names the
+  state. With arising and
   ending, each relation would restate the facts that start and stop the situation, and nothing
   would keep them in step.
 
@@ -805,24 +813,25 @@ flowchart LR
       end
       style GATE fill:#BBDEFB
   ```
-- **Situations are not cases.** A relation's scope says which cases it covers, and design-time
-  comparisons read it: does version 2 of the licence widen the licensee's powers? A gate says when
-  the relation applies, and is read only at runtime. Keeping the two apart is what stops serving
-  notice from looking like an amendment (DP6, §11.5).
+- **Situations are not cases.** A relation's scope states which cases it covers, and design-time
+  comparisons read it, for example to ask whether version 2 of the licence widens the licensee's
+  powers. A gate states when the relation applies, and only the runtime reads it. Keeping the two
+  apart stops the serving of notice from looking like an amendment (DP6, §11.5).
 
 **Several regimes on one relation.** A relation may name states of more than one regime. The states
-of one regime are alternatives: the relation applies in any of them. The regimes combine: the
-relation applies only when every one of them is in a named state. The supply agreement's duty to
-deliver names *in force* from its suspension regime and *unaffected* from its force majeure regime,
-so it applies only when deliveries are not suspended and no force majeure continues (§11.3).
+of one regime are alternatives, so the relation applies in any of them. Across regimes the
+conditions combine, so the relation applies only when every one of them is in a named state. The
+supply agreement's duty to deliver names *in force* from its suspension regime and *unaffected*
+from its force majeure regime. It applies only when deliveries are not suspended and no force
+majeure continues (§11.3).
 
-**Regimes for each occasion.** Some situations belong to one occasion of a relation, not to the
-instrument: one month's service failure is disputed while the others are not. A *per-occasion*
-regime (`bhv:perOccasionOf` a relation) runs once for each occasion of that relation, from when the
-occasion exists. A relation gated by its state must say which occasion it is about, and it does so
-through arising: an exclusion that arises on breach of the service obligation reads the dispute
-regime of the occasion that was breached (§11.4). This is where arising and regimes meet most
-directly:
+**Regimes for each occasion.** Some situations belong to one occasion of a relation rather than to
+the instrument. One month's service failure may be disputed while the others are not. A
+*per-occasion* regime (`bhv:perOccasionOf` a relation) runs once for each occasion of that
+relation, from when the occasion exists. A relation gated by its state must identify the occasion
+it concerns, and does so through arising. An exclusion that arises on breach of the service
+obligation reads the dispute regime of the breached occasion (§11.4). Here arising and regimes meet
+most directly.
 
 ```mermaid
 flowchart TB
@@ -839,11 +848,11 @@ flowchart TB
 The customer may end the agreement for April's failure, which the provider has not disputed, and
 not for March's, which it has.
 
-**One operative fact, several effects.** The legal triggers that make relations arise and end are
-the same triggers that move regimes (§4.2.15). One fact can therefore do several things at once:
-when the licensor gives notice under clause 11.1, that exercise of its power moves the licence's
-notice regime into the notice period, which opens the gate on the exclusion of sub-licensing, and
-starts the 90 days after which the licence terminates.
+**One operative fact, several effects.** The legal triggers that make relations arise and end also
+move regimes (§4.2.15), so one fact can have several effects. When the licensor gives notice under
+clause 11.1, that exercise of its power moves the licence's notice regime into the notice period.
+This opens the gate on the exclusion of sub-licensing, and starts the 90 days after which the
+licence terminates.
 
 ```mermaid
 flowchart LR
@@ -860,36 +869,35 @@ flowchart LR
     T -. "where a relation's words say so" .-> A
 ```
 
+**Kinds of regime.** Regimes are of three kinds (§11.2).
+
 | Kind | Examples | Shape |
 |---|---|---|
 | **period** | notice, cure, probation, garden leave, run-off | entered on a trigger, left at a duration from entry or on an end trigger, whichever comes first |
 | **switching** | suspension and reinstatement, force majeure | states switched back and forth by triggers |
 | **threshold** | a usage cap, an aggregate limit exhausted | states defined by ranges of a measured value, entered as the value crosses into each |
 
-**A regime is stated once.** Unlike a relation, a regime has no bound form. Its clause states its states and transitions once, every instrument that includes the clause shares them, and each instrument's progress through them is held at runtime against the instrument's persistent identity
-(§11.1). The regimes an instrument has are therefore the stated regimes of the clauses its wording
-includes, and its own positions in them are its occupancies.
+**A regime is stated once.** Unlike a relation, a regime has no bound form. Its clause states its states and transitions once, and every instrument that includes the clause shares them. Each instrument's progress through them is held at runtime against its persistent identity (§11.1). An instrument's regimes are therefore the stated regimes of the clauses in its wording, and its positions in them are its occupancies.
 
 #### 4.2.14 **`ins:RegimeTransition`.**
 
-A move between two states of a regime, on a legal trigger: "on the expiry of the notice period, this licence terminates", "if the Borrower remedies the breach within the cure period, the Event of Default does not occur". It is a `bhv:TransitionDefinition` whose engine settings are fixed: a regime takes one transition at a time (`bhv:SingleMatch`), and takes it at once (`bhv:ImmediateActivation`). A contract's words never say that two outcomes compete, or that a change waits for someone to run it. Distinct from *event*, what happened, which the runtime records,
-and *amendment*, a change of the words (C9).
+A move between two states of a regime on a legal trigger, as in "on the expiry of the notice period, this licence terminates" or "if the Borrower remedies the breach within the cure period, the Event of Default does not occur". It is a `bhv:TransitionDefinition` whose engine settings are fixed. A regime takes one transition at a time (`bhv:SingleMatch`), and takes it at once (`bhv:ImmediateActivation`), because a contract's words never say that two outcomes compete, or that a change waits for someone to run it. Distinct from *event*, what happened, which the runtime records, and *amendment*, a change of the words (C9).
 
 #### 4.2.15 **The legal triggers: `ins:OnExercise`, `ins:OnBreach`, `ins:OnAct`, `ins:OnCondition`, `ins:OnExpiry`.**
 
-A *trigger* is what makes something happen. Contracts write it as "on", "upon", "if", "when", "following". The five legal triggers are the five things a contract's words make a consequence turn on:
+A *trigger* is what makes something happen, written in contracts as "on", "upon", "if", "when" or "following". The five legal triggers are the five kinds of fact on which a contract's words make a consequence turn.
 
 | Trigger | Contract English | Fires on | Behaviour's kind |
 |---|---|---|---|
-| `ins:OnExercise` | "on the giving of notice under clause 11.1", "upon acceptance" | the exercise of a power (`ins:ofPower`) | an external stimulus: a party acts |
-| `ins:OnBreach` | "if the Borrower fails to pay", "following any breach of clause 4" | the breach of an obligation (`ins:ofObligation`) | derived: the runtime works it out from the obligation's occasions |
+| `ins:OnExercise` | "on the giving of notice under clause 11.1", "upon acceptance" | the exercise of a power (`ins:ofPower`) | an external stimulus, a party's act |
+| `ins:OnBreach` | "if the Borrower fails to pay", "following any breach of clause 4" | the breach of an obligation (`ins:ofObligation`) | derived by the runtime from the obligation's occasions |
 | `ins:OnAct` | "if the Provider disputes the report", "on delivery" | an act that exercises no power (`ins:activity`, optionally `ins:by`) | an external stimulus |
 | `ins:OnCondition` | "if leverage exceeds 3.0 to 1", "while a force majeure event prevents performance" | a condition coming to hold (`ins:condition`) | derived |
-| `ins:OnExpiry` | "on the expiry of 90 days", "within 30 Business Days" | the end of a period counted from entering a state (`ins:after`) | scheduled: known in advance |
+| `ins:OnExpiry` | "on the expiry of 90 days", "within 30 Business Days" | the end of a period counted from entering a state (`ins:after`) | scheduled, known in advance |
 
-The names follow drafting's "on" with the event: "on termination", "on expiry". *Exercise* and *breach* are the law's own words for a power used and an obligation not performed. *Expiry* is its word for a period coming to an end: "the expiry of the notice period". *Act* is the plain word, as in deontic logic, for what a party does. Distinct from *event* (what happened, not what an instrument waits for), *condition* in its other senses (§4.6: here only the trigger's Eligibility condition), and *deadline*, a due range (C7b).
+The names follow drafting's "on" with the event, as in "on termination" and "on expiry". *Exercise* and *breach* are the law's words for a power used and an obligation not performed. *Expiry* is its word for a period coming to an end, as in "the expiry of the notice period". *Act* is the plain word, as in deontic logic, for what a party does. Distinct from *event* (what happened, not what an instrument waits for), *condition* in its other senses (§4.6, here only the trigger's Eligibility condition), and *deadline*, a due range (C7b).
 
-Four of the triggers also say when a relation arises or ends (`ins:arisesOn`, `ins:endsOn`, §4.2.4). One vocabulary governs both an instrument's relations and its regimes: what moves a licence into its notice period is the same kind of thing as what gives a customer a power to terminate. `ins:OnExpiry` moves only regimes, since it counts from entering a state, and a relation has no state to enter. A relation's own periods, such as a duty due within 30 days of arising, are due ranges (C7b).
+Four of the triggers also determine when a relation arises or ends (`ins:arisesOn`, `ins:endsOn`, §4.2.4). One vocabulary therefore governs both relations and regimes. What moves a licence into its notice period is the same kind of fact as what gives a customer a power to terminate. `ins:OnExpiry` moves only regimes, because it counts from entering a state, and a relation has no state to enter. A relation's own periods, such as a duty due within 30 days of arising, are due ranges (C7b).
 
 ```mermaid
 flowchart LR
@@ -1004,35 +1012,36 @@ the party *for this instrument*, so they sit on the role occupancy rather than o
 
 #### Triggers, regimes and gating: `ins:ofPower`, `ins:ofObligation`, `ins:by`, `ins:condition`, `ins:after`, `ins:tolledIn`, `ins:stateKind`, `ins:appliesInState`, `ins:arisesOn`, `ins:arisesOnBreachOf`, `ins:arisesOnExerciseOf`, `ins:endsOn`
 
-- **`ins:ofPower`** and **`ins:ofObligation`** come from "the exercise *of* the power", "a breach
-  *of* clause 4.1". They name the relation an exercise or breach trigger watches. In a regime they
+- **`ins:ofPower`** and **`ins:ofObligation`** come from "the exercise *of* the power" and "a breach
+  *of* clause 4.1". They name the relation whose exercise or breach a trigger watches. In a regime they
   name the stated relation, and match the exercise or breach of every bound relation instantiated
   from it (§11.1).
-- **`ins:by`** is "notice given *by* the Licensor": a party whose act an `ins:OnAct` waits for.
+- **`ins:by`** comes from "notice given *by* the Licensor". It names a party whose act an
+  `ins:OnAct` waits for.
   Without it, an act of that kind by any party fires the trigger.
 - **`ins:condition`** is the Eligibility condition an `ins:OnCondition` waits for. The trigger fires
   when the condition comes to hold.
-- **`ins:after`** is "*after* 90 days": the length of an `ins:OnExpiry` period, a Quantification
-  quantity in a unit of time, counted from entering the state the transition leaves. A unit whose
+- **`ins:after`** comes from "*after* 90 days". It is the length of an `ins:OnExpiry` period, a
+  Quantification quantity in a unit of time, counted from entering the state the transition leaves. A unit whose
   length depends on a calendar, such as a business day, is a `qnt:CalendarUnit` (ADR-A94).
-- **`ins:tolledIn`** comes from *tolling*, the law's word for a period that stops running: a
+- **`ins:tolledIn`** comes from *tolling*, the law's word for stopping a period from running. A
   limitation period is *tolled*, and a *tolling agreement* stops time running between the parties.
   English drafting says "time shall not run while ...", or writes a "stop the clock" provision.
-  `ins:tolledIn` names the states during which an expiry period does not run: "the cure period
-  does not run while a force majeure event continues". *Suspended* is not used, since Behaviour's
-  core occasion state `bhv:Suspended` has that name, and *paused* is not legal English.
-- **`ins:stateKind`** says what kind of state a regime's state is (a notice period, a cure period,
-  suspended), as a concept from a scheme bound to `ins-voc:StateKindContract`. It serves readers
-  and reports, so that two instruments' notice periods can be found together although each clause
-  states its own states. The evaluator never reads it. A state no reader needs to classify has
-  none.
-- **`ins:appliesInState`** is "this clause applies only while ...", "during the notice period the
-  Licensee may not ...". A relation applies only while its regimes are in the states it names: the
-  state *gates* a relation that otherwise exists (§11.3).
-- **`ins:arisesOn`** and **`ins:endsOn`** are "the obligation arises on ...", "this licence ends on
-  ...": the legal trigger on which a relation arises, or ends. Several values are alternatives.
+  `ins:tolledIn` names the states during which an expiry period does not run, as in "the cure
+  period does not run while a force majeure event continues". *Suspended* is not used, because
+  Behaviour's core occasion state `bhv:Suspended` has that name, and *paused* is not legal English.
+- **`ins:stateKind`** classifies a regime's state, for example as a notice period or a cure period,
+  with a concept from a scheme bound to `ins-voc:StateKindContract`. It serves readers and reports,
+  so that two instruments' notice periods can be found together although each clause states its
+  own states. The evaluator never reads it, and a state that no reader needs to classify has none.
+- **`ins:appliesInState`** comes from "this clause applies only while ..." and "during the notice
+  period the Licensee may not ...". A relation applies only while its regimes are in the states it
+  names, so the state *gates* a relation that otherwise exists (§11.3).
+- **`ins:arisesOn`** and **`ins:endsOn`** come from "the obligation arises on ..." and "this licence
+  ends on ...". They name the legal trigger on which a relation arises or ends. Several values are
+  alternatives.
 - **`ins:arisesOnBreachOf`** and **`ins:arisesOnExerciseOf`** are short forms of `ins:arisesOn` with
-  an `ins:OnBreach` or an `ins:OnExercise`: "if the Provider fails to meet clause 4.1, the Customer
+  an `ins:OnBreach` or an `ins:OnExercise`. "If the Provider fails to meet clause 4.1, the Customer
   may end this agreement" is a power arising on breach of the service obligation. A breach chain,
   from a primary duty to the consequences of its breach, is written with them.
 
@@ -1766,41 +1775,42 @@ ins:Template owl:disjointWith ins:Instrument .
 
 A legal trigger is what an instrument makes a consequence turn on (§4.2). Each of the five is a
 Behaviour trigger definition with one required value ([ADR-A104](../../docs/architecture/decisions/ADR-A104-instrument-terms-and-legal-relations.md)
-decision 6). Each moves regimes, as the trigger of a regime transition (§11), and all but
+decision 6). Each moves regimes, as the trigger of a regime transition (§11). All but
 `ins:OnExpiry` also mark the moment a relation arises or ends (`ins:arisesOn`, `ins:endsOn`). An
-expiry counts from entering a state, and a relation has no state to enter: a relation's own periods
-are due ranges (C7b).
+expiry counts from entering a state, and a relation has no state to enter, so a relation's own
+periods are due ranges (C7b).
 
 | Trigger | Required value | Optional | Kind, fixed by the class |
 |---|---|---|---|
-| `ins:OnExercise` | `ins:ofPower`: exactly one power | | `bhv:ExternalStimulus` |
-| `ins:OnBreach` | `ins:ofObligation`: exactly one obligation | | `bhv:DerivedTrigger` |
-| `ins:OnAct` | `ins:activity`: exactly one concept | `ins:by`: the parties whose act counts | `bhv:ExternalStimulus` |
-| `ins:OnCondition` | `ins:condition`: exactly one Eligibility condition | | `bhv:DerivedTrigger` |
-| `ins:OnExpiry` | `ins:after`: exactly one quantity of time | `ins:tolledIn`: the states in which the period does not run | `bhv:ScheduledTrigger` |
+| `ins:OnExercise` | exactly one power (`ins:ofPower`) | | `bhv:ExternalStimulus` |
+| `ins:OnBreach` | exactly one obligation (`ins:ofObligation`) | | `bhv:DerivedTrigger` |
+| `ins:OnAct` | exactly one concept (`ins:activity`) | the parties whose act counts (`ins:by`) | `bhv:ExternalStimulus` |
+| `ins:OnCondition` | exactly one Eligibility condition (`ins:condition`) | | `bhv:DerivedTrigger` |
+| `ins:OnExpiry` | exactly one quantity of time (`ins:after`) | the states in which the period does not run (`ins:tolledIn`) | `bhv:ScheduledTrigger` |
 
-**The kind follows from the class.** An exercise and an act come from outside: a party does
-something, and the runtime receives it as a stimulus. A breach and a condition are derived: the
-runtime works them out from what it already holds. An expiry is scheduled: the runtime knows in
-advance when it falls. Each class therefore fixes its kind as an `owl:hasValue` restriction, and
-its shape permits that one value (§12).
+**The kind follows from the class.** An exercise and an act come from outside, as a stimulus the
+runtime receives when a party acts. A breach and a condition are derived by the runtime from what
+it already holds. An expiry is scheduled, since the runtime knows in advance when it falls. Each
+class therefore fixes its kind as an `owl:hasValue` restriction, and its shape permits only that
+value (§12).
 
 **An expiry** counts its period from entering the state its transition leaves, and fires when the
-period has run. The length is a `qnt:Quantity` in a unit of time: days in the licence (§16.5),
+period has run. The length is a `qnt:Quantity` in a unit of time, days in the licence (§16.5) and
 business days in the facility (§16.7). Counting business days needs the calendar in force, which a
-conversion context names when the expiry is evaluated (ADR-A94, C12). A length the instance
+conversion context names when the expiry is evaluated (ADR-A94, C12). A length that the instrument
 supplies, such as a notice period set by a variable, is resolved for each instrument at runtime
 (C8).
 
 **Tolling.** "The cure period does not run while a force majeure event prevents the Borrower from
 reporting" is `ins:tolledIn` on the cure period's expiry, naming the force majeure regime's affected
-state. The period's clock stops while the subject is in any of the named states, and runs again
-when it leaves them. C12 counts the period over the occupancy history (ADR-A106 addendum, decision
-9). A tolling state is never a state of the state space the period runs in: leaving the period's
-state for a sibling ends the period anyway, and the period's own state cannot stop its own clock.
-A sub-state of the period's state, in a region of it, may (C11a-Q2).
+state. The period's clock stops while the subject is in any of the named states, and restarts when
+it leaves them. C12 counts the period over the occupancy history (ADR-A106 addendum, decision 9). A
+tolling state is never a state of the space in which the period runs. Leaving the period's state
+for a sibling ends the period anyway, and the period's own state cannot stop its own clock. A
+sub-state of the period's state, in a region of it, may stop it (C11a-Q2).
 
-The facility's cure period, with force majeure arising part way through it (dates illustrative):
+The diagram shows the facility's cure period, with a force majeure event beginning part way
+through it. The dates are illustrative.
 
 ```mermaid
 gantt
@@ -1817,12 +1827,12 @@ gantt
     unaffected                    :u2, 2027-10-27, 2027-11-25
 ```
 
-**Arising and ending** (§4.2.4 explains both). A relation that exists only once something has
-happened says so with `ins:arisesOn`: a power to terminate that arises on breach of the service obligation, a duty to
-repay at once that arises on acceleration. `ins:arisesOnBreachOf` and `ins:arisesOnExerciseOf` are
-its short forms, and the usual way to write a breach chain: the primary duty, then each consequence
-of its breach. Several values of these properties are alternatives: the relation arises on any of
-them. `ins:endsOn` names the triggers on which a relation ends. A relation with no arising trigger
+**Arising and ending** (§4.2.4). A relation that exists only once something has happened says so
+with `ins:arisesOn`, for example a power to terminate that arises on breach of the service
+obligation, or a duty to repay at once that arises on acceleration. `ins:arisesOnBreachOf` and
+`ins:arisesOnExerciseOf` are its short forms, and the usual way to write a breach chain, from the
+primary duty to each consequence of its breach. Several values of these properties are
+alternatives, and the relation arises on any of them. `ins:endsOn` names the triggers on which a relation ends. A relation with no arising trigger
 has arisen once its instrument takes effect. A bound relation's arising names bound relations,
 since it restates its template in full (ADR-A104 2026-10-04 addendum, decision 3). Due ranges,
 recurrence, survival and `ins:ends` are C7b's.
@@ -1926,9 +1936,9 @@ ins:endsOn a owl:ObjectProperty ;
 
 ### 11.1 A regime is stated once
 
-A relation has two tiers (§6.2): its clause states it once, and instantiation binds it for each
-instrument. A regime has one tier. It is stated meaning only (ADR-A104 2026-10-04 addendum,
-decision 1):
+A relation has two tiers (§6.2). Its clause states it once, and instantiation binds it for each
+instrument. A regime has one tier, stated meaning only (ADR-A104 2026-10-04 addendum, decision 1),
+with four consequences.
 
 - it arises under the stated term of the clause that states it, and its states, transitions and
   triggers are shared by every instrument whose wording includes that clause
@@ -1939,10 +1949,10 @@ decision 1):
 - a value an instrument supplies, such as a notice length set by a variable, is resolved for that
   instrument at runtime from its assembled wording (C8)
 
-Law I13 reads accordingly: only bound relations are evaluated, and regimes are read as stated, for
+Law I13 reads accordingly. Only bound relations are evaluated, and regimes are read as stated for
 each subject.
 
-**Why one tier.** Two facts of Behaviour's model decide it:
+**Why one tier.** Two facts of Behaviour's model decide it.
 
 - **A state belongs to exactly one state space** (`bhv:inStateSpace` is functional). A bound copy of
   a regime per instrument version would need its own copy of every state and transition, restated in
@@ -1968,33 +1978,35 @@ flowchart LR
 
 **Triggers name stated relations.** A regime's `ins:ofPower` and `ins:ofObligation` name the stated
 relation, and fire on the exercise or breach of any bound relation instantiated from it. In the
-licence (§16.5) the notice trigger names `tmpl:end-on-notice`, and Corvid's exercise of
-`ex:end-on-notice`, the bound power in Fernwood's licence, fires it for that licence: the subject is the
-persistent identity of the instrument the bound power's term is bound in. A per-occasion regime
-names its stated relation the same way (§11.4). A bound relation's own references, its arising
-triggers and what it excepts, name bound relations, since it restates its template in full.
+licence (§16.5) the notice trigger names `tmpl:end-on-notice`. Corvid's exercise of
+`ex:end-on-notice`, the bound power in Fernwood's licence, fires it for that licence. The subject
+is the persistent identity of the instrument in which the bound power's term is bound. A
+per-occasion regime names its stated relation in the same way (§11.4). A bound relation's own
+references, to its arising triggers and to what it excepts, name bound relations, since it
+restates its template in full.
 
 **Examples.** Stating a regime once matters wherever one clause serves many instruments, or one
-instrument changes often:
+instrument changes often.
 
 - **A framework agreement with many call-off orders.** The framework's suspension clause applies to
   every order made under it. Its regime has one set of states, and each order's suspension is an
   occupancy for that order. A thousand orders are a thousand subjects, not a thousand copies.
-- **A facility amended many times.** A facility is amended to add a lender, extend a date, reset a
+- **A facility amended many times.** A facility is amended to add a lender, extend a date or reset a
   covenant. Its event-of-default regime is untouched by all of these, so a cure period running on
-  the day of an amendment simply carries on.
+  the day of an amendment carries on.
 - **Layered insurance cover, an example use-case.** A broker divides a large risk into layers, each
-  attaching where the one below is exhausted, and places each with one or more insurers. Before
-  anything is accepted, insurers respond with proposals at different levels of commitment, and each
-  proposal is checked by the same rules as a contract. The proposals are many: stated once, a
-  proposal's regimes are its clauses' regimes, checked once, and running one for a what-if, such as
-  how a limit erodes under a claim scenario, means creating occupancies for that proposal as the
-  subject. Several insurers may share a layer, a following insurer adding terms of its own for its
-  share: those give rise to a regime under the follower's own clause, while the leader's stay
-  shared. Endorsements land mid-term and renewals replace the contracts each year, and the
-  occupancies stay where they are unless a regime's own clause changes. A proposal's commitment is
-  itself legal (a binding quote confers a power of acceptance), while how precise or complete its
-  values are is recorded beside its terms, never inside them.
+  attaching where the one below is exhausted, and places each layer with one or more insurers.
+  Before anything is accepted, insurers respond with proposals at different levels of commitment,
+  and each proposal is checked by the same rules as a contract. The proposals are many. Because a
+  regime is stated once, a proposal's regimes are its clauses' regimes, checked once. Running one
+  for a what-if, such as how a limit erodes under a claim scenario, means creating occupancies with
+  that proposal as the subject. Several insurers may share a layer, and a following insurer may add
+  terms of its own for its share. Those terms give rise to a regime under the follower's own
+  clause, while the leader's regimes stay shared. Endorsements land mid-term and renewals replace
+  the contracts each year, and the occupancies stay where they are unless a regime's own clause
+  changes. A proposal's commitment is itself legal, since a binding quote confers a
+  power of acceptance. How precise or complete its values are is recorded beside its terms, never
+  inside them.
 
 ### 11.2 Kinds of regime
 
@@ -2013,9 +2025,9 @@ stateDiagram-v2
     NoticePeriod --> Terminated : OnExercise, the power to end for breach
 ```
 
-A transition has one source state, so "at any time, for breach" is a transition from each state it
-applies in. The facility's cure period (§16.7) is a period regime with a way back, tolled by another
-regime:
+A transition has one source state, so "at any time, for breach" needs a transition from each state
+in which it applies. The facility's cure period (§16.7) is a period regime with a way back, tolled
+by another regime.
 
 ```mermaid
 stateDiagram-v2
@@ -2028,8 +2040,8 @@ stateDiagram-v2
     Cure --> InDefault : OnExpiry, 30 business days, tolled while affected
 ```
 
-**Switching regimes** move back and forth. The supply agreement (§16.6) has two, on one instrument:
-they are separate regimes, drawn together here, each in one state at every moment:
+**Switching regimes** move back and forth. The supply agreement (§16.6) has two on one instrument.
+They are separate regimes, drawn together here, and each is in one state at every moment.
 
 ```mermaid
 stateDiagram-v2
@@ -2052,7 +2064,7 @@ stateDiagram-v2
 **Threshold regimes** have states defined by a `qnt:RangeSet` partition of a measured value, each
 entered by an `ins:OnCondition` whose condition is an Eligibility interval condition over one range.
 The measured value changes with use, such as an aggregate eroded by claims or a usage cap, and is
-held by an applied layer's capacity model. No example in this layer runs one:
+held by an applied layer's capacity model. No example in this layer runs one.
 
 ```mermaid
 stateDiagram-v2
@@ -2068,14 +2080,15 @@ Eligibility decision, not a regime. A regime exists where something switches ove
 
 ### 11.3 Gating
 
-A relation's `ins:appliesInState` values are its **gate** (nested states sketch §6.2):
+A relation's `ins:appliesInState` values are its **gate**, evaluated by four rules (nested states
+sketch §6.2).
 
 1. the values are grouped by the top-level regime their states belong to
 2. within one regime's group, the relation applies in any of the named states
 3. across regimes, it applies only when every group holds
 4. a composite state holds while any of its descendants is active
 
-The supply agreement's duty to deliver names one state of each of its two regimes (§16.6):
+The supply agreement's duty to deliver names one state of each of its two regimes (§16.6).
 
 ```mermaid
 flowchart LR
@@ -2095,8 +2108,8 @@ flowchart LR
 | suspended | unaffected | does not apply |
 | suspended | affected | does not apply |
 
-A relation that names two states of one regime applies in either: a power exercisable "while this
-agreement is in force or during the notice period" names both. A relation with no
+A relation that names two states of one regime applies in either, so a power exercisable "while
+this agreement is in force or during the notice period" names both. A relation with no
 `ins:appliesInState` is not gated. While a relation's gate is closed, the relation does not apply.
 How a gated relation is evaluated is C13's.
 
@@ -2106,19 +2119,19 @@ that reads the other's state (nested states sketch §6.2).
 
 ### 11.4 Whose state gates a relation
 
-A gate reads the occupancy of one subject (C7a-Q5):
+A gate reads the occupancy of one subject (C7a-Q5).
 
-- for a regime of the instrument, the relation's own instrument: the persistent identity of the
-  instrument its term is bound in
-- for a per-occasion regime (`bhv:perOccasionOf`), the occasion the relation's arising chain
-  reaches (C11a-Q4)
+- For a regime of the instrument, the subject is the persistent identity of the instrument in which
+  the relation's term is bound.
+- For a per-occasion regime (`bhv:perOccasionOf`), it is the occasion that the relation's arising
+  chain reaches (C11a-Q4).
 
-A **per-occasion regime** runs once for each occasion of a relation: every month's service, every
-invoice. It names the stated relation, and covers the occasions of every bound relation
-instantiated from it. A relation gated by its state must therefore say which occasion it is about,
-and it does so by arising on that relation's breach or exercise. The services agreement (§16.8):
-the exclusion of the customer's power to terminate arises on breach of the service obligation, so
-for one month's breach its gate reads that month's dispute regime. Where the chain does not reach
+A **per-occasion regime** runs once for each occasion of a relation, such as each month's service
+or each invoice. It names the stated relation, and covers the occasions of every bound relation
+instantiated from it. A relation gated by its state must therefore identify the occasion it
+concerns, and does so by arising on that relation's breach or exercise. In the services agreement
+(§16.8), the exclusion of the customer's power to terminate arises on breach of the service
+obligation, so for one month's breach its gate reads that month's dispute regime. Where the chain does not reach
 exactly one occasion, the gate is Undetermined (ADR-A106 addendum, decision 9). A relation gated by
 a per-occasion state that arises on no breach or exercise of the relation is rejected at design
 time (§14.2).
@@ -2134,15 +2147,16 @@ flowchart LR
     MO -. "its dispute occupancy" .-> DS
 ```
 
-The model is consistent within one legally binding agreement first. A gate whose subject is
-something else is held: one participant's share within an agreement, where several parties are each
-liable for their own share and each share has its own state, or another agreement altogether, where
-one contract responds only once another is exhausted (CCS plan, held design question HQ-2).
+The model is first made consistent within one legally binding agreement. A gate whose subject is
+something else is held as design question HQ-2 (CCS plan). One such subject is a participant's share
+within an agreement, where several parties are each liable for their own share and each share has
+its own state. Another is a separate agreement, where one contract responds only once another is
+exhausted.
 
 ### 11.5 Structure and state stay apart (DP6)
 
-`ins:appliesInState` never enters a design-time comparison: authority envelopes, materiality,
-overlaps, gaps (ADR-A104 decision 8). A comparison asks what a relation covers over every case, and
+`ins:appliesInState` never enters a design-time comparison, such as of authority envelopes,
+materiality, overlaps or gaps (ADR-A104 decision 8). A comparison asks what a relation covers over every case, and
 a state is a fact about one subject at one time. A state may be a fixed parameter of a comparison
 ("compare the two licences as they stand during a notice period"), never a variable within one (law
 B8, ADR-A106).
@@ -2194,18 +2208,18 @@ ins:appliesInState a owl:ObjectProperty ;
 
 ## 12. Authoring With and Without a Reasoner
 
-Behaviour's engine reads only Behaviour's terms: a `bhv:StateSpace`, a `bhv:TransitionDefinition`
-with its `bhv:selectionPolicy` and `bhv:activationPolicy`, a `bhv:TriggerDefinition` with its
+Behaviour's engine reads only Behaviour's terms, namely `bhv:StateSpace`, `bhv:TransitionDefinition`
+with its `bhv:selectionPolicy` and `bhv:activationPolicy`, and `bhv:TriggerDefinition` with its
 `bhv:triggerKind`. Every Instrument specialisation fixes some of these. A regime is always a state
 space, a regime transition always selects one match and activates at once, and each legal trigger
-always has the same kind. Because a regime is stated once and never instantiated, no instantiation
-step can add them, so they come from one of two places (ADR-A104 2026-10-04 addendum, decision 5).
+always has the same kind. A regime is stated once and never instantiated, so no instantiation step
+can add these terms. They come from one of two places (ADR-A104 2026-10-04 addendum, decision 5).
 
-### 12.1 Asserted: the baseline
+### 12.1 The asserted baseline
 
 Data read without a reasoner states every Behaviour term beside its Instrument term. Every example
-in this layer is written this way, and so is every library template, so that both kinds of consumer
-can use it:
+in this layer is written in this form, as is every library template, so that both kinds of consumer
+can use it.
 
 ```turtle-example
 tmpl:notice-regime a ins:Regime , bhv:StateSpace , ins:Template ;
@@ -2224,18 +2238,18 @@ tmpl:give-notice a ins:RegimeTransition , bhv:TransitionDefinition ;
 ```
 
 The explicit `bhv:` type is law B4, and a shape requires it (§14.1). The engine matches
-`rdf:type bhv:TransitionDefinition` as written, and a node typed only `ins:RegimeTransition` would
-be invisible to it. Shapes alone do not show the gap. SHACL's `sh:targetClass` and `sh:class` follow
-the `rdfs:subClassOf` triples in the data graph: validated with this spec, as §14.1 asks, a node
-typed only `ins:RegimeTransition` is selected by Behaviour's shapes, and its missing policies are
-reported. Validated without it, Behaviour's shapes never select the node. So the B4 shapes check
-the `rdf:type` triple itself (`sh:path rdf:type ; sh:hasValue`), which no subclass axiom
-satisfies.
+`rdf:type bhv:TransitionDefinition` as written, so a node typed only `ins:RegimeTransition` would be
+invisible to it. Shapes alone do not reveal the gap, because SHACL's `sh:targetClass` and
+`sh:class` follow the `rdfs:subClassOf` triples in the data graph. Validated with this spec, as
+§14.1 requires, a node typed only `ins:RegimeTransition` is selected by Behaviour's shapes, and its
+missing policies are reported. Validated without the spec, Behaviour's shapes never select the
+node. The B4 shapes therefore check the `rdf:type` triple itself (`sh:path rdf:type ;
+sh:hasValue`), which no subclass axiom satisfies.
 
-### 12.2 Entailed: the convenience
+### 12.2 The entailed convenience
 
 An author working with an OWL 2 RL reasoner, or a more expressive one, may write the Instrument
-terms alone, and let the reasoner add Behaviour's:
+terms alone and let the reasoner add Behaviour's.
 
 ```turtle-example
 tmpl:notice-regime a ins:Regime , ins:Template ;
@@ -2250,7 +2264,7 @@ tmpl:give-notice a ins:RegimeTransition ;
     bhv:hasTrigger tmpl:on-notice-given .
 ```
 
-The axioms that make this work are on the Instrument classes and properties (§10, §11):
+The axioms that make this work are on the Instrument classes and properties (§10, §11).
 
 | Term | Axiom | What a reasoner adds, and by which OWL 2 RL rule |
 |---|---|---|
@@ -2263,16 +2277,16 @@ The axioms that make this work are on the Instrument classes and properties (§1
 | `ins:ofObligation` | `rdfs:domain ins:OnBreach` | the same |
 | `ins:tolledIn` | `rdfs:domain ins:OnExpiry` | the same |
 
-Three points of OWL decide the shape of these axioms:
+Three points of OWL determine the form of these axioms.
 
 - **`owl:hasValue`, not `owl:allValuesFrom`.** An `owl:allValuesFrom` restriction only constrains a
-  value already stated: it says what the value must be, if there is one. An `owl:hasValue`
-  restriction in a superclass says the value is there, so a reasoner adds it to every member of the
+  value already stated, saying what the value must be if there is one. An `owl:hasValue` restriction
+  in a superclass asserts that the value is present, so a reasoner adds it to every member of the
   class.
 - **OWL 2 RL, not RDFS.** RDFS inference follows `rdfs:subClassOf` and `rdfs:domain`, so it adds the
-  `bhv:` types, but it does not read restrictions, so it adds no policy and no kind. OWL 2 RL, the
+  `bhv:` types. It does not read restrictions, so it adds no policy and no kind. OWL 2 RL, the
   rule-based profile, does (rule cls-hv1). pySHACL's `inference="owlrl"` closes the graph under OWL
-  2 RL before it validates.
+  2 RL before validating.
 - **Domains only where every subject is that class.** `ins:ofPower`, `ins:ofObligation` and
   `ins:tolledIn` are used by one trigger class each, so a domain infers nothing false. `ins:condition`
   and `ins:after` have no domain, because terms in time (C7b) may reuse them on other subjects.
@@ -2289,38 +2303,39 @@ flowchart TB
     V2 --> E2["the engine reads<br/>the closed graph"]
 ```
 
-Without a reasoner, the engine reads the asserted graph, and the shapes validate it: B4's shape
-rejects a regime node that lacks its `bhv:` type. With one, the engine reads the closed graph, and
-the shapes validate that: B4 holds there, because the reasoner added the types. The lean form above
+Without a reasoner, the engine reads the asserted graph and the shapes validate it, so B4's shape
+rejects a regime node that lacks its `bhv:` type. With a reasoner, the engine reads the closed
+graph and the shapes validate that, where B4 holds because the reasoner has added the types. The lean form above
 fails B4 on its asserted graph, and passes every shape on its closed graph.
 
 ### 12.4 A wrong stated value
 
 `bhv:selectionPolicy`, `bhv:activationPolicy` and `bhv:triggerKind` are functional, and Behaviour
-does not declare its policy and kind individuals distinct. An author who states `bhv:selectionPolicy
-bhv:AllMatches` on a regime transition, with a reasoner running, leads it to conclude that
-`bhv:AllMatches` and `bhv:SingleMatch` are one individual (`owl:sameAs`). After that, every
-transition in the graph has both values, and the error shows everywhere but where it was made.
+does not declare its policy and kind individuals distinct. Suppose an author states
+`bhv:selectionPolicy bhv:AllMatches` on a regime transition, with a reasoner running. The reasoner
+concludes that `bhv:AllMatches` and `bhv:SingleMatch` are one individual (`owl:sameAs`). Every
+transition in the graph then has both values, and the error appears everywhere except where it was
+made.
 
-Two measures meet it:
+Two measures address it.
 
-- **Instrument's value shapes** list the one permitted value with `sh:in`: `sh:in ( bhv:SingleMatch
-  )` on a regime transition's selection, and so on for activation and each trigger kind (§14.1). On
-  the asserted graph they report a wrong value at the node that states it, in either mode, and let
-  a value the reasoner will add be absent. On the closed graph they report the wrong value at every
+- **Instrument's value shapes** list the one permitted value with `sh:in`, for example `sh:in (
+  bhv:SingleMatch )` on a regime transition's selection, and likewise for activation and each
+  trigger kind (§14.1). On the asserted graph they report a wrong value at the node that states it,
+  in either mode, and allow a value that the reasoner will add to be absent. On the closed graph they report the wrong value at every
   node the merge reached.
 - **Distinct individuals in Behaviour.** `owl:AllDifferent` over the policies and the kinds would let
   a reasoner report the merge as an inconsistency, at the triple that caused it. It is a change to
   Behaviour's vocabulary, held as follow-up FU-C7a-a (CCS plan) and TD-17.
 
-`sh:hasValue` is not used for the fixed values, because it fails both modes:
+`sh:hasValue` is not used for the fixed values, because it fails in both modes.
 
 | Case | `sh:hasValue bhv:SingleMatch` | `sh:in ( bhv:SingleMatch )` |
 |---|---|---|
-| correct lean data, asserted graph | rejected: the value is not yet there | passes |
+| correct lean data, asserted graph | rejected, as the value is not yet there | passes |
 | correct lean data, closed graph | passes | passes |
 | a wrong stated value, asserted graph | reported at that transition | reported at that transition |
-| a wrong stated value, closed graph | missed: the merge also supplies `bhv:SingleMatch` | reported at every regime transition |
+| a wrong stated value, closed graph | missed, as the merge also supplies `bhv:SingleMatch` | reported at every regime transition |
 
 A value's presence is checked by the minimum counts, Behaviour's for the two policies and
 Instrument's for each trigger's kind, on the graph the engine reads.
@@ -2330,7 +2345,7 @@ Instrument's for each trigger's kind, on the graph the engine reads.
 The activity scheme follows Wording's element types (C3-Q1): `ins-voc:ActivityContract` constrains
 `ins:activity`, with a baseline scheme bound as fallback that a deployment may extend or replace.
 The location contract has no baseline: a deployment binds its own territory or site scheme. The
-state kind scheme follows the activity scheme: `ins-voc:StateKindContract` constrains
+state kind scheme follows the activity scheme. `ins-voc:StateKindContract` constrains
 `ins:stateKind`, with a baseline of the kinds the examples use. `ins-voc:Suspended` is a kind of
 regime state, the state of an instrument whose performance is suspended, and is distinct from
 Behaviour's core occasion state `bhv:Suspended`.
@@ -2463,9 +2478,9 @@ ins-voc:Terminated a skos:Concept ; skos:inScheme ins-voc:StateKinds ;
 ### 14.1 Structural shapes (SHACL Core)
 
 Each property's subject and value, a relation's single term, its required content per class, the
-two tiers (law I2) and what each names (law I13). For regimes: a regime's term, its explicit
-Behaviour types (law B4), each trigger's one required value, the fixed values of §12 as `sh:in`
-shapes, and what may be gated or arise. Validate data with this spec, so that subclasses are known,
+two tiers (law I2) and what each names (law I13). For regimes, they check a regime's term, its
+explicit Behaviour types (law B4), each trigger's one required value, the fixed values of §12 as
+`sh:in` shapes, and what may be gated or arise. Validate data with this spec, so that subclasses are known,
 and validate the graph the engine reads (§12.3).
 
 ```turtle-shapes
@@ -2729,8 +2744,8 @@ ins:ArisingTierShape a sh:NodeShape ;
 ### 14.2 Constraint shapes (SHACL-SPARQL)
 
 Supersession within one identity, and law I8: an exception's holder is the party the excepted
-relation binds, and a permission permits the act the prohibition forbids. For regimes: every
-transition between a regime's states is a regime transition, a gate names a state of a regime, a
+relation binds, and a permission permits the act the prohibition forbids. For regimes, they check
+that every transition between a regime's states is a regime transition, a gate names a state of a regime, a
 gate on a per-occasion regime reaches its occasion (C11a-Q4), and a period is never tolled by a
 state of its own state space.
 
@@ -2909,8 +2924,8 @@ ins:SingleExpressionShape a sh:NodeShape ;
 | I18 | No term or relation is a version: meaning changes only with its owner | disjointness with `fnd:Version`, `ins:LegalRelationShape` |
 | B4 (Behaviour's) | Every Instrument specialisation of a Behaviour term carries the Behaviour type in the graph the engine reads | `ins:RegimeTypeShape`, `ins:RegimeTransitionTypeShape`, `ins:LegalTriggerTypeShape` |
 
-C7a's other design-time rules are registered without a law number: a regime's transitions are
-regime transitions with legal triggers and the fixed engine settings (`ins:RegimeTransitionShape`,
+C7a's other design-time rules are registered without a law number. They are that a regime's
+transitions are regime transitions with legal triggers and the fixed engine settings (`ins:RegimeTransitionShape`,
 `ins:RegimeTransitionsShape`), each trigger's required value and kind (`ins:OnExerciseShape` to
 `ins:OnExpiryShape`), a gate names a state of a regime (`ins:GateStateShape`) and reaches its
 occasion (`ins:PerOccasionGateShape`), and tolling (`ins:TollingShape`). The gating rule itself,
@@ -3052,12 +3067,13 @@ flowchart LR
     SE -- "appliesInState" --> NP
 ```
 
-What it shows: a period regime under clause 11.1, the term of the power whose exercise starts it.
-Its triggers name the stated powers (§11.1). Termination for breach applies from either state, so
-it is two transitions. Clause 11.3 takes away the licensee's power to grant sub-licences while
-notice runs: an exclusion of the power, the licensor's immunity, held by the licensor as the power's
-counterparty (I8), and gated by the notice period. The grant's own scope never mentions the regime
-(DP6, §11.5). The 90 days are a quantity in a day unit, on a duration space the example declares.
+The example shows a period regime under clause 11.1, the term of the power whose exercise starts
+it. Its triggers name the stated powers (§11.1). Termination for breach applies from either state,
+so it takes two transitions. Clause 11.3 takes away the licensee's power to grant sub-licences
+while notice runs, by an exclusion of the power. The exclusion is the licensor's immunity, held by
+the licensor as the power's counterparty (I8), and gated by the notice period. The grant's own
+scope never mentions the regime (DP6, §11.5). The 90 days are a quantity in a day unit, on a
+duration space that the example declares.
 
 ### 16.6 A supply agreement with suspension and force majeure
 
@@ -3088,10 +3104,11 @@ flowchart LR
     end
 ```
 
-What it shows: a switching regime moved by two parties' powers, the supplier's to suspend and the
-buyer's to have deliveries resumed, and a force majeure regime moved by conditions. The duty to
-deliver is gated across both: it applies only in force and unaffected (§11.3). The buyer's power
-is itself gated by the suspended state, so it exists only while there is a suspension to end.
+The example shows a switching regime moved by two parties' powers, the supplier's power to suspend
+and the buyer's power to have deliveries resumed, and a force majeure regime moved by conditions.
+The duty to deliver is gated across both regimes, and applies only while in force and unaffected
+(§11.3). The buyer's power is itself gated by the suspended state, so it applies only while there
+is a suspension to end.
 Clause 14.1 states no relation of its own, only its regime, so its term binds nothing (ADR-A104
 2026-10-04 addendum, decision 1). The unaffected state has no kind.
 
@@ -3111,8 +3128,8 @@ stateDiagram-v2
     Cure --> InDefault : expiry, 30 business days, tolled while affected
 ```
 
-What it shows: the cure period is entered and left by `ins:OnCondition`s over two interval
-conditions that partition the leverage ratio at 3.0, one of them the condition the covenant
+The example shows a cure period entered and left by `ins:OnCondition`s over two interval
+conditions that partition the leverage ratio at 3.0, one of which is the condition the covenant
 maintains. Default follows the expiry of 30 business days, a `qnt:CalendarUnit`, counted only while
 the force majeure regime is unaffected (`ins:tolledIn`, §10). The power to accelerate is gated by
 the default state. Clauses 22.1 and 22.2 state only regimes, so their terms bind nothing.
@@ -3132,12 +3149,13 @@ stateDiagram-v2
     Disputed --> Over : the dispute is settled
 ```
 
-What it shows: a dispute regime `bhv:perOccasionOf` the stated service obligation, so every month's
-occasion of every bound service obligation has its own dispute. The customer's power to end the
-agreement, and the exclusion of that power, both arise on breach of the service obligation
-(`ins:arisesOnBreachOf`), and the exclusion is gated by the disputed state. For one month's breach
-the gate reads that month's dispute (§11.4). Raising a dispute is an `ins:OnAct` naming the act
-and the party (`ins:by`). Its activity is the same property a relation uses (C7a-Q2).
+The example shows a dispute regime `bhv:perOccasionOf` the stated service obligation, so every
+monthly occasion of every bound service obligation has its own dispute regime. The customer's power
+to end the agreement and the exclusion of that power both arise on breach of the service
+obligation (`ins:arisesOnBreachOf`), and the exclusion is gated by the disputed state. For one
+month's breach, the gate reads that month's dispute regime (§11.4). Raising a dispute is an
+`ins:OnAct` naming the act and the party (`ins:by`). Its activity uses the same property as a
+relation (C7a-Q2).
 
 ## 17. Release Notes
 

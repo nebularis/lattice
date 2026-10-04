@@ -87,6 +87,91 @@ Phase 1, examples first (ADR-A-C2), 2026-10-04:
   - The licence's exit on termination for cause takes two transitions, from in force and from the
     notice period, since a transition has one source state.
 
+Phase 2, the model, 2026-10-04:
+
+- **Built:** `instrument` 0.10.0 (additive), `instrument-vocab` 0.10.0, `instrument-shapes` 0.3.0,
+  all generated from `ontology/instrument/README.md`, which gains:
+  - terminology for regimes, regime transitions, the five legal triggers and twelve properties,
+    with the words not used (lifecycle, status, suspended or paused, event)
+  - §5.7 (an overview picture)
+  - §10 Legal Triggers (kinds, expiry, tolling, arising and ending)
+  - §11 Regimes and Gating (stated once, with the layered insurance cover as one labelled use-case
+    among three, the regime kinds with state diagrams, the gating rule, whose state gates, DP6)
+  - §12 Authoring With and Without a Reasoner (C7a-R1)
+  - four worked examples (§16.5 to §16.8), laws and release notes
+  - 46 Mermaid diagrams, every one parsed by mermaid 11
+  - sections 10 to 14 renumbered to 13 to 17. No document links to them by number
+
+  `tools/test_regimes.py` holds rows C7a-01 to C7a-13 and C7a-15 to C7a-18. `tools/test_instrument.py`
+  now asserts the current versions, 0.10.0 and shapes 0.3.0, and keeps its release-note assertions.
+  The ontology architecture's Instrument rows, the catalog and the release table are updated.
+- **Check first:**
+  - §12 and the B4 finding below.
+  - The default in `ins:arisesOn`'s comment: a relation with no arising trigger has arisen once
+    its instrument takes effect. C6's relations read that way, but no decision states it.
+  - `ins:Regime ⊑ bhv:StateSpace ⊑ fnd:Version`, so a regime is a Foundation version through
+    Behaviour, while ADR-A104 decision 2 says only `ins:Instrument` is a version in this layer.
+    Nothing breaks: `ins:Template` is disjoint only with `ins:Instrument`, and every example is
+    consistent. What a new clause version does to a regime's identity, and to the occupancies of
+    its states, is C9's amendment question.
+- **Deviations from the plan:**
+  - **The B4 shapes check `rdf:type` itself.** Written first with `sh:class bhv:StateSpace`, they
+    could never fire: SHACL's `sh:class` and `sh:targetClass` follow the `rdfs:subClassOf` triples
+    in the data graph, and the data is validated with Instrument's spec, where `ins:Regime ⊑
+    bhv:StateSpace`. They now use `sh:path rdf:type ; sh:hasValue`, which no subclass axiom
+    satisfies. The same fact corrects a claim in the phase 1 write-up and the addendum's first
+    draft: Behaviour's shapes do select a node typed only `ins:RegimeTransition` when Instrument's
+    spec is in the data graph, and report its missing policies. They skip it only without the
+    spec. The engine matches the literal type, which is why B4 stays. Addendum decision 5 and
+    README §12.1 are corrected.
+  - **Tolling is checked per state space, not per regime.** The plan said a tolling state belongs to
+    a different regime from the one its expiry fires in. That would also reject a sub-state of the
+    period's own state, which may meaningfully stop its clock. `ins:TollingShape` rejects only a
+    state of the state space the period runs in: a sibling, or the period's own state.
+  - **The addendum's first draft said Behaviour's shapes require a trigger kind.** They require
+    only the two policies. Instrument's trigger shapes now require the kind (`sh:minCount 1` with
+    `sh:in`). Corrected in addendum decision 5.
+  - `ins:by` is optional on `ins:OnAct`: without it, an act of the kind by any party fires the
+    trigger.
+  - `ins:stateKind` has no domain, under the domain rule. A shape checks that its subject is a
+    state.
+  - No threshold regime is in an example: its measured value lives in an applied layer's capacity
+    model. §11.2 draws one.
+  - Row C7a-11 (DP6) is tested structurally: nothing reachable from a relation's scope, activity or
+    maintained condition is a state, and the licence's grant has no gate. No design-time envelope
+    comparison exists yet to run.
+  - Row C7a-14 is the existing suites, run below. It has no test of its own.
+  - **Arising and ending take four triggers, not five** (found at README review, 2026-10-04). The
+    shape first allowed `ins:OnExpiry` in `ins:arisesOn` and `ins:endsOn`. The sketch's §5.5 lists
+    four, and an expiry has no anchor on a relation: it counts from entering a state. Corrected in
+    `ins:ArisingShape`, the two properties' comments, the README and addendum decision 6, with a
+    test in C7a-08.
+  - **README review, 2026-10-04.** At the human's request, §4.2.4 now explains arising in the legal
+    sense (source and moment, Hohfeld's operative facts, arising against falling due, ending,
+    occasions), and §4.2.13 explains how regimes work: what they are for, where an instrument's
+    regimes come from, the one state per regime at every moment, what a relation's regimes are,
+    the three questions of existence, gate and scope, why a gate and not arising and ending, and
+    per-occasion regimes. The human's edits to §4.2.13 are kept. Thirteen diagrams are added (59 in
+    all), and every one renders under mermaid 11, which a parse alone does not show: a colon in a
+    gantt task name parses and fails to render.
+
 ## Results
 
-Written on machine R at verification.
+Run by the agent on machine R, 2026-10-04, with every tool package importing from this checkout.
+
+| Row | Result |
+|---|---|
+| C7a-01 | pass: 0.10.0, imports unchanged, every new property states subject and value, `ins:activity` has no domain, the three trigger domains and no others, the fixed values are `owl:hasValue` |
+| C7a-02 | pass: all eight examples conform to the structural and constraint shapes of Foundation, Vocabulary, Quantification, Party, Eligibility, Wording, Behaviour and Instrument. Also conform under pySHACL's RDFS and OWL RL inference |
+| C7a-03 | pass: the four regime examples are consistent (reasoning harness) |
+| C7a-04 to C7a-09 | pass: each change reported at its node, with its message |
+| C7a-10 | pass: an `ins:OnAct` with an activity is consistent with not being a legal relation |
+| C7a-11 | pass, structurally (see deviations) |
+| C7a-12 | pass: the state kind contract, and every kind and activity the examples use is in the baselines |
+| C7a-13 | pass: the README is the source of all five files, release notes recorded, shapes `.version` 0.3.0 |
+| C7a-14 | pass: `tools/test_instrument.py` (with its two current-version assertions moved), `check:python-root` (84), `check:mork-compilers` (114), `check:persistence` (778), `check:vocabulary` (16), `check:ontology-catalog`, `check:ontology-versioning`, `check:import-guard`, `build:mtp` (lock unchanged), `check:mtp`, and the literate check of Foundation, Wording, Behaviour, Surface and Instrument |
+| C7a-15 to C7a-18 | pass: the lean licence conforms after an OWL 2 RL closure, fails B4 at all eight regime nodes without one, a wrong policy is reported once where stated and at all four transitions after closure, and `ins:ofPower` alone yields the trigger's class, type and kind |
+
+`tools/test_instrument.py` and `tools/test_regimes.py`: 105 passed, and 106 after the README review's arising test. Release rows added for
+`instrument-v0.10.0`, `instrument-shapes-v0.3.0` and `instrument-vocab-v0.10.0`. Nothing else
+imports Instrument, so nothing cascades.

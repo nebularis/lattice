@@ -6,6 +6,9 @@
 @prefix pty:  <https://www.nebularis.org/neuro-semantic/lattice/party#> .
 @prefix elg:  <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
 @prefix wrd:  <https://www.nebularis.org/neuro-semantic/lattice/wording#> .
+@prefix bhv:  <https://www.nebularis.org/neuro-semantic/lattice/behaviour#> .
+@prefix qnt:  <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
 
 ins:InstrumentShape a sh:NodeShape ;
@@ -137,3 +140,118 @@ ins:PartyDetailsShape a sh:NodeShape ;
 	sh:property [ sh:path ins:operatesAt ; sh:nodeKind sh:IRI ;
 		sh:message "An operating location is a concept from the bound location scheme." ] ;
 	sh:message "Party details belong to a role occupancy." .
+
+ins:RegimeShape a sh:NodeShape ;
+	sh:targetClass ins:Regime ;
+	sh:class ins:Template ;
+	sh:message "A regime is stated meaning only, an ins:Template: it is stated once and read for each subject (C7a-Q1)." ;
+	sh:property [ sh:path ins:arisesUnder ; sh:minCount 1 ; sh:maxCount 1 ; sh:class ins:Term ;
+		sh:message "A regime arises under exactly one term." ] ;
+	sh:property [ sh:path ins:arisesUnder ; sh:class ins:Template ;
+		sh:message "A regime arises under a stated term (C7a-Q1)." ] ;
+	sh:property [ sh:path ins:boundFrom ; sh:maxCount 0 ;
+		sh:message "A regime is never bound: it is stated once and read for each subject (law I13)." ] .
+
+# Law B4 is about the triple the engine reads, so these shapes check rdf:type
+# itself. sh:class would follow ins:Regime's rdfs:subClassOf in the data graph
+# and pass without the triple (§12.1).
+ins:RegimeTypeShape a sh:NodeShape ;
+	sh:targetClass ins:Regime ;
+	sh:property [ sh:path rdf:type ; sh:hasValue bhv:StateSpace ;
+		sh:message "A regime is also typed bhv:StateSpace in the graph the engine reads: assert it where no reasoner runs (law B4, §12)." ] .
+
+ins:RegimeTransitionShape a sh:NodeShape ;
+	sh:targetClass ins:RegimeTransition ;
+	sh:property [ sh:path bhv:hasTrigger ;
+		sh:or ( [ sh:class ins:OnExercise ] [ sh:class ins:OnBreach ] [ sh:class ins:OnAct ] [ sh:class ins:OnCondition ] [ sh:class ins:OnExpiry ] ) ;
+		sh:message "A regime transition's triggers are legal triggers." ] ;
+	sh:property [ sh:path bhv:selectionPolicy ; sh:in ( bhv:SingleMatch ) ;
+		sh:message "A regime transition's selection policy is bhv:SingleMatch, fixed (ADR-A104 decision 7). A reasoner adds it where none is stated (§12)." ] ;
+	sh:property [ sh:path bhv:activationPolicy ; sh:in ( bhv:ImmediateActivation ) ;
+		sh:message "A regime transition's activation policy is bhv:ImmediateActivation, fixed (ADR-A104 decision 7). A reasoner adds it where none is stated (§12)." ] .
+
+ins:RegimeTransitionTypeShape a sh:NodeShape ;
+	sh:targetClass ins:RegimeTransition ;
+	sh:property [ sh:path rdf:type ; sh:hasValue bhv:TransitionDefinition ;
+		sh:message "A regime transition is also typed bhv:TransitionDefinition in the graph the engine reads: assert it where no reasoner runs (law B4, §12)." ] .
+
+ins:LegalTriggerTypeShape a sh:NodeShape ;
+	sh:targetClass ins:OnExercise , ins:OnBreach , ins:OnAct , ins:OnCondition , ins:OnExpiry ;
+	sh:property [ sh:path rdf:type ; sh:hasValue bhv:TriggerDefinition ;
+		sh:message "A legal trigger is also typed bhv:TriggerDefinition in the graph the engine reads: assert it where no reasoner runs (law B4, §12)." ] .
+
+ins:OnExerciseShape a sh:NodeShape ;
+	sh:targetClass ins:OnExercise ;
+	sh:property [ sh:path ins:ofPower ; sh:minCount 1 ; sh:maxCount 1 ; sh:class ins:Power ;
+		sh:message "An exercise trigger names exactly one power (ins:ofPower)." ] ;
+	sh:property [ sh:path bhv:triggerKind ; sh:minCount 1 ; sh:in ( bhv:ExternalStimulus ) ;
+		sh:message "An exercise trigger's kind is bhv:ExternalStimulus, fixed. Assert it where no reasoner runs (§12)." ] .
+
+ins:OnBreachShape a sh:NodeShape ;
+	sh:targetClass ins:OnBreach ;
+	sh:property [ sh:path ins:ofObligation ; sh:minCount 1 ; sh:maxCount 1 ; sh:class ins:Obligation ;
+		sh:message "A breach trigger names exactly one obligation (ins:ofObligation)." ] ;
+	sh:property [ sh:path bhv:triggerKind ; sh:minCount 1 ; sh:in ( bhv:DerivedTrigger ) ;
+		sh:message "A breach trigger's kind is bhv:DerivedTrigger, fixed. Assert it where no reasoner runs (§12)." ] .
+
+ins:OnActShape a sh:NodeShape ;
+	sh:targetClass ins:OnAct ;
+	sh:property [ sh:path ins:activity ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:IRI ;
+		sh:message "An act trigger names exactly one act (ins:activity), a concept." ] ;
+	sh:property [ sh:path ins:by ;
+		sh:or ( [ sh:class pty:Role ] [ sh:class pty:RoleOccupancy ] [ sh:class pty:ParticipationGroup ] ) ;
+		sh:message "An act trigger's ins:by names parties." ] ;
+	sh:property [ sh:path bhv:triggerKind ; sh:minCount 1 ; sh:in ( bhv:ExternalStimulus ) ;
+		sh:message "An act trigger's kind is bhv:ExternalStimulus, fixed. Assert it where no reasoner runs (§12)." ] .
+
+ins:OnConditionShape a sh:NodeShape ;
+	sh:targetClass ins:OnCondition ;
+	sh:property [ sh:path ins:condition ; sh:minCount 1 ; sh:maxCount 1 ; sh:class elg:Condition ;
+		sh:message "A condition trigger names exactly one Eligibility condition (ins:condition)." ] ;
+	sh:property [ sh:path bhv:triggerKind ; sh:minCount 1 ; sh:in ( bhv:DerivedTrigger ) ;
+		sh:message "A condition trigger's kind is bhv:DerivedTrigger, fixed. Assert it where no reasoner runs (§12)." ] .
+
+ins:OnExpiryShape a sh:NodeShape ;
+	sh:targetClass ins:OnExpiry ;
+	sh:property [ sh:path ins:after ; sh:minCount 1 ; sh:maxCount 1 ; sh:class qnt:Quantity ;
+		sh:message "An expiry trigger states exactly one length (ins:after), a quantity of time." ] ;
+	sh:property [ sh:path ins:tolledIn ; sh:class bhv:State ;
+		sh:message "An expiry period is tolled in states." ] ;
+	sh:property [ sh:path bhv:triggerKind ; sh:minCount 1 ; sh:in ( bhv:ScheduledTrigger ) ;
+		sh:message "An expiry trigger's kind is bhv:ScheduledTrigger, fixed. Assert it where no reasoner runs (§12)." ] .
+
+ins:StateKindShape a sh:NodeShape ;
+	sh:targetSubjectsOf ins:stateKind ;
+	sh:class bhv:State ;
+	sh:message "Only a state has a state kind." ;
+	sh:property [ sh:path ins:stateKind ; sh:maxCount 1 ; sh:nodeKind sh:IRI ;
+		sh:message "A state has at most one kind, a concept." ] .
+
+ins:GatedRelationShape a sh:NodeShape ;
+	sh:targetSubjectsOf ins:appliesInState ;
+	sh:class ins:LegalRelation ;
+	sh:message "Only a legal relation is gated by a state (ins:appliesInState)." ;
+	sh:property [ sh:path ins:appliesInState ; sh:class bhv:State ;
+		sh:message "A relation is gated by states." ] .
+
+ins:ArisingShape a sh:NodeShape ;
+	sh:targetSubjectsOf ins:arisesOn , ins:endsOn , ins:arisesOnBreachOf , ins:arisesOnExerciseOf ;
+	sh:class ins:LegalRelation ;
+	sh:message "Only a legal relation arises or ends on a trigger." ;
+	sh:property [ sh:path [ sh:alternativePath ( ins:arisesOn ins:endsOn ) ] ;
+		sh:or ( [ sh:class ins:OnExercise ] [ sh:class ins:OnBreach ] [ sh:class ins:OnAct ] [ sh:class ins:OnCondition ] ) ;
+		sh:message "A relation arises or ends on an exercise, a breach, an act or a condition. An expiry counts from entering a state, so it moves only regimes: a relation's own periods are due ranges (C7b)." ] ;
+	sh:property [ sh:path ins:arisesOnBreachOf ; sh:class ins:Obligation ;
+		sh:message "A relation arises on the breach of an obligation." ] ;
+	sh:property [ sh:path ins:arisesOnExerciseOf ; sh:class ins:Power ;
+		sh:message "A relation arises on the exercise of a power." ] .
+
+ins:ArisingTierShape a sh:NodeShape ;
+	sh:targetClass ins:LegalRelation ;
+	sh:message "A stated relation arises on the breach or exercise of stated relations, and a bound relation of bound ones (ADR-A104 2026-10-04 addendum, decision 3)." ;
+	sh:or (
+		[ sh:class ins:Template ;
+		  sh:property [ sh:path [ sh:alternativePath ( ins:arisesOnBreachOf ins:arisesOnExerciseOf ) ] ; sh:class ins:Template ] ]
+		[ sh:not [ sh:class ins:Template ] ;
+		  sh:property [ sh:path [ sh:alternativePath ( ins:arisesOnBreachOf ins:arisesOnExerciseOf ) ] ; sh:not [ sh:class ins:Template ] ] ]
+	) .

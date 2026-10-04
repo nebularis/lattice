@@ -5,6 +5,8 @@
 @prefix pty:  <https://www.nebularis.org/neuro-semantic/lattice/party#> .
 @prefix elg:  <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
 @prefix wrd:  <https://www.nebularis.org/neuro-semantic/lattice/wording#> .
+@prefix bhv:  <https://www.nebularis.org/neuro-semantic/lattice/behaviour#> .
+@prefix qnt:  <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
 @prefix prov: <http://www.w3.org/ns/prov#> .
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 @prefix owl:  <http://www.w3.org/2002/07/owl#> .
@@ -14,7 +16,7 @@
 
 <https://www.nebularis.org/neuro-semantic/instrument>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.9.0> ;
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.10.0> ;
 	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.4.0> ,
 				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.4.0> ,
 				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.6.0> ,
@@ -44,7 +46,7 @@ ins:Term a owl:Class ;
 
 ins:Template a owl:Class ;
 	rdfs:comment "Stated meaning: a term, relation or qualifier as its clause states it." ;
-	fnd:utility "A mixin on ins:Term, ins:LegalRelation and ins:Qualifier. A template names pty:Roles, defined words and variables, never occupancies or values (law I13), and is never evaluated. Its term is expressed in exactly one element version." .
+	fnd:utility "A mixin on ins:Term, ins:LegalRelation, ins:Qualifier and ins:Regime. A template names pty:Roles, defined words and variables, never occupancies or values (law I13). A term, relation or qualifier template is never evaluated. A regime is always a template, stated once and read as stated for each subject (C7a-Q1). Its term is expressed in exactly one element version." .
 
 ins:alsoExpressedIn a owl:ObjectProperty ;
 	rdfs:domain ins:Term ;
@@ -109,8 +111,8 @@ ins:ContinuingObligation owl:disjointWith ins:Prohibition .
 
 ins:arisesUnder a owl:ObjectProperty, owl:FunctionalProperty ;
 	rdfs:range ins:Term ;
-	rdfs:comment "The term a relation or qualifier arises under, and belongs to." ;
-	fnd:utility "Subject: a relation or qualifier. Value: its one term. A stated relation arises under a stated term, a bound relation under a bound term." .
+	rdfs:comment "The term a relation, regime or qualifier arises under, and belongs to." ;
+	fnd:utility "Subject: a relation, regime or qualifier. Value: its one term. A stated relation arises under a stated term, a bound relation under a bound term. A regime is stated only, so it arises under a stated term." .
 
 ins:excepts a owl:ObjectProperty, owl:FunctionalProperty ;
 	rdfs:range ins:LegalRelation ;
@@ -163,10 +165,9 @@ ins:operatesAt a owl:ObjectProperty ;
 	fnd:utility "Subject: a role occupancy. Value: a concept from the territory or site scheme a deployment binds to ins-voc:LocationContract." .
 
 ins:activity a owl:ObjectProperty ;
-	rdfs:domain ins:LegalRelation ;
 	rdfs:range skos:Concept ;
-	rdfs:comment "The act a relation is about." ;
-	fnd:utility "Subject: a relation. Value: a concept naming the act, from the scheme bound to ins-voc:ActivityContract. Never a circumstance of the act, which is the scope." .
+	rdfs:comment "The act a relation is about, or an act a trigger waits for." ;
+	fnd:utility "Subject: a relation, or an ins:OnAct trigger. No domain, since its subjects are of both kinds (C7a-Q2): the shapes check each. Value: a concept naming the act, from the scheme bound to ins-voc:ActivityContract. Never a circumstance of the act, which is the scope." .
 
 ins:scope a owl:ObjectProperty, owl:FunctionalProperty ;
 	rdfs:domain ins:LegalRelation ;
@@ -202,3 +203,109 @@ ins:Term owl:disjointWith fnd:Version .
 ins:LegalRelation owl:disjointWith fnd:Version .
 ins:Qualifier owl:disjointWith fnd:Version .
 ins:Template owl:disjointWith ins:Instrument .
+
+ins:OnExercise a owl:Class ;
+	rdfs:subClassOf bhv:TriggerDefinition ,
+		[ a owl:Restriction ; owl:onProperty bhv:triggerKind ; owl:hasValue bhv:ExternalStimulus ] ;
+	rdfs:comment "A legal trigger: the exercise of a power." ;
+	fnd:utility "Subject: a trigger. Names exactly one power (ins:ofPower). In a regime, a stated power: the trigger fires on the exercise of every bound power instantiated from it. Its kind is bhv:ExternalStimulus. Assert bhv:TriggerDefinition and the kind where no reasoner runs (§12)." .
+
+ins:OnBreach a owl:Class ;
+	rdfs:subClassOf bhv:TriggerDefinition ,
+		[ a owl:Restriction ; owl:onProperty bhv:triggerKind ; owl:hasValue bhv:DerivedTrigger ] ;
+	rdfs:comment "A legal trigger: the breach of an obligation." ;
+	fnd:utility "Subject: a trigger. Names exactly one obligation (ins:ofObligation). In a regime, a stated obligation: the trigger fires on the breach of an occasion of every bound obligation instantiated from it. Its kind is bhv:DerivedTrigger. Assert bhv:TriggerDefinition and the kind where no reasoner runs (§12)." .
+
+ins:OnAct a owl:Class ;
+	rdfs:subClassOf bhv:TriggerDefinition ,
+		[ a owl:Restriction ; owl:onProperty bhv:triggerKind ; owl:hasValue bhv:ExternalStimulus ] ;
+	rdfs:comment "A legal trigger: an act that exercises no power." ;
+	fnd:utility "Subject: a trigger. Names exactly one act (ins:activity), and optionally the parties whose act counts (ins:by). Its kind is bhv:ExternalStimulus. Assert bhv:TriggerDefinition and the kind where no reasoner runs (§12)." .
+
+ins:OnCondition a owl:Class ;
+	rdfs:subClassOf bhv:TriggerDefinition ,
+		[ a owl:Restriction ; owl:onProperty bhv:triggerKind ; owl:hasValue bhv:DerivedTrigger ] ;
+	rdfs:comment "A legal trigger: a condition coming to hold." ;
+	fnd:utility "Subject: a trigger. Names exactly one Eligibility condition (ins:condition), and fires when it comes to hold. Its kind is bhv:DerivedTrigger. Assert bhv:TriggerDefinition and the kind where no reasoner runs (§12)." .
+
+ins:OnExpiry a owl:Class ;
+	rdfs:subClassOf bhv:TriggerDefinition ,
+		[ a owl:Restriction ; owl:onProperty bhv:triggerKind ; owl:hasValue bhv:ScheduledTrigger ] ;
+	rdfs:comment "A legal trigger: the end of a period counted from entering a state." ;
+	fnd:utility "Subject: a trigger. Names exactly one length (ins:after), counted from entering the state its transition leaves, and optionally the states in which the period does not run (ins:tolledIn). Its kind is bhv:ScheduledTrigger. Assert bhv:TriggerDefinition and the kind where no reasoner runs (§12)." .
+
+ins:ofPower a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain ins:OnExercise ;
+	rdfs:range ins:Power ;
+	rdfs:comment "The power whose exercise a trigger waits for." ;
+	fnd:utility "Subject: an ins:OnExercise, which the domain lets a reasoner infer (§12). Value: exactly one power. In a regime, a stated power." .
+
+ins:ofObligation a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain ins:OnBreach ;
+	rdfs:range ins:Obligation ;
+	rdfs:comment "The obligation whose breach a trigger waits for." ;
+	fnd:utility "Subject: an ins:OnBreach, which the domain lets a reasoner infer (§12). Value: exactly one obligation. In a regime, a stated obligation." .
+
+ins:by a owl:ObjectProperty ;
+	rdfs:range ins:RelationParty ;
+	rdfs:comment "A party whose act an act trigger waits for." ;
+	fnd:utility "Subject: an ins:OnAct. Value: a party, any number. A regime is stated, so its triggers name roles. Without one, an act of the kind by any party fires the trigger." .
+
+ins:condition a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:range elg:Condition ;
+	rdfs:comment "The condition a condition trigger waits for." ;
+	fnd:utility "Subject: an ins:OnCondition. Value: exactly one Eligibility condition. The trigger fires when the condition comes to hold. No domain: terms in time may reuse the property (C7b)." .
+
+ins:after a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:range qnt:Quantity ;
+	rdfs:comment "The length of an expiry period." ;
+	fnd:utility "Subject: an ins:OnExpiry. Value: exactly one quantity of time, counted from entering the state the trigger's transition leaves. A business day or another calendar-dependent unit is a qnt:CalendarUnit (ADR-A94). No domain: terms in time may reuse the property (C7b)." .
+
+ins:tolledIn a owl:ObjectProperty ;
+	rdfs:domain ins:OnExpiry ;
+	rdfs:range bhv:State ;
+	rdfs:comment "A state in which an expiry period does not run." ;
+	fnd:utility "Subject: an ins:OnExpiry, which the domain lets a reasoner infer (§12). Value: a state, any number, never of the state space the period runs in. The period's clock stops while the subject is in any of them (C11a-Q2)." .
+
+ins:arisesOn a owl:ObjectProperty ;
+	rdfs:range bhv:TriggerDefinition ;
+	rdfs:comment "A legal trigger on which a relation arises." ;
+	fnd:utility "Subject: a relation. Value: an exercise, breach, act or condition trigger, any number: alternatives. Never an ins:OnExpiry, which counts from entering a state. A relation with none has arisen once its instrument takes effect." .
+
+ins:arisesOnBreachOf a owl:ObjectProperty ;
+	rdfs:range ins:Obligation ;
+	rdfs:comment "An obligation on whose breach a relation arises." ;
+	fnd:utility "Subject: a relation. Value: an obligation, any number: alternatives. Short for ins:arisesOn an ins:OnBreach of it. A stated relation names a stated obligation, a bound relation a bound one." .
+
+ins:arisesOnExerciseOf a owl:ObjectProperty ;
+	rdfs:range ins:Power ;
+	rdfs:comment "A power on whose exercise a relation arises." ;
+	fnd:utility "Subject: a relation. Value: a power, any number: alternatives. Short for ins:arisesOn an ins:OnExercise of it. A stated relation names a stated power, a bound relation a bound one." .
+
+ins:endsOn a owl:ObjectProperty ;
+	rdfs:range bhv:TriggerDefinition ;
+	rdfs:comment "A legal trigger on which a relation ends." ;
+	fnd:utility "Subject: a relation. Value: an exercise, breach, act or condition trigger, any number: alternatives. Never an ins:OnExpiry, which counts from entering a state. A relation with none ends with its instrument." .
+
+ins:Regime a owl:Class ;
+	rdfs:subClassOf bhv:StateSpace ;
+	skos:altLabel "Dispensation"@en ;
+	rdfs:comment "A state space whose states gate legal relations." ;
+	fnd:utility "Subject: a regime, stated meaning only (an ins:Template, C7a-Q1). Arises under exactly one stated term, and is shared by every instrument whose wording includes the term's clause. Each instrument's progress through it is an occupancy for its persistent identity. Its transitions are ins:RegimeTransitions. Assert bhv:StateSpace where no reasoner runs (§12)." .
+
+ins:RegimeTransition a owl:Class ;
+	rdfs:subClassOf bhv:TransitionDefinition ,
+		[ a owl:Restriction ; owl:onProperty bhv:selectionPolicy ; owl:hasValue bhv:SingleMatch ] ,
+		[ a owl:Restriction ; owl:onProperty bhv:activationPolicy ; owl:hasValue bhv:ImmediateActivation ] ;
+	rdfs:comment "A transition between a regime's states, on a legal trigger." ;
+	fnd:utility "Subject: a transition of a regime. Its triggers are legal triggers. Its selection is bhv:SingleMatch and its activation bhv:ImmediateActivation, fixed: assert bhv:TransitionDefinition and both where no reasoner runs, and an OWL 2 RL reasoner adds them where one does (§12)." .
+
+ins:stateKind a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:range skos:Concept ;
+	rdfs:comment "What kind of state a regime's state is." ;
+	fnd:utility "Subject: a state of a regime. Value: at most one concept from the scheme bound to ins-voc:StateKindContract. For readers and reports: the evaluator never reads it." .
+
+ins:appliesInState a owl:ObjectProperty ;
+	rdfs:range bhv:State ;
+	rdfs:comment "A state a relation applies in." ;
+	fnd:utility "Subject: a relation. Value: a state of an ins:Regime, any number. Grouped by top-level regime: within one, any named state admits the relation, and across regimes every group must. A composite state holds while any descendant does. Read for the relation's own instrument, or for the occasion its arising chain reaches (§11.4). Never part of a design-time comparison (DP6)." .

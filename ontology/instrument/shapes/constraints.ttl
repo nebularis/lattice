@@ -73,3 +73,73 @@ ins:ExclusionHolderShape a sh:NodeShape ;
 			}
 		"""
 	] .
+
+ins:RegimeTransitionsShape a sh:NodeShape ;
+	sh:targetClass ins:Regime ;
+	sh:sparql [
+		sh:message "{?transition} moves to or from a state of the regime {$this}, but is not an ins:RegimeTransition." ;
+		sh:select """
+			PREFIX ins:  <https://www.nebularis.org/neuro-semantic/lattice/instrument#>
+			PREFIX bhv:  <https://www.nebularis.org/neuro-semantic/lattice/behaviour#>
+			PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+			PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+			SELECT DISTINCT $this ?transition WHERE {
+				?transition (bhv:fromState|bhv:toState)/bhv:inStateSpace $this .
+				FILTER NOT EXISTS { ?transition rdf:type/rdfs:subClassOf* ins:RegimeTransition }
+			}
+		"""
+	] .
+
+ins:GateStateShape a sh:NodeShape ;
+	sh:targetSubjectsOf ins:appliesInState ;
+	sh:sparql [
+		sh:message "{$this} is gated by {?state}, which is not a state of an ins:Regime." ;
+		sh:select """
+			PREFIX ins:  <https://www.nebularis.org/neuro-semantic/lattice/instrument#>
+			PREFIX bhv:  <https://www.nebularis.org/neuro-semantic/lattice/behaviour#>
+			PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+			PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+			SELECT $this ?state WHERE {
+				$this ins:appliesInState ?state .
+				FILTER NOT EXISTS {
+					?state bhv:inStateSpace/(bhv:regionOf/bhv:inStateSpace)* ?regime .
+					?regime rdf:type/rdfs:subClassOf* ins:Regime .
+				}
+			}
+		"""
+	] .
+
+ins:PerOccasionGateShape a sh:NodeShape ;
+	sh:targetSubjectsOf ins:appliesInState ;
+	sh:sparql [
+		sh:message "{$this} is gated by {?state}, a state of a regime for each occasion of {?relation}, but arises on no breach or exercise of it, so no occasion is reached (C11a-Q4)." ;
+		sh:select """
+			PREFIX ins:  <https://www.nebularis.org/neuro-semantic/lattice/instrument#>
+			PREFIX bhv:  <https://www.nebularis.org/neuro-semantic/lattice/behaviour#>
+			SELECT $this ?state ?relation WHERE {
+				$this ins:appliesInState ?state .
+				?state bhv:inStateSpace/(bhv:regionOf/bhv:inStateSpace)* ?space .
+				?space bhv:perOccasionOf ?relation .
+				FILTER NOT EXISTS {
+					$this (ins:arisesOnBreachOf|ins:arisesOnExerciseOf|ins:arisesOn/(ins:ofObligation|ins:ofPower)) ?arising .
+					?arising ins:boundFrom? ?relation .
+				}
+			}
+		"""
+	] .
+
+ins:TollingShape a sh:NodeShape ;
+	sh:targetSubjectsOf ins:tolledIn ;
+	sh:sparql [
+		sh:message "The period of {$this} is tolled in {?state}, a state of the state space it runs in: a period's clock is stopped only by another space's state, such as another regime's or a sub-state's (C11a-Q2)." ;
+		sh:select """
+			PREFIX ins:  <https://www.nebularis.org/neuro-semantic/lattice/instrument#>
+			PREFIX bhv:  <https://www.nebularis.org/neuro-semantic/lattice/behaviour#>
+			SELECT DISTINCT $this ?state WHERE {
+				$this ins:tolledIn ?state .
+				?transition bhv:hasTrigger $this ;
+					bhv:fromState/bhv:inStateSpace ?space .
+				?state bhv:inStateSpace ?space .
+			}
+		"""
+	] .

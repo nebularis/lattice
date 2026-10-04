@@ -12,8 +12,8 @@
 
 <https://www.nebularis.org/neuro-semantic/instrument-vocab>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/instrument-vocab/0.9.0> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.9.0> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/instrument-vocab/0.10.0> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.10.0> .
 
 ins-voc:ActivityContract a voc:SchemeContract ;
 	fnd:hasIdentity ins-voc:ActivityContract-identity ;
@@ -58,6 +58,61 @@ ins-voc:Repair a skos:Concept ; skos:inScheme ins-voc:Activities ;
 ins-voc:Terminate a skos:Concept ; skos:inScheme ins-voc:Activities ;
 	skos:prefLabel "Terminate"@en ; skos:definition "End an instrument or a relationship under it."@en .
 
+ins-voc:GrantSublicence a skos:Concept ; skos:inScheme ins-voc:Activities ;
+	skos:prefLabel "Grant sub-licence"@en ; skos:definition "Grant another party a licence of rights held under a licence."@en .
+
+ins-voc:Deliver a skos:Concept ; skos:inScheme ins-voc:Activities ;
+	skos:prefLabel "Deliver"@en ; skos:definition "Hand over goods to another party."@en .
+
+ins-voc:Suspend a skos:Concept ; skos:inScheme ins-voc:Activities ;
+	skos:prefLabel "Suspend"@en ; skos:definition "Stop performing under an instrument for a time, without ending it."@en .
+
+ins-voc:Reinstate a skos:Concept ; skos:inScheme ins-voc:Activities ;
+	skos:prefLabel "Reinstate"@en ; skos:definition "Restore performance that has been suspended."@en .
+
+ins-voc:ProvideService a skos:Concept ; skos:inScheme ins-voc:Activities ;
+	skos:prefLabel "Provide service"@en ; skos:definition "Make a service available to another party."@en .
+
+ins-voc:Dispute a skos:Concept ; skos:inScheme ins-voc:Activities ;
+	skos:prefLabel "Dispute"@en ; skos:definition "Contest a claim, report or assertion another party has made."@en .
+
 ins:InstrumentTarget a bhv:TargetKind ;
 	rdfs:comment "A Behaviour effect's target kind for an instrument." ;
 	fnd:utility "Declared here, since Behaviour no longer names Instrument (ADR-A106). Behaviour's bhv:InstrumentTarget is deprecated in its favour." .
+
+ins-voc:StateKindContract a voc:SchemeContract ;
+	fnd:hasIdentity ins-voc:StateKindContract-identity ;
+	fnd:hasGovernanceState fnd:Active ;
+	skos:prefLabel "State kind scheme contract"@en ;
+	voc:constrainsProperty ins:stateKind ;
+	voc:boundScheme ins-voc:StateKinds .
+
+ins-voc:StateKinds a voc:ConceptScheme ;
+	fnd:hasIdentity ins-voc:StateKinds-identity ;
+	fnd:hasGovernanceState fnd:Active ;
+	skos:prefLabel "Baseline state kinds"@en ;
+	skos:definition "Kinds of state a regime's state may be. A baseline, not a closed set: a deployment adds kinds without a release of this layer."@en .
+
+ins-voc:InForce a skos:Concept ; skos:inScheme ins-voc:StateKinds ;
+	skos:prefLabel "In force"@en ; skos:definition "The instrument is in force and performed in the ordinary course."@en .
+
+ins-voc:NoticePeriod a skos:Concept ; skos:inScheme ins-voc:StateKinds ;
+	skos:prefLabel "Notice period"@en ; skos:definition "Notice has been given and is running."@en .
+
+ins-voc:CurePeriod a skos:Concept ; skos:inScheme ins-voc:StateKinds ;
+	skos:prefLabel "Cure period"@en ; skos:definition "A breach or a failed test may still be remedied before it has its consequence."@en .
+
+ins-voc:Default a skos:Concept ; skos:inScheme ins-voc:StateKinds ;
+	skos:prefLabel "Default"@en ; skos:definition "An event of default has occurred and is continuing."@en .
+
+ins-voc:Suspended a skos:Concept ; skos:inScheme ins-voc:StateKinds ;
+	skos:prefLabel "Suspended"@en ; skos:definition "Performance under the instrument is suspended. A regime's state, not Behaviour's core occasion state bhv:Suspended."@en .
+
+ins-voc:ForceMajeure a skos:Concept ; skos:inScheme ins-voc:StateKinds ;
+	skos:prefLabel "Force majeure"@en ; skos:definition "An event beyond a party's control prevents it from performing."@en .
+
+ins-voc:Disputed a skos:Concept ; skos:inScheme ins-voc:StateKinds ;
+	skos:prefLabel "Disputed"@en ; skos:definition "A claim, report or assertion has been disputed, and the dispute is not settled."@en .
+
+ins-voc:Terminated a skos:Concept ; skos:inScheme ins-voc:StateKinds ;
+	skos:prefLabel "Terminated"@en ; skos:definition "The instrument, or the arrangement the regime governs, has ended."@en .
