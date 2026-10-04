@@ -1,0 +1,217 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Premise. A clinical trial protocol binds a sponsor and each site's
+# investigator. The investigator must report serious adverse events to the
+# sponsor, must not enrol anyone outside the eligibility criteria unless the
+# sponsor waives a criterion for that participant, and the sponsor may end a
+# site's participation.
+#
+# The protocol's clauses:
+#
+# | Clause | Text | Meaning |
+# |--------|------|---------|
+# | 9.1    | The Investigator shall report each serious adverse event to the Sponsor. | an obligation |
+# | 5.1    | The Investigator shall not enrol a participant who does not meet the eligibility criteria. | a prohibition |
+# | 5.2    | The Sponsor may, in writing, waive a criterion for a named participant, who may then be enrolled. | a permission excepting the prohibition, its scope a written waiver |
+# | 14.1   | The Sponsor may end a site's participation in the trial. | a power |
+#
+# The protocol for site 104 binds Northgate Research Ltd as sponsor and
+# Dr Ada Shah as investigator.
+#
+# What the example shows:
+#
+# | Construct                                       | Where                                   |
+# |-------------------------------------------------|-----------------------------------------|
+# | a reporting obligation                          | ex:report-sae                           |
+# | a prohibition, and a waiver as its permission   | ex:no-ineligible-enrolment, ex:waiver   |
+# | law I8: the permission's holder is the prohibition's obligor, with the same activity | ex:waiver |
+# | a power over the counterparty's participation   | ex:end-participation                    |
+# | stated meaning on the protocol, bound for one site | tmpl:*, ex:*                         |
+#
+# The 24-hour reporting deadline is a due range, added with C7b.
+
+@prefix ins:     <https://www.nebularis.org/neuro-semantic/lattice/instrument#> .
+@prefix ins-voc: <https://www.nebularis.org/neuro-semantic/lattice/instrument/vocab#> .
+@prefix wrd:     <https://www.nebularis.org/neuro-semantic/lattice/wording#> .
+@prefix wrd-voc: <https://www.nebularis.org/neuro-semantic/lattice/wording/vocab#> .
+@prefix fnd:     <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix pty:     <https://www.nebularis.org/neuro-semantic/lattice/party#> .
+@prefix elg:     <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
+@prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+@prefix tmpl:    <https://example.org/lattice/instrument/trial/protocol/> .
+@prefix ex:      <https://example.org/lattice/instrument/trial/> .
+
+# ==== The protocol: wording ==================================================
+
+ex:protocol a wrd:Wording ;
+    fnd:hasIdentity ex:protocol-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:directlyComprises ex:sec-5 , ex:sec-9 , ex:sec-14 .
+
+ex:sec-5 a wrd:Element ;
+    fnd:hasIdentity ex:sec-5-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Section ; wrd:objectId "5" ; wrd:rankKey "e0" ;
+    wrd:directlyComprises ex:cl-5-1 , ex:cl-5-2 .
+ex:cl-5-1 a wrd:Text ;
+    fnd:hasIdentity ex:cl-5-1-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "5.1" ; wrd:rankKey "a0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "The Investigator shall not enrol a participant who does not meet the eligibility criteria." ] .
+ex:cl-5-2 a wrd:Text ;
+    fnd:hasIdentity ex:cl-5-2-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "5.2" ; wrd:rankKey "b0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "The Sponsor may, in writing, waive a criterion for a named participant, who may then be enrolled." ] .
+
+ex:sec-9 a wrd:Element ;
+    fnd:hasIdentity ex:sec-9-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Section ; wrd:objectId "9" ; wrd:rankKey "i0" ;
+    wrd:directlyComprises ex:cl-9-1 .
+ex:cl-9-1 a wrd:Text ;
+    fnd:hasIdentity ex:cl-9-1-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "9.1" ; wrd:rankKey "a0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "The Investigator shall report each serious adverse event to the Sponsor." ] .
+
+ex:sec-14 a wrd:Element ;
+    fnd:hasIdentity ex:sec-14-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Section ; wrd:objectId "14" ; wrd:rankKey "n0" ;
+    wrd:directlyComprises ex:cl-14-1 .
+ex:cl-14-1 a wrd:Text ;
+    fnd:hasIdentity ex:cl-14-1-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "14.1" ; wrd:rankKey "a0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "The Sponsor may end a site's participation in the trial." ] .
+
+# ==== Roles, conditions ======================================================
+
+ex:Sponsor a pty:Role ; rdfs:label "Sponsor" .
+ex:Investigator a pty:Role ; rdfs:label "Investigator" .
+
+# Placeholders: scopes stated, not yet evaluable. Their concepts are in no
+# scheme and no evidence binding reads them, until the case data exists (C7b,
+# C13). The prohibition's scope is the participant who fails the criteria, so
+# the activity stays plain enrolment (ins-voc:Enrol), and the waiver's scope is
+# a written waiver naming the participant.
+ex:fails-criteria a elg:Condition ;
+    elg:conditionKey "participant-fails-eligibility-criteria" ;
+    elg:matchStrategy elg:ExactMatch ;
+    elg:compatibilityOperation elg:AllRequired ;
+    elg:wildcardSemantics elg:NoWildcard ;
+    elg:requiredConcept ex:ineligible .
+ex:ineligible a skos:Concept ; rdfs:label "does not meet the eligibility criteria" .
+
+ex:written-waiver a elg:Condition ;
+    elg:conditionKey "participant-named-in-written-waiver" ;
+    elg:matchStrategy elg:ExactMatch ;
+    elg:compatibilityOperation elg:AllRequired ;
+    elg:wildcardSemantics elg:NoWildcard ;
+    elg:requiredConcept ex:waived-in-writing .
+ex:waived-in-writing a skos:Concept ; rdfs:label "a criterion waived in writing for this participant" .
+
+# ==== Stated meaning: owned by the protocol's clauses ========================
+
+tmpl:term-9-1 a ins:Term , ins:Template ; ins:expressedIn ex:cl-9-1 .
+tmpl:report-sae a ins:Obligation , ins:Template ;
+    ins:arisesUnder tmpl:term-9-1 ;
+    ins:obligor ex:Investigator ;
+    ins:obligee ex:Sponsor ;
+    ins:activity ins-voc:ReportAdverseEvent .
+
+tmpl:term-5-1 a ins:Term , ins:Template ; ins:expressedIn ex:cl-5-1 .
+tmpl:no-ineligible-enrolment a ins:Prohibition , ins:Template ;
+    ins:arisesUnder tmpl:term-5-1 ;
+    ins:obligor ex:Investigator ;
+    ins:obligee ex:Sponsor ;
+    ins:activity ins-voc:Enrol ;
+    ins:scope ex:fails-criteria .
+
+tmpl:term-5-2 a ins:Term , ins:Template ; ins:expressedIn ex:cl-5-2 .
+tmpl:waiver a ins:Permission , ins:Template ;
+    ins:arisesUnder tmpl:term-5-2 ;
+    ins:holder ex:Investigator ;                     # the prohibition's obligor (I8)
+    ins:counterparty ex:Sponsor ;
+    ins:activity ins-voc:Enrol ;                     # the same activity (I8)
+    ins:excepts tmpl:no-ineligible-enrolment ;
+    ins:scope ex:written-waiver .
+
+tmpl:term-14-1 a ins:Term , ins:Template ; ins:expressedIn ex:cl-14-1 .
+tmpl:end-participation a ins:Power , ins:Template ;
+    ins:arisesUnder tmpl:term-14-1 ;
+    ins:holder ex:Sponsor ;
+    ins:counterparty ex:Investigator ;
+    ins:activity ins-voc:EndParticipation .
+
+# ==== The protocol for site 104 ==============================================
+
+ex:site-104-wording-v1 a wrd:AssembledWording ;
+    fnd:hasIdentity ex:site-104-wording-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:assembledFrom ex:protocol ;
+    wrd:includes ex:sec-5 , ex:cl-5-1 , ex:cl-5-2 , ex:sec-9 , ex:cl-9-1 , ex:sec-14 , ex:cl-14-1 .
+
+ex:site-104-v1 a ins:Instrument ;
+    fnd:hasIdentity ex:site-104-identity ;
+    ins:expressedIn ex:site-104-wording-v1 ;
+    ins:party ex:sponsor-occ , ex:investigator-occ .
+
+ex:northgate a pty:Actor ; rdfs:label "Northgate Research Ltd" .
+ex:ada-shah a pty:Actor ; rdfs:label "Dr Ada Shah" .
+
+ex:sponsor-occ a pty:RoleOccupancy ;
+    fnd:hasIdentity ex:sponsor-occ-identity ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-03-01T00:00:00Z"^^xsd:dateTime ] ;
+    pty:inRole ex:Sponsor ;
+    pty:occupiedBy ex:northgate .
+ex:investigator-occ a pty:RoleOccupancy ;
+    fnd:hasIdentity ex:investigator-occ-identity ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-03-01T00:00:00Z"^^xsd:dateTime ] ;
+    pty:inRole ex:Investigator ;
+    pty:occupiedBy ex:ada-shah .
+
+# ==== Bound meaning: owned by site 104's protocol ============================
+#
+# What instantiation produces from the stated meaning and the instance's parties (a
+# derived artefact, ADR-A92). Each bound term is part of exactly one instrument
+# version (ins:boundIn), and its relations belong to it. A bound relation
+# restates its template in full: RDF has no override, so naming only what
+# differs would leave the template's role and the occupancy both as parties.
+
+ex:term-9-1 a ins:Term ; ins:boundIn ex:site-104-v1 ; ins:boundFrom tmpl:term-9-1 .
+ex:report-sae a ins:Obligation ;
+    ins:boundFrom tmpl:report-sae ;
+    ins:arisesUnder ex:term-9-1 ;
+    ins:obligor ex:investigator-occ ;
+    ins:obligee ex:sponsor-occ ;
+    ins:activity ins-voc:ReportAdverseEvent .
+
+ex:term-5-1 a ins:Term ; ins:boundIn ex:site-104-v1 ; ins:boundFrom tmpl:term-5-1 .
+ex:no-ineligible-enrolment a ins:Prohibition ;
+    ins:boundFrom tmpl:no-ineligible-enrolment ;
+    ins:arisesUnder ex:term-5-1 ;
+    ins:obligor ex:investigator-occ ;
+    ins:obligee ex:sponsor-occ ;
+    ins:activity ins-voc:Enrol ;
+    ins:scope ex:fails-criteria .
+
+ex:term-5-2 a ins:Term ; ins:boundIn ex:site-104-v1 ; ins:boundFrom tmpl:term-5-2 .
+ex:waiver a ins:Permission ;
+    ins:boundFrom tmpl:waiver ;
+    ins:arisesUnder ex:term-5-2 ;
+    ins:holder ex:investigator-occ ;
+    ins:counterparty ex:sponsor-occ ;
+    ins:activity ins-voc:Enrol ;
+    ins:excepts ex:no-ineligible-enrolment ;
+    ins:scope ex:written-waiver .
+
+ex:term-14-1 a ins:Term ; ins:boundIn ex:site-104-v1 ; ins:boundFrom tmpl:term-14-1 .
+ex:end-participation a ins:Power ;
+    ins:boundFrom tmpl:end-participation ;
+    ins:arisesUnder ex:term-14-1 ;
+    ins:holder ex:sponsor-occ ;
+    ins:counterparty ex:investigator-occ ;
+    ins:activity ins-voc:EndParticipation .

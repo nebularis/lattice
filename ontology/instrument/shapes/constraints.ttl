@@ -1,22 +1,75 @@
 # SPDX-License-Identifier: MPL-2.0
 
 @prefix sh:   <http://www.w3.org/ns/shacl#> .
-@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
 @prefix ins:  <https://www.nebularis.org/neuro-semantic/lattice/instrument#> .
 
 ins:SupersessionSameIdentityShape a sh:NodeShape ;
-	sh:targetClass ins:Element ;
+	sh:targetClass ins:Instrument ;
 	sh:sparql [
-		sh:message "fnd:supersededBy must point to an element sharing the same fnd:hasIdentity." ;
+		sh:message "An instrument version is superseded only by a version of the same instrument: fnd:supersededBy points to a version with another fnd:hasIdentity." ;
 		sh:select """
 			PREFIX fnd: <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
-			PREFIX ins: <https://www.nebularis.org/neuro-semantic/lattice/instrument#>
 			SELECT $this WHERE {
-				$this fnd:hasIdentity ?id1 ;
+				$this fnd:hasIdentity ?identity ;
 					  fnd:supersededBy ?next .
-				?next a ins:Element ;
-					  fnd:hasIdentity ?id2 .
-				FILTER (?id1 != ?id2)
+				?next fnd:hasIdentity ?other .
+				FILTER (?identity != ?other)
+			}
+		"""
+	] .
+
+ins:PermissionExceptsOwnProhibitionShape a sh:NodeShape ;
+	sh:targetClass ins:Permission ;
+	sh:sparql [
+		sh:message "The permission's holder {?holder} is not the obligor of the prohibition it excepts, {?prohibition} (law I8)." ;
+		sh:select """
+			PREFIX ins: <https://www.nebularis.org/neuro-semantic/lattice/instrument#>
+			SELECT $this ?holder ?prohibition WHERE {
+				$this ins:excepts ?prohibition ;
+					  ins:holder ?holder .
+				FILTER NOT EXISTS { ?prohibition ins:obligor ?holder }
+			}
+		"""
+	] ;
+	sh:sparql [
+		sh:message "The permission's activity {?activity} is not the activity of the prohibition it excepts, {?prohibition} (law I8)." ;
+		sh:select """
+			PREFIX ins: <https://www.nebularis.org/neuro-semantic/lattice/instrument#>
+			SELECT $this ?activity ?prohibition WHERE {
+				$this ins:excepts ?prohibition ;
+					  ins:activity ?activity .
+				FILTER NOT EXISTS { ?prohibition ins:activity ?activity }
+			}
+		"""
+	] .
+
+ins:ExclusionHolderShape a sh:NodeShape ;
+	sh:targetClass ins:Exclusion ;
+	sh:sparql [
+		sh:message "The exclusion's holder {?holder} is not the obligor of the obligation it excepts, {?excepted} (law I8)." ;
+		sh:select """
+			PREFIX ins:  <https://www.nebularis.org/neuro-semantic/lattice/instrument#>
+			PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+			PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+			SELECT $this ?holder ?excepted WHERE {
+				$this ins:excepts ?excepted ;
+					  ins:holder ?holder .
+				?excepted rdf:type/rdfs:subClassOf* ins:Obligation .
+				FILTER NOT EXISTS { ?excepted ins:obligor ?holder }
+			}
+		"""
+	] ;
+	sh:sparql [
+		sh:message "The exclusion's holder {?holder} is not a counterparty of the power it excepts, {?excepted}: an immunity protects the party the power is held against (law I8)." ;
+		sh:select """
+			PREFIX ins:  <https://www.nebularis.org/neuro-semantic/lattice/instrument#>
+			PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+			PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+			SELECT $this ?holder ?excepted WHERE {
+				$this ins:excepts ?excepted ;
+					  ins:holder ?holder .
+				?excepted rdf:type/rdfs:subClassOf* ins:Power .
+				FILTER NOT EXISTS { ?excepted ins:counterparty ?holder }
 			}
 		"""
 	] .

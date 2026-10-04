@@ -51,7 +51,7 @@ The unit that shipped it, `persistence-compiler-iri-sync`, is closed.
 
 | # | Debt | Spotted | Cost while it stays | Likely home |
 |---|---|---|---|---|
-| TD-16 | the Eligibility and Instrument READMEs are no longer the literate source of their documents: `tools/literate_extract.py --check` reports drift in `eligibility-vocab.ttl` and `instrument.ttl`, and no test or CI step runs it for them (Foundation's equivalent drift was fixed in CCS F1) | 2026-10-03, CCS F1 | edits to either README or file can diverge unnoticed | Instrument's in CCS C6, Eligibility's a maintenance task |
+| TD-16 | the Eligibility README is no longer the literate source of its documents: `tools/literate_extract.py --check` reports drift in `eligibility-vocab.ttl`, and no test or CI step runs it (Foundation's drift was fixed in CCS F1, Instrument's in C6) | 2026-10-03, CCS F1 | edits to the README or the file can diverge unnoticed | an Eligibility maintenance task |
 
 ### Surface
 

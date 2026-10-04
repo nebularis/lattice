@@ -1,10 +1,63 @@
 # SPDX-License-Identifier: MPL-2.0
 
-@prefix ins:  <https://www.nebularis.org/neuro-semantic/lattice/instrument#> .
-@prefix owl:  <http://www.w3.org/2002/07/owl#> .
-@base <https://www.nebularis.org/neuro-semantic/instrument-vocab> .
+@prefix ins:     <https://www.nebularis.org/neuro-semantic/lattice/instrument#> .
+@prefix ins-voc: <https://www.nebularis.org/neuro-semantic/lattice/instrument/vocab#> .
+@prefix bhv:     <https://www.nebularis.org/neuro-semantic/lattice/behaviour#> .
+@prefix fnd:     <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix voc:     <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
+@prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
+@prefix owl:     <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
 
 <https://www.nebularis.org/neuro-semantic/instrument-vocab>
-	a owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/instrument-vocab/0.8.0> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.8.0> .
+	rdf:type owl:Ontology ;
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/instrument-vocab/0.9.0> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.9.0> .
+
+ins-voc:ActivityContract a voc:SchemeContract ;
+	fnd:hasIdentity ins-voc:ActivityContract-identity ;
+	fnd:hasGovernanceState fnd:Active ;
+	skos:prefLabel "Activity scheme contract"@en ;
+	voc:constrainsProperty ins:activity ;
+	voc:boundScheme ins-voc:Activities .
+
+ins-voc:LocationContract a voc:SchemeContract ;
+	fnd:hasIdentity ins-voc:LocationContract-identity ;
+	fnd:hasGovernanceState fnd:Active ;
+	skos:prefLabel "Location scheme contract"@en ;
+	voc:constrainsProperty ins:operatesAt .
+
+ins-voc:Activities a voc:ConceptScheme ;
+	fnd:hasIdentity ins-voc:Activities-identity ;
+	fnd:hasGovernanceState fnd:Active ;
+	skos:prefLabel "Baseline activities"@en ;
+	skos:definition "Acts a relation may be about. A baseline, not a closed set. Each names the act, never the circumstances of it."@en .
+
+ins-voc:Repay a skos:Concept ; skos:inScheme ins-voc:Activities ;
+	skos:prefLabel "Repay"@en ; skos:definition "Pay back money lent."@en .
+
+ins-voc:CreateSecurity a skos:Concept ; skos:inScheme ins-voc:Activities ;
+	skos:prefLabel "Create security"@en ; skos:definition "Grant a security interest over an asset."@en .
+
+ins-voc:DeclareDue a skos:Concept ; skos:inScheme ins-voc:Activities ;
+	skos:prefLabel "Declare due"@en ; skos:definition "Declare amounts immediately due and payable."@en .
+
+ins-voc:ReportAdverseEvent a skos:Concept ; skos:inScheme ins-voc:Activities ;
+	skos:prefLabel "Report adverse event"@en ; skos:definition "Report an adverse event to another party."@en .
+
+ins-voc:Enrol a skos:Concept ; skos:inScheme ins-voc:Activities ;
+	skos:prefLabel "Enrol"@en ; skos:definition "Admit a participant to a programme or study."@en .
+
+ins-voc:EndParticipation a skos:Concept ; skos:inScheme ins-voc:Activities ;
+	skos:prefLabel "End participation"@en ; skos:definition "End another party's participation in an arrangement."@en .
+
+ins-voc:Repair a skos:Concept ; skos:inScheme ins-voc:Activities ;
+	skos:prefLabel "Repair"@en ; skos:definition "Restore a product to working order."@en .
+
+ins-voc:Terminate a skos:Concept ; skos:inScheme ins-voc:Activities ;
+	skos:prefLabel "Terminate"@en ; skos:definition "End an instrument or a relationship under it."@en .
+
+ins:InstrumentTarget a bhv:TargetKind ;
+	rdfs:comment "A Behaviour effect's target kind for an instrument." ;
+	fnd:utility "Declared here, since Behaviour no longer names Instrument (ADR-A106). Behaviour's bhv:InstrumentTarget is deprecated in its favour." .

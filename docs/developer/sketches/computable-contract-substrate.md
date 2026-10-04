@@ -896,7 +896,8 @@ never the source of truth.
 ins:Template               stated meaning: a mixin on Term, LegalRelation, Definition, Deeming,
                            Qualifier and Regime. Names pty:Roles, defined words and variables
 ins:expressedIn            stated term → wrd:Element: exactly one element version, its owner
-ins:boundIn                bound node → ins:Instrument: exactly one instrument version, its owner
+ins:boundIn                bound term → ins:Instrument: exactly one instrument version, its owner.
+                           A relation belongs to its term, and through it to the term's owner
 ins:boundFrom              bound node → the stated node it binds (exactly one), ⊑ prov:wasDerivedFrom
 ins:ParameterBinding       ins:parameterKind, ins:fromVariable → wrd:Variable, for a scope parameter
                            ins:scopeSubject (the case class), ins:scopeStep (evidence steps),
@@ -948,10 +949,10 @@ flowchart TB
     B5a -- "boundFrom" --> S5
     B2 -- "boundFrom" --> S2
     B5b -- "boundFrom" --> S5
-    B1 -- "boundIn" --> I1
-    B5a -- "boundIn" --> I1
-    B2 -- "boundIn" --> I2
-    B5b -- "boundIn" --> I2
+    B1 -- "boundIn, through its term" --> I1
+    B5a -- "boundIn, through its term" --> I1
+    B2 -- "boundIn, through its term" --> I2
+    B5b -- "boundIn, through its term" --> I2
     style WRD fill:#BBDEFB
     style STATED fill:#BBDEFB
     style INS fill:#bcdee1
@@ -968,7 +969,7 @@ LATTICE runtime (law I17):
 
 | Check | Register |
 |---|---|
-| a stated term has exactly one `ins:expressedIn`. A stated relation arises under exactly one stated term. A bound node has exactly one `ins:boundIn`, and exactly one `ins:boundFrom` or an `ins:impliedBy` (`sh:xone`). An element marked `Expresses` has stated meaning (an inverse path) | SHACL Core |
+| a stated term has exactly one `ins:expressedIn`. A stated relation arises under exactly one stated term. A bound term has exactly one `ins:boundIn`, and a bound relation none (it belongs to its term). Every bound node has exactly one `ins:boundFrom` or an `ins:impliedBy` (`sh:xone`). An element marked `Expresses` has stated meaning (an inverse path) | SHACL Core |
 | nothing bound in an instrument version comes from text its wording does not include | SHACL-SPARQL |
 | every element marked `Expresses` that the wording includes has its stated meaning bound in the instrument version | SHACL-SPARQL |
 
@@ -1010,8 +1011,8 @@ flowchart LR
 ```
 
 Only `ex:remit-premium` is evaluated (I13). The template names roles, and the bound relation names
-occupancies and carries the value the instance supplied. It also carries `ins:boundIn` the
-agreement's instrument version.
+occupancies and carries the value the instance supplied. It belongs to its bound term, which
+carries `ins:boundIn` the agreement's instrument version.
 
 ### 5.10 Sectioned instruments
 

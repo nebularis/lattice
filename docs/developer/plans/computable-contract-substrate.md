@@ -948,12 +948,12 @@ are the human's, examples first.
 
 | Slice | Content | Version impact |
 |---|---|---|
-| C6 | instrument and term, the five relation classes with Exclusion, parties with groups, roles and `resolvedBy`, party details (`noticeAddress`, `operatesAt`), instrument keys (from F1), activity, scope, `maintains`, `fulfilledWhen`, `excepts`, qualifiers (§5.1 to §5.4, §5.7). `ins:InstrumentTarget` in Instrument's vocabulary | Instrument 0.8.0 to 0.9.0, breaking MINOR (A-113). Imports Wording and Behaviour configuration. 0.8.0 is F1's cascade (G3) |
+| C6 | instrument and term, the five relation classes with Exclusion, parties with groups and roles, party details (`noticeAddress`, `operatesAt`), instrument keys (from F1), activity, scope, `maintains`, `fulfilledWhen`, `excepts`, qualifiers (§5.1 to §5.4, §5.7). `ins:InstrumentTarget` in Instrument's vocabulary | Instrument 0.8.0 to 0.9.0, breaking MINOR (A-113). Imports Wording and Behaviour configuration. 0.8.0 is F1's cascade (G3) |
 | C7a | **regimes and gating** (split from C7, 2026-10-02): legal triggers (`OnExercise`, `OnBreach`, `OnAct`, `OnCondition`, `OnExpiry`, with the states in which a period does not run, C11a-Q2), `ins:Regime`, `ins:RegimeTransition`, `ins:stateKind`, `appliesInState` with the gating rule of the nested states sketch §6.2 and per-occasion resolution (C11a-Q4). The explicit `bhv:` type shape (B4) (§7.3, §7.4) | 0.10.0 MINOR. After C6 and C11a phase 2 |
-| C7b | **terms in time and constitutive terms** (split from C7): arising and ending on legal triggers, due, recurrence, survival, constitutive terms (Definition, Deeming), `appliesWithin`, classification, segments and per-segment definitions with union and overlap reporting, `ins:computedBy` (§5.5, §5.6, §5.10, §7.9, I15, I16) | 0.11.0 MINOR. After C6, beside C11a phase 2 |
+| C7b | **terms in time and constitutive terms** (split from C7): arising and ending on legal triggers, due, recurrence, survival, constitutive terms (Definition, Deeming), `appliesWithin`, classification, segments and per-segment definitions with union and overlap reporting, `ins:computedBy` (§5.5, §5.6, §5.10, §7.9, I15, I16). From C6's review (2026-10-03): how a case-dependent party resolves, through a definition (§5.10, S58) and through the case (S20, `ins:resolvedBy`, deferred from C6 as C6-Q5: either a path-only `elg:EvidenceBinding`, which relaxes Eligibility's shape, or a rule that such resolution is not a valid way to model). And how a group acts (several, joint): a defined party word's definition carries it, so stated meaning can say "each for its share", which a role cannot | 0.11.0 MINOR. After C6, beside C11a phase 2 |
 | C8 | stated and bound meaning (CC-D12): `ins:Template`, `ins:expressedIn` as owner, `ins:boundIn`, `ins:boundFrom`, `ins:alsoExpressedIn`, parameter bindings, encoding status, the ownership shapes in SHACL Core and law I17's two SHACL-SPARQL shapes (§5.9, I17, I18) | 0.12.0 MINOR |
 | C8a | the template library (§5.11) in `ontology/instrument/templates/`: periods, switching and threshold regimes, relation patterns. Term and qualifier templates wait for the bases decision in [contract-amounts.md](../sketches/contract-amounts.md) §1.7 | templates 0.1.0 |
-| C9 | amendments, consent rules, incorporation (with segment scope), `boundUnder`, `takesEffectWhen` (§5.8). Shapes for I1 to I16 | 0.13.0 MINOR, shapes |
+| C9 | amendments, consent rules, incorporation (with segment scope), `boundUnder`, `takesEffectWhen` (§5.8). Shapes for I1 to I16. An example with a party to the instrument who is in no relation, executing separately (S90, from C6's review) | 0.13.0 MINOR, shapes |
 
 Nothing outside Instrument imports Instrument once C10 lands, so tranche D cascades only to
 Instrument's own documents and examples. No applied insurance module imports Instrument.
@@ -978,6 +978,25 @@ C6-Q3 and C6-Q4 as recommended. C6-Q2: slice F1 runs first (ADR-A114), so C6 rec
 instrument's keys from its first examples: the agreement number and market reference as natural
 keys on its persistent identity, and amendments, declarations and notices locating it with
 `fnd:externalKey`. C6's branch is recreated from `main` after F1 merges.
+
+**Simplified after review of the examples, 2026-10-03** (decided by the human):
+- a bound relation carries no `ins:boundIn`: it belongs to its term (`ins:arisesUnder`), and only
+  terms carry `ins:boundIn`, as stated relations carry no `ins:expressedIn` (ADR-A104 decision 2,
+  law I2)
+- a bound relation restates its template in full, as instantiation produces it: RDF has no override, so
+  stating only what differs would leave both the role and the occupancy as parties
+- `ins:party` stays authored, never derived from the relations: a beneficiary or regulator in a
+  relation may be no party (CC-Q4), and parties execute separately (S90). The facility example
+  shows a beneficiary who is not a party
+- `ins:resolvedBy` moves to C7b with C6-Q5 (resolution of a case-dependent party). C6 keeps the
+  contingent occupancy, a role with no actor (ADR-A102)
+- an activity names the act, never its scope: `ins-voc:Enrol` with a scope, not
+  `EnrolIneligibleParticipant`, and `ins-voc:Terminate`, shared by termination for convenience and
+  for breach
+- stated meaning names `pty:Role`s only, never an invented group role. How a group acts is stated
+  by a defined party word in C7b
+- conditions that nothing can yet evaluate are commented as placeholders
+- the facility example's term 8.1 gives rise to two relations, to show what a term is for
 
 **Questions for the human:**
 
@@ -1037,9 +1056,9 @@ keys on its persistent identity, and amendments, declarations and notices locati
 
    | File | From | Shows |
    |---|---|---|
-   | `facility-agreement.ttl` | E1, E2 | an obligation owed to a group severally, a continuing obligation, a prohibition (negative pledge) and the permission excepting it, a power held jointly by a group, stated meaning on the form and bound meaning for one facility |
+   | `facility-agreement.ttl` | E1, E2 | an obligation owed to a group severally, a continuing obligation with a beneficiary who is no party, one term giving rise to a prohibition (negative pledge) and the permission excepting it, a power held by a group, natural keys, stated meaning on the form and bound meaning for one facility |
    | `trial-protocol.ttl` | E8 | a reporting obligation, a prohibition with a waiver as a permission (law I8), a power to end a site's participation |
-   | `product-warranty.ttl` | E5 | an exclusion excepting the duty to repair, its carve-back in its scope, a party that depends on the case (a contingent occupancy `ins:resolvedBy` an evidence binding) |
+   | `product-warranty.ttl` | E5 | an exclusion excepting the duty to repair, its carve-back in its scope, a party that depends on the case (a contingent occupancy, its resolution deferred to C7b) |
    | `software-licence.ttl` | E7 | an exclusion excepting a power (immunity: a perpetual licence the licensor cannot end for convenience), party details |
 
 2. **Spec** (`instrument` 0.8.0 → 0.9.0, breaking under ADR-A113), sketch §5.1 to §5.4: imports
@@ -1047,12 +1066,14 @@ keys on its persistent identity, and amendments, declarations and notices locati
    configuration 0.11.0 (their versions after F1's cascade), never the runtime document.
    - `ins:Instrument ⊑ fnd:Version`, `ins:expressedIn` one `wrd:AssembledWording` (I1), `ins:party`
    - `ins:Term`, not a version. Under C6-Q1 (b): `ins:Template`, `ins:expressedIn` (stated term to
-     one element version), `ins:alsoExpressedIn`, `ins:boundIn`, `ins:boundFrom`, `ins:impliedBy`
+     one element version), `ins:alsoExpressedIn`, `ins:boundIn` (bound term to one instrument
+     version, terms only), `ins:boundFrom` (every bound node), `ins:impliedBy`
    - `ins:LegalRelation ≡ Obligation ⊔ Permission ⊔ Exclusion ⊔ Power`, pairwise disjoint,
      `ins:ContinuingObligation` and `ins:Prohibition` under `ins:Obligation` and disjoint, each
      relation `ins:arisesUnder` exactly one term
    - parties: `ins:obligor`, `ins:obligee`, `ins:holder`, `ins:counterparty` over the C6-Q4 union,
-     `ins:resolvedBy` an `elg:EvidenceBinding`. Under C6-Q3: `ins:noticeAddress`, `ins:operatesAt`
+     with contingent occupancies (ADR-A102) and no `ins:resolvedBy` (C7b). Under C6-Q3:
+     `ins:noticeAddress`, `ins:operatesAt`
    - content: `ins:activity`, `ins:scope` (an `elg:Condition`, at most one), `ins:maintains`,
      `ins:fulfilledWhen`, `ins:excepts` (a permission to a prohibition, an exclusion to an
      obligation or a power), `ins:Qualifier` with `ins:qualifies` a term or a relation
@@ -1077,7 +1098,7 @@ keys on its persistent identity, and amendments, declarations and notices locati
 | C6-04 | a relation under two terms, one under none, an obligation with two obligors, a continuing obligation without `ins:maintains`, an exclusion without `ins:excepts`, a permission excepting an obligation that is not a prohibition, a scope that is not a condition / shapes / each reported | L1 | − |
 | C6-05 | a node that is both an obligation and a power, both a continuing obligation and a prohibition / reasoner / inconsistent | L2 | − |
 | C6-06 | a permission whose holder is not the excepted prohibition's obligor, or whose activity differs, an exclusion of a power held by the power's holder / shapes / reported (I8) | L1 | − |
-| C6-07 | under C6-Q1 (b): a stated term in two element versions, a bound term in two instrument versions, a bound term from two stated terms or from none and not implied, a relation typed `fnd:Version` / shapes / each reported (I2) | L1 | − |
+| C6-07 | under C6-Q1 (b): a stated term in two element versions, a bound term in two instrument versions, a bound term from two stated terms or from none and not implied, a relation typed `fnd:Version`, a relation carrying `ins:boundIn` / shapes / each reported (I2) | L1 | − |
 | C6-08 | each named union / spec / named once, its members explicit subclasses | L1 | + |
 | C6-09 | every property / spec / comment states subject and value, no range names the runtime document or a higher layer | L1 | + |
 | C6-10 | the repository outside history documents / searched / no `ins:Element`, `ins:Provision`, `ins:fulfilledBy` or other retired term | L1 | + |
@@ -1102,6 +1123,7 @@ keys on its persistent identity, and amendments, declarations and notices locati
 | C14 | neutral examples E1 to E4 (sketch §9) with expected-decision tables and Behaviour traces, covering their scenarios |
 | C15 | neutral examples E5 to E8, and a coverage test that every scenario S1 to S101 (except the amounts group and the merged S79) is shown by at least one example |
 | C16 | how-to guides for Wording and Instrument (sketch §11), the substrate README's "computable contract" section, ontology architecture, SDS, data architecture |
+| C16a | **simplification sweep** (from C6's review, 2026-10-03): after C9, review the Instrument model for what can be removed without losing logical correctness, under the Ponytail guardrails in `.github/copilot-instructions.md`. First candidate: the asserted `ins:Template` type, derivable from `ins:expressedIn` and `ins:arisesUnder` but kept because law I13's shapes read it without a reasoner |
 | C17 | handoff: the insurance renderings list for AIR Phase 5 (policy scenarios) and Open CBAA (binding authority scenarios), and the Open CBAA migration notes (§7) |
 
 ## 5. Sequencing

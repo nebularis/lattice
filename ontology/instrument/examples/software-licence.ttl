@@ -1,0 +1,195 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Premise. A software licence lets the licensee use the software, and lets the
+# licensor end the licence for convenience on notice. A perpetual licence
+# takes the second away: once the licensee has paid the perpetual fee, the
+# licensor cannot end the licence for convenience. That is an immunity, an
+# exclusion of a power. The licence also records where each party takes
+# notices and where the licensee may run the software.
+#
+# The licence's clauses:
+#
+# | Clause | Text | Meaning |
+# |--------|------|---------|
+# | 11.1   | The Licensor may end this licence for convenience on 90 days' notice. | a power |
+# | 11.2   | Clause 11.1 does not apply once the perpetual licence fee has been paid. | an exclusion excepting the power: the licensee's immunity |
+# | 15.1   | Notices are given at each party's notice address. | party details |
+#
+# The grant of use ("the Licensee may use the Software") is not modelled. A
+# licence to use, with nothing forbidding use, is no legal relation in this
+# layer: a permission excepts a prohibition (ADR-A104), and there is none to
+# except. The licence's use restrictions, and their permissions, would be.
+#
+# The licence for Fernwood Analytics Ltd from Corvid Software Ltd.
+#
+# What the example shows:
+#
+# | Construct                                       | Where                                   |
+# |-------------------------------------------------|-----------------------------------------|
+# | a power to end the instrument                   | ex:end-for-convenience                  |
+# | an exclusion excepting a power (immunity)       | ex:perpetual-immunity ins:excepts ex:end-for-convenience |
+# | I8: the exclusion's holder is the power's counterparty | ex:perpetual-immunity ins:holder ex:licensee-occ |
+# | party details: a notice address and an operating location | ins:noticeAddress, ins:operatesAt |
+
+@prefix ins:     <https://www.nebularis.org/neuro-semantic/lattice/instrument#> .
+@prefix ins-voc: <https://www.nebularis.org/neuro-semantic/lattice/instrument/vocab#> .
+@prefix wrd:     <https://www.nebularis.org/neuro-semantic/lattice/wording#> .
+@prefix wrd-voc: <https://www.nebularis.org/neuro-semantic/lattice/wording/vocab#> .
+@prefix fnd:     <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix pty:     <https://www.nebularis.org/neuro-semantic/lattice/party#> .
+@prefix elg:     <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
+@prefix voc:     <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
+@prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+@prefix tmpl:    <https://example.org/lattice/instrument/licence/form/> .
+@prefix ex:      <https://example.org/lattice/instrument/licence/> .
+
+# ==== The licence form: wording ==============================================
+
+ex:form a wrd:Wording ;
+    fnd:hasIdentity ex:form-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:directlyComprises ex:sec-11 , ex:sec-15 .
+
+ex:sec-11 a wrd:Element ;
+    fnd:hasIdentity ex:sec-11-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Section ; wrd:objectId "11" ; wrd:rankKey "k0" ;
+    wrd:directlyComprises ex:cl-11-1 , ex:cl-11-2 .
+ex:cl-11-1 a wrd:Text ;
+    fnd:hasIdentity ex:cl-11-1-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "11.1" ; wrd:rankKey "a0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "The Licensor may end this licence for convenience on 90 days' notice." ] .
+ex:cl-11-2 a wrd:Text ;
+    fnd:hasIdentity ex:cl-11-2-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "11.2" ; wrd:rankKey "b0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "Clause 11.1 does not apply once the perpetual licence fee has been paid." ] .
+
+# Clause 15.1 is machinery, not a relation: it has no stated meaning, and
+# its effect is the party details on each occupancy.
+ex:sec-15 a wrd:Element ;
+    fnd:hasIdentity ex:sec-15-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Section ; wrd:objectId "15" ; wrd:rankKey "o0" ;
+    wrd:directlyComprises ex:cl-15-1 .
+ex:cl-15-1 a wrd:Text ;
+    fnd:hasIdentity ex:cl-15-1-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "15.1" ; wrd:rankKey "a0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "Notices are given in writing at each party's notice address." ] .
+
+# ==== Roles, conditions, the deployment's sites ==============================
+
+ex:Licensor a pty:Role ; rdfs:label "Licensor" .
+ex:Licensee a pty:Role ; rdfs:label "Licensee" .
+
+# Placeholders: scopes stated, not yet evaluable. Their concepts are in no
+# scheme and no evidence binding reads them, until the case data exists (C7b,
+# C13). "For convenience" is the power's scope, so its activity stays plain
+# termination (ins-voc:Terminate), shared with termination for breach.
+ex:for-convenience a elg:Condition ;
+    elg:conditionKey "termination-without-cause" ;
+    elg:matchStrategy elg:ExactMatch ;
+    elg:compatibilityOperation elg:AllRequired ;
+    elg:wildcardSemantics elg:NoWildcard ;
+    elg:requiredConcept ex:without-cause .
+ex:without-cause a skos:Concept ; rdfs:label "without cause, for the licensor's convenience" .
+
+ex:perpetual-fee-paid a elg:Condition ;
+    elg:conditionKey "perpetual-licence-fee-paid" ;
+    elg:matchStrategy elg:ExactMatch ;
+    elg:compatibilityOperation elg:AllRequired ;
+    elg:wildcardSemantics elg:NoWildcard ;
+    elg:requiredConcept ex:fee-paid .
+ex:fee-paid a skos:Concept ; rdfs:label "the perpetual licence fee has been paid" .
+
+# The deployment's site scheme, bound to ins:operatesAt through Instrument's
+# location contract (C6-Q3).
+ex:sites a voc:ConceptScheme ;
+    fnd:hasIdentity ex:sites-identity ; fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Licensee data centres"@en .
+ex:leeds-dc a skos:Concept ; skos:inScheme ex:sites ; skos:prefLabel "Leeds data centre"@en .
+ex:dublin-dc a skos:Concept ; skos:inScheme ex:sites ; skos:prefLabel "Dublin data centre"@en .
+ex:site-binding a voc:SchemeBinding ;
+    voc:forContract ins-voc:LocationContract ;
+    voc:bindsScheme ex:sites ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-06-01T00:00:00Z"^^xsd:dateTime ] .
+
+# ==== Stated meaning: owned by the form's clauses ============================
+
+tmpl:term-11-1 a ins:Term , ins:Template ; ins:expressedIn ex:cl-11-1 .
+tmpl:end-for-convenience a ins:Power , ins:Template ;
+    ins:arisesUnder tmpl:term-11-1 ;
+    ins:holder ex:Licensor ;
+    ins:counterparty ex:Licensee ;
+    ins:activity ins-voc:Terminate ;
+    ins:scope ex:for-convenience .
+
+tmpl:term-11-2 a ins:Term , ins:Template ; ins:expressedIn ex:cl-11-2 .
+tmpl:perpetual-immunity a ins:Exclusion , ins:Template ;
+    ins:arisesUnder tmpl:term-11-2 ;
+    ins:holder ex:Licensee ;                     # the excepted power's counterparty (I8)
+    ins:counterparty ex:Licensor ;
+    ins:excepts tmpl:end-for-convenience ;
+    ins:scope ex:perpetual-fee-paid .
+
+# ==== The licence for Fernwood ===============================================
+
+ex:fernwood-wording-v1 a wrd:AssembledWording ;
+    fnd:hasIdentity ex:fernwood-wording-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:assembledFrom ex:form ;
+    wrd:includes ex:sec-11 , ex:cl-11-1 , ex:cl-11-2 , ex:sec-15 , ex:cl-15-1 .
+
+ex:fernwood-v1 a ins:Instrument ;
+    fnd:hasIdentity ex:fernwood-identity ;
+    ins:expressedIn ex:fernwood-wording-v1 ;
+    ins:party ex:licensor-occ , ex:licensee-occ .
+
+ex:corvid a pty:Actor ; rdfs:label "Corvid Software Ltd" .
+ex:fernwood a pty:Actor ; rdfs:label "Fernwood Analytics Ltd" .
+
+# Party details belong to the occupancy, since they are this party's details
+# for this instrument (S97). The address is as written: the party's identity
+# is its keys, never its address (CC-D9).
+ex:licensor-occ a pty:RoleOccupancy ;
+    fnd:hasIdentity ex:licensor-occ-identity ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-06-01T00:00:00Z"^^xsd:dateTime ] ;
+    pty:inRole ex:Licensor ;
+    pty:occupiedBy ex:corvid ;
+    ins:noticeAddress "Legal Department, Corvid Software Ltd, 1 Wharf Street, Bristol BS1 4XY" .
+ex:licensee-occ a pty:RoleOccupancy ;
+    fnd:hasIdentity ex:licensee-occ-identity ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-06-01T00:00:00Z"^^xsd:dateTime ] ;
+    pty:inRole ex:Licensee ;
+    pty:occupiedBy ex:fernwood ;
+    ins:noticeAddress "Company Secretary, Fernwood Analytics Ltd, 40 Park Row, Leeds LS1 5HD" ;
+    ins:operatesAt ex:leeds-dc , ex:dublin-dc .
+
+# ==== Bound meaning: owned by Fernwood's licence =============================
+#
+# What instantiation produces from the stated meaning and the instance's parties (a
+# derived artefact, ADR-A92). Each bound term is part of exactly one instrument
+# version (ins:boundIn), and its relations belong to it. A bound relation
+# restates its template in full: RDF has no override, so naming only what
+# differs would leave the template's role and the occupancy both as parties.
+
+ex:term-11-1 a ins:Term ; ins:boundIn ex:fernwood-v1 ; ins:boundFrom tmpl:term-11-1 .
+ex:end-for-convenience a ins:Power ;
+    ins:boundFrom tmpl:end-for-convenience ;
+    ins:arisesUnder ex:term-11-1 ;
+    ins:holder ex:licensor-occ ;
+    ins:counterparty ex:licensee-occ ;
+    ins:activity ins-voc:Terminate ;
+    ins:scope ex:for-convenience .
+
+ex:term-11-2 a ins:Term ; ins:boundIn ex:fernwood-v1 ; ins:boundFrom tmpl:term-11-2 .
+ex:perpetual-immunity a ins:Exclusion ;
+    ins:boundFrom tmpl:perpetual-immunity ;
+    ins:arisesUnder ex:term-11-2 ;
+    ins:holder ex:licensee-occ ;
+    ins:counterparty ex:licensor-occ ;
+    ins:excepts ex:end-for-convenience ;
+    ins:scope ex:perpetual-fee-paid .

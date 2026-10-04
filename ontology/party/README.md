@@ -308,7 +308,7 @@ ex:mem-a a pty:GroupMembership ;
 # ex:occ-b / ex:mem-b (0.35) and ex:occ-c / ex:mem-c (0.25) follow the same pattern.
 ```
 
-Note what's absent: nothing here says which obligation this group fulfils. That reference — `ins:fulfilledBy`, or similar — is declared in Instrument's own projection file, pointing *at* `ex:group-1` from the Obligation side, per §4.
+Note what's absent: nothing here says which obligation this group owes or is owed. That reference is Instrument's: an `ins:Obligation` names the group as its `ins:obligor` or `ins:obligee`, pointing *at* `ex:group-1` from the relation's side, per §4.
 
 ### 9.2 Contingent occupancy and delegation
 

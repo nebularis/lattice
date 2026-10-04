@@ -2,83 +2,203 @@
 
 @prefix ins:  <https://www.nebularis.org/neuro-semantic/lattice/instrument#> .
 @prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
-@prefix voc:  <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
-@prefix qnt:  <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
 @prefix pty:  <https://www.nebularis.org/neuro-semantic/lattice/party#> .
 @prefix elg:  <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
+@prefix wrd:  <https://www.nebularis.org/neuro-semantic/lattice/wording#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 @prefix owl:  <http://www.w3.org/2002/07/owl#> .
 @prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
-@base <https://www.nebularis.org/neuro-semantic/instrument> .
 
 <https://www.nebularis.org/neuro-semantic/instrument>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.8.0> ;
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.9.0> ;
 	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.4.0> ,
 				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.4.0> ,
 				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.6.0> ,
 				<https://www.nebularis.org/neuro-semantic/lattice/party/0.6.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.8.0> .
+				<https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.8.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/wording/0.4.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.11.0> .
 
-ins:Element a owl:Class ;
+ins:Instrument a owl:Class ;
 	rdfs:subClassOf fnd:Version ;
-	rdfs:comment "A versioned instrument element." .
+	rdfs:comment "A legal instrument: a contract, policy, agreement, deed, licence or protocol. The only version in this layer." ;
+	fnd:utility "Subject: one version of an instrument. Expressed in exactly one assembled wording (ins:expressedIn, law I1). Its persistent identity carries its keys and its runtime state. Its terms are bound in it (ins:boundIn)." .
 
-ins:Provision a owl:Class ;
-	rdfs:subClassOf ins:Element ;
-	rdfs:comment "A structural provision grouping obligations." .
+ins:party a owl:ObjectProperty ;
+	rdfs:domain ins:Instrument ;
+	rdfs:range ins:RelationParty ;
+	rdfs:comment "A party to an instrument version." ;
+	fnd:utility "Subject: an instrument version. Value: a role occupancy or participation group party to it, as authored. Never derived from the relations' parties: a beneficiary or regulator named in a relation may be no party." .
+
+ins:expressedIn a owl:ObjectProperty ;
+	rdfs:comment "The text that states an instrument version or a stated term." ;
+	fnd:utility "Subject: an instrument version, or a stated term. Value: for an instrument, exactly one wrd:AssembledWording (law I1). For a stated term, exactly one wrd:Element version, its owner (law I2). The shapes check each case." .
+
+ins:Term a owl:Class ;
+	rdfs:comment "A provision the parties are bound by." ;
+	fnd:utility "Subject: a term, stated or bound. Not a version: it is part of its owner and changes only with it. A stated term (an ins:Template) is expressed in exactly one element version. A bound term is bound in exactly one instrument version, from exactly one stated term or implied by a source (law I2). Relations and qualifiers arise under it." .
+
+ins:Template a owl:Class ;
+	rdfs:comment "Stated meaning: a term, relation or qualifier as its clause states it." ;
+	fnd:utility "A mixin on ins:Term, ins:LegalRelation and ins:Qualifier. A template names pty:Roles, defined words and variables, never occupancies or values (law I13), and is never evaluated. Its term is expressed in exactly one element version." .
+
+ins:alsoExpressedIn a owl:ObjectProperty ;
+	rdfs:domain ins:Term ;
+	rdfs:range wrd:Element ;
+	rdfs:comment "Another element that states the same stated term." ;
+	fnd:utility "Subject: a stated term. Value: an element version stating it again, in another language or a consolidated text (ADR-A96). Its owner stays its one ins:expressedIn. The optional shapes/single-expression.ttl refuses it where every term is expressed once." .
+
+ins:boundIn a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain ins:Term ;
+	rdfs:range ins:Instrument ;
+	rdfs:comment "The instrument version a bound term is part of." ;
+	fnd:utility "Subject: a bound term. Value: the one instrument version that owns it (law I2). Relations carry none: they belong to their term." .
+
+ins:boundFrom a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:subPropertyOf prov:wasDerivedFrom ;
+	rdfs:comment "The stated node a bound node was instantiated from." ;
+	fnd:utility "Subject: a bound term, relation or qualifier. Value: the one stated node of the same kind it was instantiated from. A bound node has this or ins:impliedBy, never both." .
+
+ins:impliedBy a owl:ObjectProperty ;
+	rdfs:comment "The source that implies a term no clause states." ;
+	fnd:utility "Subject: a bound term or relation implied by law. Value: the statute, custom or course of dealing that implies it, in place of ins:boundFrom." .
+
+ins:LegalRelation a owl:Class ;
+	owl:equivalentClass [ a owl:Class ; owl:unionOf ( ins:Obligation ins:Permission ins:Exclusion ins:Power ) ] ;
+	rdfs:comment "A legal relation between parties: an obligation, permission, exclusion or power." ;
+	fnd:utility "Subject: a relation, stated or bound. Arises under exactly one term (ins:arisesUnder) and belongs to it. Never a version." .
 
 ins:Obligation a owl:Class ;
-	rdfs:subClassOf ins:Element ;
-	rdfs:comment "A versioned obligation element." .
+	rdfs:subClassOf ins:LegalRelation ;
+	rdfs:comment "The obligor must perform an activity for the obligees." ;
+	fnd:utility "Subject: an obligation. Exactly one ins:obligor, at least one ins:obligee, and an ins:activity unless continuing." .
 
-ins:Qualifier a owl:Class ;
-	rdfs:subClassOf ins:Element ;
-	rdfs:comment "A qualifier constraining or refining another element." .
+ins:ContinuingObligation a owl:Class ;
+	rdfs:subClassOf ins:Obligation ;
+	rdfs:comment "The obligor must ensure a state holds throughout." ;
+	fnd:utility "Subject: a continuing obligation, such as a financial covenant. States the state it keeps with ins:maintains." .
+
+ins:Prohibition a owl:Class ;
+	rdfs:subClassOf ins:Obligation ;
+	rdfs:comment "The obligor must not perform an activity within the scope." ;
+	fnd:utility "Subject: a prohibition, such as a negative pledge. A permission may except it." .
+
+ins:Permission a owl:Class ;
+	rdfs:subClassOf ins:LegalRelation ;
+	rdfs:comment "The holder may perform an activity despite a prohibition." ;
+	fnd:utility "Subject: a permission. Excepts exactly one prohibition, whose obligor is its holder, with the same activity (law I8). A licence to act with nothing forbidding it is no relation in this layer." .
+
+ins:Exclusion a owl:Class ;
+	rdfs:subClassOf ins:LegalRelation ;
+	rdfs:comment "The holder need not perform an obligation, or cannot be made subject to a power, within the scope." ;
+	fnd:utility "Subject: an exclusion. Excepts exactly one obligation, whose obligor is its holder, or one power, whose counterparty is its holder (law I8). An exclusion of a power is an immunity." .
+
+ins:Power a owl:Class ;
+	rdfs:subClassOf ins:LegalRelation ;
+	rdfs:comment "The holder can, by an act, change the counterparty's legal position." ;
+	fnd:utility "Subject: a power, such as acceleration or termination. Its activity is the act that exercises it." .
 
 [] a owl:AllDisjointClasses ;
-	owl:members ( ins:Provision ins:Obligation ins:Qualifier ) .
+	owl:members ( ins:Obligation ins:Permission ins:Exclusion ins:Power ) .
 
-ins:hasProvision a owl:ObjectProperty ;
-	rdfs:domain ins:Element ;
-	rdfs:range ins:Provision .
+ins:ContinuingObligation owl:disjointWith ins:Prohibition .
 
-ins:partOfInstrument a owl:ObjectProperty, owl:FunctionalProperty ;
-	rdfs:domain ins:Provision ;
-	rdfs:range ins:Element ;
-	owl:inverseOf ins:hasProvision .
+ins:arisesUnder a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:range ins:Term ;
+	rdfs:comment "The term a relation or qualifier arises under, and belongs to." ;
+	fnd:utility "Subject: a relation or qualifier. Value: its one term. A stated relation arises under a stated term, a bound relation under a bound term." .
 
-ins:hasObligation a owl:ObjectProperty ;
-	rdfs:domain ins:Provision ;
-	rdfs:range ins:Obligation .
+ins:excepts a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:range ins:LegalRelation ;
+	rdfs:comment "The relation an exception takes effect against." ;
+	fnd:utility "Subject: a permission or an exclusion. Value: for a permission, the prohibition it excepts. For an exclusion, the obligation or power it excepts. Bound exceptions except bound relations." .
 
-ins:inProvision a owl:ObjectProperty ;
-	rdfs:domain ins:Obligation ;
-	rdfs:range ins:Provision ;
-	owl:inverseOf ins:hasObligation .
+ins:RelationParty a owl:Class ;
+	owl:equivalentClass [ a owl:Class ; owl:unionOf ( pty:RoleOccupancy pty:ParticipationGroup pty:Role ) ] ;
+	rdfs:comment "What a relation's party may be: a role occupancy, a participation group, or on stated meaning a role." ;
+	fnd:utility "The range of the four party properties and of ins:party. Stated meaning names roles, bound meaning occupancies and groups (law I13)." .
 
-ins:hasQualifier a owl:ObjectProperty ;
-	rdfs:domain ins:Element ;
-	rdfs:range ins:Qualifier .
-
-ins:qualifies a owl:ObjectProperty, owl:FunctionalProperty ;
-	rdfs:domain ins:Qualifier ;
-	rdfs:range ins:Element ;
-	owl:inverseOf ins:hasQualifier .
-
-ins:hasCondition a owl:ObjectProperty ;
-	rdfs:domain ins:Element ;
-	rdfs:range elg:Condition .
-
-ins:fulfilledBy a owl:ObjectProperty ;
-	rdfs:domain ins:Obligation ;
-	rdfs:range pty:ParticipationGroup .
+pty:RoleOccupancy rdfs:subClassOf ins:RelationParty .
+pty:ParticipationGroup rdfs:subClassOf ins:RelationParty .
+pty:Role rdfs:subClassOf ins:RelationParty .
 
 ins:obligor a owl:ObjectProperty ;
 	rdfs:domain ins:Obligation ;
-	rdfs:range pty:RoleOccupancy .
+	rdfs:range ins:RelationParty ;
+	rdfs:comment "The party who must perform an obligation." ;
+	fnd:utility "Subject: an obligation. Value: exactly one party: a role on stated meaning, an occupancy or group on bound meaning." .
 
 ins:obligee a owl:ObjectProperty ;
 	rdfs:domain ins:Obligation ;
-	rdfs:range pty:RoleOccupancy .
+	rdfs:range ins:RelationParty ;
+	rdfs:comment "A party an obligation is owed to." ;
+	fnd:utility "Subject: an obligation. Value: one of at least one parties it is owed to, who need not be a party to the instrument." .
+
+ins:holder a owl:ObjectProperty ;
+	rdfs:domain ins:LegalRelation ;
+	rdfs:range ins:RelationParty ;
+	rdfs:comment "The party who holds a permission, exclusion or power." ;
+	fnd:utility "Subject: a permission, exclusion or power. Value: exactly one party." .
+
+ins:counterparty a owl:ObjectProperty ;
+	rdfs:domain ins:LegalRelation ;
+	rdfs:range ins:RelationParty ;
+	rdfs:comment "A party against whom a permission, exclusion or power holds." ;
+	fnd:utility "Subject: a permission, exclusion or power. Value: one of at least one parties whose position it affects." .
+
+ins:noticeAddress a owl:DatatypeProperty ;
+	rdfs:domain pty:RoleOccupancy ;
+	rdfs:range xsd:string ;
+	rdfs:comment "Where a party takes notices under an instrument." ;
+	fnd:utility "Subject: a role occupancy. Value: the address as written in the instrument. Never the party's identity, which is its keys (CC-D9)." .
+
+ins:operatesAt a owl:ObjectProperty ;
+	rdfs:domain pty:RoleOccupancy ;
+	rdfs:range skos:Concept ;
+	rdfs:comment "A place a party operates at under an instrument." ;
+	fnd:utility "Subject: a role occupancy. Value: a concept from the territory or site scheme a deployment binds to ins-voc:LocationContract." .
+
+ins:activity a owl:ObjectProperty ;
+	rdfs:domain ins:LegalRelation ;
+	rdfs:range skos:Concept ;
+	rdfs:comment "The act a relation is about." ;
+	fnd:utility "Subject: a relation. Value: a concept naming the act, from the scheme bound to ins-voc:ActivityContract. Never a circumstance of the act, which is the scope." .
+
+ins:scope a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain ins:LegalRelation ;
+	rdfs:range elg:Condition ;
+	rdfs:comment "The cases a relation applies to." ;
+	fnd:utility "Subject: a relation. Value: at most one Eligibility condition over the case. A carve-back is a negated member of it." .
+
+ins:maintains a owl:ObjectProperty ;
+	rdfs:domain ins:ContinuingObligation ;
+	rdfs:range elg:Condition ;
+	rdfs:comment "The state a continuing obligation keeps holding." ;
+	fnd:utility "Subject: a continuing obligation. Value: exactly one condition that must hold throughout." .
+
+ins:fulfilledWhen a owl:ObjectProperty ;
+	rdfs:domain ins:Obligation ;
+	rdfs:range elg:Condition ;
+	rdfs:comment "The test of an obligation's performance." ;
+	fnd:utility "Subject: an obligation. Value: the condition its performance meets. Without one, performance is an act of its activity for the case by the obligor or a delegate." .
+
+ins:Qualifier a owl:Class ;
+	rdfs:comment "A limit, level or retention on a term or a relation." ;
+	fnd:utility "Subject: a qualifier. Arises under exactly one term and qualifies exactly one term or relation. Its amounts are defined with contract amounts (C8)." .
+
+ins:qualifies a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain ins:Qualifier ;
+	rdfs:comment "The term or relation a qualifier qualifies." ;
+	fnd:utility "Subject: a qualifier. Value: exactly one term or relation." .
+
+[] a owl:AllDisjointClasses ;
+	owl:members ( ins:Instrument ins:Term ins:LegalRelation ins:Qualifier ) .
+
+ins:Term owl:disjointWith fnd:Version .
+ins:LegalRelation owl:disjointWith fnd:Version .
+ins:Qualifier owl:disjointWith fnd:Version .
+ins:Template owl:disjointWith ins:Instrument .

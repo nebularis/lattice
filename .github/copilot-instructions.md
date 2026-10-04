@@ -30,7 +30,13 @@ If you are changing an ontology, you need to consider the semantic versioning im
 
 Whenever any ontology document changes, follow every step of `docs/architecture/ontology-versioning-policy.md` in the same change, including the import cascade, regenerating the import catalog (`mise run build:ontology-catalog`) and adding release rows (`mise run build:ontology-releases`). A change to a file in a layer's `shapes/` or `projection/` directory bumps that directory's `.version` (semver), never the spec or vocab version IRI. Run `mise run check:ontology-versioning` and `mise run check:ontology-catalog` before handing off. A skipped step breaks consumers silently, and has done so before.
 
-**Release tags are the user's to create, never the agent's.** Whenever `build:ontology-releases` adds a row, or `check:ontology-versioning` lists pending tags, end your handoff with a prominent notice headed `🔴 RELEASE TAGS REQUIRED`, listing each tag as a, b, c and the commands to create and push them after the user commits. Repeat the notice in every handoff until the tags exist.
+**Release tags are the user's to create, never the agent's.** Whenever `build:ontology-releases` adds a row, or `check:ontology-versioning` lists pending tags, end your handoff with a prominent notice headed `🔴 RELEASE TAGS REQUIRED`, listing each tag as a, b, c and the commands to create and push them once the change is merged into `main`. Repeat the notice in every handoff until the tags exist.
+
+**Merge to `main` before tagging, and branch from `main`.**
+
+- A release tag names a commit on `main`. Stable changes are merged into `main` first, and the ontology release tags are created on the merged commit, never on a feature branch. A tag on an unmerged branch can name a commit that never reaches `main`, or one a rebase later replaces. When handing off a change that adds releases, order the steps as commit, merge into `main`, then tag.
+- Create each new feature branch from the current `main`, so that it starts from every merged release. Branch from somewhere else only where branching from `main` would cause problems for parallel work.
+- The human says when parallel work is under way, before any merge into `main`. Without that notice, assume no parallel work, branch from `main`, and expect to merge into it. Never merge into `main` or push without the human's go-ahead.
 
 ### Two Agentic Execution Modes: Default and Autonomous
 
@@ -194,7 +200,7 @@ mise run build:ontology-catalog
 mise run build:ontology-releases
 ```
 
-The second adds a row per new version and prints the tags to create. Tags are the human's: never create or push them.
+The second adds a row per new version and prints the tags to create. Tags are the human's: never create or push them. They are created after the change is merged into `main`, on the merged commit.
 
 **6. Record the release.** Add an entry to the "Release notes" section of each README that has one (Foundation, Wording, Behaviour, `applied/capacity` at the time of writing), including re-pin-only entries.
 
@@ -295,6 +301,17 @@ like a network policy block:
 
 Try not to explain your design decisions in multiple places. Avoid explaining why you did not use a certain pattern or construct, especially if you've just explained why you did use a different one. If you feel the need to explain your design decisions, do so in a single place and cross-reference it from other places.
 
+### When running the Ponytail skill
+
+The Ponytail skill pushes for the smallest model and the shortest diff. In an ontology, that must never cost logical correctness. Before proposing or applying a simplification, check each of these:
+
+- **RDF has no override.** A merged view of two nodes is the union of their triples. Do not let one node "inherit" another's properties and replace some of them, such as a bound relation stating only what differs from its template: the result has both values, and breaks every "exactly one" constraint. Restate in full, and let a generator do the repetition.
+- **Derivable in the examples is not derivable in general.** Before deleting a property because the examples could compute it, search the sketches' scenario catalogues and the decisions for a case where it differs. `ins:party` matched the relations' parties in every C6 example, but third-party beneficiaries (CC-Q4) and separate execution (S90) make it independent data.
+- **Open world.** Removing an assertion is not asserting its negation. A reasoner infers from what remains, so check what it now infers, and what it can no longer distinguish.
+- **Who reads it without a reasoner.** SHACL and the compilers read asserted triples only. A fact moved from asserted data into an axiom disappears for them.
+- **Cross-check before applying.** Search every sketch and plan that names the term, LATTICE's and the epics that build on it (CCS, AIR, NRS), for a scenario the simplification breaks. If one exists, stop and discuss it with the human.
+- **Keep what the decisions require.** A simplification that contradicts an accepted ADR is a new decision, not a cleanup.
+
 ### Authoring SHACL-SPARQL shapes
 
 These rules come from defects found at verification. Follow them in every `sh:sparql` constraint.
@@ -305,6 +322,7 @@ These rules come from defects found at verification. Follow them in every `sh:sp
   - One count: a flat query, `OPTIONAL { … ?x … }` then `GROUP BY $this HAVING (COUNT(DISTINCT ?x) != 1)`.
   - Two or more independent counts, or high cardinality: one grouped sub-query per count, so the counts do not multiply each other and the store can plan them separately. Each sub-query anchors the subject and makes its counted pattern optional, for example `{ SELECT $this (COUNT(DISTINCT ?x) AS ?n) WHERE { $this a ex:C . OPTIONAL { $this ex:p ?x } } GROUP BY $this }`. A sub-query without the anchor drops zero-count subjects from the join.
   - Several flat `OPTIONAL`s in one group multiply rows. `COUNT(DISTINCT …)` still counts correctly over them, but plain `COUNT` and `SUM` do not.
+- **Disable a SPARQL constraint by breaking a triple pattern, never with `FILTER (false)`**, when probing that a test catches a broken shape. Under pySHACL a constraint whose filter is constant false reports every focus node, so the probe passes for the wrong reason.
 - **Test every cardinality rule at zero, not only at too many.** A negative case with two values does not catch a query that drops subjects with none.
 
 ### Thinking / Reasoning for Coding
@@ -334,6 +352,10 @@ The following MUST be avoided if at all possible, breaking these rules only unde
 - Try to avoid "It's not X, it's Y" binary reframes, replace them with direct statements. 
 - Avoid formulaic transitions such as "Furthermore," "Moreover," "Additionally," and "In conclusion" at the start of sentences. 
 - Avoid vague meta-commentary like "It is important to note that," "In today's digital age," and "This serves as a testament to." Keep it short and succinct.
+- Do not coin technical terms from insurance market vocabulary. A word with a market meaning reads as that meaning to an insurance reader, and the meaning differs between markets. "Binder" is the example: in insurance it names a binding authority or a temporary cover note. Use it only in its market sense. Producing bound meaning from stated meaning, a wording's variable values and an instance's parties is **instantiation**, and what performs it an **instantiator**, as Persistence's `instantiate` fills its templates with parameters. Check any new technical term against `docs/glossary.md` and the insurance modules in `ontology/applied/insurance/` before using it.
+  - **Exception: "bound".** It has a settled technical meaning, as in a bound variable, so "bound meaning", `ins:boundIn` and `ins:boundFrom` stay (CC-D12). It is still a market word ("the risk is bound"), so say "bound meaning" or "bound term", never "bound" alone where an insurance reader could read it as cover.
+  - **Leave SPC alone.** SPC's "binder" is the process-calculus term (`rec X.B` binds a recursion variable) in a published specification. Do not rename it.
+- Keep substrate and layer READMEs domain-neutral. Insurance is LATTICE's primary target, but the substrate is a framework for any domain. Do not appeal to "the market" or a market's practice to explain a term: explain it from law, contract drafting or computing. Do not cite Open CBAA or other downstream projects as examples in a layer README: they depend on LATTICE, not the reverse, and a reader will not know them. Sketches and plans may name them. Prefer examples from several domains (lending, licences, trials, warranties) over insurance ones.
 
 ### What To Reduce
 
