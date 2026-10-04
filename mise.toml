@@ -248,19 +248,19 @@ run = [{ tasks = ["clean:java", "clean:python", "clean:frontend", "clean:build",
 run_windows = [{ task = "clean-win" }]
 
 [tasks."clean:java"]
-run = "mvn -f platform/pom.xml clean"
+run = ["mvn -f platform/pom.xml clean", "mvn -f packages/minting/java/pom.xml clean"]
 
 [tasks."clean:python"]
 description = "Clean Python caches, bytecode, and build artifacts"
-run = "rm -rf .build/pytest-cache/* .pytest_cache __pycache__ build/ *.egg-info; find . -type d -name '__pycache__' -exec rm -rf {} + 2>/dev/null; find . -type d -name '*.egg-info' -exec rm -rf {} + 2>/dev/null; true"
+run = "rm -rf .build/pytest-cache/* .pytest_cache __pycache__ build/ *.egg-info workers/build; find . -type d -name '__pycache__' -exec rm -rf {} + 2>/dev/null; find . -type d -name '*.egg-info' -exec rm -rf {} + 2>/dev/null; true"
 
 [tasks."clean:frontend"]
-description = "Clean Node/Yarn artifacts"
-run = "rm -rf node_modules .yarn apps/*/node_modules .build/yarn-cache/* .build/*-test-results/*; yarn cache clean"
+description = "Clean Node/Yarn artifacts and frontend build output"
+run = "rm -rf node_modules .yarn apps/*/node_modules apps/*/dist .build/yarn-cache/* .build/*-test-results/*; yarn cache clean"
 
 [tasks."clean:build"]
 description = "Clean generated build outputs"
-run = "rm -rf build/ ontology/mork/mtp/out/"
+run = "rm -rf build/ ontology/mork/mtp/out/ .build/authoring"
 
 [tasks."clean:docs"]
 description = "Clean local Jekyll/Bundler artifacts under docs/ (never the committed Gemfile/Gemfile.lock)"
@@ -275,20 +275,23 @@ description = "Clean Python caches, bytecode, and build artifacts (Windows)"
 shell = "powershell -c"
 run = '''
 $ErrorActionPreference = "SilentlyContinue"
-Remove-Item -Recurse -Force .build/pytest-cache, .pytest_cache, build, *.egg-info
+Remove-Item -Recurse -Force .build/pytest-cache, .pytest_cache, build, *.egg-info, workers/build
 Get-ChildItem -Recurse -Directory -Include __pycache__, *.egg-info |
     Remove-Item -Recurse -Force
 exit 0
 '''
 
 [tasks."clean-win:frontend"]
-description = "Clean Node/Yarn artifacts (Windows)"
+description = "Clean Node/Yarn artifacts and frontend build output (Windows)"
 shell = "powershell -c"
 run = '''
 $ErrorActionPreference = "SilentlyContinue"
 Remove-Item -Recurse -Force node_modules, .yarn, .build/yarn-cache
 Get-ChildItem -Path apps -Directory |
-    ForEach-Object { Remove-Item -Recurse -Force (Join-Path $_.FullName "node_modules") }
+    ForEach-Object {
+        Remove-Item -Recurse -Force (Join-Path $_.FullName "node_modules")
+        Remove-Item -Recurse -Force (Join-Path $_.FullName "dist")
+    }
 Get-ChildItem -Path .build -Directory -Filter *-test-results |
     ForEach-Object {
         Get-ChildItem -Path $_.FullName -Force |
@@ -302,7 +305,7 @@ exit 0
 [tasks."clean-win:build"]
 description = "Clean generated build outputs (Windows)"
 shell = "powershell -c"
-run = '$ErrorActionPreference = "SilentlyContinue"; Remove-Item -Recurse -Force build, ontology/mork/mtp/out; exit 0'
+run = '$ErrorActionPreference = "SilentlyContinue"; Remove-Item -Recurse -Force build, ontology/mork/mtp/out, .build/authoring; exit 0'
 
 [tasks."clean-win:docs"]
 description = "Clean local Jekyll/Bundler artifacts under docs/ (Windows, never the committed Gemfile/Gemfile.lock)"
