@@ -52,6 +52,7 @@ The unit that shipped it, `persistence-compiler-iri-sync`, is closed.
 | # | Debt | Spotted | Cost while it stays | Likely home |
 |---|---|---|---|---|
 | TD-16 | the Eligibility README is no longer the literate source of its documents: `tools/literate_extract.py --check` reports drift in `eligibility-vocab.ttl`, and no test or CI step runs it (Foundation's drift was fixed in CCS F1, Instrument's in C6) | 2026-10-03, CCS F1 | edits to the README or the file can diverge unnoticed | an Eligibility maintenance task |
+| TD-17 | Behaviour's selection policies, activation policies and trigger kinds (`behaviour-vocab.ttl`) are not declared distinct. Their properties are functional, so a reasoner given Instrument's `owl:hasValue` axioms and a wrongly stated value infers that two policies are the same individual, and every regime transition then carries both. Fix: `owl:AllDifferent` over each group | 2026-10-04, CCS C7a | the error is reported by SHACL at every regime transition, not by the reasoner at the triple that caused it | CCS FU-C7a-a, a Behaviour vocab change |
 
 ### Surface
 

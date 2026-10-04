@@ -1129,12 +1129,12 @@ author states only what the clause says.
 | Construct | Specialises | Adds | Sketch |
 |---|---|---|---|
 | `ins:Regime` (`skos:altLabel "Dispensation"`) | `bhv:StateSpace` | arises under a term, its transitions are `ins:RegimeTransition`s | §7.3, §7.4 |
-| `ins:RegimeTransition` | `bhv:TransitionDefinition` | selection `bhv:SingleMatch` and activation `bhv:ImmediateActivation` as value restrictions, legal triggers only | §7.3 |
-| `ins:OnExercise` | `bhv:TriggerDefinition`, kind `bhv:ExternalStimulus` | `ins:ofPower` → `ins:Power` | §7.3 |
-| `ins:OnBreach` | `bhv:TriggerDefinition`, kind `bhv:DerivedTrigger` | `ins:ofObligation` → `ins:Obligation` | §7.3 |
+| `ins:RegimeTransition` | `bhv:TransitionDefinition` | selection `bhv:SingleMatch` and activation `bhv:ImmediateActivation` as `owl:hasValue` restrictions, legal triggers only | §7.3 |
+| `ins:OnExercise` | `bhv:TriggerDefinition`, kind `bhv:ExternalStimulus` | `ins:ofPower` → `ins:Power`, with domain `ins:OnExercise` | §7.3 |
+| `ins:OnBreach` | `bhv:TriggerDefinition`, kind `bhv:DerivedTrigger` | `ins:ofObligation` → `ins:Obligation`, with domain `ins:OnBreach` | §7.3 |
 | `ins:OnAct` | `bhv:TriggerDefinition`, kind `bhv:ExternalStimulus` | an activity (C7a-Q2), `ins:by` → a party | §7.3 |
 | `ins:OnCondition` | `bhv:TriggerDefinition`, kind `bhv:DerivedTrigger` | `ins:condition` → `elg:Condition` | §7.3 |
-| `ins:OnExpiry` | `bhv:TriggerDefinition`, kind `bhv:ScheduledTrigger` | `ins:after` → a `qnt:Quantity` of time (calendar units such as business days per ADR-A94), anchored at entering the state. The states in which the period does not run (C11a-Q2 (a), C7a-Q4) | §7.3, nested states §6.4 |
+| `ins:OnExpiry` | `bhv:TriggerDefinition`, kind `bhv:ScheduledTrigger` | `ins:after` → a `qnt:Quantity` of time (calendar units such as business days per ADR-A94), anchored at entering the state. The states in which the period does not run, `ins:tolledIn` with domain `ins:OnExpiry` (C11a-Q2 (a), C7a-Q4) | §7.3, nested states §6.4 |
 | `ins:stateKind` | | a state's kind, a concept under `ins-voc:StateKindContract` (notice period, cure period, suspended, run-off, ...) | §7.3 |
 | `ins:appliesInState` | | `ins:LegalRelation` → `bhv:State` of an `ins:Regime`. Grouped by regime: any state within one regime, every regime's group across regimes. A composite holds while any descendant does (nested states §6.2) | §5.5, §6.3 |
 
@@ -1147,6 +1147,20 @@ domain or range only where it gives useful design-time entailment or restates wh
 C7a-Q3 as recommended. C7a-Q5 (a), added at review: the default gating subject now, within one
 legally binding agreement, and qualified gates held (plan, held design questions). C7a-Q4:
 `ins:tolledIn`, the revised recommendation.
+
+**Decided by the human after the examples, 2026-10-04 (C7a-R1):** writing the examples found that
+a stated regime must assert Behaviour's terms itself, since nothing instantiates it. The
+assertions stay the baseline, and a reasoner may supply them as a convenience. The design is
+ADR-A104's 2026-10-04 addendum, decision 5:
+
+- each trigger kind in the table above and both transition policies are `owl:hasValue`
+  restrictions, so an OWL 2 RL reasoner adds them to a node typed only with the `ins:` class
+- `ins:ofPower`, `ins:ofObligation` and `ins:tolledIn` take a domain, so the reasoner also derives
+  the trigger's class from the property
+- an `sh:in` shape per fixed value reports a wrong stated value at the node that states it.
+  `sh:hasValue` was proposed and rejected on test: it rejects correct data written for a reasoner,
+  and misses a wrong value once the reasoner has merged the two individuals
+- `owl:AllDifferent` over Behaviour's policy and kind individuals is follow-up FU-C7a-a
 
 **Questions for the human:**
 
@@ -1217,7 +1231,8 @@ legally binding agreement, and qualified gates held (plan, held design questions
   constrains `ins:stateKind`, with a baseline scheme bound as fallback holding every kind the
   examples and README use
 - every specialisation needs the explicit `bhv:` type beside the `ins:` type (B4, sketch §7.3), so
-  the engine reads Behaviour's terms without a reasoner. A shape requires it
+  the engine reads Behaviour's terms without a reasoner. A shape requires it, on the graph the
+  engine reads: the asserted graph without a reasoner, the closed graph with one (C7a-R1)
 - the gating rule and the per-occasion resolution are evaluated by C12. C7a states them in the
   README and comments, and ships design-time shapes: an `ins:appliesInState` value is a state of an
   `ins:Regime`, and a relation gated by a state of a regime `bhv:perOccasionOf` a relation must
@@ -1238,7 +1253,10 @@ legally binding agreement, and qualified gates held (plan, held design questions
 2. **Spec** (`instrument` 0.9.0 → 0.10.0, additive): the constructs of the table above, and under
    C7a-Q3 `ins:arisesOn`, `ins:arisesOnBreachOf`, `ins:arisesOnExerciseOf`, `ins:endsOn`. Under C7a-Q2,
    `ins:activity` loses its domain, and every domain and range C7a adds follows the principle in
-   `.github/copilot-instructions.md`. Each property's comment states its subject and value. The
+   `.github/copilot-instructions.md`. Each property's comment states its subject and value. Under
+   C7a-R1, the five trigger classes and `ins:RegimeTransition` carry their `bhv:` superclass and
+   `owl:hasValue` restrictions for the kind and the two policies, and `ins:ofPower`,
+   `ins:ofObligation` and `ins:tolledIn` their domains. The
    ADR-A104 addendum for C7a-Q1 (a regime is stated only, law I13 restated, the per-occasion rule and
    the default gating subject) is drafted with the examples.
 3. **Vocab** (`instrument-vocab` 0.10.0): `ins-voc:StateKindContract` and its baseline scheme.
@@ -1246,13 +1264,20 @@ legally binding agreement, and qualified gates held (plan, held design questions
    terms): a regime arises under exactly one stated term, its transitions are regime transitions
    whose triggers are legal triggers, each trigger has its one required value, the explicit `bhv:`
    type (B4), `ins:appliesInState` names a state of a regime, the per-occasion arising rule, and
-   `ins:tolledIn` names states of a different regime from the one its expiry fires in.
+   `ins:tolledIn` names states of a different regime from the one its expiry fires in. Under
+   C7a-R1, an `sh:in` value shape for each fixed value: `bhv:SingleMatch` and
+   `bhv:ImmediateActivation` on a regime transition, and each trigger class's kind. Their messages
+   name the permitted value and the decision.
 5. **README:** regimes in the terminology (regime, dispensation, legal trigger, gating, tolling), a
    section explaining why a regime is stated once, with the use-case of the sketch's §7.4.1 as one
    labelled example among others, a section
    with state diagrams for each regime kind (period, switching, threshold), the gating rule with a
    diagram, DP6 and why state never enters a comparison, a worked section per example, release
-   notes.
+   notes. A section on authoring with and without a reasoner (C7a-R1): the asserted baseline and
+   why B4 needs it, the axiom table, `owl:hasValue` against `owl:allValuesFrom`, the OWL 2 RL
+   profile, the three domains, validating the graph the engine reads, a worked lean form of one
+   example beside its asserted form, the merge a wrong value causes, and why the value shapes use
+   `sh:in`. Other sections cross-reference it.
 6. **Tests:** `tools/test_regimes.py`, with the rows below. Catalog, releases and the tag list. The
    agent stops before any commit.
 
@@ -1272,6 +1297,16 @@ legally binding agreement, and qualified gates held (plan, held design questions
 | C7a-12 | the vocab / parsed / the state kind contract constrains `ins:stateKind`, every kind used is in the baseline | L1 | + |
 | C7a-13 | the README / literate check / blocks equal the files. Release notes for 0.10.0 and shapes 0.3.0 | L1 | + |
 | C7a-14 | the existing tool tests / unchanged / pass | L1 | + |
+| C7a-15 | `licence-notice.ttl` with every `bhv:` type, kind and policy removed / OWL 2 RL closure, then all layers' shapes / conforms, and each transition and trigger has the fixed values (C7a-R1) | L1 | + |
+| C7a-16 | the same lean form, without a reasoner / Instrument's shapes / B4 reported for every regime node, and no value shape result (C7a-R1) | L1 | − |
+| C7a-17 | a regime transition stating `bhv:AllMatches` / Instrument's shapes on the asserted graph / reported once, at that transition. After an OWL 2 RL closure / reported at every regime transition (the merge, until FU-C7a-a) | L1 | − |
+| C7a-18 | a trigger with only `ins:ofPower` (no class) / OWL 2 RL closure / `ins:OnExercise`, `bhv:TriggerDefinition` and kind `bhv:ExternalStimulus` (C7a-R1) | L1 | + |
+
+**C7a follow-ups.** Found while building C7a, outside it, each with an owner (risk R10).
+
+| # | Follow-up | Owner | When |
+|---|---|---|---|
+| FU-C7a-a | `owl:AllDifferent` over Behaviour's selection policies, activation policies and trigger kinds, so a reasoner reports a wrongly stated value as an inconsistency instead of merging two individuals (ADR-A104 2026-10-04 addendum, decision 5). Also registered as TD-17 | a Behaviour vocab change | the next Behaviour release, or before C12 reads regimes through a reasoner |
 
 ### Tranche E: evaluation
 
@@ -1449,4 +1484,4 @@ records), the ADR catalogue.
 | R7 | The nested-states deep dive grows | C11a blocks only C12. Instrument, templates and examples without history proceed |
 | R8 | Removing Behaviour's range axioms breaks data relying on inferred types | C10's Validation Pack runs every Behaviour example and capacity fixture before and after |
 | R9 | The design-time satisfiability check (C13a) is deferred and forgotten | it is a slice in tranche E with its own row on the status board, NRS N3 names it as its prerequisite, and C5's Validation Pack lists it under deliberate non-coverage |
-| R10 | F1's follow-ups (FU-F1a, FU-F1b) are forgotten | each has an owner in the F1 follow-ups table, FU-F1a is in the `identity-minting` plan's deferred items, and F1's Validation Pack lists both under deliberate non-coverage |
+| R10 | F1's follow-ups (FU-F1a, FU-F1b) and C7a's (FU-C7a-a) are forgotten | each has an owner in its slice's follow-ups table, FU-F1a is in the `identity-minting` plan's deferred items, FU-C7a-a is TD-17 in the technical debt register, and each slice's Validation Pack lists its follow-ups under deliberate non-coverage |

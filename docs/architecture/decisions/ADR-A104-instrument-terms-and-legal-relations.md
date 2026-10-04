@@ -156,3 +156,100 @@ occasions, the amendment states it with `prov:wasRevisionOf`.
   2026-10-01 addendum.
 - NRS slice N4 is delivered here. ADR-A105 and ADR-A109 are revised in NRS. Applied insurance
   Phase 5 builds on this ADR (ADR-A101). Open CBAA migrates (CCS plan §7).
+
+## Addendum (2026-10-04): a regime is stated once
+
+**Status:** Proposed 2026-10-04 (CCS slice C7a, C7a-Q1 to C7a-Q5). The reasoning, with an example
+use-case, is the [CCS sketch](../../developer/sketches/computable-contract-substrate.md) §7.4.1.
+The examples are `licence-notice.ttl`, `supply-suspension.ttl`, `facility-cure-period.ttl` and
+`service-dispute.ttl` in `ontology/instrument/examples/`.
+
+1. **One tier for regimes** (revises decisions 2 and 13). A regime is stated meaning only. It
+   arises under the stated term of the clause that states it, and its states, transitions and
+   triggers are shared by every instrument whose wording includes that clause. Each instrument's
+   progress through it is an occupancy `bhv:forSubject` the instrument's persistent identity, so
+   an amendment that leaves the regime's clause alone leaves the occupancy alone. A value the
+   instance supplies, such as a notice length from a variable, is resolved per instrument at
+   runtime from its assembled wording (C8). A bound term may therefore own no relation: a term
+   whose clause states only a regime binds nothing.
+2. **Law I13 restated.** Only bound *relations* are evaluated. Regimes are read as stated, per
+   subject. A bound relation names the stated regime's state in `ins:appliesInState`.
+3. **Triggers name stated relations.** A regime's `ins:ofPower` and `ins:ofObligation` name the
+   stated relation, and match the exercise or breach of any bound relation instantiated from it.
+   A per-occasion regime (`bhv:perOccasionOf`) likewise names the stated relation, and covers the
+   occasions of every bound relation instantiated from it. A bound relation's own `ins:arisesOn`,
+   `ins:arisesOnBreachOf`, `ins:arisesOnExerciseOf`, `ins:endsOn` and `ins:excepts` name bound
+   nodes, since it restates its template in full.
+4. **Whose state gates a relation** (C7a-Q5). A gate reads the occupancy of the relation's own
+   instrument identity, or, for a per-occasion regime, of the occasion its arising chain reaches
+   (decision 9 of ADR-A106's addendum). Gates on another subject, one participant's share or
+   another agreement, are held (CCS plan, HQ-2).
+5. **Behaviour's terms on a stated regime, with or without a reasoner** (revises decisions 7 and
+   13, decided 2026-10-04). Behaviour's engine reads only Behaviour's terms: `bhv:StateSpace`,
+   `bhv:TransitionDefinition` with its `bhv:selectionPolicy` and `bhv:activationPolicy`, and
+   `bhv:TriggerDefinition` with its `bhv:triggerKind`. Behaviour's structural shapes require each
+   policy (minimum one), and Instrument's require each legal trigger's kind, which Behaviour leaves
+   optional. Decision 13 had instantiation assert them beside the `ins:`
+   types. A regime is stated only (decision 1), so nothing instantiates it, and the `bhv:` terms
+   come from one of two places:
+
+   - **Asserted, for data read without a reasoner.** This is the baseline, and every example
+     follows it. Each regime node carries its `bhv:` type beside its `ins:` type. Each
+     `ins:RegimeTransition` states `bhv:selectionPolicy bhv:SingleMatch` and `bhv:activationPolicy
+     bhv:ImmediateActivation`. Each legal trigger states its `bhv:triggerKind`. Law B4's shapes
+     require the explicit `bhv:` type, because the engine matches the `rdf:type` triple as
+     written, and a node typed only `ins:RegimeTransition` would be invisible to it. They check
+     the triple itself (`sh:path rdf:type ; sh:hasValue`): `sh:class` follows the subclass axioms
+     in the data graph, and would pass without it.
+   - **Entailed, for authors working with a reasoner.** An optional convenience. Each Instrument
+     class states its fixed Behaviour terms as axioms, so an author with an OWL 2 RL reasoner (or
+     a more expressive one) writes the `ins:` type alone:
+
+     | Class | Axioms (`rdfs:subClassOf`) |
+     |---|---|
+     | `ins:Regime` | `bhv:StateSpace` |
+     | `ins:RegimeTransition` | `bhv:TransitionDefinition`, `owl:hasValue bhv:SingleMatch` on `bhv:selectionPolicy`, `owl:hasValue bhv:ImmediateActivation` on `bhv:activationPolicy` |
+     | `ins:OnExercise`, `ins:OnAct` | `bhv:TriggerDefinition`, `owl:hasValue bhv:ExternalStimulus` on `bhv:triggerKind` |
+     | `ins:OnBreach`, `ins:OnCondition` | `bhv:TriggerDefinition`, `owl:hasValue bhv:DerivedTrigger` on `bhv:triggerKind` |
+     | `ins:OnExpiry` | `bhv:TriggerDefinition`, `owl:hasValue bhv:ScheduledTrigger` on `bhv:triggerKind` |
+
+     The restrictions are `owl:hasValue`, not `owl:allValuesFrom`. An `allValuesFrom` restriction
+     only constrains a value already stated, while `hasValue` in a superclass makes a reasoner add
+     the value (OWL 2 RL rule cls-hv1). RDFS alone gives the `bhv:` types through `rdfs:subClassOf`
+     but not the values, so the convenience needs the OWL 2 RL profile. `ins:ofPower`,
+     `ins:ofObligation` and `ins:tolledIn` each have a domain (`ins:OnExercise`, `ins:OnBreach`,
+     `ins:OnExpiry`), so a reasoner also derives the trigger's class, and from it the `bhv:` type
+     and kind, from the property alone. Each of these properties has only that one subject, which
+     meets the domain rule in `.github/copilot-instructions.md`. `ins:condition` and `ins:after`
+     have no domain, since terms in time (C7b) may reuse them.
+
+   **Validate the graph the engine reads.** Without a reasoner, that is the asserted graph. With
+   one, it is the closed graph, and B4's shape holds there because the reasoner added the `bhv:`
+   types. A library template (decision 13) is written in the asserted form, so it serves both.
+
+   **A wrong stated value.** All three properties are functional, and Behaviour does not declare
+   its policy or kind individuals distinct. An author who states `bhv:selectionPolicy
+   bhv:AllMatches` on a regime transition, with the axioms above and a reasoner, leads it to infer
+   `bhv:AllMatches owl:sameAs bhv:SingleMatch`, after which every transition in the graph has both
+   values. Two measures, combined:
+
+   - **Instrument's value shapes**, which list the one permitted value (`sh:in ( bhv:SingleMatch
+     )`, and so on for activation and each trigger kind). On the asserted graph they report the
+     wrong value at the node that states it, in either mode, and let a value the reasoner will add
+     be absent. On the closed graph they report the wrong value at every node the merge reached.
+     `sh:hasValue` is not used: it would reject correct data written for a reasoner (the value is
+     not yet there), and miss a wrong value after the merge (the right one is also there).
+     Presence stays with the minimum counts, Behaviour's for the policies and Instrument's for the
+   kinds, on the graph the engine reads.
+   - **Distinct individuals in Behaviour** (follow-up FU-C7a-a, CCS plan): `owl:AllDifferent` over
+     the selection policies, the activation policies and the trigger kinds, so that a reasoner
+     reports the merge as an inconsistency at the triple that caused it.
+
+6. **Smaller settlements.** `ins:activity` has no domain, so `ins:OnAct` reuses it for the act a
+   trigger fires on (C7a-Q2). Decision 5's three trigger domains follow the same rule. `ins:arisesOn`, `ins:arisesOnBreachOf`, `ins:arisesOnExerciseOf` and
+   `ins:endsOn` (decision 6) land with the triggers in C7a (C7a-Q3). They take the four triggers
+   other than `ins:OnExpiry`, which counts from entering a state, and a relation has none to enter
+   (sketch §5.5). A relation's own periods are due ranges (C7b). `ins:tolledIn` names the
+   states in which an `ins:OnExpiry` period does not run (C7a-Q4, ADR-A106 addendum decision 9).
+   `ins:stateKind` takes a concept under `ins-voc:StateKindContract`, with a baseline scheme bound
+   as fallback.
