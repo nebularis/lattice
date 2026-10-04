@@ -950,10 +950,11 @@ are the human's, examples first.
 |---|---|---|
 | C6 | instrument and term, the five relation classes with Exclusion, parties with groups and roles, party details (`noticeAddress`, `operatesAt`), instrument keys (from F1), activity, scope, `maintains`, `fulfilledWhen`, `excepts`, qualifiers (§5.1 to §5.4, §5.7). `ins:InstrumentTarget` in Instrument's vocabulary | Instrument 0.8.0 to 0.9.0, breaking MINOR (A-113). Imports Wording and Behaviour configuration. 0.8.0 is F1's cascade (G3) |
 | C7a | **regimes and gating** (split from C7, 2026-10-02): legal triggers (`OnExercise`, `OnBreach`, `OnAct`, `OnCondition`, `OnExpiry`, with the states in which a period does not run, C11a-Q2), `ins:Regime`, `ins:RegimeTransition`, `ins:stateKind`, `appliesInState` with the gating rule of the nested states sketch §6.2 and per-occasion resolution (C11a-Q4). The explicit `bhv:` type shape (B4) (§7.3, §7.4) | 0.10.0 MINOR. After C6 and C11a phase 2 |
-| C7b | **terms in time and constitutive terms** (split from C7): arising and ending on legal triggers, due, recurrence, survival, constitutive terms (Definition, Deeming), `appliesWithin`, classification, segments and per-segment definitions with union and overlap reporting, `ins:computedBy` (§5.5, §5.6, §5.10, §7.9, I15, I16). From C6's review (2026-10-03): how a case-dependent party resolves, through a definition (§5.10, S58) and through the case (S20, `ins:resolvedBy`, deferred from C6 as C6-Q5: either a path-only `elg:EvidenceBinding`, which relaxes Eligibility's shape, or a rule that such resolution is not a valid way to model). And how a group acts (several, joint): a defined party word's definition carries it, so stated meaning can say "each for its share", which a role cannot | 0.11.0 MINOR. After C6, beside C11a phase 2 |
-| C8 | stated and bound meaning (CC-D12): `ins:Template`, `ins:expressedIn` as owner, `ins:boundIn`, `ins:boundFrom`, `ins:alsoExpressedIn`, parameter bindings, encoding status, the ownership shapes in SHACL Core and law I17's two SHACL-SPARQL shapes (§5.9, I17, I18) | 0.12.0 MINOR |
+| C7b | **terms in time** (split from C7, then from C7c at C7b-Q1, 2026-10-04): due ranges, recurrence, windows on powers and permissions, survival, how an instrument or a term ends and what arises on termination, designed in the [terms in time sketch](../sketches/terms-in-time.md) (§5.1, §5.5, §7.9, I3, I5 as restated, I9). Arising and ending of single relations moved to C7a (C7a-Q3). `ins:computedBy` deferred to contract amounts (C7b-Q7). Anchored time may add to Quantification (TQ1) | 0.11.0 MINOR, and a Quantification MINOR with its re-pin cascade if TQ1 is answered as recommended. After C7a |
+| C7c | **what terms are, and who they bind** (split from C7b at C7b-Q1, 2026-10-04): constitutive terms (Definition, Deeming), sections (`appliesWithin`, `notWithin`), per-section definitions with union and overlap reporting, term classification (§5.6, §5.10, I15, I16). From C6's review (2026-10-03): how a case-dependent party resolves, through a definition (§5.10, S58) and through the case (S20, `ins:resolvedBy`, C6-Q5: either a path-only `elg:EvidenceBinding`, which relaxes Eligibility's shape, or a rule that such resolution is not a valid way to model), and how a group acts (several, joint) through a defined party word's definition. I15 fixes a case's section by the power it was bound under (`ins:boundUnder`, C9's), so its brief decides whether C7c follows C9 or brings `ins:boundUnder` forward | 0.12.0 MINOR. After C7b |
+| C8 | parameter bindings from wording variables (`ins:ParameterBinding`), including the dates and lengths that anchored time names (a wording date as a context role, terms in time sketch §5.2), encoding status, and law I17's two SHACL-SPARQL shapes (§5.9, I17). Stated and bound meaning, ownership (`ins:Template`, `ins:expressedIn`, `ins:boundIn`, `ins:boundFrom`, `ins:alsoExpressedIn`) and their SHACL Core shapes moved into C6 (C6-Q1 (b)) | 0.13.0 MINOR |
 | C8a | the template library (§5.11) in `ontology/instrument/templates/`: periods, switching and threshold regimes, relation patterns. Term and qualifier templates wait for the bases decision in [contract-amounts.md](../sketches/contract-amounts.md) §1.7 | templates 0.1.0 |
-| C9 | amendments, consent rules, incorporation (with segment scope), `boundUnder`, `takesEffectWhen` (§5.8). Shapes for I1 to I16. An example with a party to the instrument who is in no relation, executing separately (S90, from C6's review) | 0.13.0 MINOR, shapes |
+| C9 | amendments, consent rules, incorporation (with segment scope), `boundUnder`, `takesEffectWhen` (§5.8). Shapes for I1 to I16. An example with a party to the instrument who is in no relation, executing separately (S90, from C6's review) | 0.14.0 MINOR, shapes |
 
 Nothing outside Instrument imports Instrument once C10 lands, so tranche D cascades only to
 Instrument's own documents and examples. No applied insurance module imports Instrument.
@@ -1308,6 +1309,239 @@ ADR-A104's 2026-10-04 addendum, decision 5:
 |---|---|---|---|
 | FU-C7a-a | `owl:AllDifferent` over Behaviour's selection policies, activation policies and trigger kinds, so a reasoner reports a wrongly stated value as an inconsistency instead of merging two individuals (ADR-A104 2026-10-04 addendum, decision 5). Also registered as TD-17 | a Behaviour vocab change | the next Behaviour release, or before C12 reads regimes through a reasoner |
 
+#### C7b in detail
+
+**Machine:** R (Claude Code). **Branch:** `ccs/c7b-terms-in-time`, created by the human from `main`
+once this brief is on `main` and its questions are answered. **Commits are the human's**, examples
+first (ADR-A-C2). Merged into `main` before its release tags are created.
+**Validation Pack:** [computable-contract-substrate-c7b](../validation/computable-contract-substrate-c7b.md).
+**Decisions:** ADR-A104 decisions 6 (`ins:due`, `ins:ends`), 13 and 14 (`ins:computedBy`), and its
+2026-10-04 addendum (regimes stated once), ADR-A94 (calendars), ADR-A113. Laws I3, I5 and I9.
+**Design:** the [terms in time sketch](../sketches/terms-in-time.md), for C7b-Q3 to C7b-Q5.
+
+**Invariant:** an instrument says when its relations must be performed and how long they last. An
+obligation may fall due within a range anchored at a named time (its arising, the instrument's
+inception or expiry, the end of a period), never at evaluation time (law I9). A recurring
+obligation has one occasion per period. An instrument or a term ends when a regime enters an ending
+state, and a surviving term goes on giving rise to occasions after that. Nothing here evaluates.
+
+**Scope after C7a.** Arising and ending of single relations (`ins:arisesOn`, `ins:endsOn` and the
+short forms) moved into C7a (C7a-Q3). The row's remaining content falls into two groups that share
+almost nothing, and C7b-Q1 split them:
+
+| Group | Content | Sketch, scenarios, laws |
+|---|---|---|
+| **terms in time** (this brief) | due ranges, recurrence, survival, how an instrument or a term ends, relations arising on termination, `ins:computedBy` | §5.1, §5.5, §7.9. S1, S2, S9, S16 to S18, S60, S72. I3, I5, I9 |
+| **what terms are, and who they bind** (C7c) | definitions and deemings, sections (`ins:appliesWithin`, `ins:notWithin`, I15), per-section definitions with union and overlap reporting (I16), term classification, resolution of a party that depends on the case (C6-Q5, S20, S58), how a group acts through a defined party word | §5.3, §5.6, §5.10. S15, S20, S25, S58, S94 to S96. I11, I15, I16 |
+
+**Answered by the human, 2026-10-04:**
+
+- C7b-Q1 (a): the slice is split, and C7c is briefed separately
+- C7b-Q2 (a): an obligation has at most one due range. Asserting that every obligation falls due
+  at exactly one time is legally incorrect. Where the words fix no time, this layer does not model
+  the *reasonable time* the law implies, unless a contract's express words define one. Law I5 is
+  restated
+- C7b-Q3 and C7b-Q4: a concrete design first, specified and documented so that it can be worked
+  through against current and future use cases. The human is not convinced that quantifiable
+  axioms belong outside Quantification. Designed in the terms in time sketch Part A, which proposes
+  putting the anchoring in Quantification (TQ1)
+- C7b-Q5: the commonest endings are expiry by time and termination on notice, and every other case
+  needs attention. Designed in the sketch Part B, with a catalogue of endings (TQ3 to TQ7)
+- C7b-Q6 (a) and C7b-Q7 (a), as recommended
+
+**The sketch's questions, answered by the human, 2026-10-05:** TQ1, anchored time goes in
+Quantification. TQ2, business day conventions and times of day are held, and their use cases
+recorded (held design question HQ-3). TQ3, TQ4, TQ6 and TQ7 as recommended. TQ5, implicit: a term
+whose relations arise on termination survives for that purpose without saying so, because requiring
+express wording would not work in practice.
+
+**What C7b builds, from the answers:**
+
+| Layer | Adds | Sketch |
+|---|---|---|
+| Quantification 0.6.0 → 0.7.0 (additive, ADR-A115) | `qnt:ContextValue` with `qnt:contextRole`, the role contract `qnt:ContextRoleContract`, and the unit-bearing offsets `qnt:lowerOffsetBy` and `qnt:upperOffsetBy` on `qnt:AnchorBinding` | §5.1 |
+| Instrument 0.10.0 → 0.11.0 (additive, ADR-A104 addendum) | `ins:due` (at most one, a `qnt:Range`), `ins:recurrence` (a `qnt:Recurrence`), `ins:window` on powers and permissions, `ins:dueTolledIn`, `ins:ends` on a regime's state with `ins-voc:TheInstrument`, the sixth trigger `ins:OnEntry` (`ins:ofState`), `ins:at` on `ins:OnExpiry`, `ins:survives` with `ins:Survival`, `ins:survivalPeriod` and `ins:survivesUntil` | §5.2 to §5.4, §7, §8 |
+| `instrument-vocab` 0.11.0 | the context roles `Arising`, `Inception`, `Ending`, `PeriodStart` and `PeriodEnd`, bound to Quantification's role contract, `ins-voc:TheInstrument`, and the state kind `Expired` | §5.2, §8.2 |
+
+**Before branching.** Quantification's change re-pins every document that imports it: Party,
+Eligibility, Wording, Behaviour, Surface, Instrument and the applied modules, including
+`applied/insurance/peril` and `applied/capacity`. The human confirms that no parallel workstream
+edits those documents while C7b runs (risk R6, as for F1).
+
+**Quantification's README is not yet its literate source.** Its blocks equal the generated files
+as graphs, but it has no block for the ontology header, and one shapes block holds what three files
+contain. C7b first restores it as the source (a header block and three shapes blocks), with no
+change to any graph, as F1 did for Foundation, and then makes its additions there.
+
+**Questions, as asked:**
+
+- **C7b-Q1. Split the slice.** The two groups above use different machinery (time and Quantification
+  for the first, Eligibility's hierarchical match and the wording tree for the second) and have
+  different dependencies. Law I15 fixes a case's section by the power it was bound under
+  (`ins:boundUnder`), which is C9's, so the second group either follows C9 or brings
+  `ins:boundUnder` forward. Options:
+  - (a) **split**: C7b is terms in time (Instrument 0.11.0), and C7c is what terms are and who they
+    bind (0.12.0), briefed separately with its own questions, including C6-Q5 and the I15
+    dependency
+  - (b) one slice, as planned
+
+  **Recommendation: (a).** Each half is a coherent slice of the size C7a was, and C7c's I15
+  dependency can be decided in its own brief.
+- **C7b-Q2. Must every obligation fall due (law I5)?** I5 says an obligation has exactly one due
+  range unless continuing or a prohibition. Many obligations name no time: "the Supplier shall
+  deliver the Goods ordered", "the Buyer shall pay the price". Where a contract fixes no time for
+  performance, the law implies a *reasonable time*, which only a finding can establish. Options:
+  - (a) **at most one** due range. With none, the obligation has no fixed time, and breach by lapse
+    of time is never derived: only a finding (C13) can establish it. I5 is restated
+  - (b) exactly one, as I5 says, and every example states a due range
+
+  **Recommendation: (a).** It matches the law, and (b) would force authors to invent deadlines that
+  the words do not contain.
+- **C7b-Q3. How a due range names its anchor (law I9).** A due range is stated meaning: "within 30
+  days of arising", "at least six months before expiry", "within 10 Business Days after the end of
+  each month". The clause can only *name* the anchor. Its value differs for each instrument and
+  each occasion. Quantification's `qnt:AnchorBinding` needs a concrete anchor value, and its
+  offsets are unitless decimals, so it cannot hold "the arising" or business days. Options:
+  - (a) **an Instrument due range**: `ins:due` → an `ins:DueRange` with `ins:dueFrom`, an anchor
+    kind from a baseline scheme (`ins-voc:Arising` by default, `Inception`, `Expiry`,
+    `PeriodStart`, `PeriodEnd`), and `ins:within` or `ins:notLaterThan`, a `qnt:Quantity` before or
+    after it, in any unit including `qnt:CalendarUnit`. The runtime resolves it to a `qnt:Range`
+    for each occasion, as `ins:OnExpiry` counts `ins:after` from entering a state
+  - (b) **extend Quantification** so that an anchor binding may name a symbolic anchor and carry
+    offsets with units. A Quantification change, cascading to every importer
+
+  **Recommendation: (a).** It stays in Instrument, reads as the clause does, and matches
+  `ins:after`. A due date set by a variable ("the Maturity Date") is a C8 binding. The anchor
+  scheme follows the activity and state kind schemes.
+- **C7b-Q4. How a recurrence names its periods.** "Within 10 Business Days after the end of each
+  month" needs one occasion per month. `qnt:Recurrence` requires a concrete anchor, which stated
+  meaning cannot give. Options:
+  - (a) `ins:recurrence` → a `qnt:Quantity`, the period length ("one month"), counted from
+    `ins:recursFrom`, an anchor kind (`Inception` by default). The runtime generates a
+    `qnt:Recurrence` for each instrument, and an occasion per bin, whose due range anchors at the
+    bin's start or end
+  - (b) `ins:recurrence` → a `qnt:Recurrence` in bound meaning only, created by instantiation
+
+  **Recommendation: (a)**, for the reason given at C7b-Q3. (b) would make the recurrence the only
+  bound-only value in a stated relation.
+- **C7b-Q5. What ends an instrument or a term, and what arises on termination.** The sketch gives a
+  power `ins:ends` an instrument, a term or a relation, effective on exercise. C7a showed that
+  termination usually happens on entering a state: the licence ends when its notice period runs
+  out, not when notice is given. Contracts also attach consequences to termination itself: "on
+  termination, the Licensee shall return all materials", "the deposit shall be repaid within 30
+  days after the lease ends". No legal trigger fires on entering a state. Options:
+  - (a) **ending is a state, and termination is a trigger.** `ins:ends`, on a state of a regime,
+    names what entering the state ends: the instrument as a whole, or named stated terms. A new
+    legal trigger, `ins:OnEntry` (`ins:ofState`, kind `bhv:DerivedTrigger`), fires on entering a
+    state, so relations may arise on termination and other regimes may react to it (a run-off
+    regime entered on termination). Termination for breach that takes effect at once is a
+    transition straight into the ending state, as in the C7a licence
+  - (b) `ins:ends` on a power, effective on exercise, as the sketch has it, and "on termination"
+    written as an `ins:OnExercise` of each power that terminates. This cannot express ending at the
+    end of a notice period
+  - (c) `ins:ends` on any legal trigger
+
+  **Recommendation: (a).** It keeps one account of ending, the C7a one, and gives "on termination"
+  its own operative fact. It adds a sixth legal trigger, so it needs an addendum to ADR-A104
+  decision 6, drafted with the examples. A single relation still ends through `ins:endsOn`.
+- **C7b-Q6. How survival is stated.** "Clauses 9 and 12 survive termination of this agreement",
+  "the confidentiality obligations continue for five years after termination". A surviving term
+  goes on giving rise to occasions after its instrument ends. Occasions that arose before the end
+  persist anyway (law I3: *accrued rights*), so survival is only about new occasions. Options:
+  - (a) `ins:survives` on a term → an `ins:Survival`, with an optional `ins:survivalPeriod` (a
+    `qnt:Quantity` from the ending) and an optional `ins:survivesUntil` (an Eligibility condition).
+    With neither, the term survives without limit (S72)
+  - (b) the same two properties directly on the term, with a third for survival without limit
+
+  **Recommendation: (a).** One property says that a term survives, and the node says for how long.
+- **C7b-Q7. `ins:computedBy` (ADR-A104 decision 14).** Every slot that takes a duration or an amount
+  is to admit `ins:computedBy`, whose target is defined with contract amounts and the evaluation
+  context, neither of which exists yet. Options:
+  - (a) **defer** `ins:computedBy` to the contract amounts unit, recorded in an addendum to
+    decision 14
+  - (b) declare it now with no range, evaluating Undetermined
+
+  **Recommendation: (a).** A property whose value cannot yet be stated would be documentation
+  without use.
+
+**Decided by precedent, not asked:**
+
+- the context role scheme follows the activity and state kind schemes (C3-Q1, C6, C7a): a baseline
+  scheme of roles, bound as fallback to the contract that constrains `qnt:contextRole` (sketch
+  §5.2)
+- arising windows beyond the instrument's term (a discovery period, a reporting period after
+  expiry) are period regimes, with relations gated by their states (C7a)
+- a due range is part of the relation's stated meaning, and a bound relation restates it in full
+  (ADR-A104 decision 2)
+- durations use Quantification's units and calendars, as `ins:after` does (ADR-A94)
+- examples are domain-neutral, from at least three domains, under the rule in
+  `.github/copilot-instructions.md`
+
+1. **Examples first (ADR-A-C2).** In `ontology/instrument/examples/`, under the answers above, and
+   one Quantification example of a context value and a recurrence anchored at one:
+
+   | File | Shows |
+   |---|---|
+   | `trial-reporting.ttl` | a duty to report each serious adverse event within 24 hours of its arising (an `ins:OnAct`), and a monthly safety report due within 10 business days after each month end (recurrence, `PeriodEnd`, a calendar unit). A duty with no due range (C7b-Q2), and a covenant-like duty tested on dates (sketch §5.4) |
+   | `lease-expiry.ttl` | a lease that expires at its Expiry Date (`ins:OnExpiry` `ins:at`, `ins:ends` the instrument), a tenant's break exercisable in a window (`ins:window`), and the deposit repaid within 30 days after the lease ends (`ins:OnEntry`, anchored at `Ending`) |
+   | `service-renewal.ttl` | an evergreen services agreement that renews each year unless a notice of non-renewal is given in its window, and ends on notice or at the end of a period (sketch §8.2, §8.3) |
+   | `licence-survival.ttl` | the C7a notice regime with `ins:ends` on its terminated state, a duty to return materials arising on termination, confidentiality surviving for five years, and an indemnity surviving without limit (C7b-Q6) |
+
+2. **Spec.** Quantification first: its README restored as the literate source, then 0.7.0 with
+   the additions above, and the re-pin cascade computed and applied under the procedure in
+   `.github/copilot-instructions.md`. Then `instrument` 0.10.0 → 0.11.0: the constructs above, each
+   property's comment stating its subject and value, domains and ranges under the rule in
+   `.github/copilot-instructions.md`, and `owl:hasValue` restrictions for any new trigger's kind
+   (C7a-R1), including for `ins:OnEntry`. ADR-A115 (Quantification context values) and the ADR-A104
+   addendum (due ranges and windows, ending as a state, `ins:OnEntry`, implicit survival of
+   termination consequences, I5 restated, `ins:computedBy` deferred) are drafted with the examples.
+3. **Vocab** (`instrument-vocab` 0.11.0): the context roles (`Arising`, `Inception`, `Ending`,
+   `PeriodStart`, `PeriodEnd`) as a baseline scheme bound to Quantification's role contract, or an
+   Instrument anchor kind contract if TQ1 is answered otherwise.
+4. **Shapes.** Quantification's (`quantification-shapes` 0.1.0 → 0.2.0): a context value has
+   exactly one role, and an anchor binding uses decimal or quantity offsets, not both. Instrument's
+   (`instrument-shapes` 0.3.0 → 0.4.0, additive): I5 as answered, a due range anchored at a context
+   value (I9), a recurrence's period, a window only on a power or a permission, survival's period
+   and condition, `ins:ends` on a state of a regime naming the instrument or stated terms,
+   `ins:OnEntry`'s state and kind, and `ins:at` or `ins:after` on an expiry, exactly one.
+5. **README**, detailed and comprehensive without being verbose, with many diagrams, including
+   state diagrams in the style of the terms in time sketch:
+   - Instrument: the terminology for every new class and property, with the legal terms of the
+     sketch's §2 (*falling due*, *accrual*, *commencement* and the collision of "the Term" with
+     `ins:Term`, *expiry* and *effluxion of time*, *termination*, *accrued rights*, *survival*,
+     *renewal*, *evergreen*, *break clause*, *long-stop date*, *lapse*, *reasonable time*). A
+     section on anchored time (due ranges, windows, recurrences, tolling of due ranges, runtime
+     resolution), and a section on ending (the catalogue of endings, ending as entering a state,
+     what ending does to occasions, survival, consequences of termination, expiry, notice,
+     renewal, breaks, breach, long-stop dates). The worked examples, laws and release notes
+   - Quantification: context values, roles and unit-bearing offsets, with a diagram and its own
+     release notes
+6. **Tests:** `tools/test_terms_in_time.py`, with the rows below. Catalog, releases and the tag
+   list. The agent stops before any commit.
+
+| ID | Given / When / Then | Level | +/- |
+|---|---|---|---|
+| C7b-01 | the spec / parsed / `0.11.0`, imports unchanged, every new property states subject and value, nothing names `behaviour-runtime` | L1 | + |
+| C7b-02 | every example / all layers' shapes / conform | L1 | + |
+| C7b-03 | every example / reasoner / consistent | L2 | + |
+| C7b-04 | a due range on a continuing obligation or a prohibition, two due ranges on one obligation / shapes / each reported (I5 as answered) | L1 | − |
+| C7b-05 | a due range with no offset, or a context role from outside the bound scheme / shapes / each reported | L1 | − |
+| C7b-06 | a due range anchored at evaluation time or at a literal date in stated meaning / shapes / reported (I9) | L1 | − |
+| C7b-07 | a recurrence with no period / shapes / reported | L1 | − |
+| C7b-08 | `ins:ends` on a state of a plain `bhv:StateSpace`, or naming a bound term / shapes / each reported | L1 | − |
+| C7b-09 | a survival period that is not a quantity of time, survival on a relation / shapes / each reported | L1 | − |
+| C7b-10 | a stated due range, and its bound restatement / shapes / conform, and the bound relation names the same anchor kind | L1 | + |
+| C7b-11 | any new trigger / OWL 2 RL closure / its kind and Behaviour type follow, as for C7a's triggers (C7a-R1) | L1 | + |
+| C7b-12 | the vocab / parsed / the role scheme is bound to the role contract, every role the examples use is in the baseline | L1 | + |
+| C7b-13 | the README / literate check / blocks equal the files. Release notes for 0.11.0 and shapes 0.4.0. Every diagram renders under mermaid 11 | L1 | + |
+| C7b-14 | the existing tool tests, including `tools/test_regimes.py` / unchanged / pass | L1 | + |
+| C7b-15 | Quantification's README / literate check / blocks equal the files, before and after the additions, and the restoration changes no graph | L1 | + |
+| C7b-16 | a context value with no role or two, an anchor binding with both decimal and quantity offsets / Quantification's shapes / each reported | L1 | − |
+| C7b-17 | the re-pin cascade / `check:ontology-versioning`, `check:ontology-catalog`, `check:import-guard`, `build:mtp`, `check:mtp`, the literate checks / pass, and every importer of Quantification 0.6.0 re-pinned | L1 | + |
+| C7b-18 | a window on an obligation, an expiry with both `ins:at` and `ins:after` or neither, an `ins:OnEntry` with no state / shapes / each reported | L1 | − |
+| C7b-19 | a relation arising on an `ins:OnEntry` of an ending state, under a term with no `ins:survives` / shapes / conforms (TQ5) | L1 | + |
+| C7b-20 | every diagram in both READMEs and the sketch / mermaid 11, rendered in a page / renders | L1 | + |
+
 ### Tranche E: evaluation
 
 | Slice | Content | Where |
@@ -1335,6 +1569,7 @@ so that its implications can be weighed when it is taken up.
 |---|---|---|---|
 | HQ-1 | **Instruments without wording.** An instrument, or a fragment of one, may arrive as structured data from another system, mapped in rather than written. A counterparty's proposal sent back in response to a request for terms is the common case: it carries terms, sometimes partial or approximate, and no clause text. Law I1 requires every instrument version to be expressed in exactly one assembled wording, and law I2 requires every stated term to be expressed in a clause version. Options to weigh: (a) ingestion produces wording elements from the data, keeping "the words are the contract", (b) a fragment that is not yet an instrument, with weaker rules until it is accepted, (c) relax I1 for instruments whose source is data | a proposal must be checked by the same shapes as a contract, before anyone accepts it. Related, from C7a-Q1: a proposal's commitment (an indication, a non-binding quote, a binding quote) is a legal relation, whether it confers a power of acceptance and when that power ends. Its precision ("around five million") and completeness are an overlay on its terms, outside the legal model | before an applied ontology ingests proposals, and no later than C9 (instruments made under a power, acceptance) |
 | HQ-2 | **Qualified gates: gating by another subject's state.** C7a gates a relation by the state of its own instrument, or of the occasion its arising chain reaches (C7a-Q5). Two cases are held: one participant's share within one agreement, where several parties are each liable for their own share and each share has its own state, and another agreement altogether, where one contract responds only once another is exhausted | the model must be consistent within one legally binding agreement first. Dependencies across agreements may not belong in this layer at all, and may sit in an applied ontology above it | designed with C12's evaluator, within one agreement first |
+| HQ-3 | **Business day conventions and times of day** (TQ2, held 2026-10-05). "If that day is not a Business Day, on the next Business Day" (following, modified following, preceding), and "by 11:00 a.m. London time" (a time of day in a zone, S74). Recorded as use cases A13 and A14 in the [terms in time sketch](../sketches/terms-in-time.md) §3 | a due date that falls on a non-business day, or at a time of day, is resolved wrongly until Quantification can roll and zone it | with the first business continuity examples, in Quantification beside ADR-A94's calendars |
 
 ## 5. Sequencing
 
@@ -1345,6 +1580,7 @@ flowchart TB
     GA --> C10 --> C11 --> C11a
     C10 --> C10a
     C5 & C10 --> C6 --> C7b
+    C7b --> C7c
     C6 & C11a --> C7a
     C7a & C7b --> C8 --> C8a
     C8 --> C9

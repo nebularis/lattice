@@ -18,11 +18,11 @@ Behaviour 0.10.0 (shapes 0.4.0) with nested states and history, the import guard
 check`. Tranche D begins with C6, briefed. From C5 on, the agent builds and verifies, and the human
 commits by hand.
 
-**Next action, for the human:** review and commit the C7a model on `ccs/c7a-regimes` (Validation
-Pack handoff, phase 2), merge it into `main`, then create the release tags on the merged commit.
-
-🔴 RELEASE TAGS REQUIRED after the merge: `instrument-v0.10.0`, `instrument-shapes-v0.3.0`,
-`instrument-vocab-v0.10.0`.
+**Next action, for the human:** commit the C7b brief, the terms in time sketch and the Validation
+Pack skeleton on `main`, confirm that no parallel workstream edits a Quantification importer
+during C7b (risk R6), and create `ccs/c7b-terms-in-time` from `main`.
+**Then, for the agent:** restore Quantification's README as its literate source, write C7b's
+examples, ADR-A115 and the ADR-A104 addendum, and stop for the human's commit before the model.
 
 ## Slice board
 
@@ -40,8 +40,10 @@ Pack handoff, phase 2), merge it into `main`, then create the release tags on th
 | C11a | nested states, history, concurrent regimes | C | merged, tagged | |
 | F1 | external and natural keys (ADR-A114) | Foundation, now | merged, tagged | |
 | C6 | instrument, terms, the five relations, parties, content | D | merged, tagged | |
-| C7b, C8, C9, C8a | Instrument rewrite, template library | D | waiting | C6. C8 after C7a and C7b |
-| C7a | regimes and gating, split from C7 | D | model built and verified on `ccs/c7a-regimes`, not committed | the human's commit, merge and tags |
+| C7b | terms in time | D | briefed, every question answered, ready to branch | the human |
+| C7c | what terms are, and who they bind (split from C7b) | D | waiting, to be briefed | C7b |
+| C8, C9, C8a | Instrument rewrite, template library | D | waiting | C8 after C7a and C7b |
+| C7a | regimes and gating, split from C7 | D | merged to `main` (`c6e5853`) and tagged | |
 | C12, C13 | runtime evaluator, relation plans | E | waiting | C9, C11, C11a, AIR-3.3, NRS N1 |
 | C13a | design-time joint satisfiability: slot conditions by reasoner, the task NRS N3 reuses (deferred from C5) | E | waiting | C5, NRS N1 |
 | C14 to C17 | examples, docs, handoff | F | waiting | C8a, C9, C12 |
@@ -101,3 +103,6 @@ Pack handoff, phase 2), merge it into `main`, then create the release tags on th
 - 2026-10-04: C7a-R1 decided: the asserted `bhv:` terms stay the baseline, and `owl:hasValue` restrictions with three trigger domains let an OWL 2 RL reasoner supply them. Value shapes use `sh:in` (tested: `sh:hasValue` fails both modes). `owl:AllDifferent` in Behaviour is follow-up FU-C7a-a (TD-17). Addendum decision 5, sketch §7.3, plan and Validation Pack updated.
 - 2026-10-04: C7a model built: Instrument 0.10.0 (additive), its vocab 0.10.0 and shapes 0.3.0, generated from the README (new §10 Legal Triggers, §11 Regimes and Gating, §12 Authoring With and Without a Reasoner, four worked examples, 46 diagrams parsed). `tools/test_regimes.py` and `tools/test_instrument.py` pass (105 tests). Found while building: SHACL's `sh:class` follows subclass axioms in the data graph, so the B4 shapes check `rdf:type` directly. The addendum's first draft is corrected on this and on which layer requires a trigger kind. Tolling is checked per state space, not per regime. Not committed.
 - 2026-10-04: README review: arising explained in §4.2.4 and regimes in §4.2.13, with 13 more diagrams (59, all rendered). Arising and ending restricted to the four triggers other than an expiry (sketch §5.5), with a test. 106 tests pass. Not committed.
+- 2026-10-04: C7a merged to `main` (`c6e5853`) and tagged by the human (`instrument-v0.10.0`, `instrument-shapes-v0.3.0`, `instrument-vocab-v0.10.0`). C7b briefed with its Validation Pack skeleton and seven questions: a split into terms in time (C7b) and what terms are (C7c), whether every obligation falls due, named anchors for due ranges and recurrences, ending by a regime's state with a new trigger on entering a state, survival, and deferring `ins:computedBy`.
+- 2026-10-04: C7b questions answered. C7b split from C7c (Q1). An obligation has at most one due range, and reasonable time is not modelled unless the words define it (Q2). Survival as a node (Q6), `ins:computedBy` deferred (Q7). Anchored time and ending designed in a new [terms in time sketch](../sketches/terms-in-time.md), which proposes a Quantification context value (TQ1), windows on powers (TQ3), ending as entering a state with an `ins:OnEntry` trigger (TQ4) and expiry at a date (TQ6). The plan's C8 row corrected: stated and bound meaning moved into C6. C9 takes 0.14.0.
+- 2026-10-05: terms in time sketch decided (TQ1 to TQ7). Anchored time goes in Quantification (0.7.0, ADR-A115, with a re-pin cascade). Business day conventions and times of day held as HQ-3. Windows on powers and permissions, ending as entering a state with `ins:OnEntry`, implicit survival of termination consequences, expiry at a date, and pending occasions ending on termination. Quantification's README found not to be its literate source (no header block, one shapes block for three files, graphs equal), to be restored first in C7b.
