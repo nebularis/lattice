@@ -57,9 +57,27 @@ It imports Foundation and Vocabulary. It is imported by Party, Eligibility, Inst
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 ```
 
+```turtle-spec
+<https://www.nebularis.org/neuro-semantic/quantification>
+    rdf:type owl:Ontology ;
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/quantification/0.6.0> ;
+    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.4.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.4.0> .
+```
+
 ## 3. How to Read This Document
 
 Same convention as Foundation, Vocabulary, and Party: genuine specification content — classes, properties, and their axioms — is fenced ` ```turtle-spec `; mechanism-intrinsic vocabulary (named individuals of open classes) is fenced ` ```turtle-vocab `; illustrative SHACL shapes are fenced ` ```turtle-shapes `; and worked-example content that is not part of the substrate is fenced ` ```turtle-example `. Only the first three are extracted when regenerating `spec/quantification.ttl`, `vocab/quantification-vocab.ttl`, and `shapes/*.ttl` respectively; `turtle-example` blocks are never extracted, regardless of where in the document they appear.
+
+`tools/literate_extract.py` writes every ` ```turtle-spec ` block to `spec/quantification.ttl`, every
+` ```turtle-vocab ` block to `vocab/quantification-vocab.ttl`, and the one ` ```turtle-shapes ` block
+to `shapes/constraints.ttl`. The ontology header, with its version IRI and imports, is a
+` ```turtle-spec ` block in §2, so a version bump is an edit to this document.
+
+```bash
+python tools/literate_extract.py ontology/quantification/README.md --layer quantification --root . \
+    --shapes shapes/constraints.ttl
+```
 
 `fnd:utility` values throughout this document explain what a term is for and how to use it — never why it was shaped this way rather than some other way. That reasoning belongs in §4 (Design Decisions) alone, per the discipline corrected across Foundation, Vocabulary, and Party's own documents; nothing in this document's `fnd:utility` text should need to reference this section, a rejected alternative, or a dependency-order constraint to make sense to someone applying the term.
 

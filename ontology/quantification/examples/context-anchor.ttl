@@ -1,0 +1,104 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Premise. A subscription gives each subscriber a usage allowance that resets
+# every year from the day the subscription started, and a grace period of 14
+# days after each renewal date. Both are stated once, for every subscriber,
+# and resolve to different dates for each. The start date and the renewal
+# date are not known when the terms are written: an evaluation context
+# supplies them for each subscriber (CCS terms in time sketch, Part A).
+#
+# What the example shows:
+#
+# | Construct                                         | Where                       |
+# |---------------------------------------------------|-----------------------------|
+# | a value the evaluation context supplies by role   | ex:start, ex:renewal-date   |
+# | the roles, from a deployment scheme bound to the role contract | ex:roles, ex:role-binding |
+# | a recurrence anchored at a context value          | ex:allowance-year           |
+# | an anchored range whose offsets carry units       | ex:grace-period             |
+#
+# A context value is not an unresolved value. An unresolved value is a required
+# value that is missing. A context value is complete as stated, and resolves
+# whenever an evaluation context binds its role. An evaluation with no binding
+# for the role is Undetermined, naming the role.
+
+@prefix qnt:  <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
+@prefix voc:  <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex:   <https://example.org/lattice/quantification/context-anchor/> .
+
+# ==== Spaces and units ========================================================
+
+ex:time a qnt:ValueSpace ;
+    qnt:spaceKey "calendar-time" ; qnt:orderKind qnt:TotalOrder ; qnt:densityKind qnt:Dense ;
+    qnt:valueDatatype xsd:dateTime ;
+    qnt:spaceHash "calendar-time-v1" .
+
+ex:durations a qnt:ValueSpace ;
+    qnt:spaceKey "durations" ; qnt:orderKind qnt:TotalOrder ; qnt:densityKind qnt:Discrete ;
+    qnt:spaceHash "durations-v1" .
+
+ex:day a qnt:Unit ; rdfs:label "day" .
+ex:year a qnt:Unit ; rdfs:label "year" .
+
+# ==== The roles ===============================================================
+#
+# Quantification ships no roles. A deployment, or a layer such as Instrument,
+# binds its own scheme to the role contract.
+
+ex:roles a voc:ConceptScheme ;
+    fnd:hasIdentity ex:roles-identity ; fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Subscription dates"@en .
+ex:subscription-start a skos:Concept ; skos:inScheme ex:roles ;
+    skos:prefLabel "Subscription start"@en ;
+    skos:definition "The time at which the subscriber's subscription started."@en .
+ex:renewal a skos:Concept ; skos:inScheme ex:roles ;
+    skos:prefLabel "Renewal date"@en ;
+    skos:definition "The subscriber's most recent renewal date."@en .
+
+ex:role-binding a voc:SchemeBinding ;
+    voc:forContract qnt:ContextRoleContract ;
+    voc:bindsScheme ex:roles ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-01-01T00:00:00Z"^^xsd:dateTime ] .
+
+# ==== Context values ==========================================================
+
+ex:start a qnt:ContextValue ;
+    qnt:onSpace ex:time ;
+    qnt:contextRole ex:subscription-start .
+
+ex:renewal-date a qnt:ContextValue ;
+    qnt:onSpace ex:time ;
+    qnt:contextRole ex:renewal .
+
+# ==== A recurrence anchored at a context value ================================
+#
+# One bin a year, from each subscriber's own start. The anchor is the same
+# node for every subscriber. Its value is not.
+
+ex:allowance-year a qnt:Recurrence ;
+    qnt:anchor ex:start ;
+    qnt:period [ a qnt:Quantity ; qnt:onSpace ex:durations ;
+                 qnt:numericValue "1"^^xsd:decimal ; qnt:inUnit ex:year ] ;
+    qnt:binContiguity qnt:Contiguous ;
+    qnt:boundaryDerivation qnt:AnchorPreserving ;
+    qnt:binKeyStrategy qnt:AnchorAndOrdinal .
+
+# ==== An anchored range with unit-bearing offsets =============================
+#
+# From the renewal date to 14 days after it. The offsets are quantities, so a
+# day, a business day or a month can be used where a unitless decimal cannot.
+
+ex:grace-period a qnt:Range ;
+    qnt:onSpace ex:time ;
+    qnt:relativeToAnchor [
+        a qnt:AnchorBinding ;
+        qnt:anchorValue ex:renewal-date ;
+        qnt:offsetKind qnt:Absolute ;
+        qnt:lowerOffsetBy [ a qnt:Quantity ; qnt:onSpace ex:durations ;
+                            qnt:numericValue "0"^^xsd:decimal ; qnt:inUnit ex:day ] ;
+        qnt:upperOffsetBy [ a qnt:Quantity ; qnt:onSpace ex:durations ;
+                            qnt:numericValue "14"^^xsd:decimal ; qnt:inUnit ex:day ]
+    ] .

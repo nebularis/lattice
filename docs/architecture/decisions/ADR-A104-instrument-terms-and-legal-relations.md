@@ -253,3 +253,48 @@ The examples are `licence-notice.ttl`, `supply-suspension.ttl`, `facility-cure-p
    states in which an `ins:OnExpiry` period does not run (C7a-Q4, ADR-A106 addendum decision 9).
    `ins:stateKind` takes a concept under `ins-voc:StateKindContract`, with a baseline scheme bound
    as fallback.
+
+## Addendum (2026-10-05): terms in time
+
+**Status:** Proposed 2026-10-05 (CCS slice C7b, C7b-Q1 to C7b-Q7 and TQ1 to TQ7). The design is the
+[terms in time sketch](../../developer/sketches/terms-in-time.md), which this addendum summarises.
+The examples are `trial-reporting.ttl`, `lease-expiry.ttl`, `licence-survival.ttl` and
+`service-renewal.ttl` in `ontology/instrument/examples/`.
+
+1. **Due ranges** (revises decision 6 and law I5). An obligation has at most one due range
+   (`ins:due`, a `qnt:Range`), and none where its words fix no time. A continuing obligation and a
+   prohibition have none. This layer does not model the reasonable time the law implies where no
+   time is fixed, unless a contract's express words define one. A due range is anchored at a
+   `qnt:ContextValue` (ADR-A115) whose role is a named time, never evaluation time (law I9):
+   the occasion's arising, the instrument's inception or ending, the start or end of a recurrence
+   period, or a date the wording defines and C8 binds. Its offsets carry units, business days
+   included. `ins:dueTolledIn` names states in which its time does not run, as `ins:tolledIn` does
+   for an expiry.
+2. **Recurrences.** `ins:recurrence` gives an obligation one occasion per period of a
+   `qnt:Recurrence` anchored at a context value. A continuing obligation's recurrence gives its test
+   dates.
+3. **Windows.** `ins:window` on a power or a permission is the range in which it may be exercised
+   or used. An exercise outside it has no effect (law I10). An offer or option lapses when its
+   window closes, with no trigger of its own.
+4. **Ending is entering a state** (revises decision 6, `ins:ends`). `ins:ends` on a state of a
+   regime names what entering the state ends: the instrument (`ins-voc:TheInstrument`) or stated
+   terms, matched to the bound terms instantiated from them. Expiry, termination on notice, for
+   breach, on an event, by performance and at a long-stop date are each a transition into an ending
+   state on a legal trigger. `ins:OnExpiry` takes `ins:at`, a value such as the Expiry Date, as an
+   alternative to `ins:after`.
+5. **A sixth legal trigger.** `ins:OnEntry ⊑ bhv:TriggerDefinition`, with `ins:ofState` and the kind
+   `bhv:DerivedTrigger` fixed by an `owl:hasValue` restriction (decision 5 of the 2026-10-04
+   addendum), fires when the subject enters a state. A relation may arise on it, and another regime
+   may react to it.
+6. **What ending does.** On entering an ending state, no new occasion arises under an ended term,
+   arisen occasions persist (accrued rights and liabilities, law I3), pending occasions end, and
+   relations arising on an `ins:OnEntry` of the state arise.
+7. **Survival.** `ins:survives` on a stated term names an `ins:Survival`, with an optional
+   `ins:survivalPeriod` from the ending and an optional `ins:survivesUntil` condition. With neither,
+   the term survives without limit. It is read for each instrument through the bound term's
+   `ins:boundFrom`. A term whose relations arise on entering an ending state survives for that
+   purpose without saying so, since requiring express wording would not work in practice (TQ5).
+8. **Deferred.** `ins:computedBy` (decision 14) waits for contract amounts (C7b-Q7). Rescission
+   ab initio, frustration, termination by agreement (C9), and a party's or a section's ending
+   (C7c, C9) are outside C7b. Business day conventions and times of day are held design question
+   HQ-3.

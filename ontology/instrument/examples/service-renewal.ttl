@@ -1,0 +1,224 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Premise. A services agreement runs for one year and renews for successive
+# one-year periods, unless the Customer gives notice of non-renewal at least
+# six months before the end of the current period. An agreement with notice
+# given expires at the end of its current period. This is an *evergreen*
+# agreement: it continues until someone decides that it should not.
+#
+# The agreement's clauses:
+#
+# | Clause | Text | Meaning |
+# |--------|------|---------|
+# | 2.1    | This Agreement continues for one year, and renews for successive one-year periods unless notice of non-renewal is given under clause 2.2. | the period regime |
+# | 2.2    | The Customer may give notice of non-renewal not later than six months before the end of the current period. | a power, gated by the open part of each period, and the election it records |
+# | 4.1    | The Provider shall provide the Services. | an obligation, ending with the agreement |
+#
+# Two regimes on one agreement, both stated by clause 2.1 and 2.2:
+#
+#   period regime:    current period --(expiry, one year, if renewing)--> current period, renewed
+#                     current period --(expiry, one year, if not renewing)--> expired
+#                     within each current period: notice open --(expiry, six months)--> notice closed
+#   election regime:  renewing --(exercise of the power in 2.2)--> not renewing
+#
+# The renewal is an external self-transition (bhv:External), so each renewal
+# re-enters the current period: its year restarts, and its region restarts at
+# notice open (nested states sketch §4.1). Which way the year's expiry goes is
+# decided by guards that read the election regime's state (nested states
+# sketch §6.3), so the expiry needs no anchor of its own.
+#
+# What the example shows:
+#
+# | Construct                                       | Where                                   |
+# |-------------------------------------------------|-----------------------------------------|
+# | renewal as an external self-transition          | tmpl:renew                              |
+# | expiry at the end of a period, chosen by a guard | tmpl:expire, tmpl:if-not-renewing      |
+# | a notice window as a region of the period       | tmpl:window-region, tmpl:notice-open    |
+# | a power gated by the open part of the period    | tmpl:decline-renewal                    |
+# | ending as entering a state                      | tmpl:expired, ins:ends                  |
+#
+# The window is modelled as the open part of each period, not as ins:window,
+# because "six months before the end of the current period" has no anchor
+# outside the regime: the period's end is known only from when it was entered.
+
+@prefix ins:     <https://www.nebularis.org/neuro-semantic/lattice/instrument#> .
+@prefix ins-voc: <https://www.nebularis.org/neuro-semantic/lattice/instrument/vocab#> .
+@prefix bhv:     <https://www.nebularis.org/neuro-semantic/lattice/behaviour#> .
+@prefix wrd:     <https://www.nebularis.org/neuro-semantic/lattice/wording#> .
+@prefix wrd-voc: <https://www.nebularis.org/neuro-semantic/lattice/wording/vocab#> .
+@prefix fnd:     <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix pty:     <https://www.nebularis.org/neuro-semantic/lattice/party#> .
+@prefix qnt:     <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+@prefix tmpl:    <https://example.org/lattice/instrument/service-renewal/form/> .
+@prefix ex:      <https://example.org/lattice/instrument/service-renewal/> .
+
+# ==== The services form: wording ==============================================
+
+ex:form a wrd:Wording ;
+    fnd:hasIdentity ex:form-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:directlyComprises ex:sec-2 , ex:sec-4 .
+
+ex:sec-2 a wrd:Element ;
+    fnd:hasIdentity ex:sec-2-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Section ; wrd:objectId "2" ; wrd:rankKey "b0" ;
+    wrd:directlyComprises ex:cl-2-1 , ex:cl-2-2 .
+ex:cl-2-1 a wrd:Text ;
+    fnd:hasIdentity ex:cl-2-1-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "2.1" ; wrd:rankKey "a0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "This Agreement continues for one year, and renews for successive one-year periods unless notice of non-renewal is given under clause 2.2." ] .
+ex:cl-2-2 a wrd:Text ;
+    fnd:hasIdentity ex:cl-2-2-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "2.2" ; wrd:rankKey "b0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "The Customer may give notice of non-renewal not later than six months before the end of the current period." ] .
+
+ex:sec-4 a wrd:Element ;
+    fnd:hasIdentity ex:sec-4-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Section ; wrd:objectId "4" ; wrd:rankKey "d0" ;
+    wrd:directlyComprises ex:cl-4-1 .
+ex:cl-4-1 a wrd:Text ;
+    fnd:hasIdentity ex:cl-4-1-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "4.1" ; wrd:rankKey "a0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "The Provider shall provide the Services." ] .
+
+# ==== Roles, spaces and units =================================================
+
+ex:Provider a pty:Role ; rdfs:label "Provider" .
+ex:Customer a pty:Role ; rdfs:label "Customer" .
+
+ex:durations a qnt:ValueSpace ;
+    qnt:spaceKey "durations" ; qnt:orderKind qnt:TotalOrder ; qnt:densityKind qnt:Discrete ;
+    qnt:spaceHash "durations-v1" .
+ex:month a qnt:Unit ; rdfs:label "month" .
+ex:year a qnt:Unit ; rdfs:label "year" .
+
+# ==== Stated meaning: relations ===============================================
+
+tmpl:term-2-1 a ins:Term , ins:Template ; ins:expressedIn ex:cl-2-1 .
+
+tmpl:term-2-2 a ins:Term , ins:Template ; ins:expressedIn ex:cl-2-2 .
+tmpl:decline-renewal a ins:Power , ins:Template ;
+    ins:arisesUnder tmpl:term-2-2 ;
+    ins:holder ex:Customer ; ins:counterparty ex:Provider ;
+    ins:activity ins-voc:DeclineRenewal ;
+    ins:appliesInState tmpl:notice-open , tmpl:renewing .   # one state from each regime
+
+tmpl:term-4-1 a ins:Term , ins:Template ; ins:expressedIn ex:cl-4-1 .
+tmpl:provide-services a ins:Obligation , ins:Template ;
+    ins:arisesUnder tmpl:term-4-1 ;
+    ins:obligor ex:Provider ; ins:obligee ex:Customer ;
+    ins:activity ins-voc:ProvideService .
+
+# ==== Stated meaning: the period regime =======================================
+
+tmpl:period-regime a ins:Regime , bhv:StateSpace , ins:Template ;
+    fnd:hasIdentity tmpl:period-regime-identity ;
+    ins:arisesUnder tmpl:term-2-1 ;
+    bhv:initialState tmpl:current-period .
+
+tmpl:current-period a bhv:State ;
+    bhv:inStateSpace tmpl:period-regime ; ins:stateKind ins-voc:InForce .
+tmpl:expired a bhv:State ;
+    bhv:inStateSpace tmpl:period-regime ; ins:stateKind ins-voc:Expired ;
+    ins:ends ins-voc:TheInstrument .
+
+tmpl:on-year-end a ins:OnExpiry , bhv:TriggerDefinition ;
+    bhv:triggerKind bhv:ScheduledTrigger ;
+    ins:after [ a qnt:Quantity ; qnt:onSpace ex:durations ;
+                qnt:numericValue "1"^^xsd:decimal ; qnt:inUnit ex:year ] .
+
+tmpl:if-renewing a bhv:GuardDefinition ; bhv:excludesState tmpl:not-renewing .
+tmpl:if-not-renewing a bhv:GuardDefinition ; bhv:requiresState tmpl:not-renewing .
+
+tmpl:renew a ins:RegimeTransition , bhv:TransitionDefinition ;
+    bhv:fromState tmpl:current-period ; bhv:toState tmpl:current-period ;
+    bhv:transitionType bhv:External ;                 # re-entered: the year and the window restart
+    bhv:hasTrigger tmpl:on-year-end ; bhv:hasGuard tmpl:if-renewing ;
+    bhv:selectionPolicy bhv:SingleMatch ; bhv:activationPolicy bhv:ImmediateActivation .
+tmpl:expire a ins:RegimeTransition , bhv:TransitionDefinition ;
+    bhv:fromState tmpl:current-period ; bhv:toState tmpl:expired ;
+    bhv:hasTrigger tmpl:on-year-end ; bhv:hasGuard tmpl:if-not-renewing ;
+    bhv:selectionPolicy bhv:SingleMatch ; bhv:activationPolicy bhv:ImmediateActivation .
+
+# The notice window: a region of the current period, restarted on each renewal.
+tmpl:window-region a bhv:StateSpace ;
+    fnd:hasIdentity tmpl:window-region-identity ;
+    bhv:regionOf tmpl:current-period ;
+    bhv:initialState tmpl:notice-open .
+tmpl:notice-open a bhv:State ; bhv:inStateSpace tmpl:window-region .
+tmpl:notice-closed a bhv:State ; bhv:inStateSpace tmpl:window-region .
+
+tmpl:on-window-close a ins:OnExpiry , bhv:TriggerDefinition ;
+    bhv:triggerKind bhv:ScheduledTrigger ;
+    ins:after [ a qnt:Quantity ; qnt:onSpace ex:durations ;
+                qnt:numericValue "6"^^xsd:decimal ; qnt:inUnit ex:month ] .
+tmpl:close-window a ins:RegimeTransition , bhv:TransitionDefinition ;
+    bhv:fromState tmpl:notice-open ; bhv:toState tmpl:notice-closed ;
+    bhv:hasTrigger tmpl:on-window-close ;
+    bhv:selectionPolicy bhv:SingleMatch ; bhv:activationPolicy bhv:ImmediateActivation .
+
+# ==== Stated meaning: the election regime =====================================
+
+tmpl:election-regime a ins:Regime , bhv:StateSpace , ins:Template ;
+    fnd:hasIdentity tmpl:election-regime-identity ;
+    ins:arisesUnder tmpl:term-2-2 ;
+    bhv:initialState tmpl:renewing .
+
+tmpl:renewing a bhv:State ; bhv:inStateSpace tmpl:election-regime .
+tmpl:not-renewing a bhv:State ; bhv:inStateSpace tmpl:election-regime .
+
+tmpl:on-non-renewal a ins:OnExercise , bhv:TriggerDefinition ;
+    bhv:triggerKind bhv:ExternalStimulus ;
+    ins:ofPower tmpl:decline-renewal .
+tmpl:elect-not-to-renew a ins:RegimeTransition , bhv:TransitionDefinition ;
+    bhv:fromState tmpl:renewing ; bhv:toState tmpl:not-renewing ;
+    bhv:hasTrigger tmpl:on-non-renewal ;
+    bhv:selectionPolicy bhv:SingleMatch ; bhv:activationPolicy bhv:ImmediateActivation .
+
+# ==== The agreement with Kittiwake ============================================
+
+ex:kittiwake-wording-v1 a wrd:AssembledWording ;
+    fnd:hasIdentity ex:kittiwake-wording-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:assembledFrom ex:form ;
+    wrd:includes ex:sec-2 , ex:cl-2-1 , ex:cl-2-2 , ex:sec-4 , ex:cl-4-1 .
+
+ex:kittiwake-v1 a ins:Instrument ;
+    fnd:hasIdentity ex:kittiwake-identity ;
+    ins:expressedIn ex:kittiwake-wording-v1 ;
+    ins:party ex:provider-occ , ex:customer-occ .
+
+ex:brackenfield a pty:Actor ; rdfs:label "Brackenfield Managed Services Ltd" .
+ex:kittiwake a pty:Actor ; rdfs:label "Kittiwake Travel Ltd" .
+
+ex:provider-occ a pty:RoleOccupancy ;
+    fnd:hasIdentity ex:provider-occ-identity ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-04-01T00:00:00Z"^^xsd:dateTime ] ;
+    pty:inRole ex:Provider ; pty:occupiedBy ex:brackenfield .
+ex:customer-occ a pty:RoleOccupancy ;
+    fnd:hasIdentity ex:customer-occ-identity ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-04-01T00:00:00Z"^^xsd:dateTime ] ;
+    pty:inRole ex:Customer ; pty:occupiedBy ex:kittiwake .
+
+# ==== Bound meaning ===========================================================
+#
+# Clause 2.1 binds nothing: its stated term holds only the period regime.
+
+ex:term-2-2 a ins:Term ; ins:boundIn ex:kittiwake-v1 ; ins:boundFrom tmpl:term-2-2 .
+ex:decline-renewal a ins:Power ;
+    ins:boundFrom tmpl:decline-renewal ; ins:arisesUnder ex:term-2-2 ;
+    ins:holder ex:customer-occ ; ins:counterparty ex:provider-occ ;
+    ins:activity ins-voc:DeclineRenewal ;
+    ins:appliesInState tmpl:notice-open , tmpl:renewing .
+
+ex:term-4-1 a ins:Term ; ins:boundIn ex:kittiwake-v1 ; ins:boundFrom tmpl:term-4-1 .
+ex:provide-services a ins:Obligation ;
+    ins:boundFrom tmpl:provide-services ; ins:arisesUnder ex:term-4-1 ;
+    ins:obligor ex:provider-occ ; ins:obligee ex:customer-occ ;
+    ins:activity ins-voc:ProvideService .

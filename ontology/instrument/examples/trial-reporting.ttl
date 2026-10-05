@@ -1,0 +1,253 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Premise. A clinical trial agreement sets deadlines in three different ways.
+# A serious adverse event must be reported within 24 hours of the
+# Investigator becoming aware of it. A safety report is due within 10
+# Business Days after the end of each month. The Site's enrolment is tested
+# at the end of each quarter. The Sponsor's duty to pay the Site's fees names
+# no time at all, and so has no due range (C7b-Q2).
+#
+# The agreement's clauses:
+#
+# | Clause | Text | Meaning |
+# |--------|------|---------|
+# | 6.3    | The Site shall ensure that at least 20 participants are enrolled, tested at the end of each quarter. | a continuing obligation, tested on dates |
+# | 8.1    | The Investigator shall report each serious adverse event to the Sponsor within 24 hours of becoming aware of it. | an obligation arising on a condition, due from its arising |
+# | 8.2    | The Investigator shall deliver a safety report within 10 Business Days after the end of each month. | a recurring obligation, due from each period's end |
+# | 10.1   | The Sponsor shall pay the Site the fees set out in Schedule 2. | an obligation with no due range |
+#
+# What the example shows:
+#
+# | Construct                                       | Where                                     |
+# |-------------------------------------------------|-------------------------------------------|
+# | a due range anchored at the occasion's arising  | tmpl:report-sae, ex:within-24-hours        |
+# | a recurrence anchored at the instrument's inception | ex:each-month, ex:each-quarter         |
+# | a due range anchored at each period's end, in business days | tmpl:safety-report, ex:within-10-business-days |
+# | test dates for a continuing obligation          | tmpl:enrolment, ins:recurrence, no due range |
+# | an obligation with no time fixed                | tmpl:pay-fees                             |
+#
+# The context values (ex:arising, ex:inception, ex:period-end) are stated once
+# and shared: the evaluation context resolves them for each occasion
+# (terms in time sketch §5.5).
+
+@prefix ins:     <https://www.nebularis.org/neuro-semantic/lattice/instrument#> .
+@prefix ins-voc: <https://www.nebularis.org/neuro-semantic/lattice/instrument/vocab#> .
+@prefix bhv:     <https://www.nebularis.org/neuro-semantic/lattice/behaviour#> .
+@prefix wrd:     <https://www.nebularis.org/neuro-semantic/lattice/wording#> .
+@prefix wrd-voc: <https://www.nebularis.org/neuro-semantic/lattice/wording/vocab#> .
+@prefix fnd:     <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix pty:     <https://www.nebularis.org/neuro-semantic/lattice/party#> .
+@prefix elg:     <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
+@prefix qnt:     <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
+@prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+@prefix tmpl:    <https://example.org/lattice/instrument/trial-reporting/form/> .
+@prefix ex:      <https://example.org/lattice/instrument/trial-reporting/> .
+
+# ==== The trial agreement form: wording =======================================
+
+ex:form a wrd:Wording ;
+    fnd:hasIdentity ex:form-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:directlyComprises ex:sec-6 , ex:sec-8 , ex:sec-10 .
+
+ex:sec-6 a wrd:Element ;
+    fnd:hasIdentity ex:sec-6-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Section ; wrd:objectId "6" ; wrd:rankKey "f0" ;
+    wrd:directlyComprises ex:cl-6-3 .
+ex:cl-6-3 a wrd:Text ;
+    fnd:hasIdentity ex:cl-6-3-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "6.3" ; wrd:rankKey "c0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "The Site shall ensure that at least 20 participants are enrolled, tested at the end of each quarter." ] .
+
+ex:sec-8 a wrd:Element ;
+    fnd:hasIdentity ex:sec-8-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Section ; wrd:objectId "8" ; wrd:rankKey "h0" ;
+    wrd:directlyComprises ex:cl-8-1 , ex:cl-8-2 .
+ex:cl-8-1 a wrd:Text ;
+    fnd:hasIdentity ex:cl-8-1-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "8.1" ; wrd:rankKey "a0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "The Investigator shall report each serious adverse event to the Sponsor within 24 hours of becoming aware of it." ] .
+ex:cl-8-2 a wrd:Text ;
+    fnd:hasIdentity ex:cl-8-2-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "8.2" ; wrd:rankKey "b0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "The Investigator shall deliver a safety report within 10 Business Days after the end of each month." ] .
+
+ex:sec-10 a wrd:Element ;
+    fnd:hasIdentity ex:sec-10-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Section ; wrd:objectId "10" ; wrd:rankKey "j0" ;
+    wrd:directlyComprises ex:cl-10-1 .
+ex:cl-10-1 a wrd:Text ;
+    fnd:hasIdentity ex:cl-10-1-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "10.1" ; wrd:rankKey "a0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "The Sponsor shall pay the Site the fees set out in Schedule 2." ] .
+
+# ==== Roles, spaces, units and conditions =====================================
+
+ex:Sponsor a pty:Role ; rdfs:label "Sponsor" .
+ex:Investigator a pty:Role ; rdfs:label "Investigator" .
+ex:Site a pty:Role ; rdfs:label "Site" .
+
+ex:time a qnt:ValueSpace ;
+    qnt:spaceKey "calendar-time" ; qnt:orderKind qnt:TotalOrder ; qnt:densityKind qnt:Dense ;
+    qnt:valueDatatype xsd:dateTime ; qnt:spaceHash "calendar-time-v1" .
+ex:durations a qnt:ValueSpace ;
+    qnt:spaceKey "durations" ; qnt:orderKind qnt:TotalOrder ; qnt:densityKind qnt:Discrete ;
+    qnt:spaceHash "durations-v1" .
+ex:hour a qnt:Unit ; rdfs:label "hour" .
+ex:month a qnt:Unit ; rdfs:label "month" .
+# Counting business days needs the calendar in force, named by a conversion
+# context when the range is resolved (ADR-A94, C12).
+ex:business-day a qnt:CalendarUnit ; rdfs:label "business day" .
+
+# Placeholders: triggers and states stated, not yet evaluable (C13).
+ex:sae-known a elg:Condition ;
+    elg:conditionKey "investigator-aware-of-serious-adverse-event" ;
+    elg:matchStrategy elg:ExactMatch ; elg:compatibilityOperation elg:AllRequired ;
+    elg:wildcardSemantics elg:NoWildcard ;
+    elg:requiredConcept ex:aware .
+ex:aware a skos:Concept ; rdfs:label "the Investigator is aware of a serious adverse event" .
+
+ex:enrolment-met a elg:Condition ;
+    elg:conditionKey "at-least-20-participants-enrolled" ;
+    elg:matchStrategy elg:ExactMatch ; elg:compatibilityOperation elg:AllRequired ;
+    elg:wildcardSemantics elg:NoWildcard ;
+    elg:requiredConcept ex:enrolled .
+ex:enrolled a skos:Concept ; rdfs:label "at least 20 participants are enrolled" .
+
+# ==== Anchored time: stated once, resolved for each occasion ==================
+
+ex:arising a qnt:ContextValue ; qnt:onSpace ex:time ; qnt:contextRole ins-voc:Arising .
+ex:inception a qnt:ContextValue ; qnt:onSpace ex:time ; qnt:contextRole ins-voc:Inception .
+ex:period-end a qnt:ContextValue ; qnt:onSpace ex:time ; qnt:contextRole ins-voc:PeriodEnd .
+
+ex:within-24-hours a qnt:Range ;
+    qnt:onSpace ex:time ;
+    qnt:relativeToAnchor [ a qnt:AnchorBinding ;
+        qnt:anchorValue ex:arising ; qnt:offsetKind qnt:Absolute ;
+        qnt:lowerOffsetBy [ a qnt:Quantity ; qnt:onSpace ex:durations ; qnt:numericValue "0"^^xsd:decimal ; qnt:inUnit ex:hour ] ;
+        qnt:upperOffsetBy [ a qnt:Quantity ; qnt:onSpace ex:durations ; qnt:numericValue "24"^^xsd:decimal ; qnt:inUnit ex:hour ] ] .
+
+ex:within-10-business-days a qnt:Range ;
+    qnt:onSpace ex:time ;
+    qnt:relativeToAnchor [ a qnt:AnchorBinding ;
+        qnt:anchorValue ex:period-end ; qnt:offsetKind qnt:Absolute ;
+        qnt:lowerOffsetBy [ a qnt:Quantity ; qnt:onSpace ex:durations ; qnt:numericValue "0"^^xsd:decimal ; qnt:inUnit ex:business-day ] ;
+        qnt:upperOffsetBy [ a qnt:Quantity ; qnt:onSpace ex:durations ; qnt:numericValue "10"^^xsd:decimal ; qnt:inUnit ex:business-day ] ] .
+
+ex:each-month a qnt:Recurrence ;
+    qnt:anchor ex:inception ;
+    qnt:period [ a qnt:Quantity ; qnt:onSpace ex:durations ; qnt:numericValue "1"^^xsd:decimal ; qnt:inUnit ex:month ] ;
+    qnt:binContiguity qnt:Contiguous ; qnt:boundaryDerivation qnt:AnchorPreserving ;
+    qnt:binKeyStrategy qnt:AnchorAndOrdinal .
+
+ex:each-quarter a qnt:Recurrence ;
+    qnt:anchor ex:inception ;
+    qnt:period [ a qnt:Quantity ; qnt:onSpace ex:durations ; qnt:numericValue "3"^^xsd:decimal ; qnt:inUnit ex:month ] ;
+    qnt:binContiguity qnt:Contiguous ; qnt:boundaryDerivation qnt:AnchorPreserving ;
+    qnt:binKeyStrategy qnt:AnchorAndOrdinal .
+
+# ==== Stated meaning ==========================================================
+
+tmpl:term-6-3 a ins:Term , ins:Template ; ins:expressedIn ex:cl-6-3 .
+tmpl:enrolment a ins:ContinuingObligation , ins:Template ;
+    ins:arisesUnder tmpl:term-6-3 ;
+    ins:obligor ex:Site ; ins:obligee ex:Sponsor ;
+    ins:maintains ex:enrolment-met ;
+    ins:recurrence ex:each-quarter .                  # test dates, and no due range (I5)
+
+tmpl:term-8-1 a ins:Term , ins:Template ; ins:expressedIn ex:cl-8-1 .
+tmpl:on-sae-known a ins:OnCondition , bhv:TriggerDefinition ;
+    bhv:triggerKind bhv:DerivedTrigger ;
+    ins:condition ex:sae-known .
+tmpl:report-sae a ins:Obligation , ins:Template ;
+    ins:arisesUnder tmpl:term-8-1 ;
+    ins:obligor ex:Investigator ; ins:obligee ex:Sponsor ;
+    ins:activity ins-voc:ReportAdverseEvent ;
+    ins:arisesOn tmpl:on-sae-known ;                  # one occasion per event
+    ins:due ex:within-24-hours .
+
+tmpl:term-8-2 a ins:Term , ins:Template ; ins:expressedIn ex:cl-8-2 .
+tmpl:safety-report a ins:Obligation , ins:Template ;
+    ins:arisesUnder tmpl:term-8-2 ;
+    ins:obligor ex:Investigator ; ins:obligee ex:Sponsor ;
+    ins:activity ins-voc:Report ;
+    ins:recurrence ex:each-month ;                    # one occasion per month
+    ins:due ex:within-10-business-days .
+
+tmpl:term-10-1 a ins:Term , ins:Template ; ins:expressedIn ex:cl-10-1 .
+tmpl:pay-fees a ins:Obligation , ins:Template ;
+    ins:arisesUnder tmpl:term-10-1 ;
+    ins:obligor ex:Sponsor ; ins:obligee ex:Site ;
+    ins:activity ins-voc:Pay .                        # no time fixed, so no due range (C7b-Q2)
+
+# ==== The agreement with site 207 =============================================
+
+ex:site-207-wording-v1 a wrd:AssembledWording ;
+    fnd:hasIdentity ex:site-207-wording-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:assembledFrom ex:form ;
+    wrd:includes ex:sec-6 , ex:cl-6-3 , ex:sec-8 , ex:cl-8-1 , ex:cl-8-2 , ex:sec-10 , ex:cl-10-1 .
+
+ex:site-207-v1 a ins:Instrument ;
+    fnd:hasIdentity ex:site-207-identity ;
+    ins:expressedIn ex:site-207-wording-v1 ;
+    ins:party ex:sponsor-occ , ex:site-occ , ex:investigator-occ .
+
+ex:halcyon a pty:Actor ; rdfs:label "Halcyon Therapeutics Ltd" .
+ex:northfield a pty:Actor ; rdfs:label "Northfield University Hospital" .
+ex:dr-osei a pty:Actor ; rdfs:label "Dr A. Osei" .
+
+ex:sponsor-occ a pty:RoleOccupancy ;
+    fnd:hasIdentity ex:sponsor-occ-identity ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-03-01T00:00:00Z"^^xsd:dateTime ] ;
+    pty:inRole ex:Sponsor ; pty:occupiedBy ex:halcyon .
+ex:site-occ a pty:RoleOccupancy ;
+    fnd:hasIdentity ex:site-occ-identity ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-03-01T00:00:00Z"^^xsd:dateTime ] ;
+    pty:inRole ex:Site ; pty:occupiedBy ex:northfield .
+ex:investigator-occ a pty:RoleOccupancy ;
+    fnd:hasIdentity ex:investigator-occ-identity ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-03-01T00:00:00Z"^^xsd:dateTime ] ;
+    pty:inRole ex:Investigator ; pty:occupiedBy ex:dr-osei .
+
+# ==== Bound meaning ===========================================================
+#
+# Each bound relation restates its template in full, so it names the same
+# ranges and recurrences, which hold no role or party of their own.
+
+ex:term-6-3 a ins:Term ; ins:boundIn ex:site-207-v1 ; ins:boundFrom tmpl:term-6-3 .
+ex:enrolment a ins:ContinuingObligation ;
+    ins:boundFrom tmpl:enrolment ; ins:arisesUnder ex:term-6-3 ;
+    ins:obligor ex:site-occ ; ins:obligee ex:sponsor-occ ;
+    ins:maintains ex:enrolment-met ;
+    ins:recurrence ex:each-quarter .
+
+ex:term-8-1 a ins:Term ; ins:boundIn ex:site-207-v1 ; ins:boundFrom tmpl:term-8-1 .
+ex:report-sae a ins:Obligation ;
+    ins:boundFrom tmpl:report-sae ; ins:arisesUnder ex:term-8-1 ;
+    ins:obligor ex:investigator-occ ; ins:obligee ex:sponsor-occ ;
+    ins:activity ins-voc:ReportAdverseEvent ;
+    ins:arisesOn tmpl:on-sae-known ;
+    ins:due ex:within-24-hours .
+
+ex:term-8-2 a ins:Term ; ins:boundIn ex:site-207-v1 ; ins:boundFrom tmpl:term-8-2 .
+ex:safety-report a ins:Obligation ;
+    ins:boundFrom tmpl:safety-report ; ins:arisesUnder ex:term-8-2 ;
+    ins:obligor ex:investigator-occ ; ins:obligee ex:sponsor-occ ;
+    ins:activity ins-voc:Report ;
+    ins:recurrence ex:each-month ;
+    ins:due ex:within-10-business-days .
+
+ex:term-10-1 a ins:Term ; ins:boundIn ex:site-207-v1 ; ins:boundFrom tmpl:term-10-1 .
+ex:pay-fees a ins:Obligation ;
+    ins:boundFrom tmpl:pay-fees ; ins:arisesUnder ex:term-10-1 ;
+    ins:obligor ex:sponsor-occ ; ins:obligee ex:site-occ ;
+    ins:activity ins-voc:Pay .

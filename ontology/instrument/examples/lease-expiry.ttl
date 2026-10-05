@@ -1,0 +1,297 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Premise. A commercial lease runs to a fixed Expiry Date, unless the Tenant
+# exercises a break on the Break Date by giving at least six months' notice.
+# Rent is payable in advance on each Quarter Day. When the lease ends, by
+# expiry or by the break, the Landlord must repay the deposit within 30 days.
+#
+# The lease's clauses:
+#
+# | Clause | Text | Meaning |
+# |--------|------|---------|
+# | 2.1    | The term of this Lease ends on the Expiry Date. | the lease regime, ending at a date |
+# | 3.1    | The Tenant shall pay the rent in advance on each Quarter Day. | a recurring obligation due on each period's first day |
+# | 9.1    | The Tenant may end this Lease on the Break Date by giving the Landlord not less than six months' notice. | a power with a window, and a break into a notice period |
+# | 12.1   | Within 30 days after this Lease ends, the Landlord shall repay the deposit to the Tenant. | an obligation arising on termination |
+#
+# The lease regime, stated by clause 2.1:
+#
+#   in force --(expiry at the Expiry Date)--> expired          ins:ends the instrument
+#   in force --(exercise of the break)--> break notice
+#   break notice --(expiry at the Break Date)--> terminated    ins:ends the instrument
+#
+# What the example shows:
+#
+# | Construct                                       | Where                                   |
+# |-------------------------------------------------|-----------------------------------------|
+# | expiry at a date the wording defines            | tmpl:on-expiry-date, ins:at ex:expiry-date |
+# | ending as entering a state                      | tmpl:expired, tmpl:terminated, ins:ends |
+# | a power exercisable only in a window            | tmpl:break, ins:window ex:break-window  |
+# | a recurrence with a due date on each period's first day | tmpl:pay-rent, ex:on-the-day     |
+# | a relation arising on termination, by either ending | tmpl:repay-deposit, ins:OnEntry      |
+# | a due range anchored at the ending              | ex:within-30-days-of-ending              |
+#
+# "The term of this Lease" is the lease's duration, the sense contract English
+# gives "the Term". It is not an ins:Term, which is a provision.
+#
+# Clause 12.1's relation can arise only after the lease has ended. Its term
+# survives for that purpose without saying so (TQ5).
+
+@prefix ins:     <https://www.nebularis.org/neuro-semantic/lattice/instrument#> .
+@prefix ins-voc: <https://www.nebularis.org/neuro-semantic/lattice/instrument/vocab#> .
+@prefix bhv:     <https://www.nebularis.org/neuro-semantic/lattice/behaviour#> .
+@prefix wrd:     <https://www.nebularis.org/neuro-semantic/lattice/wording#> .
+@prefix wrd-voc: <https://www.nebularis.org/neuro-semantic/lattice/wording/vocab#> .
+@prefix fnd:     <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix pty:     <https://www.nebularis.org/neuro-semantic/lattice/party#> .
+@prefix qnt:     <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
+@prefix voc:     <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
+@prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+@prefix tmpl:    <https://example.org/lattice/instrument/lease-expiry/form/> .
+@prefix ex:      <https://example.org/lattice/instrument/lease-expiry/> .
+
+# ==== The lease form: wording =================================================
+
+ex:form a wrd:Wording ;
+    fnd:hasIdentity ex:form-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:directlyComprises ex:sec-2 , ex:sec-3 , ex:sec-9 , ex:sec-12 .
+
+ex:sec-2 a wrd:Element ;
+    fnd:hasIdentity ex:sec-2-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Section ; wrd:objectId "2" ; wrd:rankKey "b0" ;
+    wrd:directlyComprises ex:cl-2-1 .
+ex:cl-2-1 a wrd:Text ;
+    fnd:hasIdentity ex:cl-2-1-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "2.1" ; wrd:rankKey "a0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "The term of this Lease ends on the Expiry Date." ] .
+
+ex:sec-3 a wrd:Element ;
+    fnd:hasIdentity ex:sec-3-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Section ; wrd:objectId "3" ; wrd:rankKey "c0" ;
+    wrd:directlyComprises ex:cl-3-1 .
+ex:cl-3-1 a wrd:Text ;
+    fnd:hasIdentity ex:cl-3-1-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "3.1" ; wrd:rankKey "a0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "The Tenant shall pay the rent in advance on each Quarter Day." ] .
+
+ex:sec-9 a wrd:Element ;
+    fnd:hasIdentity ex:sec-9-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Section ; wrd:objectId "9" ; wrd:rankKey "i0" ;
+    wrd:directlyComprises ex:cl-9-1 .
+ex:cl-9-1 a wrd:Text ;
+    fnd:hasIdentity ex:cl-9-1-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "9.1" ; wrd:rankKey "a0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "The Tenant may end this Lease on the Break Date by giving the Landlord not less than six months' notice." ] .
+
+ex:sec-12 a wrd:Element ;
+    fnd:hasIdentity ex:sec-12-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Section ; wrd:objectId "12" ; wrd:rankKey "l0" ;
+    wrd:directlyComprises ex:cl-12-1 .
+ex:cl-12-1 a wrd:Text ;
+    fnd:hasIdentity ex:cl-12-1-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "12.1" ; wrd:rankKey "a0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "Within 30 days after this Lease ends, the Landlord shall repay the deposit to the Tenant." ] .
+
+# ==== Roles, spaces and units =================================================
+
+ex:Landlord a pty:Role ; rdfs:label "Landlord" .
+ex:Tenant a pty:Role ; rdfs:label "Tenant" .
+
+ex:time a qnt:ValueSpace ;
+    qnt:spaceKey "calendar-time" ; qnt:orderKind qnt:TotalOrder ; qnt:densityKind qnt:Dense ;
+    qnt:valueDatatype xsd:dateTime ; qnt:spaceHash "calendar-time-v1" .
+ex:durations a qnt:ValueSpace ;
+    qnt:spaceKey "durations" ; qnt:orderKind qnt:TotalOrder ; qnt:densityKind qnt:Discrete ;
+    qnt:spaceHash "durations-v1" .
+ex:day a qnt:Unit ; rdfs:label "day" .
+ex:month a qnt:Unit ; rdfs:label "month" .
+
+# ==== The dates the wording defines ===========================================
+#
+# Context roles of the lease form. Each lease's values come from its wording's
+# variables, bound per instrument (C8). Instrument's own roles (ins-voc:Ending,
+# ins-voc:PeriodStart) need no binding here: they are in the baseline.
+
+ex:lease-dates a voc:ConceptScheme ;
+    fnd:hasIdentity ex:lease-dates-identity ; fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Lease dates"@en .
+ex:ExpiryDate a skos:Concept ; skos:inScheme ex:lease-dates ; skos:prefLabel "the Expiry Date"@en .
+ex:BreakDate a skos:Concept ; skos:inScheme ex:lease-dates ; skos:prefLabel "the Break Date"@en .
+ex:FirstQuarterDay a skos:Concept ; skos:inScheme ex:lease-dates ; skos:prefLabel "the first Quarter Day"@en .
+ex:lease-dates-binding a voc:SchemeBinding ;
+    voc:forContract qnt:ContextRoleContract ;
+    voc:bindsScheme ex:lease-dates ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-01-01T00:00:00Z"^^xsd:dateTime ] .
+
+ex:expiry-date a qnt:ContextValue ; qnt:onSpace ex:time ; qnt:contextRole ex:ExpiryDate .
+ex:break-date a qnt:ContextValue ; qnt:onSpace ex:time ; qnt:contextRole ex:BreakDate .
+ex:first-quarter-day a qnt:ContextValue ; qnt:onSpace ex:time ; qnt:contextRole ex:FirstQuarterDay .
+ex:period-start a qnt:ContextValue ; qnt:onSpace ex:time ; qnt:contextRole ins-voc:PeriodStart .
+ex:ending a qnt:ContextValue ; qnt:onSpace ex:time ; qnt:contextRole ins-voc:Ending .
+
+# ==== Anchored time ===========================================================
+
+ex:quarter-days a qnt:Recurrence ;
+    qnt:anchor ex:first-quarter-day ;
+    qnt:period [ a qnt:Quantity ; qnt:onSpace ex:durations ; qnt:numericValue "3"^^xsd:decimal ; qnt:inUnit ex:month ] ;
+    qnt:binContiguity qnt:Contiguous ; qnt:boundaryDerivation qnt:AnchorPreserving ;
+    qnt:binKeyStrategy qnt:AnchorAndOrdinal .
+
+# "On each Quarter Day": a range of one day, from the period's start.
+ex:on-the-day a qnt:Range ;
+    qnt:onSpace ex:time ;
+    qnt:relativeToAnchor [ a qnt:AnchorBinding ;
+        qnt:anchorValue ex:period-start ; qnt:offsetKind qnt:Absolute ;
+        qnt:lowerOffsetBy [ a qnt:Quantity ; qnt:onSpace ex:durations ; qnt:numericValue "0"^^xsd:decimal ; qnt:inUnit ex:day ] ;
+        qnt:upperOffsetBy [ a qnt:Quantity ; qnt:onSpace ex:durations ; qnt:numericValue "1"^^xsd:decimal ; qnt:inUnit ex:day ] ] .
+
+# "Not less than six months' notice": open below, closing six months before
+# the Break Date.
+ex:break-window a qnt:Range ;
+    qnt:onSpace ex:time ;
+    qnt:relativeToAnchor [ a qnt:AnchorBinding ;
+        qnt:anchorValue ex:break-date ; qnt:offsetKind qnt:Absolute ;
+        qnt:upperOffsetBy [ a qnt:Quantity ; qnt:onSpace ex:durations ; qnt:numericValue "-6"^^xsd:decimal ; qnt:inUnit ex:month ] ] .
+
+ex:within-30-days-of-ending a qnt:Range ;
+    qnt:onSpace ex:time ;
+    qnt:relativeToAnchor [ a qnt:AnchorBinding ;
+        qnt:anchorValue ex:ending ; qnt:offsetKind qnt:Absolute ;
+        qnt:lowerOffsetBy [ a qnt:Quantity ; qnt:onSpace ex:durations ; qnt:numericValue "0"^^xsd:decimal ; qnt:inUnit ex:day ] ;
+        qnt:upperOffsetBy [ a qnt:Quantity ; qnt:onSpace ex:durations ; qnt:numericValue "30"^^xsd:decimal ; qnt:inUnit ex:day ] ] .
+
+# ==== Stated meaning: relations ===============================================
+
+tmpl:term-3-1 a ins:Term , ins:Template ; ins:expressedIn ex:cl-3-1 .
+tmpl:pay-rent a ins:Obligation , ins:Template ;
+    ins:arisesUnder tmpl:term-3-1 ;
+    ins:obligor ex:Tenant ; ins:obligee ex:Landlord ;
+    ins:activity ins-voc:Pay ;
+    ins:recurrence ex:quarter-days ;
+    ins:due ex:on-the-day .
+
+tmpl:term-9-1 a ins:Term , ins:Template ; ins:expressedIn ex:cl-9-1 .
+tmpl:break a ins:Power , ins:Template ;
+    ins:arisesUnder tmpl:term-9-1 ;
+    ins:holder ex:Tenant ; ins:counterparty ex:Landlord ;
+    ins:activity ins-voc:Terminate ;
+    ins:window ex:break-window ;                      # an exercise outside it has no effect
+    ins:appliesInState tmpl:in-force .
+
+tmpl:term-12-1 a ins:Term , ins:Template ; ins:expressedIn ex:cl-12-1 .
+tmpl:on-expired a ins:OnEntry , bhv:TriggerDefinition ;
+    bhv:triggerKind bhv:DerivedTrigger ;
+    ins:ofState tmpl:expired .
+tmpl:on-terminated a ins:OnEntry , bhv:TriggerDefinition ;
+    bhv:triggerKind bhv:DerivedTrigger ;
+    ins:ofState tmpl:terminated .
+tmpl:repay-deposit a ins:Obligation , ins:Template ;
+    ins:arisesUnder tmpl:term-12-1 ;
+    ins:obligor ex:Landlord ; ins:obligee ex:Tenant ;
+    ins:activity ins-voc:Pay ;
+    ins:arisesOn tmpl:on-expired , tmpl:on-terminated ;     # alternatives: either ending
+    ins:due ex:within-30-days-of-ending .
+
+# ==== Stated meaning: the lease regime ========================================
+
+tmpl:term-2-1 a ins:Term , ins:Template ; ins:expressedIn ex:cl-2-1 .
+tmpl:lease-regime a ins:Regime , bhv:StateSpace , ins:Template ;
+    fnd:hasIdentity tmpl:lease-regime-identity ;
+    ins:arisesUnder tmpl:term-2-1 ;
+    bhv:initialState tmpl:in-force .
+
+tmpl:in-force a bhv:State ;
+    bhv:inStateSpace tmpl:lease-regime ; ins:stateKind ins-voc:InForce .
+tmpl:break-notice a bhv:State ;
+    bhv:inStateSpace tmpl:lease-regime ; ins:stateKind ins-voc:NoticePeriod .
+tmpl:expired a bhv:State ;
+    bhv:inStateSpace tmpl:lease-regime ; ins:stateKind ins-voc:Expired ;
+    ins:ends ins-voc:TheInstrument .
+tmpl:terminated a bhv:State ;
+    bhv:inStateSpace tmpl:lease-regime ; ins:stateKind ins-voc:Terminated ;
+    ins:ends ins-voc:TheInstrument .
+
+tmpl:on-expiry-date a ins:OnExpiry , bhv:TriggerDefinition ;
+    bhv:triggerKind bhv:ScheduledTrigger ;
+    ins:at ex:expiry-date .
+tmpl:on-break a ins:OnExercise , bhv:TriggerDefinition ;
+    bhv:triggerKind bhv:ExternalStimulus ;
+    ins:ofPower tmpl:break .
+tmpl:on-break-date a ins:OnExpiry , bhv:TriggerDefinition ;
+    bhv:triggerKind bhv:ScheduledTrigger ;
+    ins:at ex:break-date .
+
+tmpl:expire a ins:RegimeTransition , bhv:TransitionDefinition ;
+    bhv:fromState tmpl:in-force ; bhv:toState tmpl:expired ;
+    bhv:hasTrigger tmpl:on-expiry-date ;
+    bhv:selectionPolicy bhv:SingleMatch ; bhv:activationPolicy bhv:ImmediateActivation .
+tmpl:give-break-notice a ins:RegimeTransition , bhv:TransitionDefinition ;
+    bhv:fromState tmpl:in-force ; bhv:toState tmpl:break-notice ;
+    bhv:hasTrigger tmpl:on-break ;
+    bhv:selectionPolicy bhv:SingleMatch ; bhv:activationPolicy bhv:ImmediateActivation .
+tmpl:break-takes-effect a ins:RegimeTransition , bhv:TransitionDefinition ;
+    bhv:fromState tmpl:break-notice ; bhv:toState tmpl:terminated ;
+    bhv:hasTrigger tmpl:on-break-date ;
+    bhv:selectionPolicy bhv:SingleMatch ; bhv:activationPolicy bhv:ImmediateActivation .
+
+# ==== The lease of Unit 4 =====================================================
+
+ex:unit-4-wording-v1 a wrd:AssembledWording ;
+    fnd:hasIdentity ex:unit-4-wording-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:assembledFrom ex:form ;
+    wrd:includes ex:sec-2 , ex:cl-2-1 , ex:sec-3 , ex:cl-3-1 , ex:sec-9 , ex:cl-9-1 , ex:sec-12 , ex:cl-12-1 .
+
+ex:unit-4-v1 a ins:Instrument ;
+    fnd:hasIdentity ex:unit-4-identity ;
+    ins:expressedIn ex:unit-4-wording-v1 ;
+    ins:party ex:landlord-occ , ex:tenant-occ .
+
+ex:ashgrove a pty:Actor ; rdfs:label "Ashgrove Estates Ltd" .
+ex:pellucid a pty:Actor ; rdfs:label "Pellucid Labs Ltd" .
+
+ex:landlord-occ a pty:RoleOccupancy ;
+    fnd:hasIdentity ex:landlord-occ-identity ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-06-24T00:00:00Z"^^xsd:dateTime ] ;
+    pty:inRole ex:Landlord ; pty:occupiedBy ex:ashgrove .
+ex:tenant-occ a pty:RoleOccupancy ;
+    fnd:hasIdentity ex:tenant-occ-identity ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-06-24T00:00:00Z"^^xsd:dateTime ] ;
+    pty:inRole ex:Tenant ; pty:occupiedBy ex:pellucid .
+
+# ==== Bound meaning ===========================================================
+#
+# Clause 2.1 binds nothing: its stated term holds only the regime (C7a-Q1).
+
+ex:term-3-1 a ins:Term ; ins:boundIn ex:unit-4-v1 ; ins:boundFrom tmpl:term-3-1 .
+ex:pay-rent a ins:Obligation ;
+    ins:boundFrom tmpl:pay-rent ; ins:arisesUnder ex:term-3-1 ;
+    ins:obligor ex:tenant-occ ; ins:obligee ex:landlord-occ ;
+    ins:activity ins-voc:Pay ;
+    ins:recurrence ex:quarter-days ;
+    ins:due ex:on-the-day .
+
+ex:term-9-1 a ins:Term ; ins:boundIn ex:unit-4-v1 ; ins:boundFrom tmpl:term-9-1 .
+ex:break a ins:Power ;
+    ins:boundFrom tmpl:break ; ins:arisesUnder ex:term-9-1 ;
+    ins:holder ex:tenant-occ ; ins:counterparty ex:landlord-occ ;
+    ins:activity ins-voc:Terminate ;
+    ins:window ex:break-window ;
+    ins:appliesInState tmpl:in-force .
+
+ex:term-12-1 a ins:Term ; ins:boundIn ex:unit-4-v1 ; ins:boundFrom tmpl:term-12-1 .
+ex:repay-deposit a ins:Obligation ;
+    ins:boundFrom tmpl:repay-deposit ; ins:arisesUnder ex:term-12-1 ;
+    ins:obligor ex:landlord-occ ; ins:obligee ex:tenant-occ ;
+    ins:activity ins-voc:Pay ;
+    ins:arisesOn tmpl:on-expired , tmpl:on-terminated ;
+    ins:due ex:within-30-days-of-ending .
