@@ -54,6 +54,13 @@ The unit that shipped it, `persistence-compiler-iri-sync`, is closed.
 | TD-16 | the Eligibility README is no longer the literate source of its documents: `tools/literate_extract.py --check` reports drift in `eligibility-vocab.ttl`, and no test or CI step runs it (Foundation's drift was fixed in CCS F1, Instrument's in C6) | 2026-10-03, CCS F1 | edits to the README or the file can diverge unnoticed | an Eligibility maintenance task |
 | TD-17 | Behaviour's selection policies, activation policies and trigger kinds (`behaviour-vocab.ttl`) are not declared distinct. Their properties are functional, so a reasoner given Instrument's `owl:hasValue` axioms and a wrongly stated value infers that two policies are the same individual, and every regime transition then carries both. Fix: `owl:AllDifferent` over each group | 2026-10-04, CCS C7a | the error is reported by SHACL at every regime transition, not by the reasoner at the triple that caused it | CCS FU-C7a-a, a Behaviour vocab change |
 
+### Test tooling
+
+| # | Debt | Spotted | Cost while it stays | Likely home |
+|---|---|---|---|---|
+| TD-18 | the Python test suites under `tools/` take minutes to run. Ten ontology modules took 129 seconds for 383 tests during CCS C7b. Likely causes, unmeasured: each module parses the ontology stack at import, pySHACL validates against every layer's shapes per example, each reasoner row starts a JVM, and OWL RL closures run in pure Python. How to measure and what to try are in the [test suite performance sketch](../sketches/test-suite-performance.md) | 2026-10-05, CCS C7b | slow feedback on every change, and pressure to skip tests locally | a test tooling task: measure first, then a shared session fixture and batched reasoner calls |
+| TD-19 | `mise run check:ontology-catalog` runs a fixed list of test modules that omits `tools/test_regimes.py` (CCS C7a) and `tools/test_terms_in_time.py` (CCS C7b), so no task and no CI run executes them | 2026-10-05, CCS C7b | a regression in regimes or terms in time goes unnoticed until someone runs the modules by hand | `mise.toml`, with TD-18, since adding them lengthens the task |
+
 ### Surface
 
 From the [Surface outstanding items](../status/surface-outstanding-items.md) record, whose unit is
