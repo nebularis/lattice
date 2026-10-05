@@ -2,8 +2,7 @@
 
 # Test suite performance
 
-**Unit:** none yet. **Status:** unplanned sketch, 2026-10-05. Registered as technical debt TD-18,
-with TD-19 for the gap found while writing it.
+**Unit:** none yet. **Status:** unplanned sketch, 2026-10-05. Registered as technical debt TD-18.
 **Reads with:** [technical-debt.md](../plans/technical-debt.md), `mise.toml`.
 
 ---
@@ -81,9 +80,9 @@ python -c "import pstats; pstats.Stats('/tmp/pytest.prof').sort_stats('cumulativ
 Each fix keeps every test's assertion unchanged. A fix is accepted only if the suite's results
 are identical before and after it.
 
-## 5. Found while writing: tests no task runs
+## 5. Found while writing: tests no task ran
 
 `mise run check:ontology-catalog` runs a fixed list of test modules. `tools/test_regimes.py` (CCS
-C7a) and `tools/test_terms_in_time.py` (CCS C7b) are not on it, so no `mise` task, and therefore no
-CI run, executes them. They have so far been run by hand during each slice. Adding them to the task
-lengthens it, which makes the work above more pressing. Recorded as TD-19.
+C7a) and `tools/test_terms_in_time.py` (CCS C7b) were not on it, so no `mise` task, and therefore no
+CI run, executed them. They were added to the task on 2026-10-05, which lengthens it and makes the
+work above more pressing.

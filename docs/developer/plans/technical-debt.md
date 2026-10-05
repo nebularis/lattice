@@ -58,8 +58,7 @@ The unit that shipped it, `persistence-compiler-iri-sync`, is closed.
 
 | # | Debt | Spotted | Cost while it stays | Likely home |
 |---|---|---|---|---|
-| TD-18 | the Python test suites under `tools/` take minutes to run. Ten ontology modules took 129 seconds for 383 tests during CCS C7b. Likely causes, unmeasured: each module parses the ontology stack at import, pySHACL validates against every layer's shapes per example, each reasoner row starts a JVM, and OWL RL closures run in pure Python. How to measure and what to try are in the [test suite performance sketch](../sketches/test-suite-performance.md) | 2026-10-05, CCS C7b | slow feedback on every change, and pressure to skip tests locally | a test tooling task: measure first, then a shared session fixture and batched reasoner calls |
-| TD-19 | `mise run check:ontology-catalog` runs a fixed list of test modules that omits `tools/test_regimes.py` (CCS C7a) and `tools/test_terms_in_time.py` (CCS C7b), so no task and no CI run executes them | 2026-10-05, CCS C7b | a regression in regimes or terms in time goes unnoticed until someone runs the modules by hand | `mise.toml`, with TD-18, since adding them lengthens the task |
+| TD-18 | the Python test suites under `tools/` take minutes to run. Ten ontology modules took 129 seconds for 383 tests during CCS C7b. Likely causes, unmeasured: each module parses the ontology stack at import, pySHACL validates against every layer's shapes per example, each reasoner row starts a JVM, and OWL RL closures run in pure Python. How to measure and what to try are in the [test suite performance sketch](../sketches/test-suite-performance.md). `check:ontology-catalog` now also runs the C7a and C7b modules, which lengthens it | 2026-10-05, CCS C7b | slow feedback on every change, and pressure to skip tests locally | a test tooling task: measure first, then a shared session fixture and batched reasoner calls |
 
 ### Surface
 
