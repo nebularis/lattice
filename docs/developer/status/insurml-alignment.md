@@ -8,15 +8,22 @@
 **Plan:** [insurml-alignment.md](../plans/insurml-alignment.md), [phase 0](../plans/insurml-alignment-phase-0.md)
 **Vision:** [insurml-alignment-vision.md](../../architecture/insurml-alignment-vision.md)
 **Sketches:** [insurml-bridge.md](../sketches/insurml-bridge.md),
-[insurml-toolchain-and-ai.md](../sketches/insurml-toolchain-and-ai.md)
+[insurml-toolchain-and-ai.md](../sketches/insurml-toolchain-and-ai.md),
+[insurml-typing.md](../sketches/insurml-typing.md),
+[wording-assembly-interface.md](../sketches/wording-assembly-interface.md)
+**Notes:** [identity, for the InsurML team](../notes/insurml-identity.md)
 
 ## Current position
 
 Nothing is built. The epic waits for the human's review of the vision, the sketches and the plans,
 and for the gate-0 decisions. CCS remains the active unit, with C7c next.
 
-**Next action, for the human:** decide IMA-D5 (where the epic's documents may be published) before
-pushing them, then review the plans and take the gate-0 decisions.
+**Decided 2026-10-05:** IMA-D1 (depth 5, depth 6 to be discussed with InsurML's owner), IMA-D3 (two
+documents in one module), IMA-D5 (publication permitted). **Open at gate 0:** IMA-D2 (explanation
+given in chat, decision pending), IMA-D4 (explored in the [typing sketch](../sketches/insurml-typing.md)),
+IMA-D16, IMA-D17 (the assembly interface). **To confirm with InsurML's author:** Q-16, whether a contract describes an issued policy.
+
+**Next action, for the human:** decide IMA-D2 and IMA-D4, and confirm Q-16 with InsurML's author.
 
 ## Phase board
 
@@ -42,11 +49,16 @@ pushing them, then review the plans and take the gate-0 decisions.
 | IMA-0.4 ADR, bridge tooling and kits | not started |
 | IMA-0.5 ADR, placement elements | not started |
 | IMA-0.6 ADR, inline placement | not started |
+| IMA-0.8 ADR, assembly interface | not started |
 | IMA-0.7 alignment edits | not started. Pointers added on 2026-10-05, final edits after gate 0 |
 
 ### Licence and publication record
 
-Empty until IMA-0.2.
+| Date | Item | State |
+|---|---|---|
+| 2026-10-05 | publication of documentation and analysis of InsurML's current draft | permitted by InsurML's owner. "Not for release" marks the draft's alpha state |
+| | licence of InsurML's ontology, shapes and schemas for import and test (Q-2, Q-11) | open |
+| | use of InsurML's example wording in LATTICE tests (Q-3) | open. Fixtures stay clean-room |
 
 ## Estimates and actuals
 

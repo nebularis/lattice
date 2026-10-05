@@ -142,7 +142,7 @@ iml:references      rdfs:subPropertyOf wrd:refersToObject .
 
 | Rule | Why |
 |---|---|
-| An InsurML contract is a library form, never an instrument | `owl:disjointWith ins:Instrument` turns the commonest naming error (comparison §8, "Contract") into a reasoner finding |
+| An InsurML contract is a wording, never an instrument | `owl:disjointWith ins:Instrument` turns a common naming error (comparison §8, "Contract") into a reasoner finding. Whether a contract is a library form or an issued policy's wording waits for Q-16. Both are `wrd:Wording`, and an issued one would align with `wrd:AssembledWording` |
 | No property gains a domain or range in the alignment | a domain of `iml:Component` on a property LATTICE also uses would classify every LATTICE definition as an InsurML component (the repository's rule on sparing domains and ranges) |
 | `iml:hasInclusion` aligns with nothing | its blank-node entries become placement elements on lift (§8), not a sub-property of a tree edge |
 | `iml:variantOf` aligns with `prov:wasDerivedFrom`, never `wrd:variantOf` | the words collide with different meanings (comparison §8) |
@@ -161,7 +161,7 @@ scheme per publisher and kind (ADR-A114). LWR codes become external keys under t
 `iml:previousVersion` and `fnd:supersededBy` are both stated, one materialised from the other by a
 Surface promotion.
 
-**Typing.** Option T1 of integration §6.3. `wrd:elementType` takes a structural type from the
+**Typing.** Explored in depth in [insurml-typing.md](insurml-typing.md), which recommends T1 as an interim and T4 as the target. The interim is option T1 of integration §6.3. `wrd:elementType` takes a structural type from the
 profile's scheme (contract, module, section, sub-section, component, paragraph, numbered clause,
 nested clause, list, list item, table, title), each `skos:broadMatch` a baseline Wording type where
 one exists. InsurML's component type (Coverage, Exclusion, Condition and the rest) becomes a
@@ -248,6 +248,11 @@ What the lower cannot carry is meaning (W-23). It stays in the graph, linked by 
 travels in a contract package or a companion document (toolchain sketch §7, §8).
 
 ## 7. Assembly parity
+
+The [assembly interface sketch](wording-assembly-interface.md) reframes §7 to §12. Placements,
+inline placement, dependencies, fallback, references and content status become hooks of a
+domain-neutral assembly interface in Wording, with InsurML's model as the insurance default. The
+designs below stand.
 
 ```mermaid
 sequenceDiagram

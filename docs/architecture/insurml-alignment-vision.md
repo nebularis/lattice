@@ -85,7 +85,7 @@ the architecture as a whole and are cited by number in the sketches and the plan
 | AV5 | **Traceable to the fragment.** Every component, fragment, inclusion and value has an IRI, and every derived artefact has provenance back to them | ADR-A26, ADR-A92 |
 | AV6 | **Deterministic after review.** Lifts, lowers, assembly, compilation and rendering are pure functions of hashed inputs. Models propose and never write a compiled artefact | IV9, ADR-A19, ADR-A25 |
 | AV7 | **Optional in both directions.** InsurML works without LATTICE, and LATTICE works without InsurML. Neither imports the other. Only the applied profile depends on both | IP10 |
-| AV8 | **Licence and clean room first.** No InsurML text, schema or example enters a public repository until its distribution is settled. Fixtures are written clean-room | IP11, ADR-A-C2 |
+| AV8 | **Licence and clean room first.** InsurML material is published with its owner's permission (IMA-D5). Market wording quoted in InsurML's examples keeps its owners' terms, so fixtures are written clean-room | IP11, ADR-A-C2 |
 | AV9 | **Published kits.** Every transformation ships as a versioned kit (schema, query, stylesheet, shapes, examples) that a third party can run without LATTICE's runtime | IP8, XML egress sketch §8 |
 | AV10 | **Models propose, standards dispose.** Model output is constrained by InsurML's grammar and LATTICE's shapes, and a person accepts it | IV2 to IV4, ADR-A25 |
 
@@ -422,7 +422,7 @@ Integration §12 lists R1 to R12. Three more arise at this scale:
 | # | Risk | Mitigation |
 |---|---|---|
 | R13 | Two standards bodies diverge in governance or pace | one profile pinned per edition, proposals made upstream rather than forked, joint review of each profile release |
-| R14 | Publishing analysis of an unreleased draft breaches its distribution terms | InsurML-specific material stays out of public branches until its owner agrees. Clean-room examples throughout |
+| R14 | Published analysis outruns a draft that is still changing | InsurML's owner permits publication (IMA-D5). Each document names the draft edition it read. Clean-room examples throughout |
 | R15 | AI results are oversold before they are measured | the measures of §11 gate any claim. Estimates are labelled as estimates |
 
 ## 11. How success is measured
