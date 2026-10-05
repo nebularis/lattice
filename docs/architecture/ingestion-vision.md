@@ -523,9 +523,9 @@ for the measurement work each phase needs.
 | Q6 | Mapping a controlled language's compiled logic | treated here as a structure mapping. Whether it needs a dedicated translator with its own conformance cases is open |
 | Q7 | Measuring accuracy | gold sets, held-out corpora and the metrics that gate routing and batch confirmation |
 | Q8 | Review ergonomics at scale | how proposals, source spans and the partially built graph are shown together, and how reviewer fatigue and automation bias are detected |
-| Q9 | One vocabulary or two for document structure | leaning: MORK's existing source-representation terms (§5.1), tested on a real document type before any sibling vocabulary is considered |
+| Q9 | One vocabulary or two for document structure | leaning: MORK's existing source-representation terms (§5.1), tested on a real document type before any sibling vocabulary is considered. For insurance documents, InsurML is a candidate published structure target ([InsurML alignment vision](insurml-alignment-vision.md) §6.9) |
 | Q10 | The review threshold for facts | the precision a batch must show before it can be confirmed at once, and the audit sampling rate after |
-| Q11 | Recognising document types | MORK's community detection over element fingerprints, or a separate similarity model |
+| Q11 | Recognising document types | MORK's community detection over element fingerprints, or a separate similarity model. Text already marked up in InsurML is recognised exactly, by component version IRI and digest |
 | Q12 | Where ingestion tooling lives | additions to `ontology/mork` and `tools/mork`, or a sibling pair under the repository topology rules, which needs an ADR before any new directory |
 
 ## 16. Risks

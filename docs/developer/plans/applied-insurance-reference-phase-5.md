@@ -47,6 +47,10 @@ should not start its contract module until that design is settled (its §13).
 | AIR-5.8 | insurance renderings of the policy scenarios of the CCS sketch §10 (the AIG rows: S10 to S14, S18 to S26, S28, S29, S33, S34, S37, S42 and the shared rows), as examples with expected decisions | CCS sketch §9, §10 |
 | AIR-5.9 | the LMA WIM profile in `applied/insurance/wording/` (CCS decision CC-D3): the four levels as element types, their containment rules as shapes, the LMA typing schemes and `applicableTo`. Open CBAA imports it | CCS sketch §3.2, CCS plan §7 |
 
+**AIR-5.9 proposed to move (2026-10-05).** The [insurml-alignment](insurml-alignment.md) epic
+proposes to build the LMA WIM profile with InsurML in view, as its Phase 1, before this phase starts,
+since the profile needs Wording and not Instrument. The move waits for decision IMA-D2.
+
 5.7 needs L-P5 (substrate track S4) only if the chosen check family groups occurrences. The
 default candidate is bind-time authority, which does not.
 

@@ -571,6 +571,24 @@ A new Wording layer (from Open CBAA's `wim:`), Instrument rewritten around terms
 relations, and Behaviour extended with occasions and records, tested against a package policy, an
 IUA binding authority and the Lloyd's CBAA.
 
+## 8.10 InsurML Alignment (Epic) — Proposed
+
+| Field | Value |
+|-------|-------|
+| **Status** | 📝 Proposed, 2026-10-05. Awaiting human review and gate-0 decisions |
+| **Unit ID** | `insurml-alignment` (epic) |
+| **Vision** | [insurml-alignment-vision.md](../architecture/insurml-alignment-vision.md) |
+| **Sketches** | [insurml-bridge.md](sketches/insurml-bridge.md), [insurml-toolchain-and-ai.md](sketches/insurml-toolchain-and-ai.md) |
+| **Analysis** | [insurml-and-lattice.md](notes/insurml-and-lattice.md), [insurml-integration.md](notes/insurml-integration.md) |
+| **Plan** | [insurml-alignment.md](plans/insurml-alignment.md), with [phase 0](plans/insurml-alignment-phase-0.md). Later phases rolling-wave |
+| **Status Record** | [insurml-alignment.md](status/insurml-alignment.md) |
+| **ADRs** | four to be drafted in Phase 0: the profile, bridge tooling and kits, placement elements, inline placement |
+
+InsurML as the document standard for insurance wording and LATTICE as the substrate for its
+meaning, execution and governance, joined by an applied profile (absorbing AIR-5.9) and published
+lift and lower kits. Covers authoring, compilation, libraries, placement, exchange and AI-assisted
+reading.
+
 ## 8. Phase Handoff Documents (0-6)
 
 | Phase | Status Record | Key Outcome |
