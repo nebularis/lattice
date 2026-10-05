@@ -2,8 +2,8 @@
 
 # ADR-A115: Quantification context values
 
-**Status:** Proposed
-**Date:** 2026-10-05 (proposed)
+**Status:** Accepted
+**Date:** 2026-10-05 (proposed), 2026-10-05 (accepted)
 **Related:** ADR-A94 (calendar binding), ADR-A85 (binding resolution), ADR-A86 (versioning),
 ADR-A104 and its 2026-10-05 addendum (terms in time), the
 [terms in time sketch](../../developer/sketches/terms-in-time.md) Part A

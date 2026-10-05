@@ -120,7 +120,10 @@ ex:month a qnt:Unit ; rdfs:label "month" .
 #
 # Context roles of the lease form. Each lease's values come from its wording's
 # variables, bound per instrument (C8). Instrument's own roles (ins-voc:Ending,
-# ins-voc:PeriodStart) need no binding here: they are in the baseline.
+# ins-voc:PeriodStart) are in its baseline scheme, which Instrument binds to
+# Quantification's role contract. These are not bound: a contract resolves to
+# one scheme, and a second unscoped binding would conflict with Instrument's
+# (CCS held design question HQ-4).
 
 ex:lease-dates a voc:ConceptScheme ;
     fnd:hasIdentity ex:lease-dates-identity ; fnd:hasGovernanceState fnd:Active ;
@@ -128,10 +131,6 @@ ex:lease-dates a voc:ConceptScheme ;
 ex:ExpiryDate a skos:Concept ; skos:inScheme ex:lease-dates ; skos:prefLabel "the Expiry Date"@en .
 ex:BreakDate a skos:Concept ; skos:inScheme ex:lease-dates ; skos:prefLabel "the Break Date"@en .
 ex:FirstQuarterDay a skos:Concept ; skos:inScheme ex:lease-dates ; skos:prefLabel "the first Quarter Day"@en .
-ex:lease-dates-binding a voc:SchemeBinding ;
-    voc:forContract qnt:ContextRoleContract ;
-    voc:bindsScheme ex:lease-dates ;
-    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-01-01T00:00:00Z"^^xsd:dateTime ] .
 
 ex:expiry-date a qnt:ContextValue ; qnt:onSpace ex:time ; qnt:contextRole ex:ExpiryDate .
 ex:break-date a qnt:ContextValue ; qnt:onSpace ex:time ; qnt:contextRole ex:BreakDate .

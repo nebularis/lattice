@@ -18,10 +18,16 @@ Behaviour 0.10.0 (shapes 0.4.0) with nested states and history, the import guard
 check`. Tranche D begins with C6, briefed. From C5 on, the agent builds and verifies, and the human
 commits by hand.
 
-**Next action, for the human:** review and commit C7b's examples, ADR-A115, the ADR-A104 addendum
-and Quantification's restored README on `ccs/c7b-terms-in-time` (Validation Pack handoff, phase 1).
-**Then, for the agent:** the C7b model: Quantification 0.7.0 with its cascade, then Instrument
-0.11.0, the READMEs and the tests, stopping before any commit.
+**Next action, for the human:** review and commit the C7b model on `ccs/c7b-terms-in-time` (Validation
+Pack handoff, phase 2), merge it into `main`, then create the release tags on the merged commit.
+
+🔴 RELEASE TAGS REQUIRED after the merge (21): `quantification-v0.7.0`, `quantification-shapes-v0.2.0`,
+`party-v0.7.0`, `party-vocab-v0.7.0`, `eligibility-v0.9.0`, `eligibility-vocab-v0.10.0`,
+`wording-v0.5.0`, `wording-vocab-v0.5.0`, `behaviour-v0.12.0`, `behaviour-runtime-v0.12.0`,
+`behaviour-vocab-v0.12.0`, `surface-v0.7.0`, `surface-vocab-v0.7.0`, `instrument-v0.11.0`,
+`instrument-shapes-v0.4.0`, `instrument-vocab-v0.11.0`, `applied-capacity-execution-v0.12.0`,
+`insurance-common-v0.3.0`, `insurance-common-vocab-v0.3.0`, `insurance-peril-v0.3.0`,
+`insurance-peril-vocab-v0.3.0`.
 
 ## Slice board
 
@@ -39,7 +45,7 @@ and Quantification's restored README on `ccs/c7b-terms-in-time` (Validation Pack
 | C11a | nested states, history, concurrent regimes | C | merged, tagged | |
 | F1 | external and natural keys (ADR-A114) | Foundation, now | merged, tagged | |
 | C6 | instrument, terms, the five relations, parties, content | D | merged, tagged | |
-| C7b | terms in time | D | examples, ADR-A115 and the ADR-A104 addendum written on `ccs/c7b-terms-in-time` | the human's commit |
+| C7b | terms in time | D | model built and verified on `ccs/c7b-terms-in-time`, not committed | the human's commit, merge and tags |
 | C7c | what terms are, and who they bind (split from C7b) | D | waiting, to be briefed | C7b |
 | C8, C9, C8a | Instrument rewrite, template library | D | waiting | C8 after C7a and C7b |
 | C7a | regimes and gating, split from C7 | D | merged to `main` (`c6e5853`) and tagged | |
@@ -106,3 +112,7 @@ and Quantification's restored README on `ccs/c7b-terms-in-time` (Validation Pack
 - 2026-10-04: C7b questions answered. C7b split from C7c (Q1). An obligation has at most one due range, and reasonable time is not modelled unless the words define it (Q2). Survival as a node (Q6), `ins:computedBy` deferred (Q7). Anchored time and ending designed in a new [terms in time sketch](../sketches/terms-in-time.md), which proposes a Quantification context value (TQ1), windows on powers (TQ3), ending as entering a state with an `ins:OnEntry` trigger (TQ4) and expiry at a date (TQ6). The plan's C8 row corrected: stated and bound meaning moved into C6. C9 takes 0.14.0.
 - 2026-10-05: terms in time sketch decided (TQ1 to TQ7). Anchored time goes in Quantification (0.7.0, ADR-A115, with a re-pin cascade). Business day conventions and times of day held as HQ-3. Windows on powers and permissions, ending as entering a state with `ins:OnEntry`, implicit survival of termination consequences, expiry at a date, and pending occasions ending on termination. Quantification's README found not to be its literate source (no header block, one shapes block for three files, graphs equal), to be restored first in C7b.
 - 2026-10-05: C7b examples written (trial reporting, lease expiry, licence survival, evergreen services, and a Quantification context value example), with ADR-A115 and the ADR-A104 addendum "terms in time". Quantification's README restored as its literate source, with no graph change. Three examples conform to the lower layers' shapes, and two fail only where TQ4 and TQ6 change the model. The evergreen notice window is a region of each period, since its anchor lies inside the regime. Not committed.
+- 2026-10-05: C7b model built. Quantification 0.7.0 (context values, unit-bearing offsets, ADR-A115) from its restored README, re-pinned through 18 importers. Instrument 0.11.0, vocab 0.11.0 and shapes 0.4.0: due ranges, windows, recurrences, ending as entering a state with `ins:OnEntry`, expiry at a time, survival, with README §4.7, §13 and §14 and four worked examples. 85 diagrams render. Found: context roles from several sources cannot all bind to one contract (held design question HQ-4). Not committed.
+- 2026-10-05: Quantification README given a guided tour of the layer (§5.1) and diagrams for containment, law prerequisites and its consumers, 20 diagrams in all, at the human's request. No change to its generated files. Not committed.
+- 2026-10-05: Quantification README: scales of measure and additivity explained (§5.1.3), operations across two spaces and overlap against containment illustrated (§5.1.9), stale paths, importers and authoring framing corrected, and open question 7 (semi-additive aggregation) recorded. No change to its generated files. Not committed.
+- 2026-10-05: ADR-A115 and ADR-A104's addenda of 2026-10-04 (a regime is stated once) and 2026-10-05 (terms in time) accepted by the human, before C7b's merge.

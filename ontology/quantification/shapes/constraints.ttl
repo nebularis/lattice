@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MPL-2.0
+
 @prefix qnt: <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
 @prefix sh:  <http://www.w3.org/ns/shacl#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
@@ -60,6 +62,27 @@ qnt:CalendarConversionShape
             }
         """
     ] .
+
+qnt:ContextValueShape
+    a sh:NodeShape ;
+    sh:targetClass qnt:ContextValue ;
+    sh:property [ sh:path qnt:contextRole ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:IRI ;
+        sh:message "A context value names exactly one role (ADR-A115)." ] ;
+    sh:property [ sh:path qnt:onSpace ; sh:minCount 1 ; sh:maxCount 1 ; sh:class qnt:ValueSpace ;
+        sh:message "A context value is on exactly one value space." ] .
+
+qnt:AnchorBindingOffsetShape
+    a sh:NodeShape ;
+    sh:targetClass qnt:AnchorBinding ;
+    sh:property [ sh:path qnt:lowerOffsetBy ; sh:maxCount 1 ; sh:class qnt:Quantity ;
+        sh:message "A quantity offset is one quantity (ADR-A115)." ] ;
+    sh:property [ sh:path qnt:upperOffsetBy ; sh:maxCount 1 ; sh:class qnt:Quantity ;
+        sh:message "A quantity offset is one quantity (ADR-A115)." ] ;
+    sh:not [ sh:and (
+        [ sh:property [ sh:path [ sh:alternativePath ( qnt:lowerOffset qnt:upperOffset ) ] ; sh:minCount 1 ] ]
+        [ sh:property [ sh:path [ sh:alternativePath ( qnt:lowerOffsetBy qnt:upperOffsetBy ) ] ; sh:minCount 1 ] ]
+    ) ] ;
+    sh:message "An anchor binding states its offsets as decimals or as quantities, never both (ADR-A115)." .
 
 qnt:AlternativeBoundShape
     a sh:NodeShape ;

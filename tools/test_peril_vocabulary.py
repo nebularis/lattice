@@ -110,11 +110,11 @@ def test_spec_and_vocab_parse_and_import_the_pinned_versions():
     assert spec_imports == {
         "http://www.w3.org/2004/02/skos/core",
         "https://www.nebularis.org/neuro-semantic/lattice/foundation/0.4.0",
-        "https://www.nebularis.org/neuro-semantic/lattice/quantification/0.6.0",
+        "https://www.nebularis.org/neuro-semantic/lattice/quantification/0.7.0",
     }
     vocab_imports = {str(o) for o in vocab.objects(None, OWL.imports)}
     assert vocab_imports == {
-        "https://www.nebularis.org/neuro-semantic/insurance/peril/0.2.0",
+        "https://www.nebularis.org/neuro-semantic/insurance/peril/0.3.0",
         "https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.4.0",
         "https://www.nebularis.org/neuro-semantic/lattice/foundation/0.4.0",
     }

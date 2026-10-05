@@ -14,11 +14,11 @@ This ontological substrate allows a user to state what legally binding outcomes 
 
 Instrument imports Foundation, Vocabulary, Quantification, Party, Eligibility, Wording and Behaviour's configuration document. Instrument's runtime document is upstream of it. Nothing outside Instrument imports it ([ADR-A104](../../docs/architecture/decisions/ADR-A104-instrument-terms-and-legal-relations.md), [ADR-A106](../../docs/architecture/decisions/ADR-A106-behaviour-configuration-runtime-occasions-and-records.md)).
 
-This version (0.10.0, CCS slice C7a) holds the instrument, its terms in two tiers, the five relations, their parties and their content (C6), and the legal triggers, the regimes they move, and the gating of relations by a regime's state (C7a). Later slices add, in order:
+This version (0.11.0, CCS slice C7b) holds the instrument, its terms in two tiers, the five relations, their parties and their content (C6), the legal triggers, the regimes they move, and the gating of relations by a regime's state (C7a), and terms in time, namely due ranges, windows, recurrences, ending and survival (C7b). Later slices add, in order:
 
 | Slice | Adds |
 |---|---|
-| C7b | due ranges, recurrence and ending, survival, definitions and deemings, sections, classification of terms, resolution of parties that depend on the case |
+| C7c | definitions and deemings, sections, classification of terms, resolution of parties that depend on the case |
 | C8 | parameter bindings from variables, encoding status, law I17's shapes |
 | C9 | amendments, consent rules, incorporation, instruments made under a power |
 
@@ -45,17 +45,17 @@ Nothing in this version evaluates.
 ```turtle-spec
 <https://www.nebularis.org/neuro-semantic/instrument>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.10.0> ;
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.11.0> ;
 	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.4.0> ,
 				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.4.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.6.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/party/0.6.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.8.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/wording/0.4.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.11.0> .
+				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.7.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/party/0.7.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.9.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/wording/0.5.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.12.0> .
 ```
 
-The vocabulary (`ins-voc:`) is `vocab/instrument-vocab.ttl`, in the namespace `https://www.nebularis.org/neuro-semantic/lattice/instrument/vocab#` (§13).
+The vocabulary (`ins-voc:`) is `vocab/instrument-vocab.ttl`, in the namespace `https://www.nebularis.org/neuro-semantic/lattice/instrument/vocab#` (§15).
 
 ## 3. Extraction Contract
 
@@ -152,7 +152,7 @@ They usually line up one to one, but not always:
   together make one provision. Its stated term is then expressed in the element that contains
   them, such as their section (law I2 requires it to map to exactly one wording element version)
 
-Since a term gives rise to relations, and in a well-modelled contract it is common for one term to give rise to more than one (§16.1, clause 8.1), it has been modelled as an independent node. The law treats a term as a unit, and several things attach to the whole provision rather than to any one relation under it:
+Since a term gives rise to relations, and in a well-modelled contract it is common for one term to give rise to more than one (§18.1, clause 8.1), it has been modelled as an independent node. The law treats a term as a unit, and several things attach to the whole provision rather than to any one relation under it:
 
 | Attaches to the term | Meaning | Slice |
 |---|---|---|
@@ -554,7 +554,7 @@ the data should see the same distinction.
 
 **Carve-backs.** Exclusions are often narrowed by a carve-back: "Clause 2.1 does not apply to damage
 caused by misuse, unless the failure was caused by a manufacturing defect". The carve-back belongs
-in the exclusion's scope, as a negated member of the scope's condition (§9, §16.3), not as a second
+in the exclusion's scope, as a negated member of the scope's condition (§9, §18.3), not as a second
 relation.
 
 #### 4.2.10 **`ins:Power`.**
@@ -744,7 +744,7 @@ The exclusion exists all along and applies only while its gate is open. While it
 **A relation's regimes** are those its named states belong to. They are its instrument's, stated by
 the relation's own clause or another. Most relations name no state, so have no gate and no regimes. Like its scope, a relation's gate is fixed by its clause's words.
 
-Three questions about one relation at one moment have separate answers, from separate parts of the model. The table answers them for the licence's exclusion of the power to grant sub-licences (§16.5).
+Three questions about one relation at one moment have separate answers, from separate parts of the model. The table answers them for the licence's exclusion of the power to grant sub-licences (§18.5).
 
 | Question | Answered by | For the exclusion |
 |---|---|---|
@@ -883,9 +883,9 @@ flowchart LR
 
 A move between two states of a regime on a legal trigger, as in "on the expiry of the notice period, this licence terminates" or "if the Borrower remedies the breach within the cure period, the Event of Default does not occur". It is a `bhv:TransitionDefinition` whose engine settings are fixed. A regime takes one transition at a time (`bhv:SingleMatch`), and takes it at once (`bhv:ImmediateActivation`), because a contract's words never say that two outcomes compete, or that a change waits for someone to run it. Distinct from *event*, what happened, which the runtime records, and *amendment*, a change of the words (C9).
 
-#### 4.2.15 **The legal triggers: `ins:OnExercise`, `ins:OnBreach`, `ins:OnAct`, `ins:OnCondition`, `ins:OnExpiry`.**
+#### 4.2.15 **The legal triggers: `ins:OnExercise`, `ins:OnBreach`, `ins:OnAct`, `ins:OnCondition`, `ins:OnExpiry`, `ins:OnEntry`.**
 
-A *trigger* is what makes something happen, written in contracts as "on", "upon", "if", "when" or "following". The five legal triggers are the five kinds of fact on which a contract's words make a consequence turn.
+A *trigger* is what makes something happen, written in contracts as "on", "upon", "if", "when" or "following". The six legal triggers are the six kinds of fact on which a contract's words make a consequence turn.
 
 | Trigger | Contract English | Fires on | Behaviour's kind |
 |---|---|---|---|
@@ -893,11 +893,12 @@ A *trigger* is what makes something happen, written in contracts as "on", "upon"
 | `ins:OnBreach` | "if the Borrower fails to pay", "following any breach of clause 4" | the breach of an obligation (`ins:ofObligation`) | derived by the runtime from the obligation's occasions |
 | `ins:OnAct` | "if the Provider disputes the report", "on delivery" | an act that exercises no power (`ins:activity`, optionally `ins:by`) | an external stimulus |
 | `ins:OnCondition` | "if leverage exceeds 3.0 to 1", "while a force majeure event prevents performance" | a condition coming to hold (`ins:condition`) | derived |
-| `ins:OnExpiry` | "on the expiry of 90 days", "within 30 Business Days" | the end of a period counted from entering a state (`ins:after`) | scheduled, known in advance |
+| `ins:OnExpiry` | "on the expiry of 90 days", "within 30 Business Days", "on the Expiry Date" | the end of a period counted from entering a state (`ins:after`), or a time (`ins:at`) | scheduled, known in advance |
+| `ins:OnEntry` | "on termination", "on the expiry of this Agreement", "upon the commencement of the run-off period" | the subject entering a state (`ins:ofState`) | derived |
 
-The names follow drafting's "on" with the event, as in "on termination" and "on expiry". *Exercise* and *breach* are the law's words for a power used and an obligation not performed. *Expiry* is its word for a period coming to an end, as in "the expiry of the notice period". *Act* is the plain word, as in deontic logic, for what a party does. Distinct from *event* (what happened, not what an instrument waits for), *condition* in its other senses (§4.6, here only the trigger's Eligibility condition), and *deadline*, a due range (C7b).
+The names follow drafting's "on" with the event, as in "on termination" and "on expiry". *Exercise* and *breach* are the law's words for a power used and an obligation not performed. *Expiry* is its word for a period coming to an end, as in "the expiry of the notice period". *Act* is the plain word, as in deontic logic, for what a party does. *Entry*, for `ins:OnEntry`, is the plain word for coming into a state, so "on termination" is the entry into a terminated state. Distinct from *event* (what happened, not what an instrument waits for), *condition* in its other senses (§4.6, here only the trigger's Eligibility condition), and *deadline*, a due range (§13).
 
-Four of the triggers also determine when a relation arises or ends (`ins:arisesOn`, `ins:endsOn`, §4.2.4). One vocabulary therefore governs both relations and regimes. What moves a licence into its notice period is the same kind of fact as what gives a customer a power to terminate. `ins:OnExpiry` moves only regimes, because it counts from entering a state, and a relation has no state to enter. A relation's own periods, such as a duty due within 30 days of arising, are due ranges (C7b).
+Five of the triggers also determine when a relation arises or ends (`ins:arisesOn`, `ins:endsOn`, §4.2.4). One vocabulary therefore governs both relations and regimes. What moves a licence into its notice period is the same kind of fact as what gives a customer a power to terminate, and what ends a licence is the same kind of fact as what makes its "on termination" duties arise. `ins:OnExpiry` moves only regimes, because it counts from entering a state, and a relation has no state to enter. A relation's own periods, such as a duty due within 30 days of arising, are due ranges (§13).
 
 ```mermaid
 flowchart LR
@@ -907,9 +908,17 @@ flowchart LR
     R -- "its states gate" --> L
 ```
 
+#### 4.2.16 **`ins:Survival`.**
+
+*Survival* is contract English for a term continuing to operate after its instrument has ended, as
+in "this clause survives termination" or "the confidentiality obligations continue for five years
+after termination". A survival says for how long, whether for a period, until a condition comes to hold, or
+without limit (§14.4). Distinct from *accrued rights*, which persist after termination without any
+clause saying so, and from *renewal*, which continues the whole instrument.
+
 ### 4.3 Properties
 
-The properties fall into five groups: those that tie meaning to text and to its owner, those that name a relation's parties, those that state a relation's content, a party's details for one instrument, and those of triggers, regimes and gating.
+The properties fall into five groups: those that tie meaning to text and to its owner, those that name a relation's parties, those that state a relation's content, a party's details for one instrument, those of triggers, regimes and gating, and those of time and ending.
 
 #### Text and ownership: `ins:expressedIn`, `ins:alsoExpressedIn`, `ins:boundIn`, `ins:boundFrom`, `ins:impliedBy`, `ins:arisesUnder`
 
@@ -979,7 +988,7 @@ flowchart LR
 
 - **`ins:activity`** is deontic logic's *action*: the act a relation is about. It names the act
   plainly, without its circumstances: `Repay`, `Enrol`, `Terminate`. An activity is a concept from a
-  scheme bound to `ins-voc:ActivityContract`, so a deployment can use its own list of acts (§13). The same property names the act an `ins:OnAct`
+  scheme bound to `ins-voc:ActivityContract`, so a deployment can use its own list of acts (§15). The same property names the act an `ins:OnAct`
   trigger waits for (§10), so a trigger on an act of repaying names the same concept as the duty to
   repay.
 - **`ins:scope`** is "the scope of the exclusion", "within the scope of this clause": the cases a
@@ -1065,6 +1074,46 @@ flowchart LR
     ST -- "stateKind" --> SK["skos:Concept"]
 ```
 
+#### Time and ending: `ins:due`, `ins:recurrence`, `ins:window`, `ins:dueTolledIn`, `ins:at`, `ins:ofState`, `ins:ends`, `ins:survives`, `ins:survivalPeriod`, `ins:survivesUntil`
+
+- **`ins:due`** comes from *falling due*, the moment performance can first be demanded. It names the
+  obligation's due range, anchored at a named time (§13.2).
+- **`ins:recurrence`** comes from "each month" and "each Quarter Day". A recurring obligation has one
+  occasion for each period (§13.4).
+- **`ins:window`** is the time in which a power may be exercised or a permission used, as in an
+  option period or a break window. A power not exercised in its window *lapses* (§13.3).
+- **`ins:dueTolledIn`** extends tolling (`ins:tolledIn`) to a due range, as in "time for payment is
+  extended by any period of force majeure" (§13.5).
+- **`ins:at`** comes from "on the Expiry Date". It is the time at which an expiry falls, where
+  `ins:after` is a length counted from entering a state.
+- **`ins:ofState`** names the state whose entry an `ins:OnEntry` waits for. "On termination" waits
+  for the entry into *terminated*.
+- **`ins:ends`** comes from "this Agreement ends" and "the Lease shall end". It names what entering a
+  state ends, the instrument or named terms (§14.2).
+- **`ins:survives`**, **`ins:survivalPeriod`** and **`ins:survivesUntil`** come from "this clause
+  survives termination", "for five years after termination", "until all claims are settled"
+  (§14.4).
+
+```mermaid
+---
+config:
+  layout: elk
+---
+flowchart LR
+    OG["ins:Obligation"] -- "due" --> R["qnt:Range"]
+    OG -- "recurrence" --> RC["qnt:Recurrence"]
+    OG -- "dueTolledIn" --> ST["bhv:State"]
+    PW["ins:Power, ins:Permission"] -- "window" --> R
+    R -- "relativeToAnchor, anchorValue" --> CV["qnt:ContextValue<br/>a role"]
+    RC -- "anchor" --> CV
+    OX["ins:OnExpiry"] -- "at" --> CV
+    OE["ins:OnEntry"] -- "ofState" --> ES["bhv:State<br/>an ending state"]
+    ES -- "ends" --> EN["the instrument,<br/>or stated terms"]
+    TM["ins:Term"] -- "survives" --> SV["ins:Survival"]
+    SV -- "survivalPeriod" --> QT["qnt:Quantity"]
+    SV -- "survivesUntil" --> EC["elg:Condition"]
+```
+
 #### At a glance
 
 | Property | Origin | Why this name |
@@ -1093,6 +1142,14 @@ flowchart LR
 | `ins:appliesInState` | "applies only while", "during the notice period" | the states that gate a relation |
 | `ins:arisesOn`, `ins:endsOn` | "arises on", "ends on" | the triggers a relation arises or ends on |
 | `ins:arisesOnBreachOf`, `ins:arisesOnExerciseOf` | "if the Provider fails to", "on exercise of" | short forms for arising on a breach or an exercise |
+| `ins:due` | *falling due*, the time for performance | when an obligation must be performed |
+| `ins:recurrence` | "each month", "on each Quarter Day" | one occasion per period |
+| `ins:window` | "may exercise the option between", "not less than six months before the Break Date" | when a power may be exercised |
+| `ins:dueTolledIn` | *tolling*: "time for payment is extended by any period of" | the states in which a due range stops running |
+| `ins:at` | "on the Expiry Date" | the time at which an expiry falls |
+| `ins:ofState` | "on termination", "on expiry" | the state whose entry a trigger waits for |
+| `ins:ends` | "this Agreement ends", "the Lease shall end" | what entering a state ends |
+| `ins:survives`, `ins:survivalPeriod`, `ins:survivesUntil` | "survives termination", "for five years after", "until" | how long a term continues after its instrument ends |
 
 ### 4.4 Hohfeld's legal relations
 
@@ -1191,8 +1248,40 @@ flowchart TB
 | Status | one value, where an instrument may be in several regimes at once. A regime's state is a `bhv:State` |
 | Suspended, paused (of a period) | a period that stops running is *tolled* (`ins:tolledIn`). `bhv:Suspended` is Behaviour's core occasion state |
 | Event (for a trigger) | names what happened, which the runtime records. What an instrument waits for is a legal trigger |
+| Term (for a duration) | contract English uses "the Term" for an instrument's duration, which collides with `ins:Term`, a provision. This layer writes *duration*, and the instrument's states say whether it is in force (§4.7) |
+| Deadline | a due range (§13.2), which may have a lower bound as well as an upper one |
 | Basis | reserved for the unit an amount applies on (contract amounts) |
 | Binder | a term of art in some domains, with a meaning of its own. What turns stated meaning into bound meaning is **instantiation** |
+
+### 4.7 Time and ending in contract law
+
+Contracts speak about time and ending with words of art, and this layer keeps their senses apart.
+
+| Term | Meaning | In this layer |
+|---|---|---|
+| **time for performance**, **falling due** | when an obligation must be performed. It *falls due* when performance can first be demanded | the due range (§13.2) |
+| **accrual** | a right *accrues* when it comes into existence, which may be before it is payable | arising (§4.2.4), against falling due (§13.2) |
+| **reasonable time** | the time the law implies where a contract fixes none, decided case by case | not modelled, unless the words define it (§13.2) |
+| **commencement**, **the Term** | the date an instrument takes effect, and the period it lasts. "The Term" collides with `ins:Term`, a provision | inception (`ins-voc:Inception`), and the instrument's regime |
+| **expiry**, **effluxion of time** | the natural end of an instrument at the end of its duration | an expiry into an ending state (§14.1) |
+| **termination** | an end brought about earlier, by notice, for breach or on an event. Prospective | entering an ending state (§14.2) |
+| **accrued rights** | rights and liabilities that arose before termination, and survive it | arisen occasions persist (§14.3) |
+| **survival** | a term that continues after termination | `ins:survives` (§14.4) |
+| **renewal**, **evergreen** | an instrument continuing for a further period, or until someone gives notice | a renewing self-transition (§14.6) |
+| **break clause** | a power to end an instrument early, on a date or in a window | a power with a window (§13.3, §14.7) |
+| **long-stop date** | the date by which conditions must be met, failing which the instrument ends | an expiry from a conditional state (§14.7) |
+| **lapse** | an offer or option ending unused at the end of its time | a window that has closed (§13.3) |
+| **rescission**, **frustration** | setting aside from the start, and discharge by impossibility | not modelled (§14.1) |
+
+```mermaid
+flowchart LR
+    C["commencement<br/>inception"] --> F["in force<br/>obligations arise,<br/>fall due, are performed"]
+    F --> E["expiry<br/>by effluxion of time"]
+    F --> T["termination<br/>on notice, for breach,<br/>on an event"]
+    E --> A["after the end<br/>accrued rights persist,<br/>surviving terms continue,<br/>termination duties arise"]
+    T --> A
+    F -. "renewal" .-> F
+```
 
 ## 5. Model Overview
 
@@ -1773,12 +1862,12 @@ ins:Template owl:disjointWith ins:Instrument .
 
 ## 10. Legal Triggers
 
-A legal trigger is what an instrument makes a consequence turn on (§4.2). Each of the five is a
+A legal trigger is what an instrument makes a consequence turn on (§4.2). Each of the six is a
 Behaviour trigger definition with one required value ([ADR-A104](../../docs/architecture/decisions/ADR-A104-instrument-terms-and-legal-relations.md)
-decision 6). Each moves regimes, as the trigger of a regime transition (§11). All but
-`ins:OnExpiry` also mark the moment a relation arises or ends (`ins:arisesOn`, `ins:endsOn`). An
-expiry counts from entering a state, and a relation has no state to enter, so a relation's own
-periods are due ranges (C7b).
+decision 6, and its 2026-10-05 addendum for `ins:OnEntry`). Each moves regimes, as the trigger of a
+regime transition (§11). All but `ins:OnExpiry` also mark the moment a relation arises or ends
+(`ins:arisesOn`, `ins:endsOn`). An expiry counts from entering a state, and a relation has no state
+to enter, so a relation's own periods are due ranges (§13).
 
 | Trigger | Required value | Optional | Kind, fixed by the class |
 |---|---|---|---|
@@ -1786,17 +1875,18 @@ periods are due ranges (C7b).
 | `ins:OnBreach` | exactly one obligation (`ins:ofObligation`) | | `bhv:DerivedTrigger` |
 | `ins:OnAct` | exactly one concept (`ins:activity`) | the parties whose act counts (`ins:by`) | `bhv:ExternalStimulus` |
 | `ins:OnCondition` | exactly one Eligibility condition (`ins:condition`) | | `bhv:DerivedTrigger` |
-| `ins:OnExpiry` | exactly one quantity of time (`ins:after`) | the states in which the period does not run (`ins:tolledIn`) | `bhv:ScheduledTrigger` |
+| `ins:OnExpiry` | exactly one quantity of time (`ins:after`), or one time (`ins:at`) | the states in which the period does not run (`ins:tolledIn`) | `bhv:ScheduledTrigger` |
+| `ins:OnEntry` | exactly one state (`ins:ofState`) | | `bhv:DerivedTrigger` |
 
 **The kind follows from the class.** An exercise and an act come from outside, as a stimulus the
-runtime receives when a party acts. A breach and a condition are derived by the runtime from what
-it already holds. An expiry is scheduled, since the runtime knows in advance when it falls. Each
+runtime receives when a party acts. A breach, a condition and an entry into a state are derived by
+the runtime from what it already holds. An expiry is scheduled, since the runtime knows in advance when it falls. Each
 class therefore fixes its kind as an `owl:hasValue` restriction, and its shape permits only that
 value (§12).
 
 **An expiry** counts its period from entering the state its transition leaves, and fires when the
-period has run. The length is a `qnt:Quantity` in a unit of time, days in the licence (§16.5) and
-business days in the facility (§16.7). Counting business days needs the calendar in force, which a
+period has run. The length is a `qnt:Quantity` in a unit of time, days in the licence (§18.5) and
+business days in the facility (§18.7). Counting business days needs the calendar in force, which a
 conversion context names when the expiry is evaluated (ADR-A94, C12). A length that the instrument
 supplies, such as a notice period set by a variable, is resolved for each instrument at runtime
 (C8).
@@ -1978,7 +2068,7 @@ flowchart LR
 
 **Triggers name stated relations.** A regime's `ins:ofPower` and `ins:ofObligation` name the stated
 relation, and fire on the exercise or breach of any bound relation instantiated from it. In the
-licence (§16.5) the notice trigger names `tmpl:end-on-notice`. Corvid's exercise of
+licence (§18.5) the notice trigger names `tmpl:end-on-notice`. Corvid's exercise of
 `ex:end-on-notice`, the bound power in Fernwood's licence, fires it for that licence. The subject
 is the persistent identity of the instrument in which the bound power's term is bound. A
 per-occasion regime names its stated relation in the same way (§11.4). A bound relation's own
@@ -2011,7 +2101,7 @@ instrument changes often.
 ### 11.2 Kinds of regime
 
 **Period regimes** are entered on a trigger and left at a duration from entry or on an end trigger,
-whichever comes first. The licence's notice regime (§16.5):
+whichever comes first. The licence's notice regime (§18.5):
 
 ```mermaid
 stateDiagram-v2
@@ -2026,7 +2116,7 @@ stateDiagram-v2
 ```
 
 A transition has one source state, so "at any time, for breach" needs a transition from each state
-in which it applies. The facility's cure period (§16.7) is a period regime with a way back, tolled
+in which it applies. The facility's cure period (§18.7) is a period regime with a way back, tolled
 by another regime.
 
 ```mermaid
@@ -2040,7 +2130,7 @@ stateDiagram-v2
     Cure --> InDefault : OnExpiry, 30 business days, tolled while affected
 ```
 
-**Switching regimes** move back and forth. The supply agreement (§16.6) has two on one instrument.
+**Switching regimes** move back and forth. The supply agreement (§18.6) has two on one instrument.
 They are separate regimes, drawn together here, and each is in one state at every moment.
 
 ```mermaid
@@ -2088,7 +2178,7 @@ sketch §6.2).
 3. across regimes, it applies only when every group holds
 4. a composite state holds while any of its descendants is active
 
-The supply agreement's duty to deliver names one state of each of its two regimes (§16.6).
+The supply agreement's duty to deliver names one state of each of its two regimes (§18.6).
 
 ```mermaid
 flowchart LR
@@ -2130,11 +2220,11 @@ A **per-occasion regime** runs once for each occasion of a relation, such as eac
 or each invoice. It names the stated relation, and covers the occasions of every bound relation
 instantiated from it. A relation gated by its state must therefore identify the occasion it
 concerns, and does so by arising on that relation's breach or exercise. In the services agreement
-(§16.8), the exclusion of the customer's power to terminate arises on breach of the service
+(§18.8), the exclusion of the customer's power to terminate arises on breach of the service
 obligation, so for one month's breach its gate reads that month's dispute regime. Where the chain does not reach
 exactly one occasion, the gate is Undetermined (ADR-A106 addendum, decision 9). A relation gated by
 a per-occasion state that arises on no breach or exercise of the relation is rejected at design
-time (§14.2).
+time (§16.2).
 
 ```mermaid
 flowchart LR
@@ -2161,7 +2251,7 @@ a state is a fact about one subject at one time. A state may be a fixed paramete
 ("compare the two licences as they stand during a notice period"), never a variable within one (law
 B8, ADR-A106).
 
-The licence shows the separation (§16.5). The licensee's power to grant sub-licences has an
+The licence shows the separation (§18.5). The licensee's power to grant sub-licences has an
 activity and parties, and its scope never mentions the notice period. The notice period's effect is
 a separate exclusion, gated by the state. Two versions of the licence compare equal on the power's
 terms whatever regime either is in.
@@ -2237,11 +2327,11 @@ tmpl:give-notice a ins:RegimeTransition , bhv:TransitionDefinition ;
     bhv:selectionPolicy bhv:SingleMatch ; bhv:activationPolicy bhv:ImmediateActivation .
 ```
 
-The explicit `bhv:` type is law B4, and a shape requires it (§14.1). The engine matches
+The explicit `bhv:` type is law B4, and a shape requires it (§16.1). The engine matches
 `rdf:type bhv:TransitionDefinition` as written, so a node typed only `ins:RegimeTransition` would be
 invisible to it. Shapes alone do not reveal the gap, because SHACL's `sh:targetClass` and
 `sh:class` follow the `rdfs:subClassOf` triples in the data graph. Validated with this spec, as
-§14.1 requires, a node typed only `ins:RegimeTransition` is selected by Behaviour's shapes, and its
+§16.1 requires, a node typed only `ins:RegimeTransition` is selected by Behaviour's shapes, and its
 missing policies are reported. Validated without the spec, Behaviour's shapes never select the
 node. The B4 shapes therefore check the `rdf:type` triple itself (`sh:path rdf:type ;
 sh:hasValue`), which no subclass axiom satisfies.
@@ -2273,9 +2363,11 @@ The axioms that make this work are on the Instrument classes and properties (§1
 | `ins:OnExercise`, `ins:OnAct` | `rdfs:subClassOf bhv:TriggerDefinition`, `owl:hasValue bhv:ExternalStimulus` on `bhv:triggerKind` | the type, the kind |
 | `ins:OnBreach`, `ins:OnCondition` | the same, with `bhv:DerivedTrigger` | the type, the kind |
 | `ins:OnExpiry` | the same, with `bhv:ScheduledTrigger` | the type, the kind |
+| `ins:OnEntry` | the same, with `bhv:DerivedTrigger` | the type, the kind |
 | `ins:ofPower` | `rdfs:domain ins:OnExercise` | the trigger's class (prp-dom), and from it the type and the kind |
 | `ins:ofObligation` | `rdfs:domain ins:OnBreach` | the same |
 | `ins:tolledIn` | `rdfs:domain ins:OnExpiry` | the same |
+| `ins:ofState` | `rdfs:domain ins:OnEntry` | the same |
 
 Three points of OWL determine the form of these axioms.
 
@@ -2321,7 +2413,7 @@ Two measures address it.
 
 - **Instrument's value shapes** list the one permitted value with `sh:in`, for example `sh:in (
   bhv:SingleMatch )` on a regime transition's selection, and likewise for activation and each
-  trigger kind (§14.1). On the asserted graph they report a wrong value at the node that states it,
+  trigger kind (§16.1). On the asserted graph they report a wrong value at the node that states it,
   in either mode, and allow a value that the reasoner will add to be absent. On the closed graph they report the wrong value at every
   node the merge reached.
 - **Distinct individuals in Behaviour.** `owl:AllDifferent` over the policies and the kinds would let
@@ -2340,7 +2432,442 @@ Two measures address it.
 A value's presence is checked by the minimum counts, Behaviour's for the two policies and
 Instrument's for each trigger's kind, on the graph the engine reads.
 
-## 13. Vocabulary
+## 13. Anchored Time
+
+A contract states times relative to dates that lie in the future when it is signed, some of which depend on events that may never happen: "within 24 hours of becoming aware of the loss", "within 10 Business Days after the end of each month", "not less than six months before the Break Date".
+
+Each is stated once, and resolves to a different date for each instrument and each occasion. This section describes how a clause names such a time, and how an obligation's due range, a power's window and a recurrence are built on it (the [terms in time sketch](../../docs/developer/sketches/terms-in-time.md) Part A, [ADR-A115](../../docs/architecture/decisions/ADR-A115-quantification-context-values.md)).
+
+### 13.1 An anchor and its offsets
+
+An anchored time is a Quantification range set relative to an anchor. The anchor is a `qnt:ContextValue`, a value the evaluation context supplies under a named role. The offsets are quantities with units (hours, days, months or business days), and a negative offset lies before the anchor.
+
+```mermaid
+flowchart LR
+    OB["an obligation"]
+    R["qnt:Range"]
+    AB["qnt:AnchorBinding<br/>offsetKind Absolute"]
+    CV["qnt:ContextValue<br/>contextRole ins-voc:Arising"]
+    LO["qnt:Quantity<br/>0 hours"]
+    UO["qnt:Quantity<br/>24 hours"]
+    OB -- "ins:due" --> R
+    R -- "relativeToAnchor" --> AB
+    AB -- "anchorValue" --> CV
+    AB -- "lowerOffsetBy" --> LO
+    AB -- "upperOffsetBy" --> UO
+```
+
+Instrument binds a baseline of roles to Quantification's role contract (§15):
+
+| Role (`ins-voc:`) | Resolved, for each occasion, to | Used by |
+|---|---|---|
+| `Arising` | the valid time at which the occasion arose (§4.2.4) | "within 24 hours of becoming aware", "within 30 days of each invoice" |
+| `Inception` | the valid time at which the instrument took effect | recurrences "from the Commencement Date" |
+| `Ending` | the valid time at which the instrument entered an ending state (§14) | "within 14 days after termination", survival periods |
+| `PeriodStart`, `PeriodEnd` | the start or end of the recurrence period the occasion belongs to | "in advance on each Quarter Day", "within 10 Business Days after the end of each month" |
+
+A date the wording defines, such as the Expiry Date or a Maturity Date, is also a role, whose value
+comes from the wording's variables, bound for each instrument (C8). Until C8, the examples give such
+dates roles of their own, which are left unbound (§18.10, held design question HQ-4).
+
+A range names its anchor's role, never a date and never the time of evaluation (law I9). One stated
+range therefore serves every instrument, because each instrument resolves the role to its own date.
+The range names no party or role of its own, so a bound relation names its template's range rather
+than a copy of it, just as it names its template's scope condition.
+
+### 13.2 Due ranges
+
+The *time for performance* of an obligation is when it must be performed. An obligation *falls
+due* when performance can first be demanded, and it is late once its time has passed. An
+obligation has at most one due range (`ins:due`), and none where its words fix no time.
+"The Sponsor shall pay the Site the fees set out in Schedule 2" fixes no time, so it has none. The
+law implies a *reasonable time* where a contract fixes none, but what is reasonable is decided case
+by case, and this layer does not model it unless a contract's own words define it. A continuing
+obligation and a prohibition have no due range, because they are kept throughout, not performed by
+a time (law I5).
+
+| Clause | Anchor | `lowerOffsetBy` | `upperOffsetBy` |
+|---|---|---|---|
+| "within 24 hours of becoming aware of it" | `Arising` | 0 hours | 24 hours |
+| "within 30 days of each invoice" | `Arising`, on the act of invoicing | 0 days | 30 days |
+| "within 10 Business Days after the end of each month" | `PeriodEnd` | 0 business days | 10 business days |
+| "in advance on each Quarter Day" | `PeriodStart` | 0 days | 1 day |
+| "within 30 days after this Lease ends" | `Ending` | 0 days | 30 days |
+| "not less than six months before the Expiry Date" | the Expiry Date | none (open) | −6 months |
+
+*Accrual* and falling due are different moments. A duty to pay for goods may arise on delivery, and
+fall due 30 days after the invoice. Arising is when the relation comes into existence for a case
+(§4.2.4), and the due range, often anchored at that arising, is when performance is owed.
+
+```mermaid
+gantt
+    dateFormat YYYY-MM-DD
+    axisFormat %d %b
+    section Occasion of the duty to pay
+    arisen, not yet due             :a1, 2027-03-01, 2027-03-02
+    due range, 30 days              :crit, d1, 2027-03-02, 2027-04-01
+    late, if unpaid                 :done, l1, 2027-04-01, 2027-04-15
+```
+
+### 13.3 Windows on powers and permissions
+
+A *window* is the time in which a power may be exercised or a permission used, such as an option period,
+a break window, the period in which notice of non-renewal may be given. `ins:window` names it, as a
+range anchored in the same way as a due range. An exercise outside the window has no effect (law
+I10). An offer or an option not exercised before its window closes *lapses*. The lapse needs no
+modelling of its own, because once the window has closed the power can no longer be exercised.
+
+A window differs from a scope and from a gate. A scope says which cases a relation covers. A gate
+says in which states of a regime it applies. A window says when, in time, it may be exercised.
+
+The lease's break (§18.10) reads "The Tenant may end this Lease on the Break Date by giving not less
+than six months' notice". Its window has no start, and closes six months before the Break Date.
+
+```mermaid
+gantt
+    dateFormat YYYY-MM-DD
+    axisFormat %b %Y
+    section The break power
+    exercisable, window open        :active, w1, 2031-01-01, 2031-12-24
+    window closed, notice too late  :crit, w2, 2031-12-24, 2032-06-24
+    Break Date                      :milestone, b1, 2032-06-24, 0d
+```
+
+### 13.4 Recurrences
+
+A recurring obligation has one occasion for each period of a recurrence (`ins:recurrence`, a
+`qnt:Recurrence`). The recurrence is anchored at a context value, the instrument's `Inception` for
+"each month from the Commencement Date", or a date the wording defines for "each Quarter Day". Each
+occasion's due range anchors at its own period, through `PeriodStart` or `PeriodEnd`.
+Quantification's recurrence policies apply unchanged, such as `qnt:boundaryDerivation` for a monthly
+recurrence anchored on the 31st, and `qnt:binKeyStrategy`, which gives each period a stable key that
+also identifies the occasion's case.
+
+```mermaid
+gantt
+    dateFormat YYYY-MM-DD
+    axisFormat %d %b
+    section Recurrence, monthly from inception
+    March period                    :p1, 2027-03-01, 2027-04-01
+    April period                    :p2, 2027-04-01, 2027-05-01
+    May period                      :p3, 2027-05-01, 2027-06-01
+    section Due, 10 business days after each period end
+    March report                    :crit, d1, 2027-04-01, 2027-04-15
+    April report                    :crit, d2, 2027-05-01, 2027-05-14
+    May report                      :crit, d3, 2027-06-01, 2027-06-14
+```
+
+A continuing obligation with a recurrence and no due range is tested on each generated date: "the
+Site shall ensure that at least 20 participants are enrolled, tested at the end of each quarter".
+
+### 13.5 Tolling a due range
+
+"Time for payment is extended by any period during which force majeure continues" stops a due
+range's time running, as `ins:tolledIn` stops an expiry period (§10). `ins:dueTolledIn`, on the
+obligation, names the states in which its due range does not run. The range's end moves later by the
+time the subject spends in them (C12).
+
+### 13.6 Resolution at runtime
+
+The evaluation context binds each role for each occasion, from the occasion's arising record, the
+instrument's occupancies, the recurrence bin and the instrument's variable values (C8). The resolved
+range is recorded with the occasion, as derived from the stated range. Its end enters the
+stimulus log as a positioned stimulus, never as a clock read (law I9).
+
+```mermaid
+sequenceDiagram
+    participant S as Stated range
+    participant C as Evaluation context
+    participant O as The occasion
+    S->>C: anchored at role PeriodEnd, 0 to 10 business days
+    C->>C: the occasion's period ends 2027-04-01
+    C->>C: counts 10 business days on the calendar in force (ADR-A94)
+    C->>O: due from 2027-04-01 to 2027-04-15
+    Note over C,O: an unbound role gives Undetermined, naming the role
+```
+
+### 13.7 Held and deferred
+
+Business day conventions, such as rolling a date that falls on a non-business day to the next one,
+and times of day in a zone, such as "by 11:00 a.m. London time", are held until there are business
+continuity examples (CCS held design question HQ-3). A time computed from others, such as "the
+earlier of 30 days after demand and the Expiry Date", waits for the evaluation context, with
+`ins:computedBy`.
+
+```turtle-spec
+ins:due a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:range qnt:Range ;
+	rdfs:comment "The range in which an obligation must be performed." ;
+	fnd:utility "Subject: an obligation that is neither continuing nor a prohibition. Value: at most one range, anchored at a qnt:ContextValue (law I9), with offsets in any unit. None where the words fix no time (law I5). A bound relation names its template's range." .
+
+ins:recurrence a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:range qnt:Recurrence ;
+	rdfs:comment "The recurrence that gives an obligation one occasion per period." ;
+	fnd:utility "Subject: an obligation. Value: one recurrence anchored at a qnt:ContextValue. Each period is an occasion, whose due range may anchor at ins-voc:PeriodStart or ins-voc:PeriodEnd. On a continuing obligation, its periods are test dates." .
+
+ins:window a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:range qnt:Range ;
+	rdfs:comment "The range in which a power may be exercised or a permission used." ;
+	fnd:utility "Subject: a power or a permission. Value: one range anchored at a qnt:ContextValue. An exercise outside it has no effect (law I10). An offer or option lapses when its window closes." .
+
+ins:dueTolledIn a owl:ObjectProperty ;
+	rdfs:range bhv:State ;
+	rdfs:comment "A state in which an obligation's due range does not run." ;
+	fnd:utility "Subject: an obligation with a due range. Value: a state, any number. The due range's end moves later by the time the subject spends in any of them (C12)." .
+```
+
+## 14. Ending
+
+### 14.1 How instruments end
+
+An instrument ends in one of a small number of ways, and the words state which:
+
+| Ending | Example | How the model states it |
+|---|---|---|
+| **expiry** after a duration, by *effluxion of time* | "this Agreement continues for three years from the Commencement Date" | an `ins:OnExpiry` `ins:after` the duration, into an ending state |
+| **expiry** at a date | "the term of this Lease ends on the Expiry Date" | an `ins:OnExpiry` `ins:at` the date |
+| **termination on notice** | "either party may terminate on 90 days' notice" | a notice regime (§11.2) |
+| **renewal** and **evergreen** continuation | "renews for successive one-year periods unless notice of non-renewal is given" | a self-transition that renews, and an expiry when notice was given (§14.6) |
+| **break** | "the Tenant may end this Lease on the Break Date" | a power with a window (§13.3), into a notice period |
+| **termination for breach** | "if the breach is not remedied within 30 days, the other party may terminate" | a power arising on breach, gated by a cure period's expiry (§14.7) |
+| **automatic termination** | "this Agreement terminates automatically if either party becomes insolvent" | an `ins:OnCondition` or `ins:OnAct` straight into the ending state |
+| **discharge by performance** | "terminates once all amounts due have been paid in full" | an `ins:OnCondition` that everything has been performed |
+| **long-stop date** | "if the Conditions are not satisfied by the Long-Stop Date, this Agreement terminates" | a conditional state left at the date (§14.7) |
+| **termination of a part** | "the Sponsor may end the Site's participation" | `ins:ends` naming stated terms, or `ins:endsOn` on one relation (C7a). A party's participation and a section are C7c's and C9's |
+| **termination by agreement** | a release, or a replacing agreement | an amendment or a new instrument (C9) |
+| **rescission** *ab initio*, **frustration** | setting aside for misrepresentation, impossibility | outside this layer: rescission undoes the past, and frustration is a finding about the whole instrument |
+
+The commonest are expiry and termination on notice. *Expiry* is an instrument's natural end at the
+end of its duration. *Termination* is an end brought about earlier, and is prospective. It ends the
+parties' future obligations, and leaves what has already happened in place. *Rescission*
+undoes the instrument from the start, as if it had never been made, and is not modelled here.
+
+### 14.2 Ending is entering a state
+
+An instrument or a term ends when a regime enters a state that ends it. `ins:ends`, on a state of
+a regime, names what entering the state ends, either the instrument as a whole (`ins-voc:TheInstrument`)
+or named stated terms, matched to every bound term instantiated from them. Every ending of §14.1
+that this layer models is a transition into an ending state on a legal trigger.
+
+```mermaid
+flowchart LR
+    T["a legal trigger<br/>an expiry, an exercise,<br/>a condition, an act"]
+    S["an ending state<br/>expired, terminated"]
+    I["the instrument,<br/>or named terms"]
+    T -- "moves the regime into" --> S
+    S -- "ins:ends" --> I
+```
+
+A sixth legal trigger, `ins:OnEntry` (`ins:ofState`), fires when the subject enters a state. A
+relation may arise on it, which is how a contract attaches consequences to termination, and
+another regime may react to it, which is how a run-off period starts on termination.
+
+An expiry at a date uses `ins:at`, a value such as the Expiry Date, in place of `ins:after`. An
+expiry has exactly one of the two.
+
+### 14.3 What ending does
+
+Termination is prospective. On entering an ending state:
+
+- **no new occasion arises** under an ended term, unless the term survives (§14.4)
+- **occasions already arisen persist**. *Accrued rights and liabilities* survive termination (law
+  I3), so an unpaid invoice remains payable, and a breach before termination remains a breach
+- **pending occasions end**. A relation that applied to a case but had not yet arisen for it can no
+  longer arise, so its occasion moves to `bhv:Ended`
+- **relations arising on termination arise**, through an `ins:OnEntry` of the ending state
+
+```mermaid
+stateDiagram-v2
+    state "Live" as Live {
+        state "Pending" as Pending
+        state "Arisen" as Arisen
+        [*] --> Pending
+        Pending --> Arisen : arising
+    }
+    state "Ended" as Ended
+    state "Performed" as Performed
+    state "Breached" as Breached
+    [*] --> Live
+    Pending --> Ended : the instrument ends, the term does not survive
+    Arisen --> Performed : performance, after the end too
+    Arisen --> Breached : breach, after the end too
+```
+
+### 14.4 Survival
+
+*Survival* is the continuing operation of a term after its instrument has ended:
+"confidentiality obligations continue for five years after termination", "clauses 9 and 12 survive
+termination". `ins:survives`, on a stated term, names an `ins:Survival`, with an optional period
+from the ending (`ins:survivalPeriod`) and an optional condition (`ins:survivesUntil`). With
+neither, the term survives without limit. A surviving term goes on giving rise to occasions after
+the ending, until its period or condition ends it. Survival is stated once, on the stated term, and
+each instrument reads it through its bound term's `ins:boundFrom`, as regimes are read.
+
+Arisen occasions need no survival (§14.3). A term whose relations arise on termination survives for
+that purpose without saying so. "Within 14 days after this licence ends, the Licensee shall return
+all materials" could otherwise never arise, and contracts rarely state that such consequences
+survive termination.
+
+```mermaid
+flowchart LR
+    N["notice period<br/>expires"]
+    T["terminated<br/>ins:ends the instrument"]
+    R["return materials<br/>arises, due within 14 days of Ending"]
+    C["confidentiality<br/>survives for five years"]
+    I["the indemnity<br/>survives without limit"]
+    P["an unpaid claim<br/>already arisen, still owed"]
+    N --> T
+    T -- "OnEntry" --> R
+    T -. "survives" .-> C
+    T -. "survives" .-> I
+    T -. "accrued, persists" .-> P
+```
+
+```mermaid
+gantt
+    dateFormat YYYY-MM-DD
+    axisFormat %Y
+    section The licence
+    in force                        :a1, 2027-02-01, 2029-06-01
+    notice period                   :active, a2, 2029-06-01, 2029-08-30
+    section After termination
+    return materials, 14 days       :crit, r1, 2029-08-30, 2029-09-13
+    confidentiality survives        :c1, 2029-08-30, 2034-08-30
+    indemnity survives              :i1, 2029-08-30, 2036-12-31
+```
+
+### 14.5 Expiry and notice
+
+An instrument with a fixed duration expires at its end. One that may also be terminated on notice
+puts both ways out in one regime, because it is in exactly one of the regime's states at a time.
+
+```mermaid
+stateDiagram-v2
+    state "in force" as InForce
+    state "notice period" as Notice
+    state "expired" as Expired
+    state "terminated" as Terminated
+    [*] --> InForce
+    InForce --> Expired : OnExpiry, at the Expiry Date
+    InForce --> Notice : OnExercise, notice to terminate
+    Notice --> Terminated : OnExpiry, 90 days
+    Notice --> Expired : OnExpiry, at the Expiry Date, if it comes first
+```
+
+*Expired* and *terminated* both carry `ins:ends`. Their state kinds tell readers and reports which
+ending occurred.
+
+### 14.6 Renewal and evergreen agreements
+
+A *renewal* continues an instrument for a further period. An *evergreen* or *rolling* agreement
+renews itself until someone gives notice that it should not. The services agreement (§18.12)
+renews each year unless the Customer gives notice of non-renewal in the first half of the current
+period:
+
+```mermaid
+stateDiagram-v2
+    state "period regime" as PR {
+        state "current period" as Current {
+            state "notice open" as Open
+            state "notice closed" as Closed
+            [*] --> Open
+            Open --> Closed : OnExpiry, six months
+        }
+        state "expired" as Expired
+        state YearEnd <<choice>>
+        [*] --> Current
+        Current --> YearEnd : OnExpiry, one year
+        YearEnd --> Current : guard, renewing (re-entered)
+        YearEnd --> Expired : guard, not renewing
+    }
+    state "election regime" as ER {
+        state "renewing" as Renewing
+        state "not renewing" as NotRenewing
+        [*] --> Renewing
+        Renewing --> NotRenewing : OnExercise, notice of non-renewal
+    }
+```
+
+- **The renewal** is an external self-transition (`bhv:External`), so the current period is left
+  and entered again, restarting its year and returning its region to *notice open*.
+- **The notice window** is the region's *notice open* state, and the power to give notice is gated
+  by it and by *renewing*. The window closes six months before the period ends, a time known only
+  from when the period was entered, so it is modelled as a state of the period rather than as an
+  `ins:window`.
+- **Which way the year ends** is chosen by guards on the two transitions, which read the election
+  regime's state (nested states sketch §6.3). The diagram draws the choice as a diamond. The data
+  has no such node: Behaviour has no pseudo-states, so it is two transitions on one expiry, each
+  with its guard.
+
+### 14.7 Breaks, breach and long-stop dates
+
+A **break** is a power with a window (§13.3) whose exercise starts a notice period, which ends in
+*terminated* at the Break Date. **Termination for breach** follows a cure period where a breach can
+be remedied. The power to terminate is gated by the default state that the cure period's expiry
+enters (§18.7), and its exercise is a transition straight into *terminated*. Where the breach
+cannot be remedied, the power arises on the breach itself. An instrument whose obligations wait on
+conditions starts in a conditional state, left for *in force* when the conditions are satisfied,
+or for *terminated* at the *long-stop date*.
+
+```mermaid
+stateDiagram-v2
+    state "conditional" as Conditional
+    state "in force" as InForce
+    state "break notice" as Break
+    state "terminated" as Terminated
+    [*] --> Conditional
+    Conditional --> InForce : OnCondition, conditions satisfied
+    Conditional --> Terminated : OnExpiry, at the Long-Stop Date
+    InForce --> Break : OnExercise, the break, in its window
+    Break --> Terminated : OnExpiry, at the Break Date
+```
+
+When the instrument as a whole takes effect only on conditions, that is `ins:takesEffectWhen`
+(C9).
+
+```turtle-spec
+ins:OnEntry a owl:Class ;
+	rdfs:subClassOf bhv:TriggerDefinition ,
+		[ a owl:Restriction ; owl:onProperty bhv:triggerKind ; owl:hasValue bhv:DerivedTrigger ] ;
+	rdfs:comment "A legal trigger: the subject entering a state." ;
+	fnd:utility "Subject: a trigger. Names exactly one state (ins:ofState), and fires when the subject enters it: on termination, on expiry, on entering a run-off. Its kind is bhv:DerivedTrigger. Assert bhv:TriggerDefinition and the kind where no reasoner runs (§12)." .
+
+ins:ofState a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain ins:OnEntry ;
+	rdfs:range bhv:State ;
+	rdfs:comment "The state whose entry a trigger waits for." ;
+	fnd:utility "Subject: an ins:OnEntry, which the domain lets a reasoner infer (§12). Value: exactly one state of a regime." .
+
+ins:at a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:range qnt:Value ;
+	rdfs:comment "The time at which an expiry falls." ;
+	fnd:utility "Subject: an ins:OnExpiry, in place of ins:after. Value: one value, typically a qnt:ContextValue such as the Expiry Date. An expiry has exactly one of ins:at and ins:after." .
+
+ins:ends a owl:ObjectProperty ;
+	rdfs:comment "What entering a state ends." ;
+	fnd:utility "Subject: a state of a regime. Value: ins-voc:TheInstrument, the instrument as a whole, or a stated term, matched to every bound term instantiated from it. Any number. Once the state is entered, no new occasion arises under what it ends, unless a term survives (§14.3)." .
+
+ins:Survival a owl:Class ;
+	rdfs:comment "How long a term continues to operate after its instrument ends." ;
+	fnd:utility "Subject: a survival. An optional period from the ending (ins:survivalPeriod) and an optional condition (ins:survivesUntil). With neither, the term survives without limit." .
+
+ins:survives a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:range ins:Survival ;
+	rdfs:comment "The survival of a term after its instrument ends." ;
+	fnd:utility "Subject: a stated term. Value: one survival. Read for each instrument through the bound term's ins:boundFrom. A term whose relations arise on entering an ending state survives for that purpose without it." .
+
+ins:survivalPeriod a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:range qnt:Quantity ;
+	rdfs:comment "How long a term survives after its instrument ends." ;
+	fnd:utility "Subject: a survival. Value: one quantity of time, counted from the ending (ins-voc:Ending)." .
+
+ins:survivesUntil a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:range elg:Condition ;
+	rdfs:comment "The condition until which a term survives." ;
+	fnd:utility "Subject: a survival. Value: one Eligibility condition. The term stops surviving when it comes to hold." .
+```
+
+## 15. Vocabulary
 
 The activity scheme follows Wording's element types (C3-Q1): `ins-voc:ActivityContract` constrains
 `ins:activity`, with a baseline scheme bound as fallback that a deployment may extend or replace.
@@ -2348,7 +2875,9 @@ The location contract has no baseline: a deployment binds its own territory or s
 state kind scheme follows the activity scheme. `ins-voc:StateKindContract` constrains
 `ins:stateKind`, with a baseline of the kinds the examples use. `ins-voc:Suspended` is a kind of
 regime state, the state of an instrument whose performance is suspended, and is distinct from
-Behaviour's core occasion state `bhv:Suspended`.
+Behaviour's core occasion state `bhv:Suspended`. The context roles of anchored time (§13.1) are a
+baseline scheme bound to Quantification's role contract, and `ins-voc:TheInstrument` names the
+instrument as a whole as a value of `ins:ends` (§14.2).
 
 ```turtle-vocab
 @prefix ins:     <https://www.nebularis.org/neuro-semantic/lattice/instrument#> .
@@ -2363,8 +2892,8 @@ Behaviour's core occasion state `bhv:Suspended`.
 
 <https://www.nebularis.org/neuro-semantic/instrument-vocab>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/instrument-vocab/0.10.0> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.10.0> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/instrument-vocab/0.11.0> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.11.0> .
 
 ins-voc:ActivityContract a voc:SchemeContract ;
 	fnd:hasIdentity ins-voc:ActivityContract-identity ;
@@ -2427,6 +2956,24 @@ ins-voc:ProvideService a skos:Concept ; skos:inScheme ins-voc:Activities ;
 ins-voc:Dispute a skos:Concept ; skos:inScheme ins-voc:Activities ;
 	skos:prefLabel "Dispute"@en ; skos:definition "Contest a claim, report or assertion another party has made."@en .
 
+ins-voc:Pay a skos:Concept ; skos:inScheme ins-voc:Activities ;
+	skos:prefLabel "Pay"@en ; skos:definition "Pay money owed to another party."@en .
+
+ins-voc:Report a skos:Concept ; skos:inScheme ins-voc:Activities ;
+	skos:prefLabel "Report"@en ; skos:definition "Deliver a report to another party."@en .
+
+ins-voc:ReturnMaterials a skos:Concept ; skos:inScheme ins-voc:Activities ;
+	skos:prefLabel "Return materials"@en ; skos:definition "Return another party's materials or property."@en .
+
+ins-voc:Disclose a skos:Concept ; skos:inScheme ins-voc:Activities ;
+	skos:prefLabel "Disclose"@en ; skos:definition "Make information known to a third party."@en .
+
+ins-voc:Indemnify a skos:Concept ; skos:inScheme ins-voc:Activities ;
+	skos:prefLabel "Indemnify"@en ; skos:definition "Make good another party's loss arising from a stated cause."@en .
+
+ins-voc:DeclineRenewal a skos:Concept ; skos:inScheme ins-voc:Activities ;
+	skos:prefLabel "Decline renewal"@en ; skos:definition "Give notice that an instrument shall not renew."@en .
+
 ins:InstrumentTarget a bhv:TargetKind ;
 	rdfs:comment "A Behaviour effect's target kind for an instrument." ;
 	fnd:utility "Declared here, since Behaviour no longer names Instrument (ADR-A106). Behaviour's bhv:InstrumentTarget is deprecated in its favour." .
@@ -2470,17 +3017,59 @@ ins-voc:Disputed a skos:Concept ; skos:inScheme ins-voc:StateKinds ;
 	skos:prefLabel "Disputed"@en ; skos:definition "A claim, report or assertion has been disputed, and the dispute is not settled."@en .
 
 ins-voc:Terminated a skos:Concept ; skos:inScheme ins-voc:StateKinds ;
-	skos:prefLabel "Terminated"@en ; skos:definition "The instrument, or the arrangement the regime governs, has ended."@en .
+	skos:prefLabel "Terminated"@en ; skos:definition "The instrument, or the arrangement the regime governs, has ended before its natural end."@en .
+
+ins-voc:Expired a skos:Concept ; skos:inScheme ins-voc:StateKinds ;
+	skos:prefLabel "Expired"@en ; skos:definition "The instrument has come to its natural end, by effluxion of time."@en .
 ```
 
-## 14. Shapes
+The context roles, and the instrument as a whole:
 
-### 14.1 Structural shapes (SHACL Core)
+```turtle-vocab
+@prefix qnt:     <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+
+ins-voc:ContextRoles a voc:ConceptScheme ;
+	fnd:hasIdentity ins-voc:ContextRoles-identity ;
+	fnd:hasGovernanceState fnd:Active ;
+	skos:prefLabel "Instrument context roles"@en ;
+	skos:definition "Named times that an evaluation context supplies for an instrument or an occasion (§13.1). A baseline: a date the wording defines is a role bound from its variable (C8)."@en .
+
+ins-voc:ContextRolesBinding a voc:SchemeBinding ;
+	voc:forContract qnt:ContextRoleContract ;
+	voc:bindsScheme ins-voc:ContextRoles ;
+	fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2026-10-05T00:00:00Z"^^xsd:dateTime ] .
+
+ins-voc:Arising a skos:Concept ; skos:inScheme ins-voc:ContextRoles ;
+	skos:prefLabel "Arising"@en ; skos:definition "The valid time at which the occasion arose."@en .
+
+ins-voc:Inception a skos:Concept ; skos:inScheme ins-voc:ContextRoles ;
+	skos:prefLabel "Inception"@en ; skos:definition "The valid time at which the instrument took effect."@en .
+
+ins-voc:Ending a skos:Concept ; skos:inScheme ins-voc:ContextRoles ;
+	skos:prefLabel "Ending"@en ; skos:definition "The valid time at which the instrument entered an ending state."@en .
+
+ins-voc:PeriodStart a skos:Concept ; skos:inScheme ins-voc:ContextRoles ;
+	skos:prefLabel "Period start"@en ; skos:definition "The start of the recurrence period the occasion belongs to."@en .
+
+ins-voc:PeriodEnd a skos:Concept ; skos:inScheme ins-voc:ContextRoles ;
+	skos:prefLabel "Period end"@en ; skos:definition "The end of the recurrence period the occasion belongs to."@en .
+
+ins-voc:TheInstrument a skos:Concept ;
+	skos:prefLabel "The instrument"@en ;
+	skos:definition "The instrument as a whole, as a value of ins:ends: entering the state ends every term not surviving it."@en .
+```
+
+## 16. Shapes
+
+### 16.1 Structural shapes (SHACL Core)
 
 Each property's subject and value, a relation's single term, its required content per class, the
 two tiers (law I2) and what each names (law I13). For regimes, they check a regime's term, its
 explicit Behaviour types (law B4), each trigger's one required value, the fixed values of §12 as
-`sh:in` shapes, and what may be gated or arise. Validate data with this spec, so that subclasses are known,
+`sh:in` shapes, and what may be gated or arise. For terms in time, they check due ranges (law I5),
+windows and recurrences and their anchors (law I9), ending states, `ins:OnEntry`, an expiry's
+length or time, and survival. Validate data with this spec, so that subclasses are known,
 and validate the graph the engine reads (§12.3).
 
 ```turtle-shapes
@@ -2494,6 +3083,7 @@ and validate the graph the engine reads (§12.3).
 @prefix qnt:  <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
 @prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix ins-voc: <https://www.nebularis.org/neuro-semantic/lattice/instrument/vocab#> .
 
 ins:InstrumentShape a sh:NodeShape ;
 	sh:targetClass ins:Instrument ;
@@ -2647,7 +3237,7 @@ ins:RegimeTypeShape a sh:NodeShape ;
 ins:RegimeTransitionShape a sh:NodeShape ;
 	sh:targetClass ins:RegimeTransition ;
 	sh:property [ sh:path bhv:hasTrigger ;
-		sh:or ( [ sh:class ins:OnExercise ] [ sh:class ins:OnBreach ] [ sh:class ins:OnAct ] [ sh:class ins:OnCondition ] [ sh:class ins:OnExpiry ] ) ;
+		sh:or ( [ sh:class ins:OnExercise ] [ sh:class ins:OnBreach ] [ sh:class ins:OnAct ] [ sh:class ins:OnCondition ] [ sh:class ins:OnExpiry ] [ sh:class ins:OnEntry ] ) ;
 		sh:message "A regime transition's triggers are legal triggers." ] ;
 	sh:property [ sh:path bhv:selectionPolicy ; sh:in ( bhv:SingleMatch ) ;
 		sh:message "A regime transition's selection policy is bhv:SingleMatch, fixed (ADR-A104 decision 7). A reasoner adds it where none is stated (§12)." ] ;
@@ -2660,7 +3250,7 @@ ins:RegimeTransitionTypeShape a sh:NodeShape ;
 		sh:message "A regime transition is also typed bhv:TransitionDefinition in the graph the engine reads: assert it where no reasoner runs (law B4, §12)." ] .
 
 ins:LegalTriggerTypeShape a sh:NodeShape ;
-	sh:targetClass ins:OnExercise , ins:OnBreach , ins:OnAct , ins:OnCondition , ins:OnExpiry ;
+	sh:targetClass ins:OnExercise , ins:OnBreach , ins:OnAct , ins:OnCondition , ins:OnExpiry , ins:OnEntry ;
 	sh:property [ sh:path rdf:type ; sh:hasValue bhv:TriggerDefinition ;
 		sh:message "A legal trigger is also typed bhv:TriggerDefinition in the graph the engine reads: assert it where no reasoner runs (law B4, §12)." ] .
 
@@ -2697,8 +3287,12 @@ ins:OnConditionShape a sh:NodeShape ;
 
 ins:OnExpiryShape a sh:NodeShape ;
 	sh:targetClass ins:OnExpiry ;
-	sh:property [ sh:path ins:after ; sh:minCount 1 ; sh:maxCount 1 ; sh:class qnt:Quantity ;
-		sh:message "An expiry trigger states exactly one length (ins:after), a quantity of time." ] ;
+	sh:property [ sh:path ins:after ; sh:maxCount 1 ; sh:class qnt:Quantity ;
+		sh:message "An expiry trigger's length (ins:after) is one quantity of time." ] ;
+	sh:property [ sh:path ins:at ; sh:maxCount 1 ; sh:class qnt:Value ;
+		sh:message "An expiry trigger's time (ins:at) is one value." ] ;
+	sh:xone ( [ sh:property [ sh:path ins:after ; sh:minCount 1 ] ] [ sh:property [ sh:path ins:at ; sh:minCount 1 ] ] ) ;
+	sh:message "An expiry trigger states exactly one of a length (ins:after) and a time (ins:at)." ;
 	sh:property [ sh:path ins:tolledIn ; sh:class bhv:State ;
 		sh:message "An expiry period is tolled in states." ] ;
 	sh:property [ sh:path bhv:triggerKind ; sh:minCount 1 ; sh:in ( bhv:ScheduledTrigger ) ;
@@ -2723,8 +3317,8 @@ ins:ArisingShape a sh:NodeShape ;
 	sh:class ins:LegalRelation ;
 	sh:message "Only a legal relation arises or ends on a trigger." ;
 	sh:property [ sh:path [ sh:alternativePath ( ins:arisesOn ins:endsOn ) ] ;
-		sh:or ( [ sh:class ins:OnExercise ] [ sh:class ins:OnBreach ] [ sh:class ins:OnAct ] [ sh:class ins:OnCondition ] ) ;
-		sh:message "A relation arises or ends on an exercise, a breach, an act or a condition. An expiry counts from entering a state, so it moves only regimes: a relation's own periods are due ranges (C7b)." ] ;
+		sh:or ( [ sh:class ins:OnExercise ] [ sh:class ins:OnBreach ] [ sh:class ins:OnAct ] [ sh:class ins:OnCondition ] [ sh:class ins:OnEntry ] ) ;
+		sh:message "A relation arises or ends on an exercise, a breach, an act, a condition or an entry into a state. An expiry counts from entering a state, so it moves only regimes: a relation's own periods are due ranges (§13)." ] ;
 	sh:property [ sh:path ins:arisesOnBreachOf ; sh:class ins:Obligation ;
 		sh:message "A relation arises on the breach of an obligation." ] ;
 	sh:property [ sh:path ins:arisesOnExerciseOf ; sh:class ins:Power ;
@@ -2739,9 +3333,73 @@ ins:ArisingTierShape a sh:NodeShape ;
 		[ sh:not [ sh:class ins:Template ] ;
 		  sh:property [ sh:path [ sh:alternativePath ( ins:arisesOnBreachOf ins:arisesOnExerciseOf ) ] ; sh:not [ sh:class ins:Template ] ] ]
 	) .
+
+ins:OnEntryShape a sh:NodeShape ;
+	sh:targetClass ins:OnEntry ;
+	sh:property [ sh:path ins:ofState ; sh:minCount 1 ; sh:maxCount 1 ; sh:class bhv:State ;
+		sh:message "An entry trigger names exactly one state (ins:ofState)." ] ;
+	sh:property [ sh:path bhv:triggerKind ; sh:minCount 1 ; sh:in ( bhv:DerivedTrigger ) ;
+		sh:message "An entry trigger's kind is bhv:DerivedTrigger, fixed. Assert it where no reasoner runs (§12)." ] .
+
+ins:DueShape a sh:NodeShape ;
+	sh:targetSubjectsOf ins:due ;
+	sh:class ins:Obligation ;
+	sh:not [ sh:or ( [ sh:class ins:ContinuingObligation ] [ sh:class ins:Prohibition ] ) ] ;
+	sh:message "Only an obligation that is neither continuing nor a prohibition has a due range (law I5)." ;
+	sh:property [ sh:path ins:due ; sh:maxCount 1 ; sh:class qnt:Range ;
+		sh:message "An obligation has at most one due range, a range (law I5)." ] ;
+	sh:property [ sh:path ( ins:due qnt:relativeToAnchor qnt:anchorValue ) ; sh:minCount 1 ; sh:class qnt:ContextValue ;
+		sh:message "A due range is anchored at a named time, a qnt:ContextValue, never at a fixed date or at evaluation time (law I9)." ] ;
+	sh:property [ sh:path ins:dueTolledIn ; sh:class bhv:State ;
+		sh:message "A due range is tolled in states." ] .
+
+ins:DueTolledInShape a sh:NodeShape ;
+	sh:targetSubjectsOf ins:dueTolledIn ;
+	sh:property [ sh:path ins:due ; sh:minCount 1 ;
+		sh:message "Only an obligation with a due range has its due range tolled." ] .
+
+ins:WindowShape a sh:NodeShape ;
+	sh:targetSubjectsOf ins:window ;
+	sh:or ( [ sh:class ins:Power ] [ sh:class ins:Permission ] ) ;
+	sh:message "Only a power or a permission has a window." ;
+	sh:property [ sh:path ins:window ; sh:maxCount 1 ; sh:class qnt:Range ;
+		sh:message "A relation has at most one window, a range." ] ;
+	sh:property [ sh:path ( ins:window qnt:relativeToAnchor qnt:anchorValue ) ; sh:minCount 1 ; sh:class qnt:ContextValue ;
+		sh:message "A window is anchored at a named time, a qnt:ContextValue (law I9)." ] .
+
+ins:RecurrenceShape a sh:NodeShape ;
+	sh:targetSubjectsOf ins:recurrence ;
+	sh:class ins:Obligation ;
+	sh:message "Only an obligation recurs." ;
+	sh:property [ sh:path ins:recurrence ; sh:maxCount 1 ; sh:class qnt:Recurrence ;
+		sh:message "An obligation has at most one recurrence." ] ;
+	sh:property [ sh:path ( ins:recurrence qnt:anchor ) ; sh:minCount 1 ; sh:class qnt:ContextValue ;
+		sh:message "A recurrence is anchored at a named time, a qnt:ContextValue (law I9)." ] .
+
+ins:EndsShape a sh:NodeShape ;
+	sh:targetSubjectsOf ins:ends ;
+	sh:class bhv:State ;
+	sh:message "Only a state ends an instrument or terms, when it is entered (§14.2)." ;
+	sh:property [ sh:path ins:ends ;
+		sh:or ( [ sh:in ( ins-voc:TheInstrument ) ] [ sh:and ( [ sh:class ins:Term ] [ sh:class ins:Template ] ) ] ) ;
+		sh:message "A state ends the instrument (ins-voc:TheInstrument) or stated terms." ] .
+
+ins:SurvivalShape a sh:NodeShape ;
+	sh:targetSubjectsOf ins:survives ;
+	sh:and ( [ sh:class ins:Term ] [ sh:class ins:Template ] ) ;
+	sh:message "Only a stated term survives: survival is read for each instrument through its bound terms (§14.4)." ;
+	sh:property [ sh:path ins:survives ; sh:maxCount 1 ; sh:class ins:Survival ;
+		sh:message "A term has at most one survival." ] .
+
+ins:SurvivalDetailShape a sh:NodeShape ;
+	sh:targetClass ins:Survival ;
+	sh:property [ sh:path ins:survivalPeriod ; sh:maxCount 1 ; sh:class qnt:Quantity ;
+		sh:message "A survival period is one quantity of time." ] ;
+	sh:property [ sh:path ins:survivesUntil ; sh:maxCount 1 ; sh:class elg:Condition ;
+		sh:message "A survival lasts until at most one Eligibility condition." ] .
 ```
 
-### 14.2 Constraint shapes (SHACL-SPARQL)
+### 16.2 Constraint shapes (SHACL-SPARQL)
 
 Supersession within one identity, and law I8: an exception's holder is the party the excepted
 relation binds, and a permission permits the act the prohibition forbids. For regimes, they check
@@ -2878,6 +3536,24 @@ ins:PerOccasionGateShape a sh:NodeShape ;
 		"""
 	] .
 
+ins:EndingStateShape a sh:NodeShape ;
+	sh:targetSubjectsOf ins:ends ;
+	sh:sparql [
+		sh:message "{$this} ends something, but is not a state of an ins:Regime (§14.2)." ;
+		sh:select """
+			PREFIX ins:  <https://www.nebularis.org/neuro-semantic/lattice/instrument#>
+			PREFIX bhv:  <https://www.nebularis.org/neuro-semantic/lattice/behaviour#>
+			PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+			PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+			SELECT $this WHERE {
+				FILTER NOT EXISTS {
+					$this bhv:inStateSpace/(bhv:regionOf/bhv:inStateSpace)* ?regime .
+					?regime rdf:type/rdfs:subClassOf* ins:Regime .
+				}
+			}
+		"""
+	] .
+
 ins:TollingShape a sh:NodeShape ;
 	sh:targetSubjectsOf ins:tolledIn ;
 	sh:sparql [
@@ -2895,7 +3571,7 @@ ins:TollingShape a sh:NodeShape ;
 	] .
 ```
 
-### 14.3 Optional: one expression per term
+### 16.3 Optional: one expression per term
 
 Load only where every stated term is expressed in one element version. A term may otherwise be
 expressed again in another language or a consolidated text (ADR-A96).
@@ -2913,14 +3589,17 @@ ins:SingleExpressionShape a sh:NodeShape ;
 		sh:message "This deployment expresses each term in one element version only (ADR-A96)." ] .
 ```
 
-## 15. Laws
+## 17. Laws
 
 | Law | Statement | Register in 0.10.0 |
 |---|---|---|
 | I1 | An instrument version is expressed in exactly one assembled wording | `ins:InstrumentShape` |
 | I2 | A stated term is part of exactly one element version. A bound term is part of exactly one instrument version, bound from exactly one stated term or implied by a source. A relation belongs to its term | `ins:TermShape`, `ins:LegalRelationShape`, `ins:RelationTierShape` |
+| I3 | A relation arises under exactly one term. Once arisen, an occasion persists until performed, breached or ended, and survives its instrument's termination as an accrued right. A pending occasion ends with its term, unless the term survives | `ins:SurvivalShape`. Evaluated by C12 |
+| I5 | An obligation has at most one due range, and a continuing obligation or a prohibition none (C7b-Q2) | `ins:DueShape` |
 | I8 | A permission's holder is the excepted prohibition's obligor, with the same activity. An exclusion's holder is the excepted obligation's obligor or the power's counterparty | `ins:PermissionExceptsOwnProhibitionShape`, `ins:ExclusionHolderShape` |
 | I13 | Stated meaning names roles, bound meaning occupancies and groups. Only bound relations are evaluated. A regime is stated only, read as stated for each subject (C7a-Q1) | `ins:RelationTierShape`, `ins:ArisingTierShape`, `ins:RegimeShape` |
+| I9 | A due range, a window and a recurrence are anchored at a named time, never at evaluation time | `ins:DueShape`, `ins:WindowShape`, `ins:RecurrenceShape` |
 | I18 | No term or relation is a version: meaning changes only with its owner | disjointness with `fnd:Version`, `ins:LegalRelationShape` |
 | B4 (Behaviour's) | Every Instrument specialisation of a Behaviour term carries the Behaviour type in the graph the engine reads | `ins:RegimeTypeShape`, `ins:RegimeTransitionTypeShape`, `ins:LegalTriggerTypeShape` |
 
@@ -2931,17 +3610,17 @@ transitions are regime transitions with legal triggers and the fixed engine sett
 occasion (`ins:PerOccasionGateShape`), and tolling (`ins:TollingShape`). The gating rule itself,
 per-occasion resolution and tolling are evaluated by C12 and C13.
 
-Laws I3 to I7, I9 to I12 and I14 to I17 arrive with the slices that build their terms. I6, the
-acyclic graph of breach, exercise and state reading, is checked once C7b's due ranges and C13's
-state reading exist.
+Laws I4, I6, I7, I10 to I12 and I14 to I17 arrive with the slices that build their terms. I6, the
+acyclic graph of breach, exercise and state reading, is checked once C13's state reading exists.
 
-## 16. Worked Examples
+## 18. Worked Examples
 
-Eight instruments in [`examples/`](examples/), each with a small wording of its own, its clauses'
-stated meaning, and the bound meaning of one instrument. The last four state regimes. Each is
-validated with the lower layers' shapes and these, without a reasoner.
+Twelve instruments in [`examples/`](examples/), each with a small wording of its own, its clauses'
+stated meaning, and the bound meaning of one instrument. §18.5 to §18.8 state regimes, and §18.9
+to §18.12 terms in time. Each is validated with the lower layers' shapes and these, without a
+reasoner.
 
-### 16.1 A facility agreement
+### 18.1 A facility agreement
 
 [`facility-agreement.ttl`](examples/facility-agreement.ttl). A borrower and two lenders, 60% and 40%.
 
@@ -2972,10 +3651,10 @@ What it shows: term 8.1 gives rise to two relations, the negative pledge and the
 excepting it. Repayment is owed to a group severally, under `pty:SeveralOnly`. The leverage
 covenant is owed also to a security trustee who is no party to the agreement, so it is an obligee
 and not in `ins:party`. The facility's agreement number and market reference are natural keys on
-its persistent identity. Acceleration gated by an event of default is the facility of §16.7. The
+its persistent identity. Acceleration gated by an event of default is the facility of §18.7. The
 consent rule for a group's power is C9's.
 
-### 16.2 A clinical trial protocol
+### 18.2 A clinical trial protocol
 
 [`trial-protocol.ttl`](examples/trial-protocol.ttl). A sponsor and site 104's investigator.
 
@@ -2999,7 +3678,7 @@ What it shows: law I8, where the waiver's holder is the prohibition's obligor, w
 activity, `Enrol`. The prohibition's scope says whom it forbids enrolling, and the waiver's scope
 when it permits it. The reporting deadline is a due range (C7b).
 
-### 16.3 A product warranty
+### 18.3 A product warranty
 
 [`product-warranty.ttl`](examples/product-warranty.ttl). A manufacturer and whoever owns the kettle.
 
@@ -3021,7 +3700,7 @@ Its carve-back is a negated member of its scope ("misuse, unless a manufacturing
 owner is a contingent occupancy: whoever owns the kettle when a claim is made fills it, as C7b
 decides.
 
-### 16.4 A software licence
+### 18.4 A software licence
 
 [`software-licence.ttl`](examples/software-licence.ttl). A licensor and a licensee.
 
@@ -3042,7 +3721,7 @@ power's activity is plain `Terminate`, its scope "without cause". Party details 
 occupancies. The grant of use is not modelled: a permission excepts a prohibition, and a bare
 licence to use has none to except.
 
-### 16.5 A licence with a notice period
+### 18.5 A licence with a notice period
 
 [`licence-notice.ttl`](examples/licence-notice.ttl). A licensor and a licensee. A period regime.
 
@@ -3075,7 +3754,7 @@ the licensor as the power's counterparty (I8), and gated by the notice period. T
 scope never mentions the regime (DP6, §11.5). The 90 days are a quantity in a day unit, on a
 duration space that the example declares.
 
-### 16.6 A supply agreement with suspension and force majeure
+### 18.6 A supply agreement with suspension and force majeure
 
 [`supply-suspension.ttl`](examples/supply-suspension.ttl). A supplier and a buyer. Two switching
 regimes on one instrument.
@@ -3112,7 +3791,7 @@ is a suspension to end.
 Clause 14.1 states no relation of its own, only its regime, so its term binds nothing (ADR-A104
 2026-10-04 addendum, decision 1). The unaffected state has no kind.
 
-### 16.7 A facility with a cure period
+### 18.7 A facility with a cure period
 
 [`facility-cure-period.ttl`](examples/facility-cure-period.ttl). A lender and a borrower. A period
 regime entered and left on conditions, tolled by a second regime.
@@ -3134,7 +3813,7 @@ maintains. Default follows the expiry of 30 business days, a `qnt:CalendarUnit`,
 the force majeure regime is unaffected (`ins:tolledIn`, §10). The power to accelerate is gated by
 the default state. Clauses 22.1 and 22.2 state only regimes, so their terms bind nothing.
 
-### 16.8 A services agreement with a dispute per occasion
+### 18.8 A services agreement with a dispute per occasion
 
 [`service-dispute.ttl`](examples/service-dispute.ttl). A provider and a customer. A per-occasion
 regime.
@@ -3157,9 +3836,106 @@ month's breach, the gate reads that month's dispute regime (§11.4). Raising a d
 `ins:OnAct` naming the act and the party (`ins:by`). Its activity uses the same property as a
 relation (C7a-Q2).
 
-## 17. Release Notes
+### 18.9 A trial agreement's reporting duties
+
+[`trial-reporting.ttl`](examples/trial-reporting.ttl). A sponsor, a site and an investigator. Three
+ways of fixing a time, and one duty that fixes none.
+
+```mermaid
+flowchart LR
+    SAE["report each serious adverse event<br/>ins:Obligation"]
+    MR["monthly safety report<br/>ins:Obligation"]
+    EN["at least 20 enrolled<br/>ins:ContinuingObligation"]
+    PF["pay the fees<br/>ins:Obligation"]
+    D1["due: 0 to 24 hours<br/>from Arising"]
+    D2["due: 0 to 10 business days<br/>from PeriodEnd"]
+    R1["each month from Inception"]
+    R2["each quarter from Inception<br/>test dates"]
+    SAE -- "due" --> D1
+    MR -- "due" --> D2
+    MR -- "recurrence" --> R1
+    EN -- "recurrence" --> R2
+    PF -. "no due range" .-> X["no time fixed"]
+```
+
+The example shows a due range anchored at each occasion's arising, a monthly recurrence with a due
+range in business days from each period's end, and a continuing obligation tested at the end of
+each quarter, with a recurrence and no due range (law I5). The Sponsor's duty to pay the fees
+fixes no time, so it has no due range, and it can never be found late. The stated and the bound
+relations name the same ranges and recurrences, as they name the same scope conditions.
+
+### 18.10 A lease with an Expiry Date and a break
+
+[`lease-expiry.ttl`](examples/lease-expiry.ttl). A landlord and a tenant.
+
+```mermaid
+stateDiagram-v2
+    state "in force" as InForce
+    state "break notice" as Break
+    state "expired" as Expired
+    state "terminated" as Terminated
+    [*] --> InForce
+    InForce --> Expired : OnExpiry, at the Expiry Date
+    InForce --> Break : OnExercise, the break, in its window
+    Break --> Terminated : OnExpiry, at the Break Date
+```
+
+The example shows an expiry at a date the wording defines (`ins:at`), a break exercisable only in
+a window that closes six months before the Break Date (`ins:window`, an upper offset of −6 months),
+and rent due on each Quarter Day (a recurrence, with a due range of one day from each period's
+start). *Expired* and *terminated* both end the instrument (`ins:ends`). The deposit is repaid
+within 30 days after the lease ends, whichever way it ends. Its obligation arises on an
+`ins:OnEntry` of either state, as alternatives, and its due range anchors at `Ending`. Its term
+survives for that purpose without saying so (§14.4). The Expiry Date, the Break Date and the first
+Quarter Day are the example's own roles, and are left unbound. Instrument's baseline is already
+bound to the role contract, and a contract resolves to one scheme (held design question HQ-4). C8
+binds such dates from the wording's variables.
+
+### 18.11 A licence's termination and survival
+
+[`licence-survival.ttl`](examples/licence-survival.ttl). A licensor and a licensee.
+
+```mermaid
+flowchart LR
+    NR["notice regime"] --> T["terminated<br/>ins:ends the instrument"]
+    T -- "OnEntry" --> RM["return materials<br/>due within 14 days of Ending"]
+    T -. "survives five years" .-> CF["no disclosure<br/>ins:Prohibition"]
+    T -. "survives without limit" .-> IN["indemnify against claims<br/>ins:Obligation"]
+```
+
+The example shows ending as entering the notice regime's *terminated* state, a duty to return
+materials arising on termination, a prohibition on disclosure whose term survives for five years
+(`ins:survivalPeriod`), and an indemnity whose term survives without limit (an empty
+`ins:Survival`). An indemnity claim made before termination is an arisen occasion, and persists
+whatever the survival says (§14.3). Survival is stated on the stated terms only.
+
+### 18.12 An evergreen services agreement
+
+[`service-renewal.ttl`](examples/service-renewal.ttl). A provider and a customer. The state diagram
+is §14.6's.
+
+The example shows renewal as an external self-transition of the current period, a notice window as
+a region of each period that restarts on renewal, an election regime recording the customer's
+notice of non-renewal, and guards that read it to choose between renewal and expiry. The power to
+give notice is gated by both *notice open* and *renewing*, one state from each regime, so it can be
+exercised only once, and only in the first half of a period. The service obligation ends with the
+agreement.
+
+## 19. Release Notes
 
 Breaking versions at major version zero ([ADR-A113](../../docs/architecture/decisions/ADR-A113-breaking-changes-at-major-version-zero.md)):
+
+- 0.11.0 (CCS C7b, ADR-A104 and its 2026-10-05 addendum, ADR-A115): additive. New: due ranges
+  (`ins:due`, at most one, law I5 restated), windows on powers and permissions (`ins:window`),
+  recurrences (`ins:recurrence`), tolling of due ranges (`ins:dueTolledIn`), ending as entering a
+  state (`ins:ends`), the sixth legal trigger `ins:OnEntry` with `ins:ofState`, expiry at a time
+  (`ins:at`), and survival (`ins:Survival`, `ins:survives`, `ins:survivalPeriod`,
+  `ins:survivesUntil`). Re-pinned to Quantification 0.7.0 and the layers re-pinned with it.
+  `instrument-vocab` 0.11.0 adds the context roles bound to Quantification's role contract,
+  `ins-voc:TheInstrument`, the state kind `Expired`, and six activities. Shapes 0.4.0 (additive,
+  rejecting only data that uses the new terms, and an expiry with neither `ins:after` nor
+  `ins:at`): due ranges, windows, recurrences and their anchors, ending states, `ins:OnEntry`,
+  survival, and `ins:OnEntry` admitted wherever a legal trigger is.
 
 - 0.10.0 (CCS C7a, ADR-A104 and its 2026-10-04 addendum): additive. New: the five legal triggers
   (`ins:OnExercise`, `ins:OnBreach`, `ins:OnAct`, `ins:OnCondition`, `ins:OnExpiry`) with

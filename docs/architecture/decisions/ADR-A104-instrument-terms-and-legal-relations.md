@@ -159,7 +159,7 @@ occasions, the amendment states it with `prov:wasRevisionOf`.
 
 ## Addendum (2026-10-04): a regime is stated once
 
-**Status:** Proposed 2026-10-04 (CCS slice C7a, C7a-Q1 to C7a-Q5). The reasoning, with an example
+**Status:** Accepted 2026-10-05, proposed 2026-10-04 (CCS slice C7a, C7a-Q1 to C7a-Q5). The reasoning, with an example
 use-case, is the [CCS sketch](../../developer/sketches/computable-contract-substrate.md) §7.4.1.
 The examples are `licence-notice.ttl`, `supply-suspension.ttl`, `facility-cure-period.ttl` and
 `service-dispute.ttl` in `ontology/instrument/examples/`.
@@ -256,7 +256,7 @@ The examples are `licence-notice.ttl`, `supply-suspension.ttl`, `facility-cure-p
 
 ## Addendum (2026-10-05): terms in time
 
-**Status:** Proposed 2026-10-05 (CCS slice C7b, C7b-Q1 to C7b-Q7 and TQ1 to TQ7). The design is the
+**Status:** Accepted 2026-10-05, proposed the same day (CCS slice C7b, C7b-Q1 to C7b-Q7 and TQ1 to TQ7). The design is the
 [terms in time sketch](../../developer/sketches/terms-in-time.md), which this addendum summarises.
 The examples are `trial-reporting.ttl`, `lease-expiry.ttl`, `licence-survival.ttl` and
 `service-renewal.ttl` in `ontology/instrument/examples/`.

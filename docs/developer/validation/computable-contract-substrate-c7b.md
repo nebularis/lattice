@@ -97,6 +97,65 @@ Phase 1, examples first (ADR-A-C2), 2026-10-05:
   - **Six new activities** in the baseline: `Pay`, `Report`, `ReturnMaterials`, `Disclose`,
     `Indemnify` and `DeclineRenewal`. One new state kind, `Expired`.
 
+Phase 2, the model, 2026-10-05:
+
+- **Built:**
+  - **Quantification 0.7.0** (additive, ADR-A115), from its README: `qnt:ContextValue` with
+    `qnt:contextRole` and disjoint from the other three kinds of value, `qnt:ContextRoleContract`,
+    and the unit-bearing offsets `qnt:lowerOffsetBy` and `qnt:upperOffsetBy`. Shapes 0.2.0: a
+    context value's one role and space, and an anchor binding's offsets in one form. The README
+    gains an eleventh design decision, a class section with two diagrams, a table of anchored
+    windows, an open question for HQ-3, and release notes. At the human's request (2026-10-05), a
+    guided tour (§5.1, thirteen steps, from value spaces to the law registers) and diagrams for
+    range containment, law prerequisites and the layer's consumers: 20 diagrams, all rendered, with
+    no change to the generated files
+  - **the cascade**: 18 documents that import Quantification, directly or not, re-pinned in one
+    pass with their versions bumped (Party, Eligibility, Wording, Behaviour configuration and
+    runtime and vocab, Surface, Instrument, `applied/capacity`, and the insurance `common` and
+    `peril` modules, each with its vocab). Tests that locate a current document moved to the new
+    versions. Tests of release history are unchanged. Release notes added where a README has them
+    (Wording, Behaviour, capacity). 21 release rows added
+  - **Instrument 0.11.0**, vocab 0.11.0, shapes 0.4.0, from the README. The README gains §4.2.16
+    (`ins:Survival`), a property group and glance rows for time and ending, §4.7 (the legal terms
+    of time and ending), `ins:OnEntry` in §4.2.15 and §10, §13 Anchored Time and §14 Ending, the
+    worked examples §18.9 to §18.12, laws I3, I5 and I9, and release notes. Sections 13 to 17 are
+    renumbered 15 to 19. 85 diagrams across both READMEs and the sketch render under mermaid 11
+  - `tools/test_terms_in_time.py`, rows C7b-01 to C7b-19 (30 tests). `tools/test_instrument.py` and
+    `tools/test_regimes.py` assert the current versions. The ontology architecture's Quantification,
+    Wording and Instrument rows are updated
+- **Check first:**
+  - **Context roles from several sources (held design question HQ-4).** Quantification's role
+    contract resolves to one scheme in a context, and two unscoped bindings conflict (Vocabulary's
+    invariant 4). Instrument binds its baseline roles, so the lease example's own date roles are
+    left unbound, and the Quantification example validates only beside Quantification's model,
+    not Instrument's. A deployment that uses Instrument with another layer's roles, or a wording's
+    own dates, cannot bind them all to one contract yet. Recorded as HQ-4, to take up with C8
+  - `ins:ofState` has a domain, `ins:OnEntry`, under the rule that gave `ins:ofPower` theirs: it has
+    one subject class, and the domain lets a reasoner infer the trigger
+  - `ins:dueTolledIn` is on the obligation, not the range, because ranges are shared nodes
+- **Deviations from the plan:**
+  - `ins:OnExpiry`'s shape now requires exactly one of `ins:after` and `ins:at`. An expiry with
+    neither was already rejected, so this rejects nothing that conformed
+  - the evergreen diagram draws the year's end as a choice. The data has no pseudo-state: two
+    transitions on one expiry, each with a guard
+  - row C7b-20 (diagrams render) is run in a browser, not in pytest
+
 ## Results
 
-Written on machine R at verification.
+Run by the agent on machine R, 2026-10-05, with every tool package importing from this checkout.
+
+| Row | Result |
+|---|---|
+| C7b-01 | pass: 0.11.0, Quantification 0.7.0 imported, every new property states subject and value, `ins:OnEntry`'s kind is a `hasValue`, `ins:ofState` alone of the new properties has a domain |
+| C7b-02 | pass: the four new examples conform to every layer's structural and constraint shapes, and under pySHACL's RDFS and OWL RL inference. The Quantification example conforms beside its own model (HQ-4) |
+| C7b-03 | pass: the four new examples are consistent (reasoning harness) |
+| C7b-04 to C7b-09, C7b-16, C7b-18 | pass: each change reported at its node, with its message |
+| C7b-10, C7b-19 | pass: bound relations name their templates' ranges and recurrences, and a termination consequence conforms with no survival |
+| C7b-11 | pass: `ins:ofState` alone yields `ins:OnEntry`, `bhv:TriggerDefinition` and `bhv:DerivedTrigger` after an OWL 2 RL closure |
+| C7b-12 | pass: the context roles bound to Quantification's contract, every baseline role the examples use in it, `Expired` and `ins-voc:TheInstrument` declared |
+| C7b-13, C7b-15 | pass: both READMEs generate their files, release notes recorded, shapes at 0.4.0 and 0.2.0 |
+| C7b-14 | pass: 383 tests across the Instrument, regime, terms in time, Wording, Behaviour, applied contract, peril and keys modules, after one C7a test's expected message moved with the expiry shape. `check:python-root`, `check:mork-compilers` (114), `check:persistence` (778), `check:vocabulary` (16), `check:ontology-catalog`, `check:ontology-versioning`, `check:import-guard`, `build:mtp` (lock unchanged) and `check:mtp` pass. The literate checks of Foundation, Wording, Behaviour, Surface, Quantification and Instrument pass |
+| C7b-17 | pass: no file outside the catalog still names Quantification 0.6.0 |
+| C7b-20 | pass: 85 diagrams across both READMEs and the sketch render under mermaid 11, in a page |
+
+21 release rows added. The tags are listed in the status record.

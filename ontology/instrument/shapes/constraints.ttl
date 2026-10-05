@@ -128,6 +128,24 @@ ins:PerOccasionGateShape a sh:NodeShape ;
 		"""
 	] .
 
+ins:EndingStateShape a sh:NodeShape ;
+	sh:targetSubjectsOf ins:ends ;
+	sh:sparql [
+		sh:message "{$this} ends something, but is not a state of an ins:Regime (§14.2)." ;
+		sh:select """
+			PREFIX ins:  <https://www.nebularis.org/neuro-semantic/lattice/instrument#>
+			PREFIX bhv:  <https://www.nebularis.org/neuro-semantic/lattice/behaviour#>
+			PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+			PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+			SELECT $this WHERE {
+				FILTER NOT EXISTS {
+					$this bhv:inStateSpace/(bhv:regionOf/bhv:inStateSpace)* ?regime .
+					?regime rdf:type/rdfs:subClassOf* ins:Regime .
+				}
+			}
+		"""
+	] .
+
 ins:TollingShape a sh:NodeShape ;
 	sh:targetSubjectsOf ins:tolledIn ;
 	sh:sparql [

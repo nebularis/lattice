@@ -12,8 +12,8 @@
 
 <https://www.nebularis.org/neuro-semantic/instrument-vocab>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/instrument-vocab/0.10.0> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.10.0> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/instrument-vocab/0.11.0> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.11.0> .
 
 ins-voc:ActivityContract a voc:SchemeContract ;
 	fnd:hasIdentity ins-voc:ActivityContract-identity ;
@@ -76,6 +76,24 @@ ins-voc:ProvideService a skos:Concept ; skos:inScheme ins-voc:Activities ;
 ins-voc:Dispute a skos:Concept ; skos:inScheme ins-voc:Activities ;
 	skos:prefLabel "Dispute"@en ; skos:definition "Contest a claim, report or assertion another party has made."@en .
 
+ins-voc:Pay a skos:Concept ; skos:inScheme ins-voc:Activities ;
+	skos:prefLabel "Pay"@en ; skos:definition "Pay money owed to another party."@en .
+
+ins-voc:Report a skos:Concept ; skos:inScheme ins-voc:Activities ;
+	skos:prefLabel "Report"@en ; skos:definition "Deliver a report to another party."@en .
+
+ins-voc:ReturnMaterials a skos:Concept ; skos:inScheme ins-voc:Activities ;
+	skos:prefLabel "Return materials"@en ; skos:definition "Return another party's materials or property."@en .
+
+ins-voc:Disclose a skos:Concept ; skos:inScheme ins-voc:Activities ;
+	skos:prefLabel "Disclose"@en ; skos:definition "Make information known to a third party."@en .
+
+ins-voc:Indemnify a skos:Concept ; skos:inScheme ins-voc:Activities ;
+	skos:prefLabel "Indemnify"@en ; skos:definition "Make good another party's loss arising from a stated cause."@en .
+
+ins-voc:DeclineRenewal a skos:Concept ; skos:inScheme ins-voc:Activities ;
+	skos:prefLabel "Decline renewal"@en ; skos:definition "Give notice that an instrument shall not renew."@en .
+
 ins:InstrumentTarget a bhv:TargetKind ;
 	rdfs:comment "A Behaviour effect's target kind for an instrument." ;
 	fnd:utility "Declared here, since Behaviour no longer names Instrument (ADR-A106). Behaviour's bhv:InstrumentTarget is deprecated in its favour." .
@@ -115,4 +133,40 @@ ins-voc:Disputed a skos:Concept ; skos:inScheme ins-voc:StateKinds ;
 	skos:prefLabel "Disputed"@en ; skos:definition "A claim, report or assertion has been disputed, and the dispute is not settled."@en .
 
 ins-voc:Terminated a skos:Concept ; skos:inScheme ins-voc:StateKinds ;
-	skos:prefLabel "Terminated"@en ; skos:definition "The instrument, or the arrangement the regime governs, has ended."@en .
+	skos:prefLabel "Terminated"@en ; skos:definition "The instrument, or the arrangement the regime governs, has ended before its natural end."@en .
+
+ins-voc:Expired a skos:Concept ; skos:inScheme ins-voc:StateKinds ;
+	skos:prefLabel "Expired"@en ; skos:definition "The instrument has come to its natural end, by effluxion of time."@en .
+
+@prefix qnt:     <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+
+ins-voc:ContextRoles a voc:ConceptScheme ;
+	fnd:hasIdentity ins-voc:ContextRoles-identity ;
+	fnd:hasGovernanceState fnd:Active ;
+	skos:prefLabel "Instrument context roles"@en ;
+	skos:definition "Named times that an evaluation context supplies for an instrument or an occasion (§13.1). A baseline: a date the wording defines is a role bound from its variable (C8)."@en .
+
+ins-voc:ContextRolesBinding a voc:SchemeBinding ;
+	voc:forContract qnt:ContextRoleContract ;
+	voc:bindsScheme ins-voc:ContextRoles ;
+	fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2026-10-05T00:00:00Z"^^xsd:dateTime ] .
+
+ins-voc:Arising a skos:Concept ; skos:inScheme ins-voc:ContextRoles ;
+	skos:prefLabel "Arising"@en ; skos:definition "The valid time at which the occasion arose."@en .
+
+ins-voc:Inception a skos:Concept ; skos:inScheme ins-voc:ContextRoles ;
+	skos:prefLabel "Inception"@en ; skos:definition "The valid time at which the instrument took effect."@en .
+
+ins-voc:Ending a skos:Concept ; skos:inScheme ins-voc:ContextRoles ;
+	skos:prefLabel "Ending"@en ; skos:definition "The valid time at which the instrument entered an ending state."@en .
+
+ins-voc:PeriodStart a skos:Concept ; skos:inScheme ins-voc:ContextRoles ;
+	skos:prefLabel "Period start"@en ; skos:definition "The start of the recurrence period the occasion belongs to."@en .
+
+ins-voc:PeriodEnd a skos:Concept ; skos:inScheme ins-voc:ContextRoles ;
+	skos:prefLabel "Period end"@en ; skos:definition "The end of the recurrence period the occasion belongs to."@en .
+
+ins-voc:TheInstrument a skos:Concept ;
+	skos:prefLabel "The instrument"@en ;
+	skos:definition "The instrument as a whole, as a value of ins:ends: entering the state ends every term not surviving it."@en .

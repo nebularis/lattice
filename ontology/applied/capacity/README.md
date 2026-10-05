@@ -83,3 +83,5 @@ Breaking versions at major version zero ([ADR-A113](../../../docs/architecture/d
   terms through it must import Instrument directly. ADR-A106.
 - 0.11.0: re-pinned to `behaviour-runtime` 0.11.0 and Foundation 0.4.0, with no other change
   (CCS F1, ADR-A114).
+- 0.12.0: re-pinned to `behaviour-runtime` 0.12.0 and Quantification 0.7.0, with no other change
+  (CCS C7b, ADR-A115).

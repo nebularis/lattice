@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MPL-2.0
+
 @prefix qnt:  <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
 @prefix owl:  <http://www.w3.org/2002/07/owl#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
@@ -155,3 +157,14 @@ qnt:StaticConstraint a qnt:LawRegister ;
 
 qnt:RuntimeConformance a qnt:LawRegister ;
     rdfs:comment "Discharged only by an executed test run — no formal argument alone suffices." .
+
+@prefix qnt:  <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix voc:  <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+
+qnt:ContextRoleContract a voc:SchemeContract ;
+    fnd:hasIdentity qnt:ContextRoleContract-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Context role scheme contract"@en ;
+    voc:constrainsProperty qnt:contextRole .

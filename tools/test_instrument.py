@@ -85,10 +85,10 @@ TMPL = Namespace("https://example.org/lattice/instrument/facility/form/")
 def test_c6_01_version_and_imports() -> None:
     spec = _graph(SPEC)
     ontology = URIRef("https://www.nebularis.org/neuro-semantic/instrument")
-    assert spec.value(ontology, OWL.versionIRI) == URIRef(LATTICE + "instrument/0.10.0")
+    assert spec.value(ontology, OWL.versionIRI) == URIRef(LATTICE + "instrument/0.11.0")
     assert set(spec.objects(ontology, OWL.imports)) == {URIRef(LATTICE + v) for v in (
-        "foundation/0.4.0", "vocabulary/0.4.0", "quantification/0.6.0", "party/0.6.0", "eligibility/0.8.0",
-        "wording/0.4.0", "behaviour/0.11.0")}
+        "foundation/0.4.0", "vocabulary/0.4.0", "quantification/0.7.0", "party/0.7.0", "eligibility/0.9.0",
+        "wording/0.5.0", "behaviour/0.12.0")}
     assert "behaviour-runtime" not in SPEC.read_text()
 
 
@@ -264,5 +264,5 @@ def test_c6_14_readme_is_the_source_and_releases_are_recorded() -> None:
                                   "--check"]) == 0
     readme = (LAYER / "README.md").read_text()
     assert "0.9.0 (breaking, CCS C6" in readme and "Shapes 0.2.0\n  (breaking)" in readme
-    assert (LAYER / "shapes" / ".version").read_text().strip() == "0.3.0"
+    assert (LAYER / "shapes" / ".version").read_text().strip() == "0.4.0"
     assert not (LAYER / "projection").exists()

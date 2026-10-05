@@ -10,6 +10,7 @@
 @prefix qnt:  <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
 @prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix ins-voc: <https://www.nebularis.org/neuro-semantic/lattice/instrument/vocab#> .
 
 ins:InstrumentShape a sh:NodeShape ;
 	sh:targetClass ins:Instrument ;
@@ -163,7 +164,7 @@ ins:RegimeTypeShape a sh:NodeShape ;
 ins:RegimeTransitionShape a sh:NodeShape ;
 	sh:targetClass ins:RegimeTransition ;
 	sh:property [ sh:path bhv:hasTrigger ;
-		sh:or ( [ sh:class ins:OnExercise ] [ sh:class ins:OnBreach ] [ sh:class ins:OnAct ] [ sh:class ins:OnCondition ] [ sh:class ins:OnExpiry ] ) ;
+		sh:or ( [ sh:class ins:OnExercise ] [ sh:class ins:OnBreach ] [ sh:class ins:OnAct ] [ sh:class ins:OnCondition ] [ sh:class ins:OnExpiry ] [ sh:class ins:OnEntry ] ) ;
 		sh:message "A regime transition's triggers are legal triggers." ] ;
 	sh:property [ sh:path bhv:selectionPolicy ; sh:in ( bhv:SingleMatch ) ;
 		sh:message "A regime transition's selection policy is bhv:SingleMatch, fixed (ADR-A104 decision 7). A reasoner adds it where none is stated (§12)." ] ;
@@ -176,7 +177,7 @@ ins:RegimeTransitionTypeShape a sh:NodeShape ;
 		sh:message "A regime transition is also typed bhv:TransitionDefinition in the graph the engine reads: assert it where no reasoner runs (law B4, §12)." ] .
 
 ins:LegalTriggerTypeShape a sh:NodeShape ;
-	sh:targetClass ins:OnExercise , ins:OnBreach , ins:OnAct , ins:OnCondition , ins:OnExpiry ;
+	sh:targetClass ins:OnExercise , ins:OnBreach , ins:OnAct , ins:OnCondition , ins:OnExpiry , ins:OnEntry ;
 	sh:property [ sh:path rdf:type ; sh:hasValue bhv:TriggerDefinition ;
 		sh:message "A legal trigger is also typed bhv:TriggerDefinition in the graph the engine reads: assert it where no reasoner runs (law B4, §12)." ] .
 
@@ -213,8 +214,12 @@ ins:OnConditionShape a sh:NodeShape ;
 
 ins:OnExpiryShape a sh:NodeShape ;
 	sh:targetClass ins:OnExpiry ;
-	sh:property [ sh:path ins:after ; sh:minCount 1 ; sh:maxCount 1 ; sh:class qnt:Quantity ;
-		sh:message "An expiry trigger states exactly one length (ins:after), a quantity of time." ] ;
+	sh:property [ sh:path ins:after ; sh:maxCount 1 ; sh:class qnt:Quantity ;
+		sh:message "An expiry trigger's length (ins:after) is one quantity of time." ] ;
+	sh:property [ sh:path ins:at ; sh:maxCount 1 ; sh:class qnt:Value ;
+		sh:message "An expiry trigger's time (ins:at) is one value." ] ;
+	sh:xone ( [ sh:property [ sh:path ins:after ; sh:minCount 1 ] ] [ sh:property [ sh:path ins:at ; sh:minCount 1 ] ] ) ;
+	sh:message "An expiry trigger states exactly one of a length (ins:after) and a time (ins:at)." ;
 	sh:property [ sh:path ins:tolledIn ; sh:class bhv:State ;
 		sh:message "An expiry period is tolled in states." ] ;
 	sh:property [ sh:path bhv:triggerKind ; sh:minCount 1 ; sh:in ( bhv:ScheduledTrigger ) ;
@@ -239,8 +244,8 @@ ins:ArisingShape a sh:NodeShape ;
 	sh:class ins:LegalRelation ;
 	sh:message "Only a legal relation arises or ends on a trigger." ;
 	sh:property [ sh:path [ sh:alternativePath ( ins:arisesOn ins:endsOn ) ] ;
-		sh:or ( [ sh:class ins:OnExercise ] [ sh:class ins:OnBreach ] [ sh:class ins:OnAct ] [ sh:class ins:OnCondition ] ) ;
-		sh:message "A relation arises or ends on an exercise, a breach, an act or a condition. An expiry counts from entering a state, so it moves only regimes: a relation's own periods are due ranges (C7b)." ] ;
+		sh:or ( [ sh:class ins:OnExercise ] [ sh:class ins:OnBreach ] [ sh:class ins:OnAct ] [ sh:class ins:OnCondition ] [ sh:class ins:OnEntry ] ) ;
+		sh:message "A relation arises or ends on an exercise, a breach, an act, a condition or an entry into a state. An expiry counts from entering a state, so it moves only regimes: a relation's own periods are due ranges (§13)." ] ;
 	sh:property [ sh:path ins:arisesOnBreachOf ; sh:class ins:Obligation ;
 		sh:message "A relation arises on the breach of an obligation." ] ;
 	sh:property [ sh:path ins:arisesOnExerciseOf ; sh:class ins:Power ;
@@ -255,3 +260,67 @@ ins:ArisingTierShape a sh:NodeShape ;
 		[ sh:not [ sh:class ins:Template ] ;
 		  sh:property [ sh:path [ sh:alternativePath ( ins:arisesOnBreachOf ins:arisesOnExerciseOf ) ] ; sh:not [ sh:class ins:Template ] ] ]
 	) .
+
+ins:OnEntryShape a sh:NodeShape ;
+	sh:targetClass ins:OnEntry ;
+	sh:property [ sh:path ins:ofState ; sh:minCount 1 ; sh:maxCount 1 ; sh:class bhv:State ;
+		sh:message "An entry trigger names exactly one state (ins:ofState)." ] ;
+	sh:property [ sh:path bhv:triggerKind ; sh:minCount 1 ; sh:in ( bhv:DerivedTrigger ) ;
+		sh:message "An entry trigger's kind is bhv:DerivedTrigger, fixed. Assert it where no reasoner runs (§12)." ] .
+
+ins:DueShape a sh:NodeShape ;
+	sh:targetSubjectsOf ins:due ;
+	sh:class ins:Obligation ;
+	sh:not [ sh:or ( [ sh:class ins:ContinuingObligation ] [ sh:class ins:Prohibition ] ) ] ;
+	sh:message "Only an obligation that is neither continuing nor a prohibition has a due range (law I5)." ;
+	sh:property [ sh:path ins:due ; sh:maxCount 1 ; sh:class qnt:Range ;
+		sh:message "An obligation has at most one due range, a range (law I5)." ] ;
+	sh:property [ sh:path ( ins:due qnt:relativeToAnchor qnt:anchorValue ) ; sh:minCount 1 ; sh:class qnt:ContextValue ;
+		sh:message "A due range is anchored at a named time, a qnt:ContextValue, never at a fixed date or at evaluation time (law I9)." ] ;
+	sh:property [ sh:path ins:dueTolledIn ; sh:class bhv:State ;
+		sh:message "A due range is tolled in states." ] .
+
+ins:DueTolledInShape a sh:NodeShape ;
+	sh:targetSubjectsOf ins:dueTolledIn ;
+	sh:property [ sh:path ins:due ; sh:minCount 1 ;
+		sh:message "Only an obligation with a due range has its due range tolled." ] .
+
+ins:WindowShape a sh:NodeShape ;
+	sh:targetSubjectsOf ins:window ;
+	sh:or ( [ sh:class ins:Power ] [ sh:class ins:Permission ] ) ;
+	sh:message "Only a power or a permission has a window." ;
+	sh:property [ sh:path ins:window ; sh:maxCount 1 ; sh:class qnt:Range ;
+		sh:message "A relation has at most one window, a range." ] ;
+	sh:property [ sh:path ( ins:window qnt:relativeToAnchor qnt:anchorValue ) ; sh:minCount 1 ; sh:class qnt:ContextValue ;
+		sh:message "A window is anchored at a named time, a qnt:ContextValue (law I9)." ] .
+
+ins:RecurrenceShape a sh:NodeShape ;
+	sh:targetSubjectsOf ins:recurrence ;
+	sh:class ins:Obligation ;
+	sh:message "Only an obligation recurs." ;
+	sh:property [ sh:path ins:recurrence ; sh:maxCount 1 ; sh:class qnt:Recurrence ;
+		sh:message "An obligation has at most one recurrence." ] ;
+	sh:property [ sh:path ( ins:recurrence qnt:anchor ) ; sh:minCount 1 ; sh:class qnt:ContextValue ;
+		sh:message "A recurrence is anchored at a named time, a qnt:ContextValue (law I9)." ] .
+
+ins:EndsShape a sh:NodeShape ;
+	sh:targetSubjectsOf ins:ends ;
+	sh:class bhv:State ;
+	sh:message "Only a state ends an instrument or terms, when it is entered (§14.2)." ;
+	sh:property [ sh:path ins:ends ;
+		sh:or ( [ sh:in ( ins-voc:TheInstrument ) ] [ sh:and ( [ sh:class ins:Term ] [ sh:class ins:Template ] ) ] ) ;
+		sh:message "A state ends the instrument (ins-voc:TheInstrument) or stated terms." ] .
+
+ins:SurvivalShape a sh:NodeShape ;
+	sh:targetSubjectsOf ins:survives ;
+	sh:and ( [ sh:class ins:Term ] [ sh:class ins:Template ] ) ;
+	sh:message "Only a stated term survives: survival is read for each instrument through its bound terms (§14.4)." ;
+	sh:property [ sh:path ins:survives ; sh:maxCount 1 ; sh:class ins:Survival ;
+		sh:message "A term has at most one survival." ] .
+
+ins:SurvivalDetailShape a sh:NodeShape ;
+	sh:targetClass ins:Survival ;
+	sh:property [ sh:path ins:survivalPeriod ; sh:maxCount 1 ; sh:class qnt:Quantity ;
+		sh:message "A survival period is one quantity of time." ] ;
+	sh:property [ sh:path ins:survivesUntil ; sh:maxCount 1 ; sh:class elg:Condition ;
+		sh:message "A survival lasts until at most one Eligibility condition." ] .

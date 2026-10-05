@@ -72,12 +72,12 @@ Behaviour distinguishes four tiers:
 
 <https://www.nebularis.org/neuro-semantic/behaviour>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.11.0> ;
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.12.0> ;
 	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.4.0> ,
 				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.4.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.6.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/party/0.6.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.8.0> .
+				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.7.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/party/0.7.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.9.0> .
 
 bhv:StateSpace a owl:Class ;
 	rdfs:subClassOf fnd:Version ;
@@ -386,8 +386,8 @@ stateDiagram-v2
 
 <https://www.nebularis.org/neuro-semantic/behaviour-vocab>
 	a owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/behaviour-vocab/0.11.0> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.11.0> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/behaviour-vocab/0.12.0> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.12.0> .
 
 bhv:ExternalStimulus a bhv:TriggerKind .
 bhv:ScheduledTrigger a bhv:TriggerKind .
@@ -1311,3 +1311,5 @@ Breaking versions at major version zero ([ADR-A113](../../docs/architecture/deci
   laws B5, B9 and B11. ADR-A106 addendum (2026-10-02).
 - 0.11.0 (`behaviour`, `behaviour-runtime` and `behaviour-vocab`): re-pinned to Foundation 0.4.0
   and the layers re-pinned with it, with no other change (CCS F1, ADR-A114).
+- 0.12.0 (`behaviour`, `behaviour-runtime` and `behaviour-vocab`): re-pinned to Quantification 0.7.0
+  and the layers re-pinned with it, with no other change (CCS C7b, ADR-A115).
