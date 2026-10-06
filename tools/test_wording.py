@@ -63,7 +63,7 @@ def _vocab_closure() -> Graph:
 def test_c3_01_imports_exactly_the_layers_below() -> None:
     spec = _graph(LAYER / "spec" / "wording.ttl")
     ontology = URIRef(SPEC_IRI)
-    assert spec.value(ontology, OWL.versionIRI) == URIRef(LATTICE + "wording/0.6.0")  # C4-01, C5
+    assert spec.value(ontology, OWL.versionIRI) == URIRef(LATTICE + "wording/0.7.0")  # C4-01, C5, C8b
     assert set(spec.objects(ontology, OWL.imports)) == {
         URIRef(LATTICE + "foundation/0.4.0"),
         URIRef(LATTICE + "vocabulary/0.4.0"),
@@ -109,8 +109,8 @@ def test_c3_04_clause_4_1_is_five_parts() -> None:
     parts = _parts(graph, FACILITY["cl-4-1"])
     assert [graph.value(p, WRD.partText) for p in parts] == [
         Literal("The "), None, Literal(" shall pay interest at "), None, Literal(" per annum.")]
-    assert graph.value(parts[1], WRD.refersToObject) == FACILITY["def-borrower"]
-    assert graph.value(parts[3], WRD.refersToVariable) == FACILITY["var-margin"]
+    assert graph.value(parts[1], WRD.refersToObject) == FACILITY["def-borrower-identity"]  # C8b: identities
+    assert graph.value(parts[3], WRD.refersToVariable) == FACILITY["var-margin-identity"]
 
 
 # ---- C3-05 to C3-07: the reasoner ---------------------------------------------
@@ -260,7 +260,7 @@ TRIAL = Namespace("https://example.org/lattice/wording/trial/")
 
 
 def test_c4_02_c5_01_every_example_conforms() -> None:
-    assert len(EXAMPLES) == 4
+    assert len(EXAMPLES) == 5  # C8b adds reused-clause.ttl
     for example in EXAMPLES:
         assert _violations(_example(example)) == set(), example.name
 
@@ -537,3 +537,145 @@ def test_c5_new_versions_have_release_rows() -> None:
     register = (ROOT / "docs" / "architecture" / "ontology-releases.md").read_text()
     for tag in ("wording-v0.3.0", "wording-vocab-v0.3.0", "wording-shapes-v0.3.0"):
         assert f"| {tag} |" in register, tag
+
+
+# ---- C8b: references by identity (the ADR-A112 addendum of 2026-10-06) -------------
+
+REUSED = Namespace("https://example.org/lattice/wording/reused-clause/")
+INSTRUMENT_EXAMPLES = ROOT / "ontology" / "instrument" / "examples"
+MODEL_FILES = [ROOT / "ontology" / p for p in (
+    "foundation/spec/foundation.ttl", "vocabulary/spec/vocabulary.ttl", "quantification/spec/quantification.ttl",
+    "eligibility/spec/eligibility.ttl", "wording/spec/wording.ttl", "wording/vocab/wording-vocab.ttl")]
+SHAPE_FILES = [ROOT / "ontology" / layer / "shapes" / f"{kind}.ttl"
+               for layer in ("foundation", "vocabulary", "quantification", "eligibility", "wording")
+               for kind in ("structural", "constraints")]
+
+
+def _c8b_violations(data: Graph) -> list[tuple[str, str]]:
+    _, report, _ = validate(_graph(*MODEL_FILES) + data, shacl_graph=_graph(*SHAPE_FILES), inference="none",
+                            advanced=True)
+    return [(str(report.value(r, SH.focusNode)), str(report.value(r, SH.resultMessage)))
+            for r in report.subjects(SH.resultSeverity, SH.Violation)]
+
+
+def _reused(add: str = "", remove: tuple = ()) -> Graph:
+    g = _graph(LAYER / "examples" / "reused-clause.ttl")
+    for triple in remove:
+        assert triple in g, triple
+        g.remove(triple)
+    if add:
+        prefixes = "".join(l + "\n" for l in (LAYER / "examples" / "reused-clause.ttl").read_text().splitlines()
+                           if l.startswith("@prefix"))
+        g.parse(data=prefixes + add, format="turtle")
+    return g
+
+
+def test_c8b_01_spec_version_ranges_and_display_text() -> None:
+    spec = _graph(LAYER / "spec" / "wording.ttl")
+    assert spec.value(URIRef(SPEC_IRI), OWL.versionIRI) == URIRef(LATTICE + "wording/0.7.0")
+    for p in (WRD.refersToObject, WRD.refersToVariable, WRD.linksTo, WRD.reliesAsAmended):
+        assert spec.value(p, RDFS.range) == FND.PersistentIdentity, p
+    assert spec.value(WRD.reliesOnEdition, RDFS.range) == WRD.LinkedDocument
+    assert (WRD.displayText, RDF.type, OWL.DatatypeProperty) in spec
+    for c in (WRD.DocumentObject, WRD.ExternalDocument):
+        assert (c, RDFS.subClassOf, FND.Version) in spec, c
+
+
+@pytest.mark.parametrize("path", sorted((LAYER / "examples").glob("*.ttl")) + [
+    INSTRUMENT_EXAMPLES / f"{n}.ttl" for n in ("facility-parameters", "framework-lots", "services-schedule")],
+    ids=lambda p: p.stem)
+def test_c8b_02_examples_conform(path: Path) -> None:
+    data = _example(path) if path.parent == LAYER / "examples" else _graph(path)
+    assert [m for _, m in _c8b_violations(data) if "W8" in m or "identity" in m or "reliance" in m.lower()] == []
+
+
+def test_c8b_03_a_reference_naming_a_version_is_reported() -> None:
+    g = _reused()
+    part = next(p for p in g.subjects(WRD.refersToVariable, REUSED["var-days-identity"]))
+    g.remove((part, WRD.refersToVariable, REUSED["var-days-identity"]))
+    g.add((part, WRD.refersToVariable, REUSED["var-days-v2"]))
+    assert any("never a version" in m for _, m in _c8b_violations(g))
+    g = _reused()
+    part = next(p for p in g.subjects(WRD.refersToObject, REUSED["def-equipment-identity"]))
+    g.remove((part, WRD.refersToObject, REUSED["def-equipment-identity"]))
+    g.add((part, WRD.refersToObject, REUSED["def-equipment-v1"]))
+    assert any("never a version" in m for _, m in _c8b_violations(g))
+
+
+def test_c8b_04_an_identity_finding_no_version_or_two_is_reported() -> None:
+    none_in_form = _reused("", ((REUSED["sec-1-v1"], WRD.directlyComprises, REUSED["def-equipment-v1"]),))
+    assert any(f.endswith("/form-v1") and "comprises no version" in m for f, m in _c8b_violations(none_in_form))
+    two_in_form = _reused("ex:sec-6 wrd:directlyComprises ex:def-equipment-v2 .")
+    assert any(f.endswith("/form-v1") and "two versions" in m for f, m in _c8b_violations(two_in_form))
+    none_included = _reused("", ((REUSED["lease-0193"], WRD.includes, REUSED["def-equipment-v2"]),))
+    assert any(f.endswith("/lease-0193") and "no version" in m for f, m in _c8b_violations(none_included))
+    two_included = _reused("ex:lease-0193 wrd:includes ex:def-equipment-v1 .")
+    assert any(f.endswith("/lease-0193") and "two versions" in m for f, m in _c8b_violations(two_included))
+
+
+def test_c8b_05_one_clause_version_in_both_editions_resolving_differently() -> None:
+    g = _reused()
+    for form in (REUSED["form-v1"], REUSED["form-v2"]):
+        assert (form, WRD.directlyComprises, REUSED["sec-5"]) in g
+    assert (REUSED["sec-5"], WRD.directlyComprises, REUSED["cl-5-1"]) in g
+    resolved = {}
+    for form in (REUSED["form-v1"], REUSED["form-v2"]):
+        rows = g.query(f"""SELECT ?v WHERE {{ <{form}> <{WRD.directlyComprises}>+ ?v .
+                                              ?v <{FND.hasIdentity}> <{REUSED["var-days-identity"]}> }}""")
+        resolved[form] = [r.v for r in rows]
+    assert resolved == {REUSED["form-v1"]: [REUSED["var-days-v1"]], REUSED["form-v2"]: [REUSED["var-days-v2"]]}
+    assert _c8b_violations(g) == []
+
+
+def test_c8b_06_an_outside_document_with_no_reliance_or_two_is_reported() -> None:
+    none = _reused("", ((REUSED["form-v2"], WRD.reliesAsAmended, REUSED["data-protection-identity"]),))
+    assert any(f.endswith("/form-v2") and "does not rely on" in m for f, m in _c8b_violations(none))
+    two = _reused("ex:form-v2 wrd:reliesOnEdition ex:safety-regs-2025 .")
+    assert any(f.endswith("/form-v2") and "twice" in m for f, m in _c8b_violations(two))
+    both = _reused("ex:form-v2 wrd:reliesOnEdition ex:data-protection-2024 .")
+    assert any(f.endswith("/form-v2") and "twice" in m for f, m in _c8b_violations(both))
+
+
+def test_c8b_06_a_static_reliance_names_an_edition_and_an_ambulatory_one_an_identity() -> None:
+    assert any("names an edition" in m for _, m in _c8b_violations(
+        _reused("ex:form-v2 wrd:reliesOnEdition ex:safety-regs-identity .")))
+    assert any("never an edition" in m for _, m in _c8b_violations(
+        _reused("ex:form-v2 wrd:reliesAsAmended ex:safety-regs-2027 .")))
+
+
+def test_c8b_06_an_assembled_wording_inherits_its_form_s_reliances() -> None:
+    g = _graph(LAYER / "examples" / "trial-protocol.ttl")
+    assert (TRIAL["protocol-wording"], WRD.reliesAsAmended, TRIAL["gcp-regulation-identity"]) in g
+    assert not [m for _, m in _c8b_violations(g) if "does not rely on" in m]
+
+
+def test_c8b_01_display_text_only_on_a_reference_part() -> None:
+    g = _reused()
+    literal = next(p for p in g.subjects(WRD.partText, Literal("The ")))
+    g.add((literal, WRD.displayText, Literal("The")))
+    assert any("Only a reference part has display text" in m for _, m in _c8b_violations(g))
+
+
+def test_c8b_06a_a_revised_definition_leaves_the_clause_mentioning_it_alone() -> None:
+    g = _reused()
+    assert (REUSED["def-equipment-v2"], PROV.wasRevisionOf, REUSED["def-equipment-v1"]) in g
+    part = next(g.subjects(WRD.refersToObject, REUSED["def-equipment-identity"]))
+    assert (REUSED["cl-5-1"], WRD.hasTextPart, part) in g
+    for form in (REUSED["form-v1"], REUSED["form-v2"]):
+        assert REUSED["cl-5-1"] in set(g.transitive_objects(form, WRD.directlyComprises)), form
+
+
+def test_c8b_08_instrument_imports_wording_0_7_0_and_nothing_names_0_6_0() -> None:
+    import subprocess
+    spec = _graph(ROOT / "ontology" / "instrument" / "spec" / "instrument.ttl")
+    assert URIRef(LATTICE + "wording/0.7.0") in set(spec.objects(None, OWL.imports))
+    found = subprocess.run(["git", "grep", "-l", "-F", LATTICE + "wording/0.6.0", "--", "ontology", "tools"],
+                           cwd=ROOT, capture_output=True, text=True).stdout.split()
+    assert [f for f in found if not f.endswith("catalog-v001.xml") and "fixtures/import_guard" not in f] == []
+
+
+def test_c8b_09_readme_release_notes() -> None:
+    readme = (LAYER / "README.md").read_text()
+    assert "- 0.7.0 (`wording` and `wording-vocab`, breaking, CCS C8b" in readme
+    assert (LAYER / "shapes" / ".version").read_text().strip() == "0.4.0"
+    assert "0.14.0 (breaking, CCS C8b)" in (ROOT / "ontology" / "instrument" / "README.md").read_text()

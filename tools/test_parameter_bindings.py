@@ -131,10 +131,10 @@ SS_EX, SS = _ns("services-schedule")
 def test_c8_01_version_imports_and_new_terms() -> None:
     spec = _graph(SPEC)
     ontology = URIRef("https://www.nebularis.org/neuro-semantic/instrument")
-    assert spec.value(ontology, OWL.versionIRI) == URIRef(LATTICE + "instrument/0.13.0")
+    assert spec.value(ontology, OWL.versionIRI) == URIRef(LATTICE + "instrument/0.14.0")
     assert {str(i) for i in spec.objects(ontology, OWL.imports)} == {LATTICE + v for v in (
         "foundation/0.4.0", "vocabulary/0.4.0", "quantification/0.7.0", "party/0.8.0", "eligibility/0.10.0",
-        "wording/0.6.0", "behaviour/0.13.0")}
+        "wording/0.7.0", "behaviour/0.13.0")}
     for name in ("valueFrom", "encodingStatus"):
         utility = str(spec.value(INS[name], FND.utility))
         assert "Subject:" in utility and "Value:" in utility, name

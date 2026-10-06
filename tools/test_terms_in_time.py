@@ -105,7 +105,7 @@ LS_EX, LS = _ns("licence-survival")
 def test_c7b_01_version_imports_and_new_terms() -> None:
     spec = _graph(SPEC)
     ontology = URIRef("https://www.nebularis.org/neuro-semantic/instrument")
-    assert spec.value(ontology, OWL.versionIRI) == URIRef(LATTICE + "instrument/0.13.0")
+    assert spec.value(ontology, OWL.versionIRI) == URIRef(LATTICE + "instrument/0.14.0")
     assert URIRef(LATTICE + "quantification/0.7.0") in set(spec.objects(ontology, OWL.imports))
     for name in ("due", "recurrence", "window", "dueTolledIn", "at", "ofState", "ends", "survives", "survivalPeriod",
                  "survivesUntil"):

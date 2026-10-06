@@ -14,11 +14,10 @@ This ontological substrate allows a user to state what legally binding outcomes 
 
 Instrument imports Foundation, Vocabulary, Quantification, Party, Eligibility, Wording and Behaviour's configuration document. Instrument's runtime document is upstream of it. Nothing outside Instrument imports it ([ADR-A104](../../docs/architecture/decisions/ADR-A104-instrument-terms-and-legal-relations.md), [ADR-A106](../../docs/architecture/decisions/ADR-A106-behaviour-configuration-runtime-occasions-and-records.md)).
 
-This version (0.13.0, CCS slice C8) holds the instrument, its terms in two tiers, the five relations, their parties and their content (C6), the legal triggers, the regimes they move, and the gating of relations by a regime's state (C7a), terms in time, namely due ranges, windows, recurrences, ending and survival (C7b), what terms are and whom they bind: definitions, deemings and classification, sections, and parties resolved through the case (C7c), and values in stated meaning, which text is expected to mean something, and the generation of bound meaning (C8). Later slices add, in order:
+This version (0.14.0, CCS slice C8b) holds the instrument, its terms in two tiers, the five relations, their parties and their content (C6), the legal triggers, the regimes they move, and the gating of relations by a regime's state (C7a), terms in time, namely due ranges, windows, recurrences, ending and survival (C7b), what terms are and whom they bind: definitions, deemings and classification, sections, and parties resolved through the case (C7c), and values in stated meaning, which text is expected to mean something, and the generation of bound meaning (C8). It is re-pinned to Wording 0.7.0, whose references name identities (C8b). Later slices add, in order:
 
 | Slice | Adds |
 |---|---|
-| C8b | Wording's text references by identity, re-pinning this layer |
 | C9 | amendments, consent rules, incorporation, instruments made under a power |
 
 Nothing in this version evaluates.
@@ -44,13 +43,13 @@ Nothing in this version evaluates.
 ```turtle-spec
 <https://www.nebularis.org/neuro-semantic/instrument>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.13.0> ;
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.14.0> ;
 	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.4.0> ,
 				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.4.0> ,
 				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.7.0> ,
 				<https://www.nebularis.org/neuro-semantic/lattice/party/0.8.0> ,
 				<https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.10.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/wording/0.6.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/wording/0.7.0> ,
 				<https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.13.0> .
 ```
 
@@ -3461,8 +3460,9 @@ flowchart LR
 ```
 
 A template has no bound meaning, since it has no values. A claim about every binding of a template
-quantifies over the values its variables admit. Wording's text references (`wrd:refersToVariable`)
-still name a variable version, until slice C8b lets them name an identity.
+quantifies over the values its variables admit. Since Wording 0.7.0, a clause's text names the
+variable by identity too (`wrd:refersToVariable`), so text and stated meaning point at the same
+thing, and Wording's law W8 checks that each finds exactly one version in the wording holding it.
 
 ### 18.3 Schedules
 
@@ -3598,8 +3598,8 @@ instrument as a whole as a value of `ins:ends` (§14.2).
 
 <https://www.nebularis.org/neuro-semantic/instrument-vocab>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/instrument-vocab/0.13.0> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.13.0> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/instrument-vocab/0.14.0> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.14.0> .
 
 ins-voc:ActivityContract a voc:SchemeContract ;
 	fnd:hasIdentity ins-voc:ActivityContract-identity ;
@@ -5477,6 +5477,10 @@ containers, and expected to mean nothing.
 ## 23. Release Notes
 
 Breaking versions at major version zero ([ADR-A113](../../docs/architecture/decisions/ADR-A113-breaking-changes-at-major-version-zero.md)):
+
+- 0.14.0 (breaking, CCS C8b): re-pinned to Wording 0.7.0, whose references name persistent
+  identities, with no other change. `instrument-vocab` 0.14.0 re-pinned with it. Shapes unchanged
+  (0.6.0)
 
 - 0.13.0 (additive, CCS C8, ADR-A104 and its 2026-10-06 addendum "values in stated meaning"): new:
   `ins:valueFrom` for placeholders, taking a value from a variable or a value word, and

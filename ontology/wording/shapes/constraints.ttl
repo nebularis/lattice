@@ -288,6 +288,80 @@ wrd:SlotUncheckedShape a sh:NodeShape ;
 				}
 			}""" ] .
 
+# ---- W8: references find exactly one version, or one reliance ---------------------
+
+wrd:W8FormShape a sh:NodeShape ;
+	sh:targetClass wrd:Wording ;
+	sh:sparql [ sh:prefixes wrd:LawPrefixes ;
+		sh:message "W8: {?element} refers to {?identity}, of which this form comprises no version." ;
+		sh:select """
+			SELECT DISTINCT $this ?element ?identity WHERE {
+				FILTER NOT EXISTS { $this a wrd:AssembledWording }
+				$this wrd:directlyComprises+ ?element .
+				{ ?element wrd:hasTextPart ?part . ?part wrd:refersToObject|wrd:refersToVariable ?identity } UNION { ?element wrd:linksTo ?identity }
+				?any fnd:hasIdentity ?identity .
+				FILTER EXISTS { ?any a/rdfs:subClassOf* wrd:Element }
+				FILTER NOT EXISTS { $this wrd:directlyComprises+ ?version . ?version fnd:hasIdentity ?identity }
+			}""" ] ;
+	sh:sparql [ sh:prefixes wrd:LawPrefixes ;
+		sh:message "W8: {?element} refers to {?identity}, of which this form comprises two versions, {?one} and {?other}." ;
+		sh:select """
+			SELECT DISTINCT $this ?element ?identity ?one ?other WHERE {
+				FILTER NOT EXISTS { $this a wrd:AssembledWording }
+				$this wrd:directlyComprises+ ?element .
+				{ ?element wrd:hasTextPart ?part . ?part wrd:refersToObject|wrd:refersToVariable ?identity } UNION { ?element wrd:linksTo ?identity }
+				$this wrd:directlyComprises+ ?one , ?other .
+				?one fnd:hasIdentity ?identity . ?other fnd:hasIdentity ?identity .
+				FILTER (STR(?one) < STR(?other))
+			}""" ] .
+
+wrd:W8AssembledShape a sh:NodeShape ;
+	sh:targetClass wrd:AssembledWording ;
+	sh:sparql [ sh:prefixes wrd:LawPrefixes ;
+		sh:message "W8: {?element} refers to {?identity}, of which this assembled wording includes, or declares through an included element, no version." ;
+		sh:select """
+			SELECT DISTINCT $this ?element ?identity WHERE {
+				$this wrd:includes ?element .
+				{ ?element wrd:hasTextPart ?part . ?part wrd:refersToObject|wrd:refersToVariable ?identity } UNION { ?element wrd:linksTo ?identity }
+				?any fnd:hasIdentity ?identity .
+				FILTER EXISTS { ?any a/rdfs:subClassOf* wrd:Element }
+				FILTER NOT EXISTS { $this wrd:includes ?version . ?version fnd:hasIdentity ?identity }
+				FILTER NOT EXISTS { $this wrd:includes ?declarer . ?declarer wrd:directlyComprises ?variable . ?variable fnd:hasIdentity ?identity ; a/rdfs:subClassOf* wrd:Variable }
+			}""" ] ;
+	sh:sparql [ sh:prefixes wrd:LawPrefixes ;
+		sh:message "W8: {?element} refers to {?identity}, of which this assembled wording holds two versions, {?one} and {?other}." ;
+		sh:select """
+			SELECT DISTINCT $this ?element ?identity ?one ?other WHERE {
+				$this wrd:includes ?element .
+				{ ?element wrd:hasTextPart ?part . ?part wrd:refersToObject|wrd:refersToVariable ?identity } UNION { ?element wrd:linksTo ?identity }
+				{ $this wrd:includes ?one , ?other }
+				UNION { $this wrd:includes ?d1 , ?d2 . ?d1 wrd:directlyComprises ?one . ?d2 wrd:directlyComprises ?other .
+				  ?one a/rdfs:subClassOf* wrd:Variable . ?other a/rdfs:subClassOf* wrd:Variable }
+				?one fnd:hasIdentity ?identity . ?other fnd:hasIdentity ?identity .
+				FILTER (STR(?one) < STR(?other))
+			}""" ] .
+
+wrd:W8RelianceShape a sh:NodeShape ;
+	sh:targetClass wrd:Wording ;
+	sh:sparql [ sh:prefixes wrd:LawPrefixes ;
+		sh:message "W8: {?element} refers to {?identity}, a document outside the wording, which this wording does not rely on: state a static reliance (wrd:reliesOnEdition) or an ambulatory one (wrd:reliesAsAmended)." ;
+		sh:select """
+			SELECT DISTINCT $this ?element ?identity WHERE {
+				{ $this wrd:directlyComprises+ ?element } UNION { $this wrd:includes ?element }
+				{ ?element wrd:hasTextPart ?part . ?part wrd:refersToObject|wrd:refersToVariable ?identity } UNION { ?element wrd:linksTo ?identity }
+				?document fnd:hasIdentity ?identity ; a/rdfs:subClassOf* wrd:LinkedDocument .
+				FILTER NOT EXISTS { $this wrd:reliesOnEdition/fnd:hasIdentity ?identity }
+				FILTER NOT EXISTS { $this wrd:reliesAsAmended ?identity }
+				FILTER NOT EXISTS { $this wrd:assembledFrom ?form . { ?form wrd:reliesOnEdition/fnd:hasIdentity ?identity } UNION { ?form wrd:reliesAsAmended ?identity } }
+			}""" ] ;
+	sh:sparql [ sh:prefixes wrd:LawPrefixes ;
+		sh:message "W8: this wording relies on {?identity} twice ({?one}, {?other}): a reference to it must find exactly one reliance." ;
+		sh:select """
+			SELECT DISTINCT $this ?identity ?one ?other WHERE {
+				{ $this wrd:reliesOnEdition ?one , ?other . ?one fnd:hasIdentity ?identity . ?other fnd:hasIdentity ?identity . FILTER (STR(?one) < STR(?other)) }
+				UNION { $this wrd:reliesOnEdition ?one ; wrd:reliesAsAmended ?identity . ?one fnd:hasIdentity ?identity . BIND (?identity AS ?other) }
+			}""" ] .
+
 # ---- Amendments -------------------------------------------------------------------
 
 wrd:AmendmentOperationShape a sh:NodeShape ;

@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: MPL-2.0
 
 @prefix wrd:  <https://www.nebularis.org/neuro-semantic/lattice/wording#> .
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
 @prefix voc:  <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
 @prefix qnt:  <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
 @prefix elg:  <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
@@ -45,9 +46,17 @@ wrd:TextShape a sh:NodeShape ;
 	sh:property [ sh:path wrd:hasTextPart ; sh:class wrd:TextPart ] .
 
 wrd:TextPartSubjectShape a sh:NodeShape ;
-	sh:targetSubjectsOf wrd:partIndex , wrd:partText , wrd:refersToVariable , wrd:refersToObject ;
+	sh:targetSubjectsOf wrd:partIndex , wrd:partText , wrd:refersToVariable , wrd:refersToObject , wrd:displayText ;
 	sh:class wrd:TextPart ;
-	sh:message "Only a text part has a part index, text or a reference." .
+	sh:message "Only a text part has a part index, text, a reference or display text." .
+
+wrd:VariableIdentityShape a sh:NodeShape ;
+	sh:property [ sh:path [ sh:inversePath fnd:hasIdentity ] ; sh:minCount 1 ; sh:class wrd:Variable ] ;
+	sh:message "A variable reference names a variable's persistent identity, never a version (§5.7)." .
+
+wrd:TargetIdentityShape a sh:NodeShape ;
+	sh:property [ sh:path [ sh:inversePath fnd:hasIdentity ] ; sh:minCount 1 ; sh:class wrd:ReferenceTarget ] ;
+	sh:message "A reference names the persistent identity of a wording, an element or a document outside the wording, never a version (§5.8)." .
 
 wrd:TextPartShape a sh:NodeShape ;
 	sh:targetClass wrd:TextPart ;
@@ -56,8 +65,11 @@ wrd:TextPartShape a sh:NodeShape ;
 	sh:property [ sh:path wrd:partIndex ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:Literal ; sh:minInclusive 0 ;
 		sh:message "A text part has exactly one index, from 0." ] ;
 	sh:property [ sh:path wrd:partText ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
-	sh:property [ sh:path wrd:refersToVariable ; sh:maxCount 1 ; sh:class wrd:Variable ] ;
-	sh:property [ sh:path wrd:refersToObject ; sh:maxCount 1 ; sh:class wrd:ReferenceTarget ] ;
+	sh:property [ sh:path wrd:refersToVariable ; sh:maxCount 1 ; sh:node wrd:VariableIdentityShape ;
+		sh:message "A variable reference names a variable's persistent identity, never a version (§5.7)." ] ;
+	sh:property [ sh:path wrd:refersToObject ; sh:maxCount 1 ; sh:node wrd:TargetIdentityShape ;
+		sh:message "A reference names the persistent identity of a wording, an element or a document outside the wording, never a version (§5.8)." ] ;
+	sh:property [ sh:path wrd:displayText ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
 	sh:xone (
 		[ sh:path wrd:partText ; sh:minCount 1 ]
 		[ sh:path wrd:refersToVariable ; sh:minCount 1 ]
@@ -74,7 +86,23 @@ wrd:ReferenceSubjectShape a sh:NodeShape ;
 
 wrd:ReferenceShape a sh:NodeShape ;
 	sh:targetClass wrd:Reference ;
-	sh:property [ sh:path wrd:linksTo ; sh:class wrd:ReferenceTarget ] .
+	sh:property [ sh:path wrd:linksTo ; sh:node wrd:TargetIdentityShape ;
+		sh:message "A reference names the persistent identity of a wording, an element or a document outside the wording, never a version (§5.8)." ] .
+
+wrd:DisplayTextShape a sh:NodeShape ;
+	sh:targetSubjectsOf wrd:displayText ;
+	sh:or ( [ sh:path wrd:refersToObject ; sh:minCount 1 ] [ sh:path wrd:refersToVariable ; sh:minCount 1 ] ) ;
+	sh:message "Only a reference part has display text: a literal part's words are its text." .
+
+wrd:RelianceShape a sh:NodeShape ;
+	sh:targetSubjectsOf wrd:reliesOnEdition , wrd:reliesAsAmended ;
+	sh:class wrd:Wording ;
+	sh:message "Only a wording relies on a document outside it." ;
+	sh:property [ sh:path wrd:reliesOnEdition ; sh:class wrd:LinkedDocument ;
+		sh:message "A static reliance names an edition of a document outside the wording, never its identity (§5.8)." ] ;
+	sh:property [ sh:path wrd:reliesAsAmended ;
+		sh:node [ sh:property [ sh:path [ sh:inversePath fnd:hasIdentity ] ; sh:minCount 1 ; sh:class wrd:LinkedDocument ] ] ;
+		sh:message "An ambulatory reliance names the persistent identity of a document outside the wording, never an edition (§5.8)." ] .
 
 wrd:LinkedDocumentSubjectShape a sh:NodeShape ;
 	sh:targetSubjectsOf wrd:documentKind ;

@@ -16,10 +16,12 @@
 Gate A passed on 2026-10-01. Tranches B and C are merged to `main` and tagged: Wording 0.3.0,
 Behaviour 0.10.0 (shapes 0.4.0) with nested states and history, the import guard in `mise run
 check`. In tranche D, C6 to C7c are merged and tagged (Instrument 0.12.0, Party 0.8.0, Quantification
-0.7.0). C8 is merged and tagged (Instrument 0.13.0). C8b is briefed, with four questions. From C5 on, the agent builds and verifies, and the human commits by hand.
+0.7.0). C8 is merged and tagged (Instrument 0.13.0). C8b's model phase is built (Wording 0.7.0, Instrument 0.14.0). From C5 on, the agent builds and verifies, and the human commits by hand.
 
-**Next action, for the human:** review the C8b examples, the ADR-A112 addendum and the handoff's
-deviations on `ccs/c8b-references-by-identity`, then commit the examples phase.
+**Next action, for the human:** review the C8b model phase and its deviations on
+`ccs/c8b-references-by-identity`, accept the ADR-A112 addendum, commit, merge to `main`, then tag
+`wording-v0.7.0`, `wording-vocab-v0.7.0`, `wording-shapes-v0.4.0`, `instrument-v0.14.0` and
+`instrument-vocab-v0.14.0` and push them to `origin-ssh`.
 
 ## Slice board
 
@@ -129,3 +131,4 @@ deviations on `ccs/c8b-references-by-identity`, then commit the examples phase.
 - 2026-10-06: C8b briefed on `main` with its Validation Pack skeleton and four questions, each with its options' consequences: which references name an identity (Q1), how they resolve (Q2), display text (Q3), and code (Q4). C9 moves to Instrument 0.15.0
 - 2026-10-06: C8b's questions reworked with the scene set and each option's consequences, then answered: every reference names an identity, with outside documents gaining editions and a static or ambulatory reliance (Q1 (c)), resolution derived and checked by W8 (Q2), display text on the referring part (Q3), shapes and the binder's lookup (Q4)
 - 2026-10-06: C8b phase 1 on `ccs/c8b-references-by-identity`: `reused-clause.ttl` new, six examples' references moved to identities, outside documents given identities, editions and reliances, and the ADR-A112 addendum "references by identity" (Proposed). The only new shape failures are the reference ranges the model phase changes
+- 2026-10-06: C8b examples committed. Model phase built: Wording 0.7.0, `wording-vocab` 0.7.0 (breaking), shapes 0.4.0 with law W8, and Instrument and `instrument-vocab` 0.14.0 (a re-pin). Every C8b row passes, and every check C8 ran. The binder needed no change. Deviations in the [Validation Pack](../validation/computable-contract-substrate-c8b.md)
