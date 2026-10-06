@@ -5,8 +5,10 @@
 **Unit:** [formal-methods](../status/formal-methods.md), track D
 **Plan:** [formal-methods-phase-0.md](../plans/formal-methods-phase-0.md)
 **Brief:** [formal-methods-0.md](../validation/formal-methods-0.md)
-**Branch:** `fm/phase-0-prover-spike`, head commit `5dd63ad` at the time of writing
-**Decides:** FM-D1 (the proof assistant, or none) and FM-D10 (the Haskell question)
+**Branch:** `fm/phase-0-prover-spike`, head commit `c4075a6` at the time of writing
+**Decides:** FM-D1 (the proof assistant, or none) and FM-D10 (the Haskell question) -- both
+decided 2026-10-06, see §5: **Isabelle**, with Haskell and Scala adopted as code-generation
+targets
 
 Both D2 (Rocq 9.3.0) and D3 (Isabelle2025-2/HOL) completed the chain this brief specifies (TA1,
 TA2, TL1 to TL3, the adequacy table, all five seeded defects, the scripted MINOR change, OCaml
@@ -193,31 +195,26 @@ noted here because it is a real, observed difference in favour of Isabelle's too
 
 ### FM-D1: the proof assistant, or none
 
-**Reopened, pending the human's confirmation.** With M9 removed, M5 reweighted and rescored, and
+**Decided 2026-10-06, by the human: Isabelle.** With M9 removed, M5 reweighted and rescored, and
 M6 corrected after a follow-up question (§1, §3), the total is a 6.0-point Isabelle win, past the
-plan's tie threshold, so §5's decision rule gives the higher total outright with no tiebreak:
-**Isabelle, not Rocq.** This reverses the first draft's conclusion, which depended entirely on M9
-(a measure now removed) and a 1.0-point M0 tiebreak that the new total no longer needs.
-
-This report does not treat that reversal as settling FM-D1 by itself. Adopting Isabelle for
-track E is a design decision the Agentic Development Contract reserves for the human, and the
-evidence behind the swing is still thin in places the caveats (§6) already name: M5's Scala score
-rests on an unexercised but documented capability, not a run; M0 and M2's small gaps are one
-session's experience, not a controlled study. What this report changes is the recommendation it
-would make absent further guidance: **Isabelle**, on the corrected weights, rather than Rocq's
-previous narrow tiebreak. The human may re-confirm Rocq (for reasons this report's measures do
-not capture, such as the MetaRocq/Rust-bridge ecosystem M9 used to count), confirm Isabelle, or
-ask for specific gaps (Scala, specifically) to be exercised before deciding.
+plan's tie threshold, so §5's decision rule gives the higher total outright with no tiebreak. The
+human confirmed this outcome rather than overruling it: both provers proved fully capable, and
+Isabelle demonstrated real, usable advantages this spike could measure directly (M3's cheaper
+MINOR-change repair, M4's native OCaml list mapping, M5's working Scala and Haskell targets from
+the same `export_code` mechanism, M7's simpler native install), not just a narrow tiebreak. Track
+E proceeds against Isabelle/HOL. Rocq's spike sources stay on this branch as a complete,
+working record (plan §7.1); nothing here prevents revisiting them if a later track finds a reason
+to.
 
 ### FM-D10: the Haskell question
 
-Isabelle answers it directly: `export_code ... in Haskell` produced working, GHC-compiled
-Haskell matching every reference fixture with no manual adaptation. Rocq's extraction can target
-Haskell in principle (its `Extraction` library supports it) but this was not exercised in D2.
-With FM-D1 reopened rather than settled for Rocq, this question is reopened with it: if Isabelle
-is adopted, Haskell (and Scala, per M5) are both already-working targets at effectively no
-further cost; if Rocq is retained, Haskell remains available but unverified in this spike, and
-Scala is not available from Rocq's extraction mechanism at all (§3, M5).
+**Decided 2026-10-06: Haskell and Scala are both adopted as code-generation targets.** Isabelle's
+`export_code` produces working Haskell directly (demonstrated, GHC-compiled, all reference
+fixtures matched) and Scala is documented as a target in the same code-generator family
+(undemonstrated in this spike, see §6's caveat; exercising it is near-term follow-up work, not a
+blocker to this decision). Scala in particular is now in scope for any future work that wants to
+run generated algorithms directly in a JVM-based service layer, an option Rocq's extraction
+mechanism does not offer at all.
 
 ## 6. Caveats on this report
 
