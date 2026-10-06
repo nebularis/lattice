@@ -8,6 +8,7 @@ Require Import Eligibility.
 From Stdlib Require Import List.
 Import ListNotations.
 
+(* GATE:BEGIN AQ *)
 (* pd = [a;b] = [Permitted; Denied] *)
 Theorem adequacy_some_pd : some_value [Permitted; Denied] = Permitted.
 Proof. reflexivity. Qed.
@@ -50,3 +51,4 @@ Proof. reflexivity. Qed.
 
 Theorem adequacy_negated_du : neg3 (some_value [Denied; Undetermined]) = Undetermined.
 Proof. reflexivity. Qed.
+(* GATE:END *)
