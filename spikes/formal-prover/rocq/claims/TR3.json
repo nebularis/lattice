@@ -1,0 +1,10 @@
+{
+  "subject": "TR3",
+  "statedAs": "Reading.apply_reading_most_matches_spec",
+  "statementDigest": "sha256:aea869e24b6bbb54d460b2d5a7619aebe1efc0806c5d1ce4aa336ba547d838c6",
+  "method": "Proof",
+  "scope": "EveryBoundValueAndList",
+  "assumptionAudit": "not separately audited; compiles under Kernel.v/Eligibility.v's closed context",
+  "tool": { "name": "Rocq", "version": "9.3.0" },
+  "outcome": "passed"
+}

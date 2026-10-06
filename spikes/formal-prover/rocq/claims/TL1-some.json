@@ -1,0 +1,10 @@
+{
+  "subject": "TL1-some",
+  "statedAs": "Eligibility.some_value_spec",
+  "statementDigest": "sha256:90f615717207f9d26f1742a170bb75d4c17a28048ddc0d32a12f4b809a498786",
+  "method": "Proof",
+  "scope": "EveryList",
+  "assumptionAudit": "Closed under the global context (CheckEligibility.v)",
+  "tool": { "name": "Rocq", "version": "9.3.0" },
+  "outcome": "passed"
+}

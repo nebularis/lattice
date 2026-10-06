@@ -1,7 +1,7 @@
-(** Formal methods track D (the prover spike): the adequacy oracle (brief §2.3), from
-    tools/mork_compilers/src/mork_compilers/test_set_readings.py's MIXES fixture and
+(** Formal methods track D (the prover spike): adequacy against the reference fixture (brief
+    §2.3), from tools/mork_compilers/src/mork_compilers/test_set_readings.py's MIXES data and
     ReadingTests/NegationTests. Each row is checked by [reflexivity]: if the implementation
-    disagreed with the oracle, these would fail to typecheck, not merely fail to prove. *)
+    disagreed with the reference, these would fail to typecheck, not merely fail to prove. *)
 
 Require Import Kernel.
 Require Import Eligibility.

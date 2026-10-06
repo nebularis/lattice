@@ -1,0 +1,10 @@
+{
+  "subject": "TR5",
+  "statedAs": "Interface.every_value_reading",
+  "statementDigest": "sha256:22c57c9349fee25dacde9532c67c8bb2cff1cad12c4d8c3341935ed19358d2e6",
+  "method": "Proof",
+  "scope": "EveryValueReading",
+  "assumptionAudit": "not separately audited; compiles under Kernel.v/Eligibility.v's closed context",
+  "tool": { "name": "Rocq", "version": "9.3.0" },
+  "outcome": "passed"
+}

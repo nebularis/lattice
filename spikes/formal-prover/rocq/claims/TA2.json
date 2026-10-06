@@ -1,0 +1,10 @@
+{
+  "subject": "TA2",
+  "statedAs": "Kernel.neg3_laws",
+  "statementDigest": "sha256:ccde87f088e868f1e589c778082ea758c4c69411868390f8e8fe4311cb0c9094",
+  "method": "Proof",
+  "scope": "EveryDecision",
+  "assumptionAudit": "Closed under the global context (CheckKernel.v)",
+  "tool": { "name": "Rocq", "version": "9.3.0" },
+  "outcome": "passed"
+}
