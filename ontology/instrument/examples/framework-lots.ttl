@@ -167,7 +167,7 @@ ex:row-s1-1 a wrd:Text ;
     wrd:inclusionMode wrd-voc:Mandatory ;
     wrd:directlyComprises ex:var-s1-1-supplier ;
     wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ; wrd:partText "In Lots 1 and 2, \"the Supplier\" means " ] ,
-                    [ a wrd:TextPart ; wrd:partIndex 1 ; wrd:refersToVariable ex:var-s1-1-supplier ] ,
+                    [ a wrd:TextPart ; wrd:partIndex 1 ; wrd:refersToVariable ex:var-s1-1-supplier-identity ] ,
                     [ a wrd:TextPart ; wrd:partIndex 2 ; wrd:partText "." ] .
 ex:var-s1-1-supplier a wrd:EmbeddedVariable ;
     fnd:hasIdentity ex:var-s1-1-supplier-identity ; fnd:hasGovernanceState fnd:Active ;
@@ -178,7 +178,7 @@ ex:row-s1-2 a wrd:Text ;
     wrd:inclusionMode wrd-voc:Mandatory ;
     wrd:directlyComprises ex:var-s1-2-supplier ;
     wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ; wrd:partText "In Lot 2, \"the Supplier\" means " ] ,
-                    [ a wrd:TextPart ; wrd:partIndex 1 ; wrd:refersToVariable ex:var-s1-2-supplier ] ,
+                    [ a wrd:TextPart ; wrd:partIndex 1 ; wrd:refersToVariable ex:var-s1-2-supplier-identity ] ,
                     [ a wrd:TextPart ; wrd:partIndex 2 ; wrd:partText "." ] .
 ex:var-s1-2-supplier a wrd:EmbeddedVariable ;
     fnd:hasIdentity ex:var-s1-2-supplier-identity ; fnd:hasGovernanceState fnd:Active ;
@@ -189,7 +189,7 @@ ex:row-s1-3 a wrd:Text ;
     wrd:inclusionMode wrd-voc:Mandatory ;
     wrd:directlyComprises ex:var-s1-3-supplier ;
     wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ; wrd:partText "In Lot 3, \"the Supplier\" means " ] ,
-                    [ a wrd:TextPart ; wrd:partIndex 1 ; wrd:refersToVariable ex:var-s1-3-supplier ] ,
+                    [ a wrd:TextPart ; wrd:partIndex 1 ; wrd:refersToVariable ex:var-s1-3-supplier-identity ] ,
                     [ a wrd:TextPart ; wrd:partIndex 2 ; wrd:partText ", jointly and severally and, as between themselves, in equal shares." ] .
 ex:var-s1-3-supplier a wrd:EmbeddedVariable ;
     fnd:hasIdentity ex:var-s1-3-supplier-identity ; fnd:hasGovernanceState fnd:Active ;
@@ -200,7 +200,7 @@ ex:row-s1-4 a wrd:Text ;
     wrd:inclusionMode wrd-voc:Mandatory ;
     wrd:directlyComprises ex:var-s1-4-supplier ;
     wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ; wrd:partText "In Lot 4, \"the Supplier\" means " ] ,
-                    [ a wrd:TextPart ; wrd:partIndex 1 ; wrd:refersToVariable ex:var-s1-4-supplier ] ,
+                    [ a wrd:TextPart ; wrd:partIndex 1 ; wrd:refersToVariable ex:var-s1-4-supplier-identity ] ,
                     [ a wrd:TextPart ; wrd:partIndex 2 ; wrd:partText "." ] .
 ex:var-s1-4-supplier a wrd:EmbeddedVariable ;
     fnd:hasIdentity ex:var-s1-4-supplier-identity ; fnd:hasGovernanceState fnd:Active ;

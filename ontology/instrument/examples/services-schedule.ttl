@@ -106,7 +106,7 @@ ex:cl-s-1 a wrd:Text ;
     wrd:inclusionMode wrd-voc:Mandatory ;
     wrd:directlyComprises ex:var-territories ;
     wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ; wrd:partText "\"Territory\" means " ] ,
-                    [ a wrd:TextPart ; wrd:partIndex 1 ; wrd:refersToVariable ex:var-territories ] ,
+                    [ a wrd:TextPart ; wrd:partIndex 1 ; wrd:refersToVariable ex:var-territories-identity ] ,
                     [ a wrd:TextPart ; wrd:partIndex 2 ; wrd:partText "." ] .
 ex:var-territories a wrd:EmbeddedVariable ;
     fnd:hasIdentity ex:var-territories-identity ; fnd:hasGovernanceState fnd:Active ;

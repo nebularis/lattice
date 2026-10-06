@@ -69,7 +69,7 @@ ex:cl-1-1 a wrd:Text ;
     wrd:inclusionMode wrd-voc:Mandatory ;
     wrd:directlyComprises ex:var-commitment ;
     wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ; wrd:partText "\"Commitment\" means " ] ,
-                    [ a wrd:TextPart ; wrd:partIndex 1 ; wrd:refersToVariable ex:var-commitment ] ,
+                    [ a wrd:TextPart ; wrd:partIndex 1 ; wrd:refersToVariable ex:var-commitment-identity ] ,
                     [ a wrd:TextPart ; wrd:partIndex 2 ; wrd:partText "." ] .
 ex:var-commitment a wrd:EmbeddedVariable ;
     fnd:hasIdentity ex:var-commitment-identity ; fnd:hasGovernanceState fnd:Active ;
@@ -86,7 +86,7 @@ ex:cl-6-1 a wrd:Text ;
     wrd:inclusionMode wrd-voc:Mandatory ;
     wrd:directlyComprises ex:var-repay-days ;
     wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ; wrd:partText "The Borrower shall repay all loans within " ] ,
-                    [ a wrd:TextPart ; wrd:partIndex 1 ; wrd:refersToVariable ex:var-repay-days ] ,
+                    [ a wrd:TextPart ; wrd:partIndex 1 ; wrd:refersToVariable ex:var-repay-days-identity ] ,
                     [ a wrd:TextPart ; wrd:partIndex 2 ; wrd:partText " Business Days after the Lender demands repayment." ] .
 ex:var-repay-days a wrd:EmbeddedVariable ;
     fnd:hasIdentity ex:var-repay-days-identity ; fnd:hasGovernanceState fnd:Active ;
@@ -103,7 +103,7 @@ ex:cl-7-1 a wrd:Text ;
     wrd:inclusionMode wrd-voc:Mandatory ;
     wrd:directlyComprises ex:var-leverage ;
     wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ; wrd:partText "The Borrower shall ensure that leverage does not exceed " ] ,
-                    [ a wrd:TextPart ; wrd:partIndex 1 ; wrd:refersToVariable ex:var-leverage ] ,
+                    [ a wrd:TextPart ; wrd:partIndex 1 ; wrd:refersToVariable ex:var-leverage-identity ] ,
                     [ a wrd:TextPart ; wrd:partIndex 2 ; wrd:partText " to 1." ] .
 ex:var-leverage a wrd:EmbeddedVariable ;
     fnd:hasIdentity ex:var-leverage-identity ; fnd:hasGovernanceState fnd:Active ;

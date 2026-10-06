@@ -18,8 +18,8 @@ Behaviour 0.10.0 (shapes 0.4.0) with nested states and history, the import guard
 check`. In tranche D, C6 to C7c are merged and tagged (Instrument 0.12.0, Party 0.8.0, Quantification
 0.7.0). C8 is merged and tagged (Instrument 0.13.0). C8b is briefed, with four questions. From C5 on, the agent builds and verifies, and the human commits by hand.
 
-**Next action, for the human:** commit the C8b brief on `main`, then create and push
-`ccs/c8b-references-by-identity`.
+**Next action, for the human:** review the C8b examples, the ADR-A112 addendum and the handoff's
+deviations on `ccs/c8b-references-by-identity`, then commit the examples phase.
 
 ## Slice board
 
@@ -128,3 +128,4 @@ check`. In tranche D, C6 to C7c are merged and tagged (Instrument 0.12.0, Party 
 - 2026-10-06: C8 merged to `main` and tagged by the human (`instrument-v0.13.0`, `instrument-shapes-v0.6.0`, `instrument-vocab-v0.13.0`)
 - 2026-10-06: C8b briefed on `main` with its Validation Pack skeleton and four questions, each with its options' consequences: which references name an identity (Q1), how they resolve (Q2), display text (Q3), and code (Q4). C9 moves to Instrument 0.15.0
 - 2026-10-06: C8b's questions reworked with the scene set and each option's consequences, then answered: every reference names an identity, with outside documents gaining editions and a static or ambulatory reliance (Q1 (c)), resolution derived and checked by W8 (Q2), display text on the referring part (Q3), shapes and the binder's lookup (Q4)
+- 2026-10-06: C8b phase 1 on `ccs/c8b-references-by-identity`: `reused-clause.ttl` new, six examples' references moved to identities, outside documents given identities, editions and reliances, and the ADR-A112 addendum "references by identity" (Proposed). The only new shape failures are the reference ranges the model phase changes
