@@ -12,6 +12,17 @@
 !.build/mork-review-workbench-test-results/.gitkeep
 .build/surface-contract-studio-test-results/*
 !.build/surface-contract-studio-test-results/.gitkeep
+# Formal-methods toolchains, build outputs and caches (formal-methods-phase-0, epic E6)
+.build/formal/*
+!.build/formal/.gitkeep
+# Rocq and Isabelle compiled artefacts, wherever spikes/formal-prover's theories are built
+*.vo
+*.vos
+*.vok
+*.glob
+.*.aux
+.Rocqdep.d
+*.heap.gz
 
 # Node and Yarn installs, caches, and build output
 node_modules/
@@ -37,6 +48,10 @@ __pycache__/
 venv/
 env/
 ENV/
+# Track D's spike keeps its environment scripts at spikes/formal-prover/env/ (formal-methods-
+# phase-0.md §7), which the Python virtualenv rule above would otherwise swallow (env/ matches
+# at any depth, and Windows git matches it case-insensitively against ENV/ too).
+!spikes/formal-prover/env/
 .tox/
 .nox/
 .eggs/
