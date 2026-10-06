@@ -5,9 +5,11 @@
 **Unit ID:** `formal-methods` (epic)
 **Status:** ✅ Track D complete on `fm/phase-0-prover-spike` (D0-D4). FM-D1 and FM-D10 reopened
 2026-10-06 after the human corrected the report's scoring (M9 removed, M5 reweighted to match
-M6): the weighted total now favours Isabelle by 5.0 points outright (no tiebreak needed),
-reversing the report's first-draft Rocq tiebreak. Awaiting the human's decision on FM-D1 itself
-and on whether to proceed to track E
+M6), and a follow-up question corrected M6 itself (Isabelle's `can`/`Goal.prove` gives a tested,
+working batch-mode equivalent of Rocq's `Fail`, folded into `Interface.thy`): the weighted total
+now favours Isabelle by 6.0 points outright (no tiebreak needed), reversing the report's
+first-draft Rocq tiebreak. Awaiting the human's decision on FM-D1 itself and on whether to
+proceed to track E
 **Last updated:** 2026-10-06
 **Plan:** [formal-methods.md](../plans/formal-methods.md), [the prover spike](../plans/formal-methods-phase-0.md)
 **Review response:** [formal-methods-review-response.md](../notes/formal-methods-review-response.md)
@@ -47,13 +49,13 @@ installs.
 | D1 brief | done (commit `bb86f17`): written semantics, seeded defects S1-S5, MINOR change spec, measures |
 | D2 Rocq track | done (commits `f4a6db4`, `17f05d9`, `57fea56`, `ca6fbc0`): Kernel.v (TA1, TA2), Eligibility.v (TL1-TL3), Adequacy.v (13 fixture-matching theorems, all via `reflexivity`), defects S1-S5 (each a compiled, positive detection, not a narrative), Reading.v (the MINOR change, M3 measured at +21/-7 lines for adding `MostValueR`), Interface.v (M6's `MonotoneReading` record, rejects non-monotone candidates at construction), Extraction.v (M4, extracted OCaml kernel checked against all 15 reference fixtures outside Rocq), 12 claim records, `gate.py rocq` passes clean |
 | D3 Isabelle track | done (commits `c7b399a`, `2a115b1`, `5dd63ad`): Kernel.thy (TA1, TA2), Eligibility.thy (TL1-TL3), Adequacy.thy (15 lemmas via `eval`), defects S1-S5 (S4 needs `quick_and_dirty`, since Isabelle refuses bare `sorry`), Reading.thy (the MINOR change, M3 measured at +18/-6 lines for `MostValueR`), Interface.thy (M6's `monotone_reading` locale), Export.thy (M4/M5: OCaml and Haskell, both checked against all 15 reference fixtures, Haskell compiled with GHC), 13 claim records, `gate.py isabelle` passes clean |
-| D4 report | done: [formal-prover-experiment.md](../notes/formal-prover-experiment.md), M0-M8 scored for both provers after the human's correction (Rocq 62.0, Isabelle 67.0 of 100; M9 removed, M5 reweighted 5→10 and rescored for Scala/Rust/Python). FM-D1 and FM-D10 reopened, not decided |
+| D4 report | done: [formal-prover-experiment.md](../notes/formal-prover-experiment.md), M0-M8 scored for both provers after the human's corrections (Rocq 62.0, Isabelle 68.0 of 100; M9 removed, M5 reweighted 5→10 and rescored for Scala/Rust/Python, M6 corrected after a tested `can`/`Goal.prove` equivalent of Rocq's `Fail` was found and folded into `Interface.thy`). FM-D1 and FM-D10 reopened, not decided |
 
 ## Decisions
 
 | # | State |
 |---|---|
-| FM-D1 | reopened 2026-10-06: the report's first draft scored a 1.0-point Rocq tiebreak, carried by M9 (the engine notes' prior choice for an RDF/Datalog engine that was never built). The human removed M9 as worth-less-than-nothing and reweighted M5 (production-toolchain targets) to match M6; the corrected total favours Isabelle by 5.0 points outright. See [formal-prover-experiment.md](../notes/formal-prover-experiment.md) §1, §3, §5. Needs the human's decision, not an inferred one |
+| FM-D1 | reopened 2026-10-06: the report's first draft scored a 1.0-point Rocq tiebreak, carried by M9 (the engine notes' prior choice for an RDF/Datalog engine that was never built). The human removed M9 as worth-less-than-nothing and reweighted M5 (production-toolchain targets) to match M6; a follow-up question also corrected M6 (Isabelle has a tested, working `can`/`Goal.prove` equivalent of Rocq's `Fail`, not a gap). The corrected total favours Isabelle by 6.0 points outright. See [formal-prover-experiment.md](../notes/formal-prover-experiment.md) §1, §3, §5. Needs the human's decision, not an inferred one |
 | FM-D10 | reopened 2026-10-06 with FM-D1. If Isabelle, Haskell and Scala are both already-working `export_code` targets; if Rocq is retained, Haskell is unverified in this spike and Scala is unavailable from Rocq's extraction mechanism at all |
 | FM-D5, FM-D7, FM-D9 | revised 2026-10-06 after review |
 | FM-D11, FM-D12, FM-D13 | decided 2026-10-06, as recommended |

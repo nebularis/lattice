@@ -84,18 +84,19 @@ Weighted score = raw score × (weight ÷ 10).
 | M3 | proof-repair cost, scripted MINOR change | 15 | 7 | 8 | 10.5 | 12.0 |
 | M4 | generated OCaml | 5 | 7 | 8 | 3.5 | 4.0 |
 | M5 | other targets (Scala, Rust, Python, N-version) | 10 | 2 | 8 | 2.0 | 8.0 |
-| M6 | architecture fit (interface rejection) | 10 | 8 | 6 | 8.0 | 6.0 |
+| M6 | architecture fit (interface rejection) | 10 | 8 | 7 | 8.0 | 7.0 |
 | M7 | toolchain and CI | 5 | 6 | 7 | 3.0 | 3.5 |
 | M8 | library fit | 5 | 6 | 7 | 3.0 | 3.5 |
-| **Total** | | **100** | | | **62.0** | **67.0** |
+| **Total** | | **100** | | | **62.0** | **68.0** |
 
 M9 removed; see the revision note above §1. M5's weight raised from 5 to 10 and its raw scores
 revised, same note.
 
-Margin: 5.0 points, not under the 5-point tie threshold (plan §5: "a margin under 5 points is a
+Margin: 6.0 points, not under the 5-point tie threshold (plan §5: "a margin under 5 points is a
 tie"). **This is a decisive win for Isabelle, not a tie**, so no tiebreak applies. This reverses
 the first draft's conclusion (a 1.0-point Rocq tiebreak win under the plan's original M9/M5
-weights). See §5 for what this means for FM-D1.
+weights, before the M6 correction below widened it further). See §5 for what this means for
+FM-D1.
 
 ### Notes per measure
 
@@ -141,16 +142,22 @@ weights). See §5 for what this means for FM-D1.
   here. This is a wash between the two for Rust and Python, and is reflected by neither prover
   scoring near the top of the range; Isabelle's score is carried by Scala plus the demonstrated
   Haskell/OCaml pair, Rocq's by OCaml alone.
-- **M6.** Rocq's `MonotoneReading` dependent record rejects a non-monotone candidate as a type
-  error at the point of construction, and the rejection itself is demonstrated inside the
-  successfully-building file via `Fail Definition` (`Interface.v`), a self-contained,
-  machine-checked assertion that the bad candidate fails. Isabelle's `monotone_reading` locale
-  rejects the same shape of candidate at `interpretation`/`unfold_locales`, a proof obligation
-  failure rather than a type error, which is at least as legible to a non-type-theorist (it reads
-  as an ordinary unproved goal) but could not be demonstrated as a failing-yet-contained command
-  in this spike: Isar has no batch-mode equivalent of Rocq's `Fail`, so `Interface.thy` instead
-  documents the rejection in a comment rather than asserting it. That weakens Isabelle's score
-  here on demonstrability, not on the soundness of the rejection itself.
+- **M6, corrected after a follow-up question.** The first draft claimed Isar has no batch-mode
+  equivalent of Rocq's `Fail` at all, scoring Isabelle down for undemonstrability. Tested
+  directly: `can` (a standard ML combinator; `can f x` is true iff `f x` does not raise) wrapping
+  `Goal.prove` lets an `ML_command` attempt exactly the obligation a bad candidate would face and
+  assert that the attempt fails, without aborting the theory, the same "attempt, assert
+  rejection, keep going" shape as Rocq's `Fail`, confirmed to print "ok" and let the theory
+  finish (`isabelle build`, both a trivial-false sanity check and the real `inverted_reading`
+  obligation). This is now folded into `Interface.thy` itself, replacing the earlier
+  comment-only placeholder, so Isabelle's rejection of a non-monotone candidate is demonstrated
+  as rigorously as Rocq's `Fail Definition` is. The remaining, smaller difference: Rocq's `Fail`
+  is a plain top-level keyword anyone writing the proof script reaches for directly; Isabelle's
+  equivalent requires dropping one layer down to its ML API (`can`, `Goal.prove`, antiquotations),
+  a real but narrower gap in approachability, not in capability. Rocq's rejection also still
+  happens at construction time (a type error, before any tactic runs) where Isabelle's is a proof
+  obligation either way (at `interpretation` or inside the `can` block) -- that architectural
+  distinction, the actual subject of M6, is unaffected by this correction.
 - **M7.** Both have working `mise` bootstrap tasks, confirmed idempotent in D0. Rocq has a built
   image (unused for D2's actual proof work); Isabelle has none at all in this spike, a real gap
   against the epic's eventual containerised-worker story (epic §4). Isabelle's native install is
@@ -186,11 +193,11 @@ noted here because it is a real, observed difference in favour of Isabelle's too
 
 ### FM-D1: the proof assistant, or none
 
-**Reopened, pending the human's confirmation.** With M9 removed and M5 reweighted and rescored
-(§1, §3), the total flips to a 5.0-point Isabelle win, at or past the plan's tie threshold, so
-§5's decision rule gives the higher total outright with no tiebreak: **Isabelle, not Rocq.** This
-reverses the first draft's conclusion, which depended entirely on M9 (a measure now removed) and
-a 1.0-point M0 tiebreak that the new total no longer needs.
+**Reopened, pending the human's confirmation.** With M9 removed, M5 reweighted and rescored, and
+M6 corrected after a follow-up question (§1, §3), the total is a 6.0-point Isabelle win, past the
+plan's tie threshold, so §5's decision rule gives the higher total outright with no tiebreak:
+**Isabelle, not Rocq.** This reverses the first draft's conclusion, which depended entirely on M9
+(a measure now removed) and a 1.0-point M0 tiebreak that the new total no longer needs.
 
 This report does not treat that reversal as settling FM-D1 by itself. Adopting Isabelle for
 track E is a design decision the Agentic Development Contract reserves for the human, and the
@@ -225,9 +232,15 @@ Scala is not available from Rocq's extraction mechanism at all (§3, M5).
   because D2 came first.
 - The M0-M2 debugging-iteration counts are this session's lived experience with one model and
   are not a controlled timing study. A different session could plausibly reverse M0 and M2's
-  small gaps; at the current 5.0-point margin, reversing both would roughly halve the gap but not
+  small gaps; at the current 6.0-point margin, reversing both would roughly halve the gap but not
   close it (M0's swing alone is 2 points either way), so the outright-win outcome is not fragile
   to that particular uncertainty the way the first draft's 1.0-point tiebreak was.
+- M6's `can`/`Goal.prove` demonstration (now in `Interface.thy`) was tested directly against this
+  spike's own `inverted_reading` candidate and the build was confirmed to finish; it is not
+  conjectured. What remains untested is whether the same idiom reaches all the way to literally
+  wrapping a failing `interpretation` command itself (rather than restating its obligation as a
+  bare goal, as done here); that would need Isabelle's internal `Expression`/locale-interpretation
+  ML API, not attempted in this spike.
 - M5's Scala score for Isabelle (8/10, §3) rests on that target being part of the same
   `export_code` mechanism already twice demonstrated working (OCaml, Haskell), not on Scala
   itself having been run. Before treating M5 as settled, D3 should actually exercise
