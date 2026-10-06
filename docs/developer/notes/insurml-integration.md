@@ -7,6 +7,13 @@ every new directory needs one under the repository topology rule.
 of the form "comparison §5.4" point there. Its gap numbers (L-1 to L-13 for LATTICE, I-1 to I-12
 for InsurML) are reused here.
 
+**Correction, 2026-10-06.** This note was first written on the assumption that an `iml:Contract`
+is only a library form and that InsurML gives one policy's wording no IRI. InsurML's owner
+confirmed on 2026-10-06 that a contract can be either a template, such as a generic Directors and
+Officers wording that underwriters adapt case by case, or an instance, such as one named client's
+bound D&O policy in force. Both are `iml:Contract`, with version IRIs of the pattern
+`P id/contract/{id}/{date}`. The rows marked "(corrected 2026-10-06)" below follow from this.
+
 ---
 
 ## Contents
@@ -115,8 +122,8 @@ In a combined system, each kind of fact needs one authoritative home.
 | order and inclusion in a library contract | InsurML manifest | Wording part-whole edges and rank keys | lift |
 | inclusion conditions | InsurML manifest and markup, or Eligibility profiles once conditions exceed equality | the other | lift, or lower through derived variables (§5.2) |
 | one policy's settings and variable values | `wrd:VariableValue` on its assembled wording | InsurML settings file, until Q33 is decided | lower |
-| one policy's assembled text | the assembler's output, recorded as a `wrd:AssembledWording` and an InsurML assembled contract | each from the other, with parity | §7 |
-| amendments to an issued policy | `wrd:Amendment`, `ins:Amendment` | a new InsurML contract or component version | lower |
+| one policy's assembled text | the assembler's output, under the instance contract's version IRI, typed `iml:Contract` and `wrd:AssembledWording` | the assembled contract XML and the lifted graph, each from the other, with parity | §7 (corrected 2026-10-06) |
+| amendments to an issued policy | `wrd:Amendment`, `ins:Amendment` | an endorsement is a new version of the instance contract, with new component versions where words change | lower (corrected 2026-10-06) |
 | meaning of a clause | Instrument stated meaning, owned by the element version (CC-D12) | nothing in InsurML | |
 | state after issue | Behaviour runtime records | nothing in InsurML | |
 | typing schemes | InsurML vocabularies and publisher schemes | LATTICE scheme bindings in the profile | profile |
@@ -133,7 +140,7 @@ Fidelity grades: **E** exact, **C** by convention, **L** lossy, **N** no target.
 
 | # | InsurML | LATTICE | Grade | Rule |
 |---|---|---|---|---|
-| M-01 | `iml:Contract` version | `wrd:Wording` (a library form), same IRI | C | co-typed. Not an assembled wording |
+| M-01 | `iml:Contract` version | a template as `wrd:Wording` (a library form). An instance as `wrd:AssembledWording`, with `wrd:assembledFrom` the template version. Same IRI in both cases | C | co-typed. InsurML states neither the link to the template nor which kind a contract is (P-15, P-16) (corrected 2026-10-06) |
 | M-02 | `iml:ComponentGroup` version | `wrd:Element`, same IRI | C | element type from the group type (§6.3) |
 | M-03 | `iml:Component` version | `wrd:Element`, same IRI | C | element type and classification (§6.3) |
 | M-04 | sub-component | element directly comprised by its component | E | |
@@ -184,8 +191,8 @@ Fidelity grades: **E** exact, **C** by convention, **L** lossy, **N** no target.
 | M-49 | `iml:areaOfCoverage` (literal) | a classification from peril and reference vocabularies, proposed by review | L | text kept, concept proposed (§8.8) |
 | M-50 | `iml:allowsSubComponentType`, `disallowsSubComponentType`, `allowedWithin` | SHACL-SPARQL shapes in the profile | E | §8.10 |
 | M-51 | `iml:applicableTo` | `iml:applicableTo` kept in the profile (C3-Q2) | E | |
-| M-52 | settings (`rdf:value` in the example) | `wrd:VariableValue` on a minted `wrd:AssembledWording` | C | §8.1 |
-| M-53 | assembled contract XML | a `wrd:AssembledWording` with `wrd:assembledFrom` the contract and `wrd:includes` the resolved parts | C | its IRI is minted, since InsurML gives it none |
+| M-52 | settings (`rdf:value` in the example) | `wrd:VariableValue` on the instance contract, co-typed `wrd:AssembledWording` | C | §8.1. The instance contract's IRI is adopted, nothing is minted (corrected 2026-10-06) |
+| M-53 | assembled contract XML | the instance contract as a `wrd:AssembledWording`, with `wrd:assembledFrom` the template version and `wrd:includes` the resolved parts | C | the instance contract's IRI is adopted, nothing is minted. The template version comes from P-15 or a profile rule (corrected 2026-10-06) |
 | M-54 | generated `number` | `wrd:objectId` on the instance's view, derived | C | W7 |
 | M-55 | endorsement as a new contract version (D87) | `wrd:Amendment`s found by comparing the two manifests, Insert and Delete | L | text-level operations cannot be recovered from inclusion changes |
 
@@ -201,9 +208,9 @@ Four ways to lift a shared part, in increasing order of change to LATTICE:
 | Option | How | Keeps W1 | Loses | Change |
 |---|---|---|---|---|
 | A. one form per contract, copy shared parts | mint a LATTICE element per (holder, part), `prov:wasDerivedFrom` the InsurML component | yes | the InsurML IRI is no longer the element's. Meaning reviewed for the component must be re-attached per copy | none |
-| B. one form per contract, reference shared parts | the holder gets a minted placement element of type Reference, `wrd:linksTo` the shared component | yes | the shared part is not in the tree, so W5 and assembly do not reach it | none |
+| B. one form per contract, reference shared parts | the holder gets a minted reference element, `wrd:linksTo` the shared component | yes | the shared part is not in the tree, so W5 and assembly do not reach it | none |
 | C. a pool wording | every InsurML component is the root of its own one-element wording, contracts are forms that reference them | yes | the contract's tree is flat references | none |
-| D. reify inclusion | a new Wording class for a placement, carrying the holder, the part, the rank key, the inclusion mode and the condition. W1 is restated over placements | restated | nothing | Wording, an ADR (L-1) |
+| D. reify inclusion | a new Wording class for an inclusion entry, carrying the holder, the part, the rank key, the inclusion mode and the condition. W1 is restated over inclusion entries | restated | nothing | Wording, an ADR (L-1) |
 
 **Assessment.** A breaks the adopted identity (IP4) and multiplies meaning reviews. B and C keep
 the substrate unchanged but give up what Wording's laws check. D matches InsurML and also serves
@@ -218,11 +225,11 @@ A sketch of D, for discussion only:
 @prefix wrd: <https://www.nebularis.org/neuro-semantic/lattice/wording#> .
 @prefix wrd-voc: <https://www.nebularis.org/neuro-semantic/lattice/wording/vocab#> .
 
-# Hypothetical: wrd:Placement does not exist today.
+# Hypothetical: wrd:InclusionEntry does not exist today.
 <https://insurer.example/id/group/liability-section/2026-01-01>
-    wrd:hasPlacement [
-        a wrd:Placement ;
-        wrd:places <https://insurer.example/id/component/sanctions-us/2026-01-01> ;
+    wrd:hasInclusionEntry [
+        a wrd:InclusionEntry ;
+        wrd:entryIncludes <https://insurer.example/id/component/sanctions-us/2026-01-01> ;
         wrd:rankKey "0030" ;
         wrd:inclusionMode wrd-voc:Conditional ;
         wrd:includedWhen <https://deployment.example/profile/risk-location-us>
@@ -341,7 +348,7 @@ its name.
 
 | InsurML class | Co-typed with | Never co-typed with | Why |
 |---|---|---|---|
-| `iml:Contract` | `wrd:Wording` | `wrd:AssembledWording`, `ins:Instrument` | an InsurML contract is a library form, not one policy and not the legal instrument |
+| `iml:Contract` | `wrd:Wording` for a template, `wrd:AssembledWording` for an instance | `ins:Instrument`, in either case | a template is a library form and an instance is one policy's wording. Neither is the legal instrument (corrected 2026-10-06) |
 | `iml:ComponentGroup` | `wrd:Element` | `wrd:Text`, `wrd:Table` | a group has no text of its own (D112) |
 | `iml:Component` | `wrd:Element` | `wrd:Wording` | Wording and Element are disjoint |
 | `iml:Variable` | `wrd:Variable` subclass by type | | the SKOS type decides embedded or governing |
@@ -349,9 +356,10 @@ its name.
 
 An alignment module would state `iml:Component rdfs:subClassOf wrd:Element`,
 `iml:ComponentGroup rdfs:subClassOf wrd:Element` and `iml:Contract rdfs:subClassOf wrd:Wording` in
-the profile, never in Wording. The last is safe even if an assembled contract were typed
-`iml:Contract`, since `wrd:AssembledWording ⊑ wrd:Wording`. What must stay apart are
-`iml:Contract` and `ins:Instrument`.
+the profile, never in Wording. The last is safe for instance contracts too, since
+`wrd:AssembledWording ⊑ wrd:Wording` (corrected 2026-10-06). The axiom does not say which kind a
+contract is, so the profile types an instance `wrd:AssembledWording` by its own rule until InsurML
+states one (P-16). What must stay apart are `iml:Contract` and `ins:Instrument`.
 
 The repository's rule on domains and ranges applies with force here. Neither side's properties
 should acquire a domain or range in the alignment that would classify the other side's nodes. For
@@ -388,7 +396,7 @@ dep:insurer-component-identifier a fnd:KeyScheme ;
 | versions | `iml:previousVersion` and `fnd:supersededBy` both stated, or one materialised from the other by a Surface promotion |
 | same-day revisions | `-2`, `-3` suffixes need no special handling, since LATTICE does not parse version IRIs |
 | variables | an InsurML variable IRI is adopted as the version IRI of a `wrd:Variable` that never gains a second version. The identity is minted |
-| assembled wordings | minted, since InsurML gives one policy's text no IRI. A policy number or UMR is a natural key on its identity |
+| assembled wordings | adopted from the instance contract's version IRI, never minted. A policy number or UMR is a natural key on its identity (corrected 2026-10-06) |
 | LWR codes | external keys under their own schemes |
 
 ### 6.3 Typing
@@ -529,7 +537,11 @@ wire protocol for terms.
           wrd:literalValue 250000 ] .
 ```
 
-This also answers I-2: the policy's text has its own identity and version.
+The example's minted IRI, `https://deployment.example/policy/bc-2026-00412/1`, would in practice
+be the instance contract's version IRI, of the pattern `P id/contract/{id}/{date}`, and nothing
+would be minted (corrected 2026-10-06). With `wrd:assembledFrom` and the `wrd:AssembledWording`
+type, the example also answers I-2. The instance names the template version it was drawn from, and
+its type says it is an instance.
 
 ### 8.2 Condition kinds (D52, D57)
 
@@ -599,7 +611,7 @@ InsurML resolves a defined term to the version in scope (D84), and keeps section
 apart by scope rather than by precedence. Instrument plans per-section definitions with
 `ins:appliesWithin` and `ins:notWithin`, union and overlap reporting (C7c). The two meet as
 follows. A Defined Term component included only within a section's group is a definition that
-applies within that section. A lift can write `ins:appliesWithin` from the group's placement, and
+applies within that section. A lift can write `ins:appliesWithin` from the group that includes it, and
 C7c's overlap report then shows the cases where InsurML's scope rule and the law's reading differ,
 such as a section that includes two definitions of one word. This is input to C7c's brief.
 
@@ -773,8 +785,8 @@ Every new directory needs an accepted ADR before it is created.
 
 | # | Change | Layer | Version impact | Depends on |
 |---|---|---|---|---|
-| X-1 | inclusion as a placement, W1 restated (L-1, §4.2) | Wording | MINOR, breaking, cascade through Instrument and its importers | an ADR, and a window clear of CCS C7b to C9 |
-| X-2 | optional text inside a text, and a block placed at a point in a text (L-2, L-5) | Wording | MINOR, breaking if W2 changes | an ADR |
+| X-1 | inclusion reified as an inclusion entry, W1 restated (L-1, §4.2) | Wording | MINOR, breaking, cascade through Instrument and its importers | an ADR, and a window clear of CCS C7b to C9 |
+| X-2 | optional text inside a text, and a block put at a point in a text (L-2, L-5) | Wording | MINOR, breaking if W2 changes | an ADR |
 | X-3 | inclusion conditions that read another element's inclusion (L-3) | Wording, possibly Eligibility | MINOR | an ADR. The derived-variable workaround meanwhile |
 | X-4 | references to a persistent identity, resolved within an assembled wording, with optional display text (L-6, §4.4) | Wording | MINOR | an ADR, designed with C7c |
 | X-5 | content not part of the contract (L-7) | Wording or Instrument | MINOR | a decision on whether it is neutral |
@@ -789,7 +801,7 @@ Every new directory needs an accepted ADR before it is created.
 
 | # | Proposal | Answers |
 |---|---|---|
-| P-1 | settings as variable value records on an identified assembled contract | Q33, I-1, I-2 |
+| P-1 | settings as variable value records on an identified assembled contract | Q33, I-1 (corrected 2026-10-06) |
 | P-2 | conditions held in RDF by IRI, reopening the deferred option | D52, D57, I-3 |
 | P-3 | a design-time check that a set of alternatives is exclusive and exhaustive | I-4 |
 | P-4 | fields, entries and cells as the dynamic table structure | §9.6, I-5 |
@@ -801,6 +813,10 @@ Every new directory needs an accepted ADR before it is created.
 | P-10 | a rule for cycles among `dependsOn` | U-8 |
 | P-11 | a chosen alternative takes the slot's number | Q32, I-11 |
 | P-12 | SHACL authoring rules from LATTICE's experience | §8.10 |
+| P-15 | a property linking an instance contract to the template version it was assembled from | I-2, Q-21 |
+| P-16 | a stated way to tell a template from an instance contract, such as a contract role, or a rule that an instance has settings and no unresolved conditions | I-2, Q-21 |
+
+P-13 and P-14 are numbered in the [alignment plan](../plans/insurml-alignment.md) §8.
 
 ---
 
@@ -818,7 +834,7 @@ compared with actuals, as the repository asks. They exclude human review time.
 | I4 | assembler, settings as variable values, three-valued inclusion, parity with InsurML's processor | I2, ideally I3 | no | 1M to 2M |
 | I5 | meaning over components: component type routing, limits as term parameters, Module 12 regimes as templates, definitions by scope | CCS C7c, C8, C8a, C9, AIR-5.1 to 5.4 | applied | 2M to 4M |
 | I6 | egress kits, renderer and numbering, ingestion of InsurML input | I4, the egress ADR | no | 1M to 2M |
-| I7 | proposals P-1 to P-12 written up for the InsurML owner | I1 to I4 | no | under 0.3M |
+| I7 | proposals P-1 to P-16 written up for the InsurML owner | I1 to I4 | no | under 0.3M |
 
 **Dependencies on the epics.**
 
@@ -870,7 +886,7 @@ cross Instrument's rewrite.
 | IQ-7 | Clause dependencies | derived variables, or X-3 | derived variables now, X-3 if a neutral case confirms it |
 | IQ-8 | Optional words and blocks inside text (X-2) | substrate, profile, or source XML only | substrate, through an ADR |
 | IQ-9 | Content status (X-5) | substrate or profile | profile first, substrate if a second domain needs it |
-| IQ-10 | Whether to approach the InsurML owner with P-1 to P-12 | yes or no, and when | yes, after I2 shows the proposals work |
+| IQ-10 | Whether to approach the InsurML owner with P-1 to P-16 | yes or no, and when | yes, after I2 shows the proposals work |
 | IQ-11 | Whether InsurML becomes S1's target format in the ingestion pipeline | yes, no, or as one option | one option, recorded against ingestion vision Q9 |
 | IQ-12 | Whether to fix Wording's `sh:prefixes` now (X-7) | now as a PATCH, or record as technical debt | record now, fix with the next Wording change |
 
@@ -890,3 +906,10 @@ cross Instrument's rewrite.
 | Q-8 | Is reuse of one component version by several contracts under different conditions common in practice, or mostly within one product family? (This sizes IQ-3.) |
 | Q-9 | Would InsurML adopt a persistent identity resource beside its dated version IRIs (P-8)? |
 | Q-10 | Are the InsurML shapes and their SPARQL available for review against the engine differences in §8.10? |
+| Q-19 | What does the date in an instance contract's IRI mean, its effective date or the date it was recorded, and how is a backdated endorsement versioned? (identity note §6) |
+| Q-20 | Is a renewal a new instance contract with its own identity, or a new version of the old one? (identity note §6.2) |
+| Q-21 | How does an instance name the template version it was drawn from, and how does a reader tell a template from an instance? (P-15, P-16) |
+
+Q-11 to Q-18 are in the [alignment plan](../plans/insurml-alignment.md) §8. Q-16, whether a
+contract is a product form or an issued policy, was answered on 2026-10-06. A contract may be
+either, a template or an instance. Q-19 to Q-21 follow from that answer.

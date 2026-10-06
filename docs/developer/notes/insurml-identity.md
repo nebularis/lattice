@@ -15,7 +15,7 @@ LATTICE's [InsurML alignment vision](../../architecture/insurml-alignment-vision
 3. [Where they differ](#3-where-they-differ)
 4. [Why LATTICE cannot mint identities under a publisher's prefix](#4-why-lattice-cannot-mint-identities-under-a-publishers-prefix)
 5. [What an identity resource does in a live system](#5-what-an-identity-resource-does-in-a-live-system)
-6. [If a contract identifies an issued policy](#6-if-a-contract-identifies-an-issued-policy)
+6. [Contracts that identify issued policies](#6-contracts-that-identify-issued-policies)
 7. [How it looks in different stores](#7-how-it-looks-in-different-stores)
 8. [A proposal](#8-a-proposal)
 
@@ -114,11 +114,12 @@ at that is not one version.
 
 None of these changes InsurML's version IRIs. They need a node beside them.
 
-## 6. If a contract identifies an issued policy
+## 6. Contracts that identify issued policies
 
-InsurML's specification is open on whether an `iml:Contract` describes a product form, a policy as
-issued, or both. Its endorsements are new contract versions (D87), which points towards issued
-policies. If a contract IRI can identify one policy, identity becomes more important still:
+InsurML's owner confirmed on 2026-10-06 that an `iml:Contract` may be a template, such as a generic
+directors and officers wording that underwriters tailor case by case, or an instance, such as one
+client's bound policy in force. Its endorsements are new versions of the instance contract (D87).
+So a contract IRI can identify one policy, and identity matters more still:
 
 | Question | Why it matters for a policy |
 |---|---|
@@ -173,7 +174,7 @@ terms, which is what a single identity running across renewals would allow by mi
 Practice varies. Some insurers keep one policy number across renewals. The number is then a key
 of a series of policies, a policy account, rather than of one contract. In InsurML's terms, a
 renewal under the same identifier slug and a new date would look exactly like an endorsement,
-which is a reason to settle Q-16 before either standard fixes its rule.
+which is why InsurML needs a rule for renewals (Q-20).
 
 ## 7. How it looks in different stores
 

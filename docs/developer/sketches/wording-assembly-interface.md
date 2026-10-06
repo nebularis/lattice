@@ -91,7 +91,7 @@ record.
 
 ## 3. InsurML's assembly concepts, one by one
 
-Each InsurML concept is placed in one of three dispositions. **Exists**: Wording already has it.
+Each InsurML concept is given one of three dispositions. **Exists**: Wording already has it.
 **Hook**: the interface gains a domain-neutral point that InsurML's model fills, and other models
 may fill differently. **Model only**: it belongs to InsurML's model and is not lifted into the
 substrate.
@@ -104,8 +104,8 @@ substrate.
 | suitability as a condition (D82) | exists | an inclusion condition |
 | user selection | exists | inclusion mode Optional |
 | settings (Q33) | exists | `wrd:VariableValue` records |
-| inclusion entry with its own position and condition (D79) | hook H1 | placement (bridge §8) |
-| optional phrase, alternatives inside a sentence (D131) | hook H2 | inline placement (bridge §9) |
+| inclusion entry with its own position and condition (D79) | hook H1 | transclusion (bridge §8) |
+| optional phrase, alternatives inside a sentence (D131) | hook H2 | inline parts (bridge §9) |
 | include if, exclude if (D130) | hook H3 | inclusion dependencies |
 | fallback (D130) | hook H4 | decision treatment |
 | selectable if (D130) | model only | what a builder offers. The model's builder reads it |
@@ -180,8 +180,8 @@ carries its declarations as data:
 | inclusion modes | which modes it reads | all four | all four |
 | condition kinds | which Eligibility condition kinds it evaluates natively | every kind | exact conditions only |
 | lowerings | how it carries a construct it cannot read natively | none needed | other condition kinds as derived governing variables (bridge §6) |
-| placements (H1) | whether it reads placements | yes, after the Wording change | yes, natively |
-| inline placements (H2) | whether it reads them | yes, after the Wording change | yes, natively |
+| transclusion (H1) | whether it reads transclusions | yes, after the Wording change | yes, natively |
+| inline parts (H2) | whether it reads them | yes, after the Wording change | yes, natively |
 | dependencies (H3) | whether inclusion may depend on another element's inclusion | through derived variables | natively |
 | decision treatment (H4) | what a Denied or an Undetermined inclusion does | Denied excludes, Undetermined refuses assembly | Denied excludes or falls back, Undetermined has no InsurML equivalent and asks |
 | reference policy (H5) | by version, or by identity within the assembled wording | by version | by identifier within scope |
@@ -199,8 +199,8 @@ the construct silently dropped (law WA3).
 
 | # | Hook | Neutral form | Kind of change |
 |---|---|---|---|
-| H1 | placement | an element that places an element version from another wording, carrying its own rank key, mode and condition (bridge §8) | Wording structure, MINOR |
-| H2 | inline placement | a text part that places a child element at its index (bridge §9) | Wording structure, MINOR |
+| H1 | transclusion | an element that transcludes an element version from another wording, carrying its own rank key, mode and condition (bridge §8) | Wording structure, MINOR |
+| H2 | inline part | a text part that puts a child element, its inline element, at the part's index (bridge §9) | Wording structure, MINOR |
 | H3 | inclusion dependency | a condition that reads whether another element is included in the same assembly, evaluated in dependency order, the dependency graph acyclic | Wording, possibly Eligibility. Derived variables until a neutral case asks for more |
 | H4 | decision treatment | a declared action per decision value: include, exclude, offer, ask, refuse | Wording vocabulary |
 | H5 | reference resolution | a policy, and a resolution record per reference per assembled wording | Wording |
@@ -234,7 +234,7 @@ several) become diagnostics at the decide, resolve content and resolve reference
 |---|---|---|
 | `wrd:AssembledWording`, a version with a persistent identity | yes | |
 | `wrd:assembledFrom` the form versions | yes | |
-| `wrd:includes` every included element version, placements and placed elements alike | yes | placements (H1) |
+| `wrd:includes` every included element version, transclusions and transcluded elements alike | yes | transclusions (H1) |
 | `wrd:hasValue` the settings and values | yes | |
 | the model and its version | | `wrd:assembledUnder` |
 | reference resolutions | | one record per reference (H5) |
@@ -247,15 +247,19 @@ several) become diagnostics at the decide, resolve content and resolve reference
 @prefix wrd:  <https://www.nebularis.org/neuro-semantic/lattice/wording#> .
 @prefix prov: <http://www.w3.org/ns/prov#> .
 
-# Hypothetical: wrd:assembledUnder and wrd:resolvesTo do not exist today.
-<https://deployment.example/policy/pp-0412/1>
+# Hypothetical: wrd:assembledUnder, wrd:hasResolution and wrd:resolvesTo do not exist today.
+# An InsurML instance contract: its version IRI is the record's IRI, adopted, not minted.
+<https://insurer.example/id/contract/property-pro-0412/2026-03-01>
     a wrd:AssembledWording ;
     wrd:assembledFrom  <https://insurer.example/id/contract/property-pro/2026-01-01> ;
     wrd:assembledUnder <https://deployment.example/vocab/assembly-model/insurml-1-0> ;
     wrd:includes <https://insurer.example/id/component/flood-exclusion/2026-01-01> ;
+    wrd:hasResolution <https://deployment.example/resolution/property-pro-0412/2026-03-01/3> ;
     prov:wasGeneratedBy <https://deployment.example/run/assembly/7f3a> .
 
-<https://deployment.example/policy/pp-0412/1#ref-3>
+# Minted in the deployment's namespace, never in the contract IRI's # space, which is the
+# publisher's (bridge §5.2).
+<https://deployment.example/resolution/property-pro-0412/2026-03-01/3>
     wrd:resolvesTo <https://insurer.example/id/component/flood-definition/2026-01-01> .
 ```
 
@@ -318,7 +322,7 @@ flowchart BT
 | Party | party-valued settings, such as a broker or a coverholder, as occupancies | nothing new |
 | Eligibility | every inclusion decision, three-valued, compiled once per form (H3, H4) | question form conditions, unchanged |
 | Wording | the hooks and the record | |
-| Instrument | nothing. It must not influence assembly | the record. An instrument version is expressed in one assembled wording (I1). Its bound meaning comes from the templates expressed in the included element versions. Parameter bindings read the record's values (C8). Sections and definitions read placements and reference resolutions (C7c). An amendment in law causes a re-assembly (C9, H13) |
+| Instrument | nothing. It must not influence assembly | the record. An instrument version is expressed in one assembled wording (I1). Its bound meaning comes from the templates expressed in the included element versions. Parameter bindings read the record's values (C8). Sections and definitions read transclusions and reference resolutions (C7c). An amendment in law causes a re-assembly (C9, H13) |
 | Behaviour | nothing. Assembly reads the form, settings and choices only, never runtime state | nothing directly. Regimes govern the instrument the record expresses. An event that leads to an endorsement leads to a new record through H13, never by changing the old one |
 | Surface | inherited attributes and usage indexes as promotions (H6) | the record as input |
 | Persistence | an assembled wording version as one aggregate, written by compare-and-set on its identity | |
@@ -340,6 +344,13 @@ not in Wording. A form's model is resolved in this order:
 
 So an InsurML form is always assembled under InsurML's semantics, a LATTICE-native insurance form
 defaults to them, and a facility agreement in the same deployment is assembled under the baseline.
+
+InsurML's owner confirmed (2026-10-06) that an InsurML contract may be a template or an instance. Under
+the InsurML model, assembly therefore produces an instance contract: a contract version of its own,
+with its manifest, its settings and its assembled contract XML. The record adopts that version IRI,
+and `wrd:assembledFrom` names the template version. An endorsement produces a new version of the
+instance contract and so a new version of the record (H13). A renewal produces a new instance
+contract with its own identity (identity note §6.2).
 Upgrading to a new InsurML edition is a new model version, pinned like an import (ADR-A86), and a
 record names the version it was assembled under.
 
@@ -348,7 +359,7 @@ InsurML form through lowering:
 
 | From InsurML to every insurance assembly | From LATTICE to an InsurML assembly |
 |---|---|
-| inclusion entries as placements, dependencies, fallback, scope-based references, inheritance, guidance left out, the assembled contract XML | conditions of every kind through lowering, three-valued decisions with a declared treatment of Undetermined, design-time verification of alternatives for every policy, the assembly record with its own identity, amendments recorded with PROV |
+| inclusion entries as transclusions, dependencies, fallback, scope-based references, inheritance, guidance left out, the assembled contract XML | conditions of every kind through lowering, three-valued decisions with a declared treatment of Undetermined, design-time verification of alternatives for every policy, the assembly record with its own identity, amendments recorded with PROV |
 
 ## 11. Laws
 
@@ -357,7 +368,7 @@ Proposed, for the Wording ADR.
 | # | Law |
 |---|---|
 | WA1 | An assembled wording names exactly one assembly model version |
-| WA2 | Whatever the model, the record satisfies W3 to W6, and W8 once placements exist |
+| WA2 | Whatever the model, the record satisfies W3 to W6, and W8 once transclusions exist |
 | WA3 | A form is assembled only under a model whose capabilities cover its constructs, directly or by a declared lowering, and the record lists every lowering applied |
 | WA4 | Assembly reads the form, the settings and the choices only, never runtime records or state |
 | WA5 | The same form version, settings, choices and model version give the same record, up to minted identifiers |
@@ -383,8 +394,8 @@ Each hook needs a case outside insurance before the Wording ADR can accept it (E
 
 | Hook | Case |
 |---|---|
-| H1 placement | a tax gross-up clause placed in every facility form of a loan library |
-| H2 inline placement | "[the Borrower] [each Obligor]" bracketed alternatives in a facility template |
+| H1 transclusion | a tax gross-up clause transcluded into every facility form of a loan library |
+| H2 inline part | "[the Borrower] [each Obligor]" bracketed alternatives in a facility template |
 | H3 dependency | a clean-down clause included only if the revolving facility clause is included |
 | H4 treatment | a trial site annex whose condition cannot be decided until the site is chosen, which asks rather than refuses |
 | H5 references | a defined term revised in a library's definitions clause, resolved to the version each agreement includes |
@@ -401,11 +412,11 @@ template engines used for legal document automation. They are examples of the sh
 
 | Document | Change |
 |---|---|
-| bridge sketch §7 to §12 | placements, inline placement, dependencies, fallback, references and content status become hooks H1 to H5 and H9 of this interface. Their designs stand |
+| bridge sketch §7 to §12 | transclusion, inline parts, dependencies, fallback, references and content status become hooks H1 to H5 and H9 of this interface. Their designs stand |
 | epic Phase 4 | becomes the assembly interface: the Wording ADR's slices, the assembler interface, the baseline adapter, the InsurML adapter, the parity suite |
 | epic Phase 0 | gains a slice to draft the assembly interface ADR (IMA-0.8), which IMA-0.5 and IMA-0.6 become parts of or follow |
 | toolchain sketch §3 | the compiler's passes run inside `check` and `plan` |
-| CCS | C7c reads placements and reference resolutions for sections and definitions. C9's amendments re-assemble through H13 |
+| CCS | C7c reads transclusions and reference resolutions for sections and definitions. C9's amendments re-assemble through H13 |
 
 ## 15. Open questions
 

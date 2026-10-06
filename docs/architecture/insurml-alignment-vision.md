@@ -229,7 +229,7 @@ flowchart LR
 
 Drafters work in Word, through an Office.js add-in that tags each component and fragment with its
 InsurML IRI, type and optionality in content controls and custom XML parts. Library curators and
-reviewers work in a web studio that edits the same components, shows their manifests, and places
+reviewers work in a web studio that edits the same components, shows their manifests, and shows
 meaning proposals beside their source text in the review workbench's pattern. Both write InsurML
 components, and both validate as the author types with the same schemas the compilers use. Open
 DARE's proof-of-concept notes already chose Office.js and tagged content for this reason
@@ -277,8 +277,10 @@ Placement takes a product and tailors it for a risk, a client or a scenario: ans
 governing questions, chosen alternatives, values for embedded variables, bespoke components, and
 later amendments. LATTICE records each as data: `wrd:VariableValue` records on a
 `wrd:AssembledWording`, bespoke elements derived from the library elements they revise, and
-`wrd:Amendment`s with PROV. The placed contract is then two views of one record, an InsurML
-assembled contract for publishing and an `ins:Instrument` for computing. Because every bespoke
+`wrd:Amendment`s with PROV. The placed contract is then one record seen two ways. As InsurML it is an
+instance contract, which InsurML's owner confirmed a contract may be, alongside the template it was
+drawn from. As LATTICE it is the `wrd:AssembledWording` under the same IRI, and the `ins:Instrument`
+expressed in it. Because every bespoke
 change names the library element it departs from, deviation from standard wording becomes a
 derived report, by component and by meaning.
 
@@ -392,8 +394,8 @@ Each row is a candidate decision.
 |---|---|---|---|
 | applied insurance | the InsurML profile: alignment, scheme bindings, key schemes, containment shapes, builder properties | AIR-5.9 built with InsurML in view | bridge §2 |
 | tools | lift, lower, assembler, renderer, parity suite, egress kits | exchange and assembly in both directions | bridge §5 to §7 |
-| Wording | placement elements, so one library element version serves many forms (L-1) | reuse of boilerplate is general to clause libraries | bridge §8 |
-| Wording | inline placement of a child element inside a text, for optional words and blocks mid-sentence (L-2, L-5) | general to templates in every domain | bridge §9 |
+| Wording | transclusion, so one library element version serves many forms (L-1) | reuse of boilerplate is general to clause libraries | bridge §8 |
+| Wording | inline parts, which put a child element inside a text, for optional words and blocks mid-sentence (L-2, L-5) | general to templates in every domain | bridge §9 |
 | Wording | references to a persistent identity, resolved within an assembled wording (L-6) | a revised definition should not force reissue of every clause that uses it | bridge §11, with CCS C7c |
 | Wording or applied | clause dependencies (L-3), content status (L-7) | profile first, substrate on a neutral case | bridge §10, §12 |
 | Instrument | a qualifier naming the fragment it was read from (L-10) | traceability of amounts to their words | bridge §13 |
@@ -441,9 +443,10 @@ Integration §12 lists R1 to R12. Three more arise at this scale:
 
 | Analysis | This paper |
 |---|---|
-| Reuse by reifying inclusion as an edge node (integration §4.2, option D), a breaking Wording change | a placement element, an additive change that keeps W1 for trees and maps one to one onto InsurML's inclusion entries (bridge sketch §8) |
+| Instances are identified only in LATTICE (comparison finding 7) | corrected 2026-10-06. An InsurML contract may be a template or an instance. LATTICE adopts an instance contract's IRI for its assembled wording, and InsurML lacks only the link to the template and a stated way to tell the two apart (P-15, P-16) |
+| Reuse by reifying inclusion as an edge node (integration §4.2, option D), a breaking Wording change | transclusion, an additive change that keeps W1 for trees and maps one to one onto InsurML's inclusion entries (bridge sketch §8) |
 | Meaning never embedded in InsurML (integration §8.17) | refined. LegalRuleML attaches as a companion document whose legal sources are InsurML fragments, or inside InsurML as informational foreign content if its owner agrees. The published words stay unchanged (AV4) |
-| Optional words and blocks inside a sentence as two changes (L-2, L-5) | one change, an inline placement part (bridge sketch §9) |
+| Optional words and blocks inside a sentence as two changes (L-2, L-5) | one change, the inline part (bridge sketch §9) |
 | Wording's law shapes would fail on other SHACL engines (comparison §5.15) | they declare their prefixes with `sh:declare`, as the standard requires. They depart from the repository's house rule, which asks for inline `PREFIX` lines, and can be aligned with the next Wording change |
 | A Word authoring add-in directory exists without source (comparison §11.2) | no such directory exists. The authoring add-in is designed in Open DARE's proof-of-concept notes only |
 | Layer versions of comparison §1 | dated. Wording is at 0.5.0 and Instrument at 0.11.0 on 2026-10-05 |

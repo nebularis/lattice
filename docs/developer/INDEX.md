@@ -582,7 +582,7 @@ IUA binding authority and the Lloyd's CBAA.
 | **Analysis** | [insurml-and-lattice.md](notes/insurml-and-lattice.md), [insurml-integration.md](notes/insurml-integration.md), [insurml-identity.md](notes/insurml-identity.md) (for the InsurML team) |
 | **Plan** | [insurml-alignment.md](plans/insurml-alignment.md), with [phase 0](plans/insurml-alignment-phase-0.md). Later phases rolling-wave |
 | **Status Record** | [insurml-alignment.md](status/insurml-alignment.md) |
-| **ADRs** | five to be drafted in Phase 0: the profile, bridge tooling and kits, the Wording assembly interface, placement elements, inline placement |
+| **ADRs** | five to be drafted in Phase 0: the profile, bridge tooling and kits, the Wording assembly interface, transclusion, inline parts |
 
 InsurML as the document standard for insurance wording and LATTICE as the substrate for its
 meaning, execution and governance, joined by an applied profile (absorbing AIR-5.9) and published

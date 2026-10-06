@@ -47,12 +47,12 @@ bind how the epic is run:
 | 0 | decisions, engagement, ADRs drafted | none | none | 0.15M to 0.3M |
 | 1 | the InsurML profile (absorbs AIR-5.9) | 0 | IM1, in part | 0.5M to 1M |
 | 2 | lift and lower kits, round trips, fidelity as tests | 1 | IM1 | 1M to 2M |
-| 3 | Wording changes: placement elements, inline placement, references by identity | 2's findings, CCS C9 merged | IM2, in part | 1.5M to 3M |
+| 3 | Wording changes: transclusion, inline parts, references by identity | 2's findings, CCS C9 merged | IM2, in part | 1.5M to 3M |
 | 4 | the assembly interface: models, hooks and the record in Wording, the assembler interface with baseline and InsurML adapters, renderer, verification and optimisation passes, parity | 2, ideally 3 | IM2 | 1.5M to 3M |
 | 5 | meaning over components, placement records, deviation reports | 4, CCS C7c to C9, AIR-5.1 to AIR-5.4 | IM3 | 2M to 4M |
 | 6 | authoring (Word add-in, web studio) and exchange kits, contract packages, companion LegalRuleML | 2, 4, the XML egress ADR | IM4, IM5 | 2M to 4M |
 | 7 | wording teaching packs, compact form, library index, ingestion with InsurML as structure target | 2, ingestion vision phases 1 and 2 | IM6 | 2M to 4M |
-| 8 | standards engagement: proposals P-1 to P-14, profile re-pins per InsurML edition | continuous, from 2 | none | under 0.3M a round |
+| 8 | standards engagement: proposals P-1 to P-16, profile re-pins per InsurML edition | continuous, from 2 | none | under 0.3M a round |
 
 Estimates are orders of magnitude for agent work, excluding human review, to be compared with
 actuals.
@@ -84,7 +84,7 @@ waits for CCS C9 so that the Wording cascade does not cross Instrument's rewrite
 
 Detailed in [its plan](insurml-alignment-phase-0.md). Paper only: an engagement brief for InsurML's
 owner, the licence and edition record, and five ADRs drafted (the profile, the bridge tooling and
-kits, the Wording assembly interface, placement elements, inline placement).
+kits, the Wording assembly interface, transclusion, inline parts).
 
 ### Phase 1: the profile
 
@@ -111,8 +111,8 @@ Each slice follows its accepted ADR, after CCS C9 is merged.
 
 | Slice | Content | Sketch |
 |---|---|---|
-| IMA-3.1 | placement elements, law W8, W3 and W5 read through placements | bridge §8 |
-| IMA-3.2 | inline placement part, W2's fourth form | bridge §9, §13 |
+| IMA-3.1 | transclusion, law W8, W3 and W5 read through transclusions | bridge §8 |
+| IMA-3.2 | inline parts, W2's fourth form | bridge §9, §13 |
 | IMA-3.3 | references to a persistent identity with display text, designed with CCS C7c | bridge §11 |
 
 Clause dependencies and content status stay in the profile unless a neutral case appears
@@ -126,7 +126,7 @@ changes follow the ADR drafted in IMA-0.8, after CCS C9, with phase 3.
 | Slice | Content | Sketch |
 |---|---|---|
 | IMA-4.1 | assembly models, the record's new terms (`wrd:assembledUnder`, resolution and numbering records), diagnostics for each stage, laws WA1 to WA7 | assembly §5, §7, §11 |
-| IMA-4.1a | assembler interface and the baseline adapter: Eligibility-decided inclusion with three values and declared treatments, alternatives, placements, resolution records | assembly §6, §8, bridge §10, §11 |
+| IMA-4.1a | assembler interface and the baseline adapter: Eligibility-decided inclusion with three values and declared treatments, alternatives, transclusions, resolution records | assembly §6, §8, bridge §10, §11 |
 | IMA-4.1b | InsurML assembly model in the profile, and the InsurML adapter over the lifted graph | assembly §10 |
 | IMA-4.2 | parity suite: baseline against InsurML adapter, and InsurML adapter against InsurML's processor, over every fixture configuration | assembly §8, bridge §7 |
 | IMA-4.3 | renderer and numbering, with the rule chosen for Q32 | toolchain §7 |
@@ -162,7 +162,7 @@ profile when InsurML publishes an edition.
 | # | Outcome, exercised end to end on clean-room fixtures | Closes in |
 |---|---|---|
 | IM1 | a component library and two products lift into Wording under the profile and lower back, with every mapping row's grade tested | phase 2 |
-| IM2 | one product assembles identically under InsurML's processor and LATTICE's assembler for every configuration, including a component placed in two products | phase 4 |
+| IM2 | one product assembles identically under InsurML's processor and LATTICE's assembler for every configuration, including a component transcluded into two products | phase 4 |
 | IM3 | a placed contract with values, a chosen alternative, a modified clause and a manuscript clause yields its deviation report and bound meaning, and one regime runs to a decision that cites its fragment | phase 5 |
 | IM4 | a component edited in Word arrives as a valid InsurML component version and lifts | phase 6 |
 | IM5 | a contract package goes out and is lifted back with no loss beyond declared fidelity, including a companion LegalRuleML document | phase 6 |
@@ -204,8 +204,8 @@ None of these may be taken by an agent. "Needed by" is the gate at which the epi
 | IMA-D4 | Typing | T1 to T5 ([typing sketch](../sketches/insurml-typing.md) §5) | T1 as the interim, T4 as the target once IMA-D4a lands | gate 0 |
 | IMA-D4a | Scheme composition in Vocabulary, so one contract resolves to several schemes in a context | a Vocabulary ADR shared with CCS HQ-4, or none | the shared ADR, briefed with CCS C8 | CCS C8 |
 | IMA-D5 | Publication of InsurML-specific material | public branches now, after InsurML's owner agrees, or a private branch until InsurML is released | **decided 2026-10-05:** InsurML's owner permits publication of documentation and analysis of the current draft, whose "not for release" marks its alpha state | gate 0 |
-| IMA-D6 | Reuse | options A to D of integration §4.2, or placement elements (bridge §8) | placement elements after CCS C9, a profile reference element meanwhile | gate 2 |
-| IMA-D7 | Inline structure | inline placement part (bridge §9), or source XML only | inline placement part | gate 2 |
+| IMA-D6 | Reuse | options A to D of integration §4.2, or transclusion (bridge §8) | transclusion after CCS C9, a profile reference element meanwhile | gate 2 |
+| IMA-D7 | Inline structure | inline parts (bridge §9), or source XML only | inline parts | gate 2 |
 | IMA-D8 | References | resolution records, or references to identity (bridge §11) | records now, identity with C7c | gate 2 |
 | IMA-D9 | Clause dependencies and content status | profile, or substrate | profile, substrate on a neutral case | gate 2 |
 | IMA-D10 | Who assembles | InsurML first, LATTICE first, or both with parity | both with parity, starting from InsurML's processor | gate 3 |
@@ -228,7 +228,10 @@ Integration §14 lists Q-1 to Q-10. Five more:
 | Q-13 | Would InsurML accept meaning as informational foreign content, never contractual (P-14)? |
 | Q-14 | Would InsurML's owner write, or review, the doctrine of a structure teaching pack? |
 | Q-15 | Which renumbering rule does InsurML intend after filtering (Q32), given that LATTICE numbers a chosen variant as its slot? |
-| Q-16 | Does an `iml:Contract` describe a product form, an issued policy or agreement, or either? If an issued one, what does the date in its IRI mean, and how does a policy name the form it was assembled from? (identity note §6) |
+| Q-16 | **Answered 2026-10-06:** an `iml:Contract` may be a template (a product form underwriters tailor case by case) or an instance (one client's bound policy in force) |
+| Q-19 | What does the date in an instance contract's IRI mean, its effective date or the date it was recorded, and how is a backdated endorsement versioned? (identity note §6) |
+| Q-20 | Is a renewal a new instance contract with its own identifier, or a new version of the old one? (identity note §6.2) |
+| Q-21 | How does an instance name the template version it was drawn from, and how does a reader tell a template from an instance? (P-15, P-16) |
 | Q-17 | Should the component type scheme stay one list, or would InsurML accept its facets (structure, document part, legal function, subject, guidance) as sub-schemes or collections? ([typing sketch](../sketches/insurml-typing.md) §3) |
 | Q-18 | Would InsurML add an unversioned identity pattern for contracts, groups and components (identity note §8, P-8)? |
 

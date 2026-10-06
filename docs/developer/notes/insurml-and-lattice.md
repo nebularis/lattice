@@ -9,6 +9,14 @@ Partners (`.local/sketches/insureml-spec.md`). LATTICE as it stands on `main` on
 the ontology layers and their literate READMEs, the accepted and proposed ADRs, the plans and
 status records of the CCS, AIR and NRS epics, and the sketches they cite.
 
+**Correction, 2026-10-06.** This note was first written on the assumption that an `iml:Contract`
+is only a library form and that InsurML does not identify issued policies. InsurML's owner
+confirmed on 2026-10-06 that a contract can be either a template, such as a generic Directors and
+Officers wording that underwriters adapt case by case, or an instance, such as one named client's
+bound D&O policy in force. Both are `iml:Contract`, with version IRIs of the pattern
+`P id/contract/{id}/{date}`. The findings and rows marked "(corrected 2026-10-06)" below follow
+from this.
+
 ---
 
 ## Contents
@@ -62,10 +70,12 @@ status records of the CCS, AIR and NRS epics, and the sketches they cite.
 6. **References resolve differently.** InsurML resolves a defined-term reference to whichever
    version of the target is in the contract's scope, by shared identifier (D84). LATTICE's
    `wrd:refersToObject` names a version.
-7. **Instances are identified only in LATTICE.** InsurML identifies contract versions, not issued
-   policies. An assembled contract carries the contract version's IRI, and the format of a
-   policy's settings is open (Q33). LATTICE separates the library form (`wrd:Wording`) from each
-   instance (`wrd:AssembledWording`) and records every value (`wrd:VariableValue`).
+7. **Both identify instances, only LATTICE links them to their forms** (corrected 2026-10-06).
+   InsurML identifies template and instance contracts alike by version IRI. What it lacks is a
+   property linking an instance contract to the template version it was drawn from (LATTICE's
+   `wrd:assembledFrom`), a stated way to tell a template from an instance, and a standard settings
+   format (still its open question Q33). LATTICE separates the library form (`wrd:Wording`) from
+   each instance (`wrd:AssembledWording`) and records every value (`wrd:VariableValue`).
 8. **InsurML's condition is one case of LATTICE's.** InsurML tests that one governing variable
    equals one value. Eligibility adds set membership, interval containment, hierarchical match with
    exclusions, negation, AllRequired and AnySufficient, and a third value, Undetermined. InsurML
@@ -224,7 +234,7 @@ they are: **same** (one can be read as the other), **close** (a convention bridg
 
 | InsurML | LATTICE | Verdict | Notes |
 |---|---|---|---|
-| `iml:Contract` (a policy or agreement wording, a version) | `wrd:Wording`, a library form | close | an InsurML contract is a configurable wording. LATTICE's per-instance `wrd:AssembledWording` has no InsurML class (§5.4) |
+| `iml:Contract` (a policy or agreement wording, template or instance, a version) | `wrd:Wording`, a library form, for a template. `wrd:AssembledWording` for an instance | close | a template contract aligns with a library form, an instance contract with an assembled wording. InsurML has one class for both and no property naming an instance's template (§5.4) (corrected 2026-10-06) |
 | `iml:ComponentGroup` (Module, Section, Sub-section, Schedule, Clause Group, Complex Component), no text of its own (D112) | `wrd:Element` typed by concept | close | LATTICE elements may carry text. InsurML puts a group's introductory text in an Introduction component |
 | `iml:Component`, its own XML file, contains at least one data element (D66, D89) | `wrd:Element` | close | LATTICE has no rule that a part holds content |
 | sub-component, a role not a class (D14) | an element directly comprised by an element | same | |
@@ -273,8 +283,8 @@ they are: **same** (one can be read as the other), **close** (a convention bridg
 | alternatives: `iml:hasOption`, each option with its own part and condition, exactly one applies (D81) | `wrd:VariationSlot`, `wrd:hasVariant`, each variant with `wrd:includedWhen` (W3) | close | |
 | error at assembly if no option or several apply (D86) | slot conditions checked at design time as a set for intervals (Wording §8), and for every condition kind in CCS C13a | partial | InsurML checks one policy at assembly. LATTICE checks the form for every policy at design time |
 | suitability as a condition on inclusion (D82) | the same, through `wrd:includedWhen` | same | |
-| settings: governing variable values, from the contract builder, format open (Q33) | `wrd:VariableValue` records on the `wrd:AssembledWording` (`wrd:hasValue`, `wrd:forVariable`, `wrd:value`, `wrd:literalValue`) | none on InsurML's side | |
-| an assembled contract carries the contract version's IRI | an `wrd:AssembledWording` is its own version, `wrd:assembledFrom` its forms | none on InsurML's side | InsurML does not identify one policy's assembled text |
+| settings: governing variable values, from the contract builder, format open (Q33) | `wrd:VariableValue` records on the `wrd:AssembledWording` (`wrd:hasValue`, `wrd:forVariable`, `wrd:value`, `wrd:literalValue`) | partial | an instance contract has an IRI the settings can attach to. Their format is still open (corrected 2026-10-06) |
+| an instance contract is its own version, `P id/contract/{id}/{date}`, as a template is | an `wrd:AssembledWording` is its own version, `wrd:assembledFrom` its forms | partial | InsurML identifies one policy's wording but has no property naming the template version it was drawn from, and no stated way to tell a template from an instance (corrected 2026-10-06) |
 | processing model, eight steps, normative (D86) | assembly semantics stated (§5.11, §5.12, W3 to W5) but no processor | partial | |
 | finding the XML by path rule with a drift check (D85) | no XML | none | |
 | report of included components with newer versions, informative | derivable by query over `fnd:supersededBy` | close | |
@@ -481,7 +491,7 @@ wordings with another SHACL engine would hit it.
 | conditional phrases inside a sentence (`optionalPhrase`) | D131 | a text part cannot be optional |
 | dependencies between clauses (`includeIf`, `excludeIf`, `selectableIf`) | D130 | inclusion conditions read governing variables only |
 | a fallback kind when a condition fails | D130 | none |
-| lists with label styles, nested inside sentences | D120, G33 | no list structure, no inline placement of a block |
+| lists with label styles, nested inside sentences | D120, G33 | no list structure, no way to put a block inside a sentence |
 | presentational tables (CALS) | D121 | tables are semantic only |
 | foreign content (MathML, SVG) and publisher inline extensions | D122, D125 | none |
 | composite inline constructs (`limit`, `excess`) marking the words of an amount | D125 | meaning without a span in the text that states it |
@@ -512,7 +522,7 @@ terms against `docs/glossary.md` and the insurance modules) applies to every map
 | Endorsement | (a) a change to a contract, an inclusion or exclusion (D87), (b) an altLabel of Complex Component (D60) | `wrd-voc:Endorsement`: a document issued after the contract is made, stating changes. Its changes are `wrd:Amendment`s | medium |
 | Definition, Defined Term | a component type (slug `definition`, label Defined Term) | `wrd-voc:Definition` (an element type) and `ins:Definition` (a constitutive term, C7c) | low. Same idea, two strata in LATTICE |
 | Scope | the parts reached through a contract's applicable inclusion entries (D84) | `ins:scope` on a relation, `voc:BindingScope` for vocabulary | medium |
-| Contract | `iml:Contract`, a policy or agreement wording, a version | `ins:Instrument`, the legal instrument, expressed in one assembled wording | medium. An InsurML contract is a wording, not an instrument |
+| Contract | `iml:Contract`, a policy or agreement wording, template or instance, a version | `ins:Instrument`, the legal instrument, expressed in one assembled wording | medium. An InsurML contract is a wording, template or instance, never an instrument (corrected 2026-10-06) |
 | Binding | Binding Authority (a contract type), XML Catalog binding (retained option) | `voc:SchemeBinding`, `ins:ParameterBinding`, bound meaning | low, but the repository's rule on "bound" and "binder" applies |
 | Settings | values of a policy's governing variables | no such word. `wrd:VariableValue` | low |
 | Suitability | a condition on inclusion (D82) | none | low |
@@ -561,7 +571,7 @@ WIM profile) has not started.
 | Publish a numbered contract with cross references | yes in the processing model (numbering open, Q32) | no | not planned in the substrate |
 | Mark up a contract for a publishing pipeline | yes | no | XML egress sketch |
 | Exclude guidance from the published text | yes | no | not planned |
-| Record one policy's values and its assembled text as its own version | no (Q33) | yes | |
+| Record one policy's values and its assembled text as its own version | identity yes, the settings format still open (Q33) (corrected 2026-10-06) | yes | |
 | Record an endorsement that strikes and substitutes words | no (D87) | yes | |
 | Say when an endorsement takes effect, and who consented | no | no | C9 |
 | State who must pay whom, and when | no | yes in the model | C7b to C8 |
@@ -659,10 +669,10 @@ or applied) is a design question in itself. The companion document weighs them.
 | # | Gap | Candidate response | Layer |
 |---|---|---|---|
 | L-1 | an element version cannot be reused under different parents, positions or conditions | either reify inclusion as an edge node, as InsurML does, or keep forms as the unit of reuse and state why | Wording, needs an ADR |
-| L-2 | no optional words inside a text | a fourth text part form that comprises its own parts and carries an inclusion mode, or optional text as an element placed inline | Wording |
+| L-2 | no optional words inside a text | a fourth text part form that comprises its own parts and carries an inclusion mode, or optional text as an element inside the text (an inline part, bridge sketch §9) | Wording |
 | L-3 | no dependencies between clauses | an inclusion condition that reads another element's inclusion, alongside governing variables | Wording, Eligibility |
 | L-4 | no fallback when a condition fails | an inclusion mode for "conditional, else optional", or a consumer rule on Denied | Wording |
-| L-5 | no lists, no inline placement of a block inside a sentence | a text part that places a child element at its index | Wording |
+| L-5 | no lists, no block inside a sentence | a text part that puts a child element at its index (an inline part, bridge sketch §9) | Wording |
 | L-6 | references name versions only | a reference to a persistent identity, resolved within an assembled wording's inclusions | Wording |
 | L-7 | no content status | a classification scheme, or a property marking text that is not part of the contract | Wording, Instrument |
 | L-8 | no prompt, default value or plain datatype on variables | properties in an applied profile, since prompts are for a builder interface | applied |
@@ -676,8 +686,8 @@ or applied) is a design question in itself. The companion document weighs them.
 
 | # | Gap | What LATTICE could offer |
 |---|---|---|
-| I-1 | settings format open (Q33) | `wrd:VariableValue` on an identified assembled wording |
-| I-2 | no identity for an issued policy's text | the library and instance split (`wrd:AssembledWording`, `wrd:assembledFrom`) |
+| I-1 | settings format open (Q33), although an instance contract has an IRI to hold them (corrected 2026-10-06) | `wrd:VariableValue` on the instance contract's version |
+| I-2 | no link from an instance contract to its template, and no stated way to tell the two apart (corrected 2026-10-06) | `wrd:assembledFrom`, and the class split between `wrd:Wording` and `wrd:AssembledWording` |
 | I-3 | conditions limited to equality | Eligibility's condition algebra, whose simplest case is InsurML's |
 | I-4 | alternatives checked per policy only | design-time checks that a set's conditions are exclusive and exhaustive |
 | I-5 | dynamic table structure open (§9.6) | fields, entries and cells |
@@ -704,3 +714,4 @@ or applied) is a design question in itself. The companion document weighs them.
 | U-7 | What does InsurML mean by "Step 6 selects the full set of condition kinds (D52, D57)"? | it may already plan what Eligibility offers | the InsurML owner |
 | U-8 | How does InsurML treat a cycle among `dependsOn` references? | a builder needs a rule | the InsurML owner |
 | U-9 | Is InsurLE, the controlled language LATTICE's ingestion vision attributes to John Cummins et al., meant to sit beside InsurML? | an InsurML component and an InsurLE rendering of it would be two views of one clause | the InsurML owner |
+| U-10 | Answered 2026-10-06 (alignment plan Q-16). A contract is a template or an instance. Three follow-ups remain. What does the date in an instance contract's IRI mean, its effective date or the date it was recorded? Is a renewal a new contract identity or a new version? How does an instance name its template? | a record must reach the version in force at its relevant time, a renewal under one identifier looks like an endorsement, and an instance with no link to its template cannot reuse the meaning reviewed for it | the InsurML owner (integration Q-19 to Q-21) |

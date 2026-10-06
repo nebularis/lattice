@@ -83,7 +83,7 @@ Library curators, product owners and reviewers work in a web studio over the sam
 | View | Does |
 |---|---|
 | Component editor | edits a component's XML through a structured editor, validating as it goes |
-| Product editor | edits a contract form's inclusion entries or placements, conditions as Eligibility profiles, alternatives, governing variables and their schemes |
+| Product editor | edits a contract form's inclusion entries or transclusions, conditions as Eligibility profiles, alternatives, governing variables and their schemes |
 | Meaning review | shows a meaning proposal beside its source fragment, with the review workbench's six decisions (Confirm, Retarget, Reshape, Decline, Teach, Defer) |
 | Release | publishes a library edition, records governance states, shows impact (§4) |
 
@@ -190,12 +190,12 @@ sequenceDiagram
 
 | What placement records | LATTICE | InsurML |
 |---|---|---|
-| answers to governing questions | `wrd:VariableValue` on the `wrd:AssembledWording` | settings |
-| chosen alternatives and optional clauses | `wrd:includes` | the assembled contract's parts |
+| answers to governing questions | `wrd:VariableValue` on the `wrd:AssembledWording` | the instance contract's settings |
+| chosen alternatives and optional clauses | `wrd:includes` | the instance contract's manifest, and its assembled contract |
 | values for embedded variables and schedule tables | `wrd:VariableValue`, per table entry for a table field | `variable` values |
 | a bespoke clause revising a library clause | a bespoke element, `prov:wasRevisionOf` the library element, which may be proposed back to the library | a component in the placement's own publisher space |
 | a manuscript clause with no library origin | a bespoke element with no derivation | the same |
-| an endorsement | `wrd:Amendment`s, and `ins:Amendment` for its legal effect (CCS C9) | a new contract version |
+| an endorsement | `wrd:Amendment`s, and `ins:Amendment` for its legal effect (CCS C9) | a new version of the instance contract |
 
 **Deviation from standard wording** is a derived report for every placed contract:
 

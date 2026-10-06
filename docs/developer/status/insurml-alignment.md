@@ -4,7 +4,7 @@
 
 **Unit ID:** `insurml-alignment` (epic)
 **Status:** 📝 Proposed. Vision, sketches, epic plan and Phase 0 plan drafted, awaiting human review
-**Last updated:** 2026-10-05
+**Last updated:** 2026-10-06
 **Plan:** [insurml-alignment.md](../plans/insurml-alignment.md), [phase 0](../plans/insurml-alignment-phase-0.md)
 **Vision:** [insurml-alignment-vision.md](../../architecture/insurml-alignment-vision.md)
 **Sketches:** [insurml-bridge.md](../sketches/insurml-bridge.md),
@@ -21,9 +21,9 @@ and for the gate-0 decisions. CCS remains the active unit, with C7c next.
 **Decided 2026-10-05:** IMA-D1 (depth 5, depth 6 to be discussed with InsurML's owner), IMA-D3 (two
 documents in one module), IMA-D5 (publication permitted). **Open at gate 0:** IMA-D2 (explanation
 given in chat, decision pending), IMA-D4 (explored in the [typing sketch](../sketches/insurml-typing.md)),
-IMA-D16, IMA-D17 (the assembly interface). **To confirm with InsurML's author:** Q-16, whether a contract describes an issued policy.
+IMA-D16, IMA-D17 (the assembly interface). **Answered by InsurML's owner, 2026-10-06:** Q-16. A contract may be a template or an instance. Its consequences are applied across the vision, sketches, identity note and analysis notes. Follow-ups Q-19 to Q-21 are open.
 
-**Next action, for the human:** decide IMA-D2 and IMA-D4, and confirm Q-16 with InsurML's author.
+**Next action, for the human:** decide IMA-D2, IMA-D4 and IMA-D17, and take Q-19 to Q-21 to InsurML's owner.
 
 ## Phase board
 
@@ -47,8 +47,8 @@ IMA-D16, IMA-D17 (the assembly interface). **To confirm with InsurML's author:**
 | IMA-0.2 licence and publication record | not started |
 | IMA-0.3 ADR, profile | not started |
 | IMA-0.4 ADR, bridge tooling and kits | not started |
-| IMA-0.5 ADR, placement elements | not started |
-| IMA-0.6 ADR, inline placement | not started |
+| IMA-0.5 ADR, transclusion | not started |
+| IMA-0.6 ADR, inline parts | not started |
 | IMA-0.8 ADR, assembly interface | not started |
 | IMA-0.7 alignment edits | not started. Pointers added on 2026-10-05, final edits after gate 0 |
 

@@ -25,8 +25,8 @@ Examples are clean-room. They use `.example` hosts and InsurML's placeholder bas
 5. [Lift: InsurML into LATTICE](#5-lift-insurml-into-lattice)
 6. [Lower: LATTICE into InsurML](#6-lower-lattice-into-insurml)
 7. [Assembly parity](#7-assembly-parity)
-8. [Reuse: placement elements](#8-reuse-placement-elements)
-9. [Inline placement inside a text](#9-inline-placement-inside-a-text)
+8. [Reuse: transclusion](#8-reuse-transclusion)
+9. [Inline parts inside a text](#9-inline-parts-inside-a-text)
 10. [Clause dependencies and fallback](#10-clause-dependencies-and-fallback)
 11. [References by identity, and scope](#11-references-by-identity-and-scope)
 12. [Content status and guidance](#12-content-status-and-guidance)
@@ -142,9 +142,9 @@ iml:references      rdfs:subPropertyOf wrd:refersToObject .
 
 | Rule | Why |
 |---|---|
-| An InsurML contract is a wording, never an instrument | `owl:disjointWith ins:Instrument` turns a common naming error (comparison §8, "Contract") into a reasoner finding. Whether a contract is a library form or an issued policy's wording waits for Q-16. Both are `wrd:Wording`, and an issued one would align with `wrd:AssembledWording` |
+| An InsurML contract is a wording, template or instance, never an instrument | `owl:disjointWith ins:Instrument` turns a common naming error (comparison §8, "Contract") into a reasoner finding. InsurML's owner confirmed (2026-10-06) that a contract may be a template or an instance. A template aligns with a library form, `wrd:Wording`. An instance aligns with `wrd:AssembledWording`, under the same IRI, and the lift states `wrd:assembledFrom` its template. InsurML states neither the role nor the link today (P-15, P-16) |
 | No property gains a domain or range in the alignment | a domain of `iml:Component` on a property LATTICE also uses would classify every LATTICE definition as an InsurML component (the repository's rule on sparing domains and ranges) |
-| `iml:hasInclusion` aligns with nothing | its blank-node entries become placement elements on lift (§8), not a sub-property of a tree edge |
+| `iml:hasInclusion` aligns with nothing | its blank-node entries become transclusions on lift (§8), not a sub-property of a tree edge |
 | `iml:variantOf` aligns with `prov:wasDerivedFrom`, never `wrd:variantOf` | the words collide with different meanings (comparison §8) |
 | A variable's kind comes from its SKOS type | the lift adds `wrd:GoverningVariable` or `wrd:EmbeddedVariable` from `iml:hasType` (M-26, M-27) |
 
@@ -188,7 +188,7 @@ flowchart TD
     A["Component file and manifest"] --> B["Validate as InsurML<br/>RELAX NG, Schematron, SHACL"]
     B -->|fails| X["Refuse, citing the assertion id"]
     B --> C["Normalise mixed content<br/>to ordered parts (XSLT 3.0)"]
-    C --> D["Emit Wording triples,<br/>mint fragment and placement IRIs"]
+    C --> D["Emit Wording triples,<br/>mint fragment and transclusion IRIs"]
     D --> E["Mint identities and keys"]
     E --> F["Validate as LATTICE<br/>Wording laws, profile shapes"]
     F -->|fails| Y["Refuse, citing the law"]
@@ -196,7 +196,7 @@ flowchart TD
 ```
 
 The lift refuses input that is not valid InsurML, so it never has to repair it. Mixed content is
-the hard part. A `para` interleaves text with inline elements, and an RML mapping over XPath cannot
+the hard part. A `para` interleaves text with inline markup, and an RML mapping over XPath cannot
 keep that order. So an XSLT 3.0 stylesheet first flattens each `para` into an ordered list of parts,
 and the emission from that list is a plain structure mapping. The mapping is recorded in MORK so it
 has the review and provenance trail other mappings have (IV6), and published as a kit (AV9). The
@@ -209,7 +209,8 @@ source file is kept, addressed by digest (IP2).
 | component, group, contract, variable | adopted from InsurML |
 | fragment with an `xml:id` | adopted, as the component IRI, `#` and the id |
 | fragment without an `xml:id` | minted in the deployment's namespace from the component IRI and the fragment's path. Never under the component IRI's `#` space, which belongs to the publisher's `xml:id`s (integration §6.2) |
-| placement element, from an inclusion entry | minted from the holder IRI and the entry's position (§8), until InsurML gives entries IRIs (P-13) |
+| transclusion, from an inclusion entry | minted from the holder IRI and the entry's position (§8), until InsurML gives entries IRIs (P-13) |
+| assembled wording, from an instance contract | adopted: the instance contract's version IRI. Nothing is minted |
 | persistent identity, key | minted in the deployment's namespace |
 
 ### 5.3 Fidelity
@@ -219,8 +220,8 @@ are lossy or have no target. The substrate changes of §8 to §11 raise the grad
 
 | Rows | Today | With | After |
 |---|---|---|---|
-| M-17 one part, many holders | none | placement elements (§8) | exact |
-| M-11 optional phrase, M-08 lists in a continuing sentence, M-12 limit and excess | none or lossy | inline placement (§9) | exact for structure. Label style by profile property |
+| M-17 one part, many holders | none | transclusion (§8) | exact |
+| M-11 optional phrase, M-08 lists in a continuing sentence, M-12 limit and excess | none or lossy | inline parts (§9) | exact for structure. Label style by profile property |
 | M-42 defined term resolved in scope | lossy | references by identity (§11) | exact |
 | M-24 clause dependencies | lossy | derived variables, or §10's condition | by convention |
 | M-25 content status | by convention | §12 | by convention, then exact if a substrate status is adopted |
@@ -232,8 +233,9 @@ waits for InsurML to settle its meaning.
 
 ## 6. Lower: LATTICE into InsurML
 
-The lower writes a form as component files and a manifest, and a placed contract as an assembled
-contract with its settings (integration §5.1). Two rules decide most of it:
+The lower writes a form as component files and a template contract's manifest, and a placed
+contract as an instance contract, with its own IRI, its manifest, its settings and its assembled
+contract XML (integration §5.1). Two rules decide most of it:
 
 - **Which elements become component files.** An element whose type in the profile is a component,
   or which carries stated meaning, becomes a file. Its descendants become `para`, `list` and
@@ -249,8 +251,8 @@ travels in a contract package or a companion document (toolchain sketch §7, §8
 
 ## 7. Assembly parity
 
-The [assembly interface sketch](wording-assembly-interface.md) reframes §7 to §12. Placements,
-inline placement, dependencies, fallback, references and content status become hooks of a
+The [assembly interface sketch](wording-assembly-interface.md) reframes §7 to §12. Transclusion,
+inline parts, dependencies, fallback, references and content status become hooks of a
 domain-neutral assembly interface in Wording, with InsurML's model as the insurance default. The
 designs below stand.
 
@@ -275,7 +277,7 @@ assembler, in the lift, or in a condition one side cannot express. It is reporte
 silently (ADR-A28). The suite starts from InsurML's processor as the reference (integration §7.3,
 option A), and both become references once the LATTICE assembler passes every fixture (option C).
 
-## 8. Reuse: placement elements
+## 8. Reuse: transclusion
 
 ### 8.1 The problem
 
@@ -288,78 +290,81 @@ properties off the element (integration §4.2).
 
 ### 8.2 The proposal
 
-A fifth option keeps every existing property where it is. A **placement** is an element whose only
-content is a reference, with assembly semantics, to an element version in another wording. It
-carries the rank key, the inclusion mode and the inclusion condition as any element does. The
-placed element keeps its own tree, its own identity and its own stated meaning.
+A fifth option keeps every existing property where it is. A **transclusion** is an element whose
+only content is a reference, with assembly semantics, to an element version in another wording, so
+that the element appears in the form while it lives, and is revised, at its source. The
+transclusion carries the rank key, the inclusion mode and the inclusion condition as any element
+does. The **transcluded element** keeps its own tree, its own identity and its own stated meaning.
+The term is the one XInclude and DITA's content references use for the same idea.
 
 ```turtle
 @prefix wrd:     <https://www.nebularis.org/neuro-semantic/lattice/wording#> .
 @prefix wrd-voc: <https://www.nebularis.org/neuro-semantic/lattice/wording/vocab#> .
 
-# Hypothetical: wrd:Placement and wrd:places do not exist today.
+# Hypothetical: wrd:Transclusion and wrd:transcludes do not exist today.
 
 <https://insurer.example/id/group/property-section/2026-01-01>
-    wrd:directlyComprises <https://deployment.example/placement/insurer/property-section/2026-01-01/30> .
+    wrd:directlyComprises <https://deployment.example/transclusion/insurer/property-section/2026-01-01/30> .
 
-<https://deployment.example/placement/insurer/property-section/2026-01-01/30>
-    a wrd:Placement ;
+<https://deployment.example/transclusion/insurer/property-section/2026-01-01/30>
+    a wrd:Transclusion ;
     wrd:rankKey "0030" ;
     wrd:inclusionMode wrd-voc:Conditional ;
     wrd:includedWhen <https://deployment.example/profile/flood-zone-a> ;
-    wrd:places <https://insurer.example/id/component/flood-exclusion/2026-01-01> .
+    wrd:transcludes <https://insurer.example/id/component/flood-exclusion/2026-01-01> .
 ```
 
 ```mermaid
 flowchart TB
     subgraph F1["Form: property section"]
-        G1["section group"] --> P1["placement, rank 0030<br/>conditional"]
+        G1["section group"] --> P1["transclusion, rank 0030<br/>conditional"]
     end
     subgraph F2["Form: contents section"]
-        G2["section group"] --> P2["placement, rank 0010<br/>mandatory"]
+        G2["section group"] --> P2["transclusion, rank 0010<br/>mandatory"]
     end
     subgraph LIB["Library wording"]
         C["flood exclusion<br/>component version"] --> T["its paragraphs"]
     end
-    P1 -. "places" .-> C
-    P2 -. "places" .-> C
+    P1 -. "transcludes" .-> C
+    P2 -. "transcludes" .-> C
     C -. "stated meaning,<br/>reviewed once" .-> M["meaning template"]
 ```
 
 | Aspect | Rule |
 |---|---|
-| Laws | W1 holds as written, since a placement has one parent and the placed element sits in its own wording's tree. A new law W8: a placement places exactly one element, in another wording, and no element reaches itself through placements. W3 and W5 read through placements |
-| Assembly | an assembled wording that includes a placement includes the placed element and, under W5, its mandatory descendants. `wrd:includes` lists both |
-| Alternatives | a variation slot's variants may be placements, so InsurML's `iml:hasOption` lifts to a slot whose variants place library components |
-| Meaning | stated meaning stays with the placed element version (CC-D12), so it is reviewed once for every form that places it |
-| Numbering | the placement takes the object id in its form. The placed element's own id is irrelevant there |
-| Where placed elements live | one library wording per component file, or one per publisher library edition (IB-Q2) |
+| Laws | W1 holds as written, since a transclusion has one parent and the transcluded element sits in its own wording's tree. A new law W8: a transclusion transcludes exactly one element version, in another wording, and no element reaches itself through transclusions. W3 and W5 read through transclusions |
+| Assembly | an assembled wording that includes a transclusion includes the transcluded element and, under W5, its mandatory descendants. `wrd:includes` lists both |
+| Alternatives | a variation slot's variants may be transclusions, so InsurML's `iml:hasOption` lifts to a slot whose variants transclude library components |
+| Meaning | stated meaning stays with the transcluded element version (CC-D12), so it is reviewed once for every form that transcludes it |
+| Numbering | the transclusion takes the object id in its form. The transcluded element's own id is irrelevant there |
+| Where transcluded elements live | one library wording per component file, or one per publisher library edition (IB-Q2) |
 | Versioning | a new class, a new property and two extended laws, so a MINOR, non-breaking change under ADR-A86 and ADR-A113, with the usual re-pin cascade |
 
-The neutral case is a clause library, such as a tax gross-up clause placed in every facility form
-or a consent clause placed in every trial protocol. Placements also give InsurML's blank-node inclusion
+The neutral case is a clause library, such as a tax gross-up clause transcluded into every facility
+form or a consent clause transcluded into every trial protocol. Transclusions also give InsurML's blank-node inclusion
 entries an identity, so a published number, a condition's provenance and a deviation report can
 each name the entry they come from (P-13).
 
-**Cost.** Two ways now put an element in a form, comprising it directly or placing it. They serve
+**Cost.** Two ways now put an element in a form, comprising it directly or transcluding it. They serve
 different purposes, a form's own text and reused text, and the ADR states which to use when. The
 change should land after CCS C9, so the Wording cascade does not cross Instrument's rewrite
-(integration R4). Until then, the lift uses option B of integration §4.2, a placement element typed
+(integration R4). Until then, the lift uses option B of integration §4.2, a reference element typed
 by the profile, linked by `wrd:linksTo`, with assembly done by InsurML's processor alone.
 
-## 9. Inline placement inside a text
+## 9. Inline parts inside a text
 
 Today a `wrd:Text` holds parts in three forms: literal, variable reference and object reference.
 InsurML puts structure inside a sentence: an `optionalPhrase` whose inclusion is conditional,
 alternatives among phrases, a list after which the sentence continues, and the `limit` and
 `excess` composites whose parts carry meaning.
 
-One addition covers all four. A fourth part form, the **inline placement**, places a child element
-of the text at the part's index. The child is an ordinary element with its own inclusion mode,
+One addition covers all four. A fourth part form, the **inline part**, puts a child element of the
+text, its **inline element** (`wrd:inlineElement`), at the part's index. The inline element is an
+ordinary element with its own inclusion mode,
 condition and text parts. It is rendered at that index and nowhere else, and like a variant it has
 no rank key.
 
-| InsurML construct | Child element placed inline |
+| InsurML construct | Inline element |
 |---|---|
 | `optionalPhrase` with a condition | a text, mode Conditional, with its inclusion condition |
 | phrases sharing an `alternativeSet` | a variation slot, its variants texts |
@@ -369,7 +374,7 @@ no rank key.
 ```mermaid
 flowchart LR
     T["Text: 'Contents ... but not more than'"] --> P0["part 0, literal"]
-    T --> P1["part 1, inline placement"]
+    T --> P1["part 1, inline part"]
     T --> P2["part 2, literal 'in total value'"]
     P1 --> S["variation slot"]
     S --> V1["variant: amount for product A<br/>condition product = A"]
@@ -416,8 +421,8 @@ target's identifier, so a clause need not be reissued when the definition it use
 
 The record works now. The identity reference is the cleaner model and belongs with CCS C7c, whose
 per-section definitions (`ins:appliesWithin`, `ins:notWithin`) need the same resolution in law.
-A definition component placed only within one section's group is a definition that applies within
-that section, so the lift can write `ins:appliesWithin` from placement, and C7c's overlap report
+A definition component included only within one section's group is a definition that applies
+within that section, so the lift can write `ins:appliesWithin` from the group that holds it, and C7c's overlap report
 then shows where InsurML's scope rule and the legal reading differ (integration §8.6). This is
 input to C7c's brief.
 
@@ -464,12 +469,14 @@ to catch engine differences (integration R10).
 
 ## 15. Proposals to InsurML
 
-Integration §10.2 lists P-1 to P-12. Two more arise here:
+Integration §10.2 lists P-1 to P-12. Four more arise here:
 
 | # | Proposal | Answers |
 |---|---|---|
 | P-13 | give inclusion entries IRIs, minted from holder and position, in place of blank nodes | traceability of a number, a condition or a deviation to its entry, and a one-to-one lift to placements (§8) |
 | P-14 | accept LegalRuleML, or any statement of meaning, as informational foreign content, never contractual | a single document for consumers who want one, without changing the published words (toolchain sketch §8) |
+| P-15 | a property linking an instance contract to the template version it was assembled from | the instance's provenance, and a one-to-one lift to `wrd:assembledFrom` |
+| P-16 | a stated way to tell a template contract from an instance, such as a contract role, or a rule that an instance has settings and no unresolved conditions | which shapes apply, since a template may hold unresolved alternatives and an instance may not |
 
 Each proposal goes to InsurML's owner only after a LATTICE fixture shows it working (IQ-10).
 
@@ -478,8 +485,8 @@ Each proposal goes to InsurML's owner only after a LATTICE fixture shows it work
 | # | Question | Leaning |
 |---|---|---|
 | IB-Q1 | Can the alignment import InsurML's ontology, or only name its IRIs, until publication? | name only, tested on clean-room fixtures, import once licensed |
-| IB-Q2 | Where do placed library elements live: a wording per component file, or one per publisher library edition? | per component file, since a component file is a document and the mapping stays one to one |
-| IB-Q3 | Is the placement a class or an element type? | a class, since it has its own property and law (DP2) |
+| IB-Q2 | Where do transcluded library elements live: a wording per component file, or one per publisher library edition? | per component file, since a component file is a document and the mapping stays one to one |
+| IB-Q3 | Is a transclusion a class or an element type? | a class, since it has its own property and law (DP2) |
 | IB-Q4 | Does the lift run as an XSLT kit only, or also as a compiled MORK mapping? | XSLT kit for execution, MORK record for review and provenance |
 | IB-Q5 | Should profile shapes check InsurML's rules a second time, or trust InsurML's SHACL? | generate them once from the same data, run both, report differences as defects |
-| IB-Q6 | Does an inline-placed child count as included when its text is included, or need its own inclusion record? | its own, so W5 and deviation reports treat it like any element |
+| IB-Q6 | Does an inline element count as included when its text is included, or need its own inclusion record? | its own, so W5 and deviation reports treat it like any element |

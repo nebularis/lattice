@@ -103,7 +103,7 @@ T1 to T3 are the integration analysis's options. T4 and T5 are new.
 | T1 profile structural scheme | a profile scheme of structural types (contract, module, section, component, paragraph, list) | InsurML's component type | kept |
 | T2 InsurML types as element types | InsurML's type, whatever its facet | other classifications | kept |
 | T3 baseline only | the baseline (Clause, Section, Definition, Schedule) | none | kept |
-| T4 InsurML's structural concepts as element types | InsurML's own F1 and F2 concepts, plus a small profile scheme for what InsurML has no concept for (component, contract, placement, list item) | InsurML's component type | kept |
+| T4 InsurML's structural concepts as element types | InsurML's own F1 and F2 concepts, plus a small profile scheme for what InsurML has no concept for (component, contract, transclusion, list item) | InsurML's component type | kept |
 | T5 none in LATTICE | no `wrd:elementType` on InsurML nodes. LATTICE reads `iml:hasType` through the profile | none | kept |
 
 Against the requirements:
