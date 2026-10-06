@@ -186,6 +186,7 @@ test -d tools/mork
 test -d tools/mork_compilers
 test -d tools/surface
 test -d tools/persistence
+test -d tools/proofs
 test -d tools/spc/python
 test -d tools/spc/erlang
 test -d workers
@@ -254,6 +255,19 @@ mise run check:persistence
 ```
 
 Compiles `ontology/persistence`'s own worked examples, runs the resolver/validator/capability/boundary unit tests, the injection corpus, the determinism checks, and the Python architecture-policy checks, and validates every example fixture against `ontology/persistence/shapes/constraints.ttl`. See [`tools/persistence/README.md`](tools/persistence/README.md).
+
+### Validate the prover programme's theories
+
+```bash
+mise run bootstrap:formal-native-isabelle
+mise run check:proofs
+```
+
+Builds every `tools/proofs/<layer>/` Isabelle session natively and runs the proof gate (statement
+digests, banned-marker scan). Not part of the default `check` aggregate: Isabelle is a heavy
+native toolchain not every host has installed (same convention as the formal-methods spike's own
+tasks). No container image exists for Isabelle in this programme yet. See
+[`tools/proofs/README.md`](tools/proofs/README.md), ADR-A-FM1, ADR-A-FM2.
 
 ### Validate the reasoning harness
 

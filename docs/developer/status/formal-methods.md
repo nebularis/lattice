@@ -26,10 +26,12 @@ Track D is complete. FM-D1 is decided: Isabelle/HOL is the prover for track E. T
 staggered as planned: C1, C2, B1 and B2 alongside the spike, A1 to A4 after gate D, B4 with C11a
 and C12, C3 with C13a. CCS remains the active unit, with C7c branched. Track E has its own plan,
 sketch and status record now ([formal-methods-track-e.md](formal-methods-track-e.md)). FM-D2 is
-decided too (ADR-A-FM2: `tools/proofs/`); E1.0 is unblocked but has not started.
+decided too (ADR-A-FM2: `tools/proofs/`), and E1.0/E1.1 are done: `tools/proofs/eligibility/`
+compiles and gates clean, natively, matching track D's spike evidence exactly.
 
-**Next action, for the human:** confirm E1.0 should start. The two remaining Gate D gaps (below)
-are both deliberately deferred, not blocking.
+**Next action, for the human:** decide E1.2's start (Quantification's rounding/residual theorem)
+or track C's C2 to unblock E1.3. The two remaining Gate D gaps (below) are both deliberately
+deferred, not blocking.
 
 ## Gate D (phase-0 plan §9)
 

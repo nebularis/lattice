@@ -267,3 +267,11 @@ run = "echo 'Native Isabelle install is scripted for Windows only in this spike 
 description = "Confirm both tools run on the image route (portable) for track D (epic formal-methods §4). Pass -- --route native --tool rocq,isabelle on a host with the native toolchains installed for the authoring route too"
 run = "python spikes/formal-prover/env/smoke.py"
 
+# Formal methods, track E (the prover programme, tools/proofs/, ADR-A-FM1, ADR-A-FM2). Native
+# route only: Isabelle has no image in this programme yet (epic formal-methods §4). Needs
+# bootstrap:formal-native-isabelle run first.
+
+[tasks."check:proofs"]
+description = "Build every tools/proofs/<layer>/ Isabelle session natively and run the proof gate (ADR-A-FM2). Pass a layer name to build only that one"
+run = "python tools/proofs/check.py"
+

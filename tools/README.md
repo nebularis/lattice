@@ -29,8 +29,10 @@ Regenerates a layer's compiled Turtle from its README, which is the
 authoritative specification. Fenced blocks are extracted in document order:
 `turtle-spec` → `ontology/<layer>/spec/<layer>.ttl`, `turtle-vocab` → `ontology/<layer>/vocab/<layer>-vocab.ttl`,
 `turtle-shapes` → the shape files named on the command line, in order.
-`turtle-example` blocks are never extracted. Each output gains the SPDX header
-as its first line.
+`turtle-example` blocks are never extracted. `isabelle-spec` → a layer's
+closed Isabelle datatype only, at `<proofs-root>/<layer>/Kernel.thy`
+(`--proofs-root`, e.g. `tools/proofs`; see `tools/proofs/README.md`,
+ADR-A-FM2). Each output gains the project's SPDX header as its first line.
 
 ```bash
 python3 tools/literate_extract.py ontology/surface/README.md \
@@ -41,6 +43,15 @@ python3 tools/literate_extract.py ontology/surface/README.md \
 `--check` writes nothing and exits non-zero if any target differs from what
 would be written. Run it in CI: it is the README⇄spec drift check the
 governance discipline requires and that nothing currently enforces.
+
+## `tools/proofs/` — the prover programme's theories
+
+Mechanised Isabelle/HOL theories for the `formal-methods` epic's track E
+(ADR-A-FM1, ADR-A-FM2). One subdirectory per ontology layer with a
+formalised law; see `tools/proofs/README.md` for the generated/hand-written
+split (`Kernel.thy` generated, never hand-edited; everything built on it
+hand-written) and `mise run check:proofs` to build and gate every layer
+natively (no container image exists for Isabelle in this programme yet).
 
 ## `tools/surface/` — the surface compiler
 

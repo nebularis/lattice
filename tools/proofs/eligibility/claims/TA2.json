@@ -1,0 +1,10 @@
+{
+  "subject": "TA2",
+  "statedAs": "KernelLaws.neg3_involutive/neg3_monotone/neg3_fixes_undetermined",
+  "statementDigest": "sha256:2d46b825e89b2b1187a53153a201e874953f42f293c10986c2a0797a9046a358",
+  "method": "Proof",
+  "scope": "EveryDecision",
+  "assumptionAudit": "no sorry/oops in KernelLaws.thy (gate.py's source scan)",
+  "tool": { "name": "Isabelle", "version": "Isabelle2025-2" },
+  "outcome": "passed"
+}

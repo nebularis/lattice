@@ -1,0 +1,7 @@
+session Eligibility = HOL +
+  options [document = false]
+  theories
+    Kernel
+    KernelLaws
+    Eligibility
+    Adequacy

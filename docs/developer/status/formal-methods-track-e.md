@@ -3,8 +3,8 @@
 # Formal Methods, Track E: Status
 
 **Unit ID:** `formal-methods-track-e` (phase, within the `formal-methods` epic)
-**Status:** Not started. Plan and sketch written 2026-10-06; FM-D2 decided the same day
-(ADR-A-FM2, `tools/proofs/`). E1.0 may now begin
+**Status:** E1.0 and E1.1 done, 2026-10-06, native route only (human instruction). E1.2 and
+E1.3 not started
 **Last updated:** 2026-10-06
 **Plan:** [formal-methods-track-e.md](../plans/formal-methods-track-e.md)
 **Sketch:** [formal-methods-track-e.md](../sketches/formal-methods-track-e.md)
@@ -14,32 +14,33 @@
 
 ## Current position
 
-Track D closed with FM-D1 decided (Isabelle/HOL). FM-D2 is now decided too: track E's theories
-live under `tools/proofs/`, one subdirectory per layer. Track E has not started coding. Its plan
-splits E1 (the epic's first slice: kernel, rounding/residual theorem, binding resolution) into
-three parts of different readiness, plus a prerequisite part (E1.0, home and generation tooling)
-the epic's own numbering does not name separately.
+Track D closed with FM-D1 decided (Isabelle/HOL). FM-D2 is decided and acted on: track E's
+theories live under `tools/proofs/`, one subdirectory per layer. `tools/proofs/eligibility/` now
+exists: `Kernel.thy` generated from `ontology/eligibility/README.md`'s new `isabelle-spec` block
+(§10), `KernelLaws.thy`/`Eligibility.thy`/`Adequacy.thy` hand-written (ported from track D's
+spike, byte-identical statement digests), `gate.py`/`claim-schema.json` carried over, a
+`check.py` driver and a `check:proofs` `mise` task. `isabelle build` and `gate.py` both pass,
+native route (`spikes/formal-prover/env/driver.py --route native`); no Isabelle image exists, by
+design (deferred).
 
-**Next action, for the human:** confirm E1.0 should start (scaffolding `tools/proofs/`, and
-deciding the generation-direction question: extend `tools/literate_extract.py`, or a separate
-generator), since that is new tooling work on a script other layers depend on.
+**Next action, for the human:** decide E1.2's start (source the rounding/residual theorem from
+`ontology/quantification/README.md` and ADR-A93 to ADR-A95), or track C's C2 to unblock E1.3.
 
 ## Slices
 
 | Slice | State | Blocked on |
 |---|---|---|
-| E1.0 (home, generation tooling) | not started, unblocked | nothing; awaiting the human's go-ahead to start |
-| E1.1 (the kernel, for real) | not started | E1.0 |
-| E1.2 (rounding and residual theorem) | not started | E1.0. Its exact statement is not yet sourced from `ontology/quantification/README.md` and ADR-A93 to ADR-A95 |
-| E1.3 (binding resolution) | not started | E1.0, and track C's C2 (design-time model), which has not started either |
+| E1.0 (home, generation tooling) | **done** | nothing |
+| E1.1 (the kernel, for real) | **done**, folded into E1.0's pass | nothing |
+| E1.2 (rounding and residual theorem) | not started | its exact statement is not yet sourced from `ontology/quantification/README.md` and ADR-A93 to ADR-A95 |
+| E1.3 (binding resolution) | not started | track C's C2 (design-time model), which has not started either |
 | E2 to E5 | not started, outline only | E1 |
 
 ## Open questions
 
 | # | Question | Owner |
 |---|---|---|
-| generation direction | extend `tools/literate_extract.py`, or a separate generator, for Isabelle datatypes | E1.0, when it starts |
-| the Isabelle image | does not exist in this spike; needed before epic E9's "image route only" rule applies to track E's recorded claims, not necessarily before E1 starts on native evidence | human, timing deferred 2026-10-06 to conserve tokens |
+| the Isabelle image | does not exist; needed before epic E9's "image route only" rule applies to track E's recorded claims, not before E1 itself | human, timing deferred 2026-10-06 to conserve tokens, confirmed again when E1 started (native/local explicitly requested) |
 
 ## Log
 
@@ -55,3 +56,15 @@ generator), since that is new tooling work on a script other layers depend on.
   generated), not adopted, no plan or slice opened for it. E1.0 unblocked; still needs the
   human's go-ahead to actually start, and its own generation-direction question decided when it
   does.
+- 2026-10-06: E1.0 and E1.1 done, native route only (human instruction, explicit for this slice).
+  `tools/literate_extract.py` gained an `isabelle-spec` fence tag and `--proofs-root`, purely
+  additively (Surface/Wording/Behaviour's existing `--check` invocations re-run unchanged and
+  pass, confirming no regression). `ontology/eligibility/README.md` §10 (new) states the closed
+  `decision` datatype; `tools/proofs/eligibility/Kernel.thy` is generated from it.
+  `KernelLaws.thy`/`Eligibility.thy`/`Adequacy.thy` are hand-written, ported from
+  `spikes/formal-prover/isabelle/` with identical statement digests (TA1, TA2, TL1-some,
+  TL1-every, TL2, TL3a, TL3b, AQ). `tools/proofs/gate.py` (PF1's fix carried over) passes.
+  Eligibility's pre-existing `spec`/`vocab`/`shapes` drift (TD-16) was left untouched on purpose:
+  only the new generated output was written. `check:proofs` wired into `mise.toml`, outside the
+  default aggregate `check` task (same "large, explicit" convention as the formal-prover D0
+  tasks), since Isabelle is a heavy native toolchain not every host has installed.

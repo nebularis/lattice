@@ -3,8 +3,8 @@
 # Track E: the prover programme (sketch)
 
 **Unit:** [formal-methods](../plans/formal-methods.md) (epic), track E
-**Status:** sketch, 2026-10-06. FM-D2 decided (ADR-A-FM2); the generation-direction question
-remains, for the plan
+**Status:** sketch, 2026-10-06. FM-D2 decided (ADR-A-FM2) and acted on: E1.0 and E1.1 are done,
+see the plan
 **Follows:** track D's spike, closed by [ADR-A-FM1](../../architecture/decisions/ADR-A-FM1-formal-methods-prover-choice.md)
 (Isabelle/HOL), evidenced by [formal-prover-experiment.md](../notes/formal-prover-experiment.md).
 Theory home decided by [ADR-A-FM2](../../architecture/decisions/ADR-A-FM2-formal-methods-theory-home.md)
