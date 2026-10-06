@@ -7,7 +7,7 @@
 **Status:** Proposed, awaiting human review
 **Status record:** the epic's [status record](../status/formal-methods.md)
 **Decides:** FM-D1 (the proof assistant), and the Haskell question of FM-D10
-**Changes:** no tracked file outside `docs/`. Spike code lives outside the repository (§7)
+**Changes:** on a spike branch only (§7). Nothing reaches `main` except the brief, the report and the status record
 
 ## 1. Question
 
@@ -87,23 +87,53 @@ reasons, which the status record keeps.
 
 ## 7. Where the work lives
 
-The repository's topology rule forbids new directories without an ADR, and this is an experiment.
-Spike code lives in a sibling directory outside the repository, such as `../lattice-formal-spike/`,
-with one subdirectory per track. Only the brief, the report and the status record enter the
-repository. The spike code is archived with the report's digest recorded, so the result can be
-reproduced.
+### 7.1 A spike branch
 
-Toolchains are installed by the human or with the human's approval: Rocq through opam with dune, and
-Isabelle as its distribution. Their versions are recorded in the report.
+The experiment runs on its own branch, `fm/phase-0-prover-spike`, which the human creates from
+`main`. The branch may never be merged. Whatever the outcome, what it learned reaches `main`.
+
+| Content | On the branch | Reaches `main` |
+|---|---|---|
+| the brief (FM-0.1) | yes | yes, with the plan's other documents |
+| spike sources: theories, proofs, code generation settings, the Python wrapper, the benchmark generator | yes, under `spikes/formal-prover/`, with one subdirectory per track and one for the smoke test | no. `spikes/` is a new directory, allowed on an unmerged branch only. If phase 1 adopts any of it, it moves to the home FM-D2 decides, under that ADR |
+| the report (FM-0.5) | yes | yes, carried to `main` on its own, merged or not |
+| the status record's updates | yes | yes |
+
+The branch's head commit is recorded in the report, so the result can be reproduced from it even if
+the branch is later deleted.
+
+### 7.2 What stays out of git
+
+Two git-ignored locations, by kind:
+
+| Location | For | Ignored by |
+|---|---|---|
+| `.build/formal/` | build artefacts: toolchain distributions and everything a build produces | a new `.gitignore` rule, `.build/formal/*` with `!.build/formal/.gitkeep`, following the existing `.build/` convention. FM-0.1 adds it on the branch |
+| `.local/formal/` | files that are not build artefacts but must not reach GitHub: generated benchmark data, run logs, timing data | the existing `.local/**` rule |
+
+| Kind | Location | Set by |
+|---|---|---|
+| the opam root and switch, with Rocq, dune and OCaml | `.build/formal/opam/` | `OPAMROOT` |
+| the Isabelle distribution and its user home, including session heap images | `.build/formal/isabelle/`, `.build/formal/isabelle-home/` | `ISABELLE_HOME_USER` |
+| build outputs: compiled theories, extracted and generated sources, binaries | `.build/formal/out/` | dune's build directory, Isabelle's export directory |
+| generated benchmark inputs and outputs | `.local/formal/bench/` | the benchmark generator's output path |
+| logs and timing data | `.local/formal/runs/` | the smoke test harness |
+
+Toolchains are installed by the human or with the human's approval, into `.build/formal/` only.
+Their versions go in the report. Before each commit on the branch, `git status` must show no build
+output, no binary, no generated benchmark data and no toolchain file. Only sources, the brief, the
+report, the status record and the `.gitignore` rule are tracked. The spike sources' own settings
+point every tool's output at `.build/formal/` or `.local/formal/`, so a default build cannot write
+into the tracked tree.
 
 ## 8. Slices
 
 | Slice | Content | Output | Estimate (tokens) |
 |---|---|---|---|
-| FM-0.1 | the brief: the written semantics of TA and TB, the defects as patches, the measures, the benchmark generator, the report template, fairness rules | Validation Pack `docs/developer/validation/formal-methods-0.md` | under 0.05M |
-| FM-0.2 | the Rocq track: TA, TB, the defects, extraction to OCaml, an attempt at Haskell extraction | spike code, measurements | 0.15M to 0.3M |
-| FM-0.3 | the Isabelle track: TA, TB, the defects, code generation to OCaml, Haskell and Scala | spike code, measurements | 0.15M to 0.3M |
-| FM-0.4 | the worker smoke test and benchmark, against the Python resolver | measurements | 0.05M to 0.1M |
+| FM-0.1 | the brief: the written semantics of TA and TB, the defects as patches, the measures, the benchmark generator, the report template, fairness rules. The `.build/formal/` ignore rule and its `.gitkeep` | Validation Pack `docs/developer/validation/formal-methods-0.md` | under 0.05M |
+| FM-0.2 | the Rocq track: TA, TB, the defects, extraction to OCaml, an attempt at Haskell extraction | `spikes/formal-prover/rocq/`, measurements | 0.15M to 0.3M |
+| FM-0.3 | the Isabelle track: TA, TB, the defects, code generation to OCaml, Haskell and Scala | `spikes/formal-prover/isabelle/`, measurements | 0.15M to 0.3M |
+| FM-0.4 | the worker smoke test and benchmark, against the Python resolver | `spikes/formal-prover/smoke/`, measurements | 0.05M to 0.1M |
 | FM-0.5 | the report: scores, evidence, recommendation | `docs/developer/notes/formal-prover-experiment.md` | under 0.05M |
 
 **Fairness.** One model and one agent configuration for both tracks. Both tracks start from the same
@@ -118,7 +148,8 @@ per target, and a target not finished within it is scored as not finished.
 | the report is complete, with every measure scored and its evidence linked | the report |
 | FM-D1 is decided, with reasons if the decision rule is overruled | the status record |
 | FM-D10's Haskell question is answered | the status record |
-| the spike code is archived with its digest | the report |
+| the spike branch's head commit is recorded, and no build output, binary or toolchain file is tracked on it | the report, `git status` on the branch |
+| the report and the status record are on `main` | `main` |
 | the phase 1 plan is written | `formal-methods-phase-1.md` |
 
 ## 10. Out of scope

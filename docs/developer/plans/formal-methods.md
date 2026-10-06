@@ -41,6 +41,7 @@ The sketch's FP1 to FP3 and goals G1 to G5 govern every phase. Five rules bind h
 | E3 | No generated OCaml or Haskell runs against the live graph. Proved artefacts reach the runtime as data | sketch §13.1 |
 | E4 | No phase blocks a CCS or insurml-alignment slice that does not need it. Formal work joins a slice when it is ready | G5 |
 | E5 | Agents build and verify, the human commits, merges, tags and pushes. Toolchain installs are approved by the human | CCS practice |
+| E6 | Toolchains, build outputs, generated binaries and generated data never enter git. Toolchain distributions and build outputs live under `.build/formal/`, and data that must not reach GitHub but is not a build artefact under `.local/formal/`. On `main`, `mise` tasks create the `.build/` locations and `.gitignore` excludes them. Every slice's handoff checks `git status` for them | human, 2026-10-06 |
 
 ## 3. Phase map
 
@@ -109,6 +110,7 @@ a scored comparison. Gate 0 decides FM-D1.
 
 | Slice | Content | Sketch |
 |---|---|---|
+| FM-3.0 | the toolchain joins `main`: `mise` tasks to bootstrap the chosen prover and the OCaml toolchain (and the Haskell toolchain if FM-D10 admits it), tool locations under `.build/formal/`, `.gitignore` rules for every build output and generated artefact, and CI caching. `mise run bootstrap` stays usable without the formal toolchain, through a separate `bootstrap:formal` task | parent §15, E6 |
 | FM-3.1 | the logic kernel: three values, information order, exact arithmetic, positions | parent §8.1 |
 | FM-3.2 | Foundation and Vocabulary: supersession, keys, binding resolution with its theorems | parent §8.2 |
 | FM-3.3 | Quantification: range sets and their normal form, comparisons with unresolved values | parent §8.3 |
@@ -118,7 +120,7 @@ a scored comparison. Gate 0 decides FM-D1.
 
 | Slice | Content | Sketch |
 |---|---|---|
-| FM-4.1 | the worker wrapper, sandbox, packaging and provenance, with one job family | toolchain workers |
+| FM-4.1 | the worker wrapper, sandbox, packaging and provenance, with one job family. Tool images are built in CI and published to a registry, never committed. The repository holds sources, lock files and the allow-list of image digests | toolchain workers §7, E6 |
 | FM-4.2 | the first family in production: `formal.slot-check`, measured against the Python baseline | toolchain workers §10 |
 
 ### Phases 5 to 8
@@ -189,7 +191,7 @@ compilers wholesale. Mechanising SPC's session-type metatheory, which waits for 
 
 ## 10. Documentation deltas
 
-At each gate: root `README.md` (new directories), `ontology/README.md` and each layer README whose
+At each gate: root `README.md` (new directories, and the `bootstrap:formal` task), `mise.toml`, `ontology/README.md` and each layer README whose
 laws gain formal statements, `docs/architecture/ontology-architecture.md` (the formal stack),
 `solution-design-specification.md` (toolchain workers), `data-architecture.md` (assurance records),
 `docs/architecture/semantic-platform.md` (new job families), the ADR catalogue, and

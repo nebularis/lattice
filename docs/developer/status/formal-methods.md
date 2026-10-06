@@ -18,14 +18,14 @@
 Nothing is built. Phase 0, the prover experiment, is the first step. CCS remains the active unit,
 with C7c next.
 
-**Next action, for the human:** review the plans, then approve the toolchain installs (Rocq through
-opam, Isabelle) and the spike location for Phase 0.
+**Next action, for the human:** review the plans, create the spike branch `fm/phase-0-prover-spike`
+from `main`, and approve the toolchain installs (Rocq through opam, Isabelle) into `.build/formal/`.
 
 ## Phase board
 
 | Phase | State | Blocked on |
 |---|---|---|
-| 0 Prover experiment | not started | human review, toolchain installs |
+| 0 Prover experiment | not started | human review, the spike branch, toolchain installs |
 | 1 Decisions and ADRs | not started | gate 0 |
 | 2 Cheap wins | not started | phase 1 |
 | 3 Kernel, foundations, adequacy | not started | phase 1 |
