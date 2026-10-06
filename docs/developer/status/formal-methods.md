@@ -27,11 +27,15 @@ staggered as planned: C1, C2, B1 and B2 alongside the spike, A1 to A4 after gate
 and C12, C3 with C13a. CCS remains the active unit, with C7c branched. Track E has its own plan,
 sketch and status record now ([formal-methods-track-e.md](formal-methods-track-e.md)). FM-D2 is
 decided too (ADR-A-FM2: `tools/proofs/`), and E1.0/E1.1 are done: `tools/proofs/eligibility/`
-compiles and gates clean, natively, matching track D's spike evidence exactly.
+compiles and gates clean, natively, matching track D's spike evidence exactly. E1.2 was attempted
+and found blocked on a missing normative source (its own status record), not merely unstarted.
+Track C has its own plan, sketch and status record now too
+([formal-methods-track-c.md](formal-methods-track-c.md)): C1 (an Alloy skeleton) and C2 (binding
+resolution with scheme composition, ahead of CCS's HQ-4 and insurml-alignment's IMA-D4a, both read
+directly from `main` and confirmed genuinely unresolved) are starting.
 
-**Next action, for the human:** decide E1.2's start (Quantification's rounding/residual theorem)
-or track C's C2 to unblock E1.3. The two remaining Gate D gaps (below) are both deliberately
-deferred, not blocking.
+**Next action, for the human:** none blocking track C. The two remaining Gate D gaps (below) are
+deliberately deferred, not blocking.
 
 ## Gate D (phase-0 plan §9)
 
@@ -52,7 +56,7 @@ deferred, not blocking.
 | D Prover spike | done. FM-D1 decided: Isabelle | the two open Gate D criteria above |
 | A Ledger and harness | not started | gate D's remaining criteria, then its ADR (A1). A5 runs with track C |
 | B Reference semantics and oracle | not started | its ADR. B1 and B2 alongside the spike, B4 with C11a and C12 |
-| C Design-time models | not started | none. C1 and C2 first, before CCS C8 |
+| C Design-time models | started 2026-10-06. [Its own plan, sketch and status](formal-methods-track-c.md) | none. C1 (Alloy skeleton) and C2 (scheme composition, ahead of CCS C8's HQ-4 and insurml-alignment's IMA-D4a) both starting |
 | E Prover programme | plan and sketch written, not started | FM-D2 (an ADR), then track C's C2 for E1.3 only |
 | F Native tooling | not started | its ADR, then a Python baseline per family |
 | G Instrument assurance | not started | B4, C3 |

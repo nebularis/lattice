@@ -128,6 +128,11 @@ Skeletons first (C1), then one model per ADR that adds or changes a law (FM-D8).
 resolution with scheme composition ahead of CCS C8. C3 is slot exclusivity and exhaustiveness by SMT
 for every condition kind, driven from Python, in step with CCS C13a.
 
+Detailed in its own [sketch](../sketches/formal-methods-track-c.md) and
+[plan](formal-methods-track-c.md); status in [its status record](../status/formal-methods-track-c.md).
+C1 and C2 started 2026-10-06, HQ-4 and IMA-D4a read in full from `main` and this repository's own
+plans first, confirming both are genuinely unresolved and wait on this track.
+
 ### Track E: the prover programme
 
 Gate D passed (FM-D1 decided: Isabelle/HOL, [ADR-A-FM1](../../architecture/decisions/ADR-A-FM1-formal-methods-prover-choice.md)).
