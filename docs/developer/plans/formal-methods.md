@@ -134,10 +134,11 @@ Gate D passed (FM-D1 decided: Isabelle/HOL, [ADR-A-FM1](../../architecture/decis
 Detailed in its own [sketch](../sketches/formal-methods-track-e.md) and
 [plan](formal-methods-track-e.md); status in [its status record](../status/formal-methods-track-e.md).
 Its order: E1 the kernel with the rounding and residual theorem, and binding resolution (split
-into E1.0 to E1.3 by the plan, since binding resolution waits on track C's C2 and the kernel
-needs a home decided first, FM-D2). E2 the Eligibility denotation and one SPARQL compiler core,
-with the mapping of "not a value" to Undetermined as its first theorem, a mechanical fragment
-gate, and a cross-store conformance suite. E3 the combinator algebra. E4 the evaluation context,
+into E1.0 to E1.3 by the plan, since binding resolution waits on track C's C2; the kernel's home
+is decided, FM-D2, ADR-A-FM2, `tools/proofs/`). E2 the Eligibility denotation and one SPARQL
+compiler core, with the mapping of "not a value" to Undetermined as its first theorem, a
+mechanical fragment gate, and a cross-store conformance suite. E3 the combinator algebra. E4 the
+evaluation context,
 mechanising B4. E5 the template library in rely and guarantee form.
 
 ### Track F: native tooling
@@ -269,7 +270,7 @@ None of these may be taken by an agent.
 | # | Decision | Recommendation | State |
 |---|---|---|---|
 | FM-D1 | proof assistant | settled by track D, or abandoned | **decided 2026-10-06: Isabelle/HOL**, by the corrected measures in [formal-prover-experiment.md](../notes/formal-prover-experiment.md), recorded in [ADR-A-FM1](../../architecture/decisions/ADR-A-FM1-formal-methods-prover-choice.md) |
-| FM-D2 | home of theories and tools | per-layer theories beside each layer, statements extracted into the README, one build project under `tools/` | open |
+| FM-D2 | home of theories and tools | per-layer theories beside each layer, statements extracted into the README, one build project under `tools/` | **decided 2026-10-06: `tools/proofs/`**, [ADR-A-FM2](../../architecture/decisions/ADR-A-FM2-formal-methods-theory-home.md) (not beside each layer; a developer-facing toolchain, per repository topology, not an ontology asset) |
 | FM-D3 | assurance vocabulary | a profile of EARL, PROV-O, SHACL reports and in-toto, in Executable's vocabulary | open |
 | FM-D4 | first proof target | the kernel with the rounding and residual theorem, then binding resolution | open |
 | FM-D5 | the reference evaluator | hand-written in Python first (track B), mechanised later from it if track E proceeds. The C12 runtime is held to it by conformance kits | revised 2026-10-06 |

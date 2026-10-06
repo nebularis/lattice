@@ -8,9 +8,11 @@
 **Sketch:** [formal-methods-track-e.md](../sketches/formal-methods-track-e.md)
 **Status record:** [formal-methods-track-e.md](../status/formal-methods-track-e.md)
 **Decided by:** [ADR-A-FM1](../../architecture/decisions/ADR-A-FM1-formal-methods-prover-choice.md)
-(FM-D1: Isabelle/HOL; FM-D10: Haskell and Scala as code-generation targets)
-**Status:** Proposed. E1's first two parts (kernel, rounding/residual) can start once FM-D2 is
-decided; its third part (binding resolution) waits on track C's C2
+(FM-D1: Isabelle/HOL; FM-D10: Haskell and Scala as code-generation targets),
+[ADR-A-FM2](../../architecture/decisions/ADR-A-FM2-formal-methods-theory-home.md)
+(FM-D2: `tools/proofs/`)
+**Status:** Proposed. E1.0 (home and generation tooling) can start now. E1.1 and E1.2 follow it;
+E1.3 (binding resolution) waits on track C's C2
 
 ## 1. Scope
 
@@ -25,15 +27,15 @@ Every artefact follows the chain track D proved out (phase-0 plan §2.1): prose,
 statement (extracted back into the README), proof with its assumption audit, an interface one
 instantiation discharges, adequacy against a reference, the compiled backend, a claim record, a
 report and a gate. The claim schema, `gate.py` (now fixed, PF1) and the GATE-marker convention
-are reused as-is from `spikes/formal-prover/`; they move to track E's permanent home (FM-D2)
-rather than being rewritten.
+are reused as-is from `spikes/formal-prover/`; they move to `tools/proofs/` (ADR-A-FM2) rather
+than being rewritten.
 
 ## 2. What this plan depends on, and what blocks it
 
 | Dependency | State | Blocks |
 |---|---|---|
-| FM-D2 (home of track E's theories) | open, an ADR decision (sketch §4) | every slice: nothing is created in a permanent home until this is decided |
-| the literate-generation direction for Isabelle datatypes | open, a design choice within FM-D2's ADR or a follow-up (sketch §1, §4) | E1.1's kernel datatype must be generated from the README, not hand-restated, to honour epic principle E1 |
+| FM-D2 (home of track E's theories) | **decided: `tools/proofs/`, one subdirectory per layer** (ADR-A-FM2) | nothing further; E1.0 may start |
+| the literate-generation direction for Isabelle datatypes | open, a design choice E1.0 itself makes (sketch §4) | E1.1's kernel datatype must be generated from the README, not hand-restated, to honour epic principle E1 |
 | track C's C2 (binding resolution, design-time model) | not started | E1.3 (binding resolution) specifically. E1.1 and E1.2 do not depend on it |
 | the Quantification layer's rounding/residual statement | exists in prose (`ontology/quantification/README.md`, ADR-A93 to ADR-A95), not yet read against this plan | E1.2's exact theorem statement, drafted when E1.2 starts, not guessed at here |
 | an Isabelle image | does not exist in this spike (deferred, human instruction, 2026-10-06) | epic E9's "only an image route's verdict is recorded" rule, and gate D's own smoke-suite criterion. Track E may proceed on native evidence for now; closing this before claims are recorded for gate E, not gate D, is the human's call to make when it is needed |
@@ -42,14 +44,19 @@ rather than being rewritten.
 
 ### E1.0: home and generation tooling (prerequisite, not in the epic's own numbering)
 
-- Write the FM-D2 ADR (`A-FM2`, continuing ADR-A-FM1's series): choose the home (sketch §4's two
-  candidates) and record the reasoning the sketch could not close unilaterally.
-- Extend the literate-extraction tooling (`tools/literate_extract.py` or a sibling script) with
-  whatever block kind the chosen home needs to generate the kernel's datatype from its README,
-  proven first on the smallest possible case (the three-valued `decision` type itself, which
-  track D's spike already states in prose terms the README can carry almost unchanged).
+- `tools/proofs/` scaffolded as its own build project (its own `mise` tasks, its own tests),
+  alongside `tools/mork_compilers` and `tools/persistence`, per ADR-A-FM2. One subdirectory per
+  layer that has a formalised law, named after that layer (`tools/proofs/foundation/`,
+  `tools/proofs/eligibility/`, …), created only when that layer's first theorem lands, not as an
+  empty tree every layer must populate.
+- Decide the generation direction: extend `tools/literate_extract.py` with an Isabelle-datatype
+  fenced-block kind (parallel to its `turtle-spec`/`turtle-vocab`/`turtle-shapes` blocks), or a
+  new, separate generator, proven first on the smallest possible case (the three-valued
+  `decision` type itself, which track D's spike already states in prose terms the README can
+  carry almost unchanged).
 - Move `spikes/formal-prover/isabelle/{Kernel,Eligibility}.thy`'s proof *content* (not their
-  hand-written datatypes) into the new home, re-pointed at the generated datatype.
+  hand-written datatypes) into `tools/proofs/foundation/` (or wherever the kernel's layer lands),
+  re-pointed at the generated datatype.
 - **Validation:** the generated datatype and the hand-written one from the spike are isomorphic
   (same constructors, same names), and the moved proofs still compile against the generated
   version unchanged. This closes the loop the spike left open rather than opening a new one.

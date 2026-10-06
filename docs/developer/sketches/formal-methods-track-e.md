@@ -3,10 +3,12 @@
 # Track E: the prover programme (sketch)
 
 **Unit:** [formal-methods](../plans/formal-methods.md) (epic), track E
-**Status:** sketch, 2026-10-06. Nothing here is ratified; a plan follows once the open questions
-below are settled.
+**Status:** sketch, 2026-10-06. FM-D2 decided (ADR-A-FM2); the generation-direction question
+remains, for the plan
 **Follows:** track D's spike, closed by [ADR-A-FM1](../../architecture/decisions/ADR-A-FM1-formal-methods-prover-choice.md)
-(Isabelle/HOL), evidenced by [formal-prover-experiment.md](../notes/formal-prover-experiment.md)
+(Isabelle/HOL), evidenced by [formal-prover-experiment.md](../notes/formal-prover-experiment.md).
+Theory home decided by [ADR-A-FM2](../../architecture/decisions/ADR-A-FM2-formal-methods-theory-home.md)
+(`tools/proofs/`)
 **Prover:** Isabelle2025-2/HOL (FM-D1)
 **Reads with:** [formal-methods.md](formal-methods.md) §4 "Track E" and §7 (FM-D2, FM-D4), the
 [adequacy and architecture sketch](formal-adequacy-and-architecture.md)
@@ -23,12 +25,13 @@ epic already states and the spike did not need to follow:
   The spike's `datatype decision = Permitted | Denied | Undetermined` was hand-written both ways.
   Track E needs the generation direction working before its proofs can be called the real thing
   rather than a second hand copy of the README's prose, same as the spike's.
-- **FM-D2 (open):** where track E's theories and build project live. Not `spikes/`, which this
-  epic's plan (§7.1) and the repository topology rules (`copilot-instructions.md`) only allow for
-  an unmerged spike branch.
+- **FM-D2 (decided, ADR-A-FM2):** where track E's theories and build project live. Not `spikes/`,
+  which this epic's plan (§7.1) and the repository topology rules (`copilot-instructions.md`)
+  only allow for an unmerged spike branch. Decided: a new `tools/proofs/`, one subdirectory per
+  layer, mirroring `ontology/<layer>/`'s own names.
 
-Both are open questions this sketch exists to narrow, not close: closing them is an ADR (FM-D2)
-and the plan that follows this sketch.
+The generation direction (which tool, not yet decided, see §4) remains the open question this
+sketch exists to narrow, closed by the plan that follows this sketch, not here.
 
 ## 2. Scope, restated from the epic plan (§4)
 
@@ -59,16 +62,42 @@ Both are named in the epic plan's E1 outline without restating their content her
 **Consequence for sequencing:** E1 splits into parts with different readiness, not one slice
 started all at once (the plan, §4, below).
 
-## 4. Open questions, for the plan and its ADR
+## 4. Open questions, for the plan
 
 | # | Question | Candidates |
 |---|---|---|
-| FM-D2 | home of track E's theories and build project | beside each layer (`ontology/<layer>/theory/`, paralleling `shapes/`), or a new `tools/formal/` alongside `tools/mork_compilers` and `tools/persistence`. The repository topology rules reserve `ontology/` for "normative ontology sources, shapes, vocabularies, projections, semantic examples, semantic fixtures, and semantic documentation" and `tools/` for "executable reference implementations and developer-facing toolchains" (`copilot-instructions.md`): a proof is closer to a reference implementation's assurance than to the ontology itself, which favours `tools/formal/`, but the literate-generation direction (§1) argues for the datatypes living beside the README they are generated from. Both candidates are legitimate; this is the ADR's call to make, not this sketch's |
 | generation direction | extend `tools/literate_extract.py` with an Isabelle-datatype fenced-block kind (parallel to its `turtle-spec`/`turtle-vocab`/`turtle-shapes` blocks), or a separate generator | `literate_extract.py`'s existing block/file-count contract (one block per generated file, in document order) is proven infrastructure; reusing its shape is the lower-risk default unless Isabelle's datatype syntax does not fit it |
 | image route | Isabelle has no container image in this spike (deferred, human instruction, 2026-10-06, to conserve tokens) | build one before E1's claims are recorded, per epic E9's "only an image route's verdict is recorded", or accept native-only evidence for E1 specifically and revisit before gate E |
 | binding resolution's timing | start E1's kernel and rounding/residual parts now, defer binding resolution until track C's C2 model exists | do the two independent parts first (§3), track C's timing decides the third |
 
-## 5. Non-goals, unchanged from the epic
+## 5. Compatibility with the improved-ontology-documentation sketch
+
+A separate, unplanned sketch (`docs/developer/sketches/improved-ontology-documentation.md`,
+2026-10-02) proposes injecting README narrative into generated `.ttl` files' own annotation
+properties, via a new pair of HTML-comment markers, and floats removing generated `.ttl` from git
+entirely, generating it at bootstrap instead. Track E is not adopting it (out of scope, not this
+epic's decision to make), but ADR-A-FM2 confirms the two are compatible, not competing:
+
+- The comment-marker mechanism is **orthogonal** to the fenced-code-block mechanism
+  `literate_extract.py` already uses and that track E's own generation direction (§4, above) will
+  extend or parallel: one demarcates narrative prose for an annotation property, the other
+  demarcates a block of normative syntax (Turtle today, Isabelle once E1.0 decides how). Adopting
+  one does not require touching the other, and nothing E1.0 does should assume README prose
+  **outside** fenced blocks is free of such markers later: an Isabelle-block generator should skip
+  HTML comments the same way a Turtle-block generator would need to, not choke on them.
+- If the "remove generated `.ttl` from git" idea is ever taken up, it is a repository-wide
+  reproducibility change far larger than track E and deserves its own ADR regardless; track E's
+  own generated `tools/proofs/<layer>/*.thy` should be designed to tolerate that outcome without
+  rework (generated from the README on demand, not hand-maintained), which E1.0's generation
+  direction already requires for its own reasons (epic principle E1).
+- The sketch's own nested-marker example has a real ambiguity worth fixing before anyone
+  implements it (an inner `exclude` block reuses its enclosing block's `id` rather than a distinct
+  one, relying on the end marker's proximity to resolve which block closes): not a reason to avoid
+  the idea, a reason its own eventual implementation should settle on stack-based nesting (no id
+  matching needed to close the innermost open marker) rather than id-matched pairs once ids can
+  repeat.
+
+## 6. Non-goals, unchanged from the epic
 
 `DesignEnv`/`RunEnv` and Behaviour's macrostep (track B4, not yet built). Instrument assurance
 (track G). Any native-tooling decision (track F). Binding resolution's own design-time model
