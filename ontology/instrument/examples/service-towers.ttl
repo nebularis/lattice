@@ -1,0 +1,334 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Premise. An IT outsourcing agreement divides its services into three
+# towers, each in its own schedule, and each defines "Service Failure" in its
+# own way. One clause in the general part owes a service credit for every
+# Service Failure, whatever the tower, and another caps the year's credits
+# across all towers together. One incident can be a Service Failure in two
+# towers at once. Nothing places such an incident in a section: each tower's
+# relations evaluate it in their own right, and the cap counts what they
+# give (D9).
+#
+# The agreement's clauses:
+#
+# | Clause | Text | Meaning |
+# |--------|------|---------|
+# | 2.1    | The Services are divided into the Towers in Schedules A to C, and Tower B includes its Disaster Recovery Service. The terms set out in a Tower, or in a part of it, apply only to that Tower or part. | a sectioning term, with a nested section |
+# | 5.1    | If a Service Failure occurs, the Provider shall pay the Customer a Service Credit. | an obligation in the general part, using a word each tower defines |
+# | 5.2    | The Service Credits in any Contract Year shall not exceed 12% of the Charges for that year. | a cap across every tower |
+# | 6.1    | The Customer shall pay the Charges monthly. | an obligation whose words are the same everywhere |
+# | A.1    | "Service Failure" means a priority 1 incident not resolved within 4 hours. | Tower A's definition |
+# | B.1    | "Service Failure" means data centre availability below 99.95% in a month. | Tower B's definition |
+# | B2.1   | The Provider shall test failover twice in each Contract Year and report the results to the Customer. | a term placed in a nested section |
+# | C.1    | "Service Failure" means network latency above 20 milliseconds for an hour. | Tower C's definition |
+#
+# What the example shows:
+#
+# | Construct                                            | Where                                          |
+# |------------------------------------------------------|------------------------------------------------|
+# | a sectioning clause placing what each section contains (D6) | tmpl:towers                             |
+# | a nested section, declared (D8)                      | ex:tower-b-dr inside ex:tower-b                 |
+# | a condition word, defined per section (D12)          | tmpl:def-a, tmpl:def-b, tmpl:def-c              |
+# | a general term split per section, its word resolved in each (D5) | ex:term-5-1-in-tower-a to -c          |
+# | a general term bound once, its words the same everywhere (D5) | ex:term-6-1                              |
+# | a cross-section cap, bound once (D10)                | ex:credit-cap                                   |
+# | a case in two sections, not placed (D9)              | ex:incident-0311                                |
+#
+# Nothing here evaluates.
+
+@prefix ins:     <https://www.nebularis.org/neuro-semantic/lattice/instrument#> .
+@prefix ins-voc: <https://www.nebularis.org/neuro-semantic/lattice/instrument/vocab#> .
+@prefix bhv:     <https://www.nebularis.org/neuro-semantic/lattice/behaviour#> .
+@prefix wrd:     <https://www.nebularis.org/neuro-semantic/lattice/wording#> .
+@prefix wrd-voc: <https://www.nebularis.org/neuro-semantic/lattice/wording/vocab#> .
+@prefix fnd:     <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix pty:     <https://www.nebularis.org/neuro-semantic/lattice/party#> .
+@prefix elg:     <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
+@prefix owl:     <http://www.w3.org/2002/07/owl#> .
+@prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+@prefix tmpl:    <https://example.org/lattice/instrument/service-towers/form/> .
+@prefix ex:      <https://example.org/lattice/instrument/service-towers/> .
+
+# ==== The form: wording =======================================================
+
+ex:form a wrd:Wording ;
+    fnd:hasIdentity ex:form-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:directlyComprises ex:general , ex:tower-a , ex:tower-b , ex:tower-c .
+
+ex:general a wrd:Element ;
+    fnd:hasIdentity ex:general-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Section ; wrd:objectId "General" ; wrd:rankKey "a0" ;
+    wrd:directlyComprises ex:cl-2-1 , ex:cl-5-1 , ex:cl-5-2 , ex:cl-6-1 .
+ex:cl-2-1 a wrd:Text ;
+    fnd:hasIdentity ex:cl-2-1-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "2.1" ; wrd:rankKey "a0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "The Services are divided into the Towers in Schedules A to C, and Tower B includes its Disaster Recovery Service. The terms set out in a Tower, or in a part of it, apply only to that Tower or part." ] .
+ex:cl-5-1 a wrd:Text ;
+    fnd:hasIdentity ex:cl-5-1-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "5.1" ; wrd:rankKey "b0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "If a Service Failure occurs, the Provider shall pay the Customer a Service Credit." ] .
+ex:cl-5-2 a wrd:Text ;
+    fnd:hasIdentity ex:cl-5-2-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "5.2" ; wrd:rankKey "c0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "The Service Credits in any Contract Year shall not exceed 12% of the Charges for that year." ] .
+ex:cl-6-1 a wrd:Text ;
+    fnd:hasIdentity ex:cl-6-1-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "6.1" ; wrd:rankKey "d0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "The Customer shall pay the Charges monthly." ] .
+
+ex:tower-a a wrd:Element ;
+    fnd:hasIdentity ex:tower-a-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Schedule ; wrd:objectId "Schedule A" ; wrd:rankKey "b0" ;
+    wrd:directlyComprises ex:cl-a-1 .
+ex:cl-a-1 a wrd:Text ;
+    fnd:hasIdentity ex:cl-a-1-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Definition ; wrd:objectId "A.1" ; wrd:rankKey "a0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "\"Service Failure\" means a priority 1 incident not resolved within 4 hours." ] .
+
+ex:tower-b a wrd:Element ;
+    fnd:hasIdentity ex:tower-b-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Schedule ; wrd:objectId "Schedule B" ; wrd:rankKey "c0" ;
+    wrd:directlyComprises ex:cl-b-1 , ex:tower-b-dr .
+ex:cl-b-1 a wrd:Text ;
+    fnd:hasIdentity ex:cl-b-1-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Definition ; wrd:objectId "B.1" ; wrd:rankKey "a0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "\"Service Failure\" means data centre availability below 99.95% in a month." ] .
+ex:tower-b-dr a wrd:Element ;
+    fnd:hasIdentity ex:tower-b-dr-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Section ; wrd:objectId "Part B2" ; wrd:rankKey "b0" ;
+    wrd:directlyComprises ex:cl-b2-1 .
+ex:cl-b2-1 a wrd:Text ;
+    fnd:hasIdentity ex:cl-b2-1-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "B2.1" ; wrd:rankKey "a0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "The Provider shall test failover twice in each Contract Year and report the results to the Customer." ] .
+
+ex:tower-c a wrd:Element ;
+    fnd:hasIdentity ex:tower-c-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Schedule ; wrd:objectId "Schedule C" ; wrd:rankKey "d0" ;
+    wrd:directlyComprises ex:cl-c-1 .
+ex:cl-c-1 a wrd:Text ;
+    fnd:hasIdentity ex:cl-c-1-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Definition ; wrd:objectId "C.1" ; wrd:rankKey "a0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "\"Service Failure\" means network latency above 20 milliseconds for an hour." ] .
+
+# ==== The form: roles, words and conditions ===================================
+
+ex:Provider a pty:Role ; rdfs:label "Provider" .
+ex:Customer a pty:Role ; rdfs:label "Customer" .
+
+# The word, a plain concept. Stated meaning names it wherever the text says
+# "Service Failure", even where a condition is expected, and binding
+# replaces it, in each section, by the condition that section's definition
+# means (D12). Stated meaning names words, bound meaning names meanings.
+ex:ServiceFailure a skos:Concept ; rdfs:label "Service Failure" .
+
+# Placeholders: each tower's meaning, stated and not yet evaluable (C13).
+ex:p1-unresolved a elg:Condition ;
+    elg:conditionKey "priority-1-incident-unresolved-after-4-hours" ;
+    elg:matchStrategy elg:ExactMatch ; elg:compatibilityOperation elg:AllRequired ;
+    elg:wildcardSemantics elg:NoWildcard ;
+    elg:requiredConcept ex:p1-late .
+ex:p1-late a skos:Concept ; rdfs:label "a priority 1 incident has not been resolved within 4 hours" .
+
+ex:dc-unavailable a elg:Condition ;
+    elg:conditionKey "data-centre-availability-below-99.95-percent" ;
+    elg:matchStrategy elg:ExactMatch ; elg:compatibilityOperation elg:AllRequired ;
+    elg:wildcardSemantics elg:NoWildcard ;
+    elg:requiredConcept ex:dc-down .
+ex:dc-down a skos:Concept ; rdfs:label "data centre availability was below 99.95% in a month" .
+
+ex:latency-breach a elg:Condition ;
+    elg:conditionKey "network-latency-above-20ms-for-an-hour" ;
+    elg:matchStrategy elg:ExactMatch ; elg:compatibilityOperation elg:AllRequired ;
+    elg:wildcardSemantics elg:NoWildcard ;
+    elg:requiredConcept ex:slow-network .
+ex:slow-network a skos:Concept ; rdfs:label "network latency was above 20 milliseconds for an hour" .
+
+# ==== The form: stated meaning ================================================
+
+# Four sections, one nested in another. Each places within it the terms it
+# contains: A.1, B.1, B2.1 and C.1 need no scope of their own. The general
+# part is no section, so 5.1, 5.2 and 6.1 govern the whole agreement.
+tmpl:term-2-1 a ins:Term , ins:Template ; ins:expressedIn ex:cl-2-1 .
+tmpl:towers a ins:Sectioning , ins:Template ;
+    ins:arisesUnder tmpl:term-2-1 ;
+    ins:section ex:tower-a-identity , ex:tower-b-identity , ex:tower-b-dr-identity , ex:tower-c-identity .
+
+tmpl:term-a-1 a ins:Term , ins:Template ; ins:expressedIn ex:cl-a-1 .
+tmpl:def-a a ins:Definition , ins:Template ;
+    ins:arisesUnder tmpl:term-a-1 ;
+    ins:defines ex:ServiceFailure ; ins:means ex:p1-unresolved .
+
+# Applies within Tower B and so within Part B2, which lies below it.
+tmpl:term-b-1 a ins:Term , ins:Template ; ins:expressedIn ex:cl-b-1 .
+tmpl:def-b a ins:Definition , ins:Template ;
+    ins:arisesUnder tmpl:term-b-1 ;
+    ins:defines ex:ServiceFailure ; ins:means ex:dc-unavailable .
+
+tmpl:term-c-1 a ins:Term , ins:Template ; ins:expressedIn ex:cl-c-1 .
+tmpl:def-c a ins:Definition , ins:Template ;
+    ins:arisesUnder tmpl:term-c-1 ;
+    ins:defines ex:ServiceFailure ; ins:means ex:latency-breach .
+
+tmpl:term-5-1 a ins:Term , ins:Template ; ins:expressedIn ex:cl-5-1 .
+tmpl:on-failure a ins:OnCondition , bhv:TriggerDefinition ;
+    bhv:triggerKind bhv:DerivedTrigger ;
+    ins:condition ex:ServiceFailure .                 # the word, resolved per section
+tmpl:service-credit a ins:Obligation , ins:Template ;
+    ins:arisesUnder tmpl:term-5-1 ;
+    ins:obligor ex:Provider ; ins:obligee ex:Customer ;
+    ins:activity ins-voc:Pay ;
+    ins:arisesOn tmpl:on-failure .                    # one occasion per Service Failure
+
+# The cap's amount is a contract amount (C8). It counts every occasion of
+# 5.1, in whichever tower it arises.
+tmpl:term-5-2 a ins:Term , ins:Template ; ins:expressedIn ex:cl-5-2 .
+tmpl:credit-cap a ins:Qualifier , ins:Template ;
+    ins:arisesUnder tmpl:term-5-2 ;
+    ins:qualifies tmpl:service-credit .
+
+tmpl:term-6-1 a ins:Term , ins:Template ; ins:expressedIn ex:cl-6-1 .
+tmpl:pay-charges a ins:Obligation , ins:Template ;
+    ins:arisesUnder tmpl:term-6-1 ;
+    ins:obligor ex:Customer ; ins:obligee ex:Provider ;
+    ins:activity ins-voc:Pay .
+
+tmpl:term-b2-1 a ins:Term , ins:Template ; ins:expressedIn ex:cl-b2-1 .
+tmpl:failover-report a ins:Obligation , ins:Template ;
+    ins:arisesUnder tmpl:term-b2-1 ;
+    ins:obligor ex:Provider ; ins:obligee ex:Customer ;
+    ins:activity ins-voc:Report .
+
+# ==== The instance: what the agreement stores (D1) ============================
+
+ex:meridian-wording-v1 a wrd:AssembledWording ;
+    fnd:hasIdentity ex:meridian-wording-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:assembledFrom ex:form ;
+    wrd:includes ex:general , ex:cl-2-1 , ex:cl-5-1 , ex:cl-5-2 , ex:cl-6-1 ,
+                 ex:tower-a , ex:cl-a-1 , ex:tower-b , ex:cl-b-1 , ex:tower-b-dr , ex:cl-b2-1 ,
+                 ex:tower-c , ex:cl-c-1 .
+
+ex:meridian-v1 a ins:Instrument ;
+    fnd:hasIdentity ex:meridian-identity ;
+    ins:expressedIn ex:meridian-wording-v1 ;
+    ins:party ex:provider-occ , ex:customer-occ .
+
+ex:lanthorn a pty:Actor ; rdfs:label "Lanthorn Managed Services Ltd" .
+ex:meridian a pty:Actor ; rdfs:label "Meridian Building Society" .
+
+ex:provider-occ a pty:RoleOccupancy ;
+    fnd:hasIdentity ex:provider-occ-identity ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-07-01T00:00:00Z"^^xsd:dateTime ] ;
+    pty:inRole ex:Provider ; pty:occupiedBy ex:lanthorn .
+ex:customer-occ a pty:RoleOccupancy ;
+    fnd:hasIdentity ex:customer-occ-identity ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-07-01T00:00:00Z"^^xsd:dateTime ] ;
+    pty:inRole ex:Customer ; pty:occupiedBy ex:meridian .
+
+# ==== Generated bound meaning: the expected output, not stored (D4) ===========
+#
+# | Stated term | Sections | Bound term(s) | Why |
+# |-------------|----------|---------------|-----|
+# | 5.1 | Tower A, Tower B (with B2), Tower C | three, one per tower | "Service Failure" resolves differently in each |
+# | 5.2 | the whole | one, qualifying all three of 5.1's | a cross-section cap (D10) |
+# | 6.1 | the whole | one | its words resolve alike everywhere |
+# | A.1, B.1, C.1 | their own tower | one each | placed by containment |
+# | B2.1 | Part B2 | one | placed by containment in a nested section |
+
+ex:term-2-1 a ins:Term ; ins:boundIn ex:meridian-v1 ; ins:boundFrom tmpl:term-2-1 .
+
+ex:term-a-1 a ins:Term ; ins:boundIn ex:meridian-v1 ; ins:boundFrom tmpl:term-a-1 ;
+    ins:boundWithin ex:tower-a-identity .
+ex:def-a a ins:Definition ;
+    ins:boundFrom tmpl:def-a ; ins:arisesUnder ex:term-a-1 ;
+    ins:defines ex:ServiceFailure ; ins:means ex:p1-unresolved .
+
+ex:term-b-1 a ins:Term ; ins:boundIn ex:meridian-v1 ; ins:boundFrom tmpl:term-b-1 ;
+    ins:boundWithin ex:tower-b-identity .
+ex:def-b a ins:Definition ;
+    ins:boundFrom tmpl:def-b ; ins:arisesUnder ex:term-b-1 ;
+    ins:defines ex:ServiceFailure ; ins:means ex:dc-unavailable .
+
+ex:term-c-1 a ins:Term ; ins:boundIn ex:meridian-v1 ; ins:boundFrom tmpl:term-c-1 ;
+    ins:boundWithin ex:tower-c-identity .
+ex:def-c a ins:Definition ;
+    ins:boundFrom tmpl:def-c ; ins:arisesUnder ex:term-c-1 ;
+    ins:defines ex:ServiceFailure ; ins:means ex:latency-breach .
+
+# 5.1, split by what "Service Failure" means in each tower. Each bound
+# relation arises on its tower's condition, through a generated trigger.
+ex:term-5-1-in-tower-a a ins:Term ; ins:boundIn ex:meridian-v1 ; ins:boundFrom tmpl:term-5-1 ;
+    ins:boundWithin ex:tower-a-identity .
+ex:on-failure-in-tower-a a ins:OnCondition , bhv:TriggerDefinition ;
+    bhv:triggerKind bhv:DerivedTrigger ; ins:condition ex:p1-unresolved .
+ex:service-credit-in-tower-a a ins:Obligation ;
+    ins:boundFrom tmpl:service-credit ; ins:arisesUnder ex:term-5-1-in-tower-a ;
+    ins:obligor ex:provider-occ ; ins:obligee ex:customer-occ ;
+    ins:activity ins-voc:Pay ; ins:arisesOn ex:on-failure-in-tower-a .
+
+ex:term-5-1-in-tower-b a ins:Term ; ins:boundIn ex:meridian-v1 ; ins:boundFrom tmpl:term-5-1 ;
+    ins:boundWithin ex:tower-b-identity .
+ex:on-failure-in-tower-b a ins:OnCondition , bhv:TriggerDefinition ;
+    bhv:triggerKind bhv:DerivedTrigger ; ins:condition ex:dc-unavailable .
+ex:service-credit-in-tower-b a ins:Obligation ;
+    ins:boundFrom tmpl:service-credit ; ins:arisesUnder ex:term-5-1-in-tower-b ;
+    ins:obligor ex:provider-occ ; ins:obligee ex:customer-occ ;
+    ins:activity ins-voc:Pay ; ins:arisesOn ex:on-failure-in-tower-b .
+
+ex:term-5-1-in-tower-c a ins:Term ; ins:boundIn ex:meridian-v1 ; ins:boundFrom tmpl:term-5-1 ;
+    ins:boundWithin ex:tower-c-identity .
+ex:on-failure-in-tower-c a ins:OnCondition , bhv:TriggerDefinition ;
+    bhv:triggerKind bhv:DerivedTrigger ; ins:condition ex:latency-breach .
+ex:service-credit-in-tower-c a ins:Obligation ;
+    ins:boundFrom tmpl:service-credit ; ins:arisesUnder ex:term-5-1-in-tower-c ;
+    ins:obligor ex:provider-occ ; ins:obligee ex:customer-occ ;
+    ins:activity ins-voc:Pay ; ins:arisesOn ex:on-failure-in-tower-c .
+
+# The cap, bound once: one counter over every tower's credits (D10). Splitting
+# it per tower would give each tower a cap of its own, which 5.2 does not say.
+ex:term-5-2 a ins:Term ; ins:boundIn ex:meridian-v1 ; ins:boundFrom tmpl:term-5-2 .
+ex:credit-cap a ins:Qualifier ;
+    ins:boundFrom tmpl:credit-cap ; ins:arisesUnder ex:term-5-2 ;
+    ins:qualifies ex:service-credit-in-tower-a , ex:service-credit-in-tower-b , ex:service-credit-in-tower-c .
+
+ex:term-6-1 a ins:Term ; ins:boundIn ex:meridian-v1 ; ins:boundFrom tmpl:term-6-1 .
+ex:pay-charges a ins:Obligation ;
+    ins:boundFrom tmpl:pay-charges ; ins:arisesUnder ex:term-6-1 ;
+    ins:obligor ex:customer-occ ; ins:obligee ex:provider-occ ;
+    ins:activity ins-voc:Pay .
+
+ex:term-b2-1 a ins:Term ; ins:boundIn ex:meridian-v1 ; ins:boundFrom tmpl:term-b2-1 ;
+    ins:boundWithin ex:tower-b-dr-identity .
+ex:failover-report a ins:Obligation ;
+    ins:boundFrom tmpl:failover-report ; ins:arisesUnder ex:term-b2-1 ;
+    ins:obligor ex:provider-occ ; ins:obligee ex:customer-occ ;
+    ins:activity ins-voc:Report .
+
+# ==== A case in two sections ==================================================
+#
+# The customer's own record of an incident, unchanged by evaluation. A
+# cooling failure took the data centre below 99.95% for the month, and the
+# network latency above 20 milliseconds for three hours. Nothing places the
+# incident in a tower (D9). Tower B's and Tower C's credits each arise on
+# it, Tower A's does not, and the cap counts both.
+
+ex:Incident a owl:Class ; rdfs:label "incident" .
+ex:incident-0311 a ex:Incident ; rdfs:label "Incident 0311: data hall 2 cooling failure" .

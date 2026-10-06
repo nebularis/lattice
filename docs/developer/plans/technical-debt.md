@@ -71,3 +71,10 @@ closed.
 | TD-12 | profile identity is computed in the compiler, never asserted in the graph (`srf:profileIdentityHash`, §3.3) | 2026-09-25 | a generated surface does not say which profile produced it | a Surface change |
 | TD-13 | entailment regimes other than `srf:NoEntailment` are refused, and parity cannot check `DefinitionOnly` forms (§3.5) | 2026-09-25 | the declared regimes are vocabulary without behaviour | a Surface change, after a reasoner choice |
 | TD-14 | the MORK toolchain join assumptions are unconfirmed against a live checkout (§5) | 2026-09-25 | a renamed MORK term fails silently | a Surface and MORK integration task |
+
+### Graph size
+
+| # | Debt | Spotted | Cost while it stays | Likely home |
+|---|---|---|---|---|
+| TD-19 | Bound meaning copies stated meaning in full, once per instrument (C6), and C7c's binding per section adds a copy wherever a word's meaning varies by section. Stated meaning is reused by content hash (ADR-A51, C7c R3), so a wording seen before costs nothing, but nothing shares a bound node whose content is the same across instruments or versions. A bound policy from a form the size of theAcme Insurancesample policy is about a thousand nodes, almost all of them the form's content with roles swapped for parties | 2026-10-06, CCS C7c | storage and evaluation cost grow with the number of instances, not with the number of distinct meanings. At insurance volumes the full bound graph becomes too costly to keep, and is treated as ephemeral | CCS slice C16b, required before the CCS epic closes. C7c decides the principle (an instance stores only what differs, bound meaning generated on demand, D1 to D5). Remove this row when C16b lands |
+

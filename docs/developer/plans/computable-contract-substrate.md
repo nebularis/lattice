@@ -696,7 +696,7 @@ property.
 | C10-07 | an effect targeting an arbitrary node through `bhv:targets`, and one through `bhv:targetsAllowance` / shapes / both conform | L1 | + |
 | C10-08 | an effect with a target kind and no target / shapes / fails | L1 | − |
 | C10-09 | an occupancy for a subject that is not a role occupancy / RDFS closure / no new type is inferred for the subject | L1 | + |
-| C10-10 | every Behaviour example and fixture, the conformance case and capacity's execution profile / validated before and after / same outcomes (R8) | L1 | + |
+| C10-10 | every Behaviour example and fixture, the conformance case and capacity's execution profile / validated before and after / same outcomes (D13) | L1 | + |
 | C10-11 | capacity's execution profile / catalog closure / resolves through runtime to configuration | L1 | + |
 | C10-12 | `bhv:InstrumentTarget` / vocab / present and deprecated | L1 | + |
 | C10-13 | `check:ontology-versioning` / run / every changed document and directory bumped, with release rows | L1 | + |
@@ -1722,44 +1722,108 @@ C7c runs (risk R6).
 - examples are domain-neutral, from at least three domains, under the rule in
   `.github/copilot-instructions.md`
 
-**What C7c builds, if the recommendations are taken:**
+**Design, as decided 2026-10-06, after the examples phase.** The first examples bound each stated
+term once for a whole sectioned instrument, so a word meaning different parties in different
+sections left a bound relation unable to name its party. Looking at some sample contract General Terms and
+Conditions shows what the design must also carry: a sectioning clause ("the definitions, terms,
+conditions and limitations set forth in each Coverage Section shall apply only to that particular
+Coverage Section"), one aggregate across every section, a claim triggering more than one section,
+and words defined in more than one section (Claim, Insured, Loss). These decisions replace the
+answers above where they differ, and the ADR-A104 addendum records them.
+
+*What is stored, and what is generated*
+
+| # | Decision |
+|---|---|
+| D1 | **An instance stores only what differs from its form**: the instrument and its identity and keys, its parties (occupancies, groups, memberships), the values it gives the wording's variables (C8), the elements its assembled wording includes, `ins:boundUnder`, and records filling a contingent party. Nothing else |
+| D2 | **Stated meaning is content-addressed with its element version** (ADR-A51, CC-D12). A wording seen before, matched on its hash, brings its stated meaning and is never restated. Only changed, endorsed or novel elements add stated meaning |
+| D3 | **Stated meaning is context-free.** A stated term never names another element's version. Scopes and endings name a section's persistent identity, resolved within the assembled wording's inclusions, as bridge §11 resolves references |
+| D4 | **Bound meaning is generated, never stored with the instance.** It is a derived artefact (ADR-A92) built on demand from stated meaning and the instance, cached as need dictates, and may live in its own subgraph for heavy processing. Only bound meaning is evaluated (law I13), so evaluation generates what it reads. The examples show the generated bound meaning under its own heading, as the expected output |
+| D5 | **Within one instrument, generation shares.** For each stated term, binding computes a resolution signature per section: what each of its words resolves to there (parties, conditions, values), not which definitions said so. Sections with equal signatures share one bound term, which records them with `ins:boundWithin`. A bound term covering the whole instrument records none. Generated nodes have deterministic identities, fixed by the instrument version, the stated node and the sections, so an instance can refer to one (a call-off's `ins:boundUnder`) and regeneration gives the same IRI. Sharing across instruments by content address is TD-19, with its own ADR and unit |
+
+*Sections*
+
+| # | Decision |
+|---|---|
+| D6 | **A sectioning term declares sections**: a constitutive term (`ins:Sectioning`, `ins:section`) arising under the clause that divides the instrument. It names the sections, and places within each section the terms that section contains. InsurML's lift writes it on the group holding the section groups, recording the review finding of the typing sketch §7 |
+| D7 | **Without a sectioning term**, the instrument is one section, the whole, and any element a term's words scope to (`ins:appliesWithin`, `ins:notWithin`) is a section by being named, with nothing placed by containment. "Except in Lot 4" works with no sectioning clause. Revises C7c-Q2 and decision 12 |
+| D8 | **Scopes.** No scope governs the whole instrument. Several `ins:appliesWithin` values are alternatives, and `ins:notWithin` excludes the parts at or below it. Sections nest along the wording tree. A declared section must be included in the assembled wording, and a scope naming a part inside a declared section that is not itself a section is reported while drafting |
+| D9 | **A case's sections.** A case bound under a power falls in the one section the power is bound within (I15), and such a power must be bound within exactly one section. Any other case, such as a claim under a package policy, is not placed: each section's bound relations evaluate it in their own right, and cross-section terms read which sections responded. ADR-A87's Undetermined arises only for a case placed at a section above an excluded part |
+| D10 | **Cross-section terms.** A qualifier spanning sections (an aggregate, a shared limit) is bound once and qualifies each section's bound relations, which read their words as their own section defines them. `ins:qualifies` on a bound qualifier therefore takes every bound relation generated from the stated one it qualifies. A cross-section term naming a word that varies by section is split per section and reported while drafting, for a reviewer to confirm |
+| D11 | **Ending a section.** `ins:ends` may name a section. Entering the state ends, for that section's cases, every term bound within it. What the words keep alive is survival (`ins:survives`, C7b). Revises C7c-Q9 |
+
+*Constitutive terms*
+
+| # | Decision |
+|---|---|
+| D12 | **Definitions.** An `ins:Definition` arises under a term. It `ins:defines` exactly one word, the node stated meaning names wherever the text uses it: a `pty:Role` for a party word, a `skos:Concept` for a condition or concept word. It `ins:means` at least one thing: roles on stated meaning and occupancies or groups on bound meaning for a party word, an Eligibility condition, concept or scheme otherwise. **Stated meaning names words, bound meaning names meanings.** A condition slot on stated meaning (`ins:condition`, `ins:scope`, `ins:maintains`, `ins:deems`, `ins:when`, `ins:resolutionFilter`) may take a word a definition defines, and binding replaces it by its meaning in each section, so a condition word varies by section as a party word does. On bound meaning those slots take conditions only. A word that no definition resolves, in a section its term applies within, is reported while drafting. `ins:actingRule` states how several parties a word means act together, on stated and bound meaning, and binding gives it to the group it builds. Date and amount words wait for C8 |
+| D13 | **Overlap (I16), at binding, per section.** Overlapping definitions meaning the same parties give a warning. Different parties under one agreed acting rule form that group, with a warning. Parties no definition describes together form a group with no rule (Undetermined, CC-D10), with a warning. Conflicting acting rules are a violation. `ins:prevailsOver`, between definitions only, removes an overlap. An applied profile may make any warning a violation |
+| D14 | **Deemings.** An `ins:Deeming` arises under a term, `ins:deems` exactly one condition, `ins:when` at most one, conclusively or not (`ins:conclusive`), and `ins:forPurposeOf` limits it to named relations or terms. The closure a deeming over absence licenses is ADR-A105's (HQ-6). Interpretation clauses and status declarations are terms with no relation |
+| D15 | **Classification.** `ins:classification` on a stated term names a concept from the scheme bound to `ins-voc:TermClassificationContract`, which has no baseline. It is read, never evaluated: a breach's effect is stated as relations arising on it (I12) |
+
+*Who terms bind*
+
+| # | Decision |
+|---|---|
+| D16 | **Bound relations always name their parties.** No occupancy is filled by definitions |
+| D17 | **A party that depends on the case** is a contingent occupancy (ADR-A102) with at most one `ins:resolvedBy`. An `ins:PartyResolution` starts at the case's class (`ins:resolvesFrom`), follows an ordered path of `elg:EvidenceStep`s to actors (`ins:resolutionStep`), and keeps those satisfying at most one condition (`ins:resolutionFilter`). Without a resolution, a record of each occasion fills it. Either way the party is fixed at arising (I11). Restates decision 4 |
+| D18 | **Groups.** A duty owed by or to a group is decided by its composition rule. A power held by a group, and a group with no rule, are Undetermined until C9's consent rules (CC-D10). The full set of group behaviours follows C9 (HQ-5) |
+| D19 | **Party is domain-neutral.** `pty:share` is replaced by `pty:outwardShare` (the proportion a member stands for towards the other side) and `pty:inwardShare` (the proportion it bears among the members), both optional. `pty:SeveralOnly` becomes `pty:EachForOwnShare` and `pty:JointAndSeveral` becomes `pty:EachForWhole`, defined structurally. What a proportion means (liability, contribution, a line) is the instrument's or the applied layer's. Caps are `ins:Qualifier`s with C8's amounts, and a net contribution clause leaves the outward share unfixed, found per occasion (C13). An example shows several liability and joint and several liability built from these. Revises C7c-Q4's "no Party change" |
+
+*Also decided*
+
+| # | Decision |
+|---|---|
+| D20 | `ins:boundUnder` is brought forward from C9 (C7c-Q1) |
+| D21 | Party resolution's properties are Instrument's own. A shared path type in Foundation, which would also replace Surface's and Eligibility's copies, is raised as its own unit |
+| D22 | Several instruments covering portions of one order are held as HQ-7 |
+
+**What C7c builds:**
 
 | Layer | Adds |
 |---|---|
-| Instrument 0.11.0 → 0.12.0 (additive) | `ins:Definition` with `ins:defines` and `ins:means`, `ins:Deeming` with `ins:deems`, `ins:when`, `ins:conclusive` and `ins:forPurposeOf`, `ins:appliesWithin`, `ins:notWithin`, `ins:boundUnder` (brought forward), `ins:PartyResolution` with `ins:resolvedBy`, its path of `elg:EvidenceStep`s and an optional filter condition, `ins:classification`, `ins:prevailsOver` between definitions, `ins:ends` on a section |
-| `instrument-vocab` 0.12.0 | `ins-voc:TermClassificationContract`, with no baseline |
-| `instrument-shapes` 0.4.0 → 0.5.0 (additive) | definitions and deemings, sections, I15, I16 as a warning, party resolution, classification |
-| ADR-A104 | an addendum restating decisions 4 and 12 and recording the answers |
+| Party 0.7.0 → 0.8.0, Party vocab 0.7.0 → 0.8.0 (breaking, D19) | `pty:outwardShare` and `pty:inwardShare` replacing `pty:share`, `pty:EachForOwnShare` and `pty:EachForWhole` replacing `pty:SeveralOnly` and `pty:JointAndSeveral`. Every importer of Party re-pins, and `facility-agreement.ttl` and the Instrument README move to the new names |
+| Instrument 0.11.0 → 0.12.0 | `ins:Definition` (`ins:defines`, `ins:means`, `ins:actingRule`), `ins:Deeming` (`ins:deems`, `ins:when`, `ins:conclusive`, `ins:forPurposeOf`), the sectioning term (`ins:Sectioning`, `ins:section`), `ins:appliesWithin`, `ins:notWithin` and `ins:ends` naming section identities, `ins:boundWithin`, `ins:qualifies` taking several bound relations on a bound qualifier (D10), `ins:boundUnder` (brought forward), `ins:PartyResolution` (`ins:resolvedBy`, `ins:resolvesFrom`, `ins:resolutionStep`, `ins:resolutionFilter`), `ins:classification`, `ins:prevailsOver` between definitions |
+| `instrument-vocab` 0.12.0 | `ins-voc:TermClassificationContract`, with no baseline, and the activity `ins-voc:Award` |
+| `instrument-shapes` 0.4.0 → 0.5.0 | definitions and deemings, sectioning, scopes and their resolution, binding per section (D5), I15, I16 (D13), party resolution, classification |
+| ADR-A104 | an addendum restating decisions 4 and 12 and recording the answers and revisions |
 
-1. **Examples first (ADR-A-C2).** In `ontology/instrument/examples/`, under the answers:
+1. **Examples first (ADR-A-C2).** In `ontology/instrument/examples/`, reworked under D1 to D22:
 
    | File | Shows |
    |---|---|
-   | `framework-lots.ttl` | a multi-lot framework agreement. Lots as sections, each with its own award power. A call-off contract bound under lot 2's power, so its section is lot 2 (I15). "The Supplier" defined per lot, with an overlap reported (S94, S95), and two suppliers in lot 3 acting jointly and severally for duties, while their power is Undetermined (S96, Q4). A term applying to every lot except lot 4 (`ins:notWithin`). Lot 4 withdrawn, ending its terms only (Q9) |
-   | `facility-definitions.ttl` | a facility agreement. "Material Adverse Effect" defined as a condition, "the Obligors" as the borrower and each guarantor jointly and severally. A deemed receipt of notices on delivery, and an interpretation clause with no relation (S71) |
-   | `trial-definitions.ttl` | a trial protocol. "The Participant" resolved through the case, from an adverse event to the participant in whom it occurred, filtered to participants enrolled at the event's date (Q3, S20). A site deemed inactive if it enrols no participant within 90 days of activation (a deeming over absence, S25), and a relation-back deeming for one purpose (`ins:forPurposeOf`) |
-   | `supply-classification.ttl` | a supply agreement whose terms are classified condition, warranty and innominate under the example's own scheme, with the effect of each stated as relations arising on breach (S15). A status declaration (S61) |
+   | `framework-lots.ttl` | a multi-lot framework. A sectioning clause declaring the lots. A call-off bound under lot 2's power falls in lot 2 (I15). "The Supplier" defined per lot, with an overlap at lot 2 (I16), and lot 3's two suppliers acting jointly and severally for duties, while their power is Undetermined (S96). A term applying to every lot except lot 4, bound once for lots 1 and 2, which resolve it alike (D5). Lot 4 withdrawn, ending its terms for its call-offs (D11) |
+   | `service-towers.ttl` | an outsourcing agreement in service towers, sectioned by containment as the sample clause does. "Service Level" defined per tower. One incident affecting two towers, evaluated by each tower's relations (D9). An overall cap on service credits across towers, bound once (D5). A term applying solely to one part of a tower, which is declared a nested section (D8) |
+   | `facility-definitions.ttl` | an unsectioned facility, its one section the whole instrument. "Material Adverse Effect" defined as a condition, "the Obligors" as the borrower and each guarantor jointly and severally (D12). A deemed receipt, and an interpretation clause with no relation (S71) |
+   | `trial-definitions.ttl` | "The Participant" resolved through the case and filtered (D17, S20). A deeming over absence (S25), and a relation-back deeming for one purpose |
+   | `supply-classification.ttl` | condition, warranty and innominate term under the example's own scheme, each class's effect as relations arising on breach (S15). A status declaration (S61) |
 
 2. **Spec** (`instrument` 0.11.0 → 0.12.0): the constructs above, each property's comment stating its
    subject and value, domains and ranges under the rule in `.github/copilot-instructions.md`. The
    ADR-A104 addendum is drafted with the examples.
-3. **Vocab** (`instrument-vocab` 0.12.0): the term classification contract, with no baseline.
-4. **Shapes** (`instrument-shapes` 0.4.0 → 0.5.0, additive): a definition defines exactly one word
-   and means at least one thing. A deeming deems exactly one thing, on at most one footing. Section
-   targets lie in the instrument's own wording, and a `notWithin` part lies at or below an
-   `appliesWithin` part. I15: a case of a sectioned instrument reaches exactly one section along its
-   path, and none where the instrument is not sectioned. I16: overlapping definitions of one word are
-   reported as a warning, unless one prevails. A party resolution's path ends at an actor. A
-   classification is under the bound contract.
+3. **Vocab** (`instrument-vocab` 0.12.0): the term classification contract, with no baseline, and
+   `ins-voc:Award`.
+4. **Shapes** (`instrument-shapes` 0.4.0 → 0.5.0): a definition defines exactly one word and means at
+   least one thing. A deeming deems exactly one thing, on at most one footing. A stated term names
+   no element version (D3). Every section a scope names is declared, and resolves to exactly one
+   element included in the assembled wording. A scope naming a part inside a section is reported.
+   Each bound term is bound within the sections its signature class covers, and two bound terms
+   from one stated term never share a section (D5). I15: a case bound under a power falls in exactly
+   one section. I16 as D13. A party resolution's path ends at an actor. A classification is under
+   the bound contract.
 5. **README**, detailed and comprehensive without being verbose, with many diagrams:
    - the terminology: *definition* and *defined term*, *deeming* (conclusive and rebuttable, *relation
-     back*), *section* with its other names (lot, tranche, schedule column), "only" against additive
-     scope, *condition*, *warranty* and *innominate term* (and the collisions with InsurML's
-     component type Condition and with `elg:Condition`), *interpretation clause*, *status
-     declaration*
-   - a section on constitutive terms, a section on sections (placing terms, a case's section, ending
-     a section, definitions per section, overlap), and a section on who terms bind (party words,
-     resolution through the case, groups and CC-D10), each with a diagram
+     back*), *section* with its other names (lot, tranche, tower, coverage section, schedule
+     column), *sectioning clause*, "only" against additive scope, *condition*, *warranty* and
+     *innominate term* (and the collisions with InsurML's component type Condition and with
+     `elg:Condition`), *interpretation clause*, *status declaration*
+   - a section on constitutive terms, a section on sections (declaring sections, placing terms,
+     binding per section and sharing, a case's sections, cross-section terms, ending a section,
+     definitions per section, overlap), and a section on who terms bind (party words, resolution
+     through the case, groups and acting rules, CC-D10), each with a diagram
+   - why stated meaning is context-free, and what a matched wording reuses
+   - the drafting report for a cross-section cap that names a word varying by section, which
+     binding splits per section and a reviewer confirms
    - the worked examples, laws I11, I15 and I16, and release notes for 0.12.0 and shapes 0.5.0
 6. **Tests:** `tools/test_constitutive_terms.py`, with the rows below, added to the
    `check:ontology-catalog` task. Catalog, releases and the tag list. The agent stops before any
@@ -1771,20 +1835,24 @@ C7c runs (risk R6).
 | C7c-02 | every example / all layers' shapes / conform, with I16's overlaps reported as warnings only | L1 | + |
 | C7c-03 | every example / reasoner / consistent | L2 | + |
 | C7c-04 | a definition with no word or no meaning, a deeming with two `ins:deems` / shapes / each reported | L1 | − |
-| C7c-05 | an `ins:appliesWithin` naming an element outside the instrument's wording, a `notWithin` part not below any `appliesWithin` part / shapes / each reported | L1 | − |
+| C7c-05 | a stated term whose scope names an element version, a section not declared, or a section not included in the assembled wording / shapes / each reported | L1 | − |
 | C7c-06 | a call-off bound under a lot's power / I15 / exactly one section, the lot | L1 | + |
-| C7c-07 | a case of a sectioned instrument with no power, or a power applying within two sections / I15 / each reported | L1 | − |
-| C7c-08 | two definitions of one word overlapping at one section / I16 / one warning naming both and the section | L1 | + |
-| C7c-09 | the same, with one prevailing / I16 / no warning | L1 | + |
+| C7c-07 | a power that cases are bound under, bound within two sections / I15 / reported | L1 | − |
+| C7c-08 | two definitions of one word overlapping at one section, meaning the same party, then different parties under one rule / I16 / one warning each, naming both and the section | L1 | + |
+| C7c-09 | the same, with one prevailing / I16 / no warning. Two overlapping definitions with conflicting acting rules / I16 / a violation | L1 | ± |
 | C7c-10 | a party resolution whose path ends at a literal, or has no step, or has two filter conditions / shapes / each reported | L1 | − |
-| C7c-11 | a definition meaning two occupancies whose group states no composition rule / shapes / conforms, and the README states the relation is Undetermined (CC-D10) | L1 | + |
+| C7c-11 | a definition meaning two parties with no acting rule / shapes / conforms, and the README states the relation is Undetermined (CC-D10) | L1 | + |
 | C7c-12 | a classification from outside the bound scheme / shapes / reported | L1 | − |
-| C7c-13 | `ins:ends` naming a section / shapes / conforms, and naming an element outside the wording is reported | L1 | ± |
+| C7c-13 | `ins:ends` naming a declared section / shapes / conforms, and naming an undeclared one is reported | L1 | ± |
 | C7c-14 | `ins:prevailsOver` between two relations / shapes / reported until NRS N10 | L1 | − |
 | C7c-15 | the README / literate check / blocks equal the files. Release notes for 0.12.0 and shapes 0.5.0 | L1 | + |
 | C7c-16 | every diagram in the README / mermaid 11, rendered in a page / renders | L1 | + |
 | C7c-17 | the existing tool tests, including `tools/test_regimes.py` and `tools/test_terms_in_time.py` / unchanged / pass | L1 | + |
 | C7c-18 | the version and catalog checks, the import guard, `build:mtp` and `check:mtp`, the literate checks / pass | L1 | + |
+| C7c-19 | a stated term whose words resolve alike in two sections / binding / one bound term within both. Resolving differently / two bound terms, each within its own sections | L1 | + |
+| C7c-20 | a cross-section cap / binding / one bound qualifier, qualifying each section's bound relations | L1 | + |
+| C7c-21 | an incident meeting two towers' conditions / the examples' expected outcomes / each tower's relations apply, the cap counts both | L1 | + |
+| C7c-22 | two instruments whose wordings include the same element version / stated meaning / one set of stated nodes, shared | L1 | + |
 
 ### Tranche E: evaluation
 
@@ -1802,6 +1870,7 @@ C7c runs (risk R6).
 | C15 | neutral examples E5 to E8, and a coverage test that every scenario S1 to S101 (except the amounts group and the merged S79) is shown by at least one example |
 | C16 | how-to guides for Wording and Instrument (sketch §11), the substrate README's "computable contract" section, ontology architecture, SDS, data architecture |
 | C16a | **simplification sweep** (from C6's review, 2026-10-03): after C9, review the Instrument model for what can be removed without losing logical correctness, under the Ponytail guardrails in `.github/copilot-instructions.md`. First candidate: the asserted `ins:Template` type, derivable from `ins:expressedIn` and `ins:arisesUnder` but kept because law I13's shapes read it without a reasoner. Second: every domain and range in Instrument reviewed against the principle in `.github/copilot-instructions.md` (from C7a-Q2): kept only where it gives useful design-time entailment or restates what a shape checks |
+| C16b | **instance records and shared bound meaning** (TD-19, required before the epic closes, decided 2026-10-06). An instance stores only what differs from its form (C7c D1), and bound meaning is generated on demand, cached as need dictates and kept out of the main graph where processing allows (D4). This slice adds what C7c leaves out: sharing generated bound nodes across instruments and versions by content address, the cache and its invalidation (ADR-A27, ADR-A92), the subgraph a heavy process works in, and a size measure over a form the size of the sample policy, about 100 stored nodes per bound policy as the target. Its own ADR first | an ADR, then `tools/` and Instrument shapes. After C9 and C12, before C17 |
 | C17 | handoff: the insurance renderings list for AIR Phase 5 (policy scenarios) and Open CBAA (binding authority scenarios), and the Open CBAA migration notes (§7) |
 
 ### Held design questions
@@ -1816,6 +1885,7 @@ so that its implications can be weighed when it is taken up.
 | HQ-3 | **Business day conventions and times of day** (TQ2, held 2026-10-05). "If that day is not a Business Day, on the next Business Day" (following, modified following, preceding), and "by 11:00 a.m. London time" (a time of day in a zone, S74). Recorded as use cases A13 and A14 in the [terms in time sketch](../sketches/terms-in-time.md) §3 | a due date that falls on a non-business day, or at a time of day, is resolved wrongly until Quantification can roll and zone it | with the first business continuity examples, in Quantification beside ADR-A94's calendars |
 | HQ-5 | **The full set of group behaviours** (C7c-Q4, 2026-10-06). C7c uses Party's two composition rules for duties and leaves a group's power, and a group with no rule, Undetermined (CC-D10). The full set is: several only, joint only, joint and several, any one may act, all must act, and a threshold by number or by share, for duties and for powers alike, with how a member's share, release or default affects the rest, and how the instrument's silence is filled by an amendment, a deeming, a market default declared as data, or a recorded reading | a relation owed to or held by a group is decided wrongly, or not at all, until every mode is modelled | immediately after C9, as its own slice or the first follow-up of C9, and before AIR Phase 5 and Open CBAA's migration rely on group powers |
 | HQ-6 | **Deemings made watertight** (C7c-Q8, 2026-10-06). C7c states deemings in full, but the closure a deeming over absence licenses is ADR-A105's, not yet drafted. To settle: the closure declaration and its scope and window, rebuttal of a rebuttable deeming by later evidence and what that supersedes, the precedence of a conclusive deeming over a finding, deemings for one purpose only (`ins:forPurposeOf`) and how they stay out of other relations, deemed receipt counted in business days (HQ-3), and the deemed-fact record's link back to its deeming and closure | a deeming may be read as more or less than its words say, and a late fact may not supersede it correctly | with NRS N5 (ADR-A105), and before C12 evaluates deemings |
+| HQ-7 | **Several instruments covering portions of one order** (raised 2026-10-06, C7c). A layer in an insurance programme may be placed on several policies, each covering a portion of the order, on different risks or on the same risk with different terms. They are separate instruments related to one placement, not a group of parties acting together, so neither Party's groups nor a section models them | a placement split across policies is modelled as a group or not at all, and the portions cannot be reconciled with the order | with the insurance applied layer's placement model, or C9 if it becomes an instrument relation |
 | HQ-4 | **Context roles from several sources** (found building C7b, 2026-10-05). Quantification's role contract resolves to one scheme in a context (Vocabulary, ADR-A85), and two unscoped bindings conflict. Roles come from several places: Instrument's baseline (arising, inception, ending, period start and end), other layers (an allowance reset, a policy year), and each wording's defined dates (the Expiry Date, the Break Date). C7b binds Instrument's baseline. The lease example's own date roles are left unbound | a deployment that uses Instrument and another layer's roles, or a wording's own dates, cannot bind them all to one contract today. Options: one deployment scheme that collects every role, scoped bindings, or wording dates as roles bound from variables in C8 rather than as concepts | with C8's parameter bindings, which give wording dates their values |
 
 ## 5. Sequencing
@@ -1852,7 +1922,7 @@ existing ontology checks and touches no AIR file.
 |---|---|
 | [normative-rule-substrate](normative-rule-substrate.md) | N4 is delivered by C1 and C6 to C9. N8's Behaviour work is C11 and C12, and N8 keeps the chain checks. Breach chains are `ins:arisesOn` an `ins:OnBreach` trigger, not compiled wiring. N2 revised (stratified state reads). N5 revised (contractual deeming, determinations, burden). N6 is built with C12. N3 compares Obligation and Prohibition, and Permission and Exclusion. D2 and D3 answered |
 | [applied-insurance-reference](applied-insurance-reference.md) §3b | the Phase 5 constraint becomes C9 accepted and merged. C10 re-pins `applied/capacity`, which the epic does not author before Phase 5. C6 no longer cascades to it |
-| [phase 5](applied-insurance-reference-phase-5.md) | builds on Wording and Instrument. Term parameters qualify terms and relations, and their bases feed contract-amounts §1.7. Adds the policy renderings (AIG scenarios), insurance templates on the C8a library and, under CC-D3, the LMA WIM profile |
+| [phase 5](applied-insurance-reference-phase-5.md) | builds on Wording and Instrument. Term parameters qualify terms and relations, and their bases feed contract-amounts §1.7. Adds the policy renderings (sample policy scenarios), insurance templates on the C8a library and, under CC-D3, the LMA WIM profile |
 | [phase 6](applied-insurance-reference-phase-6.md) | claims are occasions of the policy's relations |
 | [phase-3-plan](phase-3-plan.md) (platform operation plane) | the behaviour engine loads Behaviour configuration and writes runtime records, occasions and evidence (C10, C11, C12) |
 | Open CBAA plan and integration spec | migration of §7 |

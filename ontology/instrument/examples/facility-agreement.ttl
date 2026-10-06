@@ -28,7 +28,7 @@
 # | a relation belongs to its term, and through it to the term's owner | ins:arisesUnder                          |
 # | one term with two relations                          | tmpl:term-8-1, ex:term-8-1                             |
 # | each bound node from the stated node it binds        | ins:boundFrom                                          |
-# | an obligation owed to a group, severally             | ex:repay → ex:lenders (pty:SeveralOnly)                |
+# | an obligation owed to a group, severally             | ex:repay → ex:lenders (pty:EachForOwnShare)            |
 # | a continuing obligation and the state it keeps       | ex:leverage, ins:maintains ex:leverage-ok              |
 # | a prohibition and the permission excepting it        | ex:negative-pledge, ex:permitted-liens                 |
 # | a power held by a group                              | ex:accelerate                                          |
@@ -124,9 +124,9 @@ ex:SecurityTrustee a pty:Role ; rdfs:label "Security Trustee" .
 # roles, never occupancies (I13), and are never evaluated.
 #
 # Clause 6.1 says the Lenders are owed "each for its share", but a role cannot
-# say how its occupants act together. That is stated in C7b, by a defined
-# party word ("the Lenders") whose definition carries the mode. Until then
-# only the bound group says it (pty:SeveralOnly).
+# say how its occupants act together. A defined party word ("the Lenders")
+# whose definition carries an acting rule says it on the form (C7c, D12).
+# Here only the group says it (pty:EachForOwnShare).
 
 tmpl:term-6-1 a ins:Term , ins:Template ; ins:expressedIn ex:cl-6-1 .
 tmpl:repay a ins:Obligation , ins:Template ;
@@ -250,15 +250,17 @@ ex:trustee-occ a pty:RoleOccupancy ;
     pty:inRole ex:SecurityTrustee ;
     pty:occupiedBy ex:harbour-trustees .
 
-# The lenders as a group: each is owed its own share, and only its share.
+# The lenders as a group: several liability from Party's domain-neutral terms
+# (C7c, D19). Each stands towards the Borrower for its own outward share, and
+# only that share.
 ex:lenders a pty:ParticipationGroup ;
     fnd:hasIdentity ex:lenders-identity ;
-    pty:hasCompositionRule pty:SeveralOnly ;
+    pty:hasCompositionRule pty:EachForOwnShare ;
     pty:hasParticipant ex:lender-1-share , ex:lender-2-share .
 ex:lender-1-share a pty:GroupMembership ;
-    pty:memberOf ex:lenders ; pty:memberOccupancy ex:lender-1-occ ; pty:share "0.6"^^xsd:decimal .
+    pty:memberOf ex:lenders ; pty:memberOccupancy ex:lender-1-occ ; pty:outwardShare "0.6"^^xsd:decimal .
 ex:lender-2-share a pty:GroupMembership ;
-    pty:memberOf ex:lenders ; pty:memberOccupancy ex:lender-2-occ ; pty:share "0.4"^^xsd:decimal .
+    pty:memberOf ex:lenders ; pty:memberOccupancy ex:lender-2-occ ; pty:outwardShare "0.4"^^xsd:decimal .
 
 # ==== Bound meaning: owned by the facility ===================================
 #
@@ -277,7 +279,7 @@ ex:repay a ins:Obligation ;
     ins:boundFrom tmpl:repay ;
     ins:arisesUnder ex:term-6-1 ;
     ins:obligor ex:borrower-occ ;
-    ins:obligee ex:lenders ;                       # owed severally: pty:SeveralOnly
+    ins:obligee ex:lenders ;                       # owed severally: pty:EachForOwnShare
     ins:activity ins-voc:Repay .
 
 ex:term-7-1 a ins:Term ; ins:boundIn ex:facility-v1 ; ins:boundFrom tmpl:term-7-1 .

@@ -1,0 +1,550 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Premise. A public body's framework agreement for facilities services is let
+# in four lots. Clause 2.1 divides the framework into its lots, and each lot
+# has its own suppliers and its own power to award call-off contracts. A
+# call-off is a separate instrument, bound under one lot's award power, and
+# that power fixes the call-off's section (law I15).
+#
+# The framework's clauses:
+#
+# | Clause | Text | Meaning |
+# |--------|------|---------|
+# | 2.1    | The Framework is divided into the Lots set out in Part 2. The terms set out in a Lot apply only to call-off contracts awarded under that Lot. | a sectioning term: declares the lots, and places within each lot the terms it contains |
+# | 3.1    | Except in Lot 4, the Supplier shall provide the services ordered under each call-off contract. | an obligation scoped to every lot except one |
+# | 3.2    | The Supplier may suspend a call-off contract if the Authority fails to pay an undisputed invoice. | a power scoped to every lot |
+# | L1.1 to L4.1 | The Authority may award call-off contracts under this Lot. | one award power per lot, placed by containment |
+# | L4.2   | The Supplier shall deliver the goods ordered under each call-off contract. | an obligation placed in lot 4 |
+# | L4.3   | The Authority may withdraw this Lot by notice. | a power whose exercise ends lot 4 |
+#
+# Schedule 1 says who "the Supplier" is, row by row. Ash Ltd is listed for
+# Lots 1 and 2, and again for Lot 2 when that lot was re-let:
+#
+# | Row  | Text |
+# |------|------|
+# | S1.1 | In Lots 1 and 2, "the Supplier" means Ash Ltd. |
+# | S1.2 | In Lot 2, "the Supplier" means Ash Ltd. |
+# | S1.3 | In Lot 3, "the Supplier" means Birch Ltd and Cedar Ltd, jointly and severally and, as between themselves, in equal shares. |
+# | S1.4 | In Lot 4, "the Supplier" means Dogwood Ltd. |
+#
+# What the example shows (decisions D1 to D22 of the CCS plan's C7c section):
+#
+# | Construct                                            | Where                                                 |
+# |------------------------------------------------------|-------------------------------------------------------|
+# | a sectioning term declaring sections (D6)            | tmpl:lots, ins:section                                |
+# | terms placed by containment                          | the award clauses L1.1 to L4.3                        |
+# | scopes naming section identities, not versions (D3)  | tmpl:term-3-1, ins:appliesWithin ex:part-2-identity    |
+# | a term scoped to every lot except one (D8)           | tmpl:term-3-1, ins:notWithin ex:lot-4-identity         |
+# | a defined party word, defined per section (S94)      | tmpl:def-s1-1 to tmpl:def-s1-4                         |
+# | what an instance stores, and nothing else (D1)       | "The instance", below                                 |
+# | bound meaning generated per section (D4, D5)         | "Generated bound meaning", below                      |
+# | sections sharing one bound term where words resolve alike (D5) | ex:term-3-1-in-lots-1-2                     |
+# | a call-off whose section is its award power's (I15, D9) | ex:calloff-0042-v1 ins:boundUnder ex:award-lot-2   |
+# | overlapping definitions meaning the same party (I16, D13) | ex:def-s1-1 and ex:def-s1-2, within lot 2          |
+# | a word meaning several parties, with its acting rule (S96, D12) | tmpl:def-s1-3 ins:actingRule pty:EachForWhole |
+# | joint and several liability from Party's terms (D19) | ex:lot-3-suppliers                                    |
+# | a group's duty decided, its power Undetermined (D18) | ex:provide-services-in-lot-3, ex:suspend-in-lot-3      |
+# | a section's ending (D11)                             | tmpl:lot-4-withdrawn ins:ends ex:lot-4-identity        |
+#
+# Nothing here evaluates.
+
+@prefix ins:     <https://www.nebularis.org/neuro-semantic/lattice/instrument#> .
+@prefix ins-voc: <https://www.nebularis.org/neuro-semantic/lattice/instrument/vocab#> .
+@prefix bhv:     <https://www.nebularis.org/neuro-semantic/lattice/behaviour#> .
+@prefix wrd:     <https://www.nebularis.org/neuro-semantic/lattice/wording#> .
+@prefix wrd-voc: <https://www.nebularis.org/neuro-semantic/lattice/wording/vocab#> .
+@prefix fnd:     <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix pty:     <https://www.nebularis.org/neuro-semantic/lattice/party#> .
+@prefix elg:     <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
+@prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+@prefix tmpl:    <https://example.org/lattice/instrument/framework/form/> .
+@prefix ex:      <https://example.org/lattice/instrument/framework/> .
+
+# ==== The form: wording =======================================================
+#
+# Shared by every framework let on this form, and matched on its hash when
+# met again (D2). A lot is a section because clause 2.1 declares it one, not
+# because of its element type.
+
+ex:form a wrd:Wording ;
+    fnd:hasIdentity ex:form-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:directlyComprises ex:part-1 , ex:part-2 , ex:sch-1 .
+
+ex:part-1 a wrd:Element ;
+    fnd:hasIdentity ex:part-1-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Section ; wrd:objectId "Part 1" ; wrd:rankKey "a0" ;
+    wrd:directlyComprises ex:cl-2-1 , ex:cl-3-1 , ex:cl-3-2 .
+ex:cl-2-1 a wrd:Text ;
+    fnd:hasIdentity ex:cl-2-1-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "2.1" ; wrd:rankKey "a0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "The Framework is divided into the Lots set out in Part 2. The terms set out in a Lot apply only to call-off contracts awarded under that Lot." ] .
+ex:cl-3-1 a wrd:Text ;
+    fnd:hasIdentity ex:cl-3-1-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "3.1" ; wrd:rankKey "b0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "Except in Lot 4, the Supplier shall provide the services ordered under each call-off contract." ] .
+ex:cl-3-2 a wrd:Text ;
+    fnd:hasIdentity ex:cl-3-2-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "3.2" ; wrd:rankKey "c0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "The Supplier may suspend a call-off contract if the Authority fails to pay an undisputed invoice." ] .
+
+ex:part-2 a wrd:Element ;
+    fnd:hasIdentity ex:part-2-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Section ; wrd:objectId "Part 2" ; wrd:rankKey "b0" ;
+    wrd:directlyComprises ex:lot-1 , ex:lot-2 , ex:lot-3 , ex:lot-4 .
+
+ex:lot-1 a wrd:Element ;
+    fnd:hasIdentity ex:lot-1-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Schedule ; wrd:objectId "Lot 1" ; wrd:rankKey "a0" ;
+    wrd:directlyComprises ex:cl-l1-1 .
+ex:cl-l1-1 a wrd:Text ;
+    fnd:hasIdentity ex:cl-l1-1-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "L1.1" ; wrd:rankKey "a0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "The Authority may award call-off contracts under this Lot." ] .
+
+ex:lot-2 a wrd:Element ;
+    fnd:hasIdentity ex:lot-2-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Schedule ; wrd:objectId "Lot 2" ; wrd:rankKey "b0" ;
+    wrd:directlyComprises ex:cl-l2-1 .
+ex:cl-l2-1 a wrd:Text ;
+    fnd:hasIdentity ex:cl-l2-1-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "L2.1" ; wrd:rankKey "a0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "The Authority may award call-off contracts under this Lot." ] .
+
+ex:lot-3 a wrd:Element ;
+    fnd:hasIdentity ex:lot-3-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Schedule ; wrd:objectId "Lot 3" ; wrd:rankKey "c0" ;
+    wrd:directlyComprises ex:cl-l3-1 .
+ex:cl-l3-1 a wrd:Text ;
+    fnd:hasIdentity ex:cl-l3-1-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "L3.1" ; wrd:rankKey "a0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "The Authority may award call-off contracts under this Lot." ] .
+
+ex:lot-4 a wrd:Element ;
+    fnd:hasIdentity ex:lot-4-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Schedule ; wrd:objectId "Lot 4" ; wrd:rankKey "d0" ;
+    wrd:directlyComprises ex:cl-l4-1 , ex:cl-l4-2 , ex:cl-l4-3 .
+ex:cl-l4-1 a wrd:Text ;
+    fnd:hasIdentity ex:cl-l4-1-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "L4.1" ; wrd:rankKey "a0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "The Authority may award call-off contracts under this Lot." ] .
+ex:cl-l4-2 a wrd:Text ;
+    fnd:hasIdentity ex:cl-l4-2-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "L4.2" ; wrd:rankKey "b0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "The Supplier shall deliver the goods ordered under each call-off contract." ] .
+ex:cl-l4-3 a wrd:Text ;
+    fnd:hasIdentity ex:cl-l4-3-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "L4.3" ; wrd:rankKey "c0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "The Authority may withdraw this Lot by notice." ] .
+
+ex:sch-1 a wrd:Element ;
+    fnd:hasIdentity ex:sch-1-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Schedule ; wrd:objectId "Schedule 1" ; wrd:rankKey "c0" ;
+    wrd:directlyComprises ex:row-s1-1 , ex:row-s1-2 , ex:row-s1-3 , ex:row-s1-4 .
+ex:row-s1-1 a wrd:Text ;
+    fnd:hasIdentity ex:row-s1-1-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Definition ; wrd:objectId "S1.1" ; wrd:rankKey "a0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "In Lots 1 and 2, \"the Supplier\" means Ash Ltd." ] .
+ex:row-s1-2 a wrd:Text ;
+    fnd:hasIdentity ex:row-s1-2-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Definition ; wrd:objectId "S1.2" ; wrd:rankKey "b0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "In Lot 2, \"the Supplier\" means Ash Ltd." ] .
+ex:row-s1-3 a wrd:Text ;
+    fnd:hasIdentity ex:row-s1-3-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Definition ; wrd:objectId "S1.3" ; wrd:rankKey "c0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "In Lot 3, \"the Supplier\" means Birch Ltd and Cedar Ltd, jointly and severally and, as between themselves, in equal shares." ] .
+ex:row-s1-4 a wrd:Text ;
+    fnd:hasIdentity ex:row-s1-4-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Definition ; wrd:objectId "S1.4" ; wrd:rankKey "d0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "In Lot 4, \"the Supplier\" means Dogwood Ltd." ] .
+
+# ==== The form: roles =========================================================
+#
+# ex:Supplier is the defined word: the role the relations name. ex:LotSupplier
+# is the role a supplier holds by appointment to a lot, which each row means
+# on the form (I13).
+
+ex:Authority a pty:Role ; rdfs:label "Authority" .
+ex:Supplier a pty:Role ; rdfs:label "the Supplier" .
+ex:LotSupplier a pty:Role ; rdfs:label "Lot Supplier" .
+
+# ==== The form: stated meaning ================================================
+#
+# Context-free (D3): no stated term names another element's version. Scopes
+# and endings name a section's persistent identity, resolved within each
+# instrument's assembled wording.
+
+# The sectioning term (D6). It declares the four lots, and places within
+# each lot the terms the lot contains: L1.1 to L4.3 need no scope of their
+# own. Part 2 is not a section, but scopes may name it, since it lies above
+# sections only (D8).
+tmpl:term-2-1 a ins:Term , ins:Template ; ins:expressedIn ex:cl-2-1 .
+tmpl:lots a ins:Sectioning , ins:Template ;
+    ins:arisesUnder tmpl:term-2-1 ;
+    ins:section ex:lot-1-identity , ex:lot-2-identity , ex:lot-3-identity , ex:lot-4-identity .
+
+# Definitions. Schedule 1 lies in no lot, so each row says where it applies.
+tmpl:term-s1-1 a ins:Term , ins:Template ; ins:expressedIn ex:row-s1-1 ;
+    ins:appliesWithin ex:lot-1-identity , ex:lot-2-identity .     # alternatives
+tmpl:def-s1-1 a ins:Definition , ins:Template ;
+    ins:arisesUnder tmpl:term-s1-1 ;
+    ins:defines ex:Supplier ; ins:means ex:LotSupplier .
+
+tmpl:term-s1-2 a ins:Term , ins:Template ; ins:expressedIn ex:row-s1-2 ;
+    ins:appliesWithin ex:lot-2-identity .
+tmpl:def-s1-2 a ins:Definition , ins:Template ;
+    ins:arisesUnder tmpl:term-s1-2 ;
+    ins:defines ex:Supplier ; ins:means ex:LotSupplier .
+
+# Several parties, and how they act together (D12). Binding gives the rule to
+# the group the instance names.
+tmpl:term-s1-3 a ins:Term , ins:Template ; ins:expressedIn ex:row-s1-3 ;
+    ins:appliesWithin ex:lot-3-identity .
+tmpl:def-s1-3 a ins:Definition , ins:Template ;
+    ins:arisesUnder tmpl:term-s1-3 ;
+    ins:defines ex:Supplier ; ins:means ex:LotSupplier ;
+    ins:actingRule pty:EachForWhole .
+
+tmpl:term-s1-4 a ins:Term , ins:Template ; ins:expressedIn ex:row-s1-4 ;
+    ins:appliesWithin ex:lot-4-identity .
+tmpl:def-s1-4 a ins:Definition , ins:Template ;
+    ins:arisesUnder tmpl:term-s1-4 ;
+    ins:defines ex:Supplier ; ins:means ex:LotSupplier .
+
+# Every lot except Lot 4: the lots at or below Part 2, less Lot 4.
+tmpl:term-3-1 a ins:Term , ins:Template ; ins:expressedIn ex:cl-3-1 ;
+    ins:appliesWithin ex:part-2-identity ;
+    ins:notWithin ex:lot-4-identity .
+tmpl:provide-services a ins:Obligation , ins:Template ;
+    ins:arisesUnder tmpl:term-3-1 ;
+    ins:obligor ex:Supplier ; ins:obligee ex:Authority ;
+    ins:activity ins-voc:ProvideService .
+
+tmpl:term-3-2 a ins:Term , ins:Template ; ins:expressedIn ex:cl-3-2 ;
+    ins:appliesWithin ex:part-2-identity .
+tmpl:suspend a ins:Power , ins:Template ;
+    ins:arisesUnder tmpl:term-3-2 ;
+    ins:holder ex:Supplier ; ins:counterparty ex:Authority ;
+    ins:activity ins-voc:Suspend ;
+    ins:scope ex:unpaid-invoice .
+
+# Placed by containment: one award power in each lot.
+tmpl:term-l1-1 a ins:Term , ins:Template ; ins:expressedIn ex:cl-l1-1 .
+tmpl:award-lot-1 a ins:Power , ins:Template ;
+    ins:arisesUnder tmpl:term-l1-1 ;
+    ins:holder ex:Authority ; ins:counterparty ex:Supplier ;
+    ins:activity ins-voc:Award .
+
+tmpl:term-l2-1 a ins:Term , ins:Template ; ins:expressedIn ex:cl-l2-1 .
+tmpl:award-lot-2 a ins:Power , ins:Template ;
+    ins:arisesUnder tmpl:term-l2-1 ;
+    ins:holder ex:Authority ; ins:counterparty ex:Supplier ;
+    ins:activity ins-voc:Award .
+
+tmpl:term-l3-1 a ins:Term , ins:Template ; ins:expressedIn ex:cl-l3-1 .
+tmpl:award-lot-3 a ins:Power , ins:Template ;
+    ins:arisesUnder tmpl:term-l3-1 ;
+    ins:holder ex:Authority ; ins:counterparty ex:Supplier ;
+    ins:activity ins-voc:Award .
+
+tmpl:term-l4-1 a ins:Term , ins:Template ; ins:expressedIn ex:cl-l4-1 .
+tmpl:award-lot-4 a ins:Power , ins:Template ;
+    ins:arisesUnder tmpl:term-l4-1 ;
+    ins:holder ex:Authority ; ins:counterparty ex:Supplier ;
+    ins:activity ins-voc:Award .
+
+tmpl:term-l4-2 a ins:Term , ins:Template ; ins:expressedIn ex:cl-l4-2 .
+tmpl:deliver-goods a ins:Obligation , ins:Template ;
+    ins:arisesUnder tmpl:term-l4-2 ;
+    ins:obligor ex:Supplier ; ins:obligee ex:Authority ;
+    ins:activity ins-voc:Deliver .
+
+tmpl:term-l4-3 a ins:Term , ins:Template ; ins:expressedIn ex:cl-l4-3 .
+tmpl:withdraw-lot-4 a ins:Power , ins:Template ;
+    ins:arisesUnder tmpl:term-l4-3 ;
+    ins:holder ex:Authority ; ins:counterparty ex:Supplier ;
+    ins:activity ins-voc:Terminate .
+
+# Withdrawing Lot 4 (D11). Entering the withdrawn state ends, for Lot 4's
+# call-offs, every term bound within Lot 4: L4.1 to L4.3, row S1.4, and the
+# parts of 3.2 bound for Lot 4. Call-offs already awarded keep only what the
+# words keep alive, and these words keep nothing.
+tmpl:lot-4-regime a ins:Regime , bhv:StateSpace , ins:Template ;
+    fnd:hasIdentity tmpl:lot-4-regime-identity ;
+    ins:arisesUnder tmpl:term-l4-3 ;
+    bhv:initialState tmpl:lot-4-open .
+tmpl:lot-4-open a bhv:State ;
+    bhv:inStateSpace tmpl:lot-4-regime ; ins:stateKind ins-voc:InForce .
+tmpl:lot-4-withdrawn a bhv:State ;
+    bhv:inStateSpace tmpl:lot-4-regime ; ins:stateKind ins-voc:Terminated ;
+    ins:ends ex:lot-4-identity .                      # a section, not the instrument
+tmpl:on-withdrawal a ins:OnExercise , bhv:TriggerDefinition ;
+    bhv:triggerKind bhv:ExternalStimulus ;
+    ins:ofPower tmpl:withdraw-lot-4 .
+tmpl:withdraw a ins:RegimeTransition , bhv:TransitionDefinition ;
+    bhv:fromState tmpl:lot-4-open ; bhv:toState tmpl:lot-4-withdrawn ;
+    bhv:hasTrigger tmpl:on-withdrawal ;
+    bhv:selectionPolicy bhv:SingleMatch ; bhv:activationPolicy bhv:ImmediateActivation .
+
+# Placeholder: a scope stated, not yet evaluable (C13).
+ex:unpaid-invoice a elg:Condition ;
+    elg:conditionKey "authority-failed-to-pay-undisputed-invoice" ;
+    elg:matchStrategy elg:ExactMatch ; elg:compatibilityOperation elg:AllRequired ;
+    elg:wildcardSemantics elg:NoWildcard ;
+    elg:requiredConcept ex:invoice-unpaid .
+ex:invoice-unpaid a skos:Concept ; rdfs:label "the Authority has failed to pay an undisputed invoice when due" .
+
+# ==== The instance: what the framework stores (D1) ============================
+#
+# Only what differs from the form: the wording it includes, its parties, and
+# the values its words take. The actors Schedule 1 names are wording values,
+# which C8's parameter bindings carry. Until then, the generated definitions
+# below show where they land.
+
+ex:framework-wording-v1 a wrd:AssembledWording ;
+    fnd:hasIdentity ex:framework-wording-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:assembledFrom ex:form ;
+    wrd:includes ex:part-1 , ex:cl-2-1 , ex:cl-3-1 , ex:cl-3-2 ,
+                 ex:part-2 , ex:lot-1 , ex:cl-l1-1 , ex:lot-2 , ex:cl-l2-1 , ex:lot-3 , ex:cl-l3-1 ,
+                 ex:lot-4 , ex:cl-l4-1 , ex:cl-l4-2 , ex:cl-l4-3 ,
+                 ex:sch-1 , ex:row-s1-1 , ex:row-s1-2 , ex:row-s1-3 , ex:row-s1-4 .
+
+ex:framework-v1 a ins:Instrument ;
+    fnd:hasIdentity ex:framework-identity ;
+    ins:expressedIn ex:framework-wording-v1 ;
+    ins:party ex:authority-occ , ex:ash-occ , ex:birch-occ , ex:cedar-occ , ex:dogwood-occ .
+
+ex:county a pty:Actor ; rdfs:label "Westmoor County Council" .
+ex:ash a pty:Actor ; rdfs:label "Ash Facilities Ltd" .
+ex:birch a pty:Actor ; rdfs:label "Birch Services Ltd" .
+ex:cedar a pty:Actor ; rdfs:label "Cedar Maintenance Ltd" .
+ex:dogwood a pty:Actor ; rdfs:label "Dogwood Supplies Ltd" .
+
+ex:authority-occ a pty:RoleOccupancy ;
+    fnd:hasIdentity ex:authority-occ-identity ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-04-01T00:00:00Z"^^xsd:dateTime ] ;
+    pty:inRole ex:Authority ; pty:occupiedBy ex:county .
+ex:ash-occ a pty:RoleOccupancy ;
+    fnd:hasIdentity ex:ash-occ-identity ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-04-01T00:00:00Z"^^xsd:dateTime ] ;
+    pty:inRole ex:LotSupplier ; pty:occupiedBy ex:ash .
+ex:birch-occ a pty:RoleOccupancy ;
+    fnd:hasIdentity ex:birch-occ-identity ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-04-01T00:00:00Z"^^xsd:dateTime ] ;
+    pty:inRole ex:LotSupplier ; pty:occupiedBy ex:birch .
+ex:cedar-occ a pty:RoleOccupancy ;
+    fnd:hasIdentity ex:cedar-occ-identity ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-04-01T00:00:00Z"^^xsd:dateTime ] ;
+    pty:inRole ex:LotSupplier ; pty:occupiedBy ex:cedar .
+ex:dogwood-occ a pty:RoleOccupancy ;
+    fnd:hasIdentity ex:dogwood-occ-identity ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-04-01T00:00:00Z"^^xsd:dateTime ] ;
+    pty:inRole ex:LotSupplier ; pty:occupiedBy ex:dogwood .
+
+# Joint and several liability, from Party's domain-neutral terms (D19):
+# towards the Authority each stands for the whole, so no outward share is
+# stated. As between themselves they bear it equally, which the inward
+# shares state. Row S1.3's acting rule and this group's rule must agree.
+ex:lot-3-suppliers a pty:ParticipationGroup ;
+    fnd:hasIdentity ex:lot-3-suppliers-identity ;
+    pty:hasCompositionRule pty:EachForWhole ;
+    pty:hasParticipant ex:birch-membership , ex:cedar-membership .
+ex:birch-membership a pty:GroupMembership ;
+    pty:memberOf ex:lot-3-suppliers ; pty:memberOccupancy ex:birch-occ ; pty:inwardShare "0.5"^^xsd:decimal .
+ex:cedar-membership a pty:GroupMembership ;
+    pty:memberOf ex:lot-3-suppliers ; pty:memberOccupancy ex:cedar-occ ; pty:inwardShare "0.5"^^xsd:decimal .
+
+# Two call-off contracts: the cases. Each is an instance of its own, bound
+# under one award power (ins:boundUnder, brought forward from C9). The power
+# is generated, so its IRI is deterministic: the framework version, the
+# stated power and its sections fix it, and regenerating gives the same IRI.
+
+ex:calloff-form a wrd:Wording ;
+    fnd:hasIdentity ex:calloff-form-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:directlyComprises ex:order-form .
+ex:order-form a wrd:Text ;
+    fnd:hasIdentity ex:order-form-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "Order Form" ; wrd:rankKey "a0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "This call-off contract is awarded under the Framework Agreement, whose terms govern it." ] .
+
+ex:calloff-0042-wording-v1 a wrd:AssembledWording ;
+    fnd:hasIdentity ex:calloff-0042-wording-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:assembledFrom ex:calloff-form ;
+    wrd:includes ex:order-form .
+ex:calloff-0042-v1 a ins:Instrument ;
+    fnd:hasIdentity ex:calloff-0042-identity ;
+    ins:expressedIn ex:calloff-0042-wording-v1 ;
+    ins:party ex:authority-occ , ex:ash-occ ;
+    ins:boundUnder ex:award-lot-2 .                   # its section is Lot 2 (I15)
+
+ex:calloff-0057-wording-v1 a wrd:AssembledWording ;
+    fnd:hasIdentity ex:calloff-0057-wording-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:assembledFrom ex:calloff-form ;
+    wrd:includes ex:order-form .
+ex:calloff-0057-v1 a ins:Instrument ;
+    fnd:hasIdentity ex:calloff-0057-identity ;
+    ins:expressedIn ex:calloff-0057-wording-v1 ;
+    ins:party ex:authority-occ , ex:birch-occ , ex:cedar-occ ;
+    ins:boundUnder ex:award-lot-3 .                   # its section is Lot 3 (I15)
+
+# ==== Generated bound meaning: the expected output, not stored (D4) ===========
+#
+# Built on demand from the form and the instance, and cached as need
+# dictates. Binding resolves every word in each section, and sections whose
+# words resolve alike share one bound term (D5), which records them with
+# ins:boundWithin. A bound term with no ins:boundWithin covers the whole
+# instrument. Bound relations name their parties (D16).
+#
+# | Stated term | Sections | "the Supplier" resolves to | Bound term |
+# |-------------|----------|----------------------------|------------|
+# | 3.1 | Lots 1 and 2 | Ash Ltd | ex:term-3-1-in-lots-1-2 |
+# | 3.1 | Lot 3 | the Lot 3 group | ex:term-3-1-in-lot-3 |
+# | 3.2 | Lots 1 and 2 | Ash Ltd | ex:term-3-2-in-lots-1-2 |
+# | 3.2 | Lot 3 | the Lot 3 group | ex:term-3-2-in-lot-3 |
+# | 3.2 | Lot 4 | Dogwood Ltd | ex:term-3-2-in-lot-4 |
+# | L1.1 to L4.3 | their own lot | that lot's supplier | one each |
+#
+# Binding reports one overlap (I16, D13): within Lot 2, rows S1.1 and S1.2
+# both define "the Supplier". Both mean Ash Ltd, so the union is Ash Ltd and
+# the report is a warning, for a reviewer to confirm that no "only" was meant.
+#
+# | Call-off | Bound under | Section | 3.1, a duty | 3.2, a power |
+# |----------|-------------|---------|-------------|--------------|
+# | CO-0042 | ex:award-lot-2 | Lot 2 | owed by Ash Ltd | held by Ash Ltd |
+# | CO-0057 | ex:award-lot-3 | Lot 3 | owed by each of Birch and Cedar for the whole | Undetermined until C9's consent rules (D18) |
+
+ex:term-2-1 a ins:Term ; ins:boundIn ex:framework-v1 ; ins:boundFrom tmpl:term-2-1 .
+
+ex:term-s1-1 a ins:Term ; ins:boundIn ex:framework-v1 ; ins:boundFrom tmpl:term-s1-1 ;
+    ins:boundWithin ex:lot-1-identity , ex:lot-2-identity .
+ex:def-s1-1 a ins:Definition ;
+    ins:boundFrom tmpl:def-s1-1 ; ins:arisesUnder ex:term-s1-1 ;
+    ins:defines ex:Supplier ; ins:means ex:ash-occ .
+
+ex:term-s1-2 a ins:Term ; ins:boundIn ex:framework-v1 ; ins:boundFrom tmpl:term-s1-2 ;
+    ins:boundWithin ex:lot-2-identity .
+ex:def-s1-2 a ins:Definition ;
+    ins:boundFrom tmpl:def-s1-2 ; ins:arisesUnder ex:term-s1-2 ;
+    ins:defines ex:Supplier ; ins:means ex:ash-occ .
+
+ex:term-s1-3 a ins:Term ; ins:boundIn ex:framework-v1 ; ins:boundFrom tmpl:term-s1-3 ;
+    ins:boundWithin ex:lot-3-identity .
+ex:def-s1-3 a ins:Definition ;
+    ins:boundFrom tmpl:def-s1-3 ; ins:arisesUnder ex:term-s1-3 ;
+    ins:defines ex:Supplier ; ins:means ex:lot-3-suppliers ;
+    ins:actingRule pty:EachForWhole .
+
+ex:term-s1-4 a ins:Term ; ins:boundIn ex:framework-v1 ; ins:boundFrom tmpl:term-s1-4 ;
+    ins:boundWithin ex:lot-4-identity .
+ex:def-s1-4 a ins:Definition ;
+    ins:boundFrom tmpl:def-s1-4 ; ins:arisesUnder ex:term-s1-4 ;
+    ins:defines ex:Supplier ; ins:means ex:dogwood-occ .
+
+# 3.1: Lots 1 and 2 resolve "the Supplier" alike, so they share one term.
+ex:term-3-1-in-lots-1-2 a ins:Term ; ins:boundIn ex:framework-v1 ; ins:boundFrom tmpl:term-3-1 ;
+    ins:boundWithin ex:lot-1-identity , ex:lot-2-identity .
+ex:provide-services-in-lots-1-2 a ins:Obligation ;
+    ins:boundFrom tmpl:provide-services ; ins:arisesUnder ex:term-3-1-in-lots-1-2 ;
+    ins:obligor ex:ash-occ ; ins:obligee ex:authority-occ ;
+    ins:activity ins-voc:ProvideService .
+
+ex:term-3-1-in-lot-3 a ins:Term ; ins:boundIn ex:framework-v1 ; ins:boundFrom tmpl:term-3-1 ;
+    ins:boundWithin ex:lot-3-identity .
+ex:provide-services-in-lot-3 a ins:Obligation ;
+    ins:boundFrom tmpl:provide-services ; ins:arisesUnder ex:term-3-1-in-lot-3 ;
+    ins:obligor ex:lot-3-suppliers ;                  # each for the whole
+    ins:obligee ex:authority-occ ;
+    ins:activity ins-voc:ProvideService .
+
+ex:term-3-2-in-lots-1-2 a ins:Term ; ins:boundIn ex:framework-v1 ; ins:boundFrom tmpl:term-3-2 ;
+    ins:boundWithin ex:lot-1-identity , ex:lot-2-identity .
+ex:suspend-in-lots-1-2 a ins:Power ;
+    ins:boundFrom tmpl:suspend ; ins:arisesUnder ex:term-3-2-in-lots-1-2 ;
+    ins:holder ex:ash-occ ; ins:counterparty ex:authority-occ ;
+    ins:activity ins-voc:Suspend ; ins:scope ex:unpaid-invoice .
+
+ex:term-3-2-in-lot-3 a ins:Term ; ins:boundIn ex:framework-v1 ; ins:boundFrom tmpl:term-3-2 ;
+    ins:boundWithin ex:lot-3-identity .
+ex:suspend-in-lot-3 a ins:Power ;
+    ins:boundFrom tmpl:suspend ; ins:arisesUnder ex:term-3-2-in-lot-3 ;
+    ins:holder ex:lot-3-suppliers ;                   # a group's power: Undetermined (D18)
+    ins:counterparty ex:authority-occ ;
+    ins:activity ins-voc:Suspend ; ins:scope ex:unpaid-invoice .
+
+ex:term-3-2-in-lot-4 a ins:Term ; ins:boundIn ex:framework-v1 ; ins:boundFrom tmpl:term-3-2 ;
+    ins:boundWithin ex:lot-4-identity .
+ex:suspend-in-lot-4 a ins:Power ;
+    ins:boundFrom tmpl:suspend ; ins:arisesUnder ex:term-3-2-in-lot-4 ;
+    ins:holder ex:dogwood-occ ; ins:counterparty ex:authority-occ ;
+    ins:activity ins-voc:Suspend ; ins:scope ex:unpaid-invoice .
+
+ex:term-l1-1 a ins:Term ; ins:boundIn ex:framework-v1 ; ins:boundFrom tmpl:term-l1-1 ;
+    ins:boundWithin ex:lot-1-identity .
+ex:award-lot-1 a ins:Power ;
+    ins:boundFrom tmpl:award-lot-1 ; ins:arisesUnder ex:term-l1-1 ;
+    ins:holder ex:authority-occ ; ins:counterparty ex:ash-occ ;
+    ins:activity ins-voc:Award .
+
+ex:term-l2-1 a ins:Term ; ins:boundIn ex:framework-v1 ; ins:boundFrom tmpl:term-l2-1 ;
+    ins:boundWithin ex:lot-2-identity .
+ex:award-lot-2 a ins:Power ;
+    ins:boundFrom tmpl:award-lot-2 ; ins:arisesUnder ex:term-l2-1 ;
+    ins:holder ex:authority-occ ; ins:counterparty ex:ash-occ ;
+    ins:activity ins-voc:Award .
+
+ex:term-l3-1 a ins:Term ; ins:boundIn ex:framework-v1 ; ins:boundFrom tmpl:term-l3-1 ;
+    ins:boundWithin ex:lot-3-identity .
+ex:award-lot-3 a ins:Power ;
+    ins:boundFrom tmpl:award-lot-3 ; ins:arisesUnder ex:term-l3-1 ;
+    ins:holder ex:authority-occ ; ins:counterparty ex:lot-3-suppliers ;
+    ins:activity ins-voc:Award .
+
+ex:term-l4-1 a ins:Term ; ins:boundIn ex:framework-v1 ; ins:boundFrom tmpl:term-l4-1 ;
+    ins:boundWithin ex:lot-4-identity .
+ex:award-lot-4 a ins:Power ;
+    ins:boundFrom tmpl:award-lot-4 ; ins:arisesUnder ex:term-l4-1 ;
+    ins:holder ex:authority-occ ; ins:counterparty ex:dogwood-occ ;
+    ins:activity ins-voc:Award .
+
+ex:term-l4-2 a ins:Term ; ins:boundIn ex:framework-v1 ; ins:boundFrom tmpl:term-l4-2 ;
+    ins:boundWithin ex:lot-4-identity .
+ex:deliver-goods a ins:Obligation ;
+    ins:boundFrom tmpl:deliver-goods ; ins:arisesUnder ex:term-l4-2 ;
+    ins:obligor ex:dogwood-occ ; ins:obligee ex:authority-occ ;
+    ins:activity ins-voc:Deliver .
+
+ex:term-l4-3 a ins:Term ; ins:boundIn ex:framework-v1 ; ins:boundFrom tmpl:term-l4-3 ;
+    ins:boundWithin ex:lot-4-identity .
+ex:withdraw-lot-4 a ins:Power ;
+    ins:boundFrom tmpl:withdraw-lot-4 ; ins:arisesUnder ex:term-l4-3 ;
+    ins:holder ex:authority-occ ; ins:counterparty ex:dogwood-occ ;
+    ins:activity ins-voc:Terminate .

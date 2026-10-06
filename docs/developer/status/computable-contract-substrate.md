@@ -18,8 +18,8 @@ Behaviour 0.10.0 (shapes 0.4.0) with nested states and history, the import guard
 check`. In tranche D, C6, C7a and C7b are merged and tagged (Instrument 0.11.0, Quantification
 0.7.0), and C7c is briefed. From C5 on, the agent builds and verifies, and the human commits by hand.
 
-**Next action, for the human:** commit the C7c brief on `main`, then create
-`ccs/c7c-terms-and-parties` from it.
+**Next action, for the human:** review the reworked C7c examples, the ADR-A104 addendum and the
+handoff's deviations, then commit the examples phase.
 
 ## Slice board
 
@@ -38,7 +38,7 @@ check`. In tranche D, C6, C7a and C7b are merged and tagged (Instrument 0.11.0, 
 | F1 | external and natural keys (ADR-A114) | Foundation, now | merged, tagged | |
 | C6 | instrument, terms, the five relations, parties, content | D | merged, tagged | |
 | C7b | terms in time | D | merged (`5da9412`), tagged | |
-| C7c | what terms are, and who they bind (split from C7b) | D | briefed, questions answered | the human's branch |
+| C7c | what terms are, and who they bind (split from C7b) | D | examples written, awaiting the human's commit | the human |
 | C8, C9, C8a | Instrument rewrite, template library | D | waiting | C8 after C7a and C7b |
 | C7a | regimes and gating, split from C7 | D | merged to `main` (`c6e5853`) and tagged | |
 | C12, C13 | runtime evaluator, relation plans | E | waiting | C9, C11, C11a, AIR-3.3, NRS N1 |
@@ -47,7 +47,7 @@ check`. In tranche D, C6, C7a and C7b are merged and tagged (Instrument 0.11.0, 
 
 ## History
 
-- 2026-09-29 to 30: D2 walkthrough, first Instrument redesign, tests against the AIG package policy,
+- 2026-09-29 to 30: D2 walkthrough, first Instrument redesign, tests against theAcme Insurancepackage policy,
   the IUA broker binding authority and the Lloyd's CBAA collateral, and cross-reference with Open
   CBAA's `wim`, `stm`, `agr` and `rsk` modules and design documents.
 - 2026-09-30: sketches, plan and this record written. NRS, AIR and platform plans updated.
@@ -111,3 +111,7 @@ check`. In tranche D, C6, C7a and C7b are merged and tagged (Instrument 0.11.0, 
 - 2026-10-05: C7b merged to `main` (`5da9412`) and tagged by the human, with the 21 tags listed at its handoff. `tools/test_regimes.py` and `tools/test_terms_in_time.py` added to `check:ontology-catalog` (`4fa7000`)
 - 2026-10-06: C7c briefed on `main` with its Validation Pack skeleton and nine questions: `ins:boundUnder` brought forward for I15 (Q1), what a section is (Q2), party resolution through the case (Q3, C6-Q5), party words and group modes (Q4, CC-D10), overlapping definitions and InsurML's scope rule (Q5), term classification (Q6), what a definition may mean (Q7), deemings and closure (Q8), a section's ending (Q9). Inputs from the insurml-alignment epic recorded
 - 2026-10-06: C7c questions answered, all as recommended. Q3 (b) chosen on its semantics, and party resolution gains an optional filter condition. Follow-ups held as HQ-5 (the full set of group behaviours, immediately after C9) and HQ-6 (deemings made watertight with ADR-A105). Date and amount words recorded in C8's row
+- 2026-10-06: C7c phase 1 on `ccs/c7c-terms-and-parties`: four examples (`framework-lots.ttl`, `facility-definitions.ttl`, `trial-definitions.ttl`, `supply-classification.ttl`) and the ADR-A104 addendum (Proposed). Three conform to every layer's shapes. `framework-lots.ttl` fails only C7b's ending shape, which C7c-Q9 widens. Handoff and deviations in the [Validation Pack](../validation/computable-contract-substrate-c7c.md)
+- 2026-10-06: C7c design revised after review of the examples, recorded as R1 to R11 in the plan's C7c section: stated meaning context-free so matched wordings are reused by hash, sections declared by a sectioning term, binding per section with sharing where words resolve alike, cross-section qualifiers bound once, cases outside a power not placed, I16 at binding, Party's outward and inward shares (awaiting the human). The examples are reworked next. HQ-7 (portions of one order) and TD-19 (graph size) recorded
+- 2026-10-06: C7c design decided as D1 to D22 in the plan: an instance stores only what differs from its form, bound meaning generated on demand, sharing within an instrument by resolution signature, a sectioning term with a default of one section plus sections named by scopes, and Party made domain-neutral (outward and inward shares, `pty:EachForOwnShare`, `pty:EachForWhole`). TD-19 given a home: slice C16b, required before the epic closes
+- 2026-10-06: C7c examples reworked under D1 to D22: five examples in form, instance and generated parts, `service-towers.ttl` new, `facility-agreement.ttl` on Party's new terms. Four conform. `framework-lots.ttl` and `service-towers.ttl` fail only the ending and qualifier shapes the model phase widens. D5, D10 and D12 sharpened from the examples. Condition words made plain concepts, accepted in stated condition slots and replaced at binding (D12, agreed)

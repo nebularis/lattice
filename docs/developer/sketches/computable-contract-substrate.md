@@ -24,13 +24,13 @@ ratified.
 
 | Code | Instrument | Where |
 |---|---|---|
-| AIG Dummy Policy | AIG dummy non-profit package policy: General Terms and Conditions, Non-Profit D&O, EPL, Fiduciary, Corporate Counsel, CrisisFund, 33 endorsements | `wingman/Nebularis/Ontologies/specification/sample-policy-blended.md` |
+|Acme InsuranceDummy Policy |Acme Insurancedummy non-profit package policy: General Terms and Conditions, Non-Profit D&O, EPL, Fiduciary, Corporate Counsel, CrisisFund, 33 endorsements | `wingman/Nebularis/Ontologies/specification/sample-policy-blended.md` |
 | IUA | IUA 09-069 BAA2018 (Broker) non-marine binding authority agreement and its schedule | `open-dare/.copilot/UIA_Broker_BAA.md` |
 | CBAA | Lloyd's proposed computable binding authority agreement, modules M1 to M6, M8 to M10, M12 to M14, with the Insurer Capacity Table and Scope of Underwriting Authority base tables | `open-dare/.copilot/cbaa/`, extracted by `open-dare/tools/cbaa_extract.py` |
 | SCHED | the schedule of a sectioned Lloyd's binding authority template : coverholders, persons responsible, classes and locations per section | image supplied in review, 2026-09-30 |
 | LEND, TRIAL | the clean-room examples of the first sketch: a facility agreement and a trial protocol | [instrument-terms-and-legal-relations.md](instrument-terms-and-legal-relations.md) §7 |
 
-Clause references below use these codes, for example AIG Dummy Policy D&O 9.A(2), IUA 36.6, CBAA M3 3.9.1.
+Clause references below use these codes, for exampleAcme InsuranceDummy Policy D&O 9.A(2), IUA 36.6, CBAA M3 3.9.1.
 
 Three tests govern every choice, in this order:
 
@@ -370,7 +370,7 @@ wrd:readsVariable      elg:Condition → wrd:GoverningVariable
 ```
 
 The IUA's "*Permitted / Not permitted (Delete as applicable)" and "*Yes / No" schedule entries
-are variation slots with two variants. AIG Dummy Policy's optional endorsements and the forms index are optional
+are variation slots with two variants.Acme InsuranceDummy Policy's optional endorsements and the forms index are optional
 elements. CBAA's grey clauses with inclusion comments ("Will only appear if more than one
 insurer") are conditional elements whose conditions read governing variables.
 
@@ -1904,7 +1904,7 @@ Numbers are stable identifiers, not an order. S79 ("not treated as contravening 
 
 | # | Scenario | Sources | Pattern | E | Rendering |
 |---|---|---|---|---|---|
-| S1 | one-off duty due within a period of a trigger | LEND reporting, TRIAL SAE 24h, CBAA M8 8.1.2 FNOL 1 business day, AIG Dummy Policy D&O 9.A(3) advancement within 90 days of bills, IUA 20.3 documentation within 30 days | `Obligation` with `arisesOn`, `due` anchored at the arising | E1, E8 | both |
+| S1 | one-off duty due within a period of a trigger | LEND reporting, TRIAL SAE 24h, CBAA M8 8.1.2 FNOL 1 business day,Acme InsuranceDummy Policy D&O 9.A(3) advancement within 90 days of bills, IUA 20.3 documentation within 30 days | `Obligation` with `arisesOn`, `due` anchored at the arising | E1, E8 | both |
 | S2 | continuing duty, tested at recurring dates or throughout | LEND leverage, IUA 30 indemnity insurance, IUA 31 business continuity, CBAA M14 14.13 to 14.16 | `ContinuingObligation` with `maintains`, optional `recurrence` | E1 | Open CBAA |
 | S3 | negative duty over a scope | LEND negative pledge, CBAA M5 5.15.10 no New York risks, IUA 15.1 no premium finance | `Prohibition` with `scope` | E1 | Open CBAA |
 | S8 | duty performed by anyone, or by a delegate the obligor answers for | CBAA M10 10.5B "ensure that ABC Insurance Brokers … must", M1 1.20.2, IUA 5.2 | `fulfilledWhen` default reads acts by the obligor or a delegate, `pty:Delegation` | E4 | Open CBAA |
@@ -1917,19 +1917,19 @@ Numbers are stable identifiers, not an order. S79 ("not treated as contravening 
 | S78 | notify on suspected breach or awareness of a matter | IUA 22.3, 32.3, CBAA M1 1.6, 1.11 | `Obligation` whose trigger is an open-textured awareness condition, read through a finding record | E4 | Open CBAA |
 | S83 | a duty that lapses if performance would breach law | IUA 37.3, CBAA M12 12.30.1, 12.44.1 | `Exclusion` excepting the duty in the scope "performance would breach applicable law", established by a finding | E4 | Open CBAA |
 | S84 | a non-party's right of access, and the duty to permit it | IUA 25.3, CBAA M1 1.8.2, M14 14.39 | a `Power` or `Permission` held by the regulator's occupancy, and an `Obligation` to permit | E4 | Open CBAA |
-| S86 | payments free of deductions, in a stated currency | AIG Dummy Policy GTC 14, CBAA M14 14.11 | `Obligation` content, amounts in contract-amounts | E7 | both |
+| S86 | payments free of deductions, in a stated currency |Acme InsuranceDummy Policy GTC 14, CBAA M14 14.11 | `Obligation` content, amounts in contract-amounts | E7 | both |
 
 ### 10.2 Liberties, exclusions and immunities
 
 | # | Scenario | Sources | Pattern | E | Rendering |
 |---|---|---|---|---|---|
 | S4 | permission excepting a prohibition | LEND liens by law, TRIAL waiver, IUA 33.2 disclosed conflicts, IUA 32.2 confidentiality exceptions | `Permission` with `excepts` | E1, E8 | Open CBAA |
-| S10 | exclusion of an obligation, with carve-backs and carve-backs added by endorsement | AIG Dummy Policy D&O 4.B, End. 8 III.D, End. 5, 14, 15 | `Exclusion` with `excepts`, carve-backs as nested negated conditions in its scope | E5 | AIR |
-| S11 | immunity against a power | AIG Dummy Policy D&O 11.B non-rescindable Side A, a perpetual licence | `Exclusion` excepting a `Power` | E7 | AIR |
-| S12 | exclusion of a term the law would imply | AIG Dummy Policy D&O 9.A(1) no duty to defend, IUA 40 and CBAA M14 14.3 no third-party rights, CBAA M2 2.9.1.8 waiver of notice | `Exclusion` excepting a relation arising under an implied term | E5, E7 | both |
+| S10 | exclusion of an obligation, with carve-backs and carve-backs added by endorsement |Acme InsuranceDummy Policy D&O 4.B, End. 8 III.D, End. 5, 14, 15 | `Exclusion` with `excepts`, carve-backs as nested negated conditions in its scope | E5 | AIR |
+| S11 | immunity against a power |Acme InsuranceDummy Policy D&O 11.B non-rescindable Side A, a perpetual licence | `Exclusion` excepting a `Power` | E7 | AIR |
+| S12 | exclusion of a term the law would imply |Acme InsuranceDummy Policy D&O 9.A(1) no duty to defend, IUA 40 and CBAA M14 14.3 no third-party rights, CBAA M2 2.9.1.8 waiver of notice | `Exclusion` excepting a relation arising under an implied term | E5, E7 | both |
 | S13 | term implied by statute | the Contracts (Rights of Third Parties) Act 1999, sale of goods implied terms | `ins:impliedBy` | E5 | both |
-| S30 | consent regime: forbidden without consent, consent not unreasonably withheld, no consent needed within a threshold | AIG Dummy Policy D&O 9.A(5), GTC 10, IUA 27.1.4.2, 35.5.6, 35.5.7 | `Prohibition`, a `Permission` on a consent record, an `Obligation` on the consenting party with an open-textured test, a second `Permission` on the threshold | E7 | both |
-| S31 | a right but not an obligation, and an explicit no-duty | AIG Dummy Policy D&O 9.A(4), IUA 33.4, CBAA M14 14.23 | a standalone `Permission`, and an `Exclusion` of the implied duty | E7 | both |
+| S30 | consent regime: forbidden without consent, consent not unreasonably withheld, no consent needed within a threshold |Acme InsuranceDummy Policy D&O 9.A(5), GTC 10, IUA 27.1.4.2, 35.5.6, 35.5.7 | `Prohibition`, a `Permission` on a consent record, an `Obligation` on the consenting party with an open-textured test, a second `Permission` on the threshold | E7 | both |
+| S31 | a right but not an obligation, and an explicit no-duty |Acme InsuranceDummy Policy D&O 9.A(4), IUA 33.4, CBAA M14 14.23 | a standalone `Permission`, and an `Exclusion` of the implied duty | E7 | both |
 | S45 | delegation forbidden unless the principal is party to the delegation | IUA 5, CBAA M14 14.48 | `Prohibition` and a `Permission` whose scope reads the delegation contract's parties | E4 | Open CBAA |
 | S51 | amendments the amendment power cannot make | CBAA M3 3.2 | `Exclusion` excepting the amendment `Power` in that scope | E2 | Open CBAA |
 
@@ -1937,13 +1937,13 @@ Numbers are stable identifiers, not an order. S79 ("not treated as contravening 
 
 | # | Scenario | Sources | Pattern | E | Rendering |
 |---|---|---|---|---|---|
-| S7 | breach chains: a cure period, a late fee, termination for breach, fanning out | LEND cure and acceleration, CBAA M12 12.22.2 rectification within 30 business days, 12.22.9, AIG Dummy Policy D&O 12.A reimbursement | relations `arisesOnBreachOf` the primary duty, several per breach | E1 | both |
-| S5 | power whose exercise creates a duty | LEND acceleration, IUA 4.3 directions, AIG Dummy Policy D&O 3.B CEO request | `Power`, relation `arisesOnExerciseOf` it | E1 | both |
-| S6 | power ending the instrument or a term | AIG Dummy Policy GTC 7, IUA 36.1, CBAA M12 12.22, 12.23, TRIAL suspension | `Power` with `ins:ends` | E7, E8 | both |
-| S27 | power with procedural conditions of valid exercise | AIG Dummy Policy End. 1 (reasons, 30 days, Superintendent copy, broker 5 days earlier, 18-point envelope), IUA 36.2, CBAA M12 12.9 to 12.13 | the power's `scope` reads notice acts and their timing. Copies "for information only" are separate obligations that do not condition validity (I12) | E7 | both |
-| S28 | option exercisable in a window, requiring payment | AIG Dummy Policy GTC 4 discovery period | `Power` whose scope reads the window and a payment act | E7 | AIR |
-| S29 | chain of powers with defaults | AIG Dummy Policy D&O 13 ADR election, default election, rejection | successive `Power`s, a `Deeming` for the default | E7 | AIR |
-| S33 | power to vary an external list, with grandfathering | AIG Dummy Policy D&O 9.B panel counsel | `Power` to vary a scheme edition (ADR-A99), `Permission` for removed entries | E3 | AIR |
+| S7 | breach chains: a cure period, a late fee, termination for breach, fanning out | LEND cure and acceleration, CBAA M12 12.22.2 rectification within 30 business days, 12.22.9,Acme InsuranceDummy Policy D&O 12.A reimbursement | relations `arisesOnBreachOf` the primary duty, several per breach | E1 | both |
+| S5 | power whose exercise creates a duty | LEND acceleration, IUA 4.3 directions,Acme InsuranceDummy Policy D&O 3.B CEO request | `Power`, relation `arisesOnExerciseOf` it | E1 | both |
+| S6 | power ending the instrument or a term |Acme InsuranceDummy Policy GTC 7, IUA 36.1, CBAA M12 12.22, 12.23, TRIAL suspension | `Power` with `ins:ends` | E7, E8 | both |
+| S27 | power with procedural conditions of valid exercise |Acme InsuranceDummy Policy End. 1 (reasons, 30 days, Superintendent copy, broker 5 days earlier, 18-point envelope), IUA 36.2, CBAA M12 12.9 to 12.13 | the power's `scope` reads notice acts and their timing. Copies "for information only" are separate obligations that do not condition validity (I12) | E7 | both |
+| S28 | option exercisable in a window, requiring payment |Acme InsuranceDummy Policy GTC 4 discovery period | `Power` whose scope reads the window and a payment act | E7 | AIR |
+| S29 | chain of powers with defaults |Acme InsuranceDummy Policy D&O 13 ADR election, default election, rejection | successive `Power`s, a `Deeming` for the default | E7 | AIR |
+| S33 | power to vary an external list, with grandfathering |Acme InsuranceDummy Policy D&O 9.B panel counsel | `Power` to vary a scheme edition (ADR-A99), `Permission` for removed entries | E3 | AIR |
 | S43 | authority to conclude contracts for a principal, and holding out | IUA 4.1, 4.6, CBAA M1 1.14 to 1.16, M5 5.1 | `Power` (activity bind) with a scope, and a `Prohibition` on acting or holding out beyond it | E4 | Open CBAA |
 | S44 | authority scope from tables, by segment, with a level of authority, prior submit and special acceptances | CBAA M5 SoUA base table rows 3 to 47, Coverholder Level of Authority sheet, 5.18 | one `Power` per segment column, parameters bound to table cells. Level as a qualifier. Prior submit: scope reads an approval act. A special acceptance is a further `Power` for the named case | E3, E4 | Open CBAA |
 | S46 | authority with a limit, referral above it, no ex gratia, withdrawal for one claim | IUA 21.1 to 21.3, CBAA M8, M9 9.1 to 9.2.10 | `Power` with a limit in scope, `Obligation` to refer, `Prohibition`, a principal's `Power` that ends one occasion | E4 | Open CBAA |
@@ -1955,32 +1955,32 @@ Numbers are stable identifiers, not an order. S79 ("not treated as contravening 
 | S76 | consent delegated to a lead | CBAA M3 3.9.2, 3.10 | `pty:Delegation` of the consenting occupancy | E2 | Open CBAA |
 | S80 | a transfer at each party's option, with notice waived | CBAA M2 2.9 | a `Power` per insurer, an `Exclusion` of the implied notice duty | E2 | Open CBAA |
 | S87 | governing law with one party's option to choose another forum | IUA 42, CBAA M14 14.5 | `Power` | E7 | both |
-| S42 | duty to offer on terms the offeror reasonably decides | AIG Dummy Policy GTC 4 transaction discovery offer, 5(b) waiver by endorsement | `Obligation` (activity make offer) with an open-textured content test | E7 | AIR |
+| S42 | duty to offer on terms the offeror reasonably decides |Acme InsuranceDummy Policy GTC 4 transaction discovery offer, 5(b) waiver by endorsement | `Obligation` (activity make offer) with an open-textured content test | E7 | AIR |
 
 ### 10.4 Time and regimes
 
 | # | Scenario | Sources | Pattern | E | Rendering |
 |---|---|---|---|---|---|
-| S16 | a relation ending on an event | AIG Dummy Policy D&O 9.A(2) tender lapses after 30 days, GTC 5 no cancellation after a Transaction, D&O 10.B former subsidiaries, IUA 36.5 automatic termination | `ins:endsOn` | E7 | both |
-| S17 | deadline counted back from a future date | AIG Dummy Policy End. 1 nonrenewal notice 30 days before expiry, CBAA M12 12.34 | `due` anchored at expiry with a negative offset | E7 | both |
-| S18 | arising window beyond the in-force period, survival and run-off with a cap | AIG Dummy Policy D&O 7(a) report within 90 days after the period, GTC 4 discovery up to six years, CBAA M12 12.X1, 12.X2, M14 14.49, 14.50, IUA 37.2.2, 35.7 | the arising condition compares case dates with the windows, `ins:survives` with a limit and an until-condition | E5 | both |
-| S19 | retroactive effect | AIG Dummy Policy D&O 11.C rescission ab initio, CBAA M3 3.20 retrospective amendments | effects with a valid time before the exercise, ADR-A67 | E7 | both |
-| S40 | effect only on execution or acceptance by all parties | AIG Dummy Policy declarations signature, IUA 1.1, CBAA M2 2.3 to 2.8 | `ins:takesEffectWhen` over acceptance records | all | both |
+| S16 | a relation ending on an event |Acme InsuranceDummy Policy D&O 9.A(2) tender lapses after 30 days, GTC 5 no cancellation after a Transaction, D&O 10.B former subsidiaries, IUA 36.5 automatic termination | `ins:endsOn` | E7 | both |
+| S17 | deadline counted back from a future date |Acme InsuranceDummy Policy End. 1 nonrenewal notice 30 days before expiry, CBAA M12 12.34 | `due` anchored at expiry with a negative offset | E7 | both |
+| S18 | arising window beyond the in-force period, survival and run-off with a cap |Acme InsuranceDummy Policy D&O 7(a) report within 90 days after the period, GTC 4 discovery up to six years, CBAA M12 12.X1, 12.X2, M14 14.49, 14.50, IUA 37.2.2, 35.7 | the arising condition compares case dates with the windows, `ins:survives` with a limit and an until-condition | E5 | both |
+| S19 | retroactive effect |Acme InsuranceDummy Policy D&O 11.C rescission ab initio, CBAA M3 3.20 retrospective amendments | effects with a valid time before the exercise, ADR-A67 | E7 | both |
+| S40 | effect only on execution or acceptance by all parties |Acme InsuranceDummy Policy declarations signature, IUA 1.1, CBAA M2 2.3 to 2.8 | `ins:takesEffectWhen` over acceptance records | all | both |
 | S54 | relations that apply only in some states of a regime | CBAA M12 12.16, 12.24, 12.26, 12.39, 12.40, IUA 37.1, 37.2 | an `Exclusion` or state-specific `Power` arising under the regime's clause, `ins:appliesInState` a state of an `ins:Regime` (§6.3) | E4 | Open CBAA |
 | S62 | a term disapplied as invalid, the rest continuing | IUA 39, CBAA M14 14.2 | a term state (disapplied) in Behaviour | E7 | both |
 | S72 | survival notwithstanding limitation periods | CBAA M14 14.50 | `ins:survives` with no limit | E6 | Open CBAA |
-| S74 | business days, calendars, time zones, 00:00 and 24:00 conventions, local time at an address | AIG Dummy Policy declarations "12:01 A.M. at the Named Entity Address", CBAA M2 2.1, 2.2 guidance, M3, M8, M12 | Quantification calendars (ADR-A94), contextual time-zone conversion | E3 | both |
+| S74 | business days, calendars, time zones, 00:00 and 24:00 conventions, local time at an address |Acme InsuranceDummy Policy declarations "12:01 A.M. at the Named Entity Address", CBAA M2 2.1, 2.2 guidance, M3, M8, M12 | Quantification calendars (ADR-A94), contextual time-zone conversion | E3 | both |
 | S68 | agreed, operational and legal effect dates | CBAA M3 3.22 | `ins:agreedOn`, `ins:operationalFrom`, `ins:effectiveFrom` | E2 | Open CBAA |
 
 ### 10.5 Parties
 
 | # | Scenario | Sources | Pattern | E | Rendering |
 |---|---|---|---|---|---|
-| S20 | parties that depend on the case | AIG Dummy Policy D&O 1.A "any Insured Person", Insured Person definition (past, present, future), spouses and estates (GTC 6(c)) | a contingent occupancy with `ins:resolvedBy` | E5 | AIR |
-| S35 | several liability, several repayment | AIG Dummy Policy D&O 9.A(3) repayment "severally according to their respective interests", IUA 41, CBAA M1 1.19 | a `ParticipationGroup` under `pty:SeveralOnly` | E2 | both |
+| S20 | parties that depend on the case |Acme InsuranceDummy Policy D&O 1.A "any Insured Person", Insured Person definition (past, present, future), spouses and estates (GTC 6(c)) | a contingent occupancy with `ins:resolvedBy` | E5 | AIR |
+| S35 | several liability, several repayment |Acme InsuranceDummy Policy D&O 9.A(3) repayment "severally according to their respective interests", IUA 41, CBAA M1 1.19 | a `ParticipationGroup` under `pty:SeveralOnly` | E2 | both |
 | S52 | parties changing over time: annual transfer of benefit and burden, a replaced follow insurer liable for existing policies and live quotes | CBAA M2 2.9, M3 3.23, 3.24.3 | time-scoped occupancies, and I11 (parties fixed at arising) | E2 | Open CBAA |
 | S58 | performers assigned by a role table per segment | CBAA M10 10.4B, 10.5E, M8 8.1B, Multiple Reporting Arrangements and Multiple Claims Handling Arrangements tables | a party end resolved through the table's cells for the case's segment | E3 | Open CBAA |
-| S34 | subrogation: claims against third parties pass to the payer on payment, and are not pursued against an insured unless an exclusion applies | AIG Dummy Policy D&O 12.C, a guarantor's subrogation | the third-party relation's obligee end is resolved at each occasion (I11), with a `Deeming` that the payer stands in the creditor's place on payment. A `Prohibition` on pursuing insureds, excepted by a `Permission` whose scope reads the conduct exclusion | E6 | AIR |
+| S34 | subrogation: claims against third parties pass to the payer on payment, and are not pursued against an insured unless an exclusion applies |Acme InsuranceDummy Policy D&O 12.C, a guarantor's subrogation | the third-party relation's obligee end is resolved at each occasion (I11), with a `Deeming` that the payer stands in the creditor's place on payment. A `Prohibition` on pursuing insureds, excepted by a `Permission` whose scope reads the conduct exclusion | E6 | AIR |
 | S94 | a defined party word with section-scoped definitions | SCHED "The Coverholder" per section, persons responsible per section | `ins:Definition` per column, meaning occupancies, `appliesWithin` its sections. Resolution per case (§5.10) | E3 | Open CBAA |
 | S95 | overlapping definitions of one word | SCHED Imagine Underwriting Limited under "all excluding B5" and under B2 and A1 | union unless `prevailsOver`, overlap reported (I16) | E3 | Open CBAA |
 | S96 | a defined word meaning several parties | SCHED B2, D2, E2, F2, G2: two coverholder entities | a group: consent rule "any one" for powers, composition rule for duties, a recorded finding where silent | E3 | Open CBAA |
@@ -1994,16 +1994,16 @@ Numbers are stable identifiers, not an order. S79 ("not treated as contravening 
 
 | # | Scenario | Sources | Pattern | E | Rendering |
 |---|---|---|---|---|---|
-| S14 | a condition precedent to another party's duty | AIG Dummy Policy D&O 7(a) notice, GTC 11 action against the insurer | part of the dependent obligation's `arisesOn`, not an obligation | E5 | AIR |
+| S14 | a condition precedent to another party's duty |Acme InsuranceDummy Policy D&O 7(a) notice, GTC 11 action against the insurer | part of the dependent obligation's `arisesOn`, not an obligation | E5 | AIR |
 | S15 | breach consequences by term classification | English condition, warranty, innominate term, insurance condition precedent and warranty (`stm:breachTreatment`) | `ins:classification` for reading, and the effect as relations arising on breach | E5 | AIR |
-| S22 | severability per party: one party's breach does not affect another's | AIG Dummy Policy D&O 4.A, 9.A(4) cooperation, 11.C application severability | I6: one case per insured, triggers keep the case | E2 | AIR |
-| S24 | a condition reading another relation's state | AIG Dummy Policy D&O 14 Non-Indemnifiable Loss, End. 16 | a stratified state read (§6.2) | E6 | AIR |
-| S25 | contractual deeming | AIG Dummy Policy D&O 3.A deemed failed after 60 days, D&O 14 Outside Entity Executive default, End. 16 conclusively deemed, D&O 7(b), 7(c) relation back, CBAA HC-6 CMS audit deemed first made, IUA 36.3, CBAA M12 12.10 deemed receipt, M12 12.37.2 automatic extension, M3 3.6 no amendment by conduct | `ins:Deeming`, and the instrument as a closure licence (A-105) | E5, E7 | both |
-| S26 | burden: an exception applies only if established | AIG Dummy Policy D&O 4.B(1) "if established by … final, non-appealable adjudication" | §5.7 | E5 | AIR |
+| S22 | severability per party: one party's breach does not affect another's |Acme InsuranceDummy Policy D&O 4.A, 9.A(4) cooperation, 11.C application severability | I6: one case per insured, triggers keep the case | E2 | AIR |
+| S24 | a condition reading another relation's state |Acme InsuranceDummy Policy D&O 14 Non-Indemnifiable Loss, End. 16 | a stratified state read (§6.2) | E6 | AIR |
+| S25 | contractual deeming |Acme InsuranceDummy Policy D&O 3.A deemed failed after 60 days, D&O 14 Outside Entity Executive default, End. 16 conclusively deemed, D&O 7(b), 7(c) relation back, CBAA HC-6 CMS audit deemed first made, IUA 36.3, CBAA M12 12.10 deemed receipt, M12 12.37.2 automatic extension, M3 3.6 no amendment by conduct | `ins:Deeming`, and the instrument as a closure licence (A-105) | E5, E7 | both |
+| S26 | burden: an exception applies only if established |Acme InsuranceDummy Policy D&O 4.B(1) "if established by … final, non-appealable adjudication" | §5.7 | E5 | AIR |
 | S36 | open-textured standards | "reasonable", "as soon as practicable", "fair and proper", "best efforts", "materially", "not unreasonably withheld" throughout | a finding record (§6.4) | all | both |
-| S37 | matters outside computation | AIG Dummy Policy GTC 13 conformance to law, D&O 2.D Global Liberalization, "where insurable by law", "law that most favors coverage" | Undetermined with the matter recorded | E5 | AIR |
-| S38 | an overriding condition on every payment duty from an external list | AIG Dummy Policy End. 31 sanctions, IUA 34.4, CBAA M14 14.28.2 | an `Exclusion` over every payment obligation whose scope reads a sanctions scheme edition (ADR-A85) | E2 | both |
-| S41 | conditions over other instruments | AIG Dummy Policy D&O 12.B other insurance, CrisisFund 2, CBAA M12 12.22.13, 12.22.15 (outsourcing agreement, co-insurance agreement), 12.21 broker | conditions reading other instruments' records and states. Absence of other insurance needs a closure | E6 | both |
+| S37 | matters outside computation |Acme InsuranceDummy Policy GTC 13 conformance to law, D&O 2.D Global Liberalization, "where insurable by law", "law that most favors coverage" | Undetermined with the matter recorded | E5 | AIR |
+| S38 | an overriding condition on every payment duty from an external list |Acme InsuranceDummy Policy End. 31 sanctions, IUA 34.4, CBAA M14 14.28.2 | an `Exclusion` over every payment obligation whose scope reads a sanctions scheme edition (ADR-A85) | E2 | both |
+| S41 | conditions over other instruments |Acme InsuranceDummy Policy D&O 12.B other insurance, CrisisFund 2, CBAA M12 12.22.13, 12.22.15 (outsourcing agreement, co-insurance agreement), 12.21 broker | conditions reading other instruments' records and states. Absence of other insurance needs a closure | E6 | both |
 | S57 | termination triggers concerning third parties | CBAA M12 12.20, 12.21, 12.22.12, 12.22.14, IUA 36.6.3 | as S41 | E4 | Open CBAA |
 | S89 | no implied dependency between relations | IUA 36.7, CBAA M12 12.4, 12.11.2 | I12 | E7 | both |
 
@@ -2011,31 +2011,31 @@ Numbers are stable identifiers, not an order. S79 ("not treated as contravening 
 
 | # | Scenario | Sources | Pattern | E | Rendering |
 |---|---|---|---|---|---|
-| S21 | a term scoped to part of the wording | AIG Dummy Policy GTC 1 and 16 per-section definitions, End. 5 and 14 endorsement-scoped definitions, CBAA M5 5.15 territory-tagged clauses | `ins:appliesWithin` | E5 | AIR |
-| S23 | textual amendments | AIG Dummy Policy End. 8 (delete, replace, add, strike words), End. 18, End. 19, End. 20 | `wrd:Amendment` operations, `ins:Amendment` for effect | E2 | AIR |
+| S21 | a term scoped to part of the wording |Acme InsuranceDummy Policy GTC 1 and 16 per-section definitions, End. 5 and 14 endorsement-scoped definitions, CBAA M5 5.15 territory-tagged clauses | `ins:appliesWithin` | E5 | AIR |
+| S23 | textual amendments |Acme InsuranceDummy Policy End. 8 (delete, replace, add, strike words), End. 18, End. 19, End. 20 | `wrd:Amendment` operations, `ins:Amendment` for effect | E2 | AIR |
 | S48 | instruments created by exercising a power | IUA 4.1, 13.2, 37.2.2, CBAA M5 5.2, M12 12.28, `rsk:boundUnder` | `ins:boundUnder`, and conditions over "instruments bound under" | E3 | Open CBAA |
-| S53 | incorporation by reference, including a document one party may vary | IUA schedule "incorporates by reference IUA 09-069", CBAA M1 1.2, M5 5.1.4 Underwriting Instructions, AIG Dummy Policy forms index, GTC incorporated into each coverage section | `ins:incorporates`, a varying `Power`, relations reading the version in force at the occasion (ADR-A85) | E3 | both |
+| S53 | incorporation by reference, including a document one party may vary | IUA schedule "incorporates by reference IUA 09-069", CBAA M1 1.2, M5 5.1.4 Underwriting Instructions,Acme InsuranceDummy Policy forms index, GTC incorporated into each coverage section | `ins:incorporates`, a varying `Power`, relations reading the version in force at the occasion (ADR-A85) | E3 | both |
 | S63 | content for information only | CBAA M8 8.7D.3 DCA details, M5 5.1.3 estimated premium income | elements with `encodingStatus` NoMeaning | E3 | Open CBAA |
-| S64 | clause variations and conditional clauses | CBAA A, B, C variants and grey clauses throughout, IUA "delete as applicable", AIG Dummy Policy optional endorsements | Wording assembly (§4.4) | E3 | both |
+| S64 | clause variations and conditional clauses | CBAA A, B, C variants and grey clauses throughout, IUA "delete as applicable",Acme InsuranceDummy Policy optional endorsements | Wording assembly (§4.4) | E3 | both |
 | S65 | variables in text, governing variables, tables, references | CBAA endnotes, SoUA and capacity tables, IUA schedule | Wording (§4.2, §4.3) | E3 | both |
 | S67 | jurisdiction-tagged duties, and filing before exercising a power | CBAA M4 4.3.2 to 4.3.36, 4.3.22 ELANY filing 10 business days before binding | obligations scoped by territory. A filing duty is also a condition in the power's scope | E4 | Open CBAA |
 | S69 | a fallback amendment process, later formalised, the later version prevailing | CBAA M3 3.19 | a `Power` arising on a force majeure condition, an `Obligation` to formalise, `prevailsOver` | E2 | Open CBAA |
-| S70 | precedence: agreement over annexes, instructions unless they expressly say otherwise, endorsements notwithstanding, regardless of order | CBAA M1 1.2.1, M12 12.7.1, AIG Dummy Policy End. 13 "whether such endorsement precedes or follows", GTC 1 | `ins:prevailsOver`, with its own priority where a later statement overrides (N10) | E3 | both |
-| S71 | interpretation rules | AIG Dummy Policy GTC 15, IUA 38, CBAA M14 14.1 | terms with no relation | E7 | both |
+| S70 | precedence: agreement over annexes, instructions unless they expressly say otherwise, endorsements notwithstanding, regardless of order | CBAA M1 1.2.1, M12 12.7.1,Acme InsuranceDummy Policy End. 13 "whether such endorsement precedes or follows", GTC 1 | `ins:prevailsOver`, with its own priority where a later statement overrides (N10) | E3 | both |
+| S71 | interpretation rules |Acme InsuranceDummy Policy GTC 15, IUA 38, CBAA M14 14.1 | terms with no relation | E7 | both |
 | S61 | status declarations | IUA 4.7, 27.1, 25.1, CBAA M1 1.13, 1.14, 1.18, M14 14.19 | terms with no relation, consequences implied by law | E4 | Open CBAA |
 | S92 | a sectioned instrument: per-section authority, parties, persons, classes, locations, capacity, and terms that interact across sections | SCHED, CBAA SoUA segments and Insurer Capacity Table row 8, Multiple Claims Handling and Multiple Reporting Arrangements tables | sections as wording elements, `ins:appliesWithin`, the case's section from the power it was bound under (§5.10, I15) | E3 | both |
 | S93 | section sets with exclusions | SCHED "All sections (Excluding Section B5)", "Sections A1, D1, E1, F1 & G1 only" | `ins:appliesWithin` and `ins:notWithin`, hierarchical match with exclusion over the wording tree | E3 | both |
 | S99 | one of several forms incorporated "as applicable" | SCHED "LMA3113A / LMA3114 / LMA3115 as applicable" | `ins:incorporates` within sections, or a variation slot whose variants are forms | E3 | Open CBAA |
 | S100 | persons responsible, classes of business and locations per section | SCHED later parts, IUA 3, 7, 9 per section | S94 for persons, S44 per-segment power scopes for classes and locations | E3 | Open CBAA |
 | S101 | several identifiers for one instrument | SCHED agreement number and UMR | `fnd:identifier` on the instrument identity | E3 | Open CBAA |
-| S88 | notice formalities: in writing, to a named address, copies for information only | AIG Dummy Policy GTC 9, IUA 36.2 to 36.4, CBAA M12 12.9 to 12.13 | conditions on the exercise act, separate information obligations (I12) | E7 | both |
+| S88 | notice formalities: in writing, to a named address, copies for information only |Acme InsuranceDummy Policy GTC 9, IUA 36.2 to 36.4, CBAA M12 12.9 to 12.13 | conditions on the exercise act, separate information obligations (I12) | E7 | both |
 
 ### 10.8 Amounts (catalogued in contract-amounts.md)
 
 | # | Scenario | Sources |
 |---|---|---|
-| S32 | order of payments and a direction to withhold | AIG Dummy Policy D&O 3.B |
-| S39 | conversion at a published rate on a date | AIG Dummy Policy GTC 14 |
+| S32 | order of payments and a direction to withhold |Acme InsuranceDummy Policy D&O 3.B |
+| S39 | conversion at a published rate on a date |Acme InsuranceDummy Policy GTC 14 |
 | S73 | limits, sublimits, retentions, coinsurance, erosion, aggregates, commissions, fees, shares | contract-amounts.md, every instrument |
 | S81 | one limit in several currencies | CBAA SoUA row 42 |
 | S85 | commission refund on cancelled bound instruments | IUA 17.1, CBAA M6 6.8B.1A.1 |

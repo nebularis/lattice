@@ -5,7 +5,7 @@
 **Status:** Accepted
 **Date:** 2026-10-01 (proposed), 2026-10-01 (accepted, Gate A)
 **Supersedes:** ADR-A07b. Carries ADR-A96 onto terms
-**Related:** ADR-A01 (addendum), ADR-A86, ADR-A92, ADR-A102, ADR-A103, ADR-A105, ADR-A106,
+**Related:** ADR-A01 (addendum), ADR-A86, ADR-A87, ADR-A92, ADR-A102, ADR-A103, ADR-A105, ADR-A106,
 ADR-A109, ADR-A112, ADR-A113, ADR-A-C2
 **Unit:** [`computable-contract-substrate`](../../developer/plans/computable-contract-substrate.md)
 (C1, decisions CC-D5, CC-D8, CC-D10, CC-D11, CC-D12). Delivers
@@ -298,3 +298,61 @@ The examples are `trial-reporting.ttl`, `lease-expiry.ttl`, `licence-survival.tt
    ab initio, frustration, termination by agreement (C9), and a party's or a section's ending
    (C7c, C9) are outside C7b. Business day conventions and times of day are held design question
    HQ-3.
+
+## Addendum (2026-10-06): what terms are, and who they bind
+
+**Status:** Proposed 2026-10-06 (CCS slice C7c). Records C7c-Q1 to C7c-Q9 as revised after the
+examples phase, as decisions D1 to D22 of the [CCS plan's C7c section](../../developer/plans/computable-contract-substrate.md),
+which states each in full. Restates decisions 4 and 12, details decision 9, and revises the
+2026-10-05 addendum's decision 4. The examples are `framework-lots.ttl`, `service-towers.ttl`,
+`facility-definitions.ttl`, `trial-definitions.ttl` and `supply-classification.ttl` in
+`ontology/instrument/examples/`.
+
+1. **What an instance stores** (D1 to D4). An instance stores only what differs from its form:
+   identity and keys, parties, the values it gives the wording's variables, the elements its
+   wording includes, `ins:boundUnder`, and records filling a contingent party. Stated meaning is
+   content-addressed with its element version, so a wording matched on its hash is never restated,
+   and it is context-free: a stated term never names another element's version, and scopes and
+   endings name a section's persistent identity, resolved within the assembled wording. Bound
+   meaning is a derived artefact (ADR-A92), generated on demand, cached as need dictates, and kept
+   in its own subgraph where processing allows. Only bound meaning is evaluated (law I13).
+2. **Generation shares** (D5). Binding resolves every word in each section, and sections whose
+   words resolve alike share one bound term, recorded with `ins:boundWithin`. Generated nodes have
+   deterministic identities. Sharing across instruments is CCS slice C16b, under its own ADR.
+3. **Sections** (D6 to D8, restating decision 12). A sectioning term (`ins:Sectioning`,
+   `ins:section`) declares the sections and places within each the terms it contains. Without one,
+   the instrument is one section, the whole, and an element a term's words scope to is a section
+   by being named. Sections nest. `ins:appliesWithin` values are alternatives, `ins:notWithin`
+   excludes what lies at or below it, and a term with no scope governs the whole.
+4. **Cases** (D9, law I15, C7c-Q1). `ins:boundUnder`, brought forward from decision 11, names the
+   bound power whose exercise created an instrument, and that instrument falls in the one section
+   the power is bound within. Any other case is not placed: each section's bound relations
+   evaluate it in their own right.
+5. **Cross-section terms and ending** (D10, D11, revising the 2026-10-05 addendum's decision 4). A
+   qualifier spanning sections is bound once and qualifies each section's bound relations. A
+   cross-section term whose words vary by section is split and reported while drafting.
+   `ins:ends` may name a section, and entering the state ends, for that section's cases, every term
+   bound within it.
+6. **Constitutive terms** (D12 to D15, detailing decision 9). An `ins:Definition` defines exactly
+   one word, the node stated meaning names in its place (a role, or a concept for a condition or
+   concept word), and means at least one thing. Stated meaning names words and bound meaning names
+   meanings: a condition slot on stated meaning may take a defined word, which binding replaces. `ins:actingRule` states how several parties act together. Overlapping
+   definitions combine at binding, per section, as D13 sets out (law I16), and `ins:prevailsOver`
+   between definitions removes an overlap. An `ins:Deeming` deems one condition, on at most one
+   footing, conclusively or not, for named purposes or all. `ins:classification` is read, never
+   evaluated, under a scheme bound to `ins-voc:TermClassificationContract`.
+7. **Who terms bind** (D16 to D18, restating decision 4). Bound relations always name their
+   parties. A party that depends on the case is a contingent occupancy with at most one
+   `ins:resolvedBy`, an `ins:PartyResolution` (`ins:resolvesFrom`, `ins:resolutionStep`,
+   `ins:resolutionFilter`), and is otherwise filled by a record of each occasion. A group's duty is
+   decided by its composition rule. A group's power, and a group with no rule, are Undetermined
+   until C9 (CC-D10).
+8. **Party is domain-neutral** (D19). Party states a member's outward and inward shares
+   (`pty:outwardShare`, `pty:inwardShare`), and two composition rules, `pty:EachForOwnShare` and
+   `pty:EachForWhole`, replacing `pty:share`, `pty:SeveralOnly` and `pty:JointAndSeveral`. What a
+   share means is the instrument's or the applied layer's. Caps are qualifiers.
+9. **Deferred.** Evaluation of all of the above (C12, C13). Date and amount words, and the values
+   parameter bindings carry (C8). Consent rules (C9, HQ-5). The closure declaration, rebuttal and
+   supersession of deemings (ADR-A105, HQ-6). Precedence between terms (NRS N10). Sharing across
+   instruments (C16b). A shared path type in Foundation (its own unit). Portions of one order
+   (HQ-7).
