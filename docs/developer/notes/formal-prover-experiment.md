@@ -15,6 +15,25 @@ clean `gate.py` run), within the plan's 0.25M-token-per-track budget (plan §8).
 rule, this is the "both complete it" row: the higher weighted total wins, a margin under 5 points
 is a tie broken by M0, then M3.
 
+**Revision, after human review of the first draft's scoring:** the plan's own M9 ("consistency
+with prior choices") and its M5 weight are both overridden here, on the human's explicit
+instruction, as a correction to the plan rather than a reinterpretation of its evidence. The
+plan's weight table (`formal-methods-phase-0.md` §4) is unchanged by this report; the deviation
+is recorded here and should be reconciled with the plan separately. Two changes:
+
+- **M9 is removed outright**, not scored. The "prior choice" it measured is the engine notes'
+  recommendation for the physical planner, a sketch for an RDF/Datalog engine that was not built
+  and is not a commitment this spike owes continuity to. Counting it was worse than neutral: it
+  rewarded Rocq for a decision this programme never actually made, not for anything track D
+  measured.
+- **M5 ("other targets") is reweighted from 5 to 10, equal to M6**, since a target this spike's
+  generated code could go straight into a production toolchain (Scala for service-layer
+  algorithms, in particular) matters as much as the interface-rejection architecture fit M6
+  scores. M5's raw scores are also revised below to weigh Scala, Rust and Python specifically,
+  per that same instruction.
+
+This changes the weighted total from 105 to 100 and reverses the tiebreak outcome (§3, §5).
+
 ## 1. Tool identification (§6)
 
 | Tool | Version | Image/archive | Route actually used |
@@ -64,15 +83,19 @@ Weighted score = raw score × (weight ÷ 10).
 | M2 | proof effort and agent success (TA1-TL3) | 15 | 7 | 6 | 10.5 | 9.0 |
 | M3 | proof-repair cost, scripted MINOR change | 15 | 7 | 8 | 10.5 | 12.0 |
 | M4 | generated OCaml | 5 | 7 | 8 | 3.5 | 4.0 |
-| M5 | other targets (Haskell, Scala, N-version) | 5 | 3 | 8 | 1.5 | 4.0 |
+| M5 | other targets (Scala, Rust, Python, N-version) | 10 | 2 | 8 | 2.0 | 8.0 |
 | M6 | architecture fit (interface rejection) | 10 | 8 | 6 | 8.0 | 6.0 |
 | M7 | toolchain and CI | 5 | 6 | 7 | 3.0 | 3.5 |
 | M8 | library fit | 5 | 6 | 7 | 3.0 | 3.5 |
-| M9 | consistency with prior choice (Rocq) | 5 | 10 | 4 | 5.0 | 2.0 |
-| **Total** | | **105** | | | **66.5** | **65.5** |
+| **Total** | | **100** | | | **62.0** | **67.0** |
 
-Margin: 1.0 point, under the 5-point tie threshold. Tie broken by M0: Rocq (7) over Isabelle (6).
-**Rocq wins the tiebreak.**
+M9 removed; see the revision note above §1. M5's weight raised from 5 to 10 and its raw scores
+revised, same note.
+
+Margin: 5.0 points, not under the 5-point tie threshold (plan §5: "a margin under 5 points is a
+tie"). **This is a decisive win for Isabelle, not a tie**, so no tiebreak applies. This reverses
+the first draft's conclusion (a 1.0-point Rocq tiebreak win under the plan's original M9/M5
+weights). See §5 for what this means for FM-D1.
 
 ### Notes per measure
 
@@ -105,12 +128,19 @@ Margin: 1.0 point, under the 5-point tie threshold. Tie broken by M0: Rocq (7) o
   native `[]`/`::`, no adapter needed; it does, by default, hide the `decision` type's
   constructors behind an abstract signature, needing an explicit `export_code Permitted Denied
   Undetermined ...` to expose them (once known, a one-line fix).
-- **M5.** Isabelle's `export_code ... in Haskell` produced working Haskell on the first attempt,
-  compiled by GHC 9.10.3 and matching all 15 fixtures (`ExportDriver.hs`). Rocq's `Extraction`
-  library supports a Haskell target in principle; D2 did not exercise it (an explicit scope
-  choice under the token budget, not a demonstrated gap). Scala from Isabelle and N-version
-  agreement beyond OCaml/Haskell are both deliberately out of scope for this spike (brief §9) and
-  unscored beyond what is stated here.
+- **M5, rescored for production-toolchain relevance (Scala, Rust, Python).** Isabelle's code
+  generator officially targets SML, OCaml, Haskell **and Scala**; the Haskell path was exercised
+  this spike (`ExportDriver.hs`, GHC 9.10.3, all 15 fixtures matched), and Scala sits in the same
+  code-generator family, so the same pattern (list and constructor mapping, see M4) is very
+  likely to carry over with the same low adaptation cost, though it was not itself run this
+  session. Rocq's `Extraction` library targets only OCaml, Haskell and Scheme: **there is no
+  Scala backend at all**, a structural gap rather than an unexercised one. Neither tool's code
+  generator targets Rust or Python directly: Rocq's adjacent Rust tooling (`hax`, `coq-of-rust`,
+  cited in the engine notes) verifies existing Rust code written against a Rocq spec, which
+  verifies in the opposite direction from generating Rust out of a proof, so it does not help
+  here. This is a wash between the two for Rust and Python, and is reflected by neither prover
+  scoring near the top of the range; Isabelle's score is carried by Scala plus the demonstrated
+  Haskell/OCaml pair, Rocq's by OCaml alone.
 - **M6.** Rocq's `MonotoneReading` dependent record rejects a non-monotone candidate as a type
   error at the point of construction, and the rejection itself is demonstrated inside the
   successfully-building file via `Fail Definition` (`Interface.v`), a self-contained,
@@ -132,10 +162,11 @@ Margin: 1.0 point, under the 5-point tie threshold. Tie broken by M0: Rocq (7) o
   profiles.md`) describes both ecosystems as "very large"; Isabelle/HOL plus the Archive of
   Formal Proofs is marginally broader for published order/lattice developments specifically,
   hence the small edge, unconfirmed by anything this spike actually used.
-- **M9.** The engine notes (`docs/developer/notes/rdf-engine/compiled-persistence-profiles.md`
-  §3) already recommend "OCaml with Rocq," citing MetaRocq's verified extraction and Rust-bridge
-  tooling (`hax`, `coq-of-rust`), with Isabelle as "a close second." Switching to Isabelle now
-  would cost revisiting that recorded rationale, which M9 exists specifically to count.
+- **M9, removed.** The plan's M9 scored "consistency with prior choices," evidenced by the engine
+  notes' recommendation of "OCaml with Rocq" for an RDF/Datalog engine's physical planner. That
+  engine was sketched, not built, and this spike owes no continuity to a decision the programme
+  never actually acted on. Scoring it rewarded Rocq for a choice made in a different, abandoned
+  context, not for anything D2 or D3 measured, so it is removed rather than scored.
 
 ## 4. Seeded-defect detection, by tool
 
@@ -148,34 +179,38 @@ Margin: 1.0 point, under the 5-point tie threshold. Tie broken by M0: Rocq (7) o
 | S5 (weakened restatement, same name) | caught: `check_s5.py` recomputes both digests and shows they differ | caught: `check_s5.py` recomputes both digests and shows they differ |
 
 Isabelle's default refusal of `sorry` is a genuinely stronger assurance property than Rocq's
-silent acceptance of `Admitted`, not reflected in the M0-M9 table above (closest fit is M6/M7);
+silent acceptance of `Admitted`, not reflected in the M0-M8 table above (closest fit is M6/M7);
 noted here because it is a real, observed difference in favour of Isabelle's tooling.
 
 ## 5. Decisions
 
 ### FM-D1: the proof assistant, or none
 
-**Decision: adopt Rocq for the prover programme (track E), should the human choose to proceed
-past this spike.** The margin (1.0 point) is within the tie threshold, and the tiebreak (M0) is
-close enough that this is not a decisive technical win for Rocq. The practical weight behind the
-decision is M9: the engine notes already committed to Rocq and OCaml for the physical planner
-(a separate, larger piece of work), and nothing in this spike's evidence is strong enough to
-justify re-opening that choice. Isabelle outperformed Rocq on concrete, measured criteria this
-spike (M3's repair cost, M4's native list mapping, M5's Haskell target, M7's simpler native
-install, M8's library breadth) and should be kept in view if a future measure shifts the balance,
-particularly if Haskell (not OCaml) becomes the target language, or if the rejected-interface
-demonstrability gap (M6) is closed with better Isar tooling.
+**Reopened, pending the human's confirmation.** With M9 removed and M5 reweighted and rescored
+(§1, §3), the total flips to a 5.0-point Isabelle win, at or past the plan's tie threshold, so
+§5's decision rule gives the higher total outright with no tiebreak: **Isabelle, not Rocq.** This
+reverses the first draft's conclusion, which depended entirely on M9 (a measure now removed) and
+a 1.0-point M0 tiebreak that the new total no longer needs.
+
+This report does not treat that reversal as settling FM-D1 by itself. Adopting Isabelle for
+track E is a design decision the Agentic Development Contract reserves for the human, and the
+evidence behind the swing is still thin in places the caveats (§6) already name: M5's Scala score
+rests on an unexercised but documented capability, not a run; M0 and M2's small gaps are one
+session's experience, not a controlled study. What this report changes is the recommendation it
+would make absent further guidance: **Isabelle**, on the corrected weights, rather than Rocq's
+previous narrow tiebreak. The human may re-confirm Rocq (for reasons this report's measures do
+not capture, such as the MetaRocq/Rust-bridge ecosystem M9 used to count), confirm Isabelle, or
+ask for specific gaps (Scala, specifically) to be exercised before deciding.
 
 ### FM-D10: the Haskell question
 
 Isabelle answers it directly: `export_code ... in Haskell` produced working, GHC-compiled
 Haskell matching every reference fixture with no manual adaptation. Rocq's extraction can target
 Haskell in principle (its `Extraction` library supports it) but this was not exercised in D2.
-Since FM-D1 adopts Rocq, and the engine notes' own rationale for Rocq was OCaml-first (MetaRocq,
-Rust bridges), **Haskell is not adopted as a target for track E.** If a future need for Haskell
-output arises, Rocq's own Haskell extraction should be tried before reaching for Isabelle as a
-second tool, since maintaining two proof assistants is a larger cost than this spike's narrow
-margin justifies.
+With FM-D1 reopened rather than settled for Rocq, this question is reopened with it: if Isabelle
+is adopted, Haskell (and Scala, per M5) are both already-working targets at effectively no
+further cost; if Rocq is retained, Haskell remains available but unverified in this spike, and
+Scala is not available from Rocq's extraction mechanism at all (§3, M5).
 
 ## 6. Caveats on this report
 
@@ -190,5 +225,11 @@ margin justifies.
   because D2 came first.
 - The M0-M2 debugging-iteration counts are this session's lived experience with one model and
   are not a controlled timing study. A different session could plausibly reverse M0 and M2's
-  small gaps, which would not change the overall tiebreak outcome (M3 remains Isabelle's
-  advantage either way, and M9 remains decisive for the actual recommendation).
+  small gaps; at the current 5.0-point margin, reversing both would roughly halve the gap but not
+  close it (M0's swing alone is 2 points either way), so the outright-win outcome is not fragile
+  to that particular uncertainty the way the first draft's 1.0-point tiebreak was.
+- M5's Scala score for Isabelle (8/10, §3) rests on that target being part of the same
+  `export_code` mechanism already twice demonstrated working (OCaml, Haskell), not on Scala
+  itself having been run. Before treating M5 as settled, D3 should actually exercise
+  `export_code ... in Scala` the way D3 already did for OCaml and Haskell, so this score becomes
+  demonstrated rather than inferred.
