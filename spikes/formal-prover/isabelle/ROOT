@@ -6,3 +6,19 @@ session FormalMethodsSpike = HOL +
     Adequacy
     Reading
     Interface
+    Export
+
+(* S4 (brief §3) needs quick_and_dirty: Isabelle's default build refuses "sorry" outright
+   ("Cheating requires quick_and_dirty mode!"), a stronger, build-time rejection than Rocq's
+   Admitted (which compiles silently and needs the gate script's source scan to catch, S4's
+   intended lesson). quick_and_dirty is enabled for the whole defects session only to let S4
+   compile at all, so check_s4.py (and gate.py's own scan) can show what the *source scan*
+   additionally catches; it changes nothing about S1-S3 and S5, which are all genuinely proved. *)
+session FormalMethodsSpikeDefects in defects = FormalMethodsSpike +
+  options [document = false, quick_and_dirty = true]
+  theories
+    S1_weak_empty_case
+    S2_broken_negation
+    S3_vacuous_interface
+    S4_sorry
+    S5_weaker_restatement
