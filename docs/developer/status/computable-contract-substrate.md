@@ -15,16 +15,13 @@
 
 Gate A passed on 2026-10-01. Tranches B and C are merged to `main` and tagged: Wording 0.3.0,
 Behaviour 0.10.0 (shapes 0.4.0) with nested states and history, the import guard in `mise run
-check`. In tranche D, C6, C7a and C7b are merged and tagged (Instrument 0.11.0, Quantification
-0.7.0), and C7c is briefed. From C5 on, the agent builds and verifies, and the human commits by hand.
+check`. In tranche D, C6 to C7c are merged and tagged (Instrument 0.12.0, Party 0.8.0, Quantification
+0.7.0). C8 is briefed, with six questions. From C5 on, the agent builds and verifies, and the human commits by hand.
 
-**Next action, for the human:** merge `ccs/c7c-terms-and-parties` to `main`, then create and push
-the 15 release tags:
-`applied-capacity-execution-v0.13.0`, `behaviour-v0.13.0`, `behaviour-runtime-v0.13.0`,
-`behaviour-vocab-v0.13.0`, `eligibility-v0.10.0`, `eligibility-vocab-v0.11.0`, `instrument-v0.12.0`,
-`instrument-shapes-v0.5.0`, `instrument-vocab-v0.12.0`, `insurance-common-v0.4.0`,
-`insurance-common-vocab-v0.4.0`, `party-v0.8.0`, `party-vocab-v0.8.0`, `wording-v0.6.0`,
-`wording-vocab-v0.6.0`. Push them to `origin-ssh`.
+**Next action, for the human:** create `ccs/c8-parameter-bindings` from `main` once this brief is
+committed.
+C8-Q3 waits for the formal-methods epic's track C2, which holds back only the lease example's date
+words.
 
 ## Slice board
 
@@ -43,7 +40,7 @@ the 15 release tags:
 | F1 | external and natural keys (ADR-A114) | Foundation, now | merged, tagged | |
 | C6 | instrument, terms, the five relations, parties, content | D | merged, tagged | |
 | C7b | terms in time | D | merged (`5da9412`), tagged | |
-| C7c | what terms are, and who they bind (split from C7b) | D | committed (`0f4f0d9`), decisions ratified, awaiting merge and tags | the human |
+| C7c | what terms are, and who they bind (split from C7b) | D | merged and tagged | done |
 | C8, C9, C8a | Instrument rewrite, template library | D | waiting | C8 after C7a and C7b |
 | C7a | regimes and gating, split from C7 | D | merged to `main` (`c6e5853`) and tagged | |
 | C12, C13 | runtime evaluator, relation plans | E | waiting | C9, C11, C11a, AIR-3.3, NRS N1 |
@@ -122,3 +119,8 @@ the 15 release tags:
 - 2026-10-06: C7c examples reworked under D1 to D22: five examples in form, instance and generated parts, `service-towers.ttl` new, `facility-agreement.ttl` on Party's new terms. Four conform. `framework-lots.ttl` and `service-towers.ttl` fail only the ending and qualifier shapes the model phase widens. D5, D10 and D12 sharpened from the examples. Condition words made plain concepts, accepted in stated condition slots and replaced at binding (D12, agreed)
 - 2026-10-06: C7c examples committed (`2d42e42`). Model phase built: Instrument 0.12.0 (breaking), `instrument-vocab` 0.12.0, shapes 0.5.0, Party and `party-vocab` 0.8.0 (breaking, domain-neutral shares and composition rules), and the cascade to Eligibility, Behaviour, Wording, Insurance Common and the capacity execution profile. `tools/test_constitutive_terms.py` (49 tests) added to `check:ontology-catalog`. Every C7c row passes, and every check C7b ran. Deviations in the [Validation Pack](../validation/computable-contract-substrate-c7c.md)
 - 2026-10-06: C7c model phase committed by the human (`0f4f0d9`). Every deviation ratified, and the ADR-A104 addendum of 2026-10-06 accepted
+- 2026-10-06: C7c merged to `main` (`546d017`) and tagged by the human, with the 15 tags listed at its handoff
+- 2026-10-06: C8 briefed on `main` with its Validation Pack skeleton and six questions: a variable standing where its value goes (Q1), schedule parties as variables (Q2), date and amount words with HQ-4 left for track C2 (Q3), encoding status for elements without meaning only (Q4), a reference binder for one instrument (Q5), and C7c's two open checks on the form (Q6)
+- 2026-10-06: C8-Q2, Q5 and Q6 answered as recommended, Q3 deferred to track C2. Q1 and Q4 reworked with each option's consequences: a placeholder taking its value from a variable, and encoding status by convention with one optional mark
+- 2026-10-06: C8-Q4 answered (b), by convention. C8-Q1 gains how a placeholder resolves across library elements, templates and instances
+- 2026-10-06: C8-Q1 answered (b). Wording references by identity planned as slice C8b, after C8, taking over insurml-alignment IMA-3.3

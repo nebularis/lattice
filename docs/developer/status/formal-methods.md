@@ -20,8 +20,7 @@ decisions on the review response
 Nothing is built. The prover spike (track D) is the first step. The tracks are staggered: C1, C2, B1
 and B2 alongside the spike, A1 to A4 after gate D, B4 with C11a and C12, C3 with C13a. CCS remains the active unit, with C7c branched.
 
-**Next action, for the human:** decide FM-D16 (how tools run on each host), decide when and where the
-spike branch, `fm/phase-0-prover-spike`, is created, and approve the image builds and any native
+**Next action, for the human:** decide when and where the spike branch, `fm/phase-0-prover-spike`, is created, and approve the image builds and any native
 installs.
 
 ## Track board
@@ -55,7 +54,7 @@ installs.
 | FM-D11, FM-D12, FM-D13 | decided 2026-10-06, as recommended |
 | FM-D15 | decided 2026-10-06: stale on a tool change, suspect on a known soundness fix, invalid on a semantic change. Needs an ADR-A27 addendum |
 | FM-D14 | open |
-| FM-D16 | open: the image route everywhere for recorded work, native installs for authoring only |
+| FM-D16 | decided 2026-10-06: the image route everywhere for recorded work, native installs for authoring only |
 | the rest | open |
 
 ## Log
@@ -68,6 +67,7 @@ installs.
 - 2026-10-06: FM-D15 decided: a semantic input change invalidates, a tool identity change marks claims stale and schedules re-verification, and a known soundness fix marks them suspect, failing the gate until re-verified
 - 2026-10-06: tracks staggered: C1, C2, B1 and B2 alongside the spike, A1 to A4 after gate D (A5 with C), B4 with C11a and C12, C3 with C13a
 - 2026-10-06: a toolchain spike on a Windows host without administrator rights, behind a TLS-re-signing proxy, ran both stacks natively and in Linux containers: proofs, code generation, compilation, AST reading and cross-compilation all passed. The plans now run on macOS, Windows and Linux: an image route for every recorded check and job, slim, multi-arch, pinned and capped, native installs for authoring only (epic E9, §4 Environments, FM-D16), and slice D0 for environments in track D
+- 2026-10-06: FM-D16 decided as recommended
 
 ## Estimates and actuals
 
