@@ -3,8 +3,8 @@
 # Formal Methods: Status
 
 **Unit ID:** `formal-methods` (epic)
-**Status:** 📝 Proposed. Re-sequenced into tracks after review on 2026-10-06, awaiting the human's
-decisions on the review response
+**Status:** � Track D in progress. D0-D2 complete on `fm/phase-0-prover-spike`, D3 (Isabelle) and D4
+(report) remain
 **Last updated:** 2026-10-06
 **Plan:** [formal-methods.md](../plans/formal-methods.md), [the prover spike](../plans/formal-methods-phase-0.md)
 **Review response:** [formal-methods-review-response.md](../notes/formal-methods-review-response.md)
@@ -40,9 +40,9 @@ installs.
 
 | Slice | State |
 |---|---|
-| D0 environments | not started. The toolchain spike of 2026-10-06 covers its Windows half in outline |
-| D1 brief | not started |
-| D2 Rocq track | not started |
+| D0 environments | done (commit `efa2469`): image and native routes, driver, network probe, smoke suite |
+| D1 brief | done (commit `bb86f17`): written semantics, seeded defects S1-S5, MINOR change spec, measures |
+| D2 Rocq track | done (commits `f4a6db4`, `17f05d9`, `57fea56`, `ca6fbc0`): Kernel.v (TA1, TA2), Eligibility.v (TL1-TL3), Adequacy.v (13 fixture-matching theorems, all via `reflexivity`), defects S1-S5 (each a compiled, positive detection, not a narrative), Reading.v (the MINOR change, M3 measured at +21/-7 lines for adding `MostValueR`), Interface.v (M6's `MonotoneReading` record, rejects non-monotone candidates at construction), Extraction.v (M4, extracted OCaml kernel checked against all 15 reference fixtures outside Rocq), 12 claim records, `gate.py rocq` passes clean |
 | D3 Isabelle track | not started |
 | D4 report | not started |
 
