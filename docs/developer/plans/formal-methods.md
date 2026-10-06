@@ -35,7 +35,7 @@ Bring formal methods into LATTICE's development lifecycle and its compilation to
 
 ## 2. Principles
 
-The sketch's FP1 to FP4 and goals G1 to G5 govern every track. Eight rules bind how the epic runs:
+The sketch's FP1 to FP4 and goals G1 to G5 govern every track. Nine rules bind how the epic runs:
 
 | # | Rule | Source |
 |---|---|---|
@@ -44,9 +44,10 @@ The sketch's FP1 to FP4 and goals G1 to G5 govern every track. Eight rules bind 
 | E3 | No generated OCaml or Haskell runs against the live graph. Proved artefacts reach the runtime as data | sketch §13.1 |
 | E4 | No track blocks a CCS or insurml-alignment slice that does not need it | G5 |
 | E5 | Agents build and verify, the human commits, merges, tags and pushes. Toolchain installs are approved by the human | CCS practice |
-| E6 | Toolchains, build outputs, generated binaries and generated data never enter git. Toolchain distributions and build outputs live under `.build/formal/`, and data that must not reach GitHub but is not a build artefact under `.local/formal/`. On `main`, `mise` tasks create the `.build/` locations and `.gitignore` excludes them. Every slice's handoff checks `git status` for them | human, 2026-10-06 |
+| E6 | Toolchains, build outputs, generated binaries and generated data never enter git. Toolchain distributions and build outputs live under `.build/formal/`, and data that must not reach GitHub but is not a build artefact under `.local/formal/`. A host that needs a short path for native toolchains, as Windows does without long paths enabled, sets `LATTICE_FORMAL_ROOT` to a location outside the repository. On `main`, `mise` tasks create the `.build/` locations and `.gitignore` excludes them. Every slice's handoff checks `git status` for them | human, 2026-10-06 |
 | E7 | Verification and performance are separate decisions. The prover is chosen for verification. Native tooling is chosen per job family, on measurement | review §3.2 |
 | E8 | Every track declares its metrics and abandonment conditions before it starts (§6) | review §3.4 |
+| E9 | Every tool runs on macOS, Windows and Linux hosts. A pinned container image is the reference route, and the only one whose verdicts are recorded. A native install is an optional route for authoring where it is cheap (§4, Environments) | toolchain spike, 2026-10-06 |
 
 ## 3. Tracks
 
@@ -146,6 +147,65 @@ family then gets a Python baseline and a measured decision. Families bound by so
 Outlined in the [instrument assurance sketch](../sketches/instrument-assurance.md). Detailed when B4
 and C3 exist.
 
+### Environments, for every track
+
+A toolchain spike on 2026-10-06 installed and ran both stacks on a Windows 11 host without
+administrator rights, behind a proxy that re-signs TLS, natively and in Linux containers. Both
+stacks proved a lemma, generated code, compiled and ran it, and read ASTs programmatically, so no
+blocker was found for either prover. Its findings fix how every track runs tools:
+
+| Finding | Consequence |
+|---|---|
+| native Rocq on Windows builds from source inside opam's own Cygwin, about three hours, longer with MetaRocq. GHC, cabal and Isabelle install from binaries in minutes | Rocq checks run from an image on every host. Native installs are optional, and for authoring |
+| MetaRocq ran only in a container, and GHC's WebAssembly backend has no Windows host build | some capabilities exist only in Linux images, so the image route must exist on every host |
+| paths over 260 characters broke ghcup where long paths are off | native toolchains on Windows take a short root outside the repository (`LATTICE_FORMAL_ROOT`, E6) |
+| containers did not trust a TLS-re-signing proxy's root certificate, which the host trusts | an image build takes an optional certificate as a build secret, never stored in a layer, a file in the repository, or git |
+| Git for Windows' MSYS tools shadowed Cygwin's on PATH and broke native OCaml linking | native Windows tasks set their own PATH order, never relying on the shell's |
+| the spike's images were 4.6, 5.1 and 7.5 GB | images are slimmed under the rules below, and their size is a measure (track D's M7) |
+| one download host redirected to plain HTTP, and one answered scripted requests with 403 | install scripts use mirrors and direct binary URLs, and a network probe checks every source first |
+| each stack's generated code compiled under the other's compiler | code generation is not tied to the chosen prover |
+
+**Routes.**
+
+| Route | Hosts | Used for | Recorded |
+|---|---|---|---|
+| image | macOS, Windows and Linux developers, CI, and workers | every check, every build of a claim, every job. The only route for MetaRocq and the WebAssembly targets | yes: the image digest is the tool identity (FM-D15, assurance records AR1) |
+| native | any host, per tool, where its install is measured cheap: Isabelle and GHC everywhere, Rocq through the Rocq Platform installers | interactive proof and editor support, which work poorly through a container | no: a native result is advisory until the image route reproduces it |
+
+**Images use as little as they can.**
+
+- One tool per image, built in stages: the runtime stage holds the toolchain and nothing used to
+  build it. No package caches, sources, build directories or documentation, and no profiling
+  libraries unless a job needs them.
+- Built for `linux/amd64` and `linux/arm64`, so that Apple silicon runs them without emulation. A
+  tool with no arm64 build is recorded as such, and runs under emulation only in tests.
+- Base images, toolchain versions and fetched repositories are pinned by digest or commit.
+- A container runs one job and is removed (`--rm`), as a non-root user, with a read-only root
+  filesystem, `--network none`, and `--cpus`, `--memory` and `--pids-limit` set from the job's
+  budget. Nothing stays running between jobs, so the only idle cost is the container engine.
+- Caches that outlive a job, such as Isabelle session heaps and dune caches, live in volumes or
+  under `.build/formal/cache/`, keyed by image digest.
+- On macOS and Windows the container engine's virtual machine is capped (the engine's resource
+  settings, and `.wslconfig` under WSL 2) and may be stopped when unused. Any OCI engine with a
+  Docker-compatible CLI is acceptable (Docker Desktop, Colima, Podman). The plan relies on the
+  image format and the CLI only.
+
+**Tasks.** `mise` exposes, on every host:
+
+| Task | Does |
+|---|---|
+| `check:formal-network` | probes every download source, flagging block pages and redirects |
+| `bootstrap:formal-images` | pulls the pinned images, or builds them, with the optional certificate secret |
+| `bootstrap:formal-native-<tool>` | optional, per tool. Calls the tool's own installer (opam, ghcup, the Isabelle bundle, the Rocq Platform). PowerShell on Windows through `run_windows`, shell elsewhere |
+| `check:formal-smoke` | the smoke suite by the configured route: prove, generate, compile, run, read an AST, cross-compile |
+
+One Python driver runs a tool by route (`LATTICE_FORMAL_ROUTE`, `image` by default), with a fixed
+argument vector and private work directory. It is the driver a worker uses (FM-D9), so a job behind
+Python behind RabbitMQ is tested locally on any host, with RabbitMQ in a container. The spike showed
+the same works with a native binary built on Windows, for testing a compiled tool before its image
+exists. PowerShell tasks split list arguments on commas themselves, and avoid variable names that
+differ only in case, both found in the spike.
+
 ## 5. Milestones
 
 | # | Outcome | Track |
@@ -205,6 +265,7 @@ None of these may be taken by an agent.
 | FM-D13 | the spike's end-to-end law | L15 and L16, with I7 first once C13 is specified | **decided 2026-10-06** |
 | FM-D14 | licence of theories and generated code | decided per import, with the normative theory's licence chosen deliberately beside CC-BY-SA-4.0 | open |
 | FM-D15 | tool identity in read sets | separate semantic inputs from tool identity. A tool change marks records stale and schedules re-verification, without invalidating them. Needs an ADR-A27 addendum (the invalidation rule), with the two kinds of read-set entry stated in ADR-A92's terms | **decided 2026-10-06**: semantic inputs invalidate, tool identity marks stale, a known soundness fix marks suspect, which fails the gate until re-verified |
+| FM-D16 | how tools run on each host | the image route everywhere for checks, CI, claims and jobs, slimmed and capped as §4 sets out. Native installs optional, for authoring only (E9) | open |
 
 ## 8. Alignment with other work
 
@@ -232,7 +293,7 @@ Mechanising SPC's session-type metatheory, which waits for its own decision.
 
 ## 11. Documentation deltas
 
-At each track's gate: root `README.md` (new directories, and the `bootstrap:formal` task),
+At each track's gate: root `README.md` (new directories, the `bootstrap:formal-*` tasks, and the container engine each host needs),
 `mise.toml`, `ontology/README.md` and each layer README whose laws gain formal statements,
 `docs/architecture/ontology-architecture.md` (the formal stack), `solution-design-specification.md`
 (toolchain workers), `data-architecture.md` (assurance records), `docs/architecture/semantic-platform.md`

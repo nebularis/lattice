@@ -85,10 +85,10 @@ never parses RDF.
 
 | Rule | Detail |
 |---|---|
-| one process per job | the process is the sandbox |
+| one process per job | the process is the sandbox. For an imaged tool, one container per job, removed when it ends, as a non-root user with a read-only root filesystem and `--network none` |
 | fixed argument vector | the request selects a family, never a command or a path (ADR-A35) |
 | private work directory, no network | input and output files only |
-| limits | wall time, CPU, memory and exploration bound, enforced by the worker |
+| limits | wall time, CPU, memory and exploration bound, enforced by the worker, and passed to the container as `--cpus`, `--memory` and `--pids-limit` |
 | budgets | per-tenant concurrency limits and a cost ledger, so one tenant's exhaustive run cannot starve others. The ledger is also how the feature is priced |
 | cancellation | a job whose input revision has been superseded, or whose `supersedes` names a running job, is cancelled |
 | interactive checks | a drafter's sub-second feedback is a separate, small, in-process check built for the browser (FM-D6), never a synchronous path to these jobs |
@@ -110,10 +110,12 @@ claim.
 
 | Item | Rule |
 |---|---|
-| build | hermetic, from locked dependencies, a pinned compiler, a pinned system toolchain and a pinned base image |
+| build | hermetic, from locked dependencies, a pinned compiler, a pinned system toolchain and a pinned base image. Staged, so the runtime image holds the tool and nothing used to build it |
+| image | one tool per image, built for `linux/amd64` and `linux/arm64`, pinned by digest. Nothing stays running between jobs, so an idle worker host costs only its container engine |
+| hosts | macOS, Windows and Linux run the same images (epic §4, Environments, FM-D16). On macOS and Windows the engine's virtual machine is capped. A host behind a TLS-re-signing proxy passes its certificate to image builds as a secret, never stored in a layer |
 | provenance | an in-toto or SLSA build attestation for each image, published with it. Signing (ADR-A40) covers the artefact, and the attestation covers the build |
 | registry | images are built in CI and published to a registry, never committed (E6). The repository holds sources, lock files and the allow-list of digests |
-| local use | the same image or binary under `mise run`, with no queue |
+| local use | the same image under `mise run`, with no queue, through the Python driver a worker uses. A queue test runs RabbitMQ in a container and the worker natively, on any host. A native binary, built on the host before its image exists, runs behind the same driver for testing only, and is never recorded |
 
 ## 9. Provenance and caching
 
@@ -151,6 +153,6 @@ baseline. The null-result rate and the speed-up drive the epic's abandonment con
 
 | # | Question | Leaning |
 |---|---|---|
-| TW-Q1 | One image for all families, or one per tool? | one per tool, with several families per tool where they share semantics |
+| TW-Q1 | One image for all families, or one per tool? | one per tool, with several families per tool where they share semantics. A combined image would carry every toolchain into every job, which the resource rules of epic §4 rule out |
 | TW-Q2 | Does the review workbench call these jobs synchronously? | no. Interactive feedback is the separate in-process check of §6 |
 | TW-Q3 | Should Haskell builds of native tools run in CI as an N-version check? | only if FM-D1's choice makes them nearly free |

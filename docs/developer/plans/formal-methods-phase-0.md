@@ -20,6 +20,11 @@ proof maintenance, temporal monitoring precedent and code generation targets, an
 verified extraction, ML functors, dependent types and verified-compiler precedent. This spike
 settles it on measurements.
 
+A toolchain spike of 2026-10-06 has already shown that both stacks install and run on a Windows host
+without administrator rights, natively and in Linux containers, and that each proves, generates,
+compiles, runs and reads ASTs (epic §4, Environments). This spike therefore measures the provers, not
+whether they can be installed, and runs on the image route that every later track uses.
+
 **Lean 4** is not a track. Its machine-assisted proof tooling is advancing quickly, and it has a candidate
 Rust bridge (Aeneas), but it generates only C and has no extraction trust story comparable to
 MetaRocq's or a code generator with Isabelle's targets. This programme's code generation needs those,
@@ -81,7 +86,7 @@ Defects about binding resolution and TD-17's shape move to track C's design mode
 | M4 | generated OCaml | size, readability, native type mapping, unsafe casts, fit with the typed codec | 5 |
 | M5 | other targets | Haskell from both where possible, Scala from Isabelle, and whether N-version agreement comes nearly free | 5 |
 | M6 | architecture fit | the interface, and `DesignEnv` against `RunEnv`: scored separately for a typing error (Rocq can) and a definitional guarantee with a theorem (Isabelle) | 10 |
-| M7 | toolchain and CI | install size, cold and cached dependency-aware builds, `mise` integration, editor support | 5 |
+| M7 | toolchain and CI | on macOS (Apple silicon), Windows and Linux: image size, time to pull or build, idle and peak memory and CPU per job, cold and cached dependency-aware builds, `mise` integration. Native authoring: install time and size per host, and editor support. Whether the tool has an arm64 build | 5 |
 | M8 | library fit | lattices, orders, quantities, Datalog and SQL semantics, and the licence each import would bring | 5 |
 | M9 | consistency with prior choices | the engine notes chose Rocq. The cost of switching is counted, not ignored | 5 |
 
@@ -113,20 +118,36 @@ The experiment runs on its own branch, `fm/phase-0-prover-spike`, which the huma
 | Content | On the branch | Reaches `main` |
 |---|---|---|
 | the brief (D1) | yes | yes, with the plan's other documents |
-| spike sources: theories, proofs, code generation settings, the decoder, the gate script | yes, under `spikes/formal-prover/`, one subdirectory per prover | no. `spikes/` is a new directory, allowed on an unmerged branch only. If track E adopts any of it, it moves to the home FM-D2 decides, under that ADR |
+| spike sources: theories, proofs, code generation settings, the decoder, the gate script, image definitions and environment tasks | yes, under `spikes/formal-prover/`, one subdirectory per prover | no. `spikes/` is a new directory, allowed on an unmerged branch only. If track E adopts any of it, it moves to the home FM-D2 decides, under that ADR |
 | the report (D4) | yes | yes, carried to `main` on its own, merged or not |
 | the status record's updates | yes | yes |
 
 The branch's head commit is recorded in the report, so the result can be reproduced from it even if
 the branch is later deleted.
 
-### 7.2 What stays out of git
+### 7.2 Hosts and routes
+
+Both tracks run on the image route of epic §4 for everything measured, on the same host, so that
+neither prover gains from its host. The images are built in D0 under the epic's rules: one tool per
+image, staged builds, `linux/amd64` and `linux/arm64`, pinned by digest, one container per job with
+no network and capped resources.
+
+| Host | Engine | Native authoring route |
+|---|---|---|
+| macOS, Apple silicon | any OCI engine, its virtual machine capped | Isabelle's macOS bundle, the Rocq Platform's macOS installer |
+| Windows | any OCI engine on WSL 2, capped through `.wslconfig` | Isabelle's Windows bundle and ghcup, under a short `LATTICE_FORMAL_ROOT`. Rocq through the Rocq Platform installer, since opam builds it from source in hours |
+| Linux | the engine directly | the distribution bundles, opam, ghcup |
+
+MetaRocq, used if the Rocq track needs to read its own terms, and GHC's WebAssembly backend are
+image-only. A native result is advisory, and only an image run is recorded in the report.
+
+### 7.3 What stays out of git
 
 Two git-ignored locations, by kind:
 
 | Location | For | Ignored by |
 |---|---|---|
-| `.build/formal/` | build artefacts: toolchain distributions and everything a build produces | a new `.gitignore` rule, `.build/formal/*` with `!.build/formal/.gitkeep`, following the existing `.build/` convention. D1 adds it on the branch |
+| `.build/formal/` | build artefacts: toolchain distributions, image build contexts, caches keyed by image digest, and everything a build produces | a new `.gitignore` rule, `.build/formal/*` with `!.build/formal/.gitkeep`, following the existing `.build/` convention. D0 adds it on the branch |
 | `.local/formal/` | files that are not build artefacts but must not reach GitHub: run logs, timing data | the existing `.local/**` rule |
 
 | Kind | Location | Set by |
@@ -135,8 +156,11 @@ Two git-ignored locations, by kind:
 | the Isabelle distribution and its user home, including session heap images | `.build/formal/isabelle/`, `.build/formal/isabelle-home/` | `ISABELLE_HOME_USER` |
 | build outputs: compiled theories, extracted and generated sources, binaries | `.build/formal/out/` | dune's build directory, Isabelle's export directory |
 | logs and timing data | `.local/formal/runs/` | the spike's scripts |
+| native toolchains on a Windows host without long paths | a short root outside the repository | `LATTICE_FORMAL_ROOT` |
+| a proxy's root certificate, where a host needs one to build images | outside the repository, passed to the build as a secret | the host's own setting, never committed |
 
-Toolchains are installed by the human or with the human's approval, into `.build/formal/` only.
+Toolchains are installed by the human or with the human's approval, into `.build/formal/`, or the
+short root, only. Images are pulled or built with the same approval.
 Before each commit on the branch, `git status` must show no build output, no binary, no generated
 data and no toolchain file. Only sources, the brief, the report, the status record and the
 `.gitignore` rule are tracked.
@@ -145,12 +169,13 @@ data and no toolchain file. Only sources, the brief, the report, the status reco
 
 | Slice | Content | Output | Estimate (tokens) |
 |---|---|---|---|
-| D1 | the brief: the written semantics of TA and TL, the defects as patches, the MINOR change as a patch, the measures, the report template, the claim and gate scripts in their spike form, fairness rules. The `.build/formal/` ignore rule | Validation Pack `docs/developer/validation/formal-methods-0.md` | under 0.05M |
+| D0 | environments: the two prover images and the host-language images under epic §4's rules, multi-arch and pinned. The `check:formal-network`, `bootstrap:formal-images`, optional `bootstrap:formal-native-<tool>` and `check:formal-smoke` tasks in their spike form, with the Python driver. The smoke suite (prove, generate code, compile, run, read an AST, cross-compile) passing on macOS, Windows and Linux by the image route. M7's environment measures | `spikes/formal-prover/env/`, and a section of the report | under 0.05M |
+| D1 | the brief: the written semantics of TA and TL, the defects as patches, the MINOR change as a patch, the measures, the report template, the claim and gate scripts in their spike form, fairness rules | Validation Pack `docs/developer/validation/formal-methods-0.md` | under 0.05M |
 | D2 | the Rocq track | `spikes/formal-prover/rocq/` | 0.1M to 0.25M, capped at 0.25M |
 | D3 | the Isabelle track | `spikes/formal-prover/isabelle/` | 0.1M to 0.25M, capped at 0.25M |
 | D4 | the report: scores, evidence, recommendation or abandonment | `docs/developer/notes/formal-prover-experiment.md` | under 0.05M |
 
-**Fairness.** One model and one agent configuration for both tracks. Both start from the same written
+**Fairness.** One model and one agent configuration for both tracks, on one host and the image route. Both start from the same written
 semantics. The order of the tracks is recorded, since the second may benefit from the first, and the
 report weighs that. A target not finished within the cap is scored as not finished.
 
@@ -162,7 +187,8 @@ report weighs that. A target not finished within the cap is scored as not finish
 | FM-D1 is decided, or the prover abandoned, with reasons if the rule is overruled | the status record |
 | FM-D10's Haskell question is answered | the status record |
 | the abandonment thresholds of the epic §6 are revised with the measurements | the epic plan |
-| no build output, binary or toolchain file is tracked on the branch | `git status` on the branch |
+| the smoke suite passes on macOS, Windows and Linux by the image route, for the chosen prover's stack | D0's results in the report |
+| no build output, binary, image, certificate or toolchain file is tracked on the branch | `git status` on the branch |
 | the report and the status record are on `main` | `main` |
 
 ## 10. Out of scope
