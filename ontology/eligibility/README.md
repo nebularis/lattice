@@ -404,17 +404,11 @@ Eligibility canonicalisation is declaration-first and profile-stable:
 - Canonicalisation never changes the declared strategy (`elg:matchStrategy`), compatibility operation (`elg:compatibilityOperation`), or wildcard semantics (`elg:wildcardSemantics`).
 - Interval admissibility canonicalises through Quantification ranges and range sets only, using `elg:requiredRangeSet` and `elg:candidateRangeSet` with `qnt:Range`/`qnt:RangeSet`.
 
-## 10. Formalisation (Isabelle/HOL)
+## 10. Formalisation
 
 `elg:Decision`'s three named individuals (§6) are a closed, three-valued type under Belnap and
 Fitting's strong Kleene reading (L15, L16): `Undetermined` is below `Permitted` and `Denied` in
-the information order, which are each other's own fixed point only. The `isabelle-spec` block
-below generates this closed datatype into `tools/proofs/eligibility/Kernel.thy`
-(ADR-A-FM2); `or3`, `and3`, `neg3` and the laws built on it (TA1, TA2, L15, L16 as TL1 to TL3) are
-hand-written directly in that file, not generated, per epic principle E1 (`formal-methods.md`):
-only the closed datatype tracks this README, so adding a reading here (as the MINOR-change
-measure in `formal-prover-experiment.md` scripted) is a type-checked exhaustiveness break in the
-theory, not a silent gap.
+the information order, which are each other's own fixed point only.
 
 ```isabelle-spec
 theory Kernel
