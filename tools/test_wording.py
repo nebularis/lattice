@@ -63,12 +63,12 @@ def _vocab_closure() -> Graph:
 def test_c3_01_imports_exactly_the_layers_below() -> None:
     spec = _graph(LAYER / "spec" / "wording.ttl")
     ontology = URIRef(SPEC_IRI)
-    assert spec.value(ontology, OWL.versionIRI) == URIRef(LATTICE + "wording/0.5.0")  # C4-01, C5
+    assert spec.value(ontology, OWL.versionIRI) == URIRef(LATTICE + "wording/0.6.0")  # C4-01, C5
     assert set(spec.objects(ontology, OWL.imports)) == {
         URIRef(LATTICE + "foundation/0.4.0"),
         URIRef(LATTICE + "vocabulary/0.4.0"),
         URIRef(LATTICE + "quantification/0.7.0"),
-        URIRef(LATTICE + "eligibility/0.9.0"),
+        URIRef(LATTICE + "eligibility/0.10.0"),
     }
 
 

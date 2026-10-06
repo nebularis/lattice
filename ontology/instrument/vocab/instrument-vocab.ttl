@@ -12,8 +12,8 @@
 
 <https://www.nebularis.org/neuro-semantic/instrument-vocab>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/instrument-vocab/0.11.0> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.11.0> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/instrument-vocab/0.12.0> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.12.0> .
 
 ins-voc:ActivityContract a voc:SchemeContract ;
 	fnd:hasIdentity ins-voc:ActivityContract-identity ;
@@ -27,6 +27,12 @@ ins-voc:LocationContract a voc:SchemeContract ;
 	fnd:hasGovernanceState fnd:Active ;
 	skos:prefLabel "Location scheme contract"@en ;
 	voc:constrainsProperty ins:operatesAt .
+
+ins-voc:TermClassificationContract a voc:SchemeContract ;
+	fnd:hasIdentity ins-voc:TermClassificationContract-identity ;
+	fnd:hasGovernanceState fnd:Active ;
+	skos:prefLabel "Term classification scheme contract"@en ;
+	voc:constrainsProperty ins:classification .
 
 ins-voc:Activities a voc:ConceptScheme ;
 	fnd:hasIdentity ins-voc:Activities-identity ;
@@ -93,6 +99,9 @@ ins-voc:Indemnify a skos:Concept ; skos:inScheme ins-voc:Activities ;
 
 ins-voc:DeclineRenewal a skos:Concept ; skos:inScheme ins-voc:Activities ;
 	skos:prefLabel "Decline renewal"@en ; skos:definition "Give notice that an instrument shall not renew."@en .
+
+ins-voc:Award a skos:Concept ; skos:inScheme ins-voc:Activities ;
+	skos:prefLabel "Award"@en ; skos:definition "Award a contract or an order under an arrangement, creating a new instrument."@en .
 
 ins:InstrumentTarget a bhv:TargetKind ;
 	rdfs:comment "A Behaviour effect's target kind for an instrument." ;

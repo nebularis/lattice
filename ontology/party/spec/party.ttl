@@ -9,7 +9,7 @@
 @base <https://www.nebularis.org/neuro-semantic/party> .
 
 <https://www.nebularis.org/neuro-semantic/party> rdf:type owl:Ontology ;
-                                                  owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/party/0.7.0> ;
+                                                  owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/party/0.8.0> ;
                                                   owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.4.0> ,
                                                               <https://www.nebularis.org/neuro-semantic/lattice/quantification/0.7.0> .
 
@@ -38,8 +38,8 @@ pty:hasCompositionRule rdf:type owl:ObjectProperty ,
                                 owl:FunctionalProperty ;
                        rdfs:domain pty:ParticipationGroup ;
                        rdfs:range pty:CompositionRule ;
-                       rdfs:comment "The rule governing how a Participation Group's members' shares relate to the whole." ;
-                       fnd:utility "Functional and required (§6) — a group's composition rule is never ambiguous or absent once the group exists." .
+                       rdfs:comment "The rule governing how a Participation Group's members stand towards the other side." ;
+                       fnd:utility "Functional: a group has at most one composition rule. A group whose rule is not stated is silent about how its members stand, which a layer above may treat as undetermined rather than guess." .
 
 
 ###  https://www.nebularis.org/neuro-semantic/lattice/party#hasParticipant
@@ -91,13 +91,22 @@ pty:occupiedBy rdf:type owl:ObjectProperty ,
 #    Data properties
 #################################################################
 
-###  https://www.nebularis.org/neuro-semantic/lattice/party#share
-pty:share rdf:type owl:DatatypeProperty ,
-                   owl:FunctionalProperty ;
-          rdfs:domain pty:GroupMembership ;
-          rdfs:range xsd:decimal ;
-          rdfs:comment "The proportion of the obligation a group member is responsible for." ;
-          fnd:utility "The proportion of the obligation this group member is responsible for, expressed as a decimal — 0.4 for 40%. For fixed-amount shares rather than proportions, add that as a separate property." .
+###  https://www.nebularis.org/neuro-semantic/lattice/party#inwardShare
+pty:inwardShare rdf:type owl:DatatypeProperty ,
+                         owl:FunctionalProperty ;
+                rdfs:domain pty:GroupMembership ;
+                rdfs:range xsd:decimal ;
+                rdfs:comment "The proportion a group member bears among the members of its group." ;
+                fnd:utility "A decimal, 0.5 for half. Optional: state it only where the members' arrangement among themselves is known. Where stated for every member, the shares sum to 1. What the proportion is of, and what follows from it, is for the layer that uses the group to say." .
+
+
+###  https://www.nebularis.org/neuro-semantic/lattice/party#outwardShare
+pty:outwardShare rdf:type owl:DatatypeProperty ,
+                          owl:FunctionalProperty ;
+                 rdfs:domain pty:GroupMembership ;
+                 rdfs:range xsd:decimal ;
+                 rdfs:comment "The proportion a group member stands for towards the other side, outside the group." ;
+                 fnd:utility "A decimal, 0.4 for 40%. Optional: state it where each member stands for its own proportion (pty:EachForOwnShare), and leave it out where each stands for the whole (pty:EachForWhole) or where the proportion is found later. Where stated for every member of an EachForOwnShare group, the shares sum to 1. What the proportion is of is for the layer that uses the group to say." .
 
 
 #################################################################
@@ -112,8 +121,8 @@ pty:Actor rdf:type owl:Class ;
 
 ###  https://www.nebularis.org/neuro-semantic/lattice/party#CompositionRule
 pty:CompositionRule rdf:type owl:Class ;
-                    rdfs:comment "How a Participation Group's members' shares relate to the whole obligation." ;
-                    fnd:utility "How a Participation Group's members' shares relate to the whole obligation — for example, whether each member's exposure is capped at its own share, or any member may be called for the full amount with a right of recourse against the others. Named values are declared in vocab/party-vocab.ttl." .
+                    rdfs:comment "How a Participation Group's members stand towards the other side." ;
+                    fnd:utility "Whether each member stands for its own outward share only (pty:EachForOwnShare) or each stands for the whole (pty:EachForWhole). Named values are declared in vocab/party-vocab.ttl. The legal readings a layer above gives them, such as several or joint and several liability, are that layer's." .
 
 
 ###  https://www.nebularis.org/neuro-semantic/lattice/party#Delegation
@@ -141,13 +150,9 @@ pty:GroupMembership rdf:type owl:Class ;
                                     [ rdf:type owl:Restriction ;
                                       owl:onProperty pty:memberOf ;
                                       owl:cardinality "1"^^xsd:nonNegativeInteger
-                                    ] ,
-                                    [ rdf:type owl:Restriction ;
-                                      owl:onProperty pty:share ;
-                                      owl:cardinality "1"^^xsd:nonNegativeInteger
                                     ] ;
-                    rdfs:comment "One Role Occupancy's participation in one Participation Group, carrying that occupancy's share." ;
-                    fnd:utility "Connects one RoleOccupancy to one ParticipationGroup, carrying that participation's share. Create one for each occupancy added to a group, rather than putting a share value directly on the occupancy." .
+                    rdfs:comment "One Role Occupancy's participation in one Participation Group, carrying that occupancy's shares." ;
+                    fnd:utility "Connects one RoleOccupancy to one ParticipationGroup, with its optional outward and inward shares. Create one for each occupancy added to a group, rather than putting a share directly on the occupancy." .
 
 
 ###  https://www.nebularis.org/neuro-semantic/lattice/party#ParticipationGroup
@@ -160,10 +165,10 @@ pty:ParticipationGroup rdf:type owl:Class ;
                                        ] ,
                                        [ rdf:type owl:Restriction ;
                                          owl:onProperty pty:hasCompositionRule ;
-                                         owl:cardinality "1"^^xsd:nonNegativeInteger
+                                         owl:maxCardinality "1"^^xsd:nonNegativeInteger
                                        ] ;
-                       rdfs:comment "A set of Role Occupancies sharing responsibility for one obligation, under a declared composition rule." ;
-                       fnd:utility "A set of Role Occupancies sharing responsibility for one obligation. Give it a hasCompositionRule to say how members' shares relate to the whole, and connect members through GroupMembership individuals rather than a direct property. If composition changes, create a new version and link it with fnd:supersededBy." .
+                       rdfs:comment "A set of Role Occupancies standing together on one side of something, under at most one composition rule." ;
+                       fnd:utility "A set of Role Occupancies standing together on one side. Give it a hasCompositionRule to say how its members stand towards the other side, and connect members through GroupMembership individuals rather than a direct property. If composition changes, create a new version and link it with fnd:supersededBy." .
 
 
 ###  https://www.nebularis.org/neuro-semantic/lattice/party#Role

@@ -16,12 +16,12 @@
 
 <https://www.nebularis.org/neuro-semantic/lattice/applied/capacity/execution>
   a owl:Ontology ;
-  owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/applied/capacity/execution/0.12.0> ;
+  owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/applied/capacity/execution/0.13.0> ;
   owl:imports
     <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.4.0> ,
     <https://www.nebularis.org/neuro-semantic/lattice/quantification/0.7.0> ,
-    <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.9.0> ,
-    <https://www.nebularis.org/neuro-semantic/lattice/behaviour-runtime/0.12.0> ;
+    <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.10.0> ,
+    <https://www.nebularis.org/neuro-semantic/lattice/behaviour-runtime/0.13.0> ;
   rdfs:comment "Runtime projection profile for high-throughput capacity allocation. Source semantics remain in ontology/behaviour/quantification/capacity." .
 
 #################################################################

@@ -8,7 +8,7 @@
 
 ## 1. Purpose and Scope
 
-Party provides Actor, Role, and the reified qualified-relation individual (Role Occupancy) that connects them, scoped and time-bound. Participation Groups with shares and composition rules, Delegation between an accountable role and a performing one, are both built on that reification.
+Party provides Actor, Role, and the reified qualified-relation individual (Role Occupancy) that connects them, scoped and time-bound. Participation Groups with outward and inward shares and composition rules, Delegation between an accountable role and a performing one, are both built on that reification.
 
 Party imports Foundation and Vocabulary, and is imported in turn by Instrument, Eligibility, and Behaviour, per the established dependency order. The direction matters more here than in prior ontologies, because upward references (e.g., an Obligation's obligor and obligee, an Effect populating a contingent occupancy, or a Guard testing a delegation's scope) are deliberately left to the higher layer's own projection file(s) to declare.
 
@@ -33,9 +33,11 @@ Same convention as the prior two documents: genuine specification content is fen
 
 **`occupiedBy` is optional; `inRole` is required.** This is the formal mechanism behind contingent role occupancy — the case where a role exists in an instrument's design from the outset but no actor occupies it until some event triggers a state change.
 
-**Group membership is its own reified class, not a property on `RoleOccupancy`.** Share is a property of *participating in a specific group*, not of the occupancy in isolation — if an occupancy were ever relevant to more than one grouping, putting share directly on the occupancy would be ambiguous about which group it referred to. `GroupMembership` reifies exactly that participation, the same qualified-relation move `RoleOccupancy` itself already makes for Actor-in-Role.
+**Group membership is its own reified class, not a property on `RoleOccupancy`.** A share is a property of *participating in a specific group*, not of the occupancy in isolation. If an occupancy belonged to more than one group, a share on the occupancy would not say which group it referred to. `GroupMembership` reifies exactly that participation, the same qualified-relation move `RoleOccupancy` itself already makes for Actor-in-Role.
 
 **`Role` and `CompositionRule` are open at the T-box level, closed-by-default in `vocab/party-vocab.ttl`.** This design pattern is common — Foundation's `GovernanceState`, Vocabulary's implicit treatment of scheme-contract structure — and `CONTRIBUTING.md` already names "role type" and "composition-rule type" specifically as mechanism-intrinsic vocabulary, distinct from the genuinely domain-specific vocabulary that goes through Vocabulary's scheme-contract mechanism instead. Obligor, Obligee, Accountable, and Performing are properties of *how a directed relationship or a delegation works*, in any domain — not properties of insurance, or lending, or clinical trials specifically, which is what makes them mechanism-intrinsic rather than something a downstream implementation should have to supply. "Closed" here means closed-by-default, not closed-permanently: we allow for composition rules a lower ontology defines beyond LATTICE's own baseline, and `vocab/party-vocab.ttl` treats both Role and CompositionRule the same way — a baseline a downstream implementation may extend, with a correspondingly extended or overridden SHACL shape.
+
+**Shares and composition rules say how members stand, not what that means.** A member's `outwardShare` is the proportion it stands for towards the other side, and its `inwardShare` the proportion it bears among the members. A group's rule says whether each member stands for its own outward share (`EachForOwnShare`) or for the whole (`EachForWhole`). Party does not say what the proportions are of, or which legal reading applies: several liability, joint and several liability, a subscription line and a contribution arrangement are the readings a layer above gives them (§9.1). Caps on what a member stands for belong to that layer too. Both shares and the rule are optional, since an instrument may be silent, and a layer above may treat silence as undetermined rather than guess.
 
 **Delegation carries no formal scope property.** Formalising a scope property here — even a simple one — would mean either duplicating Eligibility's mechanism or depending on a layer above Party in the order. `Delegation` states only that a performing occupancy discharges an accountable one; whether a given instance of performance is *within scope* is composed on top, by Eligibility, exactly the way Behaviour composes state transitions on top of Foundation's bare `GovernanceState`.
 
@@ -91,19 +93,19 @@ pty:RoleOccupancy a owl:Class ;
 
 #### `pty:ParticipationGroup`
 
-**Definition.** A set of Role Occupancies sharing responsibility for one obligation, under a declared composition rule.
+**Definition.** A set of Role Occupancies standing together on one side of something, under at most one composition rule.
 
-**Utility.** A set of Role Occupancies sharing responsibility for one obligation. Set `hasCompositionRule` to define how member shares relate to the whole, and connect members through `GroupMembership` individuals rather than a direct property. If composition changes, create a new version and link it to the old one with `fnd:supersededBy`.
+**Utility.** Set `hasCompositionRule` to say how the members stand towards the other side, and connect members through `GroupMembership` individuals rather than a direct property. If composition changes, create a new version and link it to the old one with `fnd:supersededBy`.
 
 ```turtle-spec
 pty:ParticipationGroup a owl:Class ;
     rdfs:subClassOf fnd:Version, fnd:Evidenced ;
-    rdfs:comment "A set of Role Occupancies sharing responsibility for one obligation, under a declared composition rule." ;
-    fnd:utility "A set of Role Occupancies sharing responsibility for one obligation. Give it a hasCompositionRule to say how members' shares relate to the whole, and connect members through GroupMembership individuals rather than a direct property. If composition changes, create a new version and link it with fnd:supersededBy." ;
+    rdfs:comment "A set of Role Occupancies standing together on one side of something, under at most one composition rule." ;
+    fnd:utility "A set of Role Occupancies standing together on one side. Give it a hasCompositionRule to say how its members stand towards the other side, and connect members through GroupMembership individuals rather than a direct property. If composition changes, create a new version and link it with fnd:supersededBy." ;
     rdfs:subClassOf [
         a owl:Restriction ;
         owl:onProperty pty:hasCompositionRule ;
-        owl:cardinality "1"^^xsd:nonNegativeInteger
+        owl:maxCardinality "1"^^xsd:nonNegativeInteger
     ] , [
         a owl:Restriction ;
         owl:onProperty pty:hasParticipant ;
@@ -113,26 +115,26 @@ pty:ParticipationGroup a owl:Class ;
 
 #### `pty:CompositionRule`
 
-**Definition.** How a Participation Group's members' shares relate to the whole obligation.
+**Definition.** How a Participation Group's members stand towards the other side.
 
-**Utility.** How a Participation Group's members' shares relate to the whole obligation, for example whether each member's exposure is capped at its own share, or any member may be called for the full amount with recourse against others. Named values such as `SeveralOnly` and `JointAndSeveral` are declared in `vocab/party-vocab.ttl`.
+**Utility.** Whether each member stands for its own outward share only, or each stands for the whole. The named values, `EachForOwnShare` and `EachForWhole`, are declared in `vocab/party-vocab.ttl`.
 
 ```turtle-spec
 pty:CompositionRule a owl:Class ;
-    rdfs:comment "How a Participation Group's members' shares relate to the whole obligation." ;
-    fnd:utility "How a Participation Group's members' shares relate to the whole obligation — for example, whether each member's exposure is capped at its own share, or any member may be called for the full amount with a right of recourse against the others. Named values are declared in vocab/party-vocab.ttl." .
+    rdfs:comment "How a Participation Group's members stand towards the other side." ;
+    fnd:utility "Whether each member stands for its own outward share only (pty:EachForOwnShare) or each stands for the whole (pty:EachForWhole). Named values are declared in vocab/party-vocab.ttl. The legal readings a layer above gives them, such as several or joint and several liability, are that layer's." .
 ```
 
 #### `pty:GroupMembership`
 
-**Definition.** One Role Occupancy's participation in one Participation Group, carrying that occupancy's share.
+**Definition.** One Role Occupancy's participation in one Participation Group, carrying that occupancy's shares.
 
-**Utility.** Connects one RoleOccupancy to one ParticipationGroup and carries that participation's share. Create one membership per occupancy-per-group relationship, rather than storing share directly on the occupancy.
+**Utility.** Connects one RoleOccupancy to one ParticipationGroup, with its optional outward and inward shares. Create one membership per occupancy-per-group relationship, rather than storing a share on the occupancy.
 
 ```turtle-spec
 pty:GroupMembership a owl:Class ;
-    rdfs:comment "One Role Occupancy's participation in one Participation Group, carrying that occupancy's share." ;
-    fnd:utility "Connects one RoleOccupancy to one ParticipationGroup, carrying that participation's share. Create one for each occupancy added to a group, rather than putting a share value directly on the occupancy." ;
+    rdfs:comment "One Role Occupancy's participation in one Participation Group, carrying that occupancy's shares." ;
+    fnd:utility "Connects one RoleOccupancy to one ParticipationGroup, with its optional outward and inward shares. Create one for each occupancy added to a group, rather than putting a share directly on the occupancy." ;
     rdfs:subClassOf [
         a owl:Restriction ;
         owl:onProperty pty:memberOccupancy ;
@@ -140,10 +142,6 @@ pty:GroupMembership a owl:Class ;
     ] , [
         a owl:Restriction ;
         owl:onProperty pty:memberOf ;
-        owl:cardinality "1"^^xsd:nonNegativeInteger
-    ] , [
-        a owl:Restriction ;
-        owl:onProperty pty:share ;
         owl:cardinality "1"^^xsd:nonNegativeInteger
     ] .
 ```
@@ -232,30 +230,36 @@ pty:hasParticipant a owl:ObjectProperty ;
     fnd:utility "The inverse of memberOf — points a ParticipationGroup at its GroupMembership individuals. Typically used for querying a group's members rather than asserted directly." .
 ```
 
-#### `pty:share`
+#### `pty:outwardShare` / `pty:inwardShare`
 
-**Definition.** The proportion of the obligation a group member is responsible for.
+**Definition.** The proportion a member stands for towards the other side, and the proportion it bears among the members.
 
-**Utility.** The proportion of the obligation this group member is responsible for, expressed as a decimal, for example `0.4` for 40 percent. If fixed-amount shares are needed, add that as a separate property.
+**Utility.** Decimals, `0.4` for 40 percent, both optional. State outward shares under `EachForOwnShare`, where they sum to 1, and leave them out under `EachForWhole` or where the proportion is found later. State inward shares only where the members' arrangement among themselves is known. Party does not say what the proportions are of.
 
 ```turtle-spec
-pty:share a owl:DatatypeProperty, owl:FunctionalProperty ;
+pty:outwardShare a owl:DatatypeProperty, owl:FunctionalProperty ;
     rdfs:domain pty:GroupMembership ;
     rdfs:range xsd:decimal ;
-    rdfs:comment "The proportion of the obligation a group member is responsible for." ;
-    fnd:utility "The proportion of the obligation this group member is responsible for, expressed as a decimal — 0.4 for 40%. For fixed-amount shares rather than proportions, add that as a separate property." .
+    rdfs:comment "The proportion a group member stands for towards the other side, outside the group." ;
+    fnd:utility "A decimal, 0.4 for 40%. Optional: state it where each member stands for its own proportion (pty:EachForOwnShare), and leave it out where each stands for the whole (pty:EachForWhole) or where the proportion is found later. Where stated for every member of an EachForOwnShare group, the shares sum to 1. What the proportion is of is for the layer that uses the group to say." .
+
+pty:inwardShare a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:domain pty:GroupMembership ;
+    rdfs:range xsd:decimal ;
+    rdfs:comment "The proportion a group member bears among the members of its group." ;
+    fnd:utility "A decimal, 0.5 for half. Optional: state it only where the members' arrangement among themselves is known. Where stated for every member, the shares sum to 1. What the proportion is of, and what follows from it, is for the layer that uses the group to say." .
 ```
 
 #### `pty:hasCompositionRule`
 
-**Definition.** The rule governing how a Participation Group's members' shares relate to the whole.
+**Definition.** The rule governing how a Participation Group's members stand towards the other side.
 
 ```turtle-spec
 pty:hasCompositionRule a owl:ObjectProperty, owl:FunctionalProperty ;
     rdfs:domain pty:ParticipationGroup ;
     rdfs:range pty:CompositionRule ;
-    rdfs:comment "The rule governing how a Participation Group's members' shares relate to the whole." ;
-    fnd:utility "Functional and required (§6) — a group's composition rule is never ambiguous or absent once the group exists." .
+    rdfs:comment "The rule governing how a Participation Group's members stand towards the other side." ;
+    fnd:utility "Functional: a group has at most one composition rule. A group whose rule is not stated is silent about how its members stand, which a layer above may treat as undetermined rather than guess." .
 ```
 
 #### `pty:delegatesFrom` / `pty:delegatesTo`
@@ -284,16 +288,16 @@ None. Party introduces no external-vocabulary dependency the way Vocabulary alig
 
 ## 9. Worked Micro-Examples
 
-Illustration only. `ins:` and `ex:` prefixes are not part of Party's own namespace. `pty:Obligor`, `pty:SeveralOnly`, `pty:Accountable`, and `pty:Performing` are forward references to named individuals `vocab/party-vocab.ttl` will declare, exactly as `fnd:Active` was a forward reference in Vocabulary's worked example.
+Illustration only. `ins:` and `ex:` prefixes are not part of Party's own namespace. `pty:Obligor`, `pty:EachForOwnShare`, `pty:EachForWhole`, `pty:Accountable`, and `pty:Performing` are forward references to named individuals `vocab/party-vocab.ttl` will declare, exactly as `fnd:Active` was a forward reference in Vocabulary's worked example.
 
-### 9.1 Several liability
+### 9.1 Several, and joint and several, liability
 
-Three occupancies sharing one obligation, none liable for more than its own share.
+Party states how members stand. A layer above reads that as liability. Several liability is each member standing for its own outward share. Here three occupancies owe one obligation, none for more than its own share.
 
 ```turtle-example
 ex:group-1
     a pty:ParticipationGroup ;
-    pty:hasCompositionRule pty:SeveralOnly .
+    pty:hasCompositionRule pty:EachForOwnShare .
 
 ex:occ-a a pty:RoleOccupancy ;
     pty:inRole pty:Obligor ;
@@ -303,10 +307,27 @@ ex:occ-a a pty:RoleOccupancy ;
 ex:mem-a a pty:GroupMembership ;
     pty:memberOccupancy ex:occ-a ;
     pty:memberOf ex:group-1 ;
-    pty:share "0.40"^^xsd:decimal .
+    pty:outwardShare "0.40"^^xsd:decimal .
 
 # ex:occ-b / ex:mem-b (0.35) and ex:occ-c / ex:mem-c (0.25) follow the same pattern.
 ```
+
+Joint and several liability is each member standing for the whole, so no outward share is stated. Where the members have agreed how they bear it between themselves, their inward shares say so: the creditor may look to either for all of it, and the one who pays recovers half from the other.
+
+```turtle-example
+ex:group-2
+    a pty:ParticipationGroup ;
+    pty:hasCompositionRule pty:EachForWhole .
+
+ex:mem-d a pty:GroupMembership ;
+    pty:memberOccupancy ex:occ-d ;
+    pty:memberOf ex:group-2 ;
+    pty:inwardShare "0.5"^^xsd:decimal .
+
+# ex:mem-e for ex:occ-e follows the same pattern, with 0.5.
+```
+
+A cap on what one member stands for, such as a limit of liability for one member of a joint and several group, is stated by the instrument that creates the obligation, not by Party.
 
 Note what's absent: nothing here says which obligation this group owes or is owed. That reference is Instrument's: an `ins:Obligation` names the group as its `ins:obligor` or `ins:obligee`, pointing *at* `ex:group-1` from the relation's side, per §4.
 
@@ -342,17 +363,18 @@ ex:delegation-1
 | `pty:Actor` | Class | bare, no mixins |
 | `pty:Role` | Class | bare; open at T-box, closed via `vocab/party-vocab.ttl` |
 | `pty:RoleOccupancy` | Class | `fnd:Version`, `fnd:Evidenced`, `fnd:TemporallyScoped`; `inRole` cardinality 1 |
-| `pty:ParticipationGroup` | Class | `fnd:Version`, `fnd:Evidenced`; `hasCompositionRule` cardinality 1; `hasParticipant` min 1 |
+| `pty:ParticipationGroup` | Class | `fnd:Version`, `fnd:Evidenced`; `hasCompositionRule` at most 1; `hasParticipant` min 1 |
 | `pty:CompositionRule` | Class | open at T-box, closed via `vocab/party-vocab.ttl` |
-| `pty:GroupMembership` | Class | bare; `memberOccupancy`, `memberOf`, `share` each cardinality 1 |
+| `pty:GroupMembership` | Class | bare; `memberOccupancy`, `memberOf` each cardinality 1 |
 | `pty:Delegation` | Class | `fnd:Evidenced`, `fnd:TemporallyScoped`; `delegatesFrom`, `delegatesTo` each cardinality 1 |
 | `pty:occupiedBy` | Object property | Functional; optional |
 | `pty:inRole` | Object property | Functional; required |
 | `pty:memberOccupancy` | Object property | Functional; required |
 | `pty:memberOf` | Object property | Functional; required; inverse of `hasParticipant` |
 | `pty:hasParticipant` | Object property | inverse of `memberOf`; entailed, not independently asserted |
-| `pty:share` | Data property | Functional; `xsd:decimal`; proportion, not absolute amount |
-| `pty:hasCompositionRule` | Object property | Functional; required |
+| `pty:outwardShare` | Data property | Functional; optional; `xsd:decimal`; proportion towards the other side |
+| `pty:inwardShare` | Data property | Functional; optional; `xsd:decimal`; proportion among the members |
+| `pty:hasCompositionRule` | Object property | Functional; optional |
 | `pty:delegatesFrom` | Object property | not globally functional; cardinality 1 per `Delegation` |
 | `pty:delegatesTo` | Object property | not globally functional; cardinality 1 per `Delegation` |
 

@@ -108,6 +108,70 @@ C7c section:
   - **Older examples keep stored bound meaning.** The C6 to C7b examples are not split into form,
     instance and generated parts. C16b retrofits them, or the README states the convention
 
+Phase 2, the model, 2026-10-06:
+
+- **Built:**
+  - Instrument 0.12.0 (breaking): definitions, deemings, classification, sectionings, scopes,
+    `ins:boundWithin`, `ins:boundUnder`, party resolution, with README sections §15 Constitutive
+    Terms, §16 Sections and §17 Who Terms Bind (the former §15 to §19 are now §18 to §22),
+    terminology entries §4.2.17 to §4.2.20, a property group in §4.3, laws I11, I12, I15 and I16
+    registered and I13 restated, worked examples §21.13 to §21.17, and release notes.
+    `instrument-vocab` 0.12.0 adds `ins-voc:TermClassificationContract` and `ins-voc:Award`. Shapes
+    0.5.0
+  - Party 0.8.0 and `party-vocab` 0.8.0 (breaking, D19): `pty:outwardShare` and `pty:inwardShare`
+    replace `pty:share`, `pty:EachForOwnShare` and `pty:EachForWhole` replace `pty:SeveralOnly` and
+    `pty:JointAndSeveral`, with the README, the vocabulary README and the ontology architecture
+    updated
+  - the cascade: Eligibility 0.10.0, `eligibility-vocab` 0.11.0, Behaviour, `behaviour-vocab` and
+    `behaviour-runtime` 0.13.0, Wording and `wording-vocab` 0.6.0, Insurance Common and its vocab
+    0.4.0, the capacity execution profile 0.13.0. The catalog, 15 release rows, and release notes
+    where the README keeps them
+  - `tools/test_constitutive_terms.py` (49 tests), added to `check:ontology-catalog`. Version pins
+    in eight existing test modules moved to the new versions
+- **Run by the agent:** every row below, with every tool package importing from this checkout.
+- **Check first:** the deviations, in particular the removed ranges and the optional composition
+  rule, which make 0.12.0 and Party 0.8.0 breaking.
+- **Deviations from the plan:**
+  - **Instrument 0.12.0 is breaking, not additive.** `ins:scope`, `ins:maintains` and
+    `ins:condition` lose `rdfs:range elg:Condition`, since a word stands there on stated meaning
+    (D12) and a reasoner would otherwise type every word a condition. `ins:qualifies` is no longer
+    functional (D10). The Party cascade is breaking in any case
+  - **Party's composition rule is optional** (`owl:maxCardinality 1`, was exactly 1), and a
+    membership's shares are optional, so that a silent instrument (CC-D10) is representable
+  - **Sections are checked as element identities.** A scope, a section, a bound term's section and an
+    ending name a value that is the `fnd:hasIdentity` of a wording element (`ins:ElementIdentityShape`).
+    The examples do not type identity nodes `fnd:PersistentIdentity`, and the rule is about being an
+    element's identity in any case
+  - **A scope cutting through a section is a warning**, reported for the drafter, not a violation.
+    Only a declared or named section may be ended (`ins:EndsSectionShape`)
+  - **I16 is checked on generated bound meaning.** Overlaps are found where sections are explicit,
+    in `ins:boundWithin`. Checking them on the form alone, and checking that every word a term uses
+    resolves in every section it applies within, needs the binder (C8, C16b). C7c checks only that a
+    word in a condition slot is defined somewhere
+  - **C7c-21 checks structure, not outcomes.** Which towers' credits arise on the incident is
+    evaluation (C12, C13). The row checks that each tower's generated trigger reads its own
+    condition and that the incident carries no placement
+  - **C7c-22 is restated as "stated meaning is context-free"**: no stated node names an element
+    version except through `ins:expressedIn`, nor any instrument. That is the property hash reuse
+    relies on. Sharing stated nodes between instruments already follows from their owning element
+    version
+  - **Eligibility and Insurance Common keep no release notes**, as in earlier cascades. Their
+    versions are in the release register
+
 ## Results
 
-Recorded at verification.
+Run by the agent on machine R, 2026-10-06, with every tool package importing from this checkout.
+
+| Row | Result |
+|---|---|
+| C7c-01 | pass: 0.12.0, Party 0.8.0, Eligibility 0.10.0, Wording 0.6.0 and Behaviour 0.13.0 imported, every new property states subject and value, the three condition slots have no range, `ins:qualifies` is not functional. Party has its new terms and no old ones, and nothing in `ontology/` or `tools/` names the old ones |
+| C7c-02 | pass: the five examples conform to every layer's structural and constraint shapes. The only warning is I16's at Lot 2, naming rows S1.1 and S1.2. All 17 Instrument examples conform |
+| C7c-03 | pass: the five examples are consistent (reasoning harness) |
+| C7c-04 to C7c-14 | pass: each change reported at its node, with its message. A silent group conforms (C7c-11), a prevailing definition removes the warning (C7c-09) |
+| C7c-15 | pass: the README generates its five files, release notes for 0.12.0 and shapes 0.5.0, the 15 release rows present |
+| C7c-16 | pass: 82 diagrams in the Instrument README render under mermaid 11, with the ELK layout, in a page |
+| C7c-17 | pass: 518 tests in `check:ontology-catalog`, after the version pins in eight modules moved |
+| C7c-18 | pass: `check:ontology-catalog`, `check:ontology-versioning`, `check:import-guard` (0 violations), `check:python-root`, `check:mork-compilers` (114), `check:persistence` (778), `check:vocabulary` (16), `build:mtp` (lock unchanged) and `check:mtp`. The literate checks of Behaviour, Wording and Instrument pass |
+| C7c-19 to C7c-22 | pass: 3.1 bound once for Lots 1 and 2 and once for Lot 3, each resolving "the Supplier" alike within itself, and a second binding of one section reported. The cap bound once over the three credits. Each tower's trigger reads its own condition. No stated node names an element version or an instrument |
+
+15 release rows added. The tags are listed in the status record.

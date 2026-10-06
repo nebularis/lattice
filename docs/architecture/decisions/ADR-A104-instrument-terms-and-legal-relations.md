@@ -301,7 +301,7 @@ The examples are `trial-reporting.ttl`, `lease-expiry.ttl`, `licence-survival.tt
 
 ## Addendum (2026-10-06): what terms are, and who they bind
 
-**Status:** Proposed 2026-10-06 (CCS slice C7c). Records C7c-Q1 to C7c-Q9 as revised after the
+**Status:** Accepted 2026-10-06, proposed the same day (CCS slice C7c). Records C7c-Q1 to C7c-Q9 as revised after the
 examples phase, as decisions D1 to D22 of the [CCS plan's C7c section](../../developer/plans/computable-contract-substrate.md),
 which states each in full. Restates decisions 4 and 12, details decision 9, and revises the
 2026-10-05 addendum's decision 4. The examples are `framework-lots.ttl`, `service-towers.ttl`,

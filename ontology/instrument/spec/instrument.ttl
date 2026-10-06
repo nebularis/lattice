@@ -16,14 +16,14 @@
 
 <https://www.nebularis.org/neuro-semantic/instrument>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.11.0> ;
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.12.0> ;
 	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.4.0> ,
 				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.4.0> ,
 				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.7.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/party/0.7.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.9.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/wording/0.5.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.12.0> .
+				<https://www.nebularis.org/neuro-semantic/lattice/party/0.8.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.10.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/wording/0.6.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.13.0> .
 
 ins:Instrument a owl:Class ;
 	rdfs:subClassOf fnd:Version ;
@@ -171,15 +171,13 @@ ins:activity a owl:ObjectProperty ;
 
 ins:scope a owl:ObjectProperty, owl:FunctionalProperty ;
 	rdfs:domain ins:LegalRelation ;
-	rdfs:range elg:Condition ;
 	rdfs:comment "The cases a relation applies to." ;
-	fnd:utility "Subject: a relation. Value: at most one Eligibility condition over the case. A carve-back is a negated member of it." .
+	fnd:utility "Subject: a relation. Value: at most one Eligibility condition over the case, or on stated meaning a word a definition defines, which binding replaces (§15.1). A carve-back is a negated member of it." .
 
 ins:maintains a owl:ObjectProperty ;
 	rdfs:domain ins:ContinuingObligation ;
-	rdfs:range elg:Condition ;
 	rdfs:comment "The state a continuing obligation keeps holding." ;
-	fnd:utility "Subject: a continuing obligation. Value: exactly one condition that must hold throughout." .
+	fnd:utility "Subject: a continuing obligation. Value: exactly one condition that must hold throughout, or on stated meaning a defined word (§15.1)." .
 
 ins:fulfilledWhen a owl:ObjectProperty ;
 	rdfs:domain ins:Obligation ;
@@ -189,15 +187,15 @@ ins:fulfilledWhen a owl:ObjectProperty ;
 
 ins:Qualifier a owl:Class ;
 	rdfs:comment "A limit, level or retention on a term or a relation." ;
-	fnd:utility "Subject: a qualifier. Arises under exactly one term and qualifies exactly one term or relation. Its amounts are defined with contract amounts (C8)." .
+	fnd:utility "Subject: a qualifier. Arises under exactly one term. A stated qualifier qualifies exactly one term or relation, and a bound one every bound node generated from it (§16.5). Its amounts are defined with contract amounts (C8)." .
 
-ins:qualifies a owl:ObjectProperty, owl:FunctionalProperty ;
+ins:qualifies a owl:ObjectProperty ;
 	rdfs:domain ins:Qualifier ;
 	rdfs:comment "The term or relation a qualifier qualifies." ;
-	fnd:utility "Subject: a qualifier. Value: exactly one term or relation." .
+	fnd:utility "Subject: a qualifier. Value: on stated meaning, exactly one term or relation. On bound meaning, every bound term or relation generated from the stated one, so that a qualifier spanning sections is bound once (§16.5)." .
 
 [] a owl:AllDisjointClasses ;
-	owl:members ( ins:Instrument ins:Term ins:LegalRelation ins:Qualifier ) .
+	owl:members ( ins:Instrument ins:Term ins:LegalRelation ins:Qualifier ins:Definition ins:Deeming ins:Sectioning ins:PartyResolution ) .
 
 ins:Term owl:disjointWith fnd:Version .
 ins:LegalRelation owl:disjointWith fnd:Version .
@@ -252,9 +250,8 @@ ins:by a owl:ObjectProperty ;
 	fnd:utility "Subject: an ins:OnAct. Value: a party, any number. A regime is stated, so its triggers name roles. Without one, an act of the kind by any party fires the trigger." .
 
 ins:condition a owl:ObjectProperty, owl:FunctionalProperty ;
-	rdfs:range elg:Condition ;
 	rdfs:comment "The condition a condition trigger waits for." ;
-	fnd:utility "Subject: an ins:OnCondition. Value: exactly one Eligibility condition. The trigger fires when the condition comes to hold. No domain: terms in time may reuse the property (C7b)." .
+	fnd:utility "Subject: an ins:OnCondition. Value: exactly one Eligibility condition, or on a stated trigger a word a definition defines, which binding replaces in a generated trigger (§15.1). The trigger fires when the condition comes to hold. No domain: terms in time may reuse the property (C7b)." .
 
 ins:after a owl:ObjectProperty, owl:FunctionalProperty ;
 	rdfs:range qnt:Quantity ;
@@ -349,7 +346,7 @@ ins:at a owl:ObjectProperty, owl:FunctionalProperty ;
 
 ins:ends a owl:ObjectProperty ;
 	rdfs:comment "What entering a state ends." ;
-	fnd:utility "Subject: a state of a regime. Value: ins-voc:TheInstrument, the instrument as a whole, or a stated term, matched to every bound term instantiated from it. Any number. Once the state is entered, no new occasion arises under what it ends, unless a term survives (§14.3)." .
+	fnd:utility "Subject: a state of a regime. Value: ins-voc:TheInstrument, the instrument as a whole, a stated term, matched to every bound term instantiated from it, or a section's persistent identity, ending for that section's cases every term bound within it (§16.6). Any number. Once the state is entered, no new occasion arises under what it ends, unless a term survives (§14.3)." .
 
 ins:Survival a owl:Class ;
 	rdfs:comment "How long a term continues to operate after its instrument ends." ;
@@ -369,3 +366,104 @@ ins:survivesUntil a owl:ObjectProperty, owl:FunctionalProperty ;
 	rdfs:range elg:Condition ;
 	rdfs:comment "The condition until which a term survives." ;
 	fnd:utility "Subject: a survival. Value: one Eligibility condition. The term stops surviving when it comes to hold." .
+
+ins:Definition a owl:Class ;
+	rdfs:comment "A term's giving a word its meaning." ;
+	fnd:utility "Subject: a definition. Arises under exactly one term and belongs to it, as a relation does. Defines exactly one word and means at least one thing. Stated or bound, as relations are." .
+
+ins:defines a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:comment "The word a definition defines." ;
+	fnd:utility "Subject: a definition. Value: exactly one word, the node stated meaning names wherever the text uses it: a pty:Role for a party word, a skos:Concept for a condition or concept word." .
+
+ins:means a owl:ObjectProperty ;
+	rdfs:comment "What a defined word means." ;
+	fnd:utility "Subject: a definition. Value: at least one meaning. For a party word, roles on stated meaning and occupancies or groups on bound meaning (law I13). For a condition word, an Eligibility condition. For a concept word, a concept or a scheme. Several values are meant together." .
+
+ins:actingRule a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:range pty:CompositionRule ;
+	rdfs:comment "How the several parties a word means act together." ;
+	fnd:utility "Subject: a definition of a party word meaning several parties. Value: one Party composition rule, on stated and bound meaning alike. Binding gives it to the group it builds, whose rule must agree. Without one, the definition is silent and the relations it reaches are Undetermined (CC-D10)." .
+
+ins:prevailsOver a owl:ObjectProperty ;
+	rdfs:comment "A definition that prevails over another of the same word where both apply." ;
+	fnd:utility "Subject: a definition. Value: another definition of the same word, any number. Where both apply within one section, only the prevailing one is read, and no overlap is reported (law I16). Between definitions only, until NRS N10 widens it to terms." .
+
+ins:Deeming a owl:Class ;
+	rdfs:comment "A term's taking something to hold, whether or not it does." ;
+	fnd:utility "Subject: a deeming. Arises under exactly one term and belongs to it. Deems exactly one condition, on at most one footing. Stated or bound, as relations are." .
+
+ins:deems a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:comment "What a deeming takes to hold." ;
+	fnd:utility "Subject: a deeming. Value: exactly one Eligibility condition, or on stated meaning a word a definition defines." .
+
+ins:when a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:comment "The footing on which a deeming holds." ;
+	fnd:utility "Subject: a deeming. Value: at most one Eligibility condition, or on stated meaning a defined word. Without one, the deeming holds throughout. A condition reading an absence relies on the closure the deeming licenses (ADR-A105)." .
+
+ins:conclusive a owl:DatatypeProperty, owl:FunctionalProperty ;
+	rdfs:range xsd:boolean ;
+	rdfs:comment "Whether a deeming is conclusive." ;
+	fnd:utility "Subject: a deeming. Value: true when no proof displaces it, false when it holds until shown otherwise. Without one, the deeming is rebuttable." .
+
+ins:forPurposeOf a owl:ObjectProperty ;
+	rdfs:comment "A relation or term a deeming applies for." ;
+	fnd:utility "Subject: a deeming. Value: a relation or a term, any number, stated for a stated deeming and bound for a bound one. Without one, the deeming applies wherever its condition is read." .
+
+ins:classification a owl:ObjectProperty ;
+	rdfs:range skos:Concept ;
+	rdfs:comment "A class a term belongs to, such as a condition or a warranty." ;
+	fnd:utility "Subject: a stated term. Value: a concept from the scheme bound to ins-voc:TermClassificationContract, any number. Read for each instrument through the bound term's ins:boundFrom. Never evaluated: a breach's effect is stated as relations (law I12)." .
+
+ins:Definition owl:disjointWith fnd:Version .
+ins:Deeming owl:disjointWith fnd:Version .
+
+ins:Sectioning a owl:Class ;
+	rdfs:comment "A term's dividing its instrument into sections." ;
+	fnd:utility "Subject: a sectioning. Stated meaning only, an ins:Template, arising under exactly one stated term. Names at least one section, and places within each section the terms it contains. Read by binding, never evaluated." .
+
+ins:section a owl:ObjectProperty ;
+	rdfs:range fnd:PersistentIdentity ;
+	rdfs:comment "A section a sectioning declares." ;
+	fnd:utility "Subject: a sectioning. Value: the persistent identity of a wording element, any number, resolved within each instrument's assembled wording. Never an element version, so the stated meaning stays context-free." .
+
+ins:appliesWithin a owl:ObjectProperty ;
+	rdfs:range fnd:PersistentIdentity ;
+	rdfs:comment "A part of an instrument a term applies within." ;
+	fnd:utility "Subject: a stated term. Value: the persistent identity of a section, or of a part above sections, any number: alternatives. Without one, a term applies within the section that contains it, or the whole instrument." .
+
+ins:notWithin a owl:ObjectProperty ;
+	rdfs:range fnd:PersistentIdentity ;
+	rdfs:comment "A part of an instrument a term does not apply within." ;
+	fnd:utility "Subject: a stated term. Value: the persistent identity of a part, at or below one of the term's ins:appliesWithin parts where it has any, any number. Excludes the parts at or below it." .
+
+ins:boundWithin a owl:ObjectProperty ;
+	rdfs:range fnd:PersistentIdentity ;
+	rdfs:comment "A section a bound term was generated for." ;
+	fnd:utility "Subject: a bound term. Value: the persistent identity of a section, any number: the sections whose words resolve alike, sharing this bound term. Without one, the bound term covers the whole instrument. Two bound terms from one stated term never share a section." .
+
+ins:boundUnder a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:range ins:Power ;
+	rdfs:comment "The power whose exercise created an instrument." ;
+	fnd:utility "Subject: an instrument version, such as a call-off or a policy under a binding authority. Value: at most one bound power of another instrument. The instrument falls in the one section the power is bound within (law I15). Amendments, consent rules and incorporation are C9's." .
+
+ins:PartyResolution a owl:Class ;
+	rdfs:comment "How a party that depends on the case is resolved from it." ;
+	fnd:utility "Subject: a party resolution. Starts at exactly one class (ins:resolvesFrom), follows at least one Eligibility step to actors, and keeps those satisfying at most one condition. Not an elg:EvidenceBinding: its result is actors, not a decision." .
+
+ins:resolvedBy a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:range ins:PartyResolution ;
+	rdfs:comment "How a contingent occupancy is filled for each case." ;
+	fnd:utility "Subject: a role occupancy with no actor (ADR-A102). Value: at most one party resolution. Without one, a record of each occasion fills the occupancy. The party is fixed when the occasion arises (law I11)." .
+
+ins:resolvesFrom a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:comment "The class of case a party resolution starts from." ;
+	fnd:utility "Subject: a party resolution. Value: exactly one class, the class of the case each occasion arises on, such as an adverse event or a claim." .
+
+ins:resolutionStep a owl:ObjectProperty ;
+	rdfs:range elg:EvidenceStep ;
+	rdfs:comment "One step of a party resolution's path." ;
+	fnd:utility "Subject: a party resolution. Value: an elg:EvidenceStep, at least one, ordered by elg:stepIndex from 0. The last step reaches actors, never literals." .
+
+ins:resolutionFilter a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:comment "The condition each actor a resolution reaches must satisfy." ;
+	fnd:utility "Subject: a party resolution. Value: at most one Eligibility condition, or on stated meaning a defined word, applied to each actor the path reaches. An actor it does not keep is no party for the occasion." .

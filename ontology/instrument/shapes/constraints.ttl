@@ -161,3 +161,223 @@ ins:TollingShape a sh:NodeShape ;
 			}
 		"""
 	] .
+
+ins:NotWithinBelowShape a sh:NodeShape ;
+	sh:targetSubjectsOf ins:notWithin ;
+	sh:sparql [
+		sh:message "{$this} excludes {?part}, which lies below none of the parts it applies within (§16.2)." ;
+		sh:select """
+			PREFIX ins:  <https://www.nebularis.org/neuro-semantic/lattice/instrument#>
+			PREFIX fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+			PREFIX wrd:  <https://www.nebularis.org/neuro-semantic/lattice/wording#>
+			PREFIX pty:  <https://www.nebularis.org/neuro-semantic/lattice/party#>
+			PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+			PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+			SELECT $this ?part WHERE {
+				$this ins:notWithin ?part .
+				FILTER EXISTS { $this ins:appliesWithin ?any }
+				FILTER NOT EXISTS {
+					$this ins:appliesWithin ?above .
+					?upper fnd:hasIdentity ?above .
+					?lower fnd:hasIdentity ?part .
+					?upper wrd:directlyComprises* ?lower .
+				}
+			}
+		"""
+	] .
+
+ins:ScopeCutsSectionShape a sh:NodeShape ;
+	sh:targetSubjectsOf ins:appliesWithin , ins:notWithin ;
+	sh:severity sh:Warning ;
+	sh:sparql [
+		sh:message "{$this} is scoped to {?part}, which lies inside the declared section {?section} and is not itself a section: declare it, or state the condition as a scope (§16.2)." ;
+		sh:select """
+			PREFIX ins:  <https://www.nebularis.org/neuro-semantic/lattice/instrument#>
+			PREFIX fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+			PREFIX wrd:  <https://www.nebularis.org/neuro-semantic/lattice/wording#>
+			SELECT $this ?part ?section WHERE {
+				$this ins:appliesWithin|ins:notWithin ?part .
+				?sectioning ins:section ?section .
+				FILTER NOT EXISTS { ?any ins:section ?part }
+				?upper fnd:hasIdentity ?section .
+				?lower fnd:hasIdentity ?part .
+				?upper wrd:directlyComprises+ ?lower .
+			}
+		"""
+	] .
+
+ins:EndsSectionShape a sh:NodeShape ;
+	sh:targetSubjectsOf ins:ends ;
+	sh:sparql [
+		sh:message "{$this} ends {?part}, which no sectioning declares and no scope names: only a section ends this way (§16.6)." ;
+		sh:select """
+			PREFIX ins:  <https://www.nebularis.org/neuro-semantic/lattice/instrument#>
+			PREFIX fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+			PREFIX wrd:  <https://www.nebularis.org/neuro-semantic/lattice/wording#>
+			SELECT $this ?part WHERE {
+				$this ins:ends ?part .
+				?element fnd:hasIdentity ?part .
+				FILTER NOT EXISTS { ?sectioning ins:section ?part }
+				FILTER NOT EXISTS { ?term ins:appliesWithin|ins:notWithin ?part }
+			}
+		"""
+	] .
+
+ins:DeclaredSectionIncludedShape a sh:NodeShape ;
+	sh:targetClass ins:Instrument ;
+	sh:sparql [
+		sh:message "{?section}, a section the instrument's sectioning declares, is not an element its assembled wording includes (§16.1)." ;
+		sh:select """
+			PREFIX ins:  <https://www.nebularis.org/neuro-semantic/lattice/instrument#>
+			PREFIX fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+			PREFIX wrd:  <https://www.nebularis.org/neuro-semantic/lattice/wording#>
+			PREFIX pty:  <https://www.nebularis.org/neuro-semantic/lattice/party#>
+			PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+			PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+			SELECT $this ?section WHERE {
+				$this ins:expressedIn ?wording .
+				?wording wrd:includes ?clause .
+				?term ins:expressedIn ?clause .
+				?sectioning ins:arisesUnder ?term ; rdf:type ins:Sectioning ; ins:section ?section .
+				FILTER NOT EXISTS { ?wording wrd:includes ?element . ?element fnd:hasIdentity ?section }
+			}
+		"""
+	] .
+
+ins:BoundSectionsDisjointShape a sh:NodeShape ;
+	sh:targetClass ins:Term ;
+	sh:sparql [
+		sh:message "{$this} and {?other} are bound from one stated term in one instrument and share a section: binding shares one bound term across sections whose words resolve alike, and never binds one section twice (§16.3)." ;
+		sh:select """
+			PREFIX ins:  <https://www.nebularis.org/neuro-semantic/lattice/instrument#>
+			PREFIX fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+			PREFIX wrd:  <https://www.nebularis.org/neuro-semantic/lattice/wording#>
+			PREFIX pty:  <https://www.nebularis.org/neuro-semantic/lattice/party#>
+			PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+			PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+			SELECT $this ?other WHERE {
+				$this ins:boundIn ?instrument ; ins:boundFrom ?stated .
+				?other ins:boundIn ?instrument ; ins:boundFrom ?stated .
+				FILTER (?other != $this)
+				{ $this ins:boundWithin ?s . ?other ins:boundWithin ?s }
+				UNION { FILTER NOT EXISTS { $this ins:boundWithin ?any } }
+			}
+		"""
+	] .
+
+ins:DefinitionOverlapShape a sh:NodeShape ;
+	sh:targetClass ins:Definition ;
+	sh:severity sh:Warning ;
+	sh:sparql [
+		sh:message "{$this} and {?other} both define {?word} within {?section}: they combine by union. Confirm that no \"only\" was meant, or state which prevails (law I16)." ;
+		sh:select """
+			PREFIX ins:  <https://www.nebularis.org/neuro-semantic/lattice/instrument#>
+			PREFIX fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+			PREFIX wrd:  <https://www.nebularis.org/neuro-semantic/lattice/wording#>
+			PREFIX pty:  <https://www.nebularis.org/neuro-semantic/lattice/party#>
+			PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+			PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+			SELECT DISTINCT $this ?other ?word ?section WHERE {
+				$this ins:arisesUnder ?term ; ins:defines ?word .
+				?term ins:boundIn ?instrument .
+				?other a ins:Definition ; ins:arisesUnder ?term2 ; ins:defines ?word .
+				?term2 ins:boundIn ?instrument .
+				FILTER (?other != $this)
+				FILTER NOT EXISTS { $this rdf:type ins:Template }
+				FILTER NOT EXISTS { $this ins:prevailsOver ?other }
+				FILTER NOT EXISTS { ?other ins:prevailsOver $this }
+				{ ?term ins:boundWithin ?s . ?term2 ins:boundWithin ?s }
+				UNION { ?term ins:boundWithin ?s . FILTER NOT EXISTS { ?term2 ins:boundWithin ?any } }
+				UNION { ?term2 ins:boundWithin ?s . FILTER NOT EXISTS { ?term ins:boundWithin ?any } }
+				UNION { FILTER NOT EXISTS { ?term ins:boundWithin ?any } FILTER NOT EXISTS { ?term2 ins:boundWithin ?any2 } }
+				BIND (COALESCE(STR(?s), "the whole instrument") AS ?section)
+				FILTER (STR($this) < STR(?other))
+			}
+		"""
+	] .
+
+ins:ActingRuleConflictShape a sh:NodeShape ;
+	sh:targetClass ins:Definition ;
+	sh:sparql [
+		sh:message "{$this} and {?other} both define {?word} within {?section} under conflicting acting rules, and neither prevails (law I16)." ;
+		sh:select """
+			PREFIX ins:  <https://www.nebularis.org/neuro-semantic/lattice/instrument#>
+			PREFIX fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+			PREFIX wrd:  <https://www.nebularis.org/neuro-semantic/lattice/wording#>
+			PREFIX pty:  <https://www.nebularis.org/neuro-semantic/lattice/party#>
+			PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+			PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+			SELECT DISTINCT $this ?other ?word ?section WHERE {
+				$this ins:arisesUnder ?term ; ins:defines ?word .
+				?term ins:boundIn ?instrument .
+				?other a ins:Definition ; ins:arisesUnder ?term2 ; ins:defines ?word .
+				?term2 ins:boundIn ?instrument .
+				FILTER (?other != $this)
+				FILTER NOT EXISTS { $this rdf:type ins:Template }
+				FILTER NOT EXISTS { $this ins:prevailsOver ?other }
+				FILTER NOT EXISTS { ?other ins:prevailsOver $this }
+				{ ?term ins:boundWithin ?s . ?term2 ins:boundWithin ?s }
+				UNION { ?term ins:boundWithin ?s . FILTER NOT EXISTS { ?term2 ins:boundWithin ?any } }
+				UNION { ?term2 ins:boundWithin ?s . FILTER NOT EXISTS { ?term ins:boundWithin ?any } }
+				UNION { FILTER NOT EXISTS { ?term ins:boundWithin ?any } FILTER NOT EXISTS { ?term2 ins:boundWithin ?any2 } }
+				BIND (COALESCE(STR(?s), "the whole instrument") AS ?section)
+				$this ins:actingRule ?rule .
+				?other ins:actingRule ?rule2 .
+				FILTER (?rule != ?rule2)
+			}
+		"""
+	] .
+
+ins:ActingRuleAgreesShape a sh:NodeShape ;
+	sh:targetClass ins:Definition ;
+	sh:sparql [
+		sh:message "{$this} states the acting rule {?rule}, but the group it means, {?group}, does not (§15.1)." ;
+		sh:select """
+			PREFIX ins:  <https://www.nebularis.org/neuro-semantic/lattice/instrument#>
+			PREFIX fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+			PREFIX wrd:  <https://www.nebularis.org/neuro-semantic/lattice/wording#>
+			PREFIX pty:  <https://www.nebularis.org/neuro-semantic/lattice/party#>
+			PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+			PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+			SELECT $this ?rule ?group WHERE {
+				$this ins:actingRule ?rule ; ins:means ?group .
+				?group rdf:type pty:ParticipationGroup .
+				FILTER NOT EXISTS { ?group pty:hasCompositionRule ?rule }
+			}
+		"""
+	] .
+
+ins:ClassificationSchemeShape a sh:NodeShape ;
+	sh:targetSubjectsOf ins:classification ;
+	sh:sparql [
+		sh:message "{?class} is not in a scheme bound to ins-voc:TermClassificationContract (§15.4)." ;
+		sh:select """
+			PREFIX ins:     <https://www.nebularis.org/neuro-semantic/lattice/instrument#>
+			PREFIX ins-voc: <https://www.nebularis.org/neuro-semantic/lattice/instrument/vocab#>
+			PREFIX voc:     <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#>
+			PREFIX skos:    <http://www.w3.org/2004/02/skos/core#>
+			SELECT $this ?class WHERE {
+				$this ins:classification ?class .
+				FILTER NOT EXISTS {
+					{ ins-voc:TermClassificationContract voc:boundScheme ?scheme }
+					UNION { ?binding voc:forContract ins-voc:TermClassificationContract ; voc:bindsScheme ?scheme }
+					?class skos:inScheme ?scheme
+				}
+			}
+		"""
+	] .
+
+ins:ResolutionReachesActorsShape a sh:NodeShape ;
+	sh:targetClass ins:PartyResolution ;
+	sh:sparql [
+		sh:message "{$this}'s path steps through {?property}, a datatype property: a party resolution reaches actors, never literals (§17.2)." ;
+		sh:select """
+			PREFIX ins: <https://www.nebularis.org/neuro-semantic/lattice/instrument#>
+			PREFIX elg: <https://www.nebularis.org/neuro-semantic/lattice/eligibility#>
+			PREFIX owl: <http://www.w3.org/2002/07/owl#>
+			SELECT $this ?property WHERE {
+				$this ins:resolutionStep/elg:stepProperty ?property .
+				?property a owl:DatatypeProperty .
+			}
+		"""
+	] .

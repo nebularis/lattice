@@ -14,11 +14,10 @@ This ontological substrate allows a user to state what legally binding outcomes 
 
 Instrument imports Foundation, Vocabulary, Quantification, Party, Eligibility, Wording and Behaviour's configuration document. Instrument's runtime document is upstream of it. Nothing outside Instrument imports it ([ADR-A104](../../docs/architecture/decisions/ADR-A104-instrument-terms-and-legal-relations.md), [ADR-A106](../../docs/architecture/decisions/ADR-A106-behaviour-configuration-runtime-occasions-and-records.md)).
 
-This version (0.11.0, CCS slice C7b) holds the instrument, its terms in two tiers, the five relations, their parties and their content (C6), the legal triggers, the regimes they move, and the gating of relations by a regime's state (C7a), and terms in time, namely due ranges, windows, recurrences, ending and survival (C7b). Later slices add, in order:
+This version (0.12.0, CCS slice C7c) holds the instrument, its terms in two tiers, the five relations, their parties and their content (C6), the legal triggers, the regimes they move, and the gating of relations by a regime's state (C7a), terms in time, namely due ranges, windows, recurrences, ending and survival (C7b), and what terms are and whom they bind: definitions, deemings and classification, sections, and parties resolved through the case (C7c). Later slices add, in order:
 
 | Slice | Adds |
 |---|---|
-| C7c | definitions and deemings, sections, classification of terms, resolution of parties that depend on the case |
 | C8 | parameter bindings from variables, encoding status, law I17's shapes |
 | C9 | amendments, consent rules, incorporation, instruments made under a power |
 
@@ -45,17 +44,17 @@ Nothing in this version evaluates.
 ```turtle-spec
 <https://www.nebularis.org/neuro-semantic/instrument>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.11.0> ;
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.12.0> ;
 	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.4.0> ,
 				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.4.0> ,
 				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.7.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/party/0.7.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.9.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/wording/0.5.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.12.0> .
+				<https://www.nebularis.org/neuro-semantic/lattice/party/0.8.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.10.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/wording/0.6.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.13.0> .
 ```
 
-The vocabulary (`ins-voc:`) is `vocab/instrument-vocab.ttl`, in the namespace `https://www.nebularis.org/neuro-semantic/lattice/instrument/vocab#` (§15).
+The vocabulary (`ins-voc:`) is `vocab/instrument-vocab.ttl`, in the namespace `https://www.nebularis.org/neuro-semantic/lattice/instrument/vocab#` (§18).
 
 ## 3. Extraction Contract
 
@@ -128,7 +127,7 @@ The following similar, but distinct terminology, is provided for reference here.
 - **A Condition**, which in contracts has three senses: a heading ("General Conditions"), a class of term
   whose breach lets the other side terminate (a condition, as against a warranty), and a contingency
   ("subject to the following condition"). Contingencies are `elg:Condition`, and the class of a term
-  is its classification (C7b). No `ins:` class is named Condition
+  is its classification (§15.4). No `ins:` class is named Condition
 - **A Norm** or **A Statement**, which are words of legal theory that a contract lawyer would not use for a
   provision
   
@@ -152,14 +151,14 @@ They usually line up one to one, but not always:
   together make one provision. Its stated term is then expressed in the element that contains
   them, such as their section (law I2 requires it to map to exactly one wording element version)
 
-Since a term gives rise to relations, and in a well-modelled contract it is common for one term to give rise to more than one (§18.1, clause 8.1), it has been modelled as an independent node. The law treats a term as a unit, and several things attach to the whole provision rather than to any one relation under it:
+Since a term gives rise to relations, and in a well-modelled contract it is common for one term to give rise to more than one (§21.1, clause 8.1), it has been modelled as an independent node. The law treats a term as a unit, and several things attach to the whole provision rather than to any one relation under it:
 
 | Attaches to the term | Meaning | Slice |
 |---|---|---|
-| its relations, definitions, deemings, and qualifiers | these determine what the provision creates | C6, C7b, C8 |
-| classification | a *condition* (any breach lets the other side terminate), a *warranty* (breach gives damages only), or an *innominate* term (it depends on how serious the breach is) | C7b |
+| its relations, definitions, deemings, and qualifiers | these determine what the provision creates | C6, C7c, C8 |
+| classification | a *condition* (any breach lets the other side terminate), a *warranty* (breach gives damages only), or an *innominate* term (it depends on how serious the breach is) | C7c |
 | survival | whether the provision outlives the termination of the instrument, as confidentiality clauses often do | C7b |
-| sections it applies within | for an instrument divided into sections, which ones the provision governs | C7b |
+| sections it applies within | for an instrument divided into sections, which ones the provision governs | C7c |
 | precedence | which provision prevails when two conflict | NRS N10 |
 
 ```mermaid
@@ -168,8 +167,8 @@ flowchart TB
     R1["a relation"] -- "arisesUnder" --> T
     R2["another relation"] -- "arisesUnder" --> T
     Q["a qualifier, such as a limit"] -- "arisesUnder" --> T
-    D["a definition or deeming (C7b)"] -. "arisesUnder" .-> T
-    T -. "classification, survival, sections (C7b)" .-> P["properties of the whole provision"]
+    D["a definition or deeming"] -- "arisesUnder" --> T
+    T -- "classification, survival, sections" --> P["properties of the whole provision"]
     T -- "expressedIn (express term)" --> C["a clause version"]
     T -- "impliedBy (implied term)" --> S["a statute, custom or course of dealing"]
 ```
@@ -554,7 +553,7 @@ the data should see the same distinction.
 
 **Carve-backs.** Exclusions are often narrowed by a carve-back: "Clause 2.1 does not apply to damage
 caused by misuse, unless the failure was caused by a manufacturing defect". The carve-back belongs
-in the exclusion's scope, as a negated member of the scope's condition (§9, §18.3), not as a second
+in the exclusion's scope, as a negated member of the scope's condition (§9, §21.3), not as a second
 relation.
 
 #### 4.2.10 **`ins:Power`.**
@@ -744,7 +743,7 @@ The exclusion exists all along and applies only while its gate is open. While it
 **A relation's regimes** are those its named states belong to. They are its instrument's, stated by
 the relation's own clause or another. Most relations name no state, so have no gate and no regimes. Like its scope, a relation's gate is fixed by its clause's words.
 
-Three questions about one relation at one moment have separate answers, from separate parts of the model. The table answers them for the licence's exclusion of the power to grant sub-licences (§18.5).
+Three questions about one relation at one moment have separate answers, from separate parts of the model. The table answers them for the licence's exclusion of the power to grant sub-licences (§21.5).
 
 | Question | Answered by | For the exclusion |
 |---|---|---|
@@ -916,9 +915,45 @@ after termination". A survival says for how long, whether for a period, until a 
 without limit (§14.4). Distinct from *accrued rights*, which persist after termination without any
 clause saying so, and from *renewal*, which continues the whole instrument.
 
+#### 4.2.17 **`ins:Definition`.**
+
+A *definition* is how a contract gives a word its meaning: "'Obligors' means the Borrower and each
+Guarantor". The word is the *defined term*, often capitalised, and its meaning holds wherever the
+words use it, within the parts the definition applies to. "Defined term" is not used for the node,
+since `ins:Term` is a provision: the node is the definition, and what it defines is the *word*
+(§15.1).
+
+#### 4.2.18 **`ins:Deeming`.**
+
+To *deem* is to take something to hold whether or not it does: "deemed received", "deemed to have
+been made on the date of the first claim". A deeming is *conclusive* when no proof displaces it and
+*rebuttable* when it holds until shown otherwise. *Relation back* deems a later fact to have
+happened earlier, usually *for the purposes of* named clauses only (§15.2). Distinct from a
+*presumption*, which the law, not the contract, supplies.
+
+#### 4.2.19 **`ins:Sectioning`.**
+
+A *section* is a part of an instrument with a meaning of its own: its own parties, authority, words
+or terms. Markets call it many things: a *lot* in a framework, a *tower* in outsourcing, a *coverage
+section* in a package policy, a *tranche* in a facility, a *column* of a binding authority's
+schedule, an *agreement segment* in the CBAA. A *sectioning clause* divides an instrument into
+sections and says that what each contains applies only within it. Wording's element type Section is
+a heading's type, and does not by itself make a section in law (§16.1).
+
+#### 4.2.20 **`ins:PartyResolution`.**
+
+"Any Insured Person against whom a claim is made", "the Participant in whom the adverse event
+occurred": a party the words describe but do not name, known only when each case arises. A
+*resolution* is how it is found from the case (§17.2). The word avoids *binding*, which here means
+instantiating a template, and *evidence binding*, Eligibility's, which feeds a value to a condition.
+
+Two kinds of term create no relation. An *interpretation clause* says how the words are read ("a
+reference to a person includes its successors"). A *status declaration* says what a party is ("the
+Seller is an independent contractor"). Both are terms with nothing arising under them (§15.3).
+
 ### 4.3 Properties
 
-The properties fall into five groups: those that tie meaning to text and to its owner, those that name a relation's parties, those that state a relation's content, a party's details for one instrument, those of triggers, regimes and gating, and those of time and ending.
+The properties fall into seven groups: those that tie meaning to text and to its owner, those that name a relation's parties, those that state a relation's content, a party's details for one instrument, those of triggers, regimes and gating, those of time and ending, and those of words, sections and whom terms bind.
 
 #### Text and ownership: `ins:expressedIn`, `ins:alsoExpressedIn`, `ins:boundIn`, `ins:boundFrom`, `ins:impliedBy`, `ins:arisesUnder`
 
@@ -988,7 +1023,7 @@ flowchart LR
 
 - **`ins:activity`** is deontic logic's *action*: the act a relation is about. It names the act
   plainly, without its circumstances: `Repay`, `Enrol`, `Terminate`. An activity is a concept from a
-  scheme bound to `ins-voc:ActivityContract`, so a deployment can use its own list of acts (§15). The same property names the act an `ins:OnAct`
+  scheme bound to `ins-voc:ActivityContract`, so a deployment can use its own list of acts (§18). The same property names the act an `ins:OnAct`
   trigger waits for (§10), so a trigger on an act of repaying names the same concept as the duty to
   repay.
 - **`ins:scope`** is "the scope of the exclusion", "within the scope of this clause": the cases a
@@ -1004,7 +1039,8 @@ flowchart LR
 - **`ins:excepts`** comes from "except", "save that", "does not apply to": an *exception* names what
   it takes effect against. A permission excepts a prohibition, and an exclusion an obligation or a
   power.
-- **`ins:qualifies`** links a qualifier to the term or relation whose amount it bounds.
+- **`ins:qualifies`** links a qualifier to the term or relation whose amount it bounds. A bound
+  qualifier spanning sections qualifies every bound relation generated from the stated one (§16.5).
 
 #### A party's details for one instrument: `ins:noticeAddress`, `ins:operatesAt`
 
@@ -1114,6 +1150,22 @@ flowchart LR
     SV -- "survivesUntil" --> EC["elg:Condition"]
 ```
 
+#### Words, sections and whom terms bind
+
+- **`ins:defines`** and **`ins:means`** are a definition's two halves, as the words put them:
+  "'X' means Y". **`ins:actingRule`** is the "jointly and severally" a definition adds when its word
+  means several parties, and **`ins:prevailsOver`** the "shall prevail" between two definitions.
+- **`ins:deems`**, **`ins:when`**, **`ins:conclusive`** and **`ins:forPurposeOf`** follow the
+  words of a deeming: "is deemed", "if", "conclusively", "for the purposes of".
+- **`ins:classification`** is the class a term is said to be in, such as a condition.
+- **`ins:section`** names what a sectioning clause divides the instrument into, and
+  **`ins:appliesWithin`** and **`ins:notWithin`** what a term's words place it in or exclude it
+  from. **`ins:boundWithin`** is binding's record of the sections a generated bound term covers,
+  after `ins:boundIn`.
+- **`ins:boundUnder`** is "awarded under", "bound under": the power an instrument was made under.
+- **`ins:resolvedBy`** and the resolution's **`ins:resolvesFrom`**, **`ins:resolutionStep`** and
+  **`ins:resolutionFilter`** say how a party the words describe is found from the case.
+
 #### At a glance
 
 | Property | Origin | Why this name |
@@ -1150,6 +1202,16 @@ flowchart LR
 | `ins:ofState` | "on termination", "on expiry" | the state whose entry a trigger waits for |
 | `ins:ends` | "this Agreement ends", "the Lease shall end" | what entering a state ends |
 | `ins:survives`, `ins:survivalPeriod`, `ins:survivesUntil` | "survives termination", "for five years after", "until" | how long a term continues after its instrument ends |
+| `ins:defines`, `ins:means` | "'Obligors' means…" | the word a definition gives meaning to, and the meaning |
+| `ins:actingRule` | "jointly and severally", "each for its share" | how the several parties a word means act together |
+| `ins:prevailsOver` | "prevails over", "shall prevail in the event of conflict" | which of two overlapping definitions is read |
+| `ins:deems`, `ins:when`, `ins:conclusive`, `ins:forPurposeOf` | "is deemed", "if", "conclusively", "for the purposes of clause 9.1" | what a deeming takes to hold, on what footing, how firmly, and for which clauses |
+| `ins:classification` | "this is a condition", "warranty", "condition precedent" | the class of a term, for reading |
+| `ins:section` | "divided into the Lots", "each Coverage Section" | the sections a sectioning clause declares |
+| `ins:appliesWithin`, `ins:notWithin` | "in Lots 1 and 2", "except in Lot 4", "solely with respect to" | the parts a term applies within, and those it excludes |
+| `ins:boundWithin` | binding, as `ins:boundIn` | the sections a generated bound term covers |
+| `ins:boundUnder` | "awarded under", "bound under the binding authority" | the power whose exercise created an instrument |
+| `ins:resolvedBy`, `ins:resolvesFrom`, `ins:resolutionStep`, `ins:resolutionFilter` | "any Insured Person against whom a claim is made, who was a director at the time" | how a party that depends on the case is found from it |
 
 ### 4.4 Hohfeld's legal relations
 
@@ -1539,7 +1601,7 @@ A term is a provision the parties are bound by. It exists apart from its relatio
   example, clause 8.1)
 - what belongs to the whole provision attaches to the term: its classification and survival, the
   sections it applies within, and definitions and deemings, which arise under terms without being
-  relations (C7b), and qualifiers such as limits (C8)
+  relations (§15), and qualifiers such as limits (C8)
 - terms implied by law (`ins:impliedBy`) and incorporated terms (C9) work at the level of the
   provision
 - the term is the unit that is owned and bound: one stated term per element version, one bound
@@ -1694,11 +1756,11 @@ The four party properties range over one union, named once ([C6-Q4](../../docs/d
 a role occupancy, a participation group, or, on stated meaning only, a role (law I13).
 
 - A **group** is the obligee of a several duty (each lender for its share) or the holder of a
-  joint power (the lenders together). Its composition rule says how its members act. How a stated
-  clause says so ("each for its share") is stated in C7b, by a defined party word.
+  joint power (the lenders together). Its composition rule says how its members stand. A stated
+  clause says so ("each for its share") through a defined party word's acting rule (§15.1, §17.3).
 - A **contingent occupancy** (ADR-A102), a role with no actor, stands for a party that depends on
-  the case: the owner of a product when a claim is made. How it is resolved for each case is
-  decided in C7b.
+  the case: the owner of a product when a claim is made. It is filled for each case by a resolution
+  or a record (§17.2).
 - **Party details** belong to the occupancy, since they are this party's details for this
   instrument (S97). A notice address is a string as written: the party's identity is its keys.
 
@@ -1716,7 +1778,7 @@ flowchart TB
     end
     subgraph BOUND["Bound meaning"]
         BO["bound obligation"] -- "obligor" --> OC["pty:RoleOccupancy<br/>Acme as Borrower"]
-        BO -- "obligee" --> GR["pty:ParticipationGroup<br/>the lenders, several only"]
+        BO -- "obligee" --> GR["pty:ParticipationGroup<br/>the lenders, EachForOwnShare"]
         BO -- "obligee" --> TR["pty:RoleOccupancy<br/>trustee, no party"]
         GR -- "hasParticipant" --> M1["membership 0.6<br/>North Bank"]
         GR -- "hasParticipant" --> M2["membership 0.4<br/>South Bank"]
@@ -1736,7 +1798,7 @@ A contingent occupancy has a role and no actor until the case fills it:
 ```mermaid
 flowchart LR
     RE["repair<br/>ins:Obligation"] -- "obligee" --> OW["owner occupancy<br/>inRole Owner<br/>no occupiedBy"]
-    CL["a claim, later"] -. "fills it for that claim (C7b)" .-> OW
+    CL["a claim, later"] -. "fills it for that claim (§17.2)" .-> OW
 ```
 
 ```turtle-spec
@@ -1826,15 +1888,13 @@ ins:activity a owl:ObjectProperty ;
 
 ins:scope a owl:ObjectProperty, owl:FunctionalProperty ;
 	rdfs:domain ins:LegalRelation ;
-	rdfs:range elg:Condition ;
 	rdfs:comment "The cases a relation applies to." ;
-	fnd:utility "Subject: a relation. Value: at most one Eligibility condition over the case. A carve-back is a negated member of it." .
+	fnd:utility "Subject: a relation. Value: at most one Eligibility condition over the case, or on stated meaning a word a definition defines, which binding replaces (§15.1). A carve-back is a negated member of it." .
 
 ins:maintains a owl:ObjectProperty ;
 	rdfs:domain ins:ContinuingObligation ;
-	rdfs:range elg:Condition ;
 	rdfs:comment "The state a continuing obligation keeps holding." ;
-	fnd:utility "Subject: a continuing obligation. Value: exactly one condition that must hold throughout." .
+	fnd:utility "Subject: a continuing obligation. Value: exactly one condition that must hold throughout, or on stated meaning a defined word (§15.1)." .
 
 ins:fulfilledWhen a owl:ObjectProperty ;
 	rdfs:domain ins:Obligation ;
@@ -1844,15 +1904,15 @@ ins:fulfilledWhen a owl:ObjectProperty ;
 
 ins:Qualifier a owl:Class ;
 	rdfs:comment "A limit, level or retention on a term or a relation." ;
-	fnd:utility "Subject: a qualifier. Arises under exactly one term and qualifies exactly one term or relation. Its amounts are defined with contract amounts (C8)." .
+	fnd:utility "Subject: a qualifier. Arises under exactly one term. A stated qualifier qualifies exactly one term or relation, and a bound one every bound node generated from it (§16.5). Its amounts are defined with contract amounts (C8)." .
 
-ins:qualifies a owl:ObjectProperty, owl:FunctionalProperty ;
+ins:qualifies a owl:ObjectProperty ;
 	rdfs:domain ins:Qualifier ;
 	rdfs:comment "The term or relation a qualifier qualifies." ;
-	fnd:utility "Subject: a qualifier. Value: exactly one term or relation." .
+	fnd:utility "Subject: a qualifier. Value: on stated meaning, exactly one term or relation. On bound meaning, every bound term or relation generated from the stated one, so that a qualifier spanning sections is bound once (§16.5)." .
 
 [] a owl:AllDisjointClasses ;
-	owl:members ( ins:Instrument ins:Term ins:LegalRelation ins:Qualifier ) .
+	owl:members ( ins:Instrument ins:Term ins:LegalRelation ins:Qualifier ins:Definition ins:Deeming ins:Sectioning ins:PartyResolution ) .
 
 ins:Term owl:disjointWith fnd:Version .
 ins:LegalRelation owl:disjointWith fnd:Version .
@@ -1885,8 +1945,8 @@ class therefore fixes its kind as an `owl:hasValue` restriction, and its shape p
 value (§12).
 
 **An expiry** counts its period from entering the state its transition leaves, and fires when the
-period has run. The length is a `qnt:Quantity` in a unit of time, days in the licence (§18.5) and
-business days in the facility (§18.7). Counting business days needs the calendar in force, which a
+period has run. The length is a `qnt:Quantity` in a unit of time, days in the licence (§21.5) and
+business days in the facility (§21.7). Counting business days needs the calendar in force, which a
 conversion context names when the expiry is evaluated (ADR-A94, C12). A length that the instrument
 supplies, such as a notice period set by a variable, is resolved for each instrument at runtime
 (C8).
@@ -1986,9 +2046,8 @@ ins:by a owl:ObjectProperty ;
 	fnd:utility "Subject: an ins:OnAct. Value: a party, any number. A regime is stated, so its triggers name roles. Without one, an act of the kind by any party fires the trigger." .
 
 ins:condition a owl:ObjectProperty, owl:FunctionalProperty ;
-	rdfs:range elg:Condition ;
 	rdfs:comment "The condition a condition trigger waits for." ;
-	fnd:utility "Subject: an ins:OnCondition. Value: exactly one Eligibility condition. The trigger fires when the condition comes to hold. No domain: terms in time may reuse the property (C7b)." .
+	fnd:utility "Subject: an ins:OnCondition. Value: exactly one Eligibility condition, or on a stated trigger a word a definition defines, which binding replaces in a generated trigger (§15.1). The trigger fires when the condition comes to hold. No domain: terms in time may reuse the property (C7b)." .
 
 ins:after a owl:ObjectProperty, owl:FunctionalProperty ;
 	rdfs:range qnt:Quantity ;
@@ -2068,7 +2127,7 @@ flowchart LR
 
 **Triggers name stated relations.** A regime's `ins:ofPower` and `ins:ofObligation` name the stated
 relation, and fire on the exercise or breach of any bound relation instantiated from it. In the
-licence (§18.5) the notice trigger names `tmpl:end-on-notice`. Corvid's exercise of
+licence (§21.5) the notice trigger names `tmpl:end-on-notice`. Corvid's exercise of
 `ex:end-on-notice`, the bound power in Fernwood's licence, fires it for that licence. The subject
 is the persistent identity of the instrument in which the bound power's term is bound. A
 per-occasion regime names its stated relation in the same way (§11.4). A bound relation's own
@@ -2101,7 +2160,7 @@ instrument changes often.
 ### 11.2 Kinds of regime
 
 **Period regimes** are entered on a trigger and left at a duration from entry or on an end trigger,
-whichever comes first. The licence's notice regime (§18.5):
+whichever comes first. The licence's notice regime (§21.5):
 
 ```mermaid
 stateDiagram-v2
@@ -2116,7 +2175,7 @@ stateDiagram-v2
 ```
 
 A transition has one source state, so "at any time, for breach" needs a transition from each state
-in which it applies. The facility's cure period (§18.7) is a period regime with a way back, tolled
+in which it applies. The facility's cure period (§21.7) is a period regime with a way back, tolled
 by another regime.
 
 ```mermaid
@@ -2130,7 +2189,7 @@ stateDiagram-v2
     Cure --> InDefault : OnExpiry, 30 business days, tolled while affected
 ```
 
-**Switching regimes** move back and forth. The supply agreement (§18.6) has two on one instrument.
+**Switching regimes** move back and forth. The supply agreement (§21.6) has two on one instrument.
 They are separate regimes, drawn together here, and each is in one state at every moment.
 
 ```mermaid
@@ -2178,7 +2237,7 @@ sketch §6.2).
 3. across regimes, it applies only when every group holds
 4. a composite state holds while any of its descendants is active
 
-The supply agreement's duty to deliver names one state of each of its two regimes (§18.6).
+The supply agreement's duty to deliver names one state of each of its two regimes (§21.6).
 
 ```mermaid
 flowchart LR
@@ -2220,11 +2279,11 @@ A **per-occasion regime** runs once for each occasion of a relation, such as eac
 or each invoice. It names the stated relation, and covers the occasions of every bound relation
 instantiated from it. A relation gated by its state must therefore identify the occasion it
 concerns, and does so by arising on that relation's breach or exercise. In the services agreement
-(§18.8), the exclusion of the customer's power to terminate arises on breach of the service
+(§21.8), the exclusion of the customer's power to terminate arises on breach of the service
 obligation, so for one month's breach its gate reads that month's dispute regime. Where the chain does not reach
 exactly one occasion, the gate is Undetermined (ADR-A106 addendum, decision 9). A relation gated by
 a per-occasion state that arises on no breach or exercise of the relation is rejected at design
-time (§16.2).
+time (§19.2).
 
 ```mermaid
 flowchart LR
@@ -2251,7 +2310,7 @@ a state is a fact about one subject at one time. A state may be a fixed paramete
 ("compare the two licences as they stand during a notice period"), never a variable within one (law
 B8, ADR-A106).
 
-The licence shows the separation (§18.5). The licensee's power to grant sub-licences has an
+The licence shows the separation (§21.5). The licensee's power to grant sub-licences has an
 activity and parties, and its scope never mentions the notice period. The notice period's effect is
 a separate exclusion, gated by the state. Two versions of the licence compare equal on the power's
 terms whatever regime either is in.
@@ -2327,11 +2386,11 @@ tmpl:give-notice a ins:RegimeTransition , bhv:TransitionDefinition ;
     bhv:selectionPolicy bhv:SingleMatch ; bhv:activationPolicy bhv:ImmediateActivation .
 ```
 
-The explicit `bhv:` type is law B4, and a shape requires it (§16.1). The engine matches
+The explicit `bhv:` type is law B4, and a shape requires it (§19.1). The engine matches
 `rdf:type bhv:TransitionDefinition` as written, so a node typed only `ins:RegimeTransition` would be
 invisible to it. Shapes alone do not reveal the gap, because SHACL's `sh:targetClass` and
 `sh:class` follow the `rdfs:subClassOf` triples in the data graph. Validated with this spec, as
-§16.1 requires, a node typed only `ins:RegimeTransition` is selected by Behaviour's shapes, and its
+§19.1 requires, a node typed only `ins:RegimeTransition` is selected by Behaviour's shapes, and its
 missing policies are reported. Validated without the spec, Behaviour's shapes never select the
 node. The B4 shapes therefore check the `rdf:type` triple itself (`sh:path rdf:type ;
 sh:hasValue`), which no subclass axiom satisfies.
@@ -2413,7 +2472,7 @@ Two measures address it.
 
 - **Instrument's value shapes** list the one permitted value with `sh:in`, for example `sh:in (
   bhv:SingleMatch )` on a regime transition's selection, and likewise for activation and each
-  trigger kind (§16.1). On the asserted graph they report a wrong value at the node that states it,
+  trigger kind (§19.1). On the asserted graph they report a wrong value at the node that states it,
   in either mode, and allow a value that the reasoner will add to be absent. On the closed graph they report the wrong value at every
   node the merge reached.
 - **Distinct individuals in Behaviour.** `owl:AllDifferent` over the policies and the kinds would let
@@ -2457,7 +2516,7 @@ flowchart LR
     AB -- "upperOffsetBy" --> UO
 ```
 
-Instrument binds a baseline of roles to Quantification's role contract (§15):
+Instrument binds a baseline of roles to Quantification's role contract (§18):
 
 | Role (`ins-voc:`) | Resolved, for each occasion, to | Used by |
 |---|---|---|
@@ -2468,7 +2527,7 @@ Instrument binds a baseline of roles to Quantification's role contract (§15):
 
 A date the wording defines, such as the Expiry Date or a Maturity Date, is also a role, whose value
 comes from the wording's variables, bound for each instrument (C8). Until C8, the examples give such
-dates roles of their own, which are left unbound (§18.10, held design question HQ-4).
+dates roles of their own, which are left unbound (§21.10, held design question HQ-4).
 
 A range names its anchor's role, never a date and never the time of evaluation (law I9). One stated
 range therefore serves every instrument, because each instrument resolves the role to its own date.
@@ -2520,7 +2579,7 @@ modelling of its own, because once the window has closed the power can no longer
 A window differs from a scope and from a gate. A scope says which cases a relation covers. A gate
 says in which states of a regime it applies. A window says when, in time, it may be exercised.
 
-The lease's break (§18.10) reads "The Tenant may end this Lease on the Break Date by giving not less
+The lease's break (§21.10) reads "The Tenant may end this Lease on the Break Date by giving not less
 than six months' notice". Its window has no start, and closes six months before the Break Date.
 
 ```mermaid
@@ -2633,7 +2692,7 @@ An instrument ends in one of a small number of ways, and the words state which:
 | **automatic termination** | "this Agreement terminates automatically if either party becomes insolvent" | an `ins:OnCondition` or `ins:OnAct` straight into the ending state |
 | **discharge by performance** | "terminates once all amounts due have been paid in full" | an `ins:OnCondition` that everything has been performed |
 | **long-stop date** | "if the Conditions are not satisfied by the Long-Stop Date, this Agreement terminates" | a conditional state left at the date (§14.7) |
-| **termination of a part** | "the Sponsor may end the Site's participation" | `ins:ends` naming stated terms, or `ins:endsOn` on one relation (C7a). A party's participation and a section are C7c's and C9's |
+| **termination of a part** | "the Sponsor may end the Site's participation" | `ins:ends` naming stated terms, or `ins:endsOn` on one relation (C7a). A section's ending is §16.6, and a party's participation C9's |
 | **termination by agreement** | a release, or a replacing agreement | an amendment or a new instrument (C9) |
 | **rescission** *ab initio*, **frustration** | setting aside for misrepresentation, impossibility | outside this layer: rescission undoes the past, and frustration is a finding about the whole instrument |
 
@@ -2760,7 +2819,7 @@ ending occurred.
 ### 14.6 Renewal and evergreen agreements
 
 A *renewal* continues an instrument for a further period. An *evergreen* or *rolling* agreement
-renews itself until someone gives notice that it should not. The services agreement (§18.12)
+renews itself until someone gives notice that it should not. The services agreement (§21.12)
 renews each year unless the Customer gives notice of non-renewal in the first half of the current
 period:
 
@@ -2804,7 +2863,7 @@ stateDiagram-v2
 A **break** is a power with a window (§13.3) whose exercise starts a notice period, which ends in
 *terminated* at the Break Date. **Termination for breach** follows a cure period where a breach can
 be remedied. The power to terminate is gated by the default state that the cure period's expiry
-enters (§18.7), and its exercise is a transition straight into *terminated*. Where the breach
+enters (§21.7), and its exercise is a transition straight into *terminated*. Where the breach
 cannot be remedied, the power arises on the breach itself. An instrument whose obligations wait on
 conditions starts in a conditional state, left for *in force* when the conditions are satisfied,
 or for *terminated* at the *long-stop date*.
@@ -2845,7 +2904,7 @@ ins:at a owl:ObjectProperty, owl:FunctionalProperty ;
 
 ins:ends a owl:ObjectProperty ;
 	rdfs:comment "What entering a state ends." ;
-	fnd:utility "Subject: a state of a regime. Value: ins-voc:TheInstrument, the instrument as a whole, or a stated term, matched to every bound term instantiated from it. Any number. Once the state is entered, no new occasion arises under what it ends, unless a term survives (§14.3)." .
+	fnd:utility "Subject: a state of a regime. Value: ins-voc:TheInstrument, the instrument as a whole, a stated term, matched to every bound term instantiated from it, or a section's persistent identity, ending for that section's cases every term bound within it (§16.6). Any number. Once the state is entered, no new occasion arises under what it ends, unless a term survives (§14.3)." .
 
 ins:Survival a owl:Class ;
 	rdfs:comment "How long a term continues to operate after its instrument ends." ;
@@ -2867,11 +2926,452 @@ ins:survivesUntil a owl:ObjectProperty, owl:FunctionalProperty ;
 	fnd:utility "Subject: a survival. Value: one Eligibility condition. The term stops surviving when it comes to hold." .
 ```
 
-## 15. Vocabulary
+## 15. Constitutive Terms
+
+A term may create no legal relation. It may give a word its meaning, take something to hold, say
+how the words are read, or declare a status. These terms are *constitutive*: they constitute the
+meaning the other terms rely on. Each arises under its term and belongs to it, as a relation does
+(decision 2, law I2), and none of them is evaluated as a relation is.
+
+### 15.1 Definitions
+
+A **definition** gives a word its meaning: "'Material Adverse Effect' means…", "'the Obligors'
+means the Borrower and each Guarantor". The word is the **defined term**. An `ins:Definition`
+`ins:defines` exactly one word and `ins:means` at least one thing.
+
+The word is the node stated meaning names wherever the text uses it:
+
+| Word | Stated meaning names | `ins:defines` | `ins:means` on stated meaning | `ins:means` on bound meaning |
+|---|---|---|---|---|
+| a party word: "the Supplier", "the Obligors" | the role | the `pty:Role` | roles | occupancies or groups |
+| a condition word: "Material Adverse Effect", "Service Failure" | the word, a `skos:Concept` | the concept | an Eligibility condition | the same condition |
+| a concept word: "the Territory" | the word, a `skos:Concept` | the concept | a concept or a scheme | the same |
+
+**Stated meaning names words, bound meaning names meanings.** A party word is a role on stated
+meaning, and binding replaces it by the occupancies or group its definition means. A condition word
+works the same way. A slot that takes a condition on bound meaning (`ins:scope`, `ins:maintains`,
+`ins:condition`, `ins:deems`, `ins:when`, `ins:resolutionFilter`) may take, on stated meaning, a
+word a definition defines, and binding replaces it by the condition that definition means. An
+author writes the word, with no condition of its own standing in for it: the word is a thunk
+binding forces. Because the replacement happens per section (§16.3), a word may mean something
+different in each section, as "Service Failure" does in each tower of `service-towers.ttl`.
+
+```mermaid
+---
+config:
+  layout: elk
+---
+flowchart LR
+    subgraph STATED["Stated meaning: words"]
+        TR["on failure<br/>OnCondition"] -- "condition" --> W["ex:ServiceFailure<br/>a word, skos:Concept"]
+        DA["Tower A's definition"] -- "defines" --> W
+        DA -- "means" --> CA["p1 unresolved<br/>elg:Condition"]
+        DB["Tower B's definition"] -- "defines" --> W
+        DB -- "means" --> CB["data centre unavailable<br/>elg:Condition"]
+    end
+    subgraph BOUND["Generated bound meaning: meanings"]
+        TA["on failure in Tower A"] -- "condition" --> CA
+        TB["on failure in Tower B"] -- "condition" --> CB
+    end
+    TA -. "replaces the word in Tower A" .-> TR
+    TB -. "replaces the word in Tower B" .-> TR
+    style STATED fill:#BBDEFB
+    style BOUND fill:#bcdee1
+```
+
+A party word that means several parties says how they act together with `ins:actingRule`, a Party
+composition rule (§17.3): "jointly and severally" is `pty:EachForWhole`. Binding gives the rule to
+the group the instance names, and the group's rule must agree with it. A definition meaning several
+parties with no acting rule is silent, and the relations it reaches are Undetermined (CC-D10).
+
+Date and amount words, such as "the Expiry Date" and "the Commitment", mean values a wording's
+variables carry, and wait for C8's parameter bindings.
+
+```turtle-spec
+ins:Definition a owl:Class ;
+	rdfs:comment "A term's giving a word its meaning." ;
+	fnd:utility "Subject: a definition. Arises under exactly one term and belongs to it, as a relation does. Defines exactly one word and means at least one thing. Stated or bound, as relations are." .
+
+ins:defines a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:comment "The word a definition defines." ;
+	fnd:utility "Subject: a definition. Value: exactly one word, the node stated meaning names wherever the text uses it: a pty:Role for a party word, a skos:Concept for a condition or concept word." .
+
+ins:means a owl:ObjectProperty ;
+	rdfs:comment "What a defined word means." ;
+	fnd:utility "Subject: a definition. Value: at least one meaning. For a party word, roles on stated meaning and occupancies or groups on bound meaning (law I13). For a condition word, an Eligibility condition. For a concept word, a concept or a scheme. Several values are meant together." .
+
+ins:actingRule a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:range pty:CompositionRule ;
+	rdfs:comment "How the several parties a word means act together." ;
+	fnd:utility "Subject: a definition of a party word meaning several parties. Value: one Party composition rule, on stated and bound meaning alike. Binding gives it to the group it builds, whose rule must agree. Without one, the definition is silent and the relations it reaches are Undetermined (CC-D10)." .
+
+ins:prevailsOver a owl:ObjectProperty ;
+	rdfs:comment "A definition that prevails over another of the same word where both apply." ;
+	fnd:utility "Subject: a definition. Value: another definition of the same word, any number. Where both apply within one section, only the prevailing one is read, and no overlap is reported (law I16). Between definitions only, until NRS N10 widens it to terms." .
+```
+
+### 15.2 Deemings
+
+A **deeming** takes something to hold whether or not it does: "a notice delivered by hand is
+deemed received when it is delivered". It is **conclusive** when no proof displaces it, and
+**rebuttable** when it holds only until shown otherwise. A deeming **for the purposes of** named
+clauses applies to those alone. **Relation back** is such a deeming about time: "an injury apparent
+within 12 months after the last visit is deemed to have arisen during the trial, for the purposes of
+clause 9.1".
+
+An `ins:Deeming` `ins:deems` exactly one condition to hold `ins:when` at most one other does,
+conclusively or not (`ins:conclusive`), and `ins:forPurposeOf` limits it to named relations or
+terms. Either condition may be a word a definition defines (§15.1).
+
+A deeming whose condition reads an **absence** ("deemed inactive if it enrols no participant within
+90 days") licenses its evaluator to treat what has not been recorded as not having happened, within
+the window the condition names. That closure is declared by ADR-A105, not yet drafted (held design
+question HQ-6), and C11's deemed-fact records receive what a deeming produces.
+
+```mermaid
+flowchart LR
+    T["term 5.4"] --- D["deemed inactive<br/>ins:Deeming<br/>conclusive false"]
+    D -- "when" --> A["no enrolment in 90 days<br/>an absence"]
+    D -- "deems" --> I["site inactive"]
+    P["end for site<br/>ins:Power"] -- "scope" --> I
+    T92["term 9.2"] --- RB["relation back<br/>ins:Deeming"]
+    RB -- "forPurposeOf" --> C["compensate<br/>clause 9.1 only"]
+```
+
+```turtle-spec
+ins:Deeming a owl:Class ;
+	rdfs:comment "A term's taking something to hold, whether or not it does." ;
+	fnd:utility "Subject: a deeming. Arises under exactly one term and belongs to it. Deems exactly one condition, on at most one footing. Stated or bound, as relations are." .
+
+ins:deems a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:comment "What a deeming takes to hold." ;
+	fnd:utility "Subject: a deeming. Value: exactly one Eligibility condition, or on stated meaning a word a definition defines." .
+
+ins:when a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:comment "The footing on which a deeming holds." ;
+	fnd:utility "Subject: a deeming. Value: at most one Eligibility condition, or on stated meaning a defined word. Without one, the deeming holds throughout. A condition reading an absence relies on the closure the deeming licenses (ADR-A105)." .
+
+ins:conclusive a owl:DatatypeProperty, owl:FunctionalProperty ;
+	rdfs:range xsd:boolean ;
+	rdfs:comment "Whether a deeming is conclusive." ;
+	fnd:utility "Subject: a deeming. Value: true when no proof displaces it, false when it holds until shown otherwise. Without one, the deeming is rebuttable." .
+
+ins:forPurposeOf a owl:ObjectProperty ;
+	rdfs:comment "A relation or term a deeming applies for." ;
+	fnd:utility "Subject: a deeming. Value: a relation or a term, any number, stated for a stated deeming and bound for a bound one. Without one, the deeming applies wherever its condition is read." .
+```
+
+### 15.3 Terms with no relation
+
+Two kinds of term create nothing at all in this layer.
+
+- An **interpretation clause** says how the words are read: "a reference to a person includes its
+  successors in title". It governs reading, not anyone's conduct (S71).
+- A **status declaration** says what a party is: "the Seller is an independent contractor, and
+  nothing in this Agreement creates a partnership". Its consequences are the law's (S61).
+
+Each is a stated term with nothing arising under it, which C6 already allows. Its bound term is
+generated like any other.
+
+### 15.4 Classification
+
+English law classifies a term as a **condition** (any breach lets the other side terminate), a
+**warranty** (breach gives damages only) or an **innominate term** (termination depends on how
+serious the breach is), and insurance has its own classes, such as a condition precedent.
+`ins:classification` on a stated term names a concept from the scheme a deployment binds to
+`ins-voc:TermClassificationContract`. Instrument has no baseline: the classes are a legal system's.
+
+A classification is read, never evaluated (law I12). What a breach permits is written out as
+relations arising on the breach, and an evaluator reads those. "Condition" collides twice: with
+`elg:Condition`, a contingency, and with InsurML's component type Condition, a heading. Here it is a
+class of term only, and no `ins:` class is named Condition.
+
+```turtle-spec
+ins:classification a owl:ObjectProperty ;
+	rdfs:range skos:Concept ;
+	rdfs:comment "A class a term belongs to, such as a condition or a warranty." ;
+	fnd:utility "Subject: a stated term. Value: a concept from the scheme bound to ins-voc:TermClassificationContract, any number. Read for each instrument through the bound term's ins:boundFrom. Never evaluated: a breach's effect is stated as relations (law I12)." .
+
+ins:Definition owl:disjointWith fnd:Version .
+ins:Deeming owl:disjointWith fnd:Version .
+```
+
+## 16. Sections
+
+A **section** is a part of an instrument with its own parties, authority, words or terms: the lots
+of a framework, the towers of an outsourcing agreement, the coverage sections of a package policy,
+the tranches of a facility, the columns of a binding authority's schedule. Terms may apply only
+within some sections, and a word may mean something different in each.
+
+### 16.1 Declaring sections
+
+A **sectioning clause** divides an instrument: "The definitions, terms, conditions and limitations
+set forth in each Coverage Section shall apply only to that particular Coverage Section." Its term
+gives rise to an `ins:Sectioning`, which names the sections (`ins:section`) and places within each
+section the terms that section contains. A section is named by its element's persistent identity,
+never by an element version (§16.3), and must be included in the instrument's assembled wording.
+Sections nest along the wording tree: a part of a tower that terms apply to solely is a section
+within the tower, and is declared too.
+
+An instrument with no sectioning term has one section, the whole instrument. Any element a term's
+words scope to (§16.2) is then a section by being named, and nothing is placed by containment. So
+"except in Lot 4" works without a sectioning clause, and an unsectioned facility needs nothing.
+
+A section is a section because a term declares or names it, never because of its element type.
+`wrd-voc:Section` is a reading aid. InsurML's section groups, which match Wording's Section only by
+`skos:relatedMatch`, are made sections by a sectioning term the lift writes on the group that holds
+them, which records the review finding that they are sections in law.
+
+### 16.2 Placing terms
+
+A term contained in a declared section applies within it. A term elsewhere applies within the parts
+its words name:
+
+- `ins:appliesWithin` names the sections, or a part above them, within which the term applies.
+  Several values are alternatives
+- `ins:notWithin` excludes the parts at or below it: "except in Lot 4" is `ins:appliesWithin` Part
+  2 and `ins:notWithin` Lot 4
+- a term with neither, and not contained in a section, governs the whole instrument
+
+A case falls within a term when its section is at or below an `ins:appliesWithin` part and not at
+or below an `ins:notWithin` part: Eligibility's hierarchical match with exclusion (ADR-A87) over the
+wording tree. A case placed at a section above an excluded part is Undetermined. A scope that names a
+part inside a declared section, which is not itself a section, is reported while drafting, so that
+the drafter declares it or states the condition as a scope.
+
+"Only" against additive scope: "Sections A1, D1 and E1 only" names three sections, and a word
+defined "for Section B2" adds to whatever else defines it there unless one definition prevails
+(§16.7).
+
+### 16.3 What an instance stores, and what binding generates
+
+An instance stores only what differs from its form: the instrument and its identity and keys, its
+parties, the values its words take (C8), the elements its assembled wording includes,
+`ins:boundUnder`, and records filling a contingent party. Stated meaning belongs to element
+versions, which are content-addressed (ADR-A51), so a wording seen before brings its stated meaning
+with it and is never restated. Only changed, endorsed or novel elements add any. For that to hold,
+**stated meaning is context-free**: a stated term never names another element's version, and a
+scope or an ending names a section's persistent identity, resolved within the assembled wording's
+inclusions.
+
+**Bound meaning is generated, never stored with the instance.** It is a derived artefact (ADR-A92),
+built on demand from the form and the instance, cached as need dictates, and kept in a subgraph of
+its own where processing allows. Only bound meaning is evaluated (law I13), so evaluation generates
+what it reads. Generated nodes have deterministic identities, fixed by the instrument version, the
+stated node and the sections, so an instance may refer to one, as a call-off's `ins:boundUnder`
+does, and regeneration gives the same IRI.
+
+**Binding resolves every word, per section, and shares what does not differ.** For each stated
+term, binding computes a resolution signature in each section where it applies: what each of its
+words resolves to there, whatever definitions said so. Sections with equal signatures share one
+bound term, which records them with `ins:boundWithin`. A bound term covering the whole instrument
+records none. An unsectioned instrument has one section, so every stated term binds once.
+
+```mermaid
+---
+config:
+  layout: elk
+---
+flowchart LR
+    subgraph FORM["The form, shared and matched on its hash"]
+        S31["stated term 3.1<br/>appliesWithin Part 2<br/>notWithin Lot 4"]
+        SUP["the Supplier<br/>a role"]
+    end
+    subgraph INST["The instance: only what differs"]
+        FW["framework v1"]
+        ASH["Ash, Lot Supplier"]
+        GRP["Birch and Cedar<br/>EachForWhole"]
+    end
+    subgraph GEN["Generated bound meaning, not stored"]
+        B12["3.1 within Lots 1 and 2<br/>owed by Ash"]
+        B3["3.1 within Lot 3<br/>owed by the group"]
+    end
+    S31 --> B12
+    S31 --> B3
+    ASH --> B12
+    GRP --> B3
+    style FORM fill:#BBDEFB
+    style INST fill:#f6e7c1
+    style GEN fill:#bcdee1
+```
+
+In the framework, Lots 1 and 2 have different definitions of "the Supplier" (row S1.1, and rows
+S1.1 and S1.2) but both resolve to Ash Ltd, so clause 3.1 binds once for both. Sharing across
+instruments, by content address, is CCS slice C16b.
+
+### 16.4 A case's sections
+
+A case bound under a power falls in the one section the power is bound within (law I15).
+`ins:boundUnder` names the generated bound power whose exercise created the instrument: a call-off
+awarded under Lot 2's award power falls in Lot 2, and every term of the framework bound within Lot
+2 governs it. A power that cases are bound under must be bound within exactly one section. No
+property records a case's section: it is reached along the path.
+
+Any other case, such as a claim under a package policy, is not placed. Each section's bound
+relations evaluate it in their own right, so one incident may be a Service Failure in two towers,
+and cross-section terms (§16.5) read which sections responded.
+
+```mermaid
+flowchart LR
+    CO["call-off CO-0042<br/>ins:Instrument"] -- "boundUnder" --> AP["award power, Lot 2<br/>bound"]
+    AP -- "arisesUnder" --> BT["bound term L2.1"]
+    BT -- "boundWithin" --> L2["Lot 2's identity"]
+    T31["3.1 within Lots 1 and 2"] -- "boundWithin" --> L2
+    CO -. "governed by" .-> T31
+```
+
+### 16.5 Cross-section terms
+
+A term may span sections. The AIG sample policy's aggregate, "the Insurer's maximum liability for
+all Loss under all Coverage Sections combined", is one counter across every section, though "Loss"
+is defined in each. A qualifier spanning sections is bound once, and qualifies every bound relation
+generated from the stated relation it qualifies, each of which reads its words as its own section
+defines them. Splitting it per section would give each section an aggregate of its own, which the
+words do not say.
+
+A cross-section term whose own words vary by section is split per section, and binding reports it
+while drafting for a reviewer to confirm. "The Supplier's aggregate liability across all Lots shall
+not exceed £10m" may mean one cap shared by every supplier or one cap for each.
+
+### 16.6 Ending a section
+
+`ins:ends` may name a section. Entering the state ends, for that section's cases, every term bound
+within it, and nothing else: withdrawing Lot 4 ends L4.1 to L4.3, row S1.4 and the part of clause
+3.2 bound for Lot 4, for Lot 4's call-offs. What the words keep alive after the ending is survival
+(§14.4).
+
+### 16.7 Definitions per section, and overlap
+
+Definitions of one word may apply within different sections, as "the Supplier" does in each lot.
+Where two apply within one section, they combine at binding, in that section (law I16):
+
+| The overlapping definitions mean | Result in the section | Reported |
+|---|---|---|
+| the same parties, or the same condition | that meaning | a warning naming both and the section |
+| different parties, under one agreed acting rule | one group of all of them, under that rule | a warning |
+| different parties no definition describes together | a group with no rule, so its relations are Undetermined (CC-D10) | a warning |
+| parties under conflicting acting rules | none | a violation |
+
+`ins:prevailsOver` between two definitions removes the overlap: only the prevailing one is read.
+Whether an overlap was meant is a reading, so the warning puts it in front of a reviewer, and an
+applied profile may make it a violation, as an InsurML profile would.
+
+```turtle-spec
+ins:Sectioning a owl:Class ;
+	rdfs:comment "A term's dividing its instrument into sections." ;
+	fnd:utility "Subject: a sectioning. Stated meaning only, an ins:Template, arising under exactly one stated term. Names at least one section, and places within each section the terms it contains. Read by binding, never evaluated." .
+
+ins:section a owl:ObjectProperty ;
+	rdfs:range fnd:PersistentIdentity ;
+	rdfs:comment "A section a sectioning declares." ;
+	fnd:utility "Subject: a sectioning. Value: the persistent identity of a wording element, any number, resolved within each instrument's assembled wording. Never an element version, so the stated meaning stays context-free." .
+
+ins:appliesWithin a owl:ObjectProperty ;
+	rdfs:range fnd:PersistentIdentity ;
+	rdfs:comment "A part of an instrument a term applies within." ;
+	fnd:utility "Subject: a stated term. Value: the persistent identity of a section, or of a part above sections, any number: alternatives. Without one, a term applies within the section that contains it, or the whole instrument." .
+
+ins:notWithin a owl:ObjectProperty ;
+	rdfs:range fnd:PersistentIdentity ;
+	rdfs:comment "A part of an instrument a term does not apply within." ;
+	fnd:utility "Subject: a stated term. Value: the persistent identity of a part, at or below one of the term's ins:appliesWithin parts where it has any, any number. Excludes the parts at or below it." .
+
+ins:boundWithin a owl:ObjectProperty ;
+	rdfs:range fnd:PersistentIdentity ;
+	rdfs:comment "A section a bound term was generated for." ;
+	fnd:utility "Subject: a bound term. Value: the persistent identity of a section, any number: the sections whose words resolve alike, sharing this bound term. Without one, the bound term covers the whole instrument. Two bound terms from one stated term never share a section." .
+
+ins:boundUnder a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:range ins:Power ;
+	rdfs:comment "The power whose exercise created an instrument." ;
+	fnd:utility "Subject: an instrument version, such as a call-off or a policy under a binding authority. Value: at most one bound power of another instrument. The instrument falls in the one section the power is bound within (law I15). Amendments, consent rules and incorporation are C9's." .
+```
+
+## 17. Who Terms Bind
+
+### 17.1 Party words
+
+A stated relation names a role: the role of a party word ("the Supplier") where the words use one.
+Binding resolves it, in each section, to the occupancies or group the word's definitions mean
+there, so **a bound relation always names its parties**. An instrument whose word means one party
+throughout binds it once.
+
+### 17.2 Parties that depend on the case
+
+"The Sponsor shall compensate the Participant": the participant is whoever the adverse event
+occurred in, and is known only when each occasion arises. Such a party is a **contingent
+occupancy** (ADR-A102), a role occupancy with no actor, and is filled in one of two ways, which the
+occupancy states:
+
+- **by a resolution**: `ins:resolvedBy` names an `ins:PartyResolution`. It starts at the case's
+  class (`ins:resolvesFrom`), follows an ordered path of Eligibility's `elg:EvidenceStep`s to actors
+  (`ins:resolutionStep`), and keeps those satisfying at most one condition (`ins:resolutionFilter`):
+  "any Insured Person against whom a claim is made, who was a director at the date of the claim"
+- **by a record**: without a resolution, a record of each occasion fills it (C11)
+
+Either way the party is fixed when the occasion arises, and stays fixed (law I11). A resolution
+reuses Eligibility's steps, so the compilers read one kind of path, but it is not an evidence
+binding: a binding feeds a value to a condition, and a resolution chooses who stands at a
+relation's end.
+
+```mermaid
+flowchart LR
+    REL["compensate<br/>bound Obligation"] -- "obligee" --> OCC["participant occupancy<br/>inRole Participant<br/>no occupiedBy"]
+    OCC -- "resolvedBy" --> RES["ins:PartyResolution"]
+    RES -- "resolvesFrom" --> AE["ex:AdverseEvent<br/>the case's class"]
+    RES -- "resolutionStep 0" --> ST["occurredIn, forward"]
+    RES -- "resolutionFilter" --> F["enrolled at the event's date"]
+```
+
+### 17.3 Groups and how they act
+
+A word meaning several parties binds to a Party group, whose composition rule says how its members
+stand towards the other side. Party's terms are domain-neutral, and an instrument reads them as
+liability:
+
+| Wording | Composition rule | Shares |
+|---|---|---|
+| "each for its share", several liability | `pty:EachForOwnShare` | each member's `pty:outwardShare`, summing to 1 |
+| "jointly and severally" | `pty:EachForWhole` | no outward share. `pty:inwardShare`s where the members' arrangement between themselves is stated |
+
+A duty owed by or to a group is decided by its rule. A power held by a group, and a group with no
+rule, are Undetermined until C9's consent rules arrive (CC-D10), and the full set of group
+behaviours follows C9 (held design question HQ-5). A cap on what one member stands for, such as a
+limit of liability for one member of a joint and several group, is a qualifier on the relation,
+with C8's amounts. A net contribution clause leaves the outward shares unfixed, to be found for
+each occasion (C13).
+
+```turtle-spec
+ins:PartyResolution a owl:Class ;
+	rdfs:comment "How a party that depends on the case is resolved from it." ;
+	fnd:utility "Subject: a party resolution. Starts at exactly one class (ins:resolvesFrom), follows at least one Eligibility step to actors, and keeps those satisfying at most one condition. Not an elg:EvidenceBinding: its result is actors, not a decision." .
+
+ins:resolvedBy a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:range ins:PartyResolution ;
+	rdfs:comment "How a contingent occupancy is filled for each case." ;
+	fnd:utility "Subject: a role occupancy with no actor (ADR-A102). Value: at most one party resolution. Without one, a record of each occasion fills the occupancy. The party is fixed when the occasion arises (law I11)." .
+
+ins:resolvesFrom a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:comment "The class of case a party resolution starts from." ;
+	fnd:utility "Subject: a party resolution. Value: exactly one class, the class of the case each occasion arises on, such as an adverse event or a claim." .
+
+ins:resolutionStep a owl:ObjectProperty ;
+	rdfs:range elg:EvidenceStep ;
+	rdfs:comment "One step of a party resolution's path." ;
+	fnd:utility "Subject: a party resolution. Value: an elg:EvidenceStep, at least one, ordered by elg:stepIndex from 0. The last step reaches actors, never literals." .
+
+ins:resolutionFilter a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:comment "The condition each actor a resolution reaches must satisfy." ;
+	fnd:utility "Subject: a party resolution. Value: at most one Eligibility condition, or on stated meaning a defined word, applied to each actor the path reaches. An actor it does not keep is no party for the occasion." .
+```
+
+## 18. Vocabulary
 
 The activity scheme follows Wording's element types (C3-Q1): `ins-voc:ActivityContract` constrains
 `ins:activity`, with a baseline scheme bound as fallback that a deployment may extend or replace.
-The location contract has no baseline: a deployment binds its own territory or site scheme. The
+The location contract has no baseline: a deployment binds its own territory or site scheme, and
+neither has the term classification contract, since the classes of term are a legal system's
+(§15.4). The
 state kind scheme follows the activity scheme. `ins-voc:StateKindContract` constrains
 `ins:stateKind`, with a baseline of the kinds the examples use. `ins-voc:Suspended` is a kind of
 regime state, the state of an instrument whose performance is suspended, and is distinct from
@@ -2892,8 +3392,8 @@ instrument as a whole as a value of `ins:ends` (§14.2).
 
 <https://www.nebularis.org/neuro-semantic/instrument-vocab>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/instrument-vocab/0.11.0> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.11.0> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/instrument-vocab/0.12.0> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.12.0> .
 
 ins-voc:ActivityContract a voc:SchemeContract ;
 	fnd:hasIdentity ins-voc:ActivityContract-identity ;
@@ -2907,6 +3407,12 @@ ins-voc:LocationContract a voc:SchemeContract ;
 	fnd:hasGovernanceState fnd:Active ;
 	skos:prefLabel "Location scheme contract"@en ;
 	voc:constrainsProperty ins:operatesAt .
+
+ins-voc:TermClassificationContract a voc:SchemeContract ;
+	fnd:hasIdentity ins-voc:TermClassificationContract-identity ;
+	fnd:hasGovernanceState fnd:Active ;
+	skos:prefLabel "Term classification scheme contract"@en ;
+	voc:constrainsProperty ins:classification .
 
 ins-voc:Activities a voc:ConceptScheme ;
 	fnd:hasIdentity ins-voc:Activities-identity ;
@@ -2973,6 +3479,9 @@ ins-voc:Indemnify a skos:Concept ; skos:inScheme ins-voc:Activities ;
 
 ins-voc:DeclineRenewal a skos:Concept ; skos:inScheme ins-voc:Activities ;
 	skos:prefLabel "Decline renewal"@en ; skos:definition "Give notice that an instrument shall not renew."@en .
+
+ins-voc:Award a skos:Concept ; skos:inScheme ins-voc:Activities ;
+	skos:prefLabel "Award"@en ; skos:definition "Award a contract or an order under an arrangement, creating a new instrument."@en .
 
 ins:InstrumentTarget a bhv:TargetKind ;
 	rdfs:comment "A Behaviour effect's target kind for an instrument." ;
@@ -3060,17 +3569,20 @@ ins-voc:TheInstrument a skos:Concept ;
 	skos:definition "The instrument as a whole, as a value of ins:ends: entering the state ends every term not surviving it."@en .
 ```
 
-## 16. Shapes
+## 19. Shapes
 
-### 16.1 Structural shapes (SHACL Core)
+### 19.1 Structural shapes (SHACL Core)
 
 Each property's subject and value, a relation's single term, its required content per class, the
 two tiers (law I2) and what each names (law I13). For regimes, they check a regime's term, its
 explicit Behaviour types (law B4), each trigger's one required value, the fixed values of §12 as
 `sh:in` shapes, and what may be gated or arise. For terms in time, they check due ranges (law I5),
 windows and recurrences and their anchors (law I9), ending states, `ins:OnEntry`, an expiry's
-length or time, and survival. Validate data with this spec, so that subclasses are known,
-and validate the graph the engine reads (§12.3).
+length or time, and survival. For what terms are and whom they bind, they check definitions and
+deemings and their tiers, sectionings, scopes naming persistent identities, a bound term's
+sections, law I15's one section for a case bound under a power, party resolutions, a classification's
+subject, and a condition slot's word (§15.1). Validate data with this spec, so that subclasses are
+known, and validate the graph the engine reads (§12.3).
 
 ```turtle-shapes
 @prefix sh:   <http://www.w3.org/ns/shacl#> .
@@ -3083,6 +3595,7 @@ and validate the graph the engine reads (§12.3).
 @prefix qnt:  <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
 @prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 @prefix ins-voc: <https://www.nebularis.org/neuro-semantic/lattice/instrument/vocab#> .
 
 ins:InstrumentShape a sh:NodeShape ;
@@ -3123,8 +3636,8 @@ ins:LegalRelationShape a sh:NodeShape ;
 		sh:message "A relation carries no ins:boundIn: it belongs to its term, which does (law I2)."
 	] ;
 	sh:property [
-		sh:path ins:scope ; sh:maxCount 1 ; sh:class elg:Condition ;
-		sh:message "A relation has at most one scope, an Eligibility condition."
+		sh:path ins:scope ; sh:maxCount 1 ; sh:node ins:ConditionOrWordShape ;
+		sh:message "A relation has at most one scope, an Eligibility condition or a defined word."
 	] ;
 	sh:property [
 		sh:path ins:activity ; sh:maxCount 1 ; sh:nodeKind sh:IRI ;
@@ -3135,7 +3648,7 @@ ins:LegalRelationShape a sh:NodeShape ;
 
 ins:RelationTierShape a sh:NodeShape ;
 	sh:targetClass ins:LegalRelation ;
-	sh:message "A stated relation (an ins:Template) arises under a stated term and names roles as its parties. A bound relation arises under a bound term, names occupancies or groups, and is instantiated from exactly one stated relation or implied by a source (laws I2, I13)." ;
+	sh:message "A stated relation (an ins:Template) arises under a stated term and names roles as its parties. A bound relation arises under a bound term, names occupancies or groups and conditions, never roles or words, and is instantiated from exactly one stated relation or implied by a source (laws I2, I13)." ;
 	sh:xone (
 		[ sh:class ins:Template ;
 		  sh:property [ sh:path ins:arisesUnder ; sh:class ins:Template ] ;
@@ -3144,6 +3657,8 @@ ins:RelationTierShape a sh:NodeShape ;
 		  sh:property [ sh:path ins:arisesUnder ; sh:not [ sh:class ins:Template ] ] ;
 		  sh:property [ sh:path [ sh:alternativePath ( ins:obligor ins:obligee ins:holder ins:counterparty ) ] ;
 		                sh:or ( [ sh:class pty:RoleOccupancy ] [ sh:class pty:ParticipationGroup ] ) ] ;
+		  sh:property [ sh:path [ sh:alternativePath ( ins:scope ins:maintains ( ins:arisesOn ins:condition ) ) ] ;
+		                sh:class elg:Condition ] ;
 		  sh:xone (
 			[ sh:property [ sh:path ins:boundFrom ; sh:minCount 1 ; sh:maxCount 1 ; sh:class ins:Template ] ]
 			[ sh:property [ sh:path ins:impliedBy ; sh:minCount 1 ] ]
@@ -3166,8 +3681,8 @@ ins:ObligationShape a sh:NodeShape ;
 
 ins:ContinuingObligationShape a sh:NodeShape ;
 	sh:targetClass ins:ContinuingObligation ;
-	sh:property [ sh:path ins:maintains ; sh:minCount 1 ; sh:maxCount 1 ; sh:class elg:Condition ;
-		sh:message "A continuing obligation states the one condition it keeps holding (ins:maintains)." ] .
+	sh:property [ sh:path ins:maintains ; sh:minCount 1 ; sh:maxCount 1 ; sh:node ins:ConditionOrWordShape ;
+		sh:message "A continuing obligation states the one condition it keeps holding (ins:maintains), or on stated meaning a defined word." ] .
 
 ins:HeldRelationShape a sh:NodeShape ;
 	sh:targetClass ins:Permission , ins:Exclusion , ins:Power ;
@@ -3202,9 +3717,11 @@ ins:QualifierShape a sh:NodeShape ;
 	sh:targetClass ins:Qualifier ;
 	sh:property [ sh:path ins:arisesUnder ; sh:minCount 1 ; sh:maxCount 1 ; sh:class ins:Term ;
 		sh:message "A qualifier arises under exactly one term." ] ;
-	sh:property [ sh:path ins:qualifies ; sh:minCount 1 ; sh:maxCount 1 ;
+	sh:property [ sh:path ins:qualifies ; sh:minCount 1 ;
 		sh:or ( [ sh:class ins:Term ] [ sh:class ins:LegalRelation ] ) ;
-		sh:message "A qualifier qualifies exactly one term or relation." ] .
+		sh:message "A qualifier qualifies terms or relations, at least one." ] ;
+	sh:or ( [ sh:not [ sh:class ins:Template ] ] [ sh:property [ sh:path ins:qualifies ; sh:maxCount 1 ] ] ) ;
+	sh:message "A stated qualifier qualifies exactly one term or relation. Only a bound one, spanning sections, qualifies several (§16.5)." .
 
 ins:PartyDetailsShape a sh:NodeShape ;
 	sh:targetSubjectsOf ins:noticeAddress , ins:operatesAt ;
@@ -3280,8 +3797,8 @@ ins:OnActShape a sh:NodeShape ;
 
 ins:OnConditionShape a sh:NodeShape ;
 	sh:targetClass ins:OnCondition ;
-	sh:property [ sh:path ins:condition ; sh:minCount 1 ; sh:maxCount 1 ; sh:class elg:Condition ;
-		sh:message "A condition trigger names exactly one Eligibility condition (ins:condition)." ] ;
+	sh:property [ sh:path ins:condition ; sh:minCount 1 ; sh:maxCount 1 ; sh:node ins:ConditionOrWordShape ;
+		sh:message "A condition trigger names exactly one Eligibility condition (ins:condition), or on stated meaning a defined word." ] ;
 	sh:property [ sh:path bhv:triggerKind ; sh:minCount 1 ; sh:in ( bhv:DerivedTrigger ) ;
 		sh:message "A condition trigger's kind is bhv:DerivedTrigger, fixed. Assert it where no reasoner runs (§12)." ] .
 
@@ -3381,8 +3898,8 @@ ins:EndsShape a sh:NodeShape ;
 	sh:class bhv:State ;
 	sh:message "Only a state ends an instrument or terms, when it is entered (§14.2)." ;
 	sh:property [ sh:path ins:ends ;
-		sh:or ( [ sh:in ( ins-voc:TheInstrument ) ] [ sh:and ( [ sh:class ins:Term ] [ sh:class ins:Template ] ) ] ) ;
-		sh:message "A state ends the instrument (ins-voc:TheInstrument) or stated terms." ] .
+		sh:or ( [ sh:in ( ins-voc:TheInstrument ) ] [ sh:and ( [ sh:class ins:Term ] [ sh:class ins:Template ] ) ] [ sh:node ins:ElementIdentityShape ] ) ;
+		sh:message "A state ends the instrument (ins-voc:TheInstrument) or stated terms, or a section by its persistent identity (§16.6)." ] .
 
 ins:SurvivalShape a sh:NodeShape ;
 	sh:targetSubjectsOf ins:survives ;
@@ -3397,15 +3914,139 @@ ins:SurvivalDetailShape a sh:NodeShape ;
 		sh:message "A survival period is one quantity of time." ] ;
 	sh:property [ sh:path ins:survivesUntil ; sh:maxCount 1 ; sh:class elg:Condition ;
 		sh:message "A survival lasts until at most one Eligibility condition." ] .
+
+ins:ElementIdentityShape a sh:NodeShape ;
+	sh:property [ sh:path [ sh:inversePath fnd:hasIdentity ] ; sh:minCount 1 ; sh:class wrd:Element ] ;
+	sh:message "A section or a part is named by the persistent identity of a wording element, never by an element version (§16.3)." .
+
+ins:ConditionOrWordShape a sh:NodeShape ;
+	sh:or (
+		[ sh:class elg:Condition ]
+		[ sh:class skos:Concept ; sh:property [ sh:path [ sh:inversePath ins:defines ] ; sh:minCount 1 ] ]
+	) ;
+	sh:message "A condition slot takes an Eligibility condition or, on stated meaning, a word a definition defines (§15.1)." .
+
+ins:DefinitionShape a sh:NodeShape ;
+	sh:targetClass ins:Definition ;
+	sh:property [ sh:path ins:arisesUnder ; sh:minCount 1 ; sh:maxCount 1 ; sh:class ins:Term ;
+		sh:message "A definition arises under exactly one term." ] ;
+	sh:property [ sh:path ins:defines ; sh:minCount 1 ; sh:maxCount 1 ;
+		sh:or ( [ sh:class pty:Role ] [ sh:class skos:Concept ] ) ;
+		sh:message "A definition defines exactly one word, a role or a concept (§15.1)." ] ;
+	sh:property [ sh:path ins:means ; sh:minCount 1 ;
+		sh:message "A definition means at least one thing." ] ;
+	sh:property [ sh:path ins:actingRule ; sh:maxCount 1 ; sh:class pty:CompositionRule ;
+		sh:message "A definition has at most one acting rule, a Party composition rule." ] .
+
+ins:DeemingShape a sh:NodeShape ;
+	sh:targetClass ins:Deeming ;
+	sh:property [ sh:path ins:arisesUnder ; sh:minCount 1 ; sh:maxCount 1 ; sh:class ins:Term ;
+		sh:message "A deeming arises under exactly one term." ] ;
+	sh:property [ sh:path ins:deems ; sh:minCount 1 ; sh:maxCount 1 ; sh:node ins:ConditionOrWordShape ;
+		sh:message "A deeming deems exactly one condition, or on stated meaning a defined word." ] ;
+	sh:property [ sh:path ins:when ; sh:maxCount 1 ; sh:node ins:ConditionOrWordShape ;
+		sh:message "A deeming holds on at most one footing (ins:when), a condition or a defined word." ] ;
+	sh:property [ sh:path ins:conclusive ; sh:maxCount 1 ; sh:datatype xsd:boolean ;
+		sh:message "A deeming is conclusive or not, once (xsd:boolean)." ] ;
+	sh:property [ sh:path ins:forPurposeOf ; sh:or ( [ sh:class ins:LegalRelation ] [ sh:class ins:Term ] ) ;
+		sh:message "A deeming applies for relations or terms." ] .
+
+ins:ConstitutiveTierShape a sh:NodeShape ;
+	sh:targetClass ins:Definition , ins:Deeming ;
+	sh:message "A stated definition or deeming (an ins:Template) arises under a stated term, and a stated party word means roles. A bound one arises under a bound term, is bound from exactly one stated one, means occupancies, groups and conditions, never roles or words, and applies for bound relations and terms (laws I2, I13)." ;
+	sh:xone (
+		[ sh:class ins:Template ;
+		  sh:property [ sh:path ins:arisesUnder ; sh:class ins:Template ] ;
+		  sh:property [ sh:path ins:means ; sh:not [ sh:or ( [ sh:class pty:RoleOccupancy ] [ sh:class pty:ParticipationGroup ] ) ] ] ;
+		  sh:property [ sh:path ins:forPurposeOf ; sh:class ins:Template ] ]
+		[ sh:not [ sh:class ins:Template ] ;
+		  sh:property [ sh:path ins:arisesUnder ; sh:not [ sh:class ins:Template ] ] ;
+		  sh:property [ sh:path ins:boundFrom ; sh:minCount 1 ; sh:maxCount 1 ; sh:class ins:Template ] ;
+		  sh:property [ sh:path ins:means ; sh:not [ sh:class pty:Role ] ] ;
+		  sh:property [ sh:path [ sh:alternativePath ( ins:deems ins:when ) ] ; sh:class elg:Condition ] ;
+		  sh:property [ sh:path ins:forPurposeOf ; sh:not [ sh:class ins:Template ] ] ]
+	) .
+
+ins:PrevailsOverShape a sh:NodeShape ;
+	sh:targetSubjectsOf ins:prevailsOver ;
+	sh:class ins:Definition ;
+	sh:message "Only a definition prevails over another, until NRS N10 (§16.7)." ;
+	sh:property [ sh:path ins:prevailsOver ; sh:class ins:Definition ;
+		sh:message "A definition prevails over definitions only, until NRS N10." ] .
+
+ins:ClassificationShape a sh:NodeShape ;
+	sh:targetSubjectsOf ins:classification ;
+	sh:and ( [ sh:class ins:Term ] [ sh:class ins:Template ] ) ;
+	sh:message "Only a stated term is classified: a bound term reads it through ins:boundFrom (§15.4)." ;
+	sh:property [ sh:path ins:classification ; sh:nodeKind sh:IRI ;
+		sh:message "A classification is a concept." ] .
+
+ins:SectioningShape a sh:NodeShape ;
+	sh:targetClass ins:Sectioning ;
+	sh:class ins:Template ;
+	sh:message "A sectioning is stated meaning only, an ins:Template, read by binding (§16.1)." ;
+	sh:property [ sh:path ins:arisesUnder ; sh:minCount 1 ; sh:maxCount 1 ; sh:class ins:Term ;
+		sh:message "A sectioning arises under exactly one term." ] ;
+	sh:property [ sh:path ins:section ; sh:minCount 1 ; sh:node ins:ElementIdentityShape ;
+		sh:message "A sectioning names at least one section, by its persistent identity, never an element version (§16.3)." ] ;
+	sh:property [ sh:path ins:boundFrom ; sh:maxCount 0 ;
+		sh:message "A sectioning is never bound." ] .
+
+ins:ScopeShape a sh:NodeShape ;
+	sh:targetSubjectsOf ins:appliesWithin , ins:notWithin ;
+	sh:and ( [ sh:class ins:Term ] [ sh:class ins:Template ] ) ;
+	sh:message "Only a stated term is placed: a bound term records the sections it covers with ins:boundWithin (§16.3)." ;
+	sh:property [ sh:path [ sh:alternativePath ( ins:appliesWithin ins:notWithin ) ] ; sh:node ins:ElementIdentityShape ;
+		sh:message "A scope names a part by its persistent identity, never an element version, so stated meaning stays context-free (§16.3)." ] .
+
+ins:BoundWithinShape a sh:NodeShape ;
+	sh:targetSubjectsOf ins:boundWithin ;
+	sh:class ins:Term ;
+	sh:not [ sh:class ins:Template ] ;
+	sh:message "Only a bound term records the sections it covers (§16.3)." ;
+	sh:property [ sh:path ins:boundWithin ; sh:node ins:ElementIdentityShape ;
+		sh:message "A bound term's sections are the persistent identities of wording elements." ] .
+
+ins:BoundUnderShape a sh:NodeShape ;
+	sh:targetSubjectsOf ins:boundUnder ;
+	sh:class ins:Instrument ;
+	sh:message "Only an instrument is bound under a power." ;
+	sh:property [ sh:path ins:boundUnder ; sh:maxCount 1 ; sh:class ins:Power ; sh:not [ sh:class ins:Template ] ;
+		sh:message "An instrument is bound under at most one bound power." ] ;
+	sh:property [ sh:path ( ins:boundUnder ins:arisesUnder ins:boundWithin ) ; sh:maxCount 1 ;
+		sh:message "A power that cases are bound under is bound within exactly one section, which fixes the case's section (law I15)." ] .
+
+ins:PartyResolutionShape a sh:NodeShape ;
+	sh:targetClass ins:PartyResolution ;
+	sh:property [ sh:path ins:resolvesFrom ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:IRI ;
+		sh:message "A party resolution starts from exactly one class (ins:resolvesFrom)." ] ;
+	sh:property [ sh:path ins:resolutionStep ; sh:minCount 1 ; sh:class elg:EvidenceStep ;
+		sh:message "A party resolution follows at least one Eligibility step (ins:resolutionStep)." ] ;
+	sh:property [ sh:path ins:resolutionFilter ; sh:maxCount 1 ; sh:node ins:ConditionOrWordShape ;
+		sh:message "A party resolution keeps actors by at most one condition (ins:resolutionFilter)." ] .
+
+ins:ResolvedByShape a sh:NodeShape ;
+	sh:targetSubjectsOf ins:resolvedBy ;
+	sh:class pty:RoleOccupancy ;
+	sh:message "Only a role occupancy is resolved for each case." ;
+	sh:property [ sh:path pty:occupiedBy ; sh:maxCount 0 ;
+		sh:message "A resolved occupancy is contingent: it names no actor (ADR-A102, §17.2)." ] ;
+	sh:property [ sh:path ins:resolvedBy ; sh:maxCount 1 ; sh:class ins:PartyResolution ;
+		sh:message "A contingent occupancy is resolved by at most one party resolution." ] .
 ```
 
-### 16.2 Constraint shapes (SHACL-SPARQL)
+### 19.2 Constraint shapes (SHACL-SPARQL)
 
 Supersession within one identity, and law I8: an exception's holder is the party the excepted
 relation binds, and a permission permits the act the prohibition forbids. For regimes, they check
 that every transition between a regime's states is a regime transition, a gate names a state of a regime, a
 gate on a per-occasion regime reaches its occasion (C11a-Q4), and a period is never tolled by a
-state of its own state space.
+state of its own state space. For C7c, they check that an excluded part lies below a part applied
+within, report a scope cutting through a declared section (a warning), check that only a section
+is ended, that declared sections are included in the wording, that one stated term binds each
+section at most once, overlapping definitions (law I16: a warning, or a violation for conflicting
+acting rules), that a definition's acting rule is its group's, a classification's scheme, and that
+a party resolution reaches actors.
 
 ```turtle-shapes
 @prefix sh:   <http://www.w3.org/ns/shacl#> .
@@ -3569,9 +4210,229 @@ ins:TollingShape a sh:NodeShape ;
 			}
 		"""
 	] .
+
+ins:NotWithinBelowShape a sh:NodeShape ;
+	sh:targetSubjectsOf ins:notWithin ;
+	sh:sparql [
+		sh:message "{$this} excludes {?part}, which lies below none of the parts it applies within (§16.2)." ;
+		sh:select """
+			PREFIX ins:  <https://www.nebularis.org/neuro-semantic/lattice/instrument#>
+			PREFIX fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+			PREFIX wrd:  <https://www.nebularis.org/neuro-semantic/lattice/wording#>
+			PREFIX pty:  <https://www.nebularis.org/neuro-semantic/lattice/party#>
+			PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+			PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+			SELECT $this ?part WHERE {
+				$this ins:notWithin ?part .
+				FILTER EXISTS { $this ins:appliesWithin ?any }
+				FILTER NOT EXISTS {
+					$this ins:appliesWithin ?above .
+					?upper fnd:hasIdentity ?above .
+					?lower fnd:hasIdentity ?part .
+					?upper wrd:directlyComprises* ?lower .
+				}
+			}
+		"""
+	] .
+
+ins:ScopeCutsSectionShape a sh:NodeShape ;
+	sh:targetSubjectsOf ins:appliesWithin , ins:notWithin ;
+	sh:severity sh:Warning ;
+	sh:sparql [
+		sh:message "{$this} is scoped to {?part}, which lies inside the declared section {?section} and is not itself a section: declare it, or state the condition as a scope (§16.2)." ;
+		sh:select """
+			PREFIX ins:  <https://www.nebularis.org/neuro-semantic/lattice/instrument#>
+			PREFIX fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+			PREFIX wrd:  <https://www.nebularis.org/neuro-semantic/lattice/wording#>
+			SELECT $this ?part ?section WHERE {
+				$this ins:appliesWithin|ins:notWithin ?part .
+				?sectioning ins:section ?section .
+				FILTER NOT EXISTS { ?any ins:section ?part }
+				?upper fnd:hasIdentity ?section .
+				?lower fnd:hasIdentity ?part .
+				?upper wrd:directlyComprises+ ?lower .
+			}
+		"""
+	] .
+
+ins:EndsSectionShape a sh:NodeShape ;
+	sh:targetSubjectsOf ins:ends ;
+	sh:sparql [
+		sh:message "{$this} ends {?part}, which no sectioning declares and no scope names: only a section ends this way (§16.6)." ;
+		sh:select """
+			PREFIX ins:  <https://www.nebularis.org/neuro-semantic/lattice/instrument#>
+			PREFIX fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+			PREFIX wrd:  <https://www.nebularis.org/neuro-semantic/lattice/wording#>
+			SELECT $this ?part WHERE {
+				$this ins:ends ?part .
+				?element fnd:hasIdentity ?part .
+				FILTER NOT EXISTS { ?sectioning ins:section ?part }
+				FILTER NOT EXISTS { ?term ins:appliesWithin|ins:notWithin ?part }
+			}
+		"""
+	] .
+
+ins:DeclaredSectionIncludedShape a sh:NodeShape ;
+	sh:targetClass ins:Instrument ;
+	sh:sparql [
+		sh:message "{?section}, a section the instrument's sectioning declares, is not an element its assembled wording includes (§16.1)." ;
+		sh:select """
+			PREFIX ins:  <https://www.nebularis.org/neuro-semantic/lattice/instrument#>
+			PREFIX fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+			PREFIX wrd:  <https://www.nebularis.org/neuro-semantic/lattice/wording#>
+			PREFIX pty:  <https://www.nebularis.org/neuro-semantic/lattice/party#>
+			PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+			PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+			SELECT $this ?section WHERE {
+				$this ins:expressedIn ?wording .
+				?wording wrd:includes ?clause .
+				?term ins:expressedIn ?clause .
+				?sectioning ins:arisesUnder ?term ; rdf:type ins:Sectioning ; ins:section ?section .
+				FILTER NOT EXISTS { ?wording wrd:includes ?element . ?element fnd:hasIdentity ?section }
+			}
+		"""
+	] .
+
+ins:BoundSectionsDisjointShape a sh:NodeShape ;
+	sh:targetClass ins:Term ;
+	sh:sparql [
+		sh:message "{$this} and {?other} are bound from one stated term in one instrument and share a section: binding shares one bound term across sections whose words resolve alike, and never binds one section twice (§16.3)." ;
+		sh:select """
+			PREFIX ins:  <https://www.nebularis.org/neuro-semantic/lattice/instrument#>
+			PREFIX fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+			PREFIX wrd:  <https://www.nebularis.org/neuro-semantic/lattice/wording#>
+			PREFIX pty:  <https://www.nebularis.org/neuro-semantic/lattice/party#>
+			PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+			PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+			SELECT $this ?other WHERE {
+				$this ins:boundIn ?instrument ; ins:boundFrom ?stated .
+				?other ins:boundIn ?instrument ; ins:boundFrom ?stated .
+				FILTER (?other != $this)
+				{ $this ins:boundWithin ?s . ?other ins:boundWithin ?s }
+				UNION { FILTER NOT EXISTS { $this ins:boundWithin ?any } }
+			}
+		"""
+	] .
+
+ins:DefinitionOverlapShape a sh:NodeShape ;
+	sh:targetClass ins:Definition ;
+	sh:severity sh:Warning ;
+	sh:sparql [
+		sh:message "{$this} and {?other} both define {?word} within {?section}: they combine by union. Confirm that no \"only\" was meant, or state which prevails (law I16)." ;
+		sh:select """
+			PREFIX ins:  <https://www.nebularis.org/neuro-semantic/lattice/instrument#>
+			PREFIX fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+			PREFIX wrd:  <https://www.nebularis.org/neuro-semantic/lattice/wording#>
+			PREFIX pty:  <https://www.nebularis.org/neuro-semantic/lattice/party#>
+			PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+			PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+			SELECT DISTINCT $this ?other ?word ?section WHERE {
+				$this ins:arisesUnder ?term ; ins:defines ?word .
+				?term ins:boundIn ?instrument .
+				?other a ins:Definition ; ins:arisesUnder ?term2 ; ins:defines ?word .
+				?term2 ins:boundIn ?instrument .
+				FILTER (?other != $this)
+				FILTER NOT EXISTS { $this rdf:type ins:Template }
+				FILTER NOT EXISTS { $this ins:prevailsOver ?other }
+				FILTER NOT EXISTS { ?other ins:prevailsOver $this }
+				{ ?term ins:boundWithin ?s . ?term2 ins:boundWithin ?s }
+				UNION { ?term ins:boundWithin ?s . FILTER NOT EXISTS { ?term2 ins:boundWithin ?any } }
+				UNION { ?term2 ins:boundWithin ?s . FILTER NOT EXISTS { ?term ins:boundWithin ?any } }
+				UNION { FILTER NOT EXISTS { ?term ins:boundWithin ?any } FILTER NOT EXISTS { ?term2 ins:boundWithin ?any2 } }
+				BIND (COALESCE(STR(?s), "the whole instrument") AS ?section)
+				FILTER (STR($this) < STR(?other))
+			}
+		"""
+	] .
+
+ins:ActingRuleConflictShape a sh:NodeShape ;
+	sh:targetClass ins:Definition ;
+	sh:sparql [
+		sh:message "{$this} and {?other} both define {?word} within {?section} under conflicting acting rules, and neither prevails (law I16)." ;
+		sh:select """
+			PREFIX ins:  <https://www.nebularis.org/neuro-semantic/lattice/instrument#>
+			PREFIX fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+			PREFIX wrd:  <https://www.nebularis.org/neuro-semantic/lattice/wording#>
+			PREFIX pty:  <https://www.nebularis.org/neuro-semantic/lattice/party#>
+			PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+			PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+			SELECT DISTINCT $this ?other ?word ?section WHERE {
+				$this ins:arisesUnder ?term ; ins:defines ?word .
+				?term ins:boundIn ?instrument .
+				?other a ins:Definition ; ins:arisesUnder ?term2 ; ins:defines ?word .
+				?term2 ins:boundIn ?instrument .
+				FILTER (?other != $this)
+				FILTER NOT EXISTS { $this rdf:type ins:Template }
+				FILTER NOT EXISTS { $this ins:prevailsOver ?other }
+				FILTER NOT EXISTS { ?other ins:prevailsOver $this }
+				{ ?term ins:boundWithin ?s . ?term2 ins:boundWithin ?s }
+				UNION { ?term ins:boundWithin ?s . FILTER NOT EXISTS { ?term2 ins:boundWithin ?any } }
+				UNION { ?term2 ins:boundWithin ?s . FILTER NOT EXISTS { ?term ins:boundWithin ?any } }
+				UNION { FILTER NOT EXISTS { ?term ins:boundWithin ?any } FILTER NOT EXISTS { ?term2 ins:boundWithin ?any2 } }
+				BIND (COALESCE(STR(?s), "the whole instrument") AS ?section)
+				$this ins:actingRule ?rule .
+				?other ins:actingRule ?rule2 .
+				FILTER (?rule != ?rule2)
+			}
+		"""
+	] .
+
+ins:ActingRuleAgreesShape a sh:NodeShape ;
+	sh:targetClass ins:Definition ;
+	sh:sparql [
+		sh:message "{$this} states the acting rule {?rule}, but the group it means, {?group}, does not (§15.1)." ;
+		sh:select """
+			PREFIX ins:  <https://www.nebularis.org/neuro-semantic/lattice/instrument#>
+			PREFIX fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+			PREFIX wrd:  <https://www.nebularis.org/neuro-semantic/lattice/wording#>
+			PREFIX pty:  <https://www.nebularis.org/neuro-semantic/lattice/party#>
+			PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+			PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+			SELECT $this ?rule ?group WHERE {
+				$this ins:actingRule ?rule ; ins:means ?group .
+				?group rdf:type pty:ParticipationGroup .
+				FILTER NOT EXISTS { ?group pty:hasCompositionRule ?rule }
+			}
+		"""
+	] .
+
+ins:ClassificationSchemeShape a sh:NodeShape ;
+	sh:targetSubjectsOf ins:classification ;
+	sh:sparql [
+		sh:message "{?class} is not in a scheme bound to ins-voc:TermClassificationContract (§15.4)." ;
+		sh:select """
+			PREFIX ins:     <https://www.nebularis.org/neuro-semantic/lattice/instrument#>
+			PREFIX ins-voc: <https://www.nebularis.org/neuro-semantic/lattice/instrument/vocab#>
+			PREFIX voc:     <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#>
+			PREFIX skos:    <http://www.w3.org/2004/02/skos/core#>
+			SELECT $this ?class WHERE {
+				$this ins:classification ?class .
+				FILTER NOT EXISTS {
+					{ ins-voc:TermClassificationContract voc:boundScheme ?scheme }
+					UNION { ?binding voc:forContract ins-voc:TermClassificationContract ; voc:bindsScheme ?scheme }
+					?class skos:inScheme ?scheme
+				}
+			}
+		"""
+	] .
+
+ins:ResolutionReachesActorsShape a sh:NodeShape ;
+	sh:targetClass ins:PartyResolution ;
+	sh:sparql [
+		sh:message "{$this}'s path steps through {?property}, a datatype property: a party resolution reaches actors, never literals (§17.2)." ;
+		sh:select """
+			PREFIX ins: <https://www.nebularis.org/neuro-semantic/lattice/instrument#>
+			PREFIX elg: <https://www.nebularis.org/neuro-semantic/lattice/eligibility#>
+			PREFIX owl: <http://www.w3.org/2002/07/owl#>
+			SELECT $this ?property WHERE {
+				$this ins:resolutionStep/elg:stepProperty ?property .
+				?property a owl:DatatypeProperty .
+			}
+		"""
+	] .
 ```
 
-### 16.3 Optional: one expression per term
+### 19.3 Optional: one expression per term
 
 Load only where every stated term is expressed in one element version. A term may otherwise be
 expressed again in another language or a consolidated text (ADR-A96).
@@ -3589,19 +4450,30 @@ ins:SingleExpressionShape a sh:NodeShape ;
 		sh:message "This deployment expresses each term in one element version only (ADR-A96)." ] .
 ```
 
-## 17. Laws
+## 20. Laws
 
-| Law | Statement | Register in 0.10.0 |
+| Law | Statement | Register in 0.12.0 |
 |---|---|---|
 | I1 | An instrument version is expressed in exactly one assembled wording | `ins:InstrumentShape` |
 | I2 | A stated term is part of exactly one element version. A bound term is part of exactly one instrument version, bound from exactly one stated term or implied by a source. A relation belongs to its term | `ins:TermShape`, `ins:LegalRelationShape`, `ins:RelationTierShape` |
 | I3 | A relation arises under exactly one term. Once arisen, an occasion persists until performed, breached or ended, and survives its instrument's termination as an accrued right. A pending occasion ends with its term, unless the term survives | `ins:SurvivalShape`. Evaluated by C12 |
 | I5 | An obligation has at most one due range, and a continuing obligation or a prohibition none (C7b-Q2) | `ins:DueShape` |
 | I8 | A permission's holder is the excepted prohibition's obligor, with the same activity. An exclusion's holder is the excepted obligation's obligor or the power's counterparty | `ins:PermissionExceptsOwnProhibitionShape`, `ins:ExclusionHolderShape` |
-| I13 | Stated meaning names roles, bound meaning occupancies and groups. Only bound relations are evaluated. A regime is stated only, read as stated for each subject (C7a-Q1) | `ins:RelationTierShape`, `ins:ArisingTierShape`, `ins:RegimeShape` |
+| I11 | A relation's parties are fixed when its occasion arises. A party that depends on the case is a contingent occupancy, resolved or recorded for each occasion | `ins:ResolvedByShape`, `ins:PartyResolutionShape`, `ins:ResolutionReachesActorsShape`. Evaluated by C12 |
+| I12 | A term's classification is read, never evaluated: what a breach permits is stated as relations | `ins:ClassificationShape`, `ins:ClassificationSchemeShape` |
+| I13 | Stated meaning names roles and words, bound meaning occupancies, groups and meanings. Only bound relations are evaluated, and bound meaning is generated, never stored with the instance. A regime and a sectioning are stated only, read as stated for each subject (C7a-Q1) | `ins:RelationTierShape`, `ins:ArisingTierShape`, `ins:ConstitutiveTierShape`, `ins:RegimeShape`, `ins:SectioningShape` |
+| I15 | A case bound under a power falls in the one section the power is bound within | `ins:BoundUnderShape` |
+| I16 | Definitions of one word that apply within one section combine by union, unless one prevails, and every overlap is reported. Conflicting acting rules are a violation | `ins:DefinitionOverlapShape` (warning), `ins:ActingRuleConflictShape` |
 | I9 | A due range, a window and a recurrence are anchored at a named time, never at evaluation time | `ins:DueShape`, `ins:WindowShape`, `ins:RecurrenceShape` |
 | I18 | No term or relation is a version: meaning changes only with its owner | disjointness with `fnd:Version`, `ins:LegalRelationShape` |
 | B4 (Behaviour's) | Every Instrument specialisation of a Behaviour term carries the Behaviour type in the graph the engine reads | `ins:RegimeTypeShape`, `ins:RegimeTransitionTypeShape`, `ins:LegalTriggerTypeShape` |
+
+C7c's other design-time rules are registered without a law number. They are that stated meaning is
+context-free (`ins:ScopeShape`, `ins:SectioningShape`), declared sections are included
+(`ins:DeclaredSectionIncludedShape`), an excluded part lies below a part applied within
+(`ins:NotWithinBelowShape`), a scope does not cut through a section (`ins:ScopeCutsSectionShape`,
+a warning), only a section is ended (`ins:EndsSectionShape`), one stated term binds each section once (`ins:BoundSectionsDisjointShape`),
+and a definition's acting rule is its group's (`ins:ActingRuleAgreesShape`).
 
 C7a's other design-time rules are registered without a law number. They are that a regime's
 transitions are regime transitions with legal triggers and the fixed engine settings (`ins:RegimeTransitionShape`,
@@ -3610,17 +4482,19 @@ transitions are regime transitions with legal triggers and the fixed engine sett
 occasion (`ins:PerOccasionGateShape`), and tolling (`ins:TollingShape`). The gating rule itself,
 per-occasion resolution and tolling are evaluated by C12 and C13.
 
-Laws I4, I6, I7, I10 to I12 and I14 to I17 arrive with the slices that build their terms. I6, the
+Laws I4, I6, I7, I10, I14 and I17 arrive with the slices that build their terms. I6, the
 acyclic graph of breach, exercise and state reading, is checked once C13's state reading exists.
 
-## 18. Worked Examples
+## 21. Worked Examples
 
-Twelve instruments in [`examples/`](examples/), each with a small wording of its own, its clauses'
-stated meaning, and the bound meaning of one instrument. §18.5 to §18.8 state regimes, and §18.9
-to §18.12 terms in time. Each is validated with the lower layers' shapes and these, without a
-reasoner.
+Seventeen instruments in [`examples/`](examples/), each with a small wording of its own, its
+clauses' stated meaning, and the bound meaning of one instrument. §21.5 to §21.8 state regimes,
+§21.9 to §21.12 terms in time, and §21.13 to §21.17 what terms are and whom they bind. The C7c
+examples are in three parts: the form, the instance, which stores only what differs from the form,
+and the generated bound meaning, headed as the expected output a binder produces, not stored
+(§16.3). Each is validated with the lower layers' shapes and these, without a reasoner.
 
-### 18.1 A facility agreement
+### 21.1 A facility agreement
 
 [`facility-agreement.ttl`](examples/facility-agreement.ttl). A borrower and two lenders, 60% and 40%.
 
@@ -3637,7 +4511,7 @@ flowchart LR
     T101["term 10.1"] --- AC["accelerate<br/>Power<br/>DeclareDue"]
     PL -. "excepts" .-> NP
     BO["borrower occupancy<br/>Acme"]
-    LG["lenders<br/>group, several only"]
+    LG["lenders<br/>group, EachForOwnShare"]
     TR["security trustee<br/>no party"]
     RP -- "obligor" --> BO
     RP -- "obligee" --> LG
@@ -3648,13 +4522,13 @@ flowchart LR
 ```
 
 What it shows: term 8.1 gives rise to two relations, the negative pledge and the permission
-excepting it. Repayment is owed to a group severally, under `pty:SeveralOnly`. The leverage
+excepting it. Repayment is owed to a group severally, under `pty:EachForOwnShare`. The leverage
 covenant is owed also to a security trustee who is no party to the agreement, so it is an obligee
 and not in `ins:party`. The facility's agreement number and market reference are natural keys on
-its persistent identity. Acceleration gated by an event of default is the facility of §18.7. The
+its persistent identity. Acceleration gated by an event of default is the facility of §21.7. The
 consent rule for a group's power is C9's.
 
-### 18.2 A clinical trial protocol
+### 21.2 A clinical trial protocol
 
 [`trial-protocol.ttl`](examples/trial-protocol.ttl). A sponsor and site 104's investigator.
 
@@ -3678,7 +4552,7 @@ What it shows: law I8, where the waiver's holder is the prohibition's obligor, w
 activity, `Enrol`. The prohibition's scope says whom it forbids enrolling, and the waiver's scope
 when it permits it. The reporting deadline is a due range (C7b).
 
-### 18.3 A product warranty
+### 21.3 A product warranty
 
 [`product-warranty.ttl`](examples/product-warranty.ttl). A manufacturer and whoever owns the kettle.
 
@@ -3700,7 +4574,7 @@ Its carve-back is a negated member of its scope ("misuse, unless a manufacturing
 owner is a contingent occupancy: whoever owns the kettle when a claim is made fills it, as C7b
 decides.
 
-### 18.4 A software licence
+### 21.4 A software licence
 
 [`software-licence.ttl`](examples/software-licence.ttl). A licensor and a licensee.
 
@@ -3721,7 +4595,7 @@ power's activity is plain `Terminate`, its scope "without cause". Party details 
 occupancies. The grant of use is not modelled: a permission excepts a prohibition, and a bare
 licence to use has none to except.
 
-### 18.5 A licence with a notice period
+### 21.5 A licence with a notice period
 
 [`licence-notice.ttl`](examples/licence-notice.ttl). A licensor and a licensee. A period regime.
 
@@ -3754,7 +4628,7 @@ the licensor as the power's counterparty (I8), and gated by the notice period. T
 scope never mentions the regime (DP6, §11.5). The 90 days are a quantity in a day unit, on a
 duration space that the example declares.
 
-### 18.6 A supply agreement with suspension and force majeure
+### 21.6 A supply agreement with suspension and force majeure
 
 [`supply-suspension.ttl`](examples/supply-suspension.ttl). A supplier and a buyer. Two switching
 regimes on one instrument.
@@ -3791,7 +4665,7 @@ is a suspension to end.
 Clause 14.1 states no relation of its own, only its regime, so its term binds nothing (ADR-A104
 2026-10-04 addendum, decision 1). The unaffected state has no kind.
 
-### 18.7 A facility with a cure period
+### 21.7 A facility with a cure period
 
 [`facility-cure-period.ttl`](examples/facility-cure-period.ttl). A lender and a borrower. A period
 regime entered and left on conditions, tolled by a second regime.
@@ -3813,7 +4687,7 @@ maintains. Default follows the expiry of 30 business days, a `qnt:CalendarUnit`,
 the force majeure regime is unaffected (`ins:tolledIn`, §10). The power to accelerate is gated by
 the default state. Clauses 22.1 and 22.2 state only regimes, so their terms bind nothing.
 
-### 18.8 A services agreement with a dispute per occasion
+### 21.8 A services agreement with a dispute per occasion
 
 [`service-dispute.ttl`](examples/service-dispute.ttl). A provider and a customer. A per-occasion
 regime.
@@ -3836,7 +4710,7 @@ month's breach, the gate reads that month's dispute regime (§11.4). Raising a d
 `ins:OnAct` naming the act and the party (`ins:by`). Its activity uses the same property as a
 relation (C7a-Q2).
 
-### 18.9 A trial agreement's reporting duties
+### 21.9 A trial agreement's reporting duties
 
 [`trial-reporting.ttl`](examples/trial-reporting.ttl). A sponsor, a site and an investigator. Three
 ways of fixing a time, and one duty that fixes none.
@@ -3864,7 +4738,7 @@ each quarter, with a recurrence and no due range (law I5). The Sponsor's duty to
 fixes no time, so it has no due range, and it can never be found late. The stated and the bound
 relations name the same ranges and recurrences, as they name the same scope conditions.
 
-### 18.10 A lease with an Expiry Date and a break
+### 21.10 A lease with an Expiry Date and a break
 
 [`lease-expiry.ttl`](examples/lease-expiry.ttl). A landlord and a tenant.
 
@@ -3891,7 +4765,7 @@ Quarter Day are the example's own roles, and are left unbound. Instrument's base
 bound to the role contract, and a contract resolves to one scheme (held design question HQ-4). C8
 binds such dates from the wording's variables.
 
-### 18.11 A licence's termination and survival
+### 21.11 A licence's termination and survival
 
 [`licence-survival.ttl`](examples/licence-survival.ttl). A licensor and a licensee.
 
@@ -3909,7 +4783,7 @@ materials arising on termination, a prohibition on disclosure whose term survive
 `ins:Survival`). An indemnity claim made before termination is an arisen occasion, and persists
 whatever the survival says (§14.3). Survival is stated on the stated terms only.
 
-### 18.12 An evergreen services agreement
+### 21.12 An evergreen services agreement
 
 [`service-renewal.ttl`](examples/service-renewal.ttl). A provider and a customer. The state diagram
 is §14.6's.
@@ -3921,9 +4795,94 @@ give notice is gated by both *notice open* and *renewing*, one state from each r
 exercised only once, and only in the first half of a period. The service obligation ends with the
 agreement.
 
-## 19. Release Notes
+### 21.13 A framework in lots
+
+[`framework-lots.ttl`](examples/framework-lots.ttl). A public body, four lots and two call-offs.
+
+```mermaid
+---
+config:
+  layout: elk
+---
+flowchart LR
+    SEC["clause 2.1<br/>Sectioning"] -- "section" --> L1["Lot 1"] & L2["Lot 2"] & L3["Lot 3"] & L4["Lot 4"]
+    S31["3.1 except in Lot 4"] --> B12["bound within Lots 1 and 2<br/>owed by Ash"]
+    S31 --> B3["bound within Lot 3<br/>owed by Birch and Cedar<br/>EachForWhole"]
+    CO42["call-off CO-0042"] -- "boundUnder" --> AW2["award power, Lot 2"]
+    CO57["call-off CO-0057"] -- "boundUnder" --> AW3["award power, Lot 3"]
+    W4["Lot 4 withdrawn"] -- "ends" --> L4
+```
+
+What it shows: clause 2.1 declares the lots, and places each award power by containment. Clause 3.1
+names Part 2 and excludes Lot 4. "The Supplier" is defined row by row in Schedule 1, and rows S1.1
+and S1.2 overlap at Lot 2, both meaning Ash Ltd, so binding warns (law I16). Lots 1 and 2 resolve
+3.1 alike and share one bound term. Lot 3's suppliers each stand for the whole and bear it equally
+between themselves, so their duty under 3.1 is decided and their power under 3.2 is Undetermined
+until C9. Each call-off falls in its award power's lot (law I15). Withdrawing Lot 4 ends its terms
+for its call-offs.
+
+### 21.14 An outsourcing agreement in service towers
+
+[`service-towers.ttl`](examples/service-towers.ttl). A provider, a customer and three towers, one
+with a nested section.
+
+What it shows: each tower defines "Service Failure", a plain concept the stated trigger names, and
+binding generates one credit term and trigger per tower, each reading its tower's condition. The cap
+across towers is bound once and qualifies all three credits. Clause 6.1's words are the same
+everywhere, so it binds once. An incident that is a Service Failure in two towers is placed in
+neither, and both towers' credits arise on it.
+
+### 21.15 A facility's definitions and notices
+
+[`facility-definitions.ttl`](examples/facility-definitions.ttl). A borrower, a guarantor and a
+lender, with no sections.
+
+What it shows: "Material Adverse Effect" is a condition word, and the generated trigger reads its
+meaning. "Obligors" means the borrower and the guarantor, each for the whole, by its acting rule.
+An interpretation clause has nothing arising under it, and a deemed receipt is conclusive. The
+instrument has one section, so nothing records `ins:boundWithin`.
+
+### 21.16 A trial agreement's parties and deemings
+
+[`trial-definitions.ttl`](examples/trial-definitions.ttl). A sponsor and a site, and a participant
+resolved through each adverse event.
+
+What it shows: the participant is a contingent occupancy resolved from the adverse event along one
+step, and filtered to those enrolled at the event's date (§17.2). A site that enrols no one in 90
+days is deemed inactive, rebuttably, and the sponsor's power to end the agreement for it reads the
+deemed condition. A late injury is deemed to have arisen during the trial for clause 9.1 only.
+
+### 21.17 A supply agreement's classified terms
+
+[`supply-classification.ttl`](examples/supply-classification.ttl). A seller and a buyer.
+
+What it shows: the delivery, conformity and support terms are classified condition, warranty and
+innominate under the example's own scheme, and what each breach permits is written as powers and
+duties arising on it, so that no evaluator reads a classification. The seller's status as an
+independent contractor is a term with no relation.
+
+## 22. Release Notes
 
 Breaking versions at major version zero ([ADR-A113](../../docs/architecture/decisions/ADR-A113-breaking-changes-at-major-version-zero.md)):
+
+- 0.12.0 (breaking, CCS C7c, ADR-A104 and its 2026-10-06 addendum): new: definitions
+  (`ins:Definition`, `ins:defines`, `ins:means`, `ins:actingRule`, `ins:prevailsOver`), deemings
+  (`ins:Deeming`, `ins:deems`, `ins:when`, `ins:conclusive`, `ins:forPurposeOf`), classification
+  (`ins:classification`), sections (`ins:Sectioning`, `ins:section`, `ins:appliesWithin`,
+  `ins:notWithin`, `ins:boundWithin`), `ins:boundUnder` (brought forward from C9), and party
+  resolution (`ins:PartyResolution`, `ins:resolvedBy`, `ins:resolvesFrom`, `ins:resolutionStep`,
+  `ins:resolutionFilter`). Changed: `ins:scope`, `ins:maintains` and `ins:condition` lose their
+  range, since on stated meaning they may name a word (§15.1). `ins:qualifies` is no longer
+  functional, so a bound qualifier spanning sections qualifies every relation generated from its
+  stated one. `ins:ends` may name a section. Re-pinned to Party 0.8.0, whose shares and composition
+  rules are domain-neutral and renamed (`pty:outwardShare`, `pty:inwardShare`,
+  `pty:EachForOwnShare`, `pty:EachForWhole`), and to the layers re-pinned with it.
+  `instrument-vocab` 0.12.0 adds `ins-voc:TermClassificationContract`, with no baseline, and the
+  activity `Award`. Shapes 0.5.0: definitions, deemings and their tiers, sectionings, scopes,
+  sections a bound term covers, law I15, law I16 (a warning, and a violation for conflicting acting
+  rules), acting rules, classification, party resolution, and words in condition slots. A stated
+  qualifier still qualifies exactly one node, and a bound relation's conditions are conditions,
+  never words.
 
 - 0.11.0 (CCS C7b, ADR-A104 and its 2026-10-05 addendum, ADR-A115): additive. New: due ranges
   (`ins:due`, at most one, law I5 restated), windows on powers and permissions (`ins:window`),

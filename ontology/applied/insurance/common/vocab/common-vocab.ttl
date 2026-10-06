@@ -13,8 +13,8 @@
 
 <https://www.nebularis.org/neuro-semantic/insurance/common/vocab>
     rdf:type owl:Ontology ;
-    owl:versionIRI <https://www.nebularis.org/neuro-semantic/insurance/common-vocab/0.3.0> ;
-    owl:imports <https://www.nebularis.org/neuro-semantic/insurance/common/0.3.0> .
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/insurance/common-vocab/0.4.0> ;
+    owl:imports <https://www.nebularis.org/neuro-semantic/insurance/common/0.4.0> .
 
 #################################################################
 #    One voc:SchemeContract per common:spec property (ADR-A98

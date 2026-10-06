@@ -49,7 +49,7 @@ It is the middle of a three-part picture:
 | Party | Substrate | Actors, roles, role occupancy, participation groups, delegation | `pty:` | Foundation, Vocabulary, Quantification |
 | Eligibility | Substrate | Admissibility: conditions, unresolved questions, decisions | `elg:` | Foundation, Vocabulary, Quantification, Party |
 | Wording | Substrate | What a contract's documents say and how they are built: wordings, elements, text parts, references, variables | `wrd:` | Foundation, Vocabulary, Quantification, Eligibility |
-| Instrument | Applied domain ontology | What an agreement binds its parties to: instruments expressed in wordings, terms in two tiers (stated and bound meaning), the five legal relations, their parties and content, legal triggers, regimes that gate relations by state, and terms in time: due ranges, windows, recurrences, ending and survival (ADR-A104) | `ins:` | Foundation, Vocabulary, Quantification, Party, Eligibility, Wording, Behaviour (configuration) |
+| Instrument | Applied domain ontology | What an agreement binds its parties to: instruments expressed in wordings, terms in two tiers (stated and bound meaning), the five legal relations, their parties and content, legal triggers, regimes that gate relations by state, terms in time (due ranges, windows, recurrences, ending and survival), and what terms are and whom they bind: definitions, deemings, classification, sections, and parties resolved through the case (ADR-A104) | `ins:` | Foundation, Vocabulary, Quantification, Party, Eligibility, Wording, Behaviour (configuration) |
 | Behaviour | Substrate | State, transition, trigger, guard, effect, with nested states, history and concurrent regimes. Configuration (`behaviour`) and runtime (`behaviour-runtime`) documents, one namespace (ADR-A106 and its addendum) | `bhv:` | Foundation, Vocabulary, Quantification, Party, Eligibility. The runtime document imports configuration |
 
 Dependency order, per [ADR-A01](decisions/ADR-A01-layer-dependency-order.md) as its 2026-10-01 addendum amends it ([ADR-A112](decisions/ADR-A112-wording-layer.md)). Behaviour sits below Instrument since the computable contract substrate's slice C10. Instrument's own imports of Wording and Behaviour configuration arrive with its rewrite (slices C6 to C9):
@@ -126,10 +126,10 @@ This is the section to read before recommending any change. What follows is the 
 | Foundation | literate source | 0.4.0, generated from the README | `constraints.ttl` 0.2.0: keys (§4.2) | populated | n/a | **Fully specified T-box.** Keys added in 0.4.0 (CCS F1, ADR-A114) |
 | Vocabulary | complete | 147 lines, complete | populated (`structural.ttl`, `constraints.ttl`; `rules.ttl` deliberately documents no rule per ADR-A85) | n/a | n/a (contracts belong in consuming layers) | **T-box specified. Binding conformance package verified (14/14 tests). Surface and Eligibility both resolve scoped bindings (`tools/surface`, `ontology/eligibility/shapes/rules.ttl`), verified against dedicated fixtures.** |
 | Quantification | literate source | 0.7.0, generated from the README: context values and unit-bearing offsets added in CCS C7b (ADR-A115) | `constraints.ttl` 0.2.0, holding every shape (`rules.ttl` and `structural.ttl` are empty) | populated | empty (`.gitkeep` only — imported by everything above it, imports nothing back) | **Fully specified T-box + shapes.** Previously missing `owl:Ontology` header/imports fixed under ADR-A01/Gate 1. |
-| Party | 359 lines, complete | 202 lines, complete | empty | 75 lines, 7 named individuals, complete | `behaviour.ttl` empty | **Fully specified T-box + vocab.** Now also imports Quantification (ADR-A01/Gate 1). |
+| Party | complete, 0.8.0 | complete | empty | 7 named individuals, 0.8.0 | `behaviour.ttl` empty | **Fully specified T-box + vocab.** Now also imports Quantification (ADR-A01/Gate 1). Shares and composition rules made domain-neutral in 0.8.0 (CCS C7c): `outwardShare`, `inwardShare`, `EachForOwnShare`, `EachForWhole`. |
 | Eligibility | authored | authored | populated (`constraints.ttl`, `rules.ttl`, `structural.ttl`) | populated | populated (`party.ttl`, `quantification.ttl`) | **Authored in Gate 2.** Includes baseline admission profiles, interval-containment fixtures, and rule/constraint surface. Concept inclusion and exclusion ([ADR-A87](decisions/ADR-A87-eligibility-concept-inclusion-and-exclusion.md)), hierarchical match over a scheme without a hierarchy (`elg:L14`, [ADR-A100](decisions/ADR-A100-hierarchical-match-over-flat-schemes.md)), set readings and negation (`elg:L15`, `elg:L16`, [ADR-A103](decisions/ADR-A103-eligibility-set-readings.md)), and evidence bindings over an applied ontology's own properties ([ADR-A91](decisions/ADR-A91-eligibility-candidate-evidence-binding.md)). `tools/mork_compilers` compiles every condition kind except `Wildcard`, and `AllRequired`/`AnySufficient` profiles, to SPARQL, SHACL, and SWRL ([ADR-A89](decisions/ADR-A89-eligibility-ir-concept-conditions-and-profile-aggregation.md)). Bound conditions with a claimed single-valued path (`elg:singleValued`) also compile to design-time OWL classes, checked for subsumption, satisfiability and overlap through the test-only reasoning harness ([ADR-A90](decisions/ADR-A90-eligibility-design-time-owl-class-backend.md), [ADR-A83](decisions/ADR-A83-test-only-reasoning-engine-isolation.md)). |
-| Wording | authored (literate source) | `wording.ttl` 0.5.0 (0.3.0's content, re-pinned): structure, text parts, references, document objects, variables, tables of fields and entries, assembly, assembled wordings, variable values and amendments | `structural.ttl` 0.3.0, SHACL Core: each property's subject and values. `constraints.ttl` 0.3.0, SHACL-SPARQL: laws W1 to W6, slot conditions, amendment operations | `wording-vocab.ttl` 0.3.0: three scheme contracts, the baseline element types, inclusion modes, population methods, amendment operations and field orientations | n/a | **Authored in CCS C3 to C5** (ADR-A112). Slot conditions beyond intervals are checked by reasoner in C13a |
-| Instrument | literate source | `instrument.ttl` 0.11.0, generated from the README | `structural.ttl`, `constraints.ttl` 0.4.0, optional `single-expression.ttl` | `instrument-vocab.ttl` 0.11.0: activity, location and state kind contracts, context roles, `ins:InstrumentTarget` | retired (Instrument imports Party) | **Rewritten in CCS C6 to C7b.** Instrument, terms, the five relations, parties and content (C6). Legal triggers, regimes stated once, gating by state, arising and ending (C7a). Due ranges, windows, recurrences, ending as entering a state, and survival (C7b). Constitutive terms and sections, bindings and amendments follow in C7c to C9 |
+| Wording | authored (literate source) | `wording.ttl` 0.6.0 (0.3.0's content, re-pinned): structure, text parts, references, document objects, variables, tables of fields and entries, assembly, assembled wordings, variable values and amendments | `structural.ttl` 0.3.0, SHACL Core: each property's subject and values. `constraints.ttl` 0.3.0, SHACL-SPARQL: laws W1 to W6, slot conditions, amendment operations | `wording-vocab.ttl` 0.3.0: three scheme contracts, the baseline element types, inclusion modes, population methods, amendment operations and field orientations | n/a | **Authored in CCS C3 to C5** (ADR-A112). Slot conditions beyond intervals are checked by reasoner in C13a |
+| Instrument | literate source | `instrument.ttl` 0.12.0, generated from the README | `structural.ttl`, `constraints.ttl` 0.5.0, optional `single-expression.ttl` | `instrument-vocab.ttl` 0.12.0: activity, location, state kind and term classification contracts, context roles, `ins:InstrumentTarget` | retired (Instrument imports Party) | **Rewritten in CCS C6 to C7c.** Instrument, terms, the five relations, parties and content (C6). Legal triggers, regimes stated once, gating by state, arising and ending (C7a). Due ranges, windows, recurrences, ending as entering a state, and survival (C7b). Definitions, deemings, classification, sections declared by a sectioning term and bound per section, and party resolution, with an instance storing only what differs from its form and bound meaning generated (C7c). Bindings and amendments follow in C8 and C9 |
 | Behaviour | authored | authored | populated (`constraints.ttl`, `rules.ttl`, `structural.ttl`) | populated | populated (`eligibility.ttl`, `party.ttl`, `quantification.ttl`) | **Authored in Gate 3.** Includes transition, guard, effect, and `Sequential` allowance support. `Proportional` remains declared but rejected. CCS C10 to C11a: configuration and runtime split, occasions and records, regions, history, internal transitions (0.10.0, shapes 0.4.0) |
 | Governance | scaffold + cross-layer docs | n/a | scaffold | n/a | n/a | **Partially authored.** Governance policy lives in `docs/GOVERNANCE.md`; automated governance shapes remain future work. |
 | MORK | 657 lines, narrative "for dummies" guide (not literate-spec format) | `Mork.ttl` 1888 lines + `Mork.owl`, complete and large | empty | n/a | n/a | **Fully specified, pre-existing/independent vocabulary** — richer and older in style (OWL-API generated, SKOS-annotation-heavy) than the newer literate-spec layers |
@@ -378,16 +378,17 @@ Object properties:
   delegatesTo      : Delegation → RoleOccupancy, cardinality 1 per Delegation individual, NOT globally functional (one performer may discharge several accountable occupancies)
 
 Data properties:
-  share : GroupMembership → xsd:decimal, Func   (proportion, e.g. 0.40 for 40% — not an absolute amount; add a separate property for fixed amounts)
+  outwardShare : GroupMembership → xsd:decimal, Func, optional   (the proportion a member stands for towards the other side)
+  inwardShare  : GroupMembership → xsd:decimal, Func, optional   (the proportion a member bears among the members)
 
 Named individuals (vocab/party-vocab.ttl — baseline, extensible):
   Roles:            pty:Obligor, pty:Obligee, pty:Guarantor, pty:Accountable, pty:Performing
-  CompositionRules: pty:SeveralOnly, pty:JointAndSeveral
+  CompositionRules: pty:EachForOwnShare, pty:EachForWhole
 ```
 
 Role individuals and their intent: `Obligor`/`Obligee` are the direction-of-obligation pair (`Obligee` doubles as the role a contingent occupancy is typed with once eventually filled). `Accountable`/`Performing` are the two sides of `Delegation` (`delegatesFrom` always points at an `Accountable` occupancy, `delegatesTo` always at a `Performing` one). `Guarantor` backs another occupancy's obligation, becoming answerable on that occupancy's default — but **has no mechanism of its own yet**: it needs Instrument's `Obligation` and a Behaviour trigger together (contingent liability activating on default), and is flagged as the least mechanically complete individual in the baseline.
 
-Composition-rule individuals: `SeveralOnly` — each member's exposure independently capped, a defaulting member's shortfall is simply unmet, does not redistribute. `JointAndSeveral` — any member may be called for the full obligation, with a right of recourse against the others afterward (the group's internal contribution accounting is a separate concern this rule does not resolve).
+Composition-rule individuals, domain-neutral since Party 0.8.0: `EachForOwnShare` — each member stands towards the other side for its own outward share only, and a member's shortfall falls on no other. `EachForWhole` — each member stands for the whole, and the members' inward shares, where stated, say how they bear it among themselves. Party does not say what the proportions are of or which legal reading applies. Several and joint and several liability are readings a layer above gives these rules, and caps on a member are that layer's too. A group's rule is optional, so an instrument may be silent (CC-D10).
 
 ### 6.4 Axiom Index
 
@@ -396,16 +397,16 @@ Composition-rule individuals: `SeveralOnly` — each member's exposure independe
 | `pty:Actor` | Class | bare |
 | `pty:Role` | Class | bare, open-T-box/closed-by-default |
 | `pty:RoleOccupancy` | Class | `Version, Evidenced, TemporallyScoped`; `inRole` = 1 |
-| `pty:ParticipationGroup` | Class | `Version, Evidenced`; `hasCompositionRule` = 1; `hasParticipant` ≥ 1 |
+| `pty:ParticipationGroup` | Class | `Version, Evidenced`; `hasCompositionRule` ≤ 1; `hasParticipant` ≥ 1 |
 | `pty:CompositionRule` | Class | bare, open-T-box/closed-by-default |
-| `pty:GroupMembership` | Class | bare; `memberOccupancy`, `memberOf`, `share` each = 1 |
+| `pty:GroupMembership` | Class | bare; `memberOccupancy`, `memberOf` each = 1 |
 | `pty:Delegation` | Class | `Evidenced, TemporallyScoped`; `delegatesFrom`, `delegatesTo` each = 1 |
 | `occupiedBy` | Obj. prop. | Functional; optional |
 | `inRole` | Obj. prop. | Functional; required |
 | `memberOccupancy` | Obj. prop. | Functional; required |
 | `memberOf` / `hasParticipant` | Obj. prop. | inverse pair; `memberOf` Functional+required |
-| `share` | Data prop. | Functional; `xsd:decimal`; proportion |
-| `hasCompositionRule` | Obj. prop. | Functional; required |
+| `outwardShare` / `inwardShare` | Data prop. | Functional; optional; `xsd:decimal`; proportion |
+| `hasCompositionRule` | Obj. prop. | Functional; optional |
 | `delegatesFrom` / `delegatesTo` | Obj. prop. | not globally Functional; = 1 per Delegation |
 
 Six classes mutually disjoint. No `owl:Alignments` section — Party introduces no external-vocabulary dependency (unlike Vocabulary/SKOS or Foundation/PROV-O); everything here is LATTICE-internal or reuse of Foundation's mixins.
@@ -415,9 +416,9 @@ Six classes mutually disjoint. No `owl:Alignments` section — Party introduces 
 **Several liability** — three occupancies sharing one obligation, none liable beyond its own share:
 
 ```
-ex:group-1 a pty:ParticipationGroup ; pty:hasCompositionRule pty:SeveralOnly .
+ex:group-1 a pty:ParticipationGroup ; pty:hasCompositionRule pty:EachForOwnShare .
 ex:occ-a a pty:RoleOccupancy ; pty:inRole pty:Obligor ; pty:occupiedBy ex:syndicate-a .
-ex:mem-a a pty:GroupMembership ; pty:memberOccupancy ex:occ-a ; pty:memberOf ex:group-1 ; pty:share "0.40" .
+ex:mem-a a pty:GroupMembership ; pty:memberOccupancy ex:occ-a ; pty:memberOf ex:group-1 ; pty:outwardShare "0.40" .
 # occ-b/mem-b (0.35), occ-c/mem-c (0.25) follow the same pattern.
 ```
 Note what is *absent*: nothing here says which obligation the group owes or is owed. That reference is Instrument's: a relation names the group as a party (`ins:obligor`, `ins:obligee`, `ins:holder`, `ins:counterparty`), pointing *at* the group.

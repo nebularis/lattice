@@ -18,8 +18,13 @@ Behaviour 0.10.0 (shapes 0.4.0) with nested states and history, the import guard
 check`. In tranche D, C6, C7a and C7b are merged and tagged (Instrument 0.11.0, Quantification
 0.7.0), and C7c is briefed. From C5 on, the agent builds and verifies, and the human commits by hand.
 
-**Next action, for the human:** review the reworked C7c examples, the ADR-A104 addendum and the
-handoff's deviations, then commit the examples phase.
+**Next action, for the human:** merge `ccs/c7c-terms-and-parties` to `main`, then create and push
+the 15 release tags:
+`applied-capacity-execution-v0.13.0`, `behaviour-v0.13.0`, `behaviour-runtime-v0.13.0`,
+`behaviour-vocab-v0.13.0`, `eligibility-v0.10.0`, `eligibility-vocab-v0.11.0`, `instrument-v0.12.0`,
+`instrument-shapes-v0.5.0`, `instrument-vocab-v0.12.0`, `insurance-common-v0.4.0`,
+`insurance-common-vocab-v0.4.0`, `party-v0.8.0`, `party-vocab-v0.8.0`, `wording-v0.6.0`,
+`wording-vocab-v0.6.0`. Push them to `origin-ssh`.
 
 ## Slice board
 
@@ -38,7 +43,7 @@ handoff's deviations, then commit the examples phase.
 | F1 | external and natural keys (ADR-A114) | Foundation, now | merged, tagged | |
 | C6 | instrument, terms, the five relations, parties, content | D | merged, tagged | |
 | C7b | terms in time | D | merged (`5da9412`), tagged | |
-| C7c | what terms are, and who they bind (split from C7b) | D | examples written, awaiting the human's commit | the human |
+| C7c | what terms are, and who they bind (split from C7b) | D | committed (`0f4f0d9`), decisions ratified, awaiting merge and tags | the human |
 | C8, C9, C8a | Instrument rewrite, template library | D | waiting | C8 after C7a and C7b |
 | C7a | regimes and gating, split from C7 | D | merged to `main` (`c6e5853`) and tagged | |
 | C12, C13 | runtime evaluator, relation plans | E | waiting | C9, C11, C11a, AIR-3.3, NRS N1 |
@@ -115,3 +120,5 @@ handoff's deviations, then commit the examples phase.
 - 2026-10-06: C7c design revised after review of the examples, recorded as R1 to R11 in the plan's C7c section: stated meaning context-free so matched wordings are reused by hash, sections declared by a sectioning term, binding per section with sharing where words resolve alike, cross-section qualifiers bound once, cases outside a power not placed, I16 at binding, Party's outward and inward shares (awaiting the human). The examples are reworked next. HQ-7 (portions of one order) and TD-19 (graph size) recorded
 - 2026-10-06: C7c design decided as D1 to D22 in the plan: an instance stores only what differs from its form, bound meaning generated on demand, sharing within an instrument by resolution signature, a sectioning term with a default of one section plus sections named by scopes, and Party made domain-neutral (outward and inward shares, `pty:EachForOwnShare`, `pty:EachForWhole`). TD-19 given a home: slice C16b, required before the epic closes
 - 2026-10-06: C7c examples reworked under D1 to D22: five examples in form, instance and generated parts, `service-towers.ttl` new, `facility-agreement.ttl` on Party's new terms. Four conform. `framework-lots.ttl` and `service-towers.ttl` fail only the ending and qualifier shapes the model phase widens. D5, D10 and D12 sharpened from the examples. Condition words made plain concepts, accepted in stated condition slots and replaced at binding (D12, agreed)
+- 2026-10-06: C7c examples committed (`2d42e42`). Model phase built: Instrument 0.12.0 (breaking), `instrument-vocab` 0.12.0, shapes 0.5.0, Party and `party-vocab` 0.8.0 (breaking, domain-neutral shares and composition rules), and the cascade to Eligibility, Behaviour, Wording, Insurance Common and the capacity execution profile. `tools/test_constitutive_terms.py` (49 tests) added to `check:ontology-catalog`. Every C7c row passes, and every check C7b ran. Deviations in the [Validation Pack](../validation/computable-contract-substrate-c7c.md)
+- 2026-10-06: C7c model phase committed by the human (`0f4f0d9`). Every deviation ratified, and the ADR-A104 addendum of 2026-10-06 accepted
