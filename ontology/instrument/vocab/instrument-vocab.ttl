@@ -12,8 +12,8 @@
 
 <https://www.nebularis.org/neuro-semantic/instrument-vocab>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/instrument-vocab/0.12.0> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.12.0> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/instrument-vocab/0.13.0> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.13.0> .
 
 ins-voc:ActivityContract a voc:SchemeContract ;
 	fnd:hasIdentity ins-voc:ActivityContract-identity ;
@@ -27,6 +27,16 @@ ins-voc:LocationContract a voc:SchemeContract ;
 	fnd:hasGovernanceState fnd:Active ;
 	skos:prefLabel "Location scheme contract"@en ;
 	voc:constrainsProperty ins:operatesAt .
+
+ins-voc:EncodingStatuses a voc:ConceptScheme ;
+	fnd:hasIdentity ins-voc:EncodingStatuses-identity ;
+	fnd:hasGovernanceState fnd:Active ;
+	skos:prefLabel "Encoding statuses"@en ;
+	skos:definition "Reviewed exceptions to the convention that a leaf of text means something (§18.5). Closed: one value."@en .
+
+ins-voc:NoMeaning a skos:Concept ; skos:inScheme ins-voc:EncodingStatuses ;
+	skos:prefLabel "No meaning"@en ;
+	skos:definition "Reviewed, and binding nobody: a note for information, guidance, an example."@en .
 
 ins-voc:TermClassificationContract a voc:SchemeContract ;
 	fnd:hasIdentity ins-voc:TermClassificationContract-identity ;

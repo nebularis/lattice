@@ -201,6 +201,29 @@ says it should, and nowhere else.
 mise run check:ontology-catalog
 ```
 
+## `tools/instrument_binder.py` — the reference binder
+
+Generates one instrument's bound meaning from its form's stated meaning and the instance's
+assembled wording, values and parties (CCS C8, Instrument README §16.3 and §18.6). Each stated term
+is bound once for each group of sections whose words and values resolve alike. Words resolve through
+the definitions applying in each section, and placeholders (`ins:valueFrom`) through their variable
+or value word. A stated node holding neither is shared, and one that does is generated anew with the
+path down to its value, under a deterministic IRI.
+
+It reports instead of guessing: an unresolved word, a variable with no value, an overlap of
+definitions (law I16), and a **cycle** of words or variables, whose report lists every hop in order
+with the clause stating it and the section where it closes. A word may loop in one section and not
+in another, so the binder checks each section, where the form's shapes cannot. It does not evaluate,
+cache or share across instruments (C12, C13, C16b).
+
+```bash
+python tools/instrument_binder.py ontology/instrument/examples/facility-parameters.ttl \
+    https://example.org/lattice/instrument/facility-parameters/halden-v1
+```
+
+`tools/test_parameter_bindings.py` regenerates every C7c and C8 example's generated part and
+compares it with the expected output, up to the names of generated nodes.
+
 ## `tools/ontology_catalog.py` — import resolution
 
 Generates `ontology/catalog-v001.xml` and the stub catalogs in every `spec/`

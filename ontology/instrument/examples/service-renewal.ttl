@@ -222,3 +222,7 @@ ex:provide-services a ins:Obligation ;
     ins:boundFrom tmpl:provide-services ; ins:arisesUnder ex:term-4-1 ;
     ins:obligor ex:provider-occ ; ins:obligee ex:customer-occ ;
     ins:activity ins-voc:ProvideService .
+
+# A term whose only content is a regime is bound too, as every stated term is
+# (law I17). The regime itself is read as stated (law I13).
+ex:term-2-1 a ins:Term ; ins:boundIn ex:kittiwake-v1 ; ins:boundFrom tmpl:term-2-1 .

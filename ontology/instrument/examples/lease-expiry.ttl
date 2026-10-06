@@ -294,3 +294,7 @@ ex:repay-deposit a ins:Obligation ;
     ins:activity ins-voc:Pay ;
     ins:arisesOn tmpl:on-expired , tmpl:on-terminated ;
     ins:due ex:within-30-days-of-ending .
+
+# A term whose only content is a regime is bound too, as every stated term is
+# (law I17). The regime itself is read as stated (law I13).
+ex:term-2-1 a ins:Term ; ins:boundIn ex:unit-4-v1 ; ins:boundFrom tmpl:term-2-1 .

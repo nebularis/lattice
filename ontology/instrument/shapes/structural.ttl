@@ -448,3 +448,21 @@ ins:ResolvedByShape a sh:NodeShape ;
 		sh:message "A resolved occupancy is contingent: it names no actor (ADR-A102, §17.2)." ] ;
 	sh:property [ sh:path ins:resolvedBy ; sh:maxCount 1 ; sh:class ins:PartyResolution ;
 		sh:message "A contingent occupancy is resolved by at most one party resolution." ] .
+
+ins:ValueFromShape a sh:NodeShape ;
+	sh:targetSubjectsOf ins:valueFrom ;
+	sh:property [ sh:path ins:valueFrom ; sh:maxCount 1 ;
+		sh:or (
+			[ sh:property [ sh:path [ sh:inversePath fnd:hasIdentity ] ; sh:minCount 1 ; sh:class wrd:Variable ] ]
+			[ sh:class skos:Concept ; sh:property [ sh:path [ sh:inversePath ins:defines ] ; sh:minCount 1 ] ]
+		) ;
+		sh:message "A placeholder takes its value from one source: a variable's persistent identity, or a value word a definition defines (§18.1)." ] .
+
+ins:EncodingStatusShape a sh:NodeShape ;
+	sh:targetSubjectsOf ins:encodingStatus ;
+	sh:class wrd:Text ;
+	sh:message "Only a leaf of text carries an encoding status (§18.5)." ;
+	sh:property [ sh:path ins:encodingStatus ; sh:in ( ins-voc:NoMeaning ) ;
+		sh:message "The only encoding status is ins-voc:NoMeaning: reviewed, and binding nobody." ] ;
+	sh:property [ sh:path [ sh:inversePath ins:expressedIn ] ; sh:maxCount 0 ;
+		sh:message "Text marked ins-voc:NoMeaning expresses no stated meaning: remove the mark or the meaning (§18.5)." ] .

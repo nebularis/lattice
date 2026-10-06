@@ -1922,8 +1922,8 @@ the stated meaning of the elements its wording includes (I17). Nothing here eval
   | Tier | What exists | What the placeholder resolves to | Checked |
   |---|---|---|---|
   | library element | an element version, its stated meaning (matched on its hash, D2), and the variable it declares or refers to, each with a persistent identity | nothing: the placeholder names the variable's identity, as the text's own reference names the variable | the placeholder names a variable's identity, and at most one |
-  | template wording, a form: complete text, no data | element versions composed into one wording, InsurML's template contract among them | the one version of that identity the template includes, so a clause reused in another template, whose schedule declares the same variable, keeps its stated meaning | the template includes a version of every variable its stated meaning names (a warning while drafting) |
-  | instance: an assembled wording with its values, and its instrument | `wrd:includes` the element versions, and `wrd:hasValue` the values, each `wrd:forVariable` one included variable version | the value recorded for the included version of that identity, followed through `wrd:populatedFrom`. For a table field's variable, one value per entry (`wrd:forEntry`), and an entry may be a section or a party's occupancy, which is how a schedule gives each section its own value | the binder reports a variable with no value (the default is used if the placeholder has one), and two included versions of one identity |
+  | template wording, a form: complete text, no data | element versions composed into one wording, InsurML's template contract among them, each declaring its variables | the one version of that identity the template declares, so a clause reused in another template, whose schedule declares the same variable, keeps its stated meaning | the template declares a version of every variable its stated meaning names (a warning while drafting) |
+  | instance: an assembled wording with its values, and its instrument | `wrd:includes` the element versions, and `wrd:hasValue` the values, each `wrd:forVariable` one variable version. Variables are declarations, never included (law W5) | the value whose variable version has that identity, followed through `wrd:populatedFrom`. For a table field's variable, one value per entry (`wrd:forEntry`), and an entry may be a section or a party's occupancy, which is how a schedule gives each section its own value | the binder reports a variable with no value (the default is used if the placeholder has one), and two values for versions of one identity |
 
   ```mermaid
   flowchart LR
@@ -1944,8 +1944,8 @@ the stated meaning of the elements its wording includes (I17). Nothing here eval
           AW["assembled wording"]
           VV["variable value 10<br/>forVariable v2"]
           BR["bound obligation<br/>due within 10 Business Days"]
-          AW -- "includes" --> V2
           AW -- "hasValue" --> VV
+          VV -- "forVariable" --> V2
           VV -. "the binder reads" .-> BR
       end
       style LIB fill:#BBDEFB
@@ -2027,6 +2027,29 @@ the stated meaning of the elements its wording includes (I17). Nothing here eval
 C8-Q5 (a). C8-Q6 (a). C8-Q1 (b), a placeholder taking its value from a variable's identity, after
 its consequences and its resolution across the tiers were set out. The text reference gap is slice C8b.
 
+**Decided in the examples phase, 2026-10-06:**
+
+- **A placeholder may take its value from a value word** (an amount word now, date words with
+  HQ-4), as well as from a variable. A chain of words and variables can then loop: a word means a
+  placeholder whose value comes from the same word, through other words or `wrd:populatedFrom`.
+  Cycle checking must be thorough, on the form and in the binder, over every hop, per section
+  (a word may close a loop in one section and not in another), and through variables taking
+  another's value. A cycle is a violation, since nothing in it can be bound, and its report names
+  every hop in order, with the clause each hop is stated in. The rule, and what a cycle looks like,
+  is stated wherever a reader meets definitions, words, placeholders or variables: the Instrument
+  README's terminology, definitions, values and generation sections and its worked examples,
+  Wording's README on variables and `wrd:populatedFrom`, Quantification's and Eligibility's READMEs
+  where their slots may hold a placeholder or a word, the ADR-A104 addendum, and the binder's
+  documentation
+- **A concept word may stand in an Eligibility concept slot** (`elg:requiredConcept`,
+  `elg:excludedConcept`), extending D12 below Instrument with no change to Eligibility. Shapes govern
+  it: a word that also sits in a scheme its condition is constrained by is ambiguous and reported. A
+  word's meaning must suit every slot it stands in (concepts for a concept slot, a condition for a
+  condition slot, a quantity for a placeholder). A generated condition names no word
+- **Generation's cost** is paid on demand, not stored: an instance stores its values only, and the
+  path from a slot to a placeholder is generated where something reads it. C16b's content addressing
+  shares generated paths between instruments whose values agree
+
 **Decided by precedent, not asked:**
 
 - an instance's values belong to its assembled wording (`wrd:hasValue`), so the instance stores
@@ -2095,6 +2118,10 @@ its consequences and its resolution across the tiers were set out. The text refe
 | C8-15 | every diagram in the README / mermaid 11, rendered in a page / renders | L1 | + |
 | C8-16 | the existing tool tests / unchanged / pass | L1 | + |
 | C8-17 | the version and catalog checks, the import guard, `build:mtp` and `check:mtp`, the literate checks / pass | L1 | + |
+| C8-18 | a word whose definition's placeholder takes its value from the same word, directly, through a second word, and through two variables joined by `wrd:populatedFrom` / shapes and binder / each a violation naming every hop in order | L1 | − |
+| C8-19 | a word closing a loop in one section only / binder / reported for that section alone, the other sections bound | L1 | − |
+| C8-20 | a concept word also in the scheme its condition is constrained by, a word meaning a condition placed in a concept slot / shapes / each reported | L1 | − |
+| C8-21 | the documentation / every place listed in the decision / states the cycle rule | L1 | + |
 
 ### Tranche E: evaluation
 

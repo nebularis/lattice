@@ -16,7 +16,7 @@
 
 <https://www.nebularis.org/neuro-semantic/instrument>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.12.0> ;
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.13.0> ;
 	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.4.0> ,
 				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.4.0> ,
 				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.7.0> ,
@@ -467,3 +467,12 @@ ins:resolutionStep a owl:ObjectProperty ;
 ins:resolutionFilter a owl:ObjectProperty, owl:FunctionalProperty ;
 	rdfs:comment "The condition each actor a resolution reaches must satisfy." ;
 	fnd:utility "Subject: a party resolution. Value: at most one Eligibility condition, or on stated meaning a defined word, applied to each actor the path reaches. An actor it does not keep is no party for the occasion." .
+
+ins:valueFrom a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:comment "Where a placeholder's value comes from." ;
+	fnd:utility "Subject: a placeholder, a node of its slot's own kind in stated meaning. Value: a variable's persistent identity, resolved to the value the instance records for it, or a value word, resolved to the value its definition means (§18.4). A chain of words and variables must not loop. Never on bound meaning, which names values." .
+
+ins:encodingStatus a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:range skos:Concept ;
+	rdfs:comment "A reviewed exception to the convention that a leaf of text means something." ;
+	fnd:utility "Subject: a wrd:Text with no stated meaning. Value: ins-voc:NoMeaning, the only value: reviewed as binding nobody. Any other leaf without stated meaning is not yet assessed (§18.5)." .

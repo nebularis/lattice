@@ -1,0 +1,241 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Premise. A field services agreement lets each customer choose the
+# territories the Provider covers, from a list the schedule declares. The
+# Provider's duty to attend applies only to sites in those territories, so a
+# variable's values sit inside the duty's scope condition. Two passages carry
+# no stated meaning: a note for information, reviewed as binding nobody, and a
+# data clause nobody has modelled yet. Convention tells them apart: a leaf of
+# text is expected to mean something, and only a reviewed exception is marked
+# (C8-Q4).
+#
+# The agreement's clauses:
+#
+# | Clause | Text | Meaning |
+# |--------|------|---------|
+# | 3.1    | The Provider shall attend each fault reported at a Site in the Territory. | an obligation arising on each fault, scoped to the Territory |
+# | 3.2    | The Provider's service desk is open 24 hours a day. | for information only: ins:encodingStatus ins-voc:NoMeaning (S63) |
+# | 4.1    | The Customer shall pay the Charges monthly. | an obligation |
+# | 6.1    | The Provider shall keep the Customer's data within the European Economic Area. | not yet assessed: no stated meaning, no mark |
+# | S.1    | "Territory" means [territories]. | a definition whose meaning is a list of concepts from a variable |
+#
+# What the example shows:
+#
+# | Construct                                            | Where                                        |
+# |------------------------------------------------------|----------------------------------------------|
+# | a concept word whose meaning is a variable's values  | tmpl:def-territory                           |
+# | a multi-valued variable, its values alternatives in a condition | ex:v-territories, ex:in-territory-meridian |
+# | text reviewed as binding nobody (S63)                | ex:cl-3-2 ins:encodingStatus ins-voc:NoMeaning |
+# | text not yet assessed, found by convention           | ex:cl-6-1, a leaf with neither meaning nor mark |
+# | containers expected to mean nothing                  | ex:sec-3, ex:sec-4, ex:sec-6, ex:schedule      |
+#
+# Nothing here evaluates.
+
+@prefix ins:     <https://www.nebularis.org/neuro-semantic/lattice/instrument#> .
+@prefix ins-voc: <https://www.nebularis.org/neuro-semantic/lattice/instrument/vocab#> .
+@prefix bhv:     <https://www.nebularis.org/neuro-semantic/lattice/behaviour#> .
+@prefix wrd:     <https://www.nebularis.org/neuro-semantic/lattice/wording#> .
+@prefix wrd-voc: <https://www.nebularis.org/neuro-semantic/lattice/wording/vocab#> .
+@prefix fnd:     <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix pty:     <https://www.nebularis.org/neuro-semantic/lattice/party#> .
+@prefix elg:     <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
+@prefix voc:     <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
+@prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+@prefix tmpl:    <https://example.org/lattice/instrument/services-schedule/form/> .
+@prefix ex:      <https://example.org/lattice/instrument/services-schedule/> .
+
+# ==== The form: wording =======================================================
+
+ex:form a wrd:Wording ;
+    fnd:hasIdentity ex:form-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:directlyComprises ex:sec-3 , ex:sec-4 , ex:sec-6 , ex:schedule .
+
+ex:sec-3 a wrd:Element ;
+    fnd:hasIdentity ex:sec-3-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Section ; wrd:objectId "3" ; wrd:rankKey "a0" ;
+    wrd:directlyComprises ex:cl-3-1 , ex:cl-3-2 .
+ex:cl-3-1 a wrd:Text ;
+    fnd:hasIdentity ex:cl-3-1-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "3.1" ; wrd:rankKey "a0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "The Provider shall attend each fault reported at a Site in the Territory." ] .
+
+# For information only: reviewed, and binding nobody. The mark is on the
+# element version, so every agreement including this clause shares it.
+ex:cl-3-2 a wrd:Text ;
+    fnd:hasIdentity ex:cl-3-2-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "3.2" ; wrd:rankKey "b0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    ins:encodingStatus ins-voc:NoMeaning ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "The Provider's service desk is open 24 hours a day." ] .
+
+ex:sec-4 a wrd:Element ;
+    fnd:hasIdentity ex:sec-4-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Section ; wrd:objectId "4" ; wrd:rankKey "b0" ;
+    wrd:directlyComprises ex:cl-4-1 .
+ex:cl-4-1 a wrd:Text ;
+    fnd:hasIdentity ex:cl-4-1-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "4.1" ; wrd:rankKey "a0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ; wrd:partText "The Customer shall pay the Charges monthly." ] .
+
+# Not yet assessed: a leaf of text, with no stated meaning and no mark. The
+# check of law I17 reports it as a warning, and nothing is asserted about it.
+ex:sec-6 a wrd:Element ;
+    fnd:hasIdentity ex:sec-6-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Section ; wrd:objectId "6" ; wrd:rankKey "c0" ;
+    wrd:directlyComprises ex:cl-6-1 .
+ex:cl-6-1 a wrd:Text ;
+    fnd:hasIdentity ex:cl-6-1-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "6.1" ; wrd:rankKey "a0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "The Provider shall keep the Customer's data within the European Economic Area." ] .
+
+ex:schedule a wrd:Element ;
+    fnd:hasIdentity ex:schedule-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Schedule ; wrd:objectId "Schedule" ; wrd:rankKey "d0" ;
+    wrd:directlyComprises ex:cl-s-1 .
+ex:cl-s-1 a wrd:Text ;
+    fnd:hasIdentity ex:cl-s-1-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Definition ; wrd:objectId "S.1" ; wrd:rankKey "a0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:directlyComprises ex:var-territories ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ; wrd:partText "\"Territory\" means " ] ,
+                    [ a wrd:TextPart ; wrd:partIndex 1 ; wrd:refersToVariable ex:var-territories ] ,
+                    [ a wrd:TextPart ; wrd:partIndex 2 ; wrd:partText "." ] .
+ex:var-territories a wrd:EmbeddedVariable ;
+    fnd:hasIdentity ex:var-territories-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:variableKey "territories" ; wrd:rankKey "z0" ;
+    wrd:valueContract ex:territory-contract ; wrd:multiValued true .
+
+# ==== The form: roles, the territory scheme, words ============================
+
+ex:Provider a pty:Role ; rdfs:label "Provider" .
+ex:Customer a pty:Role ; rdfs:label "Customer" .
+
+ex:territories a voc:ConceptScheme ;
+    fnd:hasIdentity ex:territories-identity ; fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Service territories"@en .
+ex:north a skos:Concept ; skos:inScheme ex:territories ; skos:prefLabel "North"@en .
+ex:midlands a skos:Concept ; skos:inScheme ex:territories ; skos:prefLabel "Midlands"@en .
+ex:south a skos:Concept ; skos:inScheme ex:territories ; skos:prefLabel "South"@en .
+ex:territory-contract a voc:SchemeContract ;
+    fnd:hasIdentity ex:territory-contract-identity ; fnd:hasGovernanceState fnd:Active ;
+    voc:constrainsProperty wrd:value ;
+    voc:boundScheme ex:territories .
+
+ex:Territory a skos:Concept ; rdfs:label "Territory" .          # the concept word
+
+ex:fault-reported a elg:Condition ;
+    elg:conditionKey "fault-reported-at-a-site" ;
+    elg:matchStrategy elg:ExactMatch ; elg:compatibilityOperation elg:AllRequired ;
+    elg:wildcardSemantics elg:NoWildcard ;
+    elg:requiredConcept ex:fault .
+ex:fault a skos:Concept ; rdfs:label "a fault has been reported at a Site" .
+
+# ==== The form: stated meaning ================================================
+
+# "Territory" means the territories the customer chose: a placeholder of the
+# slot's kind, a concept, taking its values from the variable. A multi-valued
+# variable gives several values, which are alternatives where they reach a
+# condition's required concepts.
+tmpl:term-s-1 a ins:Term , ins:Template ; ins:expressedIn ex:cl-s-1 .
+tmpl:def-territory a ins:Definition , ins:Template ;
+    ins:arisesUnder tmpl:term-s-1 ;
+    ins:defines ex:Territory ;
+    ins:means [ a skos:Concept ; ins:valueFrom ex:var-territories-identity ] .
+
+# The scope: a site whose territory is one of the Territory's. The required
+# concept is the word, which binding replaces by its meaning, the customer's
+# territories.
+ex:in-territory a elg:Condition ;
+    elg:conditionKey "site-in-the-territory" ;
+    elg:matchStrategy elg:ExactMatch ; elg:compatibilityOperation elg:AllRequired ;
+    elg:wildcardSemantics elg:NoWildcard ;
+    elg:constrainedByContract ex:territory-contract ;
+    elg:requiredConcept ex:Territory .
+
+tmpl:term-3-1 a ins:Term , ins:Template ; ins:expressedIn ex:cl-3-1 .
+tmpl:on-fault a ins:OnCondition , bhv:TriggerDefinition ;
+    bhv:triggerKind bhv:DerivedTrigger ;
+    ins:condition ex:fault-reported .
+tmpl:attend a ins:Obligation , ins:Template ;
+    ins:arisesUnder tmpl:term-3-1 ;
+    ins:obligor ex:Provider ; ins:obligee ex:Customer ;
+    ins:activity ins-voc:ProvideService ;
+    ins:arisesOn tmpl:on-fault ;
+    ins:scope ex:in-territory .
+
+tmpl:term-4-1 a ins:Term , ins:Template ; ins:expressedIn ex:cl-4-1 .
+tmpl:pay-charges a ins:Obligation , ins:Template ;
+    ins:arisesUnder tmpl:term-4-1 ;
+    ins:obligor ex:Customer ; ins:obligee ex:Provider ;
+    ins:activity ins-voc:Pay .
+
+# ==== The instance: what the agreement stores (D1) ============================
+
+ex:meridian-wording-v1 a wrd:AssembledWording ;
+    fnd:hasIdentity ex:meridian-wording-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:assembledFrom ex:form ;
+    wrd:includes ex:sec-3 , ex:cl-3-1 , ex:cl-3-2 , ex:sec-4 , ex:cl-4-1 , ex:sec-6 , ex:cl-6-1 ,
+                 ex:schedule , ex:cl-s-1 ;
+    wrd:hasValue ex:v-territories .
+
+ex:v-territories a wrd:VariableValue ;
+    wrd:forVariable ex:var-territories ;
+    wrd:value ex:north , ex:midlands .
+
+ex:meridian-v1 a ins:Instrument ;
+    fnd:hasIdentity ex:meridian-identity ;
+    ins:expressedIn ex:meridian-wording-v1 ;
+    ins:party ex:provider-occ , ex:customer-occ .
+
+ex:fieldcare a pty:Actor ; rdfs:label "Fieldcare Engineering Ltd" .
+ex:meridian a pty:Actor ; rdfs:label "Meridian Cold Stores Ltd" .
+ex:provider-occ a pty:RoleOccupancy ;
+    fnd:hasIdentity ex:provider-occ-identity ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2028-01-01T00:00:00Z"^^xsd:dateTime ] ;
+    pty:inRole ex:Provider ; pty:occupiedBy ex:fieldcare .
+ex:customer-occ a pty:RoleOccupancy ;
+    fnd:hasIdentity ex:customer-occ-identity ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2028-01-01T00:00:00Z"^^xsd:dateTime ] ;
+    pty:inRole ex:Customer ; pty:occupiedBy ex:meridian .
+
+# ==== Generated bound meaning: the expected output, not stored (D4) ===========
+#
+# "Territory" resolves to North and Midlands, so the scope is generated anew
+# for this agreement with those two required concepts, alternatives under the
+# condition's match strategy. Clause 3.2 and clause 6.1 generate nothing.
+# Binding reports 6.1 as not yet assessed (a warning, law I17), and is silent
+# about 3.2, which is marked, and about the sections, which are containers.
+
+ex:term-s-1 a ins:Term ; ins:boundIn ex:meridian-v1 ; ins:boundFrom tmpl:term-s-1 .
+ex:def-territory a ins:Definition ;
+    ins:boundFrom tmpl:def-territory ; ins:arisesUnder ex:term-s-1 ;
+    ins:defines ex:Territory ;
+    ins:means ex:north , ex:midlands .
+
+ex:term-3-1 a ins:Term ; ins:boundIn ex:meridian-v1 ; ins:boundFrom tmpl:term-3-1 .
+ex:attend a ins:Obligation ;
+    ins:boundFrom tmpl:attend ; ins:arisesUnder ex:term-3-1 ;
+    ins:obligor ex:provider-occ ; ins:obligee ex:customer-occ ;
+    ins:activity ins-voc:ProvideService ;
+    ins:arisesOn tmpl:on-fault ;
+    ins:scope ex:in-territory-meridian .
+ex:in-territory-meridian a elg:Condition ;
+    elg:conditionKey "site-in-the-territory-meridian-v1" ;
+    elg:matchStrategy elg:ExactMatch ; elg:compatibilityOperation elg:AllRequired ;
+    elg:wildcardSemantics elg:NoWildcard ;
+    elg:constrainedByContract ex:territory-contract ;
+    elg:requiredConcept ex:north , ex:midlands .
+
+ex:term-4-1 a ins:Term ; ins:boundIn ex:meridian-v1 ; ins:boundFrom tmpl:term-4-1 .
+ex:pay-charges a ins:Obligation ;
+    ins:boundFrom tmpl:pay-charges ; ins:arisesUnder ex:term-4-1 ;
+    ins:obligor ex:customer-occ ; ins:obligee ex:provider-occ ;
+    ins:activity ins-voc:Pay .

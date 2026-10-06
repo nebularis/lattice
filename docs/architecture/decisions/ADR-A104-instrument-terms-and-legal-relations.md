@@ -356,3 +356,49 @@ which states each in full. Restates decisions 4 and 12, details decision 9, and 
    supersession of deemings (ADR-A105, HQ-6). Precedence between terms (NRS N10). Sharing across
    instruments (C16b). A shared path type in Foundation (its own unit). Portions of one order
    (HQ-7).
+
+## Addendum (2026-10-06): values in stated meaning
+
+**Status:** Proposed 2026-10-06 (CCS slice C8, C8-Q1 to C8-Q6, C8-Q3 in part). Restates decision 13.
+The [CCS plan's C8 section](../../developer/plans/computable-contract-substrate.md) states each
+answer with its consequences. The examples are `facility-parameters.ttl`, `framework-lots.ttl` and
+`services-schedule.ttl` in `ontology/instrument/examples/`.
+
+1. **A placeholder takes its value from a variable** (restates decision 13, C8-Q1). Where stated
+   meaning needs a value an instance supplies, it holds a placeholder of the slot's own kind, a
+   quantity, a concept or a role, with `ins:valueFrom` naming the variable's persistent identity.
+   There is no `ins:ParameterBinding` node and no vocabulary of parameter kinds. A placeholder may
+   sit anywhere stated meaning reaches, inside an Eligibility condition or a Quantification range
+   included, so scope parameters need nothing more. A placeholder may carry a default value.
+2. **Resolution across the tiers.** A library element's stated meaning names the variable's
+   identity. A template resolves it to the variable version it declares, so a clause reused under
+   another schedule keeps its stated meaning. An instance resolves it to the value its assembled
+   wording records for a version of that identity, following `wrd:populatedFrom`, with one value per
+   entry for a table field's variable. Variables are declarations, never included (law W5).
+3. **Schedules** (C8-Q2). A party word's stated definition means a placeholder role taking its value
+   from a variable, whose value is an occupancy or a group.
+4. **Value words** (C7c-Q7, C8-Q3 in part). An amount word's definition means a placeholder quantity,
+   and a placeholder may take its value from an amount word as from a variable. A chain of words and
+   variables must not loop: a cycle, found on the form and by the binder over every hop, per
+   section and through `wrd:populatedFrom`, is a violation whose report names each hop. A concept
+   word may stand in an Eligibility concept slot, where shapes check that it is not also a concept
+   of the condition's scheme and that its meaning suits the slot. Entered values only:
+   computed amounts, bases and `ins:computedBy` wait for contract amounts. Date words, and how
+   context roles from several sources are bound (HQ-4), wait for the formal-methods epic's track C2.
+5. **Which text is expected to mean something** (C8-Q4). By convention, a leaf of text, a
+   `wrd:Text` with no children, is expected to have stated meaning, and containers, variables,
+   references, fields and entries are not. `ins:encodingStatus ins-voc:NoMeaning` marks a leaf
+   reviewed as binding nobody. An expected leaf with neither stated meaning nor the mark is not yet
+   assessed, and is reported as a warning. Whether an element expresses meaning is read, never
+   asserted.
+6. **Generation** (C8-Q5). A reference binder generates one instrument's bound meaning from its form
+   and instance (D4, D5): words and variables resolved per section, the path from a slot down to a
+   placeholder generated anew, sharing where words and values resolve alike, deterministic
+   identities. It reports unresolved words, variables with no value, and overlaps. Sharing across
+   instruments, the cache and the subgraph are CCS C16b.
+7. **Checks** (law I17, C8-Q6). A bound node names values, never variables or words. Nothing bound
+   comes from text the wording does not include, and every included leaf of text has stated meaning
+   bound in the instrument or is marked. Overlapping definitions and unresolved words are checked on
+   the form as well as on generated meaning.
+8. **Deferred.** Date words and HQ-4 (track C2). Computed amounts, rates in qualifiers and bases
+   (contract amounts). Wording's text references by identity (CCS C8b). Evaluation (C12, C13).

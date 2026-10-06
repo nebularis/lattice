@@ -284,3 +284,8 @@ ex:accelerate a ins:Power ;
     ins:holder ex:lender-occ ; ins:counterparty ex:borrower-occ ;
     ins:activity ins-voc:DeclareDue ;
     ins:appliesInState tmpl:default .
+
+# A term whose only content is a regime is bound too, as every stated term is
+# (law I17). The regime itself is read as stated (law I13).
+ex:term-22-1 a ins:Term ; ins:boundIn ex:kestrel-v1 ; ins:boundFrom tmpl:term-22-1 .
+ex:term-22-2 a ins:Term ; ins:boundIn ex:kestrel-v1 ; ins:boundFrom tmpl:term-22-2 .

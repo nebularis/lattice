@@ -18,10 +18,9 @@ Behaviour 0.10.0 (shapes 0.4.0) with nested states and history, the import guard
 check`. In tranche D, C6 to C7c are merged and tagged (Instrument 0.12.0, Party 0.8.0, Quantification
 0.7.0). C8 is briefed, with six questions. From C5 on, the agent builds and verifies, and the human commits by hand.
 
-**Next action, for the human:** create `ccs/c8-parameter-bindings` from `main` once this brief is
-committed.
-C8-Q3 waits for the formal-methods epic's track C2, which holds back only the lease example's date
-words.
+**Next action, for the human:** review the C8 model phase on `ccs/c8-parameter-bindings` (the
+handoff's deviations first), commit it, merge to `main`, then create and push the release tags
+`instrument-v0.13.0`, `instrument-shapes-v0.6.0` and `instrument-vocab-v0.13.0` to `origin-ssh`.
 
 ## Slice board
 
@@ -124,3 +123,6 @@ words.
 - 2026-10-06: C8-Q2, Q5 and Q6 answered as recommended, Q3 deferred to track C2. Q1 and Q4 reworked with each option's consequences: a placeholder taking its value from a variable, and encoding status by convention with one optional mark
 - 2026-10-06: C8-Q4 answered (b), by convention. C8-Q1 gains how a placeholder resolves across library elements, templates and instances
 - 2026-10-06: C8-Q1 answered (b). Wording references by identity planned as slice C8b, after C8, taking over insurml-alignment IMA-3.3
+- 2026-10-06: C8 phase 1 on `ccs/c8-parameter-bindings`: `facility-parameters.ttl` and `services-schedule.ttl` new, `framework-lots.ttl` reworked, and the ADR-A104 addendum "values in stated meaning" (Proposed). All three conform to every layer's shapes. The brief's resolution table corrected to law W5
+- 2026-10-06: value words as placeholder sources agreed, with thorough cycle checking and the rule documented wherever it may arise. Concept words in Eligibility concept slots agreed, governed by shapes. Rows C8-18 to C8-21 added
+- 2026-10-06: C8 examples committed. Model phase built: Instrument 0.13.0, `instrument-vocab` 0.13.0, shapes 0.6.0 (breaking under law I17), the reference binder `tools/instrument_binder.py`, and `tools/test_parameter_bindings.py` (42 tests) in `check:ontology-catalog`. Every C8 row passes, and every check C7c ran. Five older examples gained the bound terms law I17 found missing. Deviations in the [Validation Pack](../validation/computable-contract-substrate-c8.md)

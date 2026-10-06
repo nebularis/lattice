@@ -1,0 +1,332 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Premise. A lender's facility form leaves three numbers blank: the
+# Commitment, the leverage ceiling, and how many Business Days the Borrower
+# has to repay after a demand. Every facility drawn from the form fills them
+# in. The form's stated meaning names where each value goes, and nothing
+# else: a placeholder of the slot's own kind takes its value from a variable,
+# named by the variable's persistent identity (C8-Q1). The facility stores its
+# values, and its bound meaning is generated from the two (D1, D4).
+#
+# The form's clauses:
+#
+# | Clause | Text | Meaning |
+# |--------|------|---------|
+# | 1.1    | "Commitment" means [amount]. | an amount word, meaning a variable's value |
+# | 6.1    | The Borrower shall repay all loans within [days] Business Days after the Lender demands repayment. | an obligation whose due range takes its length from a variable |
+# | 7.1    | The Borrower shall ensure that leverage does not exceed [ratio] to 1. | a continuing obligation whose condition takes its ceiling from a variable |
+# | 7.2    | The Borrower shall ensure that the loans outstanding never exceed the Commitment. | a continuing obligation whose ceiling is the amount word |
+# | 10.1   | The Lender may demand repayment of all loans. | a power, on whose exercise 6.1 arises |
+#
+# The facility for Halden Foods plc fills in 25,000,000 GBP, 3.5 to 1 and 10
+# Business Days.
+#
+# What the example shows:
+#
+# | Construct                                            | Where                                           |
+# |------------------------------------------------------|-------------------------------------------------|
+# | a placeholder taking a length from a variable        | tmpl:repay, its due range's upper offset         |
+# | a placeholder inside an Eligibility condition        | ex:leverage-ok, its bound's value                |
+# | an amount word meaning a variable's value (C7c-Q7)   | tmpl:def-commitment                              |
+# | a placeholder taking its value from an amount word   | ex:loans-within-commitment, its bound's value    |
+# | values stored with the assembled wording (D1)        | ex:halden-wording-v1 wrd:hasValue                |
+# | generated bound meaning naming values, never variables (I13) | "Generated bound meaning", below         |
+#
+# Nothing here evaluates.
+
+@prefix ins:     <https://www.nebularis.org/neuro-semantic/lattice/instrument#> .
+@prefix ins-voc: <https://www.nebularis.org/neuro-semantic/lattice/instrument/vocab#> .
+@prefix bhv:     <https://www.nebularis.org/neuro-semantic/lattice/behaviour#> .
+@prefix wrd:     <https://www.nebularis.org/neuro-semantic/lattice/wording#> .
+@prefix wrd-voc: <https://www.nebularis.org/neuro-semantic/lattice/wording/vocab#> .
+@prefix fnd:     <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix pty:     <https://www.nebularis.org/neuro-semantic/lattice/party#> .
+@prefix elg:     <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
+@prefix qnt:     <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
+@prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+@prefix tmpl:    <https://example.org/lattice/instrument/facility-parameters/form/> .
+@prefix ex:      <https://example.org/lattice/instrument/facility-parameters/> .
+
+# ==== The form: wording and its variables =====================================
+#
+# Each blank is a variable the clause declares and its text shows. Variables
+# are declarations: an assembled wording never includes them, and records a
+# value for each (law W5).
+
+ex:form a wrd:Wording ;
+    fnd:hasIdentity ex:form-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:directlyComprises ex:sec-1 , ex:sec-6 , ex:sec-7 , ex:sec-10 .
+
+ex:sec-1 a wrd:Element ;
+    fnd:hasIdentity ex:sec-1-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Section ; wrd:objectId "1" ; wrd:rankKey "a0" ;
+    wrd:directlyComprises ex:cl-1-1 .
+ex:cl-1-1 a wrd:Text ;
+    fnd:hasIdentity ex:cl-1-1-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Definition ; wrd:objectId "1.1" ; wrd:rankKey "a0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:directlyComprises ex:var-commitment ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ; wrd:partText "\"Commitment\" means " ] ,
+                    [ a wrd:TextPart ; wrd:partIndex 1 ; wrd:refersToVariable ex:var-commitment ] ,
+                    [ a wrd:TextPart ; wrd:partIndex 2 ; wrd:partText "." ] .
+ex:var-commitment a wrd:EmbeddedVariable ;
+    fnd:hasIdentity ex:var-commitment-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:variableKey "commitment" ; wrd:rankKey "z0" ;
+    wrd:valueSpace ex:money ; wrd:multiValued false .
+
+ex:sec-6 a wrd:Element ;
+    fnd:hasIdentity ex:sec-6-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Section ; wrd:objectId "6" ; wrd:rankKey "b0" ;
+    wrd:directlyComprises ex:cl-6-1 .
+ex:cl-6-1 a wrd:Text ;
+    fnd:hasIdentity ex:cl-6-1-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "6.1" ; wrd:rankKey "a0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:directlyComprises ex:var-repay-days ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ; wrd:partText "The Borrower shall repay all loans within " ] ,
+                    [ a wrd:TextPart ; wrd:partIndex 1 ; wrd:refersToVariable ex:var-repay-days ] ,
+                    [ a wrd:TextPart ; wrd:partIndex 2 ; wrd:partText " Business Days after the Lender demands repayment." ] .
+ex:var-repay-days a wrd:EmbeddedVariable ;
+    fnd:hasIdentity ex:var-repay-days-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:variableKey "repayment-days" ; wrd:rankKey "z0" ;
+    wrd:valueSpace ex:durations ; wrd:multiValued false .
+
+ex:sec-7 a wrd:Element ;
+    fnd:hasIdentity ex:sec-7-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Section ; wrd:objectId "7" ; wrd:rankKey "c0" ;
+    wrd:directlyComprises ex:cl-7-1 , ex:cl-7-2 .
+ex:cl-7-1 a wrd:Text ;
+    fnd:hasIdentity ex:cl-7-1-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "7.1" ; wrd:rankKey "a0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:directlyComprises ex:var-leverage ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ; wrd:partText "The Borrower shall ensure that leverage does not exceed " ] ,
+                    [ a wrd:TextPart ; wrd:partIndex 1 ; wrd:refersToVariable ex:var-leverage ] ,
+                    [ a wrd:TextPart ; wrd:partIndex 2 ; wrd:partText " to 1." ] .
+ex:var-leverage a wrd:EmbeddedVariable ;
+    fnd:hasIdentity ex:var-leverage-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:variableKey "leverage-ceiling" ; wrd:rankKey "z0" ;
+    wrd:valueSpace ex:leverage-space ; wrd:multiValued false .
+ex:cl-7-2 a wrd:Text ;
+    fnd:hasIdentity ex:cl-7-2-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "7.2" ; wrd:rankKey "b0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "The Borrower shall ensure that the loans outstanding never exceed the Commitment." ] .
+
+ex:sec-10 a wrd:Element ;
+    fnd:hasIdentity ex:sec-10-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Section ; wrd:objectId "10" ; wrd:rankKey "d0" ;
+    wrd:directlyComprises ex:cl-10-1 .
+ex:cl-10-1 a wrd:Text ;
+    fnd:hasIdentity ex:cl-10-1-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "10.1" ; wrd:rankKey "a0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ; wrd:partText "The Lender may demand repayment of all loans." ] .
+
+# ==== The form: roles, spaces, words ==========================================
+
+ex:Borrower a pty:Role ; rdfs:label "Borrower" .
+ex:Lender a pty:Role ; rdfs:label "Lender" .
+
+ex:Commitment a skos:Concept ; rdfs:label "Commitment" .         # the amount word
+
+ex:time a qnt:ValueSpace ;
+    qnt:spaceKey "calendar-time" ; qnt:orderKind qnt:TotalOrder ; qnt:densityKind qnt:Dense ;
+    qnt:valueDatatype xsd:dateTime ; qnt:spaceHash "calendar-time-v1" .
+ex:durations a qnt:ValueSpace ;
+    qnt:spaceKey "durations" ; qnt:orderKind qnt:TotalOrder ; qnt:densityKind qnt:Discrete ;
+    qnt:spaceHash "durations-v1" .
+ex:money a qnt:ValueSpace ;
+    qnt:spaceKey "sterling" ; qnt:orderKind qnt:TotalOrder ; qnt:densityKind qnt:Dense ;
+    qnt:spaceHash "sterling-v1" .
+ex:leverage-space a qnt:ValueSpace ;
+    qnt:spaceKey "leverage-ratio" ; qnt:orderKind qnt:TotalOrder ; qnt:densityKind qnt:Dense ;
+    qnt:spaceHash "leverage-ratio-v1" .
+ex:business-day a qnt:CalendarUnit ; rdfs:label "business day" .
+ex:gbp a qnt:Unit ; rdfs:label "pound sterling" .
+
+ex:arising a qnt:ContextValue ; qnt:onSpace ex:time ; qnt:contextRole ins-voc:Arising .
+
+# ==== The form: stated meaning ================================================
+#
+# Placeholders are nodes of the slot's own kind, a quantity here, with
+# ins:valueFrom naming where the value comes from: a variable's persistent
+# identity, or an amount word that a definition gives a value. A placeholder
+# holds no value of its own.
+
+tmpl:term-1-1 a ins:Term , ins:Template ; ins:expressedIn ex:cl-1-1 .
+tmpl:def-commitment a ins:Definition , ins:Template ;
+    ins:arisesUnder tmpl:term-1-1 ;
+    ins:defines ex:Commitment ;
+    ins:means [ a qnt:Quantity ; qnt:onSpace ex:money ; qnt:inUnit ex:gbp ;
+                ins:valueFrom ex:var-commitment-identity ] .
+
+tmpl:term-10-1 a ins:Term , ins:Template ; ins:expressedIn ex:cl-10-1 .
+tmpl:demand a ins:Power , ins:Template ;
+    ins:arisesUnder tmpl:term-10-1 ;
+    ins:holder ex:Lender ; ins:counterparty ex:Borrower ;
+    ins:activity ins-voc:DeclareDue .
+
+tmpl:term-6-1 a ins:Term , ins:Template ; ins:expressedIn ex:cl-6-1 .
+tmpl:repay a ins:Obligation , ins:Template ;
+    ins:arisesUnder tmpl:term-6-1 ;
+    ins:obligor ex:Borrower ; ins:obligee ex:Lender ;
+    ins:activity ins-voc:Repay ;
+    ins:arisesOnExerciseOf tmpl:demand ;
+    ins:due tmpl:within-days .
+tmpl:within-days a qnt:Range ;
+    qnt:onSpace ex:time ;
+    qnt:relativeToAnchor [ a qnt:AnchorBinding ;
+        qnt:anchorValue ex:arising ; qnt:offsetKind qnt:Absolute ;
+        qnt:lowerOffsetBy [ a qnt:Quantity ; qnt:onSpace ex:durations ; qnt:numericValue "0"^^xsd:decimal ; qnt:inUnit ex:business-day ] ;
+        qnt:upperOffsetBy [ a qnt:Quantity ; qnt:onSpace ex:durations ; qnt:inUnit ex:business-day ;
+                            ins:valueFrom ex:var-repay-days-identity ] ] .     # the placeholder
+
+tmpl:term-7-1 a ins:Term , ins:Template ; ins:expressedIn ex:cl-7-1 .
+tmpl:leverage a ins:ContinuingObligation , ins:Template ;
+    ins:arisesUnder tmpl:term-7-1 ;
+    ins:obligor ex:Borrower ; ins:obligee ex:Lender ;
+    ins:maintains ex:leverage-ok .
+
+tmpl:term-7-2 a ins:Term , ins:Template ; ins:expressedIn ex:cl-7-2 .
+tmpl:within-commitment a ins:ContinuingObligation , ins:Template ;
+    ins:arisesUnder tmpl:term-7-2 ;
+    ins:obligor ex:Borrower ; ins:obligee ex:Lender ;
+    ins:maintains ex:loans-within-commitment .
+
+# The stated conditions. Each holds a placeholder at its bound's value, and is
+# shared by every facility drawn from the form.
+ex:leverage-ok a elg:IntervalCondition ;
+    elg:conditionKey "leverage-within-ceiling" ;
+    elg:matchStrategy elg:IntervalContainment ; elg:compatibilityOperation elg:AllRequired ;
+    elg:wildcardSemantics elg:NoWildcard ;
+    elg:requiredRangeSet [ a qnt:RangeSet ; qnt:onSpace ex:leverage-space ;
+        qnt:hasRange [ a qnt:Range ; qnt:onSpace ex:leverage-space ;
+            qnt:upperBound ex:leverage-ceiling ; qnt:hasBound ex:leverage-ceiling ] ] .
+ex:leverage-ceiling a qnt:Bound ; qnt:onSpace ex:leverage-space ;
+    qnt:boundSense qnt:Upper ; qnt:boundClosure qnt:Closed ;
+    qnt:boundValue [ a qnt:Quantity ; qnt:onSpace ex:leverage-space ; ins:valueFrom ex:var-leverage-identity ] .
+
+ex:loans-within-commitment a elg:IntervalCondition ;
+    elg:conditionKey "loans-outstanding-within-commitment" ;
+    elg:matchStrategy elg:IntervalContainment ; elg:compatibilityOperation elg:AllRequired ;
+    elg:wildcardSemantics elg:NoWildcard ;
+    elg:requiredRangeSet [ a qnt:RangeSet ; qnt:onSpace ex:money ;
+        qnt:hasRange [ a qnt:Range ; qnt:onSpace ex:money ;
+            qnt:upperBound ex:commitment-ceiling ; qnt:hasBound ex:commitment-ceiling ] ] .
+ex:commitment-ceiling a qnt:Bound ; qnt:onSpace ex:money ;
+    qnt:boundSense qnt:Upper ; qnt:boundClosure qnt:Closed ;
+    qnt:boundValue [ a qnt:Quantity ; qnt:onSpace ex:money ; qnt:inUnit ex:gbp ;
+                     ins:valueFrom ex:Commitment ] .                   # the amount word
+
+# ==== The instance: what the facility stores (D1) =============================
+
+ex:halden-wording-v1 a wrd:AssembledWording ;
+    fnd:hasIdentity ex:halden-wording-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:assembledFrom ex:form ;
+    wrd:includes ex:sec-1 , ex:cl-1-1 , ex:sec-6 , ex:cl-6-1 , ex:sec-7 , ex:cl-7-1 , ex:cl-7-2 , ex:sec-10 , ex:cl-10-1 ;
+    wrd:hasValue ex:v-commitment , ex:v-repay-days , ex:v-leverage .
+
+ex:v-commitment a wrd:VariableValue ;
+    wrd:forVariable ex:var-commitment ;
+    wrd:value [ a qnt:Quantity ; qnt:onSpace ex:money ; qnt:numericValue "25000000"^^xsd:decimal ; qnt:inUnit ex:gbp ] .
+ex:v-repay-days a wrd:VariableValue ;
+    wrd:forVariable ex:var-repay-days ;
+    wrd:literalValue "10"^^xsd:decimal .
+ex:v-leverage a wrd:VariableValue ;
+    wrd:forVariable ex:var-leverage ;
+    wrd:literalValue "3.5"^^xsd:decimal .
+
+ex:halden-v1 a ins:Instrument ;
+    fnd:hasIdentity ex:halden-identity ;
+    ins:expressedIn ex:halden-wording-v1 ;
+    ins:party ex:borrower-occ , ex:lender-occ .
+
+ex:halden a pty:Actor ; rdfs:label "Halden Foods plc" .
+ex:ridgeway-bank a pty:Actor ; rdfs:label "Ridgeway Bank plc" .
+ex:borrower-occ a pty:RoleOccupancy ;
+    fnd:hasIdentity ex:borrower-occ-identity ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-11-01T00:00:00Z"^^xsd:dateTime ] ;
+    pty:inRole ex:Borrower ; pty:occupiedBy ex:halden .
+ex:lender-occ a pty:RoleOccupancy ;
+    fnd:hasIdentity ex:lender-occ-identity ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-11-01T00:00:00Z"^^xsd:dateTime ] ;
+    pty:inRole ex:Lender ; pty:occupiedBy ex:ridgeway-bank .
+
+# ==== Generated bound meaning: the expected output, not stored (D4) ===========
+#
+# Binding replaces each placeholder by the value its variable has in this
+# instance, and the amount word by the value its definition means. Where a
+# placeholder sits inside a stated node, the path from the slot down to it is
+# generated anew, so the facility's conditions and its due range are its own:
+# a condition, a range set, a range, a bound and a quantity for each ceiling.
+# Everything else is the form's, shared (D5).
+#
+# | Placeholder | From | Value in this facility |
+# |-------------|------|------------------------|
+# | 6.1's due length | the repayment-days variable | 10 Business Days |
+# | 7.1's ceiling | the leverage-ceiling variable | 3.5 |
+# | the Commitment | the commitment variable | 25,000,000 GBP |
+# | 7.2's ceiling | the amount word "Commitment" | 25,000,000 GBP |
+
+ex:term-1-1 a ins:Term ; ins:boundIn ex:halden-v1 ; ins:boundFrom tmpl:term-1-1 .
+ex:def-commitment a ins:Definition ;
+    ins:boundFrom tmpl:def-commitment ; ins:arisesUnder ex:term-1-1 ;
+    ins:defines ex:Commitment ;
+    ins:means ex:commitment-value .
+ex:commitment-value a qnt:Quantity ; qnt:onSpace ex:money ; qnt:numericValue "25000000"^^xsd:decimal ; qnt:inUnit ex:gbp .
+
+ex:term-10-1 a ins:Term ; ins:boundIn ex:halden-v1 ; ins:boundFrom tmpl:term-10-1 .
+ex:demand a ins:Power ;
+    ins:boundFrom tmpl:demand ; ins:arisesUnder ex:term-10-1 ;
+    ins:holder ex:lender-occ ; ins:counterparty ex:borrower-occ ;
+    ins:activity ins-voc:DeclareDue .
+
+ex:term-6-1 a ins:Term ; ins:boundIn ex:halden-v1 ; ins:boundFrom tmpl:term-6-1 .
+ex:repay a ins:Obligation ;
+    ins:boundFrom tmpl:repay ; ins:arisesUnder ex:term-6-1 ;
+    ins:obligor ex:borrower-occ ; ins:obligee ex:lender-occ ;
+    ins:activity ins-voc:Repay ;
+    ins:arisesOnExerciseOf ex:demand ;
+    ins:due ex:within-10-business-days .
+ex:within-10-business-days a qnt:Range ;
+    qnt:onSpace ex:time ;
+    qnt:relativeToAnchor [ a qnt:AnchorBinding ;
+        qnt:anchorValue ex:arising ; qnt:offsetKind qnt:Absolute ;
+        qnt:lowerOffsetBy [ a qnt:Quantity ; qnt:onSpace ex:durations ; qnt:numericValue "0"^^xsd:decimal ; qnt:inUnit ex:business-day ] ;
+        qnt:upperOffsetBy [ a qnt:Quantity ; qnt:onSpace ex:durations ; qnt:numericValue "10"^^xsd:decimal ; qnt:inUnit ex:business-day ] ] .
+
+ex:term-7-1 a ins:Term ; ins:boundIn ex:halden-v1 ; ins:boundFrom tmpl:term-7-1 .
+ex:leverage a ins:ContinuingObligation ;
+    ins:boundFrom tmpl:leverage ; ins:arisesUnder ex:term-7-1 ;
+    ins:obligor ex:borrower-occ ; ins:obligee ex:lender-occ ;
+    ins:maintains ex:leverage-ok-halden .
+ex:leverage-ok-halden a elg:IntervalCondition ;
+    elg:conditionKey "leverage-within-ceiling-halden-v1" ;
+    elg:matchStrategy elg:IntervalContainment ; elg:compatibilityOperation elg:AllRequired ;
+    elg:wildcardSemantics elg:NoWildcard ;
+    elg:requiredRangeSet [ a qnt:RangeSet ; qnt:onSpace ex:leverage-space ;
+        qnt:hasRange [ a qnt:Range ; qnt:onSpace ex:leverage-space ;
+            qnt:upperBound ex:leverage-ceiling-halden ; qnt:hasBound ex:leverage-ceiling-halden ] ] .
+ex:leverage-ceiling-halden a qnt:Bound ; qnt:onSpace ex:leverage-space ;
+    qnt:boundSense qnt:Upper ; qnt:boundClosure qnt:Closed ;
+    qnt:boundValue [ a qnt:Quantity ; qnt:onSpace ex:leverage-space ; qnt:numericValue "3.5"^^xsd:decimal ] .
+
+ex:term-7-2 a ins:Term ; ins:boundIn ex:halden-v1 ; ins:boundFrom tmpl:term-7-2 .
+ex:within-commitment a ins:ContinuingObligation ;
+    ins:boundFrom tmpl:within-commitment ; ins:arisesUnder ex:term-7-2 ;
+    ins:obligor ex:borrower-occ ; ins:obligee ex:lender-occ ;
+    ins:maintains ex:loans-within-commitment-halden .
+ex:loans-within-commitment-halden a elg:IntervalCondition ;
+    elg:conditionKey "loans-outstanding-within-commitment-halden-v1" ;
+    elg:matchStrategy elg:IntervalContainment ; elg:compatibilityOperation elg:AllRequired ;
+    elg:wildcardSemantics elg:NoWildcard ;
+    elg:requiredRangeSet [ a qnt:RangeSet ; qnt:onSpace ex:money ;
+        qnt:hasRange [ a qnt:Range ; qnt:onSpace ex:money ;
+            qnt:upperBound ex:commitment-ceiling-halden ; qnt:hasBound ex:commitment-ceiling-halden ] ] .
+ex:commitment-ceiling-halden a qnt:Bound ; qnt:onSpace ex:money ;
+    qnt:boundSense qnt:Upper ; qnt:boundClosure qnt:Closed ;
+    qnt:boundValue ex:commitment-value .
