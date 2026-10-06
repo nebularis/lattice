@@ -58,8 +58,20 @@ Negation (`neg3`): `Permitted ↦ Denied`, `Denied ↦ Permitted`, `Undetermined
 $$ a \sqsubseteq a' \implies or3(a,b) \sqsubseteq or3(a',b) \qquad a \sqsubseteq a' \implies and3(a,b) \sqsubseteq and3(a',b) $$
 and symmetrically in the second argument.
 
-**TA2 (negation).** `neg3` is an order-reversing involution that fixes `Undetermined`:
-$$ neg3(neg3(a)) = a \qquad a \sqsubseteq a' \implies neg3(a') \sqsubseteq neg3(a) \qquad neg3(\mathrm{Undetermined}) = \mathrm{Undetermined} $$
+**TA2 (negation).** `neg3` is an involution that fixes `Undetermined` and is **monotone** in `⊑`
+(not order-reversing: `⊑` is the information order, not a truth order, and swapping `Permitted`
+and `Denied` while fixing the bottom `Undetermined` preserves how much is known, not how it
+compares as true or false):
+$$ neg3(neg3(a)) = a \qquad a \sqsubseteq a' \implies neg3(a) \sqsubseteq neg3(a') \qquad neg3(\mathrm{Undetermined}) = \mathrm{Undetermined} $$
+
+> **Correction, found during D2 (Rocq track):** an earlier draft of this brief stated TA2 as
+> order-reversing. Attempting the Rocq proof of that direction produced an unprovable goal; the
+> counterexample `a = Undetermined`, `a' = Permitted` confirms it (the order-reversing direction
+> would demand `neg3(Permitted) ⊑ neg3(Undetermined)`, i.e. `Denied ⊑ Undetermined`, which is
+> false). The monotone direction above is what `spikes/formal-prover/rocq/Kernel.v`'s `TA2`
+> actually proves, and is what D3 (Isabelle) must formalise too, per the no-unreviewed-
+> restatement rule applied to this brief itself (brief §10).
+
 
 ### 2.2 Eligibility's set readings and negation (target TL): L15 and L16
 
