@@ -99,6 +99,13 @@ Most ideas start out life as `sketches`. Some may be captured as a plan rather t
 - Every active review record must name an existing matching status record.
 - `docs/developer/` root holds durable guidance only. Do not create a new `current/` directory.
 
+#### Writing a plan or a sketch
+
+- Take your time and re-read the latest version of any material you are proposing changes to.
+- Don't guess about the consequences of a modelling decision - check it against the ontologies
+- When you need to show the options and consequences of a design choice: NEVER go off your memory alone, ALWAYS re-read the ontologies
+- When explaining things, always set the scene first, consider drawing pictures if the subject matter is complex, and work through your arguments and their consequences carefully and methodically for the user to consider
+
 ### Epic Decomposition Model
 
 An **epic** is a large work package spanning multiple phases, teams, or quarters with complex interdependencies. Epics are broken down into smaller, manageable units.

@@ -16,11 +16,10 @@
 Gate A passed on 2026-10-01. Tranches B and C are merged to `main` and tagged: Wording 0.3.0,
 Behaviour 0.10.0 (shapes 0.4.0) with nested states and history, the import guard in `mise run
 check`. In tranche D, C6 to C7c are merged and tagged (Instrument 0.12.0, Party 0.8.0, Quantification
-0.7.0). C8 is briefed, with six questions. From C5 on, the agent builds and verifies, and the human commits by hand.
+0.7.0). C8 is merged and tagged (Instrument 0.13.0). C8b is briefed, with four questions. From C5 on, the agent builds and verifies, and the human commits by hand.
 
-**Next action, for the human:** review the C8 model phase on `ccs/c8-parameter-bindings` (the
-handoff's deviations first), commit it, merge to `main`, then create and push the release tags
-`instrument-v0.13.0`, `instrument-shapes-v0.6.0` and `instrument-vocab-v0.13.0` to `origin-ssh`.
+**Next action, for the human:** commit the C8b brief on `main`, then create and push
+`ccs/c8b-references-by-identity`.
 
 ## Slice board
 
@@ -126,3 +125,6 @@ handoff's deviations first), commit it, merge to `main`, then create and push th
 - 2026-10-06: C8 phase 1 on `ccs/c8-parameter-bindings`: `facility-parameters.ttl` and `services-schedule.ttl` new, `framework-lots.ttl` reworked, and the ADR-A104 addendum "values in stated meaning" (Proposed). All three conform to every layer's shapes. The brief's resolution table corrected to law W5
 - 2026-10-06: value words as placeholder sources agreed, with thorough cycle checking and the rule documented wherever it may arise. Concept words in Eligibility concept slots agreed, governed by shapes. Rows C8-18 to C8-21 added
 - 2026-10-06: C8 examples committed. Model phase built: Instrument 0.13.0, `instrument-vocab` 0.13.0, shapes 0.6.0 (breaking under law I17), the reference binder `tools/instrument_binder.py`, and `tools/test_parameter_bindings.py` (42 tests) in `check:ontology-catalog`. Every C8 row passes, and every check C7c ran. Five older examples gained the bound terms law I17 found missing. Deviations in the [Validation Pack](../validation/computable-contract-substrate-c8.md)
+- 2026-10-06: C8 merged to `main` and tagged by the human (`instrument-v0.13.0`, `instrument-shapes-v0.6.0`, `instrument-vocab-v0.13.0`)
+- 2026-10-06: C8b briefed on `main` with its Validation Pack skeleton and four questions, each with its options' consequences: which references name an identity (Q1), how they resolve (Q2), display text (Q3), and code (Q4). C9 moves to Instrument 0.15.0
+- 2026-10-06: C8b's questions reworked with the scene set and each option's consequences, then answered: every reference names an identity, with outside documents gaining editions and a static or ambulatory reliance (Q1 (c)), resolution derived and checked by W8 (Q2), display text on the referring part (Q3), shapes and the binder's lookup (Q4)
