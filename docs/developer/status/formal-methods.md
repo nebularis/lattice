@@ -3,8 +3,10 @@
 # Formal Methods: Status
 
 **Unit ID:** `formal-methods` (epic)
-**Status:** � Track D in progress. D0-D2 complete on `fm/phase-0-prover-spike`, D3 (Isabelle) and D4
-(report) remain
+**Status:** ✅ Track D complete on `fm/phase-0-prover-spike` (D0-D4). FM-D1 decided: adopt Rocq
+for the prover programme (track E), by a 1.0-point tiebreak on M0 after a 105-point weighted
+score (margin under the plan's 5-point tie threshold). FM-D10 decided: Haskell is not adopted
+as a target. Awaiting the human's decision on whether to proceed to track E
 **Last updated:** 2026-10-06
 **Plan:** [formal-methods.md](../plans/formal-methods.md), [the prover spike](../plans/formal-methods-phase-0.md)
 **Review response:** [formal-methods-review-response.md](../notes/formal-methods-review-response.md)
@@ -43,14 +45,15 @@ installs.
 | D0 environments | done (commit `efa2469`): image and native routes, driver, network probe, smoke suite |
 | D1 brief | done (commit `bb86f17`): written semantics, seeded defects S1-S5, MINOR change spec, measures |
 | D2 Rocq track | done (commits `f4a6db4`, `17f05d9`, `57fea56`, `ca6fbc0`): Kernel.v (TA1, TA2), Eligibility.v (TL1-TL3), Adequacy.v (13 fixture-matching theorems, all via `reflexivity`), defects S1-S5 (each a compiled, positive detection, not a narrative), Reading.v (the MINOR change, M3 measured at +21/-7 lines for adding `MostValueR`), Interface.v (M6's `MonotoneReading` record, rejects non-monotone candidates at construction), Extraction.v (M4, extracted OCaml kernel checked against all 15 reference fixtures outside Rocq), 12 claim records, `gate.py rocq` passes clean |
-| D3 Isabelle track | not started |
-| D4 report | not started |
+| D3 Isabelle track | done (commits `c7b399a`, `2a115b1`, `5dd63ad`): Kernel.thy (TA1, TA2), Eligibility.thy (TL1-TL3), Adequacy.thy (15 lemmas via `eval`), defects S1-S5 (S4 needs `quick_and_dirty`, since Isabelle refuses bare `sorry`), Reading.thy (the MINOR change, M3 measured at +18/-6 lines for `MostValueR`), Interface.thy (M6's `monotone_reading` locale), Export.thy (M4/M5: OCaml and Haskell, both checked against all 15 reference fixtures, Haskell compiled with GHC), 13 claim records, `gate.py isabelle` passes clean |
+| D4 report | done: [formal-prover-experiment.md](../notes/formal-prover-experiment.md), M0-M9 scored for both provers (Rocq 66.5, Isabelle 65.5, a 1.0-point margin broken by M0), FM-D1 and FM-D10 decided |
 
 ## Decisions
 
 | # | State |
 |---|---|
-| FM-D1 | open, settled by track D, or the prover abandoned |
+| FM-D1 | decided 2026-10-06: adopt Rocq for the prover programme (track E), per [formal-prover-experiment.md](../notes/formal-prover-experiment.md). A narrow result (1.0-point tiebreak on M0); carried mainly by M9 (the engine notes' prior choice) |
+| FM-D10 | decided 2026-10-06: Haskell is not adopted as a target, since FM-D1 adopts Rocq and the engine notes' rationale is OCaml-first. Isabelle's `export_code` produces working Haskell directly; Rocq's own Haskell extraction should be tried first if the need arises |
 | FM-D5, FM-D7, FM-D9 | revised 2026-10-06 after review |
 | FM-D11, FM-D12, FM-D13 | decided 2026-10-06, as recommended |
 | FM-D15 | decided 2026-10-06: stale on a tool change, suspect on a known soundness fix, invalid on a semantic change. Needs an ADR-A27 addendum |
