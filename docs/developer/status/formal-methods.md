@@ -3,9 +3,11 @@
 # Formal Methods: Status
 
 **Unit ID:** `formal-methods` (epic)
-**Status:** 📝 Proposed. Sketches, epic plan and Phase 0 plan drafted, awaiting human review
+**Status:** 📝 Proposed. Re-sequenced into tracks after review on 2026-10-06, awaiting the human's
+decisions on the review response
 **Last updated:** 2026-10-06
-**Plan:** [formal-methods.md](../plans/formal-methods.md), [phase 0](../plans/formal-methods-phase-0.md)
+**Plan:** [formal-methods.md](../plans/formal-methods.md), [the prover spike](../plans/formal-methods-phase-0.md)
+**Review response:** [formal-methods-review-response.md](../notes/formal-methods-review-response.md)
 **Sketches:** [formal-methods.md](../sketches/formal-methods.md),
 [adequacy and architecture](../sketches/formal-adequacy-and-architecture.md),
 [assurance records](../sketches/assurance-records.md),
@@ -15,46 +17,57 @@
 
 ## Current position
 
-Nothing is built. Phase 0, the prover experiment, is the first step. CCS remains the active unit,
-with C7c next.
+Nothing is built. The prover spike (track D) is the first step. The tracks are staggered: C1, C2, B1
+and B2 alongside the spike, A1 to A4 after gate D, B4 with C11a and C12, C3 with C13a. CCS remains the active unit, with C7c branched.
 
-**Next action, for the human:** review the plans, create the spike branch `fm/phase-0-prover-spike`
-from `main`, and approve the toolchain installs (Rocq through opam, Isabelle) into `.build/formal/`.
+**Next action, for the human:** decide when and where the spike branch, `fm/phase-0-prover-spike`, is
+created, and approve the toolchain installs into `.build/formal/`.
 
-## Phase board
+## Track board
 
-| Phase | State | Blocked on |
+| Track | State | Blocked on |
 |---|---|---|
-| 0 Prover experiment | not started | human review, the spike branch, toolchain installs |
-| 1 Decisions and ADRs | not started | gate 0 |
-| 2 Cheap wins | not started | phase 1 |
-| 3 Kernel, foundations, adequacy | not started | phase 1 |
-| 4 Toolchain workers | not started | phase 3 |
-| 5 Eligibility | not started | phases 3 and 4 |
-| 6 Reference evaluator, conformance kit | not started | phases 3 and 4, CCS C11a |
-| 7 Instrument assurance | not started | phases 5 and 6, CCS C8a |
-| 8 Monitors, compilers, Surface, MORK, assembly | not started | phase 7, insurml-alignment phase 4 |
+| D Prover spike | not started | the branching decision, toolchain installs |
+| A Ledger and harness | not started | gate D, then its ADR (A1). A5 runs with track C |
+| B Reference semantics and oracle | not started | its ADR. B1 and B2 alongside the spike, B4 with C11a and C12 |
+| C Design-time models | not started | none. C1 and C2 first, before CCS C8 |
+| E Prover programme | not started | gate D |
+| F Native tooling | not started | its ADR, then a Python baseline per family |
+| G Instrument assurance | not started | B4, C3 |
 
-## Phase 0
+## Track D
 
 | Slice | State |
 |---|---|
-| FM-0.1 brief | not started |
-| FM-0.2 Rocq track | not started |
-| FM-0.3 Isabelle track | not started |
-| FM-0.4 worker smoke test and benchmark | not started |
-| FM-0.5 report | not started |
+| D1 brief | not started |
+| D2 Rocq track | not started |
+| D3 Isabelle track | not started |
+| D4 report | not started |
 
 ## Decisions
 
 | # | State |
 |---|---|
-| FM-D1 | open, settled by Phase 0 |
-| FM-D2 to FM-D10 | open |
+| FM-D1 | open, settled by track D, or the prover abandoned |
+| FM-D5, FM-D7, FM-D9 | revised 2026-10-06 after review |
+| FM-D11, FM-D12, FM-D13 | decided 2026-10-06, as recommended |
+| FM-D15 | decided 2026-10-06: stale on a tool change, suspect on a known soundness fix, invalid on a semantic change. Needs an ADR-A27 addendum |
+| FM-D14 | open |
+| the rest | open |
+
+## Log
+
+- 2026-10-06: epic, sketches and the prover experiment drafted.
+- 2026-10-06: reviewed. Five headline findings accepted. The epic re-sequenced into tracks A to G with
+  metrics and abandonment conditions. The spike narrowed to the kernel and L15 and L16 carried end to
+  end. Six points rebutted or refined in the review response, four of them for the human's decision.
+- 2026-10-06: FM-D11 (stratified Datalog), FM-D12 (generation from the README) and FM-D13 (L15 and L16 in the spike) decided as recommended. FM-D15's addendum belongs to ADR-A27, the invalidation rule, with the read-set kinds in ADR-A92's terms
+- 2026-10-06: FM-D15 decided: a semantic input change invalidates, a tool identity change marks claims stale and schedules re-verification, and a known soundness fix marks them suspect, failing the gate until re-verified
+- 2026-10-06: tracks staggered: C1, C2, B1 and B2 alongside the spike, A1 to A4 after gate D (A5 with C), B4 with C11a and C12, C3 with C13a
 
 ## Estimates and actuals
 
-| Phase | Estimate (tokens) | Actual |
+| Track | Estimate (tokens) | Actual |
 |---|---|---|
-| 0 | 0.4M to 0.8M | |
-| sketches and plans (2026-10-06) | not estimated | not recorded |
+| D | 0.3M to 0.6M | |
+| sketches, plans and the review response (2026-10-06) | not estimated | not recorded |
