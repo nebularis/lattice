@@ -24,12 +24,12 @@ closed: two criteria remain open, see §Gate D below
 
 Track D is complete. FM-D1 is decided: Isabelle/HOL is the prover for track E. The tracks remain
 staggered as planned: C1, C2, B1 and B2 alongside the spike, A1 to A4 after gate D, B4 with C11a
-and C12, C3 with C13a. CCS remains the active unit, with C7c branched. Track E has not started.
+and C12, C3 with C13a. CCS remains the active unit, with C7c branched. Track E has its own plan,
+sketch and status record now ([formal-methods-track-e.md](formal-methods-track-e.md)), and has
+not started: FM-D2 (home of its theories) needs its own ADR first.
 
-**Next action, for the human:** close the two remaining Gate D gaps (below), then decide track
-E's first slice (E1: the kernel with the rounding and residual theorem, and binding resolution,
-per the epic plan §4) and whether it gets its own detailed plan before work starts, per the
-Epic Decomposition Model.
+**Next action, for the human:** close the two remaining Gate D gaps (below), then decide FM-D2 so
+track E's first slice (E1.0, [its plan](../plans/formal-methods-track-e.md)) can start.
 
 ## Gate D (phase-0 plan §9)
 
@@ -51,7 +51,7 @@ Epic Decomposition Model.
 | A Ledger and harness | not started | gate D's remaining criteria, then its ADR (A1). A5 runs with track C |
 | B Reference semantics and oracle | not started | its ADR. B1 and B2 alongside the spike, B4 with C11a and C12 |
 | C Design-time models | not started | none. C1 and C2 first, before CCS C8 |
-| E Prover programme | not started | the two open Gate D criteria above, then its own detailed plan |
+| E Prover programme | plan and sketch written, not started | FM-D2 (an ADR), then track C's C2 for E1.3 only |
 | F Native tooling | not started | its ADR, then a Python baseline per family |
 | G Instrument assurance | not started | B4, C3 |
 
@@ -70,7 +70,7 @@ Epic Decomposition Model.
 
 | # | State |
 |---|---|
-| FM-D1 | **decided 2026-10-06 by the human: Isabelle.** The report's first draft scored a 1.0-point Rocq tiebreak, carried by M9 (the engine notes' prior choice for an RDF/Datalog engine that was never built). The human removed M9 and reweighted M5 to match M6; a follow-up question also corrected M6 (Isabelle has a tested `can`/`Goal.prove` equivalent of Rocq's `Fail`). The corrected total favours Isabelle by 6.0 points outright, and the human confirmed it: both provers were fully capable, and Isabelle showed real, measured advantages, not just a narrow tiebreak. See [formal-prover-experiment.md](../notes/formal-prover-experiment.md) §1, §3, §5 |
+| FM-D1 | **decided 2026-10-06 by the human: Isabelle.** The report's first draft scored a 1.0-point Rocq tiebreak, carried by M9 (the engine notes' prior choice for an RDF/Datalog engine that was never built). The human removed M9 and reweighted M5 to match M6; a follow-up question also corrected M6 (Isabelle has a tested `can`/`Goal.prove` equivalent of Rocq's `Fail`). The corrected total favours Isabelle by 6.0 points outright, and the human confirmed it: both provers were fully capable, and Isabelle showed real, measured advantages, not just a narrow tiebreak. See [formal-prover-experiment.md](../notes/formal-prover-experiment.md) §1, §3, §5 and [ADR-A-FM1](../../architecture/decisions/ADR-A-FM1-formal-methods-prover-choice.md) |
 | FM-D10 | **decided 2026-10-06: Haskell and Scala both adopted.** Isabelle's `export_code` demonstrated working Haskell (GHC-compiled, all fixtures matched); Scala is in the same code-generator family (documented, not yet exercised -- a near-term follow-up, not a blocker). Scala specifically opens a route to running generated algorithms directly in a JVM-based service layer |
 | FM-D5, FM-D7, FM-D9 | revised 2026-10-06 after review |
 | FM-D11, FM-D12, FM-D13 | decided 2026-10-06, as recommended |

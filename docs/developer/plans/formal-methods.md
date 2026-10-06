@@ -130,11 +130,15 @@ for every condition kind, driven from Python, in step with CCS C13a.
 
 ### Track E: the prover programme
 
-Detailed only if gate D passes. Its order: E1 the kernel with the rounding and residual theorem, and
-binding resolution. E2 the Eligibility denotation and one SPARQL compiler core, with the mapping of
-"not a value" to Undetermined as its first theorem, a mechanical fragment gate, and a cross-store
-conformance suite. E3 the combinator algebra. E4 the evaluation context, mechanising B4. E5 the
-template library in rely and guarantee form.
+Gate D passed (FM-D1 decided: Isabelle/HOL, [ADR-A-FM1](../../architecture/decisions/ADR-A-FM1-formal-methods-prover-choice.md)).
+Detailed in its own [sketch](../sketches/formal-methods-track-e.md) and
+[plan](formal-methods-track-e.md); status in [its status record](../status/formal-methods-track-e.md).
+Its order: E1 the kernel with the rounding and residual theorem, and binding resolution (split
+into E1.0 to E1.3 by the plan, since binding resolution waits on track C's C2 and the kernel
+needs a home decided first, FM-D2). E2 the Eligibility denotation and one SPARQL compiler core,
+with the mapping of "not a value" to Undetermined as its first theorem, a mechanical fragment
+gate, and a cross-store conformance suite. E3 the combinator algebra. E4 the evaluation context,
+mechanising B4. E5 the template library in rely and guarantee form.
 
 ### Track F: native tooling
 
@@ -264,7 +268,7 @@ None of these may be taken by an agent.
 
 | # | Decision | Recommendation | State |
 |---|---|---|---|
-| FM-D1 | proof assistant | settled by track D, or abandoned | **decided 2026-10-06: Isabelle/HOL**, by the corrected measures in [formal-prover-experiment.md](../notes/formal-prover-experiment.md) |
+| FM-D1 | proof assistant | settled by track D, or abandoned | **decided 2026-10-06: Isabelle/HOL**, by the corrected measures in [formal-prover-experiment.md](../notes/formal-prover-experiment.md), recorded in [ADR-A-FM1](../../architecture/decisions/ADR-A-FM1-formal-methods-prover-choice.md) |
 | FM-D2 | home of theories and tools | per-layer theories beside each layer, statements extracted into the README, one build project under `tools/` | open |
 | FM-D3 | assurance vocabulary | a profile of EARL, PROV-O, SHACL reports and in-toto, in Executable's vocabulary | open |
 | FM-D4 | first proof target | the kernel with the rounding and residual theorem, then binding resolution | open |
@@ -273,7 +277,7 @@ None of these may be taken by an agent.
 | FM-D7 | instance property language | a metric first-order temporal logic over three-valued atoms, with prefix verdicts, rendered in controlled English, refusing non-monitorable properties for monitors | revised 2026-10-06 |
 | FM-D8 | where design models are required | every ADR that adds or changes a law, with skeletons supplied by track C | open |
 | FM-D9 | how tools run | worker jobs, one subprocess per job, native or Python decided per family on measurement | revised 2026-10-06 |
-| FM-D10 | languages | OCaml for native tools, Haskell builds as an N-version check only if FM-D1's choice makes them nearly free | **decided 2026-10-06: Haskell and Scala**, both via Isabelle's `export_code`, Haskell demonstrated working, Scala documented and pending its own exercise |
+| FM-D10 | languages | OCaml for native tools, Haskell builds as an N-version check only if FM-D1's choice makes them nearly free | **decided 2026-10-06: Haskell and Scala**, both via Isabelle's `export_code`, Haskell demonstrated working, Scala documented and pending its own exercise. [ADR-A-FM1](../../architecture/decisions/ADR-A-FM1-formal-methods-prover-choice.md) |
 | FM-D11 | Datalog's normative semantics | stratified with dual predicates, non-stratifiable programs refused | **decided 2026-10-06** |
 | FM-D12 | direction of generation | from the literate README to shapes and theory datatypes | **decided 2026-10-06** |
 | FM-D13 | the spike's end-to-end law | L15 and L16, with I7 first once C13 is specified | **decided 2026-10-06** |
