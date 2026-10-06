@@ -45,7 +45,7 @@ An opaque table whose cells are separately named variables, cannot say "field X 
 
 The constraint that must hold: a template parameter can bind "the value in this field for each entry", so one field yields one parameter per entry (S44).
 
-<!-- start: {"exclude": "true", "id": "comment-1" } -->
+<!-- start: {"exclude": "true" } -->
 
 ```mermaid
 flowchart TB
@@ -75,7 +75,7 @@ flowchart TB
     style FORM fill:#BBDEFB
     style INST fill:#bcdee1
 ```
-<!-- end: {"exclude": "true" } -->
+<!-- end: {"exclude": "ignored" } -->
 
 For a kind-3 table the form's `wrd:Table` also comprises its `wrd:Entry` nodes, and each cell's
 `wrd:forEntry` names one of them (the responsibilities table in `trial-protocol.ttl`).
