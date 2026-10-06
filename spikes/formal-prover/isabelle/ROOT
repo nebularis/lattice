@@ -1,0 +1,8 @@
+session FormalMethodsSpike = HOL +
+  options [document = false]
+  theories
+    Kernel
+    Eligibility
+    Adequacy
+    Reading
+    Interface
