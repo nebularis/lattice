@@ -39,10 +39,16 @@ def digest(statement: str) -> str:
 
 
 def extract_statements(track_dir: Path) -> dict[str, str]:
-    """subject -> normalised statement text, from every .v/.thy file's GATE markers."""
+    """subject -> normalised statement text, from every .v/.thy file's GATE markers, outside
+    defects/ (PF1): a defect file may deliberately carry a weakened restatement under a real
+    subject's name (S5), and relying on which file a case-sensitive-vs-insensitive directory
+    listing visits last to decide which text wins is not a gate, it is luck. scan_for_banned
+    already excludes defects/ for the same reason (S4); this mirrors it for rule 1."""
     found: dict[str, str] = {}
     for path in sorted(track_dir.rglob("*")):
         if path.suffix not in (".v", ".thy"):
+            continue
+        if "defects" in path.parts:
             continue
         text = path.read_text(encoding="utf-8")
         for match in MARKER.finditer(text):
