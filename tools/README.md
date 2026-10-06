@@ -53,6 +53,16 @@ split (`Kernel.thy` generated, never hand-edited; everything built on it
 hand-written) and `mise run check:proofs` to build and gate every layer
 natively (no container image exists for Isabelle in this programme yet).
 
+## `tools/models/` — the design-time models
+
+Alloy/SMT design-time models for the `formal-methods` epic's track C. One
+subdirectory per modelled law family; see `tools/models/README.md` for the
+convention and `tools/models/vocabulary-scheme-composition/README.md` for
+C2's checked model of binding resolution with scheme composition (ahead of
+CCS's HQ-4 and insurml-alignment's IMA-D4a), run via Alloy Analyzer's own
+`exec` sub-command (no container image or tracked JAR — see that README for
+the install location).
+
 ## `tools/surface/` — the surface compiler
 
 Compiles surface contracts into generated module packages. Structure follows

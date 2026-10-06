@@ -187,6 +187,7 @@ test -d tools/mork_compilers
 test -d tools/surface
 test -d tools/persistence
 test -d tools/proofs
+test -d tools/models
 test -d tools/spc/python
 test -d tools/spc/erlang
 test -d workers
@@ -268,6 +269,19 @@ digests, banned-marker scan). Not part of the default `check` aggregate: Isabell
 native toolchain not every host has installed (same convention as the formal-methods spike's own
 tasks). No container image exists for Isabelle in this programme yet. See
 [`tools/proofs/README.md`](tools/proofs/README.md), ADR-A-FM1, ADR-A-FM2.
+
+### Run the design-time models
+
+```bash
+java -jar <path-to>/alloy.jar exec tools/models/vocabulary-scheme-composition/SchemeComposition.als
+```
+
+Alloy Analyzer (a single MIT-licensed JAR, not tracked in this repository) checks each track C
+model and writes a `receipt.json` with every command's structured result next to the model. Not
+wired into `mise` yet: track C's models are run and their results recorded as evidence for an
+ADR, not re-verified continuously by CI. See
+[`tools/models/README.md`](tools/models/README.md) and
+[`tools/models/vocabulary-scheme-composition/README.md`](tools/models/vocabulary-scheme-composition/README.md).
 
 ### Validate the reasoning harness
 

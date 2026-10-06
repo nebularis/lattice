@@ -130,8 +130,12 @@ for every condition kind, driven from Python, in step with CCS C13a.
 
 Detailed in its own [sketch](../sketches/formal-methods-track-c.md) and
 [plan](formal-methods-track-c.md); status in [its status record](../status/formal-methods-track-c.md).
-C1 and C2 started 2026-10-06, HQ-4 and IMA-D4a read in full from `main` and this repository's own
-plans first, confirming both are genuinely unresolved and wait on this track.
+C1 and C2 done 2026-10-06, HQ-4 and IMA-D4a read in full from `main` and this repository's own
+plans first, confirming both were genuinely unresolved and waiting on this track. C2's checked
+Alloy model found that the composition rule it was built to evaluate (union of membership, union
+of hierarchy) does not by itself prevent two composed schemes disagreeing about a shared
+concept's `broader` parent — recorded with the full counterexample in the model's own README, an
+open decision for whichever ADR accepts scheme composition, not resolved by this track.
 
 ### Track E: the prover programme
 

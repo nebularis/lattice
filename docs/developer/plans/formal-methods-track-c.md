@@ -35,44 +35,58 @@ checked model and a recommendation, not a mechanised law).
 
 ## 3. Slices
 
-### C1: the Alloy skeleton (prerequisite, not in the epic's own numbering)
+### C1: the Alloy skeleton (prerequisite, not in the epic's own numbering) — done
 
-- Install Alloy Analyzer (a single JAR, `org.alloytools.alloy`, MIT licensed) under the same
-  `.build/formal/`-style convention track D used for other toolchains, or a repository-local
-  `tools/models/` home if that fits better once C2's own home is decided (see C2 below) — not
-  `spikes/`, which is track D's alone.
-- A trivial smoke-test model (`sig A {} sig B { r: A }` or similar) run headlessly
-  (`java -cp alloy.jar ...` or the Analyzer's CLI) to confirm the JAR runs under this host's
-  Java 25, and that `run`/`check` commands produce a result programmatically, not only in the
-  GUI.
-- **Validation:** the smoke model's `run` finds an instance, and a deliberately unsatisfiable
-  variant reports none — the same "prove it can fail, not just that it can pass" discipline
-  track D's seeded defects used.
+- Alloy Analyzer 6.2.0 (a single MIT-licensed JAR) installed at `C:\fmx\alloy\alloy.jar`, the
+  same short-root, not-tracked-in-the-repository convention track D and E's toolchains use.
+  Needs a JDK new enough for Alloy's own dispatcher; the mise-managed Java 25 already on this
+  host works (the bare `java` on `PATH` in a fresh terminal is a stale 1.8.0_491 — invoke the
+  mise JDK's `bin\java.exe` explicitly, or put it first on `PATH`, same gotcha repository memory
+  already records for Maven).
+- A trivial smoke-test model (`tools/models/vocabulary-scheme-composition/smoke.als`: a
+  satisfiable `run Possible` and an unsatisfiable `run Impossible`) run headlessly via the
+  Analyzer's own `exec` sub-command (`java -jar alloy.jar exec smoke.als`), which writes a
+  `receipt.json` with each command's structured result.
+- **Validated:** `Possible` reported `SAT` with an instance in its `receipt.json`; `Impossible`
+  reported `UNSAT` with no `solution` key at all — the same "prove it can fail, not just that it
+  can pass" discipline track D's seeded defects used. The smoke output itself was not kept (a
+  one-off toolchain check, recorded here instead); the model file (`smoke.als`) is.
 
-### C2: binding resolution with scheme composition
+### C2: binding resolution with scheme composition — done
 
-- The model proposed in the sketch (§4), refined against what Alloy's analyzer actually accepts
-  once C1 is working: `Scheme`, `Context`, `Source`, `Contract`, ADR-A85's existing per-source
-  resolution rule as a fact, and the composed `resolvesTo` relation.
-- Two checks, not assumed: **every source resolves** (HQ-4's own property, made checkable) and
-  **composition does not silently merge overlap** (the sketch's second open question, §2) —
-  run as a `check` with a scope large enough to find a counterexample if one exists, not just a
-  `run` that shows one possible good instance.
-- **Validation:** both checks run and their results are recorded verbatim (which found a
-  counterexample, which did not, at what scope), with the counterexample itself (if any) read and
-  explained, not just reported as a pass/fail count. A recommendation for the overlap rule
-  (sketch §5's first open question) follows from what the check actually finds, not from a
-  preference stated before running it.
+- The model built at `tools/models/vocabulary-scheme-composition/SchemeComposition.als`, close
+  to the sketch's proposed shape (§4) with one simplification found necessary once Alloy's own
+  type-checking was run against it: `Scheme` is given explicit `Concept` members and a
+  `broader: Concept -> Concept` hierarchy restricted to its own members (needed to state the
+  overlap question concretely), and `single: Source -> Context -> lone Scheme` stands in for the
+  whole of ADR-A85's resolver collapsed to "at most one scheme, per source, per context" — not a
+  model of candidate bindings, specificity or conflict, which `tools/vocabulary/` already
+  implements and whose own properties are assumed to hold before composition is asked to do
+  anything with the result.
+- Two checks run, not assumed, at scope 4: `EverySourceResolves` (HQ-4's own property, "every
+  role a layer needs resolves," made checkable) and `NoOverlapDisagreement` (does the sketch's
+  proposed union of members and union of hierarchies, by itself, already rule out two composed
+  schemes disagreeing about a shared concept's `broader` parent).
+- **Validated, results recorded in full in [the model's own README](../../../tools/models/vocabulary-scheme-composition/README.md):**
+  `EverySourceResolves` found **no counterexample** (a self-consistency check on `composed`'s own
+  definition, not a deep claim, and recorded as such). `NoOverlapDisagreement` **found a
+  counterexample** — two schemes sharing two member concepts, disagreeing about one concept's
+  `broader` parent — confirming the sketch's open question (§2, §5) is reachable, not merely
+  hypothetical. The counterexample instance itself is read and explained in the model's README,
+  not only reported as a pass/fail count. **Finding:** the overlap rule cannot be left unstated;
+  three candidates are named (forbid overlap by a new Vocabulary shape, order sources by an
+  explicit precedence rule, or allow free union and require `broader`'s transitive closure to
+  stay acyclic) with no choice made among them here — that choice is the human's, informed by
+  this evidence, for whichever ADR accepts scheme composition.
 
 ## 4. Home for the model
 
-Not fixed by the sketch (deliberately — see its §5). This plan's working assumption, to be
-confirmed when C1 starts: `tools/models/vocabulary-scheme-composition/`, parallel in spirit to
-`tools/proofs/`'s layer-named subdirectories but under a different top-level name, since a
-checked design-time model is not a mechanised proof and ADR-A-FM2's reasoning (a proof is an
-executable reference implementation's assurance) does not transfer unchanged to a model whose
-job is finding counterexamples before anything is implemented. If a smaller, less committal home
-turns out to fit better once C1 is under way, this plan is wrong here, not the sketch.
+Confirmed, not merely proposed: `tools/models/vocabulary-scheme-composition/`, with a parent
+`tools/models/README.md` explaining the convention for any later law family's model. Parallel in
+spirit to `tools/proofs/`'s layer-named subdirectories but under a different top-level name, since
+a checked design-time model is not a mechanised proof and ADR-A-FM2's reasoning (a proof is an
+executable reference implementation's assurance) does not transfer unchanged to a model whose job
+is finding counterexamples before anything is implemented.
 
 ## 5. Test taxonomy and evidence
 

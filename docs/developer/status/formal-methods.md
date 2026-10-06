@@ -32,10 +32,14 @@ and found blocked on a missing normative source (its own status record), not mer
 Track C has its own plan, sketch and status record now too
 ([formal-methods-track-c.md](formal-methods-track-c.md)): C1 (an Alloy skeleton) and C2 (binding
 resolution with scheme composition, ahead of CCS's HQ-4 and insurml-alignment's IMA-D4a, both read
-directly from `main` and confirmed genuinely unresolved) are starting.
+directly from `main` and confirmed genuinely unresolved) are both **done**. C2's checked model
+found that "union of membership, union of hierarchy" does not by itself prevent two composed
+schemes disagreeing about a shared concept's `broader` parent — a counterexample, read and
+recorded in full, not a reinvented worry.
 
-**Next action, for the human:** none blocking track C. The two remaining Gate D gaps (below) are
-deliberately deferred, not blocking.
+**Next action, for the human:** decide track C2's overlap rule (three candidates named in its
+status record) and who drafts the shared Vocabulary ADR it informs. The two remaining Gate D gaps
+(below) are deliberately deferred, not blocking.
 
 ## Gate D (phase-0 plan §9)
 
@@ -56,7 +60,7 @@ deliberately deferred, not blocking.
 | D Prover spike | done. FM-D1 decided: Isabelle | the two open Gate D criteria above |
 | A Ledger and harness | not started | gate D's remaining criteria, then its ADR (A1). A5 runs with track C |
 | B Reference semantics and oracle | not started | its ADR. B1 and B2 alongside the spike, B4 with C11a and C12 |
-| C Design-time models | started 2026-10-06. [Its own plan, sketch and status](formal-methods-track-c.md) | none. C1 (Alloy skeleton) and C2 (scheme composition, ahead of CCS C8's HQ-4 and insurml-alignment's IMA-D4a) both starting |
+| C Design-time models | C1 and C2 done 2026-10-06. [Its own plan, sketch and status](formal-methods-track-c.md) | C3 (slot exclusivity, SMT) not started, waits on nothing but is next in this track's own numbering |
 | E Prover programme | plan and sketch written, not started | FM-D2 (an ADR), then track C's C2 for E1.3 only |
 | F Native tooling | not started | its ADR, then a Python baseline per family |
 | G Instrument assurance | not started | B4, C3 |
