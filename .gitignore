@@ -15,6 +15,14 @@
 # Formal-methods toolchains, build outputs and caches (formal-methods-phase-0, epic E6)
 .build/formal/*
 !.build/formal/.gitkeep
+# Rocq and Isabelle compiled artefacts, wherever spikes/formal-prover's theories are built
+*.vo
+*.vos
+*.vok
+*.glob
+.*.aux
+.Rocqdep.d
+*.heap.gz
 
 # Node and Yarn installs, caches, and build output
 node_modules/
