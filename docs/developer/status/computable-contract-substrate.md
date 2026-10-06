@@ -4,7 +4,7 @@
 
 **Unit ID:** `computable-contract-substrate`
 **Status:** 🔨 In progress. Gate A passed. Tranche B and C briefed (C3, C10)
-**Last updated:** 2026-10-04
+**Last updated:** 2026-10-06
 **Plan:** [computable-contract-substrate.md](../plans/computable-contract-substrate.md)
 **Sketches:** [computable-contract-substrate.md](../sketches/computable-contract-substrate.md),
 [contract-amounts.md](../sketches/contract-amounts.md)
@@ -15,19 +15,11 @@
 
 Gate A passed on 2026-10-01. Tranches B and C are merged to `main` and tagged: Wording 0.3.0,
 Behaviour 0.10.0 (shapes 0.4.0) with nested states and history, the import guard in `mise run
-check`. Tranche D begins with C6, briefed. From C5 on, the agent builds and verifies, and the human
-commits by hand.
+check`. In tranche D, C6, C7a and C7b are merged and tagged (Instrument 0.11.0, Quantification
+0.7.0), and C7c is briefed. From C5 on, the agent builds and verifies, and the human commits by hand.
 
-**Next action, for the human:** review and commit the C7b model on `ccs/c7b-terms-in-time` (Validation
-Pack handoff, phase 2), merge it into `main`, then create the release tags on the merged commit.
-
-🔴 RELEASE TAGS REQUIRED after the merge (21): `quantification-v0.7.0`, `quantification-shapes-v0.2.0`,
-`party-v0.7.0`, `party-vocab-v0.7.0`, `eligibility-v0.9.0`, `eligibility-vocab-v0.10.0`,
-`wording-v0.5.0`, `wording-vocab-v0.5.0`, `behaviour-v0.12.0`, `behaviour-runtime-v0.12.0`,
-`behaviour-vocab-v0.12.0`, `surface-v0.7.0`, `surface-vocab-v0.7.0`, `instrument-v0.11.0`,
-`instrument-shapes-v0.4.0`, `instrument-vocab-v0.11.0`, `applied-capacity-execution-v0.12.0`,
-`insurance-common-v0.3.0`, `insurance-common-vocab-v0.3.0`, `insurance-peril-v0.3.0`,
-`insurance-peril-vocab-v0.3.0`.
+**Next action, for the human:** commit the C7c brief on `main`, then create
+`ccs/c7c-terms-and-parties` from it.
 
 ## Slice board
 
@@ -45,8 +37,8 @@ Pack handoff, phase 2), merge it into `main`, then create the release tags on th
 | C11a | nested states, history, concurrent regimes | C | merged, tagged | |
 | F1 | external and natural keys (ADR-A114) | Foundation, now | merged, tagged | |
 | C6 | instrument, terms, the five relations, parties, content | D | merged, tagged | |
-| C7b | terms in time | D | model built and verified on `ccs/c7b-terms-in-time`, not committed | the human's commit, merge and tags |
-| C7c | what terms are, and who they bind (split from C7b) | D | waiting, to be briefed | C7b |
+| C7b | terms in time | D | merged (`5da9412`), tagged | |
+| C7c | what terms are, and who they bind (split from C7b) | D | briefed, questions answered | the human's branch |
 | C8, C9, C8a | Instrument rewrite, template library | D | waiting | C8 after C7a and C7b |
 | C7a | regimes and gating, split from C7 | D | merged to `main` (`c6e5853`) and tagged | |
 | C12, C13 | runtime evaluator, relation plans | E | waiting | C9, C11, C11a, AIR-3.3, NRS N1 |
@@ -116,3 +108,6 @@ Pack handoff, phase 2), merge it into `main`, then create the release tags on th
 - 2026-10-05: Quantification README given a guided tour of the layer (§5.1) and diagrams for containment, law prerequisites and its consumers, 20 diagrams in all, at the human's request. No change to its generated files. Not committed.
 - 2026-10-05: Quantification README: scales of measure and additivity explained (§5.1.3), operations across two spaces and overlap against containment illustrated (§5.1.9), stale paths, importers and authoring framing corrected, and open question 7 (semi-additive aggregation) recorded. No change to its generated files. Not committed.
 - 2026-10-05: ADR-A115 and ADR-A104's addenda of 2026-10-04 (a regime is stated once) and 2026-10-05 (terms in time) accepted by the human, before C7b's merge.
+- 2026-10-05: C7b merged to `main` (`5da9412`) and tagged by the human, with the 21 tags listed at its handoff. `tools/test_regimes.py` and `tools/test_terms_in_time.py` added to `check:ontology-catalog` (`4fa7000`)
+- 2026-10-06: C7c briefed on `main` with its Validation Pack skeleton and nine questions: `ins:boundUnder` brought forward for I15 (Q1), what a section is (Q2), party resolution through the case (Q3, C6-Q5), party words and group modes (Q4, CC-D10), overlapping definitions and InsurML's scope rule (Q5), term classification (Q6), what a definition may mean (Q7), deemings and closure (Q8), a section's ending (Q9). Inputs from the insurml-alignment epic recorded
+- 2026-10-06: C7c questions answered, all as recommended. Q3 (b) chosen on its semantics, and party resolution gains an optional filter condition. Follow-ups held as HQ-5 (the full set of group behaviours, immediately after C9) and HQ-6 (deemings made watertight with ADR-A105). Date and amount words recorded in C8's row
