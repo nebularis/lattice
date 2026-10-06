@@ -3,8 +3,9 @@
 # Formal Methods, Track E: Status
 
 **Unit ID:** `formal-methods-track-e` (phase, within the `formal-methods` epic)
-**Status:** E1.0 and E1.1 done, 2026-10-06, native route only (human instruction). E1.2 and
-E1.3 not started
+**Status:** E1.0 and E1.1 done, 2026-10-06, native route only (human instruction). E1.2
+attempted and found blocked on a missing normative source, not merely unstarted (see Log). E1.3
+not started
 **Last updated:** 2026-10-06
 **Plan:** [formal-methods-track-e.md](../plans/formal-methods-track-e.md)
 **Sketch:** [formal-methods-track-e.md](../sketches/formal-methods-track-e.md)
@@ -23,8 +24,11 @@ spike, byte-identical statement digests), `gate.py`/`claim-schema.json` carried 
 native route (`spikes/formal-prover/env/driver.py --route native`); no Isabelle image exists, by
 design (deferred).
 
-**Next action, for the human:** decide E1.2's start (source the rounding/residual theorem from
-`ontology/quantification/README.md` and ADR-A93 to ADR-A95), or track C's C2 to unblock E1.3.
+**Next action, for the human:** E1.2 was attempted and found blocked on something more
+fundamental than sourcing a citation (see below): `split`/`proRata`/the rounding-residual rule
+have no normative ontology declaration anywhere, in Quantification or elsewhere. Decide where
+they are specified and under which ADR before this resumes, or redirect to track C's C2 (to
+unblock E1.3) or to E2 preparatory reading instead.
 
 ## Slices
 
@@ -32,7 +36,7 @@ design (deferred).
 |---|---|---|
 | E1.0 (home, generation tooling) | **done** | nothing |
 | E1.1 (the kernel, for real) | **done**, folded into E1.0's pass | nothing |
-| E1.2 (rounding and residual theorem) | not started | its exact statement is not yet sourced from `ontology/quantification/README.md` and ADR-A93 to ADR-A95 |
+| E1.2 (rounding and residual theorem) | **blocked, not merely unstarted** (see Log) | no normative source exists for `split`/`proRata`/the rounding-residual rule anywhere under `ontology/`. Needs a design-time decision (and likely an ADR) before any proof is attempted |
 | E1.3 (binding resolution) | not started | track C's C2 (design-time model), which has not started either |
 | E2 to E5 | not started, outline only | E1 |
 
@@ -40,6 +44,7 @@ design (deferred).
 
 | # | Question | Owner |
 |---|---|---|
+| where `split`/`proRata`/the combinator algebra are specified normatively | a new Quantification section, a new layer, or folded into Behaviour's evaluation context; `sketches/formal-methods.md` §8.1 places the rounding/residual theorem with the kernel, §9.2 places it with the combinator algebra (epic track E3), which do not obviously agree on which track owns E1.2's theorem | human |
 | the Isabelle image | does not exist; needed before epic E9's "image route only" rule applies to track E's recorded claims, not before E1 itself | human, timing deferred 2026-10-06 to conserve tokens, confirmed again when E1 started (native/local explicitly requested) |
 
 ## Log
@@ -68,3 +73,14 @@ design (deferred).
   only the new generated output was written. `check:proofs` wired into `mise.toml`, outside the
   default aggregate `check` task (same "large, explicit" convention as the formal-prover D0
   tasks), since Isabelle is a heavy native toolchain not every host has installed.
+- 2026-10-06: E1.2 attempted. Searched `ontology/quantification/README.md` and ADR-A93 to
+  ADR-A95 directly (not guessed at): neither names `split`, `proRata`, or any rounding/residual-
+  allocation rule. Quantification's only rounding-related content is `qnt:roundingPolicy`, a
+  property whose own README already lists it as having no declared vocabulary yet. Searched all
+  of `ontology/` for `proRata`: zero matches, in any layer, under any name. The theorem exists
+  only in two epic sketches, which do not agree on which track owns it
+  (`sketches/formal-methods.md` §8.1 places it with the kernel, §9.2 places it with the
+  combinator algebra the epic plan assigns to E3). Not drafted: formalising an operation with no
+  design-time decision behind it risks fixing its design inside a proof, the same risk already
+  held E1.3 back for binding resolution. Plan and this record both updated; the human's decision
+  is needed on where it is specified and under which ADR before this resumes.

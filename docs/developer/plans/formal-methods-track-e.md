@@ -83,13 +83,29 @@ track D proved them, including the TA2 correction (negation is monotone, not ord
 Claim records match track D's own evidence, not merely a close port of it: identical statement
 digests.
 
-### E1.2: the rounding and residual theorem (Quantification)
+### E1.2: the rounding and residual theorem (Quantification) — blocked, not merely unstarted
 
-- Source its exact statement from `ontology/quantification/README.md` and ADR-A93 to ADR-A95
-  before drafting anything: this plan does not restate it, since guessing at a theorem's content
-  ahead of reading its normative source is exactly the restatement risk the no-unreviewed-
-  restatement rule exists to catch.
-- **Validation:** TBD when this part starts, following the same chain as E1.1.
+Attempted to source: neither `ontology/quantification/README.md` nor ADR-A93 to ADR-A95 states
+`split`, `proRata`, or any rounding/residual-allocation rule. Quantification's only rounding-
+related content is `qnt:roundingPolicy`, a property with **no declared vocabulary of values yet**
+(its README names this an open item). `split` and `proRata` do not exist anywhere under
+`ontology/` under any name: not as classes, properties, or shapes, in Quantification or any other
+layer.
+
+The theorem is real, but only at the sketch level, in two places that do not fully agree on which
+track owns it: `sketches/formal-methods.md` §8.1 ("the logic kernel... the rounding and residual
+theorem") places it beside `k3`'s monotonicity; the same sketch's §9.2 ("the combinator algebra,
+with rounding and residual allocation") places it with `split`/`proRata`/`convert`/`percentOf`/
+… as combinators, which the epic plan assigns to **E3**, not E1. This plan's own E1.2 heading,
+written before this attempt actually read the sources, assumed a Quantification-layer source that
+turns out not to exist.
+
+**Not drafted.** Formalising an operation that has no normative ontology declaration risks fixing
+its design inside a proof before anyone has decided it at design time — the same risk E1.3 is
+already held back from for binding resolution, for the same reason. This needs the human's
+decision, not an inferred one: where `split`/`proRata`/the combinator algebra are specified
+normatively (a new Quantification section, a new layer, or folded into Behaviour's evaluation
+context), and under which ADR, before any theorem about them is attempted. See the status record.
 
 ### E1.3: binding resolution
 
