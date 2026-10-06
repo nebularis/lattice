@@ -240,3 +240,30 @@ bundle install
 description = "Serve docs/ locally with Jekyll (run bootstrap:jekyll first)"
 tools = { ruby = "3.4" }
 run = "cd docs && bundle exec jekyll serve"
+
+# Formal methods, track D (the prover spike, formal-methods-phase-0.md). Not part of the default
+# bootstrap or check tasks: toolchains and images are large, and native installs take minutes to
+# hours (epic formal-methods, §4 Environments). Run explicitly when working on spikes/formal-prover.
+
+[tasks."check:formal-network"]
+description = "Probe whether track D's tool sources (opam, the Rocq repository, the Isabelle mirror, Docker Hub) are reachable, flagging proxy block pages (epic formal-methods §4)"
+run = "python spikes/formal-prover/env/probe_network.py"
+
+[tasks."bootstrap:formal-images"]
+description = "Build track D's pinned Rocq+MetaRocq and GHC-wasm images (epic formal-methods §4). Needs Docker. An optional corporate CA is read from NODE_EXTRA_CA_CERTS and never stored in an image layer or committed"
+run = "python spikes/formal-prover/env/build_images.py"
+
+[tasks."bootstrap:formal-native-rocq"]
+description = "Install opam, an OCaml switch and Rocq natively, for interactive authoring only (epic E9). Windows only in this spike; set LATTICE_FORMAL_ROOT first for a location outside the repository"
+run_windows = "powershell -NoProfile -ExecutionPolicy Bypass -File .local/formal-methods-spike/scripts/install-ocaml-rocq.ps1"
+run = "echo 'Native Rocq install is scripted for Windows only in this spike (epic E9). Use bootstrap:formal-images for the portable route.'"
+
+[tasks."bootstrap:formal-native-isabelle"]
+description = "Install Isabelle natively, for interactive authoring only (epic E9). Windows only in this spike; set LATTICE_FORMAL_ROOT first for a location outside the repository"
+run_windows = "powershell -NoProfile -ExecutionPolicy Bypass -File .local/formal-methods-spike/scripts/install-isabelle.ps1"
+run = "echo 'Native Isabelle install is scripted for Windows only in this spike (epic E9). Isabelle has no image route here.'"
+
+[tasks."check:formal-smoke"]
+description = "Confirm both tools run on the image route (portable) for track D (epic formal-methods §4). Pass -- --route native --tool rocq,isabelle on a host with the native toolchains installed for the authoring route too"
+run = "python spikes/formal-prover/env/smoke.py"
+
