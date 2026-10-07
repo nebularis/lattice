@@ -611,6 +611,18 @@ Formal methods in LATTICE's development lifecycle and compilation toolchains: me
 and proofs, lightweight models, adequacy against the fixture corpus, assurance records, guaranteed
 instrument behaviour, and generated tools run as workers, never against the live graph.
 
+## 8.12 Agent Skills — Proposed
+
+| Field | Value |
+|-------|-------|
+| **Status** | 📝 Proposed, 2026-10-07. Sketch and ADR drafted, questions SQ1 to SQ5 open |
+| **Unit ID** | `agent-skills` |
+| **Sketches** | [agent-skills.md](sketches/agent-skills.md) |
+| **ADRs** | [A-117](../architecture/decisions/ADR-A117-agent-guidance-and-skill-library.md), Proposed |
+
+LATTICE's guidance for AI agents as an always-on core (`AGENTS.md`) and six skills in
+`.claude/skills/`, shared with projects built on LATTICE as a Claude Code plugin. Takes over TD-21.
+
 ## 8. Phase Handoff Documents (0-6)
 
 | Phase | Status Record | Key Outcome |
