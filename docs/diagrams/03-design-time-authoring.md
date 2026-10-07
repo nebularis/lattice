@@ -22,7 +22,7 @@ flowchart TB
         direction TB
         TXT["Text, elements, variables<br/>(ontology/wording)"]
         TMPL["Templates and library elements<br/>(ontology/instrument/templates, CCS C8a)"]
-        ASSM["Assembly: form + settings + choices + model<br/>→ a deterministic record (WA1-WA7)"]
+        ASSM["Assembly: form + settings + choices + model<br/>produces a deterministic record (WA1-WA7)"]
     end
 
     WAI --> TXT
@@ -55,7 +55,7 @@ flowchart TB
         direction TB
         INTENT["Intent nodes<br/>(mork:IntentNode, refinement order)"]
         COOCCUR["Co-occurrence constraint verification"]
-        SIXVERB["Six-verb decision model<br/>(accept / reject / defer / …)"]
+        SIXVERB["Six-verb decision model<br/>(accept / reject / defer / etc.)"]
     end
 
     MRW --> INTENT --> COOCCUR --> SIXVERB

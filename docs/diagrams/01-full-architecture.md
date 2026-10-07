@@ -11,8 +11,12 @@ and [Compiler backends](05-compiler-backends-pluggable-surfaces.md) for a closer
 of this at a time.
 
 ```mermaid
+---
+config:
+  layout: elk
+--- 
 flowchart TB
-    subgraph ONTOLOGY["ontology/ — semantic assets (one README per layer, the normative source)"]
+    subgraph ONTOLOGY["ontology/ - semantic assets (one README per layer, the normative source)"]
         direction TB
         FND["Foundation<br/>identity, versioning, provenance, evidence, temporal scope"]
         VOC["Vocabulary<br/>scoped/temporal concept-scheme binding (ADR-A85, ADR-A116)"]
@@ -36,10 +40,9 @@ flowchart TB
         INS --> APL
         FND -.-> PST
         FND -.-> SRF
-        MRK -.->|targets any layer| ONTOLOGY
     end
 
-    subgraph FORMAL["formal-methods epic — tracks A-G, layered on the ontology"]
+    subgraph FORMAL["formal-methods epic - tracks A-G, layered on the ontology"]
         direction TB
         TRC["Track C<br/>design-time models (Alloy/SMT)<br/>tools/models/"]
         TRE["Track E<br/>mechanised theories (Isabelle/HOL)<br/>tools/proofs/"]
@@ -58,12 +61,12 @@ flowchart TB
     TRB -.->|proved templates| TRG
     TRC -.->|proved templates| TRG
 
-    subgraph TOOLS["tools/ — compilers, resolvers, validators"]
+    subgraph TOOLS["tools/ - compilers, resolvers, validators"]
         direction TB
         MC["mork_compilers<br/>SPARQL/SHACL/SWRL/OWL backends"]
         VR["vocabulary<br/>binding resolver"]
         SFC["surface<br/>promotion/projection compiler"]
-        PSC["persistence<br/>profile → SPARQL compiler"]
+        PSC["persistence<br/>profile to SPARQL compiler"]
         MKT["mork<br/>MORK package + Teaching Pack"]
     end
 
@@ -73,7 +76,7 @@ flowchart TB
     PST --> PSC
     MRK --> MKT
 
-    subgraph PLATFORM["platform/ — runtime services (Java/Maven)"]
+    subgraph PLATFORM["platform/ - runtime services (Java/Maven)"]
         direction TB
         AUTH["authoring-service<br/>design-time control plane"]
         SWF["surface-workflow<br/>revision lifecycle, worker coordination"]
@@ -91,14 +94,14 @@ flowchart TB
     SWF --> REL
     MC -.->|test-only, never runtime| RTK
 
-    subgraph WORKERS["workers/ — async runtime"]
+    subgraph WORKERS["workers/ - async runtime"]
         WRK["job processing, idempotent delivery<br/>(ADR-A36, ADR-A37)"]
     end
 
     SWF --> WRK
     REL --> OBX --> WRK
 
-    subgraph APPS["apps/ — web applications (Yarn workspace)"]
+    subgraph APPS["apps/ - web applications (Yarn workspace)"]
         direction LR
         MRW["MORK Review Workbench"]
         SCS["Surface Contract Studio"]
@@ -109,7 +112,7 @@ flowchart TB
     AUTH --> SCS
     SFC --> WAI
 
-    subgraph PACKAGES["packages/ — standalone libraries"]
+    subgraph PACKAGES["packages/ - standalone libraries"]
         MINT["minting<br/>identity-minting, Python + Java, no LATTICE dependency"]
     end
 
@@ -126,16 +129,16 @@ flowchart TB
     WRK --> OPS
     REL --> ART
 
-    subgraph CONTRACTS["contracts/ — inter-component data contracts (JSON Schema)"]
+    subgraph CONTRACTS["contracts/ - inter-component data contracts (JSON Schema)"]
         CTR["events, identity, MORK, release, Surface"]
     end
 
     SWF -.->|validated against| CTR
     WRK -.->|validated against| CTR
 
-    subgraph DEPLOY["deployment/ — local reference environment"]
+    subgraph DEPLOY["deployment/ - local reference environment"]
         CMP["Docker Compose: Fuseki, Postgres, platform services"]
     end
 
-    PLATFORM -.->|mise run services:up| CMP
+    SWF -.->|mise run services:up| CMP
 ```

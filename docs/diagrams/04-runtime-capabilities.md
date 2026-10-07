@@ -30,7 +30,7 @@ flowchart TB
 
         subgraph SURFACEGEN["Surface's generated artefacts"]
             direction TB
-            PROMOTED["Promoted views, indices, projections<br/>— read by anything downstream"]
+            PROMOTED["Promoted views, indices, projections<br/>read by anything downstream"]
         end
 
         subgraph WORKERRT["workers/: asynchronous job processing"]
@@ -54,7 +54,7 @@ flowchart TB
         SWFRT --> FUSRT
         SWFRT --> JOB
         RELRT --> OBXRT --> JOB
-        SURFACEGEN --> FUSRT
+        PROMOTED --> FUSRT
     end
 
     subgraph PLANNED["Designed, not yet built"]
@@ -80,8 +80,8 @@ flowchart TB
             PLANS["Compiled relation plans, run on a store"]
         end
 
-        MONAD --> C12
-        C12 --> C13
+        MONAD --> REGIMES
+        RECORDS --> PLANS
     end
 
     STIM -.->|planned| REGIMES
@@ -89,8 +89,8 @@ flowchart TB
     RECORDS -.->|planned: recorded in| FUSRT
 
     subgraph KIT["The conformance kit (track B4, planned)"]
-        KITDATA["Generated event logs → expected outcomes,<br/>checked against both C12 and track E's mechanised reference"]
+        KITDATA["Generated event logs, turned into expected outcomes,<br/>checked against both C12 and track E's mechanised reference"]
     end
 
-    C12 -.->|planned| KITDATA
+    RECORDS -.->|planned| KITDATA
 ```

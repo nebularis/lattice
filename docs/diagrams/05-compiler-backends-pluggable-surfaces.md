@@ -36,7 +36,7 @@ flowchart TB
     PLAN2 --> SPARQLB2 & SHACLB2 & SWRLB2 & OWLB2
 
     subgraph ORACLE["The independent check: track B's reference semantics"]
-        REF2["tools/reference/eligibility<br/>— never generated from the IR, never reads it"]
+        REF2["tools/reference/eligibility<br/>never generated from the IR, never reads it"]
     end
 
     SPARQLB2 -.->|differential test| REF2
@@ -44,7 +44,7 @@ flowchart TB
     LAW -.->|restated independently| REF2
 
     subgraph YOUROWN["Write your own backend"]
-        NEWB["A new module implementing the same ConceptPlan/ProfilePlan contract<br/>— e.g. a Datalog, Prolog, or native-code target"]
+        NEWB["A new module implementing the same ConceptPlan/ProfilePlan contract<br/>e.g. a Datalog, Prolog, or native-code target"]
     end
 
     PLAN2 -.->|the contract a new backend must honour| NEWB
@@ -71,7 +71,7 @@ flowchart TB
     subgraph STORES["Concrete backends behind the SPI"]
         direction LR
         FUSEKI2["Fuseki<br/>(RDF, built today)"]
-        SQLSTORE["A SQL store<br/>(not built — the SPI is the extension point)"]
+        SQLSTORE["A SQL store<br/>(not built, the SPI is the extension point)"]
         OTHERSTORE["Your own store<br/>(same extension point)"]
     end
 
@@ -80,14 +80,14 @@ flowchart TB
     CORE -.-> OTHERSTORE
 
     subgraph SURFACEOUT["Surface: backend-neutral promotion"]
-        SFOUT["Promoted views and projections<br/>— read through the same SPI, not SPARQL-specific"]
+        SFOUT["Promoted views and projections<br/>read through the same SPI, not SPARQL-specific"]
     end
 
-    SFOUT --> SPI2
+    SFOUT --> CORE
 
     subgraph MORKOUT["MORK: cross-ontology mapping, same pattern"]
         MOUT["A mapping targets any layer,<br/>compiled the same shared-IR-then-backend way"]
     end
 
-    MOUT -.-> ELIGIR
+    MOUT -.-> COND2
 ```

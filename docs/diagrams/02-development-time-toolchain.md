@@ -14,11 +14,11 @@ flowchart TB
 
     subgraph EXTRACT["tools/literate_extract.py"]
         direction TB
-        TSPEC["turtle-spec blocks"] --> SPEC["spec/&lt;layer&gt;.ttl"]
-        TVOC["turtle-vocab blocks"] --> VOCF["vocab/&lt;layer&gt;-vocab.ttl"]
+        TSPEC["turtle-spec blocks"] --> SPEC["spec/LAYER.ttl"]
+        TVOC["turtle-vocab blocks"] --> VOCF["vocab/LAYER-vocab.ttl"]
         TSHP["turtle-shapes blocks"] --> SHP["shapes/structural.ttl<br/>shapes/constraints.ttl"]
         TEX["turtle-example blocks"] -.->|illustrative only, never extracted| NONE[" "]
-        ISP["isabelle-spec blocks"] --> KTHY["tools/proofs/&lt;layer&gt;/Kernel.thy<br/>(datatype only, generated)"]
+        ISP["isabelle-spec blocks"] --> KTHY["tools/proofs/LAYER/Kernel.thy<br/>(datatype only, generated)"]
     end
 
     README --> TSPEC & TVOC & TSHP & TEX & ISP
@@ -26,14 +26,14 @@ flowchart TB
     CHECK1["--check: compares current files<br/>against what would be written,<br/>exits non-zero on drift"]
     SPEC & VOCF & SHP & KTHY -.-> CHECK1
 
-    subgraph PROOFS["Track E: tools/proofs/&lt;layer&gt;/ (Isabelle/HOL, ADR-A-FM1/A-FM2)"]
+    subgraph PROOFS["Track E: tools/proofs/LAYER/ (Isabelle/HOL, ADR-A-FM1/A-FM2)"]
         direction TB
-        KTHY --> LAWS["&lt;Layer&gt;Laws.thy<br/>hand-written theorems on the generated datatype"]
-        LAWS --> BUILD["isabelle build -d tools/proofs/&lt;layer&gt;"]
+        KTHY --> LAWS["LayerLaws.thy<br/>hand-written theorems on the generated datatype"]
+        LAWS --> BUILD["isabelle build -d tools/proofs/LAYER"]
         BUILD --> GATE["gate.py: statement digests,<br/>banned-marker scan, claim records"]
     end
 
-    subgraph REFERENCE["Track B: tools/reference/&lt;layer&gt;/ (hand-written Python)"]
+    subgraph REFERENCE["Track B: tools/reference/LAYER/ (hand-written Python)"]
         direction TB
         REFCODE["kernel.py / denotation.py<br/>restates an already-accepted law independently"]
         REFCODE --> DIFF["differential tests vs. the real compilers<br/>(check:reference-eligibility)"]
@@ -53,7 +53,7 @@ flowchart TB
     README --> IR
     SPARQLB & SHACLB --> DIFF
 
-    subgraph MODELS["Track C: tools/models/&lt;name&gt;/ (Alloy/SMT)"]
+    subgraph MODELS["Track C: tools/models/NAME/ (Alloy/SMT)"]
         direction TB
         ALS["hand-written model of a *proposed* law"]
         ALS --> RUNCHECK["run / check (Alloy Analyzer, Z3/cvc5)"]
@@ -96,7 +96,7 @@ flowchart TB
         CI2["formal-methods.yml: proofs (Isabelle), models (Alloy)"]
     end
 
-    MISE -.->|same tasks, no YAML duplication| CI1
-    PROOFS -.-> CI2
-    MODELS -.-> CI2
+    M1 -.->|same tasks, no YAML duplication| CI1
+    GATE -.-> CI2
+    RUNCHECK -.-> CI2
 ```
