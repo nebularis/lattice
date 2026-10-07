@@ -31,7 +31,6 @@ import subprocess
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
 HOOK_MARK = "# lattice deny-terms hook"
 
 
@@ -115,11 +114,14 @@ def install_hook(cwd: Path) -> str:
     return str(hook)
 
 
-def main(argv: list[str] | None = None, cwd: Path = ROOT) -> int:
+def main(argv: list[str] | None = None, cwd: Path | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("command", nargs="?", choices=["check", "install-hook"], default="check")
     parser.add_argument("--all", action="store_true", help="scan every tracked file, not only staged lines")
     args = parser.parse_args(argv)
+    if cwd is None:
+        # the repository it is run from, so another project can run this script by path
+        cwd = Path(git("rev-parse", "--show-toplevel", cwd=Path.cwd()).strip())
     if args.command == "install-hook":
         print(f"installed {install_hook(cwd)}")
         return 0
