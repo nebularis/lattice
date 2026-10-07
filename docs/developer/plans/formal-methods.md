@@ -119,8 +119,16 @@ measures, with abandonment conditions. Gate D decides FM-D1.
 |---|---|---|
 | B1 | the reference for the logic kernel and Eligibility, in Python, with the semantics stated precisely in the literate README | reference evaluator §2 |
 | B2 | differential tests of the Eligibility compilers against B1, with shape-derived generators, and a named negative fixture for hierarchical match with exclusions | sketch §8.4 |
-| B3 | property tests: regeneration as naturality (ADR-A27), MORK's lattice laws, MCN's round trip through RDFC-1.0 | sketch §8.8, §10 |
+| B3 | property test: regeneration as naturality (ADR-A27). MORK's lattice laws and MCN's round trip are deferred (the human's own call, and a missing encoder, respectively) | sketch §8.8, §10 |
 | B4 | the reference for the evaluation context and Behaviour's macrostep, with `DesignEnv` and `RunEnv`, the rounding and residual rule, and conformance kits for C12 | reference evaluator §3, §4 |
+
+Detailed in its own [sketch](../sketches/formal-methods-track-b.md) and
+[plan](formal-methods-track-b.md); status in [its status record](../status/formal-methods-track-b.md).
+B1 done 2026-10-07 (`tools/reference/eligibility/`, `ADR-A-FM3` Proposed): the logic kernel and
+Eligibility's denotation (L9-L16), ported from and verified against `tools/proofs/eligibility/`'s
+Isabelle statements, 47 tests passing. B1's own scoping also resolved track E's E1.2: the
+rounding/residual theorem belongs to this track's B4 and track E's E3/E4, not Quantification,
+where E1.2 had gone looking and found nothing — track E's plan and status are corrected to match.
 
 ### Track C: the design-time models
 

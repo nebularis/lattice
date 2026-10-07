@@ -188,6 +188,7 @@ test -d tools/surface
 test -d tools/persistence
 test -d tools/proofs
 test -d tools/models
+test -d tools/reference
 test -d tools/spc/python
 test -d tools/spc/erlang
 test -d workers
@@ -256,6 +257,19 @@ mise run check:persistence
 ```
 
 Compiles `ontology/persistence`'s own worked examples, runs the resolver/validator/capability/boundary unit tests, the injection corpus, the determinism checks, and the Python architecture-policy checks, and validates every example fixture against `ontology/persistence/shapes/constraints.ttl`. See [`tools/persistence/README.md`](tools/persistence/README.md).
+
+### Validate Eligibility's reference semantics
+
+```bash
+mise run bootstrap:reference-eligibility
+mise run check:reference-eligibility
+```
+
+Runs the hand-written Python reference for the logic kernel and Eligibility's denotation (laws
+L9-L16, formal-methods epic track B1), including exhaustive checks of the kernel's own claims
+(TA1, TA2) over its three-valued domain and the 15 adequacy fixtures shared with the Isabelle
+kernel. Part of the default `check` aggregate: no dependency beyond `pytest`. See
+[`tools/reference/eligibility/README.md`](tools/reference/eligibility/README.md), ADR-A-FM3.
 
 ### Validate the prover programme's theories
 

@@ -6,8 +6,8 @@
 **Unit type:** Phase (Epic Decomposition Model, `copilot-instructions.md`)
 **Epic:** [formal-methods](formal-methods.md)
 **Sketch:** [formal-methods-track-b.md](../sketches/formal-methods-track-b.md)
-**Status record:** none yet — created at kickoff, once this plan is reviewed
-**Status:** Proposed, awaiting human review before any slice starts
+**Status record:** [formal-methods-track-b.md](../status/formal-methods-track-b.md)
+**Status:** B1 done, 2026-10-07. B2 and B3 not started
 
 ## 1. Scope
 
@@ -32,21 +32,23 @@ same rolling-wave discipline tracks C and E already use.
 
 ## 3. Slices
 
-### B1: the kernel and Eligibility's denotation, in Python
+### B1: the kernel and Eligibility's denotation, in Python — done
 
-- Draft `ADR-A-FM3` (home `tools/reference/`, scope B1-B3, restating E1/E3), Proposed, as this
-  slice's first action — reviewed and accepted before the rest of the slice's code is treated as
-  final, the same order track A's A1 uses for its own ADR.
+- Drafted `ADR-A-FM3` (home `tools/reference/`, scope B1-B3, restating E1/E3), **Proposed**, not
+  yet accepted by the human.
 - `tools/reference/eligibility/kernel.py`: `or3`/`and3`/`neg3`/`decision_leq` ported from
   `tools/proofs/eligibility/KernelLaws.thy`, same names, same statements, docstring wording kept
   close enough to `ontology/eligibility/README.md` to align by inspection.
 - `tools/reference/eligibility/denotation.py`: the single-candidate decision function (L9-L12,
   L14), `some_value`/`every_value` (L15, ported from `Eligibility.thy`), negation (L16, `neg3`
   applied to the combined outcome).
-- **Validation**: every one of the Isabelle kernel's own `Adequacy.thy` fixture lemmas (the 15
-  `MIXES`-derived cases) reproduced as Python unit tests against B1's functions, with identical
-  inputs and expected outcomes — the two representations of the same law are compared directly,
-  and any divergence is a finding, not a merge conflict to paper over.
+- **Validated**: every one of the Isabelle kernel's own `Adequacy.thy` fixture lemmas (the 15
+  `MIXES`-derived cases) reproduced as Python unit tests, identical inputs and expected outcomes,
+  plus exhaustive checks of TA1/TA2 over the full three-valued domain, bounded checks (lists up
+  to length 3) of TL1-TL3b, and direct per-law tests of L9-L12/L14-L16 against a small
+  hierarchy fixture — 47 tests, all passing. A seeded mutation (`neg3` broken to fix
+  `Undetermined` to `Permitted`) was confirmed to fail six tests before being reverted, the
+  "prove it can fail" check this criterion calls for.
 
 ### B2: differential tests against the existing compilers
 

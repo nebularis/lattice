@@ -35,11 +35,17 @@ resolution with scheme composition, ahead of CCS's HQ-4 and insurml-alignment's 
 directly from `main` and confirmed genuinely unresolved) are both **done**. C2's checked model
 found that "union of membership, union of hierarchy" does not by itself prevent two composed
 schemes disagreeing about a shared concept's `broader` parent — a counterexample, read and
-recorded in full, not a reinvented worry.
+recorded in full, not a reinvented worry. Track B now has its own plan, sketch and status record
+too ([formal-methods-track-b.md](formal-methods-track-b.md)): B1 is **done**
+(`tools/reference/eligibility/`, `ADR-A-FM3` Proposed), the logic kernel and Eligibility's
+denotation (L9-L16) ported from and verified against `tools/proofs/eligibility/`'s Isabelle
+statements, 47 tests passing. B1's own scoping work resolved E1.2 (below): the rounding/residual
+theorem belongs to B4/E3-E4, not Quantification; track E's plan and status are corrected.
 
-**Next action, for the human:** decide track C2's overlap rule (three candidates named in its
-status record) and who drafts the shared Vocabulary ADR it informs. The two remaining Gate D gaps
-(below) are deliberately deferred, not blocking.
+**Next action, for the human:** accept or revise `ADR-A-FM3` (track B's home/scope), decide
+track C2's overlap rule (three candidates named in its status record) and who drafts the shared
+Vocabulary ADR it informs. The two remaining Gate D gaps (below) are deliberately deferred, not
+blocking.
 
 ## Gate D (phase-0 plan §9)
 
@@ -59,9 +65,9 @@ status record) and who drafts the shared Vocabulary ADR it informs. The two rema
 |---|---|---|
 | D Prover spike | done. FM-D1 decided: Isabelle | the two open Gate D criteria above |
 | A Ledger and harness | not started | gate D's remaining criteria, then its ADR (A1). A5 runs with track C |
-| B Reference semantics and oracle | not started | its ADR. B1 and B2 alongside the spike, B4 with C11a and C12 |
+| B Reference semantics and oracle | B1 done 2026-10-06/07. [Its own plan, sketch and status](formal-methods-track-b.md) | B2, B3 not started, wait on nothing. B4 waits on CCS's C11a (done) and C12 (not done) |
 | C Design-time models | C1 and C2 done 2026-10-06. [Its own plan, sketch and status](formal-methods-track-c.md) | C3 (slot exclusivity, SMT) not started, waits on nothing but is next in this track's own numbering |
-| E Prover programme | plan and sketch written, not started | FM-D2 (an ADR), then track C's C2 for E1.3 only |
+| E Prover programme | E1.0/E1.1 done. E1.2 retired (its real home is B4/E3-E4, not Quantification) | E1.3 waits on track C2's overlap-rule ADR, not on C2 itself (done) |
 | F Native tooling | not started | its ADR, then a Python baseline per family |
 | G Instrument assurance | not started | B4, C3 |
 

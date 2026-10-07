@@ -63,6 +63,17 @@ CCS's HQ-4 and insurml-alignment's IMA-D4a), run via Alloy Analyzer's own
 `exec` sub-command (no container image or tracked JAR — see that README for
 the install location).
 
+## `tools/reference/` — the reference evaluator and its oracle
+
+Hand-written, test-verified reference semantics for the `formal-methods`
+epic's track B (ADR-A-FM3). One subdirectory per layer; see
+`tools/reference/README.md` for the convention and
+`tools/reference/eligibility/README.md` for track B1's logic kernel and
+Eligibility denotation (laws L9-L16), ported from `tools/proofs/eligibility/`'s
+Isabelle statements and verified by exhaustive and bounded test, not proved.
+`mise run check:reference-eligibility` runs it; no dependency beyond
+`pytest`.
+
 ## `tools/surface/` — the surface compiler
 
 Compiles surface contracts into generated module packages. Structure follows

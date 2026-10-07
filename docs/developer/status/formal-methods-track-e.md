@@ -3,9 +3,10 @@
 # Formal Methods, Track E: Status
 
 **Unit ID:** `formal-methods-track-e` (phase, within the `formal-methods` epic)
-**Status:** E1.0 and E1.1 done, 2026-10-06, native route only (human instruction). E1.2
-attempted and found blocked on a missing normative source, not merely unstarted (see Log). E1.3
-not started
+**Status:** E1.0 and E1.1 done, 2026-10-06, native route only (human instruction). E1.2's
+blocker is resolved by reading track B's sketch (2026-10-07): the rounding/residual theorem
+belongs to B4/E3-E4, not Quantification, so E1.2 itself is retargeted, not merely unblocked. E1.3
+remains blocked (see Log)
 **Last updated:** 2026-10-06
 **Plan:** [formal-methods-track-e.md](../plans/formal-methods-track-e.md)
 **Sketch:** [formal-methods-track-e.md](../sketches/formal-methods-track-e.md)
@@ -24,11 +25,16 @@ spike, byte-identical statement digests), `gate.py`/`claim-schema.json` carried 
 native route (`spikes/formal-prover/env/driver.py --route native`); no Isabelle image exists, by
 design (deferred).
 
-**Next action, for the human:** E1.2 was attempted and found blocked on something more
-fundamental than sourcing a citation (see below): `split`/`proRata`/the rounding-residual rule
-have no normative ontology declaration anywhere, in Quantification or elsewhere. Decide where
-they are specified and under which ADR before this resumes, or redirect to track C's C2 (to
-unblock E1.3) or to E2 preparatory reading instead.
+**Next action, for the human:** E1.2's blocker is resolved, not merely diagnosed: the track B
+sketch (`formal-methods-track-b.md` §6) reads the reference-evaluator sketch's own RE6/RE-Q4
+directly and finds the rounding/residual rule for `split`/`proRata` belongs to the evaluation
+context's combinator algebra (track B's B4, mechanised later by track E's own E3/E4) — not to
+Quantification, where E1.2 went looking and found nothing. E1.2 as originally scoped (a
+Quantification theorem) is retired; the theorem's real home is E3/E4, after B4 states it
+precisely, which itself waits on CCS's C12 (track B's own status). E1.3 (binding resolution)
+remains blocked: track C's C2 is done, but the overlap-rule decision its model surfaced has not
+been made, and the Vocabulary ADR IMA-D4a calls for has not been drafted (track C's own status).
+No action needed on E1 until one of those two clears.
 
 ## Slices
 
@@ -36,15 +42,15 @@ unblock E1.3) or to E2 preparatory reading instead.
 |---|---|---|
 | E1.0 (home, generation tooling) | **done** | nothing |
 | E1.1 (the kernel, for real) | **done**, folded into E1.0's pass | nothing |
-| E1.2 (rounding and residual theorem) | **blocked, not merely unstarted** (see Log) | no normative source exists for `split`/`proRata`/the rounding-residual rule anywhere under `ontology/`. Needs a design-time decision (and likely an ADR) before any proof is attempted |
-| E1.3 (binding resolution) | not started | track C's C2 (design-time model), which has not started either |
+| E1.2 (rounding and residual theorem) | **retired from this track's E1** — its real home is E3/E4, after track B's B4 (see Log, 2026-10-07) | track B's B4, which waits on CCS's C12 |
+| E1.3 (binding resolution) | not started | track C's C2 is **done**, but the overlap-rule decision it surfaced, and the Vocabulary ADR IMA-D4a names, are not yet made/drafted (track C's own status) |
 | E2 to E5 | not started, outline only | E1 |
 
 ## Open questions
 
 | # | Question | Owner |
 |---|---|---|
-| where `split`/`proRata`/the combinator algebra are specified normatively | a new Quantification section, a new layer, or folded into Behaviour's evaluation context; `sketches/formal-methods.md` §8.1 places the rounding/residual theorem with the kernel, §9.2 places it with the combinator algebra (epic track E3), which do not obviously agree on which track owns E1.2's theorem | human |
+| where `split`/`proRata`/the combinator algebra are specified normatively | **answered, 2026-10-07**: track B's B4 (the evaluation context's combinator algebra), mechanised later by E3/E4, per the reference-evaluator sketch's own RE6/RE-Q4 — not a new Quantification section, not folded into the kernel | closed |
 | the Isabelle image | does not exist; needed before epic E9's "image route only" rule applies to track E's recorded claims, not before E1 itself | human, timing deferred 2026-10-06 to conserve tokens, confirmed again when E1 started (native/local explicitly requested) |
 
 ## Log
@@ -84,3 +90,13 @@ unblock E1.3) or to E2 preparatory reading instead.
   design-time decision behind it risks fixing its design inside a proof, the same risk already
   held E1.3 back for binding resolution. Plan and this record both updated; the human's decision
   is needed on where it is specified and under which ADR before this resumes.
+- 2026-10-07: E1.2's blocker resolved by reading track B's sketch directly, not re-derived here.
+  The reference-evaluator sketch's own RE6 and RE-Q4 already state that the rounding and
+  residual-allocation rule for `split`/`proRata` belongs to the evaluation context's combinator
+  algebra, with a leaning already recorded ("largest remainder, with ties broken by a total order
+  of accounts"). That is track B's B4 (not yet started, waiting on CCS's C12) and track E's own
+  E3/E4 (the combinator algebra and the evaluation context), mechanised once B4 states it
+  precisely. E1.2 as originally scoped — a Quantification theorem — is retired, not merely
+  renamed: there was never a Quantification-level theorem to prove, since the rule was never
+  Quantification's to state. No proof is drafted by this change; it only corrects where the work,
+  when it is ready, belongs.

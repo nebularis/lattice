@@ -12,7 +12,9 @@
 [ADR-A-FM2](../../architecture/decisions/ADR-A-FM2-formal-methods-theory-home.md)
 (FM-D2: `tools/proofs/`)
 **Status:** E1.0 done. E1.1 (the kernel, for real) done alongside it. E1.2 (rounding/residual)
-and E1.3 (binding resolution) not started; E1.3 waits on track C's C2
+is retired from this track (2026-10-07): its real home is track B's B4 and E3/E4, not E1 (see
+§3). E1.3 (binding resolution) not started; track C's C2 is done, but the overlap-rule decision
+it surfaced is not yet made
 
 ## 1. Scope
 
@@ -36,8 +38,8 @@ than being rewritten.
 |---|---|---|
 | FM-D2 (home of track E's theories) | **decided and done: `tools/proofs/`, one subdirectory per layer** (ADR-A-FM2) | nothing further |
 | the literate-generation direction for Isabelle datatypes | **decided and done:** `isabelle-spec` fenced blocks, extending `tools/literate_extract.py` additively (new `--proofs-root` argument; every existing Turtle invocation unaffected) | nothing further |
-| track C's C2 (binding resolution, design-time model) | not started | E1.3 (binding resolution) specifically. E1.1 and E1.2 do not depend on it |
-| the Quantification layer's rounding/residual statement | exists in prose (`ontology/quantification/README.md`, ADR-A93 to ADR-A95), not yet read against this plan | E1.2's exact theorem statement, drafted when E1.2 starts, not guessed at here |
+| track C's C2 (binding resolution, design-time model) | **done**, but the overlap-rule decision its own checked model surfaced (what composition does when two composed schemes disagree about a shared concept's `broader` parent) is not yet made, and the Vocabulary ADR insurml-alignment's IMA-D4a names is not yet drafted | E1.3 (binding resolution) specifically. E1.1 does not depend on it; E1.2 is retired (see §3) |
+| track B's B4 (the evaluation context's combinator algebra, rounding/residual rule) | not started, waits on CCS's C12 (`formal-methods-track-b.md` status) | the rounding/residual theorem, now retired from this plan's E1.2 and reassigned to E3/E4 once B4 states it precisely |
 | an Isabelle image | does not exist in this spike (deferred, human instruction, 2026-10-06, confirmed again for E1: native/local route only) | epic E9's "only an image route's verdict is recorded" rule, and gate D's own smoke-suite criterion. Track E proceeds on native evidence; closing this before claims are recorded for gate E, not gate D, is the human's call to make when it is needed |
 
 ## 3. Slices
@@ -83,37 +85,37 @@ track D proved them, including the TA2 correction (negation is monotone, not ord
 Claim records match track D's own evidence, not merely a close port of it: identical statement
 digests.
 
-### E1.2: the rounding and residual theorem (Quantification) — blocked, not merely unstarted
+### E1.2: the rounding and residual theorem — retired from this track (2026-10-07)
 
-Attempted to source: neither `ontology/quantification/README.md` nor ADR-A93 to ADR-A95 states
-`split`, `proRata`, or any rounding/residual-allocation rule. Quantification's only rounding-
-related content is `qnt:roundingPolicy`, a property with **no declared vocabulary of values yet**
-(its README names this an open item). `split` and `proRata` do not exist anywhere under
-`ontology/` under any name: not as classes, properties, or shapes, in Quantification or any other
-layer.
+Attempted, and found blocked: neither `ontology/quantification/README.md` nor ADR-A93 to ADR-A95
+states `split`, `proRata`, or any rounding/residual-allocation rule, and neither does any other
+layer under `ontology/`, under any name (full negative-search account in the status record's
+log, 2026-10-06). The theorem existed only in two epic sketches that did not fully agree on which
+track owns it.
 
-The theorem is real, but only at the sketch level, in two places that do not fully agree on which
-track owns it: `sketches/formal-methods.md` §8.1 ("the logic kernel... the rounding and residual
-theorem") places it beside `k3`'s monotonicity; the same sketch's §9.2 ("the combinator algebra,
-with rounding and residual allocation") places it with `split`/`proRata`/`convert`/`percentOf`/
-… as combinators, which the epic plan assigns to **E3**, not E1. This plan's own E1.2 heading,
-written before this attempt actually read the sources, assumed a Quantification-layer source that
-turns out not to exist.
-
-**Not drafted.** Formalising an operation that has no normative ontology declaration risks fixing
-its design inside a proof before anyone has decided it at design time — the same risk E1.3 is
-already held back from for binding resolution, for the same reason. This needs the human's
-decision, not an inferred one: where `split`/`proRata`/the combinator algebra are specified
-normatively (a new Quantification section, a new layer, or folded into Behaviour's evaluation
-context), and under which ADR, before any theorem about them is attempted. See the status record.
+**Resolved, not merely left blocked**, by reading track B's own sketch (`formal-methods-track-b.md`
+§6) directly: the reference-evaluator sketch's RE6 and RE-Q4 already state that the rounding and
+residual-allocation rule for `split`/`proRata` belongs to the evaluation context's combinator
+algebra, with a leaning already recorded. That is track B's **B4** (not yet started, waiting on
+CCS's C12) and this track's own **E3** (the combinator algebra) and **E4** (the evaluation
+context), mechanised once B4 states the rule precisely. There was never a Quantification-level
+theorem to prove: the rule was never Quantification's to state. This plan's own E1.2 heading is
+retired, not renamed — E1's numbering now runs E1.0, E1.1, E1.3 only, and the rounding/residual
+theorem reappears in whichever later plan details E3/E4.
 
 ### E1.3: binding resolution
 
-- **Blocked on track C's C2** (design-time model of scheme composition, ahead of CCS C8). Do not
-  start this part before C2 exists: mechanising a semantics still being decided at design time
-  risks proving the wrong thing precisely, which the epic's own track ordering (C before E for
-  this reason) already guards against.
-- **Validation:** TBD, including differential evidence against C2's model once it exists.
+- **Blocked, refreshed 2026-10-07**: track C's C2 is done — its Alloy model checked scheme
+  composition and found that "union of membership, union of hierarchy" alone does not prevent two
+  composed schemes disagreeing about a shared concept's `broader` parent
+  (`formal-methods-track-c.md` status). What remains blocking is the decision C2's own finding
+  calls for (the overlap rule: forbid, order, or allow with an acyclicity requirement) and the
+  Vocabulary ADR insurml-alignment's IMA-D4a names as shared with CCS's HQ-4 — neither made nor
+  drafted yet. Do not start this part before that ADR exists: mechanising a semantics still being
+  decided at design time risks proving the wrong thing precisely, the same reason this plan
+  already held E1.3 back before C2 itself existed.
+- **Validation:** TBD, including differential evidence against C2's model and whichever ADR
+  accepts scheme composition, once both exist.
 
 ## 4. Test taxonomy and evidence
 
