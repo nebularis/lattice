@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lattice-reference-eligibility"
+version = "0.1.0"
+description = "Hand-written reference semantics for Eligibility's logic kernel and denotation (formal-methods epic, track B, ADR-A-FM3)"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = []
+
+[project.optional-dependencies]
+test = [
+  "pytest>=8.0",
+  "mork-compilers>=0.1,<0.2",
+  "pyshacl>=0.26,<1",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]

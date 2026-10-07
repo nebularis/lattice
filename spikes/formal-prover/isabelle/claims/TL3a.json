@@ -1,0 +1,10 @@
+{
+  "subject": "TL3a",
+  "statedAs": "Eligibility.negate_after_is_every_of_negated",
+  "statementDigest": "sha256:f483e7a4fb732e6671a74b3b6cc5baedfbfa31954b900324201a4ec446be1416",
+  "method": "Proof",
+  "scope": "EveryList",
+  "assumptionAudit": "no sorry/oops in Eligibility.thy (gate.py's source scan)",
+  "tool": { "name": "Isabelle", "version": "Isabelle2025-2" },
+  "outcome": "passed"
+}

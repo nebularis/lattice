@@ -5,7 +5,8 @@
 Python 3.14+. The executable Python tools are sibling projects under `tools/`.
 `tools/mork/`, `tools/mork_compilers/`, and `tools/surface/` each own a
 `pyproject.toml` and a conventional `src/<package>/` layout. Run everything
-from the repository root.
+from the repository root. For what each tool is for and when to reach for it,
+see [`docs/developer/developer-guide.md`](../docs/developer/developer-guide.md).
 
 ## Python environment
 
@@ -29,8 +30,10 @@ Regenerates a layer's compiled Turtle from its README, which is the
 authoritative specification. Fenced blocks are extracted in document order:
 `turtle-spec` → `ontology/<layer>/spec/<layer>.ttl`, `turtle-vocab` → `ontology/<layer>/vocab/<layer>-vocab.ttl`,
 `turtle-shapes` → the shape files named on the command line, in order.
-`turtle-example` blocks are never extracted. Each output gains the SPDX header
-as its first line.
+`turtle-example` blocks are never extracted. `isabelle-spec` → a layer's
+closed Isabelle datatype only, at `<proofs-root>/<layer>/Kernel.thy`
+(`--proofs-root`, e.g. `tools/proofs`; see `tools/proofs/README.md`,
+ADR-A-FM2). Each output gains the project's SPDX header as its first line.
 
 ```bash
 python3 tools/literate_extract.py ontology/surface/README.md \
@@ -39,8 +42,50 @@ python3 tools/literate_extract.py ontology/surface/README.md \
 ```
 
 `--check` writes nothing and exits non-zero if any target differs from what
-would be written. Run it in CI: it is the README⇄spec drift check the
-governance discipline requires and that nothing currently enforces.
+would be written. Part of `mise run check:python-root` for Surface; run it
+directly for any other layer.
+
+## `tools/check_formal_freshness.py`
+
+Checks that a layer's formal-methods artefacts have not silently drifted from
+its literate README: every `tools/proofs/<layer>/Kernel.thy` is re-extracted
+and compared byte for byte (the same discipline as `literate_extract.py
+--check`, scoped to only the `isabelle-spec` output so it does not trip on
+layers whose `spec`/`vocab`/`shapes` already drift for unrelated reasons,
+TD-16), and every semantic law a README declares is confirmed named somewhere
+in that layer's `tools/reference/<layer>/`, covered or explicitly disclaimed.
+Run via `mise run check:formal-freshness`, part of the default `check`
+aggregate. See `docs/developer/formal-methods-lifecycle.md`.
+
+## `tools/proofs/` — the prover programme's theories
+
+Mechanised Isabelle/HOL theories for the `formal-methods` epic's track E
+(ADR-A-FM1, ADR-A-FM2). One subdirectory per ontology layer with a
+formalised law; see `tools/proofs/README.md` for the generated/hand-written
+split (`Kernel.thy` generated, never hand-edited; everything built on it
+hand-written) and `mise run check:proofs` to build and gate every layer
+natively (no container image exists for Isabelle in this programme yet).
+
+## `tools/models/` — the design-time models
+
+Alloy/SMT design-time models for the `formal-methods` epic's track C. One
+subdirectory per modelled law family; see `tools/models/README.md` for the
+convention and `tools/models/vocabulary-scheme-composition/README.md` for
+C2's checked model of binding resolution with scheme composition (ahead of
+CCS's HQ-4 and insurml-alignment's IMA-D4a), run via Alloy Analyzer's own
+`exec` sub-command (no container image or tracked JAR — see that README for
+the install location).
+
+## `tools/reference/` — the reference evaluator and its oracle
+
+Hand-written, test-verified reference semantics for the `formal-methods`
+epic's track B (ADR-A-FM3). One subdirectory per layer; see
+`tools/reference/README.md` for the convention and
+`tools/reference/eligibility/README.md` for track B1's logic kernel and
+Eligibility denotation (laws L9-L16), ported from `tools/proofs/eligibility/`'s
+Isabelle statements and verified by exhaustive and bounded test, not proved.
+`mise run check:reference-eligibility` runs it; no dependency beyond
+`pytest`.
 
 ## `tools/surface/` — the surface compiler
 

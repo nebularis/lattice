@@ -1,0 +1,10 @@
+{
+  "subject": "TR2",
+  "statedAs": "Reading.apply_reading_every_matches_spec",
+  "statementDigest": "sha256:06f7613b56cddcd529d9be26abf7b7fac53274ae5bc300f46ed47bd5b2783baf",
+  "method": "Proof",
+  "scope": "EveryBoundValueAndList",
+  "assumptionAudit": "not separately audited; compiles under Kernel.v/Eligibility.v's closed context",
+  "tool": { "name": "Rocq", "version": "9.3.0" },
+  "outcome": "passed"
+}

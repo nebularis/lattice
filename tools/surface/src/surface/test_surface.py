@@ -20,7 +20,9 @@ notice.
 
 from __future__ import annotations
 
+import random
 import unittest
+from collections import deque
 from dataclasses import replace
 from datetime import datetime
 from pathlib import Path
@@ -714,6 +716,110 @@ class InvalidationTests(unittest.TestCase):
         self.assertEqual(plan.mappings, (str(mapping),))
         self.assertEqual(plan.artefacts, (str(artefact),))
         self.assertEqual(plan.reasons, ("profile-change",))
+
+
+class RegenerationPropertyTests(unittest.TestCase):
+    """Property test for ``impacted_surfaces``'s minimal-regeneration claim
+    (ADR-A27; formal-methods epic track B3): "a change to a source, and its
+    minimal regeneration... regenerating after a change equals applying the
+    change's image to the old output." Cashed out here as two properties,
+    checked over randomly generated dependency graphs rather than only the
+    worked examples above: **soundness** (every surface the planner selects
+    genuinely depends, directly or transitively, on a changed source) and
+    **completeness** (every surface that genuinely depends on one is
+    selected) -- together, exactly ADR-A27's own "minimal... rather than
+    regenerating a whole layer or estate on any change."
+
+    The oracle (``_reachable_backward``) is a breadth-first search over an
+    adjacency structure built independently of ``impacted_surfaces``'s own
+    repeated-whole-pass fixed point, reducing (not eliminating) the risk
+    that a shared mistake in both would go uncaught: the two must still
+    compute the same mathematical object, the set of surfaces reachable
+    backward from the changed sources along read-set edges, since there is
+    only one correct answer for a given graph.
+    """
+
+    @staticmethod
+    def _node(token: str) -> str:
+        return f"https://example.org/regeneration-property/{token}"
+
+    def _random_manifests(
+        self, rng: random.Random, surface_count: int, source_pool: int
+    ) -> dict[str, list[str]]:
+        """surface token -> the tokens (plain sources, or other surfaces'
+        own tokens, to exercise chaining) it reads."""
+        surfaces = [f"s{i}" for i in range(surface_count)]
+        sources = [f"src{i}" for i in range(source_pool)] + surfaces
+        manifests: dict[str, list[str]] = {}
+        for surface in surfaces:
+            candidates = [s for s in sources if s != surface]
+            read_count = rng.randint(0, min(3, len(candidates)))
+            manifests[surface] = rng.sample(candidates, k=read_count)
+        return manifests
+
+    def _reachable_backward(self, manifests: dict[str, list[str]], changed: set[str]) -> set[str]:
+        """Which surfaces transitively read a changed token, via an
+        explicit BFS queue -- not a repeated-pass fixed point."""
+        impacted: set[str] = set()
+        queue: deque[str] = deque()
+        for surface, reads in manifests.items():
+            if any(token in changed for token in reads) and surface not in impacted:
+                impacted.add(surface)
+                queue.append(surface)
+        while queue:
+            current = queue.popleft()
+            for surface, reads in manifests.items():
+                if surface not in impacted and current in reads:
+                    impacted.add(surface)
+                    queue.append(surface)
+        return impacted
+
+    def test_soundness_and_completeness_over_random_dependency_graphs(self) -> None:
+        rng = random.Random(20261007)  # fixed seed: reproducible, not flaky
+        for _ in range(200):
+            manifests_tokens = self._random_manifests(rng, surface_count=6, source_pool=4)
+            all_tokens = sorted({t for reads in manifests_tokens.values() for t in reads} | set(manifests_tokens))
+            changed_tokens = set(rng.sample(all_tokens, k=rng.randint(0, 2)))
+
+            manifests = {
+                self._node(surface): [
+                    ReadSetRecord(kind=SRF.SurfaceSource, source=URIRef(self._node(token)), digest="d")
+                    for token in reads
+                ]
+                for surface, reads in manifests_tokens.items()
+            }
+            changed_sources = {self._node(token) for token in changed_tokens}
+
+            actual = set(impacted_surfaces(manifests, changed_sources))
+            expected = {self._node(token) for token in self._reachable_backward(manifests_tokens, changed_tokens)}
+
+            self.assertEqual(actual, expected, (manifests_tokens, changed_tokens))
+
+    def test_a_surface_depending_on_nothing_changed_is_never_selected(self) -> None:
+        """ADR-A27's own words, as a direct assertion: a surface whose read
+        set shares no entry, directly or transitively, with the changed set
+        is not regenerated."""
+        manifests = {
+            "https://example.org/regeneration-property/untouched": [
+                ReadSetRecord(kind=SRF.SurfaceSource, source=URIRef("https://example.org/regeneration-property/unrelated-source"), digest="d")
+            ],
+        }
+        self.assertEqual(impacted_surfaces(manifests, {"https://example.org/regeneration-property/changed-elsewhere"}), ())
+
+    def test_widening_the_changed_set_never_shrinks_the_impacted_set(self) -> None:
+        rng = random.Random(7)
+        manifests_tokens = self._random_manifests(rng, surface_count=6, source_pool=4)
+        manifests = {
+            self._node(surface): [
+                ReadSetRecord(kind=SRF.SurfaceSource, source=URIRef(self._node(token)), digest="d")
+                for token in reads
+            ]
+            for surface, reads in manifests_tokens.items()
+        }
+        all_tokens = sorted({t for reads in manifests_tokens.values() for t in reads} | set(manifests_tokens))
+        smaller = {self._node(t) for t in rng.sample(all_tokens, k=1)}
+        larger = smaller | {self._node(t) for t in rng.sample(all_tokens, k=min(2, len(all_tokens)))}
+        self.assertTrue(set(impacted_surfaces(manifests, smaller)) <= set(impacted_surfaces(manifests, larger)))
 
 
 class ProjectionLoweringTests(unittest.TestCase):

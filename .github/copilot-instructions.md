@@ -341,6 +341,8 @@ renamed `fnd:Versioned` (technical debt TD-20).
 
 Otherwise leave it out, say the subject and value in the property's comment, and let a shape check use. Before adding one, ask whether *every* individual that could carry the property really is an instance of the class.
 
+**A "Formalisation" section introducing a generated theory (ADR-A-FM2) names no tool.** Title it "Formalisation", not "Formalisation (Isabelle/HOL)" or similar: the tool is a decision (ADR-A-FM1, ADR-A-FM2), not a fact about the layer, and naming it in a heading is one more place to update if it ever changes. Say only what the type itself means (its ordering, its reading, what two readings disagree on) — not the ADR's number, the generation mechanism, the epic principle that explains why only the datatype is generated, or a past evaluation's findings. Those are said once, where they were decided, and cross-referenced, not repeated beside every generated block. Add more narrative only if the type itself is complex enough to need it (a union type whose cases are not obvious, say) — a closed enumeration of a few named values usually is not.
+
 ### When running the Ponytail skill
 
 The Ponytail skill pushes for the smallest model and the shortest diff. In an ontology, that must never cost logical correctness. Before proposing or applying a simplification, check each of these:

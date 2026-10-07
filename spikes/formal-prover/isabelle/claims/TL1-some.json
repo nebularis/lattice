@@ -1,0 +1,10 @@
+{
+  "subject": "TL1-some",
+  "statedAs": "Eligibility.some_value_spec_permitted/denied/undetermined",
+  "statementDigest": "sha256:750aa844d70bcb5a3b9712386c23fc2398ef5db393068d7e5773d9326f938c57",
+  "method": "Proof",
+  "scope": "EveryList",
+  "assumptionAudit": "no sorry/oops in Eligibility.thy (gate.py's source scan)",
+  "tool": { "name": "Isabelle", "version": "Isabelle2025-2" },
+  "outcome": "passed"
+}

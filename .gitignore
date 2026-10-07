@@ -23,7 +23,6 @@
 .*.aux
 .Rocqdep.d
 *.heap.gz
-
 # Node and Yarn installs, caches, and build output
 node_modules/
 .pnp.*

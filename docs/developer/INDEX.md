@@ -19,6 +19,13 @@ Each work unit has:
 
 **Navigation:** Use Ctrl/Cmd+F to search by topic (e.g., "RDF", "MTP", "housekeeping") or by unit ID.
 
+**New here?** This index tracks active units of work, not how to use the repository day to day.
+For that: [Getting Started](getting-started.md) (bootstrap a clean clone),
+[Developer Guide](developer-guide.md) (every tool and script, when to use it),
+[Formal Methods in the Development Lifecycle](formal-methods-lifecycle.md) (how formalising a law
+hooks into sketch, plan and implementation), and [`docs/diagrams/`](../diagrams/README.md) (the
+whole architecture, pictured, five ways).
+
 ---
 
 # Part I — Completed Work

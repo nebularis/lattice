@@ -1,0 +1,10 @@
+{
+  "subject": "TA1",
+  "statedAs": "Kernel.or3_and3_monotone",
+  "statementDigest": "sha256:b0c2f7054932de6d058dfae7c632de2730324823c3261722b936ccef587e8bc3",
+  "method": "Proof",
+  "scope": "EveryPair",
+  "assumptionAudit": "Closed under the global context (CheckKernel.v)",
+  "tool": { "name": "Rocq", "version": "9.3.0" },
+  "outcome": "passed"
+}

@@ -6,7 +6,11 @@ Literate-spec extractor.
 
 A LATTICE layer's ``README.md`` is the authoritative specification. The compiled
 Turtle under ``spec/``, ``vocab/`` and ``shapes/`` is mechanically extracted from
-its fenced blocks, in document order, so the two artefacts cannot drift.
+its fenced blocks, in document order, so the two artefacts cannot drift. An
+``isabelle-spec`` block does the same for a layer's Isabelle theory's closed
+datatypes (ADR-A-FM2, epic principle E1): the proofs and functions built on
+top of those datatypes are hand-written directly in the ``.thy`` file, not
+generated, since only the closed datatypes are meant to track the README.
 
 Fence tags recognised:
 
@@ -16,9 +20,11 @@ Fence tags recognised:
 ``turtle-shapes``     written, in document order, to the shape files
                       named by the layer's extraction contract
 ``turtle-example``    never extracted
+``isabelle-spec``     concatenated into ``<proofs-root>/<layer>/Kernel.thy``
 ====================  ================================================
 
-Each extracted ``.ttl`` gains the project's SPDX header as its first line.
+Each extracted ``.ttl``/``.thy`` gains the project's SPDX header as its first
+line (``#``-style for Turtle, ``(* ... *)``-style for Isabelle).
 
 Usage::
 
@@ -29,6 +35,9 @@ Usage::
 
     python3 -m tools.lattice.literate_extract ontology/surface/README.md \\
         --layer surface --root . --check
+
+    python3 -m tools.lattice.literate_extract ontology/eligibility/README.md \\
+        --layer eligibility --root . --proofs-root tools/proofs
 """
 
 from __future__ import annotations
@@ -41,9 +50,10 @@ from pathlib import Path
 from typing import Dict, List, Sequence
 
 SPDX_TTL = "# SPDX-License-Identifier: MPL-2.0"
+SPDX_THY = "(* SPDX-License-Identifier: MPL-2.0 *)"
 
 FENCE_RE = re.compile(
-    r"^```(?P<tag>turtle-spec|turtle-vocab|turtle-shapes|turtle-example)\s*$"
+    r"^```(?P<tag>turtle-spec|turtle-vocab|turtle-shapes|turtle-example|isabelle-spec)\s*$"
 )
 FENCE_END_RE = re.compile(r"^```\s*$")
 
@@ -90,28 +100,42 @@ def parse_blocks(markdown: str) -> List[Block]:
     return blocks
 
 
-def render(bodies: Sequence[str]) -> str:
-    """Concatenate block bodies into one Turtle document under the SPDX header."""
+def render(bodies: Sequence[str], header: str = SPDX_TTL) -> str:
+    """Concatenate block bodies into one document under the given SPDX header."""
     if not bodies:
         return ""
-    return SPDX_TTL + "\n\n" + "\n".join(body.rstrip() + "\n" for body in bodies)
+    return header + "\n\n" + "\n".join(body.rstrip() + "\n" for body in bodies)
 
 
 def plan(
     blocks: Sequence[Block],
     layer: str,
     shape_targets: Sequence[str],
+    proofs_root: str | None = None,
 ) -> Dict[str, str]:
-    """Map each output path to the Turtle document it should contain."""
+    """Map each output path to the document it should contain.
+
+    Every path is relative to ``--root`` (the ontology directory) except an
+    ``isabelle-spec`` output, which is relative to the repository root, via
+    ``proofs_root``, since ``tools/proofs/`` sits outside ``ontology/``
+    entirely (ADR-A-FM2).
+    """
     spec_bodies = [b.body for b in blocks if b.tag == "turtle-spec"]
     vocab_bodies = [b.body for b in blocks if b.tag == "turtle-vocab"]
     shape_blocks = [b for b in blocks if b.tag == "turtle-shapes"]
+    isabelle_bodies = [b.body for b in blocks if b.tag == "isabelle-spec"]
 
     if len(shape_blocks) != len(shape_targets):
         raise ValueError(
             f"{len(shape_blocks)} turtle-shapes block(s) found but "
             f"{len(shape_targets)} shape target(s) declared; the extraction "
             f"contract in the README and the --shapes argument must agree"
+        )
+    if isabelle_bodies and not proofs_root:
+        raise ValueError(
+            "isabelle-spec block(s) found but --proofs-root was not given; "
+            "pass --proofs-root tools/proofs to extract them, or remove the "
+            "block(s) if this layer has no formalised theory yet"
         )
 
     outputs: Dict[str, str] = {}
@@ -121,6 +145,12 @@ def plan(
         outputs[f"ontology/{layer}/vocab/{layer}-vocab.ttl"] = render(vocab_bodies)
     for block, target in zip(shape_blocks, shape_targets):
         outputs[f"ontology/{layer}/{target}"] = render([block.body])
+    if isabelle_bodies:
+        # A path outside `root` (ontology/), marked with a recognisable prefix so
+        # main() resolves it against --proofs-root instead of --root.
+        outputs[f"@proofs-root@/{layer}/Kernel.thy"] = render(
+            isabelle_bodies, header=SPDX_THY
+        )
     return outputs
 
 
@@ -136,6 +166,16 @@ def main(argv: Sequence[str] | None = None) -> int:
         help="shape output paths, relative to the layer directory, in document order",
     )
     parser.add_argument(
+        "--proofs-root",
+        default=None,
+        help=(
+            "where isabelle-spec output goes, e.g. tools/proofs (resolved against the "
+            "current working directory, independently of --root, since tools/proofs/ "
+            "sits outside ontology/ entirely, ADR-A-FM2). Required if the README has "
+            "any isabelle-spec blocks"
+        ),
+    )
+    parser.add_argument(
         "--check",
         action="store_true",
         help="do not write; exit non-zero if any target differs from what would be written",
@@ -144,12 +184,17 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     readme_path = Path(args.readme)
     blocks = parse_blocks(readme_path.read_text(encoding="utf-8"))
-    outputs = plan(blocks, args.layer, args.shapes)
+    outputs = plan(blocks, args.layer, args.shapes, args.proofs_root)
 
     root = Path(args.root)
+    proofs_root = Path(args.proofs_root) if args.proofs_root else None
     drifted: List[str] = []
     for relative, content in sorted(outputs.items()):
-        target = root / relative
+        if relative.startswith("@proofs-root@/"):
+            assert proofs_root is not None  # plan() already enforced this
+            target = proofs_root / relative.removeprefix("@proofs-root@/")
+        else:
+            target = root / relative
         if args.check:
             current = target.read_text(encoding="utf-8") if target.exists() else None
             if current != content:

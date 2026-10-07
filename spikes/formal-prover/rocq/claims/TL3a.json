@@ -1,0 +1,10 @@
+{
+  "subject": "TL3a",
+  "statedAs": "Eligibility.negate_after_is_every_of_negated",
+  "statementDigest": "sha256:21d0204b51280e45711af591ad69c82a83f41e0da48442d02966a11bd51eef0a",
+  "method": "Proof",
+  "scope": "EveryList",
+  "assumptionAudit": "Closed under the global context (CheckEligibility.v)",
+  "tool": { "name": "Rocq", "version": "9.3.0" },
+  "outcome": "passed"
+}

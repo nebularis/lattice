@@ -5,9 +5,9 @@
 **Unit type:** Epic
 **Epic:** `formal-methods` (FM)
 **Epic status:** Proposed, re-sequenced into tracks on 2026-10-06 after review
-([response](../notes/formal-methods-review-response.md)). Track D's spike, the prover experiment, is
-the first step and is detailed in its own plan. Other tracks are rolling-wave, each detailed when it
-starts.
+([response](../notes/formal-methods-review-response.md)). Track D's spike, the prover experiment,
+completed 2026-10-06: FM-D1 decided (Isabelle/HOL). Gate D is not yet fully closed (two open
+criteria, status record). Other tracks are rolling-wave, each detailed when it starts.
 **Trigger:** human request, 2026-10-06
 **Sketch:** [formal-methods.md](../sketches/formal-methods.md), with
 [adequacy and architecture](../sketches/formal-adequacy-and-architecture.md),
@@ -119,8 +119,22 @@ measures, with abandonment conditions. Gate D decides FM-D1.
 |---|---|---|
 | B1 | the reference for the logic kernel and Eligibility, in Python, with the semantics stated precisely in the literate README | reference evaluator §2 |
 | B2 | differential tests of the Eligibility compilers against B1, with shape-derived generators, and a named negative fixture for hierarchical match with exclusions | sketch §8.4 |
-| B3 | property tests: regeneration as naturality (ADR-A27), MORK's lattice laws, MCN's round trip through RDFC-1.0 | sketch §8.8, §10 |
+| B3 | property test: regeneration as naturality (ADR-A27). MORK's lattice laws and MCN's round trip are deferred (the human's own call, and a missing encoder, respectively) | sketch §8.8, §10 |
 | B4 | the reference for the evaluation context and Behaviour's macrostep, with `DesignEnv` and `RunEnv`, the rounding and residual rule, and conformance kits for C12 | reference evaluator §3, §4 |
+
+Detailed in its own [sketch](../sketches/formal-methods-track-b.md) and
+[plan](formal-methods-track-b.md); status in [its status record](../status/formal-methods-track-b.md).
+B1, B2 and B3 all done 2026-10-07 (`tools/reference/eligibility/`, `ADR-A-FM3` Accepted): the
+logic kernel and Eligibility's denotation (L9-L16), ported from and verified against
+`tools/proofs/eligibility/`'s Isabelle statements, differentially tested against
+`tools/mork_compilers`' SPARQL and SHACL backends (63 tests), and Surface's ADR-A27
+regeneration-as-naturality property test (72 tests in `surface.test_surface`, no regression). B2
+found and fixed two real defects in B1's own reference (a missing scheme-membership precondition,
+and a `SingleValue` reading that silently took the first of several candidates) — independent
+oracles catching each other's mistakes being exactly the point. B1's own scoping also resolved
+track E's E1.2: the rounding/residual theorem belongs to this track's B4 and track E's E3/E4, not
+Quantification, where E1.2 had gone looking and found nothing — track E's plan and status are
+corrected to match.
 
 ### Track C: the design-time models
 
@@ -128,13 +142,27 @@ Skeletons first (C1), then one model per ADR that adds or changes a law (FM-D8).
 resolution with scheme composition ahead of CCS C8. C3 is slot exclusivity and exhaustiveness by SMT
 for every condition kind, driven from Python, in step with CCS C13a.
 
+Detailed in its own [sketch](../sketches/formal-methods-track-c.md) and
+[plan](formal-methods-track-c.md); status in [its status record](../status/formal-methods-track-c.md).
+C1 and C2 done 2026-10-06, HQ-4 and IMA-D4a read in full from `main` and this repository's own
+plans first, confirming both were genuinely unresolved and waiting on this track. C2's checked
+Alloy model found that the composition rule it was built to evaluate (union of membership, union
+of hierarchy) does not by itself prevent two composed schemes disagreeing about a shared
+concept's `broader` parent — recorded with the full counterexample in the model's own README, an
+open decision for whichever ADR accepts scheme composition, not resolved by this track.
+
 ### Track E: the prover programme
 
-Detailed only if gate D passes. Its order: E1 the kernel with the rounding and residual theorem, and
-binding resolution. E2 the Eligibility denotation and one SPARQL compiler core, with the mapping of
-"not a value" to Undetermined as its first theorem, a mechanical fragment gate, and a cross-store
-conformance suite. E3 the combinator algebra. E4 the evaluation context, mechanising B4. E5 the
-template library in rely and guarantee form.
+Gate D passed (FM-D1 decided: Isabelle/HOL, [ADR-A-FM1](../../architecture/decisions/ADR-A-FM1-formal-methods-prover-choice.md)).
+Detailed in its own [sketch](../sketches/formal-methods-track-e.md) and
+[plan](formal-methods-track-e.md); status in [its status record](../status/formal-methods-track-e.md).
+Its order: E1 the kernel with the rounding and residual theorem, and binding resolution (split
+into E1.0 to E1.3 by the plan, since binding resolution waits on track C's C2; the kernel's home
+is decided, FM-D2, ADR-A-FM2, `tools/proofs/`). E2 the Eligibility denotation and one SPARQL
+compiler core, with the mapping of "not a value" to Undetermined as its first theorem, a
+mechanical fragment gate, and a cross-store conformance suite. E3 the combinator algebra. E4 the
+evaluation context,
+mechanising B4. E5 the template library in rely and guarantee form.
 
 ### Track F: native tooling
 
@@ -244,14 +272,28 @@ Kill and continue criteria, declared now:
 
 The thresholds are first values, to be revised at gate D with the measurements in hand.
 
+**Gate D revision, 2026-10-06.** Track D measured a MINOR change's repair cost directly (plan
+`formal-methods-phase-0.md` §4, M3): adding a fourth value reading cost +18/-6 lines in Isabelle
+and +21/-7 in Rocq, against a `Reading.thy`/`Reading.v` of a few dozen lines. That is real
+evidence the mechanism the "25% of slice cost" threshold targets behaves as expected (a small,
+closed-world enum addition costs a correspondingly small, bounded repair), but the file it was
+measured against is a spike toy, not a layer-sized theory: Eligibility's real `reading` (or its
+track E equivalent) will be hundreds of lines with cross-references the spike's four-constructor
+example does not have, so a percentage recalibrated from this sample would not be trustworthy.
+**The 25% threshold stands, provisional**, per this section's own instruction, until track E's
+first slice that changes a real layer theory under a real MINOR release gives a same-shape
+measurement at production scale. The other four thresholds have no track D evidence at all (D
+measured no adjudications, no `NotDecided` jobs, no native job family and no UI assurance
+statement) and stand unrevised for the same reason: nothing has measured them yet.
+
 ## 7. Decisions
 
 None of these may be taken by an agent.
 
 | # | Decision | Recommendation | State |
 |---|---|---|---|
-| FM-D1 | proof assistant | settled by track D, or abandoned | open |
-| FM-D2 | home of theories and tools | per-layer theories beside each layer, statements extracted into the README, one build project under `tools/` | open |
+| FM-D1 | proof assistant | settled by track D, or abandoned | **decided 2026-10-06: Isabelle/HOL**, by the corrected measures in [formal-prover-experiment.md](../notes/formal-prover-experiment.md), recorded in [ADR-A-FM1](../../architecture/decisions/ADR-A-FM1-formal-methods-prover-choice.md) |
+| FM-D2 | home of theories and tools | per-layer theories beside each layer, statements extracted into the README, one build project under `tools/` | **decided 2026-10-06: `tools/proofs/`**, [ADR-A-FM2](../../architecture/decisions/ADR-A-FM2-formal-methods-theory-home.md) (not beside each layer; a developer-facing toolchain, per repository topology, not an ontology asset) |
 | FM-D3 | assurance vocabulary | a profile of EARL, PROV-O, SHACL reports and in-toto, in Executable's vocabulary | open |
 | FM-D4 | first proof target | the kernel with the rounding and residual theorem, then binding resolution | open |
 | FM-D5 | the reference evaluator | hand-written in Python first (track B), mechanised later from it if track E proceeds. The C12 runtime is held to it by conformance kits | revised 2026-10-06 |
@@ -259,7 +301,7 @@ None of these may be taken by an agent.
 | FM-D7 | instance property language | a metric first-order temporal logic over three-valued atoms, with prefix verdicts, rendered in controlled English, refusing non-monitorable properties for monitors | revised 2026-10-06 |
 | FM-D8 | where design models are required | every ADR that adds or changes a law, with skeletons supplied by track C | open |
 | FM-D9 | how tools run | worker jobs, one subprocess per job, native or Python decided per family on measurement | revised 2026-10-06 |
-| FM-D10 | languages | OCaml for native tools, Haskell builds as an N-version check only if FM-D1's choice makes them nearly free | open |
+| FM-D10 | languages | OCaml for native tools, Haskell builds as an N-version check only if FM-D1's choice makes them nearly free | **decided 2026-10-06: Haskell and Scala**, both via Isabelle's `export_code`, Haskell demonstrated working, Scala documented and pending its own exercise. [ADR-A-FM1](../../architecture/decisions/ADR-A-FM1-formal-methods-prover-choice.md) |
 | FM-D11 | Datalog's normative semantics | stratified with dual predicates, non-stratifiable programs refused | **decided 2026-10-06** |
 | FM-D12 | direction of generation | from the literate README to shapes and theory datatypes | **decided 2026-10-06** |
 | FM-D13 | the spike's end-to-end law | L15 and L16, with I7 first once C13 is specified | **decided 2026-10-06** |
