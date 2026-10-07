@@ -99,6 +99,14 @@ Most ideas start out life as `sketches`. Some may be captured as a plan rather t
 - Every active review record must name an existing matching status record.
 - `docs/developer/` root holds durable guidance only. Do not create a new `current/` directory.
 
+#### Writing a plan or a sketch
+
+- Take your time and re-read the latest version of any material you are proposing changes to
+- Don't guess about the consequences of a modelling decision - check it against the ontologies 
+- Design for the future: check your design against the roadmap: do not design in ways that works now by makes roadmap items harder to deliver later
+- When you need to show the options and consequences of a design choice for the user, NEVER go off your memory alone, ALWAYS re-read the ontologies
+- When explaining your design choices: set the scene first, consider drawing pictures if the subject matter is complex, and work through your arguments and their consequences carefully and methodically for the user to consider
+
 ### Epic Decomposition Model
 
 An **epic** is a large work package spanning multiple phases, teams, or quarters with complex interdependencies. Epics are broken down into smaller, manageable units.
@@ -301,6 +309,13 @@ like a network policy block:
 ### Documenting DL/OWL/TTL Ontologies
 
 Try not to explain your design decisions in multiple places. Avoid explaining why you did not use a certain pattern or construct, especially if you've just explained why you did use a different one. If you feel the need to explain your design decisions, do so in a single place and cross-reference it from other places.
+
+**Referring to `fnd:Version`.** Use the word "versioned" when talking about the *type*, or class
+membership, of a thing. For example, an `ins:Instrument` is "versioned", meaning that it is also a
+member of `fnd:Version`, which implies that it supports multiple versions, provenance and the rest.
+When talking about an individual `ins:Instrument` in the graph, it MAY be more appropriate to call it
+"a version", if and only if you are talking about a specific *version* node. The class is to be
+renamed `fnd:Versioned` (technical debt TD-20).
 
 **Use `rdfs:domain` and `rdfs:range` sparingly.** They are not constraints on how a property may be used. They tell a reasoner something about everything the property is used with: any individual that has the property *is* an instance of the domain, and any value *is* an instance of the range. A domain of `ins:LegalRelation` on `ins:activity` would make every trigger that names an act a legal relation. Declare a domain or range only where it:
 

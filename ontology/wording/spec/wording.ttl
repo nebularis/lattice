@@ -14,7 +14,7 @@
 
 <https://www.nebularis.org/neuro-semantic/wording>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/wording/0.6.0> ;
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/wording/0.7.0> ;
 	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.4.0> ,
 				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.4.0> ,
 				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.7.0> ,
@@ -140,24 +140,31 @@ wrd:partText a owl:DatatypeProperty , owl:FunctionalProperty ;
 
 wrd:refersToVariable a owl:ObjectProperty , owl:FunctionalProperty ;
 	rdfs:label "refers to variable"@en ;
-	rdfs:domain wrd:TextPart ; rdfs:range wrd:Variable ;
-	rdfs:comment "The variable whose value the part shows. Subject: a text part. Value: a variable, at most one." .
+	rdfs:domain wrd:TextPart ; rdfs:range fnd:PersistentIdentity ;
+	rdfs:comment "The variable whose value the part shows. Subject: a text part. Value: the variable's persistent identity, at most one, resolved to the version the wording holding the text declares (law W8)." .
 
 wrd:refersToObject a owl:ObjectProperty , owl:FunctionalProperty ;
 	rdfs:label "refers to object"@en ;
 	rdfs:domain wrd:TextPart ;
-	rdfs:range wrd:ReferenceTarget ;
-	rdfs:comment "The part, wording or document the part names: a defined word's definition, another clause, an annex, a regulation. Subject: a text part. Value: a reference target, at most one." .
+	rdfs:range fnd:PersistentIdentity ;
+	rdfs:comment "The part, wording or document the part names: a defined word's definition, another clause, an annex, a regulation. Subject: a text part. Value: the target's persistent identity, at most one, resolved to the version the wording holds, or for a document outside it to the edition the wording relies on (law W8)." .
+
+wrd:displayText a owl:DatatypeProperty , owl:FunctionalProperty ;
+	rdfs:label "display text"@en ;
+	rdfs:domain wrd:TextPart ; rdfs:range xsd:string ;
+	rdfs:comment "The words a reference part shows, as the drafter wrote them: an inflected form or a variable's printed name. Subject: a text part with a reference. Value: a string, at most one. Without one, a renderer shows the target's own label." .
 
 wrd:DocumentObject a owl:Class ;
-	rdfs:subClassOf prov:Entity , wrd:LinkedDocument ;
+	rdfs:subClassOf prov:Entity , fnd:Version , wrd:LinkedDocument ;
 	rdfs:label "Document object"@en ;
-	rdfs:comment "An attachment the wording relies on whose content is not digitised." .
+	rdfs:comment "An attachment the wording relies on whose content is not digitised." ;
+	fnd:utility "Each instance is one edition, with the attachment's persistent identity. A wording relies on one edition of it (wrd:reliesOnEdition)." .
 
 wrd:ExternalDocument a owl:Class ;
-	rdfs:subClassOf prov:Entity , wrd:LinkedDocument ;
+	rdfs:subClassOf prov:Entity , fnd:Version , wrd:LinkedDocument ;
 	rdfs:label "External document"@en ;
-	rdfs:comment "A document outside the contract, that its wording relies on." .
+	rdfs:comment "A document outside the contract, that its wording relies on." ;
+	fnd:utility "Each instance is one edition, with the document's persistent identity and the date it came into force. A wording relies on one edition (wrd:reliesOnEdition) or on the document as amended (wrd:reliesAsAmended)." .
 
 wrd:LinkedDocument a owl:Class ;
 	owl:equivalentClass [ a owl:Class ; owl:unionOf ( wrd:DocumentObject wrd:ExternalDocument ) ] ;
@@ -168,7 +175,7 @@ wrd:LinkedDocument a owl:Class ;
 wrd:ReferenceTarget a owl:Class ;
 	owl:equivalentClass [ a owl:Class ; owl:unionOf ( wrd:WordingNode wrd:LinkedDocument ) ] ;
 	rdfs:label "Reference target"@en ;
-	rdfs:comment "Anything a text part or a reference element may point to (e.g., a wording, element, or linked document." ;
+	rdfs:comment "Anything whose identity a text part or a reference element may name: a wording, an element, or a linked document." ;
 	fnd:utility "Assertions should NOT be made using this class. Its subclasses are declared explicitly. For use by SHACL validators." .
 
 wrd:WordingNode rdfs:subClassOf wrd:ReferenceTarget .
@@ -183,8 +190,18 @@ wrd:documentKind a owl:ObjectProperty , owl:FunctionalProperty ;
 wrd:linksTo a owl:ObjectProperty ;
 	rdfs:label "links to"@en ;
 	rdfs:domain wrd:Reference ;
-	rdfs:range wrd:ReferenceTarget ;
-	rdfs:comment "What a reference element points to. Subject: a reference element. Value: a reference target." .
+	rdfs:range fnd:PersistentIdentity ;
+	rdfs:comment "What a reference element points to. Subject: a reference element. Value: the target's persistent identity, resolved as a text part's reference is (law W8)." .
+
+wrd:reliesOnEdition a owl:ObjectProperty ;
+	rdfs:label "relies on edition"@en ;
+	rdfs:domain wrd:Wording ; rdfs:range wrd:LinkedDocument ;
+	rdfs:comment "An edition of a document outside the wording that the wording relies on, as in force at that edition: a static reliance. Subject: a wording. Value: an edition, any number, at most one per document (law W8)." .
+
+wrd:reliesAsAmended a owl:ObjectProperty ;
+	rdfs:label "relies as amended"@en ;
+	rdfs:domain wrd:Wording ; rdfs:range fnd:PersistentIdentity ;
+	rdfs:comment "A document outside the wording that the wording relies on as amended from time to time: an ambulatory reliance. Subject: a wording. Value: the document's persistent identity, any number. The edition is whichever is in force when a case is evaluated." .
 
 [] a owl:AllDisjointClasses ;
 	owl:members ( wrd:Wording wrd:Element wrd:TextPart wrd:DocumentObject wrd:ExternalDocument wrd:PopulationMethod wrd:InclusionMode wrd:VariableValue

@@ -104,10 +104,10 @@ SC_EX, SC = _ns("supply-classification")
 def test_c7c_01_version_imports_and_new_terms() -> None:
     spec = _graph(SPEC)
     ontology = URIRef("https://www.nebularis.org/neuro-semantic/instrument")
-    assert spec.value(ontology, OWL.versionIRI) == URIRef(LATTICE + "instrument/0.12.0")
+    assert spec.value(ontology, OWL.versionIRI) == URIRef(LATTICE + "instrument/0.14.0")
     assert {str(i) for i in spec.objects(ontology, OWL.imports)} == {LATTICE + v for v in (
         "foundation/0.4.0", "vocabulary/0.4.0", "quantification/0.7.0", "party/0.8.0", "eligibility/0.10.0",
-        "wording/0.6.0", "behaviour/0.13.0")}
+        "wording/0.7.0", "behaviour/0.13.0")}
     for name in ("defines", "means", "actingRule", "prevailsOver", "deems", "when", "conclusive", "forPurposeOf",
                  "classification", "section", "appliesWithin", "notWithin", "boundWithin", "boundUnder", "resolvedBy",
                  "resolvesFrom", "resolutionStep", "resolutionFilter"):
@@ -138,7 +138,8 @@ def test_c7c_02_examples_conform_to_every_layer(name: str) -> None:
 
 
 def test_c7c_02_the_only_warning_is_the_lot_2_overlap() -> None:
-    warnings = [w for name in NEW for w in _results(_example(name), EVERY_SHAPE, SH.Warning)]
+    warnings = [w for name in NEW for w in _results(_example(name), EVERY_SHAPE, SH.Warning)
+                if "law I16" in w[1] and not w[1].startswith("On the form")]   # C8 adds the form's and coverage
     assert len(warnings) == 1
     focus, message = warnings[0]
     assert focus == str(FW_EX["def-s1-1"]) and "def-s1-2" in message and "lot-2-identity" in message
@@ -218,13 +219,13 @@ def test_c7c_07_a_power_bound_within_two_sections_is_reported() -> None:
 def test_c7c_08_an_overlap_meaning_different_parties_is_one_warning() -> None:
     data = _changed("framework-lots", "ex:def-s1-2 ins:means ex:birch-occ .",
                     ((FW_EX["def-s1-2"], INS.means, FW_EX["ash-occ"]),))
-    warnings = [w for w in _results(data, SHAPES, SH.Warning) if "law I16" in w[1]]
+    warnings = [w for w in _results(data, SHAPES, SH.Warning) if "law I16" in w[1] and not w[1].startswith("On the form")]
     assert len(warnings) == 1 and "lot-2-identity" in warnings[0][1]
 
 
 def test_c7c_09_a_prevailing_definition_removes_the_warning() -> None:
     data = _changed("framework-lots", "ex:def-s1-2 ins:prevailsOver ex:def-s1-1 .")
-    assert [w for w in _results(data, SHAPES, SH.Warning) if "law I16" in w[1]] == []
+    assert [w for w in _results(data, SHAPES, SH.Warning) if "law I16" in w[1] and not w[1].startswith("On the form")] == []
 
 
 def test_c7c_09_conflicting_acting_rules_are_a_violation() -> None:
@@ -298,7 +299,7 @@ def test_c7c_15_readme_is_the_source_and_releases_are_recorded() -> None:
                                   "--check"]) == 0
     readme = (LAYER / "README.md").read_text()
     assert "0.12.0 (breaking, CCS C7c" in readme and "Shapes 0.5.0" in readme
-    assert (LAYER / "shapes" / ".version").read_text().strip() == "0.5.0"
+    assert (LAYER / "shapes" / ".version").read_text().strip() == "0.6.0"
     register = (ROOT / "docs" / "architecture" / "ontology-releases.md").read_text()
     for tag in ("instrument-v0.12.0", "instrument-shapes-v0.5.0", "instrument-vocab-v0.12.0", "party-v0.8.0",
                 "party-vocab-v0.8.0", "eligibility-v0.10.0", "behaviour-v0.13.0", "wording-v0.6.0"):

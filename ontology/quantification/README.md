@@ -685,6 +685,15 @@ qnt:Quantity a owl:Class ;
     rdfs:subClassOf [ a owl:Restriction ; owl:onProperty qnt:numericValue ; owl:cardinality "1"^^xsd:nonNegativeInteger ] .
 ```
 
+**A quantity as a placeholder.** A layer above may hold a quantity whose number an instance
+supplies: a quantity with no `qnt:numericValue`, marked as taking its value from elsewhere, as
+Instrument's placeholders are (Instrument README §18.1). It is consistent under this class's
+cardinality, which an open world reads as a number not yet known, and the layer above generates the
+quantity with its number for each instance. Where the value comes from a defined word, the chain of
+words and variables must not loop back to where it started: such a loop is a violation, which
+Instrument reports hop by hop (Instrument README §18.4).
+
+
 ### `qnt:OrdinalValue`
 
 **Definition.** A point value represented by a concept in an ordered deployment-defined scheme.

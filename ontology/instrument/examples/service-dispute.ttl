@@ -224,3 +224,7 @@ ex:termination-excluded a ins:Exclusion ;
     ins:excepts ex:end-for-failure ;
     ins:arisesOnBreachOf ex:provide-service ;
     ins:appliesInState tmpl:disputed .
+
+# A term whose only content is a regime is bound too, as every stated term is
+# (law I17). The regime itself is read as stated (law I13).
+ex:term-20-1 a ins:Term ; ins:boundIn ex:larkspur-v1 ; ins:boundFrom tmpl:term-20-1 .

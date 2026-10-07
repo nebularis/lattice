@@ -50,21 +50,7 @@ regeneration-as-naturality property test (72 tests, no regression). B1's own sco
 resolved E1.2 (below): the rounding/residual
 theorem belongs to B4/E3-E4, not Quantification; track E's plan and status are corrected.
 
-**Next action, for the human:** review and accept (or revise) `ADR-A116`. Track B's B1-B3 are
-complete; B4 waits on CCS's C12. The two remaining Gate D gaps (below) are deliberately deferred, not
-blocking.
-
-## Gate D (phase-0 plan §9)
-
-| Criterion | State |
-|---|---|
-| the report is complete, every measure scored and evidence linked | done |
-| FM-D1 decided, or the prover abandoned, with reasons if the rule is overruled | done: Isabelle, via the corrected decision rule (not an overrule of it -- M9/M5/M6 were corrected first, the rule's outright-win outcome was then followed) |
-| FM-D10's Haskell question answered | done: Haskell and Scala both adopted |
-| the epic §6 abandonment thresholds revised with the measurements | **open**. The spike's actual M0/M3 figures (e.g. Isabelle's MINOR-change repair at +18/-6 lines) have not yet been fed back into the epic's standing thresholds |
-| the smoke suite passes on macOS, Windows and Linux by the image route, for the chosen prover's stack | **open, and currently unmet**. Isabelle has no image route in this spike at all (epic §4 table; `driver.py` refuses `--route image` for `isabelle` by design). Only Rocq (not chosen) has a working image. Building one is new work, not yet started |
-| no build output, binary, image, certificate or toolchain file tracked on the branch | holds (checked after every commit this track) |
-| the report and the status record are on `main` | **open**. Per plan §7.1 these were meant to reach `main` regardless of the branch's own fate; the human's decision to keep working on this branch before merging anything has deferred this too. Needs an explicit choice: land these three documents on `main` now (a small, low-risk cherry-pick), or supersede §7.1's expectation deliberately and merge everything together later |
+**Next action, for the human:** review and accept (or revise) `ADR-A116`. Track B's B1-B3 are complete; B4 waits on CCS's C12. The two remaining Gate D gaps (below) are deliberately deferred, not blocking. Also decide when and where the spike branch, `fm/phase-0-prover-spike`, is created, and approve the image builds and any native installs.
 
 ## Track board
 
@@ -99,7 +85,7 @@ blocking.
 | FM-D11, FM-D12, FM-D13 | decided 2026-10-06, as recommended |
 | FM-D15 | decided 2026-10-06: stale on a tool change, suspect on a known soundness fix, invalid on a semantic change. Needs an ADR-A27 addendum |
 | FM-D14 | open |
-| FM-D16 | open: the image route everywhere for recorded work, native installs for authoring only. Blocked, for Isabelle specifically, on building the image Gate D's smoke-suite criterion needs |
+| FM-D16 | decided 2026-10-06: the image route everywhere for recorded work, native installs for authoring only. The spike remains blocked on Isabelle's image route for Gate D's smoke-suite criterion until that path is built |
 | the rest | open |
 
 ## Log
@@ -112,26 +98,9 @@ blocking.
 - 2026-10-06: FM-D15 decided: a semantic input change invalidates, a tool identity change marks claims stale and schedules re-verification, and a known soundness fix marks them suspect, failing the gate until re-verified
 - 2026-10-06: tracks staggered: C1, C2, B1 and B2 alongside the spike, A1 to A4 after gate D (A5 with C), B4 with C11a and C12, C3 with C13a
 - 2026-10-06: a toolchain spike on a Windows host without administrator rights, behind a TLS-re-signing proxy, ran both stacks natively and in Linux containers: proofs, code generation, compilation, AST reading and cross-compilation all passed. The plans now run on macOS, Windows and Linux: an image route for every recorded check and job, slim, multi-arch, pinned and capped, native installs for authoring only (epic E9, §4 Environments, FM-D16), and slice D0 for environments in track D
-- 2026-10-06: track D (D0-D4) completed on `fm/phase-0-prover-spike`. A brief defect found during
-  D2 (TA2 mis-stated as order-reversing; it is monotone) corrected before D3 began. D4's first
-  draft scored a 1.0-point Rocq tiebreak. The human then corrected the scoring: M9 (prior-choice
-  consistency, evidenced by an RDF/Datalog engine that was sketched but never built) removed as
-  worth-less-than-nothing, M5 (other code-generation targets) reweighted from 5 to 10 to match
-  M6 and rescored for production-toolchain relevance (Scala, Rust, Python). The corrected total
-  (100 points) favours Isabelle by 5.0, an outright win under the plan's tie rule, not a tiebreak.
-  FM-D1 and FM-D10 reopened rather than re-decided unilaterally; see
-  [formal-prover-experiment.md](../notes/formal-prover-experiment.md).
-- 2026-10-06: Machine R reproduced the branch on macOS (Apple silicon), native installs only,
-  unmodified: everything passed except `gate.py`, found to depend on filesystem sort order
-  (PF1). Fixed here: `extract_statements` now excludes `defects/`, matching `scan_for_banned`
-  (commit `c4075a6`). A follow-up question on the M6 finding confirmed Isabelle's `can`/
-  `Goal.prove` is a tested, working equivalent of Rocq's `Fail`, not a gap; the correction raised
-  Isabelle's total to a 6.0-point win. The human then decided FM-D1 (Isabelle) and FM-D10
-  (Haskell and Scala both adopted) on that evidence, and decided to continue track E's work on
-  this branch rather than cutting a new one, deferring `main` until that work is ready. Gate D
-  itself is not yet fully closed: the epic's abandonment thresholds are not yet revised with the
-  measurements, and Isabelle has no image route in this spike to satisfy the smoke-suite
-  criterion with (both open, see Gate D above).
+- 2026-10-06: FM-D16 decided as recommended: the image route everywhere for recorded work, native installs for authoring only.
+- 2026-10-06: track D (D0-D4) completed on `fm/phase-0-prover-spike`. A brief defect found during D2 (TA2 mis-stated as order-reversing; it is monotone) corrected before D3 began. D4's first draft scored a 1.0-point Rocq tiebreak. The human then corrected the scoring: M9 (prior-choice consistency, evidenced by an RDF/Datalog engine that was sketched but never built) removed as worthless-than-nothing, M5 (other code-generation targets) reweighted from 5 to 10 to match M6 and rescored for production-toolchain relevance (Scala, Rust, Python). The corrected total (100 points) favours Isabelle by 5.0, an outright win under the plan's tie rule, not a tiebreak. FM-D1 and FM-D10 reopened rather than re-decided unilaterally; see [formal-prover-experiment.md](../notes/formal-prover-experiment.md).
+- 2026-10-06: Machine R reproduced the branch on macOS (Apple silicon), native installs only, unmodified: everything passed except `gate.py`, found to depend on filesystem sort order (PF1). Fixed here: `extract_statements` now excludes `defects/`, matching `scan_for_banned` (commit `c4075a6`). A follow-up question on the M6 finding confirmed Isabelle's `can`/`Goal.prove` is a tested, working equivalent of Rocq's `Fail`, not a gap; the correction raised Isabelle's total to a 6.0-point win. The human then decided FM-D1 (Isabelle) and FM-D10 (Haskell and Scala both adopted) on that evidence, and decided to continue track E's work on this branch rather than cutting a new one, deferring `main` until that work is ready. Gate D itself is not yet fully closed: the epic's abandonment thresholds are not yet revised with the measurements, and Isabelle has no image route in this spike to satisfy the smoke-suite criterion with (both open, see Gate D above).
 
 ## Estimates and actuals
 

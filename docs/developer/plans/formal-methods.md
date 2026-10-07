@@ -307,7 +307,7 @@ None of these may be taken by an agent.
 | FM-D13 | the spike's end-to-end law | L15 and L16, with I7 first once C13 is specified | **decided 2026-10-06** |
 | FM-D14 | licence of theories and generated code | decided per import, with the normative theory's licence chosen deliberately beside CC-BY-SA-4.0 | open |
 | FM-D15 | tool identity in read sets | separate semantic inputs from tool identity. A tool change marks records stale and schedules re-verification, without invalidating them. Needs an ADR-A27 addendum (the invalidation rule), with the two kinds of read-set entry stated in ADR-A92's terms | **decided 2026-10-06**: semantic inputs invalidate, tool identity marks stale, a known soundness fix marks suspect, which fails the gate until re-verified |
-| FM-D16 | how tools run on each host | the image route everywhere for checks, CI, claims and jobs, slimmed and capped as §4 sets out. Native installs optional, for authoring only (E9) | open |
+| FM-D16 | how tools run on each host | the image route everywhere for checks, CI, claims and jobs, slimmed and capped as §4 sets out. Native installs optional, for authoring only (E9) | **decided 2026-10-06** |
 
 ## 8. Alignment with other work
 

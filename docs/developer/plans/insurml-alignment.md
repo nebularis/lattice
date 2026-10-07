@@ -113,7 +113,7 @@ Each slice follows its accepted ADR, after CCS C9 is merged.
 |---|---|---|
 | IMA-3.1 | transclusion, law W8, W3 and W5 read through transclusions | bridge §8 |
 | IMA-3.2 | inline parts, W2's fourth form | bridge §9, §13 |
-| IMA-3.3 | references to a persistent identity with display text, designed with CCS C7c | bridge §11 |
+| IMA-3.3 | references to a persistent identity with display text: **moved to CCS C8b** (2026-10-06), since CCS C8's stated meaning names variables by identity and the text should too. This epic's lift adopts it | bridge §11 |
 
 Clause dependencies and content status stay in the profile unless a neutral case appears
 (IMA-D9).
@@ -206,7 +206,7 @@ None of these may be taken by an agent. "Needed by" is the gate at which the epi
 | IMA-D5 | Publication of InsurML-specific material | public branches now, after InsurML's owner agrees, or a private branch until InsurML is released | **decided 2026-10-05:** InsurML's owner permits publication of documentation and analysis of the current draft, whose "not for release" marks its alpha state | gate 0 |
 | IMA-D6 | Reuse | options A to D of integration §4.2, or transclusion (bridge §8) | transclusion after CCS C9, a profile reference element meanwhile | gate 2 |
 | IMA-D7 | Inline structure | inline parts (bridge §9), or source XML only | inline parts | gate 2 |
-| IMA-D8 | References | resolution records, or references to identity (bridge §11) | records now, identity with C7c | gate 2 |
+| IMA-D8 | References | resolution records, or references to identity (bridge §11) | records now, identity with CCS C8b | gate 2 |
 | IMA-D9 | Clause dependencies and content status | profile, or substrate | profile, substrate on a neutral case | gate 2 |
 | IMA-D10 | Who assembles | InsurML first, LATTICE first, or both with parity | both with parity, starting from InsurML's processor | gate 3 |
 | IMA-D11 | Lift technology | XSLT kit, MORK-compiled RML, or both | XSLT kit for execution, MORK record for review | gate 1 |

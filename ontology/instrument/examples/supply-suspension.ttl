@@ -272,3 +272,7 @@ ex:require-resumption a ins:Power ;
     ins:activity ins-voc:Reinstate ;
     ins:scope ex:arrears-cleared ;
     ins:appliesInState tmpl:suspended .
+
+# A term whose only content is a regime is bound too, as every stated term is
+# (law I17). The regime itself is read as stated (law I13).
+ex:term-14-1 a ins:Term ; ins:boundIn ex:halden-v1 ; ins:boundFrom tmpl:term-14-1 .

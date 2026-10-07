@@ -36,6 +36,7 @@
 # | scopes naming section identities, not versions (D3)  | tmpl:term-3-1, ins:appliesWithin ex:part-2-identity    |
 # | a term scoped to every lot except one (D8)           | tmpl:term-3-1, ins:notWithin ex:lot-4-identity         |
 # | a defined party word, defined per section (S94)      | tmpl:def-s1-1 to tmpl:def-s1-4                         |
+# | the suppliers a schedule names, as variable values (C8-Q2) | ex:var-s1-1-supplier to -4, ex:v-s1-1 to -4  |
 # | what an instance stores, and nothing else (D1)       | "The instance", below                                 |
 # | bound meaning generated per section (D4, D5)         | "Generated bound meaning", below                      |
 # | sections sharing one bound term where words resolve alike (D5) | ex:term-3-1-in-lots-1-2                     |
@@ -164,32 +165,53 @@ ex:row-s1-1 a wrd:Text ;
     fnd:hasIdentity ex:row-s1-1-identity ; fnd:hasGovernanceState fnd:Active ;
     wrd:elementType wrd-voc:Definition ; wrd:objectId "S1.1" ; wrd:rankKey "a0" ;
     wrd:inclusionMode wrd-voc:Mandatory ;
-    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
-        wrd:partText "In Lots 1 and 2, \"the Supplier\" means Ash Ltd." ] .
+    wrd:directlyComprises ex:var-s1-1-supplier ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ; wrd:partText "In Lots 1 and 2, \"the Supplier\" means " ] ,
+                    [ a wrd:TextPart ; wrd:partIndex 1 ; wrd:refersToVariable ex:var-s1-1-supplier-identity ] ,
+                    [ a wrd:TextPart ; wrd:partIndex 2 ; wrd:partText "." ] .
+ex:var-s1-1-supplier a wrd:EmbeddedVariable ;
+    fnd:hasIdentity ex:var-s1-1-supplier-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:variableKey "supplier-S1.1" ; wrd:rankKey "z0" ; wrd:multiValued false .
 ex:row-s1-2 a wrd:Text ;
     fnd:hasIdentity ex:row-s1-2-identity ; fnd:hasGovernanceState fnd:Active ;
     wrd:elementType wrd-voc:Definition ; wrd:objectId "S1.2" ; wrd:rankKey "b0" ;
     wrd:inclusionMode wrd-voc:Mandatory ;
-    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
-        wrd:partText "In Lot 2, \"the Supplier\" means Ash Ltd." ] .
+    wrd:directlyComprises ex:var-s1-2-supplier ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ; wrd:partText "In Lot 2, \"the Supplier\" means " ] ,
+                    [ a wrd:TextPart ; wrd:partIndex 1 ; wrd:refersToVariable ex:var-s1-2-supplier-identity ] ,
+                    [ a wrd:TextPart ; wrd:partIndex 2 ; wrd:partText "." ] .
+ex:var-s1-2-supplier a wrd:EmbeddedVariable ;
+    fnd:hasIdentity ex:var-s1-2-supplier-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:variableKey "supplier-S1.2" ; wrd:rankKey "z0" ; wrd:multiValued false .
 ex:row-s1-3 a wrd:Text ;
     fnd:hasIdentity ex:row-s1-3-identity ; fnd:hasGovernanceState fnd:Active ;
     wrd:elementType wrd-voc:Definition ; wrd:objectId "S1.3" ; wrd:rankKey "c0" ;
     wrd:inclusionMode wrd-voc:Mandatory ;
-    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
-        wrd:partText "In Lot 3, \"the Supplier\" means Birch Ltd and Cedar Ltd, jointly and severally and, as between themselves, in equal shares." ] .
+    wrd:directlyComprises ex:var-s1-3-supplier ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ; wrd:partText "In Lot 3, \"the Supplier\" means " ] ,
+                    [ a wrd:TextPart ; wrd:partIndex 1 ; wrd:refersToVariable ex:var-s1-3-supplier-identity ] ,
+                    [ a wrd:TextPart ; wrd:partIndex 2 ; wrd:partText ", jointly and severally and, as between themselves, in equal shares." ] .
+ex:var-s1-3-supplier a wrd:EmbeddedVariable ;
+    fnd:hasIdentity ex:var-s1-3-supplier-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:variableKey "supplier-S1.3" ; wrd:rankKey "z0" ; wrd:multiValued false .
 ex:row-s1-4 a wrd:Text ;
     fnd:hasIdentity ex:row-s1-4-identity ; fnd:hasGovernanceState fnd:Active ;
     wrd:elementType wrd-voc:Definition ; wrd:objectId "S1.4" ; wrd:rankKey "d0" ;
     wrd:inclusionMode wrd-voc:Mandatory ;
-    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
-        wrd:partText "In Lot 4, \"the Supplier\" means Dogwood Ltd." ] .
+    wrd:directlyComprises ex:var-s1-4-supplier ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ; wrd:partText "In Lot 4, \"the Supplier\" means " ] ,
+                    [ a wrd:TextPart ; wrd:partIndex 1 ; wrd:refersToVariable ex:var-s1-4-supplier-identity ] ,
+                    [ a wrd:TextPart ; wrd:partIndex 2 ; wrd:partText "." ] .
+ex:var-s1-4-supplier a wrd:EmbeddedVariable ;
+    fnd:hasIdentity ex:var-s1-4-supplier-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:variableKey "supplier-S1.4" ; wrd:rankKey "z0" ; wrd:multiValued false .
 
 # ==== The form: roles =========================================================
 #
-# ex:Supplier is the defined word: the role the relations name. ex:LotSupplier
-# is the role a supplier holds by appointment to a lot, which each row means
-# on the form (I13).
+# ex:Supplier is the defined word: the role the relations name. Each row of
+# Schedule 1 names who fills it in its lots, as the value of the row's
+# variable (C8-Q2). ex:LotSupplier is the role a supplier holds by appointment
+# to a lot.
 
 ex:Authority a pty:Role ; rdfs:label "Authority" .
 ex:Supplier a pty:Role ; rdfs:label "the Supplier" .
@@ -211,17 +233,22 @@ tmpl:lots a ins:Sectioning , ins:Template ;
     ins:section ex:lot-1-identity , ex:lot-2-identity , ex:lot-3-identity , ex:lot-4-identity .
 
 # Definitions. Schedule 1 lies in no lot, so each row says where it applies.
+# On the form a row means a placeholder of the slot's stated kind, a role,
+# taking its value from the row's variable (C8-Q1, C8-Q2). Binding replaces it
+# by the occupancy or group the instance records for that variable.
 tmpl:term-s1-1 a ins:Term , ins:Template ; ins:expressedIn ex:row-s1-1 ;
     ins:appliesWithin ex:lot-1-identity , ex:lot-2-identity .     # alternatives
 tmpl:def-s1-1 a ins:Definition , ins:Template ;
     ins:arisesUnder tmpl:term-s1-1 ;
-    ins:defines ex:Supplier ; ins:means ex:LotSupplier .
+    ins:defines ex:Supplier ;
+    ins:means [ a pty:Role ; ins:valueFrom ex:var-s1-1-supplier-identity ] .
 
 tmpl:term-s1-2 a ins:Term , ins:Template ; ins:expressedIn ex:row-s1-2 ;
     ins:appliesWithin ex:lot-2-identity .
 tmpl:def-s1-2 a ins:Definition , ins:Template ;
     ins:arisesUnder tmpl:term-s1-2 ;
-    ins:defines ex:Supplier ; ins:means ex:LotSupplier .
+    ins:defines ex:Supplier ;
+    ins:means [ a pty:Role ; ins:valueFrom ex:var-s1-2-supplier-identity ] .
 
 # Several parties, and how they act together (D12). Binding gives the rule to
 # the group the instance names.
@@ -229,14 +256,16 @@ tmpl:term-s1-3 a ins:Term , ins:Template ; ins:expressedIn ex:row-s1-3 ;
     ins:appliesWithin ex:lot-3-identity .
 tmpl:def-s1-3 a ins:Definition , ins:Template ;
     ins:arisesUnder tmpl:term-s1-3 ;
-    ins:defines ex:Supplier ; ins:means ex:LotSupplier ;
+    ins:defines ex:Supplier ;
+    ins:means [ a pty:Role ; ins:valueFrom ex:var-s1-3-supplier-identity ] ;
     ins:actingRule pty:EachForWhole .
 
 tmpl:term-s1-4 a ins:Term , ins:Template ; ins:expressedIn ex:row-s1-4 ;
     ins:appliesWithin ex:lot-4-identity .
 tmpl:def-s1-4 a ins:Definition , ins:Template ;
     ins:arisesUnder tmpl:term-s1-4 ;
-    ins:defines ex:Supplier ; ins:means ex:LotSupplier .
+    ins:defines ex:Supplier ;
+    ins:means [ a pty:Role ; ins:valueFrom ex:var-s1-4-supplier-identity ] .
 
 # Every lot except Lot 4: the lots at or below Part 2, less Lot 4.
 tmpl:term-3-1 a ins:Term , ins:Template ; ins:expressedIn ex:cl-3-1 ;
@@ -324,9 +353,8 @@ ex:invoice-unpaid a skos:Concept ; rdfs:label "the Authority has failed to pay a
 # ==== The instance: what the framework stores (D1) ============================
 #
 # Only what differs from the form: the wording it includes, its parties, and
-# the values its words take. The actors Schedule 1 names are wording values,
-# which C8's parameter bindings carry. Until then, the generated definitions
-# below show where they land.
+# the values of its variables, among them the supplier each row of Schedule 1
+# names (C8-Q2). Variables are declarations, never included (law W5).
 
 ex:framework-wording-v1 a wrd:AssembledWording ;
     fnd:hasIdentity ex:framework-wording-identity ; fnd:hasGovernanceState fnd:Active ;
@@ -334,7 +362,13 @@ ex:framework-wording-v1 a wrd:AssembledWording ;
     wrd:includes ex:part-1 , ex:cl-2-1 , ex:cl-3-1 , ex:cl-3-2 ,
                  ex:part-2 , ex:lot-1 , ex:cl-l1-1 , ex:lot-2 , ex:cl-l2-1 , ex:lot-3 , ex:cl-l3-1 ,
                  ex:lot-4 , ex:cl-l4-1 , ex:cl-l4-2 , ex:cl-l4-3 ,
-                 ex:sch-1 , ex:row-s1-1 , ex:row-s1-2 , ex:row-s1-3 , ex:row-s1-4 .
+                 ex:sch-1 , ex:row-s1-1 , ex:row-s1-2 , ex:row-s1-3 , ex:row-s1-4 ;
+    wrd:hasValue ex:v-s1-1 , ex:v-s1-2 , ex:v-s1-3 , ex:v-s1-4 .
+
+ex:v-s1-1 a wrd:VariableValue ; wrd:forVariable ex:var-s1-1-supplier ; wrd:value ex:ash-occ .
+ex:v-s1-2 a wrd:VariableValue ; wrd:forVariable ex:var-s1-2-supplier ; wrd:value ex:ash-occ .
+ex:v-s1-3 a wrd:VariableValue ; wrd:forVariable ex:var-s1-3-supplier ; wrd:value ex:lot-3-suppliers .
+ex:v-s1-4 a wrd:VariableValue ; wrd:forVariable ex:var-s1-4-supplier ; wrd:value ex:dogwood-occ .
 
 ex:framework-v1 a ins:Instrument ;
     fnd:hasIdentity ex:framework-identity ;

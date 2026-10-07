@@ -79,3 +79,43 @@ principle DP3 keeps apart (sketch §3.1).
 - The root README, `ontology/README.md`, `ontology-architecture.md` and the solution design
   specification are updated when the layer lands (C3) and when the unit closes (C16).
 - Open CBAA's `wim:` migrates to this layer (CCS plan §7).
+
+## Addendum (2026-10-06): references by identity
+
+**Status:** Proposed 2026-10-06 (CCS slice C8b, C8b-Q1 to C8b-Q4). Takes over insurml-alignment
+IMA-3.3 and the identity half of IMA-D8. The [CCS plan's C8b section](../../developer/plans/computable-contract-substrate.md)
+sets out the problem and each option's consequences. The examples are `reused-clause.ttl`,
+`facility-agreement.ttl`, `facility-form.ttl` and `trial-protocol.ttl` in
+`ontology/wording/examples/`, and Instrument's `facility-parameters.ttl`, `framework-lots.ttl` and
+`services-schedule.ttl`.
+
+1. **A reference names what it refers to, never which version** (C8b-Q1 (c)).
+   `wrd:refersToObject`, `wrd:refersToVariable` and `wrd:linksTo` name a persistent identity: an
+   element's, a variable's, a wording's, or a document's outside the wording. A revised definition
+   or a redeclared variable therefore leaves every clause mentioning it at the same version, with
+   the same hash and the same stated meaning.
+2. **The wording fixes the version.** Inside the wording, the version is the one the wording holds:
+   in a form, the version it comprises. In an assembled wording, the version it includes, or for a
+   variable the version an included element declares (law W5).
+3. **Outside documents have editions.** An external document or a document object has a persistent
+   identity and an edition for each text in force, each a version under Foundation's versioning. A
+   wording relies on an outside document either at one edition (`wrd:reliesOnEdition`, static: "as
+   in force on 1 January 2027") or as amended (`wrd:reliesAsAmended`, ambulatory: "as amended from
+   time to time"). An ambulatory reliance names no edition. The edition in force when a case is
+   evaluated is a value the evaluation context supplies, which CCS C12 and C13 resolve. An
+   attachment is part of what the parties agreed, and is relied on at one edition.
+4. **Resolution is derived, and checked** (C8b-Q2 (a)). Law W8: within a form and within an
+   assembled wording, every reference to something inside the wording finds exactly one version,
+   and every reference to an outside document finds exactly one reliance, in the wording holding the
+   clause or the form it was assembled from. No resolution is stored per instance. A resolution
+   record (the assembly interface sketch's H5) remains available should a resolution policy appear
+   that the graph does not determine.
+5. **Display text** (C8b-Q3 (a)). `wrd:displayText` on a referring text part holds the words shown,
+   as the drafter wrote them: an inflected form ("Lessee's") or a variable's printed name.
+6. **Code** (C8b-Q4 (a)). W8 is a shape. Instrument's reference binder finds a variable's version
+   from its identity at both tiers. No renderer exists yet: the assembly interface's `render`
+   (IMA-4.1) will resolve references the same way.
+7. **Breaking at major version zero** (ADR-A113). Wording 0.6.0 → 0.7.0, and Instrument re-pinned.
+8. **Deferred.** One element version in two different forms needs transclusion (IMA-3.1), since law
+   W1 places an element version in versions of one wording only. Resolving an ambulatory reliance
+   at evaluation time (C12, C13).

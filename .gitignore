@@ -23,9 +23,6 @@
 .*.aux
 .Rocqdep.d
 *.heap.gz
-# A corporate TLS-proxy CA staged into an image build context (build_images.py) and meant to be
-# removed after the build; stray if a build fails partway through (PF4, macOS reproduction)
-spikes/formal-prover/env/docker/*/corporate-ca.crt
 # Node and Yarn installs, caches, and build output
 node_modules/
 .pnp.*

@@ -954,7 +954,8 @@ are the human's, examples first.
 | C7c | **what terms are, and who they bind** (split from C7b at C7b-Q1, 2026-10-04): constitutive terms (Definition, Deeming), sections (`appliesWithin`, `notWithin`), per-section definitions with union and overlap reporting, term classification (§5.6, §5.10, I15, I16). From C6's review (2026-10-03): how a case-dependent party resolves, through a definition (§5.10, S58) and through the case (S20, `ins:resolvedBy`, C6-Q5: either a path-only `elg:EvidenceBinding`, which relaxes Eligibility's shape, or a rule that such resolution is not a valid way to model), and how a group acts (several, joint) through a defined party word's definition. I15 fixes a case's section by the power it was bound under, so `ins:boundUnder` is brought forward from C9 (C7c-Q1) | 0.12.0 MINOR. After C7b |
 | C8 | parameter bindings from wording variables (`ins:ParameterBinding`), including the dates and lengths that anchored time names (a wording date as a context role, terms in time sketch §5.2), and **definitions of date and amount words** ("the Expiry Date", "the Commitment"), whose `ins:means` is a value bound from a wording variable, from C7c-Q7, decided with HQ-4, encoding status, and law I17's two SHACL-SPARQL shapes (§5.9, I17). Stated and bound meaning, ownership (`ins:Template`, `ins:expressedIn`, `ins:boundIn`, `ins:boundFrom`, `ins:alsoExpressedIn`) and their SHACL Core shapes moved into C6 (C6-Q1 (b)) | 0.13.0 MINOR |
 | C8a | the template library (§5.11) in `ontology/instrument/templates/`: periods, switching and threshold regimes, relation patterns. Term and qualifier templates wait for the bases decision in [contract-amounts.md](../sketches/contract-amounts.md) §1.7 | templates 0.1.0 |
-| C9 | amendments, consent rules, incorporation (with segment scope), `takesEffectWhen` (§5.8). `ins:boundUnder` moved into C7c (C7c-Q1). Consent rules complete how a group acts (HQ-5). Shapes for I1 to I16. An example with a party to the instrument who is in no relation, executing separately (S90, from C6's review) | 0.14.0 MINOR, shapes |
+| C8b | **Wording references by identity** (raised by C8-Q1, 2026-10-06, taking over insurml-alignment IMA-3.3). `wrd:refersToVariable` and `wrd:refersToObject` may name an element's persistent identity, resolved within the assembled wording's inclusions, so a clause's text names a variable or an object as its stated meaning does (D3), and a clause reused under another schedule needs no new version. A law that an assembled wording includes at most one version of a referenced identity. An optional display text for an inflected form ("insured persons") or a variable's printed name (bridge §11). A version reference stays valid. Brief: whether the identity reference replaces or sits beside the version reference, how the renderer resolves it, and InsurML's lift (IMA-D8) | Wording 0.6.0 → 0.7.0, re-pinning Instrument 0.14.0. After C8, before C9, which then takes Instrument 0.15.0 |
+| C9 | amendments, consent rules, incorporation (with segment scope), `takesEffectWhen` (§5.8). `ins:boundUnder` moved into C7c (C7c-Q1). Consent rules complete how a group acts (HQ-5). Shapes for I1 to I16. An example with a party to the instrument who is in no relation, executing separately (S90, from C6's review) | 0.15.0 MINOR, shapes (C8b takes 0.14.0) |
 
 Nothing outside Instrument imports Instrument once C10 lands, so tranche D cascades only to
 Instrument's own documents and examples. No applied insurance module imports Instrument.
@@ -1853,6 +1854,825 @@ answers above where they differ, and the ADR-A104 addendum records them.
 | C7c-20 | a cross-section cap / binding / one bound qualifier, qualifying each section's bound relations | L1 | + |
 | C7c-21 | an incident meeting two towers' conditions / the examples' expected outcomes / each tower's relations apply, the cap counts both | L1 | + |
 | C7c-22 | two instruments whose wordings include the same element version / stated meaning / one set of stated nodes, shared | L1 | + |
+
+#### C8 in detail
+
+**Machine:** R (Claude Code). **Branch:** `ccs/c8-parameter-bindings`, created by the human from
+`main` once this brief is on `main` and its questions are answered, except C8-Q3's HQ-4 part, which
+waits for the formal-methods epic's track C2. **Commits are the human's**, examples first (ADR-A-C2).
+Merged into `main` before its release tags are created.
+**Validation Pack:** [computable-contract-substrate-c8](../validation/computable-contract-substrate-c8.md).
+**Decisions:** ADR-A104 decision 13 (binding) and its 2026-10-06 addendum (D1 to D22), ADR-A92
+(derived artefacts), ADR-A51 (content-addressed versions), ADR-A85 (scheme bindings), ADR-A115
+(context values). Laws I13 and I17.
+**Inputs:** the CCS sketch §5.9, scenarios S63 and S65, and S46, S73 and S81 for what waits on
+contract amounts. C7c's handoff: the two checks that need binding (overlapping definitions on the
+form, and every word resolving in every section its term applies within), and the actors a
+schedule names, which C7c's examples could show only in generated output. C7c-Q7's date and amount
+words, and HQ-4. From the insurml-alignment epic: the bridge sketch §12 (contractual and
+informational content). From the formal-methods epic: track C2, which models scheme composition
+before HQ-4 is decided.
+
+**Invariant:** an instrument stores only what differs from its form, and its values are among that.
+Stated meaning names roles, words and variables. Bound meaning names occupancies, meanings and
+values, and is generated from the form and the instance (D4). An instrument version binds exactly
+the stated meaning of the elements its wording includes (I17). Nothing here evaluates.
+
+**Scope:**
+
+| Group | Content | Sketch, scenarios, laws |
+|---|---|---|
+| values in stated meaning | how a stated node takes a value from a wording variable: a duration, a rate, a threshold, a date, an amount, a party, a concept | §5.9. S65. I13 |
+| value words | definitions of date and amount words, and wording dates as context roles | C7c-Q7, HQ-4 |
+| schedules | the parties and values a schedule names, per section | C7c's handoff, S94 |
+| what text means nothing | encoding status | §5.9. S63. I17 |
+| generation | a reference binder for one instrument, and the checks that need it | D4, D5. I16, I17 |
+
+**Questions:**
+
+- **C8-Q1. How stated meaning takes a value from a variable.** "The Borrower shall repay within
+  [10] Business Days." The sketch (§5.9, written before C7c's D1 to D5 and D12) has an
+  `ins:ParameterBinding` node per parameter, naming a parameter kind and the variable, and scope
+  parameters with their own subject, steps and strategy. Generation now makes bound meaning from the
+  form and the instance (D4), so the question is only how a stated node says where a value goes.
+  Options, with their consequences:
+
+  | | (a) the variable named in the slot | (b) **a placeholder that takes its value from a variable** | (c) `ins:ParameterBinding`, as sketched |
+  |---|---|---|---|
+  | Shape | `ins:due` or `elg:requiredConcept` names the `wrd:Variable` | a node of the slot's own kind, a quantity, a concept, a range, carries `ins:valueFrom`, naming the variable | a separate node names the stated node, a parameter kind and the variable |
+  | Lower layers | Eligibility's and Quantification's ranges would type a variable as a concept, a range set or a quantity under a reasoner, which is wrong and cannot be fixed without changing those layers | none: every slot holds a node of its proper kind, and only Instrument's new property is added | none |
+  | Literal values (a number, a date) | cannot be expressed, since a literal slot cannot name a node | the same way as objects: the placeholder quantity takes its number from the variable | the same way as objects |
+  | Mechanisms | two, one for objects and one for literals | one | one, plus a kind vocabulary kept in step with Instrument's properties |
+  | Size, per form | none added | the placeholder node, which the slot needs anyway, plus one triple | one node of about four triples per parameter, beside the slot |
+  | Per instance | none: values are already stored with the assembled wording (D1) | none | none |
+  | Binder | replaces a variable wherever it appears | the same walk as for words (D12) | reads each binding node, then finds the slot it names |
+  | Context-free stated meaning (D3) | the variable must be named by identity | the same | the same |
+
+  **Recommendation: (b).** It keeps every slot well typed, needs no change below Instrument, and is
+  one mechanism for literal and object values alike. The node saving against (c) is small, and on
+  the form only, which is shared and matched on its hash (D2), so the reason to prefer it is one
+  mechanism and no kind vocabulary, not size. `ins:valueFrom` names the variable's persistent
+  identity, resolved within the assembled wording, so a clause reused under another schedule keeps
+  its stated meaning (D3, bridge §11). A placeholder may carry a default value, which the instance's
+  value replaces.
+
+  **How a placeholder resolves across the tiers.** Nothing new is stored at any tier. Each tier
+  already holds what resolution reads:
+
+  | Tier | What exists | What the placeholder resolves to | Checked |
+  |---|---|---|---|
+  | library element | an element version, its stated meaning (matched on its hash, D2), and the variable it declares or refers to, each with a persistent identity | nothing: the placeholder names the variable's identity, as the text's own reference names the variable | the placeholder names a variable's identity, and at most one |
+  | template wording, a form: complete text, no data | element versions composed into one wording, InsurML's template contract among them, each declaring its variables | the one version of that identity the template declares, so a clause reused in another template, whose schedule declares the same variable, keeps its stated meaning | the template declares a version of every variable its stated meaning names (a warning while drafting) |
+  | instance: an assembled wording with its values, and its instrument | `wrd:includes` the element versions, and `wrd:hasValue` the values, each `wrd:forVariable` one variable version. Variables are declarations, never included (law W5) | the value whose variable version has that identity, followed through `wrd:populatedFrom`. For a table field's variable, one value per entry (`wrd:forEntry`), and an entry may be a section or a party's occupancy, which is how a schedule gives each section its own value | the binder reports a variable with no value (the default is used if the placeholder has one), and two values for versions of one identity |
+
+  ```mermaid
+  flowchart LR
+      subgraph LIB["Library element, matched on its hash"]
+          CL["clause 7.2 v3<br/>within [days] Business Days"]
+          PH["placeholder quantity<br/>ins:valueFrom days' identity"]
+          ID["the days variable's identity"]
+          CL -- "states" --> PH
+          PH -- "valueFrom" --> ID
+      end
+      subgraph TPL["Template: complete text, no data"]
+          T["template wording"]
+          V2["days variable v2"]
+          T -- "comprises" --> V2
+          V2 -- "hasIdentity" --> ID
+      end
+      subgraph INS["Instance: values, and generated meaning"]
+          AW["assembled wording"]
+          VV["variable value 10<br/>forVariable v2"]
+          BR["bound obligation<br/>due within 10 Business Days"]
+          AW -- "hasValue" --> VV
+          VV -- "forVariable" --> V2
+          VV -. "the binder reads" .-> BR
+      end
+      style LIB fill:#BBDEFB
+      style TPL fill:#BBDEFB
+      style INS fill:#bcdee1
+  ```
+
+  A template has no bound meaning, since it has no values. A claim about every binding of a template
+  (formal-methods track G) quantifies over the values its variables admit. Wording's text references
+  (`wrd:refersToVariable`) still name a variable version, so a clause's text and its stated meaning
+  name the variable differently until Wording takes the identity reference of bridge §11, which slice
+  C8b plans.
+- **C8-Q2. The parties a schedule names.** "In Lot 2, the Supplier means [Ash Ltd]." Options:
+  - (a) **a party word's stated definition means a variable**, whose value is an occupancy or a
+    group (`wrd:value` already admits a party's occupancy). Binding resolves the word, per section,
+    to the values of the definitions that apply there
+  - (b) the stated definition keeps meaning a role, and the instance says which occupancy fills it in
+    each section
+
+  **Recommendation: (a).** It follows from C8-Q1, needs no new property, and puts the value where
+  the text puts it. (b) would need a per-section filling record on the instance, a second mechanism.
+- **C8-Q3. Date and amount words, and HQ-4.** "The Expiry Date" is a defined word whose definition
+  means a variable's value, and a due range or an expiry anchors at a context value whose role is
+  that word. HQ-4 asks how such roles are bound, beside Instrument's baseline roles and other
+  layers'. Options:
+  - (a) one deployment scheme collecting every role
+  - (b) scoped scheme bindings (ADR-A85)
+  - (c) **a wording's own dates are defined words**, admitted as context roles because a definition
+    in the instrument defines them, with no scheme binding. Baseline roles stay bound by contract
+
+  **Recommendation: (c), decided after track C2's model of scheme composition** (agreed
+  2026-10-06). Amount words take entered values only: computed amounts, bases and aggregation wait
+  for contract amounts (§1.7 of its sketch), and so does `ins:computedBy` (C7b-Q7).
+- **C8-Q4. Encoding status: which text is expected to mean something.** Law I17 asks that an
+  instrument bind "every element marked `Expresses`". Its purpose is coverage: to tell text that
+  binds nobody by design (a heading, a note for information, S63) from text whose meaning nobody has
+  modelled yet. Without some way to tell them apart, the second half of I17 cannot be checked, and
+  the formal-methods adequacy report cannot list unformalised commitments. Options, with their
+  consequences:
+
+  | | (a) marks on every element, as sketched | (b) **a convention, with one optional mark** | (c) element types decide | (d) no marks and no check |
+  |---|---|---|---|---|
+  | Rule | each element is `Expresses`, `NoMeaning` or `NotAssessed` | a leaf of text, a `wrd:Text` with no children, is expected to mean something. Containers, variables, references, fields and entries are not. A leaf reviewed as binding nobody carries `ins:encodingStatus ins-voc:NoMeaning`. An expected leaf with neither stated meaning nor the mark is not yet assessed | Clause and Definition are expected to mean something, Section, Schedule and the rest not | none |
+  | Marks per form | one per element: about 700 for a form the size of the AIG sample policy | one per informational leaf: tens | as (b), plus a mapping per element-type scheme | none |
+  | Per instance | none: marks are on element versions, shared and matched on their hash (D2) | none | none | none |
+  | Check cost | one pass over the included elements, per assembled wording, which many instances share, so it is cached with it (C16b) | the same | the same | none |
+  | Drift | `Expresses` can disagree with whether stated meaning exists | none: whether stated meaning exists is read, never asserted | an InsurML profile's types need their own mapping, and meaning would depend on typing, which C7c-Q2 rejected | none, and no coverage either |
+  | Unassessed text | reported | reported | reported | invisible |
+
+  **Recommendation: (b).** Convention covers almost every element: structure says what is expected,
+  and only a reviewed exception is marked. It reads the wording's shape, not its types, so InsurML
+  and Wording behave alike, and the lift marks InsurML's informational content `NoMeaning` (bridge
+  §12). `ins-voc:NotAssessed` is not needed, since the absence of both meaning and mark says it.
+  An unassessed leaf is a warning, since drafting and lifting leave many for a while, and an
+  applied profile may make it a violation. A container that does express meaning, such as a
+  section whose term spans its clauses, is never at fault.
+- **C8-Q5. A reference binder.** Bound meaning is generated (D4), and C7c's examples hand-write it.
+  Options:
+  - (a) **a Python reference binder** in `tools/`, generating one instrument's bound meaning from
+    its form and instance: words and variables resolved per section, sharing where they resolve
+    alike, deterministic IRIs (D5). The tests regenerate every C7c and C8 example's generated part
+    and compare it with the expected output, and I16 and I17 run on the binder's output. C16b adds
+    sharing across instruments, the cache and the subgraph
+  - (b) no binder until C16b. The examples keep hand-written expected output
+
+  **Recommendation: (a).** A variable means nothing until something applies it, and C7c's two open
+  checks need the binder. Hand-written output would drift from the rules without one.
+- **C8-Q6. C7c's two open checks.** Options:
+  - (a) **both on the form as well**: overlapping definitions of a word within a section, and a
+    word some term uses with no definition applying in a section where the term applies, as
+    SHACL-SPARQL over stated meaning and sectioning. The binder reports what depends on values,
+    such as two definitions meaning different parties
+  - (b) on the binder's output only
+
+  **Recommendation: (a).** A form is reviewed before any instance exists, and both checks are
+  questions about the form.
+
+**Answered by the human, 2026-10-06:** C8-Q2 (a). C8-Q3 waits for track C2. C8-Q4 (b), by convention.
+C8-Q5 (a). C8-Q6 (a). C8-Q1 (b), a placeholder taking its value from a variable's identity, after
+its consequences and its resolution across the tiers were set out. The text reference gap is slice C8b.
+
+**Decided in the examples phase, 2026-10-06:**
+
+- **A placeholder may take its value from a value word** (an amount word now, date words with
+  HQ-4), as well as from a variable. A chain of words and variables can then loop: a word means a
+  placeholder whose value comes from the same word, through other words or `wrd:populatedFrom`.
+  Cycle checking must be thorough, on the form and in the binder, over every hop, per section
+  (a word may close a loop in one section and not in another), and through variables taking
+  another's value. A cycle is a violation, since nothing in it can be bound, and its report names
+  every hop in order, with the clause each hop is stated in. The rule, and what a cycle looks like,
+  is stated wherever a reader meets definitions, words, placeholders or variables: the Instrument
+  README's terminology, definitions, values and generation sections and its worked examples,
+  Wording's README on variables and `wrd:populatedFrom`, Quantification's and Eligibility's READMEs
+  where their slots may hold a placeholder or a word, the ADR-A104 addendum, and the binder's
+  documentation
+- **A concept word may stand in an Eligibility concept slot** (`elg:requiredConcept`,
+  `elg:excludedConcept`), extending D12 below Instrument with no change to Eligibility. Shapes govern
+  it: a word that also sits in a scheme its condition is constrained by is ambiguous and reported. A
+  word's meaning must suit every slot it stands in (concepts for a concept slot, a condition for a
+  condition slot, a quantity for a placeholder). A generated condition names no word
+- **Generation's cost** is paid on demand, not stored: an instance stores its values only, and the
+  path from a slot to a placeholder is generated where something reads it. C16b's content addressing
+  shares generated paths between instruments whose values agree
+
+**Decided by precedent, not asked:**
+
+- an instance's values belong to its assembled wording (`wrd:hasValue`), so the instance stores
+  them (D1). A variable with no value in an instance leaves its bound node unbuilt, which the binder
+  reports, as it reports an unresolved word
+- a bound node names values, never variables (law I13), checked as words are (D12)
+- law I17's two SHACL-SPARQL shapes run over generated bound meaning (D4)
+- generated nodes keep deterministic identities (D5)
+- examples are domain-neutral, from at least three domains, under the rule in
+  `.github/copilot-instructions.md`
+
+**What C8 builds, if the recommendations are taken:**
+
+| Layer | Adds |
+|---|---|
+| Instrument 0.12.0 → 0.13.0 | `ins:valueFrom`, variables admitted in stated slots, `ins:encodingStatus`, and the README's sections on values, schedules, value words and generation |
+| `instrument-vocab` 0.13.0 | `ins-voc:NoMeaning` |
+| `instrument-shapes` 0.5.0 → 0.6.0 | a bound node names no variable, encoding status, law I17's two shapes, overlap and word resolution on the form |
+| `tools/` | the reference binder, `tools/instrument_binder.py`, and its tests |
+| ADR-A104 | an addendum restating decision 13 and recording the answers |
+
+1. **Examples first (ADR-A-C2).** In `ontology/instrument/examples/`, under the answers:
+
+   | File | Shows |
+   |---|---|
+   | `facility-parameters.ttl` | a facility form's variables: the margin, "the Commitment" as an amount word, the leverage ceiling inside a covenant's range, repayment within [n] Business Days, and the parties. Generated bound meaning |
+   | `framework-lots.ttl` (reworked) | Schedule 1's suppliers as variables whose values are occupancies and a group, closing C7c's gap (C8-Q2) |
+   | `lease-expiry.ttl` (reworked) | the Expiry Date and the Break Date as date words bound from variables, anchoring the expiry and the break window (C8-Q3, once HQ-4 is decided) |
+   | `services-schedule.ttl` | a services agreement whose territory list is a variable inside a scope condition, an element for information only (`NoMeaning`, S63), and one not yet assessed |
+
+2. **Spec** (`instrument` 0.12.0 → 0.13.0): the constructs above, each property's comment stating its
+   subject and value. The ADR-A104 addendum is drafted with the examples.
+3. **Vocab** (`instrument-vocab` 0.13.0): `ins-voc:NoMeaning`.
+4. **Shapes** (`instrument-shapes` 0.5.0 → 0.6.0): a bound node names no variable and no word. A
+   placeholder takes at most one variable. An element marked `NoMeaning` has no stated meaning. I17:
+   nothing bound comes from text the wording does not include, and every included leaf of text has
+   stated meaning bound in the instrument or is marked (a warning). Overlapping
+   definitions of one word within a section of the form (a warning), and a word with no definition
+   applying in a section where its term applies.
+5. **Binder** (`tools/instrument_binder.py`): one instrument's bound meaning from its form and
+   instance, per D4 and D5, with a report of unresolved words, unvalued variables and overlaps. No
+   evaluation, no cache, no sharing across instruments (C16b).
+6. **README**, detailed and comprehensive without being verbose, with diagrams: values in stated
+   meaning, schedules, value words and context roles, encoding status, generation and the binder,
+   law I17, the worked examples, and release notes for 0.13.0 and shapes 0.6.0.
+7. **Tests:** `tools/test_parameter_bindings.py`, with the rows below, added to the
+   `check:ontology-catalog` task. Catalog, releases and the tag list. The agent stops before any
+   commit.
+
+| ID | Given / When / Then | Level | +/- |
+|---|---|---|---|
+| C8-01 | the spec / parsed / `0.13.0`, imports unchanged, every new property states subject and value | L1 | + |
+| C8-02 | every example / all layers' shapes / conform | L1 | + |
+| C8-03 | every example / reasoner / consistent | L2 | + |
+| C8-04 | a bound node naming a variable or a word, a placeholder with two variables / shapes / each reported | L1 | − |
+| C8-05 | an element marked `NoMeaning` with stated meaning / shapes / reported | L1 | − |
+| C8-06 | a bound term from an element the wording does not include / I17 / reported | L1 | − |
+| C8-07 | an included leaf of text with neither stated meaning bound nor a mark / I17 / a warning. A container with neither / no report | L1 | ± |
+| C8-08 | two stated definitions of one word applying within one section of the form / shapes / a warning | L1 | + |
+| C8-09 | a stated term using a word with no definition in one of its sections / shapes / reported | L1 | − |
+| C8-10 | every C7c and C8 example / binder / output isomorphic to its expected generated part | L1 | + |
+| C8-11 | a variable with no value in the instance / binder / the node unbuilt and reported | L1 | − |
+| C8-12 | the framework's Schedule 1 / binder / each lot's supplier from its variable, Lots 1 and 2 sharing 3.1 | L1 | + |
+| C8-13 | the binder run twice / output / identical IRIs (D5) | L1 | + |
+| C8-14 | the README / literate check / blocks equal the files. Release notes for 0.13.0 and shapes 0.6.0 | L1 | + |
+| C8-15 | every diagram in the README / mermaid 11, rendered in a page / renders | L1 | + |
+| C8-16 | the existing tool tests / unchanged / pass | L1 | + |
+| C8-17 | the version and catalog checks, the import guard, `build:mtp` and `check:mtp`, the literate checks / pass | L1 | + |
+| C8-18 | a word whose definition's placeholder takes its value from the same word, directly, through a second word, and through two variables joined by `wrd:populatedFrom` / shapes and binder / each a violation naming every hop in order | L1 | − |
+| C8-19 | a word closing a loop in one section only / binder / reported for that section alone, the other sections bound | L1 | − |
+| C8-20 | a concept word also in the scheme its condition is constrained by, a word meaning a condition placed in a concept slot / shapes / each reported | L1 | − |
+| C8-21 | the documentation / every place listed in the decision / states the cycle rule | L1 | + |
+
+#### C8b in detail
+
+**Machine:** R (Claude Code). **Branch:** `ccs/c8b-references-by-identity`, created by the human from
+`main` once this brief is on `main` and its questions are answered. **Commits are the human's**,
+examples first (ADR-A-C2). Merged into `main` before its release tags are created.
+**Validation Pack:** [computable-contract-substrate-c8b](../validation/computable-contract-substrate-c8b.md).
+**Decisions:** ADR-A104 and its 2026-10-06 addenda (D3, values in stated meaning), ADR-A51
+(content-addressed versions), the Wording ADRs behind laws W1 to W7. Takes over insurml-alignment
+IMA-3.3, and settles the identity half of IMA-D8.
+**Inputs:** the bridge sketch §11, the assembly interface sketch §6 (H5, reference resolution) and
+§7 (the assembly record), C8-Q1's resolution across the tiers (Instrument README §18.2).
+
+**Invariant:** a clause's text names what it refers to the way its stated meaning does. A reference
+to another part of the wording, or to a variable, names a persistent identity, resolved within the
+wording that holds the clause, so a clause reused under another schedule or beside a revised
+definition needs no new version. Nothing here changes what a wording means.
+
+**Setting the scene.**
+
+Wording keeps every piece of text as a **version**. An element, a clause or a definition, has one
+persistent identity for its whole life ("clause 5", "the definition of Insured Person"), and a new
+version each time its words change. Versions are immutable and content-addressed (ADR-A51), and
+since C7c they carry the stated meaning their words express, so a version seen before is matched on
+its hash and never restated (D2).
+
+A wording does not hold text directly. It **includes** versions: an assembled wording lists the
+exact element versions the parties agreed (`wrd:includes`), and a form comprises the versions it is
+built from. That is where versions are used. They are the record of what text was agreed, and the
+assembly pins one version of each piece.
+
+Inside a piece of text, a **reference** points at something else. Three kinds exist today:
+
+| Reference | From | Points at | Example |
+|---|---|---|---|
+| `wrd:refersToObject` | a text part | another part of the wording, or a document outside it | "as defined in clause 1.1", "**Insured Person**" (a defined term, pointing at its definition) |
+| `wrd:refersToVariable` | a text part | a variable, whose value the text shows | "within **[10]** Business Days" |
+| `wrd:linksTo` | a reference element | a part of the wording, or a document outside it | a schedule's heading linking to an attached plan |
+
+The things a reference can point at fall into two groups:
+
+- **inside the wording**: an element, a variable (which is an element), or a whole wording. Each is
+  versioned, with a persistent identity
+- **outside the wording**: a **document object**, an attachment whose content is not digitised (a
+  scanned plan), or an **external document**, a regulation or a separate agreement. Today each is a
+  single node, a `prov:Entity`, with no identity, no versions and no notion of edition
+
+Today every reference names a **version**:
+
+```mermaid
+flowchart LR
+    subgraph F1["Form, edition 1"]
+        C5a["clause 5, version 1<br/>'… any Insured Person …'"]
+        D1["definition of Insured Person,<br/>version 1"]
+        C5a -- "refersToObject" --> D1
+    end
+    subgraph F2["Form, edition 2: the definition is revised"]
+        C5b["clause 5, version 2<br/>the same words"]
+        D2["definition of Insured Person,<br/>version 2"]
+        C5b -- "refersToObject" --> D2
+    end
+    C5a -. "must be superseded<br/>only to change its pointer" .-> C5b
+    D1 -. "superseded" .-> D2
+```
+
+**Why this should change.** Naming a version inside a piece of text ties the text to one version of
+everything it mentions:
+
+1. **Revisions ripple.** When the definition of Insured Person is revised, every clause that mentions
+   it must become a new version, though its own words have not changed, only so that its pointer
+   moves. Those new versions have new hashes, so the stated meaning they carry is restated (D2's
+   reuse is lost), and every form and instrument including them changes.
+2. **Reuse breaks.** A clause written once for a library, "repay within [days] Business Days", cannot
+   be placed in a second form whose schedule declares its own version of the days variable: the
+   clause's text points at the first form's variable version, so the second form needs its own
+   copy of the clause.
+3. **Text and meaning disagree.** Since C8, the clause's stated meaning names the variable by
+   identity (`ins:valueFrom`), and resolves it within whichever wording holds the clause. Its text
+   still names one version. The two can point at different versions of the same variable.
+4. **Outside documents are ambiguous.** "In accordance with the Data Protection Regulation" is a
+   single node today. It does not say whether the clause means the Regulation as in force when the
+   agreement was signed (a **static** reference) or as amended from time to time (an **ambulatory**
+   reference), a distinction contract law draws and drafters state.
+
+InsurML met the first two problems and resolves a reference by identifier, within the contract's
+scope, to whichever version the contract includes (bridge §11). The pattern is a lockfile's: source
+code names a package, and the lockfile pins its version. Here the text names an identity, and the
+wording that includes the text pins the version.
+
+**Questions, with each option's consequences:**
+
+- **C8b-Q1. What a reference names.**
+
+  The options, pictured for a clause mentioning a definition and citing a regulation:
+
+  ```mermaid
+  flowchart LR
+      subgraph A["(a) Every reference names a version: today"]
+          A1["clause"] -- "refers to" --> A2["definition, version 1"]
+          A1 -- "refers to" --> A3["the Regulation<br/>(no edition)"]
+      end
+      subgraph B["(b) Internal references name an identity, external as today"]
+          B1["clause"] -- "refers to" --> B2["the definition's identity"]
+          B1 -- "refers to" --> B3["the Regulation<br/>(no edition)"]
+          BW["the wording"] -- "includes" --> B4["definition, version 1"]
+          B4 -- "hasIdentity" --> B2
+      end
+      subgraph C["(c) Every reference names an identity, and something else fixes the version"]
+          C1["clause"] -- "refers to" --> C2["the definition's identity"]
+          C1 -- "refers to" --> C3["the Regulation's identity"]
+          CW["the wording"] -- "includes" --> C4["definition, version 1"]
+          C4 -- "hasIdentity" --> C2
+          CW -- "relies on, static" --> C5["the Regulation,<br/>2026 edition"]
+          C5 -- "hasIdentity" --> C3
+      end
+  ```
+
+  - **(a) Keep versions in every reference.** Nothing changes.
+    - Every revision of a definition or a schedule forces new versions of every clause mentioning
+      it, and of everything including those clauses (problem 1).
+    - A library clause cannot be reused under another schedule (problem 2).
+    - A clause's text and its stated meaning can name different versions of one variable
+      (problem 3).
+    - Outside documents stay ambiguous (problem 4).
+    - Costs nothing now.
+  - **(b) Internal references name an identity, external references stay as they are.** The wording
+    pins internal versions by inclusion.
+    - Solves problems 1 to 3.
+    - Leaves problem 4: a regulation is still one node, neither static nor ambulatory.
+    - Two rules for one property: a reader of `wrd:refersToObject` must know which kind of target
+      it has to know whether it names an identity or a document. Less error-prone than letting
+      drafters choose, but still two meanings for one link.
+    - Breaking at 0.x (ADR-A113): six examples, about 14 references, migrate. Wording 0.7.0,
+      Instrument re-pinned.
+  - **(c) Every reference names an identity, and the version is fixed elsewhere.** Inside the
+    wording, the wording's inclusion fixes the version, as in (b). Outside, an external document
+    gains a persistent identity and editions (Foundation's identity and version, as every LATTICE
+    record already uses), and the wording states which edition it relies on:
+    - **static**: a named edition, "the Regulation as in force on 1 January 2027", fixed when the
+      wording is assembled
+    - **ambulatory**: "as amended from time to time", no edition fixed. The edition is whichever is
+      in force at the time a case is evaluated, which makes it a value the evaluation context
+      supplies (C12), as Quantification's context values do (ADR-A115)
+
+    Consequences:
+    - Solves all four problems, with one rule: a reference names what it refers to, never which
+      version. The version comes from the wording, for internal targets, or from the wording's
+      stated reliance, for external ones.
+    - A document object, an attachment to this contract, is part of what the parties agreed, so it
+      is pinned like internal text, by the wording relying on one edition of it.
+    - New model in Wording: identities and editions for linked documents, and a reliance from a
+      wording to an external document, static or ambulatory. Its shapes: every external
+      reference has exactly one reliance in the wording holding it.
+    - Ambulatory references reach the evaluator: an edition chosen at evaluation time is a
+      runtime value, and C12 and C13 must supply it. Until then an ambulatory reference is stated
+      and not resolved, which is honest, since its edition is not known at design time.
+    - Breaking at 0.x: the same six examples, plus the two outside documents they cite. Wording
+      0.7.0, Instrument re-pinned. More work than (b): about twice the model and the shapes.
+  - **(d) Let each reference name either a version or an identity.**
+    - Solves the problems only where the drafter chooses identity, and adds a fifth: two forms of
+      one link, which readers, shapes and the binder must all handle, and which drafters will mix.
+    - Additive, with no migration.
+
+  **Leaning: (c).** It is the only option that gives a reference one meaning, and it settles a real
+  ambiguity in how contracts cite outside law, which (a) and (b) leave in place. (b) is a smaller
+  step that solves the three internal problems and leaves the external one for later.
+
+- **C8b-Q2. How a reference finds its version, and whether that is stored.** Under (b) or (c), a
+  reference names an identity, so something must find the version it means. That is a matter of
+  looking at what the wording holds:
+
+  ```mermaid
+  flowchart LR
+      R["text part<br/>refers to the definition's identity"] --> ID["identity"]
+      subgraph FORM["In a form"]
+          FV["the version the form comprises"]
+      end
+      subgraph INST["In an assembled wording"]
+          IV["the version it includes,<br/>or, for a variable, the version an included element declares"]
+      end
+      ID -. "resolved within" .-> FV
+      ID -. "resolved within" .-> IV
+  ```
+
+  - **(a) Derive it, and check it with a shape.** A new law, W8: within a form, and within an
+    assembled wording, every reference by identity finds exactly one version. None means the text
+    mentions something the wording does not hold. Two means the wording holds two versions of one
+    thing, which W3 and W5 already rule out for elements.
+    - Nothing stored per instance. Anyone can resolve it from the graph: a shape, the binder, a
+      future renderer.
+    - Resolution costs a lookup per reference, each time it is needed. A renderer would cache it
+      per assembled wording, which many instances share.
+  - **(b) Store it.** The assembler writes a resolution record per reference per assembled wording
+    (the assembly interface sketch's H5).
+    - Stored per instance, one record per reference: repeating what the inclusion list already
+      determines, against D1.
+    - Shows which resolution policy ran, which matters only if a policy could choose something the
+      graph does not determine. None is known: InsurML's scope rule resolves exactly as (a) does.
+
+  **Leaning: (a).** H5's record stays available to the assembly interface (IMA-4.1), should a policy
+  appear that the graph cannot determine.
+
+- **C8b-Q3. Display text.** A reference shows text: "**Insured Persons**" for the definition of
+  "Insured Person", "the **Lender's**" for "Lender", or a variable shown by its printed name. When
+  the reference names an identity, the words shown at that point need a home.
+  - **(a) An optional literal on the referring text part** (`wrd:displayText`), holding the words as
+    the drafter wrote them.
+    - Every inflection is right, because it is written, not computed.
+    - Part of the element version, so shared by hash, and nothing per instance.
+    - If the definition's own label changes, the clause keeps its words, which is what its text says.
+  - **(b) None: a renderer shows the target's label.**
+    - Wrong for every inflected form: "Insured Person" where the text says "Insured Persons".
+  - **(c) Inflection rules.**
+    - Right where a rule exists, for each language, and a rule set to maintain.
+
+  **Leaning: (a).**
+
+- **C8b-Q4. Code.** The C8 binder already finds a variable's version from its identity.
+  - **(a) Shapes for W8, and the binder's lookup extended to forms.** No new module. There is no
+    renderer yet.
+  - **(b) A shared reference resolver in `tools/`**, used by the binder and a future renderer.
+    - Ready for a renderer, at the cost of a module and its tests before anything needs it.
+
+  **Leaning: (a).** The assembly interface's `render` (IMA-4.1) can lift the lookup into a module
+  when it exists.
+
+**Answered by the human, 2026-10-06:** C8b-Q1 (c), every reference names an identity and the
+version is fixed elsewhere. C8b-Q2 (a), derived and checked, with (b)'s record available if a
+policy ever needs it. C8b-Q3 (a). C8b-Q4 (a).
+
+**Decided by precedent, not asked:**
+
+- the change is breaking at 0.x under ADR-A113, so Wording 0.6.0 → 0.7.0 and Instrument 0.13.0 →
+  0.14.0 re-pinned. C9 then takes Instrument 0.15.0
+- examples are domain-neutral, from at least three domains
+- the insurml-alignment lift writes references by identity, with no resolution records (IMA-D8)
+
+**What C8b builds:**
+
+| Layer | Adds |
+|---|---|
+| Wording 0.6.0 → 0.7.0 (breaking) | `wrd:refersToObject`, `wrd:refersToVariable` and `wrd:linksTo` naming persistent identities. Linked documents with persistent identities and editions (Foundation's identity and version). A wording's reliance on an outside document: static, naming one edition, or ambulatory, naming none. `wrd:displayText`. Law W8: every internal reference resolves to exactly one version at each tier, and every external reference to exactly one reliance in the wording holding it. README sections and release notes |
+| `wording-shapes` | W8, and the ranges of the three properties |
+| Instrument 0.13.0 → 0.14.0 | re-pinned only |
+| `tools/` | the binder's variable lookup accepting the form's tier |
+
+1. **Examples first (ADR-A-C2):**
+
+   | File | Shows |
+   |---|---|
+   | `ontology/wording/examples/facility-agreement.ttl`, `facility-form.ttl`, `trial-protocol.ttl` (reworked) | references to definitions and variables by identity |
+   | `ontology/wording/examples/reused-clause.ttl` (new) | one clause version included in two forms whose schedules declare the same variable, unchanged. A definition revised without a new version of the clause mentioning it. An inflected reference with display text. A regulation cited statically, at one edition, and another cited as amended from time to time. An attachment pinned at one edition |
+   | `ontology/instrument/examples/facility-parameters.ttl`, `framework-lots.ttl`, `services-schedule.ttl` (reworked) | text and stated meaning naming each variable the same way |
+
+2. **Spec, vocab and shapes** as the table above.
+3. **README:** references by identity, resolution at each tier, display text, W8, release notes.
+4. **Tests:** `tools/test_wording.py` gains the rows below, which run in `check:ontology-catalog`.
+   The agent stops before any commit.
+
+| ID | Given / When / Then | Level | +/- |
+|---|---|---|---|
+| C8b-01 | Wording's spec / parsed / `0.7.0`, the three properties' ranges, `wrd:displayText` | L1 | + |
+| C8b-02 | every Wording and Instrument example / all layers' shapes / conform | L1 | + |
+| C8b-03 | a reference to an element or a variable naming a version / shapes / reported | L1 | − |
+| C8b-04 | an identity resolving to no version, or to two, in a form and in an assembled wording / W8 / each reported | L1 | − |
+| C8b-05 | the reused clause / its two forms / one element version, its hash unchanged, each form resolving the variable to its own declaration | L1 | + |
+| C8b-06 | a reference to an outside document with no reliance, or two, in the wording holding it / W8 / reported. A static reliance with no edition, an ambulatory one naming an edition / shapes / each reported | L1 | − |
+| C8b-06a | a definition revised in a second edition of a form / the clause mentioning it / the same element version in both editions | L1 | + |
+| C8b-07 | the binder over the reworked Instrument examples / output / unchanged from C8 | L1 | + |
+| C8b-08 | Instrument / imports / Wording 0.7.0, and no file outside the catalog names Wording 0.6.0 | L1 | + |
+| C8b-09 | both READMEs / literate checks / pass. Release notes for Wording 0.7.0 and Instrument 0.14.0 | L1 | + |
+| C8b-10 | the existing tests, the version and catalog checks, the import guard, `build:mtp` and `check:mtp` / pass | L1 | + |
+
+#### C9 in detail
+
+**Machine:** R (Claude Code). **Branch:** created by the human from `main` once this brief is on
+`main` and its questions are answered, one branch per slice if C9 is split (C9-Q1). **Commits are
+the human's**, examples first (ADR-A-C2). Merged into `main` before release tags are created.
+**Validation Pack:** written once C9-Q1 fixes the slices.
+**Decisions:** ADR-A104 decisions 4, 11 and 16 and its addenda, ADR-A106 (records), ADR-A112 and its
+references-by-identity addendum (reliance on outside documents), ADR-A85 (resolution by valid time),
+CC-D10 and CC-D12.
+**Inputs:** the CCS sketch §5.8 and scenarios S23, S40, S48, S50, S51, S53, S69, S90 and S99,
+terms-in-time §8.6 and its endings E10 and E11, held design questions HQ-1 and HQ-5, the assembly
+interface sketch's hook H13 (re-assembly after an amendment).
+
+**Invariant:** what an instrument means changes only by an amendment that the instrument permits,
+made by the parties it requires, and recorded with when it was agreed and when it takes effect.
+Each version keeps the meaning it was agreed with. An instrument has no effect until it is formed,
+and a document it incorporates means, within it, what the incorporation says.
+
+**Setting the scene.**
+
+An instrument is versioned (`fnd:Version`). Each of its versions is expressed in exactly one assembled
+wording (law I1) and binds exactly the stated meaning of the element versions that wording includes
+(law I17). Its bound meaning is generated (C8). Nothing else about an instrument changes, because no
+term or relation is versioned (law I18).
+
+The text side of change already exists. Wording C5 records an amendment's operations
+(`wrd:Amendment`, insert, delete, replace, strike and substitute, append), each stated in a part of
+an amending document and producing a new element version. `facility-amendment.ttl` changes three
+clauses of a facility and assembles a second facility wording. Records exist too. Behaviour C11
+records a party accepting a version (`bhv:AcceptanceRecord`), exercising a power
+(`bhv:ExerciseRecord`) and acting (`bhv:ActRecord`).
+
+The legal side is missing. Today the second facility wording exists, and nothing says:
+
+- that a second instrument version is expressed in it, and that it replaced the first
+- when the change was agreed, when it took effect, which may be earlier (a retrospective change),
+  and whether it reaches occasions already arisen
+- whose agreement made it: all parties, or a group exercising a power under a consent rule
+  ("Majority Lenders", the lead insurer alone for a change that is not material)
+- when the instrument took effect at all: on signature by every party, each signing separately (S90)
+- what a document it incorporates by reference contributes, and at which edition
+
+Today:
+
+```mermaid
+flowchart LR
+    W1["facility wording v1"] -. "the letter's<br/>wrd:Amendments" .-> W2["facility wording v2"]
+    I1["facility v1<br/>ins:Instrument"] -- "expressedIn" --> W1
+    Q["?"] -- "expressedIn" --> W2
+```
+
+After C9:
+
+```mermaid
+flowchart LR
+    A["an ins:Amendment<br/>agreed, effective"] -- "amends" --> J1["facility v1"]
+    A -- "resultsIn" --> J2["facility v2"]
+    J1 -- "expressedIn" --> V1["facility wording v1"]
+    J2 -- "expressedIn" --> V2["facility wording v2"]
+    A -- "statedIn" --> L["the amendment letter"]
+    A -- "byExerciseOf" --> P["the amendment power,<br/>under its consent rule"]
+    R["acceptance and<br/>exercise records"] -. "meet the rule" .-> P
+```
+
+Three facts about the current model shape every option below:
+
+1. **Versions are immutable.** A fact learned later, such as a retrospective effective date, cannot
+   be written onto an existing version. It must sit on something new, such as the amendment.
+2. **Eligibility cannot count.** A condition tests one case's attributes. It cannot say "every
+   party has accepted" or "lenders whose commitments are more than two thirds of the total". Any
+   rule over a set of parties is a construct of its own, evaluated by C12, or an Eligibility
+   extension.
+3. **References name identities since C8b**, and a wording's reliance fixes an outside document's
+   edition, static or as amended. Incorporation by reference is a reliance with legal effect, so it
+   should reuse that, never fix an edition a second way.
+
+**Questions, with each option's consequences:**
+
+- **C9-Q1. One slice or several.** C9's row lists amendments, consent rules, incorporation and
+  taking effect, plus S90 and the two endings terms-in-time left to C9. Its "shapes for I1 to I16"
+  is stale, since C6 to C8 shipped those, and only I4, I10 and I14 remain, of which I10 and I14 are
+  evaluated, not shaped. Counted from the questions below, C9 is about 26 test rows over Instrument,
+  Wording and `tools/`, above the slice sizing rule's 15.
+  - **(a) Three slices.** C9a, amendments, taking effect, and the two endings (Q2, Q3, Q5, Q6).
+    C9b, powers held by groups (Q4), which C9a's amendment by majority needs. C9c, incorporation
+    (Q7, Q8).
+    - Each about 8 to 10 rows, each with its own Validation Pack, releasing Instrument 0.15.0,
+      0.16.0 and 0.17.0 in turn, and Wording 0.8.0 with C9c if Q7 (a) widens reliance.
+    - C9a's examples amend by agreement of all parties, and C9b adds the majority case.
+    - Estimated 1.5M to 2.5M tokens each, about 6M in all, to be checked against the actuals.
+  - **(b) Two slices.** Amendments with consent rules, then incorporation with taking effect.
+    - The first is about 16 rows, at the limit. Taking effect and incorporation share nothing.
+  - **(c) One slice.**
+    - One release and one review, of about 26 rows across three modules, which the sizing rule
+      rejects.
+
+  **Leaning: (a).** HQ-5, the full set of group behaviours, follows C9b as its own slice.
+
+- **C9-Q2. What an amendment records.** The sketch gives `ins:Amendment` the versions before and
+  after, three times (agreed, operational, effective), `ins:affectsExisting`, the power exercised,
+  and `ins:textChanges` to every `wrd:Amendment`. Two choices need answering.
+
+  *Where the times sit.*
+  - **(a) On the amendment only.** A version's valid period is derived from the chain of amendments
+    that made and replaced it. A retrospective amendment adds a new amendment with an earlier
+    effective date, and nothing existing changes.
+    - Keeps every version immutable. Bitemporal reading (which version applied at valid time *t*,
+      as known at time *k*) is a query over amendments, which C12 runs.
+  - **(b) A temporal scope on each version.**
+    - A retrospective amendment must shorten the replaced version's period after the fact, which
+      edits an immutable version. Ruled out by fact 1.
+
+  *How the text change is reached.*
+  - **(a) The amendment names the document that states it** (`ins:statedIn`, one link), and its
+    text changes are the `wrd:Amendment`s expressed in that document.
+    - One link per amendment. A change of values or of a party, with no text operation, still
+      names its document, the endorsement or the schedule.
+  - **(b) The amendment names each text change** (`ins:textChanges`, as sketched).
+    - One link per operation, repeating what the document's `wrd:expressedIn` already says.
+
+  `ins:affectsExisting` (default false, law I14) and continuity by `prov:wasRevisionOf` between the
+  replaced and replacing stated relations stay as ADR-A104 decided. A shape reports an amendment
+  that affects existing occasions and replaces a stated relation with no `prov:wasRevisionOf`.
+
+  **Leaning: (a) and (a).**
+
+- **C9-Q3. Materiality.** Consent often depends on it. Every lender must agree a material change,
+  and the agent alone may agree any other. The sketch derives it by comparing the two versions.
+  - **(a) Derived by a design-time comparison** in `tools/`, from the change report sketch §5.8
+    tabulates.
+    - What counts as material is the contract's own definition ("any change to the Margin, the
+      Final Maturity Date or a Commitment"), so the comparison would need each contract's rule as
+      data, which no layer models yet.
+  - **(b) A determination.** The party the contract names decides it, recorded as a
+    `bhv:DeterminationRecord` on the amendment (ADR-A106), and the consent rule reads it. Where the
+    contract defines material changes, the comparison of (a) can later warn of a determination
+    that disagrees.
+    - Matches how contracts say it ("as determined by the Agent"). No new mechanism, only a
+      determination's subject being an amendment.
+  - **(c) Authored on the amendment as a concept, with no record of who decided it.**
+    - Smallest. Loses who decided, which a dispute about consent turns on.
+
+  **Leaning: (b).** It departs from the sketch, which says derived, for the reason (a) gives.
+
+- **C9-Q4. Powers held by groups** (C9b). Today a power held by a group is Undetermined (CC-D10).
+  The sketch's `ins:ConsentRule` says whose consent an exercise needs.
+  - **(a) A consent rule on the power.** It states who must consent for each exercise (every
+    member, members chosen by role, by being affected, or by the materiality determination) and an
+    optional threshold of a weight per member ("more than 66⅔% of the Commitments", where the
+    weight is a value of the instrument, not Party's outward share). Each member's consent is a
+    `bhv:AcceptanceRecord` of the amendment, and C12 evaluates law I10. Delegated consent is a
+    `pty:Delegation`, as the sketch has it. A group power with no rule stays Undetermined.
+    - Settles powers only. Duties already follow Party's composition rules. HQ-5 then covers "any
+      one may act" and the rest.
+    - The counting is Instrument's (fact 2).
+  - **(b) Widen Party's composition rules to acting rules for powers too**, with the consent rule
+    only for what varies per exercise.
+    - Takes most of HQ-5 into C9. Party changes, and every instrument and Open CBAA re-pin.
+  - **(c) No new construct. Each member holds its own power, and the group's exercise is a trigger
+    on the members' exercises.**
+    - Needs counting in a trigger, which fact 2 rules out, and loses the group's single exercise.
+
+  **Leaning: (a).**
+
+- **C9-Q5. Taking effect, and separate execution** (S40, S90). §14.7 already describes an
+  instrument whose obligations wait on conditions as starting in a *conditional* state. No example
+  builds it, and nothing gates a whole instrument.
+  - **(a) `ins:takesEffectWhen` on the instrument**, as sketched, read by C12. Nothing arises
+    before it holds.
+    - One triple. But it is a second gate beside regimes, and "every party has signed" is not an
+      Eligibility condition (fact 2), so its value needs a construct of its own anyway. A long-stop
+      date for signature needs a regime regardless.
+  - **(b) Formation as a regime.** `ins:begins`, the counterpart of `ins:ends` (§14.2), names the
+    state whose entry brings the instrument, or named terms, into effect. Before it, nothing arises
+    and no gate is open. A new legal trigger, `ins:OnAcceptance`, fires when every named party, or
+    every `ins:party`, has a `bhv:AcceptanceRecord` of the version, so each signing separately is
+    one record (S90). Conditions precedent and long-stop dates use the same regime. The regime is
+    stated in a clause ("this Agreement takes effect when signed by all parties"), or implied by
+    law (`ins:impliedBy`) where none is written.
+    - One mechanism for all of §14.7. Makes the documented conditional state real. More triples
+      per instrument that needs it, and none for one that takes effect at once.
+  - **(c) Both, with (a) as shorthand the instantiator expands into (b).**
+    - Two ways to say one thing.
+
+  **Leaning: (b).**
+
+- **C9-Q6. A party leaving, and ending by agreement** (terms-in-time E10 and E11).
+  - **(a) Both are amendments.** A party leaving is a new version without it (its occasions
+    already arisen stay fixed, law I11). Ending by agreement is an amendment whose new version adds
+    a transition into an ending state on the agreement, so the ending is a regime's, as §14.2
+    requires.
+    - No new construct. The release appears in the history as an amendment.
+  - **(b) A separate instrument, a release, that discharges the first** (`ins:discharges`).
+    - Closer to some legal analyses, and one more relation between instruments.
+
+  **Leaning: (a).**
+
+- **C9-Q7. What incorporation names** (C9c, S53, S99). "The Supplier's Code of Conduct, as amended
+  from time to time, is incorporated into this Agreement", or "the Standard Terms 2026 apply to
+  Lot 2".
+  - **(a) Stated in the words, as C8b decided.** The incorporating clause names the document's
+    identity, and the wording's reliance fixes the edition, static or as amended. Instrument adds
+    `ins:incorporates` on the clause's stated term, naming the same identity. If the document is
+    encoded (a LATTICE wording), its stated meaning is generated into the instrument within the
+    sections the incorporating term applies within (S99), and law I17 widens to "includes or
+    incorporates". An opaque document generates nothing.
+    - One place fixes the edition. Wording's reliance today ranges over linked documents only, so
+      it widens to wordings, an additive change releasing Wording 0.8.0, and W8 learns to resolve a reference to a
+      wording's identity, which it does not check today.
+  - **(b) `ins:incorporates` on the instrument, naming an instrument, a wording or an element
+    version**, as sketched before C8b.
+    - Two places say which edition, the reliance and the incorporation, and they can disagree.
+  - **(c) Copy the text in by transclusion** (insurml-alignment IMA-3.1).
+    - Incorporation by reference is not copying. The document stays separate and may change. And
+      transclusion waits for C9, so this is circular.
+
+  **Leaning: (a).**
+
+- **C9-Q8. An encoded document incorporated as amended.** A static incorporation has one edition,
+  so its meaning is fixed. An ambulatory one changes when the document does.
+  - **(a) Each new edition reaches the instrument by an amendment.** Where a party may vary the
+    document (S53), the variation is an exercise of a power, and the amendment records it and
+    yields a new instrument version binding the new edition.
+    - Keeps laws I17 and I18 exact, since a version's meaning never moves. One new version per
+      instrument per edition, made cheap by shared generation (D5, C16b), and the history records
+      when each edition took effect.
+  - **(b) Resolved per occasion at its valid time,** with a record, as ADR-A85 resolves scheme
+    bindings.
+    - Fewer versions. A version's meaning then moves over time, so I18 is restated and every
+      evaluator must resolve editions.
+  - **(c) Static only in C9.** An ambulatory incorporation of an encoded document is reported, and
+    its meaning not generated, until C12 decides.
+
+  **Leaning: (a)** for documents a party may vary, and **(c)** for documents outside the parties'
+  control, such as legislation, whose changes are no party's act and belong with the normative rule
+  substrate.
+
+- **C9-Q9. Instruments without wording** (HQ-1). HQ-1 is due "no later than C9".
+  - **(a) Re-time it** to before an applied layer ingests proposals (AIR Phase 5,
+    insurml-alignment Phase 5). Nothing in C9 needs it. An instrument made under a power, such as a
+    call-off or a policy under a binding authority, still has its own wording.
+  - **(b) Decide it in C9**, by HQ-1's option (a), ingestion producing wording elements.
+    - Adds an ingestion path to a slice about change.
+
+  **Leaning: (a).**
+
+- **C9-Q10. The word "binder".** C8 named its generator `tools/instrument_binder.py`, and ADR-A104's
+  and ADR-A112's addenda and the Instrument README call it "the reference binder". "Binder" is a
+  market word, and the governing instructions now name the operation instantiation and the
+  component an instantiator.
+  - **(a) Rename before C9**, on `main` in one change: `tools/instrument_instantiator.py`, its tests,
+    the two addenda, the Instrument README and the open plan sections. Closed Validation Packs and
+    history keep the old name.
+  - **(b) Rename as C9a's first commit.**
+    - Mixes a rename into a design slice's review.
+
+  **Leaning: (a).**
+
+**Decided by precedent, not asked:**
+
+- an amendment to one instrument, an endorsement, leaves its form untouched (C5). An existing
+  instrument reaches a new form edition only by an amendment, since its version's wording is fixed
+  (laws I1 and I17)
+- every change is a re-assembly, a new assembled wording through the assembly interface's hook H13,
+  never an edit of the old one
+- a correction is not an amendment (law I18)
+- releases are MINOR and breaking where a range or shape tightens (ADR-A113)
+- examples are domain-neutral, from at least three domains: a syndicated facility (majority
+  lenders, separate execution), a services agreement incorporating a code of conduct a party may
+  vary, and a licence ended by agreement
+
+**What C9 builds, under the leanings:**
+
+| Slice | Layer | Adds |
+|---|---|---|
+| C9a | Instrument 0.15.0 | `ins:Amendment` (`ins:amends`, `ins:resultsIn`, `ins:agreedOn`, `ins:operationalFrom`, `ins:effectiveFrom`, `ins:affectsExisting`, `ins:statedIn`, `ins:byExerciseOf`), materiality as a determination, `ins:begins`, `ins:OnAcceptance`. Shapes for the amendment and the I14 continuity warning. I4's shape, whose terms C6 built, unless the human defers it |
+| C9b | Instrument 0.16.0 | `ins:ConsentRule` (`ins:consentRule`, who must consent, a threshold of a weight per member), delegated consent. Shapes. I10's data, evaluated by C12 |
+| C9c | Wording 0.8.0, Instrument 0.17.0 | reliance on a wording, and W8 for references to a wording. `ins:incorporates`, generation of an encoded incorporated document's meaning within sections, I17 widened. `tools/`: the instantiator follows incorporation |
 
 ### Tranche E: evaluation
 

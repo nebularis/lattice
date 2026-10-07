@@ -15,16 +15,12 @@
 
 Gate A passed on 2026-10-01. Tranches B and C are merged to `main` and tagged: Wording 0.3.0,
 Behaviour 0.10.0 (shapes 0.4.0) with nested states and history, the import guard in `mise run
-check`. In tranche D, C6, C7a and C7b are merged and tagged (Instrument 0.11.0, Quantification
-0.7.0), and C7c is briefed. From C5 on, the agent builds and verifies, and the human commits by hand.
+check`. In tranche D, C6 to C7c are merged and tagged (Instrument 0.12.0, Party 0.8.0, Quantification
+0.7.0). C8 and C8b are merged and tagged (Instrument 0.14.0, Wording 0.7.0). C9 is briefed, with ten questions. From C5 on, the agent builds and verifies, and the human commits by hand.
 
-**Next action, for the human:** merge `ccs/c7c-terms-and-parties` to `main`, then create and push
-the 15 release tags:
-`applied-capacity-execution-v0.13.0`, `behaviour-v0.13.0`, `behaviour-runtime-v0.13.0`,
-`behaviour-vocab-v0.13.0`, `eligibility-v0.10.0`, `eligibility-vocab-v0.11.0`, `instrument-v0.12.0`,
-`instrument-shapes-v0.5.0`, `instrument-vocab-v0.12.0`, `insurance-common-v0.4.0`,
-`insurance-common-vocab-v0.4.0`, `party-v0.8.0`, `party-vocab-v0.8.0`, `wording-v0.6.0`,
-`wording-vocab-v0.6.0`. Push them to `origin-ssh`.
+**Next action, for the human:** answer C9-Q1 to C9-Q10 in the plan's "C9 in detail", including
+whether C9 splits into C9a to C9c (Q1) and whether the "binder" rename lands on `main` first (Q10).
+The agent then writes the Validation Pack for the first slice.
 
 ## Slice board
 
@@ -43,8 +39,9 @@ the 15 release tags:
 | F1 | external and natural keys (ADR-A114) | Foundation, now | merged, tagged | |
 | C6 | instrument, terms, the five relations, parties, content | D | merged, tagged | |
 | C7b | terms in time | D | merged (`5da9412`), tagged | |
-| C7c | what terms are, and who they bind (split from C7b) | D | committed (`0f4f0d9`), decisions ratified, awaiting merge and tags | the human |
-| C8, C9, C8a | Instrument rewrite, template library | D | waiting | C8 after C7a and C7b |
+| C7c | what terms are, and who they bind (split from C7b) | D | merged and tagged | done |
+| C8, C8b | values in stated meaning, Wording references by identity | D | merged, tagged | |
+| C9, C8a | change and composition, template library | D | C9 briefed | C9-Q1 to C9-Q10 |
 | C7a | regimes and gating, split from C7 | D | merged to `main` (`c6e5853`) and tagged | |
 | C12, C13 | runtime evaluator, relation plans | E | waiting | C9, C11, C11a, AIR-3.3, NRS N1 |
 | C13a | design-time joint satisfiability: slot conditions by reasoner, the task NRS N3 reuses (deferred from C5) | E | waiting | C5, NRS N1 |
@@ -122,3 +119,18 @@ the 15 release tags:
 - 2026-10-06: C7c examples reworked under D1 to D22: five examples in form, instance and generated parts, `service-towers.ttl` new, `facility-agreement.ttl` on Party's new terms. Four conform. `framework-lots.ttl` and `service-towers.ttl` fail only the ending and qualifier shapes the model phase widens. D5, D10 and D12 sharpened from the examples. Condition words made plain concepts, accepted in stated condition slots and replaced at binding (D12, agreed)
 - 2026-10-06: C7c examples committed (`2d42e42`). Model phase built: Instrument 0.12.0 (breaking), `instrument-vocab` 0.12.0, shapes 0.5.0, Party and `party-vocab` 0.8.0 (breaking, domain-neutral shares and composition rules), and the cascade to Eligibility, Behaviour, Wording, Insurance Common and the capacity execution profile. `tools/test_constitutive_terms.py` (49 tests) added to `check:ontology-catalog`. Every C7c row passes, and every check C7b ran. Deviations in the [Validation Pack](../validation/computable-contract-substrate-c7c.md)
 - 2026-10-06: C7c model phase committed by the human (`0f4f0d9`). Every deviation ratified, and the ADR-A104 addendum of 2026-10-06 accepted
+- 2026-10-06: C7c merged to `main` (`546d017`) and tagged by the human, with the 15 tags listed at its handoff
+- 2026-10-06: C8 briefed on `main` with its Validation Pack skeleton and six questions: a variable standing where its value goes (Q1), schedule parties as variables (Q2), date and amount words with HQ-4 left for track C2 (Q3), encoding status for elements without meaning only (Q4), a reference binder for one instrument (Q5), and C7c's two open checks on the form (Q6)
+- 2026-10-06: C8-Q2, Q5 and Q6 answered as recommended, Q3 deferred to track C2. Q1 and Q4 reworked with each option's consequences: a placeholder taking its value from a variable, and encoding status by convention with one optional mark
+- 2026-10-06: C8-Q4 answered (b), by convention. C8-Q1 gains how a placeholder resolves across library elements, templates and instances
+- 2026-10-06: C8-Q1 answered (b). Wording references by identity planned as slice C8b, after C8, taking over insurml-alignment IMA-3.3
+- 2026-10-06: C8 phase 1 on `ccs/c8-parameter-bindings`: `facility-parameters.ttl` and `services-schedule.ttl` new, `framework-lots.ttl` reworked, and the ADR-A104 addendum "values in stated meaning" (Proposed). All three conform to every layer's shapes. The brief's resolution table corrected to law W5
+- 2026-10-06: value words as placeholder sources agreed, with thorough cycle checking and the rule documented wherever it may arise. Concept words in Eligibility concept slots agreed, governed by shapes. Rows C8-18 to C8-21 added
+- 2026-10-06: C8 examples committed. Model phase built: Instrument 0.13.0, `instrument-vocab` 0.13.0, shapes 0.6.0 (breaking under law I17), the reference binder `tools/instrument_binder.py`, and `tools/test_parameter_bindings.py` (42 tests) in `check:ontology-catalog`. Every C8 row passes, and every check C7c ran. Five older examples gained the bound terms law I17 found missing. Deviations in the [Validation Pack](../validation/computable-contract-substrate-c8.md)
+- 2026-10-06: C8 merged to `main` and tagged by the human (`instrument-v0.13.0`, `instrument-shapes-v0.6.0`, `instrument-vocab-v0.13.0`)
+- 2026-10-06: C8b briefed on `main` with its Validation Pack skeleton and four questions, each with its options' consequences: which references name an identity (Q1), how they resolve (Q2), display text (Q3), and code (Q4). C9 moves to Instrument 0.15.0
+- 2026-10-06: C8b's questions reworked with the scene set and each option's consequences, then answered: every reference names an identity, with outside documents gaining editions and a static or ambulatory reliance (Q1 (c)), resolution derived and checked by W8 (Q2), display text on the referring part (Q3), shapes and the binder's lookup (Q4)
+- 2026-10-06: C8b phase 1 on `ccs/c8b-references-by-identity`: `reused-clause.ttl` new, six examples' references moved to identities, outside documents given identities, editions and reliances, and the ADR-A112 addendum "references by identity" (Proposed). The only new shape failures are the reference ranges the model phase changes
+- 2026-10-06: C8b examples committed. Model phase built: Wording 0.7.0, `wording-vocab` 0.7.0 (breaking), shapes 0.4.0 with law W8, and Instrument and `instrument-vocab` 0.14.0 (a re-pin). Every C8b row passes, and every check C8 ran. The binder needed no change. Deviations in the [Validation Pack](../validation/computable-contract-substrate-c8b.md)
+- 2026-10-06: C8b model phase committed, merged to `main` and tagged by the human (`wording-v0.7.0`, `wording-vocab-v0.7.0`, `wording-shapes-v0.4.0`, `instrument-v0.14.0`, `instrument-vocab-v0.14.0`)
+- 2026-10-07: C9 briefed on `main` with ten questions, each with its options' consequences: splitting into C9a to C9c (Q1), what an amendment records (Q2), materiality (Q3), powers held by groups (Q4), taking effect and separate execution (Q5), a party leaving and ending by agreement (Q6), incorporation (Q7), ambulatory incorporation of encoded documents (Q8), re-timing HQ-1 (Q9), and renaming the "binder" (Q10). The C9 row's "shapes for I1 to I16" found stale

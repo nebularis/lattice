@@ -97,7 +97,7 @@ ex:cl-12-1 a wrd:Text ;
     wrd:elementType wrd-voc:Clause ; wrd:objectId "12.1" ; wrd:rankKey "a0" ;
     wrd:hasTextPart ex:cl-12-1-p0 , ex:cl-12-1-p1 .
 ex:cl-12-1-p0 a wrd:TextPart ; wrd:partIndex 0 ; wrd:partText "The borrower may operate in " .
-ex:cl-12-1-p1 a wrd:TextPart ; wrd:partIndex 1 ; wrd:refersToVariable ex:var-jurisdictions .
+ex:cl-12-1-p1 a wrd:TextPart ; wrd:partIndex 1 ; wrd:refersToVariable ex:var-jurisdictions-identity .
 
 ex:var-jurisdictions a wrd:EmbeddedVariable ;
     fnd:hasIdentity ex:var-jurisdictions-identity ; fnd:hasGovernanceState fnd:Active ;

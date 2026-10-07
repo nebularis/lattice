@@ -59,6 +59,7 @@ IMA-D16, IMA-D17 (the assembly interface). **Answered by InsurML's owner, 2026-1
 | 2026-10-05 | publication of documentation and analysis of InsurML's current draft | permitted by InsurML's owner. "Not for release" marks the draft's alpha state |
 | | licence of InsurML's ontology, shapes and schemas for import and test (Q-2, Q-11) | open |
 | | use of InsurML's example wording in LATTICE tests (Q-3) | open. Fixtures stay clean-room |
+- 2026-10-06: IMA-3.3, references to a persistent identity, moved to CCS slice C8b, which follows C8. IMA-D8's identity half now lands with C8b
 
 ## Estimates and actuals
 

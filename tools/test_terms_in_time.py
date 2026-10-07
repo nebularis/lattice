@@ -105,7 +105,7 @@ LS_EX, LS = _ns("licence-survival")
 def test_c7b_01_version_imports_and_new_terms() -> None:
     spec = _graph(SPEC)
     ontology = URIRef("https://www.nebularis.org/neuro-semantic/instrument")
-    assert spec.value(ontology, OWL.versionIRI) == URIRef(LATTICE + "instrument/0.12.0")
+    assert spec.value(ontology, OWL.versionIRI) == URIRef(LATTICE + "instrument/0.14.0")
     assert URIRef(LATTICE + "quantification/0.7.0") in set(spec.objects(ontology, OWL.imports))
     for name in ("due", "recurrence", "window", "dueTolledIn", "at", "ofState", "ends", "survives", "survivalPeriod",
                  "survivesUntil"):
@@ -225,7 +225,7 @@ def test_c7b_13_instrument_readme_and_releases() -> None:
                                   "--check"]) == 0
     readme = (LAYER / "README.md").read_text()
     assert "0.11.0 (CCS C7b" in readme and "Shapes 0.4.0 (additive" in readme and "0.12.0 (breaking, CCS C7c" in readme
-    assert (LAYER / "shapes" / ".version").read_text().strip() == "0.5.0"
+    assert (LAYER / "shapes" / ".version").read_text().strip() == "0.6.0"
 
 
 def test_c7b_15_quantification_readme_is_the_source() -> None:

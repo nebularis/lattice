@@ -18,10 +18,11 @@ decision 2).
 Wording imports Foundation, Vocabulary, Quantification and Eligibility, and is imported by
 Instrument. It names no term of a higher layer.
 
-This release (`0.3.0`) holds structure, text parts, references, document objects and variables
-(since `0.1.0`), tables, assembly and the values an instance supplies (since `0.2.0`), and textual
-amendments with the shapes for the layer's laws. Breaking changes are listed in the release notes
-(§10).
+This release (`0.7.0`) holds structure, text parts, references, document objects and variables
+(since `0.1.0`), tables, assembly and the values an instance supplies (since `0.2.0`), textual
+amendments with the shapes for the layer's laws (since `0.3.0`), and references by identity, with
+editions and reliance for documents outside the wording (since `0.7.0`). Breaking changes are listed
+in the release notes (§10).
 
 ## 2. Namespace and prefixes
 
@@ -62,6 +63,7 @@ Each file opens with its premise.
 | [`facility-agreement.ttl`](examples/facility-agreement.ttl) | a wording tree ordered by rank key, a clause as five text parts with a reference to a definition and to a variable, an annex that refers to a scanned document |
 | [`trial-protocol.ttl`](examples/trial-protocol.ttl) | a schedule, an embedded variable with admissible values, a governing variable never shown in text, a reference to an external regulation, a clause classification, a table whose fields the form declares and whose entries (study arms) one trial supplies, a table whose fields and entries the form both declares, that trial's assembled protocol, and an amendment inserting a field |
 | [`facility-form.ttl`](examples/facility-form.ttl) | a library form with a mandatory clause, a variation slot of two variants, an optional clause and a conditional clause reading a governing variable, and a facility assembled from it, with a multi-valued list of jurisdictions |
+| [`reused-clause.ttl`](examples/reused-clause.ttl) | a lease form in two editions in which clause 5.1 is one version, though the definition it mentions is revised, the variable it shows redeclared and a regulation it cites relied on at a newer edition. Display text, a static and an ambulatory reliance, an attachment at one edition, and a lease assembled from the second edition |
 | [`facility-amendment.ttl`](examples/facility-amendment.ttl) | an amendment letter that replaces, strikes and substitutes, and appends, producing the facility's own revisions of library clauses, the same change stated twice, and a draft release of the form adopting one revision as a new variant. Read with `facility-form.ttl` |
 
 Clause 4.1 of the facility agreement, "The Borrower shall pay interest at {margin} per annum", is
@@ -69,9 +71,10 @@ five text parts:
 
 ```turtle-example
 ex:cl-4-1-p0 a wrd:TextPart ; wrd:partIndex 0 ; wrd:partText "The " .
-ex:cl-4-1-p1 a wrd:TextPart ; wrd:partIndex 1 ; wrd:refersToObject ex:def-borrower .
+ex:cl-4-1-p1 a wrd:TextPart ; wrd:partIndex 1 ; wrd:refersToObject ex:def-borrower-identity ;
+    wrd:displayText "Borrower" .
 ex:cl-4-1-p2 a wrd:TextPart ; wrd:partIndex 2 ; wrd:partText " shall pay interest at " .
-ex:cl-4-1-p3 a wrd:TextPart ; wrd:partIndex 3 ; wrd:refersToVariable ex:var-margin .
+ex:cl-4-1-p3 a wrd:TextPart ; wrd:partIndex 3 ; wrd:refersToVariable ex:var-margin-identity .
 ex:cl-4-1-p4 a wrd:TextPart ; wrd:partIndex 4 ; wrd:partText " per annum." .
 ```
 
@@ -82,7 +85,7 @@ ex:cl-4-1-p4 a wrd:TextPart ; wrd:partIndex 4 ; wrd:partText " per annum." .
 ```turtle-spec
 <https://www.nebularis.org/neuro-semantic/wording>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/wording/0.6.0> ;
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/wording/0.7.0> ;
 	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.4.0> ,
 				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.4.0> ,
 				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.7.0> ,
@@ -221,7 +224,9 @@ wrd:Metadata a owl:Class ;
 
 ### 5.7 Text parts
 
-Text is represented as a sequence of parts, with each part being one of three forms: literal text, a reference to a variable, or a reference to another part or document. Parts are indexed from 0 without gaps, which gives a closed-world order without an RDF list. A part belongs to one text and is not a version. Changed text is a new text version with new parts. 
+Text is represented as a sequence of parts, with each part being one of three forms: literal text, a reference to a variable, or a reference to another part or document. Parts are indexed from 0 without gaps, which gives a closed-world order without an RDF list. A part belongs to one text and is not a version. Changed text is a new text version with new parts.
+
+**A reference names what it refers to, never which version** (§5.8). A reference part names a persistent identity: a variable's, another element's, a wording's, or a document's outside the wording. The wording holding the text fixes the version it means, so a revised definition, or a redeclared variable, leaves every text mentioning it at the same version. A reference part may carry the words shown at that point, as the drafter wrote them (`wrd:displayText`): an inflected form, such as "Lessee's" for the defined word "Lessee", or a variable's printed name.
 
 ```turtle-spec
 wrd:TextPart a owl:Class ;
@@ -247,30 +252,60 @@ wrd:partText a owl:DatatypeProperty , owl:FunctionalProperty ;
 
 wrd:refersToVariable a owl:ObjectProperty , owl:FunctionalProperty ;
 	rdfs:label "refers to variable"@en ;
-	rdfs:domain wrd:TextPart ; rdfs:range wrd:Variable ;
-	rdfs:comment "The variable whose value the part shows. Subject: a text part. Value: a variable, at most one." .
+	rdfs:domain wrd:TextPart ; rdfs:range fnd:PersistentIdentity ;
+	rdfs:comment "The variable whose value the part shows. Subject: a text part. Value: the variable's persistent identity, at most one, resolved to the version the wording holding the text declares (law W8)." .
 
 wrd:refersToObject a owl:ObjectProperty , owl:FunctionalProperty ;
 	rdfs:label "refers to object"@en ;
 	rdfs:domain wrd:TextPart ;
-	rdfs:range wrd:ReferenceTarget ;
-	rdfs:comment "The part, wording or document the part names: a defined word's definition, another clause, an annex, a regulation. Subject: a text part. Value: a reference target, at most one." .
+	rdfs:range fnd:PersistentIdentity ;
+	rdfs:comment "The part, wording or document the part names: a defined word's definition, another clause, an annex, a regulation. Subject: a text part. Value: the target's persistent identity, at most one, resolved to the version the wording holds, or for a document outside it to the edition the wording relies on (law W8)." .
+
+wrd:displayText a owl:DatatypeProperty , owl:FunctionalProperty ;
+	rdfs:label "display text"@en ;
+	rdfs:domain wrd:TextPart ; rdfs:range xsd:string ;
+	rdfs:comment "The words a reference part shows, as the drafter wrote them: an inflected form or a variable's printed name. Subject: a text part with a reference. Value: a string, at most one. Without one, a renderer shows the target's own label." .
 ```
 
 ### 5.8 References and documents
 
 A document object is an attachment whose content is not digitised: a scanned plan, a certificate. An external document sits outside the contract altogether: a regulation, a separate agreement. Both are outside the wording tree, reached by a reference element or a text part.
 
+**Editions.** A document outside the wording has one persistent identity, and an **edition** for each text in force: each edition is a Foundation version, with the date it came into force as its temporal scope and the next edition through `fnd:supersededBy`. A reference to it names its identity, never an edition.
+
+**Reliance.** The wording holding a reference says which edition it means, in one of two ways that contract law distinguishes:
+
+| Reliance | Property | Means | The edition is |
+|---|---|---|---|
+| static | `wrd:reliesOnEdition`, naming an edition | "the Regulation as in force on 1 January 2027" | the one named, fixed when the wording is drafted or assembled |
+| ambulatory | `wrd:reliesAsAmended`, naming the document's identity | "the Regulation as amended from time to time" | whichever is in force when a case is evaluated: a value the evaluation context supplies, which no design-time check resolves |
+
+An attachment is part of what the parties agreed, so it is relied on statically. A form states its reliances, and an assembled wording inherits them from the form it is assembled from, unless it states its own.
+
+**How a reference resolves.** Each tier already holds what resolution needs, so nothing is stored for it:
+
+```mermaid
+flowchart LR
+    P["text part<br/>refers to an identity"]
+    P --> Q{"what has<br/>that identity?"}
+    Q -- "an element or a variable" --> W["the version the wording holds:<br/>a form comprises it, an assembled wording includes it,<br/>or an included element declares it (variables, W5)"]
+    Q -- "a document outside the wording" --> R["the wording's reliance on it:<br/>one edition (static),<br/>or as amended (ambulatory)"]
+```
+
+Law W8 checks that every reference finds exactly one version, or exactly one reliance (§8). A clause that names identities is one element version in every edition of its form, however often what it mentions is revised. Containment still names versions, so a section whose definition is revised takes a new version: references by identity remove the ripple through references, not through containment.
+
 ```turtle-spec
 wrd:DocumentObject a owl:Class ;
-	rdfs:subClassOf prov:Entity , wrd:LinkedDocument ;
+	rdfs:subClassOf prov:Entity , fnd:Version , wrd:LinkedDocument ;
 	rdfs:label "Document object"@en ;
-	rdfs:comment "An attachment the wording relies on whose content is not digitised." .
+	rdfs:comment "An attachment the wording relies on whose content is not digitised." ;
+	fnd:utility "Each instance is one edition, with the attachment's persistent identity. A wording relies on one edition of it (wrd:reliesOnEdition)." .
 
 wrd:ExternalDocument a owl:Class ;
-	rdfs:subClassOf prov:Entity , wrd:LinkedDocument ;
+	rdfs:subClassOf prov:Entity , fnd:Version , wrd:LinkedDocument ;
 	rdfs:label "External document"@en ;
-	rdfs:comment "A document outside the contract, that its wording relies on." .
+	rdfs:comment "A document outside the contract, that its wording relies on." ;
+	fnd:utility "Each instance is one edition, with the document's persistent identity and the date it came into force. A wording relies on one edition (wrd:reliesOnEdition) or on the document as amended (wrd:reliesAsAmended)." .
 
 wrd:LinkedDocument a owl:Class ;
 	owl:equivalentClass [ a owl:Class ; owl:unionOf ( wrd:DocumentObject wrd:ExternalDocument ) ] ;
@@ -281,7 +316,7 @@ wrd:LinkedDocument a owl:Class ;
 wrd:ReferenceTarget a owl:Class ;
 	owl:equivalentClass [ a owl:Class ; owl:unionOf ( wrd:WordingNode wrd:LinkedDocument ) ] ;
 	rdfs:label "Reference target"@en ;
-	rdfs:comment "Anything a text part or a reference element may point to (e.g., a wording, element, or linked document." ;
+	rdfs:comment "Anything whose identity a text part or a reference element may name: a wording, an element, or a linked document." ;
 	fnd:utility "Assertions should NOT be made using this class. Its subclasses are declared explicitly. For use by SHACL validators." .
 
 wrd:WordingNode rdfs:subClassOf wrd:ReferenceTarget .
@@ -296,8 +331,18 @@ wrd:documentKind a owl:ObjectProperty , owl:FunctionalProperty ;
 wrd:linksTo a owl:ObjectProperty ;
 	rdfs:label "links to"@en ;
 	rdfs:domain wrd:Reference ;
-	rdfs:range wrd:ReferenceTarget ;
-	rdfs:comment "What a reference element points to. Subject: a reference element. Value: a reference target." .
+	rdfs:range fnd:PersistentIdentity ;
+	rdfs:comment "What a reference element points to. Subject: a reference element. Value: the target's persistent identity, resolved as a text part's reference is (law W8)." .
+
+wrd:reliesOnEdition a owl:ObjectProperty ;
+	rdfs:label "relies on edition"@en ;
+	rdfs:domain wrd:Wording ; rdfs:range wrd:LinkedDocument ;
+	rdfs:comment "An edition of a document outside the wording that the wording relies on, as in force at that edition: a static reliance. Subject: a wording. Value: an edition, any number, at most one per document (law W8)." .
+
+wrd:reliesAsAmended a owl:ObjectProperty ;
+	rdfs:label "relies as amended"@en ;
+	rdfs:domain wrd:Wording ; rdfs:range fnd:PersistentIdentity ;
+	rdfs:comment "A document outside the wording that the wording relies on as amended from time to time: an ambulatory reliance. Subject: a wording. Value: the document's persistent identity, any number. The edition is whichever is in force when a case is evaluated." .
 
 [] a owl:AllDisjointClasses ;
 	owl:members ( wrd:Wording wrd:Element wrd:TextPart wrd:DocumentObject wrd:ExternalDocument wrd:PopulationMethod wrd:InclusionMode wrd:VariableValue
@@ -365,6 +410,15 @@ wrd:multiValued a owl:DatatypeProperty , owl:FunctionalProperty ;
 	rdfs:domain wrd:Variable ; rdfs:range xsd:boolean ;
 	rdfs:comment "True when an instance may supply several values, as for a list of territories. Single-valued when absent. Subject: a variable. Value: a boolean, at most one." .
 ```
+
+**Chains of variables must not loop.** A variable populated from another, which is populated from
+the first, directly or through others, can never have a value. A layer that reads values through
+variables must check for such loops, and Instrument does: a placeholder in its stated meaning may
+take its value from a variable or from a defined word whose own value comes from a variable, so one
+loop may pass through words and variables alike. Instrument's shapes report each hop of such a loop,
+and its reference binder reports the whole loop in order, with the clause stating each hop
+(Instrument README §18.4).
+
 
 ### 5.10 Tables
 
@@ -619,8 +673,8 @@ use, and is not closed: a deployment binds a scheme of its own, which may extend
 
 <https://www.nebularis.org/neuro-semantic/wording-vocab>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/wording-vocab/0.6.0> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/wording/0.6.0> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/wording-vocab/0.7.0> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/wording/0.7.0> .
 
 wrd-voc:ElementTypeContract a voc:SchemeContract ;
 	fnd:hasIdentity wrd-voc:ElementTypeContract-identity ;
@@ -785,6 +839,7 @@ Each `…SubjectShape` checks that a property is used on the kind of node it bel
 
 ```turtle-shapes
 @prefix wrd:  <https://www.nebularis.org/neuro-semantic/lattice/wording#> .
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
 @prefix voc:  <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
 @prefix qnt:  <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
 @prefix elg:  <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
@@ -829,9 +884,17 @@ wrd:TextShape a sh:NodeShape ;
 	sh:property [ sh:path wrd:hasTextPart ; sh:class wrd:TextPart ] .
 
 wrd:TextPartSubjectShape a sh:NodeShape ;
-	sh:targetSubjectsOf wrd:partIndex , wrd:partText , wrd:refersToVariable , wrd:refersToObject ;
+	sh:targetSubjectsOf wrd:partIndex , wrd:partText , wrd:refersToVariable , wrd:refersToObject , wrd:displayText ;
 	sh:class wrd:TextPart ;
-	sh:message "Only a text part has a part index, text or a reference." .
+	sh:message "Only a text part has a part index, text, a reference or display text." .
+
+wrd:VariableIdentityShape a sh:NodeShape ;
+	sh:property [ sh:path [ sh:inversePath fnd:hasIdentity ] ; sh:minCount 1 ; sh:class wrd:Variable ] ;
+	sh:message "A variable reference names a variable's persistent identity, never a version (§5.7)." .
+
+wrd:TargetIdentityShape a sh:NodeShape ;
+	sh:property [ sh:path [ sh:inversePath fnd:hasIdentity ] ; sh:minCount 1 ; sh:class wrd:ReferenceTarget ] ;
+	sh:message "A reference names the persistent identity of a wording, an element or a document outside the wording, never a version (§5.8)." .
 
 wrd:TextPartShape a sh:NodeShape ;
 	sh:targetClass wrd:TextPart ;
@@ -840,8 +903,11 @@ wrd:TextPartShape a sh:NodeShape ;
 	sh:property [ sh:path wrd:partIndex ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:Literal ; sh:minInclusive 0 ;
 		sh:message "A text part has exactly one index, from 0." ] ;
 	sh:property [ sh:path wrd:partText ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
-	sh:property [ sh:path wrd:refersToVariable ; sh:maxCount 1 ; sh:class wrd:Variable ] ;
-	sh:property [ sh:path wrd:refersToObject ; sh:maxCount 1 ; sh:class wrd:ReferenceTarget ] ;
+	sh:property [ sh:path wrd:refersToVariable ; sh:maxCount 1 ; sh:node wrd:VariableIdentityShape ;
+		sh:message "A variable reference names a variable's persistent identity, never a version (§5.7)." ] ;
+	sh:property [ sh:path wrd:refersToObject ; sh:maxCount 1 ; sh:node wrd:TargetIdentityShape ;
+		sh:message "A reference names the persistent identity of a wording, an element or a document outside the wording, never a version (§5.8)." ] ;
+	sh:property [ sh:path wrd:displayText ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
 	sh:xone (
 		[ sh:path wrd:partText ; sh:minCount 1 ]
 		[ sh:path wrd:refersToVariable ; sh:minCount 1 ]
@@ -858,7 +924,23 @@ wrd:ReferenceSubjectShape a sh:NodeShape ;
 
 wrd:ReferenceShape a sh:NodeShape ;
 	sh:targetClass wrd:Reference ;
-	sh:property [ sh:path wrd:linksTo ; sh:class wrd:ReferenceTarget ] .
+	sh:property [ sh:path wrd:linksTo ; sh:node wrd:TargetIdentityShape ;
+		sh:message "A reference names the persistent identity of a wording, an element or a document outside the wording, never a version (§5.8)." ] .
+
+wrd:DisplayTextShape a sh:NodeShape ;
+	sh:targetSubjectsOf wrd:displayText ;
+	sh:or ( [ sh:path wrd:refersToObject ; sh:minCount 1 ] [ sh:path wrd:refersToVariable ; sh:minCount 1 ] ) ;
+	sh:message "Only a reference part has display text: a literal part's words are its text." .
+
+wrd:RelianceShape a sh:NodeShape ;
+	sh:targetSubjectsOf wrd:reliesOnEdition , wrd:reliesAsAmended ;
+	sh:class wrd:Wording ;
+	sh:message "Only a wording relies on a document outside it." ;
+	sh:property [ sh:path wrd:reliesOnEdition ; sh:class wrd:LinkedDocument ;
+		sh:message "A static reliance names an edition of a document outside the wording, never its identity (§5.8)." ] ;
+	sh:property [ sh:path wrd:reliesAsAmended ;
+		sh:node [ sh:property [ sh:path [ sh:inversePath fnd:hasIdentity ] ; sh:minCount 1 ; sh:class wrd:LinkedDocument ] ] ;
+		sh:message "An ambulatory reliance names the persistent identity of a document outside the wording, never an edition (§5.8)." ] .
 
 wrd:LinkedDocumentSubjectShape a sh:NodeShape ;
 	sh:targetSubjectsOf wrd:documentKind ;
@@ -1033,6 +1115,7 @@ data graph.
 | W6 | A value matches its variable: a concept is in a scheme bound to the value contract, a quantity is on the value space, a number lies within the admissible values, and a variable not multi-valued has one value | `wrd:W6Shape` |
 | — | A cell's declared entry belongs to the table of the cell's field | `wrd:CellShape` |
 | W7 | Object ids are derived after assembly, never stored as identity | a design rule (§5.4) |
+| W8 | Every reference finds what it means in the wording holding it. A reference to an element or a variable finds exactly one version: the one a form comprises, or the one an assembled wording includes or, for a variable, declares through an included element. A reference to a document outside the wording finds exactly one reliance on it: in the wording itself, or for an assembled wording that states none, in the form it is assembled from | `wrd:W8FormShape`, `wrd:W8AssembledShape`, `wrd:W8RelianceShape` |
 
 **A slot's conditions** are checked as a set. Every variant's conditions read the same governing
 variables. Where each variant has one interval condition over the same governing variable, no two
@@ -1333,6 +1416,80 @@ wrd:SlotUncheckedShape a sh:NodeShape ;
 				}
 			}""" ] .
 
+# ---- W8: references find exactly one version, or one reliance ---------------------
+
+wrd:W8FormShape a sh:NodeShape ;
+	sh:targetClass wrd:Wording ;
+	sh:sparql [ sh:prefixes wrd:LawPrefixes ;
+		sh:message "W8: {?element} refers to {?identity}, of which this form comprises no version." ;
+		sh:select """
+			SELECT DISTINCT $this ?element ?identity WHERE {
+				FILTER NOT EXISTS { $this a wrd:AssembledWording }
+				$this wrd:directlyComprises+ ?element .
+				{ ?element wrd:hasTextPart ?part . ?part wrd:refersToObject|wrd:refersToVariable ?identity } UNION { ?element wrd:linksTo ?identity }
+				?any fnd:hasIdentity ?identity .
+				FILTER EXISTS { ?any a/rdfs:subClassOf* wrd:Element }
+				FILTER NOT EXISTS { $this wrd:directlyComprises+ ?version . ?version fnd:hasIdentity ?identity }
+			}""" ] ;
+	sh:sparql [ sh:prefixes wrd:LawPrefixes ;
+		sh:message "W8: {?element} refers to {?identity}, of which this form comprises two versions, {?one} and {?other}." ;
+		sh:select """
+			SELECT DISTINCT $this ?element ?identity ?one ?other WHERE {
+				FILTER NOT EXISTS { $this a wrd:AssembledWording }
+				$this wrd:directlyComprises+ ?element .
+				{ ?element wrd:hasTextPart ?part . ?part wrd:refersToObject|wrd:refersToVariable ?identity } UNION { ?element wrd:linksTo ?identity }
+				$this wrd:directlyComprises+ ?one , ?other .
+				?one fnd:hasIdentity ?identity . ?other fnd:hasIdentity ?identity .
+				FILTER (STR(?one) < STR(?other))
+			}""" ] .
+
+wrd:W8AssembledShape a sh:NodeShape ;
+	sh:targetClass wrd:AssembledWording ;
+	sh:sparql [ sh:prefixes wrd:LawPrefixes ;
+		sh:message "W8: {?element} refers to {?identity}, of which this assembled wording includes, or declares through an included element, no version." ;
+		sh:select """
+			SELECT DISTINCT $this ?element ?identity WHERE {
+				$this wrd:includes ?element .
+				{ ?element wrd:hasTextPart ?part . ?part wrd:refersToObject|wrd:refersToVariable ?identity } UNION { ?element wrd:linksTo ?identity }
+				?any fnd:hasIdentity ?identity .
+				FILTER EXISTS { ?any a/rdfs:subClassOf* wrd:Element }
+				FILTER NOT EXISTS { $this wrd:includes ?version . ?version fnd:hasIdentity ?identity }
+				FILTER NOT EXISTS { $this wrd:includes ?declarer . ?declarer wrd:directlyComprises ?variable . ?variable fnd:hasIdentity ?identity ; a/rdfs:subClassOf* wrd:Variable }
+			}""" ] ;
+	sh:sparql [ sh:prefixes wrd:LawPrefixes ;
+		sh:message "W8: {?element} refers to {?identity}, of which this assembled wording holds two versions, {?one} and {?other}." ;
+		sh:select """
+			SELECT DISTINCT $this ?element ?identity ?one ?other WHERE {
+				$this wrd:includes ?element .
+				{ ?element wrd:hasTextPart ?part . ?part wrd:refersToObject|wrd:refersToVariable ?identity } UNION { ?element wrd:linksTo ?identity }
+				{ $this wrd:includes ?one , ?other }
+				UNION { $this wrd:includes ?d1 , ?d2 . ?d1 wrd:directlyComprises ?one . ?d2 wrd:directlyComprises ?other .
+				  ?one a/rdfs:subClassOf* wrd:Variable . ?other a/rdfs:subClassOf* wrd:Variable }
+				?one fnd:hasIdentity ?identity . ?other fnd:hasIdentity ?identity .
+				FILTER (STR(?one) < STR(?other))
+			}""" ] .
+
+wrd:W8RelianceShape a sh:NodeShape ;
+	sh:targetClass wrd:Wording ;
+	sh:sparql [ sh:prefixes wrd:LawPrefixes ;
+		sh:message "W8: {?element} refers to {?identity}, a document outside the wording, which this wording does not rely on: state a static reliance (wrd:reliesOnEdition) or an ambulatory one (wrd:reliesAsAmended)." ;
+		sh:select """
+			SELECT DISTINCT $this ?element ?identity WHERE {
+				{ $this wrd:directlyComprises+ ?element } UNION { $this wrd:includes ?element }
+				{ ?element wrd:hasTextPart ?part . ?part wrd:refersToObject|wrd:refersToVariable ?identity } UNION { ?element wrd:linksTo ?identity }
+				?document fnd:hasIdentity ?identity ; a/rdfs:subClassOf* wrd:LinkedDocument .
+				FILTER NOT EXISTS { $this wrd:reliesOnEdition/fnd:hasIdentity ?identity }
+				FILTER NOT EXISTS { $this wrd:reliesAsAmended ?identity }
+				FILTER NOT EXISTS { $this wrd:assembledFrom ?form . { ?form wrd:reliesOnEdition/fnd:hasIdentity ?identity } UNION { ?form wrd:reliesAsAmended ?identity } }
+			}""" ] ;
+	sh:sparql [ sh:prefixes wrd:LawPrefixes ;
+		sh:message "W8: this wording relies on {?identity} twice ({?one}, {?other}): a reference to it must find exactly one reliance." ;
+		sh:select """
+			SELECT DISTINCT $this ?identity ?one ?other WHERE {
+				{ $this wrd:reliesOnEdition ?one , ?other . ?one fnd:hasIdentity ?identity . ?other fnd:hasIdentity ?identity . FILTER (STR(?one) < STR(?other)) }
+				UNION { $this wrd:reliesOnEdition ?one ; wrd:reliesAsAmended ?identity . ?one fnd:hasIdentity ?identity . BIND (?identity AS ?other) }
+			}""" ] .
+
 # ---- Amendments -------------------------------------------------------------------
 
 wrd:AmendmentOperationShape a sh:NodeShape ;
@@ -1411,3 +1568,10 @@ Breaking versions at major version zero ([ADR-A113](../../docs/architecture/deci
   with it, with no other change (CCS C7b, ADR-A115).
 - 0.6.0 (`wording` and `wording-vocab`, breaking): re-pinned to Eligibility 0.10.0, which re-pins
   Party 0.8.0, whose shares and composition rules are renamed, with no other change (CCS C7c).
+- 0.7.0 (`wording` and `wording-vocab`, breaking, CCS C8b, the ADR-A112 addendum "references by
+  identity"): `wrd:refersToObject`, `wrd:refersToVariable` and `wrd:linksTo` name a persistent
+  identity, never a version, resolved within the wording holding the reference. Document objects and
+  external documents are editions, `fnd:Version`s. New: `wrd:reliesOnEdition` (static) and
+  `wrd:reliesAsAmended` (ambulatory) from a wording to a document outside it, and `wrd:displayText`.
+  Shapes 0.4.0 (breaking): a reference names an identity, display text only on a reference part,
+  reliances, and law W8, which reports a reference that finds no version, or two, or no reliance.

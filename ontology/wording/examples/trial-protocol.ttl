@@ -94,7 +94,7 @@ ex:cl-6-2 a wrd:Text ;
     wrd:hasTextPart ex:cl-6-2-p0 , ex:cl-6-2-p1 , ex:cl-6-2-p2 .
 
 ex:cl-6-2-p0 a wrd:TextPart ; wrd:partIndex 0 ; wrd:partText "Each follow-up visit takes place within " .
-ex:cl-6-2-p1 a wrd:TextPart ; wrd:partIndex 1 ; wrd:refersToVariable ex:var-visit-window .
+ex:cl-6-2-p1 a wrd:TextPart ; wrd:partIndex 1 ; wrd:refersToVariable ex:var-visit-window-identity .
 ex:cl-6-2-p2 a wrd:TextPart ; wrd:partIndex 2 ; wrd:partText " of its scheduled date." .
 
 ex:var-visit-window a wrd:EmbeddedVariable ;
@@ -163,9 +163,14 @@ ex:cl-6-3 a wrd:Text ;
     wrd:hasTextPart ex:cl-6-3-p0 , ex:cl-6-3-p1 .
 
 ex:cl-6-3-p0 a wrd:TextPart ; wrd:partIndex 0 ; wrd:partText "Adverse events are reported as required by " .
-ex:cl-6-3-p1 a wrd:TextPart ; wrd:partIndex 1 ; wrd:refersToObject ex:gcp-regulation .
+ex:cl-6-3-p1 a wrd:TextPart ; wrd:partIndex 1 ; wrd:refersToObject ex:gcp-regulation-identity .
 
-ex:gcp-regulation a wrd:ExternalDocument .
+# The regulation, cited "as required by": as amended from time to time, an
+# ambulatory reliance naming no edition. The edition in force when a case is
+# evaluated is a value the evaluation context supplies. One edition is shown.
+ex:gcp-regulation a wrd:ExternalDocument ;
+    fnd:hasIdentity ex:gcp-regulation-identity .
+ex:protocol-wording wrd:reliesAsAmended ex:gcp-regulation-identity .
 
 # A sponsor's own clause classification, bound to Wording's classification contract.
 ex:sponsor-classes a voc:ConceptScheme ;

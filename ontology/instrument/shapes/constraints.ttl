@@ -2,6 +2,8 @@
 
 @prefix sh:   <http://www.w3.org/ns/shacl#> .
 @prefix ins:  <https://www.nebularis.org/neuro-semantic/lattice/instrument#> .
+@prefix elg:  <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
+@prefix wrd:  <https://www.nebularis.org/neuro-semantic/lattice/wording#> .
 
 ins:SupersessionSameIdentityShape a sh:NodeShape ;
 	sh:targetClass ins:Instrument ;
@@ -378,6 +380,326 @@ ins:ResolutionReachesActorsShape a sh:NodeShape ;
 			SELECT $this ?property WHERE {
 				$this ins:resolutionStep/elg:stepProperty ?property .
 				?property a owl:DatatypeProperty .
+			}
+		"""
+	] .
+
+ins:WordCycleShape a sh:NodeShape ;
+	sh:targetClass ins:Definition ;
+	sh:sparql [
+		sh:message "Cycle: {?word}, defined in {?clause}, takes its value from {?next}, which leads back to {?word}. Nothing in the loop can ever have a value: break the chain at one of its words (§18.4)." ;
+		sh:select """
+			PREFIX ins:  <https://www.nebularis.org/neuro-semantic/lattice/instrument#>
+			PREFIX fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+			PREFIX wrd:  <https://www.nebularis.org/neuro-semantic/lattice/wording#>
+			PREFIX elg:  <https://www.nebularis.org/neuro-semantic/lattice/eligibility#>
+			PREFIX qnt:  <https://www.nebularis.org/neuro-semantic/lattice/quantification#>
+			PREFIX voc:  <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#>
+			PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+			PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+			PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+			SELECT DISTINCT $this ?word ?clause ?next WHERE {
+				$this rdf:type ins:Template ; ins:defines ?word ; ins:arisesUnder/ins:expressedIn ?clause ;
+					ins:means/ins:valueFrom ?next .
+				?next (^ins:defines/ins:means/ins:valueFrom)* ?word .
+			}
+		"""
+	] .
+
+ins:VariableCycleShape a sh:NodeShape ;
+	sh:targetSubjectsOf wrd:populatedFrom ;
+	sh:sparql [
+		sh:message "Cycle: the variable {$this} is populated from {?next}, which leads back to {$this}. None of them can ever have a value (§18.4)." ;
+		sh:select """
+			PREFIX ins:  <https://www.nebularis.org/neuro-semantic/lattice/instrument#>
+			PREFIX fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+			PREFIX wrd:  <https://www.nebularis.org/neuro-semantic/lattice/wording#>
+			PREFIX elg:  <https://www.nebularis.org/neuro-semantic/lattice/eligibility#>
+			PREFIX qnt:  <https://www.nebularis.org/neuro-semantic/lattice/quantification#>
+			PREFIX voc:  <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#>
+			PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+			PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+			PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+			SELECT DISTINCT $this ?next WHERE {
+				$this wrd:populatedFrom ?next .
+				?next wrd:populatedFrom* $this .
+			}
+		"""
+	] .
+
+ins:WordInConceptSlotShape a sh:NodeShape ;
+	sh:targetClass elg:Condition ;
+	sh:sparql [
+		sh:message "{?word} is a defined word and also a concept of {?scheme}, the scheme this condition is constrained by: the condition is ambiguous. Define a word outside the scheme (§15.1)." ;
+		sh:select """
+			PREFIX ins:  <https://www.nebularis.org/neuro-semantic/lattice/instrument#>
+			PREFIX fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+			PREFIX wrd:  <https://www.nebularis.org/neuro-semantic/lattice/wording#>
+			PREFIX elg:  <https://www.nebularis.org/neuro-semantic/lattice/eligibility#>
+			PREFIX qnt:  <https://www.nebularis.org/neuro-semantic/lattice/quantification#>
+			PREFIX voc:  <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#>
+			PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+			PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+			PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+			SELECT DISTINCT $this ?word ?scheme WHERE {
+				$this elg:requiredConcept|elg:excludedConcept ?word .
+				?definition ins:defines ?word .
+				?word skos:inScheme ?scheme .
+				$this elg:constrainedByContract ?contract .
+				{ ?contract voc:boundScheme ?scheme } UNION { ?binding voc:forContract ?contract ; voc:bindsScheme ?scheme }
+			}
+		"""
+	] .
+
+ins:WordMeaningSuitsSlotShape a sh:NodeShape ;
+	sh:targetClass ins:Definition ;
+	sh:sparql [
+		sh:message "{?word} stands in a concept slot of {?condition}, but this definition means {?meaning}, which is not a concept (§15.1)." ;
+		sh:select """
+			PREFIX ins:  <https://www.nebularis.org/neuro-semantic/lattice/instrument#>
+			PREFIX fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+			PREFIX wrd:  <https://www.nebularis.org/neuro-semantic/lattice/wording#>
+			PREFIX elg:  <https://www.nebularis.org/neuro-semantic/lattice/eligibility#>
+			PREFIX qnt:  <https://www.nebularis.org/neuro-semantic/lattice/quantification#>
+			PREFIX voc:  <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#>
+			PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+			PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+			PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+			SELECT DISTINCT $this ?word ?condition ?meaning WHERE {
+				$this rdf:type ins:Template ; ins:defines ?word ; ins:means ?meaning .
+				?condition elg:requiredConcept|elg:excludedConcept ?word .
+				FILTER NOT EXISTS { ?meaning rdf:type/rdfs:subClassOf* skos:Concept }
+				FILTER NOT EXISTS { ?meaning rdf:type/rdfs:subClassOf* skos:ConceptScheme }
+			}
+		"""
+	] ;
+	sh:sparql [
+		sh:message "{?word} stands in a condition slot of {?user}, but this definition means {?meaning}, which is not an Eligibility condition (§15.1)." ;
+		sh:select """
+			PREFIX ins:  <https://www.nebularis.org/neuro-semantic/lattice/instrument#>
+			PREFIX fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+			PREFIX wrd:  <https://www.nebularis.org/neuro-semantic/lattice/wording#>
+			PREFIX elg:  <https://www.nebularis.org/neuro-semantic/lattice/eligibility#>
+			PREFIX qnt:  <https://www.nebularis.org/neuro-semantic/lattice/quantification#>
+			PREFIX voc:  <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#>
+			PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+			PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+			PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+			SELECT DISTINCT $this ?word ?user ?meaning WHERE {
+				$this rdf:type ins:Template ; ins:defines ?word ; ins:means ?meaning .
+				?user ins:condition|ins:scope|ins:maintains|ins:deems|ins:when|ins:resolutionFilter ?word .
+				FILTER NOT EXISTS { ?meaning rdf:type/rdfs:subClassOf* elg:Condition }
+			}
+		"""
+	] ;
+	sh:sparql [
+		sh:message "A placeholder takes its value from {?word}, but this definition means {?meaning}, which is not a quantity (§18.4)." ;
+		sh:select """
+			PREFIX ins:  <https://www.nebularis.org/neuro-semantic/lattice/instrument#>
+			PREFIX fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+			PREFIX wrd:  <https://www.nebularis.org/neuro-semantic/lattice/wording#>
+			PREFIX elg:  <https://www.nebularis.org/neuro-semantic/lattice/eligibility#>
+			PREFIX qnt:  <https://www.nebularis.org/neuro-semantic/lattice/quantification#>
+			PREFIX voc:  <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#>
+			PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+			PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+			PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+			SELECT DISTINCT $this ?word ?meaning WHERE {
+				$this rdf:type ins:Template ; ins:defines ?word ; ins:means ?meaning .
+				?placeholder ins:valueFrom ?word .
+				FILTER NOT EXISTS { ?meaning rdf:type/rdfs:subClassOf* qnt:Quantity }
+			}
+		"""
+	] .
+
+ins:BoundNamesValuesShape a sh:NodeShape ;
+	sh:targetClass ins:Term ;
+	sh:sparql [
+		sh:message "{?node}, generated under {$this}, still holds a placeholder ({?node} ins:valueFrom {?source}). Bound meaning names values, never variables or words (law I13, §18.7)." ;
+		sh:select """
+			PREFIX ins:  <https://www.nebularis.org/neuro-semantic/lattice/instrument#>
+			PREFIX fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+			PREFIX wrd:  <https://www.nebularis.org/neuro-semantic/lattice/wording#>
+			PREFIX elg:  <https://www.nebularis.org/neuro-semantic/lattice/eligibility#>
+			PREFIX qnt:  <https://www.nebularis.org/neuro-semantic/lattice/quantification#>
+			PREFIX voc:  <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#>
+			PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+			PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+			PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+			SELECT DISTINCT $this ?node ?source WHERE {
+				$this ins:boundIn ?instrument .
+				?bound ins:arisesUnder $this .
+				FILTER NOT EXISTS { ?bound rdf:type ins:Template }
+				?bound (ins:scope|ins:maintains|ins:due|ins:window|ins:recurrence|ins:means|ins:deems|ins:when|ins:condition|ins:arisesOn|ins:resolutionFilter|elg:requiredRangeSet|elg:hasCondition|qnt:hasRange|qnt:hasBound|qnt:upperBound|qnt:lowerBound|qnt:boundValue|qnt:relativeToAnchor|qnt:upperOffsetBy|qnt:lowerOffsetBy|qnt:anchor|qnt:period)* ?node .
+				?node ins:valueFrom ?source .
+			}
+		"""
+	] ;
+	sh:sparql [
+		sh:message "{?condition}, generated under {$this}, still names the word {?word}. Bound meaning names its meaning (law I13, §15.1)." ;
+		sh:select """
+			PREFIX ins:  <https://www.nebularis.org/neuro-semantic/lattice/instrument#>
+			PREFIX fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+			PREFIX wrd:  <https://www.nebularis.org/neuro-semantic/lattice/wording#>
+			PREFIX elg:  <https://www.nebularis.org/neuro-semantic/lattice/eligibility#>
+			PREFIX qnt:  <https://www.nebularis.org/neuro-semantic/lattice/quantification#>
+			PREFIX voc:  <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#>
+			PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+			PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+			PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+			SELECT DISTINCT $this ?condition ?word WHERE {
+				$this ins:boundIn ?instrument .
+				?bound ins:arisesUnder $this .
+				FILTER NOT EXISTS { ?bound rdf:type ins:Template }
+				?bound (ins:scope|ins:maintains|ins:due|ins:window|ins:recurrence|ins:means|ins:deems|ins:when|ins:condition|ins:arisesOn|ins:resolutionFilter|elg:requiredRangeSet|elg:hasCondition|qnt:hasRange|qnt:hasBound|qnt:upperBound|qnt:lowerBound|qnt:boundValue|qnt:relativeToAnchor|qnt:upperOffsetBy|qnt:lowerOffsetBy|qnt:anchor|qnt:period)* ?condition .
+				?condition elg:requiredConcept|elg:excludedConcept ?word .
+				?definition ins:defines ?word .
+			}
+		"""
+	] .
+
+ins:BoundFromIncludedShape a sh:NodeShape ;
+	sh:targetClass ins:Term ;
+	sh:sparql [
+		sh:message "{$this} is bound from {?stated}, stated in {?element}, which the instrument's wording does not include (law I17)." ;
+		sh:select """
+			PREFIX ins:  <https://www.nebularis.org/neuro-semantic/lattice/instrument#>
+			PREFIX fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+			PREFIX wrd:  <https://www.nebularis.org/neuro-semantic/lattice/wording#>
+			PREFIX elg:  <https://www.nebularis.org/neuro-semantic/lattice/eligibility#>
+			PREFIX qnt:  <https://www.nebularis.org/neuro-semantic/lattice/quantification#>
+			PREFIX voc:  <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#>
+			PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+			PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+			PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+			SELECT $this ?stated ?element WHERE {
+				$this ins:boundIn ?instrument ; ins:boundFrom ?stated .
+				?stated ins:expressedIn ?element .
+				?instrument ins:expressedIn ?wording .
+				FILTER NOT EXISTS { ?wording wrd:includes ?element }
+			}
+		"""
+	] .
+
+ins:StatedMeaningBoundShape a sh:NodeShape ;
+	sh:targetClass ins:Instrument ;
+	sh:sparql [
+		sh:message "{?stated}, stated in {?element}, which the wording includes, is not bound in {$this} (law I17)." ;
+		sh:select """
+			PREFIX ins:  <https://www.nebularis.org/neuro-semantic/lattice/instrument#>
+			PREFIX fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+			PREFIX wrd:  <https://www.nebularis.org/neuro-semantic/lattice/wording#>
+			PREFIX elg:  <https://www.nebularis.org/neuro-semantic/lattice/eligibility#>
+			PREFIX qnt:  <https://www.nebularis.org/neuro-semantic/lattice/quantification#>
+			PREFIX voc:  <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#>
+			PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+			PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+			PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+			SELECT $this ?stated ?element WHERE {
+				$this ins:expressedIn ?wording .
+				?wording wrd:includes ?element .
+				?stated ins:expressedIn ?element ; rdf:type ins:Term , ins:Template .
+				FILTER NOT EXISTS { ?bound ins:boundIn $this ; ins:boundFrom ?stated }
+			}
+		"""
+	] .
+
+ins:CoverageShape a sh:NodeShape ;
+	sh:targetClass ins:Instrument ;
+	sh:severity sh:Warning ;
+	sh:sparql [
+		sh:message "{?element} is a leaf of text with no stated meaning and no encoding status: not yet assessed. Give it stated meaning, or mark it ins-voc:NoMeaning if it binds nobody (law I17, §18.5)." ;
+		sh:select """
+			PREFIX ins:  <https://www.nebularis.org/neuro-semantic/lattice/instrument#>
+			PREFIX fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+			PREFIX wrd:  <https://www.nebularis.org/neuro-semantic/lattice/wording#>
+			PREFIX elg:  <https://www.nebularis.org/neuro-semantic/lattice/eligibility#>
+			PREFIX qnt:  <https://www.nebularis.org/neuro-semantic/lattice/quantification#>
+			PREFIX voc:  <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#>
+			PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+			PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+			PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+			PREFIX ins-voc: <https://www.nebularis.org/neuro-semantic/lattice/instrument/vocab#>
+			SELECT $this ?element WHERE {
+				$this ins:expressedIn ?wording .
+				?wording wrd:includes ?element .
+				?element rdf:type/rdfs:subClassOf* wrd:Text .
+				FILTER NOT EXISTS { ?element wrd:directlyComprises ?child . FILTER NOT EXISTS { ?child rdf:type/rdfs:subClassOf* wrd:Variable } }
+				FILTER NOT EXISTS { ?stated ins:expressedIn ?element }
+				FILTER NOT EXISTS { ?container wrd:directlyComprises+ ?element . ?stated2 ins:expressedIn ?container }
+				FILTER NOT EXISTS { ?element ins:encodingStatus ins-voc:NoMeaning }
+			}
+		"""
+	] .
+
+ins:FormDefinitionOverlapShape a sh:NodeShape ;
+	sh:targetClass ins:Definition ;
+	sh:severity sh:Warning ;
+	sh:sparql [
+		sh:message "On the form, {$this} and {?other} both define {?word} where both apply ({?section}): any instrument binding them combines them by union. Confirm that no \"only\" was meant, or state which prevails (law I16)." ;
+		sh:select """
+			PREFIX ins:  <https://www.nebularis.org/neuro-semantic/lattice/instrument#>
+			PREFIX fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+			PREFIX wrd:  <https://www.nebularis.org/neuro-semantic/lattice/wording#>
+			PREFIX elg:  <https://www.nebularis.org/neuro-semantic/lattice/eligibility#>
+			PREFIX qnt:  <https://www.nebularis.org/neuro-semantic/lattice/quantification#>
+			PREFIX voc:  <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#>
+			PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+			PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+			PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+			SELECT DISTINCT $this ?other ?word ?section WHERE {
+				$this rdf:type ins:Template ; ins:defines ?word ; ins:arisesUnder ?t .
+				?other rdf:type ins:Template ; ins:defines ?word ; ins:arisesUnder ?t2 .
+				FILTER (?other != $this && STR($this) < STR(?other))
+				FILTER NOT EXISTS { $this ins:prevailsOver ?other }
+				FILTER NOT EXISTS { ?other ins:prevailsOver $this }
+				{ { ?t ins:appliesWithin ?s } UNION { ?t ins:expressedIn ?cl_s . ?up_s wrd:directlyComprises+ ?cl_s ; fnd:hasIdentity ?s . ?sg_s ins:section ?s } { ?t2 ins:appliesWithin ?s } UNION { ?t2 ins:expressedIn ?cl_s . ?up_s wrd:directlyComprises+ ?cl_s ; fnd:hasIdentity ?s . ?sg_s ins:section ?s } BIND (STR(?s) AS ?section) }
+				UNION { FILTER NOT EXISTS { ?t ins:appliesWithin|ins:notWithin ?x1 }
+				FILTER NOT EXISTS { ?t ins:expressedIn ?wc1 . ?wu1 wrd:directlyComprises+ ?wc1 ; fnd:hasIdentity ?ws1 . ?wg1 ins:section ?ws1 } BIND ("the whole form" AS ?section) }
+				UNION { FILTER NOT EXISTS { ?t2 ins:appliesWithin|ins:notWithin ?x2 }
+				FILTER NOT EXISTS { ?t2 ins:expressedIn ?wc2 . ?wu2 wrd:directlyComprises+ ?wc2 ; fnd:hasIdentity ?ws2 . ?wg2 ins:section ?ws2 } BIND ("the whole form" AS ?section) }
+			}
+		"""
+	] .
+
+ins:FormWordResolvedShape a sh:NodeShape ;
+	sh:targetClass ins:Term ;
+	sh:sparql [
+		sh:message "{$this} uses the word {?word} within {?section}, where no definition of it applies: in an instrument it cannot be bound there (§16.3, §18.6)." ;
+		sh:select """
+			PREFIX ins:  <https://www.nebularis.org/neuro-semantic/lattice/instrument#>
+			PREFIX fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+			PREFIX wrd:  <https://www.nebularis.org/neuro-semantic/lattice/wording#>
+			PREFIX elg:  <https://www.nebularis.org/neuro-semantic/lattice/eligibility#>
+			PREFIX qnt:  <https://www.nebularis.org/neuro-semantic/lattice/quantification#>
+			PREFIX voc:  <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#>
+			PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+			PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+			PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+			SELECT DISTINCT $this ?word ?section WHERE {
+				$this rdf:type ins:Template .
+				?user ins:arisesUnder $this .
+				{ ?user ins:obligor|ins:obligee|ins:holder|ins:counterparty|ins:scope|ins:maintains|ins:deems|ins:when ?word }
+				UNION { ?user ins:arisesOn/ins:condition ?word }
+				UNION { ?user (ins:scope|ins:maintains)/elg:hasCondition*/(elg:requiredConcept|elg:excludedConcept) ?word }
+				UNION { ?user (ins:scope|ins:maintains|ins:due|ins:window|ins:recurrence|ins:means|ins:deems|ins:when|ins:condition|ins:arisesOn|ins:resolutionFilter|elg:requiredRangeSet|elg:hasCondition|qnt:hasRange|qnt:hasBound|qnt:upperBound|qnt:lowerBound|qnt:boundValue|qnt:relativeToAnchor|qnt:upperOffsetBy|qnt:lowerOffsetBy|qnt:anchor|qnt:period)* ?placeholder . ?placeholder ins:valueFrom ?word }
+				?anyDefinition ins:defines ?word ; rdf:type ins:Template .
+				# The sections the term applies within: those its scope names or covers, or the one containing it.
+				{ $this ins:appliesWithin ?part . ?partElement fnd:hasIdentity ?part .
+				  ?partElement wrd:directlyComprises* ?sectionElement . ?sectionElement fnd:hasIdentity ?section .
+				  ?anySectioning ins:section ?section .
+				  FILTER NOT EXISTS { $this ins:notWithin ?out . ?outElement fnd:hasIdentity ?out . ?outElement wrd:directlyComprises* ?sectionElement } }
+				UNION { $this ins:expressedIn ?clause . ?sectionElement wrd:directlyComprises+ ?clause ; fnd:hasIdentity ?section .
+				  ?anySectioning ins:section ?section . }
+				# No definition of the word applies there: none placed at or above the section, and none for the whole form.
+				FILTER NOT EXISTS {
+					?definition ins:defines ?word ; rdf:type ins:Template ; ins:arisesUnder ?dt .
+					{ ?dt ins:appliesWithin ?at . ?atElement fnd:hasIdentity ?at . ?atElement wrd:directlyComprises* ?sectionElement }
+					UNION { ?dt ins:expressedIn ?dc . ?dcUp wrd:directlyComprises+ ?dc . ?dcUp wrd:directlyComprises* ?sectionElement .
+					  ?dcUp fnd:hasIdentity ?dcSection . ?dcSectioning ins:section ?dcSection }
+					UNION { FILTER NOT EXISTS { ?dt ins:appliesWithin|ins:notWithin ?x3 }
+				FILTER NOT EXISTS { ?dt ins:expressedIn ?wc3 . ?wu3 wrd:directlyComprises+ ?wc3 ; fnd:hasIdentity ?ws3 . ?wg3 ins:section ?ws3 } }
+				}
 			}
 		"""
 	] .

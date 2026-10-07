@@ -1,0 +1,190 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Premise. A lessor's equipment lease form is revised: its definition of
+# "Equipment" is widened, its schedule's return period is redeclared, and the
+# safety regulations it relies on are fixed at a newer edition. Clause 5.1,
+# which mentions all three, is not changed. Because its references name what
+# they refer to, not which version, clause 5.1 is one element version in both
+# editions of the form, and its hash, and any meaning stated for it, carry
+# over unchanged. The form, as the wording holding the clause, fixes the
+# version each reference means.
+#
+# Clause 5.1 reads
+#
+#   On termination the Lessee shall return the Equipment within [days]
+#   Business Days, in the condition shown in the Inspection Report, and
+#   complying with the Safety Regulations and the Data Protection Regulation.
+#
+# What the example shows:
+#
+# | Construct                                            | Where                                  |
+# |------------------------------------------------------|----------------------------------------|
+# | references naming identities, never versions         | ex:cl-5-1's text parts                 |
+# | one clause version in two editions of its form       | ex:cl-5-1, under ex:sec-5 in both      |
+# | a definition revised without the clause changing     | ex:def-equipment-v1, ex:def-equipment-v2 |
+# | a variable redeclared without the clause changing    | ex:var-days-v1, ex:var-days-v2          |
+# | an inflected display text                            | "Lessee's" in ex:cl-6-1                 |
+# | an outside document relied on at one edition (static) | the Safety Regulations, wrd:reliesOnEdition |
+# | an outside document relied on as amended (ambulatory) | the Data Protection Regulation, wrd:reliesAsAmended |
+# | an attachment relied on at one edition               | the Inspection Report                  |
+# | an assembled wording resolving each reference        | ex:lease-0193                          |
+#
+# How each reference resolves:
+#
+# | Reference in clause 5.1 | Edition 1 of the form | Edition 2 | The lease, assembled from edition 2 |
+# |-------------------------|-----------------------|-----------|--------------------------------------|
+# | the Equipment           | definition version 1  | definition version 2 | definition version 2, which it includes |
+# | [days]                  | variable version 1    | variable version 2 | the value 10, recorded for variable version 2 |
+# | the Inspection Report   | the 2026 report       | the 2026 report | the 2026 report |
+# | the Safety Regulations  | the 2025 edition      | the 2027 edition | the 2027 edition |
+# | the Data Protection Regulation | no edition: as amended | as amended | the edition in force when a case is evaluated |
+
+@prefix wrd:     <https://www.nebularis.org/neuro-semantic/lattice/wording#> .
+@prefix wrd-voc: <https://www.nebularis.org/neuro-semantic/lattice/wording/vocab#> .
+@prefix fnd:     <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix qnt:     <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
+@prefix prov:    <http://www.w3.org/ns/prov#> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex:      <https://example.org/lattice/wording/reused-clause/> .
+
+# ---- Edition 1 of the form -----------------------------------------------------
+
+ex:form-v1 a wrd:Wording ;
+    fnd:hasIdentity ex:form-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:directlyComprises ex:sec-1-v1 , ex:sec-5 , ex:sec-6 , ex:schedule-v1 ;
+    wrd:reliesOnEdition ex:safety-regs-2025 , ex:inspection-report-2026 ;
+    wrd:reliesAsAmended ex:data-protection-identity ;
+    fnd:supersededBy ex:form-v2 .
+
+ex:sec-1-v1 a wrd:Element ;
+    fnd:hasIdentity ex:sec-1-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Section ; wrd:objectId "1" ; wrd:rankKey "a0" ;
+    wrd:directlyComprises ex:def-equipment-v1 , ex:def-lessee .
+ex:def-equipment-v1 a wrd:Text ;
+    fnd:hasIdentity ex:def-equipment-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Definition ; wrd:objectId "1.1" ; wrd:rankKey "a0" ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "\"Equipment\" means the machines listed in the Schedule." ] .
+ex:def-lessee a wrd:Text ;
+    fnd:hasIdentity ex:def-lessee-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Definition ; wrd:objectId "1.2" ; wrd:rankKey "b0" ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "\"Lessee\" means the person named as lessee in the Schedule." ] .
+
+ex:schedule-v1 a wrd:Element ;
+    fnd:hasIdentity ex:schedule-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Schedule ; wrd:objectId "Schedule" ; wrd:rankKey "d0" ;
+    wrd:directlyComprises ex:var-days-v1 .
+ex:var-days-v1 a wrd:EmbeddedVariable ;
+    fnd:hasIdentity ex:var-days-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:variableKey "return-days" ; wrd:rankKey "z0" ;
+    wrd:valueSpace ex:days-space ; wrd:multiValued false .
+
+# ---- Clause 5.1 and 6.1: one version each, in both editions --------------------
+
+ex:sec-5 a wrd:Element ;
+    fnd:hasIdentity ex:sec-5-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Section ; wrd:objectId "5" ; wrd:rankKey "b0" ;
+    wrd:directlyComprises ex:cl-5-1 .
+ex:cl-5-1 a wrd:Text ;
+    fnd:hasIdentity ex:cl-5-1-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "5.1" ; wrd:rankKey "a0" ;
+    wrd:hasTextPart
+        [ a wrd:TextPart ; wrd:partIndex 0 ; wrd:partText "On termination the Lessee shall return the " ] ,
+        [ a wrd:TextPart ; wrd:partIndex 1 ; wrd:refersToObject ex:def-equipment-identity ; wrd:displayText "Equipment" ] ,
+        [ a wrd:TextPart ; wrd:partIndex 2 ; wrd:partText " within " ] ,
+        [ a wrd:TextPart ; wrd:partIndex 3 ; wrd:refersToVariable ex:var-days-identity ] ,
+        [ a wrd:TextPart ; wrd:partIndex 4 ; wrd:partText " Business Days, in the condition shown in " ] ,
+        [ a wrd:TextPart ; wrd:partIndex 5 ; wrd:refersToObject ex:inspection-report-identity ; wrd:displayText "the Inspection Report" ] ,
+        [ a wrd:TextPart ; wrd:partIndex 6 ; wrd:partText ", and complying with " ] ,
+        [ a wrd:TextPart ; wrd:partIndex 7 ; wrd:refersToObject ex:safety-regs-identity ; wrd:displayText "the Safety Regulations" ] ,
+        [ a wrd:TextPart ; wrd:partIndex 8 ; wrd:partText " and " ] ,
+        [ a wrd:TextPart ; wrd:partIndex 9 ; wrd:refersToObject ex:data-protection-identity ; wrd:displayText "the Data Protection Regulation" ] ,
+        [ a wrd:TextPart ; wrd:partIndex 10 ; wrd:partText "." ] .
+
+# An inflected reference: the words shown are the drafter's, "Lessee's", not
+# the definition's label.
+ex:sec-6 a wrd:Element ;
+    fnd:hasIdentity ex:sec-6-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Section ; wrd:objectId "6" ; wrd:rankKey "c0" ;
+    wrd:directlyComprises ex:cl-6-1 .
+ex:cl-6-1 a wrd:Text ;
+    fnd:hasIdentity ex:cl-6-1-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "6.1" ; wrd:rankKey "a0" ;
+    wrd:hasTextPart
+        [ a wrd:TextPart ; wrd:partIndex 0 ; wrd:partText "The " ] ,
+        [ a wrd:TextPart ; wrd:partIndex 1 ; wrd:refersToObject ex:def-lessee-identity ; wrd:displayText "Lessee's" ] ,
+        [ a wrd:TextPart ; wrd:partIndex 2 ; wrd:partText " obligations continue until the Equipment is returned." ] .
+
+# ---- Edition 2: the definition, the schedule and one reliance revised ----------
+#
+# Sections 1 and the Schedule get new versions because what they contain
+# changed. Sections 5 and 6, and the clauses in them, are the same versions.
+
+ex:form-v2 a wrd:Wording ;
+    fnd:hasIdentity ex:form-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:directlyComprises ex:sec-1-v2 , ex:sec-5 , ex:sec-6 , ex:schedule-v2 ;
+    wrd:reliesOnEdition ex:safety-regs-2027 , ex:inspection-report-2026 ;
+    wrd:reliesAsAmended ex:data-protection-identity .
+
+ex:sec-1-v2 a wrd:Element ;
+    fnd:hasIdentity ex:sec-1-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Section ; wrd:objectId "1" ; wrd:rankKey "a0" ;
+    wrd:directlyComprises ex:def-equipment-v2 , ex:def-lessee .
+ex:def-equipment-v2 a wrd:Text ;
+    fnd:hasIdentity ex:def-equipment-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Definition ; wrd:objectId "1.1" ; wrd:rankKey "a0" ;
+    prov:wasRevisionOf ex:def-equipment-v1 ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "\"Equipment\" means the machines listed in the Schedule, with their accessories and manuals." ] .
+ex:def-equipment-v1 fnd:supersededBy ex:def-equipment-v2 .
+
+ex:schedule-v2 a wrd:Element ;
+    fnd:hasIdentity ex:schedule-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Schedule ; wrd:objectId "Schedule" ; wrd:rankKey "d0" ;
+    wrd:directlyComprises ex:var-days-v2 .
+ex:var-days-v2 a wrd:EmbeddedVariable ;
+    fnd:hasIdentity ex:var-days-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:variableKey "return-days" ; wrd:rankKey "z0" ;
+    wrd:valueSpace ex:days-space ; wrd:multiValued false ;
+    wrd:populationMethod wrd-voc:FreeEntry .
+ex:var-days-v1 fnd:supersededBy ex:var-days-v2 .
+
+ex:days-space a qnt:ValueSpace .
+
+# ---- Documents outside the wording: identities and editions ---------------------
+#
+# An outside document has one persistent identity and an edition for each
+# text in force. A reference names the identity. The wording says which edition
+# it relies on (static), or that it relies on the document as amended
+# (ambulatory), so that the edition is whichever is in force when a case is
+# evaluated.
+
+ex:safety-regs-2025 a wrd:ExternalDocument ;
+    fnd:hasIdentity ex:safety-regs-identity ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2025-04-01T00:00:00Z"^^xsd:dateTime ] ;
+    fnd:supersededBy ex:safety-regs-2027 .
+ex:safety-regs-2027 a wrd:ExternalDocument ;
+    fnd:hasIdentity ex:safety-regs-identity ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-04-01T00:00:00Z"^^xsd:dateTime ] .
+
+ex:data-protection-2024 a wrd:ExternalDocument ;
+    fnd:hasIdentity ex:data-protection-identity ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2024-05-25T00:00:00Z"^^xsd:dateTime ] .
+
+# An attachment: a scanned report, part of what the parties agreed, relied on
+# at one edition.
+ex:inspection-report-2026 a wrd:DocumentObject ;
+    fnd:hasIdentity ex:inspection-report-identity .
+
+# ---- A lease assembled from edition 2 --------------------------------------------
+
+ex:lease-0193 a wrd:AssembledWording ;
+    fnd:hasIdentity ex:lease-0193-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:assembledFrom ex:form-v2 ;
+    wrd:includes ex:sec-1-v2 , ex:def-equipment-v2 , ex:def-lessee , ex:sec-5 , ex:cl-5-1 ,
+                 ex:sec-6 , ex:cl-6-1 , ex:schedule-v2 ;
+    wrd:hasValue ex:v-days .
+ex:v-days a wrd:VariableValue ;
+    wrd:forVariable ex:var-days-v2 ;
+    wrd:literalValue "10"^^xsd:decimal .
