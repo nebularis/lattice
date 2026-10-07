@@ -3,7 +3,7 @@
 # Agent skills: LATTICE's guidance for AI agents, as a skill library
 
 **Unit:** `agent-skills` (this sketch). Takes over technical debt TD-21.
-**Status:** decided 2026-10-07. SQ1 to SQ5 answered (§8). ADR-A117 awaits acceptance.
+**Status:** built 2026-10-07 on `main`. SQ1 to SQ5 answered (§8). ADR-A117 accepted, with an addendum on the plugin's source.
 **Decision:** [ADR-A117](../../architecture/decisions/ADR-A117-agent-guidance-and-skill-library.md)
 (Proposed). Two tiers, six skills in `.claude/skills/`, shared as a Claude Code plugin from this
 repository.
@@ -189,10 +189,10 @@ principles, its ontology change steps), and installs the plugin.
 
 1. `AGENTS.md`, `CLAUDE.md`, and Copilot's file derived from `AGENTS.md` (SQ1).
 2. The six skills, written from §4's sources, each checked against the document it replaces.
-3. `.claude-plugin/marketplace.json`, validated with `claude plugin validate .`, and installed into a
-   scratch project to check the six skills load and nothing else does.
+3. `.claude-plugin/marketplace.json`, validated with `claude plugin validate .`. Its source is `./.claude`
+   (the ADR's addendum).
 4. `mise run skills:link`, and the checks of §5 in `mise run check`.
-5. The root `README.md`, the developer guide and `GENAI_CONTRIBUTION.md` updated. TD-21 removed.
+5. The root `README.md`, the developer guide and getting started updated. TD-21 removed.
 6. `project-environment.md` folded into `lattice-toolchain`.
 
 ## 8. Questions

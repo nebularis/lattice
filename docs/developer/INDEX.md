@@ -154,7 +154,7 @@ All 7 critical (A), 14 major (B), 9 safety (C), 7 cross-document (D) and 10 edit
 | **Status Record** | [repository-topology-a77.md](status/repository-topology-a77.md) |
 | **ADR** | [ADR-A77](../architecture/decisions/ADR-A77-repository-topology-and-documentation-governance.md) |
 | **Implementation** | Relocation of semantic assets to `ontology/`, tools to `tools/`, restructuring of `docs/developer/` |
-| **Doc Reference** | [.github/copilot-instructions.md](../../.github/copilot-instructions.md) — "Repository Topology and Documentation Governance" section |
+| **Doc Reference** | [AGENTS.md](../../AGENTS.md) and the [lattice-lifecycle skill](../../.claude/skills/lattice-lifecycle/SKILL.md) (ADR-A117) |
 
 ### Deliverables
 - ✅ Folder structure relocated per ADR-A77
@@ -611,14 +611,14 @@ Formal methods in LATTICE's development lifecycle and compilation toolchains: me
 and proofs, lightweight models, adequacy against the fixture corpus, assurance records, guaranteed
 instrument behaviour, and generated tools run as workers, never against the live graph.
 
-## 8.12 Agent Skills — Proposed
+## 8.12 Agent Skills — Built
 
 | Field | Value |
 |-------|-------|
-| **Status** | 📝 Proposed, 2026-10-07. Sketch decided (SQ1 to SQ5), ADR-A117 awaiting acceptance |
+| **Status** | ✅ Built, 2026-10-07. ADR-A117 accepted. Open CBAA's adoption is that project's own change |
 | **Unit ID** | `agent-skills` |
 | **Sketches** | [agent-skills.md](sketches/agent-skills.md) |
-| **ADRs** | [A-117](../architecture/decisions/ADR-A117-agent-guidance-and-skill-library.md), Proposed |
+| **ADRs** | [A-117](../architecture/decisions/ADR-A117-agent-guidance-and-skill-library.md), Accepted |
 
 LATTICE's guidance for AI agents as an always-on core (`AGENTS.md`) and six skills in
 `.claude/skills/`, shared with projects built on LATTICE as a Claude Code plugin. Takes over TD-21.

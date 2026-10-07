@@ -1,11 +1,9 @@
-<!-- Generated from AGENTS.md by `mise run build:agent-guidance`. Edit AGENTS.md, not this file. -->
-
 # LATTICE: instructions for AI agents
 
 These rules apply to every task in this repository and in projects built on LATTICE. Procedures and
 reference material live in skills, loaded when a task needs them (see the last section). This file
 is the source of `.github/copilot-instructions.md`. Edit it here, then run
-`mise run build:agent-guidance` ([ADR-A117](../docs/architecture/decisions/ADR-A117-agent-guidance-and-skill-library.md)).
+`mise run build:agent-guidance` ([ADR-A117](docs/architecture/decisions/ADR-A117-agent-guidance-and-skill-library.md)).
 
 ## The contract
 
@@ -39,7 +37,7 @@ along the way.
 | `.claude/skills/` | the skills below |
 
 Do not add a directory at the root, or a new kind of directory anywhere, without an accepted ADR.
-`mise` is the only task entry point (ADR-A29). The [developer guide](../docs/developer/developer-guide.md)
+`mise` is the only task entry point (ADR-A29). The [developer guide](docs/developer/developer-guide.md)
 describes every tool.
 
 ## Writing
@@ -71,7 +69,7 @@ This repository is public, and so is everything it publishes.
 - Notes true of one machine or one person's setup belong in that person's own configuration or agent
   memory, never in the repository.
 - Substrate and layer documentation stays domain-neutral.
-- AI-assisted contributions are disclosed as [GENAI_CONTRIBUTION.md](../GENAI_CONTRIBUTION.md) requires.
+- AI-assisted contributions are disclosed as [GENAI_CONTRIBUTION.md](GENAI_CONTRIBUTION.md) requires.
 
 Skill `lattice-publication-hygiene` has the detail and the pre-commit check.
 

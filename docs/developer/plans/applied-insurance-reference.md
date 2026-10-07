@@ -9,7 +9,7 @@ phase plans (below). Phases 0 and 1 are detailed to slice level. Phases 2 to 6 a
 slices are outlined and detailed at the preceding phase gate.
 **Trigger:** human request, 2026-09-26
 **Status record:** [applied-insurance-reference.md](../status/applied-insurance-reference.md)
-**Governing model:** Epic Decomposition in [copilot-instructions](../../../.github/copilot-instructions.md)
+**Governing model:** Epic Decomposition in the [lattice-lifecycle skill](../../../.claude/skills/lattice-lifecycle/SKILL.md)
 
 **Sketches** (the design this epic implements, cited by section):
 

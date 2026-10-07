@@ -18,7 +18,7 @@ criteria, status record). Other tracks are rolling-wave, each detailed when it s
 **Prior work:** the engine notes in [`notes/rdf-engine/`](../notes/rdf-engine/)
 **Plans:** [the prover spike](formal-methods-phase-0.md) (track D). Others are outlined in §4
 **Status record:** [formal-methods.md](../status/formal-methods.md)
-**Governing model:** Epic Decomposition in [copilot-instructions](../../../.github/copilot-instructions.md)
+**Governing model:** Epic Decomposition in the [lattice-lifecycle skill](../../../.claude/skills/lattice-lifecycle/SKILL.md)
 
 ---
 

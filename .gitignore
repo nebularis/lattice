@@ -85,3 +85,6 @@ WINGMAN
 .local/**
 *.patch
 /.yarn
+
+# Claude Code personal settings (ADR-A117)
+.claude/settings.local.json

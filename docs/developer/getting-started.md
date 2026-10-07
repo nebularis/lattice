@@ -104,6 +104,7 @@ mise run check:formal-smoke
 ## 6. Where to go next
 
 - [Developer Guide](developer-guide.md) — every tool, what it is for, how the pieces fit together.
+- [AGENTS.md](../../AGENTS.md) — the rules AI agents follow here, and the skills they load (Developer Guide §8).
 - [Formal Methods in the Development Lifecycle](formal-methods-lifecycle.md) — how sketch, plan
   and implementation each use formal methods, for an ontology change, a tools change, or a
   platform service change alike.

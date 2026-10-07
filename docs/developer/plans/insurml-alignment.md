@@ -17,7 +17,7 @@ plan. Phases 1 to 8 are rolling-wave. Each phase plan is written at the precedin
 [identity, for the InsurML team](../notes/insurml-identity.md)
 **Phase plans:** [phase 0](insurml-alignment-phase-0.md). Later phases are outlined in §4
 **Status record:** [insurml-alignment.md](../status/insurml-alignment.md)
-**Governing model:** Epic Decomposition in [copilot-instructions](../../../.github/copilot-instructions.md)
+**Governing model:** Epic Decomposition in the [lattice-lifecycle skill](../../../.claude/skills/lattice-lifecycle/SKILL.md)
 
 ---
 

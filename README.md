@@ -89,6 +89,8 @@ lattice/
 ├── LICENSE                  # MPL 2.0 — ontology artefacts, tools/
 ├── LICENSE-DOCS.md          # CC BY-SA 4.0 — documentation, specifications
 ├── CONTRIBUTING.md
+├── AGENTS.md                # Always-on instructions for AI agents (ADR-A117), imported by CLAUDE.md
+├── .claude/skills/          # Agent skills, loaded by task, shared as a plugin by .claude-plugin/
 │
 ├── ontology/catalog-v001.xml         # Generated import catalog, every ontology and version IRI (ADR-A88)
 ├── ontology/foundation/              # Foundation Layers (provenance, versioning)
@@ -409,6 +411,15 @@ Two licences govern the artefacts in the repository:
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the licensing mechanics, the SPDX header convention, and where new content belongs within a layer.
+
+## Working with AI agents
+
+[AGENTS.md](AGENTS.md) holds the rules every agent follows here, and `.claude/skills/` the procedures
+it loads by task (ADR-A117). Claude Code and GitHub Copilot pick both up in this repository with no
+setup. To use the skills in another project, with Claude Code run
+`/plugin marketplace add nebularis/lattice` and then `/plugin install lattice@nebularis`, and for
+Copilot run `mise run skills:link` from a LATTICE checkout. AI-assisted contributions are disclosed as
+[GENAI_CONTRIBUTION.md](GENAI_CONTRIBUTION.md) requires.
 
 ## Development environment
 

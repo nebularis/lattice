@@ -183,10 +183,29 @@ never blocks the rest of CI.
 
 ## 7. Validation packs and the Epic Decomposition Model
 
-Any unit of work beyond a small fix follows the model in `.github/copilot-instructions.md` and
+Any unit of work beyond a small fix follows the model in the [lattice-lifecycle skill](../../.claude/skills/lattice-lifecycle/SKILL.md) and
 [`docs/developer/INDEX.md`](INDEX.md): a sketch, a plan, a status record updated live, and (for a
 slice) a Validation Pack under `docs/developer/validation/` naming its test cases, the one command
 that runs them, and what a human should inspect before signing off in
 `docs/developer/validation/LOG.md`. Read that model before starting a new unit — this guide
-covers the tools; INDEX.md and the Epic Decomposition Model section of the instructions cover the
+covers the tools; INDEX.md and that skill cover the
 process those tools are run under.
+
+## 8. Agent guidance
+
+AI agents work here under [AGENTS.md](../../AGENTS.md), always loaded, and six skills in
+[`.claude/skills/`](../../.claude/skills), loaded by task (ADR-A117). `.github/copilot-instructions.md`
+is generated from `AGENTS.md`, never edited by hand.
+
+| Task | Does |
+|---|---|
+| `build:agent-guidance` | writes Copilot's file from `AGENTS.md` |
+| `check:agent-guidance` | checks that file, every skill's name and description, `AGENTS.md`'s skill table, the plugin marketplace and every link (in `check`) |
+| `skills:link` | links the skills into `~/.copilot/skills/` for Copilot in other projects, copying on Windows |
+| `check:deny-terms` | checks staged changes against your personal, never published, list of terms (skill `lattice-publication-hygiene`) |
+| `hooks:install` | adds an opt-in pre-commit hook running `check:deny-terms` |
+
+Claude Code users elsewhere install the skills with `/plugin marketplace add nebularis/lattice` and
+`/plugin install lattice@nebularis`. Do not install the plugin inside this repository, where the
+skills already load, or each appears twice.
+

@@ -2,7 +2,7 @@
 
 # ADR-A117: Agent guidance and the skill library
 
-**Status:** Proposed
+**Status:** Accepted 2026-10-07, with the addendum below
 **Date:** 2026-10-07
 **Related:** [ADR-A77](ADR-A77-repository-topology-and-documentation-governance.md) (repository
 topology), [ADR-A29](ADR-A29-repository-toolchain-and-environment-boundary.md) (`mise` as the task entry point),
@@ -86,3 +86,17 @@ other projects from a plugin marketplace, a repository holding `.claude-plugin/m
   skills from a repository by itself.
 - The skills are public, so they describe the project's conventions only, and are reviewed under
   the publication hygiene rules before each change.
+
+## Addendum (2026-10-07): the plugin's source is `.claude/`
+
+Found while building. Decision 4 makes the repository root the plugin's source, with `skills`
+naming the six directories. Instead, the marketplace entry's source is `./.claude`, so Claude Code
+scans `.claude/skills/` by default and needs no list.
+
+- An install copies `.claude/` only, not the whole repository.
+- The root needs no restriction on `bin/`, `hooks/`, `.mcp.json` or `settings.json`, so the first
+  consequence above no longer applies.
+- Anything added under `.claude/agents/`, `.claude/commands/` or `.claude/hooks/` is shared with
+  every project that installs the plugin, so it is reviewed as part of the library. A
+  `.claude/settings.json` would apply only its `agent` and `subagentStatusLine` keys to them.
+- `mise run check:agent-guidance` checks the entry's source.

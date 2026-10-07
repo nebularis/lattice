@@ -55,7 +55,7 @@ run = "corepack enable && yarn install --immutable"
 
 [tasks.check]
 description = "Run all repository validation tasks"
-depends = ["check:python-root", "check:workers", "check:java", "check:frontend", "check:spc", "check:persistence", "check:vocabulary", "check:reference-eligibility", "check:mork-compilers", "check:ontology-versioning", "check:ontology-catalog", "check:import-guard", "check:reasoning-isolation", "check:minting", "check:formal-freshness", "build:mtp", "check:mtp"]
+depends = ["check:python-root", "check:workers", "check:java", "check:frontend", "check:spc", "check:persistence", "check:vocabulary", "check:reference-eligibility", "check:mork-compilers", "check:ontology-versioning", "check:ontology-catalog", "check:import-guard", "check:reasoning-isolation", "check:minting", "check:formal-freshness", "check:agent-guidance", "build:mtp", "check:mtp"]
 
 [tasks.test]
 description = "Run the repository test suites"
@@ -171,6 +171,26 @@ run = "python -m pytest tools/reference/eligibility/tests -q"
 [tasks."check:formal-freshness"]
 description = "Check every tools/proofs/<layer>/Kernel.thy and tools/reference/<layer>/ law-coverage still matches its layer's literate README (formal-methods epic, epic principle E1)"
 run = "python tools/check_formal_freshness.py"
+
+[tasks."build:agent-guidance"]
+description = "Write .github/copilot-instructions.md from AGENTS.md (ADR-A117)"
+run = "python tools/agent_guidance.py build"
+
+[tasks."check:agent-guidance"]
+description = "Check Copilot's file matches AGENTS.md, every skill is well formed and listed, the plugin marketplace is right, and every link resolves (ADR-A117)"
+run = "python tools/agent_guidance.py check && python -m pytest tools/test_agent_guidance.py -q"
+
+[tasks."skills:link"]
+description = "Link LATTICE's skills into ~/.copilot/skills for Copilot in other projects (copies on Windows). Re-run after pulling. Pass --target for another directory"
+run = "python tools/agent_guidance.py link"
+
+[tasks."check:deny-terms"]
+description = "Check staged changes against your personal deny-list, never published (skill lattice-publication-hygiene). Pass --all to scan every tracked file"
+run = "python tools/deny_terms.py"
+
+[tasks."hooks:install"]
+description = "Install an opt-in git pre-commit hook running the deny-terms check"
+run = "python tools/deny_terms.py install-hook"
 
 [tasks."check:mork-compilers"]
 description = "Run the MORK backend compiler tests, including generated SPARQL executed against fixtures (ADR-A24, ADR-A89)"

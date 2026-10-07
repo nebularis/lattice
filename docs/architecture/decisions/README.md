@@ -113,7 +113,7 @@ This directory holds the ADRs that govern LATTICE's substrate architecture. An A
 | [A-114](ADR-A114-external-and-natural-keys.md) | External and natural keys | Accepted |
 | [A-115](ADR-A115-quantification-context-values.md) | Quantification context values | Accepted |
 | [A-116](ADR-A116-vocabulary-scheme-composition.md) | Vocabulary scheme composition | Proposed |
-| [A-117](ADR-A117-agent-guidance-and-skill-library.md) | Agent guidance and the skill library | Proposed |
+| [A-117](ADR-A117-agent-guidance-and-skill-library.md) | Agent guidance and the skill library | Accepted, with addendum |
 
 **The `A-FM` block.** ADR-A-FM1 and its successors are the `formal-methods` epic's own ADRs,
 filed outside the main sequential pool for the same reason `A-CAP` and `A-C` are: this epic's

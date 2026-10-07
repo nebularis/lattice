@@ -3,7 +3,7 @@
 # Formal Methods in the Development Lifecycle
 
 How the `formal-methods` epic's tracks hook into every change, at every stage the Epic
-Decomposition Model names (`.github/copilot-instructions.md`): sketch, plan, implementation,
+Decomposition Model names (the [lattice-lifecycle skill](../../.claude/skills/lattice-lifecycle/SKILL.md)): sketch, plan, implementation,
 validation. For what each track's own tool does mechanically, see the
 [Developer Guide](developer-guide.md) §4-§5. For the epic's own scope and tracks, see
 [`docs/developer/plans/formal-methods.md`](plans/formal-methods.md).

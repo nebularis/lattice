@@ -1,0 +1,14 @@
+{
+  "name": "nebularis",
+  "description": "Agent skills for working on LATTICE and projects built on it (ADR-A117)",
+  "owner": {
+    "name": "Nebularis"
+  },
+  "plugins": [
+    {
+      "name": "lattice",
+      "source": "./.claude",
+      "description": "LATTICE's development lifecycle, design practice, architecture, ontology authoring, toolchain and publication hygiene"
+    }
+  ]
+}
