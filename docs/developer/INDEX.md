@@ -615,7 +615,7 @@ instrument behaviour, and generated tools run as workers, never against the live
 
 | Field | Value |
 |-------|-------|
-| **Status** | 📝 Proposed, 2026-10-07. Sketch and ADR drafted, questions SQ1 to SQ5 open |
+| **Status** | 📝 Proposed, 2026-10-07. Sketch decided (SQ1 to SQ5), ADR-A117 awaiting acceptance |
 | **Unit ID** | `agent-skills` |
 | **Sketches** | [agent-skills.md](sketches/agent-skills.md) |
 | **ADRs** | [A-117](../architecture/decisions/ADR-A117-agent-guidance-and-skill-library.md), Proposed |

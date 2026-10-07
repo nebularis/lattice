@@ -3,7 +3,7 @@
 # Agent skills: LATTICE's guidance for AI agents, as a skill library
 
 **Unit:** `agent-skills` (this sketch). Takes over technical debt TD-21.
-**Status:** draft for review, 2026-10-07. Questions in §8.
+**Status:** decided 2026-10-07. SQ1 to SQ5 answered (§8). ADR-A117 awaits acceptance.
 **Decision:** [ADR-A117](../../architecture/decisions/ADR-A117-agent-guidance-and-skill-library.md)
 (Proposed). Two tiers, six skills in `.claude/skills/`, shared as a Claude Code plugin from this
 repository.
@@ -272,3 +272,22 @@ then against KISS.
 - *KISS.* (a) is small.
 
 **Leaning: (a).**
+
+**Answered by the human, 2026-10-07:** SQ1 to SQ5, each as the leaning.
+
+### Where the deny-list check looks
+
+The check (`mise run check:deny-terms`) reads the first of these that exists, and passes when none
+does, so it never fails on a machine or in CI with no list:
+
+1. the file named by `LATTICE_DENY_TERMS`
+2. `${XDG_CONFIG_HOME:-~/.config}/lattice/deny-terms` on macOS and Linux
+3. `%APPDATA%\lattice\deny-terms` on Windows
+
+The file holds one case-insensitive regular expression per line, with `#` for comments. A line
+starting `!` names a path glob the check skips, for a file where a term may legitimately appear,
+such as synthetic data. By default the check reads only the lines a commit adds (`git diff
+--cached`), and `--all` scans the tracked tree. A finding prints the file, the line and the
+pattern's line number in the list, never the pattern, so a shared terminal log does not repeat it.
+`mise run hooks:install` adds an opt-in git pre-commit hook that runs it. The hook lives in
+`.git/hooks/`, which is never committed.
