@@ -3,9 +3,8 @@
 - `mise` is not on PATH in this sandbox, and there is no system Python or `py` launcher.
 - `uv` is available at `%USERPROFILE%\.local\bin\uv.exe`. `uv python install <ver> --system-certs`
   works (uses the OS cert store) and can fetch a Python build from GitHub releases successfully.
-- However, `pypi.org`/`files.pythonhosted.org` package downloads are blocked by the corporate
-  proxy (Marsh McLennan / MMC): every request 307-redirects to
-  `https://zswpmanager.glb.mmc.com/cgi-bin/notice?...reason=Not+allowed+to+browse+MMC+Block+Notice...`.
+- However, `pypi.org`/`files.pythonhosted.org` package downloads are blocked by the network's
+  proxy, which 307-redirects every request to a block-notice page.
   This is a deliberate network policy block, not a transient/technical issue — do not try to route
   around it (no alternate index, no manual wheel-URL fetch tricks). It affects `uv pip install`,
   plain `pip install`, and presumably any other PyPI-based installer.
@@ -99,10 +98,10 @@
   Python 3.14 + pip 26, `pip install <anything from PyPI>` fails with "THESE PACKAGES DO NOT
   MATCH THE HASHES FROM THE REQUIREMENTS FILE" even with no `-c`/hash-pinned requirements file
   given — pip fetched the real metadata (correct expected hash) but the proxy substituted the
-  MMC block-notice HTML page as the wheel body, so the downloaded bytes hash differently.
+  block-notice HTML page as the wheel body, so the downloaded bytes hash differently.
   Confirmed 2026-09-29 by fetching the exact `files.pythonhosted.org` wheel URL directly with
-  `Invoke-WebRequest` and finding the response body is the same `<!DOCTYPE html>...Not allowed
-  to browse MMC Block Notice` page, not the wheel. Same underlying network policy block as
+  `Invoke-WebRequest` and finding the response body is the same block-notice
+  page, not the wheel. Same underlying network policy block as
   before, different symptom under mise. All `bootstrap:*` mise tasks that `pip install` from
   PyPI (python-root, workers, vocabulary, persistence, mork-compilers, surface, minting-python)
   will fail the same way until the human runs them off-network/VPN or via an allow-listed

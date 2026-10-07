@@ -63,7 +63,7 @@ class ExtensionConfigGenerator:
     def _generate_timers(self, protocol_name: str) -> list[dict]:
         query = f"""
         PREFIX ext-timer: <{EXT_TIMER}>
-        PREFIX spc: <http://spc.marsh.com/ontology/core#>
+        PREFIX spc: <http://spc.example.org/ontology/core#>
         SELECT ?binding ?participant ?afterLabel ?type ?duration ?cron
                ?timeoutLabel
         WHERE {{
@@ -110,7 +110,7 @@ class ExtensionConfigGenerator:
     def _generate_jobs(self, protocol_name: str) -> list[dict]:
         query = f"""
         PREFIX ext-job: <{EXT_JOB}>
-        PREFIX spc: <http://spc.marsh.com/ontology/core#>
+        PREFIX spc: <http://spc.example.org/ontology/core#>
         SELECT ?binding ?participant ?label ?maxAttempts ?backoff
                ?baseDelay ?multiplier ?jitter ?exhaustedLabel ?exhaustedEscalate
         WHERE {{
@@ -158,7 +158,7 @@ class ExtensionConfigGenerator:
     def _generate_errors(self, protocol_name: str) -> list[dict]:
         query = f"""
         PREFIX ext-error: <{EXT_ERROR}>
-        PREFIX spc: <http://spc.marsh.com/ontology/core#>
+        PREFIX spc: <http://spc.example.org/ontology/core#>
         SELECT ?handler ?participant ?errorType ?recoveryLabel ?escalateTo
         WHERE {{
             ?handler a ext-error:ErrorHandler .
@@ -230,7 +230,7 @@ class ExtensionConfigGenerator:
     def _generate_signals(self, protocol_name: str) -> list[dict]:
         query = f"""
         PREFIX ext-signal: <{EXT_SIGNAL}>
-        PREFIX spc: <http://spc.marsh.com/ontology/core#>
+        PREFIX spc: <http://spc.example.org/ontology/core#>
         SELECT ?binding ?participant ?label ?topic ?exchange
                ?routingKey ?direction ?corrField
         WHERE {{

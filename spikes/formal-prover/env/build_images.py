@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Builds track D's pinned image set (mise task bootstrap:formal-images), cross-platform.
 
-Stages an optional corporate root CA into each build context as corporate-ca.crt (named by
+Stages an optional extra root CA into each build context as extra-ca.crt (named by
 NODE_EXTRA_CA_CERTS, following the general toolchain-feasibility spike's convention) and removes
 it afterwards, so it is never left in an image layer or committed to git.
 """
@@ -22,7 +22,7 @@ IMAGES = {
 
 
 def staged_ca(context: Path) -> Path:
-    target = context / "corporate-ca.crt"
+    target = context / "extra-ca.crt"
     ca = os.environ.get("NODE_EXTRA_CA_CERTS")
     if ca and Path(ca).is_file():
         shutil.copyfile(ca, target)

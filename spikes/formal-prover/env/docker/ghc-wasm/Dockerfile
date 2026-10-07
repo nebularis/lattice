@@ -3,7 +3,7 @@
 # measure M5 (other code-generation targets): Isabelle's Haskell export cross-compiled to wasm.
 # Base image pinned by digest (epic §4, Environments).
 #
-# Build with build-images.py, which stages an optional corporate CA as corporate-ca.crt
+# Build with build-images.py, which stages an optional extra root CA as extra-ca.crt
 # (an empty file off a network that does not need one).
 FROM debian@sha256:2c037a04925515fdd6ea85ea14a682d0e79931f5e9f5d07b6dbfc6ba12f9e858
 
@@ -11,13 +11,13 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends ca-certificates curl jq unzip xz-utils zstd git python3 make && \
     rm -rf /var/lib/apt/lists/*
 
-COPY corporate-ca.crt /tmp/corporate-ca.crt
-RUN if [ -s /tmp/corporate-ca.crt ]; then \
-      cp /tmp/corporate-ca.crt /usr/local/share/ca-certificates/corporate-ca.crt && \
+COPY extra-ca.crt /tmp/extra-ca.crt
+RUN if [ -s /tmp/extra-ca.crt ]; then \
+      cp /tmp/extra-ca.crt /usr/local/share/ca-certificates/extra-ca.crt && \
       update-ca-certificates; \
     fi
 # ghc-wasm-meta installs its own Node.js, which does not read the system trust store.
-ENV NODE_EXTRA_CA_CERTS=/tmp/corporate-ca.crt
+ENV NODE_EXTRA_CA_CERTS=/tmp/extra-ca.crt
 
 # ghc-wasm-meta's setup.sh runs "npm install" for Playwright and Puppeteer, used only to test
 # JavaScript FFI output in browsers. The proxy blocks the npm registry (toolchain-feasibility

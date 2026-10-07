@@ -47,7 +47,7 @@ the `lattice` plugin, and Copilot links the skills into its personal skills dire
 |---|---|
 | The contract | default and autonomous modes, never stating a check passed that was not run, pausing for design decisions, never committing, tagging, merging or pushing without the human's go-ahead |
 | Writing | no semicolons, sparing colons, no superlatives, no binary reframes, no formulaic transitions or meta-commentary, examples introduced as examples, no market words coined as technical terms, "versioned" for `fnd:Version` |
-| Privacy | the repository is public. Nothing identifying a person, an employer, a client or a network. No secrets, mirror hostnames or credentials. Domain-neutral substrate text |
+| Privacy | the repository is public. Nothing identifying a person or a client. No secrets, private hostnames or credentials. Domain-neutral substrate text |
 | Where things are | the repository roots in one table, the documentation lifecycle in one line each, pointers to the developer guide |
 | The skills | each skill's name and when it applies |
 
@@ -122,8 +122,8 @@ package install or tool fails.*
 *Use before committing, before opening a pull request, and whenever writing text that will be
 published: documentation, commit messages, examples, generated content.*
 
-- the repository is public. What must never enter it: names of people, employers, clients or
-  internal systems, network details, credentials, private repository paths
+- the repository is public. What must never enter it: names of people or clients, private
+  hostnames, credentials, private repository paths
 - anonymising sources and examples, as the CCS sketches did
 - words to avoid in generated content, and why
 - AI disclosure, per [GENAI_CONTRIBUTION.md](../../../GENAI_CONTRIBUTION.md)
@@ -158,9 +158,8 @@ some that do not:
 | domain-neutral READMEs, sparing colons, sparing domain and range | core, `lattice-ontology-authoring` |
 | which remote to push to, editable installs from another clone | stays personal: true of one machine |
 
-`docs/developer/project-environment.md` is a tracked note of one machine's network and sandbox. Its
-general lessons (do not route around a network block, hand off what cannot run) move to
-`lattice-toolchain`. Its machine-specific details leave the repository.
+The general lessons of `docs/developer/project-environment.md` (do not route around a blocked
+registry, hand off what cannot run) move to `lattice-toolchain`.
 
 ## 5. How a skill stays right
 
@@ -194,7 +193,7 @@ principles, its ontology change steps), and installs the plugin.
    scratch project to check the six skills load and nothing else does.
 4. `mise run skills:link`, and the checks of §5 in `mise run check`.
 5. The root `README.md`, the developer guide and `GENAI_CONTRIBUTION.md` updated. TD-21 removed.
-6. `project-environment.md` reduced to its general lessons, which move to `lattice-toolchain`.
+6. `project-environment.md` folded into `lattice-toolchain`.
 
 ## 8. Questions
 
@@ -269,8 +268,7 @@ then against KISS.
     keeps their own list.
   - *Runtime.* Runs on staged changes, fast.
 - **(b) Rules only**, no check.
-  - *Design.* Nothing to build. Depends on the agent and the human noticing, which failed once
-    already (§4).
-- *KISS.* (a) is small and has already been needed.
+  - *Design.* Nothing to build. Depends on the agent and the human noticing.
+- *KISS.* (a) is small.
 
 **Leaning: (a).**

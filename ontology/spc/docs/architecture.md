@@ -888,7 +888,7 @@ Before certifying a mapping:
 The preceding pipeline is largely based on Python, though a JVM language could also fulfil this role (e.g., Scala/Kotlin/Groovy). The reasons behind this are two-fold. 
 -	Python and Java share a wealth of supporting libraries, tools, and client implementations for working with semantic web technologies (RDF, OWL, SPARQL, etc). 
 -	The pipeline for these tools is fairly complex, requiring complex algorithms and transformations that developers will need to code and maintain
-The runtime execution engine for SPC on the other hand, can be generated from the specification by LLM (or other techniques), and has relatively low overheads in terms of maintenance and setup. Any team capable of configuring and maintaining a RabbitMQ cluster will be able to easily manage it, and that technology is already in-situ within Marsh.
+The runtime execution engine for SPC on the other hand, can be generated from the specification by LLM (or other techniques), and has relatively low overheads in terms of maintenance and setup. Any team capable of configuring and maintaining a RabbitMQ cluster will be able to easily manage it, and that technology is already in place in many enterprises.
 Furthermore, this is a reference architecture, so a different path may be taken for a production system.
 
 ### Erlang/OTP as a Natural Fit for SPC Protocol Execution
@@ -896,7 +896,7 @@ We have selected the BEAM interpreter as our runtime execution platform. There a
 
 #### Isomorphism with SPC Semantics
 
-The choice of Erlang/OTP as a technology base is not a preferential one for Marsh, however it is based on a structural correspondence. The SPC calculus models autonomous subjects communicating via asynchronous message passing, each executing an independent state machine, with failures handled by supervision rather than defensive coding.
+The choice of Erlang/OTP as a technology base is not a preferential one for many enterprises, however it is based on a structural correspondence. The SPC calculus models autonomous subjects communicating via asynchronous message passing, each executing an independent state machine, with failures handled by supervision rather than defensive coding.
 
 Erlang/OTP models autonomous processes communicating via asynchronous message passing, each executing an independent state machine, with failures handled by supervision rather than defensive coding. The runtime semantics are, in the non-trivial sense, the same semantics.
 

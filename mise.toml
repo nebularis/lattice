@@ -263,7 +263,7 @@ description = "Probe whether track D's tool sources (opam, the Rocq repository, 
 run = "python spikes/formal-prover/env/probe_network.py"
 
 [tasks."bootstrap:formal-images"]
-description = "Build track D's pinned Rocq+MetaRocq and GHC-wasm images (epic formal-methods §4). Needs Docker. An optional corporate CA is read from NODE_EXTRA_CA_CERTS and never stored in an image layer or committed"
+description = "Build track D's pinned Rocq+MetaRocq and GHC-wasm images (epic formal-methods §4). Needs Docker. An optional extra root CA is read from NODE_EXTRA_CA_CERTS and never stored in an image layer or committed"
 run = "python spikes/formal-prover/env/build_images.py"
 
 [tasks."bootstrap:formal-native-rocq"]

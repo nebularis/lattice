@@ -72,9 +72,9 @@ function ConvertTo-FmxCygwinPath([string] $WindowsPath) {
     '/cygdrive/' + $full.Substring(0, 1).ToLower() + ($full.Substring(2) -replace '\\', '/')
 }
 
-# The corporate proxy re-signs TLS. Containers trust it only if its root CA is copied in.
+# A proxy that intercepts TLS re-signs it. Containers trust it only if its root CA is copied in.
 # NODE_EXTRA_CA_CERTS names the CA file at user level on the test machine.
-function Get-FmxCorporateCa {
+function Get-FmxExtraCa {
     $ca = [Environment]::GetEnvironmentVariable('NODE_EXTRA_CA_CERTS', 'User')
     if (-not $ca) { $ca = $env:NODE_EXTRA_CA_CERTS }
     if (-not $ca -or -not (Test-Path $ca)) { return $null }

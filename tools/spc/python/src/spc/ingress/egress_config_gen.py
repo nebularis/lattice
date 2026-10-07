@@ -34,8 +34,8 @@ class EgressConfigGenerator:
 
         # Query all egress mappings from MORK
         query = """
-        PREFIX mork: <http://mork.marsh.com/ontology#>
-        PREFIX spc: <http://spc.marsh.com/ontology/core#>
+        PREFIX mork: <http://mork.example.org/ontology#>
+        PREFIX spc: <http://spc.example.org/ontology/core#>
         SELECT ?mapping ?name ?targetConcept ?targetConceptIRI
                ?outputFormat
         WHERE {
@@ -94,7 +94,7 @@ class EgressConfigGenerator:
         """Generate a SPARQL CONSTRUCT template for an egress mapping."""
         # Fetch the field mappings (reverse direction)
         fm_query = f"""
-        PREFIX mork: <http://mork.marsh.com/ontology#>
+        PREFIX mork: <http://mork.example.org/ontology#>
         SELECT ?targetProp ?datatype
         WHERE {{
             <{mapping_iri}> mork:hasFieldMapping ?fm .
@@ -136,7 +136,7 @@ WHERE {{
     ) -> dict:
         """Generate a JSON-LD frame for an egress mapping."""
         fm_query = f"""
-        PREFIX mork: <http://mork.marsh.com/ontology#>
+        PREFIX mork: <http://mork.example.org/ontology#>
         SELECT ?sourcePath ?targetProp
         WHERE {{
             <{mapping_iri}> mork:hasFieldMapping ?fm .

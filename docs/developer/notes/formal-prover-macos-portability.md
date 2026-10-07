@@ -87,8 +87,8 @@ tracked copies were checked.
 
 ### PF4. Smaller items
 
-- `build_images.py` stages `docker/<image>/corporate-ca.crt` and removes it afterwards. A stray empty
-  `spikes/formal-prover/env/docker/ghc-wasm/corporate-ca.crt` was left untracked here. Add it to
+- `build_images.py` stages `docker/<image>/extra-ca.crt` and removes it afterwards. A stray empty
+  `spikes/formal-prover/env/docker/ghc-wasm/extra-ca.crt` was left untracked here. Add it to
   `.gitignore`, or make the script clean up on failure too.
 - The D4 report states that neither track used the image route. The portable route was not exercised on
   macOS either, so the image route remains unverified on this host.

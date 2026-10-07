@@ -23,8 +23,8 @@ built on it, such as Open CBAA. The rules those agents follow live in one 425-li
 3. **Everything loads every time.** Writing style and the commit rules must hold in every reply.
    The ontology change procedure, the slice lifecycle and the toolchain notes matter only for the
    task at hand, and loading all of it always costs context and dilutes what matters.
-4. **Machine-specific and private notes leak.** Some guidance is true of one machine or one network
-   only, and the repository is public.
+4. **Some guidance is personal.** Some of it is true of one machine or one person's setup only,
+   and the repository is public.
 
 Both agents now read the same open skill format: a directory holding a `SKILL.md` with a name and a
 description, loaded when the description matches the task. Claude Code reads project skills from
@@ -63,8 +63,8 @@ other projects from a plugin marketplace, a repository holding `.claude-plugin/m
    `/plugin marketplace add nebularis/lattice` and install it. Copilot users elsewhere run a `mise`
    task that links the skills into their personal skills directory. A project built on LATTICE
    keeps its own short `AGENTS.md` for what is its own, and takes the shared skills from here.
-5. **What stays personal.** Guidance true of one machine, one network or one person's accounts
-   (remotes, proxies, editable installs pointing elsewhere) stays in that person's own agent memory
+5. **What stays personal.** Guidance true of one machine or one person's accounts
+   (remotes, editable installs pointing elsewhere) stays in that person's own agent memory
    or user-level configuration, never in the repository. The publication hygiene skill states
    rules and categories only: a list of real names to avoid would publish them, so any such list
    lives in user-level configuration, read by a local check.

@@ -24,7 +24,7 @@ From a clean clone to a passing `mise run check`. For what each tool actually do
 
 - **Docker** (optional), only if you plan to run `deployment/compose` or build the formal-methods
   toolchain spike's portable images (`mise run bootstrap:formal-images`).
-- **A corporate network's CA bundle**, if your network intercepts TLS: several tools need it set
+- **An extra root CA**, if your network intercepts TLS: several tools need it set
   explicitly rather than relying on the OS trust store (Node via `NODE_EXTRA_CA_CERTS`, `pip` via
   its own `pip.ini`/`pip.conf` pointed at an approved internal mirror). This is environment-
   specific — ask whoever administers your network's egress policy, never hard-code a mirror URL
