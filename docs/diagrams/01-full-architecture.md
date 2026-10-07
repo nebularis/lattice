@@ -15,7 +15,7 @@ of this at a time.
 config:
   layout: elk
 --- 
-flowchart TB
+flowchart LR
     subgraph ONTOLOGY["ontology/ - semantic assets (one README per layer, the normative source)"]
         direction TB
         FND["Foundation<br/>identity, versioning, provenance, evidence, temporal scope"]
