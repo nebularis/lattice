@@ -79,13 +79,6 @@ Generated-by: <tool name and version or model identifier, and date>
 AI-Content: substantial | assisted
 ```
 
-For example:
-
-```
-Generated-by: Claude Opus 4.5 (Anthropic), 2026-09
-AI-Content: substantial
-```
-
 If a single commit mixes files at different tiers, the trailer reflects the highest tier present in that commit, and the PR description (below) carries the per-file breakdown — a commit-level trailer alone doesn't give a reviewer enough resolution to know which specific file deserves the closer look Tier A warrants.
 
 ### Pull request description

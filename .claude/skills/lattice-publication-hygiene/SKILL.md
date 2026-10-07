@@ -30,8 +30,7 @@ history, so the time to catch a problem is before the commit.
 
 ## AI disclosure
 
-[GENAI_CONTRIBUTION.md](https://github.com/nebularis/lattice/blob/main/GENAI_CONTRIBUTION.md)
-governs it. In short:
+If an AI agent is making commits, then [GENAI_CONTRIBUTION.md](https://github.com/nebularis/lattice/blob/main/GENAI_CONTRIBUTION.md) governs the disclosure rules. In short:
 
 - Substantial (tier A) and assisted (tier B) AI content is disclosed in every commit, with
   `Generated-by:` and `AI-Content: substantial | assisted` trailers, and in every pull request, with
@@ -39,6 +38,8 @@ governs it. In short:
 - The trailer must survive a squash merge.
 - AI-drafted text published under the project's name is reviewed by a person first, or labelled as
   AI-generated.
+
+If a human is making the commit then disclosure is their responsibility.
 
 ## The deny-list check
 
