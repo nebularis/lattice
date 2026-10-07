@@ -562,7 +562,7 @@ non-blocking track.
 |-------|-------|
 | **Status** | 🔨 In progress. Gate A passed 2026-10-01. Tranches B and C merged, tranche D merged to C8b (Instrument 0.14.0, Wording 0.7.0). C9 briefed 2026-10-07 |
 | **Unit ID** | `computable-contract-substrate` |
-| **Sketches** | [computable-contract-substrate.md](sketches/computable-contract-substrate.md) (design, scenarios S1 to S101), [contract-amounts.md](sketches/contract-amounts.md) (A1 to A58), [instrument-terms-and-legal-relations.md](sketches/instrument-terms-and-legal-relations.md) (superseded), [logical-english-alignment.md](sketches/logical-english-alignment.md) (unplanned) |
+| **Sketches** | [computable-contract-substrate.md](sketches/computable-contract-substrate.md) (design, scenarios S1 to S101), [contract-amounts.md](sketches/contract-amounts.md) (A1 to A58), [instrument-terms-and-legal-relations.md](sketches/instrument-terms-and-legal-relations.md) (superseded), [logical-english-alignment.md](sketches/logical-english-alignment.md) (unplanned), [change-materiality.md](sketches/change-materiality.md) (C9-Q3, draft) |
 | **Plan** | [computable-contract-substrate.md](plans/computable-contract-substrate.md) |
 | **Status Record** | [computable-contract-substrate.md](status/computable-contract-substrate.md) |
 | **ADRs** | A-104, A-106, A-112, A-113 accepted, with addenda |

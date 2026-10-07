@@ -16,11 +16,11 @@
 Gate A passed on 2026-10-01. Tranches B and C are merged to `main` and tagged: Wording 0.3.0,
 Behaviour 0.10.0 (shapes 0.4.0) with nested states and history, the import guard in `mise run
 check`. In tranche D, C6 to C7c are merged and tagged (Instrument 0.12.0, Party 0.8.0, Quantification
-0.7.0). C8 and C8b are merged and tagged (Instrument 0.14.0, Wording 0.7.0). C9 is briefed, with ten questions. From C5 on, the agent builds and verifies, and the human commits by hand.
+0.7.0). C8 and C8b are merged and tagged (Instrument 0.14.0, Wording 0.7.0). C9 is briefed and splits into C9a to C9c. Its materiality question has its own sketch. From C5 on, the agent builds and verifies, and the human commits by hand.
 
-**Next action, for the human:** answer C9-Q1 to C9-Q10 in the plan's "C9 in detail", including
-whether C9 splits into C9a to C9c (Q1) and whether the "binder" rename lands on `main` first (Q10).
-The agent then writes the Validation Pack for the first slice.
+**Next action, for the human:** answer C9-Q2 and C9-Q4 to C9-Q10, reworked with design and runtime
+overheads in the plan's "C9 in detail". Then commit on `main`, set up the skill library (TD-21), and
+branch for C9a.
 
 ## Slice board
 
@@ -134,3 +134,7 @@ The agent then writes the Validation Pack for the first slice.
 - 2026-10-06: C8b examples committed. Model phase built: Wording 0.7.0, `wording-vocab` 0.7.0 (breaking), shapes 0.4.0 with law W8, and Instrument and `instrument-vocab` 0.14.0 (a re-pin). Every C8b row passes, and every check C8 ran. The binder needed no change. Deviations in the [Validation Pack](../validation/computable-contract-substrate-c8b.md)
 - 2026-10-06: C8b model phase committed, merged to `main` and tagged by the human (`wording-v0.7.0`, `wording-vocab-v0.7.0`, `wording-shapes-v0.4.0`, `instrument-v0.14.0`, `instrument-vocab-v0.14.0`)
 - 2026-10-07: C9 briefed on `main` with ten questions, each with its options' consequences: splitting into C9a to C9c (Q1), what an amendment records (Q2), materiality (Q3), powers held by groups (Q4), taking effect and separate execution (Q5), a party leaving and ending by agreement (Q6), incorporation (Q7), ambulatory incorporation of encoded documents (Q8), re-timing HQ-1 (Q9), and renaming the "binder" (Q10). The C9 row's "shapes for I1 to I16" found stale
+- 2026-10-07: C9-Q1 answered (a), three slices. C9-Q2 reworked with its consequences, reusing Foundation's and PROV-O's times, and a rule for a retrospective amendment that overtakes a later one. C9-Q3 paused for the change materiality sketch: no consent rule is a default, and materiality comes from the contract's definition, then a referenced one, then a determination. Eligibility paths ending at an identity raised (MQ7)
+- 2026-10-07: materiality MQ1 (a), MQ3 (a) and MQ7 (b) later with (a) in C9 answered, MQ5's three fallbacks all offered. MQ2, MQ4, MQ5's placement and MQ6 rewritten with design and runtime overheads. Held questions HQ-8 (materiality beyond amendments), HQ-9 (Eligibility identity endings) and HQ-10 (a deployment configuration layer) added
+- 2026-10-07: materiality MQ2 (a), MQ4 (b) with baseline and chain rule, MQ5 (a) with HQ-10 on the backlog, and MQ6 (a) with the decider notified, answered. C9-Q3 decided. C9-Q2 and C9-Q4 to C9-Q10 to be reworked with design and runtime overheads
+- 2026-10-07: C9-Q2 and C9-Q4 to C9-Q10 reworked with design and runtime overheads and KISS. Materiality moved to C9b beside the consent rules. C9-Q8's leaning revised to (c), static incorporation only, on finding that (a) needs a per-version edition pin and fans out an amendment per instrument per edition

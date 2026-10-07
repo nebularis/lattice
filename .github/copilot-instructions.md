@@ -99,13 +99,30 @@ Most ideas start out life as `sketches`. Some may be captured as a plan rather t
 - Every active review record must name an existing matching status record.
 - `docs/developer/` root holds durable guidance only. Do not create a new `current/` directory.
 
-#### Writing a plan or a sketch
+### Writing a plan or a sketch
 
 - Take your time and re-read the latest version of any material you are proposing changes to
 - Don't guess about the consequences of a modelling decision - check it against the ontologies 
 - Design for the future: check your design against the roadmap: do not design in ways that works now by makes roadmap items harder to deliver later
 - When you need to show the options and consequences of a design choice for the user, NEVER go off your memory alone, ALWAYS re-read the ontologies
 - When explaining your design choices: set the scene first, consider drawing pictures if the subject matter is complex, and work through your arguments and their consequences carefully and methodically for the user to consider
+
+#### Comparing Options
+
+When presenting architecture or design options to the user, you should consider and provide information about the following:
+
+- design overheads: is it difficult to reason about, easy to model incorrectly, hard to assure or govern, or brittle in the face of potential changes
+- use/runtime overheads: does it lead to data explosion, can it easily lead to data inconsistency, does it prevent common classes of traversal or other processing algorithms, do common operations over the class of data (e.g., aggregation or summation of measures) behave in unexpected or unusual ways that could confuse or surprise?
+
+#### KISS
+
+Keep It Simple Silly. Apply the following questions to design decisions:
+
+- Is it needed right now? If not, do we need it at all?
+- Is it needed later? If so, can we defer it, or is there real value in addressing it now?
+- Is it as simple as it could be? If not, can you simplify it more? 
+
+These questions SHOULD NOT override the need to remain architecturally conformant, ensure that non-functional requirements are met, and comply with standards currently in force.
 
 ### Epic Decomposition Model
 

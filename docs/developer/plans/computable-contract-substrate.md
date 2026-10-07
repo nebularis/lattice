@@ -2473,14 +2473,20 @@ Three facts about the current model shape every option below:
 
 **Questions, with each option's consequences:**
 
+Each option below is compared on its design overheads (how hard it is to reason about, to model
+correctly, to assure and govern, and how brittle it is under change) and its runtime overheads (data
+volume, inconsistency, and surprises for traversal or aggregation), then against KISS. Reworked on
+2026-10-07 after the human's review.
+
 - **C9-Q1. One slice or several.** C9's row lists amendments, consent rules, incorporation and
   taking effect, plus S90 and the two endings terms-in-time left to C9. Its "shapes for I1 to I16"
   is stale, since C6 to C8 shipped those, and only I4, I10 and I14 remain, of which I10 and I14 are
   evaluated, not shaped. Counted from the questions below, C9 is about 26 test rows over Instrument,
   Wording and `tools/`, above the slice sizing rule's 15.
-  - **(a) Three slices.** C9a, amendments, taking effect, and the two endings (Q2, Q3, Q5, Q6).
-    C9b, powers held by groups (Q4), which C9a's amendment by majority needs. C9c, incorporation
-    (Q7, Q8).
+  - **(a) Three slices.** C9a, amendments, taking effect, and the two endings (Q2, Q5, Q6).
+    C9b, powers held by groups and materiality (Q3, Q4), which an amendment by majority needs.
+    C9c, incorporation (Q7, Q8). Materiality moved from C9a to C9b on 2026-10-07, beside the
+    consent rules that read it.
     - Each about 8 to 10 rows, each with its own Validation Pack, releasing Instrument 0.15.0,
       0.16.0 and 0.17.0 in turn, and Wording 0.8.0 with C9c if Q7 (a) widens reliance.
     - C9a's examples amend by agreement of all parties, and C9b adds the majority case.
@@ -2493,102 +2499,188 @@ Three facts about the current model shape every option below:
 
   **Leaning: (a).** HQ-5, the full set of group behaviours, follows C9b as its own slice.
 
-- **C9-Q2. What an amendment records.** The sketch gives `ins:Amendment` the versions before and
-  after, three times (agreed, operational, effective), `ins:affectsExisting`, the power exercised,
-  and `ins:textChanges` to every `wrd:Amendment`. Two choices need answering.
+- **C9-Q2. What an amendment records.**
 
-  *Where the times sit.*
-  - **(a) On the amendment only.** A version's valid period is derived from the chain of amendments
-    that made and replaced it. A retrospective amendment adds a new amendment with an earlier
-    effective date, and nothing existing changes.
-    - Keeps every version immutable. Bitemporal reading (which version applied at valid time *t*,
-      as known at time *k*) is a query over amendments, which C12 runs.
+  An amendment carries up to four times, and contracts state each separately:
+
+  | Time | Meaning | Example |
+  |---|---|---|
+  | agreed | when the parties made the change | the date of the amendment letter |
+  | effective | from when the change applies in law. May be earlier than agreed (retrospective) or later | "with effect from 1 January" |
+  | recorded | when the system learned of it, and from whom | the letter is entered a week after signing |
+  | operational | when systems may act on it ahead of its legal effect | a rate loaded before the effective date |
+
+  **None of the four needs a new property.** Foundation and PROV-O already hold them, and
+  Behaviour's records use the same pattern (`bhv:Record ⊑ fnd:Evidenced, fnd:TemporallyScoped`):
+
+  | Time | Reused term |
+  |---|---|
+  | effective | `fnd:hasTemporalScope`, its `fnd:validFrom` (valid time) |
+  | recorded, and by whom | `fnd:hasEvidence`, its `fnd:recordedAt` and `fnd:assertedBy` |
+  | agreed | `prov:endedAtTime`, the amending activity ending when it is agreed |
+  | operational | left out of the substrate. An applied layer that needs it adds it |
+  | before and after | `ins:amends ⊑ prov:used` and `ins:resultsIn ⊑ prov:generated`, as Wording's amendment does (C5-Q2b), with `fnd:supersededBy` asserted from the old version to the new, so a reader without a reasoner sees the chain |
+
+  This replaces the sketch's `ins:agreedOn`, `ins:operationalFrom` and `ins:effectiveFrom`, at the
+  cost of two small nodes per amendment, its scope and its evidence.
+
+  *Choice 1. Where the effective time sits.*
+  - **(a) On the amendment only.** A version's valid period is read from the amendments that made
+    and replaced it.
+    - *Design.* Versions are never edited, and each fact has one home. The first version has no
+      amendment, so its start is the instrument entering the state that begins it (Q5), a runtime
+      fact. Amendments form one chain per instrument, and a shape allows at most one agreed
+      amendment per version, so a fork is caught where it is made. Changes negotiated in parallel
+      are proposals until one is agreed.
+    - *Runtime.* "Which version applied at valid time *t*, as known at *k*" is a walk along the
+      chain (C12), short for one instrument. A portfolio query ("every limit in force on 1 March")
+      walks every instrument's chain, which surprises a SPARQL author expecting a date on each
+      version. A generated view of each version's valid period, derived from the chain and never
+      authored, gives that query a filter without giving up immutability.
   - **(b) A temporal scope on each version.**
-    - A retrospective amendment must shorten the replaced version's period after the fact, which
-      edits an immutable version. Ruled out by fact 1.
+    - *Design.* A retrospective amendment must shorten the replaced version's period after the
+      fact, which edits an immutable version (ADR-A104's versioning contract). Two versions'
+      authored periods can then overlap or leave gaps, with nothing to say which is right.
+    - *Runtime.* A plain date filter, the fastest query. (a)'s generated view gives the same.
+  - *KISS.* (a) adds nothing beyond the amendment itself.
 
-  *How the text change is reached.*
-  - **(a) The amendment names the document that states it** (`ins:statedIn`, one link), and its
-    text changes are the `wrd:Amendment`s expressed in that document.
-    - One link per amendment. A change of values or of a party, with no text operation, still
-      names its document, the endorsement or the schedule.
+  *Choice 1's rule for a retrospective change that overtakes a later one.* Versions are cumulative,
+  since each version's wording holds every change so far:
+
+  ```mermaid
+  flowchart LR
+      V1["v1<br/>in force from<br/>1 Oct"] -- "amendment A<br/>agreed 1 Feb<br/>effective 1 Mar" --> V2["v2<br/>= v1 + A"]
+      V2 -- "amendment B<br/>agreed 1 Apr<br/>effective 1 Jan" --> V3["v3<br/>= v1 + A + B"]
+      G["for January and February,<br/>the law is v1 + B,<br/>which no version holds"]
+      V3 -.-> G
+  ```
+
+  - **(i) A shape forbids it.** An amendment may not take effect before the amendment that made the
+    version it amends. The drafter states B twice, on v1 for January and February, and on v2 from
+    March.
+    - *Design.* One amendment is one step in the chain, and the shape is a single date comparison.
+      The rebasing falls on whoever records B, until a tool does it, and the shape tells them when.
+    - *Runtime.* One extra amendment and one extra version for each overtaken amendment. Rare.
+  - **(ii) The amendment rebases.** One amendment yields every version it changes.
+    - *Design.* The record matches the one agreement. `ins:resultsIn` is then not functional, the
+      chain becomes a tree whose side branches end, and every reader of the chain, the shapes
+      and C12 must handle it.
+    - *Runtime.* The same versions as (i), one amendment node fewer.
+  - *KISS.* (i).
+
+  *Choice 2. How the amendment reaches its text changes.*
+  - **(a) The amendment names where it is stated** (`ins:statedIn`), a wording node, the amending
+    document or a part of it. Its text changes are the `wrd:Amendment`s expressed in that node or
+    below it.
+    - *Design.* One link per amendment. A change of values or of a party, which has no text
+      operation, still has a home. A change stated twice, in a letter and in a confirmation (C5),
+      names both, so `ins:statedIn` is not functional. One letter making two amendments with
+      different effective dates works only when each sits in its own part of the letter, and a
+      shape cannot tell when a single paragraph mixes them.
+    - *Runtime.* Finding the text changes walks down the document's parts, a short traversal.
   - **(b) The amendment names each text change** (`ins:textChanges`, as sketched).
-    - One link per operation, repeating what the document's `wrd:expressedIn` already says.
+    - *Design.* Divides any document exactly. Repeats `wrd:expressedIn` wherever document and
+      amendment coincide, the common case, so the two can disagree, and a change of values still
+      needs a second property.
+    - *Runtime.* One link per operation, direct.
+  - *KISS.* (a).
 
-  `ins:affectsExisting` (default false, law I14) and continuity by `prov:wasRevisionOf` between the
-  replaced and replacing stated relations stay as ADR-A104 decided. A shape reports an amendment
-  that affects existing occasions and replaces a stated relation with no `prov:wasRevisionOf`.
+  What changed is still computed by comparing the two wordings (sketch §5.8), and materialised as
+  the change report C9-Q3 reads. `ins:affectsExisting` (default false, law I14) and continuity by
+  `prov:wasRevisionOf` stay as ADR-A104 decided, with a shape reporting an amendment that affects
+  existing occasions and replaces a stated relation with no `prov:wasRevisionOf`.
 
-  **Leaning: (a) and (a).**
+  **Leaning:** choice 1 (a) with rule (i), and choice 2 (a).
 
-- **C9-Q3. Materiality.** Consent often depends on it. Every lender must agree a material change,
-  and the agent alone may agree any other. The sketch derives it by comparing the two versions.
-  - **(a) Derived by a design-time comparison** in `tools/`, from the change report sketch §5.8
-    tabulates.
-    - What counts as material is the contract's own definition ("any change to the Margin, the
-      Final Maturity Date or a Commitment"), so the comparison would need each contract's rule as
-      data, which no layer models yet.
-  - **(b) A determination.** The party the contract names decides it, recorded as a
-    `bhv:DeterminationRecord` on the amendment (ADR-A106), and the consent rule reads it. Where the
-    contract defines material changes, the comparison of (a) can later warn of a determination
-    that disagrees.
-    - Matches how contracts say it ("as determined by the Agent"). No new mechanism, only a
-      determination's subject being an amendment.
-  - **(c) Authored on the amendment as a concept, with no record of who decided it.**
-    - Smallest. Loses who decided, which a dispute about consent turns on.
-
-  **Leaning: (b).** It departs from the sketch, which says derived, for the reason (a) gives.
+- **C9-Q3. Materiality.** Decided in the [change materiality sketch](../sketches/change-materiality.md)
+  (MQ1 to MQ7, 2026-10-07). No consent rule and no meaning of "material" is a default. Materiality
+  comes from the contract's own definition, then a definition it refers to and LATTICE holds, then a
+  determination. A definition is a condition word whose case is the amendment, read through a
+  materialised change report, and bound from the version being amended (MQ2, MQ3). Its outcome is a
+  grade from a scheme a deployment binds, with a two-concept baseline and grades ordered as a chain
+  of narrower concepts (MQ4). A mixed definition is computed first, and its decider is asked only
+  when the computed part does not settle it, and is otherwise notified of the result (MQ6). Where
+  the contract names no decider, an Instrument evaluation profile holds the deployment's fallback
+  (MQ5). A definition naming a clause falls back to a determination until Eligibility's paths may
+  end at an identity (MQ7, HQ-9). Builds in C9b, beside the consent rules that read it (C9-Q4).
 
 - **C9-Q4. Powers held by groups** (C9b). Today a power held by a group is Undetermined (CC-D10).
-  The sketch's `ins:ConsentRule` says whose consent an exercise needs.
-  - **(a) A consent rule on the power.** It states who must consent for each exercise (every
-    member, members chosen by role, by being affected, or by the materiality determination) and an
-    optional threshold of a weight per member ("more than 66⅔% of the Commitments", where the
-    weight is a value of the instrument, not Party's outward share). Each member's consent is a
-    `bhv:AcceptanceRecord` of the amendment, and C12 evaluates law I10. Delegated consent is a
-    `pty:Delegation`, as the sketch has it. A group power with no rule stays Undetermined.
-    - Settles powers only. Duties already follow Party's composition rules. HQ-5 then covers "any
-      one may act" and the rest.
-    - The counting is Instrument's (fact 2).
-  - **(b) Widen Party's composition rules to acting rules for powers too**, with the consent rule
-    only for what varies per exercise.
-    - Takes most of HQ-5 into C9. Party changes, and every instrument and Open CBAA re-pin.
-  - **(c) No new construct. Each member holds its own power, and the group's exercise is a trigger
-    on the members' exercises.**
-    - Needs counting in a trigger, which fact 2 rules out, and loses the group's single exercise.
+  "The Majority Lenders may waive any Default" is one power, held by the lenders as a group, which
+  takes effect when lenders whose commitments exceed two thirds of the total consent.
+  - **(a) A consent rule on the power** (`ins:ConsentRule`). It states who must consent for each
+    exercise, chosen by role, by being affected by the change, or by the change's grade (C9-Q3),
+    and an optional threshold over a weight per member. Each member's consent is a
+    `bhv:AcceptanceRecord` of the resulting version. Delegated consent is a `pty:Delegation`.
+    - *Design.* One class, on the power that needs it. The weight ("its Commitment") is a value of
+      the instance read for each member, so a weight that changes, such as a commitment after a
+      transfer, is read from the version in force at the exercise. Counting is Instrument's,
+      evaluated by C12 (law I10), since Eligibility cannot count. Being affected is read from the
+      change report: a member whose relations the change alters. A group power with no rule stays
+      Undetermined, and HQ-5 follows for "any one may act" and the rest.
+    - *Runtime.* One acceptance record per consenting member per exercise, forty for a syndicate of
+      forty. The sum must count members, not records, or a member who consents twice, or a delegate
+      consenting for several members, is counted wrongly, and a withdrawn consent must be read as
+      a later record. A missing weight makes the outcome Undetermined, not a smaller sum.
+    - *KISS.* Needed for C9b's examples. Smallest construct that states a threshold.
+  - **(b) Widen Party's composition rules to acting rules for powers**, with the consent rule only
+    for what varies per exercise.
+    - *Design.* Takes most of HQ-5 into C9. Party changes, cascading to every layer and Open CBAA.
+      A rule that varies by grade still needs (a), so there are two mechanisms for one exercise.
+    - *Runtime.* As (a).
+    - *KISS.* More than C9 needs.
+  - **(c) Each member holds its own power, and the group's exercise is a trigger on the members'
+    exercises.**
+    - *Design.* A trigger that counts, which Eligibility cannot express, and the group's single
+      exercise disappears from the record.
+    - *Runtime.* One power per member per group power: forty powers where there was one, in every
+      bound instrument.
 
-  **Leaning: (a).**
+  **Leaning: (a).** Materiality (C9-Q3) builds with it in C9b, since the consent rule is what reads
+  it.
 
-- **C9-Q5. Taking effect, and separate execution** (S40, S90). §14.7 already describes an
-  instrument whose obligations wait on conditions as starting in a *conditional* state. No example
-  builds it, and nothing gates a whole instrument.
-  - **(a) `ins:takesEffectWhen` on the instrument**, as sketched, read by C12. Nothing arises
-    before it holds.
-    - One triple. But it is a second gate beside regimes, and "every party has signed" is not an
-      Eligibility condition (fact 2), so its value needs a construct of its own anyway. A long-stop
-      date for signature needs a regime regardless.
+- **C9-Q5. Taking effect, and separate execution** (S40, S90). §14.7 describes an instrument whose
+  obligations wait on conditions as starting in a conditional state, and no example builds it.
+  Most contracts take effect on signature by every party, each signing separately.
+  - **(a) `ins:takesEffectWhen` on the instrument**, read by C12. Nothing arises before it holds.
+    - *Design.* One triple, and a second gate beside regimes, so the evaluator checks two places
+      before a relation may arise. "Every party has signed" is not an Eligibility condition, so its
+      value needs a construct of its own. A long-stop date for signature needs a regime regardless,
+      and the two must then agree.
+    - *Runtime.* One triple per instrument.
   - **(b) Formation as a regime.** `ins:begins`, the counterpart of `ins:ends` (§14.2), names the
     state whose entry brings the instrument, or named terms, into effect. Before it, nothing arises
     and no gate is open. A new legal trigger, `ins:OnAcceptance`, fires when every named party, or
-    every `ins:party`, has a `bhv:AcceptanceRecord` of the version, so each signing separately is
-    one record (S90). Conditions precedent and long-stop dates use the same regime. The regime is
-    stated in a clause ("this Agreement takes effect when signed by all parties"), or implied by
-    law (`ins:impliedBy`) where none is written.
-    - One mechanism for all of §14.7. Makes the documented conditional state real. More triples
-      per instrument that needs it, and none for one that takes effect at once.
+    every `ins:party`, has a `bhv:AcceptanceRecord` of the version, one record per party signing
+    (S90). Conditions precedent and long-stop dates use the same regime. The regime is stated in a
+    clause, or implied by law (`ins:impliedBy`) where none is written. An instrument with no
+    `ins:begins` takes effect at once.
+    - *Design.* One mechanism for all of §14.7, learned once with `ins:ends`. A shape allows at most
+      one state marked `ins:begins` per instrument. The risk is an author omitting `ins:begins`
+      where a clause makes effect conditional, which a coverage check on the clause can report.
+      `ins:OnAcceptance` reads acceptance records, as amendment consent does (C9-Q4), so formation
+      and consent share one record class.
+    - *Runtime.* A regime is stated once on the form and shared by every instrument including its
+      clause (§11.1), so nothing is copied per instrument. Each instrument has one occupancy at
+      runtime, and one acceptance record per party.
   - **(c) Both, with (a) as shorthand the instantiator expands into (b).**
-    - Two ways to say one thing.
+    - *Design.* Two ways to say one thing, and expansion code to keep in step.
+  - *KISS.* (b) adds one property and one trigger, and makes an existing documented design real.
 
   **Leaning: (b).**
 
 - **C9-Q6. A party leaving, and ending by agreement** (terms-in-time E10 and E11).
-  - **(a) Both are amendments.** A party leaving is a new version without it (its occasions
-    already arisen stay fixed, law I11). Ending by agreement is an amendment whose new version adds
-    a transition into an ending state on the agreement, so the ending is a regime's, as §14.2
-    requires.
-    - No new construct. The release appears in the history as an amendment.
+  - **(a) Both are amendments.** A party leaving is a new version without it. Ending by agreement is
+    an amendment that adds an expiry at the agreed date, as a termination agreement is often
+    drafted ("this Agreement shall terminate on 30 June"), so the ending is a regime's transition,
+    as §14.2 requires.
+    - *Design.* No new construct. The leaving party's arisen occasions keep their parties (law I11),
+      so its accrued rights stay. Every ending still reads as entering an ending state.
+    - *Runtime.* One new version per departure or termination.
   - **(b) A separate instrument, a release, that discharges the first** (`ins:discharges`).
-    - Closer to some legal analyses, and one more relation between instruments.
+    - *Design.* Closer to some legal analyses. A second way to end an instrument, outside regimes,
+      which every reader of "is it in force" must also check.
+    - *Runtime.* One more instrument per release.
+  - *KISS.* (a).
 
   **Leaning: (a).**
 
@@ -2596,62 +2688,90 @@ Three facts about the current model shape every option below:
   from time to time, is incorporated into this Agreement", or "the Standard Terms 2026 apply to
   Lot 2".
   - **(a) Stated in the words, as C8b decided.** The incorporating clause names the document's
-    identity, and the wording's reliance fixes the edition, static or as amended. Instrument adds
-    `ins:incorporates` on the clause's stated term, naming the same identity. If the document is
-    encoded (a LATTICE wording), its stated meaning is generated into the instrument within the
-    sections the incorporating term applies within (S99), and law I17 widens to "includes or
-    incorporates". An opaque document generates nothing.
-    - One place fixes the edition. Wording's reliance today ranges over linked documents only, so
-      it widens to wordings, an additive change releasing Wording 0.8.0, and W8 learns to resolve a reference to a
-      wording's identity, which it does not check today.
+    identity, and the wording's reliance fixes the edition. Instrument adds `ins:incorporates` on the
+    clause's stated term. An encoded document's stated meaning is generated into the instrument
+    within the sections the incorporating term applies within (S99), and law I17 widens to
+    "includes or incorporates". An opaque document generates nothing.
+    - *Design.* One place fixes the edition. Wording's reliance widens from outside documents to
+      wordings, an additive Wording 0.8.0, and W8 learns to resolve a reference to a wording's
+      identity, which it does not check today. Two new rules follow. Incorporation can loop (A
+      incorporates B, which incorporates A), so the cycle checks extend to it. And the host's and
+      the incorporated document's definitions overlap, where contracts usually say the host
+      prevails (S70), so `ins:prevailsOver` must reach a whole document's definitions.
+    - *Runtime.* A set of standard terms incorporated into ten thousand contracts generates its
+      meaning ten thousand times, unless generation is shared (D5) and bound meaning stays
+      generated on demand (C16b). Until C16b, the examples stay small.
   - **(b) `ins:incorporates` on the instrument, naming an instrument, a wording or an element
     version**, as sketched before C8b.
-    - Two places say which edition, the reliance and the incorporation, and they can disagree.
+    - *Design.* Two places say which edition, the reliance and the incorporation, and nothing stops
+      them disagreeing.
+    - *Runtime.* As (a).
   - **(c) Copy the text in by transclusion** (insurml-alignment IMA-3.1).
-    - Incorporation by reference is not copying. The document stays separate and may change. And
-      transclusion waits for C9, so this is circular.
+    - *Design.* Incorporation by reference is not copying, since the document stays separate and may
+      change. Transclusion waits for C9, so this is circular.
+  - *KISS.* (a) reuses C8b.
 
   **Leaning: (a).**
 
 - **C9-Q8. An encoded document incorporated as amended.** A static incorporation has one edition,
   so its meaning is fixed. An ambulatory one changes when the document does.
   - **(a) Each new edition reaches the instrument by an amendment.** Where a party may vary the
-    document (S53), the variation is an exercise of a power, and the amendment records it and
-    yields a new instrument version binding the new edition.
-    - Keeps laws I17 and I18 exact, since a version's meaning never moves. One new version per
-      instrument per edition, made cheap by shared generation (D5, C16b), and the history records
-      when each edition took effect.
-  - **(b) Resolved per occasion at its valid time,** with a record, as ADR-A85 resolves scheme
+    document (S53), the variation is an exercise of a power, and the amendment yields a new
+    instrument version binding the new edition.
+    - *Design.* Laws I17 and I18 stay exact, since a version's meaning never moves. But the wording
+      is unchanged, because an ambulatory reliance names an identity, so the new version must pin
+      the edition it binds itself, a per-version record (`ins:incorporatesEdition`) that C8b avoided
+      for text. Someone must start the amendments when an edition is published.
+    - *Runtime.* A fan-out. One document incorporated into ten thousand instruments, revised four
+      times a year, is forty thousand amendments and versions a year, each small but each a
+      version to govern and query.
+  - **(b) Resolved for each occasion at its valid time,** with a record, as ADR-A85 resolves scheme
     bindings.
-    - Fewer versions. A version's meaning then moves over time, so I18 is restated and every
-      evaluator must resolve editions.
+    - *Design.* Law I18 is restated, since one version's meaning then moves over time, and
+      design-time shapes over a version cannot check meaning from editions not yet published.
+    - *Runtime.* No fan-out. One resolution, and one record, per occasion that reads the document.
   - **(c) Static only in C9.** An ambulatory incorporation of an encoded document is reported, and
-    its meaning not generated, until C12 decides.
+    its meaning not generated, until a slice decides between (a) and (b) with an example that needs
+    it.
+    - *Design.* Honest about what is not modelled. Open CBAA's Underwriting Instructions (S53) wait.
+    - *Runtime.* Nothing.
+  - *KISS.* (c) now. Both (a) and (b) have real costs, and the choice is better made with S53's
+    volumes in view.
 
-  **Leaning: (a)** for documents a party may vary, and **(c)** for documents outside the parties'
-  control, such as legislation, whose changes are no party's act and belong with the normative rule
-  substrate.
+  **Leaning: (c),** revised from (a) on finding (a)'s per-version pin and fan-out. Documents
+  outside the parties' control, such as legislation, stay with the normative rule substrate in
+  any case.
 
 - **C9-Q9. Instruments without wording** (HQ-1). HQ-1 is due "no later than C9".
   - **(a) Re-time it** to before an applied layer ingests proposals (AIR Phase 5,
-    insurml-alignment Phase 5). Nothing in C9 needs it. An instrument made under a power, such as a
-    call-off or a policy under a binding authority, still has its own wording.
+    insurml-alignment Phase 5).
+    - *Design.* Nothing in C9 needs it. An instrument made under a power, such as a call-off, still
+      has its own wording. The decision is made when a real ingestion path shows what proposals
+      carry.
+    - *Runtime.* Nothing.
   - **(b) Decide it in C9**, by HQ-1's option (a), ingestion producing wording elements.
-    - Adds an ingestion path to a slice about change.
+    - *Design.* Adds an ingestion path to slices about change, and decides it without an ingestion
+      example.
 
   **Leaning: (a).**
 
 - **C9-Q10. The word "binder".** C8 named its generator `tools/instrument_binder.py`, and ADR-A104's
   and ADR-A112's addenda and the Instrument README call it "the reference binder". "Binder" is a
-  market word, and the governing instructions now name the operation instantiation and the
-  component an instantiator.
-  - **(a) Rename before C9**, on `main` in one change: `tools/instrument_instantiator.py`, its tests,
-    the two addenda, the Instrument README and the open plan sections. Closed Validation Packs and
-    history keep the old name.
+  market word, and the governing instructions name the operation instantiation and the component an
+  instantiator.
+  - **(a) Rename before C9**, on `main` in one change: `tools/instrument_instantiator.py`, its
+    tests, the two addenda, the Instrument README and the open plan sections. Closed Validation
+    Packs and history keep the old name.
+    - *Design.* A mechanical change, reviewed on its own. No ontology changes, so no release.
   - **(b) Rename as C9a's first commit.**
-    - Mixes a rename into a design slice's review.
+    - *Design.* Mixes a rename into a design slice's review.
 
   **Leaning: (a).**
+
+**Answered by the human, 2026-10-07:** C9-Q1 (a), three slices, C9a to C9c. C9-Q3 decided through
+the [change materiality sketch](../sketches/change-materiality.md) (MQ1 to MQ7), with held questions
+HQ-8 to HQ-10 added. C9-Q2 and C9-Q4 to C9-Q10 reworked with design and runtime overheads, for the
+human's answers. C9-Q8's leaning revised to (c).
 
 **Decided by precedent, not asked:**
 
@@ -2670,9 +2790,9 @@ Three facts about the current model shape every option below:
 
 | Slice | Layer | Adds |
 |---|---|---|
-| C9a | Instrument 0.15.0 | `ins:Amendment` (`ins:amends`, `ins:resultsIn`, `ins:agreedOn`, `ins:operationalFrom`, `ins:effectiveFrom`, `ins:affectsExisting`, `ins:statedIn`, `ins:byExerciseOf`), materiality as a determination, `ins:begins`, `ins:OnAcceptance`. Shapes for the amendment and the I14 continuity warning. I4's shape, whose terms C6 built, unless the human defers it |
-| C9b | Instrument 0.16.0 | `ins:ConsentRule` (`ins:consentRule`, who must consent, a threshold of a weight per member), delegated consent. Shapes. I10's data, evaluated by C12 |
-| C9c | Wording 0.8.0, Instrument 0.17.0 | reliance on a wording, and W8 for references to a wording. `ins:incorporates`, generation of an encoded incorporated document's meaning within sections, I17 widened. `tools/`: the instantiator follows incorporation |
+| C9a | Instrument 0.15.0 | `ins:Amendment` (`ins:amends`, `ins:resultsIn`, `ins:affectsExisting`, `ins:statedIn`, `ins:byExerciseOf`), its times on Foundation's scope and evidence and `prov:endedAtTime`, `ins:begins`, `ins:OnAcceptance`. Shapes for one chain per instrument and rule (i). Shapes for the amendment and the I14 continuity warning. I4's shape, whose terms C6 built, unless the human defers it |
+| C9b | Instrument 0.16.0 | `ins:ConsentRule` (`ins:consentRule`, who must consent, a threshold of a weight per member), delegated consent. Materiality (C9-Q3): the materialised change report, condition words over it, the change grade contract with its two-concept baseline and chain rule, the Instrument evaluation profile with the fallback. `tools/`: the change report. Shapes. I10's data, evaluated by C12 |
+| C9c | Wording 0.8.0, Instrument 0.17.0 | reliance on a wording, and W8 for references to a wording. `ins:incorporates`, generation of an encoded incorporated document's meaning within sections, I17 widened, cycle checks and `ins:prevailsOver` over an incorporated document. Static incorporation only, an ambulatory one of an encoded document reported (C9-Q8 (c)). `tools/`: the instantiator follows incorporation |
 
 ### Tranche E: evaluation
 
@@ -2706,6 +2826,9 @@ so that its implications can be weighed when it is taken up.
 | HQ-5 | **The full set of group behaviours** (C7c-Q4, 2026-10-06). C7c uses Party's two composition rules for duties and leaves a group's power, and a group with no rule, Undetermined (CC-D10). The full set is: several only, joint only, joint and several, any one may act, all must act, and a threshold by number or by share, for duties and for powers alike, with how a member's share, release or default affects the rest, and how the instrument's silence is filled by an amendment, a deeming, a market default declared as data, or a recorded reading | a relation owed to or held by a group is decided wrongly, or not at all, until every mode is modelled | immediately after C9, as its own slice or the first follow-up of C9, and before AIR Phase 5 and Open CBAA's migration rely on group powers |
 | HQ-6 | **Deemings made watertight** (C7c-Q8, 2026-10-06). C7c states deemings in full, but the closure a deeming over absence licenses is ADR-A105's, not yet drafted. To settle: the closure declaration and its scope and window, rebuttal of a rebuttable deeming by later evidence and what that supersedes, the precedence of a conclusive deeming over a finding, deemings for one purpose only (`ins:forPurposeOf`) and how they stay out of other relations, deemed receipt counted in business days (HQ-3), and the deemed-fact record's link back to its deeming and closure | a deeming may be read as more or less than its words say, and a late fact may not supersede it correctly | with NRS N5 (ADR-A105), and before C12 evaluates deemings |
 | HQ-7 | **Several instruments covering portions of one order** (raised 2026-10-06, C7c). A layer in an insurance programme may be placed on several policies, each covering a portion of the order, on different risks or on the same risk with different terms. They are separate instruments related to one placement, not a group of parties acting together, so neither Party's groups nor a section models them | a placement split across policies is modelled as a group or not at all, and the portions cannot be reconciled with the order | with the insurance applied layer's placement model, or C9 if it becomes an instrument relation |
+| HQ-8 | **Materiality beyond amendments** (MQ1, 2026-10-07). Material breach, a material adverse change in a party's circumstances and a material change in a risk classify an event or a state of affairs, as amendment materiality classifies a change. They share its sources (the contract's definition, a referenced one, a determination) and its split between enumerated and evaluative definitions ([change materiality sketch](../sketches/change-materiality.md)) | each is otherwise modelled ad hoc, and a definition such as "Material Adverse Effect" already exists as a condition word (C7c) without a rule for its evaluative part | later in the epic, after C9 and C12, reusing C9's mechanism |
+| HQ-9 | **Eligibility paths ending at an identity** (MQ7, 2026-10-07). A condition that asks whether a value is one of several named records, such as "any amendment to Clause 35" or "a claim on one of the named vessels". Matching is exact, with no hierarchy unless the condition walks a structure Eligibility does not import | until then a materiality definition naming a clause falls back to a determination (C9), and other layers tag records with concepts to be matched | its own Eligibility slice with an ADR, after ADR-A90, A91 and A103, cascading to every importer and the MORK and design-time OWL compilers |
+| HQ-10 | **A deployment configuration layer** (MQ5, 2026-10-07). Settings that vary by deployment, tenant or jurisdiction have no common home: Eligibility's operational profiles, C9's materiality fallback, HQ-5's market default for a silent group, and the evaluation context sketch's environments. Vocabulary's scope bindings select schemes, not settings | each layer grows its own profile and selection, and an outcome's settings are recorded differently in each | its own unit with an ADR for the new module, once C9's profile shows the pattern |
 | HQ-4 | **Context roles from several sources** (found building C7b, 2026-10-05). Quantification's role contract resolves to one scheme in a context (Vocabulary, ADR-A85), and two unscoped bindings conflict. Roles come from several places: Instrument's baseline (arising, inception, ending, period start and end), other layers (an allowance reset, a policy year), and each wording's defined dates (the Expiry Date, the Break Date). C7b binds Instrument's baseline. The lease example's own date roles are left unbound | a deployment that uses Instrument and another layer's roles, or a wording's own dates, cannot bind them all to one contract today. Options: one deployment scheme that collects every role, scoped bindings, or wording dates as roles bound from variables in C8 rather than as concepts | with C8's parameter bindings, which give wording dates their values |
 
 ## 5. Sequencing
