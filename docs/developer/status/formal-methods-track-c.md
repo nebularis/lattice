@@ -3,9 +3,9 @@
 # Formal Methods, Track C: Status
 
 **Unit ID:** `formal-methods-track-c` (phase, within the `formal-methods` epic)
-**Status:** C1 and C2 done, 2026-10-06. Both checked, results recorded. No ADR drafted yet
-(not this track's job — see plan §6)
-**Last updated:** 2026-10-06
+**Status:** C1 and C2 done, 2026-10-06. `ADR-A116` (Vocabulary scheme composition) drafted
+2026-10-07, Proposed, citing this track's checked evidence
+**Last updated:** 2026-10-07
 **Plan:** [formal-methods-track-c.md](../plans/formal-methods-track-c.md)
 **Sketch:** [formal-methods-track-c.md](../sketches/formal-methods-track-c.md)
 **Epic status:** [formal-methods.md](formal-methods.md)
@@ -29,12 +29,14 @@ itself prevent two composed schemes disagreeing about a shared concept's `broade
 results, the counterexample instance read and explained, and the three candidate fixes are in
 [the model's own README](../../../tools/models/vocabulary-scheme-composition/README.md).
 
-**Next action, for the human:** decide the overlap rule (forbid overlapping membership by a new
-Vocabulary shape; order composed sources by an explicit precedence rule; or allow free union and
-require `broader`'s transitive closure to stay acyclic), and decide who drafts the shared
-Vocabulary ADR IMA-D4a names (this track produced the checked evidence for it, not the ADR
-itself). C3 (slot exclusivity and exhaustiveness, SMT, CCS C13a) is next in track C's own
-numbering, not started.
+**Next action, for the human:** review and accept (or revise) `ADR-A116`
+(`docs/architecture/decisions/ADR-A116-vocabulary-scheme-composition.md`), which decides the
+overlap rule (forbid, by a new static Vocabulary shape — the simplest of the three candidates,
+not the precedence or free-union alternatives) and the composition construct itself
+(`voc:BindingAspect`/`voc:forAspect`). Implementing it (the ontology change, the shape, the
+resolver's `CompositionOverlapError`) is a separate follow-up slice, not done by the ADR itself.
+C3 (slot exclusivity and exhaustiveness, SMT, CCS C13a) is next in track C's own numbering, not
+started.
 
 ## Slices
 
@@ -48,9 +50,9 @@ numbering, not started.
 
 | # | Question | Owner |
 |---|---|---|
-| the overlap rule | what composition does when two composed schemes share a member with different `skos:broader` parents — **confirmed reachable** by C2's `NoOverlapDisagreement` counterexample, three candidates named (sketch §2, §5; model README) | human decision, for whichever ADR accepts composition |
+| the overlap rule | **decided in `ADR-A116` (Proposed)**: forbidden, checked by a new static Vocabulary shape — the simplest of the three candidates named in the sketch/model README | human, to accept or revise the ADR |
 | home for the model | confirmed: `tools/models/vocabulary-scheme-composition/` (plan §4) | closed |
-| who writes the shared Vocabulary ADR | track C produced the checked evidence; a human, or whichever agent is asked to draft it from that evidence, writes the ADR itself | human |
+| who writes the shared Vocabulary ADR | **done**: `ADR-A116`, drafted 2026-10-07, citing this track's checked evidence directly | human, to accept or revise |
 
 ## Log
 
@@ -76,3 +78,18 @@ numbering, not started.
   `tools/models/vocabulary-scheme-composition/`, with a parent `tools/models/README.md`. No
   ontology or ADR change made — this track's job is the checked evidence, not the decision or its
   ratification.
+- 2026-10-07: `ADR-A116` (Vocabulary scheme composition) drafted, Proposed, at the human's
+  explicit request. Cites this track's evidence directly: `EverySourceResolves`'s no-counterexample
+  result as the property composition must keep, `NoOverlapDisagreement`'s counterexample as the
+  reason the overlap rule cannot be left unstated. Decides the forbid-overlap candidate (a new
+  static Vocabulary SHACL-SPARQL shape), a new `voc:BindingAspect`/`voc:forAspect` construct
+  (named to avoid colliding with `pty:Role` and `ins:forPurposeOf`, both already taken), and
+  reuses ADR-A85's resolution algorithm unchanged, per aspect — fully additive, no existing
+  consumer's behaviour changes. Eligibility's own hierarchical-match addendum
+  (`insurml-typing.md` §6.1) stays a follow-on against ADR-A100, not decided here. Filed as plain
+  `ADR-A116`, not the epic's own `A-FM` block, since this is a shared Vocabulary-layer decision,
+  not an epic-scoped artefact — checked against both this branch's and `main`'s catalogues first
+  (both agreed up to A115). Implementation (the ontology change itself, the shape, the resolver's
+  `CompositionOverlapError`) is explicitly deferred to a follow-up slice, not done by this commit.
+  CCS's and insurml-alignment's own plan documents are left untouched (Machine R's own editorial
+  territory); the human's own bundle/push to `origin` is expected to surface this ADR to them.

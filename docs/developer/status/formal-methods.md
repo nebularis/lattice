@@ -35,7 +35,12 @@ resolution with scheme composition, ahead of CCS's HQ-4 and insurml-alignment's 
 directly from `main` and confirmed genuinely unresolved) are both **done**. C2's checked model
 found that "union of membership, union of hierarchy" does not by itself prevent two composed
 schemes disagreeing about a shared concept's `broader` parent — a counterexample, read and
-recorded in full, not a reinvented worry. Track B now has its own plan, sketch and status record
+recorded in full, not a reinvented worry. That finding is now answered: `ADR-A116` (Vocabulary
+scheme composition), drafted 2026-10-07 at the human's request, cites C2's evidence directly,
+decides the overlap rule (forbidden, by a new static shape) and the composition construct
+(`voc:BindingAspect`/`voc:forAspect`), and is shared with CCS's HQ-4 and insurml-alignment's
+IMA-D4a as one ADR, per IMA-D4a's own recommendation. Filed as plain `A116`, not the epic's own
+`A-FM` block, since it is a shared Vocabulary-layer decision. Track B now has its own plan, sketch and status record
 too ([formal-methods-track-b.md](formal-methods-track-b.md)): B1, B2 and B3 are all **done**
 (`tools/reference/eligibility/`, `ADR-A-FM3` **Accepted**), the logic kernel and Eligibility's
 denotation (L9-L16) ported from and verified against `tools/proofs/eligibility/`'s Isabelle
@@ -45,9 +50,8 @@ regeneration-as-naturality property test (72 tests, no regression). B1's own sco
 resolved E1.2 (below): the rounding/residual
 theorem belongs to B4/E3-E4, not Quantification; track E's plan and status are corrected.
 
-**Next action, for the human:** decide track C2's overlap rule (three candidates named in its
-status record) and who drafts the shared Vocabulary ADR it informs. Track B's B1-B3 are complete;
-B4 waits on CCS's C12. The two remaining Gate D gaps (below) are deliberately deferred, not
+**Next action, for the human:** review and accept (or revise) `ADR-A116`. Track B's B1-B3 are
+complete; B4 waits on CCS's C12. The two remaining Gate D gaps (below) are deliberately deferred, not
 blocking.
 
 ## Gate D (phase-0 plan §9)
