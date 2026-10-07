@@ -16,12 +16,11 @@
 Gate A passed on 2026-10-01. Tranches B and C are merged to `main` and tagged: Wording 0.3.0,
 Behaviour 0.10.0 (shapes 0.4.0) with nested states and history, the import guard in `mise run
 check`. In tranche D, C6 to C7c are merged and tagged (Instrument 0.12.0, Party 0.8.0, Quantification
-0.7.0). C8 is merged and tagged (Instrument 0.13.0). C8b's model phase is built (Wording 0.7.0, Instrument 0.14.0). From C5 on, the agent builds and verifies, and the human commits by hand.
+0.7.0). C8 and C8b are merged and tagged (Instrument 0.14.0, Wording 0.7.0). C9 is briefed, with ten questions. From C5 on, the agent builds and verifies, and the human commits by hand.
 
-**Next action, for the human:** review the C8b model phase and its deviations on
-`ccs/c8b-references-by-identity`, accept the ADR-A112 addendum, commit, merge to `main`, then tag
-`wording-v0.7.0`, `wording-vocab-v0.7.0`, `wording-shapes-v0.4.0`, `instrument-v0.14.0` and
-`instrument-vocab-v0.14.0` and push them to `origin-ssh`.
+**Next action, for the human:** answer C9-Q1 to C9-Q10 in the plan's "C9 in detail", including
+whether C9 splits into C9a to C9c (Q1) and whether the "binder" rename lands on `main` first (Q10).
+The agent then writes the Validation Pack for the first slice.
 
 ## Slice board
 
@@ -41,7 +40,8 @@ check`. In tranche D, C6 to C7c are merged and tagged (Instrument 0.12.0, Party 
 | C6 | instrument, terms, the five relations, parties, content | D | merged, tagged | |
 | C7b | terms in time | D | merged (`5da9412`), tagged | |
 | C7c | what terms are, and who they bind (split from C7b) | D | merged and tagged | done |
-| C8, C9, C8a | Instrument rewrite, template library | D | waiting | C8 after C7a and C7b |
+| C8, C8b | values in stated meaning, Wording references by identity | D | merged, tagged | |
+| C9, C8a | change and composition, template library | D | C9 briefed | C9-Q1 to C9-Q10 |
 | C7a | regimes and gating, split from C7 | D | merged to `main` (`c6e5853`) and tagged | |
 | C12, C13 | runtime evaluator, relation plans | E | waiting | C9, C11, C11a, AIR-3.3, NRS N1 |
 | C13a | design-time joint satisfiability: slot conditions by reasoner, the task NRS N3 reuses (deferred from C5) | E | waiting | C5, NRS N1 |
@@ -132,3 +132,5 @@ check`. In tranche D, C6 to C7c are merged and tagged (Instrument 0.12.0, Party 
 - 2026-10-06: C8b's questions reworked with the scene set and each option's consequences, then answered: every reference names an identity, with outside documents gaining editions and a static or ambulatory reliance (Q1 (c)), resolution derived and checked by W8 (Q2), display text on the referring part (Q3), shapes and the binder's lookup (Q4)
 - 2026-10-06: C8b phase 1 on `ccs/c8b-references-by-identity`: `reused-clause.ttl` new, six examples' references moved to identities, outside documents given identities, editions and reliances, and the ADR-A112 addendum "references by identity" (Proposed). The only new shape failures are the reference ranges the model phase changes
 - 2026-10-06: C8b examples committed. Model phase built: Wording 0.7.0, `wording-vocab` 0.7.0 (breaking), shapes 0.4.0 with law W8, and Instrument and `instrument-vocab` 0.14.0 (a re-pin). Every C8b row passes, and every check C8 ran. The binder needed no change. Deviations in the [Validation Pack](../validation/computable-contract-substrate-c8b.md)
+- 2026-10-06: C8b model phase committed, merged to `main` and tagged by the human (`wording-v0.7.0`, `wording-vocab-v0.7.0`, `wording-shapes-v0.4.0`, `instrument-v0.14.0`, `instrument-vocab-v0.14.0`)
+- 2026-10-07: C9 briefed on `main` with ten questions, each with its options' consequences: splitting into C9a to C9c (Q1), what an amendment records (Q2), materiality (Q3), powers held by groups (Q4), taking effect and separate execution (Q5), a party leaving and ending by agreement (Q6), incorporation (Q7), ambulatory incorporation of encoded documents (Q8), re-timing HQ-1 (Q9), and renaming the "binder" (Q10). The C9 row's "shapes for I1 to I16" found stale

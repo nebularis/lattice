@@ -310,6 +310,13 @@ like a network policy block:
 
 Try not to explain your design decisions in multiple places. Avoid explaining why you did not use a certain pattern or construct, especially if you've just explained why you did use a different one. If you feel the need to explain your design decisions, do so in a single place and cross-reference it from other places.
 
+**Referring to `fnd:Version`.** Use the word "versioned" when talking about the *type*, or class
+membership, of a thing. For example, an `ins:Instrument` is "versioned", meaning that it is also a
+member of `fnd:Version`, which implies that it supports multiple versions, provenance and the rest.
+When talking about an individual `ins:Instrument` in the graph, it MAY be more appropriate to call it
+"a version", if and only if you are talking about a specific *version* node. The class is to be
+renamed `fnd:Versioned` (technical debt TD-20).
+
 **Use `rdfs:domain` and `rdfs:range` sparingly.** They are not constraints on how a property may be used. They tell a reasoner something about everything the property is used with: any individual that has the property *is* an instance of the domain, and any value *is* an instance of the range. A domain of `ins:LegalRelation` on `ins:activity` would make every trigger that names an act a legal relation. Declare a domain or range only where it:
 
 - gives useful entailment at design time, or
