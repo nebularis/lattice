@@ -67,6 +67,15 @@ def decide_concept_match(
     cases the law register's own decision table needs the bound scheme for.
     """
 
+    # L9: the closure is "restricted to that scheme's members" -- a candidate
+    # outside the resolved scheme entirely is Undetermined (exe:OutsideScheme
+    # in the compilers), before anything else is asked of it, even an
+    # otherwise-matching required or excluded concept. Found missing by
+    # track B2's differential harness: the first version of this function
+    # checked ancestry but never scheme membership itself.
+    if scheme is not None and candidate not in scheme.members:
+        return UNDETERMINED
+
     def matches(concept: Concept) -> bool:
         if not hierarchical:
             return candidate == concept
@@ -118,9 +127,15 @@ def decide_condition(
     single-candidate decision (``decide_concept_match``).
 
     ``reading`` is one of ``"SingleValue"``, ``"SomeValue"`` or ``"EveryValue"``
-    (``elg:valueReading``, ADR-A103). A single-value reading with no value,
-    like the set readings with none, is Undetermined (the compilers' own
-    ``exe:MissingCandidate`` diagnostic names the same case).
+    (``elg:valueReading``, ADR-A103). A single-value reading decides only
+    when there is exactly one value: no value is Undetermined
+    (``exe:MissingCandidate``), and more than one is Undetermined too
+    (``exe:SeveralCandidates``) -- a question with several candidates and no
+    declared reading to combine them is ambiguous, not a silent pick of the
+    first. Found while differentially testing against
+    ``tools/mork_compilers``' SPARQL backend (track B2): this module's first
+    version took ``values[0]`` regardless of length, which agreed with the
+    compiler only by accident, on fixtures with exactly one candidate.
     """
 
     def decide_one(candidate: Concept) -> Decision:
@@ -133,7 +148,7 @@ def decide_condition(
         )
 
     if reading == "SingleValue":
-        decision = decide_one(values[0]) if values else UNDETERMINED
+        decision = decide_one(values[0]) if len(values) == 1 else UNDETERMINED
     elif reading == "SomeValue":
         decision = some_value([decide_one(v) for v in values])
     elif reading == "EveryValue":

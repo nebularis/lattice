@@ -57,6 +57,17 @@ class TestL9HierarchicalClosure:
         )
         assert decision is DENIED
 
+    def test_candidate_outside_the_scheme_entirely_is_undetermined(self) -> None:
+        """Found by track B2's differential harness against the compilers'
+        own exe:OutsideScheme handling: a candidate that is not a member of
+        the resolved scheme at all is Undetermined, overriding what L10's
+        exclusion match would otherwise say -- "restricted to that scheme's
+        members" (L9) takes priority over everything else."""
+        decision = decide_concept_match(
+            "mango", hierarchical=True, required={CITRUS}, excluded={CITRUS}, scheme=FRUIT_SCHEME
+        )
+        assert decision is UNDETERMINED
+
 
 class TestL10ExclusionPrecedence:
     """An excluded match is Denied, whether or not it also matches a
@@ -166,6 +177,21 @@ class TestL15SetReadingsAndL16Negation:
     def test_single_value_with_no_value_is_undetermined(self) -> None:
         decision = decide_condition(
             [],
+            reading="SingleValue",
+            negated=False,
+            hierarchical=False,
+            required={"x"},
+            excluded=set(),
+            scheme=None,
+        )
+        assert decision is UNDETERMINED
+
+    def test_single_value_with_several_values_is_undetermined(self) -> None:
+        """A SingleValue reading with more than one candidate is ambiguous
+        (exe:SeveralCandidates), not a silent pick of the first -- matches
+        tools/mork_compilers' SPARQL backend's own "?candidates != 1" rule."""
+        decision = decide_condition(
+            ["x", "y"],
             reading="SingleValue",
             negated=False,
             hierarchical=False,

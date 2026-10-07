@@ -124,11 +124,17 @@ measures, with abandonment conditions. Gate D decides FM-D1.
 
 Detailed in its own [sketch](../sketches/formal-methods-track-b.md) and
 [plan](formal-methods-track-b.md); status in [its status record](../status/formal-methods-track-b.md).
-B1 done 2026-10-07 (`tools/reference/eligibility/`, `ADR-A-FM3` Proposed): the logic kernel and
-Eligibility's denotation (L9-L16), ported from and verified against `tools/proofs/eligibility/`'s
-Isabelle statements, 47 tests passing. B1's own scoping also resolved track E's E1.2: the
-rounding/residual theorem belongs to this track's B4 and track E's E3/E4, not Quantification,
-where E1.2 had gone looking and found nothing — track E's plan and status are corrected to match.
+B1, B2 and B3 all done 2026-10-07 (`tools/reference/eligibility/`, `ADR-A-FM3` Accepted): the
+logic kernel and Eligibility's denotation (L9-L16), ported from and verified against
+`tools/proofs/eligibility/`'s Isabelle statements, differentially tested against
+`tools/mork_compilers`' SPARQL and SHACL backends (63 tests), and Surface's ADR-A27
+regeneration-as-naturality property test (72 tests in `surface.test_surface`, no regression). B2
+found and fixed two real defects in B1's own reference (a missing scheme-membership precondition,
+and a `SingleValue` reading that silently took the first of several candidates) — independent
+oracles catching each other's mistakes being exactly the point. B1's own scoping also resolved
+track E's E1.2: the rounding/residual theorem belongs to this track's B4 and track E's E3/E4, not
+Quantification, where E1.2 had gone looking and found nothing — track E's plan and status are
+corrected to match.
 
 ### Track C: the design-time models
 

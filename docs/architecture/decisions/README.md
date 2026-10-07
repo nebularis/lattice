@@ -64,7 +64,7 @@ This directory holds the ADRs that govern LATTICE's substrate architecture. An A
 | [A-C2](ADR-AC2-clean-room-authoring-procedure.md) | Clean-room authoring procedure for substrate content (with addendum) | Accepted |
 | [A-FM1](ADR-A-FM1-formal-methods-prover-choice.md) | Formal-methods prover choice and code-generation targets (Isabelle/HOL) | Accepted |
 | [A-FM2](ADR-A-FM2-formal-methods-theory-home.md) | Home of the formal-methods prover programme's theories (`tools/proofs/`) | Accepted |
-| [A-FM3](ADR-A-FM3-reference-evaluator-home-and-scope.md) | Home and scope of the reference evaluator and its oracle (`tools/reference/`) | Proposed |
+| [A-FM3](ADR-A-FM3-reference-evaluator-home-and-scope.md) | Home and scope of the reference evaluator and its oracle (`tools/reference/`) | Accepted |
 | [A-78](ADR-A78-persistence-profile-substrate-and-aggregate-boundaries.md) | Persistence profile substrate and configurable aggregate boundaries | Accepted |
 | [A-79](ADR-A79-persistence-compiler-toolchain.md) | Persistence compiler toolchain and template-based SPARQL generation | Accepted |
 | [A-80](ADR-A80-housekeeping-component-boundary.md) | Housekeeping component boundary | Accepted |

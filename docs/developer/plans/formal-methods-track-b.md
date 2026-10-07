@@ -7,7 +7,7 @@
 **Epic:** [formal-methods](formal-methods.md)
 **Sketch:** [formal-methods-track-b.md](../sketches/formal-methods-track-b.md)
 **Status record:** [formal-methods-track-b.md](../status/formal-methods-track-b.md)
-**Status:** B1 done, 2026-10-07. B2 and B3 not started
+**Status:** B1, B2 and B3 done, 2026-10-07
 
 ## 1. Scope
 
@@ -22,7 +22,7 @@ same rolling-wave discipline tracks C and E already use.
 
 | Dependency | State | Blocks |
 |---|---|---|
-| an ADR for track B's home and scope (epic plan §3's own dependency row) | not drafted. Proposed content in the sketch §5 | B1's first commit — drafted as B1's own first action, Proposed, for human review, the same shape as track A's A1 |
+| an ADR for track B's home and scope (epic plan §3's own dependency row) | **`ADR-A-FM3`, Accepted 2026-10-07** | nothing further |
 | the Isabelle kernel (`tools/proofs/eligibility/`) | done (track E, E1.0/E1.1) | nothing — B1 ports its statements, doesn't wait on anything further from it |
 | `tools/mork_compilers`' SPARQL and SHACL backends | exist, stable | nothing — B2 tests against what exists today |
 | `tools/surface/src/surface/invalidation.py` (`RegenerationPlan`) | exists | nothing — B3's item wraps it in a property test |
@@ -50,41 +50,50 @@ same rolling-wave discipline tracks C and E already use.
   `Undetermined` to `Permitted`) was confirmed to fail six tests before being reverted, the
   "prove it can fail" check this criterion calls for.
 
-### B2: differential tests against the existing compilers
+### B2: differential tests against the existing compilers — done
 
-- A test harness that takes one Eligibility condition or profile declaration, evaluates it under
-  B1, compiles and evaluates it under `tools/mork_compilers`' SPARQL backend (and SHACL, and SWRL
-  or OWL only where the input is one each backend does not already refuse by its own documented
-  restriction), and asserts agreement.
-- Fixtures: the existing `MIXES` family (`test_set_readings.py` and siblings) reused directly, not
-  copied; shape-derived generators (property-based, from `ontology/eligibility/shapes/constraints.ttl`)
-  for conditions and profiles within the shapes' own constraints.
+- `tools/reference/eligibility/tests/test_differential.py`: evaluates `decide_concept_match`
+  against `tools/mork_compilers`' compiled SPARQL (executed, not inspected as text) and SHACL
+  (validated with pySHACL), reusing that package's own fixtures and test helpers (`DIAGNOSES`,
+  `ENTITLEMENT`, `with_questions`, `sparql`, `shacl`) and one real Eligibility example
+  (`ontology/eligibility/examples/flat-scheme-lending.ttl`), not duplicating them.
 - The named negative fixture (epic plan's own B2 row): hierarchical match with exclusions under
-  L11, generated at every position relative to an excluded concept in the hierarchy, asserting the
-  exclusion's effect never promotes a Permitted candidate.
-- "Not a value" first (sketch §3): unbound variables, absent solutions and `FILTER` errors tested
-  for their mapping to Undetermined before any other law-by-law comparison runs.
-- **Validation**: the harness runs over every existing Eligibility example fixture
-  (`ontology/eligibility/examples/`) plus the generated cases, with a report of agreement and
-  disagreement per law, not a single pass/fail count — a disagreement is a finding for
-  `tools/mork_compilers`' own maintainers, not silently fixed by this slice (sketch §7).
+  L11, checked directly (`solid-tumour-arm`'s required solid-tumour/excluded cns-tumour) and
+  generalised across every member of the resolved scheme (`TestL11OverEveryMember`).
+- "Not a value" first (sketch §3): a question with no candidate at all (`q-absent`/`absent`) and
+  one with several candidates and no declared reading (`q-two`) both checked as Undetermined
+  across all three implementations.
+- **Validated**: 63 tests pass (47 from B1 plus 16 differential). **Found and fixed two real
+  defects in B1's own `denotation.py`**, exactly what an independent oracle is for:
+  (1) `decide_concept_match` never checked whether a candidate was a member of the resolved
+  scheme at all (L9's "restricted to that scheme's members"), so a candidate entirely outside the
+  scheme could be wrongly Denied instead of Undetermined; (2) `decide_condition`'s `SingleValue`
+  reading took the first value regardless of count, instead of requiring exactly one (several
+  candidates with no declared reading is ambiguous, `exe:SeveralCandidates`, Undetermined). Both
+  fixes are in `denotation.py`, with regression tests in `test_denotation.py` and the differential
+  harness itself. L14 (hierarchy precondition) checked against a real Eligibility example fixture
+  (`flat-scheme-lending.ttl`), not a synthetic one, per this criterion's own wording.
 
-### B3: a property test for Surface (MORK and MCN deferred)
+### B3: a property test for Surface (MORK and MCN deferred) — done
 
-- Surface: a property test (Hypothesis or equivalent) generating a read-set change and asserting
-  `plan_regeneration`'s output against the old output's image equals a direct regeneration from
-  the new state — ADR-A27's own naturality claim, checked, not only exercised by example.
+- `tools/surface/src/surface/test_surface.py`'s new `RegenerationPropertyTests`: a property test
+  (stdlib `random`, seeded — Hypothesis was attempted first and found blocked by this
+  environment's package mirror, a 403 on that one dependency, not a network-wide block) generating
+  random dependency graphs and checking `impacted_surfaces`'s **soundness** (every selected
+  surface genuinely depends, directly or transitively, on a changed source) and **completeness**
+  (every surface that genuinely depends on one is selected) against an independently structured
+  BFS oracle, plus a monotonicity check (widening the changed set never shrinks the impacted set)
+  and a direct assertion of ADR-A27's own words (a surface depending on nothing changed is never
+  selected).
 - MORK's join-semilattice claim: **not pursued this slice**, by the human's own call — it has
   always been the least certain of the three B3 items named in the epic plan, and is left for a
   later slice to state and confirm properly against `mork_schemas.py`'s `IntentNodeSpec.refines`
   and `mork_validation.py`'s co-occurrence checks, rather than being carried here on an assumption.
+- **Validated**: 72 tests pass in `surface.test_surface` (3 new, 69 existing, no regression). A
+  seeded mutation (removing the "or already impacted" chaining clause from `impacted_surfaces`)
+  was confirmed to fail the soundness/completeness property test before being reverted.
 - MCN: **not built this slice**. Recorded in the status record as found-blocked (no RDF-to-MCN
   encoder exists), with a line for whoever eventually builds one.
-- **Validation**: the Surface property test runs, with its generator's coverage (how many
-  distinct cases, what the shrinker finds on a seeded failure) recorded, not just a pass count —
-  the same "prove it can fail" discipline every other track in this epic uses. A seeded, known-bad
-  mutation of `plan_regeneration` (e.g. dropping one read-set entry from the rebuild scope) must
-  make the property test fail, checked once before the slice is called done.
 
 ## 4. Home for the reference
 

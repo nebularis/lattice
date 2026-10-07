@@ -1,9 +1,10 @@
 <!-- SPDX-License-Identifier: MPL-2.0 -->
 
-# Eligibility's reference semantics (track B1)
+# Eligibility's reference semantics (track B1/B2)
 
 A hand-written, independent Python reference for Eligibility's logic kernel and denotation
-(`ontology/eligibility/README.md` §6, laws L9-L16), for the formal-methods epic's track B
+(`ontology/eligibility/README.md` §6, laws L9-L16), differentially tested against
+`tools/mork_compilers`' SPARQL and SHACL backends, for the formal-methods epic's track B
 ([sketch](../../../docs/developer/sketches/formal-methods-track-b.md),
 [plan](../../../docs/developer/plans/formal-methods-track-b.md),
 [ADR-A-FM3](../../../docs/architecture/decisions/ADR-A-FM3-reference-evaluator-home-and-scope.md)).
@@ -32,8 +33,17 @@ A hand-written, independent Python reference for Eligibility's logic kernel and 
   aggregation (`elg:AllRequired`/`elg:AnySufficient`, L6-L8). B1 decides a condition's outcome from
   already-extracted Python values (candidates, required/excluded sets, a scheme's membership and
   ordering), not from an `rdflib.Graph` — reading a condition's own declarations out of RDF is
-  `tools/mork_compilers`' job (`eligibility_ir.py`), and B2 (not yet built) is where this
-  reference meets that extraction, for differential testing against the real compilers.
+  `tools/mork_compilers`' job (`eligibility_ir.py`); `tests/test_differential.py` (B2) is where
+  this reference meets that extraction, for differential testing against the real compilers.
+- **`tests/test_differential.py`** (B2) runs `decide_concept_match` against `tools/mork_compilers`'
+  compiled SPARQL (executed, not inspected as text) and SHACL (validated with pySHACL), reusing
+  that package's own fixtures (`DIAGNOSES`, `ENTITLEMENT`) and one real Eligibility example
+  (`ontology/eligibility/examples/flat-scheme-lending.ttl`), rather than duplicating them. Found,
+  and fixed in `denotation.py`: the first version of `decide_concept_match` never checked whether
+  a candidate was a member of the resolved scheme at all (L9's "restricted to that scheme's
+  members"), so a candidate entirely outside the scheme could be wrongly Denied instead of
+  Undetermined — caught by comparing against the compilers' own `exe:OutsideScheme` handling, the
+  reason an independent oracle exists.
 - **Never runs against the live graph** (ADR-A-FM3, restating epic principle E3): this package is
   a test-time oracle only, imported by its own tests and by B2's differential-test suite, never by
   a runtime path.

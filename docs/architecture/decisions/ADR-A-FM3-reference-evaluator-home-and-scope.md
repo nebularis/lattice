@@ -2,7 +2,7 @@
 
 # ADR-A-FM3: Home and scope of the reference evaluator and its oracle
 
-**Status:** Proposed
+**Status:** Accepted
 **Date:** 2026-10-07
 **Related:** [ADR-A-FM1](ADR-A-FM1-formal-methods-prover-choice.md) (prover choice, Isabelle/HOL),
 [ADR-A-FM2](ADR-A-FM2-formal-methods-theory-home.md) (home of track E's theories, `tools/proofs/`),
