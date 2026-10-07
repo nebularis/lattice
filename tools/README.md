@@ -5,7 +5,8 @@
 Python 3.14+. The executable Python tools are sibling projects under `tools/`.
 `tools/mork/`, `tools/mork_compilers/`, and `tools/surface/` each own a
 `pyproject.toml` and a conventional `src/<package>/` layout. Run everything
-from the repository root.
+from the repository root. For what each tool is for and when to reach for it,
+see [`docs/developer/developer-guide.md`](../docs/developer/developer-guide.md).
 
 ## Python environment
 
@@ -41,8 +42,20 @@ python3 tools/literate_extract.py ontology/surface/README.md \
 ```
 
 `--check` writes nothing and exits non-zero if any target differs from what
-would be written. Run it in CI: it is the README⇄spec drift check the
-governance discipline requires and that nothing currently enforces.
+would be written. Part of `mise run check:python-root` for Surface; run it
+directly for any other layer.
+
+## `tools/check_formal_freshness.py`
+
+Checks that a layer's formal-methods artefacts have not silently drifted from
+its literate README: every `tools/proofs/<layer>/Kernel.thy` is re-extracted
+and compared byte for byte (the same discipline as `literate_extract.py
+--check`, scoped to only the `isabelle-spec` output so it does not trip on
+layers whose `spec`/`vocab`/`shapes` already drift for unrelated reasons,
+TD-16), and every semantic law a README declares is confirmed named somewhere
+in that layer's `tools/reference/<layer>/`, covered or explicitly disclaimed.
+Run via `mise run check:formal-freshness`, part of the default `check`
+aggregate. See `docs/developer/formal-methods-lifecycle.md`.
 
 ## `tools/proofs/` — the prover programme's theories
 

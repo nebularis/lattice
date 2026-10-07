@@ -2,6 +2,11 @@
 
 A domain neutral semantic framework for representing governing instruments (contracts, protocols, agreements, etc) and the obligations, eligibility conditions, and lifecycle behaviours they define, as structured, queryable, versioned graphs.
 
+**New to this repository?** [Getting Started](docs/developer/getting-started.md) bootstraps a
+clean clone end to end. The [Developer Guide](docs/developer/developer-guide.md) covers every
+tool and script and when to use it. [`docs/diagrams/`](docs/diagrams/README.md) pictures the
+whole architecture, five ways.
+
 ---
 
 ## Overview
@@ -195,6 +200,7 @@ test -d workers
 test -d platform
 test -d apps
 test -d contracts
+test -d docs/diagrams
 ```
 
 ### Install dependencies
@@ -220,10 +226,22 @@ mise run check:java
 mise run check:frontend
 mise run check:spc
 mise run check:persistence
+mise run check:vocabulary
+mise run check:reference-eligibility
+mise run check:mork-compilers
+mise run check:ontology-versioning
+mise run check:ontology-catalog
+mise run check:import-guard
+mise run check:reasoning-isolation
 mise run check:minting
+mise run check:formal-freshness
 mise run build:mtp
 mise run check:mtp
 ```
+
+Not included (large, native, or optional toolchains — run manually, see
+[Getting Started](docs/developer/getting-started.md) §5):
+`check:formal-network`, `check:formal-smoke`, `check:proofs`, `check:minting-tables`.
 
 ### Build and test all frontend workspaces
 
