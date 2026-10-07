@@ -246,7 +246,7 @@ says it should, and nowhere else.
 mise run check:ontology-catalog
 ```
 
-## `tools/instrument_binder.py` — the reference binder
+## `tools/instrument_instantiator.py` — the reference instantiator
 
 Generates one instrument's bound meaning from its form's stated meaning and the instance's
 assembled wording, values and parties (CCS C8, Instrument README §16.3 and §18.6). Each stated term
@@ -258,11 +258,11 @@ path down to its value, under a deterministic IRI.
 It reports instead of guessing: an unresolved word, a variable with no value, an overlap of
 definitions (law I16), and a **cycle** of words or variables, whose report lists every hop in order
 with the clause stating it and the section where it closes. A word may loop in one section and not
-in another, so the binder checks each section, where the form's shapes cannot. It does not evaluate,
+in another, so the instantiator checks each section, where the form's shapes cannot. It does not evaluate,
 cache or share across instruments (C12, C13, C16b).
 
 ```bash
-python tools/instrument_binder.py ontology/instrument/examples/facility-parameters.ttl \
+python tools/instrument_instantiator.py ontology/instrument/examples/facility-parameters.ttl \
     https://example.org/lattice/instrument/facility-parameters/halden-v1
 ```
 

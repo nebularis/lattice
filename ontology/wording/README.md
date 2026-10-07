@@ -416,7 +416,7 @@ the first, directly or through others, can never have a value. A layer that read
 variables must check for such loops, and Instrument does: a placeholder in its stated meaning may
 take its value from a variable or from a defined word whose own value comes from a variable, so one
 loop may pass through words and variables alike. Instrument's shapes report each hop of such a loop,
-and its reference binder reports the whole loop in order, with the clause stating each hop
+and its reference instantiator reports the whole loop in order, with the clause stating each hop
 (Instrument README §18.4).
 
 

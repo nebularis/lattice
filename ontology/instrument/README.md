@@ -2978,7 +2978,7 @@ placeholder takes its value from it.
 
 **A word's meaning may not lead back to the word.** A definition may mean a placeholder that takes
 its value from another word (§18.4), and a chain of such words must end in a value. A chain that
-returns to its start is a cycle, a violation reported on the form and by the binder, hop by hop.
+returns to its start is a cycle, a violation reported on the form and by the instantiator, hop by hop.
 
 ```mermaid
 ---
@@ -3431,7 +3431,7 @@ Nothing new is stored at any tier. Each tier holds what resolution reads:
 |---|---|---|---|
 | library element | an element version and its stated meaning, matched on its hash (ADR-A51), and the variable it declares or refers to, each with a persistent identity | nothing: it names the variable's identity, never a version (§16.3) | it names one variable identity, or one defined word |
 | template, a form: complete text, no data | element versions composed into one wording, each declaring its variables | the variable version of that identity the template declares, so a clause reused under another schedule keeps its stated meaning | the template declares every variable its stated meaning names |
-| instance: an assembled wording with its values, and its instrument | `wrd:includes` the element versions, `wrd:hasValue` the values, each `wrd:forVariable` a variable version. Variables are declarations, never included (Wording's law W5) | the value whose variable version has that identity, through `wrd:populatedFrom` where one variable takes another's. A table field's variable has one value per entry (`wrd:forEntry`), and an entry may be a section or a party | a variable with no value: the default is used, or the node is not generated and the binder reports it. Two values for versions of one identity: reported |
+| instance: an assembled wording with its values, and its instrument | `wrd:includes` the element versions, `wrd:hasValue` the values, each `wrd:forVariable` a variable version. Variables are declarations, never included (Wording's law W5) | the value whose variable version has that identity, through `wrd:populatedFrom` where one variable takes another's. A table field's variable has one value per entry (`wrd:forEntry`), and an entry may be a section or a party | a variable with no value: the default is used, or the node is not generated and the instantiator reports it. Two values for versions of one identity: reported |
 
 ```mermaid
 flowchart LR
@@ -3452,7 +3452,7 @@ flowchart LR
         BR["bound obligation<br/>due within 10 Business Days"]
         AW -- "hasValue" --> VV
         VV -- "forVariable" --> V2
-        VV -. "the binder reads" .-> BR
+        VV -. "the instantiator reads" .-> BR
     end
     style LIB fill:#BBDEFB
     style TPL fill:#BBDEFB
@@ -3497,7 +3497,7 @@ A cycle is a **violation**, never silently skipped. It is checked twice:
   naming the word or variable, the clause stating it, and the next hop. A cycle among definitions
   that never apply together, in different sections, is still reported on the form, since the form
   alone cannot rule out a section where they meet
-- **by the binder**, exactly, section by section: a word may close a loop in one section and not in
+- **by the instantiator**, exactly, section by section: a word may close a loop in one section and not in
   another. Its report gives the whole loop in order, each hop with its clause, and the section
 
 ### 18.5 Which text is expected to mean something
@@ -3521,8 +3521,8 @@ term spans its clauses, is never at fault.
 
 ### 18.6 Generation
 
-Bound meaning is generated from the form and the instance (§16.3). The reference binder,
-[`tools/instrument_binder.py`](../../tools/instrument_binder.py), generates one instrument's:
+Bound meaning is generated from the form and the instance (§16.3). The reference instantiator,
+[`tools/instrument_instantiator.py`](../../tools/instrument_instantiator.py), generates one instrument's:
 
 1. It reads the instrument's included elements, the stated meaning they express, and the instance's
    values.
@@ -3544,7 +3544,7 @@ Bound meaning is generated from the form and the instance (§16.3). The referenc
 7. It reports what it could not do: an unresolved word, a variable with no value, a cycle, and an
    overlap (law I16).
 
-The binder does not evaluate, cache or share across instruments: those are C12, C13 and C16b's.
+The instantiator does not evaluate, cache or share across instruments: those are C12, C13 and C16b's.
 What is stored per instance is its values only. The generated path costs nothing until something
 reads it, and C16b's content addressing shares generated paths between instruments whose values
 agree.
@@ -5056,7 +5056,7 @@ clauses' stated meaning, and the bound meaning of one instrument. §22.5 to §22
 §22.9 to §22.12 terms in time, §22.13 to §22.17 what terms are and whom they bind, and §22.18 and
 §22.19 values in stated meaning. The C7c and C8 examples are in three parts: the form, the instance,
 which stores only what differs from the form, and the generated bound meaning, headed as the expected
-output. The reference binder (§18.6) regenerates that part from the other two, and the tests compare
+output. The reference instantiator (§18.6) regenerates that part from the other two, and the tests compare
 them. Each example is validated with the lower layers' shapes and these, without a reasoner.
 
 ### 22.1 A facility agreement

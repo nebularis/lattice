@@ -112,9 +112,9 @@ sets out the problem and each option's consequences. The examples are `reused-cl
    that the graph does not determine.
 5. **Display text** (C8b-Q3 (a)). `wrd:displayText` on a referring text part holds the words shown,
    as the drafter wrote them: an inflected form ("Lessee's") or a variable's printed name.
-6. **Code** (C8b-Q4 (a)). W8 is a shape. Instrument's reference binder finds a variable's version
+6. **Code** (C8b-Q4 (a)). W8 is a shape. Instrument's reference instantiator finds a variable's version
    from its identity at both tiers. No renderer exists yet: the assembly interface's `render`
-   (IMA-4.1) will resolve references the same way.
+   (IMA-4.1) will resolve references the same way. Called the reference binder until 2026-10-08, renamed under CCS C9-Q10 because "binder" is a market word.
 7. **Breaking at major version zero** (ADR-A113). Wording 0.6.0 → 0.7.0, and Instrument re-pinned.
 8. **Deferred.** One element version in two different forms needs transclusion (IMA-3.1), since law
    W1 places an element version in versions of one wording only. Resolving an ambulatory reliance

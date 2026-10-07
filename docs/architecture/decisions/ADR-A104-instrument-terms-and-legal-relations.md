@@ -379,7 +379,7 @@ answer with its consequences. The examples are `facility-parameters.ttl`, `frame
    from a variable, whose value is an occupancy or a group.
 4. **Value words** (C7c-Q7, C8-Q3 in part). An amount word's definition means a placeholder quantity,
    and a placeholder may take its value from an amount word as from a variable. A chain of words and
-   variables must not loop: a cycle, found on the form and by the binder over every hop, per
+   variables must not loop: a cycle, found on the form and by the instantiator over every hop, per
    section and through `wrd:populatedFrom`, is a violation whose report names each hop. A concept
    word may stand in an Eligibility concept slot, where shapes check that it is not also a concept
    of the condition's scheme and that its meaning suits the slot. Entered values only:
@@ -391,11 +391,11 @@ answer with its consequences. The examples are `facility-parameters.ttl`, `frame
    reviewed as binding nobody. An expected leaf with neither stated meaning nor the mark is not yet
    assessed, and is reported as a warning. Whether an element expresses meaning is read, never
    asserted.
-6. **Generation** (C8-Q5). A reference binder generates one instrument's bound meaning from its form
+6. **Generation** (C8-Q5). A reference instantiator generates one instrument's bound meaning from its form
    and instance (D4, D5): words and variables resolved per section, the path from a slot down to a
    placeholder generated anew, sharing where words and values resolve alike, deterministic
    identities. It reports unresolved words, variables with no value, and overlaps. Sharing across
-   instruments, the cache and the subgraph are CCS C16b.
+   instruments, the cache and the subgraph are CCS C16b. Called the reference binder until 2026-10-08, renamed under CCS C9-Q10 because "binder" is a market word.
 7. **Checks** (law I17, C8-Q6). A bound node names values, never variables or words. Nothing bound
    comes from text the wording does not include, and every included leaf of text has stated meaning
    bound in the instrument or is marked. Overlapping definitions and unresolved words are checked on

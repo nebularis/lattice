@@ -18,9 +18,9 @@ Behaviour 0.10.0 (shapes 0.4.0) with nested states and history, the import guard
 check`. In tranche D, C6 to C7c are merged and tagged (Instrument 0.12.0, Party 0.8.0, Quantification
 0.7.0). C8 and C8b are merged and tagged (Instrument 0.14.0, Wording 0.7.0). C9 is briefed and splits into C9a to C9c. Its materiality question has its own sketch. From C5 on, the agent builds and verifies, and the human commits by hand.
 
-**Next action, for the human:** answer C9-Q2 and C9-Q4 to C9-Q10, reworked with design and runtime
-overheads in the plan's "C9 in detail". Then commit on `main`, set up the skill library (TD-21), and
-branch for C9a.
+**Next action, for the human:** review and commit, on `main`, C9's answers, the "binder" rename
+(C9-Q10) and C9a's [Validation Pack](../validation/computable-contract-substrate-c9a.md), then create
+`ccs/c9a-amendments` from `main` for C9a's examples phase.
 
 ## Slice board
 
@@ -41,7 +41,7 @@ branch for C9a.
 | C7b | terms in time | D | merged (`5da9412`), tagged | |
 | C7c | what terms are, and who they bind (split from C7b) | D | merged and tagged | done |
 | C8, C8b | values in stated meaning, Wording references by identity | D | merged, tagged | |
-| C9, C8a | change and composition, template library | D | C9 briefed | C9-Q1 to C9-Q10 |
+| C9a, C9b, C9c, C8a | amendments and taking effect, consent and materiality, incorporation, template library | D | C9 answered, C9a ready to branch | |
 | C7a | regimes and gating, split from C7 | D | merged to `main` (`c6e5853`) and tagged | |
 | C12, C13 | runtime evaluator, relation plans | E | waiting | C9, C11, C11a, AIR-3.3, NRS N1 |
 | C13a | design-time joint satisfiability: slot conditions by reasoner, the task NRS N3 reuses (deferred from C5) | E | waiting | C5, NRS N1 |
@@ -138,3 +138,7 @@ branch for C9a.
 - 2026-10-07: materiality MQ1 (a), MQ3 (a) and MQ7 (b) later with (a) in C9 answered, MQ5's three fallbacks all offered. MQ2, MQ4, MQ5's placement and MQ6 rewritten with design and runtime overheads. Held questions HQ-8 (materiality beyond amendments), HQ-9 (Eligibility identity endings) and HQ-10 (a deployment configuration layer) added
 - 2026-10-07: materiality MQ2 (a), MQ4 (b) with baseline and chain rule, MQ5 (a) with HQ-10 on the backlog, and MQ6 (a) with the decider notified, answered. C9-Q3 decided. C9-Q2 and C9-Q4 to C9-Q10 to be reworked with design and runtime overheads
 - 2026-10-07: C9-Q2 and C9-Q4 to C9-Q10 reworked with design and runtime overheads and KISS. Materiality moved to C9b beside the consent rules. C9-Q8's leaning revised to (c), static incorporation only, on finding that (a) needs a per-version edition pin and fans out an amendment per instrument per edition
+- 2026-10-07: C9-Q2 reworked again. Events may come in any order: an amendment and its new version exist from the proposal, the agreed time comes from the acceptance records, and the effective time sits on the amendment (choice 1 (a), accepted on that condition). The overtaking case gains a third option, record what was agreed and derive the overtaken window (now the leaning), costed against forbidding and rebasing. Choice 2 pictured, with a third option (no link) ruled out
+- 2026-10-07: C9-Q2 gains choice 0, where the agreed time and the consents behind it live, after the human rejected deriving it from Behaviour's runtime records (Instrument imports only Behaviour's configuration, and intake of amendments is an application's design). Options: asserted on the amendment, assents as Instrument facts (leaning, shared with C9-Q4 and C9-Q5), or agreed amendments only. C9-Q4 and C9-Q5 reworded to read assents, not Behaviour records
+- 2026-10-07: C9-Q5 answered (b), formation as a regime. C9-Q2 gains a summary of the model and a picture of how assents serve formation and amendment alike, with a timeline. The operational time removed from C9-Q2's table, since it is not the agreed time and is not part of the model. The human noted the confusion as a failed design test (hard to reason about), so the summary leads the question
+- 2026-10-08: C9 answered: C9-Q2 choice 0 (b) assents as Instrument facts, choice 1 (a) with rule (iii) to be revisited at C16b, choice 2 (a), C9-Q4 (a), C9-Q6 (a), C9-Q7 (a), C9-Q8 (c) deferred to HQ-11, C9-Q9 (a) re-timing HQ-1, C9-Q10 (a). The human asked, as an explicit instruction, for insurance examples in C9: a subscription placement with insurers attaching and its inception rule, and reinsurance recoveries. "Binder" renamed "instantiator" on `main`: `tools/instrument_instantiator.py`, its tests (42 pass), the READMEs and the two ADR addenda. C9a's Validation Pack written (14 rows)

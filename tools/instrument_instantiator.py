@@ -2,7 +2,7 @@
 # NB: This module has been produced using GenAI
 
 """
-Reference binder for one instrument (CCS C8, ADR-A104 and its 2026-10-06 addenda).
+Reference instantiator for one instrument (CCS C8, ADR-A104 and its 2026-10-06 addenda).
 
 Bound meaning is generated, never stored with the instance (D4). Given a graph holding a form's
 stated meaning and one instance (its assembled wording, values and parties), ``bind`` generates the
@@ -23,7 +23,7 @@ It does not evaluate, cache, or share across instruments (C12, C13, C16b).
 
 Usage::
 
-    python tools/instrument_binder.py ontology/instrument/examples/facility-parameters.ttl \\
+    python tools/instrument_instantiator.py ontology/instrument/examples/facility-parameters.ttl \\
         https://example.org/lattice/instrument/facility-parameters/halden-v1
 """
 
@@ -73,7 +73,7 @@ def _local(node: Node) -> str:
     return text.rsplit("/", 1)[-1].rsplit("#", 1)[-1]
 
 
-class Binder:
+class Instantiator:
     def __init__(self, graph: Graph, instrument: URIRef) -> None:
         self.g = graph
         self.instrument = instrument
@@ -391,7 +391,7 @@ class Binder:
                 self._at_or_below(s, t) for s in key for t in k)]
         return list(copies.values())
 
-    def bind(self) -> Graph:
+    def instantiate(self) -> Graph:
         for term in self.stated_terms:
             self._groups[term] = self._plan(term)
         for term in self.stated_terms:  # bound nodes first, so links between them resolve
@@ -458,13 +458,13 @@ class Binder:
         return [meaning]
 
 
-def bind(graph: Graph, instrument: URIRef) -> Tuple[Graph, List[Report]]:
+def instantiate(graph: Graph, instrument: URIRef) -> Tuple[Graph, List[Report]]:
     """Generate one instrument's bound meaning from its form and instance. Returns the generated
-    graph and the binder's reports."""
-    binder = Binder(graph, instrument)
-    out = binder.bind()
+    graph and the instantiator's reports."""
+    instantiator = Instantiator(graph, instrument)
+    out = instantiator.instantiate()
     seen, reports = set(), []
-    for r in binder.reports:
+    for r in instantiator.reports:
         if r.message not in seen:
             seen.add(r.message)
             reports.append(r)
@@ -477,7 +477,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         print(__doc__)
         return 2
     graph = Graph().parse(args[0])
-    out, reports = bind(graph, URIRef(args[1]))
+    out, reports = instantiate(graph, URIRef(args[1]))
     print(out.serialize(format="turtle"))
     for r in reports:
         print(f"# {r.kind}: {r.message}", file=sys.stderr)

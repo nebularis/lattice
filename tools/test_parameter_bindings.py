@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: MPL-2.0
 
-"""Instrument: values in stated meaning, and the reference binder (computable-contract-substrate C8,
+"""Instrument: values in stated meaning, and the reference instantiator (computable-contract-substrate C8,
 ADR-A104 and its 2026-10-06 addendum "values in stated meaning"). Row IDs are the C8 Validation
 Pack's. Reasoner rows skip when the ADR-A83 harness jar is not built. Row C8-15 (every diagram
 renders) is run in a browser, and C8-16 and C8-17 by the existing tests and checks; all three are
@@ -21,7 +21,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "tools"))
 sys.path.insert(0, str(ROOT / "tools" / "mork_compilers" / "src"))
 
-import instrument_binder  # noqa: E402
+import instrument_instantiator  # noqa: E402
 import literate_extract  # noqa: E402
 from mork_compilers import reasoning  # noqa: E402
 
@@ -214,33 +214,33 @@ def test_c8_09_a_word_with_no_definition_in_a_section_is_reported() -> None:
     assert _reported(data, "form/term-l4-1", "no definition of it applies")
 
 
-# ---- C8-10 to C8-13: the binder ----------------------------------------------
+# ---- C8-10 to C8-13: the instantiator ----------------------------------------------
 
 @pytest.mark.parametrize("name", sorted(BOUND))
-def test_c8_10_the_binder_regenerates_the_expected_part(name: str) -> None:
+def test_c8_10_the_instantiator_regenerates_the_expected_part(name: str) -> None:
     given, expected = _split(name)
-    generated, _ = instrument_binder.bind(given, _instrument(name))
+    generated, _ = instrument_instantiator.instantiate(given, _instrument(name))
     known = set(given.all_nodes())
     assert to_isomorphic(_bnodified(generated, known)) == to_isomorphic(_bnodified(expected, known))
 
 
 @pytest.mark.parametrize("name", NEW)
-def test_c8_10_the_binder_s_output_conforms(name: str) -> None:
+def test_c8_10_the_instantiator_s_output_conforms(name: str) -> None:
     given, _ = _split(name)
-    generated, _ = instrument_binder.bind(given, _instrument(name))
+    generated, _ = instrument_instantiator.instantiate(given, _instrument(name))
     assert _results(given + generated, EVERY_SHAPE) == []
 
 
 def test_c8_11_a_variable_with_no_value_is_reported() -> None:
     given, _ = _split("facility-parameters")
     given.remove((FP_EX["halden-wording-v1"], WRD.hasValue, FP_EX["v-repay-days"]))
-    _, reports = instrument_binder.bind(given, _instrument("facility-parameters"))
+    _, reports = instrument_instantiator.instantiate(given, _instrument("facility-parameters"))
     assert [r.message for r in reports if r.kind == "no-value"] == ["no value for the variable var-repay-days-identity"]
 
 
 def test_c8_12_schedule_values_reach_each_lot_and_lots_1_and_2_share_3_1() -> None:
     given, _ = _split("framework-lots")
-    generated, _ = instrument_binder.bind(given, _instrument("framework-lots"))
+    generated, _ = instrument_instantiator.instantiate(given, _instrument("framework-lots"))
     bound = list(generated.subjects(INS.boundFrom, FW["term-3-1"]))
     assert len(bound) == 2
     by_cover = {frozenset(generated.objects(t, INS.boundWithin)): t for t in bound}
@@ -252,10 +252,10 @@ def test_c8_12_schedule_values_reach_each_lot_and_lots_1_and_2_share_3_1() -> No
     assert generated.value(award, INS.counterparty) == FW_EX["lot-3-suppliers"]
 
 
-def test_c8_13_the_binder_names_generated_nodes_deterministically() -> None:
+def test_c8_13_the_instantiator_names_generated_nodes_deterministically() -> None:
     given, _ = _split("facility-parameters")
-    first, _ = instrument_binder.bind(given, _instrument("facility-parameters"))
-    second, _ = instrument_binder.bind(given, _instrument("facility-parameters"))
+    first, _ = instrument_instantiator.instantiate(given, _instrument("facility-parameters"))
+    second, _ = instrument_instantiator.instantiate(given, _instrument("facility-parameters"))
     iris = lambda g: {n for n in g.all_nodes() if isinstance(n, URIRef)}
     assert iris(first) == iris(second)
     assert to_isomorphic(first) == to_isomorphic(second)
@@ -278,7 +278,7 @@ def test_c8_14_readme_is_the_source_and_releases_are_recorded() -> None:
 # ---- C8-18, C8-19: cycles -----------------------------------------------------
 
 def _cycle_reports(given: Graph, name: str) -> list:
-    _, reports = instrument_binder.bind(given, _instrument(name))
+    _, reports = instrument_instantiator.instantiate(given, _instrument(name))
     return [r for r in reports if r.kind == "cycle"]
 
 
@@ -329,7 +329,7 @@ def test_c8_19_a_cycle_closing_in_one_section_spares_the_others() -> None:
     placeholder = given.value(FW["def-s1-2"], INS.means)
     given.remove((placeholder, INS.valueFrom, FW_EX["var-s1-2-supplier-identity"]))
     given.add((placeholder, INS.valueFrom, FW_EX.Supplier))
-    generated, reports = instrument_binder.bind(given, _instrument("framework-lots"))
+    generated, reports = instrument_instantiator.instantiate(given, _instrument("framework-lots"))
     cycles = [r for r in reports if r.kind == "cycle"]
     assert cycles and all(r.section == FW_EX["lot-2-identity"] for r in cycles)
     award = generated.value(None, INS.boundFrom, FW["award-lot-1"])
