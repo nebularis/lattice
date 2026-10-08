@@ -12,8 +12,8 @@
 
 <https://www.nebularis.org/neuro-semantic/instrument-vocab>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/instrument-vocab/0.14.0> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.14.0> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/instrument-vocab/0.15.0> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.15.0> .
 
 ins-voc:ActivityContract a voc:SchemeContract ;
 	fnd:hasIdentity ins-voc:ActivityContract-identity ;
@@ -156,6 +156,9 @@ ins-voc:Terminated a skos:Concept ; skos:inScheme ins-voc:StateKinds ;
 
 ins-voc:Expired a skos:Concept ; skos:inScheme ins-voc:StateKinds ;
 	skos:prefLabel "Expired"@en ; skos:definition "The instrument has come to its natural end, by effluxion of time."@en .
+
+ins-voc:Conditional a skos:Concept ; skos:inScheme ins-voc:StateKinds ;
+	skos:prefLabel "Conditional"@en ; skos:definition "The instrument waits for its parties' signatures or for conditions, and has no effect yet."@en .
 
 @prefix qnt:     <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
 @prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .

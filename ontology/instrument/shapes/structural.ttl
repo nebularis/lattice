@@ -169,7 +169,7 @@ ins:RegimeTypeShape a sh:NodeShape ;
 ins:RegimeTransitionShape a sh:NodeShape ;
 	sh:targetClass ins:RegimeTransition ;
 	sh:property [ sh:path bhv:hasTrigger ;
-		sh:or ( [ sh:class ins:OnExercise ] [ sh:class ins:OnBreach ] [ sh:class ins:OnAct ] [ sh:class ins:OnCondition ] [ sh:class ins:OnExpiry ] [ sh:class ins:OnEntry ] ) ;
+		sh:or ( [ sh:class ins:OnExercise ] [ sh:class ins:OnBreach ] [ sh:class ins:OnAct ] [ sh:class ins:OnCondition ] [ sh:class ins:OnExpiry ] [ sh:class ins:OnEntry ] [ sh:class ins:OnAcceptance ] ) ;
 		sh:message "A regime transition's triggers are legal triggers." ] ;
 	sh:property [ sh:path bhv:selectionPolicy ; sh:in ( bhv:SingleMatch ) ;
 		sh:message "A regime transition's selection policy is bhv:SingleMatch, fixed (ADR-A104 decision 7). A reasoner adds it where none is stated (§12)." ] ;
@@ -182,7 +182,7 @@ ins:RegimeTransitionTypeShape a sh:NodeShape ;
 		sh:message "A regime transition is also typed bhv:TransitionDefinition in the graph the engine reads: assert it where no reasoner runs (law B4, §12)." ] .
 
 ins:LegalTriggerTypeShape a sh:NodeShape ;
-	sh:targetClass ins:OnExercise , ins:OnBreach , ins:OnAct , ins:OnCondition , ins:OnExpiry , ins:OnEntry ;
+	sh:targetClass ins:OnExercise , ins:OnBreach , ins:OnAct , ins:OnCondition , ins:OnExpiry , ins:OnEntry , ins:OnAcceptance ;
 	sh:property [ sh:path rdf:type ; sh:hasValue bhv:TriggerDefinition ;
 		sh:message "A legal trigger is also typed bhv:TriggerDefinition in the graph the engine reads: assert it where no reasoner runs (law B4, §12)." ] .
 
@@ -315,6 +315,58 @@ ins:EndsShape a sh:NodeShape ;
 	sh:property [ sh:path ins:ends ;
 		sh:or ( [ sh:in ( ins-voc:TheInstrument ) ] [ sh:and ( [ sh:class ins:Term ] [ sh:class ins:Template ] ) ] [ sh:node ins:ElementIdentityShape ] ) ;
 		sh:message "A state ends the instrument (ins-voc:TheInstrument) or stated terms, or a section by its persistent identity (§16.6)." ] .
+
+ins:BeginsShape a sh:NodeShape ;
+	sh:targetSubjectsOf ins:begins ;
+	sh:class bhv:State ;
+	sh:message "Only a state begins an instrument or terms, when it is entered (§14.8)." ;
+	sh:property [ sh:path ins:begins ;
+		sh:or ( [ sh:in ( ins-voc:TheInstrument ) ] [ sh:and ( [ sh:class ins:Term ] [ sh:class ins:Template ] ) ] ) ;
+		sh:message "A state begins the instrument (ins-voc:TheInstrument) or stated terms (§14.8)." ] .
+
+ins:OnAcceptanceShape a sh:NodeShape ;
+	sh:targetClass ins:OnAcceptance ;
+	sh:property [ sh:path ins:by ;
+		sh:or ( [ sh:class pty:Role ] [ sh:class pty:RoleOccupancy ] [ sh:class pty:ParticipationGroup ] ) ;
+		sh:message "An acceptance trigger's ins:by names parties." ] ;
+	sh:property [ sh:path bhv:triggerKind ; sh:minCount 1 ; sh:in ( bhv:DerivedTrigger ) ;
+		sh:message "An acceptance trigger's kind is bhv:DerivedTrigger, fixed. Assert it where no reasoner runs (§12)." ] .
+
+ins:AmendmentShape a sh:NodeShape ;
+	sh:targetClass ins:Amendment ;
+	sh:property [ sh:path ins:amends ; sh:minCount 1 ; sh:maxCount 1 ; sh:class ins:Instrument ;
+		sh:message "An amendment amends exactly one instrument version (§6.3)." ] ;
+	sh:property [ sh:path ins:resultsIn ; sh:minCount 1 ; sh:maxCount 1 ; sh:class ins:Instrument ;
+		sh:message "An amendment results in exactly one instrument version (§6.3)." ] ;
+	sh:property [ sh:path ins:statedIn ; sh:minCount 1 ; sh:class wrd:WordingNode ;
+		sh:message "An amendment is stated in at least one document, a wording node (§6.3)." ] ;
+	sh:property [ sh:path ins:affectsExisting ; sh:maxCount 1 ; sh:datatype xsd:boolean ;
+		sh:message "An amendment states at most once, as a boolean, whether it affects existing occasions (law I14)." ] ;
+	sh:property [ sh:path ( fnd:hasTemporalScope fnd:validFrom ) ; sh:minCount 1 ; sh:maxCount 1 ;
+		sh:message "An amendment has exactly one effective time, its temporal scope's start (§6.3)." ] ;
+	sh:property [ sh:path ( fnd:hasEvidence fnd:recordedAt ) ; sh:minCount 1 ;
+		sh:message "An amendment records when it became known, its evidence's recording time (§6.3)." ] .
+
+ins:AmendmentSubjectShape a sh:NodeShape ;
+	sh:targetSubjectsOf ins:amends , ins:resultsIn , ins:statedIn , ins:affectsExisting ;
+	sh:class ins:Amendment ;
+	sh:message "Only an amendment amends, results in, is stated in, or affects existing occasions." .
+
+ins:AssentShape a sh:NodeShape ;
+	sh:targetClass ins:Assent ;
+	sh:property [ sh:path ins:assentBy ; sh:minCount 1 ; sh:maxCount 1 ; sh:class pty:RoleOccupancy ;
+		sh:message "An assent is by exactly one party, a role occupancy (§6.3)." ] ;
+	sh:property [ sh:path ins:assentTo ; sh:minCount 1 ; sh:maxCount 1 ; sh:class ins:Instrument ;
+		sh:message "An assent is to exactly one instrument version (§6.3)." ] ;
+	sh:property [ sh:path ( fnd:hasTemporalScope fnd:validFrom ) ; sh:minCount 1 ; sh:maxCount 1 ;
+		sh:message "An assent has exactly one time, when the party assented (§6.3)." ] ;
+	sh:property [ sh:path ( fnd:hasEvidence fnd:recordedAt ) ; sh:minCount 1 ;
+		sh:message "An assent records when it became known, its evidence's recording time (§6.3)." ] .
+
+ins:AssentSubjectShape a sh:NodeShape ;
+	sh:targetSubjectsOf ins:assentBy , ins:assentTo ;
+	sh:class ins:Assent ;
+	sh:message "Only an assent names who assents and to which version." .
 
 ins:SurvivalShape a sh:NodeShape ;
 	sh:targetSubjectsOf ins:survives ;

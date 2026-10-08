@@ -108,6 +108,56 @@ Phase 1, examples first (ADR-A-C2), 2026-10-08:
     an example property, `ex:at`. Instrument models no loss. The header tables give the expected
     version for each
 
+
+Phase 2, the model, 2026-10-08:
+
+- **Built:**
+  - Instrument 0.15.0 and `instrument-vocab` 0.15.0, shapes 0.7.0, all from the README. §6.3
+    amendments and assents: `ins:Amendment`, `ins:amends`, `ins:resultsIn`, `ins:statedIn`,
+    `ins:affectsExisting`, `ins:Assent`, `ins:assentBy`, `ins:assentTo`. §14.8 taking effect:
+    `ins:begins`, `ins:OnAcceptance`, and `ins:by` widened to acceptance triggers. The state kind
+    `ins-voc:Conditional`. Worked examples §22.20 to §22.22, the mid-term adjustment walked through
+    with a timeline. Laws I4 and I14 registered, and C9a's other rules
+  - shapes: the amendment's and the assent's own shapes, one agreed amendment per version, an assent
+    by a party to the version or the one it amends, at most one state beginning an instrument, law I4
+    (`ins:OneCaseShape`), and the overtaking and continuity warnings
+  - `tools/test_amendments.py` (20 tests, rows C9a-01 to C9a-14), in `check:ontology-catalog`.
+    Version pins and shapes-version assertions moved in five test modules. The catalog, the release
+    register and the ontology architecture updated
+- **Run by the agent:** every check listed under Results, and a mutation probe: with a triple pattern
+  broken in `ins:AgreedChainShape` and in `ins:OvertakingShape`, C9a-06 and C9a-07 fail, and pass once
+  restored.
+- **Check first:** the deviations, then §6.3 and §22.22 of the Instrument README.
+- **Deviations from the plan:**
+  - **An assent may come from a party to the version being amended**, not only to the version
+    assented to. A party being released, such as the licence's guarantor, assents to the version that
+    no longer names it. `ins:AssentByPartyShape` allows both
+  - **Agreement is read, not stored.** The tests read it from the assents (`agreed`, `version_at`),
+    as C12 will. No shape derives an agreed time, and only the one-agreed-amendment rule reads it
+  - **Examples read with others.** `facility-amendment.ttl` conforms only with Wording's two files, so
+    the earlier conformance tests load an example's companions from one map, `READ_WITH`, in
+    `tools/test_parameter_bindings.py`
+  - **No state "implied by law".** The ADR-A104 addendum's draft allowed a formation regime implied by
+    law where no clause states one. A regime arises under a stated term, so §14.8 says a clause states
+    it, and the addendum is corrected to match
+
 ## Results
 
-Recorded at verification.
+| Row | Result | Evidence |
+|---|---|---|
+| C9a-01 | pass | `test_c9a_01_spec_terms` |
+| C9a-02 | pass | `test_c9a_02_examples_conform` (three examples), with the earlier slices' conformance tests over every Instrument example |
+| C9a-03 | pass | `test_c9a_03_text_changes_are_read_through_stated_in` |
+| C9a-04 | pass | `test_c9a_04_agreed_when_every_party_has_assented` |
+| C9a-05 | pass | `test_c9a_05_the_facts_in_any_order` |
+| C9a-06 | pass | `test_c9a_06_one_agreed_amendment_per_version`, at zero, one and two, and with a pending rival |
+| C9a-07 | pass | `test_c9a_07_an_overtaking_amendment_is_reported` |
+| C9a-08 | pass | `test_c9a_08_affecting_existing_occasions_needs_continuity` |
+| C9a-09 | pass | `test_c9a_09_formation_regime`, `test_c9a_09_formation_completes_on_the_last_signature` |
+| C9a-10 | pass | `test_c9a_10_which_version_decides_each_loss` (three losses), `test_c9a_10_only_version_two_covers_unit_9` |
+| C9a-11 | pass | `test_c9a_11_a_released_guarantor_keeps_what_arose_before` |
+| C9a-12 | pass | `test_c9a_12_ending_by_agreement_is_an_added_ending` |
+| C9a-13 | pass | `test_c9a_13_one_case_per_relation` |
+| C9a-14 | pass | `test_c9a_14_release_notes_and_versions`. `check:ontology-catalog` (617 passed), `check:ontology-versioning`, `check:import-guard`, `check:python-root`, `check:mork-compilers` (114), `check:vocabulary` (16), `check:persistence` (778), `check:agent-guidance`, `build:mtp`, `check:mtp`, and the Instrument and Wording literate checks |
+
+The README's new diagrams, in §6.3, §14.8 and §22.22, render in a browser.

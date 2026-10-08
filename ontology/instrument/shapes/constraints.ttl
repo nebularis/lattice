@@ -703,3 +703,119 @@ ins:FormWordResolvedShape a sh:NodeShape ;
 			}
 		"""
 	] .
+
+# ---- C9a: amendments, assents and taking effect (§6.3, §14.8) ------------------
+
+ins:AgreedChainShape a sh:NodeShape ;
+	sh:targetClass ins:Instrument ;
+	sh:sparql [
+		sh:message "{$this} has two agreed amendments, {?one} and {?other}: a version has at most one (§6.3)." ;
+		sh:select """
+			PREFIX ins:  <https://www.nebularis.org/neuro-semantic/lattice/instrument#>
+			SELECT $this ?one ?other WHERE {
+				?one ins:amends $this ; ins:resultsIn ?r1 .
+				?other ins:amends $this ; ins:resultsIn ?r2 .
+				FILTER (STR(?one) < STR(?other))
+				FILTER NOT EXISTS { $this ins:party ?p1 . FILTER NOT EXISTS { ?s1 ins:assentBy ?p1 ; ins:assentTo ?r1 } }
+				FILTER NOT EXISTS { $this ins:party ?p2 . FILTER NOT EXISTS { ?s2 ins:assentBy ?p2 ; ins:assentTo ?r2 } }
+			}
+		"""
+	] .
+
+ins:AmendmentVersionsShape a sh:NodeShape ;
+	sh:targetClass ins:Amendment ;
+	sh:sparql [
+		sh:message "An amendment results in another version of the instrument it amends, never in itself or in another instrument (§6.3)." ;
+		sh:select """
+			PREFIX ins:  <https://www.nebularis.org/neuro-semantic/lattice/instrument#>
+			PREFIX fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+			SELECT $this WHERE {
+				$this ins:amends ?old ; ins:resultsIn ?new .
+				FILTER (?old = ?new || NOT EXISTS { ?old fnd:hasIdentity ?id . ?new fnd:hasIdentity ?id })
+			}
+		"""
+	] .
+
+ins:AssentByPartyShape a sh:NodeShape ;
+	sh:targetClass ins:Assent ;
+	sh:sparql [
+		sh:message "{?party} assents to {?version}, but is no party to it or to the version it amends (§6.3)." ;
+		sh:select """
+			PREFIX ins:  <https://www.nebularis.org/neuro-semantic/lattice/instrument#>
+			SELECT $this ?party ?version WHERE {
+				$this ins:assentBy ?party ; ins:assentTo ?version .
+				FILTER NOT EXISTS { ?version ins:party ?party }
+				FILTER NOT EXISTS { ?amendment ins:resultsIn ?version ; ins:amends ?previous . ?previous ins:party ?party }
+			}
+		"""
+	] .
+
+ins:OvertakingShape a sh:NodeShape ;
+	sh:targetClass ins:Amendment ;
+	sh:severity sh:Warning ;
+	sh:sparql [
+		sh:message "{$this} takes effect on {?from}, before {?earlier}, which made the version it amends, took effect on {?made}. No authored version holds the window between: it is derived when needed (CCS C16b, §6.3)." ;
+		sh:select """
+			PREFIX ins:  <https://www.nebularis.org/neuro-semantic/lattice/instrument#>
+			PREFIX fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+			SELECT $this ?from ?earlier ?made WHERE {
+				$this ins:amends ?version ; fnd:hasTemporalScope/fnd:validFrom ?from .
+				?earlier ins:resultsIn ?version ; fnd:hasTemporalScope/fnd:validFrom ?made .
+				FILTER (?from < ?made)
+			}
+		"""
+	] .
+
+ins:ContinuityShape a sh:NodeShape ;
+	sh:targetClass ins:Amendment ;
+	sh:severity sh:Warning ;
+	sh:sparql [
+		sh:message "{$this} affects existing occasions, but {?relation}, which it replaces, has no successor naming it with prov:wasRevisionOf (law I14)." ;
+		sh:select """
+			PREFIX ins:  <https://www.nebularis.org/neuro-semantic/lattice/instrument#>
+			PREFIX prov: <http://www.w3.org/ns/prov#>
+			SELECT $this ?relation WHERE {
+				$this ins:affectsExisting true ; ins:amends ?old ; ins:resultsIn ?new .
+				?oldTerm ins:boundIn ?old ; ins:boundFrom ?stated .
+				?relation ins:arisesUnder ?stated ; a ins:Template .
+				FILTER NOT EXISTS { ?kept ins:boundIn ?new ; ins:boundFrom ?stated }
+				FILTER NOT EXISTS { ?newTerm ins:boundIn ?new ; ins:boundFrom ?newStated .
+					?successor ins:arisesUnder ?newStated ; prov:wasRevisionOf ?relation }
+			}
+		"""
+	] .
+
+ins:BeginsOnceShape a sh:NodeShape ;
+	sh:targetClass ins:Instrument ;
+	sh:sparql [
+		sh:message "{$this}'s wording states two states that begin the instrument, {?one} and {?other}: at most one may (§14.8)." ;
+		sh:select """
+			PREFIX ins:     <https://www.nebularis.org/neuro-semantic/lattice/instrument#>
+			PREFIX ins-voc: <https://www.nebularis.org/neuro-semantic/lattice/instrument/vocab#>
+			PREFIX wrd:     <https://www.nebularis.org/neuro-semantic/lattice/wording#>
+			PREFIX bhv:     <https://www.nebularis.org/neuro-semantic/lattice/behaviour#>
+			SELECT DISTINCT $this ?one ?other WHERE {
+				$this ins:expressedIn ?wording .
+				?wording wrd:includes ?e1 . ?t1 ins:expressedIn ?e1 . ?g1 ins:arisesUnder ?t1 . ?one bhv:inStateSpace ?g1 ; ins:begins ins-voc:TheInstrument .
+				?wording wrd:includes ?e2 . ?t2 ins:expressedIn ?e2 . ?g2 ins:arisesUnder ?t2 . ?other bhv:inStateSpace ?g2 ; ins:begins ins-voc:TheInstrument .
+				FILTER (STR(?one) < STR(?other))
+			}
+		"""
+	] .
+
+ins:OneCaseShape a sh:NodeShape ;
+	sh:targetClass ins:LegalRelation ;
+	sh:sparql [
+		sh:message "I4: {$this}'s conditions bind two subject classes, {?one} and {?other}. All conditions on one relation bind one class, the case." ;
+		sh:select """
+			PREFIX ins:  <https://www.nebularis.org/neuro-semantic/lattice/instrument#>
+			PREFIX elg:  <https://www.nebularis.org/neuro-semantic/lattice/eligibility#>
+			SELECT DISTINCT $this ?one ?other WHERE {
+				$this (ins:scope|ins:maintains|ins:fulfilledWhen|((ins:arisesOn|ins:endsOn)/ins:condition)) ?c1 .
+				$this (ins:scope|ins:maintains|ins:fulfilledWhen|((ins:arisesOn|ins:endsOn)/ins:condition)) ?c2 .
+				?b1 elg:bindsCondition ?c1 ; elg:subjectClass ?one .
+				?b2 elg:bindsCondition ?c2 ; elg:subjectClass ?other .
+				FILTER (STR(?one) < STR(?other))
+			}
+		"""
+	] .

@@ -429,8 +429,8 @@ options and their consequences are in the CCS plan, C9 in detail.
    before the amendment that made the version it amends is reported, and the version for the
    overtaken window is derived when needed rather than authored. Deriving it is CCS C16b's, which
    revisits this rule.
-5. **Taking effect** (C9-Q5). A regime stated by a clause, or implied by law where none is written,
-   holds an instrument whose effect waits on conditions. `ins:begins`, the counterpart of
+5. **Taking effect** (C9-Q5). A regime stated by a clause holds an instrument whose effect waits on
+   its parties' signatures or on conditions. `ins:begins`, the counterpart of
    `ins:ends`, names what entering a state brings into effect. Before that, nothing arises under
    it. The legal trigger `ins:OnAcceptance` fires when every named party (`ins:by`), or every
    `ins:party`, has assented to the version.

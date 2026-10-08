@@ -73,6 +73,11 @@ def _instrument(name: str) -> URIRef:
     return URIRef(E + "/".join(BOUND[name]))
 
 
+# Examples that are read with others, as their headers say. Every conformance test loads them together.
+READ_WITH = {"facility-amendment": [ONTOLOGY / "wording" / "examples" / "facility-form.ttl",
+                                    ONTOLOGY / "wording" / "examples" / "facility-amendment.ttl"]}
+
+
 def _example(name: str) -> Graph:
     return _graph(EXAMPLES / f"{name}.ttl")
 
@@ -131,7 +136,7 @@ SS_EX, SS = _ns("services-schedule")
 def test_c8_01_version_imports_and_new_terms() -> None:
     spec = _graph(SPEC)
     ontology = URIRef("https://www.nebularis.org/neuro-semantic/instrument")
-    assert spec.value(ontology, OWL.versionIRI) == URIRef(LATTICE + "instrument/0.14.0")
+    assert spec.value(ontology, OWL.versionIRI) == URIRef(LATTICE + "instrument/0.15.0")
     assert {str(i) for i in spec.objects(ontology, OWL.imports)} == {LATTICE + v for v in (
         "foundation/0.4.0", "vocabulary/0.4.0", "quantification/0.7.0", "party/0.8.0", "eligibility/0.10.0",
         "wording/0.7.0", "behaviour/0.13.0")}
@@ -152,7 +157,7 @@ def test_c8_02_examples_conform_to_every_layer(name: str) -> None:
 
 def test_c8_02_every_instrument_example_conforms() -> None:
     for path in sorted(EXAMPLES.glob("*.ttl")):
-        assert _results(_graph(path), EVERY_SHAPE) == [], path.name
+        assert _results(_graph(path, *READ_WITH.get(path.stem, [])), EVERY_SHAPE) == [], path.name
 
 
 @needs_reasoner
@@ -269,7 +274,7 @@ def test_c8_14_readme_is_the_source_and_releases_are_recorded() -> None:
                                   "--check"]) == 0
     readme = (LAYER / "README.md").read_text()
     assert "0.13.0 (additive, CCS C8" in readme and "Shapes 0.6.0 (breaking" in readme
-    assert (LAYER / "shapes" / ".version").read_text().strip() == "0.6.0"
+    assert (LAYER / "shapes" / ".version").read_text().strip() == "0.7.0"
     register = (ROOT / "docs" / "architecture" / "ontology-releases.md").read_text()
     for tag in ("instrument-v0.13.0", "instrument-shapes-v0.6.0", "instrument-vocab-v0.13.0"):
         assert tag in register, tag

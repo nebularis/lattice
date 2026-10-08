@@ -18,6 +18,7 @@ from rdflib.namespace import OWL, RDF, RDFS, SH
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "tools"))
 sys.path.insert(0, str(ROOT / "tools" / "mork_compilers" / "src"))
+from test_parameter_bindings import READ_WITH  # noqa: E402
 
 import literate_extract  # noqa: E402
 from mork_compilers import reasoning  # noqa: E402
@@ -85,7 +86,7 @@ TMPL = Namespace("https://example.org/lattice/instrument/facility/form/")
 def test_c6_01_version_and_imports() -> None:
     spec = _graph(SPEC)
     ontology = URIRef("https://www.nebularis.org/neuro-semantic/instrument")
-    assert spec.value(ontology, OWL.versionIRI) == URIRef(LATTICE + "instrument/0.14.0")
+    assert spec.value(ontology, OWL.versionIRI) == URIRef(LATTICE + "instrument/0.15.0")
     assert set(spec.objects(ontology, OWL.imports)) == {URIRef(LATTICE + v) for v in (
         "foundation/0.4.0", "vocabulary/0.4.0", "quantification/0.7.0", "party/0.8.0", "eligibility/0.10.0",
         "wording/0.7.0", "behaviour/0.13.0")}
@@ -100,7 +101,7 @@ def test_c6_01_import_guard_passes() -> None:
 
 @pytest.mark.parametrize("example", EXAMPLES, ids=lambda p: p.stem)
 def test_c6_02_examples_conform(example: Path) -> None:
-    assert _messages(_graph(example)) == []
+    assert _messages(_graph(example, *READ_WITH.get(example.stem, []))) == []
 
 
 needs_reasoner = pytest.mark.skipif(not reasoning.available(), reason="reasoning-testkit jar not built")
@@ -264,5 +265,5 @@ def test_c6_14_readme_is_the_source_and_releases_are_recorded() -> None:
                                   "--check"]) == 0
     readme = (LAYER / "README.md").read_text()
     assert "0.9.0 (breaking, CCS C6" in readme and "Shapes 0.2.0\n  (breaking)" in readme
-    assert (LAYER / "shapes" / ".version").read_text().strip() == "0.6.0"
+    assert (LAYER / "shapes" / ".version").read_text().strip() == "0.7.0"
     assert not (LAYER / "projection").exists()

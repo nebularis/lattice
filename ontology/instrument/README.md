@@ -14,11 +14,12 @@ This ontological substrate allows a user to state what legally binding outcomes 
 
 Instrument imports Foundation, Vocabulary, Quantification, Party, Eligibility, Wording and Behaviour's configuration document. Instrument's runtime document is upstream of it. Nothing outside Instrument imports it ([ADR-A104](../../docs/architecture/decisions/ADR-A104-instrument-terms-and-legal-relations.md), [ADR-A106](../../docs/architecture/decisions/ADR-A106-behaviour-configuration-runtime-occasions-and-records.md)).
 
-This version (0.14.0, CCS slice C8b) holds the instrument, its terms in two tiers, the five relations, their parties and their content (C6), the legal triggers, the regimes they move, and the gating of relations by a regime's state (C7a), terms in time, namely due ranges, windows, recurrences, ending and survival (C7b), what terms are and whom they bind: definitions, deemings and classification, sections, and parties resolved through the case (C7c), and values in stated meaning, which text is expected to mean something, and the generation of bound meaning (C8). It is re-pinned to Wording 0.7.0, whose references name identities (C8b). Later slices add, in order:
+This version (0.15.0, CCS slice C9a) holds the instrument, its terms in two tiers, the five relations, their parties and their content (C6), the legal triggers, the regimes they move, and the gating of relations by a regime's state (C7a), terms in time, namely due ranges, windows, recurrences, ending and survival (C7b), what terms are and whom they bind: definitions, deemings and classification, sections, and parties resolved through the case (C7c), and values in stated meaning, which text is expected to mean something, and the generation of bound meaning (C8). It is pinned to Wording 0.7.0, whose references name identities (C8b), and adds amendments, assents and taking effect (C9a, §6.3, §14.8). Later slices add, in order:
 
 | Slice | Adds |
 |---|---|
-| C9 | amendments, consent rules, incorporation, instruments made under a power |
+| C9b | consent rules for powers held by groups, and the materiality of a change |
+| C9c | incorporation by reference |
 
 Nothing in this version evaluates.
 
@@ -43,7 +44,7 @@ Nothing in this version evaluates.
 ```turtle-spec
 <https://www.nebularis.org/neuro-semantic/instrument>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.14.0> ;
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.15.0> ;
 	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.4.0> ,
 				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.4.0> ,
 				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.7.0> ,
@@ -1210,6 +1211,11 @@ flowchart LR
 | `ins:at` | "on the Expiry Date" | the time at which an expiry falls |
 | `ins:ofState` | "on termination", "on expiry" | the state whose entry a trigger waits for |
 | `ins:ends` | "this Agreement ends", "the Lease shall end" | what entering a state ends |
+| `ins:begins` | "this Agreement takes effect when" | what entering a state brings into effect, the counterpart of `ins:ends` |
+| `ins:amends`, `ins:resultsIn` | "this letter amends the Agreement", "the Agreement as amended" | the version an amendment changes, and the version it produces |
+| `ins:statedIn` | "as set out in this endorsement" | the document that states an amendment |
+| `ins:affectsExisting` | "shall not affect any rights or obligations accrued before" | whether an amendment reaches occasions already arisen |
+| `ins:assentBy`, `ins:assentTo` | *assent*, a party's agreement to terms: signing, accepting, consenting | who assents, and to which version |
 | `ins:survives`, `ins:survivalPeriod`, `ins:survivesUntil` | "survives termination", "for five years after", "until" | how long a term continues after its instrument ends |
 | `ins:defines`, `ins:means` | "'Obligors' means…" | the word a definition gives meaning to, and the meaning |
 | `ins:actingRule` | "jointly and severally", "each for its share" | how the several parties a word means act together |
@@ -1693,6 +1699,116 @@ ins:impliedBy a owl:ObjectProperty ;
 	fnd:utility "Subject: a bound term or relation implied by law. Value: the statute, custom or course of dealing that implies it, in place of ins:boundFrom." .
 ```
 
+### 6.3 Amendments and assents
+
+An instrument changes only by an **amendment**, which takes it from one version to the next. The
+words change first: Wording records each change to the text and assembles the new wording. The
+amendment records the legal effect, namely the version it amends, the version it produces, where it
+is stated, and from when it applies. The parties agree by **assenting** to a version. An amendment by
+agreement is agreed when every party to the version it amends has assented to the version it
+produces.
+
+```mermaid
+---
+config:
+  layout: elk
+---
+flowchart TB
+    A["an ins:Amendment<br/>effective from its scope's date<br/>recorded at its evidence's time"] -- "amends" --> V1["instrument v1"]
+    A -- "resultsIn" --> V2["instrument v2"]
+    A -- "statedIn" --> E["the endorsement<br/>or amending letter"]
+    S1["ins:Assent<br/>party 1"] -- "assentTo" --> V2
+    S2["ins:Assent<br/>party 2"] -- "assentTo" --> V2
+    V1 -- "expressedIn" --> W1["wording v1"]
+    V2 -- "expressedIn" --> W2["wording v2"]
+```
+
+The facts arrive in any order. An amendment may be recorded when it is proposed, before anyone has
+agreed it, and may take effect before both. Each fact therefore keeps its own valid time and its own
+recording time:
+
+| Fact | Valid time | Known from |
+|---|---|---|
+| the amendment | when it takes effect, its `fnd:hasTemporalScope` | when it was recorded, its `fnd:hasEvidence` |
+| an assent | when the party assented | when the assent was recorded |
+| agreement | the valid time of the last assent it needs | when that assent was recorded |
+
+Nothing asserts an agreed time. It is read from the assents. An assent is an Instrument fact, written
+by whatever an application uses to gather signatures or consents, whether a workflow, a signing
+service or a scanned signature page. Instrument imports only Behaviour's configuration, so it reads no
+runtime record (ADR-A104, 2026-10-08 addendum). Consent to the exercise of a power held by a group
+reads the same facts, under the power's consent rule (C9b).
+
+The text changes an amendment makes are the Wording amendments expressed in the document it is stated
+in (`ins:statedIn`), or in any part of it. One letter that makes two amendments with different
+effective dates states each in its own part. A change of values or of a party has no text operation,
+and is still stated in a document.
+
+Rules for the chain of versions:
+
+- **One agreed amendment per version.** Several proposals against one version may be pending at
+  once, but only one is agreed (`ins:AgreedChainShape`). `fnd:supersededBy` from the amended
+  version to the new one is asserted once it is agreed, so a reader without a reasoner sees the
+  chain.
+- **A change that overtakes a later one is reported.** Each version's wording holds every change so
+  far. An amendment that takes effect before the amendment that made the version it amends leaves a
+  window that no authored version holds, the earlier version with only the later change
+  (`ins:OvertakingShape`, a warning). Deriving that version when it is needed is CCS C16b's.
+- **Existing occasions stay as they were** unless the amendment says otherwise (law I14). Where
+  `ins:affectsExisting` is true, a stated relation the amendment replaces names its successor with
+  `prov:wasRevisionOf` (`ins:ContinuityShape`, a warning).
+- **A party leaving, and ending by agreement, are amendments** (§14.1). The leaving party's
+  occasions already arisen keep their parties (law I11).
+- **An amendment is not a correction** (§5.4, law I18).
+
+When systems may act on a change ahead of its legal effect, such as loading a new rate early, is an
+application's concern, outside this layer.
+
+```turtle-spec
+ins:Amendment a owl:Class ;
+	rdfs:subClassOf prov:Activity , fnd:TemporallyScoped , fnd:Evidenced ;
+	owl:disjointWith fnd:Version ;
+	rdfs:comment "The legal effect of a change to an instrument, from one version to the next." ;
+	fnd:utility "Subject: an amendment. Names the version it amends (ins:amends) and the one it produces (ins:resultsIn), and the documents it is stated in (ins:statedIn). Its fnd:hasTemporalScope is when it takes effect, which may precede its recording and its agreement, and its fnd:hasEvidence when it was recorded. Agreed when the assents it needs exist (§6.3)." .
+
+ins:amends a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:subPropertyOf prov:used ;
+	rdfs:range ins:Instrument ;
+	rdfs:comment "The instrument version an amendment changes." ;
+	fnd:utility "Subject: an amendment. Value: exactly one instrument version." .
+
+ins:resultsIn a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:subPropertyOf prov:generated ;
+	rdfs:range ins:Instrument ;
+	rdfs:comment "The instrument version an amendment produces." ;
+	fnd:utility "Subject: an amendment. Value: exactly one instrument version, of the same persistent identity as the version it amends." .
+
+ins:statedIn a owl:ObjectProperty ;
+	rdfs:comment "The document, or part of one, that states an amendment." ;
+	fnd:utility "Subject: an amendment. Value: a wording node, at least one, such as an endorsement or an amendment letter. The amendment's text changes are the wrd:Amendment nodes expressed in it or any part of it. A change restated in a second document names both." .
+
+ins:affectsExisting a owl:DatatypeProperty, owl:FunctionalProperty ;
+	rdfs:range xsd:boolean ;
+	rdfs:comment "Whether an amendment reaches occasions already arisen." ;
+	fnd:utility "Subject: an amendment. Value: at most one boolean, false when absent (law I14). Where true, a stated relation the amendment replaces names its successor with prov:wasRevisionOf." .
+
+ins:Assent a owl:Class ;
+	rdfs:subClassOf fnd:TemporallyScoped , fnd:Evidenced ;
+	owl:disjointWith fnd:Version ;
+	rdfs:comment "One party's assent to one instrument version." ;
+	fnd:utility "Subject: an assent. Names exactly one party (ins:assentBy) and one version (ins:assentTo). Its fnd:hasTemporalScope is when the party assented, and its fnd:hasEvidence when that became known. Written by whatever gathers the signature or consent. Read for formation (ins:OnAcceptance), agreement of an amendment, and consent to a power's exercise." .
+
+ins:assentBy a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:range pty:RoleOccupancy ;
+	rdfs:comment "The party who assents." ;
+	fnd:utility "Subject: an assent. Value: exactly one role occupancy, a party to the version assented to." .
+
+ins:assentTo a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:range ins:Instrument ;
+	rdfs:comment "The instrument version assented to." ;
+	fnd:utility "Subject: an assent. Value: exactly one instrument version." .
+```
+
 ## 7. Legal Relations
 
 Five classes, each arising under exactly one term ([ADR-A104](../../docs/architecture/decisions/ADR-A104-instrument-terms-and-legal-relations.md)
@@ -2053,8 +2169,8 @@ ins:ofObligation a owl:ObjectProperty, owl:FunctionalProperty ;
 
 ins:by a owl:ObjectProperty ;
 	rdfs:range ins:RelationParty ;
-	rdfs:comment "A party whose act an act trigger waits for." ;
-	fnd:utility "Subject: an ins:OnAct. Value: a party, any number. A regime is stated, so its triggers name roles. Without one, an act of the kind by any party fires the trigger." .
+	rdfs:comment "A party whose act or assent a trigger waits for." ;
+	fnd:utility "Subject: an ins:OnAct or an ins:OnAcceptance. Value: a party, any number. A regime is stated, so its triggers name roles. Without one, an act of the kind by any party fires an act trigger, and every ins:party's assent an acceptance trigger." .
 
 ins:condition a owl:ObjectProperty, owl:FunctionalProperty ;
 	rdfs:comment "The condition a condition trigger waits for." ;
@@ -2892,8 +3008,7 @@ stateDiagram-v2
     Break --> Terminated : OnExpiry, at the Break Date
 ```
 
-When the instrument as a whole takes effect only on conditions, that is `ins:takesEffectWhen`
-(C9).
+An instrument that waits for its parties' signatures is formed by a regime too (§14.8).
 
 ```turtle-spec
 ins:OnEntry a owl:Class ;
@@ -2935,6 +3050,47 @@ ins:survivesUntil a owl:ObjectProperty, owl:FunctionalProperty ;
 	rdfs:range elg:Condition ;
 	rdfs:comment "The condition until which a term survives." ;
 	fnd:utility "Subject: a survival. Value: one Eligibility condition. The term stops surviving when it comes to hold." .
+```
+
+### 14.8 Taking effect
+
+An instrument that takes effect only once its parties have signed it, or once conditions are met,
+waits in a state of a regime that gives it no effect. **`ins:begins`**, the counterpart of
+`ins:ends`, marks the state whose entry brings the instrument, or named terms, into effect. Before
+that state is entered, nothing arises under what it begins, so no relation needs gating by it. An
+instrument with no state marked `ins:begins` takes effect at once.
+
+**`ins:OnAcceptance`** is the legal trigger for signature. It fires when every party it names
+(`ins:by`), or with none every `ins:party` of the version, has assented to the version (§6.3). Each
+party may sign separately (S90), each signature an assent of its own, and the last completes
+formation. A long-stop date is an `ins:OnExpiry` from the same waiting state into one that ends the
+instrument.
+
+```mermaid
+stateDiagram-v2
+    state "conditional" as Conditional
+    state "in force, ins:begins the instrument" as InForce
+    state "lapsed, ins:ends the instrument" as Lapsed
+    [*] --> Conditional
+    Conditional --> InForce : OnAcceptance, every party has assented
+    Conditional --> Lapsed : OnExpiry, at the Long-Stop Date
+```
+
+A clause states the regime, for example "This Licence takes effect when every party has signed it,
+and lapses if they have not all signed it by the Long-Stop Date" (§22.21). Formation for a party at a
+time, where each of several parties on one side is bound from its own signature, as each insurer in a
+subscription placement is, is not modelled yet (CCS C9a-Q1, with HQ-7).
+
+```turtle-spec
+ins:begins a owl:ObjectProperty ;
+	rdfs:comment "What entering a state brings into effect." ;
+	fnd:utility "Subject: a state of a regime. Value: ins-voc:TheInstrument, or a stated term, matched to every bound term instantiated from it. Before the state is entered, nothing arises under what it begins. At most one state per instrument begins the instrument as a whole." .
+
+ins:OnAcceptance a owl:Class ;
+	rdfs:subClassOf bhv:TriggerDefinition ,
+		[ a owl:Restriction ; owl:onProperty bhv:triggerKind ; owl:hasValue bhv:DerivedTrigger ] ;
+	rdfs:comment "A legal trigger: the parties having assented to the version." ;
+	fnd:utility "Subject: a trigger. Fires when every party it names (ins:by), or with none every ins:party of the version, has an ins:Assent to the version (§6.3). Its kind is bhv:DerivedTrigger. Assert bhv:TriggerDefinition and the kind where no reasoner runs (§12)." .
 ```
 
 ## 15. Constitutive Terms
@@ -3598,8 +3754,8 @@ instrument as a whole as a value of `ins:ends` (§14.2).
 
 <https://www.nebularis.org/neuro-semantic/instrument-vocab>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/instrument-vocab/0.14.0> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.14.0> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/instrument-vocab/0.15.0> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.15.0> .
 
 ins-voc:ActivityContract a voc:SchemeContract ;
 	fnd:hasIdentity ins-voc:ActivityContract-identity ;
@@ -3746,6 +3902,9 @@ ins-voc:Terminated a skos:Concept ; skos:inScheme ins-voc:StateKinds ;
 
 ins-voc:Expired a skos:Concept ; skos:inScheme ins-voc:StateKinds ;
 	skos:prefLabel "Expired"@en ; skos:definition "The instrument has come to its natural end, by effluxion of time."@en .
+
+ins-voc:Conditional a skos:Concept ; skos:inScheme ins-voc:StateKinds ;
+	skos:prefLabel "Conditional"@en ; skos:definition "The instrument waits for its parties' signatures or for conditions, and has no effect yet."@en .
 ```
 
 The context roles, and the instrument as a whole:
@@ -3970,7 +4129,7 @@ ins:RegimeTypeShape a sh:NodeShape ;
 ins:RegimeTransitionShape a sh:NodeShape ;
 	sh:targetClass ins:RegimeTransition ;
 	sh:property [ sh:path bhv:hasTrigger ;
-		sh:or ( [ sh:class ins:OnExercise ] [ sh:class ins:OnBreach ] [ sh:class ins:OnAct ] [ sh:class ins:OnCondition ] [ sh:class ins:OnExpiry ] [ sh:class ins:OnEntry ] ) ;
+		sh:or ( [ sh:class ins:OnExercise ] [ sh:class ins:OnBreach ] [ sh:class ins:OnAct ] [ sh:class ins:OnCondition ] [ sh:class ins:OnExpiry ] [ sh:class ins:OnEntry ] [ sh:class ins:OnAcceptance ] ) ;
 		sh:message "A regime transition's triggers are legal triggers." ] ;
 	sh:property [ sh:path bhv:selectionPolicy ; sh:in ( bhv:SingleMatch ) ;
 		sh:message "A regime transition's selection policy is bhv:SingleMatch, fixed (ADR-A104 decision 7). A reasoner adds it where none is stated (§12)." ] ;
@@ -3983,7 +4142,7 @@ ins:RegimeTransitionTypeShape a sh:NodeShape ;
 		sh:message "A regime transition is also typed bhv:TransitionDefinition in the graph the engine reads: assert it where no reasoner runs (law B4, §12)." ] .
 
 ins:LegalTriggerTypeShape a sh:NodeShape ;
-	sh:targetClass ins:OnExercise , ins:OnBreach , ins:OnAct , ins:OnCondition , ins:OnExpiry , ins:OnEntry ;
+	sh:targetClass ins:OnExercise , ins:OnBreach , ins:OnAct , ins:OnCondition , ins:OnExpiry , ins:OnEntry , ins:OnAcceptance ;
 	sh:property [ sh:path rdf:type ; sh:hasValue bhv:TriggerDefinition ;
 		sh:message "A legal trigger is also typed bhv:TriggerDefinition in the graph the engine reads: assert it where no reasoner runs (law B4, §12)." ] .
 
@@ -4116,6 +4275,58 @@ ins:EndsShape a sh:NodeShape ;
 	sh:property [ sh:path ins:ends ;
 		sh:or ( [ sh:in ( ins-voc:TheInstrument ) ] [ sh:and ( [ sh:class ins:Term ] [ sh:class ins:Template ] ) ] [ sh:node ins:ElementIdentityShape ] ) ;
 		sh:message "A state ends the instrument (ins-voc:TheInstrument) or stated terms, or a section by its persistent identity (§16.6)." ] .
+
+ins:BeginsShape a sh:NodeShape ;
+	sh:targetSubjectsOf ins:begins ;
+	sh:class bhv:State ;
+	sh:message "Only a state begins an instrument or terms, when it is entered (§14.8)." ;
+	sh:property [ sh:path ins:begins ;
+		sh:or ( [ sh:in ( ins-voc:TheInstrument ) ] [ sh:and ( [ sh:class ins:Term ] [ sh:class ins:Template ] ) ] ) ;
+		sh:message "A state begins the instrument (ins-voc:TheInstrument) or stated terms (§14.8)." ] .
+
+ins:OnAcceptanceShape a sh:NodeShape ;
+	sh:targetClass ins:OnAcceptance ;
+	sh:property [ sh:path ins:by ;
+		sh:or ( [ sh:class pty:Role ] [ sh:class pty:RoleOccupancy ] [ sh:class pty:ParticipationGroup ] ) ;
+		sh:message "An acceptance trigger's ins:by names parties." ] ;
+	sh:property [ sh:path bhv:triggerKind ; sh:minCount 1 ; sh:in ( bhv:DerivedTrigger ) ;
+		sh:message "An acceptance trigger's kind is bhv:DerivedTrigger, fixed. Assert it where no reasoner runs (§12)." ] .
+
+ins:AmendmentShape a sh:NodeShape ;
+	sh:targetClass ins:Amendment ;
+	sh:property [ sh:path ins:amends ; sh:minCount 1 ; sh:maxCount 1 ; sh:class ins:Instrument ;
+		sh:message "An amendment amends exactly one instrument version (§6.3)." ] ;
+	sh:property [ sh:path ins:resultsIn ; sh:minCount 1 ; sh:maxCount 1 ; sh:class ins:Instrument ;
+		sh:message "An amendment results in exactly one instrument version (§6.3)." ] ;
+	sh:property [ sh:path ins:statedIn ; sh:minCount 1 ; sh:class wrd:WordingNode ;
+		sh:message "An amendment is stated in at least one document, a wording node (§6.3)." ] ;
+	sh:property [ sh:path ins:affectsExisting ; sh:maxCount 1 ; sh:datatype xsd:boolean ;
+		sh:message "An amendment states at most once, as a boolean, whether it affects existing occasions (law I14)." ] ;
+	sh:property [ sh:path ( fnd:hasTemporalScope fnd:validFrom ) ; sh:minCount 1 ; sh:maxCount 1 ;
+		sh:message "An amendment has exactly one effective time, its temporal scope's start (§6.3)." ] ;
+	sh:property [ sh:path ( fnd:hasEvidence fnd:recordedAt ) ; sh:minCount 1 ;
+		sh:message "An amendment records when it became known, its evidence's recording time (§6.3)." ] .
+
+ins:AmendmentSubjectShape a sh:NodeShape ;
+	sh:targetSubjectsOf ins:amends , ins:resultsIn , ins:statedIn , ins:affectsExisting ;
+	sh:class ins:Amendment ;
+	sh:message "Only an amendment amends, results in, is stated in, or affects existing occasions." .
+
+ins:AssentShape a sh:NodeShape ;
+	sh:targetClass ins:Assent ;
+	sh:property [ sh:path ins:assentBy ; sh:minCount 1 ; sh:maxCount 1 ; sh:class pty:RoleOccupancy ;
+		sh:message "An assent is by exactly one party, a role occupancy (§6.3)." ] ;
+	sh:property [ sh:path ins:assentTo ; sh:minCount 1 ; sh:maxCount 1 ; sh:class ins:Instrument ;
+		sh:message "An assent is to exactly one instrument version (§6.3)." ] ;
+	sh:property [ sh:path ( fnd:hasTemporalScope fnd:validFrom ) ; sh:minCount 1 ; sh:maxCount 1 ;
+		sh:message "An assent has exactly one time, when the party assented (§6.3)." ] ;
+	sh:property [ sh:path ( fnd:hasEvidence fnd:recordedAt ) ; sh:minCount 1 ;
+		sh:message "An assent records when it became known, its evidence's recording time (§6.3)." ] .
+
+ins:AssentSubjectShape a sh:NodeShape ;
+	sh:targetSubjectsOf ins:assentBy , ins:assentTo ;
+	sh:class ins:Assent ;
+	sh:message "Only an assent names who assents and to which version." .
 
 ins:SurvivalShape a sh:NodeShape ;
 	sh:targetSubjectsOf ins:survives ;
@@ -4986,6 +5197,122 @@ ins:FormWordResolvedShape a sh:NodeShape ;
 			}
 		"""
 	] .
+
+# ---- C9a: amendments, assents and taking effect (§6.3, §14.8) ------------------
+
+ins:AgreedChainShape a sh:NodeShape ;
+	sh:targetClass ins:Instrument ;
+	sh:sparql [
+		sh:message "{$this} has two agreed amendments, {?one} and {?other}: a version has at most one (§6.3)." ;
+		sh:select """
+			PREFIX ins:  <https://www.nebularis.org/neuro-semantic/lattice/instrument#>
+			SELECT $this ?one ?other WHERE {
+				?one ins:amends $this ; ins:resultsIn ?r1 .
+				?other ins:amends $this ; ins:resultsIn ?r2 .
+				FILTER (STR(?one) < STR(?other))
+				FILTER NOT EXISTS { $this ins:party ?p1 . FILTER NOT EXISTS { ?s1 ins:assentBy ?p1 ; ins:assentTo ?r1 } }
+				FILTER NOT EXISTS { $this ins:party ?p2 . FILTER NOT EXISTS { ?s2 ins:assentBy ?p2 ; ins:assentTo ?r2 } }
+			}
+		"""
+	] .
+
+ins:AmendmentVersionsShape a sh:NodeShape ;
+	sh:targetClass ins:Amendment ;
+	sh:sparql [
+		sh:message "An amendment results in another version of the instrument it amends, never in itself or in another instrument (§6.3)." ;
+		sh:select """
+			PREFIX ins:  <https://www.nebularis.org/neuro-semantic/lattice/instrument#>
+			PREFIX fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+			SELECT $this WHERE {
+				$this ins:amends ?old ; ins:resultsIn ?new .
+				FILTER (?old = ?new || NOT EXISTS { ?old fnd:hasIdentity ?id . ?new fnd:hasIdentity ?id })
+			}
+		"""
+	] .
+
+ins:AssentByPartyShape a sh:NodeShape ;
+	sh:targetClass ins:Assent ;
+	sh:sparql [
+		sh:message "{?party} assents to {?version}, but is no party to it or to the version it amends (§6.3)." ;
+		sh:select """
+			PREFIX ins:  <https://www.nebularis.org/neuro-semantic/lattice/instrument#>
+			SELECT $this ?party ?version WHERE {
+				$this ins:assentBy ?party ; ins:assentTo ?version .
+				FILTER NOT EXISTS { ?version ins:party ?party }
+				FILTER NOT EXISTS { ?amendment ins:resultsIn ?version ; ins:amends ?previous . ?previous ins:party ?party }
+			}
+		"""
+	] .
+
+ins:OvertakingShape a sh:NodeShape ;
+	sh:targetClass ins:Amendment ;
+	sh:severity sh:Warning ;
+	sh:sparql [
+		sh:message "{$this} takes effect on {?from}, before {?earlier}, which made the version it amends, took effect on {?made}. No authored version holds the window between: it is derived when needed (CCS C16b, §6.3)." ;
+		sh:select """
+			PREFIX ins:  <https://www.nebularis.org/neuro-semantic/lattice/instrument#>
+			PREFIX fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+			SELECT $this ?from ?earlier ?made WHERE {
+				$this ins:amends ?version ; fnd:hasTemporalScope/fnd:validFrom ?from .
+				?earlier ins:resultsIn ?version ; fnd:hasTemporalScope/fnd:validFrom ?made .
+				FILTER (?from < ?made)
+			}
+		"""
+	] .
+
+ins:ContinuityShape a sh:NodeShape ;
+	sh:targetClass ins:Amendment ;
+	sh:severity sh:Warning ;
+	sh:sparql [
+		sh:message "{$this} affects existing occasions, but {?relation}, which it replaces, has no successor naming it with prov:wasRevisionOf (law I14)." ;
+		sh:select """
+			PREFIX ins:  <https://www.nebularis.org/neuro-semantic/lattice/instrument#>
+			PREFIX prov: <http://www.w3.org/ns/prov#>
+			SELECT $this ?relation WHERE {
+				$this ins:affectsExisting true ; ins:amends ?old ; ins:resultsIn ?new .
+				?oldTerm ins:boundIn ?old ; ins:boundFrom ?stated .
+				?relation ins:arisesUnder ?stated ; a ins:Template .
+				FILTER NOT EXISTS { ?kept ins:boundIn ?new ; ins:boundFrom ?stated }
+				FILTER NOT EXISTS { ?newTerm ins:boundIn ?new ; ins:boundFrom ?newStated .
+					?successor ins:arisesUnder ?newStated ; prov:wasRevisionOf ?relation }
+			}
+		"""
+	] .
+
+ins:BeginsOnceShape a sh:NodeShape ;
+	sh:targetClass ins:Instrument ;
+	sh:sparql [
+		sh:message "{$this}'s wording states two states that begin the instrument, {?one} and {?other}: at most one may (§14.8)." ;
+		sh:select """
+			PREFIX ins:     <https://www.nebularis.org/neuro-semantic/lattice/instrument#>
+			PREFIX ins-voc: <https://www.nebularis.org/neuro-semantic/lattice/instrument/vocab#>
+			PREFIX wrd:     <https://www.nebularis.org/neuro-semantic/lattice/wording#>
+			PREFIX bhv:     <https://www.nebularis.org/neuro-semantic/lattice/behaviour#>
+			SELECT DISTINCT $this ?one ?other WHERE {
+				$this ins:expressedIn ?wording .
+				?wording wrd:includes ?e1 . ?t1 ins:expressedIn ?e1 . ?g1 ins:arisesUnder ?t1 . ?one bhv:inStateSpace ?g1 ; ins:begins ins-voc:TheInstrument .
+				?wording wrd:includes ?e2 . ?t2 ins:expressedIn ?e2 . ?g2 ins:arisesUnder ?t2 . ?other bhv:inStateSpace ?g2 ; ins:begins ins-voc:TheInstrument .
+				FILTER (STR(?one) < STR(?other))
+			}
+		"""
+	] .
+
+ins:OneCaseShape a sh:NodeShape ;
+	sh:targetClass ins:LegalRelation ;
+	sh:sparql [
+		sh:message "I4: {$this}'s conditions bind two subject classes, {?one} and {?other}. All conditions on one relation bind one class, the case." ;
+		sh:select """
+			PREFIX ins:  <https://www.nebularis.org/neuro-semantic/lattice/instrument#>
+			PREFIX elg:  <https://www.nebularis.org/neuro-semantic/lattice/eligibility#>
+			SELECT DISTINCT $this ?one ?other WHERE {
+				$this (ins:scope|ins:maintains|ins:fulfilledWhen|((ins:arisesOn|ins:endsOn)/ins:condition)) ?c1 .
+				$this (ins:scope|ins:maintains|ins:fulfilledWhen|((ins:arisesOn|ins:endsOn)/ins:condition)) ?c2 .
+				?b1 elg:bindsCondition ?c1 ; elg:subjectClass ?one .
+				?b2 elg:bindsCondition ?c2 ; elg:subjectClass ?other .
+				FILTER (STR(?one) < STR(?other))
+			}
+		"""
+	] .
 ```
 
 ### 20.3 Optional: one expression per term
@@ -5008,7 +5335,7 @@ ins:SingleExpressionShape a sh:NodeShape ;
 
 ## 21. Laws
 
-| Law | Statement | Register in 0.13.0 |
+| Law | Statement | Register in 0.15.0 |
 |---|---|---|
 | I1 | An instrument version is expressed in exactly one assembled wording | `ins:InstrumentShape` |
 | I2 | A stated term is part of exactly one element version. A bound term is part of exactly one instrument version, bound from exactly one stated term or implied by a source. A relation belongs to its term | `ins:TermShape`, `ins:LegalRelationShape`, `ins:RelationTierShape` |
@@ -5018,6 +5345,8 @@ ins:SingleExpressionShape a sh:NodeShape ;
 | I11 | A relation's parties are fixed when its occasion arises. A party that depends on the case is a contingent occupancy, resolved or recorded for each occasion | `ins:ResolvedByShape`, `ins:PartyResolutionShape`, `ins:ResolutionReachesActorsShape`. Evaluated by C12 |
 | I12 | A term's classification is read, never evaluated: what a breach permits is stated as relations | `ins:ClassificationShape`, `ins:ClassificationSchemeShape` |
 | I13 | Stated meaning names roles, words and placeholders, bound meaning occupancies, groups, meanings and values. Only bound relations are evaluated, and bound meaning is generated, never stored with the instance. A regime and a sectioning are stated only, read as stated for each subject (C7a-Q1) | `ins:RelationTierShape`, `ins:ArisingTierShape`, `ins:ConstitutiveTierShape`, `ins:BoundNamesValuesShape`, `ins:RegimeShape`, `ins:SectioningShape` |
+| I4 | All conditions on one relation bind one subject class, the case | `ins:OneCaseShape` |
+| I14 | An amendment does not change arisen occasions unless it says so. Where it does, a replaced stated relation names its successor | `ins:affectsExisting`, `ins:ContinuityShape` (warning) |
 | I15 | A case bound under a power falls in the one section the power is bound within | `ins:BoundUnderShape` |
 | I16 | Definitions of one word that apply within one section combine by union, unless one prevails, and every overlap is reported. Conflicting acting rules are a violation | `ins:DefinitionOverlapShape` (warning, on generated meaning), `ins:FormDefinitionOverlapShape` (warning, on the form), `ins:ActingRuleConflictShape` |
 | I17 | An instrument version binds exactly the stated meaning of the elements its wording includes: nothing from text it does not include, all the stated meaning of what it does, and every included leaf of text either means something or is marked as binding nobody | `ins:BoundFromIncludedShape`, `ins:StatedMeaningBoundShape`, `ins:CoverageShape` (warning) |
@@ -5046,7 +5375,13 @@ transitions are regime transitions with legal triggers and the fixed engine sett
 occasion (`ins:PerOccasionGateShape`), and tolling (`ins:TollingShape`). The gating rule itself,
 per-occasion resolution and tolling are evaluated by C12 and C13.
 
-Laws I4, I6, I7, I10 and I14 arrive with the slices that build their terms. I6, the
+C9a's are registered without a law number too: the amendment's and the assent's own shapes
+(`ins:AmendmentShape`, `ins:AmendmentVersionsShape`, `ins:AssentShape`, `ins:AssentByPartyShape`),
+one agreed amendment per version (`ins:AgreedChainShape`), an overtaking amendment
+(`ins:OvertakingShape`, a warning), and formation (`ins:BeginsShape`, `ins:BeginsOnceShape`,
+`ins:OnAcceptanceShape`).
+
+Laws I6, I7 and I10 arrive with the slices that build their terms. I6, the
 acyclic graph of breach, exercise and state reading, is checked once C13's state reading exists.
 
 ## 22. Worked Examples
@@ -5474,10 +5809,79 @@ alternatives. A note for information is marked `ins-voc:NoMeaning`. A data claus
 stated meaning nor the mark is not yet assessed, and the coverage check warns. The sections are
 containers, and expected to mean nothing.
 
+### 22.20 A facility's amendment, agreed party by party
+
+[`facility-amendment.ttl`](examples/facility-amendment.ttl), read with Wording's
+`facility-form.ttl` and `facility-amendment.ttl`. The legal side of the letter that changes three
+clauses of a facility.
+
+What it shows: an amendment from the first version to the second, stated in the letter and in a
+later confirmation, so its text changes are the four Wording amendments expressed in either. It
+takes effect from 1 January, is recorded on 3 February, and needs every party's assent. The four
+assents arrive over a fortnight, one recorded two days after it was given, so the amendment is
+agreed on 20 February, the last assent's date, and known to be agreed from the 21st (§6.3).
+
+### 22.21 A licence formed, a guarantor released, and the licence ended by agreement
+
+[`licence-amendments.ttl`](examples/licence-amendments.ttl). A licensor, a licensee and the
+licensee's parent as guarantor of the fee.
+
+What it shows: formation as a regime (§14.8). Clause 1.1 holds the licence in *conditional* until
+all three have signed, each separately, and the last signature on 8 September moves it to *in
+force*, which begins the instrument. A first amendment releases the guarantor, with the guarantor's
+own assent, so the guarantee is bound in the first version only. A second ends the licence by
+agreement, adding a clause whose regime ends it on 30 June 2029, so the ending is a regime's like
+any other (§14.1).
+
+### 22.22 A property policy's mid-term adjustment
+
+[`property-endorsement.ttl`](examples/property-endorsement.ttl). An insurer and an insured under a
+commercial property policy covering one unit of a business park.
+
+Insurance practice changes a policy in force by **endorsement**, and a change during the period of
+insurance is a **mid-term adjustment** (MTA). Here the insured takes a second unit and, on 20
+February, asks for it to be covered from 1 March. The underwriter agrees on 10 March, from the date
+asked for, as is common, charging an additional premium for the rest of the period (outside the
+example). The endorsement replaces the insuring clause with one naming both units. The insured's
+signed request is its assent to the amended policy, so the amendment is agreed when the insurer
+assents.
+
+```mermaid
+flowchart LR
+    R["20 Feb<br/>MTA requested<br/>insured assents"] --> A["25 Feb<br/>loss A at Unit 9"]
+    A --> E["1 Mar<br/>endorsement effective"]
+    E --> B["5 Mar<br/>loss B at Unit 9<br/>notified 6 Mar"]
+    B --> G["10 Mar<br/>insurer assents:<br/>MTA agreed"]
+    G --> C["20 Mar<br/>loss C at Unit 9"]
+```
+
+Which version decides each loss, read on the loss's date:
+
+| Loss | As known when notified | As known from 10 March |
+|---|---|---|
+| A, 25 February | the first version, Unit 9 not covered, since the endorsement is not yet effective | the same |
+| B, 5 March | the first version, not covered, since the endorsement is not yet agreed | the second version, covered: agreed later, effective earlier |
+| C, 20 March | the second version, covered | the same |
+
+Loss B is the case underwriters guard against. Before agreeing an MTA effective from an earlier
+date, an underwriter usually asks the insured to declare that no loss has occurred since then, and
+an insured who knew of loss B and kept silent may lose the cover for non-disclosure, a remedy outside
+this example. Without it, the endorsement covers loss B, and whether the policy covered it depends on
+when the question is asked. That is why the amendment and each assent keep both their valid time
+and their recording time (§6.3).
+
 ## 23. Release Notes
 
 Breaking versions at major version zero ([ADR-A113](../../docs/architecture/decisions/ADR-A113-breaking-changes-at-major-version-zero.md)):
 
+- 0.15.0 (CCS C9a, ADR-A104 and its 2026-10-08 addendum): new: amendments (`ins:Amendment`,
+  `ins:amends`, `ins:resultsIn`, `ins:statedIn`, `ins:affectsExisting`), assents (`ins:Assent`,
+  `ins:assentBy`, `ins:assentTo`), and taking effect (`ins:begins`, `ins:OnAcceptance`), with
+  `ins:by` widened to acceptance triggers. `instrument-vocab` 0.15.0 adds the state kind
+  `ins-voc:Conditional`. Shapes 0.7.0 (breaking: law I4 is checked): the new terms, one agreed
+  amendment per version, an assent by a party to the version or the one it amends, at most one state
+  beginning an instrument, law I4, and two warnings, an overtaking amendment and continuity under
+  law I14
 - 0.14.0 (breaking, CCS C8b): re-pinned to Wording 0.7.0, whose references name persistent
   identities, with no other change. `instrument-vocab` 0.14.0 re-pinned with it. Shapes unchanged
   (0.6.0)

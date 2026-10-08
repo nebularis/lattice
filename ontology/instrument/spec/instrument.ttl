@@ -16,7 +16,7 @@
 
 <https://www.nebularis.org/neuro-semantic/instrument>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.14.0> ;
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.15.0> ;
 	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.4.0> ,
 				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.4.0> ,
 				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.7.0> ,
@@ -68,6 +68,49 @@ ins:boundFrom a owl:ObjectProperty, owl:FunctionalProperty ;
 ins:impliedBy a owl:ObjectProperty ;
 	rdfs:comment "The source that implies a term no clause states." ;
 	fnd:utility "Subject: a bound term or relation implied by law. Value: the statute, custom or course of dealing that implies it, in place of ins:boundFrom." .
+
+ins:Amendment a owl:Class ;
+	rdfs:subClassOf prov:Activity , fnd:TemporallyScoped , fnd:Evidenced ;
+	owl:disjointWith fnd:Version ;
+	rdfs:comment "The legal effect of a change to an instrument, from one version to the next." ;
+	fnd:utility "Subject: an amendment. Names the version it amends (ins:amends) and the one it produces (ins:resultsIn), and the documents it is stated in (ins:statedIn). Its fnd:hasTemporalScope is when it takes effect, which may precede its recording and its agreement, and its fnd:hasEvidence when it was recorded. Agreed when the assents it needs exist (§6.3)." .
+
+ins:amends a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:subPropertyOf prov:used ;
+	rdfs:range ins:Instrument ;
+	rdfs:comment "The instrument version an amendment changes." ;
+	fnd:utility "Subject: an amendment. Value: exactly one instrument version." .
+
+ins:resultsIn a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:subPropertyOf prov:generated ;
+	rdfs:range ins:Instrument ;
+	rdfs:comment "The instrument version an amendment produces." ;
+	fnd:utility "Subject: an amendment. Value: exactly one instrument version, of the same persistent identity as the version it amends." .
+
+ins:statedIn a owl:ObjectProperty ;
+	rdfs:comment "The document, or part of one, that states an amendment." ;
+	fnd:utility "Subject: an amendment. Value: a wording node, at least one, such as an endorsement or an amendment letter. The amendment's text changes are the wrd:Amendment nodes expressed in it or any part of it. A change restated in a second document names both." .
+
+ins:affectsExisting a owl:DatatypeProperty, owl:FunctionalProperty ;
+	rdfs:range xsd:boolean ;
+	rdfs:comment "Whether an amendment reaches occasions already arisen." ;
+	fnd:utility "Subject: an amendment. Value: at most one boolean, false when absent (law I14). Where true, a stated relation the amendment replaces names its successor with prov:wasRevisionOf." .
+
+ins:Assent a owl:Class ;
+	rdfs:subClassOf fnd:TemporallyScoped , fnd:Evidenced ;
+	owl:disjointWith fnd:Version ;
+	rdfs:comment "One party's assent to one instrument version." ;
+	fnd:utility "Subject: an assent. Names exactly one party (ins:assentBy) and one version (ins:assentTo). Its fnd:hasTemporalScope is when the party assented, and its fnd:hasEvidence when that became known. Written by whatever gathers the signature or consent. Read for formation (ins:OnAcceptance), agreement of an amendment, and consent to a power's exercise." .
+
+ins:assentBy a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:range pty:RoleOccupancy ;
+	rdfs:comment "The party who assents." ;
+	fnd:utility "Subject: an assent. Value: exactly one role occupancy, a party to the version assented to." .
+
+ins:assentTo a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:range ins:Instrument ;
+	rdfs:comment "The instrument version assented to." ;
+	fnd:utility "Subject: an assent. Value: exactly one instrument version." .
 
 ins:LegalRelation a owl:Class ;
 	owl:equivalentClass [ a owl:Class ; owl:unionOf ( ins:Obligation ins:Permission ins:Exclusion ins:Power ) ] ;
@@ -246,8 +289,8 @@ ins:ofObligation a owl:ObjectProperty, owl:FunctionalProperty ;
 
 ins:by a owl:ObjectProperty ;
 	rdfs:range ins:RelationParty ;
-	rdfs:comment "A party whose act an act trigger waits for." ;
-	fnd:utility "Subject: an ins:OnAct. Value: a party, any number. A regime is stated, so its triggers name roles. Without one, an act of the kind by any party fires the trigger." .
+	rdfs:comment "A party whose act or assent a trigger waits for." ;
+	fnd:utility "Subject: an ins:OnAct or an ins:OnAcceptance. Value: a party, any number. A regime is stated, so its triggers name roles. Without one, an act of the kind by any party fires an act trigger, and every ins:party's assent an acceptance trigger." .
 
 ins:condition a owl:ObjectProperty, owl:FunctionalProperty ;
 	rdfs:comment "The condition a condition trigger waits for." ;
@@ -366,6 +409,16 @@ ins:survivesUntil a owl:ObjectProperty, owl:FunctionalProperty ;
 	rdfs:range elg:Condition ;
 	rdfs:comment "The condition until which a term survives." ;
 	fnd:utility "Subject: a survival. Value: one Eligibility condition. The term stops surviving when it comes to hold." .
+
+ins:begins a owl:ObjectProperty ;
+	rdfs:comment "What entering a state brings into effect." ;
+	fnd:utility "Subject: a state of a regime. Value: ins-voc:TheInstrument, or a stated term, matched to every bound term instantiated from it. Before the state is entered, nothing arises under what it begins. At most one state per instrument begins the instrument as a whole." .
+
+ins:OnAcceptance a owl:Class ;
+	rdfs:subClassOf bhv:TriggerDefinition ,
+		[ a owl:Restriction ; owl:onProperty bhv:triggerKind ; owl:hasValue bhv:DerivedTrigger ] ;
+	rdfs:comment "A legal trigger: the parties having assented to the version." ;
+	fnd:utility "Subject: a trigger. Fires when every party it names (ins:by), or with none every ins:party of the version, has an ins:Assent to the version (§6.3). Its kind is bhv:DerivedTrigger. Assert bhv:TriggerDefinition and the kind where no reasoner runs (§12)." .
 
 ins:Definition a owl:Class ;
 	rdfs:comment "A term's giving a word its meaning." ;
