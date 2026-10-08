@@ -1,0 +1,786 @@
+# ==== The deployment's vocabulary =============================================
+#
+# Instrument's baseline activities lack most insurance acts. Its activity
+# contract binds its own scheme (voc:boundScheme ins-voc:Activities), so a
+# deployment has no governed way to add these. They are the example's own.
+
+ex:insurance-activities a voc:ConceptScheme ;
+    fnd:hasIdentity ex:insurance-activities-identity ; fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Insurance activities (the example's own)"@en .
+ex:Defend a skos:Concept ; skos:inScheme ex:insurance-activities ; skos:prefLabel "defend a Claim"@en .
+ex:Cooperate a skos:Concept ; skos:inScheme ex:insurance-activities ; skos:prefLabel "cooperate"@en .
+ex:RecordClaim a skos:Concept ; skos:inScheme ex:insurance-activities ; skos:prefLabel "record a Claim's specifics"@en .
+ex:SettleOrAdmit a skos:Concept ; skos:inScheme ex:insurance-activities ; skos:prefLabel "admit liability, settle, assume an obligation or pay money"@en .
+ex:PermitAssociation a skos:Concept ; skos:inScheme ex:insurance-activities ; skos:prefLabel "let the Insurer associate in the defence"@en .
+ex:SelectCounsel a skos:Concept ; skos:inScheme ex:insurance-activities ; skos:prefLabel "select defence counsel"@en .
+ex:WithholdConsent a skos:Concept ; skos:inScheme ex:insurance-activities ; skos:prefLabel "withhold consent"@en .
+ex:PrejudiceInsurer a skos:Concept ; skos:inScheme ex:insurance-activities ; skos:prefLabel "act, or fail to act, so as to prejudice the Insurer's rights"@en .
+ex:Assign a skos:Concept ; skos:inScheme ex:insurance-activities ; skos:prefLabel "assign the policy or rights under it"@en .
+ex:BringAction a skos:Concept ; skos:inScheme ex:insurance-activities ; skos:prefLabel "bring an action against the Insurer"@en .
+ex:ElectDiscovery a skos:Concept ; skos:inScheme ex:insurance-activities ; skos:prefLabel "elect and purchase a Discovery Period"@en .
+ex:RequestOffer a skos:Concept ; skos:inScheme ex:insurance-activities ; skos:prefLabel "request an offer"@en .
+ex:OfferTerms a skos:Concept ; skos:inScheme ex:insurance-activities ; skos:prefLabel "offer terms"@en .
+ex:Waive a skos:Concept ; skos:inScheme ex:insurance-activities ; skos:prefLabel "waive by endorsement"@en .
+ex:RequestInformation a skos:Concept ; skos:inScheme ex:insurance-activities ; skos:prefLabel "request documents or information"@en .
+ex:AmendPanel a skos:Concept ; skos:inScheme ex:insurance-activities ; skos:prefLabel "amend the Panel Counsel list"@en .
+
+# Term classes are a legal system's (C7c-Q6). This deployment binds one.
+ex:term-classes a voc:ConceptScheme ;
+    fnd:hasIdentity ex:term-classes-identity ; fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "US insurance term classes"@en .
+ex:condition-precedent a skos:Concept ; skos:inScheme ex:term-classes ;
+    skos:prefLabel "condition precedent"@en ;
+    skos:definition "A term whose performance must come before the Insurer's obligations, or the right named, arise."@en .
+ex:term-classes-binding a voc:SchemeBinding ;
+    voc:forContract ins-voc:TermClassificationContract ;
+    voc:bindsScheme ex:term-classes ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2024-01-01T00:00:00Z"^^xsd:dateTime ] .
+
+# Dates the wording defines, as roles of the deployment's own (HQ-4: unbound,
+# as in lease-expiry). Their values are the Item 2 variables', but nothing
+# links a context role to a variable yet.
+ex:policy-dates a voc:ConceptScheme ;
+    fnd:hasIdentity ex:policy-dates-identity ; fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Policy dates"@en .
+ex:InceptionDateRole a skos:Concept ; skos:inScheme ex:policy-dates ; skos:prefLabel "the Inception Date"@en .
+ex:ExpirationDateRole a skos:Concept ; skos:inScheme ex:policy-dates ; skos:prefLabel "the Expiration Date"@en .
+
+# ==== Spaces, units, context values, ranges ===================================
+
+ex:time a qnt:ValueSpace ;
+    qnt:spaceKey "calendar-time" ; qnt:orderKind qnt:TotalOrder ; qnt:densityKind qnt:Dense ;
+    qnt:valueDatatype xsd:dateTime ; qnt:spaceHash "calendar-time-v1" .
+ex:durations a qnt:ValueSpace ;
+    qnt:spaceKey "durations" ; qnt:orderKind qnt:TotalOrder ; qnt:densityKind qnt:Discrete ;
+    qnt:spaceHash "durations-v1" .
+ex:usd-space a qnt:ValueSpace ;
+    qnt:spaceKey "us-dollars" ; qnt:orderKind qnt:TotalOrder ; qnt:densityKind qnt:Dense ;
+    qnt:spaceHash "us-dollars-v1" .
+ex:usd a qnt:Unit ; rdfs:label "US dollar" .
+ex:day a qnt:Unit ; rdfs:label "day" .
+
+ex:inception-at a qnt:ContextValue ; qnt:onSpace ex:time ; qnt:contextRole ex:InceptionDateRole .
+ex:expiration-at a qnt:ContextValue ; qnt:onSpace ex:time ; qnt:contextRole ex:ExpirationDateRole .
+ex:ending a qnt:ContextValue ; qnt:onSpace ex:time ; qnt:contextRole ins-voc:Ending .
+ex:arising a qnt:ContextValue ; qnt:onSpace ex:time ; qnt:contextRole ins-voc:Arising .
+
+ex:within-30-days-of-ending a qnt:Range ;
+    qnt:onSpace ex:time ;
+    qnt:relativeToAnchor [ a qnt:AnchorBinding ;
+        qnt:anchorValue ex:ending ; qnt:offsetKind qnt:Absolute ;
+        qnt:lowerOffsetBy [ a qnt:Quantity ; qnt:onSpace ex:durations ; qnt:numericValue "0"^^xsd:decimal ; qnt:inUnit ex:day ] ;
+        qnt:upperOffsetBy [ a qnt:Quantity ; qnt:onSpace ex:durations ; qnt:numericValue "30"^^xsd:decimal ; qnt:inUnit ex:day ] ] .
+ex:within-30-days-of-arising a qnt:Range ;
+    qnt:onSpace ex:time ;
+    qnt:relativeToAnchor [ a qnt:AnchorBinding ;
+        qnt:anchorValue ex:arising ; qnt:offsetKind qnt:Absolute ;
+        qnt:lowerOffsetBy [ a qnt:Quantity ; qnt:onSpace ex:durations ; qnt:numericValue "0"^^xsd:decimal ; qnt:inUnit ex:day ] ;
+        qnt:upperOffsetBy [ a qnt:Quantity ; qnt:onSpace ex:durations ; qnt:numericValue "30"^^xsd:decimal ; qnt:inUnit ex:day ] ] .
+# CPL 5(a)'s outer limit only. "As soon as practicable" has no range (§13.2).
+ex:by-90-days-after-ending a qnt:Range ;
+    qnt:onSpace ex:time ;
+    qnt:relativeToAnchor [ a qnt:AnchorBinding ;
+        qnt:anchorValue ex:ending ; qnt:offsetKind qnt:Absolute ;
+        qnt:upperOffsetBy [ a qnt:Quantity ; qnt:onSpace ex:durations ; qnt:numericValue "90"^^xsd:decimal ; qnt:inUnit ex:day ] ] .
+
+# ==== Roles and words =========================================================
+
+ex:Insurer a pty:Role ; rdfs:label "the Insurer" .
+ex:NamedEntity a pty:Role ; rdfs:label "the Named Entity" .              # a party word, from Item 1
+ex:Subsidiary a pty:Role ; rdfs:label "a Subsidiary" .
+ex:DebtorInPossession a pty:Role ; rdfs:label "a debtor-in-possession" .
+ex:Organization a pty:Role ; rdfs:label "the Organization" .              # a party word, GTC 16(c)
+ex:InsuredPerson a pty:Role ; rdfs:label "the Insured Person" .          # resolved per Claim
+ex:IndemnifyingOrganization a pty:Role ; rdfs:label "the Organization that indemnified" .
+ex:SpouseOrRepresentative a pty:Role ; rdfs:label "the spouse, partner, estate or legal representative" .
+
+# Value words: each a concept that a definition gives a value (C7c-Q7).
+ex:InceptionDate a skos:Concept ; rdfs:label "Inception Date" .
+ex:ExpirationDate a skos:Concept ; rdfs:label "Expiration Date" .
+ex:Premium a skos:Concept ; rdfs:label "Premium" .
+ex:PolicyAggregate a skos:Concept ; rdfs:label "Policy Aggregate" .
+ex:SharedLimit a skos:Concept ; rdfs:label "Shared Limit of Liability" .
+ex:SeparateLimit a skos:Concept ; rdfs:label "Separate Limit of Liability" .
+ex:ExcessLimitForExecutives a skos:Concept ; rdfs:label "Excess Limit for Executives" .
+ex:Retention a skos:Concept ; rdfs:label "Retention" .
+ex:ClassActionRetention a skos:Concept ; rdfs:label "Class Action Retention" .
+ex:ThirdPartyRetention a skos:Concept ; rdfs:label "Third Party Retention" .
+ex:SecuritiesRetention a skos:Concept ; rdfs:label "Securities Retention" .
+ex:ContinuityDate a skos:Concept ; rdfs:label "Continuity Date" .
+ex:RetroactiveDate a skos:Concept ; rdfs:label "Retroactive Date" .
+ex:CoverageSectionPremium a skos:Concept ; rdfs:label "Coverage Section Premium" .
+ex:TRIAPremium a skos:Concept ; rdfs:label "TRIA Premium" .
+
+# Condition words, GTC 16(c).
+ex:Transaction a skos:Concept ; rdfs:label "Transaction" .
+ex:PolicyPeriod a skos:Concept ; rdfs:label "Policy Period" .
+ex:EConsultantFirm a skos:Concept ; rdfs:label "E-Consultant Firm" .
+ex:EDiscovery a skos:Concept ; rdfs:label "E-Discovery" .
+ex:EDiscoveryServices a skos:Concept ; rdfs:label "E-Discovery Consultant Services" .
+ex:EnforcementBody a skos:Concept ; rdfs:label "Enforcement Body" .
+ex:ForeignJurisdiction a skos:Concept ; rdfs:label "Foreign Jurisdiction" .
+
+# ==== The case: the insurer's claims file, as the applied ontology ===========
+#
+# LATTICE does not define claims. The paths below read the claims file.
+
+ex:Claim a owl:Class ; rdfs:label "Claim" .
+ex:WrongfulAct a owl:Class ; rdfs:label "Wrongful Act" .
+ex:Proceeding a owl:Class ; rdfs:label "litigation or proceeding" .
+ex:madeAgainst a owl:ObjectProperty ; rdfs:comment "Subject: a Claim. Value: an actor it is made against." .
+ex:indemnifiedBy a owl:ObjectProperty ; rdfs:comment "Subject: a Claim. Value: an actor that indemnified the Insured Person for its Loss." .
+ex:alleges a owl:ObjectProperty ; rdfs:comment "Subject: a Claim. Value: a Wrongful Act it alleges." .
+ex:committedOn a owl:DatatypeProperty ; rdfs:comment "Subject: a Wrongful Act. Value: when it was committed or omitted." .
+ex:arisesFrom a owl:ObjectProperty ; rdfs:comment "Subject: a Claim. Value: a proceeding it arises from." .
+ex:commencedOn a owl:DatatypeProperty ; rdfs:comment "Subject: a proceeding. Value: when it began." .
+
+# ==== Conditions with placeholders ============================================
+#
+# Interval conditions over dates the Item 6 rows give per section. Each
+# bound's value is a placeholder naming the date word, which binding resolves
+# through the definition applying in the section (C8-Q1, D12).
+
+# CPL 3(c): a Wrongful Act before the Retroactive Date.
+ex:act-before-retro-date a elg:IntervalCondition ;
+    elg:conditionKey "wrongful-act-before-retroactive-date" ;
+    elg:matchStrategy elg:IntervalContainment ; elg:compatibilityOperation elg:AllRequired ;
+    elg:wildcardSemantics elg:NoWildcard ;
+    elg:requiredRangeSet [ a qnt:RangeSet ; qnt:onSpace ex:time ;
+        qnt:hasRange [ a qnt:Range ; qnt:onSpace ex:time ;
+            qnt:upperBound ex:retro-bound ; qnt:hasBound ex:retro-bound ] ] .
+ex:retro-bound a qnt:Bound ; qnt:onSpace ex:time ;
+    qnt:boundSense qnt:Upper ; qnt:boundClosure qnt:Open ;
+    qnt:boundValue [ a qnt:Quantity ; qnt:onSpace ex:time ; ins:valueFrom ex:RetroactiveDate ] .
+ex:act-before-retro-date-binding a elg:EvidenceBinding ;
+    elg:bindsCondition ex:act-before-retro-date ;
+    elg:subjectClass ex:Claim ;
+    elg:singleValued false ;
+    elg:evidenceStep [ a elg:EvidenceStep ; elg:stepIndex 0 ; elg:stepProperty ex:alleges ; elg:stepDirection elg:Forward ] ,
+                     [ a elg:EvidenceStep ; elg:stepIndex 1 ; elg:stepProperty ex:committedOn ; elg:stepDirection elg:Forward ] .
+
+# CPL 3(e)(i): litigation pending or prior as of the Continuity Date.
+ex:litigation-by-continuity a elg:IntervalCondition ;
+    elg:conditionKey "litigation-commenced-by-continuity-date" ;
+    elg:matchStrategy elg:IntervalContainment ; elg:compatibilityOperation elg:AllRequired ;
+    elg:wildcardSemantics elg:NoWildcard ;
+    elg:requiredRangeSet [ a qnt:RangeSet ; qnt:onSpace ex:time ;
+        qnt:hasRange [ a qnt:Range ; qnt:onSpace ex:time ;
+            qnt:upperBound ex:continuity-bound ; qnt:hasBound ex:continuity-bound ] ] .
+ex:continuity-bound a qnt:Bound ; qnt:onSpace ex:time ;
+    qnt:boundSense qnt:Upper ; qnt:boundClosure qnt:Closed ;
+    qnt:boundValue [ a qnt:Quantity ; qnt:onSpace ex:time ; ins:valueFrom ex:ContinuityDate ] .
+ex:litigation-by-continuity-binding a elg:EvidenceBinding ;
+    elg:bindsCondition ex:litigation-by-continuity ;
+    elg:subjectClass ex:Claim ;
+    elg:singleValued false ;
+    elg:evidenceStep [ a elg:EvidenceStep ; elg:stepIndex 0 ; elg:stepProperty ex:arisesFrom ; elg:stepDirection elg:Forward ] ,
+                     [ a elg:EvidenceStep ; elg:stepIndex 1 ; elg:stepProperty ex:commencedOn ; elg:stepDirection elg:Forward ] .
+
+# GTC 16(c) "Policy Period": from the Inception Date, up to the Expiration
+# Date. "The earlier of the Expiration Date or the effective date of
+# cancellation" needs a minimum of a word and the regime's ending, which no
+# bound can state. The regime below carries the cancellation.
+ex:policy-period-span a elg:IntervalCondition ;
+    elg:conditionKey "within-the-policy-period" ;
+    elg:matchStrategy elg:IntervalContainment ; elg:compatibilityOperation elg:AllRequired ;
+    elg:wildcardSemantics elg:NoWildcard ;
+    elg:requiredRangeSet [ a qnt:RangeSet ; qnt:onSpace ex:time ;
+        qnt:hasRange [ a qnt:Range ; qnt:onSpace ex:time ;
+            qnt:lowerBound ex:period-from ; qnt:upperBound ex:period-to ;
+            qnt:hasBound ex:period-from , ex:period-to ] ] .
+ex:period-from a qnt:Bound ; qnt:onSpace ex:time ;
+    qnt:boundSense qnt:Lower ; qnt:boundClosure qnt:Closed ;
+    qnt:boundValue [ a qnt:Quantity ; qnt:onSpace ex:time ; ins:valueFrom ex:InceptionDate ] .
+ex:period-to a qnt:Bound ; qnt:onSpace ex:time ;
+    qnt:boundSense qnt:Upper ; qnt:boundClosure qnt:Open ;
+    qnt:boundValue [ a qnt:Quantity ; qnt:onSpace ex:time ; ins:valueFrom ex:ExpirationDate ] .
+
+# ==== Stated meaning: the declarations ========================================
+#
+# Each row's definition gives a word the row's value. Item 6 rows apply
+# within their own section (ins:appliesWithin), so "Retention" or
+# "Continuity Date" has one value per section, resolved where it is read.
+
+tmpl:term-item-1 a ins:Term , ins:Template ; ins:expressedIn ex:item-1 .
+tmpl:def-named-entity a ins:Definition , ins:Template ;
+    ins:arisesUnder tmpl:term-item-1 ;
+    ins:defines ex:NamedEntity ;
+    ins:means [ a pty:Role ; ins:valueFrom ex:var-named-entity-identity ] .
+
+tmpl:term-item-2 a ins:Term , ins:Template ; ins:expressedIn ex:item-2 .
+tmpl:def-inception a ins:Definition , ins:Template ;
+    ins:arisesUnder tmpl:term-item-2 ;
+    ins:defines ex:InceptionDate ;
+    ins:means [ a qnt:Quantity ; qnt:onSpace ex:time ; ins:valueFrom ex:var-inception-identity ] .
+tmpl:def-expiration a ins:Definition , ins:Template ;
+    ins:arisesUnder tmpl:term-item-2 ;
+    ins:defines ex:ExpirationDate ;
+    ins:means [ a qnt:Quantity ; qnt:onSpace ex:time ; ins:valueFrom ex:var-expiration-identity ] .
+
+tmpl:term-item-3 a ins:Term , ins:Template ; ins:expressedIn ex:item-3 .
+tmpl:def-premium a ins:Definition , ins:Template ;
+    ins:arisesUnder tmpl:term-item-3 ;
+    ins:defines ex:Premium ;
+    ins:means [ a qnt:Quantity ; qnt:onSpace ex:usd-space ; qnt:inUnit ex:usd ; ins:valueFrom ex:var-premium-identity ] .
+
+tmpl:term-item-5 a ins:Term , ins:Template ; ins:expressedIn ex:item-5 .
+tmpl:def-aggregate a ins:Definition , ins:Template ;
+    ins:arisesUnder tmpl:term-item-5 ;
+    ins:defines ex:PolicyAggregate ;
+    ins:means [ a qnt:Quantity ; qnt:onSpace ex:usd-space ; qnt:inUnit ex:usd ; ins:valueFrom ex:var-aggregate-identity ] .
+
+tmpl:term-do-limit a ins:Term , ins:Template ; ins:expressedIn ex:do-limit ; ins:appliesWithin ex:do-identity .
+tmpl:def-do-shared-limit a ins:Definition , ins:Template ;
+    ins:arisesUnder tmpl:term-do-limit ; ins:defines ex:SharedLimit ;
+    ins:means [ a qnt:Quantity ; qnt:onSpace ex:usd-space ; qnt:inUnit ex:usd ; ins:valueFrom ex:var-do-shared-limit-identity ] .
+tmpl:term-do-excess a ins:Term , ins:Template ; ins:expressedIn ex:do-excess ; ins:appliesWithin ex:do-identity .
+tmpl:def-do-excess a ins:Definition , ins:Template ;
+    ins:arisesUnder tmpl:term-do-excess ; ins:defines ex:ExcessLimitForExecutives ;
+    ins:means [ a qnt:Quantity ; qnt:onSpace ex:usd-space ; qnt:inUnit ex:usd ; ins:valueFrom ex:var-do-excess-identity ] .
+tmpl:term-do-retention a ins:Term , ins:Template ; ins:expressedIn ex:do-retention ; ins:appliesWithin ex:do-identity .
+tmpl:def-do-retention a ins:Definition , ins:Template ;
+    ins:arisesUnder tmpl:term-do-retention ; ins:defines ex:Retention ;
+    ins:means [ a qnt:Quantity ; qnt:onSpace ex:usd-space ; qnt:inUnit ex:usd ; ins:valueFrom ex:var-do-retention-identity ] .
+# "All other" only. The Outside Entity Executive date is each case's own.
+tmpl:term-do-continuity a ins:Term , ins:Template ; ins:expressedIn ex:do-continuity ; ins:appliesWithin ex:do-identity .
+tmpl:def-do-continuity a ins:Definition , ins:Template ;
+    ins:arisesUnder tmpl:term-do-continuity ; ins:defines ex:ContinuityDate ;
+    ins:means [ a qnt:Quantity ; qnt:onSpace ex:time ; ins:valueFrom ex:var-do-continuity-identity ] .
+tmpl:term-do-premium a ins:Term , ins:Template ; ins:expressedIn ex:do-premium ; ins:appliesWithin ex:do-identity .
+tmpl:def-do-premium a ins:Definition , ins:Template ;
+    ins:arisesUnder tmpl:term-do-premium ; ins:defines ex:CoverageSectionPremium ;
+    ins:means [ a qnt:Quantity ; qnt:onSpace ex:usd-space ; qnt:inUnit ex:usd ; ins:valueFrom ex:var-do-premium-identity ] .
+
+tmpl:term-epl-limit a ins:Term , ins:Template ; ins:expressedIn ex:epl-limit ; ins:appliesWithin ex:epl-identity .
+tmpl:def-epl-shared-limit a ins:Definition , ins:Template ;
+    ins:arisesUnder tmpl:term-epl-limit ; ins:defines ex:SharedLimit ;
+    ins:means [ a qnt:Quantity ; qnt:onSpace ex:usd-space ; qnt:inUnit ex:usd ; ins:valueFrom ex:var-epl-shared-limit-identity ] .
+tmpl:term-epl-retention a ins:Term , ins:Template ; ins:expressedIn ex:epl-retention ; ins:appliesWithin ex:epl-identity .
+tmpl:def-epl-retention-class a ins:Definition , ins:Template ;
+    ins:arisesUnder tmpl:term-epl-retention ; ins:defines ex:ClassActionRetention ;
+    ins:means [ a qnt:Quantity ; qnt:onSpace ex:usd-space ; qnt:inUnit ex:usd ; ins:valueFrom ex:var-epl-retention-class-identity ] .
+tmpl:def-epl-retention-third a ins:Definition , ins:Template ;
+    ins:arisesUnder tmpl:term-epl-retention ; ins:defines ex:ThirdPartyRetention ;
+    ins:means [ a qnt:Quantity ; qnt:onSpace ex:usd-space ; qnt:inUnit ex:usd ; ins:valueFrom ex:var-epl-retention-third-identity ] .
+tmpl:def-epl-retention-other a ins:Definition , ins:Template ;
+    ins:arisesUnder tmpl:term-epl-retention ; ins:defines ex:Retention ;
+    ins:means [ a qnt:Quantity ; qnt:onSpace ex:usd-space ; qnt:inUnit ex:usd ; ins:valueFrom ex:var-epl-retention-other-identity ] .
+tmpl:term-epl-continuity a ins:Term , ins:Template ; ins:expressedIn ex:epl-continuity ; ins:appliesWithin ex:epl-identity .
+tmpl:def-epl-continuity a ins:Definition , ins:Template ;
+    ins:arisesUnder tmpl:term-epl-continuity ; ins:defines ex:ContinuityDate ;
+    ins:means [ a qnt:Quantity ; qnt:onSpace ex:time ; ins:valueFrom ex:var-epl-continuity-identity ] .
+tmpl:term-epl-premium a ins:Term , ins:Template ; ins:expressedIn ex:epl-premium ; ins:appliesWithin ex:epl-identity .
+tmpl:def-epl-premium a ins:Definition , ins:Template ;
+    ins:arisesUnder tmpl:term-epl-premium ; ins:defines ex:CoverageSectionPremium ;
+    ins:means [ a qnt:Quantity ; qnt:onSpace ex:usd-space ; qnt:inUnit ex:usd ; ins:valueFrom ex:var-epl-premium-identity ] .
+
+tmpl:term-fid-limit a ins:Term , ins:Template ; ins:expressedIn ex:fid-limit ; ins:appliesWithin ex:fid-identity .
+tmpl:def-fid-separate-limit a ins:Definition , ins:Template ;
+    ins:arisesUnder tmpl:term-fid-limit ; ins:defines ex:SeparateLimit ;
+    ins:means [ a qnt:Quantity ; qnt:onSpace ex:usd-space ; qnt:inUnit ex:usd ; ins:valueFrom ex:var-fid-separate-limit-identity ] .
+tmpl:term-fid-retention a ins:Term , ins:Template ; ins:expressedIn ex:fid-retention ; ins:appliesWithin ex:fid-identity .
+tmpl:def-fid-retention-securities a ins:Definition , ins:Template ;
+    ins:arisesUnder tmpl:term-fid-retention ; ins:defines ex:SecuritiesRetention ;
+    ins:means [ a qnt:Quantity ; qnt:onSpace ex:usd-space ; qnt:inUnit ex:usd ; ins:valueFrom ex:var-fid-retention-securities-identity ] .
+tmpl:def-fid-retention-other a ins:Definition , ins:Template ;
+    ins:arisesUnder tmpl:term-fid-retention ; ins:defines ex:Retention ;
+    ins:means [ a qnt:Quantity ; qnt:onSpace ex:usd-space ; qnt:inUnit ex:usd ; ins:valueFrom ex:var-fid-retention-other-identity ] .
+tmpl:term-fid-continuity a ins:Term , ins:Template ; ins:expressedIn ex:fid-continuity ; ins:appliesWithin ex:fid-identity .
+tmpl:def-fid-continuity a ins:Definition , ins:Template ;
+    ins:arisesUnder tmpl:term-fid-continuity ; ins:defines ex:ContinuityDate ;
+    ins:means [ a qnt:Quantity ; qnt:onSpace ex:time ; ins:valueFrom ex:var-fid-continuity-identity ] .
+tmpl:term-fid-premium a ins:Term , ins:Template ; ins:expressedIn ex:fid-premium ; ins:appliesWithin ex:fid-identity .
+tmpl:def-fid-premium a ins:Definition , ins:Template ;
+    ins:arisesUnder tmpl:term-fid-premium ; ins:defines ex:CoverageSectionPremium ;
+    ins:means [ a qnt:Quantity ; qnt:onSpace ex:usd-space ; qnt:inUnit ex:usd ; ins:valueFrom ex:var-fid-premium-identity ] .
+
+tmpl:term-cpl-limit a ins:Term , ins:Template ; ins:expressedIn ex:cpl-limit ; ins:appliesWithin ex:cpl-identity .
+tmpl:def-cpl-separate-limit a ins:Definition , ins:Template ;
+    ins:arisesUnder tmpl:term-cpl-limit ; ins:defines ex:SeparateLimit ;
+    ins:means [ a qnt:Quantity ; qnt:onSpace ex:usd-space ; qnt:inUnit ex:usd ; ins:valueFrom ex:var-cpl-separate-limit-identity ] .
+tmpl:term-cpl-retention a ins:Term , ins:Template ; ins:expressedIn ex:cpl-retention ; ins:appliesWithin ex:cpl-identity .
+tmpl:def-cpl-retention a ins:Definition , ins:Template ;
+    ins:arisesUnder tmpl:term-cpl-retention ; ins:defines ex:Retention ;
+    ins:means [ a qnt:Quantity ; qnt:onSpace ex:usd-space ; qnt:inUnit ex:usd ; ins:valueFrom ex:var-cpl-retention-identity ] .
+tmpl:term-cpl-continuity a ins:Term , ins:Template ; ins:expressedIn ex:cpl-continuity ; ins:appliesWithin ex:cpl-identity .
+tmpl:def-cpl-continuity a ins:Definition , ins:Template ;
+    ins:arisesUnder tmpl:term-cpl-continuity ; ins:defines ex:ContinuityDate ;
+    ins:means [ a qnt:Quantity ; qnt:onSpace ex:time ; ins:valueFrom ex:var-cpl-continuity-identity ] .
+tmpl:term-cpl-retro a ins:Term , ins:Template ; ins:expressedIn ex:cpl-retro ; ins:appliesWithin ex:cpl-identity .
+tmpl:def-cpl-retro a ins:Definition , ins:Template ;
+    ins:arisesUnder tmpl:term-cpl-retro ; ins:defines ex:RetroactiveDate ;
+    ins:means [ a qnt:Quantity ; qnt:onSpace ex:time ; ins:valueFrom ex:var-cpl-retro-identity ] .
+tmpl:term-cpl-premium a ins:Term , ins:Template ; ins:expressedIn ex:cpl-premium ; ins:appliesWithin ex:cpl-identity .
+tmpl:def-cpl-premium a ins:Definition , ins:Template ;
+    ins:arisesUnder tmpl:term-cpl-premium ; ins:defines ex:CoverageSectionPremium ;
+    ins:means [ a qnt:Quantity ; qnt:onSpace ex:usd-space ; qnt:inUnit ex:usd ; ins:valueFrom ex:var-cpl-premium-identity ] .
+
+tmpl:term-item-8 a ins:Term , ins:Template ; ins:expressedIn ex:item-8 .
+tmpl:def-tria-premium a ins:Definition , ins:Template ;
+    ins:arisesUnder tmpl:term-item-8 ; ins:defines ex:TRIAPremium ;
+    ins:means [ a qnt:Quantity ; qnt:onSpace ex:usd-space ; qnt:inUnit ex:usd ; ins:valueFrom ex:var-tria-premium-identity ] .
+
+# ==== Stated meaning: General Terms and Conditions ============================
+
+# The recital: the consideration. No due date in the fragment.
+tmpl:term-gtc-recital a ins:Term , ins:Template ; ins:expressedIn ex:gtc-recital .
+tmpl:pay-premium a ins:Obligation , ins:Template ;
+    ins:arisesUnder tmpl:term-gtc-recital ;
+    ins:obligor ex:NamedEntity ; ins:obligee ex:Insurer ;
+    ins:activity ins-voc:Pay .
+
+# GTC 1: four sections. The GTC are the general part, no section, so they
+# govern every section. Each section's own words apply only within it.
+tmpl:term-gtc-1 a ins:Term , ins:Template ; ins:expressedIn ex:gtc-1 .
+tmpl:coverage-sections a ins:Sectioning , ins:Template ;
+    ins:arisesUnder tmpl:term-gtc-1 ;
+    ins:section ex:do-identity , ex:epl-identity , ex:fid-identity , ex:cpl-identity .
+
+# GTC 2, first sentence only: the Retention, its amount the word each
+# section's Item 6 row defines. A stated qualifier qualifies one term or
+# relation (§16.5), so it names the CPL insuring term, the only one here.
+tmpl:term-gtc-2 a ins:Term , ins:Template ; ins:expressedIn ex:gtc-2 .
+tmpl:retention a ins:Qualifier , ins:Template ;
+    ins:arisesUnder tmpl:term-gtc-2 ;
+    ins:qualifies tmpl:term-ccp-1 .
+
+# GTC 3: the Policy Aggregate, and the Separate Limit as it applies to the
+# CPL section. Both should also qualify the defence costs of CPL 2 and every
+# other section's insuring term, which one stated qualifier cannot.
+tmpl:term-gtc-3 a ins:Term , ins:Template ; ins:expressedIn ex:gtc-3 .
+tmpl:policy-aggregate a ins:Qualifier , ins:Template ;
+    ins:arisesUnder tmpl:term-gtc-3 ;
+    ins:qualifies tmpl:term-ccp-1 .
+tmpl:separate-limit a ins:Qualifier , ins:Template ;
+    ins:arisesUnder tmpl:term-gtc-3 ;
+    ins:qualifies tmpl:term-ccp-1 .
+
+# GTC 4: the Discovery Period. It arises on the Named Entity's cancellation
+# or either party's nonrenewal (alternatives), never on the Insurer's
+# cancellation for non-payment. Its window runs from the ending.
+tmpl:term-gtc-4 a ins:Term , ins:Template ; ins:expressedIn ex:gtc-4 .
+tmpl:on-nonrenewal-by-named-entity a ins:OnAct , bhv:TriggerDefinition ;
+    bhv:triggerKind bhv:ExternalStimulus ;
+    ins:activity ins-voc:DeclineRenewal ; ins:by ex:NamedEntity .
+tmpl:on-nonrenewal-by-insurer a ins:OnAct , bhv:TriggerDefinition ;
+    bhv:triggerKind bhv:ExternalStimulus ;
+    ins:activity ins-voc:DeclineRenewal ; ins:by ex:Insurer .
+tmpl:elect-discovery a ins:Power , ins:Template ;
+    ins:arisesUnder tmpl:term-gtc-4 ;
+    ins:holder ex:NamedEntity ; ins:counterparty ex:Insurer ;
+    ins:activity ex:ElectDiscovery ;
+    ins:arisesOn tmpl:on-cancel-by-named-entity , tmpl:on-nonrenewal-by-named-entity , tmpl:on-nonrenewal-by-insurer ;
+    ins:window ex:within-30-days-of-ending .
+tmpl:pay-discovery-premium a ins:Obligation , ins:Template ;
+    ins:arisesUnder tmpl:term-gtc-4 ;
+    ins:obligor ex:NamedEntity ; ins:obligee ex:Insurer ;
+    ins:activity ins-voc:Pay ;
+    ins:arisesOnExerciseOf tmpl:elect-discovery .
+# On a Transaction: a right to ask, and a duty to offer on terms the Insurer
+# "may reasonably decide", which nothing here can state.
+tmpl:request-discovery-offer a ins:Power , ins:Template ;
+    ins:arisesUnder tmpl:term-gtc-4 ;
+    ins:holder ex:NamedEntity ; ins:counterparty ex:Insurer ;
+    ins:activity ex:RequestOffer ;
+    ins:arisesOn tmpl:on-transaction ;
+    ins:window ex:within-30-days-of-arising .
+tmpl:offer-discovery a ins:Obligation , ins:Template ;
+    ins:arisesUnder tmpl:term-gtc-4 ;
+    ins:obligor ex:Insurer ; ins:obligee ex:NamedEntity ;
+    ins:activity ex:OfferTerms ;
+    ins:arisesOnExerciseOf tmpl:request-discovery-offer .
+
+# GTC 5: the Transaction. Its run-off and the bar on cancellation are the
+# regime's (below). The waiver is a power whose exercise is an endorsement,
+# an amendment (C9a).
+tmpl:term-gtc-5 a ins:Term , ins:Template ; ins:expressedIn ex:gtc-5 .
+tmpl:waive-transaction a ins:Power , ins:Template ;
+    ins:arisesUnder tmpl:term-gtc-5 ;
+    ins:holder ex:Insurer ; ins:counterparty ex:NamedEntity ;
+    ins:activity ex:Waive ;
+    ins:scope ex:particulars-in-30-days ;
+    ins:appliesInState tmpl:run-off .
+# "No portion of the premium shall be refundable": no transition leaves
+# run-off for cancelled, so tmpl:return-premium cannot arise. This exclusion
+# restates what the regime already gives.
+tmpl:no-refund-after-transaction a ins:Exclusion , ins:Template ;
+    ins:arisesUnder tmpl:term-gtc-5 ;
+    ins:holder ex:Insurer ; ins:counterparty ex:NamedEntity ;
+    ins:excepts tmpl:return-premium ;
+    ins:appliesInState tmpl:run-off .
+
+# GTC 6(c): the spousal and legal representative extension.
+tmpl:term-gtc-6c a ins:Term , ins:Template ; ins:expressedIn ex:gtc-6c .
+tmpl:pay-spouse a ins:Obligation , ins:Template ;
+    ins:arisesUnder tmpl:term-gtc-6c ;
+    ins:obligor ex:Insurer ; ins:obligee ex:SpouseOrRepresentative ;
+    ins:activity ins-voc:Indemnify ;
+    ins:arisesOn tmpl:on-covered-claim ;
+    ins:scope ex:spousal-scope .
+
+# GTC 7: cancellation. The Named Entity's is any time in force, or in the
+# Insurer's notice period. The Insurer's only for non-payment. Neither after
+# a Transaction, since neither applies in run-off.
+tmpl:term-gtc-7a a ins:Term , ins:Template ; ins:expressedIn ex:gtc-7a .
+tmpl:cancel-by-named-entity a ins:Power , ins:Template ;
+    ins:arisesUnder tmpl:term-gtc-7a ;
+    ins:holder ex:NamedEntity ; ins:counterparty ex:Insurer ;
+    ins:activity ins-voc:Terminate ;
+    ins:appliesInState tmpl:in-force , tmpl:cancellation-notice .
+tmpl:term-gtc-7b a ins:Term , ins:Template ; ins:expressedIn ex:gtc-7b .
+tmpl:cancel-by-insurer a ins:Power , ins:Template ;
+    ins:arisesUnder tmpl:term-gtc-7b ;
+    ins:holder ex:Insurer ; ins:counterparty ex:NamedEntity ;
+    ins:activity ins-voc:Terminate ;
+    ins:scope ex:premium-unpaid ;
+    ins:appliesInState tmpl:in-force .
+tmpl:term-gtc-7c a ins:Term , ins:Template ; ins:expressedIn ex:gtc-7c .
+tmpl:on-cancelled a ins:OnEntry , bhv:TriggerDefinition ;
+    bhv:triggerKind bhv:DerivedTrigger ;
+    ins:ofState tmpl:cancelled .
+tmpl:return-premium a ins:Obligation , ins:Template ;       # the pro rata amount is not stated
+    ins:arisesUnder tmpl:term-gtc-7c ;
+    ins:obligor ex:Insurer ; ins:obligee ex:NamedEntity ;
+    ins:activity ins-voc:Pay ;
+    ins:arisesOn tmpl:on-cancelled .
+
+# GTC 10: assignment needs consent.
+tmpl:term-gtc-10 a ins:Term , ins:Template ; ins:expressedIn ex:gtc-10 .
+tmpl:no-assignment a ins:Prohibition , ins:Template ;
+    ins:arisesUnder tmpl:term-gtc-10 ;
+    ins:obligor ex:NamedEntity ; ins:obligee ex:Insurer ;
+    ins:activity ex:Assign .
+tmpl:assignment-with-consent a ins:Permission , ins:Template ;
+    ins:arisesUnder tmpl:term-gtc-10 ;
+    ins:holder ex:NamedEntity ; ins:counterparty ex:Insurer ;
+    ins:activity ex:Assign ;
+    ins:excepts tmpl:no-assignment ;
+    ins:scope ex:insurer-consented .
+
+# GTC 11, first sentence: no action until compliance and a final amount.
+tmpl:term-gtc-11 a ins:Term , ins:Template ; ins:expressedIn ex:gtc-11 ;
+    ins:classification ex:condition-precedent .
+tmpl:no-premature-action a ins:Prohibition , ins:Template ;
+    ins:arisesUnder tmpl:term-gtc-11 ;
+    ins:obligor ex:InsuredPerson ; ins:obligee ex:Insurer ;
+    ins:activity ex:BringAction ;
+    ins:scope ex:action-not-ripe .
+
+# GTC 12, second sentence: cooperation on insolvency, each way.
+tmpl:term-gtc-12 a ins:Term , ins:Template ; ins:expressedIn ex:gtc-12 .
+tmpl:on-insolvency a ins:OnCondition , bhv:TriggerDefinition ;
+    bhv:triggerKind bhv:DerivedTrigger ;
+    ins:condition ex:insolvency .
+tmpl:insurer-cooperates a ins:Obligation , ins:Template ;
+    ins:arisesUnder tmpl:term-gtc-12 ;
+    ins:obligor ex:Insurer ; ins:obligee ex:InsuredPerson ;
+    ins:activity ex:Cooperate ;
+    ins:arisesOn tmpl:on-insolvency .
+tmpl:insured-cooperates a ins:Obligation , ins:Template ;
+    ins:arisesUnder tmpl:term-gtc-12 ;
+    ins:obligor ex:InsuredPerson ; ins:obligee ex:Insurer ;
+    ins:activity ex:Cooperate ;
+    ins:arisesOn tmpl:on-insolvency .
+
+# ---- GTC 16(c): definitions of general applicability -------------------------
+
+tmpl:term-def-e-consultant a ins:Term , ins:Template ; ins:expressedIn ex:def-e-consultant .
+tmpl:def-e-consultant a ins:Definition , ins:Template ;
+    ins:arisesUnder tmpl:term-def-e-consultant ; ins:defines ex:EConsultantFirm ; ins:means ex:is-e-consultant-firm .
+tmpl:term-def-e-discovery a ins:Term , ins:Template ; ins:expressedIn ex:def-e-discovery .
+tmpl:def-e-discovery a ins:Definition , ins:Template ;
+    ins:arisesUnder tmpl:term-def-e-discovery ; ins:defines ex:EDiscovery ; ins:means ex:is-e-discovery .
+tmpl:term-def-e-services a ins:Term , ins:Template ; ins:expressedIn ex:def-e-services .
+tmpl:def-e-services a ins:Definition , ins:Template ;
+    ins:arisesUnder tmpl:term-def-e-services ; ins:defines ex:EDiscoveryServices ; ins:means ex:is-e-discovery-services .
+tmpl:term-def-enforcement-body a ins:Term , ins:Template ; ins:expressedIn ex:def-enforcement-body .
+tmpl:def-enforcement-body a ins:Definition , ins:Template ;
+    ins:arisesUnder tmpl:term-def-enforcement-body ; ins:defines ex:EnforcementBody ; ins:means ex:is-enforcement-body .
+tmpl:term-def-foreign-jurisdiction a ins:Term , ins:Template ; ins:expressedIn ex:def-foreign-jurisdiction .
+tmpl:def-foreign-jurisdiction a ins:Definition , ins:Template ;
+    ins:arisesUnder tmpl:term-def-foreign-jurisdiction ; ins:defines ex:ForeignJurisdiction ; ins:means ex:is-foreign-jurisdiction .
+
+# Several parties, with no acting rule: the policy never says how they act
+# together, so a relation reaching the word is Undetermined (CC-D10).
+tmpl:term-def-organization a ins:Term , ins:Template ; ins:expressedIn ex:def-organization .
+tmpl:def-organization a ins:Definition , ins:Template ;
+    ins:arisesUnder tmpl:term-def-organization ;
+    ins:defines ex:Organization ;
+    ins:means ex:NamedEntity , ex:Subsidiary , ex:DebtorInPossession .
+
+tmpl:term-def-transaction a ins:Term , ins:Template ; ins:expressedIn ex:def-transaction .
+tmpl:def-transaction a ins:Definition , ins:Template ;
+    ins:arisesUnder tmpl:term-def-transaction ; ins:defines ex:Transaction ; ins:means ex:transaction-meaning .
+
+# "Policy Period": the word, and the regime it implies. One term owns the
+# regime, although Item 2, the attestation, GTC 5 and GTC 7 each state a part.
+tmpl:term-def-policy-period a ins:Term , ins:Template ; ins:expressedIn ex:def-policy-period .
+tmpl:def-policy-period a ins:Definition , ins:Template ;
+    ins:arisesUnder tmpl:term-def-policy-period ; ins:defines ex:PolicyPeriod ; ins:means ex:policy-period-span .
+
+tmpl:policy-regime a ins:Regime , bhv:StateSpace , ins:Template ;
+    fnd:hasIdentity tmpl:policy-regime-identity ;
+    ins:arisesUnder tmpl:term-def-policy-period ;
+    bhv:initialState tmpl:unsigned .
+
+tmpl:unsigned a bhv:State ;
+    bhv:inStateSpace tmpl:policy-regime ; ins:stateKind ins-voc:Conditional .
+tmpl:issued a bhv:State ;                                   # signed, before the Inception Date
+    bhv:inStateSpace tmpl:policy-regime ; ins:stateKind ins-voc:Conditional .
+tmpl:in-force a bhv:State ;
+    bhv:inStateSpace tmpl:policy-regime ; ins:stateKind ins-voc:InForce ;
+    ins:begins ins-voc:TheInstrument .
+tmpl:cancellation-notice a bhv:State ;
+    bhv:inStateSpace tmpl:policy-regime ; ins:stateKind ins-voc:NoticePeriod .
+tmpl:run-off a bhv:State ;                                  # after a Transaction: no state kind fits
+    bhv:inStateSpace tmpl:policy-regime ; ins:stateKind ins-voc:InForce .
+tmpl:expired a bhv:State ;
+    bhv:inStateSpace tmpl:policy-regime ; ins:stateKind ins-voc:Expired ;
+    ins:ends ins-voc:TheInstrument .
+tmpl:cancelled a bhv:State ;
+    bhv:inStateSpace tmpl:policy-regime ; ins:stateKind ins-voc:Terminated ;
+    ins:ends ins-voc:TheInstrument .
+
+# The attestation: valid only once signed for the Insurer.
+tmpl:on-signed a ins:OnAcceptance , bhv:TriggerDefinition ;
+    bhv:triggerKind bhv:DerivedTrigger ;
+    ins:by ex:Insurer .
+tmpl:on-inception a ins:OnExpiry , bhv:TriggerDefinition ;
+    bhv:triggerKind bhv:ScheduledTrigger ;
+    ins:at ex:inception-at .
+tmpl:on-expiration a ins:OnExpiry , bhv:TriggerDefinition ;
+    bhv:triggerKind bhv:ScheduledTrigger ;
+    ins:at ex:expiration-at .
+tmpl:on-cancel-by-named-entity a ins:OnExercise , bhv:TriggerDefinition ;
+    bhv:triggerKind bhv:ExternalStimulus ;
+    ins:ofPower tmpl:cancel-by-named-entity .
+tmpl:on-cancel-by-insurer a ins:OnExercise , bhv:TriggerDefinition ;
+    bhv:triggerKind bhv:ExternalStimulus ;
+    ins:ofPower tmpl:cancel-by-insurer .
+# "Not less than fifteen days": the notice names the date. The minimum only.
+tmpl:on-notice-runs-out a ins:OnExpiry , bhv:TriggerDefinition ;
+    bhv:triggerKind bhv:ScheduledTrigger ;
+    ins:after [ a qnt:Quantity ; qnt:onSpace ex:durations ; qnt:numericValue "15"^^xsd:decimal ; qnt:inUnit ex:day ] .
+tmpl:on-transaction a ins:OnCondition , bhv:TriggerDefinition ;
+    bhv:triggerKind bhv:DerivedTrigger ;
+    ins:condition ex:Transaction .                          # the word
+tmpl:on-waiver a ins:OnExercise , bhv:TriggerDefinition ;
+    bhv:triggerKind bhv:ExternalStimulus ;
+    ins:ofPower tmpl:waive-transaction .
+
+tmpl:sign a ins:RegimeTransition , bhv:TransitionDefinition ;
+    bhv:fromState tmpl:unsigned ; bhv:toState tmpl:issued ;
+    bhv:hasTrigger tmpl:on-signed ;
+    bhv:selectionPolicy bhv:SingleMatch ; bhv:activationPolicy bhv:ImmediateActivation .
+tmpl:incept a ins:RegimeTransition , bhv:TransitionDefinition ;
+    bhv:fromState tmpl:issued ; bhv:toState tmpl:in-force ;
+    bhv:hasTrigger tmpl:on-inception ;
+    bhv:selectionPolicy bhv:SingleMatch ; bhv:activationPolicy bhv:ImmediateActivation .
+tmpl:expire a ins:RegimeTransition , bhv:TransitionDefinition ;
+    bhv:fromState tmpl:in-force ; bhv:toState tmpl:expired ;
+    bhv:hasTrigger tmpl:on-expiration ;
+    bhv:selectionPolicy bhv:SingleMatch ; bhv:activationPolicy bhv:ImmediateActivation .
+tmpl:expire-in-notice a ins:RegimeTransition , bhv:TransitionDefinition ;
+    bhv:fromState tmpl:cancellation-notice ; bhv:toState tmpl:expired ;
+    bhv:hasTrigger tmpl:on-expiration ;
+    bhv:selectionPolicy bhv:SingleMatch ; bhv:activationPolicy bhv:ImmediateActivation .
+tmpl:expire-in-run-off a ins:RegimeTransition , bhv:TransitionDefinition ;
+    bhv:fromState tmpl:run-off ; bhv:toState tmpl:expired ;
+    bhv:hasTrigger tmpl:on-expiration ;
+    bhv:selectionPolicy bhv:SingleMatch ; bhv:activationPolicy bhv:ImmediateActivation .
+tmpl:cancel-now a ins:RegimeTransition , bhv:TransitionDefinition ;
+    bhv:fromState tmpl:in-force ; bhv:toState tmpl:cancelled ;
+    bhv:hasTrigger tmpl:on-cancel-by-named-entity ;
+    bhv:selectionPolicy bhv:SingleMatch ; bhv:activationPolicy bhv:ImmediateActivation .
+tmpl:cancel-during-notice a ins:RegimeTransition , bhv:TransitionDefinition ;
+    bhv:fromState tmpl:cancellation-notice ; bhv:toState tmpl:cancelled ;
+    bhv:hasTrigger tmpl:on-cancel-by-named-entity ;
+    bhv:selectionPolicy bhv:SingleMatch ; bhv:activationPolicy bhv:ImmediateActivation .
+tmpl:give-cancellation-notice a ins:RegimeTransition , bhv:TransitionDefinition ;
+    bhv:fromState tmpl:in-force ; bhv:toState tmpl:cancellation-notice ;
+    bhv:hasTrigger tmpl:on-cancel-by-insurer ;
+    bhv:selectionPolicy bhv:SingleMatch ; bhv:activationPolicy bhv:ImmediateActivation .
+tmpl:notice-runs-out a ins:RegimeTransition , bhv:TransitionDefinition ;
+    bhv:fromState tmpl:cancellation-notice ; bhv:toState tmpl:cancelled ;
+    bhv:hasTrigger tmpl:on-notice-runs-out ;
+    bhv:selectionPolicy bhv:SingleMatch ; bhv:activationPolicy bhv:ImmediateActivation .
+tmpl:enter-run-off a ins:RegimeTransition , bhv:TransitionDefinition ;
+    bhv:fromState tmpl:in-force ; bhv:toState tmpl:run-off ;
+    bhv:hasTrigger tmpl:on-transaction ;
+    bhv:selectionPolicy bhv:SingleMatch ; bhv:activationPolicy bhv:ImmediateActivation .
+tmpl:waive-run-off a ins:RegimeTransition , bhv:TransitionDefinition ;
+    bhv:fromState tmpl:run-off ; bhv:toState tmpl:in-force ;
+    bhv:hasTrigger tmpl:on-waiver ;
+    bhv:selectionPolicy bhv:SingleMatch ; bhv:activationPolicy bhv:ImmediateActivation .
+
+# ==== Stated meaning: the CPL section =========================================
+
+# CPL 1: one trigger for both insuring agreements, one occasion per Claim.
+# A and B split the Loss by whether the Organization indemnified.
+tmpl:term-ccp-1 a ins:Term , ins:Template ; ins:expressedIn ex:ccp-1 .
+tmpl:on-covered-claim a ins:OnCondition , bhv:TriggerDefinition ;
+    bhv:triggerKind bhv:DerivedTrigger ;
+    ins:condition ex:covered-claim .
+tmpl:pay-a a ins:Obligation , ins:Template ;
+    ins:arisesUnder tmpl:term-ccp-1 ;
+    ins:obligor ex:Insurer ; ins:obligee ex:InsuredPerson ;
+    ins:activity ins-voc:Indemnify ;
+    ins:arisesOn tmpl:on-covered-claim ;
+    ins:scope ex:not-indemnified .
+tmpl:pay-b a ins:Obligation , ins:Template ;
+    ins:arisesUnder tmpl:term-ccp-1 ;
+    ins:obligor ex:Insurer ; ins:obligee ex:IndemnifyingOrganization ;
+    ins:activity ins-voc:Indemnify ;
+    ins:arisesOn tmpl:on-covered-claim ;
+    ins:scope ex:indemnified .
+
+# CPL 2(a), with 2(c)'s endings. The right to defend is the duty's other
+# side here: nothing in the fragment lets an Insured refuse the defence.
+tmpl:term-ccp-2a a ins:Term , ins:Template ; ins:expressedIn ex:ccp-2a .
+tmpl:on-limits-exhausted a ins:OnCondition , bhv:TriggerDefinition ;
+    bhv:triggerKind bhv:DerivedTrigger ;
+    ins:condition ex:limits-exhausted .
+tmpl:on-settlement-refused a ins:OnCondition , bhv:TriggerDefinition ;
+    bhv:triggerKind bhv:DerivedTrigger ;
+    ins:condition ex:hammer-applies .
+tmpl:defend a ins:Obligation , ins:Template ;
+    ins:arisesUnder tmpl:term-ccp-2a ;
+    ins:obligor ex:Insurer ; ins:obligee ex:InsuredPerson ;
+    ins:activity ex:Defend ;
+    ins:arisesOn tmpl:on-covered-claim ;
+    ins:endsOn tmpl:on-limits-exhausted , tmpl:on-settlement-refused .
+tmpl:pay-defense-costs a ins:Obligation , ins:Template ;
+    ins:arisesUnder tmpl:term-ccp-2a ;
+    ins:obligor ex:Insurer ; ins:obligee ex:InsuredPerson ;
+    ins:activity ins-voc:Pay ;
+    ins:arisesOn tmpl:on-covered-claim ;
+    ins:endsOn tmpl:on-limits-exhausted .
+tmpl:no-defence-of-do-or-securities a ins:Exclusion , ins:Template ;
+    ins:arisesUnder tmpl:term-ccp-2a ;
+    ins:holder ex:Insurer ; ins:counterparty ex:InsuredPerson ;
+    ins:excepts tmpl:defend ;
+    ins:scope ex:do-or-securities .
+
+# CPL 2(b): consented defence costs where there is no duty to defend.
+tmpl:term-ccp-2b a ins:Term , ins:Template ; ins:expressedIn ex:ccp-2b .
+tmpl:indemnify-defense-costs a ins:Obligation , ins:Template ;
+    ins:arisesUnder tmpl:term-ccp-2b ;
+    ins:obligor ex:Insurer ; ins:obligee ex:InsuredPerson ;
+    ins:activity ins-voc:Indemnify ;
+    ins:arisesOn tmpl:on-covered-claim ;
+    ins:scope ex:consented-costs-scope .
+
+# CPL 2(c): its endings are on tmpl:defend. What it adds is the hammer: a
+# cap of the refused settlement, plus earlier costs, plus 70% of later ones.
+tmpl:term-ccp-2c a ins:Term , ins:Template ; ins:expressedIn ex:ccp-2c .
+tmpl:hammer-cap a ins:Qualifier , ins:Template ;
+    ins:arisesUnder tmpl:term-ccp-2c ;
+    ins:qualifies tmpl:term-ccp-1 .
+
+# CPL 2(d)(1): duties on each Claim. "As soon as practicable" and
+# "immediately" have no range. The request is the Insurer's power.
+tmpl:term-ccp-2d1 a ins:Term , ins:Template ; ins:expressedIn ex:ccp-2d1 .
+tmpl:on-claim a ins:OnCondition , bhv:TriggerDefinition ;
+    bhv:triggerKind bhv:DerivedTrigger ;
+    ins:condition ex:claim-made .
+tmpl:send-copies a ins:Obligation , ins:Template ;
+    ins:arisesUnder tmpl:term-ccp-2d1 ;
+    ins:obligor ex:InsuredPerson ; ins:obligee ex:Insurer ;
+    ins:activity ins-voc:Report ;
+    ins:arisesOn tmpl:on-claim .
+tmpl:record-claim a ins:Obligation , ins:Template ;
+    ins:arisesUnder tmpl:term-ccp-2d1 ;
+    ins:obligor ex:InsuredPerson ; ins:obligee ex:Insurer ;
+    ins:activity ex:RecordClaim ;
+    ins:arisesOn tmpl:on-claim .
+tmpl:request-documents a ins:Power , ins:Template ;
+    ins:arisesUnder tmpl:term-ccp-2d1 ;
+    ins:holder ex:Insurer ; ins:counterparty ex:InsuredPerson ;
+    ins:activity ex:RequestInformation ;
+    ins:arisesOn tmpl:on-claim .
+tmpl:furnish-documents a ins:Obligation , ins:Template ;
+    ins:arisesUnder tmpl:term-ccp-2d1 ;
+    ins:obligor ex:InsuredPerson ; ins:obligee ex:Insurer ;
+    ins:activity ins-voc:Disclose ;
+    ins:arisesOnExerciseOf tmpl:request-documents .
+tmpl:cooperate a ins:Obligation , ins:Template ;
+    ins:arisesUnder tmpl:term-ccp-2d1 ;
+    ins:obligor ex:InsuredPerson ; ins:obligee ex:Insurer ;
+    ins:activity ex:Cooperate ;
+    ins:arisesOn tmpl:on-claim .
+
+# CPL 2(d)(2): no settlement without consent, and its effect stated as
+# relations (law I12): what is paid without consent is not covered. That
+# it does not erode the Retention is a qualifier's business, unstated.
+tmpl:term-ccp-2d2 a ins:Term , ins:Template ; ins:expressedIn ex:ccp-2d2 .
+tmpl:no-settlement a ins:Prohibition , ins:Template ;
+    ins:arisesUnder tmpl:term-ccp-2d2 ;
+    ins:obligor ex:InsuredPerson ; ins:obligee ex:Insurer ;
+    ins:activity ex:SettleOrAdmit .
+tmpl:settlement-with-consent a ins:Permission , ins:Template ;
+    ins:arisesUnder tmpl:term-ccp-2d2 ;
+    ins:holder ex:InsuredPerson ; ins:counterparty ex:Insurer ;
+    ins:activity ex:SettleOrAdmit ;
+    ins:excepts tmpl:no-settlement ;
+    ins:scope ex:insurer-consented .
+tmpl:unconsented-not-covered-a a ins:Exclusion , ins:Template ;
+    ins:arisesUnder tmpl:term-ccp-2d2 ;
+    ins:holder ex:Insurer ; ins:counterparty ex:InsuredPerson ;
+    ins:excepts tmpl:pay-a ; ins:scope ex:unconsented-settlement .
+tmpl:unconsented-not-covered-b a ins:Exclusion , ins:Template ;
+    ins:arisesUnder tmpl:term-ccp-2d2 ;
+    ins:holder ex:Insurer ; ins:counterparty ex:IndemnifyingOrganization ;
+    ins:excepts tmpl:pay-b ; ins:scope ex:unconsented-settlement .
+
+# CPL 2(d)(3): a right with no prohibition to except, so its correlative duty.
+tmpl:term-ccp-2d3 a ins:Term , ins:Template ; ins:expressedIn ex:ccp-2d3 .
+tmpl:permit-association a ins:Obligation , ins:Template ;
+    ins:arisesUnder tmpl:term-ccp-2d3 ;
+    ins:obligor ex:InsuredPerson ; ins:obligee ex:Insurer ;
+    ins:activity ex:PermitAssociation ;
+    ins:arisesOn tmpl:on-claim .
+
+# CPL 2(d)(4): the entity's own liability. Its second and third sentences
+# hold by construction: no Organization is an obligee of A or of CPL 2.
+tmpl:term-ccp-2d4 a ins:Term , ins:Template ; ins:expressedIn ex:ccp-2d4 .
+tmpl:entity-liability-excluded a ins:Exclusion , ins:Template ;
+    ins:arisesUnder tmpl:term-ccp-2d4 ;
+    ins:holder ex:Insurer ; ins:counterparty ex:IndemnifyingOrganization ;
+    ins:excepts tmpl:pay-b ; ins:scope ex:entity-own-liability .
+
+# CPL 2(d)(5): panel counsel, in part.
+tmpl:term-ccp-2d5 a ins:Term , ins:Template ; ins:expressedIn ex:ccp-2d5 .
+tmpl:select-panel-counsel a ins:Obligation , ins:Template ;
+    ins:arisesUnder tmpl:term-ccp-2d5 ;
+    ins:obligor ex:InsuredPerson ; ins:obligee ex:Insurer ;
+    ins:activity ex:SelectCounsel ;
+    ins:arisesOn tmpl:on-claim ;
+    ins:scope ex:securities-claim-without-do .
+tmpl:amend-panel a ins:Power , ins:Template ;
+    ins:arisesUnder tmpl:term-ccp-2d5 ;
+    ins:holder ex:Insurer ; ins:counterparty ex:InsuredPerson ;
+    ins:activity ex:AmendPanel .
+tmpl:no-unreasonable-refusal a ins:Prohibition , ins:Template ;
+    ins:arisesUnder tmpl:term-ccp-2d5 ;
+    ins:obligor ex:Insurer ; ins:obligee ex:InsuredPerson ;
+    ins:activity ex:WithholdConsent ;
+    ins:scope ex:refusal-unreasonable .
+
+# CPL 2(d)(6).
+tmpl:term-ccp-2d6 a ins:Term , ins:Template ; ins:expressedIn ex:ccp-2d6 .
+tmpl:no-prejudice a ins:Prohibition , ins:Template ;
+    ins:arisesUnder tmpl:term-ccp-2d6 ;
+    ins:obligor ex:InsuredPerson ; ins:obligee ex:Insurer ;
+    ins:activity ex:PrejudiceInsurer ;
+    ins:scope ex:intentional .
+
+# CPL 3(a)'s proviso: defence until adjudication, then reimbursement.
+tmpl:on-conduct-adjudicated a ins:OnCondition , bhv:TriggerDefinition ;
+    bhv:triggerKind bhv:DerivedTrigger ;
+    ins:condition ex:conduct-adjudicated .
+tmpl:reimburse-defense-costs a ins:Obligation , ins:Template ;
+    ins:arisesUnder tmpl:term-ccp-3a ;
+    ins:obligor ex:InsuredPerson ; ins:obligee ex:Insurer ;
+    ins:activity ins-voc:Repay ;
+    ins:arisesOn tmpl:on-conduct-adjudicated .
+

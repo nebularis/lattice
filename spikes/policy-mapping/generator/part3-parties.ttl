@@ -1,0 +1,68 @@
+# ---- the policy and its parties ----------------------------------------------
+#
+# The Insured Person, the indemnifying Organization and the spouse or
+# representative are contingent occupancies (ADR-A102), each resolved from
+# the Claim on each occasion (D17, I11). Subsidiaries and a debtor-in-
+# possession are contingent too, with no resolution: the fragment does not
+# define Subsidiary.
+
+ex:policy-v1 a ins:Instrument ;
+    fnd:hasIdentity ex:policy-identity ;
+    ins:expressedIn ex:policy-wording-v1 ;
+    ins:party ex:insurer-occ , ex:named-entity-occ , ex:subsidiary-occ , ex:dip-occ ,
+              ex:insured-person-occ , ex:indemnifying-org-occ , ex:spouse-occ .
+
+ex:acme a pty:Actor ; rdfs:label "Acme Insurance Company (anonymised)" .
+ex:named-entity-actor a pty:Actor ; rdfs:label "the Named Entity, a non-profit (anonymised)" .
+
+# Item 4's two addresses, by purpose: GTC 9 notices, and CPL 5 notices of
+# Claim. ins:noticeAddress records strings, not which notices each takes.
+ex:insurer-occ a pty:RoleOccupancy ;
+    fnd:hasIdentity ex:insurer-occ-identity ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2024-06-01T00:01:00-04:00"^^xsd:dateTime ] ;
+    pty:inRole ex:Insurer ; pty:occupiedBy ex:acme ;
+    ins:noticeAddress "[Insurer Address, withheld]" , "[Claims Address, withheld]" .
+ex:named-entity-occ a pty:RoleOccupancy ;
+    fnd:hasIdentity ex:named-entity-occ-identity ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2024-06-01T00:01:00-04:00"^^xsd:dateTime ] ;
+    pty:inRole ex:NamedEntity ; pty:occupiedBy ex:named-entity-actor ;
+    ins:noticeAddress "[Named Entity Address, withheld]" .
+ex:subsidiary-occ a pty:RoleOccupancy ;
+    fnd:hasIdentity ex:subsidiary-occ-identity ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2024-06-01T00:01:00-04:00"^^xsd:dateTime ] ;
+    pty:inRole ex:Subsidiary .
+ex:dip-occ a pty:RoleOccupancy ;
+    fnd:hasIdentity ex:dip-occ-identity ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2024-06-01T00:01:00-04:00"^^xsd:dateTime ] ;
+    pty:inRole ex:DebtorInPossession .
+
+ex:insured-person-occ a pty:RoleOccupancy ;
+    fnd:hasIdentity ex:insured-person-occ-identity ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2024-06-01T00:01:00-04:00"^^xsd:dateTime ] ;
+    pty:inRole ex:InsuredPerson ;
+    ins:resolvedBy ex:insured-person-resolution .
+ex:indemnifying-org-occ a pty:RoleOccupancy ;
+    fnd:hasIdentity ex:indemnifying-org-occ-identity ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2024-06-01T00:01:00-04:00"^^xsd:dateTime ] ;
+    pty:inRole ex:IndemnifyingOrganization ;
+    ins:resolvedBy ex:indemnifying-org-resolution .
+ex:spouse-occ a pty:RoleOccupancy ;
+    fnd:hasIdentity ex:spouse-occ-identity ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2024-06-01T00:01:00-04:00"^^xsd:dateTime ] ;
+    pty:inRole ex:SpouseOrRepresentative ;
+    ins:resolvedBy ex:spouse-resolution .
+
+# From the Claim to whom it is made against, kept if an Insured Person under
+# the CPL section's definition, which the fragment does not include.
+ex:insured-person-resolution a ins:PartyResolution ;
+    ins:resolvesFrom ex:Claim ;
+    ins:resolutionStep [ a elg:EvidenceStep ; elg:stepIndex 0 ; elg:stepProperty ex:madeAgainst ; elg:stepDirection elg:Forward ] ;
+    ins:resolutionFilter ex:is-insured-person .
+ex:indemnifying-org-resolution a ins:PartyResolution ;
+    ins:resolvesFrom ex:Claim ;
+    ins:resolutionStep [ a elg:EvidenceStep ; elg:stepIndex 0 ; elg:stepProperty ex:indemnifiedBy ; elg:stepDirection elg:Forward ] ;
+    ins:resolutionFilter ex:is-organization .
+ex:spouse-resolution a ins:PartyResolution ;
+    ins:resolvesFrom ex:Claim ;
+    ins:resolutionStep [ a elg:EvidenceStep ; elg:stepIndex 0 ; elg:stepProperty ex:madeAgainst ; elg:stepDirection elg:Forward ] ;
+    ins:resolutionFilter ex:is-spouse-or-representative .

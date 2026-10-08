@@ -1,0 +1,63 @@
+# ---- CPL 5: notice and reporting ----------------------------------------------
+
+# The mailbox rule: a mailed or e-mailed notice is given when sent.
+tmpl:term-ccp-5-intro a ins:Term , ins:Template ; ins:expressedIn ex:ccp-5-intro .
+tmpl:mailed-is-given a ins:Deeming , ins:Template ;
+    ins:arisesUnder tmpl:term-ccp-5-intro ;
+    ins:deems ex:notice-given ;
+    ins:when ex:notice-sent ;
+    ins:conclusive true ;
+    ins:forPurposeOf tmpl:notify-claim .
+
+# The condition precedent. Its effect is already in tmpl:on-covered-claim,
+# whose condition requires the Claim reported as 5(a) requires (law I12).
+tmpl:term-ccp-5a a ins:Term , ins:Template ; ins:expressedIn ex:ccp-5a ;
+    ins:classification ex:condition-precedent .
+tmpl:notify-claim a ins:Obligation , ins:Template ;
+    ins:arisesUnder tmpl:term-ccp-5a ;
+    ins:obligor ex:InsuredPerson ; ins:obligee ex:Insurer ;
+    ins:activity ins-voc:Report ;
+    ins:arisesOn tmpl:on-claim ;
+    ins:due ex:by-90-days-after-ending .
+
+# Relation back. "Solely for the purpose of establishing whether [the Claim]
+# was first made during the Policy Period": a purpose stated as a question,
+# which ins:forPurposeOf can only name as the relations reading it.
+tmpl:term-ccp-5b a ins:Term , ins:Template ; ins:expressedIn ex:ccp-5b .
+tmpl:related-claim-relates-back a ins:Deeming , ins:Template ;
+    ins:arisesUnder tmpl:term-ccp-5b ;
+    ins:deems ex:first-made-in-period ;
+    ins:when ex:related-to-reported-claim ;
+    ins:conclusive true ;
+    ins:forPurposeOf tmpl:pay-a , tmpl:pay-b , tmpl:defend , tmpl:pay-defense-costs .
+tmpl:early-loss-5b-a a ins:Exclusion , ins:Template ;
+    ins:arisesUnder tmpl:term-ccp-5b ;
+    ins:holder ex:Insurer ; ins:counterparty ex:InsuredPerson ;
+    ins:excepts tmpl:pay-a ; ins:scope ex:loss-before-actual-claim .
+tmpl:early-loss-5b-b a ins:Exclusion , ins:Template ;
+    ins:arisesUnder tmpl:term-ccp-5b ;
+    ins:holder ex:Insurer ; ins:counterparty ex:IndemnifyingOrganization ;
+    ins:excepts tmpl:pay-b ; ins:scope ex:loss-before-actual-claim .
+
+tmpl:term-ccp-5c a ins:Term , ins:Template ; ins:expressedIn ex:ccp-5c .
+tmpl:circumstances-relate-back a ins:Deeming , ins:Template ;
+    ins:arisesUnder tmpl:term-ccp-5c ;
+    ins:deems ex:first-made-in-period ;
+    ins:when ex:arises-from-notified-circumstances ;
+    ins:conclusive true ;
+    ins:forPurposeOf tmpl:pay-a , tmpl:pay-b , tmpl:defend , tmpl:pay-defense-costs .
+# "Shall be presumed": rebuttable (S25).
+tmpl:tolling-is-specific a ins:Deeming , ins:Template ;
+    ins:arisesUnder tmpl:term-ccp-5c ;
+    ins:deems ex:circumstances-specific ;
+    ins:when ex:tolling-agreement-attached ;
+    ins:conclusive false .
+tmpl:early-loss-5c-a a ins:Exclusion , ins:Template ;
+    ins:arisesUnder tmpl:term-ccp-5c ;
+    ins:holder ex:Insurer ; ins:counterparty ex:InsuredPerson ;
+    ins:excepts tmpl:pay-a ; ins:scope ex:loss-before-actual-claim .
+tmpl:early-loss-5c-b a ins:Exclusion , ins:Template ;
+    ins:arisesUnder tmpl:term-ccp-5c ;
+    ins:holder ex:Insurer ; ins:counterparty ex:IndemnifyingOrganization ;
+    ins:excepts tmpl:pay-b ; ins:scope ex:loss-before-actual-claim .
+
