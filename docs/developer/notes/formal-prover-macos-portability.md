@@ -64,6 +64,13 @@ Needed. A POSIX branch for both native tasks and for the driver's native route, 
 toolchain root taken from `LATTICE_FORMAL_ROOT` and the opam root from `OPAMROOT`. The Isabelle
 entry point on macOS is `<root>/Isabelle2025-2.app/bin/isabelle`.
 
+**Fixed 2026-10-08.** `env/install_native.py` installs Isabelle2025-2 (macOS, Linux on x86_64 or
+arm64) and the opam switch with Rocq (macOS, Linux), and both `bootstrap:formal-native-*` tasks run
+it outside Windows. `driver.py`'s native route runs `isabelle` directly and Rocq through `opam exec`
+on macOS and Linux. Windows keeps its PowerShell route, now tracked in git as
+`env/install-isabelle.ps1` and `env/install-ocaml-rocq.ps1`, reading their pins from
+`env/env-common.ps1`, so a fresh Windows checkout can install both too.
+
 ### PF3. No task runs the proofs
 
 No `mise` task compiles the Rocq theories or builds the Isabelle sessions, and `gate.py` has no task.

@@ -86,8 +86,9 @@ Not part of `bootstrap`/`check` by default — large, native, and only needed if
 formal-methods track C, D or E (see the [lifecycle guide](formal-methods-lifecycle.md)):
 
 ```bash
-# Track E: Isabelle/HOL, native install, Windows-scripted in this spike (set LATTICE_FORMAL_ROOT
-# first, to a short path outside the repository, if your OS has path-length limits)
+# Track E: Isabelle/HOL, native install on macOS, Linux or Windows (about 1.2 GB, prebuilt HOL
+# heap included). Installs under LATTICE_FORMAL_ROOT, default ~/.local/share/lattice-formal
+# (C:/fmx on Windows, where a short path avoids path-length limits)
 mise run bootstrap:formal-native-isabelle
 mise run check:proofs
 

@@ -21,10 +21,9 @@ permissions:
 jobs:
   # Track E: mechanised Isabelle/HOL theories (tools/proofs/, ADR-A-FM1,
   # ADR-A-FM2). Native route only -- no Isabelle container image exists in
-  # this programme (epic formal-methods §4). The Windows-only
-  # `bootstrap:formal-native-isabelle` mise task does not run on this
-  # runner's OS, so this job installs Isabelle directly instead, the same
-  # Linux distribution the epic's own toolchain-feasibility notes name.
+  # this programme (epic formal-methods §4). This job installs the Linux
+  # release directly and puts it on PATH, which `check:proofs` finds, the same
+  # distribution `bootstrap:formal-native-isabelle` installs on macOS and Linux.
   # Best-effort: `continue-on-error` so a toolchain hiccup here never blocks
   # the rest of CI, since this check has no analogue in a developer's own
   # default `mise run check` either (it is deliberately excluded there too,

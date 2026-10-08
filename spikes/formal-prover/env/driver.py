@@ -22,6 +22,8 @@ import tempfile
 import time
 from pathlib import Path
 
+from install_native import SWITCH, isabelle_executable
+
 REPO_ROOT = Path(__file__).resolve().parents[3]
 BUILD_ROOT = REPO_ROOT / ".build" / "formal"
 
@@ -38,8 +40,14 @@ def _run(cmd: list[str], **kw) -> subprocess.CompletedProcess:
 
 
 def native_rocq(args: list[str], workdir: Path) -> int:
-    """Runs a Rocq command natively, via PowerShell so env-common.ps1's PATH setup applies.
-    Image route runs are what the report records; this exists for local iteration only."""
+    """Runs a Rocq command natively: in the opam switch on macOS and Linux, and via PowerShell on
+    Windows, so env-common.ps1's PATH setup applies. Image route runs are what the report records;
+    this exists for local iteration only."""
+    if os.name != "nt":
+        env = dict(os.environ)
+        if os.environ.get("LATTICE_FORMAL_OPAMROOT"):
+            env["OPAMROOT"] = os.environ["LATTICE_FORMAL_OPAMROOT"]
+        return _run(["opam", "exec", f"--switch={SWITCH}", "--", *args], cwd=workdir, env=env).returncode
     opam_root = os.environ.get(
         "LATTICE_FORMAL_OPAMROOT",
         str(Path(os.environ.get("LOCALAPPDATA", "")) / "fm-experiment" / "opamroot"),
@@ -70,6 +78,14 @@ def image_rocq(args: list[str], workdir: Path, image: str = "rocq") -> int:
 
 
 def native_isabelle(args: list[str], workdir: Path) -> int:
+    """Runs the isabelle tool natively: directly on macOS and Linux, and through Isabelle's own
+    Cygwin bash on Windows."""
+    if os.name != "nt":
+        isabelle = isabelle_executable()
+        if not isabelle:
+            raise SystemExit("Isabelle not found: run `mise run bootstrap:formal-native-isabelle`, "
+                             "or set FMX_ISABELLE to its home directory")
+        return _run([str(isabelle), *args], cwd=workdir).returncode
     root = os.environ.get("LATTICE_FORMAL_ROOT", "C:/fmx")
     isabelle_home = os.environ.get("FMX_ISABELLE", str(Path(root) / "Isabelle2025-2"))
 

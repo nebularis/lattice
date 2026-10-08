@@ -396,14 +396,14 @@ description = "Build track D's pinned Rocq+MetaRocq and GHC-wasm images (epic fo
 run = "python spikes/formal-prover/env/build_images.py"
 
 [tasks."bootstrap:formal-native-rocq"]
-description = "Install opam, an OCaml switch and Rocq natively, for interactive authoring only (epic E9). Windows only in this spike; set LATTICE_FORMAL_ROOT first for a location outside the repository"
-run_windows = "powershell -NoProfile -ExecutionPolicy Bypass -File .local/formal-methods-spike/scripts/install-ocaml-rocq.ps1"
-run = "echo 'Native Rocq install is scripted for Windows only in this spike (epic E9). Use bootstrap:formal-images for the portable route.'"
+description = "Install an OCaml 5.3.0 opam switch and Rocq natively, for interactive authoring only (epic E9). macOS and Linux need opam on PATH first. Set LATTICE_FORMAL_ROOT or FMX_SWITCH to override the defaults"
+run_windows = "powershell -NoProfile -ExecutionPolicy Bypass -File spikes/formal-prover/env/install-ocaml-rocq.ps1"
+run = "python spikes/formal-prover/env/install_native.py rocq"
 
 [tasks."bootstrap:formal-native-isabelle"]
-description = "Install Isabelle natively, for interactive authoring only (epic E9). Windows only in this spike; set LATTICE_FORMAL_ROOT first for a location outside the repository"
-run_windows = "powershell -NoProfile -ExecutionPolicy Bypass -File .local/formal-methods-spike/scripts/install-isabelle.ps1"
-run = "echo 'Native Isabelle install is scripted for Windows only in this spike (epic E9). Isabelle has no image route here.'"
+description = "Install Isabelle2025-2 natively, with its prebuilt HOL heap, on macOS, Linux or Windows (epic E9). Installs under LATTICE_FORMAL_ROOT, default ~/.local/share/lattice-formal (C:/fmx on Windows)"
+run_windows = "powershell -NoProfile -ExecutionPolicy Bypass -File spikes/formal-prover/env/install-isabelle.ps1"
+run = "python spikes/formal-prover/env/install_native.py isabelle"
 
 [tasks."check:formal-smoke"]
 description = "Confirm both tools run on the image route (portable) for track D (epic formal-methods §4). Pass -- --route native --tool rocq,isabelle on a host with the native toolchains installed for the authoring route too"
@@ -411,7 +411,7 @@ run = "python spikes/formal-prover/env/smoke.py"
 
 # Formal methods, track E (the prover programme, tools/proofs/, ADR-A-FM1, ADR-A-FM2). Native
 # route only: Isabelle has no image in this programme yet (epic formal-methods §4). Needs
-# bootstrap:formal-native-isabelle run first.
+# Isabelle installed first, by bootstrap:formal-native-isabelle or already on PATH.
 
 [tasks."check:proofs"]
 description = "Build every tools/proofs/<layer>/ Isabelle session natively and run the proof gate (ADR-A-FM2). Pass a layer name to build only that one"

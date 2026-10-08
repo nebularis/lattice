@@ -32,6 +32,15 @@ $FmxIsabelle  = if ($env:FMX_ISABELLE)  { $env:FMX_ISABELLE }  else { Join-Path 
 
 $FmxOpamExe   = Join-Path $FmxDownloads 'opam.exe'
 
+# Versions the Windows installers pin (install-isabelle.ps1, install-ocaml-rocq.ps1), tested on
+# 2026-10-06. macOS and Linux pin the same in install_native.py.
+$FmxOpamVersion  = '2.6.0'
+$FmxOcamlVersion = '5.3.0'
+$FmxIsabelleName = 'Isabelle2025-2'
+# TUM's download link redirects to a plain-HTTP host. The Cambridge mirror serves the same file
+# over HTTPS.
+$FmxIsabelleUrl  = "https://www.cl.cam.ac.uk/research/hvg/Isabelle/dist/$FmxIsabelleName.exe"
+
 function New-FmxDirectory([string] $Path) {
     if (-not (Test-Path $Path)) { New-Item -ItemType Directory -Force $Path | Out-Null }
 }
