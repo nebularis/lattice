@@ -18,9 +18,7 @@ Behaviour 0.10.0 (shapes 0.4.0) with nested states and history, the import guard
 check`. In tranche D, C6 to C7c are merged and tagged (Instrument 0.12.0, Party 0.8.0, Quantification
 0.7.0). C8 and C8b are merged and tagged (Instrument 0.14.0, Wording 0.7.0). C9 is briefed and splits into C9a to C9c. Its materiality question has its own sketch. From C5 on, the agent builds and verifies, and the human commits by hand.
 
-**Next action, for the human:** review C9a's model phase and its deviations on `ccs/c9a-amendments`,
-accept the ADR-A104 addendum of 2026-10-08, commit, merge to `main`, then tag `instrument-v0.15.0`,
-`instrument-shapes-v0.7.0` and `instrument-vocab-v0.15.0` and push them to `origin-ssh`.
+**Next action, for the human:** answer C9b-Q1 to C9b-Q5 in the plan's "C9b in detail".
 
 ## Slice board
 
@@ -145,3 +143,5 @@ accept the ADR-A104 addendum of 2026-10-08, commit, merge to `main`, then tag `i
 - 2026-10-08: C9a examples phase on `ccs/c9a-amendments`: `facility-amendment.ttl` (the legal side of Wording's amendment, assents arriving out of order) and `licence-amendments.ttl` (formation by separate signatures, a guarantor released, ending by agreement) written. The facility conforms. The licence fails only on `ins:OnAcceptance`, which the model phase adds. C9a-Q1 raised: how each insurer in a subscription placement is bound from its own assent
 - 2026-10-08: C9a-Q1 withdrawn by the human, and the subscription placement replaced by an endorsement and mid-term adjustment. `property-endorsement.ttl` written and conforming. The ADR-A104 addendum "amendments, assents and taking effect" drafted (Proposed). C9a's examples phase complete, with its handoff in the Validation Pack
 - 2026-10-08: C9a examples committed. Model phase built: Instrument 0.15.0, `instrument-vocab` 0.15.0, shapes 0.7.0 (breaking, law I4), with amendments, assents and taking effect, the worked examples §22.20 to §22.22, and `tools/test_amendments.py` (20 tests) in `check:ontology-catalog`. Deviations in the [Validation Pack](../validation/computable-contract-substrate-c9a.md)
+- 2026-10-08: C9a merged to `main` and tagged by the human (`instrument-v0.15.0`, `instrument-shapes-v0.7.0`, `instrument-vocab-v0.15.0`)
+- 2026-10-08: C9b briefed on `main` with five questions, each with design and runtime overheads: splitting materiality into C9d (Q1), what a consent is given to (Q2), the consent rule and where a member's weight comes from (Q3), delegated consent (Q4), and a regime per exercise (Q5)

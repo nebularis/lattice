@@ -3064,8 +3064,190 @@ question to be taken up (below).
 | Slice | Layer | Adds |
 |---|---|---|
 | C9a | Instrument 0.15.0 | `ins:Amendment` (`ins:amends`, `ins:resultsIn`, `ins:affectsExisting`, `ins:statedIn`), its effective time on Foundation's temporal scope and its recording on Foundation's evidence. `ins:Assent` (a party, a version, its valid time and evidence), and an amendment by agreement agreed when every party has assented. Formation as a regime: `ins:begins` and `ins:OnAcceptance`. Shapes for at most one agreed amendment per version, the overtaking warning (C9-Q2 rule (iii)), the I14 continuity warning, and I4. Examples include an endorsement and mid-term adjustment, showing whether it is in force on the date of a loss |
-| C9b | Instrument 0.16.0 | `ins:ConsentRule` (`ins:consentRule`, who must consent, a threshold of a weight per member), read over assents, `ins:byExerciseOf`, delegated consent, and the scoping of a regime per amendment. Materiality (C9-Q3): the materialised change report, condition words over it, the change grade contract with its two-concept baseline and chain rule, the Instrument evaluation profile with the fallback. `tools/`: the change report. Shapes. I10's data, evaluated by C12. Examples include reinsurance recoveries |
-| C9c | Wording 0.8.0, Instrument 0.17.0 | reliance on a wording, and W8 for references to a wording. `ins:incorporates`, generation of an encoded incorporated document's meaning within sections, I17 widened, cycle checks and `ins:prevailsOver` over an incorporated document. Static incorporation only, an ambulatory one of an encoded document reported (C9-Q8 (c)). `tools/`: the instantiator follows incorporation |
+| C9b | Instrument 0.16.0 | consent rules for powers held by groups. See C9b in detail |
+| C9d | Instrument 0.17.0 | materiality (C9-Q3): the change report, condition words over it, grades, the evaluation profile, and selecting consenting members by grade. Split from C9b by C9b-Q1's leaning |
+| C9c | Wording 0.8.0, Instrument 0.18.0 | reliance on a wording, and W8 for references to a wording. `ins:incorporates`, generation of an encoded incorporated document's meaning within sections, I17 widened, cycle checks and `ins:prevailsOver` over an incorporated document. Static incorporation only, an ambulatory one of an encoded document reported (C9-Q8 (c)). `tools/`: the instantiator follows incorporation |
+
+#### C9b in detail
+
+**Machine:** R (Claude Code). **Branch:** created by the human from `main` once this brief is on
+`main` and its questions are answered. **Commits are the human's**, examples first (ADR-A-C2).
+Merged into `main` before release tags are created.
+**Validation Pack:** written once C9b-Q1 fixes the slice.
+**Decisions:** ADR-A104 decisions 4 and 11, its 2026-10-08 addendum (assents), CC-D10, C9-Q3 and
+the [change materiality sketch](../sketches/change-materiality.md), C9-Q4 (a).
+**Inputs:** the CCS sketch §5.3 and §5.8 (consent rules, delegated consent), scenarios S50 and S51,
+held question HQ-5, and the human's instruction for a reinsurance recoveries example (C9 in detail).
+
+**Invariant:** a power held by a group takes effect only when the members its consent rule selects
+have consented, by number or by weight, and the instrument says which. Whether consent is present is
+decided from facts any application can supply, never left undetermined for want of a rule the
+contract states.
+
+**Setting the scene.**
+
+Since C9a, a party's assent to a version is an Instrument fact (`ins:Assent`), and an amendment by
+agreement is agreed when every party has assented. Three things remain:
+
+- **A power held by a group is Undetermined** (CC-D10). The facility example's clause 10.1, "The
+  Lenders may declare all loans immediately due and payable", is a power held by the lenders'
+  group, and nothing says whether one lender, all of them, or lenders holding two thirds of the
+  commitments may exercise it.
+- **Consent is to an exercise, and only some exercises produce a version.** An amendment under a
+  power produces a new version, and its consents are assents to that version, as in C9a. An
+  acceleration, a waiver or a reinsurer's approval of a settlement produces no version. There is
+  nothing in Instrument for a consent to name.
+- **Materiality** is decided (C9-Q3, MQ1 to MQ7), and needs building: the change report, condition
+  words over it, grades and the evaluation profile.
+
+```mermaid
+flowchart LR
+    subgraph STATED["Stated, in the facility's clauses"]
+        PW["clause 10.1: power to accelerate<br/>held by the Lenders"]
+        CR["consent rule<br/>Majority Lenders: more than 66⅔%<br/>of the Commitments"]
+        PW -- "consentRule" --> CR
+    end
+    subgraph FACTS["Facts, from any application"]
+        X["an exercise of the power<br/>proposed by Lender A"]
+        A1["Lender A consents<br/>commitment 40%"]
+        A2["Lender B consents<br/>commitment 30%"]
+    end
+    X -. "exercises" .-> PW
+    A1 & A2 -. "consent to" .-> X
+    CR -. "70% > 66⅔%: takes effect" .-> X
+```
+
+Facts about the current model that constrain the options:
+
+1. **Behaviour's exercise record is runtime.** `bhv:ExerciseRecord` records an exercise, but
+   Instrument imports only Behaviour's configuration (C9-Q2 choice 0), so a consent cannot name it.
+2. **A weight per member already has two homes.** Party's `pty:outwardShare` on a group membership
+   (the facility's lenders hold 60% and 40%), and a Wording table whose field has one value per
+   entry, where an entry may be a party (`wrd:forEntry`). Neither is tied to consent.
+3. **Eligibility cannot count or sum** (C9 in detail, fact 2), so the counting is Instrument's, and
+   evaluated by C12.
+4. **A regime can run per occasion** (`bhv:perOccasionOf`, no range), so running one per exercise is
+   a matter of what it names, not a new Behaviour construct.
+
+**Questions, with each option's consequences:**
+
+Each option is compared on its design overheads and its runtime overheads, then against KISS.
+
+- **C9b-Q1. One slice or two.** Consent rules, what a consent names, delegated consent and the
+  per-exercise regime come to about 12 rows. Materiality (change report, condition words, grades,
+  evaluation profile, determinations) comes to about 10 more.
+  - **(a) Two slices.** C9b consent, then C9d materiality, which adds selecting consenting members
+    by a change's grade.
+    - *Design.* Each slice reviewable on its own. Consent rules in C9b select by role and by
+      threshold only, and C9d adds selection by grade. The change report's design, the larger
+      piece, gets its own brief.
+    - *Runtime.* None.
+  - **(b) One slice,** about 22 rows over Instrument and `tools/`.
+    - *Design.* Above the sizing rule, and the change report's design questions crowd the consent
+      questions.
+  - *KISS.* (a).
+
+  **Leaning: (a),** C9b consent, C9d materiality, C9c incorporation unchanged.
+
+- **C9b-Q2. What a consent is given to.**
+  - **(a) An Instrument record of an exercise, `ins:Exercise`,** naming the power exercised, and
+    for an amendment the amendment. A consent is an `ins:Assent` naming the exercise
+    (`ins:assentTo` widened from a version to a version or an exercise). An amendment under a
+    power is an exercise whose consents may be given as assents to its resulting version, as C9a's
+    are.
+    - *Design.* One consent mechanism for every group power: acceleration, waiver, amendment. Any
+      application writes an exercise as it writes assents. It overlaps `bhv:ExerciseRecord`, kept
+      apart by the same import boundary as assents. `ins:assentTo` gains a second kind of value,
+      which every reader of an assent must handle.
+    - *Runtime.* One exercise node per exercise, and one assent per consenting member.
+  - **(b) Consent rules for amendment powers only.** Consents are assents to the resulting version,
+    as in C9a. Other group powers stay Undetermined until a later slice.
+    - *Design.* No new class. Acceleration, the facility example's group power, stays undecidable,
+      and so does CC-D10 in general.
+    - *Runtime.* None beyond C9a.
+  - **(c) Consent as a condition.** The power's scope, or the relation it gates, reads an
+    application's record of consent through an Eligibility evidence binding.
+    - *Design.* No new Instrument construct. Counting and weights cannot be expressed (fact 3), so
+      it covers "with the Agent's consent" and not "Majority Lenders".
+    - *Runtime.* An evidence binding per condition.
+  - *KISS.* (b) is smallest and leaves the facility's group power undecided. (a) is the smallest that
+    decides it.
+
+  **Leaning: (a).**
+
+- **C9b-Q3. The consent rule.** Stated once, on the stated power, and read for every bound power
+  (`ins:consentRule`).
+  - **Who must consent.** Every member, members by role (the Agent, the Lead), or members affected
+    by the change, read from the change report (C9d).
+  - **A threshold,** optional: a share of a weight, more than or at least.
+  - **Where each member's weight comes from:**
+    - **(i) Party's outward share** on the member's group membership.
+      - *Design.* Already present, and right where a share of liability is the weight. Wrong where
+        the weight is something else, such as commitments when liability shares differ, or votes.
+      - *Runtime.* None new.
+    - **(ii) A weight word.** The consent rule names a word ("Commitment") whose meaning, per member,
+      is a value. A Wording table gives one value per party (fact 2).
+      - *Design.* Any weight the contract defines, read like any other word. Reading a word once
+        per member is new to the instantiator, which today reads a table field per entry only for
+        placeholders. A weight that changes, such as a commitment after a transfer, is read from the
+        version in force at the exercise.
+      - *Runtime.* One value per member, which the contract already holds.
+    - **(iii) Both,** with (i) the default where no word is named.
+      - *Design.* Two ways to say one thing, and readers must know the default.
+  - *KISS.* (ii) covers every case, and the facility's 60% and 40% move from outward shares to
+    a commitments table only where the two differ.
+
+  **Leaning: who by every member or by role, a threshold, and weight (ii).** Selection by affected
+  members waits for C9d's change report.
+
+- **C9b-Q4. Delegated consent.** "Each Lender authorises the Agent to consent on its behalf to any
+  amendment that is not material." The sketch uses `pty:Delegation`.
+  - **(a) `pty:Delegation`.** The delegate's assent counts for each delegating member.
+    - *Design.* Party's construct, made for one occupancy performing for another. Its meaning
+      extends naturally to consenting. The scope of a delegation, such as "not material", has no
+      home in Party, so it waits for C9d.
+    - *Runtime.* The sum counts members, never assents, or a delegate assenting for several members
+      is miscounted. One assent can then stand for several members.
+  - **(b) A consent rule that names the delegate directly** ("the Agent alone, for a change that is
+    not material").
+    - *Design.* No delegation needed where the contract makes the Agent's consent sufficient, which
+      is how most such clauses read in effect.
+  - *KISS.* (b) needs nothing new. (a) is needed only where the delegate consents for some members
+    and not others.
+
+  **Leaning: (b) in C9b,** with (a) for a later slice if an example needs it.
+
+- **C9b-Q5. A regime per exercise.** "If the Majority Lenders have not consented within 30 days, the
+  request lapses."
+  - **(a) Build it now.** A regime stated with the power runs once per exercise, as
+    `bhv:perOccasionOf` runs one per occasion (fact 4), entering a lapsed state on an expiry.
+    - *Design.* Uses Behaviour's existing scoping with an exercise as its subject. Lapsed is a
+      state of the exercise, read by the consent rule's evaluation (C12).
+    - *Runtime.* One occupancy per exercise.
+  - **(b) Defer** until an example needs it.
+  - *KISS.* (b), unless the reinsurance example needs a time limit, which claims co-operation
+    clauses often have ("within 14 days").
+
+  **Leaning: (a) if Q2 is (a),** since the reinsurance example needs it, otherwise (b).
+
+**Decided by precedent, not asked:**
+
+- `ins:byExerciseOf` from an amendment to the power it exercises (ADR-A104 decision 11)
+- a power held by a group with no consent rule stays Undetermined (CC-D10), and the full set of group
+  behaviours is HQ-5's, following C9b
+- whether an exercise takes effect (law I10) is evaluated by C12. C9b states the rule and checks its
+  structure
+- the reinsurance recoveries example invents its own model. Under "follow the settlements" the
+  reinsured's settlement with its insured fixes the reinsurer's liability, which the model reads as
+  the reinsured's power to settle. A claims co-operation clause makes the reinsurer's approval of
+  each settlement a condition precedent to that liability, which the model reads as a consent rule
+  naming the reinsurer, with a time limit
+
+**What C9b builds, under the leanings:**
+
+| Layer | Adds |
+|---|---|
+| Instrument 0.16.0 | `ins:ConsentRule` (`ins:consentRule`, who must consent by role or all, `ins:threshold`, `ins:weightedBy` a word), `ins:Exercise` (`ins:exercises`, `ins:proposedBy`), `ins:assentTo` widened to an exercise, `ins:byExerciseOf`, a regime per exercise. Shapes for each. Examples: the facility's acceleration by the Majority Lenders, an amendment under a power, and reinsurance recoveries |
 
 ### Tranche E: evaluation
 
