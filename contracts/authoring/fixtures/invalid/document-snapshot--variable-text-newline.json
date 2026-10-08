@@ -1,0 +1,23 @@
+{
+  "schemaVersion": "0.1.0",
+  "documentId": "00000009-0000-4000-8000-000000000000",
+  "templateId": "facility-agreement",
+  "title": "Variable text newline",
+  "sections": [
+    {
+      "sectionKey": "commitment",
+      "elements": [
+        {
+          "elementId": "00000009-0000-4000-8000-000000000001",
+          "kind": "clause",
+          "definedTerm": null,
+          "parts": [
+            {"kind": "variable", "variableKey": "facility-amount", "text": "GBP 10,000,000\nGBP 20,000,000"}
+          ]
+        }
+      ]
+    }
+  ],
+  "variables": [],
+  "unmarked": []
+}

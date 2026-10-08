@@ -1,0 +1,811 @@
+{
+  "formsProfile": {
+    "profileId": "wap-le-forms",
+    "version": "0.1.0"
+  },
+  "elements": [
+    {
+      "elementId": "00000003-0000-4000-8000-000000000001",
+      "objectId": "1.1",
+      "sectionKey": "definitions",
+      "kind": "definition",
+      "text": "\u201cInsurer\u201d means the underwriter providing cover under this Policy.",
+      "relationClass": "Definition",
+      "basis": "form",
+      "formId": "definition",
+      "leTemplate": "*a term* means *a description*.",
+      "leSentence": "\u201cInsurer\u201d means the underwriter providing cover under this Policy.",
+      "spans": [
+        {
+          "start": 1,
+          "end": 8,
+          "role": "slot-text",
+          "partIndex": 0
+        },
+        {
+          "start": 10,
+          "end": 15,
+          "role": "fixed",
+          "partIndex": 0
+        },
+        {
+          "start": 16,
+          "end": 19,
+          "role": "ignorable",
+          "partIndex": 0
+        },
+        {
+          "start": 20,
+          "end": 65,
+          "role": "slot-text",
+          "partIndex": 0
+        }
+      ]
+    },
+    {
+      "elementId": "00000003-0000-4000-8000-000000000002",
+      "objectId": "1.2",
+      "sectionKey": "definitions",
+      "kind": "definition",
+      "text": "\u201cInsured\u201d means the person named as insured in the schedule.",
+      "relationClass": "Definition",
+      "basis": "form",
+      "formId": "definition",
+      "leTemplate": "*a term* means *a description*.",
+      "leSentence": "\u201cInsured\u201d means the person named as insured in the schedule.",
+      "spans": [
+        {
+          "start": 1,
+          "end": 8,
+          "role": "slot-text",
+          "partIndex": 0
+        },
+        {
+          "start": 10,
+          "end": 15,
+          "role": "fixed",
+          "partIndex": 0
+        },
+        {
+          "start": 16,
+          "end": 19,
+          "role": "ignorable",
+          "partIndex": 0
+        },
+        {
+          "start": 20,
+          "end": 46,
+          "role": "slot-text",
+          "partIndex": 0
+        },
+        {
+          "start": 47,
+          "end": 50,
+          "role": "ignorable",
+          "partIndex": 0
+        },
+        {
+          "start": 51,
+          "end": 59,
+          "role": "slot-text",
+          "partIndex": 0
+        }
+      ]
+    },
+    {
+      "elementId": "00000003-0000-4000-8000-000000000003",
+      "objectId": "1.3",
+      "sectionKey": "definitions",
+      "kind": "definition",
+      "text": "\u201cPremises\u201d means the building described in the schedule.",
+      "relationClass": "Definition",
+      "basis": "form",
+      "formId": "definition",
+      "leTemplate": "*a term* means *a description*.",
+      "leSentence": "\u201cPremises\u201d means the building described in the schedule.",
+      "spans": [
+        {
+          "start": 1,
+          "end": 9,
+          "role": "slot-text",
+          "partIndex": 0
+        },
+        {
+          "start": 11,
+          "end": 16,
+          "role": "fixed",
+          "partIndex": 0
+        },
+        {
+          "start": 17,
+          "end": 20,
+          "role": "ignorable",
+          "partIndex": 0
+        },
+        {
+          "start": 21,
+          "end": 42,
+          "role": "slot-text",
+          "partIndex": 0
+        },
+        {
+          "start": 43,
+          "end": 46,
+          "role": "ignorable",
+          "partIndex": 0
+        },
+        {
+          "start": 47,
+          "end": 55,
+          "role": "slot-text",
+          "partIndex": 0
+        }
+      ]
+    },
+    {
+      "elementId": "00000003-0000-4000-8000-000000000004",
+      "objectId": "1.4",
+      "sectionKey": "definitions",
+      "kind": "definition",
+      "text": "\u201cDamage\u201d means physical loss of or damage to the Premises.",
+      "relationClass": "Definition",
+      "basis": "form",
+      "formId": "definition",
+      "leTemplate": "*a term* means *a description*.",
+      "leSentence": "\u201cDamage\u201d means physical loss of or damage to the Premises.",
+      "spans": [
+        {
+          "start": 1,
+          "end": 7,
+          "role": "slot-text",
+          "partIndex": 0
+        },
+        {
+          "start": 9,
+          "end": 14,
+          "role": "fixed",
+          "partIndex": 0
+        },
+        {
+          "start": 15,
+          "end": 44,
+          "role": "slot-text",
+          "partIndex": 0
+        },
+        {
+          "start": 45,
+          "end": 48,
+          "role": "ignorable",
+          "partIndex": 0
+        },
+        {
+          "start": 49,
+          "end": 57,
+          "role": "slot-constant",
+          "partIndex": 1
+        }
+      ]
+    },
+    {
+      "elementId": "00000003-0000-4000-8000-000000000005",
+      "objectId": "2.1",
+      "sectionKey": "insuring-clause",
+      "kind": "clause",
+      "text": "Insurer shall indemnify Insured against Damage to the Premises up to the GBP 500,000.",
+      "relationClass": "Obligation",
+      "basis": "form",
+      "formId": "obligation",
+      "leTemplate": "*a party* shall *an activity*.",
+      "leSentence": "Insurer shall indemnify Insured against Damage to the Premises up to the GBP 500,000.",
+      "spans": [
+        {
+          "start": 0,
+          "end": 7,
+          "role": "slot-constant",
+          "partIndex": 0
+        },
+        {
+          "start": 8,
+          "end": 13,
+          "role": "modal",
+          "partIndex": 1
+        },
+        {
+          "start": 14,
+          "end": 23,
+          "role": "slot-text",
+          "partIndex": 1
+        },
+        {
+          "start": 24,
+          "end": 31,
+          "role": "slot-constant",
+          "partIndex": 2
+        },
+        {
+          "start": 32,
+          "end": 39,
+          "role": "slot-text",
+          "partIndex": 3
+        },
+        {
+          "start": 40,
+          "end": 46,
+          "role": "slot-constant",
+          "partIndex": 4
+        },
+        {
+          "start": 47,
+          "end": 49,
+          "role": "slot-text",
+          "partIndex": 5
+        },
+        {
+          "start": 50,
+          "end": 53,
+          "role": "ignorable",
+          "partIndex": 5
+        },
+        {
+          "start": 54,
+          "end": 62,
+          "role": "slot-constant",
+          "partIndex": 6
+        },
+        {
+          "start": 63,
+          "end": 68,
+          "role": "slot-text",
+          "partIndex": 7
+        },
+        {
+          "start": 69,
+          "end": 72,
+          "role": "ignorable",
+          "partIndex": 7
+        },
+        {
+          "start": 73,
+          "end": 84,
+          "role": "slot-variable",
+          "partIndex": 8
+        }
+      ]
+    },
+    {
+      "elementId": "00000003-0000-4000-8000-000000000006",
+      "objectId": "3.1",
+      "sectionKey": "exclusions",
+      "kind": "clause",
+      "text": "This policy does not cover Damage caused by wear and tear.",
+      "relationClass": "Exclusion",
+      "basis": "form",
+      "formId": "exclusion-not-cover",
+      "leTemplate": "this policy does not cover *a matter*.",
+      "leSentence": "This policy does not cover Damage caused by wear and tear.",
+      "spans": [
+        {
+          "start": 0,
+          "end": 16,
+          "role": "fixed",
+          "partIndex": 0
+        },
+        {
+          "start": 17,
+          "end": 20,
+          "role": "modal",
+          "partIndex": 0
+        },
+        {
+          "start": 21,
+          "end": 26,
+          "role": "fixed",
+          "partIndex": 0
+        },
+        {
+          "start": 27,
+          "end": 33,
+          "role": "slot-constant",
+          "partIndex": 1
+        },
+        {
+          "start": 34,
+          "end": 57,
+          "role": "slot-text",
+          "partIndex": 2
+        }
+      ]
+    },
+    {
+      "elementId": "00000003-0000-4000-8000-000000000007",
+      "objectId": "3.2",
+      "sectionKey": "exclusions",
+      "kind": "clause",
+      "text": "Insurer is not liable for the GBP 500 of each claim.",
+      "relationClass": "Exclusion",
+      "basis": "form",
+      "formId": "exclusion-not-liable",
+      "leTemplate": "*a party* is not liable for *a matter*.",
+      "leSentence": "Insurer is not liable for the GBP 500 of each claim.",
+      "spans": [
+        {
+          "start": 0,
+          "end": 7,
+          "role": "slot-constant",
+          "partIndex": 0
+        },
+        {
+          "start": 8,
+          "end": 10,
+          "role": "fixed",
+          "partIndex": 1
+        },
+        {
+          "start": 11,
+          "end": 14,
+          "role": "modal",
+          "partIndex": 1
+        },
+        {
+          "start": 15,
+          "end": 25,
+          "role": "fixed",
+          "partIndex": 1
+        },
+        {
+          "start": 26,
+          "end": 29,
+          "role": "ignorable",
+          "partIndex": 1
+        },
+        {
+          "start": 30,
+          "end": 37,
+          "role": "slot-variable",
+          "partIndex": 2
+        },
+        {
+          "start": 38,
+          "end": 40,
+          "role": "slot-text",
+          "partIndex": 3
+        },
+        {
+          "start": 41,
+          "end": 45,
+          "role": "ignorable",
+          "partIndex": 3
+        },
+        {
+          "start": 46,
+          "end": 51,
+          "role": "slot-text",
+          "partIndex": 3
+        }
+      ]
+    },
+    {
+      "elementId": "00000003-0000-4000-8000-000000000008",
+      "objectId": "4.1",
+      "sectionKey": "conditions",
+      "kind": "clause",
+      "text": "Insured shall take reasonable precautions to prevent Damage.",
+      "relationClass": "Obligation",
+      "basis": "form",
+      "formId": "obligation",
+      "leTemplate": "*a party* shall *an activity*.",
+      "leSentence": "Insured shall take reasonable precautions to prevent Damage.",
+      "spans": [
+        {
+          "start": 0,
+          "end": 7,
+          "role": "slot-constant",
+          "partIndex": 0
+        },
+        {
+          "start": 8,
+          "end": 13,
+          "role": "modal",
+          "partIndex": 1
+        },
+        {
+          "start": 14,
+          "end": 52,
+          "role": "slot-text",
+          "partIndex": 1
+        },
+        {
+          "start": 53,
+          "end": 59,
+          "role": "slot-constant",
+          "partIndex": 2
+        }
+      ]
+    },
+    {
+      "elementId": "00000003-0000-4000-8000-000000000009",
+      "objectId": "4.2",
+      "sectionKey": "conditions",
+      "kind": "clause",
+      "text": "Insured shall not leave the Premises unoccupied for more than 30 days.",
+      "relationClass": "Prohibition",
+      "basis": "form",
+      "formId": "prohibition",
+      "leTemplate": "*a party* shall not *an activity*.",
+      "leSentence": "Insured shall not leave the Premises unoccupied for more than 30 days.",
+      "spans": [
+        {
+          "start": 0,
+          "end": 7,
+          "role": "slot-constant",
+          "partIndex": 0
+        },
+        {
+          "start": 8,
+          "end": 17,
+          "role": "modal",
+          "partIndex": 1
+        },
+        {
+          "start": 18,
+          "end": 23,
+          "role": "slot-text",
+          "partIndex": 1
+        },
+        {
+          "start": 24,
+          "end": 27,
+          "role": "ignorable",
+          "partIndex": 1
+        },
+        {
+          "start": 28,
+          "end": 36,
+          "role": "slot-constant",
+          "partIndex": 2
+        },
+        {
+          "start": 37,
+          "end": 69,
+          "role": "slot-text",
+          "partIndex": 3
+        }
+      ]
+    },
+    {
+      "elementId": "00000003-0000-4000-8000-000000000010",
+      "objectId": "5.1",
+      "sectionKey": "claims",
+      "kind": "clause",
+      "text": "Insured shall notify Insurer of any Damage within 30 days.",
+      "relationClass": "Obligation",
+      "basis": "form",
+      "formId": "obligation-within",
+      "leTemplate": "*a party* shall *an activity* within *a period*.",
+      "leSentence": "Insured shall notify Insurer of any Damage within 30 days.",
+      "spans": [
+        {
+          "start": 0,
+          "end": 7,
+          "role": "slot-constant",
+          "partIndex": 0
+        },
+        {
+          "start": 8,
+          "end": 13,
+          "role": "modal",
+          "partIndex": 1
+        },
+        {
+          "start": 14,
+          "end": 20,
+          "role": "slot-text",
+          "partIndex": 1
+        },
+        {
+          "start": 21,
+          "end": 28,
+          "role": "slot-constant",
+          "partIndex": 2
+        },
+        {
+          "start": 29,
+          "end": 31,
+          "role": "slot-text",
+          "partIndex": 3
+        },
+        {
+          "start": 32,
+          "end": 35,
+          "role": "ignorable",
+          "partIndex": 3
+        },
+        {
+          "start": 36,
+          "end": 42,
+          "role": "slot-constant",
+          "partIndex": 4
+        },
+        {
+          "start": 43,
+          "end": 49,
+          "role": "fixed",
+          "partIndex": 5
+        },
+        {
+          "start": 50,
+          "end": 57,
+          "role": "slot-variable",
+          "partIndex": 6
+        }
+      ]
+    },
+    {
+      "elementId": "00000003-0000-4000-8000-000000000011",
+      "objectId": "5.2",
+      "sectionKey": "claims",
+      "kind": "clause",
+      "text": "A claim is deemed notified on the date Insurer receives written notice.",
+      "relationClass": "Deeming",
+      "basis": "form",
+      "formId": "deemed-is",
+      "leTemplate": "*a thing* is deemed *a state*.",
+      "leSentence": "A claim is deemed notified on the date Insurer receives written notice.",
+      "spans": [
+        {
+          "start": 0,
+          "end": 1,
+          "role": "ignorable",
+          "partIndex": 0
+        },
+        {
+          "start": 2,
+          "end": 7,
+          "role": "slot-text",
+          "partIndex": 0
+        },
+        {
+          "start": 8,
+          "end": 17,
+          "role": "fixed",
+          "partIndex": 0
+        },
+        {
+          "start": 18,
+          "end": 29,
+          "role": "slot-text",
+          "partIndex": 0
+        },
+        {
+          "start": 30,
+          "end": 33,
+          "role": "ignorable",
+          "partIndex": 0
+        },
+        {
+          "start": 34,
+          "end": 70,
+          "role": "slot-text",
+          "partIndex": 0
+        }
+      ]
+    }
+  ],
+  "leProgram": "% Logical English reading of \"Property Policy (sample)\", revision 1, generated by the word authoring POC.\n% Profile wap-le-forms 0.1.0. Not checked by an LE parser.\n\nthe templates are:\n    *a thing* is deemed *a state*.\n    *a party* shall *an activity* within *a period*.\n    *a party* shall not *an activity*.\n    *a party* shall *an activity*.\n    *a party* is not liable for *a matter*.\n    this policy does not cover *a matter*.\n    *a term* means *a description*.\n\nthe knowledge base property_policy includes:\n\n% 1.1 Definition (form definition)\n\u201cInsurer\u201d means the underwriter providing cover under this Policy.\n\n% 1.2 Definition (form definition)\n\u201cInsured\u201d means the person named as insured in the schedule.\n\n% 1.3 Definition (form definition)\n\u201cPremises\u201d means the building described in the schedule.\n\n% 1.4 Definition (form definition)\n\u201cDamage\u201d means physical loss of or damage to the Premises.\n\n% 2.1 Obligation (form obligation)\nInsurer shall indemnify Insured against Damage to the Premises up to the GBP 500,000.\n\n% 3.1 Exclusion (form exclusion-not-cover)\nThis policy does not cover Damage caused by wear and tear.\n\n% 3.2 Exclusion (form exclusion-not-liable)\nInsurer is not liable for the GBP 500 of each claim.\n\n% 4.1 Obligation (form obligation)\nInsured shall take reasonable precautions to prevent Damage.\n\n% 4.2 Prohibition (form prohibition)\nInsured shall not leave the Premises unoccupied for more than 30 days.\n\n% 5.1 Obligation (form obligation-within)\nInsured shall notify Insurer of any Damage within 30 days.\n\n% 5.2 Deeming (form deemed-is)\nA claim is deemed notified on the date Insurer receives written notice.\n",
+  "graphView": {
+    "nodes": [
+      {
+        "id": "https://example.org/lattice/authoring/doc/00000003-0000-4000-8000-000000000000/element/00000003-0000-4000-8000-000000000001/meaning",
+        "label": "Definition 1.1",
+        "kind": "relation"
+      },
+      {
+        "id": "https://example.org/lattice/authoring/doc/00000003-0000-4000-8000-000000000000/element/00000003-0000-4000-8000-000000000002/meaning",
+        "label": "Definition 1.2",
+        "kind": "relation"
+      },
+      {
+        "id": "https://example.org/lattice/authoring/doc/00000003-0000-4000-8000-000000000000/element/00000003-0000-4000-8000-000000000003/meaning",
+        "label": "Definition 1.3",
+        "kind": "relation"
+      },
+      {
+        "id": "https://example.org/lattice/authoring/doc/00000003-0000-4000-8000-000000000000/element/00000003-0000-4000-8000-000000000004/meaning",
+        "label": "Definition 1.4",
+        "kind": "relation"
+      },
+      {
+        "id": "https://example.org/lattice/authoring/doc/00000003-0000-4000-8000-000000000000/element/00000003-0000-4000-8000-000000000005/meaning",
+        "label": "Obligation 2.1",
+        "kind": "relation"
+      },
+      {
+        "id": "https://example.org/lattice/authoring/doc/00000003-0000-4000-8000-000000000000/element/00000003-0000-4000-8000-000000000006/meaning",
+        "label": "Exclusion 3.1",
+        "kind": "relation"
+      },
+      {
+        "id": "https://example.org/lattice/authoring/doc/00000003-0000-4000-8000-000000000000/element/00000003-0000-4000-8000-000000000007/meaning",
+        "label": "Exclusion 3.2",
+        "kind": "relation"
+      },
+      {
+        "id": "https://example.org/lattice/authoring/doc/00000003-0000-4000-8000-000000000000/element/00000003-0000-4000-8000-000000000008/meaning",
+        "label": "Obligation 4.1",
+        "kind": "relation"
+      },
+      {
+        "id": "https://example.org/lattice/authoring/doc/00000003-0000-4000-8000-000000000000/element/00000003-0000-4000-8000-000000000009/meaning",
+        "label": "Prohibition 4.2",
+        "kind": "relation"
+      },
+      {
+        "id": "https://example.org/lattice/authoring/doc/00000003-0000-4000-8000-000000000000/element/00000003-0000-4000-8000-000000000010/meaning",
+        "label": "Obligation 5.1",
+        "kind": "relation"
+      },
+      {
+        "id": "https://example.org/lattice/authoring/doc/00000003-0000-4000-8000-000000000000/element/00000003-0000-4000-8000-000000000011/meaning",
+        "label": "Deeming 5.2",
+        "kind": "relation"
+      },
+      {
+        "id": "https://example.org/lattice/authoring/doc/00000003-0000-4000-8000-000000000000/element/00000003-0000-4000-8000-000000000001",
+        "label": "Definition 1.1",
+        "kind": "element"
+      },
+      {
+        "id": "https://example.org/lattice/authoring/doc/00000003-0000-4000-8000-000000000000/element/00000003-0000-4000-8000-000000000002",
+        "label": "Definition 1.2",
+        "kind": "element"
+      },
+      {
+        "id": "https://example.org/lattice/authoring/doc/00000003-0000-4000-8000-000000000000/element/00000003-0000-4000-8000-000000000003",
+        "label": "Definition 1.3",
+        "kind": "element"
+      },
+      {
+        "id": "https://example.org/lattice/authoring/doc/00000003-0000-4000-8000-000000000000/element/00000003-0000-4000-8000-000000000004",
+        "label": "Definition 1.4",
+        "kind": "element"
+      },
+      {
+        "id": "https://example.org/lattice/authoring/doc/00000003-0000-4000-8000-000000000000/element/00000003-0000-4000-8000-000000000005",
+        "label": "Clause 2.1",
+        "kind": "element"
+      },
+      {
+        "id": "https://example.org/lattice/authoring/doc/00000003-0000-4000-8000-000000000000/element/00000003-0000-4000-8000-000000000006",
+        "label": "Clause 3.1",
+        "kind": "element"
+      },
+      {
+        "id": "https://example.org/lattice/authoring/doc/00000003-0000-4000-8000-000000000000/element/00000003-0000-4000-8000-000000000007",
+        "label": "Clause 3.2",
+        "kind": "element"
+      },
+      {
+        "id": "https://example.org/lattice/authoring/doc/00000003-0000-4000-8000-000000000000/element/00000003-0000-4000-8000-000000000008",
+        "label": "Clause 4.1",
+        "kind": "element"
+      },
+      {
+        "id": "https://example.org/lattice/authoring/doc/00000003-0000-4000-8000-000000000000/element/00000003-0000-4000-8000-000000000009",
+        "label": "Clause 4.2",
+        "kind": "element"
+      },
+      {
+        "id": "https://example.org/lattice/authoring/doc/00000003-0000-4000-8000-000000000000/element/00000003-0000-4000-8000-000000000010",
+        "label": "Clause 5.1",
+        "kind": "element"
+      },
+      {
+        "id": "https://example.org/lattice/authoring/doc/00000003-0000-4000-8000-000000000000/element/00000003-0000-4000-8000-000000000011",
+        "label": "Clause 5.2",
+        "kind": "element"
+      },
+      {
+        "id": "https://example.org/lattice/authoring/doc/00000003-0000-4000-8000-000000000000/role/00000003-0000-4000-8000-000000000001",
+        "label": "Insurer",
+        "kind": "role"
+      },
+      {
+        "id": "https://example.org/lattice/authoring/doc/00000003-0000-4000-8000-000000000000/role/00000003-0000-4000-8000-000000000002",
+        "label": "Insured",
+        "kind": "role"
+      },
+      {
+        "id": "https://example.org/lattice/authoring/doc/00000003-0000-4000-8000-000000000000/variable/notification-days",
+        "label": "notification-days",
+        "kind": "variable"
+      }
+    ],
+    "edges": [
+      {
+        "from": "https://example.org/lattice/authoring/doc/00000003-0000-4000-8000-000000000000/element/00000003-0000-4000-8000-000000000001/meaning",
+        "to": "https://example.org/lattice/authoring/doc/00000003-0000-4000-8000-000000000000/element/00000003-0000-4000-8000-000000000001",
+        "label": "expressedIn"
+      },
+      {
+        "from": "https://example.org/lattice/authoring/doc/00000003-0000-4000-8000-000000000000/element/00000003-0000-4000-8000-000000000002/meaning",
+        "to": "https://example.org/lattice/authoring/doc/00000003-0000-4000-8000-000000000000/element/00000003-0000-4000-8000-000000000002",
+        "label": "expressedIn"
+      },
+      {
+        "from": "https://example.org/lattice/authoring/doc/00000003-0000-4000-8000-000000000000/element/00000003-0000-4000-8000-000000000003/meaning",
+        "to": "https://example.org/lattice/authoring/doc/00000003-0000-4000-8000-000000000000/element/00000003-0000-4000-8000-000000000003",
+        "label": "expressedIn"
+      },
+      {
+        "from": "https://example.org/lattice/authoring/doc/00000003-0000-4000-8000-000000000000/element/00000003-0000-4000-8000-000000000004/meaning",
+        "to": "https://example.org/lattice/authoring/doc/00000003-0000-4000-8000-000000000000/element/00000003-0000-4000-8000-000000000004",
+        "label": "expressedIn"
+      },
+      {
+        "from": "https://example.org/lattice/authoring/doc/00000003-0000-4000-8000-000000000000/element/00000003-0000-4000-8000-000000000005/meaning",
+        "to": "https://example.org/lattice/authoring/doc/00000003-0000-4000-8000-000000000000/element/00000003-0000-4000-8000-000000000005",
+        "label": "expressedIn"
+      },
+      {
+        "from": "https://example.org/lattice/authoring/doc/00000003-0000-4000-8000-000000000000/element/00000003-0000-4000-8000-000000000005/meaning",
+        "to": "https://example.org/lattice/authoring/doc/00000003-0000-4000-8000-000000000000/role/00000003-0000-4000-8000-000000000001",
+        "label": "obligor"
+      },
+      {
+        "from": "https://example.org/lattice/authoring/doc/00000003-0000-4000-8000-000000000000/element/00000003-0000-4000-8000-000000000006/meaning",
+        "to": "https://example.org/lattice/authoring/doc/00000003-0000-4000-8000-000000000000/element/00000003-0000-4000-8000-000000000006",
+        "label": "expressedIn"
+      },
+      {
+        "from": "https://example.org/lattice/authoring/doc/00000003-0000-4000-8000-000000000000/element/00000003-0000-4000-8000-000000000007/meaning",
+        "to": "https://example.org/lattice/authoring/doc/00000003-0000-4000-8000-000000000000/element/00000003-0000-4000-8000-000000000007",
+        "label": "expressedIn"
+      },
+      {
+        "from": "https://example.org/lattice/authoring/doc/00000003-0000-4000-8000-000000000000/element/00000003-0000-4000-8000-000000000007/meaning",
+        "to": "https://example.org/lattice/authoring/doc/00000003-0000-4000-8000-000000000000/role/00000003-0000-4000-8000-000000000001",
+        "label": "obligor"
+      },
+      {
+        "from": "https://example.org/lattice/authoring/doc/00000003-0000-4000-8000-000000000000/element/00000003-0000-4000-8000-000000000008/meaning",
+        "to": "https://example.org/lattice/authoring/doc/00000003-0000-4000-8000-000000000000/element/00000003-0000-4000-8000-000000000008",
+        "label": "expressedIn"
+      },
+      {
+        "from": "https://example.org/lattice/authoring/doc/00000003-0000-4000-8000-000000000000/element/00000003-0000-4000-8000-000000000008/meaning",
+        "to": "https://example.org/lattice/authoring/doc/00000003-0000-4000-8000-000000000000/role/00000003-0000-4000-8000-000000000002",
+        "label": "obligor"
+      },
+      {
+        "from": "https://example.org/lattice/authoring/doc/00000003-0000-4000-8000-000000000000/element/00000003-0000-4000-8000-000000000009/meaning",
+        "to": "https://example.org/lattice/authoring/doc/00000003-0000-4000-8000-000000000000/element/00000003-0000-4000-8000-000000000009",
+        "label": "expressedIn"
+      },
+      {
+        "from": "https://example.org/lattice/authoring/doc/00000003-0000-4000-8000-000000000000/element/00000003-0000-4000-8000-000000000009/meaning",
+        "to": "https://example.org/lattice/authoring/doc/00000003-0000-4000-8000-000000000000/role/00000003-0000-4000-8000-000000000002",
+        "label": "obligor"
+      },
+      {
+        "from": "https://example.org/lattice/authoring/doc/00000003-0000-4000-8000-000000000000/element/00000003-0000-4000-8000-000000000010/meaning",
+        "to": "https://example.org/lattice/authoring/doc/00000003-0000-4000-8000-000000000000/element/00000003-0000-4000-8000-000000000010",
+        "label": "expressedIn"
+      },
+      {
+        "from": "https://example.org/lattice/authoring/doc/00000003-0000-4000-8000-000000000000/element/00000003-0000-4000-8000-000000000010/meaning",
+        "to": "https://example.org/lattice/authoring/doc/00000003-0000-4000-8000-000000000000/role/00000003-0000-4000-8000-000000000002",
+        "label": "obligor"
+      },
+      {
+        "from": "https://example.org/lattice/authoring/doc/00000003-0000-4000-8000-000000000000/element/00000003-0000-4000-8000-000000000010/meaning",
+        "to": "https://example.org/lattice/authoring/doc/00000003-0000-4000-8000-000000000000/variable/notification-days",
+        "label": "period"
+      },
+      {
+        "from": "https://example.org/lattice/authoring/doc/00000003-0000-4000-8000-000000000000/element/00000003-0000-4000-8000-000000000011/meaning",
+        "to": "https://example.org/lattice/authoring/doc/00000003-0000-4000-8000-000000000000/element/00000003-0000-4000-8000-000000000011",
+        "label": "expressedIn"
+      }
+    ]
+  }
+}

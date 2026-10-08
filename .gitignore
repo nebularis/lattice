@@ -12,6 +12,11 @@
 !.build/mork-review-workbench-test-results/.gitkeep
 .build/surface-contract-studio-test-results/*
 !.build/surface-contract-studio-test-results/.gitkeep
+.build/word-authoring-addin-test-results/*
+!.build/word-authoring-addin-test-results/.gitkeep
+.build/authoring/
+workers/build/
+
 # Formal-methods toolchains, build outputs and caches (formal-methods-phase-0, epic E6)
 .build/formal/*
 !.build/formal/.gitkeep
@@ -85,6 +90,8 @@ WINGMAN
 .local/**
 *.patch
 /.yarn
+/.build/authoring
+.build/word-authoring-addin-test-results/.last-run.json
 
 # Claude Code personal settings (ADR-A117)
 .claude/settings.local.json

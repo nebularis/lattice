@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.nebularis.org/lattice/events/wording-analysis-request/0.1.0",
+  "title": "Word authoring POC: wording analysis request",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "jobId", "correlationId", "documentId", "revision", "wordingGraph", "wordingIri", "proposalGraphIri",
+    "requestedAt"
+  ],
+  "properties": {
+    "jobId": {"$ref": "https://schemas.nebularis.org/lattice/authoring/common/0.1.0#/$defs/Uuid"},
+    "correlationId": {"type": "string", "minLength": 1, "maxLength": 100},
+    "documentId": {"$ref": "https://schemas.nebularis.org/lattice/authoring/common/0.1.0#/$defs/Uuid"},
+    "revision": {"type": "integer", "minimum": 1},
+    "wordingGraph": {"$ref": "https://schemas.nebularis.org/lattice/authoring/common/0.1.0#/$defs/GraphRef"},
+    "wordingIri": {"type": "string", "minLength": 1, "maxLength": 500},
+    "proposalGraphIri": {"type": "string", "minLength": 1, "maxLength": 500},
+    "requestedAt": {"$ref": "https://schemas.nebularis.org/lattice/authoring/common/0.1.0#/$defs/Timestamp"}
+  }
+}

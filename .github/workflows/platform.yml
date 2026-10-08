@@ -16,6 +16,9 @@ name: Platform checks
 on:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   licence:
     runs-on: ubuntu-latest

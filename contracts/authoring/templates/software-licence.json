@@ -1,0 +1,61 @@
+{
+  "templateId": "software-licence",
+  "version": "0.1.0",
+  "title": "Software Licence",
+  "domain": "technology",
+  "sections": [
+    {
+      "sectionKey": "definitions",
+      "heading": "Definitions",
+      "elementKinds": ["definition"],
+      "allowedTermKinds": ["Definition"],
+      "required": true,
+      "guidance": "Define each defined term used elsewhere in the licence."
+    },
+    {
+      "sectionKey": "grant",
+      "heading": "Grant",
+      "elementKinds": ["clause"],
+      "allowedTermKinds": ["Permission"],
+      "required": true,
+      "guidance": "State what the licensee is permitted to do with the software."
+    },
+    {
+      "sectionKey": "restrictions",
+      "heading": "Restrictions",
+      "elementKinds": ["clause"],
+      "allowedTermKinds": ["Prohibition"],
+      "required": true,
+      "guidance": "State what the licensee must not do with the software."
+    },
+    {
+      "sectionKey": "fees",
+      "heading": "Fees",
+      "elementKinds": ["clause"],
+      "allowedTermKinds": ["Obligation"],
+      "required": true,
+      "guidance": "State the fees payable and when they are due."
+    },
+    {
+      "sectionKey": "warranty-exclusions",
+      "heading": "Warranty Exclusions",
+      "elementKinds": ["clause"],
+      "allowedTermKinds": ["Exclusion"],
+      "required": false,
+      "guidance": "State what the licensor excludes from its warranty."
+    },
+    {
+      "sectionKey": "termination",
+      "heading": "Termination",
+      "elementKinds": ["clause"],
+      "allowedTermKinds": ["Power"],
+      "required": true,
+      "guidance": "State when the licensor may terminate the licence."
+    }
+  ],
+  "variables": [
+    {"variableKey": "licence-fee", "label": "Licence fee", "valueType": "money"},
+    {"variableKey": "payment-days", "label": "Payment days", "valueType": "duration"},
+    {"variableKey": "user-limit", "label": "User limit", "valueType": "number"}
+  ]
+}

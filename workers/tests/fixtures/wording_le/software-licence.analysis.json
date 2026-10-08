@@ -1,0 +1,831 @@
+{
+  "formsProfile": {
+    "profileId": "wap-le-forms",
+    "version": "0.1.0"
+  },
+  "elements": [
+    {
+      "elementId": "00000002-0000-4000-8000-000000000001",
+      "objectId": "1.1",
+      "sectionKey": "definitions",
+      "kind": "definition",
+      "text": "\u201cLicensor\u201d means the party granting rights under this Agreement.",
+      "relationClass": "Definition",
+      "basis": "form",
+      "formId": "definition",
+      "leTemplate": "*a term* means *a description*.",
+      "leSentence": "\u201cLicensor\u201d means the party granting rights under this Agreement.",
+      "spans": [
+        {
+          "start": 1,
+          "end": 9,
+          "role": "slot-text",
+          "partIndex": 0
+        },
+        {
+          "start": 11,
+          "end": 16,
+          "role": "fixed",
+          "partIndex": 0
+        },
+        {
+          "start": 17,
+          "end": 20,
+          "role": "ignorable",
+          "partIndex": 0
+        },
+        {
+          "start": 21,
+          "end": 63,
+          "role": "slot-text",
+          "partIndex": 0
+        }
+      ]
+    },
+    {
+      "elementId": "00000002-0000-4000-8000-000000000002",
+      "objectId": "1.2",
+      "sectionKey": "definitions",
+      "kind": "definition",
+      "text": "\u201cLicensee\u201d means the party receiving rights under this Agreement.",
+      "relationClass": "Definition",
+      "basis": "form",
+      "formId": "definition",
+      "leTemplate": "*a term* means *a description*.",
+      "leSentence": "\u201cLicensee\u201d means the party receiving rights under this Agreement.",
+      "spans": [
+        {
+          "start": 1,
+          "end": 9,
+          "role": "slot-text",
+          "partIndex": 0
+        },
+        {
+          "start": 11,
+          "end": 16,
+          "role": "fixed",
+          "partIndex": 0
+        },
+        {
+          "start": 17,
+          "end": 20,
+          "role": "ignorable",
+          "partIndex": 0
+        },
+        {
+          "start": 21,
+          "end": 64,
+          "role": "slot-text",
+          "partIndex": 0
+        }
+      ]
+    },
+    {
+      "elementId": "00000002-0000-4000-8000-000000000003",
+      "objectId": "1.3",
+      "sectionKey": "definitions",
+      "kind": "definition",
+      "text": "\u201cSoftware\u201d means the computer program licensed under this Agreement.",
+      "relationClass": "Definition",
+      "basis": "form",
+      "formId": "definition",
+      "leTemplate": "*a term* means *a description*.",
+      "leSentence": "\u201cSoftware\u201d means the computer program licensed under this Agreement.",
+      "spans": [
+        {
+          "start": 1,
+          "end": 9,
+          "role": "slot-text",
+          "partIndex": 0
+        },
+        {
+          "start": 11,
+          "end": 16,
+          "role": "fixed",
+          "partIndex": 0
+        },
+        {
+          "start": 17,
+          "end": 20,
+          "role": "ignorable",
+          "partIndex": 0
+        },
+        {
+          "start": 21,
+          "end": 67,
+          "role": "slot-text",
+          "partIndex": 0
+        }
+      ]
+    },
+    {
+      "elementId": "00000002-0000-4000-8000-000000000004",
+      "objectId": "1.4",
+      "sectionKey": "definitions",
+      "kind": "definition",
+      "text": "\u201cDocumentation\u201d means the user manuals supplied with the Software.",
+      "relationClass": "Definition",
+      "basis": "form",
+      "formId": "definition",
+      "leTemplate": "*a term* means *a description*.",
+      "leSentence": "\u201cDocumentation\u201d means the user manuals supplied with the Software.",
+      "spans": [
+        {
+          "start": 1,
+          "end": 14,
+          "role": "slot-text",
+          "partIndex": 0
+        },
+        {
+          "start": 16,
+          "end": 21,
+          "role": "fixed",
+          "partIndex": 0
+        },
+        {
+          "start": 22,
+          "end": 25,
+          "role": "ignorable",
+          "partIndex": 0
+        },
+        {
+          "start": 26,
+          "end": 52,
+          "role": "slot-text",
+          "partIndex": 0
+        },
+        {
+          "start": 53,
+          "end": 56,
+          "role": "ignorable",
+          "partIndex": 0
+        },
+        {
+          "start": 57,
+          "end": 65,
+          "role": "slot-constant",
+          "partIndex": 1
+        }
+      ]
+    },
+    {
+      "elementId": "00000002-0000-4000-8000-000000000005",
+      "objectId": "2.1",
+      "sectionKey": "grant",
+      "kind": "clause",
+      "text": "Licensee may use the Software for its internal business purposes.",
+      "relationClass": "Permission",
+      "basis": "form",
+      "formId": "permission",
+      "leTemplate": "*a party* may *an activity*.",
+      "leSentence": "Licensee may use the Software for its internal business purposes.",
+      "spans": [
+        {
+          "start": 0,
+          "end": 8,
+          "role": "slot-constant",
+          "partIndex": 0
+        },
+        {
+          "start": 9,
+          "end": 12,
+          "role": "modal",
+          "partIndex": 1
+        },
+        {
+          "start": 13,
+          "end": 16,
+          "role": "slot-text",
+          "partIndex": 1
+        },
+        {
+          "start": 17,
+          "end": 20,
+          "role": "ignorable",
+          "partIndex": 1
+        },
+        {
+          "start": 21,
+          "end": 29,
+          "role": "slot-constant",
+          "partIndex": 2
+        },
+        {
+          "start": 30,
+          "end": 64,
+          "role": "slot-text",
+          "partIndex": 3
+        }
+      ]
+    },
+    {
+      "elementId": "00000002-0000-4000-8000-000000000006",
+      "objectId": "2.2",
+      "sectionKey": "grant",
+      "kind": "clause",
+      "text": "Licensee may permit up to 10 users to access the Software.",
+      "relationClass": "Permission",
+      "basis": "form",
+      "formId": "permission",
+      "leTemplate": "*a party* may *an activity*.",
+      "leSentence": "Licensee may permit up to 10 users to access the Software.",
+      "spans": [
+        {
+          "start": 0,
+          "end": 8,
+          "role": "slot-constant",
+          "partIndex": 0
+        },
+        {
+          "start": 9,
+          "end": 12,
+          "role": "modal",
+          "partIndex": 1
+        },
+        {
+          "start": 13,
+          "end": 25,
+          "role": "slot-text",
+          "partIndex": 1
+        },
+        {
+          "start": 26,
+          "end": 28,
+          "role": "slot-variable",
+          "partIndex": 2
+        },
+        {
+          "start": 29,
+          "end": 44,
+          "role": "slot-text",
+          "partIndex": 3
+        },
+        {
+          "start": 45,
+          "end": 48,
+          "role": "ignorable",
+          "partIndex": 3
+        },
+        {
+          "start": 49,
+          "end": 57,
+          "role": "slot-constant",
+          "partIndex": 4
+        }
+      ]
+    },
+    {
+      "elementId": "00000002-0000-4000-8000-000000000007",
+      "objectId": "2.3",
+      "sectionKey": "grant",
+      "kind": "clause",
+      "text": "Licensee shall not sublicense the Software.",
+      "relationClass": "Prohibition",
+      "basis": "form",
+      "formId": "prohibition",
+      "leTemplate": "*a party* shall not *an activity*.",
+      "leSentence": "Licensee shall not sublicense the Software.",
+      "spans": [
+        {
+          "start": 0,
+          "end": 8,
+          "role": "slot-constant",
+          "partIndex": 0
+        },
+        {
+          "start": 9,
+          "end": 18,
+          "role": "modal",
+          "partIndex": 1
+        },
+        {
+          "start": 19,
+          "end": 29,
+          "role": "slot-text",
+          "partIndex": 1
+        },
+        {
+          "start": 30,
+          "end": 33,
+          "role": "ignorable",
+          "partIndex": 1
+        },
+        {
+          "start": 34,
+          "end": 42,
+          "role": "slot-constant",
+          "partIndex": 2
+        }
+      ]
+    },
+    {
+      "elementId": "00000002-0000-4000-8000-000000000008",
+      "objectId": "3.1",
+      "sectionKey": "restrictions",
+      "kind": "clause",
+      "text": "Licensee shall not reverse engineer the Software.",
+      "relationClass": "Prohibition",
+      "basis": "form",
+      "formId": "prohibition",
+      "leTemplate": "*a party* shall not *an activity*.",
+      "leSentence": "Licensee shall not reverse engineer the Software.",
+      "spans": [
+        {
+          "start": 0,
+          "end": 8,
+          "role": "slot-constant",
+          "partIndex": 0
+        },
+        {
+          "start": 9,
+          "end": 18,
+          "role": "modal",
+          "partIndex": 1
+        },
+        {
+          "start": 19,
+          "end": 35,
+          "role": "slot-text",
+          "partIndex": 1
+        },
+        {
+          "start": 36,
+          "end": 39,
+          "role": "ignorable",
+          "partIndex": 1
+        },
+        {
+          "start": 40,
+          "end": 48,
+          "role": "slot-constant",
+          "partIndex": 2
+        }
+      ]
+    },
+    {
+      "elementId": "00000002-0000-4000-8000-000000000009",
+      "objectId": "4.1",
+      "sectionKey": "fees",
+      "kind": "clause",
+      "text": "Licensee shall pay the GBP 5,000 annually in advance.",
+      "relationClass": "Obligation",
+      "basis": "form",
+      "formId": "obligation",
+      "leTemplate": "*a party* shall *an activity*.",
+      "leSentence": "Licensee shall pay the GBP 5,000 annually in advance.",
+      "spans": [
+        {
+          "start": 0,
+          "end": 8,
+          "role": "slot-constant",
+          "partIndex": 0
+        },
+        {
+          "start": 9,
+          "end": 14,
+          "role": "modal",
+          "partIndex": 1
+        },
+        {
+          "start": 15,
+          "end": 18,
+          "role": "slot-text",
+          "partIndex": 1
+        },
+        {
+          "start": 19,
+          "end": 22,
+          "role": "ignorable",
+          "partIndex": 1
+        },
+        {
+          "start": 23,
+          "end": 32,
+          "role": "slot-variable",
+          "partIndex": 2
+        },
+        {
+          "start": 33,
+          "end": 52,
+          "role": "slot-text",
+          "partIndex": 3
+        }
+      ]
+    },
+    {
+      "elementId": "00000002-0000-4000-8000-000000000010",
+      "objectId": "4.2",
+      "sectionKey": "fees",
+      "kind": "clause",
+      "text": "Licensee shall pay each invoice within 30 days.",
+      "relationClass": "Obligation",
+      "basis": "form",
+      "formId": "obligation-within",
+      "leTemplate": "*a party* shall *an activity* within *a period*.",
+      "leSentence": "Licensee shall pay each invoice within 30 days.",
+      "spans": [
+        {
+          "start": 0,
+          "end": 8,
+          "role": "slot-constant",
+          "partIndex": 0
+        },
+        {
+          "start": 9,
+          "end": 14,
+          "role": "modal",
+          "partIndex": 1
+        },
+        {
+          "start": 15,
+          "end": 18,
+          "role": "slot-text",
+          "partIndex": 1
+        },
+        {
+          "start": 19,
+          "end": 23,
+          "role": "ignorable",
+          "partIndex": 1
+        },
+        {
+          "start": 24,
+          "end": 31,
+          "role": "slot-text",
+          "partIndex": 1
+        },
+        {
+          "start": 32,
+          "end": 38,
+          "role": "fixed",
+          "partIndex": 1
+        },
+        {
+          "start": 39,
+          "end": 46,
+          "role": "slot-variable",
+          "partIndex": 2
+        }
+      ]
+    },
+    {
+      "elementId": "00000002-0000-4000-8000-000000000011",
+      "objectId": "5.1",
+      "sectionKey": "warranty-exclusions",
+      "kind": "clause",
+      "text": "Licensor is not liable for any loss of profits.",
+      "relationClass": "Exclusion",
+      "basis": "form",
+      "formId": "exclusion-not-liable",
+      "leTemplate": "*a party* is not liable for *a matter*.",
+      "leSentence": "Licensor is not liable for any loss of profits.",
+      "spans": [
+        {
+          "start": 0,
+          "end": 8,
+          "role": "slot-constant",
+          "partIndex": 0
+        },
+        {
+          "start": 9,
+          "end": 11,
+          "role": "fixed",
+          "partIndex": 1
+        },
+        {
+          "start": 12,
+          "end": 15,
+          "role": "modal",
+          "partIndex": 1
+        },
+        {
+          "start": 16,
+          "end": 26,
+          "role": "fixed",
+          "partIndex": 1
+        },
+        {
+          "start": 27,
+          "end": 30,
+          "role": "ignorable",
+          "partIndex": 1
+        },
+        {
+          "start": 31,
+          "end": 46,
+          "role": "slot-text",
+          "partIndex": 1
+        }
+      ]
+    },
+    {
+      "elementId": "00000002-0000-4000-8000-000000000012",
+      "objectId": "6.1",
+      "sectionKey": "termination",
+      "kind": "clause",
+      "text": "Licensor may terminate this Agreement if Licensee fails to pay any fee.",
+      "relationClass": "Power",
+      "basis": "form",
+      "formId": "power-terminate",
+      "leTemplate": "*a party* may terminate *an activity*.",
+      "leSentence": "Licensor may terminate this Agreement if Licensee fails to pay any fee.",
+      "spans": [
+        {
+          "start": 0,
+          "end": 8,
+          "role": "slot-constant",
+          "partIndex": 0
+        },
+        {
+          "start": 9,
+          "end": 12,
+          "role": "modal",
+          "partIndex": 1
+        },
+        {
+          "start": 13,
+          "end": 22,
+          "role": "fixed",
+          "partIndex": 1
+        },
+        {
+          "start": 23,
+          "end": 40,
+          "role": "slot-text",
+          "partIndex": 1
+        },
+        {
+          "start": 41,
+          "end": 49,
+          "role": "slot-constant",
+          "partIndex": 2
+        },
+        {
+          "start": 50,
+          "end": 62,
+          "role": "slot-text",
+          "partIndex": 3
+        },
+        {
+          "start": 63,
+          "end": 66,
+          "role": "ignorable",
+          "partIndex": 3
+        },
+        {
+          "start": 67,
+          "end": 70,
+          "role": "slot-text",
+          "partIndex": 3
+        }
+      ]
+    }
+  ],
+  "leProgram": "% Logical English reading of \"Software Licence (sample)\", revision 1, generated by the word authoring POC.\n% Profile wap-le-forms 0.1.0. Not checked by an LE parser.\n\nthe templates are:\n    *a party* shall *an activity* within *a period*.\n    *a party* shall not *an activity*.\n    *a party* shall *an activity*.\n    *a party* may terminate *an activity*.\n    *a party* may *an activity*.\n    *a party* is not liable for *a matter*.\n    *a term* means *a description*.\n\nthe knowledge base software_licence includes:\n\n% 1.1 Definition (form definition)\n\u201cLicensor\u201d means the party granting rights under this Agreement.\n\n% 1.2 Definition (form definition)\n\u201cLicensee\u201d means the party receiving rights under this Agreement.\n\n% 1.3 Definition (form definition)\n\u201cSoftware\u201d means the computer program licensed under this Agreement.\n\n% 1.4 Definition (form definition)\n\u201cDocumentation\u201d means the user manuals supplied with the Software.\n\n% 2.1 Permission (form permission)\nLicensee may use the Software for its internal business purposes.\n\n% 2.2 Permission (form permission)\nLicensee may permit up to 10 users to access the Software.\n\n% 2.3 Prohibition (form prohibition)\nLicensee shall not sublicense the Software.\n\n% 3.1 Prohibition (form prohibition)\nLicensee shall not reverse engineer the Software.\n\n% 4.1 Obligation (form obligation)\nLicensee shall pay the GBP 5,000 annually in advance.\n\n% 4.2 Obligation (form obligation-within)\nLicensee shall pay each invoice within 30 days.\n\n% 5.1 Exclusion (form exclusion-not-liable)\nLicensor is not liable for any loss of profits.\n\n% 6.1 Power (form power-terminate)\nLicensor may terminate this Agreement if Licensee fails to pay any fee.\n",
+  "graphView": {
+    "nodes": [
+      {
+        "id": "https://example.org/lattice/authoring/doc/00000002-0000-4000-8000-000000000000/element/00000002-0000-4000-8000-000000000001/meaning",
+        "label": "Definition 1.1",
+        "kind": "relation"
+      },
+      {
+        "id": "https://example.org/lattice/authoring/doc/00000002-0000-4000-8000-000000000000/element/00000002-0000-4000-8000-000000000002/meaning",
+        "label": "Definition 1.2",
+        "kind": "relation"
+      },
+      {
+        "id": "https://example.org/lattice/authoring/doc/00000002-0000-4000-8000-000000000000/element/00000002-0000-4000-8000-000000000003/meaning",
+        "label": "Definition 1.3",
+        "kind": "relation"
+      },
+      {
+        "id": "https://example.org/lattice/authoring/doc/00000002-0000-4000-8000-000000000000/element/00000002-0000-4000-8000-000000000004/meaning",
+        "label": "Definition 1.4",
+        "kind": "relation"
+      },
+      {
+        "id": "https://example.org/lattice/authoring/doc/00000002-0000-4000-8000-000000000000/element/00000002-0000-4000-8000-000000000005/meaning",
+        "label": "Permission 2.1",
+        "kind": "relation"
+      },
+      {
+        "id": "https://example.org/lattice/authoring/doc/00000002-0000-4000-8000-000000000000/element/00000002-0000-4000-8000-000000000006/meaning",
+        "label": "Permission 2.2",
+        "kind": "relation"
+      },
+      {
+        "id": "https://example.org/lattice/authoring/doc/00000002-0000-4000-8000-000000000000/element/00000002-0000-4000-8000-000000000007/meaning",
+        "label": "Prohibition 2.3",
+        "kind": "relation"
+      },
+      {
+        "id": "https://example.org/lattice/authoring/doc/00000002-0000-4000-8000-000000000000/element/00000002-0000-4000-8000-000000000008/meaning",
+        "label": "Prohibition 3.1",
+        "kind": "relation"
+      },
+      {
+        "id": "https://example.org/lattice/authoring/doc/00000002-0000-4000-8000-000000000000/element/00000002-0000-4000-8000-000000000009/meaning",
+        "label": "Obligation 4.1",
+        "kind": "relation"
+      },
+      {
+        "id": "https://example.org/lattice/authoring/doc/00000002-0000-4000-8000-000000000000/element/00000002-0000-4000-8000-000000000010/meaning",
+        "label": "Obligation 4.2",
+        "kind": "relation"
+      },
+      {
+        "id": "https://example.org/lattice/authoring/doc/00000002-0000-4000-8000-000000000000/element/00000002-0000-4000-8000-000000000011/meaning",
+        "label": "Exclusion 5.1",
+        "kind": "relation"
+      },
+      {
+        "id": "https://example.org/lattice/authoring/doc/00000002-0000-4000-8000-000000000000/element/00000002-0000-4000-8000-000000000012/meaning",
+        "label": "Power 6.1",
+        "kind": "relation"
+      },
+      {
+        "id": "https://example.org/lattice/authoring/doc/00000002-0000-4000-8000-000000000000/element/00000002-0000-4000-8000-000000000001",
+        "label": "Definition 1.1",
+        "kind": "element"
+      },
+      {
+        "id": "https://example.org/lattice/authoring/doc/00000002-0000-4000-8000-000000000000/element/00000002-0000-4000-8000-000000000002",
+        "label": "Definition 1.2",
+        "kind": "element"
+      },
+      {
+        "id": "https://example.org/lattice/authoring/doc/00000002-0000-4000-8000-000000000000/element/00000002-0000-4000-8000-000000000003",
+        "label": "Definition 1.3",
+        "kind": "element"
+      },
+      {
+        "id": "https://example.org/lattice/authoring/doc/00000002-0000-4000-8000-000000000000/element/00000002-0000-4000-8000-000000000004",
+        "label": "Definition 1.4",
+        "kind": "element"
+      },
+      {
+        "id": "https://example.org/lattice/authoring/doc/00000002-0000-4000-8000-000000000000/element/00000002-0000-4000-8000-000000000005",
+        "label": "Clause 2.1",
+        "kind": "element"
+      },
+      {
+        "id": "https://example.org/lattice/authoring/doc/00000002-0000-4000-8000-000000000000/element/00000002-0000-4000-8000-000000000006",
+        "label": "Clause 2.2",
+        "kind": "element"
+      },
+      {
+        "id": "https://example.org/lattice/authoring/doc/00000002-0000-4000-8000-000000000000/element/00000002-0000-4000-8000-000000000007",
+        "label": "Clause 2.3",
+        "kind": "element"
+      },
+      {
+        "id": "https://example.org/lattice/authoring/doc/00000002-0000-4000-8000-000000000000/element/00000002-0000-4000-8000-000000000008",
+        "label": "Clause 3.1",
+        "kind": "element"
+      },
+      {
+        "id": "https://example.org/lattice/authoring/doc/00000002-0000-4000-8000-000000000000/element/00000002-0000-4000-8000-000000000009",
+        "label": "Clause 4.1",
+        "kind": "element"
+      },
+      {
+        "id": "https://example.org/lattice/authoring/doc/00000002-0000-4000-8000-000000000000/element/00000002-0000-4000-8000-000000000010",
+        "label": "Clause 4.2",
+        "kind": "element"
+      },
+      {
+        "id": "https://example.org/lattice/authoring/doc/00000002-0000-4000-8000-000000000000/element/00000002-0000-4000-8000-000000000011",
+        "label": "Clause 5.1",
+        "kind": "element"
+      },
+      {
+        "id": "https://example.org/lattice/authoring/doc/00000002-0000-4000-8000-000000000000/element/00000002-0000-4000-8000-000000000012",
+        "label": "Clause 6.1",
+        "kind": "element"
+      },
+      {
+        "id": "https://example.org/lattice/authoring/doc/00000002-0000-4000-8000-000000000000/role/00000002-0000-4000-8000-000000000001",
+        "label": "Licensor",
+        "kind": "role"
+      },
+      {
+        "id": "https://example.org/lattice/authoring/doc/00000002-0000-4000-8000-000000000000/role/00000002-0000-4000-8000-000000000002",
+        "label": "Licensee",
+        "kind": "role"
+      },
+      {
+        "id": "https://example.org/lattice/authoring/doc/00000002-0000-4000-8000-000000000000/variable/payment-days",
+        "label": "payment-days",
+        "kind": "variable"
+      }
+    ],
+    "edges": [
+      {
+        "from": "https://example.org/lattice/authoring/doc/00000002-0000-4000-8000-000000000000/element/00000002-0000-4000-8000-000000000001/meaning",
+        "to": "https://example.org/lattice/authoring/doc/00000002-0000-4000-8000-000000000000/element/00000002-0000-4000-8000-000000000001",
+        "label": "expressedIn"
+      },
+      {
+        "from": "https://example.org/lattice/authoring/doc/00000002-0000-4000-8000-000000000000/element/00000002-0000-4000-8000-000000000002/meaning",
+        "to": "https://example.org/lattice/authoring/doc/00000002-0000-4000-8000-000000000000/element/00000002-0000-4000-8000-000000000002",
+        "label": "expressedIn"
+      },
+      {
+        "from": "https://example.org/lattice/authoring/doc/00000002-0000-4000-8000-000000000000/element/00000002-0000-4000-8000-000000000003/meaning",
+        "to": "https://example.org/lattice/authoring/doc/00000002-0000-4000-8000-000000000000/element/00000002-0000-4000-8000-000000000003",
+        "label": "expressedIn"
+      },
+      {
+        "from": "https://example.org/lattice/authoring/doc/00000002-0000-4000-8000-000000000000/element/00000002-0000-4000-8000-000000000004/meaning",
+        "to": "https://example.org/lattice/authoring/doc/00000002-0000-4000-8000-000000000000/element/00000002-0000-4000-8000-000000000004",
+        "label": "expressedIn"
+      },
+      {
+        "from": "https://example.org/lattice/authoring/doc/00000002-0000-4000-8000-000000000000/element/00000002-0000-4000-8000-000000000005/meaning",
+        "to": "https://example.org/lattice/authoring/doc/00000002-0000-4000-8000-000000000000/element/00000002-0000-4000-8000-000000000005",
+        "label": "expressedIn"
+      },
+      {
+        "from": "https://example.org/lattice/authoring/doc/00000002-0000-4000-8000-000000000000/element/00000002-0000-4000-8000-000000000005/meaning",
+        "to": "https://example.org/lattice/authoring/doc/00000002-0000-4000-8000-000000000000/role/00000002-0000-4000-8000-000000000002",
+        "label": "holder"
+      },
+      {
+        "from": "https://example.org/lattice/authoring/doc/00000002-0000-4000-8000-000000000000/element/00000002-0000-4000-8000-000000000006/meaning",
+        "to": "https://example.org/lattice/authoring/doc/00000002-0000-4000-8000-000000000000/element/00000002-0000-4000-8000-000000000006",
+        "label": "expressedIn"
+      },
+      {
+        "from": "https://example.org/lattice/authoring/doc/00000002-0000-4000-8000-000000000000/element/00000002-0000-4000-8000-000000000006/meaning",
+        "to": "https://example.org/lattice/authoring/doc/00000002-0000-4000-8000-000000000000/role/00000002-0000-4000-8000-000000000002",
+        "label": "holder"
+      },
+      {
+        "from": "https://example.org/lattice/authoring/doc/00000002-0000-4000-8000-000000000000/element/00000002-0000-4000-8000-000000000007/meaning",
+        "to": "https://example.org/lattice/authoring/doc/00000002-0000-4000-8000-000000000000/element/00000002-0000-4000-8000-000000000007",
+        "label": "expressedIn"
+      },
+      {
+        "from": "https://example.org/lattice/authoring/doc/00000002-0000-4000-8000-000000000000/element/00000002-0000-4000-8000-000000000007/meaning",
+        "to": "https://example.org/lattice/authoring/doc/00000002-0000-4000-8000-000000000000/role/00000002-0000-4000-8000-000000000002",
+        "label": "obligor"
+      },
+      {
+        "from": "https://example.org/lattice/authoring/doc/00000002-0000-4000-8000-000000000000/element/00000002-0000-4000-8000-000000000008/meaning",
+        "to": "https://example.org/lattice/authoring/doc/00000002-0000-4000-8000-000000000000/element/00000002-0000-4000-8000-000000000008",
+        "label": "expressedIn"
+      },
+      {
+        "from": "https://example.org/lattice/authoring/doc/00000002-0000-4000-8000-000000000000/element/00000002-0000-4000-8000-000000000008/meaning",
+        "to": "https://example.org/lattice/authoring/doc/00000002-0000-4000-8000-000000000000/role/00000002-0000-4000-8000-000000000002",
+        "label": "obligor"
+      },
+      {
+        "from": "https://example.org/lattice/authoring/doc/00000002-0000-4000-8000-000000000000/element/00000002-0000-4000-8000-000000000009/meaning",
+        "to": "https://example.org/lattice/authoring/doc/00000002-0000-4000-8000-000000000000/element/00000002-0000-4000-8000-000000000009",
+        "label": "expressedIn"
+      },
+      {
+        "from": "https://example.org/lattice/authoring/doc/00000002-0000-4000-8000-000000000000/element/00000002-0000-4000-8000-000000000009/meaning",
+        "to": "https://example.org/lattice/authoring/doc/00000002-0000-4000-8000-000000000000/role/00000002-0000-4000-8000-000000000002",
+        "label": "obligor"
+      },
+      {
+        "from": "https://example.org/lattice/authoring/doc/00000002-0000-4000-8000-000000000000/element/00000002-0000-4000-8000-000000000010/meaning",
+        "to": "https://example.org/lattice/authoring/doc/00000002-0000-4000-8000-000000000000/element/00000002-0000-4000-8000-000000000010",
+        "label": "expressedIn"
+      },
+      {
+        "from": "https://example.org/lattice/authoring/doc/00000002-0000-4000-8000-000000000000/element/00000002-0000-4000-8000-000000000010/meaning",
+        "to": "https://example.org/lattice/authoring/doc/00000002-0000-4000-8000-000000000000/role/00000002-0000-4000-8000-000000000002",
+        "label": "obligor"
+      },
+      {
+        "from": "https://example.org/lattice/authoring/doc/00000002-0000-4000-8000-000000000000/element/00000002-0000-4000-8000-000000000010/meaning",
+        "to": "https://example.org/lattice/authoring/doc/00000002-0000-4000-8000-000000000000/variable/payment-days",
+        "label": "period"
+      },
+      {
+        "from": "https://example.org/lattice/authoring/doc/00000002-0000-4000-8000-000000000000/element/00000002-0000-4000-8000-000000000011/meaning",
+        "to": "https://example.org/lattice/authoring/doc/00000002-0000-4000-8000-000000000000/element/00000002-0000-4000-8000-000000000011",
+        "label": "expressedIn"
+      },
+      {
+        "from": "https://example.org/lattice/authoring/doc/00000002-0000-4000-8000-000000000000/element/00000002-0000-4000-8000-000000000011/meaning",
+        "to": "https://example.org/lattice/authoring/doc/00000002-0000-4000-8000-000000000000/role/00000002-0000-4000-8000-000000000001",
+        "label": "obligor"
+      },
+      {
+        "from": "https://example.org/lattice/authoring/doc/00000002-0000-4000-8000-000000000000/element/00000002-0000-4000-8000-000000000012/meaning",
+        "to": "https://example.org/lattice/authoring/doc/00000002-0000-4000-8000-000000000000/element/00000002-0000-4000-8000-000000000012",
+        "label": "expressedIn"
+      },
+      {
+        "from": "https://example.org/lattice/authoring/doc/00000002-0000-4000-8000-000000000000/element/00000002-0000-4000-8000-000000000012/meaning",
+        "to": "https://example.org/lattice/authoring/doc/00000002-0000-4000-8000-000000000000/role/00000002-0000-4000-8000-000000000001",
+        "label": "holder"
+      }
+    ]
+  }
+}

@@ -16,3 +16,10 @@ SPDX-License-Identifier = "MPL-2.0"
 path = ["packages/minting/testdata/*.json"]
 precedence = "aggregate"
 SPDX-License-Identifier = "MPL-2.0"
+
+# Word authoring POC (ADR-A114): generated N-Triples goldens, compared line by line against the
+# mapper's output. A comment line would be read back as data, so the licence is declared here.
+[[annotations]]
+path = ["contracts/authoring/fixtures/wording/*.nt"]
+precedence = "aggregate"
+SPDX-License-Identifier = "MPL-2.0"

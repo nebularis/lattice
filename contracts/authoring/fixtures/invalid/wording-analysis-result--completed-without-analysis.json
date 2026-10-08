@@ -1,0 +1,11 @@
+{
+  "jobId": "00000009-0000-4000-8000-000000000099",
+  "correlationId": "00000009-0000-4000-8000-000000000099",
+  "documentId": "00000009-0000-4000-8000-000000000000",
+  "revision": 1,
+  "status": "completed",
+  "error": "something went wrong",
+  "proposalGraph": null,
+  "analysis": null,
+  "completedAt": "2026-10-01T00:00:01Z"
+}

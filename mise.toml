@@ -20,7 +20,7 @@ run = "python -m pip install -c requirements-lock.txt \".[reasoning,test]\""
 
 [tasks."bootstrap:workers"]
 description = "Install the worker package with test dependencies"
-run = "python -m pip install -e ./workers[test]"
+run = "python -m pip install -e \"./workers[test,authoring]\""
 
 [tasks."bootstrap:mork"]
 description = "Install the MORK package and MTP structural dependencies"
@@ -55,7 +55,7 @@ run = "corepack enable && yarn install --immutable"
 
 [tasks.check]
 description = "Run all repository validation tasks"
-depends = ["check:python-root", "check:workers", "check:java", "check:frontend", "check:spc", "check:persistence", "check:vocabulary", "check:reference-eligibility", "check:mork-compilers", "check:ontology-versioning", "check:ontology-catalog", "check:import-guard", "check:reasoning-isolation", "check:minting", "check:formal-freshness", "check:agent-guidance", "build:mtp", "check:mtp"]
+depends = ["check:python-root", "check:workers", "check:java", "check:frontend", "check:spc", "check:persistence", "check:vocabulary", "check:reference-eligibility", "check:mork-compilers", "check:ontology-versioning", "check:ontology-catalog", "check:import-guard", "check:reasoning-isolation", "check:minting", "check:formal-freshness", "check:agent-guidance", "build:mtp", "check:mtp", "check:authoring-tools"]
 
 [tasks.test]
 description = "Run the repository test suites"
@@ -79,6 +79,14 @@ run = "python -m unittest surface.test_surface mork_compilers.test_mork_compiler
 [tasks."check:workers"]
 run = "python -m pytest workers/tests"
 
+[tasks."check:authoring-contracts"]
+description = "Validate the word authoring POC contracts, templates, samples and fixtures"
+run = "python -m pytest workers/tests/test_authoring_contracts.py -q"
+
+[tasks."check:authoring-worker"]
+description = "Test the word authoring POC worker (ADR-A114)"
+run = "python -m pytest workers/tests/test_wording_le.py workers/tests/test_wording_analysis_worker.py workers/tests/test_authoring_contracts.py -q"
+
 [tasks."check:mtp"]
 description = "Check the committed MORK Teaching Pack structure and pins"
 run = "python -m mtp.cli check --out ontology/mork/mtp/out"
@@ -92,6 +100,15 @@ run = "mvn -f platform/pom.xml verify"
 
 [tasks."check:frontend"]
 run = "yarn check"
+
+[tasks."check:authoring-addin"]
+description = "Type-check and unit-test the Word authoring add-in"
+run = "yarn workspace @lattice/word-authoring-addin run check"
+
+[tasks."test:authoring-addin"]
+description = "Type-check, unit-test and run the harness tests of the Word authoring add-in"
+depends = ["check:authoring-addin"]
+run = "yarn workspace @lattice/word-authoring-addin run test"
 
 [tasks."test:frontend"]
 run = "yarn test"
@@ -228,6 +245,51 @@ run = "mvn -q -f platform/pom.xml -pl reasoning-testkit -am verify"
 description = "Fail when a reasoner, rules engine or JVM bridge is declared outside platform/reasoning-testkit (ADR-A83)"
 run = "python tools/reasoning_isolation_check.py"
 
+[tasks."check:authoring-service"]
+description = "Build and unit-test the word authoring POC service (ADR-A114)"
+run = "mvn -f platform/pom.xml -pl authoring-service -am verify"
+
+[tasks."check:authoring-service-it"]
+description = "Integration-test the word authoring POC service against Fuseki and RabbitMQ containers"
+run = "mvn -f platform/pom.xml -pl authoring-service -am -Pauthoring-it verify"
+
+[tasks."build:authoring-fixtures"]
+description = "Regenerate the word authoring POC's generated wording fixtures from the samples (ADR-A114)"
+run = "mvn -q -f platform/pom.xml -pl authoring-service -am package -DskipTests && java -cp platform/authoring-service/target/authoring-service.jar org.nebularis.lattice.authoring.app.FixtureWriter contracts/authoring"
+
+[tasks."build:authoring"]
+description = "Build the POC service jar and add-in, and stage the image inputs"
+run = "mvn -q -f platform/pom.xml -pl authoring-service -am package -DskipTests && yarn workspace @lattice/word-authoring-addin run build && python tools/authoring_stage.py"
+
+[tasks."authoring:up"]
+description = "Start the Word authoring POC stack and seed the samples"
+depends = ["build:authoring"]
+run = "docker compose -f deployment/compose/authoring/docker-compose.yml up -d --build --wait"
+
+[tasks."authoring:down"]
+run = "docker compose -f deployment/compose/authoring/docker-compose.yml down"
+
+[tasks."authoring:reset"]
+description = "Stop the POC stack and delete its data and local CA"
+run = "docker compose -f deployment/compose/authoring/docker-compose.yml down -v"
+
+[tasks."authoring:ca"]
+description = "Copy the POC proxy's local root certificate to .build/authoring"
+run = "docker compose -f deployment/compose/authoring/docker-compose.yml cp authoring-proxy:/data/caddy/pki/authorities/local/root.crt .build/authoring/lattice-authoring-root.crt"
+
+[tasks."check:authoring-tools"]
+description = "Test the word authoring POC staging script (ADR-A114)"
+run = "python -m pytest tools/test_authoring_stage.py -q"
+
+[tasks."check:authoring-stack"]
+description = "Start the POC stack and run its end-to-end suite"
+depends = ["authoring:up"]
+run = "yarn workspace @lattice/word-authoring-addin run test:stack"
+
+[tasks."check:authoring"]
+description = "All Word authoring POC checks that need no running stack"
+depends = ["check:authoring-contracts", "check:authoring-service", "check:authoring-worker", "check:authoring-addin", "test:authoring-addin", "check:authoring-tools"]
+
 [tasks."services:up"]
 description = "Start the reference platform services"
 run = "docker compose -f deployment/compose/docker-compose.yml up -d"
@@ -238,26 +300,73 @@ run = "docker compose -f deployment/compose/docker-compose.yml down"
 
 [tasks.clean]
 description = "Clean all build artifacts and caches"
-depends = ["clean:java", "clean:python", "clean:frontend", "clean:build", "clean:docs"]
+run = [{ tasks = ["clean:java", "clean:python", "clean:frontend", "clean:build", "clean:docs"] }]
+run_windows = [{ task = "clean-win" }]
 
 [tasks."clean:java"]
-run = "mvn -f platform/pom.xml clean"
+run = ["mvn -f platform/pom.xml clean", "mvn -f packages/minting/java/pom.xml clean"]
 
 [tasks."clean:python"]
 description = "Clean Python caches, bytecode, and build artifacts"
-run = "rm -rf .build/pytest-cache/* .pytest_cache __pycache__ build/ *.egg-info; find . -type d -name '__pycache__' -exec rm -rf {} + 2>/dev/null; find . -type d -name '*.egg-info' -exec rm -rf {} + 2>/dev/null; true"
+run = "rm -rf .build/pytest-cache/* .pytest_cache __pycache__ build/ *.egg-info workers/build; find . -type d -name '__pycache__' -exec rm -rf {} + 2>/dev/null; find . -type d -name '*.egg-info' -exec rm -rf {} + 2>/dev/null; true"
 
 [tasks."clean:frontend"]
-description = "Clean Node/Yarn artifacts"
-run = "rm -rf node_modules .yarn apps/*/node_modules .build/yarn-cache/* .build/*-test-results/*; yarn cache clean"
+description = "Clean Node/Yarn artifacts and frontend build output"
+run = "rm -rf node_modules .yarn apps/*/node_modules apps/*/dist .build/yarn-cache/* .build/*-test-results/*; yarn cache clean"
 
 [tasks."clean:build"]
 description = "Clean generated build outputs"
-run = "rm -rf build/ ontology/mork/mtp/out/"
+run = "rm -rf build/ ontology/mork/mtp/out/ .build/authoring"
 
 [tasks."clean:docs"]
 description = "Clean local Jekyll/Bundler artifacts under docs/ (never the committed Gemfile/Gemfile.lock)"
 run = "rm -rf docs/vendor docs/.bundle docs/_site docs/.jekyll-cache docs/.jekyll-metadata"
+
+[tasks."clean-win"]
+description = "Clean all build artifacts and caches (Windows PowerShell equivalent of clean). Run directly, or let `clean` fall back to it automatically on Windows."
+depends = ["clean:java", "clean-win:python", "clean-win:frontend", "clean-win:build", "clean-win:docs"]
+
+[tasks."clean-win:python"]
+description = "Clean Python caches, bytecode, and build artifacts (Windows)"
+shell = "powershell -c"
+run = '''
+$ErrorActionPreference = "SilentlyContinue"
+Remove-Item -Recurse -Force .build/pytest-cache, .pytest_cache, build, *.egg-info, workers/build
+Get-ChildItem -Recurse -Directory -Include __pycache__, *.egg-info |
+    Remove-Item -Recurse -Force
+exit 0
+'''
+
+[tasks."clean-win:frontend"]
+description = "Clean Node/Yarn artifacts and frontend build output (Windows)"
+shell = "powershell -c"
+run = '''
+$ErrorActionPreference = "SilentlyContinue"
+Remove-Item -Recurse -Force node_modules, .yarn, .build/yarn-cache
+Get-ChildItem -Path apps -Directory |
+    ForEach-Object {
+        Remove-Item -Recurse -Force (Join-Path $_.FullName "node_modules")
+        Remove-Item -Recurse -Force (Join-Path $_.FullName "dist")
+    }
+Get-ChildItem -Path .build -Directory -Filter *-test-results |
+    ForEach-Object {
+        Get-ChildItem -Path $_.FullName -Force |
+            Where-Object { $_.Name -notlike ".*" } |
+            Remove-Item -Recurse -Force
+    }
+yarn cache clean
+exit 0
+'''
+
+[tasks."clean-win:build"]
+description = "Clean generated build outputs (Windows)"
+shell = "powershell -c"
+run = '$ErrorActionPreference = "SilentlyContinue"; Remove-Item -Recurse -Force build, ontology/mork/mtp/out, .build/authoring; exit 0'
+
+[tasks."clean-win:docs"]
+description = "Clean local Jekyll/Bundler artifacts under docs/ (Windows, never the committed Gemfile/Gemfile.lock)"
+shell = "powershell -c"
+run = '$ErrorActionPreference = "SilentlyContinue"; Remove-Item -Recurse -Force docs/vendor, docs/.bundle, docs/_site, docs/.jekyll-cache, docs/.jekyll-metadata; exit 0'
 
 [tasks."bootstrap:jekyll"]
 description = "Install Ruby/Bundler/Jekyll locally for docs/ (GitHub Pages). Not part of the default bootstrap task — run explicitly when working on docs content."
@@ -307,4 +416,3 @@ run = "python spikes/formal-prover/env/smoke.py"
 [tasks."check:proofs"]
 description = "Build every tools/proofs/<layer>/ Isabelle session natively and run the proof gate (ADR-A-FM2). Pass a layer name to build only that one"
 run = "python tools/proofs/check.py"
-

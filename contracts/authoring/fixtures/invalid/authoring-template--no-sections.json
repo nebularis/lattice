@@ -1,0 +1,8 @@
+{
+  "templateId": "no-sections-template",
+  "version": "0.1.0",
+  "title": "No sections",
+  "domain": "demo",
+  "sections": [],
+  "variables": []
+}

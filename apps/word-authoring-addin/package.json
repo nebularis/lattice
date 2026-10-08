@@ -1,0 +1,31 @@
+{
+  "name": "@lattice/word-authoring-addin",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "check": "tsc --noEmit && vitest run",
+    "test": "playwright test",
+    "test:stack": "playwright test -c playwright.stack.config.ts"
+  },
+  "dependencies": {
+    "mermaid": "^11.4.1",
+    "react": "19.0.0",
+    "react-dom": "19.0.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.50.1",
+    "@types/node": "^22.10.2",
+    "@types/office-js": "^1.0.470",
+    "@types/react": "18.3.12",
+    "@types/react-dom": "18.3.1",
+    "@vitejs/plugin-react": "4.3.4",
+    "ajv": "^8.17.1",
+    "jsdom": "^25.0.1",
+    "typescript": "5.7.3",
+    "vite": "6.0.5",
+    "vitest": "^2.1.8"
+  }
+}

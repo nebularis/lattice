@@ -1,0 +1,57 @@
+<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:w15="http://schemas.microsoft.com/office/word/2012/wordml">
+  <w:body>
+    <w:sdt>
+      <w:sdtPr>
+        <w:alias w:val="Section: Commitment"/>
+        <w:tag w:val="lat:s:commitment"/>
+        <w:id w:val="1"/>
+        <w15:color w:val="5B6B7F"/>
+        <w15:appearance w:val="boundingBox"/>
+      </w:sdtPr>
+      <w:sdtContent>
+        <w:p>
+          <w:pPr><w:pStyle w:val="Heading1"/></w:pPr>
+          <w:r><w:t>Commitment</w:t></w:r>
+        </w:p>
+        <w:sdt>
+          <w:sdtPr>
+            <w:alias w:val="Clause"/>
+            <w:tag w:val="lat:e:00000009-0000-4000-8000-000000000001"/>
+            <w:id w:val="2"/>
+            <w15:color w:val="1F6FB2"/>
+            <w15:appearance w:val="boundingBox"/>
+          </w:sdtPr>
+          <w:sdtContent>
+            <w:p>
+              <w:bookmarkStart w:id="0" w:name="_GoBack"/>
+              <w:proofErr w:type="spellStart"/>
+              <w:del w:id="10" w:author="X" w:date="2026-01-01T00:00:00Z">
+                <w:r><w:delText>won't</w:delText></w:r>
+              </w:del>
+              <w:r>
+                <w:rPr><w:b/></w:rPr>
+                <w:t>Bor</w:t>
+              </w:r>
+              <w:r><w:t>rower</w:t></w:r>
+              <w:proofErr w:type="spellEnd"/>
+              <w:bookmarkEnd w:id="0"/>
+              <w:r><w:tab/></w:r>
+              <w:ins w:id="11" w:author="X" w:date="2026-01-01T00:00:00Z">
+                <w:r><w:t>shall</w:t></w:r>
+              </w:ins>
+              <w:r><w:t xml:space="preserve"> </w:t></w:r>
+              <w:smartTag w:uri="urn:schemas-microsoft-com:office:smarttags" w:element="PersonName">
+                <w:r><w:t>pay</w:t></w:r>
+              </w:smartTag>
+              <w:r><w:t xml:space="preserve"> </w:t></w:r>
+              <w:hyperlink w:anchor="lender">
+                <w:r><w:t>lender</w:t></w:r>
+              </w:hyperlink>
+              <w:r><w:t>.</w:t></w:r>
+            </w:p>
+          </w:sdtContent>
+        </w:sdt>
+      </w:sdtContent>
+    </w:sdt>
+  </w:body>
+</w:document>

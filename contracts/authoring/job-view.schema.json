@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.nebularis.org/lattice/authoring/job-view/0.1.0",
+  "title": "Word authoring POC: job view",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["jobId", "documentId", "revision", "status", "error"],
+  "properties": {
+    "jobId": {"$ref": "https://schemas.nebularis.org/lattice/authoring/common/0.1.0#/$defs/Uuid"},
+    "documentId": {"$ref": "https://schemas.nebularis.org/lattice/authoring/common/0.1.0#/$defs/Uuid"},
+    "revision": {"type": "integer", "minimum": 1},
+    "status": {"$ref": "https://schemas.nebularis.org/lattice/authoring/common/0.1.0#/$defs/JobStatus"},
+    "error": {"oneOf": [{"type": "string", "minLength": 1, "maxLength": 1000}, {"type": "null"}]}
+  }
+}

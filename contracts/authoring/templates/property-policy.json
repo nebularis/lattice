@@ -1,0 +1,54 @@
+{
+  "templateId": "property-policy",
+  "version": "0.1.0",
+  "title": "Property Policy",
+  "domain": "insurance",
+  "sections": [
+    {
+      "sectionKey": "definitions",
+      "heading": "Definitions",
+      "elementKinds": ["definition"],
+      "allowedTermKinds": ["Definition"],
+      "required": true,
+      "guidance": "Define each defined term used elsewhere in the policy."
+    },
+    {
+      "sectionKey": "insuring-clause",
+      "heading": "Insuring Clause",
+      "elementKinds": ["clause"],
+      "allowedTermKinds": ["Obligation"],
+      "required": true,
+      "guidance": "State what the insurer agrees to indemnify."
+    },
+    {
+      "sectionKey": "exclusions",
+      "heading": "Exclusions",
+      "elementKinds": ["clause"],
+      "allowedTermKinds": ["Exclusion"],
+      "required": true,
+      "guidance": "State what the policy does not cover."
+    },
+    {
+      "sectionKey": "conditions",
+      "heading": "Conditions",
+      "elementKinds": ["clause"],
+      "allowedTermKinds": ["Obligation", "Prohibition"],
+      "required": true,
+      "guidance": "State what the insured must do and must not do to keep cover in force."
+    },
+    {
+      "sectionKey": "claims",
+      "heading": "Claims",
+      "elementKinds": ["clause"],
+      "allowedTermKinds": ["Obligation", "Deeming"],
+      "required": false,
+      "guidance": "State how a claim is notified and when it is deemed notified."
+    }
+  ],
+  "variables": [
+    {"variableKey": "sum-insured", "label": "Sum insured", "valueType": "money"},
+    {"variableKey": "excess", "label": "Excess", "valueType": "money"},
+    {"variableKey": "notification-days", "label": "Notification days", "valueType": "duration"},
+    {"variableKey": "period-start", "label": "Period start", "valueType": "date"}
+  ]
+}
