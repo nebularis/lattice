@@ -209,3 +209,11 @@ Claude Code users elsewhere install the skills with `/plugin marketplace add neb
 `/plugin install lattice@nebularis`. Do not install the plugin inside this repository, where the
 skills already load, or each appears twice.
 
+**Cloud sessions.** A Claude Code cloud environment prepares itself with
+[`tools/claude-cloud-setup.sh`](../../tools/claude-cloud-setup.sh): paste the two lines from its header
+into the environment's **Setup script** field. It installs Java 25 and Python 3.14 from GitHub-hosted
+builds, links the image's Node and Maven into mise, and runs `mise run bootstrap`, within the default
+**Trusted** network and always exiting 0, as a cloud setup script must. Erlang/Elixir and Playwright's
+browsers are left out. Its last line reports how long setup took, which must stay under about five
+minutes for the environment to be cached.
+
