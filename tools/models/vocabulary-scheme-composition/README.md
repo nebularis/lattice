@@ -56,3 +56,29 @@ concept (needs an explicit precedence rule, parallel to ADR-A85's specificity or
 free union and require `skos:broader`'s transitive closure to stay acyclic, deferring disagreement
 to whatever reads the hierarchy (weakest guarantee, cheapest to state). This model does not choose
 among them — that is the human's decision, informed by this evidence, not this track's to take.
+
+## Re-run with well-formedness facts (2026-10-07, after independent review)
+
+An external review of the formal-methods programme ([response](../../../docs/developer/notes/formal-methods-more-feedback-response.md)
+§4.2) found the original `NoOverlapDisagreement` counterexample above **degenerate**: `Scheme`'s
+signature constrained `broader` to relate only a scheme's own members, but never excluded a
+concept from being recorded as its own parent, so the very first counterexample Alloy found
+(`Concept$1 broader Concept$1` in one scheme) relied on a self-loop `skos:broader` would never
+hold in practice, not on genuine disagreement between two schemes.
+
+Two new facts were added to `Scheme`'s signature:
+
+```alloy
+no (broader & iden)     -- skos:broader is irreflexive: no concept is its own parent
+no (^broader & iden)    -- skos:broader is acyclic: no concept is its own ancestor
+```
+
+`NoOverlapDisagreement` was re-run at the same scope (4) and **still returns SAT**: the
+counterexample survives, now with no self-loop or cycle possible. The new witness (`receipt.json`,
+command run 2026-10-07): `Scheme$1` has members `{Concept$1, Concept$2}` with
+`broader = {Concept$2 -> Concept$1}`; `Scheme$2` has members `{Concept$0, Concept$2}` with
+`broader = {Concept$2 -> Concept$0}`. Both schemes share `Concept$2` as a member, and each records
+a genuinely different, distinct concept as its broader parent (`Concept$1` versus `Concept$0`),
+with neither relation touching the shared concept itself. The finding above is confirmed under
+the stronger, well-formed model, not merely an artefact of an under-constrained first pass.
+`EverySourceResolves` is unaffected (still UNSAT, as before).

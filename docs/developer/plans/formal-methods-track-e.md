@@ -14,7 +14,9 @@
 **Status:** E1.0 done. E1.1 (the kernel, for real) done alongside it. E1.2 (rounding/residual)
 is retired from this track (2026-10-07): its real home is track B's B4 and E3/E4, not E1 (see
 §3). E1.3 (binding resolution) not started; track C's C2 is done, but the overlap-rule decision
-it surfaced is not yet made
+it surfaced is not yet made. E1.4 (hardening the gate and the kernel theory) queued 2026-10-08
+after an implementation-level review, not started; see
+[the review response](../notes/formal-methods-more-feedback-response.md) §4
 
 ## 1. Scope
 
@@ -116,6 +118,54 @@ theorem reappears in whichever later plan details E3/E4.
   already held E1.3 back before C2 itself existed.
 - **Validation:** TBD, including differential evidence against C2's model and whichever ADR
   accepts scheme composition, once both exist.
+
+### E1.4: harden the gate and the kernel theory — not started
+
+Queued 2026-10-08 from an implementation-level review of the programme's own evidence (full
+disposition in [the review response](../notes/formal-methods-more-feedback-response.md) §2, §4).
+Each item below is a confirmed, not merely alleged, property of the committed theories:
+
+- **Digest transitive definitions.** `gate.py` hashes only the text between the `GATE:BEGIN` and
+  `GATE:END` markers. `decision_leq`, `or3`, `and3` and `neg3` sit outside any gate, so redefining
+  one of them changes what every gated lemma means without changing a single digest. Fix by having
+  Isabelle emit, per gated theorem, its term plus the defining equations of every constant it
+  mentions transitively, and hash that output, not the source text alone.
+- **Add characterising lemmas.** TA1's monotonicity lemmas hold of a constant function standing in
+  for `or3`/`and3`; TA2's lemmas hold of the identity function standing in for `neg3`. Neither is
+  ruled out today. Add, and gate: the full truth table (or equivalently `neg3 Permitted = Denied`),
+  commutativity, associativity and idempotence of `or3`/`and3`, an identity and absorbing element
+  for each, and both De Morgan forms (only one direction's negation is currently refuted, in
+  `Eligibility.thy`; check whether the dual is proved or simply never stated).
+- **State and gate set-reading invariance.** `some_value`/`every_value` are list folds standing in
+  for a property of sets. Permutation invariance and duplication invariance (the result depends
+  only on `set xs`) are neither stated nor gated, and follow once the algebraic laws above are
+  proved. State and gate the empty-list base cases explicitly too (`some_value [] = Denied`,
+  `every_value [] = Permitted`), checked against the README's own wording for `SingleValue`'s
+  zero-candidate case, which differs from an existential over the empty set and deserves its own
+  line.
+- **Replace `by eval`.** `Adequacy.thy`'s 15 fixture lemmas use Isabelle's code-generator oracle,
+  not the kernel, and are tagged accordingly rather than fully kernel-checked. For a
+  three-constructor finite domain, `by simp`, `by code_simp` or `by normalization` establish the
+  same facts inside the kernel at negligible extra cost. Replace throughout.
+- **Describe and implement the assumption audit.** The epic sketch names "an assumption audit"
+  (§3) as part of track E's verification story; nothing in this track's documents says what it
+  checks. Implement it as a check for `sorry`, `oops`, `quick_and_dirty` and `axiomatization`, and
+  for oracle tags via `thm_oracles` (which also catches the `by eval` dependency above until it is
+  removed), wired into `gate.py` or `check.py`.
+- **Record the build identity a claim depends on.** Each claim JSON names "the tool, version and
+  outcome": confirm this is populated from an actual build run, not hand-written, and that
+  `gate.py` passing in CI is tied to that same build having actually succeeded, not run
+  independently of it.
+- **Mutation-test the theory.** No mutation has ever been seeded into `tools/proofs/eligibility`
+  itself (B1's Python port has been; the Isabelle theory has not). Seed at minimum: a wrong `or3`
+  cell (confirm `Adequacy.thy` fails), a weakened gated statement (confirm `gate.py` fails on the
+  digest), and a changed definition with an unchanged statement (confirm the digest fix above is
+  what makes this case fail, since today it would not).
+
+**Validation:** each item above gets its own before/after pair, the specific mutation or defect it
+is meant to catch, shown failing before the fix and caught after, the same discipline track D's
+seeded defects and B1's own seeded mutation already use. Not a new proof target: a hardening pass
+over E1.0/E1.1's existing one.
 
 ## 4. Test taxonomy and evidence
 

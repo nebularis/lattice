@@ -79,6 +79,41 @@ checked model and a recommendation, not a mechanised law).
   stay acyclic) with no choice made among them here — that choice is the human's, informed by
   this evidence, for whichever ADR accepts scheme composition.
 
+### C2.1: well-formedness facts, and a re-run — done
+
+Queued, then done the same session, 2026-10-08, after an implementation-level review (full
+disposition in [the review response](../notes/formal-methods-more-feedback-response.md) §2, §4):
+the original `NoOverlapDisagreement` counterexample relied on a concept recorded as its own
+`broader` parent, a self-loop `Scheme`'s signature never excluded. Two facts were added
+(`broader` irreflexive, `^broader` acyclic) and the check re-run at the same scope. The
+counterexample survives, now non-degenerate (two distinct schemes genuinely disagreeing about a
+shared concept's parent, neither relation touching the shared concept itself) — recorded in full,
+with the new witness, in [the model's own README](../../../tools/models/vocabulary-scheme-composition/README.md).
+
+### C2.2: model the composed scheme and check a decision-level property — not started
+
+The model as built (C2) shows that two source schemes' relations *can* differ over a shared
+concept. It never constructs the composed scheme itself, and never checks a property at the level
+that actually matters to an adopter: whether a decision made under the composed scheme (an
+Eligibility hierarchical-match outcome, L9-L11) can disagree with the decision any one source
+scheme alone would have given. Extend the model to build the union scheme explicitly and check
+this directly, rather than only the weaker "the inputs to a union can disagree" property C2
+checked.
+
+### C2.3: model `ADR-A116`'s accepted rule itself, against its own motivating cases — not started
+
+**Recommended before or alongside `ADR-A116`'s acceptance, not after.** Neither C2 nor its
+well-formedness fix (C2.1) ever modelled the rule `ADR-A116` actually decided (forbid overlapping
+membership, checked by a new static Vocabulary shape). Add it as a fact, then `run` the real HQ-4
+and IMA-D4a configurations (an Instrument baseline's dates composed with a wording's own dates;
+InsurML's type scheme composed with a profile-local scheme) to confirm they are *admitted*, not
+rejected by a rule chosen for simplicity. The live risk, raised directly by the review (its
+answer to its own open question 2) and not yet checked: a wording that refines or redefines a
+baseline date, or a profile concept that legitimately belongs to two schemes (ordinary SKOS
+practice: `skos:inScheme` is many-valued), may be exactly the overlap the simplest rule forbids. A
+`run` that fails to admit either motivating case is evidence the ADR should be revised before it
+is accepted, not after.
+
 ## 4. Home for the model
 
 Confirmed, not merely proposed: `tools/models/vocabulary-scheme-composition/`, with a parent
@@ -95,6 +130,13 @@ A design-time model's result is its own category, parallel to proof's in the Isa
 stated scope) is the unit of evidence, not a position on the `copilot-instructions.md` L0-L8
 taxonomy. Alloy's scope is always finite, so a `check` that finds no counterexample is evidence
 up to that scope, stated as such, never reported as an unconditional proof.
+
+**Process additions, queued 2026-10-08** (review §4.5): archive each model's `receipt.json`
+alongside its `README.md` rather than only summarising it in prose; pin and state the Alloy
+Analyzer version a result was produced with; re-run every check whenever the ADR or law family it
+evidences changes, not only once at authoring time; add at least one non-vacuous `run` (not only
+`check`s) per model, exhibiting a realistic instance, so a reader can see the model is not
+accidentally unsatisfiable everywhere.
 
 ## 6. Out of scope
 

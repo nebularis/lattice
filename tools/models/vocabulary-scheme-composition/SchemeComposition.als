@@ -24,6 +24,8 @@ sig Scheme {
   broader: Concept -> Concept
 } {
   broader in members -> members          -- a scheme's hierarchy only relates its own members
+  no (broader & iden)                    -- skos:broader is irreflexive: no concept is its own parent
+  no (^broader & iden)                   -- skos:broader is acyclic: no concept is its own ancestor
 }
 
 sig Context {}

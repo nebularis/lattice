@@ -7,7 +7,10 @@
 **Epic status:** Proposed, re-sequenced into tracks on 2026-10-06 after review
 ([response](../notes/formal-methods-review-response.md)). Track D's spike, the prover experiment,
 completed 2026-10-06: FM-D1 decided (Isabelle/HOL). Gate D is not yet fully closed (two open
-criteria, status record). Other tracks are rolling-wave, each detailed when it starts.
+criteria, status record). A second, implementation-level review followed on 2026-10-08
+([response](../notes/formal-methods-more-feedback-response.md)), queuing hardening slices in
+tracks B, C and E (none blocking) and adding FM-D17 (§7). Other tracks are rolling-wave, each
+detailed when it starts.
 **Trigger:** human request, 2026-10-06
 **Sketch:** [formal-methods.md](../sketches/formal-methods.md), with
 [adequacy and architecture](../sketches/formal-adequacy-and-architecture.md),
@@ -61,6 +64,7 @@ only if D passes. F runs on its own measurements. The tracks are staggered (deci
 | with CCS C11a and C12 | B4 and its conformance kits | B4 follows C11a's semantics and lands before C12 needs its kits |
 | with CCS C13a | C3 | the SMT slot checks serve C13a directly |
 | per ADR, from then on | track C's design models | FM-D8 |
+| now, independently of every other track | track H's H1 (static hygiene) | needs no toolchain, no ADR acceptance and no CCS/insurml dependency; its own ADR (A-FM4) gates H2 onward, not H1 |
 
 | Track | Delivers | Prover | Depends on | Estimate (tokens) |
 |---|---|---|---|---|
@@ -71,6 +75,7 @@ only if D passes. F runs on its own measurements. The tracks are staggered (deci
 | **E. the prover programme** | the kernel with the rounding and residual theorem, binding resolution, the Eligibility denotation with one proved SPARQL compiler core behind a fragment gate, the combinator algebra, the evaluation context mechanised from track B's reference, templates in rely and guarantee form. Behaviour and Instrument stay at T0 to T4 until those layers settle | yes | D passed | 4M to 8M |
 | **F. native tooling** | the worker infrastructure for every job family, Python or native. Native tools only for families whose Python baseline is measured as the bottleneck | no | its ADR | 0.5M per family |
 | **G. instrument assurance** | the property language, generated satisfying and violating traces, model generation from compiled instruments, inductive invariants before bounded exploration, vacuity checks, monitorable fragments as runtime data | partly | B, C, and E for proved templates | 2M to 4M |
+| **H. Persistence** | static hygiene over `dal:`/`tools/persistence` (witness coverage, template checks), a typed IR and a specification registry for the compiler, exhaustive cross-axis validation, Isabelle theories for the resolver and identity laws, and this epic's first protocol models (TLA+/Quint, rung T4) producing a capability × strategy guarantee matrix. Excludes all relational/SQL work | partly (Isabelle for H6; TLA+/Quint, undecided, for H5/H7/H8) | its ADR (A-FM4) for H2 onward; H1 depends on nothing | 3M to 6M, H1-H4 only; protocol models (H5 onward) not yet estimated |
 
 Estimates are orders of magnitude for agent work, excluding human review, to be compared with
 actuals.
@@ -93,7 +98,13 @@ flowchart LR
     C8["CCS C8"] -.-> C
     C11a["CCS C11a"] --> B
     C8a["CCS C8a"] --> G
+    H["H. Persistence<br/>(independent)"]
 ```
+
+Track H is deliberately absent from the dependency arrows above: it needs nothing from A-G to
+start, and nothing in A-G needs it. It reuses track E's Isabelle home, track C's Alloy home (and
+extends it to protocol models), and the claim/gate discipline both already established, as
+conventions, not as dependencies with a blocking order.
 
 ## 4. Tracks in outline
 
@@ -175,6 +186,27 @@ family then gets a Python baseline and a measured decision. Families bound by so
 Outlined in the [instrument assurance sketch](../sketches/instrument-assurance.md). Detailed when B4
 and C3 exist.
 
+### Track H: Persistence
+
+Detailed in its own [sketches](../sketches/formal-methods-track-h.md) (main,
+[protocols](../sketches/formal-methods-track-h-protocols.md),
+[specification registry](../sketches/formal-methods-track-h-specification.md)) and
+[plan](formal-methods-track-h.md); status in
+[its status record](../status/formal-methods-track-h.md). Drafted 2026-10-08 from
+`docs/developer/notes/rdf-engine/persistence-fml.md`, an independent review applying this epic's
+own techniques to the Persistence layer (`dal:`, `tools/persistence`, generated SPARQL, pluggable
+RDF backends) and finding, unlike Eligibility, a defect history dominated by concurrency and
+protocol failures — exactly the class rung T4 (model checking) exists for and this epic has never
+yet used. H1 (static hygiene: prefix overlap, witness coverage, template checks, the
+declaration/implementation gap, stable profile labels) is ready to start now, needing neither a
+new toolchain nor [ADR-A-FM4](../../architecture/decisions/ADR-A-FM4-persistence-formal-methods-home-and-scope.md)'s
+acceptance. H2/H3 (a typed IR and a specification registry for `tools/persistence`, the enabling
+move, recorded as an ADR-A79 addendum rather than a fresh ADR) follow. H5 is this epic's first
+protocol-model slice: a capability × strategy guarantee matrix, generated by TLA+ or Quint models
+rather than hand-maintained, the choice of tool left to H5's own small toolchain spike.
+**Explicitly excludes all relational/SQL-compilation work**, a separate review's own scope
+(`sql-feedback.md`).
+
 ### Environments, for every track
 
 A toolchain spike on 2026-10-06 installed and ran both stacks on a Windows 11 host without
@@ -246,6 +278,7 @@ differ only in case, both found in the spike.
 | FM6 | the first native job family is measured against its Python baseline and kept or dropped on the result | F |
 | FM7 | a template claim in rely and guarantee form, and an instance property with its generated traces, are recorded and exchanged in a contract package | G |
 | FM8 | the SPARQL compiler core is proved behind its fragment gate, and the cross-store suite runs | E |
+| FM9 | the first capability × strategy guarantee matrix cell is produced by a protocol model (not hand-written), for Persistence's guarded-write path, with a counterexample for a known-unsafe baseline | H |
 
 ## 6. Metrics and abandonment conditions
 
@@ -308,6 +341,7 @@ None of these may be taken by an agent.
 | FM-D14 | licence of theories and generated code | decided per import, with the normative theory's licence chosen deliberately beside CC-BY-SA-4.0 | open |
 | FM-D15 | tool identity in read sets | separate semantic inputs from tool identity. A tool change marks records stale and schedules re-verification, without invalidating them. Needs an ADR-A27 addendum (the invalidation rule), with the two kinds of read-set entry stated in ADR-A92's terms | **decided 2026-10-06**: semantic inputs invalidate, tool identity marks stale, a known soundness fix marks suspect, which fails the gate until re-verified |
 | FM-D16 | how tools run on each host | the image route everywhere for checks, CI, claims and jobs, slimmed and capped as §4 sets out. Native installs optional, for authoring only (E9) | **decided 2026-10-06** |
+| FM-D17 | whether to widen FM-D12's generation direction from "closed datatypes only" to "closed datatypes **and** closed truth-table equations" (`or3`/`and3`/`neg3`'s defining cases, not the theorems about them), generated from one README source into both `tools/proofs/<layer>/*.thy` and `tools/reference/<layer>/*.py`, so the kernel's semantics is hand-written once instead of twice, independently fallibly | **recommended: yes**, per the [second review response](../notes/formal-methods-more-feedback-response.md) §6. Does not touch E1 (laws stay hand-written; a truth table is a definition, not a law) | open |
 
 ## 8. Alignment with other work
 
@@ -321,6 +355,7 @@ None of these may be taken by an agent.
 | [insurml-alignment](insurml-alignment.md) | IMA-D4a, IMA-4.2 | track C informs scheme composition. Assembly parity is a track B property test first and a track E theorem later |
 | [Technical debt](technical-debt.md) | TD-18 | proofs and model checks add CI time, run through dependency-aware builds with deeper runs nightly |
 | the engine notes | the persistence planner | reuses track E's kernel if the custom engine is built |
+| the engine notes | `persistence-fml.md`'s own review | track H implements it directly, scoped to RDF/SPARQL only (ADR-A-FM4); the sibling SQL review (`sql-feedback.md`) is explicitly not this epic's scope |
 | the platform | `workers/`, RabbitMQ, the store interface | track F adds job families under the existing worker boundary |
 
 ## 9. Risks

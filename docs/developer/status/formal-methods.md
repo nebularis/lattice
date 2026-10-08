@@ -52,6 +52,23 @@ theorem belongs to B4/E3-E4, not Quantification; track E's plan and status are c
 
 **Next action, for the human:** review and accept (or revise) `ADR-A116`. Track B's B1-B3 are complete; B4 waits on CCS's C12. The two remaining Gate D gaps (below) are deliberately deferred, not blocking. Also decide when and where the spike branch, `fm/phase-0-prover-spike`, is created, and approve the image builds and any native installs.
 
+**2026-10-08, a second review.** An implementation-level review of the programme's actual
+evidence (not just its sketches), disposed in
+[formal-methods-more-feedback-response.md](../notes/formal-methods-more-feedback-response.md),
+found two real defects beyond wording: `tools/proofs/eligibility/gate.py`'s statement digest does
+not cover the definitions a gated statement depends on, and the Alloy model's first
+`NoOverlapDisagreement` counterexample relied on a degenerate self-loop. The second was fixed and
+re-checked the same session — the finding survives under well-formedness facts, with a new,
+non-degenerate witness (`tools/models/vocabulary-scheme-composition/`). The first, and several
+smaller hardening items, are queued as new slices (track E's E1.4, track B's B2.1/B2.2/B5, track
+C's C2.2/C2.3), none blocking. A new open decision, FM-D17, asks whether to generate the kernel's
+truth-table equations (not just its closed datatype) from one README source into both Isabelle and
+Python, closing the "one hand-written table, two consumers" risk the review raised. **A new
+track, H (Persistence), is also added this session** (§Track board), drafted from
+`docs/developer/notes/rdf-engine/persistence-fml.md` and connected to, but independently
+runnable from, tracks A, B, C and E — see `formal-methods-track-h.md`'s own plan, sketch and
+status record.
+
 ## Track board
 
 | Track | State | Blocked on |
@@ -60,9 +77,10 @@ theorem belongs to B4/E3-E4, not Quantification; track E's plan and status are c
 | A Ledger and harness | not started | gate D's remaining criteria, then its ADR (A1). A5 runs with track C |
 | B Reference semantics and oracle | B1, B2, B3 done 2026-10-07. [Its own plan, sketch and status](formal-methods-track-b.md) | B4 waits on CCS's C11a (done) and C12 (not done) |
 | C Design-time models | C1 and C2 done 2026-10-06. [Its own plan, sketch and status](formal-methods-track-c.md) | C3 (slot exclusivity, SMT) not started, waits on nothing but is next in this track's own numbering |
-| E Prover programme | E1.0/E1.1 done. E1.2 retired (its real home is B4/E3-E4, not Quantification) | E1.3 waits on track C2's overlap-rule ADR, not on C2 itself (done) |
+| E Prover programme | E1.0/E1.1 done. E1.2 retired (its real home is B4/E3-E4, not Quantification). E1.4 (hardening) queued, not started | E1.3 waits on track C2's overlap-rule ADR, not on C2 itself (done) |
 | F Native tooling | not started | its ADR, then a Python baseline per family |
 | G Instrument assurance | not started | B4, C3 |
+| H Persistence | not started. [Its own plan, sketch and status](formal-methods-track-h.md) | nothing from tracks A-G; it reuses their methods but needs none of them to start |
 
 ## Track D
 

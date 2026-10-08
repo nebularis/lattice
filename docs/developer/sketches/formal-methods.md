@@ -8,6 +8,10 @@ is ratified. A new directory, a new vocabulary and any change to the toolchain e
 Isabelle/HOL before anything else is built, and the smaller sketches are written prover-neutral.
 **Reviewed:** 2026-10-06. Dispositions and rebuttals are in the
 [review response](../notes/formal-methods-review-response.md), and this sketch is revised to match.
+**Reviewed again:** 2026-10-08, an implementation-level review of the evidence tracks B, C and E
+had produced by then. Dispositions in
+[this response](../notes/formal-methods-more-feedback-response.md); queued corrective slices are
+recorded in the affected tracks' own plans and status records, not restated here.
 **Smaller sketches:** [adequacy and architecture](formal-adequacy-and-architecture.md),
 [assurance records](assurance-records.md), [instrument assurance](instrument-assurance.md),
 [reference evaluator](reference-evaluator.md), [toolchain workers](formal-toolchain-workers.md).
@@ -147,7 +151,7 @@ used where it pays, and the cheap rungs apply everywhere.
 | T1 | **Property-based and metamorphic tests**, with generators derived from the shapes | law breaks, order dependence | low | every algorithm, every compiler, every lift |
 | T2 | **Model finding** (Alloy 6) | inconsistent or underconstrained models, with counterexamples | low | new T-Box designs, law sets, cross-standard constraints |
 | T3 | **SMT solving** (Z3, cvc5) | satisfiability, overlap, exhaustiveness, widening, with witnesses | low to medium | Eligibility conditions, slot exclusivity (C13a), clash detection (NRS N3), range sets |
-| T4 | **Model checking** (TLA+ with TLC or Apalache, Quint), with inductive invariants before bounded exploration. No timed automata: durations are integer constraints over positions | temporal property violations, with traces | medium | regimes, windows, ledgers, instruments, platform protocols |
+| T4 | **Model checking** (TLA+ with TLC or Apalache, Quint), with inductive invariants before bounded exploration. No timed automata: durations are integer constraints over positions | temporal property violations, with traces | medium | regimes, windows, ledgers, instruments, platform protocols, **Persistence's generated-operation protocols (track H, first use of this rung, 2026-10-08)** |
 | T5 | **Mechanised semantics and proof** (Rocq) | errors in specifications and algorithms, for all inputs | high | the logic kernel, binding resolution, Eligibility, the evaluation context, Behaviour macrosteps, compilers |
 | T6 | **Verified code generation** (extraction, verified printers) | translation errors | high | the reference evaluator, compilers to query surfaces |
 | T7 | **Runtime verification**: monitors generated from properties | violations in production, as they happen | low once T4 properties exist | live instruments |
@@ -302,7 +306,8 @@ What each layer needs, and which rung earns it (§5.1):
 | Eligibility | the reference, differential tests of every backend | the denotation and one compiler core |
 | Wording, assembly | property tests of the assembly laws, parity as a test | parity for the shared fragment, later |
 | Behaviour, Instrument | the reference evaluator, conformance kits, model checks | after these layers settle, starting with I7 once C13 is specified |
-| Surface, MORK, Persistence | property tests of regeneration, lattice laws, MCN's round trip | conservativity under composition, later |
+| Surface, MORK | property tests of regeneration, lattice laws, MCN's round trip | conservativity under composition, later |
+| Persistence | **its own track, H**: static hygiene, a typed IR, a specification registry, exhaustive cross-axis validation, and this epic's first protocol models (TLA+/Quint, rung T4), producing a capability × strategy guarantee matrix. See [the track H sketches](formal-methods-track-h.md) | the resolver's determinism/locality/monotonicity, identity-law injectivity, outcome-classification soundness (track H's H6) |
 
 ### 8.1 The logic kernel
 

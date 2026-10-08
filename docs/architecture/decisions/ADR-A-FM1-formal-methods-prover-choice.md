@@ -96,3 +96,34 @@ on filesystem sort order, fixed in `c4075a6`), not in either track's mathematics
   each would collide on merge, as has already happened once in this catalogue's history (A-44,
   A-81, A-83; see this directory's `README.md`). Track E's later ADRs continue this `A-FM2`,
   `A-FM3`, … series.
+
+## Addendum, 2026-10-08
+
+An implementation-level review of the programme's evidence (disposed in full in
+[formal-methods-more-feedback-response.md](../../developer/notes/formal-methods-more-feedback-response.md)
+§2, §4) raised two points about this decision's own evidence, neither of which reopens it:
+
+1. **M6's corrected evidence is weaker than the Context section states.** Isabelle's `can`
+   wrapping `Goal.prove` demonstrates that *a given tactic fails* on a goal, inside a successful
+   build. It does not demonstrate that the goal is false or unprovable, the way Rocq's
+   `Fail Definition` demonstrates a definition is rejected by the termination or type checker.
+   These are different strengths of evidence, and the Context section's "exactly that shape of
+   evidence" overstates the match. Where this programme needs the stronger shape (a candidate
+   definition proved impossible, not merely a chosen proof attempt failing), the pattern to reach
+   for is the one `Eligibility.thy` already uses for TL3b (proving the negation of a false
+   candidate statement directly), not the `can`/`Goal.prove` wrapper M6 credits.
+2. **M5's Scala credit has not been exercised, and was not held to the same scrutiny M9's removal
+   established.** M9 was removed for rewarding a decision the codebase never acted on. M5's Scala
+   component rewards a capability (`export_code ... in Scala`) that is, as of this addendum,
+   equally unexercised. Exercising it is already named above as "near-term follow-up work for
+   track E, not a precondition of this decision" — this addendum raises its priority, given the
+   review's point, but does not change the decision: removing Scala's credit from M5 and
+   recomputing the total is recorded as an open, low-cost check (run `export_code ... in Scala`
+   from the existing kernel theory, compile with `scalac`, and recompute M5 both with and without
+   the resulting evidence) rather than taken as already discharged.
+
+Neither point changes FM-D1 or FM-D10: both were corroborated by concrete, measured advantages
+beyond the M5/M6/M9 scoring alone (the Context section's own list: MINOR-change repair cost,
+native list mapping, a second demonstrated code-generation target, a simpler native install). The
+open check in point 2 is tracked, not scheduled, since nothing downstream currently depends on
+its outcome.

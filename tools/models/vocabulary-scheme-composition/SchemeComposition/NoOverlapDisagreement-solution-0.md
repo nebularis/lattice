@@ -42,6 +42,6 @@ Loop back                                true
 ├──────────────────────────┼────────────┤
 │$overlapDisagrees_s2      │{Scheme$1}  │
 ├──────────────────────────┼────────────┤
-│$overlapDisagrees_concept │{Concept$1} │
+│$overlapDisagrees_concept │{Concept$2} │
 └──────────────────────────┴────────────┘
 
