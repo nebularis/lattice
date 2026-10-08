@@ -29,6 +29,7 @@ approved.
 | `docs/developer/status/<unit>.md` | live state, next action, history | after every material action, result, blocker or handoff |
 | `docs/developer/review/<unit>-review.md` | the review request: scope, artefacts, exact `mise` commands, pass criteria, open questions, a link to the status record | before handoff. Closed after disposition |
 | `docs/developer/validation/<slice-id>.md` | a slice's Validation Pack | written with the slice, results filled at verification |
+| `docs/developer/plans/pending-design-decisions.md` | design decisions that matter but cannot be made yet, with the options known | add when raised, remove naming the ADR, sketch or plan that settles it |
 | `docs/developer/plans/technical-debt.md` | debt with no planned home: a shortcut, a gap between a claim and the behaviour, a check that does not run | add when spotted, remove naming the plan that takes it on. Never features, follow-ups or deferred slices |
 | `docs/developer/INDEX.md` | every unit and its documents | when a unit or slice changes state |
 
