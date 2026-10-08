@@ -41,12 +41,12 @@ A model that only declares behaviour imports configuration and never meets a run
 
 ## 3. Extraction Contract
 
-- `turtle-spec` blocks generate `spec/behaviour.ttl`, the configuration document.
+- `turtle-spec` blocks generate `spec/behaviour.ttl`, the configuration document, except §5.2's,
+  which open with `# @output-file "spec/behaviour-runtime.ttl"` and generate the runtime document
+  (ADR-A120). The two share one version.
 - `turtle-vocab` blocks generate `vocab/behaviour-vocab.ttl`.
 - The `turtle-shapes` block generates `shapes/structural.ttl`. `shapes/constraints.ttl` and
   `shapes/rules.ttl` are authored as files.
-- `spec/behaviour-runtime.ttl` is still authored as a file (§5.2). It moves into this README as
-  `turtle-spec` blocks opening with `# @output-file "spec/behaviour-runtime.ttl"` (ADR-A120).
 - `turtle-example` blocks are illustrative only.
 
 ```bash
@@ -72,7 +72,7 @@ Behaviour distinguishes four tiers:
 
 <https://www.nebularis.org/neuro-semantic/behaviour>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.13.0> ;
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.13.1> ;
 	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.4.0> ,
 				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.4.0> ,
 				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.7.0> ,
@@ -189,8 +189,8 @@ bhv:absorptionPolicy a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain 
 
 ### 5.2 Runtime
 
-`spec/behaviour-runtime.ttl` (version IRI `…/lattice/behaviour-runtime/0.10.0`) imports the
-configuration document and declares the other three tiers:
+`spec/behaviour-runtime.ttl` imports the configuration document and declares the other three
+tiers:
 
 | Tier | Classes | Properties |
 |---|---|---|
@@ -225,6 +225,197 @@ valid time). It points at what it is about through properties with no range.
 (`bhv:enteredBy`), which names its stimulus, or carries evidence: of the subject taking effect when
 it occupies its space's initial state, of an external log entry otherwise. An occupancy of an
 occasion state is a derived artefact (law B1), `prov:wasDerivedFrom` the records it rests on.
+
+The runtime document's blocks each open with `# @output-file "spec/behaviour-runtime.ttl"`, so
+they extract to that file, which takes §2's prefixes (ADR-A120). Its header imports the
+configuration document, at the same version.
+
+```turtle-spec
+# @output-file "spec/behaviour-runtime.ttl"
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+
+<https://www.nebularis.org/neuro-semantic/behaviour-runtime>
+	rdf:type owl:Ontology ;
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/behaviour-runtime/0.13.1> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.13.1> .
+```
+
+```turtle-spec
+# @output-file "spec/behaviour-runtime.ttl"
+# ---- Occurrence ---------------------------------------------------------------
+
+bhv:Stimulus a owl:Class ; rdfs:subClassOf fnd:Evidenced ; rdfs:comment "An observed stimulus or event." .
+```
+
+```turtle-spec
+# @output-file "spec/behaviour-runtime.ttl"
+# ---- Execution ----------------------------------------------------------------
+
+bhv:TransitionExecution a owl:Class ; rdfs:subClassOf fnd:Evidenced ; rdfs:comment "A recorded transition execution." .
+bhv:EffectApplication a owl:Class ; rdfs:subClassOf fnd:Evidenced ; rdfs:comment "A recorded effect application." .
+
+bhv:executedTransition a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain bhv:TransitionExecution ; rdfs:range bhv:TransitionDefinition .
+bhv:appliesEffect a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain bhv:EffectApplication ; rdfs:range bhv:EffectDefinition .
+bhv:causedByStimulus a owl:ObjectProperty ; rdfs:domain bhv:TransitionExecution ; rdfs:range bhv:Stimulus .
+bhv:usesProfile a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain bhv:TransitionExecution ; rdfs:range bhv:OperationalProfile .
+```
+
+```turtle-spec
+# @output-file "spec/behaviour-runtime.ttl"
+# ---- State record -------------------------------------------------------------
+
+bhv:StateOccupancy a owl:Class ; rdfs:subClassOf fnd:Evidenced, fnd:TemporallyScoped ; rdfs:comment "A current or hypothetical occupancy of a state." .
+
+bhv:AllowanceAccount a owl:Class ;
+	rdfs:subClassOf fnd:Evidenced,
+		[ a owl:Restriction ; owl:onProperty bhv:tracksAllowance ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+		[ a owl:Restriction ; owl:onProperty bhv:availableBalance ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ;
+	rdfs:comment "A durable state record tracking allowance balance." .
+
+bhv:occupiesState a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain bhv:StateOccupancy ; rdfs:range bhv:State .
+
+bhv:forSubject a owl:ObjectProperty ;
+	rdfs:domain bhv:StateOccupancy ;
+	rdfs:comment "What is in the state. Subject: a state occupancy. Value: any resource." ;
+	fnd:utility "Deliberately has no range: a role occupancy, an instrument's persistent identity, a section, a term or an occasion may each be in a state. Where the subject is versioned, use its persistent identity, so the state outlives a new version (ADR-A106 decision 5)." .
+
+bhv:enteredBy a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain bhv:StateOccupancy ; rdfs:range bhv:TransitionExecution ;
+	rdfs:comment "The execution that entered the state, which names the stimulus that caused it (law B6). Subject: a state occupancy. Value: a transition execution, at most one." ;
+	fnd:utility "An occupancy with none carries evidence instead: of the subject taking effect, when it occupies its space's initial state, or of an external log entry." .
+
+bhv:exitedBy a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain bhv:StateOccupancy ; rdfs:range bhv:TransitionExecution ;
+	rdfs:comment "The execution that ended the occupancy. Subject: a state occupancy. Value: a transition execution, at most one." ;
+	fnd:utility "Leaving a composite state ends every occupancy inside it with the same execution. History reads what the target's last exit ended (nested states sketch §4)." .
+
+bhv:resumedFrom a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain bhv:StateOccupancy ; rdfs:range bhv:StateOccupancy ;
+	rdfs:comment "The earlier occupancy of the same state, for the same subject, that a history entry resumed. Subject: a state occupancy. Value: a state occupancy, at most one (law B5)." ;
+	fnd:utility "A resumed state is a new occupancy: records are never reopened. Its own valid time starts at the resumption." .
+
+bhv:isHypothetical a owl:DatatypeProperty, owl:FunctionalProperty ; rdfs:domain bhv:StateOccupancy ; rdfs:range xsd:boolean .
+bhv:isCurrent a owl:DatatypeProperty, owl:FunctionalProperty ; rdfs:domain bhv:StateOccupancy ; rdfs:range xsd:boolean .
+bhv:tracksAllowance a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain bhv:AllowanceAccount ; rdfs:range bhv:AllowanceDefinition .
+bhv:availableBalance a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain bhv:AllowanceAccount ; rdfs:range qnt:Quantity .
+```
+
+```turtle-spec
+# @output-file "spec/behaviour-runtime.ttl"
+# ---- Occasions ----------------------------------------------------------------
+
+bhv:Occasion a owl:Class ;
+	rdfs:subClassOf fnd:Evidenced ;
+	rdfs:comment "One declaration, in practice a legal relation, applied to one case. Its states are bhv:OccasionStates." ;
+	fnd:utility "Not a version: it is created once, and its state changes are its occupancies. Its parties are fixed when it arises (law I11)." .
+
+bhv:occasionOf a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain bhv:Occasion ;
+	rdfs:comment "The declaration the occasion applies. Subject: an occasion. Value: any resource, exactly one." ;
+	fnd:utility "Deliberately has no range, so Behaviour names nothing of the layer that declares the relation (law B7)." .
+
+bhv:forCase a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:comment "The case an occasion or an act is for. Subject: an occasion or an act record. Value: any resource, exactly one." ;
+	fnd:utility "Deliberately has no domain or range: two classes use it, and what a case is belongs to the layer above." .
+
+bhv:occasionParty a owl:ObjectProperty ;
+	rdfs:domain bhv:Occasion ; rdfs:range pty:RoleOccupancy ;
+	rdfs:comment "A party to the occasion, resolved when it arose. Subject: an occasion. Value: a role occupancy version, any number." ;
+	fnd:utility "Point at the occupancy version in force at arising, never its persistent identity, so a later version does not change the occasion's parties (law I11)." .
+```
+
+```turtle-spec
+# @output-file "spec/behaviour-runtime.ttl"
+# ---- Records --------------------------------------------------------------------
+
+bhv:Record a owl:Class ;
+	rdfs:subClassOf fnd:Evidenced, fnd:TemporallyScoped ;
+	rdfs:comment "A fact the runtime records that can change an occasion's or a subject's state." ;
+	fnd:utility "Carry when it was recorded, and by whom when asserted, on its fnd:Evidence, and its valid time on its fnd:TemporalScope." .
+
+bhv:ActRecord a owl:Class ; rdfs:subClassOf bhv:Record ;
+	rdfs:comment "An act of an activity by an actor for a case." .
+bhv:BreachRecord a owl:Class ; rdfs:subClassOf bhv:Record ;
+	rdfs:comment "A breach of an occasion, derived by the evaluator or asserted by an adjudicator." .
+bhv:ExerciseRecord a owl:Class ; rdfs:subClassOf bhv:Record ;
+	rdfs:comment "An exercise of a power, whether or not it took effect." .
+bhv:DeterminationRecord a owl:Class ; rdfs:subClassOf bhv:Record ;
+	rdfs:comment "A determination of a matter by the party a contract names to decide it." .
+bhv:DeemedFactRecord a owl:Class ; rdfs:subClassOf bhv:Record ;
+	rdfs:comment "A fact taken to hold by a deeming." .
+bhv:AcceptanceRecord a owl:Class ; rdfs:subClassOf bhv:Record ;
+	rdfs:comment "A party's acceptance of a version." .
+
+[] a owl:AllDisjointClasses ;
+	owl:members ( bhv:ActRecord bhv:BreachRecord bhv:ExerciseRecord bhv:DeterminationRecord bhv:DeemedFactRecord bhv:AcceptanceRecord ) .
+
+bhv:fromStimulus a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain bhv:Record ; rdfs:range bhv:Stimulus ;
+	rdfs:comment "The stimulus the record came from. Subject: a record. Value: a stimulus, at most one." .
+
+bhv:actor a owl:ObjectProperty ;
+	rdfs:domain bhv:Record ; rdfs:range pty:RoleOccupancy ;
+	rdfs:comment "Who acted, exercised or accepted. Subject: a record. Value: a role occupancy." .
+
+bhv:activity a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain bhv:ActRecord ; rdfs:range skos:Concept ;
+	rdfs:comment "The activity acted. Subject: an act record. Value: a concept, exactly one." .
+
+bhv:ofOccasion a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain bhv:BreachRecord ; rdfs:range bhv:Occasion ;
+	rdfs:comment "The occasion breached. Subject: a breach record. Value: an occasion, exactly one." .
+
+bhv:closureReliedOn a owl:ObjectProperty ;
+	rdfs:domain bhv:BreachRecord ;
+	rdfs:comment "The closure licence that let absence decide the breach (ADR-A105). Subject: a breach record. Value: any resource." .
+
+bhv:exercised a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain bhv:ExerciseRecord ;
+	rdfs:comment "The power exercised. Subject: an exercise record. Value: any resource, exactly one." ;
+	fnd:utility "Deliberately has no range: a power is declared by the layer above (law B7)." .
+
+bhv:tookEffect a owl:DatatypeProperty, owl:FunctionalProperty ;
+	rdfs:domain bhv:ExerciseRecord ; rdfs:range xsd:boolean ;
+	rdfs:comment "Whether the exercise took effect. Subject: an exercise record. Value: a boolean, exactly one." .
+
+bhv:reasonNotTaken a owl:DatatypeProperty, owl:FunctionalProperty ;
+	rdfs:domain bhv:ExerciseRecord ; rdfs:range xsd:string ;
+	rdfs:comment "Why an exercise did not take effect. Subject: an exercise record. Value: a string, at most one." .
+
+bhv:matter a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain bhv:DeterminationRecord ;
+	rdfs:comment "The matter determined. Subject: a determination record. Value: any resource, exactly one." .
+
+bhv:determiner a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain bhv:DeterminationRecord ; rdfs:range pty:RoleOccupancy ;
+	rdfs:comment "The party that determined it. Subject: a determination record. Value: a role occupancy, exactly one." .
+
+bhv:determinedValue a owl:ObjectProperty ;
+	rdfs:domain bhv:DeterminationRecord ;
+	rdfs:comment "What was determined. Subject: a determination record. Value: any resource." .
+
+bhv:deeming a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain bhv:DeemedFactRecord ;
+	rdfs:comment "The deeming that took the fact to hold. Subject: a deemed-fact record. Value: any resource, exactly one." ;
+	fnd:utility "Deliberately has no range: a deeming is declared by the layer above (law B7)." .
+
+bhv:conditionSatisfied a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain bhv:DeemedFactRecord ; rdfs:range elg:Condition ;
+	rdfs:comment "The deeming's condition, as it was satisfied. Subject: a deemed-fact record. Value: an Eligibility condition, at most one." .
+
+bhv:accepted a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain bhv:AcceptanceRecord ; rdfs:range fnd:Version ;
+	rdfs:comment "The version accepted. Subject: an acceptance record. Value: a version, exactly one." .
+```
+
+```turtle-spec
+# @output-file "spec/behaviour-runtime.ttl"
+# ---- Disjointness: every runtime class from every other Behaviour class -------
+
+[] a owl:AllDisjointClasses ;
+	owl:members ( bhv:StateSpace bhv:State bhv:TransitionDefinition bhv:TriggerDefinition bhv:GuardDefinition bhv:EffectDefinition bhv:AllowanceDefinition bhv:SelectionPolicy bhv:ActivationPolicy bhv:TriggerKind bhv:TargetKind bhv:AbsorptionPolicy bhv:OperationalProfile bhv:EntryMode bhv:TransitionType
+		bhv:Stimulus bhv:TransitionExecution bhv:EffectApplication bhv:StateOccupancy bhv:AllowanceAccount bhv:Occasion bhv:Record ) .
+```
 
 ### 5.3 Nested states, history, and concurrent regimes
 
@@ -386,8 +577,8 @@ stateDiagram-v2
 
 <https://www.nebularis.org/neuro-semantic/behaviour-vocab>
 	a owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/behaviour-vocab/0.13.0> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.13.0> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/behaviour-vocab/0.13.1> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.13.1> .
 
 bhv:ExternalStimulus a bhv:TriggerKind .
 bhv:ScheduledTrigger a bhv:TriggerKind .
@@ -1317,3 +1508,6 @@ Breaking versions at major version zero ([ADR-A113](../../docs/architecture/deci
   0.8.0, whose shares and composition rules are renamed (`pty:outwardShare`, `pty:inwardShare`,
   `pty:EachForOwnShare`, `pty:EachForWhole`), and to Eligibility 0.10.0, with no other change (CCS
   C7c, ADR-A104 2026-10-06 addendum).
+- 0.13.1 (`behaviour`, `behaviour-runtime` and `behaviour-vocab`, patch): the runtime document is
+  extracted from §5.2 instead of authored as a file, with the same triples, and the three move
+  together (ADR-A120).

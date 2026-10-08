@@ -104,10 +104,10 @@ SC_EX, SC = _ns("supply-classification")
 def test_c7c_01_version_imports_and_new_terms() -> None:
     spec = _graph(SPEC)
     ontology = URIRef("https://www.nebularis.org/neuro-semantic/instrument")
-    assert spec.value(ontology, OWL.versionIRI) == URIRef(LATTICE + "instrument/0.15.0")
+    assert spec.value(ontology, OWL.versionIRI) == URIRef(LATTICE + "instrument/0.15.1")
     assert {str(i) for i in spec.objects(ontology, OWL.imports)} == {LATTICE + v for v in (
         "foundation/0.4.0", "vocabulary/0.4.0", "quantification/0.7.0", "party/0.8.0", "eligibility/0.10.0",
-        "wording/0.7.0", "behaviour/0.13.0")}
+        "wording/0.7.0", "behaviour/0.13.1")}
     for name in ("defines", "means", "actingRule", "prevailsOver", "deems", "when", "conclusive", "forPurposeOf",
                  "classification", "section", "appliesWithin", "notWithin", "boundWithin", "boundUnder", "resolvedBy",
                  "resolvesFrom", "resolutionStep", "resolutionFilter"):

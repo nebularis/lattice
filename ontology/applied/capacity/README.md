@@ -87,3 +87,4 @@ Breaking versions at major version zero ([ADR-A113](../../../docs/architecture/d
   (CCS C7b, ADR-A115).
 - 0.13.0 (breaking): re-pinned to `behaviour-runtime` 0.13.0 and Eligibility 0.10.0, which follow
   Party 0.8.0's renamed shares and composition rules, with no other change (CCS C7c).
+- 0.13.1: re-pinned to `behaviour-runtime` 0.13.1, with no other change (ADR-A120).
