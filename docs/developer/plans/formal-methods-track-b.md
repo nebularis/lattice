@@ -95,6 +95,88 @@ same rolling-wave discipline tracks C and E already use.
 - MCN: **not built this slice**. Recorded in the status record as found-blocked (no RDF-to-MCN
   encoder exists), with a line for whoever eventually builds one.
 
+### B2.1: hardening the differential harness and its independence — not started
+
+Queued 2026-10-08 from an implementation-level review of the programme's own evidence (full
+disposition in [the review response](../notes/formal-methods-more-feedback-response.md) §2, §4).
+The single highest-value item in the review is listed first:
+
+- **Seed a fault in the compiler, not just in the reference.** B2's stated rationale is catching a
+  bug shared by every backend through `tools/mork_compilers`' `_expand`. That has never been
+  tested: both defects B2 actually found were in B1's own `denotation.py`, discovered because it
+  disagreed with the compiler, never the reverse. Seed a deliberate fault directly into `_expand`
+  and into one SPARQL or SHACL template, and confirm the differential tests fail. Until this is
+  done, B2's evidentiary claim is "the harness detects disagreement," not "the harness catches
+  compiler bugs."
+- **An adjudication record for every disagreement.** B2 already fixed two bugs by reading the
+  compiler's own template (the `SingleValue` reading, justified by "the real compiler's SPARQL
+  template," not by a law citation). Correcting the reference by consulting the implementation
+  erodes the independence the reference exists to provide. From now on, every reference/compiler
+  disagreement gets a short record: which side was wrong, and the normative citation (a README
+  law, or, if the README is silent, a README change — never "the compiler says so" alone).
+- **State the per-backend projection explicitly.** B2 tests SPARQL (executed) and SHACL (validated
+  with pySHACL) by design (sketch §3), which is correct and already documented — but nothing
+  states what SHACL's two-valued conformance result is actually projecting of {Permitted, Denied,
+  Undetermined}. Add a short statement, in the reference's own README, of which projection each
+  tested backend is claimed to preserve, before SWRL or OWL are ever added to the differential
+  suite.
+- **Name the engine.** The differential harness executes SPARQL via `tools/mork_compilers`' own
+  test helpers, which use rdflib. State this explicitly in the reference's README, since a
+  different production engine's semantics (error propagation in `IF`, `COUNT` over unbound values,
+  blank-node handling) is untested otherwise.
+- **Extend to bounded-exhaustive generation.** The differential suite's 14 cases are fixed
+  fixtures. The concept-matching input space is small enough to generate exhaustively: every
+  scheme of up to 3-4 concepts, with and without a hierarchy including the degenerate ones, every
+  `required`/`excluded` subset, both match modes, candidates inside and outside the scheme. A few
+  milliseconds of SPARQL execution per case. This gives B2 a defensible, bounded-universal claim
+  instead of an example-based one.
+- **Trace the untraced branch.** `decide_concept_match`'s required-but-unmatched → `Denied` branch
+  carries no law-ID comment, unlike every other branch. Add one, or an explicit disclaimer, per
+  the freshness checker's own discipline (`tools/check_formal_freshness.py`).
+- **Confirm L13's coverage.** Not checked this session: re-read Eligibility's law register and
+  confirm whether L13 is out of scope for `decide_concept_match` by design (as L15/L16 already are,
+  correctly, one layer up in `decide_condition`) or missing.
+
+**Validation:** the seeded-fault check (first bullet) needs a before/after pair exactly like B1's
+own seeded `neg3` mutation: the differential test suite passes before the fault is seeded (sanity),
+fails once it is seeded, and is confirmed reverted afterwards. The rest are documentation and
+fixture-generation additions, validated by the extended test suite still passing.
+
+### B2.2: verify and, if confirmed, fix a possible scheme-less hierarchical-match defect — not started
+
+Flagged by the same review, re-read and confirmed plausible directly against
+`tools/reference/eligibility/src/reference_eligibility/denotation.py` this session, but neither
+test-driven nor fixed here. With `hierarchical=True` and `scheme=None`, the inner `matches()`
+closure always returns `False` (its hierarchical branch requires a scheme to compute ancestors),
+so a non-empty `required` set falls through to the unmatched-required branch and returns `DENIED`.
+By the same reasoning that fixed B2's own scheme-membership defect (L9: a candidate judged with no
+resolved scheme at all is a *different* situation from a candidate judged against a scheme it
+happens not to belong to), this looks like it should be `UNDETERMINED`, not `DENIED` — "no scheme
+to check hierarchy against" is closer to "not enough evidence to decide" than to "fails the
+condition". This needs a fixture and a judgement call against the README's exact wording before
+being changed, not a reflexive fix: write the test first, expecting it to fail against today's
+code, exactly as repository convention already requires for a defect found this way.
+
+### B5: a measured mutation score — not started
+
+The four mutations recorded across this track and track C (`neg3`, `impacted_surfaces`,
+`check_formal_freshness.py` twice) are spot checks, not a systematic mutation-testing pass. Run an
+automated mutation-testing tool (for example `mutmut`) over `tools/reference/eligibility` and
+report a measured mutation score (the fraction of seeded mutants the test suite kills), rather than
+relying on a small, hand-picked set confirmed to fail. A mutant that survives is either a gap in
+the test suite or evidence the mutated line carries no semantic weight, and both are worth knowing.
+
+### An explicit statement of T1
+
+This track's B2 (differential, generator-driven testing against shape-derived inputs) and B3 (a
+property test of soundness, completeness and monotonicity) are already, in substance, the epic
+sketch's rung T1 (property-based and metamorphic testing, §5). Nothing in this track's own
+documents has said so plainly until now: T1 is not "not started" anywhere in LATTICE, it has been
+running since B2 and B3 landed, under a different name. State this explicitly in the epic's own
+rung table (sketch §5) the next time that section is touched, so a future reader does not
+re-discover the same gap this review found in a compressed summary of the work rather than in the
+work itself.
+
 ## 4. Home for the reference
 
 `tools/reference/`, one subdirectory per layer, decided by `ADR-A-FM3` (drafted as part of B1,

@@ -3,8 +3,9 @@
 # Formal Methods, Track B: Status
 
 **Unit ID:** `formal-methods-track-b` (phase, within the `formal-methods` epic)
-**Status:** B1, B2 and B3 done, 2026-10-07
-**Last updated:** 2026-10-07
+**Status:** B1, B2 and B3 done, 2026-10-07. B2.1, B2.2 and B5 queued 2026-10-08 after an
+implementation-level review (not started)
+**Last updated:** 2026-10-08
 **Plan:** [formal-methods-track-b.md](../plans/formal-methods-track-b.md)
 **Sketch:** [formal-methods-track-b.md](../sketches/formal-methods-track-b.md)
 **Epic status:** [formal-methods.md](formal-methods.md)
@@ -47,8 +48,7 @@ scoped. 72 tests pass in `surface.test_surface` (3 new, no regression).
 
 `ADR-A-FM3` accepted by the human, 2026-10-07.
 
-**Next action, for the human:** none blocking. Track B's three ready slices (B1-B3) are complete.
-B4 waits on CCS's C12.
+**Next action, for the human:** review [the formal-methods-more-feedback-response note](../notes/formal-methods-more-feedback-response.md), which queues three follow-up slices, none blocking: B2.1 (seed a fault in the compiler itself to confirm the differential harness catches it, an adjudication-record process, bounded-exhaustive generation, per-backend projection statement), B2.2 (verify and, if confirmed, fix a possible scheme-less hierarchical-match defect in `decide_concept_match`, same bug class as the already-fixed scheme-membership defect), and B5 (a measured mutation score via an automated tool, not spot checks). B4 still waits on CCS's C12.
 
 ## Slices
 
@@ -56,8 +56,11 @@ B4 waits on CCS's C12.
 |---|---|---|
 | B1 (kernel and denotation) | **done** | nothing |
 | B2 (differential tests against the compilers) | **done** | nothing |
+| B2.1 (harden the differential harness, seed a compiler-side fault) | not started, queued 2026-10-08 | nothing |
+| B2.2 (verify/fix the scheme-less hierarchical-match branch) | not started, queued 2026-10-08, flagged as the next concrete defect | nothing |
 | B3 (Surface's regeneration property test; MORK and MCN deferred) | **done** | nothing |
 | B4 (evaluation context, CCS C12's conformance kit) | not started, outline only | CCS's C12, not yet briefable |
+| B5 (measured mutation score) | not started, queued 2026-10-08 | nothing |
 
 ## Open questions
 

@@ -4,8 +4,9 @@
 
 **Unit ID:** `formal-methods-track-c` (phase, within the `formal-methods` epic)
 **Status:** C1 and C2 done, 2026-10-06. `ADR-A116` (Vocabulary scheme composition) drafted
-2026-10-07, Proposed, citing this track's checked evidence
-**Last updated:** 2026-10-07
+2026-10-07, Proposed, citing this track's checked evidence. C2.1 (well-formedness facts, a
+re-run) done 2026-10-08, after an implementation-level review; C2.2 and C2.3 queued, not started
+**Last updated:** 2026-10-08
 **Plan:** [formal-methods-track-c.md](../plans/formal-methods-track-c.md)
 **Sketch:** [formal-methods-track-c.md](../sketches/formal-methods-track-c.md)
 **Epic status:** [formal-methods.md](formal-methods.md)
@@ -29,12 +30,27 @@ itself prevent two composed schemes disagreeing about a shared concept's `broade
 results, the counterexample instance read and explained, and the three candidate fixes are in
 [the model's own README](../../../tools/models/vocabulary-scheme-composition/README.md).
 
+**C2.1, 2026-10-08:** an implementation-level review of the programme's evidence found the
+original `NoOverlapDisagreement` counterexample degenerate — a concept recorded as its own
+`broader` parent, a self-loop `Scheme`'s signature never excluded. Two well-formedness facts were
+added (`broader` irreflexive, `^broader` acyclic) and the check re-run at the same scope: **the
+counterexample survives**, now with a genuinely distinct, non-self-referential witness (full
+detail in the model's README, re-run section). The finding stands; its first piece of supporting
+evidence did not, and has been replaced with a stronger one. C2.2 (model the composed scheme
+directly, check a decision-level property against Eligibility's L9-L11) and C2.3 (model
+`ADR-A116`'s own accepted rule, `run` the real HQ-4/IMA-D4a configurations to confirm they are
+admitted) are both queued, not started — see
+[the review response](../notes/formal-methods-more-feedback-response.md) §4.
+
 **Next action, for the human:** review and accept (or revise) `ADR-A116`
 (`docs/architecture/decisions/ADR-A116-vocabulary-scheme-composition.md`), which decides the
 overlap rule (forbid, by a new static Vocabulary shape — the simplest of the three candidates,
 not the precedence or free-union alternatives) and the composition construct itself
-(`voc:BindingAspect`/`voc:forAspect`). Implementing it (the ontology change, the shape, the
-resolver's `CompositionOverlapError`) is a separate follow-up slice, not done by the ADR itself.
+(`voc:BindingAspect`/`voc:forAspect`). **Recommended before accepting it**: C2.3 (model the rule
+itself and `run` the real HQ-4/IMA-D4a configurations against it) — the review's own open
+question 2 is still live, that the simplest rule may be too strict for the very cases it exists
+to serve. Implementing the ADR (the ontology change, the shape, the resolver's
+`CompositionOverlapError`) is a separate follow-up slice either way, not done by the ADR itself.
 C3 (slot exclusivity and exhaustiveness, SMT, CCS C13a) is next in track C's own numbering, not
 started.
 
@@ -44,6 +60,9 @@ started.
 |---|---|---|
 | C1 (Alloy skeleton) | **done** | nothing |
 | C2 (scheme composition) | **done**, results recorded | nothing — the overlap-rule *decision* is the human's, not a blocker on this slice's own completion |
+| C2.1 (well-formedness facts, re-run) | **done**, 2026-10-08 | nothing |
+| C2.2 (model the composed scheme, decision-level check) | not started, queued 2026-10-08 | nothing |
+| C2.3 (model `ADR-A116`'s own rule against HQ-4/IMA-D4a) | not started, queued 2026-10-08, recommended before `ADR-A116`'s acceptance | nothing |
 | C3 (slot exclusivity, SMT) | not started, outline only | C2 (done) |
 
 ## Open questions

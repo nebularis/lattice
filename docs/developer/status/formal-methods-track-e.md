@@ -6,8 +6,8 @@
 **Status:** E1.0 and E1.1 done, 2026-10-06, native route only (human instruction). E1.2's
 blocker is resolved by reading track B's sketch (2026-10-07): the rounding/residual theorem
 belongs to B4/E3-E4, not Quantification, so E1.2 itself is retargeted, not merely unblocked. E1.3
-remains blocked (see Log)
-**Last updated:** 2026-10-06
+remains blocked (see Log). E1.4 (hardening) queued 2026-10-08, not started
+**Last updated:** 2026-10-08
 **Plan:** [formal-methods-track-e.md](../plans/formal-methods-track-e.md)
 **Sketch:** [formal-methods-track-e.md](../sketches/formal-methods-track-e.md)
 **Epic status:** [formal-methods.md](formal-methods.md)
@@ -25,7 +25,7 @@ spike, byte-identical statement digests), `gate.py`/`claim-schema.json` carried 
 native route (`spikes/formal-prover/env/driver.py --route native`); no Isabelle image exists, by
 design (deferred).
 
-**Next action, for the human:** E1.2's blocker is resolved, not merely diagnosed: the track B
+**Next action, for the human:** review [the formal-methods-more-feedback-response note](../notes/formal-methods-more-feedback-response.md), which queues E1.4 (gate and kernel-theory hardening: digest transitive definitions, characterising lemmas, replace `by eval`, an explicit assumption audit, a mutation set over the Isabelle theory). Nothing blocks starting it. Separately, E1.2's blocker is resolved, not merely diagnosed: the track B
 sketch (`formal-methods-track-b.md` §6) reads the reference-evaluator sketch's own RE6/RE-Q4
 directly and finds the rounding/residual rule for `split`/`proRata` belongs to the evaluation
 context's combinator algebra (track B's B4, mechanised later by track E's own E3/E4) — not to
@@ -44,6 +44,7 @@ No action needed on E1 until one of those two clears.
 | E1.1 (the kernel, for real) | **done**, folded into E1.0's pass | nothing |
 | E1.2 (rounding and residual theorem) | **retired from this track's E1** — its real home is E3/E4, after track B's B4 (see Log, 2026-10-07) | track B's B4, which waits on CCS's C12 |
 | E1.3 (binding resolution) | not started | track C's C2 is **done**, but the overlap-rule decision it surfaced, and the Vocabulary ADR IMA-D4a names, are not yet made/drafted (track C's own status) |
+| E1.4 (harden the gate and the kernel theory) | not started, queued 2026-10-08 | nothing — can start any time; see the plan's own E1.4 section |
 | E2 to E5 | not started, outline only | E1 |
 
 ## Open questions

@@ -600,12 +600,12 @@ reading.
 
 | Field | Value |
 |-------|-------|
-| **Status** | 📝 Proposed, 2026-10-06. Re-sequenced into tracks after review ([response](notes/formal-methods-review-response.md)). The prover spike is the first step |
+| **Status** | 📝 Proposed, 2026-10-06. Re-sequenced into tracks after review ([response](notes/formal-methods-review-response.md)), then again 2026-10-08 after an implementation-level review ([response](notes/formal-methods-more-feedback-response.md)) and the addition of track H (Persistence). The prover spike is the first step |
 | **Unit ID** | `formal-methods` (epic) |
-| **Sketches** | [formal-methods.md](sketches/formal-methods.md), [formal-adequacy-and-architecture.md](sketches/formal-adequacy-and-architecture.md), [assurance-records.md](sketches/assurance-records.md), [instrument-assurance.md](sketches/instrument-assurance.md), [reference-evaluator.md](sketches/reference-evaluator.md), [formal-toolchain-workers.md](sketches/formal-toolchain-workers.md) |
-| **Plan** | [formal-methods.md](plans/formal-methods.md), with [the prover spike](plans/formal-methods-phase-0.md). Other tracks rolling-wave |
+| **Sketches** | [formal-methods.md](sketches/formal-methods.md), [formal-adequacy-and-architecture.md](sketches/formal-adequacy-and-architecture.md), [assurance-records.md](sketches/assurance-records.md), [instrument-assurance.md](sketches/instrument-assurance.md), [reference-evaluator.md](sketches/reference-evaluator.md), [formal-toolchain-workers.md](sketches/formal-toolchain-workers.md). Per-track sketches under `sketches/formal-methods-track-*.md` (B, C, E, H) |
+| **Plan** | [formal-methods.md](plans/formal-methods.md), with [the prover spike](plans/formal-methods-phase-0.md) and per-track plans (`plans/formal-methods-track-*.md`, B, C, E, H). Other tracks rolling-wave |
 | **Status Record** | [formal-methods.md](status/formal-methods.md) |
-| **ADRs** | per track: the assurance profile (A), the reference semantics (B), toolchain workers (F), and the formal stack with its home after the spike (E) |
+| **ADRs** | per track: the assurance profile (A), the reference semantics (B, A-FM3), toolchain workers (F), the formal stack with its home after the spike (E, A-FM1/A-FM2), and Persistence's own home and scope (H, A-FM4, Proposed) |
 
 Formal methods in LATTICE's development lifecycle and compilation toolchains: mechanised semantics
 and proofs, lightweight models, adequacy against the fixture corpus, assurance records, guaranteed
