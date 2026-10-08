@@ -1,0 +1,131 @@
+@prefix ns1: <https://www.nebularis.org/neuro-semantic/lattice/instrument#> .
+@prefix ns2: <https://www.nebularis.org/neuro-semantic/lattice/poc/word-authoring#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+<https://example.org/lattice/authoring/doc/00000001-0000-4000-8000-000000000000/element/00000001-0000-4000-8000-000000000001/meaning> a ns1:Definition ;
+    prov:wasGeneratedBy <https://example.org/lattice/authoring/doc/00000001-0000-4000-8000-000000000000/rev/1/proposal-graph#activity> ;
+    ns1:expressedIn <https://example.org/lattice/authoring/doc/00000001-0000-4000-8000-000000000000/element/00000001-0000-4000-8000-000000000001> ;
+    ns2:definesTerm "Borrower" ;
+    ns2:proposalBasis "form" ;
+    ns2:sentenceForm "definition" .
+
+<https://example.org/lattice/authoring/doc/00000001-0000-4000-8000-000000000000/element/00000001-0000-4000-8000-000000000002/meaning> a ns1:Definition ;
+    prov:wasGeneratedBy <https://example.org/lattice/authoring/doc/00000001-0000-4000-8000-000000000000/rev/1/proposal-graph#activity> ;
+    ns1:expressedIn <https://example.org/lattice/authoring/doc/00000001-0000-4000-8000-000000000000/element/00000001-0000-4000-8000-000000000002> ;
+    ns2:definesTerm "Lender" ;
+    ns2:proposalBasis "form" ;
+    ns2:sentenceForm "definition" .
+
+<https://example.org/lattice/authoring/doc/00000001-0000-4000-8000-000000000000/element/00000001-0000-4000-8000-000000000003/meaning> a ns1:Definition ;
+    prov:wasGeneratedBy <https://example.org/lattice/authoring/doc/00000001-0000-4000-8000-000000000000/rev/1/proposal-graph#activity> ;
+    ns1:expressedIn <https://example.org/lattice/authoring/doc/00000001-0000-4000-8000-000000000000/element/00000001-0000-4000-8000-000000000003> ;
+    ns2:definesTerm "Loan" ;
+    ns2:proposalBasis "form" ;
+    ns2:sentenceForm "definition" .
+
+<https://example.org/lattice/authoring/doc/00000001-0000-4000-8000-000000000000/element/00000001-0000-4000-8000-000000000004/meaning> a ns1:Definition ;
+    prov:wasGeneratedBy <https://example.org/lattice/authoring/doc/00000001-0000-4000-8000-000000000000/rev/1/proposal-graph#activity> ;
+    ns1:expressedIn <https://example.org/lattice/authoring/doc/00000001-0000-4000-8000-000000000000/element/00000001-0000-4000-8000-000000000004> ;
+    ns2:definesTerm "Facility" ;
+    ns2:proposalBasis "form" ;
+    ns2:sentenceForm "definition" .
+
+<https://example.org/lattice/authoring/doc/00000001-0000-4000-8000-000000000000/element/00000001-0000-4000-8000-000000000005/meaning> a ns1:Definition ;
+    prov:wasGeneratedBy <https://example.org/lattice/authoring/doc/00000001-0000-4000-8000-000000000000/rev/1/proposal-graph#activity> ;
+    ns1:expressedIn <https://example.org/lattice/authoring/doc/00000001-0000-4000-8000-000000000000/element/00000001-0000-4000-8000-000000000005> ;
+    ns2:definesTerm "Repayment Date" ;
+    ns2:proposalBasis "form" ;
+    ns2:sentenceForm "definition" .
+
+<https://example.org/lattice/authoring/doc/00000001-0000-4000-8000-000000000000/element/00000001-0000-4000-8000-000000000006/meaning> a ns1:Obligation ;
+    prov:wasGeneratedBy <https://example.org/lattice/authoring/doc/00000001-0000-4000-8000-000000000000/rev/1/proposal-graph#activity> ;
+    ns1:expressedIn <https://example.org/lattice/authoring/doc/00000001-0000-4000-8000-000000000000/element/00000001-0000-4000-8000-000000000006> ;
+    ns1:obligor <https://example.org/lattice/authoring/doc/00000001-0000-4000-8000-000000000000/role/00000001-0000-4000-8000-000000000002> ;
+    ns2:activityText "make available to Borrower a term loan facility in an aggregate amount equal to GBP 10,000,000" ;
+    ns2:proposalBasis "form" ;
+    ns2:sentenceForm "obligation" .
+
+<https://example.org/lattice/authoring/doc/00000001-0000-4000-8000-000000000000/element/00000001-0000-4000-8000-000000000007/meaning> a ns1:Permission ;
+    prov:wasGeneratedBy <https://example.org/lattice/authoring/doc/00000001-0000-4000-8000-000000000000/rev/1/proposal-graph#activity> ;
+    ns1:expressedIn <https://example.org/lattice/authoring/doc/00000001-0000-4000-8000-000000000000/element/00000001-0000-4000-8000-000000000007> ;
+    ns1:holder <https://example.org/lattice/authoring/doc/00000001-0000-4000-8000-000000000000/role/00000001-0000-4000-8000-000000000001> ;
+    ns2:activityText "cancel the whole or any part of the Facility on not less than five Business Days' prior notice" ;
+    ns2:proposalBasis "form" ;
+    ns2:sentenceForm "permission" .
+
+<https://example.org/lattice/authoring/doc/00000001-0000-4000-8000-000000000000/element/00000001-0000-4000-8000-000000000008/meaning> a ns1:Obligation ;
+    prov:wasGeneratedBy <https://example.org/lattice/authoring/doc/00000001-0000-4000-8000-000000000000/rev/1/proposal-graph#activity> ;
+    ns1:expressedIn <https://example.org/lattice/authoring/doc/00000001-0000-4000-8000-000000000000/element/00000001-0000-4000-8000-000000000008> ;
+    ns1:hasParameterBinding <https://example.org/lattice/authoring/doc/00000001-0000-4000-8000-000000000000/element/00000001-0000-4000-8000-000000000008/meaning/binding/rate> ;
+    ns1:obligor <https://example.org/lattice/authoring/doc/00000001-0000-4000-8000-000000000000/role/00000001-0000-4000-8000-000000000001> ;
+    ns2:proposalBasis "form" ;
+    ns2:sentenceForm "pay-interest-at-rate" .
+
+<https://example.org/lattice/authoring/doc/00000001-0000-4000-8000-000000000000/element/00000001-0000-4000-8000-000000000009/meaning> a ns1:Obligation ;
+    prov:wasGeneratedBy <https://example.org/lattice/authoring/doc/00000001-0000-4000-8000-000000000000/rev/1/proposal-graph#activity> ;
+    ns1:expressedIn <https://example.org/lattice/authoring/doc/00000001-0000-4000-8000-000000000000/element/00000001-0000-4000-8000-000000000009> ;
+    ns2:proposalBasis "keyword" .
+
+<https://example.org/lattice/authoring/doc/00000001-0000-4000-8000-000000000000/element/00000001-0000-4000-8000-000000000010/meaning> a ns1:Obligation ;
+    prov:wasGeneratedBy <https://example.org/lattice/authoring/doc/00000001-0000-4000-8000-000000000000/rev/1/proposal-graph#activity> ;
+    ns1:expressedIn <https://example.org/lattice/authoring/doc/00000001-0000-4000-8000-000000000000/element/00000001-0000-4000-8000-000000000010> ;
+    ns1:obligor <https://example.org/lattice/authoring/doc/00000001-0000-4000-8000-000000000000/role/00000001-0000-4000-8000-000000000001> ;
+    ns2:activityText "repay each Loan in full on the Repayment Date" ;
+    ns2:proposalBasis "form" ;
+    ns2:sentenceForm "obligation" .
+
+<https://example.org/lattice/authoring/doc/00000001-0000-4000-8000-000000000000/element/00000001-0000-4000-8000-000000000011/meaning> a ns1:Obligation ;
+    prov:wasGeneratedBy <https://example.org/lattice/authoring/doc/00000001-0000-4000-8000-000000000000/rev/1/proposal-graph#activity> ;
+    ns1:expressedIn <https://example.org/lattice/authoring/doc/00000001-0000-4000-8000-000000000000/element/00000001-0000-4000-8000-000000000011> ;
+    ns1:obligor <https://example.org/lattice/authoring/doc/00000001-0000-4000-8000-000000000000/role/00000001-0000-4000-8000-000000000001> ;
+    ns2:activityText "pay a prepayment fee of GBP 250 for each prepayment" ;
+    ns2:proposalBasis "form" ;
+    ns2:sentenceForm "obligation" .
+
+<https://example.org/lattice/authoring/doc/00000001-0000-4000-8000-000000000000/element/00000001-0000-4000-8000-000000000012/meaning> a ns1:Prohibition ;
+    prov:wasGeneratedBy <https://example.org/lattice/authoring/doc/00000001-0000-4000-8000-000000000000/rev/1/proposal-graph#activity> ;
+    ns1:expressedIn <https://example.org/lattice/authoring/doc/00000001-0000-4000-8000-000000000000/element/00000001-0000-4000-8000-000000000012> ;
+    ns1:obligor <https://example.org/lattice/authoring/doc/00000001-0000-4000-8000-000000000000/role/00000001-0000-4000-8000-000000000001> ;
+    ns2:activityText "create any security over its assets" ;
+    ns2:proposalBasis "form" ;
+    ns2:sentenceForm "prohibition" .
+
+<https://example.org/lattice/authoring/doc/00000001-0000-4000-8000-000000000000/element/00000001-0000-4000-8000-000000000013/meaning> a ns1:Obligation ;
+    prov:wasGeneratedBy <https://example.org/lattice/authoring/doc/00000001-0000-4000-8000-000000000000/rev/1/proposal-graph#activity> ;
+    ns1:expressedIn <https://example.org/lattice/authoring/doc/00000001-0000-4000-8000-000000000000/element/00000001-0000-4000-8000-000000000013> ;
+    ns1:obligor <https://example.org/lattice/authoring/doc/00000001-0000-4000-8000-000000000000/role/00000001-0000-4000-8000-000000000001> ;
+    ns2:activityText "supply its annual financial statements to the [Agent] within 120 days of each financial year end" ;
+    ns2:proposalBasis "form" ;
+    ns2:sentenceForm "obligation" .
+
+<https://example.org/lattice/authoring/doc/00000001-0000-4000-8000-000000000000/element/00000001-0000-4000-8000-000000000014/meaning> a ns1:Power ;
+    prov:wasGeneratedBy <https://example.org/lattice/authoring/doc/00000001-0000-4000-8000-000000000000/rev/1/proposal-graph#activity> ;
+    ns1:expressedIn <https://example.org/lattice/authoring/doc/00000001-0000-4000-8000-000000000000/element/00000001-0000-4000-8000-000000000014> ;
+    ns1:holder <https://example.org/lattice/authoring/doc/00000001-0000-4000-8000-000000000000/role/00000001-0000-4000-8000-000000000002> ;
+    ns2:activityText "declare all Loans immediately due" ;
+    ns2:proposalBasis "form" ;
+    ns2:sentenceForm "power-on-condition" .
+
+<https://example.org/lattice/authoring/doc/00000001-0000-4000-8000-000000000000/element/00000001-0000-4000-8000-000000000015/meaning> a ns1:Deeming ;
+    prov:wasGeneratedBy <https://example.org/lattice/authoring/doc/00000001-0000-4000-8000-000000000000/rev/1/proposal-graph#activity> ;
+    ns1:expressedIn <https://example.org/lattice/authoring/doc/00000001-0000-4000-8000-000000000000/element/00000001-0000-4000-8000-000000000015> ;
+    ns2:proposalBasis "form" ;
+    ns2:sentenceForm "deemed-shall" .
+
+<https://example.org/lattice/authoring/doc/00000001-0000-4000-8000-000000000000/element/00000001-0000-4000-8000-000000000008/meaning/binding/rate> a ns1:ParameterBinding ;
+    ns1:fromVariable <https://example.org/lattice/authoring/doc/00000001-0000-4000-8000-000000000000/variable/margin> ;
+    ns1:parameterKind ns2:rate .
+
+<https://example.org/lattice/authoring/doc/00000001-0000-4000-8000-000000000000/role/00000001-0000-4000-8000-000000000002> a ns2:PartyRole ;
+    rdfs:label "Lender" ;
+    ns2:namedBy <https://example.org/lattice/authoring/doc/00000001-0000-4000-8000-000000000000/element/00000001-0000-4000-8000-000000000002> .
+
+<https://example.org/lattice/authoring/doc/00000001-0000-4000-8000-000000000000/role/00000001-0000-4000-8000-000000000001> a ns2:PartyRole ;
+    rdfs:label "Borrower" ;
+    ns2:namedBy <https://example.org/lattice/authoring/doc/00000001-0000-4000-8000-000000000000/element/00000001-0000-4000-8000-000000000001> .
+
+<https://example.org/lattice/authoring/doc/00000001-0000-4000-8000-000000000000/rev/1/proposal-graph#activity> a prov:Activity ;
+    prov:used <https://example.org/lattice/authoring/doc/00000001-0000-4000-8000-000000000000/wording> ;
+    ns2:formsProfile "wap-le-forms 0.1.0" .
+

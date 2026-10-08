@@ -15,6 +15,9 @@ name: Formal methods (heavy toolchains)
 on:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   # Track E: mechanised Isabelle/HOL theories (tools/proofs/, ADR-A-FM1,
   # ADR-A-FM2). Native route only -- no Isabelle container image exists in

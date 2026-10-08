@@ -1,0 +1,113 @@
+/* Layout for a 320 to 450 pixel wide task pane (plan WA9 "Files"). */
+
+.addin-pane {
+  min-width: 320px;
+  max-width: 450px;
+  font-family: "Segoe UI", sans-serif;
+  font-size: 13px;
+  padding: 8px;
+}
+
+.addin-header {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 4px;
+}
+
+.status-connected {
+  color: #2e7d32;
+  font-weight: 600;
+}
+
+.status-disconnected {
+  color: #b00020;
+  font-weight: 600;
+}
+
+.error-banner {
+  background: #fdecea;
+  border: 1px solid #b00020;
+  color: #611a15;
+  padding: 8px;
+  margin-bottom: 8px;
+}
+
+.tab-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.tab-bar .tab {
+  background: none;
+  border: 1px solid #c7ccd1;
+  padding: 4px 8px;
+  cursor: pointer;
+}
+
+.tab-bar .tab.active {
+  background: #1f6fb2;
+  color: white;
+  border-color: #1f6fb2;
+}
+
+.button-row {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+/* Span roles (Logical English tab). Each role also carries its name as text, so colour is never
+ * the only cue, matching the tag codec's own accessibility rule. */
+.role-fixed {
+  color: #202020;
+  font-weight: 600;
+}
+
+.role-ignorable {
+  color: #8a8f98;
+}
+
+.role-slot-variable {
+  color: #c46a00;
+  font-weight: 600;
+}
+
+.role-slot-constant {
+  color: #1f6fb2;
+  font-weight: 600;
+}
+
+.role-slot-text {
+  color: #00796b;
+  font-weight: 600;
+}
+
+.role-modal {
+  color: #6a3fb5;
+  font-weight: 600;
+}
+
+.role-connective {
+  color: #2e7d32;
+  font-weight: 600;
+}
+
+.role-unmatched {
+  color: #b00020;
+  text-decoration: underline wavy;
+}
+
+.legend {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 0;
+}
+
+.graph-diagram svg {
+  max-width: 100%;
+  height: auto;
+}

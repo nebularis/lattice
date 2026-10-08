@@ -1,0 +1,17 @@
+{
+  "templateId": "minimal-template",
+  "version": "0.1.0",
+  "title": "Minimal Template",
+  "domain": "demo",
+  "sections": [
+    {
+      "sectionKey": "definitions",
+      "heading": "Definitions",
+      "elementKinds": ["definition"],
+      "allowedTermKinds": ["Definition"],
+      "required": true,
+      "guidance": "Define the terms used in this document."
+    }
+  ],
+  "variables": []
+}

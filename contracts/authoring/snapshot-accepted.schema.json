@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.nebularis.org/lattice/authoring/snapshot-accepted/0.1.0",
+  "title": "Word authoring POC: snapshot accepted",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["documentId", "revision", "wordingGraph", "validation", "detections", "templateFindings", "job"],
+  "properties": {
+    "documentId": {"$ref": "https://schemas.nebularis.org/lattice/authoring/common/0.1.0#/$defs/Uuid"},
+    "revision": {"type": "integer", "minimum": 1},
+    "wordingGraph": {"$ref": "https://schemas.nebularis.org/lattice/authoring/common/0.1.0#/$defs/GraphRef"},
+    "validation": {"$ref": "https://schemas.nebularis.org/lattice/authoring/common/0.1.0#/$defs/ValidationReport"},
+    "detections": {
+      "type": "array",
+      "maxItems": 2000,
+      "items": {"$ref": "https://schemas.nebularis.org/lattice/authoring/common/0.1.0#/$defs/Detection"}
+    },
+    "templateFindings": {
+      "type": "array",
+      "maxItems": 500,
+      "items": {"$ref": "https://schemas.nebularis.org/lattice/authoring/common/0.1.0#/$defs/Finding"}
+    },
+    "job": {"$ref": "https://schemas.nebularis.org/lattice/authoring/common/0.1.0#/$defs/Job"}
+  }
+}

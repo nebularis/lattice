@@ -1,0 +1,21 @@
+{
+  "exchange": "lattice.authoring",
+  "deadLetterExchange": "lattice.authoring.dlx",
+  "queues": [
+    {
+      "name": "lattice.authoring.analysis.requested",
+      "routingKey": "lattice.authoring.analysis.requested",
+      "deadLetter": true
+    },
+    {
+      "name": "lattice.authoring.analysis.completed",
+      "routingKey": "lattice.authoring.analysis.completed",
+      "deadLetter": true
+    },
+    {
+      "name": "lattice.authoring.dead",
+      "routingKey": "#",
+      "deadLetter": false
+    }
+  ]
+}

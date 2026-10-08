@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.nebularis.org/lattice/authoring/snapshot-submission/0.1.0",
+  "title": "Word authoring POC: snapshot submission",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["baseRevision", "snapshot"],
+  "properties": {
+    "baseRevision": {"oneOf": [{"type": "integer", "minimum": 1}, {"type": "null"}]},
+    "snapshot": {"$ref": "https://schemas.nebularis.org/lattice/authoring/document-snapshot/0.1.0#"}
+  }
+}

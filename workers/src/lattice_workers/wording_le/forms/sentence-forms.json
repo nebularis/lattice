@@ -1,0 +1,134 @@
+{
+  "profileId": "wap-le-forms",
+  "version": "0.1.0",
+  "ignorable": ["the", "a", "an", "each", "any"],
+  "forms": [
+    {
+      "formId": "pay-interest-at-rate",
+      "relationClass": "Obligation",
+      "template": "*a party* shall pay interest on *a thing* at *a rate* per annum",
+      "items": [
+        {"kind": "slot", "name": "party", "type": "party"},
+        {"kind": "fixed", "words": ["shall", "pay", "interest", "on"]},
+        {"kind": "slot", "name": "thing", "type": "text"},
+        {"kind": "fixed", "words": ["at"]},
+        {"kind": "slot", "name": "rate", "type": "variable", "valueTypes": ["percentage"]},
+        {"kind": "fixed", "words": ["per", "annum"]}
+      ]
+    },
+    {
+      "formId": "deemed-shall",
+      "relationClass": "Deeming",
+      "template": "*a thing* shall be deemed *a state*",
+      "items": [
+        {"kind": "slot", "name": "thing", "type": "text"},
+        {"kind": "fixed", "words": ["shall", "be", "deemed"]},
+        {"kind": "slot", "name": "state", "type": "text"}
+      ]
+    },
+    {
+      "formId": "deemed-is",
+      "relationClass": "Deeming",
+      "template": "*a thing* is deemed *a state*",
+      "items": [
+        {"kind": "slot", "name": "thing", "type": "text"},
+        {"kind": "fixed", "words": ["is", "deemed"]},
+        {"kind": "slot", "name": "state", "type": "text"}
+      ]
+    },
+    {
+      "formId": "obligation-within",
+      "relationClass": "Obligation",
+      "template": "*a party* shall *an activity* within *a period*",
+      "items": [
+        {"kind": "slot", "name": "party", "type": "party"},
+        {"kind": "fixed", "words": ["shall"]},
+        {"kind": "slot", "name": "activity", "type": "text"},
+        {"kind": "fixed", "words": ["within"]},
+        {"kind": "slot", "name": "period", "type": "variable", "valueTypes": ["duration"]}
+      ]
+    },
+    {
+      "formId": "prohibition",
+      "relationClass": "Prohibition",
+      "template": "*a party* shall not *an activity*",
+      "items": [
+        {"kind": "slot", "name": "party", "type": "party"},
+        {"kind": "fixed", "words": ["shall", "not"]},
+        {"kind": "slot", "name": "activity", "type": "text"}
+      ]
+    },
+    {
+      "formId": "obligation",
+      "relationClass": "Obligation",
+      "template": "*a party* shall *an activity*",
+      "items": [
+        {"kind": "slot", "name": "party", "type": "party"},
+        {"kind": "fixed", "words": ["shall"]},
+        {"kind": "slot", "name": "activity", "type": "text"}
+      ]
+    },
+    {
+      "formId": "power-terminate",
+      "relationClass": "Power",
+      "template": "*a party* may terminate *an activity*",
+      "items": [
+        {"kind": "slot", "name": "party", "type": "party"},
+        {"kind": "fixed", "words": ["may", "terminate"]},
+        {"kind": "slot", "name": "activity", "type": "text"}
+      ]
+    },
+    {
+      "formId": "power-on-condition",
+      "relationClass": "Power",
+      "template": "if *a condition*, *a party* may *an activity*",
+      "items": [
+        {"kind": "fixed", "words": ["if"]},
+        {"kind": "slot", "name": "condition", "type": "text"},
+        {"kind": "fixed", "words": [","]},
+        {"kind": "slot", "name": "party", "type": "party"},
+        {"kind": "fixed", "words": ["may"]},
+        {"kind": "slot", "name": "activity", "type": "text"}
+      ]
+    },
+    {
+      "formId": "permission",
+      "relationClass": "Permission",
+      "template": "*a party* may *an activity*",
+      "items": [
+        {"kind": "slot", "name": "party", "type": "party"},
+        {"kind": "fixed", "words": ["may"]},
+        {"kind": "slot", "name": "activity", "type": "text"}
+      ]
+    },
+    {
+      "formId": "exclusion-not-liable",
+      "relationClass": "Exclusion",
+      "template": "*a party* is not liable for *a matter*",
+      "items": [
+        {"kind": "slot", "name": "party", "type": "party"},
+        {"kind": "fixed", "words": ["is", "not", "liable", "for"]},
+        {"kind": "slot", "name": "matter", "type": "text"}
+      ]
+    },
+    {
+      "formId": "exclusion-not-cover",
+      "relationClass": "Exclusion",
+      "template": "this policy does not cover *a matter*",
+      "items": [
+        {"kind": "fixed", "words": ["this", "policy", "does", "not", "cover"]},
+        {"kind": "slot", "name": "matter", "type": "text"}
+      ]
+    },
+    {
+      "formId": "definition",
+      "relationClass": "Definition",
+      "template": "*a term* means *a description*",
+      "items": [
+        {"kind": "slot", "name": "term", "type": "term"},
+        {"kind": "fixed", "words": ["means"]},
+        {"kind": "slot", "name": "description", "type": "text"}
+      ]
+    }
+  ]
+}

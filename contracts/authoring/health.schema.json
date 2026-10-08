@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.nebularis.org/lattice/authoring/health/0.1.0",
+  "title": "Word authoring POC: health",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["status", "fuseki", "amqp"],
+  "properties": {
+    "status": {"type": "string", "enum": ["ok", "degraded"]},
+    "fuseki": {"type": "string", "enum": ["up", "down"]},
+    "amqp": {"type": "string", "enum": ["up", "down"]}
+  }
+}

@@ -1,0 +1,194 @@
+{
+  "schemaVersion": "0.1.0",
+  "documentId": "00000001-0000-4000-8000-000000000000",
+  "templateId": "facility-agreement",
+  "title": "Facility Agreement (sample)",
+  "sections": [
+    {
+      "sectionKey": "definitions",
+      "elements": [
+        {
+          "elementId": "00000001-0000-4000-8000-000000000001",
+          "kind": "definition",
+          "definedTerm": "Borrower",
+          "parts": [
+            {"kind": "literal", "text": "\u201cBorrower\u201d means the company named as borrower in the schedule."}
+          ]
+        },
+        {
+          "elementId": "00000001-0000-4000-8000-000000000002",
+          "kind": "definition",
+          "definedTerm": "Lender",
+          "parts": [
+            {"kind": "literal", "text": "\u201cLender\u201d means each bank listed in Part 1 of the schedule."}
+          ]
+        },
+        {
+          "elementId": "00000001-0000-4000-8000-000000000003",
+          "kind": "definition",
+          "definedTerm": "Loan",
+          "parts": [
+            {"kind": "literal", "text": "\u201cLoan\u201d means a loan made or to be made under the Facility."}
+          ]
+        },
+        {
+          "elementId": "00000001-0000-4000-8000-000000000004",
+          "kind": "definition",
+          "definedTerm": "Facility",
+          "parts": [
+            {"kind": "literal", "text": "\u201cFacility\u201d means the term loan facility made available under this Agreement."}
+          ]
+        },
+        {
+          "elementId": "00000001-0000-4000-8000-000000000005",
+          "kind": "definition",
+          "definedTerm": "Repayment Date",
+          "parts": [
+            {"kind": "literal", "text": "\u201cRepayment Date\u201d means the date falling "},
+            {"kind": "variable", "variableKey": "repayment-period", "text": "five years"},
+            {"kind": "literal", "text": " after the date of this Agreement."}
+          ]
+        }
+      ]
+    },
+    {
+      "sectionKey": "commitment",
+      "elements": [
+        {
+          "elementId": "00000001-0000-4000-8000-000000000006",
+          "kind": "clause",
+          "definedTerm": null,
+          "parts": [
+            {"kind": "reference", "targetElementId": "00000001-0000-4000-8000-000000000002", "text": "Lender"},
+            {"kind": "literal", "text": " shall make available to "},
+            {"kind": "reference", "targetElementId": "00000001-0000-4000-8000-000000000001", "text": "Borrower"},
+            {"kind": "literal", "text": " a term loan facility in an aggregate amount equal to "},
+            {"kind": "variable", "variableKey": "facility-amount", "text": "GBP 10,000,000"},
+            {"kind": "literal", "text": "."}
+          ]
+        },
+        {
+          "elementId": "00000001-0000-4000-8000-000000000007",
+          "kind": "clause",
+          "definedTerm": null,
+          "parts": [
+            {"kind": "reference", "targetElementId": "00000001-0000-4000-8000-000000000001", "text": "Borrower"},
+            {"kind": "literal", "text": " may cancel the whole or any part of the "},
+            {"kind": "reference", "targetElementId": "00000001-0000-4000-8000-000000000004", "text": "Facility"},
+            {"kind": "literal", "text": " on not less than "},
+            {"kind": "variable", "variableKey": "notice-period", "text": "five Business Days'"},
+            {"kind": "literal", "text": " prior notice."}
+          ]
+        }
+      ]
+    },
+    {
+      "sectionKey": "interest",
+      "elements": [
+        {
+          "elementId": "00000001-0000-4000-8000-000000000008",
+          "kind": "clause",
+          "definedTerm": null,
+          "parts": [
+            {"kind": "reference", "targetElementId": "00000001-0000-4000-8000-000000000001", "text": "Borrower"},
+            {"kind": "literal", "text": " shall pay interest on each "},
+            {"kind": "reference", "targetElementId": "00000001-0000-4000-8000-000000000003", "text": "Loan"},
+            {"kind": "literal", "text": " at "},
+            {"kind": "variable", "variableKey": "margin", "text": "2.5 per cent"},
+            {"kind": "literal", "text": " per annum."}
+          ]
+        },
+        {
+          "elementId": "00000001-0000-4000-8000-000000000009",
+          "kind": "clause",
+          "definedTerm": null,
+          "parts": [
+            {"kind": "literal", "text": "Interest shall be calculated on the basis of a 365 day year."}
+          ]
+        }
+      ]
+    },
+    {
+      "sectionKey": "repayment",
+      "elements": [
+        {
+          "elementId": "00000001-0000-4000-8000-000000000010",
+          "kind": "clause",
+          "definedTerm": null,
+          "parts": [
+            {"kind": "reference", "targetElementId": "00000001-0000-4000-8000-000000000001", "text": "Borrower"},
+            {"kind": "literal", "text": " shall repay each "},
+            {"kind": "reference", "targetElementId": "00000001-0000-4000-8000-000000000003", "text": "Loan"},
+            {"kind": "literal", "text": " in full on the "},
+            {"kind": "reference", "targetElementId": "00000001-0000-4000-8000-000000000005", "text": "Repayment Date"},
+            {"kind": "literal", "text": "."}
+          ]
+        },
+        {
+          "elementId": "00000001-0000-4000-8000-000000000011",
+          "kind": "clause",
+          "definedTerm": null,
+          "parts": [
+            {"kind": "reference", "targetElementId": "00000001-0000-4000-8000-000000000001", "text": "Borrower"},
+            {"kind": "literal", "text": " shall pay a prepayment fee of GBP 250 for each prepayment."}
+          ]
+        }
+      ]
+    },
+    {
+      "sectionKey": "undertakings",
+      "elements": [
+        {
+          "elementId": "00000001-0000-4000-8000-000000000012",
+          "kind": "clause",
+          "definedTerm": null,
+          "parts": [
+            {"kind": "reference", "targetElementId": "00000001-0000-4000-8000-000000000001", "text": "Borrower"},
+            {"kind": "literal", "text": " shall not create any security over its assets."}
+          ]
+        },
+        {
+          "elementId": "00000001-0000-4000-8000-000000000013",
+          "kind": "clause",
+          "definedTerm": null,
+          "parts": [
+            {"kind": "reference", "targetElementId": "00000001-0000-4000-8000-000000000001", "text": "Borrower"},
+            {"kind": "literal", "text": " shall supply its annual financial statements to the [Agent] within 120 days of each financial year end."}
+          ]
+        }
+      ]
+    },
+    {
+      "sectionKey": "events-of-default",
+      "elements": [
+        {
+          "elementId": "00000001-0000-4000-8000-000000000014",
+          "kind": "clause",
+          "definedTerm": null,
+          "parts": [
+            {"kind": "literal", "text": "If "},
+            {"kind": "reference", "targetElementId": "00000001-0000-4000-8000-000000000001", "text": "Borrower"},
+            {"kind": "literal", "text": " does not pay any sum due under this Agreement, "},
+            {"kind": "reference", "targetElementId": "00000001-0000-4000-8000-000000000002", "text": "Lender"},
+            {"kind": "literal", "text": " may declare all Loans immediately due."}
+          ]
+        },
+        {
+          "elementId": "00000001-0000-4000-8000-000000000015",
+          "kind": "clause",
+          "definedTerm": null,
+          "parts": [
+            {"kind": "literal", "text": "A Loan shall be deemed due on the date a demand is made."}
+          ]
+        }
+      ]
+    }
+  ],
+  "variables": [
+    {"variableKey": "facility-amount", "label": "Facility amount", "valueType": "money"},
+    {"variableKey": "margin", "label": "Margin", "valueType": "percentage"},
+    {"variableKey": "notice-period", "label": "Notice period", "valueType": "duration"},
+    {"variableKey": "repayment-period", "label": "Repayment period", "valueType": "duration"}
+  ],
+  "unmarked": []
+}

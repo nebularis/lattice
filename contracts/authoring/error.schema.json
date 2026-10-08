@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.nebularis.org/lattice/authoring/error/0.1.0",
+  "title": "Word authoring POC: error",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["error", "details"],
+  "properties": {
+    "error": {"type": "string", "minLength": 1, "maxLength": 1000},
+    "details": {"type": "array", "maxItems": 20, "items": {"type": "string", "minLength": 1, "maxLength": 1000}}
+  }
+}

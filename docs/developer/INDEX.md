@@ -623,6 +623,41 @@ instrument behaviour, and generated tools run as workers, never against the live
 LATTICE's guidance for AI agents as an always-on core (`AGENTS.md`) and six skills in
 `.claude/skills/`, shared with projects built on LATTICE as a Claude Code plugin. Takes over TD-21.
 
+## 8.13 Word Authoring Proof of Concept — Awaiting human validation
+
+| Field | Value |
+|-------|-------|
+| **Status** | 🟡 WA0 to WA11 done. Awaiting the human's manual Word checklist, see the status record |
+| **Unit ID** | `word-authoring-poc` |
+| **Sketch** | [word-authoring-poc.md](sketches/word-authoring-poc.md) |
+| **Plan** | [word-authoring-poc.md](plans/word-authoring-poc.md) |
+| **Status Record** | [word-authoring-poc.md](status/word-authoring-poc.md) |
+| **Validation Packs** | [WA1](validation/word-authoring-poc-wa1.md), [WA2](validation/word-authoring-poc-wa2.md), [WA3](validation/word-authoring-poc-wa3.md), [WA4](validation/word-authoring-poc-wa4.md), [WA5](validation/word-authoring-poc-wa5.md), [WA6](validation/word-authoring-poc-wa6.md), [WA7](validation/word-authoring-poc-wa7.md), [WA8](validation/word-authoring-poc-wa8.md), [WA9](validation/word-authoring-poc-wa9.md), [WA9a](validation/word-authoring-poc-wa9a.md), [WA10](validation/word-authoring-poc-wa10.md), [WA11](validation/word-authoring-poc-wa11.md) |
+| **ADRs** | A-118, Proposed |
+| **Follow-on tranche** | drafted 2026-10-02, not started: richer nested sample data (deferred on CCS), a web authoring app, add-in parity. Decisions WA-D14 to WA-D20 and slices WA12 to WA20 in the plan, design in sketch §8. Awaiting the human's decisions |
+
+A Word add-in, loaded without installation, for writing wordings into templates with marked text
+parts, backed by a Java and Jena service and a Python Logical English job over RabbitMQ, run as a
+local compose stack.
+
+## 8.14 Bidirectional XSLT Transformation Sidecar — Drafted, not started
+
+| Field | Value |
+|-------|-------|
+| **Status** | 🔵 Sketch and plan drafted 2026-10-02. Decisions XS-D1 to XS-D7 awaiting the human, see the status record |
+| **Unit ID** | `xslt-sidecar` |
+| **Sketch** | [xslt-sidecar.md](sketches/xslt-sidecar.md) |
+| **Plan** | [xslt-sidecar.md](plans/xslt-sidecar.md) |
+| **Status Record** | [xslt-sidecar.md](status/xslt-sidecar.md) |
+| **ADRs** | A-119, Proposed |
+
+A Saxon-hosted XSLT 3.0 engine, published as a Java library and a standalone sidecar process,
+projecting known-shape SPI data (from the persistence and Surface compilers) to documents on
+egress, and lifting external, non-OWL XML into canonical triples on ingress, with a new MORK
+compiler backend compiling a mapping graph into an ingress kit's stylesheet. Builds on
+[xml-egress-and-transformation-kits.md](sketches/xml-egress-and-transformation-kits.md) without
+revising it. A utility meant to be glued into other stacks, not a vertical proof of concept.
+
 ## 8. Phase Handoff Documents (0-6)
 
 | Phase | Status Record | Key Outcome |
