@@ -38,6 +38,14 @@ python -m persistence export-recipes compiled-profile.ttl --out ./recipes
 
 Neither subcommand assumes you will ever run the other, or run any further LATTICE component at all. An adopter who wants only the ontology and the generated SPARQL can run both once and walk away with the `.rq` files.
 
+**`hygiene`** runs the static checks of formal-methods track H, slice H1, over a configuration without compiling it. It exits 1 on a violation and 0 otherwise, printing warnings. So far it checks the prefix antichain: two `dal:GraphPatternScope` nodes with nested `dal:graphPrefix` values over a shared class are a violation (one instance would belong to two targets, and the resolver has no longest-prefix rule), and nested `dal:iriPrefix` values on `dal:NamespaceScope` nodes are a warning (the resolver ranks by `dal:priority`). Each finding names the scopes and a graph or resource IRI that both match. Implemented in [`persistence.hygiene`](src/persistence/hygiene.py).
+
+```bash
+python -m persistence hygiene \
+    ontology/persistence/spec/persistence.ttl \
+    path/to/your-config.ttl
+```
+
 ## What `compile` actually does
 
 | Stage | Input | Output | Failure mode |

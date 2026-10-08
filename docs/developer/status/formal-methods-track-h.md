@@ -3,7 +3,7 @@
 # Formal Methods, Track H: Status
 
 **Unit ID:** `formal-methods-track-h` (phase, within the `formal-methods` epic)
-**Status:** Proposed. Not started
+**Status:** In progress. H1.1 authored and verified, awaiting human review
 **Last updated:** 2026-10-08
 **Plan:** [formal-methods-track-h.md](../plans/formal-methods-track-h.md)
 **Sketches:** [formal-methods-track-h.md](../sketches/formal-methods-track-h.md) (main),
@@ -47,7 +47,8 @@ reviewing the ADR; H2 onward should wait for ADR-A-FM4's acceptance.
 
 | Slice | State | Blocked on |
 |---|---|---|
-| H1 (static hygiene: prefix antichain, witness coverage, S-3/S-4, declaration gap, stable labels) | not started, fully detailed in the plan | nothing — can start immediately |
+| H1.1 (prefix antichain and overlap check) | **authored, verified by the agent, awaiting the human's gate.** [Validation Pack](../validation/FMH-H1-1.md) | the human's review |
+| H1.2 to H1.5 (witness coverage, S-3/S-4, declaration gap, stable labels) | not started, fully detailed in the plan | H1.1's gate, by the working agreement |
 | H2 (typed IR) | not started, outlined in the plan | H1 (informative, not a hard blocker) |
 | H3 (specification registry) | not started, outlined in the plan | H2 preferred first (smaller, more self-contained), not a hard blocker |
 | H4 (exhaustive cross-axis validation, BDD/SMT) | not started, outline only | H3 |
@@ -67,6 +68,8 @@ reviewing the ADR; H2 onward should wait for ADR-A-FM4's acceptance.
 | H-D3 | ADR-A79 addendum vs a fresh ADR for H2/H3's design | recommend an addendum; deferred to H2/H3 |
 | H-D4 | fix the composite-boundary soundness gap now (a refusal) or wait for H2's typed IR | recommend: refuse now, fix properly later |
 | H-D5 | feed track A's ledger once it exists, or keep an independent record permanently | recommend: feed track A once it starts |
+| H-D6 | H1.1 reads "antichain" per scope kind. Nested `dal:graphPrefix` values are a **violation** only when the scopes cover a common class (each graph-pattern scope is its own target, so disjoint classes cannot collide). Nested `dal:iriPrefix` values are a **warning**, because the resolver ranks by `dal:priority`. The plan says only "antichain", so this narrows it | human, confirm or widen at H1.1's gate |
+| H-D7 | H1's checks live in one new module, `persistence.hygiene`, behind one `hygiene` subcommand, and run under `check:persistence`. No new `mise` task until H1's closing slice | human, confirm at H1.1's gate |
 
 ## Log
 
@@ -76,3 +79,10 @@ reviewing the ADR; H2 onward should wait for ADR-A-FM4's acceptance.
   `ADR-A-FM4` drafted, Proposed, deciding this track's own home and scope, including the explicit
   exclusion of all relational/SQL-compilation work (the separate `sql-feedback.md` review). No
   code written yet; H1 is ready to start as the next action.
+- 2026-10-08: H1 split into H1.1 to H1.5 as one slice each, since the plan's five items together
+  exceed the slice-sizing rule. H1.1 authored: `persistence.hygiene.check_prefix_antichain`, the
+  `hygiene` subcommand and 13 test cases (44 with the per-example parameter). The existing suite is
+  at 778 passed before the slice. Adversarial probes run and recorded in the Validation Pack. No
+  finding against any shipped example. Working agreement for Track H changed by the human: the agent
+  completes each slice, commits and pushes it, and debriefs. The sign-off in `validation/LOG.md`
+  stays the human's.
