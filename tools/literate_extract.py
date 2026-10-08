@@ -15,7 +15,8 @@ generated, since only the closed datatypes are meant to track the README.
 Fence tags recognised:
 
 ====================  ================================================
-``turtle-spec``       concatenated into ``spec/<layer>.ttl``
+``turtle-spec``       concatenated into ``spec/<layer>.ttl``, or into the
+                      file its ``@output-file`` directive names
 ``turtle-vocab``      concatenated into ``vocab/<layer>-vocab.ttl``
 ``turtle-shapes``     written, in document order, to the shape files
                       named by the layer's extraction contract
@@ -25,6 +26,18 @@ Fence tags recognised:
 
 Each extracted ``.ttl``/``.thy`` gains the project's SPDX header as its first
 line (``#``-style for Turtle, ``(* ... *)``-style for Isabelle).
+
+A layer with more than one spec document (ADR-A120) sends a ``turtle-spec``
+block elsewhere with a directive as the block's first line, a path relative to
+the layer directory::
+
+    # @output-file "spec/behaviour-runtime.ttl"
+
+The directive is read only on the first line, and is not written out. Such a
+document gains the ``@prefix`` lines of ``spec/<layer>.ttl``'s blocks after its
+SPDX header, so its blocks state only its own ontology header and content. All
+of a layer's spec documents carry the same version (``owl:versionIRI ending
+/X.Y.Z``), or extraction fails.
 
 Usage::
 
@@ -56,6 +69,9 @@ FENCE_RE = re.compile(
     r"^```(?P<tag>turtle-spec|turtle-vocab|turtle-shapes|turtle-example|isabelle-spec)\s*$"
 )
 FENCE_END_RE = re.compile(r"^```\s*$")
+OUTPUT_FILE_RE = re.compile(r'^#\s*@output-file\s+"(?P<path>[^"]+)"\s*$')
+PREFIX_RE = re.compile(r"^@prefix\s.*$", re.MULTILINE)
+VERSION_RE = re.compile(r"owl:versionIRI\s+<[^>]*/(?P<version>\d+\.\d+\.\d+)>")
 
 
 @dataclass(frozen=True)
@@ -120,7 +136,12 @@ def plan(
     ``proofs_root``, since ``tools/proofs/`` sits outside ``ontology/``
     entirely (ADR-A-FM2).
     """
-    spec_bodies = [b.body for b in blocks if b.tag == "turtle-spec"]
+    default_spec = f"ontology/{layer}/spec/{layer}.ttl"
+    spec_docs: Dict[str, List[str]] = {}
+    for block in blocks:
+        if block.tag == "turtle-spec":
+            target, body = _spec_target(block, layer, default_spec)
+            spec_docs.setdefault(target, []).append(body)
     vocab_bodies = [b.body for b in blocks if b.tag == "turtle-vocab"]
     shape_blocks = [b for b in blocks if b.tag == "turtle-shapes"]
     isabelle_bodies = [b.body for b in blocks if b.tag == "isabelle-spec"]
@@ -139,8 +160,19 @@ def plan(
         )
 
     outputs: Dict[str, str] = {}
-    if spec_bodies:
-        outputs[f"ontology/{layer}/spec/{layer}.ttl"] = render(spec_bodies)
+    prefixes = PREFIX_RE.findall("\n".join(spec_docs.get(default_spec, [])))
+    for target, bodies in spec_docs.items():
+        if target != default_spec and prefixes:
+            bodies = ["\n".join(prefixes) + "\n"] + bodies
+        outputs[target] = render(bodies)
+    versions = {t: VERSION_RE.search(outputs[t]) for t in spec_docs}
+    found = {m.group("version") for m in versions.values() if m}
+    if len(spec_docs) > 1 and len(found) > 1:
+        raise ValueError(
+            f"{layer}'s spec documents carry different versions "
+            f"({', '.join(f'{t}: {m.group(1) if m else None}' for t, m in sorted(versions.items()))}); "
+            f"a layer's spec documents move in unison (ADR-A120)"
+        )
     if vocab_bodies:
         outputs[f"ontology/{layer}/vocab/{layer}-vocab.ttl"] = render(vocab_bodies)
     for block, target in zip(shape_blocks, shape_targets):
@@ -152,6 +184,21 @@ def plan(
             isabelle_bodies, header=SPDX_THY
         )
     return outputs
+
+
+def _spec_target(block: Block, layer: str, default: str) -> tuple[str, str]:
+    """The spec document a ``turtle-spec`` block goes to, and its body without the directive."""
+    first, _, rest = block.body.partition("\n")
+    match = OUTPUT_FILE_RE.match(first)
+    if match is None:
+        return default, block.body
+    path = match.group("path")
+    if Path(path).is_absolute() or ".." in Path(path).parts or not path.endswith(".ttl"):
+        raise ValueError(
+            f"turtle-spec block at line {block.start_line}: @output-file must name a .ttl "
+            f"file inside the layer directory, not {path!r}"
+        )
+    return f"ontology/{layer}/{path}", rest.lstrip("\n")
 
 
 def main(argv: Sequence[str] | None = None) -> int:

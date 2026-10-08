@@ -27,6 +27,10 @@ Follow every step for any change to `ontology/**/spec/`, `ontology/**/vocab/`, o
    - All `turtle-spec` blocks concatenate, in order, into `spec/<layer>.ttl`, and all `turtle-vocab`
      blocks into `vocab/<layer>-vocab.ttl`. The ontology header is itself a block, so a version bump
      is a README edit.
+   - A `turtle-spec` block whose **first** line is `# @output-file "spec/<file>.ttl"` goes to that
+     file instead, which gains `spec/<layer>.ttl`'s `@prefix` lines (ADR-A120). It states its own
+     ontology header. All of a layer's spec documents share one version, bumped together even when
+     only one changed. The extractor refuses them otherwise.
    - Add `--check` to compare without writing. Run it **before** relying on a README. If the layer
      already drifts, the README is not yet its source (technical debt TD-16). Compare the extracted
      and committed graphs (`rdflib.compare.graph_diff` over `to_isomorphic` graphs) before

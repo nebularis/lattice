@@ -78,6 +78,13 @@ for a formalised layer's closed datatype — are mechanically extracted by
 and (for formalised layers) `tools/proofs/<layer>/Kernel.thy`. Never hand-edit a generated file:
 edit the README's own fenced block and re-run the extractor.
 
+A layer with a second spec document, such as Behaviour's runtime document, writes it from the same
+README ([ADR-A120](../architecture/decisions/ADR-A120-literate-specs-with-several-documents.md)). A
+`turtle-spec` block whose first line is `# @output-file "spec/<file>.ttl"` goes to that file, which
+gains `spec/<layer>.ttl`'s `@prefix` lines. The directive counts only on the first line. Each such
+block states its own ontology header. All of a layer's spec documents carry one version and are
+bumped together. The extractor refuses them otherwise.
+
 ```bash
 # Check a layer's generated files still match its README (writes nothing, exits non-zero on drift)
 python tools/literate_extract.py ontology/surface/README.md --layer surface --root . \

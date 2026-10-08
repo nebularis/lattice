@@ -45,8 +45,8 @@ A model that only declares behaviour imports configuration and never meets a run
 - `turtle-vocab` blocks generate `vocab/behaviour-vocab.ttl`.
 - The `turtle-shapes` block generates `shapes/structural.ttl`. `shapes/constraints.ttl` and
   `shapes/rules.ttl` are authored as files.
-- `spec/behaviour-runtime.ttl` is authored as a file (§5.2): the extractor writes one spec
-  document per layer.
+- `spec/behaviour-runtime.ttl` is still authored as a file (§5.2). It moves into this README as
+  `turtle-spec` blocks opening with `# @output-file "spec/behaviour-runtime.ttl"` (ADR-A120).
 - `turtle-example` blocks are illustrative only.
 
 ```bash

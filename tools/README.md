@@ -28,7 +28,10 @@ environment and can be installed with `.[community]` when needed.
 
 Regenerates a layer's compiled Turtle from its README, which is the
 authoritative specification. Fenced blocks are extracted in document order:
-`turtle-spec` → `ontology/<layer>/spec/<layer>.ttl`, `turtle-vocab` → `ontology/<layer>/vocab/<layer>-vocab.ttl`,
+`turtle-spec` → `ontology/<layer>/spec/<layer>.ttl`, unless the block's first line is
+`# @output-file "spec/<file>.ttl"`, which sends it to that file in the layer, with
+`spec/<layer>.ttl`'s prefixes. A layer's spec documents share one version, or extraction fails
+(ADR-A120). `turtle-vocab` → `ontology/<layer>/vocab/<layer>-vocab.ttl`,
 `turtle-shapes` → the shape files named on the command line, in order.
 `turtle-example` blocks are never extracted. `isabelle-spec` → a layer's
 closed Isabelle datatype only, at `<proofs-root>/<layer>/Kernel.thy`
