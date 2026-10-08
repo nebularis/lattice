@@ -210,10 +210,13 @@ Claude Code users elsewhere install the skills with `/plugin marketplace add neb
 skills already load, or each appears twice.
 
 **Cloud sessions.** A Claude Code cloud environment prepares itself with
-[`tools/claude-cloud-setup.sh`](../../tools/claude-cloud-setup.sh): paste the two lines from its header
-into the environment's **Setup script** field. It installs Java 25 and Python 3.14 from GitHub-hosted
-builds, links the image's Node and Maven into mise, and runs `mise run bootstrap`, within the default
-**Trusted** network and always exiting 0, as a cloud setup script must. Erlang/Elixir and Playwright's
-browsers are left out. Its last line reports how long setup took, which must stay under about five
-minutes for the environment to be cached.
+[`tools/claude-cloud-setup.sh`](../../tools/claude-cloud-setup.sh). Paste the two lines from its header
+into the environment's **Setup script** field, and set its network access to **Custom**, with the
+default list of package managers included, plus `mise.jdx.dev` and `www.cl.cam.ac.uk`. It installs
+mise, Java 25 from Ubuntu's archive, Python 3.14 from the deadsnakes PPA and Isabelle2025-2, with its
+prebuilt HOL heap, from the Cambridge mirror. It links those and the image's Node and Maven into mise,
+and runs `mise run bootstrap`. GitHub serves a cloud session only its own repositories, so nothing is
+fetched from GitHub. The script always exits 0, as a cloud setup script must, and its last lines
+report how long setup took, which must stay under about five minutes for the environment to be
+cached.
 
