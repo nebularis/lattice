@@ -86,3 +86,10 @@ reviewing the ADR; H2 onward should wait for ADR-A-FM4's acceptance.
   finding against any shipped example. Working agreement for Track H changed by the human: the agent
   completes each slice, commits and pushes it, and debriefs. The sign-off in `validation/LOG.md`
   stays the human's.
+- 2026-10-08: the human reported an intermittent failure in
+  `test_identity_minting_m1.py::test_export_recipes_writes_each_recipe_and_refuses_a_tampered_one`.
+  It predates H1.1 and is unrelated to it. The test tampered with an arbitrary recipe node by
+  replacing `urn:` with `urx:`, and the `AdoptedIdentity` recipe contains no `urn:`, so one run in
+  seven the edit changed nothing and no error was raised (11 failures in 60 runs before the fix).
+  The test now chooses a node deterministically and asserts the edit took effect (0 in 60 after).
+  The assertion it protects is unchanged, so this does not weaken the test.
