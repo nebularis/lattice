@@ -18,9 +18,8 @@ Behaviour 0.10.0 (shapes 0.4.0) with nested states and history, the import guard
 check`. In tranche D, C6 to C7c are merged and tagged (Instrument 0.12.0, Party 0.8.0, Quantification
 0.7.0). C8 and C8b are merged and tagged (Instrument 0.14.0, Wording 0.7.0). C9 is briefed and splits into C9a to C9c. Its materiality question has its own sketch. From C5 on, the agent builds and verifies, and the human commits by hand.
 
-**Next action, for the human:** review and commit, on `main`, C9's answers, the "binder" rename
-(C9-Q10) and C9a's [Validation Pack](../validation/computable-contract-substrate-c9a.md), then create
-`ccs/c9a-amendments` from `main` for C9a's examples phase.
+**Next action, for the human:** review C9a's three examples, the ADR-A104 addendum (Proposed) and the
+handoff's deviations on `ccs/c9a-amendments`, then commit the examples phase.
 
 ## Slice board
 
@@ -142,3 +141,5 @@ check`. In tranche D, C6 to C7c are merged and tagged (Instrument 0.12.0, Party 
 - 2026-10-07: C9-Q2 gains choice 0, where the agreed time and the consents behind it live, after the human rejected deriving it from Behaviour's runtime records (Instrument imports only Behaviour's configuration, and intake of amendments is an application's design). Options: asserted on the amendment, assents as Instrument facts (leaning, shared with C9-Q4 and C9-Q5), or agreed amendments only. C9-Q4 and C9-Q5 reworded to read assents, not Behaviour records
 - 2026-10-07: C9-Q5 answered (b), formation as a regime. C9-Q2 gains a summary of the model and a picture of how assents serve formation and amendment alike, with a timeline. The operational time removed from C9-Q2's table, since it is not the agreed time and is not part of the model. The human noted the confusion as a failed design test (hard to reason about), so the summary leads the question
 - 2026-10-08: C9 answered: C9-Q2 choice 0 (b) assents as Instrument facts, choice 1 (a) with rule (iii) to be revisited at C16b, choice 2 (a), C9-Q4 (a), C9-Q6 (a), C9-Q7 (a), C9-Q8 (c) deferred to HQ-11, C9-Q9 (a) re-timing HQ-1, C9-Q10 (a). The human asked, as an explicit instruction, for insurance examples in C9: a subscription placement with insurers attaching and its inception rule, and reinsurance recoveries. "Binder" renamed "instantiator" on `main`: `tools/instrument_instantiator.py`, its tests (42 pass), the READMEs and the two ADR addenda. C9a's Validation Pack written (14 rows)
+- 2026-10-08: C9a examples phase on `ccs/c9a-amendments`: `facility-amendment.ttl` (the legal side of Wording's amendment, assents arriving out of order) and `licence-amendments.ttl` (formation by separate signatures, a guarantor released, ending by agreement) written. The facility conforms. The licence fails only on `ins:OnAcceptance`, which the model phase adds. C9a-Q1 raised: how each insurer in a subscription placement is bound from its own assent
+- 2026-10-08: C9a-Q1 withdrawn by the human, and the subscription placement replaced by an endorsement and mid-term adjustment. `property-endorsement.ttl` written and conforming. The ADR-A104 addendum "amendments, assents and taking effect" drafted (Proposed). C9a's examples phase complete, with its handoff in the Validation Pack

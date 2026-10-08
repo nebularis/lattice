@@ -1,0 +1,351 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Premise. A software licence between a Licensor and a Licensee, with the
+# Licensee's parent company guaranteeing the fee. The licence takes effect only
+# when all three have signed, each signing separately, and lapses if they have
+# not all signed by the Long-Stop Date. Later the Guarantor is released, and
+# later still the parties agree to end the licence on a fixed date.
+#
+# The form's clauses, and the clause the second amendment adds:
+#
+# | Clause | Text | Meaning |
+# |--------|------|---------|
+# | 1.1 | This Licence takes effect when every party has signed it, and lapses if they have not all signed it by the Long-Stop Date. | the formation regime |
+# | 3.1 | The Licensee shall pay the Licence Fee. | an obligation |
+# | 5.1 | If the Licensee fails to pay the Licence Fee, the Guarantor shall pay it. | an obligation arising on breach |
+# | 1.2 | This Licence ends on 30 June 2029. | added by amendment 2: an ending at a date |
+#
+# The formation regime, stated by clause 1.1 (C9-Q5 (b)):
+#
+#   conditional --(OnAcceptance: every party has assented to the version)--> in force     ins:begins the instrument
+#   conditional --(expiry at the Long-Stop Date)--> lapsed                                ins:ends the instrument
+#
+# Before the instrument enters "in force", nothing arises under it, so no
+# relation needs gating by that state.
+#
+# The licence's three versions:
+#
+# | Version | Parties | Made by | Assents, by valid date |
+# |---------|---------|---------|------------------------|
+# | v1 | Licensor, Licensee, Guarantor | formation | Licensee 1 Sep 2027, Licensor 3 Sep, Guarantor 8 Sep: in force from 8 Sep |
+# | v2 | Licensor, Licensee | amendment 1, releasing the Guarantor, effective 1 Apr 2028 | all three, since the Guarantor must agree to its release: agreed 20 Mar 2028 |
+# | v3 | Licensor, Licensee | amendment 2, ending by agreement, effective 1 Nov 2028 | Licensor and Licensee: agreed 25 Oct 2028 |
+#
+# A party leaving is an amendment, and so is ending by agreement (C9-Q6 (a)).
+# The second adds clause 1.2, whose regime ends the licence on its date, so the
+# ending is a regime's, as every ending is. The Guarantor's obligation under v1
+# is bound in v1 only. An occasion of it arisen before 1 April 2028 keeps its
+# parties (law I11).
+
+@prefix ins:     <https://www.nebularis.org/neuro-semantic/lattice/instrument#> .
+@prefix ins-voc: <https://www.nebularis.org/neuro-semantic/lattice/instrument/vocab#> .
+@prefix bhv:     <https://www.nebularis.org/neuro-semantic/lattice/behaviour#> .
+@prefix wrd:     <https://www.nebularis.org/neuro-semantic/lattice/wording#> .
+@prefix wrd-voc: <https://www.nebularis.org/neuro-semantic/lattice/wording/vocab#> .
+@prefix fnd:     <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix pty:     <https://www.nebularis.org/neuro-semantic/lattice/party#> .
+@prefix qnt:     <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
+@prefix voc:     <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
+@prefix prov:    <http://www.w3.org/ns/prov#> .
+@prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+@prefix tmpl:    <https://example.org/lattice/instrument/licence-amendments/form/> .
+@prefix ex:      <https://example.org/lattice/instrument/licence-amendments/> .
+
+# ==== The licence form: wording ===============================================
+
+ex:form a wrd:Wording ;
+    fnd:hasIdentity ex:form-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:directlyComprises ex:sec-1 , ex:sec-3 , ex:sec-5 .
+
+ex:sec-1 a wrd:Element ;
+    fnd:hasIdentity ex:sec-1-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Section ; wrd:objectId "1" ; wrd:rankKey "a0" ;
+    wrd:directlyComprises ex:cl-1-1 .
+ex:cl-1-1 a wrd:Text ;
+    fnd:hasIdentity ex:cl-1-1-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "1.1" ; wrd:rankKey "a0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "This Licence takes effect when every party has signed it, and lapses if they have not all signed it by the Long-Stop Date." ] .
+
+ex:sec-3 a wrd:Element ;
+    fnd:hasIdentity ex:sec-3-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Section ; wrd:objectId "3" ; wrd:rankKey "c0" ;
+    wrd:directlyComprises ex:cl-3-1 .
+ex:cl-3-1 a wrd:Text ;
+    fnd:hasIdentity ex:cl-3-1-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "3.1" ; wrd:rankKey "a0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "The Licensee shall pay the Licence Fee." ] .
+
+ex:sec-5 a wrd:Element ;
+    fnd:hasIdentity ex:sec-5-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Section ; wrd:objectId "5" ; wrd:rankKey "e0" ;
+    wrd:directlyComprises ex:cl-5-1 .
+ex:cl-5-1 a wrd:Text ;
+    fnd:hasIdentity ex:cl-5-1-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "5.1" ; wrd:rankKey "a0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "If the Licensee fails to pay the Licence Fee, the Guarantor shall pay it." ] .
+
+# ==== Roles, spaces and dates =================================================
+
+ex:Licensor a pty:Role ; rdfs:label "Licensor" .
+ex:Licensee a pty:Role ; rdfs:label "Licensee" .
+ex:Guarantor a pty:Role ; rdfs:label "Guarantor" .
+
+ex:time a qnt:ValueSpace ;
+    qnt:spaceKey "calendar-time" ; qnt:orderKind qnt:TotalOrder ; qnt:densityKind qnt:Dense ;
+    qnt:valueDatatype xsd:dateTime ; qnt:spaceHash "calendar-time-v1" .
+
+ex:licence-dates a voc:ConceptScheme ;
+    fnd:hasIdentity ex:licence-dates-identity ; fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Licence dates"@en .
+ex:LongStopDate a skos:Concept ; skos:inScheme ex:licence-dates ; skos:prefLabel "the Long-Stop Date"@en .
+ex:long-stop-date a qnt:ContextValue ; qnt:onSpace ex:time ; qnt:contextRole ex:LongStopDate .
+
+# ==== Stated meaning ==========================================================
+
+# Clause 1.1: the formation regime. No relation is gated by "in force":
+# nothing arises under the licence before it enters that state.
+tmpl:term-1-1 a ins:Term , ins:Template ; ins:expressedIn ex:cl-1-1 .
+tmpl:formation a ins:Regime , bhv:StateSpace , ins:Template ;
+    fnd:hasIdentity tmpl:formation-identity ;
+    ins:arisesUnder tmpl:term-1-1 ;
+    bhv:initialState tmpl:conditional .
+
+tmpl:conditional a bhv:State ;
+    bhv:inStateSpace tmpl:formation ; ins:stateKind ins-voc:Conditional .
+tmpl:in-force a bhv:State ;
+    bhv:inStateSpace tmpl:formation ; ins:stateKind ins-voc:InForce ;
+    ins:begins ins-voc:TheInstrument .
+tmpl:lapsed a bhv:State ;
+    bhv:inStateSpace tmpl:formation ; ins:stateKind ins-voc:Terminated ;
+    ins:ends ins-voc:TheInstrument .
+
+# No ins:by: the trigger reads every ins:party of the version.
+tmpl:on-signed a ins:OnAcceptance , bhv:TriggerDefinition ;
+    bhv:triggerKind bhv:DerivedTrigger .
+tmpl:on-long-stop a ins:OnExpiry , bhv:TriggerDefinition ;
+    bhv:triggerKind bhv:ScheduledTrigger ;
+    ins:at ex:long-stop-date .
+
+tmpl:take-effect a ins:RegimeTransition , bhv:TransitionDefinition ;
+    bhv:fromState tmpl:conditional ; bhv:toState tmpl:in-force ;
+    bhv:hasTrigger tmpl:on-signed ;
+    bhv:selectionPolicy bhv:SingleMatch ; bhv:activationPolicy bhv:ImmediateActivation .
+tmpl:lapse a ins:RegimeTransition , bhv:TransitionDefinition ;
+    bhv:fromState tmpl:conditional ; bhv:toState tmpl:lapsed ;
+    bhv:hasTrigger tmpl:on-long-stop ;
+    bhv:selectionPolicy bhv:SingleMatch ; bhv:activationPolicy bhv:ImmediateActivation .
+
+tmpl:term-3-1 a ins:Term , ins:Template ; ins:expressedIn ex:cl-3-1 .
+tmpl:pay-fee a ins:Obligation , ins:Template ;
+    ins:arisesUnder tmpl:term-3-1 ;
+    ins:obligor ex:Licensee ; ins:obligee ex:Licensor ;
+    ins:activity ins-voc:Pay .
+
+tmpl:term-5-1 a ins:Term , ins:Template ; ins:expressedIn ex:cl-5-1 .
+tmpl:guarantee a ins:Obligation , ins:Template ;
+    ins:arisesUnder tmpl:term-5-1 ;
+    ins:obligor ex:Guarantor ; ins:obligee ex:Licensor ;
+    ins:activity ins-voc:Pay ;
+    ins:arisesOnBreachOf tmpl:pay-fee .
+
+# ==== The instance: parties and the first version =============================
+
+ex:quillon a pty:Actor ; rdfs:label "Quillon Software Ltd" .
+ex:harbourline a pty:Actor ; rdfs:label "Harbourline Logistics Ltd" .
+ex:harbourline-group a pty:Actor ; rdfs:label "Harbourline Group plc" .
+
+ex:licensor-occ a pty:RoleOccupancy ; fnd:hasIdentity ex:licensor-occ-identity ;
+    pty:inRole ex:Licensor ; pty:occupiedBy ex:quillon .
+ex:licensee-occ a pty:RoleOccupancy ; fnd:hasIdentity ex:licensee-occ-identity ;
+    pty:inRole ex:Licensee ; pty:occupiedBy ex:harbourline .
+ex:guarantor-occ a pty:RoleOccupancy ; fnd:hasIdentity ex:guarantor-occ-identity ;
+    pty:inRole ex:Guarantor ; pty:occupiedBy ex:harbourline-group .
+
+ex:wording-v1 a wrd:AssembledWording ;
+    fnd:hasIdentity ex:wording-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:assembledFrom ex:form ;
+    wrd:includes ex:sec-1 , ex:cl-1-1 , ex:sec-3 , ex:cl-3-1 , ex:sec-5 , ex:cl-5-1 .
+
+ex:licence-v1 a ins:Instrument ;
+    fnd:hasIdentity ex:licence-identity ;
+    ins:expressedIn ex:wording-v1 ;
+    ins:party ex:licensor-occ , ex:licensee-occ , ex:guarantor-occ .
+
+# Each party signs separately (S90). The last signature, on 8 September,
+# completes formation, and the formation regime enters "in force".
+ex:sign-licensee a ins:Assent ; ins:assentBy ex:licensee-occ ; ins:assentTo ex:licence-v1 ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-09-01T12:00:00Z"^^xsd:dateTime ] ;
+    fnd:hasEvidence [ a fnd:Evidence ; fnd:recordedAt "2027-09-01T12:05:00Z"^^xsd:dateTime ] .
+ex:sign-licensor a ins:Assent ; ins:assentBy ex:licensor-occ ; ins:assentTo ex:licence-v1 ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-09-03T10:00:00Z"^^xsd:dateTime ] ;
+    fnd:hasEvidence [ a fnd:Evidence ; fnd:recordedAt "2027-09-03T10:01:00Z"^^xsd:dateTime ] .
+ex:sign-guarantor a ins:Assent ; ins:assentBy ex:guarantor-occ ; ins:assentTo ex:licence-v1 ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-09-08T16:00:00Z"^^xsd:dateTime ] ;
+    fnd:hasEvidence [ a fnd:Evidence ; fnd:recordedAt "2027-09-09T09:00:00Z"^^xsd:dateTime ] .
+
+# ==== Amendment 1: the Guarantor is released ==================================
+
+ex:release-letter a wrd:Wording ;
+    fnd:hasIdentity ex:release-letter-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Endorsement ;
+    wrd:directlyComprises ex:release-para-1 .
+ex:release-para-1 a wrd:Text ;
+    fnd:hasIdentity ex:release-para-1-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:objectId "1" ; wrd:rankKey "a0" ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "Clause 5 is deleted, and the Guarantor is released from 1 April 2028." ] .
+
+ex:delete-5 a wrd:Amendment ;
+    wrd:operation wrd-voc:Delete ;
+    wrd:amendsElement ex:sec-5 ;
+    prov:generated ex:wording-v2 ;             # the licence's wording without section 5 (W5)
+    wrd:expressedIn ex:release-para-1 .
+
+ex:wording-v2 a wrd:AssembledWording ;
+    fnd:hasIdentity ex:wording-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:assembledFrom ex:form ;
+    wrd:includes ex:sec-1 , ex:cl-1-1 , ex:sec-3 , ex:cl-3-1 .
+ex:wording-v1 fnd:supersededBy ex:wording-v2 .
+
+ex:licence-v2 a ins:Instrument ;
+    fnd:hasIdentity ex:licence-identity ;
+    ins:expressedIn ex:wording-v2 ;
+    ins:party ex:licensor-occ , ex:licensee-occ .
+
+ex:amendment-1 a ins:Amendment ;
+    ins:amends ex:licence-v1 ; ins:resultsIn ex:licence-v2 ;
+    ins:statedIn ex:release-letter ;
+    ins:affectsExisting false ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2028-04-01T00:00:00Z"^^xsd:dateTime ] ;
+    fnd:hasEvidence [ a fnd:Evidence ; fnd:recordedAt "2028-03-10T09:00:00Z"^^xsd:dateTime ] .
+
+# Every party to v1 assents, the Guarantor included.
+ex:release-licensor a ins:Assent ; ins:assentBy ex:licensor-occ ; ins:assentTo ex:licence-v2 ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2028-03-12T10:00:00Z"^^xsd:dateTime ] ;
+    fnd:hasEvidence [ a fnd:Evidence ; fnd:recordedAt "2028-03-12T10:00:00Z"^^xsd:dateTime ] .
+ex:release-licensee a ins:Assent ; ins:assentBy ex:licensee-occ ; ins:assentTo ex:licence-v2 ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2028-03-15T10:00:00Z"^^xsd:dateTime ] ;
+    fnd:hasEvidence [ a fnd:Evidence ; fnd:recordedAt "2028-03-15T10:00:00Z"^^xsd:dateTime ] .
+ex:release-guarantor a ins:Assent ; ins:assentBy ex:guarantor-occ ; ins:assentTo ex:licence-v2 ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2028-03-20T10:00:00Z"^^xsd:dateTime ] ;
+    fnd:hasEvidence [ a fnd:Evidence ; fnd:recordedAt "2028-03-20T10:00:00Z"^^xsd:dateTime ] .
+
+ex:licence-v1 fnd:supersededBy ex:licence-v2 .
+
+# ==== Amendment 2: ending by agreement ========================================
+
+ex:ending-letter a wrd:Wording ;
+    fnd:hasIdentity ex:ending-letter-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Endorsement ;
+    wrd:directlyComprises ex:ending-para-1 .
+ex:ending-para-1 a wrd:Text ;
+    fnd:hasIdentity ex:ending-para-1-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:objectId "1" ; wrd:rankKey "a0" ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "The following clause 1.2 is added." ] .
+
+# The licence's own clause, placed under the form's section 1.
+ex:cl-1-2 a wrd:Text ;
+    fnd:hasIdentity ex:cl-1-2-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "1.2" ; wrd:rankKey "b0" ;
+    wrd:placedUnder ex:sec-1 ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "This Licence ends on 30 June 2029." ] .
+
+ex:append-1-2 a wrd:Amendment ;
+    wrd:operation wrd-voc:Append ;
+    wrd:amendsElement ex:sec-1 ;
+    wrd:replacement ex:cl-1-2 ;
+    wrd:expressedIn ex:ending-para-1 .
+
+ex:wording-v3 a wrd:AssembledWording ;
+    fnd:hasIdentity ex:wording-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:assembledFrom ex:form ;
+    wrd:directlyComprises ex:cl-1-2 ;
+    wrd:includes ex:sec-1 , ex:cl-1-1 , ex:cl-1-2 , ex:sec-3 , ex:cl-3-1 .
+ex:wording-v2 fnd:supersededBy ex:wording-v3 .
+
+# Clause 1.2's stated meaning: a regime that ends the licence at its date.
+ex:end-date a qnt:Quantity ; qnt:onSpace ex:time ;
+    qnt:numericValue "2029-06-30T00:00:00Z"^^xsd:dateTime .
+
+ex:term-1-2 a ins:Term , ins:Template ; ins:expressedIn ex:cl-1-2 .
+ex:end-regime a ins:Regime , bhv:StateSpace , ins:Template ;
+    fnd:hasIdentity ex:end-regime-identity ;
+    ins:arisesUnder ex:term-1-2 ;
+    bhv:initialState ex:until-end .
+ex:until-end a bhv:State ;
+    bhv:inStateSpace ex:end-regime ; ins:stateKind ins-voc:InForce .
+ex:ended a bhv:State ;
+    bhv:inStateSpace ex:end-regime ; ins:stateKind ins-voc:Expired ;
+    ins:ends ins-voc:TheInstrument .
+ex:on-end-date a ins:OnExpiry , bhv:TriggerDefinition ;
+    bhv:triggerKind bhv:ScheduledTrigger ;
+    ins:at ex:end-date .
+ex:end a ins:RegimeTransition , bhv:TransitionDefinition ;
+    bhv:fromState ex:until-end ; bhv:toState ex:ended ;
+    bhv:hasTrigger ex:on-end-date ;
+    bhv:selectionPolicy bhv:SingleMatch ; bhv:activationPolicy bhv:ImmediateActivation .
+
+ex:licence-v3 a ins:Instrument ;
+    fnd:hasIdentity ex:licence-identity ;
+    ins:expressedIn ex:wording-v3 ;
+    ins:party ex:licensor-occ , ex:licensee-occ .
+
+ex:amendment-2 a ins:Amendment ;
+    ins:amends ex:licence-v2 ; ins:resultsIn ex:licence-v3 ;
+    ins:statedIn ex:ending-letter ;
+    ins:affectsExisting false ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2028-11-01T00:00:00Z"^^xsd:dateTime ] ;
+    fnd:hasEvidence [ a fnd:Evidence ; fnd:recordedAt "2028-10-20T09:00:00Z"^^xsd:dateTime ] .
+
+ex:ending-licensor a ins:Assent ; ins:assentBy ex:licensor-occ ; ins:assentTo ex:licence-v3 ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2028-10-22T10:00:00Z"^^xsd:dateTime ] ;
+    fnd:hasEvidence [ a fnd:Evidence ; fnd:recordedAt "2028-10-22T10:00:00Z"^^xsd:dateTime ] .
+ex:ending-licensee a ins:Assent ; ins:assentBy ex:licensee-occ ; ins:assentTo ex:licence-v3 ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2028-10-25T10:00:00Z"^^xsd:dateTime ] ;
+    fnd:hasEvidence [ a fnd:Evidence ; fnd:recordedAt "2028-10-25T10:00:00Z"^^xsd:dateTime ] .
+
+ex:licence-v2 fnd:supersededBy ex:licence-v3 .
+
+# ==== Generated bound meaning: the expected output, not stored (D4) ===========
+#
+# Each version binds the stated meaning of exactly the elements its wording
+# includes (law I17). A term holding only a regime binds nothing else, and the
+# regime is read as stated (law I13).
+
+ex:v1-term-1-1 a ins:Term ; ins:boundIn ex:licence-v1 ; ins:boundFrom tmpl:term-1-1 .
+ex:v1-term-3-1 a ins:Term ; ins:boundIn ex:licence-v1 ; ins:boundFrom tmpl:term-3-1 .
+ex:v1-pay-fee a ins:Obligation ;
+    ins:boundFrom tmpl:pay-fee ; ins:arisesUnder ex:v1-term-3-1 ;
+    ins:obligor ex:licensee-occ ; ins:obligee ex:licensor-occ ;
+    ins:activity ins-voc:Pay .
+ex:v1-term-5-1 a ins:Term ; ins:boundIn ex:licence-v1 ; ins:boundFrom tmpl:term-5-1 .
+ex:v1-guarantee a ins:Obligation ;
+    ins:boundFrom tmpl:guarantee ; ins:arisesUnder ex:v1-term-5-1 ;
+    ins:obligor ex:guarantor-occ ; ins:obligee ex:licensor-occ ;
+    ins:activity ins-voc:Pay ;
+    ins:arisesOnBreachOf ex:v1-pay-fee .
+
+ex:v2-term-1-1 a ins:Term ; ins:boundIn ex:licence-v2 ; ins:boundFrom tmpl:term-1-1 .
+ex:v2-term-3-1 a ins:Term ; ins:boundIn ex:licence-v2 ; ins:boundFrom tmpl:term-3-1 .
+ex:v2-pay-fee a ins:Obligation ;
+    ins:boundFrom tmpl:pay-fee ; ins:arisesUnder ex:v2-term-3-1 ;
+    ins:obligor ex:licensee-occ ; ins:obligee ex:licensor-occ ;
+    ins:activity ins-voc:Pay .
+
+ex:v3-term-1-1 a ins:Term ; ins:boundIn ex:licence-v3 ; ins:boundFrom tmpl:term-1-1 .
+ex:v3-term-1-2 a ins:Term ; ins:boundIn ex:licence-v3 ; ins:boundFrom ex:term-1-2 .
+ex:v3-term-3-1 a ins:Term ; ins:boundIn ex:licence-v3 ; ins:boundFrom tmpl:term-3-1 .
+ex:v3-pay-fee a ins:Obligation ;
+    ins:boundFrom tmpl:pay-fee ; ins:arisesUnder ex:v3-term-3-1 ;
+    ins:obligor ex:licensee-occ ; ins:obligee ex:licensor-occ ;
+    ins:activity ins-voc:Pay .

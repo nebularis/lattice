@@ -3023,18 +3023,28 @@ volume, inconsistency, and surprises for traversal or aggregation), then against
 **Insurance examples, by explicit instruction (the human, 2026-10-08).** This instruction asks that
 C9 model insurance specifics. In C9's examples, in this slice or a subsequent one, show:
 
-1. **Placement in a subscription market.** Several insurers each writing a line on one risk, each
-   attaching separately as it assents, and the inception rule for consent, whether the risk is fully
-   placed when cover is to incept
-2. **Reinsurance recoveries.** A reinsurer whose approval of the reinsured's claim settlement is a
-   condition precedent to its liability, so that whether a recovery is due turns on that consent
+1. **Endorsement and mid-term adjustment** (C9a), replacing a subscription placement by the
+   human's choice on 2026-10-08. A policy's cover extended mid-term by endorsement, effective before
+   the insurer agrees it, and whether the endorsement is in force on the date of a loss, as known
+   when the loss is notified and as known later
+2. **Reinsurance recoveries** (C9b). A reinsurer whose approval of the reinsured's claim settlement
+   is a condition precedent to its liability, so that whether a recovery is due turns on that
+   consent
 
 As examples always do, each invents its own model, and the README's narrative and diagrams walk
 through the industry's nuances. They stand beside the domain-neutral examples, not in place of them.
-Placement's separate attachment needs only C9a's assents and formation. Its inception rule and
-reinsurance recoveries need C9b's consent rules. A reinsurer's consent is to an act, the settlement,
-not to a version, so C9b's brief must say whether `ins:Assent` may name an exercise as well as a
-version.
+A reinsurer's consent is to an act, the settlement, not to a version, so C9b's brief must say whether
+`ins:Assent` may name an exercise as well as a version. A subscription placement waits for C9a-Q1's
+question to be taken up (below).
+
+**Raised in C9a's examples phase (2026-10-08):**
+
+- **C9a-Q1. Each insurer bound from its own assent.** Withdrawn by the human on 2026-10-08, who chose
+  not to resolve it in C9. The subscription placement example is replaced in C9a by an endorsement
+  and mid-term adjustment, showing whether an endorsement is in force on the date of a loss. A
+  placement, and how each subscribing insurer is bound from its own assent, waits for a later slice,
+  with HQ-7. The options recorded here, a formation regime run per party, one instrument per
+  insurer, or a new group version per attachment, stand as its starting point.
 
 **Decided by precedent, not asked:**
 
@@ -3053,8 +3063,8 @@ version.
 
 | Slice | Layer | Adds |
 |---|---|---|
-| C9a | Instrument 0.15.0 | `ins:Amendment` (`ins:amends`, `ins:resultsIn`, `ins:affectsExisting`, `ins:statedIn`), its effective time on Foundation's temporal scope and its recording on Foundation's evidence. `ins:Assent` (a party, a version, its valid time and evidence), and an amendment by agreement agreed when every party has assented. Formation as a regime: `ins:begins` and `ins:OnAcceptance`. Shapes for at most one agreed amendment per version, the overtaking warning (C9-Q2 rule (iii)), the I14 continuity warning, and I4. Examples include a placement in a subscription market with each insurer attaching on its own assent |
-| C9b | Instrument 0.16.0 | `ins:ConsentRule` (`ins:consentRule`, who must consent, a threshold of a weight per member), read over assents, `ins:byExerciseOf`, delegated consent, and the scoping of a regime per amendment. Materiality (C9-Q3): the materialised change report, condition words over it, the change grade contract with its two-concept baseline and chain rule, the Instrument evaluation profile with the fallback. `tools/`: the change report. Shapes. I10's data, evaluated by C12. Examples include the placement's inception rule and reinsurance recoveries |
+| C9a | Instrument 0.15.0 | `ins:Amendment` (`ins:amends`, `ins:resultsIn`, `ins:affectsExisting`, `ins:statedIn`), its effective time on Foundation's temporal scope and its recording on Foundation's evidence. `ins:Assent` (a party, a version, its valid time and evidence), and an amendment by agreement agreed when every party has assented. Formation as a regime: `ins:begins` and `ins:OnAcceptance`. Shapes for at most one agreed amendment per version, the overtaking warning (C9-Q2 rule (iii)), the I14 continuity warning, and I4. Examples include an endorsement and mid-term adjustment, showing whether it is in force on the date of a loss |
+| C9b | Instrument 0.16.0 | `ins:ConsentRule` (`ins:consentRule`, who must consent, a threshold of a weight per member), read over assents, `ins:byExerciseOf`, delegated consent, and the scoping of a regime per amendment. Materiality (C9-Q3): the materialised change report, condition words over it, the change grade contract with its two-concept baseline and chain rule, the Instrument evaluation profile with the fallback. `tools/`: the change report. Shapes. I10's data, evaluated by C12. Examples include reinsurance recoveries |
 | C9c | Wording 0.8.0, Instrument 0.17.0 | reliance on a wording, and W8 for references to a wording. `ins:incorporates`, generation of an encoded incorporated document's meaning within sections, I17 widened, cycle checks and `ins:prevailsOver` over an incorporated document. Static incorporation only, an ambulatory one of an encoded document reported (C9-Q8 (c)). `tools/`: the instantiator follows incorporation |
 
 ### Tranche E: evaluation

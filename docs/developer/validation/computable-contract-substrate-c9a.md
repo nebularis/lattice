@@ -33,7 +33,7 @@ assents.
 | C9a-07 | an amendment taking effect before the amendment that made the version it amends / shapes / a warning naming the overtaken window | L1 | − |
 | C9a-08 | an amendment that affects existing occasions and replaces a stated relation with no `prov:wasRevisionOf` / shapes / a warning (I14) | L1 | − |
 | C9a-09 | a formation regime / shapes / at most one state marked `ins:begins` per instrument, reported at two. An `ins:OnAcceptance` naming no parties reads every `ins:party` | L1 | + − |
-| C9a-10 | the subscription placement / which insurers are bound on each date / each insurer from its own assent and none before it, and the share placed on each date the sum of the outward shares (`pty:outwardShare`) of the insurers who have assented | L1 | + |
+| C9a-10 | the property policy's mid-term adjustment / which version decides each of three losses at the added unit, on its date, as known when notified and as known later / before the effective date v1, between the effective date and agreement v1 as then known and v2 as known after agreement, after agreement v2 | L1 | + |
 | C9a-11 | a party leaving by amendment / its occasions arisen before the amendment / keep their parties (law I11) | L1 | + |
 | C9a-12 | the licence ended by agreement / the amendment adding an expiry at the agreed date / the licence's regime enters its ending state on that date | L1 | + |
 | C9a-13 | a relation whose conditions bind two subject classes / shapes / reported (law I4) | L1 | − |
@@ -50,15 +50,16 @@ mise run build:ontology-catalog && mise run check:ontology-versioning && mise ru
 ## Artefacts to inspect
 
 - `ontology/instrument/examples/`: the facility's amendment (the legal side of Wording's
-  `facility-amendment.ttl`), the subscription placement, and the licence ended by agreement,
+  `facility-amendment.ttl`), the property policy's endorsement and mid-term adjustment, and the
+  licence formed by separate signatures, released guarantor and ending by agreement,
   written before the model
 - `ontology/instrument/README.md`: amendments, assents, formation as a regime, and the narrative and
-  diagrams walking through the placement's market practice
+  diagrams walking through the mid-term adjustment's market practice
 - `ontology/instrument/shapes/`: the agreed-chain, overtaking, continuity and I4 shapes
 
 ## Deliberate non-coverage
 
-- Consent rules, group powers, materiality, the placement's inception rule and reinsurance
+- Consent rules, group powers, materiality and reinsurance
   recoveries (C9b)
 - A regime run once per amendment, such as a proposal lapsing without consent (C9b)
 - Incorporation (C9c)
@@ -70,6 +71,42 @@ mise run build:ontology-catalog && mise run check:ontology-versioning && mise ru
 ## Handoff
 
 Written by the building machine when the work is ready for the human to commit.
+
+Phase 1, examples first (ADR-A-C2), 2026-10-08:
+
+- **Built:**
+  - `ontology/instrument/examples/facility-amendment.ttl` (new): the legal side of Wording's
+    `facility-amendment.ttl`, read with it and `facility-form.ttl`. An amendment by agreement, stated
+    in the letter and the confirmation, effective 1 January 2028, recorded 3 February, agreed when
+    the fourth party's assent arrives on 20 February, known from the 21st
+  - `ontology/instrument/examples/licence-amendments.ttl` (new): formation as a regime, the three
+    parties signing separately (S90), a guarantor released by amendment (C9-Q6), and ending by
+    agreement through an added clause whose regime ends the licence at a date
+  - `ontology/instrument/examples/property-endorsement.ttl` (new, the human's insurance example): a
+    mid-term adjustment adding a unit to a property policy by endorsement, effective before the
+    insurer agrees it, and three losses at the new unit before, inside and after that gap, with the
+    version deciding each as known when notified and as known later
+  - the ADR-A104 addendum "amendments, assents and taking effect" (Proposed)
+- **Run by the agent:** the three examples against the current model and every layer's shapes,
+  without inference. `facility-amendment.ttl` and `property-endorsement.ttl` report no violation.
+  The facility's six warnings are coverage warnings for Wording's facility clauses, which carry no
+  stated meaning. `licence-amendments.ttl` reports one violation, which the model phase removes:
+  its formation transition's trigger, `ins:OnAcceptance`, is not yet a legal trigger.
+- **Not run:** the tool tests, since the example conformance tests read every Instrument example
+  and fail on the licence until the model phase.
+- **Check first:** the deviations, then the endorsement example's header tables.
+- **Deviations from the plan:**
+  - **No subscription placement.** It needs each insurer bound from its own assent, which C9-Q5's
+    formation regime does not give. The human withdrew the question (C9a-Q1) and chose an
+    endorsement and mid-term adjustment instead, so row C9a-10 now tests that
+  - **A deletion generates the assembled wording without the deleted element.** Wording's rule
+    (W5, C5) needs `prov:generated` on a delete, which the licence's release now states
+  - **The insured's assent comes with its request.** In the mid-term adjustment, the signed request
+    is the insured's assent to the amended policy, so the amendment is agreed when the insurer
+    assents
+  - **Losses are the example's own records**, a place, a valid time and a recording time each, with
+    an example property, `ex:at`. Instrument models no loss. The header tables give the expected
+    version for each
 
 ## Results
 

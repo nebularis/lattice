@@ -1,0 +1,126 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Premise. Wording's facility-amendment.ttl records what an amendment letter
+# does to the text of Acme's facility. This example records its legal effect:
+# the facility's second version, agreed by every party, and the order in which
+# the facts about it arrived. Read it with Wording's facility-form.ttl and
+# facility-amendment.ttl.
+#
+# The amendment is proposed on 3 February 2028, applies from 1 January 2028,
+# and needs every party's agreement, since the facility gives no power to
+# amend it otherwise. The parties assent one by one:
+#
+# | Date (valid) | Recorded | Fact                                    |
+# |--------------|----------|-----------------------------------------|
+# | 3 Feb 2028   | 3 Feb    | the amendment proposed, v2 drafted      |
+# | 5 Feb 2028   | 5 Feb    | Acme (the borrower) assents to v2       |
+# | 10 Feb 2028  | 10 Feb   | Northgate Bank assents to v2            |
+# | 12 Feb 2028  | 14 Feb   | Tidewater Capital assents to v2         |
+# | 20 Feb 2028  | 21 Feb   | Larchmont Credit assents to v2: agreed  |
+# | 1 Jan 2028   |          | the amendment's effective date          |
+#
+# So the amendment is recorded before it is agreed, and takes effect before
+# both. It is agreed when the last assent it needs exists, on 20 February, and
+# as known from 21 February, when that assent was recorded. Nothing here states
+# an agreed time. It is read from the assents (C9-Q2 choice 0).
+#
+# The amendment is stated in two documents, the letter and a later
+# confirmation that restates one of the letter's changes. Its text changes are
+# the Wording amendments expressed in either (C9-Q2 choice 2): the letter's
+# three and the confirmation's one.
+#
+# What the example shows:
+#
+# | Construct                                         | Where                                  |
+# |---------------------------------------------------|----------------------------------------|
+# | an amendment from one instrument version to the next | ex:amendment-1, ins:amends, ins:resultsIn |
+# | where it is stated                                | ins:statedIn, the letter and the confirmation |
+# | when it applies, and when it was recorded         | fnd:hasTemporalScope, fnd:hasEvidence  |
+# | each party's assent to the new version            | ex:assent-*, ins:Assent                |
+# | no effect on occasions already arisen             | ins:affectsExisting false              |
+# | the agreed chain, for readers without a reasoner  | fnd:supersededBy                       |
+
+@prefix ins:     <https://www.nebularis.org/neuro-semantic/lattice/instrument#> .
+@prefix fnd:     <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix pty:     <https://www.nebularis.org/neuro-semantic/lattice/party#> .
+@prefix prov:    <http://www.w3.org/ns/prov#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+@prefix form:    <https://example.org/lattice/wording/facility-form/> .
+@prefix wex:     <https://example.org/lattice/wording/facility-amendment/> .
+@prefix ex:      <https://example.org/lattice/instrument/facility-amendment/> .
+
+# ==== The parties =============================================================
+
+ex:Borrower a pty:Role ; rdfs:label "Borrower" .
+ex:Lender a pty:Role ; rdfs:label "Lender" .
+
+ex:acme a pty:Actor , prov:Agent ; rdfs:label "Acme Components Ltd" .
+ex:northgate a pty:Actor , prov:Agent ; rdfs:label "Northgate Bank plc" .
+ex:tidewater a pty:Actor , prov:Agent ; rdfs:label "Tidewater Capital LLP" .
+ex:larchmont a pty:Actor , prov:Agent ; rdfs:label "Larchmont Credit SA" .
+ex:agent-desk a prov:Agent ; rdfs:label "Northgate Bank's agency desk, which keeps the facility's records" .
+
+ex:borrower-occ a pty:RoleOccupancy ; fnd:hasIdentity ex:borrower-occ-identity ;
+    pty:inRole ex:Borrower ; pty:occupiedBy ex:acme .
+ex:northgate-occ a pty:RoleOccupancy ; fnd:hasIdentity ex:northgate-occ-identity ;
+    pty:inRole ex:Lender ; pty:occupiedBy ex:northgate .
+ex:tidewater-occ a pty:RoleOccupancy ; fnd:hasIdentity ex:tidewater-occ-identity ;
+    pty:inRole ex:Lender ; pty:occupiedBy ex:tidewater .
+ex:larchmont-occ a pty:RoleOccupancy ; fnd:hasIdentity ex:larchmont-occ-identity ;
+    pty:inRole ex:Lender ; pty:occupiedBy ex:larchmont .
+
+# ==== Two versions of Acme's facility =========================================
+
+ex:acme-v1 a ins:Instrument ;
+    fnd:hasIdentity ex:acme-identity ;
+    ins:expressedIn form:acme-facility-v1 ;
+    ins:party ex:borrower-occ , ex:northgate-occ , ex:tidewater-occ , ex:larchmont-occ .
+
+ex:acme-v2 a ins:Instrument ;
+    fnd:hasIdentity ex:acme-identity ;
+    ins:expressedIn wex:acme-facility-v2 ;
+    ins:party ex:borrower-occ , ex:northgate-occ , ex:tidewater-occ , ex:larchmont-occ .
+
+# Asserted once the amendment is agreed: the agreed chain, for any reader.
+ex:acme-v1 fnd:supersededBy ex:acme-v2 .
+
+# ==== The amendment ===========================================================
+
+ex:amendment-1 a ins:Amendment ;
+    ins:amends ex:acme-v1 ;
+    ins:resultsIn ex:acme-v2 ;
+    ins:statedIn wex:letter , wex:confirmation ;
+    ins:affectsExisting false ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2028-01-01T00:00:00Z"^^xsd:dateTime ] ;
+    fnd:hasEvidence [ a fnd:Evidence ;
+        fnd:recordedAt "2028-02-03T10:00:00Z"^^xsd:dateTime ; fnd:assertedBy ex:agent-desk ] .
+
+# ==== The assents, in the order they became known =============================
+
+ex:assent-acme a ins:Assent ;
+    ins:assentBy ex:borrower-occ ; ins:assentTo ex:acme-v2 ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2028-02-05T15:00:00Z"^^xsd:dateTime ] ;
+    fnd:hasEvidence [ a fnd:Evidence ;
+        fnd:recordedAt "2028-02-05T15:30:00Z"^^xsd:dateTime ; fnd:assertedBy ex:agent-desk ] .
+
+ex:assent-northgate a ins:Assent ;
+    ins:assentBy ex:northgate-occ ; ins:assentTo ex:acme-v2 ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2028-02-10T09:00:00Z"^^xsd:dateTime ] ;
+    fnd:hasEvidence [ a fnd:Evidence ;
+        fnd:recordedAt "2028-02-10T09:00:00Z"^^xsd:dateTime ; fnd:assertedBy ex:agent-desk ] .
+
+# Signed on the 12th, and the signed page reached the agent on the 14th.
+ex:assent-tidewater a ins:Assent ;
+    ins:assentBy ex:tidewater-occ ; ins:assentTo ex:acme-v2 ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2028-02-12T17:00:00Z"^^xsd:dateTime ] ;
+    fnd:hasEvidence [ a fnd:Evidence ;
+        fnd:recordedAt "2028-02-14T11:00:00Z"^^xsd:dateTime ; fnd:assertedBy ex:agent-desk ] .
+
+# The last assent the amendment needs: it is agreed from 20 February, as
+# known from 21 February.
+ex:assent-larchmont a ins:Assent ;
+    ins:assentBy ex:larchmont-occ ; ins:assentTo ex:acme-v2 ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2028-02-20T16:00:00Z"^^xsd:dateTime ] ;
+    fnd:hasEvidence [ a fnd:Evidence ;
+        fnd:recordedAt "2028-02-21T08:30:00Z"^^xsd:dateTime ; fnd:assertedBy ex:agent-desk ] .

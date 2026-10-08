@@ -402,3 +402,41 @@ answer with its consequences. The examples are `facility-parameters.ttl`, `frame
    the form as well as on generated meaning.
 8. **Deferred.** Date words and HQ-4 (track C2). Computed amounts, rates in qualifiers and bases
    (contract amounts). Wording's text references by identity (CCS C8b). Evaluation (C12, C13).
+
+## Addendum (2026-10-08): amendments, assents and taking effect
+
+**Status:** Proposed 2026-10-08 (CCS slice C9a, C9-Q2, C9-Q5 and C9-Q6). Revises decision 11. The
+options and their consequences are in the CCS plan, C9 in detail.
+
+1. **An amendment** (`ins:Amendment ⊑ prov:Activity`) names the version it amends (`ins:amends ⊑
+   prov:used`), the version it produces (`ins:resultsIn ⊑ prov:generated`), and where it is stated
+   (`ins:statedIn`, the amending document or a part of it). Its text changes are the Wording
+   amendments expressed there. Its effective time is its `fnd:hasTemporalScope`, and when it was
+   recorded is its `fnd:hasEvidence`. The sketch's `ins:agreedOn`, `ins:operationalFrom`,
+   `ins:effectiveFrom` and `ins:textChanges` are not built. When systems may act on a change ahead
+   of its legal effect is an application's concern.
+2. **Assents** (`ins:Assent`) are Instrument facts. Each records one party's assent to one
+   instrument version, with its valid time and its evidence. An amendment by agreement is agreed
+   when every party to the amended version has assented, and its agreed time is the valid time of
+   the last assent. Nothing asserts it. Behaviour's runtime records are not read, since Instrument
+   imports only Behaviour's configuration and how an application gathers consent is its own
+   design. Consent rules for powers held by groups read the same facts (C9b).
+3. **The facts arrive in any order.** An amendment exists from its proposal, and may be recorded
+   before it is agreed and take effect before both. A version's governance state concerns its
+   text's review, not its legal effect. `fnd:supersededBy` from one version to the next is asserted
+   once the amendment is agreed.
+4. **One agreed chain.** A version has at most one agreed amendment. An amendment taking effect
+   before the amendment that made the version it amends is reported, and the version for the
+   overtaken window is derived when needed rather than authored. Deriving it is CCS C16b's, which
+   revisits this rule.
+5. **Taking effect** (C9-Q5). A regime stated by a clause, or implied by law where none is written,
+   holds an instrument whose effect waits on conditions. `ins:begins`, the counterpart of
+   `ins:ends`, names what entering a state brings into effect. Before that, nothing arises under
+   it. The legal trigger `ins:OnAcceptance` fires when every named party (`ins:by`), or every
+   `ins:party`, has assented to the version.
+6. **A party leaving and ending by agreement are amendments** (C9-Q6). The leaving party's occasions
+   already arisen keep their parties (law I11). Ending by agreement adds an ending at the agreed date,
+   so every ending stays a regime's (the 2026-10-05 addendum, item 4).
+7. **Deferred.** Consent rules, materiality and per-amendment regimes (C9b). Incorporation (C9c). A
+   subscription placement, each insurer bound from its own assent (C9a-Q1, with HQ-7). Assents with
+   a share or a condition.

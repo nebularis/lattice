@@ -326,7 +326,7 @@ The package should follow LATTICE's literate-spec convention. Its `README.md` is
 @prefix cap: <https://www.nebularis.org/neuro-semantic/lattice/applied/capacity#> .
 ```
 
-The namespace must not use `fbo:`, `ctr:`, `apex:`, `MERIDIAN:`, or any employer-owned namespace.
+The namespace must not use `fbo:`, `ctr:`, `MERIDIAN:`, or any employer-owned namespace.
 
 ## Imports
 
