@@ -4,11 +4,11 @@
 
 **Unit ID:** `xslt-sidecar` (XS)
 **Unit type:** multi-slice unit, human validation gate per slice
-**Status:** Decisions XS-D1 to XS-D7 proposed 2026-10-02, none recorded. ADR-A115 Proposed. No
+**Status:** Decisions XS-D1 to XS-D7 proposed 2026-10-02, none recorded. ADR-A119 Proposed. No
 slice may start
 **Sketch:** [xslt-sidecar.md](../sketches/xslt-sidecar.md) (the design, cited below as "sketch §n")
 **Status record:** [xslt-sidecar.md](../status/xslt-sidecar.md)
-**ADR:** [A-115](../../architecture/decisions/ADR-A115-xslt-transformation-sidecar.md), Proposed
+**ADR:** [A-119](../../architecture/decisions/ADR-A119-xslt-transformation-sidecar.md), Proposed
 **Depends on:** nothing merged. Builds on
 [xml-egress-and-transformation-kits.md](../sketches/xml-egress-and-transformation-kits.md) (cited
 below as "egress sketch §n") as design input, not as a slice dependency
@@ -275,7 +275,7 @@ As the word authoring POC's own WA11/WA19: root `README.md` gains the new paths.
 entry updated with slice states and links to the Validation Packs. The status record set to
 "awaiting human validation" with actual token use per slice. `mise run check:java`,
 `check:mork-compilers` (or whichever task now covers the factored module), `check:ontology-catalog`,
-`topology:links` run and recorded. Prose check of every changed Markdown file. ADR-A115 is left
+`topology:links` run and recorded. Prose check of every changed Markdown file. ADR-A119 is left
 Proposed: moving it to Accepted is the human's decision, not a slice output.
 
 **Commit:** `[wap-xs] XS6: documentation and close-out`.
@@ -320,6 +320,6 @@ Risks XS-R1 to XS-R6 are recorded in
 ## 9. Handoff
 
 After XS6 the agent's last message lists, in order: the commits made (`git log --oneline
-<first>^..HEAD`), the Validation Packs, any blocker or deviation, and a note that ADR-A115 remains
+<first>^..HEAD`), the Validation Packs, any blocker or deviation, and a note that ADR-A119 remains
 Proposed pending the human's own review, not advanced by the agent. No ontology document changes in
 this unit, so no release tag is due.

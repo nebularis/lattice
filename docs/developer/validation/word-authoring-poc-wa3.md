@@ -23,7 +23,7 @@ match wins, so the author is offered the construct a lawyer would recognise.
 
 Template findings and conformance are advisory throughout: every finding is a `warning` or an
 `info`, never a `violation`. A document that departs from its template is still a document, and
-ADR-A114's POC boundary means none of this is a platform contract. Conformance says nothing about
+ADR-A118's POC boundary means none of this is a platform contract. Conformance says nothing about
 sections the template does not name, because `TemplateFindings` has already said the section is
 unknown and repeating it would make the same defect produce two findings.
 

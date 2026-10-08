@@ -1,0 +1,314 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Premise. A supply agreement under English law classifies three of its
+# terms: delivery on time is a condition, conformity of the goods a warranty,
+# and technical support an innominate term. A classification is something a
+# reader uses. It decides nothing: what a breach of each term permits is
+# written out as relations arising on that breach (I12). The agreement also
+# declares the parties' status, which creates no relation (S61).
+#
+# The agreement's clauses:
+#
+# | Clause | Text | Meaning |
+# |--------|------|---------|
+# | 2.1    | The Seller is an independent contractor, and nothing in this Agreement creates a partnership. | a status declaration: a term with no relation |
+# | 4.1    | The Seller shall deliver the goods by the Delivery Date. This is a condition. | an obligation, classified condition |
+# | 5.1    | The Seller shall ensure the goods conform to the Specification. This is a warranty. | a continuing obligation, classified warranty |
+# | 6.1    | The Seller shall provide technical support for the goods. | an obligation, classified innominate |
+# | 12.1   | If the Seller breaches clause 4.1, the Buyer may terminate this Agreement and claim damages. | a condition's effect |
+# | 12.2   | If the Seller breaches clause 5.1, the Buyer may claim damages, but may not terminate. | a warranty's effect |
+# | 12.3   | If the Seller breaches clause 6.1, the Buyer may claim damages, and may terminate if the breach deprives it of substantially the whole benefit of this Agreement. | an innominate term's effect |
+#
+# What the example shows:
+#
+# | Construct                                       | Where                                         |
+# |-------------------------------------------------|-----------------------------------------------|
+# | a classification scheme the example binds (C7c-Q6) | ex:term-classes, ex:term-classes-binding    |
+# | a classification on a stated term, for reading  | tmpl:term-4-1, tmpl:term-5-1, tmpl:term-6-1   |
+# | a classification's effect, stated as relations  | tmpl:terminate-on-late-delivery and the others under 12.1 to 12.3 |
+# | a status declaration, with no relation (S61)    | tmpl:term-2-1                                 |
+#
+# "Condition" collides twice: with elg:Condition, a contingency a relation
+# reads, and with InsurML's component type Condition, a heading. Here it is a
+# class of term, from the example's scheme. The Delivery Date is a date word,
+# which C8 binds, so 4.1 states no due range here. Nothing here evaluates.
+
+@prefix ins:     <https://www.nebularis.org/neuro-semantic/lattice/instrument#> .
+@prefix ins-voc: <https://www.nebularis.org/neuro-semantic/lattice/instrument/vocab#> .
+@prefix wrd:     <https://www.nebularis.org/neuro-semantic/lattice/wording#> .
+@prefix wrd-voc: <https://www.nebularis.org/neuro-semantic/lattice/wording/vocab#> .
+@prefix fnd:     <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix pty:     <https://www.nebularis.org/neuro-semantic/lattice/party#> .
+@prefix elg:     <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
+@prefix voc:     <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
+@prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+@prefix tmpl:    <https://example.org/lattice/instrument/supply-classification/form/> .
+@prefix ex:      <https://example.org/lattice/instrument/supply-classification/> .
+
+# ==== The seller's form: wording ==============================================
+
+ex:form a wrd:Wording ;
+    fnd:hasIdentity ex:form-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:directlyComprises ex:sec-2 , ex:sec-4 , ex:sec-5 , ex:sec-6 , ex:sec-12 .
+
+ex:sec-2 a wrd:Element ;
+    fnd:hasIdentity ex:sec-2-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Section ; wrd:objectId "2" ; wrd:rankKey "b0" ;
+    wrd:directlyComprises ex:cl-2-1 .
+ex:cl-2-1 a wrd:Text ;
+    fnd:hasIdentity ex:cl-2-1-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "2.1" ; wrd:rankKey "a0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "The Seller is an independent contractor, and nothing in this Agreement creates a partnership." ] .
+
+ex:sec-4 a wrd:Element ;
+    fnd:hasIdentity ex:sec-4-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Section ; wrd:objectId "4" ; wrd:rankKey "d0" ;
+    wrd:directlyComprises ex:cl-4-1 .
+ex:cl-4-1 a wrd:Text ;
+    fnd:hasIdentity ex:cl-4-1-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "4.1" ; wrd:rankKey "a0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "The Seller shall deliver the goods by the Delivery Date. This is a condition." ] .
+
+ex:sec-5 a wrd:Element ;
+    fnd:hasIdentity ex:sec-5-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Section ; wrd:objectId "5" ; wrd:rankKey "e0" ;
+    wrd:directlyComprises ex:cl-5-1 .
+ex:cl-5-1 a wrd:Text ;
+    fnd:hasIdentity ex:cl-5-1-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "5.1" ; wrd:rankKey "a0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "The Seller shall ensure the goods conform to the Specification. This is a warranty." ] .
+
+ex:sec-6 a wrd:Element ;
+    fnd:hasIdentity ex:sec-6-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Section ; wrd:objectId "6" ; wrd:rankKey "f0" ;
+    wrd:directlyComprises ex:cl-6-1 .
+ex:cl-6-1 a wrd:Text ;
+    fnd:hasIdentity ex:cl-6-1-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "6.1" ; wrd:rankKey "a0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "The Seller shall provide technical support for the goods." ] .
+
+ex:sec-12 a wrd:Element ;
+    fnd:hasIdentity ex:sec-12-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Section ; wrd:objectId "12" ; wrd:rankKey "l0" ;
+    wrd:directlyComprises ex:cl-12-1 , ex:cl-12-2 , ex:cl-12-3 .
+ex:cl-12-1 a wrd:Text ;
+    fnd:hasIdentity ex:cl-12-1-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "12.1" ; wrd:rankKey "a0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "If the Seller breaches clause 4.1, the Buyer may terminate this Agreement and claim damages." ] .
+ex:cl-12-2 a wrd:Text ;
+    fnd:hasIdentity ex:cl-12-2-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "12.2" ; wrd:rankKey "b0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "If the Seller breaches clause 5.1, the Buyer may claim damages, but may not terminate." ] .
+ex:cl-12-3 a wrd:Text ;
+    fnd:hasIdentity ex:cl-12-3-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "12.3" ; wrd:rankKey "c0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "If the Seller breaches clause 6.1, the Buyer may claim damages, and may terminate if the breach deprives it of substantially the whole benefit of this Agreement." ] .
+
+# ==== The example's term classes ==============================================
+#
+# Instrument has no baseline of term classes (C7c-Q6): they are a legal
+# system's. This deployment binds English law's three to Instrument's term
+# classification contract.
+
+ex:term-classes a voc:ConceptScheme ;
+    fnd:hasIdentity ex:term-classes-identity ; fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "English law term classes"@en .
+ex:condition a skos:Concept ; skos:inScheme ex:term-classes ;
+    skos:prefLabel "condition"@en ;
+    skos:definition "A term any breach of which entitles the other party to terminate."@en .
+ex:warranty a skos:Concept ; skos:inScheme ex:term-classes ;
+    skos:prefLabel "warranty"@en ;
+    skos:definition "A term whose breach entitles the other party to damages only."@en .
+ex:innominate a skos:Concept ; skos:inScheme ex:term-classes ;
+    skos:prefLabel "innominate term"@en ;
+    skos:definition "A term whose breach entitles the other party to terminate only if the breach deprives it of substantially the whole benefit."@en .
+ex:term-classes-binding a voc:SchemeBinding ;
+    voc:forContract ins-voc:TermClassificationContract ;
+    voc:bindsScheme ex:term-classes ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-01-01T00:00:00Z"^^xsd:dateTime ] .
+
+# ==== Roles and conditions ====================================================
+
+ex:Seller a pty:Role ; rdfs:label "Seller" .
+ex:Buyer a pty:Role ; rdfs:label "Buyer" .
+
+# Placeholders: conditions stated, not yet evaluable (C13).
+ex:goods-conform a elg:Condition ;
+    elg:conditionKey "goods-conform-to-specification" ;
+    elg:matchStrategy elg:ExactMatch ; elg:compatibilityOperation elg:AllRequired ;
+    elg:wildcardSemantics elg:NoWildcard ;
+    elg:requiredConcept ex:conforming .
+ex:conforming a skos:Concept ; rdfs:label "the goods conform to the Specification" .
+
+ex:substantial-deprivation a elg:Condition ;
+    elg:conditionKey "breach-deprives-buyer-of-substantially-the-whole-benefit" ;
+    elg:matchStrategy elg:ExactMatch ; elg:compatibilityOperation elg:AllRequired ;
+    elg:wildcardSemantics elg:NoWildcard ;
+    elg:requiredConcept ex:deprived .
+ex:deprived a skos:Concept ; rdfs:label "the breach deprives the Buyer of substantially the whole benefit of the Agreement" .
+
+# ==== Stated meaning: classified terms ========================================
+#
+# A classification is on the stated term, and a bound term reads it through
+# ins:boundFrom, as it reads survival (C7b).
+
+# A status declaration: a term with no relation. What follows from it, here
+# that neither party can bind the other as a partner, is the law's (S61).
+tmpl:term-2-1 a ins:Term , ins:Template ; ins:expressedIn ex:cl-2-1 .
+
+tmpl:term-4-1 a ins:Term , ins:Template ; ins:expressedIn ex:cl-4-1 ;
+    ins:classification ex:condition .
+tmpl:deliver a ins:Obligation , ins:Template ;
+    ins:arisesUnder tmpl:term-4-1 ;
+    ins:obligor ex:Seller ; ins:obligee ex:Buyer ;
+    ins:activity ins-voc:Deliver .
+
+tmpl:term-5-1 a ins:Term , ins:Template ; ins:expressedIn ex:cl-5-1 ;
+    ins:classification ex:warranty .
+tmpl:conform a ins:ContinuingObligation , ins:Template ;
+    ins:arisesUnder tmpl:term-5-1 ;
+    ins:obligor ex:Seller ; ins:obligee ex:Buyer ;
+    ins:maintains ex:goods-conform .
+
+tmpl:term-6-1 a ins:Term , ins:Template ; ins:expressedIn ex:cl-6-1 ;
+    ins:classification ex:innominate .
+tmpl:support a ins:Obligation , ins:Template ;
+    ins:arisesUnder tmpl:term-6-1 ;
+    ins:obligor ex:Seller ; ins:obligee ex:Buyer ;
+    ins:activity ins-voc:ProvideService .
+
+# ==== Stated meaning: what each breach permits ================================
+#
+# The classes' effects, written as relations arising on breach. An evaluator
+# reads these, never the classification.
+
+tmpl:term-12-1 a ins:Term , ins:Template ; ins:expressedIn ex:cl-12-1 .
+tmpl:terminate-on-late-delivery a ins:Power , ins:Template ;
+    ins:arisesUnder tmpl:term-12-1 ;
+    ins:holder ex:Buyer ; ins:counterparty ex:Seller ;
+    ins:activity ins-voc:Terminate ;
+    ins:arisesOnBreachOf tmpl:deliver .
+tmpl:damages-late-delivery a ins:Obligation , ins:Template ;
+    ins:arisesUnder tmpl:term-12-1 ;
+    ins:obligor ex:Seller ; ins:obligee ex:Buyer ;
+    ins:activity ins-voc:Pay ;
+    ins:arisesOnBreachOf tmpl:deliver .
+
+# A warranty's breach gives damages only: there is no power to terminate,
+# and "may not terminate" adds no relation.
+tmpl:term-12-2 a ins:Term , ins:Template ; ins:expressedIn ex:cl-12-2 .
+tmpl:damages-non-conformity a ins:Obligation , ins:Template ;
+    ins:arisesUnder tmpl:term-12-2 ;
+    ins:obligor ex:Seller ; ins:obligee ex:Buyer ;
+    ins:activity ins-voc:Pay ;
+    ins:arisesOnBreachOf tmpl:conform .
+
+tmpl:term-12-3 a ins:Term , ins:Template ; ins:expressedIn ex:cl-12-3 .
+tmpl:damages-support a ins:Obligation , ins:Template ;
+    ins:arisesUnder tmpl:term-12-3 ;
+    ins:obligor ex:Seller ; ins:obligee ex:Buyer ;
+    ins:activity ins-voc:Pay ;
+    ins:arisesOnBreachOf tmpl:support .
+tmpl:terminate-on-serious-support-failure a ins:Power , ins:Template ;
+    ins:arisesUnder tmpl:term-12-3 ;
+    ins:holder ex:Buyer ; ins:counterparty ex:Seller ;
+    ins:activity ins-voc:Terminate ;
+    ins:arisesOnBreachOf tmpl:support ;
+    ins:scope ex:substantial-deprivation .            # only where the breach is serious
+
+# ==== The instance: what the agreement stores (D1) ============================
+
+ex:harrow-wording-v1 a wrd:AssembledWording ;
+    fnd:hasIdentity ex:harrow-wording-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:assembledFrom ex:form ;
+    wrd:includes ex:sec-2 , ex:cl-2-1 , ex:sec-4 , ex:cl-4-1 , ex:sec-5 , ex:cl-5-1 ,
+                 ex:sec-6 , ex:cl-6-1 , ex:sec-12 , ex:cl-12-1 , ex:cl-12-2 , ex:cl-12-3 .
+
+ex:harrow-v1 a ins:Instrument ;
+    fnd:hasIdentity ex:harrow-identity ;
+    ins:expressedIn ex:harrow-wording-v1 ;
+    ins:party ex:seller-occ , ex:buyer-occ .
+
+ex:kestrel a pty:Actor ; rdfs:label "Kestrel Packaging Ltd" .
+ex:harrow a pty:Actor ; rdfs:label "Harrow Foods Ltd" .
+
+ex:seller-occ a pty:RoleOccupancy ;
+    fnd:hasIdentity ex:seller-occ-identity ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-02-15T00:00:00Z"^^xsd:dateTime ] ;
+    pty:inRole ex:Seller ; pty:occupiedBy ex:kestrel .
+ex:buyer-occ a pty:RoleOccupancy ;
+    fnd:hasIdentity ex:buyer-occ-identity ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-02-15T00:00:00Z"^^xsd:dateTime ] ;
+    pty:inRole ex:Buyer ; pty:occupiedBy ex:harrow .
+
+# ==== Generated bound meaning: the expected output, not stored (D4) ===========
+#
+# One section, the whole (D7), so no bound term records ins:boundWithin.
+
+ex:term-2-1 a ins:Term ; ins:boundIn ex:harrow-v1 ; ins:boundFrom tmpl:term-2-1 .
+
+ex:term-4-1 a ins:Term ; ins:boundIn ex:harrow-v1 ; ins:boundFrom tmpl:term-4-1 .
+ex:deliver a ins:Obligation ;
+    ins:boundFrom tmpl:deliver ; ins:arisesUnder ex:term-4-1 ;
+    ins:obligor ex:seller-occ ; ins:obligee ex:buyer-occ ;
+    ins:activity ins-voc:Deliver .
+
+ex:term-5-1 a ins:Term ; ins:boundIn ex:harrow-v1 ; ins:boundFrom tmpl:term-5-1 .
+ex:conform a ins:ContinuingObligation ;
+    ins:boundFrom tmpl:conform ; ins:arisesUnder ex:term-5-1 ;
+    ins:obligor ex:seller-occ ; ins:obligee ex:buyer-occ ;
+    ins:maintains ex:goods-conform .
+
+ex:term-6-1 a ins:Term ; ins:boundIn ex:harrow-v1 ; ins:boundFrom tmpl:term-6-1 .
+ex:support a ins:Obligation ;
+    ins:boundFrom tmpl:support ; ins:arisesUnder ex:term-6-1 ;
+    ins:obligor ex:seller-occ ; ins:obligee ex:buyer-occ ;
+    ins:activity ins-voc:ProvideService .
+
+ex:term-12-1 a ins:Term ; ins:boundIn ex:harrow-v1 ; ins:boundFrom tmpl:term-12-1 .
+ex:terminate-on-late-delivery a ins:Power ;
+    ins:boundFrom tmpl:terminate-on-late-delivery ; ins:arisesUnder ex:term-12-1 ;
+    ins:holder ex:buyer-occ ; ins:counterparty ex:seller-occ ;
+    ins:activity ins-voc:Terminate ;
+    ins:arisesOnBreachOf ex:deliver .
+ex:damages-late-delivery a ins:Obligation ;
+    ins:boundFrom tmpl:damages-late-delivery ; ins:arisesUnder ex:term-12-1 ;
+    ins:obligor ex:seller-occ ; ins:obligee ex:buyer-occ ;
+    ins:activity ins-voc:Pay ;
+    ins:arisesOnBreachOf ex:deliver .
+
+ex:term-12-2 a ins:Term ; ins:boundIn ex:harrow-v1 ; ins:boundFrom tmpl:term-12-2 .
+ex:damages-non-conformity a ins:Obligation ;
+    ins:boundFrom tmpl:damages-non-conformity ; ins:arisesUnder ex:term-12-2 ;
+    ins:obligor ex:seller-occ ; ins:obligee ex:buyer-occ ;
+    ins:activity ins-voc:Pay ;
+    ins:arisesOnBreachOf ex:conform .
+
+ex:term-12-3 a ins:Term ; ins:boundIn ex:harrow-v1 ; ins:boundFrom tmpl:term-12-3 .
+ex:damages-support a ins:Obligation ;
+    ins:boundFrom tmpl:damages-support ; ins:arisesUnder ex:term-12-3 ;
+    ins:obligor ex:seller-occ ; ins:obligee ex:buyer-occ ;
+    ins:activity ins-voc:Pay ;
+    ins:arisesOnBreachOf ex:support .
+ex:terminate-on-serious-support-failure a ins:Power ;
+    ins:boundFrom tmpl:terminate-on-serious-support-failure ; ins:arisesUnder ex:term-12-3 ;
+    ins:holder ex:buyer-occ ; ins:counterparty ex:seller-occ ;
+    ins:activity ins-voc:Terminate ;
+    ins:arisesOnBreachOf ex:support ;
+    ins:scope ex:substantial-deprivation .

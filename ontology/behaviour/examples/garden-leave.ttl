@@ -1,0 +1,420 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Premise. Two things that often happen together are not, on that account, one
+# inside the other. If either can start, or continue, without the other, they
+# are separate state machines on the same subject, and any dependency between
+# them is stated where it lies: as a guard on a transition, or as a trigger.
+#
+# An employment has a termination regime (in force, notice, terminated) and an
+# attendance regime (working, garden leave). Garden leave may start with no
+# notice given, during an investigation for example. Notice may be served
+# while the employee is already on garden leave. So garden leave is not nested
+# in notice (nested states sketch §3.1, §9.1).
+#
+# Two employees, two contracts:
+#
+# - Ada's contract lets the employer place her on garden leave at any time
+# - Ben's contract allows garden leave only during notice, and ends it if
+#   notice is withdrawn: a guard requiring the notice state, and a transition
+#   in the attendance regime on the same stimulus as the withdrawal
+#
+# | Date       | Ada                                                       | Ben                                                                      |
+# |------------|-----------------------------------------------------------|--------------------------------------------------------------------------|
+# | 2027-01-04 | in force, working (evidence)                              | in force, working (evidence)                                             |
+# | 2027-01-20 |                                                           | garden leave attempted before notice: refused by the guard               |
+# | 2027-02-01 | placed on garden leave, no notice given                   | notice served                                                            |
+# | 2027-02-03 |                                                           | placed on garden leave: the guard's notice state holds                   |
+# | 2027-02-15 | notice served while on garden leave                       |                                                                          |
+# | 2027-03-01 | notice re-served: the period starts again                 | notice withdrawn by agreement: one stimulus, a transition in each regime |
+# | 2027-06-01 | notice expires: terminated                                |                                                                          |
+#
+# Relations gated on these states, in an instrument: the duty to work applies
+# in ex:working, an exclusion of it and a prohibition on working for a
+# competitor apply in ex:garden-leave, and salary applies in ex:in-force and
+# ex:notice. Once the employment ends no relation applies in any of its
+# regimes' states, so Ada's attendance regime is simply left where it was.
+
+@prefix bhv:  <https://www.nebularis.org/neuro-semantic/lattice/behaviour#> .
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix pty:  <https://www.nebularis.org/neuro-semantic/lattice/party#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex:   <https://example.org/lattice/behaviour/garden-leave/> .
+
+# ---- Configuration: the termination regime, shared by both contracts ------------
+
+ex:termination-regime a bhv:StateSpace ;
+    fnd:hasIdentity ex:termination-regime-identity ;
+    bhv:initialState ex:in-force .
+
+ex:in-force a bhv:State ;
+    bhv:inStateSpace ex:termination-regime .
+
+ex:notice a bhv:State ;
+    bhv:inStateSpace ex:termination-regime .
+
+ex:terminated a bhv:State ;
+    bhv:inStateSpace ex:termination-regime .
+
+ex:on-notice-served a bhv:TriggerDefinition ;
+    bhv:triggerKind bhv:ExternalStimulus ;
+    rdfs:comment "Either party exercises its power to terminate on notice." .
+
+ex:on-notice-withdrawn a bhv:TriggerDefinition ;
+    bhv:triggerKind bhv:ExternalStimulus ;
+    rdfs:comment "The parties agree to withdraw a notice already served." .
+
+ex:on-notice-expiry a bhv:TriggerDefinition ;
+    bhv:triggerKind bhv:ScheduledTrigger ;
+    rdfs:comment "Three months after entry into the notice state, as a positioned stimulus." .
+
+ex:serve-notice a bhv:TransitionDefinition ;
+    bhv:fromState ex:in-force ;
+    bhv:toState ex:notice ;
+    bhv:hasTrigger ex:on-notice-served ;
+    bhv:selectionPolicy bhv:SingleMatch ;
+    bhv:activationPolicy bhv:ImmediateActivation .
+
+# A self-transition that must restart the period anchored on entry, so it says
+# External: notice is left and entered again, with a new occupancy and a new
+# entry time. Without the declaration it would be internal, and the period
+# would run on from the first service (nested states sketch §4.1).
+ex:re-serve-notice a bhv:TransitionDefinition ;
+    bhv:fromState ex:notice ;
+    bhv:toState ex:notice ;
+    bhv:transitionType bhv:External ;
+    bhv:hasTrigger ex:on-notice-served ;
+    bhv:selectionPolicy bhv:SingleMatch ;
+    bhv:activationPolicy bhv:ImmediateActivation .
+
+ex:withdraw-notice a bhv:TransitionDefinition ;
+    bhv:fromState ex:notice ;
+    bhv:toState ex:in-force ;
+    bhv:hasTrigger ex:on-notice-withdrawn ;
+    bhv:selectionPolicy bhv:SingleMatch ;
+    bhv:activationPolicy bhv:ImmediateActivation .
+
+ex:notice-expires a bhv:TransitionDefinition ;
+    bhv:fromState ex:notice ;
+    bhv:toState ex:terminated ;
+    bhv:hasTrigger ex:on-notice-expiry ;
+    bhv:selectionPolicy bhv:SingleMatch ;
+    bhv:activationPolicy bhv:ImmediateActivation .
+
+# ---- Configuration: Ada's attendance regime, garden leave at any time ----------
+
+ex:attendance-at-any-time a bhv:StateSpace ;
+    fnd:hasIdentity ex:attendance-at-any-time-identity ;
+    bhv:initialState ex:a-working .
+
+ex:a-working a bhv:State ;
+    bhv:inStateSpace ex:attendance-at-any-time .
+
+ex:a-garden-leave a bhv:State ;
+    bhv:inStateSpace ex:attendance-at-any-time .
+
+ex:on-garden-leave-directed a bhv:TriggerDefinition ;
+    bhv:triggerKind bhv:ExternalStimulus ;
+    rdfs:comment "The employer exercises its power to place the employee on garden leave." .
+
+ex:on-recall a bhv:TriggerDefinition ;
+    bhv:triggerKind bhv:ExternalStimulus ;
+    rdfs:comment "The employer exercises its power to recall the employee to work." .
+
+ex:a-place-on-garden-leave a bhv:TransitionDefinition ;
+    bhv:fromState ex:a-working ;
+    bhv:toState ex:a-garden-leave ;
+    bhv:hasTrigger ex:on-garden-leave-directed ;
+    bhv:selectionPolicy bhv:SingleMatch ;
+    bhv:activationPolicy bhv:ImmediateActivation .
+
+ex:a-recall a bhv:TransitionDefinition ;
+    bhv:fromState ex:a-garden-leave ;
+    bhv:toState ex:a-working ;
+    bhv:hasTrigger ex:on-recall ;
+    bhv:selectionPolicy bhv:SingleMatch ;
+    bhv:activationPolicy bhv:ImmediateActivation .
+
+# ---- Configuration: Ben's attendance regime, garden leave only during notice ----
+
+ex:attendance-during-notice a bhv:StateSpace ;
+    fnd:hasIdentity ex:attendance-during-notice-identity ;
+    bhv:initialState ex:b-working .
+
+ex:b-working a bhv:State ;
+    bhv:inStateSpace ex:attendance-during-notice .
+
+ex:b-garden-leave a bhv:State ;
+    bhv:inStateSpace ex:attendance-during-notice .
+
+# The dependency is a guard reading the other regime's state, not a nesting:
+# "during any period of notice, the employer may place the employee on garden
+# leave" (nested states sketch §6.3).
+ex:only-during-notice a bhv:GuardDefinition ;
+    bhv:requiresState ex:notice .
+
+ex:b-place-on-garden-leave a bhv:TransitionDefinition ;
+    bhv:fromState ex:b-working ;
+    bhv:toState ex:b-garden-leave ;
+    bhv:hasTrigger ex:on-garden-leave-directed ;
+    bhv:hasGuard ex:only-during-notice ;
+    bhv:selectionPolicy bhv:SingleMatch ;
+    bhv:activationPolicy bhv:ImmediateActivation .
+
+ex:b-recall a bhv:TransitionDefinition ;
+    bhv:fromState ex:b-garden-leave ;
+    bhv:toState ex:b-working ;
+    bhv:hasTrigger ex:on-recall ;
+    bhv:selectionPolicy bhv:SingleMatch ;
+    bhv:activationPolicy bhv:ImmediateActivation .
+
+# "Garden leave ends if notice is withdrawn": the attendance regime reacts to
+# the same stimulus the termination regime does. One pass, two transitions.
+ex:b-end-garden-leave-on-withdrawal a bhv:TransitionDefinition ;
+    bhv:fromState ex:b-garden-leave ;
+    bhv:toState ex:b-working ;
+    bhv:hasTrigger ex:on-notice-withdrawn ;
+    bhv:selectionPolicy bhv:SingleMatch ;
+    bhv:activationPolicy bhv:ImmediateActivation .
+
+# ---- The employments and the parties --------------------------------------------
+
+ex:ada-employment a fnd:PersistentIdentity .
+ex:ben-employment a fnd:PersistentIdentity .
+ex:employer-occ a pty:RoleOccupancy .
+ex:ada-occ a pty:RoleOccupancy .
+ex:ben-occ a pty:RoleOccupancy .
+
+ex:notice-withdrawn-by-agreement a skos:Concept ;
+    skos:prefLabel "Notice withdrawn by agreement"@en .
+
+# ==== Ada ==========================================================================
+
+ex:ada-s1 a bhv:Stimulus ;
+    fnd:hasEvidence [ a fnd:Evidence ; fnd:recordedAt "2027-02-01T09:00:00Z"^^xsd:dateTime ] .
+ex:ada-s2 a bhv:Stimulus ;
+    fnd:hasEvidence [ a fnd:Evidence ; fnd:recordedAt "2027-02-15T09:00:00Z"^^xsd:dateTime ] .
+ex:ada-s3 a bhv:Stimulus ;
+    fnd:hasEvidence [ a fnd:Evidence ; fnd:recordedAt "2027-03-01T09:00:00Z"^^xsd:dateTime ] .
+ex:ada-s4 a bhv:Stimulus ;
+    fnd:hasEvidence [ a fnd:Evidence ; fnd:recordedAt "2027-06-01T00:00:00Z"^^xsd:dateTime ] .
+
+ex:ada-garden-leave a bhv:ExerciseRecord ;
+    bhv:exercised ex:power-to-place-on-garden-leave ;
+    bhv:actor ex:employer-occ ;
+    bhv:tookEffect true ;
+    bhv:fromStimulus ex:ada-s1 ;
+    rdfs:comment "Pending an investigation. No notice has been given." .
+
+ex:ada-notice a bhv:ExerciseRecord ;
+    bhv:exercised ex:power-to-terminate-on-notice ;
+    bhv:actor ex:employer-occ ;
+    bhv:tookEffect true ;
+    bhv:fromStimulus ex:ada-s2 .
+
+ex:ada-notice-again a bhv:ExerciseRecord ;
+    bhv:exercised ex:power-to-terminate-on-notice ;
+    bhv:actor ex:employer-occ ;
+    bhv:tookEffect true ;
+    bhv:fromStimulus ex:ada-s3 ;
+    rdfs:comment "Re-served to correct the length of notice stated." .
+
+ex:ada-exec-1 a bhv:TransitionExecution ;
+    bhv:executedTransition ex:a-place-on-garden-leave ;
+    bhv:causedByStimulus ex:ada-s1 .
+ex:ada-exec-2 a bhv:TransitionExecution ;
+    bhv:executedTransition ex:serve-notice ;
+    bhv:causedByStimulus ex:ada-s2 .
+ex:ada-exec-3 a bhv:TransitionExecution ;
+    bhv:executedTransition ex:re-serve-notice ;
+    bhv:causedByStimulus ex:ada-s3 .
+ex:ada-exec-4 a bhv:TransitionExecution ;
+    bhv:executedTransition ex:notice-expires ;
+    bhv:causedByStimulus ex:ada-s4 .
+
+# Termination regime.
+ex:ada-occ-in-force a bhv:StateOccupancy ;
+    bhv:forSubject ex:ada-employment ;
+    bhv:occupiesState ex:in-force ;
+    bhv:isHypothetical false ;
+    bhv:isCurrent false ;
+    bhv:exitedBy ex:ada-exec-2 ;
+    fnd:hasEvidence [ a fnd:Evidence ; fnd:recordedAt "2027-01-04T09:00:00Z"^^xsd:dateTime ;
+        rdfs:comment "Ada's employment began." ] ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ;
+        fnd:validFrom "2027-01-04T09:00:00Z"^^xsd:dateTime ;
+        fnd:validTo "2027-02-15T09:00:00Z"^^xsd:dateTime ] .
+
+ex:ada-occ-notice-1 a bhv:StateOccupancy ;
+    bhv:forSubject ex:ada-employment ;
+    bhv:occupiesState ex:notice ;
+    bhv:isHypothetical false ;
+    bhv:isCurrent false ;
+    bhv:enteredBy ex:ada-exec-2 ;
+    bhv:exitedBy ex:ada-exec-3 ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ;
+        fnd:validFrom "2027-02-15T09:00:00Z"^^xsd:dateTime ;
+        fnd:validTo "2027-03-01T09:00:00Z"^^xsd:dateTime ] .
+
+# The external self-transition: a second occupancy of notice, entered on
+# 2027-03-01, which is what the three-month expiry is anchored on.
+ex:ada-occ-notice-2 a bhv:StateOccupancy ;
+    bhv:forSubject ex:ada-employment ;
+    bhv:occupiesState ex:notice ;
+    bhv:isHypothetical false ;
+    bhv:isCurrent false ;
+    bhv:enteredBy ex:ada-exec-3 ;
+    bhv:exitedBy ex:ada-exec-4 ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ;
+        fnd:validFrom "2027-03-01T09:00:00Z"^^xsd:dateTime ;
+        fnd:validTo "2027-06-01T00:00:00Z"^^xsd:dateTime ] .
+
+ex:ada-occ-terminated a bhv:StateOccupancy ;
+    bhv:forSubject ex:ada-employment ;
+    bhv:occupiesState ex:terminated ;
+    bhv:isHypothetical false ;
+    bhv:isCurrent true ;
+    bhv:enteredBy ex:ada-exec-4 ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ;
+        fnd:validFrom "2027-06-01T00:00:00Z"^^xsd:dateTime ] .
+
+# Attendance regime: garden leave began before any notice, and ran through it.
+ex:ada-occ-working a bhv:StateOccupancy ;
+    bhv:forSubject ex:ada-employment ;
+    bhv:occupiesState ex:a-working ;
+    bhv:isHypothetical false ;
+    bhv:isCurrent false ;
+    bhv:exitedBy ex:ada-exec-1 ;
+    fnd:hasEvidence [ a fnd:Evidence ; fnd:recordedAt "2027-01-04T09:00:00Z"^^xsd:dateTime ;
+        rdfs:comment "Ada's employment began." ] ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ;
+        fnd:validFrom "2027-01-04T09:00:00Z"^^xsd:dateTime ;
+        fnd:validTo "2027-02-01T09:00:00Z"^^xsd:dateTime ] .
+
+ex:ada-occ-garden-leave a bhv:StateOccupancy ;
+    bhv:forSubject ex:ada-employment ;
+    bhv:occupiesState ex:a-garden-leave ;
+    bhv:isHypothetical false ;
+    bhv:isCurrent true ;
+    bhv:enteredBy ex:ada-exec-1 ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ;
+        fnd:validFrom "2027-02-01T09:00:00Z"^^xsd:dateTime ] .
+
+# ==== Ben ==========================================================================
+
+ex:ben-s0 a bhv:Stimulus ;
+    fnd:hasEvidence [ a fnd:Evidence ; fnd:recordedAt "2027-01-20T09:00:00Z"^^xsd:dateTime ] .
+ex:ben-s1 a bhv:Stimulus ;
+    fnd:hasEvidence [ a fnd:Evidence ; fnd:recordedAt "2027-02-01T09:00:00Z"^^xsd:dateTime ] .
+ex:ben-s2 a bhv:Stimulus ;
+    fnd:hasEvidence [ a fnd:Evidence ; fnd:recordedAt "2027-02-03T09:00:00Z"^^xsd:dateTime ] .
+ex:ben-s3 a bhv:Stimulus ;
+    fnd:hasEvidence [ a fnd:Evidence ; fnd:recordedAt "2027-03-01T09:00:00Z"^^xsd:dateTime ] .
+
+# The guard fails: no execution, no occupancy, and a record of why.
+ex:ben-early-garden-leave a bhv:ExerciseRecord ;
+    bhv:exercised ex:power-to-place-on-garden-leave ;
+    bhv:actor ex:employer-occ ;
+    bhv:tookEffect false ;
+    bhv:reasonNotTaken "No notice had been served. Garden leave is only available during notice." ;
+    bhv:fromStimulus ex:ben-s0 .
+
+ex:ben-notice a bhv:ExerciseRecord ;
+    bhv:exercised ex:power-to-terminate-on-notice ;
+    bhv:actor ex:ben-occ ;
+    bhv:tookEffect true ;
+    bhv:fromStimulus ex:ben-s1 .
+
+ex:ben-garden-leave a bhv:ExerciseRecord ;
+    bhv:exercised ex:power-to-place-on-garden-leave ;
+    bhv:actor ex:employer-occ ;
+    bhv:tookEffect true ;
+    bhv:fromStimulus ex:ben-s2 .
+
+ex:ben-withdrawal a bhv:ActRecord ;
+    bhv:activity ex:notice-withdrawn-by-agreement ;
+    bhv:actor ex:employer-occ , ex:ben-occ ;
+    bhv:forCase ex:ben-notice ;
+    bhv:fromStimulus ex:ben-s3 .
+
+ex:ben-exec-1 a bhv:TransitionExecution ;
+    bhv:executedTransition ex:serve-notice ;
+    bhv:causedByStimulus ex:ben-s1 .
+ex:ben-exec-2 a bhv:TransitionExecution ;
+    bhv:executedTransition ex:b-place-on-garden-leave ;
+    bhv:causedByStimulus ex:ben-s2 .
+
+# One stimulus, two regimes, two executions in one pass.
+ex:ben-exec-3 a bhv:TransitionExecution ;
+    bhv:executedTransition ex:withdraw-notice ;
+    bhv:causedByStimulus ex:ben-s3 .
+ex:ben-exec-4 a bhv:TransitionExecution ;
+    bhv:executedTransition ex:b-end-garden-leave-on-withdrawal ;
+    bhv:causedByStimulus ex:ben-s3 .
+
+# Termination regime.
+ex:ben-occ-in-force-1 a bhv:StateOccupancy ;
+    bhv:forSubject ex:ben-employment ;
+    bhv:occupiesState ex:in-force ;
+    bhv:isHypothetical false ;
+    bhv:isCurrent false ;
+    bhv:exitedBy ex:ben-exec-1 ;
+    fnd:hasEvidence [ a fnd:Evidence ; fnd:recordedAt "2027-01-04T09:00:00Z"^^xsd:dateTime ;
+        rdfs:comment "Ben's employment began." ] ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ;
+        fnd:validFrom "2027-01-04T09:00:00Z"^^xsd:dateTime ;
+        fnd:validTo "2027-02-01T09:00:00Z"^^xsd:dateTime ] .
+
+ex:ben-occ-notice a bhv:StateOccupancy ;
+    bhv:forSubject ex:ben-employment ;
+    bhv:occupiesState ex:notice ;
+    bhv:isHypothetical false ;
+    bhv:isCurrent false ;
+    bhv:enteredBy ex:ben-exec-1 ;
+    bhv:exitedBy ex:ben-exec-3 ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ;
+        fnd:validFrom "2027-02-01T09:00:00Z"^^xsd:dateTime ;
+        fnd:validTo "2027-03-01T09:00:00Z"^^xsd:dateTime ] .
+
+ex:ben-occ-in-force-2 a bhv:StateOccupancy ;
+    bhv:forSubject ex:ben-employment ;
+    bhv:occupiesState ex:in-force ;
+    bhv:isHypothetical false ;
+    bhv:isCurrent true ;
+    bhv:enteredBy ex:ben-exec-3 ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ;
+        fnd:validFrom "2027-03-01T09:00:00Z"^^xsd:dateTime ] .
+
+# Attendance regime.
+ex:ben-occ-working-1 a bhv:StateOccupancy ;
+    bhv:forSubject ex:ben-employment ;
+    bhv:occupiesState ex:b-working ;
+    bhv:isHypothetical false ;
+    bhv:isCurrent false ;
+    bhv:exitedBy ex:ben-exec-2 ;
+    fnd:hasEvidence [ a fnd:Evidence ; fnd:recordedAt "2027-01-04T09:00:00Z"^^xsd:dateTime ;
+        rdfs:comment "Ben's employment began." ] ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ;
+        fnd:validFrom "2027-01-04T09:00:00Z"^^xsd:dateTime ;
+        fnd:validTo "2027-02-03T09:00:00Z"^^xsd:dateTime ] .
+
+ex:ben-occ-garden-leave a bhv:StateOccupancy ;
+    bhv:forSubject ex:ben-employment ;
+    bhv:occupiesState ex:b-garden-leave ;
+    bhv:isHypothetical false ;
+    bhv:isCurrent false ;
+    bhv:enteredBy ex:ben-exec-2 ;
+    bhv:exitedBy ex:ben-exec-4 ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ;
+        fnd:validFrom "2027-02-03T09:00:00Z"^^xsd:dateTime ;
+        fnd:validTo "2027-03-01T09:00:00Z"^^xsd:dateTime ] .
+
+ex:ben-occ-working-2 a bhv:StateOccupancy ;
+    bhv:forSubject ex:ben-employment ;
+    bhv:occupiesState ex:b-working ;
+    bhv:isHypothetical false ;
+    bhv:isCurrent true ;
+    bhv:enteredBy ex:ben-exec-4 ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ;
+        fnd:validFrom "2027-03-01T09:00:00Z"^^xsd:dateTime ] .

@@ -105,6 +105,12 @@ Validation: the schemas validate the anchor file; `verify-anchors.py` passes wit
 3. `iri-identity-patterns.md` §14.2 and `tools/persistence/README.md` updated.
 4. **Human walk-through** (cannot be done by the agent): a person follows the specification alone, with a hex editor and an SHA-256 tool, and reproduces one derived-hash IRI and one claim IRI from the anchor file. Findings feed a final revision.
 
+## Deferred items
+
+| # | Item | Raised by | When |
+|---|---|---|---|
+| FU-F1a | an exact normalisation pipeline, with no case folding or compatibility mapping (identity or NFC only, decided then), for key components that are already-minted IRIs (a uniqueness constraint on `fnd:naturalKey`). A fourth pipeline in the specification, both libraries and the vectors. The three existing pipelines are harmless on such IRIs | CCS F1 ([keys impact](../sketches/keys-impact.md) P1, CCS plan F1 follow-ups) | when a scheme needs it, or with M4 |
+
 ## Validation approach
 
 Each slice has a validation pack at `docs/developer/validation/identity-minting-<slice>.md`, with positive and negative cases, the `mise` command, and at least one adversarial probe. `mise run check:persistence` stays green throughout.

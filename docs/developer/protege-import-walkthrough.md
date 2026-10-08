@@ -10,7 +10,7 @@ This is the manual step in the AOR-4 Validation Pack.
 ## Why a successful load is evidence
 
 LATTICE imports its layers by version IRI, for example
-`https://www.nebularis.org/neuro-semantic/lattice/foundation/0.3.0`. None of
+`https://www.nebularis.org/neuro-semantic/lattice/foundation/0.4.0`. None of
 these IRIs is served on the web. If Protégé loads a layer's imports, it found
 them through a catalog. Protégé reads the `catalog-v001.xml` beside the file it
 opens. In every `spec/` and `vocab/` directory that file is a stub with one

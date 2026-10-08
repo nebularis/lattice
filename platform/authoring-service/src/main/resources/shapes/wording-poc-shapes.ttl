@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: MPL-2.0
 #
-# Word authoring proof of concept (ADR-A114): SHACL shapes for the mapped wording graph (plan
+# Word authoring proof of concept (ADR-A118): SHACL shapes for the mapped wording graph (plan
 # §2.3, WA2 "Shapes"). Not published under ontology/governance/; a POC artefact only.
 
 @prefix sh:    <http://www.w3.org/ns/shacl#> .

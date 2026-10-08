@@ -11,8 +11,8 @@
 
 <https://www.nebularis.org/neuro-semantic/wording-vocab>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/wording-vocab/0.2.0> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/wording/0.2.0> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/wording-vocab/0.7.0> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/wording/0.7.0> .
 
 wrd-voc:ElementTypeContract a voc:SchemeContract ;
 	fnd:hasIdentity wrd-voc:ElementTypeContract-identity ;
@@ -64,6 +64,12 @@ wrd-voc:Annex a skos:Concept ;
 	skos:prefLabel "Annex"@en ;
 	skos:altLabel "Appendix"@en ;
 	skos:definition "A part attached to the body of the wording, often referring to a document object."@en .
+
+wrd-voc:Endorsement a skos:Concept ;
+	skos:inScheme wrd-voc:ElementTypes ;
+	skos:prefLabel "Endorsement"@en ;
+	skos:altLabel "Amendment letter"@en ;
+	skos:definition "A document issued after a contract is made, stating changes to its wording."@en .
 
 # ---- Inclusion modes: a closed set -------------------------------------------
 
@@ -119,6 +125,44 @@ wrd-voc:DefaultedOverridable a owl:NamedIndividual , wrd:PopulationMethod ;
 wrd-voc:FromAnotherVariable a owl:NamedIndividual , wrd:PopulationMethod ;
 	rdfs:label "From another variable"@en ;
 	rdfs:comment "Takes the value of the variable named by wrd:populatedFrom." .
+
+# ---- Amendment operations: a closed set ---------------------------------------
+
+wrd-voc:Insert a owl:NamedIndividual , wrd:AmendmentOperation ;
+	rdfs:label "Insert"@en ;
+	rdfs:comment "Adds a new element among the children of the amended element, at the rank key it carries." .
+
+wrd-voc:Append a owl:NamedIndividual , wrd:AmendmentOperation ;
+	rdfs:label "Append"@en ;
+	rdfs:comment "Adds a new element after the last child of the amended element." .
+
+wrd-voc:Replace a owl:NamedIndividual , wrd:AmendmentOperation ;
+	rdfs:label "Replace"@en ;
+	rdfs:comment "Puts a new element in the place of the amended one." .
+
+wrd-voc:StrikeAndSubstitute a owl:NamedIndividual , wrd:AmendmentOperation ;
+	rdfs:label "Strike and substitute"@en ;
+	rdfs:comment "Removes words from the amended text and puts others in their place, producing a new text version." .
+
+wrd-voc:Delete a owl:NamedIndividual , wrd:AmendmentOperation ;
+	rdfs:label "Delete"@en ;
+	rdfs:comment "Removes the amended element. In an instance, generates the new assembled wording that leaves it out." .
+
+[] a owl:AllDifferent ;
+	owl:distinctMembers ( wrd-voc:Insert wrd-voc:Append wrd-voc:Replace wrd-voc:StrikeAndSubstitute wrd-voc:Delete ) .
+
+# ---- Field orientations: a closed set -----------------------------------------
+
+wrd-voc:Rows a owl:NamedIndividual , wrd:FieldOrientation ;
+	rdfs:label "Fields as rows"@en ;
+	rdfs:comment "Each field is drawn as a row, each entry as a column." .
+
+wrd-voc:Columns a owl:NamedIndividual , wrd:FieldOrientation ;
+	rdfs:label "Fields as columns"@en ;
+	rdfs:comment "Each field is drawn as a column, each entry as a row." .
+
+[] a owl:AllDifferent ;
+	owl:distinctMembers ( wrd-voc:Rows wrd-voc:Columns ) .
 
 [] a owl:AllDifferent ;
 	owl:distinctMembers ( wrd-voc:FreeEntry wrd-voc:PickList wrd-voc:ReferenceTableLookup wrd-voc:TablePopulated

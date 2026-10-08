@@ -1,0 +1,268 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Premise. Some states have stages of their own, which exist only inside them
+# and end with them. Entering the state enters its first stage. Leaving the
+# state, from whichever stage, leaves the stage too.
+#
+# A facility agreement tests a leverage covenant each quarter. A failed test
+# puts the facility in default. A default starts with a cure period of 20
+# business days, after which it is uncured, and the lenders may accelerate the
+# loans only once it is uncured. Meeting the covenant again cures the default,
+# whether the cure period is still running or has passed.
+#
+# Default is a compound state: one region, with the cure period as its initial
+# state (nested states sketch §3, §3.1: a cure period means nothing outside a
+# default, and every way out of the default must end it).
+#
+# | Date       | Stimulus                                    | Exited                    | Entered                           |
+# |------------|---------------------------------------------|---------------------------|-----------------------------------|
+# | 2027-01-01 | the facility takes effect                   |                           | performing (evidence)             |
+# | 2027-03-31 | Q1 test failed, leverage 4.2x against 4.0x  | performing                | default, cure period (one exec)   |
+# | 2027-04-28 | 20 business days pass                       | cure period               | uncured                           |
+# | 2027-05-15 | equity cure, covenant met again             | uncured, then default     | performing                        |
+# | 2027-09-30 | Q3 test failed again                        | performing                | default, cure period              |
+# | 2027-10-20 | cured inside the cure period                | cure period, then default | performing                        |
+#
+# The lenders' power to accelerate applies only in the uncured state: in an
+# instrument, a relation gated on ex:uncured. Between 2027-04-28 and
+# 2027-05-15 it applied. In the second default it never did.
+
+@prefix bhv:  <https://www.nebularis.org/neuro-semantic/lattice/behaviour#> .
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix pty:  <https://www.nebularis.org/neuro-semantic/lattice/party#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex:   <https://example.org/lattice/behaviour/covenant/> .
+
+# ---- Configuration: the covenant regime, with default as a compound state ------
+
+ex:covenant-regime a bhv:StateSpace ;
+    fnd:hasIdentity ex:covenant-regime-identity ;
+    bhv:initialState ex:performing .
+
+ex:performing a bhv:State ;
+    bhv:inStateSpace ex:covenant-regime .
+
+ex:default a bhv:State ;
+    bhv:inStateSpace ex:covenant-regime .
+
+# The region: default's own stages. Naming default with bhv:regionOf makes it
+# compound. The region has an initial state of its own, as any space does.
+ex:default-stages a bhv:StateSpace ;
+    fnd:hasIdentity ex:default-stages-identity ;
+    bhv:regionOf ex:default ;
+    bhv:initialState ex:cure-period .
+
+ex:cure-period a bhv:State ;
+    bhv:inStateSpace ex:default-stages .
+
+ex:uncured a bhv:State ;
+    bhv:inStateSpace ex:default-stages .
+
+# ---- Triggers --------------------------------------------------------------------
+# In an instrument these are legal triggers: a breach of the covenant, the
+# expiry of a period anchored on entry into the cure period, and a condition.
+
+ex:on-covenant-breach a bhv:TriggerDefinition ;
+    bhv:triggerKind bhv:DerivedTrigger ;
+    rdfs:comment "The quarterly leverage test is failed." .
+
+ex:on-cure-period-expiry a bhv:TriggerDefinition ;
+    bhv:triggerKind bhv:ScheduledTrigger ;
+    rdfs:comment "20 business days after entry into the cure period, as a positioned stimulus (B3)." .
+
+ex:on-covenant-met a bhv:TriggerDefinition ;
+    bhv:triggerKind bhv:DerivedTrigger ;
+    rdfs:comment "The leverage test is met again, on a compliance certificate or an equity cure." .
+
+# ---- Transitions -----------------------------------------------------------------
+
+# Into the composite: enters default, then its region's initial state.
+ex:enter-default a bhv:TransitionDefinition ;
+    bhv:fromState ex:performing ;
+    bhv:toState ex:default ;
+    bhv:hasTrigger ex:on-covenant-breach ;
+    bhv:selectionPolicy bhv:SingleMatch ;
+    bhv:activationPolicy bhv:ImmediateActivation .
+
+# Inside the region.
+ex:cure-period-ends a bhv:TransitionDefinition ;
+    bhv:fromState ex:cure-period ;
+    bhv:toState ex:uncured ;
+    bhv:hasTrigger ex:on-cure-period-expiry ;
+    bhv:selectionPolicy bhv:SingleMatch ;
+    bhv:activationPolicy bhv:ImmediateActivation .
+
+# Out of the composite: leaves whichever stage is active, then default.
+ex:cure a bhv:TransitionDefinition ;
+    bhv:fromState ex:default ;
+    bhv:toState ex:performing ;
+    bhv:hasTrigger ex:on-covenant-met ;
+    bhv:selectionPolicy bhv:SingleMatch ;
+    bhv:activationPolicy bhv:ImmediateActivation .
+
+# ---- The facility, its parties and the activities recorded ------------------------
+
+ex:facility a fnd:PersistentIdentity .
+ex:borrower-occ a pty:RoleOccupancy .
+ex:agent-occ a pty:RoleOccupancy .
+
+ex:covenant-tested a skos:Concept ; skos:prefLabel "Covenant tested"@en .
+ex:equity-injected a skos:Concept ; skos:prefLabel "Equity injected"@en .
+
+# ---- Stimuli and the records they carry -------------------------------------------
+
+ex:stimulus-q1-test a bhv:Stimulus ;
+    fnd:hasEvidence [ a fnd:Evidence ; fnd:recordedAt "2027-03-31T17:00:00Z"^^xsd:dateTime ] .
+ex:stimulus-cure-period-1-expires a bhv:Stimulus ;
+    fnd:hasEvidence [ a fnd:Evidence ; fnd:recordedAt "2027-04-28T00:00:00Z"^^xsd:dateTime ] .
+ex:stimulus-equity-cure a bhv:Stimulus ;
+    fnd:hasEvidence [ a fnd:Evidence ; fnd:recordedAt "2027-05-15T12:00:00Z"^^xsd:dateTime ] .
+ex:stimulus-q3-test a bhv:Stimulus ;
+    fnd:hasEvidence [ a fnd:Evidence ; fnd:recordedAt "2027-09-30T17:00:00Z"^^xsd:dateTime ] .
+ex:stimulus-q3-cured a bhv:Stimulus ;
+    fnd:hasEvidence [ a fnd:Evidence ; fnd:recordedAt "2027-10-20T12:00:00Z"^^xsd:dateTime ] .
+
+ex:act-q1-test a bhv:ActRecord ;
+    bhv:activity ex:covenant-tested ;
+    bhv:actor ex:agent-occ ;
+    bhv:forCase ex:q1-2027 ;
+    bhv:fromStimulus ex:stimulus-q1-test ;
+    rdfs:comment "Leverage 4.2x against a maximum of 4.0x." .
+
+ex:act-equity-cure a bhv:ActRecord ;
+    bhv:activity ex:equity-injected ;
+    bhv:actor ex:borrower-occ ;
+    bhv:forCase ex:q1-2027 ;
+    bhv:fromStimulus ex:stimulus-equity-cure ;
+    rdfs:comment "Equity injected, restating leverage at 3.8x." .
+
+ex:act-q3-test a bhv:ActRecord ;
+    bhv:activity ex:covenant-tested ;
+    bhv:actor ex:agent-occ ;
+    bhv:forCase ex:q3-2027 ;
+    bhv:fromStimulus ex:stimulus-q3-test ;
+    rdfs:comment "Leverage 4.1x against a maximum of 4.0x." .
+
+ex:act-q3-cured a bhv:ActRecord ;
+    bhv:activity ex:covenant-tested ;
+    bhv:actor ex:agent-occ ;
+    bhv:forCase ex:q3-2027 ;
+    bhv:fromStimulus ex:stimulus-q3-cured ;
+    rdfs:comment "A revised certificate shows leverage at 3.9x." .
+
+# ---- Executions: one per transition taken -----------------------------------------
+
+ex:exec-1 a bhv:TransitionExecution ;
+    bhv:executedTransition ex:enter-default ;
+    bhv:causedByStimulus ex:stimulus-q1-test .
+
+ex:exec-2 a bhv:TransitionExecution ;
+    bhv:executedTransition ex:cure-period-ends ;
+    bhv:causedByStimulus ex:stimulus-cure-period-1-expires .
+
+ex:exec-3 a bhv:TransitionExecution ;
+    bhv:executedTransition ex:cure ;
+    bhv:causedByStimulus ex:stimulus-equity-cure .
+
+ex:exec-4 a bhv:TransitionExecution ;
+    bhv:executedTransition ex:enter-default ;
+    bhv:causedByStimulus ex:stimulus-q3-test .
+
+ex:exec-5 a bhv:TransitionExecution ;
+    bhv:executedTransition ex:cure ;
+    bhv:causedByStimulus ex:stimulus-q3-cured .
+
+# ---- Occupancies: one per active state at every level (sketch §5) -----------------
+# Each names the execution that entered it (B6) and the one that ended it.
+
+ex:occ-1-performing a bhv:StateOccupancy ;
+    bhv:forSubject ex:facility ;
+    bhv:occupiesState ex:performing ;
+    bhv:isHypothetical false ;
+    bhv:isCurrent false ;
+    bhv:exitedBy ex:exec-1 ;
+    fnd:hasEvidence [ a fnd:Evidence ; fnd:recordedAt "2027-01-01T00:00:00Z"^^xsd:dateTime ;
+        rdfs:comment "The facility took effect." ] ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ;
+        fnd:validFrom "2027-01-01T00:00:00Z"^^xsd:dateTime ;
+        fnd:validTo "2027-03-31T17:00:00Z"^^xsd:dateTime ] .
+
+# The first default: the composite and its initial stage, entered by one execution.
+ex:occ-2-default a bhv:StateOccupancy ;
+    bhv:forSubject ex:facility ;
+    bhv:occupiesState ex:default ;
+    bhv:isHypothetical false ;
+    bhv:isCurrent false ;
+    bhv:enteredBy ex:exec-1 ;
+    bhv:exitedBy ex:exec-3 ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ;
+        fnd:validFrom "2027-03-31T17:00:00Z"^^xsd:dateTime ;
+        fnd:validTo "2027-05-15T12:00:00Z"^^xsd:dateTime ] .
+
+ex:occ-3-cure-period a bhv:StateOccupancy ;
+    bhv:forSubject ex:facility ;
+    bhv:occupiesState ex:cure-period ;
+    bhv:isHypothetical false ;
+    bhv:isCurrent false ;
+    bhv:enteredBy ex:exec-1 ;
+    bhv:exitedBy ex:exec-2 ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ;
+        fnd:validFrom "2027-03-31T17:00:00Z"^^xsd:dateTime ;
+        fnd:validTo "2027-04-28T00:00:00Z"^^xsd:dateTime ] .
+
+ex:occ-4-uncured a bhv:StateOccupancy ;
+    bhv:forSubject ex:facility ;
+    bhv:occupiesState ex:uncured ;
+    bhv:isHypothetical false ;
+    bhv:isCurrent false ;
+    bhv:enteredBy ex:exec-2 ;
+    bhv:exitedBy ex:exec-3 ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ;
+        fnd:validFrom "2027-04-28T00:00:00Z"^^xsd:dateTime ;
+        fnd:validTo "2027-05-15T12:00:00Z"^^xsd:dateTime ] .
+
+# The cure leaves from the composite: ex:exec-3 ends uncured, then default.
+ex:occ-5-performing a bhv:StateOccupancy ;
+    bhv:forSubject ex:facility ;
+    bhv:occupiesState ex:performing ;
+    bhv:isHypothetical false ;
+    bhv:isCurrent false ;
+    bhv:enteredBy ex:exec-3 ;
+    bhv:exitedBy ex:exec-4 ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ;
+        fnd:validFrom "2027-05-15T12:00:00Z"^^xsd:dateTime ;
+        fnd:validTo "2027-09-30T17:00:00Z"^^xsd:dateTime ] .
+
+# The second default: a fresh cure period, cured before it ran out.
+ex:occ-6-default a bhv:StateOccupancy ;
+    bhv:forSubject ex:facility ;
+    bhv:occupiesState ex:default ;
+    bhv:isHypothetical false ;
+    bhv:isCurrent false ;
+    bhv:enteredBy ex:exec-4 ;
+    bhv:exitedBy ex:exec-5 ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ;
+        fnd:validFrom "2027-09-30T17:00:00Z"^^xsd:dateTime ;
+        fnd:validTo "2027-10-20T12:00:00Z"^^xsd:dateTime ] .
+
+ex:occ-7-cure-period a bhv:StateOccupancy ;
+    bhv:forSubject ex:facility ;
+    bhv:occupiesState ex:cure-period ;
+    bhv:isHypothetical false ;
+    bhv:isCurrent false ;
+    bhv:enteredBy ex:exec-4 ;
+    bhv:exitedBy ex:exec-5 ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ;
+        fnd:validFrom "2027-09-30T17:00:00Z"^^xsd:dateTime ;
+        fnd:validTo "2027-10-20T12:00:00Z"^^xsd:dateTime ] .
+
+ex:occ-8-performing a bhv:StateOccupancy ;
+    bhv:forSubject ex:facility ;
+    bhv:occupiesState ex:performing ;
+    bhv:isHypothetical false ;
+    bhv:isCurrent true ;
+    bhv:enteredBy ex:exec-5 ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ;
+        fnd:validFrom "2027-10-20T12:00:00Z"^^xsd:dateTime ] .

@@ -23,7 +23,7 @@ The design, its principles, and laws, are located in [`docs/architecture-overvie
 | Part | Namespace | File | State |
 |---|---|---|---|
 | source ontology: arrangements, resources, demands, draws, dependencies, rules | `cap:` | `spec/capacity.ttl` | **designed, not authored** (architecture overview §"Proposed applied ontology") |
-| runtime execution profile | `capx:` | [`spec/applied_capacity_execution_spec_capx_Version2.ttl`](spec/applied_capacity_execution_spec_capx_Version2.ttl) | authored, `0.9.0` |
+| runtime execution profile | `capx:` | [`spec/applied_capacity_execution_spec_capx_Version2.ttl`](spec/applied_capacity_execution_spec_capx_Version2.ttl) | authored, `0.10.0` |
 
 The execution profile's `capx:projectsFrom…` properties range over `cap:` classes that no document
 declares yet. They resolve when the source ontology is authored.
@@ -81,3 +81,9 @@ Breaking versions at major version zero ([ADR-A113](../../../docs/architecture/d
 - 0.8.0 (breaking): the execution profile imports `behaviour-runtime` 0.8.0 in place of `behaviour`
   0.7.0. Its import closure no longer includes Instrument, so a consumer that reached Instrument's
   terms through it must import Instrument directly. ADR-A106.
+- 0.11.0: re-pinned to `behaviour-runtime` 0.11.0 and Foundation 0.4.0, with no other change
+  (CCS F1, ADR-A114).
+- 0.12.0: re-pinned to `behaviour-runtime` 0.12.0 and Quantification 0.7.0, with no other change
+  (CCS C7b, ADR-A115).
+- 0.13.0 (breaking): re-pinned to `behaviour-runtime` 0.13.0 and Eligibility 0.10.0, which follow
+  Party 0.8.0's renamed shares and composition rules, with no other change (CCS C7c).

@@ -28,6 +28,11 @@ per claim, aggregate windows, hours clauses) stay on term parameters as designed
 general basis pattern, if any, comes from contract-amounts §1.7. The running totals against a limit
 are dynamic and live in `applied/capacity` through a Surface projection.
 
+**Comes back in: the evaluation context (2026-10-02).** The unplanned
+[evaluation-context.md](../sketches/evaluation-context.md) sketch outlines limits, retentions,
+aggregates, reinstatements and bases as ledger accounts, combinators and environments. This phase
+should not start its contract module until that design is settled (its §13).
+
 ## Slices
 
 | Slice | Content | Sketch |
@@ -39,8 +44,12 @@ are dynamic and live in `applied/capacity` through a Surface projection.
 | AIR-5.5 | party role parameters and direction derivation over roles and the exposure relationship graph, with the D&O example | §7, milestone M4 |
 | AIR-5.6 | defect catalogue as shapes | §8 |
 | AIR-5.7 | route R2: compile one check family into Capacity runtime forms, parity suite against R1, no write-back | §5, milestone M5 |
-| AIR-5.8 | insurance renderings of the policy scenarios of the CCS sketch §10 (the AIG rows: S10 to S14, S18 to S26, S28, S29, S33, S34, S37, S42 and the shared rows), as examples with expected decisions | CCS sketch §9, §10 |
+| AIR-5.8 | insurance renderings of the policy scenarios of the CCS sketch §10 (theAcme Insurancerows: S10 to S14, S18 to S26, S28, S29, S33, S34, S37, S42 and the shared rows), as examples with expected decisions | CCS sketch §9, §10 |
 | AIR-5.9 | the LMA WIM profile in `applied/insurance/wording/` (CCS decision CC-D3): the four levels as element types, their containment rules as shapes, the LMA typing schemes and `applicableTo`. Open CBAA imports it | CCS sketch §3.2, CCS plan §7 |
+
+**AIR-5.9 proposed to move (2026-10-05).** The [insurml-alignment](insurml-alignment.md) epic
+proposes to build the LMA WIM profile with InsurML in view, as its Phase 1, before this phase starts,
+since the profile needs Wording and not Instrument. The move waits for decision IMA-D2.
 
 5.7 needs L-P5 (substrate track S4) only if the chosen check family groups occurrences. The
 default candidate is bind-time authority, which does not.

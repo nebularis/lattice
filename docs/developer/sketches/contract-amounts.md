@@ -6,9 +6,11 @@ Draft for review, 2026-09-30. A requirements catalogue, not yet a design. The de
 [computable-contract-substrate.md](computable-contract-substrate.md) says *that* a party must pay
 or may not exceed something. This sketch collects every construct in the tested instruments that
 decides *how much*, so that none is lost before the design is written. It feeds AIR Phase 5
-(ADR-A101, term parameters) and Open CBAA's binding authority capacity.
+(ADR-A101, term parameters) and Open CBAA's binding authority capacity. The unplanned
+[evaluation context](evaluation-context.md) sketch outlines a design for §3: a ledger of accounts,
+combinators and environments.
 
-Sources use the codes of the substrate sketch: AIG (package policy), IUA (IUA 09-069 BAA2018),
+Sources use the codes of the substrate sketch:Acme Insurance(package policy), IUA (IUA 09-069 BAA2018),
 CBAA (Lloyd's computable binding authority collateral).
 
 ## 1. Catalogue
@@ -17,16 +19,16 @@ CBAA (Lloyd's computable binding authority collateral).
 
 | # | Construct | Source |
 |---|---|---|
-| A1 | a policy aggregate: maximum for all loss under all sections combined | AIG Declarations item 5, GTC 3 |
-| A2 | a separate limit per section, part of and not in addition to the aggregate | AIG GTC 3, Declarations item 6 |
-| A3 | a shared limit across named sections, with a lesser amount stated for one section serving as that section's cap, reduced by prior payments under the shared limit | AIG GTC 3 |
-| A4 | sublimits, part of and not in addition to every enclosing limit | AIG GTC 3, D&O 6, End. 8 H (EMTALA, governmental fraud defence costs, HIPAA penalties), End. 23 regulatory sublimit |
-| A5 | per-person sublimits nested inside aggregate sublimits | AIG D&O 2.A(3), (4) personal reputation and asset protection, D&O 6 |
-| A6 | an excess limit available only after the section limit and any other valid insurance are exhausted, then primary | AIG D&O 2.C, 6 Excess Limit for Executives |
-| A7 | discovery period limits part of the policy period limits | AIG GTC 3 |
-| A8 | a limit shared with another section's limit for one purpose | AIG CrisisFund 3, End. 12 item I |
-| A9 | the highest limit across several policies from the same insurer applies, never their sum | AIG CrisisFund 2 |
-| A10 | continuity dates that differ by limit layer (first 2,000,000 against the excess 2,000,000) | AIG End. 6, End. 7 |
+| A1 | a policy aggregate: maximum for all loss under all sections combined |Acme InsuranceDeclarations item 5, GTC 3 |
+| A2 | a separate limit per section, part of and not in addition to the aggregate |Acme InsuranceGTC 3, Declarations item 6 |
+| A3 | a shared limit across named sections, with a lesser amount stated for one section serving as that section's cap, reduced by prior payments under the shared limit |Acme InsuranceGTC 3 |
+| A4 | sublimits, part of and not in addition to every enclosing limit |Acme InsuranceGTC 3, D&O 6, End. 8 H (EMTALA, governmental fraud defence costs, HIPAA penalties), End. 23 regulatory sublimit |
+| A5 | per-person sublimits nested inside aggregate sublimits |Acme InsuranceD&O 2.A(3), (4) personal reputation and asset protection, D&O 6 |
+| A6 | an excess limit available only after the section limit and any other valid insurance are exhausted, then primary |Acme InsuranceD&O 2.C, 6 Excess Limit for Executives |
+| A7 | discovery period limits part of the policy period limits |Acme InsuranceGTC 3 |
+| A8 | a limit shared with another section's limit for one purpose |Acme InsuranceCrisisFund 3, End. 12 item I |
+| A9 | the highest limit across several policies from the same insurer applies, never their sum |Acme InsuranceCrisisFund 2 |
+| A10 | continuity dates that differ by limit layer (first 2,000,000 against the excess 2,000,000) |Acme InsuranceEnd. 6, End. 7 |
 | A11 | limits and sums insured an authority may bind up to, per segment, in several currencies | IUA 10, CBAA SoUA rows 20, 21, 42 |
 | A12 | claims settlement authority per claim, and a claims loss fund with drawdowns and top-ups | IUA 21.1.1, CBAA M8 8.7D.3.2 |
 | A13 | redress authority up to an amount "or equivalent in other currencies" | CBAA M9 9.1.3 |
@@ -36,26 +38,26 @@ CBAA (Lloyd's computable binding authority collateral).
 
 | # | Construct | Source |
 |---|---|---|
-| A15 | one retention per claim or group of related claims | AIG GTC 2 |
-| A16 | the highest applicable retention when a claim triggers several sections under a shared limit | AIG GTC 2 |
-| A17 | separate retentions per section under separate limits, not satisfied by payments towards another section's retention | AIG GTC 2 |
-| A18 | retentions that vary by claim kind, the highest applying when several are triggered | AIG End. 3 California, End. 17 class action, End. 23 regulatory, End. 24 highly compensated employees, End. 29 and 30 a named individual |
-| A19 | no retention for some loss: non-indemnifiable loss, crisis loss, the first 25,000 of e-discovery consultant costs | AIG D&O 2.B, 5, CrisisFund 4 |
-| A20 | coinsurance: 50% of loss above a retention up to a sublimit, the remainder uninsured "as a condition of this insurance" | AIG End. 8 H, End. 23 CA-1 |
-| A21 | amounts within a retention remain uninsured, and an advance within the retention counts towards exhaustion | AIG GTC 2, D&O 3.A |
+| A15 | one retention per claim or group of related claims |Acme InsuranceGTC 2 |
+| A16 | the highest applicable retention when a claim triggers several sections under a shared limit |Acme InsuranceGTC 2 |
+| A17 | separate retentions per section under separate limits, not satisfied by payments towards another section's retention |Acme InsuranceGTC 2 |
+| A18 | retentions that vary by claim kind, the highest applying when several are triggered |Acme InsuranceEnd. 3 California, End. 17 class action, End. 23 regulatory, End. 24 highly compensated employees, End. 29 and 30 a named individual |
+| A19 | no retention for some loss: non-indemnifiable loss, crisis loss, the first 25,000 of e-discovery consultant costs |Acme InsuranceD&O 2.B, 5, CrisisFund 4 |
+| A20 | coinsurance: 50% of loss above a retention up to a sublimit, the remainder uninsured "as a condition of this insurance" |Acme InsuranceEnd. 8 H, End. 23 CA-1 |
+| A21 | amounts within a retention remain uninsured, and an advance within the retention counts towards exhaustion |Acme InsuranceGTC 2, D&O 3.A |
 | A22 | minimum deductibles and excesses an agent must impose | IUA 11.2, CBAA SoUA rows 39, 40 |
 
 ### 1.3 Erosion, order and reinstatement
 
 | # | Construct | Source |
 |---|---|---|
-| A23 | defence costs part of loss, eroding limits | AIG notice page, GTC 3 |
-| A24 | order of payments: Side A first, then B and C only if limits remain, at a named officer's direction | AIG D&O 3.B |
-| A25 | recovery of paid amounts reinstates limits, less recovery costs | AIG GTC 8 |
-| A26 | a limit reduced by amounts recoverable under another policy from an affiliate | AIG D&O 12.B |
-| A27 | excess over other valid and collectible insurance, primary to personal umbrella cover | AIG D&O 12.B |
-| A28 | related claims treated as one, deemed made when the first was | AIG D&O 7(b), GTC 2 |
-| A29 | a public cap: an insurer not liable above a statutory aggregate, and pro rata shares below it | AIG End. 32 TRIA |
+| A23 | defence costs part of loss, eroding limits |Acme Insurancenotice page, GTC 3 |
+| A24 | order of payments: Side A first, then B and C only if limits remain, at a named officer's direction |Acme InsuranceD&O 3.B |
+| A25 | recovery of paid amounts reinstates limits, less recovery costs |Acme InsuranceGTC 8 |
+| A26 | a limit reduced by amounts recoverable under another policy from an affiliate |Acme InsuranceD&O 12.B |
+| A27 | excess over other valid and collectible insurance, primary to personal umbrella cover |Acme InsuranceD&O 12.B |
+| A28 | related claims treated as one, deemed made when the first was |Acme InsuranceD&O 7(b), GTC 2 |
+| A29 | a public cap: an insurer not liable above a statutory aggregate, and pro rata shares below it |Acme InsuranceEnd. 32 TRIA |
 
 ### 1.4 Aggregates over bound business
 
@@ -81,15 +83,15 @@ CBAA (Lloyd's computable binding authority collateral).
 | A42 | a leader fee as a percentage of premium, adjusted with premium, borne proportionally by participants or by the agent | CBAA M6 6.8 |
 | A43 | fees charged to policyholders, disclosed and shown separately | IUA 29, CBAA M6 6.4 |
 | A44 | fees and charges deducted from premium | IUA 24.7, CBAA M6 6.6 |
-| A45 | premium and additional premium, pro rata return on cancellation, non-refundable additional premium | AIG GTC 4, 7(c), Declarations |
-| A46 | a discovery premium of up to 125% of the full annual premium for one year, or to be determined | AIG D&O 8, End. 19 |
+| A45 | premium and additional premium, pro rata return on cancellation, non-refundable additional premium |Acme InsuranceGTC 4, 7(c), Declarations |
+| A46 | a discovery premium of up to 125% of the full annual premium for one year, or to be determined |Acme InsuranceD&O 8, End. 19 |
 
 ### 1.6 Shares and currencies
 
 | # | Construct | Source |
 |---|---|---|
 | A47 | several shares: signed, written, order, broker share, participation basis (percentage or amount, of whole or of order), line to stand | CBAA Insurer Capacity Table rows 10 to 26, IUA 41 |
-| A48 | payment in the instrument currency, or another at the payer's option, at a published rate on the date the obligation is established | AIG GTC 14 |
+| A48 | payment in the instrument currency, or another at the payer's option, at a published rate on the date the obligation is established |Acme InsuranceGTC 14 |
 | A49 | one limit stated in several currencies, each read in its own unit | CBAA SoUA row 42, ADR-A95 |
 | A50 | taxes shown separately and not concealed | IUA 28.2 |
 
@@ -112,8 +114,8 @@ The machinery a basis needs, independent of any domain:
 
 | # | Construct | Source |
 |---|---|---|
-| A51 | a limit or retention on a basis: per occurrence, per claim ("any one claim"), per event, per risk, per location | AIG D&O 6 per-executive sublimits, GTC 2 "each Claim or group of Related Claims", CBAA SoUA row 21 limit or sum insured basis |
-| A52 | an aggregate limit over a window: policy year, calendar year, per event, custom | AIG GTC 3, CBAA SoUA row 45 GWP income limit period |
+| A51 | a limit or retention on a basis: per occurrence, per claim ("any one claim"), per event, per risk, per location |Acme InsuranceD&O 6 per-executive sublimits, GTC 2 "each Claim or group of Related Claims", CBAA SoUA row 21 limit or sum insured basis |
+| A52 | an aggregate limit over a window: policy year, calendar year, per event, custom |Acme InsuranceGTC 3, CBAA SoUA row 45 GWP income limit period |
 | A53 | an aggregate deductible (annual aggregate deductible), distinct from the aggregate limit, with its own window and counting basis | term-parameters `ctr:AggregateParameter` |
 | A54 | an aggregate counting basis: per occurrence, per claim, per event | term-parameters T2 (basis on aggregate parameters) |
 | A55 | an hours clause: window duration, selection method (insured's choice, largest loss, first event), non-overlap, maximum windows | term-parameters `ctr:OccurrenceGroupingParameter` |

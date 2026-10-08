@@ -2,7 +2,7 @@
 
 # LATTICE Authoring (Word add-in, proof of concept)
 
-A Word add-in for the word authoring proof of concept (ADR-A114): mark clauses, definitions,
+A Word add-in for the word authoring proof of concept (ADR-A118): mark clauses, definitions,
 variables and defined-term references in a document, then read them as Logical English and
 review the proposed `ins:` graph against [`platform/authoring-service`](../../platform/authoring-service).
 Not a platform contract. Its code, markup and manifest may change or be withdrawn without

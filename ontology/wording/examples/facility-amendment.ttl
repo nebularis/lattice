@@ -1,0 +1,200 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Premise. A contract's text changes after it is signed, by a document that
+# states the changes. Each change is recorded with what it changed and what it
+# produced. A change to standard text in one contract leaves the standard text,
+# and every other contract that uses it, untouched. A contract's change may
+# later be proposed back to the standard form.
+#
+# Acme's facility (facility-form.ttl) is amended by an amendment letter:
+#
+# | Change                                        | Operation             | Clause |
+# |-----------------------------------------------|-----------------------|--------|
+# | interest periods may also be six months       | Replace               | 5.2    |
+# | interest accrues "on each business day"       | Strike and substitute | 5.1    |
+# | a new clause on reporting jurisdictions       | Append                | 12.2   |
+#
+# Clauses 5.1 and 5.2B are the form's, shared by every facility drawn from it,
+# so Acme's changes produce bespoke elements, each a revision of the form's
+# version, and Acme's second facility version includes those instead. Section
+# 12 is the form's too, so the appended clause is Acme's own, placed under it.
+#
+# The same change to 5.1 is stated twice, in the letter and again in a later
+# confirmation. Both are recorded, and they produce one version.
+#
+# The lender then proposes Acme's six-month option back to the form: a draft
+# release of the form adds it as a third variant of slot 5.2.
+
+@prefix wrd:     <https://www.nebularis.org/neuro-semantic/lattice/wording#> .
+@prefix wrd-voc: <https://www.nebularis.org/neuro-semantic/lattice/wording/vocab#> .
+@prefix fnd:     <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix prov:    <http://www.w3.org/ns/prov#> .
+@prefix form:    <https://example.org/lattice/wording/facility-form/> .
+@prefix ex:      <https://example.org/lattice/wording/facility-amendment/> .
+
+# ---- The documents stating the changes ----------------------------------------
+
+ex:letter a wrd:Wording ;
+    fnd:hasIdentity ex:letter-identity ; 
+    fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Endorsement ;
+    wrd:directlyComprises ex:letter-para-1 , ex:letter-para-2 , ex:letter-para-3 .
+
+ex:letter-para-1 a wrd:Text ;
+    fnd:hasIdentity ex:letter-para-1-identity ; 
+    fnd:hasGovernanceState fnd:Active ;
+    wrd:objectId "1" ; wrd:rankKey "a0" ;
+    wrd:hasTextPart [ 
+            a wrd:TextPart ; 
+            wrd:partIndex 0 ; 
+            wrd:partText "Clause 5.2 is replaced with the following." 
+        ] .
+
+ex:letter-para-2 a wrd:Text ;
+    fnd:hasIdentity ex:letter-para-2-identity ; 
+    fnd:hasGovernanceState fnd:Active ;
+    wrd:objectId "2" ; wrd:rankKey "b0" ;
+    wrd:hasTextPart [ 
+            a wrd:TextPart ; 
+            wrd:partIndex 0 ; 
+            wrd:partText "In clause 5.1, \"daily\" is struck and \"on each business day\" substituted." 
+        ] .
+
+ex:letter-para-3 a wrd:Text ;
+    fnd:hasIdentity ex:letter-para-3-identity ; 
+    fnd:hasGovernanceState fnd:Active ;
+    wrd:objectId "3" ; wrd:rankKey "c0" ;
+    wrd:hasTextPart [ 
+            a wrd:TextPart ; 
+            wrd:partIndex 0 ; 
+            wrd:partText "The following clause 12.2 is added." 
+        ] .
+
+ex:confirmation a wrd:Wording ;
+    fnd:hasIdentity ex:confirmation-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Endorsement ;
+    wrd:directlyComprises ex:confirmation-para-1 .
+
+ex:confirmation-para-1 a wrd:Text ;
+    fnd:hasIdentity ex:confirmation-para-1-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:objectId "1" ; wrd:rankKey "a0" ;
+    wrd:hasTextPart [ 
+            a wrd:TextPart ; 
+            wrd:partIndex 0 ; 
+            wrd:partText "For the avoidance of doubt, in clause 5.1 \"daily\" is struck and \"on each business day\" substituted." 
+        ] .
+
+# ---- Acme's own elements: revisions of the form's, and one new clause ---------
+# They belong to Acme's facility, not the form, so its assembled wording holds
+# them. A revision takes the place of the version it revises. A new clause is
+# placed under the form's element it was added to.
+
+ex:acme-cl-5-2 a wrd:Text ;
+    fnd:hasIdentity ex:acme-cl-5-2-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "5.2" ;
+    prov:wasRevisionOf form:cl-5-2b ;
+    wrd:hasTextPart [ 
+            a wrd:TextPart ; 
+            wrd:partIndex 0 ; 
+            wrd:partText "Each interest period is three months, or six months if the borrower so elects." 
+        ] .
+
+ex:acme-cl-5-1 a wrd:Text ;
+    fnd:hasIdentity ex:acme-cl-5-1-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "5.1" ;
+    prov:wasRevisionOf form:cl-5-1 ;
+    wrd:hasTextPart [ 
+            a wrd:TextPart ; 
+            wrd:partIndex 0 ; 
+            wrd:partText "Interest accrues on each business day on each loan." 
+        ] .
+
+ex:acme-cl-12-2 a wrd:Text ;
+    fnd:hasIdentity ex:acme-cl-12-2-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "12.2" ; wrd:rankKey "b0" ;
+    wrd:placedUnder form:sec-12 ;
+    wrd:hasTextPart [ 
+            a wrd:TextPart ; 
+            wrd:partIndex 0 ; 
+            wrd:partText "The borrower reports any new jurisdiction to the agent within ten business days." 
+        ] .
+
+# ---- The amendments: what each used, and what it generated ---------------------
+
+ex:replace-5-2 a wrd:Amendment ;
+    wrd:operation wrd-voc:Replace ;
+    wrd:amendsElement form:cl-5-2b ;
+    wrd:replacement ex:acme-cl-5-2 ;
+    wrd:expressedIn ex:letter-para-1 .
+
+ex:strike-5-1 a wrd:Amendment ;
+    wrd:operation wrd-voc:StrikeAndSubstitute ;
+    wrd:amendsElement form:cl-5-1 ;
+    wrd:struckText "daily" ; wrd:substitutedText "on each business day" ;
+    prov:generated ex:acme-cl-5-1 ;
+    wrd:expressedIn ex:letter-para-2 .
+
+# The same change, stated again: recorded, and producing the same version.
+ex:strike-5-1-again a wrd:Amendment ;
+    wrd:operation wrd-voc:StrikeAndSubstitute ;
+    wrd:amendsElement form:cl-5-1 ;
+    wrd:struckText "daily" ; wrd:substitutedText "on each business day" ;
+    prov:generated ex:acme-cl-5-1 ;
+    wrd:expressedIn ex:confirmation-para-1 .
+
+ex:append-12-2 a wrd:Amendment ;
+    wrd:operation wrd-voc:Append ;
+    wrd:amendsElement form:sec-12 ;
+    wrd:replacement ex:acme-cl-12-2 ;
+    wrd:expressedIn ex:letter-para-3 .
+
+# ---- Acme's facility, second version -------------------------------------------
+
+ex:acme-facility-v2 a wrd:AssembledWording ;
+    fnd:hasIdentity form:acme-facility-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    wrd:assembledFrom form:form ;
+    wrd:directlyComprises ex:acme-cl-5-1 , ex:acme-cl-5-2 , ex:acme-cl-12-2 ;
+    wrd:includes form:sec-5 , ex:acme-cl-5-1 , form:slot-5-2 , ex:acme-cl-5-2 ,
+        form:sec-9 , form:cl-9-1 , form:sec-12 , form:cl-12-1 , ex:acme-cl-12-2 ;
+    wrd:hasValue ex:v2-lender-count , ex:v2-jurisdictions .
+
+form:acme-facility-v1 fnd:supersededBy ex:acme-facility-v2 .
+
+ex:v2-lender-count a wrd:VariableValue ;
+    wrd:forVariable form:gv-lender-count ;
+    wrd:literalValue 3 .
+
+ex:v2-jurisdictions a wrd:VariableValue ;
+    wrd:forVariable form:var-jurisdictions ;
+    wrd:value form:uk , form:ie , form:fr .
+
+# ---- Proposed upstream: a draft release of the form -------------------------
+# The release adds Acme's revision to slot 5.2 as a third variant. The slot and
+# its section get new versions of their own identities, and the form a new
+# version, in draft until reviewed. No existing facility changes.
+
+form:cl-5-2c a wrd:Text ;
+    fnd:hasIdentity form:cl-5-2c-identity ; fnd:hasGovernanceState fnd:Draft ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "5.2C" ;
+    wrd:inclusionMode wrd-voc:Variation ;
+    prov:wasDerivedFrom ex:acme-cl-5-2 ;
+    wrd:hasTextPart [ 
+            a wrd:TextPart ; 
+            wrd:partIndex 0 ; 
+            wrd:partText "Each interest period is three months, or six months if the borrower so elects." 
+        ] .
+
+form:slot-5-2-v2 a wrd:VariationSlot ;
+    fnd:hasIdentity form:slot-5-2-identity ; fnd:hasGovernanceState fnd:Draft ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "5.2" ; wrd:rankKey "b0" ;
+    wrd:hasVariant form:cl-5-2a , form:cl-5-2b , form:cl-5-2c .
+
+form:sec-5-v2 a wrd:Element ;
+    fnd:hasIdentity form:sec-5-identity ; fnd:hasGovernanceState fnd:Draft ;
+    wrd:elementType wrd-voc:Section ; wrd:objectId "5" ; wrd:rankKey "e0" ;
+    wrd:directlyComprises form:cl-5-1 , form:slot-5-2-v2 , form:cl-5-3 .
+
+form:form-v2 a wrd:Wording ;
+    fnd:hasIdentity form:form-identity ; fnd:hasGovernanceState fnd:Draft ;
+    wrd:directlyComprises form:sec-5-v2 , form:sec-9 , form:sec-12 , form:gv-lender-count .

@@ -137,7 +137,7 @@ The transformer was restored and `mise run check:authoring-service-it` re-run gr
   to give the slice a probe that actually fails on the regression it targets.
 - **Fuseki or RabbitMQ going down after the service has started** (mid-run reconnection). The retry
   loops run once, at construction; `ping()`/`health()` report the failure but nothing reconnects
-  automatically. A POC-grade limitation, consistent with ADR-A114's scope.
+  automatically. A POC-grade limitation, consistent with ADR-A118's scope.
 - **The admin dataset-creation path when a dataset of the same name already exists with a different
   type** (e.g. `mem` instead of `tdb2`). `ensureReady` only distinguishes "exists" from "absent".
 - **Message redelivery after a worker crash mid-processing** (RabbitMQ's own redelivery-on-requeue

@@ -15,12 +15,12 @@
 
 <https://www.nebularis.org/neuro-semantic/behaviour>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.9.0> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.3.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.3.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.5.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/party/0.5.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.7.0> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.13.0> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.4.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.4.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.7.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/party/0.8.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.10.0> .
 
 bhv:StateSpace a owl:Class ;
 	rdfs:subClassOf fnd:Version ;
@@ -55,6 +55,8 @@ bhv:TriggerKind a owl:Class .
 bhv:TargetKind a owl:Class .
 bhv:AbsorptionPolicy a owl:Class .
 bhv:OperationalProfile a owl:Class ; rdfs:subClassOf fnd:Version .
+bhv:EntryMode a owl:Class ; rdfs:comment "How a transition enters a composite state: by default, or by shallow or deep history (behaviour-vocab)." .
+bhv:TransitionType a owl:Class ; rdfs:comment "Whether a transition from a state to itself leaves and enters it again (External) or not (Internal) (behaviour-vocab)." .
 
 bhv:inStateSpace a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain bhv:State ; rdfs:range bhv:StateSpace .
 
@@ -62,8 +64,28 @@ bhv:initialState a owl:ObjectProperty, owl:FunctionalProperty ;
 	rdfs:domain bhv:StateSpace ; rdfs:range bhv:State ;
 	rdfs:comment "The state a subject is in when it takes effect, before any transition. Subject: a state space. Value: one of its own states, at most one." ;
 	fnd:utility "An occupancy of the initial state needs no transition execution: it carries evidence of the subject taking effect (law B6). Nested states reuse this property for a composite state's initial sub-state." .
+bhv:regionOf a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain bhv:StateSpace ; rdfs:range bhv:State ;
+	rdfs:comment "The state this space refines: a region of it. Subject: a state space. Value: a state, at most one." ;
+	fnd:utility "A state with one region is compound, with several parallel. Give the region its own bhv:initialState. Nest a machine only when its states mean nothing outside the parent, must end on every exit from it, or must be found again on return. Otherwise make it a separate state space on the same subject (nested states sketch §3.1)." .
+
+bhv:perOccasionOf a owl:ObjectProperty ;
+	rdfs:domain bhv:StateSpace ;
+	rdfs:comment "A declaration whose every occasion gets its own instance of this space. Subject: a state space. Value: any resource, in practice a relation." ;
+	fnd:utility "Deliberately has no range (B7). With bhv:regionOf a core occasion state, the space refines that state for the relation's occasions. Without it, the space is a regime running beside each occasion's core states." .
+
 bhv:fromState a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain bhv:TransitionDefinition ; rdfs:range bhv:State .
 bhv:toState a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain bhv:TransitionDefinition ; rdfs:range bhv:State .
+bhv:entryMode a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain bhv:TransitionDefinition ; rdfs:range bhv:EntryMode ;
+	rdfs:comment "How the transition enters its target's regions. Subject: a transition definition. Value: an entry mode, at most one, bhv:DefaultEntry when absent." ;
+	fnd:utility "bhv:ShallowHistory and bhv:DeepHistory need a target with a region. History is a property of the entering transition, so one transition may start a state afresh and another resume it (nested states sketch §4)." .
+
+bhv:transitionType a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain bhv:TransitionDefinition ; rdfs:range bhv:TransitionType ;
+	rdfs:comment "Whether a transition from a state to itself leaves and enters it again. Subject: a transition definition. Value: a transition type, at most one. Internal when absent and source equals target, External otherwise." ;
+	fnd:utility "Declare bhv:External only to restart what is anchored on entry, such as a notice period re-served. Internal is the default so that an effect-only reaction never restarts a period (nested states sketch §4.1)." .
+
 bhv:hasTrigger a owl:ObjectProperty ; rdfs:domain bhv:TransitionDefinition ; rdfs:range bhv:TriggerDefinition .
 bhv:hasGuard a owl:ObjectProperty ; rdfs:domain bhv:TransitionDefinition ; rdfs:range bhv:GuardDefinition .
 bhv:hasEffect a owl:ObjectProperty ; rdfs:domain bhv:TransitionDefinition ; rdfs:range bhv:EffectDefinition .
@@ -72,6 +94,15 @@ bhv:selectionPolicy a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain b
 bhv:activationPolicy a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain bhv:TransitionDefinition ; rdfs:range bhv:ActivationPolicy .
 bhv:priority a owl:DatatypeProperty, owl:FunctionalProperty ; rdfs:domain bhv:TransitionDefinition ; rdfs:range xsd:integer .
 bhv:requiresEligibility a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain bhv:GuardDefinition ; rdfs:range elg:AdmissionProfile .
+
+bhv:requiresState a owl:ObjectProperty ;
+	rdfs:domain bhv:GuardDefinition ; rdfs:range bhv:State ;
+	rdfs:comment "A state the subject must be in for the guard to hold. Subject: a guard definition. Value: a state, any number: one of them per top-level state space they belong to." ;
+	fnd:utility "Reads another regime's state on the same subject, as SCXML's In(). A dependency between two regimes is a guard or a trigger, not a nesting." .
+
+bhv:excludesState a owl:ObjectProperty ;
+	rdfs:domain bhv:GuardDefinition ; rdfs:range bhv:State ;
+	rdfs:comment "A state the subject must not be in for the guard to hold. Subject: a guard definition. Value: a state, any number. The guard fails if any is active." .
 bhv:targetKind a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain bhv:EffectDefinition ; rdfs:range bhv:TargetKind .
 
 bhv:targets a owl:ObjectProperty ;
@@ -96,4 +127,4 @@ bhv:resetRecurrence a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain b
 bhv:absorptionPolicy a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain bhv:AllowanceDefinition ; rdfs:range bhv:AbsorptionPolicy .
 
 [] a owl:AllDisjointClasses ;
-	owl:members ( bhv:StateSpace bhv:State bhv:TransitionDefinition bhv:TriggerDefinition bhv:GuardDefinition bhv:EffectDefinition bhv:AllowanceDefinition bhv:SelectionPolicy bhv:ActivationPolicy bhv:TriggerKind bhv:TargetKind bhv:AbsorptionPolicy bhv:OperationalProfile ) .
+	owl:members ( bhv:StateSpace bhv:State bhv:TransitionDefinition bhv:TriggerDefinition bhv:GuardDefinition bhv:EffectDefinition bhv:AllowanceDefinition bhv:SelectionPolicy bhv:ActivationPolicy bhv:TriggerKind bhv:TargetKind bhv:AbsorptionPolicy bhv:OperationalProfile bhv:EntryMode bhv:TransitionType ) .

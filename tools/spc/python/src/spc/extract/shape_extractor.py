@@ -29,7 +29,7 @@ class ShapeExtractor:
 
         # Query all message options with refinement predicates
         query = """
-        PREFIX spc: <http://spc.marsh.com/ontology/core#>
+        PREFIX spc: <http://spc.example.org/ontology/core#>
         SELECT ?option ?label ?concept
         WHERE {
             ?option a spc:MessageOption .
@@ -62,7 +62,7 @@ class ShapeExtractor:
         g = Graph()
         bind_namespaces(g)
 
-        shape_iri = URIRef(f"http://spc.marsh.com/shapes/{label}Shape")
+        shape_iri = URIRef(f"http://spc.example.org/shapes/{label}Shape")
         concept = URIRef(concept_iri)
 
         g.add((shape_iri, RDF.type, SH.NodeShape))
@@ -97,7 +97,7 @@ class ShapeExtractor:
                         g.add((prop_shape, SH.datatype, range_iri))
                     else:
                         g.add((prop_shape, SH.node,
-                               URIRef(f"http://spc.marsh.com/shapes/"
+                               URIRef(f"http://spc.example.org/shapes/"
                                       f"{range_iri.split('#')[-1]}Shape")))
         except Exception:
             # If the ontology query fails, generate a minimal shape

@@ -7,7 +7,7 @@
 **Last updated:** 2026-10-02
 **Plan:** [xslt-sidecar.md](../plans/xslt-sidecar.md)
 **Sketch:** [xslt-sidecar.md](../sketches/xslt-sidecar.md)
-**ADR:** [A-115](../../architecture/decisions/ADR-A115-xslt-transformation-sidecar.md), Proposed
+**ADR:** [A-119](../../architecture/decisions/ADR-A119-xslt-transformation-sidecar.md), Proposed
 **Machine:** not yet assigned. No branch created, no code written
 
 ## Current position
@@ -41,6 +41,6 @@ branch, or module exists yet.
 
 ## History
 
-- 2026-10-02: sketch and plan drafted at the human's request, alongside ADR-A115 (Proposed) and
+- 2026-10-02: sketch and plan drafted at the human's request, alongside ADR-A119 (Proposed) and
   this status record. No implementation authorised. Not committed to a feature branch yet, since no
   branch has been assigned to this unit.

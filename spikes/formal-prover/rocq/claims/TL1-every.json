@@ -1,0 +1,10 @@
+{
+  "subject": "TL1-every",
+  "statedAs": "Eligibility.every_value_spec",
+  "statementDigest": "sha256:89a860beff303820c4c8ac8f6323c7aa2a232e5b210b72472da237344852362e",
+  "method": "Proof",
+  "scope": "EveryList",
+  "assumptionAudit": "Closed under the global context (CheckEligibility.v)",
+  "tool": { "name": "Rocq", "version": "9.3.0" },
+  "outcome": "passed"
+}

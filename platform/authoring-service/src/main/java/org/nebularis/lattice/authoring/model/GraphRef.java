@@ -3,7 +3,7 @@ package org.nebularis.lattice.authoring.model;
 
 /**
  * A reference to a stored graph (common schema {@code $defs/GraphRef}). {@code tenantId} and
- * {@code projectId} are fixed consts of this POC: see ADR-A114.
+ * {@code projectId} are fixed consts of this POC: see ADR-A118.
  */
 public record GraphRef(String tenantId, String projectId, String graphIri, String revisionHash) {
     public static final String TENANT_ID = "poc";

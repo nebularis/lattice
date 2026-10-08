@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://www.nebularis.org/neuro-semantic/lattice/formal/claim-schema.json",
+  "title": "Track D claim record (spike form of the assurance profile, FM-D3)",
+  "description": "A minimal claim shape, in the assurance-records.md sketch's vocabulary (the asr: prefix there is provisional). One file per claim, under <track>/claims/.",
+  "type": "object",
+  "required": ["subject", "statedAs", "statementDigest", "method", "scope", "tool", "outcome"],
+  "properties": {
+    "subject": {
+      "type": "string",
+      "description": "The law or theorem this claim is about, e.g. elg:L15, elg:L16, TA1."
+    },
+    "statedAs": {
+      "type": "string",
+      "description": "The theorem's name in the theory source, e.g. Eligibility.some_value_spec."
+    },
+    "statementDigest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "description": "sha256 of the normalised statement text (gate.py computes this; a changed digest under an unchanged subject/statedAs is an unreviewed restatement, S5)."
+    },
+    "method": {
+      "enum": ["Proof", "Review", "ModelCheck", "SolverCheck", "PropertyTest", "ShapeCheck"]
+    },
+    "scope": {
+      "type": "string",
+      "description": "What the claim quantifies over, e.g. EveryList, EveryCandidate."
+    },
+    "assumptionAudit": {
+      "type": "string",
+      "description": "The prover's own assumption listing, verbatim (Rocq: Print Assumptions; Isabelle: thm_deps / the theory's sorry/oracle report). Empty string means none found."
+    },
+    "tool": {
+      "type": "object",
+      "required": ["name", "version"],
+      "properties": {
+        "name": { "type": "string" },
+        "version": { "type": "string" },
+        "digest": { "type": "string", "description": "image or archive digest (FM-D15, epic §4)" }
+      }
+    },
+    "outcome": { "enum": ["passed", "failed"] },
+    "defect": {
+      "type": "string",
+      "description": "Set when this claim record documents a seeded-defect run (S1-S5), naming the defect id."
+    }
+  }
+}

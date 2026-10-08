@@ -8,7 +8,7 @@ and sees the wording read as Logical English and the meaning a backend proposes 
 
 **Plan:** [word-authoring-poc.md](../plans/word-authoring-poc.md).
 **Status record:** [word-authoring-poc.md](../status/word-authoring-poc.md).
-**ADR:** [A-114](../../architecture/decisions/ADR-A114-word-authoring-proof-of-concept.md), Proposed.
+**ADR:** [A-118](../../architecture/decisions/ADR-A118-word-authoring-proof-of-concept.md), Proposed.
 **Inputs:** [computable-contract-substrate.md](computable-contract-substrate.md) (CCS) §4 and §5,
 [logical-english-alignment.md](logical-english-alignment.md) (LE) §2 and §6,
 [ADR-A112](../../architecture/decisions/ADR-A112-wording-layer.md).
@@ -178,7 +178,7 @@ the POC runs successfully and that Wording is published and stable. The current 
 [Wording 0.2.0](../../../ontology/wording/README.md), its
 [vocabulary](../../../ontology/wording/vocab/wording-vocab.ttl), and
 [structural shapes](../../../ontology/wording/shapes/structural.ttl). Pin the selected published
-versions when this tranche is approved. Revisit ADR-A114 decision 5 and WA-D3 first, since both
+versions when this tranche is approved. Revisit ADR-A118 decision 5 and WA-D3 first, since both
 deliberately chose a provisional vocabulary. This note is an impact assessment, not an ADR approval.
 
 The bounded first step would adopt published structure and typing while keeping the existing

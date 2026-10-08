@@ -9,7 +9,7 @@
   <ProviderName>Nebularis</ProviderName>
   <DefaultLocale>en-GB</DefaultLocale>
   <DisplayName DefaultValue="LATTICE Authoring"/>
-  <Description DefaultValue="Mark up a wording in Word, read it as Logical English, and review the proposed instrument graph (proof of concept, ADR-A114)."/>
+  <Description DefaultValue="Mark up a wording in Word, read it as Logical English, and review the proposed instrument graph (proof of concept, ADR-A118)."/>
   <IconUrl DefaultValue="https://localhost:3443/addin/assets/icon-32.png"/>
   <HighResolutionIconUrl DefaultValue="https://localhost:3443/addin/assets/icon-80.png"/>
   <SupportUrl DefaultValue="https://localhost:3443/addin/help.html"/>

@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <parent><groupId>org.nebularis.lattice</groupId><artifactId>lattice-platform</artifactId><version>0.1.0-SNAPSHOT</version><relativePath>../pom.xml</relativePath></parent>
   <artifactId>authoring-service</artifactId>
-  <description>Word authoring proof-of-concept HTTP service (ADR-A114). Not a platform contract.</description>
+  <description>Word authoring proof-of-concept HTTP service (ADR-A118). Not a platform contract.</description>
   <dependencies>
     <dependency><groupId>org.apache.jena</groupId><artifactId>jena-arq</artifactId><version>${jena.version}</version></dependency>
     <dependency><groupId>org.apache.jena</groupId><artifactId>jena-shacl</artifactId><version>${jena.version}</version></dependency>

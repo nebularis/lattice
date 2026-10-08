@@ -1,4 +1,4 @@
-"""Contract tests for the word authoring POC (ADR-A114, plan WA1).
+"""Contract tests for the word authoring POC (ADR-A118, plan WA1).
 
 Validates every JSON Schema under ``contracts/authoring`` and the two authoring event schemas
 under ``contracts/events``, the OpenAPI document, the three templates and samples, and the

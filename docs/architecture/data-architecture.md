@@ -158,7 +158,7 @@ Each arrow from a worker back to the Control Plane is a result event consumed on
 
 ### 6.1 Word authoring POC graphs
 
-The word authoring proof of concept (ADR-A114) writes named graphs to its own Fuseki dataset,
+The word authoring proof of concept (ADR-A118) writes named graphs to its own Fuseki dataset,
 outside ADR-A54's layout. With `B` the configured base IRI and `D` = `B` + `doc/` + documentId:
 
 | Graph | IRI |

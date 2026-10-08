@@ -1,6 +1,6 @@
 /**
  * TypeScript types for every schema under `contracts/authoring` and `contracts/events` used by
- * the word authoring add-in (ADR-A114, plan WA8). Hand-written, not generated: each name matches
+ * the word authoring add-in (ADR-A118, plan WA8). Hand-written, not generated: each name matches
  * the schema's own `$defs` name. Kept free of any dependency on `schemas.ts` so these types can be
  * used (and the modules importing them tested) without an Ajv instance.
  */

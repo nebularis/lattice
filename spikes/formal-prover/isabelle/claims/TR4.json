@@ -1,0 +1,10 @@
+{
+  "subject": "TR4",
+  "statedAs": "Interface.some_value_reading (locale monotone_reading interpretation)",
+  "statementDigest": "sha256:7e3a102f5a9c6ce0c906c3c17bb68fd29381c608427bc8cdfebdae5bc05adee0",
+  "method": "Proof",
+  "scope": "SomeValueReading",
+  "assumptionAudit": "no sorry/oops in Interface.thy (gate.py's source scan)",
+  "tool": { "name": "Isabelle", "version": "Isabelle2025-2" },
+  "outcome": "passed"
+}

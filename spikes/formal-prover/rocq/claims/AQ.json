@@ -1,0 +1,10 @@
+{
+  "subject": "AQ",
+  "statedAs": "Adequacy.adequacy_* (13 theorems)",
+  "statementDigest": "sha256:7b5f5efe723408013f2ec363550f011710bc1a98aeb4b366caea72ada49d5625",
+  "method": "Proof",
+  "scope": "EveryMixFixture",
+  "assumptionAudit": "not separately audited; each theorem closed by reflexivity (a computation-level check)",
+  "tool": { "name": "Rocq", "version": "9.3.0" },
+  "outcome": "passed"
+}

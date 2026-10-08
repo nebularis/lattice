@@ -1,259 +1,268 @@
-@prefix : <https://www.nebularis.org/neuro-semantic/foundation#> .
-@prefix fnd: <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
-@prefix owl: <http://www.w3.org/2002/07/owl#> .
-@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
-@prefix xml: <http://www.w3.org/XML/1998/namespace> .
-@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
-@prefix prov: <http://www.w3.org/ns/prov#> .
-@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
-@base <https://www.nebularis.org/neuro-semantic/Foundation> .
+# SPDX-License-Identifier: MPL-2.0
 
-<https://www.nebularis.org/neuro-semantic/foundation> 
-    rdf:type owl:Ontology ;
-    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.3.0> ;
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+
+<https://www.nebularis.org/neuro-semantic/foundation>
+    a owl:Ontology ;
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.4.0> ;
     owl:imports <http://www.w3.org/ns/prov-o-20130430> .
 
-#################################################################
-#    Annotation properties
-#################################################################
+fnd:utility a owl:AnnotationProperty ;
+    rdfs:comment "A concise explanation of what a term is for and how to use it." .
 
-###  https://www.nebularis.org/neuro-semantic/lattice/foundation#utility
-fnd:utility rdf:type owl:AnnotationProperty ;
-            rdfs:comment "A concise explanation of what a term is for and how to use it." .
+fnd:Version a owl:Class ;
+    rdfs:comment "An individual representing a specific, identified state of some persistent thing." ;
+    fnd:utility "A mixin for identity that survives change. The domain individual itself plays the role of being a version, rather than pointing out to a separate version object. Subclass this when a domain concept needs identity that survives being edited or restated. Instances of a Version-bearing class are the versions themselves; each carries identity via hasIdentity, and successive versions link through supersededBy." ;
+    rdfs:subClassOf [
+        a owl:Restriction ;
+        owl:onProperty fnd:hasIdentity ;
+        owl:cardinality "1"^^xsd:nonNegativeInteger
+    ] .
 
+fnd:PersistentIdentity a owl:Class ;
+    rdfs:comment "The stable identifier for a thing across all of its versions." ;
+    fnd:utility "Separates 'the same thing, edited' from 'a different thing that looks similar' — without this, a version history is just a set of unrelated snapshots with no continuant they're all states of." ;
+    rdfs:subClassOf [
+        a owl:Restriction ;
+        owl:onProperty fnd:hasVersion ;
+        owl:minCardinality "1"^^xsd:nonNegativeInteger
+    ] .
 
-#################################################################
-#    Object Properties
-#################################################################
+fnd:Evidenced a owl:Class ;
+    rdfs:comment "A mixin for anything that can carry supporting evidence." ;
+    fnd:utility "Subclass this when something needs to carry supporting evidence for why it holds. Attach evidence via hasEvidence; a fresh instance doesn't need any evidence yet, since something can be true before anyone has recorded why." .
 
-###  https://www.nebularis.org/neuro-semantic/lattice/foundation#assertedBy
-fnd:assertedBy rdf:type owl:ObjectProperty ;
-               rdfs:subPropertyOf prov:wasAttributedTo ;
-               rdfs:domain fnd:Evidence ;
-               rdfs:range prov:Agent ;
-               rdfs:comment "The agent that asserted a piece of evidence." ;
-               fnd:utility "Points a piece of evidence at whoever or whatever asserted it — a person, an organisation, or an automated system. Any prov:Agent individual is a valid value." .
+fnd:Evidence a owl:Class ;
+    rdfs:subClassOf prov:Entity ;
+    rdfs:comment "An item of evidence supporting some assertion or entity." ;
+    fnd:utility "An item of evidence supporting some other fact in the graph. Populate supports to say what it's evidence for, assertedBy for who or what provided it, and recordedAt for when. Every piece of evidence must support at least one thing." ;
+    rdfs:subClassOf [
+        a owl:Restriction ;
+        owl:onProperty fnd:supports ;
+        owl:minCardinality "1"^^xsd:nonNegativeInteger
+    ] , [
+        a owl:Restriction ;
+        owl:onProperty fnd:recordedAt ;
+        owl:cardinality "1"^^xsd:nonNegativeInteger
+    ] .
 
+fnd:TemporallyScoped a owl:Class ;
+    rdfs:comment "A mixin for anything with a validity period distinct from when it was recorded." ;
+    fnd:utility "Subclass this when something has a period during which it holds true, distinct from when someone recorded that fact. Use hasTemporalScope to state the validity period." ;
+    rdfs:subClassOf [
+        a owl:Restriction ;
+        owl:onProperty fnd:hasTemporalScope ;
+        owl:cardinality "1"^^xsd:nonNegativeInteger
+    ] .
 
-###  https://www.nebularis.org/neuro-semantic/lattice/foundation#hasEvidence
-fnd:hasEvidence rdf:type owl:ObjectProperty ;
-                owl:inverseOf fnd:supports ;
-                rdfs:domain fnd:Evidenced ;
-                rdfs:range fnd:Evidence ;
-                rdfs:comment "The evidence supporting an Evidenced thing." ;
-                fnd:utility "Not Functional — an individual can accumulate multiple pieces of evidence over time. No minimum: having no evidence yet is a normal starting state, not an error." .
+fnd:TemporalScope a owl:Class ;
+    rdfs:comment "A validity period: a start, and an optional end." ;
+    fnd:utility "A validity period with a start and an optional end. If something becomes valid, lapses, and later becomes valid again, model that as a new Version with its own new TemporalScope rather than adding a second window here." ;
+    rdfs:subClassOf [
+        a owl:Restriction ;
+        owl:onProperty fnd:validFrom ;
+        owl:cardinality "1"^^xsd:nonNegativeInteger
+    ] .
 
+fnd:Governable a owl:Class ;
+    rdfs:comment "A mixin for anything that carries a governance-lifecycle status." ;
+    fnd:utility "Subclass this when something moves through a review lifecycle before being trusted — a Wording Template, a SHACL shape, an ontology term itself. Use hasGovernanceState to record its current status. Most ordinary facts in a populated graph won't need this mixin at all." ;
+    rdfs:subClassOf [
+        a owl:Restriction ;
+        owl:onProperty fnd:hasGovernanceState ;
+        owl:cardinality "1"^^xsd:nonNegativeInteger
+    ] .
 
-###  https://www.nebularis.org/neuro-semantic/lattice/foundation#hasGovernanceState
-fnd:hasGovernanceState rdf:type owl:ObjectProperty ,
-                                owl:FunctionalProperty ;
-                       rdfs:domain fnd:Governable ;
-                       rdfs:range fnd:GovernanceState ;
-                       rdfs:comment "The current governance status of a Governable thing." ;
-                       fnd:utility "Points a Governable thing at its current governance status. Keep one current value at a time and update it as review status changes." .
+fnd:GovernanceState a owl:Class ;
+    rdfs:comment "The status of a governed artefact within its review lifecycle." ;
+    fnd:utility "The current status of a Governable thing within its review lifecycle — draft, reviewed, active, or superseded. Point hasGovernanceState at whichever value currently applies. Tracking the transition itself is a separate concern from recording the current value; pair with a state-machine mechanism elsewhere if you need it." .
 
+fnd:DerivedArtefact a owl:Class ;
+    rdfs:subClassOf prov:Entity ;
+    rdfs:comment "Something produced from declared sources by a derivation, not authored directly." ;
+    fnd:utility "A compiled, generated, validated or materialised product. Subclass it for a layer's own derived records. Name the kind with derivationKind, the run that produced it with prov:wasGeneratedBy, and its sources with prov:wasDerivedFrom." .
 
-###  https://www.nebularis.org/neuro-semantic/lattice/foundation#hasIdentity
-fnd:hasIdentity rdf:type owl:ObjectProperty ;
-                owl:inverseOf fnd:hasVersion ;
-                rdf:type owl:FunctionalProperty ;
-                rdfs:domain fnd:Version ;
-                rdfs:range fnd:PersistentIdentity ;
-                rdfs:comment "A Version's persistent identity." ;
-                fnd:utility "Points a Version at its PersistentIdentity. Set this once, when the version is created — it won't need to change even as the thing itself is edited into later versions." .
+fnd:DerivationRun a owl:Class ;
+    rdfs:subClassOf prov:Activity ;
+    rdfs:comment "One execution of a derivation." ;
+    fnd:utility "The activity that produced one or more derived artefacts. Link the sources it read with prov:used." .
 
+fnd:DerivationKind a owl:Class ;
+    rdfs:comment "The kind of derivation that produced an artefact." ;
+    fnd:utility "One of the derivation kinds ADR-A12 names: inferred, validated, materialised, projected, indexed, generated, compiled, or a decision or execution record." .
 
-###  https://www.nebularis.org/neuro-semantic/lattice/foundation#hasTemporalScope
-fnd:hasTemporalScope rdf:type owl:ObjectProperty ,
-                              owl:FunctionalProperty ;
-                     rdfs:domain fnd:TemporallyScoped ;
-                     rdfs:range fnd:TemporalScope ;
-                     rdfs:comment "The validity period of a TemporallyScoped thing." ;
-                     fnd:utility "Points a TemporallyScoped thing at its validity period. If the thing later lapses and becomes valid again, that's a new version with its own new TemporalScope, not a second value here." .
+[] a owl:AllDisjointClasses ;
+    owl:members ( fnd:Version fnd:PersistentIdentity fnd:Evidence fnd:TemporalScope fnd:GovernanceState fnd:DerivationKind fnd:Key fnd:KeyScheme ) .
 
+fnd:Evidenced owl:disjointWith fnd:Evidence .
+fnd:TemporallyScoped owl:disjointWith fnd:TemporalScope .
+fnd:Governable owl:disjointWith fnd:GovernanceState .
 
-###  https://www.nebularis.org/neuro-semantic/lattice/foundation#hasVersion
-fnd:hasVersion rdf:type owl:ObjectProperty ;
-               rdfs:domain fnd:PersistentIdentity ;
-               rdfs:range fnd:Version ;
-               rdfs:comment "A PersistentIdentity's versions." ;
-               fnd:utility "Points a PersistentIdentity at all of its versions. Typically populated by querying rather than asserted directly, since it's the inverse of hasIdentity." .
+fnd:hasIdentity a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain fnd:Version ;
+    rdfs:range fnd:PersistentIdentity ;
+    owl:inverseOf fnd:hasVersion ;
+    rdfs:comment "A Version's persistent identity." ;
+    fnd:utility "Points a Version at its PersistentIdentity. Set this once, when the version is created — it won't need to change even as the thing itself is edited into later versions." .
 
+fnd:hasVersion a owl:ObjectProperty ;
+    rdfs:domain fnd:PersistentIdentity ;
+    rdfs:range fnd:Version ;
+    rdfs:comment "A PersistentIdentity's versions." ;
+    fnd:utility "Points a PersistentIdentity at all of its versions. Typically populated by querying rather than asserted directly, since it's the inverse of hasIdentity." .
 
-###  https://www.nebularis.org/neuro-semantic/lattice/foundation#supersededBy
-fnd:supersededBy rdf:type owl:ObjectProperty ,
-                          owl:AsymmetricProperty ,
-                          owl:IrreflexiveProperty ;
-                 rdfs:domain fnd:Version ;
-                 rdfs:range fnd:Version ;
-                 rdfs:comment "Direct succession between two versions of the same identity." ;
-                 fnd:utility "Points one version at the version that directly replaced it. Set this when creating a new version to supersede an old one. Records immediate succession only — to find the latest in a chain, follow this property repeatedly rather than expecting a single hop." .
+fnd:supersededBy a owl:ObjectProperty, owl:AsymmetricProperty, owl:IrreflexiveProperty ;
+    rdfs:domain fnd:Version ;
+    rdfs:range fnd:Version ;
+    rdfs:comment "Direct succession between two versions of the same identity." ;
+    fnd:utility "Points one version at the version that directly replaced it. Set this when creating a new version to supersede an old one. Records immediate succession only — to find the latest in a chain, follow this property repeatedly rather than expecting a single hop." .
 
+fnd:hasEvidence a owl:ObjectProperty ;
+    rdfs:domain fnd:Evidenced ;
+    rdfs:range fnd:Evidence ;
+    owl:inverseOf fnd:supports ;
+    rdfs:comment "The evidence supporting an Evidenced thing." ;
+    fnd:utility "Not Functional — an individual can accumulate multiple pieces of evidence over time. No minimum: having no evidence yet is a normal starting state, not an error." .
 
-###  https://www.nebularis.org/neuro-semantic/lattice/foundation#supports
-fnd:supports rdf:type owl:ObjectProperty ;
-             rdfs:domain fnd:Evidence ;
-             rdfs:range fnd:Evidenced ;
-             rdfs:comment "The inverse of hasEvidence." ;
-             fnd:utility "The inverse direction of hasEvidence; Evidence's own minimum-one restriction (§6) is what actually requires every piece of evidence to support something." .
+fnd:supports a owl:ObjectProperty ;
+    rdfs:domain fnd:Evidence ;
+    rdfs:range fnd:Evidenced ;
+    rdfs:comment "The inverse of hasEvidence." ;
+    fnd:utility "The inverse direction of hasEvidence; Evidence's own minimum-one restriction (§6) is what actually requires every piece of evidence to support something." .
 
+fnd:assertedBy a owl:ObjectProperty ;
+    rdfs:domain fnd:Evidence ;
+    rdfs:range prov:Agent ;
+    rdfs:subPropertyOf prov:wasAttributedTo ;
+    rdfs:comment "The agent that asserted a piece of evidence." ;
+    fnd:utility "Points a piece of evidence at whoever or whatever asserted it — a person, an organisation, or an automated system. Any prov:Agent individual is a valid value." .
 
-#################################################################
-#    Data properties
-#################################################################
+fnd:recordedAt a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:domain fnd:Evidence ;
+    rdfs:range xsd:dateTime ;
+    rdfs:comment "When a piece of evidence was recorded." ;
+    fnd:utility "The point at which a piece of evidence was recorded — not when the fact it supports became true, which is answered separately by whatever TemporalScope applies to the thing being supported." .
 
-###  https://www.nebularis.org/neuro-semantic/lattice/foundation#recordedAt
-fnd:recordedAt rdf:type owl:DatatypeProperty ,
-                        owl:FunctionalProperty ;
-               rdfs:domain fnd:Evidence ;
-               rdfs:range xsd:dateTime ;
-               rdfs:comment "When a piece of evidence was recorded." ;
-               fnd:utility "The point at which a piece of evidence was recorded — not when the fact it supports became true, which is answered separately by whatever TemporalScope applies to the thing being supported." .
+fnd:hasTemporalScope a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain fnd:TemporallyScoped ;
+    rdfs:range fnd:TemporalScope ;
+    rdfs:comment "The validity period of a TemporallyScoped thing." ;
+    fnd:utility "Points a TemporallyScoped thing at its validity period. If the thing later lapses and becomes valid again, that's a new version with its own new TemporalScope, not a second value here." .
 
+fnd:validFrom a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:domain fnd:TemporalScope ;
+    rdfs:range xsd:dateTime ;
+    rdfs:comment "The start of a validity period." ;
+    fnd:utility "The point at which a validity period begins. Always required — use the best available estimate if you don't know a precise start." .
 
-###  https://www.nebularis.org/neuro-semantic/lattice/foundation#validFrom
-fnd:validFrom rdf:type owl:DatatypeProperty ,
-                       owl:FunctionalProperty ;
-              rdfs:domain fnd:TemporalScope ;
-              rdfs:range xsd:dateTime ;
-              rdfs:comment "The start of a validity period." ;
-              fnd:utility "The point at which a validity period begins. Always required — use the best available estimate if you don't know a precise start." .
+fnd:validTo a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:domain fnd:TemporalScope ;
+    rdfs:range xsd:dateTime ;
+    rdfs:comment "The end of a validity period, if it has one." ;
+    fnd:utility "Optional and capped at one — an open-ended scope simply omits this rather than needing a sentinel value." .
 
+fnd:hasGovernanceState a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain fnd:Governable ;
+    rdfs:range fnd:GovernanceState ;
+    rdfs:comment "The current governance status of a Governable thing." ;
+    fnd:utility "Points a Governable thing at its current governance status. Keep one current value at a time and update it as review status changes." .
 
-###  https://www.nebularis.org/neuro-semantic/lattice/foundation#validTo
-fnd:validTo rdf:type owl:DatatypeProperty ,
-                     owl:FunctionalProperty ;
-            rdfs:domain fnd:TemporalScope ;
-            rdfs:range xsd:dateTime ;
-            rdfs:comment "The end of a validity period, if it has one." ;
-            fnd:utility "Optional and capped at one — an open-ended scope simply omits this rather than needing a sentinel value." .
+fnd:derivationKind a owl:ObjectProperty ;
+    rdfs:domain fnd:DerivedArtefact ;
+    rdfs:range fnd:DerivationKind ;
+    rdfs:comment "The kind of derivation that produced a derived artefact." ;
+    fnd:utility "Points a derived artefact at the kind of derivation that produced it." .
 
+fnd:Key a owl:Class ;
+    rdfs:comment "A name an authority outside LATTICE gives a thing: one value, issued under one scheme." ;
+    fnd:utility "Subject: a key node. Holds exactly one keyValue, as issued, and exactly one keyScheme. Mint its IRI from its scheme and value, so one value of one scheme is one node wherever it is recorded. Link things to it with externalKey or naturalKey." ;
+    rdfs:subClassOf [
+        a owl:Restriction ;
+        owl:onProperty fnd:keyValue ;
+        owl:cardinality "1"^^xsd:nonNegativeInteger
+    ] , [
+        a owl:Restriction ;
+        owl:onProperty fnd:keyScheme ;
+        owl:cardinality "1"^^xsd:nonNegativeInteger
+    ] .
 
-#################################################################
-#    Classes
-#################################################################
+fnd:KeyScheme a owl:Class ;
+    rdfs:comment "An authority's scheme of keys: a register, a market's references, a party's own numbers." ;
+    fnd:utility "Subject: a scheme. Declared once, by whoever uses it, never by Foundation. States reissuesValues and sensitiveDataScheme, and may state personalDataScheme, valuePattern and keyNormalisation. A scheme may be given a key class, defined by an owl:hasValue restriction on keyScheme." .
 
-###  https://www.nebularis.org/neuro-semantic/lattice/foundation#Evidence
-fnd:Evidence rdf:type owl:Class ;
-             rdfs:subClassOf prov:Entity ,
-                             [ rdf:type owl:Restriction ;
-                               owl:onProperty fnd:supports ;
-                               owl:minCardinality "1"^^xsd:nonNegativeInteger
-                             ] ,
-                             [ rdf:type owl:Restriction ;
-                               owl:onProperty fnd:recordedAt ;
-                               owl:cardinality "1"^^xsd:nonNegativeInteger
-                             ] ;
-             owl:disjointWith fnd:Evidenced ;
-             rdfs:comment "An item of evidence supporting some assertion or entity." ;
-             fnd:utility "An item of evidence supporting some other fact in the graph. Populate supports to say what it's evidence for, assertedBy for who or what provided it, and recordedAt for when. Every piece of evidence must support at least one thing." .
+fnd:NaturallyKeyed a owl:Class ;
+    rdfs:comment "A mixin for anything that can be identified by a key the world gives it." ;
+    fnd:utility "The domain of naturalKey. Foundation's shapes report two different members sharing a natural key. Take MergedOnNaturalKey for OWL's merging, or Persistence's PersistenceKeyed for write-time enforcement, not both." .
 
+fnd:MergedOnNaturalKey a owl:Class ;
+    rdfs:subClassOf fnd:NaturallyKeyed ;
+    owl:hasKey ( fnd:naturalKey ) ;
+    rdfs:comment "A naturally keyed thing that an OWL reasoner merges with any named thing sharing one of its natural keys." ;
+    fnd:utility "For adopters who use LATTICE's ontologies with a reasoner and without Persistence. Two named members sharing a natural key are inferred owl:sameAs, never rejected, and Foundation's shapes report the pair as a warning so the merge can be reviewed." .
 
-###  https://www.nebularis.org/neuro-semantic/lattice/foundation#Evidenced
-fnd:Evidenced rdf:type owl:Class ;
-              rdfs:comment "A mixin for anything that can carry supporting evidence." ;
-              fnd:utility "Subclass this when something needs to carry supporting evidence for why it holds. Attach evidence via hasEvidence; a fresh instance doesn't need any evidence yet, since something can be true before anyone has recorded why." .
+fnd:NaturallyKeyed owl:disjointWith fnd:Key .
 
+fnd:keyValue a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:domain fnd:Key ;
+    rdfs:range xsd:string ;
+    rdfs:comment "A key's value, as issued." ;
+    fnd:utility "Subject: a key. Value: the string the authority issued, unnormalised. Matching compares the scheme's normalised form, never this string directly." .
 
-###  https://www.nebularis.org/neuro-semantic/lattice/foundation#Governable
-fnd:Governable rdf:type owl:Class ;
-               rdfs:subClassOf [ rdf:type owl:Restriction ;
-                                 owl:onProperty fnd:hasGovernanceState ;
-                                 owl:cardinality "1"^^xsd:nonNegativeInteger
-                               ] ;
-               owl:disjointWith fnd:GovernanceState ;
-               rdfs:comment "A mixin for anything that carries a governance-lifecycle status." ;
-               fnd:utility "Subclass this when something moves through a review lifecycle before being trusted — a Wording Template, a SHACL shape, an ontology term itself. Use hasGovernanceState to record its current status. Most ordinary facts in a populated graph won't need this mixin at all." .
+fnd:keyScheme a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain fnd:Key ;
+    rdfs:range fnd:KeyScheme ;
+    rdfs:comment "The scheme a key was issued under." ;
+    fnd:utility "Subject: a key. Value: its scheme. Exactly one." .
 
+fnd:externalKey a owl:ObjectProperty ;
+    rdfs:range fnd:Key ;
+    owl:propertyChainAxiom ( fnd:hasIdentity fnd:externalKey ) ;
+    rdfs:comment "A key a thing carries, which locates it without identifying it." ;
+    fnd:utility "Subject: anything. Value: a key it carries. Many things may share one key, and one thing may carry many. A version carries every key of its persistent identity, by the property chain." .
 
-###  https://www.nebularis.org/neuro-semantic/lattice/foundation#GovernanceState
-fnd:GovernanceState rdf:type owl:Class ;
-                    rdfs:comment "The status of a governed artefact within its review lifecycle." ;
-                    fnd:utility "The current status of a Governable thing within its review lifecycle — draft, reviewed, active, or superseded. Point hasGovernanceState at whichever value currently applies. Tracking the transition itself is a separate concern from recording the current value; pair with a state-machine mechanism elsewhere if you need it." .
+fnd:naturalKey a owl:ObjectProperty ;
+    rdfs:subPropertyOf fnd:externalKey ;
+    rdfs:domain fnd:NaturallyKeyed ;
+    rdfs:range fnd:Key ;
+    rdfs:comment "A key that identifies a thing: the thing it names, and nothing else." ;
+    fnd:utility "Subject: a naturally keyed thing, the persistent identity of a versioned thing or an unversioned thing itself. Value: a key from a scheme that never reissues values. Not functional: a thing may have one natural key per scheme." .
 
+fnd:reissuesValues a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:domain fnd:KeyScheme ;
+    rdfs:range xsd:boolean ;
+    rdfs:comment "Whether a scheme may issue a withdrawn value again, naming something else." ;
+    fnd:utility "Subject: a scheme. Value: true if a withdrawn value may later name another thing. A scheme that reissues values never supplies natural keys." .
 
-###  https://www.nebularis.org/neuro-semantic/lattice/foundation#PersistentIdentity
-fnd:PersistentIdentity rdf:type owl:Class ;
-                       rdfs:subClassOf [ rdf:type owl:Restriction ;
-                                         owl:onProperty fnd:hasVersion ;
-                                         owl:minCardinality "1"^^xsd:nonNegativeInteger
-                                       ] ;
-                       rdfs:comment "The stable identifier for a thing across all of its versions." ;
-                       fnd:utility "Separates 'the same thing, edited' from 'a different thing that looks similar' — without this, a version history is just a set of unrelated snapshots with no continuant they're all states of." .
+fnd:sensitiveDataScheme a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:domain fnd:KeyScheme ;
+    rdfs:range xsd:boolean ;
+    rdfs:comment "Whether a scheme's values must be kept hidden." ;
+    fnd:utility "Subject: a scheme. Value: true for personal data, or any other value a deployment must not expose. A sensitive value never appears in an IRI, hashed or not (ADR-A51)." .
 
+fnd:personalDataScheme a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:domain fnd:KeyScheme ;
+    rdfs:range xsd:boolean ;
+    rdfs:comment "Whether a sensitive scheme's values are also personal data." ;
+    fnd:utility "Subject: a scheme. Value: true if its values are personal data, so that erasure rules apply. Optional, and allowed only on a sensitive scheme." .
 
-###  https://www.nebularis.org/neuro-semantic/lattice/foundation#TemporalScope
-fnd:TemporalScope rdf:type owl:Class ;
-                  rdfs:subClassOf [ rdf:type owl:Restriction ;
-                                    owl:onProperty fnd:validFrom ;
-                                    owl:cardinality "1"^^xsd:nonNegativeInteger
-                                  ] ;
-                  owl:disjointWith fnd:TemporallyScoped ;
-                  rdfs:comment "A validity period: a start, and an optional end." ;
-                  fnd:utility "A validity period with a start and an optional end. If something becomes valid, lapses, and later becomes valid again, model that as a new Version with its own new TemporalScope rather than adding a second window here." .
+fnd:valuePattern a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:domain fnd:KeyScheme ;
+    rdfs:range xsd:string ;
+    rdfs:comment "A regular expression every value of a scheme matches." ;
+    fnd:utility "Subject: a scheme. Value: an XPath regular expression, checked against each key's value as issued by a shape." .
 
+fnd:keyNormalisation a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:domain fnd:KeyScheme ;
+    rdfs:range xsd:string ;
+    rdfs:comment "The normalisation a scheme's values are compared under." ;
+    fnd:utility "Subject: a scheme. Value: one of the minting specification's pipelines, NfkcTrimCasefold, NfkcTrimUppercase or NfkcTrimLowercase. Minting and uniqueness for the scheme's keys both use it." .
 
-###  https://www.nebularis.org/neuro-semantic/lattice/foundation#TemporallyScoped
-fnd:TemporallyScoped rdf:type owl:Class ;
-                     rdfs:subClassOf [ rdf:type owl:Restriction ;
-                                       owl:onProperty fnd:hasTemporalScope ;
-                                       owl:cardinality "1"^^xsd:nonNegativeInteger
-                                     ] ;
-                     rdfs:comment "A mixin for anything with a validity period distinct from when it was recorded." ;
-                     fnd:utility "Subclass this when something has a period during which it holds true, distinct from when someone recorded that fact. Use hasTemporalScope to state the validity period." .
-
-
-###  https://www.nebularis.org/neuro-semantic/lattice/foundation#Version
-fnd:Version rdf:type owl:Class ;
-            rdfs:subClassOf [ rdf:type owl:Restriction ;
-                              owl:onProperty fnd:hasIdentity ;
-                              owl:cardinality "1"^^xsd:nonNegativeInteger
-                            ] ;
-            rdfs:comment "An individual representing a specific, identified state of some persistent thing." ;
-            fnd:utility "A mixin for identity that survives change. The domain individual itself plays the role of being a version, rather than pointing out to a separate version object. Subclass this when a domain concept needs identity that survives being edited or restated. Instances of a Version-bearing class are the versions themselves; each carries identity via hasIdentity, and successive versions link through supersededBy." .
-
-
-#################################################################
-#    General axioms
-#################################################################
-
-###  https://www.nebularis.org/neuro-semantic/lattice/foundation#DerivedArtefact
-fnd:DerivedArtefact rdf:type owl:Class ;
-                    rdfs:subClassOf prov:Entity ;
-                    rdfs:comment "Something produced from declared sources by a derivation, not authored directly." ;
-                    fnd:utility "A compiled, generated, validated or materialised product. Subclass it for a layer's own derived records. Name the kind with derivationKind, the run that produced it with prov:wasGeneratedBy, and its sources with prov:wasDerivedFrom." .
-
-
-###  https://www.nebularis.org/neuro-semantic/lattice/foundation#DerivationRun
-fnd:DerivationRun rdf:type owl:Class ;
-                  rdfs:subClassOf prov:Activity ;
-                  rdfs:comment "One execution of a derivation." ;
-                  fnd:utility "The activity that produced one or more derived artefacts. Link the sources it read with prov:used." .
-
-
-###  https://www.nebularis.org/neuro-semantic/lattice/foundation#DerivationKind
-fnd:DerivationKind rdf:type owl:Class ;
-                   rdfs:comment "The kind of derivation that produced an artefact." ;
-                   fnd:utility "One of the derivation kinds ADR-A12 names: inferred, validated, materialised, projected, indexed, generated, compiled, or a decision or execution record." .
-
-
-###  https://www.nebularis.org/neuro-semantic/lattice/foundation#derivationKind
-fnd:derivationKind rdf:type owl:ObjectProperty ;
-                   rdfs:domain fnd:DerivedArtefact ;
-                   rdfs:range fnd:DerivationKind ;
-                   rdfs:comment "The kind of derivation that produced a derived artefact." ;
-                   fnd:utility "Points a derived artefact at the kind of derivation that produced it." .
-
-
-[ rdf:type owl:AllDisjointClasses ;
-  owl:members ( fnd:DerivationKind
-                fnd:Evidence
-                fnd:GovernanceState
-                fnd:PersistentIdentity
-                fnd:TemporalScope
-                fnd:Version
-              )
-] .
-
-
-###  Generated by the OWL API (version 4.5.29.2024-05-13T12:11:03Z) https://github.com/owlcs/owlapi
+fnd:Evidence rdfs:subClassOf prov:Entity .
+fnd:assertedBy rdfs:subPropertyOf prov:wasAttributedTo .
+fnd:DerivedArtefact rdfs:subClassOf prov:Entity .
+fnd:DerivationRun rdfs:subClassOf prov:Activity .

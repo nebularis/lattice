@@ -8,13 +8,13 @@
 @prefix ins:   <https://www.nebularis.org/neuro-semantic/lattice/instrument#> .
 @prefix wap:   <https://www.nebularis.org/neuro-semantic/lattice/poc/word-authoring#> .
 
-# Word authoring proof of concept (ADR-A114): a provisional vocabulary, not an ontology document.
+# Word authoring proof of concept (ADR-A118): a provisional vocabulary, not an ontology document.
 #
 # The wrd: terms are taken from the computable contract substrate sketch
 # (docs/developer/sketches/computable-contract-substrate.md) \u00a74, ahead of CCS slice C3, which
 # will publish ontology/wording/ under ADR-A112. The wap: terms are this POC's own, filling the
 # gaps plan \u00a72.6 lists between what the sketch names and what the service needs to build a graph.
-# Neither this file nor the IRIs it documents are platform contracts: see ADR-A114.
+# Neither this file nor the IRIs it documents are platform contracts: see ADR-A118.
 #
 # The ins: terms below are the proposed meaning graph's relation classes (CCS sketch section 4.4,
 # section 5.2), read provisionally ahead of CCS's own rewrite of the Instrument layer, and are
@@ -22,7 +22,7 @@
 # this Java service.
 
 wap:provisional-vocabulary a owl:Ontology ;
-	rdfs:comment "Word authoring POC provisional vocabulary (ADR-A114). Not published under ontology/." .
+	rdfs:comment "Word authoring POC provisional vocabulary (ADR-A118). Not published under ontology/." .
 
 # --- wrd: classes, from the sketch --------------------------------------------------------------
 

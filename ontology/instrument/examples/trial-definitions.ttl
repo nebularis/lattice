@@ -1,0 +1,279 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Premise. A clinical trial agreement owes compensation to "the
+# Participant", but names no one: the participant is whoever the adverse
+# event occurred in, and only if they were enrolled when it occurred. The
+# party is resolved from the case when each occasion arises, and stays fixed
+# for that occasion (law I11). The agreement also takes two things to hold
+# without proof: that a site which enrols no one is inactive, and that a late
+# injury arose during the trial, for one clause only.
+#
+# The agreement's clauses:
+#
+# | Clause | Text | Meaning |
+# |--------|------|---------|
+# | 5.4    | A Site that enrols no participant within 90 days of its activation is deemed inactive. | a rebuttable deeming over an absence (S25) |
+# | 5.5    | The Sponsor may terminate this Agreement as to an inactive Site. | a power whose scope the deeming feeds |
+# | 9.1    | The Sponsor shall compensate the Participant for any injury arising during the trial from an adverse event. | an obligation owed to a party resolved through the case (S20) |
+# | 9.2    | For the purposes of clause 9.1, an injury that becomes apparent within 12 months after the Participant's last visit is deemed to have arisen during the trial. | a relation-back deeming, for one purpose |
+#
+# What the example shows:
+#
+# | Construct                                            | Where                                            |
+# |------------------------------------------------------|--------------------------------------------------|
+# | a party that depends on the case (D17)               | ex:participant-occ ins:resolvedBy ex:participant-resolution |
+# | a path from the case to an actor, in Eligibility's steps | ex:participant-resolution, an elg:EvidenceStep |
+# | a filter on each actor the path reaches              | ins:resolutionFilter ex:enrolled-at-event        |
+# | a rebuttable deeming over an absence (S25)           | tmpl:deemed-inactive, ins:conclusive false       |
+# | a deeming feeding a relation's scope                 | tmpl:end-for-site ins:scope ex:site-inactive     |
+# | relation back, for one purpose (ins:forPurposeOf)    | tmpl:deemed-in-trial ins:forPurposeOf tmpl:compensate |
+#
+# Each occasion of 9.1 is one adverse event, which is the case. Its
+# participant is the actor the event ex:occurredIn, kept if they were
+# enrolled at the event's date. Two events in one participant are two
+# occasions, each resolved on its own. Nothing here evaluates.
+
+@prefix ins:     <https://www.nebularis.org/neuro-semantic/lattice/instrument#> .
+@prefix ins-voc: <https://www.nebularis.org/neuro-semantic/lattice/instrument/vocab#> .
+@prefix bhv:     <https://www.nebularis.org/neuro-semantic/lattice/behaviour#> .
+@prefix wrd:     <https://www.nebularis.org/neuro-semantic/lattice/wording#> .
+@prefix wrd-voc: <https://www.nebularis.org/neuro-semantic/lattice/wording/vocab#> .
+@prefix fnd:     <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix pty:     <https://www.nebularis.org/neuro-semantic/lattice/party#> .
+@prefix elg:     <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
+@prefix owl:     <http://www.w3.org/2002/07/owl#> .
+@prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+@prefix tmpl:    <https://example.org/lattice/instrument/trial-definitions/form/> .
+@prefix ex:      <https://example.org/lattice/instrument/trial-definitions/> .
+
+# ==== The trial agreement form: wording =======================================
+
+ex:form a wrd:Wording ;
+    fnd:hasIdentity ex:form-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:directlyComprises ex:sec-5 , ex:sec-9 .
+
+ex:sec-5 a wrd:Element ;
+    fnd:hasIdentity ex:sec-5-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Section ; wrd:objectId "5" ; wrd:rankKey "e0" ;
+    wrd:directlyComprises ex:cl-5-4 , ex:cl-5-5 .
+ex:cl-5-4 a wrd:Text ;
+    fnd:hasIdentity ex:cl-5-4-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "5.4" ; wrd:rankKey "d0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "A Site that enrols no participant within 90 days of its activation is deemed inactive." ] .
+ex:cl-5-5 a wrd:Text ;
+    fnd:hasIdentity ex:cl-5-5-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "5.5" ; wrd:rankKey "e0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "The Sponsor may terminate this Agreement as to an inactive Site." ] .
+
+ex:sec-9 a wrd:Element ;
+    fnd:hasIdentity ex:sec-9-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Section ; wrd:objectId "9" ; wrd:rankKey "i0" ;
+    wrd:directlyComprises ex:cl-9-1 , ex:cl-9-2 .
+ex:cl-9-1 a wrd:Text ;
+    fnd:hasIdentity ex:cl-9-1-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "9.1" ; wrd:rankKey "a0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "The Sponsor shall compensate the Participant for any injury arising during the trial from an adverse event." ] .
+ex:cl-9-2 a wrd:Text ;
+    fnd:hasIdentity ex:cl-9-2-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "9.2" ; wrd:rankKey "b0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "For the purposes of clause 9.1, an injury that becomes apparent within 12 months after the Participant's last visit is deemed to have arisen during the trial." ] .
+
+# ==== The trial's own data: the case ==========================================
+#
+# The trial's applied ontology, which the resolution's path reads. LATTICE
+# does not define adverse events.
+
+ex:AdverseEvent a owl:Class ; rdfs:label "adverse event" .
+ex:occurredIn a owl:ObjectProperty ; rdfs:label "occurred in" .
+
+# ==== Roles and conditions ====================================================
+
+ex:Sponsor a pty:Role ; rdfs:label "Sponsor" .
+ex:Site a pty:Role ; rdfs:label "Site" .
+ex:Participant a pty:Role ; rdfs:label "the Participant" .
+
+# Placeholders: conditions stated, not yet evaluable (C13). The absence in
+# ex:no-enrolment-in-90-days is read under a closure the deeming licenses,
+# which ADR-A105 declares (HQ-6).
+ex:no-enrolment-in-90-days a elg:Condition ;
+    elg:conditionKey "no-participant-enrolled-within-90-days-of-activation" ;
+    elg:matchStrategy elg:ExactMatch ; elg:compatibilityOperation elg:AllRequired ;
+    elg:wildcardSemantics elg:NoWildcard ;
+    elg:requiredConcept ex:no-enrolment .
+ex:no-enrolment a skos:Concept ; rdfs:label "no participant has been enrolled at the Site within 90 days of its activation" .
+
+ex:site-inactive a elg:Condition ;
+    elg:conditionKey "site-inactive" ;
+    elg:matchStrategy elg:ExactMatch ; elg:compatibilityOperation elg:AllRequired ;
+    elg:wildcardSemantics elg:NoWildcard ;
+    elg:requiredConcept ex:inactive .
+ex:inactive a skos:Concept ; rdfs:label "the Site is inactive" .
+
+ex:injury-in-trial a elg:Condition ;
+    elg:conditionKey "injury-arising-during-the-trial-from-an-adverse-event" ;
+    elg:matchStrategy elg:ExactMatch ; elg:compatibilityOperation elg:AllRequired ;
+    elg:wildcardSemantics elg:NoWildcard ;
+    elg:requiredConcept ex:in-trial .
+ex:in-trial a skos:Concept ; rdfs:label "an injury has arisen during the trial from an adverse event" .
+
+ex:apparent-within-12-months a elg:Condition ;
+    elg:conditionKey "injury-apparent-within-12-months-after-last-visit" ;
+    elg:matchStrategy elg:ExactMatch ; elg:compatibilityOperation elg:AllRequired ;
+    elg:wildcardSemantics elg:NoWildcard ;
+    elg:requiredConcept ex:apparent-late .
+ex:apparent-late a skos:Concept ; rdfs:label "the injury became apparent within 12 months after the Participant's last visit" .
+
+# The resolution's filter, applied to each actor the path reaches. Reading
+# enrolment at the event's date needs the case's time, which the evaluation
+# context supplies (C12, C13).
+ex:enrolled-at-event a elg:Condition ;
+    elg:conditionKey "enrolled-at-the-date-of-the-event" ;
+    elg:matchStrategy elg:ExactMatch ; elg:compatibilityOperation elg:AllRequired ;
+    elg:wildcardSemantics elg:NoWildcard ;
+    elg:requiredConcept ex:enrolled .
+ex:enrolled a skos:Concept ; rdfs:label "the person was enrolled in the trial at the date of the adverse event" .
+
+# ==== Stated meaning: deemings ================================================
+
+# Rebuttable: the Site may show that it did enrol a participant whose record
+# arrived late (S25). The deemed condition is what clause 5.5 reads.
+tmpl:term-5-4 a ins:Term , ins:Template ; ins:expressedIn ex:cl-5-4 .
+tmpl:deemed-inactive a ins:Deeming , ins:Template ;
+    ins:arisesUnder tmpl:term-5-4 ;
+    ins:deems ex:site-inactive ;
+    ins:when ex:no-enrolment-in-90-days ;
+    ins:conclusive false .
+
+# Relation back: a late injury is taken to have arisen during the trial, but
+# only for clause 9.1. Any other clause reading ex:injury-in-trial reads it
+# without the deeming.
+tmpl:term-9-2 a ins:Term , ins:Template ; ins:expressedIn ex:cl-9-2 .
+tmpl:deemed-in-trial a ins:Deeming , ins:Template ;
+    ins:arisesUnder tmpl:term-9-2 ;
+    ins:deems ex:injury-in-trial ;
+    ins:when ex:apparent-within-12-months ;
+    ins:conclusive true ;
+    ins:forPurposeOf tmpl:compensate .
+
+# ==== Stated meaning: relations ===============================================
+
+tmpl:term-5-5 a ins:Term , ins:Template ; ins:expressedIn ex:cl-5-5 .
+tmpl:end-for-site a ins:Power , ins:Template ;
+    ins:arisesUnder tmpl:term-5-5 ;
+    ins:holder ex:Sponsor ; ins:counterparty ex:Site ;
+    ins:activity ins-voc:Terminate ;
+    ins:scope ex:site-inactive .
+
+tmpl:term-9-1 a ins:Term , ins:Template ; ins:expressedIn ex:cl-9-1 .
+tmpl:on-injury a ins:OnCondition , bhv:TriggerDefinition ;
+    bhv:triggerKind bhv:DerivedTrigger ;
+    ins:condition ex:injury-in-trial .
+tmpl:compensate a ins:Obligation , ins:Template ;
+    ins:arisesUnder tmpl:term-9-1 ;
+    ins:obligor ex:Sponsor ; ins:obligee ex:Participant ;
+    ins:activity ins-voc:Pay ;
+    ins:arisesOn tmpl:on-injury .                     # one occasion per adverse event
+
+# ==== The instance: what the agreement stores (D1) ============================
+#
+# Its parties, including the contingent one, with how that one is resolved
+# (D17). The resolution is the instance's, since the form names only a role.
+
+ex:site-311-wording-v1 a wrd:AssembledWording ;
+    fnd:hasIdentity ex:site-311-wording-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:assembledFrom ex:form ;
+    wrd:includes ex:sec-5 , ex:cl-5-4 , ex:cl-5-5 , ex:sec-9 , ex:cl-9-1 , ex:cl-9-2 .
+
+# The participant is no party: they are owed compensation by an agreement
+# they do not sign.
+ex:site-311-v1 a ins:Instrument ;
+    fnd:hasIdentity ex:site-311-identity ;
+    ins:expressedIn ex:site-311-wording-v1 ;
+    ins:party ex:sponsor-occ , ex:site-occ .
+
+ex:halcyon a pty:Actor ; rdfs:label "Halcyon Therapeutics Ltd" .
+ex:eastgate a pty:Actor ; rdfs:label "Eastgate General Hospital" .
+
+ex:sponsor-occ a pty:RoleOccupancy ;
+    fnd:hasIdentity ex:sponsor-occ-identity ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-06-01T00:00:00Z"^^xsd:dateTime ] ;
+    pty:inRole ex:Sponsor ; pty:occupiedBy ex:halcyon .
+ex:site-occ a pty:RoleOccupancy ;
+    fnd:hasIdentity ex:site-occ-identity ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-06-01T00:00:00Z"^^xsd:dateTime ] ;
+    pty:inRole ex:Site ; pty:occupiedBy ex:eastgate .
+
+# "The Participant": a contingent occupancy (ADR-A102), resolved from each
+# occasion's case (I11).
+ex:participant-occ a pty:RoleOccupancy ;
+    fnd:hasIdentity ex:participant-occ-identity ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-06-01T00:00:00Z"^^xsd:dateTime ] ;
+    pty:inRole ex:Participant ;
+    ins:resolvedBy ex:participant-resolution .
+
+# From the adverse event to the actor it occurred in, along Eligibility's
+# steps. The path ends at an actor. The filter keeps those enrolled at the
+# event's date, and an actor it does not keep is no participant for the
+# occasion.
+ex:participant-resolution a ins:PartyResolution ;
+    ins:resolvesFrom ex:AdverseEvent ;
+    ins:resolutionStep [ a elg:EvidenceStep ; elg:stepIndex 0 ;
+                         elg:stepProperty ex:occurredIn ; elg:stepDirection elg:Forward ] ;
+    ins:resolutionFilter ex:enrolled-at-event .
+
+# ==== Generated bound meaning: the expected output, not stored (D4) ===========
+#
+# One section, the whole (D7), so no bound term records ins:boundWithin.
+
+ex:term-5-4 a ins:Term ; ins:boundIn ex:site-311-v1 ; ins:boundFrom tmpl:term-5-4 .
+ex:deemed-inactive a ins:Deeming ;
+    ins:boundFrom tmpl:deemed-inactive ; ins:arisesUnder ex:term-5-4 ;
+    ins:deems ex:site-inactive ;
+    ins:when ex:no-enrolment-in-90-days ;
+    ins:conclusive false .
+
+ex:term-5-5 a ins:Term ; ins:boundIn ex:site-311-v1 ; ins:boundFrom tmpl:term-5-5 .
+ex:end-for-site a ins:Power ;
+    ins:boundFrom tmpl:end-for-site ; ins:arisesUnder ex:term-5-5 ;
+    ins:holder ex:sponsor-occ ; ins:counterparty ex:site-occ ;
+    ins:activity ins-voc:Terminate ;
+    ins:scope ex:site-inactive .
+
+ex:term-9-1 a ins:Term ; ins:boundIn ex:site-311-v1 ; ins:boundFrom tmpl:term-9-1 .
+ex:compensate a ins:Obligation ;
+    ins:boundFrom tmpl:compensate ; ins:arisesUnder ex:term-9-1 ;
+    ins:obligor ex:sponsor-occ ;
+    ins:obligee ex:participant-occ ;                  # resolved for each occasion
+    ins:activity ins-voc:Pay ;
+    ins:arisesOn tmpl:on-injury .
+
+# A bound deeming's purpose is the bound relation.
+ex:term-9-2 a ins:Term ; ins:boundIn ex:site-311-v1 ; ins:boundFrom tmpl:term-9-2 .
+ex:deemed-in-trial a ins:Deeming ;
+    ins:boundFrom tmpl:deemed-in-trial ; ins:arisesUnder ex:term-9-2 ;
+    ins:deems ex:injury-in-trial ;
+    ins:when ex:apparent-within-12-months ;
+    ins:conclusive true ;
+    ins:forPurposeOf ex:compensate .
+
+# ==== The trial's data, unchanged by evaluation ===============================
+#
+# Event AE-0193 occurred in participant P-0418, enrolled at its date: the
+# occasion's participant is P-0418. Event AE-0207 occurred in a person
+# screened but never enrolled: the filter keeps no one, and 9.1 owes that
+# occasion to no participant.
+
+ex:p-0418 a pty:Actor ; rdfs:label "Participant P-0418" .
+ex:s-0533 a pty:Actor ; rdfs:label "Screened person S-0533" .
+ex:ae-0193 a ex:AdverseEvent ; ex:occurredIn ex:p-0418 .
+ex:ae-0207 a ex:AdverseEvent ; ex:occurredIn ex:s-0533 .

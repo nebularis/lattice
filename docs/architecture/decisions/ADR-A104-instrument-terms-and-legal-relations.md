@@ -5,7 +5,7 @@
 **Status:** Accepted
 **Date:** 2026-10-01 (proposed), 2026-10-01 (accepted, Gate A)
 **Supersedes:** ADR-A07b. Carries ADR-A96 onto terms
-**Related:** ADR-A01 (addendum), ADR-A86, ADR-A92, ADR-A102, ADR-A103, ADR-A105, ADR-A106,
+**Related:** ADR-A01 (addendum), ADR-A86, ADR-A87, ADR-A92, ADR-A102, ADR-A103, ADR-A105, ADR-A106,
 ADR-A109, ADR-A112, ADR-A113, ADR-A-C2
 **Unit:** [`computable-contract-substrate`](../../developer/plans/computable-contract-substrate.md)
 (C1, decisions CC-D5, CC-D8, CC-D10, CC-D11, CC-D12). Delivers
@@ -145,7 +145,7 @@ occasions, the amendment states it with `prov:wasRevisionOf`.
 ## Consequences
 
 - Instrument is rewritten in CCS slices C6 to C9 and C8a, each a breaking MINOR under ADR-A113
-  (`0.7.0` to `0.11.0`). Instrument imports Wording and Behaviour configuration. Once ADR-A106
+  (`0.9.0` to `0.13.0`, after Foundation's keys cascade takes `0.8.0`, ADR-A114). Instrument imports Wording and Behaviour configuration. Once ADR-A106
   lands, nothing outside Instrument imports it, so the rewrite cascades only to its own documents.
 - Instrument's shapes check ownership in SHACL Core and law I17 in two SHACL-SPARQL shapes,
   shipped for consumers who do not use the LATTICE runtime (sketch §5.9).
@@ -156,3 +156,249 @@ occasions, the amendment states it with `prov:wasRevisionOf`.
   2026-10-01 addendum.
 - NRS slice N4 is delivered here. ADR-A105 and ADR-A109 are revised in NRS. Applied insurance
   Phase 5 builds on this ADR (ADR-A101). Open CBAA migrates (CCS plan §7).
+
+## Addendum (2026-10-04): a regime is stated once
+
+**Status:** Accepted 2026-10-05, proposed 2026-10-04 (CCS slice C7a, C7a-Q1 to C7a-Q5). The reasoning, with an example
+use-case, is the [CCS sketch](../../developer/sketches/computable-contract-substrate.md) §7.4.1.
+The examples are `licence-notice.ttl`, `supply-suspension.ttl`, `facility-cure-period.ttl` and
+`service-dispute.ttl` in `ontology/instrument/examples/`.
+
+1. **One tier for regimes** (revises decisions 2 and 13). A regime is stated meaning only. It
+   arises under the stated term of the clause that states it, and its states, transitions and
+   triggers are shared by every instrument whose wording includes that clause. Each instrument's
+   progress through it is an occupancy `bhv:forSubject` the instrument's persistent identity, so
+   an amendment that leaves the regime's clause alone leaves the occupancy alone. A value the
+   instance supplies, such as a notice length from a variable, is resolved per instrument at
+   runtime from its assembled wording (C8). A bound term may therefore own no relation: a term
+   whose clause states only a regime binds nothing.
+2. **Law I13 restated.** Only bound *relations* are evaluated. Regimes are read as stated, per
+   subject. A bound relation names the stated regime's state in `ins:appliesInState`.
+3. **Triggers name stated relations.** A regime's `ins:ofPower` and `ins:ofObligation` name the
+   stated relation, and match the exercise or breach of any bound relation instantiated from it.
+   A per-occasion regime (`bhv:perOccasionOf`) likewise names the stated relation, and covers the
+   occasions of every bound relation instantiated from it. A bound relation's own `ins:arisesOn`,
+   `ins:arisesOnBreachOf`, `ins:arisesOnExerciseOf`, `ins:endsOn` and `ins:excepts` name bound
+   nodes, since it restates its template in full.
+4. **Whose state gates a relation** (C7a-Q5). A gate reads the occupancy of the relation's own
+   instrument identity, or, for a per-occasion regime, of the occasion its arising chain reaches
+   (decision 9 of ADR-A106's addendum). Gates on another subject, one participant's share or
+   another agreement, are held (CCS plan, HQ-2).
+5. **Behaviour's terms on a stated regime, with or without a reasoner** (revises decisions 7 and
+   13, decided 2026-10-04). Behaviour's engine reads only Behaviour's terms: `bhv:StateSpace`,
+   `bhv:TransitionDefinition` with its `bhv:selectionPolicy` and `bhv:activationPolicy`, and
+   `bhv:TriggerDefinition` with its `bhv:triggerKind`. Behaviour's structural shapes require each
+   policy (minimum one), and Instrument's require each legal trigger's kind, which Behaviour leaves
+   optional. Decision 13 had instantiation assert them beside the `ins:`
+   types. A regime is stated only (decision 1), so nothing instantiates it, and the `bhv:` terms
+   come from one of two places:
+
+   - **Asserted, for data read without a reasoner.** This is the baseline, and every example
+     follows it. Each regime node carries its `bhv:` type beside its `ins:` type. Each
+     `ins:RegimeTransition` states `bhv:selectionPolicy bhv:SingleMatch` and `bhv:activationPolicy
+     bhv:ImmediateActivation`. Each legal trigger states its `bhv:triggerKind`. Law B4's shapes
+     require the explicit `bhv:` type, because the engine matches the `rdf:type` triple as
+     written, and a node typed only `ins:RegimeTransition` would be invisible to it. They check
+     the triple itself (`sh:path rdf:type ; sh:hasValue`): `sh:class` follows the subclass axioms
+     in the data graph, and would pass without it.
+   - **Entailed, for authors working with a reasoner.** An optional convenience. Each Instrument
+     class states its fixed Behaviour terms as axioms, so an author with an OWL 2 RL reasoner (or
+     a more expressive one) writes the `ins:` type alone:
+
+     | Class | Axioms (`rdfs:subClassOf`) |
+     |---|---|
+     | `ins:Regime` | `bhv:StateSpace` |
+     | `ins:RegimeTransition` | `bhv:TransitionDefinition`, `owl:hasValue bhv:SingleMatch` on `bhv:selectionPolicy`, `owl:hasValue bhv:ImmediateActivation` on `bhv:activationPolicy` |
+     | `ins:OnExercise`, `ins:OnAct` | `bhv:TriggerDefinition`, `owl:hasValue bhv:ExternalStimulus` on `bhv:triggerKind` |
+     | `ins:OnBreach`, `ins:OnCondition` | `bhv:TriggerDefinition`, `owl:hasValue bhv:DerivedTrigger` on `bhv:triggerKind` |
+     | `ins:OnExpiry` | `bhv:TriggerDefinition`, `owl:hasValue bhv:ScheduledTrigger` on `bhv:triggerKind` |
+
+     The restrictions are `owl:hasValue`, not `owl:allValuesFrom`. An `allValuesFrom` restriction
+     only constrains a value already stated, while `hasValue` in a superclass makes a reasoner add
+     the value (OWL 2 RL rule cls-hv1). RDFS alone gives the `bhv:` types through `rdfs:subClassOf`
+     but not the values, so the convenience needs the OWL 2 RL profile. `ins:ofPower`,
+     `ins:ofObligation` and `ins:tolledIn` each have a domain (`ins:OnExercise`, `ins:OnBreach`,
+     `ins:OnExpiry`), so a reasoner also derives the trigger's class, and from it the `bhv:` type
+     and kind, from the property alone. Each of these properties has only that one subject, which
+     meets the domain rule in `.github/copilot-instructions.md`. `ins:condition` and `ins:after`
+     have no domain, since terms in time (C7b) may reuse them.
+
+   **Validate the graph the engine reads.** Without a reasoner, that is the asserted graph. With
+   one, it is the closed graph, and B4's shape holds there because the reasoner added the `bhv:`
+   types. A library template (decision 13) is written in the asserted form, so it serves both.
+
+   **A wrong stated value.** All three properties are functional, and Behaviour does not declare
+   its policy or kind individuals distinct. An author who states `bhv:selectionPolicy
+   bhv:AllMatches` on a regime transition, with the axioms above and a reasoner, leads it to infer
+   `bhv:AllMatches owl:sameAs bhv:SingleMatch`, after which every transition in the graph has both
+   values. Two measures, combined:
+
+   - **Instrument's value shapes**, which list the one permitted value (`sh:in ( bhv:SingleMatch
+     )`, and so on for activation and each trigger kind). On the asserted graph they report the
+     wrong value at the node that states it, in either mode, and let a value the reasoner will add
+     be absent. On the closed graph they report the wrong value at every node the merge reached.
+     `sh:hasValue` is not used: it would reject correct data written for a reasoner (the value is
+     not yet there), and miss a wrong value after the merge (the right one is also there).
+     Presence stays with the minimum counts, Behaviour's for the policies and Instrument's for the
+   kinds, on the graph the engine reads.
+   - **Distinct individuals in Behaviour** (follow-up FU-C7a-a, CCS plan): `owl:AllDifferent` over
+     the selection policies, the activation policies and the trigger kinds, so that a reasoner
+     reports the merge as an inconsistency at the triple that caused it.
+
+6. **Smaller settlements.** `ins:activity` has no domain, so `ins:OnAct` reuses it for the act a
+   trigger fires on (C7a-Q2). Decision 5's three trigger domains follow the same rule. `ins:arisesOn`, `ins:arisesOnBreachOf`, `ins:arisesOnExerciseOf` and
+   `ins:endsOn` (decision 6) land with the triggers in C7a (C7a-Q3). They take the four triggers
+   other than `ins:OnExpiry`, which counts from entering a state, and a relation has none to enter
+   (sketch §5.5). A relation's own periods are due ranges (C7b). `ins:tolledIn` names the
+   states in which an `ins:OnExpiry` period does not run (C7a-Q4, ADR-A106 addendum decision 9).
+   `ins:stateKind` takes a concept under `ins-voc:StateKindContract`, with a baseline scheme bound
+   as fallback.
+
+## Addendum (2026-10-05): terms in time
+
+**Status:** Accepted 2026-10-05, proposed the same day (CCS slice C7b, C7b-Q1 to C7b-Q7 and TQ1 to TQ7). The design is the
+[terms in time sketch](../../developer/sketches/terms-in-time.md), which this addendum summarises.
+The examples are `trial-reporting.ttl`, `lease-expiry.ttl`, `licence-survival.ttl` and
+`service-renewal.ttl` in `ontology/instrument/examples/`.
+
+1. **Due ranges** (revises decision 6 and law I5). An obligation has at most one due range
+   (`ins:due`, a `qnt:Range`), and none where its words fix no time. A continuing obligation and a
+   prohibition have none. This layer does not model the reasonable time the law implies where no
+   time is fixed, unless a contract's express words define one. A due range is anchored at a
+   `qnt:ContextValue` (ADR-A115) whose role is a named time, never evaluation time (law I9):
+   the occasion's arising, the instrument's inception or ending, the start or end of a recurrence
+   period, or a date the wording defines and C8 binds. Its offsets carry units, business days
+   included. `ins:dueTolledIn` names states in which its time does not run, as `ins:tolledIn` does
+   for an expiry.
+2. **Recurrences.** `ins:recurrence` gives an obligation one occasion per period of a
+   `qnt:Recurrence` anchored at a context value. A continuing obligation's recurrence gives its test
+   dates.
+3. **Windows.** `ins:window` on a power or a permission is the range in which it may be exercised
+   or used. An exercise outside it has no effect (law I10). An offer or option lapses when its
+   window closes, with no trigger of its own.
+4. **Ending is entering a state** (revises decision 6, `ins:ends`). `ins:ends` on a state of a
+   regime names what entering the state ends: the instrument (`ins-voc:TheInstrument`) or stated
+   terms, matched to the bound terms instantiated from them. Expiry, termination on notice, for
+   breach, on an event, by performance and at a long-stop date are each a transition into an ending
+   state on a legal trigger. `ins:OnExpiry` takes `ins:at`, a value such as the Expiry Date, as an
+   alternative to `ins:after`.
+5. **A sixth legal trigger.** `ins:OnEntry ⊑ bhv:TriggerDefinition`, with `ins:ofState` and the kind
+   `bhv:DerivedTrigger` fixed by an `owl:hasValue` restriction (decision 5 of the 2026-10-04
+   addendum), fires when the subject enters a state. A relation may arise on it, and another regime
+   may react to it.
+6. **What ending does.** On entering an ending state, no new occasion arises under an ended term,
+   arisen occasions persist (accrued rights and liabilities, law I3), pending occasions end, and
+   relations arising on an `ins:OnEntry` of the state arise.
+7. **Survival.** `ins:survives` on a stated term names an `ins:Survival`, with an optional
+   `ins:survivalPeriod` from the ending and an optional `ins:survivesUntil` condition. With neither,
+   the term survives without limit. It is read for each instrument through the bound term's
+   `ins:boundFrom`. A term whose relations arise on entering an ending state survives for that
+   purpose without saying so, since requiring express wording would not work in practice (TQ5).
+8. **Deferred.** `ins:computedBy` (decision 14) waits for contract amounts (C7b-Q7). Rescission
+   ab initio, frustration, termination by agreement (C9), and a party's or a section's ending
+   (C7c, C9) are outside C7b. Business day conventions and times of day are held design question
+   HQ-3.
+
+## Addendum (2026-10-06): what terms are, and who they bind
+
+**Status:** Accepted 2026-10-06, proposed the same day (CCS slice C7c). Records C7c-Q1 to C7c-Q9 as revised after the
+examples phase, as decisions D1 to D22 of the [CCS plan's C7c section](../../developer/plans/computable-contract-substrate.md),
+which states each in full. Restates decisions 4 and 12, details decision 9, and revises the
+2026-10-05 addendum's decision 4. The examples are `framework-lots.ttl`, `service-towers.ttl`,
+`facility-definitions.ttl`, `trial-definitions.ttl` and `supply-classification.ttl` in
+`ontology/instrument/examples/`.
+
+1. **What an instance stores** (D1 to D4). An instance stores only what differs from its form:
+   identity and keys, parties, the values it gives the wording's variables, the elements its
+   wording includes, `ins:boundUnder`, and records filling a contingent party. Stated meaning is
+   content-addressed with its element version, so a wording matched on its hash is never restated,
+   and it is context-free: a stated term never names another element's version, and scopes and
+   endings name a section's persistent identity, resolved within the assembled wording. Bound
+   meaning is a derived artefact (ADR-A92), generated on demand, cached as need dictates, and kept
+   in its own subgraph where processing allows. Only bound meaning is evaluated (law I13).
+2. **Generation shares** (D5). Binding resolves every word in each section, and sections whose
+   words resolve alike share one bound term, recorded with `ins:boundWithin`. Generated nodes have
+   deterministic identities. Sharing across instruments is CCS slice C16b, under its own ADR.
+3. **Sections** (D6 to D8, restating decision 12). A sectioning term (`ins:Sectioning`,
+   `ins:section`) declares the sections and places within each the terms it contains. Without one,
+   the instrument is one section, the whole, and an element a term's words scope to is a section
+   by being named. Sections nest. `ins:appliesWithin` values are alternatives, `ins:notWithin`
+   excludes what lies at or below it, and a term with no scope governs the whole.
+4. **Cases** (D9, law I15, C7c-Q1). `ins:boundUnder`, brought forward from decision 11, names the
+   bound power whose exercise created an instrument, and that instrument falls in the one section
+   the power is bound within. Any other case is not placed: each section's bound relations
+   evaluate it in their own right.
+5. **Cross-section terms and ending** (D10, D11, revising the 2026-10-05 addendum's decision 4). A
+   qualifier spanning sections is bound once and qualifies each section's bound relations. A
+   cross-section term whose words vary by section is split and reported while drafting.
+   `ins:ends` may name a section, and entering the state ends, for that section's cases, every term
+   bound within it.
+6. **Constitutive terms** (D12 to D15, detailing decision 9). An `ins:Definition` defines exactly
+   one word, the node stated meaning names in its place (a role, or a concept for a condition or
+   concept word), and means at least one thing. Stated meaning names words and bound meaning names
+   meanings: a condition slot on stated meaning may take a defined word, which binding replaces. `ins:actingRule` states how several parties act together. Overlapping
+   definitions combine at binding, per section, as D13 sets out (law I16), and `ins:prevailsOver`
+   between definitions removes an overlap. An `ins:Deeming` deems one condition, on at most one
+   footing, conclusively or not, for named purposes or all. `ins:classification` is read, never
+   evaluated, under a scheme bound to `ins-voc:TermClassificationContract`.
+7. **Who terms bind** (D16 to D18, restating decision 4). Bound relations always name their
+   parties. A party that depends on the case is a contingent occupancy with at most one
+   `ins:resolvedBy`, an `ins:PartyResolution` (`ins:resolvesFrom`, `ins:resolutionStep`,
+   `ins:resolutionFilter`), and is otherwise filled by a record of each occasion. A group's duty is
+   decided by its composition rule. A group's power, and a group with no rule, are Undetermined
+   until C9 (CC-D10).
+8. **Party is domain-neutral** (D19). Party states a member's outward and inward shares
+   (`pty:outwardShare`, `pty:inwardShare`), and two composition rules, `pty:EachForOwnShare` and
+   `pty:EachForWhole`, replacing `pty:share`, `pty:SeveralOnly` and `pty:JointAndSeveral`. What a
+   share means is the instrument's or the applied layer's. Caps are qualifiers.
+9. **Deferred.** Evaluation of all of the above (C12, C13). Date and amount words, and the values
+   parameter bindings carry (C8). Consent rules (C9, HQ-5). The closure declaration, rebuttal and
+   supersession of deemings (ADR-A105, HQ-6). Precedence between terms (NRS N10). Sharing across
+   instruments (C16b). A shared path type in Foundation (its own unit). Portions of one order
+   (HQ-7).
+
+## Addendum (2026-10-06): values in stated meaning
+
+**Status:** Proposed 2026-10-06 (CCS slice C8, C8-Q1 to C8-Q6, C8-Q3 in part). Restates decision 13.
+The [CCS plan's C8 section](../../developer/plans/computable-contract-substrate.md) states each
+answer with its consequences. The examples are `facility-parameters.ttl`, `framework-lots.ttl` and
+`services-schedule.ttl` in `ontology/instrument/examples/`.
+
+1. **A placeholder takes its value from a variable** (restates decision 13, C8-Q1). Where stated
+   meaning needs a value an instance supplies, it holds a placeholder of the slot's own kind, a
+   quantity, a concept or a role, with `ins:valueFrom` naming the variable's persistent identity.
+   There is no `ins:ParameterBinding` node and no vocabulary of parameter kinds. A placeholder may
+   sit anywhere stated meaning reaches, inside an Eligibility condition or a Quantification range
+   included, so scope parameters need nothing more. A placeholder may carry a default value.
+2. **Resolution across the tiers.** A library element's stated meaning names the variable's
+   identity. A template resolves it to the variable version it declares, so a clause reused under
+   another schedule keeps its stated meaning. An instance resolves it to the value its assembled
+   wording records for a version of that identity, following `wrd:populatedFrom`, with one value per
+   entry for a table field's variable. Variables are declarations, never included (law W5).
+3. **Schedules** (C8-Q2). A party word's stated definition means a placeholder role taking its value
+   from a variable, whose value is an occupancy or a group.
+4. **Value words** (C7c-Q7, C8-Q3 in part). An amount word's definition means a placeholder quantity,
+   and a placeholder may take its value from an amount word as from a variable. A chain of words and
+   variables must not loop: a cycle, found on the form and by the instantiator over every hop, per
+   section and through `wrd:populatedFrom`, is a violation whose report names each hop. A concept
+   word may stand in an Eligibility concept slot, where shapes check that it is not also a concept
+   of the condition's scheme and that its meaning suits the slot. Entered values only:
+   computed amounts, bases and `ins:computedBy` wait for contract amounts. Date words, and how
+   context roles from several sources are bound (HQ-4), wait for the formal-methods epic's track C2.
+5. **Which text is expected to mean something** (C8-Q4). By convention, a leaf of text, a
+   `wrd:Text` with no children, is expected to have stated meaning, and containers, variables,
+   references, fields and entries are not. `ins:encodingStatus ins-voc:NoMeaning` marks a leaf
+   reviewed as binding nobody. An expected leaf with neither stated meaning nor the mark is not yet
+   assessed, and is reported as a warning. Whether an element expresses meaning is read, never
+   asserted.
+6. **Generation** (C8-Q5). A reference instantiator generates one instrument's bound meaning from its form
+   and instance (D4, D5): words and variables resolved per section, the path from a slot down to a
+   placeholder generated anew, sharing where words and values resolve alike, deterministic
+   identities. It reports unresolved words, variables with no value, and overlaps. Sharing across
+   instruments, the cache and the subgraph are CCS C16b. Called the reference binder until 2026-10-08, renamed under CCS C9-Q10 because "binder" is a market word.
+7. **Checks** (law I17, C8-Q6). A bound node names values, never variables or words. Nothing bound
+   comes from text the wording does not include, and every included leaf of text has stated meaning
+   bound in the instrument or is marked. Overlapping definitions and unresolved words are checked on
+   the form as well as on generated meaning.
+8. **Deferred.** Date words and HQ-4 (track C2). Computed amounts, rates in qualifiers and bases
+   (contract amounts). Wording's text references by identity (CCS C8b). Evaluation (C12, C13).

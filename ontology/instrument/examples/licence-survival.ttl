@@ -1,0 +1,270 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Premise. A software licence ends on notice, at the end of a 90 day notice
+# period. Termination ends the licence, but not everything in it. The
+# licensee must return the licensor's materials within 14 days after the
+# licence ends. The duty of confidentiality continues for five years after
+# termination, and the licensor's indemnity against third-party claims
+# continues without limit.
+#
+# The licence's clauses:
+#
+# | Clause | Text | Meaning |
+# |--------|------|---------|
+# | 11.1   | The Licensor may end this licence by giving 90 days' notice. | a power, and the notice regime its exercise starts |
+# | 11.4   | Within 14 days after this licence ends, the Licensee shall return all of the Licensor's materials. | an obligation arising on termination |
+# | 13.1   | The Licensee shall not disclose the Licensor's Confidential Information. This clause survives termination for five years. | a prohibition, surviving for a period |
+# | 14.1   | The Licensor shall indemnify the Licensee against any claim that the Software infringes a third party's rights. This clause survives termination. | an obligation arising on a condition, surviving without limit |
+#
+# The notice regime, stated by clause 11.1:
+#
+#   in force --(exercise of the power in 11.1)--> notice period
+#   notice period --(expiry, 90 days)--> terminated            ins:ends the instrument
+#
+# What termination does (terms in time sketch §7):
+#
+# | Relation | On entering terminated |
+# |----------|------------------------|
+# | an occasion already arisen, such as an unpaid claim under 14.1 | persists: an accrued right |
+# | an occasion pending, not yet arisen, under a term that does not survive | ends |
+# | return of materials (11.4) | arises, due within 14 days of the ending |
+# | confidentiality (13.1) | continues for five years |
+# | the indemnity (14.1) | continues, with no limit |
+#
+# What the example shows:
+#
+# | Construct                                       | Where                                   |
+# |-------------------------------------------------|-----------------------------------------|
+# | ending as entering a state                      | tmpl:terminated, ins:ends               |
+# | a relation arising on termination               | tmpl:return-materials, ins:OnEntry      |
+# | survival for a period                           | tmpl:term-13-1, ins:survivalPeriod      |
+# | survival without limit                          | tmpl:term-14-1, an empty ins:Survival   |
+#
+# Survival is stated on the stated term, and read for each instrument through
+# its bound term's ins:boundFrom, as a regime is read as stated.
+
+@prefix ins:     <https://www.nebularis.org/neuro-semantic/lattice/instrument#> .
+@prefix ins-voc: <https://www.nebularis.org/neuro-semantic/lattice/instrument/vocab#> .
+@prefix bhv:     <https://www.nebularis.org/neuro-semantic/lattice/behaviour#> .
+@prefix wrd:     <https://www.nebularis.org/neuro-semantic/lattice/wording#> .
+@prefix wrd-voc: <https://www.nebularis.org/neuro-semantic/lattice/wording/vocab#> .
+@prefix fnd:     <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix pty:     <https://www.nebularis.org/neuro-semantic/lattice/party#> .
+@prefix elg:     <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
+@prefix qnt:     <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
+@prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+@prefix tmpl:    <https://example.org/lattice/instrument/licence-survival/form/> .
+@prefix ex:      <https://example.org/lattice/instrument/licence-survival/> .
+
+# ==== The licence form: wording ===============================================
+
+ex:form a wrd:Wording ;
+    fnd:hasIdentity ex:form-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:directlyComprises ex:sec-11 , ex:sec-13 , ex:sec-14 .
+
+ex:sec-11 a wrd:Element ;
+    fnd:hasIdentity ex:sec-11-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Section ; wrd:objectId "11" ; wrd:rankKey "k0" ;
+    wrd:directlyComprises ex:cl-11-1 , ex:cl-11-4 .
+ex:cl-11-1 a wrd:Text ;
+    fnd:hasIdentity ex:cl-11-1-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "11.1" ; wrd:rankKey "a0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "The Licensor may end this licence by giving 90 days' notice." ] .
+ex:cl-11-4 a wrd:Text ;
+    fnd:hasIdentity ex:cl-11-4-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "11.4" ; wrd:rankKey "d0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "Within 14 days after this licence ends, the Licensee shall return all of the Licensor's materials." ] .
+
+ex:sec-13 a wrd:Element ;
+    fnd:hasIdentity ex:sec-13-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Section ; wrd:objectId "13" ; wrd:rankKey "m0" ;
+    wrd:directlyComprises ex:cl-13-1 .
+ex:cl-13-1 a wrd:Text ;
+    fnd:hasIdentity ex:cl-13-1-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "13.1" ; wrd:rankKey "a0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "The Licensee shall not disclose the Licensor's Confidential Information. This clause survives termination for five years." ] .
+
+ex:sec-14 a wrd:Element ;
+    fnd:hasIdentity ex:sec-14-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Section ; wrd:objectId "14" ; wrd:rankKey "n0" ;
+    wrd:directlyComprises ex:cl-14-1 .
+ex:cl-14-1 a wrd:Text ;
+    fnd:hasIdentity ex:cl-14-1-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "14.1" ; wrd:rankKey "a0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "The Licensor shall indemnify the Licensee against any claim that the Software infringes a third party's rights. This clause survives termination." ] .
+
+# ==== Roles, spaces, units and conditions =====================================
+
+ex:Licensor a pty:Role ; rdfs:label "Licensor" .
+ex:Licensee a pty:Role ; rdfs:label "Licensee" .
+
+ex:time a qnt:ValueSpace ;
+    qnt:spaceKey "calendar-time" ; qnt:orderKind qnt:TotalOrder ; qnt:densityKind qnt:Dense ;
+    qnt:valueDatatype xsd:dateTime ; qnt:spaceHash "calendar-time-v1" .
+ex:durations a qnt:ValueSpace ;
+    qnt:spaceKey "durations" ; qnt:orderKind qnt:TotalOrder ; qnt:densityKind qnt:Discrete ;
+    qnt:spaceHash "durations-v1" .
+ex:day a qnt:Unit ; rdfs:label "day" .
+ex:year a qnt:Unit ; rdfs:label "year" .
+
+ex:ending a qnt:ContextValue ; qnt:onSpace ex:time ; qnt:contextRole ins-voc:Ending .
+
+ex:within-14-days-of-ending a qnt:Range ;
+    qnt:onSpace ex:time ;
+    qnt:relativeToAnchor [ a qnt:AnchorBinding ;
+        qnt:anchorValue ex:ending ; qnt:offsetKind qnt:Absolute ;
+        qnt:lowerOffsetBy [ a qnt:Quantity ; qnt:onSpace ex:durations ; qnt:numericValue "0"^^xsd:decimal ; qnt:inUnit ex:day ] ;
+        qnt:upperOffsetBy [ a qnt:Quantity ; qnt:onSpace ex:durations ; qnt:numericValue "14"^^xsd:decimal ; qnt:inUnit ex:day ] ] .
+
+# Placeholders: scopes and triggers stated, not yet evaluable (C13).
+ex:confidential a elg:Condition ;
+    elg:conditionKey "licensor-confidential-information" ;
+    elg:matchStrategy elg:ExactMatch ; elg:compatibilityOperation elg:AllRequired ;
+    elg:wildcardSemantics elg:NoWildcard ;
+    elg:requiredConcept ex:confidential-information .
+ex:confidential-information a skos:Concept ; rdfs:label "the Licensor's Confidential Information" .
+
+ex:infringement-claim a elg:Condition ;
+    elg:conditionKey "third-party-infringement-claim" ;
+    elg:matchStrategy elg:ExactMatch ; elg:compatibilityOperation elg:AllRequired ;
+    elg:wildcardSemantics elg:NoWildcard ;
+    elg:requiredConcept ex:claim-made .
+ex:claim-made a skos:Concept ; rdfs:label "a third party claims that the Software infringes its rights" .
+
+# ==== Stated meaning: relations ===============================================
+
+tmpl:term-11-1 a ins:Term , ins:Template ; ins:expressedIn ex:cl-11-1 .
+tmpl:end-on-notice a ins:Power , ins:Template ;
+    ins:arisesUnder tmpl:term-11-1 ;
+    ins:holder ex:Licensor ; ins:counterparty ex:Licensee ;
+    ins:activity ins-voc:Terminate .
+
+# Arises only after the licence has ended, so its term survives for that
+# purpose without saying so (TQ5).
+tmpl:term-11-4 a ins:Term , ins:Template ; ins:expressedIn ex:cl-11-4 .
+tmpl:on-termination a ins:OnEntry , bhv:TriggerDefinition ;
+    bhv:triggerKind bhv:DerivedTrigger ;
+    ins:ofState tmpl:terminated .
+tmpl:return-materials a ins:Obligation , ins:Template ;
+    ins:arisesUnder tmpl:term-11-4 ;
+    ins:obligor ex:Licensee ; ins:obligee ex:Licensor ;
+    ins:activity ins-voc:ReturnMaterials ;
+    ins:arisesOn tmpl:on-termination ;
+    ins:due ex:within-14-days-of-ending .
+
+tmpl:term-13-1 a ins:Term , ins:Template ; ins:expressedIn ex:cl-13-1 ;
+    ins:survives [ a ins:Survival ;
+        ins:survivalPeriod [ a qnt:Quantity ; qnt:onSpace ex:durations ;
+                             qnt:numericValue "5"^^xsd:decimal ; qnt:inUnit ex:year ] ] .
+tmpl:no-disclosure a ins:Prohibition , ins:Template ;
+    ins:arisesUnder tmpl:term-13-1 ;
+    ins:obligor ex:Licensee ; ins:obligee ex:Licensor ;
+    ins:activity ins-voc:Disclose ;
+    ins:scope ex:confidential .
+
+tmpl:term-14-1 a ins:Term , ins:Template ; ins:expressedIn ex:cl-14-1 ;
+    ins:survives [ a ins:Survival ] .                 # without limit
+tmpl:on-claim a ins:OnCondition , bhv:TriggerDefinition ;
+    bhv:triggerKind bhv:DerivedTrigger ;
+    ins:condition ex:infringement-claim .
+tmpl:indemnify a ins:Obligation , ins:Template ;
+    ins:arisesUnder tmpl:term-14-1 ;
+    ins:obligor ex:Licensor ; ins:obligee ex:Licensee ;
+    ins:activity ins-voc:Indemnify ;
+    ins:arisesOn tmpl:on-claim .                      # one occasion per claim
+
+# ==== Stated meaning: the notice regime =======================================
+
+tmpl:notice-regime a ins:Regime , bhv:StateSpace , ins:Template ;
+    fnd:hasIdentity tmpl:notice-regime-identity ;
+    ins:arisesUnder tmpl:term-11-1 ;
+    bhv:initialState tmpl:in-force .
+
+tmpl:in-force a bhv:State ;
+    bhv:inStateSpace tmpl:notice-regime ; ins:stateKind ins-voc:InForce .
+tmpl:notice-period a bhv:State ;
+    bhv:inStateSpace tmpl:notice-regime ; ins:stateKind ins-voc:NoticePeriod .
+tmpl:terminated a bhv:State ;
+    bhv:inStateSpace tmpl:notice-regime ; ins:stateKind ins-voc:Terminated ;
+    ins:ends ins-voc:TheInstrument .
+
+tmpl:on-notice-given a ins:OnExercise , bhv:TriggerDefinition ;
+    bhv:triggerKind bhv:ExternalStimulus ;
+    ins:ofPower tmpl:end-on-notice .
+tmpl:on-notice-expiry a ins:OnExpiry , bhv:TriggerDefinition ;
+    bhv:triggerKind bhv:ScheduledTrigger ;
+    ins:after [ a qnt:Quantity ; qnt:onSpace ex:durations ;
+                qnt:numericValue "90"^^xsd:decimal ; qnt:inUnit ex:day ] .
+
+tmpl:give-notice a ins:RegimeTransition , bhv:TransitionDefinition ;
+    bhv:fromState tmpl:in-force ; bhv:toState tmpl:notice-period ;
+    bhv:hasTrigger tmpl:on-notice-given ;
+    bhv:selectionPolicy bhv:SingleMatch ; bhv:activationPolicy bhv:ImmediateActivation .
+tmpl:notice-runs-out a ins:RegimeTransition , bhv:TransitionDefinition ;
+    bhv:fromState tmpl:notice-period ; bhv:toState tmpl:terminated ;
+    bhv:hasTrigger tmpl:on-notice-expiry ;
+    bhv:selectionPolicy bhv:SingleMatch ; bhv:activationPolicy bhv:ImmediateActivation .
+
+# ==== The licence for Quarry Analytics ========================================
+
+ex:quarry-wording-v1 a wrd:AssembledWording ;
+    fnd:hasIdentity ex:quarry-wording-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:assembledFrom ex:form ;
+    wrd:includes ex:sec-11 , ex:cl-11-1 , ex:cl-11-4 , ex:sec-13 , ex:cl-13-1 , ex:sec-14 , ex:cl-14-1 .
+
+ex:quarry-v1 a ins:Instrument ;
+    fnd:hasIdentity ex:quarry-identity ;
+    ins:expressedIn ex:quarry-wording-v1 ;
+    ins:party ex:licensor-occ , ex:licensee-occ .
+
+ex:meridale a pty:Actor ; rdfs:label "Meridale Software Ltd" .
+ex:quarry a pty:Actor ; rdfs:label "Quarry Analytics Ltd" .
+
+ex:licensor-occ a pty:RoleOccupancy ;
+    fnd:hasIdentity ex:licensor-occ-identity ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-02-01T00:00:00Z"^^xsd:dateTime ] ;
+    pty:inRole ex:Licensor ; pty:occupiedBy ex:meridale .
+ex:licensee-occ a pty:RoleOccupancy ;
+    fnd:hasIdentity ex:licensee-occ-identity ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-02-01T00:00:00Z"^^xsd:dateTime ] ;
+    pty:inRole ex:Licensee ; pty:occupiedBy ex:quarry .
+
+# ==== Bound meaning ===========================================================
+
+ex:term-11-1 a ins:Term ; ins:boundIn ex:quarry-v1 ; ins:boundFrom tmpl:term-11-1 .
+ex:end-on-notice a ins:Power ;
+    ins:boundFrom tmpl:end-on-notice ; ins:arisesUnder ex:term-11-1 ;
+    ins:holder ex:licensor-occ ; ins:counterparty ex:licensee-occ ;
+    ins:activity ins-voc:Terminate .
+
+ex:term-11-4 a ins:Term ; ins:boundIn ex:quarry-v1 ; ins:boundFrom tmpl:term-11-4 .
+ex:return-materials a ins:Obligation ;
+    ins:boundFrom tmpl:return-materials ; ins:arisesUnder ex:term-11-4 ;
+    ins:obligor ex:licensee-occ ; ins:obligee ex:licensor-occ ;
+    ins:activity ins-voc:ReturnMaterials ;
+    ins:arisesOn tmpl:on-termination ;
+    ins:due ex:within-14-days-of-ending .
+
+ex:term-13-1 a ins:Term ; ins:boundIn ex:quarry-v1 ; ins:boundFrom tmpl:term-13-1 .
+ex:no-disclosure a ins:Prohibition ;
+    ins:boundFrom tmpl:no-disclosure ; ins:arisesUnder ex:term-13-1 ;
+    ins:obligor ex:licensee-occ ; ins:obligee ex:licensor-occ ;
+    ins:activity ins-voc:Disclose ;
+    ins:scope ex:confidential .
+
+ex:term-14-1 a ins:Term ; ins:boundIn ex:quarry-v1 ; ins:boundFrom tmpl:term-14-1 .
+ex:indemnify a ins:Obligation ;
+    ins:boundFrom tmpl:indemnify ; ins:arisesUnder ex:term-14-1 ;
+    ins:obligor ex:licensor-occ ; ins:obligee ex:licensee-occ ;
+    ins:activity ins-voc:Indemnify ;
+    ins:arisesOn tmpl:on-claim .

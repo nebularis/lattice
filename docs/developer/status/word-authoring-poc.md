@@ -8,14 +8,14 @@ checklist, M1 to M14, which only the human can run)
 **Last updated:** 2026-10-02
 **Plan:** [word-authoring-poc.md](../plans/word-authoring-poc.md)
 **Sketch:** [word-authoring-poc.md](../sketches/word-authoring-poc.md)
-**ADR:** [A-114](../../architecture/decisions/ADR-A114-word-authoring-proof-of-concept.md), Proposed
+**ADR:** [A-118](../../architecture/decisions/ADR-A118-word-authoring-proof-of-concept.md), Proposed
 **Machine:** S. Branch `ux/auth-le`, local commits only
 
 ## Current position
 
 The design and a one-shot plan of thirteen slices (WA0 to WA11, with WA9a) are written. Decisions
 WA-D1 to WA-D13 were recorded by the human on 2026-10-01: WA-D4 is Javalin, the rest follow the
-recommendations. ADR-A114 stays Proposed. WA0 to WA9 are done: preflight, the WA1 contracts, the
+recommendations. ADR-A118 stays Proposed. WA0 to WA9 are done: preflight, the WA1 contracts, the
 WA2 service module that maps a snapshot to the Wording graph and validates it with SHACL, the WA3
 detection, template and conformance checks, the WA4 HTTP API over Javalin with an in-memory store,
 bus, registry and job tracking, WA5's real Fuseki store, RabbitMQ bus, configuration and entry
@@ -239,11 +239,11 @@ reverted. No replacement test was needed. Detail in the
   published-Wording adoption assessment was added to sketch section 4.1.1 and the plan's
   deferred follow-up section. No runtime or ontology changes, no tranche scheduled, and no
   manual-checklist sign-off inferred. The human will decide when to pick up the work.
-- 2026-10-01: sketch, plan, status record and ADR-A114 (Proposed) written on `ux/auth-le`. No
+- 2026-10-01: sketch, plan, status record and ADR-A118 (Proposed) written on `ux/auth-le`. No
   ontology change, so no release tag is due.- 2026-10-01: slice WA9a added at the human's request: ribbon group and right-click commands for
   marking text, decision WA-D13 (shared runtime), checklist steps M11 to M14, risk R8.
 - 2026-10-01: decisions WA-D1 to WA-D13 recorded by the human. WA-D4 is Javalin (pinned 6.7.0, the
-  plan's WA4 adapter rewritten for it), the rest as recommended. ADR-A114 decision 6 names Javalin.
+  plan's WA4 adapter rewritten for it), the rest as recommended. ADR-A118 decision 6 names Javalin.
 - 2026-10-01: WA0 preflight run in autonomous mode. P1 to P4 and P7 pass, P5 and P6 fail (above).
   Committed with the unit's planning documents as `[wap] WA0: preflight` (`a0758ae`).
 - 2026-10-01: P5 and P6 re-run after the human set `NODE_EXTRA_CA_CERTS` and started Docker

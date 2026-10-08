@@ -8,8 +8,8 @@
 
 <https://www.nebularis.org/neuro-semantic/behaviour-vocab>
 	a owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/behaviour-vocab/0.9.0> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.9.0> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/behaviour-vocab/0.13.0> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.13.0> .
 
 bhv:ExternalStimulus a bhv:TriggerKind .
 bhv:ScheduledTrigger a bhv:TriggerKind .
@@ -29,6 +29,23 @@ bhv:InstrumentTarget a bhv:TargetKind ;
 bhv:PartyTarget a bhv:TargetKind .
 bhv:AllowanceTarget a bhv:TargetKind .
 
+bhv:DefaultEntry a bhv:EntryMode ;
+	rdfs:label "Default entry"@en ;
+	rdfs:comment "Each region of the target is entered at its initial state. The mode when none is declared." .
+bhv:ShallowHistory a bhv:EntryMode ;
+	rdfs:label "Shallow history"@en ;
+	rdfs:comment "Each region of the target resumes the state it held when the target was last exited. Below those, regions start at their initial states." .
+bhv:DeepHistory a bhv:EntryMode ;
+	rdfs:label "Deep history"@en ;
+	rdfs:comment "The whole configuration below the target is resumed as it was when the target was last exited." .
+
+bhv:Internal a bhv:TransitionType ;
+	rdfs:label "Internal"@en ;
+	rdfs:comment "Applies its effects without leaving its state: no occupancy is ended or created. Only from a state to itself, and the default there." .
+bhv:External a bhv:TransitionType ;
+	rdfs:label "External"@en ;
+	rdfs:comment "Leaves its source and enters its target. Always so between two states. Declared on a self-transition that must restart what is anchored on entry." .
+
 bhv:Sequential a bhv:AbsorptionPolicy .
 bhv:Proportional a bhv:AbsorptionPolicy .
 
@@ -38,21 +55,20 @@ bhv:B-P2 a bhv:OperationalProfile ; rdfs:comment "Sequential allowance-evaluatio
 # ---- The occasion state space: a fixed core, refined by sub-states ----------
 # Its transitions are the runtime evaluator's, derived from the legal
 # algorithms and protected by law I7, so they are not declared here. A
-# deployment refines a core state with sub-states of its own and adds parallel
-# regimes, never a new state of this space (CCS C11-Q1).
+# deployment refines a core state with a region of its own (bhv:regionOf,
+# bhv:perOccasionOf) and adds regimes per occasion, never a new state of this
+# space (CCS C11-Q1). bhv:Live holds the states an occasion can be suspended
+# from, so reinstatement is deep history into it (C11a-Q1).
 
 bhv:OccasionStates a bhv:StateSpace ;
 	fnd:hasIdentity bhv:OccasionStates-identity ;
-	bhv:initialState bhv:Pending ;
+	bhv:initialState bhv:Live ;
 	rdfs:label "Occasion states"@en ;
 	rdfs:comment "The states of an occasion: one legal relation applied to one case." .
 
-bhv:Pending a bhv:State ; bhv:inStateSpace bhv:OccasionStates ;
-	rdfs:label "Pending"@en ;
-	rdfs:comment "The relation applies to the case, and has not yet arisen. The initial state. The evaluator's." .
-bhv:Arisen a bhv:State ; bhv:inStateSpace bhv:OccasionStates ;
-	rdfs:label "Arisen"@en ;
-	rdfs:comment "The relation has arisen for the case and is live. The evaluator's." .
+bhv:Live a bhv:State ; bhv:inStateSpace bhv:OccasionStates ;
+	rdfs:label "Live"@en ;
+	rdfs:comment "The occasion has not been performed, breached or ended, and is not suspended: it is pending or arisen. The initial state. The evaluator's." .
 bhv:Performed a bhv:State ; bhv:inStateSpace bhv:OccasionStates ;
 	rdfs:label "Performed"@en ;
 	rdfs:comment "The relation has been fulfilled for the case. The evaluator's." .
@@ -64,4 +80,18 @@ bhv:Ended a bhv:State ; bhv:inStateSpace bhv:OccasionStates ;
 	rdfs:comment "The relation ended for the case without being performed or breached. The evaluator's." .
 bhv:Suspended a bhv:State ; bhv:inStateSpace bhv:OccasionStates ;
 	rdfs:label "Suspended"@en ;
-	rdfs:comment "The relation is suspended for the case, from Pending or Arisen, and resumes its prior state on reinstatement (law B5). The evaluator's." .
+	rdfs:comment "The relation is suspended for the case. Entered from bhv:Live. Reinstatement enters bhv:Live by deep history, resuming the state, and any refinement of it, the suspension interrupted (law B5). The evaluator's." .
+
+bhv:LiveStates a bhv:StateSpace ;
+	fnd:hasIdentity bhv:LiveStates-identity ;
+	bhv:regionOf bhv:Live ;
+	bhv:initialState bhv:Pending ;
+	rdfs:label "Live states"@en ;
+	rdfs:comment "The region of bhv:Live." .
+
+bhv:Pending a bhv:State ; bhv:inStateSpace bhv:LiveStates ;
+	rdfs:label "Pending"@en ;
+	rdfs:comment "The relation applies to the case, and has not yet arisen. The initial state of bhv:LiveStates. The evaluator's." .
+bhv:Arisen a bhv:State ; bhv:inStateSpace bhv:LiveStates ;
+	rdfs:label "Arisen"@en ;
+	rdfs:comment "The relation has arisen for the case and is live. The state deployments most often refine. The evaluator's." .

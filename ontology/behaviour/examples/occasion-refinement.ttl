@@ -1,0 +1,306 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Premise. Every occasion moves through the same core states, which the
+# evaluator decides from the legal rules: pending, arisen, then performed,
+# breached or ended, or suspended for a while. A deployment often needs to
+# know more about where an arisen occasion has got to, without being able to
+# change when it is performed or breached. It refines the arisen state with
+# stages of its own, for one relation's occasions.
+#
+# An insurer's duty to indemnify the insured arises for each claim. Its arisen
+# state is refined by claims handling: notified, under assessment, assessed.
+# Claim 41 is notified, an adjuster is appointed, and then cover is suspended
+# for unpaid premium. When the premium is paid and cover reinstated, the claim
+# returns exactly where it was, under assessment, not back to notified.
+#
+# That return is deep history into bhv:Live, the core composite holding
+# bhv:Pending and bhv:Arisen (C11a-Q1). bhv:Suspended sits beside bhv:Live, so
+# reinstatement restores bhv:Arisen and, below it, the refinement's stage.
+#
+#   bhv:OccasionStates:  Live, Suspended, Performed, Breached, Ended
+#     Live:              Pending, Arisen                 (region: bhv:LiveStates)
+#       Arisen:          notified, under assessment, assessed   (this deployment's refinement)
+#
+# | Date       | Record                          | Exited                                   | Entered                                           | Whose transition |
+# |------------|---------------------------------|------------------------------------------|---------------------------------------------------|------------------|
+# | 2027-01-20 | the loss occurs                 |                                          | Live, Pending (evidence)                          | none: initial    |
+# | 2027-02-01 | the claim is notified           | Pending                                  | Arisen, notified                                  | the evaluator's  |
+# | 2027-02-10 | an adjuster is appointed        | notified                                 | under assessment                                  | the deployment's |
+# | 2027-03-01 | cover suspended, premium unpaid | under assessment, Arisen, Live           | Suspended                                         | the evaluator's  |
+# | 2027-03-20 | premium paid, cover reinstated  | Suspended                                | Live, Arisen, under assessment, each resumed      | the evaluator's  |
+# | 2027-04-10 | the assessment is issued        | under assessment                         | assessed                                          | the deployment's |
+# | 2027-04-30 | the claim is paid               | assessed, Arisen, Live                   | Performed                                         | the evaluator's  |
+#
+# The deployment declares only its refinement and the transitions inside it.
+# The evaluator's transitions are not configuration (C11-Q1), and none of the
+# deployment's leaves the refinement (law B9).
+
+@prefix bhv:  <https://www.nebularis.org/neuro-semantic/lattice/behaviour#> .
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix pty:  <https://www.nebularis.org/neuro-semantic/lattice/party#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex:   <https://example.org/lattice/behaviour/claims/> .
+
+# ---- Configuration: the deployment's refinement of bhv:Arisen ------------------
+# A region of a core state, instantiated once per occasion of the relation it
+# names. It refines bhv:Arisen for those occasions only.
+
+ex:claims-handling a bhv:StateSpace ;
+    fnd:hasIdentity ex:claims-handling-identity ;
+    bhv:regionOf bhv:Arisen ;
+    bhv:perOccasionOf ex:indemnify-insured ;
+    bhv:initialState ex:notified .
+
+ex:notified a bhv:State ;
+    bhv:inStateSpace ex:claims-handling .
+
+ex:under-assessment a bhv:State ;
+    bhv:inStateSpace ex:claims-handling .
+
+ex:assessed a bhv:State ;
+    bhv:inStateSpace ex:claims-handling .
+
+ex:on-adjuster-appointed a bhv:TriggerDefinition ;
+    bhv:triggerKind bhv:ExternalStimulus .
+
+ex:on-assessment-issued a bhv:TriggerDefinition ;
+    bhv:triggerKind bhv:ExternalStimulus .
+
+ex:appoint-adjuster a bhv:TransitionDefinition ;
+    bhv:fromState ex:notified ;
+    bhv:toState ex:under-assessment ;
+    bhv:hasTrigger ex:on-adjuster-appointed ;
+    bhv:selectionPolicy bhv:SingleMatch ;
+    bhv:activationPolicy bhv:ImmediateActivation .
+
+ex:issue-assessment a bhv:TransitionDefinition ;
+    bhv:fromState ex:under-assessment ;
+    bhv:toState ex:assessed ;
+    bhv:hasTrigger ex:on-assessment-issued ;
+    bhv:selectionPolicy bhv:SingleMatch ;
+    bhv:activationPolicy bhv:ImmediateActivation .
+
+# ---- The relation, the parties and the occasion ----------------------------------
+# The duty is another layer's declaration, pointed at without a range (B7).
+
+ex:indemnify-insured a ex:IndemnityDuty .
+ex:insurer-occ a pty:RoleOccupancy .
+ex:insured-occ a pty:RoleOccupancy .
+ex:adjuster-occ a pty:RoleOccupancy .
+
+ex:occasion-claim-41 a bhv:Occasion ;
+    bhv:occasionOf ex:indemnify-insured ;
+    bhv:forCase ex:claim-41 ;
+    bhv:occasionParty ex:insurer-occ , ex:insured-occ .
+
+ex:loss-occurred a skos:Concept ; skos:prefLabel "Loss occurred"@en .
+ex:claim-notified a skos:Concept ; skos:prefLabel "Claim notified"@en .
+ex:adjuster-appointed a skos:Concept ; skos:prefLabel "Adjuster appointed"@en .
+ex:assessment-issued a skos:Concept ; skos:prefLabel "Assessment issued"@en .
+ex:claim-paid a skos:Concept ; skos:prefLabel "Claim paid"@en .
+
+# ---- Stimuli and records ---------------------------------------------------------
+
+ex:s0 a bhv:Stimulus ;
+    fnd:hasEvidence [ a fnd:Evidence ; fnd:recordedAt "2027-01-20T10:00:00Z"^^xsd:dateTime ] .
+ex:s1 a bhv:Stimulus ;
+    fnd:hasEvidence [ a fnd:Evidence ; fnd:recordedAt "2027-02-01T10:00:00Z"^^xsd:dateTime ] .
+ex:s2 a bhv:Stimulus ;
+    fnd:hasEvidence [ a fnd:Evidence ; fnd:recordedAt "2027-02-10T10:00:00Z"^^xsd:dateTime ] .
+ex:s3 a bhv:Stimulus ;
+    fnd:hasEvidence [ a fnd:Evidence ; fnd:recordedAt "2027-03-01T00:00:00Z"^^xsd:dateTime ] .
+ex:s4 a bhv:Stimulus ;
+    fnd:hasEvidence [ a fnd:Evidence ; fnd:recordedAt "2027-03-20T10:00:00Z"^^xsd:dateTime ] .
+ex:s5 a bhv:Stimulus ;
+    fnd:hasEvidence [ a fnd:Evidence ; fnd:recordedAt "2027-04-10T10:00:00Z"^^xsd:dateTime ] .
+ex:s6 a bhv:Stimulus ;
+    fnd:hasEvidence [ a fnd:Evidence ; fnd:recordedAt "2027-04-30T10:00:00Z"^^xsd:dateTime ] .
+
+ex:r-loss a bhv:ActRecord ;
+    bhv:activity ex:loss-occurred ; bhv:actor ex:insured-occ ; bhv:forCase ex:claim-41 ;
+    bhv:fromStimulus ex:s0 .
+ex:r-notified a bhv:ActRecord ;
+    bhv:activity ex:claim-notified ; bhv:actor ex:insured-occ ; bhv:forCase ex:claim-41 ;
+    bhv:fromStimulus ex:s1 .
+ex:r-adjuster a bhv:ActRecord ;
+    bhv:activity ex:adjuster-appointed ; bhv:actor ex:insurer-occ ; bhv:forCase ex:claim-41 ;
+    bhv:fromStimulus ex:s2 .
+ex:r-suspended a bhv:ExerciseRecord ;
+    bhv:exercised ex:power-to-suspend-cover ; bhv:actor ex:insurer-occ ;
+    bhv:tookEffect true ; bhv:fromStimulus ex:s3 ;
+    rdfs:comment "Premium unpaid 30 days after its due date." .
+ex:r-reinstated a bhv:ExerciseRecord ;
+    bhv:exercised ex:power-to-reinstate-cover ; bhv:actor ex:insurer-occ ;
+    bhv:tookEffect true ; bhv:fromStimulus ex:s4 ;
+    rdfs:comment "Premium received in full." .
+ex:r-assessment a bhv:ActRecord ;
+    bhv:activity ex:assessment-issued ; bhv:actor ex:adjuster-occ ; bhv:forCase ex:claim-41 ;
+    bhv:fromStimulus ex:s5 .
+ex:r-paid a bhv:ActRecord ;
+    bhv:activity ex:claim-paid ; bhv:actor ex:insurer-occ ; bhv:forCase ex:claim-41 ;
+    bhv:fromStimulus ex:s6 .
+
+# ---- Executions ------------------------------------------------------------------
+# The evaluator's executions name no declared transition. The deployment's do.
+
+ex:exec-1 a bhv:TransitionExecution ;
+    bhv:causedByStimulus ex:s1 ;
+    rdfs:comment "The evaluator: the duty arises for claim 41." .
+ex:exec-2 a bhv:TransitionExecution ;
+    bhv:executedTransition ex:appoint-adjuster ;
+    bhv:causedByStimulus ex:s2 .
+ex:exec-3 a bhv:TransitionExecution ;
+    bhv:causedByStimulus ex:s3 ;
+    rdfs:comment "The evaluator: the occasion is suspended with the cover." .
+ex:exec-4 a bhv:TransitionExecution ;
+    bhv:causedByStimulus ex:s4 ;
+    rdfs:comment "The evaluator: reinstated into bhv:Live by deep history." .
+ex:exec-5 a bhv:TransitionExecution ;
+    bhv:executedTransition ex:issue-assessment ;
+    bhv:causedByStimulus ex:s5 .
+ex:exec-6 a bhv:TransitionExecution ;
+    bhv:causedByStimulus ex:s6 ;
+    rdfs:comment "The evaluator: the duty is performed. Leaves from bhv:Arisen, inside bhv:Live." .
+
+# ---- Occupancies: every one derived from the records it rests on (B1) ------------
+
+ex:o-live-1 a bhv:StateOccupancy , fnd:DerivedArtefact ;
+    bhv:forSubject ex:occasion-claim-41 ;
+    bhv:occupiesState bhv:Live ;
+    bhv:isHypothetical false ;
+    bhv:isCurrent false ;
+    bhv:exitedBy ex:exec-3 ;
+    prov:wasDerivedFrom ex:r-loss ;
+    fnd:hasEvidence [ a fnd:Evidence ; fnd:recordedAt "2027-01-20T10:00:00Z"^^xsd:dateTime ;
+        rdfs:comment "The occasion was created: the relation applies to claim 41." ] ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ;
+        fnd:validFrom "2027-01-20T10:00:00Z"^^xsd:dateTime ;
+        fnd:validTo "2027-03-01T00:00:00Z"^^xsd:dateTime ] .
+
+ex:o-pending a bhv:StateOccupancy , fnd:DerivedArtefact ;
+    bhv:forSubject ex:occasion-claim-41 ;
+    bhv:occupiesState bhv:Pending ;
+    bhv:isHypothetical false ;
+    bhv:isCurrent false ;
+    bhv:exitedBy ex:exec-1 ;
+    prov:wasDerivedFrom ex:r-loss ;
+    fnd:hasEvidence [ a fnd:Evidence ; fnd:recordedAt "2027-01-20T10:00:00Z"^^xsd:dateTime ;
+        rdfs:comment "The initial state of bhv:LiveStates." ] ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ;
+        fnd:validFrom "2027-01-20T10:00:00Z"^^xsd:dateTime ;
+        fnd:validTo "2027-02-01T10:00:00Z"^^xsd:dateTime ] .
+
+ex:o-arisen-1 a bhv:StateOccupancy , fnd:DerivedArtefact ;
+    bhv:forSubject ex:occasion-claim-41 ;
+    bhv:occupiesState bhv:Arisen ;
+    bhv:isHypothetical false ;
+    bhv:isCurrent false ;
+    bhv:enteredBy ex:exec-1 ;
+    bhv:exitedBy ex:exec-3 ;
+    prov:wasDerivedFrom ex:r-notified ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ;
+        fnd:validFrom "2027-02-01T10:00:00Z"^^xsd:dateTime ;
+        fnd:validTo "2027-03-01T00:00:00Z"^^xsd:dateTime ] .
+
+# Entering bhv:Arisen enters the refinement's initial stage with it.
+ex:o-notified a bhv:StateOccupancy , fnd:DerivedArtefact ;
+    bhv:forSubject ex:occasion-claim-41 ;
+    bhv:occupiesState ex:notified ;
+    bhv:isHypothetical false ;
+    bhv:isCurrent false ;
+    bhv:enteredBy ex:exec-1 ;
+    bhv:exitedBy ex:exec-2 ;
+    prov:wasDerivedFrom ex:r-notified ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ;
+        fnd:validFrom "2027-02-01T10:00:00Z"^^xsd:dateTime ;
+        fnd:validTo "2027-02-10T10:00:00Z"^^xsd:dateTime ] .
+
+ex:o-under-assessment-1 a bhv:StateOccupancy , fnd:DerivedArtefact ;
+    bhv:forSubject ex:occasion-claim-41 ;
+    bhv:occupiesState ex:under-assessment ;
+    bhv:isHypothetical false ;
+    bhv:isCurrent false ;
+    bhv:enteredBy ex:exec-2 ;
+    bhv:exitedBy ex:exec-3 ;
+    prov:wasDerivedFrom ex:r-adjuster ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ;
+        fnd:validFrom "2027-02-10T10:00:00Z"^^xsd:dateTime ;
+        fnd:validTo "2027-03-01T00:00:00Z"^^xsd:dateTime ] .
+
+ex:o-suspended a bhv:StateOccupancy , fnd:DerivedArtefact ;
+    bhv:forSubject ex:occasion-claim-41 ;
+    bhv:occupiesState bhv:Suspended ;
+    bhv:isHypothetical false ;
+    bhv:isCurrent false ;
+    bhv:enteredBy ex:exec-3 ;
+    bhv:exitedBy ex:exec-4 ;
+    prov:wasDerivedFrom ex:r-suspended ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ;
+        fnd:validFrom "2027-03-01T00:00:00Z"^^xsd:dateTime ;
+        fnd:validTo "2027-03-20T10:00:00Z"^^xsd:dateTime ] .
+
+# Deep history: each level resumes the occupancy ex:exec-3 ended.
+ex:o-live-2 a bhv:StateOccupancy , fnd:DerivedArtefact ;
+    bhv:forSubject ex:occasion-claim-41 ;
+    bhv:occupiesState bhv:Live ;
+    bhv:isHypothetical false ;
+    bhv:isCurrent false ;
+    bhv:enteredBy ex:exec-4 ;
+    bhv:exitedBy ex:exec-6 ;
+    bhv:resumedFrom ex:o-live-1 ;
+    prov:wasDerivedFrom ex:r-reinstated ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ;
+        fnd:validFrom "2027-03-20T10:00:00Z"^^xsd:dateTime ;
+        fnd:validTo "2027-04-30T10:00:00Z"^^xsd:dateTime ] .
+
+ex:o-arisen-2 a bhv:StateOccupancy , fnd:DerivedArtefact ;
+    bhv:forSubject ex:occasion-claim-41 ;
+    bhv:occupiesState bhv:Arisen ;
+    bhv:isHypothetical false ;
+    bhv:isCurrent false ;
+    bhv:enteredBy ex:exec-4 ;
+    bhv:exitedBy ex:exec-6 ;
+    bhv:resumedFrom ex:o-arisen-1 ;
+    prov:wasDerivedFrom ex:r-reinstated ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ;
+        fnd:validFrom "2027-03-20T10:00:00Z"^^xsd:dateTime ;
+        fnd:validTo "2027-04-30T10:00:00Z"^^xsd:dateTime ] .
+
+ex:o-under-assessment-2 a bhv:StateOccupancy , fnd:DerivedArtefact ;
+    bhv:forSubject ex:occasion-claim-41 ;
+    bhv:occupiesState ex:under-assessment ;
+    bhv:isHypothetical false ;
+    bhv:isCurrent false ;
+    bhv:enteredBy ex:exec-4 ;
+    bhv:exitedBy ex:exec-5 ;
+    bhv:resumedFrom ex:o-under-assessment-1 ;
+    prov:wasDerivedFrom ex:r-reinstated ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ;
+        fnd:validFrom "2027-03-20T10:00:00Z"^^xsd:dateTime ;
+        fnd:validTo "2027-04-10T10:00:00Z"^^xsd:dateTime ] .
+
+ex:o-assessed a bhv:StateOccupancy , fnd:DerivedArtefact ;
+    bhv:forSubject ex:occasion-claim-41 ;
+    bhv:occupiesState ex:assessed ;
+    bhv:isHypothetical false ;
+    bhv:isCurrent false ;
+    bhv:enteredBy ex:exec-5 ;
+    bhv:exitedBy ex:exec-6 ;
+    prov:wasDerivedFrom ex:r-assessment ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ;
+        fnd:validFrom "2027-04-10T10:00:00Z"^^xsd:dateTime ;
+        fnd:validTo "2027-04-30T10:00:00Z"^^xsd:dateTime ] .
+
+# Performance leaves from bhv:Arisen: the refinement, then Arisen, then Live.
+ex:o-performed a bhv:StateOccupancy , fnd:DerivedArtefact ;
+    bhv:forSubject ex:occasion-claim-41 ;
+    bhv:occupiesState bhv:Performed ;
+    bhv:isHypothetical false ;
+    bhv:isCurrent true ;
+    bhv:enteredBy ex:exec-6 ;
+    prov:wasDerivedFrom ex:r-paid ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ;
+        fnd:validFrom "2027-04-30T10:00:00Z"^^xsd:dateTime ] .

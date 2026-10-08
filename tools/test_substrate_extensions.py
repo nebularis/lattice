@@ -46,13 +46,15 @@ def test_shapes(text: str, expected: bool) -> None:
     assert conforms(text) is expected
 
 
-def test_obligation_in_two_provisions_is_refused_only_by_the_optional_shape() -> None:
+def test_term_in_two_expressions_is_refused_only_by_the_optional_shape() -> None:
+    """ADR-A96: a stated term may be expressed in a second element (another
+    language), refused only by the optional single-expression shape."""
     root = Path(__file__).resolve().parents[1] / "ontology/instrument"
     spec = Graph().parse(root / "spec/instrument.ttl")
-    assert (INS.inProvision, RDF.type, OWL.FunctionalProperty) not in spec
+    assert (INS.alsoExpressedIn, RDF.type, OWL.FunctionalProperty) not in spec
     data = Graph().parse(data="""
         @prefix ins: <https://www.nebularis.org/neuro-semantic/lattice/instrument#> .
         @prefix ex: <https://example.org/i/> .
-        ex:uptime a ins:Obligation ; ins:inProvision ex:clause-en , ex:clause-fr .
+        ex:uptime a ins:Term , ins:Template ; ins:expressedIn ex:clause-en ; ins:alsoExpressedIn ex:clause-fr .
     """, format="turtle")
-    assert validate(data, shacl_graph=Graph().parse(root / "shapes/single-provision.ttl"))[0] is False
+    assert validate(data, shacl_graph=Graph().parse(root / "shapes/single-expression.ttl"))[0] is False

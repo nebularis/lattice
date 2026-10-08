@@ -19,6 +19,13 @@ Each work unit has:
 
 **Navigation:** Use Ctrl/Cmd+F to search by topic (e.g., "RDF", "MTP", "housekeeping") or by unit ID.
 
+**New here?** This index tracks active units of work, not how to use the repository day to day.
+For that: [Getting Started](getting-started.md) (bootstrap a clean clone),
+[Developer Guide](developer-guide.md) (every tool and script, when to use it),
+[Formal Methods in the Development Lifecycle](formal-methods-lifecycle.md) (how formalising a law
+hooks into sketch, plan and implementation), and [`docs/diagrams/`](../diagrams/README.md) (the
+whole architecture, pictured, five ways).
+
 ---
 
 # Part I — Completed Work
@@ -147,7 +154,7 @@ All 7 critical (A), 14 major (B), 9 safety (C), 7 cross-document (D) and 10 edit
 | **Status Record** | [repository-topology-a77.md](status/repository-topology-a77.md) |
 | **ADR** | [ADR-A77](../architecture/decisions/ADR-A77-repository-topology-and-documentation-governance.md) |
 | **Implementation** | Relocation of semantic assets to `ontology/`, tools to `tools/`, restructuring of `docs/developer/` |
-| **Doc Reference** | [.github/copilot-instructions.md](../../.github/copilot-instructions.md) — "Repository Topology and Documentation Governance" section |
+| **Doc Reference** | [AGENTS.md](../../AGENTS.md) and the [lattice-lifecycle skill](../../.claude/skills/lattice-lifecycle/SKILL.md) (ADR-A117) |
 
 ### Deliverables
 - ✅ Folder structure relocated per ADR-A77
@@ -560,18 +567,63 @@ non-blocking track.
 
 | Field | Value |
 |-------|-------|
-| **Status** | 🔨 In progress. Gate A passed 2026-10-01 (ADR-A104, A-106, A-112, A-113 accepted). C3 and C10 briefed |
+| **Status** | 🔨 In progress. Gate A passed 2026-10-01. Tranches B and C merged, tranche D merged to C8b (Instrument 0.14.0, Wording 0.7.0). C9 briefed 2026-10-07 |
 | **Unit ID** | `computable-contract-substrate` |
-| **Sketches** | [computable-contract-substrate.md](sketches/computable-contract-substrate.md) (design, scenarios S1 to S101), [contract-amounts.md](sketches/contract-amounts.md) (A1 to A58), [instrument-terms-and-legal-relations.md](sketches/instrument-terms-and-legal-relations.md) (superseded), [logical-english-alignment.md](sketches/logical-english-alignment.md) (unplanned) |
+| **Sketches** | [computable-contract-substrate.md](sketches/computable-contract-substrate.md) (design, scenarios S1 to S101), [contract-amounts.md](sketches/contract-amounts.md) (A1 to A58), [instrument-terms-and-legal-relations.md](sketches/instrument-terms-and-legal-relations.md) (superseded), [logical-english-alignment.md](sketches/logical-english-alignment.md) (unplanned), [change-materiality.md](sketches/change-materiality.md) (C9-Q3, draft) |
 | **Plan** | [computable-contract-substrate.md](plans/computable-contract-substrate.md) |
 | **Status Record** | [computable-contract-substrate.md](status/computable-contract-substrate.md) |
-| **ADRs** | A-104, A-106, A-112, A-113 to be drafted |
+| **ADRs** | A-104, A-106, A-112, A-113 accepted, with addenda |
 
 A new Wording layer (from Open CBAA's `wim:`), Instrument rewritten around terms and legal
 relations, and Behaviour extended with occasions and records, tested against a package policy, an
 IUA binding authority and the Lloyd's CBAA.
 
-## 8.10 Word Authoring Proof of Concept — Awaiting human validation
+## 8.10 InsurML Alignment (Epic) — Proposed
+
+| Field | Value |
+|-------|-------|
+| **Status** | 📝 Proposed, 2026-10-05. Awaiting human review and gate-0 decisions |
+| **Unit ID** | `insurml-alignment` (epic) |
+| **Vision** | [insurml-alignment-vision.md](../architecture/insurml-alignment-vision.md) |
+| **Sketches** | [insurml-bridge.md](sketches/insurml-bridge.md), [insurml-toolchain-and-ai.md](sketches/insurml-toolchain-and-ai.md), [insurml-typing.md](sketches/insurml-typing.md), [wording-assembly-interface.md](sketches/wording-assembly-interface.md) |
+| **Analysis** | [insurml-and-lattice.md](notes/insurml-and-lattice.md), [insurml-integration.md](notes/insurml-integration.md), [insurml-identity.md](notes/insurml-identity.md) (for the InsurML team) |
+| **Plan** | [insurml-alignment.md](plans/insurml-alignment.md), with [phase 0](plans/insurml-alignment-phase-0.md). Later phases rolling-wave |
+| **Status Record** | [insurml-alignment.md](status/insurml-alignment.md) |
+| **ADRs** | five to be drafted in Phase 0: the profile, bridge tooling and kits, the Wording assembly interface, transclusion, inline parts |
+
+InsurML as the document standard for insurance wording and LATTICE as the substrate for its
+meaning, execution and governance, joined by an applied profile (absorbing AIR-5.9) and published
+lift and lower kits. Covers authoring, compilation, libraries, placement, exchange and AI-assisted
+reading.
+
+## 8.11 Formal Methods (Epic) — Proposed
+
+| Field | Value |
+|-------|-------|
+| **Status** | 📝 Proposed, 2026-10-06. Re-sequenced into tracks after review ([response](notes/formal-methods-review-response.md)). The prover spike is the first step |
+| **Unit ID** | `formal-methods` (epic) |
+| **Sketches** | [formal-methods.md](sketches/formal-methods.md), [formal-adequacy-and-architecture.md](sketches/formal-adequacy-and-architecture.md), [assurance-records.md](sketches/assurance-records.md), [instrument-assurance.md](sketches/instrument-assurance.md), [reference-evaluator.md](sketches/reference-evaluator.md), [formal-toolchain-workers.md](sketches/formal-toolchain-workers.md) |
+| **Plan** | [formal-methods.md](plans/formal-methods.md), with [the prover spike](plans/formal-methods-phase-0.md). Other tracks rolling-wave |
+| **Status Record** | [formal-methods.md](status/formal-methods.md) |
+| **ADRs** | per track: the assurance profile (A), the reference semantics (B), toolchain workers (F), and the formal stack with its home after the spike (E) |
+
+Formal methods in LATTICE's development lifecycle and compilation toolchains: mechanised semantics
+and proofs, lightweight models, adequacy against the fixture corpus, assurance records, guaranteed
+instrument behaviour, and generated tools run as workers, never against the live graph.
+
+## 8.12 Agent Skills — Built
+
+| Field | Value |
+|-------|-------|
+| **Status** | ✅ Built, 2026-10-07. ADR-A117 accepted. Open CBAA's adoption is that project's own change |
+| **Unit ID** | `agent-skills` |
+| **Sketches** | [agent-skills.md](sketches/agent-skills.md) |
+| **ADRs** | [A-117](../architecture/decisions/ADR-A117-agent-guidance-and-skill-library.md), Accepted |
+
+LATTICE's guidance for AI agents as an always-on core (`AGENTS.md`) and six skills in
+`.claude/skills/`, shared with projects built on LATTICE as a Claude Code plugin. Takes over TD-21.
+
+## 8.13 Word Authoring Proof of Concept — Awaiting human validation
 
 | Field | Value |
 |-------|-------|
@@ -581,14 +633,14 @@ IUA binding authority and the Lloyd's CBAA.
 | **Plan** | [word-authoring-poc.md](plans/word-authoring-poc.md) |
 | **Status Record** | [word-authoring-poc.md](status/word-authoring-poc.md) |
 | **Validation Packs** | [WA1](validation/word-authoring-poc-wa1.md), [WA2](validation/word-authoring-poc-wa2.md), [WA3](validation/word-authoring-poc-wa3.md), [WA4](validation/word-authoring-poc-wa4.md), [WA5](validation/word-authoring-poc-wa5.md), [WA6](validation/word-authoring-poc-wa6.md), [WA7](validation/word-authoring-poc-wa7.md), [WA8](validation/word-authoring-poc-wa8.md), [WA9](validation/word-authoring-poc-wa9.md), [WA9a](validation/word-authoring-poc-wa9a.md), [WA10](validation/word-authoring-poc-wa10.md), [WA11](validation/word-authoring-poc-wa11.md) |
-| **ADRs** | A-114, Proposed |
+| **ADRs** | A-118, Proposed |
 | **Follow-on tranche** | drafted 2026-10-02, not started: richer nested sample data (deferred on CCS), a web authoring app, add-in parity. Decisions WA-D14 to WA-D20 and slices WA12 to WA20 in the plan, design in sketch §8. Awaiting the human's decisions |
 
 A Word add-in, loaded without installation, for writing wordings into templates with marked text
 parts, backed by a Java and Jena service and a Python Logical English job over RabbitMQ, run as a
 local compose stack.
 
-## 8.11 Bidirectional XSLT Transformation Sidecar — Drafted, not started
+## 8.14 Bidirectional XSLT Transformation Sidecar — Drafted, not started
 
 | Field | Value |
 |-------|-------|
@@ -597,7 +649,7 @@ local compose stack.
 | **Sketch** | [xslt-sidecar.md](sketches/xslt-sidecar.md) |
 | **Plan** | [xslt-sidecar.md](plans/xslt-sidecar.md) |
 | **Status Record** | [xslt-sidecar.md](status/xslt-sidecar.md) |
-| **ADRs** | A-115, Proposed |
+| **ADRs** | A-119, Proposed |
 
 A Saxon-hosted XSLT 3.0 engine, published as a Java library and a standalone sidecar process,
 projecting known-shape SPI data (from the persistence and Surface compilers) to documents on

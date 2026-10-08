@@ -1,8 +1,18 @@
 # SPDX-License-Identifier: MPL-2.0
 name: Platform checks
 
-# Temporarily manual-only while the authored Phase 0-6 implementation is
-# validated in a live toolchain environment.
+# Deliberately manual-only (workflow_dispatch), to control compute cost while
+# the formal-methods and CCS/insurml-alignment epics are still landing large
+# changes at once. Every job below calls the same `mise` tasks a developer
+# runs locally (see docs/developer/developer-guide.md and mise.toml), so
+# enabling automatic triggering is a one-line change here, not a redesign:
+# uncomment the block below once the human chooses to activate continuous
+# checking.
+#
+# on:
+#   push:
+#     branches: [main]
+#   pull_request:
 on:
   workflow_dispatch:
 
@@ -13,70 +23,80 @@ jobs:
       - uses: actions/checkout@v4
       - uses: fsfe/reuse-action@v5
 
-  python-root:
+  # Ontology layers, their compiler/resolver/reference packages, and the
+  # repository-wide ontology gates (catalog, versioning, import guard,
+  # reasoning isolation, formal-methods freshness). One job: these packages
+  # share the Python toolchain and several depend on each other's install
+  # (mork-compilers and surface both need vocabulary, ADR-A85).
+  ontology-and-tools:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.14"
-      - run: python -m pip install -c requirements-lock.txt ".[reasoning,test]"
-      - run: python tools/literate_extract.py ontology/surface/README.md --layer surface --root . --shapes shapes/structural.ttl shapes/constraints.ttl --check
-      - run: python -m pip install -e ./tools/vocabulary -e ./tools/mork -e ./tools/mork_compilers -e ./tools/surface
-      - run: python -m unittest surface.test_surface mork_compilers.test_mork_compilers -v
-      - run: python -m tools.phase8_conformance
-      - run: python -m pytest tools/test_*.py tools/mork_compilers -q
-      - run: python tools/ontology_catalog.py check
-      - run: python tools/ontology_version_check.py --base-ref origin/main
-      - run: python tools/ontology_releases.py check
+      - uses: jdx/mise-action@v2
+      - run: mise run bootstrap:python-root bootstrap:vocabulary bootstrap:mork bootstrap:mork-compilers bootstrap:surface bootstrap:persistence bootstrap:reference-eligibility
+      - name: Surface literate extraction (--check)
+        run: mise exec -- python tools/literate_extract.py ontology/surface/README.md --layer surface --root . --shapes shapes/structural.ttl shapes/constraints.ttl --check
+      - run: mise run check:python-root
+      - run: mise run check:vocabulary
+      - run: mise run check:persistence
+      - run: mise run check:reference-eligibility
+      - run: mise run check:mork-compilers
+      - run: mise run check:ontology-versioning
+      - run: mise run check:ontology-catalog
+      - run: mise run check:import-guard
+      - run: mise run check:reasoning-isolation
+      - run: mise run check:formal-freshness
 
   workers:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.14"
-      - run: python -m pip install -e ./workers[test]
-      - run: python -m pytest workers/tests
+      - uses: jdx/mise-action@v2
+      - run: mise run bootstrap:workers
+      - run: mise run check:workers
 
   mtp-structural:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.14"
-      - run: python -m pip install -e ./tools/mork
-      - run: python -m pytest tools/mork/src/test_mtp.py
-      - run: python -m mtp.cli build --out ontology/mork/mtp/out
-      - run: python -m mtp.cli check --out ontology/mork/mtp/out
+      - uses: jdx/mise-action@v2
+      - run: mise run bootstrap:mork
+      - run: mise exec -- python -m pytest tools/mork/src/test_mtp.py
+      - run: mise run build:mtp
+      - run: mise run check:mtp
       - run: git diff --exit-code ontology/mork/mtp/out/ ontology/mork/mtp/data/pins.lock.json
 
   java:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: "25"
-          cache: maven
-      - run: mvn -f platform/pom.xml verify
+      - uses: jdx/mise-action@v2
+      - run: mise run check:java
+
+  minting:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jdx/mise-action@v2
+      - run: mise run bootstrap:minting-python
+      - run: mise run check:minting
+
+  spc:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jdx/mise-action@v2
+      - run: mise run check:spc
 
   frontend:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-          cache: yarn
-      - run: corepack enable
-      - run: yarn install --immutable
-      - run: yarn check
-      - run: yarn build
-      - run: yarn playwright install --with-deps chromium
-      - run: yarn test
+      - uses: jdx/mise-action@v2
+      - run: mise run bootstrap:frontend
+      - run: mise run check:frontend
+      - run: mise exec -- yarn build
+      - run: mise exec -- yarn playwright install --with-deps chromium
+      - run: mise exec -- yarn test

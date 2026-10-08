@@ -5,7 +5,7 @@
 **Epic status:** Decomposed into phase plans (2026-09-22). Phase 0 and Phase 1 are ready to execute at full slice detail. Phases 2–4 are rolling-wave placeholders per §0.5, expanded at P1.11.3/P2.11.4/P3.6.4 respectively.
 **Epic review:** Deferred until all phase plans and acceptance tests are finalized
 
-**Purpose of this document.** A dependency-ordered, slice-by-slice development epic that defines the scope, milestones, tracks, and hard orderings for the LATTICE platform delivery. This epic has been decomposed into individual phase plans per the Epic Decomposition model in [copilot-instructions](../../.github/copilot-instructions.md). Each plan is authored, reviewed, and accepted separately before its implementation begins. The final epic review will be created only after all phase plans are complete and their acceptance tests pass.
+**Purpose of this document.** A dependency-ordered, slice-by-slice development epic that defines the scope, milestones, tracks, and hard orderings for the LATTICE platform delivery. This epic has been decomposed into individual phase plans per the Epic Decomposition model in the [lattice-lifecycle skill](../../../.claude/skills/lattice-lifecycle/SKILL.md). Each plan is authored, reviewed, and accepted separately before its implementation begins. The final epic review will be created only after all phase plans are complete and their acceptance tests pass.
 
 **Decomposition index:**
 
@@ -19,7 +19,7 @@
 
 Each phase plan cross-references its Part below for slice-level detail rather than duplicating it, and adds the `docs/architecture`, README, and `solution-design-specification.md` obligations the epic's own slice tables name but do not tabulate.
 
-**Governing model.** Epic decomposition, phase plans, and slice validation follow the Epic Decomposition model in [copilot-instructions](../../.github/copilot-instructions.md). See that document for the standard approach to units of work, validation packs, traceability, and review gates.
+**Governing model.** Epic decomposition, phase plans, and slice validation follow the Epic Decomposition model in the [lattice-lifecycle skill](../../../.claude/skills/lattice-lifecycle/SKILL.md). See that document for the standard approach to units of work, validation packs, traceability, and review gates.
 
 **Source of truth for scope.** `docs/architecutre/Architecture Review.md` (G-nn gaps, C-nn components, A-nn decisions), plus the three existing design documents it critiques. Every slice below carries traceability IDs back to those, recorded in `docs/traceability/matrix.csv`.
 
@@ -42,13 +42,13 @@ Before any implementation slice in this plan begins, the `repository-topology-a7
 
 ### 0.1 Note: Units of work hierarchy
 
-The hierarchy of units (Epic → Phase → Slice → Milestone) and their validation model are now defined in the [copilot-instructions Epic Decomposition section](../../.github/copilot-instructions.md). See that document for the authoritative definitions and required validation pack structure. This section retains the specific hierarchy for the LATTICE platform epic only.
+The hierarchy of units (Epic → Phase → Slice → Milestone) and their validation model are now defined in the [lattice-lifecycle skill](../../../.claude/skills/lattice-lifecycle/SKILL.md). See that document for the authoritative definitions and required validation pack structure. This section retains the specific hierarchy for the LATTICE platform epic only.
 
 **Slice sizing rule.** If a slice's Validation Pack contains more than ~15 test cases, or touches more than two modules, split it. If it contains fewer than 3, merge it. Skeleton slices are exempt (they contain 1 test: the build smokes).
 
 ### 0.2 Slice validation model
 
-The mandatory shape of every slice, validation pack requirements, and human validation gate protocol are defined in the [copilot-instructions Epic Decomposition section](../../.github/copilot-instructions.md). See that document for the authoritative requirements.
+The mandatory shape of every slice, validation pack requirements, and human validation gate protocol are defined in the [lattice-lifecycle skill](../../../.claude/skills/lattice-lifecycle/SKILL.md). See that document for the authoritative requirements.
 
 ### 0.3 Test taxonomy (referenced as L0–L8 throughout)
 

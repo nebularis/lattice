@@ -6,7 +6,7 @@ import java.util.function.Consumer;
 
 /**
  * Where this service sends wording analysis requests and receives their results. A test seam
- * (WA4), not an SPI: see ADR-A114 decision 4. {@link InMemoryAnalysisBus} backs unit tests and
+ * (WA4), not an SPI: see ADR-A118 decision 4. {@link InMemoryAnalysisBus} backs unit tests and
  * {@code RabbitMqAnalysisBus} (WA5) backs the runnable service.
  */
 public interface AnalysisBus {

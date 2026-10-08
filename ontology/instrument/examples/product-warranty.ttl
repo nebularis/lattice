@@ -1,0 +1,187 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Premise. A manufacturer's warranty promises to repair a product that fails
+# within the warranty period, to whoever owns the product when they claim. It
+# then takes something back: no repair for damage caused by misuse. And then it
+# gives a little of that back again: misuse does not excuse the repair when the
+# failure was caused by a manufacturing defect all the same.
+#
+# The warranty's clauses:
+#
+# | Clause | Text | Meaning |
+# |--------|------|---------|
+# | 2.1    | The Manufacturer shall repair the Product for its Owner. | an obligation, owed to a party who depends on the case |
+# | 3.1    | Clause 2.1 does not apply to damage caused by misuse, unless the failure was caused by a manufacturing defect. | an exclusion excepting the duty to repair, its carve-back in its scope |
+#
+# The warranty on the Acme K2 kettle, serial K2-55017, binds Brightworks
+# Appliances Ltd as manufacturer. Its owner is not known when the warranty is
+# given: the product may be sold on. The owner is a contingent occupancy: the
+# role, with no actor (ADR-A102). How it resolves for each claim, and is fixed
+# when the claim arises (law I11), is decided with resolution through
+# definitions in C7b (CCS plan, C6-Q5 deferred).
+#
+# What the example shows:
+#
+# | Construct                                       | Where                                   |
+# |-------------------------------------------------|-----------------------------------------|
+# | an exclusion excepting an obligation            | ex:misuse-exclusion ins:excepts ex:repair |
+# | a carve-back in the exclusion's scope           | ex:misuse-not-defect, its negated member |
+# | a party that depends on the case                | ex:owner-occ, a contingent occupancy    |
+# | an exclusion's holder is the excepted obligation's obligor (I8) | ex:misuse-exclusion ins:holder ex:manufacturer-occ |
+
+@prefix ins:     <https://www.nebularis.org/neuro-semantic/lattice/instrument#> .
+@prefix ins-voc: <https://www.nebularis.org/neuro-semantic/lattice/instrument/vocab#> .
+@prefix wrd:     <https://www.nebularis.org/neuro-semantic/lattice/wording#> .
+@prefix wrd-voc: <https://www.nebularis.org/neuro-semantic/lattice/wording/vocab#> .
+@prefix fnd:     <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix pty:     <https://www.nebularis.org/neuro-semantic/lattice/party#> .
+@prefix elg:     <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
+@prefix owl:     <http://www.w3.org/2002/07/owl#> .
+@prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+@prefix tmpl:    <https://example.org/lattice/instrument/warranty/form/> .
+@prefix ex:      <https://example.org/lattice/instrument/warranty/> .
+
+# ==== The warranty form: wording =============================================
+
+ex:form a wrd:Wording ;
+    fnd:hasIdentity ex:form-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:directlyComprises ex:sec-2 , ex:sec-3 .
+
+ex:sec-2 a wrd:Element ;
+    fnd:hasIdentity ex:sec-2-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Section ; wrd:objectId "2" ; wrd:rankKey "b0" ;
+    wrd:directlyComprises ex:cl-2-1 .
+ex:cl-2-1 a wrd:Text ;
+    fnd:hasIdentity ex:cl-2-1-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "2.1" ; wrd:rankKey "a0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "The Manufacturer shall repair the Product, free of charge, for its Owner." ] .
+
+ex:sec-3 a wrd:Element ;
+    fnd:hasIdentity ex:sec-3-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Section ; wrd:objectId "3" ; wrd:rankKey "c0" ;
+    wrd:directlyComprises ex:cl-3-1 .
+ex:cl-3-1 a wrd:Text ;
+    fnd:hasIdentity ex:cl-3-1-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "3.1" ; wrd:rankKey "a0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "Clause 2.1 does not apply to damage caused by misuse, unless the failure was caused by a manufacturing defect." ] .
+
+# ==== Roles, the applied ontology's claims, conditions =======================
+
+ex:Manufacturer a pty:Role ; rdfs:label "Manufacturer" .
+ex:Owner a pty:Role ; rdfs:label "Owner" .
+
+ex:WarrantyClaim a owl:Class .
+ex:cause a owl:ObjectProperty ; rdfs:comment "Subject: a warranty claim. Value: what caused the failure claimed for." .
+
+ex:causes a skos:ConceptScheme .
+ex:misuse a skos:Concept ; skos:inScheme ex:causes ; rdfs:label "misuse" .
+ex:manufacturing-defect a skos:Concept ; skos:inScheme ex:causes ; rdfs:label "manufacturing defect" .
+
+# The exclusion's scope: misuse, and not a manufacturing defect. The second
+# member is the carve-back, negated (ADR-A103).
+ex:caused-by-misuse a elg:Condition ;
+    elg:conditionKey "caused-by-misuse" ;
+    elg:matchStrategy elg:ExactMatch ;
+    elg:compatibilityOperation elg:AllRequired ;
+    elg:wildcardSemantics elg:NoWildcard ;
+    elg:requiredConcept ex:misuse .
+ex:caused-by-defect a elg:Condition ;
+    elg:conditionKey "caused-by-manufacturing-defect" ;
+    elg:matchStrategy elg:ExactMatch ;
+    elg:compatibilityOperation elg:AllRequired ;
+    elg:wildcardSemantics elg:NoWildcard ;
+    elg:requiredConcept ex:manufacturing-defect ;
+    elg:negated true .
+ex:misuse-not-defect a elg:Condition ;
+    elg:conditionKey "misuse-unless-manufacturing-defect" ;
+    elg:matchStrategy elg:ExactMatch ;
+    elg:compatibilityOperation elg:AllRequired ;
+    elg:wildcardSemantics elg:NoWildcard ;
+    elg:hasCondition ex:caused-by-misuse , ex:caused-by-defect .
+
+# Both read the claim's cause, the case being a warranty claim.
+ex:misuse-binding a elg:EvidenceBinding ;
+    elg:bindsCondition ex:caused-by-misuse ;
+    elg:subjectClass ex:WarrantyClaim ;
+    elg:singleValued true ;
+    elg:evidenceStep [ a elg:EvidenceStep ; elg:stepIndex 0 ; elg:stepProperty ex:cause ; elg:stepDirection elg:Forward ] .
+ex:defect-binding a elg:EvidenceBinding ;
+    elg:bindsCondition ex:caused-by-defect ;
+    elg:subjectClass ex:WarrantyClaim ;
+    elg:singleValued true ;
+    elg:evidenceStep [ a elg:EvidenceStep ; elg:stepIndex 0 ; elg:stepProperty ex:cause ; elg:stepDirection elg:Forward ] .
+
+# ==== Stated meaning: owned by the form's clauses ============================
+
+tmpl:term-2-1 a ins:Term , ins:Template ; ins:expressedIn ex:cl-2-1 .
+tmpl:repair a ins:Obligation , ins:Template ;
+    ins:arisesUnder tmpl:term-2-1 ;
+    ins:obligor ex:Manufacturer ;
+    ins:obligee ex:Owner ;
+    ins:activity ins-voc:Repair .
+
+tmpl:term-3-1 a ins:Term , ins:Template ; ins:expressedIn ex:cl-3-1 .
+tmpl:misuse-exclusion a ins:Exclusion , ins:Template ;
+    ins:arisesUnder tmpl:term-3-1 ;
+    ins:holder ex:Manufacturer ;                 # the excepted obligation's obligor (I8)
+    ins:counterparty ex:Owner ;
+    ins:excepts tmpl:repair ;
+    ins:scope ex:misuse-not-defect .
+
+# ==== The warranty on kettle K2-55017 ========================================
+
+ex:k2-55017-wording-v1 a wrd:AssembledWording ;
+    fnd:hasIdentity ex:k2-55017-wording-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:assembledFrom ex:form ;
+    wrd:includes ex:sec-2 , ex:cl-2-1 , ex:sec-3 , ex:cl-3-1 .
+
+ex:k2-55017-v1 a ins:Instrument ;
+    fnd:hasIdentity ex:k2-55017-identity ;
+    ins:expressedIn ex:k2-55017-wording-v1 ;
+    ins:party ex:manufacturer-occ , ex:owner-occ .
+
+ex:brightworks a pty:Actor ; rdfs:label "Brightworks Appliances Ltd" .
+
+ex:manufacturer-occ a pty:RoleOccupancy ;
+    fnd:hasIdentity ex:manufacturer-occ-identity ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-05-10T00:00:00Z"^^xsd:dateTime ] ;
+    pty:inRole ex:Manufacturer ;
+    pty:occupiedBy ex:brightworks .
+
+# A contingent occupancy (ADR-A102): the role, with no actor. Whoever owns
+# the kettle when a claim is made fills it for that claim (C7b).
+ex:owner-occ a pty:RoleOccupancy ;
+    fnd:hasIdentity ex:owner-occ-identity ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-05-10T00:00:00Z"^^xsd:dateTime ] ;
+    pty:inRole ex:Owner .
+
+# ==== Bound meaning: owned by this kettle's warranty =========================
+#
+# What instantiation produces from the stated meaning and the instance's parties (a
+# derived artefact, ADR-A92). Each bound term is part of exactly one instrument
+# version (ins:boundIn), and its relations belong to it. A bound relation
+# restates its template in full: RDF has no override, so naming only what
+# differs would leave the template's role and the occupancy both as parties.
+
+ex:term-2-1 a ins:Term ; ins:boundIn ex:k2-55017-v1 ; ins:boundFrom tmpl:term-2-1 .
+ex:repair a ins:Obligation ;
+    ins:boundFrom tmpl:repair ;
+    ins:arisesUnder ex:term-2-1 ;
+    ins:obligor ex:manufacturer-occ ;
+    ins:obligee ex:owner-occ ;
+    ins:activity ins-voc:Repair .
+
+ex:term-3-1 a ins:Term ; ins:boundIn ex:k2-55017-v1 ; ins:boundFrom tmpl:term-3-1 .
+ex:misuse-exclusion a ins:Exclusion ;
+    ins:boundFrom tmpl:misuse-exclusion ;
+    ins:arisesUnder ex:term-3-1 ;
+    ins:holder ex:manufacturer-occ ;
+    ins:counterparty ex:owner-occ ;
+    ins:excepts ex:repair ;
+    ins:scope ex:misuse-not-defect .

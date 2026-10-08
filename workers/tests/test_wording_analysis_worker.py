@@ -1,4 +1,4 @@
-"""Tests the worker runtime: Fuseki GSP client, RabbitMQ adapter, entry point (ADR-A114, plan WA7).
+"""Tests the worker runtime: Fuseki GSP client, RabbitMQ adapter, entry point (ADR-A118, plan WA7).
 
 Covers S7-01 to S7-08 of docs/developer/plans/word-authoring-poc.md section "WA7".
 """

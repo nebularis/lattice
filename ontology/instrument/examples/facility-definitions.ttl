@@ -1,0 +1,278 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Premise. A term loan agreement opens with a definitions clause and an
+# interpretation clause, and closes with a notices clause. None of them
+# creates a legal relation. Each says what the agreement's words mean, how
+# they are read, or what is taken to hold, and the relations elsewhere rely
+# on them. The agreement has no sections, so it is one section, the whole
+# (D7), and every definition applies throughout it.
+#
+# The agreement's clauses:
+#
+# | Clause | Text | Meaning |
+# |--------|------|---------|
+# | 1.1    | "Material Adverse Effect" means a material adverse effect on the business or financial condition of the Obligors taken as a whole. | a definition of a condition word |
+# | 1.2    | "Obligors" means the Borrower and each Guarantor, jointly and severally. | a definition of a party word meaning several parties, with how they act |
+# | 1.3    | A reference to a person includes its successors in title and permitted assigns. | an interpretation clause: a term with no relation (S71) |
+# | 18.1   | The Obligors shall pay the Lender's costs of enforcing this Agreement. | an obligation owed by the defined group |
+# | 23.1   | If a Material Adverse Effect occurs, the Lender may declare the loan immediately due and payable. | a power arising on the defined condition |
+# | 30.2   | A notice delivered by hand is deemed received when it is delivered. | a conclusive deeming |
+#
+# What the example shows:
+#
+# | Construct                                       | Where                                              |
+# |-------------------------------------------------|----------------------------------------------------|
+# | a condition word, and the condition it means (D12) | tmpl:def-mae, ex:MaterialAdverseEffect → ex:mae |
+# | a party word meaning roles, with its acting rule (D12) | tmpl:def-obligors, ins:actingRule pty:EachForWhole |
+# | joint and several liability from Party's terms (D19) | ex:obligors                                     |
+# | an unsectioned instrument, bound once (D7)      | the generated bound meaning: no ins:boundWithin    |
+# | an interpretation clause, with no relation (S71) | tmpl:term-1-3                                     |
+# | a conclusive deeming (D14, S25)                 | tmpl:deemed-receipt, ins:conclusive true           |
+#
+# Nothing here evaluates.
+
+@prefix ins:     <https://www.nebularis.org/neuro-semantic/lattice/instrument#> .
+@prefix ins-voc: <https://www.nebularis.org/neuro-semantic/lattice/instrument/vocab#> .
+@prefix bhv:     <https://www.nebularis.org/neuro-semantic/lattice/behaviour#> .
+@prefix wrd:     <https://www.nebularis.org/neuro-semantic/lattice/wording#> .
+@prefix wrd-voc: <https://www.nebularis.org/neuro-semantic/lattice/wording/vocab#> .
+@prefix fnd:     <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix pty:     <https://www.nebularis.org/neuro-semantic/lattice/party#> .
+@prefix elg:     <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
+@prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+@prefix tmpl:    <https://example.org/lattice/instrument/facility-definitions/form/> .
+@prefix ex:      <https://example.org/lattice/instrument/facility-definitions/> .
+
+# ==== The form: wording =======================================================
+
+ex:form a wrd:Wording ;
+    fnd:hasIdentity ex:form-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:directlyComprises ex:sec-1 , ex:sec-18 , ex:sec-23 , ex:sec-30 .
+
+ex:sec-1 a wrd:Element ;
+    fnd:hasIdentity ex:sec-1-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Section ; wrd:objectId "1" ; wrd:rankKey "a0" ;
+    wrd:directlyComprises ex:cl-1-1 , ex:cl-1-2 , ex:cl-1-3 .
+ex:cl-1-1 a wrd:Text ;
+    fnd:hasIdentity ex:cl-1-1-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Definition ; wrd:objectId "1.1" ; wrd:rankKey "a0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "\"Material Adverse Effect\" means a material adverse effect on the business or financial condition of the Obligors taken as a whole." ] .
+ex:cl-1-2 a wrd:Text ;
+    fnd:hasIdentity ex:cl-1-2-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Definition ; wrd:objectId "1.2" ; wrd:rankKey "b0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "\"Obligors\" means the Borrower and each Guarantor, jointly and severally." ] .
+ex:cl-1-3 a wrd:Text ;
+    fnd:hasIdentity ex:cl-1-3-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "1.3" ; wrd:rankKey "c0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "A reference to a person includes its successors in title and permitted assigns." ] .
+
+ex:sec-18 a wrd:Element ;
+    fnd:hasIdentity ex:sec-18-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Section ; wrd:objectId "18" ; wrd:rankKey "b0" ;
+    wrd:directlyComprises ex:cl-18-1 .
+ex:cl-18-1 a wrd:Text ;
+    fnd:hasIdentity ex:cl-18-1-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "18.1" ; wrd:rankKey "a0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "The Obligors shall pay the Lender's costs of enforcing this Agreement." ] .
+
+ex:sec-23 a wrd:Element ;
+    fnd:hasIdentity ex:sec-23-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Section ; wrd:objectId "23" ; wrd:rankKey "c0" ;
+    wrd:directlyComprises ex:cl-23-1 .
+ex:cl-23-1 a wrd:Text ;
+    fnd:hasIdentity ex:cl-23-1-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "23.1" ; wrd:rankKey "a0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "If a Material Adverse Effect occurs, the Lender may declare the loan immediately due and payable." ] .
+
+ex:sec-30 a wrd:Element ;
+    fnd:hasIdentity ex:sec-30-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Section ; wrd:objectId "30" ; wrd:rankKey "d0" ;
+    wrd:directlyComprises ex:cl-30-2 .
+ex:cl-30-2 a wrd:Text ;
+    fnd:hasIdentity ex:cl-30-2-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "30.2" ; wrd:rankKey "b0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "A notice delivered by hand is deemed received when it is delivered." ] .
+
+# ==== The form: roles, words and conditions ===================================
+
+ex:Borrower a pty:Role ; rdfs:label "Borrower" .
+ex:Guarantor a pty:Role ; rdfs:label "Guarantor" .
+ex:Lender a pty:Role ; rdfs:label "Lender" .
+ex:Obligor a pty:Role ; rdfs:label "Obligor" .        # the party word
+
+# The condition word, a plain concept. Stated meaning names it wherever the
+# text says "Material Adverse Effect", even where a condition is expected,
+# and binding replaces it by the condition its definition means (D12).
+ex:MaterialAdverseEffect a skos:Concept ; rdfs:label "Material Adverse Effect" .
+
+# Placeholders: conditions stated, not yet evaluable (C13).
+ex:mae a elg:Condition ;
+    elg:conditionKey "material-adverse-effect-on-the-obligors" ;
+    elg:matchStrategy elg:ExactMatch ; elg:compatibilityOperation elg:AllRequired ;
+    elg:wildcardSemantics elg:NoWildcard ;
+    elg:requiredConcept ex:adverse-effect .
+ex:adverse-effect a skos:Concept ;
+    rdfs:label "a material adverse effect on the business or financial condition of the Obligors taken as a whole" .
+
+ex:delivered-by-hand a elg:Condition ;
+    elg:conditionKey "notice-delivered-by-hand" ;
+    elg:matchStrategy elg:ExactMatch ; elg:compatibilityOperation elg:AllRequired ;
+    elg:wildcardSemantics elg:NoWildcard ;
+    elg:requiredConcept ex:hand-delivery .
+ex:hand-delivery a skos:Concept ; rdfs:label "the notice has been delivered by hand to the addressee" .
+
+ex:notice-received a elg:Condition ;
+    elg:conditionKey "notice-received" ;
+    elg:matchStrategy elg:ExactMatch ; elg:compatibilityOperation elg:AllRequired ;
+    elg:wildcardSemantics elg:NoWildcard ;
+    elg:requiredConcept ex:received .
+ex:received a skos:Concept ; rdfs:label "the notice has been received by the addressee" .
+
+# ==== The form: stated meaning ================================================
+#
+# Definitions and deemings arise under terms, as relations do (decision 2,
+# I2). None of them is a legal relation.
+
+tmpl:term-1-1 a ins:Term , ins:Template ; ins:expressedIn ex:cl-1-1 .
+tmpl:def-mae a ins:Definition , ins:Template ;
+    ins:arisesUnder tmpl:term-1-1 ;
+    ins:defines ex:MaterialAdverseEffect ;
+    ins:means ex:mae .
+
+# On the form, a party word means roles (I13), and says how their occupants
+# act together. A definition meaning several parties with no acting rule is
+# silent, and the relations it reaches are Undetermined (CC-D10).
+tmpl:term-1-2 a ins:Term , ins:Template ; ins:expressedIn ex:cl-1-2 .
+tmpl:def-obligors a ins:Definition , ins:Template ;
+    ins:arisesUnder tmpl:term-1-2 ;
+    ins:defines ex:Obligor ;
+    ins:means ex:Borrower , ex:Guarantor ;
+    ins:actingRule pty:EachForWhole .
+
+# An interpretation clause: a term with no relation, definition or deeming.
+# It governs how the words are read, not what anyone must do (S71).
+tmpl:term-1-3 a ins:Term , ins:Template ; ins:expressedIn ex:cl-1-3 .
+
+# Conclusive: proof that the notice did not reach the addressee does not
+# displace it. The closure the deeming licenses is ADR-A105's (HQ-6).
+tmpl:term-30-2 a ins:Term , ins:Template ; ins:expressedIn ex:cl-30-2 .
+tmpl:deemed-receipt a ins:Deeming , ins:Template ;
+    ins:arisesUnder tmpl:term-30-2 ;
+    ins:deems ex:notice-received ;
+    ins:when ex:delivered-by-hand ;
+    ins:conclusive true .
+
+tmpl:term-18-1 a ins:Term , ins:Template ; ins:expressedIn ex:cl-18-1 .
+tmpl:pay-costs a ins:Obligation , ins:Template ;
+    ins:arisesUnder tmpl:term-18-1 ;
+    ins:obligor ex:Obligor ; ins:obligee ex:Lender ;
+    ins:activity ins-voc:Pay .
+
+tmpl:term-23-1 a ins:Term , ins:Template ; ins:expressedIn ex:cl-23-1 .
+tmpl:on-mae a ins:OnCondition , bhv:TriggerDefinition ;
+    bhv:triggerKind bhv:DerivedTrigger ;
+    ins:condition ex:MaterialAdverseEffect .          # the word, resolved at binding
+tmpl:accelerate a ins:Power , ins:Template ;
+    ins:arisesUnder tmpl:term-23-1 ;
+    ins:holder ex:Lender ; ins:counterparty ex:Borrower ;
+    ins:activity ins-voc:DeclareDue ;
+    ins:arisesOn tmpl:on-mae .
+
+# ==== The instance: what the facility stores (D1) =============================
+
+ex:fenwick-wording-v1 a wrd:AssembledWording ;
+    fnd:hasIdentity ex:fenwick-wording-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:assembledFrom ex:form ;
+    wrd:includes ex:sec-1 , ex:cl-1-1 , ex:cl-1-2 , ex:cl-1-3 , ex:sec-18 , ex:cl-18-1 ,
+                 ex:sec-23 , ex:cl-23-1 , ex:sec-30 , ex:cl-30-2 .
+
+ex:fenwick-v1 a ins:Instrument ;
+    fnd:hasIdentity ex:fenwick-identity ;
+    ins:expressedIn ex:fenwick-wording-v1 ;
+    ins:party ex:borrower-occ , ex:guarantor-occ , ex:lender-occ .
+
+ex:fenwick-holdings a pty:Actor ; rdfs:label "Fenwick Holdings plc" .
+ex:fenwick-ops a pty:Actor ; rdfs:label "Fenwick Operations Ltd" .
+ex:granite-bank a pty:Actor ; rdfs:label "Granite Bank plc" .
+
+ex:borrower-occ a pty:RoleOccupancy ;
+    fnd:hasIdentity ex:borrower-occ-identity ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-09-01T00:00:00Z"^^xsd:dateTime ] ;
+    pty:inRole ex:Borrower ; pty:occupiedBy ex:fenwick-holdings .
+ex:guarantor-occ a pty:RoleOccupancy ;
+    fnd:hasIdentity ex:guarantor-occ-identity ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-09-01T00:00:00Z"^^xsd:dateTime ] ;
+    pty:inRole ex:Guarantor ; pty:occupiedBy ex:fenwick-ops .
+ex:lender-occ a pty:RoleOccupancy ;
+    fnd:hasIdentity ex:lender-occ-identity ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-09-01T00:00:00Z"^^xsd:dateTime ] ;
+    pty:inRole ex:Lender ; pty:occupiedBy ex:granite-bank .
+
+# "The Obligors": towards the Lender each stands for the whole, so no
+# outward share is stated, and the agreement says nothing of how they share
+# it between themselves, so no inward share is either (D19). The group's
+# rule agrees with clause 1.2's acting rule, as binding requires.
+ex:obligors a pty:ParticipationGroup ;
+    fnd:hasIdentity ex:obligors-identity ;
+    pty:hasCompositionRule pty:EachForWhole ;
+    pty:hasParticipant ex:borrower-membership , ex:guarantor-membership .
+ex:borrower-membership a pty:GroupMembership ;
+    pty:memberOf ex:obligors ; pty:memberOccupancy ex:borrower-occ .
+ex:guarantor-membership a pty:GroupMembership ;
+    pty:memberOf ex:obligors ; pty:memberOccupancy ex:guarantor-occ .
+
+# ==== Generated bound meaning: the expected output, not stored (D4) ===========
+#
+# One section, the whole, so no bound term records ins:boundWithin. Each
+# word resolves once: "Obligors" to the group, "Material Adverse Effect" to
+# ex:mae, which the generated trigger reads.
+
+ex:term-1-1 a ins:Term ; ins:boundIn ex:fenwick-v1 ; ins:boundFrom tmpl:term-1-1 .
+ex:def-mae a ins:Definition ;
+    ins:boundFrom tmpl:def-mae ; ins:arisesUnder ex:term-1-1 ;
+    ins:defines ex:MaterialAdverseEffect ; ins:means ex:mae .
+
+ex:term-1-2 a ins:Term ; ins:boundIn ex:fenwick-v1 ; ins:boundFrom tmpl:term-1-2 .
+ex:def-obligors a ins:Definition ;
+    ins:boundFrom tmpl:def-obligors ; ins:arisesUnder ex:term-1-2 ;
+    ins:defines ex:Obligor ; ins:means ex:obligors ;
+    ins:actingRule pty:EachForWhole .
+
+ex:term-1-3 a ins:Term ; ins:boundIn ex:fenwick-v1 ; ins:boundFrom tmpl:term-1-3 .
+
+ex:term-30-2 a ins:Term ; ins:boundIn ex:fenwick-v1 ; ins:boundFrom tmpl:term-30-2 .
+ex:deemed-receipt a ins:Deeming ;
+    ins:boundFrom tmpl:deemed-receipt ; ins:arisesUnder ex:term-30-2 ;
+    ins:deems ex:notice-received ; ins:when ex:delivered-by-hand ;
+    ins:conclusive true .
+
+ex:term-18-1 a ins:Term ; ins:boundIn ex:fenwick-v1 ; ins:boundFrom tmpl:term-18-1 .
+ex:pay-costs a ins:Obligation ;
+    ins:boundFrom tmpl:pay-costs ; ins:arisesUnder ex:term-18-1 ;
+    ins:obligor ex:obligors ;                         # each for the whole
+    ins:obligee ex:lender-occ ;
+    ins:activity ins-voc:Pay .
+
+ex:term-23-1 a ins:Term ; ins:boundIn ex:fenwick-v1 ; ins:boundFrom tmpl:term-23-1 .
+ex:on-mae a ins:OnCondition , bhv:TriggerDefinition ;
+    bhv:triggerKind bhv:DerivedTrigger ;
+    ins:condition ex:mae .                            # the word's meaning
+ex:accelerate a ins:Power ;
+    ins:boundFrom tmpl:accelerate ; ins:arisesUnder ex:term-23-1 ;
+    ins:holder ex:lender-occ ; ins:counterparty ex:borrower-occ ;
+    ins:activity ins-voc:DeclareDue ;
+    ins:arisesOn ex:on-mae .

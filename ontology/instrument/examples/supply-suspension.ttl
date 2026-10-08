@@ -1,0 +1,278 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Premise. A supply agreement lets the supplier suspend deliveries while an
+# invoice is overdue, and lets the buyer have them resumed once it has paid.
+# Separately, the supplier is relieved of delivering while force majeure
+# prevents it. The duty to deliver is gated by both: it applies only while the
+# agreement is not suspended and no force majeure continues.
+#
+# The agreement's clauses:
+#
+# | Clause | Text | Meaning |
+# |--------|------|---------|
+# | 3.1    | The Supplier shall deliver the Goods ordered by the Buyer. | an obligation, gated by both regimes |
+# | 8.1    | The Supplier may suspend deliveries if an invoice is unpaid 30 days after it is due. | a power, and the suspension regime it switches |
+# | 8.2    | Once every overdue invoice is paid, the Buyer may require deliveries to resume. | a power, gated by the suspended state |
+# | 14.1   | The Supplier is relieved of clause 3.1 while a force majeure event prevents it from performing. | the force majeure regime |
+#
+# Two switching regimes on one instrument:
+#
+#   suspension:     in force --(exercise of 8.1)--> suspended --(exercise of 8.2)--> in force
+#   force majeure:  unaffected --(force majeure prevents performance)--> affected
+#                   affected --(the event has ended)--> unaffected
+#
+# What the example shows:
+#
+# | Construct                                       | Where                                   |
+# |-------------------------------------------------|-----------------------------------------|
+# | a switching regime, moved by two parties' powers | tmpl:suspension-regime                 |
+# | a regime moved by conditions                    | tmpl:force-majeure-regime, ins:OnCondition |
+# | a relation gated across two regimes: every regime's group must hold | ex:deliver, ins:appliesInState tmpl:in-force , tmpl:unaffected |
+# | a power gated by a state                        | ex:require-resumption, ins:appliesInState tmpl:suspended |
+# | a state with no kind                            | tmpl:unaffected                         |
+#
+# Gating rule (nested states §6.2). A relation's gating states are grouped by
+# regime. Within one regime, any of its named states admits the relation.
+# Across regimes, every regime's group must admit it. So ex:deliver applies
+# when the suspension regime is in tmpl:in-force and the force majeure regime
+# is in tmpl:unaffected, and in no other combination.
+
+@prefix ins:     <https://www.nebularis.org/neuro-semantic/lattice/instrument#> .
+@prefix ins-voc: <https://www.nebularis.org/neuro-semantic/lattice/instrument/vocab#> .
+@prefix bhv:     <https://www.nebularis.org/neuro-semantic/lattice/behaviour#> .
+@prefix wrd:     <https://www.nebularis.org/neuro-semantic/lattice/wording#> .
+@prefix wrd-voc: <https://www.nebularis.org/neuro-semantic/lattice/wording/vocab#> .
+@prefix fnd:     <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix pty:     <https://www.nebularis.org/neuro-semantic/lattice/party#> .
+@prefix elg:     <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
+@prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+@prefix tmpl:    <https://example.org/lattice/instrument/supply-suspension/form/> .
+@prefix ex:      <https://example.org/lattice/instrument/supply-suspension/> .
+
+# ==== The supply form: wording ===============================================
+
+ex:form a wrd:Wording ;
+    fnd:hasIdentity ex:form-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:directlyComprises ex:sec-3 , ex:sec-8 , ex:sec-14 .
+
+ex:sec-3 a wrd:Element ;
+    fnd:hasIdentity ex:sec-3-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Section ; wrd:objectId "3" ; wrd:rankKey "c0" ;
+    wrd:directlyComprises ex:cl-3-1 .
+ex:cl-3-1 a wrd:Text ;
+    fnd:hasIdentity ex:cl-3-1-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "3.1" ; wrd:rankKey "a0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "The Supplier shall deliver the Goods ordered by the Buyer." ] .
+
+ex:sec-8 a wrd:Element ;
+    fnd:hasIdentity ex:sec-8-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Section ; wrd:objectId "8" ; wrd:rankKey "h0" ;
+    wrd:directlyComprises ex:cl-8-1 , ex:cl-8-2 .
+ex:cl-8-1 a wrd:Text ;
+    fnd:hasIdentity ex:cl-8-1-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "8.1" ; wrd:rankKey "a0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "The Supplier may suspend deliveries if an invoice is unpaid 30 days after it is due." ] .
+ex:cl-8-2 a wrd:Text ;
+    fnd:hasIdentity ex:cl-8-2-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "8.2" ; wrd:rankKey "b0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "Once every overdue invoice is paid, the Buyer may require deliveries to resume." ] .
+
+ex:sec-14 a wrd:Element ;
+    fnd:hasIdentity ex:sec-14-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Section ; wrd:objectId "14" ; wrd:rankKey "n0" ;
+    wrd:directlyComprises ex:cl-14-1 .
+ex:cl-14-1 a wrd:Text ;
+    fnd:hasIdentity ex:cl-14-1-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "14.1" ; wrd:rankKey "a0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "The Supplier is relieved of clause 3.1 while a force majeure event prevents it from performing." ] .
+
+# ==== Roles and conditions ===================================================
+
+ex:Supplier a pty:Role ; rdfs:label "Supplier" .
+ex:Buyer a pty:Role ; rdfs:label "Buyer" .
+
+# Placeholders: scopes and triggers stated, not yet evaluable. Their concepts
+# are in no scheme and no evidence binding reads them, until the case data
+# exists (C7b, C13).
+ex:invoice-overdue a elg:Condition ;
+    elg:conditionKey "invoice-unpaid-30-days-after-due" ;
+    elg:matchStrategy elg:ExactMatch ; elg:compatibilityOperation elg:AllRequired ;
+    elg:wildcardSemantics elg:NoWildcard ;
+    elg:requiredConcept ex:overdue .
+ex:overdue a skos:Concept ; rdfs:label "an invoice is unpaid 30 days after it is due" .
+
+ex:arrears-cleared a elg:Condition ;
+    elg:conditionKey "every-overdue-invoice-paid" ;
+    elg:matchStrategy elg:ExactMatch ; elg:compatibilityOperation elg:AllRequired ;
+    elg:wildcardSemantics elg:NoWildcard ;
+    elg:requiredConcept ex:cleared .
+ex:cleared a skos:Concept ; rdfs:label "every overdue invoice has been paid" .
+
+ex:force-majeure-prevents a elg:Condition ;
+    elg:conditionKey "force-majeure-prevents-supplier" ;
+    elg:matchStrategy elg:ExactMatch ; elg:compatibilityOperation elg:AllRequired ;
+    elg:wildcardSemantics elg:NoWildcard ;
+    elg:requiredConcept ex:prevented .
+ex:prevented a skos:Concept ; rdfs:label "a force majeure event prevents the Supplier from performing" .
+
+ex:force-majeure-ended a elg:Condition ;
+    elg:conditionKey "force-majeure-ended" ;
+    elg:matchStrategy elg:ExactMatch ; elg:compatibilityOperation elg:AllRequired ;
+    elg:wildcardSemantics elg:NoWildcard ;
+    elg:requiredConcept ex:ended .
+ex:ended a skos:Concept ; rdfs:label "the force majeure event no longer prevents the Supplier from performing" .
+
+# ==== Stated meaning: relations ==============================================
+
+tmpl:term-3-1 a ins:Term , ins:Template ; ins:expressedIn ex:cl-3-1 .
+tmpl:deliver a ins:Obligation , ins:Template ;
+    ins:arisesUnder tmpl:term-3-1 ;
+    ins:obligor ex:Supplier ;
+    ins:obligee ex:Buyer ;
+    ins:activity ins-voc:Deliver ;
+    ins:appliesInState tmpl:in-force , tmpl:unaffected .     # one state from each regime
+
+tmpl:term-8-1 a ins:Term , ins:Template ; ins:expressedIn ex:cl-8-1 .
+tmpl:suspend a ins:Power , ins:Template ;
+    ins:arisesUnder tmpl:term-8-1 ;
+    ins:holder ex:Supplier ;
+    ins:counterparty ex:Buyer ;
+    ins:activity ins-voc:Suspend ;
+    ins:scope ex:invoice-overdue .
+
+tmpl:term-8-2 a ins:Term , ins:Template ; ins:expressedIn ex:cl-8-2 .
+tmpl:require-resumption a ins:Power , ins:Template ;
+    ins:arisesUnder tmpl:term-8-2 ;
+    ins:holder ex:Buyer ;
+    ins:counterparty ex:Supplier ;
+    ins:activity ins-voc:Reinstate ;
+    ins:scope ex:arrears-cleared ;
+    ins:appliesInState tmpl:suspended .
+
+tmpl:term-14-1 a ins:Term , ins:Template ; ins:expressedIn ex:cl-14-1 .
+
+# ==== Stated meaning: the suspension regime ==================================
+
+tmpl:suspension-regime a ins:Regime , bhv:StateSpace , ins:Template ;
+    fnd:hasIdentity tmpl:suspension-regime-identity ;
+    ins:arisesUnder tmpl:term-8-1 ;
+    bhv:initialState tmpl:in-force .
+
+tmpl:in-force a bhv:State ;
+    bhv:inStateSpace tmpl:suspension-regime ; ins:stateKind ins-voc:InForce .
+tmpl:suspended a bhv:State ;
+    bhv:inStateSpace tmpl:suspension-regime ; ins:stateKind ins-voc:Suspended .
+
+tmpl:on-suspension a ins:OnExercise , bhv:TriggerDefinition ;
+    bhv:triggerKind bhv:ExternalStimulus ;
+    ins:ofPower tmpl:suspend .
+tmpl:on-resumption a ins:OnExercise , bhv:TriggerDefinition ;
+    bhv:triggerKind bhv:ExternalStimulus ;
+    ins:ofPower tmpl:require-resumption .
+
+tmpl:suspend-deliveries a ins:RegimeTransition , bhv:TransitionDefinition ;
+    bhv:fromState tmpl:in-force ; bhv:toState tmpl:suspended ;
+    bhv:hasTrigger tmpl:on-suspension ;
+    bhv:selectionPolicy bhv:SingleMatch ; bhv:activationPolicy bhv:ImmediateActivation .
+tmpl:resume-deliveries a ins:RegimeTransition , bhv:TransitionDefinition ;
+    bhv:fromState tmpl:suspended ; bhv:toState tmpl:in-force ;
+    bhv:hasTrigger tmpl:on-resumption ;
+    bhv:selectionPolicy bhv:SingleMatch ; bhv:activationPolicy bhv:ImmediateActivation .
+
+# ==== Stated meaning: the force majeure regime ===============================
+#
+# Clause 14.1 states no relation of its own: its effect is this regime, and
+# the gate it puts on clause 3.1. The unaffected state has no kind, since no
+# reader or report needs one.
+
+tmpl:force-majeure-regime a ins:Regime , bhv:StateSpace , ins:Template ;
+    fnd:hasIdentity tmpl:force-majeure-regime-identity ;
+    ins:arisesUnder tmpl:term-14-1 ;
+    bhv:initialState tmpl:unaffected .
+
+tmpl:unaffected a bhv:State ;
+    bhv:inStateSpace tmpl:force-majeure-regime .
+tmpl:affected a bhv:State ;
+    bhv:inStateSpace tmpl:force-majeure-regime ; ins:stateKind ins-voc:ForceMajeure .
+
+tmpl:on-force-majeure a ins:OnCondition , bhv:TriggerDefinition ;
+    bhv:triggerKind bhv:DerivedTrigger ;
+    ins:condition ex:force-majeure-prevents .
+tmpl:on-force-majeure-ended a ins:OnCondition , bhv:TriggerDefinition ;
+    bhv:triggerKind bhv:DerivedTrigger ;
+    ins:condition ex:force-majeure-ended .
+
+tmpl:force-majeure-begins a ins:RegimeTransition , bhv:TransitionDefinition ;
+    bhv:fromState tmpl:unaffected ; bhv:toState tmpl:affected ;
+    bhv:hasTrigger tmpl:on-force-majeure ;
+    bhv:selectionPolicy bhv:SingleMatch ; bhv:activationPolicy bhv:ImmediateActivation .
+tmpl:force-majeure-ends a ins:RegimeTransition , bhv:TransitionDefinition ;
+    bhv:fromState tmpl:affected ; bhv:toState tmpl:unaffected ;
+    bhv:hasTrigger tmpl:on-force-majeure-ended ;
+    bhv:selectionPolicy bhv:SingleMatch ; bhv:activationPolicy bhv:ImmediateActivation .
+
+# ==== The agreement between Brightwater and Halden ===========================
+
+ex:halden-wording-v1 a wrd:AssembledWording ;
+    fnd:hasIdentity ex:halden-wording-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:assembledFrom ex:form ;
+    wrd:includes ex:sec-3 , ex:cl-3-1 , ex:sec-8 , ex:cl-8-1 , ex:cl-8-2 , ex:sec-14 , ex:cl-14-1 .
+
+ex:halden-v1 a ins:Instrument ;
+    fnd:hasIdentity ex:halden-identity ;
+    ins:expressedIn ex:halden-wording-v1 ;
+    ins:party ex:supplier-occ , ex:buyer-occ .
+
+ex:brightwater a pty:Actor ; rdfs:label "Brightwater Packaging Ltd" .
+ex:halden a pty:Actor ; rdfs:label "Halden Foods Ltd" .
+
+ex:supplier-occ a pty:RoleOccupancy ;
+    fnd:hasIdentity ex:supplier-occ-identity ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-04-01T00:00:00Z"^^xsd:dateTime ] ;
+    pty:inRole ex:Supplier ; pty:occupiedBy ex:brightwater .
+ex:buyer-occ a pty:RoleOccupancy ;
+    fnd:hasIdentity ex:buyer-occ-identity ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-04-01T00:00:00Z"^^xsd:dateTime ] ;
+    pty:inRole ex:Buyer ; pty:occupiedBy ex:halden .
+
+# ==== Bound meaning: owned by Halden's agreement =============================
+#
+# Both gates read the occupancies of each regime for ex:halden-identity, the
+# agreement's persistent identity (C7a-Q5). Clause 14.1 binds nothing: its
+# stated term holds only the regime, and a regime is stated only (C7a-Q1).
+
+ex:term-3-1 a ins:Term ; ins:boundIn ex:halden-v1 ; ins:boundFrom tmpl:term-3-1 .
+ex:deliver a ins:Obligation ;
+    ins:boundFrom tmpl:deliver ; ins:arisesUnder ex:term-3-1 ;
+    ins:obligor ex:supplier-occ ; ins:obligee ex:buyer-occ ;
+    ins:activity ins-voc:Deliver ;
+    ins:appliesInState tmpl:in-force , tmpl:unaffected .
+
+ex:term-8-1 a ins:Term ; ins:boundIn ex:halden-v1 ; ins:boundFrom tmpl:term-8-1 .
+ex:suspend a ins:Power ;
+    ins:boundFrom tmpl:suspend ; ins:arisesUnder ex:term-8-1 ;
+    ins:holder ex:supplier-occ ; ins:counterparty ex:buyer-occ ;
+    ins:activity ins-voc:Suspend ;
+    ins:scope ex:invoice-overdue .
+
+ex:term-8-2 a ins:Term ; ins:boundIn ex:halden-v1 ; ins:boundFrom tmpl:term-8-2 .
+ex:require-resumption a ins:Power ;
+    ins:boundFrom tmpl:require-resumption ; ins:arisesUnder ex:term-8-2 ;
+    ins:holder ex:buyer-occ ; ins:counterparty ex:supplier-occ ;
+    ins:activity ins-voc:Reinstate ;
+    ins:scope ex:arrears-cleared ;
+    ins:appliesInState tmpl:suspended .
+
+# A term whose only content is a regime is bound too, as every stated term is
+# (law I17). The regime itself is read as stated (law I13).
+ex:term-14-1 a ins:Term ; ins:boundIn ex:halden-v1 ; ins:boundFrom tmpl:term-14-1 .

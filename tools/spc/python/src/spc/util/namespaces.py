@@ -7,21 +7,21 @@ All IRI prefixes used across the encoder, verifier, and extractor.
 from rdflib import Namespace, RDF, RDFS, OWL, XSD
 
 # SPC Core ontology
-SPC = Namespace("http://spc.marsh.com/ontology/core#")
+SPC = Namespace("http://spc.example.org/ontology/core#")
 
 # SPC Extension ontologies
-EXT_TIMER = Namespace("http://spc.marsh.com/ontology/ext/timer#")
-EXT_JOB = Namespace("http://spc.marsh.com/ontology/ext/job#")
-EXT_ERROR = Namespace("http://spc.marsh.com/ontology/ext/error#")
-EXT_COMP = Namespace("http://spc.marsh.com/ontology/ext/compensation#")
-EXT_SIGNAL = Namespace("http://spc.marsh.com/ontology/ext/signal#")
-EXT_CONN = Namespace("http://spc.marsh.com/ontology/ext/connector#")
+EXT_TIMER = Namespace("http://spc.example.org/ontology/ext/timer#")
+EXT_JOB = Namespace("http://spc.example.org/ontology/ext/job#")
+EXT_ERROR = Namespace("http://spc.example.org/ontology/ext/error#")
+EXT_COMP = Namespace("http://spc.example.org/ontology/ext/compensation#")
+EXT_SIGNAL = Namespace("http://spc.example.org/ontology/ext/signal#")
+EXT_CONN = Namespace("http://spc.example.org/ontology/ext/connector#")
 
 # Protocol instance namespace (per-protocol A-Box individuals)
-PROTO = Namespace("http://spc.marsh.com/protocol/")
+PROTO = Namespace("http://spc.example.org/protocol/")
 
 # Domain ontology (insurance — configurable)
-INS = Namespace("http://spc.marsh.com/ontology/insurance#")
+INS = Namespace("http://spc.example.org/ontology/insurance#")
 
 # SHACL
 SH = Namespace("http://www.w3.org/ns/shacl#")

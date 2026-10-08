@@ -7,11 +7,11 @@
 ex:identity-a a fnd:PersistentIdentity .
 ex:identity-b a fnd:PersistentIdentity .
 
-ex:old-obligation
-    a ins:Obligation ;
+ex:old-version
+    a ins:Instrument ;
     fnd:hasIdentity ex:identity-a ;
-    fnd:supersededBy ex:new-obligation .
+    fnd:supersededBy ex:new-version .
 
-ex:new-obligation
-    a ins:Obligation ;
+ex:new-version
+    a ins:Instrument ;
     fnd:hasIdentity ex:identity-b .

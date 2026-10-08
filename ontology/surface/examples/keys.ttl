@@ -1,0 +1,102 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Premise. A versioned thing carries its keys on its persistent identity, so
+# finding a version by a key it carries is one hop more than finding an
+# unversioned thing. Adopters without a reasoner still want the version to
+# carry them directly.
+#
+# Two promotion contracts restate an agreement identity's keys on each of the
+# agreement's versions, as fnd:externalKey, over the data of
+# ontology/foundation/examples/keys.ttl. Together they materialise for
+# everyone what Foundation's property chain on fnd:externalKey gives a
+# reasoner.
+#
+# Two are needed, one per property the identity carries keys on. Under
+# srf:NoEntailment a path step follows asserted triples only, and
+# fnd:naturalKey ⊑ fnd:externalKey is not applied, so a step on
+# fnd:externalKey does not reach keys asserted as fnd:naturalKey, and a step
+# on fnd:naturalKey does not reach plain external keys:
+#
+#   identity --fnd:naturalKey--> agreement number, market reference   (exs:version-natural-keys)
+#   identity --fnd:externalKey--> payout account                      (exs:version-external-keys)
+#
+# What the example shows:
+#
+# | Construct                                   | Where                    |
+# |---------------------------------------------|--------------------------|
+# | an exact, materialised two-step promotion   | exs:version-natural-keys, exs:version-external-keys |
+# | two contracts promoting onto one property   | both srf:promotesTo fnd:externalKey |
+# | promotion onto an authored property         | srf:promotesTo fnd:externalKey |
+#
+# It promotes onto fnd:externalKey, which locates, and never onto
+# fnd:naturalKey, which identifies. Every version would otherwise hold its
+# identity's natural keys, become fnd:NaturallyKeyed by that property's
+# domain, and be reported by Foundation's uniqueness shape as different
+# things sharing one key.
+#
+# The promoted property lies outside the contract's target namespace, so it
+# reaches the authored signature: the contract declares exact fidelity and is
+# materialised (srf:PromotionSignatureDisciplineShape).
+#
+# There is no index contract. Surface's index forms mint a symbol per value
+# and need an enumerable population, and a key space is neither. A key node
+# is already the lookup symbol: everything carrying one is the single pattern
+# ?x fnd:externalKey key-mr:MR-2027-000412.
+
+@prefix srf:  <https://www.nebularis.org/neuro-semantic/lattice/surface#> .
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex:   <https://example.org/lattice/foundation/keys#> .
+@prefix exs:  <https://example.org/lattice/surface/keys#> .
+
+# --- generation profile ------------------------------------------------------
+
+exs:profile-v1 a srf:SurfaceProfile ;
+    fnd:hasIdentity exs:profile-identity ;
+    srf:generatorVersion "lattice-surface-compiler/0.1.0" ;
+    srf:canonicalisationVersion "srf-canon/1" ;
+    srf:entailmentRegime srf:NoEntailment ;
+    srf:namingNormalisation srf:SanitisedLocalName ;
+    srf:symbolMode srf:WrappedSymbols ;
+    srf:permittedStackDepth 1 .
+
+# --- the promotion -----------------------------------------------------------
+
+exs:identity-step a srf:PathStep ;
+    srf:stepIndex 0 ;
+    srf:stepProperty fnd:hasIdentity ;
+    srf:stepDirection srf:Forward .
+
+exs:natural-key-step a srf:PathStep ;
+    srf:stepIndex 1 ;
+    srf:stepProperty fnd:naturalKey ;
+    srf:stepDirection srf:Forward .
+
+exs:external-key-step a srf:PathStep ;
+    srf:stepIndex 1 ;
+    srf:stepProperty fnd:externalKey ;
+    srf:stepDirection srf:Forward .
+
+exs:version-natural-keys a srf:PromotionContract ;
+    fnd:hasIdentity exs:version-natural-keys-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    srf:contractKey "version-natural-keys" ;
+    srf:carrier ex:Agreement ;
+    srf:hasPathStep exs:identity-step , exs:natural-key-step ;
+    srf:targetNamespace "https://example.org/lattice/surface/keys/exec#"^^xsd:anyURI ;
+    srf:realisationMode srf:Materialised ;
+    srf:surfaceProfile exs:profile-v1 ;
+    srf:promotesTo fnd:externalKey ;
+    srf:sourceFidelity srf:ExactSource .
+
+exs:version-external-keys a srf:PromotionContract ;
+    fnd:hasIdentity exs:version-external-keys-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    srf:contractKey "version-external-keys" ;
+    srf:carrier ex:Agreement ;
+    srf:hasPathStep exs:identity-step , exs:external-key-step ;
+    srf:targetNamespace "https://example.org/lattice/surface/keys/exec#"^^xsd:anyURI ;
+    srf:realisationMode srf:Materialised ;
+    srf:surfaceProfile exs:profile-v1 ;
+    srf:promotesTo fnd:externalKey ;
+    srf:sourceFidelity srf:ExactSource .

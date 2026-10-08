@@ -1,0 +1,230 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Premise. A services agreement obliges the provider to meet a service level
+# each month. Each month's failure lets the customer end the agreement, unless
+# the provider disputes that failure, in which case the customer's power is
+# excluded until the dispute is settled. A dispute about one month says
+# nothing about another, so the dispute regime runs once per occasion of the
+# service duty.
+#
+# The agreement's clauses:
+#
+# | Clause | Text | Meaning |
+# |--------|------|---------|
+# | 4.1    | The Provider shall make the Service available for at least 99.5% of each month. | an obligation, one occasion per month |
+# | 16.1   | If the Provider fails to meet clause 4.1 in a month, the Customer may end this agreement. | a power arising on breach |
+# | 16.2   | Clause 16.1 does not apply to a failure the Provider has disputed, until the dispute is settled. | an exclusion arising on the same breach, gated by Disputed |
+# | 20.1   | The Provider may dispute a reported failure by notice. The dispute ends when settled under clause 21. | the per-occasion dispute regime |
+#
+# The dispute regime, one instance per occasion of the service duty:
+#
+#   undisputed --(the Provider's act of disputing)--> disputed
+#   disputed --(the dispute is settled)--> settled
+#
+# What the example shows:
+#
+# | Construct                                       | Where                                   |
+# |-------------------------------------------------|-----------------------------------------|
+# | a per-occasion regime naming the stated relation | tmpl:dispute-regime bhv:perOccasionOf tmpl:provide-service |
+# | relations arising on breach (C7a-Q3)            | ins:arisesOnBreachOf                    |
+# | a gate read for the occasion the arising chain reaches (C11a-Q4) | ex:termination-excluded, ins:appliesInState tmpl:disputed |
+# | a trigger on a party's act                      | ins:OnAct, ins:activity, ins:by         |
+#
+# Whose state gates the exclusion (C7a-Q5). The dispute regime is per
+# occasion, so a gate on tmpl:disputed has no single occupancy for the
+# agreement. The exclusion arises on breach of ex:provide-service, so for one
+# month's breach its gate reads the dispute regime of that month's occasion. The
+# per-occasion regime names tmpl:provide-service, and covers the occasions of
+# every bound relation instantiated from it (C7a-Q1).
+
+@prefix ins:     <https://www.nebularis.org/neuro-semantic/lattice/instrument#> .
+@prefix ins-voc: <https://www.nebularis.org/neuro-semantic/lattice/instrument/vocab#> .
+@prefix bhv:     <https://www.nebularis.org/neuro-semantic/lattice/behaviour#> .
+@prefix wrd:     <https://www.nebularis.org/neuro-semantic/lattice/wording#> .
+@prefix wrd-voc: <https://www.nebularis.org/neuro-semantic/lattice/wording/vocab#> .
+@prefix fnd:     <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix pty:     <https://www.nebularis.org/neuro-semantic/lattice/party#> .
+@prefix elg:     <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
+@prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+@prefix tmpl:    <https://example.org/lattice/instrument/service-dispute/form/> .
+@prefix ex:      <https://example.org/lattice/instrument/service-dispute/> .
+
+# ==== The services form: wording =============================================
+
+ex:form a wrd:Wording ;
+    fnd:hasIdentity ex:form-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:directlyComprises ex:sec-4 , ex:sec-16 , ex:sec-20 .
+
+ex:sec-4 a wrd:Element ;
+    fnd:hasIdentity ex:sec-4-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Section ; wrd:objectId "4" ; wrd:rankKey "d0" ;
+    wrd:directlyComprises ex:cl-4-1 .
+ex:cl-4-1 a wrd:Text ;
+    fnd:hasIdentity ex:cl-4-1-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "4.1" ; wrd:rankKey "a0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "The Provider shall make the Service available for at least 99.5% of each month." ] .
+
+ex:sec-16 a wrd:Element ;
+    fnd:hasIdentity ex:sec-16-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Section ; wrd:objectId "16" ; wrd:rankKey "p0" ;
+    wrd:directlyComprises ex:cl-16-1 , ex:cl-16-2 .
+ex:cl-16-1 a wrd:Text ;
+    fnd:hasIdentity ex:cl-16-1-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "16.1" ; wrd:rankKey "a0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "If the Provider fails to meet clause 4.1 in a month, the Customer may end this agreement." ] .
+ex:cl-16-2 a wrd:Text ;
+    fnd:hasIdentity ex:cl-16-2-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "16.2" ; wrd:rankKey "b0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "Clause 16.1 does not apply to a failure the Provider has disputed, until the dispute is settled." ] .
+
+ex:sec-20 a wrd:Element ;
+    fnd:hasIdentity ex:sec-20-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Section ; wrd:objectId "20" ; wrd:rankKey "t0" ;
+    wrd:directlyComprises ex:cl-20-1 .
+ex:cl-20-1 a wrd:Text ;
+    fnd:hasIdentity ex:cl-20-1-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "20.1" ; wrd:rankKey "a0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "The Provider may dispute a reported failure by notice. The dispute ends when settled under clause 21." ] .
+
+# ==== Roles and conditions ===================================================
+
+ex:Provider a pty:Role ; rdfs:label "Provider" .
+ex:Customer a pty:Role ; rdfs:label "Customer" .
+
+# Placeholder: a trigger stated, not yet evaluable. Its concept is in no
+# scheme and no evidence binding reads it, until the case data exists (C7b,
+# C13). Clause 21 is not modelled.
+ex:dispute-settled a elg:Condition ;
+    elg:conditionKey "service-dispute-settled" ;
+    elg:matchStrategy elg:ExactMatch ; elg:compatibilityOperation elg:AllRequired ;
+    elg:wildcardSemantics elg:NoWildcard ;
+    elg:requiredConcept ex:settled .
+ex:settled a skos:Concept ; rdfs:label "the dispute has been settled under clause 21" .
+
+# ==== Stated meaning: relations ==============================================
+#
+# The monthly due ranges of clause 4.1 are C7b's: here the duty is stated
+# without them, and its occasions are taken as given.
+
+tmpl:term-4-1 a ins:Term , ins:Template ; ins:expressedIn ex:cl-4-1 .
+tmpl:provide-service a ins:Obligation , ins:Template ;
+    ins:arisesUnder tmpl:term-4-1 ;
+    ins:obligor ex:Provider ;
+    ins:obligee ex:Customer ;
+    ins:activity ins-voc:ProvideService .
+
+tmpl:term-16-1 a ins:Term , ins:Template ; ins:expressedIn ex:cl-16-1 .
+tmpl:end-for-failure a ins:Power , ins:Template ;
+    ins:arisesUnder tmpl:term-16-1 ;
+    ins:holder ex:Customer ;
+    ins:counterparty ex:Provider ;
+    ins:activity ins-voc:Terminate ;
+    ins:arisesOnBreachOf tmpl:provide-service .
+
+tmpl:term-16-2 a ins:Term , ins:Template ; ins:expressedIn ex:cl-16-2 .
+tmpl:termination-excluded a ins:Exclusion , ins:Template ;
+    ins:arisesUnder tmpl:term-16-2 ;
+    ins:holder ex:Provider ;                          # the excepted power's counterparty (I8)
+    ins:counterparty ex:Customer ;
+    ins:excepts tmpl:end-for-failure ;
+    ins:arisesOnBreachOf tmpl:provide-service ;       # the chain the gate follows to its occasion
+    ins:appliesInState tmpl:disputed .
+
+# ==== Stated meaning: the dispute regime =====================================
+
+tmpl:term-20-1 a ins:Term , ins:Template ; ins:expressedIn ex:cl-20-1 .
+tmpl:dispute-regime a ins:Regime , bhv:StateSpace , ins:Template ;
+    fnd:hasIdentity tmpl:dispute-regime-identity ;
+    ins:arisesUnder tmpl:term-20-1 ;
+    bhv:perOccasionOf tmpl:provide-service ;          # the stated relation
+    bhv:initialState tmpl:undisputed .
+
+tmpl:undisputed a bhv:State ;
+    bhv:inStateSpace tmpl:dispute-regime .
+tmpl:disputed a bhv:State ;
+    bhv:inStateSpace tmpl:dispute-regime ; ins:stateKind ins-voc:Disputed .
+tmpl:dispute-over a bhv:State ;
+    bhv:inStateSpace tmpl:dispute-regime .
+
+tmpl:on-dispute a ins:OnAct , bhv:TriggerDefinition ;
+    bhv:triggerKind bhv:ExternalStimulus ;
+    ins:activity ins-voc:Dispute ;                    # the same property a relation uses (C7a-Q2)
+    ins:by ex:Provider .
+tmpl:on-settlement a ins:OnCondition , bhv:TriggerDefinition ;
+    bhv:triggerKind bhv:DerivedTrigger ;
+    ins:condition ex:dispute-settled .
+
+tmpl:raise-dispute a ins:RegimeTransition , bhv:TransitionDefinition ;
+    bhv:fromState tmpl:undisputed ; bhv:toState tmpl:disputed ;
+    bhv:hasTrigger tmpl:on-dispute ;
+    bhv:selectionPolicy bhv:SingleMatch ; bhv:activationPolicy bhv:ImmediateActivation .
+tmpl:settle-dispute a ins:RegimeTransition , bhv:TransitionDefinition ;
+    bhv:fromState tmpl:disputed ; bhv:toState tmpl:dispute-over ;
+    bhv:hasTrigger tmpl:on-settlement ;
+    bhv:selectionPolicy bhv:SingleMatch ; bhv:activationPolicy bhv:ImmediateActivation .
+
+# ==== The agreement with Larkspur ============================================
+
+ex:larkspur-wording-v1 a wrd:AssembledWording ;
+    fnd:hasIdentity ex:larkspur-wording-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:assembledFrom ex:form ;
+    wrd:includes ex:sec-4 , ex:cl-4-1 , ex:sec-16 , ex:cl-16-1 , ex:cl-16-2 , ex:sec-20 , ex:cl-20-1 .
+
+ex:larkspur-v1 a ins:Instrument ;
+    fnd:hasIdentity ex:larkspur-identity ;
+    ins:expressedIn ex:larkspur-wording-v1 ;
+    ins:party ex:provider-occ , ex:customer-occ .
+
+ex:tessera a pty:Actor ; rdfs:label "Tessera Hosting Ltd" .
+ex:larkspur a pty:Actor ; rdfs:label "Larkspur Retail Ltd" .
+
+ex:provider-occ a pty:RoleOccupancy ;
+    fnd:hasIdentity ex:provider-occ-identity ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-01-01T00:00:00Z"^^xsd:dateTime ] ;
+    pty:inRole ex:Provider ; pty:occupiedBy ex:tessera .
+ex:customer-occ a pty:RoleOccupancy ;
+    fnd:hasIdentity ex:customer-occ-identity ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-01-01T00:00:00Z"^^xsd:dateTime ] ;
+    pty:inRole ex:Customer ; pty:occupiedBy ex:larkspur .
+
+# ==== Bound meaning: owned by Larkspur's agreement ===========================
+#
+# The bound relations restate their templates in full, so their arising
+# names the bound duty (as ins:excepts names the bound power). The regime
+# names the stated duty, and reaches ex:provide-service through its
+# ins:boundFrom.
+
+ex:term-4-1 a ins:Term ; ins:boundIn ex:larkspur-v1 ; ins:boundFrom tmpl:term-4-1 .
+ex:provide-service a ins:Obligation ;
+    ins:boundFrom tmpl:provide-service ; ins:arisesUnder ex:term-4-1 ;
+    ins:obligor ex:provider-occ ; ins:obligee ex:customer-occ ;
+    ins:activity ins-voc:ProvideService .
+
+ex:term-16-1 a ins:Term ; ins:boundIn ex:larkspur-v1 ; ins:boundFrom tmpl:term-16-1 .
+ex:end-for-failure a ins:Power ;
+    ins:boundFrom tmpl:end-for-failure ; ins:arisesUnder ex:term-16-1 ;
+    ins:holder ex:customer-occ ; ins:counterparty ex:provider-occ ;
+    ins:activity ins-voc:Terminate ;
+    ins:arisesOnBreachOf ex:provide-service .
+
+ex:term-16-2 a ins:Term ; ins:boundIn ex:larkspur-v1 ; ins:boundFrom tmpl:term-16-2 .
+ex:termination-excluded a ins:Exclusion ;
+    ins:boundFrom tmpl:termination-excluded ; ins:arisesUnder ex:term-16-2 ;
+    ins:holder ex:provider-occ ; ins:counterparty ex:customer-occ ;
+    ins:excepts ex:end-for-failure ;
+    ins:arisesOnBreachOf ex:provide-service ;
+    ins:appliesInState tmpl:disputed .
+
+# A term whose only content is a regime is bound too, as every stated term is
+# (law I17). The regime itself is read as stated (law I13).
+ex:term-20-1 a ins:Term ; ins:boundIn ex:larkspur-v1 ; ins:boundFrom tmpl:term-20-1 .

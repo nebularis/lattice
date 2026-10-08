@@ -2,7 +2,7 @@
 
 # Validation Pack: WA10, Compose stack
 
-**Unit:** `word-authoring-poc` (WAP), ADR-A114
+**Unit:** `word-authoring-poc` (WAP), ADR-A118
 **Plan:** [word-authoring-poc.md](../plans/word-authoring-poc.md) section "WA10: Compose stack"
 **Status record:** [word-authoring-poc.md](../status/word-authoring-poc.md)
 

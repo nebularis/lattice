@@ -1,0 +1,59 @@
+# SPDX-License-Identifier: MPL-2.0
+name: Formal methods (heavy toolchains)
+
+# Manual-only (workflow_dispatch), same cost-control reason as platform.yml,
+# doubly so here: both jobs install a native toolchain (Isabelle, Alloy)
+# from scratch on every run, no caching set up yet. Split from platform.yml
+# deliberately, so the lightweight checks (platform.yml's ontology-and-tools
+# job, which already includes check:formal-freshness) are never blocked by
+# these heavier, more toolchain-fragile ones.
+#
+# on:
+#   schedule:
+#     - cron: "0 6 * * 1"   # weekly, not on every push -- see mise.toml's
+#                            # own comment on why these stay out of `check`
+on:
+  workflow_dispatch:
+
+jobs:
+  # Track E: mechanised Isabelle/HOL theories (tools/proofs/, ADR-A-FM1,
+  # ADR-A-FM2). Native route only -- no Isabelle container image exists in
+  # this programme (epic formal-methods §4). The Windows-only
+  # `bootstrap:formal-native-isabelle` mise task does not run on this
+  # runner's OS, so this job installs Isabelle directly instead, the same
+  # Linux distribution the epic's own toolchain-feasibility notes name.
+  # Best-effort: `continue-on-error` so a toolchain hiccup here never blocks
+  # the rest of CI, since this check has no analogue in a developer's own
+  # default `mise run check` either (it is deliberately excluded there too,
+  # for the same native-toolchain-weight reason).
+  proofs:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    env:
+      ISABELLE_VERSION: Isabelle2025-2
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Isabelle natively (Linux)
+        run: |
+          curl -fsSL "https://isabelle.in.tum.de/dist/${ISABELLE_VERSION}_linux.tar.gz" -o /tmp/isabelle.tar.gz
+          tar -xzf /tmp/isabelle.tar.gz -C /tmp
+          echo "/tmp/${ISABELLE_VERSION}/bin" >> "$GITHUB_PATH"
+      - run: python3 tools/proofs/check.py
+
+  # Track C: design-time models (tools/models/, Alloy Analyzer). Evidence
+  # for an ADR, not code that ships -- re-run here so a model's result is
+  # re-confirmed whenever this workflow runs, not only when a human happens
+  # to re-run it locally.
+  models:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "25"
+      - name: Install Alloy Analyzer
+        run: curl -fsSL https://github.com/AlloyTools/org.alloytools.alloy/releases/download/v6.2.0/org.alloytools.alloy.dist.jar -o /tmp/alloy.jar
+      - name: Run the scheme-composition model's checks
+        working-directory: tools/models/vocabulary-scheme-composition
+        run: java -jar /tmp/alloy.jar exec SchemeComposition.als

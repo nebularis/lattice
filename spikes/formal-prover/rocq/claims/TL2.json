@@ -1,0 +1,10 @@
+{
+  "subject": "TL2",
+  "statedAs": "Eligibility.some_every_value_monotone",
+  "statementDigest": "sha256:7b04d0a8c5b2e29c60ee8541ffe032403f8b6bdb5996255eba84aab65f671521",
+  "method": "Proof",
+  "scope": "EveryRelatedListPair",
+  "assumptionAudit": "Closed under the global context (CheckEligibility.v)",
+  "tool": { "name": "Rocq", "version": "9.3.0" },
+  "outcome": "passed"
+}

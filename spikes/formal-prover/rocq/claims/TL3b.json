@@ -1,0 +1,10 @@
+{
+  "subject": "TL3b",
+  "statedAs": "Eligibility.negate_before_same_reading_disagrees",
+  "statementDigest": "sha256:622a93026ece50178a9526149a791fd85af2c303f021527cef57ace7fd271e81",
+  "method": "Proof",
+  "scope": "SomeList",
+  "assumptionAudit": "Closed under the global context (CheckEligibility.v)",
+  "tool": { "name": "Rocq", "version": "9.3.0" },
+  "outcome": "passed"
+}

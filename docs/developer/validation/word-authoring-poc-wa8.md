@@ -2,7 +2,7 @@
 
 # Validation Pack: WA8, Add-in domain
 
-**Unit:** `word-authoring-poc` (WAP), ADR-A114
+**Unit:** `word-authoring-poc` (WAP), ADR-A118
 **Plan:** [word-authoring-poc.md](../plans/word-authoring-poc.md) section "WA8: Add-in domain"
 **Status record:** [word-authoring-poc.md](../status/word-authoring-poc.md)
 

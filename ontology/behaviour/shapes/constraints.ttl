@@ -83,7 +83,7 @@ bhv:InitialStateInItsSpace a sh:NodeShape ;
 bhv:OccasionOccupancyDerived a sh:NodeShape ;
 	sh:targetClass bhv:StateOccupancy ;
 	sh:sparql [
-		sh:message "An occupancy of an occasion state is a derived artefact, derived from at least one record (law B1)." ;
+		sh:message "An occupancy of an occasion state, or of a state nested in one, is a derived artefact, derived from at least one record (law B1)." ;
 		sh:select """
 			PREFIX bhv: <https://www.nebularis.org/neuro-semantic/lattice/behaviour#>
 			PREFIX fnd: <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
@@ -91,11 +91,188 @@ bhv:OccasionOccupancyDerived a sh:NodeShape ;
 			PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 			SELECT $this WHERE {
 				$this bhv:occupiesState ?state .
-				?state bhv:inStateSpace bhv:OccasionStates .
+				?state bhv:inStateSpace/(bhv:regionOf/bhv:inStateSpace)* bhv:OccasionStates .
 				FILTER NOT EXISTS {
 					$this a fnd:DerivedArtefact ; prov:wasDerivedFrom ?record .
 					?record a/rdfs:subClassOf* bhv:Record .
 				}
+			}
+		"""
+	] .
+
+# ---- Nested states, history and concurrent regimes (C11a, ADR-A106 addendum) -------
+
+bhv:RegionsNestWithoutCycle a sh:NodeShape ;
+	sh:targetClass bhv:State ;
+	sh:sparql [
+		sh:message "A state does not contain itself through its regions." ;
+		sh:select """
+			PREFIX bhv: <https://www.nebularis.org/neuro-semantic/lattice/behaviour#>
+			SELECT $this ?value WHERE {
+				$this (bhv:inStateSpace/bhv:regionOf)+ $this .
+				BIND ($this AS ?value)
+			}
+		"""
+	] .
+
+bhv:HistoryNeedsAComposite a sh:NodeShape ;
+	sh:targetClass bhv:TransitionDefinition ;
+	sh:sparql [
+		sh:message "A transition entering by history targets a state with a region." ;
+		sh:select """
+			PREFIX bhv: <https://www.nebularis.org/neuro-semantic/lattice/behaviour#>
+			SELECT $this ?value WHERE {
+				$this bhv:entryMode ?value ; bhv:toState ?target .
+				FILTER (?value IN (bhv:ShallowHistory, bhv:DeepHistory))
+				FILTER NOT EXISTS { ?region bhv:regionOf ?target }
+			}
+		"""
+	] .
+
+bhv:InternalOnlyOnItself a sh:NodeShape ;
+	sh:targetClass bhv:TransitionDefinition ;
+	sh:sparql [
+		sh:message "Only a transition from a state to itself can be internal." ;
+		sh:select """
+			PREFIX bhv: <https://www.nebularis.org/neuro-semantic/lattice/behaviour#>
+			SELECT $this ?value WHERE {
+				$this bhv:transitionType bhv:Internal ; bhv:fromState ?from ; bhv:toState ?value .
+				FILTER (?from != ?value)
+			}
+		"""
+	] .
+
+bhv:OneTreePerTransition a sh:NodeShape ;
+	sh:targetClass bhv:TransitionDefinition ;
+	sh:sparql [
+		sh:message "A transition's source and target belong to one top-level state space (law B9)." ;
+		sh:select """
+			PREFIX bhv: <https://www.nebularis.org/neuro-semantic/lattice/behaviour#>
+			SELECT $this ?value WHERE {
+				$this bhv:fromState ?from ; bhv:toState ?to .
+				?from bhv:inStateSpace/(bhv:regionOf/bhv:inStateSpace)* ?value . FILTER NOT EXISTS { ?value bhv:regionOf ?p1 }
+				?to bhv:inStateSpace/(bhv:regionOf/bhv:inStateSpace)* ?root . FILTER NOT EXISTS { ?root bhv:regionOf ?p2 }
+				FILTER (?value != ?root)
+			}
+		"""
+	] .
+
+bhv:RefinementsAreClosed a sh:NodeShape ;
+	sh:targetClass bhv:TransitionDefinition ;
+	sh:sparql [
+		sh:message "A transition declared in a refinement of an occasion state stays inside that refinement (law B9)." ;
+		sh:select """
+			PREFIX bhv: <https://www.nebularis.org/neuro-semantic/lattice/behaviour#>
+			SELECT $this ?value WHERE {
+				$this bhv:fromState|bhv:toState ?inside .
+				?inside bhv:inStateSpace/(bhv:regionOf/bhv:inStateSpace)* ?value .
+				?value bhv:regionOf ?core ; bhv:perOccasionOf ?declaration .
+				$this bhv:fromState|bhv:toState ?other .
+				FILTER NOT EXISTS { ?other bhv:inStateSpace/(bhv:regionOf/bhv:inStateSpace)* ?value }
+			}
+		"""
+	] .
+
+bhv:AllMatchesOnlyInternal a sh:NodeShape ;
+	sh:targetClass bhv:TransitionDefinition ;
+	sh:sparql [
+		sh:message "AllMatches applies only to internal transitions: every enabled one fires, in descending priority, without leaving the state." ;
+		sh:select """
+			PREFIX bhv: <https://www.nebularis.org/neuro-semantic/lattice/behaviour#>
+			SELECT $this ?value WHERE {
+				$this bhv:selectionPolicy bhv:AllMatches ; bhv:fromState ?from ; bhv:toState ?to .
+				FILTER (?from != ?to || EXISTS { $this bhv:transitionType bhv:External })
+				BIND (?to AS ?value)
+			}
+		"""
+	] .
+
+bhv:AllMatchesNeedsDistinctPriorities a sh:NodeShape ;
+	sh:targetClass bhv:TransitionDefinition ;
+	sh:sparql [
+		sh:message "AllMatches transitions from one state on one trigger each declare a priority, and no two the same." ;
+		sh:select """
+			PREFIX bhv: <https://www.nebularis.org/neuro-semantic/lattice/behaviour#>
+			SELECT $this ?value WHERE {
+				$this bhv:selectionPolicy bhv:AllMatches .
+				{ FILTER NOT EXISTS { $this bhv:priority ?any } BIND ($this AS ?value) }
+				UNION
+				{ $this bhv:fromState ?from ; bhv:hasTrigger ?trigger ; bhv:priority ?p .
+				  ?value bhv:selectionPolicy bhv:AllMatches ; bhv:fromState ?from ; bhv:hasTrigger ?trigger ; bhv:priority ?p .
+				  FILTER (?value != $this) }
+			}
+		"""
+	] .
+
+bhv:CompetitorsAgreeOnPolicy a sh:NodeShape ;
+	sh:targetClass bhv:TransitionDefinition ;
+	sh:sparql [
+		sh:message "State-changing transitions from one state on one trigger declare the same selection policy." ;
+		sh:select """
+			PREFIX bhv: <https://www.nebularis.org/neuro-semantic/lattice/behaviour#>
+			SELECT $this ?value WHERE {
+				$this bhv:fromState ?from ; bhv:toState ?to ; bhv:hasTrigger ?trigger ; bhv:selectionPolicy ?mine .
+				?value bhv:fromState ?from ; bhv:toState ?to2 ; bhv:hasTrigger ?trigger ; bhv:selectionPolicy ?theirs .
+				FILTER (?value != $this && ?mine != ?theirs)
+				FILTER (?from != ?to || EXISTS { $this bhv:transitionType bhv:External })
+				FILTER (?from != ?to2 || EXISTS { ?value bhv:transitionType bhv:External })
+			}
+		"""
+	] .
+
+bhv:ResumptionIsHistory a sh:NodeShape ;
+	sh:targetSubjectsOf bhv:resumedFrom ;
+	sh:sparql [
+		sh:message "A resumed occupancy is of the same subject and state as an occupancy that was exited, and was entered by a history transition or by the evaluator (law B5)." ;
+		sh:select """
+			PREFIX bhv: <https://www.nebularis.org/neuro-semantic/lattice/behaviour#>
+			SELECT $this ?value WHERE {
+				$this bhv:resumedFrom ?value .
+				FILTER (
+					NOT EXISTS { $this bhv:occupiesState ?s . ?value bhv:occupiesState ?s }
+					|| NOT EXISTS { $this bhv:forSubject ?x . ?value bhv:forSubject ?x }
+					|| NOT EXISTS { ?value bhv:exitedBy ?exit }
+					|| NOT EXISTS { $this bhv:enteredBy ?entry .
+						FILTER (NOT EXISTS { ?entry bhv:executedTransition ?t }
+							|| EXISTS { ?entry bhv:executedTransition/bhv:entryMode ?m . FILTER (?m IN (bhv:ShallowHistory, bhv:DeepHistory)) }) }
+				)
+			}
+		"""
+	] .
+
+bhv:NestedStateNeedsItsParent a sh:NodeShape ;
+	sh:targetClass bhv:StateOccupancy ;
+	sh:sparql [
+		sh:message "A current occupancy of a nested state has a current occupancy of the parent state, for the same subject (law B11)." ;
+		sh:select """
+			PREFIX bhv: <https://www.nebularis.org/neuro-semantic/lattice/behaviour#>
+			SELECT $this ?value WHERE {
+				$this bhv:isCurrent true ; bhv:isHypothetical false ;
+					bhv:forSubject ?subject ; bhv:occupiesState ?state .
+				?state bhv:inStateSpace/bhv:regionOf ?value .
+				FILTER NOT EXISTS {
+					?parent bhv:forSubject ?subject ; bhv:occupiesState ?value ;
+						bhv:isCurrent true ; bhv:isHypothetical false }
+			}
+		"""
+	] .
+
+bhv:OccupiedCompositeFillsItsRegions a sh:NodeShape ;
+	sh:targetClass bhv:StateOccupancy ;
+	sh:sparql [
+		sh:message "A current occupancy of a composite state has a current state in each of its regions that applies to the subject (law B11)." ;
+		sh:select """
+			PREFIX bhv: <https://www.nebularis.org/neuro-semantic/lattice/behaviour#>
+			SELECT $this ?value WHERE {
+				$this bhv:isCurrent true ; bhv:isHypothetical false ;
+					bhv:forSubject ?subject ; bhv:occupiesState ?state .
+				?value bhv:regionOf ?state .
+				FILTER (NOT EXISTS { ?value bhv:perOccasionOf ?d }
+					|| EXISTS { ?value bhv:perOccasionOf ?d2 . ?subject bhv:occasionOf ?d2 })
+				FILTER NOT EXISTS {
+					?child bhv:forSubject ?subject ; bhv:occupiesState ?inner ;
+						bhv:isCurrent true ; bhv:isHypothetical false .
+					?inner bhv:inStateSpace ?value }
 			}
 		"""
 	] .

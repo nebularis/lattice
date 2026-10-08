@@ -3,12 +3,12 @@
 # Word authoring POC service
 
 A proof-of-concept HTTP service for the [word authoring add-in](../../apps/word-authoring-addin)
-(ADR-A114). **Not a platform contract.** Its code, vocabulary and graph layout may be removed or
+(ADR-A118). **Not a platform contract.** Its code, vocabulary and graph layout may be removed or
 rewritten without deprecation; nothing outside this unit may depend on them.
 
 See the [sketch](../../docs/developer/sketches/word-authoring-poc.md), the
 [plan](../../docs/developer/plans/word-authoring-poc.md) and
-[ADR-A114](../../docs/architecture/decisions/ADR-A114-word-authoring-proof-of-concept.md). For how
+[ADR-A118](../../docs/architecture/decisions/ADR-A118-word-authoring-proof-of-concept.md). For how
 this service fits with the worker, the add-in and the compose stack, including the architecture
 and data-flow diagrams, see the add-in's
 [README](../../apps/word-authoring-addin/README.md#how-the-proof-of-concept-fits-together).
@@ -117,4 +117,4 @@ them.
 and `InMemoryAnalysisBus` back every unit test. `FusekiAuthoringStore` (Graph Store Protocol) and
 `RabbitMqAnalysisBus` back the running service and the WA5 integration tests, each retrying its
 connection for up to a minute so compose startup ordering does not matter. The service does not use
-or extend the semantic dataset SPI (ADR-A71, ADR-A75): see ADR-A114 decision 4.
+or extend the semantic dataset SPI (ADR-A71, ADR-A75): see ADR-A118 decision 4.

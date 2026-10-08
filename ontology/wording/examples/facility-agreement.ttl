@@ -5,7 +5,7 @@
 # instance and refers to defined words, and a document the text relies on may
 # sit outside the text altogether.
 #
-# A facility agreement's section 4 holds two clauses. Clause 4.1 reads
+# A loan facility agreement's section 4 holds two clauses. Clause 4.1 reads
 #
 #   The Borrower shall pay interest at {margin} per annum.
 #
@@ -15,13 +15,18 @@
 #
 # What the example shows:
 #
-# | Construct                         | Where                               |
-# |-----------------------------------|-------------------------------------|
-# | a wording tree, ordered by rank   | ex:facility-wording, ex:sec-4       |
-# | a clause as five text parts       | ex:cl-4-1                           |
-# | an object reference to a definition | ex:cl-4-1-p1 → ex:def-borrower    |
-# | a variable reference              | ex:cl-4-1-p3 → ex:var-margin        |
-# | a reference to a document object  | ex:annex-1-ref → ex:repayment-plan  |
+# | Construct                           | Where                               |
+# |-------------------------------------|-------------------------------------|
+# | a wording tree, ordered by rank     | ex:facility-wording, ex:sec-4       |
+# | a clause as five text parts         | ex:cl-4-1                           |
+# | an object reference to a definition | ex:cl-4-1-p1 → ex:def-borrower-identity |
+# | a variable reference                | ex:cl-4-1-p3 → ex:var-margin-identity |
+# | a reference to a document object    | ex:annex-1-ref → ex:repayment-plan-identity |
+# | the wording relying on one edition of it | ex:facility-wording wrd:reliesOnEdition |
+#
+# Every reference names a persistent identity. The wording fixes which
+# version it means: the version it comprises, for text and variables, and the
+# edition it relies on, for a document outside it (CCS C8b).
 #
 # Clause numbers are object ids. Inserting a clause before 4.1 would change
 # what a reader sees, never the clause's identity.
@@ -56,7 +61,11 @@ ex:def-borrower a wrd:Text ;
     wrd:elementType wrd-voc:Definition ;
     wrd:objectId "1.1" ;
     wrd:rankKey "a0" ;
-    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ; wrd:partText "\"Borrower\" means the company named as borrower in the schedule." ] .
+    wrd:hasTextPart [ 
+            a wrd:TextPart ; 
+            wrd:partIndex 0 ; 
+            wrd:partText "\"Borrower\" means the company named as borrower in the schedule." 
+        ] .
 
 # ---- Section 4: interest ---------------------------------------------------
 
@@ -76,11 +85,17 @@ ex:cl-4-1 a wrd:Text ;
     wrd:rankKey "a0" ;
     wrd:hasTextPart ex:cl-4-1-p0 , ex:cl-4-1-p1 , ex:cl-4-1-p2 , ex:cl-4-1-p3 , ex:cl-4-1-p4 .
 
-ex:cl-4-1-p0 a wrd:TextPart ; wrd:partIndex 0 ; wrd:partText "The " .
-ex:cl-4-1-p1 a wrd:TextPart ; wrd:partIndex 1 ; wrd:refersToObject ex:def-borrower .
-ex:cl-4-1-p2 a wrd:TextPart ; wrd:partIndex 2 ; wrd:partText " shall pay interest at " .
-ex:cl-4-1-p3 a wrd:TextPart ; wrd:partIndex 3 ; wrd:refersToVariable ex:var-margin .
-ex:cl-4-1-p4 a wrd:TextPart ; wrd:partIndex 4 ; wrd:partText " per annum." .
+ex:cl-4-1-p0 a wrd:TextPart ; 
+    wrd:partIndex 0 ; wrd:partText "The " .
+ex:cl-4-1-p1 a wrd:TextPart ; 
+    wrd:partIndex 1 ; wrd:refersToObject ex:def-borrower-identity ;
+    wrd:displayText "Borrower" .
+ex:cl-4-1-p2 a wrd:TextPart ; 
+    wrd:partIndex 2 ; wrd:partText " shall pay interest at " .
+ex:cl-4-1-p3 a wrd:TextPart ; 
+    wrd:partIndex 3 ; wrd:refersToVariable ex:var-margin-identity .
+ex:cl-4-1-p4 a wrd:TextPart ; 
+    wrd:partIndex 4 ; wrd:partText " per annum." .
 
 ex:var-margin a wrd:EmbeddedVariable ;
     fnd:hasIdentity ex:var-margin-identity ;
@@ -100,8 +115,12 @@ ex:cl-4-2 a wrd:Text ;
     wrd:rankKey "b0" ;
     wrd:hasTextPart ex:cl-4-2-p0 , ex:cl-4-2-p1 .
 
-ex:cl-4-2-p0 a wrd:TextPart ; wrd:partIndex 0 ; wrd:partText "Each loan is repaid in the instalments set out in " .
-ex:cl-4-2-p1 a wrd:TextPart ; wrd:partIndex 1 ; wrd:refersToObject ex:annex-1 .
+ex:cl-4-2-p0 a wrd:TextPart ; 
+    wrd:partIndex 0 ; 
+    wrd:partText "Each loan is repaid in the instalments set out in " .
+
+ex:cl-4-2-p1 a wrd:TextPart ; 
+    wrd:partIndex 1 ; wrd:refersToObject ex:annex-1-identity .
 
 # ---- Annex 1: a scanned repayment plan -------------------------------------
 
@@ -117,10 +136,14 @@ ex:annex-1-ref a wrd:Reference ;
     fnd:hasIdentity ex:annex-1-ref-identity ;
     fnd:hasGovernanceState fnd:Active ;
     wrd:rankKey "a0" ;
-    wrd:linksTo ex:repayment-plan .
+    wrd:linksTo ex:repayment-plan-identity .
 
+# The attachment's first edition. An attachment is part of what the parties
+# agreed, so the wording relies on one edition of it (static).
 ex:repayment-plan a wrd:DocumentObject ;
+    fnd:hasIdentity ex:repayment-plan-identity ;
     wrd:documentKind ex:repayment-schedule .
+ex:facility-wording wrd:reliesOnEdition ex:repayment-plan .
 
 # A deployment's own document kinds, bound to Wording's document kind contract.
 ex:document-kinds a voc:ConceptScheme ;

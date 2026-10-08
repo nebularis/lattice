@@ -24,8 +24,8 @@ class IngressConfigGenerator:
     def generate(self) -> dict[str, Any]:
         """Generate the ingress registry mapping source schemas to configs."""
         query = """
-        PREFIX mork: <http://mork.marsh.com/ontology#>
-        PREFIX spc: <http://spc.marsh.com/ontology/core#>
+        PREFIX mork: <http://mork.example.org/ontology#>
+        PREFIX spc: <http://spc.example.org/ontology/core#>
         SELECT ?mapping ?sourceSchema ?targetConcept ?targetConceptIRI
                ?identityTemplate ?sessionField ?label ?participant
         WHERE {
@@ -61,7 +61,7 @@ class IngressConfigGenerator:
 
             # Fetch identity fields
             id_query = f"""
-            PREFIX mork: <http://mork.marsh.com/ontology#>
+            PREFIX mork: <http://mork.example.org/ontology#>
             SELECT ?field WHERE {{
                 <{mapping_iri}> mork:hasIdentityField ?field .
             }}
@@ -74,7 +74,7 @@ class IngressConfigGenerator:
 
             # Fetch field mappings
             fm_query = f"""
-            PREFIX mork: <http://mork.marsh.com/ontology#>
+            PREFIX mork: <http://mork.example.org/ontology#>
             SELECT ?fm ?sourcePath ?targetProp ?datatype ?required
             WHERE {{
                 <{mapping_iri}> mork:hasFieldMapping ?fm .
@@ -95,7 +95,7 @@ class IngressConfigGenerator:
 
                 # Fetch value map if present
                 vm_query = f"""
-                PREFIX mork: <http://mork.marsh.com/ontology#>
+                PREFIX mork: <http://mork.example.org/ontology#>
                 SELECT ?sourceVal ?targetVal WHERE {{
                     <{fmb['fm']['value']}> mork:hasValueMap ?vm .
                     ?vm mork:mapsFromValue ?sourceVal .

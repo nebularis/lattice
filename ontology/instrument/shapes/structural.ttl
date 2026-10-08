@@ -3,16 +3,466 @@
 @prefix sh:   <http://www.w3.org/ns/shacl#> .
 @prefix ins:  <https://www.nebularis.org/neuro-semantic/lattice/instrument#> .
 @prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix pty:  <https://www.nebularis.org/neuro-semantic/lattice/party#> .
+@prefix elg:  <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
+@prefix wrd:  <https://www.nebularis.org/neuro-semantic/lattice/wording#> .
+@prefix bhv:  <https://www.nebularis.org/neuro-semantic/lattice/behaviour#> .
+@prefix qnt:  <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix ins-voc: <https://www.nebularis.org/neuro-semantic/lattice/instrument/vocab#> .
 
-ins:ElementShape a sh:NodeShape ;
-	sh:targetClass ins:Element ;
-	sh:property [ sh:path fnd:hasIdentity ; sh:minCount 1 ; sh:maxCount 1 ] .
+ins:InstrumentShape a sh:NodeShape ;
+	sh:targetClass ins:Instrument ;
+	sh:property [
+		sh:path ins:expressedIn ; sh:minCount 1 ; sh:maxCount 1 ; sh:class wrd:AssembledWording ;
+		sh:message "An instrument version is expressed in exactly one assembled wording (law I1)."
+	] ;
+	sh:property [
+		sh:path ins:party ; sh:or ( [ sh:class pty:RoleOccupancy ] [ sh:class pty:ParticipationGroup ] ) ;
+		sh:message "An instrument's parties are role occupancies or participation groups, never roles."
+	] .
 
-ins:ProvisionShape a sh:NodeShape ;
-	sh:targetClass ins:Provision ;
-	sh:property [ sh:path ins:hasObligation ; sh:minCount 1 ] .
+ins:TermShape a sh:NodeShape ;
+	sh:targetClass ins:Term ;
+	sh:message "A term is either stated, an ins:Template expressed in exactly one element version and bound in none, or bound, bound in exactly one instrument version from exactly one stated term or implied by a source, and expressed in none (law I2)." ;
+	sh:xone (
+		[ sh:class ins:Template ;
+		  sh:property [ sh:path ins:expressedIn ; sh:minCount 1 ; sh:maxCount 1 ; sh:class wrd:Element ] ;
+		  sh:property [ sh:path ins:boundIn ; sh:maxCount 0 ] ]
+		[ sh:not [ sh:class ins:Template ] ;
+		  sh:property [ sh:path ins:boundIn ; sh:minCount 1 ; sh:maxCount 1 ; sh:class ins:Instrument ] ;
+		  sh:property [ sh:path ins:expressedIn ; sh:maxCount 0 ] ;
+		  sh:xone (
+			[ sh:property [ sh:path ins:boundFrom ; sh:minCount 1 ; sh:maxCount 1 ; sh:class ins:Template ] ]
+			[ sh:property [ sh:path ins:impliedBy ; sh:minCount 1 ] ]
+		  ) ]
+	) .
+
+ins:LegalRelationShape a sh:NodeShape ;
+	sh:targetClass ins:LegalRelation ;
+	sh:property [
+		sh:path ins:arisesUnder ; sh:minCount 1 ; sh:maxCount 1 ; sh:class ins:Term ;
+		sh:message "A relation arises under exactly one term."
+	] ;
+	sh:property [
+		sh:path ins:boundIn ; sh:maxCount 0 ;
+		sh:message "A relation carries no ins:boundIn: it belongs to its term, which does (law I2)."
+	] ;
+	sh:property [
+		sh:path ins:scope ; sh:maxCount 1 ; sh:node ins:ConditionOrWordShape ;
+		sh:message "A relation has at most one scope, an Eligibility condition or a defined word."
+	] ;
+	sh:property [
+		sh:path ins:activity ; sh:maxCount 1 ; sh:nodeKind sh:IRI ;
+		sh:message "A relation has at most one activity, a concept."
+	] ;
+	sh:not [ sh:class fnd:Version ] ;
+	sh:message "A relation is never a version: it changes only with its owner (law I18)." .
+
+ins:RelationTierShape a sh:NodeShape ;
+	sh:targetClass ins:LegalRelation ;
+	sh:message "A stated relation (an ins:Template) arises under a stated term and names roles as its parties. A bound relation arises under a bound term, names occupancies or groups and conditions, never roles or words, and is instantiated from exactly one stated relation or implied by a source (laws I2, I13)." ;
+	sh:xone (
+		[ sh:class ins:Template ;
+		  sh:property [ sh:path ins:arisesUnder ; sh:class ins:Template ] ;
+		  sh:property [ sh:path [ sh:alternativePath ( ins:obligor ins:obligee ins:holder ins:counterparty ) ] ; sh:class pty:Role ] ]
+		[ sh:not [ sh:class ins:Template ] ;
+		  sh:property [ sh:path ins:arisesUnder ; sh:not [ sh:class ins:Template ] ] ;
+		  sh:property [ sh:path [ sh:alternativePath ( ins:obligor ins:obligee ins:holder ins:counterparty ) ] ;
+		                sh:or ( [ sh:class pty:RoleOccupancy ] [ sh:class pty:ParticipationGroup ] ) ] ;
+		  sh:property [ sh:path [ sh:alternativePath ( ins:scope ins:maintains ( ins:arisesOn ins:condition ) ) ] ;
+		                sh:class elg:Condition ] ;
+		  sh:xone (
+			[ sh:property [ sh:path ins:boundFrom ; sh:minCount 1 ; sh:maxCount 1 ; sh:class ins:Template ] ]
+			[ sh:property [ sh:path ins:impliedBy ; sh:minCount 1 ] ]
+		  ) ]
+	) .
 
 ins:ObligationShape a sh:NodeShape ;
 	sh:targetClass ins:Obligation ;
-	sh:property [ sh:path ins:obligor ; sh:minCount 1 ] ;
-	sh:property [ sh:path ins:obligee ; sh:minCount 1 ] .
+	sh:property [ sh:path ins:obligor ; sh:minCount 1 ; sh:maxCount 1 ;
+		sh:message "An obligation has exactly one obligor. Several owing together are a participation group." ] ;
+	sh:property [ sh:path ins:obligee ; sh:minCount 1 ;
+		sh:message "An obligation is owed to at least one obligee." ] ;
+	sh:property [ sh:path ins:excepts ; sh:maxCount 0 ;
+		sh:message "An obligation excepts nothing: only a permission or an exclusion does." ] ;
+	sh:or (
+		[ sh:class ins:ContinuingObligation ]
+		[ sh:property [ sh:path ins:activity ; sh:minCount 1 ] ]
+	) ;
+	sh:message "An obligation that is not continuing states its activity." .
+
+ins:ContinuingObligationShape a sh:NodeShape ;
+	sh:targetClass ins:ContinuingObligation ;
+	sh:property [ sh:path ins:maintains ; sh:minCount 1 ; sh:maxCount 1 ; sh:node ins:ConditionOrWordShape ;
+		sh:message "A continuing obligation states the one condition it keeps holding (ins:maintains), or on stated meaning a defined word." ] .
+
+ins:HeldRelationShape a sh:NodeShape ;
+	sh:targetClass ins:Permission , ins:Exclusion , ins:Power ;
+	sh:property [ sh:path ins:holder ; sh:minCount 1 ; sh:maxCount 1 ;
+		sh:message "A permission, exclusion or power has exactly one holder. Several holding together are a participation group." ] ;
+	sh:property [ sh:path ins:counterparty ; sh:minCount 1 ;
+		sh:message "A permission, exclusion or power has at least one counterparty." ] ;
+	sh:property [ sh:path ins:obligor ; sh:maxCount 0 ; sh:message "Only an obligation has an obligor." ] ;
+	sh:property [ sh:path ins:obligee ; sh:maxCount 0 ; sh:message "Only an obligation has obligees." ] .
+
+ins:PermissionShape a sh:NodeShape ;
+	sh:targetClass ins:Permission ;
+	sh:property [ sh:path ins:activity ; sh:minCount 1 ;
+		sh:message "A permission states the activity it permits." ] ;
+	sh:property [ sh:path ins:excepts ; sh:minCount 1 ; sh:maxCount 1 ; sh:class ins:Prohibition ;
+		sh:message "A permission excepts exactly one prohibition." ] .
+
+ins:ExclusionShape a sh:NodeShape ;
+	sh:targetClass ins:Exclusion ;
+	sh:property [ sh:path ins:excepts ; sh:minCount 1 ; sh:maxCount 1 ;
+		sh:or ( [ sh:class ins:Obligation ] [ sh:class ins:Power ] ) ;
+		sh:message "An exclusion excepts exactly one obligation or power." ] .
+
+ins:PowerShape a sh:NodeShape ;
+	sh:targetClass ins:Power ;
+	sh:property [ sh:path ins:activity ; sh:minCount 1 ;
+		sh:message "A power states the act that exercises it." ] ;
+	sh:property [ sh:path ins:excepts ; sh:maxCount 0 ;
+		sh:message "A power excepts nothing: only a permission or an exclusion does." ] .
+
+ins:QualifierShape a sh:NodeShape ;
+	sh:targetClass ins:Qualifier ;
+	sh:property [ sh:path ins:arisesUnder ; sh:minCount 1 ; sh:maxCount 1 ; sh:class ins:Term ;
+		sh:message "A qualifier arises under exactly one term." ] ;
+	sh:property [ sh:path ins:qualifies ; sh:minCount 1 ;
+		sh:or ( [ sh:class ins:Term ] [ sh:class ins:LegalRelation ] ) ;
+		sh:message "A qualifier qualifies terms or relations, at least one." ] ;
+	sh:or ( [ sh:not [ sh:class ins:Template ] ] [ sh:property [ sh:path ins:qualifies ; sh:maxCount 1 ] ] ) ;
+	sh:message "A stated qualifier qualifies exactly one term or relation. Only a bound one, spanning sections, qualifies several (§16.5)." .
+
+ins:PartyDetailsShape a sh:NodeShape ;
+	sh:targetSubjectsOf ins:noticeAddress , ins:operatesAt ;
+	sh:class pty:RoleOccupancy ;
+	sh:property [ sh:path ins:noticeAddress ; sh:datatype xsd:string ;
+		sh:message "A notice address is a string, the address as written." ] ;
+	sh:property [ sh:path ins:operatesAt ; sh:nodeKind sh:IRI ;
+		sh:message "An operating location is a concept from the bound location scheme." ] ;
+	sh:message "Party details belong to a role occupancy." .
+
+ins:RegimeShape a sh:NodeShape ;
+	sh:targetClass ins:Regime ;
+	sh:class ins:Template ;
+	sh:message "A regime is stated meaning only, an ins:Template: it is stated once and read for each subject (C7a-Q1)." ;
+	sh:property [ sh:path ins:arisesUnder ; sh:minCount 1 ; sh:maxCount 1 ; sh:class ins:Term ;
+		sh:message "A regime arises under exactly one term." ] ;
+	sh:property [ sh:path ins:arisesUnder ; sh:class ins:Template ;
+		sh:message "A regime arises under a stated term (C7a-Q1)." ] ;
+	sh:property [ sh:path ins:boundFrom ; sh:maxCount 0 ;
+		sh:message "A regime is never bound: it is stated once and read for each subject (law I13)." ] .
+
+# Law B4 is about the triple the engine reads, so these shapes check rdf:type
+# itself. sh:class would follow ins:Regime's rdfs:subClassOf in the data graph
+# and pass without the triple (§12.1).
+ins:RegimeTypeShape a sh:NodeShape ;
+	sh:targetClass ins:Regime ;
+	sh:property [ sh:path rdf:type ; sh:hasValue bhv:StateSpace ;
+		sh:message "A regime is also typed bhv:StateSpace in the graph the engine reads: assert it where no reasoner runs (law B4, §12)." ] .
+
+ins:RegimeTransitionShape a sh:NodeShape ;
+	sh:targetClass ins:RegimeTransition ;
+	sh:property [ sh:path bhv:hasTrigger ;
+		sh:or ( [ sh:class ins:OnExercise ] [ sh:class ins:OnBreach ] [ sh:class ins:OnAct ] [ sh:class ins:OnCondition ] [ sh:class ins:OnExpiry ] [ sh:class ins:OnEntry ] ) ;
+		sh:message "A regime transition's triggers are legal triggers." ] ;
+	sh:property [ sh:path bhv:selectionPolicy ; sh:in ( bhv:SingleMatch ) ;
+		sh:message "A regime transition's selection policy is bhv:SingleMatch, fixed (ADR-A104 decision 7). A reasoner adds it where none is stated (§12)." ] ;
+	sh:property [ sh:path bhv:activationPolicy ; sh:in ( bhv:ImmediateActivation ) ;
+		sh:message "A regime transition's activation policy is bhv:ImmediateActivation, fixed (ADR-A104 decision 7). A reasoner adds it where none is stated (§12)." ] .
+
+ins:RegimeTransitionTypeShape a sh:NodeShape ;
+	sh:targetClass ins:RegimeTransition ;
+	sh:property [ sh:path rdf:type ; sh:hasValue bhv:TransitionDefinition ;
+		sh:message "A regime transition is also typed bhv:TransitionDefinition in the graph the engine reads: assert it where no reasoner runs (law B4, §12)." ] .
+
+ins:LegalTriggerTypeShape a sh:NodeShape ;
+	sh:targetClass ins:OnExercise , ins:OnBreach , ins:OnAct , ins:OnCondition , ins:OnExpiry , ins:OnEntry ;
+	sh:property [ sh:path rdf:type ; sh:hasValue bhv:TriggerDefinition ;
+		sh:message "A legal trigger is also typed bhv:TriggerDefinition in the graph the engine reads: assert it where no reasoner runs (law B4, §12)." ] .
+
+ins:OnExerciseShape a sh:NodeShape ;
+	sh:targetClass ins:OnExercise ;
+	sh:property [ sh:path ins:ofPower ; sh:minCount 1 ; sh:maxCount 1 ; sh:class ins:Power ;
+		sh:message "An exercise trigger names exactly one power (ins:ofPower)." ] ;
+	sh:property [ sh:path bhv:triggerKind ; sh:minCount 1 ; sh:in ( bhv:ExternalStimulus ) ;
+		sh:message "An exercise trigger's kind is bhv:ExternalStimulus, fixed. Assert it where no reasoner runs (§12)." ] .
+
+ins:OnBreachShape a sh:NodeShape ;
+	sh:targetClass ins:OnBreach ;
+	sh:property [ sh:path ins:ofObligation ; sh:minCount 1 ; sh:maxCount 1 ; sh:class ins:Obligation ;
+		sh:message "A breach trigger names exactly one obligation (ins:ofObligation)." ] ;
+	sh:property [ sh:path bhv:triggerKind ; sh:minCount 1 ; sh:in ( bhv:DerivedTrigger ) ;
+		sh:message "A breach trigger's kind is bhv:DerivedTrigger, fixed. Assert it where no reasoner runs (§12)." ] .
+
+ins:OnActShape a sh:NodeShape ;
+	sh:targetClass ins:OnAct ;
+	sh:property [ sh:path ins:activity ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:IRI ;
+		sh:message "An act trigger names exactly one act (ins:activity), a concept." ] ;
+	sh:property [ sh:path ins:by ;
+		sh:or ( [ sh:class pty:Role ] [ sh:class pty:RoleOccupancy ] [ sh:class pty:ParticipationGroup ] ) ;
+		sh:message "An act trigger's ins:by names parties." ] ;
+	sh:property [ sh:path bhv:triggerKind ; sh:minCount 1 ; sh:in ( bhv:ExternalStimulus ) ;
+		sh:message "An act trigger's kind is bhv:ExternalStimulus, fixed. Assert it where no reasoner runs (§12)." ] .
+
+ins:OnConditionShape a sh:NodeShape ;
+	sh:targetClass ins:OnCondition ;
+	sh:property [ sh:path ins:condition ; sh:minCount 1 ; sh:maxCount 1 ; sh:node ins:ConditionOrWordShape ;
+		sh:message "A condition trigger names exactly one Eligibility condition (ins:condition), or on stated meaning a defined word." ] ;
+	sh:property [ sh:path bhv:triggerKind ; sh:minCount 1 ; sh:in ( bhv:DerivedTrigger ) ;
+		sh:message "A condition trigger's kind is bhv:DerivedTrigger, fixed. Assert it where no reasoner runs (§12)." ] .
+
+ins:OnExpiryShape a sh:NodeShape ;
+	sh:targetClass ins:OnExpiry ;
+	sh:property [ sh:path ins:after ; sh:maxCount 1 ; sh:class qnt:Quantity ;
+		sh:message "An expiry trigger's length (ins:after) is one quantity of time." ] ;
+	sh:property [ sh:path ins:at ; sh:maxCount 1 ; sh:class qnt:Value ;
+		sh:message "An expiry trigger's time (ins:at) is one value." ] ;
+	sh:xone ( [ sh:property [ sh:path ins:after ; sh:minCount 1 ] ] [ sh:property [ sh:path ins:at ; sh:minCount 1 ] ] ) ;
+	sh:message "An expiry trigger states exactly one of a length (ins:after) and a time (ins:at)." ;
+	sh:property [ sh:path ins:tolledIn ; sh:class bhv:State ;
+		sh:message "An expiry period is tolled in states." ] ;
+	sh:property [ sh:path bhv:triggerKind ; sh:minCount 1 ; sh:in ( bhv:ScheduledTrigger ) ;
+		sh:message "An expiry trigger's kind is bhv:ScheduledTrigger, fixed. Assert it where no reasoner runs (§12)." ] .
+
+ins:StateKindShape a sh:NodeShape ;
+	sh:targetSubjectsOf ins:stateKind ;
+	sh:class bhv:State ;
+	sh:message "Only a state has a state kind." ;
+	sh:property [ sh:path ins:stateKind ; sh:maxCount 1 ; sh:nodeKind sh:IRI ;
+		sh:message "A state has at most one kind, a concept." ] .
+
+ins:GatedRelationShape a sh:NodeShape ;
+	sh:targetSubjectsOf ins:appliesInState ;
+	sh:class ins:LegalRelation ;
+	sh:message "Only a legal relation is gated by a state (ins:appliesInState)." ;
+	sh:property [ sh:path ins:appliesInState ; sh:class bhv:State ;
+		sh:message "A relation is gated by states." ] .
+
+ins:ArisingShape a sh:NodeShape ;
+	sh:targetSubjectsOf ins:arisesOn , ins:endsOn , ins:arisesOnBreachOf , ins:arisesOnExerciseOf ;
+	sh:class ins:LegalRelation ;
+	sh:message "Only a legal relation arises or ends on a trigger." ;
+	sh:property [ sh:path [ sh:alternativePath ( ins:arisesOn ins:endsOn ) ] ;
+		sh:or ( [ sh:class ins:OnExercise ] [ sh:class ins:OnBreach ] [ sh:class ins:OnAct ] [ sh:class ins:OnCondition ] [ sh:class ins:OnEntry ] ) ;
+		sh:message "A relation arises or ends on an exercise, a breach, an act, a condition or an entry into a state. An expiry counts from entering a state, so it moves only regimes: a relation's own periods are due ranges (§13)." ] ;
+	sh:property [ sh:path ins:arisesOnBreachOf ; sh:class ins:Obligation ;
+		sh:message "A relation arises on the breach of an obligation." ] ;
+	sh:property [ sh:path ins:arisesOnExerciseOf ; sh:class ins:Power ;
+		sh:message "A relation arises on the exercise of a power." ] .
+
+ins:ArisingTierShape a sh:NodeShape ;
+	sh:targetClass ins:LegalRelation ;
+	sh:message "A stated relation arises on the breach or exercise of stated relations, and a bound relation of bound ones (ADR-A104 2026-10-04 addendum, decision 3)." ;
+	sh:or (
+		[ sh:class ins:Template ;
+		  sh:property [ sh:path [ sh:alternativePath ( ins:arisesOnBreachOf ins:arisesOnExerciseOf ) ] ; sh:class ins:Template ] ]
+		[ sh:not [ sh:class ins:Template ] ;
+		  sh:property [ sh:path [ sh:alternativePath ( ins:arisesOnBreachOf ins:arisesOnExerciseOf ) ] ; sh:not [ sh:class ins:Template ] ] ]
+	) .
+
+ins:OnEntryShape a sh:NodeShape ;
+	sh:targetClass ins:OnEntry ;
+	sh:property [ sh:path ins:ofState ; sh:minCount 1 ; sh:maxCount 1 ; sh:class bhv:State ;
+		sh:message "An entry trigger names exactly one state (ins:ofState)." ] ;
+	sh:property [ sh:path bhv:triggerKind ; sh:minCount 1 ; sh:in ( bhv:DerivedTrigger ) ;
+		sh:message "An entry trigger's kind is bhv:DerivedTrigger, fixed. Assert it where no reasoner runs (§12)." ] .
+
+ins:DueShape a sh:NodeShape ;
+	sh:targetSubjectsOf ins:due ;
+	sh:class ins:Obligation ;
+	sh:not [ sh:or ( [ sh:class ins:ContinuingObligation ] [ sh:class ins:Prohibition ] ) ] ;
+	sh:message "Only an obligation that is neither continuing nor a prohibition has a due range (law I5)." ;
+	sh:property [ sh:path ins:due ; sh:maxCount 1 ; sh:class qnt:Range ;
+		sh:message "An obligation has at most one due range, a range (law I5)." ] ;
+	sh:property [ sh:path ( ins:due qnt:relativeToAnchor qnt:anchorValue ) ; sh:minCount 1 ; sh:class qnt:ContextValue ;
+		sh:message "A due range is anchored at a named time, a qnt:ContextValue, never at a fixed date or at evaluation time (law I9)." ] ;
+	sh:property [ sh:path ins:dueTolledIn ; sh:class bhv:State ;
+		sh:message "A due range is tolled in states." ] .
+
+ins:DueTolledInShape a sh:NodeShape ;
+	sh:targetSubjectsOf ins:dueTolledIn ;
+	sh:property [ sh:path ins:due ; sh:minCount 1 ;
+		sh:message "Only an obligation with a due range has its due range tolled." ] .
+
+ins:WindowShape a sh:NodeShape ;
+	sh:targetSubjectsOf ins:window ;
+	sh:or ( [ sh:class ins:Power ] [ sh:class ins:Permission ] ) ;
+	sh:message "Only a power or a permission has a window." ;
+	sh:property [ sh:path ins:window ; sh:maxCount 1 ; sh:class qnt:Range ;
+		sh:message "A relation has at most one window, a range." ] ;
+	sh:property [ sh:path ( ins:window qnt:relativeToAnchor qnt:anchorValue ) ; sh:minCount 1 ; sh:class qnt:ContextValue ;
+		sh:message "A window is anchored at a named time, a qnt:ContextValue (law I9)." ] .
+
+ins:RecurrenceShape a sh:NodeShape ;
+	sh:targetSubjectsOf ins:recurrence ;
+	sh:class ins:Obligation ;
+	sh:message "Only an obligation recurs." ;
+	sh:property [ sh:path ins:recurrence ; sh:maxCount 1 ; sh:class qnt:Recurrence ;
+		sh:message "An obligation has at most one recurrence." ] ;
+	sh:property [ sh:path ( ins:recurrence qnt:anchor ) ; sh:minCount 1 ; sh:class qnt:ContextValue ;
+		sh:message "A recurrence is anchored at a named time, a qnt:ContextValue (law I9)." ] .
+
+ins:EndsShape a sh:NodeShape ;
+	sh:targetSubjectsOf ins:ends ;
+	sh:class bhv:State ;
+	sh:message "Only a state ends an instrument or terms, when it is entered (§14.2)." ;
+	sh:property [ sh:path ins:ends ;
+		sh:or ( [ sh:in ( ins-voc:TheInstrument ) ] [ sh:and ( [ sh:class ins:Term ] [ sh:class ins:Template ] ) ] [ sh:node ins:ElementIdentityShape ] ) ;
+		sh:message "A state ends the instrument (ins-voc:TheInstrument) or stated terms, or a section by its persistent identity (§16.6)." ] .
+
+ins:SurvivalShape a sh:NodeShape ;
+	sh:targetSubjectsOf ins:survives ;
+	sh:and ( [ sh:class ins:Term ] [ sh:class ins:Template ] ) ;
+	sh:message "Only a stated term survives: survival is read for each instrument through its bound terms (§14.4)." ;
+	sh:property [ sh:path ins:survives ; sh:maxCount 1 ; sh:class ins:Survival ;
+		sh:message "A term has at most one survival." ] .
+
+ins:SurvivalDetailShape a sh:NodeShape ;
+	sh:targetClass ins:Survival ;
+	sh:property [ sh:path ins:survivalPeriod ; sh:maxCount 1 ; sh:class qnt:Quantity ;
+		sh:message "A survival period is one quantity of time." ] ;
+	sh:property [ sh:path ins:survivesUntil ; sh:maxCount 1 ; sh:class elg:Condition ;
+		sh:message "A survival lasts until at most one Eligibility condition." ] .
+
+ins:ElementIdentityShape a sh:NodeShape ;
+	sh:property [ sh:path [ sh:inversePath fnd:hasIdentity ] ; sh:minCount 1 ; sh:class wrd:Element ] ;
+	sh:message "A section or a part is named by the persistent identity of a wording element, never by an element version (§16.3)." .
+
+ins:ConditionOrWordShape a sh:NodeShape ;
+	sh:or (
+		[ sh:class elg:Condition ]
+		[ sh:class skos:Concept ; sh:property [ sh:path [ sh:inversePath ins:defines ] ; sh:minCount 1 ] ]
+	) ;
+	sh:message "A condition slot takes an Eligibility condition or, on stated meaning, a word a definition defines (§15.1)." .
+
+ins:DefinitionShape a sh:NodeShape ;
+	sh:targetClass ins:Definition ;
+	sh:property [ sh:path ins:arisesUnder ; sh:minCount 1 ; sh:maxCount 1 ; sh:class ins:Term ;
+		sh:message "A definition arises under exactly one term." ] ;
+	sh:property [ sh:path ins:defines ; sh:minCount 1 ; sh:maxCount 1 ;
+		sh:or ( [ sh:class pty:Role ] [ sh:class skos:Concept ] ) ;
+		sh:message "A definition defines exactly one word, a role or a concept (§15.1)." ] ;
+	sh:property [ sh:path ins:means ; sh:minCount 1 ;
+		sh:message "A definition means at least one thing." ] ;
+	sh:property [ sh:path ins:actingRule ; sh:maxCount 1 ; sh:class pty:CompositionRule ;
+		sh:message "A definition has at most one acting rule, a Party composition rule." ] .
+
+ins:DeemingShape a sh:NodeShape ;
+	sh:targetClass ins:Deeming ;
+	sh:property [ sh:path ins:arisesUnder ; sh:minCount 1 ; sh:maxCount 1 ; sh:class ins:Term ;
+		sh:message "A deeming arises under exactly one term." ] ;
+	sh:property [ sh:path ins:deems ; sh:minCount 1 ; sh:maxCount 1 ; sh:node ins:ConditionOrWordShape ;
+		sh:message "A deeming deems exactly one condition, or on stated meaning a defined word." ] ;
+	sh:property [ sh:path ins:when ; sh:maxCount 1 ; sh:node ins:ConditionOrWordShape ;
+		sh:message "A deeming holds on at most one footing (ins:when), a condition or a defined word." ] ;
+	sh:property [ sh:path ins:conclusive ; sh:maxCount 1 ; sh:datatype xsd:boolean ;
+		sh:message "A deeming is conclusive or not, once (xsd:boolean)." ] ;
+	sh:property [ sh:path ins:forPurposeOf ; sh:or ( [ sh:class ins:LegalRelation ] [ sh:class ins:Term ] ) ;
+		sh:message "A deeming applies for relations or terms." ] .
+
+ins:ConstitutiveTierShape a sh:NodeShape ;
+	sh:targetClass ins:Definition , ins:Deeming ;
+	sh:message "A stated definition or deeming (an ins:Template) arises under a stated term, and a stated party word means roles. A bound one arises under a bound term, is bound from exactly one stated one, means occupancies, groups and conditions, never roles or words, and applies for bound relations and terms (laws I2, I13)." ;
+	sh:xone (
+		[ sh:class ins:Template ;
+		  sh:property [ sh:path ins:arisesUnder ; sh:class ins:Template ] ;
+		  sh:property [ sh:path ins:means ; sh:not [ sh:or ( [ sh:class pty:RoleOccupancy ] [ sh:class pty:ParticipationGroup ] ) ] ] ;
+		  sh:property [ sh:path ins:forPurposeOf ; sh:class ins:Template ] ]
+		[ sh:not [ sh:class ins:Template ] ;
+		  sh:property [ sh:path ins:arisesUnder ; sh:not [ sh:class ins:Template ] ] ;
+		  sh:property [ sh:path ins:boundFrom ; sh:minCount 1 ; sh:maxCount 1 ; sh:class ins:Template ] ;
+		  sh:property [ sh:path ins:means ; sh:not [ sh:class pty:Role ] ] ;
+		  sh:property [ sh:path [ sh:alternativePath ( ins:deems ins:when ) ] ; sh:class elg:Condition ] ;
+		  sh:property [ sh:path ins:forPurposeOf ; sh:not [ sh:class ins:Template ] ] ]
+	) .
+
+ins:PrevailsOverShape a sh:NodeShape ;
+	sh:targetSubjectsOf ins:prevailsOver ;
+	sh:class ins:Definition ;
+	sh:message "Only a definition prevails over another, until NRS N10 (§16.7)." ;
+	sh:property [ sh:path ins:prevailsOver ; sh:class ins:Definition ;
+		sh:message "A definition prevails over definitions only, until NRS N10." ] .
+
+ins:ClassificationShape a sh:NodeShape ;
+	sh:targetSubjectsOf ins:classification ;
+	sh:and ( [ sh:class ins:Term ] [ sh:class ins:Template ] ) ;
+	sh:message "Only a stated term is classified: a bound term reads it through ins:boundFrom (§15.4)." ;
+	sh:property [ sh:path ins:classification ; sh:nodeKind sh:IRI ;
+		sh:message "A classification is a concept." ] .
+
+ins:SectioningShape a sh:NodeShape ;
+	sh:targetClass ins:Sectioning ;
+	sh:class ins:Template ;
+	sh:message "A sectioning is stated meaning only, an ins:Template, read by binding (§16.1)." ;
+	sh:property [ sh:path ins:arisesUnder ; sh:minCount 1 ; sh:maxCount 1 ; sh:class ins:Term ;
+		sh:message "A sectioning arises under exactly one term." ] ;
+	sh:property [ sh:path ins:section ; sh:minCount 1 ; sh:node ins:ElementIdentityShape ;
+		sh:message "A sectioning names at least one section, by its persistent identity, never an element version (§16.3)." ] ;
+	sh:property [ sh:path ins:boundFrom ; sh:maxCount 0 ;
+		sh:message "A sectioning is never bound." ] .
+
+ins:ScopeShape a sh:NodeShape ;
+	sh:targetSubjectsOf ins:appliesWithin , ins:notWithin ;
+	sh:and ( [ sh:class ins:Term ] [ sh:class ins:Template ] ) ;
+	sh:message "Only a stated term is placed: a bound term records the sections it covers with ins:boundWithin (§16.3)." ;
+	sh:property [ sh:path [ sh:alternativePath ( ins:appliesWithin ins:notWithin ) ] ; sh:node ins:ElementIdentityShape ;
+		sh:message "A scope names a part by its persistent identity, never an element version, so stated meaning stays context-free (§16.3)." ] .
+
+ins:BoundWithinShape a sh:NodeShape ;
+	sh:targetSubjectsOf ins:boundWithin ;
+	sh:class ins:Term ;
+	sh:not [ sh:class ins:Template ] ;
+	sh:message "Only a bound term records the sections it covers (§16.3)." ;
+	sh:property [ sh:path ins:boundWithin ; sh:node ins:ElementIdentityShape ;
+		sh:message "A bound term's sections are the persistent identities of wording elements." ] .
+
+ins:BoundUnderShape a sh:NodeShape ;
+	sh:targetSubjectsOf ins:boundUnder ;
+	sh:class ins:Instrument ;
+	sh:message "Only an instrument is bound under a power." ;
+	sh:property [ sh:path ins:boundUnder ; sh:maxCount 1 ; sh:class ins:Power ; sh:not [ sh:class ins:Template ] ;
+		sh:message "An instrument is bound under at most one bound power." ] ;
+	sh:property [ sh:path ( ins:boundUnder ins:arisesUnder ins:boundWithin ) ; sh:maxCount 1 ;
+		sh:message "A power that cases are bound under is bound within exactly one section, which fixes the case's section (law I15)." ] .
+
+ins:PartyResolutionShape a sh:NodeShape ;
+	sh:targetClass ins:PartyResolution ;
+	sh:property [ sh:path ins:resolvesFrom ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:IRI ;
+		sh:message "A party resolution starts from exactly one class (ins:resolvesFrom)." ] ;
+	sh:property [ sh:path ins:resolutionStep ; sh:minCount 1 ; sh:class elg:EvidenceStep ;
+		sh:message "A party resolution follows at least one Eligibility step (ins:resolutionStep)." ] ;
+	sh:property [ sh:path ins:resolutionFilter ; sh:maxCount 1 ; sh:node ins:ConditionOrWordShape ;
+		sh:message "A party resolution keeps actors by at most one condition (ins:resolutionFilter)." ] .
+
+ins:ResolvedByShape a sh:NodeShape ;
+	sh:targetSubjectsOf ins:resolvedBy ;
+	sh:class pty:RoleOccupancy ;
+	sh:message "Only a role occupancy is resolved for each case." ;
+	sh:property [ sh:path pty:occupiedBy ; sh:maxCount 0 ;
+		sh:message "A resolved occupancy is contingent: it names no actor (ADR-A102, §17.2)." ] ;
+	sh:property [ sh:path ins:resolvedBy ; sh:maxCount 1 ; sh:class ins:PartyResolution ;
+		sh:message "A contingent occupancy is resolved by at most one party resolution." ] .
+
+ins:ValueFromShape a sh:NodeShape ;
+	sh:targetSubjectsOf ins:valueFrom ;
+	sh:property [ sh:path ins:valueFrom ; sh:maxCount 1 ;
+		sh:or (
+			[ sh:property [ sh:path [ sh:inversePath fnd:hasIdentity ] ; sh:minCount 1 ; sh:class wrd:Variable ] ]
+			[ sh:class skos:Concept ; sh:property [ sh:path [ sh:inversePath ins:defines ] ; sh:minCount 1 ] ]
+		) ;
+		sh:message "A placeholder takes its value from one source: a variable's persistent identity, or a value word a definition defines (§18.1)." ] .
+
+ins:EncodingStatusShape a sh:NodeShape ;
+	sh:targetSubjectsOf ins:encodingStatus ;
+	sh:class wrd:Text ;
+	sh:message "Only a leaf of text carries an encoding status (§18.5)." ;
+	sh:property [ sh:path ins:encodingStatus ; sh:in ( ins-voc:NoMeaning ) ;
+		sh:message "The only encoding status is ins-voc:NoMeaning: reviewed, and binding nobody." ] ;
+	sh:property [ sh:path [ sh:inversePath ins:expressedIn ] ; sh:maxCount 0 ;
+		sh:message "Text marked ins-voc:NoMeaning expresses no stated meaning: remove the mark or the meaning (§18.5)." ] .

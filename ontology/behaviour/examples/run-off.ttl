@@ -1,0 +1,290 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Premise. While a state holds, several independent things may each run their
+# own course, and all of them end when the state does. A state with several
+# regions holds them: each region has its own current state, and leaving the
+# state leaves every region.
+#
+# A binding authority is terminated and goes into run-off for six years.
+# During run-off the coverholder keeps servicing claims on policies it bound,
+# and keeps collecting premium due on them. The insurer may suspend the
+# coverholder's claims authority after an audit finding, and reinstate it.
+# Premium collection runs on regardless. When run-off ends, both end.
+#
+# Run-off is a parallel state with two regions (nested states sketch §3, §6.1).
+#
+# | Date       | Stimulus                           | Exited                                  | Entered                                  |
+# |------------|------------------------------------|-----------------------------------------|------------------------------------------|
+# | 2027-01-01 | the authority takes effect          |                                         | active (evidence)                         |
+# | 2027-12-31 | the authority is terminated         | active                                  | run-off, servicing, collecting (one exec) |
+# | 2028-03-01 | claims authority suspended          | servicing                               | servicing suspended                       |
+# | 2028-05-01 | all premium collected               | collecting                              | collected                                 |
+# | 2028-06-15 | claims authority reinstated         | servicing suspended                     | servicing                                 |
+# | 2033-12-31 | six years after entry into run-off  | servicing, collected, then run-off      | closed                                    |
+#
+# The coverholder's power to settle claims applies only in ex:servicing. Its
+# duty to remit premium applies in ex:collecting.
+
+@prefix bhv:  <https://www.nebularis.org/neuro-semantic/lattice/behaviour#> .
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix pty:  <https://www.nebularis.org/neuro-semantic/lattice/party#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex:   <https://example.org/lattice/behaviour/run-off/> .
+
+# ---- Configuration: the authority regime, with run-off as a parallel state ------
+
+ex:authority-regime a bhv:StateSpace ;
+    fnd:hasIdentity ex:authority-regime-identity ;
+    bhv:initialState ex:active .
+
+ex:active a bhv:State ;
+    bhv:inStateSpace ex:authority-regime .
+
+ex:run-off a bhv:State ;
+    bhv:inStateSpace ex:authority-regime .
+
+ex:closed a bhv:State ;
+    bhv:inStateSpace ex:authority-regime .
+
+# Two regions name run-off, so it is parallel. Each has its own initial state.
+ex:claims-servicing a bhv:StateSpace ;
+    fnd:hasIdentity ex:claims-servicing-identity ;
+    bhv:regionOf ex:run-off ;
+    bhv:initialState ex:servicing .
+
+ex:servicing a bhv:State ;
+    bhv:inStateSpace ex:claims-servicing .
+
+ex:servicing-suspended a bhv:State ;
+    bhv:inStateSpace ex:claims-servicing .
+
+ex:premium-collection a bhv:StateSpace ;
+    fnd:hasIdentity ex:premium-collection-identity ;
+    bhv:regionOf ex:run-off ;
+    bhv:initialState ex:collecting .
+
+ex:collecting a bhv:State ;
+    bhv:inStateSpace ex:premium-collection .
+
+ex:collected a bhv:State ;
+    bhv:inStateSpace ex:premium-collection .
+
+# ---- Triggers --------------------------------------------------------------------
+
+ex:on-termination a bhv:TriggerDefinition ;
+    bhv:triggerKind bhv:ExternalStimulus ;
+    rdfs:comment "The insurer exercises its power to terminate the authority." .
+
+ex:on-suspension a bhv:TriggerDefinition ;
+    bhv:triggerKind bhv:ExternalStimulus ;
+    rdfs:comment "The insurer exercises its power to suspend claims authority." .
+
+ex:on-reinstatement a bhv:TriggerDefinition ;
+    bhv:triggerKind bhv:ExternalStimulus ;
+    rdfs:comment "The insurer exercises its power to reinstate claims authority." .
+
+ex:on-premium-collected a bhv:TriggerDefinition ;
+    bhv:triggerKind bhv:DerivedTrigger ;
+    rdfs:comment "No premium remains due on any policy bound under the authority." .
+
+ex:on-run-off-expiry a bhv:TriggerDefinition ;
+    bhv:triggerKind bhv:ScheduledTrigger ;
+    rdfs:comment "Six years after entry into run-off, as a positioned stimulus (B3)." .
+
+# ---- Transitions -----------------------------------------------------------------
+
+ex:terminate a bhv:TransitionDefinition ;
+    bhv:fromState ex:active ;
+    bhv:toState ex:run-off ;
+    bhv:hasTrigger ex:on-termination ;
+    bhv:selectionPolicy bhv:SingleMatch ;
+    bhv:activationPolicy bhv:ImmediateActivation .
+
+ex:suspend-claims-authority a bhv:TransitionDefinition ;
+    bhv:fromState ex:servicing ;
+    bhv:toState ex:servicing-suspended ;
+    bhv:hasTrigger ex:on-suspension ;
+    bhv:selectionPolicy bhv:SingleMatch ;
+    bhv:activationPolicy bhv:ImmediateActivation .
+
+ex:reinstate-claims-authority a bhv:TransitionDefinition ;
+    bhv:fromState ex:servicing-suspended ;
+    bhv:toState ex:servicing ;
+    bhv:hasTrigger ex:on-reinstatement ;
+    bhv:selectionPolicy bhv:SingleMatch ;
+    bhv:activationPolicy bhv:ImmediateActivation .
+
+ex:premium-complete a bhv:TransitionDefinition ;
+    bhv:fromState ex:collecting ;
+    bhv:toState ex:collected ;
+    bhv:hasTrigger ex:on-premium-collected ;
+    bhv:selectionPolicy bhv:SingleMatch ;
+    bhv:activationPolicy bhv:ImmediateActivation .
+
+# Leaves run-off, and with it whatever each region holds.
+ex:close a bhv:TransitionDefinition ;
+    bhv:fromState ex:run-off ;
+    bhv:toState ex:closed ;
+    bhv:hasTrigger ex:on-run-off-expiry ;
+    bhv:selectionPolicy bhv:SingleMatch ;
+    bhv:activationPolicy bhv:ImmediateActivation .
+
+# ---- The authority, its parties and the records ----------------------------------
+
+ex:binding-authority a fnd:PersistentIdentity .
+ex:insurer-occ a pty:RoleOccupancy .
+ex:coverholder-occ a pty:RoleOccupancy .
+
+ex:premium-remitted a skos:Concept ; skos:prefLabel "Premium remitted"@en .
+
+ex:stimulus-terminated a bhv:Stimulus ;
+    fnd:hasEvidence [ a fnd:Evidence ; fnd:recordedAt "2027-12-31T00:00:00Z"^^xsd:dateTime ] .
+ex:stimulus-suspended a bhv:Stimulus ;
+    fnd:hasEvidence [ a fnd:Evidence ; fnd:recordedAt "2028-03-01T09:00:00Z"^^xsd:dateTime ] .
+ex:stimulus-premium-collected a bhv:Stimulus ;
+    fnd:hasEvidence [ a fnd:Evidence ; fnd:recordedAt "2028-05-01T09:00:00Z"^^xsd:dateTime ] .
+ex:stimulus-reinstated a bhv:Stimulus ;
+    fnd:hasEvidence [ a fnd:Evidence ; fnd:recordedAt "2028-06-15T09:00:00Z"^^xsd:dateTime ] .
+ex:stimulus-run-off-ends a bhv:Stimulus ;
+    fnd:hasEvidence [ a fnd:Evidence ; fnd:recordedAt "2033-12-31T00:00:00Z"^^xsd:dateTime ] .
+
+ex:termination a bhv:ExerciseRecord ;
+    bhv:exercised ex:power-to-terminate ;
+    bhv:actor ex:insurer-occ ;
+    bhv:tookEffect true ;
+    bhv:fromStimulus ex:stimulus-terminated .
+
+ex:suspension a bhv:ExerciseRecord ;
+    bhv:exercised ex:power-to-suspend-claims-authority ;
+    bhv:actor ex:insurer-occ ;
+    bhv:tookEffect true ;
+    bhv:fromStimulus ex:stimulus-suspended ;
+    rdfs:comment "After an audit finding on reserving." .
+
+ex:last-remittance a bhv:ActRecord ;
+    bhv:activity ex:premium-remitted ;
+    bhv:actor ex:coverholder-occ ;
+    bhv:forCase ex:final-bordereau ;
+    bhv:fromStimulus ex:stimulus-premium-collected .
+
+ex:reinstatement a bhv:ExerciseRecord ;
+    bhv:exercised ex:power-to-reinstate-claims-authority ;
+    bhv:actor ex:insurer-occ ;
+    bhv:tookEffect true ;
+    bhv:fromStimulus ex:stimulus-reinstated .
+
+# ---- Executions ------------------------------------------------------------------
+
+ex:exec-1 a bhv:TransitionExecution ;
+    bhv:executedTransition ex:terminate ;
+    bhv:causedByStimulus ex:stimulus-terminated .
+
+ex:exec-2 a bhv:TransitionExecution ;
+    bhv:executedTransition ex:suspend-claims-authority ;
+    bhv:causedByStimulus ex:stimulus-suspended .
+
+ex:exec-3 a bhv:TransitionExecution ;
+    bhv:executedTransition ex:premium-complete ;
+    bhv:causedByStimulus ex:stimulus-premium-collected .
+
+ex:exec-4 a bhv:TransitionExecution ;
+    bhv:executedTransition ex:reinstate-claims-authority ;
+    bhv:causedByStimulus ex:stimulus-reinstated .
+
+ex:exec-5 a bhv:TransitionExecution ;
+    bhv:executedTransition ex:close ;
+    bhv:causedByStimulus ex:stimulus-run-off-ends .
+
+# ---- Occupancies -----------------------------------------------------------------
+
+ex:occ-1-active a bhv:StateOccupancy ;
+    bhv:forSubject ex:binding-authority ;
+    bhv:occupiesState ex:active ;
+    bhv:isHypothetical false ;
+    bhv:isCurrent false ;
+    bhv:exitedBy ex:exec-1 ;
+    fnd:hasEvidence [ a fnd:Evidence ; fnd:recordedAt "2027-01-01T00:00:00Z"^^xsd:dateTime ;
+        rdfs:comment "The authority took effect." ] ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ;
+        fnd:validFrom "2027-01-01T00:00:00Z"^^xsd:dateTime ;
+        fnd:validTo "2027-12-31T00:00:00Z"^^xsd:dateTime ] .
+
+# One execution enters run-off and both regions' initial states.
+ex:occ-2-run-off a bhv:StateOccupancy ;
+    bhv:forSubject ex:binding-authority ;
+    bhv:occupiesState ex:run-off ;
+    bhv:isHypothetical false ;
+    bhv:isCurrent false ;
+    bhv:enteredBy ex:exec-1 ;
+    bhv:exitedBy ex:exec-5 ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ;
+        fnd:validFrom "2027-12-31T00:00:00Z"^^xsd:dateTime ;
+        fnd:validTo "2033-12-31T00:00:00Z"^^xsd:dateTime ] .
+
+ex:occ-3-servicing a bhv:StateOccupancy ;
+    bhv:forSubject ex:binding-authority ;
+    bhv:occupiesState ex:servicing ;
+    bhv:isHypothetical false ;
+    bhv:isCurrent false ;
+    bhv:enteredBy ex:exec-1 ;
+    bhv:exitedBy ex:exec-2 ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ;
+        fnd:validFrom "2027-12-31T00:00:00Z"^^xsd:dateTime ;
+        fnd:validTo "2028-03-01T09:00:00Z"^^xsd:dateTime ] .
+
+ex:occ-4-collecting a bhv:StateOccupancy ;
+    bhv:forSubject ex:binding-authority ;
+    bhv:occupiesState ex:collecting ;
+    bhv:isHypothetical false ;
+    bhv:isCurrent false ;
+    bhv:enteredBy ex:exec-1 ;
+    bhv:exitedBy ex:exec-3 ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ;
+        fnd:validFrom "2027-12-31T00:00:00Z"^^xsd:dateTime ;
+        fnd:validTo "2028-05-01T09:00:00Z"^^xsd:dateTime ] .
+
+ex:occ-5-servicing-suspended a bhv:StateOccupancy ;
+    bhv:forSubject ex:binding-authority ;
+    bhv:occupiesState ex:servicing-suspended ;
+    bhv:isHypothetical false ;
+    bhv:isCurrent false ;
+    bhv:enteredBy ex:exec-2 ;
+    bhv:exitedBy ex:exec-4 ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ;
+        fnd:validFrom "2028-03-01T09:00:00Z"^^xsd:dateTime ;
+        fnd:validTo "2028-06-15T09:00:00Z"^^xsd:dateTime ] .
+
+# The other region moved on its own while claims authority was suspended.
+ex:occ-6-collected a bhv:StateOccupancy ;
+    bhv:forSubject ex:binding-authority ;
+    bhv:occupiesState ex:collected ;
+    bhv:isHypothetical false ;
+    bhv:isCurrent false ;
+    bhv:enteredBy ex:exec-3 ;
+    bhv:exitedBy ex:exec-5 ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ;
+        fnd:validFrom "2028-05-01T09:00:00Z"^^xsd:dateTime ;
+        fnd:validTo "2033-12-31T00:00:00Z"^^xsd:dateTime ] .
+
+ex:occ-7-servicing a bhv:StateOccupancy ;
+    bhv:forSubject ex:binding-authority ;
+    bhv:occupiesState ex:servicing ;
+    bhv:isHypothetical false ;
+    bhv:isCurrent false ;
+    bhv:enteredBy ex:exec-4 ;
+    bhv:exitedBy ex:exec-5 ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ;
+        fnd:validFrom "2028-06-15T09:00:00Z"^^xsd:dateTime ;
+        fnd:validTo "2033-12-31T00:00:00Z"^^xsd:dateTime ] .
+
+# Leaving run-off ends both regions' states first, then run-off itself.
+ex:occ-8-closed a bhv:StateOccupancy ;
+    bhv:forSubject ex:binding-authority ;
+    bhv:occupiesState ex:closed ;
+    bhv:isHypothetical false ;
+    bhv:isCurrent true ;
+    bhv:enteredBy ex:exec-5 ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ;
+        fnd:validFrom "2033-12-31T00:00:00Z"^^xsd:dateTime ] .

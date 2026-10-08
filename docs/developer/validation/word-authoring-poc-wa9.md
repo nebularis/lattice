@@ -2,7 +2,7 @@
 
 # Validation Pack: WA9, Add-in task pane and harness
 
-**Unit:** `word-authoring-poc` (WAP), ADR-A114
+**Unit:** `word-authoring-poc` (WAP), ADR-A118
 **Plan:** [word-authoring-poc.md](../plans/word-authoring-poc.md) section "WA9: Add-in task pane and harness"
 **Status record:** [word-authoring-poc.md](../status/word-authoring-poc.md)
 

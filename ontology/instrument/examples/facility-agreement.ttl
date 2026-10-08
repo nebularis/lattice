@@ -1,0 +1,315 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Premise. A facility agreement binds a borrower to a syndicate of lenders.
+# Its clauses say what each side must, must not, may and can do, and they say
+# it twice: once on the lender's form, in terms of roles ("the Borrower", "the
+# Lenders"), and once for a particular facility, in terms of the parties who
+# signed it. The form's meaning is shared by every facility drawn from it. A
+# facility's meaning is built from the form's for that facility alone.
+#
+# The form's clauses:
+#
+# | Clause | Text | Meaning |
+# |--------|------|---------|
+# | 6.1    | The Borrower shall repay each loan to the Lenders, each for its share. | an obligation owed to a group, severally |
+# | 7.1    | The Borrower shall ensure, for the Lenders and the Security Trustee, leverage does not exceed 3.0 to 1. | a continuing obligation, one beneficiary no party |
+# | 8.1    | The Borrower shall not create security over its assets, except a lien arising by operation of law. | one term, two relations: a prohibition (the negative pledge) and the permission excepting it |
+# | 10.1   | The Lenders may declare all loans immediately due and payable. | a power held by the group |
+#
+# The facility for Acme Holdings plc (FA-2027-0419) has two lenders, holding
+# 60% and 40% of the commitments, and a security trustee who is no party to it.
+#
+# What the example shows:
+#
+# | Construct                                            | Where                                                  |
+# |------------------------------------------------------|--------------------------------------------------------|
+# | stated meaning on the form, owned by its clauses     | tmpl:*, each term ins:expressedIn a clause             |
+# | bound meaning for one facility, owned by it          | ex:*, each term ins:boundIn ex:facility-v1             |
+# | a relation belongs to its term, and through it to the term's owner | ins:arisesUnder                          |
+# | one term with two relations                          | tmpl:term-8-1, ex:term-8-1                             |
+# | each bound node from the stated node it binds        | ins:boundFrom                                          |
+# | an obligation owed to a group, severally             | ex:repay → ex:lenders (pty:EachForOwnShare)            |
+# | a continuing obligation and the state it keeps       | ex:leverage, ins:maintains ex:leverage-ok              |
+# | a prohibition and the permission excepting it        | ex:negative-pledge, ex:permitted-liens                 |
+# | a power held by a group                              | ex:accelerate                                          |
+# | the instrument's parties, and a beneficiary who is not one | ins:party, ex:trustee-occ                        |
+# | an instrument's natural keys                         | ex:facility-identity                                   |
+#
+# Why terms exist: a term is the provision the parties are bound by. Clause
+# 8.1 is one provision giving rise to two relations. Later slices attach to the
+# term what belongs to the whole provision: its classification (a condition or
+# a warranty) and survival (C7b), the sections it applies within (C7b), its
+# precedence, and qualifiers such as limits (C8). Definitions and deemings
+# arise under terms without being relations (C7b).
+#
+# Arising, due and ending (C7b), the regime that gates acceleration on an
+# event of default (C7a), and the consent rule for joint exercise (C9) are
+# added by later slices. Nothing here evaluates.
+
+@prefix ins:     <https://www.nebularis.org/neuro-semantic/lattice/instrument#> .
+@prefix ins-voc: <https://www.nebularis.org/neuro-semantic/lattice/instrument/vocab#> .
+@prefix wrd:     <https://www.nebularis.org/neuro-semantic/lattice/wording#> .
+@prefix wrd-voc: <https://www.nebularis.org/neuro-semantic/lattice/wording/vocab#> .
+@prefix fnd:     <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix pty:     <https://www.nebularis.org/neuro-semantic/lattice/party#> .
+@prefix elg:     <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
+@prefix qnt:     <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
+@prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+@prefix keys:    <https://example.org/lattice/foundation/keys#> .
+@prefix tmpl:    <https://example.org/lattice/instrument/facility/form/> .
+@prefix ex:      <https://example.org/lattice/instrument/facility/> .
+
+# ==== The lender's form: wording =============================================
+
+ex:form a wrd:Wording ;
+    fnd:hasIdentity ex:form-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:directlyComprises ex:sec-6 , ex:sec-7 , ex:sec-8 , ex:sec-10 .
+
+ex:sec-6 a wrd:Element ;
+    fnd:hasIdentity ex:sec-6-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Section ; wrd:objectId "6" ; wrd:rankKey "f0" ;
+    wrd:directlyComprises ex:cl-6-1 .
+ex:cl-6-1 a wrd:Text ;
+    fnd:hasIdentity ex:cl-6-1-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "6.1" ; wrd:rankKey "a0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "The Borrower shall repay each loan to the Lenders, each for its share." ] .
+
+ex:sec-7 a wrd:Element ;
+    fnd:hasIdentity ex:sec-7-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Section ; wrd:objectId "7" ; wrd:rankKey "g0" ;
+    wrd:directlyComprises ex:cl-7-1 .
+ex:cl-7-1 a wrd:Text ;
+    fnd:hasIdentity ex:cl-7-1-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "7.1" ; wrd:rankKey "a0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "The Borrower shall ensure, for the benefit of the Lenders and the Security Trustee, that leverage does not exceed 3.0 to 1." ] .
+
+ex:sec-8 a wrd:Element ;
+    fnd:hasIdentity ex:sec-8-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Section ; wrd:objectId "8" ; wrd:rankKey "h0" ;
+    wrd:directlyComprises ex:cl-8-1 .
+ex:cl-8-1 a wrd:Text ;
+    fnd:hasIdentity ex:cl-8-1-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "8.1" ; wrd:rankKey "a0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "The Borrower shall not create any security over any of its assets, except a lien arising by operation of law." ] .
+
+ex:sec-10 a wrd:Element ;
+    fnd:hasIdentity ex:sec-10-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Section ; wrd:objectId "10" ; wrd:rankKey "j0" ;
+    wrd:directlyComprises ex:cl-10-1 .
+ex:cl-10-1 a wrd:Text ;
+    fnd:hasIdentity ex:cl-10-1-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "10.1" ; wrd:rankKey "a0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "The Lenders may by notice declare all loans immediately due and payable." ] .
+
+# ==== The form's roles =======================================================
+
+ex:Borrower a pty:Role ; rdfs:label "Borrower" .
+ex:Lender a pty:Role ; rdfs:label "Lender" .
+ex:SecurityTrustee a pty:Role ; rdfs:label "Security Trustee" .
+
+# ==== Stated meaning: owned by the form's clauses ============================
+#
+# Each stated term is part of exactly one element version, the clause that
+# expresses it (law I2). Its relations belong to it (ins:arisesUnder), name
+# roles, never occupancies (I13), and are never evaluated.
+#
+# Clause 6.1 says the Lenders are owed "each for its share", but a role cannot
+# say how its occupants act together. A defined party word ("the Lenders")
+# whose definition carries an acting rule says it on the form (C7c, D12).
+# Here only the group says it (pty:EachForOwnShare).
+
+tmpl:term-6-1 a ins:Term , ins:Template ; ins:expressedIn ex:cl-6-1 .
+tmpl:repay a ins:Obligation , ins:Template ;
+    ins:arisesUnder tmpl:term-6-1 ;
+    ins:obligor ex:Borrower ;
+    ins:obligee ex:Lender ;
+    ins:activity ins-voc:Repay .
+
+tmpl:term-7-1 a ins:Term , ins:Template ; ins:expressedIn ex:cl-7-1 .
+tmpl:leverage a ins:ContinuingObligation , ins:Template ;
+    ins:arisesUnder tmpl:term-7-1 ;
+    ins:obligor ex:Borrower ;
+    ins:obligee ex:Lender , ex:SecurityTrustee ;
+    ins:maintains ex:leverage-ok .
+
+# One provision, two relations: the prohibition and its exception.
+tmpl:term-8-1 a ins:Term , ins:Template ; ins:expressedIn ex:cl-8-1 .
+tmpl:negative-pledge a ins:Prohibition , ins:Template ;
+    ins:arisesUnder tmpl:term-8-1 ;
+    ins:obligor ex:Borrower ;
+    ins:obligee ex:Lender ;
+    ins:activity ins-voc:CreateSecurity .
+tmpl:permitted-liens a ins:Permission , ins:Template ;
+    ins:arisesUnder tmpl:term-8-1 ;
+    ins:holder ex:Borrower ;                      # the excepted prohibition's obligor (I8)
+    ins:counterparty ex:Lender ;
+    ins:activity ins-voc:CreateSecurity ;         # the same activity (I8)
+    ins:excepts tmpl:negative-pledge ;
+    ins:scope ex:lien-by-law .
+
+tmpl:term-10-1 a ins:Term , ins:Template ; ins:expressedIn ex:cl-10-1 .
+tmpl:accelerate a ins:Power , ins:Template ;
+    ins:arisesUnder tmpl:term-10-1 ;
+    ins:holder ex:Lender ;
+    ins:counterparty ex:Borrower ;
+    ins:activity ins-voc:DeclareDue .
+
+# ==== Conditions the meaning reads ===========================================
+
+ex:leverage-space a qnt:ValueSpace ;
+    qnt:spaceKey "leverage-ratio" ; qnt:orderKind qnt:TotalOrder ; qnt:densityKind qnt:Dense ;
+    qnt:spaceHash "leverage-ratio-v1" .
+ex:three a qnt:Quantity ; qnt:onSpace ex:leverage-space ; qnt:numericValue "3.0"^^xsd:decimal .
+ex:at-most-three a qnt:Bound ;
+    qnt:onSpace ex:leverage-space ; qnt:boundValue ex:three ; qnt:boundSense qnt:Upper ; qnt:boundClosure qnt:Closed .
+ex:up-to-three a qnt:Range ; qnt:onSpace ex:leverage-space ; qnt:upperBound ex:at-most-three ; qnt:hasBound ex:at-most-three .
+ex:permitted-leverage a qnt:RangeSet ; qnt:onSpace ex:leverage-space ; qnt:hasRange ex:up-to-three .
+
+ex:leverage-ok a elg:IntervalCondition ;
+    elg:conditionKey "leverage-within-covenant" ;
+    elg:matchStrategy elg:IntervalContainment ;
+    elg:compatibilityOperation elg:AllRequired ;
+    elg:wildcardSemantics elg:NoWildcard ;
+    elg:requiredRangeSet ex:permitted-leverage .
+
+# Placeholder: a scope stated, not yet evaluable. Its concept is in no scheme
+# and no evidence binding reads it, until the case data exists (C7b, C13).
+ex:lien-by-law a elg:Condition ;
+    elg:conditionKey "lien-arising-by-operation-of-law" ;
+    elg:matchStrategy elg:ExactMatch ;
+    elg:compatibilityOperation elg:AllRequired ;
+    elg:wildcardSemantics elg:NoWildcard ;
+    elg:requiredConcept ex:by-operation-of-law .
+ex:by-operation-of-law a skos:Concept ; rdfs:label "a security interest arising by operation of law" .
+
+# ==== The facility for Acme: wording and instrument ==========================
+
+ex:acme-wording-v1 a wrd:AssembledWording ;
+    fnd:hasIdentity ex:acme-wording-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:assembledFrom ex:form ;
+    wrd:includes ex:sec-6 , ex:cl-6-1 , ex:sec-7 , ex:cl-7-1 , ex:sec-8 , ex:cl-8-1 , ex:sec-10 , ex:cl-10-1 .
+
+# ins:party lists the parties to the instrument, as authored: who signs it.
+# It is not derived from the relations' parties, since a relation may name a
+# beneficiary or a regulator who is no party (CC-Q4), and every party executes
+# separately (S90, C9).
+ex:facility-v1 a ins:Instrument ;
+    fnd:hasIdentity ex:facility-identity ;
+    ins:expressedIn ex:acme-wording-v1 ;              # exactly one assembled wording (I1)
+    ins:party ex:borrower-occ , ex:lender-1-occ , ex:lender-2-occ .
+
+# The facility's names, given by the world: natural keys on its identity,
+# from the schemes Foundation's keys example declares. Their IRIs are what
+# those schemes' natural-key recipe mints from the values.
+ex:facility-identity a fnd:PersistentIdentity , fnd:NaturallyKeyed ;
+    fnd:naturalKey <https://example.org/lattice/foundation/keys/key/agreement-number/FA-2027-0419> ,
+                   <https://example.org/lattice/foundation/keys/key/market-reference/MR-2027-000419> .
+<https://example.org/lattice/foundation/keys/key/agreement-number/FA-2027-0419> a fnd:Key , keys:AgreementNumberKey ;
+    fnd:keyScheme keys:agreement-number ; fnd:keyValue "FA-2027-0419" .
+<https://example.org/lattice/foundation/keys/key/market-reference/MR-2027-000419> a fnd:Key , keys:MarketReferenceKey ;
+    fnd:keyScheme keys:market-reference ; fnd:keyValue "MR-2027-000419" .
+
+# ==== The parties of this facility, and one who is not a party ===============
+
+ex:acme a pty:Actor ; rdfs:label "Acme Holdings plc" .
+ex:north-bank a pty:Actor ; rdfs:label "North Bank plc" .
+ex:south-bank a pty:Actor ; rdfs:label "South Bank SA" .
+ex:harbour-trustees a pty:Actor ; rdfs:label "Harbour Trustees Ltd" .
+
+ex:borrower-occ a pty:RoleOccupancy ;
+    fnd:hasIdentity ex:borrower-occ-identity ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-01-01T00:00:00Z"^^xsd:dateTime ] ;
+    pty:inRole ex:Borrower ;
+    pty:occupiedBy ex:acme .
+ex:lender-1-occ a pty:RoleOccupancy ;
+    fnd:hasIdentity ex:lender-1-occ-identity ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-01-01T00:00:00Z"^^xsd:dateTime ] ;
+    pty:inRole ex:Lender ;
+    pty:occupiedBy ex:north-bank .
+ex:lender-2-occ a pty:RoleOccupancy ;
+    fnd:hasIdentity ex:lender-2-occ-identity ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-01-01T00:00:00Z"^^xsd:dateTime ] ;
+    pty:inRole ex:Lender ;
+    pty:occupiedBy ex:south-bank .
+
+# The security trustee holds the leverage covenant's benefit for the lenders,
+# but signs a separate deed, not this agreement: an obligee, not a party.
+ex:trustee-occ a pty:RoleOccupancy ;
+    fnd:hasIdentity ex:trustee-occ-identity ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-01-01T00:00:00Z"^^xsd:dateTime ] ;
+    pty:inRole ex:SecurityTrustee ;
+    pty:occupiedBy ex:harbour-trustees .
+
+# The lenders as a group: several liability from Party's domain-neutral terms
+# (C7c, D19). Each stands towards the Borrower for its own outward share, and
+# only that share.
+ex:lenders a pty:ParticipationGroup ;
+    fnd:hasIdentity ex:lenders-identity ;
+    pty:hasCompositionRule pty:EachForOwnShare ;
+    pty:hasParticipant ex:lender-1-share , ex:lender-2-share .
+ex:lender-1-share a pty:GroupMembership ;
+    pty:memberOf ex:lenders ; pty:memberOccupancy ex:lender-1-occ ; pty:outwardShare "0.6"^^xsd:decimal .
+ex:lender-2-share a pty:GroupMembership ;
+    pty:memberOf ex:lenders ; pty:memberOccupancy ex:lender-2-occ ; pty:outwardShare "0.4"^^xsd:decimal .
+
+# ==== Bound meaning: owned by the facility ===================================
+#
+# What instantiation produces from the stated meaning, the wording's values and the
+# instance's parties (a derived artefact, ADR-A92). Each bound term is part of
+# exactly one instrument version (ins:boundIn) and bound from exactly one
+# stated term (I2). Its relations belong to it and name occupancies and
+# groups, never roles. Only bound meaning is evaluated (I13).
+#
+# A bound relation restates its template's content in full, not only what
+# differs. RDF has no override: a relation naming both the template's role and
+# the bound occupancy as obligor would have two obligors.
+
+ex:term-6-1 a ins:Term ; ins:boundIn ex:facility-v1 ; ins:boundFrom tmpl:term-6-1 .
+ex:repay a ins:Obligation ;
+    ins:boundFrom tmpl:repay ;
+    ins:arisesUnder ex:term-6-1 ;
+    ins:obligor ex:borrower-occ ;
+    ins:obligee ex:lenders ;                       # owed severally: pty:EachForOwnShare
+    ins:activity ins-voc:Repay .
+
+ex:term-7-1 a ins:Term ; ins:boundIn ex:facility-v1 ; ins:boundFrom tmpl:term-7-1 .
+ex:leverage a ins:ContinuingObligation ;
+    ins:boundFrom tmpl:leverage ;
+    ins:arisesUnder ex:term-7-1 ;
+    ins:obligor ex:borrower-occ ;
+    ins:obligee ex:lenders , ex:trustee-occ ;      # the trustee benefits, and is no party
+    ins:maintains ex:leverage-ok .
+
+ex:term-8-1 a ins:Term ; ins:boundIn ex:facility-v1 ; ins:boundFrom tmpl:term-8-1 .
+ex:negative-pledge a ins:Prohibition ;
+    ins:boundFrom tmpl:negative-pledge ;
+    ins:arisesUnder ex:term-8-1 ;
+    ins:obligor ex:borrower-occ ;
+    ins:obligee ex:lenders ;
+    ins:activity ins-voc:CreateSecurity .
+ex:permitted-liens a ins:Permission ;
+    ins:boundFrom tmpl:permitted-liens ;
+    ins:arisesUnder ex:term-8-1 ;
+    ins:holder ex:borrower-occ ;
+    ins:counterparty ex:lenders ;
+    ins:activity ins-voc:CreateSecurity ;
+    ins:excepts ex:negative-pledge ;
+    ins:scope ex:lien-by-law .
+
+ex:term-10-1 a ins:Term ; ins:boundIn ex:facility-v1 ; ins:boundFrom tmpl:term-10-1 .
+ex:accelerate a ins:Power ;
+    ins:boundFrom tmpl:accelerate ;
+    ins:arisesUnder ex:term-10-1 ;
+    ins:holder ex:lenders ;
+    ins:counterparty ex:borrower-occ ;
+    ins:activity ins-voc:DeclareDue .

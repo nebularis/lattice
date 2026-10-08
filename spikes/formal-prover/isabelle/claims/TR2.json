@@ -1,0 +1,10 @@
+{
+  "subject": "TR2",
+  "statedAs": "Reading.apply_reading_every_matches_spec",
+  "statementDigest": "sha256:bdbf714830603e1fdf6ed679bb3a19df9e77ac1a07ad9cfd3b1dc64ea7bc9897",
+  "method": "Proof",
+  "scope": "EveryBoundValueAndList",
+  "assumptionAudit": "no sorry/oops in Reading.thy (gate.py's source scan)",
+  "tool": { "name": "Isabelle", "version": "Isabelle2025-2" },
+  "outcome": "passed"
+}

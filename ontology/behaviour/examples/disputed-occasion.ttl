@@ -1,0 +1,300 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Premise. A state machine can belong to each occasion of a relation, not to
+# the agreement as a whole: every invoice can be disputed on its own, and a
+# dispute about one says nothing about another. The occasion's own core state
+# is untouched: what the dispute changes are the consequences that read it.
+#
+# A services agreement obliges the client to pay each invoice within 30 days.
+# A dispute regime (undisputed, disputed, settled) runs once per occasion of
+# that duty. Invoice 101 goes unpaid and is disputed, so its occasion is
+# breached and disputed at once, until an expert determines the dispute.
+# Invoice 102 is paid on time and never disputed.
+#
+# | Date       | Record                                  | Invoice 101: core   | Invoice 101: dispute | Invoice 102: core | Invoice 102: dispute |
+# |------------|-----------------------------------------|---------------------|----------------------|-------------------|----------------------|
+# | 2027-03-01 | invoice 101 issued                      | Live, Arisen        | undisputed           |                   |                      |
+# | 2027-03-05 | invoice 102 issued                      |                     |                      | Live, Arisen      | undisputed           |
+# | 2027-03-31 | invoice 101 due, unpaid                 | Breached            |                      |                   |                      |
+# | 2027-04-02 | the client disputes invoice 101         |                     | disputed             |                   |                      |
+# | 2027-04-04 | invoice 102 paid                        |                     |                      | Performed         |                      |
+# | 2027-05-15 | the expert determines invoice 101       |                     | settled              |                   |                      |
+#
+# Relations gated on these states, in an instrument: an exclusion of the
+# supplier's power to terminate for non-payment applies while the unpaid
+# invoice's occasion is in ex:disputed. The power's own case is the breach of
+# invoice 101's occasion, so it reads that occasion's dispute regime
+# (C11a-Q4). Interest on late payment keeps running whatever the dispute.
+
+@prefix bhv:  <https://www.nebularis.org/neuro-semantic/lattice/behaviour#> .
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix pty:  <https://www.nebularis.org/neuro-semantic/lattice/party#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex:   <https://example.org/lattice/behaviour/dispute/> .
+
+# ---- Configuration: a regime per occasion of the payment duty ------------------
+# bhv:perOccasionOf with no bhv:regionOf: a top-level space, one instance per
+# occasion of the relation it names, running beside the occasion's core states.
+
+ex:dispute-regime a bhv:StateSpace ;
+    fnd:hasIdentity ex:dispute-regime-identity ;
+    bhv:perOccasionOf ex:pay-invoice ;
+    bhv:initialState ex:undisputed .
+
+ex:undisputed a bhv:State ;
+    bhv:inStateSpace ex:dispute-regime .
+
+ex:disputed a bhv:State ;
+    bhv:inStateSpace ex:dispute-regime .
+
+ex:settled a bhv:State ;
+    bhv:inStateSpace ex:dispute-regime .
+
+ex:on-dispute-notice a bhv:TriggerDefinition ;
+    bhv:triggerKind bhv:ExternalStimulus ;
+    rdfs:comment "The client gives notice disputing the invoice." .
+
+ex:on-determination a bhv:TriggerDefinition ;
+    bhv:triggerKind bhv:ExternalStimulus ;
+    rdfs:comment "The expert named in the agreement determines the dispute." .
+
+ex:raise-dispute a bhv:TransitionDefinition ;
+    bhv:fromState ex:undisputed ;
+    bhv:toState ex:disputed ;
+    bhv:hasTrigger ex:on-dispute-notice ;
+    bhv:selectionPolicy bhv:SingleMatch ;
+    bhv:activationPolicy bhv:ImmediateActivation .
+
+ex:settle-dispute a bhv:TransitionDefinition ;
+    bhv:fromState ex:disputed ;
+    bhv:toState ex:settled ;
+    bhv:hasTrigger ex:on-determination ;
+    bhv:selectionPolicy bhv:SingleMatch ;
+    bhv:activationPolicy bhv:ImmediateActivation .
+
+# ---- The duty, the parties and the two occasions ---------------------------------
+
+ex:pay-invoice a ex:PaymentDuty .
+ex:client-occ a pty:RoleOccupancy .
+ex:supplier-occ a pty:RoleOccupancy .
+ex:expert-occ a pty:RoleOccupancy .
+
+ex:occasion-101 a bhv:Occasion ;
+    bhv:occasionOf ex:pay-invoice ;
+    bhv:forCase ex:invoice-101 ;
+    bhv:occasionParty ex:client-occ , ex:supplier-occ .
+
+ex:occasion-102 a bhv:Occasion ;
+    bhv:occasionOf ex:pay-invoice ;
+    bhv:forCase ex:invoice-102 ;
+    bhv:occasionParty ex:client-occ , ex:supplier-occ .
+
+ex:invoice-issued a skos:Concept ; skos:prefLabel "Invoice issued"@en .
+ex:invoice-disputed a skos:Concept ; skos:prefLabel "Invoice disputed"@en .
+ex:invoice-paid a skos:Concept ; skos:prefLabel "Invoice paid"@en .
+
+# ---- Stimuli and records ---------------------------------------------------------
+
+ex:s1 a bhv:Stimulus ;
+    fnd:hasEvidence [ a fnd:Evidence ; fnd:recordedAt "2027-03-01T09:00:00Z"^^xsd:dateTime ] .
+ex:s2 a bhv:Stimulus ;
+    fnd:hasEvidence [ a fnd:Evidence ; fnd:recordedAt "2027-03-05T09:00:00Z"^^xsd:dateTime ] .
+ex:s3 a bhv:Stimulus ;
+    fnd:hasEvidence [ a fnd:Evidence ; fnd:recordedAt "2027-03-31T23:59:59Z"^^xsd:dateTime ] .
+ex:s4 a bhv:Stimulus ;
+    fnd:hasEvidence [ a fnd:Evidence ; fnd:recordedAt "2027-04-02T09:00:00Z"^^xsd:dateTime ] .
+ex:s5 a bhv:Stimulus ;
+    fnd:hasEvidence [ a fnd:Evidence ; fnd:recordedAt "2027-04-04T09:00:00Z"^^xsd:dateTime ] .
+ex:s6 a bhv:Stimulus ;
+    fnd:hasEvidence [ a fnd:Evidence ; fnd:recordedAt "2027-05-15T09:00:00Z"^^xsd:dateTime ] .
+
+ex:r-101-issued a bhv:ActRecord ;
+    bhv:activity ex:invoice-issued ; bhv:actor ex:supplier-occ ; bhv:forCase ex:invoice-101 ;
+    bhv:fromStimulus ex:s1 .
+ex:r-102-issued a bhv:ActRecord ;
+    bhv:activity ex:invoice-issued ; bhv:actor ex:supplier-occ ; bhv:forCase ex:invoice-102 ;
+    bhv:fromStimulus ex:s2 .
+ex:r-101-breach a bhv:BreachRecord ;
+    bhv:ofOccasion ex:occasion-101 ;
+    bhv:closureReliedOn ex:supplier-receipts-ledger ;
+    bhv:fromStimulus ex:s3 .
+ex:r-101-disputed a bhv:ActRecord ;
+    bhv:activity ex:invoice-disputed ; bhv:actor ex:client-occ ; bhv:forCase ex:invoice-101 ;
+    bhv:fromStimulus ex:s4 ;
+    rdfs:comment "The client says the services billed were not delivered." .
+ex:r-102-paid a bhv:ActRecord ;
+    bhv:activity ex:invoice-paid ; bhv:actor ex:client-occ ; bhv:forCase ex:invoice-102 ;
+    bhv:fromStimulus ex:s5 .
+ex:r-101-determined a bhv:DeterminationRecord ;
+    bhv:matter ex:invoice-101-dispute ;
+    bhv:determiner ex:expert-occ ;
+    bhv:determinedValue ex:invoice-101-payable-in-full ;
+    bhv:fromStimulus ex:s6 .
+
+# ---- Executions ------------------------------------------------------------------
+
+ex:exec-101-arises a bhv:TransitionExecution ;
+    bhv:causedByStimulus ex:s1 ;
+    rdfs:comment "The evaluator: the duty arises for invoice 101." .
+ex:exec-102-arises a bhv:TransitionExecution ;
+    bhv:causedByStimulus ex:s2 ;
+    rdfs:comment "The evaluator: the duty arises for invoice 102." .
+ex:exec-101-breached a bhv:TransitionExecution ;
+    bhv:causedByStimulus ex:s3 ;
+    rdfs:comment "The evaluator: the due range ends unpaid." .
+ex:exec-101-disputed a bhv:TransitionExecution ;
+    bhv:executedTransition ex:raise-dispute ;
+    bhv:causedByStimulus ex:s4 .
+ex:exec-102-performed a bhv:TransitionExecution ;
+    bhv:causedByStimulus ex:s5 ;
+    rdfs:comment "The evaluator: invoice 102 is paid." .
+ex:exec-101-settled a bhv:TransitionExecution ;
+    bhv:executedTransition ex:settle-dispute ;
+    bhv:causedByStimulus ex:s6 .
+
+# ==== Invoice 101: core states, derived (B1) ======================================
+# The occasion is created when the invoice is issued and arises at once, so
+# bhv:Live is entered with evidence, bhv:Pending never holds for long, and
+# both happen at one position.
+
+ex:o-101-live a bhv:StateOccupancy , fnd:DerivedArtefact ;
+    bhv:forSubject ex:occasion-101 ;
+    bhv:occupiesState bhv:Live ;
+    bhv:isHypothetical false ;
+    bhv:isCurrent false ;
+    bhv:exitedBy ex:exec-101-breached ;
+    prov:wasDerivedFrom ex:r-101-issued ;
+    fnd:hasEvidence [ a fnd:Evidence ; fnd:recordedAt "2027-03-01T09:00:00Z"^^xsd:dateTime ;
+        rdfs:comment "The occasion was created with the invoice." ] ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ;
+        fnd:validFrom "2027-03-01T09:00:00Z"^^xsd:dateTime ;
+        fnd:validTo "2027-03-31T23:59:59Z"^^xsd:dateTime ] .
+
+ex:o-101-pending a bhv:StateOccupancy , fnd:DerivedArtefact ;
+    bhv:forSubject ex:occasion-101 ;
+    bhv:occupiesState bhv:Pending ;
+    bhv:isHypothetical false ;
+    bhv:isCurrent false ;
+    bhv:exitedBy ex:exec-101-arises ;
+    prov:wasDerivedFrom ex:r-101-issued ;
+    fnd:hasEvidence [ a fnd:Evidence ; fnd:recordedAt "2027-03-01T09:00:00Z"^^xsd:dateTime ] ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ;
+        fnd:validFrom "2027-03-01T09:00:00Z"^^xsd:dateTime ;
+        fnd:validTo "2027-03-01T09:00:00Z"^^xsd:dateTime ] .
+
+ex:o-101-arisen a bhv:StateOccupancy , fnd:DerivedArtefact ;
+    bhv:forSubject ex:occasion-101 ;
+    bhv:occupiesState bhv:Arisen ;
+    bhv:isHypothetical false ;
+    bhv:isCurrent false ;
+    bhv:enteredBy ex:exec-101-arises ;
+    bhv:exitedBy ex:exec-101-breached ;
+    prov:wasDerivedFrom ex:r-101-issued ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ;
+        fnd:validFrom "2027-03-01T09:00:00Z"^^xsd:dateTime ;
+        fnd:validTo "2027-03-31T23:59:59Z"^^xsd:dateTime ] .
+
+ex:o-101-breached a bhv:StateOccupancy , fnd:DerivedArtefact ;
+    bhv:forSubject ex:occasion-101 ;
+    bhv:occupiesState bhv:Breached ;
+    bhv:isHypothetical false ;
+    bhv:isCurrent true ;
+    bhv:enteredBy ex:exec-101-breached ;
+    prov:wasDerivedFrom ex:r-101-breach ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ;
+        fnd:validFrom "2027-03-31T23:59:59Z"^^xsd:dateTime ] .
+
+# ==== Invoice 101: its own dispute regime ==========================================
+
+ex:d-101-undisputed a bhv:StateOccupancy ;
+    bhv:forSubject ex:occasion-101 ;
+    bhv:occupiesState ex:undisputed ;
+    bhv:isHypothetical false ;
+    bhv:isCurrent false ;
+    bhv:exitedBy ex:exec-101-disputed ;
+    fnd:hasEvidence [ a fnd:Evidence ; fnd:recordedAt "2027-03-01T09:00:00Z"^^xsd:dateTime ;
+        rdfs:comment "The regime's instance for this occasion began with the occasion." ] ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ;
+        fnd:validFrom "2027-03-01T09:00:00Z"^^xsd:dateTime ;
+        fnd:validTo "2027-04-02T09:00:00Z"^^xsd:dateTime ] .
+
+ex:d-101-disputed a bhv:StateOccupancy ;
+    bhv:forSubject ex:occasion-101 ;
+    bhv:occupiesState ex:disputed ;
+    bhv:isHypothetical false ;
+    bhv:isCurrent false ;
+    bhv:enteredBy ex:exec-101-disputed ;
+    bhv:exitedBy ex:exec-101-settled ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ;
+        fnd:validFrom "2027-04-02T09:00:00Z"^^xsd:dateTime ;
+        fnd:validTo "2027-05-15T09:00:00Z"^^xsd:dateTime ] .
+
+ex:d-101-settled a bhv:StateOccupancy ;
+    bhv:forSubject ex:occasion-101 ;
+    bhv:occupiesState ex:settled ;
+    bhv:isHypothetical false ;
+    bhv:isCurrent true ;
+    bhv:enteredBy ex:exec-101-settled ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ;
+        fnd:validFrom "2027-05-15T09:00:00Z"^^xsd:dateTime ] .
+
+# ==== Invoice 102: paid, never disputed ===========================================
+
+ex:o-102-live a bhv:StateOccupancy , fnd:DerivedArtefact ;
+    bhv:forSubject ex:occasion-102 ;
+    bhv:occupiesState bhv:Live ;
+    bhv:isHypothetical false ;
+    bhv:isCurrent false ;
+    bhv:exitedBy ex:exec-102-performed ;
+    prov:wasDerivedFrom ex:r-102-issued ;
+    fnd:hasEvidence [ a fnd:Evidence ; fnd:recordedAt "2027-03-05T09:00:00Z"^^xsd:dateTime ] ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ;
+        fnd:validFrom "2027-03-05T09:00:00Z"^^xsd:dateTime ;
+        fnd:validTo "2027-04-04T09:00:00Z"^^xsd:dateTime ] .
+
+ex:o-102-pending a bhv:StateOccupancy , fnd:DerivedArtefact ;
+    bhv:forSubject ex:occasion-102 ;
+    bhv:occupiesState bhv:Pending ;
+    bhv:isHypothetical false ;
+    bhv:isCurrent false ;
+    bhv:exitedBy ex:exec-102-arises ;
+    prov:wasDerivedFrom ex:r-102-issued ;
+    fnd:hasEvidence [ a fnd:Evidence ; fnd:recordedAt "2027-03-05T09:00:00Z"^^xsd:dateTime ] ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ;
+        fnd:validFrom "2027-03-05T09:00:00Z"^^xsd:dateTime ;
+        fnd:validTo "2027-03-05T09:00:00Z"^^xsd:dateTime ] .
+
+ex:o-102-arisen a bhv:StateOccupancy , fnd:DerivedArtefact ;
+    bhv:forSubject ex:occasion-102 ;
+    bhv:occupiesState bhv:Arisen ;
+    bhv:isHypothetical false ;
+    bhv:isCurrent false ;
+    bhv:enteredBy ex:exec-102-arises ;
+    bhv:exitedBy ex:exec-102-performed ;
+    prov:wasDerivedFrom ex:r-102-issued ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ;
+        fnd:validFrom "2027-03-05T09:00:00Z"^^xsd:dateTime ;
+        fnd:validTo "2027-04-04T09:00:00Z"^^xsd:dateTime ] .
+
+ex:o-102-performed a bhv:StateOccupancy , fnd:DerivedArtefact ;
+    bhv:forSubject ex:occasion-102 ;
+    bhv:occupiesState bhv:Performed ;
+    bhv:isHypothetical false ;
+    bhv:isCurrent true ;
+    bhv:enteredBy ex:exec-102-performed ;
+    prov:wasDerivedFrom ex:r-102-paid ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ;
+        fnd:validFrom "2027-04-04T09:00:00Z"^^xsd:dateTime ] .
+
+ex:d-102-undisputed a bhv:StateOccupancy ;
+    bhv:forSubject ex:occasion-102 ;
+    bhv:occupiesState ex:undisputed ;
+    bhv:isHypothetical false ;
+    bhv:isCurrent true ;
+    fnd:hasEvidence [ a fnd:Evidence ; fnd:recordedAt "2027-03-05T09:00:00Z"^^xsd:dateTime ;
+        rdfs:comment "Its own instance of the dispute regime, never moved." ] ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ;
+        fnd:validFrom "2027-03-05T09:00:00Z"^^xsd:dateTime ] .

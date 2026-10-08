@@ -1,0 +1,225 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Premise. The things a contract is about already have names the world gives
+# them. A facility agreement has its number and a market reference. The
+# borrower has a company number and a legal entity identifier. A guarantor
+# has a national identity number. The borrower's bank account has an account
+# number. Other records cite and match these things by those names.
+#
+# "Facility Agreement No. FA-2027-0412, market reference MR-2027-000412,
+# between Acme Holdings plc (company number 01234567, LEI
+# 5493001KJTIIGC8Y1R12) as Borrower and the Lenders, guaranteed by Jane Doe
+# (national identity number QQ123456C). Drawdowns to account 31926819."
+#
+# The agreement is amended once, so it has two versions sharing one
+# persistent identity. Its keys belong to that identity, since the number
+# names the agreement across both versions. Drawdown requests and a transfer
+# certificate locate the agreement by its market reference without being it.
+#
+# What the example shows:
+#
+# | Construct                                         | Where                                   |
+# |---------------------------------------------------|-----------------------------------------|
+# | a scheme without a pattern                        | ex:agreement-number, ex:account-number  |
+# | schemes with a pattern                            | ex:market-reference, ex:company-number, ex:lei, ex:national-id |
+# | a scheme that reissues values                     | ex:account-number                       |
+# | a sensitive scheme, not personal data             | ex:account-number                       |
+# | a personal-data scheme                            | ex:national-id                          |
+# | a key class defined from its scheme               | ex:AgreementNumberKey and the others    |
+# | two natural keys on a versioned thing's identity  | ex:facility-identity                    |
+# | an external key on a versioned thing's identity   | ex:facility-identity → the payout account |
+# | two natural keys on an unversioned thing          | ex:acme                                 |
+# | a natural key from a sensitive scheme             | ex:jane, key:9b1d7e40-…                 |
+# | external keys locating without identifying        | ex:drawdown-1, ex:drawdown-2, ex:transfer-1 |
+# | an external key from a scheme that reissues       | ex:acme-account, ex:drawdown-1          |
+#
+# Key IRIs are minted by the recipes that
+# ontology/persistence/examples/persistent-foundation-keys.ttl compiles to:
+# natural key for the agreement number and market reference, a derived hash
+# for the company number and LEI, a random surrogate for the two sensitive
+# schemes. No IRI is read for meaning. A key's value is held as issued in
+# fnd:keyValue.
+#
+# The path that reaches a natural key from a version or from an unversioned
+# thing, and the current version of the agreement with this reference:
+#
+#   SELECT ?version WHERE {
+#     ?key fnd:keyScheme ex:market-reference ; fnd:keyValue "MR-2027-000412" .
+#     ?version fnd:hasIdentity/fnd:naturalKey ?key .
+#     FILTER NOT EXISTS { ?version fnd:supersededBy ?later }
+#   }
+#
+# Everything carrying the market reference, the agreement's versions
+# included through the property chain on fnd:externalKey for a reasoner:
+#
+#   SELECT ?thing WHERE { ?thing fnd:externalKey key-mr:MR-2027-000412 }
+
+@prefix fnd:     <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix owl:     <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex:      <https://example.org/lattice/foundation/keys#> .
+@prefix key:     <https://example.org/lattice/foundation/keys/key/> .
+@prefix key-agr: <https://example.org/lattice/foundation/keys/key/agreement-number/> .
+@prefix key-mr:  <https://example.org/lattice/foundation/keys/key/market-reference/> .
+@prefix key-co:  <https://example.org/lattice/foundation/keys/key/company-number/> .
+@prefix key-lei: <https://example.org/lattice/foundation/keys/key/lei/> .
+
+# --- the adopter's classes ----------------------------------------------------
+
+ex:Agreement a owl:Class ; rdfs:subClassOf fnd:Version .
+ex:AgreementIdentity a owl:Class ; rdfs:subClassOf fnd:PersistentIdentity , fnd:NaturallyKeyed .
+ex:Company a owl:Class ; rdfs:subClassOf fnd:NaturallyKeyed .
+ex:Person a owl:Class ; rdfs:subClassOf fnd:NaturallyKeyed .
+ex:BankAccount a owl:Class .
+ex:DrawdownRequest a owl:Class .
+ex:TransferCertificate a owl:Class .
+
+# --- schemes ------------------------------------------------------------------
+#
+# Declared by whoever uses them. Foundation declares none.
+
+ex:agreement-number a fnd:KeyScheme ;                    # issued by the facility agent
+    rdfs:label "Facility agent's agreement numbers" ;
+    fnd:reissuesValues false ;
+    fnd:sensitiveDataScheme false ;
+    fnd:keyNormalisation "NfkcTrimUppercase" .
+
+ex:market-reference a fnd:KeyScheme ;                    # issued by a loan market's settlement platform
+    rdfs:label "Settlement platform market references" ;
+    fnd:reissuesValues false ;
+    fnd:sensitiveDataScheme false ;
+    fnd:valuePattern "^MR-[0-9]{4}-[0-9]{6}$" ;
+    fnd:keyNormalisation "NfkcTrimUppercase" .
+
+ex:company-number a fnd:KeyScheme ;
+    rdfs:label "Company register numbers" ;
+    fnd:reissuesValues false ;
+    fnd:sensitiveDataScheme false ;
+    fnd:valuePattern "^([0-9]{8}|[A-Z]{2}[0-9]{6})$" ;
+    fnd:keyNormalisation "NfkcTrimUppercase" .
+
+ex:lei a fnd:KeyScheme ;
+    rdfs:label "Legal entity identifiers" ;
+    fnd:reissuesValues false ;
+    fnd:sensitiveDataScheme false ;
+    fnd:valuePattern "^[0-9A-Z]{18}[0-9]{2}$" ;
+    fnd:keyNormalisation "NfkcTrimUppercase" .
+
+ex:account-number a fnd:KeyScheme ;                      # a bank reassigns closed accounts' numbers
+    rdfs:label "Example Bank account numbers" ;
+    fnd:reissuesValues true ;
+    fnd:sensitiveDataScheme true ;
+    fnd:personalDataScheme false ;
+    fnd:keyNormalisation "NfkcTrimUppercase" .
+
+ex:national-id a fnd:KeyScheme ;
+    rdfs:label "National identity numbers" ;
+    fnd:reissuesValues false ;
+    fnd:sensitiveDataScheme true ;
+    fnd:personalDataScheme true ;
+    fnd:valuePattern "^[A-Z]{2}[0-9]{6}[A-D]$" ;
+    fnd:keyNormalisation "NfkcTrimUppercase" .
+
+# OWL makes no unique-name assumption. Declaring the schemes distinct turns a
+# key typed with one scheme's class and carrying another into an
+# inconsistency, rather than an inferred owl:sameAs between two schemes.
+[] a owl:AllDifferent ;
+    owl:distinctMembers ( ex:agreement-number ex:market-reference ex:company-number
+                          ex:lei ex:account-number ex:national-id ) .
+
+# --- key classes, one per scheme, defined from it -----------------------------
+
+ex:AgreementNumberKey a owl:Class ;
+    rdfs:subClassOf fnd:Key ;
+    owl:equivalentClass [ a owl:Restriction ; owl:onProperty fnd:keyScheme ; owl:hasValue ex:agreement-number ] .
+
+ex:MarketReferenceKey a owl:Class ;
+    rdfs:subClassOf fnd:Key ;
+    owl:equivalentClass [ a owl:Restriction ; owl:onProperty fnd:keyScheme ; owl:hasValue ex:market-reference ] .
+
+ex:CompanyNumberKey a owl:Class ;
+    rdfs:subClassOf fnd:Key ;
+    owl:equivalentClass [ a owl:Restriction ; owl:onProperty fnd:keyScheme ; owl:hasValue ex:company-number ] .
+
+ex:LeiKey a owl:Class ;
+    rdfs:subClassOf fnd:Key ;
+    owl:equivalentClass [ a owl:Restriction ; owl:onProperty fnd:keyScheme ; owl:hasValue ex:lei ] .
+
+ex:AccountNumberKey a owl:Class ;
+    rdfs:subClassOf fnd:Key ;
+    owl:equivalentClass [ a owl:Restriction ; owl:onProperty fnd:keyScheme ; owl:hasValue ex:account-number ] .
+
+ex:NationalIdKey a owl:Class ;
+    rdfs:subClassOf fnd:Key ;
+    owl:equivalentClass [ a owl:Restriction ; owl:onProperty fnd:keyScheme ; owl:hasValue ex:national-id ] .
+
+# --- keys ---------------------------------------------------------------------
+
+key-agr:FA-2027-0412 a fnd:Key , ex:AgreementNumberKey ;
+    fnd:keyScheme ex:agreement-number ;
+    fnd:keyValue "FA-2027-0412" .
+
+key-mr:MR-2027-000412 a fnd:Key , ex:MarketReferenceKey ;
+    fnd:keyScheme ex:market-reference ;
+    fnd:keyValue "MR-2027-000412" .
+
+key-co:BAZNGJDSNJMQOBDGRCMLKBNPPDHJ2B6Y a fnd:Key , ex:CompanyNumberKey ;
+    fnd:keyScheme ex:company-number ;
+    fnd:keyValue "01234567" .
+
+key-lei:EAM7J7IMZREYFG6MX6RLIQFP7W2KAKRU a fnd:Key , ex:LeiKey ;
+    fnd:keyScheme ex:lei ;
+    fnd:keyValue "5493001KJTIIGC8Y1R12" .
+
+# The sensitive schemes' key IRIs are surrogates. Their values appear only in
+# fnd:keyValue, never in an IRI.
+key:3f6a0c9e-2b7d-4e1f-a58c-06d9b2e47f13 a fnd:Key , ex:AccountNumberKey ;
+    fnd:keyScheme ex:account-number ;
+    fnd:keyValue "31926819" .
+
+key:9b1d7e40-c3a2-456f-8e0b-1c2d3e4f5a6b a fnd:Key , ex:NationalIdKey ;
+    fnd:keyScheme ex:national-id ;
+    fnd:keyValue "QQ123456C" .
+
+# --- the agreement: keys on its identity --------------------------------------
+
+ex:facility-identity a ex:AgreementIdentity , fnd:PersistentIdentity , fnd:NaturallyKeyed ;
+    fnd:naturalKey key-agr:FA-2027-0412 , key-mr:MR-2027-000412 ;
+    # The account drawdowns are paid into. It locates the agreement, and
+    # since the bank may reassign the number, it never identifies it.
+    fnd:externalKey key:3f6a0c9e-2b7d-4e1f-a58c-06d9b2e47f13 .
+
+ex:facility-v1 a ex:Agreement , fnd:Version ;
+    fnd:hasIdentity ex:facility-identity ;
+    fnd:supersededBy ex:facility-v2 .
+
+ex:facility-v2 a ex:Agreement , fnd:Version ;            # the amended agreement
+    fnd:hasIdentity ex:facility-identity .
+
+# --- unversioned things: keys on the thing itself -----------------------------
+
+ex:acme a ex:Company , fnd:NaturallyKeyed ;
+    rdfs:label "Acme Holdings plc" ;
+    fnd:naturalKey key-co:BAZNGJDSNJMQOBDGRCMLKBNPPDHJ2B6Y , key-lei:EAM7J7IMZREYFG6MX6RLIQFP7W2KAKRU .
+
+ex:jane a ex:Person , fnd:NaturallyKeyed ;
+    rdfs:label "Jane Doe" ;
+    fnd:naturalKey key:9b1d7e40-c3a2-456f-8e0b-1c2d3e4f5a6b .
+
+# An account number may later name another account, so it locates the
+# account today and never identifies it.
+ex:acme-account a ex:BankAccount ;
+    fnd:externalKey key:3f6a0c9e-2b7d-4e1f-a58c-06d9b2e47f13 .
+
+# --- records that locate the agreement by its market reference ----------------
+
+ex:drawdown-1 a ex:DrawdownRequest ;
+    fnd:externalKey key-mr:MR-2027-000412 ,                       # the agreement drawn under
+                    key:3f6a0c9e-2b7d-4e1f-a58c-06d9b2e47f13 .    # the account paid into
+
+ex:drawdown-2 a ex:DrawdownRequest ;
+    fnd:externalKey key-mr:MR-2027-000412 .
+
+ex:transfer-1 a ex:TransferCertificate ;                 # a lender's participation transferred
+    fnd:externalKey key-mr:MR-2027-000412 .

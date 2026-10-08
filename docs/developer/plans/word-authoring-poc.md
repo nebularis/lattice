@@ -6,11 +6,11 @@
 **Unit type:** multi-slice unit, run as one shot on machine S, with a human validation gate per slice
 after the run
 **Status:** Decisions WA-D1 to WA-D13 recorded 2026-10-01 (WA-D4 Javalin, the rest as recommended).
-ADR-A114 Proposed. Execution started with WA0
+ADR-A118 Proposed. Execution started with WA0
 **Sketch:** [word-authoring-poc.md](../sketches/word-authoring-poc.md) (the design, cited below as
 "sketch §n")
 **Status record:** [word-authoring-poc.md](../status/word-authoring-poc.md)
-**ADR:** [A-114](../../architecture/decisions/ADR-A114-word-authoring-proof-of-concept.md), Proposed
+**ADR:** [A-118](../../architecture/decisions/ADR-A118-word-authoring-proof-of-concept.md), Proposed
 **Depends on:** nothing merged. Uses the CCS sketch §4 and §5 as design input, not CCS slices
 **Implementer:** Claude Sonnet 5 on machine S, autonomous mode, local commits only
 
@@ -32,7 +32,7 @@ version identity and existing Fuseki revisions.
 
 Before starting this tranche:
 
-1. Obtain human approval of a proposed ADR-A114 amendment covering WA-D3, the pinned release,
+1. Obtain human approval of a proposed ADR-A118 amendment covering WA-D3, the pinned release,
   the adopted semantic scope and the retained POC extensions.
 2. Choose configured SKOS concept mappings and scheme validation, variable mappings, the
   immutable-version policy and the old-data policy. Do not silently reset the demo dataset.
@@ -545,7 +545,7 @@ event schemas into a `referencing.Registry` keyed by `$id`, and validates with
 fails.
 
 **Docs:** root `README.md` repository layout gains `contracts/authoring/  # Word authoring POC
-contracts, templates and samples (ADR-A114)`.
+contracts, templates and samples (ADR-A118)`.
 
 ---
 
@@ -684,8 +684,8 @@ as goldens.
 (the unreferenced variable produces no row).
 
 **Docs:** root `README.md` layout gains `platform/authoring-service/  # Word authoring POC service
-(ADR-A114)`. `docs/architecture/data-architecture.md` gains a short "Word authoring POC graphs"
-section with the §2.3 graph table, stating that it is outside ADR-A54's layout by ADR-A114.
+(ADR-A118)`. `docs/architecture/data-architecture.md` gains a short "Word authoring POC graphs"
+section with the §2.3 graph table, stating that it is outside ADR-A54's layout by ADR-A118.
 `platform/authoring-service/README.md` created: purpose, ADR, the commands, the provisional
 vocabulary and the gaps of §2.6.
 
@@ -788,7 +788,7 @@ For each element of `analysis.elements` whose `sectionKey` the template names:
 
 | Class | Responsibility |
 |---|---|
-| `store.AuthoringStore` | interface: `void ensureReady()`, `boolean ping()`, `void putGraph(String graphIri, Model model)`, `Optional<Model> getGraph(String graphIri)`. A test seam, not an SPI (ADR-A114) |
+| `store.AuthoringStore` | interface: `void ensureReady()`, `boolean ping()`, `void putGraph(String graphIri, Model model)`, `Optional<Model> getGraph(String graphIri)`. A test seam, not an SPI (ADR-A118) |
 | `store.InMemoryAuthoringStore` | over `DatasetFactory.createTxnMem()`, copying models in and out |
 | `store.DocumentRegistry` | over the store's registry graph: `int latestRevision(String documentId)` (0 if none), `Optional<DocumentView> find(String documentId)`, `void record(String documentId, int revision, String title, String templateId, GraphRef wordingGraph)`, `List<String> documentIds()`. Read the registry graph, change it in a Jena model, put it back, all inside `synchronized` methods. Triples: the document IRI `a wap:AuthoringDocument`, `wap:documentId`, `dcterms:title`, `wap:templateId`, `wap:latestRevision`. The revision record `D/rev/n` `a wap:Revision`, `wap:revisionOf`, `wap:revisionNumber`, `wap:wordingGraph`, `wap:revisionHash`, `dcterms:created` (xsd:dateTime) |
 | `messaging.AnalysisBus` | interface: `void publish(JsonNode request)`, `void onResult(Consumer<JsonNode> handler)`, `boolean ping()` |
@@ -871,7 +871,7 @@ available".
 
 **Docs:** `solution-design-specification.md` gains a short "Word authoring POC" section: the
 component table of sketch §2, the route table above (methods and paths only), a link to the sketch
-and ADR-A114, and the statement that it is not a platform contract.
+and ADR-A118, and the statement that it is not a platform contract.
 
 ---
 
@@ -1328,7 +1328,7 @@ run = "yarn workspace @lattice/word-authoring-addin run check"
 **Self-probe:** make the parser read `w:delText`. S8-03 fails.
 
 **Docs:** root `README.md` layout gains `apps/word-authoring-addin/  # Word add-in, proof of concept
-(ADR-A114)`. `apps/word-authoring-addin/README.md` created: purpose, commands, the tag table.
+(ADR-A118)`. `apps/word-authoring-addin/README.md` created: purpose, commands, the tag table.
 
 ---
 
@@ -1664,7 +1664,7 @@ tests already run under `check:java`, `check:workers`, `check:frontend` and `tes
 the job timeout. Start the worker again.
 
 **Docs:** root `README.md` layout gains `deployment/compose/authoring/  # Word authoring POC stack
-(ADR-A114)` and a "Run the Word authoring POC" subsection under Developer Setup: the one command,
+(ADR-A118)` and a "Run the Word authoring POC" subsection under Developer Setup: the one command,
 trusting the certificate, sideloading (pointing to the add-in README). `deployment/compose/authoring/README.md`
 created: services, ports, volumes, commands, trusting the CA (`mise run authoring:ca`, then
 `Import-Certificate -FilePath .build\authoring\lattice-authoring-root.crt -CertStoreLocation
@@ -1990,7 +1990,7 @@ cross-checks over a nested element, a demo feature for the deepest nesting case)
 **Status record:** [word-authoring-poc](../status/word-authoring-poc.md) (holds the commit hash)
 
 ## Invariant
-<one paragraph, from the slice's purpose, citing ADR-A114, the sketch and CCS laws where relevant>
+<one paragraph, from the slice's purpose, citing ADR-A118, the sketch and CCS laws where relevant>
 
 ## Test cases
 <the slice's table, with a Result column: pass, or the failure>

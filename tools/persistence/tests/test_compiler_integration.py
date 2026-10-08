@@ -241,3 +241,26 @@ class TestEpochGuardScopeTemplateSelection:
         cas_ops = [o for o in compiled[0].operations if o.operation == "cas-replace"]
         assert len(cas_ops) == 1
         assert cas_ops[0].template_id == "cas-replace-named-graph.mustache"
+
+
+def test_instantiate_keeps_every_target_apart(tmp_path):
+    """A profile with several targets repeats operation names per target
+    (each has its own audits). Each target's SPARQL is written to its own
+    directory, never overwritten by another's."""
+    from persistence.instantiate import instantiate_to_directory
+
+    g = Graph()
+    g.parse(SPEC_TTL, format="turtle")
+    g.parse(EXAMPLES_DIR / "lending-credit-shared-class.ttl", format="turtle")
+    out, compiled = compile_to_graph(g)
+    assert len(compiled) == 3
+
+    written = instantiate_to_directory(out, tmp_path)
+    assert len(written) == sum(len(c.operations) for c in compiled)
+    targets = {p.parent.name for p in written}
+    assert targets == {"Behaviour", "Behaviour.LendingBehaviourGraphs", "Behaviour.CreditBehaviourGraphs"}
+    assert (tmp_path / "Behaviour.LendingBehaviourGraphs" / "cas-replace.rq").exists()
+    assert (tmp_path / "Behaviour.CreditBehaviourGraphs" / "unconditional-write.rq").exists()
+
+    with pytest.raises(ValueError):
+        instantiate_profile(out)

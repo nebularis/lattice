@@ -92,26 +92,28 @@ pty:Performing a owl:NamedIndividual, pty:Role ;
 
 ## 6. Composition Rule Individuals
 
-#### `pty:SeveralOnly`
+Domain-neutral: each says how members stand towards the other side, not what a layer above makes of it. Several liability and joint and several liability are the readings Instrument's examples give them ([Party README](../README.md) §9.1).
 
-**Definition.** A composition rule under which each member's share of an obligation is independently capped. No member answers for another's shortfall.
+#### `pty:EachForOwnShare`
+
+**Definition.** A composition rule under which each member stands towards the other side for its own outward share only.
 
 ```turtle-spec
-pty:SeveralOnly a owl:NamedIndividual, pty:CompositionRule ;
-    rdfs:label "Several-only"@en ;
-    rdfs:comment "A composition rule under which each member's share of an obligation is independently capped; no member answers for another's shortfall." ;
-    fnd:utility "If one member defaults, the residual is simply unmet — it does not redistribute onto the remaining members. The baseline case for a Participation Group whose members each bear a bounded, non-aggregating portion of one obligation." .
+pty:EachForOwnShare a owl:NamedIndividual, pty:CompositionRule ;
+    rdfs:label "Each for its own share"@en ;
+    rdfs:comment "A composition rule under which each member stands towards the other side for its own outward share only." ;
+    fnd:utility "No member stands for another's shortfall. State each member's pty:outwardShare. A layer above may read it as several liability, a subscription line or any other several arrangement." .
 ```
 
-#### `pty:JointAndSeveral`
+#### `pty:EachForWhole`
 
-**Definition.** A composition rule under which any member may be called for the full obligation, subject to a right of recourse against the other members afterward.
+**Definition.** A composition rule under which each member stands towards the other side for the whole.
 
 ```turtle-spec
-pty:JointAndSeveral a owl:NamedIndividual, pty:CompositionRule ;
-    rdfs:label "Joint and several"@en ;
-    rdfs:comment "A composition rule under which any member may be called for the full obligation, subject to a right of recourse against the other members afterward." ;
-    fnd:utility "The dual of SeveralOnly: exposure is not capped at a member's own share, but the group's internal contribution rights — who ultimately bears what — are a distinct concern this rule does not itself resolve." .
+pty:EachForWhole a owl:NamedIndividual, pty:CompositionRule ;
+    rdfs:label "Each for the whole"@en ;
+    rdfs:comment "A composition rule under which each member stands towards the other side for the whole." ;
+    fnd:utility "The other side may look to any member for all of it. How the members bear it among themselves is their pty:inwardShare, where stated. A layer above may read it as joint and several liability." .
 ```
 
 ## 7. Axiom Index
@@ -123,8 +125,8 @@ pty:JointAndSeveral a owl:NamedIndividual, pty:CompositionRule ;
 | `pty:Guarantor` | `pty:Role` | activation mechanism TBD |
 | `pty:Accountable` | `pty:Role` | `Delegation`'s `delegatesFrom` side |
 | `pty:Performing` | `pty:Role` | `Delegation`'s `delegatesTo` side |
-| `pty:SeveralOnly` | `pty:CompositionRule` | independently capped shares |
-| `pty:JointAndSeveral` | `pty:CompositionRule` | full exposure, right of recourse |
+| `pty:EachForOwnShare` | `pty:CompositionRule` | each for its own outward share |
+| `pty:EachForWhole` | `pty:CompositionRule` | each for the whole |
 
 Seven individuals total — the baseline this vocabulary ships with, extensible per §4.
 

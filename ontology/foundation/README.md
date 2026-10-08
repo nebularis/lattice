@@ -45,6 +45,15 @@ This document uses only the prefixes Foundation's own axioms actually need:
 @prefix prov: <http://www.w3.org/ns/prov#> .
 ```
 
+The ontology header, with the version every importer pins (ADR-A86):
+
+```turtle-spec
+<https://www.nebularis.org/neuro-semantic/foundation>
+    a owl:Ontology ;
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.4.0> ;
+    owl:imports <http://www.w3.org/ns/prov-o-20130430> .
+```
+
 ## 3. How to Read This Document
 
 Every class, property, and axiom group below follows the same fixed template:
@@ -61,11 +70,11 @@ Every class, property, and axiom group below follows the same fixed template:
 >     fnd:utility "..." .
 > ```
 
-**NOTE FOR LLMs Regenerating `spec/foundation.ttl` from this document:** concatenate the prefix block in §2, then every fenced ` ```turtle ` block from **§5, §6 (including its Disjointness subsection), §7, and §8 — those four sections only.** The template illustration in this section (§3) and the worked example in §9 also use ` ```turtle ` fences but are not specification content — the template shows the pattern with a placeholder name rather than a real term, and the worked example deliberately uses `ins:` and `ex:` prefixes that aren't part of Foundation's own namespace and aren't declared in §2. A naive "every turtle block in the document" extraction will pull both in by mistake; an extraction tool should filter by section number, not merely by fence language. (This rule was tightened after testing the extraction against this exact document turned up precisely that mistake — worth keeping the explicit section list here rather than reverting to the vaguer phrasing.)
+**NOTE FOR LLMs Regenerating `spec/foundation.ttl` from this document:** `tools/literate_extract.py` concatenates every ` ```turtle-spec ` block in document order: the prefix and header blocks in §2, then **§5, §6 (including its Disjointness subsection), §7, §8 and §9**. Every ` ```turtle-shapes ` block (§8) becomes `shapes/constraints.ttl`. The template illustration in this section (§3) and the worked example in §10 also use ` ```turtle ` fences but are not specification content — the template shows the pattern with a placeholder name rather than a real term, and the worked example deliberately uses `ins:` and `ex:` prefixes that aren't part of Foundation's own namespace and aren't declared in §2. A naive "every turtle block in the document" extraction will pull both in by mistake; an extraction tool should filter by section number, not merely by fence language. (This rule was tightened after testing the extraction against this exact document turned up precisely that mistake — worth keeping the explicit section list here rather than reverting to the vaguer phrasing.)
 
 The blocks are fragments, not independently complete files — prefixes are declared once, not repeated per block, both to keep this document readable and to keep its own token footprint down if it's ever fed back to a model for extension. Nothing else in the document (the Definition/Utility prose, the tables) is authoritative; it's a rendering of what the Turtle blocks already say via `rdfs:comment` and `fnd:utility`.
 
-**Regenerating this document from `spec/foundation.ttl`:** walk the ontology's classes and properties, and for each, render its `rdfs:comment` as Definition, its `fnd:utility` as Utility, and its full axiom set as the Turtle block, in the section order given by §5–8 below (Annotation Properties, Classes, Object and Data Properties, Alignments). Because the prose is sourced from annotation values rather than written independently, the two artefacts can't drift apart from ordinary editing of either one — drift can only happen if someone edits the rendered Markdown prose directly instead of the annotation value it came from, which the convention above is designed to make unnecessary.
+**Regenerating this document from `spec/foundation.ttl`:** walk the ontology's classes and properties, and for each, render its `rdfs:comment` as Definition, its `fnd:utility` as Utility, and its full axiom set as the Turtle block, in the section order given by §5–9 below (Annotation Properties, Classes, Object and Data Properties, Keys, Alignments). Because the prose is sourced from annotation values rather than written independently, the two artefacts can't drift apart from ordinary editing of either one — drift can only happen if someone edits the rendered Markdown prose directly instead of the annotation value it came from, which the convention above is designed to make unnecessary.
 
 ## 4. Design Decisions
 
@@ -263,14 +272,14 @@ fnd:DerivationKind a owl:Class ;
 
 ```turtle-spec
 [] a owl:AllDisjointClasses ;
-    owl:members ( fnd:Version fnd:PersistentIdentity fnd:Evidence fnd:TemporalScope fnd:GovernanceState fnd:DerivationKind ) .
+    owl:members ( fnd:Version fnd:PersistentIdentity fnd:Evidence fnd:TemporalScope fnd:GovernanceState fnd:DerivationKind fnd:Key fnd:KeyScheme ) .
 
 fnd:Evidenced owl:disjointWith fnd:Evidence .
 fnd:TemporallyScoped owl:disjointWith fnd:TemporalScope .
 fnd:Governable owl:disjointWith fnd:GovernanceState .
 ```
 
-**Utility.** `Version`, `PersistentIdentity`, `Evidence`, `TemporalScope`, `GovernanceState`, and `DerivationKind` should never be classified as one another. Separately, `Evidenced`, `TemporallyScoped`, and `Governable` should each not be classified as the value object they point at, while still being combinable with one another and with `Version`.
+**Utility.** `Version`, `PersistentIdentity`, `Evidence`, `TemporalScope`, `GovernanceState`, `DerivationKind`, `Key` and `KeyScheme` should never be classified as one another. Separately, `Evidenced`, `TemporallyScoped`, and `Governable` should each not be classified as the value object they point at, while still being combinable with one another and with `Version`.
 
 ## 7. Object and Data Properties
 
@@ -415,7 +424,384 @@ fnd:derivationKind a owl:ObjectProperty ;
     fnd:utility "Points a derived artefact at the kind of derivation that produced it." .
 ```
 
-## 8. Alignments
+## 8. Keys
+
+Decided by [ADR-A114](../../docs/architecture/decisions/ADR-A114-external-and-natural-keys.md),
+added in Foundation 0.4.0.
+
+The things a contract is about already have names the world gives them: a company has a
+registration number and a legal entity identifier, an agreement has its number and a market
+reference, a person has a national identity number. Other records cite and match things by these
+names. Some pick out exactly one thing. Others are carried by many things that relate to one: every
+drawdown request under a facility carries the facility's market reference.
+
+**A key is not an identity.** Every versioned thing already has a persistent identity, an IRI
+LATTICE mints and never reuses (ADR-A51). A key is a name some authority outside LATTICE gives it:
+
+| | Identity | Key |
+|---|---|---|
+| issued by | LATTICE, when the thing is first recorded | a registry, a market, a party |
+| how many | exactly one per thing | any number, from different schemes |
+| changes | never | a thing may gain keys, and a key may be withdrawn |
+| readable | opaque by design | the value people quote |
+| may be sensitive | never, by construction | sometimes (a national ID, an account number) |
+
+The word "identifier" is avoided for keys, to keep the two apart.
+
+### 8.1 The model
+
+```mermaid
+classDiagram
+    direction LR
+    class Key {
+        keyValue : string [1]
+    }
+    class KeyScheme {
+        reissuesValues : boolean [1]
+        sensitiveDataScheme : boolean [1]
+        personalDataScheme : boolean [0..1]
+        valuePattern : string [0..1]
+        keyNormalisation : string [0..1]
+    }
+    class NaturallyKeyed
+    class MergedOnNaturalKey {
+        owl:hasKey ( naturalKey )
+    }
+    class Thing["any thing"]
+    Key --> "1" KeyScheme : keyScheme
+    Thing --> "*" Key : externalKey (locates)
+    NaturallyKeyed --> "*" Key : naturalKey (identifies)
+    MergedOnNaturalKey --|> NaturallyKeyed
+```
+
+- **A key is a node** with exactly one value, held as issued, and exactly one scheme. Its IRI is
+  minted from its scheme and value, so one value of one scheme is one node wherever it is recorded.
+- **A scheme is declared once**, by whoever uses it. Foundation declares none. A scheme states
+  whether it reissues values (whether a value it withdrew may later name something else) and whether
+  its values are sensitive, and may state whether they are also personal data, a regular expression
+  they match, and the normalisation used to compare them (one of the minting specification's three
+  pipelines: `NfkcTrimCasefold`, `NfkcTrimUppercase`, `NfkcTrimLowercase`).
+- **`fnd:externalKey` locates.** It links anything to a key it carries, and is many-to-many: a
+  facility, its drawdown requests and a transfer certificate all carry its market reference.
+- **`fnd:naturalKey` identifies**, and is a sub-property of `fnd:externalKey`. The facility, and
+  only the facility, has the market reference as its natural key. It is not functional: a company
+  has a company number and an LEI, each identifying it. Only a scheme that never reissues values
+  supplies natural keys.
+
+### 8.2 Keys belong to what persists
+
+On a versioned thing, keys attach to its persistent identity, since an agreement number names the
+agreement across all its versions. On an unversioned thing they attach to the thing itself.
+
+```mermaid
+flowchart LR
+    V1["facility v1"] -- hasIdentity --> I["facility identity"]
+    V2["facility v2"] -- hasIdentity --> I
+    V1 -- supersededBy --> V2
+    I -- naturalKey --> K1["agreement number<br/>FA-2027-0412"]
+    I -- naturalKey --> K2["market reference<br/>MR-2027-000412"]
+    I -- externalKey --> K3["payout account"]
+    D["drawdown request"] -- externalKey --> K2
+    A["Acme Holdings plc"] -- naturalKey --> K4["company number"]
+    A -- naturalKey --> K5["LEI"]
+```
+
+The path `fnd:hasIdentity?/fnd:naturalKey` reaches a natural key from a version or from an
+unversioned thing. A version also locates by every key of its identity through a property chain,
+`fnd:externalKey ⊒ fnd:hasIdentity ∘ fnd:externalKey`, so to a reasoner each version carries its
+identity's keys, natural ones included through the sub-property. The chain infers only
+`fnd:externalKey`, so a version never becomes `fnd:NaturallyKeyed` and never trips the uniqueness
+check below. Without a reasoner, a Surface promotion contract materialises the same triples
+(`ontology/surface/examples/keys.ttl`).
+
+### 8.3 A scheme's key class
+
+A scheme may be given the class of its keys, defined from the scheme by an OWL restriction, so a
+reasoner classifies every key of the scheme and a tool without one can target the class:
+
+```turtle-example
+ex:market-reference a fnd:KeyScheme ;
+    fnd:reissuesValues false ;
+    fnd:sensitiveDataScheme false ;
+    fnd:valuePattern "^MR-[0-9]{4}-[0-9]{6}$" ;
+    fnd:keyNormalisation "NfkcTrimUppercase" .
+
+ex:MarketReferenceKey a owl:Class ;
+    rdfs:subClassOf fnd:Key ;
+    owl:equivalentClass [ a owl:Restriction ;
+        owl:onProperty fnd:keyScheme ; owl:hasValue ex:market-reference ] .
+```
+
+The scheme and its class are two IRIs joined by an axiom, never one punned IRI: OWL 2 DL treats a
+punned class and individual as unrelated. Foundation does not require a key class. Persistence
+does, because its profiles target classes (below). Declaring an adopter's schemes
+`owl:AllDifferent` is good practice: OWL makes no unique-name assumption, and a key typed with one
+scheme's class while carrying another would otherwise lead a reasoner to infer the two schemes are
+the same.
+
+### 8.4 Sensitive keys
+
+A sensitive scheme's values never appear in an IRI, hashed or not (ADR-A51): its keys are minted as
+a random surrogate, found by a keyed claim. `fnd:sensitiveDataScheme` covers any value a
+deployment must not expose. `fnd:personalDataScheme` marks the sensitive schemes whose values are
+also personal data, so that erasure rules apply. The flags state the facts. What a deployment does
+with them is Persistence's privacy profile.
+
+### 8.5 Natural keys mean one thing, in three ways
+
+```mermaid
+flowchart TB
+    NK["fnd:NaturallyKeyed<br/>domain of fnd:naturalKey<br/>SHACL: uniqueness, scheme, pattern"]
+    MK["fnd:MergedOnNaturalKey<br/>owl:hasKey ( fnd:naturalKey )<br/>for adopters using a reasoner alone"]
+    PK["dal:PersistenceKeyed<br/>persistent-foundation (optional)<br/>enforced at write time"]
+    MK -- "⊑" --> NK
+    PK -- "⊑" --> NK
+```
+
+- **`fnd:NaturallyKeyed`** is the common mixin. Foundation's shapes check its natural keys everywhere.
+- **`fnd:MergedOnNaturalKey`** adds `owl:hasKey ( fnd:naturalKey )`. To an OWL reasoner, two named
+  members sharing a natural key are the same individual: `owl:hasKey` infers `owl:sameAs`, it never
+  rejects.
+- **`dal:PersistenceKeyed`**, in Persistence's optional `persistent-foundation` document, adds no
+  key axiom. Persistence enforces uniqueness when the data is written, and a violation is rejected,
+  quarantined or recorded as a reviewable merge relation, never `owl:sameAs`.
+
+**LATTICE recommends Persistence** for any deployment that writes keyed data: `owl:hasKey` merges
+on any collision, including a mistaken one, and nothing in OWL can undo a merge or say why it
+happened. A class takes one of the two sub-mixins, never both.
+
+### 8.6 Terms
+
+```turtle-spec
+fnd:Key a owl:Class ;
+    rdfs:comment "A name an authority outside LATTICE gives a thing: one value, issued under one scheme." ;
+    fnd:utility "Subject: a key node. Holds exactly one keyValue, as issued, and exactly one keyScheme. Mint its IRI from its scheme and value, so one value of one scheme is one node wherever it is recorded. Link things to it with externalKey or naturalKey." ;
+    rdfs:subClassOf [
+        a owl:Restriction ;
+        owl:onProperty fnd:keyValue ;
+        owl:cardinality "1"^^xsd:nonNegativeInteger
+    ] , [
+        a owl:Restriction ;
+        owl:onProperty fnd:keyScheme ;
+        owl:cardinality "1"^^xsd:nonNegativeInteger
+    ] .
+
+fnd:KeyScheme a owl:Class ;
+    rdfs:comment "An authority's scheme of keys: a register, a market's references, a party's own numbers." ;
+    fnd:utility "Subject: a scheme. Declared once, by whoever uses it, never by Foundation. States reissuesValues and sensitiveDataScheme, and may state personalDataScheme, valuePattern and keyNormalisation. A scheme may be given a key class, defined by an owl:hasValue restriction on keyScheme." .
+
+fnd:NaturallyKeyed a owl:Class ;
+    rdfs:comment "A mixin for anything that can be identified by a key the world gives it." ;
+    fnd:utility "The domain of naturalKey. Foundation's shapes report two different members sharing a natural key. Take MergedOnNaturalKey for OWL's merging, or Persistence's PersistenceKeyed for write-time enforcement, not both." .
+
+fnd:MergedOnNaturalKey a owl:Class ;
+    rdfs:subClassOf fnd:NaturallyKeyed ;
+    owl:hasKey ( fnd:naturalKey ) ;
+    rdfs:comment "A naturally keyed thing that an OWL reasoner merges with any named thing sharing one of its natural keys." ;
+    fnd:utility "For adopters who use LATTICE's ontologies with a reasoner and without Persistence. Two named members sharing a natural key are inferred owl:sameAs, never rejected, and Foundation's shapes report the pair as a warning so the merge can be reviewed." .
+
+fnd:NaturallyKeyed owl:disjointWith fnd:Key .
+
+fnd:keyValue a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:domain fnd:Key ;
+    rdfs:range xsd:string ;
+    rdfs:comment "A key's value, as issued." ;
+    fnd:utility "Subject: a key. Value: the string the authority issued, unnormalised. Matching compares the scheme's normalised form, never this string directly." .
+
+fnd:keyScheme a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain fnd:Key ;
+    rdfs:range fnd:KeyScheme ;
+    rdfs:comment "The scheme a key was issued under." ;
+    fnd:utility "Subject: a key. Value: its scheme. Exactly one." .
+
+fnd:externalKey a owl:ObjectProperty ;
+    rdfs:range fnd:Key ;
+    owl:propertyChainAxiom ( fnd:hasIdentity fnd:externalKey ) ;
+    rdfs:comment "A key a thing carries, which locates it without identifying it." ;
+    fnd:utility "Subject: anything. Value: a key it carries. Many things may share one key, and one thing may carry many. A version carries every key of its persistent identity, by the property chain." .
+
+fnd:naturalKey a owl:ObjectProperty ;
+    rdfs:subPropertyOf fnd:externalKey ;
+    rdfs:domain fnd:NaturallyKeyed ;
+    rdfs:range fnd:Key ;
+    rdfs:comment "A key that identifies a thing: the thing it names, and nothing else." ;
+    fnd:utility "Subject: a naturally keyed thing, the persistent identity of a versioned thing or an unversioned thing itself. Value: a key from a scheme that never reissues values. Not functional: a thing may have one natural key per scheme." .
+
+fnd:reissuesValues a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:domain fnd:KeyScheme ;
+    rdfs:range xsd:boolean ;
+    rdfs:comment "Whether a scheme may issue a withdrawn value again, naming something else." ;
+    fnd:utility "Subject: a scheme. Value: true if a withdrawn value may later name another thing. A scheme that reissues values never supplies natural keys." .
+
+fnd:sensitiveDataScheme a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:domain fnd:KeyScheme ;
+    rdfs:range xsd:boolean ;
+    rdfs:comment "Whether a scheme's values must be kept hidden." ;
+    fnd:utility "Subject: a scheme. Value: true for personal data, or any other value a deployment must not expose. A sensitive value never appears in an IRI, hashed or not (ADR-A51)." .
+
+fnd:personalDataScheme a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:domain fnd:KeyScheme ;
+    rdfs:range xsd:boolean ;
+    rdfs:comment "Whether a sensitive scheme's values are also personal data." ;
+    fnd:utility "Subject: a scheme. Value: true if its values are personal data, so that erasure rules apply. Optional, and allowed only on a sensitive scheme." .
+
+fnd:valuePattern a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:domain fnd:KeyScheme ;
+    rdfs:range xsd:string ;
+    rdfs:comment "A regular expression every value of a scheme matches." ;
+    fnd:utility "Subject: a scheme. Value: an XPath regular expression, checked against each key's value as issued by a shape." .
+
+fnd:keyNormalisation a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:domain fnd:KeyScheme ;
+    rdfs:range xsd:string ;
+    rdfs:comment "The normalisation a scheme's values are compared under." ;
+    fnd:utility "Subject: a scheme. Value: one of the minting specification's pipelines, NfkcTrimCasefold, NfkcTrimUppercase or NfkcTrimLowercase. Minting and uniqueness for the scheme's keys both use it." .
+```
+
+### 8.7 Shapes
+
+Foundation's shapes check keys for every adopter, with or without a reasoner or Persistence. The
+uniqueness check has two severities:
+
+| Two different things share a natural key, and | Severity | Read it as |
+|---|---|---|
+| at least one is not `fnd:MergedOnNaturalKey` | violation | an error: one thing recorded twice under two IRIs, or a key that only locates recorded as identifying |
+| both are `fnd:MergedOnNaturalKey` | warning | the merge announced: a reasoner will infer the two are `owl:sameAs`. Review it. If they really are different things, the data is wrong and the warning is the only report you get |
+
+```turtle-shapes
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+
+fnd:KeyShape a sh:NodeShape ;
+    sh:targetClass fnd:Key ;
+    sh:targetSubjectsOf fnd:keyValue , fnd:keyScheme ;
+    sh:property [
+        sh:path fnd:keyValue ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ;
+        sh:message "A key has exactly one fnd:keyValue, a string as issued."
+    ] ;
+    sh:property [
+        sh:path fnd:keyScheme ; sh:minCount 1 ; sh:maxCount 1 ; sh:class fnd:KeyScheme ;
+        sh:message "A key has exactly one fnd:keyScheme, a declared fnd:KeyScheme."
+    ] .
+
+fnd:KeySchemeShape a sh:NodeShape ;
+    sh:targetClass fnd:KeyScheme ;
+    sh:property [
+        sh:path fnd:reissuesValues ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:boolean ;
+        sh:message "A key scheme states fnd:reissuesValues exactly once."
+    ] ;
+    sh:property [
+        sh:path fnd:sensitiveDataScheme ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:boolean ;
+        sh:message "A key scheme states fnd:sensitiveDataScheme exactly once."
+    ] ;
+    sh:property [
+        sh:path fnd:personalDataScheme ; sh:maxCount 1 ; sh:datatype xsd:boolean ;
+        sh:message "A key scheme states fnd:personalDataScheme at most once."
+    ] ;
+    sh:property [
+        sh:path fnd:valuePattern ; sh:maxCount 1 ; sh:datatype xsd:string ;
+        sh:message "A key scheme states at most one fnd:valuePattern."
+    ] ;
+    sh:property [
+        sh:path fnd:keyNormalisation ; sh:maxCount 1 ;
+        sh:in ( "NfkcTrimCasefold" "NfkcTrimUppercase" "NfkcTrimLowercase" ) ;
+        sh:message "fnd:keyNormalisation names one of the minting specification's pipelines: NfkcTrimCasefold, NfkcTrimUppercase or NfkcTrimLowercase."
+    ] ;
+    sh:sparql [
+        sh:message "{$this} states fnd:personalDataScheme true but not fnd:sensitiveDataScheme true. Personal data is sensitive: mark the scheme sensitive as well." ;
+        sh:select """
+            PREFIX fnd: <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+            SELECT $this WHERE {
+                $this fnd:personalDataScheme true .
+                FILTER NOT EXISTS { $this fnd:sensitiveDataScheme true }
+            }
+        """
+    ] .
+
+fnd:KeyValuePatternShape a sh:NodeShape ;
+    sh:targetSubjectsOf fnd:keyValue ;
+    sh:sparql [
+        sh:message "The key value {?value} does not match its scheme {?scheme}'s fnd:valuePattern {?pattern}." ;
+        sh:select """
+            PREFIX fnd: <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+            SELECT $this ?value ?scheme ?pattern WHERE {
+                $this fnd:keyValue ?value ;
+                      fnd:keyScheme ?scheme .
+                ?scheme fnd:valuePattern ?pattern .
+                FILTER (!REGEX(STR(?value), ?pattern))
+            }
+        """
+    ] .
+
+fnd:NaturalKeySchemeShape a sh:NodeShape ;
+    sh:targetSubjectsOf fnd:naturalKey ;
+    sh:sparql [
+        sh:message "{$this} has {?key} as a natural key, but its scheme {?scheme} reissues values, so the key may later name something else. Record it with fnd:externalKey, which locates without identifying." ;
+        sh:select """
+            PREFIX fnd: <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+            SELECT $this ?key ?scheme WHERE {
+                $this fnd:naturalKey ?key .
+                ?key fnd:keyScheme ?scheme .
+                ?scheme fnd:reissuesValues true .
+            }
+        """
+    ] .
+
+fnd:NaturalKeyUniquenessShape a sh:NodeShape ;
+    sh:targetSubjectsOf fnd:naturalKey ;
+    sh:sparql [
+        sh:message "{$this} and {?other} both have {?key} as a natural key. A natural key identifies one thing: either they are one thing recorded under two IRIs, or one of them only carries the key and should record it with fnd:externalKey." ;
+        sh:select """
+            PREFIX fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+            PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+            PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+            SELECT $this ?other ?key WHERE {
+                $this fnd:naturalKey ?key .
+                ?other fnd:naturalKey ?key .
+                FILTER (?other != $this)
+                FILTER NOT EXISTS {
+                    $this rdf:type/rdfs:subClassOf* fnd:MergedOnNaturalKey .
+                    ?other rdf:type/rdfs:subClassOf* fnd:MergedOnNaturalKey .
+                }
+            }
+        """
+    ] .
+
+fnd:MergedNaturalKeyShape a sh:NodeShape ;
+    sh:targetSubjectsOf fnd:naturalKey ;
+    sh:severity sh:Warning ;
+    sh:sparql [
+        sh:message "{$this} and {?other} both have {?key} as a natural key, and both are fnd:MergedOnNaturalKey, so an OWL reasoner will infer they are the same individual (owl:sameAs). Not an error: review the merge. If they are different things, the data is wrong, and this warning is the only report of it." ;
+        sh:select """
+            PREFIX fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+            PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+            PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+            SELECT $this ?other ?key WHERE {
+                $this fnd:naturalKey ?key ;
+                      rdf:type/rdfs:subClassOf* fnd:MergedOnNaturalKey .
+                ?other fnd:naturalKey ?key ;
+                       rdf:type/rdfs:subClassOf* fnd:MergedOnNaturalKey .
+                FILTER (?other != $this)
+            }
+        """
+    ] .
+```
+
+The shapes match subclasses through `rdfs:subClassOf*` in the data graph, so validate data
+together with the adopter's ontology. A pair is reported from both sides, once per member.
+
+### 8.8 Worked example and related documents
+
+[`examples/keys.ttl`](examples/keys.ttl) walks a facility agreement, its borrower, guarantor and
+account through every construct above: six schemes, their key classes, natural and external keys
+on a versioned identity and on unversioned things, and the lookup queries. Its key IRIs are minted
+by the recipes Persistence's [`persistent-foundation-keys`](../persistence/examples/persistent-foundation-keys.ttl)
+example compiles to, and [`ontology/surface/examples/keys.ttl`](../surface/examples/keys.ttl)
+promotes the identity's keys onto its versions. The Persistence README explains
+`persistent-foundation` and how write-time uniqueness works.
+
+## 9. Alignments
 
 Collected here for visibility, and to make them easy to extract into a separate optional module later if that split (discussed in §4) is taken up. Nothing in this section introduces new LATTICE classes or properties — it only relates existing ones to PROV-O.
 
@@ -426,7 +812,7 @@ fnd:DerivedArtefact rdfs:subClassOf prov:Entity .
 fnd:DerivationRun rdfs:subClassOf prov:Activity .
 ```
 
-## 9. Worked Micro-Example
+## 10. Worked Micro-Example
 
 Illustration only — `ins:Obligation` isn't defined here; it belongs to Instrument. This shows how a domain class from another layer would compose Foundation's mixins.
 
@@ -450,7 +836,7 @@ ex:ob1
 
 `ex:ob1` doesn't take on `fnd:Governable` — an ordinary contract fact, as distinct from a specification artefact, has no review lifecycle to track, and the mixins were designed precisely so it doesn't have to.
 
-## 10. Axiom Index
+## 11. Axiom Index
 
 | Term | Kind | Key characteristics |
 |---|---|---|
@@ -475,12 +861,32 @@ ex:ob1
 | `fnd:validTo` | Data property | Functional, optional |
 | `fnd:hasGovernanceState` | Object property | Functional |
 
-Six classes mutually disjoint (`Version`, `PersistentIdentity`, `Evidence`, `TemporalScope`, `GovernanceState`, `DerivationKind`); each of the three "points-to" mixins disjoint from its own value class.
+| `fnd:Key` | Class | `keyValue` cardinality 1, `keyScheme` cardinality 1 |
+| `fnd:KeyScheme` | Class | individuals declared by adopters, never by Foundation |
+| `fnd:NaturallyKeyed` | Class (mixin) | domain of `naturalKey`, disjoint from `Key` |
+| `fnd:MergedOnNaturalKey` | Class (mixin) | subClassOf `NaturallyKeyed`, `owl:hasKey ( naturalKey )` |
+| `fnd:keyValue` | Data property | Functional, `xsd:string` |
+| `fnd:keyScheme` | Object property | Functional |
+| `fnd:externalKey` | Object property | many-to-many, chain `hasIdentity ∘ externalKey` |
+| `fnd:naturalKey` | Object property | subPropertyOf `externalKey`, not functional |
+| `fnd:reissuesValues`, `fnd:sensitiveDataScheme`, `fnd:personalDataScheme` | Data properties | Functional, `xsd:boolean` |
+| `fnd:valuePattern`, `fnd:keyNormalisation` | Data properties | Functional, `xsd:string` |
 
-## 11. Open Items
+Eight classes mutually disjoint (`Version`, `PersistentIdentity`, `Evidence`, `TemporalScope`, `GovernanceState`, `DerivationKind`, `Key`, `KeyScheme`); each of the four "points-to" mixins disjoint from its own value class.
 
-- **Alignment module split.** §8's PROV-O alignment axioms are candidates for a separate, optional file a consumer could choose not to import, keeping `spec/foundation.ttl` itself free of external dependencies. Not built yet — a decision for whoever builds `tools/`.
+## 12. Open Items
+
+- **Alignment module split.** §9's PROV-O alignment axioms are candidates for a separate, optional file a consumer could choose not to import, keeping `spec/foundation.ttl` itself free of external dependencies. Not built yet — a decision for whoever builds `tools/`.
 - **`fnd:GovernanceState`'s named individuals** (`Draft`, `Reviewed`, `Active`, `Superseded`) and **`fnd:DerivationKind`'s** (`Inferred`, `Validated`, `Materialised`, `Projected`, `Indexed`, `Generated`, `Compiled`, `DecisionRecord`) belong in `vocab/foundation-vocab.ttl`, not written here — this document only establishes the classes and properties they populate.
 - **The `same-identity` integrity check** on `fnd:supersededBy` (§7) belongs in `shapes/constraints.ttl` as a SHACL-SPARQL rule, not attempted here as an OWL property chain.
 - **This Turtle has been checked by manual syntax review, not by an actual OWL/Turtle parser** — no parser was available in the environment this document was drafted in. Running it through `riot` (Apache Jena) or `rdflib` before merging into `spec/foundation.ttl` is a needed step, not an optional one.
 - ~~Extraction tooling should assert its section filter explicitly~~ — **Resolved.** Spec content is now fenced ` ```turtle-spec `; illustration is fenced ` ```turtle-example `. Extraction filters on the fence tag alone; no section-number knowledge is required.
+
+## 13. Release notes
+
+- **0.4.0** (additive, CCS F1, ADR-A114). Keys: `fnd:Key`, `fnd:KeyScheme`, `fnd:keyValue`,
+  `fnd:keyScheme`, `fnd:externalKey` with its property chain, `fnd:naturalKey`,
+  `fnd:NaturallyKeyed`, `fnd:MergedOnNaturalKey`, and the scheme properties (§8). `Key` and
+  `KeyScheme` join the disjoint classes. The first shapes in `shapes/constraints.ttl`, and this
+  document is again the source of `spec/foundation.ttl` (the ontology header is now a block in §2).
+  Every importer re-pins in the same release.

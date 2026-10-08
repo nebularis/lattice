@@ -11,8 +11,8 @@
 
 <https://www.nebularis.org/neuro-semantic/lattice/applied/classification/vocab>
     rdf:type owl:Ontology ;
-    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/applied/classification-vocab/0.1.0> ;
-    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/applied/classification/0.1.0> .
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/applied/classification-vocab/0.2.0> ;
+    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/applied/classification/0.2.0> .
 
 #################################################################
 #    One dal:SchemeContract per classification property (ADR-A98

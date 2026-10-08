@@ -1,0 +1,272 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Premise. Independent things happen to one subject at overlapping times. Each
+# runs its own state machine, and no machine outranks another. One can only
+# act on another through something a party does, which the other machine has
+# a trigger for.
+#
+# A supply agreement has a termination regime (in force, notice, terminated)
+# and a force majeure regime (normal, force majeure, prolonged). A flood stops
+# the supplier performing. While it continues the buyer serves notice to
+# terminate for convenience. Before the notice runs out, the force majeure
+# becomes prolonged, and the buyer terminates at once for prolonged force
+# majeure instead.
+#
+# | Date       | Stimulus                                      | Termination regime   | Force majeure regime |
+# |------------|-----------------------------------------------|----------------------|----------------------|
+# | 2027-01-01 | the agreement takes effect                     | in force (evidence)   | normal (evidence)     |
+# | 2027-01-15 | the supplier notifies force majeure (flood)    |                      | force majeure         |
+# | 2027-04-01 | the buyer serves 60 days' notice                | notice               |                      |
+# | 2027-04-15 | 90 days after entry into force majeure          |                      | prolonged             |
+# | 2027-04-20 | the buyer terminates for prolonged force majeure | terminated           |                      |
+#
+# Every position holds one state per regime: notice and force majeure together
+# is an ordinary configuration (nested states sketch §6, §9.5).
+#
+# Relations gated on these states, in an instrument: an exclusion of the
+# supplier's duty to deliver applies in ex:force-majeure and ex:prolonged, and
+# the buyer's power to terminate for prolonged force majeure applies only in
+# ex:prolonged. Its exercise is what the termination regime's transitions
+# react to. The notice's own expiry, due on 2027-05-31, never becomes a
+# stimulus: the notice state was left first.
+#
+# Whether the notice period runs during force majeure is a term. This contract
+# says it does. A contract that says otherwise declares, on the notice expiry
+# trigger, the states in which the period does not run (C11a-Q2).
+
+@prefix bhv:  <https://www.nebularis.org/neuro-semantic/lattice/behaviour#> .
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix pty:  <https://www.nebularis.org/neuro-semantic/lattice/party#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex:   <https://example.org/lattice/behaviour/force-majeure/> .
+
+# ---- Configuration: the termination regime ---------------------------------------
+
+ex:termination-regime a bhv:StateSpace ;
+    fnd:hasIdentity ex:termination-regime-identity ;
+    bhv:initialState ex:in-force .
+
+ex:in-force a bhv:State ;
+    bhv:inStateSpace ex:termination-regime .
+
+ex:notice a bhv:State ;
+    bhv:inStateSpace ex:termination-regime .
+
+ex:terminated a bhv:State ;
+    bhv:inStateSpace ex:termination-regime .
+
+ex:on-notice-served a bhv:TriggerDefinition ;
+    bhv:triggerKind bhv:ExternalStimulus ;
+    rdfs:comment "The buyer exercises its power to terminate for convenience on 60 days' notice." .
+
+ex:on-notice-expiry a bhv:TriggerDefinition ;
+    bhv:triggerKind bhv:ScheduledTrigger ;
+    rdfs:comment "60 days after entry into the notice state." .
+
+ex:on-termination-for-force-majeure a bhv:TriggerDefinition ;
+    bhv:triggerKind bhv:ExternalStimulus ;
+    rdfs:comment "The buyer exercises its power to terminate for prolonged force majeure, which applies only in ex:prolonged." .
+
+ex:serve-notice a bhv:TransitionDefinition ;
+    bhv:fromState ex:in-force ;
+    bhv:toState ex:notice ;
+    bhv:hasTrigger ex:on-notice-served ;
+    bhv:selectionPolicy bhv:SingleMatch ;
+    bhv:activationPolicy bhv:ImmediateActivation .
+
+ex:notice-expires a bhv:TransitionDefinition ;
+    bhv:fromState ex:notice ;
+    bhv:toState ex:terminated ;
+    bhv:hasTrigger ex:on-notice-expiry ;
+    bhv:selectionPolicy bhv:SingleMatch ;
+    bhv:activationPolicy bhv:ImmediateActivation .
+
+# The same exercise ends the agreement from either state.
+ex:terminate-for-force-majeure-in-force a bhv:TransitionDefinition ;
+    bhv:fromState ex:in-force ;
+    bhv:toState ex:terminated ;
+    bhv:hasTrigger ex:on-termination-for-force-majeure ;
+    bhv:selectionPolicy bhv:SingleMatch ;
+    bhv:activationPolicy bhv:ImmediateActivation .
+
+ex:terminate-for-force-majeure-on-notice a bhv:TransitionDefinition ;
+    bhv:fromState ex:notice ;
+    bhv:toState ex:terminated ;
+    bhv:hasTrigger ex:on-termination-for-force-majeure ;
+    bhv:selectionPolicy bhv:SingleMatch ;
+    bhv:activationPolicy bhv:ImmediateActivation .
+
+# ---- Configuration: the force majeure regime -------------------------------------
+
+ex:force-majeure-regime a bhv:StateSpace ;
+    fnd:hasIdentity ex:force-majeure-regime-identity ;
+    bhv:initialState ex:normal .
+
+ex:normal a bhv:State ;
+    bhv:inStateSpace ex:force-majeure-regime .
+
+ex:force-majeure a bhv:State ;
+    bhv:inStateSpace ex:force-majeure-regime .
+
+ex:prolonged a bhv:State ;
+    bhv:inStateSpace ex:force-majeure-regime .
+
+ex:on-force-majeure-notified a bhv:TriggerDefinition ;
+    bhv:triggerKind bhv:ExternalStimulus ;
+    rdfs:comment "The affected party notifies a force majeure event." .
+
+ex:on-ninety-days a bhv:TriggerDefinition ;
+    bhv:triggerKind bhv:ScheduledTrigger ;
+    rdfs:comment "90 days after entry into force majeure." .
+
+ex:on-event-ends a bhv:TriggerDefinition ;
+    bhv:triggerKind bhv:ExternalStimulus ;
+    rdfs:comment "The affected party notifies that the event has ended." .
+
+ex:force-majeure-begins a bhv:TransitionDefinition ;
+    bhv:fromState ex:normal ;
+    bhv:toState ex:force-majeure ;
+    bhv:hasTrigger ex:on-force-majeure-notified ;
+    bhv:selectionPolicy bhv:SingleMatch ;
+    bhv:activationPolicy bhv:ImmediateActivation .
+
+ex:force-majeure-prolonged a bhv:TransitionDefinition ;
+    bhv:fromState ex:force-majeure ;
+    bhv:toState ex:prolonged ;
+    bhv:hasTrigger ex:on-ninety-days ;
+    bhv:selectionPolicy bhv:SingleMatch ;
+    bhv:activationPolicy bhv:ImmediateActivation .
+
+ex:force-majeure-ends a bhv:TransitionDefinition ;
+    bhv:fromState ex:force-majeure ;
+    bhv:toState ex:normal ;
+    bhv:hasTrigger ex:on-event-ends ;
+    bhv:selectionPolicy bhv:SingleMatch ;
+    bhv:activationPolicy bhv:ImmediateActivation .
+
+ex:prolonged-force-majeure-ends a bhv:TransitionDefinition ;
+    bhv:fromState ex:prolonged ;
+    bhv:toState ex:normal ;
+    bhv:hasTrigger ex:on-event-ends ;
+    bhv:selectionPolicy bhv:SingleMatch ;
+    bhv:activationPolicy bhv:ImmediateActivation .
+
+# ---- The agreement, its parties and the records ----------------------------------
+
+ex:supply-agreement a fnd:PersistentIdentity .
+ex:buyer-occ a pty:RoleOccupancy .
+ex:supplier-occ a pty:RoleOccupancy .
+
+ex:force-majeure-notified a skos:Concept ; skos:prefLabel "Force majeure notified"@en .
+
+ex:s1 a bhv:Stimulus ;
+    fnd:hasEvidence [ a fnd:Evidence ; fnd:recordedAt "2027-01-15T08:00:00Z"^^xsd:dateTime ] .
+ex:s2 a bhv:Stimulus ;
+    fnd:hasEvidence [ a fnd:Evidence ; fnd:recordedAt "2027-04-01T09:00:00Z"^^xsd:dateTime ] .
+ex:s3 a bhv:Stimulus ;
+    fnd:hasEvidence [ a fnd:Evidence ; fnd:recordedAt "2027-04-15T08:00:00Z"^^xsd:dateTime ] .
+ex:s4 a bhv:Stimulus ;
+    fnd:hasEvidence [ a fnd:Evidence ; fnd:recordedAt "2027-04-20T09:00:00Z"^^xsd:dateTime ] .
+
+ex:flood-notice a bhv:ActRecord ;
+    bhv:activity ex:force-majeure-notified ;
+    bhv:actor ex:supplier-occ ;
+    bhv:forCase ex:flood-2027 ;
+    bhv:fromStimulus ex:s1 ;
+    rdfs:comment "The supplier's plant is flooded." .
+
+ex:notice-for-convenience a bhv:ExerciseRecord ;
+    bhv:exercised ex:power-to-terminate-for-convenience ;
+    bhv:actor ex:buyer-occ ;
+    bhv:tookEffect true ;
+    bhv:fromStimulus ex:s2 .
+
+ex:termination-for-force-majeure a bhv:ExerciseRecord ;
+    bhv:exercised ex:power-to-terminate-for-prolonged-force-majeure ;
+    bhv:actor ex:buyer-occ ;
+    bhv:tookEffect true ;
+    bhv:fromStimulus ex:s4 ;
+    rdfs:comment "Took effect because the force majeure regime was in ex:prolonged." .
+
+ex:exec-1 a bhv:TransitionExecution ;
+    bhv:executedTransition ex:force-majeure-begins ;
+    bhv:causedByStimulus ex:s1 .
+ex:exec-2 a bhv:TransitionExecution ;
+    bhv:executedTransition ex:serve-notice ;
+    bhv:causedByStimulus ex:s2 .
+ex:exec-3 a bhv:TransitionExecution ;
+    bhv:executedTransition ex:force-majeure-prolonged ;
+    bhv:causedByStimulus ex:s3 .
+ex:exec-4 a bhv:TransitionExecution ;
+    bhv:executedTransition ex:terminate-for-force-majeure-on-notice ;
+    bhv:causedByStimulus ex:s4 .
+
+# ---- Occupancies: termination regime ---------------------------------------------
+
+ex:occ-in-force a bhv:StateOccupancy ;
+    bhv:forSubject ex:supply-agreement ;
+    bhv:occupiesState ex:in-force ;
+    bhv:isHypothetical false ;
+    bhv:isCurrent false ;
+    bhv:exitedBy ex:exec-2 ;
+    fnd:hasEvidence [ a fnd:Evidence ; fnd:recordedAt "2027-01-01T00:00:00Z"^^xsd:dateTime ;
+        rdfs:comment "The agreement took effect." ] ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ;
+        fnd:validFrom "2027-01-01T00:00:00Z"^^xsd:dateTime ;
+        fnd:validTo "2027-04-01T09:00:00Z"^^xsd:dateTime ] .
+
+ex:occ-notice a bhv:StateOccupancy ;
+    bhv:forSubject ex:supply-agreement ;
+    bhv:occupiesState ex:notice ;
+    bhv:isHypothetical false ;
+    bhv:isCurrent false ;
+    bhv:enteredBy ex:exec-2 ;
+    bhv:exitedBy ex:exec-4 ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ;
+        fnd:validFrom "2027-04-01T09:00:00Z"^^xsd:dateTime ;
+        fnd:validTo "2027-04-20T09:00:00Z"^^xsd:dateTime ] .
+
+ex:occ-terminated a bhv:StateOccupancy ;
+    bhv:forSubject ex:supply-agreement ;
+    bhv:occupiesState ex:terminated ;
+    bhv:isHypothetical false ;
+    bhv:isCurrent true ;
+    bhv:enteredBy ex:exec-4 ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ;
+        fnd:validFrom "2027-04-20T09:00:00Z"^^xsd:dateTime ] .
+
+# ---- Occupancies: force majeure regime -------------------------------------------
+
+ex:occ-normal a bhv:StateOccupancy ;
+    bhv:forSubject ex:supply-agreement ;
+    bhv:occupiesState ex:normal ;
+    bhv:isHypothetical false ;
+    bhv:isCurrent false ;
+    bhv:exitedBy ex:exec-1 ;
+    fnd:hasEvidence [ a fnd:Evidence ; fnd:recordedAt "2027-01-01T00:00:00Z"^^xsd:dateTime ;
+        rdfs:comment "The agreement took effect." ] ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ;
+        fnd:validFrom "2027-01-01T00:00:00Z"^^xsd:dateTime ;
+        fnd:validTo "2027-01-15T08:00:00Z"^^xsd:dateTime ] .
+
+ex:occ-force-majeure a bhv:StateOccupancy ;
+    bhv:forSubject ex:supply-agreement ;
+    bhv:occupiesState ex:force-majeure ;
+    bhv:isHypothetical false ;
+    bhv:isCurrent false ;
+    bhv:enteredBy ex:exec-1 ;
+    bhv:exitedBy ex:exec-3 ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ;
+        fnd:validFrom "2027-01-15T08:00:00Z"^^xsd:dateTime ;
+        fnd:validTo "2027-04-15T08:00:00Z"^^xsd:dateTime ] .
+
+ex:occ-prolonged a bhv:StateOccupancy ;
+    bhv:forSubject ex:supply-agreement ;
+    bhv:occupiesState ex:prolonged ;
+    bhv:isHypothetical false ;
+    bhv:isCurrent true ;
+    bhv:enteredBy ex:exec-3 ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ;
+        fnd:validFrom "2027-04-15T08:00:00Z"^^xsd:dateTime ] .

@@ -2,9 +2,7 @@
 
 # Quantification Ontology — Values, Bounds, Ranges, Conversion, and Recurrence
 
-*Literate specification, following the convention established in `ontology/foundation/spec/foundation.md`, `ontology/vocabulary/spec/vocabulary.md`, and `ontology/party/spec/party.md`. This document and `spec/quantification.ttl`, `vocab/quantification-vocab.ttl`, and `shapes/*.ttl` are meant to be regenerated from one another — see §3.*
-
-Suggested repository location: `ontology/quantification/spec/quantification.md`.
+*Literate specification, following the convention of the Foundation, Vocabulary and Party documents. `spec/quantification.ttl`, `vocab/quantification-vocab.ttl` and `shapes/constraints.ttl` are generated from this document (§3).*
 
 **Revision note.** This is a full rework of an earlier draft, addressing the five blocking defects and the substantive defects raised in that draft's critical review. §16 lists what changed and why. The rename from `qty:` to `qnt:` — Quantity to Quantification — is adopted throughout, per that review's confirmation that it is correct and should not be relitigated.
 
@@ -44,7 +42,7 @@ foundation
                             └── behaviour
 ```
 
-It imports Foundation and Vocabulary. It is imported by Party, Eligibility, Instrument, and Behaviour — none of which it imports back, and none of whose classes it ever references. This is the same discipline Party's document applies to Instrument, Eligibility, and Behaviour: Quantification is reusable by everything above it specifically because it never reaches upward to say how any of them will use it.
+It imports Foundation and Vocabulary. It is imported by Party, Eligibility, Wording, Behaviour, Instrument and Surface, and by the applied layers, none of which it imports back, and none of whose classes it ever references (§12 shows what each uses it for). This is the same discipline Party's document applies to Instrument, Eligibility, and Behaviour: Quantification is reusable by everything above it specifically because it never reaches upward to say how any of them will use it.
 
 ```turtle-spec
 @prefix qnt:  <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
@@ -57,39 +55,59 @@ It imports Foundation and Vocabulary. It is imported by Party, Eligibility, Inst
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 ```
 
+```turtle-spec
+<https://www.nebularis.org/neuro-semantic/quantification>
+    rdf:type owl:Ontology ;
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/quantification/0.7.0> ;
+    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.4.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.4.0> .
+```
+
 ## 3. How to Read This Document
 
 Same convention as Foundation, Vocabulary, and Party: genuine specification content — classes, properties, and their axioms — is fenced ` ```turtle-spec `; mechanism-intrinsic vocabulary (named individuals of open classes) is fenced ` ```turtle-vocab `; illustrative SHACL shapes are fenced ` ```turtle-shapes `; and worked-example content that is not part of the substrate is fenced ` ```turtle-example `. Only the first three are extracted when regenerating `spec/quantification.ttl`, `vocab/quantification-vocab.ttl`, and `shapes/*.ttl` respectively; `turtle-example` blocks are never extracted, regardless of where in the document they appear.
+
+`tools/literate_extract.py` writes every ` ```turtle-spec ` block to `spec/quantification.ttl`, every
+` ```turtle-vocab ` block to `vocab/quantification-vocab.ttl`, and the one ` ```turtle-shapes ` block
+to `shapes/constraints.ttl`. The ontology header, with its version IRI and imports, is a
+` ```turtle-spec ` block in §2, so a version bump is an edit to this document.
+
+```bash
+python tools/literate_extract.py ontology/quantification/README.md --layer quantification --root . \
+    --shapes shapes/constraints.ttl
+```
 
 `fnd:utility` values throughout this document explain what a term is for and how to use it — never why it was shaped this way rather than some other way. That reasoning belongs in §4 (Design Decisions) alone, per the discipline corrected across Foundation, Vocabulary, and Party's own documents; nothing in this document's `fnd:utility` text should need to reference this section, a rejected alternative, or a dependency-order constraint to make sense to someone applying the term.
 
 ## 4. Design Decisions
 
-Ten decisions, several forced by the corrected structure below rather than freely chosen — worth reading in full before treating any single class in isolation, since a number of the later definitions only make sense in light of one of these.
+Eleven decisions, several forced by the corrected structure below rather than freely chosen — worth reading in full before treating any single class in isolation, since a number of the later definitions only make sense in light of one of these.
 
 **Quantification, not Quantity.** Grades, tiers, statuses, and priorities need exactly the same containment, overlap, minimum, and maximum operations that magnitudes need, without being magnitudes. A layer named after magnitudes either excludes them — forcing every deployment to invent ordinal comparison privately — or admits them under a name that misdescribes what it actually is. The layer declares how a value space is *ordered, bounded, and compared*; that is Quantification, and the rename costs one import change now against every deployment inventing this privately later.
 
-**A position and an extent are distinct spaces, not distinct readings of one space.** Two positions have a difference; a position plus an extent yields a position; two extents sum; adding two positions is not meaningful. Keeping these as genuinely separate declared spaces makes `position + position` unrepresentable rather than merely discouraged — the same "unwritable failure mode" discipline Behaviour applies to guard-versus-effect. Temporal modelling falls directly out of this: a temporal position is a point on a totally-ordered, unit-bearing space; a temporal interval is a range over it; a recurrence is a generator of canonically identified ranges. Temporal is therefore an instance of quantification, not a peer layer, and building it as a peer would duplicate ordering, bounds, normalisation, and canonical form for no reason.
+**A position and an extent are distinct spaces, not distinct readings of one space.** Two positions have a difference; a position plus an extent yields a position; two extents sum; adding two positions is not meaningful. Keeping these as genuinely separate declared spaces makes `position + position` unrepresentable rather than merely discouraged: no capability for it can be matched, so the mistake cannot be made (§5.1.3). Temporal modelling falls directly out of this: a temporal position is a point on a totally-ordered, unit-bearing space; a temporal interval is a range over it; a recurrence is a generator of canonically identified ranges. Temporal is therefore an instance of quantification, not a peer layer, and building it as a peer would duplicate ordering, bounds, normalisation, and canonical form for no reason.
 
-**Overlap is not containment.** A value can be contained by the meet (intersection) of two ranges only if it's contained by both — that's `Q4a`, required of any range semantics claiming to support containment. The converse — a value contained by both individually is contained by their meet — is `Q4b`, and it holds for ordinary non-cyclic containment but *not* for overlap: two ranges can each overlap a third separately while having an empty three-way intersection. A semantics satisfying only `Q4a` is declared `ScreeningRangeSemantics` and must not be used for meet-based enumeration; only `ExactRangeSemantics` may be. This is a fact about ranges over an ordered space — this layer's fact to state, not a fact for every consumer to rediscover independently. §10 gives the formal statement; `qnt:participatesInMeet` gives consumers a declared answer rather than a rule to re-derive.
+**Overlap is not containment.** A value can be contained by the meet (intersection) of two ranges only if it's contained by both — that's `Q4a`, required of any range semantics claiming to support containment. The converse — a value contained by both individually is contained by their meet — is `Q4b`, and it holds for ordinary non-cyclic containment but *not* for overlap. Two ranges can each overlap a third separately while the three share nothing: 1 to 10 January and 20 to 30 January each overlap 5 to 25 January, but have no day in common (§5.1.9). A semantics satisfying only `Q4a` is declared `ScreeningRangeSemantics`, and must not be used to decide what several ranges admit together (*meet-based enumeration*). Only `ExactRangeSemantics` may be. This is a fact about ranges over an ordered space — this layer's fact to state, not a fact for every consumer to rediscover independently. §10 gives the formal statement; `qnt:participatesInMeet` gives consumers a declared answer rather than a rule to re-derive.
 
 **Cyclic ranges are start-plus-extent.** A lower/upper pair is not globally meaningful on a cyclic space — "22:00 to 06:00" has no consistent answer to "which is lower" without picking an arbitrary cut point, and a two-bound model either rejects the wrapping window or truncates it silently, in the direction that happens to be wrong. Representing it as a start and an extent around the cycle sidesteps the question rather than answering it badly. But a cyclic range still has two endpoints, and each needs a declared closure exactly as an ordinary `Bound` does — an earlier draft of this layer gave `CyclicRange` no closure property at all, which meant containment couldn't be discharged for cyclic spaces even though `Bound` itself already required one. §6's `CyclicRange` definition fixes this.
 
 **Granularity is not unresolvedness.** A value known only to a month is known — it denotes a range of possible exact values, not an absence. An unresolved value's required content is pending, unknown, contested, or unavailable — a genuinely different condition, needing different remediation. Both can produce `Undetermined`, but they carry different provenance and different reasons, and conflating them into one "precision" enumeration — as an earlier pass of this layer did — loses the distinction consumers actually need.
 
-**Operation permission is declared rather than inferred from representation.** A value space stating it holds numeric literals does not thereby permit arithmetic over them — that has to be a separate, explicit `OperationCapability`. This is the layer's single highest-value check: "can I average these grades" becomes a load-time or query-time answer instead of a plausible-looking number nobody checked.
+**Operation permission is declared rather than inferred from representation.** A value space stating it holds numeric literals does not thereby permit arithmetic over them — that has to be a separate, explicit `OperationCapability`. This is the layer's single highest-value check: "can I add these dates", or "can I average these grades", becomes a load-time or query-time answer instead of a plausible-looking number nobody checked. §5.1.3 explains which operations each kind of value supports.
 
-**Three law registers.** A semantic law (order coherence, bound coherence, containment soundness) is discharged by formal argument and property tests. A static declaration constraint (every value space declares a key and an order kind) is discharged by SPARQL, SHACL, or equivalent static analysis. A runtime conformance claim (a recurrence produces the same bin identity when recomputed independently) can only be discharged by actually running the computation twice and comparing — no formal argument alone establishes it. An earlier draft of this layer put all ten laws in one register with one discharge contract, which meant two of them — recurrence determinism and unresolved non-coercion — were effectively asserted by prose. §9 restructures the register into three, each with its own evidence shape.
+**Three law registers.** A semantic law (order coherence, bound coherence, containment soundness) is discharged by formal argument and property tests. A static declaration constraint (every value space declares a key and an order kind) is discharged by SPARQL, SHACL, or equivalent static analysis. A runtime conformance claim (a recurrence produces the same bin identity when recomputed independently) can only be discharged by actually running the computation twice and comparing — no formal argument alone establishes it. An earlier draft of this layer put all ten laws in one register with one discharge contract, which meant two of them — recurrence determinism and unresolved non-coercion — were effectively asserted by prose. §10 sets out the three registers, each with its own evidence shape.
 
 **Conversion needs a registered function.** Declaring that a conversion exists between two units, without declaring *how*, leaves the actual transformation as an undeclared deployment detail. Quantification sits below Behaviour, so it owns the shared registered-function mechanism; Behaviour's own function registry should reuse this rather than inventing a parallel one.
 
 **A range defined relative to an anchor keeps that relationship, rather than only keeping the two bounds it computes to.** A ±2% tolerance around a nominal value of 18,000 and a hand-authored band from 17,640 to 18,360 are indistinguishable once only the bounds are recorded — nothing says the first pair is derived from the second. That loses exactly the information a later reparameterisation (widening the tolerance to ±3%) needs: whether to rewrite the offset or rewrite two endpoints by hand. `AnchorBinding` keeps the derivation explicit.
 
+**A value may be supplied by its context.** "Within 30 days of each invoice", "each year from the subscription start" and "six months before the Expiry Date" are each stated once, and resolve to a different value for every subject they are evaluated for. The statement names its anchor, and an evaluation context supplies the anchor's value. Such a value is complete as stated, yet resolved only when evaluated, so it is neither definite nor missing. It is therefore its own kind of value, `ContextValue`, named by a role ([ADR-A115](../../docs/architecture/decisions/ADR-A115-quantification-context-values.md)). Its offsets, such as "30 days" or "10 business days", are quantities with units, because a unitless decimal in the anchor's own space cannot count business days.
+
 **A value space's density determines what "adjacent" means and must be declared rather than assumed.** Range-set canonicalisation needs to know whether `[1,5]` and `[6,10]` merge — which depends entirely on whether the space is discrete (where "immediately following" is well-defined, via a granularity floor) or dense (where only closures abutting without a gap can merge). Leaving this undeclared, as an earlier draft did, made canonical form an open question for exactly the operation whose whole purpose is to have one.
 
 ## 5. Architecture
 
-Four semantic tiers; the fourth is genuinely optional, not merely lightly used.
+Four semantic tiers, where the fourth is entirely optional. The diagram after the listing shows how they connect.
 
 ```
 DECLARATION
@@ -99,7 +117,7 @@ DECLARATION
     "What kind of values exist, and what may be done with them?"
 
 ASSERTION
-    qnt:Value · qnt:Quantity · qnt:OrdinalValue · qnt:UnresolvedValue
+    qnt:Value · qnt:Quantity · qnt:OrdinalValue · qnt:UnresolvedValue · qnt:ContextValue
     qnt:Bound · qnt:Range · qnt:CyclicRange · qnt:RangeSet
     qnt:ConversionContext · qnt:RecurrenceBin
     "What values, bounds, ranges, and contexts are actually present?"
@@ -115,6 +133,509 @@ OPTIONAL DERIVED REPRESENTATIONS
 ```
 
 An operational profile must identify the source graph or snapshot, the declarations and versions used, the entailment regime if any, the validation profile if any, the implementation or query-set version, and its authority level (§10). Derived representations are not authored facts merely because they're persisted — they remain traceable to their inputs and producing profile.
+
+```mermaid
+---
+config:
+  layout: elk
+---
+flowchart TB
+    subgraph DECL["Declaration: what kinds of values exist, and what may be done with them"]
+        VS["qnt:ValueSpace"]
+        UC["qnt:UnitContract"]
+        OC["qnt:OperationCapability"]
+        RC["qnt:Recurrence"]
+        OB["qnt:OrderingBasis"]
+    end
+    subgraph ASSERT["Assertion: what values, bounds and ranges are present"]
+        V["qnt:Value<br/>Quantity, OrdinalValue,<br/>UnresolvedValue, ContextValue"]
+        B["qnt:Bound"]
+        R["qnt:Range, qnt:CyclicRange,<br/>qnt:RangeSet"]
+    end
+    subgraph EVAL["Evaluation: what can be concluded"]
+        CMP["qnt:Comparison<br/>True, False or Undetermined"]
+    end
+    subgraph DERIV["Optional derived representations"]
+        D["normal forms, materialised bins,<br/>projections, generated code"]
+    end
+    V -- "onSpace" --> VS
+    B -- "onSpace" --> VS
+    R -- "onSpace" --> VS
+    VS -- "unitContract" --> UC
+    VS -- "hasOperationCapability" --> OC
+    V --> CMP
+    R --> CMP
+    OC -. "permits" .-> CMP
+    CMP -. "may be materialised as" .-> D
+    style DECL fill:#BBDEFB
+    style ASSERT fill:#bcdee1
+```
+
+### 5.1 A guided tour
+
+The sections that follow §5 define every class and property. This tour shows how they are used
+together, one idea at a time, with a diagram for each. Every step has a worked example in
+[`examples/examples.md`](examples/examples.md), and context values have a loadable one in
+[`examples/context-anchor.ttl`](examples/context-anchor.ttl).
+
+#### 5.1.1 Start with a value space
+
+Every value lives in a declared `ValueSpace`, and the space, not the value, says what may be done
+with it. A space declares how its values are ordered (`orderKind`), what counts as adjacent
+(`densityKind`), what datatype its literals use (`valueDatatype`), whether its values need units
+(`unitContract`), and which operations are permitted over them (`hasOperationCapability`). Two
+spaces whose values are both decimals are still different spaces. A mass and a price are not
+comparable merely because both are numbers.
+
+```mermaid
+flowchart LR
+    VS["ex:mass-space<br/>qnt:ValueSpace"]
+    VS -- "orderKind" --> OK["TotalOrder"]
+    VS -- "densityKind" --> DK["Dense"]
+    VS -- "valueDatatype" --> DT["xsd:decimal"]
+    VS -- "unitContract" --> UC["qnt:UnitContract<br/>requiresUnit true,<br/>unitFamily mass"]
+    VS -- "hasOperationCapability" --> C1["Compare"]
+    VS -- "hasOperationCapability" --> C2["Contains"]
+    VS -- "hasOperationCapability" --> C3["Sum, Difference"]
+```
+
+The order kind decides which questions the space can answer at all:
+
+| `orderKind` | Supports | Example |
+|---|---|---|
+| `TotalOrder` | equality, comparison, bounds, ranges | a mass, a date, a grade |
+| `CyclicOrder` | equality, cyclic ranges, never lower and upper bounds | a time of day, a day of the week, a season |
+| `NoOrder` | equality only | a colour code, a category without rank |
+
+Worked example: [§3, declaring a mass space](examples/examples.md#3-declaring-a-mass-space).
+
+#### 5.1.2 Choose the right kind of value
+
+A `Value` is a point in one space. Four kinds of value are pairwise disjoint, so a reader always
+knows what kind of fact a value records:
+
+```mermaid
+classDiagram
+    class Value {
+        onSpace exactly one
+    }
+    class Quantity {
+        numericValue, a literal
+        inUnit, where the contract requires one
+    }
+    class OrdinalValue {
+        ordinalConcept, a ranked concept
+    }
+    class UnresolvedValue {
+        unresolvedReason, at least one
+        evidence
+    }
+    class ContextValue {
+        contextRole, exactly one
+    }
+    Value <|-- Quantity
+    Value <|-- OrdinalValue
+    Value <|-- UnresolvedValue
+    Value <|-- ContextValue
+```
+
+```mermaid
+flowchart TB
+    Q1{"Is the value known?"}
+    Q2{"Is it a literal, such as<br/>a number or a date?"}
+    Q3{"Is it supplied for each subject<br/>when something is evaluated?"}
+    QT["qnt:Quantity<br/>18,000 kg, 2027-05-01"]
+    OV["qnt:OrdinalValue<br/>grade B, tier 2"]
+    CV["qnt:ContextValue<br/>the renewal date,<br/>the occasion's arising"]
+    UV["qnt:UnresolvedValue<br/>pending, disputed,<br/>with a reason and evidence"]
+    Q1 -- "yes" --> Q2
+    Q1 -- "no, it is missing" --> UV
+    Q1 -- "not yet, it depends<br/>on the subject" --> Q3
+    Q2 -- "yes" --> QT
+    Q2 -- "no, a ranked concept" --> OV
+    Q3 -- "yes" --> CV
+```
+
+A value known only roughly, such as a date known to the month, is still a known value. Give it
+`knownToGranularity`, not an unresolved status. A comparison that needs a finer distinction than
+the granularity allows is `Undetermined` with `GranularityInsufficient` (§9.5).
+
+Worked examples: [§8, a known-but-coarse value](examples/examples.md#8-a-known-but-coarse-value),
+[§9, an explicitly unresolved value](examples/examples.md#9-an-explicitly-unresolved-value),
+[§10, ordered grades](examples/examples.md#10-ordered-grades-kept-distinct-from-their-backing-concepts).
+
+#### 5.1.3 Which operations make sense: scales of measure and additivity
+
+Two values held as numbers are not thereby addable. Whether adding, subtracting, dividing or
+averaging them means anything depends on what they measure. This is the most important idea in
+the layer, and every operation Quantification evaluates depends on it.
+
+**Scales of measure.** Measurement theory distinguishes four scales, each permitting more than
+the one before it:
+
+| Scale | What is meaningful | Examples | In Quantification |
+|---|---|---|---|
+| **nominal** | equality only | a colour code, a category | a space with `orderKind` `NoOrder` |
+| **ordinal** | equality and order, but not distance | a grade, a priority, a risk tier | `OrdinalValue`s on a `TotalOrder` space |
+| **interval** | order and differences, but no true zero, so no sums or ratios | a date, a time of day, a temperature in °C | a *position* space |
+| **ratio** | order, differences, sums and ratios, with a true zero | a mass, a sum of money, a duration, a count | an amount or *extent* space |
+
+```mermaid
+flowchart LR
+    N["nominal<br/>equal or not"] --> O["ordinal<br/>plus order"]
+    O --> I["interval<br/>plus differences"]
+    I --> R["ratio<br/>plus sums and ratios"]
+```
+
+A date is the commonest interval-scale value. 15 May minus 1 May is 14 days, but 1 May plus 15 May
+is nothing at all. A duration is ratio-scale, so 14 days plus 14 days is 28 days, and 28 days is
+twice 14 days. A *position* is a point on an interval scale, and an *extent* is an amount on a
+ratio scale. Quantification declares them as separate spaces, so that each can permit exactly the
+operations that mean something for it:
+
+```mermaid
+flowchart LR
+    P1["position<br/>2027-05-01"] -- "minus" --> D["extent<br/>14 days"]
+    P2["position<br/>2027-05-15"] -- "minus" --> D
+    P3["position<br/>2027-05-01"] -- "plus extent" --> P4["position<br/>2027-05-15"]
+    E1["extent<br/>14 days"] -- "plus extent" --> E2["extent<br/>28 days"]
+    X["position plus position"] -. "no capability,<br/>never permitted" .-> N["no result"]
+```
+
+**Additivity.** The same question, asked of aggregation, is whether a measure is *additive*. Data
+warehousing names three kinds of measure:
+
+- **additive** measures can be summed across every grouping: amounts paid, units shipped, hours
+  worked. Summing them by customer, by month or in total all give meaningful results
+- **semi-additive** measures can be summed across some groupings but not others. Bank balances
+  on one date can be summed across accounts, giving the total held that day. The same account's
+  balances summed across dates give nothing meaningful. Over time, the latest, the lowest or the
+  highest balance is what means something. Stock levels and headcounts behave the same way
+- **non-additive** measures can never be summed: unit prices, percentages, ratios, grades and
+  dates. A total of percentages, or a total of dates, has no meaning
+
+```mermaid
+flowchart TB
+    subgraph ACC["Balances on 31 March, across accounts"]
+        A1["account A<br/>£100"] --> T1["£250<br/>the total held that day"]
+        A2["account B<br/>£150"] --> T1
+    end
+    subgraph TIME["Account A's balances, across dates"]
+        D1["31 March<br/>£100"] --> T2["£220?<br/>meaningless"]
+        D2["30 April<br/>£120"] --> T2
+        D1 --> L["latest: £120<br/>lowest: £100"]
+        D2 --> L
+    end
+    style T2 fill:#f8d7da
+```
+
+The operations a kind of value supports:
+
+| Operation (`operationKind`) | Amount (ratio scale) | Position (interval scale) | Rate or proportion | Grade (ordinal) |
+|---|---|---|---|---|
+| `Compare`, `Minimum`, `Maximum` | yes | yes | yes | yes |
+| `Difference` | yes, an amount | yes, giving an extent | yes, in points | no |
+| `Sum` | yes | no | no | no |
+| `Ratio` | yes, giving a rate or proportion | no | not by default | no |
+| `Scale` | by a rate | no | applies to a base amount | no |
+
+There is no averaging operation. A mean is a sum divided by a count, so it can be computed only
+from a declared `Sum`, `Count` and `Ratio`, and the sum it needs is meaningful only for additive
+amounts. "The average grade" is never computed, because nothing permits the sum of grades.
+
+**How Quantification enforces this.** Quantification never works out which operations a space
+supports. Each one is declared on the space as an `OperationCapability`, with the space of each
+operand and of the result (§5.1.9). A space of dates declares `Difference` into an extent space,
+and does not declare `Sum`, so a request to add two dates is refused. An operation with several
+operands declares each by position (`OperationOperand`, with `operandIndex` and `operandSpace`) and
+names its `resultSpace`. Worked example:
+[§14, position minus position](examples/examples.md#14-position-minus-position-yielding-an-extent).
+
+**What a capability cannot see.** A capability belongs to a space, and says nothing about which
+values are being aggregated. A space of balances may permit `Sum`, because summing balances across
+accounts on one date is meaningful. That the balances being summed are all on one date is a fact
+about the records, which only the consuming layer can check (open question 7, §13).
+
+#### 5.1.4 Bounds, ranges and range sets
+
+A `Bound` is one limit, with a value, a sense (`Lower` or `Upper`) and a closure (`Closed` includes
+the limit, `Open` excludes it). A `Range` has a lower bound, an upper bound or both, and an absent
+bound means unbounded in that direction. A `RangeSet` is a union of ranges on one space.
+
+```mermaid
+flowchart LR
+    R["qnt:Range<br/>17,640 to 18,360 kg"]
+    LB["qnt:Bound<br/>Lower, Closed<br/>17,640 kg"]
+    UB["qnt:Bound<br/>Upper, Open<br/>18,360 kg"]
+    RS["qnt:RangeSet<br/>permitted masses"]
+    R -- "lowerBound" --> LB
+    R -- "upperBound" --> UB
+    RS -- "hasRange" --> R
+    RS -- "hasRange" --> R2["qnt:Range<br/>20,000 kg and above"]
+```
+
+| Range | Lower | Upper | Contains 18,360? |
+|---|---|---|---|
+| from 17,640 up to but not including 18,360 | Closed 17,640 | Open 18,360 | no |
+| from 17,640 to 18,360 inclusive | Closed 17,640 | Closed 18,360 | yes |
+| 18 or over | Closed 18 | none | (any value of 18 or more) |
+| under 65 | none | Open 65 | (any value below 65) |
+
+Closure is never cosmetic, because whether a limit counts as inside changes the answer. A limit that
+a contract states in more than one unit, such as "1,000 kg or 2,200 lb", is one bound with
+`alternativeBound` statements, and a candidate is compared with the statement in its own unit,
+never through a conversion (ADR-A95). Worked example:
+[§4, half-bounded ranges](examples/examples.md#4-half-bounded-ranges-both-directions).
+
+#### 5.1.5 Ranges that wrap around a cycle
+
+On a cyclic space, "22:00 to 06:00" has no lower and upper end, because there is no first hour of
+the day. A `CyclicRange` is stated as a start and an extent around the cycle, each end with its own
+closure:
+
+```mermaid
+flowchart LR
+    H18["18:00"] --> H22["22:00<br/>cycleStart, Closed"]
+    H22 --> H00["00:00"]
+    H00 --> H06["06:00<br/>end, Open"]
+    H06 --> H12["12:00"]
+    H12 --> H18
+    style H22 fill:#bcdee1
+    style H00 fill:#bcdee1
+    style H06 fill:#bcdee1
+```
+
+The window above is `cycleStart` 22:00 with a `cycleExtent` of eight hours. An extent of zero is a
+single point, an extent equal to the cycle's length is the whole cycle, and a longer extent is a
+declaration error. Worked example:
+[§11, a wrapping window](examples/examples.md#11-a-wrapping-window-with-declared-endpoint-closure).
+
+#### 5.1.6 Ranges relative to an anchor
+
+A tolerance of ±2% around 18,000 kg, and a window of 30 days after an invoice, are ranges derived
+from an anchor and two offsets. An `AnchorBinding` keeps that derivation, so widening the tolerance
+is a change to one offset, not a rewrite of two endpoints. The anchor may be a definite value or a
+`ContextValue`, which an evaluation context supplies for each subject (§6, `qnt:ContextValue`).
+
+```mermaid
+flowchart TB
+    subgraph TOL["A tolerance: definite anchor, proportional offsets"]
+        R1["qnt:Range"] -- "relativeToAnchor" --> A1["qnt:AnchorBinding<br/>offsetKind Proportional<br/>lowerOffset 0.02, upperOffset 0.02"]
+        A1 -- "anchorValue" --> V1["qnt:Quantity<br/>18,000 kg"]
+    end
+    subgraph WIN["A window: context anchor, quantity offsets"]
+        R2["qnt:Range"] -- "relativeToAnchor" --> A2["qnt:AnchorBinding<br/>offsetKind Absolute"]
+        A2 -- "anchorValue" --> V2["qnt:ContextValue<br/>role: invoice date"]
+        A2 -- "lowerOffsetBy" --> O1["0 days"]
+        A2 -- "upperOffsetBy" --> O2["30 days"]
+    end
+```
+
+Worked examples: [§5, anchored tolerance](examples/examples.md#5-anchored-tolerance), and
+[`examples/context-anchor.ttl`](examples/context-anchor.ttl).
+
+#### 5.1.7 Units and conversion
+
+A space whose `UnitContract` requires units has each quantity carry one (`inUnit`), from a permitted
+`UnitFamily`. Two quantities in different units are compared only through a declared `Conversion`,
+whose transformation is stated, as a `conversionFactor` for the linear case, or a registered
+`ConversionFunction` otherwise. A `Contextual` conversion, such as one at a day's exchange rate or
+one counting business days, also needs a `ConversionContext` at evaluation time. Every way the
+chain can fail ends in `Undetermined`, never in a guess:
+
+```mermaid
+flowchart TB
+    S{"Same unit?"}
+    A{"Both units allowed<br/>by the UnitContract?"}
+    C{"A declared Conversion,<br/>direct or through a chain?"}
+    K{"Any step Contextual?"}
+    X{"ConversionContext present?"}
+    CMP["compare"]
+    U1["Undetermined<br/>no permitted conversion"]
+    U2["Undetermined<br/>ConversionContextAbsent"]
+    S -- "yes" --> CMP
+    S -- "no" --> A
+    A -- "no" --> U1
+    A -- "yes" --> C
+    C -- "no" --> U1
+    C -- "yes" --> K
+    K -- "no" --> CMP
+    K -- "yes" --> X
+    X -- "yes" --> CMP
+    X -- "no" --> U2
+```
+
+| `conversionKind` | Meaning | Example |
+|---|---|---|
+| `Exact` | definitional and lossless | metres to centimetres |
+| `Defined` | a declared factor or registered function | Fahrenheit to Celsius |
+| `Contextual` | needs an evidenced observation | euros to pounds on a date, business days to elapsed days |
+
+A business day is a `CalendarUnit`, and counting one needs the calendar in force, resolved as a
+concept scheme edition (ADR-A94). Worked examples:
+[§6, unit families and a registered conversion function](examples/examples.md#6-unit-families-and-a-registered-conversion-function),
+[§7, contextual conversion](examples/examples.md#7-contextual-conversion-and-when-context-is-actually-required).
+
+#### 5.1.8 Rates and proportions
+
+A rate, such as a dose per kilogram of body weight, and a proportion, such as a credit of 10% of a
+fee, are values in a `DerivedValueSpace` that names the space it divides and the space it divides
+by. `Scale` applies a rate to a base value, and `Ratio` of two values yields one (ADR-A93). A
+proportion names the same space twice, so 10% of a fee and 10% of an income stay in different
+spaces.
+
+```mermaid
+flowchart LR
+    DS["qnt:DerivedValueSpace<br/>dose per body weight"]
+    DS -- "numeratorSpace" --> N["dose, mg"]
+    DS -- "denominatorSpace" --> D["body weight, kg"]
+    RATE["rate<br/>5 mg per kg"] -- "Scale" --> RES["dose<br/>350 mg"]
+    BASE["body weight<br/>70 kg"] -- "Scale" --> RES
+```
+
+#### 5.1.9 Operations are declared, never assumed
+
+That a space holds numbers does not permit arithmetic over it (§5.1.3). Each permitted operation is
+an `OperationCapability` with its operand spaces and, for an operation that produces a value, its
+result space. An operation with no matching capability is not evaluated, and its request is
+recorded as `OperationNotPermitted`.
+
+```mermaid
+flowchart LR
+    REQ["OperationRequest<br/>Sum of two grades"] --> Q{"A capability with<br/>this signature?"}
+    Q -- "yes" --> EV["evaluate, in its result space"]
+    Q -- "no" --> NP["Comparison<br/>Undetermined, OperationNotPermitted"]
+```
+
+**Operations across two spaces.** Values from different spaces are not combined by default, but
+they may be, where a capability declares it. "1 May + 3" means nothing until two things are
+stated. The 3 must be a quantity in an extent space with a unit, since 3 days, 3 business days and
+3 months give different dates. And a capability must declare `Sum` with a position as its first
+operand, an extent as its second, and a position as its result. With both, "1 May + 3 days" is
+4 May. Without the capability, the request is refused.
+
+```mermaid
+flowchart LR
+    CAP["qnt:OperationCapability<br/>operationKind Sum"]
+    CAP -- "operand 1" --> P["date-space<br/>a position"]
+    CAP -- "operand 2" --> E["duration-space<br/>an extent, in days"]
+    CAP -- "resultSpace" --> R["date-space"]
+    X["1 May + 3 days"] -. "matches the signature" .-> RES["4 May"]
+```
+
+**Overlap screens, containment decides.** `Contains` and `Overlaps` capabilities also say which
+range semantics they provide. Overlap answers "could these have anything in common?", and is safe
+for finding candidates. It cannot say what two ranges admit together. Take A from 1 to 10 January
+and B from 20 to 30 January, which share no day, and a candidate C from 5 to 25 January. C
+overlaps A, and C overlaps B, yet no day of C lies in both A and B:
+
+```mermaid
+gantt
+    dateFormat YYYY-MM-DD
+    axisFormat %d %b
+    section Ranges
+    A                               :a, 2027-01-01, 2027-01-10
+    B                               :b, 2027-01-20, 2027-01-30
+    section Candidate
+    C overlaps A, and overlaps B    :active, c, 2027-01-05, 2027-01-25
+```
+
+Two overlap tests taken one at a time therefore cannot show that something satisfies both ranges.
+A capability whose `rangeSemanticsKind` is `ScreeningRangeSemantics` may be used to find
+candidates. Only one with `ExactRangeSemantics` may be used to decide what two ranges admit
+together (§9.4, laws Q4a, Q4b and Q5).
+
+#### 5.1.10 Three-valued comparison
+
+Every comparison is `True`, `False` or `Undetermined`. `Undetermined` is an honest answer, not an
+error and not a disguised `False`, and it always carries a reason:
+
+```mermaid
+flowchart TB
+    CMP["a comparison"]
+    CMP --> T["True"]
+    CMP --> F["False"]
+    CMP --> U["Undetermined"]
+    U --> R1["ValueAbsent"]
+    U --> R2["ValueMarkedUnresolved"]
+    U --> R3["GranularityInsufficient"]
+    U --> R4["ConversionContextAbsent"]
+    U --> R5["OutsideDeclaredSpace"]
+    U --> R6["OperationNotPermitted"]
+    U --> R7["NoBoundInUnit"]
+```
+
+A comparison worth keeping is recorded as a `Comparison`, with its result, its reasons, its
+evidence and the `OperationalProfile` that produced it, so that any consumer can see how it was
+reached. Eligibility and Behaviour read these results. Behaviour fires a condition trigger on
+`True`, and decides for itself what an `Undetermined` result means for an occurrence. Worked
+examples:
+[§20](examples/examples.md#20-a-comparison-behaviour-disposes-of-as-true) and
+[§21](examples/examples.md#21-a-comparison-behaviour-disposes-of-as-undetermined).
+
+#### 5.1.11 Recurring periods
+
+A `Recurrence` generates a sequence of ranges, its bins, from an anchor and a period. `binOf`
+returns the one bin that contains a position, and every bin has a stable key, so that independent
+processes agree on which period a position belongs to (law Q9). Two policies are declared
+separately. One says whether bins may have gaps (`binContiguity`), and the other how a boundary is
+derived when the anchor does not land cleanly, as with a monthly recurrence anchored on the 31st
+(`boundaryDerivation`).
+
+```mermaid
+gantt
+    dateFormat YYYY-MM-DD
+    axisFormat %d %b
+    section Monthly recurrence, anchored on 31 January
+    bin 1                           :b1, 2027-01-31, 2027-02-28
+    bin 2, AnchorPreserving         :b2, 2027-02-28, 2027-03-31
+    bin 3                           :b3, 2027-03-31, 2027-04-30
+    section A position
+    observed 15 March, binOf gives bin 2 :milestone, m1, 2027-03-15, 0d
+```
+
+The anchor may be a `ContextValue`, so one recurrence, such as "each year from the subscription
+start", serves every subscriber. Worked examples:
+[§12, a monthly recurrence](examples/examples.md#12-a-monthly-recurrence-with-the-two-alignment-axes-separated),
+[§22, a recurrence bin as reset-bin identity](examples/examples.md#22-a-recurrence-bin-as-reset-bin-identity).
+
+#### 5.1.12 Deterministic ordering
+
+When two occurrences share a timestamp, something must decide which comes first, and it should be
+a declaration rather than a database's insertion order. An `OrderingBasis` lists its criteria in
+priority order, each an `OrderingComponent` with a space and a direction, and says what happens to
+an occurrence whose ordering value is unresolved (`Defer`, `PlaceLast` or `Reject`).
+
+```mermaid
+flowchart LR
+    OB["qnt:OrderingBasis<br/>meter readings"]
+    OB -- "component 1" --> C1["valid time<br/>Ascending"]
+    OB -- "component 2" --> C2["reading kind<br/>scheduled before correction"]
+    OB -- "component 3" --> C3["sequence number<br/>Ascending"]
+    OB -- "unresolvedOrderPolicy" --> P["PlaceLast"]
+```
+
+Worked example: [§13, deterministic tie-breaking](examples/examples.md#13-deterministic-tie-breaking).
+
+#### 5.1.13 How the layer proves itself
+
+Quantification states laws, and each is discharged by the evidence its register needs (§10):
+
+```mermaid
+flowchart LR
+    L["qnt:Law"]
+    L --> S["SemanticLaw<br/>formal argument<br/>and property tests"]
+    L --> T["StaticConstraint<br/>SPARQL, SHACL,<br/>reasoner, analysis"]
+    L --> R["RuntimeConformance<br/>an executed test run"]
+    S --> E1["order and bound coherence,<br/>containment, overlap, conversion"]
+    T --> E2["operation admissibility,<br/>declaration completeness"]
+    R --> E3["canonical range sets,<br/>stable recurrence keys,<br/>no coercion of Undetermined,<br/>deterministic ordering"]
+```
+
+The same declarations can be evaluated by a SPARQL query set, checked by SHACL, classified by a
+reasoner, materialised, projected or compiled. Each is an operational profile, and each must pass
+the same conformance corpus. Worked examples: Parts IX to XIV of
+[`examples/examples.md`](examples/examples.md).
 ## 6. Classes
 
 ### `qnt:ValueSpace`
@@ -164,6 +685,15 @@ qnt:Quantity a owl:Class ;
     rdfs:subClassOf [ a owl:Restriction ; owl:onProperty qnt:numericValue ; owl:cardinality "1"^^xsd:nonNegativeInteger ] .
 ```
 
+**A quantity as a placeholder.** A layer above may hold a quantity whose number an instance
+supplies: a quantity with no `qnt:numericValue`, marked as taking its value from elsewhere, as
+Instrument's placeholders are (Instrument README §18.1). It is consistent under this class's
+cardinality, which an open world reads as a number not yet known, and the layer above generates the
+quantity with its number for each instance. Where the value comes from a defined word, the chain of
+words and variables must not loop back to where it started: such a loop is a violation, which
+Instrument reports hop by hop (Instrument README §18.4).
+
+
 ### `qnt:OrdinalValue`
 
 **Definition.** A point value represented by a concept in an ordered deployment-defined scheme.
@@ -190,6 +720,55 @@ qnt:UnresolvedValue a owl:Class ;
     rdfs:comment "A value whose required content is not currently available as a definite value in its declared space." ;
     fnd:utility "Use when a required value is pending, unknown, disputed, or unavailable, with a declared reason and evidence. Do not use this for a known-but-coarse value — see knownToGranularity instead." ;
     rdfs:subClassOf [ a owl:Restriction ; owl:onProperty qnt:unresolvedReason ; owl:minCardinality "1"^^xsd:nonNegativeInteger ] .
+```
+
+### `qnt:ContextValue`
+
+**Definition.** A value supplied by an evaluation context under a named role.
+
+**Utility.** Use for a value stated once and resolved for each subject, such as the arising of an obligation's occasion, the start of a subscription, or a date a contract's wording defines. It names its role with `contextRole`, a concept from a scheme a deployment or an upper layer binds to `qnt:ContextRoleContract`, and its space with `onSpace`. A context value is complete as stated. It is not an unresolved value, which is a required value that is missing, and it carries no reason or evidence. An evaluation that binds no value to its role is `Undetermined`, with a diagnostic naming the role.
+
+A context value anchors a recurrence or an anchored range like any other value. The same anchor node serves every subject, and each subject resolves it to its own value.
+
+```mermaid
+flowchart LR
+    R["qnt:Range<br/>the grace period"]
+    AB["qnt:AnchorBinding<br/>offsetKind Absolute"]
+    CV["qnt:ContextValue<br/>contextRole: renewal date"]
+    LO["qnt:Quantity<br/>0 days"]
+    UO["qnt:Quantity<br/>14 days"]
+    RC["qnt:Recurrence<br/>the allowance year"]
+    CV2["qnt:ContextValue<br/>contextRole: subscription start"]
+    PQ["qnt:Quantity<br/>1 year"]
+    R -- "relativeToAnchor" --> AB
+    AB -- "anchorValue" --> CV
+    AB -- "lowerOffsetBy" --> LO
+    AB -- "upperOffsetBy" --> UO
+    RC -- "anchor" --> CV2
+    RC -- "period" --> PQ
+```
+
+How a value is resolved for one subject.
+
+```mermaid
+sequenceDiagram
+    participant S as Stated
+    participant C as Evaluation context
+    participant R as Resolved
+    S->>C: anchor names the role "renewal date"
+    C->>C: binds the role for this subscriber, 2027-05-01
+    C->>R: the range from 2027-05-01 to 2027-05-15
+    Note over C,R: no binding for the role gives Undetermined, naming the role
+```
+
+The example `examples/context-anchor.ttl` shows both forms.
+
+```turtle-spec
+qnt:ContextValue a owl:Class ;
+    rdfs:subClassOf qnt:Value ;
+    rdfs:comment "A value supplied by an evaluation context under a named role (ADR-A115)." ;
+    fnd:utility "Use for a value stated once and resolved for each subject, such as an occasion's arising or a subscription's start. Name its role with contextRole, from a scheme bound to qnt:ContextRoleContract. It is complete as stated, unlike an UnresolvedValue. An evaluation that binds no value to its role is Undetermined, naming the role." ;
+    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty qnt:contextRole ; owl:cardinality "1"^^xsd:nonNegativeInteger ] .
 ```
 
 ### `qnt:Bound`
@@ -266,6 +845,15 @@ qnt:RangeSet a owl:Class ;
 
 **Utility.** Use where a range is defined relative to a nominal or reference value — a tolerance, a margin, a window around a scheduled position — rather than authored as two independent bounds. The derived bounds may be materialised for direct querying, but the anchor and offsets remain the authored form, so widening a tolerance is a change to one offset, not a rewrite of two endpoints. Use `offsetKind` `Proportional` only where the space's operation capabilities include `Ratio` — a proportional offset is meaningless without it.
 
+An offset is either a decimal (`lowerOffset`, `upperOffset`), in the anchor space's own units or as a proportion, or a quantity with its own unit (`lowerOffsetBy`, `upperOffsetBy`). A window of "10 business days after" or "six months before" an anchor needs the quantity form. A quantity offset is signed, and a negative one lies before the anchor. Counting it in a calendar unit is a contextual conversion (ADR-A94). A binding states both of its offsets in the same form.
+
+| Clause | Anchor | `lowerOffsetBy` | `upperOffsetBy` |
+|---|---|---|---|
+| "within 30 days of the invoice" | the invoice's date | 0 days | 30 days |
+| "within 10 business days after the end of each month" | the end of the period | 0 business days | 10 business days |
+| "not less than six months before the Break Date" | the Break Date | none (open) | −6 months |
+| "between six and three months before expiry" | the expiry | −6 months | −3 months |
+
 ```turtle-spec
 qnt:AnchorBinding a owl:Class ;
     rdfs:comment "A declared anchor value and offsets from which a Range's bounds are derived." ;
@@ -274,7 +862,9 @@ qnt:AnchorBinding a owl:Class ;
         [ a owl:Restriction ; owl:onProperty qnt:anchorValue ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
         [ a owl:Restriction ; owl:onProperty qnt:offsetKind ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
         [ a owl:Restriction ; owl:onProperty qnt:lowerOffset ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ,
-        [ a owl:Restriction ; owl:onProperty qnt:upperOffset ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] .
+        [ a owl:Restriction ; owl:onProperty qnt:upperOffset ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty qnt:lowerOffsetBy ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty qnt:upperOffsetBy ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] .
 ```
 
 ### `qnt:UnitContract`
@@ -550,14 +1140,15 @@ qnt:RuntimeConformanceDischarge a owl:Class ;
         qnt:OperationalProfile qnt:OperationRequest qnt:Law qnt:LawDischarge
     ) .
 
-qnt:Quantity owl:disjointWith qnt:OrdinalValue, qnt:UnresolvedValue .
-qnt:OrdinalValue owl:disjointWith qnt:UnresolvedValue .
+qnt:Quantity owl:disjointWith qnt:OrdinalValue, qnt:UnresolvedValue, qnt:ContextValue .
+qnt:OrdinalValue owl:disjointWith qnt:UnresolvedValue, qnt:ContextValue .
+qnt:UnresolvedValue owl:disjointWith qnt:ContextValue .
 qnt:CyclicRange owl:disjointWith qnt:Range .
 qnt:SemanticLawDischarge owl:disjointWith qnt:StaticConstraintDischarge, qnt:RuntimeConformanceDischarge .
 qnt:StaticConstraintDischarge owl:disjointWith qnt:RuntimeConformanceDischarge .
 ```
 
-**Utility.** The first group is the substrate's distinct top-level constructs — none should ever be classified as another. `Quantity`, `OrdinalValue`, and `UnresolvedValue` are three distinct kinds of `Value` and pairwise disjoint for the same reason. `CyclicRange` is disjoint from `Range` because a value space is either cyclically ordered or not (governance obligation 3, §10) — nothing should be classified as both range forms at once. The three discharge subclasses are pairwise disjoint because a single discharge names exactly one evidence contract.
+**Utility.** The first group is the substrate's distinct top-level constructs — none should ever be classified as another. `Quantity`, `OrdinalValue`, `UnresolvedValue` and `ContextValue` are four distinct kinds of `Value` and pairwise disjoint for the same reason. `CyclicRange` is disjoint from `Range` because a value space is either cyclically ordered or not (governance obligation 3, §10) — nothing should be classified as both range forms at once. The three discharge subclasses are pairwise disjoint because a single discharge names exactly one evidence contract.
 ## 7. Properties
 
 ```turtle-spec
@@ -699,6 +1290,21 @@ qnt:lowerOffset a owl:DatatypeProperty, owl:FunctionalProperty ;
 qnt:upperOffset a owl:DatatypeProperty, owl:FunctionalProperty ;
     rdfs:domain qnt:AnchorBinding ; rdfs:range xsd:decimal ;
     rdfs:comment "The offset above the anchor value, in the units or proportion offsetKind declares." .
+
+qnt:lowerOffsetBy a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain qnt:AnchorBinding ; rdfs:range qnt:Quantity ;
+    rdfs:comment "The lower offset from the anchor value, as a signed quantity with its own unit (ADR-A115)." ;
+    fnd:utility "Use for an offset in a unit other than the anchor space's own, such as business days or months. Negative lies before the anchor. Do not combine with lowerOffset or upperOffset on one binding." .
+
+qnt:upperOffsetBy a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain qnt:AnchorBinding ; rdfs:range qnt:Quantity ;
+    rdfs:comment "The upper offset from the anchor value, as a signed quantity with its own unit (ADR-A115)." ;
+    fnd:utility "Use for an offset in a unit other than the anchor space's own, such as business days or months. Negative lies before the anchor. Do not combine with lowerOffset or upperOffset on one binding." .
+
+qnt:contextRole a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain qnt:ContextValue ; rdfs:range skos:Concept ;
+    rdfs:comment "The role under which an evaluation context supplies a ContextValue (ADR-A115)." ;
+    fnd:utility "Name a concept from a scheme bound to qnt:ContextRoleContract. The substrate ships no roles: a deployment or an upper layer binds its own." .
 
 qnt:requiresUnit a owl:DatatypeProperty, owl:FunctionalProperty ;
     rdfs:domain qnt:UnitContract ; rdfs:range xsd:boolean ;
@@ -1068,6 +1674,22 @@ qnt:RuntimeConformance a qnt:LawRegister ;
 The substrate ships these mechanism values only. It ships no unit, unit family, currency, calendar, date convention, grade, priority, recurring period, or conversion observation.
 
 **On the absent `PartialOrder` and `IncomparableValues`.** An earlier draft carried both alongside a stated intention to omit `PartialOrder` from the first release, while leaving `IncomparableValues` in the `UnresolvedReason` enumeration — meaning that reason had no order kind able to produce it: dead mechanism-intrinsic vocabulary. Both are omitted here together, to be reintroduced together only if a case arrives that Eligibility's scheme-subsumption mechanism genuinely cannot express — two poset mechanisms with no declared relationship between them is worse than a missing order kind.
+
+The role contract (ADR-A115). It binds no scheme: Quantification ships no roles, and a deployment or an upper layer binds its own, as Instrument binds its baseline of the arising, inception, ending and a period's start and end.
+
+```turtle-vocab
+@prefix qnt:  <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix voc:  <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+
+qnt:ContextRoleContract a voc:SchemeContract ;
+    fnd:hasIdentity qnt:ContextRoleContract-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Context role scheme contract"@en ;
+    voc:constrainsProperty qnt:contextRole .
+```
+
 ## 9. Evaluation Semantics
 
 ### 9.1 Comparison outcomes
@@ -1084,13 +1706,32 @@ The substrate ships these mechanism values only. It ships no unit, unit family, 
 
 For a non-cyclic `Range`, a value is contained if it's in the same ValueSpace, not below the lower bound (respecting closure), not above the upper bound (respecting closure), and every required comparison is definite. Where a bound has `alternativeBound` statements, the value is compared with the statement in its own unit, with no conversion, and the comparison is `Undetermined` with `NoBoundInUnit` if none is in its unit (ADR-A95).
 
+```mermaid
+flowchart TB
+    Q0{"Same ValueSpace?"}
+    Q1{"Value resolved,<br/>and fine enough?"}
+    Q2{"Above the lower bound,<br/>or equal to it and Closed?"}
+    Q3{"Below the upper bound,<br/>or equal to it and Closed?"}
+    T["True"]
+    F["False"]
+    U["Undetermined,<br/>with the reason"]
+    Q0 -- "no" --> U
+    Q0 -- "yes" --> Q1
+    Q1 -- "no" --> U
+    Q1 -- "yes" --> Q2
+    Q2 -- "no" --> F
+    Q2 -- "yes, or no lower bound" --> Q3
+    Q3 -- "no" --> F
+    Q3 -- "yes, or no upper bound" --> T
+```
+
 ### 9.3 Cyclic range membership
 
 For a `CyclicRange` with `cycleStart` *s*, `cycleExtent` *e*, on a space with `cycleLength` *L*: a position *p* is contained if, measuring forward from *s* around the cycle, the forward distance to *p* is less than *e* (or equal to *e* where `endClosure` is `Closed`), and *p* is not equal to *s* unless `startClosure` is `Closed`. Degenerate cases are stated once, in §6, rather than left for each implementation to work out: extent zero is a single point; extent equal to *L* is the whole cycle; extent exceeding *L* is a declaration error.
 
 ### 9.4 Range overlap
 
-Two non-cyclic ranges overlap when their intersection is non-empty under the declared order and endpoint closures. Overlap is sound for screening — a reported overlap is a genuine non-empty pairwise intersection — but is not complete for meet-based enumeration: a value contained by neither of two ranges' meet may still be reported as a candidate by each range's overlap with a third, separately. A capability whose `rangeSemanticsKind` is `ScreeningRangeSemantics` must never be presented as exact co-admissibility; only `ExactRangeSemantics` may be. See §10, `Q4a`/`Q4b`/`Q5`.
+Two non-cyclic ranges overlap when their intersection is non-empty under the declared order and endpoint closures. Overlap is sound for screening, because a reported overlap is a genuine non-empty intersection of the two ranges compared. It is not complete for finding what several ranges admit together (their *meet*, the intersection of all of them). A candidate can overlap each of two ranges separately while overlapping nothing in their meet, as §5.1.9 shows. A capability whose `rangeSemanticsKind` is `ScreeningRangeSemantics` must therefore never be presented as deciding what several ranges admit together. Only `ExactRangeSemantics` may be. See §10, `Q4a`/`Q4b`/`Q5`.
 
 ### 9.5 Granularity
 
@@ -1098,7 +1739,14 @@ A value with declared granularity stands for a region around its represented poi
 
 ### 9.6 Conversion
 
-A comparison between values in distinct units is permitted only when both units are allowed by the relevant `UnitContract`; a declared `Conversion` relates them directly or through an allowed chain, with its transformation stated via `conversionFactor` or a registered `ConversionFunction` — never left undeclared; a `ConversionContext` is present where any step of that chain is `Contextual`; and the declared operational profile supports the required conversion path. An absent context produces `Undetermined`; it does not make the underlying values invalid RDF. A conversion from or to a `CalendarUnit` is always `Contextual`, and its context names the calendar's scheme contract (`underCalendar`) and the starting position (`fromPosition`) (ADR-A94).
+A comparison between values in different units is permitted only when all of the following hold:
+
+- both units are allowed by the space's `UnitContract`
+- a declared `Conversion` relates them, directly or through a chain of allowed conversions, and states its transformation with a `conversionFactor` or a registered `ConversionFunction`
+- a `ConversionContext` is present wherever a step of that chain is `Contextual`
+- the operational profile supports the conversion path
+
+Where any of these fails, the comparison is `Undetermined` (the flowchart in §5.1.7 shows each route). An absent context makes the comparison `Undetermined`, but does not make the values themselves invalid. A conversion from or to a `CalendarUnit` is always `Contextual`, and its context names the calendar's scheme contract (`underCalendar`) and the starting position (`fromPosition`) (ADR-A94).
 
 ### 9.7 Recurrence and `binOf`
 
@@ -1159,6 +1807,39 @@ Corrected mapping — an earlier draft understated this and named the wrong subs
 
 `Q6` (conversion coherence) is not a prerequisite for any of the above — it is needed for the layer's own internal correctness wherever conversion is used, not to unblock a specific upper-layer construct.
 
+```mermaid
+flowchart LR
+    subgraph QL["Quantification laws"]
+        Q3["Q3<br/>canonical range sets"]
+        Q4["Q4a, Q4b, Q5<br/>containment and overlap"]
+        Q7["Q7<br/>operation admissibility"]
+        Q8["Q8<br/>zero-bounded closure"]
+        Q9["Q9<br/>recurrence determinism"]
+        Q10["Q10<br/>no coercion of Undetermined"]
+        Q11["Q11<br/>ordering determinism"]
+    end
+    subgraph EL["Eligibility"]
+        E1["interval canonicalisation"]
+        E2["indeterminate range conditions"]
+        E3["overlap as screening"]
+    end
+    subgraph BH["Behaviour"]
+        B1["non-negative depletion"]
+        B2["absorption conservation"]
+        B3["reset bins"]
+        B4["queue ordering"]
+    end
+    Q3 --> E1
+    Q10 --> E2
+    Q4 --> E3
+    Q8 --> B1
+    Q8 --> B2
+    Q7 --> B2
+    Q9 --> B3
+    Q11 --> B4
+    style QL fill:#BBDEFB
+```
+
 ---
 
 ## 11. Governance Obligations
@@ -1180,7 +1861,7 @@ Checked over the relevant union graph and stated operational profile. They do no
 | 11 | Every persisted derived representation traces to source declarations, graph inputs, producing profile, and a declared authority level (advisory, cached-reproducible, operationally authoritative, or externally authoritative-and-synchronised). |
 | 12 | Changing order kind, density kind, operation capability, canonical unit, recurrence anchor, period, binContiguity, boundaryDerivation, or bin-key strategy requires a major declaration version. |
 
-**Conformance floor.** Direct SPARQL and SHACL validation are the mandatory baseline profiles; every other operational profile (reasoning, materialisation, projection, compiled evaluation) is per-deployment and must agree with the baseline over the shared conformance corpus (§13) where supported.
+**Conformance floor.** Direct SPARQL and SHACL validation are the mandatory baseline profiles; every other operational profile (reasoning, materialisation, projection, compiled evaluation) is per-deployment and must agree with the baseline over the shared conformance corpus (§15, and `examples/examples.md` §24) where supported.
 
 **Conformance levels.** Quantification states have a place on the same eight-level ladder used elsewhere in the substrate:
 
@@ -1259,6 +1940,27 @@ qnt:CalendarConversionShape
         """
     ] .
 
+qnt:ContextValueShape
+    a sh:NodeShape ;
+    sh:targetClass qnt:ContextValue ;
+    sh:property [ sh:path qnt:contextRole ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:IRI ;
+        sh:message "A context value names exactly one role (ADR-A115)." ] ;
+    sh:property [ sh:path qnt:onSpace ; sh:minCount 1 ; sh:maxCount 1 ; sh:class qnt:ValueSpace ;
+        sh:message "A context value is on exactly one value space." ] .
+
+qnt:AnchorBindingOffsetShape
+    a sh:NodeShape ;
+    sh:targetClass qnt:AnchorBinding ;
+    sh:property [ sh:path qnt:lowerOffsetBy ; sh:maxCount 1 ; sh:class qnt:Quantity ;
+        sh:message "A quantity offset is one quantity (ADR-A115)." ] ;
+    sh:property [ sh:path qnt:upperOffsetBy ; sh:maxCount 1 ; sh:class qnt:Quantity ;
+        sh:message "A quantity offset is one quantity (ADR-A115)." ] ;
+    sh:not [ sh:and (
+        [ sh:property [ sh:path [ sh:alternativePath ( qnt:lowerOffset qnt:upperOffset ) ] ; sh:minCount 1 ] ]
+        [ sh:property [ sh:path [ sh:alternativePath ( qnt:lowerOffsetBy qnt:upperOffsetBy ) ] ; sh:minCount 1 ] ]
+    ) ] ;
+    sh:message "An anchor binding states its offsets as decimals or as quantities, never both (ADR-A115)." .
+
 qnt:AlternativeBoundShape
     a sh:NodeShape ;
     sh:targetClass qnt:Bound ;
@@ -1283,6 +1985,21 @@ qnt:AlternativeBoundShape
 Substrate shapes are `qnt:`-named, as above; deployment shapes illustrating them (§14) are `ex:`-named — the two are never conflated in this document.
 ## 12. Relationship to Other Layers
 
+```mermaid
+flowchart BT
+    QNT["Quantification<br/>spaces, values, ranges,<br/>units, recurrences, ordering"]
+    FND["Foundation"] --> QNT
+    VOC["Vocabulary"] --> QNT
+    QNT --> PTY["Party"]
+    QNT --> ELG["Eligibility<br/>ranges and range sets for<br/>interval conditions"]
+    QNT --> BHV["Behaviour<br/>depletion, reset bins,<br/>ordering, condition triggers"]
+    QNT --> INS["Instrument<br/>due ranges, windows,<br/>recurrences, durations"]
+    QNT --> WRD["Wording"]
+```
+
+Quantification imports Foundation and Vocabulary, and is imported by every layer above it. It
+never names a class of a layer above it. Each consumer decides what its ranges and values mean.
+
 ### Foundation
 
 Quantification uses `fnd:Version` for declarations whose meaning changes over time, `fnd:Governable` for declarations needing review before operational use, `fnd:Evidenced` for unresolved values, conversion contexts, comparisons, conversion functions, and law discharges, and `fnd:TemporallyScoped` for conversion contexts.
@@ -1303,7 +2020,7 @@ Behaviour may consume zero-bounded quantity spaces for non-negative depletion, `
 
 ### Instrument
 
-Instrument may consume Quantification values and ranges for declared qualifiers — windows, tolerances, deadlines, capacities. Quantification does not prescribe the Instrument-level meaning of any such qualifier.
+Instrument may consume Quantification values and ranges for declared qualifiers — windows, tolerances, deadlines, capacities. Quantification does not prescribe the Instrument-level meaning of any such qualifier. Instrument's due ranges, windows and recurrences are anchored at context values, and Instrument binds its own baseline of roles to `qnt:ContextRoleContract`, namely an occasion's arising, an instrument's inception and ending, and the start and end of a recurrence period.
 
 ---
 
@@ -1314,6 +2031,12 @@ Instrument may consume Quantification values and ranges for declared qualifiers 
 3. **Contextual conversion observations.** The precise RDF shape for an external conversion observation should be designed alongside the first implementation profile, preserving the rule that a context is required for `Contextual` conversion.
 4. ~~**Derived rate spaces.**~~ Resolved by [ADR-A93](../../docs/architecture/decisions/ADR-A93-quantification-derived-rate-spaces.md): `qnt:DerivedValueSpace` and the `Scale` operation.
 5. **Precision and rounding policy vocabulary.** `precisionPolicy` and `roundingPolicy` (§7) exist as properties but have no declared vocabulary of values yet — `rdfs:Literal`-valued for the first release, with a closed vocabulary to follow once a real implementation profile needs to interpret them rather than merely record them.
+6. **Business day conventions and times of day.** How to roll a date that falls on a non-business day (following, modified following, preceding), and how to state a time of day in a zone ("by 11:00 a.m. London time"), are held as CCS held design question HQ-3, to be decided with the first business continuity examples.
+7. **Semi-additive aggregation.** A capability says which operations a space permits, not along
+   which grouping its values may be aggregated. Summing balances across accounts on one date is
+   meaningful, and summing one account's balances across dates is not, yet both use the same
+   space's `Sum` (§5.1.3). Whether Quantification should declare the groupings along which a
+   space is additive, or leave that rule to the consuming layer, is open.
 
 **Resolved, not reopened:** partial orders (omitted, §8); the L5a/L5b-equivalent classification for containment versus overlap (§9, `Q4a`/`Q4b`/`Q5`); cyclic range endpoint closure (§6); ordering tie-breakers (§6, `OrderingComponent`); range-set adjacency (§6, `densityKind`); the Gate prerequisite mapping (§10).
 
@@ -1340,7 +2063,7 @@ Quantification is ready for use by Eligibility and Behaviour only when:
 
 ## 15. Authoring Procedure
 
-This layer is unauthored as Turtle. Before it becomes normative:
+The procedure this layer was authored under, kept as the standard for its later revisions. The layer is now authored, so item 3's note that the public author can be first records how it began.
 
 1. Publish the generic premise and the two-premise temporal collapse (§1, §4) as a public ADR, citing only public sources on measurement, order theory, interval semantics, SKOS, SHACL, RDF, and provenance — not any closed internal estate. The name `Quantification` must be coined from this public premise directly, not arrive via a closed renaming table, for the same reason applied elsewhere in the substrate to avoid a derivation fingerprint with no corresponding benefit.
 2. Author at least two non-domain-inventory examples per newly introduced construct as loadable RDF graphs, before generalising any mechanism further — three for constructs an upper layer is actually blocked on.
@@ -1374,3 +2097,13 @@ What changed from the earlier draft, and why — kept here rather than only in a
 | Laws | Gate prerequisite table corrected; `Q11` (ordering determinism) added | The stated prerequisites didn't match what upper layers actually depend on, and ordering had no law at all (S7) |
 | Governance | Conformance-level table, mandatory-profile statement, and derivation-authority obligation added | Required by the substrate's own conformance and provenance conventions, previously absent (P1, P3, P5) |
 | Procedure | Clean-room authoring referenced explicitly | An earlier, weaker procedure restated rather than deferred to the established one (P4) |
+
+---
+
+## 17. Release Notes
+
+- **0.7.0** (additive, CCS C7b, ADR-A115): `qnt:ContextValue` with `qnt:contextRole`, the role
+  contract `qnt:ContextRoleContract`, and the unit-bearing offsets `qnt:lowerOffsetBy` and
+  `qnt:upperOffsetBy` on `qnt:AnchorBinding`. Shapes 0.2.0 (additive): a context value's role and
+  space, and an anchor binding's offsets in one form. This README became the literate source of
+  the spec, vocab and shapes, with no change to their graphs. Every importer is re-pinned.

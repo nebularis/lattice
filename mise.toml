@@ -12,7 +12,7 @@ PYTHONUNBUFFERED = "1"
 
 [tasks.bootstrap]
 description = "Install configured toolchains and dependency sets"
-depends = ["bootstrap:python-root", "bootstrap:mork", "bootstrap:mork-compilers", "bootstrap:vocabulary", "bootstrap:surface", "bootstrap:persistence", "bootstrap:minting-python", "bootstrap:workers", "bootstrap:frontend"]
+depends = ["bootstrap:python-root", "bootstrap:mork", "bootstrap:mork-compilers", "bootstrap:vocabulary", "bootstrap:reference-eligibility", "bootstrap:surface", "bootstrap:persistence", "bootstrap:minting-python", "bootstrap:workers", "bootstrap:frontend"]
 
 [tasks."bootstrap:python-root"]
 description = "Install root ontology validation dependencies"
@@ -44,13 +44,18 @@ run = "python -m pip install -e \"./tools/persistence[test]\""
 description = "Install the Vocabulary scoped/temporal binding reference resolver (ADR-A85)"
 run = "python -m pip install -e \"./tools/vocabulary[test]\""
 
+[tasks."bootstrap:reference-eligibility"]
+depends = ["bootstrap:mork-compilers"]
+description = "Install Eligibility's hand-written reference semantics (formal-methods track B1/B2, ADR-A-FM3)"
+run = "python -m pip install -e \"./tools/reference/eligibility[test]\""
+
 [tasks."bootstrap:frontend"]
 description = "Install the Yarn workspace through Corepack"
 run = "corepack enable && yarn install --immutable"
 
 [tasks.check]
 description = "Run all repository validation tasks"
-depends = ["check:python-root", "check:workers", "check:java", "check:frontend", "check:spc", "check:persistence", "check:vocabulary", "check:mork-compilers", "check:ontology-versioning", "check:ontology-catalog", "check:import-guard", "check:reasoning-isolation", "check:minting", "build:mtp", "check:mtp", "check:authoring-tools"]
+depends = ["check:python-root", "check:workers", "check:java", "check:frontend", "check:spc", "check:persistence", "check:vocabulary", "check:reference-eligibility", "check:mork-compilers", "check:ontology-versioning", "check:ontology-catalog", "check:import-guard", "check:reasoning-isolation", "check:minting", "check:formal-freshness", "check:agent-guidance", "build:mtp", "check:mtp", "check:authoring-tools"]
 
 [tasks.test]
 description = "Run the repository test suites"
@@ -131,6 +136,29 @@ run = "mvn -q -f packages/minting/java/pom.xml verify"
 description = "Check both identity minting libraries and the anchor vectors (the table check, which downloads the UCD, is check:minting-tables)"
 depends = ["check:minting-anchors", "check:minting-python", "check:minting-java"]
 
+[tasks."build:persistence-execution"]
+description = "Compile every ontology/persistence example and write its SPARQL and minting recipes to ontology/persistence/execution (generated, ignored by git)"
+run = """
+set -e
+t=$(mktemp -d)
+out=ontology/persistence/execution
+rm -rf "$out"/*/
+for f in ontology/persistence/examples/*.ttl; do
+  n=$(basename "$f" .ttl)
+  args="$f"
+  if [ "$n" = capability-spec-example ]; then args="ontology/persistence/examples/baseline-single-class.ttl --capability-spec $f"; fi
+  mkdir -p "$out/$n"
+  if python -m persistence compile ontology/persistence/spec/persistence.ttl $args --out "$t/$n.ttl" > "$t/$n.log" 2>&1; then
+    python -m persistence instantiate "$t/$n.ttl" --out "$out/$n/sparql" > /dev/null 2>&1
+    python -m persistence export-recipes "$t/$n.ttl" --out "$out/$n/recipes" > /dev/null 2>&1 || true
+    rmdir "$out/$n/recipes" 2> /dev/null || true
+  else
+    sed -e "s|$t/||g" "$t/$n.log" > "$out/$n/refused.txt"
+  fi
+done
+rm -rf "$t"
+"""
+
 [tasks."build:minting-vectors"]
 description = "Compile the identity-minting anchor and coverage fixtures and regenerate the committed recipes and conformance vectors in packages/minting/testdata"
 run = """
@@ -153,6 +181,34 @@ run = "python -m pytest tools/persistence/tests -q"
 description = "Run the Vocabulary scoped/temporal binding conformance package (SHACL fixtures, resolver, determinism, consumer boundary; ADR-A85)"
 run = "python -m pytest tools/vocabulary/tests -q"
 
+[tasks."check:reference-eligibility"]
+description = "Run Eligibility's hand-written reference semantics and its differential tests against tools/mork_compilers (kernel, denotation, laws L9-L16; formal-methods track B1/B2, ADR-A-FM3)"
+run = "python -m pytest tools/reference/eligibility/tests -q"
+
+[tasks."check:formal-freshness"]
+description = "Check every tools/proofs/<layer>/Kernel.thy and tools/reference/<layer>/ law-coverage still matches its layer's literate README (formal-methods epic, epic principle E1)"
+run = "python tools/check_formal_freshness.py"
+
+[tasks."build:agent-guidance"]
+description = "Write .github/copilot-instructions.md from AGENTS.md (ADR-A117)"
+run = "python tools/agent_guidance.py build"
+
+[tasks."check:agent-guidance"]
+description = "Check Copilot's file matches AGENTS.md, every skill is well formed and listed, the plugin marketplace is right, and every link resolves (ADR-A117)"
+run = "python tools/agent_guidance.py check && python -m pytest tools/test_agent_guidance.py -q"
+
+[tasks."skills:link"]
+description = "Link LATTICE's skills into ~/.copilot/skills for Copilot in other projects (copies on Windows). Re-run after pulling. Pass --target for another directory"
+run = "python tools/agent_guidance.py link"
+
+[tasks."check:deny-terms"]
+description = "Check staged changes against your personal deny-list, never published (skill lattice-publication-hygiene). Pass --all to scan every tracked file"
+run = "python tools/deny_terms.py"
+
+[tasks."hooks:install"]
+description = "Install an opt-in git pre-commit hook running the deny-terms check"
+run = "python tools/deny_terms.py install-hook"
+
 [tasks."check:mork-compilers"]
 description = "Run the MORK backend compiler tests, including generated SPARQL executed against fixtures (ADR-A24, ADR-A89)"
 run = "python -m pytest tools/mork_compilers -q"
@@ -174,8 +230,8 @@ description = "Regenerate ontology/catalog-v001.xml and the spec/vocab stub cata
 run = "python tools/ontology_catalog.py write"
 
 [tasks."check:ontology-catalog"]
-description = "Run the ontology tool tests (catalog, versioning, Eligibility examples, PROV-O alignment, Wording, Behaviour split), then fail when a catalog drifts, an import does not resolve, or a known defect is fixed but still listed (ADR-A88)"
-run = "python -m pytest tools/test_applied_shared_contracts.py tools/test_eligibility_examples.py tools/test_mork_order_relations.py tools/test_ontology_catalog.py tools/test_ontology_releases.py tools/test_ontology_version_check.py tools/test_peril_vocabulary.py tools/test_provenance_alignment.py tools/test_reasoning_isolation.py tools/test_substrate_extensions.py tools/test_wording.py tools/test_behaviour_split.py tools/test_import_guard.py tools/test_behaviour_records.py -q && python tools/ontology_catalog.py check"
+description = "Run the ontology tool tests (catalog, versioning, Eligibility examples, PROV-O alignment, Wording, Behaviour split, Instrument with its regimes and terms in time), then fail when a catalog drifts, an import does not resolve, or a known defect is fixed but still listed (ADR-A88)"
+run = "python -m pytest tools/test_applied_shared_contracts.py tools/test_eligibility_examples.py tools/test_mork_order_relations.py tools/test_ontology_catalog.py tools/test_ontology_releases.py tools/test_ontology_version_check.py tools/test_peril_vocabulary.py tools/test_provenance_alignment.py tools/test_reasoning_isolation.py tools/test_substrate_extensions.py tools/test_wording.py tools/test_behaviour_split.py tools/test_import_guard.py tools/test_behaviour_records.py tools/test_behaviour_nested.py tools/test_keys.py tools/test_instrument.py tools/test_regimes.py tools/test_terms_in_time.py tools/test_constitutive_terms.py tools/test_parameter_bindings.py -q && python tools/ontology_catalog.py check"
 
 [tasks."bootstrap:reasoning-testkit"]
 description = "Build the test-only reasoning harness jar (ADR-A83). Tests that need it skip without it"
@@ -326,3 +382,37 @@ bundle install
 description = "Serve docs/ locally with Jekyll (run bootstrap:jekyll first)"
 tools = { ruby = "3.4" }
 run = "cd docs && bundle exec jekyll serve"
+
+# Formal methods, track D (the prover spike, formal-methods-phase-0.md). Not part of the default
+# bootstrap or check tasks: toolchains and images are large, and native installs take minutes to
+# hours (epic formal-methods, §4 Environments). Run explicitly when working on spikes/formal-prover.
+
+[tasks."check:formal-network"]
+description = "Probe whether track D's tool sources (opam, the Rocq repository, the Isabelle mirror, Docker Hub) are reachable, flagging proxy block pages (epic formal-methods §4)"
+run = "python spikes/formal-prover/env/probe_network.py"
+
+[tasks."bootstrap:formal-images"]
+description = "Build track D's pinned Rocq+MetaRocq and GHC-wasm images (epic formal-methods §4). Needs Docker. An optional extra root CA is read from NODE_EXTRA_CA_CERTS and never stored in an image layer or committed"
+run = "python spikes/formal-prover/env/build_images.py"
+
+[tasks."bootstrap:formal-native-rocq"]
+description = "Install opam, an OCaml switch and Rocq natively, for interactive authoring only (epic E9). Windows only in this spike; set LATTICE_FORMAL_ROOT first for a location outside the repository"
+run_windows = "powershell -NoProfile -ExecutionPolicy Bypass -File .local/formal-methods-spike/scripts/install-ocaml-rocq.ps1"
+run = "echo 'Native Rocq install is scripted for Windows only in this spike (epic E9). Use bootstrap:formal-images for the portable route.'"
+
+[tasks."bootstrap:formal-native-isabelle"]
+description = "Install Isabelle natively, for interactive authoring only (epic E9). Windows only in this spike; set LATTICE_FORMAL_ROOT first for a location outside the repository"
+run_windows = "powershell -NoProfile -ExecutionPolicy Bypass -File .local/formal-methods-spike/scripts/install-isabelle.ps1"
+run = "echo 'Native Isabelle install is scripted for Windows only in this spike (epic E9). Isabelle has no image route here.'"
+
+[tasks."check:formal-smoke"]
+description = "Confirm both tools run on the image route (portable) for track D (epic formal-methods §4). Pass -- --route native --tool rocq,isabelle on a host with the native toolchains installed for the authoring route too"
+run = "python spikes/formal-prover/env/smoke.py"
+
+# Formal methods, track E (the prover programme, tools/proofs/, ADR-A-FM1, ADR-A-FM2). Native
+# route only: Isabelle has no image in this programme yet (epic formal-methods §4). Needs
+# bootstrap:formal-native-isabelle run first.
+
+[tasks."check:proofs"]
+description = "Build every tools/proofs/<layer>/ Isabelle session natively and run the proof gate (ADR-A-FM2). Pass a layer name to build only that one"
+run = "python tools/proofs/check.py"

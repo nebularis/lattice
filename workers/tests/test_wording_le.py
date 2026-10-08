@@ -1,4 +1,4 @@
-"""Tests the Logical English reading of the Wording layer (ADR-A114, plan WA6).
+"""Tests the Logical English reading of the Wording layer (ADR-A118, plan WA6).
 
 Covers S6-01 to S6-13 of docs/developer/plans/word-authoring-poc.md section "WA6".
 """

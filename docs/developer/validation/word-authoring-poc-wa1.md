@@ -8,7 +8,7 @@
 ## Invariant
 
 The three runtimes (Java, Python, the add-in) agree on one wire format before any of them is
-built. Every message schema closes its object shape (ADR-A114 decision 1: the POC's own
+built. Every message schema closes its object shape (ADR-A118 decision 1: the POC's own
 contracts, not a platform contract) and marks every optional field `null` rather than omitting it,
 so a producer in one language and a consumer in another cannot silently drift. The three sample
 documents exercise the Wording text-part model the sketch describes (§3.1): a literal, a variable

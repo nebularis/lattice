@@ -488,11 +488,11 @@ Rules that apply uniformly:
 
 ### 4.7 Word Authoring Proof of Concept
 
-**Not a platform contract.** A spike (ADR-A114, Proposed) testing whether a drafter can mark a
+**Not a platform contract.** A spike (ADR-A118, Proposed) testing whether a drafter can mark a
 contract's text parts in Microsoft Word, with no local installation, and have the marked document
 read as Logical English and a proposed meaning. See the
 [sketch](../developer/sketches/word-authoring-poc.md) for the design and
-[ADR-A114](decisions/ADR-A114-word-authoring-proof-of-concept.md) for the decision record. Its
+[ADR-A118](decisions/ADR-A118-word-authoring-proof-of-concept.md) for the decision record. Its
 code, vocabulary and graph layout may be removed or rewritten without deprecation, and nothing
 outside `platform/authoring-service`, `workers/src/lattice_workers/wording_le`,
 `apps/word-authoring-addin` and `contracts/authoring` may depend on them.

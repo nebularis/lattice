@@ -1,0 +1,291 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Premise. A facility agreement gives the borrower 30 business days to remedy
+# a breach of its leverage covenant. If leverage is not back within the
+# covenant by then, an event of default occurs, and the lender may accelerate
+# the loan. The cure period does not run while a force majeure event prevents
+# the borrower from reporting leverage.
+#
+# The agreement's clauses:
+#
+# | Clause | Text | Meaning |
+# |--------|------|---------|
+# | 7.1    | The Borrower shall ensure that leverage does not exceed 3.0 to 1. | a continuing obligation |
+# | 22.1   | If leverage exceeds 3.0 to 1, the Borrower may remedy it within 30 Business Days. If it does not, an Event of Default occurs. | the event-of-default regime |
+# | 22.2   | The period in clause 22.1 does not run while a force majeure event prevents the Borrower from reporting leverage. | the force majeure regime, which tolls the cure period |
+# | 23.1   | While an Event of Default is continuing, the Lender may declare the Loan immediately due. | a power, gated by the default state |
+#
+# The event-of-default regime:
+#
+#   performing --(leverage above the covenant)--> cure period
+#   cure period --(leverage within the covenant)--> performing
+#   cure period --(expiry, 30 business days after entering it,
+#                  not counting time in tmpl:affected)--> default
+#
+# The force majeure regime: unaffected <--> affected, on conditions.
+#
+# What the example shows:
+#
+# | Construct                                       | Where                                   |
+# |-------------------------------------------------|-----------------------------------------|
+# | a regime entered and left on conditions         | ins:OnCondition, ex:leverage-exceeded, ex:leverage-ok |
+# | an expiry in a calendar unit (ADR-A94)          | tmpl:on-cure-expiry, ins:after, ex:business-day |
+# | a period tolled by another regime's state       | ins:tolledIn tmpl:affected               |
+# | a power gated by a state                        | ex:accelerate, ins:appliesInState tmpl:default |
+# | one condition read by an obligation and a trigger | ex:leverage-ok: what 7.1 maintains, and what ends the cure period |
+
+@prefix ins:     <https://www.nebularis.org/neuro-semantic/lattice/instrument#> .
+@prefix ins-voc: <https://www.nebularis.org/neuro-semantic/lattice/instrument/vocab#> .
+@prefix bhv:     <https://www.nebularis.org/neuro-semantic/lattice/behaviour#> .
+@prefix wrd:     <https://www.nebularis.org/neuro-semantic/lattice/wording#> .
+@prefix wrd-voc: <https://www.nebularis.org/neuro-semantic/lattice/wording/vocab#> .
+@prefix fnd:     <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix pty:     <https://www.nebularis.org/neuro-semantic/lattice/party#> .
+@prefix elg:     <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
+@prefix qnt:     <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
+@prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+@prefix tmpl:    <https://example.org/lattice/instrument/facility-cure-period/form/> .
+@prefix ex:      <https://example.org/lattice/instrument/facility-cure-period/> .
+
+# ==== The facility form: wording =============================================
+
+ex:form a wrd:Wording ;
+    fnd:hasIdentity ex:form-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:directlyComprises ex:sec-7 , ex:sec-22 , ex:sec-23 .
+
+ex:sec-7 a wrd:Element ;
+    fnd:hasIdentity ex:sec-7-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Section ; wrd:objectId "7" ; wrd:rankKey "g0" ;
+    wrd:directlyComprises ex:cl-7-1 .
+ex:cl-7-1 a wrd:Text ;
+    fnd:hasIdentity ex:cl-7-1-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "7.1" ; wrd:rankKey "a0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "The Borrower shall ensure that leverage does not exceed 3.0 to 1." ] .
+
+ex:sec-22 a wrd:Element ;
+    fnd:hasIdentity ex:sec-22-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Section ; wrd:objectId "22" ; wrd:rankKey "v0" ;
+    wrd:directlyComprises ex:cl-22-1 , ex:cl-22-2 .
+ex:cl-22-1 a wrd:Text ;
+    fnd:hasIdentity ex:cl-22-1-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "22.1" ; wrd:rankKey "a0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "If leverage exceeds 3.0 to 1, the Borrower may remedy it within 30 Business Days. If it does not, an Event of Default occurs." ] .
+ex:cl-22-2 a wrd:Text ;
+    fnd:hasIdentity ex:cl-22-2-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "22.2" ; wrd:rankKey "b0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "The period in clause 22.1 does not run while a force majeure event prevents the Borrower from reporting leverage." ] .
+
+ex:sec-23 a wrd:Element ;
+    fnd:hasIdentity ex:sec-23-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Section ; wrd:objectId "23" ; wrd:rankKey "w0" ;
+    wrd:directlyComprises ex:cl-23-1 .
+ex:cl-23-1 a wrd:Text ;
+    fnd:hasIdentity ex:cl-23-1-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "23.1" ; wrd:rankKey "a0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "While an Event of Default is continuing, the Lender may declare the Loan immediately due." ] .
+
+# ==== Roles, durations, conditions ===========================================
+
+ex:Lender a pty:Role ; rdfs:label "Lender" .
+ex:Borrower a pty:Role ; rdfs:label "Borrower" .
+
+# A business day is a calendar unit. Counting 30 of them from entering the
+# cure period needs the calendar in force, named by a conversion context when
+# the expiry is evaluated (ADR-A94, C12).
+ex:duration-space a qnt:ValueSpace ;
+    qnt:spaceKey "duration-business-days" ; qnt:orderKind qnt:TotalOrder ; qnt:densityKind qnt:Discrete ;
+    qnt:spaceHash "duration-business-days-v1" .
+ex:business-day a qnt:CalendarUnit ; rdfs:label "business day" .
+
+# Leverage within the covenant, and above it: two interval conditions that
+# partition the ratio's space at 3.0.
+ex:leverage-space a qnt:ValueSpace ;
+    qnt:spaceKey "leverage-ratio" ; qnt:orderKind qnt:TotalOrder ; qnt:densityKind qnt:Dense ;
+    qnt:spaceHash "leverage-ratio-v1" .
+ex:three a qnt:Quantity ; qnt:onSpace ex:leverage-space ; qnt:numericValue "3.0"^^xsd:decimal .
+
+ex:at-most-three a qnt:Bound ;
+    qnt:onSpace ex:leverage-space ; qnt:boundValue ex:three ; qnt:boundSense qnt:Upper ; qnt:boundClosure qnt:Closed .
+ex:up-to-three a qnt:Range ; qnt:onSpace ex:leverage-space ; qnt:upperBound ex:at-most-three ; qnt:hasBound ex:at-most-three .
+ex:permitted-leverage a qnt:RangeSet ; qnt:onSpace ex:leverage-space ; qnt:hasRange ex:up-to-three .
+ex:leverage-ok a elg:IntervalCondition ;
+    elg:conditionKey "leverage-within-covenant" ;
+    elg:matchStrategy elg:IntervalContainment ;
+    elg:compatibilityOperation elg:AllRequired ;
+    elg:wildcardSemantics elg:NoWildcard ;
+    elg:requiredRangeSet ex:permitted-leverage .
+
+ex:above-three a qnt:Bound ;
+    qnt:onSpace ex:leverage-space ; qnt:boundValue ex:three ; qnt:boundSense qnt:Lower ; qnt:boundClosure qnt:Open .
+ex:over-three a qnt:Range ; qnt:onSpace ex:leverage-space ; qnt:lowerBound ex:above-three ; qnt:hasBound ex:above-three .
+ex:excess-leverage a qnt:RangeSet ; qnt:onSpace ex:leverage-space ; qnt:hasRange ex:over-three .
+ex:leverage-exceeded a elg:IntervalCondition ;
+    elg:conditionKey "leverage-above-covenant" ;
+    elg:matchStrategy elg:IntervalContainment ;
+    elg:compatibilityOperation elg:AllRequired ;
+    elg:wildcardSemantics elg:NoWildcard ;
+    elg:requiredRangeSet ex:excess-leverage .
+
+# Placeholders: triggers stated, not yet evaluable. Their concepts are in no
+# scheme and no evidence binding reads them, until the case data exists (C7b,
+# C13).
+ex:force-majeure-prevents a elg:Condition ;
+    elg:conditionKey "force-majeure-prevents-reporting" ;
+    elg:matchStrategy elg:ExactMatch ; elg:compatibilityOperation elg:AllRequired ;
+    elg:wildcardSemantics elg:NoWildcard ;
+    elg:requiredConcept ex:prevented .
+ex:prevented a skos:Concept ; rdfs:label "a force majeure event prevents the Borrower from reporting leverage" .
+
+ex:force-majeure-ended a elg:Condition ;
+    elg:conditionKey "force-majeure-ended" ;
+    elg:matchStrategy elg:ExactMatch ; elg:compatibilityOperation elg:AllRequired ;
+    elg:wildcardSemantics elg:NoWildcard ;
+    elg:requiredConcept ex:ended .
+ex:ended a skos:Concept ; rdfs:label "the force majeure event no longer prevents the Borrower from reporting leverage" .
+
+# ==== Stated meaning: relations ==============================================
+
+tmpl:term-7-1 a ins:Term , ins:Template ; ins:expressedIn ex:cl-7-1 .
+tmpl:leverage a ins:ContinuingObligation , ins:Template ;
+    ins:arisesUnder tmpl:term-7-1 ;
+    ins:obligor ex:Borrower ;
+    ins:obligee ex:Lender ;
+    ins:maintains ex:leverage-ok .
+
+tmpl:term-23-1 a ins:Term , ins:Template ; ins:expressedIn ex:cl-23-1 .
+tmpl:accelerate a ins:Power , ins:Template ;
+    ins:arisesUnder tmpl:term-23-1 ;
+    ins:holder ex:Lender ;
+    ins:counterparty ex:Borrower ;
+    ins:activity ins-voc:DeclareDue ;
+    ins:appliesInState tmpl:default .
+
+# ==== Stated meaning: the event-of-default regime ============================
+#
+# A cure period is a period regime: entered on a trigger, left on an end
+# trigger or at its expiry, whichever comes first.
+
+tmpl:term-22-1 a ins:Term , ins:Template ; ins:expressedIn ex:cl-22-1 .
+tmpl:default-regime a ins:Regime , bhv:StateSpace , ins:Template ;
+    fnd:hasIdentity tmpl:default-regime-identity ;
+    ins:arisesUnder tmpl:term-22-1 ;
+    bhv:initialState tmpl:performing .
+
+tmpl:performing a bhv:State ;
+    bhv:inStateSpace tmpl:default-regime ; ins:stateKind ins-voc:InForce .
+tmpl:cure-period a bhv:State ;
+    bhv:inStateSpace tmpl:default-regime ; ins:stateKind ins-voc:CurePeriod .
+tmpl:default a bhv:State ;
+    bhv:inStateSpace tmpl:default-regime ; ins:stateKind ins-voc:Default .
+
+tmpl:on-leverage-exceeded a ins:OnCondition , bhv:TriggerDefinition ;
+    bhv:triggerKind bhv:DerivedTrigger ;
+    ins:condition ex:leverage-exceeded .
+tmpl:on-leverage-restored a ins:OnCondition , bhv:TriggerDefinition ;
+    bhv:triggerKind bhv:DerivedTrigger ;
+    ins:condition ex:leverage-ok .
+tmpl:on-cure-expiry a ins:OnExpiry , bhv:TriggerDefinition ;
+    bhv:triggerKind bhv:ScheduledTrigger ;
+    ins:after [ a qnt:Quantity ; qnt:onSpace ex:duration-space ;
+                qnt:numericValue "30"^^xsd:decimal ; qnt:inUnit ex:business-day ] ;
+    ins:tolledIn tmpl:affected .                      # clause 22.2: time does not run here
+
+tmpl:enter-cure-period a ins:RegimeTransition , bhv:TransitionDefinition ;
+    bhv:fromState tmpl:performing ; bhv:toState tmpl:cure-period ;
+    bhv:hasTrigger tmpl:on-leverage-exceeded ;
+    bhv:selectionPolicy bhv:SingleMatch ; bhv:activationPolicy bhv:ImmediateActivation .
+tmpl:cured a ins:RegimeTransition , bhv:TransitionDefinition ;
+    bhv:fromState tmpl:cure-period ; bhv:toState tmpl:performing ;
+    bhv:hasTrigger tmpl:on-leverage-restored ;
+    bhv:selectionPolicy bhv:SingleMatch ; bhv:activationPolicy bhv:ImmediateActivation .
+tmpl:enter-default a ins:RegimeTransition , bhv:TransitionDefinition ;
+    bhv:fromState tmpl:cure-period ; bhv:toState tmpl:default ;
+    bhv:hasTrigger tmpl:on-cure-expiry ;
+    bhv:selectionPolicy bhv:SingleMatch ; bhv:activationPolicy bhv:ImmediateActivation .
+
+# ==== Stated meaning: the force majeure regime ===============================
+
+tmpl:term-22-2 a ins:Term , ins:Template ; ins:expressedIn ex:cl-22-2 .
+tmpl:force-majeure-regime a ins:Regime , bhv:StateSpace , ins:Template ;
+    fnd:hasIdentity tmpl:force-majeure-regime-identity ;
+    ins:arisesUnder tmpl:term-22-2 ;
+    bhv:initialState tmpl:unaffected .
+
+tmpl:unaffected a bhv:State ;
+    bhv:inStateSpace tmpl:force-majeure-regime .
+tmpl:affected a bhv:State ;
+    bhv:inStateSpace tmpl:force-majeure-regime ; ins:stateKind ins-voc:ForceMajeure .
+
+tmpl:on-force-majeure a ins:OnCondition , bhv:TriggerDefinition ;
+    bhv:triggerKind bhv:DerivedTrigger ;
+    ins:condition ex:force-majeure-prevents .
+tmpl:on-force-majeure-ended a ins:OnCondition , bhv:TriggerDefinition ;
+    bhv:triggerKind bhv:DerivedTrigger ;
+    ins:condition ex:force-majeure-ended .
+
+tmpl:force-majeure-begins a ins:RegimeTransition , bhv:TransitionDefinition ;
+    bhv:fromState tmpl:unaffected ; bhv:toState tmpl:affected ;
+    bhv:hasTrigger tmpl:on-force-majeure ;
+    bhv:selectionPolicy bhv:SingleMatch ; bhv:activationPolicy bhv:ImmediateActivation .
+tmpl:force-majeure-ends a ins:RegimeTransition , bhv:TransitionDefinition ;
+    bhv:fromState tmpl:affected ; bhv:toState tmpl:unaffected ;
+    bhv:hasTrigger tmpl:on-force-majeure-ended ;
+    bhv:selectionPolicy bhv:SingleMatch ; bhv:activationPolicy bhv:ImmediateActivation .
+
+# ==== The facility for Kestrel ===============================================
+
+ex:kestrel-wording-v1 a wrd:AssembledWording ;
+    fnd:hasIdentity ex:kestrel-wording-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:assembledFrom ex:form ;
+    wrd:includes ex:sec-7 , ex:cl-7-1 , ex:sec-22 , ex:cl-22-1 , ex:cl-22-2 , ex:sec-23 , ex:cl-23-1 .
+
+ex:kestrel-v1 a ins:Instrument ;
+    fnd:hasIdentity ex:kestrel-identity ;
+    ins:expressedIn ex:kestrel-wording-v1 ;
+    ins:party ex:lender-occ , ex:borrower-occ .
+
+ex:northgate a pty:Actor ; rdfs:label "Northgate Bank plc" .
+ex:kestrel a pty:Actor ; rdfs:label "Kestrel Logistics Ltd" .
+
+ex:lender-occ a pty:RoleOccupancy ;
+    fnd:hasIdentity ex:lender-occ-identity ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-09-01T00:00:00Z"^^xsd:dateTime ] ;
+    pty:inRole ex:Lender ; pty:occupiedBy ex:northgate .
+ex:borrower-occ a pty:RoleOccupancy ;
+    fnd:hasIdentity ex:borrower-occ-identity ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-09-01T00:00:00Z"^^xsd:dateTime ] ;
+    pty:inRole ex:Borrower ; pty:occupiedBy ex:kestrel .
+
+# ==== Bound meaning: owned by Kestrel's facility =============================
+#
+# Clauses 22.1 and 22.2 bind nothing: their stated terms hold only the regimes
+# (C7a-Q1). The acceleration gate reads the event-of-default occupancy for
+# ex:kestrel-identity (C7a-Q5).
+
+ex:term-7-1 a ins:Term ; ins:boundIn ex:kestrel-v1 ; ins:boundFrom tmpl:term-7-1 .
+ex:leverage a ins:ContinuingObligation ;
+    ins:boundFrom tmpl:leverage ; ins:arisesUnder ex:term-7-1 ;
+    ins:obligor ex:borrower-occ ; ins:obligee ex:lender-occ ;
+    ins:maintains ex:leverage-ok .
+
+ex:term-23-1 a ins:Term ; ins:boundIn ex:kestrel-v1 ; ins:boundFrom tmpl:term-23-1 .
+ex:accelerate a ins:Power ;
+    ins:boundFrom tmpl:accelerate ; ins:arisesUnder ex:term-23-1 ;
+    ins:holder ex:lender-occ ; ins:counterparty ex:borrower-occ ;
+    ins:activity ins-voc:DeclareDue ;
+    ins:appliesInState tmpl:default .
+
+# A term whose only content is a regime is bound too, as every stated term is
+# (law I17). The regime itself is read as stated (law I13).
+ex:term-22-1 a ins:Term ; ins:boundIn ex:kestrel-v1 ; ins:boundFrom tmpl:term-22-1 .
+ex:term-22-2 a ins:Term ; ins:boundIn ex:kestrel-v1 ; ins:boundFrom tmpl:term-22-2 .

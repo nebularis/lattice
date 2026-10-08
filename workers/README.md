@@ -6,7 +6,7 @@ Graph-reference workers for the LATTICE semantic platform: each reads a job nami
 reference (never carrying RDF or credentials on the wire), does its work, and publishes a result.
 See the module docstrings under `src/lattice_workers/` for the MORK, Surface and projection jobs.
 
-## Word authoring POC: Logical English reading (ADR-A114)
+## Word authoring POC: Logical English reading (ADR-A118)
 
 **Not a platform contract.** A proof-of-concept job for the
 [word authoring add-in](../apps/word-authoring-addin): reads a Wording-layer graph (built by
@@ -15,7 +15,7 @@ English against a small sentence-form profile, and proposes the meaning it reads
 graph. See the
 [sketch](../docs/developer/sketches/word-authoring-poc.md),
 [plan](../docs/developer/plans/word-authoring-poc.md) WA6 and
-[ADR-A114](../docs/architecture/decisions/ADR-A114-word-authoring-proof-of-concept.md). Its code,
+[ADR-A118](../docs/architecture/decisions/ADR-A118-word-authoring-proof-of-concept.md). Its code,
 vocabulary and graph layout may be removed or rewritten without deprecation. For how this worker
 fits with the service, the add-in and the compose stack, including the architecture and data-flow
 diagrams, see the add-in's

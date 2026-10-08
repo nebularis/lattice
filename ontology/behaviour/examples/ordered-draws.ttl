@@ -1,0 +1,272 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Premise. One event can have several consequences that do not change the
+# subject's state, each with its own condition, and some conditions depend on
+# what an earlier consequence just did. They run in a declared order, each
+# seeing what the one before it left, and any change of state comes after
+# them, in the same pass.
+#
+# A software licence comes with a prepaid bundle of 3 seats and a quota of 3
+# low-balance alerts a year. Each seat activation:
+#
+# 1. draws one seat from the bundle, while the bundle has one (priority 20)
+# 2. draws one alert from the alert quota, when the activation leaves fewer
+#    than 2 seats in the bundle (priority 10): this guard reads the bundle as
+#    the first draw left it
+# 3. moves the licence to overage billing when the bundle is empty: a state
+#    change, after both draws, reading the bundle they left
+#
+# Draws 1 and 2 are internal transitions (they do not leave the state) under
+# bhv:AllMatches: every enabled one fires, in descending priority, in the
+# sequential environment (nested states sketch §4.1, §7, C11a-Q3). The state
+# change is an ordinary transition under bhv:SingleMatch on the same trigger.
+#
+# | Date       | Activation | Seat draw   | Alert draw              | State change              |
+# |------------|------------|-------------|-------------------------|---------------------------|
+# | 2027-02-01 | 1          | bundle 3→2  | no: 2 seats remain      | no                        |
+# | 2027-03-01 | 2          | bundle 2→1  | yes: quota 3→2          | no                        |
+# | 2027-04-01 | 3          | bundle 1→0  | yes: quota 2→1          | within bundle → on overage |
+#
+# Had the alert's guard read the bundle as the pass found it (a parallel
+# environment), activation 2 would have seen 2 seats and sent no alert. The
+# sequential reading is the one this contract means: "an activation that
+# leaves fewer than 2 seats". The parallel environment is deferred to the
+# evaluation context design.
+#
+# Either-or consequences ("from the bundle, else from overage") are not this
+# pattern: they are bhv:PriorityOrdered, where only the highest enabled
+# transition fires.
+
+@prefix bhv:  <https://www.nebularis.org/neuro-semantic/lattice/behaviour#> .
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix qnt:  <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
+@prefix elg:  <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
+@prefix pty:  <https://www.nebularis.org/neuro-semantic/lattice/party#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex:   <https://example.org/lattice/behaviour/ordered-draws/> .
+
+# ---- Configuration: the licence regime -------------------------------------------
+
+ex:licence-regime a bhv:StateSpace ;
+    fnd:hasIdentity ex:licence-regime-identity ;
+    bhv:initialState ex:within-bundle .
+
+ex:within-bundle a bhv:State ;
+    bhv:inStateSpace ex:licence-regime .
+
+ex:on-overage a bhv:State ;
+    bhv:inStateSpace ex:licence-regime .
+
+ex:on-seat-activated a bhv:TriggerDefinition ;
+    bhv:triggerKind bhv:ExternalStimulus ;
+    rdfs:comment "The licensee activates a seat." .
+
+# ---- Configuration: the two allowances -------------------------------------------
+
+ex:seats a qnt:ValueSpace ;
+    qnt:spaceKey "seats" ;
+    qnt:orderKind qnt:TotalOrder ;
+    qnt:densityKind qnt:Discrete .
+
+ex:alerts a qnt:ValueSpace ;
+    qnt:spaceKey "alerts" ;
+    qnt:orderKind qnt:TotalOrder ;
+    qnt:densityKind qnt:Discrete .
+
+ex:seat-bundle a bhv:AllowanceDefinition ;
+    fnd:hasIdentity ex:seat-bundle-identity ;
+    bhv:allowanceSpace ex:seats ;
+    bhv:absorptionPolicy bhv:Sequential ;
+    rdfs:comment "3 prepaid seats." .
+
+ex:alert-quota a bhv:AllowanceDefinition ;
+    fnd:hasIdentity ex:alert-quota-identity ;
+    bhv:allowanceSpace ex:alerts ;
+    bhv:absorptionPolicy bhv:Sequential ;
+    rdfs:comment "3 low-balance alerts a year." .
+
+ex:one-seat a qnt:Quantity ; qnt:onSpace ex:seats ; qnt:numericValue "1"^^xsd:decimal .
+ex:one-alert a qnt:Quantity ; qnt:onSpace ex:alerts ; qnt:numericValue "1"^^xsd:decimal .
+
+# ---- Configuration: guards, each reading the ledger as the evaluation leaves it ---
+
+ex:bundle-has-a-seat a elg:AdmissionProfile ;
+    rdfs:comment "The seat bundle's balance is at least 1." .
+ex:bundle-below-two a elg:AdmissionProfile ;
+    rdfs:comment "The seat bundle's balance is below 2." .
+ex:bundle-empty a elg:AdmissionProfile ;
+    rdfs:comment "The seat bundle's balance is 0." .
+
+ex:while-a-seat-remains a bhv:GuardDefinition ;
+    bhv:requiresEligibility ex:bundle-has-a-seat .
+ex:when-few-seats-remain a bhv:GuardDefinition ;
+    bhv:requiresEligibility ex:bundle-below-two .
+ex:when-the-bundle-is-empty a bhv:GuardDefinition ;
+    bhv:requiresEligibility ex:bundle-empty .
+
+# ---- Configuration: effects ------------------------------------------------------
+
+ex:take-a-seat a bhv:EffectDefinition ;
+    bhv:targetKind bhv:AllowanceTarget ;
+    bhv:targetsAllowance ex:seat-bundle ;
+    bhv:usesAllowance ex:seat-bundle ;
+    bhv:consumesAmount ex:one-seat .
+
+ex:send-an-alert a bhv:EffectDefinition ;
+    bhv:targetKind bhv:AllowanceTarget ;
+    bhv:targetsAllowance ex:alert-quota ;
+    bhv:usesAllowance ex:alert-quota ;
+    bhv:consumesAmount ex:one-alert .
+
+# ---- Configuration: two internal transitions and a state change, one trigger -----
+# Source and target are one state, so these are internal: no occupancy is left
+# or entered. Under AllMatches they have distinct priorities, and fire highest
+# first.
+
+ex:draw-a-seat a bhv:TransitionDefinition ;
+    bhv:fromState ex:within-bundle ;
+    bhv:toState ex:within-bundle ;
+    bhv:hasTrigger ex:on-seat-activated ;
+    bhv:hasGuard ex:while-a-seat-remains ;
+    bhv:hasEffect ex:take-a-seat ;
+    bhv:selectionPolicy bhv:AllMatches ;
+    bhv:priority 20 ;
+    bhv:activationPolicy bhv:ImmediateActivation .
+
+ex:draw-an-alert a bhv:TransitionDefinition ;
+    bhv:fromState ex:within-bundle ;
+    bhv:toState ex:within-bundle ;
+    bhv:transitionType bhv:Internal ;
+    bhv:hasTrigger ex:on-seat-activated ;
+    bhv:hasGuard ex:when-few-seats-remain ;
+    bhv:hasEffect ex:send-an-alert ;
+    bhv:selectionPolicy bhv:AllMatches ;
+    bhv:priority 10 ;
+    bhv:activationPolicy bhv:ImmediateActivation ;
+    rdfs:comment "Internal by default. Stated here only to show the declaration." .
+
+# The only state-changing transition from within-bundle on this trigger, so it
+# declares SingleMatch on its own. It runs after the internal transitions.
+ex:move-to-overage a bhv:TransitionDefinition ;
+    bhv:fromState ex:within-bundle ;
+    bhv:toState ex:on-overage ;
+    bhv:hasTrigger ex:on-seat-activated ;
+    bhv:hasGuard ex:when-the-bundle-is-empty ;
+    bhv:selectionPolicy bhv:SingleMatch ;
+    bhv:activationPolicy bhv:ImmediateActivation .
+
+# ---- The licence and its parties --------------------------------------------------
+
+ex:licence a fnd:PersistentIdentity .
+ex:licensee-occ a pty:RoleOccupancy .
+
+# ---- Stimuli: three activations ---------------------------------------------------
+
+ex:activation-1 a bhv:Stimulus ;
+    fnd:hasEvidence [ a fnd:Evidence ; fnd:recordedAt "2027-02-01T10:00:00Z"^^xsd:dateTime ] .
+ex:activation-2 a bhv:Stimulus ;
+    fnd:hasEvidence [ a fnd:Evidence ; fnd:recordedAt "2027-03-01T10:00:00Z"^^xsd:dateTime ] .
+ex:activation-3 a bhv:Stimulus ;
+    fnd:hasEvidence [ a fnd:Evidence ; fnd:recordedAt "2027-04-01T10:00:00Z"^^xsd:dateTime ] .
+
+# ---- The ledger before any activation ---------------------------------------------
+
+ex:bundle-0 a bhv:AllowanceAccount ;
+    bhv:tracksAllowance ex:seat-bundle ;
+    bhv:availableBalance [ a qnt:Quantity ; qnt:onSpace ex:seats ; qnt:numericValue "3"^^xsd:decimal ] ;
+    fnd:hasEvidence [ a fnd:Evidence ; fnd:recordedAt "2027-01-01T00:00:00Z"^^xsd:dateTime ] .
+
+ex:alerts-0 a bhv:AllowanceAccount ;
+    bhv:tracksAllowance ex:alert-quota ;
+    bhv:availableBalance [ a qnt:Quantity ; qnt:onSpace ex:alerts ; qnt:numericValue "3"^^xsd:decimal ] ;
+    fnd:hasEvidence [ a fnd:Evidence ; fnd:recordedAt "2027-01-01T00:00:00Z"^^xsd:dateTime ] .
+
+# ==== Pass 1: one draw ============================================================
+
+ex:p1-draw-a-seat a bhv:TransitionExecution ;
+    bhv:executedTransition ex:draw-a-seat ;
+    bhv:causedByStimulus ex:activation-1 .
+
+ex:bundle-1 a bhv:AllowanceAccount ;
+    bhv:tracksAllowance ex:seat-bundle ;
+    bhv:availableBalance [ a qnt:Quantity ; qnt:onSpace ex:seats ; qnt:numericValue "2"^^xsd:decimal ] ;
+    prov:wasDerivedFrom ex:bundle-0 , ex:p1-draw-a-seat ;
+    fnd:hasEvidence [ a fnd:Evidence ; fnd:recordedAt "2027-02-01T10:00:00Z"^^xsd:dateTime ] .
+
+# The alert's guard read 2 seats: not below two, so no alert.
+
+# ==== Pass 2: two draws, the second reading what the first left ====================
+
+ex:p2-draw-a-seat a bhv:TransitionExecution ;
+    bhv:executedTransition ex:draw-a-seat ;
+    bhv:causedByStimulus ex:activation-2 .
+
+ex:bundle-2 a bhv:AllowanceAccount ;
+    bhv:tracksAllowance ex:seat-bundle ;
+    bhv:availableBalance [ a qnt:Quantity ; qnt:onSpace ex:seats ; qnt:numericValue "1"^^xsd:decimal ] ;
+    prov:wasDerivedFrom ex:bundle-1 , ex:p2-draw-a-seat ;
+    fnd:hasEvidence [ a fnd:Evidence ; fnd:recordedAt "2027-03-01T10:00:00Z"^^xsd:dateTime ] .
+
+ex:p2-draw-an-alert a bhv:TransitionExecution ;
+    bhv:executedTransition ex:draw-an-alert ;
+    bhv:causedByStimulus ex:activation-2 ;
+    rdfs:comment "Its guard read ex:bundle-2, the balance the seat draw left." .
+
+ex:alerts-1 a bhv:AllowanceAccount ;
+    bhv:tracksAllowance ex:alert-quota ;
+    bhv:availableBalance [ a qnt:Quantity ; qnt:onSpace ex:alerts ; qnt:numericValue "2"^^xsd:decimal ] ;
+    prov:wasDerivedFrom ex:alerts-0 , ex:p2-draw-an-alert , ex:bundle-2 ;
+    fnd:hasEvidence [ a fnd:Evidence ; fnd:recordedAt "2027-03-01T10:00:00Z"^^xsd:dateTime ] .
+
+# ==== Pass 3: two draws, then the state change =====================================
+
+ex:p3-draw-a-seat a bhv:TransitionExecution ;
+    bhv:executedTransition ex:draw-a-seat ;
+    bhv:causedByStimulus ex:activation-3 .
+
+ex:bundle-3 a bhv:AllowanceAccount ;
+    bhv:tracksAllowance ex:seat-bundle ;
+    bhv:availableBalance [ a qnt:Quantity ; qnt:onSpace ex:seats ; qnt:numericValue "0"^^xsd:decimal ] ;
+    prov:wasDerivedFrom ex:bundle-2 , ex:p3-draw-a-seat ;
+    fnd:hasEvidence [ a fnd:Evidence ; fnd:recordedAt "2027-04-01T10:00:00Z"^^xsd:dateTime ] .
+
+ex:p3-draw-an-alert a bhv:TransitionExecution ;
+    bhv:executedTransition ex:draw-an-alert ;
+    bhv:causedByStimulus ex:activation-3 ;
+    rdfs:comment "Its guard read ex:bundle-3, the balance the seat draw left." .
+
+ex:alerts-2 a bhv:AllowanceAccount ;
+    bhv:tracksAllowance ex:alert-quota ;
+    bhv:availableBalance [ a qnt:Quantity ; qnt:onSpace ex:alerts ; qnt:numericValue "1"^^xsd:decimal ] ;
+    prov:wasDerivedFrom ex:alerts-1 , ex:p3-draw-an-alert , ex:bundle-3 ;
+    fnd:hasEvidence [ a fnd:Evidence ; fnd:recordedAt "2027-04-01T10:00:00Z"^^xsd:dateTime ] .
+
+ex:p3-move-to-overage a bhv:TransitionExecution ;
+    bhv:executedTransition ex:move-to-overage ;
+    bhv:causedByStimulus ex:activation-3 ;
+    rdfs:comment "After both internal transitions. Its guard read ex:bundle-3." .
+
+# ---- Occupancies: the internal transitions created none ---------------------------
+
+ex:occ-within-bundle a bhv:StateOccupancy ;
+    bhv:forSubject ex:licence ;
+    bhv:occupiesState ex:within-bundle ;
+    bhv:isHypothetical false ;
+    bhv:isCurrent false ;
+    bhv:exitedBy ex:p3-move-to-overage ;
+    fnd:hasEvidence [ a fnd:Evidence ; fnd:recordedAt "2027-01-01T00:00:00Z"^^xsd:dateTime ;
+        rdfs:comment "The licence took effect. One occupancy throughout passes 1 and 2." ] ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ;
+        fnd:validFrom "2027-01-01T00:00:00Z"^^xsd:dateTime ;
+        fnd:validTo "2027-04-01T10:00:00Z"^^xsd:dateTime ] .
+
+ex:occ-on-overage a bhv:StateOccupancy ;
+    bhv:forSubject ex:licence ;
+    bhv:occupiesState ex:on-overage ;
+    bhv:isHypothetical false ;
+    bhv:isCurrent true ;
+    bhv:enteredBy ex:p3-move-to-overage ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ;
+        fnd:validFrom "2027-04-01T10:00:00Z"^^xsd:dateTime ] .

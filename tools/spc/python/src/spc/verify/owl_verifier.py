@@ -77,7 +77,7 @@ def verify_owl(
 
     # Check that all asserted types are consistent with partition axioms
     partition_query = """
-    PREFIX spc: <http://spc.marsh.com/ontology/core#>
+    PREFIX spc: <http://spc.example.org/ontology/core#>
     PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
     SELECT ?individual ?type1 ?type2 WHERE {
         ?individual rdf:type ?type1 .

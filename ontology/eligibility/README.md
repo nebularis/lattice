@@ -33,6 +33,8 @@ Eligibility imports Foundation, Vocabulary, Quantification, and Party. Quantific
 - `turtle-vocab` blocks generate `vocab/eligibility-vocab.ttl`.
 - `turtle-shapes` blocks generate `shapes/*.ttl`.
 - `turtle-example` blocks are illustrative only.
+- `isabelle-spec` blocks (§10) generate `tools/proofs/eligibility/Kernel.thy`'s closed
+  datatype only (ADR-A-FM2). The theory's proofs are hand-written there, not generated.
 
 ## 4. Strategy Algebra
 
@@ -43,7 +45,7 @@ Eligibility imports Foundation, Vocabulary, Quantification, and Party. Quantific
 
 `HierarchicalMatch` is valid when a dimension is backed by a concept scheme whose membership is resolved against a well-founded `skos:broader` hierarchy. Evaluation may compute closure at query time or use a generated surface, provided closure is interpreted over the bound scheme. A scheme can reach a hierarchical condition without a hierarchy, because a contract resolves to different schemes in different contexts (ADR-A85). Where no member of the resolved scheme has a broader concept within it, the condition decides only the concepts it names (L14, ADR-A100).
 
-Conditions matching by `ExactMatch`, `SetMembership`, or `HierarchicalMatch` state what they match against with `elg:requiredConcept` and `elg:excludedConcept`. A candidate *matches* a concept by equality under `ExactMatch` and `SetMembership`, and by standing at or below it in the bound scheme's ordering under `HierarchicalMatch`. Several required concepts are alternatives to one another, and each excluded concept excludes independently. Neither reading changes how the condition's compatibility operation is interpreted. An admission profile declares no concepts of its own, since its conditions do. A question offers its candidate with `elg:candidateConcept`. `IntervalContainment` needs no exclusion construct: a `qnt:RangeSet` is a union of ranges and already expresses gaps.
+Conditions matching by `ExactMatch`, `SetMembership`, or `HierarchicalMatch` state what they match against with `elg:requiredConcept` and `elg:excludedConcept`. A candidate *matches* a concept by equality under `ExactMatch` and `SetMembership`, and by standing at or below it in the bound scheme's ordering under `HierarchicalMatch`. Several required concepts are alternatives to one another, and each excluded concept excludes independently. Neither reading changes how the condition's compatibility operation is interpreted. An admission profile declares no concepts of its own, since its conditions do. A layer above may place one of its defined words, itself a `skos:Concept`, in `elg:requiredConcept` or `elg:excludedConcept` ("a Site in the Territory"), and replace it for each instance by the concepts the word means, so that a condition it generates never names a word. Instrument does, and its shapes report a word that is also a concept of the scheme its condition is constrained by, and a word whose meaning is not a concept (Instrument README §15.1). A word's meaning may come from a variable or from another word, and must not loop back to itself (Instrument README §18.4). A question offers its candidate with `elg:candidateConcept`. `IntervalContainment` needs no exclusion construct: a `qnt:RangeSet` is a union of ranges and already expresses gaps.
 
 | Candidate | Decision | Law |
 |---|---|---|
@@ -63,11 +65,11 @@ Conditions matching by `ExactMatch`, `SetMembership`, or `HierarchicalMatch` sta
 
 <https://www.nebularis.org/neuro-semantic/eligibility>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.7.0> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.3.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.3.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.5.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/party/0.5.0> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.10.0> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.4.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.4.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.7.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/party/0.8.0> .
 
 elg:Condition a owl:Class ;
 	rdfs:comment "A declared admissibility condition." .
@@ -401,3 +403,19 @@ Eligibility canonicalisation is declaration-first and profile-stable:
 - `elg:conditionKey` is the canonical identifier of a condition declaration for comparison, caching, and replay.
 - Canonicalisation never changes the declared strategy (`elg:matchStrategy`), compatibility operation (`elg:compatibilityOperation`), or wildcard semantics (`elg:wildcardSemantics`).
 - Interval admissibility canonicalises through Quantification ranges and range sets only, using `elg:requiredRangeSet` and `elg:candidateRangeSet` with `qnt:Range`/`qnt:RangeSet`.
+
+## 10. Formalisation
+
+`elg:Decision`'s three named individuals (§6) are a closed, three-valued type under Belnap and
+Fitting's strong Kleene reading (L15, L16): `Undetermined` is below `Permitted` and `Denied` in
+the information order, which are each other's own fixed point only.
+
+```isabelle-spec
+theory Kernel
+imports Main
+begin
+
+datatype decision = Permitted | Denied | Undetermined
+
+end
+```

@@ -1,0 +1,12 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Optional (ADR-A96). Load only where every stated term is expressed in one
+# element version.
+
+@prefix sh:  <http://www.w3.org/ns/shacl#> .
+@prefix ins: <https://www.nebularis.org/neuro-semantic/lattice/instrument#> .
+
+ins:SingleExpressionShape a sh:NodeShape ;
+	sh:targetClass ins:Term ;
+	sh:property [ sh:path ins:alsoExpressedIn ; sh:maxCount 0 ;
+		sh:message "This deployment expresses each term in one element version only (ADR-A96)." ] .

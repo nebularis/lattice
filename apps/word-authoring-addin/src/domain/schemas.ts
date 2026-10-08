@@ -1,6 +1,6 @@
 /**
  * One Ajv 2020-12 instance holding every schema under `contracts/authoring` and
- * `contracts/events` the word authoring POC uses (ADR-A114, plan WA8), keyed by the same
+ * `contracts/events` the word authoring POC uses (ADR-A118, plan WA8), keyed by the same
  * schema name the Java service's `ContractSchemas` and the Python `test_authoring_contracts.py`
  * use: the file name without `.schema.json`. This is the only place the set of schema resources is
  * listed on the add-in side.

@@ -2,6 +2,11 @@
 
 A domain neutral semantic framework for representing governing instruments (contracts, protocols, agreements, etc) and the obligations, eligibility conditions, and lifecycle behaviours they define, as structured, queryable, versioned graphs.
 
+**New to this repository?** [Getting Started](docs/developer/getting-started.md) bootstraps a
+clean clone end to end. The [Developer Guide](docs/developer/developer-guide.md) covers every
+tool and script and when to use it. [`docs/diagrams/`](docs/diagrams/README.md) pictures the
+whole architecture, five ways.
+
 ---
 
 ## Overview
@@ -84,6 +89,8 @@ lattice/
 ├── LICENSE                  # MPL 2.0 — ontology artefacts, tools/
 ├── LICENSE-DOCS.md          # CC BY-SA 4.0 — documentation, specifications
 ├── CONTRIBUTING.md
+├── AGENTS.md                # Always-on instructions for AI agents (ADR-A117), imported by CLAUDE.md
+├── .claude/skills/          # Agent skills, loaded by task, shared as a plugin by .claude-plugin/
 │
 ├── ontology/catalog-v001.xml         # Generated import catalog, every ontology and version IRI (ADR-A88)
 ├── ontology/foundation/              # Foundation Layers (provenance, versioning)
@@ -116,18 +123,18 @@ lattice/
 │
 ├── contracts/
 │   ├── identity/            # Minting recipe and vector schemas, anchor vectors, independent verifier
-│   └── authoring/           # Word authoring POC contracts, templates and samples (ADR-A114)
+│   └── authoring/           # Word authoring POC contracts, templates and samples (ADR-A118)
 │
 ├── platform/
 │   ├── reasoning-testkit/   # Test-only OWL reasoner harness, never a runtime dependency (ADR-A83)
-│   └── authoring-service/   # Word authoring POC service (ADR-A114)
+│   └── authoring-service/   # Word authoring POC service (ADR-A118)
 │
 ├── apps/
-│   └── word-authoring-addin/  # Word add-in, proof of concept (ADR-A114)
+│   └── word-authoring-addin/  # Word add-in, proof of concept (ADR-A118)
 │
 ├── deployment/
 │   └── compose/
-│       └── authoring/        # Word authoring POC compose stack (ADR-A114)
+│       └── authoring/        # Word authoring POC compose stack (ADR-A118)
 │
 ├── packages/
 │   └── minting/             # Standalone identity minting libraries (Python, Java), no LATTICE dependency
@@ -195,12 +202,16 @@ test -d tools/mork
 test -d tools/mork_compilers
 test -d tools/surface
 test -d tools/persistence
+test -d tools/proofs
+test -d tools/models
+test -d tools/reference
 test -d tools/spc/python
 test -d tools/spc/erlang
 test -d workers
 test -d platform
 test -d apps
 test -d contracts
+test -d docs/diagrams
 ```
 
 ### Install dependencies
@@ -226,10 +237,22 @@ mise run check:java
 mise run check:frontend
 mise run check:spc
 mise run check:persistence
+mise run check:vocabulary
+mise run check:reference-eligibility
+mise run check:mork-compilers
+mise run check:ontology-versioning
+mise run check:ontology-catalog
+mise run check:import-guard
+mise run check:reasoning-isolation
 mise run check:minting
+mise run check:formal-freshness
 mise run build:mtp
 mise run check:mtp
 ```
+
+Not included (large, native, or optional toolchains — run manually, see
+[Getting Started](docs/developer/getting-started.md) §5):
+`check:formal-network`, `check:formal-smoke`, `check:proofs`, `check:minting-tables`.
 
 ### Build and test all frontend workspaces
 
@@ -263,6 +286,45 @@ mise run check:persistence
 ```
 
 Compiles `ontology/persistence`'s own worked examples, runs the resolver/validator/capability/boundary unit tests, the injection corpus, the determinism checks, and the Python architecture-policy checks, and validates every example fixture against `ontology/persistence/shapes/constraints.ttl`. See [`tools/persistence/README.md`](tools/persistence/README.md).
+
+### Validate Eligibility's reference semantics
+
+```bash
+mise run bootstrap:reference-eligibility
+mise run check:reference-eligibility
+```
+
+Runs the hand-written Python reference for the logic kernel and Eligibility's denotation (laws
+L9-L16, formal-methods epic track B1), including exhaustive checks of the kernel's own claims
+(TA1, TA2) over its three-valued domain and the 15 adequacy fixtures shared with the Isabelle
+kernel. Part of the default `check` aggregate: no dependency beyond `pytest`. See
+[`tools/reference/eligibility/README.md`](tools/reference/eligibility/README.md), ADR-A-FM3.
+
+### Validate the prover programme's theories
+
+```bash
+mise run bootstrap:formal-native-isabelle
+mise run check:proofs
+```
+
+Builds every `tools/proofs/<layer>/` Isabelle session natively and runs the proof gate (statement
+digests, banned-marker scan). Not part of the default `check` aggregate: Isabelle is a heavy
+native toolchain not every host has installed (same convention as the formal-methods spike's own
+tasks). No container image exists for Isabelle in this programme yet. See
+[`tools/proofs/README.md`](tools/proofs/README.md), ADR-A-FM1, ADR-A-FM2.
+
+### Run the design-time models
+
+```bash
+java -jar <path-to>/alloy.jar exec tools/models/vocabulary-scheme-composition/SchemeComposition.als
+```
+
+Alloy Analyzer (a single MIT-licensed JAR, not tracked in this repository) checks each track C
+model and writes a `receipt.json` with every command's structured result next to the model. Not
+wired into `mise` yet: track C's models are run and their results recorded as evidence for an
+ADR, not re-verified continuously by CI. See
+[`tools/models/README.md`](tools/models/README.md) and
+[`tools/models/vocabulary-scheme-composition/README.md`](tools/models/vocabulary-scheme-composition/README.md).
 
 ### Validate the reasoning harness
 
@@ -381,6 +443,15 @@ Two licences govern the artefacts in the repository:
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the licensing mechanics, the SPDX header convention, and where new content belongs within a layer.
+
+## Working with AI agents
+
+[AGENTS.md](AGENTS.md) holds the rules every agent follows here, and `.claude/skills/` the procedures
+it loads by task (ADR-A117). Claude Code and GitHub Copilot pick both up in this repository with no
+setup. To use the skills in another project, with Claude Code run
+`/plugin marketplace add nebularis/lattice` and then `/plugin install lattice@nebularis`, and for
+Copilot run `mise run skills:link` from a LATTICE checkout. AI-assisted contributions are disclosed as
+[GENAI_CONTRIBUTION.md](GENAI_CONTRIBUTION.md) requires.
 
 ## Development environment
 

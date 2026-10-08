@@ -1,10 +1,12 @@
 # SPDX-License-Identifier: MPL-2.0
 
 @prefix wrd:  <https://www.nebularis.org/neuro-semantic/lattice/wording#> .
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
 @prefix voc:  <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
 @prefix qnt:  <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
 @prefix elg:  <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
 @prefix wrd-voc: <https://www.nebularis.org/neuro-semantic/lattice/wording/vocab#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
 @prefix sh:   <http://www.w3.org/ns/shacl#> .
 @prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
 
@@ -44,9 +46,17 @@ wrd:TextShape a sh:NodeShape ;
 	sh:property [ sh:path wrd:hasTextPart ; sh:class wrd:TextPart ] .
 
 wrd:TextPartSubjectShape a sh:NodeShape ;
-	sh:targetSubjectsOf wrd:partIndex , wrd:partText , wrd:refersToVariable , wrd:refersToObject ;
+	sh:targetSubjectsOf wrd:partIndex , wrd:partText , wrd:refersToVariable , wrd:refersToObject , wrd:displayText ;
 	sh:class wrd:TextPart ;
-	sh:message "Only a text part has a part index, text or a reference." .
+	sh:message "Only a text part has a part index, text, a reference or display text." .
+
+wrd:VariableIdentityShape a sh:NodeShape ;
+	sh:property [ sh:path [ sh:inversePath fnd:hasIdentity ] ; sh:minCount 1 ; sh:class wrd:Variable ] ;
+	sh:message "A variable reference names a variable's persistent identity, never a version (§5.7)." .
+
+wrd:TargetIdentityShape a sh:NodeShape ;
+	sh:property [ sh:path [ sh:inversePath fnd:hasIdentity ] ; sh:minCount 1 ; sh:class wrd:ReferenceTarget ] ;
+	sh:message "A reference names the persistent identity of a wording, an element or a document outside the wording, never a version (§5.8)." .
 
 wrd:TextPartShape a sh:NodeShape ;
 	sh:targetClass wrd:TextPart ;
@@ -55,8 +65,11 @@ wrd:TextPartShape a sh:NodeShape ;
 	sh:property [ sh:path wrd:partIndex ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:Literal ; sh:minInclusive 0 ;
 		sh:message "A text part has exactly one index, from 0." ] ;
 	sh:property [ sh:path wrd:partText ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
-	sh:property [ sh:path wrd:refersToVariable ; sh:maxCount 1 ; sh:class wrd:Variable ] ;
-	sh:property [ sh:path wrd:refersToObject ; sh:maxCount 1 ; sh:class wrd:ReferenceTarget ] ;
+	sh:property [ sh:path wrd:refersToVariable ; sh:maxCount 1 ; sh:node wrd:VariableIdentityShape ;
+		sh:message "A variable reference names a variable's persistent identity, never a version (§5.7)." ] ;
+	sh:property [ sh:path wrd:refersToObject ; sh:maxCount 1 ; sh:node wrd:TargetIdentityShape ;
+		sh:message "A reference names the persistent identity of a wording, an element or a document outside the wording, never a version (§5.8)." ] ;
+	sh:property [ sh:path wrd:displayText ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
 	sh:xone (
 		[ sh:path wrd:partText ; sh:minCount 1 ]
 		[ sh:path wrd:refersToVariable ; sh:minCount 1 ]
@@ -73,7 +86,23 @@ wrd:ReferenceSubjectShape a sh:NodeShape ;
 
 wrd:ReferenceShape a sh:NodeShape ;
 	sh:targetClass wrd:Reference ;
-	sh:property [ sh:path wrd:linksTo ; sh:class wrd:ReferenceTarget ] .
+	sh:property [ sh:path wrd:linksTo ; sh:node wrd:TargetIdentityShape ;
+		sh:message "A reference names the persistent identity of a wording, an element or a document outside the wording, never a version (§5.8)." ] .
+
+wrd:DisplayTextShape a sh:NodeShape ;
+	sh:targetSubjectsOf wrd:displayText ;
+	sh:or ( [ sh:path wrd:refersToObject ; sh:minCount 1 ] [ sh:path wrd:refersToVariable ; sh:minCount 1 ] ) ;
+	sh:message "Only a reference part has display text: a literal part's words are its text." .
+
+wrd:RelianceShape a sh:NodeShape ;
+	sh:targetSubjectsOf wrd:reliesOnEdition , wrd:reliesAsAmended ;
+	sh:class wrd:Wording ;
+	sh:message "Only a wording relies on a document outside it." ;
+	sh:property [ sh:path wrd:reliesOnEdition ; sh:class wrd:LinkedDocument ;
+		sh:message "A static reliance names an edition of a document outside the wording, never its identity (§5.8)." ] ;
+	sh:property [ sh:path wrd:reliesAsAmended ;
+		sh:node [ sh:property [ sh:path [ sh:inversePath fnd:hasIdentity ] ; sh:minCount 1 ; sh:class wrd:LinkedDocument ] ] ;
+		sh:message "An ambulatory reliance names the persistent identity of a document outside the wording, never an edition (§5.8)." ] .
 
 wrd:LinkedDocumentSubjectShape a sh:NodeShape ;
 	sh:targetSubjectsOf wrd:documentKind ;
@@ -104,16 +133,35 @@ wrd:VariableShape a sh:NodeShape ;
 
 # ---- Tables -------------------------------------------------------------------
 
-wrd:RowSubjectShape a sh:NodeShape ;
-	sh:targetSubjectsOf wrd:rowKey , wrd:rowVariable ;
-	sh:class wrd:Row ;
-	sh:message "Only a row has a row key or a row variable." .
+wrd:FieldSubjectShape a sh:NodeShape ;
+	sh:targetSubjectsOf wrd:fieldKey , wrd:fieldVariable ;
+	sh:class wrd:Field ;
+	sh:message "Only a field has a field key or a field variable." .
 
-wrd:RowShape a sh:NodeShape ;
-	sh:targetClass wrd:Row ;
-	sh:property [ sh:path wrd:rowKey ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
-	sh:property [ sh:path wrd:rowVariable ; sh:minCount 1 ; sh:maxCount 1 ; sh:class wrd:Variable ;
-		sh:message "A row declares exactly one variable, which every column supplies a value for." ] .
+wrd:FieldShape a sh:NodeShape ;
+	sh:targetClass wrd:Field ;
+	sh:property [ sh:path wrd:fieldKey ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+	sh:property [ sh:path wrd:fieldVariable ; sh:minCount 1 ; sh:maxCount 1 ; sh:class wrd:Variable ;
+		sh:message "A field declares exactly one variable, which every entry supplies a value for." ] .
+
+wrd:EntrySubjectShape a sh:NodeShape ;
+	sh:targetSubjectsOf wrd:entryKey ;
+	sh:class wrd:Entry ;
+	sh:message "Only a declared entry has an entry key." .
+
+wrd:EntryShape a sh:NodeShape ;
+	sh:targetClass wrd:Entry ;
+	sh:property [ sh:path wrd:entryKey ; sh:maxCount 1 ; sh:datatype xsd:string ] .
+
+wrd:TableSubjectShape a sh:NodeShape ;
+	sh:targetSubjectsOf wrd:fieldsAs ;
+	sh:class wrd:Table ;
+	sh:message "Only a table draws its fields as rows or columns." .
+
+wrd:TableShape a sh:NodeShape ;
+	sh:targetClass wrd:Table ;
+	sh:property [ sh:path wrd:fieldsAs ; sh:maxCount 1 ; sh:in ( wrd-voc:Rows wrd-voc:Columns ) ;
+		sh:message "A table draws its fields as Rows or as Columns." ] .
 
 # ---- Assembly -----------------------------------------------------------------
 
@@ -127,9 +175,7 @@ wrd:AssemblyShape a sh:NodeShape ;
 	sh:property [ sh:path wrd:inclusionMode ; sh:maxCount 1 ;
 		sh:in ( wrd-voc:Mandatory wrd-voc:Variation wrd-voc:Optional wrd-voc:Conditional ) ;
 		sh:message "An element has at most one inclusion mode, one of the four." ] ;
-	sh:property [ sh:path wrd:includedWhen ; sh:maxCount 1 ; sh:class elg:AdmissionProfile ] ;
-	sh:property [ sh:path [ sh:inversePath wrd:hasVariant ] ; sh:maxCount 1 ;
-		sh:message "An element is the variant of at most one slot." ] .
+	sh:property [ sh:path wrd:includedWhen ; sh:maxCount 1 ; sh:class elg:AdmissionProfile ] .
 
 wrd:VariationSlotSubjectShape a sh:NodeShape ;
 	sh:targetSubjectsOf wrd:hasVariant ;
@@ -161,9 +207,9 @@ wrd:AssembledWordingShape a sh:NodeShape ;
 	sh:property [ sh:path wrd:hasValue ; sh:class wrd:VariableValue ] .
 
 wrd:VariableValueSubjectShape a sh:NodeShape ;
-	sh:targetSubjectsOf wrd:forVariable , wrd:value , wrd:literalValue , wrd:forColumn ;
+	sh:targetSubjectsOf wrd:forVariable , wrd:value , wrd:literalValue , wrd:forEntry ;
 	sh:class wrd:VariableValue ;
-	sh:message "Only a variable value has a variable, a value or a column." .
+	sh:message "Only a variable value has a variable, a value or an entry." .
 
 wrd:VariableValueShape a sh:NodeShape ;
 	sh:targetClass wrd:VariableValue ;
@@ -171,7 +217,7 @@ wrd:VariableValueShape a sh:NodeShape ;
 		sh:message "A variable value is for exactly one variable." ] ;
 	sh:property [ sh:path [ sh:inversePath wrd:hasValue ] ; sh:minCount 1 ; sh:maxCount 1 ;
 		sh:message "A variable value belongs to exactly one assembled wording." ] ;
-	sh:property [ sh:path wrd:forColumn ; sh:maxCount 1 ] ;
+	sh:property [ sh:path wrd:forEntry ; sh:maxCount 1 ] ;
 	sh:property [ sh:path wrd:value ; sh:nodeKind sh:BlankNodeOrIRI ] ;
 	sh:property [ sh:path wrd:literalValue ; sh:nodeKind sh:Literal ] ;
 	sh:or (
@@ -180,7 +226,36 @@ wrd:VariableValueShape a sh:NodeShape ;
 	) ;
 	sh:message "A variable value holds at least one value." .
 
-wrd:ForColumnShape a sh:NodeShape ;
-	sh:targetSubjectsOf wrd:forColumn ;
-	sh:property [ sh:path ( wrd:forVariable [ sh:inversePath wrd:rowVariable ] ) ; sh:minCount 1 ;
-		sh:message "A column applies only to a table row's variable." ] .
+wrd:ForEntryShape a sh:NodeShape ;
+	sh:targetSubjectsOf wrd:forEntry ;
+	sh:property [ sh:path ( wrd:forVariable [ sh:inversePath wrd:fieldVariable ] ) ; sh:minCount 1 ;
+		sh:message "An entry applies only to a table field's variable." ] .
+
+# ---- Amendments -----------------------------------------------------------------
+
+wrd:AmendmentSubjectShape a sh:NodeShape ;
+	sh:targetSubjectsOf wrd:operation , wrd:amendsElement , wrd:replacement , wrd:struckText ,
+		wrd:substitutedText , wrd:expressedIn ;
+	sh:class wrd:Amendment ;
+	sh:message "Only an amendment has an operation, an amended element, a replacement, struck or substituted text, or a statement." .
+
+wrd:AmendmentShape a sh:NodeShape ;
+	sh:targetClass wrd:Amendment ;
+	sh:property [ sh:path wrd:operation ; sh:minCount 1 ; sh:maxCount 1 ;
+		sh:in ( wrd-voc:Insert wrd-voc:Append wrd-voc:Replace wrd-voc:StrikeAndSubstitute wrd-voc:Delete ) ;
+		sh:message "An amendment has exactly one of the five operations." ] ;
+	sh:property [ sh:path wrd:amendsElement ; sh:minCount 1 ; sh:maxCount 1 ; sh:class wrd:Element ;
+		sh:message "An amendment changes exactly one element." ] ;
+	sh:property [ sh:path wrd:replacement ; sh:maxCount 1 ; sh:class wrd:Element ] ;
+	sh:property [ sh:path wrd:struckText ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+	sh:property [ sh:path wrd:substitutedText ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+	sh:property [ sh:path wrd:expressedIn ; sh:minCount 1 ; sh:maxCount 1 ; sh:class wrd:WordingNode ;
+		sh:message "An amendment is stated in exactly one part of a document." ] ;
+	sh:property [ sh:path [ sh:alternativePath ( wrd:replacement prov:generated ) ] ; sh:minCount 1 ;
+		sh:message "An amendment generates at least one version." ] .
+
+wrd:PlacedUnderShape a sh:NodeShape ;
+	sh:targetSubjectsOf wrd:placedUnder ;
+	sh:class wrd:Element ;
+	sh:property [ sh:path wrd:placedUnder ; sh:maxCount 1 ; sh:class wrd:Element ;
+		sh:message "An element is placed under at most one element." ] .

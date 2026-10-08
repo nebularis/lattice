@@ -1,0 +1,10 @@
+{
+  "subject": "TL3b",
+  "statedAs": "Eligibility.negate_before_same_reading_disagrees",
+  "statementDigest": "sha256:a39053e740089a0517fd2ffe4ac998b123e270d118fabca7b0b8c7ffc6a85d90",
+  "method": "Proof",
+  "scope": "SomeList",
+  "assumptionAudit": "no sorry/oops in Eligibility.thy (gate.py's source scan)",
+  "tool": { "name": "Isabelle", "version": "Isabelle2025-2" },
+  "outcome": "passed"
+}

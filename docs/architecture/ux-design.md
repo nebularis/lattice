@@ -137,7 +137,7 @@ Both products share these, stated once here rather than in each product's sectio
 
 ## 4. Word authoring add-in (proof of concept)
 
-**Not a platform contract.** The word authoring POC (ADR-A114, `docs/developer/plans/word-authoring-poc.md`), under `apps/word-authoring-addin`. Its code, markup and manifest may change or be withdrawn without deprecation.
+**Not a platform contract.** The word authoring POC (ADR-A118, `docs/developer/plans/word-authoring-poc.md`), under `apps/word-authoring-addin`. Its code, markup and manifest may change or be withdrawn without deprecation.
 
 ### 4.1 Tabs
 

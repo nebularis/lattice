@@ -1,0 +1,10 @@
+{
+  "subject": "TR4",
+  "statedAs": "Interface.some_value_reading",
+  "statementDigest": "sha256:3dcfaa8a934574d840fe32ac9f626bedc131d15209f197335e51a3b575f9b00a",
+  "method": "Proof",
+  "scope": "SomeValueReading",
+  "assumptionAudit": "not separately audited; compiles under Kernel.v/Eligibility.v's closed context",
+  "tool": { "name": "Rocq", "version": "9.3.0" },
+  "outcome": "passed"
+}

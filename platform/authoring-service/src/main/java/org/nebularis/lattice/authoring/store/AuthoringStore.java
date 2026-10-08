@@ -5,7 +5,7 @@ import java.util.Optional;
 import org.apache.jena.rdf.model.Model;
 
 /**
- * Where this service keeps named graphs. A test seam (WA4), not an SPI: see ADR-A114 decision 4.
+ * Where this service keeps named graphs. A test seam (WA4), not an SPI: see ADR-A118 decision 4.
  * {@link org.nebularis.lattice.authoring.store.InMemoryAuthoringStore} backs unit tests and
  * {@code FusekiAuthoringStore} (WA5) backs the runnable service.
  */

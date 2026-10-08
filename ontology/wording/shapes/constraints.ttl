@@ -1,0 +1,401 @@
+# SPDX-License-Identifier: MPL-2.0
+
+@prefix wrd:  <https://www.nebularis.org/neuro-semantic/lattice/wording#> .
+@prefix wrd-voc: <https://www.nebularis.org/neuro-semantic/lattice/wording/vocab#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+
+wrd:LawPrefixes
+	sh:declare [ sh:prefix "wrd" ; sh:namespace "https://www.nebularis.org/neuro-semantic/lattice/wording#"^^xsd:anyURI ] ,
+		[ sh:prefix "wrd-voc" ; sh:namespace "https://www.nebularis.org/neuro-semantic/lattice/wording/vocab#"^^xsd:anyURI ] ,
+		[ sh:prefix "fnd" ; sh:namespace "https://www.nebularis.org/neuro-semantic/lattice/foundation#"^^xsd:anyURI ] ,
+		[ sh:prefix "voc" ; sh:namespace "https://www.nebularis.org/neuro-semantic/lattice/vocabulary#"^^xsd:anyURI ] ,
+		[ sh:prefix "qnt" ; sh:namespace "https://www.nebularis.org/neuro-semantic/lattice/quantification#"^^xsd:anyURI ] ,
+		[ sh:prefix "elg" ; sh:namespace "https://www.nebularis.org/neuro-semantic/lattice/eligibility#"^^xsd:anyURI ] ,
+		[ sh:prefix "prov" ; sh:namespace "http://www.w3.org/ns/prov#"^^xsd:anyURI ] ,
+		[ sh:prefix "skos" ; sh:namespace "http://www.w3.org/2004/02/skos/core#"^^xsd:anyURI ] ,
+		[ sh:prefix "rdfs" ; sh:namespace "http://www.w3.org/2000/01/rdf-schema#"^^xsd:anyURI ] .
+
+# ---- W1: one tree -----------------------------------------------------------------
+
+wrd:W1Shape a sh:NodeShape ;
+	sh:targetClass wrd:Element ;
+	sh:sparql [ sh:prefixes wrd:LawPrefixes ;
+		sh:message "W1: an element's parents are versions of one parent." ;
+		sh:select """
+			SELECT $this ?value WHERE {
+				?p wrd:directlyComprises|wrd:hasVariant $this .
+				?value wrd:directlyComprises|wrd:hasVariant $this .
+				FILTER (?p != ?value)
+				FILTER NOT EXISTS { ?p fnd:hasIdentity ?i . ?value fnd:hasIdentity ?i }
+			}""" ] ;
+	sh:sparql [ sh:prefixes wrd:LawPrefixes ;
+		sh:message "W1: an element is in a wording's tree." ;
+		sh:select """
+			SELECT $this ?value WHERE {
+				$this ^(wrd:directlyComprises|wrd:hasVariant)* ?value .
+				FILTER NOT EXISTS { ?parent wrd:directlyComprises|wrd:hasVariant ?value }
+				FILTER NOT EXISTS { ?value a/rdfs:subClassOf* wrd:Wording }
+			}""" ] ;
+	sh:sparql [ sh:prefixes wrd:LawPrefixes ;
+		sh:message "W1: an element's root is a version of exactly one wording." ;
+		sh:select """
+			SELECT $this ?value WHERE {
+				$this ^(wrd:directlyComprises|wrd:hasVariant)+ ?root , ?value .
+				FILTER NOT EXISTS { ?a wrd:directlyComprises|wrd:hasVariant ?root }
+				FILTER NOT EXISTS { ?b wrd:directlyComprises|wrd:hasVariant ?value }
+				FILTER (STR(?root) < STR(?value))
+				FILTER NOT EXISTS { ?root fnd:hasIdentity ?i . ?value fnd:hasIdentity ?i }
+			}""" ] ;
+	sh:sparql [ sh:prefixes wrd:LawPrefixes ;
+		sh:message "W1: an element does not comprise itself." ;
+		sh:select """
+			SELECT $this WHERE { $this (wrd:directlyComprises|wrd:hasVariant)+ $this }""" ] .
+
+# ---- W2: part indices 0 to n-1 ------------------------------------------------------
+
+wrd:W2Shape a sh:NodeShape ;
+	sh:targetClass wrd:Text ;
+	sh:sparql [ sh:prefixes wrd:LawPrefixes ;
+		sh:message "W2: a text's part indices run from 0 without gaps or repeats." ;
+		sh:select """
+			SELECT $this ?value WHERE {
+				$this wrd:hasTextPart ?part . ?part wrd:partIndex ?value .
+				FILTER (EXISTS { $this wrd:hasTextPart ?other . ?other wrd:partIndex ?value . FILTER (?other != ?part) }
+					|| (?value > 0 && NOT EXISTS { $this wrd:hasTextPart/wrd:partIndex ?before . FILTER (?before = ?value - 1) }))
+			}""" ] .
+
+# ---- W3: variants -----------------------------------------------------------------
+
+wrd:W3VariantShape a sh:NodeShape ;
+	sh:targetObjectsOf wrd:hasVariant ;
+	sh:property [ sh:path wrd:inclusionMode ; sh:hasValue wrd-voc:Variation ;
+		sh:message "W3: a slot's variant has inclusion mode Variation." ] .
+
+wrd:W3Shape a sh:NodeShape ;
+	sh:targetClass wrd:Element ;
+	sh:sparql [ sh:prefixes wrd:LawPrefixes ;
+		sh:message "W3: an element of mode Variation is a slot's variant." ;
+		sh:select """
+			SELECT $this WHERE {
+				$this wrd:inclusionMode wrd-voc:Variation .
+				FILTER NOT EXISTS { ?slot wrd:hasVariant $this }
+			}""" ] .
+
+wrd:W3AssembledShape a sh:NodeShape ;
+	sh:targetClass wrd:AssembledWording ;
+	sh:sparql [ sh:prefixes wrd:LawPrefixes ;
+		sh:message "W3: an assembled wording includes one variant, or a revision of one, of every slot it includes." ;
+		sh:select """
+			SELECT $this ?value WHERE {
+				$this wrd:includes ?value . ?value wrd:hasVariant ?any .
+				FILTER NOT EXISTS { $this wrd:includes ?e . ?e prov:wasRevisionOf* ?v . ?value wrd:hasVariant ?v }
+			}""" ] ;
+	sh:sparql [ sh:prefixes wrd:LawPrefixes ;
+		sh:message "W3: an assembled wording includes no more than one variant of a slot." ;
+		sh:select """
+			SELECT DISTINCT $this ?value WHERE {
+				$this wrd:includes ?value , ?e1 , ?e2 .
+				?value wrd:hasVariant ?v1 , ?v2 .
+				?e1 prov:wasRevisionOf* ?v1 . ?e2 prov:wasRevisionOf* ?v2 .
+				FILTER (?e1 != ?e2)
+			}""" ] .
+
+# ---- W4: inclusion conditions -----------------------------------------------------
+
+wrd:W4Shape a sh:NodeShape ;
+	sh:targetClass wrd:Element ;
+	sh:sparql [ sh:prefixes wrd:LawPrefixes ;
+		sh:message "W4: only a conditional element or a variant has an inclusion condition." ;
+		sh:select """
+			SELECT $this ?value WHERE {
+				$this wrd:includedWhen ?value .
+				FILTER NOT EXISTS { $this wrd:inclusionMode ?m . FILTER (?m IN (wrd-voc:Conditional, wrd-voc:Variation)) }
+			}""" ] ;
+	sh:sparql [ sh:prefixes wrd:LawPrefixes ;
+		sh:message "W4: every condition of an inclusion condition reads a governing variable." ;
+		sh:select """
+			SELECT $this ?value WHERE {
+				$this wrd:includedWhen/elg:hasCondition ?value .
+				FILTER NOT EXISTS { ?value wrd:readsVariable ?g . ?g a/rdfs:subClassOf* wrd:GoverningVariable }
+			}""" ] .
+
+# ---- W5: mandatory parts ----------------------------------------------------------
+
+wrd:W5Shape a sh:NodeShape ;
+	sh:targetClass wrd:AssembledWording ;
+	sh:sparql [ sh:prefixes wrd:LawPrefixes ;
+		sh:message "W5: an assembled wording includes every mandatory child of an element it includes, or a revision of it." ;
+		sh:select """
+			SELECT $this ?value WHERE {
+				$this wrd:includes ?parent . ?parent wrd:directlyComprises ?value .
+				FILTER NOT EXISTS { ?value wrd:inclusionMode ?m . FILTER (?m != wrd-voc:Mandatory) }
+				FILTER NOT EXISTS { ?value a/rdfs:subClassOf* wrd:Variable }
+				FILTER NOT EXISTS { $this wrd:includes ?r . ?r prov:wasRevisionOf* ?value }
+				FILTER NOT EXISTS { ?a wrd:operation wrd-voc:Delete ; wrd:amendsElement ?value ; prov:generated $this }
+			}""" ] .
+
+# ---- W6: values match their variables ---------------------------------------------
+
+wrd:W6Shape a sh:NodeShape ;
+	sh:targetClass wrd:VariableValue ;
+	sh:sparql [ sh:prefixes wrd:LawPrefixes ;
+		sh:message "W6: a concept value is in a scheme bound to the variable's value contract." ;
+		sh:select """
+			SELECT $this ?value WHERE {
+				$this wrd:forVariable/wrd:valueContract ?contract ; wrd:value ?value .
+				FILTER NOT EXISTS {
+					{ ?contract voc:boundScheme ?scheme } UNION { ?binding voc:forContract ?contract ; voc:bindsScheme ?scheme }
+					?value skos:inScheme ?scheme }
+			}""" ] ;
+	sh:sparql [ sh:prefixes wrd:LawPrefixes ;
+		sh:message "W6: a quantity value is on the variable's value space." ;
+		sh:select """
+			SELECT $this ?value WHERE {
+				$this wrd:forVariable/wrd:valueSpace ?space ; wrd:value ?value .
+				?value qnt:onSpace ?other . FILTER (?other != ?space)
+			}""" ] ;
+	sh:sparql [ sh:prefixes wrd:LawPrefixes ;
+		sh:message "W6: a numeric value lies within the variable's admissible values." ;
+		sh:select """
+			SELECT $this ?value WHERE {
+				$this wrd:forVariable/wrd:admissibleValues ?set .
+				{ $this wrd:literalValue ?value } UNION { $this wrd:value/qnt:numericValue ?value }
+				FILTER (isNumeric(?value))
+				FILTER NOT EXISTS { ?set qnt:hasRange ?r .
+					FILTER NOT EXISTS { ?r qnt:lowerBound ?b . ?b qnt:boundValue/qnt:numericValue ?n .
+						FILTER (?value < ?n || (?value = ?n && NOT EXISTS { ?b qnt:boundClosure qnt:Closed })) }
+					FILTER NOT EXISTS { ?r qnt:upperBound ?b . ?b qnt:boundValue/qnt:numericValue ?n .
+						FILTER (?value > ?n || (?value = ?n && NOT EXISTS { ?b qnt:boundClosure qnt:Closed })) }
+				}
+			}""" ] ;
+	sh:sparql [ sh:prefixes wrd:LawPrefixes ;
+		sh:message "W6: a variable that is not multi-valued has one value." ;
+		sh:select """
+			SELECT DISTINCT $this WHERE {
+				$this wrd:forVariable ?variable ; wrd:value|wrd:literalValue ?a , ?b .
+				FILTER (?a != ?b)
+				FILTER NOT EXISTS { ?variable wrd:multiValued true }
+			}""" ] .
+
+# ---- Table cells --------------------------------------------------------------------
+
+wrd:CellShape a sh:NodeShape ;
+	sh:targetSubjectsOf wrd:forEntry ;
+	sh:sparql [ sh:prefixes wrd:LawPrefixes ;
+		sh:message "A cell's declared entry belongs to the table of the cell's field." ;
+		sh:select """
+			SELECT $this ?value WHERE {
+				$this wrd:forVariable ?variable ; wrd:forEntry ?value .
+				?value a wrd:Entry .
+				FILTER NOT EXISTS {
+					?field wrd:fieldVariable ?variable .
+					{ ?table wrd:directlyComprises ?field } UNION { ?field wrd:placedUnder ?table }
+					{ ?table wrd:directlyComprises ?value } UNION { ?value wrd:placedUnder ?table } }
+			}""" ] .
+
+# ---- A slot's conditions, as a set (C5-Q1) ----------------------------------------
+# ponytail: interval conditions over one governing variable only, by candidate points
+# (endpoints, a step either side, midpoints on dense spaces). The reasoner's check for
+# every kind of condition is slice C13a.
+
+wrd:SlotConditionsShape a sh:NodeShape ;
+	sh:targetClass wrd:VariationSlot ;
+	sh:sparql [ sh:prefixes wrd:LawPrefixes ;
+		sh:message "A slot's variants' conditions all read the same governing variables." ;
+		sh:select """
+			SELECT $this ?value WHERE {
+				$this wrd:hasVariant ?other , ?value .
+				?other wrd:includedWhen/elg:hasCondition/wrd:readsVariable ?g .
+				FILTER NOT EXISTS { ?value wrd:includedWhen/elg:hasCondition/wrd:readsVariable ?g }
+			}""" ] ;
+	sh:sparql [ sh:prefixes wrd:LawPrefixes ;
+		sh:message "Two variants of a slot can both apply: their ranges overlap." ;
+		sh:select """
+			SELECT DISTINCT $this ?value WHERE {
+				$this wrd:hasVariant/wrd:includedWhen/elg:hasCondition/wrd:readsVariable ?g .
+				FILTER NOT EXISTS { $this wrd:hasVariant ?v . FILTER NOT EXISTS { ?v wrd:includedWhen/elg:hasCondition ?c } }
+				FILTER NOT EXISTS { $this wrd:hasVariant/wrd:includedWhen/elg:hasCondition ?c .
+					FILTER NOT EXISTS { ?c a elg:IntervalCondition ; wrd:readsVariable ?g } }
+				FILTER NOT EXISTS { $this wrd:hasVariant/wrd:includedWhen ?p . ?p elg:hasCondition ?c1 , ?c2 . FILTER (?c1 != ?c2) }
+				$this wrd:hasVariant ?va , ?value . FILTER (STR(?va) < STR(?value))
+				?va wrd:includedWhen/elg:hasCondition/elg:requiredRangeSet/qnt:hasRange ?ra .
+				?value wrd:includedWhen/elg:hasCondition/elg:requiredRangeSet/qnt:hasRange ?rb .
+				{ ?ra (qnt:lowerBound|qnt:upperBound)/qnt:boundValue/qnt:numericValue ?e1 } UNION { ?rb (qnt:lowerBound|qnt:upperBound)/qnt:boundValue/qnt:numericValue ?e1 }
+				{ ?ra (qnt:lowerBound|qnt:upperBound)/qnt:boundValue/qnt:numericValue ?e2 } UNION { ?rb (qnt:lowerBound|qnt:upperBound)/qnt:boundValue/qnt:numericValue ?e2 }
+				OPTIONAL { ?g wrd:valueSpace/qnt:granularityFloor/qnt:numericValue ?grain }
+				BIND (COALESCE(?grain, 1) AS ?step)
+				BIND (EXISTS { ?g wrd:valueSpace/qnt:densityKind qnt:Discrete } AS ?discrete)
+				{ BIND (0 AS ?k) } UNION { BIND (1 AS ?k) } UNION { BIND (2 AS ?k) } UNION { BIND (3 AS ?k) }
+				FILTER (?k != 3 || !?discrete)
+				BIND (IF(?k = 0, ?e1, IF(?k = 1, ?e1 + ?step, IF(?k = 2, ?e1 - ?step, (?e1 + ?e2) / 2))) AS ?x)
+				FILTER NOT EXISTS { ?ra qnt:lowerBound ?b . ?b qnt:boundValue/qnt:numericValue ?n .
+					FILTER (?x < ?n || (?x = ?n && NOT EXISTS { ?b qnt:boundClosure qnt:Closed })) }
+				FILTER NOT EXISTS { ?ra qnt:upperBound ?b . ?b qnt:boundValue/qnt:numericValue ?n .
+					FILTER (?x > ?n || (?x = ?n && NOT EXISTS { ?b qnt:boundClosure qnt:Closed })) }
+				FILTER NOT EXISTS { ?rb qnt:lowerBound ?b . ?b qnt:boundValue/qnt:numericValue ?n .
+					FILTER (?x < ?n || (?x = ?n && NOT EXISTS { ?b qnt:boundClosure qnt:Closed })) }
+				FILTER NOT EXISTS { ?rb qnt:upperBound ?b . ?b qnt:boundValue/qnt:numericValue ?n .
+					FILTER (?x > ?n || (?x = ?n && NOT EXISTS { ?b qnt:boundClosure qnt:Closed })) }
+			}""" ] ;
+	sh:sparql [ sh:prefixes wrd:LawPrefixes ;
+		sh:message "No variant of a slot applies to some admissible value of its governing variable." ;
+		sh:select """
+			SELECT DISTINCT $this ?value WHERE {
+				$this wrd:hasVariant/wrd:includedWhen/elg:hasCondition/wrd:readsVariable ?g .
+				FILTER NOT EXISTS { $this wrd:hasVariant ?v . FILTER NOT EXISTS { ?v wrd:includedWhen/elg:hasCondition ?c } }
+				FILTER NOT EXISTS { $this wrd:hasVariant/wrd:includedWhen/elg:hasCondition ?c .
+					FILTER NOT EXISTS { ?c a elg:IntervalCondition ; wrd:readsVariable ?g } }
+				FILTER NOT EXISTS { $this wrd:hasVariant/wrd:includedWhen ?p . ?p elg:hasCondition ?c1 , ?c2 . FILTER (?c1 != ?c2) }
+				{ $this wrd:hasVariant/wrd:includedWhen/elg:hasCondition/elg:requiredRangeSet/qnt:hasRange ?r1 } UNION { ?g wrd:admissibleValues/qnt:hasRange ?r1 }
+				{ $this wrd:hasVariant/wrd:includedWhen/elg:hasCondition/elg:requiredRangeSet/qnt:hasRange ?r2 } UNION { ?g wrd:admissibleValues/qnt:hasRange ?r2 }
+				?r1 (qnt:lowerBound|qnt:upperBound)/qnt:boundValue/qnt:numericValue ?e1 . ?r2 (qnt:lowerBound|qnt:upperBound)/qnt:boundValue/qnt:numericValue ?e2 .
+				OPTIONAL { ?g wrd:valueSpace/qnt:granularityFloor/qnt:numericValue ?grain }
+				BIND (COALESCE(?grain, 1) AS ?step)
+				BIND (EXISTS { ?g wrd:valueSpace/qnt:densityKind qnt:Discrete } AS ?discrete)
+				{ BIND (0 AS ?k) } UNION { BIND (1 AS ?k) } UNION { BIND (2 AS ?k) } UNION { BIND (3 AS ?k) }
+				FILTER (?k != 3 || !?discrete)
+				BIND (IF(?k = 0, ?e1, IF(?k = 1, ?e1 + ?step, IF(?k = 2, ?e1 - ?step, (?e1 + ?e2) / 2))) AS ?x)
+				FILTER NOT EXISTS { ?g wrd:admissibleValues ?set . FILTER NOT EXISTS { ?set qnt:hasRange ?ar .
+					FILTER NOT EXISTS { ?ar qnt:lowerBound ?b . ?b qnt:boundValue/qnt:numericValue ?n .
+						FILTER (?x < ?n || (?x = ?n && NOT EXISTS { ?b qnt:boundClosure qnt:Closed })) }
+					FILTER NOT EXISTS { ?ar qnt:upperBound ?b . ?b qnt:boundValue/qnt:numericValue ?n .
+						FILTER (?x > ?n || (?x = ?n && NOT EXISTS { ?b qnt:boundClosure qnt:Closed })) }
+				} }
+				FILTER NOT EXISTS { $this wrd:hasVariant/wrd:includedWhen/elg:hasCondition/elg:requiredRangeSet/qnt:hasRange ?ur .
+					FILTER NOT EXISTS { ?ur qnt:lowerBound ?b . ?b qnt:boundValue/qnt:numericValue ?n .
+						FILTER (?x < ?n || (?x = ?n && NOT EXISTS { ?b qnt:boundClosure qnt:Closed })) }
+					FILTER NOT EXISTS { ?ur qnt:upperBound ?b . ?b qnt:boundValue/qnt:numericValue ?n .
+						FILTER (?x > ?n || (?x = ?n && NOT EXISTS { ?b qnt:boundClosure qnt:Closed })) }
+				}
+				BIND (?x AS ?value)
+			}""" ] .
+
+wrd:SlotUncheckedShape a sh:NodeShape ;
+	sh:targetClass wrd:VariationSlot ;
+	sh:severity sh:Info ;
+	sh:sparql [ sh:prefixes wrd:LawPrefixes ;
+		sh:message "Unchecked: this slot's conditions are not all interval conditions over one governing variable (slice C13a checks them)." ;
+		sh:select """
+			SELECT $this WHERE {
+				$this wrd:hasVariant/wrd:includedWhen ?profile .
+				FILTER NOT EXISTS {
+					$this wrd:hasVariant/wrd:includedWhen/elg:hasCondition/wrd:readsVariable ?g .
+					FILTER NOT EXISTS { $this wrd:hasVariant ?v . FILTER NOT EXISTS { ?v wrd:includedWhen/elg:hasCondition ?c } }
+					FILTER NOT EXISTS { $this wrd:hasVariant/wrd:includedWhen/elg:hasCondition ?c .
+						FILTER NOT EXISTS { ?c a elg:IntervalCondition ; wrd:readsVariable ?g } }
+					FILTER NOT EXISTS { $this wrd:hasVariant/wrd:includedWhen ?p . ?p elg:hasCondition ?c1 , ?c2 . FILTER (?c1 != ?c2) }
+				}
+			}""" ] .
+
+# ---- W8: references find exactly one version, or one reliance ---------------------
+
+wrd:W8FormShape a sh:NodeShape ;
+	sh:targetClass wrd:Wording ;
+	sh:sparql [ sh:prefixes wrd:LawPrefixes ;
+		sh:message "W8: {?element} refers to {?identity}, of which this form comprises no version." ;
+		sh:select """
+			SELECT DISTINCT $this ?element ?identity WHERE {
+				FILTER NOT EXISTS { $this a wrd:AssembledWording }
+				$this wrd:directlyComprises+ ?element .
+				{ ?element wrd:hasTextPart ?part . ?part wrd:refersToObject|wrd:refersToVariable ?identity } UNION { ?element wrd:linksTo ?identity }
+				?any fnd:hasIdentity ?identity .
+				FILTER EXISTS { ?any a/rdfs:subClassOf* wrd:Element }
+				FILTER NOT EXISTS { $this wrd:directlyComprises+ ?version . ?version fnd:hasIdentity ?identity }
+			}""" ] ;
+	sh:sparql [ sh:prefixes wrd:LawPrefixes ;
+		sh:message "W8: {?element} refers to {?identity}, of which this form comprises two versions, {?one} and {?other}." ;
+		sh:select """
+			SELECT DISTINCT $this ?element ?identity ?one ?other WHERE {
+				FILTER NOT EXISTS { $this a wrd:AssembledWording }
+				$this wrd:directlyComprises+ ?element .
+				{ ?element wrd:hasTextPart ?part . ?part wrd:refersToObject|wrd:refersToVariable ?identity } UNION { ?element wrd:linksTo ?identity }
+				$this wrd:directlyComprises+ ?one , ?other .
+				?one fnd:hasIdentity ?identity . ?other fnd:hasIdentity ?identity .
+				FILTER (STR(?one) < STR(?other))
+			}""" ] .
+
+wrd:W8AssembledShape a sh:NodeShape ;
+	sh:targetClass wrd:AssembledWording ;
+	sh:sparql [ sh:prefixes wrd:LawPrefixes ;
+		sh:message "W8: {?element} refers to {?identity}, of which this assembled wording includes, or declares through an included element, no version." ;
+		sh:select """
+			SELECT DISTINCT $this ?element ?identity WHERE {
+				$this wrd:includes ?element .
+				{ ?element wrd:hasTextPart ?part . ?part wrd:refersToObject|wrd:refersToVariable ?identity } UNION { ?element wrd:linksTo ?identity }
+				?any fnd:hasIdentity ?identity .
+				FILTER EXISTS { ?any a/rdfs:subClassOf* wrd:Element }
+				FILTER NOT EXISTS { $this wrd:includes ?version . ?version fnd:hasIdentity ?identity }
+				FILTER NOT EXISTS { $this wrd:includes ?declarer . ?declarer wrd:directlyComprises ?variable . ?variable fnd:hasIdentity ?identity ; a/rdfs:subClassOf* wrd:Variable }
+			}""" ] ;
+	sh:sparql [ sh:prefixes wrd:LawPrefixes ;
+		sh:message "W8: {?element} refers to {?identity}, of which this assembled wording holds two versions, {?one} and {?other}." ;
+		sh:select """
+			SELECT DISTINCT $this ?element ?identity ?one ?other WHERE {
+				$this wrd:includes ?element .
+				{ ?element wrd:hasTextPart ?part . ?part wrd:refersToObject|wrd:refersToVariable ?identity } UNION { ?element wrd:linksTo ?identity }
+				{ $this wrd:includes ?one , ?other }
+				UNION { $this wrd:includes ?d1 , ?d2 . ?d1 wrd:directlyComprises ?one . ?d2 wrd:directlyComprises ?other .
+				  ?one a/rdfs:subClassOf* wrd:Variable . ?other a/rdfs:subClassOf* wrd:Variable }
+				?one fnd:hasIdentity ?identity . ?other fnd:hasIdentity ?identity .
+				FILTER (STR(?one) < STR(?other))
+			}""" ] .
+
+wrd:W8RelianceShape a sh:NodeShape ;
+	sh:targetClass wrd:Wording ;
+	sh:sparql [ sh:prefixes wrd:LawPrefixes ;
+		sh:message "W8: {?element} refers to {?identity}, a document outside the wording, which this wording does not rely on: state a static reliance (wrd:reliesOnEdition) or an ambulatory one (wrd:reliesAsAmended)." ;
+		sh:select """
+			SELECT DISTINCT $this ?element ?identity WHERE {
+				{ $this wrd:directlyComprises+ ?element } UNION { $this wrd:includes ?element }
+				{ ?element wrd:hasTextPart ?part . ?part wrd:refersToObject|wrd:refersToVariable ?identity } UNION { ?element wrd:linksTo ?identity }
+				?document fnd:hasIdentity ?identity ; a/rdfs:subClassOf* wrd:LinkedDocument .
+				FILTER NOT EXISTS { $this wrd:reliesOnEdition/fnd:hasIdentity ?identity }
+				FILTER NOT EXISTS { $this wrd:reliesAsAmended ?identity }
+				FILTER NOT EXISTS { $this wrd:assembledFrom ?form . { ?form wrd:reliesOnEdition/fnd:hasIdentity ?identity } UNION { ?form wrd:reliesAsAmended ?identity } }
+			}""" ] ;
+	sh:sparql [ sh:prefixes wrd:LawPrefixes ;
+		sh:message "W8: this wording relies on {?identity} twice ({?one}, {?other}): a reference to it must find exactly one reliance." ;
+		sh:select """
+			SELECT DISTINCT $this ?identity ?one ?other WHERE {
+				{ $this wrd:reliesOnEdition ?one , ?other . ?one fnd:hasIdentity ?identity . ?other fnd:hasIdentity ?identity . FILTER (STR(?one) < STR(?other)) }
+				UNION { $this wrd:reliesOnEdition ?one ; wrd:reliesAsAmended ?identity . ?one fnd:hasIdentity ?identity . BIND (?identity AS ?other) }
+			}""" ] .
+
+# ---- Amendments -------------------------------------------------------------------
+
+wrd:AmendmentOperationShape a sh:NodeShape ;
+	sh:targetClass wrd:Amendment ;
+	sh:sparql [ sh:prefixes wrd:LawPrefixes ;
+		sh:message "An insert, append or replace names its new element with wrd:replacement." ;
+		sh:select """
+			SELECT $this WHERE {
+				$this wrd:operation ?op . FILTER (?op IN (wrd-voc:Insert, wrd-voc:Append, wrd-voc:Replace))
+				FILTER NOT EXISTS { $this wrd:replacement ?new }
+			}""" ] ;
+	sh:sparql [ sh:prefixes wrd:LawPrefixes ;
+		sh:message "A strike and substitute states both the struck and the substituted text, and only it states either." ;
+		sh:select """
+			SELECT $this WHERE {
+				$this wrd:operation ?op .
+				BIND (EXISTS { $this wrd:struckText ?s } AS ?struck)
+				BIND (EXISTS { $this wrd:substitutedText ?t } AS ?substituted)
+				FILTER (IF(?op = wrd-voc:StrikeAndSubstitute, !(?struck && ?substituted), ?struck || ?substituted))
+			}""" ] ;
+	sh:sparql [ sh:prefixes wrd:LawPrefixes ;
+		sh:message "A delete or a strike and substitute has no replacement." ;
+		sh:select """
+			SELECT $this WHERE {
+				$this wrd:operation ?op ; wrd:replacement ?new .
+				FILTER (?op IN (wrd-voc:Delete, wrd-voc:StrikeAndSubstitute))
+			}""" ] ;
+	sh:sparql [ sh:prefixes wrd:LawPrefixes ;
+		sh:message "An instance's amendment generates no new version of a library element: amend it with a bespoke element instead." ;
+		sh:select """
+			SELECT DISTINCT $this ?value WHERE {
+				$this wrd:replacement|prov:generated ?value .
+				?value fnd:hasIdentity ?i . ?library fnd:hasIdentity ?i . FILTER (?library != ?value)
+				?form (wrd:directlyComprises|wrd:hasVariant)* ?library .
+				?form a/rdfs:subClassOf* wrd:Wording . FILTER NOT EXISTS { ?form a wrd:AssembledWording }
+				?instance (wrd:directlyComprises|wrd:hasVariant)* ?value . ?instance a wrd:AssembledWording .
+			}""" ] .

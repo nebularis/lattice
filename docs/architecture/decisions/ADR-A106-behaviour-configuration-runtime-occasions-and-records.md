@@ -112,3 +112,63 @@ this ADR. Until then B5 holds for one level of suspension.
 - The platform's behaviour engine loads configuration and writes runtime records (Phase 3 plan).
 - ADR-A105 (closure declarations) and the evidence rule meet in B6: the external log an occupancy
   cites is a fact source a closure may name.
+
+## Addendum (2026-10-02): nested states, history and concurrent regimes
+
+**Status:** Accepted 2026-10-02 (CCS slice C11a, phase 1). The design is the
+[nested states sketch](../../developer/sketches/nested-states-and-history.md), which this addendum
+summarises. It settles what "Not decided here" deferred.
+
+1. **Reference semantics.** Behaviour takes W3C SCXML as its reference, without claiming
+   conformance. It follows SCXML's compound and parallel states, initial
+   states, history, inner-first transition selection and exit and entry order, and departs where
+   RDF and the evidence rule need it: no pseudo-state nodes, no document order, no clock, no
+   datamodel or executable content, no final states, and internal self-transitions by default
+   (sketch §2).
+2. **Regions.** A state holds sub-states through regions. A region is a `bhv:StateSpace` naming
+   the state it refines with `bhv:regionOf`, with its own `bhv:initialState`. One region makes a
+   compound state, several a parallel one. A machine is nested in a state only when its states
+   have no meaning outside it, must end on every exit from it, or must be found again on return.
+   Otherwise it is a separate regime, with guards and legal triggers for any interaction (sketch
+   §3, §3.1).
+3. **History per transition.** `bhv:entryMode` on a transition definition is `bhv:DefaultEntry`
+   (when absent), `bhv:ShallowHistory` or `bhv:DeepHistory`. History reads the occupancies the
+   target's last exit ended (`bhv:exitedBy`), and each resumed occupancy names the one it resumes
+   (`bhv:resumedFrom`). Nothing else is stored for it (sketch §4).
+4. **Occupancies per level.** A subject holds one current occupancy for every active state, at
+   every level. B6 applies to every occupancy an execution creates or ends (sketch §5).
+5. **Concurrency.** Separate regimes on one subject and parallel regions within a state are both
+   kept. Behaviour never ranks regimes. A relation's `ins:appliesInState` holds when, for each
+   regime its states belong to, the subject is in one of them. Conflicts between the relations
+   regimes gate are resolved in Instrument. A guard may read a state with `bhv:requiresState` and
+   `bhv:excludesState` (sketch §6).
+6. **Evaluation order.** One macrostep per positioned stimulus: inner-first selection, the state's
+   selection policy, conflicts by depth then priority (a remaining tie takes no transition and is
+   Undetermined), exit deepest first, entry outermost first, then derived triggers to quiescence
+   (sketch §7).
+7. **Occasions.** `bhv:perOccasionOf` gives a state space one instance per occasion of a
+   declaration: a refinement of a core occasion state (also a region of it) or a parallel regime on
+   the occasion. A refinement's transitions stay inside it, and moves between core states remain
+   the evaluator's (sketch §8).
+8. **Laws.** B5 is restated as the history rule. B6 is extended to ancestors, default sub-states and
+   exits. B9 (one tree per transition, refinements closed), B10 (no cycle of derived triggers at one
+   position) and B11 (a well-formed active configuration) are added (sketch §10).
+
+9. **Answered 2026-10-02.** Occasion suspension uses history: a seventh core state, `bhv:Live`,
+   holds `Pending` and `Arisen`, and reinstatement enters it by deep history (C11a-Q1, breaking
+   for `behaviour-vocab`). A period may declare states during which it does not run, on
+   `ins:OnExpiry`, counted by C12 over the occupancy history (C11a-Q2, in C7a). A relation gated by
+   a per-occasion state reads the occasion its arising trigger refers to, and is Undetermined when
+   that is not exactly one (C11a-Q4, in C7a).
+10. **Internal transitions.** A transition whose source and target are the same state is internal
+   unless it declares `bhv:transitionType bhv:External`: it applies its effects without leaving
+   the state, so it creates no occupancy and keeps the state's entry time and history. Re-entry
+   must be declared (sketch §4.1).
+
+11. **`AllMatches` (C11a-Q3, answered 2026-10-02).** `AllMatches` applies only to internal
+   transitions. Every enabled internal transition of the state fires, its effects composed in one
+   computation in the sequential environment: in `bhv:priority` order, each guard reading what the
+   one before it left. Competing `AllMatches` transitions have distinct priorities. State-changing
+   transitions from one state on one trigger agree on `SingleMatch` or `PriorityOrdered`. In one
+   pass the internal transitions fire before the state change. The parallel environment is left to
+   the [evaluation context](../../developer/sketches/evaluation-context.md) design.
