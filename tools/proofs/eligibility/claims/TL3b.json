@@ -1,10 +1,13 @@
 {
   "subject": "TL3b",
   "statedAs": "Eligibility.negate_before_same_reading_disagrees",
-  "statementDigest": "sha256:a39053e740089a0517fd2ffe4ac998b123e270d118fabca7b0b8c7ffc6a85d90",
+  "statementDigest": "sha256:dd8b2e77f2da0113152f5a06a81efbf642a1e0e3ef25417b1ff366237af4bea0",
   "method": "Proof",
   "scope": "SomeList",
-  "assumptionAudit": "no sorry/oops in Eligibility.thy (gate.py's source scan)",
-  "tool": { "name": "Isabelle", "version": "Isabelle2025-2" },
+  "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found (E1.4)",
+  "tool": {
+    "name": "Isabelle",
+    "version": "Isabelle2025-2"
+  },
   "outcome": "passed"
 }

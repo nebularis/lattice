@@ -19,8 +19,10 @@ check`. In tranche D, C6 to C7c are merged and tagged (Instrument 0.12.0, Party 
 0.7.0). C8 and C8b are merged and tagged (Instrument 0.14.0, Wording 0.7.0). C9 is briefed and splits into C9a to C9c. Its materiality question has its own sketch. From C5 on, the agent builds and verifies, and the human commits by hand.
 
 **Next action, for the human:** choose which of C9b1 (legal acts), C9b2 (additivity) or HQ-6 (deemings)
-to brief while FM-EP, the formal-methods Eligibility pass, runs on machine S (`fm/eligibility-pass`).
-C9b3 waits for FM-EP and HQ-6.
+to brief. **FM-EP, the formal-methods Eligibility pass on machine S (`fm/eligibility-pass`), is
+done** (FM-D17, E1.4, B2.1, B2.2 built and verified; B5 attempted, blocked, deferred) and held
+ready for the human to commit and merge — C9b3 can start once that branch is merged to `main`
+and HQ-6 is also settled.
 
 ## Slice board
 
@@ -42,7 +44,7 @@ C9b3 waits for FM-EP and HQ-6.
 | C7c | what terms are, and who they bind (split from C7b) | D | merged and tagged | done |
 | C8, C8b | values in stated meaning, Wording references by identity | D | merged, tagged | |
 | C9a | amendments, assents and taking effect | D | merged, tagged | |
-| C9b1 to C9b4, C9d, C9c, C8a | legal acts, additivity, set comparisons, qualifying rules, materiality, incorporation, template library | D | C9b re-sliced 2026-10-09 | C9b3 waits on the formal-methods Eligibility pass and HQ-6 |
+| C9b1 to C9b4, C9d, C9c, C8a | legal acts, additivity, set comparisons, qualifying rules, materiality, incorporation, template library | D | C9b re-sliced 2026-10-09 | C9b3 waits on the formal-methods Eligibility pass (**done 2026-10-09, not yet merged**) and HQ-6 |
 | C16c | remove Party's shares | F | planned, required before the epic closes | C9b4 |
 | C7a | regimes and gating, split from C7 | D | merged to `main` (`c6e5853`) and tagged | |
 | C12, C13 | runtime evaluator, relation plans | E | waiting | C9, C11, C11a, AIR-3.3, NRS N1 |

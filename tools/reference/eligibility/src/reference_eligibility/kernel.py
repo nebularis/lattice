@@ -1,74 +1,43 @@
 # SPDX-License-Identifier: MPL-2.0
 """The logic kernel: Decision, or3/and3/neg3 and the information order decision_leq.
 
-Ported from ``tools/proofs/eligibility/KernelLaws.thy`` and ``Eligibility.thy``
-(track E, Isabelle/HOL) -- same names, same case tables, restated in Python so
-an independent oracle exists for Eligibility's compilers to be checked
-against (track B2). Not a proof: track E already proved TA1 (``or3``/``and3``
-monotone in both arguments) and TA2 (``neg3`` involutive, monotone, fixes
-``Undetermined``) of the Isabelle original. This module is verified by test
-(``tests/test_kernel.py``), which reproduces those claims by exhaustive
-enumeration over the three-valued domain, not mechanised again.
+``Decision`` and the three connectives are now generated (FM-D17), not hand-ported: `or3`/`and3`/
+`neg3` are rendered by ``tools/literate_extract.py`` from the exact Isabelle ``fun`` clauses
+``tools/proofs/eligibility/Kernel.thy`` mechanises (``ontology/eligibility/README.md`` \u00a710), so
+the two languages' statements of the same connectives agree by construction, not by two
+independent authors' care. ``decision_leq``, ``some_value`` and ``every_value`` stay hand-written
+here: ``decision_leq`` is a predicate over equality, not a finite case table; ``some_value``/
+``every_value`` fold over an unbounded list, not a closed domain, so neither is generated.
+Verified by test (``tests/test_kernel.py``), which reproduces track E's TA1/TA2 claims by
+exhaustive enumeration over the three-valued domain, not mechanised again.
 """
 
 from __future__ import annotations
 
-from enum import Enum
 from functools import reduce
 from typing import Sequence
 
+from ._decision import DENIED, PERMITTED, UNDETERMINED, Decision
+from ._kernel_defs import and3, neg3, or3
 
-class Decision(Enum):
-    """The three-valued outcome (``elg:Decision``'s three named individuals)."""
-
-    PERMITTED = "Permitted"
-    DENIED = "Denied"
-    UNDETERMINED = "Undetermined"
-
-
-PERMITTED = Decision.PERMITTED
-DENIED = Decision.DENIED
-UNDETERMINED = Decision.UNDETERMINED
+__all__ = [
+    "Decision",
+    "PERMITTED",
+    "DENIED",
+    "UNDETERMINED",
+    "decision_leq",
+    "or3",
+    "and3",
+    "neg3",
+    "some_value",
+    "every_value",
+]
 
 
 def decision_leq(u: Decision, x: Decision) -> bool:
     """The information order (``KernelLaws.thy``'s ``decision_leq``): ``Undetermined``
     is below every decision, and otherwise a decision is below only itself."""
     return u is UNDETERMINED or u == x
-
-
-def or3(a: Decision, b: Decision) -> Decision:
-    """Strong Kleene disjunction (``KernelLaws.thy``'s ``or3``)."""
-    if a is PERMITTED:
-        return PERMITTED
-    if a is DENIED:
-        return b
-    # a is Undetermined
-    if b is PERMITTED:
-        return PERMITTED
-    return UNDETERMINED
-
-
-def and3(a: Decision, b: Decision) -> Decision:
-    """Strong Kleene conjunction (``KernelLaws.thy``'s ``and3``)."""
-    if a is PERMITTED:
-        return b
-    if a is DENIED:
-        return DENIED
-    # a is Undetermined
-    if b is DENIED:
-        return DENIED
-    return UNDETERMINED
-
-
-def neg3(a: Decision) -> Decision:
-    """Strong Kleene negation (``KernelLaws.thy``'s ``neg3``): involutive (TA2),
-    monotone, and fixes ``Undetermined``."""
-    if a is PERMITTED:
-        return DENIED
-    if a is DENIED:
-        return PERMITTED
-    return UNDETERMINED
 
 
 def some_value(values: Sequence[Decision]) -> Decision:

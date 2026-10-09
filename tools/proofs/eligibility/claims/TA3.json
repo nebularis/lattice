@@ -1,9 +1,9 @@
 {
-  "subject": "TL1-some",
-  "statedAs": "Eligibility.some_value_spec_permitted/denied/undetermined",
-  "statementDigest": "sha256:4994e60b4d4fb22ccbf09d9992c703a197c69c5930873b97667be9280803b97b",
+  "subject": "TA3",
+  "statedAs": "KernelLaws.or3_truth_table/and3_truth_table/neg3_truth_table",
+  "statementDigest": "sha256:c7cfac13990c6e103c2c8082edf8e6bcd5c732fca3670640cbf48b19fee3aa58",
   "method": "Proof",
-  "scope": "EveryList",
+  "scope": "EveryCase",
   "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found (E1.4)",
   "tool": {
     "name": "Isabelle",

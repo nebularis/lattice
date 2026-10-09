@@ -1,13 +1,22 @@
 #!/usr/bin/env python3
 """The proof gate script (ADR-A-FM2; carried over from spikes/formal-prover/gate.py, track D's
-spike, unchanged in design). For one layer's directory under tools/proofs/:
+spike). For one layer's directory under tools/proofs/:
 
 1. Recomputes each claim's statement digest from its theory source, between
-   ``(* GATE:BEGIN <subject> *)`` and ``(* GATE:END *)`` markers, and fails on an unreviewed
-   mismatch against the committed claim (an unreviewed restatement under an unchanged name).
-2. Scans every theory source for an unreviewed ``Admitted``/``admit``/``sorry``/``oracle``/
-   ``axiomatization`` outside files under a ``defects/`` directory, where such a marker is the
-   defect itself, not a gate failure.
+   ``(* GATE:BEGIN <subject> *)`` and ``(* GATE:END *)`` markers, **together with the normalised
+   text of every datatype/fun/definition/abbreviation block found anywhere in the layer**
+   (E1.4, the formal-methods epic's second review \u00a72.1), and fails on an unreviewed mismatch
+   against the committed claim. Before E1.4, a gated lemma's digest covered only the lemma's own
+   statement text, so redefining a constant the lemma mentions (``or3``, say) changed what every
+   lemma about it means without changing a single digest. Covering every definition in the layer
+   is coarser than true per-statement dependency tracking (every claim becomes sensitive to every
+   definition, not only the ones it actually mentions), but it is sound, which a textual
+   approximation of real dependency tracking is not guaranteed to be.
+2. Runs the assumption audit: a scan of every theory source for an unreviewed
+   ``Admitted``/``admit``/``sorry``/``oracle``/``axiomatization``, or a proof relying on
+   Isabelle's code-generator oracle (``by eval``/``by evaluation``, which is tagged as an oracle
+   dependency, not a kernel-checked proof), outside files under a ``defects/`` directory, where
+   such a marker is the defect itself, not a gate failure.
 3. Prints one law-report row per claim.
 
 Usage: python gate.py <layer-dir> [--defect-ok]
@@ -25,8 +34,9 @@ import re
 import sys
 from pathlib import Path
 
-BANNED = re.compile(r"\b(Admitted|admit|sorry|oracle|axiomatization)\b")
+BANNED = re.compile(r"\b(Admitted|admit|sorry|oracle|axiomatization)\b|\bby\s+eval(uation)?\b")
 MARKER = re.compile(r"\(\*\s*GATE:BEGIN\s+(\S+)\s*\*\)(.*?)\(\*\s*GATE:END\s*\*\)", re.S)
+DEF_HEADER = re.compile(r"^(datatype|type_synonym|fun|definition|abbreviation)\b")
 
 
 def normalise(statement: str) -> str:
@@ -54,6 +64,33 @@ def extract_statements(track_dir: Path) -> dict[str, str]:
             subject, body = match.group(1), match.group(2)
             found[subject] = normalise(body)
     return found
+
+
+def extract_definitions(track_dir: Path) -> str:
+    """The normalised text of every ``datatype``/``type_synonym``/``fun``/``definition``/
+    ``abbreviation`` block in any .thy file in this layer, outside ``defects/`` -- included in
+    every claim's digest input (E1.4), not only the gated statement's own text, so changing a
+    definition a statement depends on, even one declared in a file the statement's own theory
+    imports, changes that statement's recomputed digest. A block runs from its header line
+    through the following non-blank lines (matching how every definition in this layer is
+    actually laid out: a header, its clauses, then a blank line before the next construct)."""
+    found: list[str] = []
+    for path in sorted(track_dir.rglob("*")):
+        if path.suffix not in (".v", ".thy") or "defects" in path.parts:
+            continue
+        lines = path.read_text(encoding="utf-8").splitlines()
+        index = 0
+        while index < len(lines):
+            if DEF_HEADER.match(lines[index].strip()):
+                block = [lines[index]]
+                index += 1
+                while index < len(lines) and lines[index].strip():
+                    block.append(lines[index])
+                    index += 1
+                found.append(normalise("\n".join(block)))
+            else:
+                index += 1
+    return " ".join(found)
 
 
 def scan_for_banned(track_dir: Path) -> list[str]:
@@ -85,6 +122,7 @@ def main() -> int:
     track_dir = args.track_dir.resolve()
 
     statements = extract_statements(track_dir)
+    definitions = extract_definitions(track_dir)
     claims = load_claims(track_dir)
     banned = scan_for_banned(track_dir)
 
@@ -92,13 +130,14 @@ def main() -> int:
     print(f"Law report: {track_dir.name}")
     for claim in claims:
         subject = claim["subject"]
-        recomputed = digest(statements[subject]) if subject in statements else None
+        recomputed = digest(statements[subject] + " " + definitions) if subject in statements else None
         mismatch = recomputed is not None and recomputed != claim["statementDigest"]
         row_ok = claim["outcome"] == "passed" and not (mismatch and not args.defect_ok)
         ok = ok and row_ok
         flag = "" if not mismatch else "  [STATEMENT DIGEST MISMATCH, unreviewed restatement]"
         print(f"  {subject:<12} {claim['method']:<8} {claim['outcome']:<7} {claim['statedAs']}{flag}")
 
+    print("Assumption audit: " + ("clean, no sorry/oops/admit/oracle/by-eval found" if not banned else "FINDINGS"))
     if banned and not args.defect_ok:
         ok = False
         print("Banned markers found outside defects/:")

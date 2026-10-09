@@ -1,9 +1,9 @@
 {
-  "subject": "TL1-some",
-  "statedAs": "Eligibility.some_value_spec_permitted/denied/undetermined",
-  "statementDigest": "sha256:4994e60b4d4fb22ccbf09d9992c703a197c69c5930873b97667be9280803b97b",
+  "subject": "TA5",
+  "statedAs": "KernelLaws.neg3_or3_demorgan/neg3_and3_demorgan",
+  "statementDigest": "sha256:9f0158f40828dd34859950c3d24189e3edda4630416715bd6d522854797d72af",
   "method": "Proof",
-  "scope": "EveryList",
+  "scope": "EveryPair",
   "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found (E1.4)",
   "tool": {
     "name": "Isabelle",

@@ -1,10 +1,13 @@
 {
   "subject": "TL2",
   "statedAs": "Eligibility.some_value_monotone/every_value_monotone",
-  "statementDigest": "sha256:ff15bf02120aa90e15abe3aad5175a2f909f3d55d2aafaf6a616a31bccfe1ac7",
+  "statementDigest": "sha256:d59a24bc9e88970a959ded30fa8dddb539a4b4b23572e504b74f1f9c4bdc05e4",
   "method": "Proof",
   "scope": "EveryRelatedListPair",
-  "assumptionAudit": "no sorry/oops in Eligibility.thy (gate.py's source scan)",
-  "tool": { "name": "Isabelle", "version": "Isabelle2025-2" },
+  "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found (E1.4)",
+  "tool": {
+    "name": "Isabelle",
+    "version": "Isabelle2025-2"
+  },
   "outcome": "passed"
 }

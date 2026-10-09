@@ -68,6 +68,22 @@ class TestL9HierarchicalClosure:
         )
         assert decision is UNDETERMINED
 
+    def test_hierarchical_match_with_no_resolved_scheme_is_undetermined(self) -> None:
+        """Found by the formal-methods epic's second review (B2.2): a
+        hierarchical condition with no resolved scheme at all has no closure
+        to test a candidate against -- L9's own statement is conditioned on
+        "the bound scheme", which does not exist here, the same reason L14
+        leaves an otherwise-undecided candidate Undetermined rather than
+        Denied. Before this fix, ``matches()`` silently returned False for
+        every candidate when ``hierarchical`` was true and ``scheme`` was
+        ``None``, so a declared ``required`` set fell through to the
+        unmatched-required branch and returned Denied -- a condition cannot
+        be shown to fail a closure that was never resolved."""
+        decision = decide_concept_match(
+            ORANGE, hierarchical=True, required={CITRUS}, excluded=set(), scheme=None
+        )
+        assert decision is UNDETERMINED
+
 
 class TestL10ExclusionPrecedence:
     """An excluded match is Denied, whether or not it also matches a

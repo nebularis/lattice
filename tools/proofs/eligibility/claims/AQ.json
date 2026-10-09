@@ -1,10 +1,13 @@
 {
   "subject": "AQ",
   "statedAs": "Adequacy.adequacy_* (15 lemmas)",
-  "statementDigest": "sha256:4c1753838fc25f45e681cf2712e6f0280f90b9964f0940bec853a90fb7645a96",
+  "statementDigest": "sha256:4e370c87b68cce98dcf19bdc32fab9818685e7f501034b3b807e0bea7b99a50e",
   "method": "Proof",
   "scope": "EveryMixFixture",
-  "assumptionAudit": "each lemma closed by eval (a computation-level check)",
-  "tool": { "name": "Isabelle", "version": "Isabelle2025-2" },
+  "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found (E1.4)",
+  "tool": {
+    "name": "Isabelle",
+    "version": "Isabelle2025-2"
+  },
   "outcome": "passed"
 }

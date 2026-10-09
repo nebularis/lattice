@@ -11,6 +11,14 @@ independent reference that imported it would be comparing ``_expand``
 against itself: track B2's differential tests would never be able to catch
 a mistake in ``_expand`` shared by every backend. See this package's
 ``README.md`` for the full account.
+
+**L13 is deliberately not implemented here** (confirmed, B2.1): the law register
+(``ontology/eligibility/README.md`` §6) marks L13 ``elg:StaticConstraint``, not
+``elg:SemanticLaw`` -- a declaration-time well-formedness rule ("each excluded
+concept matches at least one required concept"), discharged by SHACL/SPARQL
+static analysis of a condition's own declarations, never by this decision
+function. L15 and L16 are, by contrast, deliberately implemented one layer up,
+in ``decide_condition`` below -- a different reason for the same absence here.
 """
 
 from __future__ import annotations
@@ -76,6 +84,17 @@ def decide_concept_match(
     if scheme is not None and candidate not in scheme.members:
         return UNDETERMINED
 
+    # L9: a hierarchical condition's closure is a relation *within the bound
+    # scheme*. With no resolved scheme at all there is no closure to test a
+    # candidate against -- not "this candidate fails the closure" (Denied),
+    # but "there is no closure to ask", the same reason L14 leaves an
+    # otherwise-undecided candidate Undetermined rather than Denied. Found by
+    # the formal-methods epic's second review (B2.2): before this guard,
+    # every hierarchical candidate fell through to the unmatched-required
+    # branch below and was wrongly Denied.
+    if hierarchical and scheme is None:
+        return UNDETERMINED
+
     def matches(concept: Concept) -> bool:
         if not hierarchical:
             return candidate == concept
@@ -92,7 +111,11 @@ def decide_concept_match(
     if hierarchical and scheme is not None and not scheme.has_hierarchy():
         return PERMITTED if candidate in required else UNDETERMINED
 
-    # A declared required set the candidate matches none of: Denied.
+    # A declared required set the candidate matches none of: Denied. (ADR-A87's own
+    # decision table, ``elg:AllRequired``; ``exe:NoMatchingRequiredConcept`` in the
+    # compilers.) Untraced before B2.1: this branch carries no law-ID comment because
+    # no single law states it in isolation; it is the complement of L12's default
+    # inclusion, under the same hierarchical-vs-flat conditions L14 and L12 state.
     if required and not any(matches(concept) for concept in required):
         return DENIED
 

@@ -50,11 +50,20 @@ regeneration-as-naturality property test (72 tests, no regression). B1's own sco
 resolved E1.2 (below): the rounding/residual
 theorem belongs to B4/E3-E4, not Quantification; track E's plan and status are corrected.
 
-**FM-EP, the Eligibility pass, before CCS C9b3 (decided 2026-10-09).** On machine S, branch `fm/eligibility-pass`, merged to
-`main` before CCS changes Eligibility: FM-D17 (decide, then build), E1.4, B2.2, B2.1, with B5 optional.
-See the plan §8. CCS C9b1 and C9b2 may proceed meanwhile, since they touch no Eligibility artefact.
+**FM-EP, the Eligibility pass, before CCS C9b3 (decided 2026-10-09). Done, 2026-10-09.** On
+machine S, branch `fm/eligibility-pass`: FM-D17 decided (A+B hybrid) and built, E1.4 built,
+B2.2 and B2.1 built, B5 attempted and blocked (mirror gap, deferred). Full detail in track E's
+and track B's own status records. Working tree held ready for the human to commit; not yet merged
+to `main`. CCS C9b1 and C9b2 may proceed meanwhile, since they touch no Eligibility artefact; C9b3
+itself can start once this branch is reviewed, accepted and merged. Cost: 1969.4 AI credits for
+the whole work unit (see Estimates and actuals).
 
-**Next action, for the human:** review and accept (or revise) `ADR-A116`. Track B's B1-B3 are complete; B4 waits on CCS's C12. The two remaining Gate D gaps (below) are deliberately deferred, not blocking. Also decide when and where the spike branch, `fm/phase-0-prover-spike`, is created, and approve the image builds and any native installs.
+**Next action, for the human:** review this branch (`fm/eligibility-pass`) and, if acceptable,
+commit, merge to `main` and tag, so CCS's C9b3 can start. Separately, review and accept (or
+revise) `ADR-A116`. Track B's B1-B3 are complete; B4 waits on CCS's C12. The two remaining Gate D
+gaps (below) are deliberately deferred, not blocking. Also decide when and where the spike
+branch, `fm/phase-0-prover-spike`, is created, and approve the image builds and any native
+installs.
 
 **2026-10-08, a second review.** An implementation-level review of the programme's actual
 evidence (not just its sketches), disposed in
@@ -79,9 +88,9 @@ status record.
 |---|---|---|
 | D Prover spike | done. FM-D1 decided: Isabelle | the two open Gate D criteria above |
 | A Ledger and harness | not started | gate D's remaining criteria, then its ADR (A1). A5 runs with track C |
-| B Reference semantics and oracle | B1, B2, B3 done 2026-10-07. [Its own plan, sketch and status](formal-methods-track-b.md) | B4 waits on CCS's C11a (done) and C12 (not done) |
+| B Reference semantics and oracle | B1, B2, B3, B2.1, B2.2 done. B5 attempted, blocked (mirror gap). [Its own plan, sketch and status](formal-methods-track-b.md) | B4 waits on CCS's C11a (done) and C12 (not done) |
 | C Design-time models | C1 and C2 done 2026-10-06. [Its own plan, sketch and status](formal-methods-track-c.md) | C3 (slot exclusivity, SMT) not started, waits on nothing but is next in this track's own numbering |
-| E Prover programme | E1.0/E1.1 done. E1.2 retired (its real home is B4/E3-E4, not Quantification). E1.4 (hardening) queued, not started | E1.3 waits on track C2's overlap-rule ADR, not on C2 itself (done) |
+| E Prover programme | E1.0/E1.1/E1.4 done. FM-D17 built. E1.2 retired (its real home is B4/E3-E4, not Quantification) | E1.3 waits on track C2's overlap-rule ADR, not on C2 itself (done) |
 | F Native tooling | not started | its ADR, then a Python baseline per family |
 | G Instrument assurance | not started | B4, C3 |
 | H Persistence | not started. [Its own plan, sketch and status](formal-methods-track-h.md) | nothing from tracks A-G; it reuses their methods but needs none of them to start |
@@ -130,4 +139,5 @@ status record.
 |---|---|---|
 | D | 0.3M to 0.6M | |
 | sketches, plans and the review response (2026-10-06) | not estimated | not recorded |
+| FM-EP, the Eligibility pass (2026-10-09, machine S, `fm/eligibility-pass`) | not estimated | 1969.4 AI credits |
 - 2026-10-09: an Eligibility pass scheduled before CCS C9b3, which extends Eligibility with set comparisons and aggregate bindings: FM-D17, E1.4, B2.2 and B2.1 on this epic's own branch, merged to `main` first
