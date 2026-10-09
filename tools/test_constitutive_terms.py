@@ -52,9 +52,15 @@ def _graph(*sources) -> Graph:
     return g
 
 
-MODEL = _graph(*[ONTOLOGY / p for p in LOWER], SPEC, VOCAB)
-SHAPES = _graph(LAYER / "shapes" / "structural.ttl", LAYER / "shapes" / "constraints.ttl")
-EVERY_SHAPE = _graph(*ALL_SHAPES)
+@pytest.fixture(scope="module", autouse=True)
+def _cached_graphs(request: pytest.FixtureRequest, graph_cache, validated) -> None:
+    """TM1/TM2: shared, session-scoped graphs and validation cache
+    (python-test-melting)."""
+    module = request.module
+    module.MODEL = graph_cache(*[ONTOLOGY / p for p in LOWER], SPEC, VOCAB)
+    module.SHAPES = graph_cache(LAYER / "shapes" / "structural.ttl", LAYER / "shapes" / "constraints.ttl")
+    module.EVERY_SHAPE = graph_cache(*ALL_SHAPES)
+    module.validate = validated
 NS = {"framework-lots": "framework", "service-towers": "service-towers", "facility-definitions": "facility-definitions",
       "trial-definitions": "trial-definitions", "supply-classification": "supply-classification"}
 
@@ -81,8 +87,8 @@ def _changed(name: str, add: str = "", remove: tuple = ()) -> Graph:
     return g
 
 
-def _results(data: Graph, shapes: Graph = SHAPES, severity=SH.Violation) -> list[tuple[str, str]]:
-    _, report, _ = validate(MODEL + data, shacl_graph=shapes, inference="none", advanced=True)
+def _results(data: Graph, shapes: Graph | None = None, severity=SH.Violation) -> list[tuple[str, str]]:
+    _, report, _ = validate(MODEL + data, shacl_graph=SHAPES if shapes is None else shapes, inference="none", advanced=True)
     return [(str(report.value(r, SH.focusNode)), str(report.value(r, SH.resultMessage)))
             for r in report.subjects(SH.resultSeverity, severity)]
 

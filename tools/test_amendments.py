@@ -32,8 +32,14 @@ FILES = {
     "licence-amendments": [EXAMPLES / "licence-amendments.ttl"],
     "property-endorsement": [EXAMPLES / "property-endorsement.ttl"],
 }
-MODEL = _graph(SPEC, VOCAB, *[ONTOLOGY / p for p in LOWER])
-SHAPES = _graph(*ALL_SHAPES)
+@pytest.fixture(scope="module", autouse=True)
+def _cached_graphs(request: pytest.FixtureRequest, graph_cache, validated) -> None:
+    """TM1/TM2: shared, session-scoped graphs and validation cache
+    (python-test-melting)."""
+    module = request.module
+    module.MODEL = graph_cache(SPEC, VOCAB, *[ONTOLOGY / p for p in LOWER])
+    module.SHAPES = graph_cache(*ALL_SHAPES)
+    module.validate = validated
 
 
 def _example(name: str) -> Graph:

@@ -32,18 +32,28 @@ cache can never silently hide a test that corrupted shared data (plan
 principle 3).
 
 **How a test module adopts the cache.** Each module that benefits declares
-one `@pytest.fixture(scope="session", autouse=True)` that fetches its own
-`MODEL`/`SHAPES`/`EVERY_SHAPE` (or that module's equivalents) from
-`graph_cache` and assigns them onto `request.module`, so every existing test
-function and helper in that module keeps referring to the same bare names it
-always has: only the one assignment at the top of the file changes, from a
-direct `_graph(...)` call to a cached one. A helper whose default argument
+one `@pytest.fixture(scope="module", autouse=True)` that fetches its own
+`MODEL`/`SHAPES`/`EVERY_SHAPE` (or that module's equivalents) from the
+session-scoped `graph_cache` and assigns them onto `request.module`, so every
+existing test function and helper in that module keeps referring to the same
+bare names it always has: only the one assignment at the top of the file
+changes, from a direct `_graph(...)` call to a cached one. The fixture itself
+is module-scoped, not session-scoped, since `request.module` is only
+available at function, class or module scope; the cache underneath it is
+session-scoped regardless, so the same parsed graph is still shared across
+every module that asks for the same sources. A helper whose default argument
 reads one of those names directly (evaluated at import time, before any
-fixture runs) is changed to look it up inside its own body instead. This
-keeps the caching mechanism itself centralised here, fixture-based, and
-session-scoped, without rewriting every call site's signature across the 25
-modules that use it (a deliberate, recorded reading of TM-Q2 option B: the
-cache is the fixture, not every test that benefits from it).
+fixture runs) is changed to look it up inside its own body instead. The same
+fixture also assigns `module.validate = validated`: `ValidationCache` is
+callable with exactly `pyshacl.validate`'s own signature (`data_graph`,
+`shacl_graph=...`, every other keyword passed through), so every existing
+`validate(data, shacl_graph=shapes, ...)` call site in the module gains TM2's
+cache with no change of its own, including inside the module's own helper
+functions. This keeps the caching mechanism itself centralised here,
+fixture-based, and session-scoped underneath, without rewriting every call
+site's signature across the 25 modules that use it (a deliberate, recorded
+reading of TM-Q2 option B: the cache is the fixture, not every test that
+benefits from it).
 
 `repo_files` (TM6, TD-29) replaces the five `git grep` subprocess calls the
 suite used to find a retired term or a pinned version: it walks the tree
@@ -114,32 +124,72 @@ class GraphCache:
             if len(graph) != self._size_at_insert[key]
         }
 
+    def resnapshot(self, graph: Graph) -> None:
+        """Re-records `graph`'s current triple count as its new baseline, if it is
+        one of this cache's own objects (a no-op otherwise). `ValidationCache`
+        calls this after a real pySHACL run, because pySHACL's own `advanced=True`
+        mode adds a small, fixed, idempotent set of RDFS/OWL compatibility axioms
+        to the shapes graph it is given the first time it sees it (confirmed:
+        `owl:Class rdfs:subClassOf rdfs:Class` and similar, never growing further
+        on a second call) -- pySHACL's own documented behaviour, not a test's, and
+        not a sign that caching has hidden anything. A later, *further* change to
+        the same graph still trips `mutated()`, since this only accepts the one
+        delta pySHACL itself is known to make."""
+        for key, cached in self._by_key.items():
+            if cached is graph:
+                self._size_at_insert[key] = len(graph)
+                return
+
 
 class ValidationCache:
-    """Memoises a whole pySHACL report, keyed on the identity of the data and
-    shapes graphs plus every validation option, so repeated calls for the same
-    graph, shape set and options run `validate()` once and share its report
-    (python-test-melting sketch item 1). A graph a test built or changed
-    itself is a fresh object each time, so it is simply never a cache hit here
-    -- nothing needs to be invalidated, because nothing cached is ever
-    mutated (see the module docstring, and `_graph_cache_not_mutated` below
-    for the graphs that do come from `graph_cache`)."""
+    """Memoises a whole pySHACL report, keyed on the *content* of the data and
+    shapes graphs (not their Python identity) plus every validation option, so
+    repeated calls for the same graph, shape set and options run `validate()`
+    once and share its report (python-test-melting sketch item 1).
 
-    def __init__(self) -> None:
+    Content, not `id()`, because a test may mutate its own graph in place and
+    validate it again (`data.remove(...)` then re-validate the same Python
+    object, a real, existing pattern in this suite, confirmed by a test that
+    failed under an identity-only key during this plan's own roll-out): an
+    identity-only cache would wrongly return the first, now-stale report.
+    Fingerprinting costs one linear pass over each graph, which is still far
+    cheaper than the `validate()` call it may save, and correctly treats two
+    *different* graph objects with identical triples as the same cache entry
+    too, a bonus hit neither this plan nor the sketch assumed.
+
+    Callable with the same signature as `pyshacl.validate` itself
+    (`data_graph`, `shacl_graph=...`, every other keyword passed through), so
+    an adopting module can substitute it directly for its own `validate` name
+    (`request.module.validate = validated`) and every existing call site
+    gains the cache with no change of its own."""
+
+    def __init__(self, graph_cache: "GraphCache | None" = None) -> None:
         self._by_key: dict[tuple, tuple] = {}
-        # Keeps every cached (data, shapes) pair alive for the session, so a
-        # Python id() this cache has keyed on is never reused by an unrelated
-        # later object (id() is only unique while the object is alive).
-        self._keepalive: list[tuple[Graph, Graph]] = []
+        # Defaults to the module's own singleton, so the `validated` fixture
+        # needs no wiring of its own; a test may inject its own GraphCache to
+        # exercise `resnapshot` in isolation (test_graph_cache.py).
+        self._graph_cache = _GRAPH_CACHE if graph_cache is None else graph_cache
 
-    def __call__(self, data: Graph, shapes: Graph, **options: Any) -> tuple:
-        key = (id(data), id(shapes), tuple(sorted(options.items())))
+    @staticmethod
+    def _fingerprint(graph: Graph) -> int:
+        return hash(frozenset(graph))
+
+    def __call__(self, data_graph: Graph, *args: Any, shacl_graph: Graph, **options: Any) -> tuple:
+        key = (self._fingerprint(data_graph), self._fingerprint(shacl_graph), tuple(sorted(options.items())))
         cached = self._by_key.get(key)
         if cached is not None:
             return cached
-        result = _pyshacl_validate(data, shacl_graph=shapes, **options)
-        self._by_key[key] = result
-        self._keepalive.append((data, shapes))
+        result = _pyshacl_validate(data_graph, *args, shacl_graph=shacl_graph, **options)
+        # pySHACL itself may have just added its own idempotent axioms to
+        # either graph (see GraphCache.resnapshot's docstring); accepted, not
+        # hidden, as this cache's own call is the only path a shapes graph
+        # from `graph_cache` is ever validated through. Done before the final
+        # fingerprint below, so a shapes graph pySHACL just touched is keyed
+        # on its settled content, not its pre-validation content.
+        self._graph_cache.resnapshot(data_graph)
+        self._graph_cache.resnapshot(shacl_graph)
+        settled_key = (self._fingerprint(data_graph), self._fingerprint(shacl_graph), key[2])
+        self._by_key[settled_key] = result
         return result
 
 

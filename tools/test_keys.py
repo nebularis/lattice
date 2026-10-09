@@ -55,6 +55,16 @@ def _graph(*sources) -> Graph:
 
 FND_SHAPES = _graph(FOUNDATION / "shapes" / "constraints.ttl")
 PF_SHAPES = _graph(PERSISTENCE / "shapes" / "persistent-foundation.ttl")
+
+
+@pytest.fixture(scope="module", autouse=True)
+def _cached_graphs(request: pytest.FixtureRequest, graph_cache, validated) -> None:
+    """TM1/TM2: shared, session-scoped graphs and validation cache
+    (python-test-melting)."""
+    module = request.module
+    module.FND_SHAPES = graph_cache(FOUNDATION / "shapes" / "constraints.ttl")
+    module.PF_SHAPES = graph_cache(PERSISTENCE / "shapes" / "persistent-foundation.ttl")
+    module.validate = validated
 PREFIXES = (f"@prefix fnd: <{FND}> .\n@prefix dal: <{DAL}> .\n@prefix ex: <{EX}> .\n"
             "@prefix owl: <http://www.w3.org/2002/07/owl#> .\n"
             "@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .\n")

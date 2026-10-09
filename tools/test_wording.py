@@ -7,6 +7,7 @@ the ADR-A83 harness jar is not built (``mise run bootstrap:reasoning-testkit``).
 
 from __future__ import annotations
 
+import functools
 import re
 import sys
 from pathlib import Path
@@ -55,7 +56,11 @@ def _example(path: Path) -> Graph:
     return _graph(path, *([LAYER / "examples" / f"{other}.ttl"] if other else []))
 
 
+@functools.lru_cache(maxsize=None)
 def _vocab_closure() -> Graph:
+    """TM1: used to rebuild the catalog closure on every call (python-test-melting
+    sketch); cached since every caller only ever reads it or combines it with `+`
+    (a new graph), never mutates it in place."""
     return closure(Catalog(CATALOG), VOCAB_IRI)
 
 
@@ -193,6 +198,15 @@ def test_c3_13_every_element_type_used_is_in_the_baseline_scheme() -> None:
 # ---- C3-14 to C3-17: shapes, named unions, comments -----------------------------
 
 SHAPES = _graph(LAYER / "shapes" / "structural.ttl", LAYER / "shapes" / "constraints.ttl")
+
+
+@pytest.fixture(scope="module", autouse=True)
+def _cached_graphs(request: pytest.FixtureRequest, graph_cache, validated) -> None:
+    """TM1/TM2: shared, session-scoped graphs and validation cache
+    (python-test-melting)."""
+    module = request.module
+    module.SHAPES = graph_cache(LAYER / "shapes" / "structural.ttl", LAYER / "shapes" / "constraints.ttl")
+    module.validate = validated
 
 
 def _violations(data: Graph, severity: URIRef = SH.Violation) -> set:

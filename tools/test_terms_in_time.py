@@ -56,10 +56,16 @@ def _graph(*sources) -> Graph:
     return g
 
 
-MODEL = _graph(*[ONTOLOGY / p for p in LOWER], SPEC, VOCAB)
-SHAPES = _graph(LAYER / "shapes" / "structural.ttl", LAYER / "shapes" / "constraints.ttl")
-QSHAPES = _graph(QLAYER / "shapes" / "constraints.ttl")
-EVERY_SHAPE = _graph(*ALL_SHAPES)
+@pytest.fixture(scope="module", autouse=True)
+def _cached_graphs(request: pytest.FixtureRequest, graph_cache, validated) -> None:
+    """TM1/TM2: shared, session-scoped graphs and validation cache
+    (python-test-melting)."""
+    module = request.module
+    module.MODEL = graph_cache(*[ONTOLOGY / p for p in LOWER], SPEC, VOCAB)
+    module.SHAPES = graph_cache(LAYER / "shapes" / "structural.ttl", LAYER / "shapes" / "constraints.ttl")
+    module.QSHAPES = graph_cache(QLAYER / "shapes" / "constraints.ttl")
+    module.EVERY_SHAPE = graph_cache(*ALL_SHAPES)
+    module.validate = validated
 
 
 def _ns(name: str) -> tuple[Namespace, Namespace]:
@@ -84,14 +90,14 @@ def _changed(name: str, add: str = "", remove: tuple = ()) -> Graph:
     return g
 
 
-def _messages(data: Graph, shapes: Graph = SHAPES) -> list[tuple[str, str]]:
-    _, report, _ = validate(MODEL + data, shacl_graph=shapes, inference="none", advanced=True)
+def _messages(data: Graph, shapes: Graph | None = None) -> list[tuple[str, str]]:
+    _, report, _ = validate(MODEL + data, shacl_graph=SHAPES if shapes is None else shapes, inference="none", advanced=True)
     return [(str(report.value(r, SH.focusNode)), str(report.value(r, SH.resultMessage)))
             for r in report.subjects(SH.resultSeverity, SH.Violation)]
 
 
-def _reported(data: Graph, focus: str, fragment: str, shapes: Graph = SHAPES) -> bool:
-    return any(f.endswith(focus) and fragment in m for f, m in _messages(data, shapes))
+def _reported(data: Graph, focus: str, fragment: str, shapes: Graph | None = None) -> bool:
+    return any(f.endswith(focus) and fragment in m for f, m in _messages(data, SHAPES if shapes is None else shapes))
 
 
 needs_reasoner = pytest.mark.skipif(not reasoning.available(), reason="reasoning-testkit jar not built")

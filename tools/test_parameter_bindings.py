@@ -59,9 +59,18 @@ def _graph(*sources) -> Graph:
     return g
 
 
-MODEL = _graph(*[ONTOLOGY / p for p in LOWER], SPEC, VOCAB)
-SHAPES = _graph(LAYER / "shapes" / "structural.ttl", LAYER / "shapes" / "constraints.ttl")
-EVERY_SHAPE = _graph(*ALL_SHAPES)
+@pytest.fixture(scope="module", autouse=True)
+def _cached_graphs(request: pytest.FixtureRequest, graph_cache, validated) -> None:
+    """TM1/TM2: MODEL, SHAPES and EVERY_SHAPE are shared, session-scoped, parsed
+    once across the whole suite, not once per module, and `validate` is
+    replaced by the shared, cached pySHACL report (python-test-melting). This
+    fixture itself is module-scoped (runs once for this module), since
+    `request.module` needs that; the cache underneath is session-scoped."""
+    module = request.module
+    module.MODEL = graph_cache(*[ONTOLOGY / p for p in LOWER], SPEC, VOCAB)
+    module.SHAPES = graph_cache(LAYER / "shapes" / "structural.ttl", LAYER / "shapes" / "constraints.ttl")
+    module.EVERY_SHAPE = graph_cache(*ALL_SHAPES)
+    module.validate = validated
 
 
 def _ns(name: str) -> tuple[Namespace, Namespace]:
@@ -107,8 +116,8 @@ def _changed(name: str, add: str = "", remove: tuple = (), graph: Graph | None =
     return g
 
 
-def _results(data: Graph, shapes: Graph = SHAPES, severity=SH.Violation) -> list[tuple[str, str]]:
-    _, report, _ = validate(MODEL + data, shacl_graph=shapes, inference="none", advanced=True)
+def _results(data: Graph, shapes: Graph | None = None, severity=SH.Violation) -> list[tuple[str, str]]:
+    _, report, _ = validate(MODEL + data, shacl_graph=SHAPES if shapes is None else shapes, inference="none", advanced=True)
     return [(str(report.value(r, SH.focusNode)), str(report.value(r, SH.resultMessage)))
             for r in report.subjects(SH.resultSeverity, severity)]
 

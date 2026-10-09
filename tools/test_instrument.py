@@ -50,9 +50,17 @@ def _graph(*sources) -> Graph:
     return g
 
 
-MODEL = _graph(*[ROOT / "ontology" / p for p in LOWER], SPEC, VOCAB)
-SHAPES = _graph(LAYER / "shapes" / "structural.ttl", LAYER / "shapes" / "constraints.ttl")
-FACILITY = _graph(LAYER / "examples" / "facility-agreement.ttl")
+@pytest.fixture(scope="module", autouse=True)
+def _cached_graphs(request: pytest.FixtureRequest, graph_cache, validated) -> None:
+    """TM1/TM2: shared, session-scoped graphs and validation cache
+    (python-test-melting)."""
+    module = request.module
+    module.MODEL = graph_cache(*[ROOT / "ontology" / p for p in LOWER], SPEC, VOCAB)
+    module.SHAPES = graph_cache(LAYER / "shapes" / "structural.ttl", LAYER / "shapes" / "constraints.ttl")
+    module.FACILITY = graph_cache(LAYER / "examples" / "facility-agreement.ttl")
+    module.validate = validated
+
+
 PREFIXES = (f"@prefix ins: <{INS}> .\n@prefix fnd: <{LATTICE}foundation#> .\n@prefix pty: <{LATTICE}party#> .\n"
             f"@prefix elg: <{LATTICE}eligibility#> .\n@prefix ex: <https://example.org/lattice/instrument/facility/> .\n"
             "@prefix tmpl: <https://example.org/lattice/instrument/facility/form/> .\n")
