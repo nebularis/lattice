@@ -64,6 +64,52 @@ Follow every step for any change to `ontology/**/spec/`, `ontology/**/vocab/`, o
    Persistence's spec, examples or templates changed, run `mise run build:persistence-execution`.
 8. **Check the code under test is this checkout's** (skill `lattice-toolchain`).
 
+## Modelling from reality
+
+**Ask how the law answers first.** Before modelling a legal concept, find how the law and contract
+drafting already answer the question: what kind of act it is, who holds what power, where a contract
+drafts the rule. Model that, and say so in the design. A model that reflects reality seldom drifts
+from it, and is of more use than one shaped for implementation convenience. For example, "Majority
+Lenders" is drafted as a defined word that several powers use, so a group's threshold belongs in
+that word's meaning, not on each power.
+
+**Reality first, then simplify.** Apply KISS, the ladder and the checks in "Simplifying a model
+safely" to a model that already reflects what it models. Never reduce reality's complexity by waving
+it away. Where usability or size forces the model to drift, record the drift and the reason beside
+it, as documentation.
+
+**Judgements are evaluated, never authored.** Whether declarations meet a rule, whether an exercise
+took effect (law I10) and when an amendment was agreed are read from facts by the evaluator. Stating
+one as data lets the data disagree with the rule that decides it.
+
+**Facts, meaning and findings live apart.** Instrument holds stated meaning, bound meaning, and the
+legal acts the parties did, such as assents and amendments. Behaviour holds what the evaluator
+concluded and executed. Behaviour is an abstract state machine that applied ontologies use, and
+deployments may implement differently, so outside a domain ontology do not name Behaviour constructs
+where a legal concept belongs in Instrument.
+
+**Layers state, code executes.** An ontology layer, Behaviour's runtime document included, is data.
+Counting, summing and forcing a deferred value are the evaluator's. A layer may declare what will be
+computed and how its result is read, never compute it, and must not depend on a runtime to say what
+something means.
+
+**Name the deferral.** A value not known when meaning is stated is deferred in one of two ways. A
+binding-time deferral, such as a placeholder taking its value from a variable, is forced by the
+instantiator and never survives into bound meaning (law I13). An evaluation-time deferral, such as
+the consenting lenders' share of the commitments, is forced by the evaluator at a stated reference
+time, may survive into bound meaning, and reads as Undetermined until forced. Say which a construct
+is.
+
+**Add only what may be added.** A sum is meaningful only over an extensive quantity, on one unit and
+one base, such as commitments in one currency or signed lines on one order. Ratios, rates, ratings
+and percentages of different bases are not additive. A proportion states its base. Never sum without
+checking.
+
+**The open world carries implied terms.** Statute and case law imply terms no clause states, such as
+a duty not to withhold consent unreasonably (`ins:impliedBy`). That is why the model is open-world.
+A drafter never gathers every legal influence into the contract, so keep a place for implication
+rather than requiring every term to be stated.
+
 ## Modelling rules
 
 **Say a design decision once.** Explain it in one place and cross-reference it. Do not explain why

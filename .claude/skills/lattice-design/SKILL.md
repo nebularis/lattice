@@ -47,7 +47,7 @@ hard-codes one domain's practice as the only way is wrong at the substrate.
    - *runtime overheads*: does it explode the data, invite inconsistency, block common traversals or
      processing, or make common operations, such as aggregating or summing a measure, behave in
      surprising ways
-4. **KISS.** Is it needed now? If not, is it needed at all? If later, can it wait, or is there value
+4. **KISS,** applied to a model that already reflects reality, never by waving reality away. Is it needed now? If not, is it needed at all? If later, can it wait, or is there value
    in doing it now? Is it as simple as it can be? KISS never overrides architectural conformance,
    non-functional requirements or standards in force.
 5. **A leaning**, with its reason. Then wait for the answer.

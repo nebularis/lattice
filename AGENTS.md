@@ -59,6 +59,16 @@ Every piece of text, in documents, code comments, commit messages and replies:
 - call a class that is a member of `fnd:Version` "versioned". Call a node "a version" only when it is
   one specific version
 
+## Modelling
+
+- Ask how the law and contract drafting answer a question before modelling it, and model that.
+- Model reality first, then simplify. Never reduce reality's complexity by waving it away, and record
+  any drift forced by usability.
+- Judgements, such as whether a rule was met or an act took effect, are evaluated from facts, never
+  authored. Layers state, code executes.
+
+Skill `lattice-ontology-authoring` has the detail.
+
 ## A public repository
 
 This repository is public, and so is everything it publishes.
