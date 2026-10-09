@@ -3515,7 +3515,7 @@ KISS: a record of reliance has no reader. **Leaning (a).**
 - the three Behaviour notice examples are annotated, not moved: a notice with legal effect is an
   Instrument act, and the record shows its performance
 - a per-document test that `instrument-acts` imports no Behaviour runtime. The import guard's blind
-  spot is TD-28
+  spot is TD-30
 - README §1.1's sentence is corrected
 - the reinsurance example records "no approval gives Undetermined" as deliberate non-coverage until
   HQ-6
