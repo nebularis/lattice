@@ -3065,9 +3065,9 @@ question to be taken up (below).
 |---|---|---|
 | C9a | Instrument 0.15.0 | `ins:Amendment` (`ins:amends`, `ins:resultsIn`, `ins:affectsExisting`, `ins:statedIn`), its effective time on Foundation's temporal scope and its recording on Foundation's evidence. `ins:Assent` (a party, a version, its valid time and evidence), and an amendment by agreement agreed when every party has assented. Formation as a regime: `ins:begins` and `ins:OnAcceptance`. Shapes for at most one agreed amendment per version, the overtaking warning (C9-Q2 rule (iii)), the I14 continuity warning, and I4. Examples include an endorsement and mid-term adjustment, showing whether it is in force on the date of a loss |
 | C9b0 | Eligibility, cascading | the Eligibility README made its source again (TD-16's Eligibility part), and law L9's amendment from FM-EP released. Before C9b3 |
-| C9b1 | Instrument 0.16.0, Behaviour patch | the legal acts tier in its own document (ADR-A120): declarations (assent, consent, objection, withdrawal), proposals (the amendment one of them), exercises, `ins:pursuantTo`. Behaviour's exercise and acceptance records narrowed to findings. Example: reinsurance claims co-operation. [Consent sketch](../sketches/consent-and-group-powers.md) §2.1 |
+| C9b1 | Instrument 0.16.0, Behaviour 0.14.0, both breaking | the legal acts tier in its own document (ADR-A120): declarations (assent, consent, objection, withdrawal), proposals (the amendment one of them), exercises, `ins:pursuantTo`. Behaviour's exercise and acceptance records narrowed to findings. Example: reinsurance claims co-operation. [Consent sketch](../sketches/consent-and-group-powers.md) §2.1 |
 | C9b2 | Quantification, cascading | extensive and intensive quantities, a proportion's base, sum and count. Examples: multicurrency commitments, written and signed lines, signing down. Sketch §2.4 |
-| C9b3 | Eligibility, own ADR | set comparisons (subset, intersects, disjoint), aggregate bindings, the two kinds of deferral, with their proofs and reference semantics. After the formal-methods Eligibility pass and HQ-6. Sketch §2.3 |
+| C9b3 | Eligibility, own ADR | set comparisons (subset, intersects, disjoint), aggregate bindings, the two kinds of deferral, with their proofs and reference semantics, including a hierarchical condition whose binding does not apply at the resolution time, Undetermined under L9 where C9b0 leaves the compilers refusing it (C9b0-Q2). After the formal-methods Eligibility pass and HQ-6. Sketch §2.3 |
 | C9b4 | Instrument | qualifying rules as acting rules (`ins:QualifyingRule`), universe, exclusions and reference time, joint and several powers, laws I11 and I13 restated, measure words, Party's shares deprecated with a warning shape. Examples: Majority Lenders acceleration with a transfer between request and decision, an Extraordinary Resolution. Sketch §2.2, §2.5 |
 | C9d | Instrument 0.17.0 | materiality (C9-Q3): the change report, condition words over it, grades, the evaluation profile, and selecting consenting members by grade. Split from C9b by C9b-Q1's leaning |
 | C9c | Wording 0.8.0, Instrument 0.18.0 | reliance on a wording, and W8 for references to a wording. `ins:incorporates`, generation of an encoded incorporated document's meaning within sections, I17 widened, cycle checks and `ins:prevailsOver` over an incorporated document. Static incorporation only, an ambulatory one of an encoded document reported (C9-Q8 (c)). `tools/`: the instantiator follows incorporation |
@@ -3081,7 +3081,7 @@ becomes four slices:
 
 ```mermaid
 flowchart LR
-    B1["C9b1 legal acts<br/>Instrument, Behaviour patch"]
+    B1["C9b1 legal acts<br/>Instrument, Behaviour"]
     B2["C9b2 additivity<br/>Quantification"]
     FM["FM-EP, Eligibility pass<br/>merged 2026-10-09"]
     B0["C9b0 Eligibility sources<br/>README the source again,<br/>L9 released"]
@@ -3115,11 +3115,9 @@ no resolved scheme is Undetermined rather than Denied. Eligibility's README is n
 README and regenerate from it, which TD-16 forbids today. So a new slice comes first:
 
 - **C9b0, Eligibility sources** (TD-16's Eligibility part). Make the README Eligibility's source again:
-  restore the vocabulary's ontology header in it, reconcile the shapes (78 triples only in the README,
-  19 only in the file, each difference judged, not regenerated over), add a test running `--check` as
-  the other literate layers have, and release the result, L9's amendment included, as Eligibility and
-  `eligibility-vocab` MINOR versions with their cascade. It also confirms the compilers' reading of
-  L9's new case.
+  restore the vocabulary's ontology header in it, reconcile the shapes, each difference judged, not
+  regenerated over, add a test running `--check` as the other literate layers have, and release L9's
+  amendment. It also confirms the compilers' reading of L9's new case. Briefed below, in C9b0 in detail.
 
 The details below are the record of the first brief.
 
@@ -3302,6 +3300,418 @@ Each option is compared on its design overheads and its runtime overheads, then 
 |---|---|
 | Instrument 0.16.0 | `ins:ConsentRule` (`ins:consentRule`, who must consent by role or all, `ins:threshold`, `ins:weightedBy` a word), `ins:Exercise` (`ins:exercises`, `ins:proposedBy`), `ins:assentTo` widened to an exercise, `ins:byExerciseOf`, a regime per exercise. Shapes for each. Examples: the facility's acceleration by the Majority Lenders, an amendment under a power, and reinsurance recoveries |
 
+#### C9b0 in detail
+
+**Machine:** R (Claude Code). **Branch:** created by the human from `main` once this brief is answered.
+Merged first of C9b0, C9b2 and C9b1. **Commits are the human's.**
+**Decisions:** TD-16, ADR-A120, law L9 as amended by FM-EP's B2.2 (`2a438b15`).
+
+**Invariant:** Eligibility's README generates every Eligibility spec, vocab and shapes file, and
+`--check` proves it. No shape, law text or ontology header exists only in a generated file.
+
+**Setting the scene.** A read-only inventory (2026-10-09) measured the drift against all three
+committed shape files, not `constraints.ttl` alone. The plan's "78 and 19 triples" compared the
+README's one shapes block with one file. Against the union, five triples are only in the README and
+42 only in the files:
+
+```mermaid
+flowchart LR
+    R["README §7<br/>one turtle-shapes block"]
+    S["structural.ttl<br/>Condition, EvidenceBinding,<br/>EvidenceStep,<br/>AdmissionProfile, EligibilityDecision"]
+    C["constraints.ttl<br/>IntervalContainmentRequiresRangeSet,<br/>WildcardPolicyConsistency,<br/>ConceptConditionDeclaration,<br/>ReachableExclusion"]
+    U["rules.ttl<br/>HierarchyWellFoundedness (L9 (a)),<br/>UndeterminedWhenNoCandidateInput (sh:rule)"]
+    R -- "extracted to" --> C
+    R -. "three structural shapes<br/>also in" .-> S
+    R -. "IntervalConditionShape,<br/>same body, other name" .-> C
+```
+
+- **Spec:** isomorphic. Nothing to do.
+- **Vocab:** the README has never carried the ontology header (`eligibility-vocab/0.11.0`), and L9's
+  new sentence (FM-EP) is in the README only. **Nothing imports `eligibility-vocab`**, so its release
+  has no cascade.
+- **Shapes, in the files only:** `WildcardPolicyConsistency` (enforces ADR-A06),
+  `AdmissionProfileShape`, `EligibilityDecisionShape` (README §6.4 says §7 discharges L6 to L8, yet
+  §7 lacks it), and both shapes in `rules.ttl`, one of which discharges L9 clause (a).
+- **Shapes, in both:** three structural shapes. Extracting the README's one block into
+  `constraints.ttl` while `structural.ttl` keeps them makes every violation of them reported twice.
+- **Interval shape:** the same body under two names. The files' name is the released one, cited by
+  `docs/architecture/derivation-and-validation.md`.
+- **No example or test changes conformance** under any of the three shape sets tried (all 8 examples,
+  E1, E2, and 351 tests across the importing layers). `test_readme_mirrors_shape_file` passes only
+  because it checks the two identical shapes.
+- **The compilers and L9's new case.** A hierarchical condition with no resolved scheme never reaches
+  a backend: `eligibility_ir.py` refuses to compile it (no `elg:constrainedByContract`, no binding,
+  or no binding applicable at the resolution time). The reference returns Undetermined. Hand-built,
+  the SPARQL backend would return Denied and the SHACL backend would disagree with it.
+
+**Questions, with each option's consequences:**
+
+**C9b0-Q1. How the README sources the three shape files.**
+
+| Option | Design overheads | Runtime overheads |
+|---|---|---|
+| (a) three `turtle-shapes` blocks, structural, constraints and rules, `--shapes` naming all three | none new: Wording already has two blocks. A `sh:rule` in a shapes block is ordinary Turtle to the extractor | none. Files unchanged |
+| (b) one block, the files merged into `constraints.ttl` | every reader of the three files changes, including five tests that load `structural.ttl` and `constraints.ttl` but not `rules.ttl` | a merge moves shapes between files, so tests that skip `rules.ttl` gain L9 (a) and may change |
+| (c) two blocks, `rules.ttl` left hand-kept | the README is still not the whole source, the defect C9b0 exists to remove | none |
+
+KISS: (a) is the smallest change that makes the README the whole source. **Leaning (a).**
+**Answered (the human, 2026-10-09): (a).**
+
+**C9b0-Q2. Is the compilers' refusal an acceptable reading of L9's new case?**
+
+| Option | Design overheads | Runtime overheads |
+|---|---|---|
+| (a) accept it now. Document in README §6.4 that a compiler refuses a plan L9 makes Undetermined for every candidate, add the missing test (required concepts, no contract), and assert `scheme is not None` for hierarchical plans in both backends | small. The refusal is one code path | an application gets a compile error where the reference gives Undetermined |
+| (b) compile it to a plan that answers Undetermined | each backend gains a no-scheme path, and the differential harness a case | matches L9 at runtime |
+
+The refusal has two causes, which reality separates. A condition with no contract is mis-authored,
+and refusing it is right. A condition whose binding does not apply at the resolution time is a
+binding-time deferral, which C9b3 names and designs. KISS: C9b0 need not pre-empt C9b3.
+**Leaning (a)**, with C9b3 turning the no-applicable-binding case into Undetermined.
+**Answered (the human, 2026-10-09): (a), and C9b3 must cover the no-applicable-binding case.**
+
+**TD-16 cross-checked (the human asked, 2026-10-09).** FM-EP (`2a438b15`) changed only
+`ontology/eligibility/README.md` under `ontology/`. On `main`, `literate_extract.py --check` reports
+drift in all three generated files. The spec differs in layout only. The vocab has one triple only in
+the README (L9's new comment) and four only in the file (L9's old comment and the three-triple
+header). The shapes differ as above. So TD-16's Eligibility part stands, and the human's proposal,
+repairing Eligibility's README in its own slice before the rest of C9b, is C9b0 as briefed.
+
+**Decided by precedent, not asked:**
+
+- the three file-only shapes, and both `rules.ttl` shapes, move into the README unchanged. Dropping
+  them would weaken earlier slices' checks (non-weakening)
+- the interval shape keeps its released name, `IntervalContainmentRequiresRangeSet`
+- the vocab's header joins the README. `eligibility-vocab` becomes 0.12.0, additive (L9's comment
+  says more, the meaning of L9 is FM-EP's). The spec and shapes graphs are unchanged, so neither
+  moves. With no importer, there is no cascade
+- the literate `--check` joins `tools/test_eligibility_examples.py`, replacing
+  `test_readme_mirrors_shape_file`
+- the README §6.4 diagram calls L1 to L8 static, but no law register says so, and L5 has no shape.
+  Recorded as TD-27, not fixed here
+
+**Planned validation** (pack `docs/developer/validation/ccs-c9b0.md`, written with the slice): the
+literate `--check` for Eligibility (positive), a probe shape edited in a generated file fails it
+(negative), each moved shape still fires on its probe (`WildcardCondition` with `NoWildcard`, an
+empty profile, an empty decision, a cyclic scheme), no violation is reported twice, the
+required-concepts-without-contract refusal, and the backend guards. One command:
+`mise run check:eligibility-sources` or the test file, settled in the pack.
+
+#### C9b1 in detail
+
+**Machine:** R. **Branch:** from `main` after C9b2 merges, merged last of the three.
+**Decisions:** the [consent sketch](../sketches/consent-and-group-powers.md) §2.1, §2.6, §3, §4.3 and
+its decisions, ADR-A104, ADR-A106, ADR-A120.
+
+**Invariant:** what the parties did (declarations, proposals, exercises, notices with legal effect)
+is an Instrument fact in its own document, written by any application. What the evaluator concluded
+about it is a Behaviour finding. A consumer that states meaning only never imports an act.
+
+**Setting the scene.** Facts from a read-only investigation (2026-10-09), checked against the source:
+
+- C9a's `ins:Amendment` is "the legal effect of a change", a `prov:Activity` whose temporal scope is
+  **when it takes effect**. The sketch gives a proposal's temporal scope as **when it was made**, and
+  makes the amendment a kind of proposal.
+- `ins:Assent` sits in Instrument's main document. Its utility still says it is read for "consent to
+  a power's exercise", which consent as a sibling replaces.
+- `bhv:ExerciseRecord` holds the act and its outcome (`tookEffect`, `reasonNotTaken`).
+  `bhv:AcceptanceRecord` (`accepted` a version, `actor`) is used by one example,
+  `licence-suspension.ttl`, and one test.
+- `ins:OnExercise` is a `bhv:ExternalStimulus`, fixed by a shape. An exercise outside its window has
+  no effect (law I10), so the stimulus is really the evaluator's finding.
+- The reinsurance scope works today as an evidence path from the claim through the settlement,
+  `ins:pursuantTo` and the approval to its activity, compiled by the SPARQL backend. Two gaps: an act
+  cannot name its case (`bhv:forCase` is runtime-only), and a missing approval gives Undetermined,
+  not Denied, until HQ-6's closures.
+- Three Behaviour examples record notices with legal effect as `bhv:ActRecord`s (a force majeure
+  notice, a claim notification, a notice withdrawn by agreement). The import guard forbids Behaviour
+  examples to name `ins:`.
+- The import guard treats Behaviour's configuration and runtime documents as one layer, so it cannot
+  see the acts document import the runtime (ADR-A106).
+- README §1.1 says "Instrument's runtime document is upstream of it". Behaviour's runtime document
+  imports only Behaviour's configuration.
+
+```mermaid
+flowchart TB
+    subgraph acts["instrument-acts (new, ADR-A120)"]
+        LA["ins:LegalAct"]
+        D["ins:Declaration"]
+        AS["ins:Assent (moved)"]
+        CO["ins:Consent"]
+        OB["ins:Objection"]
+        WD["ins:Withdrawal"]
+        EX["ins:Exercise"]
+        PR["ins:Proposal"]
+        LA --> D
+        D --> AS
+        D --> CO
+        D --> OB
+        D --> WD
+        LA --> EX
+        LA --> PR
+    end
+    AM["ins:Amendment (C9a)<br/>effect, effective time"]
+    PR -- "Q1 (a): ins:proposes" --> AM
+    BR["bhv:ExerciseRecord<br/>finding: tookEffect"]
+    BR -- "bhv:exercised" --> EX
+```
+
+**Questions, with each option's consequences:**
+
+**C9b1-Q1. How a proposal and an amendment relate.** In law, a proposed variation is an offer, an
+act made at a time. The variation it proposes is its content, which takes effect at another.
+
+| Option | Design overheads | Runtime overheads |
+|---|---|---|
+| (a) `ins:Proposal` is a legal act (`ins:proposedBy`, made when its temporal scope says) that `ins:proposes` a matter, such as an amendment. The amendment is unchanged | one property. Mirrors the law's act and content | an amendment's proposal is one hop away |
+| (b) `ins:Amendment ⊑ ins:Proposal`, as the sketch wrote, with its temporal scope moved to when proposed and its effective time on a new property | breaks C9a (0.15.x) and its examples, shapes and laws I4 and I14 | none |
+| (c) the subclass, with temporal scope meaning different things per subclass | the same property means two things. Easy to model wrongly, hard to query | queries must branch on type |
+
+KISS: (a) adds one property and changes nothing released. It departs from one line of the sketch, not
+from a decision. **Leaning (a).**
+**Answered (the human, 2026-10-09): (a).**
+
+**C9b1-Q2. What becomes of `bhv:AcceptanceRecord`.**
+
+| Option | Design overheads | Runtime overheads |
+|---|---|---|
+| (a) deprecate it, with a warning shape, removed in C16c. Whether a version is agreed is derived from assents (C9a) | one example and one test move to assents | none |
+| (b) narrow it to "the evaluator relied on an assent", `bhv:accepted` pointing at the assent | changes the range of a property (breaking), and stores a fact the evaluator can derive | a second record per assent |
+
+KISS: a record of reliance has no reader. **Leaning (a).**
+**Answered (the human, 2026-10-09): (a).**
+
+**Decided by precedent, not asked** (each from the sketch, its decisions, or policy):
+
+- the document is `spec/instrument-acts.ttl`, ontology `instrument-acts`, importing Instrument.
+  Nothing in LATTICE imports it but examples and tests
+- `ins:LegalAct ⊑ prov:Activity, fnd:TemporallyScoped, fnd:Evidenced`. Every act names its case with a
+  new `ins:forCase`
+- `ins:Assent` moves into the acts document and loses "consent to a power's exercise". A consumer of
+  C9a's assents must now import the acts document, so Instrument 0.16.0 is breaking
+- `bhv:exercised` points at an `ins:Exercise` and keeps no range. `bhv:actor` on an exercise record is
+  deprecated, since the act names its party and a second copy can disagree
+- `ins:OnExercise` becomes a `bhv:DerivedTrigger`, since it fires on an exercise found effective
+  (law I10). Its shape changes, which is breaking
+- **Behaviour is 0.14.0, a MINOR marked breaking, not a patch.** Narrowing what its records mean is a
+  change of meaning (ADR-A113)
+- "Effective approval" in the reinsurance scope is read from facts: the approval exists, was made by
+  the party holding the power, and precedes the settlement. The first is the scope's evidence path.
+  The other two are the acts' shapes. No finding enters a condition (the import boundary)
+- withdrawal has no substrate default (decision 7), so AgreedChainShape and `ins:OnAcceptance` are
+  unchanged and a withdrawal's effect is evaluated under the instrument's own rule
+- `ins:pursuantTo` may cross instruments, as the reinsurance example needs. Unshaped until a case
+  needs one
+- `ins:impliedBy`'s utility adds a judgment to statute, custom and course of dealing
+- `ins:boundUnder` is unchanged. An exercise may sit beside it
+- the three Behaviour notice examples are annotated, not moved: a notice with legal effect is an
+  Instrument act, and the record shows its performance
+- a per-document test that `instrument-acts` imports no Behaviour runtime. The import guard's blind
+  spot is TD-28
+- README §1.1's sentence is corrected
+- the reinsurance example records "no approval gives Undetermined" as deliberate non-coverage until
+  HQ-6
+
+**Planned validation** (pack `ccs-c9b1.md`): each act class and its shapes at zero and too many,
+proposal and `ins:proposes`, `ins:pursuantTo` across instruments, the reinsurance evidence path
+Permitted with an approval made before the settlement by the reinsurer, rejected when made by
+another party or after, `ins:OnExercise` derived, the deprecation warnings, the acts document's
+imports, and every C9a test unchanged. Precedence on a path cannot be tested yet (deliberate
+non-coverage, C9b3). If the table passes 15 cases the slice splits into the acts tier and the
+Behaviour change.
+
+#### C9b2 in detail
+
+**Machine:** R. **Branch:** from `main` after C9b0 merges.
+**Decisions:** the [consent sketch](../sketches/consent-and-group-powers.md) §2.4, ADR-A93, ADR-A94,
+ADR-A115, Quantification's open question 7.
+
+**Invariant:** a sum of values on one space is declared legitimate only where the space is
+extensive, and a sum over values whose units or bases differ, with no conversion, is Undetermined.
+
+**Setting the scene.** Facts from a read-only investigation (2026-10-09), checked against the source:
+
+- Sum and Count exist as operation kinds, permitted only by a declared capability (law Q7). The
+  README already teaches additive, semi-additive and non-additive measures (§5.1.3) and holds
+  semi-additive aggregation as open question 7.
+- **Sum is already used across two spaces:** a date plus a duration gives a date. A rule "Sum needs
+  an extensive space" would forbid it unless it covers only a sum within one space.
+- A proportion's base is a space (`qnt:DerivedValueSpace`, ADR-A93). Lines on order A and order B
+  share a space, so the space cannot tell them apart.
+- README §5.1.3's table says Sum is "no" for proportions. Signed lines on one order add.
+- None of the 31 value spaces outside Quantification declares a capability or a unit. There is no
+  value space shape.
+- Quantification cannot see Eligibility, so whether an aggregate binding's measure permits Sum is
+  checked by Eligibility's shapes in C9b3.
+- Prior art: extensive and intensive quantities (Campbell, Krantz et al.), kind of quantity versus
+  dimension (VIM), aggregate functions on measures (QB4OLAP), stock and flow (XBRL's period type).
+  QUDT and OM have no additivity flag.
+
+```mermaid
+flowchart LR
+    O["the order<br/>(a context role)"]
+    W1["written line 30%"]
+    W2["written line 50%"]
+    W3["written line 40%"]
+    S["sum 120%<br/>same base: legitimate"]
+    D["signing down<br/>× 100/120"]
+    W1 & W2 & W3 -- "of" --> O
+    W1 & W2 & W3 --> S --> D
+```
+
+**Questions, with each option's consequences:**
+
+**C9b2-Q1. Where additivity is declared.**
+
+| Option | Design overheads | Runtime overheads |
+|---|---|---|
+| (a) an optional `qnt:additivity` on a value space, Extensive or Intensive, like `qnt:orderKind` | one property and two individuals. Optional, so no existing space breaks | none |
+| (b) subclasses of value space | a space's class carries a fact about the quantity. Two disjoint classes to govern | a reasoner or `sh:class` check |
+| (c) a quantity kind that spaces point to | duplicates what a space already distinguishes | an extra hop |
+| (d) on the unit | currency additivity holds only within one unit, and a percent is both | units are deployment content |
+| (e) nothing new: extensive means "declares a same-space Sum" | confuses a permission with a category | none |
+
+Semi-additivity (a stock, such as a balance, summed across members but not across time) is not
+needed now: every consent aggregate sums members at one reference time. KISS: (a), two values, open
+question 7 stays open. **Leaning (a).**
+
+**Does (a) make semi-additivity hard later?** (the human, 2026-10-09) No, it defers it. A
+semi-additive measure adds along some groupings and not others, and in every known case the grouping
+it must not cross is time: a balance adds across accounts, not across days (XBRL's instant against
+duration). Adding it later takes a third value, `qnt:SemiAdditive`, and an optional property naming
+what a sum must not cross. Both are additive changes. The sum's grouping is the aggregate's, which is
+Eligibility's (C9b3), so that check sits there. The one cost of waiting is that a stock declared
+Extensive in the meantime would need redeclaring, so the utility text tells authors to leave a stock
+undeclared. (b) defers it the same way, with a third subclass.
+
+**Design-time warnings, and a third class for semi-additivity** (the human, 2026-10-09). Facts that
+decide it:
+
+- **SHACL warns equally under (a) and (b).** Eligibility's shape for an aggregate binding checks
+  `sh:path ( <measure's space> qnt:additivity ) ; sh:hasValue qnt:Extensive` under (a), or
+  `sh:class qnt:ExtensiveValueSpace` under (b). Both run without a reasoner, at design time in an
+  authoring studio and in CI. A missing declaration is a SHACL finding in both.
+- **An OWL reasoner cannot warn of a missing declaration under either.** It works in the open world.
+  A restriction such as "a semi-additive space must name what a sum may not cross" makes it infer an
+  unnamed value, not report one missing. A range on the aggregate binding would make it infer that
+  the space is extensive. A reasoner only finds a contradiction, such as a space declared both, and
+  (a) gets that from a functional property with distinct values, as (b) does from disjoint classes.
+- **The classes are free under (a) if a studio wants them.** `qnt:ExtensiveValueSpace ≡
+  qnt:ValueSpace ⊓ ∃qnt:additivity.{qnt:Extensive}` lets a reasoner classify spaces from the one
+  property, with nothing asserted twice. Held until a studio asks for it.
+- **Semi-additivity belongs to the measure, not the space.** Quantification keeps one space per
+  kind of quantity, such as sterling. A balance (a stock) and a payment (a flow) are both sterling,
+  and a balance plus a payment is a new balance, a sum within one space. A third class of space
+  would split them into two spaces and turn that sum into a cross-space one. The fact "do not sum
+  across time" is about what the value measures, as XBRL puts its period type on the concept, not
+  on the unit. Its home is the measure word (C9b4) or Eligibility's aggregate binding (C9b3), which
+  is also where the check runs.
+- **Only Sum is at stake.** The lowest, highest, latest and a count of a balance over time are
+  meaningful, and so is an average daily balance, which divides a sum over time by a count of days.
+  So the rule constrains `qnt:Sum` along time, not every aggregate.
+- **Runtime.** Neither option adds runtime work. Additivity is checked at design time. The runtime
+  checks are mixed units and mixed bases (C9b2-Q2), which exist under any option.
+
+KISS: (a), with Extensive and Intensive on the space, and stock or flow on the measure when a slice
+needs it. **Leaning (a), unchanged**, with open question 7 answered in principle: the consuming layer
+says along which grouping a measure may be summed.
+
+**C9b2-Q2. How a proportion names its base.**
+
+| Option | Design overheads | Runtime overheads |
+|---|---|---|
+| (p1) the space, as today | nothing new | lines on different orders sum silently |
+| (p2) the value names its base value | a property on every proportion. Quantification cannot name an Instrument word, so the base is a placeholder | the evaluator compares base identities |
+| (p3) the space names a base context role (ADR-A115), resolved per subject at the reference time | one optional property, reusing a mechanism already built, and decision 6's reference time | the evaluator compares resolved bases. Different bases with no conversion are Undetermined |
+| (p4) composition of shares | a new operation kind multiplying derived values, and a law discharge | none |
+
+**How (p3) and (p4) work** (pictures asked for by the human, 2026-10-09). They answer different
+questions. (p3) says *which* base a share is of, so a sum can tell whether its shares have one base.
+(p4) converts a share from one base to another, as a currency conversion does for an amount.
+
+*(p3), lines on two policies whose orders are the same size:*
+
+```mermaid
+flowchart LR
+    SP["space: line share<br/>money ÷ money<br/>qnt:baseRole: the Order"]
+    subgraph P1["policy P1, at the reference time"]
+        O1["the Order = £10m"]
+        A["insurer A: 40%"]
+        B["insurer B: 60%"]
+    end
+    subgraph P2["policy P2, at the reference time"]
+        O2["the Order = £10m"]
+        C["insurer C: 30%"]
+    end
+    A & B & C -. "on" .-> SP
+    A & B -- "base resolves to" --> O1
+    C -- "base resolves to" --> O2
+```
+
+- Every line is a value on one space, the line share, whose base is a context role, the Order. The
+  role is a concept under a role contract (ADR-A115), so Quantification names no Instrument word.
+- Evaluating for a subject, here a policy, resolves the role to that policy's order at the reference
+  time, as any context value resolves.
+- A plus B: both resolve to P1's binding, so the sum is legitimate, 100%. A plus C: two bindings, so
+  Undetermined, for mixed bases. Bindings are compared, not amounts: both orders are £10m and are still
+  different bases.
+- The same resolution turns a line into an amount. A's 40% of P1's order is £4m (Scale), which sums
+  as money.
+- For: one optional property on a mechanism already built, and the base follows the order when an
+  amendment changes it, the reference time saying which order applies. Against: checked at runtime
+  only, a share whose role has no binding is Undetermined, and two shares compare only within one
+  subject's context.
+
+*(p4), a reinsurer's share of a layer:*
+
+```mermaid
+flowchart LR
+    L["R's line on layer 1: 10%<br/>space: line ÷ order"]
+    W["the order: 50% of layer 1<br/>space: order ÷ layer"]
+    X(("product<br/>a new operation kind"))
+    R["R's share of layer 1: 5%<br/>space: line ÷ layer"]
+    L --> X
+    W --> X
+    X --> R
+```
+
+- A share of a share is a product, and the spaces multiply as fractions do: (line ÷ order) × (order ÷
+  layer) = (line ÷ layer). A design-time check verifies that the middle term cancels.
+- Shares brought to one base can then be compared. Shares of different layers still sum only as
+  amounts.
+- For: a product whose bases do not chain is caught at design time. Against: a new operation kind
+  and law discharge, a derived space for each pair of bases, support in every consumer, and nothing
+  in C9b needs it. Signing down multiplies a share by a plain ratio (the order over the total written),
+  and the examples phase checks whether Scale covers that.
+
+KISS: (p3) is needed now, for sums of lines and for turning a line into an amount. (p4) is needed by
+no slice yet, and adding it later is additive. **Leaning (p3)**, (p4) held until a case multiplies
+shares.
+**Answered (the human, 2026-10-09): (p3). (p4) is held as HQ-12.** The two compose: a product of a
+line share (base role: the order) and an order share (base role: the layer) has the layer as its
+base role, and at runtime (p3) checks that the first operand's resolved base is what the second
+measures, a check (p4) alone could not make.
+
+**Decided by precedent, not asked:**
+
+- Sum and Count stay operation kinds. A new shape rejects a Sum capability whose operands and result
+  share one space that is not declared Extensive. A date plus a duration is unaffected. Count is the
+  sum of a unit measure and needs no additivity
+- mixed units with no conversion reuse `qnt:ConversionContextAbsent`. Mixed bases add one unresolved
+  reason. Two laws are registered, one static and one runtime
+- the README table is corrected: proportions of one base are extensive
+- Quantification becomes 0.8.0, additive. Its shapes become 0.3.0, breaking, since a shape tightens,
+  though no loaded space declares a same-space Sum. 18 documents re-pin, Eligibility's from C9b0's
+  versions
+- examples: multicurrency commitments (sum after dated conversion), written and signed lines, and
+  signing down, which uses Ratio and Scale. If signing down needs a product of two derived values,
+  the examples phase says so before the model phase
+
+**Planned validation** (pack `ccs-c9b2.md`): additivity at zero and two values, the same-space Sum
+shape positive and negative, date plus duration still valid, Count on an intensive space valid, a
+proportion's base role, the examples conformant, and the cascade's versioning, catalog and literate
+checks.
+
 ### Tranche E: evaluation
 
 | Slice | Content | Where |
@@ -3340,6 +3750,7 @@ so that its implications can be weighed when it is taken up.
 | HQ-10 | **A deployment configuration layer** (MQ5, 2026-10-07). Settings that vary by deployment, tenant or jurisdiction have no common home: Eligibility's operational profiles, C9's materiality fallback, HQ-5's market default for a silent group, and the evaluation context sketch's environments. Vocabulary's scope bindings select schemes, not settings | each layer grows its own profile and selection, and an outcome's settings are recorded differently in each | its own unit with an ADR for the new module, once C9's profile shows the pattern |
 | HQ-11 | **An encoded document incorporated as amended** (C9-Q8, 2026-10-08). C9c incorporates encoded documents statically only. For one a party may vary, such as underwriting instructions under a binding authority (S53), each new edition reaches the instrument either by an amendment yielding a new version that pins the edition, or by resolution for each occasion at its valid time, as ADR-A85 resolves scheme bindings | the first fans out an amendment per instrument per edition, the second makes a version's meaning move over time and restates law I18. Until decided, such an incorporation is reported and its meaning not generated | when S53's volumes are known, with Open CBAA's underwriting instructions in view |
 | HQ-4 | **Context roles from several sources** (found building C7b, 2026-10-05). Quantification's role contract resolves to one scheme in a context (Vocabulary, ADR-A85), and two unscoped bindings conflict. Roles come from several places: Instrument's baseline (arising, inception, ending, period start and end), other layers (an allowance reset, a policy year), and each wording's defined dates (the Expiry Date, the Break Date). C7b binds Instrument's baseline. The lease example's own date roles are left unbound | a deployment that uses Instrument and another layer's roles, or a wording's own dates, cannot bind them all to one contract today. Options: one deployment scheme that collects every role, scoped bindings, or wording dates as roles bound from variables in C8 rather than as concepts | with C8's parameter bindings, which give wording dates their values |
+| HQ-12 | **Composing shares** (C9b2-Q2 (p4), 2026-10-09). A share of a share is a product: a 10% line on an order that is 50% of a layer is 5% of the layer, and the spaces multiply as fractions, (line ÷ order) × (order ÷ layer) = (line ÷ layer). Needs a new operation kind with its law discharge, a derived space per pair of bases, and support in every consumer. It composes with C9b2's base roles, which supply the runtime check that the bases chain | comparing or reporting participations across layers or programmes, and any clause that multiplies shares, without first converting to amounts | an enhancement slice, when a case needs it |
 
 ## 5. Sequencing
 

@@ -18,9 +18,9 @@ Behaviour 0.10.0 (shapes 0.4.0) with nested states and history, the import guard
 check`. In tranche D, C6 to C7c are merged and tagged (Instrument 0.12.0, Party 0.8.0, Quantification
 0.7.0). C8 and C8b are merged and tagged (Instrument 0.14.0, Wording 0.7.0). C9 is briefed and splits into C9a to C9c. Its materiality question has its own sketch. From C5 on, the agent builds and verifies, and the human commits by hand.
 
-**Next action, for the human:** review the plan's update after FM-EP (new slice C9b0, Eligibility
-sources), then choose which of C9b1, C9b2, C9b0 or HQ-6 to brief first. None conflicts with another
-branch now that FM-EP is merged.
+**Next action, for the human:** confirm C9b2-Q1 after the design-time analysis (plan, C9b2 in
+detail), and create the C9b0 branch, which no longer waits on anything. Merge order: C9b0, then C9b2, then C9b1, each
+regenerating the catalog and release register rather than hand-merging.
 
 ## Slice board
 
@@ -153,3 +153,7 @@ branch now that FM-EP is merged.
 - 2026-10-09: the consent paper decided, as the [consent sketch](../sketches/consent-and-group-powers.md): consent a sibling of assent, qualifying rules as acting rules (`ins:QualifyingRule`), legal acts in Instrument (juristic acts only), no regime per exercise, Party's shares deprecated in C9b4 and removed in C16c. C9b re-sliced into C9b1 to C9b4. The formal-methods epic's Eligibility work (FM-D17, E1.4, B2.2, B2.1) is to run on its own branch and merge before C9b3. HQ-6 scheduled before C9b3
 - 2026-10-09: the reference time (stated once by the word, as a context role) and withdrawal (no substrate default) decided by the human. The formal-methods Eligibility pass named FM-EP, to run on machine S on `fm/eligibility-pass`
 - 2026-10-09: FM-EP merged to `main` (`2a438b15`) and reviewed: README restructured with diagrams, FM-D17's generated truth tables, proofs and reference hardened, checks passing. Law L9 amended in the Eligibility README only, which TD-16 kept from reaching the vocabulary. New slice C9b0 makes Eligibility's README its source again and releases L9, before C9b3
+- 2026-10-09: C9b0, C9b1 and C9b2 all to run on machine R, not in a cloud session (the human). The agent may run sub-agents in parallel and routes their decisions to the human. Read-only investigations started for all three briefs
+- 2026-10-09: C9b0, C9b1 and C9b2 briefed from the three investigations, six questions for the human. Found: Eligibility's drift is 5 and 42 triples against all three shape files, not 78 and 19, and nothing imports `eligibility-vocab`, so C9b0 releases one document with no cascade. Behaviour's C9b1 change is 0.14.0 breaking, not a patch. Sum already spans two spaces (a date plus a duration), so C9b2's rule covers a sum within one space
+- 2026-10-09: C9b0-Q1, C9b1-Q1 and C9b1-Q2 answered (a) by the human. TD-16 cross-checked: FM-EP changed Eligibility's README only, so the drift stands and C9b0 repairs it first, as the human proposed. The plan explains (p3) and (p4) with pictures, and why (a) defers semi-additivity without blocking it
+- 2026-10-09: C9b0-Q2 answered (a), with C9b3 to make the no-applicable-binding case Undetermined. C9b2-Q2 answered (p3), with (p4) held as HQ-12. C9b2-Q1 analysed for design-time warnings: SHACL warns equally under (a) and (b), a reasoner cannot warn of a missing declaration under either, and semi-additivity belongs on the measure, not the space. Leaning (a) kept, for the human to confirm
