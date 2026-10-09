@@ -266,5 +266,5 @@ def test_c6_14_readme_is_the_source_and_releases_are_recorded() -> None:
                                   "--check"]) == 0
     readme = (LAYER / "README.md").read_text()
     assert "0.9.0 (breaking, CCS C6" in readme and "Shapes 0.2.0\n  (breaking)" in readme
-    assert (LAYER / "shapes" / ".version").read_text().strip() == "0.7.0"
+    assert (LAYER / "shapes" / ".version").read_text().strip() == "0.8.0"
     assert not (LAYER / "projection").exists()

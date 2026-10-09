@@ -113,6 +113,15 @@ ins-voc:DeclineRenewal a skos:Concept ; skos:inScheme ins-voc:Activities ;
 ins-voc:Award a skos:Concept ; skos:inScheme ins-voc:Activities ;
 	skos:prefLabel "Award"@en ; skos:definition "Award a contract or an order under an arrangement, creating a new instrument."@en .
 
+ins-voc:Settle a skos:Concept ; skos:inScheme ins-voc:Activities ;
+	skos:prefLabel "Settle"@en ; skos:definition "Resolve a claim or a dispute by agreement with the claimant."@en .
+
+ins-voc:Approve a skos:Concept ; skos:inScheme ins-voc:Activities ;
+	skos:prefLabel "Approve"@en ; skos:definition "Give the approval an instrument requires before another party's act."@en .
+
+ins-voc:Refuse a skos:Concept ; skos:inScheme ins-voc:Activities ;
+	skos:prefLabel "Refuse"@en ; skos:definition "Withhold an approval or a consent an instrument requires."@en .
+
 ins:InstrumentTarget a bhv:TargetKind ;
 	rdfs:comment "A Behaviour effect's target kind for an instrument." ;
 	fnd:utility "Declared here, since Behaviour no longer names Instrument (ADR-A106). Behaviour's bhv:InstrumentTarget is deprecated in its favour." .

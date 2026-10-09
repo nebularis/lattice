@@ -172,3 +172,23 @@ summarises. It settles what "Not decided here" deferred.
    transitions from one state on one trigger agree on `SingleMatch` or `PriorityOrdered`. In one
    pass the internal transitions fire before the state change. The parallel environment is left to
    the [evaluation context](../../developer/sketches/evaluation-context.md) design.
+
+## Addendum (2026-10-09): records are findings
+
+**Status:** Proposed 2026-10-09 (CCS slice C9b1, C9b1-Q2). The reasoning is the
+[consent sketch](../../developer/sketches/consent-and-group-powers.md), §2.1 and §2.6. Narrows
+decision 5.
+
+1. **What the parties did is the layer above's fact.** An exercise, an assent, a consent or a notice
+   with legal effect is a legal act of Instrument's acts document (ADR-A104, 2026-10-09 addendum).
+   Behaviour records what the evaluator concluded about it.
+2. **An exercise record is the finding about one exercise.** `bhv:exercised` names the exercise act,
+   with no range (law B7). `bhv:tookEffect` and `bhv:reasonNotTaken` are unchanged. `bhv:actor` on an
+   exercise record is deprecated, since the act names its party and a second copy can disagree.
+3. **`bhv:AcceptanceRecord` and `bhv:accepted` are deprecated** (C9b1-Q2, answer (a)), reported by a
+   warning shape, and removed in CCS C16c. Whether a version is agreed is read from assents.
+4. **Act records keep performance.** A notice with legal effect kept as an act record in an example
+   shows the notice's performance. The examples are annotated, not moved, since Behaviour names no
+   Instrument term.
+5. **The narrowing changes what the records mean**, so Behaviour's documents take a MINOR version
+   marked breaking (ADR-A113).

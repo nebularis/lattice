@@ -216,10 +216,20 @@ valid time). It points at what it is about through properties with no range.
 |---|---|---|
 | `bhv:ActRecord` | an act of an activity by an actor for a case | `activity`, `actor`, `forCase` |
 | `bhv:BreachRecord` | a breach of an occasion, derived or asserted by an adjudicator | `ofOccasion`, `closureReliedOn` |
-| `bhv:ExerciseRecord` | an exercise of a power, whether or not it took effect | `exercised`, `actor`, `tookEffect`, `reasonNotTaken` |
+| `bhv:ExerciseRecord` | the evaluator's finding about an exercise of a power: whether it took effect, and why not | `exercised`, `tookEffect`, `reasonNotTaken`. `actor` is deprecated here |
 | `bhv:DeterminationRecord` | a determination by the party a contract names | `matter`, `determiner`, `determinedValue` |
 | `bhv:DeemedFactRecord` | a fact taken to hold by a deeming | `deeming`, `conditionSatisfied` |
-| `bhv:AcceptanceRecord` | a party's acceptance of a version | `accepted`, `actor` |
+| `bhv:AcceptanceRecord` | deprecated: a party's acceptance of a version | `accepted`, `actor` |
+
+**Facts and findings.** What the parties did, such as the exercise of a power, a consent, an assent
+or a notice with legal effect, is a legal act, a fact of the layer above, written by any application.
+What the evaluator concluded about it is a record here. An exercise record is the finding about one
+exercise: `bhv:exercised` names the act, which names its party, so `bhv:actor` on an exercise record
+is deprecated, since a second copy can disagree. `bhv:AcceptanceRecord` is deprecated, reported by a
+warning shape, and removed in CCS C16c: a party's acceptance of a version is the layer above's fact,
+and whether a version is agreed is read from those facts. An act record keeps a fact of performance,
+such as a payment or a delivery. Where an example keeps a notice with legal effect as an act record,
+the record shows the notice's performance, and the notice itself is the layer above's act.
 
 **Every state entry is recorded** (law B6). An occupancy names the execution that entered it
 (`bhv:enteredBy`), which names its stimulus, or carries evidence: of the subject taking effect when
@@ -338,13 +348,16 @@ bhv:ActRecord a owl:Class ; rdfs:subClassOf bhv:Record ;
 bhv:BreachRecord a owl:Class ; rdfs:subClassOf bhv:Record ;
 	rdfs:comment "A breach of an occasion, derived by the evaluator or asserted by an adjudicator." .
 bhv:ExerciseRecord a owl:Class ; rdfs:subClassOf bhv:Record ;
-	rdfs:comment "An exercise of a power, whether or not it took effect." .
+	rdfs:comment "The evaluator's finding about an exercise of a power: whether it took effect, and why not." ;
+	fnd:utility "The exercise itself is a fact of the layer above, which names its party (§5.2)." .
 bhv:DeterminationRecord a owl:Class ; rdfs:subClassOf bhv:Record ;
 	rdfs:comment "A determination of a matter by the party a contract names to decide it." .
 bhv:DeemedFactRecord a owl:Class ; rdfs:subClassOf bhv:Record ;
 	rdfs:comment "A fact taken to hold by a deeming." .
 bhv:AcceptanceRecord a owl:Class ; rdfs:subClassOf bhv:Record ;
-	rdfs:comment "A party's acceptance of a version." .
+	owl:deprecated true ;
+	rdfs:comment "Deprecated: a party's acceptance of a version." ;
+	fnd:utility "A party's acceptance of a version is a fact of the layer above, and whether a version is agreed is read from those facts. Reported by a warning shape, and removed in CCS C16c." .
 
 [] a owl:AllDisjointClasses ;
 	owl:members ( bhv:ActRecord bhv:BreachRecord bhv:ExerciseRecord bhv:DeterminationRecord bhv:DeemedFactRecord bhv:AcceptanceRecord ) .
@@ -355,7 +368,8 @@ bhv:fromStimulus a owl:ObjectProperty, owl:FunctionalProperty ;
 
 bhv:actor a owl:ObjectProperty ;
 	rdfs:domain bhv:Record ; rdfs:range pty:RoleOccupancy ;
-	rdfs:comment "Who acted, exercised or accepted. Subject: a record. Value: a role occupancy." .
+	rdfs:comment "Who acted, exercised or accepted. Subject: a record. Value: a role occupancy." ;
+	fnd:utility "Deprecated on an exercise record: the exercise names its party, and a second copy can disagree." .
 
 bhv:activity a owl:ObjectProperty, owl:FunctionalProperty ;
 	rdfs:domain bhv:ActRecord ; rdfs:range skos:Concept ;
@@ -371,8 +385,8 @@ bhv:closureReliedOn a owl:ObjectProperty ;
 
 bhv:exercised a owl:ObjectProperty, owl:FunctionalProperty ;
 	rdfs:domain bhv:ExerciseRecord ;
-	rdfs:comment "The power exercised. Subject: an exercise record. Value: any resource, exactly one." ;
-	fnd:utility "Deliberately has no range: a power is declared by the layer above (law B7)." .
+	rdfs:comment "The exercise the finding is about. Subject: an exercise record. Value: any resource, exactly one, the exercise act." ;
+	fnd:utility "Deliberately has no range: the exercise, and the power it exercises, are declared by the layer above (law B7)." .
 
 bhv:tookEffect a owl:DatatypeProperty, owl:FunctionalProperty ;
 	rdfs:domain bhv:ExerciseRecord ; rdfs:range xsd:boolean ;
@@ -405,7 +419,9 @@ bhv:conditionSatisfied a owl:ObjectProperty, owl:FunctionalProperty ;
 
 bhv:accepted a owl:ObjectProperty, owl:FunctionalProperty ;
 	rdfs:domain bhv:AcceptanceRecord ; rdfs:range fnd:Version ;
-	rdfs:comment "The version accepted. Subject: an acceptance record. Value: a version, exactly one." .
+	owl:deprecated true ;
+	rdfs:comment "The version accepted. Subject: an acceptance record. Value: a version, exactly one." ;
+	fnd:utility "Deprecated with bhv:AcceptanceRecord." .
 ```
 
 ```turtle-spec
@@ -872,6 +888,11 @@ bhv:AcceptanceRecordShape a sh:NodeShape ;
 	sh:targetClass bhv:AcceptanceRecord ;
 	sh:property [ sh:path bhv:accepted ; sh:minCount 1 ; sh:maxCount 1 ; sh:class fnd:Version ] ;
 	sh:property [ sh:path bhv:actor ; sh:minCount 1 ] .
+bhv:AcceptanceRecordDeprecatedShape a sh:NodeShape ;
+	sh:targetClass bhv:AcceptanceRecord ;
+	sh:severity sh:Warning ;
+	sh:not [ sh:class bhv:AcceptanceRecord ] ;
+	sh:message "bhv:AcceptanceRecord is deprecated, and removed in CCS C16c: a party's acceptance of a version is a fact of the layer above, from which agreement is read (§5.2)." .
 ```
 
 ## 9. Worked examples
@@ -883,8 +904,9 @@ Examples are authored in:
 - `ontology/behaviour/examples/adverse-event-occasion.ttl`: an occasion of a reporting duty that
   arises on an event and is breached when its window closes, each state derived from its record
 - `ontology/behaviour/examples/licence-suspension.ttl`: a state space with an initial state, exercise
-  records that took effect and one that did not, and acceptance, determination and deemed-fact
-  records
+  records that took effect and one that did not, each naming the exercise it is about, and
+  determination and deemed-fact records. A party's acceptance of a version is an assent of the layer
+  above, so the example no longer keeps an acceptance record
 - eight worked state machines for nested states, history, internal transitions and concurrent
   regimes, each taken in turn in §10
 
@@ -1508,8 +1530,12 @@ Breaking versions at major version zero ([ADR-A113](../../docs/architecture/deci
   0.8.0, whose shares and composition rules are renamed (`pty:outwardShare`, `pty:inwardShare`,
   `pty:EachForOwnShare`, `pty:EachForWhole`), and to Eligibility 0.10.0, with no other change (CCS
   C7c, ADR-A104 2026-10-06 addendum).
+- 0.14.0 (`behaviour`, `behaviour-runtime` and `behaviour-vocab`, breaking, CCS C9b1, ADR-A106
+  2026-10-09 addendum): records are findings. `bhv:ExerciseRecord` is the evaluator's finding about
+  an exercise, and `bhv:exercised` names the exercise act, still with no range. `bhv:actor` on an
+  exercise record is deprecated. `bhv:AcceptanceRecord` and `bhv:accepted` are deprecated, to be
+  removed in CCS C16c. Shapes 0.5.0 (additive, a warning): an acceptance record is reported as
+  deprecated. Re-pinned to Quantification 0.8.0 and the layers re-pinned with it (CCS C9b2)
 - 0.13.1 (`behaviour`, `behaviour-runtime` and `behaviour-vocab`, patch): the runtime document is
   extracted from §5.2 instead of authored as a file, with the same triples, and the three move
   together (ADR-A120).
-- 0.14.0 (`behaviour`, `behaviour-runtime` and `behaviour-vocab`): re-pinned to Quantification 0.8.0
-  and the layers re-pinned with it, with no other change (CCS C9b2).

@@ -225,7 +225,7 @@ def test_c7b_13_instrument_readme_and_releases() -> None:
                                   "--check"]) == 0
     readme = (LAYER / "README.md").read_text()
     assert "0.11.0 (CCS C7b" in readme and "Shapes 0.4.0 (additive" in readme and "0.12.0 (breaking, CCS C7c" in readme
-    assert (LAYER / "shapes" / ".version").read_text().strip() == "0.7.0"
+    assert (LAYER / "shapes" / ".version").read_text().strip() == "0.8.0"
 
 
 def test_c7b_15_quantification_readme_is_the_source() -> None:

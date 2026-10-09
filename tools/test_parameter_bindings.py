@@ -75,7 +75,10 @@ def _instrument(name: str) -> URIRef:
 
 # Examples that are read with others, as their headers say. Every conformance test loads them together.
 READ_WITH = {"facility-amendment": [ONTOLOGY / "wording" / "examples" / "facility-form.ttl",
-                                    ONTOLOGY / "wording" / "examples" / "facility-amendment.ttl"]}
+                                    ONTOLOGY / "wording" / "examples" / "facility-amendment.ttl"],
+             "facility-requests": [ONTOLOGY / "wording" / "examples" / "facility-form.ttl",
+                                   ONTOLOGY / "wording" / "examples" / "facility-amendment.ttl",
+                                   ONTOLOGY / "instrument" / "examples" / "facility-amendment.ttl"]}
 
 
 def _example(name: str) -> Graph:
@@ -274,7 +277,7 @@ def test_c8_14_readme_is_the_source_and_releases_are_recorded() -> None:
                                   "--check"]) == 0
     readme = (LAYER / "README.md").read_text()
     assert "0.13.0 (additive, CCS C8" in readme and "Shapes 0.6.0 (breaking" in readme
-    assert (LAYER / "shapes" / ".version").read_text().strip() == "0.7.0"
+    assert (LAYER / "shapes" / ".version").read_text().strip() == "0.8.0"
     register = (ROOT / "docs" / "architecture" / "ontology-releases.md").read_text()
     for tag in ("instrument-v0.13.0", "instrument-shapes-v0.6.0", "instrument-vocab-v0.13.0"):
         assert tag in register, tag

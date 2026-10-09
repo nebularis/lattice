@@ -224,7 +224,7 @@ tmpl:on-expiry-date a ins:OnExpiry , bhv:TriggerDefinition ;
     bhv:triggerKind bhv:ScheduledTrigger ;
     ins:at ex:expiry-date .
 tmpl:on-break a ins:OnExercise , bhv:TriggerDefinition ;
-    bhv:triggerKind bhv:ExternalStimulus ;
+    bhv:triggerKind bhv:DerivedTrigger ;
     ins:ofPower tmpl:break .
 tmpl:on-break-date a ins:OnExpiry , bhv:TriggerDefinition ;
     bhv:triggerKind bhv:ScheduledTrigger ;

@@ -47,7 +47,8 @@ ALL_SHAPES = [ONTOLOGY / layer / "shapes" / f"{kind}.ttl"
                             "instrument")
               for kind in ("structural", "constraints")]
 TRIGGERS = (INS.OnExercise, INS.OnBreach, INS.OnAct, INS.OnCondition, INS.OnExpiry)
-FIXED_KIND = {INS.OnExercise: BHV.ExternalStimulus, INS.OnAct: BHV.ExternalStimulus, INS.OnBreach: BHV.DerivedTrigger,
+FIXED_KIND = {INS.OnExercise: BHV.DerivedTrigger, INS.OnAct: BHV.ExternalStimulus,  # OnExercise derived since C9b1
+              INS.OnBreach: BHV.DerivedTrigger,
               INS.OnCondition: BHV.DerivedTrigger, INS.OnExpiry: BHV.ScheduledTrigger}
 
 
@@ -222,8 +223,8 @@ def test_c7a_04_regime_shapes_report(add: str, remove: tuple, focus: str, messag
      "/on-leverage-exceeded", "exactly one Eligibility condition"),
     ("service-dispute", "", ((SD["on-dispute"], INS.activity, INSV.Dispute),), "/on-dispute", "exactly one act"),
     ("service-dispute", "tmpl:on-dispute ins:by ins-voc:Dispute .", (), "/on-dispute", "names parties"),
-    ("licence-notice", "", ((LN["on-notice-given"], BHV.triggerKind, BHV.ExternalStimulus),), "/on-notice-given",
-     "bhv:ExternalStimulus, fixed"),
+    ("licence-notice", "", ((LN["on-notice-given"], BHV.triggerKind, BHV.DerivedTrigger),), "/on-notice-given",
+     "bhv:DerivedTrigger, fixed"),
     ("licence-notice", "tmpl:on-notice-expiry bhv:triggerKind bhv:ExternalStimulus .",
      ((LN["on-notice-expiry"], BHV.triggerKind, BHV.ScheduledTrigger),), "/on-notice-expiry", "bhv:ScheduledTrigger, fixed"),
     ("facility-cure-period", "tmpl:on-leverage-exceeded bhv:triggerKind bhv:ScheduledTrigger .",
@@ -361,7 +362,7 @@ def test_c7a_13_readme_is_the_source_and_releases_are_recorded() -> None:
                                   "--check"]) == 0
     readme = (LAYER / "README.md").read_text()
     assert "0.10.0 (CCS C7a" in readme and "Shapes 0.3.0 (additive" in readme
-    assert (LAYER / "shapes" / ".version").read_text().strip() == "0.7.0"
+    assert (LAYER / "shapes" / ".version").read_text().strip() == "0.8.0"
     vocab = _graph(VOCAB)
     assert URIRef(LATTICE + "instrument-vocab/0.16.0") in set(vocab.objects(None, OWL.versionIRI))
 
@@ -406,4 +407,4 @@ def test_c7a_18_a_trigger_from_its_property_alone() -> None:
     closed = _closed(data)
     trigger = LN["on-notice-given"]
     assert {INS.OnExercise, BHV.TriggerDefinition} <= set(closed.objects(trigger, RDF.type))
-    assert set(closed.objects(trigger, BHV.triggerKind)) == {BHV.ExternalStimulus}
+    assert set(closed.objects(trigger, BHV.triggerKind)) == {BHV.DerivedTrigger}

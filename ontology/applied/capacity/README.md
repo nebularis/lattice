@@ -88,5 +88,6 @@ Breaking versions at major version zero ([ADR-A113](../../../docs/architecture/d
 - 0.13.0 (breaking): re-pinned to `behaviour-runtime` 0.13.0 and Eligibility 0.10.0, which follow
   Party 0.8.0's renamed shares and composition rules, with no other change (CCS C7c).
 - 0.13.1: re-pinned to `behaviour-runtime` 0.13.1, with no other change (ADR-A120).
-- 0.14.0: re-pinned to `behaviour-runtime` 0.14.0 and Quantification 0.8.0, with no other change
-  (CCS C9b2).
+- 0.14.0 (breaking): re-pinned to `behaviour-runtime` 0.14.0, whose records are narrowed to the
+  evaluator's findings and whose acceptance record is deprecated (CCS C9b1), and to Quantification
+  0.8.0 (CCS C9b2), with no other change.
