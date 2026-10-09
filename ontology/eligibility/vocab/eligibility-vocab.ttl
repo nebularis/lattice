@@ -7,7 +7,7 @@
 
 <https://www.nebularis.org/neuro-semantic/eligibility-vocab>
 	a owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/eligibility-vocab/0.11.0> ;
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/eligibility-vocab/0.12.0> ;
 	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.10.0> .
 
 elg:ExactMatch a elg:MatchStrategy .
@@ -58,7 +58,7 @@ elg:L7 a elg:Law ; rdfs:comment "EligibilityDecision references at least one que
 elg:L8 a elg:Law ; rdfs:comment "EligibilityDecision names one operational profile." .
 elg:L9 a elg:Law ;
 	elg:lawRegister elg:SemanticLaw ;
-	rdfs:comment "Hierarchical match closure. A candidate value satisfies a condition under hierarchical match exactly when it stands in the reflexive-transitive closure of the bound scheme's ordering relation, restricted to that scheme's members, below the asserted value. The ordering relation is acyclic over the bound scheme; a scheme carrying a cycle is not evaluable under hierarchical match." .
+	rdfs:comment "Hierarchical match closure. A candidate value satisfies a condition under hierarchical match exactly when it stands in the reflexive-transitive closure of the bound scheme's ordering relation, restricted to that scheme's members, below the asserted value. The ordering relation is acyclic over the bound scheme; a scheme carrying a cycle is not evaluable under hierarchical match. A condition under hierarchical match with no resolved scheme at all has no closure to test a candidate against, and is undetermined for every candidate, the same reasoning L14 applies once a scheme resolves but states nothing about the candidate's position within it." .
 elg:L10 a elg:Law ;
 	elg:lawRegister elg:SemanticLaw ;
 	rdfs:comment "Exclusion precedence. A candidate that matches an excluded concept of a condition, under the condition's match strategy, does not satisfy the condition, whether or not it also matches a required concept." .
