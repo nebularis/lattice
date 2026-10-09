@@ -3542,6 +3542,14 @@ KISS: a record of reliance has no reader. **Leaning (a).**
   amend has no case. Act shapes target each concrete act class. `bhv:actor` on an exercise record is
   deprecated in its utility only.
 
+**Built (2026-10-09, merged into `ccs/c9b-groundwork`).** `spec/instrument-acts.ttl` from README
+§6.4, the shapes for each act, an exercise by the power's holder, and an act relied on done no later
+than the act relying on it. The reinsurance implied term is a prohibition on refusing
+(`ins-voc:Refuse`), beside `ins-voc:Settle` and `ins-voc:Approve`. Instrument 0.16.0 (shapes 0.8.0)
+and Behaviour 0.14.0 (shapes 0.5.0), both breaking, each released once with C9b2's re-pins. ADR-A104
+and ADR-A106 addenda, Proposed. 15 rows in two parts, acts and Behaviour
+([Validation Pack](../validation/computable-contract-substrate-c9b1.md)).
+
 **Planned validation** (pack `computable-contract-substrate-c9b1.md`): each act class and its shapes at zero and too many,
 proposal and `ins:proposes`, `ins:pursuantTo` across instruments, the reinsurance evidence path
 Permitted with an approval made before the settlement by the reinsurer, rejected when made by

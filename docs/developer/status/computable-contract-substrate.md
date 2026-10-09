@@ -18,11 +18,12 @@ Behaviour 0.10.0 (shapes 0.4.0) with nested states and history, the import guard
 check`. In tranche D, C6 to C7c are merged and tagged (Instrument 0.12.0, Party 0.8.0, Quantification
 0.7.0). C8 and C8b are merged and tagged (Instrument 0.14.0, Wording 0.7.0). C9 is briefed and splits into C9a to C9c. Its materiality question has its own sketch. From C5 on, the agent builds and verifies, and the human commits by hand.
 
-**Paused at the human's request (2026-10-09).** On `ccs/c9b-groundwork`, C9b0 and C9b2 are merged
-and recorded. C9b1 is built and committed on `ccs/c9b1-legal-acts` (`96e22d9e`) in its worktree,
-`.local/worktrees/c9b1`, not yet merged. **Next action, for the human:** answer C9b1's open questions,
-then let the agent merge C9b1, retake Instrument's and Behaviour's versions once, regenerate, run the
-full checks, remove the slice worktrees, and hand over the three Validation Packs.
+**Next action, for the human:** review the three Validation Packs
+([C9b0](../validation/computable-contract-substrate-c9b0.md),
+[C9b1](../validation/computable-contract-substrate-c9b1.md),
+[C9b2](../validation/computable-contract-substrate-c9b2.md)) on `ccs/c9b-groundwork`, accept or amend
+the ADR-A104 and ADR-A106 addenda, push, merge into `main` and create the release tags. Then HQ-6 and
+C9b3 are next.
 
 ## Slice board
 
@@ -163,3 +164,4 @@ full checks, remove the slice worktrees, and hand over the three Validation Pack
 - 2026-10-09: C9b0 merged (`19132c26`): Eligibility's README is its source again, `eligibility-vocab` 0.12.0, the compilers refuse a hierarchical plan with no scheme. TD-16's Eligibility part closed. The import guard's debt renumbered TD-30, since TD-28 was taken
 - 2026-10-09: C9b2 merged (`4bef8942`): `qnt:additivity`, `qnt:baseRole`, `qnt:MixedBases`, laws Q12 and Q13, Quantification 0.8.0 and shapes 0.3.0 cascading to 18 documents, Eligibility's versions shared with C9b0. Corrected at merge: a stock shares its currency's Extensive space. `check:ontology-catalog` fails two tests outside the slices: TD-28 (`insure-o`) and the reasoning isolation test, which scans the slice worktrees
 - 2026-10-09: C9b1 built on `ccs/c9b1-legal-acts` (`e5436e35` to `96e22d9e`), 15 pack rows passing, ADR-A104 and ADR-A106 addenda Proposed. Paused before its merge at the human's request
+- 2026-10-09: C9b1-Q3 to Q5 answered as leaned. The reinsurance implied term became a prohibition on an arbitrary refusal. C9b1 merged (`b24cb3c5`): Instrument 0.16.0 with `instrument-acts`, Behaviour 0.14.0, each released once with C9b2's re-pins. Slice worktrees removed, branches kept. Full checks pass but for TD-28 (`insure-o`) and TD-31 (a flaky persistence test, new). Ready for the human's review
