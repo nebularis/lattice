@@ -351,6 +351,7 @@ None of these may be taken by an agent.
 | CCS | C11a, C12 | track B gives C12 its reference and conformance kits. C12 does not wait for them |
 | CCS | C13, C13a | track B checks relation plans. Track C supplies the SMT checks for C13a. I7 is track E's first Instrument target once C13 is specified |
 | CCS | C8a | track G states the template library's claims in rely and guarantee form |
+| CCS | C9b3 | **an Eligibility pass first** (decided 2026-10-09). C9b3 adds set comparisons and aggregate bindings to Eligibility, extending its laws, its theory, its reference semantics and its compilers. Before it, on this epic's own branch, merged to `main`: FM-D17 decided and built (the kernel's truth tables generated into theory and reference), E1.4 (track E's gate and theory hardening), B2.2 (the suspected hierarchical-match defect) and B2.1 (the differential harness hardened). B5 may follow. C9b3 then carries its own proof and reference rows ([consent sketch](../sketches/consent-and-group-powers.md) §2.3) |
 | CCS | C16a | laws with formal statements make simplifications checkable |
 | [insurml-alignment](insurml-alignment.md) | IMA-D4a, IMA-4.2 | track C informs scheme composition. Assembly parity is a track B property test first and a track E theorem later |
 | [Technical debt](technical-debt.md) | TD-18 | proofs and model checks add CI time, run through dependency-aware builds with deeper runs nightly |

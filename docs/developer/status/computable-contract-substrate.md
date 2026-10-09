@@ -18,7 +18,9 @@ Behaviour 0.10.0 (shapes 0.4.0) with nested states and history, the import guard
 check`. In tranche D, C6 to C7c are merged and tagged (Instrument 0.12.0, Party 0.8.0, Quantification
 0.7.0). C8 and C8b are merged and tagged (Instrument 0.14.0, Wording 0.7.0). C9 is briefed and splits into C9a to C9c. Its materiality question has its own sketch. From C5 on, the agent builds and verifies, and the human commits by hand.
 
-**Next action, for the human:** answer C9b-Q1 to C9b-Q5 in the plan's "C9b in detail".
+**Next action, for the human:** review the [consent sketch](../sketches/consent-and-group-powers.md) and the
+re-sliced C9b, then branch for the formal-methods epic's Eligibility pass (FM-D17, E1.4, B2.2, B2.1),
+which must merge before C9b3. C9b1 (legal acts) and C9b2 (additivity) do not touch Eligibility.
 
 ## Slice board
 
@@ -39,7 +41,9 @@ check`. In tranche D, C6 to C7c are merged and tagged (Instrument 0.12.0, Party 
 | C7b | terms in time | D | merged (`5da9412`), tagged | |
 | C7c | what terms are, and who they bind (split from C7b) | D | merged and tagged | done |
 | C8, C8b | values in stated meaning, Wording references by identity | D | merged, tagged | |
-| C9a, C9b, C9c, C8a | amendments and taking effect, consent and materiality, incorporation, template library | D | C9 answered, C9a ready to branch | |
+| C9a | amendments, assents and taking effect | D | merged, tagged | |
+| C9b1 to C9b4, C9d, C9c, C8a | legal acts, additivity, set comparisons, qualifying rules, materiality, incorporation, template library | D | C9b re-sliced 2026-10-09 | C9b3 waits on the formal-methods Eligibility pass and HQ-6 |
+| C16c | remove Party's shares | F | planned, required before the epic closes | C9b4 |
 | C7a | regimes and gating, split from C7 | D | merged to `main` (`c6e5853`) and tagged | |
 | C12, C13 | runtime evaluator, relation plans | E | waiting | C9, C11, C11a, AIR-3.3, NRS N1 |
 | C13a | design-time joint satisfiability: slot conditions by reasoner, the task NRS N3 reuses (deferred from C5) | E | waiting | C5, NRS N1 |
@@ -145,3 +149,5 @@ check`. In tranche D, C6 to C7c are merged and tagged (Instrument 0.12.0, Party 
 - 2026-10-08: C9a examples committed. Model phase built: Instrument 0.15.0, `instrument-vocab` 0.15.0, shapes 0.7.0 (breaking, law I4), with amendments, assents and taking effect, the worked examples §22.20 to §22.22, and `tools/test_amendments.py` (20 tests) in `check:ontology-catalog`. Deviations in the [Validation Pack](../validation/computable-contract-substrate-c9a.md)
 - 2026-10-08: C9a merged to `main` and tagged by the human (`instrument-v0.15.0`, `instrument-shapes-v0.7.0`, `instrument-vocab-v0.15.0`)
 - 2026-10-08: C9b briefed on `main` with five questions, each with design and runtime overheads: splitting materiality into C9d (Q1), what a consent is given to (Q2), the consent rule and where a member's weight comes from (Q3), delegated consent (Q4), and a regime per exercise (Q5)
+- 2026-10-09: the human's paper on consent, groups and exercise received. C9b's brief marked under revision. The paper's design advice added to the authoring, architecture and design skills and to `AGENTS.md`, and Copilot's instructions regenerated
+- 2026-10-09: the consent paper decided, as the [consent sketch](../sketches/consent-and-group-powers.md): consent a sibling of assent, qualifying rules as acting rules (`ins:QualifyingRule`), legal acts in Instrument (juristic acts only), no regime per exercise, Party's shares deprecated in C9b4 and removed in C16c. C9b re-sliced into C9b1 to C9b4. The formal-methods epic's Eligibility work (FM-D17, E1.4, B2.2, B2.1) is to run on its own branch and merge before C9b3. HQ-6 scheduled before C9b3

@@ -50,6 +50,10 @@ regeneration-as-naturality property test (72 tests, no regression). B1's own sco
 resolved E1.2 (below): the rounding/residual
 theorem belongs to B4/E3-E4, not Quantification; track E's plan and status are corrected.
 
+**Eligibility pass, before CCS C9b3 (decided 2026-10-09).** On a branch of this epic, merged to
+`main` before CCS changes Eligibility: FM-D17 (decide, then build), E1.4, B2.2, B2.1, with B5 optional.
+See the plan §8. CCS C9b1 and C9b2 may proceed meanwhile, since they touch no Eligibility artefact.
+
 **Next action, for the human:** review and accept (or revise) `ADR-A116`. Track B's B1-B3 are complete; B4 waits on CCS's C12. The two remaining Gate D gaps (below) are deliberately deferred, not blocking. Also decide when and where the spike branch, `fm/phase-0-prover-spike`, is created, and approve the image builds and any native installs.
 
 **2026-10-08, a second review.** An implementation-level review of the programme's actual
@@ -126,3 +130,4 @@ status record.
 |---|---|---|
 | D | 0.3M to 0.6M | |
 | sketches, plans and the review response (2026-10-06) | not estimated | not recorded |
+- 2026-10-09: an Eligibility pass scheduled before CCS C9b3, which extends Eligibility with set comparisons and aggregate bindings: FM-D17, E1.4, B2.2 and B2.1 on this epic's own branch, merged to `main` first
