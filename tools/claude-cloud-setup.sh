@@ -53,7 +53,12 @@ step() {
 install_packages() {
   export DEBIAN_FRONTEND=noninteractive
   command -v add-apt-repository >/dev/null || apt-get install -y software-properties-common
-  add-apt-repository -y ppa:deadsnakes/ppa &&
+  # The image may point python3 at a newer Python than the one Ubuntu's
+  # apt_pkg binding was built for, so run add-apt-repository with the matching one.
+  local apt_py
+  apt_py=$(ls /usr/lib/python3/dist-packages/apt_pkg.cpython-*.so 2>/dev/null | head -1 |
+    sed -E 's/.*cpython-([0-9])([0-9]+)-.*/python\1.\2/')
+  ${apt_py:-python3} /usr/bin/add-apt-repository -y ppa:deadsnakes/ppa &&
     apt-get update &&
     apt-get install -y --no-install-recommends openjdk-25-jdk-headless python3.14 python3.14-venv &&
     rm -rf /opt/python3.14 && python3.14 -m venv /opt/python3.14
