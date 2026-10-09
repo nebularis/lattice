@@ -18,11 +18,9 @@ Behaviour 0.10.0 (shapes 0.4.0) with nested states and history, the import guard
 check`. In tranche D, C6 to C7c are merged and tagged (Instrument 0.12.0, Party 0.8.0, Quantification
 0.7.0). C8 and C8b are merged and tagged (Instrument 0.14.0, Wording 0.7.0). C9 is briefed and splits into C9a to C9c. Its materiality question has its own sketch. From C5 on, the agent builds and verifies, and the human commits by hand.
 
-**Next action, for the human:** choose which of C9b1 (legal acts), C9b2 (additivity) or HQ-6 (deemings)
-to brief. **FM-EP, the formal-methods Eligibility pass on machine S (`fm/eligibility-pass`), is
-done** (FM-D17, E1.4, B2.1, B2.2 built and verified; B5 attempted, blocked, deferred) and held
-ready for the human to commit and merge — C9b3 can start once that branch is merged to `main`
-and HQ-6 is also settled.
+**Next action, for the human:** review the plan's update after FM-EP (new slice C9b0, Eligibility
+sources), then choose which of C9b1, C9b2, C9b0 or HQ-6 to brief first. None conflicts with another
+branch now that FM-EP is merged.
 
 ## Slice board
 
@@ -44,7 +42,7 @@ and HQ-6 is also settled.
 | C7c | what terms are, and who they bind (split from C7b) | D | merged and tagged | done |
 | C8, C8b | values in stated meaning, Wording references by identity | D | merged, tagged | |
 | C9a | amendments, assents and taking effect | D | merged, tagged | |
-| C9b1 to C9b4, C9d, C9c, C8a | legal acts, additivity, set comparisons, qualifying rules, materiality, incorporation, template library | D | C9b re-sliced 2026-10-09 | C9b3 waits on the formal-methods Eligibility pass (**done 2026-10-09, not yet merged**) and HQ-6 |
+| C9b1 to C9b4, C9d, C9c, C8a | legal acts, additivity, set comparisons, qualifying rules, materiality, incorporation, template library | D | C9b re-sliced 2026-10-09 | C9b3 waits on C9b0 (Eligibility sources), C9b2 and HQ-6. FM-EP merged 2026-10-09 |
 | C16c | remove Party's shares | F | planned, required before the epic closes | C9b4 |
 | C7a | regimes and gating, split from C7 | D | merged to `main` (`c6e5853`) and tagged | |
 | C12, C13 | runtime evaluator, relation plans | E | waiting | C9, C11, C11a, AIR-3.3, NRS N1 |
@@ -154,3 +152,4 @@ and HQ-6 is also settled.
 - 2026-10-09: the human's paper on consent, groups and exercise received. C9b's brief marked under revision. The paper's design advice added to the authoring, architecture and design skills and to `AGENTS.md`, and Copilot's instructions regenerated
 - 2026-10-09: the consent paper decided, as the [consent sketch](../sketches/consent-and-group-powers.md): consent a sibling of assent, qualifying rules as acting rules (`ins:QualifyingRule`), legal acts in Instrument (juristic acts only), no regime per exercise, Party's shares deprecated in C9b4 and removed in C16c. C9b re-sliced into C9b1 to C9b4. The formal-methods epic's Eligibility work (FM-D17, E1.4, B2.2, B2.1) is to run on its own branch and merge before C9b3. HQ-6 scheduled before C9b3
 - 2026-10-09: the reference time (stated once by the word, as a context role) and withdrawal (no substrate default) decided by the human. The formal-methods Eligibility pass named FM-EP, to run on machine S on `fm/eligibility-pass`
+- 2026-10-09: FM-EP merged to `main` (`2a438b15`) and reviewed: README restructured with diagrams, FM-D17's generated truth tables, proofs and reference hardened, checks passing. Law L9 amended in the Eligibility README only, which TD-16 kept from reaching the vocabulary. New slice C9b0 makes Eligibility's README its source again and releases L9, before C9b3

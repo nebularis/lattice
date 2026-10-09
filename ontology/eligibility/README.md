@@ -319,17 +319,50 @@ every `ex:Employee`), an `elg:EvidenceBinding` reaches each subject's candidate 
 `ex:Employee` by a two-step path, through a role to its job family:
 
 ```mermaid
-flowchart LR
-    Subj["ex:alice, an ex:Employee"]
-    Role["a Role<br/>step 0: holdsRole, Forward"]
-    Fam["ex:platform-engineering<br/>step 1: inJobFamily, Forward<br/>the candidate concept"]
-    Bind["ex:family-binding<br/>EvidenceBinding<br/>subjectClass: Employee<br/>singleValued: true"]
-    Cond["ex:engineering-family"]
-    Subj -- "holdsRole" --> Role
-    Role -- "inJobFamily" --> Fam
-    Bind -. "evidenceStep 0, 1" .-> Role
-    Bind -. "bindsCondition" .-> Cond
+---
+config:
+  layout: elk
+---
+flowchart TB
+    Emp((ex:Employee)) -. "rdfs:type" .- Subj["ex:alice"]
+    Rl((ex:Role)) -. "rdfs:type" .- Role["alice's Role"]
+    Con((skos:Concept)) -. "rdfs:type" .- Fam["ex:platform-engineering"]
+    Subj -- "ex:holdsRole" --> Role
+    Role -- "ex:inJobFamily" --> Fam
+
+    Bind["ex:family-binding"]
+    EvB((elg:EvidenceBinding)) -. "rdfs:type" .- Bind
+    Bind -- "subjectClass" --> Emp
+    Bind -- "singleValued" --> SV["true"]
+    Bind -- "bindsCondition" --> Cond["ex:engineering-family"]
+
+    ES((elg:EvidenceStep)) -. "rdfs:type" .- S0["step<br/>stepIndex 0"]
+    ES -. "rdfs:type" .- S1["step<br/>stepIndex 1"]
+    Bind -- "evidenceStep" --> S0
+    Bind -- "evidenceStep" --> S1
+    S0 -- "stepProperty" --> P0["ex:holdsRole"]
+    S1 -- "stepProperty" --> P1["ex:inJobFamily"]
+    S0 -- "stepDirection" --> Fwd["elg:Forward"]
+    S1 -- "stepDirection" --> Fwd
+    S0 -. "reaches" .-> Role
+    S1 -. "reaches" .-> Fam
+
+    P0 -. "rdfs:type" .- OP((owl:ObjectProperty))
+    P1 -. "rdfs:type" .- OP
+
+    classDef domain fill:#d5f5e3,stroke:#1e8449,color:#000
+    classDef elig fill:#d6eaf8,stroke:#2874a6,color:#000
+    class Emp,Subj,Rl,Role,Con,Fam,P0,P1 domain
+    class EvB,Bind,SV,Cond,ES,S0,S1,Fwd elig
+    linkStyle 0,1,2,3,4 stroke:#1e8449,stroke-width:2px,color:#1e8449
+    linkStyle 5,6,7,8,9,10,11,12,13,14,15,16,17,18 stroke:#2874a6,stroke-width:2px,color:#2874a6
 ```
+
+Green is the applied domain ontology (`ex:`) and the SKOS concept it uses. Blue is Eligibility
+(`elg:`), including the binding and condition, which are Eligibility individuals named in the
+example's namespace. Solid lines are asserted triples. Dotted lines are `rdfs:type`, or show what
+each step reaches when a subject's path is followed. Each step is a node of its own, positioned by
+`elg:stepIndex`, naming the property it traverses and its direction.
 
 A path ending at a literal instead of a `skos:Concept` or `qnt:Quantity` names the value space it
 reads on (`elg:readOnSpace`), as `ex:tenure-binding` does for `ex:tenureYears`. A binding that reads

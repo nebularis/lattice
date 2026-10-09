@@ -53,14 +53,9 @@ theorem belongs to B4/E3-E4, not Quantification; track E's plan and status are c
 **FM-EP, the Eligibility pass, before CCS C9b3 (decided 2026-10-09). Done, 2026-10-09.** On
 machine S, branch `fm/eligibility-pass`: FM-D17 decided (A+B hybrid) and built, E1.4 built,
 B2.2 and B2.1 built, B5 attempted and blocked (mirror gap, deferred). Full detail in track E's
-and track B's own status records. Working tree held ready for the human to commit; not yet merged
-to `main`. CCS C9b1 and C9b2 may proceed meanwhile, since they touch no Eligibility artefact; C9b3
-itself can start once this branch is reviewed, accepted and merged. Cost: 1969.4 AI credits for
-the whole work unit (see Estimates and actuals).
+and track B's own status records. Merged to `main` on 2026-10-09 (`2a438b15`). Its one hand-off to CCS, law L9's amendment in the Eligibility README, is released by CCS slice C9b0. Cost: 1969.4 AI credits for the whole work unit (see Estimates and actuals).
 
-**Next action, for the human:** review this branch (`fm/eligibility-pass`) and, if acceptable,
-commit, merge to `main` and tag, so CCS's C9b3 can start. Separately, review and accept (or
-revise) `ADR-A116`. Track B's B1-B3 are complete; B4 waits on CCS's C12. The two remaining Gate D
+**Next action, for the human:** review and accept (or revise) `ADR-A116`. FM-EP is merged (2026-10-09). Track B's B1-B3 are complete; B4 waits on CCS's C12. The two remaining Gate D
 gaps (below) are deliberately deferred, not blocking. Also decide when and where the spike
 branch, `fm/phase-0-prover-spike`, is created, and approve the image builds and any native
 installs.
@@ -141,3 +136,4 @@ status record.
 | sketches, plans and the review response (2026-10-06) | not estimated | not recorded |
 | FM-EP, the Eligibility pass (2026-10-09, machine S, `fm/eligibility-pass`) | not estimated | 1969.4 AI credits |
 - 2026-10-09: an Eligibility pass scheduled before CCS C9b3, which extends Eligibility with set comparisons and aggregate bindings: FM-D17, E1.4, B2.2 and B2.1 on this epic's own branch, merged to `main` first
+- 2026-10-09: FM-EP merged to `main` (`2a438b15`). L9's README amendment handed to CCS slice C9b0 for release

@@ -3064,6 +3064,7 @@ question to be taken up (below).
 | Slice | Layer | Adds |
 |---|---|---|
 | C9a | Instrument 0.15.0 | `ins:Amendment` (`ins:amends`, `ins:resultsIn`, `ins:affectsExisting`, `ins:statedIn`), its effective time on Foundation's temporal scope and its recording on Foundation's evidence. `ins:Assent` (a party, a version, its valid time and evidence), and an amendment by agreement agreed when every party has assented. Formation as a regime: `ins:begins` and `ins:OnAcceptance`. Shapes for at most one agreed amendment per version, the overtaking warning (C9-Q2 rule (iii)), the I14 continuity warning, and I4. Examples include an endorsement and mid-term adjustment, showing whether it is in force on the date of a loss |
+| C9b0 | Eligibility, cascading | the Eligibility README made its source again (TD-16's Eligibility part), and law L9's amendment from FM-EP released. Before C9b3 |
 | C9b1 | Instrument 0.16.0, Behaviour patch | the legal acts tier in its own document (ADR-A120): declarations (assent, consent, objection, withdrawal), proposals (the amendment one of them), exercises, `ins:pursuantTo`. Behaviour's exercise and acceptance records narrowed to findings. Example: reinsurance claims co-operation. [Consent sketch](../sketches/consent-and-group-powers.md) §2.1 |
 | C9b2 | Quantification, cascading | extensive and intensive quantities, a proportion's base, sum and count. Examples: multicurrency commitments, written and signed lines, signing down. Sketch §2.4 |
 | C9b3 | Eligibility, own ADR | set comparisons (subset, intersects, disjoint), aggregate bindings, the two kinds of deferral, with their proofs and reference semantics. After the formal-methods Eligibility pass and HQ-6. Sketch §2.3 |
@@ -3082,12 +3083,14 @@ becomes four slices:
 flowchart LR
     B1["C9b1 legal acts<br/>Instrument, Behaviour patch"]
     B2["C9b2 additivity<br/>Quantification"]
-    FM["formal-methods<br/>Eligibility pass<br/>(own branch)"]
+    FM["FM-EP, Eligibility pass<br/>merged 2026-10-09"]
+    B0["C9b0 Eligibility sources<br/>README the source again,<br/>L9 released"]
     H6["HQ-6 deemings<br/>closures, ADR-A105"]
     B3["C9b3 set comparisons<br/>Eligibility, own ADR"]
     B4["C9b4 qualifying rules<br/>Instrument"]
+    FM --> B0
+    B0 --> B3
     B2 --> B3
-    FM --> B3
     H6 --> B3
     B1 --> B4
     B3 --> B4
@@ -3102,6 +3105,21 @@ cover definitions, characterising lemmas, set-reading invariance, no `by eval`, 
 B2.2 (the suspected hierarchical-match defect, which may change the README's wording) and B2.1 (faults
 seeded in the compilers, adjudication records, exhaustive generation). B5's mutation score may follow.
 C9b1 and C9b2 touch no Eligibility artefact. C9b3 then carries its own proof and reference rows.
+
+**FM-EP merged on 2026-10-09** (`2a438b15`): FM-D17 (the kernel's truth tables generated from the README
+into the theory and the reference), E1.4, B2.2 and B2.1 done, B5 deferred. Its checks pass on `main`. It
+left one thing for CCS. B2.2 amended law L9 in the Eligibility README, so a hierarchical condition with
+no resolved scheme is Undetermined rather than Denied. Eligibility's README is not yet its source
+(TD-16), so the change did not reach `vocab/eligibility-vocab.ttl` and no version moved, and
+`check:ontology-versioning` compares `.ttl` files only, which is how it passed. C9b3 must edit that
+README and regenerate from it, which TD-16 forbids today. So a new slice comes first:
+
+- **C9b0, Eligibility sources** (TD-16's Eligibility part). Make the README Eligibility's source again:
+  restore the vocabulary's ontology header in it, reconcile the shapes (78 triples only in the README,
+  19 only in the file, each difference judged, not regenerated over), add a test running `--check` as
+  the other literate layers have, and release the result, L9's amendment included, as Eligibility and
+  `eligibility-vocab` MINOR versions with their cascade. It also confirms the compilers' reading of
+  L9's new case.
 
 The details below are the record of the first brief.
 
