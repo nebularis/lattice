@@ -75,7 +75,7 @@ Conditions matching by `ExactMatch`, `SetMembership`, or `HierarchicalMatch` sta
 The table reads as a decision flow, each row a condition on the way to a leaf:
 
 ```mermaid
-flowchart TD
+flowchart LR
     Start["candidate offered to a condition"]
     Absent{"absent, unresolved, more than<br/>one per question, or outside<br/>the bound scheme where the<br/>decision needs that scheme?"}
     Excluded{"matches an<br/>excluded concept?"}
