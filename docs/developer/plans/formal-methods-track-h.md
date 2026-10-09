@@ -209,8 +209,17 @@ None of these may be taken by an agent.
 | H-D1 | accept, revise or reject [ADR-A-FM4](../../architecture/decisions/ADR-A-FM4-persistence-formal-methods-home-and-scope.md) | accept, including its point 3 (TLA+/Quint models share `tools/models/` with Alloy) | open |
 | H-D2 | TLA+ or Quint, for protocol models | undecided; H5's own toolchain spike decides it on measured evidence, the same discipline track D used for Rocq vs Isabelle | open, deferred to H5 |
 | H-D3 | whether the specification registry's and typed IR's design (H2, H3) are recorded as an ADR-A79 addendum or a fresh ADR | recommend an addendum, dated, per ADR-A-FM4 decision 4 and this repository's own practice for a decision found while building | open, deferred to H2/H3 |
-| H-D4 | whether the composite-boundary soundness gap (H1.4's flagged finding) is fixed immediately as a `tools/persistence` defect, or left as a documented, refused combination until H2's typed IR makes the fix structural | recommend: refuse the combination now (cheap, one line in the existing validation predicate), fix properly once H2 lands | open |
+| H-D4 | whether the composite-boundary soundness gap (H1.4's flagged finding) is fixed immediately as a `tools/persistence` defect, or left as a documented, refused combination until H2's typed IR makes the fix structural | recommend: refuse the combination now (cheap, one line in the existing validation predicate), fix properly once H2 lands | **decided by the human, 2026-10-09**: left as a documented, refused combination until H2's typed IR makes the fix structural. H1.4 carries the refusal |
 | H-D5 | whether track H's claims feed track A's ledger once it exists, or keep their own interim Validation-Pack record permanently | recommend: feed track A once it starts, per ADR-A-FM4 decision 7 | open, not urgent |
+
+Decisions H-D6 to H-D10 were taken as H1 progressed and are recorded, with their reasons, in the
+[status record](../status/formal-methods-track-h.md). Two are open and are explained in
+[§13](#13-walkthrough-the-two-assumptions-behind-check-s-3-h-d11-and-h-d12).
+
+| # | Decision | State |
+|---|---|---|
+| H-D11 | how check S-3 knows which variables the caller supplies | **open**, walkthrough in §13.3 |
+| H-D12 | whether a `BIND` counts as giving its variable a value | **open**, walkthrough in §13.4 |
 
 ## 9. Alignment with other work
 
@@ -255,3 +264,191 @@ native install or image route is added), `mise.toml` (new `check:persistence-for
 `docs/architecture/ontology-architecture.md` (the capability-matrix idea, once it has its first
 populated row). At H9/H10's gate: `docs/architecture/semantic-platform.md` (new monitor job
 families), the ADR catalogue (the ADR-A79 addenda from H2/H3, if taken).
+
+
+## 13. Walkthrough: the two assumptions behind check S-3 (H-D11 and H-D12)
+
+This section is for a reader who has not worked in `tools/persistence`. It explains what check S-3
+([H1.3](../validation/FMH-H1-3.md)) does, then the two assumptions it makes that the human is asked
+to confirm. Everything marked "demonstrated" was run against the real generated templates on
+2026-10-09. The code is `tools/persistence/src/persistence/templatecheck.py`.
+
+### 13.1 Five facts about a generated update
+
+The compiler generates SPARQL updates from templates. Each looks like this, with a real, shortened
+example below it.
+
+```sparql
+INSERT { GRAPH <g> { ?doc pat:title ?title .  ?doc pat:author ?author } }
+WHERE  { ?doc a pat:Doc .  ?doc pat:title ?title .
+         OPTIONAL { ?doc pat:author ?author } }
+```
+
+1. The database finds every **solution** of the `WHERE` clause. A solution is one assignment of
+   values to the variables, for example one document with its title and perhaps its author.
+2. For each solution it fills in the `INSERT` template and writes the triples.
+3. **If a variable in an `INSERT` triple has no value in that solution, that one triple is skipped.
+   There is no error.** In the example, a document with no author gets its title triple and no author
+   triple. This is how the SPARQL 1.1 Update specification describes it and how the demonstration
+   in §13.4 behaves.
+4. `?x` and `$x` are the same variable to the database. The `$` is only a hint from the author of
+   the template that the **caller** fills this one in before running the update, for example `$root`,
+   the aggregate being changed. The compiler cannot know such values, so they are not part of the
+   generated text.
+5. `BIND(expression AS ?v)` gives `?v` a value. If the expression raises an error, for example
+   `STR` of a variable that has no value, `?v` is left without one, the solution is kept, and
+   fact 3 then applies to every triple that uses `?v`.
+
+Fact 3 is the hazard. A field can go missing from a record that the system treats as complete, and
+nothing reports it. The review behind this track ([§12](../notes/rdf-engine/persistence-fml.md))
+ranked a check for it first (S-3).
+
+### 13.2 What check S-3 does
+
+For every generated update, the check does the following (`analyse`, `templatecheck.py:207`).
+
+1. Fill in the values the compiler knows, as `python -m persistence instantiate` does. Replace the
+   two request-time slots (`payloadTriples`, `logGraphs`) with harmless stand-ins so the text parses.
+2. Parse it with rdflib into its algebra, a tree describing the `WHERE` clause.
+3. List the variables used in the `INSERT` template.
+4. Work out which variables have a value in **every** solution (`definitely_bound`, line 131).
+5. Report any `INSERT` variable that is neither in that set, nor a `$parameter`, nor excused by a
+   reviewed allowance in `OPTIONAL_INSERT_VARIABLES`.
+
+How step 4 decides:
+
+| Part of the `WHERE` clause | Variables counted as having a value |
+|---|---|
+| a triple pattern | every variable in it |
+| two patterns joined | those of both |
+| `OPTIONAL { ... }` | only those of the part outside it |
+| `UNION` | only those present in **both** branches |
+| `VALUES` | those given in every row (an `UNDEF` row does not count) |
+| `FILTER`, `MINUS` | no change to what the main pattern gave |
+| `BIND(e AS ?v)` | `?v`, **if every variable in `e` already counts** (this is H-D12) |
+| a group-by sub-select | its grouping keys and aggregates |
+| anything else | the check reports that it cannot analyse it, and never passes it |
+
+Step 5's `$parameter` exemption is H-D11. On the real templates the check finds one thing, the
+previous revision, left unbound on the first write to a row or stream. That is correct behaviour and
+is recorded as eight allowances. The check finds no defect in the shipped templates.
+
+### 13.3 H-D11: how does the check know which variables the caller supplies?
+
+**The question.** The check must not flag `$root` as "unbound", because the caller supplies it. What
+should define "a variable the caller supplies"?
+
+**What it does today.** It reads the template text, removes comments, strings and IRIs, and treats
+every name written with a `$` as a caller parameter (`_PARAMETER`, line 74, used at line 220).
+
+**Why the text.** The compiled profile does list parameter bindings, but every one of them is a
+compile-time value already substituted into the text (for example `metaGraphPrefix` or `txnGraph`).
+Nothing in the compiled output says which names are left for the caller. The `$` is the only record.
+
+**What the convention covers in practice.** Demonstrated: 17 of the 24 templates use at least one
+`$parameter`, and the 7 that use none are the five audits and two key-claim reconcilers.
+
+| Template family | Request-time parameters |
+|---|---|
+| `cas-replace-named-graph` and its dataset-guard variant | `$root $epoch $expectedSeq $nextSeq $newRev $txnId $requestDigest $assertGraph $retractGraph` |
+| `cas-replace-composite-property` and its variant | the same, without the two graph parameters |
+| `cas-replace-value-guard`, `unconditional-write` | `$root $oldValue $newValue`, and `$root` |
+| `append-event` and its variant | `$stream $epoch $event $eventType $opSeq $occurredAt $txnId $requestDigest $revBase` |
+| `tombstone-delete-named-graph` and its variant | the CAS set without the graphs, plus `$actor $cause` |
+| `create-if-absent-named-graph` and its variant | `$root $epoch $newRev $txnId $requestDigest` |
+| `bootstrap-version-row` and its variant | `$target $epoch` |
+| `key-claim-write`, `-write-dual`, `-retire` | `$claim $owner` (and `$now`, or the two claim names) |
+
+**The two ways the convention can be wrong.**
+
+| The author writes | Meaning intended | What the check does | Consequence |
+|---|---|---|---|
+| `?x` | a caller parameter | reports it as unbound | safe, because it is loud |
+| `$x` | a variable the `WHERE` clause should bind | **exempts it** | silent, the defect S-3 exists to catch |
+
+The second row is real. Demonstrated: in the real `cas-replace` update, writing `$prevRev` in place
+of `?prevRev` in the `INSERT` makes the finding disappear.
+
+**Options.**
+
+| Option | What it means | Consequence |
+|---|---|---|
+| **A. Keep the `$` convention** (current) | Read the parameters from the text | No change to compiler output. Has the second row above |
+| **B. The compiler lists them** | Emit each operation's request-time parameters into the compiled profile, and have the check require the text's `$` names to equal that list | Closes the second row, and gives readers an explicit caller obligation list. Needs a new term in the `dal:` compiled-profile vocabulary under `ontology/persistence`, so a modelling decision and probably an ADR-A79 addendum |
+| **C. Keep `$`, add a guard** | Also refuse a `$` name that a `BIND` assigns or a sub-select projects | Cheap, catches nonsense like `BIND(... AS $x)`, but does not catch the realistic row-two slip above |
+
+**Recommendation, as a hypothesis.** Keep A for now and let the typed IR of H2 settle it. H2 gives
+every generated operation a declared parameter list in its intermediate representation
+([§4](#4-h2-h3-the-typed-ir-and-the-specification-registry)), which is option B arriving as part of
+work already planned, without a separate ontology change today. The row-two risk is narrow while the
+library is 24 reviewed files edited by the maintainers. It would grow if templates were authored
+outside this repository, and that would change the recommendation to B.
+
+**To try it yourself.** Edit a copy of a template so an `INSERT` variable becomes `$name`, then run
+`python -m persistence hygiene ontology/persistence/spec/persistence.ttl ontology/persistence/examples/baseline-single-class.ttl`
+against a build that reads your copy. The unit test `test_h1_3_t3` shows the exemption and
+`test_h1_3_t2` shows the loud case.
+
+### 13.4 H-D12: does a `BIND` count as giving its variable a value?
+
+**The question.** `BIND(expression AS ?v)` can fail (fact 5). When the check sees one, should it
+assume `?v` has a value?
+
+**What it does today.** It assumes yes, provided every variable inside the expression itself
+counts as having a value (`templatecheck.py:147-149`). Without that assumption, nearly every template
+would be reported.
+
+**What the real templates contain.** Demonstrated: 13 distinct `BIND` shapes across the 24
+templates. Ignoring four that are artefacts of how rdflib rewrites aggregates and aliases, they fall
+into three groups.
+
+| Group | `BIND` | Can it fail? |
+|---|---|---|
+| No inputs | `?now` from `NOW()`, `?month`, `?logGraph` from `NOW()`, and values built from them (21 uses across templates) | Not by design |
+| Inputs are caller parameters only | `?txnKey` from `STR($txnId)` (10 templates), `?g` from `$root` (7) | Yes, if the caller omits or mis-types the parameter |
+| Inputs include stored data | `?n1` from the stored sequence counter (2 templates), `?rev` from `$revBase` and `?n1` (2) | Yes, if the parameter is missing, **or** if the stored counter is not a number |
+
+**What a failure looks like. Demonstrated** with the real `append-event` update on a small
+in-memory dataset.
+
+| Request | Result |
+|---|---|
+| every `$parameter` supplied | 15 triples. The counter advances to 1, the event, the transaction claim, the revision record and the head pointer are all written |
+| the caller forgets `$revBase` | 6 triples. **The counter still advances to 1** and the event is partly written, the transaction claim is recorded with its digest, but there is **no revision record, no head pointer, and the claim has no `pat:rev`** |
+| then the caller retries with the same transaction id and every parameter | The transaction guard does not stop it, because it looks for a claim with a `pat:rev`. The counter advances to **2**, and the stream has **no revision record at all** |
+
+No error was raised at any step. The gap scan audit would report the missing receipts afterwards
+(its witness shows it fires on exactly that shape), so the damage is detectable but not prevented.
+This is a caller error, and it is recorded as TD-26 because the template offers no all-or-nothing
+protection against it.
+
+**What this means for the check.** S-3 counted `?rev` as having a value. That holds only while the
+caller supplies `$revBase`. The two decisions are therefore one underlying trust:
+**the check assumes the caller honours the parameter list**. H-D11 decides how the list is known.
+H-D12 decides how far the assumption extends into computed values.
+
+**Options.**
+
+| Option | Rule | Consequence |
+|---|---|---|
+| **A. Trust a `BIND` over bound inputs** (current) | counts as having a value | Quiet. Misses the failure shown above |
+| **B. Distrust any `BIND` with inputs** | counts only a `BIND` that has none | Rough trial: about half the templates (12 of 24) would be reported, mostly noise, because every template that uses `?txnKey` or `?g` is caller-dependent. The trial also counted a few values derived from `NOW()` through a middle variable, so read 12 as an upper bound |
+| **C. Trust caller-dependent, distrust data-dependent** | a `BIND` over `$parameters` or constants counts. One over stored data does not | Reports the two append templates (`?n1`, `?rev`). The same trial also flagged three other templates through aggregate and alias artefacts that a real implementation would not. It is a defensible line (the caller contract is a separate obligation, stored data going wrong is an integrity hazard) but it needs an allowance or a guard to pass |
+| **D. Fix the templates, not the check** | add a required-parameter guard so a missing parameter writes **nothing** | The real remedy for the demonstration above. Belongs to H2, where each parameter is declared and a guard can be generated |
+
+**Recommendation, as a hypothesis.** Keep A for now, record the limitation here and in TD-26, and
+take D in H2. Option C is the one to pick if you want the stored-counter case surfaced before H2.
+
+**To try it yourself.** The demonstration used `rdflib` directly. The shape of it is: compile
+`tools/persistence/tests/witnesses/template-append-event.ttl`, take the `append-event` update from
+`persistence.templatecheck.operations`, create a dataset with one stream row, and run
+`dataset.update(text, initBindings={...})` once with every parameter and once without `revBase`.
+
+### 13.5 What you are deciding
+
+| Decision | If you agree with A | If you prefer another |
+|---|---|---|
+| **H-D11** | No change. Option B arrives with H2 | Say B or C. B is a small ontology and compiler change, C is a few lines in the check |
+| **H-D12** | No change. TD-26 records the hazard and D arrives with H2 | Say B, C or D. C is a few lines in the check, B is mostly allowances, D is a template change that I would treat as its own slice |
+
+Neither decision blocks H1.4.
