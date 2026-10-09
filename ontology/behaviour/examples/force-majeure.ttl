@@ -170,6 +170,9 @@ ex:s3 a bhv:Stimulus ;
 ex:s4 a bhv:Stimulus ;
     fnd:hasEvidence [ a fnd:Evidence ; fnd:recordedAt "2027-04-20T09:00:00Z"^^xsd:dateTime ] .
 
+# A force majeure notice has legal effect, so the notice itself is a legal act
+# of the layer above. This act record shows its performance, which the runtime
+# reads (CCS C9b1).
 ex:flood-notice a bhv:ActRecord ;
     bhv:activity ex:force-majeure-notified ;
     bhv:actor ex:supplier-occ ;

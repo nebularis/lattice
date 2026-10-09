@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: MPL-2.0
 """Instrument: the legal acts tier (computable-contract-substrate C9b1, ADR-A104, ADR-A120).
-Rows C9b1-01 to C9b1-11 of the Validation Pack."""
+Rows C9b1-01 to C9b1-14 of the Validation Pack: the acts tier, then Behaviour's records as findings."""
 
 from __future__ import annotations
 
@@ -260,3 +260,53 @@ def test_c9b1_11_a_term_implied_by_a_judgment() -> None:
     assert g.value(RE["not-withhold-arbitrarily"], INS.obligor) == g.value(RE.approve, INS.holder)
     readme = (LAYER / "README.md").read_text()
     assert "Instrument's runtime document is upstream" not in readme
+
+
+# ---- C9b1-12 to C9b1-14: Behaviour's records are findings ------------------------------
+
+BHV_LAYER = ONTOLOGY / "behaviour"
+RUNTIME = BHV_LAYER / "spec" / "behaviour-runtime.ttl"
+BHV_MODEL = _graph(BHV_LAYER / "spec" / "behaviour.ttl", RUNTIME, BHV_LAYER / "vocab" / "behaviour-vocab.ttl")
+BHV_SHAPES = _graph(BHV_LAYER / "shapes" / "structural.ttl", BHV_LAYER / "shapes" / "constraints.ttl")
+LIC = Namespace("https://example.org/lattice/behaviour/licence/")
+
+
+def _bhv_results(data: Graph) -> list[tuple[str, str, str]]:
+    _, report, _ = validate(BHV_MODEL + data, shacl_graph=BHV_SHAPES, inference="none", advanced=True)
+    return [(str(report.value(r, SH.resultSeverity)).rsplit("#", 1)[-1], str(report.value(r, SH.focusNode)),
+             str(report.value(r, SH.resultMessage))) for r in report.subjects(SH.resultSeverity, None)]
+
+
+def test_c9b1_12_an_exercise_record_is_a_finding_about_an_exercise() -> None:
+    runtime = _graph(RUNTIME)
+    assert not list(runtime.objects(BHV.exercised, RDFS.range))                 # no range (law B7)
+    assert "exercise act" in str(runtime.value(BHV.exercised, RDFS.comment))
+    assert "finding" in str(runtime.value(BHV.ExerciseRecord, RDFS.comment))
+    assert "Deprecated on an exercise record" in str(runtime.value(BHV.actor, FND.utility))
+    assert "ins:" not in RUNTIME.read_text() and "lattice/instrument" not in RUNTIME.read_text()
+
+
+def test_c9b1_13_an_acceptance_record_is_deprecated_with_a_warning() -> None:
+    runtime = _graph(RUNTIME)
+    assert (BHV.AcceptanceRecord, OWL.deprecated, Literal(True)) in runtime
+    record = ("@prefix bhv: <" + str(BHV) + "> .\n@prefix fnd: <" + str(FND) + "> .\n"
+              "@prefix pty: <" + LATTICE + "party#> .\n@prefix ex: <https://example.org/r/> .\n"
+              "ex:v a fnd:Version . ex:p a pty:RoleOccupancy . "
+              "ex:accept a bhv:AcceptanceRecord ; bhv:accepted ex:v ; bhv:actor ex:p .")
+    found = _bhv_results(Graph().parse(data=record, format="turtle"))
+    assert [(s, f.rsplit("/", 1)[-1]) for s, f, m in found] == [("Warning", "accept")]
+    assert "C16c" in found[0][2]
+
+
+def test_c9b1_14_licence_suspension_keeps_no_acceptance() -> None:
+    g = _graph(BHV_LAYER / "examples" / "licence-suspension.ttl")
+    assert not list(g.subjects(RDF.type, BHV.AcceptanceRecord)) and not list(g.subjects(BHV.accepted, None))
+    for record in g.subjects(RDF.type, BHV.ExerciseRecord):
+        assert g.value(record, BHV.actor) is None, record
+    assert _bhv_results(g) == []
+    for name, record in (("force-majeure", "flood-notice"), ("occasion-refinement", "r-notified"),
+                         ("garden-leave", "ben-withdrawal")):
+        text = (BHV_LAYER / "examples" / f"{name}.ttl").read_text()
+        before = text[:text.index(f"ex:{record} a bhv:ActRecord")]
+        comment = " ".join(line.lstrip("# ") for line in before.rsplit("\n\n", 1)[-1].splitlines())
+        assert "legal act of the layer above" in comment, name

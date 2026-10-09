@@ -172,3 +172,8 @@ bhv:AcceptanceRecordShape a sh:NodeShape ;
 	sh:targetClass bhv:AcceptanceRecord ;
 	sh:property [ sh:path bhv:accepted ; sh:minCount 1 ; sh:maxCount 1 ; sh:class fnd:Version ] ;
 	sh:property [ sh:path bhv:actor ; sh:minCount 1 ] .
+bhv:AcceptanceRecordDeprecatedShape a sh:NodeShape ;
+	sh:targetClass bhv:AcceptanceRecord ;
+	sh:severity sh:Warning ;
+	sh:not [ sh:class bhv:AcceptanceRecord ] ;
+	sh:message "bhv:AcceptanceRecord is deprecated, and removed in CCS C16c: a party's acceptance of a version is a fact of the layer above, from which agreement is read (§5.2)." .
