@@ -44,14 +44,14 @@ Nothing in this version evaluates.
 ```turtle-spec
 <https://www.nebularis.org/neuro-semantic/instrument>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.15.1> ;
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.16.0> ;
 	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.4.0> ,
 				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.4.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.7.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/party/0.8.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.10.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/wording/0.7.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.13.1> .
+				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.8.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/party/0.9.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.11.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/wording/0.8.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.14.0> .
 ```
 
 The vocabulary (`ins-voc:`) is `vocab/instrument-vocab.ttl`, in the namespace `https://www.nebularis.org/neuro-semantic/lattice/instrument/vocab#` (§19).
@@ -3754,8 +3754,8 @@ instrument as a whole as a value of `ins:ends` (§14.2).
 
 <https://www.nebularis.org/neuro-semantic/instrument-vocab>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/instrument-vocab/0.15.1> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.15.1> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/instrument-vocab/0.16.0> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.16.0> .
 
 ins-voc:ActivityContract a voc:SchemeContract ;
 	fnd:hasIdentity ins-voc:ActivityContract-identity ;
@@ -5874,6 +5874,8 @@ and their recording time (§6.3).
 
 Breaking versions at major version zero ([ADR-A113](../../docs/architecture/decisions/ADR-A113-breaking-changes-at-major-version-zero.md)):
 
+- 0.16.0 (`instrument` and `instrument-vocab`): re-pinned to Quantification 0.8.0 and the layers
+  re-pinned with it, with no other change (CCS C9b2)
 - 0.15.1 (`instrument` and `instrument-vocab`, patch): re-pinned to Behaviour 0.13.1, with no other
   change (ADR-A120)
 - 0.15.0 (CCS C9a, ADR-A104 and its 2026-10-08 addendum): new: amendments (`ins:Amendment`,

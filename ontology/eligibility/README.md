@@ -127,11 +127,11 @@ flowchart LR
 
 <https://www.nebularis.org/neuro-semantic/eligibility>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.10.0> ;
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.11.0> ;
 	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.4.0> ,
 				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.4.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.7.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/party/0.8.0> .
+				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.8.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/party/0.9.0> .
 ```
 
 ### 5.1 Conditions and profiles

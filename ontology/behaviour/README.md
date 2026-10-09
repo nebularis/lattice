@@ -72,12 +72,12 @@ Behaviour distinguishes four tiers:
 
 <https://www.nebularis.org/neuro-semantic/behaviour>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.13.1> ;
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.14.0> ;
 	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.4.0> ,
 				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.4.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.7.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/party/0.8.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.10.0> .
+				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.8.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/party/0.9.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.11.0> .
 
 bhv:StateSpace a owl:Class ;
 	rdfs:subClassOf fnd:Version ;
@@ -236,8 +236,8 @@ configuration document, at the same version.
 
 <https://www.nebularis.org/neuro-semantic/behaviour-runtime>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/behaviour-runtime/0.13.1> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.13.1> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/behaviour-runtime/0.14.0> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.14.0> .
 ```
 
 ```turtle-spec
@@ -577,8 +577,8 @@ stateDiagram-v2
 
 <https://www.nebularis.org/neuro-semantic/behaviour-vocab>
 	a owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/behaviour-vocab/0.13.1> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.13.1> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/behaviour-vocab/0.14.0> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.14.0> .
 
 bhv:ExternalStimulus a bhv:TriggerKind .
 bhv:ScheduledTrigger a bhv:TriggerKind .
@@ -1511,3 +1511,5 @@ Breaking versions at major version zero ([ADR-A113](../../docs/architecture/deci
 - 0.13.1 (`behaviour`, `behaviour-runtime` and `behaviour-vocab`, patch): the runtime document is
   extracted from §5.2 instead of authored as a file, with the same triples, and the three move
   together (ADR-A120).
+- 0.14.0 (`behaviour`, `behaviour-runtime` and `behaviour-vocab`): re-pinned to Quantification 0.8.0
+  and the layers re-pinned with it, with no other change (CCS C9b2).

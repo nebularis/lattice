@@ -105,8 +105,8 @@ LS_EX, LS = _ns("licence-survival")
 def test_c7b_01_version_imports_and_new_terms() -> None:
     spec = _graph(SPEC)
     ontology = URIRef("https://www.nebularis.org/neuro-semantic/instrument")
-    assert spec.value(ontology, OWL.versionIRI) == URIRef(LATTICE + "instrument/0.15.1")
-    assert URIRef(LATTICE + "quantification/0.7.0") in set(spec.objects(ontology, OWL.imports))
+    assert spec.value(ontology, OWL.versionIRI) == URIRef(LATTICE + "instrument/0.16.0")
+    assert URIRef(LATTICE + "quantification/0.8.0") in set(spec.objects(ontology, OWL.imports))
     for name in ("due", "recurrence", "window", "dueTolledIn", "at", "ofState", "ends", "survives", "survivalPeriod",
                  "survivesUntil"):
         utility = str(spec.value(INS[name], FND.utility))
@@ -233,9 +233,9 @@ def test_c7b_15_quantification_readme_is_the_source() -> None:
                                   "--shapes", "shapes/constraints.ttl", "--check"]) == 0
     spec = _graph(QLAYER / "spec" / "quantification.ttl")
     assert spec.value(URIRef("https://www.nebularis.org/neuro-semantic/quantification"), OWL.versionIRI) == \
-        URIRef(LATTICE + "quantification/0.7.0")
+        URIRef(LATTICE + "quantification/0.8.0")
     assert "**0.7.0** (additive, CCS C7b" in (QLAYER / "README.md").read_text()
-    assert (QLAYER / "shapes" / ".version").read_text().strip() == "0.2.0"
+    assert (QLAYER / "shapes" / ".version").read_text().strip() == "0.3.0"
 
 
 # ---- C7b-16: Quantification's shapes ----------------------------------------
