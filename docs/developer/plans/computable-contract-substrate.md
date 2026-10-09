@@ -3709,6 +3709,16 @@ line share (base role: the order) and an order share (base role: the layer) has 
 base role, and at runtime (p3) checks that the first operand's resolved base is what the second
 measures, a check (p4) alone could not make.
 
+**Built (2026-10-09, merged into `ccs/c9b-groundwork`).** `qnt:additivity` (`qnt:Extensive`,
+`qnt:Intensive`), `qnt:baseRole` on a derived space, `qnt:MixedBases`, laws Q12 (static: a Sum within
+one space needs Extensive) and Q13 (runtime: different units or bases with no conversion are
+Undetermined), and three shapes. Signing down needs only Ratio then Scale, so HQ-12 stays held. A Sum
+capability stating no operands reads as a sum within its own space. `qnt:baseRole` is not restricted
+to proportions. Rows C9b2-08 to C9b2-13 are checked by a reference reading of §9.9 until an evaluator
+of sums exists (C12). Corrected at merge: a stock shares its currency's Extensive space. Quantification
+0.8.0 and its shapes 0.3.0 cascade to 18 documents, Eligibility's versions shared with C9b0
+([Validation Pack](../validation/computable-contract-substrate-c9b2.md)).
+
 **Decided by precedent, not asked:**
 
 - Sum and Count stay operation kinds. A new shape rejects a Sum capability whose operands and result
