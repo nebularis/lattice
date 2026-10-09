@@ -283,3 +283,52 @@ def test_h1_2_t23_every_refusal_and_warning_has_a_witness_and_only_shapes_remain
     assert {r.family for r in report.covered} >= {REFUSAL, WARNING, AUDIT}
     assert Rule(WARNING, "MixedReceiptModel") in report.covered  # not reachable from the shipped example
     assert Rule(REFUSAL, "IdentityStrategyUnsupported") in report.covered
+
+
+# ---- the console colours -------------------------------------------------------------------------
+
+GREEN, RED, RESET = "\033[32m", "\033[31m", "\033[0m"
+
+
+def _verbose_lines(color: bool) -> list[str]:
+    return check_witness_coverage().lines(verbose=True, color=color)
+
+
+def test_h1_2_t24_witnessed_lines_are_green_and_gap_lines_red_when_colour_is_on():
+    lines = _verbose_lines(color=True)
+    witnessed = [line for line in lines if "WITNESSED" in line]
+    gaps = [line for line in lines if " GAP " in line or line.startswith(RED + "GAP")]
+    assert witnessed and all(line.startswith(GREEN) and line.endswith(RESET) for line in witnessed)
+    assert gaps and all(line.startswith(RED) and line.endswith(RESET) for line in gaps)
+
+
+def test_h1_2_t25_without_colour_the_output_has_no_escape_codes():
+    assert not any("\033" in line for line in _verbose_lines(color=False))
+
+
+def test_h1_2_t26_colour_follows_the_terminal_and_the_usual_environment_switches():
+    class Tty:
+        def isatty(self):
+            return True
+
+    class Pipe:
+        def isatty(self):
+            return False
+
+    assert witness.use_color(Tty(), {"TERM": "xterm-256color"})
+    assert not witness.use_color(Pipe(), {"TERM": "xterm-256color"})
+    assert not witness.use_color(Tty(), {"TERM": "dumb"})
+    assert not witness.use_color(Tty(), {"NO_COLOR": "1"})
+    assert witness.use_color(Pipe(), {"FORCE_COLOR": "1"})
+    assert not witness.use_color(Pipe(), {"FORCE_COLOR": "0"})
+    assert not witness.use_color(Tty(), {"NO_COLOR": "1", "FORCE_COLOR": "1"})
+
+
+def test_h1_2_t27_cli_colours_only_when_asked(monkeypatch, capsys):
+    monkeypatch.delenv("NO_COLOR", raising=False)
+    monkeypatch.setenv("FORCE_COLOR", "1")
+    assert main(["witness", "--verbose"]) == 0
+    assert GREEN in capsys.readouterr().out
+    monkeypatch.delenv("FORCE_COLOR")
+    assert main(["witness", "--verbose"]) == 0
+    assert "\033" not in capsys.readouterr().out

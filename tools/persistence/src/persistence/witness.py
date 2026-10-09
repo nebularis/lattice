@@ -31,13 +31,14 @@ cannot pass unnoticed.
 from __future__ import annotations
 
 import ast
+import os
 import re
 import warnings
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from functools import lru_cache
 from pathlib import Path
-from typing import Iterable, Iterator
+from typing import Iterable, Iterator, Mapping
 
 import pyshacl
 from rdflib import RDF, Dataset, Graph, Literal, Namespace, URIRef
@@ -451,6 +452,26 @@ def read_known_gaps(path: Path = KNOWN_GAPS) -> dict[Rule, str]:
     return gaps
 
 
+_GREEN, _RED, _RESET = "\033[32m", "\033[31m", "\033[0m"
+
+
+def _paint(text: str, code: str, enabled: bool) -> str:
+    return f"{code}{text}{_RESET}" if enabled else text
+
+
+def use_color(stream, environ: Mapping[str, str] | None = None) -> bool:
+    """Whether to colour output on ``stream``. ``NO_COLOR`` (any value) turns
+    colour off and ``FORCE_COLOR`` (any value but ``0``) turns it on, per the
+    usual conventions. Otherwise colour is used on a terminal that is not
+    ``TERM=dumb``."""
+    env = os.environ if environ is None else environ
+    if env.get("NO_COLOR"):
+        return False
+    if env.get("FORCE_COLOR", "0") != "0":
+        return True
+    return bool(getattr(stream, "isatty", lambda: False)()) and env.get("TERM") != "dumb"
+
+
 @dataclass
 class Report:
     covered: dict[Rule, set[str]] = field(default_factory=dict)
@@ -464,7 +485,7 @@ class Report:
     def ok(self) -> bool:
         return not (self.uncovered or self.stale_gaps or self.unknown_gaps or self.problems)
 
-    def lines(self, verbose: bool = False) -> list[str]:
+    def lines(self, verbose: bool = False, color: bool = False) -> list[str]:
         out = []
         total = len(self.covered) + len(self.listed_gaps) + len(self.uncovered)
         out.append(
@@ -480,8 +501,11 @@ class Report:
         out += [f"UNKNOWN GAP {rule}: no such rule" for rule in self.unknown_gaps]
         out += [f"PROBLEM {problem}" for problem in self.problems]
         if verbose:
-            out += [f"WITNESSED {rule} <- {', '.join(sorted(files))}" for rule, files in self.covered.items()]
-            out += [f"GAP {rule} | {reason}" for rule, reason in self.listed_gaps.items()]
+            out += [
+                _paint(f"WITNESSED {rule} <- {', '.join(sorted(files))}", _GREEN, color)
+                for rule, files in self.covered.items()
+            ]
+            out += [_paint(f"GAP {rule} | {reason}", _RED, color) for rule, reason in self.listed_gaps.items()]
         return out
 
 
@@ -558,6 +582,7 @@ __all__ = [
     "observe_compile",
     "observe_shapes",
     "read_known_gaps",
+    "use_color",
     "run_audit",
     "scan_source",
     "source_rules",

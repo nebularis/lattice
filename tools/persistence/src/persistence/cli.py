@@ -41,7 +41,7 @@ from rdflib import Graph
 from .capability import load_capability_spec
 from .compiler import CompileError, compile_to_graph
 from .hygiene import VIOLATION, check_prefix_antichain
-from .witness import check_witness_coverage
+from .witness import check_witness_coverage, use_color
 from .instantiate import instantiate_to_directory
 from .namespaces import DAL
 from .recipes import export_recipes
@@ -117,7 +117,7 @@ def cmd_witness(args: argparse.Namespace) -> int:
     except ValueError as error:  # a patch fixture that no longer applies to its base
         print(f"FIXTURE ERROR {error}")
         return 1
-    for line in report.lines(verbose=args.verbose):
+    for line in report.lines(verbose=args.verbose, color=use_color(sys.stdout)):
         print(line)
     return 0 if report.ok else 1
 
