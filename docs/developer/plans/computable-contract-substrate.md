@@ -3528,6 +3528,20 @@ KISS: a record of reliance has no reader. **Leaning (a).**
 - the reinsurance example records "no approval gives Undetermined" as deliberate non-coverage until
   HQ-6
 
+**Raised while building (2026-10-09), answered by the human:**
+
+- **C9b1-Q3.** The party to any act is `ins:actBy`, with `ins:assentBy` and `ins:proposedBy` beneath
+  it, and the proposal a consent or objection answers is `ins:directedAt`. `ins:actBy` takes several
+  parties, since a joint notice or an act by agreement has more than one. Answered: as leaned.
+- **C9b1-Q4.** The reinsurer's implied term (*Gan v Tai Ping (No 2)*) is a prohibition on refusing
+  approval, scoped to a refusal found arbitrary, a determination. It is not an obligation to approve,
+  since the reinsurer may refuse for proper reasons. Answered: as leaned.
+- **C9b1-Q5.** The five earlier Behaviour examples with exercise records move to exercise acts in
+  C16c, with the removal of the deprecated terms. Answered: as leaned.
+- Settled while building: `ins:forCase` is optional, at most one, since an assent or a proposal to
+  amend has no case. Act shapes target each concrete act class. `bhv:actor` on an exercise record is
+  deprecated in its utility only.
+
 **Planned validation** (pack `computable-contract-substrate-c9b1.md`): each act class and its shapes at zero and too many,
 proposal and `ins:proposes`, `ins:pursuantTo` across instruments, the reinsurance evidence path
 Permitted with an approval made before the settlement by the reinsurer, rejected when made by
