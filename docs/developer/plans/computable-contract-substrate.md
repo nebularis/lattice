@@ -3067,7 +3067,7 @@ question to be taken up (below).
 | C9b0 | Eligibility, cascading | the Eligibility README made its source again (TD-16's Eligibility part), and law L9's amendment from FM-EP released. Before C9b3 |
 | C9b1 | Instrument 0.16.0, Behaviour 0.14.0, both breaking | the legal acts tier in its own document (ADR-A120): declarations (assent, consent, objection, withdrawal), proposals (the amendment one of them), exercises, `ins:pursuantTo`. Behaviour's exercise and acceptance records narrowed to findings. Example: reinsurance claims co-operation. [Consent sketch](../sketches/consent-and-group-powers.md) §2.1 |
 | C9b2 | Quantification, cascading | extensive and intensive quantities, a proportion's base, sum and count. Examples: multicurrency commitments, written and signed lines, signing down. Sketch §2.4 |
-| C9b3 | Eligibility, own ADR | set comparisons (subset, intersects, disjoint), aggregate bindings, the two kinds of deferral, with their proofs and reference semantics, including a hierarchical condition whose binding does not apply at the resolution time, Undetermined under L9 where C9b0 leaves the compilers refusing it (C9b0-Q2). After the formal-methods Eligibility pass and HQ-6. Sketch §2.3 |
+| C9b3 | Eligibility, own ADR | set comparisons (subset, intersects, disjoint), aggregate bindings, the two kinds of deferral, with their proofs and reference semantics, including a hierarchical condition whose binding does not apply at the resolution time, Undetermined under L9 where C9b0 leaves the compilers refusing it (C9b0-Q2), and the same guard in the OWL and SWRL backends. After the formal-methods Eligibility pass and HQ-6. Sketch §2.3 |
 | C9b4 | Instrument | qualifying rules as acting rules (`ins:QualifyingRule`), universe, exclusions and reference time, joint and several powers, laws I11 and I13 restated, measure words, Party's shares deprecated with a warning shape. Examples: Majority Lenders acceleration with a transfer between request and decision, an Extraordinary Resolution. Sketch §2.2, §2.5 |
 | C9d | Instrument 0.17.0 | materiality (C9-Q3): the change report, condition words over it, grades, the evaluation profile, and selecting consenting members by grade. Split from C9b by C9b-Q1's leaning |
 | C9c | Wording 0.8.0, Instrument 0.18.0 | reliance on a wording, and W8 for references to a wording. `ins:incorporates`, generation of an encoded incorporated document's meaning within sections, I17 widened, cycle checks and `ins:prevailsOver` over an incorporated document. Static incorporation only, an ambulatory one of an encoded document reported (C9-Q8 (c)). `tools/`: the instantiator follows incorporation |
@@ -3377,6 +3377,14 @@ and refusing it is right. A condition whose binding does not apply at the resolu
 binding-time deferral, which C9b3 names and designs. KISS: C9b0 need not pre-empt C9b3.
 **Leaning (a)**, with C9b3 turning the no-applicable-binding case into Undetermined.
 **Answered (the human, 2026-10-09): (a), and C9b3 must cover the no-applicable-binding case.**
+
+**Built (2026-10-09, merged into `ccs/c9b-groundwork`).** As briefed, with these settled while
+building: the guards raise `IRCompileError` rather than assert, so they hold under `python -O`. The
+spec's `@base` moved into README §2's prefix block so the spec regenerates byte for byte. A new README
+§11 holds release notes. The OWL and SWRL backends have no guard, which C9b3 adds with the
+no-applicable-binding case. One command: the literate `--check`, then
+`tools/test_eligibility_examples.py` and `tools/mork_compilers/src/mork_compilers/test_hierarchical_conditions.py`
+([Validation Pack](../validation/computable-contract-substrate-c9b0.md)).
 
 **TD-16 cross-checked (the human asked, 2026-10-09).** FM-EP (`2a438b15`) changed only
 `ontology/eligibility/README.md` under `ontology/`. On `main`, `literate_extract.py --check` reports
