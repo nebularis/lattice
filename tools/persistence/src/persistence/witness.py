@@ -40,7 +40,7 @@ from pathlib import Path
 from typing import Iterable, Iterator
 
 import pyshacl
-from rdflib import RDF, Dataset, Graph, Namespace, URIRef
+from rdflib import RDF, Dataset, Graph, Literal, Namespace, URIRef
 
 from .compiler import CompileError, compile_targets, compile_to_graph
 from .instantiate import instantiate_by_target
@@ -88,37 +88,94 @@ def _call_name(node: ast.Call) -> str | None:
     return None
 
 
-def _kind_argument(node: ast.Call) -> str | None:
+def _kind_node(node: ast.Call) -> ast.expr | None:
+    """The expression naming the kind in a refusal or warning call."""
     for keyword in node.keywords:
-        if keyword.arg == "kind" and isinstance(keyword.value, ast.Constant):
-            return keyword.value.value
-    if node.args and isinstance(node.args[0], ast.Constant) and isinstance(node.args[0].value, str):
-        return node.args[0].value
-    return None
+        if keyword.arg == "kind":
+            return keyword.value
+    return node.args[0] if node.args else None
 
 
-def source_rules(source_dir: Path = PACKAGE_DIR) -> set[Rule]:
-    """Refusals and warnings found in the package's source by syntax alone.
+class _Source:
+    """Every function and call in the package, enough to follow a kind that
+    reaches a refusal through a helper's parameter (``self.constraint(...,
+    "KeyConstraintRequired")`` passes it to ``fail`` as ``missing_kind``)."""
+
+    def __init__(self, source_dir: Path):
+        self.calls: list[tuple[str, ast.Call, ast.FunctionDef | None]] = []
+        self.functions: dict[str, ast.FunctionDef] = {}
+        for path in sorted(source_dir.glob("*.py")):
+            tree = ast.parse(path.read_text(encoding="utf-8"))
+            owners: dict[int, ast.FunctionDef | None] = {}
+            for fn in (n for n in ast.walk(tree) if isinstance(n, ast.FunctionDef)):
+                self.functions[fn.name] = fn
+                for inner in ast.walk(fn):
+                    owners[id(inner)] = fn  # the innermost function wins, as walk is breadth-first
+            for node in ast.walk(tree):
+                if isinstance(node, ast.Call):
+                    self.calls.append((path.name, node, owners.get(id(node))))
+
+    def kinds(self, expr: ast.expr | None, owner: ast.FunctionDef | None, seen: frozenset = frozenset()) -> set[str] | None:
+        """The string constants ``expr`` can be, or ``None`` if it cannot be
+        determined. A parameter is resolved from the arguments at its
+        function's call sites."""
+        if isinstance(expr, ast.Constant) and isinstance(expr.value, str):
+            return {expr.value}
+        if not (isinstance(expr, ast.Name) and owner is not None and expr.id not in seen):
+            return None
+        params = [a.arg for a in owner.args.args]
+        if expr.id not in params:
+            return None
+        found: set[str] = set()
+        sites = 0
+        offset = 1 if params and params[0] == "self" else 0
+        for _, call, caller in self.calls:
+            if _call_name(call) != owner.name:
+                continue
+            sites += 1
+            index = params.index(expr.id) - (offset if isinstance(call.func, ast.Attribute) else 0)
+            argument = next((k.value for k in call.keywords if k.arg == expr.id), None)
+            if argument is None and 0 <= index < len(call.args):
+                argument = call.args[index]
+            resolved = self.kinds(argument, caller, seen | {expr.id})
+            if resolved is None:
+                return None
+            found |= resolved
+        return found if sites else None
+
+
+def scan_source(source_dir: Path = PACKAGE_DIR) -> tuple[set[Rule], list[str]]:
+    """Refusals and warnings found in the package's source, and the call sites
+    whose kind could not be determined.
 
     A ``CrossAxisViolation(kind, ...)`` or ``fail(kind, ...)`` call names a
     refusal. A ``_warning(kind, ...)`` or ``Diagnostic(kind=..., ...)`` call
     names a warning. A ``raise`` of one of the other named exceptions is a
-    refusal keyed by the class name. A call whose kind is not a string
-    literal is skipped here: it is a variable, such as the ``kind`` parameter
-    of ``_warning`` itself."""
+    refusal keyed by the class name. A kind that is a parameter is followed
+    back to the constants passed for it. A call whose kind cannot be
+    determined is returned as a problem, never skipped, so the inventory
+    cannot silently miss a rule."""
+    source = _Source(source_dir)
     rules: set[Rule] = set()
-    for path in sorted(source_dir.glob("*.py")):
-        for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
-            if isinstance(node, ast.Call):
-                name, kind = _call_name(node), _kind_argument(node)
-                if kind and name in _REFUSAL_CALLS:
-                    rules.add(Rule(REFUSAL, kind))
-                elif kind and name in _WARNING_CALLS:
-                    rules.add(Rule(WARNING, kind))
-            elif isinstance(node, ast.Raise) and isinstance(node.exc, ast.Call):
-                if _call_name(node.exc) in _NAMED_REFUSALS:
-                    rules.add(Rule(REFUSAL, _call_name(node.exc)))
-    return rules
+    problems: list[str] = []
+    for filename, call, owner in source.calls:
+        name = _call_name(call)
+        if name in _NAMED_REFUSALS:
+            rules.add(Rule(REFUSAL, name))
+            continue
+        if name not in _REFUSAL_CALLS and name not in _WARNING_CALLS:
+            continue
+        family = REFUSAL if name in _REFUSAL_CALLS else WARNING
+        kinds = source.kinds(_kind_node(call), owner)
+        if kinds is None:
+            problems.append(f"{filename}:{call.lineno}: cannot determine the kind passed to {name}()")
+        else:
+            rules.update(Rule(family, kind) for kind in kinds)
+    return rules, problems
+
+
+def source_rules(source_dir: Path = PACKAGE_DIR) -> set[Rule]:
+    return scan_source(source_dir)[0]
 
 
 def shape_rules(shapes: Graph) -> set[Rule]:
@@ -150,21 +207,72 @@ def _record(observed: Observed, rule: Rule, witness: str) -> None:
 
 
 def compile_fixtures(extra_dir: Path = WITNESS_DIR) -> Iterator[Path]:
-    """Every shipped example and every file directly in the witness directory."""
+    """Every shipped example and every witness file directly in the witness
+    directory."""
     yield from sorted(EXAMPLES_DIR.glob("*.ttl"))
     if extra_dir.is_dir():
-        yield from sorted(extra_dir.glob("*.ttl"))
+        # a file whose name starts with "_" is a shared base, not a witness
+        yield from sorted(p for p in extra_dir.glob("*.ttl") if not p.name.startswith("_"))
+
+
+_DIRECTIVE = re.compile(r"^#\s*(base|remove):\s*(.+?)\s*$")
+
+
+def _term(graph: Graph, text: str):
+    """A term in a ``# remove:`` line: ``<iri>``, a CURIE using the fixture's
+    own prefixes, a quoted string, or an integer."""
+    if text.startswith("<") and text.endswith(">"):
+        return URIRef(text[1:-1])
+    if text.startswith('"') and text.endswith('"'):
+        return Literal(text[1:-1])
+    if re.fullmatch(r"-?\d+", text):
+        return Literal(int(text))
+    return URIRef(graph.namespace_manager.expand_curie(text))
 
 
 def _load_fixture(path: Path) -> Graph:
-    """The spec plus one fixture. ``capability-spec-example`` is a
-    capability record only, so it is compiled against the baseline example,
-    as ``build:persistence-execution`` does."""
+    """The spec plus one fixture.
+
+    A fixture is Turtle, optionally preceded by directives that patch a
+    shipped example, so a witness is a small difference from it and follows
+    the example when it changes::
+
+        # base: identity-minting-anchors.ttl
+        # remove: ex:ProductIdentity dal:mintedIriTemplate
+        # remove: ex:ProductIdentity dal:digestScheme ex:ProductDigest
+
+    The base is parsed first and each ``remove`` deletes every matching
+    triple (the object is optional). The Turtle that follows is then added.
+    A ``remove`` that matches nothing is an error, so a patch cannot quietly
+    do nothing.
+
+    ``capability-spec-example`` is a capability record only, so it is
+    compiled against the baseline example, as ``build:persistence-execution``
+    does."""
+    text = path.read_text(encoding="utf-8")
+    directives = [m.groups() for line in text.splitlines() if (m := _DIRECTIVE.match(line))]
+    bases = [value for kind, value in directives if kind == "base"]
     graph = Graph()
     graph.parse(SPEC_TTL, format="turtle")
     if path.name == "capability-spec-example.ttl":
-        graph.parse(EXAMPLES_DIR / "baseline-single-class.ttl", format="turtle")
-    graph.parse(path, format="turtle")
+        bases = ["baseline-single-class.ttl"]
+    for base in bases:
+        graph.parse(next(d / base for d in (EXAMPLES_DIR, WITNESS_DIR) if (d / base).is_file()), format="turtle")
+    body = Graph()
+    body.parse(data=text, format="turtle")
+    for kind, value in directives:
+        if kind != "remove":
+            continue
+        parts = value.split(None, 2)
+        if len(parts) < 2:
+            raise ValueError(f"{path.name}: 'remove:' needs a subject and a predicate, got {value!r}")
+        pattern = (_term(body, parts[0]), _term(body, parts[1]), _term(body, parts[2]) if len(parts) == 3 else None)
+        matched = list(graph.triples(pattern))
+        if not matched:
+            raise ValueError(f"{path.name}: 'remove: {value}' matches nothing in the base")
+        for triple in matched:
+            graph.remove(triple)
+    graph += body
     return graph
 
 
@@ -397,6 +505,23 @@ def build_report(
     return report
 
 
+def named_witness_problems(observed: Observed, witness_dir: Path = WITNESS_DIR) -> list[str]:
+    """A file in the witness directory called ``refusal-X.ttl`` or
+    ``warning-X.ttl`` must witness ``X``. Otherwise it has drifted onto a
+    different rule, usually because an earlier check now refuses it first."""
+    problems: list[str] = []
+    if not witness_dir.is_dir():
+        return problems
+    for path in sorted(witness_dir.glob("*.ttl")):
+        family, _, name = path.name.removesuffix(".ttl").partition("-")
+        if family not in (REFUSAL, WARNING) or not name:
+            continue
+        if path.name not in observed.get(Rule(family, name), set()):
+            seen = sorted(str(r) for r, files in observed.items() if path.name in files)
+            problems.append(f"{path.name}: does not trigger {family}:{name}, it triggers {', '.join(seen) or 'nothing'}")
+    return problems
+
+
 @lru_cache(maxsize=1)
 def _observations() -> tuple[Observed, tuple[str, ...]]:
     """The slow part, run once per process: compile and validate every
@@ -407,12 +532,12 @@ def _observations() -> tuple[Observed, tuple[str, ...]]:
         observed.setdefault(rule, set()).update(witnesses)
     audit_observed, problems = observe_audits(audit_witnesses())
     observed.update(audit_observed)
-    return observed, tuple(problems)
+    return observed, (*problems, *named_witness_problems(observed))
 
 
 def check_witness_coverage() -> Report:
     observed, problems = _observations()
-    return build_report(enumerate_rules(), observed, read_known_gaps(), problems)
+    return build_report(enumerate_rules(), observed, read_known_gaps(), [*scan_source()[1], *problems])
 
 
 __all__ = [
@@ -428,10 +553,12 @@ __all__ = [
     "check_witness_coverage",
     "compile_fixtures",
     "enumerate_rules",
+    "named_witness_problems",
     "observe_audits",
     "observe_compile",
     "observe_shapes",
     "read_known_gaps",
     "run_audit",
+    "scan_source",
     "source_rules",
 ]

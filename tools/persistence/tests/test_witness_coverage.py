@@ -184,3 +184,102 @@ def test_h1_2_t16_cli_exits_zero_on_the_real_corpus_and_one_on_an_unlisted_gap(m
     monkeypatch.setattr(witness, "read_known_gaps", lambda path=witness.KNOWN_GAPS: {})
     assert main(["witness"]) == 1
     assert "UNWITNESSED" in capsys.readouterr().out
+
+
+# ---- H1.2b: the corrected inventory, the patch format and the drift check -------------------------
+
+
+def test_h1_2_t17_a_kind_passed_through_a_helper_parameter_is_followed(tmp_path):
+    """The recipe builder passes a kind to ``constraint(..., "KeyConstraintRequired")``,
+    which hands it on to ``fail``. A literal-only scan missed both."""
+    (tmp_path / "helper.py").write_text(
+        textwrap.dedent(
+            """
+            class Builder:
+                def fail(self, kind, where, message):
+                    raise CrossAxisViolation(kind, where, message)
+
+                def constraint(self, where, node, missing_kind):
+                    if node is None:
+                        self.fail(missing_kind, where, "required")
+
+                def build(self, where, node):
+                    self.constraint(where, node, "FirstKind")
+                    self.constraint(where, node, missing_kind="SecondKind")
+            """
+        )
+    )
+    rules, problems = witness.scan_source(tmp_path)
+    assert rules == {Rule(REFUSAL, "FirstKind"), Rule(REFUSAL, "SecondKind")}
+    assert problems == []
+
+
+def test_h1_2_t18_a_kind_that_cannot_be_determined_is_reported_not_skipped(tmp_path):
+    (tmp_path / "opaque.py").write_text(
+        textwrap.dedent(
+            """
+            KINDS = {"a": "X"}
+
+            def f(key, target):
+                raise CrossAxisViolation(KINDS[key], target, "x")
+            """
+        )
+    )
+    rules, problems = witness.scan_source(tmp_path)
+    assert rules == set()
+    assert len(problems) == 1 and "opaque.py:5" in problems[0]
+
+
+def test_h1_2_t19_the_real_source_has_no_undeterminable_kind():
+    assert witness.scan_source()[1] == []
+    assert Rule(REFUSAL, "KeyConstraintRequired") in enumerate_rules()
+    assert Rule(REFUSAL, "ClaimedIdentityWithoutKey") in enumerate_rules()
+
+
+def test_h1_2_t20_a_patch_fixture_removes_from_its_base_and_adds_its_own(tmp_path):
+    fixture = tmp_path / "patch.ttl"
+    fixture.write_text(
+        "# base: baseline-single-class.ttl\n"
+        "# remove: ex:LoanApplicationClass dal:priority\n"
+        "@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .\n"
+        "@prefix ex: <https://example.org/lending#> .\n"
+        "ex:Extra a dal:ClassScope ; dal:targetClass ex:Extra .\n"
+    )
+    base = witness._load_fixture(EXAMPLES_DIR / "baseline-single-class.ttl")
+    patched = witness._load_fixture(fixture)
+    ns = "https://example.org/lending#"
+    priority = URIRef("https://www.nebularis.org/neuro-semantic/lattice/persistence#priority")
+    assert (URIRef(ns + "LoanApplicationClass"), priority, None) in base
+    assert (URIRef(ns + "LoanApplicationClass"), priority, None) not in patched
+    assert (URIRef(ns + "Extra"), None, None) in patched
+
+
+def test_h1_2_t21_a_patch_that_removes_nothing_is_refused(tmp_path):
+    fixture = tmp_path / "noop.ttl"
+    fixture.write_text(
+        "# base: baseline-single-class.ttl\n"
+        "# remove: ex:NoSuchNode dal:priority\n"
+        "@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .\n"
+        "@prefix ex: <https://example.org/lending#> .\n"
+    )
+    with pytest.raises(ValueError, match="matches nothing"):
+        witness._load_fixture(fixture)
+
+
+def test_h1_2_t22_a_witness_that_triggers_a_different_rule_than_its_name_is_a_problem(tmp_path):
+    (tmp_path / "refusal-Alpha.ttl").write_text("")
+    (tmp_path / "warning-Beta.ttl").write_text("")
+    (tmp_path / "_base.ttl").write_text("")  # a shared base is not a witness
+    observed = {Rule(REFUSAL, "Alpha"): {"refusal-Alpha.ttl"}, Rule(REFUSAL, "Gamma"): {"warning-Beta.ttl"}}
+    problems = witness.named_witness_problems(observed, tmp_path)
+    assert len(problems) == 1
+    assert "warning-Beta.ttl" in problems[0] and "refusal:Gamma" in problems[0]
+
+
+def test_h1_2_t23_every_refusal_and_warning_has_a_witness_and_only_shapes_remain():
+    report = check_witness_coverage()
+    assert report.ok, "\n".join(report.lines())
+    assert {r.family for r in report.listed_gaps} <= {SHAPE}
+    assert {r.family for r in report.covered} >= {REFUSAL, WARNING, AUDIT}
+    assert Rule(WARNING, "MixedReceiptModel") in report.covered  # not reachable from the shipped example
+    assert Rule(REFUSAL, "IdentityStrategyUnsupported") in report.covered

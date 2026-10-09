@@ -1,0 +1,13 @@
+# SPDX-License-Identifier: MPL-2.0
+# NB: This file has been produced using GenAI
+# A class that is a composite member of one aggregate cannot also declare its
+# own boundary strategy.
+# base: composite-property-boundary-shacl.ttl
+@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix ex:  <https://example.org/lending#> .
+@prefix sh:  <http://www.w3.org/ns/shacl#> .
+
+ex:LineItemShape sh:targetClass ex:LineItem .
+ex:LineItemClass a dal:ClassScope ; dal:targetClass ex:LineItem ; dal:priority 20 .
+ex:LineItemBoundaryProfile a dal:AggregateBoundaryProfile ; dal:appliesTo ex:LineItemClass ;
+    dal:strategy dal:NamedGraphBoundary ; dal:graphIriTemplate "urn:g:line/{id}" .

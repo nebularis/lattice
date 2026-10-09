@@ -1,0 +1,8 @@
+# SPDX-License-Identifier: MPL-2.0
+# NB: This file has been produced using GenAI
+# A caller-supplied surrogate needs the pattern it must match.
+# base: identity-minting-anchors.ttl
+# remove: ex:PersonIdentity dal:callerSuppliedPattern
+@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix ex:  <https://example.org/lending#> .
+

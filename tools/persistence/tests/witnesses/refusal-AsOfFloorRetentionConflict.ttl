@@ -1,0 +1,8 @@
+# SPDX-License-Identifier: MPL-2.0
+# NB: This file has been produced using GenAI
+# Bucket-any retention with an as-of floor resurrects deleted triples.
+# base: _base-thing.ttl
+@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix ex:  <https://example.org/lending#> .
+
+ex:R a dal:DataAccessProfile ; dal:appliesTo ex:ThingScope ; dal:retentionMode dal:BucketAnyRetention ; dal:asOfFloorSource "job" .

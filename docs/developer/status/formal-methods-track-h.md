@@ -3,7 +3,7 @@
 # Formal Methods, Track H: Status
 
 **Unit ID:** `formal-methods-track-h` (phase, within the `formal-methods` epic)
-**Status:** In progress. H1.1 signed off. H1.2a authored and verified, awaiting human review
+**Status:** In progress. H1.1 and H1.2a signed off. H1.2b authored and verified, awaiting human review
 **Last updated:** 2026-10-08
 **Plan:** [formal-methods-track-h.md](../plans/formal-methods-track-h.md)
 **Sketches:** [formal-methods-track-h.md](../sketches/formal-methods-track-h.md) (main),
@@ -48,9 +48,9 @@ reviewing the ADR; H2 onward should wait for ADR-A-FM4's acceptance.
 | Slice | State | Blocked on |
 |---|---|---|
 | H1.1 (prefix antichain and overlap check) | **signed off.** [Validation Pack](../validation/FMH-H1-1.md) | |
-| H1.2a (witness harness, audit witnesses, measured gap list) | **authored, verified by the agent, awaiting the human's gate.** [Validation Pack](../validation/FMH-H1-2.md) | the human's review |
-| H1.2b (witnesses for 24 refusals and 8 warnings) | not started | H1.2a's gate |
-| H1.2c (witnesses for 23 shapes) | not started | H1.2a's gate |
+| H1.2a (witness harness, audit witnesses, measured gap list) | **signed off.** [Validation Pack](../validation/FMH-H1-2.md) | |
+| H1.2b (witnesses for the refusals and warnings) | **authored, verified by the agent, awaiting the human's gate.** [Validation Pack](../validation/FMH-H1-2b.md) | the human's review |
+| H1.2c (witnesses for the 13 remaining shapes) | not started | H1.2b's gate |
 | H1.3 to H1.5 (S-3/S-4, declaration gap, stable labels) | not started, fully detailed in the plan | H1.2's gates, by the working agreement |
 | H2 (typed IR) | not started, outlined in the plan | H1 (informative, not a hard blocker) |
 | H3 (specification registry) | not started, outlined in the plan | H2 preferred first (smaller, more self-contained), not a hard blocker |
@@ -71,10 +71,10 @@ reviewing the ADR; H2 onward should wait for ADR-A-FM4's acceptance.
 | H-D3 | ADR-A79 addendum vs a fresh ADR for H2/H3's design | recommend an addendum; deferred to H2/H3 |
 | H-D4 | fix the composite-boundary soundness gap now (a refusal) or wait for H2's typed IR | recommend: refuse now, fix properly later |
 | H-D5 | feed track A's ledger once it exists, or keep an independent record permanently | recommend: feed track A once it starts |
-| H-D6 | H1.1 reads "antichain" per scope kind. Nested `dal:graphPrefix` values are a **violation** only when the scopes cover a common class (each graph-pattern scope is its own target, so disjoint classes cannot collide). Nested `dal:iriPrefix` values are a **warning**, because the resolver ranks by `dal:priority`. The plan says only "antichain", so this narrows it | human, confirm or widen at H1.1's gate |
-| H-D8 | H1.2 is delivered in three parts (a, b, c), because the first run found 55 of 83 rules unwitnessed and closing them together breaks the slice-sizing rule. The plan's H1.2 validation ("every existing rule either has a witness or is listed as a gap") is met by part a. The plan's metric "vacancy rate closed" is then measured as the shrinkage of `known-gaps.txt` | human, confirm at H1.2a's gate |
-| H-D9 | the rule inventory is read from the package's own source (refusals and warnings by syntax, shapes from `constraints.ttl`, audits from the template names), not from a hand-kept list, so a new rule cannot dodge the check. A rule is keyed by its `CrossAxisViolation` kind, or by exception class name for the four refusals that carry no kind | human, confirm at H1.2a's gate |
-| H-D7 | H1's checks live in one new module, `persistence.hygiene`, behind one `hygiene` subcommand, and run under `check:persistence`. No new `mise` task until H1's closing slice | human, confirm at H1.1's gate |
+| H-D6 | H1.1 reads "antichain" per scope kind. Nested `dal:graphPrefix` values are a **violation** only when the scopes cover a common class (each graph-pattern scope is its own target, so disjoint classes cannot collide). Nested `dal:iriPrefix` values are a **warning**, because the resolver ranks by `dal:priority`. The plan says only "antichain", so this narrows it | agreed by the human, 2026-10-09 |
+| H-D8 | H1.2 is delivered in three parts (a, b, c), because the first run found 55 of 83 rules unwitnessed and closing them together breaks the slice-sizing rule. The plan's H1.2 validation ("every existing rule either has a witness or is listed as a gap") is met by part a. The plan's metric "vacancy rate closed" is then measured as the shrinkage of `known-gaps.txt` | agreed by the human, 2026-10-09 |
+| H-D9 | the rule inventory is read from the package's own source (refusals and warnings by syntax, shapes from `constraints.ttl`, audits from the template names), not from a hand-kept list, so a new rule cannot dodge the check. A rule is keyed by its `CrossAxisViolation` kind, or by exception class name for the four refusals that carry no kind | agreed by the human, 2026-10-09 |
+| H-D7 | H1's checks live in one new module, `persistence.hygiene`, behind one `hygiene` subcommand, and run under `check:persistence`. No new `mise` task until H1's closing slice | agreed by the human, 2026-10-09 |
 
 ## Log
 
@@ -105,3 +105,11 @@ reviewing the ADR; H2 onward should wait for ADR-A-FM4's acceptance.
   found. Six refusals are named by no test and are the first targets of H1.2b. `check:persistence`
   is at 842 passed. An architecture test (only `persistence.render` may import `chevron`) caught a
   first draft of the harness, which now fills the request-time slot by plain substitution.
+- 2026-10-09: H1.2a signed off, and H-D6 to H-D9 confirmed by the human. H1.2b authored: 33 witness
+  fixtures, a patch format for them, a drift check, and `known-gaps.txt` reduced to the 13 shapes.
+  Refusals are 36 of 36 witnessed and warnings 11 of 11, shapes 20 of 33, audits 5 of 5 (72 of 85).
+  Correction to H1.2a's harness: its source scan missed two refusals whose kind reaches `fail`
+  through a helper parameter. It now follows parameters and reports any kind it cannot determine.
+  Two defects found and entered in the technical debt register as TD-23 (a class named only by
+  `dal:coversClass` is never compiled) and TD-24 (the CLI suggests a `--target-class` option that
+  does not exist). `check:persistence` is at 849 passed.

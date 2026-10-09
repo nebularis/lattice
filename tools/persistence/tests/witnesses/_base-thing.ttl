@@ -1,0 +1,16 @@
+# SPDX-License-Identifier: MPL-2.0
+# NB: This file has been produced using GenAI
+# A minimal, valid single-class configuration that witnesses extend. It is a
+# base only (the leading underscore), compiled by no check of its own.
+@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix ex:  <https://example.org/lending#> .
+
+ex:ThingScope a dal:ClassScope ; dal:priority 10 ; dal:targetClass ex:Thing .
+ex:ThingProfile a dal:DataAccessProfile ;
+    dal:appliesTo ex:ThingScope ;
+    dal:strategy dal:NamedGraphBoundary ;
+    dal:graphIriTemplate "urn:g:thing/{id}" ;
+    dal:concurrencyProfile dal:Optimistic ;
+    dal:orderingGrain dal:EventGrain ;
+    dal:receiptModel dal:PatchLog ;
+    dal:metaTopology dal:SharedSharded .

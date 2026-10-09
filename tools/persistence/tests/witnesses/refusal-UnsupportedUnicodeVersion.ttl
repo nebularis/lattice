@@ -1,0 +1,9 @@
+# SPDX-License-Identifier: MPL-2.0
+# NB: This file has been produced using GenAI
+# A pipeline's Unicode version must match what recipes support.
+# base: identity-minting-anchors.ttl
+# remove: dal:NfkcTrimUppercase dal:unicodeVersion
+@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix ex:  <https://example.org/lending#> .
+
+dal:NfkcTrimUppercase dal:unicodeVersion "15.1.0" .

@@ -1,0 +1,9 @@
+# SPDX-License-Identifier: MPL-2.0
+# NB: This file has been produced using GenAI
+# The key constraint must apply to the identity's own target.
+# base: identity-minting-anchors.ttl
+# remove: ex:PolicyIdentity dal:keyConstraint
+@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix ex:  <https://example.org/lending#> .
+
+ex:PolicyIdentity dal:keyConstraint ex:ProductSkuUnique .

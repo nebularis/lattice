@@ -112,7 +112,11 @@ def cmd_hygiene(args: argparse.Namespace) -> int:
 
 
 def cmd_witness(args: argparse.Namespace) -> int:
-    report = check_witness_coverage()
+    try:
+        report = check_witness_coverage()
+    except ValueError as error:  # a patch fixture that no longer applies to its base
+        print(f"FIXTURE ERROR {error}")
+        return 1
     for line in report.lines(verbose=args.verbose):
         print(line)
     return 0 if report.ok else 1

@@ -1,0 +1,11 @@
+# SPDX-License-Identifier: MPL-2.0
+# NB: This file has been produced using GenAI
+# Two scopes at equal priority give one dimension two different values.
+@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix ex:  <https://example.org/lending#> .
+@prefix sh:  <http://www.w3.org/ns/shacl#> .
+
+ex:ScopeA a dal:ClassScope ; dal:targetClass ex:Thing ; dal:priority 5 .
+ex:ScopeB a dal:ClassScope ; dal:targetClass ex:Thing ; dal:priority 5 .
+ex:ProfileA a dal:ConcurrencyProfile ; dal:appliesTo ex:ScopeA ; dal:concurrencyProfile dal:Optimistic .
+ex:ProfileB a dal:ConcurrencyProfile ; dal:appliesTo ex:ScopeB ; dal:concurrencyProfile dal:ProvidedConcurrency .
