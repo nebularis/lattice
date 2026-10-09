@@ -7,7 +7,6 @@ when the ADR-A83 harness jar is not built."""
 
 from __future__ import annotations
 
-import subprocess
 import sys
 from datetime import datetime, timezone
 from decimal import Decimal
@@ -23,6 +22,7 @@ sys.path.insert(0, str(ROOT / "tools"))
 sys.path.insert(0, str(ROOT / "tools" / "mork_compilers" / "src"))
 
 import literate_extract  # noqa: E402
+from conftest import repo_files  # noqa: E402
 from mork_compilers import reasoning  # noqa: E402
 
 LATTICE = "https://www.nebularis.org/neuro-semantic/lattice/"
@@ -48,10 +48,17 @@ def _graph(*sources) -> Graph:
     return g
 
 
-MODEL = _graph(*[ONTOLOGY / p for p in LOWER])
-QSHAPES = _graph(QLAYER / "shapes" / "constraints.ttl")
-EVERY_SHAPE = _graph(*ALL_SHAPES)
-DATA = _graph(EXAMPLE)
+@pytest.fixture(scope="module", autouse=True)
+def _cached_graphs(request: pytest.FixtureRequest, graph_cache, validated) -> None:
+    """Shared, session-scoped graphs and validation cache (python-test-melting). Never mutate them."""
+    module = request.module
+    module.MODEL = graph_cache(*[ONTOLOGY / p for p in LOWER])
+    module.QSHAPES = graph_cache(QLAYER / "shapes" / "constraints.ttl")
+    module.EVERY_SHAPE = graph_cache(*ALL_SHAPES)
+    module.DATA = graph_cache(EXAMPLE)
+    module.validate = validated
+
+
 MARCH, APRIL = (datetime(2027, m, d, 12, tzinfo=timezone.utc) for m, d in ((3, 31), (4, 30)))
 needs_reasoner = pytest.mark.skipif(not reasoning.available(), reason="reasoning-testkit jar not built")
 
@@ -278,6 +285,5 @@ def test_c9b2_14_readme_is_the_source_and_records_the_release() -> None:
 
 
 def test_c9b2_15_nothing_still_imports_quantification_0_7_0() -> None:
-    found = subprocess.run(["git", "grep", "-l", "-F", LATTICE + "quantification/0.7.0", "--", "ontology", "tools"],
-                           cwd=ROOT, capture_output=True, text=True).stdout.split()
+    found = repo_files(("ontology", "tools"), LATTICE + "quantification/0.7.0", fixed=True)
     assert [f for f in found if not f.endswith("catalog-v001.xml") and "fixtures/import_guard" not in f] == []

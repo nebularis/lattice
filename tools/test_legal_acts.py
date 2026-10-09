@@ -35,13 +35,20 @@ FILES = {
     "reinsurance-claims-cooperation": [EXAMPLES / "reinsurance-claims-cooperation.ttl"],
     "facility-requests": [*READ_WITH["facility-requests"], EXAMPLES / "facility-requests.ttl"],
 }
-MODEL = _graph(SPEC, ACTS, VOCAB, *[ONTOLOGY / p for p in LOWER])
-SHAPES = _graph(*ALL_SHAPES)
 CLASSES = ("LegalAct", "Declaration", "Assent", "Consent", "Objection", "Withdrawal", "Exercise", "Proposal")
 PROPERTIES = ("actBy", "assentBy", "assentTo", "proposedBy", "proposes", "directedAt", "withdraws", "exercises",
               "pursuantTo", "forCase")
 PREFIXES = (f"@prefix ins: <{INS}> .\n@prefix fnd: <{FND}> .\n@prefix xsd: <{XSD}> .\n"
             f"@prefix ex: <{RE}> .\n@prefix fr: <{FR}> .\n@prefix fam: <{FAM}> .\n")
+
+
+@pytest.fixture(scope="module", autouse=True)
+def _cached_graphs(request: pytest.FixtureRequest, graph_cache, validated) -> None:
+    """Shared, session-scoped graphs and validation cache (python-test-melting). Never mutate them."""
+    module = request.module
+    module.MODEL = graph_cache(SPEC, ACTS, VOCAB, *[ONTOLOGY / p for p in LOWER])
+    module.SHAPES = graph_cache(*ALL_SHAPES)
+    module.validate = validated
 
 
 def _example(name: str, add: str = "", remove: tuple = ()) -> Graph:
