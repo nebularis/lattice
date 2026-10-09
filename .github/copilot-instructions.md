@@ -96,4 +96,5 @@ Load the skill whose description matches the task. Each lives in `.claude/skills
 | `lattice-architecture` | a design that crosses layers or modules, or needs the principles behind LATTICE's structure |
 | `lattice-ontology-authoring` | changing anything under `ontology/` |
 | `lattice-toolchain` | building, testing, running checks, or setting up or repairing an environment |
+| `lattice-testing` | a slow test suite, writing or extending a Python test under `tools/` that parses an ontology graph or calls pySHACL, sharing state across test modules with pytest fixtures, or a repository-wide text scan that must work on every platform |
 | `lattice-publication-hygiene` | before a commit or pull request, and whenever writing text that will be published |

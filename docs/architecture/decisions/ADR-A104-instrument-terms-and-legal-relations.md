@@ -471,5 +471,5 @@ its decisions. Revises the 2026-10-08 addendum, items 2 and 7.
 7. **Deferred.** No approval yields Undetermined rather than Denied until closures (HQ-6, ADR-A105).
    Who may act for a power held by a group, and whether consents qualify, are C9b4's. Whether a
    withdrawal counts is the instrument's rule or a deployment's profile. The import guard does not
-   tell Behaviour's runtime document from its configuration (technical debt TD-30), so a per-document
+   tell Behaviour's runtime document from its configuration (technical debt TD-32), so a per-document
    test checks that the acts document imports no runtime.

@@ -15,6 +15,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
 from pyshacl import validate
 from rdflib import Graph, Namespace, URIRef
 from rdflib.namespace import OWL, RDF
@@ -66,6 +67,16 @@ def _all_contracts() -> Graph:
 
 def _vocabulary_shapes() -> Graph:
     return _graph(VOCAB_SHAPES / "structural.ttl", VOCAB_SHAPES / "constraints.ttl")
+
+
+@pytest.fixture(scope="module", autouse=True)
+def _cached_validate(request: pytest.FixtureRequest, validated) -> None:
+    """TM2: shared, session-scoped validation cache (python-test-melting).
+    `_all_contracts`/`_vocabulary_shapes` stay plain functions (only two call
+    sites, each already a module-level-cacheable graph elsewhere), since the
+    files they build from are the same ones several Instrument-family
+    modules' EVERY_SHAPE already pulls through `graph_cache`."""
+    request.module.validate = validated
 
 
 # ---- AIR12-01: parse and pinned imports -------------------------------------------------------

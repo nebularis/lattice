@@ -84,7 +84,7 @@ def test_c9b1_01_the_acts_document() -> None:
 
 
 def test_c9b1_02_the_acts_document_imports_no_behaviour_runtime() -> None:
-    """The import guard reads behaviour-runtime as Behaviour (TD-30), so this document is checked alone."""
+    """The import guard reads behaviour-runtime as Behaviour (TD-32), so this document is checked alone."""
     acts, main = _graph(ACTS), _graph(SPEC)
     version = main.value(URIRef("https://www.nebularis.org/neuro-semantic/instrument"), OWL.versionIRI)
     assert set(acts.objects(None, OWL.imports)) == {version}

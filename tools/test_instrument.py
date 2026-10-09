@@ -21,6 +21,7 @@ sys.path.insert(0, str(ROOT / "tools" / "mork_compilers" / "src"))
 from test_parameter_bindings import READ_WITH  # noqa: E402
 
 import literate_extract  # noqa: E402
+from conftest import repo_files  # noqa: E402
 from mork_compilers import reasoning  # noqa: E402
 
 LATTICE = "https://www.nebularis.org/neuro-semantic/lattice/"
@@ -49,9 +50,17 @@ def _graph(*sources) -> Graph:
     return g
 
 
-MODEL = _graph(*[ROOT / "ontology" / p for p in LOWER], SPEC, VOCAB)
-SHAPES = _graph(LAYER / "shapes" / "structural.ttl", LAYER / "shapes" / "constraints.ttl")
-FACILITY = _graph(LAYER / "examples" / "facility-agreement.ttl")
+@pytest.fixture(scope="module", autouse=True)
+def _cached_graphs(request: pytest.FixtureRequest, graph_cache, validated) -> None:
+    """TM1/TM2: shared, session-scoped graphs and validation cache
+    (python-test-melting)."""
+    module = request.module
+    module.MODEL = graph_cache(*[ROOT / "ontology" / p for p in LOWER], SPEC, VOCAB)
+    module.SHAPES = graph_cache(LAYER / "shapes" / "structural.ttl", LAYER / "shapes" / "constraints.ttl")
+    module.FACILITY = graph_cache(LAYER / "examples" / "facility-agreement.ttl")
+    module.validate = validated
+
+
 PREFIXES = (f"@prefix ins: <{INS}> .\n@prefix fnd: <{LATTICE}foundation#> .\n@prefix pty: <{LATTICE}party#> .\n"
             f"@prefix elg: <{LATTICE}eligibility#> .\n@prefix ex: <https://example.org/lattice/instrument/facility/> .\n"
             "@prefix tmpl: <https://example.org/lattice/instrument/facility/form/> .\n")
@@ -217,11 +226,11 @@ def test_c6_09_every_property_states_subject_and_value() -> None:
 # ---- C6-10: retired terms ---------------------------------------------------
 
 def test_c6_10_no_retired_term_outside_history() -> None:
-    # POSIX ERE has no \b, and git grep -E on macOS ignores it. [^A-Za-z0-9_] behaves the same on every platform.
+    # [^A-Za-z0-9_] behaves the same as \b on every platform (POSIX ERE has no \b).
     pattern = "ins:(" + "|".join(RETIRED) + ")([^A-Za-z0-9_]|$)"
-    found = subprocess.run(["git", "grep", "-l", "-E", pattern, "--", "ontology", "tools", "test", "docs/architecture/ontology-architecture.md"],
-                           cwd=ROOT, capture_output=True, text=True).stdout.split()
-    allowed = {"ontology/instrument/README.md", "tools/test_instrument.py"}  # release notes, this list
+    found = repo_files(("ontology", "tools", "test", "docs/architecture/ontology-architecture.md"), pattern)
+    # Release notes, this list, and test_repo_files.py's own fixture data for repo_files() itself.
+    allowed = {"ontology/instrument/README.md", "tools/test_instrument.py", "tools/test_repo_files.py"}
     assert [f for f in found if f not in allowed and "/decisions/" not in f] == []
 
 

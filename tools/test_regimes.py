@@ -62,11 +62,17 @@ def _graph(*sources) -> Graph:
     return g
 
 
-MODEL = _graph(*[ONTOLOGY / p for p in LOWER], SPEC, VOCAB)
-SHAPES = _graph(LAYER / "shapes" / "structural.ttl", LAYER / "shapes" / "constraints.ttl")
-EVERY_SHAPE = _graph(*ALL_SHAPES)
-# The closure's axioms: Instrument's and Behaviour's specs (§12). The other layers are not closed.
-AXIOMS = _graph(SPEC, ONTOLOGY / "behaviour" / "spec" / "behaviour.ttl")
+@pytest.fixture(scope="module", autouse=True)
+def _cached_graphs(request: pytest.FixtureRequest, graph_cache, validated) -> None:
+    """TM1/TM2: shared, session-scoped graphs and validation cache
+    (python-test-melting)."""
+    module = request.module
+    module.MODEL = graph_cache(*[ONTOLOGY / p for p in LOWER], SPEC, VOCAB)
+    module.SHAPES = graph_cache(LAYER / "shapes" / "structural.ttl", LAYER / "shapes" / "constraints.ttl")
+    module.EVERY_SHAPE = graph_cache(*ALL_SHAPES)
+    # The closure's axioms: Instrument's and Behaviour's specs (§12). The other layers are not closed.
+    module.AXIOMS = graph_cache(SPEC, ONTOLOGY / "behaviour" / "spec" / "behaviour.ttl")
+    module.validate = validated
 
 
 def _example(name: str) -> Graph:
@@ -94,8 +100,8 @@ def _changed(name: str, add: str = "", remove: tuple = ()) -> Graph:
     return g
 
 
-def _messages(data: Graph, shapes: Graph = SHAPES) -> list[tuple[str, str]]:
-    _, report, _ = validate(MODEL + data, shacl_graph=shapes, inference="none", advanced=True)
+def _messages(data: Graph, shapes: Graph | None = None) -> list[tuple[str, str]]:
+    _, report, _ = validate(MODEL + data, shacl_graph=SHAPES if shapes is None else shapes, inference="none", advanced=True)
     return [(str(report.value(r, SH.focusNode)), str(report.value(r, SH.resultMessage)))
             for r in report.subjects(SH.resultSeverity, SH.Violation)]
 

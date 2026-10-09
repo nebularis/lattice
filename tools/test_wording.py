@@ -7,6 +7,7 @@ the ADR-A83 harness jar is not built (``mise run bootstrap:reasoning-testkit``).
 
 from __future__ import annotations
 
+import functools
 import re
 import sys
 from pathlib import Path
@@ -21,6 +22,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(Path(__file__).resolve().parent / "mork_compilers" / "src"))
 
 import literate_extract  # noqa: E402
+from conftest import repo_files  # noqa: E402
 from mork_compilers import reasoning  # noqa: E402
 from ontology_catalog import Catalog, closure  # noqa: E402
 
@@ -54,7 +56,11 @@ def _example(path: Path) -> Graph:
     return _graph(path, *([LAYER / "examples" / f"{other}.ttl"] if other else []))
 
 
+@functools.lru_cache(maxsize=None)
 def _vocab_closure() -> Graph:
+    """TM1: used to rebuild the catalog closure on every call (python-test-melting
+    sketch); cached since every caller only ever reads it or combines it with `+`
+    (a new graph), never mutates it in place."""
     return closure(Catalog(CATALOG), VOCAB_IRI)
 
 
@@ -192,6 +198,15 @@ def test_c3_13_every_element_type_used_is_in_the_baseline_scheme() -> None:
 # ---- C3-14 to C3-17: shapes, named unions, comments -----------------------------
 
 SHAPES = _graph(LAYER / "shapes" / "structural.ttl", LAYER / "shapes" / "constraints.ttl")
+
+
+@pytest.fixture(scope="module", autouse=True)
+def _cached_graphs(request: pytest.FixtureRequest, graph_cache, validated) -> None:
+    """TM1/TM2: shared, session-scoped graphs and validation cache
+    (python-test-melting)."""
+    module = request.module
+    module.SHAPES = graph_cache(LAYER / "shapes" / "structural.ttl", LAYER / "shapes" / "constraints.ttl")
+    module.validate = validated
 
 
 def _violations(data: Graph, severity: URIRef = SH.Violation) -> set:
@@ -666,11 +681,9 @@ def test_c8b_06a_a_revised_definition_leaves_the_clause_mentioning_it_alone() ->
 
 
 def test_c8b_08_instrument_imports_wording_0_7_0_and_nothing_names_0_6_0() -> None:
-    import subprocess
     spec = _graph(ROOT / "ontology" / "instrument" / "spec" / "instrument.ttl")
     assert URIRef(LATTICE + "wording/0.8.0") in set(spec.objects(None, OWL.imports))
-    found = subprocess.run(["git", "grep", "-l", "-F", LATTICE + "wording/0.6.0", "--", "ontology", "tools"],
-                           cwd=ROOT, capture_output=True, text=True).stdout.split()
+    found = repo_files(("ontology", "tools"), LATTICE + "wording/0.6.0", fixed=True)
     assert [f for f in found if not f.endswith("catalog-v001.xml") and "fixtures/import_guard" not in f] == []
 
 

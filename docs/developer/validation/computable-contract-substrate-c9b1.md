@@ -18,7 +18,7 @@ What the parties did, such as a proposal, a declaration, an exercise or a notice
 an Instrument fact in its own document, `instrument-acts`, written by any application and evaluated,
 never stated, for its effect. What the evaluator concluded about an act is a Behaviour finding. A
 consumer that only states meaning never imports an act, and the acts document never imports
-Behaviour's runtime (ADR-A104 and ADR-A106, their 2026-10-09 addenda, ADR-A120, TD-30).
+Behaviour's runtime (ADR-A104 and ADR-A106, their 2026-10-09 addenda, ADR-A120, TD-32).
 
 ## Test cases
 
@@ -28,7 +28,7 @@ The table has 15 rows in two parts, the acts tier (C9b1-01 to C9b1-11) and Behav
 | ID | Given / When / Then | Level | +/- |
 |---|---|---|---|
 | C9b1-01 | the acts document / parsed / Instrument's version, `ins:LegalAct ⊑ prov:Activity, fnd:TemporallyScoped, fnd:Evidenced`, every act class and property with its utility, each property stating its subject and value, `ins:Assent` moved from the main document without "consent to a power" | L1 | + |
-| C9b1-02 | the acts document / its imports and terms / imports only Instrument's main document at the same version, names no `behaviour-runtime` IRI and no runtime term, and the main document never names it (the per-document check for TD-30) | L3 | + |
+| C9b1-02 | the acts document / its imports and terms / imports only Instrument's main document at the same version, names no `behaviour-runtime` IRI and no runtime term, and the main document never names it (the per-document check for TD-32) | L3 | + |
 | C9b1-03 | the reinsurance and facility examples, and C9a's three examples with the acts document loaded / every layer's shapes / no violation | L1 | + |
 | C9b1-04 | each act / its shapes, at zero and at too many: a proposal's matter and proposer, a consent's or objection's proposal, a withdrawal's declaration, an act's party, an exercise's bound power (also a stated one), a second case, an act's time, its evidence / reported | L1 | − |
 | C9b1-05 | a node that is not an act carrying `ins:proposes`, `ins:directedAt`, `ins:withdraws`, `ins:exercises`, `ins:forCase` or `ins:pursuantTo` / shapes / reported | L1 | − |
@@ -76,7 +76,7 @@ module.
 - Cross-instrument constraints on `ins:pursuantTo` and on arising, unshaped until a case needs one
   (C9c may revisit)
 - An exercise's effect (law I10) and the derived stimulus for `ins:OnExercise` (C12)
-- The import guard's blind spot for Behaviour's runtime (TD-30), covered here by C9b1-02 only for the
+- The import guard's blind spot for Behaviour's runtime (TD-32), covered here by C9b1-02 only for the
   acts document
 - Five Behaviour examples (garden-leave, run-off, standstill, occasion-refinement, force-majeure)
   still name a power and an actor on their fourteen exercise records. They read as before, and move

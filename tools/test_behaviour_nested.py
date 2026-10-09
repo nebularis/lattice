@@ -43,6 +43,16 @@ SHAPES = _graph(LAYER / "shapes" / "structural.ttl", LAYER / "shapes" / "constra
 MODEL = _graph(CONFIG, RUNTIME, VOCAB)
 
 
+@pytest.fixture(scope="module", autouse=True)
+def _cached_graphs(request: pytest.FixtureRequest, graph_cache, validated) -> None:
+    """TM1/TM2: shared, session-scoped graphs and validation cache
+    (python-test-melting)."""
+    module = request.module
+    module.MODEL = graph_cache(CONFIG, RUNTIME, VOCAB)
+    module.SHAPES = graph_cache(LAYER / "shapes" / "structural.ttl", LAYER / "shapes" / "constraints.ttl")
+    module.validate = validated
+
+
 def _reported(data: Graph, focus: str, message: str) -> bool:
     """Whether a violation on the focus node carries a message starting with the given text."""
     _, report, _ = validate(MODEL + data, shacl_graph=SHAPES, inference="none", advanced=True)

@@ -51,8 +51,15 @@ def _shapes() -> Graph:
     return shapes
 
 
-SHAPES = _shapes()
-SPEC = Graph().parse(LAYER / "spec" / "eligibility.ttl")
+@pytest.fixture(scope="module", autouse=True)
+def _cached_graphs(request: pytest.FixtureRequest, graph_cache, validated) -> None:
+    """TM1/TM2: shared, session-scoped graphs and validation cache
+    (python-test-melting)."""
+    module = request.module
+    module.SHAPES = graph_cache(LAYER / "shapes" / "structural.ttl", LAYER / "shapes" / "constraints.ttl",
+                                 LAYER / "shapes" / "rules.ttl")
+    module.SPEC = graph_cache(LAYER / "spec" / "eligibility.ttl")
+    module.validate = validated
 
 
 def results(data: Graph) -> list[tuple[URIRef, URIRef, URIRef]]:

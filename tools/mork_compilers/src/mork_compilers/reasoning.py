@@ -5,6 +5,8 @@ Calls the test-only reasoning harness (ADR-A83), ``platform/reasoning-testkit``,
 as a subprocess. No reasoner is a dependency of this package: build the jar
 with ``mise run bootstrap:reasoning-testkit``, and callers skip when
 ``available()`` is false. ``LATTICE_REASONING_TESTKIT`` overrides the jar path.
+``LATTICE_REASONING_TIMEOUT`` (seconds, default 300) bounds one call, so a stalled JVM fails
+the test instead of hanging the run (TD-31).
 """
 
 from __future__ import annotations
@@ -26,6 +28,9 @@ JAR = Path(os.environ.get(
     "LATTICE_REASONING_TESTKIT",
     Path(__file__).resolve().parents[4] / "platform/reasoning-testkit/target/reasoning-testkit.jar",
 ))
+
+
+TIMEOUT = int(os.environ.get("LATTICE_REASONING_TIMEOUT", "300"))
 
 
 def available() -> bool:
@@ -60,6 +65,6 @@ def run(command: str, *iris: str, graphs: Iterable[Graph]):
         path = Path(directory) / "closure.owl"
         anonymise_rules(merged).serialize(path, format="xml")
         output = subprocess.run(
-            ["java", "--sun-misc-unsafe-memory-access=allow", "-jar", str(JAR), command, *iris, str(path)], capture_output=True, text=True, check=True
+            ["java", "--sun-misc-unsafe-memory-access=allow", "-jar", str(JAR), command, *iris, str(path)], capture_output=True, text=True, check=True, timeout=TIMEOUT
         ).stdout
     return json.loads(output.strip().splitlines()[-1])["result"]

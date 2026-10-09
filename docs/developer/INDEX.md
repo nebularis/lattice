@@ -659,6 +659,35 @@ compiler backend compiling a mapping graph into an ingress kit's stylesheet. Bui
 [xml-egress-and-transformation-kits.md](sketches/xml-egress-and-transformation-kits.md) without
 revising it. A utility meant to be glued into other stacks, not a vertical proof of concept.
 
+## 8.15 Python Test Speed — Done
+
+| Field | Value |
+|-------|-------|
+| **Status** | ✅ Done 2026-10-09, branch `test/slow-py`. All 16 modules with a `validate()` call site adopted a shared graph/validation cache (`tools/conftest.py`), the five `git grep` call sites replaced with a Python scan, `pytest-xdist` wired into `check:ontology-catalog`. 456s serial to 123.6s (`pytest-xdist`), identical outcomes. TM4 and TM5 deferred, reasoning recorded. Held ready for the human to review and merge |
+| **Unit ID** | `python-test-melting` |
+| **Sketches** | [python-test-melting.md](sketches/python-test-melting.md), [test-suite-performance.md](sketches/test-suite-performance.md) (both superseded, kept until the human decides) |
+| **Plan** | [python-test-melting.md](plans/python-test-melting.md) |
+| **Status Record** | [python-test-melting.md](status/python-test-melting.md) |
+| **Skill** | [lattice-testing](../../.claude/skills/lattice-testing/SKILL.md) |
+| **ADRs** | none |
+
+Took on TD-18 and TD-29 (both removed from the technical debt register). Measured the Python test
+suites, then shared parsed ontology graphs and SHACL validation results across test modules in a
+session-scoped cache, found and fixed a real identity-vs-content cache-key bug along the way, and
+added `pytest-xdist` as the dominant speed lever.
+
+## 8.16 Repository Catalogue — Sketch
+
+| Field | Value |
+|-------|-------|
+| **Status** | 🔵 Sketched 2026-10-09. RC-Q1 to RC-Q8 open. Not planned |
+| **Unit ID** | `repository-catalogue` |
+| **Sketch** | [repository-catalogue.md](sketches/repository-catalogue.md) |
+| **ADRs** | A-121 to be drafted as Proposed once RC-Q3 and RC-Q7 are answered |
+
+One catalogue of where things live in the repository, one interface module that reads it, and a check
+that code and documents agree with it. Shares work with `python-test-melting` (sketch §8.1).
+
 ## 8. Phase Handoff Documents (0-6)
 
 | Phase | Status Record | Key Outcome |
