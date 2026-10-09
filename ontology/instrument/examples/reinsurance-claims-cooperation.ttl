@@ -18,17 +18,17 @@
 #
 # In the model:
 #
-# | Fact or meaning                         | Where                                        |
-# |-----------------------------------------|----------------------------------------------|
-# | the insurer's power to settle a claim   | ex:settle, bound in the policy               |
-# | the reinsurer's power to approve        | ex:approve, bound in the reinsurance         |
-# | the reinsurer's duty to indemnify       | ex:indemnify, arising on an exercise of ex:settle, another instrument's power |
-# | its scope: claims settled pursuant to an approval | ex:settled-with-approval, an evidence path from the claim |
-# | the implied term                        | ex:no-arbitrary-refusal, a prohibition ins:impliedBy the judgment |
-# | the insurer's request for approval      | ex:request-1, an ins:Proposal                |
-# | the approval, an exercise for the claim | ex:approval-1, ins:Exercise, ins:forCase     |
-# | the settlement, made pursuant to it     | ex:settlement-1, ins:pursuantTo ex:approval-1 |
-# | a settlement made with no approval      | ex:settlement-2                              |
+# | Fact or meaning                                   | Where                                                                         |
+# |---------------------------------------------------|-------------------------------------------------------------------------------|
+# | the insurer's power to settle a claim             | ex:settle, bound in the policy                                                |
+# | the reinsurer's power to approve                  | ex:approve, bound in the reinsurance                                          |
+# | the reinsurer's duty to indemnify                 | ex:indemnify, arising on an exercise of ex:settle, another instrument's power |
+# | its scope: claims settled pursuant to an approval | ex:settled-with-approval, an evidence path from the claim                     |
+# | the implied term                                  | ex:no-arbitrary-refusal, a prohibition ins:impliedBy the judgment             |
+# | the insurer's request for approval                | ex:request-1, an ins:Proposal                                                 |
+# | the approval, an exercise for the claim           | ex:approval-1, ins:Exercise, ins:forCase                                      |
+# | the settlement, made pursuant to it               | ex:settlement-1, ins:pursuantTo ex:approval-1                                 |
+# | a settlement made with no approval                | ex:settlement-2                                                               |
 #
 # The acts, by valid time and recording time:
 #
