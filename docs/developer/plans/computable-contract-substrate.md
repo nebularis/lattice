@@ -3097,6 +3097,14 @@ flowchart LR
     B4 --> D["C9d materiality"] --> C["C9c incorporation"]
 ```
 
+**How C9b0 to C9b2 run (the human, 2026-10-09).** On one integration branch,
+`ccs/c9b-groundwork`. Each slice runs in its own local worktree and branch (`ccs/c9b0-eligibility-sources`,
+`ccs/c9b2-additivity`, `ccs/c9b1-legal-acts`), built by a sub-agent that commits there, examples
+first. The agent merges them into the integration branch in the order C9b0, C9b2, C9b1, takes each
+document's version once at the strongest level any slice needs, recomputes the cascade and
+regenerates the catalog, release register and MTP lock. Design questions go to the human through the
+agent. The human reviews all three Validation Packs, pushes, merges into `main` and creates the tags.
+
 **Before C9b3, the formal-methods epic's Eligibility pass, FM-EP, is completed** on machine S, on
 `fm/eligibility-pass`, and merged (the human, 2026-10-09). C9b3 extends Eligibility's laws, its Isabelle theory, its reference semantics
 and its four compilers, so it must build on a hardened base. The items are FM-D17 (generate the
@@ -3615,6 +3623,7 @@ decide it:
 KISS: (a), with Extensive and Intensive on the space, and stock or flow on the measure when a slice
 needs it. **Leaning (a), unchanged**, with open question 7 answered in principle: the consuming layer
 says along which grouping a measure may be summed.
+**Answered (the human, 2026-10-09): (a), with no subclasses.**
 
 **C9b2-Q2. How a proportion names its base.**
 
@@ -3707,7 +3716,11 @@ measures, a check (p4) alone could not make.
   signing down, which uses Ratio and Scale. If signing down needs a product of two derived values,
   the examples phase says so before the model phase
 
-**Planned validation** (pack `ccs-c9b2.md`): additivity at zero and two values, the same-space Sum
+**Planned validation** (pack `ccs-c9b2.md`), including every currency case the human asked for
+(2026-10-09): one currency sums. Mixed currencies with a dated conversion context at the reference
+time convert to the base currency, then sum. Mixed currencies with none are Undetermined
+(`qnt:ConversionContextAbsent`). A limit stated in two currencies (ADR-A95) is never converted.
+Shares with one base sum, and with two are Undetermined. Also: additivity at zero and two values, the same-space Sum
 shape positive and negative, date plus duration still valid, Count on an intensive space valid, a
 proportion's base role, the examples conformant, and the cascade's versioning, catalog and literate
 checks.

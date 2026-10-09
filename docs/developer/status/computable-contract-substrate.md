@@ -18,9 +18,8 @@ Behaviour 0.10.0 (shapes 0.4.0) with nested states and history, the import guard
 check`. In tranche D, C6 to C7c are merged and tagged (Instrument 0.12.0, Party 0.8.0, Quantification
 0.7.0). C8 and C8b are merged and tagged (Instrument 0.14.0, Wording 0.7.0). C9 is briefed and splits into C9a to C9c. Its materiality question has its own sketch. From C5 on, the agent builds and verifies, and the human commits by hand.
 
-**Next action, for the human:** confirm C9b2-Q1 after the design-time analysis (plan, C9b2 in
-detail), and create the C9b0 branch, which no longer waits on anything. Merge order: C9b0, then C9b2, then C9b1, each
-regenerating the catalog and release register rather than hand-merging.
+**Next action, for the agent:** build C9b0, C9b2 and C9b1 in their own worktrees and merge them into
+`ccs/c9b-groundwork` (plan, How C9b0 to C9b2 run). Then the human reviews the three Validation Packs.
 
 ## Slice board
 
@@ -157,3 +156,4 @@ regenerating the catalog and release register rather than hand-merging.
 - 2026-10-09: C9b0, C9b1 and C9b2 briefed from the three investigations, six questions for the human. Found: Eligibility's drift is 5 and 42 triples against all three shape files, not 78 and 19, and nothing imports `eligibility-vocab`, so C9b0 releases one document with no cascade. Behaviour's C9b1 change is 0.14.0 breaking, not a patch. Sum already spans two spaces (a date plus a duration), so C9b2's rule covers a sum within one space
 - 2026-10-09: C9b0-Q1, C9b1-Q1 and C9b1-Q2 answered (a) by the human. TD-16 cross-checked: FM-EP changed Eligibility's README only, so the drift stands and C9b0 repairs it first, as the human proposed. The plan explains (p3) and (p4) with pictures, and why (a) defers semi-additivity without blocking it
 - 2026-10-09: C9b0-Q2 answered (a), with C9b3 to make the no-applicable-binding case Undetermined. C9b2-Q2 answered (p3), with (p4) held as HQ-12. C9b2-Q1 analysed for design-time warnings: SHACL warns equally under (a) and (b), a reasoner cannot warn of a missing declaration under either, and semi-additivity belongs on the measure, not the space. Leaning (a) kept, for the human to confirm
+- 2026-10-09: C9b2-Q1 answered (a), no subclasses, with every currency case covered. The human chose one integration branch, `ccs/c9b-groundwork`, with each slice built by a sub-agent in its own worktree and merged by the agent
