@@ -96,9 +96,10 @@ def test_c9a_01_spec_terms() -> None:
     spec = _graph(SPEC)
     ontology = next(spec.subjects(RDF.type, OWL.Ontology))
     assert spec.value(ontology, OWL.versionIRI) == URIRef(LATTICE + "instrument/0.15.1")
+    terms = spec + _graph(SPEC.parent / "instrument-acts.ttl")                     # C9b1: assents are legal acts
     for term in ("Amendment", "amends", "resultsIn", "affectsExisting", "statedIn", "Assent",
                  "assentBy", "assentTo", "begins", "OnAcceptance"):
-        assert spec.value(INS[term], FND.utility) is not None, term
+        assert terms.value(INS[term], FND.utility) is not None, term
     assert (INS.Amendment, OWL.disjointWith, FND.Version) in spec
     assert (INS_VOC.Conditional, None, None) in _graph(VOCAB)
 

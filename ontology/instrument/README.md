@@ -12,13 +12,14 @@ This ontological substrate allows a user to state what legally binding outcomes 
 
 ### 1.1 Dependencies 
 
-Instrument imports Foundation, Vocabulary, Quantification, Party, Eligibility, Wording and Behaviour's configuration document. Instrument's runtime document is upstream of it. Nothing outside Instrument imports it ([ADR-A104](../../docs/architecture/decisions/ADR-A104-instrument-terms-and-legal-relations.md), [ADR-A106](../../docs/architecture/decisions/ADR-A106-behaviour-configuration-runtime-occasions-and-records.md)).
+Instrument imports Foundation, Vocabulary, Quantification, Party, Eligibility, Wording and Behaviour's configuration document. It never imports Behaviour's runtime document, which itself imports only Behaviour's configuration, so Instrument meets no runtime record. Instrument is two documents in one namespace. The main document, `spec/instrument.ttl`, holds stated and bound meaning. The acts document, `spec/instrument-acts.ttl`, imports it and holds the legal acts the parties did (§6.4), so a consumer that only states meaning never imports an act. Nothing outside Instrument imports either, and in LATTICE only examples and tests read the acts document ([ADR-A104](../../docs/architecture/decisions/ADR-A104-instrument-terms-and-legal-relations.md), [ADR-A106](../../docs/architecture/decisions/ADR-A106-behaviour-configuration-runtime-occasions-and-records.md)).
 
-This version (0.15.0, CCS slice C9a) holds the instrument, its terms in two tiers, the five relations, their parties and their content (C6), the legal triggers, the regimes they move, and the gating of relations by a regime's state (C7a), terms in time, namely due ranges, windows, recurrences, ending and survival (C7b), what terms are and whom they bind: definitions, deemings and classification, sections, and parties resolved through the case (C7c), and values in stated meaning, which text is expected to mean something, and the generation of bound meaning (C8). It is pinned to Wording 0.7.0, whose references name identities (C8b), and adds amendments, assents and taking effect (C9a, §6.3, §14.8). Later slices add, in order:
+This version (0.15.0, CCS slice C9a) holds the instrument, its terms in two tiers, the five relations, their parties and their content (C6), the legal triggers, the regimes they move, and the gating of relations by a regime's state (C7a), terms in time, namely due ranges, windows, recurrences, ending and survival (C7b), what terms are and whom they bind: definitions, deemings and classification, sections, and parties resolved through the case (C7c), and values in stated meaning, which text is expected to mean something, and the generation of bound meaning (C8). It is pinned to Wording 0.7.0, whose references name identities (C8b), adds amendments, assents and taking effect (C9a, §6.3, §14.8), and the legal acts tier: proposals, declarations and exercises, in their own document (C9b1, §6.4). Later slices add, in order:
 
 | Slice | Adds |
 |---|---|
-| C9b | consent rules for powers held by groups, and the materiality of a change |
+| C9b4 | qualifying rules for powers held by groups |
+| C9d | the materiality of a change |
 | C9c | incorporation by reference |
 
 Nothing in this version evaluates.
@@ -58,7 +59,7 @@ The vocabulary (`ins-voc:`) is `vocab/instrument-vocab.ttl`, in the namespace `h
 
 ## 3. Extraction Contract
 
-This README is the source of three kinds of file. `tools/literate_extract.py` concatenates every ` ```turtle-spec ` block into `spec/instrument.ttl` and every ` ```turtle-vocab ` block into `vocab/instrument-vocab.ttl`, and writes the three ` ```turtle-shapes ` blocks, in order, to
+This README is the source of three kinds of file. `tools/literate_extract.py` concatenates every ` ```turtle-spec ` block into `spec/instrument.ttl`, except §6.4's, which open with `# @output-file "spec/instrument-acts.ttl"` and generate the acts document, which takes §2's prefixes (ADR-A120). The two share one version. It concatenates every ` ```turtle-vocab ` block into `vocab/instrument-vocab.ttl`, and writes the three ` ```turtle-shapes ` blocks, in order, to
 `shapes/structural.ttl`, `shapes/constraints.ttl` and `shapes/single-expression.ttl`. A ` ```turtle-example ` block is illustration only.
 
 ```bash
@@ -118,7 +119,7 @@ flowchart LR
 
 #### 4.2.2 **`ins:Term`.**
 
-In contract law, a "term" is a provision the parties are bound by: "the terms of the agreement", "an implied term", "terms and conditions". A term may be *express*, stated in the words, or *implied*, by statute, custom or the course of dealing between the parties. "Term" has a second sense, of duration ("the term of the lease", "a five-year term"), which LATTICE handles with Foundation's `TemporalScope`. Note that `ins:Term` means only the provision and not the duration.
+In contract law, a "term" is a provision the parties are bound by: "the terms of the agreement", "an implied term", "terms and conditions". A term may be *express*, stated in the words, or *implied*, by statute, custom, the course of dealing between the parties or a judgment. "Term" has a second sense, of duration ("the term of the lease", "a five-year term"), which LATTICE handles with Foundation's `TemporalScope`. Note that `ins:Term` means only the provision and not the duration.
 
 The following similar, but distinct terminology, is provided for reference here.
 
@@ -139,6 +140,9 @@ each one. Some terms bind the parties although no clause states them. They are *
 - **by custom**: a usage so settled in a trade that the parties are taken to have agreed it
 - **by the course of dealing**: terms the same parties have always used in their past contracts
 - **in fact**: a term so obvious, or so necessary to make the contract work, that it goes without saying
+- **by a court**: a judgment that holds a term implied in a kind of contract binds later contracts of
+  that kind, for example a duty on a party whose approval a contract requires not to withhold it
+  arbitrarily
 
 An express term is a stated term, expressed in a clause. An implied term has no clause to express it, so it has no stated meaning. Its bound term names its source instead (`ins:impliedBy`). 
 
@@ -170,7 +174,7 @@ flowchart TB
     D["a definition or deeming"] -- "arisesUnder" --> T
     T -- "classification, survival, sections" --> P["properties of the whole provision"]
     T -- "expressedIn (express term)" --> C["a clause version"]
-    T -- "impliedBy (implied term)" --> S["a statute, custom or course of dealing"]
+    T -- "impliedBy (implied term)" --> S["a statute, custom, course of dealing or judgment"]
 ```
 
 #### 4.2.3 **`ins:Template`.**
@@ -888,7 +892,7 @@ A *trigger* is what makes something happen, written in contracts as "on", "upon"
 
 | Trigger | Contract English | Fires on | Behaviour's kind |
 |---|---|---|---|
-| `ins:OnExercise` | "on the giving of notice under clause 11.1", "upon acceptance" | the exercise of a power (`ins:ofPower`) | an external stimulus, a party's act |
+| `ins:OnExercise` | "on the giving of notice under clause 11.1", "upon acceptance" | the exercise of a power (`ins:ofPower`) | derived: a party's exercise, found effective (law I10) |
 | `ins:OnBreach` | "if the Borrower fails to pay", "following any breach of clause 4" | the breach of an obligation (`ins:ofObligation`) | derived by the runtime from the obligation's occasions |
 | `ins:OnAct` | "if the Provider disputes the report", "on delivery" | an act that exercises no power (`ins:activity`, optionally `ins:by`) | an external stimulus |
 | `ins:OnCondition` | "if leverage exceeds 3.0 to 1", "while a force majeure event prevents performance" | a condition coming to hold (`ins:condition`) | derived |
@@ -983,8 +987,8 @@ These six properties are how every computable node reaches the words that create
   sub-property of PROV's `prov:wasDerivedFrom`, the W3C provenance vocabulary's word for exactly
   this. The phrase also echoes the law's "the parties are bound by its terms".
 - **`ins:impliedBy`** takes the place of `ins:boundFrom` for an implied term (§4.2, `ins:Term`): a
-  term no clause states has no template to be instantiated from, so it names the statute, custom or
-  course of dealing that implies it.
+  term no clause states has no template to be instantiated from, so it names the statute, custom,
+  course of dealing or judgment that implies it.
 - **`ins:arisesUnder`** is contract English: "any obligation arising under this agreement", "any
   dispute arising under this licence". A relation, definition, deeming or qualifier arises under the
   term that creates it, and belongs to it. Only the term carries `ins:expressedIn` or `ins:boundIn`,
@@ -1182,7 +1186,7 @@ flowchart LR
 |---|---|---|
 | `ins:expressedIn`, `ins:alsoExpressedIn` | "the terms expressed in this agreement", *express* terms: terms the words state | a term is expressed in its clause, and an instrument in its wording. "Also" carries the same term in another language or a consolidated text |
 | `ins:boundIn`, `ins:boundFrom` | from computing's *bound variable*: a template's roles and variables are bound to particular parties and values. Also echoes "the parties are bound by its terms" | bound meaning is the template's meaning with its roles and variables bound. "Bound" is also a term of art in some domains, so it is always written "bound meaning" or "bound term", never alone |
-| `ins:impliedBy` | *implied terms*: terms implied by statute, custom or the course of dealing, which no clause states | names the source that implies the term in place of a clause |
+| `ins:impliedBy` | *implied terms*: terms implied by statute, custom, the course of dealing or a judgment, which no clause states | names the source that implies the term in place of a clause |
 | `ins:arisesUnder` | "obligations arising under this agreement", "any dispute arising under this licence" | a relation arises under the term that gives rise to it, and belongs to it |
 | `ins:party` | "the parties to this agreement" | lists who is party to the instrument, as authored. A beneficiary named in a relation may be no party |
 | `ins:obligor`, `ins:obligee` | civil law's *obligor* and *obligee*, the two ends of an *obligatio* | standard legal terms, and unambiguous where "debtor" and "creditor" suggest money |
@@ -1215,7 +1219,13 @@ flowchart LR
 | `ins:amends`, `ins:resultsIn` | "this letter amends the Agreement", "the Agreement as amended" | the version an amendment changes, and the version it produces |
 | `ins:statedIn` | "as set out in this endorsement" | the document that states an amendment |
 | `ins:affectsExisting` | "shall not affect any rights or obligations accrued before" | whether an amendment reaches occasions already arisen |
-| `ins:assentBy`, `ins:assentTo` | *assent*, a party's agreement to terms: signing, accepting, consenting | who assents, and to which version |
+| `ins:assentBy`, `ins:assentTo` | *assent*, a party's agreement to terms: signing, accepting | who assents, and to which version |
+| `ins:proposedBy`, `ins:proposes` | "the Borrower may request", "a proposed amendment" | who puts a matter to the parties, and the matter |
+| `ins:directedAt` | "consents to the request", "objects to the proposal" | the proposal a consent or an objection answers |
+| `ins:withdraws` | "may revoke its consent" | the declaration a withdrawal withdraws |
+| `ins:exercises`, `ins:actBy` | "exercise of a power", "by notice from the Licensor" | the power an exercise exercises, and who did an act |
+| `ins:pursuantTo` | "pursuant to", "with the approval of", "at the request of" | an act relied on |
+| `ins:forCase` | "in respect of a claim" | the case an act is about |
 | `ins:survives`, `ins:survivalPeriod`, `ins:survivesUntil` | "survives termination", "for five years after", "until" | how long a term continues after its instrument ends |
 | `ins:defines`, `ins:means` | "'Obligors' means…" | the word a definition gives meaning to, and the meaning |
 | `ins:actingRule` | "jointly and severally", "each for its share" | how the several parties a word means act together |
@@ -1391,7 +1401,7 @@ layer is tied back to the words that create it:
 So from any relation the evaluator acts on, there is one path back to the words: relation, bound
 term, stated term, clause version, the text itself. Nothing in this layer has legal effect of its
 own. If the data and the words ever disagree, the words win, and the data is wrong. A term no clause
-states, a term *implied* by law, names the statute, custom or course of dealing that implies it
+states, a term *implied* by law, names the statute, custom, course of dealing or judgment that implies it
 (`ins:impliedBy`) in place of a clause.
 
 ```mermaid
@@ -1696,7 +1706,7 @@ ins:boundFrom a owl:ObjectProperty, owl:FunctionalProperty ;
 
 ins:impliedBy a owl:ObjectProperty ;
 	rdfs:comment "The source that implies a term no clause states." ;
-	fnd:utility "Subject: a bound term or relation implied by law. Value: the statute, custom or course of dealing that implies it, in place of ins:boundFrom." .
+	fnd:utility "Subject: a bound term or relation implied by law. Value: the statute, custom, course of dealing or judgment that implies it, in place of ins:boundFrom." .
 ```
 
 ### 6.3 Amendments and assents
@@ -1736,8 +1746,8 @@ recording time:
 Nothing asserts an agreed time. It is read from the assents. An assent is an Instrument fact, written
 by whatever an application uses to gather signatures or consents, whether a workflow, a signing
 service or a scanned signature page. Instrument imports only Behaviour's configuration, so it reads no
-runtime record (ADR-A104, 2026-10-08 addendum). Consent to the exercise of a power held by a group
-reads the same facts, under the power's consent rule (C9b).
+runtime record (ADR-A104, 2026-10-08 addendum). An assent is a legal act, in the acts document
+(§6.4). Consent, directed at a proposal rather than a version, is its sibling there.
 
 The text changes an amendment makes are the Wording amendments expressed in the document it is stated
 in (`ins:statedIn`), or in any part of it. One letter that makes two amendments with different
@@ -1792,13 +1802,147 @@ ins:affectsExisting a owl:DatatypeProperty, owl:FunctionalProperty ;
 	rdfs:comment "Whether an amendment reaches occasions already arisen." ;
 	fnd:utility "Subject: an amendment. Value: at most one boolean, false when absent (law I14). Where true, a stated relation the amendment replaces names its successor with prov:wasRevisionOf." .
 
-ins:Assent a owl:Class ;
-	rdfs:subClassOf fnd:TemporallyScoped , fnd:Evidenced ;
+```
+
+### 6.4 Legal acts
+
+What the parties did is a third tier, beside stated and bound meaning (§6.2). A **legal act** is an
+act of a party that an instrument makes something turn on: a declaration of will, a proposal, or the
+exercise of a power. Each is a fact, with the time it was done and evidence that it was done, written
+by whatever application gathers it, such as a workflow, a signing service or a claims system. Whether
+it had the effect it sought is a judgement, evaluated from the facts and never stated: an exercise
+outside its window, or by a party without the power, has no effect (law I10). What the evaluator
+concludes about an act is a Behaviour record, such as `bhv:ExerciseRecord` for whether an exercise
+took effect.
+
+The acts are their own document, `spec/instrument-acts.ttl` (ADR-A120), which imports Instrument's
+main document and nothing of Behaviour's runtime. A consumer that only states meaning never imports
+an act.
+
+```mermaid
+---
+config:
+  layout: elk
+---
+flowchart TB
+    LA["ins:LegalAct<br/>when done, evidence,<br/>actBy, forCase, pursuantTo"]
+    D["ins:Declaration"]
+    AS["ins:Assent<br/>to a version (§6.3)"]
+    CO["ins:Consent"]
+    OB["ins:Objection"]
+    WD["ins:Withdrawal"]
+    EX["ins:Exercise"]
+    PR["ins:Proposal"]
+    LA --> D
+    LA --> EX
+    LA --> PR
+    D --> AS
+    D --> CO
+    D --> OB
+    D --> WD
+    CO -- "directedAt" --> PR
+    OB -- "directedAt" --> PR
+    WD -- "withdraws" --> D
+    EX -- "exercises" --> PW["a bound ins:Power"]
+    PR -- "proposes" --> M["a matter, such as<br/>an ins:Amendment"]
+```
+
+| Act | Directed at | Drafted as |
+|---|---|---|
+| `ins:Assent` | a version (§6.3) | signing the agreement, accepting the offer |
+| `ins:Consent` | a proposal (`ins:directedAt`) | "shall not assign without the Licensor's consent" |
+| `ins:Objection` | a proposal (`ins:directedAt`) | "unless any Lender objects within 10 Business Days" |
+| `ins:Withdrawal` | an earlier declaration (`ins:withdraws`) | "a consent may be revoked before the decision" |
+| `ins:Exercise` | a bound power (`ins:exercises`) | "may terminate by notice", "with the approval of the Licensor" |
+| `ins:Proposal` | a matter put to the parties (`ins:proposes`) | "the Borrower may request a waiver", a proposed amendment |
+
+- **Assent and consent are siblings.** Assent is directed at terms, consent at a proposal. A party
+  bound under a power, such as a lender outvoted on a waiver, is bound by the exercise, not by an
+  assent, so a consent is never recorded as an assent to the result.
+- **A proposal is an act, and its content is apart from it.** Its valid time is when it was made.
+  What it proposes keeps its own time: an amendment's is when it takes effect (§6.3). Whether a
+  proposal is pending, decided or lapsed is derived by the evaluator, never stored.
+- **Pursuant to.** An act made in reliance on another, "with the Licensor's approval" or "at the
+  Borrower's request", names it with `ins:pursuantTo`. The act relied on may be under another
+  instrument, and is done no later than the act relying on it.
+- **The case.** An act about a case, such as a claim or a delivery, names it with `ins:forCase`, at
+  most one, so an Eligibility evidence path can start from the case (§22.23). An act about a version,
+  such as an assent, names none.
+- **Who acted.** `ins:actBy` names the party, a role occupancy. An assent names it with `ins:assentBy`
+  and a proposal with `ins:proposedBy`, its sub-properties. An exercise by a party other than the one
+  holding the power is reported where the holder is a role occupancy. Who may act for a power held by
+  a group is CCS C9b4's.
+- **Withdrawal has no default.** Whether a withdrawal counts, and until when, differs between
+  markets: a lender's consent is usually revocable until the decision, and a written line binds once
+  written. The instrument states it, or a deployment's evaluation profile does. §6.3's agreement rule
+  and §14.8's formation trigger read assents, and are unchanged by this tier.
+- **Juristic acts only.** Declarations, proposals, exercises and notices with legal effect, such as a
+  notice of loss or of force majeure, are legal acts. Acts of performance, such as a payment or a
+  delivery, are not declarations of will, and stay performance facts the evaluator reads.
+
+```turtle-spec
+# @output-file "spec/instrument-acts.ttl"
+<https://www.nebularis.org/neuro-semantic/instrument-acts>
+	rdf:type owl:Ontology ;
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/instrument-acts/0.15.1> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.15.1> .
+```
+
+```turtle-spec
+# @output-file "spec/instrument-acts.ttl"
+# ---- Legal acts (§6.4) -----------------------------------------------------------
+
+ins:LegalAct a owl:Class ;
+	rdfs:subClassOf prov:Activity , fnd:TemporallyScoped , fnd:Evidenced ;
 	owl:disjointWith fnd:Version ;
+	rdfs:comment "An act of a party that an instrument makes something turn on: a declaration of will, a proposal, or the exercise of a power." ;
+	fnd:utility "Subject: a legal act. Its fnd:hasTemporalScope is when it was done, and its fnd:hasEvidence when that became known. Names who did it (ins:actBy or a sub-property), and optionally its case (ins:forCase) and the acts it relies on (ins:pursuantTo). Whether it had effect is evaluated, never stated (§6.4)." .
+
+ins:Declaration a owl:Class ;
+	rdfs:subClassOf ins:LegalAct ;
+	rdfs:comment "A declaration of will: an act whose legal effect is the effect its party intends." ;
+	fnd:utility "Subject: a declaration. Not used alone: an assent, a consent, an objection or a withdrawal." .
+
+ins:Assent a owl:Class ;
+	rdfs:subClassOf ins:Declaration ;
 	rdfs:comment "One party's assent to one instrument version." ;
-	fnd:utility "Subject: an assent. Names exactly one party (ins:assentBy) and one version (ins:assentTo). Its fnd:hasTemporalScope is when the party assented, and its fnd:hasEvidence when that became known. Written by whatever gathers the signature or consent. Read for formation (ins:OnAcceptance), agreement of an amendment, and consent to a power's exercise." .
+	fnd:utility "Subject: an assent. Names exactly one party (ins:assentBy) and one version (ins:assentTo). Its fnd:hasTemporalScope is when the party assented, and its fnd:hasEvidence when that became known. Written by whatever gathers the signature. Read for formation (ins:OnAcceptance) and the agreement of an amendment (§6.3)." .
+
+ins:Consent a owl:Class ;
+	rdfs:subClassOf ins:Declaration ;
+	rdfs:comment "A party's consent to a proposal." ;
+	fnd:utility "Subject: a consent. Names the party (ins:actBy) and exactly one proposal (ins:directedAt). Which consents a rule needs, and whether they meet it, are evaluated (CCS C9b4)." .
+
+ins:Objection a owl:Class ;
+	rdfs:subClassOf ins:Declaration ;
+	rdfs:comment "A party's objection to a proposal." ;
+	fnd:utility "Subject: an objection. Names the party (ins:actBy) and exactly one proposal (ins:directedAt). Its effect, such as a veto or preventing a deemed consent, is the instrument's rule." .
+
+ins:Withdrawal a owl:Class ;
+	rdfs:subClassOf ins:Declaration ;
+	rdfs:comment "A party's withdrawal of an earlier declaration." ;
+	fnd:utility "Subject: a withdrawal. Names the party (ins:actBy) and exactly one declaration (ins:withdraws). Whether it counts has no default: the instrument or a deployment's evaluation profile says (§6.4)." .
+
+[] a owl:AllDisjointClasses ;
+	owl:members ( ins:Assent ins:Consent ins:Objection ins:Withdrawal ) .
+
+ins:Exercise a owl:Class ;
+	rdfs:subClassOf ins:LegalAct ;
+	rdfs:comment "A purported exercise of a bound power." ;
+	fnd:utility "Subject: an exercise. Names exactly one bound power (ins:exercises) and the party (ins:actBy). Records only that the act was done. Whether it took effect is the evaluator's finding (law I10, bhv:ExerciseRecord), and an ins:OnExercise trigger fires on an exercise found effective." .
+
+ins:Proposal a owl:Class ;
+	rdfs:subClassOf ins:LegalAct ;
+	rdfs:comment "A matter put to parties, such as a request for a waiver or a proposed amendment." ;
+	fnd:utility "Subject: a proposal. Names who proposes it (ins:proposedBy) and exactly one matter (ins:proposes). Its fnd:hasTemporalScope is when it was made. Pending, decided and lapsed are derived, never stored." .
+
+ins:actBy a owl:ObjectProperty ;
+	rdfs:range pty:RoleOccupancy ;
+	rdfs:comment "A party who did a legal act." ;
+	fnd:utility "Subject: a legal act. Value: a role occupancy, at least one. Several parties act together in an act by agreement. An assent names its party with ins:assentBy and a proposal with ins:proposedBy, its sub-properties." .
 
 ins:assentBy a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:subPropertyOf ins:actBy ;
 	rdfs:range pty:RoleOccupancy ;
 	rdfs:comment "The party who assents." ;
 	fnd:utility "Subject: an assent. Value: exactly one role occupancy, a party to the version assented to." .
@@ -1807,6 +1951,40 @@ ins:assentTo a owl:ObjectProperty, owl:FunctionalProperty ;
 	rdfs:range ins:Instrument ;
 	rdfs:comment "The instrument version assented to." ;
 	fnd:utility "Subject: an assent. Value: exactly one instrument version." .
+
+ins:proposedBy a owl:ObjectProperty ;
+	rdfs:subPropertyOf ins:actBy ;
+	rdfs:range pty:RoleOccupancy ;
+	rdfs:comment "A party who makes a proposal." ;
+	fnd:utility "Subject: a proposal. Value: a role occupancy, at least one." .
+
+ins:proposes a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:comment "The matter a proposal puts to the parties." ;
+	fnd:utility "Subject: a proposal. Value: exactly one resource, such as an ins:Amendment, which keeps its own effective time (§6.3), or a node naming a waiver or a settlement. Two matters are two proposals." .
+
+ins:directedAt a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:range ins:Proposal ;
+	rdfs:comment "The proposal a consent or an objection answers." ;
+	fnd:utility "Subject: a consent or an objection. Value: exactly one proposal." .
+
+ins:withdraws a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:range ins:Declaration ;
+	rdfs:comment "The declaration a withdrawal withdraws." ;
+	fnd:utility "Subject: a withdrawal. Value: exactly one assent, consent or objection." .
+
+ins:exercises a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:range ins:Power ;
+	rdfs:comment "The bound power an exercise purports to exercise." ;
+	fnd:utility "Subject: an exercise. Value: exactly one bound power, which may be another instrument's than the relations that arise on it. Its activity names the act." .
+
+ins:pursuantTo a owl:ObjectProperty ;
+	rdfs:range ins:LegalAct ;
+	rdfs:comment "An act relied on: a proposal answered, or a consent or approval acted on." ;
+	fnd:utility "Subject: a legal act. Value: a legal act, any number, under this or another instrument, done no later than the subject." .
+
+ins:forCase a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:comment "The case a legal act is about." ;
+	fnd:utility "Subject: a legal act. Value: at most one resource, the case, such as a claim or a delivery, of the class the relations' conditions bind (law I4). No range: what a case is belongs to the application. Behaviour's bhv:forCase is the runtime's, for occasions and act records." .
 ```
 
 ## 7. Legal Relations
@@ -2058,16 +2236,19 @@ to enter, so a relation's own periods are due ranges (§13).
 
 | Trigger | Required value | Optional | Kind, fixed by the class |
 |---|---|---|---|
-| `ins:OnExercise` | exactly one power (`ins:ofPower`) | | `bhv:ExternalStimulus` |
+| `ins:OnExercise` | exactly one power (`ins:ofPower`) | | `bhv:DerivedTrigger` |
 | `ins:OnBreach` | exactly one obligation (`ins:ofObligation`) | | `bhv:DerivedTrigger` |
 | `ins:OnAct` | exactly one concept (`ins:activity`) | the parties whose act counts (`ins:by`) | `bhv:ExternalStimulus` |
 | `ins:OnCondition` | exactly one Eligibility condition (`ins:condition`) | | `bhv:DerivedTrigger` |
 | `ins:OnExpiry` | exactly one quantity of time (`ins:after`), or one time (`ins:at`) | the states in which the period does not run (`ins:tolledIn`) | `bhv:ScheduledTrigger` |
 | `ins:OnEntry` | exactly one state (`ins:ofState`) | | `bhv:DerivedTrigger` |
 
-**The kind follows from the class.** An exercise and an act come from outside, as a stimulus the
-runtime receives when a party acts. A breach, a condition and an entry into a state are derived by
-the runtime from what it already holds. An expiry is scheduled, since the runtime knows in advance when it falls. Each
+**The kind follows from the class.** An act comes from outside, as a stimulus the runtime receives
+when a party acts. A breach, a condition and an entry into a state are derived by the runtime from
+what it already holds. So is an exercise: the party's act is an Instrument fact (`ins:Exercise`,
+§6.4), and an exercise outside its window, or by a party without the power, has no effect (law I10).
+The trigger fires on an exercise the evaluator finds effective, and Behaviour's stimulus for it is
+`prov:wasDerivedFrom` the exercise. An expiry is scheduled, since the runtime knows in advance when it falls. Each
 class therefore fixes its kind as an `owl:hasValue` restriction, and its shape permits only that
 value (§12).
 
@@ -2127,9 +2308,9 @@ flowchart LR
 ```turtle-spec
 ins:OnExercise a owl:Class ;
 	rdfs:subClassOf bhv:TriggerDefinition ,
-		[ a owl:Restriction ; owl:onProperty bhv:triggerKind ; owl:hasValue bhv:ExternalStimulus ] ;
+		[ a owl:Restriction ; owl:onProperty bhv:triggerKind ; owl:hasValue bhv:DerivedTrigger ] ;
 	rdfs:comment "A legal trigger: the exercise of a power." ;
-	fnd:utility "Subject: a trigger. Names exactly one power (ins:ofPower). In a regime, a stated power: the trigger fires on the exercise of every bound power instantiated from it. Its kind is bhv:ExternalStimulus. Assert bhv:TriggerDefinition and the kind where no reasoner runs (§12)." .
+	fnd:utility "Subject: a trigger. Names exactly one power (ins:ofPower). In a regime, a stated power: the trigger fires on an exercise (ins:Exercise) of every bound power instantiated from it that the evaluator finds effective (law I10). Its kind is bhv:DerivedTrigger. Assert bhv:TriggerDefinition and the kind where no reasoner runs (§12)." .
 
 ins:OnBreach a owl:Class ;
 	rdfs:subClassOf bhv:TriggerDefinition ,
@@ -2504,7 +2685,7 @@ tmpl:notice-regime a ins:Regime , bhv:StateSpace , ins:Template ;
     bhv:initialState tmpl:in-force .
 
 tmpl:on-notice-given a ins:OnExercise , bhv:TriggerDefinition ;
-    bhv:triggerKind bhv:ExternalStimulus ;
+    bhv:triggerKind bhv:DerivedTrigger ;
     ins:ofPower tmpl:end-on-notice .
 
 tmpl:give-notice a ins:RegimeTransition , bhv:TransitionDefinition ;
@@ -2546,8 +2727,8 @@ The axioms that make this work are on the Instrument classes and properties (§1
 |---|---|---|
 | `ins:Regime` | `rdfs:subClassOf bhv:StateSpace` | `bhv:StateSpace` (cax-sco) |
 | `ins:RegimeTransition` | `rdfs:subClassOf bhv:TransitionDefinition`, `owl:hasValue bhv:SingleMatch` on `bhv:selectionPolicy`, `owl:hasValue bhv:ImmediateActivation` on `bhv:activationPolicy` | the type (cax-sco), both policies (cls-hv1) |
-| `ins:OnExercise`, `ins:OnAct` | `rdfs:subClassOf bhv:TriggerDefinition`, `owl:hasValue bhv:ExternalStimulus` on `bhv:triggerKind` | the type, the kind |
-| `ins:OnBreach`, `ins:OnCondition` | the same, with `bhv:DerivedTrigger` | the type, the kind |
+| `ins:OnAct` | `rdfs:subClassOf bhv:TriggerDefinition`, `owl:hasValue bhv:ExternalStimulus` on `bhv:triggerKind` | the type, the kind |
+| `ins:OnExercise`, `ins:OnBreach`, `ins:OnCondition` | the same, with `bhv:DerivedTrigger` | the type, the kind |
 | `ins:OnExpiry` | the same, with `bhv:ScheduledTrigger` | the type, the kind |
 | `ins:OnEntry` | the same, with `bhv:DerivedTrigger` | the type, the kind |
 | `ins:ofPower` | `rdfs:domain ins:OnExercise` | the trigger's class (prp-dom), and from it the type and the kind |
@@ -3855,6 +4036,12 @@ ins-voc:DeclineRenewal a skos:Concept ; skos:inScheme ins-voc:Activities ;
 ins-voc:Award a skos:Concept ; skos:inScheme ins-voc:Activities ;
 	skos:prefLabel "Award"@en ; skos:definition "Award a contract or an order under an arrangement, creating a new instrument."@en .
 
+ins-voc:Settle a skos:Concept ; skos:inScheme ins-voc:Activities ;
+	skos:prefLabel "Settle"@en ; skos:definition "Resolve a claim or a dispute by agreement with the claimant."@en .
+
+ins-voc:Approve a skos:Concept ; skos:inScheme ins-voc:Activities ;
+	skos:prefLabel "Approve"@en ; skos:definition "Give the approval an instrument requires before another party's act."@en .
+
 ins:InstrumentTarget a bhv:TargetKind ;
 	rdfs:comment "A Behaviour effect's target kind for an instrument." ;
 	fnd:utility "Declared here, since Behaviour no longer names Instrument (ADR-A106). Behaviour's bhv:InstrumentTarget is deprecated in its favour." .
@@ -4150,8 +4337,8 @@ ins:OnExerciseShape a sh:NodeShape ;
 	sh:targetClass ins:OnExercise ;
 	sh:property [ sh:path ins:ofPower ; sh:minCount 1 ; sh:maxCount 1 ; sh:class ins:Power ;
 		sh:message "An exercise trigger names exactly one power (ins:ofPower)." ] ;
-	sh:property [ sh:path bhv:triggerKind ; sh:minCount 1 ; sh:in ( bhv:ExternalStimulus ) ;
-		sh:message "An exercise trigger's kind is bhv:ExternalStimulus, fixed. Assert it where no reasoner runs (§12)." ] .
+	sh:property [ sh:path bhv:triggerKind ; sh:minCount 1 ; sh:in ( bhv:DerivedTrigger ) ;
+		sh:message "An exercise trigger's kind is bhv:DerivedTrigger, fixed: it fires on an exercise found effective (law I10). Assert it where no reasoner runs (§12)." ] .
 
 ins:OnBreachShape a sh:NodeShape ;
 	sh:targetClass ins:OnBreach ;
@@ -4478,6 +4665,74 @@ ins:EncodingStatusShape a sh:NodeShape ;
 		sh:message "The only encoding status is ins-voc:NoMeaning: reviewed, and binding nobody." ] ;
 	sh:property [ sh:path [ sh:inversePath ins:expressedIn ] ; sh:maxCount 0 ;
 		sh:message "Text marked ins-voc:NoMeaning expresses no stated meaning: remove the mark or the meaning (§18.5)." ] .
+# ---- C9b1: legal acts (§6.4) ---------------------------------------------------
+# Each act class is named, not ins:LegalAct, so the shapes select the graph the
+# engine reads without the acts document's subclass axioms (§12.3). An assent's
+# time and evidence are ins:AssentShape's.
+
+ins:LegalActShape a sh:NodeShape ;
+	sh:targetClass ins:Consent , ins:Objection , ins:Withdrawal , ins:Exercise , ins:Proposal ;
+	sh:property [ sh:path ( fnd:hasTemporalScope fnd:validFrom ) ; sh:minCount 1 ; sh:maxCount 1 ;
+		sh:message "A legal act has exactly one time, when it was done (§6.4)." ] ;
+	sh:property [ sh:path ( fnd:hasEvidence fnd:recordedAt ) ; sh:minCount 1 ;
+		sh:message "A legal act records when it became known, its evidence's recording time (§6.4)." ] .
+
+ins:ActByShape a sh:NodeShape ;
+	sh:targetClass ins:Consent , ins:Objection , ins:Withdrawal , ins:Exercise ;
+	sh:property [ sh:path ins:actBy ; sh:minCount 1 ; sh:class pty:RoleOccupancy ;
+		sh:message "A consent, objection, withdrawal or exercise is made by at least one party, a role occupancy (ins:actBy, §6.4)." ] .
+
+ins:ProposalShape a sh:NodeShape ;
+	sh:targetClass ins:Proposal ;
+	sh:property [ sh:path ins:proposedBy ; sh:minCount 1 ; sh:class pty:RoleOccupancy ;
+		sh:message "A proposal is made by at least one party, a role occupancy (ins:proposedBy, §6.4)." ] ;
+	sh:property [ sh:path ins:proposes ; sh:minCount 1 ; sh:maxCount 1 ;
+		sh:message "A proposal proposes exactly one matter (ins:proposes). Two matters are two proposals (§6.4)." ] .
+
+ins:DirectedAtShape a sh:NodeShape ;
+	sh:targetClass ins:Consent , ins:Objection ;
+	sh:property [ sh:path ins:directedAt ; sh:minCount 1 ; sh:maxCount 1 ; sh:class ins:Proposal ;
+		sh:message "A consent or an objection is directed at exactly one proposal (ins:directedAt, §6.4)." ] .
+
+ins:WithdrawalShape a sh:NodeShape ;
+	sh:targetClass ins:Withdrawal ;
+	sh:property [ sh:path ins:withdraws ; sh:minCount 1 ; sh:maxCount 1 ;
+		sh:or ( [ sh:class ins:Assent ] [ sh:class ins:Consent ] [ sh:class ins:Objection ] ) ;
+		sh:message "A withdrawal withdraws exactly one assent, consent or objection (ins:withdraws, §6.4)." ] .
+
+ins:ExerciseShape a sh:NodeShape ;
+	sh:targetClass ins:Exercise ;
+	sh:property [ sh:path ins:exercises ; sh:minCount 1 ; sh:maxCount 1 ; sh:class ins:Power ;
+		sh:not [ sh:class ins:Template ] ;
+		sh:message "An exercise exercises exactly one bound power (ins:exercises, §6.4)." ] .
+
+ins:ProposalSubjectShape a sh:NodeShape ;
+	sh:targetSubjectsOf ins:proposedBy , ins:proposes ;
+	sh:class ins:Proposal ;
+	sh:message "Only a proposal is proposed by a party or proposes a matter." .
+
+ins:DirectedAtSubjectShape a sh:NodeShape ;
+	sh:targetSubjectsOf ins:directedAt ;
+	sh:or ( [ sh:class ins:Consent ] [ sh:class ins:Objection ] ) ;
+	sh:message "Only a consent or an objection is directed at a proposal." .
+
+ins:WithdrawsSubjectShape a sh:NodeShape ;
+	sh:targetSubjectsOf ins:withdraws ;
+	sh:class ins:Withdrawal ;
+	sh:message "Only a withdrawal withdraws a declaration." .
+
+ins:ExercisesSubjectShape a sh:NodeShape ;
+	sh:targetSubjectsOf ins:exercises ;
+	sh:class ins:Exercise ;
+	sh:message "Only an exercise exercises a power." .
+
+ins:LegalActSubjectShape a sh:NodeShape ;
+	sh:targetSubjectsOf ins:actBy , ins:forCase , ins:pursuantTo ;
+	sh:or ( [ sh:class ins:Assent ] [ sh:class ins:Consent ] [ sh:class ins:Objection ] [ sh:class ins:Withdrawal ]
+	        [ sh:class ins:Exercise ] [ sh:class ins:Proposal ] ) ;
+	sh:message "Only a legal act names who did it, its case, or an act it relies on." ;
+	sh:property [ sh:path ins:forCase ; sh:maxCount 1 ;
+		sh:message "A legal act is for at most one case (ins:forCase, §6.4)." ] .
 ```
 
 ### 20.2 Constraint shapes (SHACL-SPARQL)
@@ -5313,6 +5568,40 @@ ins:OneCaseShape a sh:NodeShape ;
 			}
 		"""
 	] .
+# ---- C9b1: legal acts (§6.4) ---------------------------------------------------
+
+ins:ExerciseByHolderShape a sh:NodeShape ;
+	sh:targetClass ins:Exercise ;
+	sh:sparql [
+		sh:message "{$this} is made by {?actor}, who does not hold the power it exercises, {?power}: an exercise is made by the power's holder (§6.4)." ;
+		sh:select """
+			PREFIX ins:  <https://www.nebularis.org/neuro-semantic/lattice/instrument#>
+			PREFIX pty:  <https://www.nebularis.org/neuro-semantic/lattice/party#>
+			PREFIX fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+			SELECT $this ?actor ?power WHERE {
+				$this ins:exercises ?power ; ins:actBy ?actor .
+				?power ins:holder ?holder .
+				?holder a pty:RoleOccupancy .
+				FILTER (?actor != ?holder)
+				FILTER NOT EXISTS { ?actor fnd:hasIdentity ?id . ?holder fnd:hasIdentity ?id }
+			}
+		"""
+	] .
+
+ins:PursuantPrecedesShape a sh:NodeShape ;
+	sh:targetSubjectsOf ins:pursuantTo ;
+	sh:sparql [
+		sh:message "{$this}, done on {?done}, is made pursuant to {?relied}, done later, on {?later}: an act relied on is done no later than the act relying on it (§6.4)." ;
+		sh:select """
+			PREFIX ins:  <https://www.nebularis.org/neuro-semantic/lattice/instrument#>
+			PREFIX fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+			SELECT $this ?relied ?done ?later WHERE {
+				$this ins:pursuantTo ?relied ; fnd:hasTemporalScope/fnd:validFrom ?done .
+				?relied fnd:hasTemporalScope/fnd:validFrom ?later .
+				FILTER (?later > ?done)
+			}
+		"""
+	] .
 ```
 
 ### 20.3 Optional: one expression per term
@@ -5381,15 +5670,22 @@ one agreed amendment per version (`ins:AgreedChainShape`), an overtaking amendme
 (`ins:OvertakingShape`, a warning), and formation (`ins:BeginsShape`, `ins:BeginsOnceShape`,
 `ins:OnAcceptanceShape`).
 
+C9b1's are registered without a law number too: each legal act's own shapes (`ins:LegalActShape`,
+`ins:ActByShape`, `ins:ProposalShape`, `ins:DirectedAtShape`, `ins:WithdrawalShape`,
+`ins:ExerciseShape` and the subject shapes), an exercise made by the power's holder
+(`ins:ExerciseByHolderShape`), and an act relied on done no later than the act relying on it
+(`ins:PursuantPrecedesShape`). An exercise's effect, law I10, is the evaluator's (C12), read from
+`ins:Exercise` facts.
+
 Laws I6, I7 and I10 arrive with the slices that build their terms. I6, the
 acyclic graph of breach, exercise and state reading, is checked once C13's state reading exists.
 
 ## 22. Worked Examples
 
-Nineteen instruments in [`examples/`](examples/), each with a small wording of its own, its
-clauses' stated meaning, and the bound meaning of one instrument. §22.5 to §22.8 state regimes,
-§22.9 to §22.12 terms in time, §22.13 to §22.17 what terms are and whom they bind, and §22.18 and
-§22.19 values in stated meaning. The C7c and C8 examples are in three parts: the form, the instance,
+The instruments in [`examples/`](examples/) each have a small wording, their clauses' stated
+meaning, and the bound meaning of one instrument. §22.5 to §22.8 state regimes, §22.9 to §22.12 terms
+in time, §22.13 to §22.17 what terms are and whom they bind, §22.18 and §22.19 values in stated
+meaning, §22.20 to §22.22 amendments, and §22.23 and §22.24 legal acts. The C7c and C8 examples are in three parts: the form, the instance,
 which stores only what differs from the form, and the generated bound meaning, headed as the expected
 output. The reference instantiator (§18.6) regenerates that part from the other two, and the tests compare
 them. Each example is validated with the lower layers' shapes and these, without a reasoner.
@@ -5869,6 +6165,59 @@ an insured who knew of loss B and kept silent may lose the cover for non-disclos
 this example. Without it, the endorsement covers loss B, and whether the policy covered it depends on
 when the question is asked. That is why the amendment and each assent keep both their valid time
 and their recording time (§6.3).
+
+### 22.23 A reinsurance with a claims co-operation clause
+
+[`reinsurance-claims-cooperation.ttl`](examples/reinsurance-claims-cooperation.ttl). A direct
+policy, and its reinsurance. One actor is the insurer on the first and the reinsured on the second.
+
+The reinsurance follows the insurer's settlements, but makes the reinsurer's approval of a
+settlement a condition precedent to its liability, as a claims co-operation clause does. The law
+also implies that the reinsurer will not withhold approval arbitrarily.
+
+What it shows (§6.4): the settlement of a claim is an exercise of the insurer's power under the
+policy, and the approval an exercise of the reinsurer's power under the reinsurance, each for the
+claim (`ins:forCase`). The settlement is made pursuant to the approval, across the two instruments.
+The reinsurer's duty to indemnify arises on an exercise of the policy's power, and its scope reads an
+evidence path from the claim, through the acts for it and what each relied on, to the activity of
+the power exercised.
+
+```mermaid
+---
+config:
+  layout: elk
+---
+flowchart LR
+    C["claim 1"]
+    S["settlement 1<br/>ins:Exercise, 15 April"] -- "forCase" --> C
+    A["approval 1<br/>ins:Exercise, 8 April"] -- "forCase" --> C
+    S -- "pursuantTo" --> A
+    A -- "pursuantTo" --> R["request 1<br/>ins:Proposal"]
+    S -- "exercises" --> PS["settle<br/>the policy's power"]
+    A -- "exercises" --> PA["approve<br/>the reinsurance's power"]
+    PA -- "activity" --> AP["ins-voc:Approve"]
+    I["indemnify<br/>the reinsurance's duty"] -- "arisesOnExerciseOf" --> PS
+```
+
+Claim 1, settled pursuant to an approval, is Permitted. "Effective approval" is read from facts: the
+approval exists, which the path reads, was made by the reinsurer, and preceded the settlement, which
+the acts' shapes check. Claim 2, settled with no approval, is Undetermined rather than Denied, since
+"no approval, no liability" needs an absence to decide, a closure (ADR-A105, held question HQ-6). The
+implied term is a bound relation `ins:impliedBy` the judgment that implied it, and whether a refusal
+was arbitrary is a determination.
+
+### 22.24 A facility's requests
+
+[`facility-requests.ttl`](examples/facility-requests.ttl), read with §22.20's example and its
+companions. The borrower makes two requests of its three lenders.
+
+What it shows (§6.4): the first request proposes §22.20's amendment. It was made on 3 February, and
+the amendment it proposes takes effect from 1 January. An amendment by agreement binds each party
+through its own assent, so the parties answer it by assenting to the new version. The second request
+asks the lenders to waive a default, a power held by them as a group. One lender consents, one
+objects, a third consents and then withdraws its consent, and the objector later withdraws its
+objection. Whether the waiver is given is the group's qualifying rule's (CCS C9b4), and whether each
+withdrawal counts is the facility's, since withdrawal has no default.
 
 ## 23. Release Notes
 

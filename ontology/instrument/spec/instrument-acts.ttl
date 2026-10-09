@@ -1,0 +1,116 @@
+# SPDX-License-Identifier: MPL-2.0
+
+@prefix ins:  <https://www.nebularis.org/neuro-semantic/lattice/instrument#> .
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix pty:  <https://www.nebularis.org/neuro-semantic/lattice/party#> .
+@prefix elg:  <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
+@prefix wrd:  <https://www.nebularis.org/neuro-semantic/lattice/wording#> .
+@prefix bhv:  <https://www.nebularis.org/neuro-semantic/lattice/behaviour#> .
+@prefix qnt:  <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+
+<https://www.nebularis.org/neuro-semantic/instrument-acts>
+	rdf:type owl:Ontology ;
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/instrument-acts/0.15.1> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.15.1> .
+
+# ---- Legal acts (§6.4) -----------------------------------------------------------
+
+ins:LegalAct a owl:Class ;
+	rdfs:subClassOf prov:Activity , fnd:TemporallyScoped , fnd:Evidenced ;
+	owl:disjointWith fnd:Version ;
+	rdfs:comment "An act of a party that an instrument makes something turn on: a declaration of will, a proposal, or the exercise of a power." ;
+	fnd:utility "Subject: a legal act. Its fnd:hasTemporalScope is when it was done, and its fnd:hasEvidence when that became known. Names who did it (ins:actBy or a sub-property), and optionally its case (ins:forCase) and the acts it relies on (ins:pursuantTo). Whether it had effect is evaluated, never stated (§6.4)." .
+
+ins:Declaration a owl:Class ;
+	rdfs:subClassOf ins:LegalAct ;
+	rdfs:comment "A declaration of will: an act whose legal effect is the effect its party intends." ;
+	fnd:utility "Subject: a declaration. Not used alone: an assent, a consent, an objection or a withdrawal." .
+
+ins:Assent a owl:Class ;
+	rdfs:subClassOf ins:Declaration ;
+	rdfs:comment "One party's assent to one instrument version." ;
+	fnd:utility "Subject: an assent. Names exactly one party (ins:assentBy) and one version (ins:assentTo). Its fnd:hasTemporalScope is when the party assented, and its fnd:hasEvidence when that became known. Written by whatever gathers the signature. Read for formation (ins:OnAcceptance) and the agreement of an amendment (§6.3)." .
+
+ins:Consent a owl:Class ;
+	rdfs:subClassOf ins:Declaration ;
+	rdfs:comment "A party's consent to a proposal." ;
+	fnd:utility "Subject: a consent. Names the party (ins:actBy) and exactly one proposal (ins:directedAt). Which consents a rule needs, and whether they meet it, are evaluated (CCS C9b4)." .
+
+ins:Objection a owl:Class ;
+	rdfs:subClassOf ins:Declaration ;
+	rdfs:comment "A party's objection to a proposal." ;
+	fnd:utility "Subject: an objection. Names the party (ins:actBy) and exactly one proposal (ins:directedAt). Its effect, such as a veto or preventing a deemed consent, is the instrument's rule." .
+
+ins:Withdrawal a owl:Class ;
+	rdfs:subClassOf ins:Declaration ;
+	rdfs:comment "A party's withdrawal of an earlier declaration." ;
+	fnd:utility "Subject: a withdrawal. Names the party (ins:actBy) and exactly one declaration (ins:withdraws). Whether it counts has no default: the instrument or a deployment's evaluation profile says (§6.4)." .
+
+[] a owl:AllDisjointClasses ;
+	owl:members ( ins:Assent ins:Consent ins:Objection ins:Withdrawal ) .
+
+ins:Exercise a owl:Class ;
+	rdfs:subClassOf ins:LegalAct ;
+	rdfs:comment "A purported exercise of a bound power." ;
+	fnd:utility "Subject: an exercise. Names exactly one bound power (ins:exercises) and the party (ins:actBy). Records only that the act was done. Whether it took effect is the evaluator's finding (law I10, bhv:ExerciseRecord), and an ins:OnExercise trigger fires on an exercise found effective." .
+
+ins:Proposal a owl:Class ;
+	rdfs:subClassOf ins:LegalAct ;
+	rdfs:comment "A matter put to parties, such as a request for a waiver or a proposed amendment." ;
+	fnd:utility "Subject: a proposal. Names who proposes it (ins:proposedBy) and exactly one matter (ins:proposes). Its fnd:hasTemporalScope is when it was made. Pending, decided and lapsed are derived, never stored." .
+
+ins:actBy a owl:ObjectProperty ;
+	rdfs:range pty:RoleOccupancy ;
+	rdfs:comment "A party who did a legal act." ;
+	fnd:utility "Subject: a legal act. Value: a role occupancy, at least one. Several parties act together in an act by agreement. An assent names its party with ins:assentBy and a proposal with ins:proposedBy, its sub-properties." .
+
+ins:assentBy a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:subPropertyOf ins:actBy ;
+	rdfs:range pty:RoleOccupancy ;
+	rdfs:comment "The party who assents." ;
+	fnd:utility "Subject: an assent. Value: exactly one role occupancy, a party to the version assented to." .
+
+ins:assentTo a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:range ins:Instrument ;
+	rdfs:comment "The instrument version assented to." ;
+	fnd:utility "Subject: an assent. Value: exactly one instrument version." .
+
+ins:proposedBy a owl:ObjectProperty ;
+	rdfs:subPropertyOf ins:actBy ;
+	rdfs:range pty:RoleOccupancy ;
+	rdfs:comment "A party who makes a proposal." ;
+	fnd:utility "Subject: a proposal. Value: a role occupancy, at least one." .
+
+ins:proposes a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:comment "The matter a proposal puts to the parties." ;
+	fnd:utility "Subject: a proposal. Value: exactly one resource, such as an ins:Amendment, which keeps its own effective time (§6.3), or a node naming a waiver or a settlement. Two matters are two proposals." .
+
+ins:directedAt a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:range ins:Proposal ;
+	rdfs:comment "The proposal a consent or an objection answers." ;
+	fnd:utility "Subject: a consent or an objection. Value: exactly one proposal." .
+
+ins:withdraws a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:range ins:Declaration ;
+	rdfs:comment "The declaration a withdrawal withdraws." ;
+	fnd:utility "Subject: a withdrawal. Value: exactly one assent, consent or objection." .
+
+ins:exercises a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:range ins:Power ;
+	rdfs:comment "The bound power an exercise purports to exercise." ;
+	fnd:utility "Subject: an exercise. Value: exactly one bound power, which may be another instrument's than the relations that arise on it. Its activity names the act." .
+
+ins:pursuantTo a owl:ObjectProperty ;
+	rdfs:range ins:LegalAct ;
+	rdfs:comment "An act relied on: a proposal answered, or a consent or approval acted on." ;
+	fnd:utility "Subject: a legal act. Value: a legal act, any number, under this or another instrument, done no later than the subject." .
+
+ins:forCase a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:comment "The case a legal act is about." ;
+	fnd:utility "Subject: a legal act. Value: at most one resource, the case, such as a claim or a delivery, of the class the relations' conditions bind (law I4). No range: what a case is belongs to the application. Behaviour's bhv:forCase is the runtime's, for occasions and act records." .

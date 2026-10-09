@@ -75,7 +75,10 @@ def _instrument(name: str) -> URIRef:
 
 # Examples that are read with others, as their headers say. Every conformance test loads them together.
 READ_WITH = {"facility-amendment": [ONTOLOGY / "wording" / "examples" / "facility-form.ttl",
-                                    ONTOLOGY / "wording" / "examples" / "facility-amendment.ttl"]}
+                                    ONTOLOGY / "wording" / "examples" / "facility-amendment.ttl"],
+             "facility-requests": [ONTOLOGY / "wording" / "examples" / "facility-form.ttl",
+                                   ONTOLOGY / "wording" / "examples" / "facility-amendment.ttl",
+                                   ONTOLOGY / "instrument" / "examples" / "facility-amendment.ttl"]}
 
 
 def _example(name: str) -> Graph:
