@@ -57,7 +57,7 @@ Follow every step for any change to `ontology/**/spec/`, `ontology/**/vocab/`, o
    `lattice-lifecycle`).
 6. **Record the release** in the "Release notes" section of every README that has one, re-pins
    included.
-7. **Check:** `mise run check:ontology-catalog`, `check:ontology-versioning`, `check:import-guard`,
+7. **Check:** `mise run check:full-sweep` runs all of these but the literate checks, one line each. Or singly: `mise run check:ontology-catalog`, `check:ontology-versioning`, `check:import-guard`,
    `build:mtp`, `check:mtp`, `check:persistence`, `check:python-root`, `check:vocabulary`,
    `check:mork-compilers`, and the literate `--check` for every literate layer touched. `build:mtp`
    rewrites `ontology/mork/mtp/data/pins.lock.json` when MORK's version changes, so commit it. If
