@@ -41,6 +41,7 @@ ex:mass-space
     qnt:orderKind qnt:TotalOrder ;
     qnt:densityKind qnt:Dense ;
     qnt:spaceHash "example:mass-space:v1" ;
+    qnt:additivity qnt:Extensive ;
     qnt:unitContract ex:mass-unit-contract ;
     qnt:hasOperationCapability
         ex:mass-compare , ex:mass-contains , ex:mass-difference ,
@@ -384,6 +385,7 @@ ex:position-space a qnt:ValueSpace ;
 ex:extent-space a qnt:ValueSpace ;
     qnt:spaceKey "delivery-extent" ; qnt:orderKind qnt:TotalOrder ; qnt:densityKind qnt:Dense ;
     qnt:spaceHash "example:extent-space:v1" ;
+    qnt:additivity qnt:Extensive ;
     qnt:hasOperationCapability ex:extent-sum .
 
 ex:position-difference

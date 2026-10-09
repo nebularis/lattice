@@ -11,8 +11,8 @@
 
 <https://www.nebularis.org/neuro-semantic/insurance/peril/vocab>
     rdf:type owl:Ontology ;
-    owl:versionIRI <https://www.nebularis.org/neuro-semantic/insurance/peril-vocab/0.3.0> ;
-    owl:imports <https://www.nebularis.org/neuro-semantic/insurance/peril/0.3.0> ,
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/insurance/peril-vocab/0.4.0> ;
+    owl:imports <https://www.nebularis.org/neuro-semantic/insurance/peril/0.4.0> ,
                 <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.4.0> ,
                 <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.4.0> .
 

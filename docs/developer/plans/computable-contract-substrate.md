@@ -3596,9 +3596,9 @@ semi-additive measure adds along some groupings and not others, and in every kno
 it must not cross is time: a balance adds across accounts, not across days (XBRL's instant against
 duration). Adding it later takes a third value, `qnt:SemiAdditive`, and an optional property naming
 what a sum must not cross. Both are additive changes. The sum's grouping is the aggregate's, which is
-Eligibility's (C9b3), so that check sits there. The one cost of waiting is that a stock declared
-Extensive in the meantime would need redeclaring, so the utility text tells authors to leave a stock
-undeclared. (b) defers it the same way, with a third subclass.
+Eligibility's (C9b3), so that check sits there. (b) defers it the same way, with a third subclass.
+(Corrected 2026-10-09: an earlier line here told authors to leave a stock undeclared, which the
+analysis below contradicts. A balance shares its currency's Extensive space.)
 
 **Design-time warnings, and a third class for semi-additivity** (the human, 2026-10-09). Facts that
 decide it:

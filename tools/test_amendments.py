@@ -95,7 +95,7 @@ def _when(text: str) -> datetime:
 def test_c9a_01_spec_terms() -> None:
     spec = _graph(SPEC)
     ontology = next(spec.subjects(RDF.type, OWL.Ontology))
-    assert spec.value(ontology, OWL.versionIRI) == URIRef(LATTICE + "instrument/0.15.1")
+    assert spec.value(ontology, OWL.versionIRI) == URIRef(LATTICE + "instrument/0.16.0")
     for term in ("Amendment", "amends", "resultsIn", "affectsExisting", "statedIn", "Assent",
                  "assentBy", "assentTo", "begins", "OnAcceptance"):
         assert spec.value(INS[term], FND.utility) is not None, term

@@ -63,12 +63,12 @@ def _vocab_closure() -> Graph:
 def test_c3_01_imports_exactly_the_layers_below() -> None:
     spec = _graph(LAYER / "spec" / "wording.ttl")
     ontology = URIRef(SPEC_IRI)
-    assert spec.value(ontology, OWL.versionIRI) == URIRef(LATTICE + "wording/0.7.0")  # C4-01, C5, C8b
+    assert spec.value(ontology, OWL.versionIRI) == URIRef(LATTICE + "wording/0.8.0")  # C4-01, C5, C8b
     assert set(spec.objects(ontology, OWL.imports)) == {
         URIRef(LATTICE + "foundation/0.4.0"),
         URIRef(LATTICE + "vocabulary/0.4.0"),
-        URIRef(LATTICE + "quantification/0.7.0"),
-        URIRef(LATTICE + "eligibility/0.10.0"),
+        URIRef(LATTICE + "quantification/0.8.0"),
+        URIRef(LATTICE + "eligibility/0.11.0"),
     }
 
 
@@ -572,7 +572,7 @@ def _reused(add: str = "", remove: tuple = ()) -> Graph:
 
 def test_c8b_01_spec_version_ranges_and_display_text() -> None:
     spec = _graph(LAYER / "spec" / "wording.ttl")
-    assert spec.value(URIRef(SPEC_IRI), OWL.versionIRI) == URIRef(LATTICE + "wording/0.7.0")
+    assert spec.value(URIRef(SPEC_IRI), OWL.versionIRI) == URIRef(LATTICE + "wording/0.8.0")
     for p in (WRD.refersToObject, WRD.refersToVariable, WRD.linksTo, WRD.reliesAsAmended):
         assert spec.value(p, RDFS.range) == FND.PersistentIdentity, p
     assert spec.value(WRD.reliesOnEdition, RDFS.range) == WRD.LinkedDocument
@@ -668,7 +668,7 @@ def test_c8b_06a_a_revised_definition_leaves_the_clause_mentioning_it_alone() ->
 def test_c8b_08_instrument_imports_wording_0_7_0_and_nothing_names_0_6_0() -> None:
     import subprocess
     spec = _graph(ROOT / "ontology" / "instrument" / "spec" / "instrument.ttl")
-    assert URIRef(LATTICE + "wording/0.7.0") in set(spec.objects(None, OWL.imports))
+    assert URIRef(LATTICE + "wording/0.8.0") in set(spec.objects(None, OWL.imports))
     found = subprocess.run(["git", "grep", "-l", "-F", LATTICE + "wording/0.6.0", "--", "ontology", "tools"],
                            cwd=ROOT, capture_output=True, text=True).stdout.split()
     assert [f for f in found if not f.endswith("catalog-v001.xml") and "fixtures/import_guard" not in f] == []
