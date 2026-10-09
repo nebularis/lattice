@@ -439,6 +439,12 @@ The three mechanisms §4's diagram names are each a closed set of named individu
 @prefix elg:  <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
 @prefix owl:  <http://www.w3.org/2002/07/owl#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@base <https://www.nebularis.org/neuro-semantic/eligibility-vocab> .
+
+<https://www.nebularis.org/neuro-semantic/eligibility-vocab>
+	a owl:Ontology ;
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/eligibility-vocab/0.12.0> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.10.0> .
 
 elg:ExactMatch a elg:MatchStrategy .
 elg:SetMembership a elg:MatchStrategy .
@@ -982,3 +988,12 @@ fun neg3 :: "decision \<Rightarrow> decision" where
 
 end
 ```
+
+## 11. Release notes
+
+Earlier versions are listed in the [ontology release register](../../docs/architecture/ontology-releases.md).
+
+- `eligibility-vocab` 0.12.0 (additive, CCS C9b0): L9's comment adds that a hierarchical condition
+  with no resolved scheme is undetermined for every candidate (FM-EP, B2.2). The vocabulary's
+  ontology header joins the README, which is again the source of every Eligibility spec, vocab and
+  shapes file. `eligibility` 0.10.0 and the shapes, 0.2.0, are unchanged.

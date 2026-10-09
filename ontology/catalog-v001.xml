@@ -41,7 +41,7 @@
     <uri name="https://www.nebularis.org/neuro-semantic/lattice/behaviour-runtime/0.13.1" uri="behaviour/spec/behaviour-runtime.ttl"/>
     <uri name="https://www.nebularis.org/neuro-semantic/lattice/behaviour-vocab/0.13.1" uri="behaviour/vocab/behaviour-vocab.ttl"/>
     <uri name="https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.13.1" uri="behaviour/spec/behaviour.ttl"/>
-    <uri name="https://www.nebularis.org/neuro-semantic/lattice/eligibility-vocab/0.11.0" uri="eligibility/vocab/eligibility-vocab.ttl"/>
+    <uri name="https://www.nebularis.org/neuro-semantic/lattice/eligibility-vocab/0.12.0" uri="eligibility/vocab/eligibility-vocab.ttl"/>
     <uri name="https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.10.0" uri="eligibility/spec/eligibility.ttl"/>
     <uri name="https://www.nebularis.org/neuro-semantic/lattice/executable" uri="mork/spec/Executable.ttl"/>
     <uri name="https://www.nebularis.org/neuro-semantic/lattice/executable/0.6.0" uri="mork/spec/Executable.ttl"/>
