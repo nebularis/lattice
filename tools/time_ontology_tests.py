@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Times each step of the `check:ontology-catalog` mise task separately, slowest first.
 
-Run from anywhere: python .local/time_ontology_tests.py [--top N]
+Run from the repository root: python tools/time_ontology_tests.py [--top N]
 Each test file runs in its own pytest process, so import-time ontology parsing is counted
 against the file that pays it. The sum therefore exceeds the single-process task time.
 """

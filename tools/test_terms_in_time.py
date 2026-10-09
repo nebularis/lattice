@@ -8,7 +8,6 @@ Pack."""
 
 from __future__ import annotations
 
-import subprocess
 import sys
 from pathlib import Path
 
@@ -23,6 +22,7 @@ sys.path.insert(0, str(ROOT / "tools"))
 sys.path.insert(0, str(ROOT / "tools" / "mork_compilers" / "src"))
 
 import literate_extract  # noqa: E402
+from conftest import repo_files  # noqa: E402
 from mork_compilers import reasoning  # noqa: E402
 
 LATTICE = "https://www.nebularis.org/neuro-semantic/lattice/"
@@ -251,8 +251,7 @@ def test_c7b_16_context_value_and_offset_shapes() -> None:
 # ---- C7b-17: the cascade ----------------------------------------------------
 
 def test_c7b_17_nothing_still_imports_quantification_0_6_0() -> None:
-    found = subprocess.run(["git", "grep", "-l", "-F", LATTICE + "quantification/0.6.0", "--", "ontology", "tools"],
-                           cwd=ROOT, capture_output=True, text=True).stdout.split()
+    found = repo_files(("ontology", "tools"), LATTICE + "quantification/0.6.0", fixed=True)
     assert [f for f in found if not f.endswith("catalog-v001.xml") and "fixtures/import_guard" not in f] == []
 
 

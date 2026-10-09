@@ -21,6 +21,7 @@ sys.path.insert(0, str(ROOT / "tools" / "mork_compilers" / "src"))
 from test_parameter_bindings import READ_WITH  # noqa: E402
 
 import literate_extract  # noqa: E402
+from conftest import repo_files  # noqa: E402
 from mork_compilers import reasoning  # noqa: E402
 
 LATTICE = "https://www.nebularis.org/neuro-semantic/lattice/"
@@ -217,11 +218,11 @@ def test_c6_09_every_property_states_subject_and_value() -> None:
 # ---- C6-10: retired terms ---------------------------------------------------
 
 def test_c6_10_no_retired_term_outside_history() -> None:
-    # POSIX ERE has no \b, and git grep -E on macOS ignores it. [^A-Za-z0-9_] behaves the same on every platform.
+    # [^A-Za-z0-9_] behaves the same as \b on every platform (POSIX ERE has no \b).
     pattern = "ins:(" + "|".join(RETIRED) + ")([^A-Za-z0-9_]|$)"
-    found = subprocess.run(["git", "grep", "-l", "-E", pattern, "--", "ontology", "tools", "test", "docs/architecture/ontology-architecture.md"],
-                           cwd=ROOT, capture_output=True, text=True).stdout.split()
-    allowed = {"ontology/instrument/README.md", "tools/test_instrument.py"}  # release notes, this list
+    found = repo_files(("ontology", "tools", "test", "docs/architecture/ontology-architecture.md"), pattern)
+    # Release notes, this list, and test_repo_files.py's own fixture data for repo_files() itself.
+    allowed = {"ontology/instrument/README.md", "tools/test_instrument.py", "tools/test_repo_files.py"}
     assert [f for f in found if f not in allowed and "/decisions/" not in f] == []
 
 

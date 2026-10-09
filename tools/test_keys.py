@@ -7,7 +7,6 @@ harness jar is not built."""
 from __future__ import annotations
 
 import re
-import subprocess
 import sys
 import tempfile
 from pathlib import Path
@@ -23,6 +22,7 @@ for source in ("tools/mork_compilers/src", "tools/persistence/src", "tools/surfa
 sys.path.insert(0, str(ROOT / "tools"))
 
 import literate_extract  # noqa: E402
+from conftest import repo_files  # noqa: E402
 from lattice_minting import Minter, Recipe  # noqa: E402
 from mork_compilers import reasoning  # noqa: E402
 from persistence.compiler import compile_to_graph  # noqa: E402
@@ -271,8 +271,7 @@ def test_f1_09_lookup_paths() -> None:
 # ---- F1-10: the cascade -----------------------------------------------------
 
 def test_f1_10_nothing_pins_foundation_0_3_0() -> None:
-    pinned = subprocess.run(["git", "grep", "-l", "-F", LATTICE + "foundation/0.3.0", "--", "ontology", "tools", "packages"],
-                            cwd=ROOT, capture_output=True, text=True).stdout.split()
+    pinned = repo_files(("ontology", "tools", "packages"), LATTICE + "foundation/0.3.0", fixed=True)
     assert [p for p in pinned if not p.startswith("tools/fixtures/import_guard/")] == []
 
 

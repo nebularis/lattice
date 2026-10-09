@@ -8,7 +8,6 @@ existing tests and checks; both are recorded in the Validation Pack."""
 
 from __future__ import annotations
 
-import subprocess
 import sys
 from pathlib import Path
 
@@ -22,6 +21,7 @@ sys.path.insert(0, str(ROOT / "tools"))
 sys.path.insert(0, str(ROOT / "tools" / "mork_compilers" / "src"))
 
 import literate_extract  # noqa: E402
+from conftest import repo_files  # noqa: E402
 from mork_compilers import reasoning  # noqa: E402
 
 LATTICE = "https://www.nebularis.org/neuro-semantic/lattice/"
@@ -125,8 +125,7 @@ def test_c7c_01_party_is_domain_neutral() -> None:
     assert (PTY.EachForOwnShare, RDF.type, PTY.CompositionRule) in party
     assert (PTY.EachForWhole, RDF.type, PTY.CompositionRule) in party
     assert not any(PTY.share in t or PTY.SeveralOnly in t or PTY.JointAndSeveral in t for t in party)
-    found = subprocess.run(["git", "grep", "-l", "-E", r"pty:(share([^A-Za-z0-9_]|$)|SeveralOnly|JointAndSeveral)", "--", "ontology",
-                            "tools"], cwd=ROOT, capture_output=True, text=True).stdout.split()
+    found = repo_files(("ontology", "tools"), r"pty:(share([^A-Za-z0-9_]|$)|SeveralOnly|JointAndSeveral)")
     assert found == []
 
 

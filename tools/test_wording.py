@@ -21,6 +21,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(Path(__file__).resolve().parent / "mork_compilers" / "src"))
 
 import literate_extract  # noqa: E402
+from conftest import repo_files  # noqa: E402
 from mork_compilers import reasoning  # noqa: E402
 from ontology_catalog import Catalog, closure  # noqa: E402
 
@@ -666,11 +667,9 @@ def test_c8b_06a_a_revised_definition_leaves_the_clause_mentioning_it_alone() ->
 
 
 def test_c8b_08_instrument_imports_wording_0_7_0_and_nothing_names_0_6_0() -> None:
-    import subprocess
     spec = _graph(ROOT / "ontology" / "instrument" / "spec" / "instrument.ttl")
     assert URIRef(LATTICE + "wording/0.7.0") in set(spec.objects(None, OWL.imports))
-    found = subprocess.run(["git", "grep", "-l", "-F", LATTICE + "wording/0.6.0", "--", "ontology", "tools"],
-                           cwd=ROOT, capture_output=True, text=True).stdout.split()
+    found = repo_files(("ontology", "tools"), LATTICE + "wording/0.6.0", fixed=True)
     assert [f for f in found if not f.endswith("catalog-v001.xml") and "fixtures/import_guard" not in f] == []
 
 

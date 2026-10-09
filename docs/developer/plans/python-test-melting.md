@@ -3,7 +3,7 @@
 # Plan: Python test speed
 
 **Unit ID:** `python-test-melting`
-**Status:** Planned. Not started. Questions TM-Q2 to TM-Q5 open, each blocking the slice named.
+**Status:** In progress. TM0, TM1, TM2, TM6, TM7 done, 2026-10-09. TM-Q1 to TM-Q5 decided (status record).
 **Trigger:** human request, 2026-10-09. The `check:ontology-catalog` run took 19 minutes in a fresh
 cloud environment, and about 31 s for one test locally.
 **Status record:** [python-test-melting.md](../status/python-test-melting.md)

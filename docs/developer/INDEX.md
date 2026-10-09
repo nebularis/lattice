@@ -658,11 +658,11 @@ compiler backend compiling a mapping graph into an ingress kit's stylesheet. Bui
 [xml-egress-and-transformation-kits.md](sketches/xml-egress-and-transformation-kits.md) without
 revising it. A utility meant to be glued into other stacks, not a vertical proof of concept.
 
-## 8.15 Python Test Speed — Planned
+## 8.15 Python Test Speed — In progress
 
 | Field | Value |
 |-------|-------|
-| **Status** | ⏳ Planned 2026-10-09. TM0 (measure) needs no decision. TM-Q2 to TM-Q5 open |
+| **Status** | 🔧 In progress, branch `test/slow-py`. TM0, TM1, TM2, TM6, TM7 done 2026-10-09 (456s to ~130s serial, `pytest-xdist`). TM-Q1 to TM-Q5 decided |
 | **Unit ID** | `python-test-melting` |
 | **Sketches** | [python-test-melting.md](sketches/python-test-melting.md), [test-suite-performance.md](sketches/test-suite-performance.md) |
 | **Plan** | [python-test-melting.md](plans/python-test-melting.md) |
