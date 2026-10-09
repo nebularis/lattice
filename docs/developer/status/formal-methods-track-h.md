@@ -3,7 +3,7 @@
 # Formal Methods, Track H: Status
 
 **Unit ID:** `formal-methods-track-h` (phase, within the `formal-methods` epic)
-**Status:** In progress. H1.1 to H1.2c signed off. The TD-25 fix (H1.2d) and H1.3 are authored and verified, awaiting human review
+**Status:** In progress. H1.1 to H1.2c signed off. H1.2d, H1.3 and H1.4a are authored and verified, awaiting human review
 **Last updated:** 2026-10-08
 **Plan:** [formal-methods-track-h.md](../plans/formal-methods-track-h.md)
 **Sketches:** [formal-methods-track-h.md](../sketches/formal-methods-track-h.md) (main),
@@ -53,7 +53,9 @@ reviewing the ADR; H2 onward should wait for ADR-A-FM4's acceptance.
 | H1.2c (witnesses for the 13 remaining shapes) | **signed off.** [Validation Pack](../validation/FMH-H1-2c.md) | |
 | H1.2d (refuse a multi-valued single-valued property, TD-25) | **authored, verified by the agent, awaiting the human's gate.** [Validation Pack](../validation/FMH-H1-2d.md) | the human's review |
 | H1.3 (static template checks S-3 and S-4) | **authored, verified by the agent, awaiting the human's gate.** [Validation Pack](../validation/FMH-H1-3.md) | the human's review |
-| H1.4 and H1.5 (declaration gap, stable labels) | not started, fully detailed in the plan | H1.3's gate, by the working agreement |
+| H1.4a (refuse a composite boundary with several node properties, H-D4) | **authored, verified by the agent, awaiting the human's gate.** [Validation Pack](../validation/FMH-H1-4a.md) | the human's review |
+| H1.4b (the declaration/implementation gap report) | not started | none |
+| H1.5 (stable labels) | not started, fully detailed in the plan | H1.4's gates, by the working agreement |
 | H2 (typed IR) | not started, outlined in the plan | H1 (informative, not a hard blocker) |
 | H3 (specification registry) | not started, outlined in the plan | H2 preferred first (smaller, more self-contained), not a hard blocker |
 | H4 (exhaustive cross-axis validation, BDD/SMT) | not started, outline only | H3 |
@@ -79,6 +81,7 @@ reviewing the ADR; H2 onward should wait for ADR-A-FM4's acceptance.
 | H-D10 | how to close TD-25 (a multi-valued functional property is resolved by triple order, law L1). Refuse it in the resolver, run the structural shapes inside `compile`, or add a hygiene check. See the H1.2c Validation Pack for the consequences of each | decided by the human, 2026-10-09: refuse it in the resolver. Done in H1.2d |
 | H-D11 | S-3 treats a `$name` variable as bound by the caller, read from the template text, since the compiled profile lists no request-time parameters | **decided by the human, 2026-10-09**: keep option A, let H2's typed IR settle it. [Walkthrough](../plans/formal-methods-track-h.md#133-h-d11-how-does-the-check-know-which-variables-the-caller-supplies) |
 | H-D12 | S-3 treats a `BIND` over bound inputs as binding its variable, though an expression can fail and leave it unbound | **decided by the human, 2026-10-09**: keep option A, record the limitation here and in TD-26, take option D (a required-parameter guard) in H2. [Walkthrough](../plans/formal-methods-track-h.md#134-h-d12-does-a-bind-count-as-giving-its-variable-a-value) |
+| H-D13 | H1.4a also changes what is bound for a shape with exactly one node property, from the first path to the node property, and puts the boundary closure in path order. The old binding could pick a plain property and depended on triple order. See the H1.4a Validation Pack | human, confirm at H1.4a's gate |
 | H-D7 | H1's checks live in one new module, `persistence.hygiene`, behind one `hygiene` subcommand, and run under `check:persistence`. No new `mise` task until H1's closing slice | agreed by the human, 2026-10-09 |
 
 ## Log
@@ -148,3 +151,13 @@ reviewing the ADR; H2 onward should wait for ADR-A-FM4's acceptance.
   `main` was merged into the branch (`f7c72d9`), with no conflicts.
 - 2026-10-09: the human decided H-D11 and H-D12 (option A for both, remedies in H2). Recorded in the
   plan (§8 and §13.5), in TD-26, and in the `templatecheck.py` docstring. No code behaviour changed.
+- 2026-10-09: H-D11 and H-D12 recorded. The TD-26 demonstration was re-run on a conforming engine
+  (Oxigraph) and corrected: rdflib's `update` evaluates lazily, and had wrongly shown no revision
+  record after the retry. H1.4 is split into H1.4a and H1.4b. H1.4a authored: a composite boundary
+  whose shape reaches other nodes through more than one property is refused
+  (`CompositeBoundaryMultipleProperties`), the bound property is the node property and no longer the
+  first path found, and the closure no longer depends on triple order. Findings: the shipped
+  composite example is sound (one node property, `sku` is a plain property), and the old binding
+  was both incomplete and order-dependent. The plan's expectation that the shipped example would
+  show the gap was wrong. 87 of 87 rules witnessed. `check:persistence` is at 905 passed, 3 skipped
+  (the tests that need `pyoxigraph`) and 1 xfailed.

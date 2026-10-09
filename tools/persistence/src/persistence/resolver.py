@@ -208,6 +208,7 @@ def _select(
             max_depth = int(extra.get("maxTraversalDepth", 8))
             closure = walk_boundary_shape(graph, boundary_shape, max_depth)
             extra["compositeProperties"] = closure.composite_properties
+            extra["compositeEdgeProperties"] = closure.node_properties
 
     return ResolvedDimension(
         dimension=dimension,

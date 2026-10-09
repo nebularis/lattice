@@ -48,6 +48,10 @@ class Closure:
 
     root_shape: URIRef
     composite_properties: list[URIRef] = field(default_factory=list)
+    # The properties that lead to another node (``sh:node``), the edges along which a
+    # member is a separate subject. ``composite_properties`` holds every property the
+    # walk reached, so it also holds plain value properties such as a datatype property.
+    node_properties: list[URIRef] = field(default_factory=list)
     max_depth_reached: int = 0
 
 
@@ -70,12 +74,17 @@ def _walk(
     if depth > max_depth:
         return
     closure.max_depth_reached = max(closure.max_depth_reached, depth)
-    for prop_shape in graph.objects(shape, SH.property):
+    # In path order, not triple order: the closure, and so the property the compiler
+    # binds, must not depend on how the shape's triples happened to be written.
+    ordered = sorted(graph.objects(shape, SH.property), key=lambda ps: (str(graph.value(ps, SH.path)), str(ps)))
+    for prop_shape in ordered:
         path = graph.value(prop_shape, SH.path)
         if path is not None and path not in closure.composite_properties:
             closure.composite_properties.append(path)
         node_shape = graph.value(prop_shape, SH.node)
         if node_shape is not None:
+            if path is not None and path not in closure.node_properties:
+                closure.node_properties.append(path)
             _walk(graph, node_shape, max_depth, ancestors + [shape], closure, depth + 1)
 
 

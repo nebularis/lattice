@@ -156,8 +156,12 @@ def select_operations(
             # persistence.boundary). Depth is enforced at compile time by
             # the shape walk's own cycle detection, not by a runtime bound.
             boundary_dim = dimensions["aggregateBoundary"]
+            # The property that leads to a member node. A boundary with more than one is
+            # refused by the validator, so there is at most one here. A shape with none has
+            # no members to sweep, and keeps binding its first property as before.
+            edges = boundary_dim.extra.get("compositeEdgeProperties", [])
             composite_properties = boundary_dim.extra.get("compositeProperties", [])
-            first_property = composite_properties[0] if composite_properties else None
+            first_property = (edges or composite_properties or [None])[0]
             bindings = common_bindings + (
                 [ParameterBinding("compositeProperty", "Iri", Iri.encode(str(first_property)))]
                 if first_property is not None

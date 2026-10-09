@@ -137,6 +137,21 @@ def check_cross_axis(
             raise MissingBoundaryShapeError(
                 f"dal:CompositePropertyBoundary at {target} declares no dal:boundaryShape"
             )
+        edges = boundary.extra.get("compositeEdgeProperties", [])
+        if len(edges) > 1:
+            # cas-replace-composite-property sweeps members along ONE property
+            # (``$root <p>+ ?member``). A member reached through any other property
+            # keeps its triples after a replace, a dangling subgraph that whole-replace
+            # exists to prevent. Refused until the typed IR of formal-methods H2 can
+            # generate a sweep over several properties (H-D4, TD-03).
+            listed = ", ".join(str(e) for e in edges)
+            raise CrossAxisViolation(
+                "CompositeBoundaryMultipleProperties",
+                str(target),
+                f"boundary shape {boundary_shape} leads to other nodes through {len(edges)} properties "
+                f"({listed}). The generated replace follows one, so members reached through the others "
+                "would be left behind as dangling triples. Reduce the shape to one such property.",
+            )
         max_depth = int(boundary.extra.get("maxTraversalDepth", 8))
         reachable = reachable_properties(graph, boundary_shape, max_depth)
         for constraint in uniqueness:
