@@ -125,7 +125,7 @@ def test_c7c_01_party_is_domain_neutral() -> None:
     assert (PTY.EachForOwnShare, RDF.type, PTY.CompositionRule) in party
     assert (PTY.EachForWhole, RDF.type, PTY.CompositionRule) in party
     assert not any(PTY.share in t or PTY.SeveralOnly in t or PTY.JointAndSeveral in t for t in party)
-    found = subprocess.run(["git", "grep", "-l", "-E", r"pty:(share\b|SeveralOnly|JointAndSeveral)", "--", "ontology",
+    found = subprocess.run(["git", "grep", "-l", "-E", r"pty:(share([^A-Za-z0-9_]|$)|SeveralOnly|JointAndSeveral)", "--", "ontology",
                             "tools"], cwd=ROOT, capture_output=True, text=True).stdout.split()
     assert found == []
 

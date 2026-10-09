@@ -217,7 +217,8 @@ def test_c6_09_every_property_states_subject_and_value() -> None:
 # ---- C6-10: retired terms ---------------------------------------------------
 
 def test_c6_10_no_retired_term_outside_history() -> None:
-    pattern = "ins:(" + "|".join(RETIRED) + r")\b"
+    # POSIX ERE has no \b, and git grep -E on macOS ignores it. [^A-Za-z0-9_] behaves the same on every platform.
+    pattern = "ins:(" + "|".join(RETIRED) + ")([^A-Za-z0-9_]|$)"
     found = subprocess.run(["git", "grep", "-l", "-E", pattern, "--", "ontology", "tools", "test", "docs/architecture/ontology-architecture.md"],
                            cwd=ROOT, capture_output=True, text=True).stdout.split()
     allowed = {"ontology/instrument/README.md", "tools/test_instrument.py"}  # release notes, this list
