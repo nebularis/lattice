@@ -77,8 +77,8 @@ reviewing the ADR; H2 onward should wait for ADR-A-FM4's acceptance.
 | H-D8 | H1.2 is delivered in three parts (a, b, c), because the first run found 55 of 83 rules unwitnessed and closing them together breaks the slice-sizing rule. The plan's H1.2 validation ("every existing rule either has a witness or is listed as a gap") is met by part a. The plan's metric "vacancy rate closed" is then measured as the shrinkage of `known-gaps.txt` | agreed by the human, 2026-10-09 |
 | H-D9 | the rule inventory is read from the package's own source (refusals and warnings by syntax, shapes from `constraints.ttl`, audits from the template names), not from a hand-kept list, so a new rule cannot dodge the check. A rule is keyed by its `CrossAxisViolation` kind, or by exception class name for the four refusals that carry no kind | agreed by the human, 2026-10-09 |
 | H-D10 | how to close TD-25 (a multi-valued functional property is resolved by triple order, law L1). Refuse it in the resolver, run the structural shapes inside `compile`, or add a hygiene check. See the H1.2c Validation Pack for the consequences of each | decided by the human, 2026-10-09: refuse it in the resolver. Done in H1.2d |
-| H-D11 | S-3 treats a `$name` variable as bound by the caller, read from the template text, since the compiled profile lists no request-time parameters | open. Walkthrough with options in [plan §13.3](../plans/formal-methods-track-h.md#133-h-d11-how-does-the-check-know-which-variables-the-caller-supplies) |
-| H-D12 | S-3 treats a `BIND` over bound inputs as binding its variable, though an expression can fail and leave it unbound | open. Walkthrough with options in [plan §13.4](../plans/formal-methods-track-h.md#134-h-d12-does-a-bind-count-as-giving-its-variable-a-value) |
+| H-D11 | S-3 treats a `$name` variable as bound by the caller, read from the template text, since the compiled profile lists no request-time parameters | **decided by the human, 2026-10-09**: keep option A, let H2's typed IR settle it. [Walkthrough](../plans/formal-methods-track-h.md#133-h-d11-how-does-the-check-know-which-variables-the-caller-supplies) |
+| H-D12 | S-3 treats a `BIND` over bound inputs as binding its variable, though an expression can fail and leave it unbound | **decided by the human, 2026-10-09**: keep option A, record the limitation here and in TD-26, take option D (a required-parameter guard) in H2. [Walkthrough](../plans/formal-methods-track-h.md#134-h-d12-does-a-bind-count-as-giving-its-variable-a-value) |
 | H-D7 | H1's checks live in one new module, `persistence.hygiene`, behind one `hygiene` subcommand, and run under `check:persistence`. No new `mise` task until H1's closing slice | agreed by the human, 2026-10-09 |
 
 ## Log
@@ -146,3 +146,5 @@ reviewing the ADR; H2 onward should wait for ADR-A-FM4's acceptance.
   written from experiments on the real templates. They found one new hazard, TD-26: an update run
   without a required `$parameter` writes a partial record and advances the counter, with no error.
   `main` was merged into the branch (`f7c72d9`), with no conflicts.
+- 2026-10-09: the human decided H-D11 and H-D12 (option A for both, remedies in H2). Recorded in the
+  plan (§8 and §13.5), in TD-26, and in the `templatecheck.py` docstring. No code behaviour changed.

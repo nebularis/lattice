@@ -213,13 +213,13 @@ None of these may be taken by an agent.
 | H-D5 | whether track H's claims feed track A's ledger once it exists, or keep their own interim Validation-Pack record permanently | recommend: feed track A once it starts, per ADR-A-FM4 decision 7 | open, not urgent |
 
 Decisions H-D6 to H-D10 were taken as H1 progressed and are recorded, with their reasons, in the
-[status record](../status/formal-methods-track-h.md). Two are open and are explained in
+[status record](../status/formal-methods-track-h.md). Two, H-D11 and H-D12, are explained in
 [§13](#13-walkthrough-the-two-assumptions-behind-check-s-3-h-d11-and-h-d12).
 
 | # | Decision | State |
 |---|---|---|
-| H-D11 | how check S-3 knows which variables the caller supplies | **open**, walkthrough in §13.3 |
-| H-D12 | whether a `BIND` counts as giving its variable a value | **open**, walkthrough in §13.4 |
+| H-D11 | how check S-3 knows which variables the caller supplies | **decided by the human, 2026-10-09**: keep option A (the `$name` convention) and let H2's typed IR settle it. Walkthrough in §13.3 |
+| H-D12 | whether a `BIND` counts as giving its variable a value | **decided by the human, 2026-10-09**: keep option A, record the limitation in this plan and in TD-26, and take option D (a required-parameter guard) in H2. Walkthrough in §13.4 |
 
 ## 9. Alignment with other work
 
@@ -444,11 +444,17 @@ take D in H2. Option C is the one to pick if you want the stored-counter case su
 `persistence.templatecheck.operations`, create a dataset with one stream row, and run
 `dataset.update(text, initBindings={...})` once with every parameter and once without `revBase`.
 
-### 13.5 What you are deciding
+### 13.5 Outcome
 
-| Decision | If you agree with A | If you prefer another |
+Both decisions were taken on 2026-10-09 in favour of option A, with the remedy deferred to H2.
+
+| Decision | Outcome | What it commits H2 to |
 |---|---|---|
-| **H-D11** | No change. Option B arrives with H2 | Say B or C. B is a small ontology and compiler change, C is a few lines in the check |
-| **H-D12** | No change. TD-26 records the hazard and D arrives with H2 | Say B, C or D. C is a few lines in the check, B is mostly allowances, D is a template change that I would treat as its own slice |
+| **H-D11** | Keep the `$name` convention. The check reads the caller's parameters from the template text | The typed IR declares each operation's request-time parameters. When it does, the lexical convention is replaced by the declared list, and the check reads that |
+| **H-D12** | Keep trusting a `BIND` over bound inputs. The limitation is recorded here and as TD-26 | The typed IR declares required parameters and generates a guard so that an update with a missing parameter writes **nothing**, which is option D. TD-26 closes then |
 
-Neither decision blocks H1.4.
+**The limitation stands until H2.** Check S-3 does not detect an update run with a missing
+parameter, a stored counter that is not a number, or a template author who writes `$x` where the
+`WHERE` clause should bind `?x`. The first two are caller or data faults, and the third is a review
+matter while the library is 24 maintained files. The assumptions are also stated at the top of
+`persistence/templatecheck.py`.
