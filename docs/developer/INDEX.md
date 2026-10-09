@@ -658,6 +658,33 @@ compiler backend compiling a mapping graph into an ingress kit's stylesheet. Bui
 [xml-egress-and-transformation-kits.md](sketches/xml-egress-and-transformation-kits.md) without
 revising it. A utility meant to be glued into other stacks, not a vertical proof of concept.
 
+## 8.15 Python Test Speed — Planned
+
+| Field | Value |
+|-------|-------|
+| **Status** | ⏳ Planned 2026-10-09. TM0 (measure) needs no decision. TM-Q2 to TM-Q5 open |
+| **Unit ID** | `python-test-melting` |
+| **Sketches** | [python-test-melting.md](sketches/python-test-melting.md), [test-suite-performance.md](sketches/test-suite-performance.md) |
+| **Plan** | [python-test-melting.md](plans/python-test-melting.md) |
+| **Status Record** | [python-test-melting.md](status/python-test-melting.md) |
+| **ADRs** | none |
+
+Takes on TD-18 and TD-29. Measures the Python test suites, then shares parsed ontology graphs and
+repeated SHACL validation across test modules. Owns the test support module that the repository
+catalogue's RC3 slice later feeds from the catalogue.
+
+## 8.16 Repository Catalogue — Sketch
+
+| Field | Value |
+|-------|-------|
+| **Status** | 🔵 Sketched 2026-10-09. RC-Q1 to RC-Q8 open. Not planned |
+| **Unit ID** | `repository-catalogue` |
+| **Sketch** | [repository-catalogue.md](sketches/repository-catalogue.md) |
+| **ADRs** | A-121 to be drafted as Proposed once RC-Q3 and RC-Q7 are answered |
+
+One catalogue of where things live in the repository, one interface module that reads it, and a check
+that code and documents agree with it. Shares work with `python-test-melting` (sketch §8.1).
+
 ## 8. Phase Handoff Documents (0-6)
 
 | Phase | Status Record | Key Outcome |

@@ -3,18 +3,17 @@
 # Repository Catalogue — Sketch
 
 **Unit ID:** `repository-catalogue`
-**Status:** Sketch. Design questions RC-Q1 to RC-Q8 open. Not yet planned.
+**Status:** Sketch. Design questions RC-Q1 to RC-Q8 open. Not yet planned. Shares work with
+[`python-test-melting`](../plans/python-test-melting.md) (§8.1)
 **Date:** 2026-10-09
 **Question prefix:** RC
-**Proposes:** ADR-A120, *Repository catalogue and location resolution* (next free number at the
-time of writing. Re-check the [ADR catalogue](../../architecture/decisions/README.md) before filing)
+**Proposes:** ADR-A121, *Repository catalogue and location resolution* (next free number at the
+time of writing, A120 being taken. Re-check the [ADR catalogue](../../architecture/decisions/README.md) before filing)
 **Related:** [ADR-A77](../../architecture/decisions/ADR-A77-repository-topology-and-documentation-governance.md)
 (repository topology), [ADR-A88](../../architecture/decisions/ADR-A88-ontology-import-resolution-for-consumers.md)
 (ontology import resolution), [ADR-A29](../../architecture/decisions/ADR-A29-repository-toolchain-and-environment-boundary.md)
 (`mise` as the task entry point), [ADR-A117](../../architecture/decisions/ADR-A117-agent-guidance-and-skill-library.md)
 (agent guidance and skills)
-
-> Drafted in `.local/`. Relative links assume its eventual home, `docs/developer/sketches/`.
 
 ---
 
@@ -26,8 +25,8 @@ that the paths still exist.
 
 ### 1.1 A worked example
 
-[`witness.py`](../../../tools/persistence/src/persistence/witness.py) (formal-methods track H,
-slice H1.2) opens with this:
+`tools/persistence/src/persistence/witness.py` (formal-methods track H,
+slice H1.2, on a formal-methods branch and not yet on `main`) opens with this:
 
 ```python
 PACKAGE_DIR = Path(__file__).resolve().parent
@@ -397,10 +396,10 @@ Each slice ends with `mise run check` passing and the known-exceptions list shor
 
 | Slice | Scope |
 |---|---|
-| RC0 | ADR-A120 drafted, catalogue document with roots, conventions and every module, interface module, `check:catalogue` (schema and both tree directions), bypass scan in report-only mode with the exceptions list generated from today's tree |
+| RC0 | ADR-A121 drafted, catalogue document with roots, conventions and every module, interface module, `check:catalogue` (schema and both tree directions), bypass scan in report-only mode with the exceptions list generated from today's tree |
 | RC1 | pilot, `tools/persistence` (`witness.py`, `cli.py`, its tests and its `mise` tasks). Confirms root discovery (§4.3) under pytest, `mise` and CI |
 | RC2 | root-level scripts and checks: `literate_extract.py` reads extraction contracts from the catalogue, `ontology_version_check`, `ontology_catalog`, `import_guard`, `check_formal_freshness`, `repository_topology_check`. The four Instrument tests drop their `--shapes` lists |
-| RC3 | root-level `tools/test_*.py` (about 35 files) |
+| RC3 | root-level `tools/test_*.py` (25 files, 19 of them deriving the root from `__file__`). Follows `python-test-melting` TM3 (§8.1), so the 16 modules that share ontology fixtures need one edit in the test support module, not 16 |
 | RC4 | tool packages `mork`, `mork_compilers`, `surface`, `vocabulary`, `spc/python`, `reference/*`, then `workers/` |
 | RC5 | `mise.toml` tasks that name module paths use the CLI. Bypass scan switches from report-only to failing |
 | RC6 | skills and AGENTS.md (§6), READMEs link to the catalogue, link check widened |
@@ -408,6 +407,22 @@ Each slice ends with `mise run check` passing and the known-exceptions list shor
 `sys.path.insert` sibling imports (34 sites) are related but separate. Many exist only to import a
 sibling script's constants, and disappear when those constants move to the catalogue. The rest are
 packaging debt and are out of scope.
+
+### 8.1 Work shared with `python-test-melting`
+
+The plan to speed up the Python tests ([`python-test-melting`](../plans/python-test-melting.md))
+touches the same 16 test modules and needs the same things. Rather than do it twice, the plan owns
+the following, and this unit consumes the result.
+
+| Shared task | Owned by | Effect here |
+|---|---|---|
+| One test support module holding the layer stack (`LOWER`, the layer order, `ALL_SHAPES`), the extraction-contract shape lists repeated in four Instrument tests, and the one place a test finds the repository root (§1.2) | TM1, TM3 | RC3 shrinks to replacing that module's literals with catalogue lookups. The module is a single entry in the known-exceptions list until then (§5, item 4) |
+| Scanning repository files without `git grep` (TD-29), taking its roots as arguments | TM6 | the helper's roots come from the catalogue after RC3. It also removes a dependence on `.git`, which §4.3 already rules out for root discovery |
+| Replacing `sys.path.insert` and `from test_parameter_bindings import ...` sibling imports in those modules | TM1, TM3 | fewer of the 34 sites (§8) remain for this unit to count |
+
+Nothing in `python-test-melting` waits for an answer to RC-Q1 to RC-Q8. Its support module takes
+locations as ordinary module-level constants and keeps no path logic beyond them, so the catalogue
+can replace those constants later without changing a caller.
 
 ## 9. Design questions
 
@@ -523,4 +538,4 @@ which map IRIs to files. "Repository catalogue" differs by one word and one spel
 ## 11. Next
 
 🔴 PLAN FIRST. RC-Q1 to RC-Q8 need answers, RC-Q3 and RC-Q7 first since they fix the schema's scope.
-After that, RC0 can be planned and ADR-A120 drafted as Proposed.
+After that, RC0 can be planned and ADR-A121 drafted as Proposed.
