@@ -14,7 +14,7 @@ This ontological substrate allows a user to state what legally binding outcomes 
 
 Instrument imports Foundation, Vocabulary, Quantification, Party, Eligibility, Wording and Behaviour's configuration document. It never imports Behaviour's runtime document, which itself imports only Behaviour's configuration, so Instrument meets no runtime record. Instrument is two documents in one namespace. The main document, `spec/instrument.ttl`, holds stated and bound meaning. The acts document, `spec/instrument-acts.ttl`, imports it and holds the legal acts the parties did (§6.4), so a consumer that only states meaning never imports an act. Nothing outside Instrument imports either, and in LATTICE only examples and tests read the acts document ([ADR-A104](../../docs/architecture/decisions/ADR-A104-instrument-terms-and-legal-relations.md), [ADR-A106](../../docs/architecture/decisions/ADR-A106-behaviour-configuration-runtime-occasions-and-records.md)).
 
-This version (0.15.0, CCS slice C9a) holds the instrument, its terms in two tiers, the five relations, their parties and their content (C6), the legal triggers, the regimes they move, and the gating of relations by a regime's state (C7a), terms in time, namely due ranges, windows, recurrences, ending and survival (C7b), what terms are and whom they bind: definitions, deemings and classification, sections, and parties resolved through the case (C7c), and values in stated meaning, which text is expected to mean something, and the generation of bound meaning (C8). It is pinned to Wording 0.7.0, whose references name identities (C8b), adds amendments, assents and taking effect (C9a, §6.3, §14.8), and the legal acts tier: proposals, declarations and exercises, in their own document (C9b1, §6.4). Later slices add, in order:
+This version (0.16.0, CCS slice C9b1) holds the instrument, its terms in two tiers, the five relations, their parties and their content (C6), the legal triggers, the regimes they move, and the gating of relations by a regime's state (C7a), terms in time, namely due ranges, windows, recurrences, ending and survival (C7b), what terms are and whom they bind: definitions, deemings and classification, sections, and parties resolved through the case (C7c), and values in stated meaning, which text is expected to mean something, and the generation of bound meaning (C8). It is pinned to Wording 0.7.0, whose references name identities (C8b), adds amendments, assents and taking effect (C9a, §6.3, §14.8), and the legal acts tier: proposals, declarations and exercises, in their own document (C9b1, §6.4). Later slices add, in order:
 
 | Slice | Adds |
 |---|---|
@@ -45,14 +45,14 @@ Nothing in this version evaluates.
 ```turtle-spec
 <https://www.nebularis.org/neuro-semantic/instrument>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.15.1> ;
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.16.0> ;
 	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.4.0> ,
 				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.4.0> ,
 				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.7.0> ,
 				<https://www.nebularis.org/neuro-semantic/lattice/party/0.8.0> ,
 				<https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.10.0> ,
 				<https://www.nebularis.org/neuro-semantic/lattice/wording/0.7.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.13.1> .
+				<https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.14.0> .
 ```
 
 The vocabulary (`ins-voc:`) is `vocab/instrument-vocab.ttl`, in the namespace `https://www.nebularis.org/neuro-semantic/lattice/instrument/vocab#` (§19).
@@ -1884,8 +1884,8 @@ flowchart TB
 # @output-file "spec/instrument-acts.ttl"
 <https://www.nebularis.org/neuro-semantic/instrument-acts>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/instrument-acts/0.15.1> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.15.1> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/instrument-acts/0.16.0> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.16.0> .
 ```
 
 ```turtle-spec
@@ -3935,8 +3935,8 @@ instrument as a whole as a value of `ins:ends` (§14.2).
 
 <https://www.nebularis.org/neuro-semantic/instrument-vocab>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/instrument-vocab/0.15.1> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.15.1> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/instrument-vocab/0.16.0> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.16.0> .
 
 ins-voc:ActivityContract a voc:SchemeContract ;
 	fnd:hasIdentity ins-voc:ActivityContract-identity ;
@@ -6223,6 +6223,17 @@ withdrawal counts is the facility's, since withdrawal has no default.
 
 Breaking versions at major version zero ([ADR-A113](../../docs/architecture/decisions/ADR-A113-breaking-changes-at-major-version-zero.md)):
 
+- 0.16.0 (breaking, CCS C9b1, ADR-A104 and its 2026-10-09 addendum): the legal acts tier, in a new
+  document, `instrument-acts` 0.16.0 (§6.4, ADR-A120): `ins:LegalAct`, `ins:Declaration`,
+  `ins:Consent`, `ins:Objection`, `ins:Withdrawal`, `ins:Exercise` and `ins:Proposal`, with
+  `ins:actBy`, `ins:proposedBy`, `ins:proposes`, `ins:directedAt`, `ins:withdraws`,
+  `ins:exercises`, `ins:pursuantTo` and `ins:forCase`. Breaking: `ins:Assent`, `ins:assentBy` and
+  `ins:assentTo` move to the acts document, so a consumer of assents must load it, and
+  `ins:OnExercise`'s kind is now `bhv:DerivedTrigger`, since it fires on an exercise found effective.
+  `ins:impliedBy` names a judgment as a source. Re-pinned to Behaviour 0.14.0. `instrument-vocab`
+  0.16.0 adds the activities `ins-voc:Settle` and `ins-voc:Approve`. Shapes 0.8.0 (breaking: an
+  exercise trigger with the kind `bhv:ExternalStimulus` no longer conforms): each legal act's shapes,
+  an exercise by the power's holder, and an act relied on done no later than the act relying on it
 - 0.15.1 (`instrument` and `instrument-vocab`, patch): re-pinned to Behaviour 0.13.1, with no other
   change (ADR-A120)
 - 0.15.0 (CCS C9a, ADR-A104 and its 2026-10-08 addendum): new: amendments (`ins:Amendment`,

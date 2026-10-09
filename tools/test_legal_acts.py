@@ -310,3 +310,16 @@ def test_c9b1_14_licence_suspension_keeps_no_acceptance() -> None:
         before = text[:text.index(f"ex:{record} a bhv:ActRecord")]
         comment = " ".join(line.lstrip("# ") for line in before.rsplit("\n\n", 1)[-1].splitlines())
         assert "legal act of the layer above" in comment, name
+
+
+# ---- C9b1-15: release ------------------------------------------------------------------
+
+def test_c9b1_15_release_notes_and_versions() -> None:
+    assert "- 0.16.0 (breaking, CCS C9b1" in (LAYER / "README.md").read_text()
+    assert "- 0.14.0 (`behaviour`, `behaviour-runtime` and `behaviour-vocab`, breaking, CCS C9b1" in \
+        (BHV_LAYER / "README.md").read_text()
+    register = (ONTOLOGY.parent / "docs" / "architecture" / "ontology-releases.md").read_text()
+    for tag in ("instrument-v0.16.0", "instrument-acts-v0.16.0", "instrument-vocab-v0.16.0", "instrument-shapes-v0.8.0",
+                "behaviour-v0.14.0", "behaviour-runtime-v0.14.0", "behaviour-vocab-v0.14.0", "behaviour-shapes-v0.5.0",
+                "applied-capacity-execution-v0.14.0"):
+        assert f"| {tag} |" in register, tag

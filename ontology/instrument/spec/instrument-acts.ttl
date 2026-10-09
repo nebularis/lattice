@@ -16,8 +16,8 @@
 
 <https://www.nebularis.org/neuro-semantic/instrument-acts>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/instrument-acts/0.15.1> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.15.1> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/instrument-acts/0.16.0> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.16.0> .
 
 # ---- Legal acts (§6.4) -----------------------------------------------------------
 

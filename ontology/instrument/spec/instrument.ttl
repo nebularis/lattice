@@ -16,14 +16,14 @@
 
 <https://www.nebularis.org/neuro-semantic/instrument>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.15.1> ;
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.16.0> ;
 	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.4.0> ,
 				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.4.0> ,
 				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.7.0> ,
 				<https://www.nebularis.org/neuro-semantic/lattice/party/0.8.0> ,
 				<https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.10.0> ,
 				<https://www.nebularis.org/neuro-semantic/lattice/wording/0.7.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.13.1> .
+				<https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.14.0> .
 
 ins:Instrument a owl:Class ;
 	rdfs:subClassOf fnd:Version ;

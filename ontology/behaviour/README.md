@@ -72,7 +72,7 @@ Behaviour distinguishes four tiers:
 
 <https://www.nebularis.org/neuro-semantic/behaviour>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.13.1> ;
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.14.0> ;
 	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.4.0> ,
 				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.4.0> ,
 				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.7.0> ,
@@ -246,8 +246,8 @@ configuration document, at the same version.
 
 <https://www.nebularis.org/neuro-semantic/behaviour-runtime>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/behaviour-runtime/0.13.1> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.13.1> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/behaviour-runtime/0.14.0> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.14.0> .
 ```
 
 ```turtle-spec
@@ -593,8 +593,8 @@ stateDiagram-v2
 
 <https://www.nebularis.org/neuro-semantic/behaviour-vocab>
 	a owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/behaviour-vocab/0.13.1> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.13.1> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/behaviour-vocab/0.14.0> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.14.0> .
 
 bhv:ExternalStimulus a bhv:TriggerKind .
 bhv:ScheduledTrigger a bhv:TriggerKind .
@@ -1530,6 +1530,12 @@ Breaking versions at major version zero ([ADR-A113](../../docs/architecture/deci
   0.8.0, whose shares and composition rules are renamed (`pty:outwardShare`, `pty:inwardShare`,
   `pty:EachForOwnShare`, `pty:EachForWhole`), and to Eligibility 0.10.0, with no other change (CCS
   C7c, ADR-A104 2026-10-06 addendum).
+- 0.14.0 (`behaviour`, `behaviour-runtime` and `behaviour-vocab`, breaking, CCS C9b1, ADR-A106
+  2026-10-09 addendum): records are findings. `bhv:ExerciseRecord` is the evaluator's finding about
+  an exercise, and `bhv:exercised` names the exercise act, still with no range. `bhv:actor` on an
+  exercise record is deprecated. `bhv:AcceptanceRecord` and `bhv:accepted` are deprecated, to be
+  removed in CCS C16c. Shapes 0.5.0 (additive, a warning): an acceptance record is reported as
+  deprecated
 - 0.13.1 (`behaviour`, `behaviour-runtime` and `behaviour-vocab`, patch): the runtime document is
   extracted from §5.2 instead of authored as a file, with the same triples, and the three move
   together (ADR-A120).
