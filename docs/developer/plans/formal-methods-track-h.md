@@ -409,16 +409,20 @@ into three groups.
 | Inputs include stored data | `?n1` from the stored sequence counter (2 templates), `?rev` from `$revBase` and `?n1` (2) | Yes, if the parameter is missing, **or** if the stored counter is not a number |
 
 **What a failure looks like. Demonstrated** with the real `append-event` update on a small
-in-memory dataset.
+in-memory dataset, run on Oxigraph 0.5.11, a conforming SPARQL 1.1 engine. (rdflib's `update`
+applies deletes while it is still evaluating the `WHERE` clause, so it is not a safe engine for
+reasoning about these templates. It agreed on the first two rows below and disagreed on the third,
+which is how an earlier version of this section came to state it wrongly.)
 
 | Request | Result |
 |---|---|
 | every `$parameter` supplied | 15 triples. The counter advances to 1, the event, the transaction claim, the revision record and the head pointer are all written |
 | the caller forgets `$revBase` | 6 triples. **The counter still advances to 1** and the event is partly written, the transaction claim is recorded with its digest, but there is **no revision record, no head pointer, and the claim has no `pat:rev`** |
-| then the caller retries with the same transaction id and every parameter | The transaction guard does not stop it, because it looks for a claim with a `pat:rev`. The counter advances to **2**, and the stream has **no revision record at all** |
+| then the caller retries with the same transaction id and every parameter | The transaction guard does not stop it, because it looks for a claim with a `pat:rev`. The counter advances to **2** and one revision record is written, for sequence 2. **Sequence 1 has no revision record, permanently** |
 
-No error was raised at any step. The gap scan audit would report the missing receipts afterwards
-(its witness shows it fires on exactly that shape), so the damage is detectable but not prevented.
+No error was raised at any step. The gap scan audit would report the missing receipt for sequence 1
+afterwards (its witness shows it fires on a version row with receipts missing), so the damage is
+detectable but not prevented.
 This is a caller error, and it is recorded as TD-26 because the template offers no all-or-nothing
 protection against it.
 
@@ -439,10 +443,11 @@ H-D12 decides how far the assumption extends into computed values.
 **Recommendation, as a hypothesis.** Keep A for now, record the limitation here and in TD-26, and
 take D in H2. Option C is the one to pick if you want the stored-counter case surfaced before H2.
 
-**To try it yourself.** The demonstration used `rdflib` directly. The shape of it is: compile
-`tools/persistence/tests/witnesses/template-append-event.ttl`, take the `append-event` update from
-`persistence.templatecheck.operations`, create a dataset with one stream row, and run
-`dataset.update(text, initBindings={...})` once with every parameter and once without `revBase`.
+**To try it yourself.** Compile `tools/persistence/tests/witnesses/template-append-event.ttl` and
+take the `append-event` update from `persistence.templatecheck.operations`. Create a store with one
+stream row (its epoch and a sequence of 0 in the meta graph). Replace each `$name` and `?name` for
+the caller's parameters with its value as text, and run the update on a conforming engine such as
+`pyoxigraph`, once with every parameter and once without `$revBase`. Do not use rdflib's `update`.
 
 ### 13.5 Outcome
 
