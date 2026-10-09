@@ -18,9 +18,9 @@ Behaviour 0.10.0 (shapes 0.4.0) with nested states and history, the import guard
 check`. In tranche D, C6 to C7c are merged and tagged (Instrument 0.12.0, Party 0.8.0, Quantification
 0.7.0). C8 and C8b are merged and tagged (Instrument 0.14.0, Wording 0.7.0). C9 is briefed and splits into C9a to C9c. Its materiality question has its own sketch. From C5 on, the agent builds and verifies, and the human commits by hand.
 
-**Next action, for the human:** review the [consent sketch](../sketches/consent-and-group-powers.md) and the
-re-sliced C9b, then branch for the formal-methods epic's Eligibility pass (FM-D17, E1.4, B2.2, B2.1),
-which must merge before C9b3. C9b1 (legal acts) and C9b2 (additivity) do not touch Eligibility.
+**Next action, for the human:** choose which of C9b1 (legal acts), C9b2 (additivity) or HQ-6 (deemings)
+to brief while FM-EP, the formal-methods Eligibility pass, runs on machine S (`fm/eligibility-pass`).
+C9b3 waits for FM-EP and HQ-6.
 
 ## Slice board
 
@@ -151,3 +151,4 @@ which must merge before C9b3. C9b1 (legal acts) and C9b2 (additivity) do not tou
 - 2026-10-08: C9b briefed on `main` with five questions, each with design and runtime overheads: splitting materiality into C9d (Q1), what a consent is given to (Q2), the consent rule and where a member's weight comes from (Q3), delegated consent (Q4), and a regime per exercise (Q5)
 - 2026-10-09: the human's paper on consent, groups and exercise received. C9b's brief marked under revision. The paper's design advice added to the authoring, architecture and design skills and to `AGENTS.md`, and Copilot's instructions regenerated
 - 2026-10-09: the consent paper decided, as the [consent sketch](../sketches/consent-and-group-powers.md): consent a sibling of assent, qualifying rules as acting rules (`ins:QualifyingRule`), legal acts in Instrument (juristic acts only), no regime per exercise, Party's shares deprecated in C9b4 and removed in C16c. C9b re-sliced into C9b1 to C9b4. The formal-methods epic's Eligibility work (FM-D17, E1.4, B2.2, B2.1) is to run on its own branch and merge before C9b3. HQ-6 scheduled before C9b3
+- 2026-10-09: the reference time (stated once by the word, as a context role) and withdrawal (no substrate default) decided by the human. The formal-methods Eligibility pass named FM-EP, to run on machine S on `fm/eligibility-pass`

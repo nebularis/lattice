@@ -3094,8 +3094,8 @@ flowchart LR
     B4 --> D["C9d materiality"] --> C["C9c incorporation"]
 ```
 
-**Before C9b3, the formal-methods epic's Eligibility work is completed** on its own branch and merged
-(the human, 2026-10-09). C9b3 extends Eligibility's laws, its Isabelle theory, its reference semantics
+**Before C9b3, the formal-methods epic's Eligibility pass, FM-EP, is completed** on machine S, on
+`fm/eligibility-pass`, and merged (the human, 2026-10-09). C9b3 extends Eligibility's laws, its Isabelle theory, its reference semantics
 and its four compilers, so it must build on a hardened base. The items are FM-D17 (generate the
 kernel's truth tables from the README into both the theory and the reference), E1.4 (gate digests that
 cover definitions, characterising lemmas, set-reading invariance, no `by eval`, the assumption audit),

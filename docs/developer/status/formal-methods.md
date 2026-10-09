@@ -50,7 +50,7 @@ regeneration-as-naturality property test (72 tests, no regression). B1's own sco
 resolved E1.2 (below): the rounding/residual
 theorem belongs to B4/E3-E4, not Quantification; track E's plan and status are corrected.
 
-**Eligibility pass, before CCS C9b3 (decided 2026-10-09).** On a branch of this epic, merged to
+**FM-EP, the Eligibility pass, before CCS C9b3 (decided 2026-10-09).** On machine S, branch `fm/eligibility-pass`, merged to
 `main` before CCS changes Eligibility: FM-D17 (decide, then build), E1.4, B2.2, B2.1, with B5 optional.
 See the plan §8. CCS C9b1 and C9b2 may proceed meanwhile, since they touch no Eligibility artefact.
 

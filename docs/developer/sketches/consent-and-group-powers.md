@@ -201,9 +201,9 @@ remaining group behaviours of HQ-5 become further acting rules.
 **The universe and its measure are resolved at a reference time, not read from the version in force.**
 Commitments change by transfer certificate, cancellation and prepayment, and the Lenders change by
 novation, none of which amends the agreement. An insurer's signed line changes by signing down. Both are
-facts at the reference time. The reference time is proposed to be stated once, by the word, as a context role:
-the proposal's date, a record date, or the decision, with the proposal or the meeting supplying that
-role's value (§6, for C9b4's brief).
+facts at the reference time. The **reference time is stated once, by the word**, as a context role: the proposal's
+date, a record date, or the decision. The proposal, or the meeting, supplies that role's value
+(decided, §6).
 
 **Joint and several powers are a separate axis from liability.** For a power, "jointly" means all must
 act together, and "severally" means each may act alone for its own part, as with each finance party's
@@ -423,11 +423,6 @@ C9d's selection by grade becomes another member condition, and HQ-5's "any one m
 | 3 | Party's shares are narrowed and deprecated in C9b4, reported by a warning shape at every use, and removed in C16c, required before the epic closes |
 | 4 | The acts tier holds juristic acts: declarations, exercises and notices with legal effect. Real acts of performance stay performance facts |
 | 5 | The Quantification cascade is accepted |
+| 6 | The reference time is stated once, by the word, as a context role whose value the proposal or meeting supplies. That covers a facility's request date and a bond's record date in one place |
+| 7 | Withdrawal has no substrate default. The contract states it, or a deployment's evaluation profile does, since the rule differs between markets: a lender's consent is usually revocable until the decision, and a written line binds when it is written |
 
-Proposed by the agent for C9b4's brief, not yet decided:
-
-- **The reference time** is stated once, by the word, as a context role, whose value the proposal or
-  meeting supplies. That covers a facility's request date and a bond's record date in one place.
-- **Withdrawal** has no substrate default. The contract states it, or a deployment's evaluation
-  profile does, since the rule differs between markets: a lender's consent is usually revocable until
-  the decision, and a written line binds when it is written.
