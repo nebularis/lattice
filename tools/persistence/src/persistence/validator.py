@@ -11,6 +11,7 @@ from __future__ import annotations
 
 from rdflib import RDF, Graph, URIRef
 
+from .functional import functional_value
 from .boundary import MissingBoundaryShapeError, reachable_properties
 from .capability import CapabilityCheckResult
 from .model import BoundaryConflict, CrossAxisViolation, Diagnostic, ResolvedDimension
@@ -354,9 +355,9 @@ def check_identity(
                 and _local(extra.get("occurrenceNamespaceDerivation")) == "RegistryTokenDerivation"
             )
             if not (scheme is None and digest_unused):
-                function = graph.value(scheme, DAL.digestFunction) if scheme is not None else None
-                width = graph.value(scheme, DAL.digestWidthBits) if scheme is not None else None
-                encoding = graph.value(scheme, DAL.digestEncoding) if scheme is not None else None
+                function = functional_value(graph, scheme, DAL.digestFunction) if scheme is not None else None
+                width = functional_value(graph, scheme, DAL.digestWidthBits) if scheme is not None else None
+                encoding = functional_value(graph, scheme, DAL.digestEncoding) if scheme is not None else None
                 if function is None or width is None or encoding is None:
                     raise CrossAxisViolation(
                         "DigestSchemeRequired", str(target),
@@ -471,19 +472,19 @@ def check_boundary_conflicts(graph: Graph) -> list[Diagnostic]:
     diagnostics: list[Diagnostic] = []
     own_strategy: dict[URIRef, URIRef] = {}
     for profile in graph.subjects(RDF.type, DAL.AggregateBoundaryProfile):
-        scope = graph.value(profile, DAL.appliesTo)
+        scope = functional_value(graph, profile, DAL.appliesTo)
         if scope is None:
             continue
-        cls = graph.value(scope, DAL.targetClass)
-        strategy = graph.value(profile, DAL.strategy)
+        cls = functional_value(graph, scope, DAL.targetClass)
+        strategy = functional_value(graph, profile, DAL.strategy)
         if cls is not None and strategy is not None:
             own_strategy[cls] = strategy
 
     for profile in graph.subjects(RDF.type, DAL.AggregateBoundaryProfile):
-        strategy = graph.value(profile, DAL.strategy)
+        strategy = functional_value(graph, profile, DAL.strategy)
         if strategy != DAL.CompositePropertyBoundary:
             continue
-        shape = graph.value(profile, DAL.boundaryShape)
+        shape = functional_value(graph, profile, DAL.boundaryShape)
         if shape is None:
             continue
         for prop_shape in graph.objects(shape, SH.property):

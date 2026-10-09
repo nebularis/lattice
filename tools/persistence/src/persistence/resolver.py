@@ -17,6 +17,7 @@ from typing import Optional
 
 from rdflib import RDF, Graph, URIRef
 
+from .functional import functional_value
 from .capability import CapabilitySpec
 from .model import BASELINE_DEFAULTS, Candidate, ProfileAmbiguityError, ResolvedDimension
 from .namespaces import DAL
@@ -99,7 +100,7 @@ _DIMENSION_SPEC: dict[str, tuple[URIRef, URIRef, tuple[URIRef, ...]]] = {
 def _extras(graph: Graph, subject: URIRef, props: tuple[URIRef, ...]) -> dict:
     out = {}
     for prop in props:
-        value = graph.value(subject, prop)
+        value = functional_value(graph, subject, prop)
         if value is not None:
             local = str(prop).rsplit("#", 1)[-1]
             out[local] = value
@@ -118,10 +119,10 @@ def _candidates_from(
     scopes_by_iri = {s.iri: s for s in all_scopes(graph)}
     candidates: list[Candidate] = []
     for subject in subjects:
-        value = graph.value(subject, value_prop)
+        value = functional_value(graph, subject, value_prop)
         if value is None:
             continue
-        scope_iri = graph.value(subject, DAL.appliesTo)
+        scope_iri = functional_value(graph, subject, DAL.appliesTo)
         if scope_iri is None:
             continue
         scope = scopes_by_iri.get(scope_iri)
@@ -247,7 +248,7 @@ def resolve_identity(
     identity strategy (ADR-A82)."""
     by_role: dict[URIRef, list[URIRef]] = {}
     for profile in graph.subjects(RDF.type, DAL.IdentityProfile):
-        role = graph.value(profile, DAL.resourceRole)
+        role = functional_value(graph, profile, DAL.resourceRole)
         if isinstance(role, URIRef):
             by_role.setdefault(role, []).append(profile)
     out: dict[str, ResolvedDimension] = {}
@@ -281,29 +282,29 @@ def resolve_uniqueness(graph: Graph, target: Target) -> list[dict]:
     out = []
     scopes_by_iri = {s.iri: s for s in all_scopes(graph)}
     for constraint in graph.subjects(RDF.type, DAL.UniquenessConstraint):
-        scope_iri = graph.value(constraint, DAL.appliesTo)
+        scope_iri = functional_value(graph, constraint, DAL.appliesTo)
         if scope_iri is None:
             continue
         scope = scopes_by_iri.get(scope_iri)
         if scope is None or not matches(graph, scope, target):
             continue
-        key_list_head = graph.value(constraint, DAL.keyProperty)
+        key_list_head = functional_value(graph, constraint, DAL.keyProperty)
         key_props = list(graph.items(key_list_head)) if key_list_head is not None else []
         active_schemes = [
             s
             for s in graph.objects(constraint, DAL.claimScheme)
-            if _local_name(graph.value(s, DAL.schemeState)) in _MINTING_ACTIVE_STATES
+            if _local_name(functional_value(graph, s, DAL.schemeState)) in _MINTING_ACTIVE_STATES
         ]
         out.append(
             {
                 "constraint": str(constraint),
-                "constraintId": str(graph.value(constraint, DAL.constraintId) or ""),
+                "constraintId": str(functional_value(graph, constraint, DAL.constraintId) or ""),
                 "keyProperty": [str(k) for k in key_props],
-                "scopeProperty": graph.value(constraint, DAL.scopeProperty),
-                "onViolation": graph.value(constraint, DAL.onViolation),
-                "minEnforcementLevel": graph.value(constraint, DAL.minEnforcementLevel),
+                "scopeProperty": functional_value(graph, constraint, DAL.scopeProperty),
+                "onViolation": functional_value(graph, constraint, DAL.onViolation),
+                "minEnforcementLevel": functional_value(graph, constraint, DAL.minEnforcementLevel),
                 # persistence-compiler-iri-sync Slice 5 (G7 items 2 and 3).
-                "mergeRelation": graph.value(constraint, DAL.mergeRelation),
+                "mergeRelation": functional_value(graph, constraint, DAL.mergeRelation),
                 "dualClaimScheme": len(active_schemes) == 2,
             }
         )

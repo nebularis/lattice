@@ -71,7 +71,10 @@ def compile_targets(
     wrapping whichever named exception (``ProfileAmbiguityError``,
     ``CrossAxisViolation``, ``BoundaryConflict``, ``MissingBoundaryShapeError``)
     the underlying check raised."""
-    targets = discover_targets(graph, classes)
+    try:
+        targets = discover_targets(graph, classes)
+    except Exception as e:  # e.g. MultiValuedFunctionalProperty on a scope, read before any target exists
+        raise CompileError(Target(cls=URIRef("urn:x-persistence:whole-graph")), e) from e
     compiled: list[CompiledTarget] = []
     resolved_by_target: dict[Target, dict[str, ResolvedDimension]] = {}
 

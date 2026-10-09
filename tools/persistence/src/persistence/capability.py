@@ -23,6 +23,7 @@ from typing import Optional
 
 from rdflib import RDF, Graph, URIRef
 
+from .functional import functional_value
 from .model import ResolvedDimension
 from .namespaces import DAL
 from .scopes import Target
@@ -52,11 +53,11 @@ def load_capability_spec(graph: Graph, target: Optional[Target] = None) -> Optio
         return None
 
     def _build(iri: URIRef) -> CapabilitySpec:
-        cas = graph.value(iri, DAL.providesCas)
-        reasoning = graph.value(iri, DAL.providesReasoning)
-        commit = graph.value(iri, DAL.providesCommitValidation)
-        single_writer = graph.value(iri, DAL.providesSingleWriter)
-        stmt_level = graph.value(iri, DAL.providesStatementLevelConflictDetection)
+        cas = functional_value(graph, iri, DAL.providesCas)
+        reasoning = functional_value(graph, iri, DAL.providesReasoning)
+        commit = functional_value(graph, iri, DAL.providesCommitValidation)
+        single_writer = functional_value(graph, iri, DAL.providesSingleWriter)
+        stmt_level = functional_value(graph, iri, DAL.providesStatementLevelConflictDetection)
         return CapabilitySpec(
             iri=str(iri),
             provides_cas=str(cas) if cas is not None else None,
@@ -70,10 +71,10 @@ def load_capability_spec(graph: Graph, target: Optional[Target] = None) -> Optio
 
     if target is not None:
         for spec_iri in specs:
-            if graph.value(spec_iri, DAL.appliesToTarget) == target.cls:
+            if functional_value(graph, spec_iri, DAL.appliesToTarget) == target.cls:
                 return _build(spec_iri)
     for spec_iri in specs:
-        if graph.value(spec_iri, DAL.appliesToTarget) is None:
+        if functional_value(graph, spec_iri, DAL.appliesToTarget) is None:
             return _build(spec_iri)
     return None
 

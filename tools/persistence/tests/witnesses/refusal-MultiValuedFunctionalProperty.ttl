@@ -1,0 +1,12 @@
+# SPDX-License-Identifier: MPL-2.0
+# NB: This file has been produced using GenAI
+# A single-valued property given two values would resolve by triple order, so
+# the compiler refuses it (TD-25). Here a scope declares two priorities and
+# competes with another scope between them.
+@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix ex:  <https://example.org/lending#> .
+
+ex:A a dal:ClassScope ; dal:targetClass ex:Thing ; dal:priority 1, 3 .
+ex:B a dal:ClassScope ; dal:targetClass ex:Thing ; dal:priority 2 .
+ex:PA a dal:ConcurrencyProfile ; dal:appliesTo ex:A ; dal:concurrencyProfile dal:Optimistic .
+ex:PB a dal:ConcurrencyProfile ; dal:appliesTo ex:B ; dal:concurrencyProfile dal:ProvidedConcurrency .

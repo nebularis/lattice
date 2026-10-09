@@ -26,6 +26,7 @@ import re
 
 from rdflib import Graph, URIRef
 
+from .functional import functional_value
 from .model import CrossAxisViolation, ResolvedDimension
 from .namespaces import DAL
 from .scopes import Target
@@ -107,9 +108,9 @@ class _Builder:
     def digest(self, where: str, scheme, function: str) -> dict:
         if scheme is None:
             self.fail("DigestSchemeRequired", where, "a dal:DigestScheme is required")
-        fn = self.g.value(scheme, DAL.digestFunction)
-        width = self.g.value(scheme, DAL.digestWidthBits)
-        encoding = self.g.value(scheme, DAL.digestEncoding)
+        fn = functional_value(self.g, scheme, DAL.digestFunction)
+        width = functional_value(self.g, scheme, DAL.digestWidthBits)
+        encoding = functional_value(self.g, scheme, DAL.digestEncoding)
         if fn is None or width is None or encoding is None:
             self.fail("DigestSchemeRequired", where, "the digest scheme needs a function, width and encoding")
         if str(fn) != function:
@@ -120,19 +121,19 @@ class _Builder:
         return {"function": function, "widthBits": w, "encoding": str(encoding)}
 
     def key(self, where: str, constraint) -> dict:
-        pipeline = self.g.value(constraint, DAL.normalizePipeline)
+        pipeline = functional_value(self.g, constraint, DAL.normalizePipeline)
         pid = _local(pipeline)
         if pid not in PIPELINE_STEPS:
             self.fail("NormalizePipelineRequired", where,
                       f"constraint {constraint} needs one of {sorted(PIPELINE_STEPS)} as dal:normalizePipeline")
-        version = self.g.value(pipeline, DAL.unicodeVersion)
+        version = functional_value(self.g, pipeline, DAL.unicodeVersion)
         if str(version) != UNICODE_VERSION:
             self.fail("UnsupportedUnicodeVersion", where, f"pipeline {pid} declares Unicode {version}, recipes support {UNICODE_VERSION}")
-        head = self.g.value(constraint, DAL.keyProperty)
+        head = functional_value(self.g, constraint, DAL.keyProperty)
         props = [str(p) for p in self.g.items(head)] if head is not None else []
         if not props:
             self.fail("KeyPropertiesRequired", where, f"constraint {constraint} declares no dal:keyProperty")
-        scope = self.g.value(constraint, DAL.scopeProperty)
+        scope = functional_value(self.g, constraint, DAL.scopeProperty)
         return {"properties": props, "scopeProperty": str(scope) if scope is not None else None,
                 "pipeline": {"id": pid, "unicodeVersion": UNICODE_VERSION, "steps": list(PIPELINE_STEPS[pid])}}
 
@@ -145,23 +146,23 @@ class _Builder:
         return constraint
 
     def claims(self, where: str, constraint) -> list[dict]:
-        cid = self.g.value(constraint, DAL.constraintId)
+        cid = functional_value(self.g, constraint, DAL.constraintId)
         key = self.key(where, constraint)
         out = []
         for scheme in self.g.objects(constraint, DAL.claimScheme):
-            state = _local(self.g.value(scheme, DAL.schemeState))
+            state = _local(functional_value(self.g, scheme, DAL.schemeState))
             if state not in MINTING_SCHEME_STATES:
                 continue
             at = f"{where}, claim scheme {scheme}"
-            version = self.g.value(scheme, DAL.schemeVersion)
-            key_id = self.g.value(scheme, DAL.claimKeyId)
+            version = functional_value(self.g, scheme, DAL.schemeVersion)
+            key_id = functional_value(self.g, scheme, DAL.claimKeyId)
             if version is None or key_id is None or cid is None:
                 self.fail("ClaimSchemeIncomplete", at, "needs dal:schemeVersion, dal:claimKeyId and the constraint's dal:constraintId")
             out.append({
                 "constraintId": str(cid), "schemeVersion": str(version), "schemeState": state,
                 "keyId": str(key_id), "key": key, "tupleEncoding": TUPLE_ENCODING,
-                "mac": self.digest(at, self.g.value(scheme, DAL.claimDigestScheme), "HMAC-SHA-256"),
-                "iriTemplate": self.template(at, self.g.value(scheme, DAL.claimIriTemplate), CLAIM_TEMPLATE_SLOTS),
+                "mac": self.digest(at, functional_value(self.g, scheme, DAL.claimDigestScheme), "HMAC-SHA-256"),
+                "iriTemplate": self.template(at, functional_value(self.g, scheme, DAL.claimIriTemplate), CLAIM_TEMPLATE_SLOTS),
             })
         if not 1 <= len(out) <= 2:
             self.fail("ClaimSchemeIncomplete", where,
@@ -174,7 +175,7 @@ class _Builder:
         where = f"{name} (won by {rd.won_by})"
         role = name.split(":", 1)[1]
         strategy = _local(rd.value)
-        if _local(g.value(profile, DAL.eventIdentityStrategy)) == "PositionDerivedEvent":
+        if _local(functional_value(g, profile, DAL.eventIdentityStrategy)) == "PositionDerivedEvent":
             strategy = "PositionDerivedEvent"
         recipe: dict = {
             "recipeFormat": RECIPE_FORMAT, "role": role,
@@ -182,10 +183,10 @@ class _Builder:
                        "deployment": str(self.target.deployment) if self.target.deployment is not None else None},
             "strategy": strategy,
         }
-        template = g.value(profile, DAL.mintedIriTemplate)
+        template = functional_value(g, profile, DAL.mintedIriTemplate)
         if strategy in ("AdoptedIdentity", "ExternalRegistryIdentity"):
-            pattern = g.value(profile, DAL.acceptedIriPattern)
-            authority = g.value(profile, DAL.namingAuthority)
+            pattern = functional_value(g, profile, DAL.acceptedIriPattern)
+            authority = functional_value(g, profile, DAL.namingAuthority)
             if pattern is None or authority is None:
                 self.fail("AcceptedPatternRequired", where, "needs dal:acceptedIriPattern and dal:namingAuthority")
             recipe.update(namingAuthority=str(authority), acceptedPattern=str(pattern))
@@ -194,52 +195,52 @@ class _Builder:
             self.fail("IdentityStrategyUnsupported", where, f"no recipe format for {strategy}")
         recipe["iriTemplate"] = self.template(where, template, TEMPLATE_SLOTS[strategy])
         if strategy in ("NaturalKeyIdentity", "DerivedHashIdentity"):
-            constraint = self.constraint(where, DAL.keyConstraint, g.value(profile, DAL.keyConstraint), "KeyConstraintRequired")
+            constraint = self.constraint(where, DAL.keyConstraint, functional_value(g, profile, DAL.keyConstraint), "KeyConstraintRequired")
             recipe["key"] = self.key(where, constraint)
             if strategy == "DerivedHashIdentity":
-                head = g.value(profile, DAL.tuplePrefix)
+                head = functional_value(g, profile, DAL.tuplePrefix)
                 prefix = [str(p) for p in g.items(head)] if head is not None else []
                 if not prefix:
                     self.fail("TuplePrefixRequired", where, "dal:DerivedHashIdentity needs a non-empty dal:tuplePrefix")
                 recipe.update(tuplePrefix=prefix, tupleEncoding=TUPLE_ENCODING,
-                              digest=self.digest(where, g.value(profile, DAL.digestScheme), "SHA-256"))
+                              digest=self.digest(where, functional_value(g, profile, DAL.digestScheme), "SHA-256"))
         elif strategy == "SurrogateClaimedIdentity":
-            kind = _local(g.value(profile, DAL.surrogateKind))
+            kind = _local(functional_value(g, profile, DAL.surrogateKind))
             if kind == "UuidV4Surrogate":
                 recipe["surrogate"] = {"kind": kind}
             elif kind == "CallerSuppliedSurrogate":
-                pattern = g.value(profile, DAL.callerSuppliedPattern)
+                pattern = functional_value(g, profile, DAL.callerSuppliedPattern)
                 if pattern is None:
                     self.fail("CallerSuppliedPatternRequired", where, "dal:CallerSuppliedSurrogate needs dal:callerSuppliedPattern")
                 recipe["surrogate"] = {"kind": kind, "pattern": str(pattern)}
             else:
                 self.fail("SurrogateKindRequired", where, "dal:SurrogateClaimedIdentity needs dal:surrogateKind")
-            constraint = self.constraint(where, DAL.claimsConstraint, g.value(profile, DAL.claimsConstraint), "ClaimedIdentityWithoutKey")
+            constraint = self.constraint(where, DAL.claimsConstraint, functional_value(g, profile, DAL.claimsConstraint), "ClaimedIdentityWithoutKey")
             recipe["claims"] = self.claims(where, constraint)
         elif strategy == "RandomSurrogateIdentity":
             recipe["surrogate"] = {"kind": "UuidV4Surrogate"}
         elif strategy == "PositionDerivedEvent":
-            derivation = _local(g.value(profile, DAL.occurrenceNamespaceDerivation))
+            derivation = _local(functional_value(g, profile, DAL.occurrenceNamespaceDerivation))
             if derivation == "HashedTargetDerivation":
                 recipe["namespace"] = {"derivation": derivation,
-                                       "digest": self.digest(where, g.value(profile, DAL.digestScheme), "SHA-256")}
+                                       "digest": self.digest(where, functional_value(g, profile, DAL.digestScheme), "SHA-256")}
             else:
                 recipe["namespace"] = {"derivation": derivation}
             widths = []
             for prop in (DAL.epochWidth, DAL.sequenceWidth):
-                v = g.value(profile, prop)
+                v = functional_value(g, profile, prop)
                 if v is None or not 1 <= int(v) <= 19:
                     self.fail("PositionWidthsRequired", where, "dal:epochWidth and dal:sequenceWidth, each from 1 to 19, are required")
                 widths.append(int(v))
             recipe.update(epochWidth=widths[0], sequenceWidth=widths[1])
         elif strategy == "ContentAddressedIdentity":
-            scheme = g.value(profile, DAL.digestScheme)
-            rule = SELF_REFERENCE.get(_local(g.value(profile, DAL.selfReferenceRule)))
-            budget = g.value(profile, DAL.canonicalizationWorkBudget)
+            scheme = functional_value(g, profile, DAL.digestScheme)
+            rule = SELF_REFERENCE.get(_local(functional_value(g, profile, DAL.selfReferenceRule)))
+            budget = functional_value(g, profile, DAL.canonicalizationWorkBudget)
             if rule is None or budget is None or int(budget) <= 0:
                 self.fail("ContentAddressedMembersRequired", where,
                           "needs dal:selfReferenceRule and a positive dal:canonicalizationWorkBudget")
-            full = g.value(scheme, DAL.verifyFullDigestOnWrite) if scheme is not None else None
+            full = functional_value(g, scheme, DAL.verifyFullDigestOnWrite) if scheme is not None else None
             recipe.update(digest=self.digest(where, scheme, "SHA-256"),
                           canonicalization={"algorithm": "RDFC-1.0", "serialization": "canonical-n-quads-utf8"},
                           selfReference=rule, workBudget=int(budget),
