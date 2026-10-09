@@ -3398,7 +3398,7 @@ repairing Eligibility's README in its own slice before the rest of C9b, is C9b0 
 - the README §6.4 diagram calls L1 to L8 static, but no law register says so, and L5 has no shape.
   Recorded as TD-27, not fixed here
 
-**Planned validation** (pack `docs/developer/validation/ccs-c9b0.md`, written with the slice): the
+**Planned validation** (pack `docs/developer/validation/computable-contract-substrate-c9b0.md`, written with the slice): the
 literate `--check` for Eligibility (positive), a probe shape edited in a generated file fails it
 (negative), each moved shape still fires on its probe (`WildcardCondition` with `NoWildcard`, an
 empty profile, an empty decision, a cyclic scheme), no violation is reported twice, the
@@ -3520,7 +3520,7 @@ KISS: a record of reliance has no reader. **Leaning (a).**
 - the reinsurance example records "no approval gives Undetermined" as deliberate non-coverage until
   HQ-6
 
-**Planned validation** (pack `ccs-c9b1.md`): each act class and its shapes at zero and too many,
+**Planned validation** (pack `computable-contract-substrate-c9b1.md`): each act class and its shapes at zero and too many,
 proposal and `ins:proposes`, `ins:pursuantTo` across instruments, the reinsurance evidence path
 Permitted with an approval made before the settlement by the reinsurer, rejected when made by
 another party or after, `ins:OnExercise` derived, the deprecation warnings, the acts document's
@@ -3716,7 +3716,7 @@ measures, a check (p4) alone could not make.
   signing down, which uses Ratio and Scale. If signing down needs a product of two derived values,
   the examples phase says so before the model phase
 
-**Planned validation** (pack `ccs-c9b2.md`), including every currency case the human asked for
+**Planned validation** (pack `computable-contract-substrate-c9b2.md`), including every currency case the human asked for
 (2026-10-09): one currency sums. Mixed currencies with a dated conversion context at the reference
 time convert to the base currency, then sum. Mixed currencies with none are Undetermined
 (`qnt:ConversionContextAbsent`). A limit stated in two currencies (ADR-A95) is never converted.
