@@ -41,6 +41,7 @@ from rdflib import Graph
 from .capability import load_capability_spec
 from .compiler import CompileError, compile_to_graph
 from .hygiene import VIOLATION, check_prefix_antichain
+from .templatecheck import check_compiled
 from .witness import check_witness_coverage, use_color
 from .instantiate import instantiate_to_directory
 from .namespaces import DAL
@@ -104,6 +105,13 @@ def cmd_export_recipes(args: argparse.Namespace) -> int:
 def cmd_hygiene(args: argparse.Namespace) -> int:
     graph = _load_graph(args.config, None)
     findings = check_prefix_antichain(graph)
+    try:
+        compiled, _ = compile_to_graph(graph)
+    except CompileError as error:
+        print(f"hygiene: templates: not checked, the configuration does not compile ({error.cause})", file=sys.stderr)
+    else:
+        findings = sorted([*findings, *check_compiled(compiled)])
+        print("hygiene: templates: S-3 and S-4 checked over the generated operations", file=sys.stderr)
     for finding in findings:
         print(finding)
     violations = sum(1 for f in findings if f.severity == VIOLATION)
