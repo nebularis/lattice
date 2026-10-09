@@ -3,7 +3,7 @@
 # Formal Methods, Track H: Status
 
 **Unit ID:** `formal-methods-track-h` (phase, within the `formal-methods` epic)
-**Status:** In progress. H1.1 and H1.2a signed off. H1.2b authored and verified, awaiting human review
+**Status:** In progress. H1.1, H1.2a and H1.2b signed off. H1.2c authored and verified, awaiting human review
 **Last updated:** 2026-10-08
 **Plan:** [formal-methods-track-h.md](../plans/formal-methods-track-h.md)
 **Sketches:** [formal-methods-track-h.md](../sketches/formal-methods-track-h.md) (main),
@@ -49,8 +49,8 @@ reviewing the ADR; H2 onward should wait for ADR-A-FM4's acceptance.
 |---|---|---|
 | H1.1 (prefix antichain and overlap check) | **signed off.** [Validation Pack](../validation/FMH-H1-1.md) | |
 | H1.2a (witness harness, audit witnesses, measured gap list) | **signed off.** [Validation Pack](../validation/FMH-H1-2.md) | |
-| H1.2b (witnesses for the refusals and warnings) | **authored, verified by the agent, awaiting the human's gate.** [Validation Pack](../validation/FMH-H1-2b.md) | the human's review |
-| H1.2c (witnesses for the 13 remaining shapes) | not started | H1.2b's gate |
+| H1.2b (witnesses for the refusals and warnings) | **signed off.** [Validation Pack](../validation/FMH-H1-2b.md) | |
+| H1.2c (witnesses for the 13 remaining shapes) | **authored, verified by the agent, awaiting the human's gate.** [Validation Pack](../validation/FMH-H1-2c.md) | the human's review |
 | H1.3 to H1.5 (S-3/S-4, declaration gap, stable labels) | not started, fully detailed in the plan | H1.2's gates, by the working agreement |
 | H2 (typed IR) | not started, outlined in the plan | H1 (informative, not a hard blocker) |
 | H3 (specification registry) | not started, outlined in the plan | H2 preferred first (smaller, more self-contained), not a hard blocker |
@@ -74,6 +74,7 @@ reviewing the ADR; H2 onward should wait for ADR-A-FM4's acceptance.
 | H-D6 | H1.1 reads "antichain" per scope kind. Nested `dal:graphPrefix` values are a **violation** only when the scopes cover a common class (each graph-pattern scope is its own target, so disjoint classes cannot collide). Nested `dal:iriPrefix` values are a **warning**, because the resolver ranks by `dal:priority`. The plan says only "antichain", so this narrows it | agreed by the human, 2026-10-09 |
 | H-D8 | H1.2 is delivered in three parts (a, b, c), because the first run found 55 of 83 rules unwitnessed and closing them together breaks the slice-sizing rule. The plan's H1.2 validation ("every existing rule either has a witness or is listed as a gap") is met by part a. The plan's metric "vacancy rate closed" is then measured as the shrinkage of `known-gaps.txt` | agreed by the human, 2026-10-09 |
 | H-D9 | the rule inventory is read from the package's own source (refusals and warnings by syntax, shapes from `constraints.ttl`, audits from the template names), not from a hand-kept list, so a new rule cannot dodge the check. A rule is keyed by its `CrossAxisViolation` kind, or by exception class name for the four refusals that carry no kind | agreed by the human, 2026-10-09 |
+| H-D10 | how to close TD-25 (a multi-valued functional property is resolved by triple order, law L1). Refuse it in the resolver, run the structural shapes inside `compile`, or add a hygiene check. See the H1.2c Validation Pack for the consequences of each | human, before H1.3 or whenever the compiler unit takes it |
 | H-D7 | H1's checks live in one new module, `persistence.hygiene`, behind one `hygiene` subcommand, and run under `check:persistence`. No new `mise` task until H1's closing slice | agreed by the human, 2026-10-09 |
 
 ## Log
@@ -113,3 +114,11 @@ reviewing the ADR; H2 onward should wait for ADR-A-FM4's acceptance.
   Two defects found and entered in the technical debt register as TD-23 (a class named only by
   `dal:coversClass` is never compiled) and TD-24 (the CLI suggests a `--target-class` option that
   does not exist). `check:persistence` is at 849 passed.
+- 2026-10-09: H1.2b signed off. An interim fix, by the human's request: `witness --verbose` prints
+  WITNESSED lines green and GAP lines red on a terminal (`6bd91a8`). H1.2c authored: 13 shape
+  witnesses, one conforming fixture, and a stricter rule for shapes (a shape is witnessed only if some
+  fixture makes it report and some fixture has data it accepts, prompted by a probe in which a
+  shape that fires on everything counted as witnessed). `known-gaps.txt` is now empty, 85 of 85 rules
+  are witnessed (refusals 36, warnings 11, shapes 33, audits 5). H1.2 is complete. New finding TD-25,
+  asserted with TD-23 as strict expected failures in `tests/test_known_defects.py`, and recorded as
+  the open decision H-D10. `check:persistence` is at 857 passed and 2 xfailed.

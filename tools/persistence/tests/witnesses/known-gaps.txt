@@ -2,20 +2,9 @@
 # NB: This file has been produced using GenAI
 # Rules with no witness fixture yet (formal-methods track H, slice H1.2).
 # Format: family:name | reason. A rule leaves this list when a fixture triggers it,
-# and the check fails if a listed rule already has a witness. The refusals and warnings
-# were closed in H1.2b. The shapes that remain are H1.2c.
-
-# Shapes (13)
-shape:AggregateBoundaryProfileShape | no fixture makes this shape report a result (H1.2c)
-shape:CapabilitySpecShape | no fixture makes this shape report a result (H1.2c)
-shape:ClaimSchemeCompletenessShape | no fixture makes this shape report a result (H1.2c)
-shape:ClassScopeShape | no fixture makes this shape report a result (H1.2c)
-shape:ConcurrencyProfileShape | no fixture makes this shape report a result (H1.2c)
-shape:DataAccessProfileShape | no fixture makes this shape report a result (H1.2c)
-shape:EquivalentClassScopeShape | no fixture makes this shape report a result (H1.2c)
-shape:GraphPatternScopeShape | no fixture makes this shape report a result (H1.2c)
-shape:NamespaceScopeShape | no fixture makes this shape report a result (H1.2c)
-shape:PrivacyProfileShape | no fixture makes this shape report a result (H1.2c)
-shape:ProfileScopeShape | no fixture makes this shape report a result (H1.2c)
-shape:ShapeScopeShape | no fixture makes this shape report a result (H1.2c)
-shape:WeakEtagCasWarningShape | no fixture makes this shape report a result (H1.2c)
+# and the check fails if a listed rule already has a witness.
+#
+# Empty since H1.2c: every refusal, warning, shape and audit has a witness.
+# A rule added to the compiler or the shapes without a witness is an unlisted
+# gap and fails `python -m persistence witness`. List it here, with a reason,
+# only when a witness cannot be written yet.

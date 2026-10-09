@@ -1,0 +1,9 @@
+# SPDX-License-Identifier: MPL-2.0
+# NB: This file has been produced using GenAI
+# Weak ETag and optimistic CAS declared on one node. The compiler warns across nodes, this shape only on one.
+@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix ex:  <https://example.org/lending#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ex:S a dal:ClassScope ; dal:targetClass ex:Thing .
+ex:P a dal:DataAccessProfile ; dal:appliesTo ex:S ; dal:etagForm dal:WeakEtag ; dal:concurrencyProfile dal:Optimistic .

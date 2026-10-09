@@ -116,8 +116,11 @@ def test_h1_2_t8_compiling_a_refusal_example_witnesses_its_rule():
 
 
 def test_h1_2_t9_validating_an_example_witnesses_the_shape_that_fires():
-    observed = observe_shapes([EXAMPLES_DIR / "invalid-lagwindow-missing.ttl"])
-    assert Rule(SHAPE, "LagWindowRequiredShape") in observed
+    fired, conforming = observe_shapes([EXAMPLES_DIR / "invalid-lagwindow-missing.ttl", EXAMPLES_DIR / "baseline-single-class.ttl"])
+    assert fired[Rule(SHAPE, "LagWindowRequiredShape")] == {"invalid-lagwindow-missing.ttl"}
+    # the baseline example has data the shape applies to and accepts
+    assert "baseline-single-class.ttl" in conforming[Rule(SHAPE, "ClassScopeShape")]
+    assert "invalid-lagwindow-missing.ttl" not in conforming.get(Rule(SHAPE, "LagWindowRequiredShape"), set())
 
 
 def test_h1_2_t10_a_property_shape_result_is_credited_to_its_named_parent():
@@ -181,9 +184,10 @@ def test_h1_2_t15_the_real_corpus_has_no_unlisted_gap_and_no_stale_gap():
 def test_h1_2_t16_cli_exits_zero_on_the_real_corpus_and_one_on_an_unlisted_gap(monkeypatch, capsys):
     assert main(["witness"]) == 0
     assert "witness coverage:" in capsys.readouterr().out
-    monkeypatch.setattr(witness, "read_known_gaps", lambda path=witness.KNOWN_GAPS: {})
+    real = witness.enumerate_rules
+    monkeypatch.setattr(witness, "enumerate_rules", lambda: real() | {Rule(REFUSAL, "NeverRaised")})
     assert main(["witness"]) == 1
-    assert "UNWITNESSED" in capsys.readouterr().out
+    assert "UNWITNESSED refusal:NeverRaised" in capsys.readouterr().out
 
 
 # ---- H1.2b: the corrected inventory, the patch format and the drift check -------------------------
@@ -291,15 +295,19 @@ GREEN, RED, RESET = "\033[32m", "\033[31m", "\033[0m"
 
 
 def _verbose_lines(color: bool) -> list[str]:
-    return check_witness_coverage().lines(verbose=True, color=color)
+    witnessed, gap = Rule(SHAPE, "SomeWitnessedShape"), Rule(SHAPE, "SomeGapShape")
+    report = build_report({witnessed, gap}, {witnessed: {"f.ttl"}}, {gap: "not yet"})
+    return report.lines(verbose=True, color=color)
 
 
 def test_h1_2_t24_witnessed_lines_are_green_and_gap_lines_red_when_colour_is_on():
     lines = _verbose_lines(color=True)
     witnessed = [line for line in lines if "WITNESSED" in line]
-    gaps = [line for line in lines if " GAP " in line or line.startswith(RED + "GAP")]
-    assert witnessed and all(line.startswith(GREEN) and line.endswith(RESET) for line in witnessed)
-    assert gaps and all(line.startswith(RED) and line.endswith(RESET) for line in gaps)
+    gaps = [line for line in lines if "GAP shape:" in line]
+    assert len(witnessed) == 1 and witnessed[0].startswith(GREEN) and witnessed[0].endswith(RESET)
+    assert len(gaps) == 1 and gaps[0].startswith(RED) and gaps[0].endswith(RESET)
+    # the summary and the failure lines are not coloured
+    assert not any("\033" in line for line in lines if line.startswith(("witness coverage", "  shape")))
 
 
 def test_h1_2_t25_without_colour_the_output_has_no_escape_codes():
@@ -332,3 +340,39 @@ def test_h1_2_t27_cli_colours_only_when_asked(monkeypatch, capsys):
     monkeypatch.delenv("FORCE_COLOR")
     assert main(["witness", "--verbose"]) == 0
     assert "\033" not in capsys.readouterr().out
+
+
+def test_h1_2_t28_the_known_gap_list_is_empty():
+    """H1.2c closed the last gap. A new rule must arrive with its witness."""
+    assert witness.read_known_gaps() == {}
+    report = check_witness_coverage()
+    assert report.ok and len(report.covered) == len(enumerate_rules())
+
+
+def test_h1_2_t29_a_shape_witness_must_fire_the_shape_it_is_named_for(tmp_path):
+    (tmp_path / "shape-Alpha.ttl").write_text("")
+    observed = {Rule(SHAPE, "Beta"): {"shape-Alpha.ttl"}}
+    (problem,) = witness.named_witness_problems(observed, tmp_path)
+    assert "shape-Alpha.ttl" in problem and "shape:Beta" in problem
+
+
+def test_h1_2_t30_a_shape_that_reports_on_every_fixture_has_no_conforming_witness(tmp_path, monkeypatch):
+    """A shape that fires everywhere detects nothing, like an audit that always returns rows."""
+    shapes = tmp_path / "shapes.ttl"
+    shapes.write_text(
+        """
+        @prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+        @prefix sh:  <http://www.w3.org/ns/shacl#> .
+        dal:AlwaysShape a sh:NodeShape ; sh:targetClass dal:ClassScope ;
+            sh:property [ sh:path dal:describedBy ; sh:minCount 5 ] .
+        """
+    )
+    monkeypatch.setattr(witness, "SHAPES_TTL", shapes)
+    fired, conforming = observe_shapes([EXAMPLES_DIR / "baseline-single-class.ttl"])
+    assert Rule(SHAPE, "AlwaysShape") in fired
+    assert Rule(SHAPE, "AlwaysShape") not in conforming
+
+
+def test_h1_2_t31_a_conforming_fixture_exists_for_a_shape_no_shipped_example_exercises():
+    _, conforming = observe_shapes([witness.WITNESS_DIR / "ok-ShapeScopeShape.ttl"])
+    assert conforming[Rule(SHAPE, "ShapeScopeShape")] == {"ok-ShapeScopeShape.ttl"}

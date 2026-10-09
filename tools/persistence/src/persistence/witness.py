@@ -41,7 +41,7 @@ from pathlib import Path
 from typing import Iterable, Iterator, Mapping
 
 import pyshacl
-from rdflib import RDF, Dataset, Graph, Literal, Namespace, URIRef
+from rdflib import RDF, RDFS, Dataset, Graph, Literal, Namespace, URIRef
 
 from .compiler import CompileError, compile_targets, compile_to_graph
 from .instantiate import instantiate_by_target
@@ -305,21 +305,42 @@ def _owning_shape(shapes: Graph, shape) -> URIRef | None:
     return shape if isinstance(shape, URIRef) else None
 
 
-def observe_shapes(fixtures: Iterable[Path]) -> Observed:
-    """Validate each fixture against the shapes, recording every node shape
-    that reports a result, of any severity."""
+def _focus_nodes(data: Graph, shapes: Graph, shape: URIRef) -> set:
+    """The nodes a shape's ``sh:targetClass`` selects in ``data``, counting
+    subclasses by the asserted ``rdfs:subClassOf`` triples (SHACL's rule)."""
+    focus: set = set()
+    for target_class in shapes.objects(shape, SH.targetClass):
+        for cls in data.transitive_subjects(RDFS.subClassOf, target_class):
+            focus.update(data.subjects(RDF.type, cls))
+    return focus
+
+
+def observe_shapes(fixtures: Iterable[Path]) -> tuple[Observed, Observed]:
+    """Validate each fixture against the shapes. Returns two observations.
+
+    The first records every node shape that reports a result, of any
+    severity. The second records every shape that has focus nodes in the
+    fixture and reports nothing for them, a fixture that conforms. A shape
+    that fires everywhere detects nothing, so it is witnessed only when both
+    exist, as an audit needs a violating and a clean dataset."""
     shapes = Graph()
     shapes.parse(SHAPES_TTL, format="turtle")
-    observed: Observed = {}
+    named = [s for s in shapes.subjects(RDF.type, SH.NodeShape) if isinstance(s, URIRef)]
+    fired: Observed = {}
+    conforming: Observed = {}
     for path in fixtures:
-        _, results, _ = pyshacl.validate(
-            _load_fixture(path), shacl_graph=shapes, inference="none", advanced=True, allow_warnings=True
-        )
+        data = _load_fixture(path)
+        _, results, _ = pyshacl.validate(data, shacl_graph=shapes, inference="none", advanced=True, allow_warnings=True)
+        reporting = set()
         for source in results.objects(None, SH.sourceShape):
             owner = _owning_shape(shapes, source)
             if owner is not None:
-                _record(observed, Rule(SHAPE, _local(owner)), path.name)
-    return observed
+                reporting.add(owner)
+                _record(fired, Rule(SHAPE, _local(owner)), path.name)
+        for shape in named:
+            if shape not in reporting and _focus_nodes(data, shapes, shape):
+                _record(conforming, Rule(SHAPE, _local(shape)), path.name)
+    return fired, conforming
 
 
 # --------------------------------------------------------------------------
@@ -530,15 +551,15 @@ def build_report(
 
 
 def named_witness_problems(observed: Observed, witness_dir: Path = WITNESS_DIR) -> list[str]:
-    """A file in the witness directory called ``refusal-X.ttl`` or
-    ``warning-X.ttl`` must witness ``X``. Otherwise it has drifted onto a
+    """A file in the witness directory called ``refusal-X.ttl``,
+    ``warning-X.ttl`` or ``shape-X.ttl`` must witness ``X``. Otherwise it has drifted onto a
     different rule, usually because an earlier check now refuses it first."""
     problems: list[str] = []
     if not witness_dir.is_dir():
         return problems
     for path in sorted(witness_dir.glob("*.ttl")):
         family, _, name = path.name.removesuffix(".ttl").partition("-")
-        if family not in (REFUSAL, WARNING) or not name:
+        if family not in (REFUSAL, WARNING, SHAPE) or not name:
             continue
         if path.name not in observed.get(Rule(family, name), set()):
             seen = sorted(str(r) for r, files in observed.items() if path.name in files)
@@ -552,11 +573,16 @@ def _observations() -> tuple[Observed, tuple[str, ...]]:
     fixture, and run every audit witness."""
     fixtures = list(compile_fixtures())
     observed = observe_compile(fixtures)
-    for rule, witnesses in observe_shapes(fixtures).items():
-        observed.setdefault(rule, set()).update(witnesses)
+    fired, conforming = observe_shapes(fixtures)
+    problems_shapes: list[str] = []
+    for rule, witnesses in fired.items():
+        if rule in conforming:
+            observed.setdefault(rule, set()).update(witnesses)
+        else:
+            problems_shapes.append(f"{rule.name}: reports a result on every fixture it applies to, so it detects nothing")
     audit_observed, problems = observe_audits(audit_witnesses())
     observed.update(audit_observed)
-    return observed, (*problems, *named_witness_problems(observed))
+    return observed, (*problems_shapes, *problems, *named_witness_problems(observed))
 
 
 def check_witness_coverage() -> Report:
