@@ -14,9 +14,11 @@ detail: [the plan](../../../docs/developer/plans/python-test-melting.md) and
 
 A slow suite's cause is a hypothesis until profiled. Guessing wrong costs more than measuring.
 
-- `mise run dev:time-ontology-tests` times each file of `check:ontology-catalog` separately,
-  slowest first, with `--durations` for the slowest tests inside the three slowest files. A single
-  `pytest` invocation across many files hides which one is slow.
+- `mise run dev:time-ontology-tests` profiles `check:ontology-catalog` as one real run, with the
+  task's own flags and a JUnit report, and prints the wall time, the slowest files and the slowest
+  tests. A tail made of a few big files, or one stalled test, shows up here. A run reports nothing
+  until it ends, so `-- --per-file` runs each file in its own process with a `--timeout` and marks
+  the one that hangs. Its sum exceeds a real run.
 - `python -m pytest <file> -q -p no:cacheprovider --durations=40 --durations-min=1.0` for one
   file's own ranking.
 - Before changing a shared fixture, capture a baseline you can diff against exactly:

@@ -66,6 +66,7 @@ forward-slash paths on every platform."""
 from __future__ import annotations
 
 import re
+import shutil
 import sys
 from pathlib import Path
 from typing import Any, Sequence
@@ -284,3 +285,49 @@ def repo_files(roots: Sequence[str], pattern: str, *, fixed: bool = False, repo_
         if any(finder(line) for line in text.splitlines()):
             matches.append(path.relative_to(repo_root).as_posix())
     return sorted(matches)
+
+
+# ---- environment banner -----------------------------------------------------
+# A reasoner row, a proof or a Compose test skips or fails without its tool, and a green run
+# says nothing about the rows that never ran. This names the missing tools at the end of the
+# run (the terminal summary shows under -q, the report header does not). Only the xdist
+# controller runs it.
+
+def _isabelle_found() -> bool:
+    sys.path.insert(0, str(ROOT / "spikes" / "formal-prover" / "env"))
+    try:
+        from install_native import isabelle_executable
+        return isabelle_executable() is not None
+    except Exception:  # an unreadable installer must not break the run
+        return shutil.which("isabelle") is not None
+    finally:
+        sys.path.pop(0)
+
+
+def _reasoner_found() -> bool:
+    try:
+        from mork_compilers import reasoning
+        return reasoning.available()
+    except ImportError:
+        return False
+
+
+# (name, probe, what is lost, how to get it)
+_TOOLS = (
+    ("reasoner (reasoning-testkit jar and Java)", _reasoner_found, "every needs_reasoner test skips", "mise run bootstrap:reasoning-testkit"),
+    ("Isabelle", _isabelle_found, "check:proofs cannot run", "mise run bootstrap:formal-native-isabelle"),
+    ("Docker", lambda: shutil.which("docker") is not None, "Compose and Fuseki or RabbitMQ ITs cannot start", "install Docker"),
+)
+
+
+def missing_tools() -> list[tuple[str, str, str]]:
+    return [(name, lost, fix) for name, probe, lost, fix in _TOOLS if not probe()]
+
+
+def pytest_terminal_summary(terminalreporter) -> None:
+    missing = missing_tools()
+    if not missing:
+        return
+    terminalreporter.write_sep("=", "environment: tools missing", yellow=True, bold=True)
+    for name, lost, fix in missing:
+        terminalreporter.write_line(f"WARNING {name} not found. {lost}. Fix: {fix}", yellow=True)

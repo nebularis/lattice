@@ -51,6 +51,10 @@ public final class ReasoningTestkit {
                 .setMissingImportHandlingStrategy(MissingImportHandlingStrategy.SILENT);
         for (Path file : files) {
             OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
+            // Imports are ignored, since the caller passes the whole closure. SILENT alone still
+            // fetches each import and has no bound on a stalled connection, so send every import
+            // to a document that cannot load, which SILENT then skips without touching the network.
+            manager.getIRIMappers().add(iri -> IRI.create("file:/lattice-import-ignored"));
             String content = Files.readString(file);
             merged.addAxioms(manager.loadOntologyFromOntologyDocument(new StringDocumentSource(content), config).axioms());
         }
