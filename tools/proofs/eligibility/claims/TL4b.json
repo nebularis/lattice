@@ -1,0 +1,13 @@
+{
+  "subject": "TL4b",
+  "statedAs": "Eligibility.some_value_set_invariant/every_value_set_invariant",
+  "statementDigest": "sha256:9786b76065eaac3d56774c5682ce04ef791f5f60aa94dea9dc58daf8a56f7ccc",
+  "method": "Proof",
+  "scope": "EveryEqualSetPair",
+  "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found (E1.4)",
+  "tool": {
+    "name": "Isabelle",
+    "version": "Isabelle2025-2"
+  },
+  "outcome": "passed"
+}

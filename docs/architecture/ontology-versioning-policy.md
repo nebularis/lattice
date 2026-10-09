@@ -110,6 +110,11 @@ that is Eligibility, Instrument, Behaviour, and Surface), edit the version in
 *both* the README and the generated `spec/`/`vocab/` file, since
 `tools/literate_extract.py` is meant to keep them identical.
 
+**A layer with several spec documents** (Behaviour's `behaviour` and
+`behaviour-runtime`) gives them all one version, bumped together as one
+release, even when only one changed. The extractor refuses documents whose
+`owl:versionIRI` versions differ (ADR-A120).
+
 **A known, pre-existing gap this policy does not paper over:**
 `tools/literate_extract.py --check` does not currently pass for any of the
 seven core layers — Foundation's, Vocabulary's, and Party's committed

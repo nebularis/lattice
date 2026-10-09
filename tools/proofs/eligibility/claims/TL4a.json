@@ -1,0 +1,13 @@
+{
+  "subject": "TL4a",
+  "statedAs": "Eligibility.some_value_empty/every_value_empty",
+  "statementDigest": "sha256:4a192966199fe6f73f1f2ee8aa76a5cb6e8fdd1e6ef798459b2490ab4a1ec84d",
+  "method": "Proof",
+  "scope": "EmptyList",
+  "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found (E1.4)",
+  "tool": {
+    "name": "Isabelle",
+    "version": "Isabelle2025-2"
+  },
+  "outcome": "passed"
+}

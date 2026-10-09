@@ -1,26 +1,22 @@
 # SPDX-License-Identifier: MPL-2.0
 
-# Behaviour's runtime document (ADR-A106 decision 3): the occurrence, execution
-# and state record tiers of ADR-A08, in the configuration document's namespace.
-# Authored as a file, since the literate extractor writes one spec document per
-# layer. The README's §5.2 describes it.
-
 @prefix bhv:  <https://www.nebularis.org/neuro-semantic/lattice/behaviour#> .
 @prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix voc:  <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
 @prefix qnt:  <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
 @prefix pty:  <https://www.nebularis.org/neuro-semantic/lattice/party#> .
 @prefix elg:  <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
-@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 @prefix owl:  <http://www.w3.org/2002/07/owl#> .
 @prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
-@base <https://www.nebularis.org/neuro-semantic/behaviour-runtime> .
+
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 
 <https://www.nebularis.org/neuro-semantic/behaviour-runtime>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/behaviour-runtime/0.13.0> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.13.0> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/behaviour-runtime/0.13.1> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.13.1> .
 
 # ---- Occurrence ---------------------------------------------------------------
 

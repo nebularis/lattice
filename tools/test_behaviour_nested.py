@@ -43,6 +43,16 @@ SHAPES = _graph(LAYER / "shapes" / "structural.ttl", LAYER / "shapes" / "constra
 MODEL = _graph(CONFIG, RUNTIME, VOCAB)
 
 
+@pytest.fixture(scope="module", autouse=True)
+def _cached_graphs(request: pytest.FixtureRequest, graph_cache, validated) -> None:
+    """TM1/TM2: shared, session-scoped graphs and validation cache
+    (python-test-melting)."""
+    module = request.module
+    module.MODEL = graph_cache(CONFIG, RUNTIME, VOCAB)
+    module.SHAPES = graph_cache(LAYER / "shapes" / "structural.ttl", LAYER / "shapes" / "constraints.ttl")
+    module.validate = validated
+
+
 def _reported(data: Graph, focus: str, message: str) -> bool:
     """Whether a violation on the focus node carries a message starting with the given text."""
     _, report, _ = validate(MODEL + data, shacl_graph=SHAPES, inference="none", advanced=True)
@@ -83,7 +93,7 @@ def test_c11a_05_the_eight_worked_examples_exist() -> None:
 @pytest.mark.parametrize("name", NESTED)
 def test_c11a_06_examples_are_consistent(name: str) -> None:
     catalog = Catalog(ROOT / "ontology" / "catalog-v001.xml")
-    graph = closure(catalog, LATTICE + "behaviour-vocab/0.13.0") + closure(catalog, LATTICE + "behaviour-runtime/0.13.0")
+    graph = closure(catalog, LATTICE + "behaviour-vocab/0.13.1") + closure(catalog, LATTICE + "behaviour-runtime/0.13.1")
     assert reasoning.run("consistent", graphs=[graph, _example(name)]) is True
 
 
@@ -245,8 +255,8 @@ def test_c11a_15_readme_blocks_and_release_notes() -> None:
 
 def test_c11a_15_versions_and_release_rows() -> None:
     config, runtime = _graph(CONFIG), _graph(RUNTIME)
-    assert config.value(URIRef("https://www.nebularis.org/neuro-semantic/behaviour"), OWL.versionIRI) == URIRef(LATTICE + "behaviour/0.13.0")
-    assert set(runtime.objects(None, OWL.imports)) == {URIRef(LATTICE + "behaviour/0.13.0")}
+    assert config.value(URIRef("https://www.nebularis.org/neuro-semantic/behaviour"), OWL.versionIRI) == URIRef(LATTICE + "behaviour/0.13.1")
+    assert set(runtime.objects(None, OWL.imports)) == {URIRef(LATTICE + "behaviour/0.13.1")}
     register = (ROOT / "docs" / "architecture" / "ontology-releases.md").read_text()
     for tag in ("behaviour-v0.10.0", "behaviour-runtime-v0.10.0", "behaviour-vocab-v0.10.0", "behaviour-shapes-v0.4.0",
                 "applied-capacity-execution-v0.10.0"):

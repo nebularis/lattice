@@ -61,6 +61,16 @@ Every piece of text, in documents, code comments, commit messages and replies:
 - call a class that is a member of `fnd:Version` "versioned". Call a node "a version" only when it is
   one specific version
 
+## Modelling
+
+- Ask how the law and contract drafting answer a question before modelling it, and model that.
+- Model reality first, then simplify. Never reduce reality's complexity by waving it away, and record
+  any drift forced by usability.
+- Judgements, such as whether a rule was met or an act took effect, are evaluated from facts, never
+  authored. Layers state, code executes.
+
+Skill `lattice-ontology-authoring` has the detail.
+
 ## A public repository
 
 This repository is public, and so is everything it publishes.
@@ -86,4 +96,5 @@ Load the skill whose description matches the task. Each lives in `.claude/skills
 | `lattice-architecture` | a design that crosses layers or modules, or needs the principles behind LATTICE's structure |
 | `lattice-ontology-authoring` | changing anything under `ontology/` |
 | `lattice-toolchain` | building, testing, running checks, or setting up or repairing an environment |
+| `lattice-testing` | a slow test suite, writing or extending a Python test under `tools/` that parses an ontology graph or calls pySHACL, sharing state across test modules with pytest fixtures, or a repository-wide text scan that must work on every platform |
 | `lattice-publication-hygiene` | before a commit or pull request, and whenever writing text that will be published |

@@ -3,9 +3,10 @@
 # Formal Methods, Track B: Status
 
 **Unit ID:** `formal-methods-track-b` (phase, within the `formal-methods` epic)
-**Status:** B1, B2 and B3 done, 2026-10-07. B2.1, B2.2 and B5 queued 2026-10-08 after an
-implementation-level review (not started)
-**Last updated:** 2026-10-08
+**Status:** B1, B2 and B3 done, 2026-10-07. **B2.1 and B2.2 done, 2026-10-09**, on branch
+`fm/eligibility-pass` (machine S), part of the formal-methods epic's Eligibility pass (FM-EP)
+CCS's C9b3 waits on. B5 attempted the same session, blocked (see below), deferred
+**Last updated:** 2026-10-09
 **Plan:** [formal-methods-track-b.md](../plans/formal-methods-track-b.md)
 **Sketch:** [formal-methods-track-b.md](../sketches/formal-methods-track-b.md)
 **Epic status:** [formal-methods.md](formal-methods.md)
@@ -48,7 +49,46 @@ scoped. 72 tests pass in `surface.test_surface` (3 new, no regression).
 
 `ADR-A-FM3` accepted by the human, 2026-10-07.
 
-**Next action, for the human:** review [the formal-methods-more-feedback-response note](../notes/formal-methods-more-feedback-response.md), which queues three follow-up slices, none blocking: B2.1 (seed a fault in the compiler itself to confirm the differential harness catches it, an adjudication-record process, bounded-exhaustive generation, per-backend projection statement), B2.2 (verify and, if confirmed, fix a possible scheme-less hierarchical-match defect in `decide_concept_match`, same bug class as the already-fixed scheme-membership defect), and B5 (a measured mutation score via an automated tool, not spot checks). B4 still waits on CCS's C12.
+**2026-10-09, branch `fm/eligibility-pass` (machine S), B2.2 done.** The suspected defect was
+real: `decide_concept_match(hierarchical=True, scheme=None, required={...})` fell through to the
+unmatched-required branch and returned `Denied`. Fixed test-first (a failing test added and
+confirmed failing against the old code, per convention): a new early guard returns `Undetermined`
+when a hierarchical condition has no resolved scheme at all — "no closure to test a candidate
+against", not "this candidate fails the closure", the same reasoning L14 already uses. `L9`'s own
+wording in `ontology/eligibility/README.md` amended to state this case explicitly (the CCS plan's
+own anticipation that this slice "may change the README's wording" confirmed).
+
+**2026-10-09, B2.1 done.** All six items: (1) a deliberate fault seeded directly into
+`eligibility_ir._expand` (via `monkeypatch`, not a permanent edit), confirmed the SHACL backend's
+real output (which reads `plan.expansion` directly) now disagrees with the unchanged reference —
+the harness's core rationale, tested for the first time; (2) an adjudication log added to this
+package's own README, with entries for all three disagreements found so far (B2's two, B2.2's
+one), naming which side was wrong and the normative citation, including one entry flagged as
+weaker than the others (B2's `SingleValue` fix, settled by reading the compiler's template, not a
+README law); (3) the per-backend projection of `{Permitted, Denied, Undetermined}` stated
+explicitly for both tested backends (SPARQL: no projection, exact; SHACL: conformance-plus-lists,
+reconstructed by the test helper); (4) the differential engine named (rdflib, not a production
+store); (5) the previously untraced required-but-unmatched branch given a citing comment; (6) L13
+confirmed out of scope by design (`elg:StaticConstraint`, not `elg:SemanticLaw` — a declaration-time
+rule discharged by SHACL, never part of this decision function), documented in the module
+docstring. Bounded-exhaustive generation added: `TestBoundedExhaustiveConceptMatching` generates
+every combination of flat/chained three-concept scheme, both match modes, every required subset of
+`{c0, c1}` and every excluded subset of `{c2}` (28 compiled plans, 4 candidates each, 112
+comparisons), checked against both SPARQL and SHACL, not sampled.
+
+**B5 attempted, blocked.** `pip install mutmut` fails: its dependency `textual` pulls
+`platformdirs`, which 403s from the configured mirror (same per-package-mirror-gap pattern as
+`hypothesis` before it, repository memory). Not retried further; deferred, not this session's to
+force. A hand-seeded mutation (as this session already used three times elsewhere) remains the
+fallback if a measured score is wanted before the mirror gap closes.
+
+**Validated:** `python -m pytest tools/reference/eligibility/tests -q` — 66 passed (was 63: +1
+B2.2, +2 B2.1's two new test classes, one of which itself checks 28 generated cases × 4
+candidates internally).
+
+**Next action, for the human:** review and accept this branch's work (B2.1, B2.2, plus track E's
+FM-D17/E1.4 on the same branch) so CCS's C9b3 can start. B4 still waits on CCS's C12. B5 remains
+open whenever the mirror gap clears or a hand-seeded alternative is wanted.
 
 ## Slices
 
@@ -56,11 +96,11 @@ scoped. 72 tests pass in `surface.test_surface` (3 new, no regression).
 |---|---|---|
 | B1 (kernel and denotation) | **done** | nothing |
 | B2 (differential tests against the compilers) | **done** | nothing |
-| B2.1 (harden the differential harness, seed a compiler-side fault) | not started, queued 2026-10-08 | nothing |
-| B2.2 (verify/fix the scheme-less hierarchical-match branch) | not started, queued 2026-10-08, flagged as the next concrete defect | nothing |
+| B2.1 (harden the differential harness, seed a compiler-side fault) | **done**, 2026-10-09 | nothing |
+| B2.2 (verify/fix the scheme-less hierarchical-match branch) | **done**, 2026-10-09, defect confirmed and fixed | nothing |
 | B3 (Surface's regeneration property test; MORK and MCN deferred) | **done** | nothing |
 | B4 (evaluation context, CCS C12's conformance kit) | not started, outline only | CCS's C12, not yet briefable |
-| B5 (measured mutation score) | not started, queued 2026-10-08 | nothing |
+| B5 (measured mutation score) | attempted 2026-10-09, blocked (`mutmut`'s dependency chain 403s on the mirror), deferred | the mirror gap, or a hand-seeded fallback |
 
 ## Open questions
 

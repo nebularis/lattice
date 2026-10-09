@@ -1,0 +1,13 @@
+{
+  "subject": "TA5",
+  "statedAs": "KernelLaws.neg3_or3_demorgan/neg3_and3_demorgan",
+  "statementDigest": "sha256:9f0158f40828dd34859950c3d24189e3edda4630416715bd6d522854797d72af",
+  "method": "Proof",
+  "scope": "EveryPair",
+  "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found (E1.4)",
+  "tool": {
+    "name": "Isabelle",
+    "version": "Isabelle2025-2"
+  },
+  "outcome": "passed"
+}

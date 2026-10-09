@@ -78,6 +78,13 @@ for a formalised layer's closed datatype — are mechanically extracted by
 and (for formalised layers) `tools/proofs/<layer>/Kernel.thy`. Never hand-edit a generated file:
 edit the README's own fenced block and re-run the extractor.
 
+A layer with a second spec document, such as Behaviour's runtime document, writes it from the same
+README ([ADR-A120](../architecture/decisions/ADR-A120-literate-specs-with-several-documents.md)). A
+`turtle-spec` block whose first line is `# @output-file "spec/<file>.ttl"` goes to that file, which
+gains `spec/<layer>.ttl`'s `@prefix` lines. The directive counts only on the first line. Each such
+block states its own ontology header. All of a layer's spec documents carry one version and are
+bumped together. The extractor refuses them otherwise.
+
 ```bash
 # Check a layer's generated files still match its README (writes nothing, exits non-zero on drift)
 python tools/literate_extract.py ontology/surface/README.md --layer surface --root . \
@@ -148,6 +155,7 @@ ordinary Turtle.
 | `reasoning_isolation_check.py` | A reasoner is declared only in `platform/reasoning-testkit` (ADR-A83) | `mise run check:reasoning-isolation` |
 | `repository_topology_check.py` | The repository's own structure matches ADR-A77 | `mise run topology:preflight` / `topology:ready` / `topology:links` |
 | `phase8_conformance.py` | A shared conformance corpus runs clean across Surface and Eligibility's compiled backends | part of `mise run check:python-root` |
+| `conftest.py` | Shared, session-scoped caching for the `tools/test_*.py` suite (`graph_cache`, `validated`, `repo_files`; `python-test-melting`). A module that benefits declares one module-scoped autouse fixture fetching its own graphs from `graph_cache` and assigning `module.validate = validated`; see the module's own docstring. `mise run dev:time-ontology-tests` times `check:ontology-catalog`'s test files separately, slowest first | `mise run check:ontology-catalog` runs the whole suite with `pytest-xdist` (`-n auto --dist loadfile`) |
 
 ### Platform services (Java/Maven, `platform/`)
 

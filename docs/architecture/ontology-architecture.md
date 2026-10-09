@@ -88,6 +88,7 @@ Layer-crossing composition rules (stated once here, they recur throughout the la
 <layer>/
 ├── README.md          # literate spec: prose + fenced turtle-spec blocks == the T-box/R-box source of truth
 ├── spec/<layer>.ttl    # compiled OWL, mechanically extractable from README.md's turtle-spec fences
+│                       # (a block opening `# @output-file "spec/<file>.ttl"` writes a second document, ADR-A120)
 ├── shapes/
 │   ├── structural.ttl   # SHACL property shapes (local, per-instance)
 │   ├── constraints.ttl  # SHACL-SPARQL, whole-graph conditions (e.g. sh:in closed-world enums)

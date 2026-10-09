@@ -61,11 +61,17 @@ def _graph(*sources) -> Graph:
     return g
 
 
-MODEL = _graph(*[ONTOLOGY / p for p in LOWER], SPEC, VOCAB)
-SHAPES = _graph(LAYER / "shapes" / "structural.ttl", LAYER / "shapes" / "constraints.ttl")
-EVERY_SHAPE = _graph(*ALL_SHAPES)
-# The closure's axioms: Instrument's and Behaviour's specs (§12). The other layers are not closed.
-AXIOMS = _graph(SPEC, ONTOLOGY / "behaviour" / "spec" / "behaviour.ttl")
+@pytest.fixture(scope="module", autouse=True)
+def _cached_graphs(request: pytest.FixtureRequest, graph_cache, validated) -> None:
+    """TM1/TM2: shared, session-scoped graphs and validation cache
+    (python-test-melting)."""
+    module = request.module
+    module.MODEL = graph_cache(*[ONTOLOGY / p for p in LOWER], SPEC, VOCAB)
+    module.SHAPES = graph_cache(LAYER / "shapes" / "structural.ttl", LAYER / "shapes" / "constraints.ttl")
+    module.EVERY_SHAPE = graph_cache(*ALL_SHAPES)
+    # The closure's axioms: Instrument's and Behaviour's specs (§12). The other layers are not closed.
+    module.AXIOMS = graph_cache(SPEC, ONTOLOGY / "behaviour" / "spec" / "behaviour.ttl")
+    module.validate = validated
 
 
 def _example(name: str) -> Graph:
@@ -93,8 +99,8 @@ def _changed(name: str, add: str = "", remove: tuple = ()) -> Graph:
     return g
 
 
-def _messages(data: Graph, shapes: Graph = SHAPES) -> list[tuple[str, str]]:
-    _, report, _ = validate(MODEL + data, shacl_graph=shapes, inference="none", advanced=True)
+def _messages(data: Graph, shapes: Graph | None = None) -> list[tuple[str, str]]:
+    _, report, _ = validate(MODEL + data, shacl_graph=SHAPES if shapes is None else shapes, inference="none", advanced=True)
     return [(str(report.value(r, SH.focusNode)), str(report.value(r, SH.resultMessage)))
             for r in report.subjects(SH.resultSeverity, SH.Violation)]
 
@@ -136,10 +142,10 @@ FC_EX, FC = _ns("facility-cure-period")
 def test_c7a_01_version_imports_and_comments() -> None:
     spec = _graph(SPEC)
     ontology = URIRef("https://www.nebularis.org/neuro-semantic/instrument")
-    assert spec.value(ontology, OWL.versionIRI) == URIRef(LATTICE + "instrument/0.15.0")
+    assert spec.value(ontology, OWL.versionIRI) == URIRef(LATTICE + "instrument/0.15.1")
     assert set(spec.objects(ontology, OWL.imports)) == {URIRef(LATTICE + v) for v in (
         "foundation/0.4.0", "vocabulary/0.4.0", "quantification/0.7.0", "party/0.8.0", "eligibility/0.10.0",
-        "wording/0.7.0", "behaviour/0.13.0")}
+        "wording/0.7.0", "behaviour/0.13.1")}
     new = ("ofPower", "ofObligation", "by", "condition", "after", "tolledIn", "stateKind", "appliesInState",
            "arisesOn", "arisesOnBreachOf", "arisesOnExerciseOf", "endsOn")
     for name in new:
@@ -363,7 +369,7 @@ def test_c7a_13_readme_is_the_source_and_releases_are_recorded() -> None:
     assert "0.10.0 (CCS C7a" in readme and "Shapes 0.3.0 (additive" in readme
     assert (LAYER / "shapes" / ".version").read_text().strip() == "0.7.0"
     vocab = _graph(VOCAB)
-    assert URIRef(LATTICE + "instrument-vocab/0.15.0") in set(vocab.objects(None, OWL.versionIRI))
+    assert URIRef(LATTICE + "instrument-vocab/0.15.1") in set(vocab.objects(None, OWL.versionIRI))
 
 
 # ---- C7a-15 to C7a-18: authoring with a reasoner (C7a-R1) -------------------

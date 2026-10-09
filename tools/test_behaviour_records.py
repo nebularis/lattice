@@ -42,8 +42,18 @@ def _graph(*paths: Path) -> Graph:
 SHAPES = _graph(LAYER / "shapes" / "structural.ttl", LAYER / "shapes" / "constraints.ttl")
 
 
+@pytest.fixture(scope="module", autouse=True)
+def _cached_graphs(request: pytest.FixtureRequest, graph_cache, validated) -> None:
+    """TM1/TM2: MODEL used to be rebuilt by every `_violations` call; now
+    parsed once, shared across the whole suite (python-test-melting)."""
+    module = request.module
+    module.MODEL = graph_cache(CONFIG, RUNTIME, VOCAB)
+    module.SHAPES = graph_cache(LAYER / "shapes" / "structural.ttl", LAYER / "shapes" / "constraints.ttl")
+    module.validate = validated
+
+
 def _violations(data: Graph) -> set:
-    _, report, _ = validate(_graph(CONFIG, RUNTIME, VOCAB) + data, shacl_graph=SHAPES, inference="none", advanced=True)
+    _, report, _ = validate(MODEL + data, shacl_graph=SHAPES, inference="none", advanced=True)
     return {str(n).rsplit("/", 1)[-1] for n in report.objects(None, SH.focusNode)}
 
 
@@ -58,8 +68,8 @@ def _data(text: str) -> Graph:
 
 def test_c11_01_runtime_version_imports_and_no_instrument() -> None:
     runtime = _graph(RUNTIME)
-    assert runtime.value(URIRef("https://www.nebularis.org/neuro-semantic/behaviour-runtime"), OWL.versionIRI) == URIRef(LATTICE + "behaviour-runtime/0.13.0")  # C11a
-    assert set(runtime.objects(None, OWL.imports)) == {URIRef(LATTICE + "behaviour/0.13.0")}
+    assert runtime.value(URIRef("https://www.nebularis.org/neuro-semantic/behaviour-runtime"), OWL.versionIRI) == URIRef(LATTICE + "behaviour-runtime/0.13.1")  # C11a
+    assert set(runtime.objects(None, OWL.imports)) == {URIRef(LATTICE + "behaviour/0.13.1")}
     assert "lattice/instrument" not in RUNTIME.read_text() and "ins:" not in RUNTIME.read_text()
 
 
@@ -111,8 +121,8 @@ def test_c11_08_the_occasion_state_space() -> None:
 @pytest.mark.skipif(not reasoning.available(), reason="reasoning-testkit jar not built")
 @pytest.mark.parametrize("example", EXAMPLES, ids=lambda p: p.stem)
 def test_c11_09_examples_are_consistent(example: Path) -> None:
-    graph = closure(Catalog(ROOT / "ontology" / "catalog-v001.xml"), LATTICE + "behaviour-vocab/0.13.0")
-    graph += closure(Catalog(ROOT / "ontology" / "catalog-v001.xml"), LATTICE + "behaviour-runtime/0.13.0")
+    graph = closure(Catalog(ROOT / "ontology" / "catalog-v001.xml"), LATTICE + "behaviour-vocab/0.13.1")
+    graph += closure(Catalog(ROOT / "ontology" / "catalog-v001.xml"), LATTICE + "behaviour-runtime/0.13.1")
     assert reasoning.run("consistent", graphs=[graph, _graph(example)]) is True
 
 
@@ -131,7 +141,7 @@ def test_c11_12_an_initial_state_outside_its_space_fails() -> None:
 
 def test_c11_13_configuration_adds_an_optional_initial_state() -> None:
     config = _graph(CONFIG)
-    assert config.value(URIRef("https://www.nebularis.org/neuro-semantic/behaviour"), OWL.versionIRI) == URIRef(LATTICE + "behaviour/0.13.0")
+    assert config.value(URIRef("https://www.nebularis.org/neuro-semantic/behaviour"), OWL.versionIRI) == URIRef(LATTICE + "behaviour/0.13.1")
     assert (BHV.initialState, RDF.type, OWL.ObjectProperty) in config
     for fixture in [*(LAYER / "test").glob("*.ttl"), ROOT / "test" / "conformance" / "cases" / "behaviour-bp1-transition.ttl"]:
         assert _violations(_graph(fixture)) == set(), fixture.name

@@ -14,6 +14,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
 from pyshacl import validate
 from rdflib import Graph, Literal, Namespace, URIRef
 from rdflib.namespace import OWL, RDF, RDFS
@@ -68,6 +69,15 @@ def _shapes() -> Graph:
 
 
 SHAPES = _shapes()
+
+
+@pytest.fixture(scope="module", autouse=True)
+def _cached_graphs(request: pytest.FixtureRequest, graph_cache, validated) -> None:
+    """TM1/TM2: shared, session-scoped shapes graph and validation cache
+    (python-test-melting)."""
+    module = request.module
+    module.SHAPES = graph_cache(MODULE / "shapes" / "structural.ttl", MODULE / "shapes" / "constraints.ttl")
+    module.validate = validated
 
 
 def results(data: Graph) -> list[tuple[URIRef, URIRef, URIRef]]:

@@ -54,8 +54,18 @@ def _graph(*paths: Path) -> Graph:
 SHAPES = _graph(LAYER / "shapes" / "structural.ttl", LAYER / "shapes" / "constraints.ttl")
 
 
+@pytest.fixture(scope="module", autouse=True)
+def _cached_graphs(request: pytest.FixtureRequest, graph_cache, validated) -> None:
+    """TM1/TM2: MODEL used to be rebuilt by every `_conforms` call; now parsed
+    once, shared across the whole suite (python-test-melting)."""
+    module = request.module
+    module.MODEL = graph_cache(CONFIG, RUNTIME, VOCAB)
+    module.SHAPES = graph_cache(LAYER / "shapes" / "structural.ttl", LAYER / "shapes" / "constraints.ttl")
+    module.validate = validated
+
+
 def _conforms(data: Graph) -> bool:
-    return validate(_graph(CONFIG, RUNTIME, VOCAB) + data, shacl_graph=SHAPES, inference="none", advanced=True)[0]
+    return validate(MODEL + data, shacl_graph=SHAPES, inference="none", advanced=True)[0]
 
 
 PREFIXES = f"@prefix bhv: <{BHV}> .\n@prefix ex: <https://example.org/b/> .\n"

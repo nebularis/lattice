@@ -1,10 +1,13 @@
 {
   "subject": "TL1-every",
   "statedAs": "Eligibility.every_value_spec_denied/permitted/undetermined",
-  "statementDigest": "sha256:e3184dd4cac509b615ec8501b28a06c292d71eb949020df14dac8bf74ed11d71",
+  "statementDigest": "sha256:0335b81fd6754e0046b33c3e7282430223595f962540f36dee993779bb28f08f",
   "method": "Proof",
   "scope": "EveryList",
-  "assumptionAudit": "no sorry/oops in Eligibility.thy (gate.py's source scan)",
-  "tool": { "name": "Isabelle", "version": "Isabelle2025-2" },
+  "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found (E1.4)",
+  "tool": {
+    "name": "Isabelle",
+    "version": "Isabelle2025-2"
+  },
   "outcome": "passed"
 }

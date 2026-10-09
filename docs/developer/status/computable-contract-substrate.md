@@ -18,9 +18,9 @@ Behaviour 0.10.0 (shapes 0.4.0) with nested states and history, the import guard
 check`. In tranche D, C6 to C7c are merged and tagged (Instrument 0.12.0, Party 0.8.0, Quantification
 0.7.0). C8 and C8b are merged and tagged (Instrument 0.14.0, Wording 0.7.0). C9 is briefed and splits into C9a to C9c. Its materiality question has its own sketch. From C5 on, the agent builds and verifies, and the human commits by hand.
 
-**Next action, for the human:** review C9a's model phase and its deviations on `ccs/c9a-amendments`,
-accept the ADR-A104 addendum of 2026-10-08, commit, merge to `main`, then tag `instrument-v0.15.0`,
-`instrument-shapes-v0.7.0` and `instrument-vocab-v0.15.0` and push them to `origin-ssh`.
+**Next action, for the human:** confirm C9b2-Q1 after the design-time analysis (plan, C9b2 in
+detail), and create the C9b0 branch, which no longer waits on anything. Merge order: C9b0, then C9b2, then C9b1, each
+regenerating the catalog and release register rather than hand-merging.
 
 ## Slice board
 
@@ -41,7 +41,9 @@ accept the ADR-A104 addendum of 2026-10-08, commit, merge to `main`, then tag `i
 | C7b | terms in time | D | merged (`5da9412`), tagged | |
 | C7c | what terms are, and who they bind (split from C7b) | D | merged and tagged | done |
 | C8, C8b | values in stated meaning, Wording references by identity | D | merged, tagged | |
-| C9a, C9b, C9c, C8a | amendments and taking effect, consent and materiality, incorporation, template library | D | C9 answered, C9a ready to branch | |
+| C9a | amendments, assents and taking effect | D | merged, tagged | |
+| C9b1 to C9b4, C9d, C9c, C8a | legal acts, additivity, set comparisons, qualifying rules, materiality, incorporation, template library | D | C9b re-sliced 2026-10-09 | C9b3 waits on C9b0 (Eligibility sources), C9b2 and HQ-6. FM-EP merged 2026-10-09 |
+| C16c | remove Party's shares | F | planned, required before the epic closes | C9b4 |
 | C7a | regimes and gating, split from C7 | D | merged to `main` (`c6e5853`) and tagged | |
 | C12, C13 | runtime evaluator, relation plans | E | waiting | C9, C11, C11a, AIR-3.3, NRS N1 |
 | C13a | design-time joint satisfiability: slot conditions by reasoner, the task NRS N3 reuses (deferred from C5) | E | waiting | C5, NRS N1 |
@@ -145,3 +147,13 @@ accept the ADR-A104 addendum of 2026-10-08, commit, merge to `main`, then tag `i
 - 2026-10-08: C9a examples phase on `ccs/c9a-amendments`: `facility-amendment.ttl` (the legal side of Wording's amendment, assents arriving out of order) and `licence-amendments.ttl` (formation by separate signatures, a guarantor released, ending by agreement) written. The facility conforms. The licence fails only on `ins:OnAcceptance`, which the model phase adds. C9a-Q1 raised: how each insurer in a subscription placement is bound from its own assent
 - 2026-10-08: C9a-Q1 withdrawn by the human, and the subscription placement replaced by an endorsement and mid-term adjustment. `property-endorsement.ttl` written and conforming. The ADR-A104 addendum "amendments, assents and taking effect" drafted (Proposed). C9a's examples phase complete, with its handoff in the Validation Pack
 - 2026-10-08: C9a examples committed. Model phase built: Instrument 0.15.0, `instrument-vocab` 0.15.0, shapes 0.7.0 (breaking, law I4), with amendments, assents and taking effect, the worked examples §22.20 to §22.22, and `tools/test_amendments.py` (20 tests) in `check:ontology-catalog`. Deviations in the [Validation Pack](../validation/computable-contract-substrate-c9a.md)
+- 2026-10-08: C9a merged to `main` and tagged by the human (`instrument-v0.15.0`, `instrument-shapes-v0.7.0`, `instrument-vocab-v0.15.0`)
+- 2026-10-08: C9b briefed on `main` with five questions, each with design and runtime overheads: splitting materiality into C9d (Q1), what a consent is given to (Q2), the consent rule and where a member's weight comes from (Q3), delegated consent (Q4), and a regime per exercise (Q5)
+- 2026-10-09: the human's paper on consent, groups and exercise received. C9b's brief marked under revision. The paper's design advice added to the authoring, architecture and design skills and to `AGENTS.md`, and Copilot's instructions regenerated
+- 2026-10-09: the consent paper decided, as the [consent sketch](../sketches/consent-and-group-powers.md): consent a sibling of assent, qualifying rules as acting rules (`ins:QualifyingRule`), legal acts in Instrument (juristic acts only), no regime per exercise, Party's shares deprecated in C9b4 and removed in C16c. C9b re-sliced into C9b1 to C9b4. The formal-methods epic's Eligibility work (FM-D17, E1.4, B2.2, B2.1) is to run on its own branch and merge before C9b3. HQ-6 scheduled before C9b3
+- 2026-10-09: the reference time (stated once by the word, as a context role) and withdrawal (no substrate default) decided by the human. The formal-methods Eligibility pass named FM-EP, to run on machine S on `fm/eligibility-pass`
+- 2026-10-09: FM-EP merged to `main` (`2a438b15`) and reviewed: README restructured with diagrams, FM-D17's generated truth tables, proofs and reference hardened, checks passing. Law L9 amended in the Eligibility README only, which TD-16 kept from reaching the vocabulary. New slice C9b0 makes Eligibility's README its source again and releases L9, before C9b3
+- 2026-10-09: C9b0, C9b1 and C9b2 all to run on machine R, not in a cloud session (the human). The agent may run sub-agents in parallel and routes their decisions to the human. Read-only investigations started for all three briefs
+- 2026-10-09: C9b0, C9b1 and C9b2 briefed from the three investigations, six questions for the human. Found: Eligibility's drift is 5 and 42 triples against all three shape files, not 78 and 19, and nothing imports `eligibility-vocab`, so C9b0 releases one document with no cascade. Behaviour's C9b1 change is 0.14.0 breaking, not a patch. Sum already spans two spaces (a date plus a duration), so C9b2's rule covers a sum within one space
+- 2026-10-09: C9b0-Q1, C9b1-Q1 and C9b1-Q2 answered (a) by the human. TD-16 cross-checked: FM-EP changed Eligibility's README only, so the drift stands and C9b0 repairs it first, as the human proposed. The plan explains (p3) and (p4) with pictures, and why (a) defers semi-additivity without blocking it
+- 2026-10-09: C9b0-Q2 answered (a), with C9b3 to make the no-applicable-binding case Undetermined. C9b2-Q2 answered (p3), with (p4) held as HQ-12. C9b2-Q1 analysed for design-time warnings: SHACL warns equally under (a) and (b), a reasoner cannot warn of a missing declaration under either, and semi-additivity belongs on the measure, not the space. Leaning (a) kept, for the human to confirm

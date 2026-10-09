@@ -179,4 +179,95 @@ lemma negate_before_same_reading_disagrees:
 (* GATE:END *)
   by (rule exI [of _ "[Permitted, Denied]"]) simp
 
+(* E1.4 (the formal-methods epic's second review \u00a72.3): the empty-list base cases, stated and
+   gated explicitly, and set invariance (permutation and duplication do not change the result,
+   since both readings fold a commutative, associative, idempotent connective, TA4), derived
+   directly from the already-proved TL1 characterisations rather than by fresh induction. *)
+
+(* GATE:BEGIN TL4a *)
+lemma some_value_empty: "some_value [] = Undetermined"
+  by simp
+
+lemma every_value_empty: "every_value [] = Undetermined"
+  by simp
+(* GATE:END *)
+
+(* GATE:BEGIN TL4b *)
+lemma some_value_set_invariant: "set xs = set ys \<Longrightarrow> some_value xs = some_value ys"
+proof (cases "some_value xs")
+  case Permitted
+  then have "Permitted \<in> set xs" using some_value_spec_permitted by blast
+  moreover assume "set xs = set ys"
+  ultimately have "Permitted \<in> set ys" by simp
+  then show ?thesis using Permitted some_value_spec_permitted by metis
+next
+  case Denied
+  then have h: "xs \<noteq> [] \<and> (\<forall>x \<in> set xs. x = Denied)" using some_value_spec_denied by blast
+  assume eq: "set xs = set ys"
+  have ys_ne: "ys \<noteq> []"
+  proof
+    assume "ys = []"
+    then have "set xs = {}" using eq by simp
+    then show False using h by simp
+  qed
+  have "\<forall>x \<in> set ys. x = Denied" using h eq by simp
+  then show ?thesis using ys_ne Denied some_value_spec_denied by metis
+next
+  case Undetermined
+  then have u: "xs = [] \<or> (Permitted \<notin> set xs \<and> Undetermined \<in> set xs)"
+    using some_value_spec_undetermined by blast
+  assume eq: "set xs = set ys"
+  show ?thesis
+  proof (cases "xs = []")
+    case True
+    then have "set ys = {}" using eq by simp
+    then have "ys = []" by simp
+    then show ?thesis using True Undetermined some_value_spec_undetermined by simp
+  next
+    case False
+    then have h: "Permitted \<notin> set xs \<and> Undetermined \<in> set xs" using u by blast
+    then have "Permitted \<notin> set ys \<and> Undetermined \<in> set ys" using eq by simp
+    then show ?thesis using Undetermined some_value_spec_undetermined by metis
+  qed
+qed
+
+lemma every_value_set_invariant: "set xs = set ys \<Longrightarrow> every_value xs = every_value ys"
+proof (cases "every_value xs")
+  case Denied
+  then have "Denied \<in> set xs" using every_value_spec_denied by blast
+  moreover assume "set xs = set ys"
+  ultimately have "Denied \<in> set ys" by simp
+  then show ?thesis using Denied every_value_spec_denied by metis
+next
+  case Permitted
+  then have h: "xs \<noteq> [] \<and> (\<forall>x \<in> set xs. x = Permitted)" using every_value_spec_permitted by blast
+  assume eq: "set xs = set ys"
+  have ys_ne: "ys \<noteq> []"
+  proof
+    assume "ys = []"
+    then have "set xs = {}" using eq by simp
+    then show False using h by simp
+  qed
+  have "\<forall>x \<in> set ys. x = Permitted" using h eq by simp
+  then show ?thesis using ys_ne Permitted every_value_spec_permitted by metis
+next
+  case Undetermined
+  then have u: "xs = [] \<or> (Denied \<notin> set xs \<and> Undetermined \<in> set xs)"
+    using every_value_spec_undetermined by blast
+  assume eq: "set xs = set ys"
+  show ?thesis
+  proof (cases "xs = []")
+    case True
+    then have "set ys = {}" using eq by simp
+    then have "ys = []" by simp
+    then show ?thesis using True Undetermined every_value_spec_undetermined by simp
+  next
+    case False
+    then have h: "Denied \<notin> set xs \<and> Undetermined \<in> set xs" using u by blast
+    then have "Denied \<notin> set ys \<and> Undetermined \<in> set ys" using eq by simp
+    then show ?thesis using Undetermined every_value_spec_undetermined by metis
+  qed
+qed
+(* GATE:END *)
+
 end
