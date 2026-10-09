@@ -43,7 +43,7 @@ from rdflib import Graph, Literal, URIRef
 from rdflib.namespace import RDF
 
 from .common import mint
-from .eligibility_ir import ConceptPlan, EvidencePath, IntervalPlan, ProfilePlan, RequiredInterval
+from .eligibility_ir import ConceptPlan, EvidencePath, IntervalPlan, IRCompileError, ProfilePlan, RequiredInterval
 from .namespaces import ELG, EXE, MORK, QNT
 
 PREFIXES = (
@@ -212,6 +212,8 @@ def concept_select(plan: ConceptPlan, carry: str = "", key: str = "?question") -
 def _concept_core(plan: ConceptPlan, carry: str, key: str, per_value: bool) -> str:
     """The per-candidate decision. With ``per_value``, one row per value the
     binding's path reaches, each decided as a single candidate (L15)."""
+    if plan.hierarchical and plan.scheme is None:
+        raise IRCompileError(f"{plan.condition} matches hierarchically with no resolved scheme (L9)")
     if plan.no_hierarchy:
         decision = _no_hierarchy_decision(plan)
     else:

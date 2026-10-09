@@ -592,6 +592,15 @@ elg:L16 a elg:Law ;
 	rdfs:comment "Negation. A negated condition is evaluated as it stands, including its value reading, and its outcome is then swapped: Permitted becomes Denied and Denied becomes Permitted. Undetermined stays Undetermined, with its reason." .
 ```
 
+L9's last sentence makes a hierarchical condition with no resolved scheme Undetermined for every
+candidate. A compiler may refuse such a condition instead of compiling a plan that answers
+Undetermined everywhere, and the compilers in `tools/mork_compilers/` do. They refuse a hierarchical
+condition with no `elg:constrainedByContract`, a contract with neither a `voc:SchemeBinding` nor a
+`voc:boundScheme`, and a contract whose bindings resolve to no scheme at the resolution time. Their
+SPARQL and SHACL backends also refuse a hierarchical plan that carries no scheme. A refusal decides
+no candidate, so it does not contradict L9. The reference semantics (`tools/reference/eligibility/`)
+answers Undetermined.
+
 ## 7. Shapes
 
 Three `turtle-shapes` blocks generate the three shape files, in order (§3). A shape lives in one
