@@ -3,7 +3,8 @@
 # Plan: Python test speed
 
 **Unit ID:** `python-test-melting`
-**Status:** In progress. TM0, TM1, TM2, TM6, TM7 done, 2026-10-09. TM-Q1 to TM-Q5 decided (status record).
+**Status:** Done, 2026-10-09, branch `test/slow-py`. TM0-TM3, TM6-TM8 built and validated. TM4 and TM5
+deferred, with reasoning recorded (slices table). All of TM-Q1 to TM-Q5 decided (status record).
 **Trigger:** human request, 2026-10-09. The `check:ontology-catalog` run took 19 minutes in a fresh
 cloud environment, and about 31 s for one test locally.
 **Status record:** [python-test-melting.md](../status/python-test-melting.md)
@@ -46,18 +47,18 @@ Everything about relative cost is a hypothesis until TM0 profiles it.
 
 ## Slices
 
-| Slice | Scope | Test modules touched | Level | Estimate |
-|---|---|---|---|---|
-| TM0 | Measure and baseline. No behaviour change | none (and `tools/time_ontology_tests.py`) | L7 | 30k |
-| TM1 | Test support module with cached graphs, piloted on two modules | `test_parameter_bindings`, `test_constitutive_terms` | L1, L2 | 60k |
-| TM2 | Validation cache and `inplace`, same two modules | same two | L1, L2 | 50k |
-| TM3a | Roll out to the Instrument family | `test_instrument`, `test_regimes`, `test_terms_in_time`, `test_amendments` | L1 | 60k |
-| TM3b | Roll out to Behaviour, Wording and Keys | `test_behaviour_split`, `test_behaviour_records`, `test_behaviour_nested`, `test_wording`, `test_keys` | L1 | 70k |
-| TM3c | Roll out to the rest | `test_eligibility_examples`, `test_peril_vocabulary`, `test_mork_order_relations`, `test_substrate_extensions`, `test_applied_shared_contracts` | L1 | 50k |
-| TM4 | Narrow shapes in one-triple mutation tests. Only if TM0 shows it matters | the slowest of those | L1 | 60k |
-| TM5 | Reasoner rows: skip condition, `slow` marker, batching. Only if TM0 shows it matters | those with `needs_reasoner` | L1, L4 | 60k |
-| TM6 | Repository scans in Python, not `git grep` (TD-29) | the five that shell out | L1 | 50k |
-| TM7 | Parallel run with `pytest-xdist`. Only if TM0 and TM3 leave it worthwhile | none | L7 | 25k |
+| Slice | Scope | Test modules touched | Level | Estimate | Status |
+|---|---|---|---|---|---|
+| TM0 | Measure and baseline. No behaviour change | none (and `tools/time_ontology_tests.py`) | L7 | 30k | **done** |
+| TM1 | Shared, session-scoped graph cache in `tools/conftest.py` (TM-Q2: option B) | all 16 modules with a `validate()` call site | L1, L2 | 60k | **done**, rolled out to every module, not piloted on two |
+| TM2 | Validation cache, keyed on graph content (fixed mid-roll-out: a test that mutates its own graph in place and revalidates must not see a stale report) | same 16 | L1, L2 | 50k | **done** |
+| TM3a | Roll out to the Instrument family | `test_instrument`, `test_regimes`, `test_terms_in_time`, `test_amendments`, `test_parameter_bindings`, `test_constitutive_terms` | L1 | 60k | **done** |
+| TM3b | Roll out to Behaviour, Wording and Keys | `test_behaviour_split`, `test_behaviour_records`, `test_behaviour_nested`, `test_wording`, `test_keys` | L1 | 70k | **done** |
+| TM3c | Roll out to the rest | `test_eligibility_examples`, `test_peril_vocabulary`, `test_mork_order_relations`, `test_substrate_extensions`, `test_applied_shared_contracts` | L1 | 50k | **done** |
+| TM4 | Narrow shapes in one-triple mutation tests. Only if TM0 shows it matters | the slowest of those | L1 | 60k | **deferred**. TM3's own measurement shows validate() call volume (SHACL-SPARQL evaluation over necessarily-distinct mutated graphs) dominates, which TM4 would help; but the target is already met by a wide margin (TM7) and TM4 carries real, stated correctness risk (a narrowed shape set silently missing a message another shape file would add). Not worth the risk without a stronger forcing need |
+| TM5 | Reasoner rows: skip condition, `slow` marker, batching. Only if TM0 shows it matters | those with `needs_reasoner` | L1, L4 | 60k | **deferred**. Step 1 (skip condition) already holds: `reasoning.available()` skips without starting a JVM when the jar is not built, confirmed by every run in this environment. Steps 2 and 3 are unmeasurable here (the jar is never built in this sandbox, so every reasoner row already skips) and step 3 is explicitly its own slice, briefed on `main`, crossing into Java |
+| TM6 | Repository scans in Python, not `git grep` (TD-29) | the five that shell out | L1 | 50k | **done**. Also fixed a real, pre-existing Windows-only `UnicodeDecodeError` in `test_c6_10` (git grep's subprocess output decoded with the console codepage, not UTF-8); that test now fails with its true, pre-existing `AssertionError` (retired terms in `ontology/examples/insure-o/`, out of this plan's scope) on every platform instead of crashing on one |
+| TM7 | Parallel run with `pytest-xdist`. Only if TM0 and TM3 leave it worthwhile | none | L7 | 25k | **done**. The dominant lever: 456s serial to ~124-139s with `-n auto --dist loadfile`, confirmed byte-identical outcomes |
 | TM8 | Close out. TD-18 and TD-29 rows removed, developer guide updated | none | L0 | 25k |
 
 About 540k tokens in all. TM4, TM5 and TM7 may be dropped, so the realistic total is 400k to 540k.
@@ -188,10 +189,19 @@ hypotheses and wait for the human.
 
 ### TM-Q1. What is the target?
 
+**Decided 2026-10-09 by the human:** any speedup is beneficial; target 3-4 minutes or under, otherwise
+split long and short runs for CI. Met: ~124-139s under `pytest-xdist` (status record).
+
 Not asked until TM0 gives numbers. Leaning is to state it as a ratio to the TM0 baseline on one machine,
 plus an absolute ceiling for the cloud run, so that a slow runner does not hide a gain.
 
 ### TM-Q2. Where do the shared graphs and the validation cache live? (blocks TM1)
+
+**Decided 2026-10-09 by the human: option B,** session-scoped fixtures in `tools/conftest.py` only. Built
+with a deliberate reading recorded in the status record: the cache (`graph_cache`, `validated`) is the
+fixture; each adopting module declares one `@pytest.fixture(scope="module", autouse=True)` that assigns
+its own `MODEL`/`SHAPES`/`validate` names onto `request.module`, so no sibling support module exists and
+no call site outside that one fixture per module was rewritten.
 
 | Option | Design overheads | Runtime overheads |
 |---|---|---|
@@ -203,6 +213,9 @@ plus an absolute ceiling for the cloud run, so that a slow runner does not hide 
 project needs the helper, C can wrap it later.
 
 ### TM-Q3. Slice size for TM3 (blocks TM3a)
+
+**Decided 2026-10-09:** the agent's choice, per the human. Option A, batches of four to six, one commit
+per batch (TM3a, TM3b, TM3c, as the plan already had them).
 
 The lifecycle splits a slice at more than two modules touched. TM3a to TM3c touch four or five test
 modules each, with no new test cases.
@@ -218,6 +231,11 @@ comparison.
 
 ### TM-Q4. What do the Python scans list? (blocks TM6)
 
+**Decided 2026-10-09 by the human: option A.** Built as `repo_files` in `tools/conftest.py`. The known
+risk (untracked files the old `git grep` would not see) was hit for real during the roll-out, by this
+unit's own new `test_repo_files.py` matching its own fixture text; fixed by allow-listing that one file,
+the same precedent `test_instrument.py` already set for its own `RETIRED` constant.
+
 | Option | Design overheads | Runtime overheads |
 |---|---|---|
 | **A.** Walk the tree from given roots, skipping a named list of build and dependency directories | no `.git` needed, so it works in a source archive. Includes untracked files, which a `git grep` would not, so the skip list must be right | one pass per call, cacheable |
@@ -227,6 +245,10 @@ comparison.
 **Leaning A,** to match the catalogue sketch's rule that nothing depends on `.git` of LATTICE's own.
 
 ### TM-Q5. May TM7 add `pytest-xdist`?
+
+**Decided 2026-10-09 by the human:** yes, if it can be made to work in this environment. Confirmed
+working (16 vCPUs on the machine that measured it); added to `pyproject.toml`'s `test` extra and wired
+into `check:ontology-catalog`.
 
 Decide after TM3, with the TM0 vCPU figure. A new dependency changes what `bootstrap` installs for
 everyone. Leaning is yes only if the remaining serial time is still too long and the runner has at least

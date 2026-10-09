@@ -354,7 +354,7 @@ None of these may be taken by an agent.
 | CCS | C9b3 | **an Eligibility pass first, FM-EP, done 2026-10-09** on machine S, branch `fm/eligibility-pass` (FM-D17, E1.4, B2.1, B2.2 all built and verified; B5 attempted, blocked by a mirror gap, deferred). Held ready for the human to commit and merge to `main`; C9b3 can start once that happens. C9b3 adds set comparisons and aggregate bindings to Eligibility, extending its laws, its theory, its reference semantics and its compilers, and then carries its own proof and reference rows ([consent sketch](../sketches/consent-and-group-powers.md) §2.3) |
 | CCS | C16a | laws with formal statements make simplifications checkable |
 | [insurml-alignment](insurml-alignment.md) | IMA-D4a, IMA-4.2 | track C informs scheme composition. Assembly parity is a track B property test first and a track E theorem later |
-| [Technical debt](technical-debt.md) | TD-18 | proofs and model checks add CI time, run through dependency-aware builds with deeper runs nightly |
+| cross-cutting | CI time | proofs and model checks add CI time, run through dependency-aware builds with deeper runs nightly (`python-test-melting` TM8 repointed this row: TD-18, the Python test suite's own slowness, is resolved and removed from the technical debt register) |
 | the engine notes | the persistence planner | reuses track E's kernel if the custom engine is built |
 | the engine notes | `persistence-fml.md`'s own review | track H implements it directly, scoped to RDF/SPARQL only (ADR-A-FM4); the sibling SQL review (`sql-feedback.md`) is explicitly not this epic's scope |
 | the platform | `workers/`, RabbitMQ, the store interface | track F adds job families under the existing worker boundary |
