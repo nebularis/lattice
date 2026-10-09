@@ -18,8 +18,11 @@ Behaviour 0.10.0 (shapes 0.4.0) with nested states and history, the import guard
 check`. In tranche D, C6 to C7c are merged and tagged (Instrument 0.12.0, Party 0.8.0, Quantification
 0.7.0). C8 and C8b are merged and tagged (Instrument 0.14.0, Wording 0.7.0). C9 is briefed and splits into C9a to C9c. Its materiality question has its own sketch. From C5 on, the agent builds and verifies, and the human commits by hand.
 
-**Next action, for the agent:** build C9b0, C9b2 and C9b1 in their own worktrees and merge them into
-`ccs/c9b-groundwork` (plan, How C9b0 to C9b2 run). Then the human reviews the three Validation Packs.
+**Paused at the human's request (2026-10-09).** On `ccs/c9b-groundwork`, C9b0 and C9b2 are merged
+and recorded. C9b1 is built and committed on `ccs/c9b1-legal-acts` (`96e22d9e`) in its worktree,
+`.local/worktrees/c9b1`, not yet merged. **Next action, for the human:** answer C9b1's open questions,
+then let the agent merge C9b1, retake Instrument's and Behaviour's versions once, regenerate, run the
+full checks, remove the slice worktrees, and hand over the three Validation Packs.
 
 ## Slice board
 
@@ -157,3 +160,6 @@ check`. In tranche D, C6 to C7c are merged and tagged (Instrument 0.12.0, Party 
 - 2026-10-09: C9b0-Q1, C9b1-Q1 and C9b1-Q2 answered (a) by the human. TD-16 cross-checked: FM-EP changed Eligibility's README only, so the drift stands and C9b0 repairs it first, as the human proposed. The plan explains (p3) and (p4) with pictures, and why (a) defers semi-additivity without blocking it
 - 2026-10-09: C9b0-Q2 answered (a), with C9b3 to make the no-applicable-binding case Undetermined. C9b2-Q2 answered (p3), with (p4) held as HQ-12. C9b2-Q1 analysed for design-time warnings: SHACL warns equally under (a) and (b), a reasoner cannot warn of a missing declaration under either, and semi-additivity belongs on the measure, not the space. Leaning (a) kept, for the human to confirm
 - 2026-10-09: C9b2-Q1 answered (a), no subclasses, with every currency case covered. The human chose one integration branch, `ccs/c9b-groundwork`, with each slice built by a sub-agent in its own worktree and merged by the agent
+- 2026-10-09: C9b0 merged (`19132c26`): Eligibility's README is its source again, `eligibility-vocab` 0.12.0, the compilers refuse a hierarchical plan with no scheme. TD-16's Eligibility part closed. The import guard's debt renumbered TD-30, since TD-28 was taken
+- 2026-10-09: C9b2 merged (`4bef8942`): `qnt:additivity`, `qnt:baseRole`, `qnt:MixedBases`, laws Q12 and Q13, Quantification 0.8.0 and shapes 0.3.0 cascading to 18 documents, Eligibility's versions shared with C9b0. Corrected at merge: a stock shares its currency's Extensive space. `check:ontology-catalog` fails two tests outside the slices: TD-28 (`insure-o`) and the reasoning isolation test, which scans the slice worktrees
+- 2026-10-09: C9b1 built on `ccs/c9b1-legal-acts` (`e5436e35` to `96e22d9e`), 15 pack rows passing, ADR-A104 and ADR-A106 addenda Proposed. Paused before its merge at the human's request
