@@ -97,11 +97,11 @@ def test_common_documents_parse_and_import_the_pinned_versions():
     assert spec_imports == {
         "https://www.nebularis.org/neuro-semantic/lattice/foundation/0.4.0",
         "https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.4.0",
-        "https://www.nebularis.org/neuro-semantic/lattice/party/0.8.0",
+        "https://www.nebularis.org/neuro-semantic/lattice/party/0.9.0",
         "https://www.nebularis.org/neuro-semantic/lattice/applied/classification/0.2.0",
     }
     vocab_imports = {str(o) for o in _common_vocab().objects(None, OWL.imports)}
-    assert vocab_imports == {"https://www.nebularis.org/neuro-semantic/insurance/common/0.4.0"}
+    assert vocab_imports == {"https://www.nebularis.org/neuro-semantic/insurance/common/0.5.0"}
 
 
 # ---- AIR12-02: the nine contracts conform to Vocabulary's shapes ------------------------------

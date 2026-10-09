@@ -190,8 +190,8 @@ ins:OnExerciseShape a sh:NodeShape ;
 	sh:targetClass ins:OnExercise ;
 	sh:property [ sh:path ins:ofPower ; sh:minCount 1 ; sh:maxCount 1 ; sh:class ins:Power ;
 		sh:message "An exercise trigger names exactly one power (ins:ofPower)." ] ;
-	sh:property [ sh:path bhv:triggerKind ; sh:minCount 1 ; sh:in ( bhv:ExternalStimulus ) ;
-		sh:message "An exercise trigger's kind is bhv:ExternalStimulus, fixed. Assert it where no reasoner runs (§12)." ] .
+	sh:property [ sh:path bhv:triggerKind ; sh:minCount 1 ; sh:in ( bhv:DerivedTrigger ) ;
+		sh:message "An exercise trigger's kind is bhv:DerivedTrigger, fixed: it fires on an exercise found effective (law I10). Assert it where no reasoner runs (§12)." ] .
 
 ins:OnBreachShape a sh:NodeShape ;
 	sh:targetClass ins:OnBreach ;
@@ -518,3 +518,71 @@ ins:EncodingStatusShape a sh:NodeShape ;
 		sh:message "The only encoding status is ins-voc:NoMeaning: reviewed, and binding nobody." ] ;
 	sh:property [ sh:path [ sh:inversePath ins:expressedIn ] ; sh:maxCount 0 ;
 		sh:message "Text marked ins-voc:NoMeaning expresses no stated meaning: remove the mark or the meaning (§18.5)." ] .
+# ---- C9b1: legal acts (§6.4) ---------------------------------------------------
+# Each act class is named, not ins:LegalAct, so the shapes select the graph the
+# engine reads without the acts document's subclass axioms (§12.3). An assent's
+# time and evidence are ins:AssentShape's.
+
+ins:LegalActShape a sh:NodeShape ;
+	sh:targetClass ins:Consent , ins:Objection , ins:Withdrawal , ins:Exercise , ins:Proposal ;
+	sh:property [ sh:path ( fnd:hasTemporalScope fnd:validFrom ) ; sh:minCount 1 ; sh:maxCount 1 ;
+		sh:message "A legal act has exactly one time, when it was done (§6.4)." ] ;
+	sh:property [ sh:path ( fnd:hasEvidence fnd:recordedAt ) ; sh:minCount 1 ;
+		sh:message "A legal act records when it became known, its evidence's recording time (§6.4)." ] .
+
+ins:ActByShape a sh:NodeShape ;
+	sh:targetClass ins:Consent , ins:Objection , ins:Withdrawal , ins:Exercise ;
+	sh:property [ sh:path ins:actBy ; sh:minCount 1 ; sh:class pty:RoleOccupancy ;
+		sh:message "A consent, objection, withdrawal or exercise is made by at least one party, a role occupancy (ins:actBy, §6.4)." ] .
+
+ins:ProposalShape a sh:NodeShape ;
+	sh:targetClass ins:Proposal ;
+	sh:property [ sh:path ins:proposedBy ; sh:minCount 1 ; sh:class pty:RoleOccupancy ;
+		sh:message "A proposal is made by at least one party, a role occupancy (ins:proposedBy, §6.4)." ] ;
+	sh:property [ sh:path ins:proposes ; sh:minCount 1 ; sh:maxCount 1 ;
+		sh:message "A proposal proposes exactly one matter (ins:proposes). Two matters are two proposals (§6.4)." ] .
+
+ins:DirectedAtShape a sh:NodeShape ;
+	sh:targetClass ins:Consent , ins:Objection ;
+	sh:property [ sh:path ins:directedAt ; sh:minCount 1 ; sh:maxCount 1 ; sh:class ins:Proposal ;
+		sh:message "A consent or an objection is directed at exactly one proposal (ins:directedAt, §6.4)." ] .
+
+ins:WithdrawalShape a sh:NodeShape ;
+	sh:targetClass ins:Withdrawal ;
+	sh:property [ sh:path ins:withdraws ; sh:minCount 1 ; sh:maxCount 1 ;
+		sh:or ( [ sh:class ins:Assent ] [ sh:class ins:Consent ] [ sh:class ins:Objection ] ) ;
+		sh:message "A withdrawal withdraws exactly one assent, consent or objection (ins:withdraws, §6.4)." ] .
+
+ins:ExerciseShape a sh:NodeShape ;
+	sh:targetClass ins:Exercise ;
+	sh:property [ sh:path ins:exercises ; sh:minCount 1 ; sh:maxCount 1 ; sh:class ins:Power ;
+		sh:not [ sh:class ins:Template ] ;
+		sh:message "An exercise exercises exactly one bound power (ins:exercises, §6.4)." ] .
+
+ins:ProposalSubjectShape a sh:NodeShape ;
+	sh:targetSubjectsOf ins:proposedBy , ins:proposes ;
+	sh:class ins:Proposal ;
+	sh:message "Only a proposal is proposed by a party or proposes a matter." .
+
+ins:DirectedAtSubjectShape a sh:NodeShape ;
+	sh:targetSubjectsOf ins:directedAt ;
+	sh:or ( [ sh:class ins:Consent ] [ sh:class ins:Objection ] ) ;
+	sh:message "Only a consent or an objection is directed at a proposal." .
+
+ins:WithdrawsSubjectShape a sh:NodeShape ;
+	sh:targetSubjectsOf ins:withdraws ;
+	sh:class ins:Withdrawal ;
+	sh:message "Only a withdrawal withdraws a declaration." .
+
+ins:ExercisesSubjectShape a sh:NodeShape ;
+	sh:targetSubjectsOf ins:exercises ;
+	sh:class ins:Exercise ;
+	sh:message "Only an exercise exercises a power." .
+
+ins:LegalActSubjectShape a sh:NodeShape ;
+	sh:targetSubjectsOf ins:actBy , ins:forCase , ins:pursuantTo ;
+	sh:or ( [ sh:class ins:Assent ] [ sh:class ins:Consent ] [ sh:class ins:Objection ] [ sh:class ins:Withdrawal ]
+	        [ sh:class ins:Exercise ] [ sh:class ins:Proposal ] ) ;
+	sh:message "Only a legal act names who did it, its case, or an act it relies on." ;
+	sh:property [ sh:path ins:forCase ; sh:maxCount 1 ;
+		sh:message "A legal act is for at most one case (ins:forCase, §6.4)." ] .

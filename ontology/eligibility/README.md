@@ -25,18 +25,26 @@ Eligibility imports Foundation, Vocabulary, Quantification, and Party. Quantific
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@base <https://www.nebularis.org/neuro-semantic/eligibility> .
 ```
 
 ## 3. Extraction Contract
 
 - `turtle-spec` blocks generate `spec/eligibility.ttl`.
 - `turtle-vocab` blocks generate `vocab/eligibility-vocab.ttl`.
-- `turtle-shapes` blocks generate `shapes/*.ttl`.
+- `turtle-shapes` blocks generate, in order, `shapes/structural.ttl` (§7.1),
+  `shapes/constraints.ttl` (§7.2) and `shapes/rules.ttl` (§7.3).
 - `turtle-example` blocks are illustrative only.
 - `isabelle-spec` blocks (§10) generate `tools/proofs/eligibility/Kernel.thy`'s closed
   datatype and the kernel connectives' defining equations (`or3`, `and3`, `neg3`; FM-D17),
   and are also rendered into `tools/reference/eligibility/src/reference_eligibility/_kernel_defs.py`.
   The theory's proofs, and `decision_leq`, are hand-written, not generated.
+
+```bash
+python3 tools/literate_extract.py ontology/eligibility/README.md --layer eligibility --root . \
+    --shapes shapes/structural.ttl shapes/constraints.ttl shapes/rules.ttl \
+    --proofs-root tools/proofs --reference-root tools/reference --check
+```
 
 ## 4. Strategy Algebra
 
@@ -123,15 +131,13 @@ flowchart LR
 ```
 
 ```turtle-spec
-@base <https://www.nebularis.org/neuro-semantic/eligibility> .
-
 <https://www.nebularis.org/neuro-semantic/eligibility>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.10.0> ;
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.11.0> ;
 	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.4.0> ,
 				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.4.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.7.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/party/0.8.0> .
+				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.8.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/party/0.9.0> .
 ```
 
 ### 5.1 Conditions and profiles
@@ -433,6 +439,12 @@ The three mechanisms §4's diagram names are each a closed set of named individu
 @prefix elg:  <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
 @prefix owl:  <http://www.w3.org/2002/07/owl#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@base <https://www.nebularis.org/neuro-semantic/eligibility-vocab> .
+
+<https://www.nebularis.org/neuro-semantic/eligibility-vocab>
+	a owl:Ontology ;
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/eligibility-vocab/0.12.0> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.11.0> .
 
 elg:ExactMatch a elg:MatchStrategy .
 elg:SetMembership a elg:MatchStrategy .
@@ -580,7 +592,24 @@ elg:L16 a elg:Law ;
 	rdfs:comment "Negation. A negated condition is evaluated as it stands, including its value reading, and its outcome is then swapped: Permitted becomes Denied and Denied becomes Permitted. Undetermined stays Undetermined, with its reason." .
 ```
 
+L9's last sentence makes a hierarchical condition with no resolved scheme Undetermined for every
+candidate. A compiler may refuse such a condition instead of compiling a plan that answers
+Undetermined everywhere, and the compilers in `tools/mork_compilers/` do. They refuse a hierarchical
+condition with no `elg:constrainedByContract`, a contract with neither a `voc:SchemeBinding` nor a
+`voc:boundScheme`, and a contract whose bindings resolve to no scheme at the resolution time. Their
+SPARQL and SHACL backends also refuse a hierarchical plan that carries no scheme. A refusal decides
+no candidate, so it does not contradict L9. The reference semantics (`tools/reference/eligibility/`)
+answers Undetermined.
+
 ## 7. Shapes
+
+Three `turtle-shapes` blocks generate the three shape files, in order (§3). A shape lives in one
+block only, so no violation is reported twice.
+
+### 7.1 Structural shapes
+
+`shapes/structural.ttl` holds the cardinalities of conditions, profiles, decisions and evidence
+bindings. `elg:ConditionShape` discharges L1 to L3, and `elg:EligibilityDecisionShape` L6 to L8.
 
 ```turtle-shapes
 @prefix sh:   <http://www.w3.org/ns/shacl#> .
@@ -594,9 +623,60 @@ elg:ConditionShape a sh:NodeShape ;
 	sh:property [ sh:path elg:wildcardSemantics ; sh:minCount 1 ; sh:maxCount 1 ] ;
 	sh:property [ sh:path elg:negated ; sh:maxCount 1 ; sh:datatype xsd:boolean ] .
 
-elg:IntervalConditionShape a sh:NodeShape ;
+elg:AdmissionProfileShape a sh:NodeShape ;
+	sh:targetClass elg:AdmissionProfile ;
+	sh:property [ sh:path elg:hasCondition ; sh:minCount 1 ] .
+
+elg:EligibilityDecisionShape a sh:NodeShape ;
+	sh:targetClass elg:EligibilityDecision ;
+	sh:property [ sh:path elg:forProfile ; sh:minCount 1 ; sh:maxCount 1 ] ;
+	sh:property [ sh:path elg:hasQuestion ; sh:minCount 1 ] ;
+	sh:property [ sh:path elg:decisionValue ; sh:minCount 1 ; sh:maxCount 1 ] ;
+	sh:property [ sh:path elg:usesOperationalProfile ; sh:minCount 1 ; sh:maxCount 1 ] .
+
+elg:EvidenceBindingShape a sh:NodeShape ;
+	sh:targetClass elg:EvidenceBinding ;
+	sh:property [ sh:path elg:bindsCondition ; sh:minCount 1 ; sh:maxCount 1 ] ;
+	sh:property [ sh:path elg:subjectClass ; sh:minCount 1 ; sh:maxCount 1 ] ;
+	sh:property [ sh:path elg:evidenceStep ; sh:minCount 1 ] ;
+	sh:property [ sh:path elg:singleValued ; sh:maxCount 1 ; sh:datatype xsd:boolean ] ;
+	sh:property [ sh:path elg:valueReading ; sh:maxCount 1 ; sh:in ( elg:SingleValue elg:SomeValue elg:EveryValue ) ] .
+
+elg:EvidenceStepShape a sh:NodeShape ;
+	sh:targetClass elg:EvidenceStep ;
+	sh:property [ sh:path elg:stepIndex ; sh:minCount 1 ; sh:maxCount 1 ] ;
+	sh:property [ sh:path elg:stepProperty ; sh:minCount 1 ; sh:maxCount 1 ] ;
+	sh:property [ sh:path elg:stepDirection ; sh:minCount 1 ; sh:maxCount 1 ; sh:in ( elg:Forward elg:Inverse ) ] .
+```
+
+### 7.2 Constraints
+
+`shapes/constraints.ttl` holds the other constraints.
+`elg:IntervalContainmentRequiresRangeSet` discharges L4 for an `elg:IntervalCondition`.
+`elg:WildcardPolicyConsistency` reports a `Wildcard` match strategy under `NoWildcard` (ADR-A06).
+`elg:ConceptConditionDeclarationShape` warns of a concept condition that states nothing to match
+(ADR-A87), and `elg:ReachableExclusionShape` discharges L13.
+
+```turtle-shapes
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix elg:  <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
+
+elg:IntervalContainmentRequiresRangeSet a sh:NodeShape ;
 	sh:targetClass elg:IntervalCondition ;
 	sh:property [ sh:path elg:requiredRangeSet ; sh:minCount 1 ] .
+
+elg:WildcardPolicyConsistency a sh:NodeShape ;
+	sh:targetClass elg:Condition ;
+	sh:sparql [
+		sh:message "NoWildcard requires a non-Wildcard match strategy." ;
+		sh:select """
+			PREFIX elg: <https://www.nebularis.org/neuro-semantic/lattice/eligibility#>
+			SELECT $this WHERE {
+				$this elg:wildcardSemantics elg:NoWildcard ;
+					  elg:matchStrategy elg:Wildcard .
+			}
+		"""
+	] .
 
 elg:ConceptConditionDeclarationShape a sh:NodeShape ;
 	sh:targetClass elg:Condition ;
@@ -647,20 +727,62 @@ elg:ReachableExclusionShape a sh:NodeShape ;
 			}
 		"""
 	] .
+```
 
-elg:EvidenceBindingShape a sh:NodeShape ;
-	sh:targetClass elg:EvidenceBinding ;
-	sh:property [ sh:path elg:bindsCondition ; sh:minCount 1 ; sh:maxCount 1 ] ;
-	sh:property [ sh:path elg:subjectClass ; sh:minCount 1 ; sh:maxCount 1 ] ;
-	sh:property [ sh:path elg:evidenceStep ; sh:minCount 1 ] ;
-	sh:property [ sh:path elg:singleValued ; sh:maxCount 1 ; sh:datatype xsd:boolean ] ;
-	sh:property [ sh:path elg:valueReading ; sh:maxCount 1 ; sh:in ( elg:SingleValue elg:SomeValue elg:EveryValue ) ] .
+### 7.3 Rules
 
-elg:EvidenceStepShape a sh:NodeShape ;
-	sh:targetClass elg:EvidenceStep ;
-	sh:property [ sh:path elg:stepIndex ; sh:minCount 1 ; sh:maxCount 1 ] ;
-	sh:property [ sh:path elg:stepProperty ; sh:minCount 1 ; sh:maxCount 1 ] ;
-	sh:property [ sh:path elg:stepDirection ; sh:minCount 1 ; sh:maxCount 1 ; sh:in ( elg:Forward elg:Inverse ) ] .
+`shapes/rules.ttl` holds `elg:HierarchyWellFoundednessShape`, which discharges L9 clause (a) by
+reporting a cycle in any scheme a hierarchically matched condition's contract could resolve to, and
+`elg:UndeterminedWhenNoCandidateInput`, a SHACL rule that infers `Undetermined` for a decision
+whose questions offer no candidate.
+
+```turtle-shapes
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix voc:  <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
+@prefix elg:  <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
+
+elg:HierarchyWellFoundednessShape a sh:NodeShape ;
+	sh:targetClass elg:Condition ;
+	sh:sparql [
+		sh:message "A scheme this hierarchically-matched condition's contract could resolve to, via boundScheme or a voc:SchemeBinding, contains a cycle in its ordering relation, so hierarchical match has no truth condition under that scheme. Discharges elg:L9 clause (a)." ;
+		sh:select """
+			PREFIX elg: <https://www.nebularis.org/neuro-semantic/lattice/eligibility#>
+			PREFIX voc: <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#>
+			PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+			SELECT $this WHERE {
+				$this elg:matchStrategy elg:HierarchicalMatch ;
+					  elg:constrainedByContract ?schemeContract .
+				{
+					?schemeContract voc:boundScheme ?scheme .
+				} UNION {
+					?binding voc:forContract ?schemeContract ;
+							 voc:bindsScheme ?scheme .
+				}
+				?concept skos:inScheme ?scheme ;
+						 skos:broader+ ?concept .
+			}
+		"""
+	] .
+
+elg:UndeterminedWhenNoCandidateInput a sh:NodeShape ;
+	sh:targetClass elg:EligibilityDecision ;
+	sh:rule [
+		a sh:SPARQLRule ;
+		sh:construct """
+			PREFIX elg: <https://www.nebularis.org/neuro-semantic/lattice/eligibility#>
+			CONSTRUCT {
+				$this elg:decisionValue elg:Undetermined .
+			}
+			WHERE {
+				$this elg:hasQuestion ?q .
+				FILTER NOT EXISTS { ?q elg:candidateValue ?v }
+				FILTER NOT EXISTS { ?q elg:candidateRangeSet ?r }
+				FILTER NOT EXISTS { ?q elg:candidateConcept ?c }
+			}
+		"""
+	] .
 ```
 
 ## 8. Worked Examples
@@ -875,3 +997,13 @@ fun neg3 :: "decision \<Rightarrow> decision" where
 
 end
 ```
+
+## 11. Release notes
+
+Earlier versions are listed in the [ontology release register](../../docs/architecture/ontology-releases.md).
+
+- `eligibility` 0.11.0 (additive, CCS C9b2): re-pinned to Quantification 0.8.0. No other change.
+- `eligibility-vocab` 0.12.0 (additive, CCS C9b0 and C9b2): L9's comment adds that a hierarchical
+  condition with no resolved scheme is undetermined for every candidate (FM-EP, B2.2). The
+  vocabulary's ontology header joins the README, which is again the source of every Eligibility
+  spec, vocab and shapes file. Re-pinned to `eligibility` 0.11.0. The shapes, 0.2.0, are unchanged.

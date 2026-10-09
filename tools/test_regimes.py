@@ -47,7 +47,8 @@ ALL_SHAPES = [ONTOLOGY / layer / "shapes" / f"{kind}.ttl"
                             "instrument")
               for kind in ("structural", "constraints")]
 TRIGGERS = (INS.OnExercise, INS.OnBreach, INS.OnAct, INS.OnCondition, INS.OnExpiry)
-FIXED_KIND = {INS.OnExercise: BHV.ExternalStimulus, INS.OnAct: BHV.ExternalStimulus, INS.OnBreach: BHV.DerivedTrigger,
+FIXED_KIND = {INS.OnExercise: BHV.DerivedTrigger, INS.OnAct: BHV.ExternalStimulus,  # OnExercise derived since C9b1
+              INS.OnBreach: BHV.DerivedTrigger,
               INS.OnCondition: BHV.DerivedTrigger, INS.OnExpiry: BHV.ScheduledTrigger}
 
 
@@ -142,10 +143,10 @@ FC_EX, FC = _ns("facility-cure-period")
 def test_c7a_01_version_imports_and_comments() -> None:
     spec = _graph(SPEC)
     ontology = URIRef("https://www.nebularis.org/neuro-semantic/instrument")
-    assert spec.value(ontology, OWL.versionIRI) == URIRef(LATTICE + "instrument/0.15.1")
+    assert spec.value(ontology, OWL.versionIRI) == URIRef(LATTICE + "instrument/0.16.0")
     assert set(spec.objects(ontology, OWL.imports)) == {URIRef(LATTICE + v) for v in (
-        "foundation/0.4.0", "vocabulary/0.4.0", "quantification/0.7.0", "party/0.8.0", "eligibility/0.10.0",
-        "wording/0.7.0", "behaviour/0.13.1")}
+        "foundation/0.4.0", "vocabulary/0.4.0", "quantification/0.8.0", "party/0.9.0", "eligibility/0.11.0",
+        "wording/0.8.0", "behaviour/0.14.0")}
     new = ("ofPower", "ofObligation", "by", "condition", "after", "tolledIn", "stateKind", "appliesInState",
            "arisesOn", "arisesOnBreachOf", "arisesOnExerciseOf", "endsOn")
     for name in new:
@@ -228,8 +229,8 @@ def test_c7a_04_regime_shapes_report(add: str, remove: tuple, focus: str, messag
      "/on-leverage-exceeded", "exactly one Eligibility condition"),
     ("service-dispute", "", ((SD["on-dispute"], INS.activity, INSV.Dispute),), "/on-dispute", "exactly one act"),
     ("service-dispute", "tmpl:on-dispute ins:by ins-voc:Dispute .", (), "/on-dispute", "names parties"),
-    ("licence-notice", "", ((LN["on-notice-given"], BHV.triggerKind, BHV.ExternalStimulus),), "/on-notice-given",
-     "bhv:ExternalStimulus, fixed"),
+    ("licence-notice", "", ((LN["on-notice-given"], BHV.triggerKind, BHV.DerivedTrigger),), "/on-notice-given",
+     "bhv:DerivedTrigger, fixed"),
     ("licence-notice", "tmpl:on-notice-expiry bhv:triggerKind bhv:ExternalStimulus .",
      ((LN["on-notice-expiry"], BHV.triggerKind, BHV.ScheduledTrigger),), "/on-notice-expiry", "bhv:ScheduledTrigger, fixed"),
     ("facility-cure-period", "tmpl:on-leverage-exceeded bhv:triggerKind bhv:ScheduledTrigger .",
@@ -367,9 +368,9 @@ def test_c7a_13_readme_is_the_source_and_releases_are_recorded() -> None:
                                   "--check"]) == 0
     readme = (LAYER / "README.md").read_text()
     assert "0.10.0 (CCS C7a" in readme and "Shapes 0.3.0 (additive" in readme
-    assert (LAYER / "shapes" / ".version").read_text().strip() == "0.7.0"
+    assert (LAYER / "shapes" / ".version").read_text().strip() == "0.8.0"
     vocab = _graph(VOCAB)
-    assert URIRef(LATTICE + "instrument-vocab/0.15.1") in set(vocab.objects(None, OWL.versionIRI))
+    assert URIRef(LATTICE + "instrument-vocab/0.16.0") in set(vocab.objects(None, OWL.versionIRI))
 
 
 # ---- C7a-15 to C7a-18: authoring with a reasoner (C7a-R1) -------------------
@@ -412,4 +413,4 @@ def test_c7a_18_a_trigger_from_its_property_alone() -> None:
     closed = _closed(data)
     trigger = LN["on-notice-given"]
     assert {INS.OnExercise, BHV.TriggerDefinition} <= set(closed.objects(trigger, RDF.type))
-    assert set(closed.objects(trigger, BHV.triggerKind)) == {BHV.ExternalStimulus}
+    assert set(closed.objects(trigger, BHV.triggerKind)) == {BHV.DerivedTrigger}

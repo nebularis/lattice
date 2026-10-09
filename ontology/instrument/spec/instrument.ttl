@@ -16,14 +16,14 @@
 
 <https://www.nebularis.org/neuro-semantic/instrument>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.15.1> ;
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.16.0> ;
 	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.4.0> ,
 				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.4.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.7.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/party/0.8.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.10.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/wording/0.7.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.13.1> .
+				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.8.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/party/0.9.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.11.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/wording/0.8.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.14.0> .
 
 ins:Instrument a owl:Class ;
 	rdfs:subClassOf fnd:Version ;
@@ -67,7 +67,7 @@ ins:boundFrom a owl:ObjectProperty, owl:FunctionalProperty ;
 
 ins:impliedBy a owl:ObjectProperty ;
 	rdfs:comment "The source that implies a term no clause states." ;
-	fnd:utility "Subject: a bound term or relation implied by law. Value: the statute, custom or course of dealing that implies it, in place of ins:boundFrom." .
+	fnd:utility "Subject: a bound term or relation implied by law. Value: the statute, custom, course of dealing or judgment that implies it, in place of ins:boundFrom." .
 
 ins:Amendment a owl:Class ;
 	rdfs:subClassOf prov:Activity , fnd:TemporallyScoped , fnd:Evidenced ;
@@ -95,22 +95,6 @@ ins:affectsExisting a owl:DatatypeProperty, owl:FunctionalProperty ;
 	rdfs:range xsd:boolean ;
 	rdfs:comment "Whether an amendment reaches occasions already arisen." ;
 	fnd:utility "Subject: an amendment. Value: at most one boolean, false when absent (law I14). Where true, a stated relation the amendment replaces names its successor with prov:wasRevisionOf." .
-
-ins:Assent a owl:Class ;
-	rdfs:subClassOf fnd:TemporallyScoped , fnd:Evidenced ;
-	owl:disjointWith fnd:Version ;
-	rdfs:comment "One party's assent to one instrument version." ;
-	fnd:utility "Subject: an assent. Names exactly one party (ins:assentBy) and one version (ins:assentTo). Its fnd:hasTemporalScope is when the party assented, and its fnd:hasEvidence when that became known. Written by whatever gathers the signature or consent. Read for formation (ins:OnAcceptance), agreement of an amendment, and consent to a power's exercise." .
-
-ins:assentBy a owl:ObjectProperty, owl:FunctionalProperty ;
-	rdfs:range pty:RoleOccupancy ;
-	rdfs:comment "The party who assents." ;
-	fnd:utility "Subject: an assent. Value: exactly one role occupancy, a party to the version assented to." .
-
-ins:assentTo a owl:ObjectProperty, owl:FunctionalProperty ;
-	rdfs:range ins:Instrument ;
-	rdfs:comment "The instrument version assented to." ;
-	fnd:utility "Subject: an assent. Value: exactly one instrument version." .
 
 ins:LegalRelation a owl:Class ;
 	owl:equivalentClass [ a owl:Class ; owl:unionOf ( ins:Obligation ins:Permission ins:Exclusion ins:Power ) ] ;
@@ -247,9 +231,9 @@ ins:Template owl:disjointWith ins:Instrument .
 
 ins:OnExercise a owl:Class ;
 	rdfs:subClassOf bhv:TriggerDefinition ,
-		[ a owl:Restriction ; owl:onProperty bhv:triggerKind ; owl:hasValue bhv:ExternalStimulus ] ;
+		[ a owl:Restriction ; owl:onProperty bhv:triggerKind ; owl:hasValue bhv:DerivedTrigger ] ;
 	rdfs:comment "A legal trigger: the exercise of a power." ;
-	fnd:utility "Subject: a trigger. Names exactly one power (ins:ofPower). In a regime, a stated power: the trigger fires on the exercise of every bound power instantiated from it. Its kind is bhv:ExternalStimulus. Assert bhv:TriggerDefinition and the kind where no reasoner runs (§12)." .
+	fnd:utility "Subject: a trigger. Names exactly one power (ins:ofPower). In a regime, a stated power: the trigger fires on an exercise (ins:Exercise) of every bound power instantiated from it that the evaluator finds effective (law I10). Its kind is bhv:DerivedTrigger. Assert bhv:TriggerDefinition and the kind where no reasoner runs (§12)." .
 
 ins:OnBreach a owl:Class ;
 	rdfs:subClassOf bhv:TriggerDefinition ,

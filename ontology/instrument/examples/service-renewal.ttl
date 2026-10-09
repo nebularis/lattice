@@ -175,7 +175,7 @@ tmpl:renewing a bhv:State ; bhv:inStateSpace tmpl:election-regime .
 tmpl:not-renewing a bhv:State ; bhv:inStateSpace tmpl:election-regime .
 
 tmpl:on-non-renewal a ins:OnExercise , bhv:TriggerDefinition ;
-    bhv:triggerKind bhv:ExternalStimulus ;
+    bhv:triggerKind bhv:DerivedTrigger ;
     ins:ofPower tmpl:decline-renewal .
 tmpl:elect-not-to-renew a ins:RegimeTransition , bhv:TransitionDefinition ;
     bhv:fromState tmpl:renewing ; bhv:toState tmpl:not-renewing ;

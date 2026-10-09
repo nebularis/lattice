@@ -3067,7 +3067,7 @@ question to be taken up (below).
 | C9b0 | Eligibility, cascading | the Eligibility README made its source again (TD-16's Eligibility part), and law L9's amendment from FM-EP released. Before C9b3 |
 | C9b1 | Instrument 0.16.0, Behaviour 0.14.0, both breaking | the legal acts tier in its own document (ADR-A120): declarations (assent, consent, objection, withdrawal), proposals (the amendment one of them), exercises, `ins:pursuantTo`. Behaviour's exercise and acceptance records narrowed to findings. Example: reinsurance claims co-operation. [Consent sketch](../sketches/consent-and-group-powers.md) §2.1 |
 | C9b2 | Quantification, cascading | extensive and intensive quantities, a proportion's base, sum and count. Examples: multicurrency commitments, written and signed lines, signing down. Sketch §2.4 |
-| C9b3 | Eligibility, own ADR | set comparisons (subset, intersects, disjoint), aggregate bindings, the two kinds of deferral, with their proofs and reference semantics, including a hierarchical condition whose binding does not apply at the resolution time, Undetermined under L9 where C9b0 leaves the compilers refusing it (C9b0-Q2). After the formal-methods Eligibility pass and HQ-6. Sketch §2.3 |
+| C9b3 | Eligibility, own ADR | set comparisons (subset, intersects, disjoint), aggregate bindings, the two kinds of deferral, with their proofs and reference semantics, including a hierarchical condition whose binding does not apply at the resolution time, Undetermined under L9 where C9b0 leaves the compilers refusing it (C9b0-Q2), and the same guard in the OWL and SWRL backends. After the formal-methods Eligibility pass and HQ-6. Sketch §2.3 |
 | C9b4 | Instrument | qualifying rules as acting rules (`ins:QualifyingRule`), universe, exclusions and reference time, joint and several powers, laws I11 and I13 restated, measure words, Party's shares deprecated with a warning shape. Examples: Majority Lenders acceleration with a transfer between request and decision, an Extraordinary Resolution. Sketch §2.2, §2.5 |
 | C9d | Instrument 0.17.0 | materiality (C9-Q3): the change report, condition words over it, grades, the evaluation profile, and selecting consenting members by grade. Split from C9b by C9b-Q1's leaning |
 | C9c | Wording 0.8.0, Instrument 0.18.0 | reliance on a wording, and W8 for references to a wording. `ins:incorporates`, generation of an encoded incorporated document's meaning within sections, I17 widened, cycle checks and `ins:prevailsOver` over an incorporated document. Static incorporation only, an ambulatory one of an encoded document reported (C9-Q8 (c)). `tools/`: the instantiator follows incorporation |
@@ -3096,6 +3096,14 @@ flowchart LR
     B3 --> B4
     B4 --> D["C9d materiality"] --> C["C9c incorporation"]
 ```
+
+**How C9b0 to C9b2 run (the human, 2026-10-09).** On one integration branch,
+`ccs/c9b-groundwork`. Each slice runs in its own local worktree and branch (`ccs/c9b0-eligibility-sources`,
+`ccs/c9b2-additivity`, `ccs/c9b1-legal-acts`), built by a sub-agent that commits there, examples
+first. The agent merges them into the integration branch in the order C9b0, C9b2, C9b1, takes each
+document's version once at the strongest level any slice needs, recomputes the cascade and
+regenerates the catalog, release register and MTP lock. Design questions go to the human through the
+agent. The human reviews all three Validation Packs, pushes, merges into `main` and creates the tags.
 
 **Before C9b3, the formal-methods epic's Eligibility pass, FM-EP, is completed** on machine S, on
 `fm/eligibility-pass`, and merged (the human, 2026-10-09). C9b3 extends Eligibility's laws, its Isabelle theory, its reference semantics
@@ -3370,6 +3378,14 @@ binding-time deferral, which C9b3 names and designs. KISS: C9b0 need not pre-emp
 **Leaning (a)**, with C9b3 turning the no-applicable-binding case into Undetermined.
 **Answered (the human, 2026-10-09): (a), and C9b3 must cover the no-applicable-binding case.**
 
+**Built (2026-10-09, merged into `ccs/c9b-groundwork`).** As briefed, with these settled while
+building: the guards raise `IRCompileError` rather than assert, so they hold under `python -O`. The
+spec's `@base` moved into README §2's prefix block so the spec regenerates byte for byte. A new README
+§11 holds release notes. The OWL and SWRL backends have no guard, which C9b3 adds with the
+no-applicable-binding case. One command: the literate `--check`, then
+`tools/test_eligibility_examples.py` and `tools/mork_compilers/src/mork_compilers/test_hierarchical_conditions.py`
+([Validation Pack](../validation/computable-contract-substrate-c9b0.md)).
+
 **TD-16 cross-checked (the human asked, 2026-10-09).** FM-EP (`2a438b15`) changed only
 `ontology/eligibility/README.md` under `ontology/`. On `main`, `literate_extract.py --check` reports
 drift in all three generated files. The spec differs in layout only. The vocab has one triple only in
@@ -3390,7 +3406,7 @@ repairing Eligibility's README in its own slice before the rest of C9b, is C9b0 
 - the README §6.4 diagram calls L1 to L8 static, but no law register says so, and L5 has no shape.
   Recorded as TD-27, not fixed here
 
-**Planned validation** (pack `docs/developer/validation/ccs-c9b0.md`, written with the slice): the
+**Planned validation** (pack `docs/developer/validation/computable-contract-substrate-c9b0.md`, written with the slice): the
 literate `--check` for Eligibility (positive), a probe shape edited in a generated file fails it
 (negative), each moved shape still fires on its probe (`WildcardCondition` with `NoWildcard`, an
 empty profile, an empty decision, a cyclic scheme), no violation is reported twice, the
@@ -3507,12 +3523,34 @@ KISS: a record of reliance has no reader. **Leaning (a).**
 - the three Behaviour notice examples are annotated, not moved: a notice with legal effect is an
   Instrument act, and the record shows its performance
 - a per-document test that `instrument-acts` imports no Behaviour runtime. The import guard's blind
-  spot is TD-28
+  spot is TD-32
 - README §1.1's sentence is corrected
 - the reinsurance example records "no approval gives Undetermined" as deliberate non-coverage until
   HQ-6
 
-**Planned validation** (pack `ccs-c9b1.md`): each act class and its shapes at zero and too many,
+**Raised while building (2026-10-09), answered by the human:**
+
+- **C9b1-Q3.** The party to any act is `ins:actBy`, with `ins:assentBy` and `ins:proposedBy` beneath
+  it, and the proposal a consent or objection answers is `ins:directedAt`. `ins:actBy` takes several
+  parties, since a joint notice or an act by agreement has more than one. Answered: as leaned.
+- **C9b1-Q4.** The reinsurer's implied term (*Gan v Tai Ping (No 2)*) is a prohibition on refusing
+  approval, scoped to a refusal found arbitrary, a determination. It is not an obligation to approve,
+  since the reinsurer may refuse for proper reasons. Answered: as leaned.
+- **C9b1-Q5.** The five earlier Behaviour examples with exercise records move to exercise acts in
+  C16c, with the removal of the deprecated terms. Answered: as leaned.
+- Settled while building: `ins:forCase` is optional, at most one, since an assent or a proposal to
+  amend has no case. Act shapes target each concrete act class. `bhv:actor` on an exercise record is
+  deprecated in its utility only.
+
+**Built (2026-10-09, merged into `ccs/c9b-groundwork`).** `spec/instrument-acts.ttl` from README
+§6.4, the shapes for each act, an exercise by the power's holder, and an act relied on done no later
+than the act relying on it. The reinsurance implied term is a prohibition on refusing
+(`ins-voc:Refuse`), beside `ins-voc:Settle` and `ins-voc:Approve`. Instrument 0.16.0 (shapes 0.8.0)
+and Behaviour 0.14.0 (shapes 0.5.0), both breaking, each released once with C9b2's re-pins. ADR-A104
+and ADR-A106 addenda, accepted 2026-10-10. 15 rows in two parts, acts and Behaviour
+([Validation Pack](../validation/computable-contract-substrate-c9b1.md)).
+
+**Planned validation** (pack `computable-contract-substrate-c9b1.md`): each act class and its shapes at zero and too many,
 proposal and `ins:proposes`, `ins:pursuantTo` across instruments, the reinsurance evidence path
 Permitted with an approval made before the settlement by the reinsurer, rejected when made by
 another party or after, `ins:OnExercise` derived, the deprecation warnings, the acts document's
@@ -3580,9 +3618,9 @@ semi-additive measure adds along some groupings and not others, and in every kno
 it must not cross is time: a balance adds across accounts, not across days (XBRL's instant against
 duration). Adding it later takes a third value, `qnt:SemiAdditive`, and an optional property naming
 what a sum must not cross. Both are additive changes. The sum's grouping is the aggregate's, which is
-Eligibility's (C9b3), so that check sits there. The one cost of waiting is that a stock declared
-Extensive in the meantime would need redeclaring, so the utility text tells authors to leave a stock
-undeclared. (b) defers it the same way, with a third subclass.
+Eligibility's (C9b3), so that check sits there. (b) defers it the same way, with a third subclass.
+(Corrected 2026-10-09: an earlier line here told authors to leave a stock undeclared, which the
+analysis below contradicts. A balance shares its currency's Extensive space.)
 
 **Design-time warnings, and a third class for semi-additivity** (the human, 2026-10-09). Facts that
 decide it:
@@ -3615,6 +3653,7 @@ decide it:
 KISS: (a), with Extensive and Intensive on the space, and stock or flow on the measure when a slice
 needs it. **Leaning (a), unchanged**, with open question 7 answered in principle: the consuming layer
 says along which grouping a measure may be summed.
+**Answered (the human, 2026-10-09): (a), with no subclasses.**
 
 **C9b2-Q2. How a proportion names its base.**
 
@@ -3692,6 +3731,16 @@ line share (base role: the order) and an order share (base role: the layer) has 
 base role, and at runtime (p3) checks that the first operand's resolved base is what the second
 measures, a check (p4) alone could not make.
 
+**Built (2026-10-09, merged into `ccs/c9b-groundwork`).** `qnt:additivity` (`qnt:Extensive`,
+`qnt:Intensive`), `qnt:baseRole` on a derived space, `qnt:MixedBases`, laws Q12 (static: a Sum within
+one space needs Extensive) and Q13 (runtime: different units or bases with no conversion are
+Undetermined), and three shapes. Signing down needs only Ratio then Scale, so HQ-12 stays held. A Sum
+capability stating no operands reads as a sum within its own space. `qnt:baseRole` is not restricted
+to proportions. Rows C9b2-08 to C9b2-13 are checked by a reference reading of §9.9 until an evaluator
+of sums exists (C12). Corrected at merge: a stock shares its currency's Extensive space. Quantification
+0.8.0 and its shapes 0.3.0 cascade to 18 documents, Eligibility's versions shared with C9b0
+([Validation Pack](../validation/computable-contract-substrate-c9b2.md)).
+
 **Decided by precedent, not asked:**
 
 - Sum and Count stay operation kinds. A new shape rejects a Sum capability whose operands and result
@@ -3707,7 +3756,11 @@ measures, a check (p4) alone could not make.
   signing down, which uses Ratio and Scale. If signing down needs a product of two derived values,
   the examples phase says so before the model phase
 
-**Planned validation** (pack `ccs-c9b2.md`): additivity at zero and two values, the same-space Sum
+**Planned validation** (pack `computable-contract-substrate-c9b2.md`), including every currency case the human asked for
+(2026-10-09): one currency sums. Mixed currencies with a dated conversion context at the reference
+time convert to the base currency, then sum. Mixed currencies with none are Undetermined
+(`qnt:ConversionContextAbsent`). A limit stated in two currencies (ADR-A95) is never converted.
+Shares with one base sum, and with two are Undetermined. Also: additivity at zero and two values, the same-space Sum
 shape positive and negative, date plus duration still valid, Count on an intensive space valid, a
 proportion's base role, the examples conformant, and the cascade's versioning, catalog and literate
 checks.
@@ -3729,7 +3782,7 @@ checks.
 | C16 | how-to guides for Wording and Instrument (sketch §11), the substrate README's "computable contract" section, ontology architecture, SDS, data architecture |
 | C16a | **simplification sweep** (from C6's review, 2026-10-03): after C9, review the Instrument model for what can be removed without losing logical correctness, under the Ponytail guardrails in `.github/copilot-instructions.md`. First candidate: the asserted `ins:Template` type, derivable from `ins:expressedIn` and `ins:arisesUnder` but kept because law I13's shapes read it without a reasoner. Second: every domain and range in Instrument reviewed against the principle in `.github/copilot-instructions.md` (from C7a-Q2): kept only where it gives useful design-time entailment or restates what a shape checks |
 | C16b | **instance records and shared bound meaning** (TD-19, required before the epic closes, decided 2026-10-06). An instance stores only what differs from its form (C7c D1), and bound meaning is generated on demand, cached as need dictates and kept out of the main graph where processing allows (D4). This slice adds what C7c leaves out: sharing generated bound nodes across instruments and versions by content address, the cache and its invalidation (ADR-A27, ADR-A92), the subgraph a heavy process works in, and a size measure over a form the size of the sample policy, about 100 stored nodes per bound policy as the target. Its own ADR first. Revisits C9-Q2's overtaking rule (iii), whose derived nodes put a burden on implementors (the human, 2026-10-08) | an ADR, then `tools/` and Instrument shapes. After C9 and C12, before C17 |
-| C16c | **remove Party's shares** (decided 2026-10-09, [consent sketch](../sketches/consent-and-group-powers.md) §2.5). `pty:outwardShare` and `pty:inwardShare` hold one value per membership, with an unstated meaning and base, fixed per membership version. C9b4 replaces their uses with measure words, narrows and deprecates them, and adds a warning shape reporting every use. This slice removes both, the warning shape with them, and Party's composition rules read measure words. Required before the CCS epic closes | Party, breaking, cascading. After C9b4 |
+| C16c | **remove Party's shares** (decided 2026-10-09, [consent sketch](../sketches/consent-and-group-powers.md) §2.5). `pty:outwardShare` and `pty:inwardShare` hold one value per membership, with an unstated meaning and base, fixed per membership version. C9b4 replaces their uses with measure words, narrows and deprecates them, and adds a warning shape reporting every use. This slice removes both, the warning shape with them, and Party's composition rules read measure words. It also removes Behaviour's terms deprecated by C9b1 (`bhv:AcceptanceRecord`, `bhv:accepted`, `bhv:actor` on an exercise record), moving the five earlier Behaviour examples' exercise records to name exercise acts (C9b1-Q5). Required before the CCS epic closes | Party and Behaviour, breaking, cascading. After C9b4 |
 | C17 | handoff: the insurance renderings list for AIR Phase 5 (policy scenarios) and Open CBAA (binding authority scenarios), and the Open CBAA migration notes (§7) |
 
 ### Held design questions
@@ -3860,8 +3913,8 @@ None of these may be taken by the agent.
 
 ## 9. Validation
 
-Each slice has a Validation Pack at `docs/developer/validation/computable-contract-substrate-<slice>.md`
-and a `LOG.md` row at sign-off.
+Each slice has a Validation Pack at `docs/developer/validation/computable-contract-substrate-<slice>.md`.
+Its adversarial probes are recorded in the status record, and the human's merge is the sign-off.
 
 | Slice | Levels | One command |
 |---|---|---|

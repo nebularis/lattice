@@ -147,6 +147,7 @@ ordinary Turtle.
 | Script | Checks | Command |
 |---|---|---|
 | `literate_extract.py` | README ⇄ generated-artefact drift (§3) | see §3 |
+| `full_sweep.py` | Runs every check an ontology change needs, one line each, failures in red, logs in `.build/full-sweep`. Uses this checkout's tool packages, and compares versions with `main` | `mise run check:full-sweep`, or `-- --base-ref REF` |
 | `check_formal_freshness.py` | Formal artefact ⇄ README drift (§4) | `mise run check:formal-freshness` |
 | `ontology_catalog.py` | The import catalog (`ontology/catalog-v001.xml`) is complete and consistent (ADR-A88) | `mise run check:ontology-catalog` / `mise run build:ontology-catalog` |
 | `ontology_version_check.py` | Every changed ontology document bumped its version, with a release row (ADR-A86) | `mise run check:ontology-versioning` |
@@ -194,8 +195,7 @@ never blocks the rest of CI.
 Any unit of work beyond a small fix follows the model in the [lattice-lifecycle skill](../../.claude/skills/lattice-lifecycle/SKILL.md) and
 [`docs/developer/INDEX.md`](INDEX.md): a sketch, a plan, a status record updated live, and (for a
 slice) a Validation Pack under `docs/developer/validation/` naming its test cases, the one command
-that runs them, and what a human should inspect before signing off in
-`docs/developer/validation/LOG.md`. Read that model before starting a new unit — this guide
+that runs them, and what a human should inspect before merging, which is the sign-off. Read that model before starting a new unit — this guide
 covers the tools; INDEX.md and that skill cover the
 process those tools are run under.
 

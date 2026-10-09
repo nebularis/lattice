@@ -1,0 +1,233 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Premise. Which values may be added (CCS C9b2, consent sketch §2.4). Three
+# cases from different domains, each stated once:
+#
+# 1. A multicurrency loan facility. Three lenders' commitments, two in euros
+#    and one in US dollars, and a facility limit stated as EUR 110m or USD 120m
+#    (ADR-A95). The facility's base currency is the euro.
+# 2. Shares of an order. Four participants each write a line, a share of one
+#    order, and together write 160% of it. A second, separate order of the same
+#    amount has one line. Shares of one order add. Shares of two orders do not,
+#    though both orders are EUR 10m.
+# 3. Signing down. An over-written order is signed down so the lines total
+#    100%: each written line is scaled by the order over the total written.
+#    That is a Ratio of two shares, then a Scale of each line by it. Both are
+#    declared operations, and no product of two shares is needed.
+#
+# Beside them, a date plus a duration (a Sum across two spaces) and a Count of
+# ratings (Count on an intensive space), which additivity leaves untouched.
+#
+# Expected results. A sum is evaluated at a reference time. The example's own
+# properties (ex:of, ex:resolves) stand for the evaluation context, which
+# Quantification does not model (ADR-A115 decision 4).
+#
+# | Sum of                              | At         | Result                                  |
+# |-------------------------------------|------------|-----------------------------------------|
+# | lender 1 and lender 2 (EUR, EUR)    | any time   | EUR 90m                                 |
+# | lenders 1 to 3 (EUR, EUR, USD)      | 2027-03-31 | EUR 109.8m, USD 22m at 0.9              |
+# | lenders 1 to 3                      | 2027-04-30 | Undetermined, qnt:ConversionContextAbsent |
+# | written lines A to D, one order     | any time   | 1.6 (160% of order 1)                   |
+# | written line A and line E           | any time   | Undetermined, qnt:MixedBases            |
+#
+# | Comparison with the facility limit  | Result                                       |
+# |-------------------------------------|----------------------------------------------|
+# | EUR 109.8m, at most the limit       | True, against EUR 110m. Converting USD 120m at 0.9 would give EUR 108m and False |
+# | GBP 95m, at most the limit          | Undetermined, qnt:NoBoundInUnit, though a GBP conversion context exists |
+#
+# | Signing down order 1                | Value                                        |
+# |-------------------------------------|----------------------------------------------|
+# | signing factor, Ratio(1, 1.6)       | 0.625                                        |
+# | signed lines A, B, C, D (Scale)     | 0.3125, 0.25, 0.1875, 0.25, summing to 1     |
+# | line A as an amount (Scale)         | EUR 3.125m                                   |
+
+@prefix qnt:  <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
+@prefix voc:  <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex:   <https://example.org/lattice/quantification/additivity/> .
+
+# ==== Money, in three currencies ==============================================
+
+ex:currencies a qnt:UnitFamily .
+ex:EUR a qnt:Unit ; rdfs:label "euro" .
+ex:USD a qnt:Unit ; rdfs:label "US dollar" .
+ex:GBP a qnt:Unit ; rdfs:label "pound sterling" .
+
+ex:money a qnt:ValueSpace ;
+    qnt:spaceKey "money" ; qnt:orderKind qnt:TotalOrder ; qnt:densityKind qnt:Dense ;
+    qnt:spaceHash "money-v1" ;
+    qnt:additivity qnt:Extensive ;
+    qnt:unitContract [ a qnt:UnitContract ; qnt:requiresUnit true ;
+                       qnt:unitFamily ex:currencies ; qnt:canonicalUnit ex:EUR ] ;
+    qnt:hasOperationCapability ex:money-compare , ex:money-sum .
+
+ex:money-compare a qnt:OperationCapability ; qnt:operationKind qnt:Compare .
+ex:money-sum a qnt:OperationCapability ; qnt:operationKind qnt:Sum ;
+    qnt:hasOperand [ a qnt:OperationOperand ; qnt:operandIndex 0 ; qnt:operandSpace ex:money ] ,
+                   [ a qnt:OperationOperand ; qnt:operandIndex 1 ; qnt:operandSpace ex:money ] ;
+    qnt:resultSpace ex:money .
+
+# Exchange rates are observations at a date, so each conversion is Contextual.
+ex:fx-spot a qnt:ConversionFunction ; rdfs:label "spot exchange rate on the context's date" .
+ex:usd-to-eur a qnt:Conversion ; qnt:fromUnit ex:USD ; qnt:toUnit ex:EUR ;
+    qnt:conversionKind qnt:Contextual ; qnt:conversionFunction ex:fx-spot .
+ex:gbp-to-eur a qnt:Conversion ; qnt:fromUnit ex:GBP ; qnt:toUnit ex:EUR ;
+    qnt:conversionKind qnt:Contextual ; qnt:conversionFunction ex:fx-spot .
+
+# Rate observations for 31 March 2027 only. None is recorded for 30 April.
+# Quantification has no property for the observed rate yet (open question 3),
+# so the example states it with its own.
+ex:usd-eur-2027-03-31 a qnt:ConversionContext ;
+    ex:forConversion ex:usd-to-eur ; ex:rate 0.9 ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ;
+        fnd:validFrom "2027-03-31T00:00:00Z"^^xsd:dateTime ; fnd:validTo "2027-04-01T00:00:00Z"^^xsd:dateTime ] ;
+    fnd:hasEvidence [ a fnd:Evidence ; fnd:supports ex:usd-eur-2027-03-31 ;
+        fnd:recordedAt "2027-03-31T16:00:00Z"^^xsd:dateTime ] .
+ex:gbp-eur-2027-03-31 a qnt:ConversionContext ;
+    ex:forConversion ex:gbp-to-eur ; ex:rate 1.15 ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ;
+        fnd:validFrom "2027-03-31T00:00:00Z"^^xsd:dateTime ; fnd:validTo "2027-04-01T00:00:00Z"^^xsd:dateTime ] .
+
+# ==== 1. A multicurrency facility =============================================
+
+ex:commitment-1 a qnt:Quantity ; qnt:onSpace ex:money ; qnt:numericValue 60000000 ; qnt:inUnit ex:EUR .
+ex:commitment-2 a qnt:Quantity ; qnt:onSpace ex:money ; qnt:numericValue 30000000 ; qnt:inUnit ex:EUR .
+ex:commitment-3 a qnt:Quantity ; qnt:onSpace ex:money ; qnt:numericValue 22000000 ; qnt:inUnit ex:USD .
+
+# The limit is one bound stated in two currencies. Neither statement implies a
+# rate, so a candidate is compared with the statement in its own unit (ADR-A95).
+ex:limit-eur a qnt:Bound ; qnt:onSpace ex:money ; qnt:boundSense qnt:Upper ; qnt:boundClosure qnt:Closed ;
+    qnt:boundValue [ a qnt:Quantity ; qnt:onSpace ex:money ; qnt:numericValue 110000000 ; qnt:inUnit ex:EUR ] ;
+    qnt:alternativeBound ex:limit-usd .
+ex:limit-usd a qnt:Bound ; qnt:onSpace ex:money ; qnt:boundSense qnt:Upper ; qnt:boundClosure qnt:Closed ;
+    qnt:boundValue [ a qnt:Quantity ; qnt:onSpace ex:money ; qnt:numericValue 120000000 ; qnt:inUnit ex:USD ] .
+
+# A total reported in sterling, compared with the limit.
+ex:reported-total a qnt:Quantity ; qnt:onSpace ex:money ; qnt:numericValue 95000000 ; qnt:inUnit ex:GBP .
+
+# ==== 2. Shares of an order ===================================================
+#
+# A line is a share of the order it is written on. Its space divides money by
+# money and names its base as a context role, "the order". Evaluated for a
+# subject, the role resolves to that subject's order, as any context value
+# resolves. Two lines share a base only when their roles resolve to one
+# binding. The amounts are not compared.
+
+ex:roles a voc:ConceptScheme ;
+    fnd:hasIdentity ex:roles-identity ; fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Order roles"@en .
+ex:the-order a skos:Concept ; skos:inScheme ex:roles ;
+    skos:prefLabel "The order"@en ;
+    skos:definition "The amount a placement seeks, of which each line is a share."@en .
+
+ex:role-binding a voc:SchemeBinding ;
+    voc:forContract qnt:ContextRoleContract ;
+    voc:bindsScheme ex:roles ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-01-01T00:00:00Z"^^xsd:dateTime ] .
+
+ex:line-share a qnt:DerivedValueSpace ;
+    qnt:spaceKey "line-share" ; qnt:orderKind qnt:TotalOrder ; qnt:densityKind qnt:Dense ;
+    qnt:spaceHash "line-share-v1" ;
+    qnt:numeratorSpace ex:money ; qnt:denominatorSpace ex:money ;
+    qnt:baseRole ex:the-order ;
+    qnt:additivity qnt:Extensive ;
+    qnt:hasOperationCapability ex:line-sum , ex:line-ratio , ex:line-amount .
+
+ex:line-sum a qnt:OperationCapability ; qnt:operationKind qnt:Sum ;
+    qnt:hasOperand [ a qnt:OperationOperand ; qnt:operandIndex 0 ; qnt:operandSpace ex:line-share ] ,
+                   [ a qnt:OperationOperand ; qnt:operandIndex 1 ; qnt:operandSpace ex:line-share ] ;
+    qnt:resultSpace ex:line-share .
+
+# A line as an amount: the order (money) scaled by the line (ADR-A93).
+ex:line-amount a qnt:OperationCapability ; qnt:operationKind qnt:Scale ;
+    qnt:hasOperand [ a qnt:OperationOperand ; qnt:operandIndex 0 ; qnt:operandSpace ex:money ] ,
+                   [ a qnt:OperationOperand ; qnt:operandIndex 1 ; qnt:operandSpace ex:line-share ] ;
+    qnt:resultSpace ex:money .
+
+# The order over the total written, a share of a share.
+ex:line-ratio a qnt:OperationCapability ; qnt:operationKind qnt:Ratio ;
+    qnt:hasOperand [ a qnt:OperationOperand ; qnt:operandIndex 0 ; qnt:operandSpace ex:line-share ] ,
+                   [ a qnt:OperationOperand ; qnt:operandIndex 1 ; qnt:operandSpace ex:line-share ] ;
+    qnt:resultSpace ex:signing-factor .
+
+# Placement 1: one order, four written lines, 160% in all.
+ex:order-1 a qnt:Quantity ; qnt:onSpace ex:money ; qnt:numericValue 10000000 ; qnt:inUnit ex:EUR .
+ex:placement-1 ex:resolves [ ex:role ex:the-order ; ex:value ex:order-1 ] .
+
+ex:written-A a qnt:Quantity ; qnt:onSpace ex:line-share ; qnt:numericValue 0.5 ; ex:of ex:placement-1 .
+ex:written-B a qnt:Quantity ; qnt:onSpace ex:line-share ; qnt:numericValue 0.4 ; ex:of ex:placement-1 .
+ex:written-C a qnt:Quantity ; qnt:onSpace ex:line-share ; qnt:numericValue 0.3 ; ex:of ex:placement-1 .
+ex:written-D a qnt:Quantity ; qnt:onSpace ex:line-share ; qnt:numericValue 0.4 ; ex:of ex:placement-1 .
+
+# The whole order, 100% of itself.
+ex:whole-order-1 a qnt:Quantity ; qnt:onSpace ex:line-share ; qnt:numericValue 1 ; ex:of ex:placement-1 .
+
+# Placement 2: a separate order of the same amount, one line.
+ex:order-2 a qnt:Quantity ; qnt:onSpace ex:money ; qnt:numericValue 10000000 ; qnt:inUnit ex:EUR .
+ex:placement-2 ex:resolves [ ex:role ex:the-order ; ex:value ex:order-2 ] .
+
+ex:written-E a qnt:Quantity ; qnt:onSpace ex:line-share ; qnt:numericValue 0.3 ; ex:of ex:placement-2 .
+
+# ==== 3. Signing down =========================================================
+#
+# The signing factor is a ratio of two shares of one order, a plain number. It
+# is intensive: two factors never add. Scaling a written line by it gives the
+# signed line, a share of the same order.
+
+ex:signing-factor a qnt:DerivedValueSpace ;
+    qnt:spaceKey "signing-factor" ; qnt:orderKind qnt:TotalOrder ; qnt:densityKind qnt:Dense ;
+    qnt:spaceHash "signing-factor-v1" ;
+    qnt:numeratorSpace ex:line-share ; qnt:denominatorSpace ex:line-share ;
+    qnt:additivity qnt:Intensive ;
+    qnt:hasOperationCapability ex:sign-down .
+
+ex:sign-down a qnt:OperationCapability ; qnt:operationKind qnt:Scale ;
+    qnt:hasOperand [ a qnt:OperationOperand ; qnt:operandIndex 0 ; qnt:operandSpace ex:line-share ] ,
+                   [ a qnt:OperationOperand ; qnt:operandIndex 1 ; qnt:operandSpace ex:signing-factor ] ;
+    qnt:resultSpace ex:line-share .
+
+# ==== Sums additivity leaves alone ============================================
+#
+# A date plus a duration is a Sum across two spaces. A date space is not
+# extensive and declares no additivity.
+
+ex:dates a qnt:ValueSpace ;
+    qnt:spaceKey "dates" ; qnt:orderKind qnt:TotalOrder ; qnt:densityKind qnt:Discrete ;
+    qnt:valueDatatype xsd:date ; qnt:spaceHash "dates-v1" ;
+    qnt:hasOperationCapability ex:date-plus-duration .
+
+ex:durations a qnt:ValueSpace ;
+    qnt:spaceKey "durations" ; qnt:orderKind qnt:TotalOrder ; qnt:densityKind qnt:Discrete ;
+    qnt:spaceHash "durations-v1" ;
+    qnt:additivity qnt:Extensive ;
+    qnt:hasOperationCapability ex:duration-sum .
+
+ex:date-plus-duration a qnt:OperationCapability ; qnt:operationKind qnt:Sum ;
+    qnt:hasOperand [ a qnt:OperationOperand ; qnt:operandIndex 0 ; qnt:operandSpace ex:dates ] ,
+                   [ a qnt:OperationOperand ; qnt:operandIndex 1 ; qnt:operandSpace ex:durations ] ;
+    qnt:resultSpace ex:dates .
+
+ex:duration-sum a qnt:OperationCapability ; qnt:operationKind qnt:Sum ; qnt:resultSpace ex:durations .
+
+# Ratings on a clinical trial's adverse-event scale are intensive: they are
+# never added, but they are counted. Count is the sum of a unit measure, so it
+# asks nothing of the counted space.
+
+ex:severity a qnt:ValueSpace ;
+    qnt:spaceKey "severity-grade" ; qnt:orderKind qnt:TotalOrder ; qnt:densityKind qnt:Discrete ;
+    qnt:spaceHash "severity-grade-v1" ;
+    qnt:additivity qnt:Intensive ;
+    qnt:hasOperationCapability ex:severity-compare , ex:severity-count .
+
+ex:headcount a qnt:ValueSpace ;
+    qnt:spaceKey "headcount" ; qnt:orderKind qnt:TotalOrder ; qnt:densityKind qnt:Discrete ;
+    qnt:spaceHash "headcount-v1" ;
+    qnt:additivity qnt:Extensive .
+
+ex:severity-compare a qnt:OperationCapability ; qnt:operationKind qnt:Compare .
+ex:severity-count a qnt:OperationCapability ; qnt:operationKind qnt:Count ;
+    qnt:hasOperand [ a qnt:OperationOperand ; qnt:operandIndex 0 ; qnt:operandSpace ex:severity ] ;
+    qnt:resultSpace ex:headcount .

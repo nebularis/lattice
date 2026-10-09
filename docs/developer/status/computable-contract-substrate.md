@@ -18,9 +18,19 @@ Behaviour 0.10.0 (shapes 0.4.0) with nested states and history, the import guard
 check`. In tranche D, C6 to C7c are merged and tagged (Instrument 0.12.0, Party 0.8.0, Quantification
 0.7.0). C8 and C8b are merged and tagged (Instrument 0.14.0, Wording 0.7.0). C9 is briefed and splits into C9a to C9c. Its materiality question has its own sketch. From C5 on, the agent builds and verifies, and the human commits by hand.
 
-**Next action, for the human:** confirm C9b2-Q1 after the design-time analysis (plan, C9b2 in
-detail), and create the C9b0 branch, which no longer waits on anything. Merge order: C9b0, then C9b2, then C9b1, each
-regenerating the catalog and release register rather than hand-merging.
+**Next action, for the human:** merge `ccs/c9b-groundwork` into `main` and create the release tags.
+The gate is passed: the Validation Packs are reviewed, the ADR-A104 and ADR-A106 addenda accepted, and
+the adversarial probes below fail as they should. Then HQ-6, before C9b3.
+
+**Adversarial probes for C9b0 to C9b2** (2026-10-10, the agent's pick at the human's request). Each
+broke one generated shape file, ran the slice's test module, and restored the file with `git
+checkout`, after which the module passed again.
+
+| Slice | Defect introduced | Caught by | Restored |
+|---|---|---|---|
+| C9b0 | `elg:WildcardPolicyConsistency` in `eligibility/shapes/constraints.ttl` matches `elg:ExactMatch` instead of `elg:Wildcard`, so the ADR-A06 rule never fires | 3 of 24 fail: `test_moved_shape_fires_once_on_its_probe[wildcard]`, `test_readme_generates_every_file`, and the `condition-taxonomy` example now reported | 24 passed |
+| C9b2 | `qnt:SumWithinOneSpaceShape` in `quantification/shapes/constraints.ttl` tests for `qnt:Intensive` instead of `qnt:Extensive` (law Q12 inverted) | 5 of 24 fail: C9b2-02 (the example), three C9b2-04 cases, C9b2-14 (the README check) | 24 passed |
+| C9b1 | `bhv:AcceptanceRecordDeprecatedShape` in `behaviour/shapes/structural.ttl` targets `bhv:ExerciseRecord` instead of `bhv:AcceptanceRecord` | 1 of 42 fails: C9b1-13, an acceptance record is deprecated with a warning | 42 passed |
 
 ## Slice board
 
@@ -157,3 +167,9 @@ regenerating the catalog and release register rather than hand-merging.
 - 2026-10-09: C9b0, C9b1 and C9b2 briefed from the three investigations, six questions for the human. Found: Eligibility's drift is 5 and 42 triples against all three shape files, not 78 and 19, and nothing imports `eligibility-vocab`, so C9b0 releases one document with no cascade. Behaviour's C9b1 change is 0.14.0 breaking, not a patch. Sum already spans two spaces (a date plus a duration), so C9b2's rule covers a sum within one space
 - 2026-10-09: C9b0-Q1, C9b1-Q1 and C9b1-Q2 answered (a) by the human. TD-16 cross-checked: FM-EP changed Eligibility's README only, so the drift stands and C9b0 repairs it first, as the human proposed. The plan explains (p3) and (p4) with pictures, and why (a) defers semi-additivity without blocking it
 - 2026-10-09: C9b0-Q2 answered (a), with C9b3 to make the no-applicable-binding case Undetermined. C9b2-Q2 answered (p3), with (p4) held as HQ-12. C9b2-Q1 analysed for design-time warnings: SHACL warns equally under (a) and (b), a reasoner cannot warn of a missing declaration under either, and semi-additivity belongs on the measure, not the space. Leaning (a) kept, for the human to confirm
+- 2026-10-09: C9b2-Q1 answered (a), no subclasses, with every currency case covered. The human chose one integration branch, `ccs/c9b-groundwork`, with each slice built by a sub-agent in its own worktree and merged by the agent
+- 2026-10-09: C9b0 merged (`19132c26`): Eligibility's README is its source again, `eligibility-vocab` 0.12.0, the compilers refuse a hierarchical plan with no scheme. TD-16's Eligibility part closed. The import guard's debt renumbered TD-32 (TD-28, then TD-30, were taken)
+- 2026-10-09: C9b2 merged (`4bef8942`): `qnt:additivity`, `qnt:baseRole`, `qnt:MixedBases`, laws Q12 and Q13, Quantification 0.8.0 and shapes 0.3.0 cascading to 18 documents, Eligibility's versions shared with C9b0. Corrected at merge: a stock shares its currency's Extensive space. `check:ontology-catalog` fails two tests outside the slices: TD-28 (`insure-o`) and the reasoning isolation test, which scans the slice worktrees
+- 2026-10-09: C9b1 built on `ccs/c9b1-legal-acts` (`e5436e35` to `96e22d9e`), 15 pack rows passing, ADR-A104 and ADR-A106 addenda Proposed. Paused before its merge at the human's request
+- 2026-10-09: C9b1-Q3 to Q5 answered as leaned. The reinsurance implied term became a prohibition on an arbitrary refusal. C9b1 merged (`b24cb3c5`): Instrument 0.16.0 with `instrument-acts`, Behaviour 0.14.0, each released once with C9b2's re-pins. Slice worktrees removed, branches kept. Full checks pass but for TD-28 (`insure-o`) and TD-33 (a flaky persistence test, new). Ready for the human's review
+- 2026-10-10: the ADR-A104 and ADR-A106 addenda of 2026-10-09 accepted by the human. The validation sign-off log, `docs/developer/validation/LOG.md`, retired by the human: probes are recorded in the status record and the merge is the sign-off (skill `lattice-lifecycle`). Three adversarial probes, one per slice, each caught (table above). Ready to merge
