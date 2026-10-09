@@ -18,7 +18,7 @@ What the parties did, such as a proposal, a declaration, an exercise or a notice
 an Instrument fact in its own document, `instrument-acts`, written by any application and evaluated,
 never stated, for its effect. What the evaluator concluded about an act is a Behaviour finding. A
 consumer that only states meaning never imports an act, and the acts document never imports
-Behaviour's runtime (ADR-A104 and ADR-A106, their 2026-10-09 addenda, ADR-A120, TD-28).
+Behaviour's runtime (ADR-A104 and ADR-A106, their 2026-10-09 addenda, ADR-A120, TD-30).
 
 ## Test cases
 
@@ -28,7 +28,7 @@ The table has 15 rows in two parts, the acts tier (C9b1-01 to C9b1-11) and Behav
 | ID | Given / When / Then | Level | +/- |
 |---|---|---|---|
 | C9b1-01 | the acts document / parsed / Instrument's version, `ins:LegalAct ⊑ prov:Activity, fnd:TemporallyScoped, fnd:Evidenced`, every act class and property with its utility, each property stating its subject and value, `ins:Assent` moved from the main document without "consent to a power" | L1 | + |
-| C9b1-02 | the acts document / its imports and terms / imports only Instrument's main document at the same version, names no `behaviour-runtime` IRI and no runtime term, and the main document never names it (the per-document check for TD-28) | L3 | + |
+| C9b1-02 | the acts document / its imports and terms / imports only Instrument's main document at the same version, names no `behaviour-runtime` IRI and no runtime term, and the main document never names it (the per-document check for TD-30) | L3 | + |
 | C9b1-03 | the reinsurance and facility examples, and C9a's three examples with the acts document loaded / every layer's shapes / no violation | L1 | + |
 | C9b1-04 | each act / its shapes, at zero and at too many: a proposal's matter and proposer, a consent's or objection's proposal, a withdrawal's declaration, an act's party, an exercise's bound power (also a stated one), a second case, an act's time, its evidence / reported | L1 | − |
 | C9b1-05 | a node that is not an act carrying `ins:proposes`, `ins:directedAt`, `ins:withdraws`, `ins:exercises`, `ins:forCase` or `ins:pursuantTo` / shapes / reported | L1 | − |
@@ -37,7 +37,7 @@ The table has 15 rows in two parts, the acts tier (C9b1-01 to C9b1-11) and Behav
 | C9b1-08 | the approval made by the reinsured instead of the reinsurer / shapes / reported. Made by a later version of the reinsurer's occupancy / conforms | L1 | − + |
 | C9b1-09 | the indemnity's scope, an evidence path from the claim through `ins:forCase`, `ins:pursuantTo`, `ins:exercises` and `ins:activity` / compiled by MORK's SPARQL backend and run / claim 1, settled pursuant to an approval, Permitted. Claim 2, settled with none, Undetermined (deliberate non-coverage, HQ-6). Claim 1 without its reliance, Undetermined | L4 | + − |
 | C9b1-10 | `ins:OnExercise` / its restriction, every example's exercise triggers, and a trigger given `bhv:ExternalStimulus` / `bhv:DerivedTrigger` throughout, and the external kind reported | L1 | + − |
-| C9b1-11 | `ins:impliedBy` and the reinsurance's implied term / read / the utility names a judgment, the term and its relation name the judgment, the obligor is the power's holder, and README §1.1 no longer calls a runtime document upstream | L1 | + |
+| C9b1-11 | `ins:impliedBy` and the reinsurance's implied term / read / the utility names a judgment, the term and its relation name the judgment, the relation is a prohibition on refusing (`ins-voc:Refuse`) whose obligor is the power's holder and whose scope is a refusal found arbitrary, with no implied obligation to approve (C9b1-Q4), and README §1.1 no longer calls a runtime document upstream | L1 | + |
 | C9b1-12 | Behaviour's runtime document / parsed / `bhv:exercised` has no range and names the exercise act, the exercise record is a finding, `bhv:actor` is deprecated on it, and no Instrument term is named (law B7) | L1 | + |
 | C9b1-13 | an acceptance record / Behaviour's shapes / `owl:deprecated`, and one warning, no violation, naming C16c (C9b1-Q2) | L1 | − |
 | C9b1-14 | `licence-suspension.ttl` and the three notice examples / read and validated / no acceptance record, no actor on an exercise record, conforms. Each notice act record carries the annotation | L1 | + |
@@ -76,11 +76,13 @@ module.
 - Cross-instrument constraints on `ins:pursuantTo` and on arising, unshaped until a case needs one
   (C9c may revisit)
 - An exercise's effect (law I10) and the derived stimulus for `ins:OnExercise` (C12)
-- The import guard's blind spot for Behaviour's runtime (TD-28), covered here by C9b1-02 only for the
+- The import guard's blind spot for Behaviour's runtime (TD-30), covered here by C9b1-02 only for the
   acts document
 - Five Behaviour examples (garden-leave, run-off, standstill, occasion-refinement, force-majeure)
-  still name a power and an actor on their fourteen exercise records. They read as before. Updating
-  them goes with the removal of deprecated terms in C16c
+  still name a power and an actor on their fourteen exercise records. They read as before, and move
+  to exercise acts in C16c, with the removal of deprecated terms (C9b1-Q5)
+- Whether a refusal was arbitrary. The implied prohibition's scope requires a concept that only a
+  determination supplies, and no evidence path reads it here
 
 ## Handoff
 
@@ -114,11 +116,20 @@ Written by the building machine.
   - **`bhv:actor` on an exercise record is deprecated in its utility, with no warning shape.** The
     brief gives a warning shape to `bhv:AcceptanceRecord` only, and a warning on `bhv:actor` would
     fire on fourteen records in five earlier examples
-  - **New activities** `ins-voc:Settle` and `ins-voc:Approve` in `instrument-vocab`, for the
-    reinsurance example
+  - **New activities** `ins-voc:Settle`, `ins-voc:Approve` and `ins-voc:Refuse` in
+    `instrument-vocab`, for the reinsurance example
   - **Assent's disjointness with `fnd:Version`** is now entailed through `ins:LegalAct`, not stated on
     `ins:Assent`
   - **Pack name.** The plan names it `ccs-c9b1.md`. This file follows the brief and C9a's name
+- **Answers after the first handoff (the human, 2026-10-09):**
+  - **C9b1-Q3:** `ins:actBy` and `ins:directedAt` keep their names. `ins:actBy` stays
+    non-functional, since an act by agreement or a joint notice has several parties, and
+    `ins:assentBy` stays functional, as built
+  - **C9b1-Q4:** the reinsurance's implied term is a prohibition on refusing approval, whose scope is
+    a refusal found to be arbitrary, `ins:impliedBy` the judgment. The reinsurer may refuse for proper
+    reasons (*Gan v Tai Ping (No 2)*). The earlier obligation to approve is removed, and
+    `ins-voc:Refuse` added
+  - **C9b1-Q5:** the five earlier Behaviour examples move to exercise acts in C16c
 - **Pre-existing failure, not this slice's:** `test_c6_10_no_retired_term_outside_history` fails on
   retired `ins:` terms in `ontology/examples/insure-o/` (commit 89248158), which the branch point
   already tracks (`git grep` at `080a8af8` finds them). It is reported, not fixed

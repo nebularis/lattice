@@ -4042,6 +4042,9 @@ ins-voc:Settle a skos:Concept ; skos:inScheme ins-voc:Activities ;
 ins-voc:Approve a skos:Concept ; skos:inScheme ins-voc:Activities ;
 	skos:prefLabel "Approve"@en ; skos:definition "Give the approval an instrument requires before another party's act."@en .
 
+ins-voc:Refuse a skos:Concept ; skos:inScheme ins-voc:Activities ;
+	skos:prefLabel "Refuse"@en ; skos:definition "Withhold an approval or a consent an instrument requires."@en .
+
 ins:InstrumentTarget a bhv:TargetKind ;
 	rdfs:comment "A Behaviour effect's target kind for an instrument." ;
 	fnd:utility "Declared here, since Behaviour no longer names Instrument (ADR-A106). Behaviour's bhv:InstrumentTarget is deprecated in its favour." .
@@ -6203,8 +6206,9 @@ Claim 1, settled pursuant to an approval, is Permitted. "Effective approval" is 
 approval exists, which the path reads, was made by the reinsurer, and preceded the settlement, which
 the acts' shapes check. Claim 2, settled with no approval, is Undetermined rather than Denied, since
 "no approval, no liability" needs an absence to decide, a closure (ADR-A105, held question HQ-6). The
-implied term is a bound relation `ins:impliedBy` the judgment that implied it, and whether a refusal
-was arbitrary is a determination.
+implied term is a bound relation `ins:impliedBy` the judgment that implied it: the reinsurer may
+refuse for proper reasons, so it is a prohibition on refusing approval whose scope is a refusal found
+to be arbitrary, and that finding is a determination.
 
 ### 22.24 A facility's requests
 
@@ -6231,7 +6235,7 @@ Breaking versions at major version zero ([ADR-A113](../../docs/architecture/deci
   `ins:assentTo` move to the acts document, so a consumer of assents must load it, and
   `ins:OnExercise`'s kind is now `bhv:DerivedTrigger`, since it fires on an exercise found effective.
   `ins:impliedBy` names a judgment as a source. Re-pinned to Behaviour 0.14.0. `instrument-vocab`
-  0.16.0 adds the activities `ins-voc:Settle` and `ins-voc:Approve`. Shapes 0.8.0 (breaking: an
+  0.16.0 adds the activities `ins-voc:Settle`, `ins-voc:Approve` and `ins-voc:Refuse`. Shapes 0.8.0 (breaking: an
   exercise trigger with the kind `bhv:ExternalStimulus` no longer conforms): each legal act's shapes,
   an exercise by the power's holder, and an act relied on done no later than the act relying on it
 - 0.15.1 (`instrument` and `instrument-vocab`, patch): re-pinned to Behaviour 0.13.1, with no other

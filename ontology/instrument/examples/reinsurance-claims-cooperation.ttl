@@ -24,7 +24,7 @@
 # | the reinsurer's power to approve        | ex:approve, bound in the reinsurance         |
 # | the reinsurer's duty to indemnify       | ex:indemnify, arising on an exercise of ex:settle, another instrument's power |
 # | its scope: claims settled pursuant to an approval | ex:settled-with-approval, an evidence path from the claim |
-# | the implied term                        | ex:not-withhold-arbitrarily, ins:impliedBy the judgment |
+# | the implied term                        | ex:no-arbitrary-refusal, a prohibition ins:impliedBy the judgment |
 # | the insurer's request for approval      | ex:request-1, an ins:Proposal                |
 # | the approval, an exercise for the claim | ex:approval-1, ins:Exercise, ins:forCase     |
 # | the settlement, made pursuant to it     | ex:settlement-1, ins:pursuantTo ex:approval-1 |
@@ -72,6 +72,7 @@
 @prefix pty:     <https://www.nebularis.org/neuro-semantic/lattice/party#> .
 @prefix prov:    <http://www.w3.org/ns/prov#> .
 @prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
 @prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
 @prefix ex:      <https://example.org/lattice/instrument/reinsurance-claims-cooperation/> .
 
@@ -231,18 +232,30 @@ ex:approve a ins:Power ;
 # ==== An implied term ==========================================================
 #
 # No clause states it, so it has no stated meaning. Its bound term names the
-# judgment that implies it. Its content is to approve unless the reinsurer has
-# a proper reason not to. Whether a refusal was arbitrary, and so whether the
-# duty was breached, is a determination, never stated meaning.
+# judgment that implies it. The reinsurer must not withhold approval
+# arbitrarily, and may refuse for proper reasons (C9b1-Q4). So the term is a
+# prohibition on refusing approval, whose scope is a refusal found to be
+# arbitrary. That finding is a determination by the party or court the
+# contract names, never stated meaning, and no evidence path reads it here.
 
 ex:gan-v-tai-ping a prov:Entity ;
     rdfs:label "Gan Insurance Co Ltd v Tai Ping Insurance Co Ltd (No 2) [2001] EWCA Civ 1047" .
 
 ex:re-implied-term a ins:Term ; ins:boundIn ex:reinsurance ; ins:impliedBy ex:gan-v-tai-ping .
-ex:not-withhold-arbitrarily a ins:Obligation ;
+ex:arbitrary a skos:Concept ; rdfs:label "arbitrary, as determined" .
+
+ex:refused-arbitrarily a elg:Condition ;
+    elg:conditionKey "refusal-found-arbitrary" ;
+    elg:matchStrategy elg:ExactMatch ;
+    elg:compatibilityOperation elg:AllRequired ;
+    elg:wildcardSemantics elg:NoWildcard ;
+    elg:requiredConcept ex:arbitrary .
+
+ex:no-arbitrary-refusal a ins:Prohibition ;
     ins:impliedBy ex:gan-v-tai-ping ; ins:arisesUnder ex:re-implied-term ;
     ins:obligor ex:reinsurer-occ ; ins:obligee ex:reinsured-occ ;
-    ins:activity ins-voc:Approve .
+    ins:activity ins-voc:Refuse ;
+    ins:scope ex:refused-arbitrarily .
 
 # ==== The acts: Instrument facts, written by the claims system =================
 

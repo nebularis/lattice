@@ -24,6 +24,7 @@ INS = Namespace(LATTICE + "instrument#")
 INS_VOC = Namespace(LATTICE + "instrument/vocab#")
 FND = Namespace(LATTICE + "foundation#")
 BHV = Namespace(LATTICE + "behaviour#")
+ELG = Namespace(LATTICE + "eligibility#")
 LAYER = ONTOLOGY / "instrument"
 ACTS = LAYER / "spec" / "instrument-acts.ttl"
 EXAMPLES = LAYER / "examples"
@@ -83,7 +84,7 @@ def test_c9b1_01_the_acts_document() -> None:
 
 
 def test_c9b1_02_the_acts_document_imports_no_behaviour_runtime() -> None:
-    """The import guard reads behaviour-runtime as Behaviour (TD-28), so this document is checked alone."""
+    """The import guard reads behaviour-runtime as Behaviour (TD-30), so this document is checked alone."""
     acts, main = _graph(ACTS), _graph(SPEC)
     version = main.value(URIRef("https://www.nebularis.org/neuro-semantic/instrument"), OWL.versionIRI)
     assert set(acts.objects(None, OWL.imports)) == {version}
@@ -256,8 +257,12 @@ def test_c9b1_11_a_term_implied_by_a_judgment() -> None:
     g = _example("reinsurance-claims-cooperation")
     source = g.value(RE["re-implied-term"], INS.impliedBy)
     assert "EWCA Civ 1047" in str(g.value(source, RDFS.label))
-    assert g.value(RE["not-withhold-arbitrarily"], INS.impliedBy) == source
-    assert g.value(RE["not-withhold-arbitrarily"], INS.obligor) == g.value(RE.approve, INS.holder)
+    term = RE["no-arbitrary-refusal"]                                           # C9b1-Q4: a prohibition, not a duty to approve
+    assert g.value(term, INS.impliedBy) == source and (term, RDF.type, INS.Prohibition) in g
+    assert g.value(term, INS.obligor) == g.value(RE.approve, INS.holder)
+    assert g.value(term, INS.activity) == INS_VOC.Refuse
+    assert g.value(g.value(term, INS.scope), ELG.requiredConcept) == RE.arbitrary
+    assert not [r for r in g.subjects(INS.impliedBy, source) if (r, RDF.type, INS.Obligation) in g]
     readme = (LAYER / "README.md").read_text()
     assert "Instrument's runtime document is upstream" not in readme
 
