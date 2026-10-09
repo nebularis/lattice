@@ -107,8 +107,8 @@ This directory holds the ADRs that govern LATTICE's substrate architecture. An A
 | [A-100](ADR-A100-hierarchical-match-over-flat-schemes.md) | Hierarchical match over schemes without a hierarchy | Accepted |
 | [A-102](ADR-A102-liability-direction-from-party-roles.md) | Liability direction from party roles | Accepted |
 | [A-103](ADR-A103-eligibility-set-readings.md) | Eligibility set readings and negation | Accepted |
-| [A-104](ADR-A104-instrument-terms-and-legal-relations.md) | Instrument: terms and legal relations | Accepted |
-| [A-106](ADR-A106-behaviour-configuration-runtime-occasions-and-records.md) | Behaviour configuration, runtime, occasions and records | Accepted, addendum on nested states Proposed |
+| [A-104](ADR-A104-instrument-terms-and-legal-relations.md) | Instrument: terms and legal relations | Accepted, with addenda |
+| [A-106](ADR-A106-behaviour-configuration-runtime-occasions-and-records.md) | Behaviour configuration, runtime, occasions and records | Accepted, with addenda |
 | [A-112](ADR-A112-wording-layer.md) | Wording layer | Accepted |
 | [A-113](ADR-A113-breaking-changes-at-major-version-zero.md) | Breaking changes at major version zero | Accepted |
 | [A-114](ADR-A114-external-and-natural-keys.md) | External and natural keys | Accepted |

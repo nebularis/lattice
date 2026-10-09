@@ -195,8 +195,7 @@ never blocks the rest of CI.
 Any unit of work beyond a small fix follows the model in the [lattice-lifecycle skill](../../.claude/skills/lattice-lifecycle/SKILL.md) and
 [`docs/developer/INDEX.md`](INDEX.md): a sketch, a plan, a status record updated live, and (for a
 slice) a Validation Pack under `docs/developer/validation/` naming its test cases, the one command
-that runs them, and what a human should inspect before signing off in
-`docs/developer/validation/LOG.md`. Read that model before starting a new unit — this guide
+that runs them, and what a human should inspect before merging, which is the sign-off. Read that model before starting a new unit — this guide
 covers the tools; INDEX.md and that skill cover the
 process those tools are run under.
 

@@ -61,7 +61,7 @@ module.
 - `ontology/instrument/README.md` §6.4 (the acts tier), §10 (an exercise trigger is derived), §21's
   C9b1 paragraph, §22.23 and §22.24, and `spec/instrument-acts.ttl`, generated from §6.4
 - `ontology/behaviour/README.md` §5.2 (facts and findings) and §8, and `examples/licence-suspension.ttl`
-- the ADR-A104 and ADR-A106 addenda of 2026-10-09, Proposed
+- the ADR-A104 and ADR-A106 addenda of 2026-10-09, accepted by the human 2026-10-10
 
 ## Deliberate non-coverage
 

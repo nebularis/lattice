@@ -443,7 +443,7 @@ options and their consequences are in the CCS plan, C9 in detail.
 
 ## Addendum (2026-10-09): the legal acts tier
 
-**Status:** Proposed 2026-10-09 (CCS slice C9b1, C9b1-Q1 and C9b1-Q2). The reasoning is the
+**Status:** Accepted 2026-10-10, proposed 2026-10-09 (CCS slice C9b1, C9b1-Q1 and C9b1-Q2). The reasoning is the
 [consent sketch](../../developer/sketches/consent-and-group-powers.md), §2.1, §2.6, §3 and §4.3, and
 its decisions. Revises the 2026-10-08 addendum, items 2 and 7.
 

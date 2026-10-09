@@ -175,7 +175,7 @@ summarises. It settles what "Not decided here" deferred.
 
 ## Addendum (2026-10-09): records are findings
 
-**Status:** Proposed 2026-10-09 (CCS slice C9b1, C9b1-Q2). The reasoning is the
+**Status:** Accepted 2026-10-10, proposed 2026-10-09 (CCS slice C9b1, C9b1-Q2). The reasoning is the
 [consent sketch](../../developer/sketches/consent-and-group-powers.md), §2.1 and §2.6. Narrows
 decision 5.
 

@@ -60,8 +60,10 @@ Fewer than 3 merges it. Skeleton slices, with one build smoke test, are exempt.
 4. the doc delta, in the same slice. No "docs later"
 
 **The human validation gate.** The human reviews the Validation Pack before running anything, runs
-the one command, inspects the artefacts, picks a test for an adversarial probe (the agent breaks the
-implementation and shows the test fails), and signs off in `docs/developer/validation/LOG.md`.
+the one command and inspects the artefacts. An adversarial probe follows: the human names a test, or
+leaves the pick to the agent, and the agent breaks the implementation, shows the test fails, restores
+it, and records each probe and its result in the status record. The human's merge is the sign-off.
+There is no separate sign-off log. `docs/developer/validation/LOG.md` is retired (2026-10-10).
 
 **Test levels.** L0 build smoke, L1 unit, L2 property and determinism, L3 contract, L4 component
 integration, L5 system end-to-end, L6 UI end-to-end, L7 non-functional, L8 hostile and security.
