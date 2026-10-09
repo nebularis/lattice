@@ -1,0 +1,9 @@
+# SPDX-License-Identifier: MPL-2.0
+# NB: This file has been produced using GenAI
+# bind: logGraphs = <urn:g:txlog/1> <urn:g:txlog/2>
+# Witness for txn-multi-revision-audit. One transaction id sits on revisions in
+# two different buckets, a request applied twice after its claim was pruned.
+@prefix pat: <https://example.org/lattice/patterns#> .
+
+<urn:g:txlog/1> { <urn:rev:1> a pat:Revision ; pat:txn <urn:txn:a> . }
+<urn:g:txlog/2> { <urn:rev:2> a pat:Revision ; pat:txn <urn:txn:a> . }

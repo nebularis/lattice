@@ -1,0 +1,14 @@
+# SPDX-License-Identifier: MPL-2.0
+# NB: This file has been produced using GenAI
+# bind: logGraphs = <urn:g:txlog/1> <urn:g:txlog/2>
+# Witness for revision-multi-txn-audit. One revision carries two txn values,
+# a merged fork. The second revision is in the pinned graph, so the audit is
+# shown to read it as well as the registry-listed buckets.
+@prefix pat: <https://example.org/lattice/patterns#> .
+
+<urn:g:txlog/1> {
+  <urn:rev:1> a pat:Revision ; pat:txn <urn:txn:a>, <urn:txn:b> .
+}
+<urn:g:txlog/pinned> {
+  <urn:rev:2> a pat:Revision ; pat:txn <urn:txn:c> .
+}

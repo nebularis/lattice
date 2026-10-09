@@ -1,0 +1,9 @@
+# SPDX-License-Identifier: MPL-2.0
+# NB: This file has been produced using GenAI
+# bind: logGraphs = <urn:g:txlog/1> <urn:g:txlog/2>
+# One txn per revision, across a bucket, a second bucket and the pinned graph.
+@prefix pat: <https://example.org/lattice/patterns#> .
+
+<urn:g:txlog/1> { <urn:rev:1> a pat:Revision ; pat:txn <urn:txn:a> . }
+<urn:g:txlog/2> { <urn:rev:2> a pat:Revision ; pat:txn <urn:txn:b> . }
+<urn:g:txlog/pinned> { <urn:rev:3> a pat:Revision ; pat:txn <urn:txn:c> . }

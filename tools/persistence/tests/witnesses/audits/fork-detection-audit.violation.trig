@@ -1,0 +1,12 @@
+# SPDX-License-Identifier: MPL-2.0
+# NB: This file has been produced using GenAI
+# Witness for fork-detection-audit. Two writers won a CAS from one version, so
+# two txn claims name the same revision. Graph IRIs are the compiler's own
+# (urn:g:txn for the baseline example), so a change to them fails this witness.
+@prefix pat: <https://example.org/lattice/patterns#> .
+
+<urn:g:txn> {
+  <urn:txn:a> pat:rev <urn:rev:1> .
+  <urn:txn:b> pat:rev <urn:rev:1> .
+  <urn:txn:c> pat:rev <urn:rev:2> .
+}

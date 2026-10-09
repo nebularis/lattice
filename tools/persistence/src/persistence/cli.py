@@ -23,6 +23,11 @@
     Run the static hygiene checks (formal-methods track H, slice H1) over a
     configuration. Exits 1 on any violation, 0 otherwise (warnings are
     printed but do not fail).
+
+``witness``
+    Check that every refusal, warning, SHACL shape and audit query has a
+    fixture that triggers it, or is listed as a known gap (slice H1.2).
+    Exits 1 on an unlisted gap, a stale gap or a misbehaving audit witness.
 """
 
 from __future__ import annotations
@@ -36,6 +41,7 @@ from rdflib import Graph
 from .capability import load_capability_spec
 from .compiler import CompileError, compile_to_graph
 from .hygiene import VIOLATION, check_prefix_antichain
+from .witness import check_witness_coverage
 from .instantiate import instantiate_to_directory
 from .namespaces import DAL
 from .recipes import export_recipes
@@ -105,6 +111,13 @@ def cmd_hygiene(args: argparse.Namespace) -> int:
     return 1 if violations else 0
 
 
+def cmd_witness(args: argparse.Namespace) -> int:
+    report = check_witness_coverage()
+    for line in report.lines(verbose=args.verbose):
+        print(line)
+    return 0 if report.ok else 1
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="persistence")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -136,6 +149,10 @@ def build_parser() -> argparse.ArgumentParser:
     p_hygiene = sub.add_parser("hygiene", help="run the static hygiene checks over a configuration")
     p_hygiene.add_argument("config", nargs="+", help="ontology/persistence graph file(s) or directory(ies)")
     p_hygiene.set_defaults(func=cmd_hygiene)
+
+    p_witness = sub.add_parser("witness", help="check that every rule, shape and audit has a fixture that triggers it")
+    p_witness.add_argument("--verbose", action="store_true", help="also list each witnessed rule and each known gap")
+    p_witness.set_defaults(func=cmd_witness)
 
     return parser
 

@@ -46,6 +46,12 @@ python -m persistence hygiene \
     path/to/your-config.ttl
 ```
 
+**`witness`** checks that every refusal, warning, SHACL shape and always-on audit query has a fixture that triggers it, or is listed with a reason in [`tests/witnesses/known-gaps.txt`](tests/witnesses/known-gaps.txt). A rule nothing can trigger may be dead, and nothing would notice. An audit counts as witnessed only when a violating dataset (`tests/witnesses/audits/<audit>.violation.trig`) makes it return rows and a clean one makes it return none. It exits 1 on an unwitnessed rule, a listed gap that now has a witness, or an audit that misbehaves on its datasets. Add `--verbose` to see which fixture witnesses each rule. Implemented in [`persistence.witness`](src/persistence/witness.py).
+
+```bash
+python -m persistence witness --verbose
+```
+
 ## What `compile` actually does
 
 | Stage | Input | Output | Failure mode |

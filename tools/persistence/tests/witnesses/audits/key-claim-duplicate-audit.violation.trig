@@ -1,0 +1,9 @@
+# SPDX-License-Identifier: MPL-2.0
+# NB: This file has been produced using GenAI
+# Witness for key-claim-duplicate-audit, scoped to the baseline example's
+# constraint. One claim has two owners, a leak past the guarded write.
+@prefix pat: <https://example.org/lattice/patterns#> .
+
+<urn:g:keys> {
+  <urn:claim:1> a pat:KeyClaim ; pat:constraint "loan-application-number-per-branch" ; pat:claimedBy <urn:o:a>, <urn:o:b> .
+}

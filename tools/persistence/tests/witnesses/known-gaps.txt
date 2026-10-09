@@ -1,0 +1,67 @@
+# SPDX-License-Identifier: MPL-2.0
+# NB: This file has been produced using GenAI
+# Rules with no witness fixture yet (formal-methods track H, slice H1.2).
+# Format: family:name | reason. A rule leaves this list when a fixture triggers it,
+# and the check fails if a listed rule already has a witness. Closing these is H1.2b
+# (refusals and warnings) and H1.2c (shapes).
+
+# Refusals (24)
+refusal:AcceptedPatternRequired | named by an inline test graph in test_identity_minting_m1.py, with no witness file (H1.2b)
+refusal:AsOfFloorRetentionConflict | named by an inline test graph in test_slice_2_extensions.py, with no witness file (H1.2b)
+refusal:BoundaryConflict | named by no test, so possibly unreachable. H1.2b must trigger it or report it dead
+refusal:BoundaryCycleError | named by an inline test graph in test_boundary.py, with no witness file (H1.2b)
+refusal:CallerSuppliedPatternRequired | named by an inline test graph in test_identity_minting_m1.py, with no witness file (H1.2b)
+refusal:CapabilityCheckFailed | named by no test, so possibly unreachable. H1.2b must trigger it or report it dead
+refusal:ClaimSchemeIncomplete | named by an inline test graph in test_identity_minting_m1.py, with no witness file (H1.2b)
+refusal:ContentAddressedMembersRequired | named by an inline test graph in test_identity_minting_m1.py, with no witness file (H1.2b)
+refusal:DigestFunctionUnsupported | named by an inline test graph in test_identity_minting_m1.py, with no witness file (H1.2b)
+refusal:DigestSchemeMalformed | named by an inline test graph in test_slice_3_identity.py, test_slice_5_uniqueness.py, with no witness file (H1.2b)
+refusal:DigestSchemeRequired | named by an inline test graph in test_identity_minting_m1.py, test_slice_3_identity.py, test_slice_5_uniqueness.py, with no witness file (H1.2b)
+refusal:IdentityStrategyUnsupported | named by no test, so possibly unreachable. H1.2b must trigger it or report it dead
+refusal:KeyConstraintNotApplicable | named by an inline test graph in test_identity_minting_m1.py, with no witness file (H1.2b)
+refusal:KeyPropertiesRequired | named by no test, so possibly unreachable. H1.2b must trigger it or report it dead
+refusal:MintedIriTemplateInvalid | named by an inline test graph in test_identity_minting_m1.py, with no witness file (H1.2b)
+refusal:MintedIriTemplateRequired | named by an inline test graph in test_identity_minting_m1.py, with no witness file (H1.2b)
+refusal:MissingBoundaryShapeError | named by no test, so possibly unreachable. H1.2b must trigger it or report it dead
+refusal:NormalizePipelineRequired | named by an inline test graph in test_identity_minting_m1.py, with no witness file (H1.2b)
+refusal:PositionWidthsRequired | named by an inline test graph in test_identity_minting_m1.py, with no witness file (H1.2b)
+refusal:ProfileAmbiguityError | named by an inline test graph in test_resolver.py, test_slice_3_identity.py, with no witness file (H1.2b)
+refusal:SurrogateKindRequired | named by an inline test graph in test_identity_minting_m1.py, with no witness file (H1.2b)
+refusal:TuplePrefixRequired | named by an inline test graph in test_identity_minting_m1.py, with no witness file (H1.2b)
+refusal:UniquenessWitnessRequired | named by an inline test graph in test_slice_3_identity.py, with no witness file (H1.2b)
+refusal:UnsupportedUnicodeVersion | named by no test, so possibly unreachable. H1.2b must trigger it or report it dead
+
+# Warnings (8)
+warning:AdvisoryContiguity | named by an inline test graph in test_slice_2_extensions.py, with no witness file (H1.2b)
+warning:DatasetTierWithoutGlobalRead | named by an inline test graph in test_slice_2_extensions.py, with no witness file (H1.2b)
+warning:MixedReceiptModel | named by an inline test graph in test_validator.py, with no witness file (H1.2b)
+warning:NoGlobalRead | named by an inline test graph in test_slice_2_extensions.py, with no witness file (H1.2b)
+warning:PositionEventUnsafeEpoch | named by an inline test graph in test_slice_3_identity.py, with no witness file (H1.2b)
+warning:ShardingNotHonoured | named by an inline test graph in test_slice_2_extensions.py, with no witness file (H1.2b)
+warning:SortedAcquisitionIneffective | named by an inline test graph in test_slice_2_extensions.py, with no witness file (H1.2b)
+warning:WeakEtagCas | named by an inline test graph in test_slice_2_extensions.py, with no witness file (H1.2b)
+
+# Shapes (23)
+shape:AcceptedIriPatternRequiredShape | no fixture makes this shape report a result (H1.2c)
+shape:AdvisoryContiguityWarningShape | no fixture makes this shape report a result (H1.2c)
+shape:AggregateBoundaryProfileShape | no fixture makes this shape report a result (H1.2c)
+shape:AsOfFloorRetentionCompatibilityShape | no fixture makes this shape report a result (H1.2c)
+shape:CapabilitySpecShape | no fixture makes this shape report a result (H1.2c)
+shape:ClaimSchemeCompletenessShape | no fixture makes this shape report a result (H1.2c)
+shape:ClassScopeShape | no fixture makes this shape report a result (H1.2c)
+shape:ConcurrencyProfileShape | no fixture makes this shape report a result (H1.2c)
+shape:DataAccessProfileShape | no fixture makes this shape report a result (H1.2c)
+shape:DigestSchemeRequiredShape | no fixture makes this shape report a result (H1.2c)
+shape:DigestSchemeWellFormedShape | no fixture makes this shape report a result (H1.2c)
+shape:EpochProfileShape | no fixture makes this shape report a result (H1.2c)
+shape:EquivalentClassScopeShape | no fixture makes this shape report a result (H1.2c)
+shape:GraphPatternScopeShape | no fixture makes this shape report a result (H1.2c)
+shape:IdentityProfileShape | no fixture makes this shape report a result (H1.2c)
+shape:NamespaceScopeShape | no fixture makes this shape report a result (H1.2c)
+shape:NoGlobalReadWarningShape | no fixture makes this shape report a result (H1.2c)
+shape:PrivacyProfileShape | no fixture makes this shape report a result (H1.2c)
+shape:ProfileScopeShape | no fixture makes this shape report a result (H1.2c)
+shape:ShapeScopeShape | no fixture makes this shape report a result (H1.2c)
+shape:UniquenessConstraintShape | no fixture makes this shape report a result (H1.2c)
+shape:UniquenessWitnessRequiredShape | no fixture makes this shape report a result (H1.2c)
+shape:WeakEtagCasWarningShape | no fixture makes this shape report a result (H1.2c)
