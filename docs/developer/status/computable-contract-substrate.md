@@ -18,18 +18,8 @@ Behaviour 0.10.0 (shapes 0.4.0) with nested states and history, the import guard
 check`. In tranche D, C6 to C7c are merged and tagged (Instrument 0.12.0, Party 0.8.0, Quantification
 0.7.0). C8 and C8b are merged and tagged (Instrument 0.14.0, Wording 0.7.0). C9 is briefed and splits into C9a to C9c. Its materiality question has its own sketch. From C5 on, slices are built and verified on the branch, and the maintainer commits by hand.
 
-**Next action, for the maintainer:** choose how HQ-6 runs (it is NRS slice N5, ADR-A105) before the agent
-briefs it. HQ-6 comes before C9b3.
-
-**Adversarial probes for C9b0 to C9b2** (2026-10-10, picked at our request). Each
-broke one generated shape file, ran the slice's test module, and restored the file with `git
-checkout`, after which the module passed again.
-
-| Slice | Defect introduced | Caught by | Restored |
-|---|---|---|---|
-| C9b0 | `elg:WildcardPolicyConsistency` in `eligibility/shapes/constraints.ttl` matches `elg:ExactMatch` instead of `elg:Wildcard`, so the ADR-A06 rule never fires | 3 of 24 fail: `test_moved_shape_fires_once_on_its_probe[wildcard]`, `test_readme_generates_every_file`, and the `condition-taxonomy` example now reported | 24 passed |
-| C9b2 | `qnt:SumWithinOneSpaceShape` in `quantification/shapes/constraints.ttl` tests for `qnt:Intensive` instead of `qnt:Extensive` (law Q12 inverted) | 5 of 24 fail: C9b2-02 (the example), three C9b2-04 cases, C9b2-14 (the README check) | 24 passed |
-| C9b1 | `bhv:AcceptanceRecordDeprecatedShape` in `behaviour/shapes/structural.ttl` targets `bhv:ExerciseRecord` instead of `bhv:AcceptanceRecord` | 1 of 42 fails: C9b1-13, an acceptance record is deprecated with a warning | 42 passed |
+**Next action, for the maintainer:** answer HQ6a-Q1 to Q3 (plan, HQ-6a in detail), then create the
+HQ-6a.1 branch. HQ-6a has no Persistence content. HQ-6a.1 and HQ-6a.2 merge before C9b3.
 
 ## Slice board
 
@@ -174,3 +164,4 @@ checkout`, after which the module passed again.
 - 2026-10-09: C9b1-Q3 to Q5 answered as leaned. The reinsurance implied term became a prohibition on an arbitrary refusal. C9b1 merged (`b24cb3c5`): Instrument 0.16.0 with `instrument-acts`, Behaviour 0.14.0, each released once with C9b2's re-pins. Slice worktrees removed, branches kept. Full checks pass but for TD-28 (`insure-o`) and TD-33 (a flaky persistence test, new). Ready for the maintainer's review
 - 2026-10-10: the ADR-A104 and ADR-A106 addenda of 2026-10-09 accepted. The validation sign-off log, `docs/developer/validation/LOG.md`, retired: probes are recorded in the status record and the merge is the sign-off (skill `lattice-lifecycle`). Three adversarial probes, one per slice, each caught (table above). Ready to merge
 - 2026-10-10: `ccs/c9b-groundwork` merged into `main` (`4704d10a`) and its 23 release tags created. C9b0, C9b1 and C9b2 done
+- 2026-10-10: HQ-6a briefed: three questions (what a closure licenses, its layer, how a condition names it), split into HQ-6a.1 (ADR-A105, Eligibility model, examples, reference semantics) and HQ-6a.2 (compilers, refusal, decision records). No Persistence content

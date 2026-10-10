@@ -3766,6 +3766,133 @@ shape positive and negative, date plus duration still valid, Count on an intensi
 proportion's base role, the examples conformant, and the cascade's versioning, catalog and literate
 checks.
 
+#### HQ-6a in detail
+
+**Machine:** R. **Branch:** created by the maintainer from `main` once this brief is answered.
+**Decisions:** HQ6-Q1 and HQ6-Q2 (2026-10-10), NRS N5 and its decisions D6 (overtaken) and D7
+(refuse), ADR-A103, ADR-A105 (reserved, drafted here), ADR-A115, the CCS sketch §5.6, §5.7 and §6.4,
+the [consent sketch](../sketches/consent-and-group-powers.md) §2.3 and §3.
+**Boundary:** no Persistence content. A closure's binding to the store (the per-root sequence of
+Track H's AO-Q6 and `dal:BlockingContiguityCheck`) is HQ-6b's.
+
+**Invariant:** absence decides an outcome only under a declared closure, which names what it covers,
+over what window, and on whose authority. A decision that relied on absence names the closure, and
+its own recording time is the cut, so a fact recorded later can be found to supersede it (HQ-6b).
+
+**Setting the scene.** Facts checked against the source (2026-10-10):
+
+- **Absence decides nothing today.** Under law L15 a bound condition whose path reaches no value is
+  Undetermined, read `elg:SomeValue` or `elg:EveryValue`, and negation keeps it so (L16). "No
+  document was provided within 60 days" can never be Permitted.
+- **ADR-A103 already assumes completeness when values exist.** `elg:SomeValue` is Denied when every
+  value reached is Denied, so "holds no qualification in medicine" is Permitted for an applicant with
+  a history and a physics qualification. That reads the recorded qualifications as all of them. The
+  ADR's own SWRL decision says as much: a monotonic backend derives only Permitted under
+  `SomeValue` and Denied under `EveryValue`, the outcomes that need no completeness.
+- **The absence conditions in the examples are placeholders.** `trial-definitions.ttl` states "a
+  Site that enrols no participant within 90 days is deemed inactive" with a concept standing for the
+  absence, commented "read under a closure the deeming licenses, which ADR-A105 declares".
+- **Instrument and Behaviour already point at ADR-A105.** `ins:when` says a condition reading an
+  absence relies on the closure the deeming licenses. `bhv:BreachRecord` has `bhv:closureReliedOn`,
+  with no range, "the closure licence that let absence decide the breach".
+- **Layer order.** Behaviour and Instrument import Eligibility. Eligibility imports Foundation,
+  Vocabulary, Quantification and Party. Diagnostics such as `exe:MissingCandidate` are declared in
+  MORK's Executable ontology (0.6.0).
+- **Conformance level L5** (ADR-A14, `conformance-levels.md`) requires "closure assumptions" for an
+  Eligibility decision and never says what one is. ADR-A105 fills that.
+- **The formal-freshness gate** requires every Eligibility semantic law to appear in the reference
+  semantics, so a closure law brings its reference reading with it.
+- **What C9b3 needs:** set comparisons that turn an absence into Denied, or into Permitted for
+  `elg:Disjoint`, need a licensed closure. The same closure covers deemed consent and "a lender that
+  has not replied within 10 days is disregarded" (consent sketch §2.3, §3).
+
+```mermaid
+flowchart LR
+    subgraph AGREED["Stated: the instrument"]
+        DM["deemed failed<br/>ins:Deeming, rebuttable"]
+        WC["no documents provided<br/>elg:Condition, negated,<br/>binding read elg:SomeValue"]
+        CL["ex:docs-closure<br/>elg:Closure<br/>covers: acts of providing documents<br/>window: 60 days from the request<br/>source: the deeming"]
+        DM -- "ins:when" --> WC
+        WC -- "binding elg:closedUnder" --> CL
+        CL -- "elg:licensedBy" --> DM
+    end
+    subgraph HAPPENED["Recorded: what happened"]
+        RQ["request, 10 January"]
+        NONE["no act of providing documents<br/>10 January to 11 March"]
+        DEC["decision, recorded 12 March<br/>Permitted<br/>elg:closureReliedOn ex:docs-closure"]
+        RQ -- "anchors the window" --> NONE
+        NONE -- "the closure lets absence decide" --> DEC
+    end
+    CL -. "licenses" .-> NONE
+```
+
+Without the closure the same decision is Undetermined, as today. Before 11 March the window is
+open and the decision is Undetermined too. A document recorded on 20 March with a valid time of
+1 March is the late fact HQ-6b's supersession handles.
+
+**Questions, with each option's consequences:**
+
+**HQ6a-Q1. What a closure licenses.**
+
+| Option | Design overheads | Runtime overheads |
+|---|---|---|
+| (a) only the empty case: under a closure, no value reached is Denied under `SomeValue` and Permitted under `EveryValue`. ADR-A103's readings stay as they are | small. The completeness ADR-A103 assumes stays implicit, so a reader may think absence never decides without a closure | none for existing conditions |
+| (b) every outcome that needs completeness: `SomeValue` Denied and `EveryValue` Permitted need a closure whether or not values exist, and are Undetermined without one | logically the strictest. Breaks ADR-A103 and every example and test that relies on it, and most bound conditions need a closure before they decide anything | many more Undetermined outcomes until closures are declared |
+| (c) as (a), with ADR-A105 naming ADR-A103's assumption as the default closure it is: a subject's recorded values on a path are all its values once any is recorded. A declared closure extends that to the empty case, over a window | as (a), and the rule is stated once, so the two readings are one theory | as (a) |
+
+The law treats records the same way: a party's records are taken as complete for what they show,
+and silence decides only where the contract or the law says so (a deeming, a time bar). KISS: (c)
+costs a paragraph more than (a) and removes a hidden assumption. **Leaning (c).**
+
+**HQ6a-Q2. Which layer declares a closure.**
+
+| Option | Design overheads | Runtime overheads |
+|---|---|---|
+| (a) Eligibility: `elg:Closure`, read by its conditions and compilers | Behaviour and Instrument import Eligibility, so a breach record and a deeming can name one. An Eligibility MINOR | none |
+| (b) Foundation | reaches every layer, including Persistence for HQ-6b. A Foundation release re-pins everything, in its own window (CCS risk R6) | none |
+| (c) Instrument | close to deemings, but Eligibility cannot import Instrument, so its compilers could not see the licence | absence handled outside the condition, in the evaluator |
+
+KISS: (a) is where absence is read, and every layer that names a closure already imports it.
+HQ-6b binds a closure to Persistence through the profile, not by an import. **Leaning (a).**
+
+**HQ6a-Q3. How a condition names the closure it relies on.**
+
+| Option | Design overheads | Runtime overheads |
+|---|---|---|
+| (a) the evidence binding names it (`elg:closedUnder`), and a shape checks that the closure covers the class the binding reaches | one property. The compiler sees the licence where it compiles the reading | none |
+| (b) the closure names the conditions it licenses | a closure changes when a condition is added. Many conditions can share one closure, so the list grows | the compiler searches for the closure |
+| (c) matched implicitly, by the class the binding reaches | no link to maintain, but a reader cannot see which closure applies, and two closures over one class are ambiguous | a match per binding |
+
+KISS: (a) states the reliance where it happens. **Leaning (a).**
+
+**Decided by precedent, not asked:**
+
+- a closure states what it covers (a class of records), its window (a range anchored at a context
+  value, as `ins:window` is, ADR-A115) and its source with `elg:licensedBy`, which has no range, as
+  `bhv:deeming` has none: a deeming, a term, or a party whose records are authoritative
+- the cut is the deciding record's own recording time (`fnd:Evidenced`), so HQ-6a adds no
+  position. A decision names the closures it relied on with `elg:closureReliedOn`, as
+  `bhv:closureReliedOn` names one for a breach
+- a closure whose window has not ended at evaluation decides nothing, and the outcome stays
+  Undetermined
+- refusal (NRS D7): the compiler refuses a binding whose closure does not cover the class the binding
+  reaches, or names no source, with the diagnostic `exe:NoClosureLicence` (Executable 0.7.0, so
+  MORK's pins move)
+- a new semantic law, L17, states the closure, with its reference semantics and differential tests
+  (the formal-freshness gate). Its Isabelle rows go with C9b3's proof work on L15, which it extends
+- the trial example's placeholder becomes a real condition under a closure, with examples from
+  lending and licensing beside it, all in calendar days (business days are HQ-3, in HQ-6b)
+- **sizing:** HQ-6a touches Eligibility, the reference semantics, the compilers and MORK's
+  Executable ontology, so it splits by the lifecycle rule: **HQ-6a.1**, ADR-A105, the Eligibility
+  model, examples and reference semantics, and **HQ-6a.2**, the compilers, the refusal and decision
+  records. Both merge before C9b3
+
+**Planned validation** (packs `computable-contract-substrate-hq6a1.md` and `-hq6a2.md`): a closure
+at zero and too many sources and windows. The empty case Undetermined without a closure, and
+decided with one, under each reading and negated. The window open (Undetermined) and ended
+(decided). A binding naming a closure over another class refused. ADR-A103's examples unchanged.
+The reference and the compilers agree on every generated case. The decision names its closure.
+
 ### Tranche E: evaluation
 
 | Slice | Content | Where |
