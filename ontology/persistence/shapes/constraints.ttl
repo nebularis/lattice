@@ -52,7 +52,8 @@ dal:AggregateBoundaryProfileShape
     a sh:NodeShape ;
     sh:targetClass dal:AggregateBoundaryProfile ;
     sh:property [ sh:path dal:strategy ; sh:minCount 1 ; sh:maxCount 1 ; sh:class dal:AggregateBoundaryStrategy ] ;
-    sh:property [ sh:path dal:maxTraversalDepth ; sh:maxCount 1 ; sh:datatype xsd:integer ] .
+    sh:property [ sh:path dal:dataGraph ; sh:maxCount 1 ; sh:nodeKind sh:IRI ] ;
+    sh:property [ sh:path dal:ownsReferenceData ; sh:maxCount 1 ; sh:datatype xsd:boolean ] .
 
 # A CompositePropertyBoundary profile MUST carry a boundaryShape (ADR-A78
 # point 4: SHACL is the sole authoring surface for this strategy). Checked
@@ -69,6 +70,40 @@ dal:CompositePropertyBoundaryRequiresShapeShape
               $this dal:strategy dal:CompositePropertyBoundary .
               FILTER NOT EXISTS { $this dal:boundaryShape ?shape }
             }""" ] .
+
+# A composite aggregate lives in one named graph (ADR-A122 decision 3, static
+# check S-1), so the profile must name it.
+dal:CompositePropertyBoundaryRequiresDataGraphShape
+    a sh:NodeShape ;
+    sh:targetClass dal:AggregateBoundaryProfile ;
+    sh:sparql [
+        sh:message "dal:CompositePropertyBoundary requires dal:dataGraph, the named graph its aggregates live in (ADR-A122 decision 3, static check S-1)." ;
+        sh:select """
+            PREFIX dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#>
+            SELECT $this WHERE {
+              $this dal:strategy dal:CompositePropertyBoundary .
+              FILTER NOT EXISTS { $this dal:dataGraph ?graph }
+            }""" ] .
+
+# dal:ownership takes exactly one of the three kinds (ADR-A122 decision 1).
+dal:BoundaryOwnershipShape
+    a sh:NodeShape ;
+    sh:targetSubjectsOf dal:ownership ;
+    sh:property [
+        sh:path dal:ownership ;
+        sh:maxCount 1 ;
+        sh:in ( dal:Owned dal:Reference dal:Vocabulary ) ;
+        sh:message "dal:ownership takes exactly one of dal:Owned, dal:Reference, dal:Vocabulary." ] .
+
+# A dal:ReferenceData declaration names at least one class.
+dal:ReferenceDataShape
+    a sh:NodeShape ;
+    sh:targetClass dal:ReferenceData ;
+    sh:property [
+        sh:path dal:coversClass ;
+        sh:minCount 1 ;
+        sh:nodeKind sh:IRI ;
+        sh:message "A dal:ReferenceData declaration names at least one class with dal:coversClass." ] .
 
 dal:ConcurrencyProfileShape
     a sh:NodeShape ;

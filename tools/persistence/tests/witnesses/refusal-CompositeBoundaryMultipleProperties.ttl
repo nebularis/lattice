@@ -8,6 +8,6 @@
 @prefix sh:  <http://www.w3.org/ns/shacl#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
-ex:OrderAggregateShape sh:property [ sh:path ex:payment ; sh:node ex:PaymentShape ] .
+ex:OrderAggregateShape sh:property [ sh:path ex:payment ; sh:node ex:PaymentShape ; dal:ownership dal:Owned ] .
 ex:PaymentShape a sh:NodeShape ;
     sh:property [ sh:path ex:amount ; sh:datatype xsd:string ] .

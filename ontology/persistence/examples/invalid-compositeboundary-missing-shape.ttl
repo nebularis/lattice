@@ -10,5 +10,6 @@ ex:WidgetClass a dal:ClassScope ;
 
 ex:WidgetBoundaryProfile a dal:AggregateBoundaryProfile ;
     dal:appliesTo ex:WidgetClass ;
-    dal:strategy  dal:CompositePropertyBoundary .
+    dal:strategy  dal:CompositePropertyBoundary ;
+    dal:dataGraph <urn:g:widgets> .
     # dal:boundaryShape deliberately absent

@@ -477,7 +477,7 @@ entities it refers to, is a fact about their domain
 | Strategy | What the aggregate is | Authoring | Write |
 |---|---|---|---|
 | `dal:NamedGraphBoundary` | everything in one named graph per aggregate root | `dal:graphIriTemplate` | the whole graph is replaced |
-| `dal:CompositePropertyBoundary` | the closure reached from the root along declared properties | `dal:boundaryShape`, an `sh:NodeShape`, and `dal:maxTraversalDepth` | the closure is swept and rewritten |
+| `dal:CompositePropertyBoundary` | the nodes reached from the root along the owned edges of a classified shape, in one named graph | `dal:boundaryShape`, an `sh:NodeShape` whose node properties carry `dal:ownership`, and `dal:dataGraph` | the closure is swept and rewritten |
 | `dal:NoBoundary` | no aggregate: one property's value | `dal:valueGuardProperty` on the concurrency profile | a value-based guard on that property |
 
 **Why replace whole.** If the previous version of an order had three line items and the new one has
@@ -1199,16 +1199,16 @@ An order and its line items form one aggregate. The customer the order refers to
 ```turtle
 ex:OrderAggregateShape a sh:NodeShape ;
     sh:targetClass ex:Order ;
-    sh:property [ sh:path ex:lineItem ; sh:node ex:LineItemShape ; sh:minCount 1 ] .
+    sh:property [ sh:path ex:lineItem ; sh:node ex:LineItemShape ; sh:minCount 1 ; dal:ownership dal:Owned ] .
 
 ex:LineItemShape a sh:NodeShape ;
     sh:property [ sh:path ex:sku ; sh:datatype xsd:string ] .
 
 ex:OrderBoundaryProfile a dal:AggregateBoundaryProfile ;
-    dal:appliesTo         ex:OrderClass ;
-    dal:strategy          dal:CompositePropertyBoundary ;
-    dal:boundaryShape     ex:OrderAggregateShape ;
-    dal:maxTraversalDepth "8"^^xsd:integer .
+    dal:appliesTo     ex:OrderClass ;
+    dal:strategy      dal:CompositePropertyBoundary ;
+    dal:boundaryShape ex:OrderAggregateShape ;
+    dal:dataGraph     <urn:g:orders> .
 ```
 
 ```mermaid
@@ -1219,8 +1219,8 @@ flowchart LR
 ```
 
 Full fixture: [`examples/composite-property-boundary-shacl.ttl`](examples/composite-property-boundary-shacl.ttl).
-The compiler walks only `sh:property` and `sh:node`, so `sh:datatype`, `sh:minCount` and the rest are
-left for the adopter's own validation. The generated update binds the closure's members in its `WHERE`
+The compiler walks `sh:property`, `sh:node` and `dal:ownership`, so `sh:datatype`, `sh:minCount` and the rest are
+left for the adopter's own validation. Every node property carries `dal:ownership` as `dal:Owned`, `dal:Reference` or `dal:Vocabulary` ([ADR-A122](../../docs/architecture/decisions/ADR-A122-aggregate-ownership.md)). The generated update binds the closure's members in its `WHERE`
 clause with a property path and rewrites them using the bound variables, since SPARQL allows a path in
 a pattern but never in a `DELETE` or `INSERT` template. The version row's subject is the root
 instance, since there is no graph to key it on.

@@ -306,12 +306,15 @@ def _owning_shape(shapes: Graph, shape) -> URIRef | None:
 
 
 def _focus_nodes(data: Graph, shapes: Graph, shape: URIRef) -> set:
-    """The nodes a shape's ``sh:targetClass`` selects in ``data``, counting
-    subclasses by the asserted ``rdfs:subClassOf`` triples (SHACL's rule)."""
+    """The nodes a shape's ``sh:targetClass`` or ``sh:targetSubjectsOf`` selects
+    in ``data``, counting subclasses by the asserted ``rdfs:subClassOf``
+    triples (SHACL's rule)."""
     focus: set = set()
     for target_class in shapes.objects(shape, SH.targetClass):
         for cls in data.transitive_subjects(RDFS.subClassOf, target_class):
             focus.update(data.subjects(RDF.type, cls))
+    for predicate in shapes.objects(shape, SH.targetSubjectsOf):
+        focus.update(data.subjects(predicate, None))
     return focus
 
 

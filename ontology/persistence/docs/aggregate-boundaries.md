@@ -34,7 +34,7 @@ This also means the same shape can serve two purposes without conflict. An adopt
 The guide's whole-graph replace primitive (Chapter 19) deletes and re-inserts everything in one named graph in a single DELETE/INSERT template. `dal:CompositePropertyBoundary` has no single graph to name, so the generated template differs in a way worth knowing about before choosing this strategy:
 
 - **The property path lives only in `WHERE`.** SPARQL 1.1 permits a property path inside a `WHERE` clause's graph pattern, never inside a `DELETE` or `INSERT` template block (a template's predicate position accepts a single, fixed predicate — a `Verb` — never a path expression). The generated template therefore binds the closure's members in `WHERE` (`$root (ex:lineItem)+ ?member`) and deletes/inserts using the resulting plain-variable bindings, never re-stating the path in the template block itself.
-- **No bounded repetition.** SPARQL 1.1 property paths support `*`, `+`, and `?`, and nothing resembling regex-style `{n,m}` bounded repetition — there is no such grammar production. Depth is enforced once, at compile time, by the shape walk's own cycle detection and `dal:maxTraversalDepth`, not by a runtime bound in the generated query.
+- **No bounded repetition.** SPARQL 1.1 property paths support `*`, `+`, and `?`, and nothing resembling regex-style `{n,m}` bounded repetition — there is no such grammar production. Recursion is compiled to a path with `*`, so no depth bound is declared (ADR-A122). The full rewrite of this document is slice HO9.
 - **The version row's subject is the root instance IRI, never a graph IRI.** There is no graph to key a meta shard on.
 
 ## Boundary conflicts
