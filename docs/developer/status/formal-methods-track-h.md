@@ -95,7 +95,8 @@ After H2.0, H2.1 (the IR core) is briefed. H3 follows H2.
 | HO7 (composite create and tombstone delete, TD-04) | **signed off** 2026-10-10, merged. [Validation Pack](../validation/FMH-HO7.md) | |
 | HO8 (injective graph naming within and across families, TD-38) | **signed off** 2026-10-10, merged. [Validation Pack](../validation/FMH-HO8.md) | |
 | HO9 (ownership documentation and close-out) | **signed off** 2026-10-10, merged. [Validation Pack](../validation/FMH-HO9.md) | |
-| H2 (typed IR) | **briefed** 2026-10-10, split into H2.0 to H2.9 ([typed IR sketch §7](../sketches/formal-methods-track-h-typed-ir.md#7-slices)) | H2.0 ready to branch |
+| H2.0 (ADR-A123, Proposed) | **built** 2026-10-10. [Validation Pack](../validation/FMH-H2-0.md) | the maintainer's acceptance of A123 |
+| H2 (typed IR) | **briefed** 2026-10-10, split into H2.0 to H2.9 ([typed IR sketch §7](../sketches/formal-methods-track-h-typed-ir.md#7-slices)) | |
 | H3 (specification registry) | not started, outlined in the plan | H2 preferred first (smaller, more self-contained), not a hard blocker |
 | H4 (exhaustive cross-axis validation, BDD/SMT) | not started, outline only | H3 |
 | H5 (capability-record extension, TLA+/Quint toolchain spike, protocol models A-D) | not started, outline only | H2 (read/write sets from the IR). ADR-A-FM4 is accepted |
@@ -388,3 +389,6 @@ After H2.0, H2.1 (the IR core) is briefed. H3 follows H2.
   be wrong. (3) `INFO` and its warning option get witnesses in H2.8, and the witness harness learns the new
   family, since it records only `WARNING` diagnostics today (§7.3). (4) The paper check of the logical
   resources against `lattice-sql.md` §9 moves to H2.6 (§7.2).
+- 2026-10-10: H2.0 built ([FMH-H2-0](../validation/FMH-H2-0.md)). [ADR-A123](../../architecture/decisions/ADR-A123-typed-operation-ir.md)
+  is drafted Proposed and catalogued. A123 was free on every remote branch. The ADR-A79 addendum is drafted at the foot of
+  A123 and applied on acceptance, since an accepted ADR should not carry text for a decision not yet taken.
