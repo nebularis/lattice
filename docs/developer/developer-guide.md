@@ -21,7 +21,7 @@ of this, see [`docs/diagrams/`](../diagrams/README.md).
 | `deployment/` | Local reference environment (Docker Compose) |
 | `workers/` | The asynchronous worker runtime |
 | `test/` | End-to-end conformance suites |
-| `spikes/` | Experimental feasibility work, not production (today: the formal-prover toolchain spike, track D, and `persistence-oxigraph`, which runs the persistence compiler's updates on a second SPARQL engine and defines no SPI) |
+| `spikes/` | Experimental feasibility work, not production (today: the formal-prover toolchain spike, track D, and `persistence-oxigraph`, which runs the persistence compiler's updates on a second SPARQL engine and defines no SPI, and `persistence-aggregate-ownership`, experiments for the aggregate ownership note) |
 | `docs/` | Architecture, ADRs, developer process (sketches/plans/status/validation), and the diagrams this guide links to |
 
 A layer under `ontology/` follows one shape: `README.md` (the one normative, literate source),
