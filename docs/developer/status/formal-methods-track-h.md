@@ -77,7 +77,7 @@ Merging signs off every slice on the branch, including H1.2d, H1.3 and H1.4a.
 | HO1 (composite replace: payload to the default graph, linear sweep, TD-39, TD-36) | **authored and verified.** [Validation Pack](../validation/FMH-HO1.md) | the maintainer's merge |
 | HO2 (draft ADR-A122, Proposed) | **done** 2026-10-10. [ADR-A122](../../architecture/decisions/ADR-A122-aggregate-ownership.md), Proposed until the maintainer accepts the work package | |
 | HO3 (`dal:` vocabulary 0.3.0: `dal:ownership`, reference data) | **authored and verified.** [Validation Pack](../validation/FMH-HO3.md). 🔴 release tags owed (`persistence-v0.3.0`, `persistence-shapes-v0.3.0`, `persistent-foundation-v0.2.0`), created on `main` | the maintainer's merge |
-| HO4 (ownership tree and path compiler, added beside the old walk) | not started, fully specified | HO3 |
+| HO4 (ownership tree and path compiler, added beside the old walk) | **authored and verified.** [Validation Pack](../validation/FMH-HO4.md) | the maintainer's merge |
 | HO5 (switch the compiler to the tree, TD-03, TD-35, TD-37, TD-40) | not started, fully specified | HO4, H-D16 |
 | HO6 (ownership refusals and the roots-only warning) | not started, fully specified | HO5 |
 | HO7 (composite create and tombstone delete, TD-04) | not started, fully specified | HO6 |
@@ -283,3 +283,8 @@ Merging signs off every slice on the branch, including H1.2d, H1.3 and H1.4a.
   being that `dal:coversClass` loses its `rdfs:domain`. The compiler does not read the new terms yet.
   `check:persistence` at 1003 passed and 1 xfailed, `check:full-sweep` all 14 passed. Tags can only be made
   on `main`, so they remain the build warning on this branch.
+- 2026-10-10: HO4 authored. `walk_ownership` reads a boundary shape as a classified tree and `paths.py`
+  compiles its owned edges to one property path by state elimination, rendered through `PropertyPath`. The
+  reference fixture of sketch §10 is added. 200 seeded random shapes and datasets agree with a
+  breadth-first search of the automaton. Nothing calls it from the compiler yet. `check:persistence` at
+  1216 passed and 1 xfailed.

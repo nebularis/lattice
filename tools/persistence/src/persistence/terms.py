@@ -148,4 +148,28 @@ class Integer(SparqlTerm):
         return cls(str(value))
 
 
-__all__ = ["SparqlTerm", "SparqlTermError", "Iri", "Literal", "Var", "Integer"]
+class PropertyPath(SparqlTerm):
+    """A validated SPARQL property path, such as the one that reaches an aggregate's members.
+
+    A path is structure and not a term, and it cannot be a variable, so it reaches a template as
+    compile-time text. The operators come from a fixed set (:mod:`persistence.paths`) and every
+    predicate in it is encoded by :meth:`Iri.encode`, so no adopter string reaches the query's
+    structure except as an encoded IRI. The text is also parsed as a path before it is returned."""
+
+    __slots__ = ()
+
+    @classmethod
+    def encode(cls, expr: "object") -> "PropertyPath":
+        from rdflib.plugins.sparql import prepareQuery
+
+        from .paths import render
+
+        text = render(expr)  # type: ignore[arg-type]
+        try:
+            prepareQuery("SELECT * WHERE { ?a " + text + " ?b }")
+        except Exception as error:
+            raise SparqlTermError(f"property path {text!r} does not parse: {error}") from error
+        return cls(text)
+
+
+__all__ = ["SparqlTerm", "SparqlTermError", "Iri", "Literal", "Var", "Integer", "PropertyPath"]

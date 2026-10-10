@@ -1,0 +1,30 @@
+# Instance data for ontology/persistence/examples/composite-project-ownership.ttl (ADR-A122,
+# sketch §10.2). Its aggregate, ex:p1, has 8 members and a delete set of 28 triples.
+@prefix ex:   <https://example.org/projects#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+
+ex:p1 a ex:Project ; ex:name "Apollo" ; ex:forClient ex:acme ;
+      ex:hasMilestone ex:m1 , ex:m2 ; ex:hasPlan ex:plan1 .
+ex:m1 a ex:Milestone ; ex:due "2026-11-01"^^xsd:date ; ex:hasTask ex:t1 .
+ex:m2 a ex:Milestone ; ex:due "2026-12-01"^^xsd:date .
+ex:t1 a ex:Task ; ex:status ex:InProgress ; ex:assignee ex:alice ;
+      ex:hasSubtask ex:t2 ; ex:attachment ex:docOwned .
+ex:t2 a ex:Task ; ex:status ex:Done ; ex:hasSubtask ex:t3 .
+ex:t3 a ex:Task ; ex:status ex:Done .
+ex:docOwned a ex:Document ; ex:title "Task notes" .
+ex:c1 a ex:Comment ; ex:text "Looks good" ; ex:onTask ex:t1 .
+ex:plan1 a ex:Plan ; ex:attachment ex:docShared .
+
+# outside the aggregate
+ex:acme a ex:Organisation ; ex:name "Acme" .
+ex:alice a ex:Person ; ex:name "Alice" .
+ex:docShared a ex:Document ; ex:title "Shared template" .
+ex:InProgress a skos:Concept ; skos:inScheme ex:TaskStatuses .
+ex:Done a skos:Concept ; skos:inScheme ex:TaskStatuses .
+ex:TaskStatuses a skos:ConceptScheme .
+ex:report1 ex:about ex:p1 .
+
+# a second aggregate that must be untouched
+ex:p2 a ex:Project ; ex:name "Gemini" ; ex:hasMilestone ex:m9 .
+ex:m9 a ex:Milestone ; ex:due "2027-01-01"^^xsd:date .
