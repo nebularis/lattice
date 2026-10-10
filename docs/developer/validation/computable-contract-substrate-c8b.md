@@ -3,7 +3,7 @@
 # Validation Pack: CCS C8b, references by identity
 
 **Unit:** [`computable-contract-substrate`](../status/computable-contract-substrate.md)
-**Machine:** R (Claude Code). **Branch:** `ccs/c8b-references-by-identity`. Commits are the human's,
+**Machine:** R. **Branch:** `ccs/c8b-references-by-identity`. Commits are the maintainer's,
 and the change is merged into `main` before its release tags are created
 **Plan and test cases:** [CCS plan](../plans/computable-contract-substrate.md) (C8b in detail)
 **Decisions:** ADR-A104 and its 2026-10-06 addenda, ADR-A51, the Wording ADRs behind laws W1 to W7.
@@ -40,7 +40,7 @@ A renderer (insurml-alignment IMA-4.1). Resolution records for policies that can
 
 ## Handoff
 
-Written by the building machine when the work is ready for the human to commit.
+Written by the building machine when the work is ready for the maintainer to commit.
 
 Phase 1, examples first (ADR-A-C2), 2026-10-06:
 
@@ -56,7 +56,7 @@ Phase 1, examples first (ADR-A-C2), 2026-10-06:
     reworked: every reference names an identity. The attachment and the regulation they cite gain
     identities, and their wordings a static and an ambulatory reliance
   - the ADR-A112 addendum "references by identity" (Proposed)
-- **Run by the agent:** every Wording example and the three Instrument examples against the current
+- **Run:** every Wording example and the three Instrument examples against the current
   model and every layer's shapes, without inference. The only new failures are the ones the model
   phase changes: Wording's shapes require a reference's value to be a `wrd:Variable` or a
   `wrd:ReferenceTarget`, a version, where each now names an identity. `facility-amendment.ttl`'s
@@ -98,7 +98,7 @@ Phase 2, the model, 2026-10-06:
   - C8b tests in `tools/test_wording.py`, already in `check:ontology-catalog`. Version pins moved in
     five other test modules. The release register, the catalog and the ontology architecture
     updated
-- **Run by the agent:** every check listed under Results.
+- **Run:** every check listed under Results.
 - **Check first:** the deviations, then the W8 messages in `ontology/wording/README.md`.
 - **Deviations from the plan:**
   - **The binder is unchanged.** It reads placeholders, not text references, and W8 covers forms,

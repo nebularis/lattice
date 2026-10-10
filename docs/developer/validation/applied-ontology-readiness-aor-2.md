@@ -53,7 +53,7 @@ gate, which reads `interval-containment.ttl`).
   Committed at 0.3.1 in `6e36586`. AOR-5 then takes the cascade to 0.4.0
   (MINOR).
 
-## Adversarial probe (run by the agent)
+## Adversarial probe
 
 Deleting the new `FILTER` line from `constraints.ttl` failed five tests:
 AOR2-01, AOR2-03, AOR2-04 (hierarchical case), AOR2-07 and AOR2-10. Restoring

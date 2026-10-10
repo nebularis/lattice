@@ -73,6 +73,24 @@ and template variables tagged `Bound` or `OptionalAllowed`.
 | `NOW()` inside a guard | no clock constructor except in an explicitly audit-only position |
 | a missing template parameter | the IR's own parameter list is the renderer's domain; completeness is a type check, not a runtime surprise |
 
+### 3.1 From aggregate ownership (2026-10-10)
+
+The [aggregate-ownership sketch](persistence-aggregate-ownership.md#12-what-h2-inherits) adds three
+things to the IR, decided (H-D14) after the
+[review](../notes/persistence-aggregate-ownership-review.md) of the
+[exploration note](../notes/persistence-aggregate-ownership.md) and
+[its spike](../../../spikes/persistence-aggregate-ownership/README.md).
+
+| Addition | Hazard it removes |
+|---|---|
+| the `OwnershipTree` and its compiled `PropertyPath` as typed values. A path parameter is built only from encoded IRIs and a fixed set of operators | a closure that depends on how a shape was written, and a path assembled from strings |
+| a payload check: every payload subject is the root or reached from it through owned steps. The IR states it and the runtime caller enforces it, since a payload is a request-time slot | a payload that writes into another aggregate or into reference data |
+| a required-parameter guard (H-D12, option D) | TD-34, a partial write when a parameter is missing |
+| a composite operation's read set is the closure its path computes at execution, and its write set the delete set, the payload and the version row | protocol models that assume a fixed read set for a write (model A) |
+| an explicit graph role for every composite pattern, the profile's named data graph (AO-Q14, decided option a) | TD-40, composite operations that rely on the default graph against static check S-1 |
+
+H2's typing of the closure starts after HO5, when the tree replaces the old walk.
+
 ## 4. Exhaustive cross-axis validation, once the registry exists
 
 The cross-axis validation predicate is propositional over finite domains (review §7.1-§7.2):
@@ -109,6 +127,12 @@ declared `epochWidth`/`sequenceWidth` must fit the datatype's own maximum, preve
 own recorded two-widths defect, B13), and the template-variable-discipline check (S-3/S-4: every
 INSERT-template variable bound in every solution, no blank nodes in a template — cheap, static,
 and the single highest-severity-to-cost static check in the whole review).
+
+The aggregate-ownership design (2026-10-10) adds three to H4's list: the source review's C10 restated
+as equality of the compiled path's language and the shape graph's owned-path language (automata, with
+no depth bound since depth is gone), the IRI-template injectivity check extended to named-graph
+templates across families (review F11 of the ownership review), and C14's request bound with the
+largest declared aggregate, since whole-replace sends it all ([ownership sketch §15.1](persistence-aggregate-ownership.md#151-solvers-and-provers-in-summary)).
 
 ## 7. Non-goals
 

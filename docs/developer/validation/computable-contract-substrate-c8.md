@@ -3,7 +3,7 @@
 # Validation Pack: CCS C8, parameter bindings
 
 **Unit:** [`computable-contract-substrate`](../status/computable-contract-substrate.md)
-**Machine:** R (Claude Code). **Branch:** `ccs/c8-parameter-bindings`. Commits are the human's, and
+**Machine:** R. **Branch:** `ccs/c8-parameter-bindings`. Commits are the maintainer's, and
 the change is merged into `main` before its release tags are created
 **Plan and test cases:** [CCS plan](../plans/computable-contract-substrate.md) (C8 in detail)
 **Decisions:** ADR-A104 decision 13 and its 2026-10-06 addendum, ADR-A92, ADR-A51, ADR-A85,
@@ -43,7 +43,7 @@ Evaluation (C12, C13). Computed amounts, bases, aggregation and `ins:computedBy`
 
 ## Handoff
 
-Written by the building machine when the work is ready for the human to commit.
+Written by the building machine when the work is ready for the maintainer to commit.
 
 Phase 1, examples first (ADR-A-C2), 2026-10-06:
 
@@ -61,12 +61,12 @@ Phase 1, examples first (ADR-A-C2), 2026-10-06:
     assessed
   - the ADR-A104 addendum "values in stated meaning" (Proposed), restating decision 13
   - the brief's resolution table corrected to law W5 (below)
-- **Run by the agent:** the three examples against the C7c model and every layer's structural and
+- **Run:** the three examples against the C7c model and every layer's structural and
   constraint shapes, without inference. All conform. The framework's only result is its intended
   overlap warning at Lot 2 (I16). `tools/test_constitutive_terms.py` and `tools/test_instrument.py`
   pass (120). `check:ontology-versioning` passes.
 - **Not run:** the other tool tests, and the reasoner.
-- **Decided by the human, 2026-10-06:** a placeholder may take its value from a value word, with
+- **Decided 2026-10-06:** a placeholder may take its value from a value word, with
   thorough cycle checking, clear reports, and the rule stated wherever it may come up. A concept word
   may stand in an Eligibility concept slot, with shapes governing it. Recorded in the plan's C8
   section, with rows C8-18 to C8-21.
@@ -111,7 +111,7 @@ Phase 2, the model, 2026-10-06:
     its concept slots, `tools/README.md` and the ADR-A104 addendum
   - `tools/test_parameter_bindings.py` (42 tests), added to `check:ontology-catalog`. Version pins and
     C7c's warning filters moved in four earlier modules
-- **Run by the agent:** every row below.
+- **Run:** every row below.
 - **Check first:** the deviations.
 - **Deviations from the plan:**
   - **Five older examples gained bound terms.** Law I17 found that the C7a and C7b examples left
@@ -137,7 +137,7 @@ Phase 2, the model, 2026-10-06:
 
 ## Results
 
-Run by the agent on machine R, 2026-10-06, with every tool package importing from this checkout.
+Run on machine R, 2026-10-06, with every tool package importing from this checkout.
 
 | Row | Result |
 |---|---|

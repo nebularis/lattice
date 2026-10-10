@@ -4,10 +4,10 @@
 
 **Unit:** [`formal-methods-track-h`](../status/formal-methods-track-h.md), slice H1.4a, the first half
 of [plan §3, H1.4](../plans/formal-methods-track-h.md). H1.4b, the gap report, follows.
-**Decided by:** the human, 2026-10-09 (H-D4): the combination is left a documented, refused
+**Decided:** 2026-10-09 (H-D4): the combination is left a documented, refused
 combination until H2's typed IR makes the fix structural.
 **Source finding:** [review](../notes/rdf-engine/persistence-fml.md) finding #9, and TD-03.
-**Decisions needing confirmation:** H-D13, below.
+**Decisions needing confirmation:** none. H-D13 was decided on 2026-10-10, below.
 
 ## Invariant
 
@@ -47,7 +47,12 @@ other nodes through more than one property, and it binds the property that leads
 - A witness, `refusal-CompositeBoundaryMultipleProperties.ttl` (the harness now has 87 rules, all
   witnessed), and the README's known-limitations entry is rewritten. TD-03 is reworded.
 
-## H-D13, for the human
+## H-D13, for the maintainer
+
+**Decided 2026-10-10: Option 1**, as a stop-gap. The [aggregate-ownership review](../notes/persistence-aggregate-ownership-review.md)
+(F1) found that its precondition, that the one node property is owned, is not checked. A shape
+whose only `sh:node` is a reference has that reference swept (TD-35). H1.4b reports it, and slice
+HO5 replaces this binding with classified edges ([plan §3.5](../plans/formal-methods-track-h.md#35-ho-aggregate-ownership)).
 
 The decision you took (H-D4) was to refuse the combination. This slice also **changes what is bound
 for a shape with exactly one node property**, from "the first path" to "the node property", and puts
@@ -89,7 +94,7 @@ mise run check:persistence
 
 ## Adversarial probes
 
-Run by the agent on 2026-10-09, each reverted afterwards.
+Run on 2026-10-09, each reverted afterwards.
 
 | Mutation | Result |
 |---|---|

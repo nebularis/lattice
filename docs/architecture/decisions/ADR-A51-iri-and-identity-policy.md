@@ -5,7 +5,7 @@
 **Status:** Superseded by [ADR-A82](ADR-A82-framework-neutral-identity-pattern-selection.md)
 **Date:** 2026-09-23 (amended 2026-09-23 following review)
 **Related:** Architecture Review Appendix A, G-05, ADR-A74, ADR-A54, ADR-A68, ADR-A75, `docs/architecture/iri-policy.md`, `docs/architecture/rdf-sparql-patterns-guide.md`
-**Drafted by:** Agent, autonomous session (P0.1.3). Pending human ratification — see [phase-0-status.md](../../developer/status/phase-0-status.md).
+**Drafted in:** P0.1.3. Pending ratification — see [phase-0-status.md](../../developer/status/phase-0-status.md).
 **Supersession note:** This proposed ADR selected a universal LATTICE identity grammar. It is retained as historical review context only. [ADR-A82](ADR-A82-framework-neutral-identity-pattern-selection.md) replaces that decision with configurable, framework-neutral identity-pattern selection.
 **Amendment note:** The initial draft was reviewed in [docs/developer/review/ADR-A51-review.md](../../developer/review/ADR-A51-review.md), which found one critical conflict with RDF identity semantics (environment-scoped IRIs), one critical overclaim (uniqueness "by construction" with a truncated hash), and a set of internal contradictions and gaps against the `rdf-sparql-patterns-guide.md` entity-identity default. The initial disposition claimed those findings resolved; [the second review](../../developer/review/ADR-A51-2nd-agent-review.md) identified remaining gaps. ADR-A82 supersedes this proposed decision rather than extending it further.
 

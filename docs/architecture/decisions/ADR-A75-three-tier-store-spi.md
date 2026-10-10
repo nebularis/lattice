@@ -5,7 +5,7 @@
 **Status:** Proposed
 **Date:** 2026-09-23
 **Related:** Architecture Review Addendum 2 (§A2.1–A2.7, G-16, G-10), ADR-A74, `platform/graph-spi`
-**Drafted by:** Agent, autonomous session (P0.1.2). Pending human ratification — see [phase-0-status.md](../../developer/status/phase-0-status.md).
+**Drafted in:** P0.1.2. Pending ratification — see [phase-0-status.md](../../developer/status/phase-0-status.md).
 
 ## Context
 

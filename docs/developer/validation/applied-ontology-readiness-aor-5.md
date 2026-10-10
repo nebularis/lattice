@@ -56,7 +56,7 @@ tests.
   against the committed 0.3.0, superseding AOR-2's interim 0.3.1. Executable
   moves 0.2.0 → 0.3.0. Nothing imports Executable.
 
-## Adversarial probe (run by the agent)
+## Adversarial probe
 
 Dropping the exclusion clause failed AOR5-07. Letting two candidates through
 (`< 1` for `!= 1`) failed AOR5-09.

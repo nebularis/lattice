@@ -468,7 +468,7 @@ power's own case is the breach, is question C11a-Q4.
 
 B1 to B4, B7 and B8 stand as ADR-A106 states them.
 
-## 11. Questions for the human
+## 11. Questions for the maintainer
 
 **Answered 2026-10-02:** C11a-Q1 (a), C11a-Q2 (a) and C11a-Q4 (a), as recommended. C11a-Q3: (c),
 `AllMatches` redefined over internal transitions, composing their effects into one computation in

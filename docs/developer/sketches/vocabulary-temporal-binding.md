@@ -122,7 +122,7 @@ unit beyond the smallest adapter or fixture needed to prove the boundary.
 
 | Slice | Scope | Validation level | Completion gate |
 |---|---|---|---|
-| 1 | ADR-A85, architecture sync, fixture vocabulary and traceability skeleton | L0, L2 | Human review of semantic parity and ADR |
+| 1 | ADR-A85, architecture sync, fixture vocabulary and traceability skeleton | L0, L2 | Review of semantic parity and ADR |
 | 2 | Examples and structural/SHACL-SPARQL validation | L1, L3, L4 | Positive and negative fixtures produce expected conformance |
 | 3 | Reference resolver and deterministic test suite | L1, L2 | Conflict and precedence mutations fail the tests |
 | 4 | Consumer and historical provenance integration checks, final docs | L3, L4 | Cross-layer contract passes and validation pack is complete |

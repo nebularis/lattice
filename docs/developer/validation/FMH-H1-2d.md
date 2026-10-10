@@ -3,7 +3,7 @@
 # Validation Pack: FMH-H1.2d, refuse a multi-valued single-valued property (TD-25)
 
 **Unit:** [`formal-methods-track-h`](../status/formal-methods-track-h.md), a fix arising from H1.2c
-**Decided by:** the human, 2026-10-09 (H-D10): the compiler refuses a multi-valued functional
+**Decided by:** the maintainer, 2026-10-09 (H-D10): the compiler refuses a multi-valued functional
 property in the resolver. No ADR. It changes `tools/persistence` behaviour for malformed input only.
 **Finding:** TD-25, see [FMH-H1.2c](FMH-H1-2c.md).
 
@@ -67,7 +67,7 @@ mise run check:persistence
 
 ## Adversarial probes
 
-Run by the agent on 2026-10-09, each reverted afterwards.
+Run on 2026-10-09, each reverted afterwards.
 
 | Mutation | Result |
 |---|---|

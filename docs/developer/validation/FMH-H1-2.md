@@ -75,7 +75,7 @@ with `refusal 10/34`, `warning 3/11`, `shape 10/33` and `audit 5/5`.
 
 ## Adversarial probes
 
-Run by the agent on 2026-10-09, each reverted afterwards.
+Run on 2026-10-09, each reverted afterwards.
 
 | Mutation | Result |
 |---|---|
@@ -86,7 +86,7 @@ Run by the agent on 2026-10-09, each reverted afterwards.
 | the `WeakEtagCas` entry removed from `known-gaps.txt` | the CLI prints `UNWITNESSED warning:WeakEtagCas` and exits 1 |
 
 One probe did not detect a change, correctly. Renaming a refusal consistently in the validator keeps
-it witnessed, because the inventory and the observation both follow the new name. The human is
+it witnessed, because the inventory and the observation both follow the new name. The maintainer is
 invited to pick another mutation, for example swapping the violating and clean datasets of one audit.
 
 ## Artefacts to inspect

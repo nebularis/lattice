@@ -4,7 +4,7 @@
 
 **Unit:** [formal-methods](../plans/formal-methods.md) (epic), track H
 **Status:** sketch, 2026-10-08. Nothing here is ratified. [ADR-A-FM4](../../architecture/decisions/ADR-A-FM4-persistence-formal-methods-home-and-scope.md)
-(home and scope) is Proposed, not yet accepted
+(home and scope) was accepted on 2026-10-10
 **Source:** [persistence-fml.md](../notes/rdf-engine/persistence-fml.md), an independent,
 exhaustive review applying this epic's own techniques to the Persistence layer. Its section
 numbers are cited as "review §n" throughout this sketch and its siblings
@@ -14,6 +14,12 @@ enabling move), [formal-methods.md](formal-methods.md) §5 (the techniques, by c
 layer — Persistence's own row is thin and this track replaces it), the engine notes this review
 answers: [compiled persistence profiles](../notes/rdf-engine/compiled-persistence-profiles.md) and
 the RDF/SPARQL patterns guide it cites throughout
+**Aggregate ownership (2026-10-10):** [persistence-aggregate-ownership.md](persistence-aggregate-ownership.md),
+the design for the HO slices, built from the exploration note
+[persistence-aggregate-ownership.md](../notes/persistence-aggregate-ownership.md), its spike
+[`spikes/persistence-aggregate-ownership`](../../../spikes/persistence-aggregate-ownership/README.md),
+and the review [persistence-aggregate-ownership-review.md](../notes/persistence-aggregate-ownership-review.md).
+It changes the composite boundary this sketch's L6 gap describes
 **Explicitly excludes:** any relational or SQL-compilation work (the separate review at
 [sql-feedback.md](../notes/rdf-engine/sql-feedback.md), "paper 5"). See §2 below
 
@@ -126,13 +132,16 @@ keeps its own letter-and-number register, per house convention):
 | L12 | Identity laws | claim/revision/event/key IRIs are deterministic and injective on their declared domains |
 | L13 | Erasure boundary | after erasure plus the retention bound, no enumerated store yields the subject's data |
 | L14 | Epoch safety | no position/ETag/revision IRI/cursor minted under one epoch is mistaken for another's |
-| L15 | Migration/rotation squares | a shard-count, scheme or epoch change commutes with reading |
+| L15 | Migration/rotation squares | a shard-count, scheme or epoch change commutes with reading. Since 2026-10-10 also a reclassified boundary edge and a changed graph template ([ownership sketch §15](persistence-aggregate-ownership.md#15-effect-on-the-later-track-h-slices)) |
+| L16 | Ownership is a partition of members | the compiled closure path denotes exactly the classified tree's paths, and no node is a member of two live aggregates. Added 2026-10-10, not in the source review ([ownership sketch §15](persistence-aggregate-ownership.md#15-effect-on-the-later-track-h-slices)) |
 
 L1, L2, L4, L5, L7, L8, L10, L12 are cheap (T0/T5) and should be settled by proof or exhaustive
 check. **L3, L6, L11 are missing from the design today, not merely from its verification** — this
 is the review's own most important distinction (§2.1), and this track's early slices (H1, §5)
 target exactly those three first, because they are gaps a proof cannot paper over. L9, L13, L14,
-L15 need protocol models and are where the review expects the actual findings (§10).
+L15 need protocol models and are where the review expects the actual findings (§10). L16, added
+with the aggregate-ownership design, is settled by an automata check for its first half and by a
+compile-time refusal plus an audit for its second (H4, H9).
 
 ## 4. The organising idea: a capability × strategy guarantee matrix
 
@@ -168,7 +177,10 @@ commit validation) is strictly narrower than what the protocol models will need 
 assumptions (`atomicUpdateRequest`, `singleWriter`, `detectsWriteWriteConflict`,
 `statementLevelConflictDetection`, `multiAggregateAtomicity`, `graphLevelAccessControl`,
 `reportsAffectedRows`, the change-feed and time-travel flags, `quadsInUpdateTemplates`,
-`unionDefaultGraph`, `requiresSkolemization`, `maxRequestBytes`). Closing this gap (review's
+`unionDefaultGraph`, `requiresSkolemization`, `maxRequestBytes`). The aggregate-ownership design
+adds one field, whether inserting a statement that another transaction also inserts counts as a
+write-write conflict, which decides the composite create race. `unionDefaultGraph` does not affect the composite
+strategy, since AO-Q14 put each family's aggregates in a named data graph ([ownership sketch §15](persistence-aggregate-ownership.md#15-effect-on-the-later-track-h-slices)). Closing this gap (review's
 PV-D1: extend to the full capability record, three-valued, `unknown` treated pessimistically,
 bound to a TCK report digest) is a prerequisite for the matrix meaning anything, and is this
 track's first design-level decision, taken alongside H1 (§5 of the plan).

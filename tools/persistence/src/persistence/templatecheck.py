@@ -23,7 +23,7 @@ S-4, blank nodes in templates
 
 A construct this module cannot analyse is reported, never passed over.
 
-Two assumptions, both decided by the human on 2026-10-09 (H-D11, H-D12, explained in plan
+Two assumptions, both decided 2026-10-09 (H-D11, H-D12, explained in plan
 section 13 of docs/developer/plans/formal-methods-track-h.md) and both to be removed by the typed
 IR of slice H2:
 
@@ -32,7 +32,7 @@ IR of slice H2:
   ``$x`` where the WHERE clause should bind ``?x`` would escape the check.
 * A BIND whose inputs are all bound is taken to give its variable a value. An expression can fail,
   for example when the caller omits a parameter, and the INSERT then skips its triples silently.
-  Nothing here detects that. See TD-26 in docs/developer/plans/technical-debt.md.
+  Nothing here detects that. See TD-34 in docs/developer/plans/technical-debt.md.
 """
 
 from __future__ import annotations

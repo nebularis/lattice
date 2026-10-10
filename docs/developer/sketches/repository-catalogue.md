@@ -427,7 +427,7 @@ can replace those constants later without changing a caller.
 ## 9. Design questions
 
 Each question follows the [lattice-design](../../../.claude/skills/lattice-design/SKILL.md) form.
-Leanings are hypotheses, pending the human's answer.
+Leanings are hypotheses, pending our answer.
 
 ### RC-Q1. Where does the catalogue live, and is it one file or many?
 

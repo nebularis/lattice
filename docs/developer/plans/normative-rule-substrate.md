@@ -4,10 +4,10 @@
 
 **Unit ID:** `normative-rule-substrate`
 **Unit type:** Multi-slice unit, single machine. Deliberately not an epic (§3)
-**Status:** Proposed, awaiting human review. No slice may start until §9's decisions are taken.
+**Status:** Proposed, awaiting the maintainer's review. No slice may start until §9's decisions are taken.
 Aligned with CCS on 2026-10-10: N4, N5 and the Behaviour part of N8 are CCS's, and what remains of this
 unit is an open question (status record, NQ-1)
-**Trigger:** human request, 2026-09-29, following the LegalRuleML mapping analysis
+**Trigger:** request, 2026-09-29, following the LegalRuleML mapping analysis
 **Sketches:** [legalruleml-mapping.md](../sketches/legalruleml-mapping.md) (the construct-level analysis),
 [rule-layers.md](../sketches/rule-layers.md) and
 [rule-layers-cross-check.md](../sketches/rule-layers-cross-check.md) (the R1 to R5 findings this unit delivers)
@@ -63,14 +63,14 @@ per-phase status records would add ceremony without adding coordination.
 The unit is nevertheless epic-sized in content: thirteen slices, five ADRs on substrate layers,
 and one change that cascades to fourteen files. Two safeguards replace the epic ceremony:
 
-- **Tranche gates.** The slices group into five tranches (§7). Each tranche ends with a human
+- **Tranche gates.** The slices group into five tranches (§7). Each tranche ends with a
   validation gate, and the Foundation tranche additionally requires a quiet window in the
   applied-insurance epic.
 - **One status record, updated per slice**, in the style of `ontology-semantic-versioning` rather
   than the per-machine sections of the applied-insurance epic.
 
 This is a deliberate deviation from the epic decomposition model (now in skill `lattice-lifecycle`)
-and needs human agreement before slice N1 starts. It is listed in §9 as decision D1.
+and needs agreement before slice N1 starts. It is listed in §9 as decision D1.
 
 ---
 
@@ -188,7 +188,7 @@ deontic extension (N4) goes first, for three independent reasons:
 come **after Phase 2 completes**, or it forces six actively-authored slice branches to re-pin a
 file they are rewriting. Phase 2 has AIR-2.2 through AIR-2.7 outstanding. If multi-axis time is
 needed sooner than that, the cost is a coordinated freeze across the epic, and that trade is the
-human's to make, not the agent's. It is decision D4 in §9.
+maintainer's to make. It is decision D4 in §9.
 
 ### 4.6 What would change this verdict
 
@@ -369,7 +369,7 @@ N8 keeps any work is open (status record, NQ-3).
 
 #### N5. Closure declarations (A-105, R2). Moved to CCS
 
-**Moved to [CCS](computable-contract-substrate.md) on 2026-10-10** (the human, HQ6-Q1). CCS's held
+**Moved to [CCS](computable-contract-substrate.md) on 2026-10-10** (HQ6-Q1). CCS's held
 question HQ-6 is this slice, and it runs as CCS work, as N4 and N8 did. Split by HQ6-Q2:
 
 - **HQ-6a, before CCS C9b3:** ADR-A105, the closure declaration with its scope and window, a deeming
@@ -530,13 +530,13 @@ this unit can ship.
 
 **After every ontology change:** `mise run build:ontology-catalog`, then
 `mise run check:ontology-versioning` and `mise run check:ontology-catalog`. Release rows via
-`mise run build:ontology-releases`. Tags are the human's to create, never the agent's.
+`mise run build:ontology-releases`. Tags are the maintainer's to create.
 
 ---
 
 ## 9. Decisions owed before slice N1 starts
 
-None of these may be taken by the agent.
+None of these is taken without the maintainer.
 
 | # | Decision | Bears on | Recommendation offered |
 |---|---|---|---|
@@ -546,7 +546,7 @@ None of these may be taken by the agent.
 | **D4** | Does N9 wait for Phase 2 to complete, or does the epic accept a coordinated freeze? | N9, and the epic | wait. The freeze cost is higher than the delay cost |
 | **D5** | Does priority (N10) wait for Phase 5 as the cross-check's row J suggests, or proceed on the audit-provenance evidence in the sketch §22.3? | N10, and adjacency with S7 | no recommendation. The evidence cuts both ways. Added 2026-09-30: every tested instrument asserts precedence (CBAA M1 1.2.1, M12 12.7.1, the sample package policy's End. 13 "whether such endorsement precedes or follows"). Most resolves when endorsements are consolidated, so a narrow `ins:prevailsOver` as consolidation provenance could come early (CCS sketch §10.7, S70). 2026-10-06: CCS C7c declared `ins:prevailsOver` between definitions only, leaving terms to N10 |
 | **D6** | Is substrate S2 authored together with N5, or landed first? | N5 | together. Both are Eligibility well-foundedness by the same hand. Overtaken 2026-10-10: N5 is CCS HQ-6, and whether S2 still pairs with it is open (status record, NQ-4) |
-| **D7** | Should an unlicensed absence-dependent check be refused at compile time, or compiled to a permanent `Undetermined` with a diagnostic? | N5 | refuse. A permanent `Undetermined` hides a data-provenance problem behind a logic outcome. **Answered 2026-10-10** by the human: refuse, in CCS HQ-6a (HQ6-Q2), consistent with CCS C9b0-Q2 |
+| **D7** | Should an unlicensed absence-dependent check be refused at compile time, or compiled to a permanent `Undetermined` with a diagnostic? | N5 | refuse. A permanent `Undetermined` hides a data-provenance problem behind a logic outcome. **Answered 2026-10-10**: refuse, in CCS HQ-6a (HQ6-Q2), consistent with CCS C9b0-Q2 |
 
 ---
 

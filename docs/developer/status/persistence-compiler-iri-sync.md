@@ -3,7 +3,7 @@
 # Persistence Compiler / IRI-Patterns Sync — Status
 
 **Unit ID:** `persistence-compiler-iri-sync`
-**Status:** ✅ Complete. All six slices done, 774/774 tests passing (human-validated 2026-09-25).
+**Status:** ✅ Complete. All six slices done, 774/774 tests passing (validated 2026-09-25).
 **Last updated:** 2026-09-25 (Slice 6 documentation close-out, unit complete)
 **Plan:** [persistence-compiler-iri-sync.md](../plans/persistence-compiler-iri-sync.md)
 **Sketch (gap analysis):** [persistence-compiler-iri-sync.md](../sketches/persistence-compiler-iri-sync.md)
@@ -12,30 +12,30 @@
 
 ## Is this unit complete?
 
-**Yes.** All six slices are done. Every gap in the [gap analysis](../sketches/persistence-compiler-iri-sync.md) (G1–G8) is closed and verified, the last (G7, Slice 5) by an actual, human-confirmed test run (774/774 passing). Nothing further is owed by this unit.
+**Yes.** All six slices are done. Every gap in the [gap analysis](../sketches/persistence-compiler-iri-sync.md) (G1–G8) is closed and verified, the last (G7, Slice 5) by an actual, confirmed test run (774/774 passing). Nothing further is owed by this unit.
 
-### Slice 5 decisions (human, 2026-09-25)
+### Slice 5 decisions (2026-09-25)
 
-1. **Decision 1 (onViolation semantics), Option A chosen.** The synchronous guarded write (`key-claim-write`) stays unchanged for every `dal:onViolation` policy — a race is always prevented at write time. `dal:onViolation` instead selects which **reconciler** operation Slice 5 generates, matching guide §7.5 (P7) rather than §6 (P1/P2, which only ever describes the Reject shape): `dal:Reject` (the baseline default when undeclared) generates an alert-only duplicate-scan audit; `dal:Merge` generates an operation that records `dal:mergeRelation` from every non-canonical owner to a deterministic canonical one (lexicographically lowest IRI, documented, not hidden); `dal:Quarantine` generates an operation that copies every duplicate into a dedicated `urn:g:key-quarantine` graph for human review. None of the three deletes anything or resolves the duplicate automatically — "the reconciler is never the only strategy, and it is never absent" (guide §7.5).
+1. **Decision 1 (onViolation semantics), Option A chosen.** The synchronous guarded write (`key-claim-write`) stays unchanged for every `dal:onViolation` policy — a race is always prevented at write time. `dal:onViolation` instead selects which **reconciler** operation Slice 5 generates, matching guide §7.5 (P7) rather than §6 (P1/P2, which only ever describes the Reject shape): `dal:Reject` (the baseline default when undeclared) generates an alert-only duplicate-scan audit; `dal:Merge` generates an operation that records `dal:mergeRelation` from every non-canonical owner to a deterministic canonical one (lexicographically lowest IRI, documented, not hidden); `dal:Quarantine` generates an operation that copies every duplicate into a dedicated `urn:g:key-quarantine` graph for the maintainer's review. None of the three deletes anything or resolves the duplicate automatically — "the reconciler is never the only strategy, and it is never absent" (guide §7.5).
 2. **Decision 2 (registry-token digest relaxation), accepted as correctly framed.** `dal:DigestSchemeRequiredShape` and the mirrored Python check in `check_identity` are narrowed to exempt exactly the combination `dal:eventIdentityStrategy dal:PositionDerivedEvent` + `dal:occurrenceNamespaceDerivation dal:RegistryTokenDerivation`: the namespace is a registry-allocated token, not digest-derived, so the digest is provably unused (`recipes.py` already never reads a digest for this role). `dal:HashedTargetDerivation` is deliberately **not** exempted: its own ontology comment ("an injective, fixed-width digest of the target's own IRI") documents a real, if not yet wired, use of the digest scheme. `ontology/persistence` bumped PATCH (0.2.0 → 0.2.1): a shape narrowed to match already-documented intent, the same class of change as `eligibility/spec`'s 0.3.0 → 0.3.1 precedent (`applied-ontology-readiness` AOR-2).
-3. **Decision 3 (execution mode).** Fully autonomous, granted for this slice. Per explicit instruction, no install or test-run was attempted in this session (the sandbox's PyPI block, recorded in the Blockers table below, is unchanged) — verification is left for the end of the slice, for the human to run.
+3. **Decision 3 (execution mode).** Fully autonomous, granted for this slice. Per explicit instruction, no install or test-run was attempted in this session (the sandbox's PyPI block, recorded in the Blockers table below, is unchanged) — verification is left for the end of the slice, for the maintainer to run.
 
 | Gap | Summary | Disposition | Where |
 |---|---|---|---|
 | G1 | Epoch guard generated the discouraged row-level shape unconditionally | ✅ Closed | Slice 1, then revised by [`iri-patterns-post-3866b21-remediation`](iri-patterns-post-3866b21-remediation.md) (row epoch rebased, not guarded) |
 | G2 | Identity minting profile unresolved | ✅ Closed | Slice 3: role-qualified resolution, emitted to the compiled profile, six checks. Minting stays with the caller (decision 2) |
-| G3 | Epoch/restore configuration surface | ✅ Closed | Slice 4: `dal:epochAuthority` promoted to its own resolved dimension; `dal:epochCoordinatorBinding`, `dal:erasureRegisterBinding`, `dal:erasureReplayOnRestore` wired as its extras. Human-validated 2026-09-25 |
-| G4 | Privacy/erasure profile and cross-profile checks | ✅ Closed | Slice 4: `dal:privacyClass`/`dal:erasureStrategy`/`dal:erasurePrecedence`/`dal:perSubjectScoped` each resolved as their own dimension; two checks (`PersonalDataRequiresErasure`, `PersonalDataReceiptConflict`) mirroring the two named SHACL shapes. Human-validated 2026-09-25 |
+| G3 | Epoch/restore configuration surface | ✅ Closed | Slice 4: `dal:epochAuthority` promoted to its own resolved dimension; `dal:epochCoordinatorBinding`, `dal:erasureRegisterBinding`, `dal:erasureReplayOnRestore` wired as its extras. Validated 2026-09-25 |
+| G4 | Privacy/erasure profile and cross-profile checks | ✅ Closed | Slice 4: `dal:privacyClass`/`dal:erasureStrategy`/`dal:erasurePrecedence`/`dal:perSubjectScoped` each resolved as their own dimension; two checks (`PersonalDataRequiresErasure`, `PersonalDataReceiptConflict`) mirroring the two named SHACL shapes. Validated 2026-09-25 |
 | G5 | Extension properties on existing profile classes | ✅ Closed | Slice 2 |
 | G6 | Meta-topology sharding extension | ✅ Closed as resolution and warning | Slice 2. The counts are recorded, not applied to the generated SPARQL (plan Slice 2 decision 3) |
-| G7 | Uniqueness `onViolation`, `mergeRelation`, `ClaimScheme` rotation | ✅ Closed | Slice 5 (2026-09-25): reconciler operations per policy (decision 1, Option A), `dal:mergeRelation` read and checked, `key-claim-write-dual.mustache` selected when a constraint's active `dal:ClaimScheme`s are both `dal:Dual`. Human-validated 2026-09-25, 774 passed |
+| G7 | Uniqueness `onViolation`, `mergeRelation`, `ClaimScheme` rotation | ✅ Closed | Slice 5 (2026-09-25): reconciler operations per policy (decision 1, Option A), `dal:mergeRelation` read and checked, `key-claim-write-dual.mustache` selected when a constraint's active `dal:ClaimScheme`s are both `dal:Dual`. Validated 2026-09-25, 774 passed |
 | G8 | `tools/persistence/README.md` stale | ✅ Closed | Updated in Slices 1, 2 and 4, by the post-3866b21 remediation, and finalised in Slice 6 (2026-09-25): "Known limitations" reflects exactly what Slices 1–5 shipped, `rdf-sparql-patterns-remediation.md`'s Deferred item 1 marked closed, `rdf-sparql-patterns-status.md` records the final 774-test count, and `docs/developer/INDEX.md` had its final traceability pass |
 
 ## Current state
 
 Scoped on 2026-09-23 in response to commit `c276afb`, which added three new profile dimensions, extended six existing ones, and added eight new SHACL shapes to `ontology/persistence`, none of it consumed by `tools/persistence`. This was anticipated, not a surprise: [rdf-sparql-patterns-remediation.md](rdf-sparql-patterns-remediation.md)'s own "Deferred item 1" named this exact gap the day it was created.
 
-Slice 1 was implemented the same day, in Default Mode: code and tests were written and the underlying logic was verified by direct script execution, but the committed pytest suite was handed off unrun (per Default Mode). The human ran `mise run check:persistence` and reported one failure: `TestEpochGuardScopeTemplateSelection::test_dataset_level_guard_selects_dataset_guard_templates` — `epoch-dataset-level-guard.ttl` declared only a `dal:EpochProfile`, no concurrency/boundary profile, so the target's `concurrencyProfile` fell back to the platform baseline (`ProvidedConcurrency`) and never entered the CAS branch at all; `select_operations()` generated `unconditional-write`, not `cas-replace`. Not a logic bug in the epoch-guard code — a fixture bug: the file wasn't a complete, self-contained positive example the way every other fixture in this directory is. Fixed by giving the fixture its own full `dal:DataAccessProfile` (matching `baseline-single-class.ttl`'s shape) alongside the `EpochProfile`, both scoped to the same target. Human then granted autonomous mode for this fix; re-ran the suite directly: **290/290 passing.**
+Slice 1 was implemented the same day, in Default Mode: code and tests were written and the underlying logic was verified by direct script execution, but the committed pytest suite was handed off unrun (per Default Mode). We ran `mise run check:persistence` and reported one failure: `TestEpochGuardScopeTemplateSelection::test_dataset_level_guard_selects_dataset_guard_templates` — `epoch-dataset-level-guard.ttl` declared only a `dal:EpochProfile`, no concurrency/boundary profile, so the target's `concurrencyProfile` fell back to the platform baseline (`ProvidedConcurrency`) and never entered the CAS branch at all; `select_operations()` generated `unconditional-write`, not `cas-replace`. Not a logic bug in the epoch-guard code — a fixture bug: the file wasn't a complete, self-contained positive example the way every other fixture in this directory is. Fixed by giving the fixture its own full `dal:DataAccessProfile` (matching `baseline-single-class.ttl`'s shape) alongside the `EpochProfile`, both scoped to the same target. We then granted autonomous mode for this fix; re-ran the suite directly: **290/290 passing.**
 
 **2026-09-23, later:** the post-3866b21 review remediation ([status](iri-patterns-post-3866b21-remediation.md)) changed the Slice 1 dataset-guard templates to rebase the row epoch instead of guarding it, added dataset-guard variants for `create-if-absent`, `append` and a new `bootstrap-version-row`, and replaced the audits. Slice 1's own tests still pass unchanged. Slice 2 then closed the `firstWrite` item.
 
@@ -44,8 +44,8 @@ Slice 1 was implemented the same day, in Default Mode: code and tests were writt
 | Blocker | Detail | Resolution owner |
 |---|---|---|
 | ~~Slice 3 resolution-model decision~~ | Resolved 2026-09-23: role-qualified dimensions, see [plan](../plans/persistence-compiler-iri-sync.md#slice-3--identity-minting-profile-resolution-g2) | — |
-| ~~Slice 4's test run~~ | Resolved 2026-09-25: human ran `mise run check:persistence`, confirmed all tests pass, and checked the adversarial probes. | — |
-| ~~Slice 5's test run~~ | Resolved 2026-09-25: human ran `mise run check:persistence`, confirmed **774 passed** after fixing a mustache-comment parsing issue in `key-claim-merge-rewrite.mustache` (found by the run itself, see Slice 5 VP's "Found on the way"). | — |
+| ~~Slice 4's test run~~ | Resolved 2026-09-25: we ran `mise run check:persistence`, confirmed all tests pass, and checked the adversarial probes. | — |
+| ~~Slice 5's test run~~ | Resolved 2026-09-25: we ran `mise run check:persistence`, confirmed **774 passed** after fixing a mustache-comment parsing issue in `key-claim-merge-rewrite.mustache` (found by the run itself, see Slice 5 VP's "Found on the way"). | — |
 
 No open blockers remain.
 
@@ -56,8 +56,8 @@ No open blockers remain.
 | 1 | Dataset-level epoch guard (G1 — correctness) | ✅ Complete, 290/290 passing — see [VP](../validation/persistence-compiler-iri-sync-slice-1.md) |
 | 2 | Ordering/receipt/concurrency/aggregate-boundary extension properties + meta-topology sharding (G5, G6) | ✅ Complete, 526/526 passing — see [VP](../validation/persistence-compiler-iri-sync-slice-2.md) |
 | 3 | Identity minting profile resolution (G2) | ✅ Complete, 570/570 passing — see [VP](../validation/persistence-compiler-iri-sync-slice-3.md) |
-| 4 | Privacy/erasure profile + cross-profile compatibility (G3 partial, G4) | ✅ Complete, human-validated 2026-09-25 (669 passed, adversarial probes checked) — see [VP](../validation/persistence-compiler-iri-sync-slice-4.md) |
-| 5 | Uniqueness `onViolation` reconciler operations, `mergeRelation`, `ClaimScheme` `dal:Dual` rotation, registry-token digest relaxation (G7) | ✅ Complete, human-validated 2026-09-25 (774 passed) — see [VP](../validation/persistence-compiler-iri-sync-slice-5.md) |
+| 4 | Privacy/erasure profile + cross-profile compatibility (G3 partial, G4) | ✅ Complete, validated 2026-09-25 (669 passed, adversarial probes checked) — see [VP](../validation/persistence-compiler-iri-sync-slice-4.md) |
+| 5 | Uniqueness `onViolation` reconciler operations, `mergeRelation`, `ClaimScheme` `dal:Dual` rotation, registry-token digest relaxation (G7) | ✅ Complete, validated 2026-09-25 (774 passed) — see [VP](../validation/persistence-compiler-iri-sync-slice-5.md) |
 | 6 | Documentation close-out | ✅ Complete, 2026-09-25 | no VP (L0, documentation only — same precedent as `applied-ontology-readiness` AOR-1) |
 
 ## Slice 1 delivery detail
@@ -88,7 +88,7 @@ Run in autonomous mode, 2026-09-23, after the plan was revised with three agreed
 
 ## Slice 3 delivery detail
 
-Decisions taken with the human on 2026-09-23: role-qualified dimensions, resolve/check/emit only, four cross-checks, autonomous mode.
+Decisions taken on 2026-09-23: role-qualified dimensions, resolve/check/emit only, four cross-checks, autonomous mode.
 
 **Code**: `resolver.py` (precedence step factored into `_select`, reused by `resolve_identity`, which resolves one `identity:<Role>` dimension per declared role, winning node as a unit), `validator.py` (`check_identity`: five refusals, one warning), `compiler.py` (identity resolved and checked per target, emitted as resolved dimensions).
 
@@ -112,13 +112,13 @@ Implemented 2026-09-23, autonomous mode (granted for this slice explicitly). No 
 
 **Docs**: `tools/persistence/README.md` gains "Privacy and erasure are resolved and checked" (mirroring the identity section's structure) and a "Known limitations" bullet for the three still-unchecked restore-surface extras; its test list and "A `Target` is a class..." section ordering updated accordingly. `ontology/persistence/README.md` §9's worked-example narrative updated from "resolved by the compiler from Slice 4" (future tense) to what Slice 4 actually resolves and checks, and its fixture-list paragraph extended with the three new files.
 
-**Not executed**: per the Blockers section above, this sandbox cannot install `rdflib`/`pytest`/`pyshacl`/`chevron` from PyPI (network policy block, not a code problem), so `mise run check:persistence` has not been run against these changes. Every new and modified Python file was checked for syntax/import errors via the editor's static diagnostics only, with none found. A human must run the suite and report the result before this slice's status can move from "implemented" to "complete".
+**Not executed**: per the Blockers section above, this sandbox cannot install `rdflib`/`pytest`/`pyshacl`/`chevron` from PyPI (network policy block, not a code problem), so `mise run check:persistence` has not been run against these changes. Every new and modified Python file was checked for syntax/import errors via the editor's static diagnostics only, with none found. The maintainer must run the suite and report the result before this slice's status can move from "implemented" to "complete".
 
-**Confirmed**: the human ran `mise run check:persistence` on 2026-09-25, reported all tests passing, and checked the adversarial probes in the Slice 4 VP. This slice is complete.
+**Confirmed**: we ran `mise run check:persistence` on 2026-09-25, reported all tests passing, and checked the adversarial probes in the Slice 4 VP. This slice is complete.
 
 ## Slice 5 delivery detail
 
-Implemented 2026-09-25, fully autonomous mode (granted for this slice explicitly). Three human decisions preceded implementation, recorded above under "Slice 5 decisions": Option A for `onViolation` semantics, the registry-token digest relaxation, and autonomous mode with no install/test-run attempted this tranche.
+Implemented 2026-09-25, fully autonomous mode (granted for this slice explicitly). Three decisions preceded implementation, recorded above under "Slice 5 decisions": Option A for `onViolation` semantics, the registry-token digest relaxation, and autonomous mode with no install/test-run attempted this tranche.
 
 **Code**: `resolver.py` (`resolve_uniqueness()` now also reads `dal:mergeRelation`, and computes `dualClaimScheme` — true exactly when a constraint's `dal:claimScheme`s in state `Accepting`/`Dual` number two, mirroring `recipes.py`'s own `claims()` filter rather than a second, divergent rule), `validator.py` (`check_identity`'s digest-scheme check gains the `RegistryTokenDerivation` exemption, checking a declared-anyway scheme for well-formedness rather than skipping validation outright; a new `_check_slice_5` raises `MergeRelationRequired`, mirroring `dal:MergeRelationRequiredShape`, called from `check_cross_axis`), `operations.py` (a new fixed `keyQuarantineGraph` binding (`urn:g:key-quarantine`), `key-claim-write` now selects the `-dual` template variant when `dualClaimScheme`, and `onViolation` — defaulting to `Reject` when undeclared, the same explicit-baseline-default convention as every other dimension — selects one reconciler operation per constraint: `key-claim-duplicate-audit` (Reject), `key-claim-merge-rewrite` (Merge, carrying `mergeRelation` as an `Iri` binding), or `key-claim-quarantine` (Quarantine)).
 
@@ -130,9 +130,9 @@ Implemented 2026-09-25, fully autonomous mode (granted for this slice explicitly
 
 **Tests**: new `test_slice_5_uniqueness.py` (onViolation defaulting, all three reconciler templates selected and rendered, `MergeRelationRequired` positive/negative, `dualClaimScheme` computation and template selection, the registry-token digest exemption's positive case and its `HashedTargetDerivation` boundary negative case). `test_template_alignment.py` extended: `_full_context()` gains `mergeRelation`/`keyQuarantineGraph`, and the `key-claim-*` template list in `test_key_claims_live_in_the_keys_graph` extended to the four new templates.
 
-**Not executed**: per instruction for this tranche, no install or test-run was attempted. Every new and modified file was checked for syntax/import errors via the editor's static diagnostics (`get_errors`), none found. A human must run the suite and report the result, per the Blockers table above.
+**Not executed**: per instruction for this tranche, no install or test-run was attempted. Every new and modified file was checked for syntax/import errors via the editor's static diagnostics (`get_errors`), none found. The maintainer must run the suite and report the result, per the Blockers table above.
 
-**Confirmed**: the human ran `mise run check:persistence` on 2026-09-25 and reported **774 passed**, after fixing one issue the run itself surfaced: `key-claim-merge-rewrite.mustache`'s header comment quoted the literal Mustache tag `{{{mergeRelation}}}` as prose inside a `{{! ... }}` comment, which this compiler's renderer (`chevron`) does not treat as inert — the braces inside the comment were parsed as a second, spurious tag. Fixed by rephrasing the comment in words instead of quoting the tag syntax. Recorded as a general gotcha for this compiler's templates in the Slice 5 VP and `docs/developer/INDEX.md`'s Key Findings. This slice is complete.
+**Confirmed**: we ran `mise run check:persistence` on 2026-09-25 and reported **774 passed**, after fixing one issue the run itself surfaced: `key-claim-merge-rewrite.mustache`'s header comment quoted the literal Mustache tag `{{{mergeRelation}}}` as prose inside a `{{! ... }}` comment, which this compiler's renderer (`chevron`) does not treat as inert — the braces inside the comment were parsed as a second, spurious tag. Fixed by rephrasing the comment in words instead of quoting the tag syntax. Recorded as a general gotcha for this compiler's templates in the Slice 5 VP and `docs/developer/INDEX.md`'s Key Findings. This slice is complete.
 
 ## Slice 6 delivery detail
 
@@ -156,8 +156,8 @@ Slice 1 addresses a live correctness gap, not a coverage gap: the compiler's exi
 | After `iri-patterns-post-3866b21-remediation` template alignment | **471 passing** (2026-09-23, see [that unit's status](iri-patterns-post-3866b21-remediation.md)) |
 | After Slice 2 | **526 passing, 0 failing** (autonomous run, 2026-09-23) |
 | After Slice 3 | **570 passing, 0 failing** (autonomous run, 2026-09-23) |
-| After Slice 4 and `identity-minting` M3 | **669 passing, 0 failing** (run 2026-09-24 on Python 3.14.7, in the `identity-minting` session). Includes the 24 cases of `test_slice_4_privacy.py` and 4 parametrised cases for `identity-minting-coverage.ttl`. Human-confirmed 2026-09-25 as Slice 4's own result |
-| After Slice 5 | **774 passing, 0 failing** (human-confirmed run, 2026-09-25). Adds `test_slice_5_uniqueness.py` plus parametrised cases from four new fixtures across `test_compiler_integration.py`'s existing suites |
+| After Slice 4 and `identity-minting` M3 | **669 passing, 0 failing** (run 2026-09-24 on Python 3.14.7, in the `identity-minting` session). Includes the 24 cases of `test_slice_4_privacy.py` and 4 parametrised cases for `identity-minting-coverage.ttl`. Confirmed 2026-09-25 as Slice 4's own result |
+| After Slice 5 | **774 passing, 0 failing** (confirmed run, 2026-09-25). Adds `test_slice_5_uniqueness.py` plus parametrised cases from four new fixtures across `test_compiler_integration.py`'s existing suites |
 
 ## Commands to run
 

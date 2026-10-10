@@ -53,7 +53,7 @@ Follow every step for any change to `ontology/**/spec/`, `ontology/**/vocab/`, o
    note. Leave alone `docs/architecture/ontology-releases.md` (generated),
    `tools/test_ontology_releases.py` and `tools/fixtures/import_guard/`.
 5. **Regenerate:** `mise run build:ontology-catalog`, then `mise run build:ontology-releases`, which
-   adds a row per new version and prints the tags to create. The tags are the human's (skill
+   adds a row per new version and prints the tags to create. The tags are the maintainer's (skill
    `lattice-lifecycle`).
 6. **Record the release** in the "Release notes" section of every README that has one, re-pins
    included.
@@ -155,7 +155,7 @@ anything, check:
 - **Who reads it without a reasoner.** SHACL and the compilers read asserted triples. A fact moved
   into an axiom disappears for them.
 - **Cross-check the roadmap.** Search every sketch and plan naming the term for a scenario the
-  simplification breaks, and discuss it with the human if one exists.
+  simplification breaks, and discuss it with the maintainer if one exists.
 - **An accepted ADR wins.** A simplification contradicting one is a new decision.
 
 ## SHACL-SPARQL shapes

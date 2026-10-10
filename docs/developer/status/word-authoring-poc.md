@@ -3,8 +3,8 @@
 # Word authoring proof of concept - Status
 
 **Unit ID:** `word-authoring-poc`
-**Status:** 🟡 Awaiting human validation. WA0 to WA11 done (WA11 is documentation and the manual Word
-checklist, M1 to M14, which only the human can run)
+**Status:** 🟡 Awaiting validation. WA0 to WA11 done (WA11 is documentation and the manual Word
+checklist, M1 to M14, which only the maintainer can run)
 **Last updated:** 2026-10-02
 **Plan:** [word-authoring-poc.md](../plans/word-authoring-poc.md)
 **Sketch:** [word-authoring-poc.md](../sketches/word-authoring-poc.md)
@@ -14,7 +14,7 @@ checklist, M1 to M14, which only the human can run)
 ## Current position
 
 The design and a one-shot plan of thirteen slices (WA0 to WA11, with WA9a) are written. Decisions
-WA-D1 to WA-D13 were recorded by the human on 2026-10-01: WA-D4 is Javalin, the rest follow the
+WA-D1 to WA-D13 were recorded 2026-10-01: WA-D4 is Javalin, the rest follow the
 recommendations. ADR-A118 stays Proposed. WA0 to WA9 are done: preflight, the WA1 contracts, the
 WA2 service module that maps a snapshot to the Wording graph and validates it with SHACL, the WA3
 detection, template and conformance checks, the WA4 HTTP API over Javalin with an in-memory store,
@@ -38,18 +38,18 @@ added "How the proof of concept fits together" and "Load the add-in in Word" to 
 README (architecture, request-flow and data-construction Mermaid diagrams, plus sideloading for
 Word on the web, desktop Word, and central deployment), re-ran every automated check
 (`check:authoring`, `check:java`, `check:workers`, `check:ontology-versioning`,
-`check:ontology-catalog`, `topology:links`), and recorded the manual Word checklist for the human
+`check:ontology-catalog`, `topology:links`), and recorded the manual Word checklist for the maintainer
 to complete.
 
-**Next action, for the human:** complete the manual checklist (M1 to M14) in the
+**Next action, for the maintainer:** complete the manual checklist (M1 to M14) in the
 [WA11 Validation Pack](../validation/word-authoring-poc-wa11.md), sign off, then decide whether to
 push `ux/auth-le`. Separately, record decisions WA-D14 to WA-D20 (plan §3) if the follow-on
 tranche below is to proceed.
-**Next action, for the agent:** none on WA0 to WA11. WA12 onward wait on WA-D14 to WA-D20.
+**Next action:** none on WA0 to WA11. WA12 onward wait on WA-D14 to WA-D20.
 
 ## Follow-on tranche drafted (2026-10-02)
 
-At the human's request, the sketch and plan were extended with three further enhancements: richer,
+At our request, the sketch and plan were extended with three further enhancements: richer,
 more deeply nested sample data (deferred until the CCS workstream completes), a web authoring app
 editing the same documents without Word, and parity brought back to the Word add-in. See
 [sketch §8](../sketches/word-authoring-poc.md#8-follow-on-enhancements-proposed-2026-10-02) for the
@@ -192,7 +192,7 @@ reverted. No replacement test was needed. Detail in the
 | P2 | `mise run check:java` | pass | BUILD SUCCESS, 8 modules. A warning that the `oss.sonatype.org` snapshots repository fails TLS (PKIX) did not affect the build |
 | P3 | new Maven artefacts | pass | jena-arq, jena-shacl, jena-rdfconnection 5.1.0, jackson-databind 2.18.2, json-schema-validator 1.5.6, amqp-client 5.22.0, slf4j-simple 2.0.16, javalin 6.7.0, testcontainers 2.0.2, shade 3.6.0, failsafe 3.5.0 |
 | P4 | Python packages through the mirror | pass | host: rdflib 7.6.0, pika 1.4.4, jsonschema 4.26.0 with attrs, referencing, jsonschema-specifications and rpds-py (cp314 win_amd64). Linux pure wheels: rdflib, pika, pyparsing 3.3.3 |
-| P5 | Node, Yarn, npm registry | pass on re-run | first run failed (`NODE_EXTRA_CA_CERTS` unset). The human set it at user level to the Zscaler root CA under `C:\Program Files (x86)\MSIRepair\`. Re-run: Yarn 4.6.0 runs, `yarn npm info vitest` answers. A shell opened before the change must load it from the user environment |
+| P5 | Node, Yarn, npm registry | pass on re-run | first run failed (`NODE_EXTRA_CA_CERTS` unset). We set it at user level to the Zscaler root CA under `C:\Program Files (x86)\MSIRepair\`. Re-run: Yarn 4.6.0 runs, `yarn npm info vitest` answers. A shell opened before the change must load it from the user environment |
 | P6 | Docker | pass on re-run | first run failed (engine not running). Re-run: Linux engine 29.8.0, API 1.56. All five images pulled. The Fuseki image has both `wget` and `curl`, so WA10's health check stands as written |
 | P7 | Edge for Playwright | pass | `msedge.exe` present |
 
@@ -212,7 +212,7 @@ reverted. No replacement test was needed. Detail in the
 | WA9 | Add-in task pane and harness | done | `e567990` | WA8 |
 | WA9a | Ribbon and right-click commands | done | `d16c4e0` | WA9, WA-D13 |
 | WA10 | Compose stack | done | `9a34ced` | WA5, WA7, WA9a |
-| WA11 | Documentation and close-out | done, pending human sign-off | `678c9b9` | WA10 |
+| WA11 | Documentation and close-out | done, pending the maintainer's sign-off | `678c9b9` | WA10 |
 
 ## Token use
 
@@ -235,18 +235,19 @@ reverted. No replacement test was needed. Detail in the
 
 ## History
 
-- 2026-10-02: the human reports that the POC runs successfully. At their request, a deferred
+- 2026-10-02: we reported that the POC runs successfully. At our request, a deferred
   published-Wording adoption assessment was added to sketch section 4.1.1 and the plan's
   deferred follow-up section. No runtime or ontology changes, no tranche scheduled, and no
-  manual-checklist sign-off inferred. The human will decide when to pick up the work.
+  manual-checklist sign-off inferred. The maintainer will decide when to pick up the work.
 - 2026-10-01: sketch, plan, status record and ADR-A118 (Proposed) written on `ux/auth-le`. No
-  ontology change, so no release tag is due.- 2026-10-01: slice WA9a added at the human's request: ribbon group and right-click commands for
+  ontology change, so no release tag is due.
+- 2026-10-01: slice WA9a added at our request: ribbon group and right-click commands for
   marking text, decision WA-D13 (shared runtime), checklist steps M11 to M14, risk R8.
-- 2026-10-01: decisions WA-D1 to WA-D13 recorded by the human. WA-D4 is Javalin (pinned 6.7.0, the
+- 2026-10-01: decisions WA-D1 to WA-D13 recorded. WA-D4 is Javalin (pinned 6.7.0, the
   plan's WA4 adapter rewritten for it), the rest as recommended. ADR-A118 decision 6 names Javalin.
 - 2026-10-01: WA0 preflight run in autonomous mode. P1 to P4 and P7 pass, P5 and P6 fail (above).
   Committed with the unit's planning documents as `[wap] WA0: preflight` (`a0758ae`).
-- 2026-10-01: P5 and P6 re-run after the human set `NODE_EXTRA_CA_CERTS` and started Docker
+- 2026-10-01: P5 and P6 re-run after we set `NODE_EXTRA_CA_CERTS` and started Docker
   Desktop. Both pass. All preflight checks now pass.
 - 2026-10-01: WA1 done (`3db3911`, hash recorded `07acc66`).
 - 2026-10-01: WA2 done: `platform/authoring-service` (new Maven module: `json`, `model`, `rdf`,
@@ -262,7 +263,7 @@ reverted. No replacement test was needed. Detail in the
   `mise.toml`. Validation Pack at `docs/developer/validation/word-authoring-poc-wa1.md`. Self-probe
   confirmed (AC-02 catches a missing `additionalProperties: false`). Full `check:workers` (73
   tests) still passes.
-- 2026-10-01: the WA2 Java sources reviewed for simplicity at the human's request, in "ponytail"
+- 2026-10-01: the WA2 Java sources reviewed for simplicity at our request, in "ponytail"
   mode (`.github/prompts/ponytail.md`). Seven files, 57 insertions and 91 deletions, no behaviour
   change: `WordingMapper` holds one `IriMinter`, `CanonicalHash.canonicalText` is the single place
   the fixture text is formed, `SnapshotReader` uses one list helper, `IriMinter` one validator.
@@ -411,12 +412,12 @@ reverted. No replacement test was needed. Detail in the
   (69 Vitest) and the mocked `e2e/` Playwright suite (13 tests) were re-run and still pass,
   confirming the `HttpApiClient` fix caused no regression.
 - 2026-10-02: WA10 committed as `9a34ced`.
-- 2026-10-02: the stack taken down (`docker compose down`) at the human's request, then WA11 done:
+- 2026-10-02: the stack taken down (`docker compose down`) at our request, then WA11 done:
   the add-in's `README.md` gained "How the proof of concept fits together" (an architecture
   diagram, a request-flow sequence diagram, and a data-construction diagram, all Mermaid) and
   "Load the add-in in Word" (Word on the web, desktop Word's registry sideload, and central
   deployment, each with how to remove it). The Mermaid diagrams go beyond the plan's own WA11
-  scope, at the human's explicit request ("awash with mermaid diagrams... how everything is glued
+  scope, at our explicit request ("awash with mermaid diagrams... how everything is glued
   together... how the data has been constructed"). One-line cross-references added to
   `platform/authoring-service/README.md` and `workers/README.md`, pointing back to the add-in's
   diagrams rather than duplicating them. `mise run check:authoring` (contracts 35, tools 4, worker
@@ -425,5 +426,5 @@ reverted. No replacement test was needed. Detail in the
   `check:ontology-catalog` (84) all pass. `topology:links` fails with 62 pre-existing broken links
   in unrelated sketches, status files and one ADR, none touched by this unit, recorded rather than
   silently dropped. Validation Pack at `docs/developer/validation/word-authoring-poc-wa11.md`,
-  with the manual Word checklist (M1 to M14) left for the human to complete and sign off.
+  with the manual Word checklist (M1 to M14) left for the maintainer to complete and sign off.
 - 2026-10-02: WA11 committed as `678c9b9`.

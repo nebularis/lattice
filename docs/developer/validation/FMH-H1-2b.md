@@ -5,7 +5,7 @@
 **Unit:** [`formal-methods-track-h`](../status/formal-methods-track-h.md), slice H1.2, part b
 ([plan §3, H1.2](../plans/formal-methods-track-h.md), split by H-D8)
 **Builds on:** [FMH-H1.2a](FMH-H1-2.md), the harness and the audit witnesses.
-**Decisions:** none new. The patch fixture format is described below for the human to confirm.
+**Decisions:** none new. The patch fixture format is described below for the maintainer to confirm.
 
 ## Invariant
 
@@ -76,7 +76,7 @@ witness it. It exits 0 and shows `72 of 85 rule(s) witnessed, 13 listed gap(s), 
 
 ## Adversarial probes
 
-Run by the agent on 2026-10-09, each reverted afterwards.
+Run on 2026-10-09, each reverted afterwards.
 
 | Mutation | Result |
 |---|---|

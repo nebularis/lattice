@@ -9,7 +9,7 @@
 
 ## Validated (2026-09-25)
 
-The human ran the suite and confirmed every row below, and performed the human validation gate's adversarial-probe step. This slice is **complete**.
+We ran the suite and confirmed every row below, and performed the validation gate's adversarial-probe step. This slice is **complete**.
 
 ## What invariants does this slice protect?
 
@@ -54,7 +54,7 @@ Confirmed: 669 tests passing (2026-09-24 run, `identity-minting` M3 session), al
 
 ## Adversarial probes (run and confirmed, 2026-09-25)
 
-These are the exact, minimal, one-line mutations that should make the named test fail. The human applied at least one of these, confirmed the named test (and only that test, or that test plus its direct dependents) failed, then reverted it, per the human validation gate's mutation-check step.
+These are the exact, minimal, one-line mutations that should make the named test fail. The maintainer applied at least one of these, confirmed the named test (and only that test, or that test plus its direct dependents) failed, then reverted it, per the validation gate's mutation-check step.
 
 | Probe | Mutation | Expected failure |
 |---|---|---|

@@ -703,7 +703,7 @@ Chapter 30.4's existing Phase‑0 correction remains valid and is amended: the e
 
 ## 6. Decisions required from humans
 
-This plan specifies mechanisms; seven choices are not the agent's to make.
+This plan specifies mechanisms; seven choices are the maintainer's to make.
 
 1. **Epoch coordinator.** Which external store holds the epoch high-water mark and the erasure register, and who operates it. Everything in Gate 1 and Gate 3 depends on this existing.
 2. **Occurrence IRI determinism.** This plan recommends keeping deterministic revision IRIs and moving detection to txn cardinality (WP‑2). The alternative — random occurrence surrogates with position properties (catalogue §10.6) — restores subject-count fork detection but forfeits lexical range scans and the ground client template. A one-way decision.

@@ -16,7 +16,7 @@ questions needed a running engine.
 1. What does a composite-boundary replace leave behind when the shape reaches more than one other
    node ([FMH-H1.4a](../../docs/developer/validation/FMH-H1-4a.md))?
 2. What does the append update do when the caller leaves out a `$parameter`
-   ([plan §13.4](../../docs/developer/plans/formal-methods-track-h.md), TD-26)?
+   ([plan §13.4](../../docs/developer/plans/formal-methods-track-h.md), TD-34)?
 
 The project's own tests answer both on **rdflib**. This spike adds **Oxigraph**, an independent
 Rust implementation, so the answer does not rest on one engine. They agree on every scenario.

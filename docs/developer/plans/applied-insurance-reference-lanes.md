@@ -15,12 +15,12 @@ merges what. Slice content stays in the phase plans.
 
 Three rules follow:
 
-- **The human runs the branching and merging.** Agents must not run the git commands this plan
+- **The maintainer runs the branching and merging.** Agents must not run the git commands this plan
   gives for creating, switching, fetching, pulling, pushing, bundling, rebasing or merging
   branches (§3, §6). They may run any other local git command their normal workflow needs, such
-  as `git status`, `git diff`, `git log` or committing on the branch the human has checked out.
-  When a step needs one of the human's commands, the agent stops and says so. The one exception:
-  machine R's agent may run them when the human explicitly asks it to. Machine S's agent never
+  as `git status`, `git diff`, `git log` or committing on the branch the maintainer has checked out.
+  When a step needs one of the maintainer's commands, the agent stops and says so. The one exception:
+  machine R's agent may run them when we explicitly ask it to. Machine S's agent never
   does.
 - **Branches are created, pushed and merged on R only.** S pulls, works and hands its commits
   back as a bundle (§3).
@@ -81,7 +81,7 @@ AIR-6.1, because each substrate bump makes every merged applied module re-pin it
 
 ## 3. The round trip for an S slice
 
-Every command in this section is run by the human. Machine R pushes to the `origin-ssh` remote
+Every command in this section is run by a maintainer. Machine R pushes to the `origin-ssh` remote
 (SSH avoids GitHub's HTTP authentication). Machine S only fetches, from `origin`.
 
 **On R**, create and push the branch:
@@ -170,12 +170,12 @@ A slice moves through these states. The machine named in the last column sets ea
 | State | Meaning | Set by |
 |---|---|---|
 | `waiting` | its "Branch after" slices are not all on `main` | — |
-| `waiting for branch` | it may start once the human creates its branch | R, at the end of a round |
+| `waiting for branch` | it may start once the maintainer creates its branch | R, at the end of a round |
 | `in progress` | the agent is building it on its branch | the building machine |
-| `handed over` | S's work is committed and the human has bundled it to R | S |
+| `handed over` | S's work is committed and we have bundled it to R | S |
 | `built` | R's own work is committed and ready to verify | R |
 | `verifying` | R is running its checks (§6) | R |
-| `signed off` | the human has recorded it in `LOG.md` | R |
+| `signed off` | we have recorded it in `LOG.md` | R |
 | `merged` | it is on `main`, with a row in the merge log | R |
 
 **Handoff notes go in the Validation Pack**, `docs/developer/validation/applied-insurance-reference-<slice>.md`,
@@ -194,8 +194,8 @@ section's newest version: the sections are disjoint, so this never loses informa
 
 For each branch, in the order of the round's merge column:
 
-1. **Rebase (human).** `git rebase main` on the branch, then `git push --force-with-lease origin-ssh air/<slice>`. The
-   agent may help resolve conflicting files, and the human continues the rebase.
+1. **Rebase (maintainer).** `git rebase main` on the branch, then `git push --force-with-lease origin-ssh air/<slice>`. The
+   agent may help resolve conflicting files, and the maintainer continues the rebase.
 2. **Regenerate catalogs and release rows (agent):** `mise run build:ontology-catalog`, and after
    any version bump `mise run build:ontology-releases`, which adds a row to
    `docs/architecture/ontology-releases.md` for each new version and lists the tags to create.
@@ -211,12 +211,12 @@ For each branch, in the order of the round's merge column:
 5. **Fix failures (agent).** Copilot Pro+ first for simple ones. Claude when the fix needs a design
    judgement. A failure on an S branch that S's own self-verification already passed is worth
    flagging as environment drift, not just fixing and moving on.
-6. **Sign off (human).** The human runs the validation gate (review the pack, run the command, inspect
+6. **Sign off (maintainer).** The maintainer runs the validation gate (review the pack, run the command, inspect
    the artefacts, one adversarial probe) and adds the slice to `docs/developer/validation/LOG.md`.
 7. **Record (agent).** On the branch: the slice's state becomes `merged` in its machine's
    section, a merge log row is added, and at a round's last merge the Round section and the
    epic's `INDEX.md` entry are updated.
-8. **Merge (human).** `git switch main && git merge --ff-only air/<slice>`, then `git push origin-ssh main`.
+8. **Merge (maintainer).** `git switch main && git merge --ff-only air/<slice>`, then `git push origin-ssh main`.
    Create the release tags step 2 listed and push them to `origin-ssh`. Delete the branch.
 
 ## 7. Critical path
@@ -235,4 +235,4 @@ also on the path, because 3.5 reads `aeo:LossCause`.
 | `ontology/applied/README.md`, `ontology-architecture.md` §3 | one row per module, added by the slice that creates the module |
 | the status record | each machine edits only its own section (§5) |
 | `docs/developer/INDEX.md` | R updates the epic's entry at each round's last merge (§6 step 7) |
-| `docs/developer/validation/LOG.md` | the human's only |
+| `docs/developer/validation/LOG.md` | the maintainer's only |

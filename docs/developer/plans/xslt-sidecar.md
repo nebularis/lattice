@@ -3,7 +3,7 @@
 # Plan: Bidirectional XSLT transformation sidecar
 
 **Unit ID:** `xslt-sidecar` (XS)
-**Unit type:** multi-slice unit, human validation gate per slice
+**Unit type:** multi-slice unit, validation gate per slice
 **Status:** Decisions XS-D1 to XS-D7 proposed 2026-10-02, none recorded. ADR-A119 Proposed. No
 slice may start
 **Sketch:** [xslt-sidecar.md](../sketches/xslt-sidecar.md) (the design, cited below as "sketch §n")
@@ -21,9 +21,9 @@ and does not guess at its own field names, routes or file layout in the meantime
 ## No implementation is authorised yet
 
 This plan and its sketch are a design response to a request to explore the idea. **No slice may
-start until the human records decisions XS-D1 to XS-D7** (sketch §11), in the same way the word
+start until the maintainer records decisions XS-D1 to XS-D7** (sketch §11), in the same way the word
 authoring proof of concept could not start before its own WA-D1 to WA-D13 were recorded. Recording
-them is the human's decision, not the agent's, on every one of the seven.
+them is our decision, on every one of the seven.
 
 ---
 
@@ -84,14 +84,14 @@ The unit is accepted when:
 
 As the word authoring POC's own §2.1: one local commit per slice, message
 `[wap-xs] XS<n>: <slice title>` (`wap-xs` distinguishes this unit's commits from `word-authoring-poc`'s
-`[wap]` ones in `git log`), no push, final push left to the human.
+`[wap]` ones in `git log`), no push, final push left to the maintainer.
 
 ---
 
 ## 3. Decisions
 
 Decisions XS-D1 to XS-D7 are recorded in [sketch §11](../sketches/xslt-sidecar.md#11-decisions), not
-duplicated here. None may be taken by the agent. No slice below may start until the decisions its own
+duplicated here. None is taken without the maintainer. No slice below may start until the decisions its own
 precondition line names are recorded.
 
 ---
@@ -273,10 +273,10 @@ sibling. A new `tools/mork2xslt.py` docstring matching its style.
 
 As the word authoring POC's own WA11/WA19: root `README.md` gains the new paths. `docs/developer/INDEX.md`
 entry updated with slice states and links to the Validation Packs. The status record set to
-"awaiting human validation" with actual token use per slice. `mise run check:java`,
+"awaiting the maintainer's validation" with actual token use per slice. `mise run check:java`,
 `check:mork-compilers` (or whichever task now covers the factored module), `check:ontology-catalog`,
 `topology:links` run and recorded. Prose check of every changed Markdown file. ADR-A119 is left
-Proposed: moving it to Accepted is the human's decision, not a slice output.
+Proposed: moving it to Accepted is our decision, not a slice output.
 
 **Commit:** `[wap-xs] XS6: documentation and close-out`.
 
@@ -313,7 +313,7 @@ Risks XS-R1 to XS-R6 are recorded in
 | # | Risk (plan-execution specific, not already in the sketch) | Mitigation |
 |---|---|---|
 | P1 | XS5's refactor of `mork2rml.py` is attempted before XS4 gives it a second backend to prove itself against, so the refactor's correctness rests on inspection alone | the slice order (§4) puts XS4 before XS5 for exactly this reason |
-| P2 | The sidecar (XS3) is built against ADR-A81 before `platform/runtime-host` exists, and later needs a second migration once it does | sketch open question XS-Q1 names this explicitly as a decision for the human, not an assumption this plan makes |
+| P2 | The sidecar (XS3) is built against ADR-A81 before `platform/runtime-host` exists, and later needs a second migration once it does | sketch open question XS-Q1 names this explicitly as a decision for the maintainer, not an assumption this plan makes |
 
 ---
 
@@ -321,5 +321,5 @@ Risks XS-R1 to XS-R6 are recorded in
 
 After XS6 the agent's last message lists, in order: the commits made (`git log --oneline
 <first>^..HEAD`), the Validation Packs, any blocker or deviation, and a note that ADR-A119 remains
-Proposed pending the human's own review, not advanced by the agent. No ontology document changes in
+Proposed pending our own review, not advanced before then. No ontology document changes in
 this unit, so no release tag is due.

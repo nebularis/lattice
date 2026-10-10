@@ -3,7 +3,7 @@
 # Validation Pack: CCS C1, ADR-A104 Instrument terms and legal relations
 
 **Unit:** [`computable-contract-substrate`](../status/computable-contract-substrate.md)
-**Machine:** R (Claude Code). **Branch:** `ccs/c0-adrs` (tranche A on one branch)
+**Machine:** R. **Branch:** `ccs/c0-adrs` (tranche A on one branch)
 **Plan and test cases:** [CCS plan](../plans/computable-contract-substrate.md) (C1 in detail)
 **Decisions:** CC-D5, CC-D8, CC-D10, CC-D11
 
@@ -39,8 +39,8 @@ Nested states, history and concurrent regimes (C11a). The expression construct b
 - **Built:** ADR-A104, its index row, A-07b marked superseded on acceptance.
 - **Not run:** nothing beyond the link and prose checks, as planned.
 - **Check first:** decision 2 and laws I17 and I18, added after review (CC-D12).
-- **Deviations from the plan:** the brief was written on the tranche branch, not on `main`, at the
-  human's instruction to complete tranche A in one run. Revised after review for CC-D12 and the
+- **Deviations from the plan:** the brief was written on the tranche branch, not on `main`, at our
+  instruction to complete tranche A in one run. Revised after review for CC-D12 and the
   settled points, and re-verified.
 
 ## Results

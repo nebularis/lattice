@@ -11,7 +11,7 @@
 
 The repository currently exposes ontology layers, MORK, SPC, applied domains, governance material, examples, developer plans, handoffs, status records, and architecture decisions through several unrelated roots. This makes semantic ownership unclear, places MORK and SPC implementation code beside their semantic assets, and leaves `docs/developer/current/` unable to distinguish a plan from the current state of implementation.
 
-The repository needs a topology that separates semantic assets from executable implementations while retaining the current toolchain boundaries. It also needs a documentation lifecycle that gives human and agent implementors one authoritative status record and one review request for every active unit of work.
+The repository needs a topology that separates semantic assets from executable implementations while retaining the current toolchain boundaries. It also needs a documentation lifecycle that gives every implementor one authoritative status record and one review request for every active unit of work.
 
 ## Decision
 
@@ -42,7 +42,7 @@ The repository needs a topology that separates semantic assets from executable i
 
 1. `docs/developer/plans/` holds plans and changes only when the plan changes.
 2. `docs/developer/status/` holds the one authoritative current state for each active unit and changes after every material implementation or validation event.
-3. `docs/developer/review/` holds the current human review request for each active unit, including exact `mise` commands, pass criteria, artifacts, and the matching status link.
+3. `docs/developer/review/` holds the current review request for each active unit, including exact `mise` commands, pass criteria, artifacts, and the matching status link.
 4. Unit identifiers are stable and shared by matching plan, status, and review files.
 5. `docs/developer/current/` is removed once existing records are classified and migrated.
 6. `docs/developer/` root retains durable implementation guidance only.
@@ -57,4 +57,4 @@ ADR-A29 remains in force. `mise` is the sole orchestration entry point. Maven, Y
 - MORK and SPC implementation dependency surfaces stop being mixed with ontology assets.
 - A repository-wide link and path rewrite is required, including `docs/index.html`, `docs/book.html`, and documentation includes.
 - The migration requires path-manifest, ownership, and documentation-lifecycle validation before source roots move.
-- Agents must follow the new plans, status, and review lifecycle once the proposed companion instructions are approved and activated.
+- Contributors must follow the new plans, status, and review lifecycle once the proposed companion instructions are approved and activated.

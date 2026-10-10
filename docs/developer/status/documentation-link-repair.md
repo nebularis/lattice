@@ -9,7 +9,7 @@
 
 ## Current position
 
-Planned at the human's request on 2026-09-25. No slice has started. The
+Planned at our request on 2026-09-25. No slice has started. The
 baseline is 419 broken links (340 distinct), 290 of them in the ignored
 `docs/_site/` build output.
 

@@ -5,8 +5,8 @@
 **Status:** Proposed
 **Date:** 2026-09-23
 **Related:** Architecture Review §2.1 (G-22), ADR-A50, `solution-design-specification.md` §4.2
-**Note on numbering:** The epic plan (`lattice-platform-agentic-development-v0.2.md`, P0.1.10) refers to this decision as "ADR-A44 amended." The existing [ADR-A44](ADR-A44-mork-teaching-pack-generated-content-boundary.md) is an accepted, unrelated decision (MORK Teaching Pack generated-content boundary). To avoid corrupting that decision, this content is recorded as a new ADR at the next free number (A81; A77–A80 already exist) rather than as an amendment to A44. This renumbering is itself a decision made without human confirmation in this autonomous session — flag for review.
-**Drafted by:** Agent, autonomous session (P0.1.10). Pending human ratification — see [phase-0-status.md](../../developer/status/phase-0-status.md).
+**Note on numbering:** The epic plan (`lattice-platform-agentic-development-v0.2.md`, P0.1.10) refers to this decision as "ADR-A44 amended." The existing [ADR-A44](ADR-A44-mork-teaching-pack-generated-content-boundary.md) is an accepted, unrelated decision (MORK Teaching Pack generated-content boundary). To avoid corrupting that decision, this content is recorded as a new ADR at the next free number (A81; A77–A80 already exist) rather than as an amendment to A44. This renumbering is itself a decision made without the maintainer's confirmation in this autonomous session — flag for review.
+**Drafted in:** P0.1.10. Pending ratification — see [phase-0-status.md](../../developer/status/phase-0-status.md).
 
 ## Context
 

@@ -19,7 +19,7 @@ budget; per the phase-0 plan's own decision rule, this is the "both complete it"
 
 The plan's weighted measures (M0 to M9, §4) scored Rocq and Isabelle at 66.5 and 65.5 of 105, a
 1.0-point margin under the plan's 5-point tie threshold, broken by M0 in Rocq's favour. On review,
-the human found two faults in that scoring, not in the tracks' evidence:
+we found two faults in that scoring, not in the tracks' evidence:
 
 1. **M9 ("consistency with prior choices") rewarded continuity with a decision the programme
    never made.** Its evidence was the engine notes' recommendation of "OCaml with Rocq" for an
@@ -54,7 +54,7 @@ on filesystem sort order, fixed in `c4075a6`), not in either track's mathematics
 
 1. **Isabelle/HOL (Isabelle2025-2 at the time of the spike) is the proof assistant for the
    formal-methods prover programme (FM-D1).** Track E proceeds against it. The decision follows
-   the corrected scoring's outright win, not an overrule of the plan's decision rule: the human
+   the corrected scoring's outright win, not an overrule of the plan's decision rule: the maintainer
    confirmed the result rather than imposing a different one, on the strength of concrete,
    measured advantages this spike could observe directly (a cheaper MINOR-change repair, a
    native OCaml list mapping needing no adapter, a demonstrated second code-generation target, a
@@ -73,7 +73,7 @@ on filesystem sort order, fixed in `c4075a6`), not in either track's mathematics
    the place to start re-opening it, not a fresh spike.
 4. **What this decision does not yet settle.** Gate D (phase-0 plan §9) is not fully closed:
    Isabelle has no image route in this spike (only Rocq's does), so the smoke-suite criterion is
-   unmet for the chosen prover, deferred deliberately (human instruction, 2026-10-06, to conserve
+   unmet for the chosen prover, deferred deliberately (our instruction, 2026-10-06, to conserve
    tokens; retro-fittable on another host). The epic's abandonment thresholds (`formal-methods.md`
    §6) are annotated with this spike's measurements but not recalibrated, since they were measured
    against a toy few-dozen-line theory, not a production-scale layer. FM-D2 (where track E's real

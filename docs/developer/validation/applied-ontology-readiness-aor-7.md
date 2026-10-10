@@ -54,7 +54,7 @@ Pass: `53 passed`.
 - `tools/mork_compilers/pyproject.toml`: a `test` extra (`pyshacl`, `pytest`),
   installed by `bootstrap:mork-compilers`.
 
-## Adversarial probe (run by the agent)
+## Adversarial probe
 
 | Mutation | Tests failed |
 |---|---|

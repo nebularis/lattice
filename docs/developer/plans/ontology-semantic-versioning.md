@@ -3,8 +3,8 @@
 # Plan: Semantic versioning for ontology documents
 
 **Unit ID:** `ontology-semantic-versioning`
-**Status:** Proposed, awaiting human review before implementation
-**Trigger:** human request, 2026-09-25
+**Status:** Proposed, awaiting the maintainer's review before implementation
+**Trigger:** request, 2026-09-25
 **Sketch:** [ontology-semantic-versioning.md](../sketches/ontology-semantic-versioning.md)
 **Status record:** [ontology-semantic-versioning.md](../status/ontology-semantic-versioning.md)
 **ADR:** [ADR-A86](../../architecture/decisions/ADR-A86-ontology-semantic-versioning.md), Proposed
@@ -120,7 +120,7 @@ names:
 
 | Slice | Scope | Test level | Gate | Status |
 |---|---|---|---|---|
-| 1 | ADR-A86, sketch, plan, status record, ADR-index and INDEX.md entries | L0 | Human review of the mapping table, versioning unit, and `0.2.0` baseline number | Done |
+| 1 | ADR-A86, sketch, plan, status record, ADR-index and INDEX.md entries | L0 | Review of the mapping table, versioning unit, and `0.2.0` baseline number | Done |
 | 2 | `ontology-versioning-policy.md`, `CONTRIBUTING.md` and `ontology-architecture.md` §2 cross-references | L0 | `mise run topology:links` finds no broken cross-reference; a second reader can classify a change using only the new document | Done |
 | 3 | Baseline reset (version numbers, base-URI normalisation, `owl:imports` cascade, per-layer changelog notes) | L0, L3 | Every affected README's `turtle-spec` block still extracts cleanly (`tools/literate_extract.py --check`); every `owl:imports` target IRI resolves to a document that exists in the tree; `reuse lint` still passes | Done, with one recorded deviation (see status record) |
 | 4 | The "changed but not bumped" check, wired into `mise` | L0 | The check fires against a fixture with content changed and version literal held constant, and stays silent against a fixture with both changed together (mutation probe) | Done |
@@ -165,5 +165,5 @@ Until then, Slices 1–3 validate via `mise run topology:links`, `tools/literate
 `docs/architecture/solution-design-specification.md`, `docs/GOVERNANCE.md`,
 the root `README.md`, and `GENAI_CONTRIBUTION.md` were checked and contain no
 ontology-version-specific mechanism this unit must synchronise. This remains
-an explicit assumption for human review, not a claim the files are
+an explicit assumption for the maintainer's review, not a claim the files are
 permanently out of scope.

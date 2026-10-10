@@ -45,7 +45,7 @@ the `lattice` plugin, and Copilot links the skills into its personal skills dire
 
 | Section | Contents |
 |---|---|
-| The contract | default and autonomous modes, never stating a check passed that was not run, pausing for design decisions, never committing, tagging, merging or pushing without the human's go-ahead |
+| The contract | default and autonomous modes, never stating a check passed that was not run, pausing for design decisions, never committing, tagging, merging or pushing without the maintainer's go-ahead |
 | Writing | no semicolons, sparing colons, no superlatives, no binary reframes, no formulaic transitions or meta-commentary, examples introduced as examples, no market words coined as technical terms, "versioned" for `fnd:Version` |
 | Privacy | the repository is public. Nothing identifying a person or a client. No secrets, private hostnames or credentials. Domain-neutral substrate text |
 | Where things are | the repository roots in one table, the documentation lifecycle in one line each, pointers to the developer guide |
@@ -65,7 +65,7 @@ plans, committing, merging, tagging releases, or reporting what comes next.*
 
 - the documentation lifecycle: sketches, plans, status, review records, the technical debt
   register's scope
-- the epic decomposition model, the slice shape, the slice sizing rule, the test taxonomy, the human
+- the epic decomposition model, the slice shape, the slice sizing rule, the test taxonomy, the maintainer
   validation gate, the non-weakening rule
 - examples first (ADR-A-C2), pausing before commits, merge before tag, branch from `main`, the
   `🔴 RELEASE TAGS REQUIRED` notice, the end-of-report markers 🔴 PLAN FIRST and 🟢 READY TO BRANCH
@@ -75,7 +75,7 @@ plans, committing, merging, tagging releases, or reporting what comes next.*
 ### `lattice-design`
 
 *Use when writing or revising a sketch, a plan brief, an ADR or a set of design questions for the
-human, or when presenting options for a modelling or architecture decision.*
+maintainer, or when presenting options for a modelling or architecture decision.*
 
 - design first: consult the ADRs, propose an ADR, keep the architecture documents current
 - writing a plan or a sketch: re-read the material, check consequences against the ontologies,
@@ -147,7 +147,7 @@ published: documentation, commit messages, examples, generated content.*
 | Thinking / Reasoning for Coding and for Writing | core |
 | Domain-neutral READMEs, market words | core (rule), `lattice-ontology-authoring` (detail) |
 
-Agent memory, kept by the human's Claude Code sessions, holds rules that belong in the library and
+Agent memory, kept by a developer's Claude Code sessions, holds rules that belong in the library and
 some that do not:
 
 | Memory | Goes to |
@@ -268,12 +268,12 @@ then against KISS.
     keeps their own list.
   - *Runtime.* Runs on staged changes, fast.
 - **(b) Rules only**, no check.
-  - *Design.* Nothing to build. Depends on the agent and the human noticing.
+  - *Design.* Nothing to build. Depends on the agent and the maintainer noticing.
 - *KISS.* (a) is small.
 
 **Leaning: (a).**
 
-**Answered by the human, 2026-10-07:** SQ1 to SQ5, each as the leaning.
+**Answered 2026-10-07:** SQ1 to SQ5, each as the leaning.
 
 ### Where the deny-list check looks
 

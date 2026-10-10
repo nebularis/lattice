@@ -3,7 +3,7 @@
 # An assembly interface for Wording, with InsurML as the insurance default
 
 **Unit:** [insurml-alignment](../plans/insurml-alignment.md), decision IMA-D17. **Status:** sketch,
-2026-10-06, for the human's review. Nothing here is ratified. The domain-neutral parts need a
+2026-10-06, for the maintainer's review. Nothing here is ratified. The domain-neutral parts need a
 Wording ADR, and the tools need a topology ADR.
 **Reads with:** the [Wording README](../../../ontology/wording/README.md) §5.11 to §5.13 and §8,
 [the bridge sketch](insurml-bridge.md) §7 to §12 (which this reframes), [the typing

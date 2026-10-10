@@ -2,7 +2,7 @@
 
 # ADR-A-FM4: Home and scope of the Persistence formal-methods track
 
-**Status:** Proposed
+**Status:** Accepted, 2026-10-10 (Track H decision H-D1), including decision 3
 **Date:** 2026-10-08
 **Related:** the formal-methods epic plan, [formal-methods-track-h.md](../../developer/plans/formal-methods-track-h.md),
 [its sketch](../../developer/sketches/formal-methods-track-h.md),
@@ -60,7 +60,7 @@ design question, detailed when that slice starts, per this epic's rolling-wave d
    bounded-scope evidence for a design or an ADR, not a proof, and neither should be read as one.
    **This is the one point in this ADR that marginally widens an existing convention** (track C's
    "home for the model" section was written describing Alloy specifically); it is named here
-   explicitly rather than assumed, for the human to confirm or redirect.
+   explicitly rather than assumed, for the maintainer to confirm or redirect.
 4. **The specification registry and the typed intermediate representation are not a new home at
    all.** Both are changes to the existing `tools/persistence` compiler's own internals — how it
    authors its rules and emits its templates — governed by that package's own existing ADRs

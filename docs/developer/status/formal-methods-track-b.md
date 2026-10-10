@@ -47,7 +47,7 @@ soundness and completeness against an independently structured BFS oracle, plus 
 direct ADR-A27 assertion. MORK's join-semilattice item and MCN's round trip remain deferred, as
 scoped. 72 tests pass in `surface.test_surface` (3 new, no regression).
 
-`ADR-A-FM3` accepted by the human, 2026-10-07.
+`ADR-A-FM3` accepted, 2026-10-07.
 
 **2026-10-09, branch `fm/eligibility-pass` (machine S), B2.2 done.** The suspected defect was
 real: `decide_concept_match(hierarchical=True, scheme=None, required={...})` fell through to the
@@ -86,7 +86,7 @@ fallback if a measured score is wanted before the mirror gap closes.
 B2.2, +2 B2.1's two new test classes, one of which itself checks 28 generated cases × 4
 candidates internally).
 
-**Next action, for the human:** review and accept this branch's work (B2.1, B2.2, plus track E's
+**Next action, for the maintainer:** review and accept this branch's work (B2.1, B2.2, plus track E's
 FM-D17/E1.4 on the same branch) so CCS's C9b3 can start. B4 still waits on CCS's C12. B5 remains
 open whenever the mirror gap clears or a hand-seeded alternative is wanted.
 
@@ -106,15 +106,15 @@ open whenever the mirror gap clears or a hand-seeded alternative is wanted.
 
 | # | Question | Owner |
 |---|---|---|
-| the overlap rule MORK's lattice-law item needs before it is pursued (deferred, not this phase) | left for a later slice | human, when that slice is scoped |
-| an RDF-to-MCN encoder (needed before MCN's round-trip property can be stated at all) | not built, not this track's job | human, if ever prioritised |
+| the overlap rule MORK's lattice-law item needs before it is pursued (deferred, not this phase) | left for a later slice | maintainer, when that slice is scoped |
+| an RDF-to-MCN encoder (needed before MCN's round-trip property can be stated at all) | not built, not this track's job | maintainer, if ever prioritised |
 
 ## Log
 
 - 2026-10-07: sketch and plan written, scoping B1-B3 (B4 confirmed still blocked on CCS's C12 by
-  reading `main` directly). B3 lightened at the human's request: the MORK join-semilattice item
+  reading `main` directly). B3 lightened at our request: the MORK join-semilattice item
   removed as a questionable claim not to be carried on assumption, MCN's round-trip item already
-  recorded as blocked (no RDF-to-MCN encoder exists). Both documents committed by the human.
+  recorded as blocked (no RDF-to-MCN encoder exists). Both documents committed.
 - 2026-10-07: B1 built and validated. `ADR-A-FM3` drafted (Proposed): home `tools/reference/`,
   scope B1-B3, restating epic principles E1 and E3. `tools/reference/eligibility/` created
   (`pyproject.toml`, `README.md`, `src/reference_eligibility/{kernel,denotation}.py`,
@@ -128,7 +128,7 @@ open whenever the mirror gap clears or a hand-seeded alternative is wanted.
   and status records corrected to retire E1.2 and point at this track's B4, and E1.3's blocked-on
   text refreshed now that track C's C2 is done (the overlap-rule ADR is the remaining blocker,
   not C2 itself).
-- 2026-10-07: `ADR-A-FM3` accepted by the human.
+- 2026-10-07: `ADR-A-FM3` accepted.
 - 2026-10-07: B2 built. `tools/reference/eligibility/tests/test_differential.py` differentially
   tests `decide_concept_match` against `tools/mork_compilers`' compiled SPARQL (executed) and
   SHACL (pySHACL), reusing that package's own fixtures (`DIAGNOSES`, `ENTITLEMENT`) and helpers

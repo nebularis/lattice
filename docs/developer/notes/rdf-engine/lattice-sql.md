@@ -38,7 +38,7 @@ rule, and any new `dal:` term is an ontology change under ADR-A86.
 14. [Costs, risks and limits](#14-costs-risks-and-limits)
 15. [Deployment options and a staged path](#15-deployment-options-and-a-staged-path)
 16. [Complexity and token estimate](#16-complexity-and-token-estimate)
-17. [Decisions for the human](#17-decisions-for-the-human)
+17. [Decisions for the maintainer](#17-decisions-for-the-maintainer)
 18. [Experiments](#18-experiments)
 - [Appendix A: Worked example](#appendix-a-worked-example)
 - [Appendix B: References](#appendix-b-references)
@@ -911,7 +911,7 @@ recurring cost (migrations per ontology release) is not included.
 
 ---
 
-## 17. Decisions for the human
+## 17. Decisions for the maintainer
 
 | # | Decision | Options | Recommendation (judgement) |
 |---|---|---|---|

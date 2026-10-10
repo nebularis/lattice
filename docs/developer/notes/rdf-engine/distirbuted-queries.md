@@ -30,7 +30,7 @@ here is a LATTICE decision.
 10. [Build, adopt or glue](#10-build-adopt-or-glue)
 11. [Token estimate](#11-token-estimate)
 12. [Risks](#12-risks)
-13. [Decisions for the human](#13-decisions-for-the-human)
+13. [Decisions for the maintainer](#13-decisions-for-the-maintainer)
 14. [Experiments](#14-experiments)
 - [Appendix A: Worked example](#appendix-a-worked-example)
 - [Appendix B: References](#appendix-b-references)
@@ -640,7 +640,7 @@ first step at a fraction of this cost.
 
 ---
 
-## 13. Decisions for the human
+## 13. Decisions for the maintainer
 
 | # | Decision | Options | Recommendation (judgement) |
 |---|---|---|---|

@@ -3,7 +3,7 @@
 # Validation Pack: CCS C11, runtime records and occasions
 
 **Unit:** [`computable-contract-substrate`](../status/computable-contract-substrate.md)
-**Machine:** R (Claude Code). **Branch:** `ccs/c11-runtime-records`
+**Machine:** R. **Branch:** `ccs/c11-runtime-records`
 **Plan and test cases:** [CCS plan](../plans/computable-contract-substrate.md) (C11 in detail)
 **Decisions:** ADR-A106 decisions 4 and 5, laws B1, B2, B6, ADR-A92, ADR-A113. Questions C11-Q1, C11-Q2 decided 2026-10-01
 
@@ -63,7 +63,7 @@ Written by the building machine when the work is committed.
   - B6 cannot tell evidence of taking effect from evidence of an external log: both are
     `fnd:hasEvidence`. Telling them apart needs the evidence kinds C12 will write.
 - **Deviations from the plan:** the record evidence and `bhv:Record`, as above.
-- **Tags for the human:** `behaviour-v0.9.0`, `behaviour-runtime-v0.9.0`, `behaviour-vocab-v0.9.0`,
+- **Tags for the maintainer:** `behaviour-v0.9.0`, `behaviour-runtime-v0.9.0`, `behaviour-vocab-v0.9.0`,
   `behaviour-shapes-v0.3.0`, `applied-capacity-execution-v0.9.0`.
 
 ## Results

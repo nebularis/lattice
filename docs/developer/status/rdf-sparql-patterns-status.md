@@ -3,9 +3,9 @@
 # RDF/SPARQL Implementation Patterns — Status Record
 
 **Unit:** `rdf-sparql-patterns-phase`
-**Status:** Slices 1 and 2 complete. ADR-A78/A79/A80 ratified. The compiler's re-sync with the vocabulary extended on 2026-09-23 is **complete** in [`persistence-compiler-iri-sync`](persistence-compiler-iri-sync.md) (Slices 1–5 done, human-validated, 774/774 passing; Slice 6 documentation close-out in progress). Slice 3 (housekeeping first cut) not started.
+**Status:** Slices 1 and 2 complete. ADR-A78/A79/A80 ratified. The compiler's re-sync with the vocabulary extended on 2026-09-23 is **complete** in [`persistence-compiler-iri-sync`](persistence-compiler-iri-sync.md) (Slices 1–5 done, validated, 774/774 passing; Slice 6 documentation close-out in progress). Slice 3 (housekeeping first cut) not started.
 **Last updated:** 2026-09-25 (persistence-compiler-iri-sync re-sync complete)
-**Owner:** Agent (autonomous execution authorised by the human; Slice 2 delivered without further pause)
+**Owner:** Agent (autonomous execution authorised; Slice 2 delivered without further pause)
 
 ---
 
@@ -21,7 +21,7 @@ ADR-A78, ADR-A79, and ADR-A80 are ratified (Status: Accepted).
 
 **2026-09-23, current position**: the sync unit has closed the epoch-guard correctness gap and the extension-property gap (526 tests), and a second review of the guide ([`iri-patterns-post-3866b21-remediation`](iri-patterns-post-3866b21-remediation.md), complete) corrected the guide and realigned the templates. The generated SPARQL's caller contract changed: payload and log-bucket lists are Mustache request-time slots, and every write records a request digest (see `tools/persistence/README.md`, "Using the generated SPARQL directly"). Identity profiles are resolved per resource role (sync Slice 3); privacy and claim-scheme profiles are still unwired (sync Slices 4–5).
 
-**2026-09-25, re-sync complete**: `persistence-compiler-iri-sync` finished Slices 4 and 5 — privacy/erasure profile resolution and checks (Slice 4), and uniqueness `dal:onViolation` reconciler operations plus `dal:ClaimScheme` `dal:Dual` rotation (Slice 5) — both human-validated. The compiler is now fully re-synced against the post-`c276afb` vocabulary: every profile dimension and SHACL shape that vocabulary added is resolved, checked, and (where it drives generated SPARQL) selected by `tools/persistence`. **774/774 tests pass** under `mise run check:persistence`. Slice 6 (documentation close-out) is that unit's own final pass.
+**2026-09-25, re-sync complete**: `persistence-compiler-iri-sync` finished Slices 4 and 5 — privacy/erasure profile resolution and checks (Slice 4), and uniqueness `dal:onViolation` reconciler operations plus `dal:ClaimScheme` `dal:Dual` rotation (Slice 5) — both validated. The compiler is now fully re-synced against the post-`c276afb` vocabulary: every profile dimension and SHACL shape that vocabulary added is resolved, checked, and (where it drives generated SPARQL) selected by `tools/persistence`. **774/774 tests pass** under `mise run check:persistence`. Slice 6 (documentation close-out) is that unit's own final pass.
 
 **Slice 3 (housekeeping first cut) has not been started** and remains scoped as written in the plan.
 
@@ -43,7 +43,7 @@ ADR-A78, ADR-A79, and ADR-A80 are ratified (Status: Accepted).
 
 ### Sketch: `docs/developer/sketches/persistence-profile-substrate.md`
 
-**Status:** ✅ Complete, remediated per human review (concurrency renamed for what it provides, the capability model rebuilt as an unconditional-requirement-plus-optional-self-check with no live-backend dependency, the compiler's canonical output made TTL rather than SPARQL text, and the hand-declared composition-property authoring surface dropped in favour of SHACL only). Governs Slice 2 and Slice 3.
+**Status:** ✅ Complete, remediated per review (concurrency renamed for what it provides, the capability model rebuilt as an unconditional-requirement-plus-optional-self-check with no live-backend dependency, the compiler's canonical output made TTL rather than SPARQL text, and the hand-declared composition-property authoring surface dropped in favour of SHACL only). Governs Slice 2 and Slice 3.
 
 ### ADRs: A78, A79, A80
 
@@ -154,4 +154,4 @@ See [`docs/traceability/matrix.csv`](../../traceability/matrix.csv).
 
 - Slice 2: [`docs/developer/validation/persistence-substrate-and-compiler.md`](../validation/persistence-substrate-and-compiler.md) ✅ complete.
 - Slice 3: `docs/developer/validation/housekeeping-first-cut.md` (to be created at slice start).
-- Sign-off log: `docs/developer/validation/LOG.md` (not yet created; human sign-off per the plan's Part 3 five-step gate is still pending).
+- Sign-off log: `docs/developer/validation/LOG.md` (not yet created; the maintainer's sign-off per the plan's Part 3 five-step gate is still pending).

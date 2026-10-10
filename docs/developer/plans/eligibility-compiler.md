@@ -84,7 +84,7 @@ Per "Pause for Architectural Guidance," the specific engine choice is still a de
 
 | Slice | Scope | Depends on |
 |---|---|---|
-| **B1** | Draft and ratify ADR-A83 (engine choice, licence check, isolation pattern). Human validation focus: is the isolation boundary (test-scope Maven + subprocess CLI for non-JVM consumers) actually sufficient, or does some future consumer need direct in-process access this design does not offer? | None |
+| **B1** | Draft and ratify ADR-A83 (engine choice, licence check, isolation pattern). Validation focus: is the isolation boundary (test-scope Maven + subprocess CLI for non-JVM consumers) actually sufficient, or does some future consumer need direct in-process access this design does not offer? | None |
 | **B2** | `platform/reasoning-testkit` module skeleton: `pom.xml` with the ratified engine(s) at `<scope>test</scope>`, CLI entry point, no-op self-test, plus the guardrail CI check (grep-based: no other `pom.xml`/`pyproject.toml` may reference the chosen engine artifacts) | B1 |
 | **B3** | Wire the OWL/SWRL engine adapter behind the CLI's `infer` command; self-tests using a trivial fixture ontology, not yet the eligibility compiler's own output | B2 |
 | **B4** | `tools/mork_compilers` test suite calls the CLI as a subprocess for A2 (OWL-reasoner consistency half) and A5 (SWRL inference); document the subprocess-invocation pattern in `tools/mork_compilers/README.md` so the next Python package needing this copies a documented pattern, not a bespoke one | B3, A1–A4 |
@@ -118,7 +118,7 @@ ADR-A97. A5 is verified for the builtin-free rules
 an Openllet adapter. The CLI commands differ from B.3's sketch: see the
 [module README](../../../platform/reasoning-testkit/README.md).
 
-## Open questions requiring human decision (summary)
+## Open questions requiring a decision (summary)
 
 1. ~~Openllet vs. HermiT~~: HermiT first (ADR-A83).
 2. ~~Drools now or later~~: deferred (ADR-A83).
@@ -126,6 +126,6 @@ an Openllet adapter. The CLI commands differ from B.3's sketch: see the
 
 ## Next steps
 
-1. Human resolves the three open questions above, or delegates that resolution to the ADR-A83 slice (B1) itself.
+1. The maintainer resolves the three open questions above, or delegates that resolution to the ADR-A83 slice (B1) itself.
 2. Begin A1–A4 in parallel with B1 — none of the four depend on Part B.
 3. B2–B4 and A2/A5 follow once B1 is ratified.

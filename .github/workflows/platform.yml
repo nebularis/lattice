@@ -6,7 +6,7 @@ name: Platform checks
 # changes at once. Every job below calls the same `mise` tasks a developer
 # runs locally (see docs/developer/developer-guide.md and mise.toml), so
 # enabling automatic triggering is a one-line change here, not a redesign:
-# uncomment the block below once the human chooses to activate continuous
+# uncomment the block below once the maintainer chooses to activate continuous
 # checking.
 #
 # on:

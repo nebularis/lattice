@@ -1,6 +1,6 @@
 ---
 name: lattice-design
-description: How to design in LATTICE and projects built on it. Use when writing or revising a sketch, a plan or slice brief, an ADR, or design questions for the human, and whenever presenting options for an architecture or modelling decision.
+description: How to design in LATTICE and projects built on it. Use when writing or revising a sketch, a plan or slice brief, an ADR, or design questions for the maintainer, and whenever presenting options for an architecture or modelling decision.
 ---
 
 # Designing in LATTICE
@@ -34,7 +34,7 @@ hard-codes one domain's practice as the only way is wrong at the substrate.
   waiting on this one. A design that works now and makes a roadmap item harder is wrong.
 - Say a design decision once, and cross-reference it.
 
-## Presenting a question to the human
+## Presenting a question to the maintainer
 
 1. **Set the scene.** What exists today, what is missing, and why it matters. State the facts about
    the current model that constrain the options, each checked against the source.
@@ -62,7 +62,7 @@ Record the answers in the plan or sketch, and in the status record's history.
   the same number. Epic-scoped blocks (`A-FM`, `A-CAP`) are reserved for their epics.
 - An ADR states context, decision and consequences. A decision found while building is recorded as
   an addendum, dated, rather than by rewriting the accepted text.
-- The agent drafts as Proposed. Only the human accepts.
+- The agent drafts as Proposed. Only the maintainer accepts.
 
 ## Links and paths
 

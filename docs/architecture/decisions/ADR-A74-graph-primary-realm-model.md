@@ -5,7 +5,7 @@
 **Status:** Proposed
 **Date:** 2026-09-23
 **Related:** Architecture Review Addendum 1 (§A1.1–A1.6, G-28, G-35, G-34), ADR-A75, ADR-A48, `data-architecture.md`, `ontology-architecture.md`
-**Drafted by:** Agent, autonomous session (P0.1.1). Pending human ratification — see [phase-0-status.md](../../developer/status/phase-0-status.md).
+**Drafted in:** P0.1.1. Pending ratification — see [phase-0-status.md](../../developer/status/phase-0-status.md).
 
 ## Context
 
@@ -48,6 +48,6 @@ Every component other than the store SPI (ADR-A75) is forbidden from writing the
 - ADR-A51 (IRI policy) and ADR-A75 (store SPI) become load-bearing prerequisites: identity must be structural, and the store SPI must expose the Core-tier primitives this model depends on, before any durable write occurs.
 - This decision is irreversible once production data exists (per the epic's own framing, Part 0). No slice in Phase 1+ writes durable data before this ADR and ADR-A75 are ratified.
 
-## Open question for human ratification
+## Open question for ratification
 
 The epic explicitly names this as the single largest gating decision ("if you do not accept A74, roughly 40% of the plan reorders"). Drafted here as accepted, consistent with the epic's stated default assumption, because no contrary instruction was given. Confirm or reject explicitly before Phase 1 begins.

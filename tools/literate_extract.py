@@ -20,7 +20,7 @@ also rendered a second time, as a generated Python module, into
 ``<reference-root>/<layer>/src/reference_<layer>/_kernel_defs.py``: the two
 languages' statements of the same function agree by construction, not by two
 independent authors' care. Isabelle itself is still hand-written and extracted
-verbatim, never synthesised, so the prover checks exactly what a human wrote
+verbatim, never synthesised, so the prover checks exactly what was written
 and reviewed; only the Python side is generated. A README section may also
 carry a plain markdown table of the same truth table for a reader (FM-D17's
 convention), which is prose, not a fenced block, and is never extracted or

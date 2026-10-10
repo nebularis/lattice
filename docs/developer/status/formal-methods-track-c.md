@@ -42,7 +42,7 @@ directly, check a decision-level property against Eligibility's L9-L11) and C2.3
 admitted) are both queued, not started — see
 [the review response](../notes/formal-methods-more-feedback-response.md) §4.
 
-**Next action, for the human:** review and accept (or revise) `ADR-A116`
+**Next action, for the maintainer:** review and accept (or revise) `ADR-A116`
 (`docs/architecture/decisions/ADR-A116-vocabulary-scheme-composition.md`), which decides the
 overlap rule (forbid, by a new static Vocabulary shape — the simplest of the three candidates,
 not the precedence or free-union alternatives) and the composition construct itself
@@ -59,7 +59,7 @@ started.
 | Slice | State | Blocked on |
 |---|---|---|
 | C1 (Alloy skeleton) | **done** | nothing |
-| C2 (scheme composition) | **done**, results recorded | nothing — the overlap-rule *decision* is the human's, not a blocker on this slice's own completion |
+| C2 (scheme composition) | **done**, results recorded | nothing — the overlap-rule *decision* is the maintainer's, not a blocker on this slice's own completion |
 | C2.1 (well-formedness facts, re-run) | **done**, 2026-10-08 | nothing |
 | C2.2 (model the composed scheme, decision-level check) | not started, queued 2026-10-08 | nothing |
 | C2.3 (model `ADR-A116`'s own rule against HQ-4/IMA-D4a) | not started, queued 2026-10-08, recommended before `ADR-A116`'s acceptance | nothing |
@@ -69,9 +69,9 @@ started.
 
 | # | Question | Owner |
 |---|---|---|
-| the overlap rule | **decided in `ADR-A116` (Proposed)**: forbidden, checked by a new static Vocabulary shape — the simplest of the three candidates named in the sketch/model README | human, to accept or revise the ADR |
+| the overlap rule | **decided in `ADR-A116` (Proposed)**: forbidden, checked by a new static Vocabulary shape — the simplest of the three candidates named in the sketch/model README | maintainer, to accept or revise the ADR |
 | home for the model | confirmed: `tools/models/vocabulary-scheme-composition/` (plan §4) | closed |
-| who writes the shared Vocabulary ADR | **done**: `ADR-A116`, drafted 2026-10-07, citing this track's checked evidence directly | human, to accept or revise |
+| who writes the shared Vocabulary ADR | **done**: `ADR-A116`, drafted 2026-10-07, citing this track's checked evidence directly | maintainer, to accept or revise |
 
 ## Log
 
@@ -97,7 +97,7 @@ started.
   `tools/models/vocabulary-scheme-composition/`, with a parent `tools/models/README.md`. No
   ontology or ADR change made — this track's job is the checked evidence, not the decision or its
   ratification.
-- 2026-10-07: `ADR-A116` (Vocabulary scheme composition) drafted, Proposed, at the human's
+- 2026-10-07: `ADR-A116` (Vocabulary scheme composition) drafted, Proposed, at the maintainer's
   explicit request. Cites this track's evidence directly: `EverySourceResolves`'s no-counterexample
   result as the property composition must keep, `NoOverlapDisagreement`'s counterexample as the
   reason the overlap rule cannot be left unstated. Decides the forbid-overlap candidate (a new
@@ -111,4 +111,4 @@ started.
   (both agreed up to A115). Implementation (the ontology change itself, the shape, the resolver's
   `CompositionOverlapError`) is explicitly deferred to a follow-up slice, not done by this commit.
   CCS's and insurml-alignment's own plan documents are left untouched (Machine R's own editorial
-  territory); the human's own bundle/push to `origin` is expected to surface this ADR to them.
+  territory); our own bundle/push to `origin` is expected to surface this ADR to them.

@@ -2,8 +2,13 @@
 
 # Persistence: aggregate ownership, deletion, updates and concurrency
 
+**Reviewed 2026-10-10:** [persistence-aggregate-ownership-review.md](persistence-aggregate-ownership-review.md)
+corrects and extends this note, and records our answers to the questions of §11. The design
+is the sketch [persistence-aggregate-ownership.md](../sketches/persistence-aggregate-ownership.md).
+Where this note and the review disagree, the review holds. Slice HO0 corrects the body.
+
 **Status:** note, 2026-10-10. Exploration only. Nothing here is decided, no tool is changed, and no
-ADR is proposed yet. Hypotheses are marked as such. **Prompted by:** the human's observation that
+ADR is proposed yet. Hypotheses are marked as such. **Prompted by:** our observation that
 `persistence` handles aggregates wrongly, with a placement example of a size the order and line item
 example never reached. **Experiments:** [`spikes/persistence-aggregate-ownership`](../../../spikes/persistence-aggregate-ownership/README.md),
 read-only, rdflib only. **Tracks affected:** formal-methods Track H, slices H1.4b, H1.5, H2 and the
@@ -15,7 +20,7 @@ protocol models of H5 onward ([§10](#10-what-this-does-to-track-h)).
    no create or tombstone operation, and treats `sh:node` as the sole sign of ownership. The placement
    example needs several owned relations, owned relations that differ by context, references that must
    survive, and vocabulary nodes that must never be touched ([§3](#3-fit-against-the-model)).
-2. **The human's instinct on ownership is right, and two refinements are proposed.** Ownership is a
+2. **Our instinct on ownership is right, and two refinements are proposed.** Ownership is a
    property of an edge in its context, so a flat list of properties is not enough. And listing the
    references (a deny-list) is the more ergonomic declaration but the more dangerous one, because
    forgetting an entry deletes someone else's data. The proposal is to classify every edge as owned,
@@ -26,7 +31,7 @@ protocol models of H5 onward ([§10](#10-what-this-does-to-track-h)).
 4. **SHACL is the right vehicle for the structure, and needs one addition.** A shape tree is already
    context sensitive. But `sh:node` also appears on references in validation shapes, so reading it as
    ownership is unsafe. An explicit ownership marker on the property shape fixes that ([§4.5](#45-should-the-boundary-be-a-shacl-shape)).
-5. **The human's two concurrency claims hold for additive edits and fail for removals.** Edits at
+5. **Our two concurrency claims hold for additive edits and fail for removals.** Edits at
    different levels need not contend, and today they do (a false conflict by design). But a removal of
    a subtree conflicts with a concurrent write beneath it, and under snapshot isolation nothing makes
    them meet unless the design makes them meet. The experiment loses data in exactly that case
@@ -37,7 +42,7 @@ protocol models of H5 onward ([§10](#10-what-this-does-to-track-h)).
    graph and not to the graph it deleted from ([§2.3](#23-a-defect-the-composite-replace-writes-the-payload-to-the-log-graph)).
    And the composite boundary has no create or tombstone-delete (TD-04, known).
 8. **Recommendation.** Hold H-D13, H1.4b and H1.5. Keep the H1.4a refusal as a stop-gap. Settle the
-   questions in [§11](#11-questions-for-the-human) before H2 types the closure.
+   questions in [§11](#11-questions-for-the-maintainer) before H2 types the closure.
 
 ## 2. What persistence does today
 
@@ -104,7 +109,7 @@ payload lands. Proposed as a technical debt row, not fixed here.
 
 ## 3. Fit against the model
 
-The model, in the human's terms. The aggregate root is the entry point. Every object property
+The model, in our terms. The aggregate root is the entry point. Every object property
 assertion inside the aggregate is part of it, so deleting the root deletes the assertions from the
 root to its children. Whether a child node is deleted too depends on whether the aggregate owns it.
 Three kinds of node are reachable.
@@ -138,14 +143,14 @@ The named-graph strategy is a different case and is taken up in [§9](#9-alterna
 
 ### 4.1 Ownership belongs to an edge in its context
 
-The human's example has the same word doing two jobs. In the spike graph, `attachment` is owned from
+Our example has the same word doing two jobs. In the spike graph, `attachment` is owned from
 a `Layer` (a layer slip) and a reference from a `LayerContractBinding` (library wording shared across
 placements). A flat list of owned properties cannot hold both. It takes the shared wording with the
 tower (the spike's flat alternation deletes `DocShared`), or leaves the layer slip behind.
 
 The same holds one level up. A `Policy` is owned by its binding in the example, yet a policy often has its
 own lifecycle. Whether `connectsPolicy` is an owned edge or a reference to
-a separate aggregate is a modelling question the sketch does not answer ([§11](#11-questions-for-the-human), Q1).
+a separate aggregate is a modelling question the sketch does not answer ([§11](#11-questions-for-the-maintainer), Q1).
 
 The structure that fits is a tree from class to the edges it owns, which is what a SHACL shape tree
 is. The spike's `OWNED_TREE` is that tree, and walking it gives the expected 12 nodes. The same tree
@@ -155,7 +160,7 @@ the number of paths.
 
 ### 4.2 An allow-list or a deny-list
 
-The human's guess is that it is easier to name the external references than every owned node.
+Our guess is that it is easier to name the external references than every owned node.
 That is likely true as authoring effort, and the two failure modes differ in cost.
 
 | | Forget an entry in an allow-list of owned edges | Forget an entry in a deny-list of references |
@@ -172,7 +177,7 @@ the concept and then its scheme (15 nodes).
 **Hypothesis.** Require both lists and make them exhaustive. Every object property that can leave an
 owned class is classified as `owned`, `reference` or `vocabulary`, and the compiler refuses a
 boundary with an unclassified property. This keeps the allow-list's safety and gives the authoring
-the human wants, since "these are external" is still a short statement. The class-to-property
+we want, since "these are external" is still a short statement. The class-to-property
 relation can come from the shape's `sh:property` entries and from the applied ontology's domains. The
 exhaustiveness check would need a decision on which source is authoritative (Q3).
 
@@ -204,7 +209,7 @@ Three signals exist, with different reach.
 
 The Vocabulary layer already builds on SKOS (`voc:ConceptScheme` is a `skos:ConceptScheme`), so the
 first two signals cover LATTICE's own vocabularies. They do not cover `Axa`, `Chubb` or the client,
-which are ordinary entities and not vocabulary. The human's own example makes that distinction:
+which are ordinary entities and not vocabulary. Our own example makes that distinction:
 carrier types are vocabulary, carriers are entities. The latter must be classified `reference` by
 hand.
 
@@ -237,7 +242,7 @@ and it stops being limited the moment several properties are followed.
 | c. Keep `sh:node` as ownership | as today | unsafe, as above |
 
 Recommended as a hypothesis, option a. A shape also cannot say "every property except these", so the
-deny-list reading of the human's suggestion has no natural SHACL form. This is a further reason to
+deny-list reading of our suggestion has no natural SHACL form. This is a further reason to
 keep the allow-list as the definition and the exhaustiveness check as the aid.
 
 ## 5. Deleting
@@ -296,7 +301,7 @@ model that has four consequences.
    LCB3`, then `LCB3` and everything it owns must go too. Whole-replace gets this by deleting the
    whole closure and writing the new one. A level operation has to compute it.
 
-The human's view is that deeper levels do not matter to an update. I think that holds for edits that
+Our view is that deeper levels do not matter to an update. I think that holds for edits that
 add or change values at one level, and the proposal below is built on it. A level operation would be
 
 - **set at a node**, replacing that node's own outgoing triples, with children left alone,
@@ -315,13 +320,13 @@ Domain-driven design uses the aggregate for two things. One is the lifecycle, me
 and deleted together. The other is the consistency boundary, meaning what a single transaction
 protects. The sketch and the code join them. The root's version row protects the whole closure.
 
-The human's model separates them. The tower is owned by the placement for deletion. Whether the
+Our model separates them. The tower is owned by the placement for deletion. Whether the
 tower must be consistent with the placement under concurrent edits is a separate question, answered
 by which invariants span them. The rest of this section keeps the two apart. The ownership tree
 decides what a delete takes. A set of **units**, nodes that carry a version row, decides what a
 writer contends with. Units sit inside the ownership tree and are chosen by the author.
 
-### 7.2 What the human's claims need
+### 7.2 What our claims need
 
 > only the immediate level needs to be protected, and an edit at the root level need not contend with
 > an edit at a lower level.
@@ -366,10 +371,10 @@ Result. "False" marks a conflict between operations that are logically independe
 
 Reading it.
 
-- **D0 is today's design.** Every pair meets on the root row, so the independent pairs conflict. The
-  human is right that this contention is unnecessary. It follows from whole-replace and one row, not
+- **D0 is today's design.** Every pair meets on the root row, so the independent pairs conflict. We
+  were right that this contention is unnecessary. It follows from whole-replace and one row, not
   from the data.
-- **D1 is the human's proposal taken literally.** The independent pairs commit. The removal pairs lose
+- **D1 is our proposal taken literally.** The independent pairs commit. The removal pairs lose
   data, because nothing makes a removal and a writer beneath it share a statement.
 - **D3 repairs D1 by making every pair meet at the root.** That recreates D0's false conflicts, so it
   defeats the purpose.
@@ -381,8 +386,8 @@ A removal under D2 writes one row per unit below, so its cost is the number of u
 number of nodes. A unit created concurrently with a removal would be missing from the removal's
 snapshot. The model handles it by having the creator also bump its parent's row, which the removal
 bumps too, and the "add a binding under `L1`" row is that case. So the rule is: **creating
-or removing a child unit is a write at the parent's level.** That is the immediate-level rule the
-human described, applied to structure.
+or removing a child unit is a write at the parent's level.** That is the immediate-level rule we
+described, applied to structure.
 
 ### 7.4 Cross-level invariants
 
@@ -496,7 +501,7 @@ run-time single-owner guarantee matters. Q7 and Q8 decide this.
 | Witnesses | each new refusal and warning needs a fixture, per the H1.2 harness |
 | Technical debt | add the payload-graph defect ([§2.3](#23-a-defect-the-composite-replace-writes-the-payload-to-the-log-graph)) |
 
-## 11. Questions for the human
+## 11. Questions for the maintainer
 
 1. **`Pol1`.** In the placement, is a policy owned by its binding, or a referenced aggregate with its
    own lifecycle? The answer changes what a tower delete takes, and it recurs for every

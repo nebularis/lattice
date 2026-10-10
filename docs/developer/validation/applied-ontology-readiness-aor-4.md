@@ -48,13 +48,13 @@ reported`.
   (status record).
 - `docs/architecture/ontology-architecture.md` §2, the consumer paragraph.
 
-## Adversarial probe (run by the agent)
+## Adversarial probe
 
 Making `Catalog.lookup` ignore `nextCatalog` failed AOR4-02 and AOR4-11.
 Disabling the entry-declares-IRI comparison failed AOR4-04. Restoring the file
 returned 11 passes.
 
-## Manual step for the human
+## Manual step for the maintainer
 
 Follow [Loading LATTICE in Protégé](../protege-import-walkthrough.md): open
 `ontology/behaviour/spec/behaviour.ttl` and confirm the import closure loads

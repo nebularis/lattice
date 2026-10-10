@@ -11,7 +11,7 @@ criteria, status record). A second, implementation-level review followed on 2026
 ([response](../notes/formal-methods-more-feedback-response.md)), queuing hardening slices in
 tracks B, C and E (none blocking) and adding FM-D17 (§7). Other tracks are rolling-wave, each
 detailed when it starts.
-**Trigger:** human request, 2026-10-06
+**Trigger:** request, 2026-10-06
 **Sketch:** [formal-methods.md](../sketches/formal-methods.md), with
 [adequacy and architecture](../sketches/formal-adequacy-and-architecture.md),
 [assurance records](../sketches/assurance-records.md),
@@ -46,8 +46,8 @@ The sketch's FP1 to FP4 and goals G1 to G5 govern every track. Nine rules bind h
 | E2 | Every claim names its method, scope, bound and assumptions. A bounded check is never reported as a proof. Every assurance statement anywhere is generated from the record | FP3, assurance records |
 | E3 | No generated OCaml or Haskell runs against the live graph. Proved artefacts reach the runtime as data | sketch §13.1 |
 | E4 | No track blocks a CCS or insurml-alignment slice that does not need it | G5 |
-| E5 | Agents build and verify, the human commits, merges, tags and pushes. Toolchain installs are approved by the human | CCS practice |
-| E6 | Toolchains, build outputs, generated binaries and generated data never enter git. Toolchain distributions and build outputs live under `.build/formal/`, and data that must not reach GitHub but is not a build artefact under `.local/formal/`. A host that needs a short path for native toolchains, as Windows does without long paths enabled, sets `LATTICE_FORMAL_ROOT` to a location outside the repository. On `main`, `mise` tasks create the `.build/` locations and `.gitignore` excludes them. Every slice's handoff checks `git status` for them | human, 2026-10-06 |
+| E5 | Slices are built and verified on a branch, and a maintainer commits, merges, tags and pushes. Toolchain installs are approved by a maintainer | CCS practice |
+| E6 | Toolchains, build outputs, generated binaries and generated data never enter git. Toolchain distributions and build outputs live under `.build/formal/`, and data that must not reach GitHub but is not a build artefact under `.local/formal/`. A host that needs a short path for native toolchains, as Windows does without long paths enabled, sets `LATTICE_FORMAL_ROOT` to a location outside the repository. On `main`, `mise` tasks create the `.build/` locations and `.gitignore` excludes them. Every slice's handoff checks `git status` for them | decided 2026-10-06 |
 | E7 | Verification and performance are separate decisions. The prover is chosen for verification. Native tooling is chosen per job family, on measurement | review §3.2 |
 | E8 | Every track declares its metrics and abandonment conditions before it starts (§6) | review §3.4 |
 | E9 | Every tool runs on macOS, Windows and Linux hosts. A pinned container image is the reference route, and the only one whose verdicts are recorded. A native install is an optional route for authoring where it is cheap (§4, Environments) | toolchain spike, 2026-10-06 |
@@ -64,7 +64,7 @@ only if D passes. F runs on its own measurements. The tracks are staggered (deci
 | with CCS C11a and C12 | B4 and its conformance kits | B4 follows C11a's semantics and lands before C12 needs its kits |
 | with CCS C13a | C3 | the SMT slot checks serve C13a directly |
 | per ADR, from then on | track C's design models | FM-D8 |
-| now, independently of every other track | track H's H1 (static hygiene) | needs no toolchain, no ADR acceptance and no CCS/insurml dependency; its own ADR (A-FM4) gates H2 onward, not H1 |
+| now, independently of every other track | track H's H1 (static hygiene) and its aggregate-ownership slices HO0 to HO9 | need no toolchain and no CCS/insurml dependency. Its own ADR (A-FM4) is accepted (2026-10-10) |
 
 | Track | Delivers | Prover | Depends on | Estimate (tokens) |
 |---|---|---|---|---|
@@ -77,7 +77,7 @@ only if D passes. F runs on its own measurements. The tracks are staggered (deci
 | **G. instrument assurance** | the property language, generated satisfying and violating traces, model generation from compiled instruments, inductive invariants before bounded exploration, vacuity checks, monitorable fragments as runtime data | partly | B, C, and E for proved templates | 2M to 4M |
 | **H. Persistence** | static hygiene over `dal:`/`tools/persistence` (witness coverage, template checks), a typed IR and a specification registry for the compiler, exhaustive cross-axis validation, Isabelle theories for the resolver and identity laws, and this epic's first protocol models (TLA+/Quint, rung T4) producing a capability × strategy guarantee matrix. Excludes all relational/SQL work | partly (Isabelle for H6; TLA+/Quint, undecided, for H5/H7/H8) | its ADR (A-FM4) for H2 onward; H1 depends on nothing | 3M to 6M, H1-H4 only; protocol models (H5 onward) not yet estimated |
 
-Estimates are orders of magnitude for agent work, excluding human review, to be compared with
+Estimates are orders of magnitude for agent work, excluding review, to be compared with
 actuals.
 
 ```mermaid
@@ -130,7 +130,7 @@ measures, with abandonment conditions. Gate D decides FM-D1.
 |---|---|---|
 | B1 | the reference for the logic kernel and Eligibility, in Python, with the semantics stated precisely in the literate README | reference evaluator §2 |
 | B2 | differential tests of the Eligibility compilers against B1, with shape-derived generators, and a named negative fixture for hierarchical match with exclusions | sketch §8.4 |
-| B3 | property test: regeneration as naturality (ADR-A27). MORK's lattice laws and MCN's round trip are deferred (the human's own call, and a missing encoder, respectively) | sketch §8.8, §10 |
+| B3 | property test: regeneration as naturality (ADR-A27). MORK's lattice laws and MCN's round trip are deferred (our own call, and a missing encoder, respectively) | sketch §8.8, §10 |
 | B4 | the reference for the evaluation context and Behaviour's macrostep, with `DesignEnv` and `RunEnv`, the rounding and residual rule, and conformance kits for C12 | reference evaluator §3, §4 |
 
 Detailed in its own [sketch](../sketches/formal-methods-track-b.md) and
@@ -204,6 +204,12 @@ acceptance. H2/H3 (a typed IR and a specification registry for `tools/persistenc
 move, recorded as an ADR-A79 addendum rather than a fresh ADR) follow. H5 is this epic's first
 protocol-model slice: a capability × strategy guarantee matrix, generated by TLA+ or Quint models
 rather than hand-maintained, the choice of tool left to H5's own small toolchain spike.
+ADR-A-FM4 was accepted 2026-10-10. The same day the track gained an
+aggregate-ownership stream, slices HO0 to HO9 ([Track H plan §3.5](formal-methods-track-h.md#35-ho-aggregate-ownership),
+[design](../sketches/persistence-aggregate-ownership.md), [ADR-A122](../../architecture/decisions/ADR-A122-aggregate-ownership.md),
+Proposed), which redesigns the composite aggregate boundary and changes the later slices H2 to H10
+as its [§15](../sketches/persistence-aggregate-ownership.md#15-effect-on-the-later-track-h-slices)
+lists. No other track is affected.
 **Explicitly excludes all relational/SQL-compilation work**, a separate review's own scope
 (`sql-feedback.md`).
 
@@ -286,9 +292,9 @@ Standing metrics, reported per release:
 
 | Metric | Measures |
 |---|---|
-| cost per law per assurance level | tokens and human review time to move one law up one level |
+| cost per law per assurance level | tokens and review time to move one law up one level |
 | proof-repair cost per MINOR layer change | tokens to repair proofs broken by a release, as a fraction of the slice's cost |
-| adjudication rate | adequacy disagreements per release that a human had to decide |
+| adjudication rate | adequacy disagreements per release that the maintainer had to decide |
 | null-result rate | the share of jobs returning NotDecided, per family |
 | native speed-up | per family, against its Python baseline |
 
@@ -321,7 +327,7 @@ statement) and stand unrevised for the same reason: nothing has measured them ye
 
 ## 7. Decisions
 
-None of these may be taken by an agent.
+None of these is taken without the maintainer.
 
 | # | Decision | Recommendation | State |
 |---|---|---|---|
@@ -341,7 +347,7 @@ None of these may be taken by an agent.
 | FM-D14 | licence of theories and generated code | decided per import, with the normative theory's licence chosen deliberately beside CC-BY-SA-4.0 | open |
 | FM-D15 | tool identity in read sets | separate semantic inputs from tool identity. A tool change marks records stale and schedules re-verification, without invalidating them. Needs an ADR-A27 addendum (the invalidation rule), with the two kinds of read-set entry stated in ADR-A92's terms | **decided 2026-10-06**: semantic inputs invalidate, tool identity marks stale, a known soundness fix marks suspect, which fails the gate until re-verified |
 | FM-D16 | how tools run on each host | the image route everywhere for checks, CI, claims and jobs, slimmed and capped as §4 sets out. Native installs optional, for authoring only (E9) | **decided 2026-10-06** |
-| FM-D17 | whether to widen FM-D12's generation direction from "closed datatypes only" to "closed datatypes **and** closed truth-table equations" (`or3`/`and3`/`neg3`'s defining cases, not the theorems about them), generated from one README source into both `tools/proofs/<layer>/*.thy` and `tools/reference/<layer>/*.py`, so the kernel's semantics is hand-written once instead of twice, independently fallibly | **decided 2026-10-09, A+B hybrid**: the README's §10 carries, in order, (B) a plain markdown truth table per connective, for a reader, never extracted or checked mechanically; a short connecting note explaining that the Isabelle clauses below implement that table and that the Python reference is generated from them, not independently authored; then (A) the `isabelle-spec` block itself, widened to carry `or3`/`and3`/`neg3`'s `fun` clauses alongside the closed datatype (still hand-written Isabelle, still the one thing a human reviews and Isabelle type-checks directly, no synthesis on the proof side). `tools/literate_extract.py` renders that same block a second time, into a generated Python lookup-table module, so Python is the only synthesised language. `decision_leq` stays out of scope and hand-written twice (a predicate over equality, not a finite case table). This is recorded as **the convention** for any future layer or track needing the same two-language pairing; going further, to make the markdown table itself the generative source, remains explicitly open for later, not decided now | **decided and built, 2026-10-09** (`fm/eligibility-pass`): `ontology/eligibility/README.md` §10, `tools/literate_extract.py`'s `parse_fun_clauses`/`resolve_truth_table`/`render_python` and `--reference-root`, the generated `tools/reference/eligibility/src/reference_eligibility/_kernel_defs.py`, `tools/proofs/eligibility/Kernel.thy` and `KernelLaws.thy` updated to match, `check_formal_freshness.py` extended. Verified by mutation (track E's status record) |
+| FM-D17 | whether to widen FM-D12's generation direction from "closed datatypes only" to "closed datatypes **and** closed truth-table equations" (`or3`/`and3`/`neg3`'s defining cases, not the theorems about them), generated from one README source into both `tools/proofs/<layer>/*.thy` and `tools/reference/<layer>/*.py`, so the kernel's semantics is hand-written once instead of twice, independently fallibly | **decided 2026-10-09, A+B hybrid**: the README's §10 carries, in order, (B) a plain markdown truth table per connective, for a reader, never extracted or checked mechanically; a short connecting note explaining that the Isabelle clauses below implement that table and that the Python reference is generated from them, not independently authored; then (A) the `isabelle-spec` block itself, widened to carry `or3`/`and3`/`neg3`'s `fun` clauses alongside the closed datatype (still hand-written Isabelle, still the one thing a maintainer reviews and Isabelle type-checks directly, no synthesis on the proof side). `tools/literate_extract.py` renders that same block a second time, into a generated Python lookup-table module, so Python is the only synthesised language. `decision_leq` stays out of scope and hand-written twice (a predicate over equality, not a finite case table). This is recorded as **the convention** for any future layer or track needing the same two-language pairing; going further, to make the markdown table itself the generative source, remains explicitly open for later, not decided now | **decided and built, 2026-10-09** (`fm/eligibility-pass`): `ontology/eligibility/README.md` §10, `tools/literate_extract.py`'s `parse_fun_clauses`/`resolve_truth_table`/`render_python` and `--reference-root`, the generated `tools/reference/eligibility/src/reference_eligibility/_kernel_defs.py`, `tools/proofs/eligibility/Kernel.thy` and `KernelLaws.thy` updated to match, `check_formal_freshness.py` extended. Verified by mutation (track E's status record) |
 
 ## 8. Alignment with other work
 
@@ -351,7 +357,7 @@ None of these may be taken by an agent.
 | CCS | C11a, C12 | track B gives C12 its reference and conformance kits. C12 does not wait for them |
 | CCS | C13, C13a | track B checks relation plans. Track C supplies the SMT checks for C13a. I7 is track E's first Instrument target once C13 is specified |
 | CCS | C8a | track G states the template library's claims in rely and guarantee form |
-| CCS | C9b3 | **an Eligibility pass first, FM-EP, done 2026-10-09** on machine S, branch `fm/eligibility-pass` (FM-D17, E1.4, B2.1, B2.2 all built and verified; B5 attempted, blocked by a mirror gap, deferred). Held ready for the human to commit and merge to `main`; C9b3 can start once that happens. C9b3 adds set comparisons and aggregate bindings to Eligibility, extending its laws, its theory, its reference semantics and its compilers, and then carries its own proof and reference rows ([consent sketch](../sketches/consent-and-group-powers.md) §2.3) |
+| CCS | C9b3 | **an Eligibility pass first, FM-EP, done 2026-10-09** on machine S, branch `fm/eligibility-pass` (FM-D17, E1.4, B2.1, B2.2 all built and verified; B5 attempted, blocked by a mirror gap, deferred). Held ready for the maintainer to commit and merge to `main`; C9b3 can start once that happens. C9b3 adds set comparisons and aggregate bindings to Eligibility, extending its laws, its theory, its reference semantics and its compilers, and then carries its own proof and reference rows ([consent sketch](../sketches/consent-and-group-powers.md) §2.3) |
 | CCS | C16a | laws with formal statements make simplifications checkable |
 | [insurml-alignment](insurml-alignment.md) | IMA-D4a, IMA-4.2 | track C informs scheme composition. Assembly parity is a track B property test first and a track E theorem later |
 | cross-cutting | CI time | proofs and model checks add CI time, run through dependency-aware builds with deeper runs nightly (`python-test-melting` TM8 repointed this row: TD-18, the Python test suite's own slowness, is resolved and removed from the technical debt register) |

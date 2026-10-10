@@ -2,8 +2,8 @@
 """Ontology semantic versioning: narrow "changed but not bumped" check
 (ADR-A86, docs/architecture/ontology-versioning-policy.md).
 
-This does not classify a change as MAJOR/MINOR/PATCH -- that stays a human
-or agentic judgement call against the policy document's table. It checks one
+This does not classify a change as MAJOR/MINOR/PATCH -- that stays a contributor's
+judgement call against the policy document's table. It checks one
 narrow, mechanical fact: for every ``.ttl`` file under ``ontology/`` that
 declares an ``owl:Ontology``, if the file's content differs from a base git
 ref, at least one ``owl:versionIRI`` literal in the file must also differ.

@@ -43,7 +43,7 @@ Editable installs can point at another clone. Before running anything that impor
 python -c "import persistence, lattice_minting, surface; print(persistence.__file__, lattice_minting.__file__, surface.__file__)"
 ```
 
-If a path is outside this checkout, ask the human to re-run the matching `mise run bootstrap:*`
+If a path is outside this checkout, ask the maintainer to re-run the matching `mise run bootstrap:*`
 task, or put `tools/persistence/src`, `packages/minting/python/src` and `tools/surface/src` first on
 `PYTHONPATH`.
 
@@ -73,7 +73,7 @@ Some networks reach public registries only through a mirror, or not at all.
 - Fix it in **user-level** configuration (`pip config file -f user` prints pip's), pointing at an
   approved mirror. Never edit repository files for it, never route around the block, and never
   record a mirror's hostname, an index URL or a credential in the repository or in published notes.
-- A package missing from a mirror, or a registry that cannot be reached, is handed to the human with
+- A package missing from a mirror, or a registry that cannot be reached, is handed to the maintainer with
   the exact command. Do not retry it.
 
 ## Rules for tasks and tools
@@ -90,4 +90,4 @@ Some networks reach public registries only through a mirror, or not at all.
   and `bootstrap:<pkg>` and `check:<pkg>` tasks wired into the aggregates.
 - A new build output outside `build/` or `.build/<name>/`, or a Maven module outside
   `platform/pom.xml`, needs adding to `clean` and `clean-win`, which list exact paths.
-- Ask the human to start Docker Desktop if its engine is not running. Do not start it yourself.
+- Ask the maintainer to start Docker Desktop if its engine is not running. Do not start it yourself.

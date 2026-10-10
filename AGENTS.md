@@ -7,21 +7,21 @@ is the source of `.github/copilot-instructions.md`. Edit it here, then run
 
 ## The contract
 
-We work iteratively. The agent suggests what to build next, and the human verifies the approach
+We work iteratively. The agent suggests what to build next, and the maintainer verifies the approach
 along the way.
 
 - **Default mode, unless told otherwise.** Write, then hand off. Do not run build, test, compile or
   integration commands to validate a change. End the turn with the exact commands to run, where to
   run them from, and what a pass looks like. Cheap static checks, such as a single-file syntax
   check, are fine.
-- **Autonomous mode, only when the human says so.** Run the checks yourself and report their real
+- **Autonomous mode, only when the maintainer says so.** Run the checks yourself and report their real
   results. It does not change anything else in this contract.
 - **Never claim a check passed** unless it ran and passed. Say "authored, not yet run" and give the
   command.
 - **Pause for design decisions.** Do not make an architecture or modelling decision alone. Present
   the options and their consequences (skill `lattice-design`) and wait for the answer.
-- **Never commit, merge, tag or push** without the human's go-ahead. Release tags are always the
-  human's to create. Do not mark an ADR Accepted yourself.
+- **Never commit, merge, tag or push** without the maintainer's go-ahead. Release tags are always the
+  maintainer's to create. Do not mark an ADR Accepted yourself.
 - **End a "what next" report** with 🔴 PLAN FIRST when something must be decided first, or
   🟢 READY TO BRANCH when a new branch is due.
 
@@ -58,6 +58,11 @@ Every piece of text, in documents, code comments, commit messages and replies:
   **instantiation**, done by an **instantiator**, never a "binder" (skill `lattice-ontology-authoring`)
 - call a class that is a member of `fnd:Version` "versioned". Call a node "a version" only when it is
   one specific version
+- write as the team. Decisions, approvals and actions are ours: "we decided", "accepted
+  2026-10-10", "the maintainer accepts", never "the human decided" or "the agent built". An agent is
+  a developer on the team, and its decisions are still ratified by the maintainer (the contract
+  above). The only place AI involvement is marked is the commit trailer and pull request section that
+  [GENAI_CONTRIBUTION.md](GENAI_CONTRIBUTION.md) requires, which EU legislation needs
 
 ## Modelling
 
@@ -90,7 +95,7 @@ Load the skill whose description matches the task. Each lives in `.claude/skills
 | Skill | When |
 |---|---|
 | `lattice-lifecycle` | starting, continuing, handing off or closing a unit of work or slice: status, plans, Validation Packs, commits, merges, release tags |
-| `lattice-design` | writing a sketch, a plan brief, an ADR or design questions for the human |
+| `lattice-design` | writing a sketch, a plan brief, an ADR or design questions for the maintainer |
 | `lattice-architecture` | a design that crosses layers or modules, or needs the principles behind LATTICE's structure |
 | `lattice-ontology-authoring` | changing anything under `ontology/` |
 | `lattice-toolchain` | building, testing, running checks, or setting up or repairing an environment |

@@ -3,7 +3,7 @@
 # Validation Pack: CCS F1, external and natural keys
 
 **Unit:** [`computable-contract-substrate`](../status/computable-contract-substrate.md)
-**Machine:** R (Claude Code). **Branch:** `ccs/f1-keys`. Commits are the human's
+**Machine:** R. **Branch:** `ccs/f1-keys`. Commits are the maintainer's
 **Plan and test cases:** [CCS plan](../plans/computable-contract-substrate.md) (F1 in detail)
 **Decisions:** [ADR-A114](../../architecture/decisions/ADR-A114-external-and-natural-keys.md) (Accepted 2026-10-03, at the phase 0 gate), CC-D9, ADR-A51, ADR-A84, ADR-A86, ADR-A113
 
@@ -45,7 +45,7 @@ Normalisations outside the minting specification's three pipelines (a change to 
 
 ## Handoff
 
-Written by the building machine when the work is ready for the human to commit.
+Written by the building machine when the work is ready for the maintainer to commit.
 
 - **Built:**
   - Foundation 0.4.0: the keys of ADR-A114 and the G2 property chain (README §8), and Foundation's

@@ -16,7 +16,7 @@ Validation Pack, never here.
 **Current round:** 3 (machine R advances it when a round's merges are done). Round 1 merged
 AIR-3.1, AIR-1.1 and AIR-2.1. Round 2 merged AIR-3.2 and AIR-1.2.
 **Branches ready to work on:** none yet. `air/2.2-characteristics` and `air/4.1-exposure-core`
-wait for the human to create them, as does `air/3.3-readings-swrl-owl`.
+wait for the maintainer to create them, as does `air/3.3-readings-swrl-owl`.
 **Briefs ready on `main`:** AIR-1.1, AIR-2.1, AIR-3.1, AIR-1.2, AIR-3.2, AIR-2.2, AIR-4.1, AIR-3.3.
 **Briefs to draft before their branches (lanes §1):** round 4's (AIR-2.3, AIR-2.4, AIR-4.2,
 AIR-4.4).
@@ -28,7 +28,7 @@ merges before Phase 5 (epic §3b).
 ## Machine R
 
 **Position:** round 3. Rounds 1 and 2 complete, Phase 1 complete. AIR-2.2, AIR-4.1 and AIR-3.3
-briefs drafted. Next: AIR-3.3 once its branch exists, and NRS N2 once the human takes NRS D1 to D3.
+briefs drafted. Next: AIR-3.3 once its branch exists, and NRS N2 once the maintainer takes NRS D1 to D3.
 **Last updated:** 2026-09-30
 **Blockers:** none
 
@@ -45,7 +45,7 @@ Verifying queue (S branches handed over and not yet merged): none.
 ## Machine S
 
 **Position:** round 3. AIR-1.1, AIR-2.1 and AIR-1.2 merged. Next: AIR-2.2 and AIR-4.1, once R has
-drafted their briefs and the human has created their branches.
+drafted their briefs and we have created their branches.
 **Last updated:** 2026-09-26
 **Blockers:** waiting for the `air/2.2-characteristics` and `air/4.1-exposure-core` branches.
 

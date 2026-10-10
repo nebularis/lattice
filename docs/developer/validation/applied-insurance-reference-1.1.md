@@ -70,7 +70,7 @@ After the rebase onto `main` (AIR-3.1 and the AIR-1.2 and AIR-3.2 briefs), clean
 | `mise run check:ontology-versioning` | exit 0, 28 in-scope documents, no unbumped changes, every version listed |
 | AIR11-03 search | no match |
 
-Gate, run on R at the human's request, 2026-09-26:
+Gate, run on R at our request, 2026-09-26:
 
 1. Pack reviewed: AIR11-01 to 04 pin the invariant. The negative case (AIR11-03) is the one that
    matters, since a stale reference would keep the dropped namespaces alive.
@@ -80,4 +80,4 @@ Gate, run on R at the human's request, 2026-09-26:
 4. Adversarial probe: putting the removed `KNOWN_DEFECTS` entry back makes
    `python tools/ontology_catalog.py check` exit 1 ("listed in KNOWN_DEFECTS … but no longer
    defective"). Restored, it exits 0.
-5. Sign-off in `LOG.md` is the human's.
+5. Sign-off in `LOG.md` is the maintainer's.

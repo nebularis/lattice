@@ -50,7 +50,7 @@ a well-formed fixture and reject each defect they name.
 | `spec/peril.ttl` | `https://www.nebularis.org/neuro-semantic/insurance/peril` | `…/insurance/peril/0.1.0` | `https://www.nebularis.org/neuro-semantic/insurance/peril#`, `prl:` |
 | `vocab/peril-vocab.ttl` | `https://www.nebularis.org/neuro-semantic/insurance/peril/vocab` | `…/insurance/peril-vocab/0.1.0` | `https://www.nebularis.org/neuro-semantic/insurance/peril/vocab#`, `prl-voc:` |
 
-Schemes and concepts are in `prl-voc:`, following ADR-A98 decision 6 (confirmed by the human,
+Schemes and concepts are in `prl-voc:`, following ADR-A98 decision 6 (confirmed,
 2026-09-26). The sketches' examples write them as `prl:` (for example `prl:N.MET.TC`). Read those
 as `prl-voc:`.
 

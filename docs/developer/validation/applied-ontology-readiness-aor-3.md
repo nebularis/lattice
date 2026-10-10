@@ -47,7 +47,7 @@ no unbumped changes`.
 - `docs/architecture/ontology-versioning-policy.md`: cascade for every bump,
   import-only changes take the imported level, enforcement scope.
 
-## Adversarial probe (run by the agent)
+## Adversarial probe
 
 Replacing `requires_version_iri`'s body with `return False` failed AOR3-04 and
 AOR3-05. Disabling the unchanged-version comparison failed AOR3-01. Restoring

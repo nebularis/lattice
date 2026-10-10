@@ -3,7 +3,7 @@
 # Validation Pack: AIR-3.2, set readings and negation, Eligibility, IR, SPARQL, SHACL
 
 **Unit:** [`applied-insurance-reference`](../status/applied-insurance-reference.md)
-**Machine:** R (Claude Code). **Branch:** `air/3.2-set-readings`
+**Machine:** R. **Branch:** `air/3.2-set-readings`
 **Plan and test cases:** [Phase 3 plan](../plans/applied-insurance-reference-phase-3.md) (AIR-3.2 in detail)
 **Decisions:** ADR-A103
 

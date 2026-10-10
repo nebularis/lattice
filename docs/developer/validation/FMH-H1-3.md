@@ -6,7 +6,7 @@
 ([plan §3, H1.3](../plans/formal-methods-track-h.md))
 **Source finding:** [review](../notes/rdf-engine/persistence-fml.md) §12, S-3 and S-4, the two checks
 the review would implement first.
-**Decisions:** none ratified. Two interpretations are recorded as H-D11 and H-D12 for the human.
+**Decisions:** none ratified. Two interpretations are recorded as H-D11 and H-D12 for the maintainer.
 
 ## Invariant
 
@@ -99,7 +99,7 @@ should print `hygiene: 0 violation(s), 0 warning(s)` and exit 0.
 
 ## Adversarial probes
 
-Run by the agent on 2026-10-09, each reverted afterwards.
+Run on 2026-10-09, each reverted afterwards.
 
 | Mutation | Result |
 |---|---|
@@ -111,7 +111,7 @@ Run by the agent on 2026-10-09, each reverted afterwards.
 When a probe changes the real template, T19 and T20 also fail, because they copy that template. That
 is expected and not a second finding.
 
-## Decisions for the human
+## Decisions for the maintainer
 
 | # | Decision |
 |---|---|

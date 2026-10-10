@@ -3,7 +3,7 @@
 # Terms in time: anchored time and the ending of instruments
 
 **Unit:** [`computable-contract-substrate`](../plans/computable-contract-substrate.md), slice C7b.
-**Status:** decided 2026-10-05 (TQ1 to TQ7 answered by the human, §9). Designs what C7b-Q3,
+**Status:** decided 2026-10-05 (TQ1 to TQ7 answered, §9). Designs what C7b-Q3,
 C7b-Q4 and C7b-Q5 left open.
 **Amends, if accepted:** [ADR-A104](../../architecture/decisions/ADR-A104-instrument-terms-and-legal-relations.md)
 decision 6, through an addendum, and Quantification, an additive MINOR under a new ADR-A115.
@@ -433,7 +433,7 @@ the conditions moves it to *in force*, and the long-stop date's expiry moves it 
 When the instrument as a whole takes effect only on conditions, that is `ins:takesEffectWhen`, which
 is C9's.
 
-## 9. Questions for the human
+## 9. Questions for the maintainer
 
 - **TQ1. Anchored time in Quantification** (§5.1). Add `qnt:ContextValue`, `qnt:contextRole` with
   its role contract, and the quantity offsets `qnt:lowerOffsetBy` and `qnt:upperOffsetBy`, as an

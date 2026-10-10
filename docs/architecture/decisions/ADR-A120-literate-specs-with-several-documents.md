@@ -2,7 +2,7 @@
 
 # ADR-A120: Literate specs with several documents
 
-**Status:** Accepted 2026-10-08, by the human's assent in the request that raised it
+**Status:** Accepted 2026-10-08, with our assent in the request that raised it
 **Date:** 2026-10-08
 **Related:** [ADR-A106](ADR-A106-behaviour-configuration-runtime-occasions-and-records.md) (Behaviour's
 configuration and runtime documents), [ADR-A86](ADR-A86-ontology-semantic-versioning.md) (semantic

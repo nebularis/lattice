@@ -4,7 +4,7 @@
 
 **Unit ID:** `toolchain-jdk25-python314`
 **Status:** Executed — see [status](../status/toolchain-jdk25-python314.md)
-**Decided:** 2026-09-23, with the human, while scoping [`identity-minting`](../sketches/identity-minting.md)
+**Decided:** 2026-09-23, while scoping [`identity-minting`](../sketches/identity-minting.md)
 
 ## Why
 

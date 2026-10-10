@@ -49,7 +49,7 @@ The toolchain corrections in AM-04 remain in force. `mise` remains the sole orch
 >
 > **Purpose.** Resolve the seven cross-cutting inconsistencies the repository compatibility review identified, as one coherent pass, before any ADR slice fixes them locally. This group produces documents only. Its exit is a signed architecture ratification record at `docs/architecture/ratification-v1.md`.
 >
-> | Slice | Scope | Human validation focus |
+> | Slice | Scope | Validation focus |
 > |---|---|---|
 > | **P0.0.1** | **Realm authority reconciliation.** State the graph-primary authority rule *together with* the artifact-realm exception (AM-03) and the Phase 0 durable-data scope (AM-02) in one section, so the three are mutually consistent. Produce the "where does a fact belong" decision table applied to every entity in `data-architecture.md §2.1` *and* every new entity in the review's A1.4 table, with the chosen realm and the authority class (`authoritative` / `derived-cache` / `derived-operational` / `external-synchronised` / `advisory`) for each | Is any entity assigned a realm that contradicts its authority class? Is any byte-store product (pack, bundle, document blob, compiled artefact) mis-assigned to the graph realm? |
 > | **P0.0.2** | **ADR supersession map.** For every accepted ADR A29–A43, state: unaffected / amended / superseded, by which new ADR, and with what migration consequence. Minimum expected entries per the review: A30 (cross-runtime boundary), A33 (revision ledger and optimistic concurrency), A34 (graph-family registry and immutable identity), A39 (PostgreSQL portions), A31 (unaffected — the boundary restatement in the review's §1.1 is an *addition* to §4.4, not a reversal), A29 (**explicitly unaffected**) | Is any ADR left in an ambiguous state? Does any new ADR silently contradict an accepted one without saying so? |
@@ -254,7 +254,7 @@ The toolchain corrections in AM-04 remain in force. `mise` remains the sole orch
 
 **Replacement text — new row in the P0.1 table.**
 
-| Slice | Deliverable | Human validation focus | Executable consequence |
+| Slice | Deliverable | Validation focus | Executable consequence |
 |---|---|---|---|
 | **P0.1.16** | **ADR-A76: home for the platform vocabulary** (`lattice:authority`, `lattice:commitSeq`, `lattice:transactionTime`, `lattice:ProvenanceScope`, `lattice:cause`, `lattice:packDigest`, `lattice:generationProfileId`, `lattice:writeBackState`, `lattice:version`, `lattice:lifecycleState`). Three named options, one chosen: **(i) a Foundation extension module** — `ontology/foundation/spec/foundation-derivation.ttl` plus an optional import, which is the direction `ontology-architecture.md §10` already anticipates (`fnd:DerivedArtefact`, `fnd:derivedFrom`, `fnd:GenerationProfile`) and which keeps the layer count stable; **(ii) a new root-level substrate layer** following the per-layer template, named to avoid collision with the `platform/` Maven root (e.g. `provenance/`); **(iii) split** — hash/derivation terms into Foundation per (i), operational terms (`commitSeq`, `cause`, `writeBackState`, `lifecycleState`) into (ii). Recommendation: **(iii)**, because hash and derivation identity are genuinely Foundation-level and demanded by `§10`, whereas commit sequence and write-back state are platform mechanics that should not enter the ontology substrate every adopter imports | Does the chosen home respect the strict downward-dependency rule? Does any platform term leak into a layer that must not depend on platform mechanics? Does the layer dependency diagram in `ontology-architecture.md §1` still hold? | P0.3.3 directory creation; layer dependency test |
 
@@ -268,13 +268,13 @@ The toolchain corrections in AM-04 remain in force. `mise` remains the sole orch
 
 ## AM-08 — P0.1.1 must state ADR supersession explicitly
 
-**Where.** Slice **P0.1.1**, Deliverable and Human-validation-focus cells.
+**Where.** Slice **P0.1.1**, Deliverable and Validation-focus cells.
 
 **Why.** Review finding 1: graph-primary is a deliberate replacement of the accepted three-realm model, ADR-A33's PostgreSQL lifecycle ledger, and ADR-A34's registry. The plan placed the rewrite correctly but did not require the supersession to be named, which would leave two accepted-and-contradictory ADR sets in the catalogue.
 
 **Replacement text for the P0.1.1 row.**
 
-| Slice | Deliverable | Human validation focus | Executable consequence |
+| Slice | Deliverable | Validation focus | Executable consequence |
 |---|---|---|---|
 | **P0.1.1** | **ADR-A74 graph-primary realm model**, which must contain an explicit supersession section naming, at minimum: **ADR-A33** (surface revision ledger and optimistic concurrency) — superseded as to storage realm, **preserved as to the `expectedVersion`/`409` contract**, which P1.1.2 must not change; **ADR-A34** (graph-family registry and immutable identity) — superseded as to enforcement mechanism, preserved as to intent, with uniqueness becoming structural per A51; **ADR-A30** (cross-runtime boundary) — amended where it assumes a PostgreSQL system of record; **ADR-A39** — PostgreSQL portions superseded; **ADR-A31** — **unaffected**, with the review's boundary restatement added to `§4.4` as an addition, not a reversal; **ADR-A29** — **unaffected**. Plus the rewrite of `data-architecture.md §1–§3, §5–§7` incorporating the artifact-realm exception (AM-03) and the Phase 0 durable-data scope (AM-02) as ratified in P0.0.1 | Is every contradicted ADR named? Is A33's concurrency contract preserved verbatim while its storage realm changes? Does the rewritten `§5` still contain the seven original concurrent-access rules in equivalent form, plus new rule 8 (no direct store access)? | ArchUnit G2/G2a; `docs/architecture/decisions/README.md` supersession map updated in the same slice |
 
@@ -341,7 +341,7 @@ The toolchain corrections in AM-04 remain in force. `mise` remains the sole orch
 
 | Slice | Scope | Tests / validation |
 |---|---|---|
-| **P0.2.10** | **Update `.github/copilot-instructions.md`** to make the v0.2 process enforceable. Required edits: (1) an implementation slice must ship `docs/validation/<slice-id>.md` in the prescribed Validation Pack shape; (2) it must ship a `docs/traceability/matrix.csv` row and an explicit *deliberate non-coverage* statement; (3) **`mise` remains the only task-runner authority unless ADR-A29 is superseded** — agents must not introduce `make`, `just`, Gradle, or `pnpm`; (4) once A74 is accepted, add the graph-primary authority rule **and** the G2a artifact-realm exception; (5) agents must stop for human architectural guidance at every decision slice (already required in principle — made explicit); (6) replace the blanket "all listed architecture documents must be updated" wording with "update each *affected* normative document", retaining the existing minimum set for cross-cutting changes. **Blocked by P0.0 and by P0.1.1** — the instructions must not encode an unratified rule | Human review against the ratification record; a deliberate probe: ask a fresh agent session to add a `justfile` task and confirm it refuses and cites A29 |
+| **P0.2.10** | **Update `.github/copilot-instructions.md`** to make the v0.2 process enforceable. Required edits: (1) an implementation slice must ship `docs/validation/<slice-id>.md` in the prescribed Validation Pack shape; (2) it must ship a `docs/traceability/matrix.csv` row and an explicit *deliberate non-coverage* statement; (3) **`mise` remains the only task-runner authority unless ADR-A29 is superseded** — agents must not introduce `make`, `just`, Gradle, or `pnpm`; (4) once A74 is accepted, add the graph-primary authority rule **and** the G2a artifact-realm exception; (5) agents must stop for the maintainer's architectural guidance at every decision slice (already required in principle — made explicit); (6) replace the blanket "all listed architecture documents must be updated" wording with "update each *affected* normative document", retaining the existing minimum set for cross-cutting changes. **Blocked by P0.0 and by P0.1.1** — the instructions must not encode an unratified rule | Review against the ratification record; a deliberate probe: ask a fresh agent session to add a `justfile` task and confirm it refuses and cites A29 |
 
 ---
 

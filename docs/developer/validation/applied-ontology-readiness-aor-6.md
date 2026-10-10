@@ -56,7 +56,7 @@ Pass: `42 passed`.
   install `tools/vocabulary` first. Surface already needed this and was
   missing it.
 
-## Adversarial probe (run by the agent)
+## Adversarial probe
 
 | Mutation | Tests failed |
 |---|---|

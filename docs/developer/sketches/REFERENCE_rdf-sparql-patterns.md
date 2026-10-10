@@ -1,7 +1,7 @@
 # RDF/SPARQL Implementation Patterns — Quick Reference
 
 **Created:** 2026-09-21  
-**Status:** Sketch ✅, Plan ✅, Status ✅ — Ready for human review and decision
+**Status:** Sketch ✅, Plan ✅, Status ✅ — Ready for the maintainer's review and decision
 
 **Reading order:**
 1. [Status](#status) — what's complete and where we are

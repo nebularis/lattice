@@ -5,7 +5,7 @@
 **Unit ID:** `python-test-melting`
 **Status:** Done, 2026-10-09, branch `test/slow-py`. TM0-TM3, TM6-TM8 built and validated. TM4 and TM5
 deferred, with reasoning recorded (slices table). All of TM-Q1 to TM-Q5 decided (status record).
-**Trigger:** human request, 2026-10-09. The `check:ontology-catalog` run took 19 minutes in a fresh
+**Trigger:** request, 2026-10-09. The `check:ontology-catalog` run took 19 minutes in a fresh
 cloud environment, and about 31 s for one test locally.
 **Status record:** [python-test-melting.md](../status/python-test-melting.md)
 **Sketches:** [python-test-melting.md](../sketches/python-test-melting.md) (diagnosis),
@@ -68,7 +68,7 @@ independent of TM1 to TM5 and can run at any point after TM0.
 
 ### TM0. Measure and baseline
 
-Run on the human's machine first. The cloud figure in TD-18 (19 minutes) has not been reproduced
+Run on the maintainer's machine first. The cloud figure in TD-18 (19 minutes) has not been reproduced
 locally, so TM0 also records the vCPU count and elapsed time of one CI run for comparison.
 
 1. Record the baseline of per-test outcomes (see Validation) and keep it outside the repository.
@@ -83,7 +83,7 @@ locally, so TM0 also records the vCPU count and elapsed time of one CI run for c
    the number that shows it, and the order TM4 to TM7 will run in. Add `--durations` output for the
    five slowest modules.
 
-Pass criterion: the status record holds a ranked table of measured costs, and the human has set TM-Q1.
+Pass criterion: the status record holds a ranked table of measured costs, and we have set TM-Q1.
 
 ### TM1. Test support module and cached graphs
 
@@ -179,17 +179,17 @@ a serial form.
 
 Remove the TD-18 and TD-29 rows, naming this plan, and repoint the TD-18 reference in the
 [formal methods plan](formal-methods.md) (CI time), which would otherwise dangle. Add the support module and
-the timing task to the developer guide. The two sketches are superseded and the human decides whether
+the timing task to the developer guide. The two sketches are superseded and the maintainer decides whether
 they are deleted. Record final timings against the TM0 baseline.
 
 ## Design questions
 
 Each follows the [lattice-design](../../../.claude/skills/lattice-design/SKILL.md) form. Leanings are
-hypotheses and wait for the human.
+hypotheses and wait for the maintainer.
 
 ### TM-Q1. What is the target?
 
-**Decided 2026-10-09 by the human:** any speedup is beneficial; target 3-4 minutes or under, otherwise
+**Decided 2026-10-09:** any speedup is beneficial; target 3-4 minutes or under, otherwise
 split long and short runs for CI. Met: ~124-139s under `pytest-xdist` (status record).
 
 Not asked until TM0 gives numbers. Leaning is to state it as a ratio to the TM0 baseline on one machine,
@@ -197,7 +197,7 @@ plus an absolute ceiling for the cloud run, so that a slow runner does not hide 
 
 ### TM-Q2. Where do the shared graphs and the validation cache live? (blocks TM1)
 
-**Decided 2026-10-09 by the human: option B,** session-scoped fixtures in `tools/conftest.py` only. Built
+**Decided 2026-10-09: option B,** session-scoped fixtures in `tools/conftest.py` only. Built
 with a deliberate reading recorded in the status record: the cache (`graph_cache`, `validated`) is the
 fixture; each adopting module declares one `@pytest.fixture(scope="module", autouse=True)` that assigns
 its own `MODEL`/`SHAPES`/`validate` names onto `request.module`, so no sibling support module exists and
@@ -214,7 +214,7 @@ project needs the helper, C can wrap it later.
 
 ### TM-Q3. Slice size for TM3 (blocks TM3a)
 
-**Decided 2026-10-09:** the agent's choice, per the human. Option A, batches of four to six, one commit
+**Decided 2026-10-09:** the agent's choice, per the maintainer. Option A, batches of four to six, one commit
 per batch (TM3a, TM3b, TM3c, as the plan already had them).
 
 The lifecycle splits a slice at more than two modules touched. TM3a to TM3c touch four or five test
@@ -231,7 +231,7 @@ comparison.
 
 ### TM-Q4. What do the Python scans list? (blocks TM6)
 
-**Decided 2026-10-09 by the human: option A.** Built as `repo_files` in `tools/conftest.py`. The known
+**Decided 2026-10-09: option A.** Built as `repo_files` in `tools/conftest.py`. The known
 risk (untracked files the old `git grep` would not see) was hit for real during the roll-out, by this
 unit's own new `test_repo_files.py` matching its own fixture text; fixed by allow-listing that one file,
 the same precedent `test_instrument.py` already set for its own `RETIRED` constant.
@@ -246,7 +246,7 @@ the same precedent `test_instrument.py` already set for its own `RETIRED` consta
 
 ### TM-Q5. May TM7 add `pytest-xdist`?
 
-**Decided 2026-10-09 by the human:** yes, if it can be made to work in this environment. Confirmed
+**Decided 2026-10-09:** yes, if it can be made to work in this environment. Confirmed
 working (16 vCPUs on the machine that measured it); added to `pyproject.toml`'s `test` extra and wired
 into `check:ontology-catalog`.
 
@@ -267,7 +267,7 @@ diff /tmp/before.txt /tmp/after.txt && echo identical
 built. Run from the repository root. A pass is `identical`, and a faster `mise run check:ontology-catalog`.
 The Validation Packs add each slice's own new tests, a slice-specific adversarial probe and the artefacts to inspect.
 
-| Slice | Probe the agent shows at the gate |
+| Slice | Probe shown at the gate |
 |---|---|
 | TM1 | change one triple in a cached graph during a test and show the session guard fails |
 | TM2 | break one SHACL constraint and show every test that uses it still fails through the cached path |

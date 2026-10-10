@@ -61,7 +61,7 @@ module.
 - `ontology/instrument/README.md` §6.4 (the acts tier), §10 (an exercise trigger is derived), §21's
   C9b1 paragraph, §22.23 and §22.24, and `spec/instrument-acts.ttl`, generated from §6.4
 - `ontology/behaviour/README.md` §5.2 (facts and findings) and §8, and `examples/licence-suspension.ttl`
-- the ADR-A104 and ADR-A106 addenda of 2026-10-09, accepted by the human 2026-10-10
+- the ADR-A104 and ADR-A106 addenda of 2026-10-09, accepted 2026-10-10
 
 ## Deliberate non-coverage
 
@@ -91,7 +91,7 @@ Written by the building machine.
 - **Built:** in five commits. Examples first, then the acts tier (Instrument), then Behaviour's
   records as findings, then the version bumps, re-pins, catalog and release register, then this
   pack.
-- **Run by the agent:** every check under Results, and a mutation probe (Results, last paragraph).
+- **Run:** every check under Results, and a mutation probe (Results, last paragraph).
 - **Check first:** the deviations, then §6.4 of the Instrument README.
 - **Deviations from the plan:**
   - **Two properties the brief does not name.** Consents, objections, withdrawals and exercises need a
@@ -121,7 +121,7 @@ Written by the building machine.
   - **Assent's disjointness with `fnd:Version`** is now entailed through `ins:LegalAct`, not stated on
     `ins:Assent`
   - **Pack name.** The plan names it `ccs-c9b1.md`. This file follows the brief and C9a's name
-- **Answers after the first handoff (the human, 2026-10-09):**
+- **Answers after the first handoff (2026-10-09):**
   - **C9b1-Q3:** `ins:actBy` and `ins:directedAt` keep their names. `ins:actBy` stays
     non-functional, since an act by agreement or a joint notice has several parties, and
     `ins:assentBy` stays functional, as built
@@ -136,7 +136,7 @@ Written by the building machine.
 
 ## Results
 
-Run by the agent on 2026-10-09, with `tools/persistence/src`, `packages/minting/python/src` and
+Run on 2026-10-09, with `tools/persistence/src`, `packages/minting/python/src` and
 `tools/surface/src` first on `PYTHONPATH`, since the editable installs point at another clone.
 
 | Row | Result | Evidence |

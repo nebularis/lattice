@@ -3,7 +3,7 @@
 # Validation Pack: CCS C6, instrument, terms and legal relations
 
 **Unit:** [`computable-contract-substrate`](../status/computable-contract-substrate.md)
-**Machine:** R (Claude Code). **Branch:** `ccs/c6-instrument-relations`. Commits are the human's
+**Machine:** R. **Branch:** `ccs/c6-instrument-relations`. Commits are the maintainer's
 **Plan and test cases:** [CCS plan](../plans/computable-contract-substrate.md) (C6 in detail)
 **Decisions:** ADR-A104 decisions 1 to 5 and 10, CC-D10, CC-D12, ADR-A96, ADR-A102, ADR-A113.
 C6-Q1 to C6-Q4 answered (2026-10-02 and 2026-10-03). C6-Q5 open
@@ -44,7 +44,7 @@ Arising, due, ending, survival and constitutive terms (C7b). Legal triggers, reg
 
 ## Handoff
 
-Written by the building machine when the work is ready for the human to commit.
+Written by the building machine when the work is ready for the maintainer to commit.
 
 - **Built (examples, phase 1):** the four examples of the brief in `ontology/instrument/examples/`,
   each a small wording of its own, its stated meaning owned by the wording's clauses, and the

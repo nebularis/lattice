@@ -3,7 +3,7 @@
 # Validation Pack: CCS C9b2, additivity in Quantification
 
 **Unit:** [`computable-contract-substrate`](../status/computable-contract-substrate.md)
-**Machine:** R (Claude Code). **Branch:** `ccs/c9b2-additivity`, in its own worktree, built by a
+**Machine:** R. **Branch:** `ccs/c9b2-additivity`, in its own worktree, built by a
 sub-agent that commits there, examples first (ADR-A-C2). Merged into `ccs/c9b-groundwork` after
 C9b0 and before C9b1, which recomputes the cascade, then into `main` before release tags are created
 **Plan:** [CCS plan](../plans/computable-contract-substrate.md), C9b2 in detail, and "How C9b0 to
@@ -84,7 +84,7 @@ mise run check:ontology-catalog && mise run check:ontology-versioning && mise ru
 Phase 1, examples first (ADR-A-C2), 2026-10-09, commit `2be832be`:
 
 - **Built:** `ontology/quantification/examples/additivity.ttl`
-- **Run by the agent:** the example against the then model and every layer's shapes: conforms (the
+- **Run:** the example against the then model and every layer's shapes: conforms (the
   new terms were not yet declared)
 - **Signing down needs no new operation.** The factor is a `Ratio` of two shares of one order (the
   whole order over the total written), on a derived space whose numerator and denominator are both
@@ -127,7 +127,7 @@ Phase 3, the cascade, 2026-10-09: see Results.
 
 ## Results
 
-Run by the agent on 2026-10-09, with this worktree's packages first on `PYTHONPATH`.
+Run on 2026-10-09, with this worktree's packages first on `PYTHONPATH`.
 
 | Row | Result | Evidence |
 |---|---|---|

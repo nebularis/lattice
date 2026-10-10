@@ -3,7 +3,7 @@
 # Validation Pack: AIR-3.1, hierarchical match over flat schemes
 
 **Unit:** [`applied-insurance-reference`](../status/applied-insurance-reference.md)
-**Machine:** R (Claude Code). **Branch:** `air/3.1-flat-hierarchy`
+**Machine:** R. **Branch:** `air/3.1-flat-hierarchy`
 **Plan and test cases:** [Phase 3 plan](../plans/applied-insurance-reference-phase-3.md) (AIR-3.1 in detail)
 **Decisions:** ADR-A100 and its implementation note
 

@@ -20,7 +20,7 @@ This is the authoritative current state for the platform continuation unit. It i
 
 ## Working Arrangement
 
-Validation of implemented code follows the [Agentic Development Contract](../../../.github/copilot-instructions.md). Work is validated by the human running the listed commands and reporting the result, not by the agent re-running build and test suites on its own initiative.
+Validation of implemented code follows the [Agentic Development Contract](../../../.github/copilot-instructions.md). Work is validated by a maintainer running the listed commands and reporting the result, not by re-running build and test suites unasked.
 
 ## Evidence Recorded This Session
 

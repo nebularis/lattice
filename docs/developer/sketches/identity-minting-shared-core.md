@@ -57,7 +57,7 @@ The repository's toolchain manager already covers what this needs: `mise` has `r
 
 Against those: each new runtime costs glue and a CI job, not a reimplementation of §7, and every minter is the same engine.
 
-## 6. Questions needing a human decision (when this is picked up)
+## 6. Questions needing a decision (when this is picked up)
 
 | # | Question | Recommendation |
 |---|---|---|

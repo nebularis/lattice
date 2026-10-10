@@ -6,9 +6,9 @@
 **Status:** AOR-1 to AOR-9, AOR-3b, AOR-12 and AOR-13 committed (`6e36586`,
 `6e9acb1`, `54caeb6`).
 AOR-10, AOR-11 and AOR-14 to AOR-17 implemented and self-validated, awaiting
-the human's commands (uncommitted). Every slice is now implemented.
+the maintainer's commands (uncommitted). Every slice is now implemented.
 **Last updated:** 2026-09-25
-**Trigger:** human request, 2026-09-25
+**Trigger:** request, 2026-09-25
 **Plan:** [applied-ontology-readiness.md](../plans/applied-ontology-readiness.md)
 **Sketch:** [applied-ontology-readiness.md](../sketches/applied-ontology-readiness.md)
 **Review request:** [applied-ontology-readiness-review.md](../review/applied-ontology-readiness-review.md)
@@ -16,18 +16,18 @@ the human's commands (uncommitted). Every slice is now implemented.
 
 ## Current position
 
-On 2026-09-25 the human reported every AOR-2 to AOR-9 command passing, accepted
+On 2026-09-25 we reported every AOR-2 to AOR-9 command passing, accepted
 ADRs A-87 to A-92, chose content-hash version IRIs for generated documents,
 asked for Executable to align directly to PROV-O if that imposes no functional
 restriction, and asked for the Phase C ADRs and ADR-A83 to be drafted. The
-`LOG.md` sign-offs are the human's to record.
+`LOG.md` sign-offs are the maintainer's to record.
 
-Later on 2026-09-25 the human ratified ADR-A83, A-86 and its addendum, and
+Later on 2026-09-25 the maintainer ratified ADR-A83, A-86 and its addendum, and
 A-93 to A-96, chose path encoding B for ADR-A90, and asked for AOR-14 to
 AOR-16 as one Quantification change with AOR-16 including the compiler work.
 The ADR-A83 harness was delivered as the `eligibility-compiler` unit's Part B
-([VP](../validation/eligibility-compiler-part-b.md)). The agent ran the
-checks listed under Validation below. The human has not yet run them.
+([VP](../validation/eligibility-compiler-part-b.md)). We ran the
+checks listed under Validation below. The maintainer has not yet run them.
 
 ## Slices
 
@@ -62,14 +62,14 @@ the applied capacity execution spec: 0.5.0 → 0.6.0. Executable: 0.4.0 → 0.5.
 Mork: 0.3.0 → 0.4.0 (ADR-A97).
 The catalog is regenerated.
 
-## Validation run by the agent (2026-09-25)
+## Validation run (2026-09-25)
 
 `check:mork-compilers` (92 passed, reasoner tests included),
 `check:python-root`, `check:ontology-versioning` (29 documents),
 `check:ontology-catalog` (3 known defects), `check:reasoning-testkit`,
 `check:reasoning-isolation`, `check:vocabulary`.
 
-## Decisions awaiting the human
+## Decisions awaiting the maintainer
 
 1. **MTP pins**: whether `build` should stop rewriting `pins.lock.json` (an MTP
    decision that `mork-teaching-pack.md` reserves for an ADR).

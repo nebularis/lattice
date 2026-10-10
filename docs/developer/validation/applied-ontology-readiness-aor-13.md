@@ -40,7 +40,7 @@ cardinality restriction is on `prov:ActivityInfluence`. It declares
 `prov:Entity` disjoint with `prov:Activity`, which is the one restriction the
 alignment passes on: a node a plan derives from cannot also be an activity.
 
-## Adversarial probe (run by the agent)
+## Adversarial probe
 
 Removing `exe:derivedFromEligibilityNode ⊑ prov:wasDerivedFrom` failed
 AOR13-01 and AOR13-02.

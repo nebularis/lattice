@@ -60,7 +60,7 @@ P1.11.1 already names the sections; this table adds the specific change and cros
 Per [epic Part 12](lattice-platform-agentic-development-v0.2.md#part-12--phase-gate-checklists):
 
 1. All Phase 1 slice gates signed off in `docs/developer/validation/LOG.md`.
-2. M2 and M3 demoed by a human against a freshly built compose stack.
+2. M2 and M3 demoed by a maintainer against a freshly built compose stack.
 3. `docs/traceability/matrix.csv` — zero claimed-but-untested requirements for Phase 1's set.
 4. Every Phase 1 ADR ratified; every row in §4 above merged.
 5. L7 baselines recorded.

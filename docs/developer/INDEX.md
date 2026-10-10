@@ -39,9 +39,9 @@ Is it complete? **Almost.** The documentation is complete and every review is cl
 | `rdf-sparql-patterns-phase` Slices 1–2 (guide, `ontology/persistence`, `tools/persistence`) | ✅ Complete | — | — |
 | `rdf-sparql-patterns-remediation` (first review of the guide) | ✅ Complete, closed | nothing; deferred items handed to the units below | — |
 | `iri-patterns-post-3866b21-remediation` (second review, plus template alignment) | ✅ Complete, closed | nothing; follow-ons listed in its [status](status/iri-patterns-post-3866b21-remediation.md#is-this-unit-complete) | — |
-| `persistence-compiler-iri-sync` (compiler catches up with the vocabulary) | ✅ Slices 1–5 done (Slice 5 human-validated 2026-09-25, 774 passed) | Slice 6 close-out, in progress. Gap table in its [status](status/persistence-compiler-iri-sync.md#is-this-unit-complete) | — |
+| `persistence-compiler-iri-sync` (compiler catches up with the vocabulary) | ✅ Slices 1–5 done (Slice 5 validated 2026-09-25, 774 passed) | Slice 6 close-out, in progress. Gap table in its [status](status/persistence-compiler-iri-sync.md#is-this-unit-complete) | — |
 | `rdf-sparql-patterns-phase` Slice 3 / `platform-housekeeping` | ⏳ Not started | the whole slice, including the retention and audit changes noted in its plan | — |
-| P0.1.3: ADR-A82 and `iri-identity-patterns.md` | 📝 Drafted and revised, Proposed | human ratification, and the point 5 amendment proposed by `identity-minting` | Phase 0 ratification pass |
+| P0.1.3: ADR-A82 and `iri-identity-patterns.md` | 📝 Drafted and revised, Proposed | ratification, and the point 5 amendment proposed by `identity-minting` | Phase 0 ratification pass |
 | `identity-minting` (minting recipes, conformance vectors, standalone Java and Python libraries, `dal:claimsConstraint`) | 🚧 M0–M3 of M0–M4 done: [plan](plans/identity-minting.md), [status](status/identity-minting.md) | M4 specification and human walk-through. One open question: default-ignorables in the upper- and lowercase pipelines | — |
 | `toolchain-jdk25-python314` (JDK 25 LTS, Python 3.14, Unicode 16.0) | ✅ Complete: [plan](plans/toolchain-jdk25-python314.md), [status](status/toolchain-jdk25-python314.md) | — | — |
 | `identity-minting-shared-core` (one Rust minting engine, WebAssembly-hosted in each runtime) | 🅿️ [Sketch](sketches/identity-minting-shared-core.md), deferred | `persistence-compiler-iri-sync` is now complete (2026-09-25); this sketch can be revisited. M2 and M3 proceed with native libraries meanwhile | none — the thing it was waiting on is done |
@@ -84,7 +84,7 @@ Epic decomposition into phase plans is **no longer blocked**: the required Phase
 
 | Field | Value |
 |-------|-------|
-| **Status** | ✅ Slices 1–5 complete (Slice 5 human-validated 2026-09-25: 774 passed). 🚧 Slice 6 (documentation close-out) in progress |
+| **Status** | ✅ Slices 1–5 complete (Slice 5 validated 2026-09-25: 774 passed). 🚧 Slice 6 (documentation close-out) in progress |
 | **Unit ID** | `persistence-compiler-iri-sync` |
 | **Sketch (gap analysis)** | [persistence-compiler-iri-sync.md](sketches/persistence-compiler-iri-sync.md) |
 | **Plan** | [persistence-compiler-iri-sync.md](plans/persistence-compiler-iri-sync.md) |
@@ -99,8 +99,8 @@ Three new profile dimensions (`dal:IdentityProfile`, `dal:EpochProfile`, `dal:Pr
 1. **✅ Complete, 290/290 passing.** Dataset-level epoch guard — `dal:epochGuardScope` resolvable, `dal:DatasetLevelGuard` template variant for the three named write shapes, warning diagnostic fires even on the platform baseline default. See the [VP](validation/persistence-compiler-iri-sync-slice-1.md).
 2. **✅ Complete, 526/526 passing.** Extension properties resolved one dimension each, baseline defaults, two refusals and six warnings mirroring the SHACL shapes, `dal:PreCreatedRow` emits `bootstrap-version-row`, request-time values as Mustache slots. See the [VP](validation/persistence-compiler-iri-sync-slice-2.md).
 3. **✅ Complete, 570/570 passing.** Identity resolved per resource role (`identity:<Role>`), winning profile node as a unit, emitted to the compiled profile, five refusals and one warning. See the [VP](validation/persistence-compiler-iri-sync-slice-3.md).
-4. **✅ Complete, human-validated 2026-09-25 (669 passed, adversarial probes checked).** Privacy/erasure profile (`dal:privacyClass`/`dal:erasureStrategy`/`dal:erasurePrecedence`/`dal:perSubjectScoped`, one dimension each) plus the G3 remainder (`dal:epochAuthority` promoted to its own dimension, carrying the remaining restore-surface properties as its extras), two refusals mirroring `dal:PersonalDataRequiresErasureShape` and `dal:PersonalDataReceiptCompatibilityShape`, and Worked example 4's privacy profile now resolving and emitting cleanly. See the [VP](validation/persistence-compiler-iri-sync-slice-4.md).
-5. **✅ Complete, human-validated 2026-09-25 (774 passed).** Uniqueness `dal:onViolation` selects a reconciler operation, never the guarded write itself (decision 1, Option A — guide §7.5, not §6): `key-claim-duplicate-audit` (`dal:Reject`, the default), `key-claim-merge-rewrite` (`dal:Merge`, with `MergeRelationRequired`), `key-claim-quarantine` (`dal:Quarantine`). `dal:ClaimScheme` `dal:Dual` rotation selects `key-claim-write-dual.mustache`. The registry-token digest-scheme relaxation (found in `identity-minting` M3) is also folded in: `dal:DigestSchemeRequiredShape` now exempts `dal:PositionDerivedEvent` + `dal:RegistryTokenDerivation` only. `ontology/persistence` bumped PATCH, 0.2.0 → 0.2.1. One issue found by the run itself, fixed: a mustache-comment quoted its own tag syntax as prose, which this compiler's renderer does not treat as inert. See the [VP](validation/persistence-compiler-iri-sync-slice-5.md).
+4. **✅ Complete, validated 2026-09-25 (669 passed, adversarial probes checked).** Privacy/erasure profile (`dal:privacyClass`/`dal:erasureStrategy`/`dal:erasurePrecedence`/`dal:perSubjectScoped`, one dimension each) plus the G3 remainder (`dal:epochAuthority` promoted to its own dimension, carrying the remaining restore-surface properties as its extras), two refusals mirroring `dal:PersonalDataRequiresErasureShape` and `dal:PersonalDataReceiptCompatibilityShape`, and Worked example 4's privacy profile now resolving and emitting cleanly. See the [VP](validation/persistence-compiler-iri-sync-slice-4.md).
+5. **✅ Complete, validated 2026-09-25 (774 passed).** Uniqueness `dal:onViolation` selects a reconciler operation, never the guarded write itself (decision 1, Option A — guide §7.5, not §6): `key-claim-duplicate-audit` (`dal:Reject`, the default), `key-claim-merge-rewrite` (`dal:Merge`, with `MergeRelationRequired`), `key-claim-quarantine` (`dal:Quarantine`). `dal:ClaimScheme` `dal:Dual` rotation selects `key-claim-write-dual.mustache`. The registry-token digest-scheme relaxation (found in `identity-minting` M3) is also folded in: `dal:DigestSchemeRequiredShape` now exempts `dal:PositionDerivedEvent` + `dal:RegistryTokenDerivation` only. `ontology/persistence` bumped PATCH, 0.2.0 → 0.2.1. One issue found by the run itself, fixed: a mustache-comment quoted its own tag syntax as prose, which this compiler's renderer does not treat as inert. See the [VP](validation/persistence-compiler-iri-sync-slice-5.md).
 6. 🚧 Documentation close-out, in progress this session
 
 ## 1b. IRI and RDF Patterns, Post-3866b21 Remediation
@@ -415,9 +415,9 @@ between active platform work and archived material.
 
 | Field | Value |
 |-------|-------|
-| **Status** | ✅ Slices 1-4 implemented (human directed autonomous implementation, 2026-09-25). ADR-A86 remains Proposed pending ratification |
+| **Status** | ✅ Slices 1-4 implemented (autonomous implementation, as we directed, 2026-09-25). ADR-A86 remains Proposed pending ratification |
 | **Unit ID** | `ontology-semantic-versioning` |
-| **Trigger** | Human request, 2026-09-25 — adopt SemVer 2.0.0 for ontology documents |
+| **Trigger** | Request, 2026-09-25 — adopt SemVer 2.0.0 for ontology documents |
 | **Sketch** | [ontology-semantic-versioning.md](sketches/ontology-semantic-versioning.md) |
 | **Plan** | [ontology-semantic-versioning.md](plans/ontology-semantic-versioning.md) |
 | **Status Record** | [ontology-semantic-versioning.md](status/ontology-semantic-versioning.md) |
@@ -456,7 +456,7 @@ between active platform work and archived material.
 
 | Field | Value |
 |-------|-------|
-| **Status** | ✅ All 4 findings implemented (human directed "proceed with the attached plan", 2026-09-25). Not yet executed in this sandbox (no rdflib) — authored and statically verified, hand-off for `mise run check:vocabulary` / `python -m unittest surface.test_surface` |
+| **Status** | ✅ All 4 findings implemented (we directed "proceed with the attached plan", 2026-09-25). Not yet executed in this sandbox (no rdflib) — authored and statically verified, hand-off for `mise run check:vocabulary` / `python -m unittest surface.test_surface` |
 | **Unit ID** | `temporal-binding-consumer-hardening` |
 | **Trigger** | Cross-reference of `vocabulary-temporal-binding`'s Surface/Eligibility integration against [rdf-sparql-patterns-guide.md](../architecture/rdf-sparql-patterns-guide.md) |
 | **Plan** | [temporal-binding-consumer-hardening.md](plans/temporal-binding-consumer-hardening.md) |
@@ -496,9 +496,9 @@ Finding 5 (terminology overload of "scope") remains accepted, no action.
 
 | Field | Value |
 |-------|-------|
-| **Status** | 🚧 AOR-2 to AOR-9, AOR-3b, AOR-12, AOR-13 committed. AOR-10, AOR-11, AOR-14 to AOR-17 implemented and self-validated, awaiting the human's commands |
+| **Status** | 🚧 AOR-2 to AOR-9, AOR-3b, AOR-12, AOR-13 committed. AOR-10, AOR-11, AOR-14 to AOR-17 implemented and self-validated, awaiting the maintainer's commands |
 | **Unit ID** | `applied-ontology-readiness` |
-| **Trigger** | Human request, 2026-09-25 — close the gaps an applied (domain) ontology meets when built on LATTICE |
+| **Trigger** | Request, 2026-09-25 — close the gaps an applied (domain) ontology meets when built on LATTICE |
 | **Sketch** | [applied-ontology-readiness.md](sketches/applied-ontology-readiness.md) |
 | **Plan** | [applied-ontology-readiness.md](plans/applied-ontology-readiness.md) |
 | **Status Record** | [applied-ontology-readiness.md](status/applied-ontology-readiness.md) |
@@ -583,7 +583,7 @@ IUA binding authority and the Lloyd's CBAA.
 
 | Field | Value |
 |-------|-------|
-| **Status** | 📝 Proposed, 2026-10-05. Awaiting human review and gate-0 decisions |
+| **Status** | 📝 Proposed, 2026-10-05. Awaiting the maintainer's review and gate-0 decisions |
 | **Unit ID** | `insurml-alignment` (epic) |
 | **Vision** | [insurml-alignment-vision.md](../architecture/insurml-alignment-vision.md) |
 | **Sketches** | [insurml-bridge.md](sketches/insurml-bridge.md), [insurml-toolchain-and-ai.md](sketches/insurml-toolchain-and-ai.md), [insurml-typing.md](sketches/insurml-typing.md), [wording-assembly-interface.md](sketches/wording-assembly-interface.md) |
@@ -606,7 +606,8 @@ reading.
 | **Sketches** | [formal-methods.md](sketches/formal-methods.md), [formal-adequacy-and-architecture.md](sketches/formal-adequacy-and-architecture.md), [assurance-records.md](sketches/assurance-records.md), [instrument-assurance.md](sketches/instrument-assurance.md), [reference-evaluator.md](sketches/reference-evaluator.md), [formal-toolchain-workers.md](sketches/formal-toolchain-workers.md). Per-track sketches under `sketches/formal-methods-track-*.md` (B, C, E, H) |
 | **Plan** | [formal-methods.md](plans/formal-methods.md), with [the prover spike](plans/formal-methods-phase-0.md) and per-track plans (`plans/formal-methods-track-*.md`, B, C, E, H). Other tracks rolling-wave |
 | **Status Record** | [formal-methods.md](status/formal-methods.md) |
-| **ADRs** | per track: the assurance profile (A), the reference semantics (B, A-FM3), toolchain workers (F), the formal stack with its home after the spike (E, A-FM1/A-FM2), and Persistence's own home and scope (H, A-FM4, Proposed) |
+| **Track H, aggregate ownership** | design [persistence-aggregate-ownership.md](sketches/persistence-aggregate-ownership.md), from the [exploration note](notes/persistence-aggregate-ownership.md), its [spike](../../spikes/persistence-aggregate-ownership/README.md) and the [review](notes/persistence-aggregate-ownership-review.md). Slices HO0 to HO9 in [plan §3.5](plans/formal-methods-track-h.md#35-ho-aggregate-ownership). [ADR-A122](../architecture/decisions/ADR-A122-aggregate-ownership.md), Proposed |
+| **ADRs** | per track: the assurance profile (A), the reference semantics (B, A-FM3), toolchain workers (F), the formal stack with its home after the spike (E, A-FM1/A-FM2), and Persistence's own home and scope (H, A-FM4, Accepted), aggregate ownership (H, A-122, Proposed) |
 
 Formal methods in LATTICE's development lifecycle and compilation toolchains: mechanised semantics
 and proofs, lightweight models, adequacy against the fixture corpus, assurance records, guaranteed
@@ -624,18 +625,18 @@ instrument behaviour, and generated tools run as workers, never against the live
 LATTICE's guidance for AI agents as an always-on core (`AGENTS.md`) and six skills in
 `.claude/skills/`, shared with projects built on LATTICE as a Claude Code plugin. Takes over TD-21.
 
-## 8.13 Word Authoring Proof of Concept — Awaiting human validation
+## 8.13 Word Authoring Proof of Concept — Awaiting validation
 
 | Field | Value |
 |-------|-------|
-| **Status** | 🟡 WA0 to WA11 done. Awaiting the human's manual Word checklist, see the status record |
+| **Status** | 🟡 WA0 to WA11 done. Awaiting the maintainer's manual Word checklist, see the status record |
 | **Unit ID** | `word-authoring-poc` |
 | **Sketch** | [word-authoring-poc.md](sketches/word-authoring-poc.md) |
 | **Plan** | [word-authoring-poc.md](plans/word-authoring-poc.md) |
 | **Status Record** | [word-authoring-poc.md](status/word-authoring-poc.md) |
 | **Validation Packs** | [WA1](validation/word-authoring-poc-wa1.md), [WA2](validation/word-authoring-poc-wa2.md), [WA3](validation/word-authoring-poc-wa3.md), [WA4](validation/word-authoring-poc-wa4.md), [WA5](validation/word-authoring-poc-wa5.md), [WA6](validation/word-authoring-poc-wa6.md), [WA7](validation/word-authoring-poc-wa7.md), [WA8](validation/word-authoring-poc-wa8.md), [WA9](validation/word-authoring-poc-wa9.md), [WA9a](validation/word-authoring-poc-wa9a.md), [WA10](validation/word-authoring-poc-wa10.md), [WA11](validation/word-authoring-poc-wa11.md) |
 | **ADRs** | A-118, Proposed |
-| **Follow-on tranche** | drafted 2026-10-02, not started: richer nested sample data (deferred on CCS), a web authoring app, add-in parity. Decisions WA-D14 to WA-D20 and slices WA12 to WA20 in the plan, design in sketch §8. Awaiting the human's decisions |
+| **Follow-on tranche** | drafted 2026-10-02, not started: richer nested sample data (deferred on CCS), a web authoring app, add-in parity. Decisions WA-D14 to WA-D20 and slices WA12 to WA20 in the plan, design in sketch §8. Awaiting the maintainer's decisions |
 
 A Word add-in, loaded without installation, for writing wordings into templates with marked text
 parts, backed by a Java and Jena service and a Python Logical English job over RabbitMQ, run as a
@@ -645,7 +646,7 @@ local compose stack.
 
 | Field | Value |
 |-------|-------|
-| **Status** | 🔵 Sketch and plan drafted 2026-10-02. Decisions XS-D1 to XS-D7 awaiting the human, see the status record |
+| **Status** | 🔵 Sketch and plan drafted 2026-10-02. Decisions XS-D1 to XS-D7 awaiting the maintainer, see the status record |
 | **Unit ID** | `xslt-sidecar` |
 | **Sketch** | [xslt-sidecar.md](sketches/xslt-sidecar.md) |
 | **Plan** | [xslt-sidecar.md](plans/xslt-sidecar.md) |
@@ -663,9 +664,9 @@ revising it. A utility meant to be glued into other stacks, not a vertical proof
 
 | Field | Value |
 |-------|-------|
-| **Status** | ✅ Done 2026-10-09, branch `test/slow-py`. All 16 modules with a `validate()` call site adopted a shared graph/validation cache (`tools/conftest.py`), the five `git grep` call sites replaced with a Python scan, `pytest-xdist` wired into `check:ontology-catalog`. 456s serial to 123.6s (`pytest-xdist`), identical outcomes. TM4 and TM5 deferred, reasoning recorded. Held ready for the human to review and merge |
+| **Status** | ✅ Done 2026-10-09, branch `test/slow-py`. All 16 modules with a `validate()` call site adopted a shared graph/validation cache (`tools/conftest.py`), the five `git grep` call sites replaced with a Python scan, `pytest-xdist` wired into `check:ontology-catalog`. 456s serial to 123.6s (`pytest-xdist`), identical outcomes. TM4 and TM5 deferred, reasoning recorded. Held ready for the maintainer to review and merge |
 | **Unit ID** | `python-test-melting` |
-| **Sketches** | [python-test-melting.md](sketches/python-test-melting.md), [test-suite-performance.md](sketches/test-suite-performance.md) (both superseded, kept until the human decides) |
+| **Sketches** | [python-test-melting.md](sketches/python-test-melting.md), [test-suite-performance.md](sketches/test-suite-performance.md) (both superseded, kept until the maintainer decides) |
 | **Plan** | [python-test-melting.md](plans/python-test-melting.md) |
 | **Status Record** | [python-test-melting.md](status/python-test-melting.md) |
 | **Skill** | [lattice-testing](../../.claude/skills/lattice-testing/SKILL.md) |
@@ -787,7 +788,7 @@ that code and documents agree with it. Shares work with `python-test-melting` (s
 
 ### ✅ Complete (Ready for Handoff or Integration)
 1. RDF/SPARQL patterns guide (Slice 1)
-2. Persistence compiler (Slice 2) — 774 tests passing after `persistence-compiler-iri-sync`'s Slices 1–5 (complete, human-validated 2026-09-25); that unit's Slice 6 (documentation close-out) is its own final pass
+2. Persistence compiler (Slice 2) — 774 tests passing after `persistence-compiler-iri-sync`'s Slices 1–5 (complete, validated 2026-09-25); that unit's Slice 6 (documentation close-out) is its own final pass
 3. LLM training / MTP generation — 346 tests passing
 4. Repository topology (ADR-A77)
 5. MORK eligibility compiler (awaiting runtime validation, not handoff)
@@ -796,7 +797,7 @@ that code and documents agree with it. Shares work with `python-test-melting` (s
 
 ### 🚧 In Progress
 1. Epic decomposition (Phase 0-9 plans)
-2. Persistence compiler / IRI-patterns sync (`persistence-compiler-iri-sync`) — Slices 1–5 of 6 done (774/774 passing, human-validated); Slice 6 (documentation close-out) in progress
+2. Persistence compiler / IRI-patterns sync (`persistence-compiler-iri-sync`) — Slices 1–5 of 6 done (774/774 passing, validated); Slice 6 (documentation close-out) in progress
 3. Housekeeping first cut (Slice 3, scoped but not started)
 4. Surface MORK Phase 8 verification (SWRL reasoner integration, 1/8 items pending)
 
@@ -892,6 +893,6 @@ This index is updated when:
 - A validation pack is accepted
 - A unit transitions between status states (🚧 → ✅, etc.)
 
-**Last updated:** 2026-09-25 — `persistence-compiler-iri-sync` Slices 4 and 5 human-validated (774/774 passing); Slice 6 documentation close-out in progress
+**Last updated:** 2026-09-25 — `persistence-compiler-iri-sync` Slices 4 and 5 validated (774/774 passing); Slice 6 documentation close-out in progress
 **Last reviewed:** 2026-09-22  
 **Next review:** Upon Phase 8 SWRL verification completion and Phase 9 decomposition

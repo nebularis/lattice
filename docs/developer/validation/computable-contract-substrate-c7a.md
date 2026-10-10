@@ -3,7 +3,7 @@
 # Validation Pack: CCS C7a, regimes and gating
 
 **Unit:** [`computable-contract-substrate`](../status/computable-contract-substrate.md)
-**Machine:** R (Claude Code). **Branch:** `ccs/c7a-regimes`. Commits are the human's, and the change is
+**Machine:** R. **Branch:** `ccs/c7a-regimes`. Commits are the maintainer's, and the change is
 merged into `main` before its release tags are created
 **Plan and test cases:** [CCS plan](../plans/computable-contract-substrate.md) (C7a in detail)
 **Decisions:** ADR-A104 decisions 6, 7 and 8, ADR-A106 and its addendum (C11a-Q2, C11a-Q4), CC-D8,
@@ -41,7 +41,7 @@ Evaluation of gating and per-occasion resolution (C12, C13). Due ranges, recurre
 
 ## Handoff
 
-Written by the building machine when the work is ready for the human to commit.
+Written by the building machine when the work is ready for the maintainer to commit.
 
 Phase 1, examples first (ADR-A-C2), 2026-10-04:
 
@@ -50,7 +50,7 @@ Phase 1, examples first (ADR-A-C2), 2026-10-04:
   addendum "a regime is stated once" (Proposed). Between them the examples use every legal trigger
   (`OnExercise`, `OnCondition`, `OnExpiry` in days and in business days, `OnAct`), `ins:tolledIn`,
   `ins:arisesOnBreachOf`, a per-occasion regime, and gates within one regime and across two.
-- **Run by the agent:** each example with the C6 model, every lower layer's vocab, and the shapes of
+- **Run:** each example with the C6 model, every lower layer's vocab, and the shapes of
   Foundation, Vocabulary, Quantification, Eligibility, Wording, Behaviour and Instrument, under
   pySHACL with and without RDFS inference. All four conform without inference. With RDFS,
   `service-dispute.ttl` fails Instrument's relation shapes on `tmpl:on-dispute`: C6's domain on
@@ -146,18 +146,18 @@ Phase 2, the model, 2026-10-04:
     four, and an expiry has no anchor on a relation: it counts from entering a state. Corrected in
     `ins:ArisingShape`, the two properties' comments, the README and addendum decision 6, with a
     test in C7a-08.
-  - **README review, 2026-10-04.** At the human's request, §4.2.4 now explains arising in the legal
+  - **README review, 2026-10-04.** At our request, §4.2.4 now explains arising in the legal
     sense (source and moment, Hohfeld's operative facts, arising against falling due, ending,
     occasions), and §4.2.13 explains how regimes work: what they are for, where an instrument's
     regimes come from, the one state per regime at every moment, what a relation's regimes are,
     the three questions of existence, gate and scope, why a gate and not arising and ending, and
-    per-occasion regimes. The human's edits to §4.2.13 are kept. Thirteen diagrams are added (59 in
+    per-occasion regimes. Our edits to §4.2.13 are kept. Thirteen diagrams are added (59 in
     all), and every one renders under mermaid 11, which a parse alone does not show: a colon in a
     gantt task name parses and fails to render.
 
 ## Results
 
-Run by the agent on machine R, 2026-10-04, with every tool package importing from this checkout.
+Run on machine R, 2026-10-04, with every tool package importing from this checkout.
 
 | Row | Result |
 |---|---|

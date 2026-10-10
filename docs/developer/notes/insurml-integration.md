@@ -31,7 +31,7 @@ bound D&O policy in force. Both are `iml:Contract`, with version IRIs of the pat
 10. [Changes each side would need](#10-changes-each-side-would-need)
 11. [A phased roadmap](#11-a-phased-roadmap)
 12. [Risks](#12-risks)
-13. [Decisions for the human](#13-decisions-for-the-human)
+13. [Decisions for the maintainer](#13-decisions-for-the-maintainer)
 14. [Questions for the InsurML owner](#14-questions-for-the-insurml-owner)
 
 ---
@@ -67,7 +67,7 @@ The shape that follows from that:
    blocks inside a sentence (L-5) arise in any clause library, from facility agreements to trial
    protocols. They belong in the substrate, each through its own ADR.
 
-Section 13 lists the decisions this needs from the human.
+Section 13 lists the decisions this needs from the maintainer.
 
 ---
 
@@ -823,7 +823,7 @@ P-13 and P-14 are numbered in the [alignment plan](../plans/insurml-alignment.md
 ## 11. A phased roadmap
 
 Phases are ordered by dependency. Token estimates are orders of magnitude for agent work, to be
-compared with actuals, as the repository asks. They exclude human review time.
+compared with actuals, as the repository asks. They exclude review time.
 
 | Phase | Content | Depends on | Changes a layer | Estimate |
 |---|---|---|---|---|
@@ -873,7 +873,7 @@ cross Instrument's rewrite.
 
 ---
 
-## 13. Decisions for the human
+## 13. Decisions for the maintainer
 
 | # | Decision | Options | Recommendation |
 |---|---|---|---|

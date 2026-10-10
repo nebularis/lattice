@@ -50,7 +50,7 @@ S2 also changes Eligibility, and rebases onto AIR-3.2. AIR-3.3 merges before
 
 ## AIR-3.1 in detail
 
-**Machine:** R (Claude Code). **Branch:** `air/3.1-flat-hierarchy`. **Validation Pack:**
+**Machine:** R. **Branch:** `air/3.1-flat-hierarchy`. **Validation Pack:**
 [applied-insurance-reference-3.1](../validation/applied-insurance-reference-3.1.md).
 **Decision:** ADR-A100, with its implementation note.
 
@@ -127,7 +127,7 @@ Disabling it in `sparql_backend.concept_select` fails AIR31-03, 04, 06 and 07.
 
 ## AIR-3.2 in detail
 
-**Machine:** R (Claude Code). **Branch:** `air/3.2-set-readings`. **Validation Pack:**
+**Machine:** R. **Branch:** `air/3.2-set-readings`. **Validation Pack:**
 [applied-insurance-reference-3.2](../validation/applied-insurance-reference-3.2.md).
 **Decision:** ADR-A103.
 
@@ -200,7 +200,7 @@ Authored in ADR-A-C2 order: examples, then laws and README, then code.
 
 ## AIR-3.3 in detail
 
-**Machine:** R (Claude Code). **Branch:** `air/3.3-readings-swrl-owl`. **Validation Pack:**
+**Machine:** R. **Branch:** `air/3.3-readings-swrl-owl`. **Validation Pack:**
 [applied-insurance-reference-3.3](../validation/applied-insurance-reference-3.3.md).
 **Decision:** ADR-A103 decisions 3 and 4.
 

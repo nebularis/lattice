@@ -3,7 +3,7 @@
 # Validation Pack: CCS C10, Behaviour below Instrument, configuration and runtime
 
 **Unit:** [`computable-contract-substrate`](../status/computable-contract-substrate.md)
-**Machine:** R (Claude Code). **Branch:** `ccs/c10-behaviour-split`
+**Machine:** R. **Branch:** `ccs/c10-behaviour-split`
 **Plan and test cases:** [CCS plan](../plans/computable-contract-substrate.md) (C10 in detail)
 **Decisions:** ADR-A106, ADR-A11 as amended, ADR-A01's addendum, ADR-A113. C10-Q1, C10-Q2 decided 2026-10-01
 
@@ -66,7 +66,7 @@ Written by the building machine when the work is committed.
     notes with the 0.8.0 breaking entry.
 - **Deviations from the plan:** none. C10-02 was first scoped to the layer's documents, then
   restored to every file once the fixtures were made neutral.
-- **Tags for the human:** `behaviour-v0.8.0`, `behaviour-runtime-v0.8.0`, `behaviour-vocab-v0.8.0`,
+- **Tags for the maintainer:** `behaviour-v0.8.0`, `behaviour-runtime-v0.8.0`, `behaviour-vocab-v0.8.0`,
   `behaviour-shapes-v0.2.0`, `behaviour-projection-v0.2.0`, `applied-capacity-execution-v0.8.0`.
 
 ## Results

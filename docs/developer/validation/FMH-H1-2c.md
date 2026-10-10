@@ -5,7 +5,7 @@
 **Unit:** [`formal-methods-track-h`](../status/formal-methods-track-h.md), slice H1.2, part c
 ([plan §3, H1.2](../plans/formal-methods-track-h.md), split by H-D8)
 **Builds on:** [FMH-H1.2a](FMH-H1-2.md) and [FMH-H1.2b](FMH-H1-2b.md).
-**Decisions:** none new. One finding needs a design decision from the human (TD-25, below).
+**Decisions:** none new. One finding needs a design decision from the maintainer (TD-25, below).
 
 ## Invariant
 
@@ -76,7 +76,7 @@ gap(s), 0 unlisted gap(s)`, and exits 0.
 
 ## Adversarial probes
 
-Run by the agent on 2026-10-09, each reverted afterwards.
+Run on 2026-10-09, each reverted afterwards.
 
 | Mutation | Result |
 |---|---|

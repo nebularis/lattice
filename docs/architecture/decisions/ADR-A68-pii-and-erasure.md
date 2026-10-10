@@ -5,7 +5,7 @@
 **Status:** Proposed
 **Date:** 2026-09-23
 **Related:** Architecture Review §5.7 (S-9), §4.10, ADR-A54, ADR-A65, ADR-A82
-**Drafted by:** Agent, autonomous session (P0.1.7). Pending human ratification — see [phase-0-status.md](../../developer/status/phase-0-status.md).
+**Drafted in:** P0.1.7. Pending ratification — see [phase-0-status.md](../../developer/status/phase-0-status.md).
 
 ## Context
 

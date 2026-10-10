@@ -4,7 +4,7 @@
 
 **Unit:** [`computable-contract-substrate`](../plans/computable-contract-substrate.md), slices C9b1 to
 C9b4 (replacing the first C9b brief).
-**Status:** decided 2026-10-09 by the human, from the human's own paper and the agent's review of it
+**Status:** decided 2026-10-09, from our own paper and a review of it
 (§6). §1 moves into the Instrument README once the slices land.
 **Reads with:** the [CCS sketch](computable-contract-substrate.md) §5.3 and §5.8, the
 [change materiality sketch](change-materiality.md), the Instrument README §6.3, §15.1 and §17, ADR-A104
@@ -414,7 +414,7 @@ The weight moves out of Instrument and into small, reusable pieces in Eligibilit
 C9d's selection by grade becomes another member condition, and HQ-5's "any one may act" an
 `elg:Intersects` rather than a slice of its own.
 
-## 6. Decisions (the human, 2026-10-09)
+## 6. Decisions (2026-10-09)
 
 | # | Decision |
 |---|---|

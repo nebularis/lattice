@@ -52,7 +52,7 @@ consistent catalog, and `80 passed`.
   Executable 0.4.0 → 0.5.0, and the cascade to Party, Surface, Eligibility,
   Instrument, Behaviour and the applied capacity spec.
 
-## Adversarial probe (run by the agent)
+## Adversarial probe
 
 | Mutation | Tests failed |
 |---|---|

@@ -37,7 +37,7 @@ What exists now:
 - Root `README.md` and `tools/README.md` document the new `tools/vocabulary/`
   package.
 
-Two decisions were made without a further human checkpoint, because the sketch
+Two decisions were made without a further checkpoint, because the sketch
 and plan explicitly permitted them (see "Decisions made during implementation"
 below), and are flagged here for review rather than silently assumed correct:
 the resolver's location/language, and the validation-context representation
@@ -52,7 +52,7 @@ for the two SHACL checks that need one.
 | 3. Resolution reference implementation | Verified, included in 14/14 package tests | `tools/vocabulary` resolver + determinism/precedence/conflict tests |
 | 4. Consumer/provenance integration | Complete, verified | Surface resolves scoped bindings via `vocabulary.resolve` (`tools/surface/src/surface/compile.py`); Eligibility's `HierarchyWellFoundednessShape` checks every scheme a contract could resolve to; both proven against dedicated fixtures |
 
-## Decisions made during implementation (flagged for human review)
+## Decisions made during implementation (flagged for the maintainer's review)
 
 - **Resolver location and language:** `tools/vocabulary/`, a Python package
   mirroring `tools/persistence/`'s `pyproject.toml` + `src/<pkg>/` + `tests/`
@@ -81,7 +81,7 @@ for the two SHACL checks that need one.
   context. `tools/surface/pyproject.toml` depends on
   `lattice-vocabulary-resolver`, and `mise.toml`'s `bootstrap` task now
   installs `bootstrap:vocabulary` before `bootstrap:surface`.
-- **ADR-A85 status:** left as Proposed. Ratifying it is a human decision, not
+- **ADR-A85 status:** left as Proposed. Ratifying it is the maintainer's decision, not
   an automatic consequence of authoring the artefacts it called for.
 - **Ontology version IRI:** left at `0.0.2`, unchanged, per the plan.
 
@@ -148,7 +148,7 @@ check:vocabulary` (14/14), `python -m unittest surface.test_surface -q`
 check:python-root` (77/77 plus Phase 8 conformance), none of which existed or
 passed with the resolver wired in before this pass.
 
-## Human validation gate
+## Validation gate
 
 Closed 2026-09-25:
 
@@ -156,7 +156,7 @@ Closed 2026-09-25:
 2. Automated checks ran green: `mise run check:vocabulary` (14/14),
    `python -m unittest surface.test_surface -q` (62/62), and `mise run
    check:python-root` (77/77 plus Phase 8 conformance).
-3. Perform the validation pack's human mutation probe (disable strict-superset
+3. Perform the validation pack's mutation probe (disable strict-superset
    precedence in the resolver and rerun VTB-06; disable the equal-specificity
    SHACL-SPARQL constraint and rerun VTB-07) to confirm the tests are not
    vacuous.
@@ -164,5 +164,5 @@ Closed 2026-09-25:
 
 ## Blockers
 
-Human review and ADR-A85 ratification. All authored artefacts, including the
+Review and ADR-A85 ratification. All authored artefacts, including the
 Surface and Eligibility consumer integration, are executed and green.

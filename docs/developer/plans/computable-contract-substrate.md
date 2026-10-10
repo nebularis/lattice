@@ -3,10 +3,10 @@
 # Plan: Computable contract substrate
 
 **Unit ID:** `computable-contract-substrate` (CCS)
-**Unit type:** multi-slice unit, single machine R, in tranches with human gates (as
+**Unit type:** multi-slice unit, single machine R, in tranches with validation gates (as
 [normative-rule-substrate](normative-rule-substrate.md) §3)
-**Status:** Proposed, awaiting human review. All §8 decisions taken (CC-D8 on 2026-10-01)
-**Trigger:** human request, 2026-09-30, after testing the Instrument redesign against a package
+**Status:** Proposed, awaiting the maintainer's review. All §8 decisions taken (CC-D8 on 2026-10-01)
+**Trigger:** request, 2026-09-30, after testing the Instrument redesign against a package
 policy, an IUA binding authority and the Lloyd's CBAA collateral
 **Sketches:** [computable-contract-substrate.md](../sketches/computable-contract-substrate.md) (the
 design and the scenario catalogue S1 to S101), [contract-amounts.md](../sketches/contract-amounts.md)
@@ -76,11 +76,11 @@ branch.
 | C1 | draft A-104 from the sketch §5, §6, §7.3, §7.4, laws I1 to I18 | ADR, Proposed |
 | C2 | draft A-106 from the sketch §7, laws B1 to B8 | ADR, Proposed |
 
-Gate A: the human accepts A-104, A-106, A-112 and A-113.
+Gate A: the maintainer accepts A-104, A-106, A-112 and A-113.
 
 #### C0 in detail
 
-**Machine:** R (Claude Code). **Branch:** `ccs/c0-adrs`, created by the human. **Validation Pack:**
+**Machine:** R. **Branch:** `ccs/c0-adrs`, created. **Validation Pack:**
 [computable-contract-substrate-c0](../validation/computable-contract-substrate-c0.md).
 **Decisions carried:** CC-D1, CC-D2 and CC-D8's layer order (A-112), CC-D4 (A-113), CC-D7 (the
 ADR-A-C2 addendum).
@@ -90,7 +90,7 @@ ontology, tool, README or architecture document changes: those follow acceptance
 slices that build what the ADRs decide (C3, C10, C16). Each ADR states what was decided and cites
 the sketch for the argument, so the rationale lives in one place.
 
-**Questions for the human before the branch** (the brief follows the recommendation unless told
+**Questions for the maintainer before the branch** (the brief follows the recommendation unless told
 otherwise):
 
 | # | Question | Options | Recommendation |
@@ -170,7 +170,7 @@ otherwise):
 
 #### C1 in detail
 
-**Machine:** R. **Branch:** `ccs/c0-adrs` (the human ran tranche A on one branch, 2026-10-01).
+**Machine:** R. **Branch:** `ccs/c0-adrs` (we ran tranche A on one branch, 2026-10-01).
 **Validation Pack:** [computable-contract-substrate-c1](../validation/computable-contract-substrate-c1.md).
 **Decisions carried:** CC-D5, CC-D8 (regimes and legal triggers), CC-D10, CC-D11.
 
@@ -240,7 +240,7 @@ C6, so tranche B cascades nowhere.
 
 #### C3 in detail
 
-**Machine:** R (Claude Code). **Branch:** `ccs/c3-wording-spec`, created by the human.
+**Machine:** R. **Branch:** `ccs/c3-wording-spec`, created.
 **Validation Pack:** [computable-contract-substrate-c3](../validation/computable-contract-substrate-c3.md).
 **Decisions:** ADR-A112 (decisions 1 to 4), ADR-A113, ADR-A-C2 and its addendum, CC-D6, CC-D11.
 
@@ -249,7 +249,7 @@ Vocabulary 0.3.0, Quantification 0.5.0 and Eligibility 0.7.0, names no term of a
 holds the structure, text and variables of a contract's documents. Nothing imports it, so no
 other document changes version.
 
-**Decided by the human, 2026-10-01:**
+**Decided 2026-10-01:**
 
 - **C3-Q1.** Wording ships a baseline element type scheme in `wrd-voc`, not closed, with every
   element type that Wording's README, how-to and examples use (Section, Clause, Schedule, Annex and
@@ -297,7 +297,7 @@ other document changes version.
    Laws W1 to W7 and the how-to follow in C5. `tools/literate_extract.py --check` passes for this
    layer.
 6. **Catalog and releases:** `mise run build:ontology-catalog`, then
-   `mise run build:ontology-releases` for the two new versions. Tags are the human's.
+   `mise run build:ontology-releases` for the two new versions. Tags are the maintainer's.
 7. **Tests:** `tools/test_wording.py`, added to `check:ontology-catalog`'s list, for the rows
    below. The reasoner rows skip when the harness jar is not built, as `mork_compilers`' `test_reasoner.py` does.
 8. **Docs** (ADR-A112's consequences): the root README and `ontology-architecture.md` take the
@@ -325,7 +325,7 @@ other document changes version.
 
 #### C4 in detail
 
-**Machine:** R (Claude Code). **Branch:** `ccs/c4-wording-assembly`, created by the human. May run
+**Machine:** R. **Branch:** `ccs/c4-wording-assembly`, created. May run
 beside C11 and C10a: they share no file except `mise.toml`'s test list and the status record.
 **Validation Pack:** [computable-contract-substrate-c4](../validation/computable-contract-substrate-c4.md).
 **Decisions:** ADR-A112 decision 3, CC-D6 (tables), ADR-A-C2 and its addendum.
@@ -334,7 +334,7 @@ beside C11 and C10a: they share no file except `mise.toml`'s test list and the s
 breaking). Every new property states its subject and value in its comment and is checked by SHACL
 Core, as in C3. Assembly is design time: nothing here is evaluated per event.
 
-**Decided by the human, 2026-10-01:**
+**Decided 2026-10-01:**
 
 - **C4-Q1.** An instance's wording is asserted as `wrd:AssembledWording ⊑ wrd:Wording`. Law I1
   (an instrument version is expressed in one), laws W3, W5 and W6, law I17 and the amendment and
@@ -379,7 +379,7 @@ Core, as in C3. Assembly is design time: nothing here is evaluated per event.
 5. **README:** the model sections for §4.3 to §4.5, the shapes, and the example table. The literate
    check covers all three files.
 6. **Tests:** `tools/test_wording.py` gains the rows below.
-7. **Catalog and releases**, and the tags for the human.
+7. **Catalog and releases**, and the tags for the maintainer.
 
 | ID | Given / When / Then | Level | +/- |
 |---|---|---|---|
@@ -397,8 +397,8 @@ Core, as in C3. Assembly is design time: nothing here is evaluated per event.
 
 #### C5 in detail
 
-**Machine:** R (Claude Code). **Branch:** `ccs/c5-wording-laws`, created by the human. May run beside
-C11a, which shares no file but the status record. **Commits are the human's** (2026-10-01): the
+**Machine:** R. **Branch:** `ccs/c5-wording-laws`, created. May run beside
+C11a, which shares no file but the status record. **Commits are the maintainer's** (2026-10-01): the
 agent builds and verifies, then stops before committing, including between the examples and the
 model, which ADR-A-C2 orders.
 **Validation Pack:** [computable-contract-substrate-c5](../validation/computable-contract-substrate-c5.md).
@@ -408,7 +408,7 @@ model, which ADR-A-C2 orders.
 consumer without the LATTICE runtime can check a wording and an assembled instance completely. New
 violation-level shapes are breaking under ADR-A113, so the README gains a Release notes section.
 
-**Decided by the human, 2026-10-02:**
+**Decided 2026-10-02:**
 
 - **C5-Q1.** SHACL-SPARQL now: where every variant of a slot has an interval condition over the
   same single governing variable, the ranges must be pairwise disjoint and together cover the
@@ -452,7 +452,7 @@ violation-level shapes are breaking under ADR-A113, so the README gains a Releas
   `wrd:forColumn` → `wrd:forEntry`. New: `wrd:Entry ⊑ wrd:Element` with `wrd:entryKey`, for
   entries the form fixes (sketch §4.3, kind 3).
 
-1. **Examples first (ADR-A-C2).** The human commits these before the model is written:
+1. **Examples first (ADR-A-C2).** The maintainer commits these before the model is written:
    - `facility-amendment.ttl`: an amendment letter that replaces clause 5.2's chosen variant text,
      strikes "daily" for "on each business day" in clause 5.1, and appends a clause 12.2, giving a
      second assembled facility version superseding the first
@@ -494,7 +494,7 @@ violation-level shapes are breaking under ADR-A113, so the README gains a Releas
    (author a form, assemble an instance, amend it, propose a revision upstream), and Release notes
    with the 0.3.0 breaking entry.
 6. **Tests:** `tools/test_wording.py` gains the rows below.
-7. **Catalog, releases and the tag list.** The agent stops here, before any commit.
+7. **Catalog, releases and the tag list.** Work stops here, before any commit.
 
 | ID | Given / When / Then | Level | +/- |
 |---|---|---|---|
@@ -521,8 +521,8 @@ violation-level shapes are breaking under ADR-A113, so the README gains a Releas
 
 #### F1 in detail
 
-**Machine:** R (Claude Code). **Branch:** `ccs/f1-keys`, created by the human once this brief is on
-`main`. **Commits are the human's**, examples first (ADR-A-C2). Runs before C6, in the quiet window
+**Machine:** R. **Branch:** `ccs/f1-keys`, created once this brief is on
+`main`. **Commits are the maintainer's**, examples first (ADR-A-C2). Runs before C6, in the quiet window
 of ADR-A114's Consequences: no branch may edit a Foundation importer until F1 merges.
 **Validation Pack:** [computable-contract-substrate-f1](../validation/computable-contract-substrate-f1.md).
 **Decisions:** [ADR-A114](../../architecture/decisions/ADR-A114-external-and-natural-keys.md)
@@ -545,18 +545,18 @@ analyses the effect on:
 | the cascade | every document pinning `foundation/0.3.0` (17 at 2026-10-03), transitively every document pinning those, the version each takes under ADR-A86, the tags, and the test suites that name versions |
 
 Each finding states the change it needs and whether it belongs in F1 or a follow-up. **Gate:** the
-human accepts the analysis and ADR-A114. Changes the analysis finds in `tools/persistence` are
+maintainer accepts the analysis and ADR-A114. Changes the analysis finds in `tools/persistence` are
 briefed into this section then, with their test rows.
 
 **At the gate, 2026-10-03.** The analysis found no change to `tools/persistence` or `tools/surface`
 beyond Surface's ontology constant (S4), and 24 importers, not 17. G2 accepted: Foundation gains the
 property chain of ADR-A114 decision 5. G3 accepted: Instrument takes 0.8.0 in the cascade, and C6 to
-C9 shift by one MINOR (tranche D below). G1 revised in answer to the human's question: a scheme's key
+C9 shift by one MINOR (tranche D below). G1 revised in answer to our question: a scheme's key
 class is defined by an OWL restriction on the scheme (ADR-A114 decision 2), replacing
 `dal:keyClassFor`, with three shapes in `persistent-foundation` (analysis P2), accepted. ADR-A114
 accepted. Two follow-ups are recorded below.
 
-1. **Examples first (ADR-A-C2).** The human commits them before the model.
+1. **Examples first (ADR-A-C2).** The maintainer commits them before the model.
 
    | File | Shows |
    |---|---|
@@ -590,8 +590,8 @@ accepted. Two follow-ups are recorded below.
 6. **Elsewhere:** Foundation's README gains a section on keys with diagrams and the example walked
    through. AIR-4.1's brief uses `fnd:Key` in place of `aeo:Identifier`. C6's brief records
    instruments' keys. The plan's §7 notes Open CBAA's `agr:umr` as a key scheme.
-7. **Tests:** `tools/test_keys.py`, with the rows below. Catalog, releases and the tag list. The
-   agent stops before any commit.
+7. **Tests:** `tools/test_keys.py`, with the rows below. Catalog, releases and the tag list. Work
+   stops before any commit.
 
 | ID | Given / When / Then | Level | +/- |
 |---|---|---|---|
@@ -632,7 +632,7 @@ and may run beside tranche B.
 
 #### C10 in detail
 
-**Machine:** R (Claude Code). **Branch:** `ccs/c10-behaviour-split`, created by the human. May run
+**Machine:** R. **Branch:** `ccs/c10-behaviour-split`, created. May run
 beside C3: the two share no file except the architecture documents, which C10 edits after C3
 merges. **Validation Pack:**
 [computable-contract-substrate-c10](../validation/computable-contract-substrate-c10.md).
@@ -645,7 +645,7 @@ Selection and activation policies stay required (ADR-A09, ADR-A10). Every existi
 example, fixture and conformance case means what it meant before, apart from the renamed
 property.
 
-**Decided by the human, 2026-10-01:**
+**Decided 2026-10-01:**
 
 - **C10-Q1.** The runtime document is `spec/behaviour-runtime.ttl`, version IRI
   `…/lattice/behaviour-runtime/0.8.0`, beside configuration at `…/lattice/behaviour/0.8.0`.
@@ -678,7 +678,7 @@ property.
    `bhv:targets`. Nothing else in them changes.
 7. **Cascade:** `applied/capacity`'s execution profile (`0.7.0` → `0.8.0`) imports runtime
    0.8.0, since it ranges over `bhv:TransitionExecution` and `bhv:EffectApplication`. Catalog,
-   release rows, and the tag list for the human.
+   release rows, and the tag list for the maintainer.
 8. **README** (`ontology/behaviour/README.md`): imports, the two documents mapped to the four
    tiers, the target rule, and a "Release notes" section with the 0.8.0 breaking entry (ADR-A113).
    `ontology-architecture.md` and the root README already carry the new order after C3. C10
@@ -705,7 +705,7 @@ property.
 
 #### C10a in detail
 
-**Machine:** R (Claude Code). **Branch:** `ccs/c10a-import-guard`, created by the human.
+**Machine:** R. **Branch:** `ccs/c10a-import-guard`, created.
 **Validation Pack:** [computable-contract-substrate-c10a](../validation/computable-contract-substrate-c10a.md).
 **Decisions:** ADR-A01 and its addendum (the order), ADR-A106 law B7.
 
@@ -714,7 +714,7 @@ any Turtle file under a layer names a higher layer's namespace without importing
 Behaviour are siblings: neither may name the other. It covers the substrate layers only
 (C10a-Q2), and a substrate layer naming an applied namespace is a violation. Run today, it finds nothing: a scan on `main` at `a804fda` found no layer naming a higher one.
 
-**Decided by the human, 2026-10-01:**
+**Decided 2026-10-01:**
 
 - **C10a-Q1.** The order is one table in the tool, mirroring ADR-A01's addendum, with a test that
   it agrees with the diagram in `ontology-architecture.md`. No ontology change.
@@ -749,7 +749,7 @@ Behaviour are siblings: neither may name the other. It covers the substrate laye
 
 #### C11 in detail
 
-**Machine:** R (Claude Code). **Branch:** `ccs/c11-runtime-records`, created by the human.
+**Machine:** R. **Branch:** `ccs/c11-runtime-records`, created.
 **Validation Pack:** [computable-contract-substrate-c11](../validation/computable-contract-substrate-c11.md).
 **Decisions:** ADR-A106 decisions 4 and 5, laws B1, B2, B6, ADR-A92, ADR-A113.
 
@@ -760,7 +760,7 @@ record points at what it is about through properties with no range. Every state 
 are derived artefacts (B1), and an occasion's parties are fixed when it arises (I11, the mandatory
 probe).
 
-**Decided by the human, 2026-10-01:**
+**Decided 2026-10-01:**
 
 - **C11-Q1, a fixed core refined by sub-states.** `bhv:OccasionStates` holds six states, `bhv:Pending`,
   `bhv:Arisen`, `bhv:Performed`, `bhv:Breached`, `bhv:Ended` and `bhv:Suspended`, as
@@ -834,8 +834,8 @@ probe).
 
 #### C11a in detail
 
-**Machine:** R (Claude Code). **Branch:** `ccs/c11a-nested-states`, created by the human. **Commits are
-the human's.** The slice has two phases with a human gate between them, because its design is not
+**Machine:** R. **Branch:** `ccs/c11a-nested-states`, created. **Commits are
+the maintainer's.** The slice has two phases with a validation gate between them, because its design is not
 yet written.
 **Validation Pack:** [computable-contract-substrate-c11a](../validation/computable-contract-substrate-c11a.md).
 **Decisions:** ADR-A106 (decisions 5 and 7, law B5), C11-Q1 (occasions refined by sub-states),
@@ -860,16 +860,16 @@ for how they interact, in configuration as data, evaluated by C12 without infere
 
 The ADR amendment is an addendum to ADR-A106, Proposed, carrying the sketch's decisions.
 
-**Gate:** passed 2026-10-02. The human accepted the sketch and the addendum, with C11a-Q1 to Q4
+**Gate:** passed 2026-10-02. We accepted the sketch and the addendum, with C11a-Q1 to Q4
 answered, internal transitions decided and `AllMatches` limited to the sequential environment.
 
 **Phase 2, the model.** Same branch. The design is the
 [nested states sketch](../sketches/nested-states-and-history.md) and ADR-A106's addendum. Commits
-are the human's, examples first.
+are the maintainer's, examples first.
 
 1. **Examples first (ADR-A-C2).** In `ontology/behaviour/examples/`, each a full configuration and
    a full record of a sequence of stimuli, with every occupancy, execution, exit and resumption
-   written out and given its valid time. The human commits them before the model is written.
+   written out and given its valid time. The maintainer commits them before the model is written.
 
    | File | Shows | Sketch |
    |---|---|---|
@@ -924,11 +924,11 @@ are the human's, examples first.
    configuration in Turtle fragments, an occupancy timeline (Mermaid Gantt) and the records of each
    step, and what it proves. Release notes for 0.10.0 and shapes 0.4.0.
 7. **Tests:** `tools/test_behaviour_nested.py`, with the rows below. Catalog, releases and the tag
-   list. The agent stops before any commit.
+   list. Work stops before any commit.
 
 | ID | Given / When / Then | Level | +/- |
 |---|---|---|---|
-| C11a-01 | the sketch / read / every topic above decided or raised as a question for the human | paper | + |
+| C11a-01 | the sketch / read / every topic above decided or raised as a question for the maintainer | paper | + |
 | C11a-02 | the worked cases / read against the sketch's model / each expressible, step by step | paper | + |
 | C11a-03 | the A-106 addendum / read / Proposed, decides only what the sketch decides | paper | + |
 | C11a-04 | links and prose / checks / pass | L1 | + |
@@ -963,8 +963,8 @@ Instrument's own documents and examples. No applied insurance module imports Ins
 
 #### C6 in detail
 
-**Machine:** R (Claude Code). **Branch:** `ccs/c6-instrument-relations`, created by the human once
-this brief is on `main` and its questions are answered. **Commits are the human's**, examples first
+**Machine:** R. **Branch:** `ccs/c6-instrument-relations`, created once
+this brief is on `main` and its questions are answered. **Commits are the maintainer's**, examples first
 (ADR-A-C2).
 **Validation Pack:** [computable-contract-substrate-c6](../validation/computable-contract-substrate-c6.md).
 **Decisions:** ADR-A104 decisions 1 to 5 and 10, CC-D10, CC-D12, ADR-A96, ADR-A102, ADR-A113.
@@ -976,13 +976,13 @@ written and checked as data. Only `ins:Instrument` is a version. Every relation 
 one term and belongs to it. Nothing here evaluates: arising, due and ending (C7b), regimes and
 gating (C7a), parameter bindings (C8) and amendments (C9) follow.
 
-**Answered by the human, 2026-10-02 and 2026-10-03:** C6-Q1 (b), ownership's core moves into C6.
+**Answered 2026-10-02 and 2026-10-03:** C6-Q1 (b), ownership's core moves into C6.
 C6-Q3 and C6-Q4 as recommended. C6-Q2: slice F1 runs first (ADR-A114), so C6 records an
 instrument's keys from its first examples: the agreement number and market reference as natural
 keys on its persistent identity, and amendments, declarations and notices locating it with
 `fnd:externalKey`. C6's branch is recreated from `main` after F1 merges.
 
-**Simplified after review of the examples, 2026-10-03** (decided by the human):
+**Simplified after review of the examples, 2026-10-03** (decided):
 - a bound relation carries no `ins:boundIn`: it belongs to its term (`ins:arisesUnder`), and only
   terms carry `ins:boundIn`, as stated relations carry no `ins:expressedIn` (ADR-A104 decision 2,
   law I2)
@@ -1001,7 +1001,7 @@ keys on its persistent identity, and amendments, declarations and notices locati
 - conditions that nothing can yet evaluate are commented as placeholders
 - the facility example's term 8.1 gives rise to two relations, to show what a term is for
 
-**Questions for the human:**
+**Questions for the maintainer:**
 
 - **C6-Q1. Where term ownership is built.** The plan puts CC-D12's ownership (stated and bound
   terms, `ins:boundIn`, `ins:boundFrom`) in C8. Without it, a C6 term has no owner, and C6's
@@ -1054,7 +1054,7 @@ keys on its persistent identity, and amendments, declarations and notices locati
 
 1. **Examples first (ADR-A-C2).** In `ontology/instrument/examples/`, each with a small wording of
    its own and the instrument it expresses, drawn from the neutral instruments of the sketch §9
-   (CC-D7). The human commits them before the model. Under C6-Q1 (b), each states its clauses'
+   (CC-D7). The maintainer commits them before the model. Under C6-Q1 (b), each states its clauses'
    meaning on the form and binds it for one instrument:
 
    | File | From | Shows |
@@ -1091,7 +1091,7 @@ keys on its persistent identity, and amendments, declarations and notices locati
    `ins:alsoExpressedIn`.
 6. **README:** the model with diagrams, a worked section per example, and release notes.
 7. **Tests:** `tools/test_instrument.py`, with the rows below. Catalog, releases and the tag list.
-   The agent stops before any commit.
+   Work stops before any commit.
 
 | ID | Given / When / Then | Level | +/- |
 |---|---|---|---|
@@ -1113,8 +1113,8 @@ keys on its persistent identity, and amendments, declarations and notices locati
 
 #### C7a in detail
 
-**Machine:** R (Claude Code). **Branch:** `ccs/c7a-regimes`, created by the human from `main` once
-this brief is on `main` and its questions are answered. **Commits are the human's**, examples first
+**Machine:** R. **Branch:** `ccs/c7a-regimes`, created from `main` once
+this brief is on `main` and its questions are answered. **Commits are the maintainer's**, examples first
 (ADR-A-C2). Merged into `main` before its release tags are created.
 **Validation Pack:** [computable-contract-substrate-c7a](../validation/computable-contract-substrate-c7a.md).
 **Decisions:** ADR-A104 decisions 6 (legal triggers), 7 (regimes) and 8 (DP6), ADR-A106 and its addendum (nested states, C11a-Q2 and
@@ -1141,7 +1141,7 @@ author states only what the clause says.
 | `ins:stateKind` | | a state's kind, a concept under `ins-voc:StateKindContract` (notice period, cure period, suspended, run-off, ...) | §7.3 |
 | `ins:appliesInState` | | `ins:LegalRelation` → `bhv:State` of an `ins:Regime`. Grouped by regime: any state within one regime, every regime's group across regimes. A composite holds while any descendant does (nested states §6.2) | §5.5, §6.3 |
 
-**Answered by the human, 2026-10-04:** C7a-Q1 (a), with two refinements: a per-occasion regime
+**Answered 2026-10-04:** C7a-Q1 (a), with two refinements: a per-occasion regime
 names the stated relation and covers the occasions of every bound relation instantiated from it,
 and commitment in a proposal is a legal relation (a power of acceptance), with precision and
 completeness an overlay outside the legal model. The reasoning, as an insurance use-case, is the
@@ -1151,7 +1151,7 @@ C7a-Q3 as recommended. C7a-Q5 (a), added at review: the default gating subject n
 legally binding agreement, and qualified gates held (plan, held design questions). C7a-Q4:
 `ins:tolledIn`, the revised recommendation.
 
-**Decided by the human after the examples, 2026-10-04 (C7a-R1):** writing the examples found that
+**Decided after the examples, 2026-10-04 (C7a-R1):** writing the examples found that
 a stated regime must assert Behaviour's terms itself, since nothing instantiates it. The
 assertions stay the baseline, and a reasoner may supply them as a convenience. The design is
 ADR-A104's 2026-10-04 addendum, decision 5:
@@ -1165,7 +1165,7 @@ ADR-A104's 2026-10-04 addendum, decision 5:
   and misses a wrong value once the reasoner has merged the two individuals
 - `owl:AllDifferent` over Behaviour's policy and kind individuals is follow-up FU-C7a-a
 
-**Questions for the human:**
+**Questions for the maintainer:**
 
 - **C7a-Q1. Are regimes stated meaning only, or stated and bound?** CC-D12 gives terms and relations
   two tiers, and the sketch's §5.9 lists `ins:Template` as a mixin on regimes too. But a regime
@@ -1281,8 +1281,8 @@ ADR-A104's 2026-10-04 addendum, decision 5:
    profile, the three domains, validating the graph the engine reads, a worked lean form of one
    example beside its asserted form, the merge a wrong value causes, and why the value shapes use
    `sh:in`. Other sections cross-reference it.
-6. **Tests:** `tools/test_regimes.py`, with the rows below. Catalog, releases and the tag list. The
-   agent stops before any commit.
+6. **Tests:** `tools/test_regimes.py`, with the rows below. Catalog, releases and the tag list. Work
+   stops before any commit.
 
 | ID | Given / When / Then | Level | +/- |
 |---|---|---|---|
@@ -1313,8 +1313,8 @@ ADR-A104's 2026-10-04 addendum, decision 5:
 
 #### C7b in detail
 
-**Machine:** R (Claude Code). **Branch:** `ccs/c7b-terms-in-time`, created by the human from `main`
-once this brief is on `main` and its questions are answered. **Commits are the human's**, examples
+**Machine:** R. **Branch:** `ccs/c7b-terms-in-time`, created from `main`
+once this brief is on `main` and its questions are answered. **Commits are the maintainer's**, examples
 first (ADR-A-C2). Merged into `main` before its release tags are created.
 **Validation Pack:** [computable-contract-substrate-c7b](../validation/computable-contract-substrate-c7b.md).
 **Decisions:** ADR-A104 decisions 6 (`ins:due`, `ins:ends`), 13 and 14 (`ins:computedBy`), and its
@@ -1336,7 +1336,7 @@ almost nothing, and C7b-Q1 split them:
 | **terms in time** (this brief) | due ranges, recurrence, survival, how an instrument or a term ends, relations arising on termination, `ins:computedBy` | §5.1, §5.5, §7.9. S1, S2, S9, S16 to S18, S60, S72. I3, I5, I9 |
 | **what terms are, and who they bind** (C7c) | definitions and deemings, sections (`ins:appliesWithin`, `ins:notWithin`, I15), per-section definitions with union and overlap reporting (I16), term classification, resolution of a party that depends on the case (C6-Q5, S20, S58), how a group acts through a defined party word | §5.3, §5.6, §5.10. S15, S20, S25, S58, S94 to S96. I11, I15, I16 |
 
-**Answered by the human, 2026-10-04:**
+**Answered 2026-10-04:**
 
 - C7b-Q1 (a): the slice is split, and C7c is briefed separately
 - C7b-Q2 (a): an obligation has at most one due range. Asserting that every obligation falls due
@@ -1344,14 +1344,14 @@ almost nothing, and C7b-Q1 split them:
   the *reasonable time* the law implies, unless a contract's express words define one. Law I5 is
   restated
 - C7b-Q3 and C7b-Q4: a concrete design first, specified and documented so that it can be worked
-  through against current and future use cases. The human is not convinced that quantifiable
+  through against current and future use cases. The maintainer is not convinced that quantifiable
   axioms belong outside Quantification. Designed in the terms in time sketch Part A, which proposes
   putting the anchoring in Quantification (TQ1)
 - C7b-Q5: the commonest endings are expiry by time and termination on notice, and every other case
   needs attention. Designed in the sketch Part B, with a catalogue of endings (TQ3 to TQ7)
 - C7b-Q6 (a) and C7b-Q7 (a), as recommended
 
-**The sketch's questions, answered by the human, 2026-10-05:** TQ1, anchored time goes in
+**The sketch's questions, answered 2026-10-05:** TQ1, anchored time goes in
 Quantification. TQ2, business day conventions and times of day are held, and their use cases
 recorded (held design question HQ-3). TQ3, TQ4, TQ6 and TQ7 as recommended. TQ5, implicit: a term
 whose relations arise on termination survives for that purpose without saying so, because requiring
@@ -1367,7 +1367,7 @@ express wording would not work in practice.
 
 **Before branching.** Quantification's change re-pins every document that imports it: Party,
 Eligibility, Wording, Behaviour, Surface, Instrument and the applied modules, including
-`applied/insurance/peril` and `applied/capacity`. The human confirms that no parallel workstream
+`applied/insurance/peril` and `applied/capacity`. The maintainer confirms that no parallel workstream
 edits those documents while C7b runs (risk R6, as for F1).
 
 **Quantification's README is not yet its literate source.** Its blocks equal the generated files
@@ -1519,7 +1519,7 @@ change to any graph, as F1 did for Foundation, and then makes its additions ther
    - Quantification: context values, roles and unit-bearing offsets, with a diagram and its own
      release notes
 6. **Tests:** `tools/test_terms_in_time.py`, with the rows below. Catalog, releases and the tag
-   list. The agent stops before any commit.
+   list. Work stops before any commit.
 
 | ID | Given / When / Then | Level | +/- |
 |---|---|---|---|
@@ -1546,8 +1546,8 @@ change to any graph, as F1 did for Foundation, and then makes its additions ther
 
 #### C7c in detail
 
-**Machine:** R (Claude Code). **Branch:** `ccs/c7c-terms-and-parties`, created by the human from
-`main` once this brief is on `main` and its questions are answered. **Commits are the human's**,
+**Machine:** R. **Branch:** `ccs/c7c-terms-and-parties`, created from
+`main` once this brief is on `main` and its questions are answered. **Commits are the maintainer's**,
 examples first (ADR-A-C2). Merged into `main` before its release tags are created.
 **Validation Pack:** [computable-contract-substrate-c7c](../validation/computable-contract-substrate-c7c.md).
 **Decisions:** ADR-A104 decisions 4 (parties, `ins:resolvedBy`, CC-D10), 9 (constitutive terms), 11
@@ -1578,10 +1578,10 @@ effect is stated as relations (I12). Nothing here evaluates.
 
 **Before branching.** Nothing outside Instrument imports Instrument, so the bump re-pins no other
 document. C7c-Q3 (b) would change Eligibility, and C7c-Q4 (b) Party. Either would cascade to every
-importer of that layer, and the human then confirms that no parallel workstream edits them while
+importer of that layer, and the maintainer then confirms that no parallel workstream edits them while
 C7c runs (risk R6).
 
-**Answered by the human, 2026-10-06:**
+**Answered 2026-10-06:**
 
 - C7c-Q1 (a): `ins:boundUnder` is brought forward. No `ins:sectionOf` property
 - C7c-Q2 (a): a section is any element a term applies within. Decision 12 is restated
@@ -1828,7 +1828,7 @@ answers above where they differ, and the ADR-A104 addendum records them.
      binding splits per section and a reviewer confirms
    - the worked examples, laws I11, I15 and I16, and release notes for 0.12.0 and shapes 0.5.0
 6. **Tests:** `tools/test_constitutive_terms.py`, with the rows below, added to the
-   `check:ontology-catalog` task. Catalog, releases and the tag list. The agent stops before any
+   `check:ontology-catalog` task. Catalog, releases and the tag list. Work stops before any
    commit.
 
 | ID | Given / When / Then | Level | +/- |
@@ -1858,9 +1858,9 @@ answers above where they differ, and the ADR-A104 addendum records them.
 
 #### C8 in detail
 
-**Machine:** R (Claude Code). **Branch:** `ccs/c8-parameter-bindings`, created by the human from
+**Machine:** R. **Branch:** `ccs/c8-parameter-bindings`, created from
 `main` once this brief is on `main` and its questions are answered, except C8-Q3's HQ-4 part, which
-waits for the formal-methods epic's track C2. **Commits are the human's**, examples first (ADR-A-C2).
+waits for the formal-methods epic's track C2. **Commits are the maintainer's**, examples first (ADR-A-C2).
 Merged into `main` before its release tags are created.
 **Validation Pack:** [computable-contract-substrate-c8](../validation/computable-contract-substrate-c8.md).
 **Decisions:** ADR-A104 decision 13 (binding) and its 2026-10-06 addendum (D1 to D22), ADR-A92
@@ -2024,7 +2024,7 @@ the stated meaning of the elements its wording includes (I17). Nothing here eval
   **Recommendation: (a).** A form is reviewed before any instance exists, and both checks are
   questions about the form.
 
-**Answered by the human, 2026-10-06:** C8-Q2 (a). C8-Q3 waits for track C2. C8-Q4 (b), by convention.
+**Answered 2026-10-06:** C8-Q2 (a). C8-Q3 waits for track C2. C8-Q4 (b), by convention.
 C8-Q5 (a). C8-Q6 (a). C8-Q1 (b), a placeholder taking its value from a variable's identity, after
 its consequences and its resolution across the tiers were set out. The text reference gap is slice C8b.
 
@@ -2097,7 +2097,7 @@ its consequences and its resolution across the tiers were set out. The text refe
    meaning, schedules, value words and context roles, encoding status, generation and the binder,
    law I17, the worked examples, and release notes for 0.13.0 and shapes 0.6.0.
 7. **Tests:** `tools/test_parameter_bindings.py`, with the rows below, added to the
-   `check:ontology-catalog` task. Catalog, releases and the tag list. The agent stops before any
+   `check:ontology-catalog` task. Catalog, releases and the tag list. Work stops before any
    commit.
 
 | ID | Given / When / Then | Level | +/- |
@@ -2126,8 +2126,8 @@ its consequences and its resolution across the tiers were set out. The text refe
 
 #### C8b in detail
 
-**Machine:** R (Claude Code). **Branch:** `ccs/c8b-references-by-identity`, created by the human from
-`main` once this brief is on `main` and its questions are answered. **Commits are the human's**,
+**Machine:** R. **Branch:** `ccs/c8b-references-by-identity`, created from
+`main` once this brief is on `main` and its questions are answered. **Commits are the maintainer's**,
 examples first (ADR-A-C2). Merged into `main` before its release tags are created.
 **Validation Pack:** [computable-contract-substrate-c8b](../validation/computable-contract-substrate-c8b.md).
 **Decisions:** ADR-A104 and its 2026-10-06 addenda (D3, values in stated meaning), ADR-A51
@@ -2349,7 +2349,7 @@ wording that includes the text pins the version.
   **Leaning: (a).** The assembly interface's `render` (IMA-4.1) can lift the lookup into a module
   when it exists.
 
-**Answered by the human, 2026-10-06:** C8b-Q1 (c), every reference names an identity and the
+**Answered 2026-10-06:** C8b-Q1 (c), every reference names an identity and the
 version is fixed elsewhere. C8b-Q2 (a), derived and checked, with (b)'s record available if a
 policy ever needs it. C8b-Q3 (a). C8b-Q4 (a).
 
@@ -2380,7 +2380,7 @@ policy ever needs it. C8b-Q3 (a). C8b-Q4 (a).
 2. **Spec, vocab and shapes** as the table above.
 3. **README:** references by identity, resolution at each tier, display text, W8, release notes.
 4. **Tests:** `tools/test_wording.py` gains the rows below, which run in `check:ontology-catalog`.
-   The agent stops before any commit.
+   Work stops before any commit.
 
 | ID | Given / When / Then | Level | +/- |
 |---|---|---|---|
@@ -2398,9 +2398,9 @@ policy ever needs it. C8b-Q3 (a). C8b-Q4 (a).
 
 #### C9 in detail
 
-**Machine:** R (Claude Code). **Branch:** created by the human from `main` once this brief is on
+**Machine:** R. **Branch:** created from `main` once this brief is on
 `main` and its questions are answered, one branch per slice if C9 is split (C9-Q1). **Commits are
-the human's**, examples first (ADR-A-C2). Merged into `main` before release tags are created.
+the maintainer's**, examples first (ADR-A-C2). Merged into `main` before release tags are created.
 **Validation Packs:** [C9a](../validation/computable-contract-substrate-c9a.md). C9b's and C9c's are written
 when each is briefed.
 **Decisions:** ADR-A104 decisions 4, 11 and 16 and its addenda, ADR-A106 (records), ADR-A112 and its
@@ -2479,7 +2479,7 @@ Three facts about the current model shape every option below:
 Each option below is compared on its design overheads (how hard it is to reason about, to model
 correctly, to assure and govern, and how brittle it is under change) and its runtime overheads (data
 volume, inconsistency, and surprises for traversal or aggregation), then against KISS. Reworked on
-2026-10-07 after the human's review.
+2026-10-07 after the maintainer's review.
 
 - **C9-Q1. One slice or several.** C9's row lists amendments, consent rules, incorporation and
   taking effect, plus S90 and the two endings terms-in-time left to C9. Its "shapes for I1 to I16"
@@ -2502,7 +2502,7 @@ volume, inconsistency, and surprises for traversal or aggregation), then against
 
   **Leaning: (a).** HQ-5, the full set of group behaviours, follows C9b as its own slice.
 
-- **C9-Q2. What an amendment records.** Reworked again on 2026-10-07, after the human pushed back
+- **C9-Q2. What an amendment records.** Reworked again on 2026-10-07, after we pushed back
   on the order of events being assumed.
 
   **The model in brief**, as the leanings below would make it. An amendment is a node that exists
@@ -2536,7 +2536,7 @@ volume, inconsistency, and surprises for traversal or aggregation), then against
   | before and after | `ins:amends ⊑ prov:used` and `ins:resultsIn ⊑ prov:generated`, as Wording's amendment does (C5-Q2b), and `fnd:supersededBy` asserted once agreed |
 
   *Choice 0. Where the agreed time, and the consents behind it, live.* The previous draft derived
-  it from Behaviour's acceptance records (`bhv:AcceptanceRecord`). The human's review rejected
+  it from Behaviour's acceptance records (`bhv:AcceptanceRecord`). The maintainer's review rejected
   that, and the ontology bears it out. Instrument imports only Behaviour's configuration document,
   never its runtime document, and no Instrument term or shape reads a runtime record today. Behaviour
   models the states an instrument passes through. How an application takes in a proposal and
@@ -2580,11 +2580,11 @@ volume, inconsistency, and surprises for traversal or aggregation), then against
     be checked, which is what C9b is for, and by C9-Q5 if execution is to be read without Behaviour.
 
   **Leaning: (b).** It keeps Behaviour out of the path, imposes no workflow on an application, and
-  is the one fact formation, amendment and group consent all need. If the human prefers to keep
+  is the one fact formation, amendment and group consent all need. If the maintainer prefers to keep
   consent out of the substrate, (c) is the coherent alternative, accepting that C9b's consent rules
   then describe rather than decide.
 
-  *How choice 0 (b) and C9-Q5 (b) fit together.* Added 2026-10-07, once the human chose formation
+  *How choice 0 (b) and C9-Q5 (b) fit together.* Added 2026-10-07, once we chose formation
   as a regime (C9-Q5 (b)) and asked whether an amendment needing consent can work the same way. It
   can. Formation and amendment ask one question, whether the assents a version needs exist, and
   differ only in whose assents count:
@@ -2680,7 +2680,7 @@ volume, inconsistency, and surprises for traversal or aggregation), then against
     - *Runtime.* A plain date filter. (a)'s generated view gives the same.
   - *KISS.* (a) adds nothing beyond the amendment.
 
-  **Leaning: (a),** which the human accepted provided the events may come in any order. The table
+  **Leaning: (a),** which we accepted provided the events may come in any order. The table
   above is how they may.
 
   *Choice 1, continued. A retrospective change that overtakes a later one.* Each version's wording
@@ -3002,14 +3002,14 @@ volume, inconsistency, and surprises for traversal or aggregation), then against
 
   **Leaning: (a).**
 
-**Answered by the human, 2026-10-07 and 2026-10-08:**
+**Answered 2026-10-07 and 2026-10-08:**
 
 - C9-Q1 (a), three slices, C9a to C9c.
 - C9-Q2 choice 0 (b), assents as Instrument facts (`ins:Assent`), after the case for deciding
   consent across placement, quote to bind, endorsements, binding authorities, claims and
   reinsurance recoveries. Choice 1 (a), the effective time on the amendment only, the events in any
   order. The overtaking rule (iii), record what was agreed and derive the overtaken window, **accepted
-  for now and to be revisited at C16b**. The human's concern is that derived nodes put a burden on
+  for now and to be revisited at C16b**. Our concern is that derived nodes put a burden on
   every implementor to write code that exists only because of a modelling choice. Choice 2 (a),
   `ins:statedIn`.
 - C9-Q3 decided through the [change materiality sketch](../sketches/change-materiality.md)
@@ -3021,11 +3021,11 @@ volume, inconsistency, and surprises for traversal or aggregation), then against
 - C9-Q9 (a), HQ-1 re-timed to before an applied layer ingests proposals.
 - C9-Q10 (a), "binder" renamed "instantiator" on `main` before C9a's branch.
 
-**Insurance examples, by explicit instruction (the human, 2026-10-08).** This instruction asks that
+**Insurance examples, by explicit instruction (2026-10-08).** This instruction asks that
 C9 model insurance specifics. In C9's examples, in this slice or a subsequent one, show:
 
-1. **Endorsement and mid-term adjustment** (C9a), replacing a subscription placement by the
-   human's choice on 2026-10-08. A policy's cover extended mid-term by endorsement, effective before
+1. **Endorsement and mid-term adjustment** (C9a), replacing a subscription placement by our
+   choice on 2026-10-08. A policy's cover extended mid-term by endorsement, effective before
    the insurer agrees it, and whether the endorsement is in force on the date of a loss, as known
    when the loss is notified and as known later
 2. **Reinsurance recoveries** (C9b). A reinsurer whose approval of the reinsured's claim settlement
@@ -3040,7 +3040,7 @@ question to be taken up (below).
 
 **Raised in C9a's examples phase (2026-10-08):**
 
-- **C9a-Q1. Each insurer bound from its own assent.** Withdrawn by the human on 2026-10-08, who chose
+- **C9a-Q1. Each insurer bound from its own assent.** Withdrawn 2026-10-08, who chose
   not to resolve it in C9. The subscription placement example is replaced in C9a by an endorsement
   and mid-term adjustment, showing whether an endorsement is in force on the date of a loss. A
   placement, and how each subscribing insurer is bound from its own assent, waits for a later slice,
@@ -3098,16 +3098,16 @@ flowchart LR
     B4 --> D["C9d materiality"] --> C["C9c incorporation"]
 ```
 
-**How C9b0 to C9b2 run (the human, 2026-10-09).** On one integration branch,
+**How C9b0 to C9b2 run (2026-10-09).** On one integration branch,
 `ccs/c9b-groundwork`. Each slice runs in its own local worktree and branch (`ccs/c9b0-eligibility-sources`,
 `ccs/c9b2-additivity`, `ccs/c9b1-legal-acts`), built by a sub-agent that commits there, examples
-first. The agent merges them into the integration branch in the order C9b0, C9b2, C9b1, takes each
+first. They are merged into the integration branch in the order C9b0, C9b2, C9b1, takes each
 document's version once at the strongest level any slice needs, recomputes the cascade and
-regenerates the catalog, release register and MTP lock. Design questions go to the human through the
-agent. The human reviews all three Validation Packs, pushes, merges into `main` and creates the tags.
+regenerates the catalog, release register and MTP lock. Design questions go to the maintainer through the
+agent. The maintainer reviews all three Validation Packs, pushes, merges into `main` and creates the tags.
 
 **Before C9b3, the formal-methods epic's Eligibility pass, FM-EP, is completed** on machine S, on
-`fm/eligibility-pass`, and merged (the human, 2026-10-09). C9b3 extends Eligibility's laws, its Isabelle theory, its reference semantics
+`fm/eligibility-pass`, and merged (2026-10-09). C9b3 extends Eligibility's laws, its Isabelle theory, its reference semantics
 and its four compilers, so it must build on a hardened base. The items are FM-D17 (generate the
 kernel's truth tables from the README into both the theory and the reference), E1.4 (gate digests that
 cover definitions, characterising lemmas, set-reading invariance, no `by eval`, the assumption audit),
@@ -3130,14 +3130,14 @@ README and regenerate from it, which TD-16 forbids today. So a new slice comes f
 
 The details below are the record of the first brief.
 
-**Machine:** R (Claude Code). **Branch:** created by the human from `main` once this brief is on
-`main` and its questions are answered. **Commits are the human's**, examples first (ADR-A-C2).
+**Machine:** R. **Branch:** created from `main` once this brief is on
+`main` and its questions are answered. **Commits are the maintainer's**, examples first (ADR-A-C2).
 Merged into `main` before release tags are created.
 **Validation Pack:** written once C9b-Q1 fixes the slice.
 **Decisions:** ADR-A104 decisions 4 and 11, its 2026-10-08 addendum (assents), CC-D10, C9-Q3 and
 the [change materiality sketch](../sketches/change-materiality.md), C9-Q4 (a).
 **Inputs:** the CCS sketch §5.3 and §5.8 (consent rules, delegated consent), scenarios S50 and S51,
-held question HQ-5, and the human's instruction for a reinsurance recoveries example (C9 in detail).
+held question HQ-5, and our instruction for a reinsurance recoveries example (C9 in detail).
 
 **Invariant:** a power held by a group takes effect only when the members its consent rule selects
 have consented, by number or by weight, and the instrument says which. Whether consent is present is
@@ -3311,8 +3311,8 @@ Each option is compared on its design overheads and its runtime overheads, then 
 
 #### C9b0 in detail
 
-**Machine:** R (Claude Code). **Branch:** created by the human from `main` once this brief is answered.
-Merged first of C9b0, C9b2 and C9b1. **Commits are the human's.**
+**Machine:** R. **Branch:** created from `main` once this brief is answered.
+Merged first of C9b0, C9b2 and C9b1. **Commits are the maintainer's.**
 **Decisions:** TD-16, ADR-A120, law L9 as amended by FM-EP's B2.2 (`2a438b15`).
 
 **Invariant:** Eligibility's README generates every Eligibility spec, vocab and shapes file, and
@@ -3364,7 +3364,7 @@ flowchart LR
 | (c) two blocks, `rules.ttl` left hand-kept | the README is still not the whole source, the defect C9b0 exists to remove | none |
 
 KISS: (a) is the smallest change that makes the README the whole source. **Leaning (a).**
-**Answered (the human, 2026-10-09): (a).**
+**Answered (2026-10-09): (a).**
 
 **C9b0-Q2. Is the compilers' refusal an acceptable reading of L9's new case?**
 
@@ -3377,7 +3377,7 @@ The refusal has two causes, which reality separates. A condition with no contrac
 and refusing it is right. A condition whose binding does not apply at the resolution time is a
 binding-time deferral, which C9b3 names and designs. KISS: C9b0 need not pre-empt C9b3.
 **Leaning (a)**, with C9b3 turning the no-applicable-binding case into Undetermined.
-**Answered (the human, 2026-10-09): (a), and C9b3 must cover the no-applicable-binding case.**
+**Answered (2026-10-09): (a), and C9b3 must cover the no-applicable-binding case.**
 
 **Built (2026-10-09, merged into `ccs/c9b-groundwork`).** As briefed, with these settled while
 building: the guards raise `IRCompileError` rather than assert, so they hold under `python -O`. The
@@ -3387,11 +3387,11 @@ no-applicable-binding case. One command: the literate `--check`, then
 `tools/test_eligibility_examples.py` and `tools/mork_compilers/src/mork_compilers/test_hierarchical_conditions.py`
 ([Validation Pack](../validation/computable-contract-substrate-c9b0.md)).
 
-**TD-16 cross-checked (the human asked, 2026-10-09).** FM-EP (`2a438b15`) changed only
+**TD-16 cross-checked (we asked, 2026-10-09).** FM-EP (`2a438b15`) changed only
 `ontology/eligibility/README.md` under `ontology/`. On `main`, `literate_extract.py --check` reports
 drift in all three generated files. The spec differs in layout only. The vocab has one triple only in
 the README (L9's new comment) and four only in the file (L9's old comment and the three-triple
-header). The shapes differ as above. So TD-16's Eligibility part stands, and the human's proposal,
+header). The shapes differ as above. So TD-16's Eligibility part stands, and our proposal,
 repairing Eligibility's README in its own slice before the rest of C9b, is C9b0 as briefed.
 
 **Decided by precedent, not asked:**
@@ -3486,7 +3486,7 @@ act made at a time. The variation it proposes is its content, which takes effect
 
 KISS: (a) adds one property and changes nothing released. It departs from one line of the sketch, not
 from a decision. **Leaning (a).**
-**Answered (the human, 2026-10-09): (a).**
+**Answered (2026-10-09): (a).**
 
 **C9b1-Q2. What becomes of `bhv:AcceptanceRecord`.**
 
@@ -3496,7 +3496,7 @@ from a decision. **Leaning (a).**
 | (b) narrow it to "the evaluator relied on an assent", `bhv:accepted` pointing at the assent | changes the range of a property (breaking), and stores a fact the evaluator can derive | a second record per assent |
 
 KISS: a record of reliance has no reader. **Leaning (a).**
-**Answered (the human, 2026-10-09): (a).**
+**Answered (2026-10-09): (a).**
 
 **Decided by precedent, not asked** (each from the sketch, its decisions, or policy):
 
@@ -3529,7 +3529,7 @@ KISS: a record of reliance has no reader. **Leaning (a).**
 - the reinsurance example records "no approval gives Undetermined" as deliberate non-coverage until
   HQ-6
 
-**Raised while building (2026-10-09), answered by the human:**
+**Raised while building (2026-10-09), answered:**
 
 - **C9b1-Q3.** The party to any act is `ins:actBy`, with `ins:assentBy` and `ins:proposedBy` beneath
   it, and the proposal a consent or objection answers is `ins:directedAt`. `ins:actBy` takes several
@@ -3614,7 +3614,7 @@ Semi-additivity (a stock, such as a balance, summed across members but not acros
 needed now: every consent aggregate sums members at one reference time. KISS: (a), two values, open
 question 7 stays open. **Leaning (a).**
 
-**Does (a) make semi-additivity hard later?** (the human, 2026-10-09) No, it defers it. A
+**Does (a) make semi-additivity hard later?** (2026-10-09) No, it defers it. A
 semi-additive measure adds along some groupings and not others, and in every known case the grouping
 it must not cross is time: a balance adds across accounts, not across days (XBRL's instant against
 duration). Adding it later takes a third value, `qnt:SemiAdditive`, and an optional property naming
@@ -3623,7 +3623,7 @@ Eligibility's (C9b3), so that check sits there. (b) defers it the same way, with
 (Corrected 2026-10-09: an earlier line here told authors to leave a stock undeclared, which the
 analysis below contradicts. A balance shares its currency's Extensive space.)
 
-**Design-time warnings, and a third class for semi-additivity** (the human, 2026-10-09). Facts that
+**Design-time warnings, and a third class for semi-additivity** (2026-10-09). Facts that
 decide it:
 
 - **SHACL warns equally under (a) and (b).** Eligibility's shape for an aggregate binding checks
@@ -3654,7 +3654,7 @@ decide it:
 KISS: (a), with Extensive and Intensive on the space, and stock or flow on the measure when a slice
 needs it. **Leaning (a), unchanged**, with open question 7 answered in principle: the consuming layer
 says along which grouping a measure may be summed.
-**Answered (the human, 2026-10-09): (a), with no subclasses.**
+**Answered (2026-10-09): (a), with no subclasses.**
 
 **C9b2-Q2. How a proportion names its base.**
 
@@ -3665,7 +3665,7 @@ says along which grouping a measure may be summed.
 | (p3) the space names a base context role (ADR-A115), resolved per subject at the reference time | one optional property, reusing a mechanism already built, and decision 6's reference time | the evaluator compares resolved bases. Different bases with no conversion are Undetermined |
 | (p4) composition of shares | a new operation kind multiplying derived values, and a law discharge | none |
 
-**How (p3) and (p4) work** (pictures asked for by the human, 2026-10-09). They answer different
+**How (p3) and (p4) work** (pictures we asked for, 2026-10-09). They answer different
 questions. (p3) says *which* base a share is of, so a sum can tell whether its shares have one base.
 (p4) converts a share from one base to another, as a currency conversion does for an amount.
 
@@ -3727,7 +3727,7 @@ flowchart LR
 KISS: (p3) is needed now, for sums of lines and for turning a line into an amount. (p4) is needed by
 no slice yet, and adding it later is additive. **Leaning (p3)**, (p4) held until a case multiplies
 shares.
-**Answered (the human, 2026-10-09): (p3). (p4) is held as HQ-12.** The two compose: a product of a
+**Answered (2026-10-09): (p3). (p4) is held as HQ-12.** The two compose: a product of a
 line share (base role: the order) and an order share (base role: the layer) has the layer as its
 base role, and at runtime (p3) checks that the first operand's resolved base is what the second
 measures, a check (p4) alone could not make.
@@ -3757,7 +3757,7 @@ of sums exists (C12). Corrected at merge: a stock shares its currency's Extensiv
   signing down, which uses Ratio and Scale. If signing down needs a product of two derived values,
   the examples phase says so before the model phase
 
-**Planned validation** (pack `computable-contract-substrate-c9b2.md`), including every currency case the human asked for
+**Planned validation** (pack `computable-contract-substrate-c9b2.md`), including every currency case we asked for
 (2026-10-09): one currency sums. Mixed currencies with a dated conversion context at the reference
 time convert to the base currency, then sum. Mixed currencies with none are Undetermined
 (`qnt:ConversionContextAbsent`). A limit stated in two currencies (ADR-A95) is never converted.
@@ -3782,7 +3782,7 @@ checks.
 | C15 | neutral examples E5 to E8, and a coverage test that every scenario S1 to S101 (except the amounts group and the merged S79) is shown by at least one example |
 | C16 | how-to guides for Wording and Instrument (sketch §11), the substrate README's "computable contract" section, ontology architecture, SDS, data architecture |
 | C16a | **simplification sweep** (from C6's review, 2026-10-03): after C9, review the Instrument model for what can be removed without losing logical correctness, under the Ponytail guardrails in `.github/copilot-instructions.md`. First candidate: the asserted `ins:Template` type, derivable from `ins:expressedIn` and `ins:arisesUnder` but kept because law I13's shapes read it without a reasoner. Second: every domain and range in Instrument reviewed against the principle in `.github/copilot-instructions.md` (from C7a-Q2): kept only where it gives useful design-time entailment or restates what a shape checks |
-| C16b | **instance records and shared bound meaning** (TD-19, required before the epic closes, decided 2026-10-06). An instance stores only what differs from its form (C7c D1), and bound meaning is generated on demand, cached as need dictates and kept out of the main graph where processing allows (D4). This slice adds what C7c leaves out: sharing generated bound nodes across instruments and versions by content address, the cache and its invalidation (ADR-A27, ADR-A92), the subgraph a heavy process works in, and a size measure over a form the size of the sample policy, about 100 stored nodes per bound policy as the target. Its own ADR first. Revisits C9-Q2's overtaking rule (iii), whose derived nodes put a burden on implementors (the human, 2026-10-08) | an ADR, then `tools/` and Instrument shapes. After C9 and C12, before C17 |
+| C16b | **instance records and shared bound meaning** (TD-19, required before the epic closes, decided 2026-10-06). An instance stores only what differs from its form (C7c D1), and bound meaning is generated on demand, cached as need dictates and kept out of the main graph where processing allows (D4). This slice adds what C7c leaves out: sharing generated bound nodes across instruments and versions by content address, the cache and its invalidation (ADR-A27, ADR-A92), the subgraph a heavy process works in, and a size measure over a form the size of the sample policy, about 100 stored nodes per bound policy as the target. Its own ADR first. Revisits C9-Q2's overtaking rule (iii), whose derived nodes put a burden on implementors (2026-10-08) | an ADR, then `tools/` and Instrument shapes. After C9 and C12, before C17 |
 | C16c | **remove Party's shares** (decided 2026-10-09, [consent sketch](../sketches/consent-and-group-powers.md) §2.5). `pty:outwardShare` and `pty:inwardShare` hold one value per membership, with an unstated meaning and base, fixed per membership version. C9b4 replaces their uses with measure words, narrows and deprecates them, and adds a warning shape reporting every use. This slice removes both, the warning shape with them, and Party's composition rules read measure words. It also removes Behaviour's terms deprecated by C9b1 (`bhv:AcceptanceRecord`, `bhv:accepted`, `bhv:actor` on an exercise record), moving the five earlier Behaviour examples' exercise records to name exercise acts (C9b1-Q5). Required before the CCS epic closes | Party and Behaviour, breaking, cascading. After C9b4 |
 | C17 | handoff: the insurance renderings list for AIR Phase 5 (policy scenarios) and Open CBAA (binding authority scenarios), and the Open CBAA migration notes (§7) |
 
@@ -3797,7 +3797,7 @@ so that its implications can be weighed when it is taken up.
 | HQ-2 | **Qualified gates: gating by another subject's state.** C7a gates a relation by the state of its own instrument, or of the occasion its arising chain reaches (C7a-Q5). Two cases are held: one participant's share within one agreement, where several parties are each liable for their own share and each share has its own state, and another agreement altogether, where one contract responds only once another is exhausted | the model must be consistent within one legally binding agreement first. Dependencies across agreements may not belong in this layer at all, and may sit in an applied ontology above it | designed with C12's evaluator, within one agreement first |
 | HQ-3 | **Business day conventions and times of day** (TQ2, held 2026-10-05). "If that day is not a Business Day, on the next Business Day" (following, modified following, preceding), and "by 11:00 a.m. London time" (a time of day in a zone, S74). Recorded as use cases A13 and A14 in the [terms in time sketch](../sketches/terms-in-time.md) §3 | a due date that falls on a non-business day, or at a time of day, is resolved wrongly until Quantification can roll and zone it | with the first business continuity examples, in Quantification beside ADR-A94's calendars |
 | HQ-5 | **The full set of group behaviours** (C7c-Q4, 2026-10-06). C7c uses Party's two composition rules for duties and leaves a group's power, and a group with no rule, Undetermined (CC-D10). The full set is: several only, joint only, joint and several, any one may act, all must act, and a threshold by number or by share, for duties and for powers alike, with how a member's share, release or default affects the rest, and how the instrument's silence is filled by an amendment, a deeming, a market default declared as data, or a recorded reading | a relation owed to or held by a group is decided wrongly, or not at all, until every mode is modelled | immediately after C9, as its own slice or the first follow-up of C9, and before AIR Phase 5 and Open CBAA's migration rely on group powers Revised 2026-10-09: the remaining group behaviours become acting rules beside C9b4's qualifying rules, and "any one may act" an `elg:Intersects` ([consent sketch](../sketches/consent-and-group-powers.md) §2.2, §5). |
-| HQ-6 | **Deemings made watertight** (C7c-Q8, 2026-10-06). C7c states deemings in full, but the closure a deeming over absence licenses is ADR-A105's, not yet drafted. To settle: the closure declaration and its scope and window, rebuttal of a rebuttable deeming by later evidence and what that supersedes, the precedence of a conclusive deeming over a finding, deemings for one purpose only (`ins:forPurposeOf`) and how they stay out of other relations, deemed receipt counted in business days (HQ-3), and the deemed-fact record's link back to its deeming and closure | a deeming may be read as more or less than its words say, and a late fact may not supersede it correctly | a CCS slice, taking over NRS slice N5 (ADR-A105), as N4 and N8 were (HQ6-Q1, the human, 2026-10-10). Split (HQ6-Q2): **HQ-6a**, before C9b3, whose set comparisons need licensed closures for deemed consent and "snooze you lose" ([consent sketch](../sketches/consent-and-group-powers.md) §2.3): ADR-A105, the closure declaration with its scope and window, a deeming as a closure source, compile-time refusal of an unlicensed absence-dependent check (NRS D7, as C9b0-Q2), and decisions recording their closure. **HQ-6b**, before C12: rebuttal and supersession, conclusive precedence, single-purpose deemings, deemed receipt in business days (HQ-3), the deemed-fact record's link, and the persistence profile's dense ordering and gap audit. Briefing waits on the formal-methods branch assessment (2026-10-10). |
+| HQ-6 | **Deemings made watertight** (C7c-Q8, 2026-10-06). C7c states deemings in full, but the closure a deeming over absence licenses is ADR-A105's, not yet drafted. To settle: the closure declaration and its scope and window, rebuttal of a rebuttable deeming by later evidence and what that supersedes, the precedence of a conclusive deeming over a finding, deemings for one purpose only (`ins:forPurposeOf`) and how they stay out of other relations, deemed receipt counted in business days (HQ-3), and the deemed-fact record's link back to its deeming and closure | a deeming may be read as more or less than its words say, and a late fact may not supersede it correctly | a CCS slice, taking over NRS slice N5 (ADR-A105), as N4 and N8 were (HQ6-Q1, the maintainer, 2026-10-10). Split (HQ6-Q2): **HQ-6a**, before C9b3, whose set comparisons need licensed closures for deemed consent and "snooze you lose" ([consent sketch](../sketches/consent-and-group-powers.md) §2.3): ADR-A105, the closure declaration with its scope and window, a deeming as a closure source, compile-time refusal of an unlicensed absence-dependent check (NRS D7, as C9b0-Q2), and decisions recording their closure. **HQ-6b**, before C12: rebuttal and supersession, conclusive precedence, single-purpose deemings, deemed receipt in business days (HQ-3), the deemed-fact record's link, and the persistence profile's dense ordering and gap audit. Briefing waits on the formal-methods branch assessment (2026-10-10). |
 | HQ-7 | **Several instruments covering portions of one order** (raised 2026-10-06, C7c). A layer in an insurance programme may be placed on several policies, each covering a portion of the order, on different risks or on the same risk with different terms. They are separate instruments related to one placement, not a group of parties acting together, so neither Party's groups nor a section models them | a placement split across policies is modelled as a group or not at all, and the portions cannot be reconciled with the order | with the insurance applied layer's placement model, or C9 if it becomes an instrument relation |
 | HQ-8 | **Materiality beyond amendments** (MQ1, 2026-10-07). Material breach, a material adverse change in a party's circumstances and a material change in a risk classify an event or a state of affairs, as amendment materiality classifies a change. They share its sources (the contract's definition, a referenced one, a determination) and its split between enumerated and evaluative definitions ([change materiality sketch](../sketches/change-materiality.md)) | each is otherwise modelled ad hoc, and a definition such as "Material Adverse Effect" already exists as a condition word (C7c) without a rule for its evaluative part | later in the epic, after C9 and C12, reusing C9's mechanism |
 | HQ-9 | **Eligibility paths ending at an identity** (MQ7, 2026-10-07). A condition that asks whether a value is one of several named records, such as "any amendment to Clause 35" or "a claim on one of the named vessels". Matching is exact, with no hierarchy unless the condition walks a structure Eligibility does not import | until then a materiality definition naming a clause falls back to a determination (C9), and other layers tag records with concepts to be matched | its own Eligibility slice with an ADR, after ADR-A90, A91 and A103, cascading to every importer and the MORK and design-time OWL compilers |
@@ -3876,7 +3876,7 @@ What changes in the data, beyond renaming:
 
 ## 8. Decisions
 
-None of these may be taken by the agent.
+None of these is taken without the maintainer.
 
 | # | Decision | Recommendation | State |
 |---|---|---|---|
@@ -3915,7 +3915,7 @@ None of these may be taken by the agent.
 ## 9. Validation
 
 Each slice has a Validation Pack at `docs/developer/validation/computable-contract-substrate-<slice>.md`.
-Its adversarial probes are recorded in the status record, and the human's merge is the sign-off.
+Its adversarial probes are recorded in the status record, and the maintainer's merge is the sign-off.
 
 | Slice | Levels | One command |
 |---|---|---|

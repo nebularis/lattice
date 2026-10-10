@@ -3,7 +3,7 @@
 # Validation Pack: CCS C9b0, Eligibility sources
 
 **Unit:** [`computable-contract-substrate`](../status/computable-contract-substrate.md)
-**Machine:** R (Claude Code). **Branch:** `ccs/c9b0-eligibility-sources`, in its own worktree, merged
+**Machine:** R. **Branch:** `ccs/c9b0-eligibility-sources`, in its own worktree, merged
 first into `ccs/c9b-groundwork` (the plan's "How C9b0 to C9b2 run"). Built and committed by a
 sub-agent on its branch, never pushed or tagged
 **Plan:** [CCS plan](../plans/computable-contract-substrate.md), C9b0 in detail
@@ -82,7 +82,7 @@ No `check:eligibility-sources` task is added. The pytest modules already run in
     regenerated, release note in a new §11
   - the literate check and probes replacing `test_readme_mirrors_shape_file`
   - the §6.4 paragraph, the backend guards and their tests (C9b0-Q2 (a))
-- **Run by the agent:** every check under Results, with this worktree's packages first on
+- **Run:** every check under Results, with this worktree's packages first on
   `PYTHONPATH`, since the editable installs point at another clone. Adversarial probes:
   - with `ConditionShape` appended to `constraints.ttl`, C9b0-01, C9b0-03 and C9b0-04 fail
   - with either backend guard disabled, C9b0-12 fails for that backend

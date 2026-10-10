@@ -5,7 +5,7 @@
 **Status:** Proposed
 **Date:** 2026-09-23
 **Related:** Architecture Review §5.5, G-07, ADR-A65, `ontology-architecture.md`
-**Drafted by:** Agent, autonomous session (P0.1.6). Pending human ratification — see [phase-0-status.md](../../developer/status/phase-0-status.md).
+**Drafted in:** P0.1.6. Pending ratification — see [phase-0-status.md](../../developer/status/phase-0-status.md).
 
 ## Context
 

@@ -6,7 +6,7 @@
 **Date:** 2026-09-23
 **Supersedes:** none
 **Related:** [ADR-A82](ADR-A82-framework-neutral-identity-pattern-selection.md) (point 5, as amended), ADR-A77, ADR-A79, ADR-A71, ADR-A29, [identity minting specification](../identity-minting-specification.md), [iri-identity-patterns.md](../iri-identity-patterns.md)
-**Drafted by:** Agent, following decisions taken with the human while scoping the `identity-minting` unit ([sketch](../../developer/sketches/identity-minting.md), [plan](../../developer/plans/identity-minting.md)). Pending human ratification.
+**Drafted:** following decisions taken while scoping the `identity-minting` unit ([sketch](../../developer/sketches/identity-minting.md), [plan](../../developer/plans/identity-minting.md)). Pending ratification.
 
 ## Context
 

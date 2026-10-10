@@ -29,7 +29,7 @@ LATTICE decision.
 9. [What the earlier papers got wrong, and what survives](#9-what-the-earlier-papers-got-wrong-and-what-survives)
 10. [Recommendation and triggers](#10-recommendation-and-triggers)
 11. [Token cost of the two build options](#11-token-cost-of-the-two-build-options)
-12. [Decisions for the human](#12-decisions-for-the-human)
+12. [Decisions for the maintainer](#12-decisions-for-the-maintainer)
 - [Appendix A: Calibration data](#appendix-a-calibration-data)
 - [Appendix B: References](#appendix-b-references)
 
@@ -58,7 +58,7 @@ unlikely to be visible, and nobody has measured it. It optimises a cost before e
 cost matters.
 
 **The deciding questions are commercial.** Whether to build depends on four answers
-only the human and adopters can give (§2.2). Until they are answered, any engine work is ponytail
+only the maintainer and adopters can give (§2.2). Until they are answered, any engine work is ponytail
 rung 1 failing.
 
 ---
@@ -71,7 +71,7 @@ rung 1 failing.
 |---|---|---|
 | **LATTICE needs a store** for its own platform and proofs of concept | LATTICE | **No.** Fuseki runs today (`platform/semantic-dataset-fuseki`, the authoring compose stack). ADR-A75 already anticipates further adapters with declared capabilities, including native reasoning, change feeds and CAS primitives |
 | **An adopter needs a live transactional reasoning store** for trading or transaction management, with a LATTICE-modelled contract | a hypothetical adopter, the motivation for paper 1 | **Only if** no available engine meets its measured requirements at an acceptable licence |
-| **Someone wants to sell or own an engine** as a product | a possible spin-out | this is a business decision. Tokens are then a minor input next to support, maintenance, sales and human review, and YAGNI does not apply in the same way |
+| **Someone wants to sell or own an engine** as a product | a possible spin-out | this is a business decision. Tokens are then a minor input next to support, maintenance, sales and review, and YAGNI does not apply in the same way |
 
 The earlier papers blurred the second and third rows. This paper treats the second row as the
 default question and names the third explicitly, because they lead to different answers.
@@ -314,7 +314,7 @@ verification, and paper 2's structure catalogue from the initial scope. Mark it 
 materialisation inside DBSP's own workers, then partitioned writers). Paper 1's single writer already
 accepted that ceiling for ordering, so this costs no guarantee the design wanted.
 
-**The functional compiler toolchain falls away in this option (judgement, a reversal for the human
+**The functional compiler toolchain falls away in this option (judgement, a reversal for the maintainer
 to confirm).** DBSP circuits are constructed through a Rust API at start-up. The rule compiler
 shrinks to a translation from the LATTICE rule IR into circuit construction calls, which is ordinary
 Rust. OCaml, Rocq, extraction and the Rust emitter (paper 2 §3 and §11) are not needed unless
@@ -464,13 +464,13 @@ With a fresh-input share of 12% (so 88% cached), E per call is 0.208 × context 
 | P | 8.24M | 30.40M |
 
 **Governance, per the repository's process.** Each slice delivers code, a Validation Pack, a status
-update, a review request, an INDEX row, and a mutation probe at the human gate. Budgeted at 16 calls
+update, a review request, an INDEX row, and a mutation probe at the validation gate. Budgeted at 16 calls
 at 120k context, which is **0.64M E and 2.0M G per slice**, with slices averaging 1,200 delivered
 lines (the 15-test, two-module slice rule). Each phase adds a plan, status, review and about three
 ADRs, about 1,500 lines of class D (**1.53M E, 4.6M G**). The epic sketch, plan and initial ADR set
 add about 3,000 lines of class D (**3.06M E, 9.2M G**).
 
-**Rework.** Integration failures, human review rounds and Rust compile-fix loops are applied as a
+**Rework.** Integration failures, review rounds and Rust compile-fix loops are applied as a
 multiplier on everything: **low ×1.0, expected ×1.5, high ×2.5**.
 
 ### 11.4 Option B: build on existing codebases
@@ -565,7 +565,7 @@ All figures in millions of tokens. Base is before the rework multiplier. Expecte
 
 **Ranges.**
 
-| | Low E | Expected E | High E | Low G | Expected G | High G | Human validation gates |
+| | Low E | Expected E | High E | Low G | Expected G | High G | Validation gates |
 |---|---|---|---|---|---|---|---|
 | B, build on | 0.25B | 0.38B | 0.63B | 0.80B | 1.20B | 2.00B | 74 slices, 5 phases |
 | A, from scratch | 0.95B | 1.42B | 2.37B | 3.19B | 4.79B | 7.98B | 193 slices, 10 phases |
@@ -595,7 +595,7 @@ compact instruction files. It is worth more than any choice between the build op
 - Adapting a commercial engine (by request), including the RDFox adapter and rule translation.
 - G0 and the build-on experiments B-X1 to B-X3 (G0 is about 14M E, §10.1).
 - Maintenance after delivery: upstream tracking for B, everything for A.
-- Human review time at each gate, which the slice counts indicate but this paper does not convert to
+- Review time at each gate, which the slice counts indicate but this paper does not convert to
   hours.
 - Licence fees, infrastructure and hardware for benchmarks.
 
@@ -610,7 +610,7 @@ parameters after five slices.
 
 ---
 
-## 12. Decisions for the human
+## 12. Decisions for the maintainer
 
 | # | Decision | Options | Recommendation (judgement) |
 |---|---|---|---|

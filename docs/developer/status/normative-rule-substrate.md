@@ -6,7 +6,7 @@
 **Status:** 📝 Proposed. Nothing implemented in this unit. N4, N5 and the Behaviour part of N8 are
 CCS's. D1, D4 and D5 open, and the unit's remaining scope is open (NQ-1 to NQ-4)
 **Last updated:** 2026-10-10
-**Trigger:** human request, 2026-09-29, following the LegalRuleML mapping analysis
+**Trigger:** request, 2026-09-29, following the LegalRuleML mapping analysis
 **Plan:** [normative-rule-substrate.md](../plans/normative-rule-substrate.md)
 **Sketches:** [legalruleml-mapping.md](../sketches/legalruleml-mapping.md),
 [rule-layers.md](../sketches/rule-layers.md),
@@ -26,14 +26,14 @@ document and started no slice. Its first blocker, D2, was answered on 2026-09-30
 [computable-contract-substrate](../plans/computable-contract-substrate.md) unit (CCS), which also
 takes N8's Behaviour work and revises N2, N5 and N6 (the plan's slice notes).
 
-**2026-10-10:** N5 moved to CCS as its held question HQ-6 (the human, HQ6-Q1), split into HQ-6a
+**2026-10-10:** N5 moved to CCS as its held question HQ-6 (HQ6-Q1), split into HQ-6a
 before CCS C9b3 and HQ-6b before CCS C12 (HQ6-Q2, the plan's N5 note). D7 is answered with it. This
 unit now holds N1, N2, N3, N6's and N8's remainders, N7, N9 and N10 to N13, none started. CCS waits
 on N1 (C13, C13a) and N3 waits on CCS C13a.
 
-**Next action, for the human:** answer NQ-1 to NQ-4 below, and D1.
+**Next action, for the maintainer:** answer NQ-1 to NQ-4 below, and D1.
 
-**Next action, for the agent, once NQ-1 and NQ-2 are answered:** brief the first slice they leave
+**Next action, once NQ-1 and NQ-2 are answered:** brief the first slice they leave
 this unit, which under the leanings is N1 (in CCS) or N2.
 
 ## Dependency position against the applied-insurance epic
@@ -92,15 +92,15 @@ Instrument's position has changed, since after CCS C10 nothing outside Instrumen
 | D4 | Does N9 wait for Phase 2, or does the epic accept a freeze? | open |
 | D5 | Does priority wait for Phase 5? | open |
 | D6 | Is substrate S2 authored together with N5? | overtaken 2026-10-10: N5 is CCS HQ-6. Restated as NQ-4 |
-| D7 | Refuse an unlicensed absence-dependent check, or compile it to `Undetermined`? | answered 2026-10-10 by the human: refuse, in CCS HQ-6a (HQ6-Q2), consistent with CCS C9b0-Q2 |
+| D7 | Refuse an unlicensed absence-dependent check, or compile it to `Undetermined`? | answered 2026-10-10: refuse, in CCS HQ-6a (HQ6-Q2), consistent with CCS C9b0-Q2 |
 
 D5 has new evidence: CCS C7c declared `ins:prevailsOver` between definitions only (D13, 2026-10-06),
 the planned C9c widens it to an incorporated document, and terms are left to N10. D1's pattern, a unit in
-tranches with human gates, is the one CCS runs under (CCS plan header).
+tranches with validation gates, is the one CCS runs under (CCS plan header).
 
 ## Open questions from the CCS alignment (2026-10-10)
 
-Raised by the agent for the human. None is decided.
+Raised for the maintainer. None is decided.
 
 | # | Question | Leaning |
 |---|---|---|
@@ -146,8 +146,8 @@ NQ-4, and NQ-1 to NQ-4 decide its remaining scope.
 - 2026-09-29: plan and this status record written. Dependency check against the applied-insurance
   epic measured rather than assumed, by enumerating per-layer external importers.
 - 2026-09-30: D2 and D3 answered. N4 moved to CCS, N2, N5, N6 and N8 revised.
-- 2026-10-10: aligned with CCS. The human moved N5 to CCS as HQ-6 (HQ6-Q1) and split it into HQ-6a
+- 2026-10-10: aligned with CCS. We moved N5 to CCS as HQ-6 (HQ6-Q1) and split it into HQ-6a
   before C9b3 and HQ-6b before C12 (HQ6-Q2), answering D7 (refuse). Plan and record updated: ADR states
   (A-104 and A-106 accepted 2026-10-01, A-105 moved), F1's separate Foundation window, N1 on CCS's
   path, Eligibility's README its source again, `ins:prevailsOver` evidence for D5, the retired
-  validation log. D6 overtaken. NQ-1 to NQ-4 raised for the human
+  validation log. D6 overtaken. NQ-1 to NQ-4 raised for the maintainer

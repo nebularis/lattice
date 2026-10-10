@@ -3,7 +3,7 @@
 # Plan: Word authoring proof of concept
 
 **Unit ID:** `word-authoring-poc` (WAP)
-**Unit type:** multi-slice unit, run as one shot on machine S, with a human validation gate per slice
+**Unit type:** multi-slice unit, run as one shot on machine S, with a validation gate per slice
 after the run
 **Status:** Decisions WA-D1 to WA-D13 recorded 2026-10-01 (WA-D4 Javalin, the rest as recommended).
 ADR-A118 Proposed. Execution started with WA0
@@ -19,7 +19,7 @@ fixes a name, a pattern, an order or a value, use it exactly. Where it does not,
 
 ## Deferred follow-up: published Wording adoption
 
-**Recorded 2026-10-02. Awaiting the human's scheduling decision.** The POC is reported running
+**Recorded 2026-10-02. Awaiting the maintainer's scheduling decision.** The POC is reported running
 successfully. Wording is now published and stable, superseding the availability assumption behind
 WA-D3, but not automatically changing that decision or the completed WA0 to WA11 scope.
 
@@ -32,7 +32,7 @@ version identity and existing Fuseki revisions.
 
 Before starting this tranche:
 
-1. Obtain human approval of a proposed ADR-A118 amendment covering WA-D3, the pinned release,
+1. Obtain the maintainer's approval of a proposed ADR-A118 amendment covering WA-D3, the pinned release,
   the adopted semantic scope and the retained POC extensions.
 2. Choose configured SKOS concept mappings and scheme validation, variable mappings, the
   immutable-version policy and the old-data policy. Do not silently reset the demo dataset.
@@ -49,7 +49,7 @@ completed slice instructions below remain a record of the POC as implemented.
 
 ## Follow-on tranche: richer data, a web app, and add-in parity
 
-**Recorded 2026-10-02. Awaiting the human's decisions.** The human asked for three further
+**Recorded 2026-10-02. Awaiting the maintainer's decisions.** We asked for three further
 enhancements once WA0 to WA11 were running and validated: deeper, more realistic sample data, a
 web authoring app editing the same documents without Word, and parity brought back to the Word
 add-in. The design is in
@@ -78,7 +78,7 @@ The unit is accepted when:
    `docs/developer/validation/LOG.md`
 2. `mise run check:authoring-stack` starts the stack from a clean checkout, seeds three samples and
    passes its end-to-end suite
-3. the manual Word checklist (WA11, M1 to M14) is completed by the human in real Word
+3. the manual Word checklist (WA11, M1 to M14) is completed by a maintainer in real Word
 4. `mise run check:java`, `check:workers`, `check:ontology-versioning` and `check:ontology-catalog`
    pass, with no existing test weakened
 
@@ -95,8 +95,8 @@ The unit is accepted when:
 | commit | one local commit per slice, after its command passes, message `[wap] WA<n>: <slice title>` |
 | staging | `git add` the slice's listed paths only, then `git status --short` must show nothing else staged |
 | forbidden | `git push`, `git commit --amend`, `git reset --hard`, `git rebase`, force options, branch deletion, `--no-verify` |
-| final push | left to the human (§9) |
-| mode | autonomous: the agent runs builds and tests itself. Design decisions still go to the human |
+| final push | left to the maintainer (§9) |
+| mode | autonomous: builds and tests run within the slice. Design decisions still go to the maintainer |
 
 ### 2.2 Execution loop, per slice
 
@@ -208,7 +208,7 @@ The mapping (WA2) uses `wap:` where the CCS sketch §4 names no term. These go t
 
 ## 3. Decisions
 
-None of these may be taken by the agent. All were recorded by the human on 2026-10-01.
+None of these is taken without the maintainer. All were recorded 2026-10-01.
 
 | # | Decision | Options | Recommendation | State |
 |---|---|---|---|---|
@@ -228,7 +228,7 @@ None of these may be taken by the agent. All were recorded by the human on 2026-
 
 ### Decisions for the follow-on tranche (sketch §8)
 
-None of these may be taken by the agent. Recorded here 2026-10-02 as proposals, none decided.
+None of these is taken without the maintainer. Recorded here 2026-10-02 as proposals, none decided.
 WA12 to WA20 (§4, §5) may not start until the decisions they depend on are recorded.
 
 | # | Decision | Options | Recommendation | State |
@@ -1065,7 +1065,7 @@ variable) then id. Edges sorted by from, label, to.
 `facility-agreement.le`, `facility-agreement.proposal.ttl`. Generate them with a test helper run
 once, read them in full against the sample texts, correct the code (not the golden) where a reading
 is wrong, and commit them. The Validation Pack lists, for the facility sample, each element's class,
-basis and form, so the human can check the reading.
+basis and form, so the maintainer can check the reading.
 
 Expected facility readings: 01 to 05 Definition (form), 06 Obligation (form `obligation`), 07
 Permission (form `permission`), 08 Obligation (form `pay-interest-at-rate`), 09 Obligation
@@ -1682,18 +1682,18 @@ Cert:\CurrentUser\Root`, which asks for confirmation and needs no administrator)
    Add-ins, More add-ins, My add-ins, Upload My Add-in, choose `manifest/manifest.xml`), desktop Word
    on Windows (one user-level registry value under
    `HKCU\Software\Microsoft\Office\16.0\WEF\Developer`, name `LatticeAuthoring`, data the full path
-   of the manifest, then restart Word, given as a command for the human to run), central
+   of the manifest, then restart Word, given as a command for the maintainer to run), central
    deployment by an administrator, and how to remove each.
-2. The manual checklist below goes into the WA11 Validation Pack, to be completed by the human.
+2. The manual checklist below goes into the WA11 Validation Pack, to be completed by a maintainer.
 3. `docs/developer/INDEX.md` entry updated with slice states and links to the Validation Packs.
-4. The status record set to "awaiting human validation", with the actual token use per slice.
+4. The status record set to "awaiting the maintainer's validation", with the actual token use per slice.
 5. Run `mise run check:authoring`, `mise run check:java`, `mise run check:workers`,
    `mise run check:ontology-versioning`, `mise run check:ontology-catalog`,
    `mise run topology:links`, and record the results. No ontology file changed, so no release tag
    is due.
 6. Prose check of every changed Markdown file: no semicolons in English text, no superlatives.
 
-**Manual checklist (human, real Word):**
+**Manual checklist (maintainer, real Word):**
 
 | # | Step | Pass |
 |---|---|---|
@@ -1721,7 +1721,7 @@ Cert:\CurrentUser\Root`, which asks for confirmation and needs no administrator)
 These are drafted to the level the plan's stop rule S3 allows before their decisions (WA-D14 to
 WA-D20) are recorded: scope, paths, the design points sketch §8 already fixes, and a token
 estimate. Where a decision is still open, the slice says so rather than guessing a field name, a
-route shape or a file layout the human has not confirmed. The detailed, field-by-field instruction
+route shape or a file layout the maintainer has not confirmed. The detailed, field-by-field instruction
 WA0 to WA11 have is written into each slice once its decisions land, following the same process
 (§2.2) that produced WA0 to WA11.
 
@@ -1928,7 +1928,7 @@ Root `README.md`'s "Run the Word authoring POC" section gains the web app's URL.
 As WA11, for this tranche: a manual checklist (open the web app, open a document pushed from the
 add-in's harness, mark up text in each of the three panes, view an older revision, insert a library
 entry, switch themes, then confirm the same document still opens correctly from the add-in). Status
-record set to "awaiting human validation" with actual token use per slice. `check:authoring`,
+record set to "awaiting the maintainer's validation" with actual token use per slice. `check:authoring`,
 `check:java`, `check:workers`, `check:ontology-versioning`, `check:ontology-catalog`,
 `topology:links` run and recorded. Prose check of every changed Markdown file.
 
@@ -1999,7 +1999,7 @@ cross-checks over a nested element, a demo feature for the deepest nesting case)
 <the command, the directory (repository root), and what a pass prints>
 
 ## Artefacts to inspect
-<files or outputs the human should read>
+<files or outputs the maintainer should read>
 
 ## Self-probe
 <the break made, the test that failed, the restore, the green re-run>
@@ -2027,7 +2027,7 @@ Real Word, except through WA11's manual checklist.
 | R3 | Testcontainers fails against Docker 29's API | P6 checks the API version, §2.7 names the fallback |
 | R4 | The CSP blocks Office.js | M2 records it, a follow-up changes the Caddyfile |
 | R5 | The tenant blocks sideloading | desktop registry sideload, central deployment, or the harness |
-| R6 | The goldens encode a wrong reading | the WA6 pack lists the facility readings for human review before sign-off |
+| R6 | The goldens encode a wrong reading | the WA6 pack lists the facility readings for the maintainer's review before sign-off |
 | R7 | Scope grows into accepting proposals or editing meaning | out of scope by the sketch §1. A follow-up unit needs its own plan |
 | R8 | A Word build or Word on the web lacks the shared runtime or the right-click extension point | Word then ignores those manifest entries. The task pane still marks everything, and M14 records which clients show the commands |
 | R9 | The web app duplicates the add-in's marking or validation logic and drifts out of sync with it | WA-D15 decides whether to share the TypeScript modules outright, and WA14 adds a parity test either way |

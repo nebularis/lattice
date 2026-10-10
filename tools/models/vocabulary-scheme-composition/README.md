@@ -55,7 +55,7 @@ the simplest to state); let one source's hierarchy take precedence over another'
 concept (needs an explicit precedence rule, parallel to ADR-A85's specificity ordering); or allow
 free union and require `skos:broader`'s transitive closure to stay acyclic, deferring disagreement
 to whatever reads the hierarchy (weakest guarantee, cheapest to state). This model does not choose
-among them — that is the human's decision, informed by this evidence, not this track's to take.
+among them — that is our decision, informed by this evidence, not this track's to take.
 
 ## Re-run with well-formedness facts (2026-10-07, after independent review)
 

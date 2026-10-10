@@ -182,7 +182,7 @@ Framework-neutral identity-pattern libraries, Python and Java, with no LATTICE d
 `mise run check:*` tasks described above — nothing is reimplemented in YAML. All three are
 **manual-dispatch only** (`workflow_dispatch`), a deliberate cost-control choice, not a readiness
 gap: every job is written and ready, so switching to automatic triggering on push/PR is a one-line
-change (see the commented-out trigger block at the top of `platform.yml`), made when the human
+change (see the commented-out trigger block at the top of `platform.yml`), made when the maintainer
 chooses to activate it.
 
 `formal-methods.yml` is split out deliberately: its two jobs (`proofs`, native Isabelle; `models`,
@@ -195,7 +195,7 @@ never blocks the rest of CI.
 Any unit of work beyond a small fix follows the model in the [lattice-lifecycle skill](../../.claude/skills/lattice-lifecycle/SKILL.md) and
 [`docs/developer/INDEX.md`](INDEX.md): a sketch, a plan, a status record updated live, and (for a
 slice) a Validation Pack under `docs/developer/validation/` naming its test cases, the one command
-that runs them, and what a human should inspect before merging, which is the sign-off. Read that model before starting a new unit — this guide
+that runs them, and what a maintainer should inspect before merging, which is the sign-off. Read that model before starting a new unit — this guide
 covers the tools; INDEX.md and that skill cover the
 process those tools are run under.
 

@@ -3,7 +3,7 @@
 # Formal Methods, Track E: Status
 
 **Unit ID:** `formal-methods-track-e` (phase, within the `formal-methods` epic)
-**Status:** E1.0 and E1.1 done, 2026-10-06, native route only (human instruction). E1.2's
+**Status:** E1.0 and E1.1 done, 2026-10-06, native route only (our instruction). E1.2's
 blocker is resolved by reading track B's sketch (2026-10-07): the rounding/residual theorem
 belongs to B4/E3-E4, not Quantification, so E1.2 itself is retargeted, not merely unblocked. E1.3
 remains blocked (see Log). **E1.4 done, 2026-10-09**, on branch `fm/eligibility-pass` (machine S),
@@ -77,7 +77,7 @@ unchanged — before this fix this would have passed silently; now every one of 
 branch: +1 B2.2, +2 B2.1). `python tools/check_formal_freshness.py` — both checks (Kernel.thy
 and the new Python module's freshness, plus law coverage) clean.
 
-**Next action, for the human:** review and accept this branch's work (FM-D17, E1.4, plus track
+**Next action, for the maintainer:** review and accept this branch's work (FM-D17, E1.4, plus track
 B's B2.1/B2.2 described in track B's own status record) so CCS's C9b3 can start. Separately, E1.2's blocker is resolved, not merely diagnosed: the track B
 sketch (`formal-methods-track-b.md` §6) reads the reference-evaluator sketch's own RE6/RE-Q4
 directly and finds the rounding/residual rule for `split`/`proRata` belongs to the evaluation
@@ -105,7 +105,7 @@ No action needed on E1 until one of those two clears.
 | # | Question | Owner |
 |---|---|---|
 | where `split`/`proRata`/the combinator algebra are specified normatively | **answered, 2026-10-07**: track B's B4 (the evaluation context's combinator algebra), mechanised later by E3/E4, per the reference-evaluator sketch's own RE6/RE-Q4 — not a new Quantification section, not folded into the kernel | closed |
-| the Isabelle image | does not exist; needed before epic E9's "image route only" rule applies to track E's recorded claims, not before E1 itself | human, timing deferred 2026-10-06 to conserve tokens, confirmed again when E1 started (native/local explicitly requested) |
+| the Isabelle image | does not exist; needed before epic E9's "image route only" rule applies to track E's recorded claims, not before E1 itself | maintainer, timing deferred 2026-10-06 to conserve tokens, confirmed again when E1 started (native/local explicitly requested) |
 
 ## Log
 
@@ -119,9 +119,9 @@ No action needed on E1 until one of those two clears.
   was reviewed for compatibility: confirmed orthogonal to track E's own generation (a separate
   extraction target from the same README, fenced-code-block generated, not HTML-comment
   generated), not adopted, no plan or slice opened for it. E1.0 unblocked; still needs the
-  human's go-ahead to actually start, and its own generation-direction question decided when it
+  maintainer's go-ahead to actually start, and its own generation-direction question decided when it
   does.
-- 2026-10-06: E1.0 and E1.1 done, native route only (human instruction, explicit for this slice).
+- 2026-10-06: E1.0 and E1.1 done, native route only (our instruction, explicit for this slice).
   `tools/literate_extract.py` gained an `isabelle-spec` fence tag and `--proofs-root`, purely
   additively (Surface/Wording/Behaviour's existing `--check` invocations re-run unchanged and
   pass, confirming no regression). `ontology/eligibility/README.md` §10 (new) states the closed
@@ -142,7 +142,7 @@ No action needed on E1 until one of those two clears.
   (`sketches/formal-methods.md` §8.1 places it with the kernel, §9.2 places it with the
   combinator algebra the epic plan assigns to E3). Not drafted: formalising an operation with no
   design-time decision behind it risks fixing its design inside a proof, the same risk already
-  held E1.3 back for binding resolution. Plan and this record both updated; the human's decision
+  held E1.3 back for binding resolution. Plan and this record both updated; our decision
   is needed on where it is specified and under which ADR before this resumes.
 - 2026-10-07: E1.2's blocker resolved by reading track B's sketch directly, not re-derived here.
   The reference-evaluator sketch's own RE6 and RE-Q4 already state that the rounding and

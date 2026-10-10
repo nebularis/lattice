@@ -13,7 +13,7 @@
 
 Turn a resolved `dal:IdentityProfile` into a self-contained minting recipe, publish conformance vectors for it, and provide pure Java and Python minting libraries that pass those vectors, together with a normative specification thorough enough for an implementor who uses neither library. Out of scope: publishing artefacts, RDF canonicalization inside the libraries, key management, the shared Rust core (deferred, [sketch](../sketches/identity-minting-shared-core.md)).
 
-## Agent design decisions taken in writing this plan (for human review)
+## Design decisions taken in writing this plan (for the maintainer's review)
 
 | # | Decision | Why |
 |---|---|---|
@@ -103,7 +103,7 @@ Validation: the schemas validate the anchor file; `verify-anchors.py` passes wit
 1. Complete `identity-minting-specification.md`: a fully worked example per deterministic strategy with every intermediate byte, the pitfalls section (UTF-16 lengths, whitespace sets, `toLowerCase` is not case folding, NFC versus NFKC, base32 padding and case, secrets in vectors, canonicalization obligations), and "implementing without our code" as a step-by-step procedure.
 2. READMEs: `packages/minting/README.md`, one per library, `contracts/identity/README.md`, each with the content-addressed obligations section before the API.
 3. `iri-identity-patterns.md` §14.2 and `tools/persistence/README.md` updated.
-4. **Human walk-through** (cannot be done by the agent): a person follows the specification alone, with a hex editor and an SHA-256 tool, and reproduces one derived-hash IRI and one claim IRI from the anchor file. Findings feed a final revision.
+4. **Manual walk-through**: someone follows the specification alone, with a hex editor and an SHA-256 tool, and reproduces one derived-hash IRI and one claim IRI from the anchor file. Findings feed a final revision.
 
 ## Deferred items
 

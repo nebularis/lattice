@@ -3,7 +3,7 @@
 # Typing InsurML content in LATTICE
 
 **Unit:** [insurml-alignment](../plans/insurml-alignment.md), decision IMA-D4. **Status:** sketch,
-2026-10-05, for the human's decision. Nothing here is ratified.
+2026-10-05, for the maintainer's decision. Nothing here is ratified.
 **Reads with:** [the bridge sketch](insurml-bridge.md) §4 (which this replaces in depth),
 [the integration analysis](../notes/insurml-integration.md) §6.3 (options T1 to T3), the
 [Wording README](../../../ontology/wording/README.md) §5.5 and §6, ADR-A85 (scoped binding),

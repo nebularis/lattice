@@ -16,9 +16,9 @@ Every active unit has one stable identifier and uses these locations:
 |---|---|---|
 | Plan | `plans/<unit>.md` | Scope, dependencies, decisions, work steps, and planned validation |
 | Status | `status/<unit>.md` | Sole authoritative current state, evidence, blockers, and next action |
-| Review | `review/<unit>-review.md` | Human review request, artifacts, exact `mise` commands, pass criteria, and status link |
+| Review | `review/<unit>-review.md` | Review request, artifacts, exact `mise` commands, pass criteria, and status link |
 
-Plans change only when planned work changes. Status changes after every material implementation or validation event. Review records are closed or archived after human disposition.
+Plans change only when planned work changes. Status changes after every material implementation or validation event. Review records are closed or archived after disposition.
 
 ## Active Unit
 

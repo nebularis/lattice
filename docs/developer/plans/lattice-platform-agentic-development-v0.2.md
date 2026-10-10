@@ -34,7 +34,7 @@ This v0.2 plan is amended for repository topology and implementation-document go
 
 The repository retains `mise` as the sole orchestration entry point and retains Maven, Yarn 4, Python project tooling, and Mix as dependency authorities. The relocation affects semantic and documentation ownership only. It does not change ontology namespace IRIs, application names, or runtime component ownership.
 
-Before any implementation slice in this plan begins, the `repository-topology-a77` unit must be accepted. Its current state is recorded in [Repository Topology A77 Status](../status/repository-topology-a77.md), and its human decision request is [Repository Topology A77 Review](../review/repository-topology-a77-review.md).
+Before any implementation slice in this plan begins, the `repository-topology-a77` unit must be accepted. Its current state is recorded in [Repository Topology A77 Status](../status/repository-topology-a77.md), and its decision request is [Repository Topology A77 Review](../review/repository-topology-a77-review.md).
 
 ---
 
@@ -48,7 +48,7 @@ The hierarchy of units (Epic → Phase → Slice → Milestone) and their valida
 
 ### 0.2 Slice validation model
 
-The mandatory shape of every slice, validation pack requirements, and human validation gate protocol are defined in the [lattice-lifecycle skill](../../../.claude/skills/lattice-lifecycle/SKILL.md). See that document for the authoritative requirements.
+The mandatory shape of every slice, validation pack requirements, and validation gate protocol are defined in the [lattice-lifecycle skill](../../../.claude/skills/lattice-lifecycle/SKILL.md). See that document for the authoritative requirements.
 
 ### 0.3 Test taxonomy (referenced as L0–L8 throughout)
 
@@ -240,9 +240,9 @@ T-DEC ──► T-ONT ──┐
 
 ### P0.1 — Decision pack (T-DEC)
 
-Decisions are *slices* here, because agents can draft ADRs and humans validate them. Each slice = draft ADR + affected normative doc edits + (where applicable) an executable consequence.
+Decisions are *slices* here, because an ADR can be drafted in one slice and validated at its gate. Each slice = draft ADR + affected normative doc edits + (where applicable) an executable consequence.
 
-| Slice | Deliverable | Human validation focus | Executable consequence in later slice |
+| Slice | Deliverable | Validation focus | Executable consequence in later slice |
 |---|---|---|---|
 | **P0.1.1** | ADR-A74 graph-primary realm model; full rewrite of `data-architecture.md` §1–§3, §5–§7 | Is the "where does a fact belong" test (A1.2) applied correctly to every existing table in A1.4? Is anything mis-assigned? | ArchUnit G2 |
 | **P0.1.2** | ADR-A75 three-tier store SPI; Core/Extended/Native split; capability list | Is every Extended capability paired with a Core fallback *or* an activation gate? | TCK (P0.5) |
@@ -260,7 +260,7 @@ Decisions are *slices* here, because agents can draft ADRs and humans validate t
 | **P0.1.14** | Threat model document (S-1…S-12) with owner per control; hostile-suite backlog | Is any control listed that has no test owner? | L8 suites |
 | **P0.1.15** | NFR/SLO catalogue + reference load profile (§5.4) committed as `docs/architecture/nfr.md`, machine-readable `nfr.yaml` | Are the numbers ones you are willing to be held to? They drive store choice and partition counts | L7 harness reads `nfr.yaml` |
 
-> **Validation note for the humans:** P0.1 slices produce *documents*, so Step 4 (adversarial probe) becomes "name one scenario the decision does not cover". Expect to reject and re-run at least P0.1.1 and P0.1.3.
+> **Validation note:** P0.1 slices produce *documents*, so Step 4 (adversarial probe) becomes "name one scenario the decision does not cover". Expect to reject and re-run at least P0.1.1 and P0.1.3.
 
 ### P0.2 — Repo, build, CI, codegen (T-BUILD)
 
@@ -305,7 +305,7 @@ This is the single most load-bearing library in the system. Slice it finely.
 | **P0.4.7** | Cost controls: cache by `(inputByteDigest, profileVersion)` behind a `HashCache` port; blank-node ceiling (default 10 000) with a diagnostic naming the offending structure; per-named-graph only | **L2/L7**: ceiling breach produces the named diagnostic, not an OOM; benchmark: throughput on the fixture corpus recorded as a baseline |
 | **P0.4.8** | Profile-version migration story: `rehash` CLI, profile-change = `breaking` classification hook | **L1**: a profile change produces a rehash plan listing affected graphs (against fixtures) |
 
-> **Human validation focus for P0.4:** ask the agent to produce a table of "these two graphs are semantically identical and hash equal" vs "these two look similar but must hash differently". If that table is thin, the suite is thin.
+> **Validation focus for P0.4:** ask for a table of "these two graphs are semantically identical and hash equal" vs "these two look similar but must hash differently". If that table is thin, the suite is thin.
 
 ### P0.5 — Graph store SPI, TCK, adapters, C-03/A75 (T-STORE)
 
@@ -481,7 +481,7 @@ This is the single most load-bearing library in the system. Slice it finely.
 | **P1.10.1** | `@lattice/ui-kit` skeleton: token set, two density presets (expert/operational), status vocabulary (`pending/running/succeeded/failed/quarantined/blocked/stale/diverged/superseded`) as a single typed enum, freshness badge, Storybook, axe in CI | **L1/L6**: status vocabulary is the only source (lint bans literal status strings in apps); axe clean |
 | **P1.10.2** | `@lattice/client-ts` generated from OpenAPI + deadline propagation + idempotency-key handling + retry policy | **L3** |
 | **P1.10.3** | **Activation Console**: pack diff (which graphs changed hash, which projections invalidate, compatibility class, affected node counts), phase progress, SHADOW divergence report, promote/rollback with limits stated | **L6**: full activation walked in Playwright against a seeded scenario, incl. a refused rollback |
-| **P1.10.4** | **Register model** documented in `ux-design.md` (G-18): expert / operational / task, with the five cross-cutting principles declared non-negotiable in all three | Human review of the doc; lint that operational surfaces do not import expert-only primitives |
+| **P1.10.4** | **Register model** documented in `ux-design.md` (G-18): expert / operational / task, with the five cross-cutting principles declared non-negotiable in all three | Review of the doc; lint that operational surfaces do not import expert-only primitives |
 | **P1.10.5** | Tenant/Environment Admin surface v1 (provisioning, dataset binding + capability report, suspend/deprovision with stated data consequences) | **L6** |
 
 ### P1.11 — Phase 1 close-out
@@ -588,7 +588,7 @@ This is the single most load-bearing library in the system. Slice it finely.
 | **P2.6.1** | `usage_event` contract + emission **on the same path as the work** (never log-derived), carrying tenant, environment, packDigest, principal, correlationId | **L3/L4**: every metered dimension from §4.16 has an emitting call site and a test; a code path doing metered work without emitting fails an ArchUnit-style check |
 | **P2.6.2** | Counter promotion pattern (A1.5 rule 5): hot counters in coordination, promoted to versioned graph measurement nodes at a declared granularity | **L4**: counter loss bounded by the promotion interval (chaos test: drop coordination mid-window, assert bounded inaccuracy and no lost decisions) |
 | **P2.6.3** | Quota pre-check at the two enforcement points only (gateway, C-14): `429` + `Retry-After` + machine-readable reason (`quota: documents_per_month`); soft warning at 80% | **L4/L8**: never a 500, never a silent slow-down; a quota-exhausted tenant gets a typed refusal while another tenant is unaffected |
-| **P2.6.4** | Metering/billing seam (§5.11): emission is OSS, rating is not; documented interface + reference `UsageSink` | Human review of the seam doc + **L3** sink contract test |
+| **P2.6.4** | Metering/billing seam (§5.11): emission is OSS, rating is not; documented interface + reference `UsageSink` | Review of the seam doc + **L3** sink contract test |
 
 ### P2.7 — Push / subscription gateway, C-18 (T-HOST)
 
@@ -628,7 +628,7 @@ This is the single most load-bearing library in the system. Slice it finely.
 | **P2.9.10** | **Two-bench layer separation as an API constraint**: the intent-review response type has no field capable of carrying an ontology IRI (server-enforced, so a UI bug cannot violate layer independence) | **L1/L8**: reflection test over the response type; a deliberate field addition fails the build |
 | **P2.9.11** | Stages 6–9: compile candidate A-Box via the C-05 plan → staging → admission gate (shapes + confidence thresholds + calibration gate) → route (auto-admit / HITL / quarantine) → commit with provenance | **L4/L5**: each route has an end-to-end test; a below-threshold extraction lands in HITL and appears in the C-15 queue |
 | **P2.9.12** | Run comparison as a first-class operation (drift detection input): compare two `extraction_run`s by id | **L4**: a changed model id produces a comparable, non-overwriting second run |
-| **P2.9.13** | Full prompt-injection threat suite (S-1): structured prompt boundaries, no tool-calling capability, admission shapes authored from pack only, plus a corpus of adversarial clauses | **L8**: the suite is the acceptance criterion for M6 — run it in the human gate, not just CI |
+| **P2.9.13** | Full prompt-injection threat suite (S-1): structured prompt boundaries, no tool-calling capability, admission shapes authored from pack only, plus a corpus of adversarial clauses | **L8**: the suite is the acceptance criterion for M6 — run it in the validation gate, not just CI |
 
 ### P2.10 — Operational and task-register UX (T-UX)
 
@@ -648,7 +648,7 @@ This is the single most load-bearing library in the system. Slice it finely.
 |---|---|
 | **P2.11.1** | Anti-pattern lint pass (§6.5): a projected value cannot render without its freshness state; no single environment "health" score exists; not-fired transitions cannot be hidden (component contract); raw SPARQL is not reachable from business-user surfaces |
 | **P2.11.2** | Observability extension (§5.8): the six operator questions each mapped to concrete signals; correlation identity chain `correlationId → batchId/stimulusId → decisionRecordId → txnId → journalId` proven end to end |
-| **P2.11.3** | **The one-minute acceptance criterion**: given a policy number and a date, an operator retrieves every event, decision, and write that touched it, in order, in under a minute, without a developer. Automated as an L5 test with a stopwatch assertion and rehearsed by a human at the gate |
+| **P2.11.3** | **The one-minute acceptance criterion**: given a policy number and a date, an operator retrieves every event, decision, and write that touched it, in order, in under a minute, without a developer. Automated as an L5 test with a stopwatch assertion and rehearsed by a maintainer at the gate |
 | **P2.11.4** | Expand Phase 3 to VP-level detail; confirm reconciliation design for C-07 before any C-09 work is scheduled |
 
 ---
@@ -779,7 +779,7 @@ These are not phases; they are standing obligations with per-phase slices.
 
 ## Part 10 — Parallelisation plan
 
-Assumes multiple agent teams working concurrently with one human validator per Epic (validators may hold two Epics).
+Assumes multiple agent teams working concurrently with one validator per Epic (validators may hold two Epics).
 
 | Phase | Parallel streams | Serialisation points |
 |---|---|---|
@@ -820,7 +820,7 @@ Every register risk must have a slice that owns its control, or it is unmitigate
 **Every phase gate requires all of:**
 
 1. All slice gates in the phase signed off in `docs/validation/LOG.md`.
-2. Phase milestone demo executed by a human against a freshly built compose stack from a clean checkout.
+2. Phase milestone demo executed by a maintainer against a freshly built compose stack from a clean checkout.
 3. `docs/traceability/matrix.csv` shows zero claimed-but-untested requirements for the phase's G-nn/C-nn/A-nn set.
 4. Every phase ADR ratified; every normative document delta merged.
 5. L7 baselines recorded; no unexplained regression.
@@ -843,7 +843,7 @@ These genuinely change the plan and I do not want to assume answers.
 | 5 | **Is the insurance applied ontology (`ontology/examples/insure-o`) an acceptable basis for the synthetic corpus**, or do we need a neutral second domain to prevent domain drift (per `GENAI_CONTRIBUTION.md`'s stated concern)? | If a second domain is required, P0.9.2 roughly doubles and every L5/L6 scenario runs in a matrix. |
 | 6 | **Which LLM providers must be supported at M6, and is a local-model-only path a launch requirement or a later tier?** | Drives P2.9.4 scope and the cassette strategy. |
 | 7 | **Phase 1 partitioned-queue impl: RabbitMQ consistent-hash plugin or Postgres `SKIP LOCKED`?** I have planned the abstraction plus both, but the agents will want a default. | Low reversibility cost behind the SPI, which is why I planned the abstraction first. |
-| 8 | **How many concurrent agent teams and human validators will we actually have?** Part 10 assumes 4–6 streams with 3–4 validators. | Validation throughput is the binding constraint in this process, not agent throughput. If you have one validator, the plan must serialise and phases roughly double in wall-clock time. |
+| 8 | **How many concurrent agent teams and validators will we actually have?** Part 10 assumes 4–6 streams with 3–4 validators. | Validation throughput is the binding constraint in this process, not agent throughput. If you have one validator, the plan must serialise and phases roughly double in wall-clock time. |
 | 9 | **Is `ux-design.md`'s register model (P1.10.4) contentious?** The review flags the MORK UXD Part 12 tension explicitly. | If there is disagreement between UX stakeholders, resolve it in P0.1 as an ADR rather than discovering it at P2.10. |
 | 10 | **Do we need a formal DPO/legal review gate on A68 (PII/erasure)?** I have flagged it as recommended in P0.1.7. | If yes, it is an external dependency with lead time and should be initiated on day one, since it blocks the Phase 0 exit gate. |
 | 11 | **Request Query Mapping library — deferred until A75 ratification.** A *general-purpose, reusable* runtime library binding an arbitrary live request, a compiled `dal:` template (from `ontology/persistence`), and a store SPI implementation, for any caller. Not designed in `rdf-sparql-patterns-phase` because it needs the SPI (proposed A75) first. See [docs/developer/INDEX.md](../INDEX.md) Part V for current status. | Blocks nothing in Phase 0 or Slice 2 of the patterns phase. **Narrowed by the Phase 2 plan revision (P2.3.1):** C-04's own ingestion write path binds request-scoped parameters into P2.1.4a's pre-instantiated templates itself, without waiting for this library — that is a scoped, C-04-local mechanism, not an instance of this library. This question remains open only for callers *other than* C-04 that would need the same capability (e.g. a future push-gateway-triggered write). Design the general library once A75 is ratified, not before. |

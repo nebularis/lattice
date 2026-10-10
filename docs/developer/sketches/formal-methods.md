@@ -46,7 +46,7 @@ and the [lock-free store](../notes/rdf-engine/lock-free-rdf-store.md) Appendix A
 16. [Where it lives](#16-where-it-lives)
 17. [A phased route](#17-a-phased-route)
 18. [Risks](#18-risks)
-19. [Decisions for the human](#19-decisions-for-the-human)
+19. [Decisions for the maintainer](#19-decisions-for-the-maintainer)
 20. [Open questions](#20-open-questions)
 
 ---
@@ -434,7 +434,7 @@ corpus for Behaviour.
 | regeneration (ADR-A27) | a change to a source, and its minimal regeneration | regenerating after a change equals applying the change's image to the old output (§10) |
 | MORK intents | the refinement order on intent nodes | the intent graph is a join-semilattice. The co-occurrence axioms reject exactly the incomplete mappings |
 | MCN | encoder and decoder | decoding is lossless: decode after encode is the identity up to graph isomorphism |
-| Persistence | profiles and their compiled plans | the refinement argument of the persistence note §14.1, unchanged |
+| Persistence | profiles and their compiled plans | the refinement argument of the persistence note §14.1, plus, since 2026-10-10, that a compiled closure path denotes exactly a boundary shape's owned paths ([aggregate ownership §15](persistence-aggregate-ownership.md#15-effect-on-the-later-track-h-slices)) |
 
 ### 8.9 Platform protocols
 
@@ -830,7 +830,7 @@ conditions.
 | FR11 | **Regeneration storms** when a tool image changes | tool identity separated from semantic inputs. A tool change marks claims stale, never invalid (FM-D15) |
 | FR12 | **Competition with CCS** on machine R | plan E4, and tracks scheduled in CCS gaps |
 
-## 19. Decisions for the human
+## 19. Decisions for the maintainer
 
 Kept in one place, the [plan](../plans/formal-methods.md) §7.
 

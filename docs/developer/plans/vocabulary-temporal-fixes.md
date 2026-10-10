@@ -25,7 +25,7 @@ the validation pack. It is not a documentation-only sync.
 ## Governing decision
 
 Author [ADR-A85](../../architecture/decisions/ADR-A85-vocabulary-scoped-temporal-binding-resolution.md)
-as Proposed for human review. It records the n-ary binding model, conjunctive
+as Proposed for the maintainer's review. It records the n-ary binding model, conjunctive
 scope semantics, strict-superset precedence, conflict refusal, `boundScheme`
 fallback, and non-retroactive `resolvedUnder` provenance. No OWL axiom may
 silently choose between competing bindings.
@@ -95,7 +95,7 @@ fuzzy matcher, scope-membership engine, live-store adapter, or general runtime.
 ### 5. Consumer and provenance boundary checks
 
 Add the narrowest useful cross-layer fixtures or contract tests, with the
-consumer selected during human review. The check must demonstrate that a
+consumer selected during review. The check must demonstrate that a
 consumer resolves the applicable binding before interpreting a concept-valued
 property, preserves existing unscoped `boundScheme` behaviour, and retains a
 historical `resolvedUnder` assertion. Do not expand this unit into a Surface or
@@ -113,7 +113,7 @@ Eligibility semantic redesign.
 
 | Slice | Scope | Test level | Gate |
 |---|---|---|---|
-| 1 | ADR-A85, architecture mirror, fixture and traceability skeleton | L0, L2 | Human review of semantic parity and decision record |
+| 1 | ADR-A85, architecture mirror, fixture and traceability skeleton | L0, L2 | Review of semantic parity and decision record |
 | 2 | Examples plus structural and SHACL-SPARQL validation | L1, L3, L4 | Positive and negative fixtures produce expected reports |
 | 3 | Reference resolver and deterministic test suite | L1, L2 | Precedence and conflict mutation probes fail as intended |
 | 4 | Consumer/provenance checks and documentation close-out | L3, L4 | Cross-layer contract passes and validation pack is complete |
@@ -134,7 +134,7 @@ mise run check:vocabulary
 
 The validation pack requires SHACL reports, resolver decision traces, a
 triple-order determinism result, a historical provenance fixture, traceability
-rows, and a human mutation probe that disables strict-superset precedence or
+rows, and a mutation probe that disables strict-superset precedence or
 the equal-specificity constraint and observes the expected test failure.
 
 ## Deliberate non-coverage
@@ -152,7 +152,7 @@ The root README, solution design specification, data architecture, UX design,
 deferred-scope document, `.github/copilot-instructions.md`, and
 `GENAI_CONTRIBUTION.md` were checked. They contain no Vocabulary-specific
 mechanism inventory that this unit must synchronise. This remains an explicit
-assumption for human review, not a claim that the files are permanently out of
+assumption for the maintainer's review, not a claim that the files are permanently out of
 scope.
 
 ## Closure (2026-09-25)

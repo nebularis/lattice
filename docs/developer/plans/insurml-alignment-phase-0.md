@@ -4,7 +4,7 @@
 
 **Unit ID:** `insurml-alignment-phase-0`
 **Epic:** [insurml-alignment](insurml-alignment.md)
-**Status:** Proposed, awaiting human review
+**Status:** Proposed, awaiting the maintainer's review
 **Status record:** the epic's [status record](../status/insurml-alignment.md), one section per phase
 **Changes:** paper only. No ontology, tool or app changes
 
@@ -18,7 +18,7 @@ engagement brief for InsurML's owner, and five ADRs drafted as Proposed.
 
 | Slice | Content | Output | Estimate (tokens) |
 |---|---|---|---|
-| IMA-0.1 | engagement brief for InsurML's owner: Q-1 to Q-21, the [identity note](../notes/insurml-identity.md), a summary of P-1 to P-16 and what each would give InsurML, the profile's intent, and collaboration options (IMA-D16) | a note. The human sends it | under 0.05M |
+| IMA-0.1 | engagement brief for InsurML's owner: Q-1 to Q-21, the [identity note](../notes/insurml-identity.md), a summary of P-1 to P-16 and what each would give InsurML, the profile's intent, and collaboration options (IMA-D16) | a note. The maintainer sends it | under 0.05M |
 | IMA-0.2 | licence, publication and edition record: the answers to Q-2, Q-3 and Q-11, IMA-D5 and its consequence for the epic's documents on public branches | a section of the status record | under 0.02M |
 | IMA-0.3 | ADR: the InsurML profile. Scope of `applied/insurance/wording/`, the two documents, alignment rules (bridge §3), identity adoption and key schemes (§4), typing T1, edition pinning, builder properties, AIR-5.9 moved (IMA-D2) | ADR, Proposed | 0.05M |
 | IMA-0.4 | ADR: bridge tooling and kits. Where the lift, lower, assembler and parity suite live, where kits are published, their versioning, and their relation to the XML egress sketch's kits (IMA-D11, IMA-D12) | ADR, Proposed, under the topology rule | 0.04M |
@@ -37,7 +37,7 @@ owner can review the substrate changes the alignment depends on before LATTICE b
 | IMA-D1 to IMA-D5 and IMA-D16 decided | the epic's §7, marked with dates |
 | the licence and publication route recorded | IMA-0.2 |
 | the ADRs of IMA-0.3 and IMA-0.4 Accepted | the ADR index |
-| the ADRs of IMA-0.5 and IMA-0.6 Proposed and reviewed by the human | the ADR index |
+| the ADRs of IMA-0.5 and IMA-0.6 Proposed and reviewed by a maintainer | the ADR index |
 | answers to Q-1 to Q-3 received, or the epic recorded as proceeding clean-room only | the status record |
 | the Phase 1 plan written | `insurml-alignment-phase-1.md` |
 
@@ -49,4 +49,4 @@ the sketch section it decides and names its neutral case where it changes a laye
 ## Out of scope
 
 Any file under `ontology/`, `tools/`, `contracts/` or `apps/`. Sending anything to InsurML's owner,
-which the human does.
+which the maintainer does.

@@ -3,8 +3,8 @@
 # Validation Pack: CCS C9a, amendments and taking effect
 
 **Unit:** [`computable-contract-substrate`](../status/computable-contract-substrate.md)
-**Machine:** R (Claude Code). **Branch:** `ccs/c9a-amendments`, created by the human from `main`.
-Commits are the human's, examples first (ADR-A-C2), and the change is merged into `main` before its
+**Machine:** R. **Branch:** `ccs/c9a-amendments`, created from `main`.
+Commits are the maintainer's, examples first (ADR-A-C2), and the change is merged into `main` before its
 release tags are created
 **Plan:** [CCS plan](../plans/computable-contract-substrate.md), C9 in detail
 **Decisions:** ADR-A104 decisions 4 and 11 and its addenda, ADR-A106, ADR-A112 and its references
@@ -70,7 +70,7 @@ mise run build:ontology-catalog && mise run check:ontology-versioning && mise ru
 
 ## Handoff
 
-Written by the building machine when the work is ready for the human to commit.
+Written by the building machine when the work is ready for the maintainer to commit.
 
 Phase 1, examples first (ADR-A-C2), 2026-10-08:
 
@@ -82,12 +82,12 @@ Phase 1, examples first (ADR-A-C2), 2026-10-08:
   - `ontology/instrument/examples/licence-amendments.ttl` (new): formation as a regime, the three
     parties signing separately (S90), a guarantor released by amendment (C9-Q6), and ending by
     agreement through an added clause whose regime ends the licence at a date
-  - `ontology/instrument/examples/property-endorsement.ttl` (new, the human's insurance example): a
+  - `ontology/instrument/examples/property-endorsement.ttl` (new, the maintainer's insurance example): a
     mid-term adjustment adding a unit to a property policy by endorsement, effective before the
     insurer agrees it, and three losses at the new unit before, inside and after that gap, with the
     version deciding each as known when notified and as known later
   - the ADR-A104 addendum "amendments, assents and taking effect" (Proposed)
-- **Run by the agent:** the three examples against the current model and every layer's shapes,
+- **Run:** the three examples against the current model and every layer's shapes,
   without inference. `facility-amendment.ttl` and `property-endorsement.ttl` report no violation.
   The facility's six warnings are coverage warnings for Wording's facility clauses, which carry no
   stated meaning. `licence-amendments.ttl` reports one violation, which the model phase removes:
@@ -97,7 +97,7 @@ Phase 1, examples first (ADR-A-C2), 2026-10-08:
 - **Check first:** the deviations, then the endorsement example's header tables.
 - **Deviations from the plan:**
   - **No subscription placement.** It needs each insurer bound from its own assent, which C9-Q5's
-    formation regime does not give. The human withdrew the question (C9a-Q1) and chose an
+    formation regime does not give. We withdrew the question (C9a-Q1) and chose an
     endorsement and mid-term adjustment instead, so row C9a-10 now tests that
   - **A deletion generates the assembled wording without the deleted element.** Wording's rule
     (W5, C5) needs `prov:generated` on a delete, which the licence's release now states
@@ -124,7 +124,7 @@ Phase 2, the model, 2026-10-08:
   - `tools/test_amendments.py` (20 tests, rows C9a-01 to C9a-14), in `check:ontology-catalog`.
     Version pins and shapes-version assertions moved in five test modules. The catalog, the release
     register and the ontology architecture updated
-- **Run by the agent:** every check listed under Results, and a mutation probe: with a triple pattern
+- **Run:** every check listed under Results, and a mutation probe: with a triple pattern
   broken in `ins:AgreedChainShape` and in `ins:OvertakingShape`, C9a-06 and C9a-07 fail, and pass once
   restored.
 - **Check first:** the deviations, then §6.3 and §22.22 of the Instrument README.

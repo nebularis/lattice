@@ -4,6 +4,9 @@
 
 **Status:** a spike, not production. It defines no interface and changes no tool. Nothing in
 `tools/` or `platform/` imports it.
+**Reviewed 2026-10-10:** [persistence-aggregate-ownership-review.md](../../docs/developer/notes/persistence-aggregate-ownership-review.md),
+sections S1 to S6. Slice HO0 of the [Track H plan](../../docs/developer/plans/formal-methods-track-h.md#35-ho-aggregate-ownership)
+applies its corrections here.
 **Origin:** the [aggregate ownership note](../../docs/developer/notes/persistence-aggregate-ownership.md),
 which asks whether `persistence` models an aggregate correctly. These experiments check claims the
 note makes. They are read-only against the compiler, which they use only to obtain generated text.

@@ -108,7 +108,7 @@ def _stream_state(backend: OxigraphBackend, meta: str, label: str) -> StreamStat
 def append_event_runs() -> list[StreamState]:
     """Three runs of the generated ``append-event`` update on one stream: every parameter supplied,
     the caller forgetting ``$revBase``, then a retry with the same transaction id and every
-    parameter. No run raises an error. See TD-26."""
+    parameter. No run raises an error. See TD-34."""
     update = generated_update(witness.WITNESS_DIR / "template-append-event.ttl", "append-event")
     meta = re.search(r"DELETE \{ GRAPH <([^>]+)>", update).group(1)
     full = _append_parameters()

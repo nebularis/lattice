@@ -3,7 +3,7 @@
 # Validation Pack: CCS C5, Wording amendments and law shapes
 
 **Unit:** [`computable-contract-substrate`](../status/computable-contract-substrate.md)
-**Machine:** R (Claude Code). **Branch:** `ccs/c5-wording-laws`. Commits are the human's
+**Machine:** R. **Branch:** `ccs/c5-wording-laws`. Commits are the maintainer's
 **Plan and test cases:** [CCS plan](../plans/computable-contract-substrate.md) (C5 in detail)
 **Decisions:** ADR-A112 decision 3, ADR-A113, C4-Q2's refinement. C5-Q1, C5-Q2a to C5-Q2d decided 2026-10-02
 
@@ -36,7 +36,7 @@ Evaluating inclusion conditions at assembly (Eligibility's, in question form). S
 
 ## Handoff
 
-Written by the building machine when the work is ready for the human to commit.
+Written by the building machine when the work is ready for the maintainer to commit.
 
 - **Built:** wording, wording-vocab and wording-shapes 0.3.0 (README §5.10, §5.13, §6, §7, §8 to §10),
   the new `shapes/constraints.ttl`, catalog and release rows, and the C5 rows in `tools/test_wording.py`.

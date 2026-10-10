@@ -9,11 +9,11 @@
 ## Invariant
 
 Every slice from WA0 to WA10 built and automatically tested its own piece. WA11 closes the unit:
-a human who has never seen the POC can read one README to understand how the pieces fit together
+someone who has never seen the POC can read one README to understand how the pieces fit together
 and how the data changes shape as it moves through them, then load the real add-in into real Word
 and confirm the thing on screen matches what every earlier slice's automated test already checked
 in isolation or against the compose stack. Nothing here is new behaviour. It is the point where
-the unit stops being validated piece by piece and starts being validated as a whole, by a human,
+the unit stops being validated piece by piece and starts being validated as a whole, by a maintainer,
 in the one place (real Word) no automated test in this unit has ever reached.
 
 ## What this slice adds
@@ -22,7 +22,7 @@ in the one place (real Word) no automated test in this unit has ever reached.
   the proof of concept fits together" (an architecture diagram, a request-flow sequence diagram,
   and a data-construction diagram, all Mermaid) and "Load the add-in in Word" (Word on the web,
   desktop Word's registry sideload, and central deployment, each with how to remove it). This goes
-  beyond the plan's own WA11 scope, at the human's explicit request.
+  beyond the plan's own WA11 scope, at our explicit request.
 - One-line cross-references added to
   [`platform/authoring-service/README.md`](../../../platform/authoring-service/README.md) and
   [`workers/README.md`](../../../workers/README.md), pointing back to the add-in's new diagrams
@@ -44,7 +44,7 @@ in the one place (real Word) no automated test in this unit has ever reached.
 own green run. It is a Docker-backed, several-minute check, not part of the default `check`
 aggregate).
 
-## Manual checklist (human, real Word)
+## Manual checklist (maintainer, real Word)
 
 Everything above is checked by a machine. This is not: it needs a real Word client. Complete it,
 then sign off in the table below (or note a deviation).
@@ -87,11 +87,11 @@ the manual checklist, which has no command.
 
 Not applicable. This slice adds no behaviour and no test a self-probe could break. Its own
 correctness is the Mermaid diagrams rendering and matching the system they describe (checked by
-inspection above) and the manual checklist (checked by the human, in real Word).
+inspection above) and the manual checklist (checked by a maintainer, in real Word).
 
 ## Implementer choices
 
-- The "whole POC" README the human asked for is the add-in's own `README.md`, not a new file. It
+- The "whole POC" README we asked for is the add-in's own `README.md`, not a new file. It
   is the closest thing the repository already had to a POC entry point (WA11's own plan already
   extends it), and the other three parts (contracts, service, worker) each keep their own
   README scoped to their own concern, cross-referencing the add-in's diagrams rather than
@@ -102,7 +102,7 @@ inspection above) and the manual checklist (checked by the human, in real Word).
 
 ## Deliberate non-coverage
 
-- The manual checklist (M1 to M14) is not run by the agent. It needs real Word, which no part of
+- The manual checklist (M1 to M14) is not run in the build. It needs real Word, which no part of
   this unit's automated tooling has ever reached (a risk R5 in the plan already names: a tenant
   that blocks sideloading leaves only the harness, which every other slice already tests).
 - No new automated test exists for this slice, consistent with its plan scope (documentation only).

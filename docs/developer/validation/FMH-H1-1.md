@@ -6,7 +6,7 @@
 ([plan §3](../plans/formal-methods-track-h.md))
 **Source finding:** [review](../notes/rdf-engine/persistence-fml.md) §6.2, finding #2 and PV-X1.
 **Decisions:** none ratified. Two interpretations are recorded in the status record as H-D6 and H-D7
-and need the human's confirmation at the gate.
+and need our confirmation at the gate.
 
 ## Invariant
 
@@ -52,7 +52,7 @@ should report `44 passed`.
 
 ## Adversarial probes
 
-Run by the agent on 2026-10-08 against `hygiene.py`, each reverted afterwards.
+Run on 2026-10-08 against `hygiene.py`, each reverted afterwards.
 
 | Mutation | Tests that failed |
 |---|---|
@@ -60,7 +60,7 @@ Run by the agent on 2026-10-08 against `hygiene.py`, each reverted afterwards.
 | the shared-class condition removed | T2 |
 | graph-prefix overlaps downgraded from violation to warning | T1, T4, T6, T12 |
 
-The human is invited to pick a different mutation, for example by flipping the `<` in the
+The maintainer is invited to pick a different mutation, for example by flipping the `<` in the
 outer/inner ordering, and confirm a test fails.
 
 ## Artefacts to inspect

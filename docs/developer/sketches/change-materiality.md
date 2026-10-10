@@ -4,7 +4,7 @@
 
 **Unit:** [`computable-contract-substrate`](../plans/computable-contract-substrate.md), slice C9
 (C9-Q3, paused for this sketch on 2026-10-07).
-**Status:** decided 2026-10-07 (MQ1 to MQ7 answered by the human, §10). Carried into C9 as C9-Q3's answer.
+**Status:** decided 2026-10-07 (MQ1 to MQ7 answered, §10). Carried into C9 as C9-Q3's answer.
 **Amends, if accepted:** ADR-A104 decision 11, through the C9 addendum. Possibly Eligibility (§8).
 **Reads with:** the [CCS sketch](computable-contract-substrate.md) §5.8 (change and composition),
 the [Instrument README](../../../ontology/instrument/README.md) §15.1 (definitions) and §15.4
@@ -30,7 +30,7 @@ change of terms. They may later reuse the mechanism, and are held for later in t
 
 ## 2. Where materiality comes from
 
-The human set the order on 2026-10-07. Materiality comes from the most specific source available:
+We set the order on 2026-10-07. Materiality comes from the most specific source available:
 
 ```mermaid
 flowchart TB
@@ -147,11 +147,11 @@ runtime evaluation.
 
 ## 8. Eligibility paths ending at an identity
 
-Raised by the human on 2026-10-07. A path that ends at a persistent identity would let a condition
+Raised 2026-10-07. A path that ends at a persistent identity would let a condition
 ask "is this one of these named things", where the named things are clauses, documents, or any
 other identified record, not concepts.
 
-**Answered by the human, 2026-10-07:** (b) as its own Eligibility slice with an ADR (HQ-9), and (a)
+**Answered 2026-10-07:** (b) as its own Eligibility slice with an ADR (HQ-9), and (a)
 in C9 meanwhile.
 
 - **(a) Leave Eligibility as it is.** Words cover enumerated definitions that name defined terms.
@@ -189,12 +189,12 @@ Each open option is compared on its design overheads (how hard it is to reason a
 correctly, to assure and govern, and how brittle it is under change) and its runtime overheads (data
 volume, inconsistency, and surprises for traversal or aggregation), then against KISS.
 
-**Answered by the human, 2026-10-07:** MQ1 (a), amendments only, with (b) on the epic's backlog as
+**Answered 2026-10-07:** MQ1 (a), amendments only, with (b) on the epic's backlog as
 held design question HQ-8. MQ3 (a), the change report materialised. MQ7 (b) as its own Eligibility
 slice with an ADR (HQ-9), and (a) in C9 meanwhile, so a definition naming a clause falls back to a
 determination. MQ5's three choices are all offered.
 
-**Answered by the human, 2026-10-07, second round:** MQ2 (a), a condition word. MQ4 (b), a graded
+**Answered 2026-10-07, second round:** MQ2 (a), a condition word. MQ4 (b), a graded
 scheme with the two-concept baseline and the chain rule. MQ5 (a) in C9, an Instrument evaluation
 profile shaped so a deployment configuration layer can absorb it, and that layer on the backlog as
 its own unit with an ADR (HQ-10). MQ6 (a), with the decider notified of the computed result, so the
@@ -352,6 +352,6 @@ opinion is material." The amendment changes the Margin.
     be sought.
 - *KISS.* (a) does less and needs no conflict rule.
 
-**Leaning: (a).** If the human wants (b) for its audit trail, a cheaper form is (a) with the
+**Leaning: (a).** If we want (b) for its audit trail, a cheaper form is (a) with the
 decider notified of the computed result, so the record exists without the decision being asked
 again.

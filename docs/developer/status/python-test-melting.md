@@ -14,11 +14,11 @@ and validated. TM4 and TM5 deferred, with reasoning recorded below.
 Done. TM0 measured a real baseline on this machine, serial: 456.09s, 9 failed (pre-existing,
 unrelated to this plan), 560 passed, 67 skipped, for the 25 top-level `tools/test_*.py` modules
 (the 22 of `check:ontology-catalog` plus `test_agent_guidance.py`, `test_authoring_stage.py` and
-`test_literate_extract.py`). The human answered TM-Q1 to TM-Q5 the same session (below). Every
+`test_literate_extract.py`). We answered TM-Q1 to TM-Q5 the same session (below). Every
 slice but TM4 and TM5 (deferred, with reasoning, see "Final result") is built, tested and rolled
 out to all 16 modules with a `validate()` call site. Full detail in "Final result" below.
 
-## Decisions (the human, 2026-10-09)
+## Decisions (2026-10-09)
 
 | ID | Decision |
 |---|---|
@@ -30,8 +30,8 @@ out to all 16 modules with a `validate()` call site. Full detail in "Final resul
 
 ## Next action
 
-None for this unit; it is done. Review and merge `test/slow-py` to `main` (the human's). The two
-superseded sketches (`python-test-melting.md`, `test-suite-performance.md`) stay until the human
+None for this unit; it is done. Review and merge `test/slow-py` to `main` (the maintainer's). The two
+superseded sketches (`python-test-melting.md`, `test-suite-performance.md`) stay until the maintainer
 decides whether to delete them, per TM8's own text.
 
 ## Final result
@@ -59,8 +59,8 @@ argument read one of those names directly (evaluated at import time, before any 
 changed to look the name up inside the function body instead. This keeps the caching mechanism
 centralised, fixture-based and session-scoped (option B's substance) without rewriting every one of
 the several hundred call sites across 16 modules to take explicit fixture parameters (option B's
-literal cost, which the plan's own table flagged). Recorded as the considered implementation of the
-human's decision, not a reversion to option A: there is no sibling support module, and nothing
+literal cost, which the plan's own table flagged). Recorded as the considered implementation of our
+decision, not a reversion to option A: there is no sibling support module, and nothing
 outside `conftest.py` defines the cache.
 
 **A real correctness bug found and fixed during the roll-out** (not anticipated by the plan):
@@ -103,7 +103,7 @@ now documents `tools/conftest.py` and `mise run dev:time-ontology-tests`. A skil
 `.claude/skills/lattice-testing`, records the diagnosis pattern and the caching convention for
 future test suites in this repository and projects built on LATTICE.
 
-## Decisions (the human, 2026-10-09)
+## Decisions (2026-10-09)
 
 All of TM-Q1 to TM-Q5 are decided (above).
 

@@ -383,7 +383,7 @@ Three issues:
 
 ---
 
-## 9. Decisions for the human (§17): proposed changes
+## 9. Decisions for the maintainer (§17): proposed changes
 
 | # | Change |
 |---|---|

@@ -317,4 +317,4 @@ Old documents may reference new locations via cross-links. No breaking changes t
 
 **Last updated:** 2026-09-22  
 **Prepared by:** Agentic Surface-MORK migration task  
-**Status:** Ready for human review and INDEX.md merge
+**Status:** Ready for the maintainer's review and INDEX.md merge
