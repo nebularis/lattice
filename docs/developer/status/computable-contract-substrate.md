@@ -4,11 +4,11 @@
 
 **Unit ID:** `computable-contract-substrate`
 **Status:** 🔨 In progress. Gate A passed. Tranche B and C briefed (C3, C10)
-**Last updated:** 2026-10-06
+**Last updated:** 2026-10-10
 **Plan:** [computable-contract-substrate.md](../plans/computable-contract-substrate.md)
 **Sketches:** [computable-contract-substrate.md](../sketches/computable-contract-substrate.md),
 [contract-amounts.md](../sketches/contract-amounts.md)
-**ADRs:** A-104, A-106, A-112, A-113, none drafted
+**ADRs:** A-104, A-106, A-112, A-113, A-114, A-115 and A-120 accepted. A-105 to be drafted in HQ-6a
 **Machine:** R
 
 ## Current position
@@ -18,9 +18,8 @@ Behaviour 0.10.0 (shapes 0.4.0) with nested states and history, the import guard
 check`. In tranche D, C6 to C7c are merged and tagged (Instrument 0.12.0, Party 0.8.0, Quantification
 0.7.0). C8 and C8b are merged and tagged (Instrument 0.14.0, Wording 0.7.0). C9 is briefed and splits into C9a to C9c. Its materiality question has its own sketch. From C5 on, the agent builds and verifies, and the human commits by hand.
 
-**Next action, for the human:** merge `ccs/c9b-groundwork` into `main` and create the release tags.
-The gate is passed: the Validation Packs are reviewed, the ADR-A104 and ADR-A106 addenda accepted, and
-the adversarial probes below fail as they should. Then HQ-6, before C9b3.
+**Next action, for the human:** choose how HQ-6 runs (it is NRS slice N5, ADR-A105) before the agent
+briefs it. HQ-6 comes before C9b3.
 
 **Adversarial probes for C9b0 to C9b2** (2026-10-10, the agent's pick at the human's request). Each
 broke one generated shape file, ran the slice's test module, and restored the file with `git
@@ -52,7 +51,8 @@ checkout`, after which the module passed again.
 | C7c | what terms are, and who they bind (split from C7b) | D | merged and tagged | done |
 | C8, C8b | values in stated meaning, Wording references by identity | D | merged, tagged | |
 | C9a | amendments, assents and taking effect | D | merged, tagged | |
-| C9b1 to C9b4, C9d, C9c, C8a | legal acts, additivity, set comparisons, qualifying rules, materiality, incorporation, template library | D | C9b re-sliced 2026-10-09 | C9b3 waits on C9b0 (Eligibility sources), C9b2 and HQ-6. FM-EP merged 2026-10-09 |
+| C9b0, C9b1, C9b2 | Eligibility sources, legal acts, additivity | D | merged, tagged 2026-10-10 | |
+| C9b3, C9b4, C9d, C9c, C8a | set comparisons, qualifying rules, materiality, incorporation, template library | D | planned | C9b3 waits on HQ-6 (NRS N5, ADR-A105). C9b4 on C9b3 |
 | C16c | remove Party's shares | F | planned, required before the epic closes | C9b4 |
 | C7a | regimes and gating, split from C7 | D | merged to `main` (`c6e5853`) and tagged | |
 | C12, C13 | runtime evaluator, relation plans | E | waiting | C9, C11, C11a, AIR-3.3, NRS N1 |
@@ -173,3 +173,4 @@ checkout`, after which the module passed again.
 - 2026-10-09: C9b1 built on `ccs/c9b1-legal-acts` (`e5436e35` to `96e22d9e`), 15 pack rows passing, ADR-A104 and ADR-A106 addenda Proposed. Paused before its merge at the human's request
 - 2026-10-09: C9b1-Q3 to Q5 answered as leaned. The reinsurance implied term became a prohibition on an arbitrary refusal. C9b1 merged (`b24cb3c5`): Instrument 0.16.0 with `instrument-acts`, Behaviour 0.14.0, each released once with C9b2's re-pins. Slice worktrees removed, branches kept. Full checks pass but for TD-28 (`insure-o`) and TD-33 (a flaky persistence test, new). Ready for the human's review
 - 2026-10-10: the ADR-A104 and ADR-A106 addenda of 2026-10-09 accepted by the human. The validation sign-off log, `docs/developer/validation/LOG.md`, retired by the human: probes are recorded in the status record and the merge is the sign-off (skill `lattice-lifecycle`). Three adversarial probes, one per slice, each caught (table above). Ready to merge
+- 2026-10-10: `ccs/c9b-groundwork` merged into `main` (`4704d10a`) and its 23 release tags created by the human. C9b0, C9b1 and C9b2 done
