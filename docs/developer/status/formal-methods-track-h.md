@@ -331,3 +331,13 @@ slice on the branch, including H1.2d, H1.3 and H1.4a. 🔴 RELEASE TAGS REQUIRED
   the maintainer: whether `ShardingNotHonoured` should be a refusal. This checkout's `.venv` was new after the
   merge of `main`, so `mise run bootstrap` ran first (`ensurepip` was needed on this machine). `check:persistence`
   at 1360 passed and 1 xfailed.
+- 2026-10-10: bootstrap repaired after a pytest `ImportError` in the maintainer's worktree. Two causes. `mise run
+  bootstrap` ran about ten pip installs in parallel into one `.venv`, and `workers` capped `pytest<9` while every
+  other package asked for `pytest>=8.0`, so two pytest versions were written into the same `_pytest` directory.
+  `bootstrap` now depends on `bootstrap:python`, which installs every Python package in one pip resolve, and every
+  Python `bootstrap:*` task depends on `bootstrap:pip` (a `uv`-made `.venv` has no pip). The `<9` cap had no
+  recorded rationale (it arrived with the AIR-2.1 commit) and workers, minting, authoring-stage and the sweep pass on
+  pytest 9.1.1, so it is lifted. `tools/test_python_requirements.py` fails if the `pytest` or `pytest-xdist`
+  specifier differs between packages. Not changed: the CI workflows still call several per-package `bootstrap:*`
+  tasks in one command, so they can still run in parallel. The repair for an existing worktree is
+  `rm -rf .venv && mise run bootstrap`.

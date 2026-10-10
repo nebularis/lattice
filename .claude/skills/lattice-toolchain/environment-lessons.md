@@ -31,6 +31,10 @@ note true of one machine belongs in that person's own configuration, not here.
 
 ## Node and the frontends
 
+- **A `.venv` made by `uv` has no pip, and parallel pip corrupts one.** Every Python `bootstrap:*`
+  task depends on `bootstrap:pip`. Run several of them with `mise run --jobs 1`, because concurrent
+  installs of two versions of a package (`pytest` showed it, as an `ImportError` in `_pytest`)
+  interleave files. The repair is `rm -rf .venv && mise run bootstrap`.
 - **`yarn --version` can block** at Corepack's download prompt and swallow the next command as its
   answer. Set `COREPACK_ENABLE_DOWNLOAD_PROMPT=0` first.
 - **Playwright clears its output directory**, deleting the `.gitkeep` in
