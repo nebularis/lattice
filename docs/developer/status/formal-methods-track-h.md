@@ -3,13 +3,14 @@
 # Formal Methods, Track H: Status
 
 **Unit ID:** `formal-methods-track-h` (phase, within the `formal-methods` epic)
-**Status:** In progress. H1.1 to H1.2c signed off. H1.2d, H1.3, H1.4a, H1.4b, H1.5 and the aggregate-ownership slices HO0 to HO9 are authored and verified (2026-10-10), awaiting the maintainer's verification, the acceptance of ADR-A122, and the merge
+**Status:** In progress. H1 (H1.1 to H1.5, with H1.4c) and the aggregate-ownership slices HO0 to HO9 are merged to `main` and signed off (2026-10-10). H2 is briefed and every question is answered (2026-10-10). H2.0 is ready to branch
 **Last updated:** 2026-10-10
 **Plan:** [formal-methods-track-h.md](../plans/formal-methods-track-h.md)
 **Sketches:** [formal-methods-track-h.md](../sketches/formal-methods-track-h.md) (main),
 [formal-methods-track-h-protocols.md](../sketches/formal-methods-track-h-protocols.md),
 [formal-methods-track-h-specification.md](../sketches/formal-methods-track-h-specification.md),
-[persistence-aggregate-ownership.md](../sketches/persistence-aggregate-ownership.md) (normative for HO0 to HO9)
+[persistence-aggregate-ownership.md](../sketches/persistence-aggregate-ownership.md) (normative for HO0 to HO9),
+[formal-methods-track-h-typed-ir.md](../sketches/formal-methods-track-h-typed-ir.md) (H2's brief)
 **Aggregate ownership:** the exploration note [persistence-aggregate-ownership.md](../notes/persistence-aggregate-ownership.md)
 and its spike [`spikes/persistence-aggregate-ownership`](../../../spikes/persistence-aggregate-ownership/README.md),
 reviewed in [persistence-aggregate-ownership-review.md](../notes/persistence-aggregate-ownership-review.md),
@@ -20,9 +21,14 @@ which records our decisions (H-D14) and the findings the HO slices act on
 
 ## Current position
 
-This track is new, drafted 2026-10-08 directly from an independent, exhaustive review
+As of 2026-10-10, H1 and the aggregate-ownership work (HO0 to HO9) are merged to `main`, which signs
+off every slice on the branch. ADR-A122 is accepted, and the release tags `persistence-v0.3.0`,
+`persistence-shapes-v0.3.0` and `persistent-foundation-v0.2.0` exist on `main` and on the remote. H2
+is briefed in the [typed IR sketch](../sketches/formal-methods-track-h-typed-ir.md).
+
+The background, as written when the track began: this track is new, drafted 2026-10-08 directly from an independent, exhaustive review
 (`docs/developer/notes/rdf-engine/persistence-fml.md`) applying this epic's own techniques to the
-Persistence layer. Nothing has been built yet. The review itself was read in full, cross-checked
+Persistence layer. The review itself was read in full, cross-checked
 section by section against the epic's own existing track structure (B, C, E) before this track's
 plan and sketches were written, so that it connects to, rather than duplicates, what those tracks
 already established (the claim/gate discipline, the Isabelle and Alloy homes, the epic's own
@@ -47,21 +53,23 @@ section below.
 
 ## Next action
 
-In this order, each per [plan §3.5](../plans/formal-methods-track-h.md#35-ho-aggregate-ownership):
+**H2.0, ready to branch** from the current `main`. A docs-only slice, per the
+[typed IR sketch §6 and §7](../sketches/formal-methods-track-h-typed-ir.md#6-the-adrs):
 
-0. Done 2026-10-10: `origin/main` is merged (`af2eb89`). `docs/developer/validation/LOG.md` is
-   retired. The maintainer's merge is the sign-off, and the index, plans, status records and Validation
-   Packs are the record, as the `lattice-lifecycle` skill now says.
-1. HO0 to HO9, H1.4b and H1.5: done 2026-10-10. ADR-A122 was drafted Proposed (HO2) and accepted by the
-   maintainer on 2026-10-10 at the close.
-2. Next, per the plan: H2, the typed IR (§4), which types the classified tree, the payload check and the
-   required-parameter guard (TD-34), and H3 after it. Nothing in the aggregate-ownership work blocks them.
+1. Re-check that A123 is free on `main`, on every remote branch and in the catalogue
+   (`docs/architecture/decisions/README.md`). A121 is claimed by the repository-catalogue sketch.
+2. Draft `docs/architecture/decisions/ADR-A123-typed-operation-ir.md`, Proposed. It decides the IR
+   and its type rules (sketch §3), the logical operation contract (§3.1, H2-Q6), the typed payload
+   PL-B and its contract (§4, H2-Q1 to H2-Q3), the parameter guard in the SPARQL and in the Python
+   caller (H2-Q4), declarations only in the compiled profile (H2-Q5), the `INFO` severity with its
+   warning option (H2-Q2), and the retirement of the Mustache templates (H-D19). It lists what it
+   supersedes in ADR-A79 (sketch §6).
+3. Draft the ADR-A79 addendum naming each superseded point and pointing at A123, to be dated when
+   the maintainer accepts A123. ADR-A79 stays Accepted.
+4. Add the catalogue row, update this record, the plan's H2 row and `INDEX.md`, and stop for the
+   maintainer's review. Do not mark A123 Accepted.
 
-For the maintainer, at the close: verify the slices (each Validation Pack has its one command), countersign
-the removed and rewritten tests listed in FMH-HO5, and merge (ADR-A122 is accepted). Merging signs off every
-slice on the branch, including H1.2d, H1.3 and H1.4a. 🔴 RELEASE TAGS REQUIRED once the merge is on `main`:
-`persistence-v0.3.0`, `persistence-shapes-v0.3.0` and `persistent-foundation-v0.2.0`, which
-`mise run build:ontology-releases` prints among the tags other merged work also owes.
+After H2.0, H2.1 (the IR core) is briefed. H3 follows H2.
 
 ## Slices
 
@@ -71,25 +79,26 @@ slice on the branch, including H1.2d, H1.3 and H1.4a. 🔴 RELEASE TAGS REQUIRED
 | H1.2a (witness harness, audit witnesses, measured gap list) | **signed off.** [Validation Pack](../validation/FMH-H1-2.md) | |
 | H1.2b (witnesses for the refusals and warnings) | **signed off.** [Validation Pack](../validation/FMH-H1-2b.md) | |
 | H1.2c (witnesses for the 13 remaining shapes) | **signed off.** [Validation Pack](../validation/FMH-H1-2c.md) | |
-| H1.2d (refuse a multi-valued single-valued property, TD-25) | **authored and verified, awaiting the maintainer's gate.** [Validation Pack](../validation/FMH-H1-2d.md) | the maintainer's review |
-| H1.3 (static template checks S-3 and S-4) | **authored and verified, awaiting the maintainer's gate.** [Validation Pack](../validation/FMH-H1-3.md) | the maintainer's review |
-| H1.4a (refuse a composite boundary with several node properties, H-D4) | **authored and verified, awaiting the maintainer's gate.** [Validation Pack](../validation/FMH-H1-4a.md) | the maintainer's review |
-| H1.4b (the declaration/implementation gap report) | **authored and verified.** [Validation Pack](../validation/FMH-H1-4b.md) | the maintainer's merge |
-| H1.5 (stable labels) | **authored and verified.** [Validation Pack](../validation/FMH-H1-5.md) | the maintainer's merge |
-| HO0 (correct the ownership note and its spike) | **authored and verified.** [Validation Pack](../validation/FMH-HO0.md) | the maintainer's merge |
-| HO1 (composite replace: payload to the default graph, linear sweep, TD-39, TD-36) | **authored and verified.** [Validation Pack](../validation/FMH-HO1.md) | the maintainer's merge |
+| H1.2d (refuse a multi-valued single-valued property, TD-25) | **signed off** 2026-10-10, merged. [Validation Pack](../validation/FMH-H1-2d.md) | |
+| H1.3 (static template checks S-3 and S-4) | **signed off** 2026-10-10, merged. [Validation Pack](../validation/FMH-H1-3.md) | |
+| H1.4a (refuse a composite boundary with several node properties, H-D4) | **signed off** 2026-10-10, merged. [Validation Pack](../validation/FMH-H1-4a.md) | |
+| H1.4b (the declaration/implementation gap report) | **signed off** 2026-10-10, merged. [Validation Pack](../validation/FMH-H1-4b.md) | |
+| H1.4c (a declaration the compiler cannot honour is a warning or a refusal) | **signed off** 2026-10-10, merged. [Validation Pack](../validation/FMH-H1-4c.md) | |
+| H1.5 (stable labels) | **signed off** 2026-10-10, merged. [Validation Pack](../validation/FMH-H1-5.md) | |
+| HO0 (correct the ownership note and its spike) | **signed off** 2026-10-10, merged. [Validation Pack](../validation/FMH-HO0.md) | |
+| HO1 (composite replace: payload to the default graph, linear sweep, TD-39, TD-36) | **signed off** 2026-10-10, merged. [Validation Pack](../validation/FMH-HO1.md) | |
 | HO2 (draft ADR-A122, Proposed) | **done** 2026-10-10. [ADR-A122](../../architecture/decisions/ADR-A122-aggregate-ownership.md), **accepted** 2026-10-10 | |
-| HO3 (`dal:` vocabulary 0.3.0: `dal:ownership`, reference data) | **authored and verified.** [Validation Pack](../validation/FMH-HO3.md). 🔴 release tags owed (`persistence-v0.3.0`, `persistence-shapes-v0.3.0`, `persistent-foundation-v0.2.0`), created on `main` | the maintainer's merge |
-| HO4 (ownership tree and path compiler, added beside the old walk) | **authored and verified.** [Validation Pack](../validation/FMH-HO4.md) | the maintainer's merge |
-| HO5 (switch the compiler to the tree, TD-03, TD-35, TD-37, TD-40) | **authored and verified.** [Validation Pack](../validation/FMH-HO5.md) | the maintainer's merge. The removed tests are countersigned (2026-10-10) |
-| HO6 (ownership refusals and the roots-only warning) | **authored and verified.** [Validation Pack](../validation/FMH-HO6.md) | the maintainer's merge |
-| HO7 (composite create and tombstone delete, TD-04) | **authored and verified.** [Validation Pack](../validation/FMH-HO7.md) | the maintainer's merge |
-| HO8 (injective graph naming within and across families, TD-38) | **authored and verified.** [Validation Pack](../validation/FMH-HO8.md) | the maintainer's merge |
-| HO9 (ownership documentation and close-out) | **authored and verified.** [Validation Pack](../validation/FMH-HO9.md) | the maintainer's merge |
-| H2 (typed IR) | not started, outlined in the plan | H1 (informative, not a hard blocker) |
+| HO3 (`dal:` vocabulary 0.3.0: `dal:ownership`, reference data) | **signed off** 2026-10-10, merged. [Validation Pack](../validation/FMH-HO3.md). Release tags created on `main` | |
+| HO4 (ownership tree and path compiler, added beside the old walk) | **signed off** 2026-10-10, merged. [Validation Pack](../validation/FMH-HO4.md) | |
+| HO5 (switch the compiler to the tree, TD-03, TD-35, TD-37, TD-40) | **signed off** 2026-10-10, merged. [Validation Pack](../validation/FMH-HO5.md) | |
+| HO6 (ownership refusals and the roots-only warning) | **signed off** 2026-10-10, merged. [Validation Pack](../validation/FMH-HO6.md) | |
+| HO7 (composite create and tombstone delete, TD-04) | **signed off** 2026-10-10, merged. [Validation Pack](../validation/FMH-HO7.md) | |
+| HO8 (injective graph naming within and across families, TD-38) | **signed off** 2026-10-10, merged. [Validation Pack](../validation/FMH-HO8.md) | |
+| HO9 (ownership documentation and close-out) | **signed off** 2026-10-10, merged. [Validation Pack](../validation/FMH-HO9.md) | |
+| H2 (typed IR) | **briefed** 2026-10-10, split into H2.0 to H2.9 ([typed IR sketch §7](../sketches/formal-methods-track-h-typed-ir.md#7-slices)) | H2.0 ready to branch |
 | H3 (specification registry) | not started, outlined in the plan | H2 preferred first (smaller, more self-contained), not a hard blocker |
 | H4 (exhaustive cross-axis validation, BDD/SMT) | not started, outline only | H3 |
-| H5 (capability-record extension, TLA+/Quint toolchain spike, protocol models A-D) | not started, outline only | H2 (read/write sets from the IR); ADR-A-FM4's acceptance recommended first |
+| H5 (capability-record extension, TLA+/Quint toolchain spike, protocol models A-D) | not started, outline only | H2 (read/write sets from the IR). ADR-A-FM4 is accepted |
 | H6 (Isabelle theories: Resolution, Positions, Encoding, Outcomes) | not started, outline only | H1; H5 for `Outcomes.thy` |
 | H7 (protocol models E-J) | not started, outline only | H5, H6 |
 | H8 (protocol models K-N, grounding) | not started, outline only | H7 |
@@ -102,7 +111,7 @@ slice on the branch, including H1.2d, H1.3 and H1.4a. 🔴 RELEASE TAGS REQUIRED
 |---|---|---|
 | H-D1 | accept, revise or reject ADR-A-FM4 | **decided 2026-10-10**: accepted, including decision 3 |
 | H-D2 | TLA+ or Quint | deferred to H5's own toolchain spike |
-| H-D3 | ADR-A79 addendum vs a fresh ADR for H2/H3's design | recommend an addendum; deferred to H2/H3 |
+| H-D3 | ADR-A79 addendum vs a fresh ADR for H2/H3's design | **decided 2026-10-10 for H2**, left to us by the maintainer: a new ADR-A123 and a dated addendum to ADR-A79 ([typed IR sketch §6](../sketches/formal-methods-track-h-typed-ir.md#6-the-adrs)). H3's when it is briefed |
 | H-D4 | fix the composite-boundary soundness gap now (a refusal) or wait for H2's typed IR | decided 2026-10-09: left as a documented, refused combination until H2's typed IR makes the fix structural. H1.4 carries the refusal. Its exact condition needs care, because the shipped composite example nests one property inside another (`lineItem` then `sku`) and TD-03 concerns sibling properties |
 | H-D5 | feed track A's ledger once it exists, or keep an independent record permanently | recommend: feed track A once it starts |
 | H-D6 | H1.1 reads "antichain" per scope kind. Nested `dal:graphPrefix` values are a **violation** only when the scopes cover a common class (each graph-pattern scope is its own target, so disjoint classes cannot collide). Nested `dal:iriPrefix` values are a **warning**, because the resolver ranks by `dal:priority`. The plan says only "antichain", so this narrows it | agreed 2026-10-09 |
@@ -116,6 +125,12 @@ slice on the branch, including H1.2d, H1.3 and H1.4a. 🔴 RELEASE TAGS REQUIRED
 | H-D15 | AO-Q13, naming a named graph from its root | **decided 2026-10-10**: option a (`ENCODE_FOR_URI` of the whole root IRI), on condition that an over-long IRI is very unlikely, which the review shows ([§7](../notes/persistence-aggregate-ownership-review.md#7-one-new-question-ao-q13)) |
 | H-D16 | HO5 touches four Python modules and HO4 three, beyond the slice-sizing rule read per file | **decided 2026-10-10: option A**, HO4 and HO5 stay one slice each. A split of HO5 was possible with a temporary shim, and was not worth its churn (plan §8) |
 | H-D17 | AO-Q14, which graph a composite aggregate lives in (review F10: today's composite template relies on the default graph, against static check S-1) | **decided 2026-10-10: option a**, a mandatory named data graph `dal:dataGraph`. No decision is open |
+| H-D18 | how many slices H2 needs | **decided 2026-10-10**: as many as it needs. Ten proposed |
+| H-D19 | the IR replaces the Mustache templates (A) or adds declarations checked against them (B) | **decided 2026-10-10: option A** |
+| H-D20 | how far the payload is typed | **decided 2026-10-10**: designed in full for the maintainer's review, weighed by the configuration it asks of a user ([typed IR sketch §4](../sketches/formal-methods-track-h-typed-ir.md#4-the-typed-payload)) |
+| H2-Q1 to H2-Q5 | typed payload option, a named-graph family with no boundary shape, closed-shape payloads, where the parameter guard runs, what the compiled profile carries | **answered 2026-10-10**: PL-B (PL-D later, as an SDK, [sketch](../sketches/persistence-client-sdk.md)), (a) and (b), (a), (c), (a) on condition it keeps the relational realisation open ([typed IR sketch §1](../sketches/formal-methods-track-h-typed-ir.md#1-decisions-already-taken-2026-10-10)) |
+| H2-Q2 reading | (a) and (b) read as informational by default, a warning under a compile option, no new `dal:` term | **confirmed 2026-10-10** by the maintainer |
+| H2-Q6 | the compiled profile's declarations name logical resources (a) or SPARQL graph roles (b) | **decided 2026-10-10: (a)** ([typed IR sketch §3.1](../sketches/formal-methods-track-h-typed-ir.md#31-the-operation-contract-and-the-sparql-realisation-h2-q6)) |
 | H-D7 | H1's checks live in one new module, `persistence.hygiene`, behind one `hygiene` subcommand, and run under `check:persistence`. No new `mise` task until H1's closing slice | agreed 2026-10-09 |
 
 ## Log
@@ -341,3 +356,22 @@ slice on the branch, including H1.2d, H1.3 and H1.4a. 🔴 RELEASE TAGS REQUIRED
   specifier differs between packages. Not changed: the CI workflows still call several per-package `bootstrap:*`
   tasks in one command, so they can still run in parallel. The repair for an existing worktree is
   `rm -rf .venv && mise run bootstrap`.
+- 2026-10-10: the maintainer merged the branch into `main` (`44a5f48`), created the release tags
+  `persistence-v0.3.0`, `persistence-shapes-v0.3.0` and `persistent-foundation-v0.2.0` on it and pushed
+  them. Every slice on the branch is signed off. The maintainer decided H-D18 to H-D20 and left H-D3 to
+  us. We took a new ADR-A123 with an ADR-A79 addendum. H2 is briefed in the
+  [typed IR sketch](../sketches/formal-methods-track-h-typed-ir.md): the IR, the typed payload (options
+  PL-A to PL-D, leaning PL-B, which asks no new configuration of a composite user), ten slices, and
+  questions H2-Q1 to H2-Q5. One hypothesis is recorded there to measure in H2.4, not yet a finding:
+  a composite replace may build its payload once per stored triple of the aggregate.
+- 2026-10-10: the maintainer answered H2-Q1 (PL-B, with generated code per language kept for a
+  published SDK, sketched in [persistence-client-sdk.md](../sketches/persistence-client-sdk.md) for
+  the end of Track H), H2-Q2 ((a) and (b), our reading to confirm), H2-Q3 (a), H2-Q4 (c) and H2-Q5 (a),
+  the last on condition that it keeps the relational realisation of `notes/rdf-engine/lattice-sql.md`
+  open. Read against that note and `sql-feedback.md`, H2 does not change the resolved profile the
+  relational compiler reads. The choice that matters is whether the new declarations name logical
+  resources or SPARQL graph roles, raised as H2-Q6. The typed IR sketch now also says plainly that a
+  caller outside the Python package runs one extra local query for the payload check.
+- 2026-10-10: the maintainer decided H2-Q6 (a), a logical operation contract with the SPARQL graph roles
+  kept in the builders, and confirmed our reading of H2-Q2. Every H2 question is answered. H2.0, drafting
+  ADR-A123 Proposed with the ADR-A79 addendum, is ready to branch from `main`.

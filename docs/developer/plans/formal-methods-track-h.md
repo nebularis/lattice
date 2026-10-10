@@ -9,6 +9,7 @@
 [formal-methods-track-h-protocols.md](../sketches/formal-methods-track-h-protocols.md) (rung T4,
 the centrepiece), [formal-methods-track-h-specification.md](../sketches/formal-methods-track-h-specification.md)
 (the specification registry and the typed IR, the enabling move),
+[formal-methods-track-h-typed-ir.md](../sketches/formal-methods-track-h-typed-ir.md) (H2's brief),
 [persistence-aggregate-ownership.md](../sketches/persistence-aggregate-ownership.md) (aggregate
 ownership, normative for the HO slices of [§3.5](#35-ho-aggregate-ownership))
 **Aggregate ownership:** the exploration note [persistence-aggregate-ownership.md](../notes/persistence-aggregate-ownership.md),
@@ -17,13 +18,13 @@ and the review [persistence-aggregate-ownership-review.md](../notes/persistence-
 which holds the decisions (H-D14)
 **Status record:** [formal-methods-track-h.md](../status/formal-methods-track-h.md)
 **Decided by:** [ADR-A-FM4](../../architecture/decisions/ADR-A-FM4-persistence-formal-methods-home-and-scope.md)
-(Proposed: home and scope. Tracks A-FM2's and A-FM3's conventions for mechanised theories and
+(Accepted 2026-10-10: home and scope. Tracks A-FM2's and A-FM3's conventions for mechanised theories and
 design-time models, excludes all relational/SQL work)
 **Source:** [persistence-fml.md](../notes/rdf-engine/persistence-fml.md), an independent,
 exhaustive review of the Persistence layer against this epic's own techniques
-**Status:** Proposed. Not started. Needs nothing from tracks A-G to begin: it reuses their
-methods (Isabelle, Alloy, the claim/gate discipline) but has its own capability-record,
-specification-registry and protocol-model work with no cross-track blocker
+**Status:** In progress. H1 and the aggregate-ownership slices HO0 to HO9 are merged to `main` and
+signed off (2026-10-10). H2 is briefed, every question is answered, and H2.0 is ready to branch. The live state is in the status
+record
 
 ## 1. Scope
 
@@ -492,23 +493,25 @@ specification registry, which generates the rules, the selection table and the R
 tables from one source, closing the review's finding #3 drift and enabling the exhaustive
 cross-axis validation H4 needs as its input).
 
-**H2 (typed IR), outline:**
-- Give `tools/persistence`'s compiler an intermediate representation for a generated operation:
-  typed parameters, a declared read/write set per operation (direct input to H5's protocol
-  models), guards tagged `Term`/`Value`, template variables tagged `Bound`/`OptionalAllowed`.
-- Rewrite the emitter to render from this IR, not from ad hoc string templates.
-- **Validation:** every hazard in the specification sketch's own table (§3) becomes a type error
-  rather than a runtime or static-check finding; re-run H1.3's checks against the new emitter's
-  output and confirm they now pass by construction, not by a separate pass.
-- **From aggregate ownership (H-D14, [sketch §12](../sketches/persistence-aggregate-ownership.md#12-what-h2-inherits)):**
-  the `OwnershipTree` and its compiled `PropertyPath` become typed IR values. The IR states the
-  payload check (every payload subject is the root or reached from it through owned steps), for the
-  runtime caller to enforce. The required-parameter guard of H-D12 option D closes TD-34. H2's typing
-  of the closure starts after HO5. The rest of H2 does not wait for the HO slices. A composite
-  operation's declared read set is the closure its path computes at execution, and its write set is
-  the delete set, the payload and the version row ([ownership sketch §15](../sketches/persistence-aggregate-ownership.md#15-effect-on-the-later-track-h-slices)).
-- This is an **addendum to ADR-A79** (persistence compiler toolchain), dated, when this slice is
-  detailed for real — not decided here, and not a new formal-methods ADR (ADR-A-FM4 decision 4).
+**H2 (typed IR), briefed 2026-10-10.** The design, its questions and its slices are in the
+[typed IR sketch](../sketches/formal-methods-track-h-typed-ir.md). We decided (H-D18 to H-D20):
+
+- H2 is split into ten slices, H2.0 to H2.9 ([sketch §7](../sketches/formal-methods-track-h-typed-ir.md#7-slices)).
+- Option A. Each operation is a typed value built by a builder, its SPARQL is rendered from it, and
+  the Mustache templates and `chevron` are retired in H2.9.
+- The typed payload is designed in full ([sketch §4](../sketches/formal-methods-track-h-typed-ir.md#4-the-typed-payload))
+  and reviewed by the maintainer before H2.8 is briefed.
+- H-D3 is ours to decide. We take a new ADR, A123, and a dated addendum to ADR-A79, which stays
+  Accepted for the points A123 does not supersede ([sketch §6](../sketches/formal-methods-track-h-typed-ir.md#6-the-adrs)).
+
+What H2 still delivers, as outlined before the brief: typed parameters, read and write sets (now
+derived from the operation, not declared), guards tagged term or value, template variables tagged
+`Bound` or `OptionalAllowed`, the `OwnershipTree` and its `PropertyPath` as IR values, the payload
+check of ADR-A122 decision 6, and the required-parameter guard that closes TD-34. Its validation is
+unchanged. Every hazard of the [specification sketch §3](../sketches/formal-methods-track-h-specification.md#3-the-typed-intermediate-representation)
+becomes a refusal by type, and H1.3's checks pass over the new output by construction. H2-Q1 to H2-Q6
+are answered ([sketch §1](../sketches/formal-methods-track-h-typed-ir.md#1-decisions-already-taken-2026-10-10)),
+and H2.0 is ready to branch.
 
 **H3 (specification registry), outline:**
 - One machine-readable registry (syntax not yet chosen, specification sketch §2) generating:
@@ -576,7 +579,7 @@ None of these is taken without the maintainer.
 |---|---|---|---|
 | H-D1 | accept, revise or reject [ADR-A-FM4](../../architecture/decisions/ADR-A-FM4-persistence-formal-methods-home-and-scope.md) | accept, including its point 3 (TLA+/Quint models share `tools/models/` with Alloy) | **decided 2026-10-10**: accepted as recommended |
 | H-D2 | TLA+ or Quint, for protocol models | undecided; H5's own toolchain spike decides it on measured evidence, the same discipline track D used for Rocq vs Isabelle | open, deferred to H5 |
-| H-D3 | whether the specification registry's and typed IR's design (H2, H3) are recorded as an ADR-A79 addendum or a fresh ADR | recommend an addendum, dated, per ADR-A-FM4 decision 4 and this repository's own practice for a decision found while building | open, deferred to H2/H3 |
+| H-D3 | whether the specification registry's and typed IR's design (H2, H3) are recorded as an ADR-A79 addendum or a fresh ADR | recommend an addendum, dated, per ADR-A-FM4 decision 4 and this repository's own practice for a decision found while building | **decided 2026-10-10 for H2**, left to us by the maintainer: a new ADR-A123 and a dated addendum to ADR-A79, since H2 replaces ADR-A79's template layer rather than refining it. H3's is decided when H3 is briefed |
 | H-D4 | whether the composite-boundary soundness gap (H1.4's flagged finding) is fixed immediately as a `tools/persistence` defect, or left as a documented, refused combination until H2's typed IR makes the fix structural | recommend: refuse the combination now (cheap, one line in the existing validation predicate), fix properly once H2 lands | **decided 2026-10-09**: left as a documented, refused combination until H2's typed IR makes the fix structural. H1.4 carries the refusal |
 | H-D5 | whether track H's claims feed track A's ledger once it exists, or keep their own interim Validation-Pack record permanently | recommend: feed track A once it starts, per ADR-A-FM4 decision 7 | open, not urgent |
 
@@ -585,6 +588,7 @@ Decisions H-D6 to H-D10 were taken as H1 progressed and are recorded, with their
 [§13](#13-walkthrough-the-two-assumptions-behind-check-s-3-h-d11-and-h-d12). H-D13 to H-D16 come
 from H1.4a and the aggregate-ownership review, H-D17 from tracing that design through the later
 phases ([ownership sketch §15](../sketches/persistence-aggregate-ownership.md#15-effect-on-the-later-track-h-slices)).
+H-D18 to H-D20 and H2-Q1 to H2-Q6 come from H2's brief ([typed IR sketch](../sketches/formal-methods-track-h-typed-ir.md)).
 
 | # | Decision | State |
 |---|---|---|
@@ -595,6 +599,10 @@ phases ([ownership sketch §15](../sketches/persistence-aggregate-ownership.md#1
 | H-D15 | AO-Q13, how a named graph is named from its root ([review §7](../notes/persistence-aggregate-ownership-review.md#7-one-new-question-ao-q13)) | **decided 2026-10-10**: option a, `ENCODE_FOR_URI` of the whole root IRI, since no standard limits IRI length, minted roots are short ASCII (about 1.2 times longer once encoded), and an over-long IRI would fail loudly where option c fails silently ([review §7](../notes/persistence-aggregate-ownership-review.md#7-one-new-question-ao-q13)) |
 | H-D16 | HO5 touches four Python modules (`resolver`, `operations`, `validator`, `boundary`) and HO4 three, more than the slice-sizing rule allows when read per file | **decided 2026-10-10: option A**, accept HO4 and HO5 as planned, one slice each. The resolver's extras, the operations' binding and the validator's checks read one structure, and most of the change is deletion. A split into two slices of two modules each is possible, with a temporary shim in the resolver that the second slice deletes. HO4 also touches three Python files (`boundary`, `paths`, `terms`), so the same question applies to it |
 | H-D17 | AO-Q14, which graph a composite aggregate lives in ([review §7.1](../notes/persistence-aggregate-ownership-review.md#71-a-further-question-ao-q14), F10) | **decided 2026-10-10: option a**, a mandatory named data graph (`dal:dataGraph`). LATTICE's patterns guide already requires every graph to be named (S-1), SPARQL leaves the default graph's contents to the store, and holding application data in named graphs is ordinary practice |
+| H-D18 | how many slices H2 is split into | **decided 2026-10-10**: as many as it needs. Ten are proposed, H2.0 to H2.9 ([typed IR sketch §7](../sketches/formal-methods-track-h-typed-ir.md#7-slices)) |
+| H-D19 | whether the IR replaces the Mustache templates (option A) or adds typed declarations checked against them (option B) | **decided 2026-10-10: option A** |
+| H-D20 | how far the payload is typed | **decided 2026-10-10**: designed in full in the [typed IR sketch §4](../sketches/formal-methods-track-h-typed-ir.md#4-the-typed-payload), weighed by the configuration it asks of a user, and reviewed by the maintainer. Its own questions are H2-Q1 to H2-Q3 |
+| H2-Q1 to H2-Q6 | the typed payload, a named-graph family with no boundary shape, closed-shape payloads, where the parameter guard runs, what the compiled profile carries, logical or SPARQL declarations ([sketch §5](../sketches/formal-methods-track-h-typed-ir.md#5-questions-for-the-maintainer)) | **answered 2026-10-10**: PL-B, with PL-D later as an SDK ([sketch](../sketches/persistence-client-sdk.md)), (a) and (b), (a), (c), and (a) on condition it keeps the relational realisation open. H2-Q6, that condition, **answered 2026-10-10: (a)**, a logical operation contract. Our reading of H2-Q2 confirmed ([typed IR sketch §1](../sketches/formal-methods-track-h-typed-ir.md#1-decisions-already-taken-2026-10-10)) |
 
 ## 9. Alignment with other work
 

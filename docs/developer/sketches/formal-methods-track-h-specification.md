@@ -91,6 +91,9 @@ things to the IR, decided (H-D14) after the
 
 H2's typing of the closure starts after HO5, when the tree replaces the old walk.
 
+H2's design, its typed payload and its slices are in the [typed IR sketch](formal-methods-track-h-typed-ir.md)
+(2026-10-10).
+
 ## 4. Exhaustive cross-axis validation, once the registry exists
 
 The cross-axis validation predicate is propositional over finite domains (review §7.1-§7.2):
