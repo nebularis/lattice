@@ -29,6 +29,7 @@ def names(result) -> set[str]:
 # ---- which nodes a delete takes
 
 def test_the_first_property_alone_reaches_only_the_tower():
+    # the compiler before H1.4a (review S1). Since H1.4a it refuses this shape
     g = pl.placement_graph()
     assert names(pl.first_property_path(g)) == {"T"}  # sorts before marketsContacted; none of the layers: hasLayer is not followed either
 
@@ -36,8 +37,9 @@ def test_the_first_property_alone_reaches_only_the_tower():
 def test_the_per_class_tree_takes_the_tower_the_markets_and_the_owned_document_only():
     g = pl.placement_graph()
     got = names(pl.unrolled_paths(g))
-    assert {"T", "L1", "L2", "L3", "LCB1", "S1", "Pol1", "Mc1", "Mc2", "DocOwned"} <= got
-    assert got.isdisjoint({"C", "Axa", "Chubb", "TypeCarrier", "PolBound", "DocShared"})
+    assert {"T", "L1", "L2", "L3", "LCB1", "S1", "Mc1", "Mc2", "DocOwned"} <= got
+    assert got.isdisjoint({"C", "Axa", "Chubb", "TypeCarrier", "PolBound", "DocShared", "Pol1"})
+    assert len(pl.unrolled_paths(g).members) == 11  # a policy is a reference (AO-Q1)
 
 
 def test_the_tree_as_sparql_paths_equals_the_typed_walk():
@@ -59,7 +61,7 @@ def test_a_deny_list_that_forgets_one_reference_takes_other_peoples_data():
 
 def test_a_vocabulary_guard_catches_a_forgotten_vocabulary_link():
     g = pl.placement_graph()
-    forgot = pl.REFERENCES - {EX.marketType, EX.status}
+    forgot = pl.REFERENCES - {EX.marketType, EX.status, EX.connectsPolicy}
     assert pl.vocabulary_hit(g, pl.deny_list(g, references=forgot)) == {EX.TypeCarrier, EX.PolBound}
     assert pl.vocabulary_hit(g, pl.deny_list(g, references=forgot, guard_vocabulary=True)) == set()
 
@@ -78,10 +80,16 @@ def test_a_delete_set_holds_the_outgoing_triples_of_the_root_and_every_member():
     assert not any(s in {EX.TypeCarrier, EX.PolBound} for s, _, _ in triples)
 
 
-def test_a_node_with_two_owners_is_found_and_an_outside_reference_is_listed():
+def test_a_shared_policy_is_a_reference_so_it_has_no_second_owner():
     g = pl.placement_graph(shared_policy=True, inbound_quote=True)
-    assert pl.owners(g, [EX.P, EX.P2]) == {EX.Pol1: {EX.P, EX.P2}}
-    assert {s for s, _, _ in pl.inbound_from_outside(g, pl.unrolled_paths(g))} == {EX.LCB9, EX.Q1}
+    assert pl.owners(g, [EX.P, EX.P2]) == {}
+    assert pl.inbound_from_outside(g, pl.unrolled_paths(g)) == set()
+
+
+def test_a_document_owned_by_layers_of_two_placements_has_two_owners():
+    g = pl.placement_graph(shared_document=True)
+    assert pl.owners(g, [EX.P, EX.P2]) == {EX.DocOwned: {EX.P, EX.P2}}
+    assert {s for s, _, _ in pl.inbound_from_outside(g, pl.unrolled_paths(g))} == {EX.L9}
 
 
 # ---- two writers

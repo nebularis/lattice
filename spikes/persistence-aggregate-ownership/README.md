@@ -19,7 +19,7 @@ note makes. They are read-only against the compiler, which they use only to obta
 | `concurrency_model.py` | a model of two overlapping writers under snapshot isolation with statement-level first-committer-wins, and five version-row disciplines |
 | `payload_graph.py` | runs the generated composite replace and reports which graph holds the new payload |
 | `run.py` | prints all three |
-| `test_spike.py` | seventeen checks that the printed results are the ones the note quotes |
+| `test_spike.py` | eighteen checks that the printed results are the ones the note quotes |
 
 ## Running it
 
@@ -42,4 +42,8 @@ It is not wired into any `mise` task or into `check`, on purpose.
   either commit. Three or more writers and other interleavings are not.
 - The closure experiments run on one hand-made graph. They show that a strategy can go wrong, not
   how often it does.
+- `first_property_path` simulates the compiler before H1.4a (review S1). Since H1.4a the compiler
+  refuses the placement shape, so that result describes a build that no longer exists.
+- A store that runs writers one at a time. On such a store, a removal that computes its closure
+  inside the update sees a concurrent write, and D1's orphan does not occur (review S5).
 - Only rdflib is used. Unlike `persistence-oxigraph`, no second engine cross-checks them.

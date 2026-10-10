@@ -73,7 +73,7 @@ Merging signs off every slice on the branch, including H1.2d, H1.3 and H1.4a.
 | H1.4a (refuse a composite boundary with several node properties, H-D4) | **authored and verified, awaiting the maintainer's gate.** [Validation Pack](../validation/FMH-H1-4a.md) | the maintainer's review |
 | H1.4b (the declaration/implementation gap report) | not started. Composite entries defined in the plan after the aggregate-ownership review | none |
 | H1.5 (stable labels) | not started, fully detailed in the plan | none |
-| HO0 (correct the ownership note and its spike) | not started, fully specified in plan §3.5 | none |
+| HO0 (correct the ownership note and its spike) | **authored and verified.** [Validation Pack](../validation/FMH-HO0.md) | the maintainer's merge |
 | HO1 (composite replace: payload to the default graph, linear sweep, TD-39, TD-36) | not started, fully specified | none |
 | HO2 (draft ADR-A122, Proposed) | **done** 2026-10-10. [ADR-A122](../../architecture/decisions/ADR-A122-aggregate-ownership.md), Proposed until the maintainer accepts the work package | |
 | HO3 (`dal:` vocabulary 0.3.0: `dal:ownership`, reference data) | not started, fully specified | HO1 |

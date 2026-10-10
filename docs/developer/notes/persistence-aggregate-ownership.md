@@ -19,7 +19,9 @@ protocol models of H5 onward ([§10](#10-what-this-does-to-track-h)).
 1. **The composite boundary does not fit the model.** It follows one property from the root, writes
    no create or tombstone operation, and treats `sh:node` as the sole sign of ownership. The placement
    example needs several owned relations, owned relations that differ by context, references that must
-   survive, and vocabulary nodes that must never be touched ([§3](#3-fit-against-the-model)).
+   survive, and vocabulary nodes that must never be touched ([§3](#3-fit-against-the-model)). Since
+   H1.4a the compiler refuses a shape with several node properties (`CompositeBoundaryMultipleProperties`),
+   so the placement shape is refused and not partly swept (review S1).
 2. **Our instinct on ownership is right, and two refinements are proposed.** Ownership is a
    property of an edge in its context, so a flat list of properties is not enough. And listing the
    references (a deny-list) is the more ergonomic declaration but the more dangerous one, because
@@ -41,8 +43,9 @@ protocol models of H5 onward ([§10](#10-what-this-does-to-track-h)).
 7. **Two defects found on the way.** The composite replace writes the new payload to the receipt log
    graph and not to the graph it deleted from ([§2.3](#23-a-defect-the-composite-replace-writes-the-payload-to-the-log-graph)).
    And the composite boundary has no create or tombstone-delete (TD-04, known).
-8. **Recommendation.** Hold H-D13, H1.4b and H1.5. Keep the H1.4a refusal as a stop-gap. Settle the
-   questions in [§11](#11-questions-for-the-maintainer) before H2 types the closure.
+8. **Recommendation, as written.** Hold H-D13, H1.4b and H1.5. Keep the H1.4a refusal as a stop-gap.
+   Settle the questions in [§11](#11-questions-for-the-maintainer) before H2 types the closure.
+   Superseded by the review (§6, §8). H-D13 is decided, H1.4b and H1.5 proceed, and H2 waits only for the typing of the closure.
 
 ## 2. What persistence does today
 
@@ -105,7 +108,7 @@ found only in `urn:g:txlog/2026-10`. A reader of the default graph sees the aggr
 The named-graph template writes the payload to `GRAPH ?g`, the aggregate's own graph, which is
 what the composite one should do for its destination. Run `spikes/persistence-aggregate-ownership/payload_graph.py`.
 This went unseen because the H1.4a tests inspect what is left behind, and not where the new
-payload lands. Proposed as a technical debt row, not fixed here.
+payload lands. Registered as TD-39 on 2026-10-10.
 
 ## 3. Fit against the model
 
@@ -125,11 +128,11 @@ deleted, and the node at the far end is deleted only if owned.
 
 | Requirement | Today | Verdict |
 |---|---|---|
-| Delete the outgoing triples of the root and of every owned node | the root, and members reached along one property | partial. On the placement graph the update reaches only the tower node itself, since `definedProgramme` sorts first and `hasLayer` is not followed ([spike](../../../spikes/persistence-aggregate-ownership/README.md)) |
+| Delete the outgoing triples of the root and of every owned node | the root, and members reached along one property | partial before H1.4a. On the placement graph the update then reached only the tower node itself, since `definedProgramme` sorts first and `hasLayer` is not followed ([spike](../../../spikes/persistence-aggregate-ownership/README.md)). Since H1.4a the placement shape is refused as `CompositeBoundaryMultipleProperties` (review S1) |
 | Follow several owned relations | refused since H1.4a | not supported |
 | Ownership differs by context | the shape tree can express it, the walk flattens it to a list of paths, the template follows one | not supported |
 | Never delete a vocabulary node | nothing | not supported, and not guarded |
-| Never delete a referenced entity | holds only because only the bound property is followed | holds by accident |
+| Never delete a referenced entity | a reference is swept when it is the shape's only `sh:node` (review F1, TD-35) | not supported, and a live hazard |
 | One owner per node | class-level refusal for nested boundaries only | partial |
 | Delete the aggregate as a whole | none (TD-04) | not supported |
 | Handle references into the aggregate from outside | nothing | not supported |
@@ -153,9 +156,9 @@ own lifecycle. Whether `connectsPolicy` is an owned edge or a reference to
 a separate aggregate is a modelling question the sketch does not answer ([§11](#11-questions-for-the-maintainer), Q1).
 
 The structure that fits is a tree from class to the edges it owns, which is what a SHACL shape tree
-is. The spike's `OWNED_TREE` is that tree, and walking it gives the expected 12 nodes. The same tree
-written as SPARQL sequence paths (a `UNION` of `placement/definedProgramme/hasLayer/...`) returns the
-same 12. The tree form needs no `+` and so no cycle problem, at the price of query size growing with
+is. The spike's `OWNED_TREE` is that tree, and walking it gives 11 nodes, since a policy is a
+reference (AO-Q1). The same tree written as SPARQL sequence paths (a `UNION` of
+`placement/definedProgramme/hasLayer/...`) returns the same 11. The tree form needs no `+` and so no cycle problem, at the price of query size growing with
 the number of paths.
 
 ### 4.2 An allow-list or a deny-list
@@ -188,14 +191,16 @@ Two statements are checkable.
 - **Single owner (compile time).** For every pair of roots, the classes owned in their trees are
   disjoint. This is the check persistence-fml §8.4 recommended, and it can be a refusal.
 - **Single owner (run time).** A node is in at most one closure. The spike builds a second placement
-  whose binding connects `Pol1` and finds it in both closures. Without a check, the later writer's
-  replace sweeps `Pol1` while the other aggregate still points at it, and the version rows differ, so
-  the two writers never collide.
+  whose layer attaches the first placement's owned document and finds the document in both closures.
+  Without a check, the later writer's replace sweeps the document while the other aggregate still
+  points at it, and the version rows differ, so the two writers never collide.
 
-Separately, an owned node can be referenced from outside, as with a quote that points at `Pol1`.
-Deleting the placement removes `Pol1`'s triples and leaves the quote's edge dangling. The spike lists
-both outside references. What a delete does about them is a policy choice. Options are refuse,
-accept the dangling edge, or require the referencing aggregate to drop it first. Q4.
+Separately, an owned node can be referenced from outside, as with that second placement's layer
+pointing at the document. Deleting the first placement removes the document's triples and leaves the
+layer's edge dangling. What a delete does about such an edge is a policy choice. Options are refuse,
+accept the dangling edge, or require the referencing aggregate to drop it first. Q4. The review
+(AO-Q4) answers it with a rule that references from outside target an aggregate's root only, and the
+compiler warns (`ReferenceToOwnedClass`) when a shape points at a non-root owned class.
 
 ### 4.4 Can vocabulary nodes be detected
 
@@ -232,8 +237,8 @@ The addition is needed because of what the compiler reads today. `boundary.py` t
 common on references in validation shapes, for example `forClient` with `sh:node ex:ClientShape`
 so the client is checked. If an adopter points `dal:boundaryShape` at such a shape, which the sketch
 explicitly allows ([§4.4](../sketches/persistence-profile-substrate.md)), the client becomes a
-member and the replace sweeps the client's triples. Today this is limited by the one-property rule,
-and it stops being limited the moment several properties are followed.
+member and the replace sweeps the client's triples. This already happens when a shape's only `sh:node`
+is a reference (review F1, TD-35).
 
 | Option | Description | Consequence |
 |---|---|---|
@@ -460,7 +465,7 @@ deliberately nested under another from an overlap.
 
 | Pro | Con |
 |---|---|
-| ownership by construction, no closure query, vocabulary and references outside by placement | graph proliferation, the cost sketch §4.1 names |
+| ownership by construction, no closure query, vocabulary and references outside by placement, though a writer still needs the classified tree to decide what goes in the graph (review F6) | graph proliferation, the cost sketch §4.1 names |
 | existing operations cover it | an adopter with one large shared graph has to move data |
 | delete is one operation | a node in two graphs is a duplicate and not a share, so the single-owner rule becomes a data layout rule that nothing enforces |
 
@@ -495,13 +500,15 @@ run-time single-owner guarantee matters. Q7 and Q8 decide this.
 | H-D13 (what the compiler binds, and how) | mostly moot. The "first property" binding disappears under 9.2, and what remains is how the closure is stated in the IR |
 | H1.4b (declaration and implementation gap report) | hold. It would report today's closure as the implementation, and the gap list should include ownership, units and the vocabulary guard |
 | H1.5 (stable labels for compiled profiles) | hold. The compiled profile's shape changes if boundaries carry classified edges and units |
-| H2 (typed IR) | the closure becomes a tree of classified edges and the units a set of nodes in it. The payload check ([§6](#6-updating)) and the required-parameter guard of TD-26 belong in the same IR |
+| H2 (typed IR) | the closure becomes a tree of classified edges and the units a set of nodes in it. The payload check ([§6](#6-updating)) and the required-parameter guard of TD-34 belong in the same IR |
 | H5 and later (protocol models, Isabelle theories) | the models of the version row and of conflict detection should be extended with units, the removal rule and the invariant row. The spike's table is a small candidate for the first model |
 | Static checks | new ones follow: every edge classified, no `owned` edge to a concept class, owned trees disjoint across roots |
 | Witnesses | each new refusal and warning needs a fixture, per the H1.2 harness |
-| Technical debt | add the payload-graph defect ([§2.3](#23-a-defect-the-composite-replace-writes-the-payload-to-the-log-graph)) |
+| Technical debt | TD-39, the payload-graph defect ([§2.3](#23-a-defect-the-composite-replace-writes-the-payload-to-the-log-graph)), added 2026-10-10 |
 
 ## 11. Questions for the maintainer
+
+Answered 2026-10-10. See the review §6.
 
 1. **`Pol1`.** In the placement, is a policy owned by its binding, or a referenced aggregate with its
    own lifecycle? The answer changes what a tower delete takes, and it recurs for every
@@ -533,7 +540,7 @@ run-time single-owner guarantee matters. Q7 and Q8 decide this.
 
 ## Appendix. What the experiments do and do not show
 
-The spike prints the closure comparison, the two-writer table and the payload location. Seventeen
+The spike prints the closure comparison, the two-writer table and the payload location. Eighteen
 checks in `test_spike.py` assert the figures quoted above. The limits are in the
 [spike README](../../../spikes/persistence-aggregate-ownership/README.md). In short, the concurrency
 table is a model of a rule and not a store, it covers pairs and not larger sets of writers, and every

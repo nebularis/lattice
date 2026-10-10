@@ -16,7 +16,7 @@ import placement as pl  # noqa: E402
 
 
 def closures() -> None:
-    g = pl.placement_graph(shared_policy=True, inbound_quote=True)
+    g = pl.placement_graph(shared_policy=True, inbound_quote=True, shared_document=True)
     print("== Which nodes does a delete of the placement take?")
     for result in (
         pl.first_property_path(g),

@@ -16,10 +16,12 @@ EX = Namespace("https://example.org/placing#")
 ROOT = EX.P
 
 
-def placement_graph(*, shared_policy: bool = False, inbound_quote: bool = False) -> Graph:
-    """The user's sketch. ``shared_policy`` adds a second placement whose binding connects the
-    same policy as the first (a node with two owners). ``inbound_quote`` adds a quote outside
-    the aggregate that refers to a policy inside it."""
+def placement_graph(*, shared_policy: bool = False, inbound_quote: bool = False, shared_document: bool = False) -> Graph:
+    """Our placement sketch. A policy is a reference (review AO-Q1), so it is outside the
+    aggregate. ``shared_policy`` adds a second placement whose binding connects the same policy
+    as the first, and ``inbound_quote`` adds a quote that refers to that policy. Neither makes
+    a second owner, since the policy is not owned. ``shared_document`` adds a second placement
+    whose layer attaches the first placement's owned document, which is a node with two owners."""
     g = Graph()
     add = g.add
 
@@ -59,13 +61,16 @@ def placement_graph(*, shared_policy: bool = False, inbound_quote: bool = False)
     typed(EX.DocOwned, EX.Document, title=Literal("Layer slip"))
     add((EX.LCB2, EX.attachment, EX.DocShared))
     typed(EX.DocShared, EX.Document, title=Literal("Library wording"))
-    if shared_policy:
+    if shared_policy or shared_document:
         typed(EX.P2, EX.Placement, definedProgramme=EX.T2)
         typed(EX.T2, EX.Tower, hasLayer=EX.L9)
         add((EX.L9, RDF.type, EX.Layer))
+    if shared_policy:
         add((EX.L9, EX.hasPolicyBinding, EX.LCB9))
         add((EX.LCB9, RDF.type, EX.LayerContractBinding))
         add((EX.LCB9, EX.connectsPolicy, EX.Pol1))
+    if shared_document:
+        add((EX.L9, EX.attachment, EX.DocOwned))
     if inbound_quote:
         typed(EX.Q1, EX.Quote, basedOnPolicy=EX.Pol1)
     return g
@@ -74,7 +79,7 @@ def placement_graph(*, shared_policy: bool = False, inbound_quote: bool = False)
 # ---------------------------------------------------------------- ownership declarations
 
 # Allow-list by property, flat: the object properties whose objects are owned, wherever they occur.
-FLAT_OWNED = [EX.marketsContacted, EX.definedProgramme, EX.hasLayer, EX.hasPolicyBinding, EX.hasShare, EX.connectsPolicy, EX.attachment]
+FLAT_OWNED = [EX.marketsContacted, EX.definedProgramme, EX.hasLayer, EX.hasPolicyBinding, EX.hasShare, EX.attachment]
 
 # Allow-list by context: a tree from class to the properties owned from it. ``attachment`` is owned
 # from a Layer and a reference from a binding, so it appears under Layer only.
@@ -82,11 +87,11 @@ OWNED_TREE: dict[URIRef, dict[URIRef, URIRef]] = {
     EX.Placement: {EX.marketsContacted: EX.MarketContacted, EX.definedProgramme: EX.Tower},
     EX.Tower: {EX.hasLayer: EX.Layer},
     EX.Layer: {EX.hasPolicyBinding: EX.LayerContractBinding, EX.attachment: EX.Document},
-    EX.LayerContractBinding: {EX.hasShare: EX.Quant, EX.connectsPolicy: EX.Policy},
+    EX.LayerContractBinding: {EX.hasShare: EX.Quant},
 }
 
 # Deny-list: every object property is followed except these references.
-REFERENCES = {EX.forClient, EX.contactedMarket, EX.marketType, EX.status, EX.attachment}
+REFERENCES = {EX.forClient, EX.contactedMarket, EX.marketType, EX.status, EX.attachment, EX.connectsPolicy}
 REFERENCES_FORGETTING_ONE = REFERENCES - {EX.contactedMarket}
 
 
@@ -113,7 +118,9 @@ class Result:
 
 
 def first_property_path(g: Graph, root=ROOT) -> Result:
-    """What the compiler does today: the first node property, in path order, followed with ``+``."""
+    """What the compiler did before H1.4a: the first node property, in path order, followed with
+    ``+``. Since H1.4a the compiler refuses this shape (CompositeBoundaryMultipleProperties), so this
+    simulates a build that no longer exists. Review S1."""
     first = sorted(OWNED_TREE[EX.Placement], key=str)[0]
     rows = g.query(f"SELECT DISTINCT ?m WHERE {{ ?r <{first}>+ ?m }}", initBindings={"r": root})
     return Result("today: first property only", {row["m"] for row in rows})
