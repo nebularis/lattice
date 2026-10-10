@@ -80,7 +80,7 @@ Merging signs off every slice on the branch, including H1.2d, H1.3 and H1.4a.
 | HO4 (ownership tree and path compiler, added beside the old walk) | **authored and verified.** [Validation Pack](../validation/FMH-HO4.md) | the maintainer's merge |
 | HO5 (switch the compiler to the tree, TD-03, TD-35, TD-37, TD-40) | **authored and verified.** [Validation Pack](../validation/FMH-HO5.md) | the maintainer's merge, and countersigning the removed tests |
 | HO6 (ownership refusals and the roots-only warning) | **authored and verified.** [Validation Pack](../validation/FMH-HO6.md) | the maintainer's merge |
-| HO7 (composite create and tombstone delete, TD-04) | not started, fully specified | HO6 |
+| HO7 (composite create and tombstone delete, TD-04) | **authored and verified.** [Validation Pack](../validation/FMH-HO7.md) | the maintainer's merge |
 | HO8 (injective graph naming within and across families, TD-38) | not started, fully specified | HO3 |
 | HO9 (ownership documentation and close-out) | not started, fully specified | HO7, HO8 |
 | H2 (typed IR) | not started, outlined in the plan | H1 (informative, not a hard blocker) |
@@ -302,3 +302,7 @@ Merging signs off every slice on the branch, including H1.2d, H1.3 and H1.4a.
   `ReferenceToOwnedClass`, each witnessed (96 of 96), plus the checks for a named-graph profile that names a
   shape. Messages name a shape and a predicate and never a blank node, so a compiled profile stays
   byte-identical (H1.5). `check:persistence` at 1252 passed and 1 xfailed. Probes in the Validation Pack.
+- 2026-10-10: HO7 authored. A composite family gets `create-if-absent-composite` (which also asks that nothing of
+  the root is in the data graph) and `tombstone-delete-composite`, each with a dataset-guard variant. The
+  tombstone removes the project fixture's 28 delete-set triples and tombstones the row, on both rdflib and
+  Oxigraph. TD-04 closed and the last composite gap rule removed. `check:persistence` at 1333 passed and 1 xfailed.

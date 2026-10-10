@@ -30,7 +30,7 @@ Rust implementation, so the answer does not rest on one engine. They agree on ev
 | `scenarios.py` | the experiments as functions that return data |
 | `run.py` | prints both experiments on Oxigraph |
 | `rdflib_comparison.py` | runs the same scenarios on rdflib and on Oxigraph and compares |
-| `test_spike.py` | seven checks, including that the two engines agree. Skipped without `pyoxigraph` |
+| `test_spike.py` | eight checks, including that the two engines agree. Skipped without `pyoxigraph` |
 | `requirements.txt` | `pyoxigraph`, for this spike only |
 
 ## Running it
@@ -58,6 +58,8 @@ left the other's member behind (FMH-H1.4a). The update now follows every owned e
 | the order also has a payment, which the shape does not own | the payment, as it should be |
 | the shape owns `payment` too | nothing |
 | the project fixture of ADR-A122 (several owned edges, a recursion, an inverse edge, a vocabulary link and two references) | exactly the nodes outside the aggregate: the client, the assignee, the shared document, the concepts and their scheme, a report, and a second project |
+| the same fixture, tombstone delete | the same nodes, and the version row tombstoned |
+| a composite create, run twice with different transaction ids | the first writes the payload, the second changes nothing |
 
 Both engines agree on every row.
 

@@ -46,19 +46,14 @@ def _example(name: str) -> set[str]:
 # ---- the entries present today
 
 # A slice that closes one of these removes it here and in persistence.gaps. HO5 removed the three
-# about ownership, the inverse path and the default graph (TD-35, TD-37, TD-40).
-COMPOSITE = {
-    "CompositeNoLifecycleOperations",  # TD-04, HO7
-}
+# about ownership, the inverse path and the default graph (TD-35, TD-37, TD-40), and HO7 the missing
+# composite create and tombstone delete (TD-04). No composite gap is left.
+COMPOSITE: set[str] = set()
 EVERY_WRITING_TARGET = {"InfrastructureGraphsFixed", "RetentionAndEpochBumpNotGenerated"}
 
 
-def test_h1_4b_t1_the_composite_example_reports_the_composite_gap_that_is_left():
-    gaps = {g.gap: g for g in _gaps(_load("composite-property-boundary-shacl.ttl"))}
-    assert set(gaps) == COMPOSITE | EVERY_WRITING_TARGET
-    assert gaps["CompositeNoLifecycleOperations"].reference == "TD-04"
-    assert gaps["CompositeNoLifecycleOperations"].closes_in == "HO7"
-    assert gaps["CompositeNoLifecycleOperations"].obligation == "unimplemented"
+def test_h1_4b_t1_the_composite_example_reports_no_composite_gap():
+    assert _example("composite-property-boundary-shacl.ttl") == COMPOSITE | EVERY_WRITING_TARGET
 
 
 def test_h1_4b_t2_a_named_graph_example_reports_the_graph_naming_gap_and_no_composite_gap():
@@ -125,7 +120,7 @@ def test_h1_4b_t10_the_cli_prints_the_report_as_text_and_as_json(capsys):
     spec = str(EXAMPLES_DIR.parent / "spec" / "persistence.ttl")
     assert main(["gaps", spec, example]) == 0
     text = capsys.readouterr().out
-    assert "GAP [CompositeNoLifecycleOperations]" in text and "TD-04" in text
+    assert "GAP [InfrastructureGraphsFixed]" in text and "TD-05" in text
     assert main(["gaps", "--json", spec, example]) == 0
     data = json.loads(capsys.readouterr().out)
     assert {entry["gap"] for entry in data} == COMPOSITE | EVERY_WRITING_TARGET

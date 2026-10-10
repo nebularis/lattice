@@ -65,18 +65,6 @@ def _gap(ct: CompiledTarget, gap: str, obligation: str, reference: str, closes_i
     return Gap(gap, str(ct.target), obligation, reference, closes_in, message)
 
 
-def _composite_lifecycle(ct: CompiledTarget) -> Iterable[Gap]:
-    if _boundary(ct) != "CompositePropertyBoundary" or _local(ct.dimensions["concurrencyProfile"].value) != "Optimistic":
-        return
-    missing = ["tombstone-delete"]
-    if _local(ct.dimensions["firstWrite"].value) != "PreCreatedRow":
-        missing.insert(0, "create-if-absent")
-    yield _gap(
-        ct, "CompositeNoLifecycleOperations", UNIMPLEMENTED, "TD-04", "HO7",
-        f"a composite aggregate has no {' and no '.join(missing)} operation",
-    )
-
-
 def _graph_named_from_local_name(ct: CompiledTarget) -> Iterable[Gap]:
     if _boundary(ct) != "NamedGraphBoundary":
         return
@@ -154,7 +142,6 @@ def _version_row_created_by_caller(ct: CompiledTarget) -> Iterable[Gap]:
 
 
 RULES: dict[str, Rule] = {
-    "CompositeNoLifecycleOperations": _composite_lifecycle,
     "NamedGraphNamedFromLocalName": _graph_named_from_local_name,
     "UnconditionalWriteNamedGraphOnly": _unconditional_write_named_graph_only,
     "ShardCountNotHonoured": _shard_counts_not_honoured,

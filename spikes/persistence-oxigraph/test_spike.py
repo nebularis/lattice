@@ -19,7 +19,7 @@ pytest.importorskip("pyoxigraph", reason="pip install -r spikes/persistence-oxig
 
 from oxigraph_backend import OxigraphBackend, bind_parameters, iri, literal  # noqa: E402
 from rdflib_comparison import compare  # noqa: E402
-from scenarios import append_event_runs, composite_sweep, project_sweep  # noqa: E402
+from scenarios import append_event_runs, composite_sweep, project_create_twice, project_sweep, project_tombstone  # noqa: E402
 
 
 def test_bind_parameters_replaces_both_spellings_and_leaves_other_names_alone():
@@ -49,6 +49,13 @@ def test_the_composite_sweep_removes_what_the_shape_owns_and_leaves_what_it_does
 def test_the_project_fixture_keeps_every_node_outside_the_aggregate_and_removes_the_project_and_its_members():
     left = project_sweep()
     assert left == sorted({"acme", "alice", "docShared", "InProgress", "Done", "TaskStatuses", "report1", "p2", "m9"})
+
+
+def test_a_composite_tombstone_removes_the_aggregate_and_tombstones_the_row_and_a_second_create_changes_nothing():
+    left, tombstoned = project_tombstone()
+    assert left == sorted({"acme", "alice", "docShared", "InProgress", "Done", "TaskStatuses", "report1", "p2", "m9"}) and tombstoned
+    first, second = project_create_twice()
+    assert first == second == 1
 
 
 def test_a_missing_parameter_advances_the_counter_and_writes_no_revision():

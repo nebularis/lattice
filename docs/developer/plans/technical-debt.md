@@ -42,7 +42,6 @@ The unit that shipped it, `persistence-compiler-iri-sync`, is closed.
 | # | Debt | Spotted | Cost while it stays | Likely home |
 |---|---|---|---|---|
 | TD-02 | `unconditional-write` targets only a named-graph boundary. Provided or locking concurrency with a composite or no boundary fails to render | 2026-09-25 | those combinations cannot be generated | a Persistence compiler unit |
-| TD-04 | a composite boundary with `dal:AbsentRow` generates no create operation, and no composite boundary has a tombstone delete | 2026-09-25, widened 2026-10-10 | such a family has no first write, and a composite aggregate cannot be deleted as a whole | formal-methods Track H, slice HO7. Remove this row when HO7 lands |
 | TD-05 | infrastructure graph IRIs (`urn:g:dataset`, `urn:g:txn`, `urn:g:keys` and the rest) are constants, in an unregistered `urn:` namespace | 2026-09-25 | two deployments merged into one store collide | a Persistence compiler unit |
 | TD-06 | `dal:txnShards`, `dal:logShards` and `dal:keyShards` resolve but no template applies them (`ShardingNotHonoured`) | 2026-09-25 | a declared shard count is silently a promise | a Persistence compiler unit |
 | TD-07 | `dal:EquivalentClassScope` matching is syntactic, not entailment | 2026-09-25 | an equivalence a reasoner would find is missed | a Persistence compiler unit |

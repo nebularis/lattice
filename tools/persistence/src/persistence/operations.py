@@ -155,17 +155,26 @@ def select_operations(
             # profile's data graph and never in the default graph (static check S-1).
             boundary_dim = dimensions["aggregateBoundary"]
             owned_path = boundary_dim.extra["ownershipTree"].owned_path()
-            bindings = common_bindings + [
-                ParameterBinding("ownedPath", "PropertyPath", PropertyPath.encode(owned_path)),
-                ParameterBinding("dataGraph", "Iri", Iri.encode(str(boundary_dim.extra["dataGraph"]))),
-            ]
+            data_graph = ParameterBinding("dataGraph", "Iri", Iri.encode(str(boundary_dim.extra["dataGraph"])))
+            bindings = common_bindings + [ParameterBinding("ownedPath", "PropertyPath", PropertyPath.encode(owned_path)), data_graph]
             composite_template = (
                 "cas-replace-composite-property-dataset-guard.mustache" if dataset_level_guard
                 else "cas-replace-composite-property.mustache"
             )
+            tombstone_template = (
+                "tombstone-delete-composite-dataset-guard.mustache" if dataset_level_guard
+                else "tombstone-delete-composite.mustache"
+            )
             if pre_created_row:
                 ops.append(GeneratedOperation(bootstrap_op.operation, bootstrap_op.template_id, bindings))
+            else:
+                # a create sweeps nothing, so it needs the data graph and no path
+                create_bindings = common_bindings + [data_graph]
+                ops.append(GeneratedOperation(
+                    "create-if-absent", f"create-if-absent-composite{guard_suffix}.mustache", create_bindings
+                ))
             ops.append(GeneratedOperation("cas-replace", composite_template, bindings))
+            ops.append(GeneratedOperation("tombstone-delete", tombstone_template, bindings))
         elif boundary == "NoBoundary":
             guard_prop = dimensions["concurrencyProfile"].extra.get("valueGuardProperty")
             bindings = common_bindings + (

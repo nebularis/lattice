@@ -125,6 +125,50 @@ def project_sweep() -> list[str]:
     return sorted({q.subject.value.rsplit("#", 1)[-1] for q in backend.quads(iri(PROJECT_GRAPH))})
 
 
+def _project_operation(template: str, payload: str = "") -> str:
+    """The generated ``template`` for the project fixture, with ``payload`` (N-Triples) in the payload slot."""
+    compiled, _ = compile_to_graph(witness._load_fixture(PROJECT_EXAMPLE))
+    update = next(op.text for op in templatecheck.operations(compiled) if op.template == template)
+    return update.replace(templatecheck._SLOT_STAND_INS["payloadTriples"], payload)
+
+
+def project_tombstone() -> tuple[list[str], bool]:
+    """Run ``tombstone-delete-composite`` on the project fixture. Returns the local names of the subjects
+    left in the data graph, and whether the version row is tombstoned."""
+    update = _project_operation("tombstone-delete-composite")
+    meta = _meta_graph(update)
+    backend, root = OxigraphBackend(), iri(PROJECT + "p1")
+    backend.add(root, iri(PAT + "epoch"), literal(1), iri(meta))
+    backend.add(root, iri(PAT + "seq"), literal(1, XSD + "long"), iri(meta))
+    backend.store.load(PROJECT_DATA.read_bytes(), format=ox.RdfFormat.TURTLE, to_graph=ox.NamedNode(PROJECT_GRAPH))
+    backend.update(
+        update,
+        {
+            "root": root, "epoch": literal(1), "expectedSeq": literal(1, XSD + "long"),
+            "nextSeq": literal(2, XSD + "long"), "newRev": iri("urn:rev:2"), "txnId": iri("urn:txn:a"),
+            "requestDigest": literal("d"), "cause": iri("urn:decision:1"), "actor": iri("urn:actor:1"),
+        },
+    )
+    left = sorted({q.subject.value.rsplit("#", 1)[-1] for q in backend.quads(iri(PROJECT_GRAPH))})
+    return left, backend.count(PAT + "deleted", iri(meta)) == 1
+
+
+def project_create_twice() -> tuple[int, int]:
+    """Run ``create-if-absent-composite`` twice with different transaction ids. Returns the number of
+    triples in the data graph after the first and after the second run, which must be equal."""
+    payload = f'<{PROJECT}p1> <{PROJECT}name> "Apollo" . '
+    update = _project_operation("create-if-absent-composite", payload)
+    backend, root = OxigraphBackend(), iri(PROJECT + "p1")
+    counts = []
+    for txn in ("a", "b"):
+        backend.update(
+            update,
+            {"root": root, "epoch": literal(1), "newRev": iri(f"urn:rev:{txn}"), "txnId": iri(f"urn:txn:{txn}"), "requestDigest": literal("d")},
+        )
+        counts.append(len(backend.quads(iri(PROJECT_GRAPH))))
+    return counts[0], counts[1]
+
+
 # ---- append-event: what a missing parameter does ----------------------------------------------
 
 
