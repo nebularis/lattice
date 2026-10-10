@@ -352,6 +352,8 @@ The profile ontology validates its own instance data the same way the guide's Ap
 
 ## Part 4 — Aggregate boundary configurability
 
+> **Superseded in part.** [ADR-A122](../../architecture/decisions/ADR-A122-aggregate-ownership.md) amends decision 4 of ADR-A78 and replaces the composite mechanism described below: a boundary shape is a classified tree (`dal:ownership` on every node property), the members are the nodes reached by owned edges, one compiled property path sweeps them inside a named `dal:dataGraph`, `dal:maxTraversalDepth` is gone, and a named graph is named from the whole root IRI. The normative design is [the aggregate ownership sketch](persistence-aggregate-ownership.md). The text below is kept as history and is not rewritten.
+
 Only the adopter knows whether a population of triples is an aggregate, and if so, what belongs inside it. The guide's Part V assumes the answer is always "a named graph," because that is the cheapest, most portable mechanism, and it is right to assume that as a default. It cannot be the *only* mechanism a framework offers, because plenty of real applied ontologies already have a large, shared graph and cannot, or do not want to, repartition it into one graph per aggregate. The guide will need to be updated once this sketch is implemented.
 
 ### 4.1 Two authoring surfaces, two runtime mechanisms

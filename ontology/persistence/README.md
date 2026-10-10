@@ -486,11 +486,25 @@ the complete new state, which is what an aggregate is. This is safe only because
 outside the payload graph: a whole-graph delete would otherwise erase the aggregate's own ordering
 evidence on every write.
 
+**What is in the aggregate.** An aggregate is a root and the nodes it owns. A node the root reaches is
+owned, a reference to an independent entity or another aggregate, or vocabulary. A delete removes every
+triple whose subject is the root or an owned node, so the edges to references and vocabulary go and the
+nodes at their ends stay. The adopter classifies every edge that leads to a node, in the boundary shape,
+with `dal:ownership`, and the compiler refuses an edge left unclassified. Ownership belongs to an edge in
+its context: a document attached to a task can be a part of the task, while the same property on a plan
+points at a template many projects share. [Aggregate boundaries](docs/aggregate-boundaries.md) has the
+rules, the refusals and the reasons.
+
+**Which strategy.** Prefer a named graph per aggregate for a new deployment. It is the cheapest boundary
+to reason about, and a delete is one operation. The composite strategy is for data that already lives in
+one large shared graph, which it keeps in the family's `dal:dataGraph`. LATTICE does not impose a layout.
+
 **Why a shape, not a sub-property.** A composite boundary is declared by pointing a SHACL shape at the
 domain's own properties by IRI. Asserting a domain property as `rdfs:subPropertyOf dal:isCompositeOf`
 was rejected (ADR-A78 point 4): it would leak OWL entailments into the domain ontology and create the
-import dependency this ontology otherwise avoids. The compiler walks the shape once, offline. No store is ever asked to run SHACL to find a write's boundary, and the same shape can
-keep serving the adopter's own validation.
+import dependency this ontology otherwise avoids. The compiler walks the shape once, offline, and
+compiles the owned edges to one SPARQL property path. No store is ever asked to run SHACL to find a
+write's boundary, and the same shape can keep serving the adopter's own validation.
 
 **First write.** A family picks one way to create a version row, declared as `dal:firstWrite`:
 
@@ -1040,7 +1054,7 @@ is ever run, and an adopter who wants only the generated SPARQL can run both onc
 | Configuration | Operations |
 |---|---|
 | `dal:Optimistic` with a named-graph boundary | `create-if-absent` (or `bootstrap-version-row` under `dal:PreCreatedRow`), `cas-replace`, `tombstone-delete` |
-| `dal:Optimistic` with a composite boundary | `cas-replace` over the closure, and `bootstrap-version-row` under `dal:PreCreatedRow` |
+| `dal:Optimistic` with a composite boundary | `create-if-absent` (or `bootstrap-version-row` under `dal:PreCreatedRow`), `cas-replace` and `tombstone-delete`, each sweeping the aggregate with one property path inside the family's `dal:dataGraph` |
 | `dal:Optimistic` with no boundary | `cas-replace` guarded on `dal:valueGuardProperty` |
 | `dal:AppendOnly`, or event grain with any concurrency other than `dal:Optimistic` | `bootstrap-version-row` and `append` |
 | `dal:ProvidedConcurrency` or `dal:LockingConcurrency`, with commit grain | `unconditional-write` |
@@ -1048,8 +1062,7 @@ is ever run, and an adopter who wants only the generated SPARQL can run both onc
 | every target | the audits: `gap-scan-audit`, `fork-detection-audit`, `revision-multi-txn-audit`, `txn-multi-revision-audit` |
 
 Under `dal:DatasetLevelGuard`, the create, bootstrap, compare-and-set, tombstone and append operations
-use their `-dataset-guard` variants. The value-guard and unconditional writes have none, and a
-composite boundary currently binds only the first property its shape reaches. The compiler's own [README](../../tools/persistence/README.md) documents the parameters each
+use their `-dataset-guard` variants. The value-guard and unconditional writes have none. The compiler's own [README](../../tools/persistence/README.md) documents the parameters each
 template takes, the obligations the generated SPARQL cannot enforce for the caller, and its known
 limitations, among them: infrastructure graph IRIs are fixed constants rather than configurable,
 declared shard counts are recorded but not yet applied, and retention and epoch bumps are left to
@@ -1191,16 +1204,18 @@ and the unscoped fallback (§6.2). A `dal:DataAccessProfile` whose only scope is
 warning rather than a refusal, since a deliberate global override is legitimate and is acknowledged
 with `dal:acknowledgedSharedClassOverride`.
 
-### 11.3 A composite-property aggregate, declared by a shape
+### 11.3 A composite-property aggregate, declared by a classified shape
 
 An order and its line items form one aggregate. The customer the order refers to does not:
 
 ```turtle
 ex:OrderAggregateShape a sh:NodeShape ;
     sh:targetClass ex:Order ;
-    sh:property [ sh:path ex:lineItem ; sh:node ex:LineItemShape ; sh:minCount 1 ; dal:ownership dal:Owned ] .
+    sh:property [ sh:path ex:lineItem ; sh:node ex:LineItemShape ; sh:minCount 1 ; dal:ownership dal:Owned ] ,
+                [ sh:path ex:customer ; sh:class ex:Customer ; dal:ownership dal:Reference ] .
 
 ex:LineItemShape a sh:NodeShape ;
+    sh:targetClass ex:LineItem ;
     sh:property [ sh:path ex:sku ; sh:datatype xsd:string ] .
 
 ex:OrderBoundaryProfile a dal:AggregateBoundaryProfile ;
@@ -1212,17 +1227,23 @@ ex:OrderBoundaryProfile a dal:AggregateBoundaryProfile ;
 
 ```mermaid
 flowchart LR
-    O["ex:Order (root)"] -- "ex:lineItem<br/>in the closure" --> L["line item"]
-    L -- "ex:sku<br/>in the closure" --> S["sku value"]
-    O -. "ex:customer<br/>not in the shape, outside" .-> C["customer"]
+    O["ex:Order (root)"] -- "ex:lineItem<br/>owned" --> L["line item"]
+    L -- "ex:sku<br/>a value" --> S["sku value"]
+    O -- "ex:customer<br/>reference" --> C["customer (stays)"]
 ```
 
-Full fixture: [`examples/composite-property-boundary-shacl.ttl`](examples/composite-property-boundary-shacl.ttl).
-The compiler walks `sh:property`, `sh:node` and `dal:ownership`, so `sh:datatype`, `sh:minCount` and the rest are
-left for the adopter's own validation. Every node property carries `dal:ownership` as `dal:Owned`, `dal:Reference` or `dal:Vocabulary` ([ADR-A122](../../docs/architecture/decisions/ADR-A122-aggregate-ownership.md)). The generated update binds the closure's members in its `WHERE`
-clause with a property path and rewrites them using the bound variables, since SPARQL allows a path in
-a pattern but never in a `DELETE` or `INSERT` template. The version row's subject is the root
+Deleting the order deletes its own triples (including the edge to the customer), the line items' triples,
+and nothing of the customer's. The compiler walks `sh:property`, `sh:path`, `sh:node`, `sh:class` and
+`dal:ownership`, so `sh:datatype`, `sh:minCount` and the rest are left for the adopter's own validation.
+The generated update binds the aggregate's members in its `WHERE` clause with one property path and
+rewrites them using the bound variables, since SPARQL allows a path in a pattern but never in a `DELETE`
+or `INSERT` template. Every pattern is inside `<urn:g:orders>`. The version row's subject is the root
 instance, since there is no graph to key it on.
+
+Full fixture: [`examples/composite-property-boundary-shacl.ttl`](examples/composite-property-boundary-shacl.ttl).
+A larger one, with several owned edges, a recursion, an edge from child to parent, a vocabulary link and
+a property owned in one place and a reference in another, is
+[`examples/composite-project-ownership.ttl`](examples/composite-project-ownership.ttl).
 
 ### 11.4 Identity, epoch and privacy together
 
@@ -1358,7 +1379,7 @@ target also gets the four audits (`gap-scan-audit`, `fork-detection-audit`,
 | the same, with a declared capability spec | [`capability-spec-example`](examples/capability-spec-example.ttl) | the same SPARQL as `baseline-single-class`: a capability spec checks a profile, never changes what it generates |
 | named graph under the dataset-level epoch guard | [`epoch-dataset-level-guard`](examples/epoch-dataset-level-guard.ttl) | `sparql/LoanApplication/cas-replace.rq`, which compares `urn:g:dataset`'s epoch |
 | pre-created version rows, every extension property | [`extension-properties`](examples/extension-properties.ttl) | `sparql/Facility/bootstrap-version-row.rq` in place of create-if-absent |
-| composite-property aggregate by SHACL shape | [`composite-property-boundary-shacl`](examples/composite-property-boundary-shacl.ttl) | `sparql/Order/cas-replace.rq`, the closure bound by a property path in `WHERE` |
+| composite-property aggregate by SHACL shape | [`composite-property-boundary-shacl`](examples/composite-property-boundary-shacl.ttl) and [`composite-project-ownership`](examples/composite-project-ownership.ttl) | `sparql/Order/cas-replace.rq`, the aggregate swept by one property path in `WHERE`, with `create-if-absent` and `tombstone-delete` beside it |
 | no boundary, value-based guard | [`value-based-cas`](examples/value-based-cas.ttl) | `sparql/Order/cas-replace.rq`, guarded on the property's old value |
 | append-only stream under the dataset guard | [`append-stream-dataset-guard`](examples/append-stream-dataset-guard.ttl) | `sparql/DecisionStream/bootstrap-version-row.rq`, `sparql/DecisionStream/append.rq` |
 | one shared class, two deployments and a fallback | [`lending-credit-shared-class`](examples/lending-credit-shared-class.ttl) | three target directories: `sparql/Behaviour.LendingBehaviourGraphs/` (compare-and-set), `sparql/Behaviour.CreditBehaviourGraphs/` (unconditional), `sparql/Behaviour/` (baseline) |

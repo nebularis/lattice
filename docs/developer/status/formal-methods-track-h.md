@@ -3,7 +3,7 @@
 # Formal Methods, Track H: Status
 
 **Unit ID:** `formal-methods-track-h` (phase, within the `formal-methods` epic)
-**Status:** In progress. H1.1 to H1.2c signed off. H1.2d, H1.3 and H1.4a are authored and verified, awaiting the maintainer's review. Aggregate-ownership slices HO0 to HO9 planned (2026-10-10)
+**Status:** In progress. H1.1 to H1.2c signed off. H1.2d, H1.3, H1.4a, H1.4b, H1.5 and the aggregate-ownership slices HO0 to HO9 are authored and verified (2026-10-10), awaiting the maintainer's verification, the acceptance of ADR-A122, and the merge
 **Last updated:** 2026-10-10
 **Plan:** [formal-methods-track-h.md](../plans/formal-methods-track-h.md)
 **Sketches:** [formal-methods-track-h.md](../sketches/formal-methods-track-h.md) (main),
@@ -52,13 +52,16 @@ In this order, each per [plan §3.5](../plans/formal-methods-track-h.md#35-ho-ag
 0. Done 2026-10-10: `origin/main` is merged (`af2eb89`). `docs/developer/validation/LOG.md` is
    retired. The maintainer's merge is the sign-off, and the index, plans, status records and Validation
    Packs are the record, as the `lattice-lifecycle` skill now says.
-1. HO0 and HO1, done 2026-10-10. HO2 is done (ADR-A122 drafted, Proposed).
-2. H1.4b and H1.5 done 2026-10-10, per the plan's "H1.4b and H1.5 after the aggregate-ownership review".
-3. HO3 to HO9 in order, end to end, without stopping for review. HO8 may run at any point after HO3.
-   ADR-A122 stays Proposed. The maintainer accepts it with the work package at the close.
+1. HO0 to HO9, H1.4b and H1.5: done 2026-10-10. HO2 is done (ADR-A122 drafted, Proposed). ADR-A122 stays Proposed.
+   The maintainer accepts it with the work package at the close.
+2. Next, per the plan: H2, the typed IR (§4), which types the classified tree, the payload check and the
+   required-parameter guard (TD-34), and H3 after it. Nothing in the aggregate-ownership work blocks them.
 
-For the maintainer, at the close: verify the slices, accept ADR-A122, and merge.
-Merging signs off every slice on the branch, including H1.2d, H1.3 and H1.4a.
+For the maintainer, at the close: verify the slices (each Validation Pack has its one command), countersign
+the removed and rewritten tests listed in FMH-HO5, accept ADR-A122, and merge. Merging signs off every
+slice on the branch, including H1.2d, H1.3 and H1.4a. 🔴 RELEASE TAGS REQUIRED once the merge is on `main`:
+`persistence-v0.3.0`, `persistence-shapes-v0.3.0` and `persistent-foundation-v0.2.0`, which
+`mise run build:ontology-releases` prints among the tags other merged work also owes.
 
 ## Slices
 
@@ -82,7 +85,7 @@ Merging signs off every slice on the branch, including H1.2d, H1.3 and H1.4a.
 | HO6 (ownership refusals and the roots-only warning) | **authored and verified.** [Validation Pack](../validation/FMH-HO6.md) | the maintainer's merge |
 | HO7 (composite create and tombstone delete, TD-04) | **authored and verified.** [Validation Pack](../validation/FMH-HO7.md) | the maintainer's merge |
 | HO8 (injective graph naming within and across families, TD-38) | **authored and verified.** [Validation Pack](../validation/FMH-HO8.md) | the maintainer's merge |
-| HO9 (ownership documentation and close-out) | not started, fully specified | HO7, HO8 |
+| HO9 (ownership documentation and close-out) | **authored and verified.** [Validation Pack](../validation/FMH-HO9.md) | the maintainer's merge |
 | H2 (typed IR) | not started, outlined in the plan | H1 (informative, not a hard blocker) |
 | H3 (specification registry) | not started, outlined in the plan | H2 preferred first (smaller, more self-contained), not a hard blocker |
 | H4 (exhaustive cross-axis validation, BDD/SMT) | not started, outline only | H3 |
@@ -311,3 +314,9 @@ Merging signs off every slice on the branch, including H1.2d, H1.3 and H1.4a.
   `GraphIriTemplateOverlap` refuse a template that is not injective, within a family and across families
   (98 of 98 rules witnessed). TD-38 closed. The `dal:graphIriTemplate` comment is edited within the unreleased
   0.3.0. `check:persistence` at 1356 passed and 1 xfailed.
+- 2026-10-10: HO9 authored, closing the aggregate-ownership work package. `aggregate-boundaries.md` is rewritten
+  from the sketch and the README's boundary sections follow it, recommending a named graph per aggregate for new
+  deployments. The legacy sketch's Part 4 points at ADR-A122. The gap report (`persistence gaps`) now lists no
+  composite or graph-naming entry. ADR-A122 is rechecked against `origin/main` and every remote branch, and it is
+  the same file on `main`, so the number is ours. Nothing is left open in the plan's HO rows. ADR-A122 awaits
+  the maintainer's acceptance.

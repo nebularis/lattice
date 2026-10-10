@@ -17,8 +17,8 @@ def test_walks_a_nested_shape_into_owned_edges_and_value_properties(example):
     g = example("composite-property-boundary-shacl.ttl")
     tree = walk_ownership(g, URIRef(LENDING + "OrderAggregateShape"))
     assert {str(e.step.predicate).rsplit("#", 1)[-1] for e in tree.owned_edges()} == {"lineItem"}
-    assert {str(p).rsplit("#", 1)[-1] for p in tree.predicates()} == {"lineItem", "sku"}
-    assert URIRef(LENDING + "customer") not in tree.predicates()
+    assert {str(p).rsplit("#", 1)[-1] for p in tree.predicates()} == {"lineItem", "customer", "sku"}
+    assert URIRef(LENDING + "customer") not in {e.step.predicate for e in tree.owned_edges()}  # a reference, not owned
 
 
 def test_a_shape_that_leads_back_to_itself_is_walked_once_and_is_not_refused():

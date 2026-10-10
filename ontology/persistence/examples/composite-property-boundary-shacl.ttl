@@ -1,9 +1,9 @@
 # CompositePropertyBoundary declared the only way it can be: through a
 # SHACL shape (ADR-A78 point 4, sketch §4.3-§4.4), whose node properties
 # are classified (ADR-A122). ex:lineItem is an owned edge, so line items
-# are members. ex:customer is deliberately absent from the shape, so it
-# stays outside the aggregate's closure. The aggregates of this family
-# live in the named graph dal:dataGraph.
+# are members. ex:customer is a reference: its edge goes when an order is
+# deleted and the customer stays. The aggregates of this family live in
+# the named graph dal:dataGraph.
 @prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
 @prefix ex:  <https://example.org/lending#> .
 @prefix sh:  <http://www.w3.org/ns/shacl#> .
@@ -11,7 +11,8 @@
 
 ex:OrderAggregateShape a sh:NodeShape ;
     sh:targetClass ex:Order ;
-    sh:property [ sh:path ex:lineItem ; sh:node ex:LineItemShape ; sh:minCount 1 ; dal:ownership dal:Owned ] .
+    sh:property [ sh:path ex:lineItem ; sh:node ex:LineItemShape ; sh:minCount 1 ; dal:ownership dal:Owned ] ,
+                [ sh:path ex:customer ; sh:class ex:Customer ; dal:ownership dal:Reference ] .
 
 ex:LineItemShape a sh:NodeShape ;
     sh:targetClass ex:LineItem ;
