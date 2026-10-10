@@ -52,13 +52,13 @@ In this order, each per [plan §3.5](../plans/formal-methods-track-h.md#35-ho-ag
 0. Done 2026-10-10: `origin/main` is merged (`af2eb89`). `docs/developer/validation/LOG.md` is
    retired. The maintainer's merge is the sign-off, and the index, plans, status records and Validation
    Packs are the record, as the `lattice-lifecycle` skill now says.
-1. HO0 to HO9, H1.4b and H1.5: done 2026-10-10. HO2 is done (ADR-A122 drafted, Proposed). ADR-A122 stays Proposed.
-   The maintainer accepts it with the work package at the close.
+1. HO0 to HO9, H1.4b and H1.5: done 2026-10-10. ADR-A122 was drafted Proposed (HO2) and accepted by the
+   maintainer on 2026-10-10 at the close.
 2. Next, per the plan: H2, the typed IR (§4), which types the classified tree, the payload check and the
    required-parameter guard (TD-34), and H3 after it. Nothing in the aggregate-ownership work blocks them.
 
 For the maintainer, at the close: verify the slices (each Validation Pack has its one command), countersign
-the removed and rewritten tests listed in FMH-HO5, accept ADR-A122, and merge. Merging signs off every
+the removed and rewritten tests listed in FMH-HO5, and merge (ADR-A122 is accepted). Merging signs off every
 slice on the branch, including H1.2d, H1.3 and H1.4a. 🔴 RELEASE TAGS REQUIRED once the merge is on `main`:
 `persistence-v0.3.0`, `persistence-shapes-v0.3.0` and `persistent-foundation-v0.2.0`, which
 `mise run build:ontology-releases` prints among the tags other merged work also owes.
@@ -78,7 +78,7 @@ slice on the branch, including H1.2d, H1.3 and H1.4a. 🔴 RELEASE TAGS REQUIRED
 | H1.5 (stable labels) | **authored and verified.** [Validation Pack](../validation/FMH-H1-5.md) | the maintainer's merge |
 | HO0 (correct the ownership note and its spike) | **authored and verified.** [Validation Pack](../validation/FMH-HO0.md) | the maintainer's merge |
 | HO1 (composite replace: payload to the default graph, linear sweep, TD-39, TD-36) | **authored and verified.** [Validation Pack](../validation/FMH-HO1.md) | the maintainer's merge |
-| HO2 (draft ADR-A122, Proposed) | **done** 2026-10-10. [ADR-A122](../../architecture/decisions/ADR-A122-aggregate-ownership.md), Proposed until the maintainer accepts the work package | |
+| HO2 (draft ADR-A122, Proposed) | **done** 2026-10-10. [ADR-A122](../../architecture/decisions/ADR-A122-aggregate-ownership.md), **accepted** 2026-10-10 | |
 | HO3 (`dal:` vocabulary 0.3.0: `dal:ownership`, reference data) | **authored and verified.** [Validation Pack](../validation/FMH-HO3.md). 🔴 release tags owed (`persistence-v0.3.0`, `persistence-shapes-v0.3.0`, `persistent-foundation-v0.2.0`), created on `main` | the maintainer's merge |
 | HO4 (ownership tree and path compiler, added beside the old walk) | **authored and verified.** [Validation Pack](../validation/FMH-HO4.md) | the maintainer's merge |
 | HO5 (switch the compiler to the tree, TD-03, TD-35, TD-37, TD-40) | **authored and verified.** [Validation Pack](../validation/FMH-HO5.md) | the maintainer's merge, and countersigning the removed tests |
@@ -320,3 +320,14 @@ slice on the branch, including H1.2d, H1.3 and H1.4a. 🔴 RELEASE TAGS REQUIRED
   composite or graph-naming entry. ADR-A122 is rechecked against `origin/main` and every remote branch, and it is
   the same file on `main`, so the number is ours. Nothing is left open in the plan's HO rows. ADR-A122 awaits
   the maintainer's acceptance.
+- 2026-10-10: the maintainer accepted ADR-A122. Its status is Accepted in the ADR and the catalogue, and the
+  indexes follow. The maintainer merged `main` into this branch (`b0fce2a`). On the open question of whether
+  `compile` should fail on gaps, we chose option C: the gap rules for a declaration the compiler ignores become
+  compile diagnostics or refusals (see the entry that follows).
+- 2026-10-10: option C carried out ([FMH-H1-4c](../validation/FMH-H1-4c.md)). A declaration the compiler cannot
+  honour is a compile warning or a refusal, never a gap. An unconditional write for a boundary with no named graph is
+  now refused (`UnconditionalWriteRequiresNamedGraph`, TD-02 reworded), the shard-count gap rule duplicated an
+  existing warning and is gone, and the gap report keeps four standing entries and is informational only. Open for
+  the maintainer: whether `ShardingNotHonoured` should be a refusal. This checkout's `.venv` was new after the
+  merge of `main`, so `mise run bootstrap` ran first (`ensurepip` was needed on this machine). `check:persistence`
+  at 1360 passed and 1 xfailed.

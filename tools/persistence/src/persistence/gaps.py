@@ -1,25 +1,28 @@
 # SPDX-License-Identifier: MPL-2.0
 # NB: This module has been produced using GenAI
 
-"""The declaration/implementation gap, as data (formal-methods track H, slice H1.4b).
+"""What the generated SPARQL does not do, as data (formal-methods track H, slice H1.4b).
 
-A configuration declares more than the generated SPARQL implements. A declared shard count is
-recorded and not applied, a boundary shape is read for one property, and a restore runbook is
-named and never run. This module lists, for each compiled target, every such gap that applies, and
-says whose obligation it is:
+For each compiled target this lists the standing facts and obligations that hold whatever the
+configuration says, and whose obligation each is:
 
 ``unimplemented``
-    the compiler or its templates do not do what the declaration says. A register row and the
-    slice that removes it are named.
+    the compiler or its templates do not do something a reader might expect. A register row is named.
 ``caller``
     the generated SPARQL assumes the caller does something it cannot enforce.
 ``housekeeping``
     the work belongs to the housekeeping component (ADR-A80), which this compiler does not generate.
 
-The report is informational. It reads compiled targets, needs no backend, and is sorted so two runs
-are byte-identical. Each rule is a function over one :class:`CompiledTarget`, kept in :data:`RULES`
-so a test can name every entry. A slice that closes a gap removes its rule here, and the entry it
-expected from the test, in the same commit.
+A configuration that asks for something the compiler cannot honour is not a gap. It is a compile
+diagnostic or a refusal, so a profile is never produced that quietly drops a declaration (ADR-A79). A
+declared shard count above one is the warning ``ShardingNotHonoured``, and an unconditional write
+for a boundary with no named graph is the refusal ``UnconditionalWriteRequiresNamedGraph``. So the
+report is informational and never a gate: every entry holds for almost every configuration.
+
+It reads compiled targets, needs no backend, and is sorted so two runs are byte-identical. Each rule
+is a function over one :class:`CompiledTarget`, kept in :data:`RULES` so a test can name every entry.
+A slice that closes a gap removes its rule here, and the entry it expected from the test, in the same
+commit.
 """
 
 from __future__ import annotations
@@ -53,40 +56,12 @@ class Gap:
 Rule = Callable[[CompiledTarget], Iterable[Gap]]
 
 
-def _boundary(ct: CompiledTarget) -> str | None:
-    return _local(ct.dimensions["aggregateBoundary"].value)
-
-
 def _operation_names(ct: CompiledTarget) -> set[str]:
     return {op.operation for op in ct.operations}
 
 
 def _gap(ct: CompiledTarget, gap: str, obligation: str, reference: str, closes_in: str, message: str) -> Gap:
     return Gap(gap, str(ct.target), obligation, reference, closes_in, message)
-
-
-def _unconditional_write_named_graph_only(ct: CompiledTarget) -> Iterable[Gap]:
-    if "unconditional-write" in _operation_names(ct) and _boundary(ct) != "NamedGraphBoundary":
-        yield _gap(
-            ct, "UnconditionalWriteNamedGraphOnly", UNIMPLEMENTED, "TD-02", "not planned",
-            f"unconditional-write targets a named graph, and this target's boundary is {_boundary(ct)}, so it fails to render",
-        )
-
-
-def _shard_counts_not_honoured(ct: CompiledTarget) -> Iterable[Gap]:
-    declared = []
-    for name in ("txnShards", "logShards", "keyShards"):
-        value = ct.dimensions[name].value
-        try:
-            if value is not None and int(str(value)) > 1:
-                declared.append(f"{name} {int(str(value))}")
-        except ValueError:
-            continue
-    if declared:
-        yield _gap(
-            ct, "ShardCountNotHonoured", UNIMPLEMENTED, "TD-06", "not planned",
-            f"{', '.join(declared)} resolves but every template writes one txn, keys and log-bucket graph",
-        )
 
 
 def _infrastructure_graphs_fixed(ct: CompiledTarget) -> Iterable[Gap]:
@@ -127,8 +102,6 @@ def _version_row_created_by_caller(ct: CompiledTarget) -> Iterable[Gap]:
 
 
 RULES: dict[str, Rule] = {
-    "UnconditionalWriteNamedGraphOnly": _unconditional_write_named_graph_only,
-    "ShardCountNotHonoured": _shard_counts_not_honoured,
     "InfrastructureGraphsFixed": _infrastructure_graphs_fixed,
     "RetentionAndEpochBumpNotGenerated": _retention_and_epoch_bump_not_generated,
     "RestoreRunbookBindingsUnread": _restore_runbook_unread,

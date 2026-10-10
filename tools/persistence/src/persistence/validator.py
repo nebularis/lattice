@@ -170,6 +170,22 @@ def check_cross_axis(
         # shape defines the subjects a payload may contain (ADR-A122 decision 6).
         _check_tree(graph, target, boundary, boundary.extra["ownershipTree"], composite=False)
 
+    # Last, so that a fixture written to isolate another row still reaches it. An unconditional write
+    # (dal:ProvidedConcurrency or dal:LockingConcurrency, with a grain that is not event grain) names its graph from the root, so it needs a named-graph boundary. Any other
+    # boundary used to fail to render at instantiate (TD-02). It is refused here instead.
+    if (
+        concurrency_local in ("ProvidedConcurrency", "LockingConcurrency")
+        and _local(ordering.value if ordering else None) != "EventGrain"
+        and boundary_local != "NamedGraphBoundary"
+    ):
+        raise CrossAxisViolation(
+            "UnconditionalWriteRequiresNamedGraph",
+            str(target),
+            f"dal:{concurrency_local} generates an unconditional write into the root's named graph, and this "
+            f"target's boundary is dal:{boundary_local}, which has no such graph. Use dal:NamedGraphBoundary, "
+            "or dal:Optimistic with a version row and a guard.",
+        )
+
     return diagnostics
 
 

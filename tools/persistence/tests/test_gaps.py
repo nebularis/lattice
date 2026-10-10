@@ -13,8 +13,7 @@ from __future__ import annotations
 import json
 
 import pytest
-from rdflib import Graph, Literal, URIRef
-from rdflib.namespace import XSD
+from rdflib import Graph
 
 from persistence import witness
 from persistence.cli import main
@@ -23,8 +22,6 @@ from persistence.gaps import RULES, find_gaps
 
 from conftest import EXAMPLES_DIR
 
-EX = "https://example.org/lending#"
-DAL = "https://www.nebularis.org/neuro-semantic/lattice/persistence#"
 
 
 def _load(name: str) -> Graph:
@@ -60,21 +57,6 @@ def test_h1_4b_t2_a_named_graph_example_reports_only_what_every_writing_target_d
     assert _example("baseline-single-class.ttl") == EVERY_WRITING_TARGET
 
 
-def test_h1_4b_t5_a_declared_shard_count_above_one_is_reported():
-    graph = _load("baseline-single-class.ttl")
-    graph.add((URIRef(EX + "LoanApplicationStrongProfile"), URIRef(DAL + "txnShards"), Literal(4, datatype=XSD.long)))
-    (gap,) = [g for g in _gaps(graph) if g.gap == "ShardCountNotHonoured"]
-    assert "txnShards 4" in gap.message
-
-
-def test_h1_4b_t6_an_unconditional_write_to_a_target_that_is_not_a_named_graph_is_reported():
-    graph = _load("value-based-cas.ttl")
-    profile = URIRef(EX + "OrderStatusConcurrencyProfile")
-    graph.set((profile, URIRef(DAL + "concurrencyProfile"), URIRef(DAL + "ProvidedConcurrency")))
-    graph.remove((profile, URIRef(DAL + "valueGuardProperty"), None))
-    assert "UnconditionalWriteNamedGraphOnly" in _ids(graph)
-
-
 @pytest.mark.parametrize(
     ("example", "expected"),
     [
@@ -93,7 +75,6 @@ def test_h1_4b_t8_every_rule_fires_somewhere():
     reached: set[str] = set()
     for name in ("baseline-single-class.ttl", "append-stream-dataset-guard.ttl", "identity-epoch-privacy-profile.ttl"):
         reached |= _example(name)
-    reached |= {"ShardCountNotHonoured", "UnconditionalWriteNamedGraphOnly"}  # t5, t6
     assert reached == set(RULES)
 
 
@@ -123,3 +104,9 @@ def test_h1_4b_t11_the_cli_exits_nonzero_when_the_configuration_does_not_compile
     spec = str(EXAMPLES_DIR.parent / "spec" / "persistence.ttl")
     assert main(["gaps", spec, broken]) == 1
     assert "does not compile" in capsys.readouterr().err
+
+
+def test_h1_4b_t12_a_declaration_the_compiler_cannot_honour_is_not_a_gap():
+    """A shard count above one is the warning ShardingNotHonoured, and an unconditional write for a boundary
+    with no named graph is a refusal. Neither is left to the report."""
+    assert {"ShardCountNotHonoured", "UnconditionalWriteNamedGraphOnly"}.isdisjoint(RULES)

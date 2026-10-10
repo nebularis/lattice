@@ -41,7 +41,7 @@ The unit that shipped it, `persistence-compiler-iri-sync`, is closed.
 
 | # | Debt | Spotted | Cost while it stays | Likely home |
 |---|---|---|---|---|
-| TD-02 | `unconditional-write` targets only a named-graph boundary. Provided or locking concurrency with a composite or no boundary fails to render | 2026-09-25 | those combinations cannot be generated | a Persistence compiler unit |
+| TD-02 | `unconditional-write` targets only a named-graph boundary. Provided or locking concurrency, outside event grain, with a composite or no boundary is now **refused** at compile time (`UnconditionalWriteRequiresNamedGraph`) and no longer fails to render at instantiate. What remains is that such a target cannot be declared. It needs a second variant of the template | 2026-09-25 | those combinations cannot be generated | a Persistence compiler unit |
 | TD-05 | infrastructure graph IRIs (`urn:g:dataset`, `urn:g:txn`, `urn:g:keys` and the rest) are constants, in an unregistered `urn:` namespace | 2026-09-25 | two deployments merged into one store collide | a Persistence compiler unit |
 | TD-06 | `dal:txnShards`, `dal:logShards` and `dal:keyShards` resolve but no template applies them (`ShardingNotHonoured`) | 2026-09-25 | a declared shard count is silently a promise | a Persistence compiler unit |
 | TD-07 | `dal:EquivalentClassScope` matching is syntactic, not entailment | 2026-09-25 | an equivalence a reasoner would find is missed | a Persistence compiler unit |

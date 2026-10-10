@@ -607,7 +607,7 @@ reading.
 | **Plan** | [formal-methods.md](plans/formal-methods.md), with [the prover spike](plans/formal-methods-phase-0.md) and per-track plans (`plans/formal-methods-track-*.md`, B, C, E, H). Other tracks rolling-wave |
 | **Status Record** | [formal-methods.md](status/formal-methods.md) |
 | **Track H, aggregate ownership** | design [persistence-aggregate-ownership.md](sketches/persistence-aggregate-ownership.md), from the [exploration note](notes/persistence-aggregate-ownership.md), its [spike](../../spikes/persistence-aggregate-ownership/README.md) and the [review](notes/persistence-aggregate-ownership-review.md). Slices HO0 to HO9 in [plan §3.5](plans/formal-methods-track-h.md#35-ho-aggregate-ownership), all authored and verified 2026-10-10 with a [Validation Pack](validation/FMH-HO0.md) each (`FMH-HO0` to `FMH-HO9`), awaiting the maintainer's merge. [ADR-A122](../architecture/decisions/ADR-A122-aggregate-ownership.md), Proposed |
-| **ADRs** | per track: the assurance profile (A), the reference semantics (B, A-FM3), toolchain workers (F), the formal stack with its home after the spike (E, A-FM1/A-FM2), and Persistence's own home and scope (H, A-FM4, Accepted), aggregate ownership (H, A-122, Proposed) |
+| **ADRs** | per track: the assurance profile (A), the reference semantics (B, A-FM3), toolchain workers (F), the formal stack with its home after the spike (E, A-FM1/A-FM2), and Persistence's own home and scope (H, A-FM4, Accepted), aggregate ownership (H, A-122, Accepted) |
 
 Formal methods in LATTICE's development lifecycle and compilation toolchains: mechanised semantics
 and proofs, lightweight models, adequacy against the fixture corpus, assurance records, guaranteed
