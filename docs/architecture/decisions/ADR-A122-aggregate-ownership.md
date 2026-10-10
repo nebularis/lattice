@@ -2,8 +2,8 @@
 
 # ADR-A122: Aggregate ownership, a classified boundary shape for every boundary strategy
 
-**Status:** Proposed. The maintainer accepts it at the close of the aggregate-ownership work package
-(slices HO0 to HO9 of formal-methods Track H), after verifying the slices built against it
+**Status:** Accepted, 2026-10-10, at the close of the aggregate-ownership work package (slices HO0 to
+HO9 of formal-methods Track H), after the slices built against it were verified
 **Date:** 2026-10-10
 **Supersedes:** none
 **Amends:** [ADR-A78](ADR-A78-persistence-profile-substrate-and-aggregate-boundaries.md) decision 4

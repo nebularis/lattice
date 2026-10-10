@@ -14,17 +14,18 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from scenarios import append_event_runs, composite_sweep  # noqa: E402
+from scenarios import append_event_runs, composite_sweep, project_sweep  # noqa: E402
 
 
 def main() -> int:
     print("Composite boundary: subjects that still have triples after a replace\n")
-    for label, bound, payment in (
-        ("one node property, bound to lineItem", "lineItem", False),
-        ("two node properties, bound to lineItem", "lineItem", True),
-        ("two node properties, bound to payment", "payment", True),
+    for label, owns, payment in (
+        ("an order and its line item", False, False),
+        ("a payment the shape does not own", False, True),
+        ("a payment the shape owns", True, True),
     ):
-        print(f"  {label:42} -> {composite_sweep(bound, payment) or 'nothing left'}")
+        print(f"  {label:42} -> {composite_sweep(owns, payment) or 'nothing left'}")
+    print(f"  {'the project fixture':42} -> {project_sweep()}")
     print("\nappend-event: what a missing parameter does\n")
     for state in append_event_runs():
         print(f"  {state}")

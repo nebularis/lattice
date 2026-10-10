@@ -9,10 +9,10 @@ pipeline (ADR-A79).
 
 from __future__ import annotations
 
+import hashlib
 from dataclasses import dataclass, field
 
 from rdflib import RDF, BNode, Graph, Literal as RdfLiteral, URIRef
-from rdflib.collection import Collection
 
 from . import validator
 from .capability import (
@@ -25,7 +25,7 @@ from .capability import (
 )
 from .model import DIMENSIONS, Diagnostic, ResolvedDimension
 from .namespaces import DAL
-from .operations import GeneratedOperation, select_operations
+from .operations import GeneratedOperation, default_graph_template, select_operations
 from .recipes import build_recipes, canonical_json
 from .resolver import resolve_dimension, resolve_identity, resolve_uniqueness
 
@@ -121,6 +121,24 @@ def compile_targets(
         except Exception as e:
             raise CompileError(target, e) from e
 
+    families: dict[str, tuple[str, str]] = {}
+    for ct in compiled:
+        boundary = ct.dimensions["aggregateBoundary"]
+        if str(boundary.value).endswith("NamedGraphBoundary"):
+            declared = boundary.extra.get("graphIriTemplate")
+            template = str(declared) if declared is not None else default_graph_template(ct.target.cls)
+            key, label = (boundary.won_by, boundary.won_by) if declared is not None else (str(ct.target.cls), f"the default for {ct.target.cls}")
+            families[str(key)] = (str(label), template.partition("{id}")[0])
+    try:
+        validator.check_graph_naming(families)
+    except Exception as e:  # GraphIriTemplateOverlap
+        raise CompileError(Target(cls=URIRef("urn:x-persistence:whole-graph")), e) from e
+
+    for ct in compiled:
+        boundary = ct.dimensions["aggregateBoundary"]
+        if str(boundary.value).endswith("CompositePropertyBoundary"):
+            ct.diagnostics += validator.check_references_to_owned(graph, ct.target, boundary)
+
     mixed_receipt_warnings = validator.check_mixed_receipt_model(graph, resolved_by_target)
     by_target_iri = {str(ct.target): ct for ct in compiled}
     for warning in mixed_receipt_warnings:
@@ -137,12 +155,20 @@ def _local(value) -> str:
     return str(value).rsplit("#", 1)[-1] if value is not None else ""
 
 
+def _profile_label(compiled: CompiledTarget) -> str:
+    """A stable stem for every blank node of one compiled profile: a digest of the target (and
+    deployment) it is for, so the same configuration serialises to the same bytes (H1.5, TD-09)."""
+    key = f"{compiled.target.cls}|{compiled.target.deployment or ''}"
+    return "p" + hashlib.sha256(key.encode("utf-8")).hexdigest()[:12]
+
+
 def emit_compiled_profile(out: Graph, compiled: CompiledTarget) -> URIRef:
     """Serialise one :class:`CompiledTarget` into ``out`` as a
     ``dal:CompiledProfile`` individual. Never writes literal SPARQL text
     (ADR-A79 point 2): only resolved values, provenance, template
     identifiers, and reified parameter bindings."""
-    profile = BNode()
+    stem = _profile_label(compiled)
+    profile = BNode(stem)
     out.add((profile, RDF.type, DAL.CompiledProfile))
     out.add((profile, DAL.forTarget, compiled.target.cls))
     if compiled.target.deployment is not None:
@@ -150,7 +176,7 @@ def emit_compiled_profile(out: Graph, compiled: CompiledTarget) -> URIRef:
 
     all_dimensions = [(dim, compiled.dimensions[dim]) for dim in DIMENSIONS] + list(compiled.identity.items())
     for dim, rd in all_dimensions:
-        node = BNode()
+        node = BNode(f"{stem}-dim-{dim.replace(':', '-')}")
         out.add((node, DAL.dimension, RdfLiteral(dim)))
         if isinstance(rd.value, RdfLiteral):
             # literal-valued dimensions (LITERAL_DIMENSIONS): dal:resolvedValue
@@ -168,7 +194,7 @@ def emit_compiled_profile(out: Graph, compiled: CompiledTarget) -> URIRef:
         out.add((profile, DAL.appliedUniquenessConstraint, URIRef(constraint["constraint"])))
 
     for recipe in compiled.recipes:
-        node = BNode()
+        node = BNode(f"{stem}-recipe-{recipe['role']}")
         out.add((node, RDF.type, DAL.MintingRecipe))
         out.add((node, DAL.forRole, DAL[recipe["role"]]))
         out.add((node, DAL.recipeStrategy, DAL[recipe["strategy"]]))
@@ -178,17 +204,18 @@ def emit_compiled_profile(out: Graph, compiled: CompiledTarget) -> URIRef:
         out.add((node, DAL.recipeDocument, RdfLiteral(canonical_json(recipe).decode("utf-8"), datatype=RDF_JSON)))
         out.add((profile, DAL.mintingRecipe, node))
 
-    for op in compiled.operations:
-        op_node = BNode()
+    for index, op in enumerate(compiled.operations):
+        op_stem = f"{stem}-op-{index:02d}"
+        op_node = BNode(op_stem)
         out.add((op_node, RDF.type, DAL.GeneratedOperation))
         out.add((op_node, DAL.forOperation, RdfLiteral(op.operation)))
-        template_node = BNode()
+        template_node = BNode(f"{op_stem}-template")
         out.add((template_node, RDF.type, DAL.Template))
         out.add((template_node, DAL.templateId, RdfLiteral(op.template_id)))
         out.add((template_node, DAL.templatePath, RdfLiteral(op.template_id)))
         out.add((op_node, DAL.usesTemplate, template_node))
         for binding in op.bindings:
-            binding_node = BNode()
+            binding_node = BNode(f"{op_stem}-binding-{binding.name}")
             out.add((binding_node, RDF.type, DAL.ParameterBinding))
             out.add((binding_node, DAL.paramName, RdfLiteral(binding.name)))
             out.add((binding_node, DAL.paramType, RdfLiteral(binding.param_type)))
@@ -196,7 +223,7 @@ def emit_compiled_profile(out: Graph, compiled: CompiledTarget) -> URIRef:
             out.add((op_node, DAL.hasParameterBinding, binding_node))
         out.add((profile, DAL.generatedOperation, op_node))
 
-    req_node = BNode()
+    req_node = BNode(f"{stem}-requirement")
     out.add((req_node, RDF.type, DAL.CapabilityRequirement))
     if compiled.requirement.requires_cas:
         out.add((req_node, DAL.requiresCas, RdfLiteral(compiled.requirement.requires_cas)))
@@ -209,20 +236,24 @@ def emit_compiled_profile(out: Graph, compiled: CompiledTarget) -> URIRef:
             )
         )
     if compiled.requirement.requires_reasoning_for:
-        list_node = BNode()
-        Collection(out, list_node, [URIRef(s) for s in compiled.requirement.requires_reasoning_for])
-        out.add((req_node, DAL.requiresReasoningFor, list_node))
+        # An RDF list written by hand, since rdflib's Collection mints a fresh blank node per cell.
+        items = [URIRef(s) for s in compiled.requirement.requires_reasoning_for]
+        cells = [BNode(f"{stem}-reasoning-{n}") for n in range(len(items))]
+        for n, (cell, item) in enumerate(zip(cells, items)):
+            out.add((cell, RDF.first, item))
+            out.add((cell, RDF.rest, cells[n + 1] if n + 1 < len(cells) else RDF.nil))
+        out.add((req_node, DAL.requiresReasoningFor, cells[0]))
     out.add((profile, DAL.capabilityRequirement, req_node))
 
     if compiled.check is not None:
-        check_node = BNode()
+        check_node = BNode(f"{stem}-check")
         out.add((check_node, RDF.type, DAL.CapabilityCheck))
         out.add((check_node, DAL.checkedAgainst, URIRef(compiled.check.against)))
         out.add((check_node, DAL.verdict, RdfLiteral(compiled.check.verdict)))
         out.add((profile, DAL.capabilityCheck, check_node))
 
-    for diag in compiled.diagnostics:
-        diag_node = BNode()
+    for index, diag in enumerate(compiled.diagnostics):
+        diag_node = BNode(f"{stem}-diagnostic-{index:02d}")
         out.add((diag_node, RDF.type, DAL.Diagnostic))
         out.add((diag_node, DAL.diagnosticKind, RdfLiteral(diag.kind)))
         out.add((diag_node, DAL.diagnosticMessage, RdfLiteral(diag.message)))

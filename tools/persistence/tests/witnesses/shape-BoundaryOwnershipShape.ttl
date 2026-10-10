@@ -1,0 +1,9 @@
+# SPDX-License-Identifier: MPL-2.0
+# NB: This file has been produced using GenAI
+# An edge is classified as exactly one of owned, reference or vocabulary.
+# base: composite-property-boundary-shacl.ttl
+@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix ex:  <https://example.org/lending#> .
+@prefix sh:  <http://www.w3.org/ns/shacl#> .
+
+ex:OrderAggregateShape sh:property [ sh:path ex:customer ; sh:class ex:Customer ; dal:ownership ex:Other ] .

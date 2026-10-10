@@ -15,40 +15,60 @@ PYTHONUNBUFFERED = "1"
 
 [tasks.bootstrap]
 description = "Install configured toolchains and dependency sets"
-depends = ["bootstrap:python-root", "bootstrap:mork", "bootstrap:mork-compilers", "bootstrap:vocabulary", "bootstrap:reference-eligibility", "bootstrap:surface", "bootstrap:persistence", "bootstrap:minting-python", "bootstrap:workers", "bootstrap:frontend"]
+depends = ["bootstrap:python", "bootstrap:frontend"]
+
+# One pip, once. The Python packages share one virtual environment per checkout, so they are
+# installed in a single resolve. Ten pip processes writing one site-packages at the same time
+# corrupt it when two of them want different versions of a package, and pip cannot see a conflict
+# between processes. A single resolve installs a consistent set or reports the conflict.
+[tasks."bootstrap:python"]
+description = "Install every Python package of the repository into this checkout's .venv in one resolve"
+depends = ["bootstrap:pip"]
+run = "python -m pip install -c requirements-lock.txt \".[reasoning,test]\" -e \"./workers[test,authoring]\" -e ./tools/mork -e \"./tools/mork_compilers[test]\" -e ./tools/surface -e \"./tools/persistence[test]\" -e \"./tools/vocabulary[test]\" -e \"./tools/reference/eligibility[test]\" -e \"./packages/minting/python[test]\""
+
+# A virtual environment that mise creates with uv has no pip. This puts one in, and does nothing
+# where pip is already there.
+[tasks."bootstrap:pip"]
+description = "Make sure this checkout's .venv has pip"
+run = "python -m ensurepip --upgrade"
 
 [tasks."bootstrap:python-root"]
+depends = ["bootstrap:pip"]
 description = "Install root ontology validation dependencies"
 run = "python -m pip install -c requirements-lock.txt \".[reasoning,test]\""
 
 [tasks."bootstrap:workers"]
+depends = ["bootstrap:pip"]
 description = "Install the worker package with test dependencies"
 run = "python -m pip install -e \"./workers[test,authoring]\""
 
 [tasks."bootstrap:mork"]
+depends = ["bootstrap:pip"]
 description = "Install the MORK package and MTP structural dependencies"
 run = "python -m pip install -e ./tools/mork"
 
 [tasks."bootstrap:mork-compilers"]
-depends = ["bootstrap:vocabulary"]
+depends = ["bootstrap:pip", "bootstrap:vocabulary"]
 description = "Install the MORK backend compiler package"
 run = "python -m pip install -e \"./tools/mork_compilers[test]\""
 
 [tasks."bootstrap:surface"]
-depends = ["bootstrap:vocabulary"]
+depends = ["bootstrap:pip", "bootstrap:vocabulary"]
 description = "Install the Surface compiler package"
 run = "python -m pip install -e ./tools/surface"
 
 [tasks."bootstrap:persistence"]
+depends = ["bootstrap:pip"]
 description = "Install the persistence profile compiler package (ADR-A78/A79)"
 run = "python -m pip install -e \"./tools/persistence[test]\""
 
 [tasks."bootstrap:vocabulary"]
+depends = ["bootstrap:pip"]
 description = "Install the Vocabulary scoped/temporal binding reference resolver (ADR-A85)"
 run = "python -m pip install -e \"./tools/vocabulary[test]\""
 
 [tasks."bootstrap:reference-eligibility"]
-depends = ["bootstrap:mork-compilers"]
+depends = ["bootstrap:pip", "bootstrap:mork-compilers"]
 description = "Install Eligibility's hand-written reference semantics (formal-methods track B1/B2, ADR-A-FM3)"
 run = "python -m pip install -e \"./tools/reference/eligibility[test]\""
 
@@ -124,6 +144,7 @@ description = "Recompute every identity-minting anchor vector with openssl and t
 run = "python contracts/identity/verify-anchors.py"
 
 [tasks."bootstrap:minting-python"]
+depends = ["bootstrap:pip"]
 description = "Install the standalone Python minting library (ADR-A84) with its test extra"
 run = "python -m pip install -e \"./packages/minting/python[test]\""
 
@@ -242,7 +263,7 @@ run = "python tools/time_ontology_tests.py"
 
 [tasks."check:ontology-catalog"]
 description = "Run the ontology tool tests (catalog, versioning, Eligibility examples, PROV-O alignment, Wording, Behaviour split, Instrument with its regimes and terms in time), then fail when a catalog drifts, an import does not resolve, or a known defect is fixed but still listed (ADR-A88). Parallelised by file (python-test-melting, TM7): a shared, cached graph in tools/conftest.py is per-worker-process, not global, so each worker still benefits from it for its own share of files"
-run = "python -m pytest tools/test_applied_shared_contracts.py tools/test_eligibility_examples.py tools/test_mork_order_relations.py tools/test_ontology_catalog.py tools/test_ontology_releases.py tools/test_ontology_version_check.py tools/test_peril_vocabulary.py tools/test_provenance_alignment.py tools/test_reasoning_isolation.py tools/test_substrate_extensions.py tools/test_wording.py tools/test_behaviour_split.py tools/test_import_guard.py tools/test_behaviour_records.py tools/test_behaviour_nested.py tools/test_keys.py tools/test_instrument.py tools/test_regimes.py tools/test_terms_in_time.py tools/test_constitutive_terms.py tools/test_parameter_bindings.py tools/test_amendments.py tools/test_graph_cache.py tools/test_repo_files.py tools/test_environment_banner.py tools/test_reasoning_stalled_import.py tools/test_additivity.py tools/test_legal_acts.py tools/test_full_sweep.py -q -n auto --dist loadfile && python tools/ontology_catalog.py check"
+run = "python -m pytest tools/test_applied_shared_contracts.py tools/test_eligibility_examples.py tools/test_mork_order_relations.py tools/test_ontology_catalog.py tools/test_ontology_releases.py tools/test_ontology_version_check.py tools/test_peril_vocabulary.py tools/test_provenance_alignment.py tools/test_reasoning_isolation.py tools/test_substrate_extensions.py tools/test_wording.py tools/test_behaviour_split.py tools/test_import_guard.py tools/test_behaviour_records.py tools/test_behaviour_nested.py tools/test_keys.py tools/test_instrument.py tools/test_regimes.py tools/test_terms_in_time.py tools/test_constitutive_terms.py tools/test_parameter_bindings.py tools/test_amendments.py tools/test_graph_cache.py tools/test_repo_files.py tools/test_environment_banner.py tools/test_reasoning_stalled_import.py tools/test_additivity.py tools/test_legal_acts.py tools/test_full_sweep.py tools/test_python_requirements.py -q -n auto --dist loadfile && python tools/ontology_catalog.py check"
 
 [tasks."bootstrap:reasoning-testkit"]
 description = "Build the test-only reasoning harness jar (ADR-A83). Tests that need it skip without it"

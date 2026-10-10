@@ -54,9 +54,9 @@
     <uri name="https://www.nebularis.org/neuro-semantic/lattice/party-vocab/0.9.0" uri="party/vocab/party-vocab.ttl"/>
     <uri name="https://www.nebularis.org/neuro-semantic/lattice/party/0.9.0" uri="party/spec/party.ttl"/>
     <uri name="https://www.nebularis.org/neuro-semantic/lattice/persistence" uri="persistence/spec/persistence.ttl"/>
-    <uri name="https://www.nebularis.org/neuro-semantic/lattice/persistence/0.2.1" uri="persistence/spec/persistence.ttl"/>
+    <uri name="https://www.nebularis.org/neuro-semantic/lattice/persistence/0.3.0" uri="persistence/spec/persistence.ttl"/>
     <uri name="https://www.nebularis.org/neuro-semantic/lattice/persistent-foundation" uri="persistence/spec/persistent-foundation.ttl"/>
-    <uri name="https://www.nebularis.org/neuro-semantic/lattice/persistent-foundation/0.1.0" uri="persistence/spec/persistent-foundation.ttl"/>
+    <uri name="https://www.nebularis.org/neuro-semantic/lattice/persistent-foundation/0.2.0" uri="persistence/spec/persistent-foundation.ttl"/>
     <uri name="https://www.nebularis.org/neuro-semantic/lattice/quantification/0.8.0" uri="quantification/spec/quantification.ttl"/>
     <uri name="https://www.nebularis.org/neuro-semantic/lattice/surface-vocab/0.8.0" uri="surface/vocab/surface-vocab.ttl"/>
     <uri name="https://www.nebularis.org/neuro-semantic/lattice/surface/0.8.0" uri="surface/spec/surface.ttl"/>

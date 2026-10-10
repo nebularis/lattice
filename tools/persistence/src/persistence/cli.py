@@ -24,6 +24,11 @@
     configuration. Exits 1 on any violation, 0 otherwise (warnings are
     printed but do not fail).
 
+``gaps``
+    List the declaration/implementation gap (slice H1.4b): what the configuration declares that
+    the generated SPARQL does not implement, and whose obligation each entry is. Informational,
+    exits 0 once the configuration compiles, and 1 if it does not.
+
 ``witness``
     Check that every refusal, warning, SHACL shape and audit query has a
     fixture that triggers it, or is listed as a known gap (slice H1.2).
@@ -33,13 +38,15 @@
 from __future__ import annotations
 
 import argparse
+import json
 import sys
 from pathlib import Path
 
 from rdflib import Graph
 
 from .capability import load_capability_spec
-from .compiler import CompileError, compile_to_graph
+from .compiler import CompileError, compile_targets, compile_to_graph
+from .gaps import as_data, find_gaps
 from .hygiene import VIOLATION, check_prefix_antichain
 from .templatecheck import check_compiled
 from .witness import check_witness_coverage, use_color
@@ -119,6 +126,22 @@ def cmd_hygiene(args: argparse.Namespace) -> int:
     return 1 if violations else 0
 
 
+def cmd_gaps(args: argparse.Namespace) -> int:
+    graph = _load_graph(args.config, None)
+    try:
+        gaps = find_gaps(compile_targets(graph))
+    except CompileError as error:
+        print(f"gaps: the configuration does not compile ({error.cause})", file=sys.stderr)
+        return 1
+    if args.json:
+        print(json.dumps(as_data(gaps), indent=2, sort_keys=True))
+    else:
+        for gap in gaps:
+            print(gap)
+    print(f"gaps: {len(gaps)} gap(s)", file=sys.stderr)
+    return 0
+
+
 def cmd_witness(args: argparse.Namespace) -> int:
     try:
         report = check_witness_coverage()
@@ -161,6 +184,11 @@ def build_parser() -> argparse.ArgumentParser:
     p_hygiene = sub.add_parser("hygiene", help="run the static hygiene checks over a configuration")
     p_hygiene.add_argument("config", nargs="+", help="ontology/persistence graph file(s) or directory(ies)")
     p_hygiene.set_defaults(func=cmd_hygiene)
+
+    p_gaps = sub.add_parser("gaps", help="list what a configuration declares that the generated SPARQL does not implement")
+    p_gaps.add_argument("config", nargs="+", help="ontology/persistence graph file(s) or directory(ies)")
+    p_gaps.add_argument("--json", action="store_true", help="print the report as JSON")
+    p_gaps.set_defaults(func=cmd_gaps)
 
     p_witness = sub.add_parser("witness", help="check that every rule, shape and audit has a fixture that triggers it")
     p_witness.add_argument("--verbose", action="store_true", help="also list each witnessed rule and each known gap")

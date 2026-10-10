@@ -37,7 +37,10 @@ along the way.
 | `.claude/skills/` | the skills below |
 
 Do not add a directory at the root, or a new kind of directory anywhere, without an accepted ADR.
-`mise` is the only task entry point (ADR-A29). The [developer guide](docs/developer/developer-guide.md)
+`mise` is the only task entry point (ADR-A29). Every command you run or give the maintainer goes
+through it, as `mise run <task>` or `mise exec -- <command>`, never a bare `python`, `pytest` or `pip`.
+Only mise picks up this checkout's `.venv` and its dependencies, and a bare interpreter is the global
+one (skill `lattice-toolchain`). The [developer guide](docs/developer/developer-guide.md)
 describes every tool.
 
 ## Writing

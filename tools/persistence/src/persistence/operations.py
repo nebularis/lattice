@@ -24,13 +24,13 @@ from rdflib import URIRef
 
 from .model import ResolvedDimension
 from .scopes import Target
-from .terms import Integer, Iri, Literal
+from .terms import Integer, Iri, Literal, PropertyPath
 
 
 @dataclass(frozen=True)
 class ParameterBinding:
     name: str
-    param_type: str  # "Iri" | "Literal" | "Integer" | "String"
+    param_type: str  # "Iri" | "Literal" | "Integer" | "String" | "PropertyPath"
     value: Any
 
 
@@ -53,6 +53,11 @@ def _family_token(cls) -> str:
     the fixed event-graph prefix (guide §2.3)."""
     local = re.split(r"[#/:]", str(cls).rstrip("/#"))[-1]
     return re.sub(r"[^a-z0-9-]", "-", local.lower()) or "family"
+
+
+def default_graph_template(cls) -> str:
+    """The graph template of a named-graph family that declares none: ``urn:g:<family token>/{id}``."""
+    return f"urn:g:{_family_token(cls)}/{{id}}"
 
 
 def _shard_for(target: Target, shard_count: int) -> int:
@@ -120,12 +125,17 @@ def select_operations(
     # know which graph to write into).
     if boundary == "NamedGraphBoundary":
         boundary_dim = dimensions["aggregateBoundary"]
-        template = boundary_dim.extra.get("graphIriTemplate", f"urn:g:{target.cls}/")
-        graph_prefix = str(template).split("{", 1)[0]
+        # The graph is the prefix, the root IRI encoded with ENCODE_FOR_URI, and the suffix, so
+        # distinct roots name distinct graphs (ADR-A122 decision 8). The validator has already
+        # checked that the template holds one {id} and that its suffix starts with a character the
+        # encoding never emits.
+        template = str(boundary_dim.extra.get("graphIriTemplate", default_graph_template(target.cls)))
+        graph_prefix, _, graph_suffix = template.partition("{id}")
         common_bindings = common_bindings + [
-            # A string fragment interpolated inside an existing CONCAT(...),
-            # not a standalone IRI term: Literal, not Iri.
+            # String fragments interpolated inside an existing CONCAT(...),
+            # not standalone IRI terms: Literals, not Iris.
             ParameterBinding("graphPrefix", "String", Literal.encode(graph_prefix)),
+            ParameterBinding("graphSuffix", "String", Literal.encode(graph_suffix)),
         ]
 
     if concurrency == "Optimistic":
@@ -147,33 +157,34 @@ def select_operations(
             ops.append(GeneratedOperation("cas-replace", cas_template, common_bindings))
             ops.append(GeneratedOperation("tombstone-delete", tombstone_template, common_bindings))
         elif boundary == "CompositePropertyBoundary":
-            # SPARQL 1.1 property paths support only *, +, ? repetition, not
-            # bounded {n,m} (there is no such production in the grammar),
-            # and a path cannot itself be a variable. The composite
-            # property is therefore a compile-time Mustache slot, not a
-            # request-time $-variable, populated in resolver.py once the
-            # boundary shape is walked (persistence.resolver,
-            # persistence.boundary). Depth is enforced at compile time by
-            # the shape walk's own cycle detection, not by a runtime bound.
+            # A property path cannot be a variable, so the path that reaches the aggregate's
+            # members is a compile-time slot, not a request-time $-variable. It is compiled from
+            # the owned edges of the boundary shape's classified tree (persistence.boundary,
+            # persistence.paths), and the validator has already refused a composite profile with
+            # no data graph, no shape or no owned edge. Every composite pattern sits in the
+            # profile's data graph and never in the default graph (static check S-1).
             boundary_dim = dimensions["aggregateBoundary"]
-            # The property that leads to a member node. A boundary with more than one is
-            # refused by the validator, so there is at most one here. A shape with none has
-            # no members to sweep, and keeps binding its first property as before.
-            edges = boundary_dim.extra.get("compositeEdgeProperties", [])
-            composite_properties = boundary_dim.extra.get("compositeProperties", [])
-            first_property = (edges or composite_properties or [None])[0]
-            bindings = common_bindings + (
-                [ParameterBinding("compositeProperty", "Iri", Iri.encode(str(first_property)))]
-                if first_property is not None
-                else []
-            )
+            owned_path = boundary_dim.extra["ownershipTree"].owned_path()
+            data_graph = ParameterBinding("dataGraph", "Iri", Iri.encode(str(boundary_dim.extra["dataGraph"])))
+            bindings = common_bindings + [ParameterBinding("ownedPath", "PropertyPath", PropertyPath.encode(owned_path)), data_graph]
             composite_template = (
                 "cas-replace-composite-property-dataset-guard.mustache" if dataset_level_guard
                 else "cas-replace-composite-property.mustache"
             )
+            tombstone_template = (
+                "tombstone-delete-composite-dataset-guard.mustache" if dataset_level_guard
+                else "tombstone-delete-composite.mustache"
+            )
             if pre_created_row:
                 ops.append(GeneratedOperation(bootstrap_op.operation, bootstrap_op.template_id, bindings))
+            else:
+                # a create sweeps nothing, so it needs the data graph and no path
+                create_bindings = common_bindings + [data_graph]
+                ops.append(GeneratedOperation(
+                    "create-if-absent", f"create-if-absent-composite{guard_suffix}.mustache", create_bindings
+                ))
             ops.append(GeneratedOperation("cas-replace", composite_template, bindings))
+            ops.append(GeneratedOperation("tombstone-delete", tombstone_template, bindings))
         elif boundary == "NoBoundary":
             guard_prop = dimensions["concurrencyProfile"].extra.get("valueGuardProperty")
             bindings = common_bindings + (

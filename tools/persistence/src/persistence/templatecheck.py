@@ -68,6 +68,8 @@ OPTIONAL_INSERT_VARIABLES: dict[str, dict[str, str]] = {
     "cas-replace-named-graph-dataset-guard": {"prevRev": _FIRST_CAS},
     "cas-replace-composite-property": {"prevRev": _FIRST_CAS},
     "cas-replace-composite-property-dataset-guard": {"prevRev": _FIRST_CAS},
+    "tombstone-delete-composite": {"prevRev": _FIRST_CAS},
+    "tombstone-delete-composite-dataset-guard": {"prevRev": _FIRST_CAS},
     "tombstone-delete-named-graph": {"prevRev": _FIRST_CAS},
     "tombstone-delete-named-graph-dataset-guard": {"prevRev": _FIRST_CAS},
     "append-event": {"prev": _FIRST_APPEND},

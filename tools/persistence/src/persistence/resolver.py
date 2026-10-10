@@ -28,7 +28,7 @@ _DIMENSION_SPEC: dict[str, tuple[URIRef, URIRef, tuple[URIRef, ...]]] = {
     "aggregateBoundary": (
         DAL.AggregateBoundaryProfile,
         DAL.strategy,
-        (DAL.graphIriTemplate, DAL.boundaryShape, DAL.maxTraversalDepth, DAL.valueGuardProperty),
+        (DAL.graphIriTemplate, DAL.boundaryShape, DAL.dataGraph, DAL.ownsReferenceData, DAL.valueGuardProperty),
     ),
     "concurrencyProfile": (
         DAL.ConcurrencyProfile,
@@ -200,15 +200,14 @@ def _select(
 
     winner = top[0]
     extra = dict(winner.extra)
-    if dimension == "aggregateBoundary" and str(winner.value).endswith("CompositePropertyBoundary"):
+    if dimension == "aggregateBoundary" and str(winner.value).endswith(("CompositePropertyBoundary", "NamedGraphBoundary")):
+        # A named-graph profile may carry the same classified shape, which defines the subjects a
+        # payload may contain (ADR-A122 decision 6).
         boundary_shape = extra.get("boundaryShape")
         if boundary_shape is not None:
-            from .boundary import walk_boundary_shape
+            from .boundary import walk_ownership
 
-            max_depth = int(extra.get("maxTraversalDepth", 8))
-            closure = walk_boundary_shape(graph, boundary_shape, max_depth)
-            extra["compositeProperties"] = closure.composite_properties
-            extra["compositeEdgeProperties"] = closure.node_properties
+            extra["ownershipTree"] = walk_ownership(graph, boundary_shape)
 
     return ResolvedDimension(
         dimension=dimension,

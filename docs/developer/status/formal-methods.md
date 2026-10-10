@@ -88,7 +88,7 @@ status record.
 | E Prover programme | E1.0/E1.1/E1.4 done. FM-D17 built. E1.2 retired (its real home is B4/E3-E4, not Quantification) | E1.3 waits on track C2's overlap-rule ADR, not on C2 itself (done) |
 | F Native tooling | not started | its ADR, then a Python baseline per family |
 | G Instrument assurance | not started | B4, C3 |
-| H Persistence | in progress. H1.1 to H1.4a built. Aggregate-ownership slices HO0 to HO9 planned 2026-10-10, ADR-A-FM4 accepted, ADR-A122 Proposed. [Its own plan, sketch and status](formal-methods-track-h.md) | nothing from tracks A-G; it reuses their methods but needs none of them to start |
+| H Persistence | in progress. H1.1 to H1.4a built. Aggregate-ownership slices HO0 to HO9 planned 2026-10-10, ADR-A-FM4 accepted, ADR-A122 accepted 2026-10-10. [Its own plan, sketch and status](formal-methods-track-h.md) | nothing from tracks A-G; it reuses their methods but needs none of them to start |
 
 ## Track D
 

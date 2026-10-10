@@ -268,12 +268,19 @@ request-time values as `initBindings`.
 `test_the_composite_replace_writes_the_new_payload_to_the_log_graph_not_the_default_graph` to
 `test_the_composite_replace_writes_the_new_payload_to_the_default_graph`, asserting
 `list(found) == [str(rdflib.graph.DATASET_DEFAULT_GRAPH_ID)]`. Update note §2.3's last sentence to "Fixed in
-HO1." Run `python spikes/persistence-oxigraph/rdflib_comparison.py`. If its composite scenarios now
-report different counts, the payload move explains it. Update their expectations and say so in the
-Validation Pack.
+HO1." Run `python spikes/persistence-oxigraph/rdflib_comparison.py` if `pyoxigraph` is installed. That run
+is **not mandatory** (decided 2026-10-10): the Oxigraph spike is a second-engine cross-check, and a
+slice may skip it where the package cannot be installed, saying so in its Validation Pack. If its
+composite scenarios report different counts, the payload move explains it. Update their expectations
+and say so in the Validation Pack.
 
-**Existing tests.** H1.4a-T10 and T11 must pass unchanged. If one fails, explain why in the
-Validation Pack before editing it.
+**Existing tests.** H1.4a-T10 and T11 must pass with their assertions unchanged. They did not at first
+(predicted, then seen): their helper ran the update with `templatecheck`'s stand-in for the payload
+slot, which the replace now writes to the default graph. The fix is to the test input and not to the
+expected results. The helper removes the stand-in from the rendered text (taken from
+`templatecheck._SLOT_STAND_INS`, so it cannot drift), so the replace runs with an empty payload, as
+the tests always meant. Filtering the stand-in's subject out of the result instead was rejected,
+since it makes the assertion skip something. HO5 rewrites both tests for the tree.
 
 **Register.** Remove TD-39 and TD-36, naming HO1.
 

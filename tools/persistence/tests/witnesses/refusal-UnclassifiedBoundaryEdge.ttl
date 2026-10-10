@@ -1,13 +1,11 @@
 # SPDX-License-Identifier: MPL-2.0
 # NB: This file has been produced using GenAI
-# A composite boundary whose shape leads to two other nodes. The generated
-# replace follows one property, so the other's members would be left behind.
+# An edge that leads to a node must say whether the aggregate owns it.
 # base: composite-property-boundary-shacl.ttl
 @prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
 @prefix ex:  <https://example.org/lending#> .
 @prefix sh:  <http://www.w3.org/ns/shacl#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
-ex:OrderAggregateShape sh:property [ sh:path ex:payment ; sh:node ex:PaymentShape ] .
-ex:PaymentShape a sh:NodeShape ;
-    sh:property [ sh:path ex:amount ; sh:datatype xsd:string ] .
+ex:OrderAggregateShape sh:property [ sh:path ex:customer ; sh:class ex:Customer ] .

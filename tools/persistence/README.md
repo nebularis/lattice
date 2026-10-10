@@ -52,6 +52,14 @@ python -m persistence hygiene \
 python -m persistence witness --verbose
 ```
 
+**`gaps`** lists, for each compiled target, what the configuration declares that the generated SPARQL does not implement, and whose obligation each entry is: `unimplemented` (a register row is named), `caller` (the SPARQL assumes something it cannot enforce), or `housekeeping` (ADR-A80). It is informational and exits 0 once the configuration compiles, and 1 if it does not. It lists what is true of nearly every configuration, and a declaration the compiler cannot honour is not in it: that is a compile warning or a refusal, so a profile is never produced that quietly drops one. `--json` prints the report as data. Each rule lives in `persistence.gaps.RULES`, and a slice that closes a gap removes its rule there.
+
+```bash
+python -m persistence gaps \
+    ontology/persistence/spec/persistence.ttl \
+    path/to/your-config.ttl
+```
+
 ## What `compile` actually does
 
 | Stage | Input | Output | Failure mode |
@@ -109,7 +117,7 @@ This section is for a caller that runs the instantiated `.rq` files without LATT
 
 | Kind | Filled by | Syntax in the `.rq` file | Examples |
 |---|---|---|---|
-| Compile-time slot | `persistence instantiate`, from the compiled profile's parameter bindings | already rendered, nothing left | graph IRIs, shard number, composite property |
+| Compile-time slot | `persistence instantiate`, from the compiled profile's parameter bindings | already rendered, nothing left | graph IRIs, shard number, the composite owned path and data graph |
 | Request-time slot | you, with any Mustache library, per request | `{{{payloadTriples}}}`, `{{{logGraphs}}}` | the payload, the registry's log buckets |
 | SPARQL variable | you, as initial bindings (or a prepared query's parameters), per request | `$root`, `$epoch`, … | the target IRI, positions, txn id |
 
@@ -150,15 +158,15 @@ This section is for a caller that runs the instantiated `.rq` files without LATT
 
 ## Known limitations (first cut, honestly scoped)
 
-- **`unconditional-write`** only knows how to target a `dal:NamedGraphBoundary`'s graph. A target combining `dal:ProvidedConcurrency`/`dal:LockingConcurrency` with `dal:CompositePropertyBoundary` or `dal:NoBoundary` will fail to render (a missing `graphPrefix` binding) until a second variant is added.
-- **`cas-replace-composite-property`** follows one property, with `+` (one-or-more) traversal, and sweeps each member's triples. A `dal:boundaryShape` whose closure leads to other nodes (`sh:node`) through **more than one** property is therefore **refused** as `CompositeBoundaryMultipleProperties`: a member reached through the other property would keep its triples after a replace, a dangling subgraph. This is a documented, refused combination until the typed IR of formal-methods H2 can generate a sweep over several properties (TD-03). A shape with exactly one such property compiles, and the compiler binds that property, not whichever property the shape happens to declare first. Plain value properties (a datatype property, say) are swept with the aggregate's own triples and do not count.
+- **`unconditional-write`** only knows how to target a `dal:NamedGraphBoundary`'s graph. A target combining `dal:ProvidedConcurrency` or `dal:LockingConcurrency`, outside event grain, with `dal:CompositePropertyBoundary` or `dal:NoBoundary` is refused (`UnconditionalWriteRequiresNamedGraph`, TD-02) until a second variant is added.
+- **`cas-replace-composite-property`** sweeps the root and every member of the aggregate in one pattern, inside the profile's `dal:dataGraph` (ADR-A122). The members are the nodes reached by the owned edges of the boundary shape, compiled to one property path (`ownedPath`), with recursion as `*` and an edge from child to parent as an inverse step. An edge that leads to a node and is not classified is refused (`UnclassifiedBoundaryEdge`), as are a composite profile with no `dal:dataGraph` (`MissingDataGraph`) and one whose shape owns no edge (`CompositeBoundaryWithoutOwnedEdges`). A composite family also has `create-if-absent-composite` (it also asks that nothing of the root is in the data graph) and `tombstone-delete-composite`, which sweeps with the same path and tombstones the version row.
 - **`dal:EquivalentClassScope` matching** is a syntactic approximation (does the target class appear inside the equivalence expression's `owl:intersectionOf`), not full OWL entailment. No reasoner dependency is introduced anywhere in this compiler, by design (sketch non-goals).
 - **The log-bucket month** (`urn:g:txlog/{month}`) is computed at request time via `NOW()`, inside the generated `WHERE` clause, not baked in as a compile-time constant — this differs from an earlier, since-corrected version of the worked example in the sketch, which would have hard-coded a single month into a template meant to be reused across many months.
 - **Infrastructure graph IRIs are fixed constants, not per-deployment configurable.** `urn:g:dataset` (dataset epoch graph and node), `urn:g:txn`, `urn:g:keys`, `urn:g:key-quarantine`, `urn:g:txlog/` (log bucket prefix), `urn:g:txlog/pinned`, `urn:g:retention`, `urn:g:events/{class-local-name}/` and `urn:g:meta/{shard}` match `rdf-sparql-patterns-guide.md` §2.3. No `dal:` property names them yet.
+- **A named graph is named from the whole root IRI** (ADR-A122 decision 8): `dal:graphIriTemplate` with `{id}` replaced by the root IRI percent-encoded as `ENCODE_FOR_URI` does, and the text after `{id}` kept. A template holds `{id}` exactly once and any text after it begins with a character the encoding never emits, or it is refused (`GraphIriTemplateInvalid`). The text before `{id}` of every named-graph family, declared or defaulted to `urn:g:<family token>/{id}`, must not be a prefix of another's (`GraphIriTemplateOverlap`). The templates bind `graphPrefix` and `graphSuffix`.
 - **`dal:epochGuardScope`** selects between a `-dataset-guard` template variant and the original for every row-writing operation: `create-if-absent`, `cas-replace` (named graph and composite property), `tombstone-delete`, `append` and `bootstrap-version-row`. The dataset-guard variants guard on the dataset epoch only and rebase the row's own `pat:epoch` on write, continuing `pat:seq` (guide §10.1). `unconditional-write` and `cas-replace-value-guard` write no version row, so they have no epoch guard.
 - **Not generated:** the retention job (low-water marks, pinned-head copies, bucket drops) and the epoch bump belong to housekeeping (ADR-A80), not to this compiler. `pat:hlc` is not written by any template.
 - **Declared shard counts are recorded, not applied.** `dal:txnShards`, `dal:logShards` and `dal:keyShards` resolve into the compiled profile, and a value above 1 raises a `ShardingNotHonoured` warning, because every template still writes one txn, keys and log-bucket graph.
-- **`dal:firstWrite dal:AbsentRow` with `dal:CompositePropertyBoundary`** generates no create operation: there is no composite-boundary create template yet. `dal:PreCreatedRow` works for both boundaries.
 - **`dal:epochCoordinatorBinding`, `dal:erasureRegisterBinding` and `dal:erasureReplayOnRestore`** (Slice 4) resolve and are emitted as extras of `dal:epochAuthority`, but no cross-axis check reads them yet: they describe the restore runbook (guide §24.4), which this compiler does not generate or execute.
 - **`key-claim-merge-rewrite` records the merge edge only** (Slice 5): it never rewrites payload references to the canonical IRI, and never retires the losing claim, since only a claim's own owner may retire it (guide §6.2) and a background reconciler has no such authority. The canonical owner is the lexicographically lowest IRI among a claim's owners — an arbitrary but deterministic and total choice, the same convention as the dataset-guard graph IRI's own documented arbitrariness.
 
@@ -173,6 +181,8 @@ The test suite includes:
 - **`test_terms.py`** — the injection corpus (ADR-A79 point 5): adversarial IRIs and literals fed through every encoder and every checked-in template, parsed by `rdflib`'s own SPARQL parser to assert exactly one operation ever results.
 - **`test_resolver.py`**, **`test_validator.py`**, **`test_capability.py`**, **`test_boundary.py`** — unit coverage for each module, including the lending/credit worked conflict from the sketch, reproduced as an executable test.
 - **`test_determinism.py`** — compiling the same configuration twice (including with triples loaded in shuffled order) produces isomorphic output.
+- **`test_ownership_tree.py`** — the classified boundary tree and the property path compiled from it (HO4): the reference fixture's members, a golden path, and 200 seeded random shapes and datasets whose members by the path equal a breadth-first search of the automaton. The compiler does not use it yet.
+- **`test_compiled_profile_stable.py`** — a compiled profile serialises to byte-identical Turtle: across two compiles, across the order the configuration was loaded in, and across processes with different hash seeds. Every blank node's label is derived from its target (H1.5).
 - **`test_compiler_integration.py`** — full compile → instantiate → parse round trips for every positive example fixture, `CompileError` assertions for every negative one, and SHACL self-validation of `ontology/persistence`'s own shapes against every fixture.
 - **`test_template_alignment.py`** — the template contract from the post-3866b21 review: epoch rebase, request digests, optional heads, typed rows, key-claim graph, audits, and the request-time slot rules.
 - **`test_slice_2_extensions.py`** — per-property resolution of the extension properties, baseline defaults, every Slice 2 check with a positive and negative case, `dal:firstWrite` and `dal:registryGraph` behaviour.

@@ -46,7 +46,7 @@ mise tasks               # list every task mise.toml declares, with its descript
 
 | Family | Does | Run |
 |---|---|---|
-| `bootstrap:*` | Installs one package's dependencies (`pip install -e`, `yarn install`, …) | Once per clone, again after a dependency changes |
+| `bootstrap:*` | Installs one package's dependencies (`pip install -e`, `yarn install`, …). `bootstrap:python` installs every Python package in one pip resolve | Once per clone, again after a dependency changes |
 | `check:*` | Validates one package or gate (tests, shape conformance, catalog/version checks) | Before every commit touching that package; `mise run check` runs all of them |
 | `build:*` | Regenerates a derived artefact (the ontology catalog, release rows, the MORK Teaching Pack, Persistence's compiled examples, minting vectors) | When the source it derives from changes |
 | `clean:*` | Removes build output and caches | When something looks stale |
@@ -243,6 +243,15 @@ checkout and for every `mise run` and `mise exec`. Editable installs (`pip insta
 `bootstrap:*` tasks use) then point at that checkout's own `tools/` and never at another's.
 
 - Run `mise run bootstrap` once in each new checkout. With pip's shared cache it takes a minute or two.
+- `mise run bootstrap` installs every Python package in one pip resolve (`bootstrap:python`), so
+  packages that need incompatible versions of a shared dependency fail at once and visibly. Keep
+  `pytest` and `pytest-xdist` specifiers identical in every `pyproject.toml`
+  (`tools/test_python_requirements.py` checks it).
+- `mise` creates the `.venv` with `uv` where `uv` is installed, and `uv` leaves out pip. Every Python
+  `bootstrap:*` task depends on `bootstrap:pip`, which runs `ensurepip`.
+- Run individual `bootstrap:<package>` tasks one at a time (`mise run --jobs 1 bootstrap:a bootstrap:b`).
+  Parallel pip runs into one `.venv` interleave files of different versions of the same package and
+  leave it unimportable. If that has happened, run `rm -rf .venv && mise run bootstrap`.
 - In a shell where mise is not activated, a bare `python` is mise's global interpreter, not the
   checkout's. Use `mise run <task>` or `mise exec -- python ...`, or activate mise in the shell.
 - Check which code a test imports: `mise exec -- python -c "import persistence; print(persistence.__file__)"`

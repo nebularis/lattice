@@ -3,7 +3,7 @@
 # Formal Methods, Track H: Status
 
 **Unit ID:** `formal-methods-track-h` (phase, within the `formal-methods` epic)
-**Status:** In progress. H1.1 to H1.2c signed off. H1.2d, H1.3 and H1.4a are authored and verified, awaiting the maintainer's review. Aggregate-ownership slices HO0 to HO9 planned (2026-10-10)
+**Status:** In progress. H1.1 to H1.2c signed off. H1.2d, H1.3, H1.4a, H1.4b, H1.5 and the aggregate-ownership slices HO0 to HO9 are authored and verified (2026-10-10), awaiting the maintainer's verification, the acceptance of ADR-A122, and the merge
 **Last updated:** 2026-10-10
 **Plan:** [formal-methods-track-h.md](../plans/formal-methods-track-h.md)
 **Sketches:** [formal-methods-track-h.md](../sketches/formal-methods-track-h.md) (main),
@@ -52,13 +52,16 @@ In this order, each per [plan §3.5](../plans/formal-methods-track-h.md#35-ho-ag
 0. Done 2026-10-10: `origin/main` is merged (`af2eb89`). `docs/developer/validation/LOG.md` is
    retired. The maintainer's merge is the sign-off, and the index, plans, status records and Validation
    Packs are the record, as the `lattice-lifecycle` skill now says.
-1. HO0 and HO1. HO2 is done (ADR-A122 drafted, Proposed).
-2. H1.4b and H1.5, per the plan's "H1.4b and H1.5 after the aggregate-ownership review".
-3. HO3 to HO9 in order, end to end, without stopping for review. HO8 may run at any point after HO3.
-   ADR-A122 stays Proposed. The maintainer accepts it with the work package at the close.
+1. HO0 to HO9, H1.4b and H1.5: done 2026-10-10. ADR-A122 was drafted Proposed (HO2) and accepted by the
+   maintainer on 2026-10-10 at the close.
+2. Next, per the plan: H2, the typed IR (§4), which types the classified tree, the payload check and the
+   required-parameter guard (TD-34), and H3 after it. Nothing in the aggregate-ownership work blocks them.
 
-For the maintainer, at the close: verify the slices, accept ADR-A122, and merge.
-Merging signs off every slice on the branch, including H1.2d, H1.3 and H1.4a.
+For the maintainer, at the close: verify the slices (each Validation Pack has its one command), countersign
+the removed and rewritten tests listed in FMH-HO5, and merge (ADR-A122 is accepted). Merging signs off every
+slice on the branch, including H1.2d, H1.3 and H1.4a. 🔴 RELEASE TAGS REQUIRED once the merge is on `main`:
+`persistence-v0.3.0`, `persistence-shapes-v0.3.0` and `persistent-foundation-v0.2.0`, which
+`mise run build:ontology-releases` prints among the tags other merged work also owes.
 
 ## Slices
 
@@ -71,18 +74,18 @@ Merging signs off every slice on the branch, including H1.2d, H1.3 and H1.4a.
 | H1.2d (refuse a multi-valued single-valued property, TD-25) | **authored and verified, awaiting the maintainer's gate.** [Validation Pack](../validation/FMH-H1-2d.md) | the maintainer's review |
 | H1.3 (static template checks S-3 and S-4) | **authored and verified, awaiting the maintainer's gate.** [Validation Pack](../validation/FMH-H1-3.md) | the maintainer's review |
 | H1.4a (refuse a composite boundary with several node properties, H-D4) | **authored and verified, awaiting the maintainer's gate.** [Validation Pack](../validation/FMH-H1-4a.md) | the maintainer's review |
-| H1.4b (the declaration/implementation gap report) | not started. Composite entries defined in the plan after the aggregate-ownership review | none |
-| H1.5 (stable labels) | not started, fully detailed in the plan | none |
-| HO0 (correct the ownership note and its spike) | not started, fully specified in plan §3.5 | none |
-| HO1 (composite replace: payload to the default graph, linear sweep, TD-39, TD-36) | not started, fully specified | none |
-| HO2 (draft ADR-A122, Proposed) | **done** 2026-10-10. [ADR-A122](../../architecture/decisions/ADR-A122-aggregate-ownership.md), Proposed until the maintainer accepts the work package | |
-| HO3 (`dal:` vocabulary 0.3.0: `dal:ownership`, reference data) | not started, fully specified | HO1 |
-| HO4 (ownership tree and path compiler, added beside the old walk) | not started, fully specified | HO3 |
-| HO5 (switch the compiler to the tree, TD-03, TD-35, TD-37, TD-40) | not started, fully specified | HO4, H-D16 |
-| HO6 (ownership refusals and the roots-only warning) | not started, fully specified | HO5 |
-| HO7 (composite create and tombstone delete, TD-04) | not started, fully specified | HO6 |
-| HO8 (injective graph naming within and across families, TD-38) | not started, fully specified | HO3 |
-| HO9 (ownership documentation and close-out) | not started, fully specified | HO7, HO8 |
+| H1.4b (the declaration/implementation gap report) | **authored and verified.** [Validation Pack](../validation/FMH-H1-4b.md) | the maintainer's merge |
+| H1.5 (stable labels) | **authored and verified.** [Validation Pack](../validation/FMH-H1-5.md) | the maintainer's merge |
+| HO0 (correct the ownership note and its spike) | **authored and verified.** [Validation Pack](../validation/FMH-HO0.md) | the maintainer's merge |
+| HO1 (composite replace: payload to the default graph, linear sweep, TD-39, TD-36) | **authored and verified.** [Validation Pack](../validation/FMH-HO1.md) | the maintainer's merge |
+| HO2 (draft ADR-A122, Proposed) | **done** 2026-10-10. [ADR-A122](../../architecture/decisions/ADR-A122-aggregate-ownership.md), **accepted** 2026-10-10 | |
+| HO3 (`dal:` vocabulary 0.3.0: `dal:ownership`, reference data) | **authored and verified.** [Validation Pack](../validation/FMH-HO3.md). 🔴 release tags owed (`persistence-v0.3.0`, `persistence-shapes-v0.3.0`, `persistent-foundation-v0.2.0`), created on `main` | the maintainer's merge |
+| HO4 (ownership tree and path compiler, added beside the old walk) | **authored and verified.** [Validation Pack](../validation/FMH-HO4.md) | the maintainer's merge |
+| HO5 (switch the compiler to the tree, TD-03, TD-35, TD-37, TD-40) | **authored and verified.** [Validation Pack](../validation/FMH-HO5.md) | the maintainer's merge. The removed tests are countersigned (2026-10-10) |
+| HO6 (ownership refusals and the roots-only warning) | **authored and verified.** [Validation Pack](../validation/FMH-HO6.md) | the maintainer's merge |
+| HO7 (composite create and tombstone delete, TD-04) | **authored and verified.** [Validation Pack](../validation/FMH-HO7.md) | the maintainer's merge |
+| HO8 (injective graph naming within and across families, TD-38) | **authored and verified.** [Validation Pack](../validation/FMH-HO8.md) | the maintainer's merge |
+| HO9 (ownership documentation and close-out) | **authored and verified.** [Validation Pack](../validation/FMH-HO9.md) | the maintainer's merge |
 | H2 (typed IR) | not started, outlined in the plan | H1 (informative, not a hard blocker) |
 | H3 (specification registry) | not started, outlined in the plan | H2 preferred first (smaller, more self-contained), not a hard blocker |
 | H4 (exhaustive cross-axis validation, BDD/SMT) | not started, outline only | H3 |
@@ -254,3 +257,87 @@ Merging signs off every slice on the branch, including H1.2d, H1.3 and H1.4a.
   the skills say "the maintainer" for the ratifying role, `.github/copilot-instructions.md` was
   rebuilt (`check:agent-guidance` passes), and every passive attribution of a decision
   ("decided by", "agreed by" and the like) is reworded across the repository.
+- 2026-10-10: we asked to proceed with the plan. HO0 authored (the note and the spike corrected,
+  18 spike checks, one probe). HO1 authored: both composite replace templates sweep with one
+  `OPTIONAL { $root <p>* ?s . ?s ?p ?o }` and write the payload to the default graph, closing TD-39 and
+  TD-36. H1.4a-T10 and T11 failed as predicted before they were run (their helper ran the update with
+  `templatecheck`'s payload stand-in, which now lands in the default graph). We chose to remove the
+  stand-in from the helper's input, taken from `templatecheck._SLOT_STAND_INS`, and not to filter
+  the result, so their assertions are unchanged. Nine new test items. `check:persistence` at 917 passed
+  and 1 xfailed. Probes recorded in the Validation Pack. The Oxigraph comparison was not run (not
+  installed here) and we decided it is not mandatory. Working agreement confirmed for this cloud
+  session: every slice is committed and pushed to `claude/nice-bohr-pmj43u` only, since the
+  maintainer cannot otherwise review a large change set. The maintainer merges.
+- 2026-10-10: H1.4b authored. `persistence gaps` lists, per compiled target, eleven kinds of
+  declaration/implementation gap with whose obligation each is, the register row and the slice that
+  removes it. A separate informational subcommand (we chose this over folding it into `compile` or
+  `hygiene`, see the Validation Pack). 13 test items, `check:persistence` at 930 passed and 1 xfailed.
+  Three probes recorded in the Validation Pack. HO5, HO7 and HO8 remove their rules and expectations in
+  the same commit as their change.
+- 2026-10-10: H1.5 authored. Every blank node of a compiled profile has a label derived from its
+  target, so the same configuration writes the same bytes, across compiles, load order and processes
+  with different hash seeds (all four examples tried differed before). TD-09 removed. A probe showed no
+  example compiles with a capability spec, so the check node was untested, and T5b was added. No golden
+  file is committed. `check:persistence` at 994 passed and 1 xfailed.
+- 2026-10-10: HO3 authored. `ontology/persistence` 0.3.0 with `dal:ownership`, the three ownership kinds,
+  `dal:ReferenceData`, `dal:ownsReferenceData` and `dal:dataGraph`, three shapes, and no
+  `dal:maxTraversalDepth`. The shapes directory goes to 0.3.0 and `persistent-foundation` to 0.2.0 (a
+  re-pinned import). Five small deviations from the sketch are listed in the Validation Pack, the main one
+  being that `dal:coversClass` loses its `rdfs:domain`. The compiler does not read the new terms yet.
+  `check:persistence` at 1003 passed and 1 xfailed, `check:full-sweep` all 14 passed. Tags can only be made
+  on `main`, so they remain the build warning on this branch.
+- 2026-10-10: HO4 authored. `walk_ownership` reads a boundary shape as a classified tree and `paths.py`
+  compiles its owned edges to one property path by state elimination, rendered through `PropertyPath`. The
+  reference fixture of sketch §10 is added. 200 seeded random shapes and datasets agree with a
+  breadth-first search of the automaton. Nothing calls it from the compiler yet. `check:persistence` at
+  1216 passed and 1 xfailed.
+- 2026-10-10: HO5 authored. The compiler uses the classified tree: the composite replace sweeps `$root <path> ?s`
+  with one path over every owned edge, inside the profile's data graph, and the default graph is not touched. A
+  shape with several owned edges, a recursion and an inverse edge now compiles, and the project fixture's delete
+  set is exactly its 28 triples on both rdflib and Oxigraph. TD-03, TD-35, TD-37 and TD-40 closed. The H1.4a
+  refusal and its witness, `BoundaryCycleError` and its witness, and four H1.4a tests are removed, each with a
+  replacement listed in the Validation Pack for the maintainer to countersign. Four deviations are recorded
+  there, chiefly `CompositeBoundaryWithoutOwnedEdges` pulled forward from HO6, and the plan's HO5-T8 example
+  being unable to fail. `check:persistence` at 1227 passed and 1 xfailed. Oxigraph, run in a Python 3.13
+  environment, passes 7 checks.
+- 2026-10-10: HO6 authored. Five refusals (`ComplexBoundaryPath`, `UnclassifiedBoundaryEdge`,
+  `OwnershipOnValueProperty`, `OwnedReferenceData`, `OverlappingOwnership`) and the warning
+  `ReferenceToOwnedClass`, each witnessed (96 of 96), plus the checks for a named-graph profile that names a
+  shape. Messages name a shape and a predicate and never a blank node, so a compiled profile stays
+  byte-identical (H1.5). `check:persistence` at 1252 passed and 1 xfailed. Probes in the Validation Pack.
+- 2026-10-10: HO7 authored. A composite family gets `create-if-absent-composite` (which also asks that nothing of
+  the root is in the data graph) and `tombstone-delete-composite`, each with a dataset-guard variant. The
+  tombstone removes the project fixture's 28 delete-set triples and tombstones the row, on both rdflib and
+  Oxigraph. TD-04 closed and the last composite gap rule removed. `check:persistence` at 1333 passed and 1 xfailed.
+- 2026-10-10: HO8 authored. A named graph is the template's prefix, the whole root IRI percent-encoded with
+  `ENCODE_FOR_URI`, and the template's suffix, in all seven templates that name one. `GraphIriTemplateInvalid` and
+  `GraphIriTemplateOverlap` refuse a template that is not injective, within a family and across families
+  (98 of 98 rules witnessed). TD-38 closed. The `dal:graphIriTemplate` comment is edited within the unreleased
+  0.3.0. `check:persistence` at 1356 passed and 1 xfailed.
+- 2026-10-10: HO9 authored, closing the aggregate-ownership work package. `aggregate-boundaries.md` is rewritten
+  from the sketch and the README's boundary sections follow it, recommending a named graph per aggregate for new
+  deployments. The legacy sketch's Part 4 points at ADR-A122. The gap report (`persistence gaps`) now lists no
+  composite or graph-naming entry. ADR-A122 is rechecked against `origin/main` and every remote branch, and it is
+  the same file on `main`, so the number is ours. Nothing is left open in the plan's HO rows. ADR-A122 awaits
+  the maintainer's acceptance.
+- 2026-10-10: the maintainer accepted ADR-A122. Its status is Accepted in the ADR and the catalogue, and the
+  indexes follow. The maintainer merged `main` into this branch (`b0fce2a`). On the open question of whether
+  `compile` should fail on gaps, we chose option C: the gap rules for a declaration the compiler ignores become
+  compile diagnostics or refusals (see the entry that follows).
+- 2026-10-10: option C carried out ([FMH-H1-4c](../validation/FMH-H1-4c.md)). A declaration the compiler cannot
+  honour is a compile warning or a refusal, never a gap. An unconditional write for a boundary with no named graph is
+  now refused (`UnconditionalWriteRequiresNamedGraph`, TD-02 reworded), the shard-count gap rule duplicated an
+  existing warning and is gone, and the gap report keeps four standing entries and is informational only. Open for
+  the maintainer: whether `ShardingNotHonoured` should be a refusal. This checkout's `.venv` was new after the
+  merge of `main`, so `mise run bootstrap` ran first (`ensurepip` was needed on this machine). `check:persistence`
+  at 1360 passed and 1 xfailed.
+- 2026-10-10: bootstrap repaired after a pytest `ImportError` in the maintainer's worktree. Two causes. `mise run
+  bootstrap` ran about ten pip installs in parallel into one `.venv`, and `workers` capped `pytest<9` while every
+  other package asked for `pytest>=8.0`, so two pytest versions were written into the same `_pytest` directory.
+  `bootstrap` now depends on `bootstrap:python`, which installs every Python package in one pip resolve, and every
+  Python `bootstrap:*` task depends on `bootstrap:pip` (a `uv`-made `.venv` has no pip). The `<9` cap had no
+  recorded rationale (it arrived with the AIR-2.1 commit) and workers, minting, authoring-stage and the sweep pass on
+  pytest 9.1.1, so it is lifted. `tools/test_python_requirements.py` fails if the `pytest` or `pytest-xdist`
+  specifier differs between packages. Not changed: the CI workflows still call several per-package `bootstrap:*`
+  tasks in one command, so they can still run in parallel. The repair for an existing worktree is
+  `rm -rf .venv && mise run bootstrap`.

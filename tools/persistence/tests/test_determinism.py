@@ -50,11 +50,8 @@ def test_compiling_twice_from_identically_loaded_graph_is_identical():
     out1, _ = compile_to_graph(g1, classes={target})
     out2, _ = compile_to_graph(g2, classes={target})
 
-    # Blank-node identifiers are ephemeral per rdflib.Graph instance, so
-    # equality has to be graph isomorphism (structurally identical up to
-    # blank-node relabelling), not literal triple-set equality, which is
-    # exactly what a resolver determinism property actually claims: the
-    # same content, not the same bnode labels.
+    # This checks isomorphism, the weaker claim. Since H1.5 the blank nodes have labels derived
+    # from their target, and test_compiled_profile_stable.py checks byte-identical Turtle.
     assert isomorphic(out1, out2), "two compiles of the same configuration produced non-isomorphic profiles"
 
 

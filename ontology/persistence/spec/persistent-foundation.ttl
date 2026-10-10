@@ -14,9 +14,9 @@
 
 <https://www.nebularis.org/neuro-semantic/lattice/persistent-foundation>
     a owl:Ontology ;
-    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/persistent-foundation/0.1.0> ;
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/persistent-foundation/0.2.0> ;
     owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.4.0> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/persistence/0.2.1> .
+                <https://www.nebularis.org/neuro-semantic/lattice/persistence/0.3.0> .
 
 dal:PersistenceKeyed a owl:Class ;
     rdfs:subClassOf fnd:NaturallyKeyed ;

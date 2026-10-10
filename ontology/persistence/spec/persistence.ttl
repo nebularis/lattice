@@ -8,7 +8,7 @@
 
 <https://www.nebularis.org/neuro-semantic/lattice/persistence>
     a owl:Ontology ;
-    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/persistence/0.2.1> ;
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/persistence/0.3.0> ;
     rdfs:label "LATTICE Data Access Layer (persistence profile substrate)" ;
     rdfs:comment "Cross-cutting configuration vocabulary letting an adopter declare, per scope, which of the guide's uniqueness/ordering/concurrency/receipt/meta-topology/boundary patterns apply to a population of RDF resources. Targets classes, graphs, and shapes by IRI reference only. Imports nothing from Foundation-to-Behaviour and is imported by none of them (ADR-A78). See docs/architecture/rdf-sparql-patterns-guide.md and docs/developer/sketches/persistence-profile-substrate.md for the design this vocabulary encodes." .
 
@@ -50,8 +50,7 @@ dal:graphPrefix a owl:DatatypeProperty ;
     rdfs:domain dal:GraphPatternScope ; rdfs:range xsd:string .
 
 dal:coversClass a owl:ObjectProperty ;
-    rdfs:domain dal:GraphPatternScope ;
-    rdfs:comment "Which class(es) this graph-pattern scope's resources instantiate. A design-time compiler resolves per class, not per live instance, and has no data graph to check actual membership against, so a GraphPatternScope must say what it covers rather than being discovered to cover it. Required for a GraphPatternScope to participate in resolution for a class-level target." .
+    rdfs:comment "On a dal:GraphPatternScope, which class(es) its resources instantiate. A design-time compiler resolves per class, not per live instance, and has no data graph to check actual membership against, so a GraphPatternScope must say what it covers rather than being discovered to cover it. Required for a GraphPatternScope to participate in resolution for a class-level target. On a dal:ReferenceData, the classes whose instances are reference data. No rdfs:domain is declared, since one would make every dal:ReferenceData a dal:GraphPatternScope." .
 
 dal:iriPrefix a owl:DatatypeProperty ;
     rdfs:domain dal:NamespaceScope ; rdfs:range xsd:string .
@@ -101,7 +100,7 @@ dal:AggregateBoundaryStrategy a owl:Class .
 dal:NamedGraphBoundary        a dal:AggregateBoundaryStrategy ;
     rdfs:comment "The aggregate root's IRI names a dedicated graph; members co-located inside it." .
 dal:CompositePropertyBoundary a dal:AggregateBoundaryStrategy ;
-    rdfs:comment "The aggregate's closure is the sh:property/sh:node recursion of dal:boundaryShape, walked once at compile time. Mandatory: dal:boundaryShape." .
+    rdfs:comment "The aggregate lives in the named graph dal:dataGraph, among other aggregates. Its members are the nodes reached from the root along the owned edges of dal:boundaryShape, a classified tree walked once at compile time. Mandatory: dal:boundaryShape and dal:dataGraph." .
 dal:NoBoundary                a dal:AggregateBoundaryStrategy ;
     rdfs:comment "No coherent aggregate. Concurrency, if any, is value-based CAS on individual properties." .
 
@@ -110,15 +109,38 @@ dal:strategy a owl:ObjectProperty ;
 
 dal:graphIriTemplate a owl:DatatypeProperty ;
     rdfs:domain dal:AggregateBoundaryProfile ; rdfs:range xsd:string ;
-    rdfs:comment "How to derive the aggregate's graph IRI from its root instance's identity, e.g. \"urn:g:orders/{id}\". Meaningful only for dal:NamedGraphBoundary." .
+    rdfs:comment "How to derive the aggregate's graph IRI from its root instance's identity, e.g. \"urn:g:orders/{id}\". Meaningful only for dal:NamedGraphBoundary. It holds {id} exactly once, replaced by the whole root IRI percent-encoded as SPARQL's ENCODE_FOR_URI does, so distinct roots name distinct graphs. Text after {id} is kept and begins with a character the encoding never emits (not a letter, a digit, or one of - . _ ~ %). Across families the text before {id} is not a prefix of another family's. Undeclared, the template is urn:g:<family token>/{id}." .
 
 dal:boundaryShape a owl:ObjectProperty ;
     rdfs:domain dal:AggregateBoundaryProfile ;
-    rdfs:comment "An sh:NodeShape. Mandatory when dal:strategy is dal:CompositePropertyBoundary, meaningless otherwise. The compiler walks its sh:property/sh:node tree once, offline; no target backend ever executes it." .
+    rdfs:comment "An sh:NodeShape, the root of a classified tree: every property shape in it that leads to a node carries dal:ownership. Mandatory when dal:strategy is dal:CompositePropertyBoundary. A dal:NamedGraphBoundary profile may name one too, to define the subjects a payload may contain. The compiler walks the tree once, offline. No target backend ever executes it." .
 
-dal:maxTraversalDepth a owl:DatatypeProperty ;
-    rdfs:domain dal:AggregateBoundaryProfile ; rdfs:range xsd:integer ;
-    rdfs:comment "Caps the sh:property/sh:node recursion walked from dal:boundaryShape. Default 8." .
+dal:dataGraph a owl:ObjectProperty ;
+    rdfs:domain dal:AggregateBoundaryProfile ;
+    rdfs:comment "The named graph that holds the aggregates of a dal:CompositePropertyBoundary family. Mandatory for that strategy. Every composite operation reads and writes this graph only, never the default graph, whose contents differ between stores (static check S-1)." .
+
+dal:ownsReferenceData a owl:DatatypeProperty ;
+    rdfs:domain dal:AggregateBoundaryProfile ; rdfs:range xsd:boolean ;
+    rdfs:comment "True for an aggregate that manages reference data, for example a concept scheme and its concepts. Without it, an owned edge to reference data is refused. Default false." .
+
+dal:OwnershipKind a owl:Class ;
+    rdfs:comment "How the aggregate stands to the node at the far end of an edge in a dal:boundaryShape tree. One of dal:Owned, dal:Reference, dal:Vocabulary." .
+
+dal:Owned a dal:OwnershipKind ;
+    rdfs:comment "The node belongs to the aggregate. It is deleted with the aggregate, and its own owned edges are followed." .
+
+dal:Reference a dal:OwnershipKind ;
+    rdfs:comment "The node is another aggregate or an independent entity. The edge belongs to the aggregate and is deleted with it. The node is never deleted and its edges are not followed." .
+
+dal:Vocabulary a dal:OwnershipKind ;
+    rdfs:comment "As dal:Reference, for an edge to reference data such as a concept or a code. Declares intent. Behaves as dal:Reference at run time." .
+
+dal:ownership a owl:ObjectProperty ;
+    rdfs:range dal:OwnershipKind ;
+    rdfs:comment "On an sh:PropertyShape inside a dal:boundaryShape tree. Classifies the edge the property shape describes, in the context of the node shape that holds it. Mandatory on every property shape that leads to a node. Forbidden on a value property (sh:datatype, or sh:nodeKind sh:Literal). No rdfs:domain is declared, so the vocabulary does not assert that a property shape is anything else." .
+
+dal:ReferenceData a owl:Class ;
+    rdfs:comment "Declares that the instances of each dal:coversClass are reference data. An owned edge to reference data is refused unless its profile declares dal:ownsReferenceData true. skos:Concept and skos:ConceptScheme are reference data without a declaration." .
 
 #################################################################
 #    §4. Concurrency (sketch §3.3.1). Named for what each value
