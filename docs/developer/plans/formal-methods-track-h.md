@@ -51,7 +51,8 @@ track in this epic already follows for its own later slices.
 | track C's Alloy pattern (`tools/models/<topic>/`) | established (its own plan §4) | H5, H7 — reused, not re-decided |
 | a TLA+ or Quint toolchain | **not installed, not chosen** | H5's protocol models only. H1-H4 need no new toolchain at all |
 | track A (the ledger and the harness) | not started (epic status) | nothing — this track's own claims and Validation Packs are the interim record, same arrangement tracks B and C already use |
-| CCS, insurml-alignment | no direct dependency either way | nothing. Persistence's own compiler and layer are not gated by either epic's own slices |
+| CCS | CCS slice HQ-6b depends on this track (2026-10-10) | nothing here. HQ-6b binds ADR-A105's closures to the store: a closure's cut to the per-root sequence (AO-Q6) and its completeness to `dal:BlockingContiguityCheck`. HQ-6a holds no Persistence content |
+| insurml-alignment | no direct dependency either way | nothing. Persistence's own compiler and layer are not gated by its slices |
 
 ## 3. H1: static hygiene — ready to start
 
@@ -596,7 +597,8 @@ phases ([ownership sketch §15](../sketches/persistence-aggregate-ownership.md#1
 | this epic, track B | the reference semantics and the oracle | no direct dependency; track H does not need a Python reference oracle in track B's sense (there is no independent "meaning" of `dal:` configuration beyond the compiler itself, unlike Eligibility's laws). B2.1's hardening work (seed a compiler-side fault) is a methodological sibling to H1.2's witness-coverage work, not a dependency |
 | this epic, track C | the design-time models | H5/H7's protocol models reuse track C's `tools/models/` home (ADR-A-FM4 decision 3) and its "bounded scope, never read as a proof" discipline directly |
 | this epic, track E | the prover programme | H6 reuses track E's `tools/proofs/` home (ADR-A-FM2) and gate discipline unchanged, including the hardening items E1.4 queues (digest transitive definitions, characterising lemmas) — H6's own Isabelle work should apply E1.4's fixes from the start, not repeat the gaps it found |
-| CCS, insurml-alignment | — | no direct dependency either way |
+| CCS | HQ-6b, the store binding of ADR-A105 closures | CCS depends on this track. A closure's cut binds to the per-root sequence and receipt stream (AO-Q6), and its completeness to the blocking contiguity audit. This track owns both, and a change to either is agreed with HQ-6b first |
+| insurml-alignment | — | no direct dependency either way |
 | the platform, `workers/` | housekeeping jobs, the outbox, the store SPI | H9/H10's generated monitors extend `tools/persistence`'s own existing housekeeping boundary (ADR-A80), not a new runtime |
 
 ## 10. Risks
