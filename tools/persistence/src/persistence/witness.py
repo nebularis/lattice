@@ -62,7 +62,7 @@ TEMPLATE_DIR = PACKAGE_DIR / "templates"
 
 # Exceptions that are refusals in their own right, keyed by class name.
 # ``CrossAxisViolation`` is keyed by its ``kind`` instead.
-_NAMED_REFUSALS = ("ProfileAmbiguityError", "BoundaryConflict", "MissingBoundaryShapeError", "BoundaryCycleError")
+_NAMED_REFUSALS = ("ProfileAmbiguityError", "BoundaryConflict", "MissingBoundaryShapeError")
 # Calls whose first string argument is a CrossAxisViolation or warning kind.
 _REFUSAL_CALLS = ("CrossAxisViolation", "fail")
 _WARNING_CALLS = ("_warning", "Diagnostic")

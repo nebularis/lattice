@@ -78,7 +78,7 @@ Merging signs off every slice on the branch, including H1.2d, H1.3 and H1.4a.
 | HO2 (draft ADR-A122, Proposed) | **done** 2026-10-10. [ADR-A122](../../architecture/decisions/ADR-A122-aggregate-ownership.md), Proposed until the maintainer accepts the work package | |
 | HO3 (`dal:` vocabulary 0.3.0: `dal:ownership`, reference data) | **authored and verified.** [Validation Pack](../validation/FMH-HO3.md). 🔴 release tags owed (`persistence-v0.3.0`, `persistence-shapes-v0.3.0`, `persistent-foundation-v0.2.0`), created on `main` | the maintainer's merge |
 | HO4 (ownership tree and path compiler, added beside the old walk) | **authored and verified.** [Validation Pack](../validation/FMH-HO4.md) | the maintainer's merge |
-| HO5 (switch the compiler to the tree, TD-03, TD-35, TD-37, TD-40) | not started, fully specified | HO4, H-D16 |
+| HO5 (switch the compiler to the tree, TD-03, TD-35, TD-37, TD-40) | **authored and verified.** [Validation Pack](../validation/FMH-HO5.md) | the maintainer's merge, and countersigning the removed tests |
 | HO6 (ownership refusals and the roots-only warning) | not started, fully specified | HO5 |
 | HO7 (composite create and tombstone delete, TD-04) | not started, fully specified | HO6 |
 | HO8 (injective graph naming within and across families, TD-38) | not started, fully specified | HO3 |
@@ -288,3 +288,12 @@ Merging signs off every slice on the branch, including H1.2d, H1.3 and H1.4a.
   reference fixture of sketch §10 is added. 200 seeded random shapes and datasets agree with a
   breadth-first search of the automaton. Nothing calls it from the compiler yet. `check:persistence` at
   1216 passed and 1 xfailed.
+- 2026-10-10: HO5 authored. The compiler uses the classified tree: the composite replace sweeps `$root <path> ?s`
+  with one path over every owned edge, inside the profile's data graph, and the default graph is not touched. A
+  shape with several owned edges, a recursion and an inverse edge now compiles, and the project fixture's delete
+  set is exactly its 28 triples on both rdflib and Oxigraph. TD-03, TD-35, TD-37 and TD-40 closed. The H1.4a
+  refusal and its witness, `BoundaryCycleError` and its witness, and four H1.4a tests are removed, each with a
+  replacement listed in the Validation Pack for the maintainer to countersign. Four deviations are recorded
+  there, chiefly `CompositeBoundaryWithoutOwnedEdges` pulled forward from HO6, and the plan's HO5-T8 example
+  being unable to fail. `check:persistence` at 1227 passed and 1 xfailed. Oxigraph, run in a Python 3.13
+  environment, passes 7 checks.

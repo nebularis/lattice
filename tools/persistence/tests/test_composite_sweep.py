@@ -5,6 +5,10 @@
 linear time (formal-methods track H, slice HO1, technical debt TD-39 and TD-36).
 Validation Pack: docs/developer/validation/FMH-HO1.md. Test IDs are HO1-Tn.
 
+HO5 moved the aggregates from the default graph to the profile's data graph (ADR-A122 decision 3), so
+these tests load the data into that graph and look for the payload there. What each asserts, that the
+payload lands where the sweep deletes from, is unchanged (FMH-HO5 lists the change).
+
 The generated update runs on rdflib's in-memory ``Dataset``. The request-time payload slot is
 filled with the payload under test, in place of the stand-in ``templatecheck`` uses."""
 
@@ -16,7 +20,6 @@ from functools import lru_cache
 
 import pytest
 from rdflib import RDF, Dataset, Literal, URIRef, Variable
-from rdflib.graph import DATASET_DEFAULT_GRAPH_ID
 from rdflib.namespace import XSD
 
 from persistence import templatecheck, witness
@@ -28,6 +31,7 @@ from conftest import EXAMPLES_DIR
 EX = "https://example.org/lending#"
 PAT = "https://example.org/lattice/patterns#"
 ROOT = URIRef("urn:order:1")
+DATA_GRAPH = URIRef("urn:g:orders")
 PLAIN = "cas-replace-composite-property"
 DATASET_GUARD = "cas-replace-composite-property-dataset-guard"
 FIXTURES = {
@@ -56,7 +60,7 @@ def _values(expected_seq: int = 1) -> dict:
 
 
 def _dataset(template: str, line_items: int = 2, triples_per_item: int = 2) -> Dataset:
-    """An order and ``line_items`` line items in the default graph, and the version row."""
+    """An order and ``line_items`` line items in the data graph, and the version row."""
     text = _text(template)
     meta = URIRef(re.search(r"GRAPH <(urn:g:meta/\d+)>", text).group(1))
     with warnings.catch_warnings():
@@ -67,14 +71,14 @@ def _dataset(template: str, line_items: int = 2, triples_per_item: int = 2) -> D
         if template == DATASET_GUARD:
             dataset_graph = URIRef(re.search(r"GRAPH <(urn:g:dataset)>", text).group(1))
             ds.graph(dataset_graph).add((dataset_graph, URIRef(PAT + "epoch"), Literal(1)))
-        default = ds.default_context
-        default.add((ROOT, URIRef(EX + "status"), Literal("open")))
-        default.add((ROOT, RDF.type, URIRef(EX + "Order")))
+        data = ds.graph(DATA_GRAPH)
+        data.add((ROOT, URIRef(EX + "status"), Literal("open")))
+        data.add((ROOT, RDF.type, URIRef(EX + "Order")))
         for n in range(1, line_items + 1):
             item = URIRef(f"urn:li:{n}")
-            default.add((ROOT, URIRef(EX + "lineItem"), item))
+            data.add((ROOT, URIRef(EX + "lineItem"), item))
             for k in range(triples_per_item):
-                default.add((item, URIRef(EX + f"attr{k}"), Literal(f"{n}-{k}")))
+                data.add((item, URIRef(EX + f"attr{k}"), Literal(f"{n}-{k}")))
     return ds
 
 
@@ -93,13 +97,13 @@ def _graphs_holding(ds: Dataset, obj: Literal) -> set[str]:
     return {g for s, p, o, g in _quads(ds) if o == obj}
 
 
-DEFAULT = str(DATASET_DEFAULT_GRAPH_ID)
+DATA_GRAPH_NAME = "urn:g:orders"
 
 
-def test_ho1_t1_the_payload_lands_in_the_default_graph_and_nowhere_else():
+def test_ho1_t1_the_payload_lands_in_the_data_graph_and_nowhere_else():
     ds = _dataset(PLAIN)
     _replace(ds, PLAIN)
-    assert _graphs_holding(ds, Literal("paid")) == {DEFAULT}
+    assert _graphs_holding(ds, Literal("paid")) == {DATA_GRAPH_NAME}
 
 
 def test_ho1_t2_the_old_payload_is_gone_and_no_payload_triple_is_in_a_log_graph():
@@ -122,7 +126,7 @@ def test_ho1_t3_one_revision_for_sequence_two_is_in_a_log_graph():
 def test_ho1_t4_the_dataset_guard_variant_does_the_same():
     ds = _dataset(DATASET_GUARD)
     _replace(ds, DATASET_GUARD)
-    assert _graphs_holding(ds, Literal("paid")) == {DEFAULT}
+    assert _graphs_holding(ds, Literal("paid")) == {DATA_GRAPH_NAME}
     assert _graphs_holding(ds, Literal("open")) == set()
     assert len([q for q in _quads(ds) if q[1] == RDF.type and q[2] == URIRef(PAT + "Revision")]) == 1
 

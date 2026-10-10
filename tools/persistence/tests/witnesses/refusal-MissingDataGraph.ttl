@@ -1,9 +1,7 @@
 # SPDX-License-Identifier: MPL-2.0
 # NB: This file has been produced using GenAI
-# A composite boundary shape that leads back to itself has no finite closure.
+# A composite aggregate lives in one named graph, which the profile must name.
 # base: composite-property-boundary-shacl.ttl
+# remove: ex:OrderBoundaryProfile dal:dataGraph
 @prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
 @prefix ex:  <https://example.org/lending#> .
-@prefix sh:  <http://www.w3.org/ns/shacl#> .
-
-ex:LineItemShape sh:property [ sh:path ex:order ; sh:node ex:OrderAggregateShape ; dal:ownership dal:Owned ] .

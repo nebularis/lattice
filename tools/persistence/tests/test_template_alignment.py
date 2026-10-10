@@ -19,7 +19,10 @@ from rdflib.plugins.sparql import prepareQuery, prepareUpdate
 from persistence.compiler import compile_to_graph
 from persistence.instantiate import instantiate_profile
 from persistence.render import REQUEST_TIME_SLOTS, load_template, render
-from persistence.terms import Iri, Literal
+from rdflib import URIRef
+
+from persistence.paths import Opt, Step
+from persistence.terms import Iri, Literal, PropertyPath
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 SPEC_TTL = REPO_ROOT / "ontology" / "persistence" / "spec" / "persistence.ttl"
@@ -60,7 +63,8 @@ def _full_context() -> dict:
         "datasetNode": Iri.encode("urn:g:dataset"),
         "graphPrefix": Literal.encode("urn:g:orders/"),
         "guardProperty": Iri.encode("https://example.org/lending#status"),
-        "compositeProperty": Iri.encode("https://example.org/lending#lineItem"),
+        "ownedPath": PropertyPath.encode(Opt(Step(URIRef("https://example.org/lending#lineItem")))),
+        "dataGraph": Iri.encode("urn:g:orders"),
         "constraintId": Literal.encode("example-constraint"),
         # persistence-compiler-iri-sync Slice 5.
         "mergeRelation": Iri.encode("https://example.org/lending#supersededBy"),

@@ -3,7 +3,8 @@
 
 """Where does the composite boundary's replace write the new payload? Runs the generated
 ``cas-replace-composite-property`` on rdflib with a one-triple payload and reports the graph
-that holds it afterwards."""
+that holds it afterwards. Before HO1 it was the receipt log graph (TD-39), after HO1 the default
+graph, and since HO5 the profile's data graph, ``urn:g:orders`` in the shipped example."""
 
 from __future__ import annotations
 
@@ -32,7 +33,7 @@ def payload_destination() -> dict[str, list[str]]:
         ds = Dataset()
         ds.graph(URIRef(meta)).add((root, URIRef(PAT + "epoch"), Literal(1)))
         ds.graph(URIRef(meta)).add((root, URIRef(PAT + "seq"), Literal(1, datatype=XSD.long)))
-        ds.default_context.add((root, URIRef(EX + "status"), Literal("open")))
+        ds.graph(URIRef("urn:g:orders")).add((root, URIRef(EX + "status"), Literal("open")))
         values = {"root": root, "epoch": Literal(1), "expectedSeq": Literal(1, datatype=XSD.long), "nextSeq": Literal(2, datatype=XSD.long),
                   "newRev": URIRef("urn:rev:2"), "txnId": URIRef("urn:txn:a"), "requestDigest": Literal("d")}
         ds.update(text, initBindings={Variable(k): v for k, v in values.items()})

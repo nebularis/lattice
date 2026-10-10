@@ -23,11 +23,14 @@ from rdflib import Dataset, Literal, URIRef, Variable  # noqa: E402
 from rdflib.namespace import XSD  # noqa: E402
 
 from persistence import witness  # noqa: E402
-from scenarios import EX, PAT, append_event_runs, composite_sweep, composite_update, generated_update  # noqa: E402
+from scenarios import (  # noqa: E402
+    DATA_GRAPH, EX, PAT, PROJECT, PROJECT_DATA, PROJECT_GRAPH, append_event_runs, composite_sweep, composite_update,
+    generated_update, project_sweep, project_update,
+)
 
 
-def rdflib_composite_sweep(bound_property: str, with_payment: bool) -> list[str]:
-    update = composite_update()
+def rdflib_composite_sweep(owns_payment: bool, with_payment: bool) -> list[str]:
+    update = composite_update(owns_payment)
     meta = re.search(r"GRAPH <(urn:g:meta/\d+)>", update).group(1)
     root = URIRef("urn:order:1")
     with warnings.catch_warnings():
@@ -35,18 +38,39 @@ def rdflib_composite_sweep(bound_property: str, with_payment: bool) -> list[str]
         ds = Dataset()
         ds.graph(URIRef(meta)).add((root, URIRef(PAT + "epoch"), Literal(1)))
         ds.graph(URIRef(meta)).add((root, URIRef(PAT + "seq"), Literal(1, datatype=XSD.long)))
+        data = ds.graph(URIRef(DATA_GRAPH))
         rows = [(root, "status", Literal("open")), (root, "lineItem", URIRef("urn:li:1")), (URIRef("urn:li:1"), "sku", Literal("ABC"))]
         if with_payment:
             rows += [(root, "payment", URIRef("urn:pay:1")), (URIRef("urn:pay:1"), "amount", Literal("10"))]
         for s, p, o in rows:
-            ds.default_context.add((s, URIRef(EX + p), o))
+            data.add((s, URIRef(EX + p), o))
         values = {
             "root": root, "epoch": Literal(1), "expectedSeq": Literal(1, datatype=XSD.long),
             "nextSeq": Literal(2, datatype=XSD.long), "newRev": URIRef("urn:rev:2"),
             "txnId": URIRef("urn:txn:a"), "requestDigest": Literal("d"),
         }
-        ds.update(update.replace(f"<{EX}lineItem>", f"<{EX}{bound_property}>"), initBindings={Variable(k): v for k, v in values.items()})
-        return sorted({str(s) for s, _, _ in ds.default_context})
+        ds.update(update, initBindings={Variable(k): v for k, v in values.items()})
+        return sorted({str(s) for s, _, _ in data})
+
+
+def rdflib_project_sweep() -> list[str]:
+    update = project_update()
+    meta = re.search(r"GRAPH <(urn:g:meta/\d+)>", update).group(1)
+    root = URIRef(PROJECT + "p1")
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", DeprecationWarning)
+        ds = Dataset()
+        ds.graph(URIRef(meta)).add((root, URIRef(PAT + "epoch"), Literal(1)))
+        ds.graph(URIRef(meta)).add((root, URIRef(PAT + "seq"), Literal(1, datatype=XSD.long)))
+        data = ds.graph(URIRef(PROJECT_GRAPH))
+        data.parse(PROJECT_DATA, format="turtle")
+        values = {
+            "root": root, "epoch": Literal(1), "expectedSeq": Literal(1, datatype=XSD.long),
+            "nextSeq": Literal(2, datatype=XSD.long), "newRev": URIRef("urn:rev:2"),
+            "txnId": URIRef("urn:txn:a"), "requestDigest": Literal("d"),
+        }
+        ds.update(update, initBindings={Variable(k): v for k, v in values.items()})
+        return sorted({str(s).rsplit("#", 1)[-1] for s, _, _ in data})
 
 
 def rdflib_append_event_runs() -> list[tuple[list[str], int]]:
@@ -92,10 +116,11 @@ def rdflib_append_event_runs() -> list[tuple[list[str], int]]:
 def compare() -> list[tuple[str, object, object]]:
     """(scenario, rdflib result, Oxigraph result) for every scenario."""
     rows = []
-    for label, bound, payment in (("composite, one node property", "lineItem", False),
-                                   ("composite, two, bound to lineItem", "lineItem", True),
-                                   ("composite, two, bound to payment", "payment", True)):
-        rows.append((label, rdflib_composite_sweep(bound, payment), composite_sweep(bound, payment)))
+    for label, owns, payment in (("composite, no payment", False, False),
+                                  ("composite, payment not owned", False, True),
+                                  ("composite, payment owned", True, True)):
+        rows.append((label, rdflib_composite_sweep(owns, payment), composite_sweep(owns, payment)))
+    rows.append(("composite, project fixture", rdflib_project_sweep(), project_sweep()))
     ox_runs = [(s.sequence, s.revision_records) for s in append_event_runs()]
     for label, a, b in zip(("append-event A, all parameters", "append-event B, no $revBase", "append-event C, retry"),
                            rdflib_append_event_runs(), ox_runs):

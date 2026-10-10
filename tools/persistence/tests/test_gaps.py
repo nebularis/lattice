@@ -13,7 +13,7 @@ from __future__ import annotations
 import json
 
 import pytest
-from rdflib import BNode, Graph, Literal, URIRef
+from rdflib import Graph, Literal, URIRef
 from rdflib.namespace import XSD
 
 from persistence import witness
@@ -24,7 +24,6 @@ from persistence.gaps import RULES, find_gaps
 from conftest import EXAMPLES_DIR
 
 EX = "https://example.org/lending#"
-SH = "http://www.w3.org/ns/shacl#"
 DAL = "https://www.nebularis.org/neuro-semantic/lattice/persistence#"
 
 
@@ -46,24 +45,20 @@ def _example(name: str) -> set[str]:
 
 # ---- the entries present today
 
-# A slice that closes one of these removes it here and in persistence.gaps.
+# A slice that closes one of these removes it here and in persistence.gaps. HO5 removed the three
+# about ownership, the inverse path and the default graph (TD-35, TD-37, TD-40).
 COMPOSITE = {
     "CompositeNoLifecycleOperations",  # TD-04, HO7
-    "CompositeOwnershipAssumed",  # TD-35, HO5
-    "CompositeUsesDefaultGraph",  # TD-40, HO5
 }
 EVERY_WRITING_TARGET = {"InfrastructureGraphsFixed", "RetentionAndEpochBumpNotGenerated"}
 
 
-def test_h1_4b_t1_the_composite_example_reports_each_composite_gap_naming_the_shape_and_property():
+def test_h1_4b_t1_the_composite_example_reports_the_composite_gap_that_is_left():
     gaps = {g.gap: g for g in _gaps(_load("composite-property-boundary-shacl.ttl"))}
     assert set(gaps) == COMPOSITE | EVERY_WRITING_TARGET
-    assert "OrderAggregateShape" in gaps["CompositeOwnershipAssumed"].message
-    assert "lineItem" in gaps["CompositeOwnershipAssumed"].message
-    assert gaps["CompositeOwnershipAssumed"].reference == "TD-35" and gaps["CompositeOwnershipAssumed"].closes_in == "HO5"
     assert gaps["CompositeNoLifecycleOperations"].reference == "TD-04"
-    assert gaps["CompositeUsesDefaultGraph"].reference == "TD-40"
-    assert all(g.obligation == "unimplemented" for k, g in gaps.items() if k in COMPOSITE)
+    assert gaps["CompositeNoLifecycleOperations"].closes_in == "HO7"
+    assert gaps["CompositeNoLifecycleOperations"].obligation == "unimplemented"
 
 
 def test_h1_4b_t2_a_named_graph_example_reports_the_graph_naming_gap_and_no_composite_gap():
@@ -76,18 +71,6 @@ def test_h1_4b_t3_text_after_the_id_is_named_as_dropped():
     graph.set((profile, URIRef(DAL + "graphIriTemplate"), Literal("urn:g:loan-application/{id}/data")))
     (gap,) = [g for g in _gaps(graph) if g.gap == "NamedGraphNamedFromLocalName"]
     assert "'/data'" in gap.message and "dropped" in gap.message
-
-
-def test_h1_4b_t4_an_inverse_path_in_a_composite_shape_is_reported():
-    graph = _load("composite-property-boundary-shacl.ttl")
-    shape = URIRef(EX + "OrderAggregateShape")
-    prop, path = BNode(), BNode()
-    graph.add((shape, URIRef(SH + "property"), prop))
-    graph.add((prop, URIRef(SH + "path"), path))
-    graph.add((path, URIRef(SH + "inversePath"), URIRef(EX + "ofOrder")))
-    graph.add((prop, URIRef(SH + "class"), URIRef(EX + "Payment")))
-    (gap,) = [g for g in _gaps(graph) if g.gap == "CompositeInversePathMisread"]
-    assert gap.reference == "TD-37" and "OrderAggregateShape" in gap.message
 
 
 def test_h1_4b_t5_a_declared_shard_count_above_one_is_reported():
@@ -119,12 +102,12 @@ def test_h1_4b_t7_the_caller_and_housekeeping_obligations_are_reported(example, 
 
 
 def test_h1_4b_t8_every_rule_fires_somewhere():
-    """No rule is vacuous: each of the eleven is reached by a fixture in this module."""
+    """No rule is vacuous: each is reached by a fixture in this module."""
     reached: set[str] = set()
     for name in ("composite-property-boundary-shacl.ttl", "baseline-single-class.ttl", "append-stream-dataset-guard.ttl",
                  "identity-epoch-privacy-profile.ttl"):
         reached |= _example(name)
-    reached |= {"CompositeInversePathMisread", "ShardCountNotHonoured", "UnconditionalWriteNamedGraphOnly"}  # t4, t5, t6
+    reached |= {"ShardCountNotHonoured", "UnconditionalWriteNamedGraphOnly"}  # t5, t6
     assert reached == set(RULES)
 
 
@@ -142,7 +125,7 @@ def test_h1_4b_t10_the_cli_prints_the_report_as_text_and_as_json(capsys):
     spec = str(EXAMPLES_DIR.parent / "spec" / "persistence.ttl")
     assert main(["gaps", spec, example]) == 0
     text = capsys.readouterr().out
-    assert "GAP [CompositeOwnershipAssumed]" in text and "TD-35" in text
+    assert "GAP [CompositeNoLifecycleOperations]" in text and "TD-04" in text
     assert main(["gaps", "--json", spec, example]) == 0
     data = json.loads(capsys.readouterr().out)
     assert {entry["gap"] for entry in data} == COMPOSITE | EVERY_WRITING_TARGET

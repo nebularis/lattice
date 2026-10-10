@@ -14,7 +14,8 @@ The persistence compiler generates SPARQL updates, and until track H nothing exe
 questions needed a running engine.
 
 1. What does a composite-boundary replace leave behind when the shape reaches more than one other
-   node ([FMH-H1.4a](../../docs/developer/validation/FMH-H1-4a.md))?
+   node ([FMH-H1.4a](../../docs/developer/validation/FMH-H1-4a.md)), and does it sweep exactly the
+   aggregate now that it follows every owned edge ([FMH-HO5](../../docs/developer/validation/FMH-HO5.md))?
 2. What does the append update do when the caller leaves out a `$parameter`
    ([plan §13.4](../../docs/developer/plans/formal-methods-track-h.md), TD-34)?
 
@@ -26,7 +27,7 @@ Rust implementation, so the answer does not rest on one engine. They agree on ev
 | File | Role |
 |---|---|
 | `oxigraph_backend.py` | `OxigraphBackend`: an in-memory quad store with `update`, `select`, `quads` and `count`, and `bind_parameters`, which fills a template's `$name` parameters with SPARQL term text, as a caller's client would |
-| `scenarios.py` | the two experiments as functions that return data |
+| `scenarios.py` | the experiments as functions that return data |
 | `run.py` | prints both experiments on Oxigraph |
 | `rdflib_comparison.py` | runs the same scenarios on rdflib and on Oxigraph and compares |
 | `test_spike.py` | seven checks, including that the two engines agree. Skipped without `pyoxigraph` |
@@ -37,7 +38,7 @@ Rust implementation, so the answer does not rest on one engine. They agree on ev
 From the repository root, after `mise run bootstrap` for the persistence packages.
 
 ```bash
-mise exec -- python -m pip install -r spikes/persistence-oxigraph/requirements.txt
+mise exec -- python -m pip install -r spikes/persistence-oxigraph/requirements.txt  # needs a Python the pyoxigraph wheels support
 mise exec -- python spikes/persistence-oxigraph/run.py
 mise exec -- python spikes/persistence-oxigraph/rdflib_comparison.py
 mise exec -- python -m pytest spikes/persistence-oxigraph -q
@@ -47,14 +48,18 @@ It is not wired into any `mise` task or into `check`, on purpose.
 
 ## What it showed
 
-Composite boundary, subjects that still have triples after one replace (an order with a line item,
-and optionally a payment, each a separate node):
+Composite boundary, subjects that still have triples in the data graph after one replace with an empty
+payload. Before HO5 (ADR-A122) the update followed one property, and a shape with two node properties
+left the other's member behind (FMH-H1.4a). The update now follows every owned edge of the shape:
 
-| Shape | Property the update follows | Left behind |
-|---|---|---|
-| one node property | `lineItem` | nothing |
-| two node properties | `lineItem` | the payment |
-| two node properties | `payment` | the line item |
+| Shape | Left behind |
+|---|---|
+| an order and its line item, `lineItem` owned | nothing |
+| the order also has a payment, which the shape does not own | the payment, as it should be |
+| the shape owns `payment` too | nothing |
+| the project fixture of ADR-A122 (several owned edges, a recursion, an inverse edge, a vocabulary link and two references) | exactly the nodes outside the aggregate: the client, the assignee, the shared document, the concepts and their scheme, a report, and a second project |
+
+Both engines agree on every row.
 
 Append, one stream, three runs. No run raises an error.
 

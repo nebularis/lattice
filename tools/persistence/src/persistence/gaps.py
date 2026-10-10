@@ -27,8 +27,6 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass
 from typing import Callable, Iterable
 
-from rdflib import BNode
-
 from .compiler import CompiledTarget
 from .operations import _local
 
@@ -65,44 +63,6 @@ def _operation_names(ct: CompiledTarget) -> set[str]:
 
 def _gap(ct: CompiledTarget, gap: str, obligation: str, reference: str, closes_in: str, message: str) -> Gap:
     return Gap(gap, str(ct.target), obligation, reference, closes_in, message)
-
-
-def _short(iri) -> str:
-    text = str(iri)
-    return text.rsplit("#", 1)[-1].rsplit("/", 1)[-1] or text
-
-
-def _composite_ownership_assumed(ct: CompiledTarget) -> Iterable[Gap]:
-    dim = ct.dimensions["aggregateBoundary"]
-    if _boundary(ct) != "CompositePropertyBoundary":
-        return
-    edges = [e for e in dim.extra.get("compositeEdgeProperties", []) if not isinstance(e, BNode)]
-    if edges:
-        yield _gap(
-            ct, "CompositeOwnershipAssumed", UNIMPLEMENTED, "TD-35", "HO5",
-            f"the replace follows {_short(edges[0])} from {_short(dim.extra.get('boundaryShape'))}, which is assumed owned. "
-            "Nothing declares ownership, so a reference given sh:node is swept with the aggregate",
-        )
-
-
-def _composite_inverse_path_misread(ct: CompiledTarget) -> Iterable[Gap]:
-    dim = ct.dimensions["aggregateBoundary"]
-    if _boundary(ct) != "CompositePropertyBoundary":
-        return
-    if any(isinstance(p, BNode) for p in dim.extra.get("compositeProperties", [])):
-        yield _gap(
-            ct, "CompositeInversePathMisread", UNIMPLEMENTED, "TD-37", "HO5",
-            f"a property shape under {_short(dim.extra.get('boundaryShape'))} has an sh:path that is not an IRI "
-            "(for example an sh:inversePath), which the walk records as a property and the template renders as one",
-        )
-
-
-def _composite_default_graph(ct: CompiledTarget) -> Iterable[Gap]:
-    if _boundary(ct) == "CompositePropertyBoundary" and "cas-replace" in _operation_names(ct):
-        yield _gap(
-            ct, "CompositeUsesDefaultGraph", UNIMPLEMENTED, "TD-40", "HO5",
-            "the composite replace sweeps and writes the default graph, whose contents differ between stores (static check S-1)",
-        )
 
 
 def _composite_lifecycle(ct: CompiledTarget) -> Iterable[Gap]:
@@ -194,9 +154,6 @@ def _version_row_created_by_caller(ct: CompiledTarget) -> Iterable[Gap]:
 
 
 RULES: dict[str, Rule] = {
-    "CompositeOwnershipAssumed": _composite_ownership_assumed,
-    "CompositeInversePathMisread": _composite_inverse_path_misread,
-    "CompositeUsesDefaultGraph": _composite_default_graph,
     "CompositeNoLifecycleOperations": _composite_lifecycle,
     "NamedGraphNamedFromLocalName": _graph_named_from_local_name,
     "UnconditionalWriteNamedGraphOnly": _unconditional_write_named_graph_only,

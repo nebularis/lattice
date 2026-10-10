@@ -39,29 +39,46 @@ def _meta_graph(update: str) -> str:
 # ---- composite boundary: what a replace leaves behind -----------------------------------------
 
 
-def composite_update() -> str:
+DATA_GRAPH = "urn:g:orders"
+SH = "http://www.w3.org/ns/shacl#"
+DAL = "https://www.nebularis.org/neuro-semantic/lattice/persistence#"
+
+
+def composite_update(owns_payment: bool = False) -> str:
     """The generated composite replace with an empty payload. The rendered text carries
-    ``templatecheck``'s stand-in for the payload slot, which the replace writes to the default
-    graph (HO1), so it is removed."""
-    update = generated_update(witness.EXAMPLES_DIR / "composite-property-boundary-shacl.ttl", "cas-replace-composite-property")
+    ``templatecheck``'s stand-in for the payload slot, which the replace writes to the data graph, so
+    it is removed. With ``owns_payment`` the shape gains a second owned edge, ``payment``."""
+    from rdflib import BNode, URIRef
+    from rdflib.namespace import RDF
+
+    graph = witness._load_fixture(witness.EXAMPLES_DIR / "composite-property-boundary-shacl.ttl")
+    if owns_payment:
+        edge = BNode()
+        graph.add((URIRef(EX + "OrderAggregateShape"), URIRef(SH + "property"), edge))
+        graph.add((edge, URIRef(SH + "path"), URIRef(EX + "payment")))
+        graph.add((edge, URIRef(SH + "node"), URIRef(EX + "PaymentShape")))
+        graph.add((edge, URIRef(DAL + "ownership"), URIRef(DAL + "Owned")))
+        graph.add((URIRef(EX + "PaymentShape"), RDF.type, URIRef(SH + "NodeShape")))
+    compiled, _ = compile_to_graph(graph)
+    update = next(op.text for op in templatecheck.operations(compiled) if op.template == "cas-replace-composite-property")
     return update.replace(templatecheck._SLOT_STAND_INS["payloadTriples"], "")
 
 
-def composite_sweep(bound_property: str, with_payment: bool) -> list[str]:
+def composite_sweep(owns_payment: bool, with_payment: bool) -> list[str]:
     """Run ``cas-replace-composite-property`` on an order and return the subjects that still have
-    triples afterwards. ``bound_property`` is the local name the compiler binds, ``lineItem`` or
-    ``payment``. An empty list means the replace swept everything."""
-    update = composite_update()
+    triples in the data graph afterwards. ``owns_payment`` says whether the boundary shape owns the
+    ``payment`` edge, and ``with_payment`` whether the order has a payment. An empty list means the
+    replace swept everything the shape owns, and anything listed is a node the shape does not own."""
+    update = composite_update(owns_payment)
     meta = _meta_graph(update)
-    backend, order = OxigraphBackend(), iri("urn:order:1")
+    backend, order, data_graph = OxigraphBackend(), iri("urn:order:1"), iri(DATA_GRAPH)
     backend.add(order, iri(PAT + "epoch"), literal(1), iri(meta))
     backend.add(order, iri(PAT + "seq"), literal(1, XSD + "long"), iri(meta))
     rows = [("urn:order:1", "status", literal("open")), ("urn:order:1", "lineItem", iri("urn:li:1")), ("urn:li:1", "sku", literal("ABC"))]
     if with_payment:
         rows += [("urn:order:1", "payment", iri("urn:pay:1")), ("urn:pay:1", "amount", literal("10"))]
     for subject, predicate, obj in rows:
-        backend.add(iri(subject), iri(EX + predicate), obj)
-    update = update.replace(f"<{EX}lineItem>", f"<{EX}{bound_property}>")
+        backend.add(iri(subject), iri(EX + predicate), obj, data_graph)
     backend.update(
         update,
         {
@@ -70,7 +87,42 @@ def composite_sweep(bound_property: str, with_payment: bool) -> list[str]:
             "txnId": iri("urn:txn:a"), "requestDigest": literal("d"),
         },
     )
-    return sorted(q.subject.value for q in backend.quads(ox.DefaultGraph()))
+    return sorted({q.subject.value for q in backend.quads(data_graph)})
+
+
+PROJECT_EXAMPLE = witness.EXAMPLES_DIR / "composite-project-ownership.ttl"
+PROJECT_DATA = Path(__file__).resolve().parents[2] / "tools" / "persistence" / "tests" / "fixtures" / "project-data.ttl"
+PROJECT_GRAPH = "urn:g:projects"
+PROJECT = "https://example.org/projects#"
+
+
+def project_update() -> str:
+    """The generated composite replace for the project fixture of ADR-A122 (several owned edges, a
+    recursion, an inverse edge), with an empty payload."""
+    compiled, _ = compile_to_graph(witness._load_fixture(PROJECT_EXAMPLE))
+    update = next(op.text for op in templatecheck.operations(compiled) if op.template == "cas-replace-composite-property")
+    return update.replace(templatecheck._SLOT_STAND_INS["payloadTriples"], "")
+
+
+def project_sweep() -> list[str]:
+    """Run the replace on the project fixture's data and return the local names of the subjects that
+    still have triples in the data graph. The nodes outside the aggregate must all remain, and none of
+    the project or its eight members."""
+    update = project_update()
+    meta = _meta_graph(update)
+    backend, root = OxigraphBackend(), iri(PROJECT + "p1")
+    backend.add(root, iri(PAT + "epoch"), literal(1), iri(meta))
+    backend.add(root, iri(PAT + "seq"), literal(1, XSD + "long"), iri(meta))
+    backend.store.load(PROJECT_DATA.read_bytes(), format=ox.RdfFormat.TURTLE, to_graph=ox.NamedNode(PROJECT_GRAPH))
+    backend.update(
+        update,
+        {
+            "root": root, "epoch": literal(1), "expectedSeq": literal(1, XSD + "long"),
+            "nextSeq": literal(2, XSD + "long"), "newRev": iri("urn:rev:2"),
+            "txnId": iri("urn:txn:a"), "requestDigest": literal("d"),
+        },
+    )
+    return sorted({q.subject.value.rsplit("#", 1)[-1] for q in backend.quads(iri(PROJECT_GRAPH))})
 
 
 # ---- append-event: what a missing parameter does ----------------------------------------------

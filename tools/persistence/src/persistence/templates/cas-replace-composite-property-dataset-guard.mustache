@@ -1,20 +1,21 @@
 {{! cas-replace-composite-property-dataset-guard: CompositePropertyBoundary CAS, dal:DatasetLevelGuard
     variant: guards on the dataset epoch, rebases the row epoch lazily
     (guide §10.1).
-    There is no single graph to sweep: the closure is a property-path walk
-    over the composite property, a compile-time slot holding the node
-    property found by walking the target's boundary shape (see
-    persistence.boundary). SPARQL 1.1 permits a property path only inside
-    WHERE, never inside a DELETE or INSERT template, so the path binds ?s
-    there for the DELETE template to consume. One pattern sweeps the root
-    and every member: the path has zero or more steps, so ?s ranges over
-    the root itself and then each member, and every triple of each is
-    matched once, which is linear in the aggregate's size. A path cannot be
-    a variable and has no bounded repetition, so depth is enforced at
-    compile time by the shape walk's cycle detection. The payload is
-    written to the default graph, which is where the sweep deletes from.
-    Only the receipt records go to the log graph. The version row's subject
-    is the root instance IRI, never a graph IRI (sketch section 4.3).
+    The aggregate is the root and every member in the family's data graph.
+    The ownedPath slot is one SPARQL property path, compiled at compile time from
+    the owned edges of the target's boundary shape (persistence.boundary,
+    persistence.paths), so a recursion is a star, an edge from child to
+    parent is an inverse step, and the path has no depth bound. A path
+    cannot be a variable, and SPARQL permits one only inside WHERE, so ?s
+    ranges over the root and each member there and the DELETE template
+    consumes it. The path can match no steps, so ?s starts at the root. Every
+    triple of the root and of each member is matched once, which is linear in
+    the aggregate's size.
+    Every pattern and the payload sit in the graph the dataGraph slot names, the profile's
+    dal:dataGraph, and the default graph is never read or written (static
+    check S-1). Only the receipt records go to the log graph. The version
+    row's subject is the root instance IRI, never a graph IRI (sketch
+    section 4.3).
     requestDigest is computed by the caller as lower-case
     hex SHA-256 over the tuple-encoded operation kind, target, expected
     seq and sorted canonical N-Triples of the skolemized payload (guide
@@ -32,11 +33,11 @@ PREFIX pat: <https://example.org/lattice/patterns#>
 PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 
 DELETE {
-  ?s ?p ?o .
+  GRAPH {{{dataGraph}}} { ?s ?p ?o }
   GRAPH {{{metaGraphPrefix}}} { $root pat:epoch ?rowEpoch ; pat:seq $expectedSeq ; pat:head ?prevRev }
 }
 INSERT {
-  {{{payloadTriples}}}
+  GRAPH {{{dataGraph}}} { {{{payloadTriples}}} }
   GRAPH {{{metaGraphPrefix}}} { $root pat:epoch $epoch ; pat:seq $nextSeq ; pat:head $newRev }
   GRAPH {{{txnGraph}}}        { $txnId pat:rev $newRev ; pat:requestDigest $requestDigest }
   GRAPH ?logGraph2 {
@@ -56,5 +57,5 @@ WHERE {
   FILTER NOT EXISTS { GRAPH {{{txnGraph}}} { $txnId pat:rev ?any } }
   BIND(STR($txnId) AS ?txnKey)
   BIND(NOW() AS ?now)
-  OPTIONAL { $root {{{compositeProperty}}}* ?s . ?s ?p ?o }
+  OPTIONAL { GRAPH {{{dataGraph}}} { $root {{{ownedPath}}} ?s . ?s ?p ?o } }
 }

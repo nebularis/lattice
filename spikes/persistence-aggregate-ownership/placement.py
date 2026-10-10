@@ -119,8 +119,8 @@ class Result:
 
 def first_property_path(g: Graph, root=ROOT) -> Result:
     """What the compiler did before H1.4a: the first node property, in path order, followed with
-    ``+``. Since H1.4a the compiler refuses this shape (CompositeBoundaryMultipleProperties), so this
-    simulates a build that no longer exists. Review S1."""
+    ``+``. The compiler refused this shape from H1.4a to HO5 (CompositeBoundaryMultipleProperties), and since
+    HO5 it sweeps every owned edge, so this simulates a build that no longer exists. Review S1."""
     first = sorted(OWNED_TREE[EX.Placement], key=str)[0]
     rows = g.query(f"SELECT DISTINCT ?m WHERE {{ ?r <{first}>+ ?m }}", initBindings={"r": root})
     return Result("today: first property only", {row["m"] for row in rows})

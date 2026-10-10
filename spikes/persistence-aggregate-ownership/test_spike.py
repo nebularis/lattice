@@ -13,8 +13,6 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from rdflib.graph import DATASET_DEFAULT_GRAPH_ID  # noqa: E402
-
 import concurrency_model as cm  # noqa: E402
 import payload_graph  # noqa: E402
 import placement as pl  # noqa: E402
@@ -142,6 +140,6 @@ def test_same_unit_edits_always_meet():
 
 # ---- the payload
 
-def test_the_composite_replace_writes_the_new_payload_to_the_default_graph():
+def test_the_composite_replace_writes_the_new_payload_to_the_data_graph():
     found = payload_graph.payload_destination()
-    assert list(found) == [str(DATASET_DEFAULT_GRAPH_ID)]
+    assert list(found) == ["urn:g:orders"]

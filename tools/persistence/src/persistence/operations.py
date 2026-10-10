@@ -24,13 +24,13 @@ from rdflib import URIRef
 
 from .model import ResolvedDimension
 from .scopes import Target
-from .terms import Integer, Iri, Literal
+from .terms import Integer, Iri, Literal, PropertyPath
 
 
 @dataclass(frozen=True)
 class ParameterBinding:
     name: str
-    param_type: str  # "Iri" | "Literal" | "Integer" | "String"
+    param_type: str  # "Iri" | "Literal" | "Integer" | "String" | "PropertyPath"
     value: Any
 
 
@@ -147,26 +147,18 @@ def select_operations(
             ops.append(GeneratedOperation("cas-replace", cas_template, common_bindings))
             ops.append(GeneratedOperation("tombstone-delete", tombstone_template, common_bindings))
         elif boundary == "CompositePropertyBoundary":
-            # SPARQL 1.1 property paths support only *, +, ? repetition, not
-            # bounded {n,m} (there is no such production in the grammar),
-            # and a path cannot itself be a variable. The composite
-            # property is therefore a compile-time Mustache slot, not a
-            # request-time $-variable, populated in resolver.py once the
-            # boundary shape is walked (persistence.resolver,
-            # persistence.boundary). Depth is enforced at compile time by
-            # the shape walk's own cycle detection, not by a runtime bound.
+            # A property path cannot be a variable, so the path that reaches the aggregate's
+            # members is a compile-time slot, not a request-time $-variable. It is compiled from
+            # the owned edges of the boundary shape's classified tree (persistence.boundary,
+            # persistence.paths), and the validator has already refused a composite profile with
+            # no data graph, no shape or no owned edge. Every composite pattern sits in the
+            # profile's data graph and never in the default graph (static check S-1).
             boundary_dim = dimensions["aggregateBoundary"]
-            # The property that leads to a member node. A boundary with more than one is
-            # refused by the validator, so there is at most one here. A shape with none has
-            # no members to sweep, and keeps binding its first property as before.
-            edges = boundary_dim.extra.get("compositeEdgeProperties", [])
-            composite_properties = boundary_dim.extra.get("compositeProperties", [])
-            first_property = (edges or composite_properties or [None])[0]
-            bindings = common_bindings + (
-                [ParameterBinding("compositeProperty", "Iri", Iri.encode(str(first_property)))]
-                if first_property is not None
-                else []
-            )
+            owned_path = boundary_dim.extra["ownershipTree"].owned_path()
+            bindings = common_bindings + [
+                ParameterBinding("ownedPath", "PropertyPath", PropertyPath.encode(owned_path)),
+                ParameterBinding("dataGraph", "Iri", Iri.encode(str(boundary_dim.extra["dataGraph"]))),
+            ]
             composite_template = (
                 "cas-replace-composite-property-dataset-guard.mustache" if dataset_level_guard
                 else "cas-replace-composite-property.mustache"

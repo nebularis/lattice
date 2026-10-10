@@ -489,8 +489,7 @@ evidence on every write.
 **Why a shape, not a sub-property.** A composite boundary is declared by pointing a SHACL shape at the
 domain's own properties by IRI. Asserting a domain property as `rdfs:subPropertyOf dal:isCompositeOf`
 was rejected (ADR-A78 point 4): it would leak OWL entailments into the domain ontology and create the
-import dependency this ontology otherwise avoids. The compiler walks the shape once, offline, with a
-cycle check. No store is ever asked to run SHACL to find a write's boundary, and the same shape can
+import dependency this ontology otherwise avoids. The compiler walks the shape once, offline. No store is ever asked to run SHACL to find a write's boundary, and the same shape can
 keep serving the adopter's own validation.
 
 **First write.** A family picks one way to create a version row, declared as `dal:firstWrite`:

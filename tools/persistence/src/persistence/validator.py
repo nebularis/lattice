@@ -12,7 +12,7 @@ from __future__ import annotations
 from rdflib import RDF, Graph, URIRef
 
 from .functional import functional_value
-from .boundary import MissingBoundaryShapeError, reachable_properties
+from .boundary import MissingBoundaryShapeError, walk_ownership
 from .capability import CapabilityCheckResult
 from .model import BoundaryConflict, CrossAxisViolation, Diagnostic, ResolvedDimension
 from .namespaces import DAL, SH
@@ -132,28 +132,30 @@ def check_cross_axis(
 
     # Row 5: a uniqueness key property outside the declared boundary.
     if boundary_local == "CompositePropertyBoundary" and boundary is not None:
+        # The data graph comes first: it is what every composite operation reads and writes
+        # (ADR-A122 decision 3, static check S-1).
+        if boundary.extra.get("dataGraph") is None:
+            raise CrossAxisViolation(
+                "MissingDataGraph",
+                str(target),
+                "dal:CompositePropertyBoundary declares no dal:dataGraph. A composite family's aggregates live "
+                "in one named graph, and every composite operation reads and writes that graph only, since "
+                "stores differ on what the default graph holds. Declare dal:dataGraph on the profile.",
+            )
         boundary_shape = boundary.extra.get("boundaryShape")
         if boundary_shape is None:
             raise MissingBoundaryShapeError(
                 f"dal:CompositePropertyBoundary at {target} declares no dal:boundaryShape"
             )
-        edges = boundary.extra.get("compositeEdgeProperties", [])
-        if len(edges) > 1:
-            # cas-replace-composite-property sweeps members along ONE property
-            # (``$root <p>+ ?member``). A member reached through any other property
-            # keeps its triples after a replace, a dangling subgraph that whole-replace
-            # exists to prevent. Refused until the typed IR of formal-methods H2 can
-            # generate a sweep over several properties (H-D4, TD-03).
-            listed = ", ".join(str(e) for e in edges)
+        tree = boundary.extra["ownershipTree"]
+        if not tree.owned_edges():
             raise CrossAxisViolation(
-                "CompositeBoundaryMultipleProperties",
+                "CompositeBoundaryWithoutOwnedEdges",
                 str(target),
-                f"boundary shape {boundary_shape} leads to other nodes through {len(edges)} properties "
-                f"({listed}). The generated replace follows one, so members reached through the others "
-                "would be left behind as dangling triples. Reduce the shape to one such property.",
+                f"boundary shape {boundary_shape} owns no edge, so the aggregate is its root alone. "
+                "Use dal:NamedGraphBoundary or dal:NoBoundary, or classify an edge dal:Owned.",
             )
-        max_depth = int(boundary.extra.get("maxTraversalDepth", 8))
-        reachable = reachable_properties(graph, boundary_shape, max_depth)
+        reachable = tree.predicates()
         for constraint in uniqueness:
             for key_prop in constraint["keyProperty"]:
                 if URIRef(key_prop) not in reachable:
@@ -502,13 +504,8 @@ def check_boundary_conflicts(graph: Graph) -> list[Diagnostic]:
         shape = functional_value(graph, profile, DAL.boundaryShape)
         if shape is None:
             continue
-        for prop_shape in graph.objects(shape, SH.property):
-            node_shape = graph.value(prop_shape, SH.node)
-            if node_shape is None:
-                continue
-            member_cls = graph.value(node_shape, SH.targetClass)
-            if member_cls is None:
-                continue
+        # every member class at any depth of the classified tree (ADR-A122 decision 2)
+        for member_cls in sorted(walk_ownership(graph, shape).member_classes(), key=str):
             member_strategy = own_strategy.get(member_cls)
             if member_strategy and member_strategy != DAL.NoBoundary:
                 raise BoundaryConflict(

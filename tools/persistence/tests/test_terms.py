@@ -22,8 +22,11 @@ from pathlib import Path
 import pytest
 from rdflib.plugins.sparql import prepareQuery, prepareUpdate
 
+from rdflib import URIRef
+
+from persistence.paths import Opt, Step
 from persistence.render import load_template, render
-from persistence.terms import Integer, Iri, Literal, SparqlTermError, Var
+from persistence.terms import Integer, Iri, Literal, PropertyPath, SparqlTermError, Var
 
 TEMPLATE_DIR = Path(__file__).resolve().parents[1] / "src" / "persistence" / "templates"
 from request_slots import fill_request_slots
@@ -185,7 +188,8 @@ def _valid_context_for(template_name: str) -> dict:
         "metaGraphPrefix": Iri.encode("urn:g:meta/17"),
         "graphPrefix": Literal.encode("urn:g:orders/"),
         "guardProperty": Iri.encode("https://example.org/lending#status"),
-        "compositeProperty": Iri.encode("https://example.org/lending#lineItem"),
+        "ownedPath": PropertyPath.encode(Opt(Step(URIRef("https://example.org/lending#lineItem")))),
+        "dataGraph": Iri.encode("urn:g:orders"),
         "constraintId": Literal.encode("example-constraint"),
     }
     return common
