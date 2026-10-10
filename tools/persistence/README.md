@@ -52,6 +52,14 @@ python -m persistence hygiene \
 python -m persistence witness --verbose
 ```
 
+**`gaps`** lists, for each compiled target, what the configuration declares that the generated SPARQL does not implement, and whose obligation each entry is: `unimplemented` (a register row and the slice that removes it are named), `caller` (the SPARQL assumes something it cannot enforce), or `housekeeping` (ADR-A80). It is informational and exits 0 once the configuration compiles, and 1 if it does not. `--json` prints the report as data. Each rule lives in `persistence.gaps.RULES`, and a slice that closes a gap removes its rule there.
+
+```bash
+python -m persistence gaps \
+    ontology/persistence/spec/persistence.ttl \
+    path/to/your-config.ttl
+```
+
 ## What `compile` actually does
 
 | Stage | Input | Output | Failure mode |

@@ -53,7 +53,7 @@ In this order, each per [plan §3.5](../plans/formal-methods-track-h.md#35-ho-ag
    retired. The maintainer's merge is the sign-off, and the index, plans, status records and Validation
    Packs are the record, as the `lattice-lifecycle` skill now says.
 1. HO0 and HO1, done 2026-10-10. HO2 is done (ADR-A122 drafted, Proposed).
-2. H1.4b and H1.5, per the plan's "H1.4b and H1.5 after the aggregate-ownership review".
+2. H1.4b done 2026-10-10. H1.5 next, per the plan's "H1.4b and H1.5 after the aggregate-ownership review".
 3. HO3 to HO9 in order, end to end, without stopping for review. HO8 may run at any point after HO3.
    ADR-A122 stays Proposed. The maintainer accepts it with the work package at the close.
 
@@ -71,7 +71,7 @@ Merging signs off every slice on the branch, including H1.2d, H1.3 and H1.4a.
 | H1.2d (refuse a multi-valued single-valued property, TD-25) | **authored and verified, awaiting the maintainer's gate.** [Validation Pack](../validation/FMH-H1-2d.md) | the maintainer's review |
 | H1.3 (static template checks S-3 and S-4) | **authored and verified, awaiting the maintainer's gate.** [Validation Pack](../validation/FMH-H1-3.md) | the maintainer's review |
 | H1.4a (refuse a composite boundary with several node properties, H-D4) | **authored and verified, awaiting the maintainer's gate.** [Validation Pack](../validation/FMH-H1-4a.md) | the maintainer's review |
-| H1.4b (the declaration/implementation gap report) | not started. Composite entries defined in the plan after the aggregate-ownership review | none |
+| H1.4b (the declaration/implementation gap report) | **authored and verified.** [Validation Pack](../validation/FMH-H1-4b.md) | the maintainer's merge |
 | H1.5 (stable labels) | not started, fully detailed in the plan | none |
 | HO0 (correct the ownership note and its spike) | **authored and verified.** [Validation Pack](../validation/FMH-HO0.md) | the maintainer's merge |
 | HO1 (composite replace: payload to the default graph, linear sweep, TD-39, TD-36) | **authored and verified.** [Validation Pack](../validation/FMH-HO1.md) | the maintainer's merge |
@@ -265,3 +265,9 @@ Merging signs off every slice on the branch, including H1.2d, H1.3 and H1.4a.
   installed here) and we decided it is not mandatory. Working agreement confirmed for this cloud
   session: every slice is committed and pushed to `claude/nice-bohr-pmj43u` only, since the
   maintainer cannot otherwise review a large change set. The maintainer merges.
+- 2026-10-10: H1.4b authored. `persistence gaps` lists, per compiled target, eleven kinds of
+  declaration/implementation gap with whose obligation each is, the register row and the slice that
+  removes it. A separate informational subcommand (we chose this over folding it into `compile` or
+  `hygiene`, see the Validation Pack). 13 test items, `check:persistence` at 930 passed and 1 xfailed.
+  Three probes recorded in the Validation Pack. HO5, HO7 and HO8 remove their rules and expectations in
+  the same commit as their change.
