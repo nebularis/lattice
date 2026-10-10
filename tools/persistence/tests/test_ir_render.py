@@ -1,0 +1,326 @@
+# SPDX-License-Identifier: MPL-2.0
+# NB: This module has been produced using GenAI
+
+"""H2.1: the IR renders to SPARQL that parses as exactly one operation, from any valid value and any
+adversarial constant (formal-methods track H, ADR-A123). Validation Pack: docs/developer/validation/FMH-H2-1.md.
+Test IDs are H2.1-Tn."""
+
+from __future__ import annotations
+
+import random
+from dataclasses import replace
+import pathlib
+
+import pytest
+from rdflib import XSD, Dataset, Literal as RdfLiteral, URIRef
+from rdflib.plugins.sparql.algebra import translateQuery, translateUpdate
+from rdflib.plugins.sparql.parser import parseQuery, parseUpdate
+
+from persistence.ir import (
+    A, Bind, Binding, Compare, Const, Filter, Func, Graph, GraphBlock, GraphRole, Group, Kind, Not, NotExists, Op,
+    Operation, Optional_, Param, ParamRef, PayloadSlot, Path, Projected, RegistrySlot, Select, TermGuard, Triple,
+    Union_, ValueGuard, Values, Var,
+)
+from persistence.ir_render import AGGREGATES, FUNCTIONS, access_sets, render
+from persistence.paths import Alt, Star, Step
+from persistence.terms import Iri, Literal, PropertyPath, SparqlTermError
+from persistence.templatecheck import _SLOT_STAND_INS
+
+from ir_fixtures import (
+    DATA, EPOCH, EXPECTED, META, NEXT, PARAMS, REV, ROOT, TXN, TXN_ID, XSD_LONG, delete, insert, integer, iri, pat,
+    string, true, valid, where,
+)
+
+GOLDEN = pathlib.Path(__file__).parent / "fixtures" / "ir" / "base-operation.rq"
+P = lambda name: pat(name)
+PATH = Path(PropertyPath.encode(Star(Alt((Step(URIRef("urn:p:owns")), Step(URIRef("urn:p:has"), inverse=True))))))
+
+
+def filled(text: str) -> str:
+    """Fill the request-time slots with stand-ins, so the text is SPARQL."""
+    for name, stand_in in _SLOT_STAND_INS.items():
+        text = text.replace("{{{" + name + "}}}", stand_in)
+    return text
+
+
+def parsed(text: str) -> int:
+    """Parse and translate ``text``. Returns the number of top-level operations of an update, and 1 for a query."""
+    text = filled(text)
+    if text.lstrip().startswith(("SELECT", "PREFIX")) and "\nSELECT" in "\n" + text:
+        translateQuery(parseQuery(text))
+        return 1
+    request = parseUpdate(text)
+    translateUpdate(request)
+    return len(request.request)
+
+
+# ---- every renderable form parses -----------------------------------------------------------------
+
+
+def _registry_audit() -> Operation:
+    log = Var("log")
+    return Operation.build(
+        "audit-registry",
+        (Param("logGraphs", Kind.REGISTRY_LIST),),
+        Group((
+            Values(log, (iri("urn:g:pinned"), RegistrySlot("logGraphs"))),
+            GraphBlock(Graph(GraphRole.LOG, log), (Triple(Var("rev"), A, P("Revision")), Triple(Var("rev"), P("txn"), Var("t")))),
+        )),
+        select=Select(
+            (Var("t"), Projected(Func("COUNT", (Var("rev"),), distinct=True), Var("n")), Projected(Func("GROUP_CONCAT", (Func("STR", (Var("rev"),)),), separator=" "), Var("revs")),
+             Projected(Func("MIN", (Var("rev"),)), Var("first")), Projected(Func("MAX", (Var("rev"),)), Var("last")),
+             Projected(Func("SAMPLE", (Var("rev"),)), Var("any_rev"))),
+            (Var("t"),),
+            (ValueGuard(">", Func("COUNT", (Var("rev"),), distinct=True), integer(1)),),
+        ),
+    )
+
+
+def _value_audit() -> Operation:
+    seq, low, high = (Var(n, Kind.LONG, Compare.VALUE) for n in ("seq", "L", "S"))
+    return Operation.build(
+        "audit-values", (),
+        Group((
+            GraphBlock(META, (Triple(Var("target"), A, P("VersionRow")), Triple(Var("target"), P("seq"), high))),
+            Optional_(Group((GraphBlock(graph_(GraphRole.RETENTION, "retention"), (Triple(Var("target"), P("lwm"), Var("lwm")),)),))),
+            Bind(Func("COALESCE", (Var("lwm"), Const(Literal.encode("1", datatype=XSD_LONG)))), low),
+            Optional_(Group((GraphBlock(graph_(GraphRole.LOG, "log"), (Triple(Var("r"), P("seq"), seq),)), Filter(Op("&&", ValueGuard(">=", seq, low), ValueGuard("<=", seq, high))))))
+        )),
+        select=Select(
+            (Var("target"), Projected(Func("COUNT", (seq,), distinct=True), Var("n"))),
+            (Var("target"), high, low),
+            (ValueGuard("!=", Func("COUNT", (seq,), distinct=True), Op("+", Op("-", high, low), integer(1))),),
+        ),
+    )
+
+
+def graph_(role: GraphRole, name: str) -> Graph:
+    return Graph(role, iri(f"urn:g:{name}"))
+
+
+def _functions() -> Operation:
+    r = ROOT
+    arguments = {
+        "IRI": (Func("STR", (r,)),), "CONCAT": (string("a"), string("b")), "STR": (r,), "ENCODE_FOR_URI": (Func("STR", (r,)),),
+        "SUBSTR": (string("abc"), integer(1), integer(2)), "STRLEN": (string("abc"),),
+        "STRDT": (string("1"), Const(Iri.encode(XSD_LONG))), "COALESCE": (Var("missing"), string("d")),
+        "BOUND": (Var("missing"),), "DATATYPE": (string("a"),), "NOW": (), "ISIRI": (r,),
+    }
+    assert set(arguments) == set(FUNCTIONS)
+    binds = tuple(Bind(Func(name, args), Var(f"f_{name.lower()}")) for name, args in arguments.items())
+    return Operation.build("functions", (Param("root", Kind.IRI),), Group((GraphBlock(META, (Triple(r, P("p"), Var("missing")),)), *binds)), select=Select((Var("f_str"),)))
+
+
+FORMS: dict[str, Operation] = {
+    "replace-shape": valid(),
+    "no-guard": replace(valid(), guard=None),
+    "insert-only": Operation.build("ins", (Param("t", Kind.IRI),), Group((NotExists(Group((GraphBlock(META, (Triple(ParamRef("t"), P("seq"), Var("any")),)),))),)), insert=(GraphBlock(META, (Triple(ParamRef("t"), A, P("VersionRow")),)),)),
+    "no-required-parameter": Operation.build("ins0", (Param("t", Kind.IRI, required=False),), Group(()), insert=(GraphBlock(META, (Triple(ParamRef("t"), A, P("VersionRow")),)),)),
+    "property-path": Operation.build("path", (Param("root", Kind.IRI),), Group((GraphBlock(DATA, (Triple(ParamRef("root"), PATH, Var("s")), Triple(Var("s"), Var("p"), Var("o")))),)), delete=(GraphBlock(DATA, (Triple(Var("s", binding=Binding.BOUND), Var("p", binding=Binding.BOUND), Var("o", binding=Binding.BOUND)),)),)),
+    "union": Operation.build("union", (Param("root", Kind.IRI),), Group((Union_((Group((GraphBlock(META, (Triple(ParamRef("root"), P("a"), Var("x")),)),)), Group((GraphBlock(META, (Triple(ParamRef("root"), P("b"), Var("x")),)),)))),)), select=Select((Var("x"),))),
+    "nested-group": Operation.build("group", (Param("root", Kind.IRI),), Group((Group((GraphBlock(META, (Triple(ParamRef("root"), P("a"), Var("x")),)),)),)), select=Select((Var("x"),))),
+    "term-and-value-guards": valid(where_=(*where(), Filter(Op("&&", TermGuard(EXPECTED, NEXT), Not(TermGuard(EXPECTED, NEXT, negated=True)))), Filter(ValueGuard("!=", ROOT, REV)))),
+    "registry-audit": _registry_audit(),
+    "value-audit": _value_audit(),
+    "every-function": _functions(),
+}
+
+
+@pytest.mark.parametrize("name", sorted(FORMS))
+def test_h2_1_t10_every_renderable_form_parses_as_one_operation(name):
+    assert parsed(render(FORMS[name])) == 1
+
+
+def test_h2_1_t11_the_forms_cover_every_function_and_aggregate():
+    text = "".join(render(op) for op in FORMS.values())
+    for name in (*FUNCTIONS, *AGGREGATES):
+        assert name + "(" in text, name
+
+
+# ---- the shape of the text ------------------------------------------------------------------------
+
+
+def test_h2_1_t12_slots_render_as_mustache_tags_and_variables_as_dollar_names():
+    text = render(valid())
+    assert "{{{payloadTriples}}}" in text
+    assert "$root" in text and "?root" not in text
+
+
+def test_h2_1_t13_the_rendering_of_the_base_operation_is_pinned():
+    assert render(valid()) == GOLDEN.read_text(encoding="utf-8")
+
+
+def test_h2_1_t14_two_renderings_are_byte_identical_and_prefixes_are_declared_once():
+    assert render(valid()) == render(valid())
+    assert render(valid()).count("PREFIX pat:") == 1
+
+
+def test_h2_1_t15_the_guard_is_exactly_one_filter_at_the_top_of_where():
+    with_guard = render(valid()).splitlines()
+    without = render(replace(valid(), guard=None)).splitlines()
+    added = [line for line in with_guard if line not in without]
+    assert len(added) == 1 and added[0].lstrip().startswith("FILTER(BOUND($root)")
+    where_start = with_guard.index("WHERE {")
+    assert with_guard[where_start + 1] == added[0]
+    assert [line for line in without if line not in with_guard] == []
+
+
+# ---- the guard does what it says (TD-34) ------------------------------------------------------------
+
+_TARGET = URIRef("urn:test:target")
+
+
+def _bootstrap() -> Operation:
+    t = ParamRef("target")
+    return Operation.build(
+        "bootstrap",
+        (Param("target", Kind.IRI), Param("epoch", Kind.LONG)),
+        Group((NotExists(Group((GraphBlock(META, (Triple(t, P("seq"), Var("any")),)),))),)),
+        insert=(GraphBlock(META, (Triple(t, A, P("VersionRow")), Triple(t, P("epoch"), ParamRef("epoch")), Triple(t, P("seq"), Const(Literal.encode("0", datatype=XSD_LONG))))),),
+    )
+
+
+def _run(op: Operation, **bindings) -> set:
+    ds = Dataset()
+    ds.update(render(op), initBindings=bindings)
+    return {(str(s), str(p), str(o)) for s, p, o, _ in ds.quads((None, None, None, URIRef("urn:g:meta")))}
+
+
+def test_h2_1_t16_with_every_parameter_bound_the_operation_writes_the_whole_record():
+    rows = _run(_bootstrap(), target=_TARGET, epoch=RdfLiteral(3, datatype=XSD.long))
+    assert len(rows) == 3
+
+
+@pytest.mark.parametrize("bindings", [
+    {"epoch": RdfLiteral(3, datatype=XSD.long)},
+    {"target": _TARGET},
+    {"target": _TARGET, "epoch": RdfLiteral(3)},
+    {"target": _TARGET, "epoch": RdfLiteral("3")},
+], ids=["no target", "no epoch", "epoch as xsd:integer", "epoch as a string"])
+def test_h2_1_t17_a_missing_or_mistyped_parameter_writes_nothing(bindings):
+    assert _run(_bootstrap(), **bindings) == set()
+
+
+def test_h2_1_t18_without_the_guard_a_missing_parameter_writes_part_of_the_record():
+    rows = _run(replace(_bootstrap(), guard=None), target=_TARGET)
+    assert 0 < len(rows) < 3  # the partial write TD-34 records
+
+
+# ---- derived read and write sets ----------------------------------------------------------------------
+
+
+def test_h2_1_t19_read_and_write_sets_are_derived_from_the_patterns():
+    sets = access_sets(valid())
+    reads = {(a.role, a.subject) for a in sets.reads}
+    writes = {(a.role, a.subject, a.predicate) for a in sets.writes}
+    assert ("meta", "$root") in reads and ("txn", "$txnId") in reads
+    assert ("data", "{payload}", "*") in writes
+    assert ("log", "$newRev", "a") in writes
+    assert not any(a.role == "log" for a in sets.reads)
+    assert access_sets(valid()) == access_sets(replace(valid(), guard=None))
+
+
+# ---- properties ------------------------------------------------------------------------------------------
+
+
+def _random_operation(rng: random.Random) -> Operation:
+    """A valid operation, valid by construction. Every snippet binds names of its own."""
+    where_: list = []
+    definite: list[str] = []
+    possible: list[str] = []
+    for k in range(rng.randint(0, 6)):
+        choice = rng.choice(("triple", "optional", "not-exists", "bind", "filter", "path", "union", "values"))
+        if choice == "triple":
+            where_.append(GraphBlock(META, (Triple(ROOT, P(f"p{k}"), Var(f"v{k}")),)))
+            definite.append(f"v{k}")
+        elif choice == "optional":
+            where_.append(GraphBlock(META, (Triple(ROOT, P(f"q{k}"), Var(f"w{k}")), Optional_(Group((Triple(ROOT, P(f"o{k}"), Var(f"o{k}")),))))))
+            definite.append(f"w{k}")
+            possible.append(f"o{k}")
+        elif choice == "not-exists":
+            where_.append(NotExists(Group((GraphBlock(TXN, (Triple(TXN_ID, P(f"n{k}"), Var(f"n{k}")),)),))))
+        elif choice == "bind":
+            fn = rng.choice(("STR", "IRI", "STRLEN", "ENCODE_FOR_URI"))
+            arg = ROOT if fn != "IRI" else Func("STR", (ROOT,))
+            where_.append(Bind(Func(fn, (Func("STR", (arg,)) if fn in ("STRLEN", "ENCODE_FOR_URI") else arg,)), Var(f"b{k}")))
+            definite.append(f"b{k}")
+        elif choice == "filter":
+            where_.append(Filter(rng.choice((ValueGuard("!=", ROOT, REV), TermGuard(EXPECTED, NEXT), Op("||", TermGuard(EXPECTED, NEXT), ValueGuard("=", ROOT, REV))))))
+        elif choice == "path":
+            where_.append(GraphBlock(DATA, (Triple(ROOT, PATH, Var(f"s{k}")), Triple(Var(f"s{k}"), Var(f"p{k}"), Var(f"o{k}x")))))
+            definite += [f"s{k}", f"p{k}", f"o{k}x"]
+        elif choice == "union":
+            where_.append(Union_((Group((GraphBlock(META, (Triple(ROOT, P(f"a{k}"), Var(f"u{k}")),)),)), Group((GraphBlock(META, (Triple(ROOT, P(f"b{k}"), Var(f"u{k}")),)),)))))
+            definite.append(f"u{k}")
+        else:
+            where_.append(Values(Var(f"g{k}"), (iri(f"urn:g:v{k}"),)))
+            where_.append(GraphBlock(Graph(GraphRole.LOG, Var(f"g{k}")), (Triple(ROOT, P(f"l{k}"), Var(f"l{k}")),)))
+            definite += [f"g{k}", f"l{k}"]
+    graphs = (META, TXN, DATA)
+    template: list = []
+    for name in definite:
+        if rng.random() < 0.5:
+            template.append(GraphBlock(rng.choice(graphs), (Triple(ROOT, P(f"t_{name}"), Var(name, binding=Binding.BOUND)),)))
+    for name in possible:
+        if rng.random() < 0.5:
+            template.append(GraphBlock(rng.choice(graphs), (Triple(ROOT, P(f"t_{name}"), Var(name, binding=Binding.OPTIONAL_ALLOWED)),)))
+    if rng.random() < 0.5:
+        template.append(GraphBlock(DATA, (PayloadSlot("payloadTriples"),)))
+    template.append(GraphBlock(META, (Triple(ROOT, P("seq"), NEXT),)))
+    params = tuple(p for p in PARAMS if p.name in {"root", "expectedSeq", "nextSeq", "newRev", "txnId", "payloadTriples", "epoch"})
+    extra = (GraphBlock(META, (Triple(ROOT, P("epoch"), EPOCH), Triple(ROOT, P("seq"), EXPECTED))),
+             NotExists(Group((GraphBlock(TXN, (Triple(TXN_ID, P("rev"), REV),)),))),
+             GraphBlock(META, (Triple(ROOT, P("head"), REV),)))
+    payload_used = any(isinstance(e, PayloadSlot) for b in template for e in b.elements)
+    if not payload_used:
+        params = tuple(p for p in params if p.name != "payloadTriples")
+    delete_ = (GraphBlock(META, (Triple(ROOT, P("seq"), NEXT),)),) if rng.random() < 0.5 else ()
+    return Operation.build("random", params, Group((*extra, *where_)), insert=tuple(template), delete=delete_)
+
+
+@pytest.mark.parametrize("seed", range(150))
+def test_h2_1_t20_a_valid_operation_renders_deterministically_to_exactly_one_operation(seed):
+    operation = _random_operation(random.Random(seed))
+    text = render(operation)
+    assert parsed(text) == 1
+    assert render(operation) == text
+
+
+_ALPHABET = list('"\'\\{}<>;.#?$ \n\t\r‮​%') + ["DROP ALL", "}; DROP ALL; INSERT {", "\\u0041", "\"\"\"", "# ", "<urn:x>", "{{{", "}}}"]
+
+
+def _adversarial(rng: random.Random) -> str:
+    return "".join(rng.choice(_ALPHABET + list("abc")) for _ in range(rng.randint(1, 12)))
+
+
+@pytest.mark.parametrize("seed", range(100))
+def test_h2_1_t21_an_adversarial_literal_stays_a_literal(seed):
+    value = _adversarial(random.Random(seed))
+    op = Operation.build(
+        "label", (Param("root", Kind.IRI),), Group(()),
+        insert=(GraphBlock(META, (Triple(ParamRef("root"), P("label"), Const(Literal.encode(value))),)),),
+    )
+    text = render(op)
+    assert parsed(text) == 1
+    ds = Dataset()
+    ds.update(text, initBindings={"root": _TARGET})
+    objects = [o for _, _, o, _ in ds.quads((None, None, None, URIRef("urn:g:meta")))]
+    assert objects == [RdfLiteral(value)]
+
+
+@pytest.mark.parametrize("seed", range(100))
+def test_h2_1_t22_an_adversarial_iri_is_refused_or_stays_an_iri(seed):
+    value = "urn:x:" + _adversarial(random.Random(seed))
+    try:
+        constant = Const(Iri.encode(value))
+    except SparqlTermError:
+        return
+    op = Operation.build(
+        "iri", (Param("root", Kind.IRI),), Group(()),
+        insert=(GraphBlock(META, (Triple(ParamRef("root"), P("see"), constant),)),),
+    )
+    text = render(op)
+    assert parsed(text) == 1
+    ds = Dataset()
+    ds.update(text, initBindings={"root": _TARGET})
+    assert [o for _, _, o, _ in ds.quads((None, None, None, URIRef("urn:g:meta")))] == [URIRef(value)]

@@ -23,7 +23,7 @@ design-time models, excludes all relational/SQL work)
 **Source:** [persistence-fml.md](../notes/rdf-engine/persistence-fml.md), an independent,
 exhaustive review of the Persistence layer against this epic's own techniques
 **Status:** In progress. H1 and the aggregate-ownership slices HO0 to HO9 are merged to `main` and
-signed off (2026-10-10). H2 is briefed, every question is answered, and H2.0 is ready to branch. The live state is in the status
+signed off (2026-10-10). H2 is briefed, every question is answered, and H2.0 and H2.1 are built and await review. The live state is in the status
 record
 
 ## 1. Scope
@@ -511,7 +511,7 @@ check of ADR-A122 decision 6, and the required-parameter guard that closes TD-34
 unchanged. Every hazard of the [specification sketch §3](../sketches/formal-methods-track-h-specification.md#3-the-typed-intermediate-representation)
 becomes a refusal by type, and H1.3's checks pass over the new output by construction. H2-Q1 to H2-Q6
 are answered ([sketch §1](../sketches/formal-methods-track-h-typed-ir.md#1-decisions-already-taken-2026-10-10)),
-and H2.0 is ready to branch.
+H2.0 and H2.1 are built (2026-10-10), awaiting review.
 
 **H3 (specification registry), outline:**
 - One machine-readable registry (syntax not yet chosen, specification sketch §2) generating:

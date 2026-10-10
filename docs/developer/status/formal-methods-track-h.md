@@ -3,7 +3,7 @@
 # Formal Methods, Track H: Status
 
 **Unit ID:** `formal-methods-track-h` (phase, within the `formal-methods` epic)
-**Status:** In progress. H1 (H1.1 to H1.5, with H1.4c) and the aggregate-ownership slices HO0 to HO9 are merged to `main` and signed off (2026-10-10). H2 is briefed and every question is answered (2026-10-10). H2.0 is ready to branch
+**Status:** In progress. H1 (H1.1 to H1.5, with H1.4c) and the aggregate-ownership slices HO0 to HO9 are merged to `main` and signed off (2026-10-10). H2 is briefed and every question is answered (2026-10-10). H2.0 (ADR-A123, Proposed) and H2.1 (the typed IR and its renderer) are built and await review
 **Last updated:** 2026-10-10
 **Plan:** [formal-methods-track-h.md](../plans/formal-methods-track-h.md)
 **Sketches:** [formal-methods-track-h.md](../sketches/formal-methods-track-h.md) (main),
@@ -53,23 +53,15 @@ section below.
 
 ## Next action
 
-**H2.0, ready to branch** from the current `main`. A docs-only slice, per the
-[typed IR sketch §6 and §7](../sketches/formal-methods-track-h-typed-ir.md#6-the-adrs):
+H2.0 and H2.1 are built and await the maintainer's review. Ahead of it:
 
-1. Re-check that A123 is free on `main`, on every remote branch and in the catalogue
-   (`docs/architecture/decisions/README.md`). A121 is claimed by the repository-catalogue sketch.
-2. Draft `docs/architecture/decisions/ADR-A123-typed-operation-ir.md`, Proposed. It decides the IR
-   and its type rules (sketch §3), the logical operation contract (§3.1, H2-Q6), the typed payload
-   PL-B and its contract (§4, H2-Q1 to H2-Q3), the parameter guard in the SPARQL and in the Python
-   caller (H2-Q4), declarations only in the compiled profile (H2-Q5), the `INFO` severity with its
-   warning option (H2-Q2), and the retirement of the Mustache templates (H-D19). It lists what it
-   supersedes in ADR-A79 (sketch §6).
-3. Draft the ADR-A79 addendum naming each superseded point and pointing at A123, to be dated when
-   the maintainer accepts A123. ADR-A79 stays Accepted.
-4. Add the catalogue row, update this record, the plan's H2 row and `INDEX.md`, and stop for the
-   maintainer's review. Do not mark A123 Accepted.
-
-After H2.0, H2.1 (the IR core) is briefed. H3 follows H2.
+1. The maintainer reviews [FMH-H2-0](../validation/FMH-H2-0.md) and [FMH-H2-1](../validation/FMH-H2-1.md), accepts
+   or amends ADR-A123, and decides the four items in FMH-H2-1 (the `Literal.encode` fix, the declared-kind rule for
+   value comparisons, the extra rules, and what is left to later slices).
+2. **H2.2**, the equivalence harness of the [typed IR sketch §7.1](../sketches/formal-methods-track-h-typed-ir.md#71-the-equivalence-harness-h22)
+   with `bootstrap-version-row` and `append-event` ported, and TD-34 closed for them. H2.3, H2.4 and H2.5 follow
+   in any order. **H2.6** (examples first, with the paper check) needs only A123 and can run beside them.
+3. On A123's acceptance, apply the dated ADR-A79 addendum drafted at the foot of A123.
 
 ## Slices
 
@@ -96,6 +88,7 @@ After H2.0, H2.1 (the IR core) is briefed. H3 follows H2.
 | HO8 (injective graph naming within and across families, TD-38) | **signed off** 2026-10-10, merged. [Validation Pack](../validation/FMH-HO8.md) | |
 | HO9 (ownership documentation and close-out) | **signed off** 2026-10-10, merged. [Validation Pack](../validation/FMH-HO9.md) | |
 | H2.0 (ADR-A123, Proposed) | **built** 2026-10-10. [Validation Pack](../validation/FMH-H2-0.md) | the maintainer's acceptance of A123 |
+| H2.1 (the typed IR and its renderer) | **built** 2026-10-10. [Validation Pack](../validation/FMH-H2-1.md). Not yet used by `compile` | the maintainer's review, and A123's acceptance |
 | H2 (typed IR) | **briefed** 2026-10-10, split into H2.0 to H2.9 ([typed IR sketch §7](../sketches/formal-methods-track-h-typed-ir.md#7-slices)) | |
 | H3 (specification registry) | not started, outlined in the plan | H2 preferred first (smaller, more self-contained), not a hard blocker |
 | H4 (exhaustive cross-axis validation, BDD/SMT) | not started, outline only | H3 |
@@ -392,3 +385,11 @@ After H2.0, H2.1 (the IR core) is briefed. H3 follows H2.
 - 2026-10-10: H2.0 built ([FMH-H2-0](../validation/FMH-H2-0.md)). [ADR-A123](../../architecture/decisions/ADR-A123-typed-operation-ir.md)
   is drafted Proposed and catalogued. A123 was free on every remote branch. The ADR-A79 addendum is drafted at the foot of
   A123 and applied on acceptance, since an accepted ADR should not carry text for a decision not yet taken.
+- 2026-10-10: H2.1 built ([FMH-H2-1](../validation/FMH-H2-1.md)). `persistence.ir` (the values) and
+  `persistence.ir_render` (26 named refusals, rendering, derived read and write sets). Nothing calls them yet.
+  `check:persistence` at 1849 passed and 1 xfailed (489 added). The property test of adversarial literals
+  found a defect in the existing `Literal.encode`: a value holding a backslash before `u` was written so that
+  SPARQL's whole-text `\u` escape processing broke it (rdflib raises). Fixed in `terms.py` (outside the slice's
+  module list, listed for the maintainer's review). Probes: seven mutations caught, and an eighth, a duplicated
+  path-in-template check, was an equivalent mutant, so the duplicate was removed. Decisions for the maintainer
+  are in the Validation Pack.

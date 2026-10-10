@@ -156,6 +156,10 @@ This section is for a caller that runs the instantiated `.rq` files without LATT
 4. **Keep txn claims at least as long as the longest redelivery horizon** before pruning them (guide §24.2).
 5. **Quiesce writers when you bump the dataset epoch** (guide §24.4).
 
+## The typed operation IR (in progress, ADR-A123)
+
+`persistence.ir` and `persistence.ir_render` are the replacement for the Mustache templates, built in slices H2.1 to H2.9 of formal-methods track H. An `Operation` is a frozen value. Its parameters are declared, every pattern sits in a graph block with a role, no blank node can be written, a property path appears only in `WHERE`, the variables of a `DELETE` or `INSERT` template are tagged `Bound` or `OptionalAllowed`, guards are tagged by term or value, `NOW()` is kept out of every guard, and the required-parameter guard is derived from the parameter list. `render` refuses an operation that breaks one of these (`persistence.ir_render.RULES` names each refusal) and `access_sets` derives the graphs and subjects it reads and writes. Nothing calls them yet. `compile` and `instantiate` still use the templates until the builders are ported (H2.2 to H2.5).
+
 ## Known limitations (first cut, honestly scoped)
 
 - **`unconditional-write`** only knows how to target a `dal:NamedGraphBoundary`'s graph. A target combining `dal:ProvidedConcurrency` or `dal:LockingConcurrency`, outside event grain, with `dal:CompositePropertyBoundary` or `dal:NoBoundary` is refused (`UnconditionalWriteRequiresNamedGraph`, TD-02) until a second variant is added.
@@ -182,6 +186,7 @@ The test suite includes:
 - **`test_resolver.py`**, **`test_validator.py`**, **`test_capability.py`**, **`test_boundary.py`** — unit coverage for each module, including the lending/credit worked conflict from the sketch, reproduced as an executable test.
 - **`test_determinism.py`** — compiling the same configuration twice (including with triples loaded in shuffled order) produces isomorphic output.
 - **`test_ownership_tree.py`** — the classified boundary tree and the property path compiled from it (HO4): the reference fixture's members, a golden path, and 200 seeded random shapes and datasets whose members by the path equal a breadth-first search of the automaton. The compiler does not use it yet.
+- **`test_ir.py`**, **`test_ir_render.py`** — the typed IR (H2.1): one refusal test per rule, a parse test for every renderable form, 150 seeded random valid operations that each render to exactly one parsed operation, adversarial literals and IRIs that stay what they were, the required-parameter guard run on rdflib, and a pinned rendering.
 - **`test_compiled_profile_stable.py`** — a compiled profile serialises to byte-identical Turtle: across two compiles, across the order the configuration was loaded in, and across processes with different hash seeds. Every blank node's label is derived from its target (H1.5).
 - **`test_compiler_integration.py`** — full compile → instantiate → parse round trips for every positive example fixture, `CompileError` assertions for every negative one, and SHACL self-validation of `ontology/persistence`'s own shapes against every fixture.
 - **`test_template_alignment.py`** — the template contract from the post-3866b21 review: epoch rebase, request digests, optional heads, typed rows, key-claim graph, audits, and the request-time slot rules.
