@@ -53,7 +53,7 @@ In this order, each per [plan §3.5](../plans/formal-methods-track-h.md#35-ho-ag
    retired. The maintainer's merge is the sign-off, and the index, plans, status records and Validation
    Packs are the record, as the `lattice-lifecycle` skill now says.
 1. HO0 and HO1, done 2026-10-10. HO2 is done (ADR-A122 drafted, Proposed).
-2. H1.4b done 2026-10-10. H1.5 next, per the plan's "H1.4b and H1.5 after the aggregate-ownership review".
+2. H1.4b and H1.5 done 2026-10-10, per the plan's "H1.4b and H1.5 after the aggregate-ownership review".
 3. HO3 to HO9 in order, end to end, without stopping for review. HO8 may run at any point after HO3.
    ADR-A122 stays Proposed. The maintainer accepts it with the work package at the close.
 
@@ -72,7 +72,7 @@ Merging signs off every slice on the branch, including H1.2d, H1.3 and H1.4a.
 | H1.3 (static template checks S-3 and S-4) | **authored and verified, awaiting the maintainer's gate.** [Validation Pack](../validation/FMH-H1-3.md) | the maintainer's review |
 | H1.4a (refuse a composite boundary with several node properties, H-D4) | **authored and verified, awaiting the maintainer's gate.** [Validation Pack](../validation/FMH-H1-4a.md) | the maintainer's review |
 | H1.4b (the declaration/implementation gap report) | **authored and verified.** [Validation Pack](../validation/FMH-H1-4b.md) | the maintainer's merge |
-| H1.5 (stable labels) | not started, fully detailed in the plan | none |
+| H1.5 (stable labels) | **authored and verified.** [Validation Pack](../validation/FMH-H1-5.md) | the maintainer's merge |
 | HO0 (correct the ownership note and its spike) | **authored and verified.** [Validation Pack](../validation/FMH-HO0.md) | the maintainer's merge |
 | HO1 (composite replace: payload to the default graph, linear sweep, TD-39, TD-36) | **authored and verified.** [Validation Pack](../validation/FMH-HO1.md) | the maintainer's merge |
 | HO2 (draft ADR-A122, Proposed) | **done** 2026-10-10. [ADR-A122](../../architecture/decisions/ADR-A122-aggregate-ownership.md), Proposed until the maintainer accepts the work package | |
@@ -271,3 +271,8 @@ Merging signs off every slice on the branch, including H1.2d, H1.3 and H1.4a.
   `hygiene`, see the Validation Pack). 13 test items, `check:persistence` at 930 passed and 1 xfailed.
   Three probes recorded in the Validation Pack. HO5, HO7 and HO8 remove their rules and expectations in
   the same commit as their change.
+- 2026-10-10: H1.5 authored. Every blank node of a compiled profile has a label derived from its
+  target, so the same configuration writes the same bytes, across compiles, load order and processes
+  with different hash seeds (all four examples tried differed before). TD-09 removed. A probe showed no
+  example compiles with a capability spec, so the check node was untested, and T5b was added. No golden
+  file is committed. `check:persistence` at 994 passed and 1 xfailed.
