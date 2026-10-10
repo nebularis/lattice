@@ -65,21 +65,6 @@ def _gap(ct: CompiledTarget, gap: str, obligation: str, reference: str, closes_i
     return Gap(gap, str(ct.target), obligation, reference, closes_in, message)
 
 
-def _graph_named_from_local_name(ct: CompiledTarget) -> Iterable[Gap]:
-    if _boundary(ct) != "NamedGraphBoundary":
-        return
-    if not any(b.name == "graphPrefix" for op in ct.operations for b in op.bindings):
-        return
-    template = str(ct.dimensions["aggregateBoundary"].extra.get("graphIriTemplate", ""))
-    dropped = ""
-    if "}" in template and template.split("}", 1)[1]:
-        dropped = f" and the text after {{id}} ({template.split('}', 1)[1]!r}) is dropped"
-    yield _gap(
-        ct, "NamedGraphNamedFromLocalName", UNIMPLEMENTED, "TD-38", "HO8",
-        "the graph is named from the root's local name, so two roots with one local name share a graph" + dropped,
-    )
-
-
 def _unconditional_write_named_graph_only(ct: CompiledTarget) -> Iterable[Gap]:
     if "unconditional-write" in _operation_names(ct) and _boundary(ct) != "NamedGraphBoundary":
         yield _gap(
@@ -142,7 +127,6 @@ def _version_row_created_by_caller(ct: CompiledTarget) -> Iterable[Gap]:
 
 
 RULES: dict[str, Rule] = {
-    "NamedGraphNamedFromLocalName": _graph_named_from_local_name,
     "UnconditionalWriteNamedGraphOnly": _unconditional_write_named_graph_only,
     "ShardCountNotHonoured": _shard_counts_not_honoured,
     "InfrastructureGraphsFixed": _infrastructure_graphs_fixed,

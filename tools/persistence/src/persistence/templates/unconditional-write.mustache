@@ -8,4 +8,4 @@
 PREFIX pat: <https://example.org/lattice/patterns#>
 
 INSERT { GRAPH ?g { {{{payloadTriples}}} } }
-WHERE  { BIND(IRI(CONCAT({{{graphPrefix}}}, REPLACE(STR($root), "^.*[/#]", ""))) AS ?g) }
+WHERE  { BIND(IRI(CONCAT({{{graphPrefix}}}, ENCODE_FOR_URI(STR($root)), {{{graphSuffix}}})) AS ?g) }

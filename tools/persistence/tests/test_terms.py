@@ -187,6 +187,7 @@ def _valid_context_for(template_name: str) -> dict:
         "datasetNode": Iri.encode("urn:g:dataset"),
         "metaGraphPrefix": Iri.encode("urn:g:meta/17"),
         "graphPrefix": Literal.encode("urn:g:orders/"),
+        "graphSuffix": Literal.encode("/data"),
         "guardProperty": Iri.encode("https://example.org/lending#status"),
         "ownedPath": PropertyPath.encode(Opt(Step(URIRef("https://example.org/lending#lineItem")))),
         "dataGraph": Iri.encode("urn:g:orders"),

@@ -55,6 +55,11 @@ def _family_token(cls) -> str:
     return re.sub(r"[^a-z0-9-]", "-", local.lower()) or "family"
 
 
+def default_graph_template(cls) -> str:
+    """The graph template of a named-graph family that declares none: ``urn:g:<family token>/{id}``."""
+    return f"urn:g:{_family_token(cls)}/{{id}}"
+
+
 def _shard_for(target: Target, shard_count: int) -> int:
     key = str(target)
     digest = hashlib.sha256(key.encode("utf-8")).digest()
@@ -120,12 +125,17 @@ def select_operations(
     # know which graph to write into).
     if boundary == "NamedGraphBoundary":
         boundary_dim = dimensions["aggregateBoundary"]
-        template = boundary_dim.extra.get("graphIriTemplate", f"urn:g:{target.cls}/")
-        graph_prefix = str(template).split("{", 1)[0]
+        # The graph is the prefix, the root IRI encoded with ENCODE_FOR_URI, and the suffix, so
+        # distinct roots name distinct graphs (ADR-A122 decision 8). The validator has already
+        # checked that the template holds one {id} and that its suffix starts with a character the
+        # encoding never emits.
+        template = str(boundary_dim.extra.get("graphIriTemplate", default_graph_template(target.cls)))
+        graph_prefix, _, graph_suffix = template.partition("{id}")
         common_bindings = common_bindings + [
-            # A string fragment interpolated inside an existing CONCAT(...),
-            # not a standalone IRI term: Literal, not Iri.
+            # String fragments interpolated inside an existing CONCAT(...),
+            # not standalone IRI terms: Literals, not Iris.
             ParameterBinding("graphPrefix", "String", Literal.encode(graph_prefix)),
+            ParameterBinding("graphSuffix", "String", Literal.encode(graph_suffix)),
         ]
 
     if concurrency == "Optimistic":

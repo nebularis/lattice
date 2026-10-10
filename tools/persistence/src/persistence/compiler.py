@@ -25,7 +25,7 @@ from .capability import (
 )
 from .model import DIMENSIONS, Diagnostic, ResolvedDimension
 from .namespaces import DAL
-from .operations import GeneratedOperation, select_operations
+from .operations import GeneratedOperation, default_graph_template, select_operations
 from .recipes import build_recipes, canonical_json
 from .resolver import resolve_dimension, resolve_identity, resolve_uniqueness
 
@@ -120,6 +120,19 @@ def compile_targets(
             )
         except Exception as e:
             raise CompileError(target, e) from e
+
+    families: dict[str, tuple[str, str]] = {}
+    for ct in compiled:
+        boundary = ct.dimensions["aggregateBoundary"]
+        if str(boundary.value).endswith("NamedGraphBoundary"):
+            declared = boundary.extra.get("graphIriTemplate")
+            template = str(declared) if declared is not None else default_graph_template(ct.target.cls)
+            key, label = (boundary.won_by, boundary.won_by) if declared is not None else (str(ct.target.cls), f"the default for {ct.target.cls}")
+            families[str(key)] = (str(label), template.partition("{id}")[0])
+    try:
+        validator.check_graph_naming(families)
+    except Exception as e:  # GraphIriTemplateOverlap
+        raise CompileError(Target(cls=URIRef("urn:x-persistence:whole-graph")), e) from e
 
     for ct in compiled:
         boundary = ct.dimensions["aggregateBoundary"]

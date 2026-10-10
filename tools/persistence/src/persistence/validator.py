@@ -9,6 +9,7 @@ downgrades a configuration it cannot satisfy)."""
 
 from __future__ import annotations
 
+import string
 from itertools import combinations
 
 from rdflib import RDF, RDFS, SKOS, Graph, URIRef
@@ -162,12 +163,56 @@ def check_cross_axis(
                         f"{key_prop!r} is not reachable within the declared boundary shape "
                         f"{boundary_shape!r}. Narrow the key property, or widen the shape.",
                     )
-    elif boundary_local == "NamedGraphBoundary" and boundary is not None and boundary.extra.get("ownershipTree") is not None:
+    elif boundary_local == "NamedGraphBoundary" and boundary is not None:
+        _check_graph_template(target, boundary)
+    if boundary_local == "NamedGraphBoundary" and boundary is not None and boundary.extra.get("ownershipTree") is not None:
         # A named-graph profile that names a boundary shape is checked by the same rules, since the
         # shape defines the subjects a payload may contain (ADR-A122 decision 6).
         _check_tree(graph, target, boundary, boundary.extra["ownershipTree"], composite=False)
 
     return diagnostics
+
+
+# The characters ENCODE_FOR_URI leaves alone, and the percent sign it writes. A suffix that begins with
+# one of these could be read as a continuation of the encoded root (ADR-A122 decision 8).
+_ENCODED_ALPHABET = frozenset(string.ascii_letters + string.digits + "-._~%")
+
+
+def _check_graph_template(target: Target, boundary: ResolvedDimension) -> None:
+    """A named-graph family's ``dal:graphIriTemplate`` holds ``{id}`` exactly once, and any text after it
+    starts with a character the encoding of the root never emits, so equal graph IRIs imply equal roots."""
+    template = boundary.extra.get("graphIriTemplate")
+    if template is None:
+        return
+    text = str(template)
+    if text.count("{id}") != 1:
+        raise CrossAxisViolation(
+            "GraphIriTemplateInvalid",
+            str(target),
+            f"dal:graphIriTemplate {text!r} must contain {{id}} exactly once, where the root IRI, percent-encoded, goes.",
+        )
+    suffix = text.split("{id}", 1)[1]
+    if suffix and suffix[0] in _ENCODED_ALPHABET:
+        raise CrossAxisViolation(
+            "GraphIriTemplateInvalid",
+            str(target),
+            f"dal:graphIriTemplate {text!r} continues after {{id}} with {suffix[0]!r}, which the encoding of a root can also "
+            "produce, so two roots could name one graph. Start the text after {id} with a character such as '/'.",
+        )
+
+
+def check_graph_naming(families: dict[str, tuple[str, str]]) -> None:
+    """Across named-graph families the text before ``{id}`` forms an antichain, so a graph IRI names one family
+    and one root (ADR-A122 decision 8). ``families`` maps a family key to its label and prefix."""
+    ordered = sorted(families.items(), key=lambda item: item[0])
+    for (_, (label_a, prefix_a)), (_, (label_b, prefix_b)) in combinations(ordered, 2):
+        if prefix_a.startswith(prefix_b) or prefix_b.startswith(prefix_a):
+            raise CrossAxisViolation(
+                "GraphIriTemplateOverlap",
+                label_a,
+                f"the graph prefixes {prefix_a!r} of {label_a} and {prefix_b!r} of {label_b} are nested or equal, so one graph "
+                "could belong to either family. Give each family a prefix that is not a prefix of another's.",
+            )
 
 
 def reference_data_classes(graph: Graph) -> set[URIRef]:
@@ -649,5 +694,6 @@ __all__ = [
     "check_cross_axis",
     "check_mixed_receipt_model",
     "check_boundary_conflicts",
+    "check_graph_naming",
     "check_capability",
 ]

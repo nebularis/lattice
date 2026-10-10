@@ -47,7 +47,7 @@ def _example(name: str) -> set[str]:
 
 # A slice that closes one of these removes it here and in persistence.gaps. HO5 removed the three
 # about ownership, the inverse path and the default graph (TD-35, TD-37, TD-40), and HO7 the missing
-# composite create and tombstone delete (TD-04). No composite gap is left.
+# composite create and tombstone delete (TD-04), and HO8 the graph named from the root's local name (TD-38).
 COMPOSITE: set[str] = set()
 EVERY_WRITING_TARGET = {"InfrastructureGraphsFixed", "RetentionAndEpochBumpNotGenerated"}
 
@@ -56,16 +56,8 @@ def test_h1_4b_t1_the_composite_example_reports_no_composite_gap():
     assert _example("composite-property-boundary-shacl.ttl") == COMPOSITE | EVERY_WRITING_TARGET
 
 
-def test_h1_4b_t2_a_named_graph_example_reports_the_graph_naming_gap_and_no_composite_gap():
-    assert _example("baseline-single-class.ttl") == {"NamedGraphNamedFromLocalName"} | EVERY_WRITING_TARGET
-
-
-def test_h1_4b_t3_text_after_the_id_is_named_as_dropped():
-    graph = _load("baseline-single-class.ttl")
-    profile = URIRef(EX + "LoanApplicationStrongProfile")
-    graph.set((profile, URIRef(DAL + "graphIriTemplate"), Literal("urn:g:loan-application/{id}/data")))
-    (gap,) = [g for g in _gaps(graph) if g.gap == "NamedGraphNamedFromLocalName"]
-    assert "'/data'" in gap.message and "dropped" in gap.message
+def test_h1_4b_t2_a_named_graph_example_reports_only_what_every_writing_target_does():
+    assert _example("baseline-single-class.ttl") == EVERY_WRITING_TARGET
 
 
 def test_h1_4b_t5_a_declared_shard_count_above_one_is_reported():
@@ -99,8 +91,7 @@ def test_h1_4b_t7_the_caller_and_housekeeping_obligations_are_reported(example, 
 def test_h1_4b_t8_every_rule_fires_somewhere():
     """No rule is vacuous: each is reached by a fixture in this module."""
     reached: set[str] = set()
-    for name in ("composite-property-boundary-shacl.ttl", "baseline-single-class.ttl", "append-stream-dataset-guard.ttl",
-                 "identity-epoch-privacy-profile.ttl"):
+    for name in ("baseline-single-class.ttl", "append-stream-dataset-guard.ttl", "identity-epoch-privacy-profile.ttl"):
         reached |= _example(name)
     reached |= {"ShardCountNotHonoured", "UnconditionalWriteNamedGraphOnly"}  # t5, t6
     assert reached == set(RULES)

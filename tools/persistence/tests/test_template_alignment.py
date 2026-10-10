@@ -62,6 +62,7 @@ def _full_context() -> dict:
         "datasetGraph": Iri.encode("urn:g:dataset"),
         "datasetNode": Iri.encode("urn:g:dataset"),
         "graphPrefix": Literal.encode("urn:g:orders/"),
+        "graphSuffix": Literal.encode("/data"),
         "guardProperty": Iri.encode("https://example.org/lending#status"),
         "ownedPath": PropertyPath.encode(Opt(Step(URIRef("https://example.org/lending#lineItem")))),
         "dataGraph": Iri.encode("urn:g:orders"),

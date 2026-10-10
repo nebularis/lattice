@@ -81,7 +81,7 @@ Merging signs off every slice on the branch, including H1.2d, H1.3 and H1.4a.
 | HO5 (switch the compiler to the tree, TD-03, TD-35, TD-37, TD-40) | **authored and verified.** [Validation Pack](../validation/FMH-HO5.md) | the maintainer's merge, and countersigning the removed tests |
 | HO6 (ownership refusals and the roots-only warning) | **authored and verified.** [Validation Pack](../validation/FMH-HO6.md) | the maintainer's merge |
 | HO7 (composite create and tombstone delete, TD-04) | **authored and verified.** [Validation Pack](../validation/FMH-HO7.md) | the maintainer's merge |
-| HO8 (injective graph naming within and across families, TD-38) | not started, fully specified | HO3 |
+| HO8 (injective graph naming within and across families, TD-38) | **authored and verified.** [Validation Pack](../validation/FMH-HO8.md) | the maintainer's merge |
 | HO9 (ownership documentation and close-out) | not started, fully specified | HO7, HO8 |
 | H2 (typed IR) | not started, outlined in the plan | H1 (informative, not a hard blocker) |
 | H3 (specification registry) | not started, outlined in the plan | H2 preferred first (smaller, more self-contained), not a hard blocker |
@@ -306,3 +306,8 @@ Merging signs off every slice on the branch, including H1.2d, H1.3 and H1.4a.
   the root is in the data graph) and `tombstone-delete-composite`, each with a dataset-guard variant. The
   tombstone removes the project fixture's 28 delete-set triples and tombstones the row, on both rdflib and
   Oxigraph. TD-04 closed and the last composite gap rule removed. `check:persistence` at 1333 passed and 1 xfailed.
+- 2026-10-10: HO8 authored. A named graph is the template's prefix, the whole root IRI percent-encoded with
+  `ENCODE_FOR_URI`, and the template's suffix, in all seven templates that name one. `GraphIriTemplateInvalid` and
+  `GraphIriTemplateOverlap` refuse a template that is not injective, within a family and across families
+  (98 of 98 rules witnessed). TD-38 closed. The `dal:graphIriTemplate` comment is edited within the unreleased
+  0.3.0. `check:persistence` at 1356 passed and 1 xfailed.

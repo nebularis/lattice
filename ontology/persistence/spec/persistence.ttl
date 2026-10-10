@@ -109,7 +109,7 @@ dal:strategy a owl:ObjectProperty ;
 
 dal:graphIriTemplate a owl:DatatypeProperty ;
     rdfs:domain dal:AggregateBoundaryProfile ; rdfs:range xsd:string ;
-    rdfs:comment "How to derive the aggregate's graph IRI from its root instance's identity, e.g. \"urn:g:orders/{id}\". Meaningful only for dal:NamedGraphBoundary." .
+    rdfs:comment "How to derive the aggregate's graph IRI from its root instance's identity, e.g. \"urn:g:orders/{id}\". Meaningful only for dal:NamedGraphBoundary. It holds {id} exactly once, replaced by the whole root IRI percent-encoded as SPARQL's ENCODE_FOR_URI does, so distinct roots name distinct graphs. Text after {id} is kept and begins with a character the encoding never emits (not a letter, a digit, or one of - . _ ~ %). Across families the text before {id} is not a prefix of another family's. Undeclared, the template is urn:g:<family token>/{id}." .
 
 dal:boundaryShape a owl:ObjectProperty ;
     rdfs:domain dal:AggregateBoundaryProfile ;
