@@ -1990,7 +1990,7 @@ the stated meaning of the elements its wording includes (I17). Nothing here eval
   | | (a) marks on every element, as sketched | (b) **a convention, with one optional mark** | (c) element types decide | (d) no marks and no check |
   |---|---|---|---|---|
   | Rule | each element is `Expresses`, `NoMeaning` or `NotAssessed` | a leaf of text, a `wrd:Text` with no children, is expected to mean something. Containers, variables, references, fields and entries are not. A leaf reviewed as binding nobody carries `ins:encodingStatus ins-voc:NoMeaning`. An expected leaf with neither stated meaning nor the mark is not yet assessed | Clause and Definition are expected to mean something, Section, Schedule and the rest not | none |
-  | Marks per form | one per element: about 700 for a form the size of the AIG sample policy | one per informational leaf: tens | as (b), plus a mapping per element-type scheme | none |
+  | Marks per form | one per element: about 700 for a form the size of the sample package policy (PKG) | one per informational leaf: tens | as (b), plus a mapping per element-type scheme | none |
   | Per instance | none: marks are on element versions, shared and matched on their hash (D2) | none | none | none |
   | Check cost | one pass over the included elements, per assembled wording, which many instances share, so it is cached with it (C16b) | the same | the same | none |
   | Drift | `Expresses` can disagree with whether stated meaning exists | none: whether stated meaning exists is read, never asserted | an InsurML profile's types need their own mapping, and meaning would depend on typing, which C7c-Q2 rejected | none, and no coverage either |

@@ -3583,7 +3583,7 @@ flowchart LR
 
 ### 16.5 Cross-section terms
 
-A term may span sections. The AIG sample policy's aggregate, "the Insurer's maximum liability for
+A term may span sections. A sample package policy's aggregate, "the Insurer's maximum liability for
 all Loss under all Coverage Sections combined", is one counter across every section, though "Loss"
 is defined in each. A qualifier spanning sections is bound once, and qualifies every bound relation
 generated from the stated relation it qualifies, each of which reads its words as its own section

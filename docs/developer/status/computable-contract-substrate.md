@@ -61,7 +61,7 @@ checkout`, after which the module passed again.
 
 ## History
 
-- 2026-09-29 to 30: D2 walkthrough, first Instrument redesign, tests against theAcme Insurancepackage policy,
+- 2026-09-29 to 30: D2 walkthrough, first Instrument redesign, tests against the PKG package policy,
   the IUA broker binding authority and the Lloyd's CBAA collateral, and cross-reference with Open
   CBAA's `wim`, `stm`, `agr` and `rsk` modules and design documents.
 - 2026-09-30: sketches, plan and this record written. NRS, AIR and platform plans updated.

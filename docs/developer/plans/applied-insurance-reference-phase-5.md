@@ -44,7 +44,7 @@ should not start its contract module until that design is settled (its §13).
 | AIR-5.5 | party role parameters and direction derivation over roles and the exposure relationship graph, with the D&O example | §7, milestone M4 |
 | AIR-5.6 | defect catalogue as shapes | §8 |
 | AIR-5.7 | route R2: compile one check family into Capacity runtime forms, parity suite against R1, no write-back | §5, milestone M5 |
-| AIR-5.8 | insurance renderings of the policy scenarios of the CCS sketch §10 (theAcme Insurancerows: S10 to S14, S18 to S26, S28, S29, S33, S34, S37, S42 and the shared rows), as examples with expected decisions | CCS sketch §9, §10 |
+| AIR-5.8 | insurance renderings of the policy scenarios of the CCS sketch §10 (the PKG rows: S10 to S14, S18 to S26, S28, S29, S33, S34, S37, S42 and the shared rows), as examples with expected decisions | CCS sketch §9, §10 |
 | AIR-5.9 | the LMA WIM profile in `applied/insurance/wording/` (CCS decision CC-D3): the four levels as element types, their containment rules as shapes, the LMA typing schemes and `applicableTo`. Open CBAA imports it | CCS sketch §3.2, CCS plan §7 |
 
 **AIR-5.9 proposed to move (2026-10-05).** The [insurml-alignment](insurml-alignment.md) epic

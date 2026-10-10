@@ -261,13 +261,22 @@ We keep the primary checkout at `~/work/lattice` and put its worktrees in `~/wor
 ```bash
 cd ~/work/lattice
 git fetch origin-ssh
-git worktree add ../lattice-wt/fm-review origin-ssh/fm/some-branch              # detached, to review a branch
+git worktree add ../lattice-wt/fm-review fm/some-branch                          # a local branch that exists: the worktree is on it
+git worktree add --track -b fm/some-branch ../lattice-wt/fm-review origin-ssh/fm/some-branch   # no local branch yet: create one tracking origin-ssh
 git worktree add -b ccs/c9b3-sets ../lattice-wt/c9b3 main                       # a new branch, started from main
-git worktree add ../lattice-wt/c9b3 ccs/c9b3-sets                               # an existing local branch
+git worktree add --detach ../lattice-wt/look origin-ssh/fm/some-branch          # a read-only look at a commit, on no branch
 git worktree list                                                                # every worktree and what it has checked out
 git worktree remove ../lattice-wt/fm-review                                      # when done: refuses if there are uncommitted changes
 git worktree prune                                                               # forget worktrees deleted by hand
 ```
+
+Name a **branch**, not a remote-tracking ref such as `origin-ssh/fm/some-branch`. Given a
+remote-tracking ref, `git worktree add` checks out its commit with no branch (a detached `HEAD`),
+where a commit belongs to no branch and a `git pull` has nothing to update. With no local branch of
+that name, git creates one tracking the remote only when exactly one remote has it. We have two,
+`origin` and `origin-ssh`, so create it explicitly with `--track -b` as above. A worktree already
+detached joins its branch with `git switch fm/some-branch`, and `git branch
+--set-upstream-to=origin-ssh/fm/some-branch` changes which remote it tracks.
 
 Then, in each new worktree:
 
@@ -321,7 +330,7 @@ cd ~/work/lattice
 git bundle verify ~/Downloads/fm-2026-10-10.bundle                              # lists its heads, and says if a prerequisite commit is missing
 git fetch ~/Downloads/fm-2026-10-10.bundle 'refs/heads/*:refs/remotes/machine-s/*'
 git log --oneline main..machine-s/fm/some-branch                                 # what arrived
-git worktree add ../lattice-wt/machine-s machine-s/fm/some-branch                # review it in its own worktree
+git worktree add --detach ../lattice-wt/machine-s machine-s/fm/some-branch       # review it in its own worktree, on no branch
 ```
 
 The fetch puts the bundle's branches under `machine-s/`, beside `origin-ssh/`, and every worktree
