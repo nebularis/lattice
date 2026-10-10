@@ -14,6 +14,7 @@ ex:OrderAggregateShape a sh:NodeShape ;
     sh:property [ sh:path ex:lineItem ; sh:node ex:LineItemShape ; sh:minCount 1 ; dal:ownership dal:Owned ] .
 
 ex:LineItemShape a sh:NodeShape ;
+    sh:targetClass ex:LineItem ;
     sh:property [ sh:path ex:sku ; sh:datatype xsd:string ] .
 
 ex:OrderClass a dal:ClassScope ;

@@ -200,7 +200,9 @@ def _select(
 
     winner = top[0]
     extra = dict(winner.extra)
-    if dimension == "aggregateBoundary" and str(winner.value).endswith("CompositePropertyBoundary"):
+    if dimension == "aggregateBoundary" and str(winner.value).endswith(("CompositePropertyBoundary", "NamedGraphBoundary")):
+        # A named-graph profile may carry the same classified shape, which defines the subjects a
+        # payload may contain (ADR-A122 decision 6).
         boundary_shape = extra.get("boundaryShape")
         if boundary_shape is not None:
             from .boundary import walk_ownership

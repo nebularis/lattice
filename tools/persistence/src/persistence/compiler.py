@@ -121,6 +121,11 @@ def compile_targets(
         except Exception as e:
             raise CompileError(target, e) from e
 
+    for ct in compiled:
+        boundary = ct.dimensions["aggregateBoundary"]
+        if str(boundary.value).endswith("CompositePropertyBoundary"):
+            ct.diagnostics += validator.check_references_to_owned(graph, ct.target, boundary)
+
     mixed_receipt_warnings = validator.check_mixed_receipt_model(graph, resolved_by_target)
     by_target_iri = {str(ct.target): ct for ct in compiled}
     for warning in mixed_receipt_warnings:

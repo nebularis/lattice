@@ -9,7 +9,9 @@ downgrades a configuration it cannot satisfy)."""
 
 from __future__ import annotations
 
-from rdflib import RDF, Graph, URIRef
+from itertools import combinations
+
+from rdflib import RDF, RDFS, SKOS, Graph, URIRef
 
 from .functional import functional_value
 from .boundary import MissingBoundaryShapeError, walk_ownership
@@ -148,13 +150,7 @@ def check_cross_axis(
                 f"dal:CompositePropertyBoundary at {target} declares no dal:boundaryShape"
             )
         tree = boundary.extra["ownershipTree"]
-        if not tree.owned_edges():
-            raise CrossAxisViolation(
-                "CompositeBoundaryWithoutOwnedEdges",
-                str(target),
-                f"boundary shape {boundary_shape} owns no edge, so the aggregate is its root alone. "
-                "Use dal:NamedGraphBoundary or dal:NoBoundary, or classify an edge dal:Owned.",
-            )
+        _check_tree(graph, target, boundary, tree, composite=True)
         reachable = tree.predicates()
         for constraint in uniqueness:
             for key_prop in constraint["keyProperty"]:
@@ -166,8 +162,115 @@ def check_cross_axis(
                         f"{key_prop!r} is not reachable within the declared boundary shape "
                         f"{boundary_shape!r}. Narrow the key property, or widen the shape.",
                     )
+    elif boundary_local == "NamedGraphBoundary" and boundary is not None and boundary.extra.get("ownershipTree") is not None:
+        # A named-graph profile that names a boundary shape is checked by the same rules, since the
+        # shape defines the subjects a payload may contain (ADR-A122 decision 6).
+        _check_tree(graph, target, boundary, boundary.extra["ownershipTree"], composite=False)
 
     return diagnostics
+
+
+def reference_data_classes(graph: Graph) -> set[URIRef]:
+    """The classes whose instances are reference data (ADR-A122 decision 4): ``skos:Concept``,
+    ``skos:ConceptScheme``, every class a ``dal:ReferenceData`` declaration covers, and the classes the
+    configuration asserts to be ``rdfs:subClassOf+`` any of these."""
+    covered = {SKOS.Concept, SKOS.ConceptScheme}
+    for declaration in graph.subjects(RDF.type, DAL.ReferenceData):
+        covered.update(c for c in graph.objects(declaration, DAL.coversClass) if isinstance(c, URIRef))
+    classes: set[URIRef] = set()
+    for cls in covered:
+        classes.update(c for c in graph.transitive_subjects(RDFS.subClassOf, cls) if isinstance(c, URIRef))
+    return classes
+
+
+def _owns_reference_data(boundary: ResolvedDimension) -> bool:
+    value = boundary.extra.get("ownsReferenceData")
+    return value is not None and str(value).lower() in {"true", "1"}
+
+
+def _check_tree(graph: Graph, target: Target, boundary: ResolvedDimension, tree, *, composite: bool) -> None:
+    """Rules 2 to 6 of sketch §5, in that order, over one classified boundary shape. A composite
+    boundary must own an edge (rule 5). A named-graph boundary that names a shape may own none. The
+    messages name a property shape by its predicate and shape and never by its blank node label, so a
+    refusal reads the same on every run."""
+    shape = tree.root_shape
+    if tree.complex_paths:
+        owner, _ = tree.complex_paths[0]
+        raise CrossAxisViolation(
+            "ComplexBoundaryPath",
+            str(target),
+            f"a property shape on {owner} has an sh:path that is neither an IRI nor [ sh:inversePath IRI ]. "
+            "A boundary shape allows one step per property shape.",
+        )
+    if tree.unclassified:
+        owner, _, predicate = tree.unclassified[0]
+        raise CrossAxisViolation(
+            "UnclassifiedBoundaryEdge",
+            str(target),
+            f"the property shape for {predicate} on {owner} leads to a node but declares no dal:ownership. "
+            "Classify it as dal:Owned, dal:Reference or dal:Vocabulary.",
+        )
+    if tree.ownership_on_values:
+        owner, _, predicate = tree.ownership_on_values[0]
+        raise CrossAxisViolation(
+            "OwnershipOnValueProperty",
+            str(target),
+            f"the property shape for {predicate} on {owner} is a value property (sh:datatype or "
+            "sh:nodeKind sh:Literal) and cannot carry dal:ownership.",
+        )
+    if composite and not tree.owned_edges():
+        raise CrossAxisViolation(
+            "CompositeBoundaryWithoutOwnedEdges",
+            str(target),
+            f"boundary shape {shape} owns no edge, so the aggregate is its root alone. "
+            "Use dal:NamedGraphBoundary or dal:NoBoundary, or classify an edge dal:Owned.",
+        )
+    if not _owns_reference_data(boundary):
+        reference_data = reference_data_classes(graph)
+        for edge in tree.owned_edges():
+            if edge.target_class in reference_data:
+                raise CrossAxisViolation(
+                    "OwnedReferenceData",
+                    str(target),
+                    f"the property shape for {edge.step.predicate} on {edge.source_shape} owns {edge.target_class}, "
+                    "which is reference data. Classify the edge dal:Vocabulary, or declare dal:ownsReferenceData true "
+                    "on the profile if this aggregate manages that vocabulary.",
+                )
+
+
+def check_references_to_owned(graph: Graph, target: Target, boundary: ResolvedDimension) -> list[Diagnostic]:
+    """The warning of sketch §5: a property shape outside an aggregate's owned shapes points at a class the
+    aggregate owns, other than its root. A deleted member leaves such a reference dangling, so references
+    from outside should target the root (ADR-A122 decision 5)."""
+    tree = boundary.extra.get("ownershipTree")
+    if tree is None:
+        return []
+    inside = set(tree.shapes)
+    owned = tree.member_classes() - ({tree.root_class} if tree.root_class is not None else set())
+    out: list[Diagnostic] = []
+    for shape in sorted(set(graph.subjects(SH.property, None)), key=str):
+        if shape in inside:
+            continue
+        for property_shape in graph.objects(shape, SH.property):
+            path = functional_value(graph, property_shape, SH.path)
+            named = functional_value(graph, property_shape, SH["class"])
+            node = functional_value(graph, property_shape, SH.node)
+            pointed = {named} | ({functional_value(graph, node, SH.targetClass)} if node is not None else set())
+            for cls in sorted((c for c in pointed if c in owned), key=str):
+                label = path if isinstance(path, URIRef) else "a property"
+                out.append(
+                    Diagnostic(
+                        kind="ReferenceToOwnedClass",
+                        severity="WARNING",
+                        target=str(target),
+                        message=(
+                            f"the property shape for {label} on {shape} points at {cls}, which {tree.root_shape} owns. "
+                            f"References from outside an aggregate should target its root ({tree.root_class}), since a "
+                            "deleted member leaves the reference dangling."
+                        ),
+                    )
+                )
+    return sorted(out, key=lambda d: d.message)
 
 
 def _value(dimensions: dict[str, ResolvedDimension], name: str):
@@ -487,6 +590,7 @@ def check_boundary_conflicts(graph: Graph) -> list[Diagnostic]:
     own, different, non-baseline boundary strategy, cannot coherently
     belong to both."""
     diagnostics: list[Diagnostic] = []
+    trees: list[tuple[URIRef, object]] = []  # (boundary shape, tree) of every composite profile
     own_strategy: dict[URIRef, URIRef] = {}
     for profile in graph.subjects(RDF.type, DAL.AggregateBoundaryProfile):
         scope = functional_value(graph, profile, DAL.appliesTo)
@@ -497,7 +601,7 @@ def check_boundary_conflicts(graph: Graph) -> list[Diagnostic]:
         if cls is not None and strategy is not None:
             own_strategy[cls] = strategy
 
-    for profile in graph.subjects(RDF.type, DAL.AggregateBoundaryProfile):
+    for profile in sorted(graph.subjects(RDF.type, DAL.AggregateBoundaryProfile), key=str):
         strategy = functional_value(graph, profile, DAL.strategy)
         if strategy != DAL.CompositePropertyBoundary:
             continue
@@ -505,7 +609,9 @@ def check_boundary_conflicts(graph: Graph) -> list[Diagnostic]:
         if shape is None:
             continue
         # every member class at any depth of the classified tree (ADR-A122 decision 2)
-        for member_cls in sorted(walk_ownership(graph, shape).member_classes(), key=str):
+        tree = walk_ownership(graph, shape)
+        trees.append((shape, tree))
+        for member_cls in sorted(tree.member_classes(), key=str):
             member_strategy = own_strategy.get(member_cls)
             if member_strategy and member_strategy != DAL.NoBoundary:
                 raise BoundaryConflict(
@@ -513,6 +619,19 @@ def check_boundary_conflicts(graph: Graph) -> list[Diagnostic]:
                     f"its own boundary strategy {member_strategy}. A resource cannot belong to two "
                     "aggregates under incompatible boundary strategies (sketch §4.6)."
                 )
+    # Rule 9, after rule 8 so that one fixture trips one rule: no class belongs to two composite
+    # aggregates, whether as a member of both or as a member of one and the root of the other.
+    for (shape_a, tree_a), (shape_b, tree_b) in combinations(trees, 2):
+        roots_b = {tree_b.root_class} if tree_b.root_class is not None else set()
+        roots_a = {tree_a.root_class} if tree_a.root_class is not None else set()
+        shared = (tree_a.member_classes() & (tree_b.member_classes() | roots_b)) | (tree_b.member_classes() & roots_a)
+        if shared:
+            raise CrossAxisViolation(
+                "OverlappingOwnership",
+                str(shape_a),
+                f"{', '.join(sorted(str(c) for c in shared))} is owned by both {shape_a} and {shape_b}. "
+                "A node belongs to one aggregate.",
+            )
     return diagnostics
 
 

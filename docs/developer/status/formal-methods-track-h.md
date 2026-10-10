@@ -79,7 +79,7 @@ Merging signs off every slice on the branch, including H1.2d, H1.3 and H1.4a.
 | HO3 (`dal:` vocabulary 0.3.0: `dal:ownership`, reference data) | **authored and verified.** [Validation Pack](../validation/FMH-HO3.md). 🔴 release tags owed (`persistence-v0.3.0`, `persistence-shapes-v0.3.0`, `persistent-foundation-v0.2.0`), created on `main` | the maintainer's merge |
 | HO4 (ownership tree and path compiler, added beside the old walk) | **authored and verified.** [Validation Pack](../validation/FMH-HO4.md) | the maintainer's merge |
 | HO5 (switch the compiler to the tree, TD-03, TD-35, TD-37, TD-40) | **authored and verified.** [Validation Pack](../validation/FMH-HO5.md) | the maintainer's merge, and countersigning the removed tests |
-| HO6 (ownership refusals and the roots-only warning) | not started, fully specified | HO5 |
+| HO6 (ownership refusals and the roots-only warning) | **authored and verified.** [Validation Pack](../validation/FMH-HO6.md) | the maintainer's merge |
 | HO7 (composite create and tombstone delete, TD-04) | not started, fully specified | HO6 |
 | HO8 (injective graph naming within and across families, TD-38) | not started, fully specified | HO3 |
 | HO9 (ownership documentation and close-out) | not started, fully specified | HO7, HO8 |
@@ -297,3 +297,8 @@ Merging signs off every slice on the branch, including H1.2d, H1.3 and H1.4a.
   there, chiefly `CompositeBoundaryWithoutOwnedEdges` pulled forward from HO6, and the plan's HO5-T8 example
   being unable to fail. `check:persistence` at 1227 passed and 1 xfailed. Oxigraph, run in a Python 3.13
   environment, passes 7 checks.
+- 2026-10-10: HO6 authored. Five refusals (`ComplexBoundaryPath`, `UnclassifiedBoundaryEdge`,
+  `OwnershipOnValueProperty`, `OwnedReferenceData`, `OverlappingOwnership`) and the warning
+  `ReferenceToOwnedClass`, each witnessed (96 of 96), plus the checks for a named-graph profile that names a
+  shape. Messages name a shape and a predicate and never a blank node, so a compiled profile stays
+  byte-identical (H1.5). `check:persistence` at 1252 passed and 1 xfailed. Probes in the Validation Pack.

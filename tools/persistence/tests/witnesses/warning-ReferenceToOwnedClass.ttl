@@ -1,0 +1,18 @@
+# SPDX-License-Identifier: MPL-2.0
+# NB: This file has been produced using GenAI
+# A reference from outside an aggregate should target its root, not a member.
+# base: composite-project-ownership.ttl
+@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix ex:  <https://example.org/projects#> .
+@prefix sh:  <http://www.w3.org/ns/shacl#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ex:InvoiceShape a sh:NodeShape ; sh:targetClass ex:Invoice ;
+    sh:property [ sh:path ex:forMilestone ; sh:class ex:Milestone ] .
+
+# The dataset-level guard keeps the discouraged row-level default (a warning of its own) out of this witness.
+ex:ProjectEpoch a dal:EpochProfile ;
+    dal:appliesTo       ex:ProjectClass ;
+    dal:epochGuardScope dal:DatasetLevelGuard ;
+    dal:epochAuthority  dal:ExternalHighWaterMark .

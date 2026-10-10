@@ -1,0 +1,11 @@
+# SPDX-License-Identifier: MPL-2.0
+# NB: This file has been produced using GenAI
+# An aggregate does not own a concept, unless it manages that vocabulary.
+# base: composite-property-boundary-shacl.ttl
+@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix ex:  <https://example.org/lending#> .
+@prefix sh:  <http://www.w3.org/ns/shacl#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ex:OrderAggregateShape sh:property [ sh:path ex:status ; sh:class skos:Concept ; dal:ownership dal:Owned ] .
