@@ -67,7 +67,7 @@ Run from the repository root. A pass is `917 passed, 1 xfailed` (908 before this
 new items), with no new skip. The expected failure is TD-23.
 
 ```bash
-mise run check:persistence && python -m pytest spikes/persistence-aggregate-ownership -q
+mise run check:persistence && mise exec -- python -m pytest spikes/persistence-aggregate-ownership -q
 ```
 
 The second command passes with `18 passed`.

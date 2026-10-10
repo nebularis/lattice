@@ -36,7 +36,7 @@ The documents describe the aggregate model that is built, and say nothing about 
 Run from the repository root.
 
 ```bash
-mise run check:persistence && python -m pytest spikes/persistence-aggregate-ownership -q
+mise run check:persistence && mise exec -- python -m pytest spikes/persistence-aggregate-ownership -q
 ```
 
 A pass is `1356 passed, 1 xfailed` and `18 passed`. `mise run check:full-sweep` runs the other checks.

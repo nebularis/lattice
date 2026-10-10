@@ -45,7 +45,7 @@ The other fourteen checks are unchanged.
 From the repository root. A pass is `18 passed`.
 
 ```bash
-python -m pytest spikes/persistence-aggregate-ownership -q
+mise exec -- python -m pytest spikes/persistence-aggregate-ownership -q
 ```
 
 ## Adversarial probe

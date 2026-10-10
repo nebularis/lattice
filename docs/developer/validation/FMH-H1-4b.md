@@ -81,7 +81,7 @@ mise run check:persistence
 To see the report on the composite example:
 
 ```bash
-python -m persistence gaps ontology/persistence/spec/persistence.ttl ontology/persistence/examples/composite-property-boundary-shacl.ttl
+mise exec -- python -m persistence gaps ontology/persistence/spec/persistence.ttl ontology/persistence/examples/composite-property-boundary-shacl.ttl
 ```
 
 ## Adversarial probes

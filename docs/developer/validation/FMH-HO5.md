@@ -72,6 +72,13 @@ Each removal is justified by ADR-A122 decision 1, which supersedes the rule the 
 | T10, one node property leaves nothing behind | rewritten | HO5-T5 |
 | T11, the other member is left behind | rewritten | HO5-T6, now both are swept |
 
+**Countersigned 2026-10-10** at the maintainer's request. Each of the eleven rows was checked against the
+H1.4a test it replaces. The four deletions assert a refusal or a closure that ADR-A122 decision 1 removes,
+and each property still worth keeping has a named replacement that asserts it (the other member is swept,
+the result does not depend on declaration order, the witnesses fire, owned edges on members at depth). The
+seven rewrites keep their property. This was a reading of the tests and not a run, so the one command below
+still decides.
+
 Also removed: `test_boundary.py`'s cycle test (recursion is allowed, so a shape that leads back to itself is
 walked once), its two walk tests (rewritten for the tree), the two deleted witnesses, and the HO1 tests'
 default-graph expectation (deviation 3).
@@ -103,7 +110,7 @@ Run from the repository root. A pass is `1227 passed, 1 xfailed`, with no new sk
 is TD-23. The aggregate-ownership spike passes with `18 passed`.
 
 ```bash
-mise run check:persistence && python -m pytest spikes/persistence-aggregate-ownership -q
+mise run check:persistence && mise exec -- python -m pytest spikes/persistence-aggregate-ownership -q
 ```
 
 The Oxigraph spike, if `pyoxigraph` is installed, passes with `7 passed`.
