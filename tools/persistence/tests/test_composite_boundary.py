@@ -136,7 +136,10 @@ def _replace_and_count_left(bound_property: str, with_payment: bool) -> list[str
     subjects that still have triples in the default graph afterwards."""
     compiled, _ = compile_to_graph(_example())
     text = next(o for o in templatecheck.operations(compiled) if o.template == "cas-replace-composite-property").text
-    meta = re.search(r"GRAPH <(urn:g:meta/\d+)>", text).group(1)
+    # The replace runs with an empty payload. The rendered text carries templatecheck's stand-in
+    # for the payload slot, which the replace now writes to the default graph, so it is removed.
+    text = text.replace(templatecheck._SLOT_STAND_INS["payloadTriples"], "")
+    meta =re.search(r"GRAPH <(urn:g:meta/\d+)>", text).group(1)
     pat = "https://example.org/lattice/patterns#"
     root = URIRef("urn:order:1")
     with warnings.catch_warnings():

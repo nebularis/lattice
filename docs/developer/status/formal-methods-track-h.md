@@ -52,7 +52,7 @@ In this order, each per [plan §3.5](../plans/formal-methods-track-h.md#35-ho-ag
 0. Done 2026-10-10: `origin/main` is merged (`af2eb89`). `docs/developer/validation/LOG.md` is
    retired. The maintainer's merge is the sign-off, and the index, plans, status records and Validation
    Packs are the record, as the `lattice-lifecycle` skill now says.
-1. HO0 and HO1. HO2 is done (ADR-A122 drafted, Proposed).
+1. HO0 and HO1, done 2026-10-10. HO2 is done (ADR-A122 drafted, Proposed).
 2. H1.4b and H1.5, per the plan's "H1.4b and H1.5 after the aggregate-ownership review".
 3. HO3 to HO9 in order, end to end, without stopping for review. HO8 may run at any point after HO3.
    ADR-A122 stays Proposed. The maintainer accepts it with the work package at the close.
@@ -74,7 +74,7 @@ Merging signs off every slice on the branch, including H1.2d, H1.3 and H1.4a.
 | H1.4b (the declaration/implementation gap report) | not started. Composite entries defined in the plan after the aggregate-ownership review | none |
 | H1.5 (stable labels) | not started, fully detailed in the plan | none |
 | HO0 (correct the ownership note and its spike) | **authored and verified.** [Validation Pack](../validation/FMH-HO0.md) | the maintainer's merge |
-| HO1 (composite replace: payload to the default graph, linear sweep, TD-39, TD-36) | not started, fully specified | none |
+| HO1 (composite replace: payload to the default graph, linear sweep, TD-39, TD-36) | **authored and verified.** [Validation Pack](../validation/FMH-HO1.md) | the maintainer's merge |
 | HO2 (draft ADR-A122, Proposed) | **done** 2026-10-10. [ADR-A122](../../architecture/decisions/ADR-A122-aggregate-ownership.md), Proposed until the maintainer accepts the work package | |
 | HO3 (`dal:` vocabulary 0.3.0: `dal:ownership`, reference data) | not started, fully specified | HO1 |
 | HO4 (ownership tree and path compiler, added beside the old walk) | not started, fully specified | HO3 |
@@ -254,3 +254,14 @@ Merging signs off every slice on the branch, including H1.2d, H1.3 and H1.4a.
   the skills say "the maintainer" for the ratifying role, `.github/copilot-instructions.md` was
   rebuilt (`check:agent-guidance` passes), and every passive attribution of a decision
   ("decided by", "agreed by" and the like) is reworded across the repository.
+- 2026-10-10: we asked to proceed with the plan. HO0 authored (the note and the spike corrected,
+  18 spike checks, one probe). HO1 authored: both composite replace templates sweep with one
+  `OPTIONAL { $root <p>* ?s . ?s ?p ?o }` and write the payload to the default graph, closing TD-39 and
+  TD-36. H1.4a-T10 and T11 failed as predicted before they were run (their helper ran the update with
+  `templatecheck`'s payload stand-in, which now lands in the default graph). We chose to remove the
+  stand-in from the helper's input, taken from `templatecheck._SLOT_STAND_INS`, and not to filter
+  the result, so their assertions are unchanged. Nine new test items. `check:persistence` at 917 passed
+  and 1 xfailed. Probes recorded in the Validation Pack. The Oxigraph comparison was not run (not
+  installed here) and we decided it is not mandatory. Working agreement confirmed for this cloud
+  session: every slice is committed and pushed to `claude/nice-bohr-pmj43u` only, since the
+  maintainer cannot otherwise review a large change set. The maintainer merges.

@@ -1,14 +1,19 @@
 {{! cas-replace-composite-property: sketch section 4.3's CompositePropertyBoundary CAS,
     dal:RowLevelGuardOnly variant.
     There is no single graph to sweep: the closure is a property-path walk
-    over the composite property, a compile-time slot holding the first
-    composite property found by walking the target's boundary shape (see
+    over the composite property, a compile-time slot holding the node
+    property found by walking the target's boundary shape (see
     persistence.boundary). SPARQL 1.1 permits a property path only inside
-    WHERE, never inside a DELETE or INSERT template, so the path binds
-    ?member there for the DELETE template to consume. A path cannot be a
-    variable and has no bounded repetition, so depth is enforced at compile
-    time by the shape walk's cycle detection. The version row's subject is
-    the root instance IRI, never a graph IRI (sketch section 4.3).
+    WHERE, never inside a DELETE or INSERT template, so the path binds ?s
+    there for the DELETE template to consume. One pattern sweeps the root
+    and every member: the path has zero or more steps, so ?s ranges over
+    the root itself and then each member, and every triple of each is
+    matched once, which is linear in the aggregate's size. A path cannot be
+    a variable and has no bounded repetition, so depth is enforced at
+    compile time by the shape walk's cycle detection. The payload is
+    written to the default graph, which is where the sweep deletes from.
+    Only the receipt records go to the log graph. The version row's subject
+    is the root instance IRI, never a graph IRI (sketch section 4.3).
     requestDigest is computed by the caller as lower-case
     hex SHA-256 over the tuple-encoded operation kind, target, expected
     seq and sorted canonical N-Triples of the skolemized payload (guide
@@ -26,12 +31,11 @@ PREFIX pat: <https://example.org/lattice/patterns#>
 PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 
 DELETE {
-  ?root ?p1 ?o1 .
-  ?member ?p2 ?o2 .
+  ?s ?p ?o .
   GRAPH {{{metaGraphPrefix}}} { $root pat:seq $expectedSeq ; pat:head ?prevRev }
 }
 INSERT {
-  GRAPH ?logGraph { {{{payloadTriples}}} }
+  {{{payloadTriples}}}
   GRAPH {{{metaGraphPrefix}}} { $root pat:epoch $epoch ; pat:seq $nextSeq ; pat:head $newRev }
   GRAPH {{{txnGraph}}}        { $txnId pat:rev $newRev ; pat:requestDigest $requestDigest }
   GRAPH ?logGraph2 {
@@ -50,9 +54,5 @@ WHERE {
   FILTER NOT EXISTS { GRAPH {{{txnGraph}}} { $txnId pat:rev ?any } }
   BIND(STR($txnId) AS ?txnKey)
   BIND(NOW() AS ?now)
-  OPTIONAL { $root ?p1 ?o1 }
-  OPTIONAL {
-      $root {{{compositeProperty}}}+ ?member .
-      ?member ?p2 ?o2
-  }
+  OPTIONAL { $root {{{compositeProperty}}}* ?s . ?s ?p ?o }
 }

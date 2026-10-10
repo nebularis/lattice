@@ -108,7 +108,7 @@ found only in `urn:g:txlog/2026-10`. A reader of the default graph sees the aggr
 The named-graph template writes the payload to `GRAPH ?g`, the aggregate's own graph, which is
 what the composite one should do for its destination. Run `spikes/persistence-aggregate-ownership/payload_graph.py`.
 This went unseen because the H1.4a tests inspect what is left behind, and not where the new
-payload lands. Registered as TD-39 on 2026-10-10.
+payload lands. Registered as TD-39 on 2026-10-10. Fixed in HO1.
 
 ## 3. Fit against the model
 

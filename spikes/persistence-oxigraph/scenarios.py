@@ -39,11 +39,19 @@ def _meta_graph(update: str) -> str:
 # ---- composite boundary: what a replace leaves behind -----------------------------------------
 
 
+def composite_update() -> str:
+    """The generated composite replace with an empty payload. The rendered text carries
+    ``templatecheck``'s stand-in for the payload slot, which the replace writes to the default
+    graph (HO1), so it is removed."""
+    update = generated_update(witness.EXAMPLES_DIR / "composite-property-boundary-shacl.ttl", "cas-replace-composite-property")
+    return update.replace(templatecheck._SLOT_STAND_INS["payloadTriples"], "")
+
+
 def composite_sweep(bound_property: str, with_payment: bool) -> list[str]:
     """Run ``cas-replace-composite-property`` on an order and return the subjects that still have
     triples afterwards. ``bound_property`` is the local name the compiler binds, ``lineItem`` or
     ``payment``. An empty list means the replace swept everything."""
-    update = generated_update(witness.EXAMPLES_DIR / "composite-property-boundary-shacl.ttl", "cas-replace-composite-property")
+    update = composite_update()
     meta = _meta_graph(update)
     backend, order = OxigraphBackend(), iri("urn:order:1")
     backend.add(order, iri(PAT + "epoch"), literal(1), iri(meta))

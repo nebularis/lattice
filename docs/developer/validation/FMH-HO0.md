@@ -3,7 +3,7 @@
 # Validation Pack: FMH-HO0, correct the ownership note and its spike
 
 **Unit:** [`formal-methods-track-h`](../status/formal-methods-track-h.md), slice HO0
-([plan §3.5](../plans/formal-methods-track-h.md#hoo-correct-the-note-and-the-spike)).
+([plan §3.5](../plans/formal-methods-track-h.md#ho0-correct-the-note-and-the-spike)).
 **Source:** [the review](../notes/persistence-aggregate-ownership-review.md), findings S1, S2, S5, F1 and F6.
 **Decisions needing confirmation:** none.
 

@@ -23,11 +23,11 @@ from rdflib import Dataset, Literal, URIRef, Variable  # noqa: E402
 from rdflib.namespace import XSD  # noqa: E402
 
 from persistence import witness  # noqa: E402
-from scenarios import EX, PAT, append_event_runs, composite_sweep, generated_update  # noqa: E402
+from scenarios import EX, PAT, append_event_runs, composite_sweep, composite_update, generated_update  # noqa: E402
 
 
 def rdflib_composite_sweep(bound_property: str, with_payment: bool) -> list[str]:
-    update = generated_update(witness.EXAMPLES_DIR / "composite-property-boundary-shacl.ttl", "cas-replace-composite-property")
+    update = composite_update()
     meta = re.search(r"GRAPH <(urn:g:meta/\d+)>", update).group(1)
     root = URIRef("urn:order:1")
     with warnings.catch_warnings():
