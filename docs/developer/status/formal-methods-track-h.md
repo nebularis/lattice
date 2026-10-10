@@ -151,13 +151,24 @@ reviewing the ADR; H2 onward should wait for ADR-A-FM4's acceptance.
   `main` was merged into the branch (`f7c72d9`), with no conflicts.
 - 2026-10-09: the human decided H-D11 and H-D12 (option A for both, remedies in H2). Recorded in the
   plan (§8 and §13.5), in TD-26, and in the `templatecheck.py` docstring. No code behaviour changed.
-- 2026-10-09: H-D11 and H-D12 recorded. The TD-26 demonstration was re-run on a conforming engine
-  (Oxigraph) and corrected: rdflib's `update` evaluates lazily, and had wrongly shown no revision
-  record after the retry. H1.4 is split into H1.4a and H1.4b. H1.4a authored: a composite boundary
+- 2026-10-09: H-D11 and H-D12 recorded. The TD-26 demonstration was re-run on Oxigraph and corrected (see
+  the 2026-10-10 entry for what the correction itself got wrong). H1.4 is split into H1.4a and H1.4b. H1.4a authored: a composite boundary
   whose shape reaches other nodes through more than one property is refused
   (`CompositeBoundaryMultipleProperties`), the bound property is the node property and no longer the
   first path found, and the closure no longer depends on triple order. Findings: the shipped
   composite example is sound (one node property, `sku` is a plain property), and the old binding
   was both incomplete and order-dependent. The plan's expectation that the shipped example would
-  show the gap was wrong. 87 of 87 rules witnessed. `check:persistence` is at 905 passed, 3 skipped
-  (the tests that need `pyoxigraph`) and 1 xfailed.
+  show the gap was wrong. 87 of 87 rules witnessed. `check:persistence` was at 905 passed, 3 skipped and 1 xfailed
+  (see the 2026-10-10 entry).
+- 2026-10-10: the human asked for the Oxigraph work to be kept. It is now
+  [`spikes/persistence-oxigraph`](../../../spikes/persistence-oxigraph/README.md), a spike that names
+  no interface and is not a store SPI. Doing so exposed that **my 2026-10-09 correction was itself
+  wrong**. I had said rdflib's `update` applies deletes lazily and so is not a safe engine. It is
+  not lazy (rdflib materialises the solutions first), and the two disagreements I saw came from two
+  bugs in my own scratch scripts: one counted revision records in the default graph only, and one
+  loaded an IRI as a literal. With those fixed, rdflib and Oxigraph agree on all six scenarios. The
+  claim is withdrawn from the plan, the register, the H1.4a Validation Pack and a test's skip reason.
+  The two data-level composite tests now run on rdflib, so they no longer skip and need no extra
+  dependency. The substantive findings stand and are unchanged: the TD-26 partial write (a missing
+  parameter advances the counter and leaves a permanent gap at the earlier sequence) and the
+  composite-boundary gap. `check:persistence` is at 908 passed and 1 xfailed.

@@ -409,10 +409,8 @@ into three groups.
 | Inputs include stored data | `?n1` from the stored sequence counter (2 templates), `?rev` from `$revBase` and `?n1` (2) | Yes, if the parameter is missing, **or** if the stored counter is not a number |
 
 **What a failure looks like. Demonstrated** with the real `append-event` update on a small
-in-memory dataset, run on Oxigraph 0.5.11, a conforming SPARQL 1.1 engine. (rdflib's `update`
-applies deletes while it is still evaluating the `WHERE` clause, so it is not a safe engine for
-reasoning about these templates. It agreed on the first two rows below and disagreed on the third,
-which is how an earlier version of this section came to state it wrongly.)
+in-memory dataset. It was run on rdflib and on Oxigraph 0.5.11, an independent engine, and
+the two agree. The code is in [`spikes/persistence-oxigraph`](../../../spikes/persistence-oxigraph/README.md).
 
 | Request | Result |
 |---|---|
@@ -443,11 +441,9 @@ H-D12 decides how far the assumption extends into computed values.
 **Recommendation, as a hypothesis.** Keep A for now, record the limitation here and in TD-26, and
 take D in H2. Option C is the one to pick if you want the stored-counter case surfaced before H2.
 
-**To try it yourself.** Compile `tools/persistence/tests/witnesses/template-append-event.ttl` and
-take the `append-event` update from `persistence.templatecheck.operations`. Create a store with one
-stream row (its epoch and a sequence of 0 in the meta graph). Replace each `$name` and `?name` for
-the caller's parameters with its value as text, and run the update on a conforming engine such as
-`pyoxigraph`, once with every parameter and once without `$revBase`. Do not use rdflib's `update`.
+**To try it yourself.** `python spikes/persistence-oxigraph/run.py` prints this table, after
+`pip install -r spikes/persistence-oxigraph/requirements.txt`. `rdflib_comparison.py` in the same
+folder runs it on both engines and compares.
 
 ### 13.5 Outcome
 

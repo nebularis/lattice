@@ -19,8 +19,8 @@ other nodes through more than one property, and it binds the property that leads
 
 ## What was found
 
-1. **The gap is real, and demonstrated on a conforming engine.** Run on Oxigraph 0.5.11 with an order
-   that has a line item and a payment, each a separate node:
+1. **The gap is real, and demonstrated on two engines.** Run on rdflib and on Oxigraph 0.5.11, which agree,
+   with an order that has a line item and a payment, each a separate node:
 
    | Shape | Property bound | Triples left in the aggregate after a replace |
    |---|---|---|
@@ -70,24 +70,22 @@ In `tools/persistence/tests/test_composite_boundary.py`.
 | H1.4a-T7 | the closure of every declaration order / compare / one result | L2 | + |
 | H1.4a-T8 | the shipped example / read the closure / one node property, and `sku` among the paths | L1 | + |
 | H1.4a-T9 | the new witness / observe / triggers exactly this refusal | L4 | + |
-| H1.4a-T10 | one node property, replace on a conforming engine / count what is left / nothing | L5 | + |
+| H1.4a-T10 | one node property, replace run on rdflib / count what is left / nothing | L5 | + |
 | H1.4a-T11 | two node properties bound either way / count what is left / the other member's triples | L5 | − |
 
-T10 and T11 need a conforming SPARQL 1.1 engine. `pyoxigraph` is not a project dependency, so they
-**skip** where it is absent and run where it is installed. I ran them with it installed, and all 14
-tests passed. Without it, 11 pass and 3 skip.
+T10 and T11 run the generated update on rdflib's in-memory store, so they need no extra dependency and
+do not skip. The same scenarios were cross-checked on Oxigraph, with identical results
+([`spikes/persistence-oxigraph`](../../../spikes/persistence-oxigraph/README.md)).
 
 ## One command
 
-Run from the repository root. A pass is `905 passed, 3 skipped, 1 xfailed`. The three skips are the
-engine tests, which skip unless `pyoxigraph` is installed, and the expected failure is TD-23.
+Run from the repository root. A pass is `908 passed, 1 xfailed`, with no skips. The expected failure
+is TD-23.
 
 ```bash
 mise run check:persistence
 ```
 
-To run the engine tests, `mise exec -- python -m pip install pyoxigraph` and rerun
-`mise exec -- python -m pytest tools/persistence/tests/test_composite_boundary.py -q`.
 
 ## Adversarial probes
 

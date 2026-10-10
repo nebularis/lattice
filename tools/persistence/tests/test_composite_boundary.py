@@ -10,9 +10,11 @@ from __future__ import annotations
 
 import itertools
 import re
+import warnings
 
 import pytest
-from rdflib import RDF, BNode, Graph, URIRef
+from rdflib import RDF, BNode, Dataset, Graph, Literal, URIRef, Variable
+from rdflib.namespace import XSD
 
 from persistence import templatecheck, witness
 from persistence.boundary import walk_boundary_shape
@@ -125,33 +127,42 @@ def test_h1_4a_t9_the_witness_triggers_exactly_this_refusal():
     assert set(observed) == {witness.Rule(witness.REFUSAL, KIND)}
 
 
-# ---- why: what a replace leaves behind. Needs a conforming SPARQL engine, which is not a dependency.
+# ---- why: what a replace leaves behind. Runs the generated update on rdflib's in-memory store.
+# The same scenarios were cross-checked on Oxigraph (spikes/persistence-oxigraph) with identical results.
 
 
 def _replace_and_count_left(bound_property: str, with_payment: bool) -> list[str]:
-    ox = pytest.importorskip("pyoxigraph", reason="a conforming SPARQL 1.1 engine; rdflib's update is not faithful")
+    """Run the generated ``cas-replace-composite-property`` update on an order and return the
+    subjects that still have triples in the default graph afterwards."""
     compiled, _ = compile_to_graph(_example())
     text = next(o for o in templatecheck.operations(compiled) if o.template == "cas-replace-composite-property").text
     meta = re.search(r"GRAPH <(urn:g:meta/\d+)>", text).group(1)
-    pat, xsd = "https://example.org/lattice/patterns#", "http://www.w3.org/2001/XMLSchema#"
-    store, root = ox.Store(), ox.NamedNode("urn:order:1")
-    store.add(ox.Quad(root, ox.NamedNode(pat + "epoch"), ox.Literal("1", datatype=ox.NamedNode(xsd + "integer")), ox.NamedNode(meta)))
-    store.add(ox.Quad(root, ox.NamedNode(pat + "seq"), ox.Literal("1", datatype=ox.NamedNode(xsd + "long")), ox.NamedNode(meta)))
-    rows = [("order:1", "status", "open"), ("order:1", "lineItem", "urn:li:1"), ("urn:li:1", "sku", "ABC")]
-    if with_payment:
-        rows += [("order:1", "payment", "urn:pay:1"), ("urn:pay:1", "amount", "10")]
-    for s, p, o in rows:
-        subject = ox.NamedNode("urn:order:1" if s == "order:1" else s)
-        obj = ox.NamedNode(o) if o.startswith("urn:") else ox.Literal(o)
-        store.add(ox.Quad(subject, ox.NamedNode(EX + p), obj, ox.DefaultGraph()))
-    values = {
-        "root": "<urn:order:1>", "epoch": f'"1"^^<{xsd}integer>', "expectedSeq": f'"1"^^<{xsd}long>',
-        "nextSeq": f'"2"^^<{xsd}long>', "newRev": "<urn:rev:2>", "txnId": "<urn:txn:a>", "requestDigest": '"d"',
-    }
-    update = text.replace(f"<{EX}lineItem>", f"<{EX}{bound_property}>")
-    update = re.sub(r"[\$?](%s)\b" % "|".join(values), lambda m: values[m.group(1)], update)
-    store.update(update)
-    return sorted(q.subject.value for q in store.quads_for_pattern(None, None, None, ox.DefaultGraph()))
+    pat = "https://example.org/lattice/patterns#"
+    root = URIRef("urn:order:1")
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", DeprecationWarning)
+        dataset = Dataset()
+        dataset.graph(URIRef(meta)).add((root, URIRef(pat + "epoch"), Literal(1)))
+        dataset.graph(URIRef(meta)).add((root, URIRef(pat + "seq"), Literal(1, datatype=XSD.long)))
+        rows = [
+            (root, "status", Literal("open")),
+            (root, "lineItem", URIRef("urn:li:1")),
+            (URIRef("urn:li:1"), "sku", Literal("ABC")),
+        ]
+        if with_payment:
+            rows += [(root, "payment", URIRef("urn:pay:1")), (URIRef("urn:pay:1"), "amount", Literal("10"))]
+        for subject, predicate, obj in rows:
+            dataset.default_context.add((subject, URIRef(EX + predicate), obj))
+        values = {
+            "root": root, "epoch": Literal(1), "expectedSeq": Literal(1, datatype=XSD.long),
+            "nextSeq": Literal(2, datatype=XSD.long), "newRev": URIRef("urn:rev:2"),
+            "txnId": URIRef("urn:txn:a"), "requestDigest": Literal("d"),
+        }
+        dataset.update(
+            text.replace(f"<{EX}lineItem>", f"<{EX}{bound_property}>"),
+            initBindings={Variable(k): v for k, v in values.items()},
+        )
+        return sorted({str(s) for s, _, _ in dataset.default_context})
 
 
 def test_h1_4a_t10_one_node_property_leaves_nothing_behind():

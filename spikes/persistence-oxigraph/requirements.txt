@@ -1,0 +1,2 @@
+# Only for this spike. Not a dependency of tools/persistence or of any mise task.
+pyoxigraph>=0.5.11,<0.6
