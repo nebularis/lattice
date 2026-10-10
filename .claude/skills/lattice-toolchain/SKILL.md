@@ -36,16 +36,19 @@ are in [environment-lessons.md](environment-lessons.md), beside this file.
 
 ## Is the code under test this checkout's?
 
-Editable installs can point at another clone. Before running anything that imports `persistence`,
+Each checkout, git worktrees included, has its own `.venv`, which `mise.toml` creates and which `mise
+run`, `mise exec` and an activated shell use. A bare `python` in a shell without mise activated is
+the global interpreter, whose editable installs can point at another clone. So run Python through
+`mise run` or `mise exec -- python`, and before running anything that imports `persistence`,
 `lattice_minting` or `surface`:
 
 ```bash
-python -c "import persistence, lattice_minting, surface; print(persistence.__file__, lattice_minting.__file__, surface.__file__)"
+mise exec -- python -c "import persistence, lattice_minting, surface; print(persistence.__file__, lattice_minting.__file__, surface.__file__)"
 ```
 
-If a path is outside this checkout, ask the maintainer to re-run the matching `mise run bootstrap:*`
-task, or put `tools/persistence/src`, `packages/minting/python/src` and `tools/surface/src` first on
-`PYTHONPATH`.
+Every path must be inside this checkout. If not, or if the import fails, run `mise run bootstrap` in
+this checkout. Working in several checkouts at once, and integrating a bundle from a machine that
+cannot push, are in the developer guide, §9.
 
 ## Shell activation
 

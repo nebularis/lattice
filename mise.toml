@@ -7,6 +7,9 @@ erlang = "27"
 elixir = "1.17"
 
 [env]
+# Each checkout, git worktrees included, gets its own .venv, so an editable install never points
+# at another checkout (developer guide, "Several checkouts side by side").
+_.python.venv = { path = ".venv", create = true }
 MAVEN_OPTS = "-Dstyle.color=always"
 PYTHONUNBUFFERED = "1"
 
