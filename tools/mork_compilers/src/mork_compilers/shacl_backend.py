@@ -44,7 +44,7 @@ from rdflib import BNode, Graph, Literal, URIRef
 from rdflib.namespace import RDF
 
 from .common import mint
-from .eligibility_ir import PERMITTED, UNDETERMINED, ConceptPlan, IntervalPlan, ProfilePlan, has_readings
+from .eligibility_ir import PERMITTED, UNDETERMINED, ConceptPlan, IntervalPlan, IRCompileError, ProfilePlan, has_readings
 from .namespaces import ELG, EXE, MORK, SH
 from .sparql_backend import PREFIXES as QUERY_PREFIXES
 from .sparql_backend import applicable, condition_select, containment_expression, evidence_path, literal_readable, profile_select
@@ -99,7 +99,11 @@ def render_readiness_select(plan: IntervalPlan) -> str:
 
 def concept_sets(plan: ConceptPlan) -> Tuple[List[URIRef], List[URIRef]]:
     """(admitted, undetermined) concepts. Without a resolved scheme the plan
-    admits its required concepts less its exclusions and leaves none undetermined."""
+    admits its required concepts less its exclusions and leaves none undetermined.
+    A hierarchical plan always has one: L9 makes it Undetermined for every
+    candidate without one, and the IR refuses to compile it."""
+    if plan.hierarchical and plan.scheme is None:
+        raise IRCompileError(f"{plan.condition} matches hierarchically with no resolved scheme (L9)")
     if plan.scheme is None:
         return [c for c in plan.required if c not in plan.excluded], []
     admitted = [concept for concept, decision in plan.expansion if decision == PERMITTED]

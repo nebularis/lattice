@@ -7,16 +7,20 @@
 #
 # A software licence is active until the licensor suspends it for non-payment.
 # The licensee asks for reinstatement before paying, which does not take
-# effect. Once paid, the licensor reinstates it. Along the way the licensee
-# accepts a new version of the terms, the licensor determines a breach to be
-# material, and a notice is deemed received.
+# effect. Once paid, the licensor reinstates it. Along the way the licensor
+# determines a breach to be material, and a notice is deemed received.
+#
+# Each exercise is a legal act of the layer above, which names who made it.
+# An exercise record is the evaluator's finding about one: whether it took
+# effect, and why not. The licensee's acceptance of a new version of the
+# terms is an assent, also the layer above's, so no record here keeps it
+# (CCS C9b1).
 #
 # | Record                    | What it shows                                       |
 # |---------------------------|-----------------------------------------------------|
 # | ex:suspend                | an exercise that took effect                        |
 # | ex:early-reinstatement    | an exercise that did not, and why                   |
 # | ex:reinstate              | an exercise that took effect                        |
-# | ex:accept-terms-2         | acceptance of a version                             |
 # | ex:materiality            | a determination by the party the contract names     |
 # | ex:notice-received        | a deemed fact, and the condition that deemed it     |
 
@@ -49,7 +53,6 @@ ex:reinstatement a bhv:TransitionDefinition ;
 ex:licensor-occ a pty:RoleOccupancy .
 ex:licensee-occ a pty:RoleOccupancy .
 ex:licence a fnd:PersistentIdentity .
-ex:terms-v2 a fnd:Version ; fnd:hasIdentity ex:licence .
 
 # ---- Stimuli and records ----------------------------------------------------------
 
@@ -57,21 +60,20 @@ ex:stimulus-1 a bhv:Stimulus .
 ex:stimulus-2 a bhv:Stimulus .
 ex:stimulus-3 a bhv:Stimulus .
 
+# The exercises themselves (ex:suspension-notice, ex:reinstatement-request,
+# ex:reinstatement-notice) are the layer above's acts, not declared here.
 ex:suspend a bhv:ExerciseRecord ;
-    bhv:exercised ex:power-to-suspend ; bhv:actor ex:licensor-occ ;
+    bhv:exercised ex:suspension-notice ;
     bhv:tookEffect true ; bhv:fromStimulus ex:stimulus-1 .
 
 ex:early-reinstatement a bhv:ExerciseRecord ;
-    bhv:exercised ex:power-to-reinstate ; bhv:actor ex:licensee-occ ;
+    bhv:exercised ex:reinstatement-request ;
     bhv:tookEffect false ; bhv:reasonNotTaken "Payment had not been received." ;
     bhv:fromStimulus ex:stimulus-2 .
 
 ex:reinstate a bhv:ExerciseRecord ;
-    bhv:exercised ex:power-to-reinstate ; bhv:actor ex:licensor-occ ;
+    bhv:exercised ex:reinstatement-notice ;
     bhv:tookEffect true ; bhv:fromStimulus ex:stimulus-3 .
-
-ex:accept-terms-2 a bhv:AcceptanceRecord ;
-    bhv:accepted ex:terms-v2 ; bhv:actor ex:licensee-occ .
 
 ex:materiality a bhv:DeterminationRecord ;
     bhv:matter ex:breach-of-payment-terms ; bhv:determiner ex:licensor-occ ;

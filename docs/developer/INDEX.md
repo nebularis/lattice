@@ -556,23 +556,24 @@ non-blocking track.
 
 | Field | Value |
 |-------|-------|
-| **Status** | 📝 Proposed. D2 and D3 answered 2026-09-30. N4 moved to the computable contract substrate unit |
+| **Status** | 📝 Proposed. D2 and D3 answered 2026-09-30, D7 answered 2026-10-10. N4 and N5 moved to the computable contract substrate unit (N5 as HQ-6, 2026-10-10). Remaining scope open (NQ-1 to NQ-4) |
 | **Unit ID** | `normative-rule-substrate` |
 | **Sketches** | [legalruleml-mapping.md](sketches/legalruleml-mapping.md), [rule-layers.md](sketches/rule-layers.md), [rule-layers-cross-check.md](sketches/rule-layers-cross-check.md) |
 | **Plan** | [normative-rule-substrate.md](plans/normative-rule-substrate.md) |
 | **Status Record** | [normative-rule-substrate.md](status/normative-rule-substrate.md) |
-| **ADRs** | A-105, A-107 to A-111 to be drafted. A-104 and A-106 drafted in CCS |
+| **ADRs** | A-104 and A-106 accepted in CCS. A-105 moved to CCS HQ-6a. A-107 to A-111 to be drafted |
 
 ## 8.9 Computable Contract Substrate — In progress
 
 | Field | Value |
 |-------|-------|
-| **Status** | 🔨 In progress. Gate A passed 2026-10-01. Tranches B and C merged, tranche D merged to C8b (Instrument 0.14.0, Wording 0.7.0). C9 briefed 2026-10-07 |
+| **Status** | 🔨 In progress. Gate A passed 2026-10-01. Tranches B and C merged, tranche D merged to C8b (Instrument 0.14.0, Wording 0.7.0). C9 briefed 2026-10-07, C9a merged, C9b0 to C9b2 merged 2026-10-10 |
 | **Unit ID** | `computable-contract-substrate` |
 | **Sketches** | [computable-contract-substrate.md](sketches/computable-contract-substrate.md) (design, scenarios S1 to S101), [contract-amounts.md](sketches/contract-amounts.md) (A1 to A58), [instrument-terms-and-legal-relations.md](sketches/instrument-terms-and-legal-relations.md) (superseded), [logical-english-alignment.md](sketches/logical-english-alignment.md) (unplanned), [change-materiality.md](sketches/change-materiality.md) (C9-Q3), [consent-and-group-powers.md](sketches/consent-and-group-powers.md) (C9b) |
 | **Plan** | [computable-contract-substrate.md](plans/computable-contract-substrate.md) |
 | **Status Record** | [computable-contract-substrate.md](status/computable-contract-substrate.md) |
 | **ADRs** | A-104, A-106, A-112, A-113 accepted, with addenda |
+| **Validation Packs** | [C8](validation/computable-contract-substrate-c8.md), [C8b](validation/computable-contract-substrate-c8b.md), [C9a](validation/computable-contract-substrate-c9a.md), [C9b0](validation/computable-contract-substrate-c9b0.md), [C9b1](validation/computable-contract-substrate-c9b1.md) and [C9b2](validation/computable-contract-substrate-c9b2.md) |
 
 A new Wording layer (from Open CBAA's `wim:`), Instrument rewritten around terms and legal
 relations, and Behaviour extended with occasions and records, tested against a package policy, an

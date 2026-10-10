@@ -28,6 +28,15 @@ qnt:Dense a qnt:DensityKind ;
 qnt:UnspecifiedDensity a qnt:DensityKind ;
     rdfs:comment "Adjacency is not defined; range-set merging uses overlap only." .
 
+qnt:Additivity a owl:Class ;
+    rdfs:comment "A mechanism-intrinsic kind of quantity, by whether its values add." .
+
+qnt:Extensive a qnt:Additivity ;
+    rdfs:comment "The measure of a whole is the sum of the measures of its parts, so any two values on the space add to a value on it." .
+
+qnt:Intensive a qnt:Additivity ;
+    rdfs:comment "Values on the space do not add, though they may be compared and counted." .
+
 qnt:BoundSense a owl:Class ;
     rdfs:comment "A mechanism-intrinsic designation of a bound as lower or upper." .
 
@@ -108,6 +117,8 @@ qnt:OutsideDeclaredSpace a qnt:UnresolvedReason .
 qnt:OperationNotPermitted a qnt:UnresolvedReason .
 qnt:NoBoundInUnit a qnt:UnresolvedReason ;
     rdfs:comment "No statement of a bound, among it and its alternatives, is in the candidate's unit (ADR-A95)." .
+qnt:MixedBases a qnt:UnresolvedReason ;
+    rdfs:comment "Shares to be summed have base roles resolving to different bindings, so they are shares of different wholes." .
 
 qnt:BinContiguity a owl:Class ;
     rdfs:comment "A mechanism-intrinsic policy governing whether recurrence bins are contiguous." .
@@ -167,4 +178,4 @@ qnt:ContextRoleContract a voc:SchemeContract ;
     fnd:hasIdentity qnt:ContextRoleContract-identity ;
     fnd:hasGovernanceState fnd:Active ;
     skos:prefLabel "Context role scheme contract"@en ;
-    voc:constrainsProperty qnt:contextRole .
+    voc:constrainsProperty qnt:contextRole , qnt:baseRole .

@@ -440,3 +440,36 @@ options and their consequences are in the CCS plan, C9 in detail.
 7. **Deferred.** Consent rules, materiality and per-amendment regimes (C9b). Incorporation (C9c). A
    subscription placement, each insurer bound from its own assent (C9a-Q1, with HQ-7). Assents with
    a share or a condition.
+
+## Addendum (2026-10-09): the legal acts tier
+
+**Status:** Accepted 2026-10-10, proposed 2026-10-09 (CCS slice C9b1, C9b1-Q1 and C9b1-Q2). The reasoning is the
+[consent sketch](../../developer/sketches/consent-and-group-powers.md), §2.1, §2.6, §3 and §4.3, and
+its decisions. Revises the 2026-10-08 addendum, items 2 and 7.
+
+1. **What the parties did is an Instrument fact, in its own document.** `spec/instrument-acts.ttl`
+   (ADR-A120) imports Instrument's main document and holds `ins:LegalAct ⊑ prov:Activity,
+   fnd:TemporallyScoped, fnd:Evidenced`: the declarations `ins:Assent` (moved from the main
+   document), `ins:Consent`, `ins:Objection` and `ins:Withdrawal` (`ins:withdraws`), `ins:Exercise`
+   (`ins:exercises` a bound power) and `ins:Proposal` (`ins:proposedBy`, `ins:proposes`). Every act
+   names who did it (`ins:actBy`, with `ins:assentBy` and `ins:proposedBy` as sub-properties), and
+   may name its case (`ins:forCase`) and the acts it relies on (`ins:pursuantTo`, possibly under
+   another instrument). A consent or an objection is directed at one proposal (`ins:directedAt`). A
+   consumer that only states meaning never imports an act. In LATTICE only examples and tests read
+   the acts document.
+2. **A proposal is an act that proposes a matter** (C9b1-Q1, answer (a)). Its valid time is when it
+   was made. An amendment it proposes is unchanged, and keeps its effective time.
+3. **Effect is evaluated.** An exercise records only that it was done. `ins:OnExercise` fires on an
+   exercise the evaluator finds effective (law I10), so its kind is `bhv:DerivedTrigger`, and
+   Behaviour's stimulus for it is `prov:wasDerivedFrom` the exercise. The shapes check the facts an
+   effect needs that can be checked without evaluation: an exercise by the power's holder, where the
+   holder is a role occupancy, and an act relied on done no later than the act relying on it.
+4. **Withdrawal has no substrate default** (sketch decision 7). The agreement rule and
+   `ins:OnAcceptance` read assents and are unchanged.
+5. **Implied terms** may be implied by a judgment as well as by statute, custom or course of dealing.
+6. **Juristic acts only** (sketch decision 4). Acts of performance stay performance facts.
+7. **Deferred.** No approval yields Undetermined rather than Denied until closures (HQ-6, ADR-A105).
+   Who may act for a power held by a group, and whether consents qualify, are C9b4's. Whether a
+   withdrawal counts is the instrument's rule or a deployment's profile. The import guard does not
+   tell Behaviour's runtime document from its configuration (technical debt TD-32), so a per-document
+   test checks that the acts document imports no runtime.

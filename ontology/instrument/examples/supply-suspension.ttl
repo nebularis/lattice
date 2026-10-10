@@ -174,10 +174,10 @@ tmpl:suspended a bhv:State ;
     bhv:inStateSpace tmpl:suspension-regime ; ins:stateKind ins-voc:Suspended .
 
 tmpl:on-suspension a ins:OnExercise , bhv:TriggerDefinition ;
-    bhv:triggerKind bhv:ExternalStimulus ;
+    bhv:triggerKind bhv:DerivedTrigger ;
     ins:ofPower tmpl:suspend .
 tmpl:on-resumption a ins:OnExercise , bhv:TriggerDefinition ;
-    bhv:triggerKind bhv:ExternalStimulus ;
+    bhv:triggerKind bhv:DerivedTrigger ;
     ins:ofPower tmpl:require-resumption .
 
 tmpl:suspend-deliveries a ins:RegimeTransition , bhv:TransitionDefinition ;

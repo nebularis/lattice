@@ -3,35 +3,38 @@
 # Normative rule substrate - Status
 
 **Unit ID:** `normative-rule-substrate`
-**Status:** 📝 Proposed. Nothing implemented. Blocked on the seven decisions in the plan's §9
-**Last updated:** 2026-09-30
+**Status:** 📝 Proposed. Nothing implemented in this unit. N4, N5 and the Behaviour part of N8 are
+CCS's. D1, D4 and D5 open, and the unit's remaining scope is open (NQ-1 to NQ-4)
+**Last updated:** 2026-10-10
 **Trigger:** human request, 2026-09-29, following the LegalRuleML mapping analysis
 **Plan:** [normative-rule-substrate.md](../plans/normative-rule-substrate.md)
 **Sketches:** [legalruleml-mapping.md](../sketches/legalruleml-mapping.md),
 [rule-layers.md](../sketches/rule-layers.md),
 [rule-layers-cross-check.md](../sketches/rule-layers-cross-check.md)
-**ADRs:** A-104 to A-111, none drafted
+**ADRs:** A-104 to A-111 reserved. A-104 and A-106 accepted in CCS (2026-10-01). A-105 moved to CCS
+HQ-6a (2026-10-10). A-107 to A-111 not drafted
 **Machine:** single. This unit does not use the applied-insurance epic's two-machine model
 
 ---
 
 ## Current position
 
-The analysis is complete and the plan is written. No ADR has been drafted, no ontology document
-has been touched, and no slice has started.
-
-The unit is waiting on decision **D2** above all others: whether `ins:Obligation` is a deontic
-operator or a structural document element. ADR-A07b chose Instrument's minimal shape deliberately
-but did not decide this question, and slice N4 cannot be authored without the answer.
+The analysis is complete and the plan is written. This unit has drafted no ADR, touched no ontology
+document and started no slice. Its first blocker, D2, was answered on 2026-09-30.
 
 **2026-09-30:** D2 and D3 are answered, and slice N4 moves to the new
 [computable-contract-substrate](../plans/computable-contract-substrate.md) unit (CCS), which also
 takes N8's Behaviour work and revises N2, N5 and N6 (the plan's slice notes).
 
-**Next action, for the human:** take D1, and CCS's CC-D1 to CC-D8.
+**2026-10-10:** N5 moved to CCS as its held question HQ-6 (the human, HQ6-Q1), split into HQ-6a
+before CCS C9b3 and HQ-6b before CCS C12 (HQ6-Q2, the plan's N5 note). D7 is answered with it. This
+unit now holds N1, N2, N3, N6's and N8's remainders, N7, N9 and N10 to N13, none started. CCS waits
+on N1 (C13, C13a) and N3 waits on CCS C13a.
 
-**Next action, for the agent, once D1 to D3 are taken:** draft ADR-A109 (slice N2, the importable
-rule-body fragment), which needs no ontology change and is independent of everything else.
+**Next action, for the human:** answer NQ-1 to NQ-4 below, and D1.
+
+**Next action, for the agent, once NQ-1 and NQ-2 are answered:** brief the first slice they leave
+this unit, which under the leanings is N1 (in CCS) or N2.
 
 ## Dependency position against the applied-insurance epic
 
@@ -43,9 +46,9 @@ analysis in the plan's §4.
 
 | Position | Slices | Constraint |
 |---|---|---|
-| Parallel-safe now | N2, N4, N6, N8 | Instrument and Behaviour have 1 external importer each and no applied module. The epic does not touch Instrument until Phase 5, which decision D2 defers |
+| Parallel-safe now | N2, N4 (CCS), N6, N8 | Instrument and Behaviour have 1 external importer each and no applied module. The epic does not touch Instrument until Phase 5, which decision D2 defers |
 | Sequenced behind AIR-3.3 | N1, N3, N7 | Share `tools/mork_compilers/` with AIR-3.3 |
-| Coordinate with substrate S2 | N5 | Both touch Eligibility |
+| Coordinate with substrate S2 | N5 (CCS HQ-6 since 2026-10-10, see NQ-4) | Both touch Eligibility |
 | **Serialised, must wait** | **N9** | Foundation has 14 external importers including the two peril files AIR-2.2 to AIR-2.7 are authoring region by region |
 
 **Ordering answer: the rule work goes first, specifically slice N4.** Not because rules outrank
@@ -57,18 +60,22 @@ un-deferred.
 
 **The one constraint in the other direction:** N9 must not start until Phase 2 completes.
 
+**Re-checked 2026-10-10.** The applied-insurance epic is still in round 3. AIR-3.3 is unmerged,
+Phase 2 is incomplete and S2 and S7 have not started, so N1's, N9's and N10's constraints stand.
+Instrument's position has changed, since after CCS C10 nothing outside Instrument imports it.
+
 ## Slice board
 
 | # | Slice | Tranche | State | Blocked on |
 |---|---|---|---|---|
-| N2 | Declare the importable rule-body fragment (A-109), revised for stratified state reads | A | waiting | D1 |
-| N4 | Deontic extension of Instrument (A-104, R1) | B | moved to CCS | CCS C1, C6 to C9 |
-| N1 | Condition composition acyclicity (R4) | A | waiting | AIR-3.3 merge |
-| N6 | Scheduled triggers as positioned stimuli (R3), built with CCS C12 | B | waiting | CCS C11 |
-| N3 | Self-contradiction design-time check | B | waiting | CCS C9, CCS C13a |
-| N5 | Closure declarations (A-105, R2) | C | waiting | D6, D7, substrate S2 |
+| N2 | Declare the importable rule-body fragment (A-109), revised for stratified state reads (ADR-A104 decision 15) | A | waiting | D1, NQ-2 |
+| N4 | Deontic extension of Instrument (A-104, R1) | B | moved to CCS 2026-09-30, delivered | CCS C1, C6 to C9 |
+| N1 | Condition composition acyclicity (R4). CCS C13 and C13a wait on it | A | waiting | AIR-3.3 merge, NQ-2 |
+| N6 | Scheduled triggers as positioned stimuli (R3), built with CCS C12 | B | waiting | CCS C12, NQ-3 |
+| N3 | Self-contradiction design-time check | B | waiting | CCS C13a, NQ-2 |
+| N5 | Closure declarations (A-105, R2) | C | moved to CCS 2026-10-10 | CCS HQ-6a before C9b3, HQ-6b before C12 |
 | N7 | Measure the OASIS conformance corpus | C | waiting | CCS C9, N1 |
-| N8 | Breach-chain checks (Behaviour records and evaluator moved to CCS C11, C12) | B | waiting | N5, CCS C12 |
+| N8 | Breach-chain checks (Behaviour records and evaluator moved to CCS C11, C12) | B | waiting | CCS HQ-6a, C12, C13, NQ-3 |
 | N9 | Multi-axis temporal scope (A-108) | D | waiting | **D4, Phase 2 complete** |
 | N10 | Norm priority and defeasibility (A-107) | E | deferred | D5 |
 | N11 | Controlled-English rendering (R5) | E | deferred | ingestion vision Phase 2 |
@@ -84,10 +91,28 @@ un-deferred.
 | D3 | How far should ODRL alignment go? | answered 2026-09-30: align where free, map through MORK otherwise |
 | D4 | Does N9 wait for Phase 2, or does the epic accept a freeze? | open |
 | D5 | Does priority wait for Phase 5? | open |
-| D6 | Is substrate S2 authored together with N5? | open |
-| D7 | Refuse an unlicensed absence-dependent check, or compile it to `Undetermined`? | open |
+| D6 | Is substrate S2 authored together with N5? | overtaken 2026-10-10: N5 is CCS HQ-6. Restated as NQ-4 |
+| D7 | Refuse an unlicensed absence-dependent check, or compile it to `Undetermined`? | answered 2026-10-10 by the human: refuse, in CCS HQ-6a (HQ6-Q2), consistent with CCS C9b0-Q2 |
+
+D5 has new evidence: CCS C7c declared `ins:prevailsOver` between definitions only (D13, 2026-10-06),
+the planned C9c widens it to an incorporated document, and terms are left to N10. D1's pattern, a unit in
+tranches with human gates, is the one CCS runs under (CCS plan header).
+
+## Open questions from the CCS alignment (2026-10-10)
+
+Raised by the agent for the human. None is decided.
+
+| # | Question | Leaning |
+|---|---|---|
+| NQ-1 | **Does NRS still have a reason to exist as a unit?** With N4, N5 and N8's Behaviour part in CCS, what is left is either on CCS's path (N1, N2, N3, N6's and N8's remainders) or independent of contracts (N7, N9, N10 to N13). Options: (a) keep NRS as the home of the independent slices, (b) close NRS and move every remaining slice to CCS or to a later unit, (c) keep it unchanged | (a). N9, N10 and N12 concern norms beyond contracts and have their own gates (Phase 2, S7, a trigger), which CCS should not carry. Close NRS once those are placed |
+| NQ-2 | **Do N1, N2 and N3 move to CCS?** CCS C13 and C13a wait on N1. ADR-A104 decision 15 already states N2's revision, and C13 builds the stratified state reading it governs. N3 follows C13a and uses its task | move N1 and N2 to CCS, as N4, N5 and N8 did, since CCS waits on both. N3 may follow, or stay as a small slice after C13a |
+| NQ-3 | **What remains of N6 and N8?** C12 builds positioned stimuli for scheduled triggers (N6). For N8, `ins:OnBreach` names only an obligation (`ins:ofObligation`), and law I6's acyclicity is checked with C13 | N6 and N8 are absorbed by CCS C12 and C13. Confirm with each brief, and retire both here when they merge |
+| NQ-4 | **Does substrate S2 still pair with N5 (D6)?** The AIR plan (§3b, substrate plan row S2) says S2 is authored with NRS N5. HQ-6a and HQ-6b as split do not name an Eligibility change, while CCS C9b3 is Eligibility's own slice with an ADR | pair S2 with C9b3 instead, or release it back to the AIR substrate track. Either needs the AIR plan's row updated |
 
 ## Key findings from the analysis
+
+Findings of 2026-09-29, kept as the record. Instrument's importer count changed with CCS C10 (above),
+and the N8 blocking finding now applies to CCS HQ-6a.
 
 - **Instrument is the safest layer in the repository to change.** One external importer
   (`behaviour/spec/behaviour.ttl`), no applied module, and no epic slice touches it until deferred
@@ -109,7 +134,8 @@ un-deferred.
 
 ## Is this unit complete?
 
-No. Nothing has started. The plan is proposed and the decisions in its §9 are open.
+No. Nothing in this unit has started. The plan is proposed, D1, D4 and D5 are open, D6 is restated as
+NQ-4, and NQ-1 to NQ-4 decide its remaining scope.
 
 ## History
 
@@ -120,3 +146,8 @@ No. Nothing has started. The plan is proposed and the decisions in its §9 are o
 - 2026-09-29: plan and this status record written. Dependency check against the applied-insurance
   epic measured rather than assumed, by enumerating per-layer external importers.
 - 2026-09-30: D2 and D3 answered. N4 moved to CCS, N2, N5, N6 and N8 revised.
+- 2026-10-10: aligned with CCS. The human moved N5 to CCS as HQ-6 (HQ6-Q1) and split it into HQ-6a
+  before C9b3 and HQ-6b before C12 (HQ6-Q2), answering D7 (refuse). Plan and record updated: ADR states
+  (A-104 and A-106 accepted 2026-10-01, A-105 moved), F1's separate Foundation window, N1 on CCS's
+  path, Eligibility's README its source again, `ins:prevailsOver` evidence for D5, the retired
+  validation log. D6 overtaken. NQ-1 to NQ-4 raised for the human

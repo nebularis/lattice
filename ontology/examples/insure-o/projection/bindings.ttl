@@ -9,23 +9,23 @@
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 
 ino:peril-contract a voc:SchemeContract ;
-    voc:constrainsProperty ins:hasPerilType ;
+    voc:constrainsProperty ino:hasPerilType ;
     voc:requiresGovernanceState <https://www.nebularis.org/neuro-semantic/lattice/foundation#Active> .
 
 ino:territory-contract a voc:SchemeContract ;
-    voc:constrainsProperty ins:hasTerritory ;
+    voc:constrainsProperty ino:hasTerritory ;
     voc:requiresGovernanceState <https://www.nebularis.org/neuro-semantic/lattice/foundation#Active> .
 
 ino:lob-contract a voc:SchemeContract ;
-    voc:constrainsProperty ins:hasLineOfBusiness ;
+    voc:constrainsProperty ino:hasLineOfBusiness ;
     voc:requiresGovernanceState <https://www.nebularis.org/neuro-semantic/lattice/foundation#Active> .
 
 ino:asset-class-contract a voc:SchemeContract ;
-    voc:constrainsProperty ins:hasAssetClass ;
+    voc:constrainsProperty ino:hasAssetClass ;
     voc:requiresGovernanceState <https://www.nebularis.org/neuro-semantic/lattice/foundation#Active> .
 
 ino:currency-contract a voc:SchemeContract ;
-    voc:constrainsProperty ins:hasCurrency ;
+    voc:constrainsProperty ino:hasCurrency ;
     voc:requiresGovernanceState <https://www.nebularis.org/neuro-semantic/lattice/foundation#Active> .
 
 ino:peril-root a skos:Concept ;

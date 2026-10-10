@@ -199,7 +199,7 @@ tmpl:terminated a bhv:State ;
     ins:ends ins-voc:TheInstrument .
 
 tmpl:on-notice-given a ins:OnExercise , bhv:TriggerDefinition ;
-    bhv:triggerKind bhv:ExternalStimulus ;
+    bhv:triggerKind bhv:DerivedTrigger ;
     ins:ofPower tmpl:end-on-notice .
 tmpl:on-notice-expiry a ins:OnExpiry , bhv:TriggerDefinition ;
     bhv:triggerKind bhv:ScheduledTrigger ;

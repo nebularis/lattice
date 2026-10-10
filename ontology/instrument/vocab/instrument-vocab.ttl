@@ -12,8 +12,8 @@
 
 <https://www.nebularis.org/neuro-semantic/instrument-vocab>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/instrument-vocab/0.15.1> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.15.1> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/instrument-vocab/0.16.0> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.16.0> .
 
 ins-voc:ActivityContract a voc:SchemeContract ;
 	fnd:hasIdentity ins-voc:ActivityContract-identity ;
@@ -112,6 +112,15 @@ ins-voc:DeclineRenewal a skos:Concept ; skos:inScheme ins-voc:Activities ;
 
 ins-voc:Award a skos:Concept ; skos:inScheme ins-voc:Activities ;
 	skos:prefLabel "Award"@en ; skos:definition "Award a contract or an order under an arrangement, creating a new instrument."@en .
+
+ins-voc:Settle a skos:Concept ; skos:inScheme ins-voc:Activities ;
+	skos:prefLabel "Settle"@en ; skos:definition "Resolve a claim or a dispute by agreement with the claimant."@en .
+
+ins-voc:Approve a skos:Concept ; skos:inScheme ins-voc:Activities ;
+	skos:prefLabel "Approve"@en ; skos:definition "Give the approval an instrument requires before another party's act."@en .
+
+ins-voc:Refuse a skos:Concept ; skos:inScheme ins-voc:Activities ;
+	skos:prefLabel "Refuse"@en ; skos:definition "Withhold an approval or a consent an instrument requires."@en .
 
 ins:InstrumentTarget a bhv:TargetKind ;
 	rdfs:comment "A Behaviour effect's target kind for an instrument." ;

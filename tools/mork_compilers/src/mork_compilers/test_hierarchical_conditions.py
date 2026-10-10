@@ -12,6 +12,7 @@ scheme is asked once through SPARQL and must receive the expansion's decision.
 from __future__ import annotations
 
 import unittest
+from dataclasses import replace
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict
@@ -26,6 +27,7 @@ from .eligibility_ir import (
     compile_concept_condition,
 )
 from .namespaces import ELG, EXE, MORK
+from .shacl_backend import compile_shapes
 from .sparql_backend import compile_query_template
 
 EX = Namespace("https://example.org/lattice/eligibility/")
@@ -196,6 +198,19 @@ class ExclusionOnlyTests(unittest.TestCase):
         self.data.remove((EX["non-haematological"], ELG.constrainedByContract, None))
         with self.assertRaises(IRCompileError):
             compile_concept_condition(self.data, EX["non-haematological"])
+
+    def test_required_concepts_without_a_contract_are_refused(self) -> None:
+        # C9b0-Q2 (a): L9 makes this Undetermined for every candidate, and the IR refuses it
+        self.data.remove((EX["solid-tumour-arm"], ELG.constrainedByContract, None))
+        with self.assertRaises(IRCompileError):
+            compile_concept_condition(self.data, EX["solid-tumour-arm"])
+
+    def test_backends_refuse_a_hierarchical_plan_with_no_scheme(self) -> None:
+        # C9b0-Q2 (a): built by hand, such a plan would answer Denied where L9 says Undetermined
+        plan = replace(compile_concept_condition(self.data, EX["solid-tumour-arm"]), scheme=None)
+        for backend in (compile_query_template, compile_shapes):
+            with self.subTest(backend=backend.__name__), self.assertRaises(IRCompileError):
+                backend(plan)
 
 
 class ParityTests(unittest.TestCase):

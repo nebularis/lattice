@@ -1,0 +1,298 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Premise. A direct insurer reinsures one policy. The reinsurance follows the
+# insurer's settlements, but a claims co-operation clause makes the
+# reinsurer's approval of a settlement a condition precedent to its
+# liability. Which claims does the reinsurer have to indemnify?
+#
+# What the law says, as the consent sketch (§4.3) reads it:
+#
+# - Under "follow the settlements", the reinsured's settlement with its
+#   insured fixes the reinsurer's liability, provided it was made honestly and
+#   in a proper and businesslike way (Insurance Co of Africa v SCOR, 1985).
+# - A claims co-operation clause that is a condition precedent prevents the
+#   liability arising at all unless the reinsurer approved the settlement
+#   (Scor v Eras (No 2), 1995).
+# - The reinsurer must not withhold approval arbitrarily, a term the law
+#   implies (Gan v Tai Ping (No 2), [2001] EWCA Civ 1047).
+#
+# In the model:
+#
+# | Fact or meaning                                   | Where                                                                         |
+# |---------------------------------------------------|-------------------------------------------------------------------------------|
+# | the insurer's power to settle a claim             | ex:settle, bound in the policy                                                |
+# | the reinsurer's power to approve                  | ex:approve, bound in the reinsurance                                          |
+# | the reinsurer's duty to indemnify                 | ex:indemnify, arising on an exercise of ex:settle, another instrument's power |
+# | its scope: claims settled pursuant to an approval | ex:settled-with-approval, an evidence path from the claim                     |
+# | the implied term                                  | ex:no-arbitrary-refusal, a prohibition ins:impliedBy the judgment             |
+# | the insurer's request for approval                | ex:request-1, an ins:Proposal                                                 |
+# | the approval, an exercise for the claim           | ex:approval-1, ins:Exercise, ins:forCase                                      |
+# | the settlement, made pursuant to it               | ex:settlement-1, ins:pursuantTo ex:approval-1                                 |
+# | a settlement made with no approval                | ex:settlement-2                                                               |
+#
+# The acts, by valid time and recording time:
+#
+# | Act                                         | Valid       | Recorded    |
+# |---------------------------------------------|-------------|-------------|
+# | the insurer asks approval to settle claim 1 | 1 Apr 2028  | 1 Apr 2028  |
+# | the reinsurer approves                      | 8 Apr       | 8 Apr       |
+# | the insurer settles claim 1                 | 15 Apr      | 16 Apr      |
+# | the insurer settles claim 2, unapproved     | 10 May      | 10 May      |
+#
+# What each claim's scope reads, with the evidence path from the claim
+# (inverse ins:forCase, ins:pursuantTo, ins:exercises, ins:activity):
+#
+# | Claim   | Path reaches       | Decision     |
+# |---------|--------------------|--------------|
+# | claim 1 | ins-voc:Approve    | Permitted    |
+# | claim 2 | nothing            | Undetermined |
+#
+# "Effective approval" is read from facts, never from a finding: the approval
+# exists (the path), was made by the party holding the power to approve, and
+# precedes the settlement made pursuant to it. The last two are the acts'
+# shapes. An approval by another party, or after the settlement, is rejected.
+#
+# Claim 2 is Undetermined, not Denied. A condition precedent means "no
+# approval, no liability", which needs the absence of an approval to decide,
+# a closure (ADR-A105, held question HQ-6). Until then the example records it
+# as deliberate non-coverage. Whether a refusal was arbitrary is a
+# determination, outside stated meaning. The clause's usual 14 days bind the
+# insurer's notice of loss, a due range, and are not modelled here.
+#
+# The condition precedent is read from the scope. `ins:classification` could
+# also name the clause's class, which is read and never evaluated (law I12),
+# and is left out.
+
+@prefix ins:     <https://www.nebularis.org/neuro-semantic/lattice/instrument#> .
+@prefix ins-voc: <https://www.nebularis.org/neuro-semantic/lattice/instrument/vocab#> .
+@prefix wrd:     <https://www.nebularis.org/neuro-semantic/lattice/wording#> .
+@prefix wrd-voc: <https://www.nebularis.org/neuro-semantic/lattice/wording/vocab#> .
+@prefix elg:     <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
+@prefix fnd:     <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix pty:     <https://www.nebularis.org/neuro-semantic/lattice/party#> .
+@prefix prov:    <http://www.w3.org/ns/prov#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex:      <https://example.org/lattice/instrument/reinsurance-claims-cooperation/> .
+
+# ==== The direct policy's wording ==============================================
+
+ex:pol-sec-4 a wrd:Element ;
+    fnd:hasIdentity ex:pol-sec-4-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Section ; wrd:objectId "4" ; wrd:rankKey "a0" ;
+    wrd:directlyComprises ex:pol-cl-4-1 .
+ex:pol-cl-4-1 a wrd:Text ;
+    fnd:hasIdentity ex:pol-cl-4-1-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "4.1" ; wrd:rankKey "a0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "The Insurer may settle any claim under this Policy with the Insured." ] .
+
+ex:policy-wording a wrd:AssembledWording ;
+    fnd:hasIdentity ex:policy-wording-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:directlyComprises ex:pol-sec-4 ;
+    wrd:includes ex:pol-sec-4 , ex:pol-cl-4-1 .
+
+# ==== The reinsurance's wording ================================================
+
+ex:re-sec-1 a wrd:Element ;
+    fnd:hasIdentity ex:re-sec-1-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Section ; wrd:objectId "1" ; wrd:rankKey "a0" ;
+    wrd:directlyComprises ex:re-cl-1-1 , ex:re-cl-1-2 .
+ex:re-cl-1-1 a wrd:Text ;
+    fnd:hasIdentity ex:re-cl-1-1-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "1.1" ; wrd:rankKey "a0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "Subject to clause 1.2, the Reinsurer shall follow the settlements of the Reinsured of claims under the Policy." ] .
+ex:re-cl-1-2 a wrd:Text ;
+    fnd:hasIdentity ex:re-cl-1-2-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "1.2" ; wrd:rankKey "b0" ;
+    wrd:inclusionMode wrd-voc:Mandatory ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ;
+        wrd:partText "It is a condition precedent to the Reinsurer's liability under clause 1.1 that no claim is settled without the approval of the Reinsurer." ] .
+
+ex:reinsurance-wording a wrd:AssembledWording ;
+    fnd:hasIdentity ex:reinsurance-wording-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:directlyComprises ex:re-sec-1 ;
+    wrd:includes ex:re-sec-1 , ex:re-cl-1-1 , ex:re-cl-1-2 .
+
+# ==== Roles, parties and the two instruments ===================================
+#
+# One actor is the Insurer on the policy and the Reinsured on the reinsurance,
+# so it holds two role occupancies, one per instrument.
+
+ex:Insurer a pty:Role ; rdfs:label "Insurer" .
+ex:Insured a pty:Role ; rdfs:label "Insured" .
+ex:Reinsured a pty:Role ; rdfs:label "Reinsured" .
+ex:Reinsurer a pty:Role ; rdfs:label "Reinsurer" .
+
+ex:cedant a pty:Actor , prov:Agent ; rdfs:label "the direct insurer" .
+ex:policyholder a pty:Actor , prov:Agent ; rdfs:label "the policyholder" .
+ex:reinsurer a pty:Actor , prov:Agent ; rdfs:label "the reinsurer" .
+ex:claims-system a prov:Agent ; rdfs:label "the insurer's claims system" .
+
+ex:insurer-occ a pty:RoleOccupancy ; fnd:hasIdentity ex:insurer-occ-identity ;
+    pty:inRole ex:Insurer ; pty:occupiedBy ex:cedant .
+ex:insured-occ a pty:RoleOccupancy ; fnd:hasIdentity ex:insured-occ-identity ;
+    pty:inRole ex:Insured ; pty:occupiedBy ex:policyholder .
+ex:reinsured-occ a pty:RoleOccupancy ; fnd:hasIdentity ex:reinsured-occ-identity ;
+    pty:inRole ex:Reinsured ; pty:occupiedBy ex:cedant .
+ex:reinsurer-occ a pty:RoleOccupancy ; fnd:hasIdentity ex:reinsurer-occ-identity ;
+    pty:inRole ex:Reinsurer ; pty:occupiedBy ex:reinsurer .
+
+ex:policy a ins:Instrument ;
+    fnd:hasIdentity ex:policy-identity ;
+    ins:expressedIn ex:policy-wording ;
+    ins:party ex:insurer-occ , ex:insured-occ .
+
+ex:reinsurance a ins:Instrument ;
+    fnd:hasIdentity ex:reinsurance-identity ;
+    ins:expressedIn ex:reinsurance-wording ;
+    ins:party ex:reinsured-occ , ex:reinsurer-occ .
+
+# ==== The case, and the scope read over it =====================================
+#
+# A claim is the case of every act below. The example's own class.
+
+ex:Claim a rdfs:Class ; rdfs:label "Claim" ;
+    rdfs:comment "A claim under the policy. The example's own class." .
+
+ex:claim-1 a ex:Claim .
+ex:claim-2 a ex:Claim .
+
+# The reinsurer indemnifies only claims whose settlement was made pursuant to
+# an approval: from the claim, the acts for it, what each was made pursuant
+# to, the power that act exercised, and that power's activity.
+ex:settled-with-approval a elg:Condition ;
+    elg:conditionKey "settled-pursuant-to-an-approval" ;
+    elg:matchStrategy elg:ExactMatch ;
+    elg:compatibilityOperation elg:AllRequired ;
+    elg:wildcardSemantics elg:NoWildcard ;
+    elg:constrainedByContract ins-voc:ActivityContract ;
+    elg:requiredConcept ins-voc:Approve .
+
+ex:settled-with-approval-binding a elg:EvidenceBinding ;
+    elg:bindsCondition ex:settled-with-approval ;
+    elg:subjectClass ex:Claim ;
+    elg:valueReading elg:SomeValue ;
+    elg:evidenceStep
+        [ a elg:EvidenceStep ; elg:stepIndex 0 ; elg:stepProperty ins:forCase ;    elg:stepDirection elg:Inverse ] ,
+        [ a elg:EvidenceStep ; elg:stepIndex 1 ; elg:stepProperty ins:pursuantTo ; elg:stepDirection elg:Forward ] ,
+        [ a elg:EvidenceStep ; elg:stepIndex 2 ; elg:stepProperty ins:exercises ;  elg:stepDirection elg:Forward ] ,
+        [ a elg:EvidenceStep ; elg:stepIndex 3 ; elg:stepProperty ins:activity ;   elg:stepDirection elg:Forward ] .
+
+# ==== Stated meaning ===========================================================
+
+ex:term-4-1 a ins:Term , ins:Template ; ins:expressedIn ex:pol-cl-4-1 .
+ex:settle-stated a ins:Power , ins:Template ;
+    ins:arisesUnder ex:term-4-1 ;
+    ins:holder ex:Insurer ; ins:counterparty ex:Insured ;
+    ins:activity ins-voc:Settle .
+
+ex:term-1-1 a ins:Term , ins:Template ; ins:expressedIn ex:re-cl-1-1 .
+ex:indemnify-stated a ins:Obligation , ins:Template ;
+    ins:arisesUnder ex:term-1-1 ;
+    ins:obligor ex:Reinsurer ; ins:obligee ex:Reinsured ;
+    ins:activity ins-voc:Indemnify ;
+    ins:arisesOnExerciseOf ex:settle-stated ;
+    ins:scope ex:settled-with-approval .
+
+ex:term-1-2 a ins:Term , ins:Template ; ins:expressedIn ex:re-cl-1-2 .
+ex:approve-stated a ins:Power , ins:Template ;
+    ins:arisesUnder ex:term-1-2 ;
+    ins:holder ex:Reinsurer ; ins:counterparty ex:Reinsured ;
+    ins:activity ins-voc:Approve .
+
+# ==== Generated bound meaning: the expected output, not stored (D4) ============
+
+ex:policy-term-4-1 a ins:Term ; ins:boundIn ex:policy ; ins:boundFrom ex:term-4-1 .
+ex:settle a ins:Power ;
+    ins:boundFrom ex:settle-stated ; ins:arisesUnder ex:policy-term-4-1 ;
+    ins:holder ex:insurer-occ ; ins:counterparty ex:insured-occ ;
+    ins:activity ins-voc:Settle .
+
+# The duty arises on an exercise of the policy's power, a power of another
+# instrument. Nothing in this layer forbids that, and the reinsurance needs it.
+ex:re-term-1-1 a ins:Term ; ins:boundIn ex:reinsurance ; ins:boundFrom ex:term-1-1 .
+ex:indemnify a ins:Obligation ;
+    ins:boundFrom ex:indemnify-stated ; ins:arisesUnder ex:re-term-1-1 ;
+    ins:obligor ex:reinsurer-occ ; ins:obligee ex:reinsured-occ ;
+    ins:activity ins-voc:Indemnify ;
+    ins:arisesOnExerciseOf ex:settle ;
+    ins:scope ex:settled-with-approval .
+
+ex:re-term-1-2 a ins:Term ; ins:boundIn ex:reinsurance ; ins:boundFrom ex:term-1-2 .
+ex:approve a ins:Power ;
+    ins:boundFrom ex:approve-stated ; ins:arisesUnder ex:re-term-1-2 ;
+    ins:holder ex:reinsurer-occ ; ins:counterparty ex:reinsured-occ ;
+    ins:activity ins-voc:Approve .
+
+# ==== An implied term ==========================================================
+#
+# No clause states it, so it has no stated meaning. Its bound term names the
+# judgment that implies it. The reinsurer must not withhold approval
+# arbitrarily, and may refuse for proper reasons (C9b1-Q4). So the term is a
+# prohibition on refusing approval, whose scope is a refusal found to be
+# arbitrary. That finding is a determination by the party or court the
+# contract names, never stated meaning, and no evidence path reads it here.
+
+ex:gan-v-tai-ping a prov:Entity ;
+    rdfs:label "Gan Insurance Co Ltd v Tai Ping Insurance Co Ltd (No 2) [2001] EWCA Civ 1047" .
+
+ex:re-implied-term a ins:Term ; ins:boundIn ex:reinsurance ; ins:impliedBy ex:gan-v-tai-ping .
+ex:arbitrary a skos:Concept ; rdfs:label "arbitrary, as determined" .
+
+ex:refused-arbitrarily a elg:Condition ;
+    elg:conditionKey "refusal-found-arbitrary" ;
+    elg:matchStrategy elg:ExactMatch ;
+    elg:compatibilityOperation elg:AllRequired ;
+    elg:wildcardSemantics elg:NoWildcard ;
+    elg:requiredConcept ex:arbitrary .
+
+ex:no-arbitrary-refusal a ins:Prohibition ;
+    ins:impliedBy ex:gan-v-tai-ping ; ins:arisesUnder ex:re-implied-term ;
+    ins:obligor ex:reinsurer-occ ; ins:obligee ex:reinsured-occ ;
+    ins:activity ins-voc:Refuse ;
+    ins:scope ex:refused-arbitrarily .
+
+# ==== The acts: Instrument facts, written by the claims system =================
+
+ex:settlement-terms-1 a prov:Entity ;
+    rdfs:label "the settlement of claim 1 the Insurer proposes to agree with the Insured" .
+
+ex:request-1 a ins:Proposal ;
+    ins:proposedBy ex:reinsured-occ ;
+    ins:proposes ex:settlement-terms-1 ;
+    ins:forCase ex:claim-1 ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2028-04-01T10:00:00Z"^^xsd:dateTime ] ;
+    fnd:hasEvidence [ a fnd:Evidence ;
+        fnd:recordedAt "2028-04-01T10:05:00Z"^^xsd:dateTime ; fnd:assertedBy ex:claims-system ] .
+
+ex:approval-1 a ins:Exercise ;
+    ins:exercises ex:approve ;
+    ins:actBy ex:reinsurer-occ ;
+    ins:forCase ex:claim-1 ;
+    ins:pursuantTo ex:request-1 ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2028-04-08T15:00:00Z"^^xsd:dateTime ] ;
+    fnd:hasEvidence [ a fnd:Evidence ;
+        fnd:recordedAt "2028-04-08T15:30:00Z"^^xsd:dateTime ; fnd:assertedBy ex:claims-system ] .
+
+# Made under the policy, pursuant to an act under the reinsurance.
+ex:settlement-1 a ins:Exercise ;
+    ins:exercises ex:settle ;
+    ins:actBy ex:insurer-occ ;
+    ins:forCase ex:claim-1 ;
+    ins:pursuantTo ex:approval-1 ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2028-04-15T12:00:00Z"^^xsd:dateTime ] ;
+    fnd:hasEvidence [ a fnd:Evidence ;
+        fnd:recordedAt "2028-04-16T09:00:00Z"^^xsd:dateTime ; fnd:assertedBy ex:claims-system ] .
+
+ex:settlement-2 a ins:Exercise ;
+    ins:exercises ex:settle ;
+    ins:actBy ex:insurer-occ ;
+    ins:forCase ex:claim-2 ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2028-05-10T11:00:00Z"^^xsd:dateTime ] ;
+    fnd:hasEvidence [ a fnd:Evidence ;
+        fnd:recordedAt "2028-05-10T11:10:00Z"^^xsd:dateTime ; fnd:assertedBy ex:claims-system ] .
