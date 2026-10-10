@@ -5,8 +5,9 @@
 **Unit ID:** `normative-rule-substrate`
 **Unit type:** Multi-slice unit, single machine. Deliberately not an epic (§3)
 **Status:** Proposed, awaiting the maintainer's review. No slice may start until §9's decisions are taken.
-Aligned with CCS on 2026-10-10: N4, N5 and the Behaviour part of N8 are CCS's, and what remains of this
-unit is an open question (status record, NQ-1)
+Aligned with CCS on 2026-10-10: N1, N2, N4, N5 and the Behaviour part of N8 are CCS's, N6 and N8 are
+absorbed by CCS C12 and C13, and this unit keeps integration with other rule languages (N3, N7, N9,
+N10 to N13), with its own formal-methods treatment when we reach it (status record, NQ-1 to NQ-4)
 **Trigger:** request, 2026-09-29, following the LegalRuleML mapping analysis
 **Sketches:** [legalruleml-mapping.md](../sketches/legalruleml-mapping.md) (the construct-level analysis),
 [rule-layers.md](../sketches/rule-layers.md) and
@@ -232,7 +233,7 @@ Pack of roughly 3 to 15 test cases. Estimates are in tokens.
 
 ### Tranche A — Groundwork, no ontology version change
 
-#### N1. Condition composition acyclicity (R4)
+#### N1. Condition composition acyclicity (R4). Moved to CCS (NQ-2)
 
 **Delivers** the cross-check's R4. **Touches** `ontology/eligibility/shapes/`, `tools/mork_compilers/`.
 
@@ -254,7 +255,7 @@ so no cascade. No spec bump.
 so the shape is authored in the README and the shapes files regenerated from it. Eligibility shapes
 are still 0.2.0. CCS C13 and C13a wait on N1, so N1 is on CCS's critical path (status record, NQ-3).
 
-#### N2. Declare the importable rule-body fragment (A-109)
+#### N2. Declare the importable rule-body fragment (A-109). Moved to CCS (NQ-2)
 
 **Delivers** a decision, no code. **Touches** `docs/architecture/decisions/`.
 
@@ -326,7 +327,7 @@ exact cascade.
 
 **Laws:** N1, N2, N4, N10 from the sketch §18.3.
 
-#### N6. Scheduled triggers as positioned stimuli (R3)
+#### N6. Scheduled triggers as positioned stimuli (R3). Absorbed by CCS C12 (NQ-3)
 
 **Touches** `ontology/behaviour/spec/`, `vocab/`, and the Phase 3 plan text.
 
@@ -341,7 +342,7 @@ backdated fact is ordered by the same rules as any other input. Allowance resets
 **Built with CCS C12 (2026-09-30, revised 2026-10-01).** The legal triggers are Behaviour triggers (`ins:OnExpiry ⊑ bhv:TriggerDefinition`, CCS CC-D8), so nothing is compiled from `ins:arisesOn` or `ins:due`. C12's runtime evaluator turns each scheduled trigger into a positioned stimulus.
 Whether anything of N6 remains outside C12 is open (status record, NQ-3).
 
-#### N8. Compensation chains and violation records (A-106). Behaviour part moved to CCS
+#### N8. Compensation chains and violation records (A-106). Moved to CCS: Behaviour part to C11 and C12, the chain checks absorbed by C13 (NQ-3)
 
 **Touches** `ontology/instrument/spec/`, `shapes/`, `ontology/behaviour/`, `tools/mork_compilers/`.
 

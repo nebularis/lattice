@@ -228,3 +228,107 @@ fetched from GitHub. The script always exits 0, as a cloud setup script must, an
 report how long setup took, which must stay under about five minutes for the environment to be
 cached.
 
+
+## 9. Several checkouts side by side
+
+We often run several workstreams at once: a slice on one branch, a review of another, a bundle from
+a machine that cannot push. Each needs its own working files and its own installed tool packages,
+without containers. Two things give that: a virtual environment per checkout, and git worktrees.
+
+### A virtual environment per checkout
+
+`mise.toml` declares `_.python.venv = { path = ".venv", create = true }`. Every checkout, worktrees
+included, gets its own `.venv` (ignored by git), which mise activates in an activated shell inside the
+checkout and for every `mise run` and `mise exec`. Editable installs (`pip install -e`, which the
+`bootstrap:*` tasks use) then point at that checkout's own `tools/` and never at another's.
+
+- Run `mise run bootstrap` once in each new checkout. With pip's shared cache it takes a minute or two.
+- In a shell where mise is not activated, a bare `python` is mise's global interpreter, not the
+  checkout's. Use `mise run <task>` or `mise exec -- python ...`, or activate mise in the shell.
+- Check which code a test imports: `mise exec -- python -c "import persistence; print(persistence.__file__)"`
+  must print a path inside the checkout.
+
+### Git worktrees
+
+A git repository can have several working trees. Each has its own files, index and checked-out
+`HEAD`, and all share one object store, one set of branches and tags, and one set of remotes. So a
+`git fetch` in any of them is seen by all, and a commit made in one is visible from the others at
+once. Git refuses to check out the same branch in two worktrees, which protects a branch from two
+workstreams editing it at the same time.
+
+We keep the primary checkout at `~/work/lattice` and put its worktrees in `~/work/lattice-wt/`:
+
+```bash
+cd ~/work/lattice
+git fetch origin-ssh
+git worktree add ../lattice-wt/fm-review origin-ssh/fm/some-branch              # detached, to review a branch
+git worktree add -b ccs/c9b3-sets ../lattice-wt/c9b3 main                       # a new branch, started from main
+git worktree add ../lattice-wt/c9b3 ccs/c9b3-sets                               # an existing local branch
+git worktree list                                                                # every worktree and what it has checked out
+git worktree remove ../lattice-wt/fm-review                                      # when done: refuses if there are uncommitted changes
+git worktree prune                                                               # forget worktrees deleted by hand
+```
+
+Then, in each new worktree:
+
+```bash
+cd ~/work/lattice-wt/c9b3
+mise trust          # once per worktree, since its mise.toml is a new file to mise
+mise run bootstrap  # its own .venv, node_modules and builds
+```
+
+To avoid `mise trust` per worktree, add `~/work` to `trusted_config_paths` in
+`~/.config/mise/config.toml`.
+
+**What stays separate:** the working files, `.venv`, `node_modules`, `target/` (so the reasoner jar),
+`.build/` (sweep logs, pytest cache) and the checked-out branch. **What is shared:** commits,
+branches, tags, remotes and stashes (so set work aside with a commit, not a bare `git stash`), and
+outside git, Maven's `~/.m2` and pip's cache, which are safe to share. Two worktrees running the
+authoring stack's dev servers at once collide on ports, so run one at a time.
+
+An agent session works in one worktree and stays there. Several sessions can run at once, one per
+worktree, as long as no two share a branch.
+
+### Integrating work from a machine that cannot push
+
+A machine with no route to the remote sends its commits as a git bundle: one file holding commits
+and the branches that name them, which another clone can fetch from as if it were a remote.
+
+**On the machine that cannot push (machine S):**
+
+```bash
+git bundle create ../fm-2026-10-10.bundle main..fm/some-branch   # only the commits main lacks
+git bundle verify ../fm-2026-10-10.bundle                        # checks it is complete
+```
+
+`main..fm/some-branch` sends only the commits that are not on `main`, so the bundle is small, and the
+receiving clone must already have `main` up to that point, which `verify` on the receiving side
+confirms. For a first bundle, or when unsure what the receiver has, bundle the whole branch:
+`git bundle create ../fm.bundle fm/some-branch`. For later bundles, send everything since the last
+one by tagging what was sent:
+
+```bash
+git bundle create ../fm-2026-10-11.bundle bundle/last-sent..fm/some-branch
+git tag -f bundle/last-sent fm/some-branch
+```
+
+Copy the file to the receiving machine by any means.
+
+**On the machine that can push (machine R):**
+
+```bash
+cd ~/work/lattice
+git bundle verify ~/Downloads/fm-2026-10-10.bundle                              # lists its heads, and says if a prerequisite commit is missing
+git fetch ~/Downloads/fm-2026-10-10.bundle 'refs/heads/*:refs/remotes/machine-s/*'
+git log --oneline main..machine-s/fm/some-branch                                 # what arrived
+git worktree add ../lattice-wt/machine-s machine-s/fm/some-branch                # review it in its own worktree
+```
+
+The fetch puts the bundle's branches under `machine-s/`, beside `origin-ssh/`, and every worktree
+sees them. Review and run the checks in the `machine-s` worktree. To accept the work, push it from
+any worktree with `git push origin-ssh machine-s/fm/some-branch:fm/some-branch` and merge it as any
+branch, or merge `machine-s/fm/some-branch` into `main` directly.
+
+**Sending updates back to machine S** works the same way in reverse: on R,
+`git bundle create ../r-main.bundle main`, and on S, `git fetch ../r-main.bundle main:refs/remotes/r/main`
+followed by a merge or rebase of `r/main` into its branch.

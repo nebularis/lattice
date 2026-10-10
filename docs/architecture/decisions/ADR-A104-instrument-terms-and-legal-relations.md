@@ -473,3 +473,9 @@ its decisions. Revises the 2026-10-08 addendum, items 2 and 7.
    withdrawal counts is the instrument's rule or a deployment's profile. The import guard does not
    tell Behaviour's runtime document from its configuration (technical debt TD-32), so a per-document
    test checks that the acts document imports no runtime.
+
+## Addendum (2026-10-10): where ADR-A105 and ADR-A109 are revised
+
+**Status:** Accepted 2026-10-10. Updates the Consequences line "ADR-A105 and ADR-A109 are revised in
+NRS". ADR-A105 (closure declarations) is drafted in this unit, in slice HQ-6a, which takes over NRS
+slice N5. ADR-A109 is revised with NRS slice N2, which also moves to this unit (NRS NQ-2).

@@ -16,8 +16,8 @@ first design, superseded)
 **Status record:** [computable-contract-substrate.md](../status/computable-contract-substrate.md)
 **ADRs:** A-104 (retitled), A-106 (retitled), A-112, A-113, A-114, A-115 and A-120, accepted. A-105 is
 drafted here in HQ-6a (2026-10-10). A-109 is revised in NRS
-**Absorbs:** NRS slices N4 and N5 (as HQ-6, 2026-10-10) and the Behaviour part of N8. Changes NRS N2
-and N6 (§6)
+**Absorbs:** NRS slices N4, N5 (as HQ-6), N1 and N2 (before C13), N6 (in C12) and N8 (its Behaviour
+part in C11 and C12, its chain checks in C13), decided 2026-10-10 (NRS NQ-2, NQ-3)
 **Precedes:** applied-insurance Phase 5 (AIR epic §3b) and Open CBAA's migration (§7)
 
 ---
@@ -3068,7 +3068,7 @@ question to be taken up (below).
 | C9b0 | Eligibility, cascading | the Eligibility README made its source again (TD-16's Eligibility part), and law L9's amendment from FM-EP released. Before C9b3 |
 | C9b1 | Instrument 0.16.0, Behaviour 0.14.0, both breaking | the legal acts tier in its own document (ADR-A120): declarations (assent, consent, objection, withdrawal), proposals (the amendment one of them), exercises, `ins:pursuantTo`. Behaviour's exercise and acceptance records narrowed to findings. Example: reinsurance claims co-operation. [Consent sketch](../sketches/consent-and-group-powers.md) §2.1 |
 | C9b2 | Quantification, cascading | extensive and intensive quantities, a proportion's base, sum and count. Examples: multicurrency commitments, written and signed lines, signing down. Sketch §2.4 |
-| C9b3 | Eligibility, own ADR | set comparisons (subset, intersects, disjoint), aggregate bindings, the two kinds of deferral, with their proofs and reference semantics, including a hierarchical condition whose binding does not apply at the resolution time, Undetermined under L9 where C9b0 leaves the compilers refusing it (C9b0-Q2), and the same guard in the OWL and SWRL backends. After the formal-methods Eligibility pass and HQ-6. Sketch §2.3 |
+| C9b3 | Eligibility, own ADR | set comparisons (subset, intersects, disjoint), aggregate bindings, the two kinds of deferral, with their proofs and reference semantics, including a hierarchical condition whose binding does not apply at the resolution time, Undetermined under L9 where C9b0 leaves the compilers refusing it (C9b0-Q2), and the same guard in the OWL and SWRL backends. With it, substrate S2: an option for hierarchical match to follow kind links only (`prl:broaderGeneric`) rather than every `skos:broader` (NRS NQ-4, 2026-10-10). After the formal-methods Eligibility pass and HQ-6. Sketch §2.3 |
 | C9b4 | Instrument | qualifying rules as acting rules (`ins:QualifyingRule`), universe, exclusions and reference time, joint and several powers, laws I11 and I13 restated, measure words, Party's shares deprecated with a warning shape. Examples: Majority Lenders acceleration with a transfer between request and decision, an Extraordinary Resolution. Sketch §2.2, §2.5 |
 | C9d | Instrument 0.17.0 | materiality (C9-Q3): the change report, condition words over it, grades, the evaluation profile, and selecting consenting members by grade. Split from C9b by C9b-Q1's leaning |
 | C9c | Wording 0.8.0, Instrument 0.18.0 | reliance on a wording, and W8 for references to a wording. `ins:incorporates`, generation of an encoded incorporated document's meaning within sections, I17 widened, cycle checks and `ins:prevailsOver` over an incorporated document. Static incorporation only, an ambulatory one of an encoded document reported (C9-Q8 (c)). `tools/`: the instantiator follows incorporation |
@@ -3770,8 +3770,8 @@ checks.
 
 | Slice | Content | Where |
 |---|---|---|
-| C12 | the runtime evaluator for regimes and occasions: positioned stimuli for scheduled triggers (with NRS N6), derived triggers for `ins:OnBreach` and `ins:OnCondition`, occasion derivation, state occupancies with evidence (B6), history per C11a. B3 and B6 shown | `tools/`, after C9 and C11a |
-| C13 | relation plans in the shared IR: per-class algorithms (§6.1), exception burden and `exe:ExceptionNotEstablished`, stratified state reading (§6.2), regime gating per state (§6.3, B8), finding, determination and deeming reads (§6.4). SPARQL reference first, SWRL for the positive subset | `tools/mork_compilers`. After AIR-3.3 and NRS N1 |
+| C12 | the runtime evaluator for regimes and occasions: positioned stimuli for scheduled triggers (NRS N6, absorbed), derived triggers for `ins:OnBreach` and `ins:OnCondition`, occasion derivation, state occupancies with evidence (B6), history per C11a. B3 and B6 shown | `tools/`, after C9 and C11a |
+| C13 | relation plans in the shared IR: per-class algorithms (§6.1), exception burden and `exe:ExceptionNotEstablished`, stratified state reading (§6.2), regime gating per state (§6.3, B8), finding, determination and deeming reads (§6.4), and NRS N8's chain checks (absorbed). SPARQL reference first, SWRL for the positive subset | `tools/mork_compilers`. After AIR-3.3, and NRS N1 and N2, run as CCS slices (NQ-2) |
 | C13a | **design-time joint satisfiability (deferred from C5, decided 2026-10-02).** The OWL backend learns to compile question-form conditions, whose subject is the value they are posed, which it refuses today (`owl_backend.py`: "compiles bound conditions only"). On that: a variation slot's conditions checked as a set by the reasoner, no two jointly satisfiable and their union covering the governing variables' admissible values, for every kind of condition, which C5's SHACL-SPARQL covers only for intervals over one variable. NRS N3's clash check (an obligation and a prohibition over overlapping scopes) and segment overlap use the same task, satisfiability of `P ⊓ Q`. Reasoner in the test-only harness (ADR-A83), so this serves LATTICE tooling, beside C5's consumer-runnable shapes | `tools/mork_compilers`. After C5 and NRS N1, with or before NRS N3 |
 
 ### Tranche F: examples and documentation

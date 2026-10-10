@@ -21,14 +21,15 @@ wait for the maintainer to create them, as does `air/3.3-readings-swrl-owl`.
 **Briefs to draft before their branches (lanes §1):** round 4's (AIR-2.3, AIR-2.4, AIR-4.2,
 AIR-4.4).
 **Concurrent work:** from round 3, machine R also builds the normative-rule-substrate unit, and
-from 2026-09-30 the computable-contract-substrate unit (CCS), which took over NRS N4. R verifies
-S's bundles first, AIR-3.3 lands before NRS N1 and CCS C13, NRS N9 waits for Phase 2, and CCS C9
-merges before Phase 5 (epic §3b).
+from 2026-09-30 the computable-contract-substrate unit (CCS), which took over NRS N4, and on
+2026-10-10 N1, N2 and N5 as well. R verifies S's bundles first, AIR-3.3 lands before CCS's N1 and
+C13, NRS N9 waits for Phase 2, substrate S2 is authored with CCS C9b3, and CCS C9 merges before
+Phase 5 (epic §3b).
 
 ## Machine R
 
 **Position:** round 3. Rounds 1 and 2 complete, Phase 1 complete. AIR-2.2, AIR-4.1 and AIR-3.3
-briefs drafted. Next: AIR-3.3 once its branch exists, and NRS N2 once the maintainer takes NRS D1 to D3.
+briefs drafted. Next: AIR-3.3 once its branch exists. NRS N2 moved to CCS on 2026-10-10 (NRS NQ-2).
 **Last updated:** 2026-09-30
 **Blockers:** none
 

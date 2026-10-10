@@ -3,8 +3,9 @@
 # Normative rule substrate - Status
 
 **Unit ID:** `normative-rule-substrate`
-**Status:** 📝 Proposed. Nothing implemented in this unit. N4, N5 and the Behaviour part of N8 are
-CCS's. D1, D4 and D5 open, and the unit's remaining scope is open (NQ-1 to NQ-4)
+**Status:** 📝 Proposed. Nothing implemented in this unit. N1, N2, N4, N5 and the Behaviour part of N8
+are CCS's, and N6 and N8 are absorbed by CCS C12 and C13 (NQ-1 to NQ-4, 2026-10-10). This unit keeps
+the rule-language integration work. D1, D4 and D5 open
 **Last updated:** 2026-10-10
 **Trigger:** request, 2026-09-29, following the LegalRuleML mapping analysis
 **Plan:** [normative-rule-substrate.md](../plans/normative-rule-substrate.md)
@@ -31,10 +32,9 @@ before CCS C9b3 and HQ-6b before CCS C12 (HQ6-Q2, the plan's N5 note). D7 is ans
 unit now holds N1, N2, N3, N6's and N8's remainders, N7, N9 and N10 to N13, none started. CCS waits
 on N1 (C13, C13a) and N3 waits on CCS C13a.
 
-**Next action, for the maintainer:** answer NQ-1 to NQ-4 below, and D1.
-
-**Next action, once NQ-1 and NQ-2 are answered:** brief the first slice they leave
-this unit, which under the leanings is N1 (in CCS) or N2.
+**Next action:** none here for now. N1, N2, N4 and N5 are CCS's, N6 and N8 are absorbed by CCS C12
+and C13 (NQ-2, NQ-3). The unit holds N3, N7, N9 and N10 to N13, the rule-language work, which we take
+up after CCS. D1, D4 and D5 stay open until then.
 
 ## Dependency position against the applied-insurance epic
 
@@ -109,6 +109,16 @@ Raised for the maintainer. None is decided.
 | NQ-3 | **What remains of N6 and N8?** C12 builds positioned stimuli for scheduled triggers (N6). For N8, `ins:OnBreach` names only an obligation (`ins:ofObligation`), and law I6's acyclicity is checked with C13 | N6 and N8 are absorbed by CCS C12 and C13. Confirm with each brief, and retire both here when they merge |
 | NQ-4 | **Does substrate S2 still pair with N5 (D6)?** The AIR plan (§3b, substrate plan row S2) says S2 is authored with NRS N5. HQ-6a and HQ-6b as split do not name an Eligibility change, while CCS C9b3 is Eligibility's own slice with an ADR | pair S2 with C9b3 instead, or release it back to the AIR substrate track. Either needs the AIR plan's row updated |
 
+**Answered 2026-10-10, as leaned:**
+
+- **NQ-1.** NRS stays a unit, as the home of integration with and compatibility to other rule
+  languages (N7, N9, N10 to N13). That work is separate from CCS and will want its own formal-methods
+  treatment when we reach it.
+- **NQ-2.** N1 and N2 move to CCS. N3 stays here, after CCS C13a.
+- **NQ-3.** N6 and N8 are absorbed by CCS C12 and C13, confirmed in each slice's brief, and retired
+  here.
+- **NQ-4.** Substrate S2 pairs with CCS C9b3, which edits the hierarchical-match code paths.
+
 ## Key findings from the analysis
 
 Findings of 2026-09-29, kept as the record. Instrument's importer count changed with CCS C10 (above),
@@ -134,8 +144,8 @@ and the N8 blocking finding now applies to CCS HQ-6a.
 
 ## Is this unit complete?
 
-No. Nothing in this unit has started. The plan is proposed, D1, D4 and D5 are open, D6 is restated as
-NQ-4, and NQ-1 to NQ-4 decide its remaining scope.
+No. Nothing in this unit has started. Its scope since 2026-10-10 (NQ-1 to NQ-4) is integration with
+other rule languages: N3, N7, N9 and N10 to N13. D1, D4 and D5 are open.
 
 ## History
 
@@ -151,3 +161,4 @@ NQ-4, and NQ-1 to NQ-4 decide its remaining scope.
   (A-104 and A-106 accepted 2026-10-01, A-105 moved), F1's separate Foundation window, N1 on CCS's
   path, Eligibility's README its source again, `ins:prevailsOver` evidence for D5, the retired
   validation log. D6 overtaken. NQ-1 to NQ-4 raised for the maintainer
+- 2026-10-10: NQ-1 to NQ-4 answered as leaned. NRS keeps the rule-language integration work. N1 and N2 move to CCS, N6 and N8 are absorbed by CCS C12 and C13, and S2 pairs with CCS C9b3
