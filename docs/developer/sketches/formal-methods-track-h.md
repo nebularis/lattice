@@ -179,7 +179,7 @@ assumptions (`atomicUpdateRequest`, `singleWriter`, `detectsWriteWriteConflict`,
 `reportsAffectedRows`, the change-feed and time-travel flags, `quadsInUpdateTemplates`,
 `unionDefaultGraph`, `requiresSkolemization`, `maxRequestBytes`). The aggregate-ownership design
 adds one field, whether inserting a statement that another transaction also inserts counts as a
-write-write conflict, which decides the composite create race. `unionDefaultGraph` does not affect the composite
+write-write conflict, which decides the composite create race. H2's brief adds `snapshotUpdateSemantics`, whether the store fills both templates of an update from one solution sequence and removes before it adds, which decides whether a composite replace can be written in linear form ([typed IR sketch §4.3](formal-methods-track-h-typed-ir.md#43-how-a-composite-replace-is-evaluated-and-what-it-costs)). `unionDefaultGraph` does not affect the composite
 strategy, since AO-Q14 put each family's aggregates in a named data graph ([ownership sketch §15](persistence-aggregate-ownership.md#15-effect-on-the-later-track-h-slices)). Closing this gap (review's
 PV-D1: extend to the full capability record, three-valued, `unknown` treated pessimistically,
 bound to a TCK report digest) is a prerequisite for the matrix meaning anything, and is this

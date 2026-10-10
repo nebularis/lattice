@@ -375,3 +375,16 @@ After H2.0, H2.1 (the IR core) is briefed. H3 follows H2.
 - 2026-10-10: the maintainer decided H2-Q6 (a), a logical operation contract with the SPARQL graph roles
   kept in the builders, and confirmed our reading of H2-Q2. Every H2 question is answered. H2.0, drafting
   ADR-A123 Proposed with the ADR-A79 addendum, is ready to branch from `main`.
+- 2026-10-10: four points settled in the work package, in the [typed IR sketch](../sketches/formal-methods-track-h-typed-ir.md).
+  (1) The equivalence harness is defined (§7.1): exact equality of normalised algebra, the parameter guard
+  removed from the `Operation` value and checked on its own, mutation probes for non-vacuity, and "a port
+  changes nothing, a change ports nothing". (2) The quadratic payload hypothesis is measured on rdflib 7.6.0
+  with a scratch script and holds (5.6 s at M = N = 1000), recorded as TD-42. rdflib's code applies an update
+  per solution, not in the specification's order, and today's form is correct under both orders because every
+  solution re-inserts the whole payload. §4.3 draws the three forms (today's, two operations, one `UNION`
+  operation) and the store properties each needs, `snapshotUpdateSemantics` (new, added to the main sketch's
+  capability record) and `atomicUpdateRequest`, for the later tranches that model each platform. H2.4 ports
+  today's form unchanged, commits the benchmark and probes, and stops only if Oxigraph shows today's form to
+  be wrong. (3) `INFO` and its warning option get witnesses in H2.8, and the witness harness learns the new
+  family, since it records only `WARNING` diagnostics today (§7.3). (4) The paper check of the logical
+  resources against `lattice-sql.md` §9 moves to H2.6 (§7.2).

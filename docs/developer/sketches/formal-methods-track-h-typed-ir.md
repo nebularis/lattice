@@ -196,17 +196,165 @@ changes from trusted text to `dal:GroundNTriples`, a set of N-Triples lines with
 library parses and checks that form. `logGraphs` becomes a `RegistryList` of encoded IRIs in the same
 way.
 
-**A hypothesis to measure, not a finding.** In `cas-replace-composite-property` the payload sits in
-an `INSERT` template evaluated once per `WHERE` solution, and the sweep gives one solution per stored
-triple. A store may then build the payload once per stored triple before removing duplicates, which
-is quadratic in the aggregate's size even though HO1 made the sweep linear. H2.4 measures it on rdflib
-and Oxigraph. If it holds, the IR can split the write into two operations in one request, which raises
-the same atomicity question as above.
+**The cost of a composite replace, and the store behaviour it depends on**, are worked through in
+§4.3. H2.4 ports today's form unchanged and measures it.
 
 **Decided: PL-B** (H2-Q1, 2026-10-10). It closes all four failure modes of §4.1 for a composite family,
 asks for no configuration a composite user does not already write, and takes work off every caller.
 PL-C can be added later per profile if a user asks for it. PL-D returns as a published SDK, in the
 [client SDK sketch](persistence-client-sdk.md), for discussion at the end of Track H.
+
+### 4.3 How a composite replace is evaluated, and what it costs
+
+This section answers a question about stores in general, not about rdflib. Later tranches of the
+epic model the concurrency of each platform, so every property below is recorded as a field those
+models branch on, never as an assumption about one engine.
+
+**How SPARQL 1.1 Update defines `DELETE … INSERT … WHERE`** (its §3.1.3). The `WHERE` clause is
+evaluated once, against the dataset as it was before the operation, giving a sequence of solutions.
+Each template is filled once per solution, and a triple with an unbound variable is skipped. Every
+filled deletion is removed, then every filled insertion is added, as one operation.
+
+```mermaid
+flowchart LR
+  D0["dataset before"] --> W["WHERE<br/>evaluated once"]
+  W --> S["solutions"]
+  S --> FD["fill DELETE template<br/>once per solution"]
+  S --> FI["fill INSERT template<br/>once per solution"]
+  FD --> UD["union of deletions"]
+  FI --> UI["union of insertions"]
+  UD --> A["remove all deletions,<br/>then add all insertions"]
+  UI --> A
+  A --> D1["dataset after"]
+```
+
+**Today's composite replace.** Its `WHERE` joins the guard patterns, which give one solution when
+the version row matches and none otherwise, with the sweep, which gives one solution per stored
+triple of the root and its members. Call that count M. The `INSERT` template holds the new version
+row, the receipt and the N payload triples, and none of them uses a sweep variable. So every one of
+the M solutions fills the same N payload triples again, and the union removes the copies.
+
+```mermaid
+flowchart TB
+  G["guards<br/>1 solution"] --> J["join"]
+  SW["sweep: root and members<br/>M stored triples"] --> J
+  J --> SOL["M solutions"]
+  SOL --> DEL["DELETE fills: M<br/>one stored triple each"]
+  SOL --> INS["INSERT fills: M x (N + k)<br/>the whole payload each time,<br/>k = version row and receipt"]
+```
+
+For example, with M = 3 stored triples and a payload of N = 2:
+
+| Solution | Bound by the sweep | `DELETE` fills | `INSERT` fills |
+|---|---|---|---|
+| 1 | `?s ?p ?o` = stored triple 1 | stored triple 1 | payload 1, payload 2, version row, receipt |
+| 2 | stored triple 2 | stored triple 2 | payload 1, payload 2, version row, receipt |
+| 3 | stored triple 3 | stored triple 3 | payload 1, payload 2, version row, receipt |
+
+**Measured on rdflib 7.6.0** (a scratch script, not committed, with the sweep reduced to its
+essentials and M = N):
+
+| M = N | seconds |
+|---|---|
+| 10 | 0.007 |
+| 100 | 0.077 |
+| 1000 | 5.6 |
+
+Ten times the size costs about seventy times the time, which is quadratic. rdflib's
+`evalModify` fills both templates once per solution, which matches. Oxigraph is not measured yet.
+Recorded as TD-42.
+
+**Stores apply the result in different orders.** rdflib does not follow the order above. For each
+solution in turn, it removes that solution's deletions and then adds its insertions.
+
+```mermaid
+sequenceDiagram
+  participant E as engine
+  participant D as data graph
+  Note over E,D: specification order
+  E->>D: remove deletions of solutions 1, 2, 3
+  E->>D: add insertions of solutions 1, 2, 3
+  Note over E,D: per-solution order (rdflib)
+  E->>D: solution 1: remove, then add
+  E->>D: solution 2: remove, then add
+  E->>D: solution 3: remove, then add
+```
+
+Today's form is correct under both orders. A payload triple that is also stored, for example an
+unchanged name, is removed by its own solution, and every later solution adds the whole payload
+again, so the last solution restores it. The redundancy that costs M × N is what makes the result
+independent of the order. A form that adds each payload triple only once is correct only where the
+store follows the specification's order. Our probe saw rdflib put the sweep's solutions first even
+when the payload was written first, so it did not lose the triple. The order is the engine's choice
+and nothing to rely on.
+
+**Two store properties decide which forms are correct.** Both join the capability record of the
+[main sketch §5](formal-methods-track-h.md#5-the-capability-record-is-the-formal-environment-assumption),
+three-valued, with `unknown` treated pessimistically and a TCK probe each:
+
+- `snapshotUpdateSemantics`, new. The store fills both templates from one solution sequence over the
+  state before the operation, and removes before it adds.
+- `atomicUpdateRequest`, already listed. Several operations in one request commit or fail together,
+  and no other writer sees the state between them.
+
+**Three forms.**
+
+R1, two operations in one request. The first deletes the aggregate and moves the version row. The
+second inserts the payload, guarded on the version row the first one wrote.
+
+```mermaid
+sequenceDiagram
+  participant A as writer A
+  participant S as store
+  participant B as writer B
+  A->>S: op 1, delete aggregate, version row to seq n+1
+  Note over S: no atomicity across operations
+  alt A's connection fails here
+    Note over S: aggregate empty, receipt says applied
+  else B writes in between
+    B->>S: replace, version row to seq n+2
+    A->>S: op 2, guard wants seq n+1, finds n+2
+    Note over S: A's payload never written, A's receipt says applied
+  end
+```
+
+R2, one operation, the payload as rows of a `UNION` branch. The `WHERE` joins the guards with three
+alternatives, an empty group, the sweep and a `VALUES` block holding the payload. The empty group
+guarantees one solution, so the version row is written even for an empty aggregate.
+
+```mermaid
+flowchart TB
+  G["guards<br/>1 solution"] --> J["join"]
+  U["UNION"] --> J
+  E["empty group<br/>1 row"] --> U
+  SW["sweep<br/>M rows, bind ?s ?p ?o"] --> U
+  V["VALUES payload<br/>N rows, bind ?ps ?pp ?po"] --> U
+  J --> SOL["1 + M + N solutions"]
+  SOL --> DEL["DELETE ?s ?p ?o<br/>filled by sweep rows only"]
+  SOL --> INS["INSERT ?ps ?pp ?po<br/>filled by payload rows only,<br/>plus k constant triples per row"]
+```
+
+| Form | Triples built before the union removes copies | Correct when | Payload encoding |
+|---|---|---|---|
+| R0, today | M + M × (N + k), quadratic | always, order-independent | N-Triples lines |
+| R1, two operations | M + M × k + N, linear | `atomicUpdateRequest` holds | N-Triples lines |
+| R2, `UNION` with `VALUES` | M + N + (1 + M + N) × k, linear | `snapshotUpdateSemantics` holds | `VALUES` rows, which admit no blank node |
+
+R1 adds a window between two operations that a single operation does not have, and needs request
+atomicity to close it. We do not propose it. R2 is linear and needs one operation, and it is correct
+only on a store that applies an update in the specification's order.
+
+**What H2.4 does by default, with no stop.** It ports R0 exactly, which the equivalence harness
+requires anyway (§7.1). It commits the benchmark for rdflib and Oxigraph, M = N from 10 to 10,000,
+and the two capability probes as tests that report what each store does, including a fixture that
+forces a payload solution before a sweep solution where the engine allows it, or a note that it
+could not. rdflib, the test store, reports `false` for `snapshotUpdateSemantics` by its code, so tests on it keep R0.
+R2 then becomes a selection by capability, made in `compile` as ADR-A79's consequences
+require of any conditional structure, once H5's capability record has `snapshotUpdateSemantics`. H5's
+model A branches on the same field.
+
+**The one stop.** If Oxigraph shows R0 to be wrong, not just slow, H2.4 stops and asks, since that is
+a defect in what ships today.
 
 ## 5. Questions for the maintainer
 
@@ -241,23 +389,73 @@ A123 is drafted Proposed in H2.0.
 ## 7. Slices
 
 Each slice keeps every behaviour test of the slice before it. The ported operations are checked by
-an equivalence harness: the old template and the new builder are rendered with the same bindings,
-both are parsed and translated to SPARQL algebra by rdflib, and the algebras must match apart from the
-added guards. The harness and the templates go together in H2.9. Estimates are in tokens, rough,
-for comparison with the actual cost.
+the equivalence harness of §7.1. The harness and the templates go together in H2.9. Estimates are in
+tokens, rough, for comparison with the actual cost.
 
 | Slice | Delivers | Modules | Depends on | Estimate |
 |---|---|---|---|---|
 | H2.0 | ADR-A123, Proposed, deciding §3, §3.1, §4 and the answers of §1. ADR-A79 addendum, drafted with A123 and dated when A123 is accepted. The ADR catalogue row | docs only | this brief | 150k |
 | H2.1 | `persistence.ir` and its renderer. One refusal test per type rule of §3, a parse test for every renderable form, and a property test that a rendered operation parses as exactly one update | `ir` (new) | H2.0 | 400k |
-| H2.2 | the equivalence harness. `bootstrap-version-row` and `append-event`, each with its dataset-guard variant, ported. The required-parameter guard, with TD-34's demonstration as a negative test on rdflib. TD-34 closed for these operations | `ir`, `builders` (new) | H2.1 | 350k |
+| H2.2 | the equivalence harness of §7.1, with its non-vacuity mutations. `bootstrap-version-row` and `append-event`, each with its dataset-guard variant, ported. The required-parameter guard, with TD-34's demonstration as a negative test on rdflib. TD-34 closed for these operations | `ir`, `builders` (new) | H2.1 | 350k |
 | H2.3 | the named-graph row writers ported: create-if-absent, cas-replace, cas-replace value guard, tombstone delete, unconditional write, with their variants (8 templates). The term and value guard tags meet their first real positions | `builders` | H2.2 | 400k |
-| H2.4 | the composite family: `OwnershipTree` and `PropertyPath` as IR values, the closure read set, create, replace and tombstone (6 templates). The §4 hypothesis measured on rdflib and Oxigraph | `builders`, `paths` | H2.2 | 400k |
+| H2.4 | the composite family: `OwnershipTree` and `PropertyPath` as IR values, the closure read set, create, replace and tombstone (6 templates). R0 ported unchanged. The benchmark and the two capability probes of §4.3 committed, on rdflib and Oxigraph (TD-42). A stop only if R0 is wrong on Oxigraph | `builders`, `paths` | H2.2 | 400k |
 | H2.5 | key claims and audits ported (10 templates). `logGraphs` as a typed `RegistryList`. `Now()` kept out of every guard | `builders` | H2.2 | 400k |
-| H2.6 | examples first (ADR-A-C2): the expected compiled-profile fixture with parameter declarations, read and write sets and a payload contract, for the maintainer to commit | `ontology/persistence/examples` | H2.0 | 150k |
-| H2.7 | the vocabulary and its emission: `dal:ParameterDeclaration`, read and write sets over the logical resources of H2-Q6, `dal:PayloadContract`, `dal:GroundNTriples`, `dal:templatePath` removed. The logical resources checked against `lattice-sql.md` §9 at its brief. `persistence` and its shapes at 0.4.0, release tags owed | `ontology/persistence`, `compiler` | H2.6, H2.3 to H2.5 | 450k |
-| H2.8 | the typed payload, per H2-Q1 to H2-Q3: the `Payload` type, canonical N-Triples and the digest, the generated `payload-check` query, the caller-side parameter check of H2-Q4, the `INFO` diagnostic and its warning option of H2-Q2 | `payload` (new), `builders` | H2.4, H2.7 | 400k |
+| H2.6 | examples first (ADR-A-C2): the expected compiled-profile fixture with parameter declarations, read and write sets and a payload contract, for the maintainer to commit. With it, the paper check of §7.2 | `ontology/persistence/examples` | H2.0 | 150k |
+| H2.7 | the vocabulary and its emission: `dal:ParameterDeclaration`, read and write sets over the logical resources of H2-Q6, `dal:PayloadContract`, `dal:GroundNTriples`, `dal:templatePath` removed. `persistence` and its shapes at 0.4.0, release tags owed | `ontology/persistence`, `compiler` | H2.6, H2.3 to H2.5 | 450k |
+| H2.8 | the typed payload, per H2-Q1 to H2-Q3: the `Payload` type, canonical N-Triples and the digest, the generated `payload-check` query, the caller-side parameter check of H2-Q4, the `INFO` diagnostic and its warning option of H2-Q2, with their witnesses (§7.3) | `payload` (new), `builders` | H2.4, H2.7 | 400k |
 | H2.9 | Mustache retired: the templates, `render.py`, `chevron` and the harness removed. S-3 and S-4 run over the IR's output and pass by construction, and S-3 reads the parameter declarations instead of the `$name` convention (H-D11). The injection corpus runs over the builders. README, ADR-A79 addendum, milestone FMH2 | `instantiate`, `templatecheck`, tests | H2.8 | 400k |
+
+### 7.1 The equivalence harness (H2.2)
+
+A port changes nothing, and a change ports nothing. The harness checks the first half. Any deliberate
+change to an operation, such as R2 of §4.3, is a separate step after its port, with its own test and
+its golden `.rq` diff listed in the slice's Validation Pack.
+
+For every ported template, with the bindings of every shipped example that selects it:
+
+1. **Render both sides.** The Mustache template with `chevron`, and the builder's `Operation` with
+   its required-parameter guard removed. The guard is a field of the `Operation`, derived from the
+   parameter list, so the harness removes it with `dataclasses.replace` on the value. No renderer
+   switch exists that could leave a production path without its guard.
+2. **Normalise.** Parse each with rdflib and translate it to algebra, which removes comments,
+   whitespace and prefix spelling. Then put each basic graph pattern's triples in a fixed order, since
+   a basic graph pattern is a set, and the conjuncts of each filter in a fixed order, since `&&` is
+   commutative. Nothing else is reordered. `OPTIONAL`, `UNION`, `BIND` and group order stay as written,
+   because they change meaning. Variable names must match exactly, so a builder keeps the template's
+   names.
+3. **Compare for equality.** Any difference fails, with both normal forms printed.
+4. **Check the guard on its own.** The rendering with the guard must differ from the rendering
+   without it by exactly one `FILTER` at the top of the `WHERE`, whose conjuncts are `BOUND` and
+   `DATATYPE` tests over the operation's declared required parameters, computed from the parameter
+   list, not matched against text.
+
+**Non-vacuity.** The harness fails if it compared fewer operations than the slice ports, or none. Its
+Validation Pack shows three mutations of a builder caught: a dropped triple, a pattern moved to
+another graph role, and a renamed variable. The behaviour tests that run each operation on rdflib stay
+as the semantic backstop.
+
+**A limit.** Both sides go through rdflib's parser and translator, so a translation defect there
+cancels out. That is acceptable for this check, which asks whether the two queries are the same query,
+not whether either is correct. Correctness stays with the behaviour tests and the witnesses.
+
+### 7.2 The paper check of the logical resources (H2.6)
+
+A mismatch with the relational realisation is cheapest to fix before any vocabulary exists, so the
+check runs when the H2.6 fixture is written, not at H2.7. It is a table in H2.6's Validation Pack,
+one row per logical resource of H2-Q6, with its SPARQL realisation (the graph role the builders map it
+to) and its relational realisation from [lattice-sql.md](../notes/rdf-engine/lattice-sql.md) §9 (a
+table, a column or a row). It fails when a resource has no relational counterpart, or when an
+operation of §9 touches something no resource names. A failure goes to the maintainer before H2.7 is
+briefed. It is a paper check, since no relational compiler exists (ADR-A-FM4 decision 1).
+
+### 7.3 Witnesses for the new severity (H2.8)
+
+The witness harness (`persistence.witness`, H1.2) inventories rules from the source, and today it
+records an observed diagnostic only when its severity is `WARNING`. An `INFO` diagnostic would be
+inventoried and never observed, so it would fail as unwitnessed. That fails closed, and H2.8 still
+fixes it properly. It adds `INFO` as a rule family and three witnesses: a named-graph family with
+payload operations and no boundary shape gives the `INFO` diagnostic by default, gives a `WARNING`
+under the compile option, and a family that names a shape gives neither.
 
 H2.3, H2.4 and H2.5 are independent once H2.2 lands. Removed and rewritten tests in H2.9 (the
 template alignment tests, the parts of the injection corpus that load template files) are listed in
