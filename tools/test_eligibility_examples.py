@@ -34,6 +34,7 @@ EXAMPLES = [
     "hierarchical-match", "condition-taxonomy", "interval-containment", "evidence-binding",
     "flat-scheme-lending", "flat-scheme-employment",  # AIR31-10
     "set-reading-admissions", "set-reading-trial",  # AIR32-12
+    "closure-usage-reports",  # HQ6a1-10
 ]
 
 PREFIXES = """

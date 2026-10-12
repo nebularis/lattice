@@ -40,22 +40,26 @@ def decision_leq(u: Decision, x: Decision) -> bool:
     return u is UNDETERMINED or u == x
 
 
-def some_value(values: Sequence[Decision]) -> Decision:
-    """L15's ``SomeValue`` reading: ``Permitted`` if any value is, ``Denied`` if
-    every value is, ``Undetermined`` otherwise or when there is no value
-    (``Eligibility.thy``'s ``some_value``, folding ``or3`` left to right -- the
-    fold shape is kept identical to the Isabelle original for a direct
-    comparison, though ``or3`` is commutative and associative so the order
-    does not affect the result)."""
-    if not values:
-        return UNDETERMINED
-    return reduce(or3, values[1:], values[0])
+def some_value(closed: bool, values: Sequence[Decision]) -> Decision:
+    """L15's ``SomeValue`` reading, under L17 (``Eligibility.thy``'s ``some_value``).
+
+    Closed (the binding names a closure in force, ADR-A105): fold ``or3`` from
+    ``Denied``, its identity, so ``Permitted`` if any value is, ``Denied`` if
+    every value is, the empty case included, and ``Undetermined`` otherwise.
+    Open: ``Permitted`` if any value is, ``Undetermined`` otherwise, since a
+    record proves only what it shows."""
+    if closed:
+        return reduce(or3, values, DENIED)
+    return PERMITTED if PERMITTED in values else UNDETERMINED
 
 
-def every_value(values: Sequence[Decision]) -> Decision:
-    """L15's ``EveryValue`` reading: ``Denied`` if any value is, ``Permitted`` if
-    every value is, ``Undetermined`` otherwise or when there is no value
-    (``Eligibility.thy``'s ``every_value``, folding ``and3``)."""
-    if not values:
-        return UNDETERMINED
-    return reduce(and3, values[1:], values[0])
+def every_value(closed: bool, values: Sequence[Decision]) -> Decision:
+    """L15's ``EveryValue`` reading, under L17 (``Eligibility.thy``'s ``every_value``).
+
+    Closed: fold ``and3`` from ``Permitted``, its identity, so ``Denied`` if any
+    value is, ``Permitted`` if every value is, the empty case included, and
+    ``Undetermined`` otherwise. Open: ``Denied`` if any value is,
+    ``Undetermined`` otherwise."""
+    if closed:
+        return reduce(and3, values, PERMITTED)
+    return DENIED if DENIED in values else UNDETERMINED

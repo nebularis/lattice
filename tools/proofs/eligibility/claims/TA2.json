@@ -1,7 +1,7 @@
 {
   "subject": "TA2",
   "statedAs": "KernelLaws.neg3_involutive/neg3_monotone/neg3_fixes_undetermined",
-  "statementDigest": "sha256:46b7fa1c04672cda5af55db7e1f88bf1b99c96486a4e631f370193479536c993",
+  "statementDigest": "sha256:49b0e94228a0aeae7ed507db4391cb71240411e8693a01f435cb0c11078d19b2",
   "method": "Proof",
   "scope": "EveryDecision",
   "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found (E1.4)",

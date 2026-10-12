@@ -232,7 +232,9 @@ def test_c9b1_09_settled_with_approval_is_permitted() -> None:
     g = _example("reinsurance-claims-cooperation")
     assert g.value(RE.indemnify, INS.scope) == RE["settled-with-approval"]
     assert g.value(RE.indemnify, INS.arisesOnExerciseOf) == RE.settle
-    assert _decisions(g) == {"claim-1": "Permitted", "claim-2": "Undetermined"}   # no approval: HQ-6
+    # The compiled decision. Claim 2 has no approval: the claims file's closure makes it Denied in the
+    # reference semantics (test_closures.py, HQ6a1-09), and the compilers apply closures in HQ-6a.2.
+    assert _decisions(g) == {"claim-1": "Permitted", "claim-2": "Undetermined"}
 
 
 def test_c9b1_09_without_the_settlements_reliance_the_claim_is_undetermined() -> None:

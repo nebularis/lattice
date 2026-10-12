@@ -17,6 +17,6 @@ graph (ADR-A-FM3, restating epic principles E1 and E3).
 
 ## Subdirectories
 
-- `eligibility/` — track B1/B2: the logic kernel and Eligibility's denotation (laws L9-L16),
+- `eligibility/` — track B1/B2: the logic kernel and Eligibility's denotation (laws L9-L17),
   checked against `tools/proofs/eligibility/`'s own Isabelle statements (B1) and differentially
   tested against `tools/mork_compilers`' SPARQL and SHACL backends (B2).

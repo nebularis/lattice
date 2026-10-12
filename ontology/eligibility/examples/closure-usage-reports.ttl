@@ -1,0 +1,69 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# A trade mark licence requires the licensee to report every use of the mark,
+# territory by territory, and treats unreported use as no use. A renewal in
+# France is offered only to a licensee that has made no use there. The
+# licence's reporting clause is the source of a closure (ADR-A105) over the
+# reports, which the condition's binding names (elg:closedUnder).
+#
+# The condition reads the territory of every report made under a licence,
+# some value, negated: "no use reported in France".
+#
+# | Licence | Territories reported | With the closure | Without it   |
+# |---------|----------------------|------------------|--------------|
+# | lic-1   | Germany, Spain       | Permitted        | Undetermined |
+# | lic-2   | France, Spain        | Denied           | Denied       |
+# | lic-3   | none                 | Permitted        | Undetermined |
+#
+# A report of use in France proves the condition false with or without the
+# closure. That there was no such use needs the closure: without it, a set
+# reading decides only what a record proves (elg:L15).
+
+@prefix elg:  <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix ex:   <https://example.org/lattice/eligibility/usage-reports/> .
+
+# The applied ontology's own terms.
+ex:Licence a owl:Class .
+ex:UsageReport a owl:Class .
+ex:reportedUnder a owl:ObjectProperty .
+ex:territory a owl:ObjectProperty .
+
+ex:france a skos:Concept ; rdfs:label "France" .
+ex:germany a skos:Concept ; rdfs:label "Germany" .
+ex:spain a skos:Concept ; rdfs:label "Spain" .
+
+# The closure. Its source is the licence's reporting clause.
+ex:reporting-clause rdfs:label "Clause 6.2: the Licensee reports every use of the Mark, and a use not reported is treated as no use" .
+ex:reports-closure a elg:Closure ;
+    elg:licensedBy ex:reporting-clause .
+
+# The condition and its binding.
+ex:no-use-in-france a elg:Condition ;
+    elg:conditionKey "no-use-reported-in-france" ;
+    elg:matchStrategy elg:ExactMatch ;
+    elg:compatibilityOperation elg:AllRequired ;
+    elg:wildcardSemantics elg:NoWildcard ;
+    elg:requiredConcept ex:france ;
+    elg:negated true .
+
+ex:no-use-binding a elg:EvidenceBinding ;
+    elg:bindsCondition ex:no-use-in-france ;
+    elg:subjectClass ex:Licence ;
+    elg:valueReading elg:SomeValue ;
+    elg:closedUnder ex:reports-closure ;
+    elg:evidenceStep
+        [ a elg:EvidenceStep ; elg:stepIndex 0 ; elg:stepProperty ex:reportedUnder ; elg:stepDirection elg:Inverse ] ,
+        [ a elg:EvidenceStep ; elg:stepIndex 1 ; elg:stepProperty ex:territory ;     elg:stepDirection elg:Forward ] .
+
+# The applied ontology's data, unchanged by evaluation.
+ex:lic-1 a ex:Licence .
+ex:lic-2 a ex:Licence .
+ex:lic-3 a ex:Licence .
+
+ex:report-1 a ex:UsageReport ; ex:reportedUnder ex:lic-1 ; ex:territory ex:germany .
+ex:report-2 a ex:UsageReport ; ex:reportedUnder ex:lic-1 ; ex:territory ex:spain .
+ex:report-3 a ex:UsageReport ; ex:reportedUnder ex:lic-2 ; ex:territory ex:france .
+ex:report-4 a ex:UsageReport ; ex:reportedUnder ex:lic-2 ; ex:territory ex:spain .

@@ -1,7 +1,7 @@
 {
   "subject": "TL2",
   "statedAs": "Eligibility.some_value_monotone/every_value_monotone",
-  "statementDigest": "sha256:d59a24bc9e88970a959ded30fa8dddb539a4b4b23572e504b74f1f9c4bdc05e4",
+  "statementDigest": "sha256:3c47345447f23747b6138eb00fa6527f9adae335e6e929abf845cec3d7ea6e14",
   "method": "Proof",
   "scope": "EveryRelatedListPair",
   "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found (E1.4)",

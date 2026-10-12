@@ -45,14 +45,14 @@ Nothing in this version evaluates.
 ```turtle-spec
 <https://www.nebularis.org/neuro-semantic/instrument>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.16.0> ;
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.17.0> ;
 	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.4.0> ,
 				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.4.0> ,
 				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.8.0> ,
 				<https://www.nebularis.org/neuro-semantic/lattice/party/0.9.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.11.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/wording/0.8.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.14.0> .
+				<https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.12.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/wording/0.9.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.15.0> .
 ```
 
 The vocabulary (`ins-voc:`) is `vocab/instrument-vocab.ttl`, in the namespace `https://www.nebularis.org/neuro-semantic/lattice/instrument/vocab#` (§19).
@@ -1884,8 +1884,8 @@ flowchart TB
 # @output-file "spec/instrument-acts.ttl"
 <https://www.nebularis.org/neuro-semantic/instrument-acts>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/instrument-acts/0.16.0> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.16.0> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/instrument-acts/0.17.0> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.17.0> .
 ```
 
 ```turtle-spec
@@ -3935,8 +3935,8 @@ instrument as a whole as a value of `ins:ends` (§14.2).
 
 <https://www.nebularis.org/neuro-semantic/instrument-vocab>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/instrument-vocab/0.16.0> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.16.0> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/instrument-vocab/0.17.0> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.17.0> .
 
 ins-voc:ActivityContract a voc:SchemeContract ;
 	fnd:hasIdentity ins-voc:ActivityContract-identity ;
@@ -6227,6 +6227,8 @@ withdrawal counts is the facility's, since withdrawal has no default.
 
 Breaking versions at major version zero ([ADR-A113](../../docs/architecture/decisions/ADR-A113-breaking-changes-at-major-version-zero.md)):
 
+- 0.17.0 (`instrument`, `instrument-acts` and `instrument-vocab`, breaking): re-pinned to Eligibility 0.12.0, whose set readings decide on completeness only under a closure
+  (ADR-A105), and the layers re-pinned with it, with no other change (CCS HQ-6a.1).
 - 0.16.0 (breaking, CCS C9b1, ADR-A104 and its 2026-10-09 addendum): the legal acts tier, in a new
   document, `instrument-acts` 0.16.0 (§6.4, ADR-A120): `ins:LegalAct`, `ins:Declaration`,
   `ins:Consent`, `ins:Objection`, `ins:Withdrawal`, `ins:Exercise` and `ins:Proposal`, with

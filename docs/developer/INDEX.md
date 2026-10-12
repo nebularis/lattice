@@ -573,7 +573,7 @@ non-blocking track.
 | **Plan** | [computable-contract-substrate.md](plans/computable-contract-substrate.md) |
 | **Status Record** | [computable-contract-substrate.md](status/computable-contract-substrate.md) |
 | **ADRs** | A-104, A-106, A-112, A-113 accepted, with addenda |
-| **Validation Packs** | [C8](validation/computable-contract-substrate-c8.md), [C8b](validation/computable-contract-substrate-c8b.md), [C9a](validation/computable-contract-substrate-c9a.md), [C9b0](validation/computable-contract-substrate-c9b0.md), [C9b1](validation/computable-contract-substrate-c9b1.md) and [C9b2](validation/computable-contract-substrate-c9b2.md) |
+| **Validation Packs** | [C8](validation/computable-contract-substrate-c8.md), [C8b](validation/computable-contract-substrate-c8b.md), [C9a](validation/computable-contract-substrate-c9a.md), [C9b0](validation/computable-contract-substrate-c9b0.md), [C9b1](validation/computable-contract-substrate-c9b1.md) and [C9b2](validation/computable-contract-substrate-c9b2.md) and [HQ-6a.1](validation/computable-contract-substrate-hq6a1.md), accepted 2026-10-12 |
 
 A new Wording layer (from Open CBAA's `wim:`), Instrument rewritten around terms and legal
 relations, and Behaviour extended with occasions and records, tested against a package policy, an

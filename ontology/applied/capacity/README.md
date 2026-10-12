@@ -91,3 +91,5 @@ Breaking versions at major version zero ([ADR-A113](../../../docs/architecture/d
 - 0.14.0 (breaking): re-pinned to `behaviour-runtime` 0.14.0, whose records are narrowed to the
   evaluator's findings and whose acceptance record is deprecated (CCS C9b1), and to Quantification
   0.8.0 (CCS C9b2), with no other change.
+- 0.15.0 (breaking): re-pinned to `behaviour-runtime` 0.15.0 and Eligibility 0.12.0, whose set
+  readings decide on completeness only under a closure (ADR-A105), with no other change (CCS HQ-6a.1).
