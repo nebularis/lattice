@@ -45,17 +45,18 @@
 # | Claim   | Path reaches       | Decision     |
 # |---------|--------------------|--------------|
 # | claim 1 | ins-voc:Approve    | Permitted    |
-# | claim 2 | nothing            | Undetermined |
+# | claim 2 | nothing            | Denied       |
 #
 # "Effective approval" is read from facts, never from a finding: the approval
 # exists (the path), was made by the party holding the power to approve, and
 # precedes the settlement made pursuant to it. The last two are the acts'
 # shapes. An approval by another party, or after the settlement, is rejected.
 #
-# Claim 2 is Undetermined, not Denied. A condition precedent means "no
-# approval, no liability", which needs the absence of an approval to decide,
-# a closure (ADR-A105, held question HQ-6). Until then the example records it
-# as deliberate non-coverage. Whether a refusal was arbitrary is a
+# Claim 2 is Denied. A condition precedent means "no approval, no liability",
+# which needs the absence of an approval to decide: a closure (ADR-A105). The
+# insurer's claims system records each settlement and what it was made
+# pursuant to, and is the closure's source, which the binding names. Without
+# the closure, claim 2 is Undetermined. Whether a refusal was arbitrary is a
 # determination, outside stated meaning. The clause's usual 14 days bind the
 # insurer's notice of loss, a due range, and are not modelled here.
 #
@@ -173,10 +174,16 @@ ex:settled-with-approval a elg:Condition ;
     elg:constrainedByContract ins-voc:ActivityContract ;
     elg:requiredConcept ins-voc:Approve .
 
+# The claims file is complete for the acts recorded for a claim and what they
+# were made pursuant to, on the claims system's authority.
+ex:claims-file-closure a elg:Closure ;
+    elg:licensedBy ex:claims-system .
+
 ex:settled-with-approval-binding a elg:EvidenceBinding ;
     elg:bindsCondition ex:settled-with-approval ;
     elg:subjectClass ex:Claim ;
     elg:valueReading elg:SomeValue ;
+    elg:closedUnder ex:claims-file-closure ;
     elg:evidenceStep
         [ a elg:EvidenceStep ; elg:stepIndex 0 ; elg:stepProperty ins:forCase ;    elg:stepDirection elg:Inverse ] ,
         [ a elg:EvidenceStep ; elg:stepIndex 1 ; elg:stepProperty ins:pursuantTo ; elg:stepDirection elg:Forward ] ,

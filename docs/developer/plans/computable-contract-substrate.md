@@ -3068,7 +3068,7 @@ question to be taken up (below).
 | C9b0 | Eligibility, cascading | the Eligibility README made its source again (TD-16's Eligibility part), and law L9's amendment from FM-EP released. Before C9b3 |
 | C9b1 | Instrument 0.16.0, Behaviour 0.14.0, both breaking | the legal acts tier in its own document (ADR-A120): declarations (assent, consent, objection, withdrawal), proposals (the amendment one of them), exercises, `ins:pursuantTo`. Behaviour's exercise and acceptance records narrowed to findings. Example: reinsurance claims co-operation. [Consent sketch](../sketches/consent-and-group-powers.md) §2.1 |
 | C9b2 | Quantification, cascading | extensive and intensive quantities, a proportion's base, sum and count. Examples: multicurrency commitments, written and signed lines, signing down. Sketch §2.4 |
-| HQ-6a.1 | Eligibility, cascading, MORK Executable | ADR-A105 drafted, `elg:Closure` (what it covers, `elg:licensedBy`), untimed (HQ6a-Q4), `elg:closedUnder` on a binding, `elg:closureReliedOn` on a decision, law L17 and its reference semantics, examples of an admissions registry, an objections register and a licence's usage reports. Under HQ6a-Q1 (b), ADR-A103's addendum and L15 restated, with their proofs. No Persistence content. HQ-6a in detail |
+| HQ-6a.1 | Eligibility, cascading, MORK Executable | ADR-A105 drafted, `elg:Closure` (its source, `elg:licensedBy`, covering the bindings that name it, HQ6a-Q5), untimed (HQ6a-Q4), `elg:closedUnder` on a binding, `elg:closureReliedOn` on a decision, law L17 and its reference semantics, examples of an admissions registry, an objections register and a licence's usage reports. Under HQ6a-Q1 (b), ADR-A103's addendum and L15 restated, with their proofs. No Persistence content. HQ-6a in detail |
 | HQ-6a.2 | `tools/mork_compilers` | the backends apply a closure, refuse an unlicensed binding with `exe:NoClosureLicence`, and record the closures a decision relied on. After HQ-6a.1, before C9b3 |
 | C9b3 | Eligibility, own ADR | set comparisons (subset, intersects, disjoint), aggregate bindings, the two kinds of deferral, with their proofs and reference semantics, including a hierarchical condition whose binding does not apply at the resolution time, Undetermined under L9 where C9b0 leaves the compilers refusing it (C9b0-Q2), and the same guard in the OWL and SWRL backends. With it, substrate S2: an option for hierarchical match to follow kind links only (`prl:broaderGeneric`) rather than every `skos:broader` (NRS NQ-4, 2026-10-10). After the formal-methods Eligibility pass and HQ-6. Sketch §2.3 |
 | C9b4 | Instrument | qualifying rules as acting rules (`ins:QualifyingRule`), universe, exclusions and reference time, joint and several powers, laws I11 and I13 restated, measure words, Party's shares deprecated with a warning shape. Examples: Majority Lenders acceleration with a transfer between request and decision, an Extraordinary Resolution. Sketch §2.2, §2.5 |
@@ -3778,8 +3778,8 @@ the [consent sketch](../sketches/consent-and-group-powers.md) §2.3 and §3.
 per-root sequence of Track H's AO-Q6 and `dal:BlockingContiguityCheck`) and closures over a period
 anchored per subject ("within 60 days of the request") are HQ-6b's (HQ6a-Q4).
 
-**Invariant:** absence decides an outcome only under a declared closure, which names what it covers
-and on whose authority. A decision that relied on absence names the closure, and its own recording
+**Invariant:** absence decides an outcome only under a declared closure, named by the binding that
+relies on it, which states on whose authority. A decision that relied on absence names the closure, and its own recording
 time is the cut: the closure licenses the records as they stood then, so a fact recorded later can be
 found to supersede the decision (HQ-6b).
 
@@ -3816,7 +3816,7 @@ flowchart LR
     subgraph AGREED["Stated: the instrument and the deployment"]
         PW["the amendment power<br/>scope: no Lender has objected"]
         NC["no objection<br/>elg:Condition, negated,<br/>binding read elg:SomeValue<br/>over objections to the proposal"]
-        CL["ex:objections-register<br/>elg:Closure<br/>covers: ins:Objection<br/>licensed by: the Agent, whose<br/>register is authoritative"]
+        CL["ex:objections-register<br/>elg:Closure<br/>licensed by: the Agent, whose<br/>register is authoritative"]
         PW -- "scope" --> NC
         NC -- "binding elg:closedUnder" --> CL
     end
@@ -3973,17 +3973,76 @@ decision").
 **Answered (2026-10-12): (2).** Example 2 in HQ6a-Q1 is HQ-6b's to build. Its outcomes hold as drawn
 once windows exist.
 
+**HQ6a-Q5. What a closure covers** (found writing HQ-6a.1's examples, 2026-10-12). The plan said a
+closure covers "a class of records", checked against the class a binding's path reaches. In three of
+the four examples the path reaches concepts (`ex:physics`, a diagnosis, `ins-voc:Approve`), not
+records. What a source vouches for is a set of statements: every statement of some properties about
+some subjects.
+
+| Option | Design overheads | Runtime overheads |
+|---|---|---|
+| (a) the closure states its coverage, a subject class and the properties it vouches for, and a binding may name it only if its subject class and every step's property are covered | the coverage restates the path, so the two can drift. A wrong reference is caught | none |
+| (b) the closure states only its source, and covers exactly the bindings that name it. Sharing one closure between bindings is explicit, by naming it from each | nothing restated. A binding names its licence where it reads, and nothing is inferred about which bindings a closure is for | none |
+| (c) a class of records, as planned | fits only the objections register | none |
+
+*How a wrong reference arises under (b).* Only by naming the wrong closure, for example a binding
+copied from another and still naming its licence:
+
+```mermaid
+flowchart LR
+    OB["objections binding<br/>proposal ← ins:directedAt"]
+    QB["qualifications binding, copied<br/>applicant → ex:holdsQualification"]
+    CL["ex:objections-register<br/>elg:Closure<br/>licensed by: the Agent"]
+    OB -- "elg:closedUnder" --> CL
+    QB -- "elg:closedUnder (left over from the copy)" --> CL
+```
+
+The second binding now decides "no medicine qualification" on the Agent's authority. Under (a) a
+shape reports it, because the closure covers `ins:directedAt` and the binding reads
+`ex:holdsQualification`. Under (b) nothing in the model says the Agent's register is not about
+qualifications, so a reviewer or an example catches it, as for any wrong reference.
+
+*What the refusal tests.* NRS D7 refuses a check that decides on absence without a licence.
+
+```mermaid
+flowchart TB
+    subgraph A["(a) coverage stated"]
+        A1["binding names a closure"] --> A2{"closure exists,<br/>has a source?"}
+        A2 -- "no" --> AR["refused<br/>exe:NoClosureLicence"]
+        A2 -- "yes" --> A3{"covers the binding's<br/>subject class and<br/>every step's property?"}
+        A3 -- "no" --> AR
+        A3 -- "yes" --> AC["compiled"]
+    end
+    subgraph B["(b) coverage is the naming"]
+        B1["binding names a closure"] --> B2{"closure exists,<br/>has a source?"}
+        B2 -- "no" --> BR["refused<br/>exe:NoClosureLicence"]
+        B2 -- "yes" --> BC["compiled"]
+    end
+```
+
+Under (b) the refusal keeps its first test and loses the second: it can say a licence is missing or
+malformed, never that a licence is for something else. That is a smaller loss than it looks.
+Under HQ6a-Q1 (b), a binding that names no closure never decides on absence, it is Undetermined, so
+an unlicensed decision on absence cannot be compiled at all. The refusal D7 asked for holds by
+construction, and what (a) adds is a guard against a wrong reference, at the price of stating the
+path twice. HQ-6b binds a closure to the store, which under (b) reads its coverage from the
+bindings that name it.
+
+KISS: (b) states the licence once, where it is used, and infers nothing. **Leaning revised to (b).**
+**Answered (2026-10-12): (b).** HQ6a-Q3's option (a) is read with it: the binding names its closure,
+and no shape compares the two.
+
 **Decided by precedent, not asked:**
 
-- a closure states what it covers (a class of records) and its source with `elg:licensedBy`, which
-  has no range, as `bhv:deeming` has none: a deeming, a term, a party whose records are
+- a closure states its source with `elg:licensedBy`, and covers exactly the bindings that name it
+  (HQ6a-Q5). The source has no range, as `bhv:deeming` has none: a deeming, a term, a party whose records are
   authoritative, or an operational profile (ADR-A89) by which a deployment declares its records
   complete. HQ-6b adds its window (HQ6a-Q4)
 - the cut is the deciding record's own recording time (`fnd:Evidenced`), so HQ-6a adds no
   position. A decision names the closures it relied on with `elg:closureReliedOn`, as
   `bhv:closureReliedOn` names one for a breach
-- refusal (NRS D7): the compiler refuses a binding whose closure does not cover the class the binding
-  reaches, or names no source, with the diagnostic `exe:NoClosureLicence` (Executable 0.7.0, so
+- refusal (NRS D7): the compiler refuses a binding that names something which is not a closure, or a
+  closure with no source, with the diagnostic `exe:NoClosureLicence` (Executable 0.7.0, so
   MORK's pins move)
 - a new semantic law, L17, states the closure, with its reference semantics and differential tests
   (the formal-freshness gate)
@@ -3999,8 +4058,8 @@ once windows exist.
   HQ-6b's, against Track H's per-root sequence (AO-Q6)
 - **ADR-A103 addendum**, Proposed: `SomeValue` Denied and `EveryValue` Permitted need a closure
 - **Eligibility, in its README** (the literate source since C9b0):
-  - `elg:Closure`: `elg:closesClass` (exactly one class of records) and `elg:licensedBy` (exactly
-    one, no range: a deeming, a term, a party or an operational profile)
+  - `elg:Closure`: `elg:licensedBy` (exactly one, no range: a deeming, a term, a party or an
+    operational profile). It covers the bindings that name it (HQ6a-Q5)
   - `elg:closedUnder` on `elg:EvidenceBinding` (at most one closure), allowed only with
     `elg:SomeValue` or `elg:EveryValue`. A closure never changes `elg:SingleValue`
   - `elg:closureReliedOn` on `elg:EligibilityDecision` (any number)
@@ -4011,9 +4070,8 @@ once windows exist.
   - **L17, new, semantic:** a closure is in force from its source's effective time. In force, it
     licenses that the values the binding reaches, as recorded up to the deciding record's recording
     time, are all there are. HQ-6b adds a window, after which a closure over a period is in force
-  - shapes: a closure's cardinalities, `elg:closedUnder` only with a set reading, the closure
-    covering the class the binding's path reaches, and a decision's relied-on closures matching
-    its bindings
+  - shapes: a closure's one source, `elg:closedUnder` naming a closure and only with a set reading,
+    and a decision's relied-on closures matching its bindings
 - **the reference semantics** (`tools/reference/eligibility`): L15 restated and L17, with their
   differential tests. The formal-freshness gate requires it
 - **the Isabelle theory** (`tools/proofs/eligibility/Eligibility.thy`): `some_value` and
@@ -4038,7 +4096,7 @@ once windows exist.
   `EveryValue` Permitted, the empty case included, only under a closure in force at the decision's
   recording time. SWRL and OWL are unchanged: they already derive only
   the outcomes (b) allows without a closure
-- the refusal: a binding whose closure does not cover the class it reaches, or has no source, is
+- the refusal: a binding naming something that is not a closure, or a closure with no source, is
   refused with `exe:NoClosureLicence`, declared in MORK's Executable ontology (0.7.0, so
   `build:mtp` moves MORK's pins)
 - a compiled decision names the closures it relied on (`elg:closureReliedOn`)
@@ -4048,9 +4106,9 @@ once windows exist.
 
 | ID | Given / When / Then | Level | + / − |
 |---|---|---|---|
-| HQ6a1-01 | a closure / validated / one class and one source. Each cardinality tested at zero and at two | L1 | + − |
+| HQ6a1-01 | a closure / validated / one source, tested at zero and at two | L1 | + − |
 | HQ6a1-02 | a binding read `SingleValue` naming a closure / validated / violation | L1 | − |
-| HQ6a1-03 | a binding naming a closure over another class / validated / violation | L1 | − |
+| HQ6a1-03 | a binding naming a node that is not a closure, and a closure with no source / validated / violation | L1 | − |
 | HQ6a1-04 | admissions A (history, physics), no closure / L15 / Undetermined. With a closure in force / Permitted, negated | L2 | + − |
 | HQ6a1-05 | admissions B (nothing), with and without a closure / L15 / Permitted, Undetermined | L2 | + − |
 | HQ6a1-06 | admissions C and request X / L15, no closure / Denied, unchanged | L2 | + |
@@ -4066,7 +4124,8 @@ once windows exist.
 
 **Planned validation, HQ-6a.2** (pack `computable-contract-substrate-hq6a2.md`): the SPARQL and
 SHACL backends agree with the reference on every HQ6a1-04 to 09 case. SWRL and OWL output unchanged.
-A binding whose closure covers another class, or has no source, refused with `exe:NoClosureLicence`.
+A binding naming something that is not a closure, or a closure with no source, refused with
+`exe:NoClosureLicence`.
 A compiled decision names its closures. `build:mtp` and `check:mtp` pass. `check:full-sweep` passes.
 
 **Deliberately not covered:** closures over a period and their anchors, the deemed-failure

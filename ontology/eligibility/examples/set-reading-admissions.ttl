@@ -6,18 +6,34 @@
 # binding declares how the set is read (ADR-A103, elg:L15), and the second
 # condition is negated (elg:L16).
 #
-# Recorded decisions:
+# The admissions office declares its registry complete for applicants'
+# qualifications: a closure (ADR-A105), licensed by its operational profile,
+# which both bindings name (elg:closedUnder). Under the closure, the
+# qualifications recorded are all the applicant holds.
+#
+# Recorded decisions, under the closure:
 #
 # | Applicant | Qualifications     | stem-qualification | no-medicine  | profile      |
 # |-----------|--------------------|--------------------|--------------|--------------|
 # | ada       | history, physics   | Permitted          | Permitted    | Permitted    |
 # | ben       | history            | Denied             | Permitted    | Denied       |
-# | cai       | none               | Undetermined       | Undetermined | Undetermined |
+# | cai       | none               | Denied             | Permitted    | Denied       |
 # | dee       | medicine, physics  | Permitted          | Denied       | Denied       |
 #
 # no-medicine requires medicine, read elg:SomeValue, and is negated: it is
-# Denied exactly when some qualification is medicine. With no qualification
-# the reading is Undetermined (exe:MissingCandidate), and negation keeps it so.
+# Denied exactly when some qualification is medicine.
+#
+# Without the closure, a set reading decides only what a record proves
+# (elg:L15): some qualification in mathematics or physics, or one in medicine.
+# That every qualification falls outside a list cannot be shown from the
+# records alone, so:
+#
+# | Applicant | stem-qualification | no-medicine  | profile      |
+# |-----------|--------------------|--------------|--------------|
+# | ada       | Permitted          | Undetermined | Undetermined |
+# | ben       | Undetermined       | Undetermined | Undetermined |
+# | cai       | Undetermined       | Undetermined | Undetermined |
+# | dee       | Permitted          | Denied       | Denied       |
 
 @prefix elg:  <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
 @prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
@@ -60,6 +76,12 @@ ex:no-medicine a elg:Condition ;
     elg:requiredConcept ex:medicine ;
     elg:negated true .
 
+# The registry's closure. Its source is the admissions office's operational
+# profile, by which the deployment declares the registry complete.
+ex:admissions-profile a elg:OperationalProfile .
+ex:registry-closure a elg:Closure ;
+    elg:licensedBy ex:admissions-profile .
+
 ex:engineering-admission a elg:AdmissionProfile ;
     elg:hasCondition ex:stem-qualification , ex:no-medicine ;
     elg:matchStrategy elg:SetMembership ;
@@ -71,12 +93,14 @@ ex:stem-binding a elg:EvidenceBinding ;
     elg:bindsCondition ex:stem-qualification ;
     elg:subjectClass ex:Applicant ;
     elg:valueReading elg:SomeValue ;
+    elg:closedUnder ex:registry-closure ;
     elg:evidenceStep [ a elg:EvidenceStep ; elg:stepIndex 0 ; elg:stepProperty ex:holdsQualification ; elg:stepDirection elg:Forward ] .
 
 ex:medicine-binding a elg:EvidenceBinding ;
     elg:bindsCondition ex:no-medicine ;
     elg:subjectClass ex:Applicant ;
     elg:valueReading elg:SomeValue ;
+    elg:closedUnder ex:registry-closure ;
     elg:evidenceStep [ a elg:EvidenceStep ; elg:stepIndex 0 ; elg:stepProperty ex:holdsQualification ; elg:stepDirection elg:Forward ] .
 
 # The applied ontology's data, unchanged by evaluation.
