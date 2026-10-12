@@ -63,6 +63,9 @@ def test_h2_1_t1_the_base_operation_is_accepted_and_renders():
 _PATH = Path(PropertyPath.encode(Step(__import__("rdflib").URIRef("urn:p:owns"))))
 
 
+_USE_GX = GraphBlock(Graph(GraphRole.LOG, Var("gx")), (Triple(Var("a"), pat("p"), Var("b")),))
+
+
 def _refusals() -> list[tuple[str, str, object]]:
     """(rule, label, a function returning an operation, or raising IrError for a construction-time rule)."""
     bound = lambda n: Var(n, binding=Binding.BOUND)
@@ -110,8 +113,14 @@ def _refusals() -> list[tuple[str, str, object]]:
         ("UnboundTemplateVariable", "Bound from a BIND in a UNION branch over an outer variable", lambda: valid(
             where_=(*where(), Union_((Group((Bind(Func("STR", (Var("now"),)), Var("stamp")),)), Group((Bind(string("x"), Var("stamp")),))))),
             insert_=(*insert(), GraphBlock(META, (Triple(ROOT, pat("stamp"), bound("stamp")),))))),
-        ("UnboundGraphVariable", "GRAPH ?g in an OPTIONAL after an outer BIND of ?g", lambda: valid(
-            where_=(*where(), Bind(iri("urn:g:x"), Var("gx")), Optional_(Group((GraphBlock(Graph(GraphRole.LOG, Var("gx")), (Triple(Var("a"), pat("p"), Var("b")),)),))))),),
+        ("UnboundGraphVariable", "GRAPH ?g in an OPTIONAL that nothing binds", lambda: valid(where_=(*where(), Optional_(Group((_USE_GX,)))))),
+        ("UnboundGraphVariable", "GRAPH ?g in a UNION branch that nothing binds", lambda: valid(where_=(*where(), Union_((Group((_USE_GX,)), Group(())))))),
+        ("UnboundGraphVariable", "GRAPH ?g bound only after the group that uses it", lambda: valid(where_=(*where(), Optional_(Group((_USE_GX,))), Bind(iri("urn:g:x"), Var("gx"))))),
+        ("InvalidEquals", "on an optional parameter", lambda: valid(params=_with_param(Param("extra", Kind.IRI, required=False, equals=iri("urn:x"))), where_=(*where(), GraphBlock(META, (Triple(ROOT, pat("p"), ParamRef("extra")),))))),
+        ("InvalidEquals", "on a slot", lambda: valid(params=(*PARAMS[:6], Param("payloadTriples", Kind.PAYLOAD, equals=iri("urn:x"))))),
+        ("InvalidEquals", "naming a variable", lambda: valid(params=_with_param(Param("g", Kind.IRI, equals=Func("IRI", (Func("STR", (Var("now"),)),)))), where_=(*where(), GraphBlock(Graph(GraphRole.DATA, ParamRef("g")), (Triple(ROOT, pat("p"), Var("x")),))))),
+        ("ClockInGuard", "NOW in an equals check", lambda: valid(params=_with_param(Param("g", Kind.IRI, equals=Func("IRI", (Func("STR", (Func("NOW"),)),)))), where_=(*where(), GraphBlock(Graph(GraphRole.DATA, ParamRef("g")), (Triple(ROOT, pat("p"), Var("x")),))))),
+        ("UndeclaredParameter", "an equals check naming an undeclared parameter", lambda: valid(params=_with_param(Param("g", Kind.IRI, equals=Func("IRI", (Func("STR", (ParamRef("nope"),)),)))), where_=(*where(), GraphBlock(Graph(GraphRole.DATA, ParamRef("g")), (Triple(ROOT, pat("p"), Var("x")),))))),
         ("UnboundTemplateVariable", "OptionalAllowed and never bound", lambda: valid(insert_=(*insert(), GraphBlock(META, (Triple(ROOT, pat("p"), optional("ghost")),))))),
         ("OptionalTagOnBoundVariable", "always bound", lambda: valid(insert_=insert(now=Binding.OPTIONAL_ALLOWED))),
         ("UnboundGraphVariable", "free GRAPH ?g", lambda: valid(where_=(*where(), GraphBlock(Graph(GraphRole.LOG, Var("free")), (Triple(Var("a"), pat("p"), Var("b")),))))),
@@ -202,6 +211,19 @@ def test_h2_1_t7_graph_variables_are_accepted_when_a_bind_or_values_binds_them()
     params = (Param("logGraphs", Kind.REGISTRY_LIST),)
     select = Select((Var("r"),))
     check(Operation.build("audit", params, Group(values), select=select))
+
+
+def _joined_graph(shape: str) -> Operation:
+    use = _USE_GX
+    inner = {"OPTIONAL": Optional_(Group((use,))), "nested group": Group((use,)), "UNION branch": Union_((Group((use,)), Group(())))}[shape]
+    return valid(where_=(*where(), Bind(iri("urn:g:x"), Var("gx")), inner))
+
+
+@pytest.mark.parametrize("shape", ["OPTIONAL", "nested group", "UNION branch"])
+def test_h2_3_t1_a_graph_variable_bound_in_an_enclosing_group_is_accepted_in_an_inner_one(shape):
+    """H2.3-Q2. The refusal case this replaces is listed in the Validation Pack of FMH-H2-3. A pattern's solutions are
+    joined with the enclosing group on ?g, so the result holds only that graph's triples (test_h2_3_t2)."""
+    check(_joined_graph(shape))
 
 
 def test_h2_1_t8_the_parameter_guard_is_derived_and_removable():

@@ -49,7 +49,7 @@ def _graphs_after_creating(graph: Graph, roots: list[str], prefix: str = "urn:g:
         ds = Dataset()
         for number, root in enumerate(roots):
             values = {
-                "root": URIRef(root), "epoch": Literal(1), "newRev": URIRef(f"urn:rev:{number}"),
+                "root": URIRef(root), "epoch": Literal(1, datatype=XSD.long), "newRev": URIRef(f"urn:rev:{number}"),
                 "txnId": URIRef(f"urn:txn:{number}"), "requestDigest": Literal("d"),
             }
             ds.update(text.replace("<urn:x:s> <urn:x:p> <urn:x:o>", f"<{root}> <urn:x:p> <urn:x:o>"), initBindings={Variable(k): v for k, v in values.items()})

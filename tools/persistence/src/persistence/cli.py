@@ -92,7 +92,13 @@ def cmd_instantiate(args: argparse.Namespace) -> int:
     profile = Graph()
     profile.parse(args.compiled_profile, format="turtle")
     template_dir = Path(args.template_dir) if args.template_dir else None
-    written = instantiate_to_directory(profile, Path(args.out), template_dir, guards=not args.no_parameter_guards)
+    written = instantiate_to_directory(
+        profile,
+        Path(args.out),
+        template_dir,
+        guards=not args.no_parameter_guards,
+        graph_names="caller" if args.caller_graph_names else "query",
+    )
     for path in written:
         print(f"wrote {path}", file=sys.stderr)
     return 0
@@ -176,6 +182,12 @@ def build_parser() -> argparse.ArgumentParser:
         "--no-parameter-guards",
         action="store_true",
         help="leave the required-parameter guards out of operations that have a builder, for a caller whose own code checks every parameter",
+    )
+    p_instantiate.add_argument(
+        "--caller-graph-names",
+        action="store_true",
+        help="have the caller name each root's graph as $g, checked against the naming rule while guards are on, "
+        "for the operations that name a graph",
     )
     p_instantiate.set_defaults(func=cmd_instantiate)
 

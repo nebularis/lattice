@@ -55,7 +55,7 @@ def operation_context(compiled_profile: Graph, op_node) -> dict:
 
 
 def _render_operation(
-    compiled_profile: Graph, op_node, template_dir: Path | None, guards: bool = True
+    compiled_profile: Graph, op_node, template_dir: Path | None, guards: bool = True, graph_names: str = "query"
 ) -> tuple[str, str]:
     """An operation's name and SPARQL text. An operation with a builder (:mod:`persistence.builders`) is rendered
     from its typed value, with the required-parameter guard unless ``guards`` is false (ADR-A123, addendum of
@@ -67,7 +67,7 @@ def _render_operation(
     context = operation_context(compiled_profile, op_node)
     stem = template_path.removesuffix(".mustache")
     if template_dir is None and stem in BUILDERS:
-        return operation_name, render_operation(build(stem, context, guards=guards))
+        return operation_name, render_operation(build(stem, context, guards=guards, graph_names=graph_names))
     return operation_name, render(load_template(template_path, template_dir), context)
 
 
@@ -75,7 +75,9 @@ def _local(iri) -> str:
     return str(iri).rstrip("/#").rsplit("#", 1)[-1].rsplit("/", 1)[-1]
 
 
-def instantiate_by_target(compiled_profile: Graph, template_dir: Path | None = None, guards: bool = True) -> dict[str, dict[str, str]]:
+def instantiate_by_target(
+    compiled_profile: Graph, template_dir: Path | None = None, guards: bool = True, graph_names: str = "query"
+) -> dict[str, dict[str, str]]:
     """Returns ``{target_name: {operation_name: rendered_sparql_text}}``, one
     entry per ``dal:CompiledProfile``. A target's name is its class's local
     name, followed by its deployment's local name where it has one
@@ -90,29 +92,32 @@ def instantiate_by_target(compiled_profile: Graph, template_dir: Path | None = N
         if name in out:
             raise ValueError(f"two compiled targets share the name {name!r}")
         out[name] = dict(
-            _render_operation(compiled_profile, op_node, template_dir, guards)
+            _render_operation(compiled_profile, op_node, template_dir, guards, graph_names)
             for op_node in compiled_profile.objects(profile, DAL.generatedOperation)
         )
     return out
 
 
-def instantiate_profile(compiled_profile: Graph, template_dir: Path | None = None, guards: bool = True) -> dict[str, str]:
+def instantiate_profile(
+    compiled_profile: Graph, template_dir: Path | None = None, guards: bool = True, graph_names: str = "query"
+) -> dict[str, str]:
     """Returns ``{operation_name: rendered_sparql_text}`` for a compiled
     profile with one target. Refuses a profile with several, whose
     operations share names: use :func:`instantiate_by_target`."""
-    by_target = instantiate_by_target(compiled_profile, template_dir, guards)
+    by_target = instantiate_by_target(compiled_profile, template_dir, guards, graph_names)
     if len(by_target) > 1:
         raise ValueError(f"{len(by_target)} targets: operation names repeat per target, use instantiate_by_target")
     return next(iter(by_target.values()), {})
 
 
 def instantiate_to_directory(
-    compiled_profile: Graph, out_dir: Path, template_dir: Path | None = None, guards: bool = True
+    compiled_profile: Graph, out_dir: Path, template_dir: Path | None = None, guards: bool = True,
+    graph_names: str = "query",
 ) -> list[Path]:
     """Writes ``<out_dir>/<target_name>/<operation_name>.rq`` for every
     generated operation of every target."""
     written: list[Path] = []
-    for target_name, rendered in instantiate_by_target(compiled_profile, template_dir, guards).items():
+    for target_name, rendered in instantiate_by_target(compiled_profile, template_dir, guards, graph_names).items():
         target_dir = out_dir / target_name
         target_dir.mkdir(parents=True, exist_ok=True)
         for operation_name, text in rendered.items():

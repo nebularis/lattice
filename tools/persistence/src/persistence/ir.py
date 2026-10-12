@@ -83,10 +83,17 @@ _NAME = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
 @dataclass(frozen=True)
 class Param:
+    """A request-time parameter. ``equals``, when given, is an expression the parameter must equal, such as the
+    naming rule for a graph the caller names. The guard checks it with ``sameTerm`` after the parameter's type test
+    (ADR-A123, addendum of 2026-10-12), so a builder declares a check on the parameter and never writes guard
+    conjuncts of its own. It is checked as a guard expression, and it is dropped with the other tests when guards
+    are off."""
+
     name: str
     kind: Kind
     required: bool = True
     compare: Compare = Compare.TERM
+    equals: Optional["Expr"] = None
 
     def __post_init__(self) -> None:
         if not isinstance(self.name, str) or not _NAME.match(self.name):

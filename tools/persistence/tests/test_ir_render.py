@@ -428,3 +428,22 @@ def test_h2_1_t29_a_bind_sees_only_its_own_group_on_rdflib(kind):
 def test_h2_1_t29b_not_exists_sees_the_enclosing_group_on_rdflib():
     assert list(Dataset().query("SELECT ?a WHERE { BIND(1 AS ?a) FILTER NOT EXISTS { FILTER(?a = 1) } }")) == []
 
+
+
+# ---- H2.3-Q2: a GRAPH ?g in an inner group, with ?g bound by an enclosing group -------------------------------
+# The join restricts the result to ?g's triples. Run on rdflib, as the scope rule is (plan 5.1).
+
+_JOIN = {
+    "OPTIONAL": "OPTIONAL { GRAPH ?g { ?s ?p ?o } }",
+    "nested group": "{ GRAPH ?g { ?s ?p ?o } }",
+    "UNION branch": "{ GRAPH ?g { ?s ?p ?o } } UNION { GRAPH ?g { ?s ?p ?o } }",
+}
+
+
+@pytest.mark.parametrize("shape", sorted(_JOIN))
+def test_h2_3_t2_a_graph_variable_bound_outside_restricts_an_inner_group_to_that_graph_on_rdflib(shape):
+    ds = Dataset()
+    ds.graph(URIRef("urn:g1")).add((URIRef("urn:s1"), URIRef("urn:p"), RdfLiteral(1)))
+    ds.graph(URIRef("urn:g2")).add((URIRef("urn:s2"), URIRef("urn:p"), RdfLiteral(2)))
+    rows = {str(row[0]) for row in ds.query("SELECT ?s WHERE { BIND(<urn:g1> AS ?g) " + _JOIN[shape] + " }") if row[0] is not None}
+    assert rows == {"urn:s1"}

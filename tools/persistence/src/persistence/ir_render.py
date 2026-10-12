@@ -17,7 +17,7 @@ with prefixes, so the output reads like the templates it replaces.
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Iterable, Optional
 
 from rdflib.namespace import XSD
@@ -34,6 +34,7 @@ from .terms import Iri, Literal
 RULES: tuple[str, ...] = (
     "InvalidName",
     "InvalidParameterKind",
+    "InvalidEquals",
     "UnencodedConstant",
     "InvalidForm",
     "DuplicateParameter",
@@ -103,6 +104,17 @@ class AccessSets:
 class _Scope:
     definite: set
     possible: set
+    # Variables the enclosing groups bind. A BIND inside an inner group does not see them (the group is evaluated on
+    # its own), but a pattern's solutions are joined with the enclosing group's afterwards, so a GRAPH ?g whose ?g an
+    # enclosing group binds yields only that graph's triples (ADR-A123, second addendum of 2026-10-12).
+    joined: set = field(default_factory=set)
+
+    def inner(self, *, copy: bool = False) -> "_Scope":
+        """The scope of a group nested in this one. ``copy`` is for NOT EXISTS, which is evaluated per outer solution."""
+        enclosing = self.joined | self.definite
+        if copy:
+            return _Scope(set(self.definite), set(self.possible), enclosing)
+        return _Scope(set(), set(), enclosing)
 
 
 class _Checker:
@@ -124,6 +136,7 @@ class _Checker:
         if not isinstance(op.id, str) or not op.id:
             raise IrError("InvalidForm", "an operation needs an id")
         self._params()
+        self._equals()
         is_select = op.select is not None
         is_update = bool(op.insert or op.delete)
         if is_select == is_update:
@@ -152,6 +165,29 @@ class _Checker:
             if param.name in self.params:
                 raise IrError("DuplicateParameter", f"parameter {param.name!r} is declared twice")
             self.params[param.name] = param
+
+    def _equals(self) -> None:
+        """Check every ``equals`` expression as a guard expression. It is checked whether or not guards are on."""
+        for param in self.params.values():
+            if param.equals is None:
+                continue
+            if not param.required or param.kind in SLOT_KINDS:
+                raise IrError("InvalidEquals", f"{self.op.id}: ${param.name} has an equals check, which needs a required parameter that is not a slot")
+            if self._variables(param.equals):
+                raise IrError("InvalidEquals", f"{self.op.id}: the equals check of ${param.name} names a variable, and the guard group binds none")
+            self._expr(param.equals, guard=True)
+            self._clock_check(param.equals, True)
+
+    def _variables(self, expr) -> bool:
+        if isinstance(expr, Var):
+            return True
+        if isinstance(expr, Func):
+            return any(self._variables(a) for a in expr.args)
+        if isinstance(expr, (Op, ValueGuard, TermGuard)):
+            return self._variables(expr.left) or self._variables(expr.right)
+        if isinstance(expr, Not):
+            return self._variables(expr.arg)
+        return False
 
     def _guard(self) -> None:
         guard = self.op.guard
@@ -222,10 +258,11 @@ class _Checker:
         term = graph.term
         if isinstance(term, Var):
             self._var(term)
-            if where and scope is not None and term.name not in scope.definite:
+            if where and scope is not None and term.name not in scope.definite and term.name not in scope.joined:
                 raise IrError(
                     "UnboundGraphVariable",
-                    f"{self.op.id}: GRAPH ?{term.name} is matched before a BIND or VALUES binds it, so it ranges over every graph",
+                    f"{self.op.id}: GRAPH ?{term.name} is matched before a BIND or VALUES binds it in this group or an enclosing one, "
+                    "so it ranges over every graph",
                 )
         elif isinstance(term, ParamRef):
             self._param_ref(term)
@@ -253,7 +290,7 @@ class _Checker:
             if isinstance(el.graph.term, Var):
                 names.add(el.graph.term.name)
                 scope.definite.add(el.graph.term.name)
-            inner = _Scope(set(), set())
+            inner = scope.inner()
             self._group(el.elements, inner, el)
             scope.definite |= inner.definite
             scope.possible |= inner.possible
@@ -262,12 +299,12 @@ class _Checker:
             # SPARQL evaluates an inner group on its own and joins it afterwards, so a BIND or a GRAPH ?g inside
             # it does not see what the enclosing group bound (SPARQL 1.1 section 18.2). Only NOT EXISTS, which is
             # evaluated once per outer solution with its values substituted, does.
-            inner = _Scope(set(), set())
+            inner = scope.inner()
             self._group(el.group.elements, inner, graph)
             scope.possible |= inner.definite - scope.definite | inner.possible
             return self._mentioned(el.group.elements)
         if isinstance(el, NotExists):
-            inner = _Scope(set(scope.definite), set(scope.possible))
+            inner = scope.inner(copy=True)
             self._group(el.group.elements, inner, graph)
             return self._mentioned(el.group.elements)
         if isinstance(el, Filter):
@@ -303,7 +340,7 @@ class _Checker:
             branches = []
             names: set = set()
             for g in el.groups:
-                inner = _Scope(set(), set())
+                inner = scope.inner()
                 self._group(g.elements, inner, graph)
                 branches.append(inner)
                 names |= self._mentioned(g.elements)
@@ -314,7 +351,7 @@ class _Checker:
                 scope.possible |= every - common
             return names
         if isinstance(el, Group):
-            inner = _Scope(set(), set())
+            inner = scope.inner()
             self._group(el.elements, inner, graph)
             scope.definite |= inner.definite
             scope.possible |= inner.possible
@@ -791,6 +828,8 @@ def _guard_expr(op: Operation) -> Optional[Expr]:
             conjuncts.append(ValueGuard("!=", Func("LANG", (ref,)), Const(Literal.encode(""))))
         else:
             conjuncts.append(ValueGuard("=", Func("DATATYPE", (ref,)), Const(Iri.encode(str(_GUARD_DATATYPE[param.kind])))))
+        if param.equals is not None:
+            conjuncts.append(TermGuard(ref, param.equals))
     if not conjuncts:
         return None
     expr = conjuncts[0]

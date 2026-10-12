@@ -17,8 +17,8 @@ from rdflib import RDF, XSD, Dataset, Literal as RdfLiteral, URIRef
 from persistence import witness
 from persistence.builders import BUILDERS, GRAPH_ROLES, Bindings, build, build_recording
 from persistence.compiler import CompileError, compile_to_graph
-from persistence.ir import GUARDS_OFF, Const, Graph, GraphBlock, GraphRole, Kind, Path, Var
-from persistence.ir_render import render
+from persistence.ir import GUARDS_OFF, SLOT_KINDS, Const, Graph, GraphBlock, GraphRole, Kind, ParamRef, Path, TermGuard, Var
+from persistence.ir_render import _Out, render
 from persistence.terms import Iri, Literal, PropertyPath
 
 import equivalence as eq
@@ -51,8 +51,13 @@ def _first(stem: str):
 # ---- the harness ----------------------------------------------------------------------------------------
 
 
-def test_h2_2_t1_the_ported_operations_are_the_four_templates_and_every_one_is_generated_by_a_fixture():
-    assert PORTED == ["append-event", "append-event-dataset-guard", "bootstrap-version-row", "bootstrap-version-row-dataset-guard"]
+def test_h2_2_t1_the_ported_operations_are_the_templates_listed_and_every_one_is_generated_by_a_fixture():
+    assert PORTED == [
+        "append-event", "append-event-dataset-guard", "bootstrap-version-row", "bootstrap-version-row-dataset-guard",
+        "cas-replace-named-graph", "cas-replace-named-graph-dataset-guard",
+        "create-if-absent-named-graph", "create-if-absent-named-graph-dataset-guard",
+        "tombstone-delete-named-graph", "tombstone-delete-named-graph-dataset-guard", "unconditional-write",
+    ]
     assert {stem for _, _, stem, _ in _ported()} == set(PORTED)
 
 
@@ -132,19 +137,22 @@ def _expected_guard_line(params) -> str:
             tests.append(f"DATATYPE(${p.name}) = xsd:string")
         elif p.kind is Kind.IRI_OR_LITERAL:
             tests.append(f"(ISIRI(${p.name}) || ISLITERAL(${p.name}))")
+        if p.equals is not None:  # computed from the parameter list, as the type tests are
+            tests.append(_Out().expr(TermGuard(ParamRef(p.name), p.equals)))
     return "FILTER(" + " && ".join(tests) + ")"
 
 
+@pytest.mark.parametrize("names", ["query", "caller"])
 @pytest.mark.parametrize("stem", PORTED)
-def test_h2_2_t6_the_guard_is_exactly_one_group_with_one_filter_of_type_tests_first_in_where(stem):
+def test_h2_2_t6_the_guard_is_exactly_one_group_with_one_filter_of_type_tests_first_in_where(stem, names):
     _, _, _, context = _first(stem)
-    guarded, _ = build_recording(stem, context)
-    bare, _ = build_recording(stem, context, guards=False)
+    guarded, _ = build_recording(stem, context, graph_names=names)
+    bare, _ = build_recording(stem, context, guards=False, graph_names=names)
     assert bare.guard == GUARDS_OFF and guarded.guard != GUARDS_OFF
     assert dataclasses.replace(guarded, guard=GUARDS_OFF) == bare
     on, off = render(guarded).splitlines(), render(bare).splitlines()
     start = on.index("WHERE {")
-    line = _expected_guard_line([p for p in guarded.params if p.required])
+    line = _expected_guard_line([p for p in guarded.params if p.required and p.kind not in SLOT_KINDS])
     # one group, one FILTER, first in WHERE, on one line when short and on three otherwise
     candidates = [["  { " + line + " }"], ["  {", "    " + line, "  }"]]
     assert any(on == off[: start + 1] + group + off[start + 1:] for group in candidates)

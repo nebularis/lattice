@@ -88,7 +88,7 @@ section below.
 | H2.1 (the typed IR and its renderer) | **built and reviewed** 2026-10-10, five defects fixed. [Validation Pack](../validation/FMH-H2-1.md). Its four decisions confirmed. Its suite ran at `1875 passed, 1 xfailed` (2026-10-12) | the maintainer's run and merge |
 | H2.2 (equivalence harness, `bootstrap-version-row` and `append-event` ported) | **built and reviewed** 2026-10-12, two review findings fixed. [Validation Pack](../validation/FMH-H2-2.md). TD-34 closed for these operations | the maintainer's run and merge |
 | H2 (typed IR) | **briefed** 2026-10-10, split into H2.0 to H2.9 ([typed IR sketch §7](../sketches/formal-methods-track-h-typed-ir.md#7-slices)) | |
-| H2.3 (named-graph row writers) | **planned** 2026-10-12, in [plan §4.1](../plans/formal-methods-track-h.md#41-h23-the-named-graph-row-writers-planned-2026-10-12), one slice by the maintainer's approval (H-D21) | H2.3-Q2 |
+| H2.3 (named-graph row writers) | **built** 2026-10-12. [Validation Pack](../validation/FMH-H2-3.md). [Plan §4.1](../plans/formal-methods-track-h.md#41-h23-the-named-graph-row-writers-planned-2026-10-12), one slice by the maintainer's approval (H-D21) | the maintainer's run and merge |
 | H3 (specification registry) | not started, outlined in the plan | H2 preferred first (smaller, more self-contained), not a hard blocker |
 | H4 (exhaustive cross-axis validation, BDD/SMT) | not started, outline only | H3 |
 | H5 (capability-record extension, TLA+/Quint toolchain spike, protocol models A-D) | not started, outline only | H2 (read/write sets from the IR). ADR-A-FM4 is accepted |
@@ -464,3 +464,13 @@ section below.
   on the parameter (`Param(..., equals=...)`), derived by `ParameterGuard.derive` and validated by `check` as a guard
   expression. The plan's step 8 says so.
 
+- 2026-10-12: H2.3 built ([FMH-H2-3](../validation/FMH-H2-3.md)), autonomously on this branch. The create, replace and
+  tombstone builders, each with its dataset-guard variant, and the unconditional write are ported, and the harness compares 90
+  operations, all equal to their templates. The scope rule follows the join (H2.3-Q2) with an engine test. `Param.equals`
+  carries the naming check of the caller-named graph, as the maintainer directed, so a builder never writes a guard
+  conjunct, and `InvalidEquals` is a new rule beside the ones he named. `instantiate --caller-graph-names` selects the
+  caller-named form. Two findings. A probe that swapped the metadata and transaction roles in `GRAPH_ROLES` was not caught,
+  because the role test asked the same table, so T32 states the roles apart from it. And three HO8 tests bound `$epoch` as
+  an `xsd:integer`, which the guard now refuses, so their input is `xsd:long`. rdflib also writes a root-less
+  unconditional write into a blank-node graph, where the specification skips the quad (recorded in T8). `check:persistence`
+  gave `2003 passed, 1 xfailed`. Eight implementation probes, seven caught first time.

@@ -19,7 +19,7 @@ from typing import Callable, Mapping
 
 from .ir import (
     A, Bind, Binding, Const, Filter, Func, Graph, GraphBlock, GraphRole, Group, Kind, NotExists, Op, Operation,
-    Optional_, Param, ParamRef, Path, Triple, Var,
+    Optional_, Param, ParamRef, PayloadSlot, Path, Triple, Var,
 )
 from .namespaces import PAT
 from .terms import Integer, Iri, Literal, PropertyPath
@@ -219,27 +219,223 @@ def _append(b: Bindings, *, guards: bool, dataset_guard: bool) -> Operation:
     )
 
 
-Builder = Callable[[Bindings, bool], Operation]
+# ---- the named-graph row writers
+
+
+def _graph_name(b: Bindings) -> Func:
+    """The rule of ADR-A122 decision 8, `IRI(CONCAT(prefix, ENCODE_FOR_URI(STR($root)), suffix))`."""
+    return Func("IRI", (Func("CONCAT", (b.const("graphPrefix"), Func("ENCODE_FOR_URI", (Func("STR", (ParamRef("root"),)),)), b.const("graphSuffix"))),))
+
+
+class _Named:
+    """How an operation names the root's graph. By default the query computes `?g` from `$root`. When the caller
+    names it (ADR-A123, second addendum of 2026-10-12) the operation declares `$g`, whose `equals` is the naming rule,
+    so the guard checks it, and every `GRAPH ?g` is `GRAPH $g`."""
+
+    def __init__(self, b: Bindings, graph_names: str) -> None:
+        if graph_names not in ("query", "caller"):
+            raise ValueError(f"graph_names is 'query' or 'caller', not {graph_names!r}")
+        self.caller = graph_names == "caller"
+        self.rule = _graph_name(b)
+
+    def params(self) -> tuple:
+        return (Param("g", Kind.IRI, equals=self.rule),) if self.caller else ()
+
+    def binds(self) -> tuple:
+        return () if self.caller else (Bind(self.rule, Var("g")),)
+
+    def graph(self, binding: Binding | None = None) -> Graph:
+        return Graph(GRAPH_ROLES["g"], ParamRef("g")) if self.caller else graph_var("g", binding)
+
+
+def _log_binds(b: Bindings) -> tuple:
+    return (
+        Bind(Func("IRI", (Func("CONCAT", (Func("STR", (b.const("logGraphPrefix"),)), Func("SUBSTR", (Func("STR", (Func("NOW"),)), _int(1), _int(7))))),)), Var("logGraph")),
+    )
+
+
+def _claim_binds() -> tuple:
+    return (Bind(Func("STR", (ParamRef("txnId"),)), Var("txnKey")), Bind(Func("NOW"), Var("now")))
+
+
+def _dataset_guard(b: Bindings) -> tuple:
+    return (GraphBlock(b.graph("datasetGraph"), (Triple(b.const("datasetNode"), _pat("epoch"), ParamRef("epoch")),)),)
+
+
+_ROW_PARAMS = (
+    Param("root", Kind.IRI), Param("epoch", Kind.LONG), Param("newRev", Kind.IRI), Param("txnId", Kind.IRI),
+    Param("requestDigest", Kind.DIGEST),
+)
+_CAS_PARAMS = (
+    Param("root", Kind.IRI), Param("epoch", Kind.LONG), Param("expectedSeq", Kind.POSITION),
+    Param("nextSeq", Kind.POSITION), Param("newRev", Kind.IRI), Param("txnId", Kind.IRI),
+    Param("requestDigest", Kind.DIGEST),
+)
+
+
+def _claim_block(b: Bindings) -> GraphBlock:
+    return GraphBlock(b.graph("txnGraph"), (
+        Triple(ParamRef("txnId"), _pat("rev"), ParamRef("newRev")),
+        Triple(ParamRef("txnId"), _pat("requestDigest"), ParamRef("requestDigest")),
+    ))
+
+
+def _create(b: Bindings, *, guards: bool, dataset_guard: bool, graph_names: str) -> Operation:
+    named = _Named(b, graph_names)
+    meta = b.graph("metaGraphPrefix")
+    root, epoch, new_rev = ParamRef("root"), ParamRef("epoch"), ParamRef("newRev")
+    where = (
+        *named.binds(),
+        *_log_binds(b),
+        *(_dataset_guard(b) if dataset_guard else ()),
+        NotExists(Group((GraphBlock(meta, (Triple(root, _pat("seq"), _ANY),)),))),
+        NotExists(Group((GraphBlock(b.graph("txnGraph"), (Triple(ParamRef("txnId"), _pat("rev"), _ANY),)),))),
+        *_claim_binds(),
+    )
+    insert = (
+        GraphBlock(named.graph(Binding.BOUND), (PayloadSlot("payloadTriples"),)),
+        GraphBlock(meta, (
+            Triple(root, A, _pat("VersionRow")), Triple(root, _pat("epoch"), epoch),
+            Triple(root, _pat("seq"), _long("1")), Triple(root, _pat("head"), new_rev),
+        )),
+        _claim_block(b),
+        GraphBlock(graph_var("logGraph", Binding.BOUND), (
+            Triple(new_rev, A, _pat("Revision")), Triple(new_rev, _pat("target"), root), Triple(new_rev, _pat("epoch"), epoch),
+            Triple(new_rev, _pat("seq"), _long("1")), Triple(new_rev, _pat("txn"), _bound("txnKey")),
+            Triple(new_rev, _pat("recordedAt"), _bound("now")),
+        )),
+    )
+    return Operation.build(
+        "create-if-absent-named-graph" + ("-dataset-guard" if dataset_guard else ""),
+        (*_ROW_PARAMS, Param("payloadTriples", Kind.PAYLOAD), *named.params()),
+        Group(where), guards=guards, insert=insert,
+    )
+
+
+def _sweep_delete(b: Bindings, named: _Named, *, dataset_guard: bool) -> tuple:
+    root = ParamRef("root")
+    row = ((Triple(root, _pat("epoch"), _bound("rowEpoch")),) if dataset_guard else ())
+    return (
+        GraphBlock(named.graph(Binding.BOUND), (Triple(_optional("s"), _optional("p"), _optional("o")),)),
+        GraphBlock(b.graph("metaGraphPrefix"), (*row, Triple(root, _pat("seq"), ParamRef("expectedSeq")), Triple(root, _pat("head"), _optional("prevRev")))),
+    )
+
+
+def _row_where(b: Bindings, named: _Named, *, dataset_guard: bool) -> tuple:
+    """The `WHERE` of replace and tombstone, which differ only in their templates."""
+    root = ParamRef("root")
+    epoch = Var("rowEpoch") if dataset_guard else ParamRef("epoch")
+    return (
+        *named.binds(),
+        *_log_binds(b),
+        *(_dataset_guard(b) if dataset_guard else ()),
+        GraphBlock(b.graph("metaGraphPrefix"), (
+            Triple(root, _pat("epoch"), epoch),
+            Triple(root, _pat("seq"), ParamRef("expectedSeq")),
+            Optional_(Group((Triple(root, _pat("head"), Var("prevRev")),))),
+            NotExists(Group((Triple(root, _pat("deleted"), _TRUE),))),
+        )),
+        NotExists(Group((GraphBlock(b.graph("txnGraph"), (Triple(ParamRef("txnId"), _pat("rev"), _ANY),)),))),
+        *_claim_binds(),
+        Optional_(Group((GraphBlock(named.graph(), (Triple(Var("s"), Var("p"), Var("o")),)),))),
+    )
+
+
+def _replace(b: Bindings, *, guards: bool, dataset_guard: bool, graph_names: str) -> Operation:
+    named = _Named(b, graph_names)
+    root, epoch, new_rev = ParamRef("root"), ParamRef("epoch"), ParamRef("newRev")
+    insert = (
+        GraphBlock(named.graph(Binding.BOUND), (PayloadSlot("payloadTriples"),)),
+        GraphBlock(b.graph("metaGraphPrefix"), (
+            Triple(root, _pat("epoch"), epoch), Triple(root, _pat("seq"), ParamRef("nextSeq")), Triple(root, _pat("head"), new_rev),
+        )),
+        _claim_block(b),
+        GraphBlock(graph_var("logGraph", Binding.BOUND), (
+            Triple(new_rev, A, _pat("Revision")), Triple(new_rev, _pat("target"), root), Triple(new_rev, _pat("epoch"), epoch),
+            Triple(new_rev, _pat("seq"), ParamRef("nextSeq")), Triple(new_rev, _pat("prevRev"), _optional("prevRev")),
+            Triple(new_rev, _pat("txn"), _bound("txnKey")), Triple(new_rev, _pat("recordedAt"), _bound("now")),
+            Triple(new_rev, _pat("asserts"), ParamRef("assertGraph")), Triple(new_rev, _pat("retracts"), ParamRef("retractGraph")),
+        )),
+    )
+    return Operation.build(
+        "cas-replace-named-graph" + ("-dataset-guard" if dataset_guard else ""),
+        (
+            *_CAS_PARAMS, Param("assertGraph", Kind.IRI, required=False), Param("retractGraph", Kind.IRI, required=False),
+            Param("payloadTriples", Kind.PAYLOAD), *named.params(),
+        ),
+        Group(_row_where(b, named, dataset_guard=dataset_guard)), guards=guards, insert=insert,
+        delete=_sweep_delete(b, named, dataset_guard=dataset_guard),
+    )
+
+
+def _tombstone(b: Bindings, *, guards: bool, dataset_guard: bool, graph_names: str) -> Operation:
+    named = _Named(b, graph_names)
+    root, epoch, new_rev = ParamRef("root"), ParamRef("epoch"), ParamRef("newRev")
+    insert = (
+        GraphBlock(b.graph("metaGraphPrefix"), (
+            Triple(root, _pat("epoch"), epoch), Triple(root, _pat("seq"), ParamRef("nextSeq")),
+            Triple(root, _pat("head"), new_rev), Triple(root, _pat("deleted"), _TRUE),
+        )),
+        _claim_block(b),
+        GraphBlock(graph_var("logGraph", Binding.BOUND), (
+            Triple(new_rev, A, _pat("Revision")), Triple(new_rev, A, _pat("Deletion")), Triple(new_rev, _pat("target"), root),
+            Triple(new_rev, _pat("epoch"), epoch), Triple(new_rev, _pat("seq"), ParamRef("nextSeq")),
+            Triple(new_rev, _pat("prevRev"), _optional("prevRev")), Triple(new_rev, _pat("txn"), _bound("txnKey")),
+            Triple(new_rev, _pat("recordedAt"), _bound("now")), Triple(new_rev, _pat("cause"), ParamRef("cause")),
+            Triple(new_rev, _pat("actor"), ParamRef("actor")),
+        )),
+    )
+    return Operation.build(
+        "tombstone-delete-named-graph" + ("-dataset-guard" if dataset_guard else ""),
+        (*_CAS_PARAMS, Param("cause", Kind.IRI), Param("actor", Kind.IRI), *named.params()),
+        Group(_row_where(b, named, dataset_guard=dataset_guard)), guards=guards, insert=insert,
+        delete=_sweep_delete(b, named, dataset_guard=dataset_guard),
+    )
+
+
+def _unconditional(b: Bindings, *, guards: bool, graph_names: str) -> Operation:
+    named = _Named(b, graph_names)
+    return Operation.build(
+        "unconditional-write",
+        (Param("root", Kind.IRI), Param("payloadTriples", Kind.PAYLOAD), *named.params()),
+        Group(named.binds()), guards=guards,
+        insert=(GraphBlock(named.graph(Binding.BOUND), (PayloadSlot("payloadTriples"),)),),
+    )
+
+
+Builder = Callable[[Bindings, bool, str], Operation]
 
 BUILDERS: dict[str, Builder] = {
-    "bootstrap-version-row": lambda b, guards: _bootstrap(b, guards=guards, dataset_guard=False),
-    "bootstrap-version-row-dataset-guard": lambda b, guards: _bootstrap(b, guards=guards, dataset_guard=True),
-    "append-event": lambda b, guards: _append(b, guards=guards, dataset_guard=False),
-    "append-event-dataset-guard": lambda b, guards: _append(b, guards=guards, dataset_guard=True),
+    "bootstrap-version-row": lambda b, guards, names: _bootstrap(b, guards=guards, dataset_guard=False),
+    "bootstrap-version-row-dataset-guard": lambda b, guards, names: _bootstrap(b, guards=guards, dataset_guard=True),
+    "append-event": lambda b, guards, names: _append(b, guards=guards, dataset_guard=False),
+    "append-event-dataset-guard": lambda b, guards, names: _append(b, guards=guards, dataset_guard=True),
+    "create-if-absent-named-graph": lambda b, guards, names: _create(b, guards=guards, dataset_guard=False, graph_names=names),
+    "create-if-absent-named-graph-dataset-guard": lambda b, guards, names: _create(b, guards=guards, dataset_guard=True, graph_names=names),
+    "cas-replace-named-graph": lambda b, guards, names: _replace(b, guards=guards, dataset_guard=False, graph_names=names),
+    "cas-replace-named-graph-dataset-guard": lambda b, guards, names: _replace(b, guards=guards, dataset_guard=True, graph_names=names),
+    "tombstone-delete-named-graph": lambda b, guards, names: _tombstone(b, guards=guards, dataset_guard=False, graph_names=names),
+    "tombstone-delete-named-graph-dataset-guard": lambda b, guards, names: _tombstone(b, guards=guards, dataset_guard=True, graph_names=names),
+    "unconditional-write": lambda b, guards, names: _unconditional(b, guards=guards, graph_names=names),
 }
 """The ported operations, keyed by template stem. A template with no entry is still rendered by Mustache."""
 
 
-def build(template: str, context: Mapping, *, guards: bool = True) -> Operation:
+def build(template: str, context: Mapping, *, guards: bool = True, graph_names: str = "query") -> Operation:
     """The typed operation for the template named ``template``, from the operation's compile-time bindings.
-    ``guards`` is false for a caller whose own code checks every parameter (ADR-A123, addendum of 2026-10-12)."""
-    return BUILDERS[template](Bindings(context), guards)
+    ``guards`` is false for a caller whose own code checks every parameter (ADR-A123, addendum of 2026-10-12).
+    ``graph_names`` is ``caller`` for an operation that names the root's graph, to have the caller name it as ``$g``
+    (second addendum of 2026-10-12). It changes only the operations that name a graph, and is the one place the
+    output is a change and not a port."""
+    return BUILDERS[template](Bindings(context), guards, graph_names)
 
 
-def build_recording(template: str, context: Mapping, *, guards: bool = True) -> tuple[Operation, set[str]]:
+def build_recording(
+    template: str, context: Mapping, *, guards: bool = True, graph_names: str = "query"
+) -> tuple[Operation, set[str]]:
     """As :func:`build`, with the names of the bindings the builder read."""
     bindings = Bindings(context)
-    return BUILDERS[template](bindings, guards), bindings.read
+    return BUILDERS[template](bindings, guards, graph_names), bindings.read
 
 
 __all__ = ["BUILDERS", "GRAPH_ROLES", "Bindings", "build", "build_recording", "graph_var"]
