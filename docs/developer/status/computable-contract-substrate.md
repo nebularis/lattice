@@ -18,9 +18,10 @@ Behaviour 0.10.0 (shapes 0.4.0) with nested states and history, the import guard
 check`. In tranche D, C6 to C7c are merged and tagged (Instrument 0.12.0, Party 0.8.0, Quantification
 0.7.0). C8 and C8b are merged and tagged (Instrument 0.14.0, Wording 0.7.0). C9 is briefed and splits into C9a to C9c. Its materiality question has its own sketch. From C5 on, slices are built and verified on the branch, and the maintainer commits by hand.
 
-**Next action, for the maintainer:** merge `ccs/hq6a1-closures-model` into `main` and create its
-release tags. HQ-6a.1 is accepted (2026-10-12) and its probes caught their defects (its Validation
-Pack). Then HQ-6a.2, the compilers.
+**Next action, for the maintainer:** commit HQ-6a.2's examples on `ccs/hq6a2-closures-compilers`
+(worktree `~/work/lattice-wt/ccs-hq6a2-closures-compilers`). Then its model phase: the compilers apply
+closures, report reliance (HQ6a2-Q1, Q2), refuse with `exe:NoClosureLicence`, and the reference
+returns reliance (HQ6a2-Q3).
 
 ## Slice board
 
@@ -43,7 +44,7 @@ Pack). Then HQ-6a.2, the compilers.
 | C8, C8b | values in stated meaning, Wording references by identity | D | merged, tagged | |
 | C9a | amendments, assents and taking effect | D | merged, tagged | |
 | C9b0, C9b1, C9b2 | Eligibility sources, legal acts, additivity | D | merged, tagged 2026-10-10 | |
-| HQ-6a.1, HQ-6a.2 | untimed closures (ADR-A105): the model and reference semantics, then the compilers | D | HQ-6a.1 accepted 2026-10-12, to merge | HQ-6a.2 after HQ-6a.1 |
+| HQ-6a.1, HQ-6a.2 | untimed closures (ADR-A105): the model and reference semantics, then the compilers | D | HQ-6a.1 merged 2026-10-12. HQ-6a.2 examples written | |
 | C9b3, C9b4, C9d, C9c, C8a | set comparisons, qualifying rules, materiality, incorporation, template library | D | planned | C9b3 waits on HQ-6 (NRS N5, ADR-A105). C9b4 on C9b3 |
 | C16c | remove Party's shares | F | planned, required before the epic closes | C9b4 |
 | C7a | regimes and gating, split from C7 | D | merged to `main` (`c6e5853`) and tagged | |
@@ -173,3 +174,4 @@ Pack). Then HQ-6a.2, the compilers.
 - 2026-10-12: HQ6a-Q5 answered (b), found writing HQ-6a.1's examples: a closure states only its source and covers exactly the bindings that name it. The refusal tests that a named closure exists and has a source
 - 2026-10-12: HQ-6a.1 built on `ccs/hq6a1-closures-model`: ADR-A105 and ADR-A103's addendum (Proposed), Eligibility 0.12.0 with closures, L15 restated and L17, the Isabelle readings re-proved (13 claims re-digested), the reference semantics, `test_closures.py`, and the cascade to nine documents. `check:full-sweep` and `check:proofs` pass
 - 2026-10-12: HQ-6a.1 accepted by the maintainer, with ADR-A105 and ADR-A103's addendum. Three adversarial probes, our pick, each caught: the reference's open reading made closed (11 tests fail), the set-reading shape loosened (HQ6a1-02 fails), the Isabelle closed reading folded from Undetermined (the session fails to build). Recorded in the Validation Pack
+- 2026-10-12: HQ-6a.1 merged and tagged. HQ-6a.2 started in its own worktree. Its examples state the compilers' outcomes under closures (15 tests red, as expected). HQ6a2-Q1 to Q3 answered as leaned: reliance as a `?closure` column per row, only where completeness decided, a profile naming the union of its conditions' closures, the compilers minting no records (C12 does), and the reference returning reliance. Recorded in the plan and an ADR-A105 addendum
