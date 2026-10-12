@@ -187,7 +187,7 @@ track's first design-level decision, taken alongside H1 (§5 of the plan).
 
 ## 6. Non-goals, for this sketch and all its siblings
 
-Everything named "out of scope" in §2. Mechanising full SPARQL semantics. Replacing
+Everything named "out of scope" in §2. Mechanising full SPARQL semantics (a model of the fragment the compiler emits is proposed as PDD-06, plan §5.1). Replacing
 `tools/persistence`'s Python compiler with anything generated wholesale — per the review's own
 §17.3 and this epic's existing E3 principle ("no generated OCaml or Haskell runs against the live
 graph"), nothing here changes that: generated code from this track's work is data (templates,

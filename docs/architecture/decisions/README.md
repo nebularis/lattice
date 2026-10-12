@@ -67,7 +67,7 @@ This directory holds the ADRs that govern LATTICE's substrate architecture. An A
 | [A-FM3](ADR-A-FM3-reference-evaluator-home-and-scope.md) | Home and scope of the reference evaluator and its oracle (`tools/reference/`) | Accepted |
 | [A-FM4](ADR-A-FM4-persistence-formal-methods-home-and-scope.md) | Home and scope of the Persistence formal-methods track | Accepted |
 | [A-78](ADR-A78-persistence-profile-substrate-and-aggregate-boundaries.md) | Persistence profile substrate and configurable aggregate boundaries | Accepted, decision 4 amended by A-122 |
-| [A-79](ADR-A79-persistence-compiler-toolchain.md) | Persistence compiler toolchain and template-based SPARQL generation | Accepted |
+| [A-79](ADR-A79-persistence-compiler-toolchain.md) | Persistence compiler toolchain and template-based SPARQL generation | Accepted, with addendum (2026-10-10, ADR-A123) |
 | [A-80](ADR-A80-housekeeping-component-boundary.md) | Housekeeping component boundary | Accepted |
 | [A-48](ADR-A48-transaction-boundary-catalogue.md) | Transaction boundary catalogue (replaces CAP framing) | Proposed |
 | [A-50](ADR-A50-role-profiled-deployment.md) | Role-profiled deployment | Proposed |
@@ -119,7 +119,7 @@ This directory holds the ADRs that govern LATTICE's substrate architecture. An A
 | [A-119](ADR-A119-xslt-transformation-sidecar.md) | Bidirectional XSLT transformation sidecar | Proposed |
 | [A-120](ADR-A120-literate-specs-with-several-documents.md) | Literate specs with several documents | Accepted |
 | [A-122](ADR-A122-aggregate-ownership.md) | Aggregate ownership, a classified boundary shape for every boundary strategy | Accepted, 2026-10-10 |
-| [A-123](ADR-A123-typed-operation-ir.md) | A typed operation IR for the persistence compiler | Proposed |
+| [A-123](ADR-A123-typed-operation-ir.md) | A typed operation IR for the persistence compiler | Accepted, 2026-10-10 |
 
 **The `A-FM` block.** ADR-A-FM1 and its successors are the `formal-methods` epic's own ADRs,
 filed outside the main sequential pool for the same reason `A-CAP` and `A-C` are: this epic's

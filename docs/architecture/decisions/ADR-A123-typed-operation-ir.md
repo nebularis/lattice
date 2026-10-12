@@ -2,7 +2,7 @@
 
 # ADR-A123: A typed operation IR for the persistence compiler
 
-**Status:** Proposed
+**Status:** Accepted, 2026-10-10, with the ADR-A79 addendum applied the same day, and an addendum of its own (2026-10-12)
 **Date:** 2026-10-10
 **Supersedes:** parts of [ADR-A79](ADR-A79-persistence-compiler-toolchain.md), listed under Decision 10. ADR-A79 stays Accepted for the rest
 **Related:** [ADR-A78](ADR-A78-persistence-profile-substrate-and-aggregate-boundaries.md),
@@ -62,10 +62,13 @@ reason, so it is kept as it is for now.
    key claim, a log bucket), not SPARQL graph roles. The builders map each logical resource to a graph role.
    A relational realisation reads the same declarations and can be compared with this one operation by operation
    (H2-Q5, H2-Q6). The `OwnershipTree` stays in `persistence.boundary`, and the IR holds a reference to it.
-5. **The required-parameter guard runs twice.** It is generated from the parameter list as `FILTER(BOUND($p))` at
-   the top of `WHERE`, with a `DATATYPE` test for `Long`, `Position` and `Digest`, so a missing parameter becomes
+5. **The required-parameter guard runs twice.** It is generated from the parameter list as `FILTER(BOUND($p))` in
+   its own group at the top of `WHERE`, `{ FILTER(...) }`, with a `DATATYPE` test for `Long`, `Position` and `Digest`, so a missing parameter becomes
    no write for every caller. The Python caller also refuses a missing or mistyped parameter before sending and
-   says why, since a guard that fails reads as a lost race (H2-Q4).
+   says why, since a guard that fails reads as a lost race (H2-Q4). The guard needs its own group because a `FILTER`
+   applies to the solutions of its whole group, after the group's patterns have matched. As a top-level `FILTER`, a
+   missing `$root` would be bound from the data by a pattern such as `$root pat:seq $expectedSeq`, and the guard would
+   pass for every aggregate (found in the H2.1 review, 2026-10-10, before acceptance).
 6. **The payload is typed, as ground triples bounded by the boundary shape (PL-B).** A `Payload` is a set of
    subject, predicate and object terms passed through the encoders. It renders as sorted canonical N-Triples,
    and the same lines feed `$requestDigest`. Every subject must be the root or be reached from the root within
@@ -122,10 +125,32 @@ reason, so it is kept as it is for now.
 - Sharding (TD-06, TD-41), infrastructure graph names (TD-05), PL-C (SHACL conformance of the payload), the
   staged in-store payload check and the specification registry (H3) are not decided here.
 
-## Draft addendum for ADR-A79
+## The ADR-A79 addendum
 
-To be added to ADR-A79 when this ADR is accepted, dated then. ADR-A79 stays Accepted.
+Applied to [ADR-A79](ADR-A79-persistence-compiler-toolchain.md) on 2026-10-10, when this ADR was accepted.
 
-> **Addendum, (date of A123's acceptance).** [ADR-A123](ADR-A123-typed-operation-ir.md) supersedes decision 3's
-> Mustache layer, decision 4's renderer clause, the consequence that templates stay auditable by inspection, and
-> `dal:templatePath` in decision 1. Everything else here stands.
+## Addendum, 2026-10-12: parameter guards are optional, and are type tests
+
+Decided by the maintainer after the H2.1 review ([FMH-H2-1](../../developer/validation/FMH-H2-1.md#review-2026-10-10)).
+It amends decisions 5 and 8.
+
+1. **Guards are on by default and can be turned off.** Input checking normally belongs in the access layer, not the
+   store. The compiler writes the guard by default, which shows what a correctly checked query has to do. A `compile`
+   flag, `--no-parameter-guards`, leaves them out for a caller whose own code checks every parameter: LATTICE's own
+   caller library, or the deployment's application code. The compiled profile records the choice, so a caller can
+   tell whose job the checks are, and `compile` reports guards that are off as an `INFO` diagnostic naming that
+   obligation. With guards off, a request that leaves out `$root` can write every aggregate whose version row
+   matches, and preventing it is the caller's job.
+2. **A guard is a type test per parameter, not `BOUND`.** `isIRI($p)` for `Iri`, `DATATYPE($p) = xsd:long` for `Long`
+   and `Position`, `DATATYPE($p) = xsd:string` for `Digest` and `String`, `LANG($p) != ""` for `LangString`. An
+   unbound parameter makes its test an error, which fails the filter, so the test also catches a missing parameter.
+   Unlike `BOUND`, it still parses when a caller substitutes the parameter's text, which a caller with no
+   initial-binding API must do. It also catches a parameter of the wrong type, such as an IRI bound to a literal.
+3. **The guard stays in its own group at the top of `WHERE`**, as decision 5 says. It runs once per request, so it
+   costs about nothing, where a top-level `FILTER` ran once per solution (measured on rdflib, FMH-H2-1).
+4. **An operation carries the derived guard or an explicit "guards off" value**, never none. `check` refuses an
+   operation without one, so a builder cannot drop it by accident. The equivalence harness of decision 8 renders with
+   guards off, not with the guard removed from the value.
+
+Where each part lands: the builders take the flag from H2.2, the `dal:` term that records it comes with the H2.7
+vocabulary, and the `INFO` diagnostic, its witness and the Python caller's own check come with H2.8.

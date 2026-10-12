@@ -4,7 +4,9 @@
 
 **Unit:** [`formal-methods-track-h`](../status/formal-methods-track-h.md), slice H2.0 of the
 [typed IR sketch §7](../../developer/sketches/formal-methods-track-h-typed-ir.md#7-slices).
-**Decisions needing confirmation:** none. The maintainer accepts or amends A123.
+**Decisions needing confirmation:** none. **A123 accepted by the maintainer on 2026-10-10**, with decision 5 corrected
+by the H2.1 review before acceptance (the guard is its own group, [FMH-H2-1](FMH-H2-1.md) F1). The ADR-A79 addendum is
+applied and dated.
 
 ## Invariant
 

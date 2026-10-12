@@ -363,7 +363,7 @@ a defect in what ships today.
 | H2-Q1 | which typed payload | PL-A, PL-B, PL-C, PL-D (§4.2) | PL-B. **Answered 2026-10-10: PL-B**, with PL-D later as an SDK |
 | H2-Q2 | a named-graph family with payload operations and no `dal:boundaryShape` | (a) PL-A only, with an informational diagnostic, (b) a compile warning, (c) refuse, so every payload is bounded | (a). The named-graph strategy replaces the root's whole graph, so a stray subject stays inside that root's own graph and cannot reach another aggregate. The harm is the one H9's "payload outside the tree" audit detects. A warning would fire on every named-graph user who has not opted in to a shape, which ADR-A122 decision 6 makes optional. **Answered 2026-10-10: (a) and (b).** Our reading, confirmed by the maintainer: informational by default, and a warning when `compile` is run with an option such as `--warn-unbounded-payload`, so no new `dal:` term. The diagnostic model gains an `INFO` severity, since today it has only `WARNING` and `ERROR` |
 | H2-Q3 | should PL-B also refuse a predicate the boundary shape does not declare | (a) no, (b) yes, closed-shape semantics | (a). An undeclared edge to a node leaves that node unreachable, so PL-B already refuses it. An undeclared value property cannot move ownership. Refusing it is SHACL's job (PL-C). **Answered 2026-10-10: (a)** |
-| H2-Q4 | where the required-parameter guard runs (TD-34) | (a) in the SPARQL only, `FILTER(BOUND($p))` and, for `Long`, `Position` and `Digest`, a `DATATYPE` test, at the top of `WHERE`, (b) in the caller library only, (c) both | (c). The SPARQL guard turns a partial write into no write for every caller. A guard that fails is then indistinguishable from a lost race in the confirmation read, so the Python caller refuses a missing or mistyped parameter before sending, and says why. **Answered 2026-10-10: (c)** |
+| H2-Q4 | where the required-parameter guard runs (TD-34) | (a) in the SPARQL only, `FILTER(BOUND($p))` (in its own group, ADR-A123 decision 5) and, for `Long`, `Position` and `Digest`, a `DATATYPE` test, at the top of `WHERE`, (b) in the caller library only, (c) both | (c). The SPARQL guard turns a partial write into no write for every caller. A guard that fails is then indistinguishable from a lost race in the confirmation read, so the Python caller refuses a missing or mistyped parameter before sending, and says why. **Answered 2026-10-10: (c)** |
 | H2-Q5 | what the compiled profile carries for a caller in another language | (a) declarations only: parameters, read and write sets, payload contract, with the query structure in the builders, (b) the whole IR as RDF, so another language could render it | (a). (b) adds an RDF encoding of SPARQL algebra to the ontology, which nobody consumes, and duplicates the `.rq` output. **Answered 2026-10-10: (a)**, provided it keeps the relational realisation open, which is H2-Q6 |
 | H2-Q6 | whether the compiled profile's declarations name logical resources or SPARQL graph roles (§3.1) | (a) a logical operation contract, (b) SPARQL terms | (a). It costs about six terms and one mapping per builder, and it is what lets a relational realisation implement and be compared against the same contract. **Answered 2026-10-10: (a)** |
 
@@ -396,13 +396,13 @@ tokens, rough, for comparison with the actual cost.
 |---|---|---|---|---|
 | H2.0 | ADR-A123, Proposed, deciding §3, §3.1, §4 and the answers of §1. ADR-A79 addendum, drafted with A123 and dated when A123 is accepted. The ADR catalogue row | docs only | this brief | 150k |
 | H2.1 | `persistence.ir` and its renderer. One refusal test per type rule of §3, a parse test for every renderable form, and a property test that a rendered operation parses as exactly one update | `ir` (new) | H2.0 | 400k |
-| H2.2 | the equivalence harness of §7.1, with its non-vacuity mutations. `bootstrap-version-row` and `append-event`, each with its dataset-guard variant, ported. The required-parameter guard, with TD-34's demonstration as a negative test on rdflib. TD-34 closed for these operations | `ir`, `builders` (new) | H2.1 | 350k |
+| H2.2 | the equivalence harness of §7.1, with its non-vacuity mutations. The builders take the guards flag. `bootstrap-version-row` and `append-event`, each with its dataset-guard variant, ported. The required-parameter guard, with TD-34's demonstration as a negative test on rdflib. TD-34 closed for these operations | `ir`, `builders` (new) | H2.1 | 350k |
 | H2.3 | the named-graph row writers ported: create-if-absent, cas-replace, cas-replace value guard, tombstone delete, unconditional write, with their variants (8 templates). The term and value guard tags meet their first real positions | `builders` | H2.2 | 400k |
 | H2.4 | the composite family: `OwnershipTree` and `PropertyPath` as IR values, the closure read set, create, replace and tombstone (6 templates). R0 ported unchanged. The benchmark and the two capability probes of §4.3 committed, on rdflib and Oxigraph (TD-42). A stop only if R0 is wrong on Oxigraph | `builders`, `paths` | H2.2 | 400k |
 | H2.5 | key claims and audits ported (10 templates). `logGraphs` as a typed `RegistryList`. `Now()` kept out of every guard | `builders` | H2.2 | 400k |
 | H2.6 | examples first (ADR-A-C2): the expected compiled-profile fixture with parameter declarations, read and write sets and a payload contract, for the maintainer to commit. With it, the paper check of §7.2 | `ontology/persistence/examples` | H2.0 | 150k |
-| H2.7 | the vocabulary and its emission: `dal:ParameterDeclaration`, read and write sets over the logical resources of H2-Q6, `dal:PayloadContract`, `dal:GroundNTriples`, `dal:templatePath` removed. `persistence` and its shapes at 0.4.0, release tags owed | `ontology/persistence`, `compiler` | H2.6, H2.3 to H2.5 | 450k |
-| H2.8 | the typed payload, per H2-Q1 to H2-Q3: the `Payload` type, canonical N-Triples and the digest, the generated `payload-check` query, the caller-side parameter check of H2-Q4, the `INFO` diagnostic and its warning option of H2-Q2, with their witnesses (§7.3) | `payload` (new), `builders` | H2.4, H2.7 | 400k |
+| H2.7 | the vocabulary and its emission: `dal:ParameterDeclaration`, read and write sets over the logical resources of H2-Q6, `dal:PayloadContract`, `dal:GroundNTriples`, the term recording whether guards are on, `--no-parameter-guards`, `dal:templatePath` removed. `persistence` and its shapes at 0.4.0, release tags owed | `ontology/persistence`, `compiler` | H2.6, H2.3 to H2.5 | 450k |
+| H2.8 | the typed payload, per H2-Q1 to H2-Q3: the `Payload` type, canonical N-Triples and the digest, the generated `payload-check` query, the caller-side parameter check of H2-Q4, the `INFO` diagnostic and its warning option of H2-Q2, and the `INFO` diagnostic for guards that are off, with their witnesses (§7.3) | `payload` (new), `builders` | H2.4, H2.7 | 400k |
 | H2.9 | Mustache retired: the templates, `render.py`, `chevron` and the harness removed. S-3 and S-4 run over the IR's output and pass by construction, and S-3 reads the parameter declarations instead of the `$name` convention (H-D11). The injection corpus runs over the builders. README, ADR-A79 addendum, milestone FMH2 | `instantiate`, `templatecheck`, tests | H2.8 | 400k |
 
 ### 7.1 The equivalence harness (H2.2)
@@ -413,10 +413,9 @@ its golden `.rq` diff listed in the slice's Validation Pack.
 
 For every ported template, with the bindings of every shipped example that selects it:
 
-1. **Render both sides.** The Mustache template with `chevron`, and the builder's `Operation` with
-   its required-parameter guard removed. The guard is a field of the `Operation`, derived from the
-   parameter list, so the harness removes it with `dataclasses.replace` on the value. No renderer
-   switch exists that could leave a production path without its guard.
+1. **Render both sides.** The Mustache template with `chevron`, and the builder's `Operation` built with
+   guards off (ADR-A123 addendum, 2026-10-12). An operation always carries the derived guard or an explicit
+   "guards off" value, so the harness asks for the second, and a builder cannot drop the guard by accident.
 2. **Normalise.** Parse each with rdflib and translate it to algebra, which removes comments,
    whitespace and prefix spelling. Then put each basic graph pattern's triples in a fixed order, since
    a basic graph pattern is a set, and the conjuncts of each filter in a fixed order, since `&&` is
@@ -425,9 +424,9 @@ For every ported template, with the bindings of every shipped example that selec
    names.
 3. **Compare for equality.** Any difference fails, with both normal forms printed.
 4. **Check the guard on its own.** The rendering with the guard must differ from the rendering
-   without it by exactly one `FILTER` at the top of the `WHERE`, whose conjuncts are `BOUND` and
-   `DATATYPE` tests over the operation's declared required parameters, computed from the parameter
-   list, not matched against text.
+   without it by exactly one group holding one `FILTER`, first in the `WHERE`, whose conjuncts are one type
+   test per declared required parameter (`isIRI`, `DATATYPE` or `LANG`), computed from the parameter list,
+   not matched against text.
 
 **Non-vacuity.** The harness fails if it compared fewer operations than the slice ports, or none. Its
 Validation Pack shows three mutations of a builder caught: a dropped triple, a pattern moved to

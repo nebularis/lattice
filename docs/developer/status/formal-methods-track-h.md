@@ -3,7 +3,7 @@
 # Formal Methods, Track H: Status
 
 **Unit ID:** `formal-methods-track-h` (phase, within the `formal-methods` epic)
-**Status:** In progress. H1 (H1.1 to H1.5, with H1.4c) and the aggregate-ownership slices HO0 to HO9 are merged to `main` and signed off (2026-10-10). H2 is briefed and every question is answered (2026-10-10). H2.0 (ADR-A123, Proposed) and H2.1 (the typed IR and its renderer) are built and await review
+**Status:** In progress. H1 (H1.1 to H1.5, with H1.4c) and the aggregate-ownership slices HO0 to HO9 are merged to `main` and signed off (2026-10-10). H2 is briefed. ADR-A123 is accepted, with its addendum of 2026-10-12 on parameter guards. H2.0 is done, and H2.1 is reviewed and corrected, awaiting the maintainer's run and merge
 **Last updated:** 2026-10-10
 **Plan:** [formal-methods-track-h.md](../plans/formal-methods-track-h.md)
 **Sketches:** [formal-methods-track-h.md](../sketches/formal-methods-track-h.md) (main),
@@ -53,15 +53,13 @@ section below.
 
 ## Next action
 
-H2.0 and H2.1 are built and await the maintainer's review. Ahead of it:
-
-1. The maintainer reviews [FMH-H2-0](../validation/FMH-H2-0.md) and [FMH-H2-1](../validation/FMH-H2-1.md), accepts
-   or amends ADR-A123, and decides the four items in FMH-H2-1 (the `Literal.encode` fix, the declared-kind rule for
-   value comparisons, the extra rules, and what is left to later slices).
-2. **H2.2**, the equivalence harness of the [typed IR sketch §7.1](../sketches/formal-methods-track-h-typed-ir.md#71-the-equivalence-harness-h22)
-   with `bootstrap-version-row` and `append-event` ported, and TD-34 closed for them. H2.3, H2.4 and H2.5 follow
-   in any order. **H2.6** (examples first, with the paper check) needs only A123 and can run beside them.
-3. On A123's acceptance, apply the dated ADR-A79 addendum drafted at the foot of A123.
+1. The maintainer runs the [FMH-H2-1](../validation/FMH-H2-1.md) one command (expected `1875 passed, 1 xfailed`, not
+   yet run) and merges H2.0 and H2.1.
+2. **H2.2**, the equivalence harness of the [typed IR sketch §7.1](../sketches/formal-methods-track-h-typed-ir.md#71-the-equivalence-harness-h22),
+   rendering with guards off, with `bootstrap-version-row` and `append-event` ported, the builders taking the guards
+   flag, and TD-34 closed for them. Each semantic rule a builder relies on gets an engine test (plan §5.1). H2.3, H2.4
+   and H2.5 follow in any order. **H2.6** (examples first, with the paper check) can run beside them.
+3. Later, not scheduled: the SPARQL semantic IR of plan §5.1 (PDD-06).
 
 ## Slices
 
@@ -87,8 +85,8 @@ H2.0 and H2.1 are built and await the maintainer's review. Ahead of it:
 | HO7 (composite create and tombstone delete, TD-04) | **signed off** 2026-10-10, merged. [Validation Pack](../validation/FMH-HO7.md) | |
 | HO8 (injective graph naming within and across families, TD-38) | **signed off** 2026-10-10, merged. [Validation Pack](../validation/FMH-HO8.md) | |
 | HO9 (ownership documentation and close-out) | **signed off** 2026-10-10, merged. [Validation Pack](../validation/FMH-HO9.md) | |
-| H2.0 (ADR-A123, Proposed) | **built** 2026-10-10. [Validation Pack](../validation/FMH-H2-0.md) | the maintainer's acceptance of A123 |
-| H2.1 (the typed IR and its renderer) | **built** 2026-10-10. [Validation Pack](../validation/FMH-H2-1.md). Not yet used by `compile` | the maintainer's review, and A123's acceptance |
+| H2.0 (ADR-A123) | **done** 2026-10-10. [Validation Pack](../validation/FMH-H2-0.md). A123 **accepted** 2026-10-10, ADR-A79 addendum applied | the maintainer's merge |
+| H2.1 (the typed IR and its renderer) | **built and reviewed** 2026-10-10, five defects fixed. [Validation Pack](../validation/FMH-H2-1.md). Its four decisions confirmed. Not yet used by `compile` | the maintainer's run and merge |
 | H2 (typed IR) | **briefed** 2026-10-10, split into H2.0 to H2.9 ([typed IR sketch §7](../sketches/formal-methods-track-h-typed-ir.md#7-slices)) | |
 | H3 (specification registry) | not started, outlined in the plan | H2 preferred first (smaller, more self-contained), not a hard blocker |
 | H4 (exhaustive cross-axis validation, BDD/SMT) | not started, outline only | H3 |
@@ -393,3 +391,25 @@ H2.0 and H2.1 are built and await the maintainer's review. Ahead of it:
   module list, listed for the maintainer's review). Probes: seven mutations caught, and an eighth, a duplicated
   path-in-template check, was an equivalent mutant, so the duplicate was removed. Decisions for the maintainer
   are in the Validation Pack.
+- 2026-10-10: the maintainer accepted ADR-A123, and we applied the dated ADR-A79 addendum and catalogued both. The
+  maintainer confirmed the four decisions of FMH-H2-1. A review of H2.1 found five defects and fixed each with a test
+  ([FMH-H2-1, Review](../validation/FMH-H2-1.md#review-2026-10-10)). The serious one: the required-parameter guard
+  rendered as a top-level `FILTER`, which applies after the group's patterns, so a replace with no `$root` bound
+  `$root` from the data and wrote every matching aggregate. The guard is now its own group, and ADR-A123 decision 5
+  says so, corrected before acceptance. The others: prefix compaction changed a literal that looked like an IRI, an
+  optional parameter counted as always bound, a graph block's scope ignored the enclosing group, and `Const` accepted
+  an IRI built without its encoder that held a `\u` escape. Two questions are open, R1 (refuse an operation without
+  its guard) and R2 (type-test `Iri` parameters with `isIRI`). The probes ran on rdflib in a scratch script. The suite
+  was not run after the fixes. Its expected total is in the Validation Pack.
+- 2026-10-12: we talked F1 to F5 through with the maintainer. F2, F3 and F5 are agreed. F4 was wrong as first fixed:
+  SPARQL evaluates an inner group on its own, so a `BIND` inside a nested group, `GRAPH` block, `OPTIONAL` or `UNION`
+  branch does not see outer variables, and only `NOT EXISTS` does (checked on rdflib). The `GRAPH` block code was
+  right, the first fix is reverted, and the other three scopes now start empty, with engine tests (T29). On F1 the
+  maintainer decided that guards are optional and on by default, since input checking normally belongs in the access
+  layer, recorded as an [ADR-A123 addendum](../../architecture/decisions/ADR-A123-typed-operation-ir.md#addendum-2026-10-12-parameter-guards-are-optional-and-are-type-tests).
+  Guards are now type tests (`isIRI`, `DATATYPE`, `LANG`) in their own group, which catch a missing parameter, a
+  mistyped one (R2) and survive text substitution, where `BOUND` became a syntax error. An operation carries the guard
+  or `GUARDS_OFF`, never none (R1). Measured on rdflib, the guard in its own group costs nothing, where the top-level
+  form cost about 60% on a 20,000-triple sweep. The maintainer also raised a SPARQL semantic IR for a later phase,
+  recorded as PDD-06 and plan §5.1, with an interim rule that every semantic rule the checker encodes gets an engine
+  test. The suite was not run (1,876 cases collected).

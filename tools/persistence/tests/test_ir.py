@@ -14,7 +14,7 @@ import pytest
 
 from persistence import ir, ir_render
 from persistence.ir import (
-    A, Bind, Binding, Compare, Const, Filter, Func, Graph, GraphBlock, GraphRole, Group, IrError, Kind, Not,
+    GUARDS_OFF, A, Bind, Binding, Compare, Const, Filter, Func, Graph, GraphBlock, GraphRole, Group, IrError, Kind, Not,
     NotExists, Op, Operation, Optional_, Param, ParameterGuard, ParamRef, PayloadSlot, Path, Projected,
     RegistrySlot, Select, TermGuard, Triple, Union_, ValueGuard, Values, Var,
 )
@@ -79,6 +79,8 @@ def _refusals() -> list[tuple[str, str, object]]:
         ("UnencodedConstant", "bare str in a triple", lambda: valid(where_=(*where(), GraphBlock(META, (Triple(ROOT, pat("p"), "urn:x"),))))),
         ("UnencodedConstant", "bare number in an expression", lambda: valid(where_=(*where(), Bind(Func("STR", (1,)), Var("n"))))),
         ("UnencodedConstant", "a path that is not encoded", lambda: Path("<urn:p>/<urn:q>")),
+        ("UnencodedConstant", "a PropertyPath built without its encoder", lambda: Path(PropertyPath("<urn:p> } DROP ALL"))),
+        ("UnencodedConstant", "an Iri built without its encoder, holding a \\u escape", lambda: Const(Iri("<urn:x\\u003E>"))),
         ("InvalidForm", "neither update nor select", lambda: valid(insert_=(), delete_=())),
         ("InvalidForm", "both", lambda: valid(select=Select((Var("x"),)))),
         ("DuplicateParameter", "twice", lambda: valid(params=_with_param(Param("root", Kind.IRI)))),
@@ -98,6 +100,18 @@ def _refusals() -> list[tuple[str, str, object]]:
         ("InconsistentVariableTag", "both tags", lambda: valid(insert_=(*insert(), GraphBlock(META, (Triple(ROOT, pat("p"), bound("now")), Triple(ROOT, pat("q"), optional("now"))))))),
         ("UnboundTemplateVariable", "Bound but only optional", lambda: valid(insert_=insert(prev=Binding.BOUND))),
         ("UnboundTemplateVariable", "Bound and never bound", lambda: valid(insert_=(*insert(), GraphBlock(META, (Triple(ROOT, pat("p"), bound("ghost")),))))),
+        ("UnboundTemplateVariable", "Bound from an optional parameter", lambda: valid(
+            params=_with_param(Param("hint", Kind.IRI, required=False)),
+            where_=(*where(), Bind(ParamRef("hint"), Var("h"))),
+            insert_=(*insert(), GraphBlock(META, (Triple(ROOT, pat("hint"), bound("h")),))))),
+        ("UnboundTemplateVariable", "Bound from a BIND in a nested group over an outer variable", lambda: valid(
+            where_=(*where(), Group((Bind(Func("STR", (Var("now"),)), Var("stamp")),))),
+            insert_=(*insert(), GraphBlock(META, (Triple(ROOT, pat("stamp"), bound("stamp")),))))),
+        ("UnboundTemplateVariable", "Bound from a BIND in a UNION branch over an outer variable", lambda: valid(
+            where_=(*where(), Union_((Group((Bind(Func("STR", (Var("now"),)), Var("stamp")),)), Group((Bind(string("x"), Var("stamp")),))))),
+            insert_=(*insert(), GraphBlock(META, (Triple(ROOT, pat("stamp"), bound("stamp")),))))),
+        ("UnboundGraphVariable", "GRAPH ?g in an OPTIONAL after an outer BIND of ?g", lambda: valid(
+            where_=(*where(), Bind(iri("urn:g:x"), Var("gx")), Optional_(Group((GraphBlock(Graph(GraphRole.LOG, Var("gx")), (Triple(Var("a"), pat("p"), Var("b")),)),))))),),
         ("UnboundTemplateVariable", "OptionalAllowed and never bound", lambda: valid(insert_=(*insert(), GraphBlock(META, (Triple(ROOT, pat("p"), optional("ghost")),))))),
         ("OptionalTagOnBoundVariable", "always bound", lambda: valid(insert_=insert(now=Binding.OPTIONAL_ALLOWED))),
         ("UnboundGraphVariable", "free GRAPH ?g", lambda: valid(where_=(*where(), GraphBlock(Graph(GraphRole.LOG, Var("free")), (Triple(Var("a"), pat("p"), Var("b")),))))),
@@ -109,6 +123,8 @@ def _refusals() -> list[tuple[str, str, object]]:
         ("ClockInGuard", "NOW through a BIND", lambda: valid(where_=(*where(), Filter(Not(Func("BOUND", (Var("now"),))))))),
         ("ClockInGuard", "NOW through two BINDs", lambda: valid(where_=(*where(), Bind(Func("STR", (Var("now"),)), Var("stamp")), Filter(Func("BOUND", (Var("stamp"),)))))),
         ("ParameterGuardNotDerived", "missing a parameter", lambda: replace(valid(), guard=ParameterGuard(PARAMS[:1]))),
+        ("ParameterGuardNotDerived", "no guard at all", lambda: replace(valid(), guard=None)),
+        ("ParameterGuardNotDerived", "a guard that is off and names parameters", lambda: replace(valid(), guard=replace(GUARDS_OFF, params=PARAMS[:1]))),
         ("ParameterGuardNotDerived", "a stray parameter", lambda: replace(valid(), guard=ParameterGuard(PARAMS[:6] + (Param("extra", Kind.IRI),)))),
         ("SlotMisuse", "payload in WHERE", lambda: valid(where_=(*where(), GraphBlock(META, (PayloadSlot("payloadTriples"),))))),
         ("SlotMisuse", "payload in DELETE", lambda: valid(delete_=(*delete(), GraphBlock(DATA, (PayloadSlot("payloadTriples"),))))),
@@ -192,9 +208,9 @@ def test_h2_1_t8_the_parameter_guard_is_derived_and_removable():
     op = valid()
     assert op.guard == ParameterGuard.derive(PARAMS)
     assert [p.name for p in op.guard.params] == ["root", "epoch", "expectedSeq", "nextSeq", "newRev", "txnId"]
-    bare = replace(op, guard=None)
+    bare = replace(op, guard=GUARDS_OFF)
     assert check(bare) == check(op)
-    assert "BOUND" in render(op) and "BOUND" not in render(bare)
+    assert "ISIRI" in render(op) and "ISIRI" not in render(bare)
 
 
 def test_h2_1_t9_an_optional_parameter_is_not_guarded():

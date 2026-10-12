@@ -17,7 +17,7 @@ from rdflib.plugins.sparql.algebra import translateQuery, translateUpdate
 from rdflib.plugins.sparql.parser import parseQuery, parseUpdate
 
 from persistence.ir import (
-    A, Bind, Binding, Compare, Const, Filter, Func, Graph, GraphBlock, GraphRole, Group, Kind, Not, NotExists, Op,
+    GUARDS_OFF, A, Bind, Binding, Compare, Const, Filter, Func, Graph, GraphBlock, GraphRole, Group, Kind, Not, NotExists, Op,
     Operation, Optional_, Param, ParamRef, PayloadSlot, Path, Projected, RegistrySlot, Select, TermGuard, Triple,
     Union_, ValueGuard, Values, Var,
 )
@@ -104,7 +104,7 @@ def _functions() -> Operation:
         "IRI": (Func("STR", (r,)),), "CONCAT": (string("a"), string("b")), "STR": (r,), "ENCODE_FOR_URI": (Func("STR", (r,)),),
         "SUBSTR": (string("abc"), integer(1), integer(2)), "STRLEN": (string("abc"),),
         "STRDT": (string("1"), Const(Iri.encode(XSD_LONG))), "COALESCE": (Var("missing"), string("d")),
-        "BOUND": (Var("missing"),), "DATATYPE": (string("a"),), "NOW": (), "ISIRI": (r,),
+        "BOUND": (Var("missing"),), "DATATYPE": (string("a"),), "NOW": (), "ISIRI": (r,), "LANG": (string("a"),),
     }
     assert set(arguments) == set(FUNCTIONS)
     binds = tuple(Bind(Func(name, args), Var(f"f_{name.lower()}")) for name, args in arguments.items())
@@ -113,7 +113,7 @@ def _functions() -> Operation:
 
 FORMS: dict[str, Operation] = {
     "replace-shape": valid(),
-    "no-guard": replace(valid(), guard=None),
+    "no-guard": replace(valid(), guard=GUARDS_OFF),
     "insert-only": Operation.build("ins", (Param("t", Kind.IRI),), Group((NotExists(Group((GraphBlock(META, (Triple(ParamRef("t"), P("seq"), Var("any")),)),))),)), insert=(GraphBlock(META, (Triple(ParamRef("t"), A, P("VersionRow")),)),)),
     "no-required-parameter": Operation.build("ins0", (Param("t", Kind.IRI, required=False),), Group(()), insert=(GraphBlock(META, (Triple(ParamRef("t"), A, P("VersionRow")),)),)),
     "property-path": Operation.build("path", (Param("root", Kind.IRI),), Group((GraphBlock(DATA, (Triple(ParamRef("root"), PATH, Var("s")), Triple(Var("s"), Var("p"), Var("o")))),)), delete=(GraphBlock(DATA, (Triple(Var("s", binding=Binding.BOUND), Var("p", binding=Binding.BOUND), Var("o", binding=Binding.BOUND)),)),)),
@@ -155,14 +155,13 @@ def test_h2_1_t14_two_renderings_are_byte_identical_and_prefixes_are_declared_on
     assert render(valid()).count("PREFIX pat:") == 1
 
 
-def test_h2_1_t15_the_guard_is_exactly_one_filter_at_the_top_of_where():
+def test_h2_1_t15_the_guard_is_exactly_one_group_holding_one_filter_at_the_top_of_where():
     with_guard = render(valid()).splitlines()
-    without = render(replace(valid(), guard=None)).splitlines()
-    added = [line for line in with_guard if line not in without]
-    assert len(added) == 1 and added[0].lstrip().startswith("FILTER(BOUND($root)")
-    where_start = with_guard.index("WHERE {")
-    assert with_guard[where_start + 1] == added[0]
-    assert [line for line in without if line not in with_guard] == []
+    without = render(replace(valid(), guard=GUARDS_OFF)).splitlines()
+    top = with_guard.index("WHERE {") + 1
+    added = with_guard[top:top + 3]
+    assert added[0] == "  {" and added[1].startswith("    FILTER(ISIRI($root)") and added[2] == "  }"
+    assert with_guard[:top] + with_guard[top + 3:] == without
 
 
 # ---- the guard does what it says (TD-34) ------------------------------------------------------------
@@ -196,14 +195,50 @@ def test_h2_1_t16_with_every_parameter_bound_the_operation_writes_the_whole_reco
     {"target": _TARGET},
     {"target": _TARGET, "epoch": RdfLiteral(3)},
     {"target": _TARGET, "epoch": RdfLiteral("3")},
-], ids=["no target", "no epoch", "epoch as xsd:integer", "epoch as a string"])
+    {"target": RdfLiteral("urn:test:target"), "epoch": RdfLiteral(3, datatype=XSD.long)},
+], ids=["no target", "no epoch", "epoch as xsd:integer", "epoch as a string", "target as a literal"])
 def test_h2_1_t17_a_missing_or_mistyped_parameter_writes_nothing(bindings):
     assert _run(_bootstrap(), **bindings) == set()
 
 
 def test_h2_1_t18_without_the_guard_a_missing_parameter_writes_part_of_the_record():
-    rows = _run(replace(_bootstrap(), guard=None), target=_TARGET)
+    rows = _run(replace(_bootstrap(), guard=GUARDS_OFF), target=_TARGET)
     assert 0 < len(rows) < 3  # the partial write TD-34 records
+
+
+# A parameter that WHERE also matches. Left unbound, `$root pat:seq $expectedSeq` binds ?root from the data, so
+# a guard written as a top-level FILTER, which applies after the group's patterns, would pass for every root.
+
+
+def _replace_shaped() -> Operation:
+    root, expected, nxt = ParamRef("root"), ParamRef("expectedSeq"), ParamRef("nextSeq")
+    return Operation.build(
+        "replace-shaped",
+        (Param("root", Kind.IRI), Param("expectedSeq", Kind.POSITION), Param("nextSeq", Kind.POSITION)),
+        Group((GraphBlock(META, (Triple(root, P("seq"), expected),)),)),
+        delete=(GraphBlock(META, (Triple(root, P("seq"), expected),)),),
+        insert=(GraphBlock(META, (Triple(root, P("seq"), nxt),)),),
+    )
+
+
+def _two_aggregates(op: Operation, **bindings) -> dict:
+    ds = Dataset()
+    for root in ("urn:test:a", "urn:test:b"):
+        ds.graph(URIRef("urn:g:meta")).add((URIRef(root), URIRef(str(P("seq").term)[1:-1]), RdfLiteral(0, datatype=XSD.long)))
+    ds.update(render(op), initBindings=bindings)
+    return {str(s): int(o) for s, _, o, _ in ds.quads((None, None, None, URIRef("urn:g:meta")))}
+
+
+_SEQS = {"expectedSeq": RdfLiteral(0, datatype=XSD.long), "nextSeq": RdfLiteral(1, datatype=XSD.long)}
+
+
+def test_h2_1_t25_a_missing_parameter_that_where_matches_writes_nothing():
+    assert _two_aggregates(_replace_shaped(), **_SEQS) == {"urn:test:a": 0, "urn:test:b": 0}
+    assert _two_aggregates(_replace_shaped(), root=URIRef("urn:test:a"), **_SEQS) == {"urn:test:a": 1, "urn:test:b": 0}
+
+
+def test_h2_1_t25b_without_the_guard_a_missing_root_writes_every_aggregate():
+    assert _two_aggregates(replace(_replace_shaped(), guard=GUARDS_OFF), **_SEQS) == {"urn:test:a": 1, "urn:test:b": 1}
 
 
 # ---- derived read and write sets ----------------------------------------------------------------------
@@ -217,7 +252,7 @@ def test_h2_1_t19_read_and_write_sets_are_derived_from_the_patterns():
     assert ("data", "{payload}", "*") in writes
     assert ("log", "$newRev", "a") in writes
     assert not any(a.role == "log" for a in sets.reads)
-    assert access_sets(valid()) == access_sets(replace(valid(), guard=None))
+    assert access_sets(valid()) == access_sets(replace(valid(), guard=GUARDS_OFF))
 
 
 # ---- properties ------------------------------------------------------------------------------------------
@@ -324,3 +359,72 @@ def test_h2_1_t22_an_adversarial_iri_is_refused_or_stays_an_iri(seed):
     ds = Dataset()
     ds.update(text, initBindings={"root": _TARGET})
     assert [o for _, _, o, _ in ds.quads((None, None, None, URIRef("urn:g:meta")))] == [URIRef(value)]
+
+
+
+# ---- review fixes (2026-10-10) ---------------------------------------------------------------------------
+
+
+def test_h2_1_t26_a_literal_that_looks_like_an_iri_is_rendered_unchanged():
+    value = "<https://example.org/lattice/patterns#seq>"
+    op = Operation.build(
+        "label", (Param("root", Kind.IRI),), Group(()),
+        insert=(GraphBlock(META, (Triple(ParamRef("root"), P("label"), Const(Literal.encode(value))),)),),
+    )
+    ds = Dataset()
+    ds.update(render(op), initBindings={"root": _TARGET})
+    assert [o for _, _, o, _ in ds.quads((None, None, None, URIRef("urn:g:meta")))] == [RdfLiteral(value)]
+    typed = Const(Literal.encode("3", datatype=XSD_LONG))
+    op = Operation.build(
+        "typed", (Param("root", Kind.IRI),), Group(()),
+        insert=(GraphBlock(META, (Triple(ParamRef("root"), P("n"), typed),)),),
+    )
+    assert '"3"^^xsd:long' in render(op)
+
+
+def test_h2_1_t28_the_guard_survives_a_caller_that_substitutes_parameter_text():
+    text = render(_replace_shaped())
+    seqs = {"$expectedSeq": '"0"^^<http://www.w3.org/2001/XMLSchema#long>', "$nextSeq": '"1"^^<http://www.w3.org/2001/XMLSchema#long>'}
+    substituted = text
+    for name, term in seqs.items():
+        substituted = substituted.replace(name, term)
+    assert parsed(substituted.replace("$root", "<urn:test:a>")) == 1
+    for root, expected in (("<urn:test:a>", {"urn:test:a": 1, "urn:test:b": 0}), (None, {"urn:test:a": 0, "urn:test:b": 0})):
+        ds = Dataset()
+        for r in ("urn:test:a", "urn:test:b"):
+            ds.graph(URIRef("urn:g:meta")).add((URIRef(r), URIRef(str(P("seq").term)[1:-1]), RdfLiteral(0, datatype=XSD.long)))
+        ds.update(substituted if root is None else substituted.replace("$root", root))
+        assert {str(s): int(o) for s, _, o, _ in ds.quads((None, None, None, URIRef("urn:g:meta")))} == expected
+
+
+def test_h2_1_t30_guards_can_be_turned_off_and_the_operation_says_so():
+    op = Operation.build("off", (Param("root", Kind.IRI),), Group(()),
+                         insert=(GraphBlock(META, (Triple(ParamRef("root"), A, P("VersionRow")),)),), guards=False)
+    assert op.guard == GUARDS_OFF
+    assert "FILTER" not in render(op) and parsed(render(op)) == 1
+
+
+# ---- the scope the checker models is the scope an engine applies (review F4, corrected) ------------------
+# SPARQL evaluates an inner group on its own and joins it afterwards. Only NOT EXISTS sees the enclosing group's
+# values. Run on rdflib, so the checker's model of scope is tested against an engine.
+
+_SCOPE = {
+    "nested group": ("SELECT ?b WHERE { BIND(1 AS ?a) { BIND(?a + 1 AS ?b) } }", [None]),
+    "GRAPH block": ("SELECT ?b WHERE { BIND(1 AS ?a) GRAPH <urn:g> { ?s ?p ?o BIND(?a + 1 AS ?b) } }", [None]),
+    "OPTIONAL": ("SELECT ?b WHERE { BIND(1 AS ?a) OPTIONAL { BIND(?a + 1 AS ?b) } }", [None]),
+    "UNION branch": ("SELECT ?b WHERE { BIND(1 AS ?a) { BIND(?a + 1 AS ?b) } UNION { BIND(5 AS ?b) } }", [None, 5]),
+    "same group": ("SELECT ?b WHERE { BIND(1 AS ?a) BIND(?a + 1 AS ?b) }", [2]),
+}
+
+
+@pytest.mark.parametrize("kind", sorted(_SCOPE))
+def test_h2_1_t29_a_bind_sees_only_its_own_group_on_rdflib(kind):
+    query, expected = _SCOPE[kind]
+    ds = Dataset()
+    ds.graph(URIRef("urn:g")).add((URIRef("urn:s"), URIRef("urn:p"), RdfLiteral(0)))
+    assert sorted((None if row[0] is None else int(row[0]) for row in ds.query(query)), key=lambda v: (v is not None, v)) == expected
+
+
+def test_h2_1_t29b_not_exists_sees_the_enclosing_group_on_rdflib():
+    assert list(Dataset().query("SELECT ?a WHERE { BIND(1 AS ?a) FILTER NOT EXISTS { FILTER(?a = 1) } }")) == []
+

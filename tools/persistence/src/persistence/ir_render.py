@@ -24,7 +24,8 @@ from rdflib.namespace import XSD
 
 from .ir import (
     Binding, Bind, Compare, Const, Expr, Filter, Func, Graph, GraphBlock, Group, IrError, Kind,
-    Not, NotExists, Op, Operation, Optional_, Param, ParamRef, Path, PayloadSlot, Projected, RdfType, RegistrySlot,
+    Not, NotExists, Op, Operation, Optional_, Param, ParameterGuard, ParamRef, Path, PayloadSlot, Projected, RdfType,
+    RegistrySlot,
     SLOT_KINDS, Select, TermGuard, Triple, Union_, ValueGuard, Values, Var,
 )
 from .namespaces import PAT
@@ -64,7 +65,7 @@ RULES: tuple[str, ...] = (
 FUNCTIONS: dict[str, tuple[int, int]] = {
     "IRI": (1, 1), "CONCAT": (1, 99), "STR": (1, 1), "ENCODE_FOR_URI": (1, 1), "SUBSTR": (2, 3),
     "STRLEN": (1, 1), "STRDT": (2, 2), "COALESCE": (1, 99), "BOUND": (1, 1), "DATATYPE": (1, 1),
-    "NOW": (0, 0), "ISIRI": (1, 1),
+    "NOW": (0, 0), "ISIRI": (1, 1), "LANG": (1, 1),
 }
 AGGREGATES: dict[str, tuple[int, int]] = {
     "COUNT": (1, 1), "MIN": (1, 1), "MAX": (1, 1), "SAMPLE": (1, 1), "GROUP_CONCAT": (1, 1),
@@ -73,7 +74,7 @@ _ARITHMETIC = {"+", "-", "*", "/"}
 _BOOLEAN = {"&&", "||"}
 _COMPARISONS = {"=", "!=", "<", "<=", ">", ">="}
 _TERM_PINNED = frozenset({Kind.LONG, Kind.POSITION, Kind.DIGEST, Kind.STRING, Kind.LANG_STRING})
-_GUARD_DATATYPE = {Kind.LONG: XSD.long, Kind.POSITION: XSD.long, Kind.DIGEST: XSD.string}
+_GUARD_DATATYPE = {Kind.LONG: XSD.long, Kind.POSITION: XSD.long, Kind.DIGEST: XSD.string, Kind.STRING: XSD.string}
 
 
 # ---------------------------------------------------------------------------
@@ -111,7 +112,6 @@ class _Checker:
         self.used_params: set[str] = set()
         self.template_tags: dict[str, set] = {}
         self.untagged: set[str] = set()
-        self.var_names: set[str] = set()
         self.clock_vars: set[str] = set()
         self.slot_uses: list[str] = []
         self.reads: set[Access] = set()
@@ -135,7 +135,7 @@ class _Checker:
         for block in op.insert:
             self._template(block, deleting=False)
         scope = _Scope(set(), set())
-        self._group(op.where.elements, scope, graph=None, top=True)
+        self._group(op.where.elements, scope, graph=None)
         if is_select:
             self._select(op.select)
         else:
@@ -156,9 +156,15 @@ class _Checker:
     def _guard(self) -> None:
         guard = self.op.guard
         if guard is None:
+            raise IrError(
+                "ParameterGuardNotDerived",
+                f"{self.op.id}: no parameter guard. Build with Operation.build, which derives it, or pass guards=False "
+                "to leave the checks to the caller",
+            )
+        if guard.off:
+            if guard.params:
+                raise IrError("ParameterGuardNotDerived", f"{self.op.id}: a guard that is off names no parameters")
             return
-        from .ir import ParameterGuard
-
         if guard != ParameterGuard.derive(self.op.params):
             raise IrError(
                 "ParameterGuardNotDerived",
@@ -207,7 +213,6 @@ class _Checker:
     def _var(self, var: Var) -> None:
         if var.name in self.params:
             raise IrError("NameCollision", f"{self.op.id}: variable ?{var.name} has the name of a parameter")
-        self.var_names.add(var.name)
 
     # ---- graph blocks and groups
 
@@ -225,7 +230,7 @@ class _Checker:
         elif isinstance(term, ParamRef):
             self._param_ref(term)
 
-    def _group(self, elements, scope: _Scope, graph: Optional[GraphBlock], top: bool = False) -> None:
+    def _group(self, elements, scope: _Scope, graph: Optional[GraphBlock]) -> None:
         seen: set[str] = set()
         for el in elements:
             names = self._element(el, scope, graph, seen)
@@ -249,14 +254,15 @@ class _Checker:
                 names.add(el.graph.term.name)
                 scope.definite.add(el.graph.term.name)
             inner = _Scope(set(), set())
-            self._group(el.elements, inner, el, top=False)
+            self._group(el.elements, inner, el)
             scope.definite |= inner.definite
             scope.possible |= inner.possible
             return names | inner.definite | inner.possible | self._mentioned(el.elements)
         if isinstance(el, Optional_):
+            # SPARQL evaluates an inner group on its own and joins it afterwards, so a BIND or a GRAPH ?g inside
+            # it does not see what the enclosing group bound (SPARQL 1.1 section 18.2). Only NOT EXISTS, which is
+            # evaluated once per outer solution with its values substituted, does.
             inner = _Scope(set(), set())
-            # an inner scope sees what the outer scope has bound, for a graph variable
-            inner.definite |= scope.definite
             self._group(el.group.elements, inner, graph)
             scope.possible |= inner.definite - scope.definite | inner.possible
             return self._mentioned(el.group.elements)
@@ -297,7 +303,7 @@ class _Checker:
             branches = []
             names: set = set()
             for g in el.groups:
-                inner = _Scope(set(scope.definite), set(scope.possible))
+                inner = _Scope(set(), set())
                 self._group(g.elements, inner, graph)
                 branches.append(inner)
                 names |= self._mentioned(g.elements)
@@ -308,7 +314,7 @@ class _Checker:
                 scope.possible |= every - common
             return names
         if isinstance(el, Group):
-            inner = _Scope(set(scope.definite), set(scope.possible))
+            inner = _Scope(set(), set())
             self._group(el.elements, inner, graph)
             scope.definite |= inner.definite
             scope.possible |= inner.possible
@@ -363,7 +369,10 @@ class _Checker:
     def _definitely_bound(self, expr, scope: _Scope) -> bool:
         if isinstance(expr, Var):
             return expr.name in scope.definite
-        if isinstance(expr, (ParamRef, Const)):
+        if isinstance(expr, ParamRef):
+            param = self.params.get(expr.name)
+            return param is not None and param.required
+        if isinstance(expr, Const):
             return True
         if isinstance(expr, Func):
             if expr.name == "COALESCE":
@@ -602,6 +611,7 @@ def access_sets(op: Operation) -> AccessSets:
 
 _PREFIXES = {"pat": str(PAT), "xsd": str(XSD)}
 _IRI = re.compile(r"<([^<>\s]*)>")
+_TYPED_LITERAL = re.compile(r'^(".*")\^\^(<[^<>\s]*>)$', re.S)
 _LOCAL = re.compile(r"^[A-Za-z][A-Za-z0-9_]*$")
 
 
@@ -628,12 +638,23 @@ class _Out:
         if isinstance(term, ParamRef):
             return f"${term.name}"
         if isinstance(term, Const):
-            return self.compact(str(term.term))
+            return self._const(term.term)
         if isinstance(term, RdfType):
             return "a"
         if isinstance(term, Path):
             return self.compact(str(term.path))
         raise IrError("UnencodedConstant", f"{term!r} is not a term")
+
+    def _const(self, term) -> str:
+        """An IRI is compacted, and so is a literal's datatype. The value of a literal is never touched, since
+        it may hold text that looks like an IRI."""
+        text = str(term)
+        if isinstance(term, Iri):
+            return self.compact(text)
+        typed = _TYPED_LITERAL.match(text)
+        if typed:
+            return f"{typed.group(1)}^^{self.compact(typed.group(2))}"
+        return text
 
     # ---- expressions
 
@@ -671,7 +692,7 @@ class _Out:
 
     # ---- patterns
 
-    def statements(self, elements, *, in_graph: bool, indent: str) -> list[str]:
+    def statements(self, elements) -> list[str]:
         """The lines of a group's elements. Consecutive triples of one subject share a statement."""
         lines: list[str] = []
         run: list[Triple] = []
@@ -693,7 +714,7 @@ class _Out:
                     flush(True)
                 continue
             flush(False)
-            lines.extend(self.element(el, in_graph=in_graph))
+            lines.extend(self.element(el))
         return lines
 
     def _triples(self, run: list[Triple]) -> str:
@@ -707,15 +728,15 @@ class _Out:
             return [f"{head} {{ {inner[0]} }}"]
         return [f"{head} {{", *("  " + line for line in inner), "}"]
 
-    def element(self, el, *, in_graph: bool) -> list[str]:
+    def element(self, el) -> list[str]:
         if isinstance(el, GraphBlock):
             return self.graph_block(el)
         if isinstance(el, PayloadSlot):
             return ["{{{" + el.param + "}}}"]
         if isinstance(el, Optional_):
-            return self.braced("OPTIONAL", self.statements(el.group.elements, in_graph=in_graph, indent=""))
+            return self.braced("OPTIONAL", self.statements(el.group.elements))
         if isinstance(el, NotExists):
-            return self.braced("FILTER NOT EXISTS", self.statements(el.group.elements, in_graph=in_graph, indent=""))
+            return self.braced("FILTER NOT EXISTS", self.statements(el.group.elements))
         if isinstance(el, Filter):
             return [f"FILTER({self.expr(el.expr)})"]
         if isinstance(el, Bind):
@@ -728,7 +749,7 @@ class _Out:
         if isinstance(el, Union_):
             out: list[str] = []
             for i, g in enumerate(el.groups):
-                block = self.braced("", self.statements(g.elements, in_graph=in_graph, indent=""))
+                block = self.braced("", self.statements(g.elements))
                 block[0] = block[0].lstrip()
                 if i:
                     out[-1] += " UNION " + block[0]
@@ -737,14 +758,14 @@ class _Out:
                     out.extend(block)
             return out
         if isinstance(el, Group):
-            block = self.braced("", self.statements(el.elements, in_graph=in_graph, indent=""))
+            block = self.braced("", self.statements(el.elements))
             block[0] = block[0].lstrip()
             return block
         raise IrError("UnsupportedInTemplate", f"{el!r} is not a pattern element")
 
     def graph_block(self, block: GraphBlock) -> list[str]:
         head = f"GRAPH {self.term(block.graph.term)}"
-        return self.braced(head, self.statements(block.elements, in_graph=True, indent=""))
+        return self.braced(head, self.statements(block.elements))
 
 
 def _comparison(e) -> bool:
@@ -756,14 +777,17 @@ def _same_op(e, op: str) -> bool:
 
 
 def _guard_expr(op: Operation) -> Optional[Expr]:
-    """The conjunction the required-parameter guard renders, or ``None`` when there is nothing to require."""
+    """The conjunction the required-parameter guard renders, or ``None`` when there is nothing to require. Each
+    parameter gets one type test. An unbound parameter makes its test an error, which fails the filter."""
     conjuncts: list[Expr] = []
     for param in op.guard.params if op.guard else ():
         ref = ParamRef(param.name)
-        conjuncts.append(Func("BOUND", (ref,)))
-        datatype = _GUARD_DATATYPE.get(param.kind)
-        if datatype is not None:
-            conjuncts.append(ValueGuard("=", Func("DATATYPE", (ref,)), Const(Iri.encode(str(datatype)))))
+        if param.kind is Kind.IRI:
+            conjuncts.append(Func("ISIRI", (ref,)))
+        elif param.kind is Kind.LANG_STRING:
+            conjuncts.append(ValueGuard("!=", Func("LANG", (ref,)), Const(Literal.encode(""))))
+        else:
+            conjuncts.append(ValueGuard("=", Func("DATATYPE", (ref,)), Const(Iri.encode(str(_GUARD_DATATYPE[param.kind])))))
     if not conjuncts:
         return None
     expr = conjuncts[0]
@@ -779,7 +803,10 @@ def render(op: Operation) -> str:
     where_elements = list(op.where.elements)
     guard = _guard_expr(op)
     if guard is not None:
-        where_elements.insert(0, Filter(guard))
+        # A FILTER applies to the solutions of its whole group, after the group's patterns have matched. At the
+        # top level a pattern such as `$root pat:seq $expectedSeq` would bind a missing $root from the data and
+        # the guard would pass. In its own group the guard is tested before anything can bind the parameter.
+        where_elements.insert(0, Group((Filter(guard),)))
     body: list[str] = []
     if op.select is not None:
         body.append("SELECT " + " ".join(_projection(out, i) for i in op.select.projection))
@@ -788,7 +815,7 @@ def render(op: Operation) -> str:
             body.extend(_template_lines(out, "DELETE", op.delete))
         if op.insert:
             body.extend(_template_lines(out, "INSERT", op.insert))
-    where_lines = out.statements(tuple(where_elements), in_graph=False, indent="")
+    where_lines = out.statements(tuple(where_elements))
     body.extend(["WHERE {", *("  " + ln for ln in where_lines), "}"])
     if op.select is not None:
         if op.select.group_by:

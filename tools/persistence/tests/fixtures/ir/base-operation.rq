@@ -11,7 +11,9 @@ INSERT {
   GRAPH ?logGraph { $newRev a pat:Revision ; pat:prevRev ?prevRev ; pat:recordedAt ?now }
 }
 WHERE {
-  FILTER(BOUND($root) && BOUND($epoch) && DATATYPE($epoch) = xsd:long && BOUND($expectedSeq) && DATATYPE($expectedSeq) = xsd:long && BOUND($nextSeq) && DATATYPE($nextSeq) = xsd:long && BOUND($newRev) && BOUND($txnId))
+  {
+    FILTER(ISIRI($root) && DATATYPE($epoch) = xsd:long && DATATYPE($expectedSeq) = xsd:long && DATATYPE($nextSeq) = xsd:long && ISIRI($newRev) && ISIRI($txnId))
+  }
   BIND(IRI(CONCAT("urn:g:log/", SUBSTR(STR(NOW()), 1, 7))) AS ?logGraph)
   GRAPH <urn:g:meta> {
     $root pat:epoch $epoch ; pat:seq $expectedSeq .

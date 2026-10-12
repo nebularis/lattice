@@ -124,7 +124,13 @@ class ParamRef:
 
 
 _ENCODED = (Iri, Literal, Integer)
-_ENCODED_FORM = re.compile(r'^(<[^<>\s]*>|"(?:[^"\\\n]|\\.)*"(?:\^\^<[^<>\s]*>|@[A-Za-z0-9-]+)?|-?[0-9]+)$')
+# The characters Iri.encode refuses, so a term built without an encoder, such as Iri("<urn:x\\u003E>"), is
+# refused here too. A backslash matters most, since SPARQL processes \u escapes over the whole query text.
+_IRI_REF = r'<[^<>"{}|^`\\\x00-\x20]*>'
+_ENCODED_FORM = re.compile(
+    rf'^({_IRI_REF}|"(?:[^"\\\n\r]|\\.)*"(?:\^\^{_IRI_REF}|@[A-Za-z]+(?:-[A-Za-z0-9]+)*)?|-?[0-9]+)$'
+)
+_PATH_FORM = re.compile(rf'^(?:{_IRI_REF}|[\^/|*+?()!\s])+$')
 
 
 @dataclass(frozen=True)
@@ -161,6 +167,8 @@ class Path:
     def __post_init__(self) -> None:
         if type(self.path) is not PropertyPath:
             raise IrError("UnencodedConstant", "a path must be made by PropertyPath.encode")
+        if not _PATH_FORM.match(str(self.path)):
+            raise IrError("UnencodedConstant", f"{str(self.path)!r} is not a well formed encoded path")
 
 
 Node = Union[Var, ParamRef, Const]
@@ -340,17 +348,26 @@ class Select:
 
 @dataclass(frozen=True)
 class ParameterGuard:
-    """The required-parameter guard, ``FILTER(BOUND($p) && ...)`` at the top of ``WHERE`` (TD-34, H2-Q4).
+    """The required-parameter guard, one type test per required parameter, such as ``isIRI($root)`` or
+    ``DATATYPE($epoch) = xsd:long``, in its own group at the top of ``WHERE`` (TD-34, H2-Q4, ADR-A123 decision 5
+    and its addendum). An unbound parameter makes its test an error, so the filter fails and nothing is written.
+    In its own group the test runs before any pattern of ``WHERE`` could bind a missing parameter from the data.
+    A type test, unlike ``BOUND``, still parses when a caller substitutes the parameter's text.
 
-    It is derived from the parameter list by :meth:`derive`, and the renderer refuses a guard that is not
-    the derived one. The equivalence harness removes it with ``dataclasses.replace(op, guard=None)``, so no
-    renderer switch exists that could leave a production path unguarded."""
+    It is derived from the parameter list by :meth:`derive`, or is :data:`GUARDS_OFF` when the caller's own code
+    checks the parameters. The renderer refuses any other guard, and refuses an operation with none, so a builder
+    cannot leave it out by accident."""
 
     params: tuple = ()
+    off: bool = False
 
     @staticmethod
     def derive(params: tuple) -> "ParameterGuard":
         return ParameterGuard(tuple(p for p in params if p.required and p.kind not in SLOT_KINDS))
+
+
+GUARDS_OFF = ParameterGuard(off=True)
+"""No guard in the query. The compiled profile records it, and the caller's code must check every parameter."""
 
 
 @dataclass(frozen=True)
@@ -366,14 +383,16 @@ class Operation:
     guard: Optional[ParameterGuard] = None
 
     @classmethod
-    def build(cls, id: str, params: tuple, where: Group, **parts) -> "Operation":
-        """An operation with the guard derived from its parameters. Builders use this."""
-        return cls(id=id, params=params, where=where, guard=ParameterGuard.derive(params), **parts)
+    def build(cls, id: str, params: tuple, where: Group, *, guards: bool = True, **parts) -> "Operation":
+        """An operation with the guard derived from its parameters, or :data:`GUARDS_OFF` when ``guards`` is false.
+        Builders use this."""
+        guard = ParameterGuard.derive(params) if guards else GUARDS_OFF
+        return cls(id=id, params=params, where=where, guard=guard, **parts)
 
 
 __all__ = [
     "IrError", "Kind", "SLOT_KINDS", "Compare", "Binding", "Param", "Var", "ParamRef", "Const", "RdfType", "A",
     "Path", "Triple", "PayloadSlot", "RegistrySlot", "GraphRole", "Graph", "Func", "Op", "Not", "TermGuard",
     "ValueGuard", "Group", "GraphBlock", "Optional_", "NotExists", "Bind", "Filter", "Values", "Union_",
-    "Projected", "Select", "ParameterGuard", "Operation",
+    "Projected", "Select", "ParameterGuard", "GUARDS_OFF", "Operation",
 ]

@@ -23,7 +23,7 @@ design-time models, excludes all relational/SQL work)
 **Source:** [persistence-fml.md](../notes/rdf-engine/persistence-fml.md), an independent,
 exhaustive review of the Persistence layer against this epic's own techniques
 **Status:** In progress. H1 and the aggregate-ownership slices HO0 to HO9 are merged to `main` and
-signed off (2026-10-10). H2 is briefed, every question is answered, and H2.0 and H2.1 are built and await review. The live state is in the status
+signed off (2026-10-10). H2 is briefed, ADR-A123 is accepted (2026-10-10), H2.0 is done and H2.1 is built and reviewed. The live state is in the status
 record
 
 ## 1. Scope
@@ -511,7 +511,7 @@ check of ADR-A122 decision 6, and the required-parameter guard that closes TD-34
 unchanged. Every hazard of the [specification sketch §3](../sketches/formal-methods-track-h-specification.md#3-the-typed-intermediate-representation)
 becomes a refusal by type, and H1.3's checks pass over the new output by construction. H2-Q1 to H2-Q6
 are answered ([sketch §1](../sketches/formal-methods-track-h-typed-ir.md#1-decisions-already-taken-2026-10-10)),
-H2.0 and H2.1 are built (2026-10-10), awaiting review.
+ADR-A123 is accepted (2026-10-10). H2.0 is done, and H2.1 is built and reviewed, awaiting the merge.
 
 **H3 (specification registry), outline:**
 - One machine-readable registry (syntax not yet chosen, specification sketch §2) generating:
@@ -540,6 +540,39 @@ H2.0 and H2.1 are built (2026-10-10), awaiting review.
 | H8 | protocol models K-N (erasure, multi-aggregate writes, bulk load/cutover, shard migration), plus grounding every model built so far against at least one real MVCC-style backend (isolation probes, history checking, predicted-anomaly reproduction). **From aggregate ownership** (ownership sketch §15): K's store list includes composite members, L adds references across aggregates under the roots-only rule, M adds an out-of-band load that makes a node a member of two aggregates | T4/T7 | H7 |
 | H9 | detection-coverage closure: generate the nine missing audits the review names (L11's gap) from the same invariants H4's registry states, Alloy detection-completeness/soundness obligations per invariant, applicability labelling so a not-applicable audit cannot be read as "clean". **From aggregate ownership** (ownership sketch §15): four more audits, instance overlap, orphan member, reference into a member, and payload outside the tree for named-graph families with a boundary shape | T2/T0 | H3, H4 |
 | H10 | runtime monitors from the same invariants (T7): housekeeping evidence, capability drift, declaration drift, an erasure audit, a position-reuse audit, feeding track A's ledger once it exists. The four ownership audits of H9 become monitors with the rest | T7 | H9 |
+
+### 5.1 Later: a SPARQL semantic IR (PDD-06, raised 2026-10-12)
+
+The maintainer's direction, to be patched into a later phase so H2 keeps its pace. Today `persistence.ir` is one
+typed syntax tree that carries both what the configuration means and how SPARQL writes it. Its checker encodes SPARQL's
+rules (scope, boundness, where a guard is evaluated) as claims written by hand. Two of them were wrong in H2.1, the
+guard's position (F1) and inner-group scope (F4), and both were found only by running queries on rdflib.
+
+```mermaid
+flowchart LR
+  C["configuration IR<br/>logical operation contract,<br/>boundaries, guards,<br/>read and write sets"] --> T["transformer"]
+  T --> S["SPARQL IR<br/>the algebra, with a<br/>formal model of the spec"]
+  S --> K["check: the SPARQL IR<br/>behaves as the<br/>configuration intends"]
+  S --> P["printer<br/>mechanical, verified"]
+  P --> Q["SPARQL text"]
+  S -.-> M["held as RDF<br/>a MORK mapping target"]
+```
+
+- **Two IRs.** The first, the output of the compiler's first stage, says how things are used and where their
+  boundaries are. The second models SPARQL's semantics, so the transformer's output can be checked against what the
+  first says, and the printer from it to text is mechanical and verified.
+- **What it moves.** ADR-A123 decisions 1 and 9 (one `Operation` value per builder, audited through golden files),
+  H2-Q5's declined option (b) if the SPARQL IR is held as RDF, and the Track H sketch's non-goal of mechanising SPARQL,
+  narrowed to the fragment the builders use. A later ADR records it.
+- **What it costs.** A relational backend needs its own path, or its own IR and code generation. The logical
+  operation contract of H2-Q6 stays the input both would share.
+- **What it gives.** The checker's rules follow from a model of the specification instead of from memory, the model is
+  a way for the maintainer and the agents to read SPARQL's semantics directly, and a MORK mapping could be lowered to
+  SPARQL through the same IR.
+- **Where it sits.** After H2, whose builders define the fragment to model, and with or before H6, which sets up the
+  Isabelle theories. Not scheduled. The open options are in PDD-06.
+- **Until then.** Each semantic rule the checker encodes gets an engine test, as T29 does for scope, so a misreading
+  is found by a test and not by a later review. The H2.2 to H2.5 builders follow that rule.
 
 ## 6. Milestones
 
