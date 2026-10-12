@@ -4,7 +4,7 @@
 
 **Unit ID:** `computable-contract-substrate`
 **Status:** 🔨 In progress. Gate A passed. Tranche B and C briefed (C3, C10)
-**Last updated:** 2026-10-10
+**Last updated:** 2026-10-12
 **Plan:** [computable-contract-substrate.md](../plans/computable-contract-substrate.md)
 **Sketches:** [computable-contract-substrate.md](../sketches/computable-contract-substrate.md),
 [contract-amounts.md](../sketches/contract-amounts.md)
@@ -18,10 +18,9 @@ Behaviour 0.10.0 (shapes 0.4.0) with nested states and history, the import guard
 check`. In tranche D, C6 to C7c are merged and tagged (Instrument 0.12.0, Party 0.8.0, Quantification
 0.7.0). C8 and C8b are merged and tagged (Instrument 0.14.0, Wording 0.7.0). C9 is briefed and splits into C9a to C9c. Its materiality question has its own sketch. From C5 on, slices are built and verified on the branch, and the maintainer commits by hand.
 
-**Next action, for the maintainer:** commit HQ-6a.2's examples on `ccs/hq6a2-closures-compilers`
-(worktree `~/work/lattice-wt/ccs-hq6a2-closures-compilers`). Then its model phase: the compilers apply
-closures, report reliance (HQ6a2-Q1, Q2), refuse with `exe:NoClosureLicence`, and the reference
-returns reliance (HQ6a2-Q3).
+**Next action, for the maintainer:** run HQ-6a.2's checks on `ccs/hq6a2-closures-compilers`, as its
+[Validation Pack](../validation/computable-contract-substrate-hq6a2.md) gives them: the 15 example
+tests red before the model phase, then `check:full-sweep`. The model phase is written, not yet run.
 
 ## Slice board
 
@@ -44,7 +43,7 @@ returns reliance (HQ6a2-Q3).
 | C8, C8b | values in stated meaning, Wording references by identity | D | merged, tagged | |
 | C9a | amendments, assents and taking effect | D | merged, tagged | |
 | C9b0, C9b1, C9b2 | Eligibility sources, legal acts, additivity | D | merged, tagged 2026-10-10 | |
-| HQ-6a.1, HQ-6a.2 | untimed closures (ADR-A105): the model and reference semantics, then the compilers | D | HQ-6a.1 merged 2026-10-12. HQ-6a.2 examples written | |
+| HQ-6a.1, HQ-6a.2 | untimed closures (ADR-A105): the model and reference semantics, then the compilers | D | HQ-6a.1 merged 2026-10-12. HQ-6a.2 model phase written, not yet run | |
 | C9b3, C9b4, C9d, C9c, C8a | set comparisons, qualifying rules, materiality, incorporation, template library | D | planned | C9b3 waits on HQ-6 (NRS N5, ADR-A105). C9b4 on C9b3 |
 | C16c | remove Party's shares | F | planned, required before the epic closes | C9b4 |
 | C7a | regimes and gating, split from C7 | D | merged to `main` (`c6e5853`) and tagged | |
@@ -175,3 +174,4 @@ returns reliance (HQ6a2-Q3).
 - 2026-10-12: HQ-6a.1 built on `ccs/hq6a1-closures-model`: ADR-A105 and ADR-A103's addendum (Proposed), Eligibility 0.12.0 with closures, L15 restated and L17, the Isabelle readings re-proved (13 claims re-digested), the reference semantics, `test_closures.py`, and the cascade to nine documents. `check:full-sweep` and `check:proofs` pass
 - 2026-10-12: HQ-6a.1 accepted by the maintainer, with ADR-A105 and ADR-A103's addendum. Three adversarial probes, our pick, each caught: the reference's open reading made closed (11 tests fail), the set-reading shape loosened (HQ6a1-02 fails), the Isabelle closed reading folded from Undetermined (the session fails to build). Recorded in the Validation Pack
 - 2026-10-12: HQ-6a.1 merged and tagged. HQ-6a.2 started in its own worktree. Its examples state the compilers' outcomes under closures (15 tests red, as expected). HQ6a2-Q1 to Q3 answered as leaned: reliance as a `?closure` column per row, only where completeness decided, a profile naming the union of its conditions' closures, the compilers minting no records (C12 does), and the reference returning reliance. Recorded in the plan and an ADR-A105 addendum
+- 2026-10-12: HQ-6a.2's model phase written, not yet run: Executable 0.7.0 with `exe:NoClosureLicence`, the IR carrying a binding's closure and refusing an unlicensed one, SPARQL deciding on completeness only under a closure with a `?closure` column and a profile's `?closures`, SHACL following through the shared select, and the reference's `decide_condition_with_reliance`. `build:mtp` moves no pins, since the MTP hashes MORK's own terms only. Validation Pack written

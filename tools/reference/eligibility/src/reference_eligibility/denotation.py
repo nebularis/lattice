@@ -24,7 +24,7 @@ in ``decide_condition`` below -- a different reason for the same absence here.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import AbstractSet, Hashable, Mapping, Optional, Sequence
+from typing import AbstractSet, Hashable, Mapping, Optional, Sequence, Tuple
 
 from .kernel import DENIED, PERMITTED, UNDETERMINED, Decision, every_value, neg3, some_value
 
@@ -164,6 +164,38 @@ def decide_condition(
     version took ``values[0]`` regardless of length, which agreed with the
     compiler only by accident, on fixtures with exactly one candidate.
     """
+    decision, _ = decide_condition_with_reliance(
+        values,
+        reading=reading,
+        negated=negated,
+        closed=closed,
+        hierarchical=hierarchical,
+        required=required,
+        excluded=excluded,
+        scheme=scheme,
+    )
+    return decision
+
+
+def decide_condition_with_reliance(
+    values: Sequence[Concept],
+    *,
+    reading: str,
+    negated: bool,
+    closed: bool = False,
+    hierarchical: bool,
+    required: AbstractSet[Concept],
+    excluded: AbstractSet[Concept],
+    scheme: Optional[Scheme] = None,
+) -> Tuple[Decision, bool]:
+    """``decide_condition``'s decision, and whether it relied on the closure (ADR-A105's
+    2026-10-12 addendum, HQ6a2-Q3).
+
+    A decision relies on the closure exactly when completeness decided it: ``SomeValue`` Denied
+    or ``EveryValue`` Permitted under a closure in force, the empty case included. Reliance is
+    decided before negation, so a negated condition relies on what it negates relied on. Without
+    a closure those outcomes are Undetermined, and nothing relies on one. The differential
+    harness checks the compilers' ``?closure`` column against this."""
 
     def decide_one(candidate: Concept) -> Decision:
         return decide_concept_match(
@@ -176,11 +208,14 @@ def decide_condition(
 
     if reading == "SingleValue":
         decision = decide_one(values[0]) if len(values) == 1 else UNDETERMINED
+        relied = False
     elif reading == "SomeValue":
         decision = some_value(closed, [decide_one(v) for v in values])
+        relied = closed and decision is DENIED
     elif reading == "EveryValue":
         decision = every_value(closed, [decide_one(v) for v in values])
+        relied = closed and decision is PERMITTED
     else:
         raise ValueError(f"unknown value reading {reading!r}")
 
-    return neg3(decision) if negated else decision
+    return (neg3(decision) if negated else decision), relied

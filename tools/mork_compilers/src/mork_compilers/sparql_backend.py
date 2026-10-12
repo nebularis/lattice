@@ -22,6 +22,15 @@ evidence must never silently read as a denial.
 Every row carries ``?diagnostic``, an ``exe:Diagnostic`` individual, exactly
 when its decision is Undetermined (ADR-A89 item 6).
 
+Every condition row also carries ``?closure``, bound to the binding's ``elg:Closure`` exactly when
+completeness decided the outcome: ``elg:SomeValue`` Denied or ``elg:EveryValue`` Permitted, the
+empty case included, before any negation (ADR-A105 and its 2026-10-12 addendum, L15, L17). Without
+a closure in force a set reading decides only what a record proves, and an outcome that needed
+completeness is Undetermined with ``exe:NoClosureLicence``. A profile row carries ``?closures``,
+the space-separated union of its conditions' closures, unbound when none relied on one. The
+evaluator copies them into the decision record's ``elg:closureReliedOn`` and stamps the recording
+time, the cut. This backend mints no decision records.
+
 Concept plans (ADR-A89) follow the ADR-A87 decision table: a question with no
 ``elg:candidateConcept``, or more than one, is Undetermined. An excluded
 candidate is Denied (L10), a required one Permitted, and any other Denied.
@@ -109,7 +118,7 @@ def _interval_core(plan: IntervalPlan, carry: str, key: str, per_value: bool) ->
     if plan.evidence is not None:
         return _bound_interval_select(plan, carry, key, per_value)
     return (
-        f"SELECT {carry}{key} ?decision ?diagnostic WHERE {{\n"
+        f"SELECT {carry}{key} ?decision ?diagnostic ?closure WHERE {{\n"
         f"  {key} elg:forCondition <{plan.condition}> .\n"
         "  OPTIONAL {\n"
         f"    {key} elg:candidateRangeSet ?candidateRangeSet .\n"
@@ -141,7 +150,7 @@ def _bound_interval_select(plan: IntervalPlan, carry: str, key: str, per_value: 
     literal = "isLiteral(?reading)" if literal_readable(plan) else "false"
     value = " ?value" if per_value else ""
     return (
-        f"SELECT {carry}{key} ?decision ?diagnostic WHERE {{\n"
+        f"SELECT {carry}{key} ?decision ?diagnostic ?closure WHERE {{\n"
         "  {\n"
         f"    SELECT {carry}{key}{value} (COUNT(DISTINCT ?value) AS ?candidates) (SAMPLE(?value) AS ?reading)"
         " (SAMPLE(?number) AS ?quantity) (SAMPLE(?unitOfValue) AS ?candUnit) WHERE {\n"
@@ -240,7 +249,7 @@ def _concept_core(plan: ConceptPlan, carry: str, key: str, per_value: bool) -> s
         )
     value = " ?offered" if per_value else ""
     return (
-        f"SELECT {carry}{key} ?decision ?diagnostic WHERE {{\n"
+        f"SELECT {carry}{key} ?decision ?diagnostic ?closure WHERE {{\n"
         "  {\n"
         f"    SELECT {carry}{key}{value} (COUNT(DISTINCT ?offered) AS ?candidates) (SAMPLE(?offered) AS ?candidate) WHERE {{\n"
         f"{source}"
@@ -259,35 +268,49 @@ def _finish(plan: Union[IntervalPlan, ConceptPlan], carry: str, key: str, core) 
     reading = plan.evidence.reading if plan.evidence is not None else ELG.SingleValue
     select = core(reading != ELG.SingleValue)
     if reading != ELG.SingleValue:
-        select = _read_set(reading, carry, key, select)
+        select = _read_set(reading, plan.evidence.closure, carry, key, select)
     if plan.negated:
         select = _negate(carry, key, select)
     return select
 
 
-def _read_set(reading: URIRef, carry: str, key: str, per_value: str) -> str:
-    """Strong Kleene over the per-value decisions of one subject (L15). A subject
-    with no value has one row, Undetermined with exe:MissingCandidate. An
-    Undetermined set reports the diagnostic of one of its Undetermined values."""
+def _read_set(reading: URIRef, closure, carry: str, key: str, per_value: str) -> str:
+    """Strong Kleene over the per-value decisions of one subject (L15), deciding on completeness
+    only under ``closure`` (L17). A subject with no value has one per-value row, Undetermined with
+    exe:MissingCandidate, which counts as no value, not as an undetermined one. Under a closure,
+    some value is Denied when no value is Permitted or undetermined, and every value Permitted when
+    none is Denied or undetermined, so the empty case decides. Without one those outcomes are
+    Undetermined, reporting an undetermined value's diagnostic, else exe:MissingCandidate for no
+    value, else exe:NoClosureLicence. ``?closure`` names the closure when it decided."""
+    closed = "true" if closure is not None else "false"
+    undetermined = "(?undetermined - ?missing)"
     if reading == ELG.SomeValue:
-        decide = 'IF(?permitted > 0, "Permitted", IF(?undetermined > 0, "Undetermined", "Denied"))'
+        decide = f'IF(?permitted > 0, "Permitted", IF({closed} && {undetermined} = 0, "Denied", "Undetermined"))'
+        relied = '?decision = "Denied"'
     else:
-        decide = 'IF(?denied > 0, "Denied", IF(?undetermined > 0, "Undetermined", "Permitted"))'
+        decide = f'IF(?denied > 0, "Denied", IF({closed} && {undetermined} = 0, "Permitted", "Undetermined"))'
+        relied = '?decision = "Permitted"'
+    reliance = f"  BIND(IF({relied}, <{closure}>, ?none) AS ?closure)\n" if closure is not None else ""
 
     def count(outcome: str) -> str:
         return f'(SUM(IF(?decision = "{outcome}", 1, 0)) AS ?{outcome.lower()})'
 
+    missing = (
+        f'(SUM(IF(?decision = "Undetermined" && COALESCE(STR(?diagnostic), "") = "{EXE.MissingCandidate}", 1, 0))'
+        " AS ?missing)"
+    )
     return (
-        f"SELECT {carry}{key} ?decision ?diagnostic WHERE {{\n"
+        f"SELECT {carry}{key} ?decision ?diagnostic ?closure WHERE {{\n"
         "  {\n"
-        f"    SELECT {carry}{key} {count('Permitted')} {count('Denied')} {count('Undetermined')}\n"
+        f"    SELECT {carry}{key} {count('Permitted')} {count('Denied')} {count('Undetermined')} {missing}\n"
         '      (MAX(IF(?decision = "Undetermined", COALESCE(STR(?diagnostic), ""), "")) AS ?reason) WHERE {\n'
         "      {\n" + per_value + "      }\n"
         "    }\n"
         f"    GROUP BY {carry}{key}\n"
         "  }\n"
         f"  BIND({decide} AS ?decision)\n"
-        '  BIND(IF(?decision = "Undetermined", IRI(?reason), ?none) AS ?diagnostic)\n'
+        f'  BIND(IF(?decision = "Undetermined", IF(?reason = "", <{EXE.NoClosureLicence}>, IRI(?reason)), ?none) AS ?diagnostic)\n'
+        f"{reliance}"
         "}\n"
     )
 
@@ -295,9 +318,9 @@ def _read_set(reading: URIRef, carry: str, key: str, per_value: str) -> str:
 def _negate(carry: str, key: str, select: str) -> str:
     """Swap Permitted and Denied, keeping Undetermined and its diagnostic (L16)."""
     return (
-        f"SELECT {carry}{key} ?decision ?diagnostic WHERE {{\n"
+        f"SELECT {carry}{key} ?decision ?diagnostic ?closure WHERE {{\n"
         "  {\n"
-        f"    SELECT {carry}{key} (?decision AS ?raw) ?diagnostic WHERE {{\n"
+        f"    SELECT {carry}{key} (?decision AS ?raw) ?diagnostic ?closure WHERE {{\n"
         "      {\n" + select + "      }\n"
         "    }\n"
         "  }\n"
@@ -318,8 +341,9 @@ def _aggregate(plan: ProfilePlan) -> str:
 
 
 def profile_select(plan: ProfilePlan, record: str = "?record") -> str:
-    """The SELECT block, without prefixes, projecting the record, ?decision and
-    ?diagnostic (ADR-A89 item 5). A record is an ``elg:EligibilityDecision`` of
+    """The SELECT block, without prefixes, projecting the record, ?decision,
+    ?diagnostic (ADR-A89 item 5) and ?closures, the union of the closures its conditions relied on
+    (ADR-A105's 2026-10-12 addendum). A record is an ``elg:EligibilityDecision`` of
     the profile, or each bound subject when the profile's conditions are bound
     (ADR-A91). A condition with no answer for the record counts as Undetermined.
 
@@ -347,10 +371,11 @@ def profile_select(plan: ProfilePlan, record: str = "?record") -> str:
         return f'(SUM(IF(COALESCE(?outcome, "") = "{outcome}", 1, 0)) AS ?{outcome.lower()})'
 
     return (
-        f"SELECT {record} ?decision ?diagnostic WHERE {{\n"
+        f"SELECT {record} ?decision ?diagnostic ?closures WHERE {{\n"
         "  {\n"
         f"    SELECT {record} {count('Permitted')} {count('Denied')} {count('Undetermined')}\n"
-        "      (COUNT(DISTINCT ?condition) AS ?answered) (MAX(COALESCE(STR(?reason), '')) AS ?conditionDiagnostic) WHERE {\n"
+        "      (COUNT(DISTINCT ?condition) AS ?answered) (MAX(COALESCE(STR(?reason), '')) AS ?conditionDiagnostic)\n"
+        '      (GROUP_CONCAT(DISTINCT STR(?relied); separator=" ") AS ?closureList) WHERE {\n"
         f"      {records}\n"
         "      OPTIONAL {\n"
         f"{link}"
@@ -359,6 +384,7 @@ def profile_select(plan: ProfilePlan, record: str = "?record") -> str:
         "        FILTER (BOUND(?decision))\n"
         "        BIND(?decision AS ?outcome)\n"
         "        BIND(?diagnostic AS ?reason)\n"
+        "        BIND(?closure AS ?relied)\n"
         "      }\n"
         "    }\n"
         f"    GROUP BY {record}\n"
@@ -366,6 +392,7 @@ def profile_select(plan: ProfilePlan, record: str = "?record") -> str:
         f"  BIND({len(plan.conditions)} - ?answered AS ?missing)\n"
         f"  BIND({_aggregate(plan)} AS ?decision)\n"
         f'  BIND(IF(?decision != "Undetermined", ?none, IF(?missing > 0, <{EXE.MissingCandidate}>, IRI(?conditionDiagnostic))) AS ?diagnostic)\n'
+        '  BIND(IF(?closureList = "", ?none, ?closureList) AS ?closures)\n'
         "}\n"
     )
 

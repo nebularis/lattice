@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import unittest
 from pathlib import Path
-from typing import Dict, Optional, Tuple
+from typing import Dict, FrozenSet, Optional, Tuple
 
 from rdflib import Graph, Namespace, URIRef
 from rdflib.namespace import RDF
@@ -79,6 +79,22 @@ def sparql(plan, data: Graph) -> Dict[str, Tuple[str, Optional[URIRef]]]:
     return keyed
 
 
+def sparql_profile(plan, data: Graph) -> Dict[str, Tuple[str, FrozenSet[URIRef]]]:
+    """Each record's decision and the closures it relied on, split from ``?closures``."""
+    artefact = compile_query_template(plan)
+    template = next(artefact.subjects(RDF.type, MORK.QueryTemplate))
+    rows = list(data.query(str(artefact.value(template, MORK.queryText))))
+    keyed = {
+        str(row[0]).rsplit("/", 1)[1]: (
+            str(row.decision),
+            frozenset(URIRef(c) for c in str(row.closures).split()) if row.closures is not None else frozenset(),
+        )
+        for row in rows
+    }
+    assert len(keyed) == len(rows), "one decision per record"
+    return keyed
+
+
 class ExampleTests(unittest.TestCase):
     def test_sparql_decides_each_example_with_and_without_its_closure(self) -> None:
         # HQ6a2-04
@@ -116,9 +132,9 @@ class RelianceTests(unittest.TestCase):
         # HQ6a2-08 (HQ6a2-Q2 (i)): ada relies through no-medicine, ben and cai through both, dee on neither
         data = example("admissions")
         closure = ADM["registry-closure"]
-        rows = sparql(compile_profile(data, ADM["engineering-admission"]), data)
+        rows = sparql_profile(compile_profile(data, ADM["engineering-admission"]), data)
         self.assertEqual({s: c for s, (_, c) in rows.items()},
-                         {"ada": closure, "ben": closure, "cai": closure, "dee": None})
+                         {"ada": {closure}, "ben": {closure}, "cai": {closure}, "dee": set()})
 
     def test_no_row_names_a_closure_without_one(self) -> None:
         data = example("admissions", closed=False)
