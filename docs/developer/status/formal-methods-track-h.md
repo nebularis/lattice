@@ -413,3 +413,8 @@ section below.
   form cost about 60% on a 20,000-triple sweep. The maintainer also raised a SPARQL semantic IR for a later phase,
   recorded as PDD-06 and plan §5.1, with an interim rule that every semantic rule the checker encodes gets an engine
   test. The suite was not run (1,876 cases collected).
+- 2026-10-12: ran the FMH-H2-1 one command after pulling. `check:persistence` gave 4 failures, all in T29
+  (`a_bind_sees_only_its_own_group`). The query selected only `?b`, and rdflib 7.6.0 drops a row whose projected
+  variables are all unbound, so the expected `[None]` came back empty. The queries now select `?a ?b` and read `?b`,
+  which asserts the same scope rule. The expected values are unchanged. `check:persistence` then gave
+  `1875 passed, 1 xfailed`.

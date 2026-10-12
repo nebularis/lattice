@@ -409,11 +409,11 @@ def test_h2_1_t30_guards_can_be_turned_off_and_the_operation_says_so():
 # values. Run on rdflib, so the checker's model of scope is tested against an engine.
 
 _SCOPE = {
-    "nested group": ("SELECT ?b WHERE { BIND(1 AS ?a) { BIND(?a + 1 AS ?b) } }", [None]),
-    "GRAPH block": ("SELECT ?b WHERE { BIND(1 AS ?a) GRAPH <urn:g> { ?s ?p ?o BIND(?a + 1 AS ?b) } }", [None]),
-    "OPTIONAL": ("SELECT ?b WHERE { BIND(1 AS ?a) OPTIONAL { BIND(?a + 1 AS ?b) } }", [None]),
-    "UNION branch": ("SELECT ?b WHERE { BIND(1 AS ?a) { BIND(?a + 1 AS ?b) } UNION { BIND(5 AS ?b) } }", [None, 5]),
-    "same group": ("SELECT ?b WHERE { BIND(1 AS ?a) BIND(?a + 1 AS ?b) }", [2]),
+    "nested group": ("SELECT ?a ?b WHERE { BIND(1 AS ?a) { BIND(?a + 1 AS ?b) } }", [None]),
+    "GRAPH block": ("SELECT ?a ?b WHERE { BIND(1 AS ?a) GRAPH <urn:g> { ?s ?p ?o BIND(?a + 1 AS ?b) } }", [None]),
+    "OPTIONAL": ("SELECT ?a ?b WHERE { BIND(1 AS ?a) OPTIONAL { BIND(?a + 1 AS ?b) } }", [None]),
+    "UNION branch": ("SELECT ?a ?b WHERE { BIND(1 AS ?a) { BIND(?a + 1 AS ?b) } UNION { BIND(5 AS ?b) } }", [None, 5]),
+    "same group": ("SELECT ?a ?b WHERE { BIND(1 AS ?a) BIND(?a + 1 AS ?b) }", [2]),
 }
 
 
@@ -422,7 +422,7 @@ def test_h2_1_t29_a_bind_sees_only_its_own_group_on_rdflib(kind):
     query, expected = _SCOPE[kind]
     ds = Dataset()
     ds.graph(URIRef("urn:g")).add((URIRef("urn:s"), URIRef("urn:p"), RdfLiteral(0)))
-    assert sorted((None if row[0] is None else int(row[0]) for row in ds.query(query)), key=lambda v: (v is not None, v)) == expected
+    assert sorted((None if row[1] is None else int(row[1]) for row in ds.query(query)), key=lambda v: (v is not None, v)) == expected
 
 
 def test_h2_1_t29b_not_exists_sees_the_enclosing_group_on_rdflib():
