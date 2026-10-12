@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: MPL-2.0
 """Exhaustive checks of the kernel's claims (TA1, TA2, bounded TL1-TL3b), and
-the 15 adequacy fixtures reproduced verbatim from
+the 30 adequacy fixtures reproduced verbatim from
 ``tools/proofs/eligibility/Adequacy.thy`` (itself from
 ``tools/mork_compilers/src/mork_compilers/test_set_readings.py``'s ``MIXES``
 data). Where the domain is finite and small (the three-valued ``Decision``
@@ -79,111 +79,121 @@ class TestTA2Neg3:
         assert neg3(UNDETERMINED) is UNDETERMINED
 
 
+CLOSED = (True, False)
+
+
 class TestTL1SomeEveryValueSpec:
     """some_value/every_value's own characterisation (Eligibility.thy's
-    TL1-some, TL1-every), checked over every list up to length 3."""
+    TL1-some, TL1-every, restated for closures, L17), checked over every list
+    up to length 3, closed and open."""
 
     def test_some_value_spec(self) -> None:
-        for xs in all_lists_up_to(3):
-            result = some_value(list(xs))
-            if PERMITTED in xs:
-                assert result is PERMITTED, xs
-            elif xs and all(x is DENIED for x in xs):
-                assert result is DENIED, xs
-            else:
-                assert result is UNDETERMINED, xs
+        for closed in CLOSED:
+            for xs in all_lists_up_to(3):
+                result = some_value(closed, list(xs))
+                if PERMITTED in xs:
+                    assert result is PERMITTED, (closed, xs)
+                elif closed and all(x is DENIED for x in xs):
+                    assert result is DENIED, (closed, xs)
+                else:
+                    assert result is UNDETERMINED, (closed, xs)
 
     def test_every_value_spec(self) -> None:
-        for xs in all_lists_up_to(3):
-            result = every_value(list(xs))
-            if DENIED in xs:
-                assert result is DENIED, xs
-            elif xs and all(x is PERMITTED for x in xs):
-                assert result is PERMITTED, xs
-            else:
-                assert result is UNDETERMINED, xs
+        for closed in CLOSED:
+            for xs in all_lists_up_to(3):
+                result = every_value(closed, list(xs))
+                if DENIED in xs:
+                    assert result is DENIED, (closed, xs)
+                elif closed and all(x is PERMITTED for x in xs):
+                    assert result is PERMITTED, (closed, xs)
+                else:
+                    assert result is UNDETERMINED, (closed, xs)
 
 
 class TestTL2Monotone:
     """some_value/every_value are monotone pointwise over the list
     (Eligibility.thy's TL2), checked over every pair of equal-length lists
-    up to length 3 whose elements are pointwise related by decision_leq."""
+    up to length 3 whose elements are pointwise related by decision_leq,
+    closed and open."""
 
     def test_some_value_monotone(self) -> None:
-        for length in range(4):
-            for xs in itertools.product(ALL_DECISIONS, repeat=length):
-                for ys in itertools.product(ALL_DECISIONS, repeat=length):
-                    if all(decision_leq(x, y) for x, y in zip(xs, ys)):
-                        assert decision_leq(some_value(list(xs)), some_value(list(ys))), (xs, ys)
+        for closed in CLOSED:
+            for length in range(4):
+                for xs in itertools.product(ALL_DECISIONS, repeat=length):
+                    for ys in itertools.product(ALL_DECISIONS, repeat=length):
+                        if all(decision_leq(x, y) for x, y in zip(xs, ys)):
+                            assert decision_leq(some_value(closed, list(xs)), some_value(closed, list(ys))), (xs, ys)
 
     def test_every_value_monotone(self) -> None:
-        for length in range(4):
-            for xs in itertools.product(ALL_DECISIONS, repeat=length):
-                for ys in itertools.product(ALL_DECISIONS, repeat=length):
-                    if all(decision_leq(x, y) for x, y in zip(xs, ys)):
-                        assert decision_leq(every_value(list(xs)), every_value(list(ys))), (xs, ys)
+        for closed in CLOSED:
+            for length in range(4):
+                for xs in itertools.product(ALL_DECISIONS, repeat=length):
+                    for ys in itertools.product(ALL_DECISIONS, repeat=length):
+                        if all(decision_leq(x, y) for x, y in zip(xs, ys)):
+                            assert decision_leq(every_value(closed, list(xs)), every_value(closed, list(ys))), (xs, ys)
 
 
 class TestTL3NegationDoesNotCommute:
     """Negating after combining is every_value of the negated list
     (Eligibility.thy's TL3a); negating before, under the same reading,
-    disagrees for some input (TL3a's deliberate asymmetry, TL3b)."""
+    disagrees for some input (TL3b). Both closed and open."""
 
     def test_negate_after_is_every_of_negated(self) -> None:
-        for xs in all_lists_up_to(3):
-            assert neg3(some_value(list(xs))) == every_value([neg3(x) for x in xs])
+        for closed in CLOSED:
+            for xs in all_lists_up_to(3):
+                assert neg3(some_value(closed, list(xs))) == every_value(closed, [neg3(x) for x in xs])
 
     def test_negate_before_same_reading_disagrees(self) -> None:
         witness = [PERMITTED, DENIED]
-        assert neg3(some_value(witness)) != some_value([neg3(x) for x in witness])
+        for closed in CLOSED:
+            assert neg3(some_value(closed, witness)) != some_value(closed, [neg3(x) for x in witness])
+
+
+class TestTL4EmptyAndSetInvariance:
+    """Eligibility.thy's TL4a (the empty case decides only when closed, L17)
+    and TL4b (only the set of values matters)."""
+
+    def test_empty(self) -> None:
+        assert some_value(True, []) is DENIED
+        assert every_value(True, []) is PERMITTED
+        assert some_value(False, []) is UNDETERMINED
+        assert every_value(False, []) is UNDETERMINED
+
+    def test_set_invariant(self) -> None:
+        for closed in CLOSED:
+            for xs in all_lists_up_to(3):
+                for ys in all_lists_up_to(3):
+                    if set(xs) == set(ys):
+                        assert some_value(closed, list(xs)) is some_value(closed, list(ys))
+                        assert every_value(closed, list(xs)) is every_value(closed, list(ys))
+
+
+ROWS = {
+    "pd": ([PERMITTED, DENIED], PERMITTED, DENIED, PERMITTED, DENIED),
+    "dd": ([DENIED, DENIED], DENIED, DENIED, UNDETERMINED, DENIED),
+    "du": ([DENIED, UNDETERMINED], UNDETERMINED, DENIED, UNDETERMINED, DENIED),
+    "pp": ([PERMITTED, PERMITTED], PERMITTED, PERMITTED, PERMITTED, UNDETERMINED),
+    "pu": ([PERMITTED, UNDETERMINED], PERMITTED, UNDETERMINED, PERMITTED, UNDETERMINED),
+    "none": ([], DENIED, PERMITTED, UNDETERMINED, UNDETERMINED),
+}
 
 
 class TestAdequacy:
-    """The 15 fixtures from tools/proofs/eligibility/Adequacy.thy, reproduced
-    verbatim: if this module disagreed with the Isabelle kernel or the
-    MIXES reference data, these would fail, not merely fail to prove."""
+    """The 30 fixtures of tools/proofs/eligibility/Adequacy.thy, each row
+    closed and open: if this module disagreed with the Isabelle kernel,
+    these would fail, not merely fail to prove."""
 
-    def test_some_pd(self) -> None:
-        assert some_value([PERMITTED, DENIED]) is PERMITTED
+    def test_rows(self) -> None:
+        for name, (xs, some_closed, every_closed, some_open, every_open) in ROWS.items():
+            assert some_value(True, xs) is some_closed, name
+            assert every_value(True, xs) is every_closed, name
+            assert some_value(False, xs) is some_open, name
+            assert every_value(False, xs) is every_open, name
 
-    def test_every_pd(self) -> None:
-        assert every_value([PERMITTED, DENIED]) is DENIED
-
-    def test_some_dd(self) -> None:
-        assert some_value([DENIED, DENIED]) is DENIED
-
-    def test_every_dd(self) -> None:
-        assert every_value([DENIED, DENIED]) is DENIED
-
-    def test_some_du(self) -> None:
-        assert some_value([DENIED, UNDETERMINED]) is UNDETERMINED
-
-    def test_every_du(self) -> None:
-        assert every_value([DENIED, UNDETERMINED]) is DENIED
-
-    def test_some_pp(self) -> None:
-        assert some_value([PERMITTED, PERMITTED]) is PERMITTED
-
-    def test_every_pp(self) -> None:
-        assert every_value([PERMITTED, PERMITTED]) is PERMITTED
-
-    def test_some_pu(self) -> None:
-        assert some_value([PERMITTED, UNDETERMINED]) is PERMITTED
-
-    def test_every_pu(self) -> None:
-        assert every_value([PERMITTED, UNDETERMINED]) is UNDETERMINED
-
-    def test_some_none(self) -> None:
-        assert some_value([]) is UNDETERMINED
-
-    def test_every_none(self) -> None:
-        assert every_value([]) is UNDETERMINED
-
-    def test_negated_pd(self) -> None:
-        assert neg3(some_value([PERMITTED, DENIED])) is DENIED
-
-    def test_negated_dd(self) -> None:
-        assert neg3(some_value([DENIED, DENIED])) is PERMITTED
-
-    def test_negated_du(self) -> None:
-        assert neg3(some_value([DENIED, UNDETERMINED])) is UNDETERMINED
+    def test_negated(self) -> None:
+        assert neg3(some_value(True, [PERMITTED, DENIED])) is DENIED
+        assert neg3(some_value(True, [DENIED, DENIED])) is PERMITTED
+        assert neg3(some_value(True, [DENIED, UNDETERMINED])) is UNDETERMINED
+        assert neg3(some_value(False, [DENIED, DENIED])) is UNDETERMINED
+        assert neg3(some_value(True, [])) is PERMITTED
+        assert neg3(some_value(False, [])) is UNDETERMINED

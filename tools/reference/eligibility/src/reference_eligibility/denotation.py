@@ -141,6 +141,7 @@ def decide_condition(
     *,
     reading: str,
     negated: bool,
+    closed: bool = False,
     hierarchical: bool,
     required: AbstractSet[Concept],
     excluded: AbstractSet[Concept],
@@ -150,7 +151,10 @@ def decide_condition(
     single-candidate decision (``decide_concept_match``).
 
     ``reading`` is one of ``"SingleValue"``, ``"SomeValue"`` or ``"EveryValue"``
-    (``elg:valueReading``, ADR-A103). A single-value reading decides only
+    (``elg:valueReading``, ADR-A103). ``closed`` is whether the binding names a
+    closure in force (``elg:closedUnder``, ADR-A105, L17): only then does a set
+    reading decide on the values reached being all there are. A closure never
+    changes a single-value reading. A single-value reading decides only
     when there is exactly one value: no value is Undetermined
     (``exe:MissingCandidate``), and more than one is Undetermined too
     (``exe:SeveralCandidates``) -- a question with several candidates and no
@@ -173,9 +177,9 @@ def decide_condition(
     if reading == "SingleValue":
         decision = decide_one(values[0]) if len(values) == 1 else UNDETERMINED
     elif reading == "SomeValue":
-        decision = some_value([decide_one(v) for v in values])
+        decision = some_value(closed, [decide_one(v) for v in values])
     elif reading == "EveryValue":
-        decision = every_value([decide_one(v) for v in values])
+        decision = every_value(closed, [decide_one(v) for v in values])
     else:
         raise ValueError(f"unknown value reading {reading!r}")
 

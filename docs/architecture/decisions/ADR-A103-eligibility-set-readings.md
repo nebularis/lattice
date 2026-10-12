@@ -63,3 +63,16 @@ rule that means "some value qualifies" or "every value qualifies" cannot be stat
 - Examples and README text follow ADR-A-C2: the two examples above are authored as fixtures before
   the law's prose.
 - Every backend changes. The IR and SPARQL and SHACL are one slice, SWRL and OWL another.
+
+## Addendum (2026-10-12): completeness needs a closure
+
+**Status:** Proposed 2026-10-12 (CCS slice HQ-6a.1, HQ6a-Q1). Narrows decision 1.
+[ADR-A105](ADR-A105-closure-declarations.md) holds the reasoning.
+
+`elg:SomeValue` is Denied when every value is Denied, and `elg:EveryValue` Permitted when every value
+is Permitted, only for a binding that names a closure in force (`elg:closedUnder`). The empty case
+then decides too. Without a closure, some value decides only Permitted and every value only Denied,
+the outcomes a record proves, and the rest is Undetermined. Decision 3's SWRL backend already derives
+only those outcomes. The examples of this ADR name a closure: the admissions registry's, licensed by
+an operational profile, and the trial protocol's full-history clause. Negation (decision 4) is
+unchanged.

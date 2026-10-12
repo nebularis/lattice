@@ -14,7 +14,7 @@
 
 <https://www.nebularis.org/neuro-semantic/eligibility>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.11.0> ;
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.12.0> ;
 	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.4.0> ,
 				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.4.0> ,
 				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.8.0> ,
@@ -163,4 +163,20 @@ elg:negated a owl:DatatypeProperty, owl:FunctionalProperty ;
 	rdfs:comment "When true, the condition is evaluated as it stands, including its value reading, and then Permitted and Denied are swapped. Undetermined stays Undetermined (ADR-A103, L16)." .
 
 [] a owl:AllDisjointClasses ;
-	owl:members ( elg:Condition elg:Question elg:EligibilityDecision elg:MatchStrategy elg:CompatibilityOperation elg:WildcardSemantics elg:Decision elg:OperationalProfile elg:Law elg:EvidenceBinding elg:EvidenceStep elg:StepDirection elg:ValueReading ) .
+	owl:members ( elg:Condition elg:Question elg:EligibilityDecision elg:MatchStrategy elg:CompatibilityOperation elg:WildcardSemantics elg:Decision elg:OperationalProfile elg:Law elg:EvidenceBinding elg:EvidenceStep elg:StepDirection elg:ValueReading elg:Closure ) .
+
+elg:Closure a owl:Class ;
+	rdfs:subClassOf [ a owl:Restriction ; owl:onProperty elg:licensedBy ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ;
+	rdfs:comment "A source's warrant that the records an evidence binding reads are complete, so a set reading may decide on what is absent (ADR-A105, L15, L17). It covers exactly the bindings that name it." .
+
+elg:licensedBy a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain elg:Closure ;
+	rdfs:comment "The source that vouches for a closure: a deeming or another term, a party whose register is authoritative, or an operational profile by which a deployment declares its records complete. Deliberately has no range, so a layer above names its own source." .
+
+elg:closedUnder a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain elg:EvidenceBinding ; rdfs:range elg:Closure ;
+	rdfs:comment "The closure an evidence binding relies on. Only a binding read elg:SomeValue or elg:EveryValue names one." .
+
+elg:closureReliedOn a owl:ObjectProperty ;
+	rdfs:domain elg:EligibilityDecision ; rdfs:range elg:Closure ;
+	rdfs:comment "A closure a decision relied on. The decision's own recording time is the cut: the closure licensed the records as they stood then." .

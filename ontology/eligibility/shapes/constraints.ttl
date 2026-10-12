@@ -69,3 +69,31 @@ elg:ReachableExclusionShape a sh:NodeShape ;
 			}
 		"""
 	] .
+
+elg:ClosureNeedsSetReadingShape a sh:NodeShape ;
+	sh:targetSubjectsOf elg:closedUnder ;
+	sh:sparql [
+		sh:message "Only a binding read elg:SomeValue or elg:EveryValue names a closure (ADR-A105, L15)." ;
+		sh:select """
+			PREFIX elg: <https://www.nebularis.org/neuro-semantic/lattice/eligibility#>
+			SELECT $this WHERE {
+				FILTER NOT EXISTS { $this elg:valueReading ?reading . FILTER (?reading IN (elg:SomeValue, elg:EveryValue)) }
+			}
+		"""
+	] .
+
+elg:ClosureReliedOnNamedShape a sh:NodeShape ;
+	sh:targetSubjectsOf elg:closureReliedOn ;
+	sh:sparql [
+		sh:message "A decision relies only on a closure that a binding of one of its profile's conditions names (ADR-A105)." ;
+		sh:select """
+			PREFIX elg: <https://www.nebularis.org/neuro-semantic/lattice/eligibility#>
+			SELECT $this ?value WHERE {
+				$this elg:closureReliedOn ?value .
+				FILTER NOT EXISTS {
+					$this elg:forProfile/elg:hasCondition+ ?condition .
+					?binding elg:bindsCondition ?condition ; elg:closedUnder ?value .
+				}
+			}
+		"""
+	] .

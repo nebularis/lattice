@@ -252,3 +252,53 @@ class TestL15SetReadingsAndL16Negation:
             scheme=FRUIT_SCHEME,
         )
         assert decided is UNDETERMINED
+
+
+class TestL17Closures:
+    """A set reading decides on completeness only under a closure (ADR-A105,
+    L15 as restated, L17). The admissions example
+    (ontology/eligibility/examples/set-reading-admissions.ttl), both of its
+    tables: with the registry's closure and without it."""
+
+    APPLICANTS = {
+        "ada": ["history", "physics"],
+        "ben": ["history"],
+        "cai": [],
+        "dee": ["medicine", "physics"],
+    }
+    CLOSED = {
+        "ada": (PERMITTED, PERMITTED),
+        "ben": (DENIED, PERMITTED),
+        "cai": (DENIED, PERMITTED),
+        "dee": (PERMITTED, DENIED),
+    }
+    OPEN = {
+        "ada": (PERMITTED, UNDETERMINED),
+        "ben": (UNDETERMINED, UNDETERMINED),
+        "cai": (UNDETERMINED, UNDETERMINED),
+        "dee": (PERMITTED, DENIED),
+    }
+
+    def decide(self, applicant: str, closed: bool) -> tuple:
+        values = self.APPLICANTS[applicant]
+        stem = decide_condition(values, reading="SomeValue", negated=False, closed=closed,
+                                hierarchical=False, required={"mathematics", "physics"}, excluded=set())
+        no_medicine = decide_condition(values, reading="SomeValue", negated=True, closed=closed,
+                                       hierarchical=False, required={"medicine"}, excluded=set())
+        return stem, no_medicine
+
+    def test_with_the_closure(self) -> None:
+        for applicant, expected in self.CLOSED.items():
+            assert self.decide(applicant, True) == expected, applicant
+
+    def test_without_the_closure(self) -> None:
+        for applicant, expected in self.OPEN.items():
+            assert self.decide(applicant, False) == expected, applicant
+
+    def test_a_closure_never_changes_a_single_value_reading(self) -> None:
+        for values in ([], ["x"], ["x", "y"]):
+            for closed in (True, False):
+                assert decide_condition(values, reading="SingleValue", negated=False, closed=closed,
+                                        hierarchical=False, required={"x"}, excluded=set()) is \
+                    decide_condition(values, reading="SingleValue", negated=False, closed=False,
+                                     hierarchical=False, required={"x"}, excluded=set())

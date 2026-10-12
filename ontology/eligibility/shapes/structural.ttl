@@ -20,7 +20,9 @@ elg:EligibilityDecisionShape a sh:NodeShape ;
 	sh:property [ sh:path elg:forProfile ; sh:minCount 1 ; sh:maxCount 1 ] ;
 	sh:property [ sh:path elg:hasQuestion ; sh:minCount 1 ] ;
 	sh:property [ sh:path elg:decisionValue ; sh:minCount 1 ; sh:maxCount 1 ] ;
-	sh:property [ sh:path elg:usesOperationalProfile ; sh:minCount 1 ; sh:maxCount 1 ] .
+	sh:property [ sh:path elg:usesOperationalProfile ; sh:minCount 1 ; sh:maxCount 1 ] ;
+	sh:property [ sh:path elg:closureReliedOn ; sh:class elg:Closure ;
+		sh:message "A decision relies only on closures (ADR-A105)." ] .
 
 elg:EvidenceBindingShape a sh:NodeShape ;
 	sh:targetClass elg:EvidenceBinding ;
@@ -28,10 +30,17 @@ elg:EvidenceBindingShape a sh:NodeShape ;
 	sh:property [ sh:path elg:subjectClass ; sh:minCount 1 ; sh:maxCount 1 ] ;
 	sh:property [ sh:path elg:evidenceStep ; sh:minCount 1 ] ;
 	sh:property [ sh:path elg:singleValued ; sh:maxCount 1 ; sh:datatype xsd:boolean ] ;
-	sh:property [ sh:path elg:valueReading ; sh:maxCount 1 ; sh:in ( elg:SingleValue elg:SomeValue elg:EveryValue ) ] .
+	sh:property [ sh:path elg:valueReading ; sh:maxCount 1 ; sh:in ( elg:SingleValue elg:SomeValue elg:EveryValue ) ] ;
+	sh:property [ sh:path elg:closedUnder ; sh:maxCount 1 ; sh:class elg:Closure ;
+		sh:message "A binding names at most one closure, and what it names is an elg:Closure (ADR-A105)." ] .
 
 elg:EvidenceStepShape a sh:NodeShape ;
 	sh:targetClass elg:EvidenceStep ;
 	sh:property [ sh:path elg:stepIndex ; sh:minCount 1 ; sh:maxCount 1 ] ;
 	sh:property [ sh:path elg:stepProperty ; sh:minCount 1 ; sh:maxCount 1 ] ;
 	sh:property [ sh:path elg:stepDirection ; sh:minCount 1 ; sh:maxCount 1 ; sh:in ( elg:Forward elg:Inverse ) ] .
+
+elg:ClosureShape a sh:NodeShape ;
+	sh:targetClass elg:Closure ;
+	sh:property [ sh:path elg:licensedBy ; sh:minCount 1 ; sh:maxCount 1 ;
+		sh:message "A closure names exactly one source (elg:licensedBy, ADR-A105)." ] .

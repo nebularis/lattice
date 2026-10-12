@@ -133,7 +133,7 @@ flowchart LR
 ```turtle-spec
 <https://www.nebularis.org/neuro-semantic/eligibility>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.11.0> ;
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.12.0> ;
 	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.4.0> ,
 				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.4.0> ,
 				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.8.0> ,
@@ -374,7 +374,9 @@ A path ending at a literal instead of a `skos:Concept` or `qnt:Quantity` names t
 reads on (`elg:readOnSpace`), as `ex:tenure-binding` does for `ex:tenureYears`. A binding that reads
 more than one value states how they combine (`elg:valueReading`, §6): `elg:SomeValue` and
 `elg:EveryValue` each decide every value as a single candidate would be decided, then combine the
-outcomes by strong Kleene `or3`/`and3` (§10).
+outcomes by strong Kleene `or3`/`and3` (§10). An outcome that relies on the values reached being all
+there are, Denied under some value and Permitted under every value, needs a closure the binding
+names (§5.6).
 
 ```turtle-spec
 elg:EvidenceBinding a owl:Class ;
@@ -427,7 +429,58 @@ elg:negated a owl:DatatypeProperty, owl:FunctionalProperty ;
 	rdfs:comment "When true, the condition is evaluated as it stands, including its value reading, and then Permitted and Denied are swapped. Undetermined stays Undetermined (ADR-A103, L16)." .
 
 [] a owl:AllDisjointClasses ;
-	owl:members ( elg:Condition elg:Question elg:EligibilityDecision elg:MatchStrategy elg:CompatibilityOperation elg:WildcardSemantics elg:Decision elg:OperationalProfile elg:Law elg:EvidenceBinding elg:EvidenceStep elg:StepDirection elg:ValueReading ) .
+	owl:members ( elg:Condition elg:Question elg:EligibilityDecision elg:MatchStrategy elg:CompatibilityOperation elg:WildcardSemantics elg:Decision elg:OperationalProfile elg:Law elg:EvidenceBinding elg:EvidenceStep elg:StepDirection elg:ValueReading elg:Closure ) .
+```
+
+### 5.6 Closures
+
+A record proves what it shows. That something is absent, or that the values recorded are all there
+are, follows only where a source vouches for the records: a deeming or another term of a contract,
+a party whose register is authoritative, or a deployment that declares its records complete through
+an operational profile. An `elg:Closure` states that source (`elg:licensedBy`), and an evidence
+binding that relies on it names it (`elg:closedUnder`). A closure covers exactly the bindings that
+name it. Several bindings share one closure by each naming it, and nothing infers which bindings a
+closure is for (ADR-A105).
+
+Under a closure, a binding read `elg:SomeValue` is Denied when no value it reaches is Permitted, the
+empty case included, and one read `elg:EveryValue` is Permitted when no value is Denied. Without one,
+a set reading decides only what a record proves (L15). The closure licenses the records as they
+stand at the deciding record's recording time (`fnd:Evidenced`), which is the cut: a fact recorded
+later can show the decision was made on incomplete records. A decision names the closures it relied
+on (`elg:closureReliedOn`). A closure is in force from its source's effective time (L17). A closure
+over a period, such as "within 60 days of the request", is not yet declared.
+
+```mermaid
+flowchart LR
+    subgraph Stated["stated"]
+        B["ex:no-objection-binding<br/>elg:EvidenceBinding<br/>valueReading elg:SomeValue"]
+        C["ex:objections-register<br/>elg:Closure"]
+        S["the agency desk,<br/>which keeps the records"]
+        B -- "closedUnder" --> C
+        C -- "licensedBy" --> S
+    end
+    subgraph Recorded["recorded"]
+        D["a decision, recorded at the vote<br/>elg:EligibilityDecision"]
+    end
+    D -- "closureReliedOn" --> C
+```
+
+```turtle-spec
+elg:Closure a owl:Class ;
+	rdfs:subClassOf [ a owl:Restriction ; owl:onProperty elg:licensedBy ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ;
+	rdfs:comment "A source's warrant that the records an evidence binding reads are complete, so a set reading may decide on what is absent (ADR-A105, L15, L17). It covers exactly the bindings that name it." .
+
+elg:licensedBy a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain elg:Closure ;
+	rdfs:comment "The source that vouches for a closure: a deeming or another term, a party whose register is authoritative, or an operational profile by which a deployment declares its records complete. Deliberately has no range, so a layer above names its own source." .
+
+elg:closedUnder a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain elg:EvidenceBinding ; rdfs:range elg:Closure ;
+	rdfs:comment "The closure an evidence binding relies on. Only a binding read elg:SomeValue or elg:EveryValue names one." .
+
+elg:closureReliedOn a owl:ObjectProperty ;
+	rdfs:domain elg:EligibilityDecision ; rdfs:range elg:Closure ;
+	rdfs:comment "A closure a decision relied on. The decision's own recording time is the cut: the closure licensed the records as they stood then." .
 ```
 
 ## 6. Mechanism Vocabulary
@@ -443,8 +496,8 @@ The three mechanisms §4's diagram names are each a closed set of named individu
 
 <https://www.nebularis.org/neuro-semantic/eligibility-vocab>
 	a owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/eligibility-vocab/0.12.0> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.11.0> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/eligibility-vocab/0.13.0> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.12.0> .
 
 elg:ExactMatch a elg:MatchStrategy .
 elg:SetMembership a elg:MatchStrategy .
@@ -460,23 +513,24 @@ elg:DimensionConsistent a elg:CompatibilityOperation .
 ### 6.1 Value readings
 
 A binding that reaches more than one value (§5.5) decides each one as a single candidate would be,
-then combines the outcomes by strong Kleene logic (L15, §10):
+then combines the outcomes by strong Kleene logic (L15, §10). Under a closure (§5.6) the empty case
+decides too: no value is Denied under some value and Permitted under every value.
 
 ```mermaid
 flowchart LR
     V["values the path reaches"]
     V --> SV["elg:SingleValue (default)<br/>one value: decide it directly.<br/>none, or several: Undetermined"]
-    V --> SM["elg:SomeValue<br/>any Permitted: Permitted<br/>all Denied: Denied<br/>otherwise: Undetermined"]
-    V --> EV["elg:EveryValue<br/>any Denied: Denied<br/>all Permitted: Permitted<br/>otherwise: Undetermined"]
+    V --> SM["elg:SomeValue<br/>any Permitted: Permitted<br/>under a closure, none Permitted<br/>and none Undetermined: Denied<br/>otherwise: Undetermined"]
+    V --> EV["elg:EveryValue<br/>any Denied: Denied<br/>under a closure, none Denied<br/>and none Undetermined: Permitted<br/>otherwise: Undetermined"]
 ```
 
 ```turtle-vocab
 elg:SingleValue a elg:ValueReading ;
 	rdfs:comment "The path reaches one value. None, or several, leaves the condition undetermined. The default reading." .
 elg:SomeValue a elg:ValueReading ;
-	rdfs:comment "Permitted when any value is Permitted, Denied when every value is Denied, otherwise, or with no value, Undetermined (L15)." .
+	rdfs:comment "Permitted when any value is Permitted. Under a closure the binding names, Denied when every value is Denied, with no value included. Otherwise Undetermined (L15)." .
 elg:EveryValue a elg:ValueReading ;
-	rdfs:comment "Denied when any value is Denied, Permitted when every value is Permitted, otherwise, or with no value, Undetermined (L15)." .
+	rdfs:comment "Denied when any value is Denied. Under a closure the binding names, Permitted when every value is Permitted, with no value included. Otherwise Undetermined (L15)." .
 ```
 
 ### 6.2 Wildcard semantics, decision and direction
@@ -551,6 +605,7 @@ flowchart TB
         L14["L14 hierarchy precondition"]
         L15["L15 set readings"]
         L16["L16 negation"]
+        L17["L17 closures"]
     end
 ```
 
@@ -586,10 +641,13 @@ elg:L14 a elg:Law ;
 	rdfs:comment "Hierarchy precondition. Under hierarchical match, when no member of the resolved scheme has a broader concept within that scheme, a candidate that is a member and is neither a required nor an excluded concept leaves the condition undetermined. The scheme cannot say whether the candidate falls under a required or an excluded concept. This takes precedence over default inclusion (L12)." .
 elg:L15 a elg:Law ;
 	elg:lawRegister elg:SemanticLaw ;
-	rdfs:comment "Set readings. A bound condition whose binding reads some or every value decides each value it reaches as a single candidate would be decided, then combines the outcomes by strong Kleene logic: under some value, Permitted if any is Permitted and Denied if all are Denied, under every value, Denied if any is Denied and Permitted if all are Permitted, and Undetermined otherwise or when there is no value." .
+	rdfs:comment "Set readings. A bound condition whose binding reads some or every value decides each value it reaches as a single candidate would be decided, then combines the outcomes by strong Kleene logic. Under some value it is Permitted if any value is Permitted. Under every value it is Denied if any value is Denied. An outcome that needs the values reached to be all there are, Denied under some value and Permitted under every value, follows only under a closure in force that the binding names (L17): then some value is Denied when every value is Denied, and every value Permitted when every value is Permitted, the empty case included. Otherwise the condition is Undetermined." .
 elg:L16 a elg:Law ;
 	elg:lawRegister elg:SemanticLaw ;
 	rdfs:comment "Negation. A negated condition is evaluated as it stands, including its value reading, and its outcome is then swapped: Permitted becomes Denied and Denied becomes Permitted. Undetermined stays Undetermined, with its reason." .
+elg:L17 a elg:Law ;
+	elg:lawRegister elg:SemanticLaw ;
+	rdfs:comment "Closures. A closure is in force from its source's effective time. In force, it licenses that the values a binding naming it reaches, as recorded up to the deciding record's recording time, are all there are. A closure covers only the bindings that name it." .
 ```
 
 L9's last sentence makes a hierarchical condition with no resolved scheme Undetermined for every
@@ -608,8 +666,9 @@ block only, so no violation is reported twice.
 
 ### 7.1 Structural shapes
 
-`shapes/structural.ttl` holds the cardinalities of conditions, profiles, decisions and evidence
-bindings. `elg:ConditionShape` discharges L1 to L3, and `elg:EligibilityDecisionShape` L6 to L8.
+`shapes/structural.ttl` holds the cardinalities of conditions, profiles, decisions, evidence
+bindings and closures. `elg:ConditionShape` discharges L1 to L3, and `elg:EligibilityDecisionShape` L6
+to L8. `elg:ClosureShape` requires a closure's one source.
 
 ```turtle-shapes
 @prefix sh:   <http://www.w3.org/ns/shacl#> .
@@ -632,7 +691,9 @@ elg:EligibilityDecisionShape a sh:NodeShape ;
 	sh:property [ sh:path elg:forProfile ; sh:minCount 1 ; sh:maxCount 1 ] ;
 	sh:property [ sh:path elg:hasQuestion ; sh:minCount 1 ] ;
 	sh:property [ sh:path elg:decisionValue ; sh:minCount 1 ; sh:maxCount 1 ] ;
-	sh:property [ sh:path elg:usesOperationalProfile ; sh:minCount 1 ; sh:maxCount 1 ] .
+	sh:property [ sh:path elg:usesOperationalProfile ; sh:minCount 1 ; sh:maxCount 1 ] ;
+	sh:property [ sh:path elg:closureReliedOn ; sh:class elg:Closure ;
+		sh:message "A decision relies only on closures (ADR-A105)." ] .
 
 elg:EvidenceBindingShape a sh:NodeShape ;
 	sh:targetClass elg:EvidenceBinding ;
@@ -640,13 +701,20 @@ elg:EvidenceBindingShape a sh:NodeShape ;
 	sh:property [ sh:path elg:subjectClass ; sh:minCount 1 ; sh:maxCount 1 ] ;
 	sh:property [ sh:path elg:evidenceStep ; sh:minCount 1 ] ;
 	sh:property [ sh:path elg:singleValued ; sh:maxCount 1 ; sh:datatype xsd:boolean ] ;
-	sh:property [ sh:path elg:valueReading ; sh:maxCount 1 ; sh:in ( elg:SingleValue elg:SomeValue elg:EveryValue ) ] .
+	sh:property [ sh:path elg:valueReading ; sh:maxCount 1 ; sh:in ( elg:SingleValue elg:SomeValue elg:EveryValue ) ] ;
+	sh:property [ sh:path elg:closedUnder ; sh:maxCount 1 ; sh:class elg:Closure ;
+		sh:message "A binding names at most one closure, and what it names is an elg:Closure (ADR-A105)." ] .
 
 elg:EvidenceStepShape a sh:NodeShape ;
 	sh:targetClass elg:EvidenceStep ;
 	sh:property [ sh:path elg:stepIndex ; sh:minCount 1 ; sh:maxCount 1 ] ;
 	sh:property [ sh:path elg:stepProperty ; sh:minCount 1 ; sh:maxCount 1 ] ;
 	sh:property [ sh:path elg:stepDirection ; sh:minCount 1 ; sh:maxCount 1 ; sh:in ( elg:Forward elg:Inverse ) ] .
+
+elg:ClosureShape a sh:NodeShape ;
+	sh:targetClass elg:Closure ;
+	sh:property [ sh:path elg:licensedBy ; sh:minCount 1 ; sh:maxCount 1 ;
+		sh:message "A closure names exactly one source (elg:licensedBy, ADR-A105)." ] .
 ```
 
 ### 7.2 Constraints
@@ -655,7 +723,9 @@ elg:EvidenceStepShape a sh:NodeShape ;
 `elg:IntervalContainmentRequiresRangeSet` discharges L4 for an `elg:IntervalCondition`.
 `elg:WildcardPolicyConsistency` reports a `Wildcard` match strategy under `NoWildcard` (ADR-A06).
 `elg:ConceptConditionDeclarationShape` warns of a concept condition that states nothing to match
-(ADR-A87), and `elg:ReachableExclusionShape` discharges L13.
+(ADR-A87), and `elg:ReachableExclusionShape` discharges L13. `elg:ClosureNeedsSetReadingShape` allows
+a closure only on a binding read some or every value, and `elg:ClosureReliedOnNamedShape` allows a
+decision to rely only on a closure a binding of its profile names (ADR-A105).
 
 ```turtle-shapes
 @prefix sh:   <http://www.w3.org/ns/shacl#> .
@@ -723,6 +793,34 @@ elg:ReachableExclusionShape a sh:NodeShape ;
 						$this elg:matchStrategy elg:HierarchicalMatch .
 						?value skos:broader+ ?required .
 					})
+				}
+			}
+		"""
+	] .
+
+elg:ClosureNeedsSetReadingShape a sh:NodeShape ;
+	sh:targetSubjectsOf elg:closedUnder ;
+	sh:sparql [
+		sh:message "Only a binding read elg:SomeValue or elg:EveryValue names a closure (ADR-A105, L15)." ;
+		sh:select """
+			PREFIX elg: <https://www.nebularis.org/neuro-semantic/lattice/eligibility#>
+			SELECT $this WHERE {
+				FILTER NOT EXISTS { $this elg:valueReading ?reading . FILTER (?reading IN (elg:SomeValue, elg:EveryValue)) }
+			}
+		"""
+	] .
+
+elg:ClosureReliedOnNamedShape a sh:NodeShape ;
+	sh:targetSubjectsOf elg:closureReliedOn ;
+	sh:sparql [
+		sh:message "A decision relies only on a closure that a binding of one of its profile's conditions names (ADR-A105)." ;
+		sh:select """
+			PREFIX elg: <https://www.nebularis.org/neuro-semantic/lattice/eligibility#>
+			SELECT $this ?value WHERE {
+				$this elg:closureReliedOn ?value .
+				FILTER NOT EXISTS {
+					$this elg:forProfile/elg:hasCondition+ ?condition .
+					?binding elg:bindsCondition ?condition ; elg:closedUnder ?value .
 				}
 			}
 		"""
@@ -969,6 +1067,12 @@ construction, not by two independent authors' care. `decision_leq` is deliberate
 it is a predicate over equality, not a finite case table, and stays hand-written once in each of
 `KernelLaws.thy` and `kernel.py`.
 
+L15's readings, `some_value` and `every_value`, are hand-written in `Eligibility.thy` and `kernel.py`,
+each taking whether the binding is closed (L17). Closed, `some_value` folds `or3` from `Denied`, and
+`every_value` folds `and3` from `Permitted`: each starts from its connective's identity, so the empty
+case decides. Open, `some_value` is Permitted when a value is Permitted and `every_value` Denied when
+a value is Denied, and each is otherwise Undetermined.
+
 ```isabelle-spec
 theory Kernel
 imports Main
@@ -1001,6 +1105,13 @@ end
 ## 11. Release notes
 
 Earlier versions are listed in the [ontology release register](../../docs/architecture/ontology-releases.md).
+
+- `eligibility` 0.12.0 (breaking, CCS HQ-6a.1, ADR-A105): closures (§5.6). New: `elg:Closure`,
+  `elg:licensedBy`, `elg:closedUnder` and `elg:closureReliedOn`. `eligibility-vocab` 0.13.0
+  (breaking): L15 restated, so a set reading is Denied under some value, or Permitted under every
+  value, only under a closure the binding names, the empty case included (ADR-A103's 2026-10-12
+  addendum). New law L17. Shapes 0.3.0 (breaking): a closure's one source, a closure only on a binding
+  read some or every value, and a decision relying only on a closure its profile's bindings name.
 
 - `eligibility` 0.11.0 (additive, CCS C9b2): re-pinned to Quantification 0.8.0. No other change.
 - `eligibility-vocab` 0.12.0 (additive, CCS C9b0 and C9b2): L9's comment adds that a hierarchical

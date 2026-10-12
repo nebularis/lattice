@@ -72,12 +72,12 @@ Behaviour distinguishes four tiers:
 
 <https://www.nebularis.org/neuro-semantic/behaviour>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.14.0> ;
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.15.0> ;
 	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.4.0> ,
 				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.4.0> ,
 				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.8.0> ,
 				<https://www.nebularis.org/neuro-semantic/lattice/party/0.9.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.11.0> .
+				<https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.12.0> .
 
 bhv:StateSpace a owl:Class ;
 	rdfs:subClassOf fnd:Version ;
@@ -246,8 +246,8 @@ configuration document, at the same version.
 
 <https://www.nebularis.org/neuro-semantic/behaviour-runtime>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/behaviour-runtime/0.14.0> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.14.0> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/behaviour-runtime/0.15.0> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.15.0> .
 ```
 
 ```turtle-spec
@@ -593,8 +593,8 @@ stateDiagram-v2
 
 <https://www.nebularis.org/neuro-semantic/behaviour-vocab>
 	a owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/behaviour-vocab/0.14.0> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.14.0> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/behaviour-vocab/0.15.0> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.15.0> .
 
 bhv:ExternalStimulus a bhv:TriggerKind .
 bhv:ScheduledTrigger a bhv:TriggerKind .
@@ -1530,6 +1530,8 @@ Breaking versions at major version zero ([ADR-A113](../../docs/architecture/deci
   0.8.0, whose shares and composition rules are renamed (`pty:outwardShare`, `pty:inwardShare`,
   `pty:EachForOwnShare`, `pty:EachForWhole`), and to Eligibility 0.10.0, with no other change (CCS
   C7c, ADR-A104 2026-10-06 addendum).
+- 0.15.0 (`behaviour`, `behaviour-runtime` and `behaviour-vocab`, breaking): re-pinned to Eligibility 0.12.0, whose set readings decide on completeness only under a closure
+  (ADR-A105), and the layers re-pinned with it, with no other change (CCS HQ-6a.1).
 - 0.14.0 (`behaviour`, `behaviour-runtime` and `behaviour-vocab`, breaking, CCS C9b1, ADR-A106
   2026-10-09 addendum): records are findings. `bhv:ExerciseRecord` is the evaluator's finding about
   an exercise, and `bhv:exercised` names the exercise act, still with no range. `bhv:actor` on an

@@ -4090,6 +4090,11 @@ and no shape compares the two.
   profile and their vocabularies) is computed, not counted. The catalog and release register are
   regenerated
 
+**Built (2026-10-12, on `ccs/hq6a1-closures-model`)** as planned, with three deviations recorded in
+its [Validation Pack](../validation/computable-contract-substrate-hq6a1.md): all 13 proof claims
+re-digested, since a claim's digest covers every definition, the reference tests restated as 58,
+and no coupling with the differential tests, which use single-value readings only.
+
 **What HQ-6a.2 builds** (branch `ccs/hq6a2-closures-compilers`, from `main` after HQ-6a.1 merges):
 
 - the IR carries a binding's closure. The SPARQL and SHACL backends decide `SomeValue` Denied and

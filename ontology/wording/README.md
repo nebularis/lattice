@@ -85,11 +85,11 @@ ex:cl-4-1-p4 a wrd:TextPart ; wrd:partIndex 4 ; wrd:partText " per annum." .
 ```turtle-spec
 <https://www.nebularis.org/neuro-semantic/wording>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/wording/0.8.0> ;
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/wording/0.9.0> ;
 	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.4.0> ,
 				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.4.0> ,
 				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.8.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.11.0> .
+				<https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.12.0> .
 ```
 
 ### 5.2 Wordings and elements
@@ -673,8 +673,8 @@ use, and is not closed: a deployment binds a scheme of its own, which may extend
 
 <https://www.nebularis.org/neuro-semantic/wording-vocab>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/wording-vocab/0.8.0> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/wording/0.8.0> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/wording-vocab/0.9.0> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/wording/0.9.0> .
 
 wrd-voc:ElementTypeContract a voc:SchemeContract ;
 	fnd:hasIdentity wrd-voc:ElementTypeContract-identity ;
@@ -1577,3 +1577,5 @@ Breaking versions at major version zero ([ADR-A113](../../docs/architecture/deci
   reliances, and law W8, which reports a reference that finds no version, or two, or no reliance.
 - 0.8.0 (`wording` and `wording-vocab`): re-pinned to Quantification 0.8.0 and the layers re-pinned
   with it, with no other change (CCS C9b2).
+- 0.9.0 (`wording` and `wording-vocab`, breaking): re-pinned to Eligibility 0.12.0, whose set readings decide on completeness only under a closure
+  (ADR-A105), and the layers re-pinned with it, with no other change (CCS HQ-6a.1).
