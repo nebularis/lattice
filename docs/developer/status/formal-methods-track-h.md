@@ -455,3 +455,12 @@ section below.
   turns into a constant graph. We added that, while guards are on, the guard group checks `$g` against ADR-A122's naming
   rule, so a wrong `$g` writes nothing. Recorded as the second ADR-A123 addendum of 2026-10-12 and as step 8 of the H2.3
   plan. H2.3 is ready to branch.
+- 2026-10-12: clarified for the H2.3 implementer. The plan's "no guard of any kind" for `unconditional-write` meant no
+  version or concurrency guard, which the profile's `dal:ProvidedConcurrency` or `dal:LockingConcurrency` already rules out
+  and the port keeps. The parameter guard applies as to every operation, `ISIRI($root)` while guards are on. The plan row
+  now says so. Nothing decided in H2 removes a concurrency or version protection.
+- 2026-10-12: for the H2.3 implementer, on step 8's name check. Rather than a builder passing extra guard conjuncts, which
+  would put unchecked expressions into a guard that `check` only compares with the derived one (R1), the check is declared
+  on the parameter (`Param(..., equals=...)`), derived by `ParameterGuard.derive` and validated by `check` as a guard
+  expression. The plan's step 8 says so.
+

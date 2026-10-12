@@ -528,7 +528,7 @@ The sketch assigns H2.3 eight templates. Read on 2026-10-12, they are:
 | `create-if-absent-named-graph` and its dataset-guard variant | the payload into `?g`, a version row at `seq 1`, the claim, the receipt | `$root`, `$epoch`, `$newRev`, `$txnId`, `$requestDigest`, the payload slot | `?g` is `BIND(IRI(CONCAT(graphPrefix, ENCODE_FOR_URI(STR($root)), graphSuffix)))`. The variant adds the dataset-epoch pattern only |
 | `cas-replace-named-graph` and its variant | deletes every triple of `?g` and the old row, writes the payload, the new row, the claim, the receipt | as create, with `$expectedSeq`, `$nextSeq`, `$assertGraph`, `$retractGraph` | the sweep is `OPTIONAL { GRAPH ?g { ?s ?p ?o } }`, after the top-level `BIND` of `?g`. The variant rebases the row's epoch through `?rowEpoch` |
 | `tombstone-delete-named-graph` and its variant | deletes every triple of `?g`, tombstones the row, writes the claim and a deletion receipt | as replace, with `$cause` and `$actor`, and no payload | the same sweep |
-| `unconditional-write` | the payload into `?g` | `$root`, the payload slot | no guard of any kind, by design |
+| `unconditional-write` | the payload into `?g` | `$root`, the payload slot | no version or concurrency guard, by the profile's design: `compile` selects it only for `dal:ProvidedConcurrency` or `dal:LockingConcurrency`, where concurrency is the store's or an external lock's. The port keeps that. Like every operation it has the parameter guard while guards are on, `ISIRI($root)`, which also refuses a literal `$root` that would otherwise name a graph from its text |
 | `cas-replace-value-guard` | `$root <guardProperty> $newValue` | `$root`, `$oldValue`, `$newValue` | **no `GRAPH` at all.** It reads and writes the default graph, which the IR cannot express (`DefaultGraphPattern`) and static check S-1 forbids. H2.3-Q1 |
 
 Three facts constrain the port.
@@ -603,11 +603,17 @@ H2.3b:
    and every `GRAPH ?g` becomes `GRAPH $g`, so a caller that substitutes text gives the store a constant graph and no
    sweep can range over other graphs. With guards on, the guard group also checks `$g` against the naming rule of
    ADR-A122 decision 8, `sameTerm($g, IRI(CONCAT(graphPrefix, ENCODE_FOR_URI(STR($root)), graphSuffix)))`, evaluated once
-   per request, so a wrong `$g` writes nothing and the injectivity of graph names still holds in the query. With guards
+   per request, so a wrong `$g` writes nothing and the injectivity of graph names still holds in the query. The check is
+   declared on the parameter, `Param("g", Kind.IRI, equals=<the naming expression>)`, and `ParameterGuard.derive` emits
+   it after the type test, so the guard stays derived from the parameter list alone and `check` still refuses any other
+   guard (R1). `check` validates every `equals` expression as a guard expression, so `ClockInGuard`, `UnknownFunction`,
+   `WrongGuard` and `UndeclaredParameter` apply to it. A builder never passes guard conjuncts of its own. With guards
    off as well, naming the graph correctly is the caller's obligation alone, and the README says so. `instantiate`
    takes `--caller-graph-names` until H2.7 records the choice in the compiled profile beside the guards term. Tests:
    with the right `$g` the result equals the default form on rdflib, a wrong `$g` writes nothing under the guard and
-   writes into the named graph without it, and the substituted text holds `GRAPH <iri>`.
+   writes into the named graph without it, and the substituted text holds `GRAPH <iri>`. An `equals` holding `NOW()` is refused with
+   `ClockInGuard`, and one naming an undeclared parameter with `UndeclaredParameter`. The builder test of the guard computes
+   the `equals` conjunct from the parameter list, as it does the type tests.
 
 #### Planned validation
 
