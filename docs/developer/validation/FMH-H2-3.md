@@ -6,7 +6,8 @@
 [plan §4.1](../plans/formal-methods-track-h.md#41-h23-the-named-graph-row-writers-planned-2026-10-12) under
 [ADR-A123](../../architecture/decisions/ADR-A123-typed-operation-ir.md) and its two addenda of 2026-10-12. One slice
 beyond the sizing rule, by the maintainer's approval (H-D21).
-**For countersignature (non-weakening rule):** two items, below. **Open decisions:** none.
+**For countersignature (non-weakening rule):** two items, below, **countersigned by the maintainer on 2026-10-12**.
+**Open decisions:** none.
 
 ## Invariant
 
@@ -38,6 +39,8 @@ the one the naming rule gives.
 
 ### For countersignature
 
+Both countersigned by the maintainer, 2026-10-12.
+
 1. **A refusal case removed from `test_ir.py`:** "GRAPH ?g in an OPTIONAL after an outer BIND of ?g" (`UnboundGraphVariable`).
    H2.1 added it, and the planning of H2.3 found it wrong in intent (plan §4.1, fact 1). It is replaced by three refusals
    that still hold, a `GRAPH ?g` in an `OPTIONAL` or a `UNION` branch that nothing binds, and one bound only after the group
@@ -45,6 +48,23 @@ the one the naming rule gives.
 2. **A test input changed in `test_graph_naming.py`** (HO8-T1, T2, T2b). They bound `$epoch` as an `xsd:integer`, which
    the README says is a different term and never matches. The create now carries the parameter guard, which refuses it, so
    the input is `xsd:long`. The assertions are unchanged.
+
+## Review, 2026-10-12
+
+`check:persistence` ran at `2003 passed, 1 xfailed`, as this pack says. The ports, the scope rule, `Param.equals` and the
+caller-named form match plan §4.1 and both ADR-A123 addenda. Three points, each now handled:
+
+1. **An unknown `graph_names` was accepted by the bootstrap and append builders**, which ignore the option. `build` and
+   `build_recording` now refuse it for every builder, and T28 also checks the append builder.
+2. **rdflib writes a template triple whose graph variable is unbound into a new blank-node graph**, where SPARQL 1.1
+   Update skips it (T8, checked again by the review). The guard prevents it, but with `--no-parameter-guards` a missing
+   `$root` leaves an orphan graph on rdflib. Recorded as TD-44, with a capability field for H5, and noted in the README's
+   guards paragraph.
+3. **The scope rule probed at its edges by the review.** A `GRAPH ?g` is refused when the outer `?g` is bound only in an
+   `OPTIONAL` or one `UNION` branch, or only after the inner group, and accepted when it is bound in every solution before
+   it, including by a sibling group. Each matches the join rule.
+
+The two countersignature items above stand for the maintainer.
 
 ## Test cases
 
@@ -80,7 +100,7 @@ graph-naming forms.
 | H2.3-T25 | the caller-named replace with every parameter's text substituted / executed with no initial bindings / `GRAPH <iri>` in the text, the same result | L4 | a text-substituting caller | + |
 | H2.3-T26 | the caller-named replace / the guard line / `ISIRI($g)` then the `equals` conjunct computed from the parameter list, dropped with guards off | L3 | the guard is derived from the parameter | + |
 | H2.3-T27 | the caller-named write / its text / `sameTerm($g, IRI(CONCAT(prefix, ENCODE_FOR_URI(STR($root)), suffix)))` | L3 | the naming rule is the one of decision 8 | + |
-| H2.3-T28 | the append and bootstrap builders, and an unknown `graph_names` / built / unchanged, and refused | L1 | the option changes only the operations that name a graph | + |
+| H2.3-T28 | the append and bootstrap builders, and an unknown `graph_names` for a named-graph and for the append builder / built / unchanged, and refused for both | L1 | the option changes only the operations that name a graph, and a wrong value is refused everywhere | + |
 | H2.3-T29 | the default and caller-named replace / rendered / equal to the two golden files, and differing in the 9 listed lines only | L3 | the golden `.rq` diff | + |
 | H2.3-T30, T31 | a compiled profile / `instantiate` and the command line with the flag / the caller-named form | L3 | the flag works | + |
 | H2.3-T32 | every graph of every ported operation / its role / equals the role its name says, from a table apart from `GRAPH_ROLES` | L3 | roles are right by an independent statement | + |
@@ -127,4 +147,4 @@ Run on 2026-10-12, restored afterwards.
   own checks (H2.8).
 - Oxigraph, and the cost of a store that evaluates the inner group before the join (H2.4, TD-42).
 - Recording `graph_names` in the compiled profile (H2.7).
-- rdflib only. Its handling of an unbound graph variable in a template differs from the specification (T8).
+- rdflib only. Its handling of an unbound graph variable in a template differs from the specification (T8, TD-44).

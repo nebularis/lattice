@@ -3,7 +3,7 @@
 # Formal Methods, Track H: Status
 
 **Unit ID:** `formal-methods-track-h` (phase, within the `formal-methods` epic)
-**Status:** In progress. H1 (H1.1 to H1.5, with H1.4c) and the aggregate-ownership slices HO0 to HO9 are merged to `main` and signed off (2026-10-10). H2 is briefed. ADR-A123 is accepted, with its addendum of 2026-10-12 on parameter guards. H2.0 is done, H2.1 is reviewed and corrected, and H2.2 is built (2026-10-12). `check:persistence` gave `1915 passed, 1 xfailed` (2026-10-12). H2.0 to H2.2 await the maintainer's merge
+**Status:** In progress. H1 (H1.1 to H1.5, with H1.4c) and the aggregate-ownership slices HO0 to HO9 are merged to `main` and signed off (2026-10-10). H2 is briefed. ADR-A123 is accepted, with two addenda of 2026-10-12. H2.0 to H2.3 are built, reviewed and ready for the maintainer's merge (2026-10-12), with `check:persistence` at `2003 passed, 1 xfailed`
 **Last updated:** 2026-10-10
 **Plan:** [formal-methods-track-h.md](../plans/formal-methods-track-h.md)
 **Sketches:** [formal-methods-track-h.md](../sketches/formal-methods-track-h.md) (main),
@@ -53,12 +53,12 @@ section below.
 
 ## Next action
 
-1. The maintainer merges H2.0 to H2.2 (`check:persistence` at `1920 passed, 1 xfailed`, 2026-10-12, after the review
-   fixes in [FMH-H2-2](../validation/FMH-H2-2.md)), and decides FMH-H2-2's decisions 2 and 3.
-2. **H2.3 is built** ([FMH-H2-3](../validation/FMH-H2-3.md), `2003 passed, 1 xfailed`). The maintainer runs it and countersigns
-   the two items listed there (a removed H2.1 refusal case, and a test input made `xsd:long`).
-3. H2.4 and H2.5 can follow in any order, and **H2.6** (examples first, with the paper check) beside them.
-4. Later, not scheduled: the SPARQL semantic IR of plan §5.1 (PDD-06).
+1. **The maintainer merges H2.0 to H2.3.** Everything is ready: `check:persistence` gave `2003 passed, 1 xfailed`
+   (2026-10-12, after the H2.3 review fix), the H2.3 countersignature items are signed, and every record is current.
+   Merging signs off each slice. Every decision in the four Validation Packs is taken. No release tag is owed, since no
+   ontology version changed.
+2. Then **H2.4**, **H2.5** or **H2.6** (examples first, with the paper check), in any order.
+3. Later, not scheduled: the SPARQL semantic IR of plan §5.1 (PDD-06).
 
 ## Slices
 
@@ -84,11 +84,11 @@ section below.
 | HO7 (composite create and tombstone delete, TD-04) | **signed off** 2026-10-10, merged. [Validation Pack](../validation/FMH-HO7.md) | |
 | HO8 (injective graph naming within and across families, TD-38) | **signed off** 2026-10-10, merged. [Validation Pack](../validation/FMH-HO8.md) | |
 | HO9 (ownership documentation and close-out) | **signed off** 2026-10-10, merged. [Validation Pack](../validation/FMH-HO9.md) | |
-| H2.0 (ADR-A123) | **done** 2026-10-10. [Validation Pack](../validation/FMH-H2-0.md). A123 **accepted** 2026-10-10, ADR-A79 addendum applied | the maintainer's merge |
-| H2.1 (the typed IR and its renderer) | **built and reviewed** 2026-10-10, five defects fixed. [Validation Pack](../validation/FMH-H2-1.md). Its four decisions confirmed. Its suite ran at `1875 passed, 1 xfailed` (2026-10-12) | the maintainer's run and merge |
-| H2.2 (equivalence harness, `bootstrap-version-row` and `append-event` ported) | **built and reviewed** 2026-10-12, two review findings fixed. [Validation Pack](../validation/FMH-H2-2.md). TD-34 closed for these operations | the maintainer's run and merge |
+| H2.0 (ADR-A123) | **done** 2026-10-10. [Validation Pack](../validation/FMH-H2-0.md). A123 **accepted** 2026-10-10, ADR-A79 addendum applied | ready for the maintainer's merge |
+| H2.1 (the typed IR and its renderer) | **built and reviewed** 2026-10-10, five defects fixed. [Validation Pack](../validation/FMH-H2-1.md). Its four decisions confirmed. Its suite ran at `1875 passed, 1 xfailed` (2026-10-12) | ready for the maintainer's merge |
+| H2.2 (equivalence harness, `bootstrap-version-row` and `append-event` ported) | **built and reviewed** 2026-10-12, two review findings fixed. [Validation Pack](../validation/FMH-H2-2.md). TD-34 closed for these operations | ready for the maintainer's merge |
 | H2 (typed IR) | **briefed** 2026-10-10, split into H2.0 to H2.9 ([typed IR sketch §7](../sketches/formal-methods-track-h-typed-ir.md#7-slices)) | |
-| H2.3 (named-graph row writers) | **built** 2026-10-12. [Validation Pack](../validation/FMH-H2-3.md). [Plan §4.1](../plans/formal-methods-track-h.md#41-h23-the-named-graph-row-writers-planned-2026-10-12), one slice by the maintainer's approval (H-D21) | the maintainer's run and merge |
+| H2.3 (named-graph row writers) | **built and reviewed** 2026-10-12, one review fix. [Validation Pack](../validation/FMH-H2-3.md). [Plan §4.1](../plans/formal-methods-track-h.md#41-h23-the-named-graph-row-writers-planned-2026-10-12). Countersignature items signed 2026-10-12. TD-34 closed for its operations | ready for the maintainer's merge |
 | H3 (specification registry) | not started, outlined in the plan | H2 preferred first (smaller, more self-contained), not a hard blocker |
 | H4 (exhaustive cross-axis validation, BDD/SMT) | not started, outline only | H3 |
 | H5 (capability-record extension, TLA+/Quint toolchain spike, protocol models A-D) | not started, outline only | H2 (read/write sets from the IR). ADR-A-FM4 is accepted |
@@ -474,3 +474,14 @@ section below.
   an `xsd:integer`, which the guard now refuses, so their input is `xsd:long`. rdflib also writes a root-less
   unconditional write into a blank-node graph, where the specification skips the quad (recorded in T8). `check:persistence`
   gave `2003 passed, 1 xfailed`. Eight implementation probes, seven caught first time.
+- 2026-10-12: a review of H2.3 ran `check:persistence` at `2003 passed, 1 xfailed`, matching FMH-H2-3. The ports, the
+  scope rule, `Param.equals` and the caller-named form match the plan and both ADR-A123 addenda, and probes of the scope
+  rule at its edges behaved as the join rule says. Fixed: an unknown `graph_names` is now refused by every builder, not only
+  those that name a graph. Recorded: on rdflib a template triple whose graph variable is unbound is written to a new
+  blank-node graph (TD-44), which matters only with guards off. The status line, which still described H2.2, is corrected.
+- 2026-10-12: the maintainer countersigned both FMH-H2-3 items, the removed H2.1 refusal case and HO8's test input made
+  `xsd:long`. H2.0 to H2.3 are marked ready for the maintainer's merge. FMH-H2-2's decisions 2 and 3 remain unconfirmed,
+  recommended for acceptance.
+- 2026-10-12: the maintainer accepted FMH-H2-2's decisions 2 (`instantiate` renders the ported operations from their
+  builders now) and 3 (the harness corpus is every fixture that compiles). No decision is open in H2.0 to H2.3.
+

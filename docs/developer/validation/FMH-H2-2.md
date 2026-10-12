@@ -6,8 +6,8 @@
 [typed IR sketch §7](../sketches/formal-methods-track-h-typed-ir.md#7-slices) and its
 [§7.1](../sketches/formal-methods-track-h-typed-ir.md#71-the-equivalence-harness-h22), under
 [ADR-A123](../../architecture/decisions/ADR-A123-typed-operation-ir.md) and its addendum of 2026-10-12.
-**Decisions needing confirmation:** decision 1 is decided (2026-10-12). Decisions 2 and 3 are open, and the review
-recommends accepting both.
+**Decisions needing confirmation:** none. Decision 1 was decided on 2026-10-12, and the maintainer accepted decisions 2
+and 3 on 2026-10-12.
 
 ## Invariant
 
@@ -49,11 +49,11 @@ turns a missing or mistyped parameter into no write (TD-34). "A port changes not
    value and the README does not type it, so a `DATATYPE` test could refuse a date an adopter uses today. The guard still
    catches a missing value. The maintainer agreed to keep it untyped as to datatype. A datatype taken from the family's
    declared valid-time property is possible in H2.7.
-2. **`instantiate` now uses the builders for the four ported operations**, so the shipped `.rq` of those operations carries
+2. **Accepted 2026-10-12. `instantiate` now uses the builders for the four ported operations**, so the shipped `.rq` of those operations carries
    the guard. That is what closes TD-34 for them, and the S-3 and S-4 checks and the witness harness pass over the new
    text. The flag is on `instantiate` for now. The addendum puts it on `compile`, recorded in the profile, which needs the
    `dal:` term of H2.7, so the flag moves then.
-3. **The harness corpus is every fixture that compiles**, the examples and the witnesses, not the examples alone. Between
+3. **Accepted 2026-10-12. The harness corpus is every fixture that compiles**, the examples and the witnesses, not the examples alone. Between
    them the four templates are generated 5 times, so five comparisons run. A template that no fixture selects is not
    compared (T1 fails first, so a gap cannot hide).
 

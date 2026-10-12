@@ -227,14 +227,22 @@ def _graph_name(b: Bindings) -> Func:
     return Func("IRI", (Func("CONCAT", (b.const("graphPrefix"), Func("ENCODE_FOR_URI", (Func("STR", (ParamRef("root"),)),)), b.const("graphSuffix"))),))
 
 
+GRAPH_NAMES = ("query", "caller")
+"""Who names a root's graph (ADR-A123, second addendum of 2026-10-12)."""
+
+
+def _check_graph_names(graph_names: str) -> None:
+    if graph_names not in GRAPH_NAMES:
+        raise ValueError(f"graph_names is 'query' or 'caller', not {graph_names!r}")
+
+
 class _Named:
     """How an operation names the root's graph. By default the query computes `?g` from `$root`. When the caller
     names it (ADR-A123, second addendum of 2026-10-12) the operation declares `$g`, whose `equals` is the naming rule,
     so the guard checks it, and every `GRAPH ?g` is `GRAPH $g`."""
 
     def __init__(self, b: Bindings, graph_names: str) -> None:
-        if graph_names not in ("query", "caller"):
-            raise ValueError(f"graph_names is 'query' or 'caller', not {graph_names!r}")
+        _check_graph_names(graph_names)
         self.caller = graph_names == "caller"
         self.rule = _graph_name(b)
 
@@ -426,7 +434,8 @@ def build(template: str, context: Mapping, *, guards: bool = True, graph_names: 
     ``guards`` is false for a caller whose own code checks every parameter (ADR-A123, addendum of 2026-10-12).
     ``graph_names`` is ``caller`` for an operation that names the root's graph, to have the caller name it as ``$g``
     (second addendum of 2026-10-12). It changes only the operations that name a graph, and is the one place the
-    output is a change and not a port."""
+    output is a change and not a port. An unknown value is refused for every builder, not only those that name a graph."""
+    _check_graph_names(graph_names)
     return BUILDERS[template](Bindings(context), guards, graph_names)
 
 
@@ -434,6 +443,7 @@ def build_recording(
     template: str, context: Mapping, *, guards: bool = True, graph_names: str = "query"
 ) -> tuple[Operation, set[str]]:
     """As :func:`build`, with the names of the bindings the builder read."""
+    _check_graph_names(graph_names)
     bindings = Bindings(context)
     return BUILDERS[template](bindings, guards, graph_names), bindings.read
 

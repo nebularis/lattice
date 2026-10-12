@@ -346,6 +346,9 @@ def test_h2_3_t28_graph_names_changes_only_the_operations_that_name_a_graph():
         assert render(build(stem, context)) == render(build(stem, context, graph_names="caller"))
     with pytest.raises(ValueError):
         build("unconditional-write", CONTEXT, graph_names="neither")
+    _, _, _, append_context = _first("append-event")
+    with pytest.raises(ValueError):
+        build("append-event", append_context, graph_names="neither")
 
 
 # ---- the shipped form and the golden text -------------------------------------------------------------------------
