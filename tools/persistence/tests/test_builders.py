@@ -9,16 +9,17 @@ from __future__ import annotations
 
 import dataclasses
 import functools
+import re
 
 import pytest
 from rdflib import RDF, XSD, Dataset, Literal as RdfLiteral, URIRef
 
 from persistence import witness
-from persistence.builders import BUILDERS, build, build_recording
+from persistence.builders import BUILDERS, GRAPH_ROLES, Bindings, build, build_recording
 from persistence.compiler import CompileError, compile_to_graph
-from persistence.ir import GUARDS_OFF, Const, GraphBlock, Kind, Var
+from persistence.ir import GUARDS_OFF, Const, Graph, GraphBlock, GraphRole, Kind, Path, Var
 from persistence.ir_render import render
-from persistence.terms import Iri, Literal
+from persistence.terms import Iri, Literal, PropertyPath
 
 import equivalence as eq
 from request_slots import fill_request_slots
@@ -315,3 +316,87 @@ def test_h2_2_t19_the_command_line_flag_leaves_the_guards_out(tmp_path):
     on = next((tmp_path / "on").rglob("append.rq")).read_text(encoding="utf-8")
     off = next((tmp_path / "off").rglob("append.rq")).read_text(encoding="utf-8")
     assert "ISIRI($stream)" in on and "ISIRI($stream)" not in off
+
+
+# ---- graph roles and binding types (review of H2.2, 2026-10-12) ---------------------------------------------
+
+
+def _graphs(node):
+    """Every Graph inside an IR value."""
+    if isinstance(node, Graph):
+        yield node
+    elif dataclasses.is_dataclass(node) and not isinstance(node, type):
+        for f in dataclasses.fields(node):
+            yield from _graphs(getattr(node, f.name))
+    elif isinstance(node, tuple):
+        for item in node:
+            yield from _graphs(item)
+
+
+def test_h2_2_t20_every_graph_of_every_ported_operation_has_the_role_its_name_gives_it():
+    checked = 0
+    for fixture, name, stem, context in _ported():
+        by_value = {str(context[n]): n for n in GRAPH_ROLES if n in context}
+        for graph in _graphs(build(stem, context)):
+            if isinstance(graph.term, Var):
+                key = graph.term.name
+            else:
+                key = by_value[str(graph.term.term)]
+            assert graph.role is GRAPH_ROLES[key], f"{fixture} {name}: {key} has role {graph.role}"
+            checked += 1
+    assert checked > 0
+
+
+_GRAPH_SLOT = re.compile(r"GRAPH (?:\{\{\{([A-Za-z]+)\}\}\}|\?([A-Za-z0-9]+))")
+
+
+def test_h2_2_t21_the_role_table_names_every_graph_slot_and_graph_variable_of_every_template():
+    names = set()
+    from persistence.render import _template_dir_default
+
+    for template in sorted(_template_dir_default().glob("*.mustache")):
+        text = eq._COMMENT.sub("", template.read_text(encoding="utf-8"))
+        names |= {a or b for a, b in _GRAPH_SLOT.findall(text)}
+    assert names and names <= set(GRAPH_ROLES), sorted(names - set(GRAPH_ROLES))
+
+
+def test_h2_2_t22_a_binding_is_wrapped_as_its_declared_type():
+    seen = set()
+    for _, compiled in _corpus():
+        from persistence.instantiate import operation_context
+        from persistence.namespaces import DAL
+
+        for node in compiled.subjects(RDF.type, DAL.GeneratedOperation):
+            context = operation_context(compiled, node)
+            for binding in compiled.objects(node, DAL.hasParameterBinding):
+                declared = str(compiled.value(binding, DAL.paramType))
+                value = context[str(compiled.value(binding, DAL.paramName))]
+                expected = {"Integer": int, "Iri": Iri, "String": Literal, "Literal": Literal, "PropertyPath": PropertyPath}[declared]
+                assert type(value) is expected, (declared, value)
+                seen.add(declared)
+    assert {"Iri", "Integer", "PropertyPath"} <= seen
+
+
+def test_h2_2_t23_an_unknown_parameter_type_is_refused():
+    from rdflib import BNode, Graph as RdfGraph
+    from persistence.instantiate import operation_context
+    from persistence.namespaces import DAL
+
+    g, op, binding = RdfGraph(), BNode(), BNode()
+    g.add((op, DAL.hasParameterBinding, binding))
+    g.add((binding, DAL.paramName, RdfLiteral("x")))
+    g.add((binding, DAL.paramValue, RdfLiteral("<urn:x>")))
+    g.add((binding, DAL.paramType, RdfLiteral("Var")))
+    with pytest.raises(ValueError, match="unknown dal:paramType"):
+        operation_context(g, op)
+
+
+def test_h2_2_t24_a_property_path_binding_is_read_as_a_path_and_never_as_a_constant():
+    from persistence.paths import Alt, Star, Step
+
+    path = PropertyPath.encode(Star(Alt((Step(URIRef("urn:p:a")), Step(URIRef("urn:p:b"), inverse=True)))))
+    bindings = Bindings({"ownedPath": path})
+    assert bindings.path("ownedPath") == Path(path)
+    with pytest.raises(TypeError, match="path"):
+        bindings.const("ownedPath")
+

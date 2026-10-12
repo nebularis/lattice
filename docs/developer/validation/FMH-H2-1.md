@@ -68,6 +68,12 @@ A review of the slice before acceptance found five defects. The maintainer agree
 | F4 | the checker let a `BIND` inside a nested group, a `UNION` branch or an `OPTIONAL` see variables bound outside it. SPARQL evaluates an inner group on its own and joins it afterwards (checked on rdflib, T29), so only `NOT EXISTS` sees them. The review first got this backwards and changed the `GRAPH` block, which was right, and that change is reverted (2026-10-12) | a builder could tag `Bound` a variable that is unbound at run time, a partial write, and a `GRAPH ?g` in an inner group after an outer `BIND ?g` passed, though it scans every graph | those three inner scopes start empty, and `NOT EXISTS` keeps the enclosing one | three new cases in T4, T29, T29b |
 | F5 | `Const` and `Path` accepted a term built without its encoder, if it looked well formed. The IRI form allowed a backslash | `Const(Iri("<urn:x\u003E>"))` was accepted, and `\u` escapes are processed over the whole query text, so it could close the IRI | the IRI form refuses exactly what `Iri.encode` refuses, and a `Path` must have the form of an encoded path | two new `UnencodedConstant` cases in T4 |
 
+**Correction found while planning H2.3 (2026-10-12).** One of F4's three refusal cases, "GRAPH ?g in an OPTIONAL after an
+outer BIND of ?g", is wrong in intent. A `BIND` inside an inner group cannot see `?g`, but a pattern's solutions are joined
+with the enclosing group on `?g`, so the result holds only `?g`'s triples and does not range over every graph. Three
+shipped templates rely on it. H2.3a changes the rule and moves the case to the accepted ones
+([plan §4.1](../plans/formal-methods-track-h.md#41-h23-the-named-graph-row-writers-planned-2026-10-12), H2.3-Q2).
+
 Also removed: two unused parameters of the walk (`top`, `indent`), one that changed nothing (`in_graph`), a set that was
 written and never read (`var_names`), and a function-local import.
 

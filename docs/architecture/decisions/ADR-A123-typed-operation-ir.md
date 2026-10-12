@@ -2,7 +2,7 @@
 
 # ADR-A123: A typed operation IR for the persistence compiler
 
-**Status:** Accepted, 2026-10-10, with the ADR-A79 addendum applied the same day, and an addendum of its own (2026-10-12)
+**Status:** Accepted, 2026-10-10, with the ADR-A79 addendum applied the same day, and two addenda of its own (2026-10-12)
 **Date:** 2026-10-10
 **Supersedes:** parts of [ADR-A79](ADR-A79-persistence-compiler-toolchain.md), listed under Decision 10. ADR-A79 stays Accepted for the rest
 **Related:** [ADR-A78](ADR-A78-persistence-profile-substrate-and-aggregate-boundaries.md),
@@ -154,3 +154,21 @@ It amends decisions 5 and 8.
 
 Where each part lands: the builders take the flag from H2.2, the `dal:` term that records it comes with the H2.7
 vocabulary, and the `INFO` diagnostic, its witness and the Python caller's own check come with H2.8.
+
+## Addendum, 2026-10-12: who names a named graph
+
+Decided by the maintainer while planning slice H2.3 (Track H plan §4.1, H2.3-Q2).
+
+1. **By default the query names the graph.** A named-graph operation computes `?g` from `$root` by the rule of
+   [ADR-A122](ADR-A122-aggregate-ownership.md) decision 8, and a pattern `GRAPH ?g` inside an inner group, such as the
+   replace's `OPTIONAL` sweep, is accepted when an earlier or enclosing group binds `?g` in every solution. SPARQL joins
+   the inner group's solutions on `?g`, so the result holds only that graph's triples. A store that evaluates the inner
+   group literally, before the join, reads every graph to get there. That cost is a store property, measured in H2.4.
+2. **A caller may choose to name it.** An override, `caller`, declares `$g` of kind `Iri` and writes `GRAPH $g`, so a
+   caller that substitutes text gives the store a constant graph. With guards on, the guard group checks `$g` against
+   decision 8's rule, so the injectivity of graph names still holds in the query. With guards off as well, the caller
+   alone must name the graph correctly. The choice is recorded in the compiled profile with the guards term (H2.7).
+
+This leaves ADR-A122 decision 8's rule unchanged and moves its enforcement to the caller only when the caller turns off
+both the query's naming and its guards.
+

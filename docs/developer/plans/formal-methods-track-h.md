@@ -513,6 +513,128 @@ becomes a refusal by type, and H1.3's checks pass over the new output by constru
 are answered ([sketch §1](../sketches/formal-methods-track-h-typed-ir.md#1-decisions-already-taken-2026-10-10)),
 ADR-A123 is accepted (2026-10-10). H2.0 is done, and H2.1 is built and reviewed, awaiting the merge.
 
+### 4.1 H2.3: the named-graph row writers (planned 2026-10-12)
+
+**Unit:** slice H2.3 of the [typed IR sketch §7](../sketches/formal-methods-track-h-typed-ir.md#7-slices), under
+ADR-A123 and its addendum of 2026-10-12. Builds on H2.2's harness, `GRAPH_ROLES` and typed bindings
+([FMH-H2-2](../validation/FMH-H2-2.md)). All four questions were decided on 2026-10-12.
+
+#### The scene, checked against the templates
+
+The sketch assigns H2.3 eight templates. Read on 2026-10-12, they are:
+
+| Template | Writes | Parameters | Note |
+|---|---|---|---|
+| `create-if-absent-named-graph` and its dataset-guard variant | the payload into `?g`, a version row at `seq 1`, the claim, the receipt | `$root`, `$epoch`, `$newRev`, `$txnId`, `$requestDigest`, the payload slot | `?g` is `BIND(IRI(CONCAT(graphPrefix, ENCODE_FOR_URI(STR($root)), graphSuffix)))`. The variant adds the dataset-epoch pattern only |
+| `cas-replace-named-graph` and its variant | deletes every triple of `?g` and the old row, writes the payload, the new row, the claim, the receipt | as create, with `$expectedSeq`, `$nextSeq`, `$assertGraph`, `$retractGraph` | the sweep is `OPTIONAL { GRAPH ?g { ?s ?p ?o } }`, after the top-level `BIND` of `?g`. The variant rebases the row's epoch through `?rowEpoch` |
+| `tombstone-delete-named-graph` and its variant | deletes every triple of `?g`, tombstones the row, writes the claim and a deletion receipt | as replace, with `$cause` and `$actor`, and no payload | the same sweep |
+| `unconditional-write` | the payload into `?g` | `$root`, the payload slot | no guard of any kind, by design |
+| `cas-replace-value-guard` | `$root <guardProperty> $newValue` | `$root`, `$oldValue`, `$newValue` | **no `GRAPH` at all.** It reads and writes the default graph, which the IR cannot express (`DefaultGraphPattern`) and static check S-1 forbids. H2.3-Q1 |
+
+Three facts constrain the port.
+
+1. **The sweep collides with the corrected scope rule.** After F4 an `OPTIONAL` starts with an empty scope, so
+   `UnboundGraphVariable` refuses `OPTIONAL { GRAPH ?g { ... } }` when `?g` is bound outside it, and H2.1 added that very
+   case as a refusal test. That was wrong in intent. F4 is right about a `BIND`, whose value is computed inside the
+   group and cannot see `?g`. It is wrong about a pattern, whose solutions are joined with the enclosing group on `?g`
+   afterwards, so the result holds only `?g`'s triples. The rule exists to stop a `GRAPH ?g` whose result ranges over
+   every graph, and a join on an outer `?g` prevents that. H2.3-Q2.
+2. **`$assertGraph` and `$retractGraph` are optional in the template and required by one receipt model.** The README
+   says they are bound "for the patch-log model". The template always holds them, so under any other model they are left
+   unbound and their two triples are skipped. A builder receives the bindings only, and no binding says which receipt
+   model applies. H2.3-Q3.
+3. **`$cause` and `$actor` are IRIs.** The patterns guide declares `pat:cause` and `pat:actor` object properties, and its
+   shapes require `sh:nodeKind sh:IRI` (guide §24.0 and its shapes), so both are `Kind.IRI`.
+
+#### Questions for the maintainer
+
+| # | Question | Options and consequences | Leaning |
+|---|---|---|---|
+| H2.3-Q1 | `cas-replace-value-guard` uses the default graph | (a) **leave it unported in H2.3**, record it as TD-43, and decide where a `dal:NoBoundary` target's data lives when H2.7 changes the vocabulary, for example the profile's `dal:dataGraph` as for a composite family. Port it then, as a change. (b) Decide now that a `dal:NoBoundary` profile names a data graph, and port it in H2.3 as a change, which needs a vocabulary change before H2.7's. (c) Give the IR a default-graph role. Against ADR-A123 decision 2 and S-1, and a store's default graph differs between stores | (a). Nothing in H2.3 depends on it, and the decision belongs with H2.7's vocabulary. **Decided 2026-10-12: (a)** |
+| H2.3-Q2 | a `GRAPH ?g` inside an inner group, with `?g` bound outside it | (a) **`UnboundGraphVariable` counts a graph variable as bound when any enclosing group binds it**, since the join restricts the result. The scope a `BIND` sees stays bottom-up. The H2.1 refusal case for `OPTIONAL` becomes an accepted case, with an engine test that the result holds only `?g`'s triples. The three templates port unchanged. A store that evaluates the inner group literally bottom-up scans every graph before the join, where rdflib passes the outer binding in. That is a cost, not a wrong result, and joins TD-42's measurement in H2.4. (b) Keep the refusal, and move the sweep out of the `OPTIONAL`. That is a change to three templates, not a port, and alters the operations' behaviour when `?g` is empty | (a). **Decided 2026-10-12: (a) by default, and (c) as an override the caller chooses** (steps 1, 2 and 8) |
+| H2.3-Q3 | `$assertGraph` and `$retractGraph` | (a) **declare them optional, as the template treats them.** The port changes nothing, and a patch-log caller who leaves them out gets a receipt without them, unguarded, as today. H2.7 then declares requiredness per receipt model, since its parameter declarations live in the compiled profile, and the builder takes the resolved receipt model from there. (b) Pass the resolved dimensions to the builders now and make the two required under `dal:PatchLog`. A change in H2.3, and a second input to every builder | (a). **Decided 2026-10-12: (a)** |
+| H2.3-Q4 | slice size | (a) **split into H2.3a and H2.3b**, about 12 test cases each. H2.3a: the Q2 rule and its engine test, `create-if-absent-named-graph` and its variant, `unconditional-write`. H2.3b: `cas-replace-named-graph` and `tombstone-delete-named-graph`, each with its variant. (b) One slice of about 25 cases, against the sizing rule | (a). **Decided 2026-10-12: (b), one slice.** The maintainer approved exceeding the slice-sizing rule (more than about 15 test cases) for H2.3, so it is built and reviewed as one slice with one Validation Pack, `FMH-H2-3`. Recorded as H-D21 |
+
+#### Parameter kinds
+
+| Parameter | Kind | Required | Guard |
+|---|---|---|---|
+| `$root`, `$newRev`, `$txnId`, `$cause`, `$actor` | `Iri` | yes | `isIRI` |
+| `$epoch` | `Long` | yes | `DATATYPE = xsd:long` |
+| `$expectedSeq`, `$nextSeq` | `Position` | yes | `DATATYPE = xsd:long` |
+| `$requestDigest` | `Digest` | yes | `DATATYPE = xsd:string` |
+| `$assertGraph`, `$retractGraph` | `Iri` | no, per H2.3-Q3 | none until H2.7 |
+| `payloadTriples` | `Payload` | slot | none, the caller's (H2.8) |
+
+#### Steps
+
+In one slice (H2.3-Q4). The H2.3a and H2.3b headings mark the order of work only.
+
+H2.3a:
+
+1. Change `UnboundGraphVariable` per H2.3-Q2. Keep the bottom-up scope for `BIND` and for template variables. Move the
+   H2.1 case "GRAPH ?g in an OPTIONAL after an outer BIND of ?g" from the refusal table to the accepted cases, and keep
+   a refusal for a `GRAPH ?g` that nothing binds anywhere. The removed refusal is listed for countersignature under the
+   non-weakening rule.
+2. Add the engine test for it: on rdflib, `BIND(<g1> AS ?g) OPTIONAL { GRAPH ?g { ?s ?p ?o } }` over two graphs returns
+   only `<g1>`'s triples, and the same holds in a nested group and a `UNION` branch.
+3. Port `create-if-absent-named-graph`, its variant and `unconditional-write`. Add the stems to `BUILDERS`, so T1 to T6
+   and T20 of H2.2 cover them.
+4. Behaviour on rdflib: a create writes the payload into the root's own graph and a version row at `seq 1`. A second
+   create of the same root writes nothing. A missing `$root` writes nothing. Without the guard, and while the store holds no
+   version row, the expected result is a claim and a partial receipt with no row and no payload, since `NOT EXISTS` with an
+   unbound `$root` finds no row and `?g` fails to bind. The test records what rdflib actually does.
+   `unconditional-write` writes into the root's graph and nowhere else.
+
+H2.3b:
+
+5. Port `cas-replace-named-graph`, `tombstone-delete-named-graph` and their variants, with `$assertGraph` and
+   `$retractGraph` as in H2.3-Q3.
+6. Behaviour on rdflib: a replace leaves exactly the payload in `?g` and moves the row. A replace at the wrong
+   `seq` writes nothing. The first replace after a create has a head, and the receipt chains. A replace of another root
+   leaves this one's graph alone, which is the join of step 1 doing its work. A tombstone empties `?g`, marks the row
+   deleted and writes a deletion receipt with cause and actor, and a later replace of it writes nothing. A retry is a
+   no-op. The variant rebases the row's epoch. A missing `$root` over two stored aggregates writes nothing, where
+   without the guard it writes every aggregate at that `seq`, as H2.1's T25b shows for a replace-shaped operation.
+7. TD-34's row lists the ported operations, and is removed only when H2.5 ports the last.
+8. **The caller-named graph, an override (H2.3-Q2 (c)).** A change after the ports, not a port. The four builders that
+   name `?g` (create, replace, tombstone, each with its variant, and `unconditional-write`) take a second option,
+   `graph_names`, `query` by default and `caller` on request. Under `caller` the operation declares `$g`, of kind `Iri`,
+   and every `GRAPH ?g` becomes `GRAPH $g`, so a caller that substitutes text gives the store a constant graph and no
+   sweep can range over other graphs. With guards on, the guard group also checks `$g` against the naming rule of
+   ADR-A122 decision 8, `sameTerm($g, IRI(CONCAT(graphPrefix, ENCODE_FOR_URI(STR($root)), graphSuffix)))`, evaluated once
+   per request, so a wrong `$g` writes nothing and the injectivity of graph names still holds in the query. With guards
+   off as well, naming the graph correctly is the caller's obligation alone, and the README says so. `instantiate`
+   takes `--caller-graph-names` until H2.7 records the choice in the compiled profile beside the guards term. Tests:
+   with the right `$g` the result equals the default form on rdflib, a wrong `$g` writes nothing under the guard and
+   writes into the named graph without it, and the substituted text holds `GRAPH <iri>`.
+
+#### Planned validation
+
+One Validation Pack, `FMH-H2-3`, with one command, `mise run check:persistence`, which records the maintainer's approval to
+exceed the slice-sizing rule (H-D21). Every port passes the harness with guards off, its bindings equal its template's tags, every graph
+has the role `GRAPH_ROLES` gives it, and every semantic rule a builder relies on has an engine test (plan §5.1): the
+join on an outer `?g` (step 2), an unbound `OPTIONAL` variable skipping only its own template triple (the head on a
+first replace), `NOT EXISTS` seeing `$root` (the create guard), and the guard's name check refusing a wrong `$g` (step 8).
+The caller-named form is a change, so the harness does not cover it, and its golden `.rq` diff against the default form
+is listed in the Validation Pack. The adversarial probes at the gate include the
+guard at the top level, a sweep without the join on `?g`, and a role swapped between `META` and `TXN`.
+
+#### Deliberate non-coverage
+
+- `cas-replace-value-guard`, per H2.3-Q1. TD-43.
+- `$assertGraph` and `$retractGraph` required under the patch-log model, H2.7.
+- The payload's own checks, H2.8.
+- Oxigraph, and the cost of a literal bottom-up sweep, H2.4.
+- Text-substituting callers of the default form. H2.1's T28 covers the IR, and step 8 substitutes text for the
+  caller-named form.
+- Recording `graph_names` in the compiled profile, H2.7, with the guards term.
+
+#### Estimate
+
+About 650k tokens for the one slice, against 400k in the sketch, since the sketch did not foresee H2.3-Q2 or the
+caller-named override.
+
 **H3 (specification registry), outline:**
 - One machine-readable registry (syntax not yet chosen, specification sketch §2) generating:
   `shapes/constraints.ttl`'s cross-axis rules, the compiler's own validation predicate and
@@ -635,6 +757,7 @@ H-D18 to H-D20 and H2-Q1 to H2-Q6 come from H2's brief ([typed IR sketch](../ske
 | H-D18 | how many slices H2 is split into | **decided 2026-10-10**: as many as it needs. Ten are proposed, H2.0 to H2.9 ([typed IR sketch §7](../sketches/formal-methods-track-h-typed-ir.md#7-slices)) |
 | H-D19 | whether the IR replaces the Mustache templates (option A) or adds typed declarations checked against them (option B) | **decided 2026-10-10: option A** |
 | H-D20 | how far the payload is typed | **decided 2026-10-10**: designed in full in the [typed IR sketch §4](../sketches/formal-methods-track-h-typed-ir.md#4-the-typed-payload), weighed by the configuration it asks of a user, and reviewed by the maintainer. Its own questions are H2-Q1 to H2-Q3 |
+| H-D21 | whether H2.3 is split to respect the slice-sizing rule (H2.3-Q4) | **decided 2026-10-12**: one slice of about 25 test cases. The maintainer approved exceeding the rule for H2.3, so that the named-graph row writers are ported and reviewed together |
 | H2-Q1 to H2-Q6 | the typed payload, a named-graph family with no boundary shape, closed-shape payloads, where the parameter guard runs, what the compiled profile carries, logical or SPARQL declarations ([sketch §5](../sketches/formal-methods-track-h-typed-ir.md#5-questions-for-the-maintainer)) | **answered 2026-10-10**: PL-B, with PL-D later as an SDK ([sketch](../sketches/persistence-client-sdk.md)), (a) and (b), (a), (c), and (a) on condition it keeps the relational realisation open. H2-Q6, that condition, **answered 2026-10-10: (a)**, a logical operation contract. Our reading of H2-Q2 confirmed ([typed IR sketch §1](../sketches/formal-methods-track-h-typed-ir.md#1-decisions-already-taken-2026-10-10)) |
 
 ## 9. Alignment with other work

@@ -3,7 +3,7 @@
 # Formal Methods, Track H: Status
 
 **Unit ID:** `formal-methods-track-h` (phase, within the `formal-methods` epic)
-**Status:** In progress. H1 (H1.1 to H1.5, with H1.4c) and the aggregate-ownership slices HO0 to HO9 are merged to `main` and signed off (2026-10-10). H2 is briefed. ADR-A123 is accepted, with its addendum of 2026-10-12 on parameter guards. H2.0 is done, and H2.1 is reviewed and corrected, awaiting the maintainer's run and merge
+**Status:** In progress. H1 (H1.1 to H1.5, with H1.4c) and the aggregate-ownership slices HO0 to HO9 are merged to `main` and signed off (2026-10-10). H2 is briefed. ADR-A123 is accepted, with its addendum of 2026-10-12 on parameter guards. H2.0 is done, H2.1 is reviewed and corrected, and H2.2 is built (2026-10-12). `check:persistence` gave `1915 passed, 1 xfailed` (2026-10-12). H2.0 to H2.2 await the maintainer's merge
 **Last updated:** 2026-10-10
 **Plan:** [formal-methods-track-h.md](../plans/formal-methods-track-h.md)
 **Sketches:** [formal-methods-track-h.md](../sketches/formal-methods-track-h.md) (main),
@@ -53,14 +53,12 @@ section below.
 
 ## Next action
 
-1. The maintainer runs the [FMH-H2-2](../validation/FMH-H2-2.md) one command (`1915 passed, 1 xfailed`) with H2.1's, and
-   merges, and decides the three items in FMH-H2-2 (the `IriOrLiteral` kind for `$occurredAt`, `instantiate` using the builders
-   now, and the harness corpus).
-2. **H2.3**, **H2.4** and **H2.5** in any order. Each ports its templates against the harness (add the stem to `BUILDERS`,
-   and the harness covers it), keeps the rule "a port changes nothing", and gives each semantic rule it relies on an engine
-   test (plan §5.1). H2.4 also measures the composite replace on rdflib and Oxigraph (TD-42). **H2.6** (examples first,
-   with the paper check) can run beside them.
-3. Later, not scheduled: the SPARQL semantic IR of plan §5.1 (PDD-06).
+1. The maintainer merges H2.0 to H2.2 (`check:persistence` at `1920 passed, 1 xfailed`, 2026-10-12, after the review
+   fixes in [FMH-H2-2](../validation/FMH-H2-2.md)), and decides FMH-H2-2's decisions 2 and 3.
+2. **H2.3, as one slice, is ready to branch.** Every question of the [H2.3 plan](../plans/formal-methods-track-h.md#41-h23-the-named-graph-row-writers-planned-2026-10-12)
+   is decided, including the caller-named graph override of step 8.
+3. H2.4 and H2.5 can follow in any order, and **H2.6** (examples first, with the paper check) beside them.
+4. Later, not scheduled: the SPARQL semantic IR of plan §5.1 (PDD-06).
 
 ## Slices
 
@@ -87,10 +85,10 @@ section below.
 | HO8 (injective graph naming within and across families, TD-38) | **signed off** 2026-10-10, merged. [Validation Pack](../validation/FMH-HO8.md) | |
 | HO9 (ownership documentation and close-out) | **signed off** 2026-10-10, merged. [Validation Pack](../validation/FMH-HO9.md) | |
 | H2.0 (ADR-A123) | **done** 2026-10-10. [Validation Pack](../validation/FMH-H2-0.md). A123 **accepted** 2026-10-10, ADR-A79 addendum applied | the maintainer's merge |
-| H2.1 (the typed IR and its renderer) | **built and reviewed** 2026-10-10, five defects fixed. [Validation Pack](../validation/FMH-H2-1.md). Its four decisions confirmed. Not yet used by `compile` | the maintainer's run and merge |
-| H2.2 (equivalence harness, `bootstrap-version-row` and `append-event` ported) | **built** 2026-10-12. [Validation Pack](../validation/FMH-H2-2.md). TD-34 closed for these operations | the maintainer's run and merge |
-| H2.2 (equivalence harness, `bootstrap-version-row` and `append-event` ported) | **built** 2026-10-12. [Validation Pack](../validation/FMH-H2-2.md). TD-34 closed for these operations | the maintainer's run and merge |
+| H2.1 (the typed IR and its renderer) | **built and reviewed** 2026-10-10, five defects fixed. [Validation Pack](../validation/FMH-H2-1.md). Its four decisions confirmed. Its suite ran at `1875 passed, 1 xfailed` (2026-10-12) | the maintainer's run and merge |
+| H2.2 (equivalence harness, `bootstrap-version-row` and `append-event` ported) | **built and reviewed** 2026-10-12, two review findings fixed. [Validation Pack](../validation/FMH-H2-2.md). TD-34 closed for these operations | the maintainer's run and merge |
 | H2 (typed IR) | **briefed** 2026-10-10, split into H2.0 to H2.9 ([typed IR sketch §7](../sketches/formal-methods-track-h-typed-ir.md#7-slices)) | |
+| H2.3 (named-graph row writers) | **planned** 2026-10-12, in [plan §4.1](../plans/formal-methods-track-h.md#41-h23-the-named-graph-row-writers-planned-2026-10-12), one slice by the maintainer's approval (H-D21) | H2.3-Q2 |
 | H3 (specification registry) | not started, outlined in the plan | H2 preferred first (smaller, more self-contained), not a hard blocker |
 | H4 (exhaustive cross-axis validation, BDD/SMT) | not started, outline only | H3 |
 | H5 (capability-record extension, TLA+/Quint toolchain spike, protocol models A-D) | not started, outline only | H2 (read/write sets from the IR). ADR-A-FM4 is accepted |
@@ -126,6 +124,9 @@ section below.
 | H2-Q1 to H2-Q5 | typed payload option, a named-graph family with no boundary shape, closed-shape payloads, where the parameter guard runs, what the compiled profile carries | **answered 2026-10-10**: PL-B (PL-D later, as an SDK, [sketch](../sketches/persistence-client-sdk.md)), (a) and (b), (a), (c), (a) on condition it keeps the relational realisation open ([typed IR sketch §1](../sketches/formal-methods-track-h-typed-ir.md#1-decisions-already-taken-2026-10-10)) |
 | H2-Q2 reading | (a) and (b) read as informational by default, a warning under a compile option, no new `dal:` term | **confirmed 2026-10-10** by the maintainer |
 | H2-Q6 | the compiled profile's declarations name logical resources (a) or SPARQL graph roles (b) | **decided 2026-10-10: (a)** ([typed IR sketch §3.1](../sketches/formal-methods-track-h-typed-ir.md#31-the-operation-contract-and-the-sparql-realisation-h2-q6)) |
+| H-D21 | H2.3 as one slice, beyond the slice-sizing rule (H2.3-Q4) | **decided 2026-10-12**: one slice, about 25 test cases, approved by the maintainer |
+| H2.3-Q1, H2.3-Q3 | the value guard's default graph, the patch-log parameters | **decided 2026-10-12: (a) for both**. TD-43 records the value guard |
+| H2.3-Q2 | a `GRAPH ?g` inside an inner group, `?g` bound outside it | **decided 2026-10-12**: (a) by default, the rule follows the join. (c), a caller-named `$g`, as an override the caller chooses, checked against the naming rule while guards are on. ADR-A123 addendum |
 | H-D7 | H1's checks live in one new module, `persistence.hygiene`, behind one `hygiene` subcommand, and run under `check:persistence`. No new `mise` task until H1's closing slice | agreed 2026-10-09 |
 
 ## Log
@@ -434,3 +435,23 @@ section below.
   IR, the builder, the tests and the Validation Pack. We keep it untyped as to datatype. Typing `$occurredAt` as
   `xsd:dateTime` would refuse `xsd:date`, `xsd:gYear`, `xsd:dateTimeStamp`, an IRI for an instant and untyped strings,
   and no query uses the type. The maintainer agreed to leave the stricter check until later. A datatype taken from the family's declared valid-time property is possible in H2.7.
+- 2026-10-12: a review of H2.2 ran `check:persistence` at `1915 passed, 1 xfailed` and found two gaps, both fixed the same
+  day. A builder chose each graph's role itself, and nothing checked it: the transaction graph labelled `META` passed every
+  test, though the derived read and write sets would carry the wrong role. `GRAPH_ROLES` now gives every role by binding
+  or variable name, and T20 and T21 check it. And `Bindings.const` guessed a binding's type from its text, which would have
+  read H2.4's `ownedPath` as an IRI. `operation_context` now wraps each binding by its declared `dal:paramType`, with T22 to
+  T24. Both fixes were probed by breaking them. `check:persistence` then gave `1920 passed, 1 xfailed`. The record also had
+  a duplicated H2.2 row and a stale status line, both corrected.
+- 2026-10-12: H2.3 planned in [plan §4.1](../plans/formal-methods-track-h.md#41-h23-the-named-graph-row-writers-planned-2026-10-12).
+  Reading its templates found two things. `cas-replace-value-guard` reads and writes the default graph, which the IR cannot
+  express and S-1 forbids (TD-43, H2.3-Q1). And the scope rule corrected in F4 refuses the sweep `OPTIONAL { GRAPH ?g {
+  ... } }` after an outer `BIND ?g`, which three templates use. F4 is right for a `BIND` and wrong for a pattern, whose
+  result is joined on `?g` afterwards (H2.3-Q2). Four questions are open for the maintainer.
+- 2026-10-12: the maintainer decided H2.3-Q1 (a), the value guard stays unported until H2.7 (TD-43), H2.3-Q3 (a),
+  `$assertGraph` and `$retractGraph` stay optional until H2.7, and H2.3-Q4 (b): **H2.3 is one slice, and the maintainer
+  approved exceeding the slice-sizing rule for it** (H-D21). H2.3-Q2 is open, with its options explained in diagrams.
+- 2026-10-12: the maintainer decided H2.3-Q2. By default the query names the graph and the scope rule follows the join
+  (option a). A caller can override it and name the graph itself as `$g` (option c), which a text-substituting caller
+  turns into a constant graph. We added that, while guards are on, the guard group checks `$g` against ADR-A122's naming
+  rule, so a wrong `$g` writes nothing. Recorded as the second ADR-A123 addendum of 2026-10-12 and as step 8 of the H2.3
+  plan. H2.3 is ready to branch.

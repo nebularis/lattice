@@ -15,15 +15,16 @@ import pprint
 import re
 from collections import defaultdict
 
-from rdflib import Variable
+from rdflib import RDF
 from rdflib.plugins.sparql.algebra import translateQuery, translateUpdate
 from rdflib.plugins.sparql.parser import parseQuery, parseUpdate
 from rdflib.plugins.sparql.parserutils import CompValue
 
-from persistence.builders import build_recording
+from persistence.builders import BUILDERS, build_recording
 from persistence.instantiate import operation_context
-from persistence.ir import GUARDS_OFF
-from persistence.render import load_template, render as mustache_render
+from persistence.ir_render import render
+from persistence.namespaces import DAL
+from persistence.render import REQUEST_TIME_SLOTS, load_template, render as mustache_render
 
 from request_slots import fill_request_slots
 
@@ -72,18 +73,11 @@ _COMMENT = re.compile(r"\{\{!.*?\}\}", re.S)
 
 def template_tags(template_text: str) -> set[str]:
     """The compile-time names a template reads (its Mustache tags, less the request-time slots)."""
-    from persistence.render import REQUEST_TIME_SLOTS
-
     return {m.group(1) for m in _TAG.finditer(_COMMENT.sub("", template_text))} - set(REQUEST_TIME_SLOTS)
 
 
 def ported_operations(compiled_corpus):
     """(fixture, operation name, template stem, context) for every generated operation a builder ports."""
-    from rdflib import RDF
-
-    from persistence.builders import BUILDERS
-    from persistence.namespaces import DAL
-
     out = []
     for fixture, compiled in compiled_corpus:
         for profile in sorted(compiled.subjects(RDF.type, DAL.CompiledProfile), key=str):
@@ -108,8 +102,6 @@ def compare_all(operations) -> int:
         template_text = load_template(stem + ".mustache")
         mustache = fill_request_slots(mustache_render(template_text, context))
         built, read = build_recording(stem, context, guards=False)
-        from persistence.ir_render import render
-
         compare(mustache, fill_request_slots(render(built)), f"{fixture} {name}")
         if read != template_tags(template_text):
             raise Mismatch(f"{fixture} {name}: the builder reads {sorted(read)} and the template {sorted(template_tags(template_text))}")

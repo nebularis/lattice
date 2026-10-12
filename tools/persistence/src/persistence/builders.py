@@ -19,13 +19,35 @@ from typing import Callable, Mapping
 
 from .ir import (
     A, Bind, Binding, Const, Filter, Func, Graph, GraphBlock, GraphRole, Group, Kind, NotExists, Op, Operation,
-    Optional_, Param, ParamRef, Triple, Var,
+    Optional_, Param, ParamRef, Path, Triple, Var,
 )
 from .namespaces import PAT
-from .terms import Integer, Iri, Literal
+from .terms import Integer, Iri, Literal, PropertyPath
 
 XSD_LONG = "http://www.w3.org/2001/XMLSchema#long"
 XSD_BOOLEAN = "http://www.w3.org/2001/XMLSchema#boolean"
+
+
+GRAPH_ROLES: dict[str, GraphRole] = {
+    # compile-time bindings that name a graph
+    "metaGraphPrefix": GraphRole.META,
+    "txnGraph": GraphRole.TXN,
+    "datasetGraph": GraphRole.DATASET,
+    "dataGraph": GraphRole.DATA,
+    "keysGraph": GraphRole.KEYS,
+    "keyQuarantineGraph": GraphRole.QUARANTINE,
+    "retentionGraph": GraphRole.RETENTION,
+    "pinnedGraph": GraphRole.PINNED,
+    # variables a query binds to a graph, each with one meaning in every template
+    "g": GraphRole.DATA,
+    "log": GraphRole.LOG,
+    "logGraph": GraphRole.LOG,
+    "logGraph2": GraphRole.LOG,
+    "eventGraph": GraphRole.EVENT,
+}
+"""The role of every graph a builder names, by binding or variable name. A builder never chooses a role itself, so
+it cannot put a pattern in the wrong part of the store, and the read and write sets derived from the roles
+(ADR-A123 decision 3) are right by construction. A name with no entry is refused."""
 
 
 class Bindings:
@@ -36,24 +58,36 @@ class Bindings:
         self._context = context
         self.read: set[str] = set()
 
-    def const(self, name: str) -> Const:
-        """The binding as a constant. The profile holds already encoded term text, so it is re-wrapped by its
-        form and checked by :class:`~persistence.ir.Const`, never encoded a second time."""
+    def _value(self, name: str):
         self.read.add(name)
-        value = self._context[name]
+        return self._context[name]
+
+    def const(self, name: str) -> Const:
+        """The binding as a constant. :func:`persistence.instantiate.operation_context` has already wrapped the
+        profile's encoded text by its declared ``dal:paramType``, so the value is used as it is, never encoded a
+        second time, and :class:`~persistence.ir.Const` checks its type and form."""
+        value = self._value(name)
         if isinstance(value, bool):
             raise TypeError(f"binding {name!r} is a bool")
         if isinstance(value, int):
             return Const(Integer.encode(value))
-        text = str(value)
-        if text.startswith("<"):
-            return Const(Iri(text))
-        if text.startswith('"'):
-            return Const(Literal(text))
-        return Const(Integer(text))
+        if isinstance(value, PropertyPath):
+            raise TypeError(f"binding {name!r} is a property path, read it with path()")
+        return Const(value)
 
-    def graph(self, role: GraphRole, name: str) -> Graph:
-        return Graph(role, self.const(name))
+    def path(self, name: str) -> Path:
+        """A ``PropertyPath`` binding, such as a composite family's owned path."""
+        return Path(self._value(name))
+
+    def graph(self, name: str) -> Graph:
+        """The graph a binding names, with its role from :data:`GRAPH_ROLES`."""
+        return Graph(GRAPH_ROLES[name], self.const(name))
+
+
+def graph_var(name: str, binding: Binding | None = None) -> Graph:
+    """A graph the query binds to a variable, with its role from :data:`GRAPH_ROLES`. ``binding`` tags the variable
+    for a ``DELETE`` or ``INSERT`` template."""
+    return Graph(GRAPH_ROLES[name], Var(name, binding=binding))
 
 
 def _pat(local: str) -> Const:
@@ -88,11 +122,11 @@ def _optional(name: str) -> Var:
 
 
 def _bootstrap(b: Bindings, *, guards: bool, dataset_guard: bool) -> Operation:
-    meta = b.graph(GraphRole.META, "metaGraphPrefix")
+    meta = b.graph("metaGraphPrefix")
     target, epoch = ParamRef("target"), ParamRef("epoch")
     where: list = []
     if dataset_guard:
-        where.append(GraphBlock(b.graph(GraphRole.DATASET, "datasetGraph"), (Triple(b.const("datasetNode"), _pat("epoch"), epoch),)))
+        where.append(GraphBlock(b.graph("datasetGraph"), (Triple(b.const("datasetNode"), _pat("epoch"), epoch),)))
     where.append(NotExists(Group((GraphBlock(meta, (Triple(target, _pat("seq"), _ANY),)),))))
     insert = (GraphBlock(meta, (
         Triple(target, A, _pat("VersionRow")),
@@ -112,15 +146,15 @@ def _bootstrap(b: Bindings, *, guards: bool, dataset_guard: bool) -> Operation:
 
 
 def _append(b: Bindings, *, guards: bool, dataset_guard: bool) -> Operation:
-    meta = b.graph(GraphRole.META, "metaGraphPrefix")
-    txn = b.graph(GraphRole.TXN, "txnGraph")
+    meta = b.graph("metaGraphPrefix")
+    txn = b.graph("txnGraph")
     stream, epoch, txn_id = ParamRef("stream"), ParamRef("epoch"), ParamRef("txnId")
     n, n1, rev, prev = Var("n"), Var("n1"), Var("rev"), Var("prev")
     row_epoch = Var("rowEpoch")
 
     where: list = []
     if dataset_guard:
-        where.append(GraphBlock(b.graph(GraphRole.DATASET, "datasetGraph"), (Triple(b.const("datasetNode"), _pat("epoch"), epoch),)))
+        where.append(GraphBlock(b.graph("datasetGraph"), (Triple(b.const("datasetNode"), _pat("epoch"), epoch),)))
         where.append(GraphBlock(meta, (Triple(stream, _pat("epoch"), row_epoch), Triple(stream, _pat("seq"), n))))
     else:
         where.append(GraphBlock(meta, (Triple(stream, _pat("epoch"), epoch), Triple(stream, _pat("seq"), n))))
@@ -155,13 +189,13 @@ def _append(b: Bindings, *, guards: bool, dataset_guard: bool) -> Operation:
             Triple(txn_id, _pat("rev"), _bound("rev")),
             Triple(txn_id, _pat("requestDigest"), ParamRef("requestDigest")),
         )),
-        GraphBlock(Graph(GraphRole.EVENT, _bound("eventGraph")), (
+        GraphBlock(graph_var("eventGraph", Binding.BOUND), (
             Triple(ParamRef("event"), A, ParamRef("eventType")),
             Triple(ParamRef("event"), _pat("revision"), _bound("rev")),
             Triple(ParamRef("event"), _pat("opSeq"), ParamRef("opSeq")),
             Triple(ParamRef("event"), _pat("occurredAt"), ParamRef("occurredAt")),
         )),
-        GraphBlock(Graph(GraphRole.LOG, _bound("logGraph")), (
+        GraphBlock(graph_var("logGraph", Binding.BOUND), (
             Triple(_bound("rev"), A, _pat("Revision")),
             Triple(_bound("rev"), _pat("target"), stream),
             Triple(_bound("rev"), _pat("epoch"), epoch),
@@ -208,4 +242,4 @@ def build_recording(template: str, context: Mapping, *, guards: bool = True) -> 
     return BUILDERS[template](bindings, guards), bindings.read
 
 
-__all__ = ["BUILDERS", "Bindings", "build", "build_recording"]
+__all__ = ["BUILDERS", "GRAPH_ROLES", "Bindings", "build", "build_recording", "graph_var"]

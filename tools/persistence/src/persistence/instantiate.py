@@ -28,11 +28,18 @@ from .builders import BUILDERS, build
 from .ir_render import render as render_operation
 from .namespaces import DAL
 from .render import load_template, render
-from .terms import SparqlTerm
+from .terms import Iri, Literal, PropertyPath
+
+
+# The term type each declared dal:paramType is re-wrapped as. Wrapping by the declared type, not by the text's
+# first character, keeps a property path from being read as an IRI.
+_PARAM_TYPES = {"Iri": Iri, "Literal": Literal, "String": Literal, "PropertyPath": PropertyPath}
 
 
 def operation_context(compiled_profile: Graph, op_node) -> dict:
-    """The parameter bindings of one generated operation, as the values a template (or a builder) takes."""
+    """The parameter bindings of one generated operation, as the values a template (or a builder) takes. Each
+    value is already encoded term text, re-wrapped as the term type its ``dal:paramType`` declares and never
+    encoded again (see the module docstring). An unknown type is refused."""
     context: dict = {}
     for binding_node in compiled_profile.objects(op_node, DAL.hasParameterBinding):
         name = str(compiled_profile.value(binding_node, DAL.paramName))
@@ -40,10 +47,10 @@ def operation_context(compiled_profile: Graph, op_node) -> dict:
         param_type = str(compiled_profile.value(binding_node, DAL.paramType))
         if param_type == "Integer":
             context[name] = int(raw_value)
+        elif param_type in _PARAM_TYPES:
+            context[name] = _PARAM_TYPES[param_type](raw_value)
         else:
-            # already fully-encoded SPARQL term text (Iri/Literal/Var),
-            # re-wrapped, never re-encoded (see module docstring)
-            context[name] = SparqlTerm(raw_value)
+            raise ValueError(f"parameter binding {name!r} has an unknown dal:paramType {param_type!r}")
     return context
 
 
