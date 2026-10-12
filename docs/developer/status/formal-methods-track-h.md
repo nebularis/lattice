@@ -3,13 +3,14 @@
 # Formal Methods, Track H: Status
 
 **Unit ID:** `formal-methods-track-h` (phase, within the `formal-methods` epic)
-**Status:** In progress. H1.1 to H1.2c signed off. H1.2d, H1.3, H1.4a, H1.4b, H1.5 and the aggregate-ownership slices HO0 to HO9 are authored and verified (2026-10-10), awaiting the maintainer's verification, the acceptance of ADR-A122, and the merge
+**Status:** In progress. H1 (H1.1 to H1.5, with H1.4c) and the aggregate-ownership slices HO0 to HO9 are merged to `main` and signed off (2026-10-10). H2 is briefed. ADR-A123 is accepted, with two addenda of 2026-10-12. H2.0 to H2.3 are built, reviewed and ready for the maintainer's merge (2026-10-12), with `check:persistence` at `2003 passed, 1 xfailed`
 **Last updated:** 2026-10-10
 **Plan:** [formal-methods-track-h.md](../plans/formal-methods-track-h.md)
 **Sketches:** [formal-methods-track-h.md](../sketches/formal-methods-track-h.md) (main),
 [formal-methods-track-h-protocols.md](../sketches/formal-methods-track-h-protocols.md),
 [formal-methods-track-h-specification.md](../sketches/formal-methods-track-h-specification.md),
-[persistence-aggregate-ownership.md](../sketches/persistence-aggregate-ownership.md) (normative for HO0 to HO9)
+[persistence-aggregate-ownership.md](../sketches/persistence-aggregate-ownership.md) (normative for HO0 to HO9),
+[formal-methods-track-h-typed-ir.md](../sketches/formal-methods-track-h-typed-ir.md) (H2's brief)
 **Aggregate ownership:** the exploration note [persistence-aggregate-ownership.md](../notes/persistence-aggregate-ownership.md)
 and its spike [`spikes/persistence-aggregate-ownership`](../../../spikes/persistence-aggregate-ownership/README.md),
 reviewed in [persistence-aggregate-ownership-review.md](../notes/persistence-aggregate-ownership-review.md),
@@ -20,9 +21,14 @@ which records our decisions (H-D14) and the findings the HO slices act on
 
 ## Current position
 
-This track is new, drafted 2026-10-08 directly from an independent, exhaustive review
+As of 2026-10-10, H1 and the aggregate-ownership work (HO0 to HO9) are merged to `main`, which signs
+off every slice on the branch. ADR-A122 is accepted, and the release tags `persistence-v0.3.0`,
+`persistence-shapes-v0.3.0` and `persistent-foundation-v0.2.0` exist on `main` and on the remote. H2
+is briefed in the [typed IR sketch](../sketches/formal-methods-track-h-typed-ir.md).
+
+The background, as written when the track began: this track is new, drafted 2026-10-08 directly from an independent, exhaustive review
 (`docs/developer/notes/rdf-engine/persistence-fml.md`) applying this epic's own techniques to the
-Persistence layer. Nothing has been built yet. The review itself was read in full, cross-checked
+Persistence layer. The review itself was read in full, cross-checked
 section by section against the epic's own existing track structure (B, C, E) before this track's
 plan and sketches were written, so that it connects to, rather than duplicates, what those tracks
 already established (the claim/gate discipline, the Isabelle and Alloy homes, the epic's own
@@ -47,21 +53,12 @@ section below.
 
 ## Next action
 
-In this order, each per [plan §3.5](../plans/formal-methods-track-h.md#35-ho-aggregate-ownership):
-
-0. Done 2026-10-10: `origin/main` is merged (`af2eb89`). `docs/developer/validation/LOG.md` is
-   retired. The maintainer's merge is the sign-off, and the index, plans, status records and Validation
-   Packs are the record, as the `lattice-lifecycle` skill now says.
-1. HO0 to HO9, H1.4b and H1.5: done 2026-10-10. ADR-A122 was drafted Proposed (HO2) and accepted by the
-   maintainer on 2026-10-10 at the close.
-2. Next, per the plan: H2, the typed IR (§4), which types the classified tree, the payload check and the
-   required-parameter guard (TD-34), and H3 after it. Nothing in the aggregate-ownership work blocks them.
-
-For the maintainer, at the close: verify the slices (each Validation Pack has its one command), countersign
-the removed and rewritten tests listed in FMH-HO5, and merge (ADR-A122 is accepted). Merging signs off every
-slice on the branch, including H1.2d, H1.3 and H1.4a. 🔴 RELEASE TAGS REQUIRED once the merge is on `main`:
-`persistence-v0.3.0`, `persistence-shapes-v0.3.0` and `persistent-foundation-v0.2.0`, which
-`mise run build:ontology-releases` prints among the tags other merged work also owes.
+1. **The maintainer merges H2.0 to H2.3.** Everything is ready: `check:persistence` gave `2003 passed, 1 xfailed`
+   (2026-10-12, after the H2.3 review fix), the H2.3 countersignature items are signed, and every record is current.
+   Merging signs off each slice. Every decision in the four Validation Packs is taken. No release tag is owed, since no
+   ontology version changed.
+2. Then **H2.4**, **H2.5** or **H2.6** (examples first, with the paper check), in any order.
+3. Later, not scheduled: the SPARQL semantic IR of plan §5.1 (PDD-06).
 
 ## Slices
 
@@ -71,25 +68,30 @@ slice on the branch, including H1.2d, H1.3 and H1.4a. 🔴 RELEASE TAGS REQUIRED
 | H1.2a (witness harness, audit witnesses, measured gap list) | **signed off.** [Validation Pack](../validation/FMH-H1-2.md) | |
 | H1.2b (witnesses for the refusals and warnings) | **signed off.** [Validation Pack](../validation/FMH-H1-2b.md) | |
 | H1.2c (witnesses for the 13 remaining shapes) | **signed off.** [Validation Pack](../validation/FMH-H1-2c.md) | |
-| H1.2d (refuse a multi-valued single-valued property, TD-25) | **authored and verified, awaiting the maintainer's gate.** [Validation Pack](../validation/FMH-H1-2d.md) | the maintainer's review |
-| H1.3 (static template checks S-3 and S-4) | **authored and verified, awaiting the maintainer's gate.** [Validation Pack](../validation/FMH-H1-3.md) | the maintainer's review |
-| H1.4a (refuse a composite boundary with several node properties, H-D4) | **authored and verified, awaiting the maintainer's gate.** [Validation Pack](../validation/FMH-H1-4a.md) | the maintainer's review |
-| H1.4b (the declaration/implementation gap report) | **authored and verified.** [Validation Pack](../validation/FMH-H1-4b.md) | the maintainer's merge |
-| H1.5 (stable labels) | **authored and verified.** [Validation Pack](../validation/FMH-H1-5.md) | the maintainer's merge |
-| HO0 (correct the ownership note and its spike) | **authored and verified.** [Validation Pack](../validation/FMH-HO0.md) | the maintainer's merge |
-| HO1 (composite replace: payload to the default graph, linear sweep, TD-39, TD-36) | **authored and verified.** [Validation Pack](../validation/FMH-HO1.md) | the maintainer's merge |
+| H1.2d (refuse a multi-valued single-valued property, TD-25) | **signed off** 2026-10-10, merged. [Validation Pack](../validation/FMH-H1-2d.md) | |
+| H1.3 (static template checks S-3 and S-4) | **signed off** 2026-10-10, merged. [Validation Pack](../validation/FMH-H1-3.md) | |
+| H1.4a (refuse a composite boundary with several node properties, H-D4) | **signed off** 2026-10-10, merged. [Validation Pack](../validation/FMH-H1-4a.md) | |
+| H1.4b (the declaration/implementation gap report) | **signed off** 2026-10-10, merged. [Validation Pack](../validation/FMH-H1-4b.md) | |
+| H1.4c (a declaration the compiler cannot honour is a warning or a refusal) | **signed off** 2026-10-10, merged. [Validation Pack](../validation/FMH-H1-4c.md) | |
+| H1.5 (stable labels) | **signed off** 2026-10-10, merged. [Validation Pack](../validation/FMH-H1-5.md) | |
+| HO0 (correct the ownership note and its spike) | **signed off** 2026-10-10, merged. [Validation Pack](../validation/FMH-HO0.md) | |
+| HO1 (composite replace: payload to the default graph, linear sweep, TD-39, TD-36) | **signed off** 2026-10-10, merged. [Validation Pack](../validation/FMH-HO1.md) | |
 | HO2 (draft ADR-A122, Proposed) | **done** 2026-10-10. [ADR-A122](../../architecture/decisions/ADR-A122-aggregate-ownership.md), **accepted** 2026-10-10 | |
-| HO3 (`dal:` vocabulary 0.3.0: `dal:ownership`, reference data) | **authored and verified.** [Validation Pack](../validation/FMH-HO3.md). 🔴 release tags owed (`persistence-v0.3.0`, `persistence-shapes-v0.3.0`, `persistent-foundation-v0.2.0`), created on `main` | the maintainer's merge |
-| HO4 (ownership tree and path compiler, added beside the old walk) | **authored and verified.** [Validation Pack](../validation/FMH-HO4.md) | the maintainer's merge |
-| HO5 (switch the compiler to the tree, TD-03, TD-35, TD-37, TD-40) | **authored and verified.** [Validation Pack](../validation/FMH-HO5.md) | the maintainer's merge. The removed tests are countersigned (2026-10-10) |
-| HO6 (ownership refusals and the roots-only warning) | **authored and verified.** [Validation Pack](../validation/FMH-HO6.md) | the maintainer's merge |
-| HO7 (composite create and tombstone delete, TD-04) | **authored and verified.** [Validation Pack](../validation/FMH-HO7.md) | the maintainer's merge |
-| HO8 (injective graph naming within and across families, TD-38) | **authored and verified.** [Validation Pack](../validation/FMH-HO8.md) | the maintainer's merge |
-| HO9 (ownership documentation and close-out) | **authored and verified.** [Validation Pack](../validation/FMH-HO9.md) | the maintainer's merge |
-| H2 (typed IR) | not started, outlined in the plan | H1 (informative, not a hard blocker) |
+| HO3 (`dal:` vocabulary 0.3.0: `dal:ownership`, reference data) | **signed off** 2026-10-10, merged. [Validation Pack](../validation/FMH-HO3.md). Release tags created on `main` | |
+| HO4 (ownership tree and path compiler, added beside the old walk) | **signed off** 2026-10-10, merged. [Validation Pack](../validation/FMH-HO4.md) | |
+| HO5 (switch the compiler to the tree, TD-03, TD-35, TD-37, TD-40) | **signed off** 2026-10-10, merged. [Validation Pack](../validation/FMH-HO5.md) | |
+| HO6 (ownership refusals and the roots-only warning) | **signed off** 2026-10-10, merged. [Validation Pack](../validation/FMH-HO6.md) | |
+| HO7 (composite create and tombstone delete, TD-04) | **signed off** 2026-10-10, merged. [Validation Pack](../validation/FMH-HO7.md) | |
+| HO8 (injective graph naming within and across families, TD-38) | **signed off** 2026-10-10, merged. [Validation Pack](../validation/FMH-HO8.md) | |
+| HO9 (ownership documentation and close-out) | **signed off** 2026-10-10, merged. [Validation Pack](../validation/FMH-HO9.md) | |
+| H2.0 (ADR-A123) | **done** 2026-10-10. [Validation Pack](../validation/FMH-H2-0.md). A123 **accepted** 2026-10-10, ADR-A79 addendum applied | ready for the maintainer's merge |
+| H2.1 (the typed IR and its renderer) | **built and reviewed** 2026-10-10, five defects fixed. [Validation Pack](../validation/FMH-H2-1.md). Its four decisions confirmed. Its suite ran at `1875 passed, 1 xfailed` (2026-10-12) | ready for the maintainer's merge |
+| H2.2 (equivalence harness, `bootstrap-version-row` and `append-event` ported) | **built and reviewed** 2026-10-12, two review findings fixed. [Validation Pack](../validation/FMH-H2-2.md). TD-34 closed for these operations | ready for the maintainer's merge |
+| H2 (typed IR) | **briefed** 2026-10-10, split into H2.0 to H2.9 ([typed IR sketch §7](../sketches/formal-methods-track-h-typed-ir.md#7-slices)) | |
+| H2.3 (named-graph row writers) | **built and reviewed** 2026-10-12, one review fix. [Validation Pack](../validation/FMH-H2-3.md). [Plan §4.1](../plans/formal-methods-track-h.md#41-h23-the-named-graph-row-writers-planned-2026-10-12). Countersignature items signed 2026-10-12. TD-34 closed for its operations | ready for the maintainer's merge |
 | H3 (specification registry) | not started, outlined in the plan | H2 preferred first (smaller, more self-contained), not a hard blocker |
 | H4 (exhaustive cross-axis validation, BDD/SMT) | not started, outline only | H3 |
-| H5 (capability-record extension, TLA+/Quint toolchain spike, protocol models A-D) | not started, outline only | H2 (read/write sets from the IR); ADR-A-FM4's acceptance recommended first |
+| H5 (capability-record extension, TLA+/Quint toolchain spike, protocol models A-D) | not started, outline only | H2 (read/write sets from the IR). ADR-A-FM4 is accepted |
 | H6 (Isabelle theories: Resolution, Positions, Encoding, Outcomes) | not started, outline only | H1; H5 for `Outcomes.thy` |
 | H7 (protocol models E-J) | not started, outline only | H5, H6 |
 | H8 (protocol models K-N, grounding) | not started, outline only | H7 |
@@ -102,7 +104,7 @@ slice on the branch, including H1.2d, H1.3 and H1.4a. 🔴 RELEASE TAGS REQUIRED
 |---|---|---|
 | H-D1 | accept, revise or reject ADR-A-FM4 | **decided 2026-10-10**: accepted, including decision 3 |
 | H-D2 | TLA+ or Quint | deferred to H5's own toolchain spike |
-| H-D3 | ADR-A79 addendum vs a fresh ADR for H2/H3's design | recommend an addendum; deferred to H2/H3 |
+| H-D3 | ADR-A79 addendum vs a fresh ADR for H2/H3's design | **decided 2026-10-10 for H2**, left to us by the maintainer: a new ADR-A123 and a dated addendum to ADR-A79 ([typed IR sketch §6](../sketches/formal-methods-track-h-typed-ir.md#6-the-adrs)). H3's when it is briefed |
 | H-D4 | fix the composite-boundary soundness gap now (a refusal) or wait for H2's typed IR | decided 2026-10-09: left as a documented, refused combination until H2's typed IR makes the fix structural. H1.4 carries the refusal. Its exact condition needs care, because the shipped composite example nests one property inside another (`lineItem` then `sku`) and TD-03 concerns sibling properties |
 | H-D5 | feed track A's ledger once it exists, or keep an independent record permanently | recommend: feed track A once it starts |
 | H-D6 | H1.1 reads "antichain" per scope kind. Nested `dal:graphPrefix` values are a **violation** only when the scopes cover a common class (each graph-pattern scope is its own target, so disjoint classes cannot collide). Nested `dal:iriPrefix` values are a **warning**, because the resolver ranks by `dal:priority`. The plan says only "antichain", so this narrows it | agreed 2026-10-09 |
@@ -116,6 +118,15 @@ slice on the branch, including H1.2d, H1.3 and H1.4a. 🔴 RELEASE TAGS REQUIRED
 | H-D15 | AO-Q13, naming a named graph from its root | **decided 2026-10-10**: option a (`ENCODE_FOR_URI` of the whole root IRI), on condition that an over-long IRI is very unlikely, which the review shows ([§7](../notes/persistence-aggregate-ownership-review.md#7-one-new-question-ao-q13)) |
 | H-D16 | HO5 touches four Python modules and HO4 three, beyond the slice-sizing rule read per file | **decided 2026-10-10: option A**, HO4 and HO5 stay one slice each. A split of HO5 was possible with a temporary shim, and was not worth its churn (plan §8) |
 | H-D17 | AO-Q14, which graph a composite aggregate lives in (review F10: today's composite template relies on the default graph, against static check S-1) | **decided 2026-10-10: option a**, a mandatory named data graph `dal:dataGraph`. No decision is open |
+| H-D18 | how many slices H2 needs | **decided 2026-10-10**: as many as it needs. Ten proposed |
+| H-D19 | the IR replaces the Mustache templates (A) or adds declarations checked against them (B) | **decided 2026-10-10: option A** |
+| H-D20 | how far the payload is typed | **decided 2026-10-10**: designed in full for the maintainer's review, weighed by the configuration it asks of a user ([typed IR sketch §4](../sketches/formal-methods-track-h-typed-ir.md#4-the-typed-payload)) |
+| H2-Q1 to H2-Q5 | typed payload option, a named-graph family with no boundary shape, closed-shape payloads, where the parameter guard runs, what the compiled profile carries | **answered 2026-10-10**: PL-B (PL-D later, as an SDK, [sketch](../sketches/persistence-client-sdk.md)), (a) and (b), (a), (c), (a) on condition it keeps the relational realisation open ([typed IR sketch §1](../sketches/formal-methods-track-h-typed-ir.md#1-decisions-already-taken-2026-10-10)) |
+| H2-Q2 reading | (a) and (b) read as informational by default, a warning under a compile option, no new `dal:` term | **confirmed 2026-10-10** by the maintainer |
+| H2-Q6 | the compiled profile's declarations name logical resources (a) or SPARQL graph roles (b) | **decided 2026-10-10: (a)** ([typed IR sketch §3.1](../sketches/formal-methods-track-h-typed-ir.md#31-the-operation-contract-and-the-sparql-realisation-h2-q6)) |
+| H-D21 | H2.3 as one slice, beyond the slice-sizing rule (H2.3-Q4) | **decided 2026-10-12**: one slice, about 25 test cases, approved by the maintainer |
+| H2.3-Q1, H2.3-Q3 | the value guard's default graph, the patch-log parameters | **decided 2026-10-12: (a) for both**. TD-43 records the value guard |
+| H2.3-Q2 | a `GRAPH ?g` inside an inner group, `?g` bound outside it | **decided 2026-10-12**: (a) by default, the rule follows the join. (c), a caller-named `$g`, as an override the caller chooses, checked against the naming rule while guards are on. ADR-A123 addendum |
 | H-D7 | H1's checks live in one new module, `persistence.hygiene`, behind one `hygiene` subcommand, and run under `check:persistence`. No new `mise` task until H1's closing slice | agreed 2026-10-09 |
 
 ## Log
@@ -341,3 +352,136 @@ slice on the branch, including H1.2d, H1.3 and H1.4a. 🔴 RELEASE TAGS REQUIRED
   specifier differs between packages. Not changed: the CI workflows still call several per-package `bootstrap:*`
   tasks in one command, so they can still run in parallel. The repair for an existing worktree is
   `rm -rf .venv && mise run bootstrap`.
+- 2026-10-10: the maintainer merged the branch into `main` (`44a5f48`), created the release tags
+  `persistence-v0.3.0`, `persistence-shapes-v0.3.0` and `persistent-foundation-v0.2.0` on it and pushed
+  them. Every slice on the branch is signed off. The maintainer decided H-D18 to H-D20 and left H-D3 to
+  us. We took a new ADR-A123 with an ADR-A79 addendum. H2 is briefed in the
+  [typed IR sketch](../sketches/formal-methods-track-h-typed-ir.md): the IR, the typed payload (options
+  PL-A to PL-D, leaning PL-B, which asks no new configuration of a composite user), ten slices, and
+  questions H2-Q1 to H2-Q5. One hypothesis is recorded there to measure in H2.4, not yet a finding:
+  a composite replace may build its payload once per stored triple of the aggregate.
+- 2026-10-10: the maintainer answered H2-Q1 (PL-B, with generated code per language kept for a
+  published SDK, sketched in [persistence-client-sdk.md](../sketches/persistence-client-sdk.md) for
+  the end of Track H), H2-Q2 ((a) and (b), our reading to confirm), H2-Q3 (a), H2-Q4 (c) and H2-Q5 (a),
+  the last on condition that it keeps the relational realisation of `notes/rdf-engine/lattice-sql.md`
+  open. Read against that note and `sql-feedback.md`, H2 does not change the resolved profile the
+  relational compiler reads. The choice that matters is whether the new declarations name logical
+  resources or SPARQL graph roles, raised as H2-Q6. The typed IR sketch now also says plainly that a
+  caller outside the Python package runs one extra local query for the payload check.
+- 2026-10-10: the maintainer decided H2-Q6 (a), a logical operation contract with the SPARQL graph roles
+  kept in the builders, and confirmed our reading of H2-Q2. Every H2 question is answered. H2.0, drafting
+  ADR-A123 Proposed with the ADR-A79 addendum, is ready to branch from `main`.
+- 2026-10-10: four points settled in the work package, in the [typed IR sketch](../sketches/formal-methods-track-h-typed-ir.md).
+  (1) The equivalence harness is defined (§7.1): exact equality of normalised algebra, the parameter guard
+  removed from the `Operation` value and checked on its own, mutation probes for non-vacuity, and "a port
+  changes nothing, a change ports nothing". (2) The quadratic payload hypothesis is measured on rdflib 7.6.0
+  with a scratch script and holds (5.6 s at M = N = 1000), recorded as TD-42. rdflib's code applies an update
+  per solution, not in the specification's order, and today's form is correct under both orders because every
+  solution re-inserts the whole payload. §4.3 draws the three forms (today's, two operations, one `UNION`
+  operation) and the store properties each needs, `snapshotUpdateSemantics` (new, added to the main sketch's
+  capability record) and `atomicUpdateRequest`, for the later tranches that model each platform. H2.4 ports
+  today's form unchanged, commits the benchmark and probes, and stops only if Oxigraph shows today's form to
+  be wrong. (3) `INFO` and its warning option get witnesses in H2.8, and the witness harness learns the new
+  family, since it records only `WARNING` diagnostics today (§7.3). (4) The paper check of the logical
+  resources against `lattice-sql.md` §9 moves to H2.6 (§7.2).
+- 2026-10-10: H2.0 built ([FMH-H2-0](../validation/FMH-H2-0.md)). [ADR-A123](../../architecture/decisions/ADR-A123-typed-operation-ir.md)
+  is drafted Proposed and catalogued. A123 was free on every remote branch. The ADR-A79 addendum is drafted at the foot of
+  A123 and applied on acceptance, since an accepted ADR should not carry text for a decision not yet taken.
+- 2026-10-10: H2.1 built ([FMH-H2-1](../validation/FMH-H2-1.md)). `persistence.ir` (the values) and
+  `persistence.ir_render` (26 named refusals, rendering, derived read and write sets). Nothing calls them yet.
+  `check:persistence` at 1849 passed and 1 xfailed (489 added). The property test of adversarial literals
+  found a defect in the existing `Literal.encode`: a value holding a backslash before `u` was written so that
+  SPARQL's whole-text `\u` escape processing broke it (rdflib raises). Fixed in `terms.py` (outside the slice's
+  module list, listed for the maintainer's review). Probes: seven mutations caught, and an eighth, a duplicated
+  path-in-template check, was an equivalent mutant, so the duplicate was removed. Decisions for the maintainer
+  are in the Validation Pack.
+- 2026-10-10: the maintainer accepted ADR-A123, and we applied the dated ADR-A79 addendum and catalogued both. The
+  maintainer confirmed the four decisions of FMH-H2-1. A review of H2.1 found five defects and fixed each with a test
+  ([FMH-H2-1, Review](../validation/FMH-H2-1.md#review-2026-10-10)). The serious one: the required-parameter guard
+  rendered as a top-level `FILTER`, which applies after the group's patterns, so a replace with no `$root` bound
+  `$root` from the data and wrote every matching aggregate. The guard is now its own group, and ADR-A123 decision 5
+  says so, corrected before acceptance. The others: prefix compaction changed a literal that looked like an IRI, an
+  optional parameter counted as always bound, a graph block's scope ignored the enclosing group, and `Const` accepted
+  an IRI built without its encoder that held a `\u` escape. Two questions are open, R1 (refuse an operation without
+  its guard) and R2 (type-test `Iri` parameters with `isIRI`). The probes ran on rdflib in a scratch script. The suite
+  was not run after the fixes. Its expected total is in the Validation Pack.
+- 2026-10-12: we talked F1 to F5 through with the maintainer. F2, F3 and F5 are agreed. F4 was wrong as first fixed:
+  SPARQL evaluates an inner group on its own, so a `BIND` inside a nested group, `GRAPH` block, `OPTIONAL` or `UNION`
+  branch does not see outer variables, and only `NOT EXISTS` does (checked on rdflib). The `GRAPH` block code was
+  right, the first fix is reverted, and the other three scopes now start empty, with engine tests (T29). On F1 the
+  maintainer decided that guards are optional and on by default, since input checking normally belongs in the access
+  layer, recorded as an [ADR-A123 addendum](../../architecture/decisions/ADR-A123-typed-operation-ir.md#addendum-2026-10-12-parameter-guards-are-optional-and-are-type-tests).
+  Guards are now type tests (`isIRI`, `DATATYPE`, `LANG`) in their own group, which catch a missing parameter, a
+  mistyped one (R2) and survive text substitution, where `BOUND` became a syntax error. An operation carries the guard
+  or `GUARDS_OFF`, never none (R1). Measured on rdflib, the guard in its own group costs nothing, where the top-level
+  form cost about 60% on a 20,000-triple sweep. The maintainer also raised a SPARQL semantic IR for a later phase,
+  recorded as PDD-06 and plan §5.1, with an interim rule that every semantic rule the checker encodes gets an engine
+  test. The suite was not run (1,876 cases collected).
+- 2026-10-12: ran the FMH-H2-1 one command after pulling. `check:persistence` gave 4 failures, all in T29
+  (`a_bind_sees_only_its_own_group`). The query selected only `?b`, and rdflib 7.6.0 drops a row whose projected
+  variables are all unbound, so the expected `[None]` came back empty. The queries now select `?a ?b` and read `?b`,
+  which asserts the same scope rule. The expected values are unchanged. `check:persistence` then gave
+  `1875 passed, 1 xfailed`.
+- 2026-10-12: H2.2 built ([FMH-H2-2](../validation/FMH-H2-2.md)). The equivalence harness (`tests/equivalence.py`) holds a
+  builder to its template as normalised rdflib algebra, with the guard off, and `bootstrap-version-row` and
+  `append-event` (each with its dataset-guard variant) are ported in `persistence.builders`. The harness caught my
+  first port of `append-event` at once: I had put an `epoch` triple in the non-dataset `INSERT` that the template does
+  not have. `instantiate` now renders the four ported operations from their builders with the required-parameter guard,
+  and `--no-parameter-guards` leaves it out. TD-34 is closed for these operations, with the unbound-`$stream` case (F1)
+  run on rdflib as a test. `Kind.IRI_OR_LITERAL` (first named `TERM`) is new, for `$occurredAt`. `check:persistence` gave `1915 passed, 1 xfailed`.
+  Six implementation probes were caught. Three decisions are listed for the maintainer in the Validation Pack.
+- 2026-10-12: the maintainer agreed to rename the new parameter kind from `Term` to `IriOrLiteral`, because a term
+  includes blank nodes, `Term` means something else in `instrument`, and the kind is not an ontology class. Done in the
+  IR, the builder, the tests and the Validation Pack. We keep it untyped as to datatype. Typing `$occurredAt` as
+  `xsd:dateTime` would refuse `xsd:date`, `xsd:gYear`, `xsd:dateTimeStamp`, an IRI for an instant and untyped strings,
+  and no query uses the type. The maintainer agreed to leave the stricter check until later. A datatype taken from the family's declared valid-time property is possible in H2.7.
+- 2026-10-12: a review of H2.2 ran `check:persistence` at `1915 passed, 1 xfailed` and found two gaps, both fixed the same
+  day. A builder chose each graph's role itself, and nothing checked it: the transaction graph labelled `META` passed every
+  test, though the derived read and write sets would carry the wrong role. `GRAPH_ROLES` now gives every role by binding
+  or variable name, and T20 and T21 check it. And `Bindings.const` guessed a binding's type from its text, which would have
+  read H2.4's `ownedPath` as an IRI. `operation_context` now wraps each binding by its declared `dal:paramType`, with T22 to
+  T24. Both fixes were probed by breaking them. `check:persistence` then gave `1920 passed, 1 xfailed`. The record also had
+  a duplicated H2.2 row and a stale status line, both corrected.
+- 2026-10-12: H2.3 planned in [plan §4.1](../plans/formal-methods-track-h.md#41-h23-the-named-graph-row-writers-planned-2026-10-12).
+  Reading its templates found two things. `cas-replace-value-guard` reads and writes the default graph, which the IR cannot
+  express and S-1 forbids (TD-43, H2.3-Q1). And the scope rule corrected in F4 refuses the sweep `OPTIONAL { GRAPH ?g {
+  ... } }` after an outer `BIND ?g`, which three templates use. F4 is right for a `BIND` and wrong for a pattern, whose
+  result is joined on `?g` afterwards (H2.3-Q2). Four questions are open for the maintainer.
+- 2026-10-12: the maintainer decided H2.3-Q1 (a), the value guard stays unported until H2.7 (TD-43), H2.3-Q3 (a),
+  `$assertGraph` and `$retractGraph` stay optional until H2.7, and H2.3-Q4 (b): **H2.3 is one slice, and the maintainer
+  approved exceeding the slice-sizing rule for it** (H-D21). H2.3-Q2 is open, with its options explained in diagrams.
+- 2026-10-12: the maintainer decided H2.3-Q2. By default the query names the graph and the scope rule follows the join
+  (option a). A caller can override it and name the graph itself as `$g` (option c), which a text-substituting caller
+  turns into a constant graph. We added that, while guards are on, the guard group checks `$g` against ADR-A122's naming
+  rule, so a wrong `$g` writes nothing. Recorded as the second ADR-A123 addendum of 2026-10-12 and as step 8 of the H2.3
+  plan. H2.3 is ready to branch.
+- 2026-10-12: clarified for the H2.3 implementer. The plan's "no guard of any kind" for `unconditional-write` meant no
+  version or concurrency guard, which the profile's `dal:ProvidedConcurrency` or `dal:LockingConcurrency` already rules out
+  and the port keeps. The parameter guard applies as to every operation, `ISIRI($root)` while guards are on. The plan row
+  now says so. Nothing decided in H2 removes a concurrency or version protection.
+- 2026-10-12: for the H2.3 implementer, on step 8's name check. Rather than a builder passing extra guard conjuncts, which
+  would put unchecked expressions into a guard that `check` only compares with the derived one (R1), the check is declared
+  on the parameter (`Param(..., equals=...)`), derived by `ParameterGuard.derive` and validated by `check` as a guard
+  expression. The plan's step 8 says so.
+
+- 2026-10-12: H2.3 built ([FMH-H2-3](../validation/FMH-H2-3.md)), autonomously on this branch. The create, replace and
+  tombstone builders, each with its dataset-guard variant, and the unconditional write are ported, and the harness compares 90
+  operations, all equal to their templates. The scope rule follows the join (H2.3-Q2) with an engine test. `Param.equals`
+  carries the naming check of the caller-named graph, as the maintainer directed, so a builder never writes a guard
+  conjunct, and `InvalidEquals` is a new rule beside the ones he named. `instantiate --caller-graph-names` selects the
+  caller-named form. Two findings. A probe that swapped the metadata and transaction roles in `GRAPH_ROLES` was not caught,
+  because the role test asked the same table, so T32 states the roles apart from it. And three HO8 tests bound `$epoch` as
+  an `xsd:integer`, which the guard now refuses, so their input is `xsd:long`. rdflib also writes a root-less
+  unconditional write into a blank-node graph, where the specification skips the quad (recorded in T8). `check:persistence`
+  gave `2003 passed, 1 xfailed`. Eight implementation probes, seven caught first time.
+- 2026-10-12: a review of H2.3 ran `check:persistence` at `2003 passed, 1 xfailed`, matching FMH-H2-3. The ports, the
+  scope rule, `Param.equals` and the caller-named form match the plan and both ADR-A123 addenda, and probes of the scope
+  rule at its edges behaved as the join rule says. Fixed: an unknown `graph_names` is now refused by every builder, not only
+  those that name a graph. Recorded: on rdflib a template triple whose graph variable is unbound is written to a new
+  blank-node graph (TD-44), which matters only with guards off. The status line, which still described H2.2, is corrected.
+- 2026-10-12: the maintainer countersigned both FMH-H2-3 items, the removed H2.1 refusal case and HO8's test input made
+  `xsd:long`. H2.0 to H2.3 are marked ready for the maintainer's merge. FMH-H2-2's decisions 2 and 3 remain unconfirmed,
+  recommended for acceptance.
+- 2026-10-12: the maintainer accepted FMH-H2-2's decisions 2 (`instantiate` renders the ported operations from their
+  builders now) and 3 (the harness corpus is every fixture that compiles). No decision is open in H2.0 to H2.3.
+

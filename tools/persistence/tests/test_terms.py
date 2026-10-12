@@ -211,3 +211,24 @@ def _assert_single_operation_or_parse_failure(text: str) -> None:
     # empirically throughout this module's development), so reaching here
     # means the whole string was consumed as a single operation.
     assert True
+
+
+# ---- H2.1: a backslash before u or U ----------------------------------------------------------------------
+# SPARQL processes \uXXXX escapes over the whole query text, so a literal value holding a backslash and
+# then "u" and hex digits must not put that sequence in the query text (found by the H2.1 property test).
+
+
+@pytest.mark.parametrize("value", [
+    "\\u0041", "a\\U00000041", "\\\\u0041", "\\ud83d", "\\u00zz", "\\uabcdefgh12", "ends with a backslash \\", "uU",
+])
+def test_h2_1_a_literal_with_a_backslash_before_u_round_trips(value):
+    from rdflib import Dataset, Literal as RdfLiteral
+
+    dataset = Dataset()
+    dataset.update(f"INSERT DATA {{ GRAPH <urn:g> {{ <urn:s> <urn:p> {Literal.encode(value)} }} }}")
+    assert [o for _, _, o, _ in dataset.quads((None, None, None, URIRef("urn:g")))] == [RdfLiteral(value)]
+
+
+def test_h2_1_no_encoded_literal_contains_a_unicode_escape_the_value_did_not_hold():
+    assert "\\u0041" not in str(Literal.encode("\\u0041"))
+    assert str(Literal.encode("plain")) == '"plain"'

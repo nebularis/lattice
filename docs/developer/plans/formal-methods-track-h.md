@@ -9,6 +9,7 @@
 [formal-methods-track-h-protocols.md](../sketches/formal-methods-track-h-protocols.md) (rung T4,
 the centrepiece), [formal-methods-track-h-specification.md](../sketches/formal-methods-track-h-specification.md)
 (the specification registry and the typed IR, the enabling move),
+[formal-methods-track-h-typed-ir.md](../sketches/formal-methods-track-h-typed-ir.md) (H2's brief),
 [persistence-aggregate-ownership.md](../sketches/persistence-aggregate-ownership.md) (aggregate
 ownership, normative for the HO slices of [§3.5](#35-ho-aggregate-ownership))
 **Aggregate ownership:** the exploration note [persistence-aggregate-ownership.md](../notes/persistence-aggregate-ownership.md),
@@ -17,13 +18,14 @@ and the review [persistence-aggregate-ownership-review.md](../notes/persistence-
 which holds the decisions (H-D14)
 **Status record:** [formal-methods-track-h.md](../status/formal-methods-track-h.md)
 **Decided by:** [ADR-A-FM4](../../architecture/decisions/ADR-A-FM4-persistence-formal-methods-home-and-scope.md)
-(Proposed: home and scope. Tracks A-FM2's and A-FM3's conventions for mechanised theories and
+(Accepted 2026-10-10: home and scope. Tracks A-FM2's and A-FM3's conventions for mechanised theories and
 design-time models, excludes all relational/SQL work)
 **Source:** [persistence-fml.md](../notes/rdf-engine/persistence-fml.md), an independent,
 exhaustive review of the Persistence layer against this epic's own techniques
-**Status:** Proposed. Not started. Needs nothing from tracks A-G to begin: it reuses their
-methods (Isabelle, Alloy, the claim/gate discipline) but has its own capability-record,
-specification-registry and protocol-model work with no cross-track blocker
+**Status:** In progress. H1 and the aggregate-ownership slices HO0 to HO9 are merged to `main` and
+signed off (2026-10-10). H2 is briefed, ADR-A123 is accepted (2026-10-10), and H2.0 to H2.3 are built, reviewed and ready for merge
+(2026-10-12). The live state is in the status
+record
 
 ## 1. Scope
 
@@ -492,23 +494,153 @@ specification registry, which generates the rules, the selection table and the R
 tables from one source, closing the review's finding #3 drift and enabling the exhaustive
 cross-axis validation H4 needs as its input).
 
-**H2 (typed IR), outline:**
-- Give `tools/persistence`'s compiler an intermediate representation for a generated operation:
-  typed parameters, a declared read/write set per operation (direct input to H5's protocol
-  models), guards tagged `Term`/`Value`, template variables tagged `Bound`/`OptionalAllowed`.
-- Rewrite the emitter to render from this IR, not from ad hoc string templates.
-- **Validation:** every hazard in the specification sketch's own table (§3) becomes a type error
-  rather than a runtime or static-check finding; re-run H1.3's checks against the new emitter's
-  output and confirm they now pass by construction, not by a separate pass.
-- **From aggregate ownership (H-D14, [sketch §12](../sketches/persistence-aggregate-ownership.md#12-what-h2-inherits)):**
-  the `OwnershipTree` and its compiled `PropertyPath` become typed IR values. The IR states the
-  payload check (every payload subject is the root or reached from it through owned steps), for the
-  runtime caller to enforce. The required-parameter guard of H-D12 option D closes TD-34. H2's typing
-  of the closure starts after HO5. The rest of H2 does not wait for the HO slices. A composite
-  operation's declared read set is the closure its path computes at execution, and its write set is
-  the delete set, the payload and the version row ([ownership sketch §15](../sketches/persistence-aggregate-ownership.md#15-effect-on-the-later-track-h-slices)).
-- This is an **addendum to ADR-A79** (persistence compiler toolchain), dated, when this slice is
-  detailed for real — not decided here, and not a new formal-methods ADR (ADR-A-FM4 decision 4).
+**H2 (typed IR), briefed 2026-10-10.** The design, its questions and its slices are in the
+[typed IR sketch](../sketches/formal-methods-track-h-typed-ir.md). We decided (H-D18 to H-D20):
+
+- H2 is split into ten slices, H2.0 to H2.9 ([sketch §7](../sketches/formal-methods-track-h-typed-ir.md#7-slices)).
+- Option A. Each operation is a typed value built by a builder, its SPARQL is rendered from it, and
+  the Mustache templates and `chevron` are retired in H2.9.
+- The typed payload is designed in full ([sketch §4](../sketches/formal-methods-track-h-typed-ir.md#4-the-typed-payload))
+  and reviewed by the maintainer before H2.8 is briefed.
+- H-D3 is ours to decide. We take a new ADR, A123, and a dated addendum to ADR-A79, which stays
+  Accepted for the points A123 does not supersede ([sketch §6](../sketches/formal-methods-track-h-typed-ir.md#6-the-adrs)).
+
+What H2 still delivers, as outlined before the brief: typed parameters, read and write sets (now
+derived from the operation, not declared), guards tagged term or value, template variables tagged
+`Bound` or `OptionalAllowed`, the `OwnershipTree` and its `PropertyPath` as IR values, the payload
+check of ADR-A122 decision 6, and the required-parameter guard that closes TD-34. Its validation is
+unchanged. Every hazard of the [specification sketch §3](../sketches/formal-methods-track-h-specification.md#3-the-typed-intermediate-representation)
+becomes a refusal by type, and H1.3's checks pass over the new output by construction. H2-Q1 to H2-Q6
+are answered ([sketch §1](../sketches/formal-methods-track-h-typed-ir.md#1-decisions-already-taken-2026-10-10)),
+ADR-A123 is accepted (2026-10-10). H2.0 to H2.3 are built and reviewed, ready for the merge (2026-10-12).
+
+### 4.1 H2.3: the named-graph row writers (planned 2026-10-12)
+
+**Unit:** slice H2.3 of the [typed IR sketch §7](../sketches/formal-methods-track-h-typed-ir.md#7-slices), under
+ADR-A123 and its addendum of 2026-10-12. Builds on H2.2's harness, `GRAPH_ROLES` and typed bindings
+([FMH-H2-2](../validation/FMH-H2-2.md)). All four questions were decided on 2026-10-12.
+
+#### The scene, checked against the templates
+
+The sketch assigns H2.3 eight templates. Read on 2026-10-12, they are:
+
+| Template | Writes | Parameters | Note |
+|---|---|---|---|
+| `create-if-absent-named-graph` and its dataset-guard variant | the payload into `?g`, a version row at `seq 1`, the claim, the receipt | `$root`, `$epoch`, `$newRev`, `$txnId`, `$requestDigest`, the payload slot | `?g` is `BIND(IRI(CONCAT(graphPrefix, ENCODE_FOR_URI(STR($root)), graphSuffix)))`. The variant adds the dataset-epoch pattern only |
+| `cas-replace-named-graph` and its variant | deletes every triple of `?g` and the old row, writes the payload, the new row, the claim, the receipt | as create, with `$expectedSeq`, `$nextSeq`, `$assertGraph`, `$retractGraph` | the sweep is `OPTIONAL { GRAPH ?g { ?s ?p ?o } }`, after the top-level `BIND` of `?g`. The variant rebases the row's epoch through `?rowEpoch` |
+| `tombstone-delete-named-graph` and its variant | deletes every triple of `?g`, tombstones the row, writes the claim and a deletion receipt | as replace, with `$cause` and `$actor`, and no payload | the same sweep |
+| `unconditional-write` | the payload into `?g` | `$root`, the payload slot | no version or concurrency guard, by the profile's design: `compile` selects it only for `dal:ProvidedConcurrency` or `dal:LockingConcurrency`, where concurrency is the store's or an external lock's. The port keeps that. Like every operation it has the parameter guard while guards are on, `ISIRI($root)`, which also refuses a literal `$root` that would otherwise name a graph from its text |
+| `cas-replace-value-guard` | `$root <guardProperty> $newValue` | `$root`, `$oldValue`, `$newValue` | **no `GRAPH` at all.** It reads and writes the default graph, which the IR cannot express (`DefaultGraphPattern`) and static check S-1 forbids. H2.3-Q1 |
+
+Three facts constrain the port.
+
+1. **The sweep collides with the corrected scope rule.** After F4 an `OPTIONAL` starts with an empty scope, so
+   `UnboundGraphVariable` refuses `OPTIONAL { GRAPH ?g { ... } }` when `?g` is bound outside it, and H2.1 added that very
+   case as a refusal test. That was wrong in intent. F4 is right about a `BIND`, whose value is computed inside the
+   group and cannot see `?g`. It is wrong about a pattern, whose solutions are joined with the enclosing group on `?g`
+   afterwards, so the result holds only `?g`'s triples. The rule exists to stop a `GRAPH ?g` whose result ranges over
+   every graph, and a join on an outer `?g` prevents that. H2.3-Q2.
+2. **`$assertGraph` and `$retractGraph` are optional in the template and required by one receipt model.** The README
+   says they are bound "for the patch-log model". The template always holds them, so under any other model they are left
+   unbound and their two triples are skipped. A builder receives the bindings only, and no binding says which receipt
+   model applies. H2.3-Q3.
+3. **`$cause` and `$actor` are IRIs.** The patterns guide declares `pat:cause` and `pat:actor` object properties, and its
+   shapes require `sh:nodeKind sh:IRI` (guide §24.0 and its shapes), so both are `Kind.IRI`.
+
+#### Questions for the maintainer
+
+| # | Question | Options and consequences | Leaning |
+|---|---|---|---|
+| H2.3-Q1 | `cas-replace-value-guard` uses the default graph | (a) **leave it unported in H2.3**, record it as TD-43, and decide where a `dal:NoBoundary` target's data lives when H2.7 changes the vocabulary, for example the profile's `dal:dataGraph` as for a composite family. Port it then, as a change. (b) Decide now that a `dal:NoBoundary` profile names a data graph, and port it in H2.3 as a change, which needs a vocabulary change before H2.7's. (c) Give the IR a default-graph role. Against ADR-A123 decision 2 and S-1, and a store's default graph differs between stores | (a). Nothing in H2.3 depends on it, and the decision belongs with H2.7's vocabulary. **Decided 2026-10-12: (a)** |
+| H2.3-Q2 | a `GRAPH ?g` inside an inner group, with `?g` bound outside it | (a) **`UnboundGraphVariable` counts a graph variable as bound when any enclosing group binds it**, since the join restricts the result. The scope a `BIND` sees stays bottom-up. The H2.1 refusal case for `OPTIONAL` becomes an accepted case, with an engine test that the result holds only `?g`'s triples. The three templates port unchanged. A store that evaluates the inner group literally bottom-up scans every graph before the join, where rdflib passes the outer binding in. That is a cost, not a wrong result, and joins TD-42's measurement in H2.4. (b) Keep the refusal, and move the sweep out of the `OPTIONAL`. That is a change to three templates, not a port, and alters the operations' behaviour when `?g` is empty | (a). **Decided 2026-10-12: (a) by default, and (c) as an override the caller chooses** (steps 1, 2 and 8) |
+| H2.3-Q3 | `$assertGraph` and `$retractGraph` | (a) **declare them optional, as the template treats them.** The port changes nothing, and a patch-log caller who leaves them out gets a receipt without them, unguarded, as today. H2.7 then declares requiredness per receipt model, since its parameter declarations live in the compiled profile, and the builder takes the resolved receipt model from there. (b) Pass the resolved dimensions to the builders now and make the two required under `dal:PatchLog`. A change in H2.3, and a second input to every builder | (a). **Decided 2026-10-12: (a)** |
+| H2.3-Q4 | slice size | (a) **split into H2.3a and H2.3b**, about 12 test cases each. H2.3a: the Q2 rule and its engine test, `create-if-absent-named-graph` and its variant, `unconditional-write`. H2.3b: `cas-replace-named-graph` and `tombstone-delete-named-graph`, each with its variant. (b) One slice of about 25 cases, against the sizing rule | (a). **Decided 2026-10-12: (b), one slice.** The maintainer approved exceeding the slice-sizing rule (more than about 15 test cases) for H2.3, so it is built and reviewed as one slice with one Validation Pack, `FMH-H2-3`. Recorded as H-D21 |
+
+#### Parameter kinds
+
+| Parameter | Kind | Required | Guard |
+|---|---|---|---|
+| `$root`, `$newRev`, `$txnId`, `$cause`, `$actor` | `Iri` | yes | `isIRI` |
+| `$epoch` | `Long` | yes | `DATATYPE = xsd:long` |
+| `$expectedSeq`, `$nextSeq` | `Position` | yes | `DATATYPE = xsd:long` |
+| `$requestDigest` | `Digest` | yes | `DATATYPE = xsd:string` |
+| `$assertGraph`, `$retractGraph` | `Iri` | no, per H2.3-Q3 | none until H2.7 |
+| `payloadTriples` | `Payload` | slot | none, the caller's (H2.8) |
+
+#### Steps
+
+In one slice (H2.3-Q4). The H2.3a and H2.3b headings mark the order of work only.
+
+H2.3a:
+
+1. Change `UnboundGraphVariable` per H2.3-Q2. Keep the bottom-up scope for `BIND` and for template variables. Move the
+   H2.1 case "GRAPH ?g in an OPTIONAL after an outer BIND of ?g" from the refusal table to the accepted cases, and keep
+   a refusal for a `GRAPH ?g` that nothing binds anywhere. The removed refusal is listed for countersignature under the
+   non-weakening rule.
+2. Add the engine test for it: on rdflib, `BIND(<g1> AS ?g) OPTIONAL { GRAPH ?g { ?s ?p ?o } }` over two graphs returns
+   only `<g1>`'s triples, and the same holds in a nested group and a `UNION` branch.
+3. Port `create-if-absent-named-graph`, its variant and `unconditional-write`. Add the stems to `BUILDERS`, so T1 to T6
+   and T20 of H2.2 cover them.
+4. Behaviour on rdflib: a create writes the payload into the root's own graph and a version row at `seq 1`. A second
+   create of the same root writes nothing. A missing `$root` writes nothing. Without the guard, and while the store holds no
+   version row, the expected result is a claim and a partial receipt with no row and no payload, since `NOT EXISTS` with an
+   unbound `$root` finds no row and `?g` fails to bind. The test records what rdflib actually does.
+   `unconditional-write` writes into the root's graph and nowhere else.
+
+H2.3b:
+
+5. Port `cas-replace-named-graph`, `tombstone-delete-named-graph` and their variants, with `$assertGraph` and
+   `$retractGraph` as in H2.3-Q3.
+6. Behaviour on rdflib: a replace leaves exactly the payload in `?g` and moves the row. A replace at the wrong
+   `seq` writes nothing. The first replace after a create has a head, and the receipt chains. A replace of another root
+   leaves this one's graph alone, which is the join of step 1 doing its work. A tombstone empties `?g`, marks the row
+   deleted and writes a deletion receipt with cause and actor, and a later replace of it writes nothing. A retry is a
+   no-op. The variant rebases the row's epoch. A missing `$root` over two stored aggregates writes nothing, where
+   without the guard it writes every aggregate at that `seq`, as H2.1's T25b shows for a replace-shaped operation.
+7. TD-34's row lists the ported operations, and is removed only when H2.5 ports the last.
+8. **The caller-named graph, an override (H2.3-Q2 (c)).** A change after the ports, not a port. The four builders that
+   name `?g` (create, replace, tombstone, each with its variant, and `unconditional-write`) take a second option,
+   `graph_names`, `query` by default and `caller` on request. Under `caller` the operation declares `$g`, of kind `Iri`,
+   and every `GRAPH ?g` becomes `GRAPH $g`, so a caller that substitutes text gives the store a constant graph and no
+   sweep can range over other graphs. With guards on, the guard group also checks `$g` against the naming rule of
+   ADR-A122 decision 8, `sameTerm($g, IRI(CONCAT(graphPrefix, ENCODE_FOR_URI(STR($root)), graphSuffix)))`, evaluated once
+   per request, so a wrong `$g` writes nothing and the injectivity of graph names still holds in the query. The check is
+   declared on the parameter, `Param("g", Kind.IRI, equals=<the naming expression>)`, and `ParameterGuard.derive` emits
+   it after the type test, so the guard stays derived from the parameter list alone and `check` still refuses any other
+   guard (R1). `check` validates every `equals` expression as a guard expression, so `ClockInGuard`, `UnknownFunction`,
+   `WrongGuard` and `UndeclaredParameter` apply to it. A builder never passes guard conjuncts of its own. With guards
+   off as well, naming the graph correctly is the caller's obligation alone, and the README says so. `instantiate`
+   takes `--caller-graph-names` until H2.7 records the choice in the compiled profile beside the guards term. Tests:
+   with the right `$g` the result equals the default form on rdflib, a wrong `$g` writes nothing under the guard and
+   writes into the named graph without it, and the substituted text holds `GRAPH <iri>`. An `equals` holding `NOW()` is refused with
+   `ClockInGuard`, and one naming an undeclared parameter with `UndeclaredParameter`. The builder test of the guard computes
+   the `equals` conjunct from the parameter list, as it does the type tests.
+
+#### Planned validation
+
+One Validation Pack, `FMH-H2-3`, with one command, `mise run check:persistence`, which records the maintainer's approval to
+exceed the slice-sizing rule (H-D21). Every port passes the harness with guards off, its bindings equal its template's tags, every graph
+has the role `GRAPH_ROLES` gives it, and every semantic rule a builder relies on has an engine test (plan §5.1): the
+join on an outer `?g` (step 2), an unbound `OPTIONAL` variable skipping only its own template triple (the head on a
+first replace), `NOT EXISTS` seeing `$root` (the create guard), and the guard's name check refusing a wrong `$g` (step 8).
+The caller-named form is a change, so the harness does not cover it, and its golden `.rq` diff against the default form
+is listed in the Validation Pack. The adversarial probes at the gate include the
+guard at the top level, a sweep without the join on `?g`, and a role swapped between `META` and `TXN`.
+
+#### Deliberate non-coverage
+
+- `cas-replace-value-guard`, per H2.3-Q1. TD-43.
+- `$assertGraph` and `$retractGraph` required under the patch-log model, H2.7.
+- The payload's own checks, H2.8.
+- Oxigraph, and the cost of a literal bottom-up sweep, H2.4.
+- Text-substituting callers of the default form. H2.1's T28 covers the IR, and step 8 substitutes text for the
+  caller-named form.
+- Recording `graph_names` in the compiled profile, H2.7, with the guards term.
+
+#### Estimate
+
+About 650k tokens for the one slice, against 400k in the sketch, since the sketch did not foresee H2.3-Q2 or the
+caller-named override.
 
 **H3 (specification registry), outline:**
 - One machine-readable registry (syntax not yet chosen, specification sketch §2) generating:
@@ -537,6 +669,39 @@ cross-axis validation H4 needs as its input).
 | H8 | protocol models K-N (erasure, multi-aggregate writes, bulk load/cutover, shard migration), plus grounding every model built so far against at least one real MVCC-style backend (isolation probes, history checking, predicted-anomaly reproduction). **From aggregate ownership** (ownership sketch §15): K's store list includes composite members, L adds references across aggregates under the roots-only rule, M adds an out-of-band load that makes a node a member of two aggregates | T4/T7 | H7 |
 | H9 | detection-coverage closure: generate the nine missing audits the review names (L11's gap) from the same invariants H4's registry states, Alloy detection-completeness/soundness obligations per invariant, applicability labelling so a not-applicable audit cannot be read as "clean". **From aggregate ownership** (ownership sketch §15): four more audits, instance overlap, orphan member, reference into a member, and payload outside the tree for named-graph families with a boundary shape | T2/T0 | H3, H4 |
 | H10 | runtime monitors from the same invariants (T7): housekeeping evidence, capability drift, declaration drift, an erasure audit, a position-reuse audit, feeding track A's ledger once it exists. The four ownership audits of H9 become monitors with the rest | T7 | H9 |
+
+### 5.1 Later: a SPARQL semantic IR (PDD-06, raised 2026-10-12)
+
+The maintainer's direction, to be patched into a later phase so H2 keeps its pace. Today `persistence.ir` is one
+typed syntax tree that carries both what the configuration means and how SPARQL writes it. Its checker encodes SPARQL's
+rules (scope, boundness, where a guard is evaluated) as claims written by hand. Two of them were wrong in H2.1, the
+guard's position (F1) and inner-group scope (F4), and both were found only by running queries on rdflib.
+
+```mermaid
+flowchart LR
+  C["configuration IR<br/>logical operation contract,<br/>boundaries, guards,<br/>read and write sets"] --> T["transformer"]
+  T --> S["SPARQL IR<br/>the algebra, with a<br/>formal model of the spec"]
+  S --> K["check: the SPARQL IR<br/>behaves as the<br/>configuration intends"]
+  S --> P["printer<br/>mechanical, verified"]
+  P --> Q["SPARQL text"]
+  S -.-> M["held as RDF<br/>a MORK mapping target"]
+```
+
+- **Two IRs.** The first, the output of the compiler's first stage, says how things are used and where their
+  boundaries are. The second models SPARQL's semantics, so the transformer's output can be checked against what the
+  first says, and the printer from it to text is mechanical and verified.
+- **What it moves.** ADR-A123 decisions 1 and 9 (one `Operation` value per builder, audited through golden files),
+  H2-Q5's declined option (b) if the SPARQL IR is held as RDF, and the Track H sketch's non-goal of mechanising SPARQL,
+  narrowed to the fragment the builders use. A later ADR records it.
+- **What it costs.** A relational backend needs its own path, or its own IR and code generation. The logical
+  operation contract of H2-Q6 stays the input both would share.
+- **What it gives.** The checker's rules follow from a model of the specification instead of from memory, the model is
+  a way for the maintainer and the agents to read SPARQL's semantics directly, and a MORK mapping could be lowered to
+  SPARQL through the same IR.
+- **Where it sits.** After H2, whose builders define the fragment to model, and with or before H6, which sets up the
+  Isabelle theories. Not scheduled. The open options are in PDD-06.
+- **Until then.** Each semantic rule the checker encodes gets an engine test, as T29 does for scope, so a misreading
+  is found by a test and not by a later review. The H2.2 to H2.5 builders follow that rule.
 
 ## 6. Milestones
 
@@ -576,7 +741,7 @@ None of these is taken without the maintainer.
 |---|---|---|---|
 | H-D1 | accept, revise or reject [ADR-A-FM4](../../architecture/decisions/ADR-A-FM4-persistence-formal-methods-home-and-scope.md) | accept, including its point 3 (TLA+/Quint models share `tools/models/` with Alloy) | **decided 2026-10-10**: accepted as recommended |
 | H-D2 | TLA+ or Quint, for protocol models | undecided; H5's own toolchain spike decides it on measured evidence, the same discipline track D used for Rocq vs Isabelle | open, deferred to H5 |
-| H-D3 | whether the specification registry's and typed IR's design (H2, H3) are recorded as an ADR-A79 addendum or a fresh ADR | recommend an addendum, dated, per ADR-A-FM4 decision 4 and this repository's own practice for a decision found while building | open, deferred to H2/H3 |
+| H-D3 | whether the specification registry's and typed IR's design (H2, H3) are recorded as an ADR-A79 addendum or a fresh ADR | recommend an addendum, dated, per ADR-A-FM4 decision 4 and this repository's own practice for a decision found while building | **decided 2026-10-10 for H2**, left to us by the maintainer: a new ADR-A123 and a dated addendum to ADR-A79, since H2 replaces ADR-A79's template layer rather than refining it. H3's is decided when H3 is briefed |
 | H-D4 | whether the composite-boundary soundness gap (H1.4's flagged finding) is fixed immediately as a `tools/persistence` defect, or left as a documented, refused combination until H2's typed IR makes the fix structural | recommend: refuse the combination now (cheap, one line in the existing validation predicate), fix properly once H2 lands | **decided 2026-10-09**: left as a documented, refused combination until H2's typed IR makes the fix structural. H1.4 carries the refusal |
 | H-D5 | whether track H's claims feed track A's ledger once it exists, or keep their own interim Validation-Pack record permanently | recommend: feed track A once it starts, per ADR-A-FM4 decision 7 | open, not urgent |
 
@@ -585,6 +750,7 @@ Decisions H-D6 to H-D10 were taken as H1 progressed and are recorded, with their
 [§13](#13-walkthrough-the-two-assumptions-behind-check-s-3-h-d11-and-h-d12). H-D13 to H-D16 come
 from H1.4a and the aggregate-ownership review, H-D17 from tracing that design through the later
 phases ([ownership sketch §15](../sketches/persistence-aggregate-ownership.md#15-effect-on-the-later-track-h-slices)).
+H-D18 to H-D20 and H2-Q1 to H2-Q6 come from H2's brief ([typed IR sketch](../sketches/formal-methods-track-h-typed-ir.md)).
 
 | # | Decision | State |
 |---|---|---|
@@ -595,6 +761,11 @@ phases ([ownership sketch §15](../sketches/persistence-aggregate-ownership.md#1
 | H-D15 | AO-Q13, how a named graph is named from its root ([review §7](../notes/persistence-aggregate-ownership-review.md#7-one-new-question-ao-q13)) | **decided 2026-10-10**: option a, `ENCODE_FOR_URI` of the whole root IRI, since no standard limits IRI length, minted roots are short ASCII (about 1.2 times longer once encoded), and an over-long IRI would fail loudly where option c fails silently ([review §7](../notes/persistence-aggregate-ownership-review.md#7-one-new-question-ao-q13)) |
 | H-D16 | HO5 touches four Python modules (`resolver`, `operations`, `validator`, `boundary`) and HO4 three, more than the slice-sizing rule allows when read per file | **decided 2026-10-10: option A**, accept HO4 and HO5 as planned, one slice each. The resolver's extras, the operations' binding and the validator's checks read one structure, and most of the change is deletion. A split into two slices of two modules each is possible, with a temporary shim in the resolver that the second slice deletes. HO4 also touches three Python files (`boundary`, `paths`, `terms`), so the same question applies to it |
 | H-D17 | AO-Q14, which graph a composite aggregate lives in ([review §7.1](../notes/persistence-aggregate-ownership-review.md#71-a-further-question-ao-q14), F10) | **decided 2026-10-10: option a**, a mandatory named data graph (`dal:dataGraph`). LATTICE's patterns guide already requires every graph to be named (S-1), SPARQL leaves the default graph's contents to the store, and holding application data in named graphs is ordinary practice |
+| H-D18 | how many slices H2 is split into | **decided 2026-10-10**: as many as it needs. Ten are proposed, H2.0 to H2.9 ([typed IR sketch §7](../sketches/formal-methods-track-h-typed-ir.md#7-slices)) |
+| H-D19 | whether the IR replaces the Mustache templates (option A) or adds typed declarations checked against them (option B) | **decided 2026-10-10: option A** |
+| H-D20 | how far the payload is typed | **decided 2026-10-10**: designed in full in the [typed IR sketch §4](../sketches/formal-methods-track-h-typed-ir.md#4-the-typed-payload), weighed by the configuration it asks of a user, and reviewed by the maintainer. Its own questions are H2-Q1 to H2-Q3 |
+| H-D21 | whether H2.3 is split to respect the slice-sizing rule (H2.3-Q4) | **decided 2026-10-12**: one slice of about 25 test cases. The maintainer approved exceeding the rule for H2.3, so that the named-graph row writers are ported and reviewed together |
+| H2-Q1 to H2-Q6 | the typed payload, a named-graph family with no boundary shape, closed-shape payloads, where the parameter guard runs, what the compiled profile carries, logical or SPARQL declarations ([sketch §5](../sketches/formal-methods-track-h-typed-ir.md#5-questions-for-the-maintainer)) | **answered 2026-10-10**: PL-B, with PL-D later as an SDK ([sketch](../sketches/persistence-client-sdk.md)), (a) and (b), (a), (c), and (a) on condition it keeps the relational realisation open. H2-Q6, that condition, **answered 2026-10-10: (a)**, a logical operation contract. Our reading of H2-Q2 confirmed ([typed IR sketch §1](../sketches/formal-methods-track-h-typed-ir.md#1-decisions-already-taken-2026-10-10)) |
 
 ## 9. Alignment with other work
 

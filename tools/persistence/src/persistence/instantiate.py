@@ -24,28 +24,50 @@ from pathlib import Path
 
 from rdflib import RDF, Graph
 
+from .builders import BUILDERS, build
+from .ir_render import render as render_operation
 from .namespaces import DAL
 from .render import load_template, render
-from .terms import SparqlTerm
+from .terms import Iri, Literal, PropertyPath
 
 
-def _render_operation(compiled_profile: Graph, op_node, template_dir: Path | None) -> tuple[str, str]:
-    operation_name = str(compiled_profile.value(op_node, DAL.forOperation))
-    template_node = compiled_profile.value(op_node, DAL.usesTemplate)
-    template_path = str(compiled_profile.value(template_node, DAL.templatePath))
+# The term type each declared dal:paramType is re-wrapped as. Wrapping by the declared type, not by the text's
+# first character, keeps a property path from being read as an IRI.
+_PARAM_TYPES = {"Iri": Iri, "Literal": Literal, "String": Literal, "PropertyPath": PropertyPath}
 
-    context: dict[str, SparqlTerm] = {}
+
+def operation_context(compiled_profile: Graph, op_node) -> dict:
+    """The parameter bindings of one generated operation, as the values a template (or a builder) takes. Each
+    value is already encoded term text, re-wrapped as the term type its ``dal:paramType`` declares and never
+    encoded again (see the module docstring). An unknown type is refused."""
+    context: dict = {}
     for binding_node in compiled_profile.objects(op_node, DAL.hasParameterBinding):
         name = str(compiled_profile.value(binding_node, DAL.paramName))
         raw_value = str(compiled_profile.value(binding_node, DAL.paramValue))
         param_type = str(compiled_profile.value(binding_node, DAL.paramType))
         if param_type == "Integer":
-            context[name] = int(raw_value)  # type: ignore[assignment]
+            context[name] = int(raw_value)
+        elif param_type in _PARAM_TYPES:
+            context[name] = _PARAM_TYPES[param_type](raw_value)
         else:
-            # already fully-encoded SPARQL term text (Iri/Literal/Var),
-            # re-wrapped, never re-encoded (see module docstring)
-            context[name] = SparqlTerm(raw_value)
+            raise ValueError(f"parameter binding {name!r} has an unknown dal:paramType {param_type!r}")
+    return context
 
+
+def _render_operation(
+    compiled_profile: Graph, op_node, template_dir: Path | None, guards: bool = True, graph_names: str = "query"
+) -> tuple[str, str]:
+    """An operation's name and SPARQL text. An operation with a builder (:mod:`persistence.builders`) is rendered
+    from its typed value, with the required-parameter guard unless ``guards`` is false (ADR-A123, addendum of
+    2026-10-12). Every other operation, and any operation under an overriding template library, is rendered by
+    Mustache as before, until H2.9 retires the templates."""
+    operation_name = str(compiled_profile.value(op_node, DAL.forOperation))
+    template_node = compiled_profile.value(op_node, DAL.usesTemplate)
+    template_path = str(compiled_profile.value(template_node, DAL.templatePath))
+    context = operation_context(compiled_profile, op_node)
+    stem = template_path.removesuffix(".mustache")
+    if template_dir is None and stem in BUILDERS:
+        return operation_name, render_operation(build(stem, context, guards=guards, graph_names=graph_names))
     return operation_name, render(load_template(template_path, template_dir), context)
 
 
@@ -53,7 +75,9 @@ def _local(iri) -> str:
     return str(iri).rstrip("/#").rsplit("#", 1)[-1].rsplit("/", 1)[-1]
 
 
-def instantiate_by_target(compiled_profile: Graph, template_dir: Path | None = None) -> dict[str, dict[str, str]]:
+def instantiate_by_target(
+    compiled_profile: Graph, template_dir: Path | None = None, guards: bool = True, graph_names: str = "query"
+) -> dict[str, dict[str, str]]:
     """Returns ``{target_name: {operation_name: rendered_sparql_text}}``, one
     entry per ``dal:CompiledProfile``. A target's name is its class's local
     name, followed by its deployment's local name where it has one
@@ -68,27 +92,32 @@ def instantiate_by_target(compiled_profile: Graph, template_dir: Path | None = N
         if name in out:
             raise ValueError(f"two compiled targets share the name {name!r}")
         out[name] = dict(
-            _render_operation(compiled_profile, op_node, template_dir)
+            _render_operation(compiled_profile, op_node, template_dir, guards, graph_names)
             for op_node in compiled_profile.objects(profile, DAL.generatedOperation)
         )
     return out
 
 
-def instantiate_profile(compiled_profile: Graph, template_dir: Path | None = None) -> dict[str, str]:
+def instantiate_profile(
+    compiled_profile: Graph, template_dir: Path | None = None, guards: bool = True, graph_names: str = "query"
+) -> dict[str, str]:
     """Returns ``{operation_name: rendered_sparql_text}`` for a compiled
     profile with one target. Refuses a profile with several, whose
     operations share names: use :func:`instantiate_by_target`."""
-    by_target = instantiate_by_target(compiled_profile, template_dir)
+    by_target = instantiate_by_target(compiled_profile, template_dir, guards, graph_names)
     if len(by_target) > 1:
         raise ValueError(f"{len(by_target)} targets: operation names repeat per target, use instantiate_by_target")
     return next(iter(by_target.values()), {})
 
 
-def instantiate_to_directory(compiled_profile: Graph, out_dir: Path, template_dir: Path | None = None) -> list[Path]:
+def instantiate_to_directory(
+    compiled_profile: Graph, out_dir: Path, template_dir: Path | None = None, guards: bool = True,
+    graph_names: str = "query",
+) -> list[Path]:
     """Writes ``<out_dir>/<target_name>/<operation_name>.rq`` for every
     generated operation of every target."""
     written: list[Path] = []
-    for target_name, rendered in instantiate_by_target(compiled_profile, template_dir).items():
+    for target_name, rendered in instantiate_by_target(compiled_profile, template_dir, guards, graph_names).items():
         target_dir = out_dir / target_name
         target_dir.mkdir(parents=True, exist_ok=True)
         for operation_name, text in rendered.items():

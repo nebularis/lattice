@@ -179,7 +179,7 @@ assumptions (`atomicUpdateRequest`, `singleWriter`, `detectsWriteWriteConflict`,
 `reportsAffectedRows`, the change-feed and time-travel flags, `quadsInUpdateTemplates`,
 `unionDefaultGraph`, `requiresSkolemization`, `maxRequestBytes`). The aggregate-ownership design
 adds one field, whether inserting a statement that another transaction also inserts counts as a
-write-write conflict, which decides the composite create race. `unionDefaultGraph` does not affect the composite
+write-write conflict, which decides the composite create race. H2's brief adds `snapshotUpdateSemantics`, whether the store fills both templates of an update from one solution sequence and removes before it adds, which decides whether a composite replace can be written in linear form ([typed IR sketch §4.3](formal-methods-track-h-typed-ir.md#43-how-a-composite-replace-is-evaluated-and-what-it-costs)). `unionDefaultGraph` does not affect the composite
 strategy, since AO-Q14 put each family's aggregates in a named data graph ([ownership sketch §15](persistence-aggregate-ownership.md#15-effect-on-the-later-track-h-slices)). Closing this gap (review's
 PV-D1: extend to the full capability record, three-valued, `unknown` treated pessimistically,
 bound to a TCK report digest) is a prerequisite for the matrix meaning anything, and is this
@@ -187,7 +187,7 @@ track's first design-level decision, taken alongside H1 (§5 of the plan).
 
 ## 6. Non-goals, for this sketch and all its siblings
 
-Everything named "out of scope" in §2. Mechanising full SPARQL semantics. Replacing
+Everything named "out of scope" in §2. Mechanising full SPARQL semantics (a model of the fragment the compiler emits is proposed as PDD-06, plan §5.1). Replacing
 `tools/persistence`'s Python compiler with anything generated wholesale — per the review's own
 §17.3 and this epic's existing E3 principle ("no generated OCaml or Haskell runs against the live
 graph"), nothing here changes that: generated code from this track's work is data (templates,
