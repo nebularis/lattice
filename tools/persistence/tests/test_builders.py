@@ -129,7 +129,7 @@ def _expected_guard_line(params) -> str:
             tests.append(f"DATATYPE(${p.name}) = xsd:long")
         elif p.kind in (Kind.DIGEST, Kind.STRING):
             tests.append(f"DATATYPE(${p.name}) = xsd:string")
-        elif p.kind is Kind.TERM:
+        elif p.kind is Kind.IRI_OR_LITERAL:
             tests.append(f"(ISIRI(${p.name}) || ISLITERAL(${p.name}))")
     return "FILTER(" + " && ".join(tests) + ")"
 

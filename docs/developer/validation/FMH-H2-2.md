@@ -24,14 +24,14 @@ turns a missing or mistyped parameter into no write (TD-34). "A port changes not
 - `instantiate` renders a ported operation from its builder, with the guard, and any other operation, and any operation
   under `--template-dir`, from Mustache as before. `persistence instantiate --no-parameter-guards` leaves the guards out.
   `operation_context` is now shared with the builders.
-- `Kind.TERM` and the function `ISLITERAL` in the IR (decision 1).
+- `Kind.IRI_OR_LITERAL` and the function `ISLITERAL` in the IR (decision 1).
 - The first port of `append-event` differed from its template, in an `epoch` triple I put in the non-dataset `INSERT`.
   The harness caught it before any other test did, and the builder was corrected.
 - TD-34 is partly closed. Its register row says which operations are done.
 
 ## Decisions needing confirmation
 
-1. **`$occurredAt` is a new kind, `Term`, guarded by `isIRI || isLiteral`.** The valid time of an event is an adopter's
+1. **`$occurredAt` is a new kind, `IriOrLiteral`, guarded by `isIRI || isLiteral`.** (Named `Term` when first built. Renamed on 2026-10-12, since a term includes blank nodes and `Term` means something else in `instrument`. The kind is a Python enum value, not an ontology class.) The valid time of an event is an adopter's
    own value and the README does not type it, so a `DATATYPE` test could refuse a date an adopter uses today. The
    guard still catches a missing value. If you want it `xsd:dateTime`, the change is one kind in the builder and one line
    in the renderer.
@@ -92,7 +92,7 @@ Run on 2026-10-12, restored afterwards.
 |---|---|
 | the guard placed at the top level of `WHERE`, not in its own group | T6, T15 (epoch) and T16 fail |
 | `instantiate` ignores the builders | T17 and T19 fail |
-| a `Term` parameter given no guard test | T6 (both append variants) and T15 (`occurredAt`) fail |
+| an `IriOrLiteral` parameter given no guard test | T6 (both append variants) and T15 (`occurredAt`) fail |
 | a builder reads one binding more than its template | T2 and T3 fail |
 | `append-event` writes one extra triple to the log | T2 fails |
 | `bootstrap` writes `seq` as an integer, not an `xsd:long` | T2 and T4 fail |

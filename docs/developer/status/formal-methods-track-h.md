@@ -54,7 +54,7 @@ section below.
 ## Next action
 
 1. The maintainer runs the [FMH-H2-2](../validation/FMH-H2-2.md) one command (`1915 passed, 1 xfailed`) with H2.1's, and
-   merges, and decides the three items in FMH-H2-2 (the `Term` kind for `$occurredAt`, `instantiate` using the builders
+   merges, and decides the three items in FMH-H2-2 (the `IriOrLiteral` kind for `$occurredAt`, `instantiate` using the builders
    now, and the harness corpus).
 2. **H2.3**, **H2.4** and **H2.5** in any order. Each ports its templates against the harness (add the stem to `BUILDERS`,
    and the harness covers it), keeps the rule "a port changes nothing", and gives each semantic rule it relies on an engine
@@ -427,5 +427,10 @@ section below.
   first port of `append-event` at once: I had put an `epoch` triple in the non-dataset `INSERT` that the template does
   not have. `instantiate` now renders the four ported operations from their builders with the required-parameter guard,
   and `--no-parameter-guards` leaves it out. TD-34 is closed for these operations, with the unbound-`$stream` case (F1)
-  run on rdflib as a test. `Kind.TERM` is new, for `$occurredAt`. `check:persistence` gave `1915 passed, 1 xfailed`.
+  run on rdflib as a test. `Kind.IRI_OR_LITERAL` (first named `TERM`) is new, for `$occurredAt`. `check:persistence` gave `1915 passed, 1 xfailed`.
   Six implementation probes were caught. Three decisions are listed for the maintainer in the Validation Pack.
+- 2026-10-12: the maintainer agreed to rename the new parameter kind from `Term` to `IriOrLiteral`, because a term
+  includes blank nodes, `Term` means something else in `instrument`, and the kind is not an ontology class. Done in the
+  IR, the builder, the tests and the Validation Pack. We keep it untyped as to datatype. Typing `$occurredAt` as
+  `xsd:dateTime` would refuse `xsd:date`, `xsd:gYear`, `xsd:dateTimeStamp`, an IRI for an instant and untyped strings,
+  and no query uses the type. The maintainer agreed to leave the stricter check until later. A datatype taken from the family's declared valid-time property is possible in H2.7.

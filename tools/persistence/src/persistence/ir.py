@@ -52,7 +52,7 @@ class Kind(Enum):
     LANG_STRING = "LangString"
     POSITION = "Position"
     DIGEST = "Digest"
-    TERM = "Term"
+    IRI_OR_LITERAL = "IriOrLiteral"
     PAYLOAD = "Payload"
     REGISTRY_LIST = "RegistryList"
 

@@ -176,7 +176,7 @@ def _append(b: Bindings, *, guards: bool, dataset_guard: bool) -> Operation:
         (
             Param("stream", Kind.IRI), Param("epoch", Kind.LONG), Param("revBase", Kind.STRING),
             Param("txnId", Kind.IRI), Param("requestDigest", Kind.DIGEST), Param("event", Kind.IRI),
-            Param("eventType", Kind.IRI), Param("opSeq", Kind.POSITION), Param("occurredAt", Kind.TERM),
+            Param("eventType", Kind.IRI), Param("opSeq", Kind.POSITION), Param("occurredAt", Kind.IRI_OR_LITERAL),
         ),
         Group(tuple(where)),
         guards=guards,

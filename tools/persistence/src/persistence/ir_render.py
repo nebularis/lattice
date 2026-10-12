@@ -784,7 +784,7 @@ def _guard_expr(op: Operation) -> Optional[Expr]:
         ref = ParamRef(param.name)
         if param.kind is Kind.IRI:
             conjuncts.append(Func("ISIRI", (ref,)))
-        elif param.kind is Kind.TERM:
+        elif param.kind is Kind.IRI_OR_LITERAL:
             # any bound IRI or literal: a value the adopter owns, such as the valid time of an event
             conjuncts.append(Op("||", Func("ISIRI", (ref,)), Func("ISLITERAL", (ref,))))
         elif param.kind is Kind.LANG_STRING:
