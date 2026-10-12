@@ -75,7 +75,7 @@ Instrument's position has changed, since after CCS C10 nothing outside Instrumen
 | N3 | Self-contradiction design-time check | B | waiting | CCS C13a, NQ-2 |
 | N5 | Closure declarations (A-105, R2) | C | moved to CCS 2026-10-10 | CCS HQ-6a before C9b3, HQ-6b before C12 |
 | N7 | Measure the OASIS conformance corpus | C | waiting | CCS C9, N1 |
-| N8 | Breach-chain checks (Behaviour records and evaluator moved to CCS C11, C12) | B | waiting | CCS HQ-6a, C12, C13, NQ-3 |
+| N8 | Breach-chain checks (Behaviour records and evaluator moved to CCS C11, C12) | B | waiting | CCS HQ-6b, C12, C13, NQ-3 |
 | N9 | Multi-axis temporal scope (A-108) | D | waiting | **D4, Phase 2 complete** |
 | N10 | Norm priority and defeasibility (A-107) | E | deferred | D5 |
 | N11 | Controlled-English rendering (R5) | E | deferred | ingestion vision Phase 2 |
@@ -122,7 +122,7 @@ Raised for the maintainer. None is decided.
 ## Key findings from the analysis
 
 Findings of 2026-09-29, kept as the record. Instrument's importer count changed with CCS C10 (above),
-and the N8 blocking finding now applies to CCS HQ-6a.
+and the N8 blocking finding now applies to CCS HQ-6b, which holds closures over a period.
 
 - **Instrument is the safest layer in the repository to change.** One external importer
   (`behaviour/spec/behaviour.ttl`), no applied module, and no epic slice touches it until deferred
@@ -162,3 +162,4 @@ other rule languages: N3, N7, N9 and N10 to N13. D1, D4 and D5 are open.
   path, Eligibility's README its source again, `ins:prevailsOver` evidence for D5, the retired
   validation log. D6 overtaken. NQ-1 to NQ-4 raised for the maintainer
 - 2026-10-10: NQ-1 to NQ-4 answered as leaned. NRS keeps the rule-language integration work. N1 and N2 move to CCS, N6 and N8 are absorbed by CCS C12 and C13, and S2 pairs with CCS C9b3
+- 2026-10-12: CCS moved closures over a period from HQ-6a to HQ-6b (HQ6a-Q4). N8's dependency follows them to HQ-6b
