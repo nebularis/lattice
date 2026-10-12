@@ -20,6 +20,8 @@ from functools import lru_cache
 from pathlib import Path
 
 import pytest
+
+import engines
 from rdflib import BNode, Dataset, Graph, Literal, URIRef, Variable
 from rdflib.namespace import RDF, XSD
 
@@ -63,14 +65,18 @@ def _refusal(graph: Graph):
 
 
 @lru_cache(maxsize=None)
-def _project_text() -> str:
+def _project_text_for(guards: bool) -> str:
     compiled, _ = compile_to_graph(witness._load_fixture(PROJECT_EXAMPLE))
-    return next(o for o in templatecheck.operations(compiled) if o.template == TEMPLATE).text
+    return next(o for o in templatecheck.operations(compiled, guards) if o.template == TEMPLATE).text
+
+
+def _project_text() -> str:
+    return _project_text_for(engines.guards())
 
 
 def _text(graph: Graph) -> str:
     compiled, _ = compile_to_graph(graph)
-    return next(o for o in templatecheck.operations(compiled) if o.template == TEMPLATE).text
+    return next(o for o in templatecheck.operations(compiled, engines.guards()) if o.template == TEMPLATE).text
 
 
 def _values() -> dict:
@@ -92,7 +98,7 @@ def _replace(graph: Graph, text: str, data: Graph, data_graph: str, root: URIRef
     values = {**_values(), Variable("root"): root}
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", DeprecationWarning)
-        ds = Dataset()
+        ds = engines.dataset()
         ds.graph(meta).add((root, URIRef(PAT + "epoch"), Literal(1, datatype=XSD.long)))
         ds.graph(meta).add((root, URIRef(PAT + "seq"), Literal(1, datatype=XSD.long)))
         target = ds.graph(URIRef(data_graph))
@@ -165,6 +171,7 @@ def test_ho5_t2a_a_value_property_declared_first_is_not_followed():
     assert _binding(_compile(graph), "ownedPath") == f"(<{EX}lineItem>)?"
 
 
+@engines.each_engine
 def test_ho5_t1_a_replace_removes_exactly_the_delete_set_and_writes_the_payload():
     data = _project_data()
     payload = {t for t in _delete_set(data) if t[1] != _px("status") or t[0] != _px("t3")}
@@ -177,6 +184,7 @@ def test_ho5_t1_a_replace_removes_exactly_the_delete_set_and_writes_the_payload(
     assert outside <= _graph_triples(ds, "urn:g:projects")
 
 
+@engines.each_engine
 def test_ho5_t2_an_empty_payload_leaves_no_triple_of_the_project_or_its_members():
     data = _project_data()
     ds = _replace(witness._load_fixture(PROJECT_EXAMPLE), _project_text(), data, "urn:g:projects")
@@ -186,6 +194,7 @@ def test_ho5_t2_an_empty_payload_leaves_no_triple_of_the_project_or_its_members(
     assert left == set(data) - _delete_set(data)
 
 
+@engines.each_engine
 def test_ho5_t3_a_reference_given_sh_node_is_not_swept():
     """Review F1. A validation shape puts sh:node on a reference, which the old walk read as ownership."""
     graph = witness._load_fixture(ORDER_EXAMPLE)
@@ -212,6 +221,7 @@ def test_ho5_t3_a_reference_given_sh_node_is_not_swept():
     assert not any(s in {order, URIRef("urn:li:1")} for s, _, _ in left)
 
 
+@engines.each_engine
 def test_ho5_t4_a_comment_linked_by_an_inverse_edge_goes_with_the_project():
     """Review F4. The comment points at its task, and the path reaches it with an inverse step."""
     data = _project_data()
@@ -222,6 +232,7 @@ def test_ho5_t4_a_comment_linked_by_an_inverse_edge_goes_with_the_project():
     assert (_px("c1"), _px("onTask"), _px("t1")) not in left
 
 
+@engines.each_engine
 def test_ho5_t5_the_shipped_composite_example_leaves_nothing_behind():
     """Rewrites H1.4a-T10."""
     graph = witness._load_fixture(ORDER_EXAMPLE)
@@ -236,6 +247,7 @@ def test_ho5_t5_the_shipped_composite_example_leaves_nothing_behind():
     assert _graph_triples(ds, "urn:g:orders") == set()
 
 
+@engines.each_engine
 def test_ho5_t6_two_owned_edges_from_the_root_both_sweep():
     """Rewrites H1.4a-T11, which showed the other member left behind and is now refused no longer."""
     graph = witness._load_fixture(ORDER_EXAMPLE)
@@ -301,6 +313,7 @@ def test_ho5_t10a_a_composite_profile_without_a_data_graph_is_refused():
     assert _refusal(graph).kind == "MissingDataGraph"
 
 
+@engines.each_engine
 def test_ho5_t10_the_default_graph_copy_of_the_data_is_untouched_by_a_replace():
     data = _project_data()
     ds = _replace(witness._load_fixture(PROJECT_EXAMPLE), _project_text(), data, "urn:g:projects", copy_to_default=True)

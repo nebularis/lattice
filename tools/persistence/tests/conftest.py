@@ -32,3 +32,22 @@ def load_example(name: str) -> Graph:
 @pytest.fixture
 def example():
     return load_example
+
+
+# ---- engines (H2.4b, ADR-A125) -------------------------------------------------------------------------------------
+
+
+def pytest_configure(config):
+    config.addinivalue_line("markers", "oxigraph: runs on Oxigraph (needs tools/testing/oxigraph, see check:persistence-oxigraph)")
+
+
+@pytest.fixture(params=__import__("engines").ENGINES)
+def engine(request):
+    """The engine a test that opts in with ``engines.each_engine`` runs on. Oxigraph cases skip where it is absent."""
+    import engines
+
+    if request.param == "oxigraph":
+        pytest.importorskip("lattice_testing_oxigraph", reason="mise run bootstrap:testing-oxigraph")
+    previous, engines.CURRENT = engines.CURRENT, request.param
+    yield request.param
+    engines.CURRENT = previous

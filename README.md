@@ -139,12 +139,12 @@ lattice/
 ├── packages/
 │   └── minting/             # Standalone identity minting libraries (Python, Java), no LATTICE dependency
 │
-├── benchmark/               # Checks that measure, run on demand, never part of `check` (ADR-A124). Created by Track H's H2.4b
+├── benchmark/               # Checks that measure, run on demand, never part of `check` (ADR-A124)
 │
 ├── test/                    # Whole-graph CI
 │
 └── tools/                   # Reference implementation
-    └── testing/             # Test-support packages, for tests, checks and benchmarks only (ADR-A125). Created by Track H's H2.4b
+    └── testing/             # Test-support packages, for tests, checks and benchmarks only (ADR-A125)
 ```
 
 ---

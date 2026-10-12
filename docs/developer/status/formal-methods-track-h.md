@@ -54,7 +54,7 @@ section below.
 ## Next action
 
 1. **H2.4a is built** ([FMH-H2-4a](../validation/FMH-H2-4a.md), `2035 passed, 1 xfailed`), with the stored-IR test of SI-1 and SI-2. One countersignature item: the epoch type in three composite test files.
-2. **H2.4b is ready to branch** too: ADR-A124 and ADR-A125 are accepted (2026-10-12), so it can create `benchmark/` and
+2. **H2.4b is built** ([FMH-H2-4b](../validation/FMH-H2-4b.md), `2111 passed, 1 xfailed`), and decision 1 there is open (the parameter guard cannot pass on Oxigraph, TD-45). It was ready to branch, and: ADR-A124 and ADR-A125 are accepted (2026-10-12), so it can create `benchmark/` and
    `tools/testing/`. It depends on H2.4a only for the composite engine tests it reruns on Oxigraph.
 3. H2.5 and **H2.6** (examples first, with the paper check) can follow in any order.
 4. Later, not scheduled: the SPARQL semantic IR of plan §5.1 (PDD-06), which now also decides whether the IR is stored.
@@ -89,7 +89,7 @@ section below.
 | H2 (typed IR) | **briefed** 2026-10-10, split into H2.0 to H2.9 ([typed IR sketch §7](../sketches/formal-methods-track-h-typed-ir.md#7-slices)) | |
 | H2.3 (named-graph row writers) | **built and reviewed** 2026-10-12, one review fix. [Validation Pack](../validation/FMH-H2-3.md). [Plan §4.1](../plans/formal-methods-track-h.md#41-h23-the-named-graph-row-writers-planned-2026-10-12). Countersignature items signed 2026-10-12. TD-34 closed for its operations | merged and signed off 2026-10-12 |
 | H2.4a (the composite ports) | **built** 2026-10-12. [Validation Pack](../validation/FMH-H2-4a.md). [Plan §4.2](../plans/formal-methods-track-h.md#42-h24-the-composite-family-and-what-each-store-does-planned-2026-10-12) | the maintainer's run and merge |
-| H2.4b (Oxigraph, probes, benchmark) | **in progress** 2026-10-12 | |
+| H2.4b (Oxigraph, probes, benchmark) | **built** 2026-10-12. [Validation Pack](../validation/FMH-H2-4b.md). One open decision (the guard on Oxigraph) | the maintainer's decision 1, run and merge |
 | H3 (specification registry) | not started, outlined in the plan | H2 preferred first (smaller, more self-contained), not a hard blocker |
 | H4 (exhaustive cross-axis validation, BDD/SMT) | not started, outline only | H3 |
 | H5 (capability-record extension, TLA+/Quint toolchain spike, protocol models A-D) | not started, outline only | H2 (read/write sets from the IR). ADR-A-FM4 is accepted |
@@ -519,3 +519,11 @@ section below.
   environment closed (T8 to T11). The lifecycle tests of HO1, HO5 and HO7 bound `$epoch` as an `xsd:integer`, which the guard
   refuses, so their request and stored epochs are `xsd:long`, assertions unchanged (listed for countersignature). `check:persistence`
   gave `2035 passed, 1 xfailed`. Six probes, all caught.
+- 2026-10-12: H2.4b built ([FMH-H2-4b](../validation/FMH-H2-4b.md)), autonomously on this branch, after H2.4a. The packages `tools/testing/oxigraph` and
+  `benchmark/persistence-composite-cost` are created per ADR-A125 and ADR-A124, and six test modules run on rdflib and on Oxigraph. **R0 is right on
+  Oxigraph, so the plan's stop did not arise.** Findings, none a wrong result: (1) Oxigraph 0.5.11 stores `"1"^^xsd:long` as `xsd:integer`, so the parameter
+  guard's datatype test can never pass there (TD-45, **decision 1 is open**, with options A to C and a leaning); (2) R0 needs memory quadratic in the
+  aggregate on Oxigraph and does not finish at M = N = 10,000 under 8 GB, where rdflib takes 983 s (TD-42 has the figures); (3) rdflib applies an update in
+  the specification's order and Oxigraph applies each solution in turn, the reverse of what the typed IR sketch §4.3 assumed, so R2 is safe on rdflib and
+  unsafe on Oxigraph and R1 the other way round (P1 and P2), corrected in the sketch; (4) the spike's own checks had been failing since H2.2, and are repaired.
+  `check:persistence` gave `2111 passed, 1 xfailed`. Five implementation probes, all caught.

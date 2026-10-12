@@ -19,6 +19,8 @@ import warnings
 from functools import lru_cache
 
 import pytest
+
+import engines
 from rdflib import RDF, Dataset, Literal, URIRef, Variable
 from rdflib.namespace import XSD
 
@@ -45,9 +47,13 @@ PAYLOAD = (
 
 
 @lru_cache(maxsize=None)
-def _text(template: str) -> str:
+def _text_for(template: str, guards: bool) -> str:
     compiled, _ = compile_to_graph(witness._load_fixture(FIXTURES[template]))
-    return next(o for o in templatecheck.operations(compiled) if o.template == template).text
+    return next(o for o in templatecheck.operations(compiled, guards) if o.template == template).text
+
+
+def _text(template: str) -> str:
+    return _text_for(template, engines.guards())
 
 
 def _values(expected_seq: int = 1) -> dict:
@@ -65,7 +71,7 @@ def _dataset(template: str, line_items: int = 2, triples_per_item: int = 2) -> D
     meta = URIRef(re.search(r"GRAPH <(urn:g:meta/\d+)>", text).group(1))
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", DeprecationWarning)
-        ds = Dataset()
+        ds = engines.dataset()
         ds.graph(meta).add((ROOT, URIRef(PAT + "epoch"), Literal(1, datatype=XSD.long)))
         ds.graph(meta).add((ROOT, URIRef(PAT + "seq"), Literal(1, datatype=XSD.long)))
         if template == DATASET_GUARD:
@@ -100,12 +106,14 @@ def _graphs_holding(ds: Dataset, obj: Literal) -> set[str]:
 DATA_GRAPH_NAME = "urn:g:orders"
 
 
+@engines.each_engine
 def test_ho1_t1_the_payload_lands_in_the_data_graph_and_nowhere_else():
     ds = _dataset(PLAIN)
     _replace(ds, PLAIN)
     assert _graphs_holding(ds, Literal("paid")) == {DATA_GRAPH_NAME}
 
 
+@engines.each_engine
 def test_ho1_t2_the_old_payload_is_gone_and_no_payload_triple_is_in_a_log_graph():
     ds = _dataset(PLAIN)
     _replace(ds, PLAIN)
@@ -114,15 +122,17 @@ def test_ho1_t2_the_old_payload_is_gone_and_no_payload_triple_is_in_a_log_graph(
     assert payload_in_log == []
 
 
+@engines.each_engine
 def test_ho1_t3_one_revision_for_sequence_two_is_in_a_log_graph():
     ds = _dataset(PLAIN)
     _replace(ds, PLAIN)
     revisions = [q for q in _quads(ds) if q[1] == RDF.type and q[2] == URIRef(PAT + "Revision")]
     assert len(revisions) == 1 and revisions[0][3].startswith("urn:g:txlog/")
     seqs = [q for q in _quads(ds) if q[0] == revisions[0][0] and q[1] == URIRef(PAT + "seq")]
-    assert [q[2] for q in seqs] == [Literal(2, datatype=XSD.long)]
+    assert [q[2] for q in seqs] == [engines.canon(Literal(2, datatype=XSD.long))]
 
 
+@engines.each_engine
 def test_ho1_t4_the_dataset_guard_variant_does_the_same():
     ds = _dataset(DATASET_GUARD)
     _replace(ds, DATASET_GUARD)
@@ -131,6 +141,7 @@ def test_ho1_t4_the_dataset_guard_variant_does_the_same():
     assert len([q for q in _quads(ds) if q[1] == RDF.type and q[2] == URIRef(PAT + "Revision")]) == 1
 
 
+@engines.each_engine
 @pytest.mark.parametrize("template", [PLAIN, DATASET_GUARD])
 def test_ho1_t5_the_sweep_does_work_linear_in_the_aggregate(template):
     """A root of 5 triples and 3 line items of 4 triples each. One solution per triple of the
@@ -146,6 +157,7 @@ def test_ho1_t5_the_sweep_does_work_linear_in_the_aggregate(template):
     assert int(row[0]) == 17
 
 
+@engines.each_engine
 def test_ho1_t6_a_stale_sequence_changes_nothing():
     ds = _dataset(PLAIN)
     before = _quads(ds)

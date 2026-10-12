@@ -13,7 +13,8 @@ of this, see [`docs/diagrams/`](../diagrams/README.md).
 | Root | Owns |
 |---|---|
 | `ontology/` | Semantic assets only: normative sources, shapes, vocabularies, projections, examples, semantic documentation. One directory per layer (`foundation`, `vocabulary`, `quantification`, `party`, `eligibility`, `behaviour`, `wording`, `instrument`, `surface`, `mork`, `persistence`, `governance`, `spc`) plus `applied/` domain ontologies and `examples/` |
-| `tools/` | Executable reference implementations and developer-facing toolchains: compilers, resolvers, validators, formal-methods artefacts |
+| `tools/` | Executable reference implementations and developer-facing toolchains: compilers, resolvers, validators, formal-methods artefacts. `tools/testing/` holds test-support packages, used only by tests, checks and benchmarks (ADR-A125) |
+| `benchmark/` | Checks that measure, run on demand and never part of `check`. They fail on a wrong result, never on time (ADR-A124) |
 | `platform/` | Runtime platform services (Java/Maven): authoring, Surface workflow, release integration, the semantic dataset SPI and Fuseki backend, policy, the test-only reasoning harness |
 | `apps/` | User-facing web applications (TypeScript/React, Yarn workspace): the MORK Review Workbench, Surface Contract Studio, the Word authoring add-in |
 | `packages/` | Standalone libraries with no LATTICE dependency (identity minting, Python and Java) |
@@ -21,7 +22,7 @@ of this, see [`docs/diagrams/`](../diagrams/README.md).
 | `deployment/` | Local reference environment (Docker Compose) |
 | `workers/` | The asynchronous worker runtime |
 | `test/` | End-to-end conformance suites |
-| `spikes/` | Experimental feasibility work, not production (today: the formal-prover toolchain spike, track D, and `persistence-oxigraph`, which runs the persistence compiler's updates on a second SPARQL engine and defines no SPI, and `persistence-aggregate-ownership`, experiments for the aggregate ownership note) |
+| `spikes/` | Experimental feasibility work, not production (today: the formal-prover toolchain spike, track D, and `persistence-oxigraph`, which runs the persistence compiler's updates on a second SPARQL engine and defines no SPI (its adapter now lives in `tools/testing/oxigraph`), and `persistence-aggregate-ownership`, experiments for the aggregate ownership note) |
 | `docs/` | Architecture, ADRs, developer process (sketches/plans/status/validation), and the diagrams this guide links to |
 
 A layer under `ontology/` follows one shape: `README.md` (the one normative, literate source),
@@ -133,6 +134,8 @@ ordinary Turtle.
 | [`tools/surface/`](../../tools/surface/README.md) | Compiles Surface promotion/projection contracts into generated module packages, with minimal-scope regeneration planning (ADR-A27) | `mise run check:python-root` (its tests run under `surface.test_surface`) |
 | [`tools/persistence/`](../../tools/persistence/README.md) | Compiles Persistence profiles into SPARQL plans (ADR-A78/A79) | `mise run check:persistence` |
 | [`tools/mork/`](../../tools/mork/README.md) | The MORK package and the MORK Teaching Pack generator | `mise run check:mtp`, `mise run build:mtp` |
+| [`tools/testing/oxigraph/`](../../tools/testing/oxigraph/README.md) | An in-memory Oxigraph engine for the persistence tests and benchmark (ADR-A125). Not a store SPI | `mise run check:persistence-oxigraph` |
+| [`benchmark/persistence-composite-cost/`](../../benchmark/persistence-composite-cost/README.md) | The cost of a composite replace on rdflib and Oxigraph (ADR-A124, TD-42) | `mise run check:persistence-composite-cost` |
 
 ### Formal-methods toolchains (`tools/`)
 

@@ -62,6 +62,11 @@ depends = ["bootstrap:pip"]
 description = "Install the persistence profile compiler package (ADR-A78/A79)"
 run = "python -m pip install -e \"./tools/persistence[test]\""
 
+[tasks."bootstrap:testing-oxigraph"]
+depends = ["bootstrap:pip"]
+description = "Install the Oxigraph test-support package (ADR-A125). The default check does not need it"
+run = "python -m pip install -e \"./tools/testing/oxigraph[test]\""
+
 [tasks."bootstrap:vocabulary"]
 depends = ["bootstrap:pip"]
 description = "Install the Vocabulary scoped/temporal binding reference resolver (ADR-A85)"
@@ -200,6 +205,16 @@ run = "python packages/minting/tools/generate_ucd_tables.py --check"
 [tasks."check:persistence"]
 description = "Run the persistence profile compiler test suite (resolver, validator, capability, injection corpus, determinism)"
 run = "python -m pytest tools/persistence/tests -q"
+
+[tasks."check:persistence-oxigraph"]
+depends = ["bootstrap:testing-oxigraph"]
+description = "Run the persistence engine tests on Oxigraph as well as rdflib (ADR-A125). Not part of check"
+run = "python -m pytest tools/testing/oxigraph/tests -q && python -m pytest tools/persistence/tests -q -m oxigraph"
+
+[tasks."check:persistence-composite-cost"]
+depends = ["bootstrap:testing-oxigraph"]
+description = "Measure the composite replace on rdflib and Oxigraph (ADR-A124, TD-42). Run on demand, not part of check. Fails on a wrong result, never on time. COMPOSITE_COST_MAX caps the size"
+run = "python -m pytest benchmark/persistence-composite-cost -q -p no:cacheprovider && python benchmark/persistence-composite-cost/check.py"
 
 [tasks."check:vocabulary"]
 description = "Run the Vocabulary scoped/temporal binding conformance package (SHACL fixtures, resolver, determinism, consumer boundary; ADR-A85)"

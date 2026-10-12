@@ -1,2 +1,3 @@
-# Only for this spike. Not a dependency of tools/persistence or of any mise task.
-pyoxigraph>=0.5.11,<0.6
+# The engine adapter moved to tools/testing/oxigraph (ADR-A125). Install it with:
+#   mise run bootstrap:testing-oxigraph
+-e ../../tools/testing/oxigraph

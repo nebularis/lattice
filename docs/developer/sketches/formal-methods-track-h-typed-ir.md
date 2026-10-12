@@ -356,6 +356,14 @@ model A branches on the same field.
 **The one stop.** If Oxigraph shows R0 to be wrong, not just slow, H2.4 stops and asks, since that is
 a defect in what ships today.
 
+**Measured 2026-10-12 (H2.4b), correcting the paragraphs above.** The probes of
+[FMH-H2-4b](../validation/FMH-H2-4b.md) run the same update on both engines. rdflib 7.6.0 does follow the specification's
+order, so it passes `snapshotUpdateSemantics`, and the statement above that it applies each solution in turn and reports
+`false` is wrong (the spike's README had already corrected the same claim for another case). Oxigraph 0.5.11 applies each
+solution in turn and fails the probe in one row order. R0 is right on both engines, because it inserts the whole payload in
+every solution, as the paragraph on stores says. R0 is also superlinear on both. Request atomicity differs the other way:
+Oxigraph rolls back a request whose second operation fails, and rdflib keeps the first.
+
 ## 5. Questions for the maintainer
 
 | # | Question | Options | Leaning |

@@ -12,6 +12,8 @@ import functools
 import re
 
 import pytest
+
+import engines
 from rdflib import RDF, XSD, Dataset, Literal as RdfLiteral, URIRef
 
 from persistence import witness
@@ -180,7 +182,7 @@ APPEND = {
 
 
 def _store(*, rows: int = 1, dataset_epoch: int | None = None) -> Dataset:
-    ds = Dataset()
+    ds = engines.dataset()
     meta = ds.graph(URIRef("urn:g:meta"))
     for i in range(rows):
         row = URIRef(f"urn:stream:orders/{i + 1}")
@@ -191,8 +193,8 @@ def _store(*, rows: int = 1, dataset_epoch: int | None = None) -> Dataset:
     return ds
 
 
-def _run(stem: str, ds: Dataset, bindings: dict, *, guards: bool = True) -> Dataset:
-    ds.update(render(build(stem, CONTEXT, guards=guards)), initBindings=bindings)
+def _run(stem: str, ds: Dataset, bindings: dict, *, guards: bool | None = None) -> Dataset:
+    ds.update(render(build(stem, CONTEXT, guards=engines.guards(guards))), initBindings=bindings)
     return ds
 
 
@@ -200,6 +202,7 @@ def _meta(ds: Dataset) -> set:
     return {(str(s), str(p).removeprefix(PAT), str(o)) for s, p, o in ds.graph(URIRef("urn:g:meta"))}
 
 
+@engines.each_engine
 def test_h2_2_t7_append_writes_the_event_the_receipt_the_log_and_moves_the_head():
     ds = _run("append-event", _store(), APPEND)
     rev = "urn:rev:orders/1/e3/0000000000000000001"
@@ -212,6 +215,7 @@ def test_h2_2_t7_append_writes_the_event_the_receipt_the_log_and_moves_the_head(
     assert len(log_graphs) == 1
 
 
+@engines.each_engine
 def test_h2_2_t8_the_first_revision_has_no_previous_revision_and_is_still_written():
     ds = _run("append-event", _store(), APPEND)
     log = next(g for g in ds.graphs() if str(g.identifier).startswith(LOG))
@@ -219,6 +223,7 @@ def test_h2_2_t8_the_first_revision_has_no_previous_revision_and_is_still_writte
     assert len(list(log.objects(None, URIRef(PAT + "recordedAt")))) == 1
 
 
+@engines.each_engine
 def test_h2_2_t9_a_retry_with_the_same_transaction_changes_nothing():
     ds = _run("append-event", _store(), APPEND)
     before = {(str(g.identifier), s, p, o) for g in ds.graphs() for s, p, o in g}
@@ -226,6 +231,7 @@ def test_h2_2_t9_a_retry_with_the_same_transaction_changes_nothing():
     assert {(str(g.identifier), s, p, o) for g in ds.graphs() for s, p, o in g} == before
 
 
+@engines.each_engine
 def test_h2_2_t10_a_second_event_chains_to_the_first():
     ds = _run("append-event", _store(), APPEND)
     second = {**APPEND, "txnId": URIRef("urn:txn:2"), "event": URIRef("urn:event:2"), "opSeq": LONG(2)}
@@ -235,6 +241,7 @@ def test_h2_2_t10_a_second_event_chains_to_the_first():
     assert (URIRef("urn:rev:orders/1/e3/0000000000000000002"), URIRef(PAT + "prevRev"), URIRef("urn:rev:orders/1/e3/0000000000000000001")) in log
 
 
+@engines.each_engine
 def test_h2_2_t11_the_dataset_guard_variant_writes_only_while_the_dataset_epoch_matches():
     wrote = _run("append-event-dataset-guard", _store(dataset_epoch=3), APPEND)
     assert (str(STREAM), "seq", "1") in _meta(wrote)
@@ -242,15 +249,17 @@ def test_h2_2_t11_the_dataset_guard_variant_writes_only_while_the_dataset_epoch_
     assert (str(STREAM), "seq", "0") in _meta(refused) and not any(s == str(STREAM) and p == "head" for s, p, _ in _meta(refused))
 
 
+@engines.each_engine
 def test_h2_2_t12_bootstrap_creates_the_row_once():
     target = URIRef("urn:stream:new")
-    ds = _run("bootstrap-version-row", Dataset(), {"target": target, "epoch": LONG(3)})
+    ds = _run("bootstrap-version-row", engines.dataset(), {"target": target, "epoch": LONG(3)})
     rows = _meta(ds)
     assert rows == {(str(target), "epoch", "3"), (str(target), "seq", "0"), (str(target), str(RDF.type), PAT + "VersionRow")}
     _run("bootstrap-version-row", ds, {"target": target, "epoch": LONG(9)})
     assert _meta(ds) == rows
 
 
+@engines.each_engine
 def test_h2_2_t13_the_bootstrap_dataset_guard_variant_needs_a_matching_dataset_epoch():
     target = URIRef("urn:stream:new")
     assert _meta(_run("bootstrap-version-row-dataset-guard", _store(rows=0, dataset_epoch=4), {"target": target, "epoch": LONG(3)})) == set()
@@ -268,8 +277,8 @@ _TYPE = (str(_TARGET), str(RDF.type), PAT + "VersionRow")
     ("target as a literal", {"target": RdfLiteral("urn:stream:new"), "epoch": LONG(3)}, {_TYPE, (str(_TARGET), "seq", "0"), (str(_TARGET), "epoch", "3")}),
 ])
 def test_h2_2_t14_a_missing_or_mistyped_parameter_writes_nothing_where_without_the_guard_it_writes_a_bad_row(name, bindings, unguarded):
-    assert _meta(_run("bootstrap-version-row", Dataset(), bindings)) == set()
-    assert _meta(_run("bootstrap-version-row", Dataset(), bindings, guards=False)) == unguarded  # TD-34
+    assert _meta(_run("bootstrap-version-row", engines.dataset(), bindings)) == set()
+    assert _meta(_run("bootstrap-version-row", engines.dataset(), bindings, guards=False)) == unguarded  # TD-34
 
 
 @pytest.mark.parametrize("missing", sorted(set(APPEND) - {"stream"}))

@@ -76,7 +76,7 @@ def rdflib_project_sweep() -> list[str]:
 
 def _rdflib_project_run(template: str, runs: list[dict], payload: str = "", load: bool = True):
     compiled, _ = compile_to_graph(witness._load_fixture(PROJECT_EXAMPLE))
-    update = next(op.text for op in templatecheck.operations(compiled) if op.template == template)
+    update = next(op.text for op in templatecheck.operations(compiled, guards=False) if op.template == template)
     update = update.replace(templatecheck._SLOT_STAND_INS["payloadTriples"], payload)
     meta = URIRef(re.search(r"GRAPH <(urn:g:meta/\d+)>", update).group(1))
     root = URIRef(PROJECT + "p1")
@@ -114,7 +114,7 @@ def rdflib_project_create_twice() -> tuple[int, int]:
 def rdflib_append_event_runs() -> list[tuple[list[str], int]]:
     """For each of the three runs, (the sequence counter, the number of revision records)."""
     update = generated_update(witness.WITNESS_DIR / "template-append-event.ttl", "append-event")
-    meta = re.search(r"DELETE \{ GRAPH <([^>]+)>", update).group(1)
+    meta = re.search(r"DELETE \{\s*GRAPH <([^>]+)>", update).group(1)
     stream = URIRef("urn:stream:1")
     full = {
         "stream": stream, "epoch": Literal(1), "txnId": URIRef("urn:txn:a"), "requestDigest": Literal("abc"),

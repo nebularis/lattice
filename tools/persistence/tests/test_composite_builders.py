@@ -14,6 +14,8 @@ import enum
 import warnings
 
 import pytest
+
+import engines
 from rdflib import Dataset, Literal, URIRef, Variable
 from rdflib.namespace import XSD
 
@@ -125,6 +127,7 @@ def _text_stand_in() -> str:
 # ---- the variants and replays (step 3, what the lifecycle tests do not) ---------------------------------------------
 
 
+@engines.each_engine
 def test_h2_4a_t4_a_replay_of_a_replace_and_of_a_tombstone_changes_nothing():
     for template, kwargs in ((REPLACE, {"payload": {(ROOT, _px("name"), Literal("Back"))}}), (TOMBSTONE, {})):
         ds = _dataset(template, data=_data())
@@ -134,12 +137,13 @@ def test_h2_4a_t4_a_replay_of_a_replace_and_of_a_tombstone_changes_nothing():
         assert _quads(ds) == after, template
 
 
+@engines.each_engine
 def test_h2_4a_t5_a_replace_of_a_row_whose_aggregate_is_empty_still_moves_the_row():
     """The sweep is optional. An aggregate with a row and no triples is replaced, and the payload is written."""
     ds = _dataset(REPLACE, data=None)
     _run(ds, REPLACE, payload={(ROOT, _px("name"), Literal("First"))})
     assert _data_graph(ds) == {(ROOT, _px("name"), Literal("First"))}
-    assert (ROOT, URIRef(PAT + "seq"), Literal(2, datatype=XSD.long), str(_meta(REPLACE))) in _quads(ds)
+    assert (ROOT, URIRef(PAT + "seq"), engines.canon(Literal(2, datatype=XSD.long)), str(_meta(REPLACE))) in _quads(ds)
 
 
 # ---- engine rules the sweep relies on, run on rdflib (plan 5.1, step 6) ---------------------------------------------
@@ -151,16 +155,20 @@ def _select(ds: Dataset, query: str) -> set:
         return {tuple(str(v) for v in row) for row in ds.query(query)}
 
 
+@engines.each_engine
 def test_h2_4a_t6_a_path_that_may_match_no_steps_reaches_the_root_itself_and_an_inverse_step_walks_against_the_edge():
-    ds = Dataset()
+    ds = engines.dataset()
     g = ds.graph(URIRef("urn:g"))
     g.add((URIRef("urn:r"), URIRef("urn:owns"), URIRef("urn:a")))
     g.add((URIRef("urn:c"), URIRef("urn:on"), URIRef("urn:a")))
     reached = _select(ds, "SELECT ?s WHERE { GRAPH <urn:g> { <urn:r> (<urn:owns>|^<urn:on>)* ?s } }")
     assert reached == {("urn:r",), ("urn:a",), ("urn:c",)}  # the root, a forward step, and an inverse step from a
-    assert _select(ds, "SELECT ?s WHERE { GRAPH <urn:g> { <urn:lonely> (<urn:owns>)* ?s } }") == {("urn:lonely",)}
+    # a term that is in no triple of the graph. rdflib matches it with itself and Oxigraph 0.5.11 does not (FMH-H2-4b)
+    absent = _select(ds, "SELECT ?s WHERE { GRAPH <urn:g> { <urn:lonely> (<urn:owns>)* ?s } }")
+    assert absent == ({("urn:lonely",)} if engines.CURRENT == "rdflib" else set())
 
 
+@engines.each_engine
 def test_h2_4a_t7_a_payload_that_keeps_a_triple_the_aggregate_already_has_keeps_it_on_an_engine_that_applies_each_solution_in_turn():
     """R0 inserts the whole payload in every solution, so the result does not depend on the order an engine applies
     removals and additions in (typed IR sketch 4.3). rdflib applies one solution at a time."""
