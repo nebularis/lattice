@@ -2,7 +2,7 @@
 
 # ADR-A105: Closure declarations
 
-**Status:** Proposed 2026-10-12
+**Status:** Accepted 2026-10-12, proposed the same day
 **Date:** 2026-10-12
 **Related:** [ADR-A103](ADR-A103-eligibility-set-readings.md) (set readings, and its 2026-10-12
 addendum), [ADR-A14](ADR-A14-conformance-levels.md) (conformance level L5's "closure

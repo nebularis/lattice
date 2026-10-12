@@ -4053,10 +4053,10 @@ and no shape compares the two.
 
 **What HQ-6a.1 builds** (branch `ccs/hq6a1-closures-model`, examples first):
 
-- **ADR-A105**, Proposed: closures as decided above, HQ6a-Q1 to Q4 with their pictures, the cut as
+- **ADR-A105**, accepted 2026-10-12: closures as decided above, HQ6a-Q1 to Q4 with their pictures, the cut as
   the deciding record's recording time, and the boundary: a closure's binding to the store is
   HQ-6b's, against Track H's per-root sequence (AO-Q6)
-- **ADR-A103 addendum**, Proposed: `SomeValue` Denied and `EveryValue` Permitted need a closure
+- **ADR-A103 addendum**, accepted 2026-10-12: `SomeValue` Denied and `EveryValue` Permitted need a closure
 - **Eligibility, in its README** (the literate source since C9b0):
   - `elg:Closure`: `elg:licensedBy` (exactly one, no range: a deeming, a term, a party or an
     operational profile). It covers the bindings that name it (HQ6a-Q5)

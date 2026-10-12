@@ -66,7 +66,7 @@ rule that means "some value qualifies" or "every value qualifies" cannot be stat
 
 ## Addendum (2026-10-12): completeness needs a closure
 
-**Status:** Proposed 2026-10-12 (CCS slice HQ-6a.1, HQ6a-Q1). Narrows decision 1.
+**Status:** Accepted 2026-10-12, proposed the same day (CCS slice HQ-6a.1, HQ6a-Q1). Narrows decision 1.
 [ADR-A105](ADR-A105-closure-declarations.md) holds the reasoning.
 
 `elg:SomeValue` is Denied when every value is Denied, and `elg:EveryValue` Permitted when every value

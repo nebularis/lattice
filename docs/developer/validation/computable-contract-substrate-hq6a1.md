@@ -9,7 +9,7 @@
 **Decisions:** HQ6a-Q1 (b), Q2 (a), Q3 (a), Q4 (2) and Q5 (b), answered 2026-10-10 to 2026-10-12.
 [ADR-A105](../../architecture/decisions/ADR-A105-closure-declarations.md) and
 [ADR-A103's 2026-10-12 addendum](../../architecture/decisions/ADR-A103-eligibility-set-readings.md),
-both Proposed. NRS D7 (refuse)
+both accepted 2026-10-12. NRS D7 (refuse)
 
 ## Invariant
 
@@ -74,7 +74,7 @@ release register checks (row 15). `check:proofs` is native and manual, so it is 
 
 **Built** (on the branch, uncommitted, after the examples commit `5a6bbee1`):
 
-- ADR-A105, Proposed, and ADR-A103's addendum, Proposed. The ADR catalogue lists both.
+- ADR-A105 and ADR-A103's addendum, accepted by the maintainer 2026-10-12. The ADR catalogue lists both.
 - Eligibility's README: §5.6 Closures with `elg:Closure`, `elg:licensedBy`, `elg:closedUnder` and
   `elg:closureReliedOn`, the readings and L15 restated, L17, three shapes and two properties on
   existing shapes, and the release notes. Its seven files regenerated, the kernel files unchanged.
@@ -114,3 +114,20 @@ definitions and TL1 statements, then the five examples' tables against `test_clo
 | HQ6a1-13 | `check:proofs -- eligibility`: Eligibility session built, 13 claims passed, audit clean, gate pass |
 | HQ6a1-14 | literate check consistent (7 artefacts), `check:formal-freshness` consistent |
 | HQ6a1-15 | `check:full-sweep` against `main`: all 14 checks passed, `check:ontology-catalog` 750 passed |
+
+## Adversarial probes
+
+Our pick, at the maintainer's request (2026-10-12), one per artefact the slice changed. Each broke
+one file in the worktree, ran the tests that guard it, and restored the file from a copy of its
+committed content (`0a53d9a0`), after which the same tests passed again and the worktree was clean.
+
+| Artefact | Defect introduced | Caught by | Restored |
+|---|---|---|---|
+| the reference semantics (`kernel.py`) | an open "some value" reading folds as if closed, ADR-A103's original behaviour | 11 of 78 fail: `test_closures.py`'s example tables without their closures (HQ6a1-04 to 06, 08, 09), the kernel's TL1, TL3a, TL4 and adequacy tests, and the denotation's L15 and L17 tests | 78 passed |
+| the shapes (`constraints.ttl`) | `elg:ClosureNeedsSetReadingShape` accepts a single-value reading | 1 of 20 fails: HQ6a1-02's single-value case | 20 passed |
+| the Isabelle theory (`Eligibility.thy`) | a closed "some value" folds from Undetermined instead of Denied | the session fails to build: seven proofs no longer finish, in TL1-some, TL3a, TL4a and four adequacy rows, and every claim's digest no longer matches. `GATE: fail` | `GATE: pass` |
+
+## Acceptance
+
+Accepted by the maintainer on 2026-10-12, with ADR-A105 and ADR-A103's addendum, after the
+adversarial probes above. The maintainer's merge into `main` is the sign-off.
