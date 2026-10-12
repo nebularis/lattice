@@ -73,7 +73,7 @@ mise exec -- python -m pytest tools/mork_compilers/src/mork_compilers/test_closu
 
 ## Handoff
 
-**Built** (on the branch, uncommitted, after the examples commit `0869d43b`):
+**Built** (commit `349ccfa2`, after the examples commit `0869d43b`, then fixed at verification as below):
 
 - Executable 0.7.0 with `exe:NoClosureLicence`. Only the catalog imports Executable, so there is
   no cascade. The catalog and release register regenerated, adding only Executable's rows.
@@ -98,6 +98,16 @@ mise exec -- python -m pytest tools/mork_compilers/src/mork_compilers/test_closu
   is not among them. The build reported the pinned graph hash unchanged, and `pins.lock.json` did
   not change.
 - **No SHACL backend change**, for the reason above.
+- **Three fixes found at verification**, after the maintainer accepted `349ccfa2`:
+  - `profile_select` had an unterminated string, so `sparql_backend.py` did not import. The quote
+    is corrected.
+  - AIR32-08 (`test_set_readings.py`, an interval read `EveryValue`) still expected an open binding
+    with every value Permitted to be Permitted, which L15 as restated (ADR-A105, HQ6a1-07) makes
+    Undetermined. Its binding now names a closure, as the examples phase did for the other
+    AIR-3.2 tests, so its expected outcomes stand, and a second assertion checks the open reading:
+    Undetermined, with a Denied value still Denied. This strengthens the test. It is listed here
+    under the non-weakening rule for the maintainer to countersign.
+  - `test_concept_backends.py` pins the set of declared diagnostics. `exe:NoClosureLicence` joins it.
 
 **What to check first:** `_read_set`'s decision and diagnostic expressions in `sparql_backend.py`,
 then `_closure` in `eligibility_ir.py`, then the module docstring's statement of the `?closure`
@@ -113,4 +123,34 @@ undetermined under a closure.
 
 | ID | Result |
 |---|---|
-| HQ6a2-01 to 11 | authored, not yet run |
+| HQ6a2-01 to 08, 10 | `check:mork-compilers`: 126 passed, including `test_closure_readings.py` and `test_set_readings.py` (16) |
+| HQ6a2-04 | also `test_legal_acts.py`, in `check:ontology-catalog`: pass |
+| HQ6a2-09 | `check:reference-eligibility`: 60 passed |
+| HQ6a2-11 | `check:full-sweep` against `main`: all 14 checks passed, `check:ontology-catalog` 750 passed, `build:mtp` and `check:mtp` pass |
+
+The 15 tests red after the examples phase pass. The first sweep found two failures, the stale
+AIR32-08 expectation and the pinned diagnostic set, fixed as above, and a versions check that
+could not run because the clone had no local `main`. The second sweep passed.
+
+## Adversarial probes
+
+Our pick, as the maintainer asked us to complete the slice autonomously (2026-10-12). Each broke
+one file, ran the tests that guard it, and restored the file from a copy, after which the same
+tests passed again (50 passed).
+
+| Artefact | Defect introduced | Caught by |
+|---|---|---|
+| SPARQL `_read_set` | every binding read as closed | 5 fail: HQ6a2-04's open tables, HQ6a2-01, 02 and 03's open cases, AIR32-08's open case |
+| IR `_closure` | a closure with no source accepted | 1 fails: HQ6a2-07's no-source case |
+| SPARQL `profile_select` | a profile row drops its conditions' closures | 1 fails: HQ6a2-08 |
+| reference `decide_condition_with_reliance` | reliance decided after negation | 1 fails: `TestReliance`'s admissions table |
+
+A first probe of the reference, reliance reported without a closure, survived. It is an equivalent
+mutant: an open `SomeValue` reading is never Denied and an open `EveryValue` never Permitted, so
+the `closed` guard on reliance is redundant, and removing it changes no outcome. We kept the guard,
+since it states the rule, and replaced the probe with the one above.
+
+## Acceptance
+
+Accepted by the maintainer on 2026-10-12 (commit `349ccfa2`), with the three verification fixes and
+the probes above recorded after. The maintainer's merge into `main` is the sign-off.

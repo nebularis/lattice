@@ -375,7 +375,7 @@ def profile_select(plan: ProfilePlan, record: str = "?record") -> str:
         "  {\n"
         f"    SELECT {record} {count('Permitted')} {count('Denied')} {count('Undetermined')}\n"
         "      (COUNT(DISTINCT ?condition) AS ?answered) (MAX(COALESCE(STR(?reason), '')) AS ?conditionDiagnostic)\n"
-        '      (GROUP_CONCAT(DISTINCT STR(?relied); separator=" ") AS ?closureList) WHERE {\n"
+        '      (GROUP_CONCAT(DISTINCT STR(?relied); separator=" ") AS ?closureList) WHERE {\n'
         f"      {records}\n"
         "      OPTIONAL {\n"
         f"{link}"

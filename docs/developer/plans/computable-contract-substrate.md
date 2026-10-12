@@ -4110,6 +4110,11 @@ and no coupling with the differential tests, which use single-value readings onl
 - `test_set_readings.py`, `test_closure_readings.py` and `test_legal_acts.py` state the outcomes
   first (examples phase)
 
+**Built (2026-10-12, on `ccs/hq6a2-closures-compilers`)** as planned, with three deviations recorded
+in its [Validation Pack](../validation/computable-contract-substrate-hq6a2.md): `build:mtp` moves no
+pins, since the MTP hashes MORK's own terms only, the SHACL backend needs no change, since its
+decided shapes reuse the SPARQL condition select, and AIR32-08 restated under a closure.
+
 **HQ-6a.2's questions** (raised in its examples phase, answered by the maintainer 2026-10-12). They
 settle how "this decision relied on that closure" leaves the compilers, which C12 (the evaluator,
 which records decisions), HQ-6b (supersession by a late fact), formal-methods Track H (per-root

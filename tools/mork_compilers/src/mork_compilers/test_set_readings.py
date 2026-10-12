@@ -26,7 +26,7 @@ from rdflib.namespace import RDF
 
 from .common import mint
 from .eligibility_ir import IRCompileError, compile_any_condition, compile_profile
-from .namespaces import EXE, MORK, SH
+from .namespaces import ELG, EXE, MORK, SH
 from .owl_backend import compile_classes
 from .shacl_backend import compile_shapes
 from .sparql_backend import compile_query_template
@@ -213,7 +213,8 @@ class NegationTests(unittest.TestCase):
 
 class IntervalTests(unittest.TestCase):
     def test_interval_read_every_value(self) -> None:
-        # AIR32-08
+        # AIR32-08, under a closure since L15's restatement (ADR-A105). Without it every value
+        # Permitted is Undetermined, and one Denied value still decides (HQ6a1-07)
         data = Graph().parse(data=HEADER + """
             ex:space a qnt:ValueSpace .
             ex:ten a qnt:Quantity ; qnt:onSpace ex:space ; qnt:numericValue "10"^^xsd:decimal .
@@ -223,13 +224,17 @@ class IntervalTests(unittest.TestCase):
             ex:c a elg:IntervalCondition ; elg:matchStrategy elg:IntervalContainment ; elg:compatibilityOperation elg:AllRequired ;
                 elg:wildcardSemantics elg:NoWildcard ; elg:requiredRangeSet ex:ranges .
             ex:b a elg:EvidenceBinding ; elg:bindsCondition ex:c ; elg:subjectClass ex:Subject ; elg:readOnSpace ex:space ;
-                elg:valueReading elg:EveryValue ;
+                elg:valueReading elg:EveryValue ; elg:closedUnder ex:scores-closure ;
                 elg:evidenceStep [ a elg:EvidenceStep ; elg:stepIndex 0 ; elg:stepProperty ex:score ; elg:stepDirection elg:Forward ] .
+            ex:scores-closure a elg:Closure ; elg:licensedBy ex:registry .
             ex:s-high a ex:Subject ; ex:score 12 , 15 .
             ex:s-mixed a ex:Subject ; ex:score 12 , 4 .
         """, format="turtle")
         rows = decisions(sparql(compile_any_condition(data, EX.c), data))
         self.assertEqual(rows, {"s-high": "Permitted", "s-mixed": "Denied"})
+        data.remove((None, ELG.closedUnder, None))
+        rows = decisions(sparql(compile_any_condition(data, EX.c), data))
+        self.assertEqual(rows, {"s-high": "Undetermined", "s-mixed": "Denied"})
 
 
 class ProfileTests(unittest.TestCase):
