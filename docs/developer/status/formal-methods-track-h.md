@@ -55,8 +55,8 @@ section below.
 
 1. The maintainer merges H2.0 to H2.2 (`check:persistence` at `1920 passed, 1 xfailed`, 2026-10-12, after the review
    fixes in [FMH-H2-2](../validation/FMH-H2-2.md)), and decides FMH-H2-2's decisions 2 and 3.
-2. **H2.3, as one slice, is ready to branch.** Every question of the [H2.3 plan](../plans/formal-methods-track-h.md#41-h23-the-named-graph-row-writers-planned-2026-10-12)
-   is decided, including the caller-named graph override of step 8.
+2. **H2.3 is built** ([FMH-H2-3](../validation/FMH-H2-3.md), `2003 passed, 1 xfailed`). The maintainer runs it and countersigns
+   the two items listed there (a removed H2.1 refusal case, and a test input made `xsd:long`).
 3. H2.4 and H2.5 can follow in any order, and **H2.6** (examples first, with the paper check) beside them.
 4. Later, not scheduled: the SPARQL semantic IR of plan §5.1 (PDD-06).
 
