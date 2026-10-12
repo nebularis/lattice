@@ -53,12 +53,13 @@ section below.
 
 ## Next action
 
-1. The maintainer runs the [FMH-H2-1](../validation/FMH-H2-1.md) one command (expected `1875 passed, 1 xfailed`, not
-   yet run) and merges H2.0 and H2.1.
-2. **H2.2**, the equivalence harness of the [typed IR sketch §7.1](../sketches/formal-methods-track-h-typed-ir.md#71-the-equivalence-harness-h22),
-   rendering with guards off, with `bootstrap-version-row` and `append-event` ported, the builders taking the guards
-   flag, and TD-34 closed for them. Each semantic rule a builder relies on gets an engine test (plan §5.1). H2.3, H2.4
-   and H2.5 follow in any order. **H2.6** (examples first, with the paper check) can run beside them.
+1. The maintainer runs the [FMH-H2-2](../validation/FMH-H2-2.md) one command (`1915 passed, 1 xfailed`) with H2.1's, and
+   merges, and decides the three items in FMH-H2-2 (the `Term` kind for `$occurredAt`, `instantiate` using the builders
+   now, and the harness corpus).
+2. **H2.3**, **H2.4** and **H2.5** in any order. Each ports its templates against the harness (add the stem to `BUILDERS`,
+   and the harness covers it), keeps the rule "a port changes nothing", and gives each semantic rule it relies on an engine
+   test (plan §5.1). H2.4 also measures the composite replace on rdflib and Oxigraph (TD-42). **H2.6** (examples first,
+   with the paper check) can run beside them.
 3. Later, not scheduled: the SPARQL semantic IR of plan §5.1 (PDD-06).
 
 ## Slices
@@ -87,6 +88,8 @@ section below.
 | HO9 (ownership documentation and close-out) | **signed off** 2026-10-10, merged. [Validation Pack](../validation/FMH-HO9.md) | |
 | H2.0 (ADR-A123) | **done** 2026-10-10. [Validation Pack](../validation/FMH-H2-0.md). A123 **accepted** 2026-10-10, ADR-A79 addendum applied | the maintainer's merge |
 | H2.1 (the typed IR and its renderer) | **built and reviewed** 2026-10-10, five defects fixed. [Validation Pack](../validation/FMH-H2-1.md). Its four decisions confirmed. Not yet used by `compile` | the maintainer's run and merge |
+| H2.2 (equivalence harness, `bootstrap-version-row` and `append-event` ported) | **built** 2026-10-12. [Validation Pack](../validation/FMH-H2-2.md). TD-34 closed for these operations | the maintainer's run and merge |
+| H2.2 (equivalence harness, `bootstrap-version-row` and `append-event` ported) | **built** 2026-10-12. [Validation Pack](../validation/FMH-H2-2.md). TD-34 closed for these operations | the maintainer's run and merge |
 | H2 (typed IR) | **briefed** 2026-10-10, split into H2.0 to H2.9 ([typed IR sketch §7](../sketches/formal-methods-track-h-typed-ir.md#7-slices)) | |
 | H3 (specification registry) | not started, outlined in the plan | H2 preferred first (smaller, more self-contained), not a hard blocker |
 | H4 (exhaustive cross-axis validation, BDD/SMT) | not started, outline only | H3 |
@@ -418,3 +421,11 @@ section below.
   variables are all unbound, so the expected `[None]` came back empty. The queries now select `?a ?b` and read `?b`,
   which asserts the same scope rule. The expected values are unchanged. `check:persistence` then gave
   `1875 passed, 1 xfailed`.
+- 2026-10-12: H2.2 built ([FMH-H2-2](../validation/FMH-H2-2.md)). The equivalence harness (`tests/equivalence.py`) holds a
+  builder to its template as normalised rdflib algebra, with the guard off, and `bootstrap-version-row` and
+  `append-event` (each with its dataset-guard variant) are ported in `persistence.builders`. The harness caught my
+  first port of `append-event` at once: I had put an `epoch` triple in the non-dataset `INSERT` that the template does
+  not have. `instantiate` now renders the four ported operations from their builders with the required-parameter guard,
+  and `--no-parameter-guards` leaves it out. TD-34 is closed for these operations, with the unbound-`$stream` case (F1)
+  run on rdflib as a test. `Kind.TERM` is new, for `$occurredAt`. `check:persistence` gave `1915 passed, 1 xfailed`.
+  Six implementation probes were caught. Three decisions are listed for the maintainer in the Validation Pack.

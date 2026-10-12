@@ -104,7 +104,7 @@ def _functions() -> Operation:
         "IRI": (Func("STR", (r,)),), "CONCAT": (string("a"), string("b")), "STR": (r,), "ENCODE_FOR_URI": (Func("STR", (r,)),),
         "SUBSTR": (string("abc"), integer(1), integer(2)), "STRLEN": (string("abc"),),
         "STRDT": (string("1"), Const(Iri.encode(XSD_LONG))), "COALESCE": (Var("missing"), string("d")),
-        "BOUND": (Var("missing"),), "DATATYPE": (string("a"),), "NOW": (), "ISIRI": (r,), "LANG": (string("a"),),
+        "BOUND": (Var("missing"),), "DATATYPE": (string("a"),), "NOW": (), "ISIRI": (r,), "ISLITERAL": (string("a"),), "LANG": (string("a"),),
     }
     assert set(arguments) == set(FUNCTIONS)
     binds = tuple(Bind(Func(name, args), Var(f"f_{name.lower()}")) for name, args in arguments.items())

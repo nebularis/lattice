@@ -65,7 +65,7 @@ RULES: tuple[str, ...] = (
 FUNCTIONS: dict[str, tuple[int, int]] = {
     "IRI": (1, 1), "CONCAT": (1, 99), "STR": (1, 1), "ENCODE_FOR_URI": (1, 1), "SUBSTR": (2, 3),
     "STRLEN": (1, 1), "STRDT": (2, 2), "COALESCE": (1, 99), "BOUND": (1, 1), "DATATYPE": (1, 1),
-    "NOW": (0, 0), "ISIRI": (1, 1), "LANG": (1, 1),
+    "NOW": (0, 0), "ISIRI": (1, 1), "ISLITERAL": (1, 1), "LANG": (1, 1),
 }
 AGGREGATES: dict[str, tuple[int, int]] = {
     "COUNT": (1, 1), "MIN": (1, 1), "MAX": (1, 1), "SAMPLE": (1, 1), "GROUP_CONCAT": (1, 1),
@@ -784,6 +784,9 @@ def _guard_expr(op: Operation) -> Optional[Expr]:
         ref = ParamRef(param.name)
         if param.kind is Kind.IRI:
             conjuncts.append(Func("ISIRI", (ref,)))
+        elif param.kind is Kind.TERM:
+            # any bound IRI or literal: a value the adopter owns, such as the valid time of an event
+            conjuncts.append(Op("||", Func("ISIRI", (ref,)), Func("ISLITERAL", (ref,))))
         elif param.kind is Kind.LANG_STRING:
             conjuncts.append(ValueGuard("!=", Func("LANG", (ref,)), Const(Literal.encode(""))))
         else:

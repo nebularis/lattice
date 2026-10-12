@@ -92,7 +92,7 @@ def cmd_instantiate(args: argparse.Namespace) -> int:
     profile = Graph()
     profile.parse(args.compiled_profile, format="turtle")
     template_dir = Path(args.template_dir) if args.template_dir else None
-    written = instantiate_to_directory(profile, Path(args.out), template_dir)
+    written = instantiate_to_directory(profile, Path(args.out), template_dir, guards=not args.no_parameter_guards)
     for path in written:
         print(f"wrote {path}", file=sys.stderr)
     return 0
@@ -172,6 +172,11 @@ def build_parser() -> argparse.ArgumentParser:
     p_instantiate.add_argument("compiled_profile", help="a dal:CompiledProfile Turtle file")
     p_instantiate.add_argument("--template-dir", help="override the built-in template library directory")
     p_instantiate.add_argument("--out", required=True, help="output directory for generated .rq files")
+    p_instantiate.add_argument(
+        "--no-parameter-guards",
+        action="store_true",
+        help="leave the required-parameter guards out of operations that have a builder, for a caller whose own code checks every parameter",
+    )
     p_instantiate.set_defaults(func=cmd_instantiate)
 
     p_export = sub.add_parser("export-recipes", help="write each dal:MintingRecipe in a compiled profile as a JSON recipe")

@@ -52,6 +52,7 @@ class Kind(Enum):
     LANG_STRING = "LangString"
     POSITION = "Position"
     DIGEST = "Digest"
+    TERM = "Term"
     PAYLOAD = "Payload"
     REGISTRY_LIST = "RegistryList"
 

@@ -1,0 +1,317 @@
+# SPDX-License-Identifier: MPL-2.0
+# NB: This module has been produced using GenAI
+
+"""H2.2: the first builders, held to their Mustache templates by the equivalence harness of the typed IR sketch
+§7.1, and the required-parameter guard run on rdflib (TD-34). Validation Pack: docs/developer/validation/FMH-H2-2.md.
+Test IDs are H2.2-Tn."""
+
+from __future__ import annotations
+
+import dataclasses
+import functools
+
+import pytest
+from rdflib import RDF, XSD, Dataset, Literal as RdfLiteral, URIRef
+
+from persistence import witness
+from persistence.builders import BUILDERS, build, build_recording
+from persistence.compiler import CompileError, compile_to_graph
+from persistence.ir import GUARDS_OFF, Const, GraphBlock, Kind, Var
+from persistence.ir_render import render
+from persistence.terms import Iri, Literal
+
+import equivalence as eq
+from request_slots import fill_request_slots
+
+PORTED = sorted(BUILDERS)
+
+
+@functools.lru_cache(maxsize=1)
+def _corpus() -> tuple:
+    out = []
+    for path in witness.compile_fixtures():
+        try:
+            compiled, _ = compile_to_graph(witness._load_fixture(path))
+        except CompileError:
+            continue
+        out.append((path.name, compiled))
+    return tuple(out)
+
+
+@functools.lru_cache(maxsize=1)
+def _ported() -> tuple:
+    return tuple(eq.ported_operations(_corpus()))
+
+
+def _first(stem: str):
+    return next(op for op in _ported() if op[2] == stem)
+
+
+# ---- the harness ----------------------------------------------------------------------------------------
+
+
+def test_h2_2_t1_the_ported_operations_are_the_four_templates_and_every_one_is_generated_by_a_fixture():
+    assert PORTED == ["append-event", "append-event-dataset-guard", "bootstrap-version-row", "bootstrap-version-row-dataset-guard"]
+    assert {stem for _, _, stem, _ in _ported()} == set(PORTED)
+
+
+def test_h2_2_t2_every_builder_equals_its_template_on_every_fixture_binding_apart_from_the_guard():
+    operations = _ported()
+    assert eq.compare_all(operations) == len(operations) >= len(PORTED)
+
+
+@pytest.mark.parametrize("stem", PORTED)
+def test_h2_2_t3_a_builder_reads_exactly_the_bindings_its_template_uses(stem):
+    _, _, _, context = _first(stem)
+    _, read = build_recording(stem, context, guards=False)
+    assert read == eq.template_tags(eq.load_template(stem + ".mustache"))
+
+
+def test_h2_2_t4_the_harness_fails_when_it_compares_fewer_operations_than_were_ported():
+    operations = _ported()
+    with pytest.raises(eq.Mismatch, match="compared"):
+        eq.require_compared(eq.compare_all(operations[:-1]), len(operations))
+    with pytest.raises(eq.Mismatch, match="compared"):
+        eq.require_compared(eq.compare_all([]), len(operations))
+    eq.require_compared(eq.compare_all(operations), len(operations))
+
+
+def _mutated_text(stem: str, mutate) -> tuple[str, str]:
+    _, _, _, context = _first(stem)
+    template = eq.load_template(stem + ".mustache")
+    mustache = fill_request_slots(eq.mustache_render(template, context))
+    operation, _ = build_recording(stem, context, guards=False)
+    return mustache, fill_request_slots(render(mutate(operation)))
+
+
+def _drop_a_triple(op):
+    block = op.insert[0]
+    return dataclasses.replace(op, insert=(dataclasses.replace(block, elements=block.elements[1:]), *op.insert[1:]))
+
+
+def _move_to_another_graph(op):
+    block = op.insert[0]
+    other = dataclasses.replace(block.graph, term=Const(Iri.encode("urn:g:elsewhere")))
+    return dataclasses.replace(op, insert=(dataclasses.replace(block, graph=other), *op.insert[1:]))
+
+
+def _rename(node, old: str, new: str):
+    if isinstance(node, Var):
+        return dataclasses.replace(node, name=new) if node.name == old else node
+    if dataclasses.is_dataclass(node) and not isinstance(node, type):
+        return dataclasses.replace(node, **{f.name: _rename(getattr(node, f.name), old, new) for f in dataclasses.fields(node)})
+    if isinstance(node, tuple):
+        return tuple(_rename(i, old, new) for i in node)
+    return node
+
+
+MUTATIONS = {
+    "a dropped triple": _drop_a_triple,
+    "a pattern in another graph": _move_to_another_graph,
+    "a renamed variable": lambda op: _rename(op, "any", "other"),
+}
+
+
+@pytest.mark.parametrize("stem", ["bootstrap-version-row", "append-event"])
+@pytest.mark.parametrize("name", sorted(MUTATIONS))
+def test_h2_2_t5_a_mutated_builder_is_caught(stem, name):
+    mustache, built = _mutated_text(stem, MUTATIONS[name])
+    with pytest.raises(eq.Mismatch):
+        eq.compare(mustache, built, name)
+
+
+def _expected_guard_line(params) -> str:
+    tests = []
+    for p in params:
+        if p.kind is Kind.IRI:
+            tests.append(f"ISIRI(${p.name})")
+        elif p.kind in (Kind.LONG, Kind.POSITION):
+            tests.append(f"DATATYPE(${p.name}) = xsd:long")
+        elif p.kind in (Kind.DIGEST, Kind.STRING):
+            tests.append(f"DATATYPE(${p.name}) = xsd:string")
+        elif p.kind is Kind.TERM:
+            tests.append(f"(ISIRI(${p.name}) || ISLITERAL(${p.name}))")
+    return "FILTER(" + " && ".join(tests) + ")"
+
+
+@pytest.mark.parametrize("stem", PORTED)
+def test_h2_2_t6_the_guard_is_exactly_one_group_with_one_filter_of_type_tests_first_in_where(stem):
+    _, _, _, context = _first(stem)
+    guarded, _ = build_recording(stem, context)
+    bare, _ = build_recording(stem, context, guards=False)
+    assert bare.guard == GUARDS_OFF and guarded.guard != GUARDS_OFF
+    assert dataclasses.replace(guarded, guard=GUARDS_OFF) == bare
+    on, off = render(guarded).splitlines(), render(bare).splitlines()
+    start = on.index("WHERE {")
+    line = _expected_guard_line([p for p in guarded.params if p.required])
+    # one group, one FILTER, first in WHERE, on one line when short and on three otherwise
+    candidates = [["  { " + line + " }"], ["  {", "    " + line, "  }"]]
+    assert any(on == off[: start + 1] + group + off[start + 1:] for group in candidates)
+
+
+# ---- TD-34 and the guard's position, on rdflib -------------------------------------------------------------
+
+LOG = "urn:g:txlog/"
+CONTEXT = {
+    "metaGraphPrefix": Iri.encode("urn:g:meta"), "txnGraph": Iri.encode("urn:g:txn"),
+    "logGraphPrefix": Iri.encode(LOG), "eventGraphPrefix": Iri.encode("urn:g:events/order/"),
+    "datasetGraph": Iri.encode("urn:g:dataset"), "datasetNode": Iri.encode("urn:g:dataset-node"),
+}
+PAT = "https://example.org/lattice/patterns#"
+LONG = lambda n: RdfLiteral(n, datatype=XSD.long)
+STREAM = URIRef("urn:stream:orders/1")
+APPEND = {
+    "stream": STREAM, "epoch": LONG(3), "revBase": RdfLiteral("urn:rev:orders/1/e3/"), "txnId": URIRef("urn:txn:1"),
+    "requestDigest": RdfLiteral("ab" * 32), "event": URIRef("urn:event:1"), "eventType": URIRef("urn:type:Placed"),
+    "opSeq": LONG(1), "occurredAt": RdfLiteral("2026-10-12T10:00:00Z", datatype=XSD.dateTime),
+}
+
+
+def _store(*, rows: int = 1, dataset_epoch: int | None = None) -> Dataset:
+    ds = Dataset()
+    meta = ds.graph(URIRef("urn:g:meta"))
+    for i in range(rows):
+        row = URIRef(f"urn:stream:orders/{i + 1}")
+        meta.add((row, URIRef(PAT + "epoch"), LONG(3)))
+        meta.add((row, URIRef(PAT + "seq"), LONG(0)))
+    if dataset_epoch is not None:
+        ds.graph(URIRef("urn:g:dataset")).add((URIRef("urn:g:dataset-node"), URIRef(PAT + "epoch"), LONG(dataset_epoch)))
+    return ds
+
+
+def _run(stem: str, ds: Dataset, bindings: dict, *, guards: bool = True) -> Dataset:
+    ds.update(render(build(stem, CONTEXT, guards=guards)), initBindings=bindings)
+    return ds
+
+
+def _meta(ds: Dataset) -> set:
+    return {(str(s), str(p).removeprefix(PAT), str(o)) for s, p, o in ds.graph(URIRef("urn:g:meta"))}
+
+
+def test_h2_2_t7_append_writes_the_event_the_receipt_the_log_and_moves_the_head():
+    ds = _run("append-event", _store(), APPEND)
+    rev = "urn:rev:orders/1/e3/0000000000000000001"
+    assert (str(STREAM), "seq", "1") in _meta(ds) and (str(STREAM), "head", rev) in _meta(ds)
+    assert (str(STREAM), "seq", "0") not in _meta(ds)
+    assert (URIRef("urn:txn:1"), URIRef(PAT + "rev"), URIRef(rev)) in ds.graph(URIRef("urn:g:txn"))
+    event_graphs = {str(g.identifier) for g in ds.graphs() if (URIRef("urn:event:1"), None, None) in g}
+    log_graphs = {str(g.identifier) for g in ds.graphs() if (URIRef(rev), None, None) in g and str(g.identifier).startswith(LOG)}
+    assert len(event_graphs) == 1 and next(iter(event_graphs)).startswith("urn:g:events/order/")
+    assert len(log_graphs) == 1
+
+
+def test_h2_2_t8_the_first_revision_has_no_previous_revision_and_is_still_written():
+    ds = _run("append-event", _store(), APPEND)
+    log = next(g for g in ds.graphs() if str(g.identifier).startswith(LOG))
+    assert len(list(log.objects(None, URIRef(PAT + "prevRev")))) == 0
+    assert len(list(log.objects(None, URIRef(PAT + "recordedAt")))) == 1
+
+
+def test_h2_2_t9_a_retry_with_the_same_transaction_changes_nothing():
+    ds = _run("append-event", _store(), APPEND)
+    before = {(str(g.identifier), s, p, o) for g in ds.graphs() for s, p, o in g}
+    _run("append-event", ds, APPEND)
+    assert {(str(g.identifier), s, p, o) for g in ds.graphs() for s, p, o in g} == before
+
+
+def test_h2_2_t10_a_second_event_chains_to_the_first():
+    ds = _run("append-event", _store(), APPEND)
+    second = {**APPEND, "txnId": URIRef("urn:txn:2"), "event": URIRef("urn:event:2"), "opSeq": LONG(2)}
+    _run("append-event", ds, second)
+    assert (str(STREAM), "seq", "2") in _meta(ds)
+    log = next(g for g in ds.graphs() if str(g.identifier).startswith(LOG))
+    assert (URIRef("urn:rev:orders/1/e3/0000000000000000002"), URIRef(PAT + "prevRev"), URIRef("urn:rev:orders/1/e3/0000000000000000001")) in log
+
+
+def test_h2_2_t11_the_dataset_guard_variant_writes_only_while_the_dataset_epoch_matches():
+    wrote = _run("append-event-dataset-guard", _store(dataset_epoch=3), APPEND)
+    assert (str(STREAM), "seq", "1") in _meta(wrote)
+    refused = _run("append-event-dataset-guard", _store(dataset_epoch=4), APPEND)
+    assert (str(STREAM), "seq", "0") in _meta(refused) and not any(s == str(STREAM) and p == "head" for s, p, _ in _meta(refused))
+
+
+def test_h2_2_t12_bootstrap_creates_the_row_once():
+    target = URIRef("urn:stream:new")
+    ds = _run("bootstrap-version-row", Dataset(), {"target": target, "epoch": LONG(3)})
+    rows = _meta(ds)
+    assert rows == {(str(target), "epoch", "3"), (str(target), "seq", "0"), (str(target), str(RDF.type), PAT + "VersionRow")}
+    _run("bootstrap-version-row", ds, {"target": target, "epoch": LONG(9)})
+    assert _meta(ds) == rows
+
+
+def test_h2_2_t13_the_bootstrap_dataset_guard_variant_needs_a_matching_dataset_epoch():
+    target = URIRef("urn:stream:new")
+    assert _meta(_run("bootstrap-version-row-dataset-guard", _store(rows=0, dataset_epoch=4), {"target": target, "epoch": LONG(3)})) == set()
+    assert len(_meta(_run("bootstrap-version-row-dataset-guard", _store(rows=0, dataset_epoch=3), {"target": target, "epoch": LONG(3)}))) == 3
+
+
+_TARGET = URIRef("urn:stream:new")
+_TYPE = (str(_TARGET), str(RDF.type), PAT + "VersionRow")
+
+
+@pytest.mark.parametrize("name, bindings, unguarded", [
+    ("no epoch", {"target": _TARGET}, {_TYPE, (str(_TARGET), "seq", "0")}),
+    ("no target", {"epoch": LONG(3)}, set()),
+    ("epoch as xsd:integer", {"target": _TARGET, "epoch": RdfLiteral(3)}, {_TYPE, (str(_TARGET), "seq", "0"), (str(_TARGET), "epoch", "3")}),
+    ("target as a literal", {"target": RdfLiteral("urn:stream:new"), "epoch": LONG(3)}, {_TYPE, (str(_TARGET), "seq", "0"), (str(_TARGET), "epoch", "3")}),
+])
+def test_h2_2_t14_a_missing_or_mistyped_parameter_writes_nothing_where_without_the_guard_it_writes_a_bad_row(name, bindings, unguarded):
+    assert _meta(_run("bootstrap-version-row", Dataset(), bindings)) == set()
+    assert _meta(_run("bootstrap-version-row", Dataset(), bindings, guards=False)) == unguarded  # TD-34
+
+
+@pytest.mark.parametrize("missing", sorted(set(APPEND) - {"stream"}))
+def test_h2_2_t15_append_with_any_one_parameter_missing_writes_nothing(missing):
+    bindings = {k: v for k, v in APPEND.items() if k != missing}
+    ds = _run("append-event", _store(), bindings)
+    assert _meta(ds) == _meta(_store())
+    assert not list(ds.graph(URIRef("urn:g:txn")))
+
+
+def test_h2_2_t16_a_missing_stream_is_not_bound_from_the_data():
+    """The pattern `$stream pat:epoch $epoch` would bind a missing `$stream` to every stored row. The guard is
+    tested first, in its own group (ADR-A123 decision 5), so nothing is written."""
+    bindings = {k: v for k, v in APPEND.items() if k != "stream"}
+    guarded = _run("append-event", _store(rows=2), bindings)
+    assert _meta(guarded) == _meta(_store(rows=2))
+    unguarded = _run("append-event", _store(rows=2), bindings, guards=False)
+    assert _meta(unguarded) != _meta(_store(rows=2))  # what the guard prevents
+
+
+# ---- instantiate renders the ported operations from their builders --------------------------------------------
+
+
+def _instantiate(**kwargs) -> dict:
+    from persistence.instantiate import instantiate_by_target
+
+    name, compiled = next((n, c) for n, c in _corpus() if n == "template-append-event.ttl")
+    return instantiate_by_target(compiled, **kwargs)
+
+
+def test_h2_2_t17_instantiate_renders_a_ported_operation_with_its_guard_and_without_it_on_request():
+    guarded = next(iter(_instantiate().values()))["append"]
+    bare = next(iter(_instantiate(guards=False).values()))["append"]
+    assert "ISIRI($stream)" in guarded and "ISIRI($stream)" not in bare
+    assert "FILTER(ISIRI($stream)" in guarded
+
+
+def test_h2_2_t18_an_overriding_template_library_is_still_rendered_by_mustache(tmp_path):
+    from persistence.render import _template_dir_default
+
+    for template in _template_dir_default().glob("*.mustache"):
+        (tmp_path / template.name).write_text(template.read_text(encoding="utf-8"), encoding="utf-8")
+    text = next(iter(_instantiate(template_dir=tmp_path).values()))["append"]
+    assert "ISIRI" not in text and "{{" not in text.replace("{{{payloadTriples}}}", "")
+
+
+def test_h2_2_t19_the_command_line_flag_leaves_the_guards_out(tmp_path):
+    from persistence.cli import main
+
+    compiled = tmp_path / "compiled.ttl"
+    _, graph = next((n, c) for n, c in _corpus() if n == "template-append-event.ttl")
+    graph.serialize(compiled, format="turtle")
+    assert main(["instantiate", str(compiled), "--out", str(tmp_path / "on")]) == 0
+    assert main(["instantiate", str(compiled), "--out", str(tmp_path / "off"), "--no-parameter-guards"]) == 0
+    on = next((tmp_path / "on").rglob("append.rq")).read_text(encoding="utf-8")
+    off = next((tmp_path / "off").rglob("append.rq")).read_text(encoding="utf-8")
+    assert "ISIRI($stream)" in on and "ISIRI($stream)" not in off
