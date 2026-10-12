@@ -139,9 +139,12 @@ lattice/
 ├── packages/
 │   └── minting/             # Standalone identity minting libraries (Python, Java), no LATTICE dependency
 │
+├── benchmark/               # Checks that measure, run on demand, never part of `check` (ADR-A124). Created by Track H's H2.4b
+│
 ├── test/                    # Whole-graph CI
 │
 └── tools/                   # Reference implementation
+    └── testing/             # Test-support packages, for tests, checks and benchmarks only (ADR-A125). Created by Track H's H2.4b
 ```
 
 ---
@@ -435,7 +438,7 @@ The canonical active documentation locations are `plans`, `status`, and `review`
 
 Two licences govern the artefacts in the repository:
 
-- **Ontology artefacts (`.ttl`), code (`tools/`, `platform/`, `packages/`, `workers/`) and machine-readable contracts (`contracts/`)** — [Mozilla Public License 2.0](LICENSE). Derivative works, commercial or otherwise, are permitted with no obligation to share what you build. If you modify one of these files and redistribute the modified version, that modification carries the same licence forward. JSON files cannot carry a licence header, so `REUSE.toml` declares theirs.
+- **Ontology artefacts (`.ttl`), code (`tools/`, `platform/`, `packages/`, `workers/`, `benchmark/`) and machine-readable contracts (`contracts/`)** — [Mozilla Public License 2.0](LICENSE). Derivative works, commercial or otherwise, are permitted with no obligation to share what you build. If you modify one of these files and redistribute the modified version, that modification carries the same licence forward. JSON files cannot carry a licence header, so `REUSE.toml` declares theirs.
 - **Documentation and specifications (`.md`)** — [CC BY-SA 4.0](LICENSE-DOCS.md). Use freely, share modifications to the text itself under the same terms.
 
 ---

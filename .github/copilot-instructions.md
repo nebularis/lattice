@@ -32,7 +32,8 @@ along the way.
 | Root | Owns |
 |---|---|
 | `ontology/` | semantic assets only: sources, shapes, vocabularies, projections, examples, their documentation |
-| `tools/` | executable reference implementations and developer toolchains |
+| `tools/` | executable reference implementations and developer toolchains. `tools/testing/` holds test-support packages, used only by tests, checks and benchmarks (ADR-A125) |
+| `benchmark/` | checks that measure, run on demand and never part of `check`. They fail on a wrong result, never on time (ADR-A124) |
 | `platform/`, `apps/`, `packages/`, `contracts/`, `deployment/`, `workers/`, `test/`, `spikes/` | services, applications, libraries, data contracts, the local environment, the worker runtime, end-to-end suites, experiments |
 | `docs/architecture/` | architecture documents and the ADRs, in `decisions/` |
 | `docs/developer/` | sketches, plans, status records, review requests, Validation Packs, and durable guidance |

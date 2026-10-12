@@ -3,7 +3,7 @@
 # Formal Methods, Track H: Status
 
 **Unit ID:** `formal-methods-track-h` (phase, within the `formal-methods` epic)
-**Status:** In progress. H1 (H1.1 to H1.5, with H1.4c), the aggregate-ownership slices HO0 to HO9 and H2.0 to H2.3 are merged to `main` and signed off (H1 and HO 2026-10-10, H2.0 to H2.3 2026-10-12). ADR-A123 is accepted, with two addenda of 2026-10-12. H2.4 is planned and every question is decided. ADR-A124 and ADR-A125 are drafted, Proposed
+**Status:** In progress. H1 (H1.1 to H1.5, with H1.4c), the aggregate-ownership slices HO0 to HO9 and H2.0 to H2.3 are merged to `main` and signed off (H1 and HO 2026-10-10, H2.0 to H2.3 2026-10-12). ADR-A123 is accepted, with two addenda of 2026-10-12. H2.4 is planned and every question is decided. ADR-A124 and ADR-A125 are accepted (2026-10-12)
 **Last updated:** 2026-10-10
 **Plan:** [formal-methods-track-h.md](../plans/formal-methods-track-h.md)
 **Sketches:** [formal-methods-track-h.md](../sketches/formal-methods-track-h.md) (main),
@@ -54,9 +54,8 @@ section below.
 ## Next action
 
 1. **H2.4a is ready to branch**: the composite ports, with the stored-IR test of SI-1 and SI-2 ([plan §4.2](../plans/formal-methods-track-h.md#42-h24-the-composite-family-and-what-each-store-does-planned-2026-10-12)).
-2. The maintainer reviews [ADR-A124](../../architecture/decisions/ADR-A124-benchmark-root.md) (the `benchmark/` root) and
-   [ADR-A125](../../architecture/decisions/ADR-A125-test-support-tooling.md) (`tools/testing/`), both Proposed. H2.4b builds
-   in both and merges after they are accepted.
+2. **H2.4b is ready to branch** too: ADR-A124 and ADR-A125 are accepted (2026-10-12), so it can create `benchmark/` and
+   `tools/testing/`. It depends on H2.4a only for the composite engine tests it reruns on Oxigraph.
 3. H2.5 and **H2.6** (examples first, with the paper check) can follow in any order.
 4. Later, not scheduled: the SPARQL semantic IR of plan §5.1 (PDD-06), which now also decides whether the IR is stored.
 
@@ -89,7 +88,7 @@ section below.
 | H2.2 (equivalence harness, `bootstrap-version-row` and `append-event` ported) | **built and reviewed** 2026-10-12, two review findings fixed. [Validation Pack](../validation/FMH-H2-2.md). TD-34 closed for these operations | merged and signed off 2026-10-12 |
 | H2 (typed IR) | **briefed** 2026-10-10, split into H2.0 to H2.9 ([typed IR sketch §7](../sketches/formal-methods-track-h-typed-ir.md#7-slices)) | |
 | H2.3 (named-graph row writers) | **built and reviewed** 2026-10-12, one review fix. [Validation Pack](../validation/FMH-H2-3.md). [Plan §4.1](../plans/formal-methods-track-h.md#41-h23-the-named-graph-row-writers-planned-2026-10-12). Countersignature items signed 2026-10-12. TD-34 closed for its operations | merged and signed off 2026-10-12 |
-| H2.4 (composite family, store probes) | **planned** 2026-10-12, in [plan §4.2](../plans/formal-methods-track-h.md#42-h24-the-composite-family-and-what-each-store-does-planned-2026-10-12) | the maintainer's branch for H2.4a. ADR-A124 and ADR-A125 accepted before H2.4b merges |
+| H2.4 (composite family, store probes) | **planned** 2026-10-12, in [plan §4.2](../plans/formal-methods-track-h.md#42-h24-the-composite-family-and-what-each-store-does-planned-2026-10-12) | the maintainer's branches for H2.4a and H2.4b |
 | H3 (specification registry) | not started, outlined in the plan | H2 preferred first (smaller, more self-contained), not a hard blocker |
 | H4 (exhaustive cross-axis validation, BDD/SMT) | not started, outline only | H3 |
 | H5 (capability-record extension, TLA+/Quint toolchain spike, protocol models A-D) | not started, outline only | H2 (read/write sets from the IR). ADR-A-FM4 is accepted |
@@ -507,4 +506,8 @@ section below.
   ADR-A123's third addendum and PDD-06. One rule does not hold today: a `Path` holds rendered text, not the path's structure.
   H2.4a gains a test of SI-1 and SI-2. The maintainer agreed a `benchmark/` root and a `tools/testing/` directory, and
   confirmed the benchmark's pass criterion. Drafted ADR-A124 and ADR-A125, Proposed. Both numbers were free on every branch.
+- 2026-10-12: `main` merged into this branch (`40ddf2e`), bringing CCS's new eligibility, instrument and wording versions.
+  `check:ontology-versioning` lists no pending release tag. The maintainer accepted ADR-A124 (`benchmark/`) and ADR-A125
+  (`tools/testing/`). Both numbers were rechecked after the merge and are free. AGENTS.md's table of roots, the root README,
+  the Copilot copy (`build:agent-guidance`, then `check:agent-guidance` with 0 problems) and an addendum to ADR-A77 name both.
 

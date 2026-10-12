@@ -2,7 +2,7 @@
 
 # ADR-A77: Repository Topology and Documentation Governance
 
-**Status:** Accepted
+**Status:** Accepted, with an addendum (2026-10-12)
 **Date:** 2026-09-20
 **Supersedes:** The repository-layout position in `docs/architecture/updated-plan-ammendment.md` AM-05
 **Related:** ADR-A29, repository topology and documentation governance plan
@@ -58,3 +58,10 @@ ADR-A29 remains in force. `mise` is the sole orchestration entry point. Maven, Y
 - A repository-wide link and path rewrite is required, including `docs/index.html`, `docs/book.html`, and documentation includes.
 - The migration requires path-manifest, ownership, and documentation-lifecycle validation before source roots move.
 - Contributors must follow the new plans, status, and review lifecycle once the proposed companion instructions are approved and activated.
+
+## Addendum, 2026-10-12
+
+[ADR-A124](ADR-A124-benchmark-root.md), accepted on 2026-10-12, adds `benchmark/` to the repository roots of decision 4, for
+checks that measure and run on demand. [ADR-A125](ADR-A125-test-support-tooling.md), accepted the same day, adds
+`tools/testing/` under the `tools/` root of decision 2, for test-support packages. Everything else here stands.
+

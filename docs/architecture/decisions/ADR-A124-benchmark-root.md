@@ -2,7 +2,7 @@
 
 # ADR-A124: A benchmark root for checks that measure, run on demand
 
-**Status:** Proposed
+**Status:** Accepted, 2026-10-12
 **Date:** 2026-10-12
 **Supersedes:** none
 **Amends:** [ADR-A77](ADR-A77-repository-topology-and-documentation-governance.md), its list of repository roots

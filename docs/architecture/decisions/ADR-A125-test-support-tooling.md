@@ -2,7 +2,7 @@
 
 # ADR-A125: Test-support tooling under `tools/testing/`
 
-**Status:** Proposed
+**Status:** Accepted, 2026-10-12
 **Date:** 2026-10-12
 **Supersedes:** none
 **Related:** [ADR-A77](ADR-A77-repository-topology-and-documentation-governance.md),
