@@ -329,13 +329,13 @@ def _sweep_delete(b: Bindings, named: _Named, *, dataset_guard: bool) -> tuple:
     )
 
 
-def _row_where(b: Bindings, named: _Named, *, dataset_guard: bool) -> tuple:
-    """The `WHERE` of replace and tombstone, which differ only in their templates."""
+def _row_where(b: Bindings, *, binds: tuple, dataset_guard: bool, sweep) -> tuple:
+    """The `WHERE` of replace and tombstone, which differ only in their templates. `binds` come first, then the
+    optional dataset guard, the version row, the claim check, and last the `sweep` of what the aggregate holds."""
     root = ParamRef("root")
     epoch = Var("rowEpoch") if dataset_guard else ParamRef("epoch")
     return (
-        *named.binds(),
-        *_log_binds(b),
+        *binds,
         *(_dataset_guard(b) if dataset_guard else ()),
         GraphBlock(b.graph("metaGraphPrefix"), (
             Triple(root, _pat("epoch"), epoch),
@@ -345,8 +345,13 @@ def _row_where(b: Bindings, named: _Named, *, dataset_guard: bool) -> tuple:
         )),
         NotExists(Group((GraphBlock(b.graph("txnGraph"), (Triple(ParamRef("txnId"), _pat("rev"), _ANY),)),))),
         *_claim_binds(),
-        Optional_(Group((GraphBlock(named.graph(), (Triple(Var("s"), Var("p"), Var("o")),)),))),
+        sweep,
     )
+
+
+def _named_where(b: Bindings, named: _Named, *, dataset_guard: bool) -> tuple:
+    sweep = Optional_(Group((GraphBlock(named.graph(), (Triple(Var("s"), Var("p"), Var("o")),)),)))
+    return _row_where(b, binds=(*named.binds(), *_log_binds(b)), dataset_guard=dataset_guard, sweep=sweep)
 
 
 def _replace(b: Bindings, *, guards: bool, dataset_guard: bool, graph_names: str) -> Operation:
@@ -371,7 +376,7 @@ def _replace(b: Bindings, *, guards: bool, dataset_guard: bool, graph_names: str
             *_CAS_PARAMS, Param("assertGraph", Kind.IRI, required=False), Param("retractGraph", Kind.IRI, required=False),
             Param("payloadTriples", Kind.PAYLOAD), *named.params(),
         ),
-        Group(_row_where(b, named, dataset_guard=dataset_guard)), guards=guards, insert=insert,
+        Group(_named_where(b, named, dataset_guard=dataset_guard)), guards=guards, insert=insert,
         delete=_sweep_delete(b, named, dataset_guard=dataset_guard),
     )
 
@@ -396,7 +401,7 @@ def _tombstone(b: Bindings, *, guards: bool, dataset_guard: bool, graph_names: s
     return Operation.build(
         "tombstone-delete-named-graph" + ("-dataset-guard" if dataset_guard else ""),
         (*_CAS_PARAMS, Param("cause", Kind.IRI), Param("actor", Kind.IRI), *named.params()),
-        Group(_row_where(b, named, dataset_guard=dataset_guard)), guards=guards, insert=insert,
+        Group(_named_where(b, named, dataset_guard=dataset_guard)), guards=guards, insert=insert,
         delete=_sweep_delete(b, named, dataset_guard=dataset_guard),
     )
 
@@ -408,6 +413,106 @@ def _unconditional(b: Bindings, *, guards: bool, graph_names: str) -> Operation:
         (Param("root", Kind.IRI), Param("payloadTriples", Kind.PAYLOAD), *named.params()),
         Group(named.binds()), guards=guards,
         insert=(GraphBlock(named.graph(Binding.BOUND), (PayloadSlot("payloadTriples"),)),),
+    )
+
+
+# ---- the composite family
+
+
+def _composite_sweep(b: Bindings) -> Optional_:
+    """The root and every member the owned path reaches, in the data graph. The path can match no steps, so the first
+    `?s` is the root itself."""
+    return Optional_(Group((GraphBlock(b.graph("dataGraph"), (
+        Triple(ParamRef("root"), b.path("ownedPath"), Var("s")),
+        Triple(Var("s"), Var("p"), Var("o")),
+    )),)))
+
+
+def _composite_delete(b: Bindings, *, dataset_guard: bool) -> tuple:
+    root = ParamRef("root")
+    row = (Triple(root, _pat("epoch"), _bound("rowEpoch")),) if dataset_guard else ()
+    return (
+        GraphBlock(b.graph("dataGraph"), (Triple(_optional("s"), _optional("p"), _optional("o")),)),
+        GraphBlock(b.graph("metaGraphPrefix"), (*row, Triple(root, _pat("seq"), ParamRef("expectedSeq")), Triple(root, _pat("head"), _optional("prevRev")))),
+    )
+
+
+def _composite_create(b: Bindings, *, guards: bool, dataset_guard: bool) -> Operation:
+    meta = b.graph("metaGraphPrefix")
+    root, epoch, new_rev = ParamRef("root"), ParamRef("epoch"), ParamRef("newRev")
+    where = (
+        *_log_binds(b),
+        *(_dataset_guard(b) if dataset_guard else ()),
+        NotExists(Group((GraphBlock(meta, (Triple(root, _pat("seq"), _ANY),)),))),
+        NotExists(Group((GraphBlock(b.graph("dataGraph"), (Triple(root, Var("anyP"), Var("anyO")),)),))),
+        NotExists(Group((GraphBlock(b.graph("txnGraph"), (Triple(ParamRef("txnId"), _pat("rev"), _ANY),)),))),
+        *_claim_binds(),
+    )
+    insert = (
+        GraphBlock(b.graph("dataGraph"), (PayloadSlot("payloadTriples"),)),
+        GraphBlock(meta, (
+            Triple(root, A, _pat("VersionRow")), Triple(root, _pat("epoch"), epoch),
+            Triple(root, _pat("seq"), _long("1")), Triple(root, _pat("head"), new_rev),
+        )),
+        _claim_block(b),
+        GraphBlock(graph_var("logGraph", Binding.BOUND), (
+            Triple(new_rev, A, _pat("Revision")), Triple(new_rev, _pat("target"), root), Triple(new_rev, _pat("epoch"), epoch),
+            Triple(new_rev, _pat("seq"), _long("1")), Triple(new_rev, _pat("txn"), _bound("txnKey")),
+            Triple(new_rev, _pat("recordedAt"), _bound("now")),
+        )),
+    )
+    return Operation.build(
+        "create-if-absent-composite" + ("-dataset-guard" if dataset_guard else ""),
+        (*_ROW_PARAMS, Param("payloadTriples", Kind.PAYLOAD)),
+        Group(where), guards=guards, insert=insert,
+    )
+
+
+def _composite_replace(b: Bindings, *, guards: bool, dataset_guard: bool) -> Operation:
+    root, epoch, new_rev = ParamRef("root"), ParamRef("epoch"), ParamRef("newRev")
+    # the receipt goes to ?logGraph2, a copy of ?logGraph that the templates have always had (plan 4.2, fact 4)
+    binds = (*_log_binds(b), Bind(Var("logGraph"), Var("logGraph2")))
+    insert = (
+        GraphBlock(b.graph("dataGraph"), (PayloadSlot("payloadTriples"),)),
+        GraphBlock(b.graph("metaGraphPrefix"), (
+            Triple(root, _pat("epoch"), epoch), Triple(root, _pat("seq"), ParamRef("nextSeq")), Triple(root, _pat("head"), new_rev),
+        )),
+        _claim_block(b),
+        GraphBlock(graph_var("logGraph2", Binding.BOUND), (
+            Triple(new_rev, A, _pat("Revision")), Triple(new_rev, _pat("target"), root), Triple(new_rev, _pat("epoch"), epoch),
+            Triple(new_rev, _pat("seq"), ParamRef("nextSeq")), Triple(new_rev, _pat("prevRev"), _optional("prevRev")),
+            Triple(new_rev, _pat("txn"), _bound("txnKey")), Triple(new_rev, _pat("recordedAt"), _bound("now")),
+        )),
+    )
+    return Operation.build(
+        "cas-replace-composite-property" + ("-dataset-guard" if dataset_guard else ""),
+        (*_CAS_PARAMS, Param("payloadTriples", Kind.PAYLOAD)),
+        Group(_row_where(b, binds=binds, dataset_guard=dataset_guard, sweep=_composite_sweep(b))),
+        guards=guards, insert=insert, delete=_composite_delete(b, dataset_guard=dataset_guard),
+    )
+
+
+def _composite_tombstone(b: Bindings, *, guards: bool, dataset_guard: bool) -> Operation:
+    root, epoch, new_rev = ParamRef("root"), ParamRef("epoch"), ParamRef("newRev")
+    insert = (
+        GraphBlock(b.graph("metaGraphPrefix"), (
+            Triple(root, _pat("epoch"), epoch), Triple(root, _pat("seq"), ParamRef("nextSeq")),
+            Triple(root, _pat("head"), new_rev), Triple(root, _pat("deleted"), _TRUE),
+        )),
+        _claim_block(b),
+        GraphBlock(graph_var("logGraph", Binding.BOUND), (
+            Triple(new_rev, A, _pat("Revision")), Triple(new_rev, A, _pat("Deletion")), Triple(new_rev, _pat("target"), root),
+            Triple(new_rev, _pat("epoch"), epoch), Triple(new_rev, _pat("seq"), ParamRef("nextSeq")),
+            Triple(new_rev, _pat("prevRev"), _optional("prevRev")), Triple(new_rev, _pat("txn"), _bound("txnKey")),
+            Triple(new_rev, _pat("recordedAt"), _bound("now")), Triple(new_rev, _pat("cause"), ParamRef("cause")),
+            Triple(new_rev, _pat("actor"), ParamRef("actor")),
+        )),
+    )
+    return Operation.build(
+        "tombstone-delete-composite" + ("-dataset-guard" if dataset_guard else ""),
+        (*_CAS_PARAMS, Param("cause", Kind.IRI), Param("actor", Kind.IRI)),
+        Group(_row_where(b, binds=_log_binds(b), dataset_guard=dataset_guard, sweep=_composite_sweep(b))),
+        guards=guards, insert=insert, delete=_composite_delete(b, dataset_guard=dataset_guard),
     )
 
 
@@ -425,6 +530,12 @@ BUILDERS: dict[str, Builder] = {
     "tombstone-delete-named-graph": lambda b, guards, names: _tombstone(b, guards=guards, dataset_guard=False, graph_names=names),
     "tombstone-delete-named-graph-dataset-guard": lambda b, guards, names: _tombstone(b, guards=guards, dataset_guard=True, graph_names=names),
     "unconditional-write": lambda b, guards, names: _unconditional(b, guards=guards, graph_names=names),
+    "create-if-absent-composite": lambda b, guards, names: _composite_create(b, guards=guards, dataset_guard=False),
+    "create-if-absent-composite-dataset-guard": lambda b, guards, names: _composite_create(b, guards=guards, dataset_guard=True),
+    "cas-replace-composite-property": lambda b, guards, names: _composite_replace(b, guards=guards, dataset_guard=False),
+    "cas-replace-composite-property-dataset-guard": lambda b, guards, names: _composite_replace(b, guards=guards, dataset_guard=True),
+    "tombstone-delete-composite": lambda b, guards, names: _composite_tombstone(b, guards=guards, dataset_guard=False),
+    "tombstone-delete-composite-dataset-guard": lambda b, guards, names: _composite_tombstone(b, guards=guards, dataset_guard=True),
 }
 """The ported operations, keyed by template stem. A template with no entry is still rendered by Mustache."""
 

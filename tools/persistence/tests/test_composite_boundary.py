@@ -75,7 +75,7 @@ def _text(graph: Graph) -> str:
 
 def _values() -> dict:
     return {
-        Variable("root"): ROOT, Variable("epoch"): Literal(1),
+        Variable("root"): ROOT, Variable("epoch"): Literal(1, datatype=XSD.long),
         Variable("expectedSeq"): Literal(1, datatype=XSD.long), Variable("nextSeq"): Literal(2, datatype=XSD.long),
         Variable("newRev"): URIRef("urn:rev:2"), Variable("txnId"): URIRef("urn:txn:a"), Variable("requestDigest"): Literal("d"),
     }
@@ -93,7 +93,7 @@ def _replace(graph: Graph, text: str, data: Graph, data_graph: str, root: URIRef
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", DeprecationWarning)
         ds = Dataset()
-        ds.graph(meta).add((root, URIRef(PAT + "epoch"), Literal(1)))
+        ds.graph(meta).add((root, URIRef(PAT + "epoch"), Literal(1, datatype=XSD.long)))
         ds.graph(meta).add((root, URIRef(PAT + "seq"), Literal(1, datatype=XSD.long)))
         target = ds.graph(URIRef(data_graph))
         for triple in data:

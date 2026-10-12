@@ -53,7 +53,7 @@ section below.
 
 ## Next action
 
-1. **H2.4a is ready to branch**: the composite ports, with the stored-IR test of SI-1 and SI-2 ([plan §4.2](../plans/formal-methods-track-h.md#42-h24-the-composite-family-and-what-each-store-does-planned-2026-10-12)).
+1. **H2.4a is built** ([FMH-H2-4a](../validation/FMH-H2-4a.md), `2035 passed, 1 xfailed`), with the stored-IR test of SI-1 and SI-2. One countersignature item: the epoch type in three composite test files.
 2. **H2.4b is ready to branch** too: ADR-A124 and ADR-A125 are accepted (2026-10-12), so it can create `benchmark/` and
    `tools/testing/`. It depends on H2.4a only for the composite engine tests it reruns on Oxigraph.
 3. H2.5 and **H2.6** (examples first, with the paper check) can follow in any order.
@@ -88,7 +88,8 @@ section below.
 | H2.2 (equivalence harness, `bootstrap-version-row` and `append-event` ported) | **built and reviewed** 2026-10-12, two review findings fixed. [Validation Pack](../validation/FMH-H2-2.md). TD-34 closed for these operations | merged and signed off 2026-10-12 |
 | H2 (typed IR) | **briefed** 2026-10-10, split into H2.0 to H2.9 ([typed IR sketch §7](../sketches/formal-methods-track-h-typed-ir.md#7-slices)) | |
 | H2.3 (named-graph row writers) | **built and reviewed** 2026-10-12, one review fix. [Validation Pack](../validation/FMH-H2-3.md). [Plan §4.1](../plans/formal-methods-track-h.md#41-h23-the-named-graph-row-writers-planned-2026-10-12). Countersignature items signed 2026-10-12. TD-34 closed for its operations | merged and signed off 2026-10-12 |
-| H2.4 (composite family, store probes) | **planned** 2026-10-12, in [plan §4.2](../plans/formal-methods-track-h.md#42-h24-the-composite-family-and-what-each-store-does-planned-2026-10-12) | the maintainer's branches for H2.4a and H2.4b |
+| H2.4a (the composite ports) | **built** 2026-10-12. [Validation Pack](../validation/FMH-H2-4a.md). [Plan §4.2](../plans/formal-methods-track-h.md#42-h24-the-composite-family-and-what-each-store-does-planned-2026-10-12) | the maintainer's run and merge |
+| H2.4b (Oxigraph, probes, benchmark) | **in progress** 2026-10-12 | |
 | H3 (specification registry) | not started, outlined in the plan | H2 preferred first (smaller, more self-contained), not a hard blocker |
 | H4 (exhaustive cross-axis validation, BDD/SMT) | not started, outline only | H3 |
 | H5 (capability-record extension, TLA+/Quint toolchain spike, protocol models A-D) | not started, outline only | H2 (read/write sets from the IR). ADR-A-FM4 is accepted |
@@ -511,3 +512,10 @@ section below.
   (`tools/testing/`). Both numbers were rechecked after the merge and are free. AGENTS.md's table of roots, the root README,
   the Copilot copy (`build:agent-guidance`, then `check:agent-guidance` with 0 problems) and an addendum to ADR-A77 name both.
 
+- 2026-10-12: H2.4a built ([FMH-H2-4a](../validation/FMH-H2-4a.md)), autonomously on this branch. The six composite templates are
+  ported, and the harness, binding, guard and role cases cover them. A replace with no `$root` over two aggregates writes nothing
+  guarded, and unguarded rdflib sweeps both aggregates, writes the payload once and moves both rows (T3). SI-1 and SI-2 have
+  tests: every ported operation encodes structurally and back, builds equal twice, and builds with the file, clock and
+  environment closed (T8 to T11). The lifecycle tests of HO1, HO5 and HO7 bound `$epoch` as an `xsd:integer`, which the guard
+  refuses, so their request and stored epochs are `xsd:long`, assertions unchanged (listed for countersignature). `check:persistence`
+  gave `2035 passed, 1 xfailed`. Six probes, all caught.

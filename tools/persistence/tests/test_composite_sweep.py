@@ -52,7 +52,7 @@ def _text(template: str) -> str:
 
 def _values(expected_seq: int = 1) -> dict:
     return {
-        Variable("root"): ROOT, Variable("epoch"): Literal(1),
+        Variable("root"): ROOT, Variable("epoch"): Literal(1, datatype=XSD.long),
         Variable("expectedSeq"): Literal(expected_seq, datatype=XSD.long),
         Variable("nextSeq"): Literal(2, datatype=XSD.long), Variable("newRev"): URIRef("urn:rev:2"),
         Variable("txnId"): URIRef("urn:txn:a"), Variable("requestDigest"): Literal("d"),
@@ -66,11 +66,11 @@ def _dataset(template: str, line_items: int = 2, triples_per_item: int = 2) -> D
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", DeprecationWarning)
         ds = Dataset()
-        ds.graph(meta).add((ROOT, URIRef(PAT + "epoch"), Literal(1)))
+        ds.graph(meta).add((ROOT, URIRef(PAT + "epoch"), Literal(1, datatype=XSD.long)))
         ds.graph(meta).add((ROOT, URIRef(PAT + "seq"), Literal(1, datatype=XSD.long)))
         if template == DATASET_GUARD:
             dataset_graph = URIRef(re.search(r"GRAPH <(urn:g:dataset)>", text).group(1))
-            ds.graph(dataset_graph).add((dataset_graph, URIRef(PAT + "epoch"), Literal(1)))
+            ds.graph(dataset_graph).add((dataset_graph, URIRef(PAT + "epoch"), Literal(1, datatype=XSD.long)))
         data = ds.graph(DATA_GRAPH)
         data.add((ROOT, URIRef(EX + "status"), Literal("open")))
         data.add((ROOT, RDF.type, URIRef(EX + "Order")))

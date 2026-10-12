@@ -68,7 +68,7 @@ def _dataset(template: str, *, data: Graph | None, row_seq: int | None = 1, defa
         warnings.simplefilter("ignore", DeprecationWarning)
         ds = Dataset()
         if row_seq is not None:
-            ds.graph(_meta(template)).add((ROOT, URIRef(PAT + "epoch"), Literal(1)))
+            ds.graph(_meta(template)).add((ROOT, URIRef(PAT + "epoch"), Literal(1, datatype=XSD.long)))
             ds.graph(_meta(template)).add((ROOT, URIRef(PAT + "seq"), Literal(row_seq, datatype=XSD.long)))
         if data is not None:
             graph = ds.graph(DATA_GRAPH)
@@ -87,7 +87,7 @@ def _quads(ds: Dataset) -> set:
 def _run(ds: Dataset, template: str, *, txn: str = "a", expected_seq: int = 1, payload=()) -> None:
     text = _text(template).replace(templatecheck._SLOT_STAND_INS["payloadTriples"], _nt(payload))
     values = {
-        "root": ROOT, "epoch": Literal(1), "expectedSeq": Literal(expected_seq, datatype=XSD.long),
+        "root": ROOT, "epoch": Literal(1, datatype=XSD.long), "expectedSeq": Literal(expected_seq, datatype=XSD.long),
         "nextSeq": Literal(expected_seq + 1, datatype=XSD.long), "newRev": URIRef(f"urn:rev:{txn}"),
         "txnId": URIRef(f"urn:txn:{txn}"), "requestDigest": Literal("d"),
         "cause": URIRef("urn:decision:1"), "actor": URIRef("urn:actor:1"),
