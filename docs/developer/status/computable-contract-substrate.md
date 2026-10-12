@@ -18,8 +18,9 @@ Behaviour 0.10.0 (shapes 0.4.0) with nested states and history, the import guard
 check`. In tranche D, C6 to C7c are merged and tagged (Instrument 0.12.0, Party 0.8.0, Quantification
 0.7.0). C8 and C8b are merged and tagged (Instrument 0.14.0, Wording 0.7.0). C9 is briefed and splits into C9a to C9c. Its materiality question has its own sketch. From C5 on, slices are built and verified on the branch, and the maintainer commits by hand.
 
-**Next action, for the maintainer:** answer HQ6a-Q1 to Q3 (plan, HQ-6a in detail), then create the
-HQ-6a.1 branch. HQ-6a has no Persistence content. HQ-6a.1 and HQ-6a.2 merge before C9b3.
+**Next action, for the maintainer:** create `ccs/hq6a1-closures-model` from `main` (HQ-6a in detail,
+answered: Q1 (b), Q2 (a), Q3 (a), Q4 (2), untimed closures). Its proofs (`TL1-some`, `TL1-every`,
+`TL4a`) are re-proved on machine R with `check:proofs`. HQ-6a has no Persistence content. HQ-6a.1 and HQ-6a.2 merge before C9b3.
 
 ## Slice board
 
@@ -42,6 +43,7 @@ HQ-6a.1 branch. HQ-6a has no Persistence content. HQ-6a.1 and HQ-6a.2 merge befo
 | C8, C8b | values in stated meaning, Wording references by identity | D | merged, tagged | |
 | C9a | amendments, assents and taking effect | D | merged, tagged | |
 | C9b0, C9b1, C9b2 | Eligibility sources, legal acts, additivity | D | merged, tagged 2026-10-10 | |
+| HQ-6a.1, HQ-6a.2 | untimed closures (ADR-A105): the model and reference semantics, then the compilers | D | ready to branch | HQ-6a.2 after HQ-6a.1 |
 | C9b3, C9b4, C9d, C9c, C8a | set comparisons, qualifying rules, materiality, incorporation, template library | D | planned | C9b3 waits on HQ-6 (NRS N5, ADR-A105). C9b4 on C9b3 |
 | C16c | remove Party's shares | F | planned, required before the epic closes | C9b4 |
 | C7a | regimes and gating, split from C7 | D | merged to `main` (`c6e5853`) and tagged | |
@@ -165,3 +167,6 @@ HQ-6a.1 branch. HQ-6a has no Persistence content. HQ-6a.1 and HQ-6a.2 merge befo
 - 2026-10-10: the ADR-A104 and ADR-A106 addenda of 2026-10-09 accepted. The validation sign-off log, `docs/developer/validation/LOG.md`, retired: probes are recorded in the status record and the merge is the sign-off (skill `lattice-lifecycle`). Three adversarial probes, one per slice, each caught (table above). Ready to merge
 - 2026-10-10: `ccs/c9b-groundwork` merged into `main` (`4704d10a`) and its 23 release tags created. C9b0, C9b1 and C9b2 done
 - 2026-10-10: HQ-6a briefed: three questions (what a closure licenses, its layer, how a condition names it), split into HQ-6a.1 (ADR-A105, Eligibility model, examples, reference semantics) and HQ-6a.2 (compilers, refusal, decision records). No Persistence content
+- 2026-10-10: HQ6a-Q2 and Q3 answered (a): closures in Eligibility, named by the binding. HQ6a-Q1 drawn with two examples. The leaning moves from (c) to (b): under (c) a late, irrelevant record lets absence decide without a licence
+- 2026-10-12: HQ6a-Q1 answered (b): a set reading decides on completeness only under a closure. The HQ-6a plan completed: what HQ-6a.1 and HQ-6a.2 build, their validation, branch names. Ready to branch
+- 2026-10-12: HQ6a-Q4 answered (2): HQ-6a builds untimed closures, complete as of the deciding record's recording time. Closures over a period, anchored per subject, move to HQ-6b with the deemed-failure example and the trial placeholder. The examples phase's stop condition is gone. Ready to branch

@@ -3068,6 +3068,8 @@ question to be taken up (below).
 | C9b0 | Eligibility, cascading | the Eligibility README made its source again (TD-16's Eligibility part), and law L9's amendment from FM-EP released. Before C9b3 |
 | C9b1 | Instrument 0.16.0, Behaviour 0.14.0, both breaking | the legal acts tier in its own document (ADR-A120): declarations (assent, consent, objection, withdrawal), proposals (the amendment one of them), exercises, `ins:pursuantTo`. Behaviour's exercise and acceptance records narrowed to findings. Example: reinsurance claims co-operation. [Consent sketch](../sketches/consent-and-group-powers.md) §2.1 |
 | C9b2 | Quantification, cascading | extensive and intensive quantities, a proportion's base, sum and count. Examples: multicurrency commitments, written and signed lines, signing down. Sketch §2.4 |
+| HQ-6a.1 | Eligibility, cascading, MORK Executable | ADR-A105 drafted, `elg:Closure` (what it covers, `elg:licensedBy`), untimed (HQ6a-Q4), `elg:closedUnder` on a binding, `elg:closureReliedOn` on a decision, law L17 and its reference semantics, examples of an admissions registry, an objections register and a licence's usage reports. Under HQ6a-Q1 (b), ADR-A103's addendum and L15 restated, with their proofs. No Persistence content. HQ-6a in detail |
+| HQ-6a.2 | `tools/mork_compilers` | the backends apply a closure, refuse an unlicensed binding with `exe:NoClosureLicence`, and record the closures a decision relied on. After HQ-6a.1, before C9b3 |
 | C9b3 | Eligibility, own ADR | set comparisons (subset, intersects, disjoint), aggregate bindings, the two kinds of deferral, with their proofs and reference semantics, including a hierarchical condition whose binding does not apply at the resolution time, Undetermined under L9 where C9b0 leaves the compilers refusing it (C9b0-Q2), and the same guard in the OWL and SWRL backends. With it, substrate S2: an option for hierarchical match to follow kind links only (`prl:broaderGeneric`) rather than every `skos:broader` (NRS NQ-4, 2026-10-10). After the formal-methods Eligibility pass and HQ-6. Sketch §2.3 |
 | C9b4 | Instrument | qualifying rules as acting rules (`ins:QualifyingRule`), universe, exclusions and reference time, joint and several powers, laws I11 and I13 restated, measure words, Party's shares deprecated with a warning shape. Examples: Majority Lenders acceleration with a transfer between request and decision, an Extraordinary Resolution. Sketch §2.2, §2.5 |
 | C9d | Instrument 0.17.0 | materiality (C9-Q3): the change report, condition words over it, grades, the evaluation profile, and selecting consenting members by grade. Split from C9b by C9b-Q1's leaning |
@@ -3086,7 +3088,7 @@ flowchart LR
     B2["C9b2 additivity<br/>Quantification"]
     FM["FM-EP, Eligibility pass<br/>merged 2026-10-09"]
     B0["C9b0 Eligibility sources<br/>README the source again,<br/>L9 released"]
-    H6["HQ-6 deemings<br/>closures, ADR-A105"]
+    H6["HQ-6a.1 and HQ-6a.2<br/>closures, ADR-A105"]
     B3["C9b3 set comparisons<br/>Eligibility, own ADR"]
     B4["C9b4 qualifying rules<br/>Instrument"]
     FM --> B0
@@ -3772,12 +3774,14 @@ checks.
 **Decisions:** HQ6-Q1 and HQ6-Q2 (2026-10-10), NRS N5 and its decisions D6 (overtaken) and D7
 (refuse), ADR-A103, ADR-A105 (reserved, drafted here), ADR-A115, the CCS sketch §5.6, §5.7 and §6.4,
 the [consent sketch](../sketches/consent-and-group-powers.md) §2.3 and §3.
-**Boundary:** no Persistence content. A closure's binding to the store (the per-root sequence of
-Track H's AO-Q6 and `dal:BlockingContiguityCheck`) is HQ-6b's.
+**Boundary:** no Persistence content and no time windows. A closure's binding to the store (the
+per-root sequence of Track H's AO-Q6 and `dal:BlockingContiguityCheck`) and closures over a period
+anchored per subject ("within 60 days of the request") are HQ-6b's (HQ6a-Q4).
 
-**Invariant:** absence decides an outcome only under a declared closure, which names what it covers,
-over what window, and on whose authority. A decision that relied on absence names the closure, and
-its own recording time is the cut, so a fact recorded later can be found to supersede it (HQ-6b).
+**Invariant:** absence decides an outcome only under a declared closure, which names what it covers
+and on whose authority. A decision that relied on absence names the closure, and its own recording
+time is the cut: the closure licenses the records as they stood then, so a fact recorded later can be
+found to supersede the decision (HQ-6b).
 
 **Setting the scene.** Facts checked against the source (2026-10-10):
 
@@ -3803,32 +3807,33 @@ its own recording time is the cut, so a fact recorded later can be found to supe
 - **The formal-freshness gate** requires every Eligibility semantic law to appear in the reference
   semantics, so a closure law brings its reference reading with it.
 - **What C9b3 needs:** set comparisons that turn an absence into Denied, or into Permitted for
-  `elg:Disjoint`, need a licensed closure. The same closure covers deemed consent and "a lender that
-  has not replied within 10 days is disregarded" (consent sketch §2.3, §3).
+  `elg:Disjoint`, need a licensed closure (consent sketch §2.3). A closure over a period also
+  covers deemed consent and "a lender that has not replied within 10 days is disregarded" (§3),
+  which HQ-6b builds (HQ6a-Q4).
 
 ```mermaid
 flowchart LR
-    subgraph AGREED["Stated: the instrument"]
-        DM["deemed failed<br/>ins:Deeming, rebuttable"]
-        WC["no documents provided<br/>elg:Condition, negated,<br/>binding read elg:SomeValue"]
-        CL["ex:docs-closure<br/>elg:Closure<br/>covers: acts of providing documents<br/>window: 60 days from the request<br/>source: the deeming"]
-        DM -- "ins:when" --> WC
-        WC -- "binding elg:closedUnder" --> CL
-        CL -- "elg:licensedBy" --> DM
+    subgraph AGREED["Stated: the instrument and the deployment"]
+        PW["the amendment power<br/>scope: no Lender has objected"]
+        NC["no objection<br/>elg:Condition, negated,<br/>binding read elg:SomeValue<br/>over objections to the proposal"]
+        CL["ex:objections-register<br/>elg:Closure<br/>covers: ins:Objection<br/>licensed by: the Agent, whose<br/>register is authoritative"]
+        PW -- "scope" --> NC
+        NC -- "binding elg:closedUnder" --> CL
     end
     subgraph HAPPENED["Recorded: what happened"]
-        RQ["request, 10 January"]
-        NONE["no act of providing documents<br/>10 January to 11 March"]
-        DEC["decision, recorded 12 March<br/>Permitted<br/>elg:closureReliedOn ex:docs-closure"]
-        RQ -- "anchors the window" --> NONE
+        PR["proposal P"]
+        NONE["no objection to P recorded"]
+        DEC["decision, recorded at the vote<br/>Permitted<br/>elg:closureReliedOn ex:objections-register"]
+        PR --> NONE
         NONE -- "the closure lets absence decide" --> DEC
     end
     CL -. "licenses" .-> NONE
 ```
 
-Without the closure the same decision is Undetermined, as today. Before 11 March the window is
-open and the decision is Undetermined too. A document recorded on 20 March with a valid time of
-1 March is the late fact HQ-6b's supersession handles.
+Without the closure the same decision is Undetermined (HQ6a-Q1 (b)). The closure has no period: it
+licenses the register as it stood at the decision's recording time. An objection recorded after the
+vote with an earlier valid time is the late fact HQ-6b's supersession handles, and "no objection
+within 10 days of the request" is a closure over a period, also HQ-6b's.
 
 **Questions, with each option's consequences:**
 
@@ -3840,9 +3845,96 @@ open and the decision is Undetermined too. A document recorded on 20 March with 
 | (b) every outcome that needs completeness: `SomeValue` Denied and `EveryValue` Permitted need a closure whether or not values exist, and are Undetermined without one | logically the strictest. Breaks ADR-A103 and every example and test that relies on it, and most bound conditions need a closure before they decide anything | many more Undetermined outcomes until closures are declared |
 | (c) as (a), with ADR-A105 naming ADR-A103's assumption as the default closure it is: a subject's recorded values on a path are all its values once any is recorded. A declared closure extends that to the empty case, over a window | as (a), and the rule is stated once, so the two readings are one theory | as (a) |
 
-The law treats records the same way: a party's records are taken as complete for what they show,
-and silence decides only where the contract or the law says so (a deeming, a time bar). KISS: (c)
-costs a paragraph more than (a) and removes a hidden assumption. **Leaning (c).**
+**Two examples, drawn** (asked for by the maintainer, 2026-10-10). Options (a) and (c) give the same
+outcomes: (c) only names, in ADR-A105, the assumption (a) leaves implicit. So the choice the pictures
+show is (a)/(c) against (b).
+
+*Example 1, admissions (ADR-A103's own).* "The applicant holds no qualification in medicine": the
+medicine condition, its binding read `elg:SomeValue`, negated. Three applicants:
+
+```mermaid
+flowchart LR
+    subgraph A["applicant A"]
+        A1["history"]
+        A2["physics"]
+    end
+    subgraph B["applicant B"]
+        B0["no qualification recorded"]
+    end
+    subgraph C["applicant C"]
+        C1["medicine"]
+    end
+    Q{"holds no qualification<br/>in medicine?"}
+    A --> Q
+    B --> Q
+    C --> Q
+```
+
+*Example 2, a deeming over absence.* "Deemed failed if no documents are provided within 60 days of
+the request": the providing-documents condition, its binding read `elg:SomeValue` over the acts,
+negated, each act decided by whether it falls within the window. The window has ended for all three:
+
+```mermaid
+flowchart LR
+    subgraph X["request X"]
+        X1["documents provided, day 20"]
+    end
+    subgraph Y["request Y"]
+        Y0["nothing recorded"]
+    end
+    subgraph Z["request Z"]
+        Z1["documents provided, day 75<br/>after the window"]
+    end
+    D{"deemed failed?<br/>no documents within 60 days"}
+    X --> D
+    Y --> D
+    Z --> D
+```
+
+| Case | Recorded | (a)/(c), no closure | (a)/(c), with a closure | (b), no closure | (b), with a closure |
+|---|---|---|---|---|---|
+| A | history, physics | **Permitted** | Permitted | Undetermined | Permitted |
+| B | nothing | Undetermined | Permitted | Undetermined | Permitted |
+| C | medicine | Denied | Denied | Denied | Denied |
+| X | documents on day 20 | Denied | Denied | Denied | Denied |
+| Y | nothing | Undetermined | Permitted (failed) | Undetermined | Permitted (failed) |
+| Z | documents on day 75 | **Permitted (failed)** | Permitted (failed) | Undetermined | Permitted (failed) |
+
+**What the trade-off is.** The two options differ only in the two bold cells:
+
+- **Under (a)/(c), A and Z are decided without any licence.** A is decided because something is
+  recorded for A, taken as all of A's qualifications. Z is decided because one act is recorded for Z,
+  late and so irrelevant, and its presence makes the absence of a timely one count. Y, with nothing
+  recorded, stays Undetermined. Whether absence decides depends on whether some unrelated record
+  happens to exist, which no clause says.
+- **Under (b), absence decides only under a licence,** whether or not other values exist. A, B, Y
+  and Z are all decided the same way: by a closure. C and X need none, because a record that
+  satisfies the condition proves it, whatever else is missing. These are exactly the outcomes
+  ADR-A103's SWRL decision calls sound without completeness.
+
+**What (b) costs:**
+
+- a deployment that trusts its records says so once: a closure's source may be an operational
+  profile (ADR-A89), so "the admissions registry is complete for qualifications" is one declaration
+  per class of records, not one per condition. Without it the outcome is Undetermined, never wrong
+- ADR-A103 gains an addendum, and L15's statement changes: `SomeValue` Denied and `EveryValue`
+  Permitted need a closure
+- three examples (`set-reading-admissions.ttl`, `set-reading-trial.ttl`,
+  `reinsurance-claims-cooperation.ttl`) and two test modules (`test_eligibility_examples.py`,
+  `mork_compilers/test_set_readings.py`) declare closures or expect Undetermined
+- the reference semantics for L15 change, and the proved claims `TL1-some`, `TL1-every` and `TL4a`
+  are restated and re-proved, in HQ-6a.1
+- C9b3's set comparisons inherit (b), so `elg:Subset` and `elg:Disjoint` are decided only under a
+  closure, which is what the consent sketch already assumes
+- the SPARQL and SHACL backends stop deciding A and Z without a closure. SWRL is unchanged, being
+  already confined to (b)'s outcomes
+
+The law agrees with (b): a record proves what it shows, and silence proves nothing unless a deeming,
+a time bar or a party's authority makes it. KISS here favours the model that matches reality. The
+extra cost is bounded (five files, two proof claims) and is paid once, before C9b3 builds on it.
+**Leaning revised to (b),** with a closure's source allowed to be an operational profile, so that
+a deployment can restore today's behaviour on purpose by declaring its records complete.
+**Answered (2026-10-10): (b).**
 
 **HQ6a-Q2. Which layer declares a closure.**
 
@@ -3854,6 +3946,7 @@ costs a paragraph more than (a) and removes a hidden assumption. **Leaning (c).*
 
 KISS: (a) is where absence is read, and every layer that names a closure already imports it.
 HQ-6b binds a closure to Persistence through the profile, not by an import. **Leaning (a).**
+**Answered (2026-10-10): (a).**
 
 **HQ6a-Q3. How a condition names the closure it relies on.**
 
@@ -3864,34 +3957,122 @@ HQ-6b binds a closure to Persistence through the profile, not by an import. **Le
 | (c) matched implicitly, by the class the binding reaches | no link to maintain, but a reader cannot see which closure applies, and two closures over one class are ambiguous | a match per binding |
 
 KISS: (a) states the reliance where it happens. **Leaning (a).**
+**Answered (2026-10-10): (a).** (b) costs too much at run time and (c) is ambiguous.
+
+**HQ6a-Q4. Closures over a period** (raised by the maintainer, 2026-10-12). "No documents within 60
+days of the request" needs the window and the closure together, and a window anchored per subject
+needs ADR-A115's context values resolved at evaluation, which no compiler does before C12. C9b3's
+set comparisons need only untimed closures ("the consents register is complete as of this
+decision").
+
+| Option | Design overheads | Runtime overheads |
+|---|---|---|
+| (1) windows in HQ-6a: the closure's window bounds the records it covers and says when it is in force | HQ-6a.2 resolves anchors per subject, a part of C12 built early, and the examples depend on it | a window resolved per subject per decision |
+| (2) untimed closures in HQ-6a, complete as of the deciding record's recording time. Windows move to HQ-6b, with the other matters of time (business days, supersession) | none new. HQ-6b already comes before C12, which resolves anchors | none |
+
+**Answered (2026-10-12): (2).** Example 2 in HQ6a-Q1 is HQ-6b's to build. Its outcomes hold as drawn
+once windows exist.
 
 **Decided by precedent, not asked:**
 
-- a closure states what it covers (a class of records), its window (a range anchored at a context
-  value, as `ins:window` is, ADR-A115) and its source with `elg:licensedBy`, which has no range, as
-  `bhv:deeming` has none: a deeming, a term, or a party whose records are authoritative
+- a closure states what it covers (a class of records) and its source with `elg:licensedBy`, which
+  has no range, as `bhv:deeming` has none: a deeming, a term, a party whose records are
+  authoritative, or an operational profile (ADR-A89) by which a deployment declares its records
+  complete. HQ-6b adds its window (HQ6a-Q4)
 - the cut is the deciding record's own recording time (`fnd:Evidenced`), so HQ-6a adds no
   position. A decision names the closures it relied on with `elg:closureReliedOn`, as
   `bhv:closureReliedOn` names one for a breach
-- a closure whose window has not ended at evaluation decides nothing, and the outcome stays
-  Undetermined
 - refusal (NRS D7): the compiler refuses a binding whose closure does not cover the class the binding
   reaches, or names no source, with the diagnostic `exe:NoClosureLicence` (Executable 0.7.0, so
   MORK's pins move)
 - a new semantic law, L17, states the closure, with its reference semantics and differential tests
-  (the formal-freshness gate). Its Isabelle rows go with C9b3's proof work on L15, which it extends
-- the trial example's placeholder becomes a real condition under a closure, with examples from
-  lending and licensing beside it, all in calendar days (business days are HQ-3, in HQ-6b)
+  (the formal-freshness gate)
 - **sizing:** HQ-6a touches Eligibility, the reference semantics, the compilers and MORK's
   Executable ontology, so it splits by the lifecycle rule: **HQ-6a.1**, ADR-A105, the Eligibility
   model, examples and reference semantics, and **HQ-6a.2**, the compilers, the refusal and decision
   records. Both merge before C9b3
 
-**Planned validation** (packs `computable-contract-substrate-hq6a1.md` and `-hq6a2.md`): a closure
-at zero and too many sources and windows. The empty case Undetermined without a closure, and
-decided with one, under each reading and negated. The window open (Undetermined) and ended
-(decided). A binding naming a closure over another class refused. ADR-A103's examples unchanged.
-The reference and the compilers agree on every generated case. The decision names its closure.
+**What HQ-6a.1 builds** (branch `ccs/hq6a1-closures-model`, examples first):
+
+- **ADR-A105**, Proposed: closures as decided above, HQ6a-Q1 to Q4 with their pictures, the cut as
+  the deciding record's recording time, and the boundary: a closure's binding to the store is
+  HQ-6b's, against Track H's per-root sequence (AO-Q6)
+- **ADR-A103 addendum**, Proposed: `SomeValue` Denied and `EveryValue` Permitted need a closure
+- **Eligibility, in its README** (the literate source since C9b0):
+  - `elg:Closure`: `elg:closesClass` (exactly one class of records) and `elg:licensedBy` (exactly
+    one, no range: a deeming, a term, a party or an operational profile)
+  - `elg:closedUnder` on `elg:EvidenceBinding` (at most one closure), allowed only with
+    `elg:SomeValue` or `elg:EveryValue`. A closure never changes `elg:SingleValue`
+  - `elg:closureReliedOn` on `elg:EligibilityDecision` (any number)
+  - **L15 restated:** `SomeValue` is Permitted when any value is Permitted, Denied when every value
+    is Denied and the binding is closed under a closure in force, otherwise Undetermined, the empty
+    case included. `EveryValue` is Denied when any value is Denied, Permitted when every value is
+    Permitted and the binding is closed, otherwise Undetermined
+  - **L17, new, semantic:** a closure is in force from its source's effective time. In force, it
+    licenses that the values the binding reaches, as recorded up to the deciding record's recording
+    time, are all there are. HQ-6b adds a window, after which a closure over a period is in force
+  - shapes: a closure's cardinalities, `elg:closedUnder` only with a set reading, the closure
+    covering the class the binding's path reaches, and a decision's relied-on closures matching
+    its bindings
+- **the reference semantics** (`tools/reference/eligibility`): L15 restated and L17, with their
+  differential tests. The formal-freshness gate requires it
+- **the Isabelle theory** (`tools/proofs/eligibility/Eligibility.thy`): `some_value` and
+  `every_value` gain the closure, `some_value_spec_*`, `every_value_spec_*` and
+  `some_value_empty`/`every_value_empty` are restated, and the claims `TL1-some`, `TL1-every` and
+  `TL4a` are re-proved with `mise run check:proofs -- eligibility` (Isabelle2025-2, found by the
+  proof driver, verified on machine R 2026-10-12)
+- **examples:** the three that use a set reading gain closures or expect Undetermined
+  (`set-reading-admissions.ttl`, with the registry's closure licensed by an operational profile,
+  `set-reading-trial.ttl` and `reinsurance-claims-cooperation.ttl`). New: a facility's objections
+  register, licensed by the Agent, deciding "no Lender has objected" at a vote, and a licence whose
+  licensee's usage reports are complete by its terms, deciding "no use reported in a territory".
+  Neither needs a time window. `trial-definitions.ttl`'s placeholder stays until HQ-6b
+- **versions:** Eligibility, `eligibility-vocab` and Eligibility's shapes take a MINOR marked
+  breaking (L15 changes meaning, ADR-A113). The cascade (Behaviour, Instrument, Wording, the capacity
+  profile and their vocabularies) is computed, not counted. The catalog and release register are
+  regenerated
+
+**What HQ-6a.2 builds** (branch `ccs/hq6a2-closures-compilers`, from `main` after HQ-6a.1 merges):
+
+- the IR carries a binding's closure. The SPARQL and SHACL backends decide `SomeValue` Denied and
+  `EveryValue` Permitted, the empty case included, only under a closure in force at the decision's
+  recording time. SWRL and OWL are unchanged: they already derive only
+  the outcomes (b) allows without a closure
+- the refusal: a binding whose closure does not cover the class it reaches, or has no source, is
+  refused with `exe:NoClosureLicence`, declared in MORK's Executable ontology (0.7.0, so
+  `build:mtp` moves MORK's pins)
+- a compiled decision names the closures it relied on (`elg:closureReliedOn`)
+- `test_set_readings.py` and the differential harness extended with the closure
+
+**Planned validation, HQ-6a.1** (pack `computable-contract-substrate-hq6a1.md`):
+
+| ID | Given / When / Then | Level | + / − |
+|---|---|---|---|
+| HQ6a1-01 | a closure / validated / one class and one source. Each cardinality tested at zero and at two | L1 | + − |
+| HQ6a1-02 | a binding read `SingleValue` naming a closure / validated / violation | L1 | − |
+| HQ6a1-03 | a binding naming a closure over another class / validated / violation | L1 | − |
+| HQ6a1-04 | admissions A (history, physics), no closure / L15 / Undetermined. With a closure in force / Permitted, negated | L2 | + − |
+| HQ6a1-05 | admissions B (nothing), with and without a closure / L15 / Permitted, Undetermined | L2 | + − |
+| HQ6a1-06 | admissions C and request X / L15, no closure / Denied, unchanged | L2 | + |
+| HQ6a1-07 | `EveryValue`, every value Permitted / with and without a closure / Permitted, Undetermined | L2 | + − |
+| HQ6a1-08 | a closure whose source takes effect after the deciding record's recording time / L17 / not in force, Undetermined | L2 | − |
+| HQ6a1-09 | the objections register at a vote, no objection recorded / with and without the Agent's closure / Permitted, Undetermined | L2 | + − |
+| HQ6a1-10 | the admissions, facility and licence examples / validated against every layer's shapes / conform | L3 | + |
+| HQ6a1-11 | a decision naming a closure its bindings do not use / validated / violation | L1 | − |
+| HQ6a1-12 | the reference semantics / differential and law tests / L15 and L17 hold on every generated case | L2 | + |
+| HQ6a1-13 | the Isabelle session / `check:proofs eligibility` / `TL1-some`, `TL1-every` and `TL4a` re-proved, the gate passes | L2 | + |
+| HQ6a1-14 | the README / literate `--check`, formal freshness / consistent | L0 | + |
+| HQ6a1-15 | the versions / versioning, catalog, release register, `check:full-sweep` / pass | L0 | + |
+
+**Planned validation, HQ-6a.2** (pack `computable-contract-substrate-hq6a2.md`): the SPARQL and
+SHACL backends agree with the reference on every HQ6a1-04 to 09 case. SWRL and OWL output unchanged.
+A binding whose closure covers another class, or has no source, refused with `exe:NoClosureLicence`.
+A compiled decision names its closures. `build:mtp` and `check:mtp` pass. `check:full-sweep` passes.
+
+**Deliberately not covered:** closures over a period and their anchors, the deemed-failure
+example and the trial placeholder, supersession by a late fact, conclusive and single-purpose
+deemings, business days, the deemed-fact record's link, and the closure's binding to the store (all
+HQ-6b). Set comparisons over closures (C9b3).
 
 ### Tranche E: evaluation
 
@@ -3924,7 +4105,7 @@ so that its implications can be weighed when it is taken up.
 | HQ-2 | **Qualified gates: gating by another subject's state.** C7a gates a relation by the state of its own instrument, or of the occasion its arising chain reaches (C7a-Q5). Two cases are held: one participant's share within one agreement, where several parties are each liable for their own share and each share has its own state, and another agreement altogether, where one contract responds only once another is exhausted | the model must be consistent within one legally binding agreement first. Dependencies across agreements may not belong in this layer at all, and may sit in an applied ontology above it | designed with C12's evaluator, within one agreement first |
 | HQ-3 | **Business day conventions and times of day** (TQ2, held 2026-10-05). "If that day is not a Business Day, on the next Business Day" (following, modified following, preceding), and "by 11:00 a.m. London time" (a time of day in a zone, S74). Recorded as use cases A13 and A14 in the [terms in time sketch](../sketches/terms-in-time.md) §3 | a due date that falls on a non-business day, or at a time of day, is resolved wrongly until Quantification can roll and zone it | with the first business continuity examples, in Quantification beside ADR-A94's calendars |
 | HQ-5 | **The full set of group behaviours** (C7c-Q4, 2026-10-06). C7c uses Party's two composition rules for duties and leaves a group's power, and a group with no rule, Undetermined (CC-D10). The full set is: several only, joint only, joint and several, any one may act, all must act, and a threshold by number or by share, for duties and for powers alike, with how a member's share, release or default affects the rest, and how the instrument's silence is filled by an amendment, a deeming, a market default declared as data, or a recorded reading | a relation owed to or held by a group is decided wrongly, or not at all, until every mode is modelled | immediately after C9, as its own slice or the first follow-up of C9, and before AIR Phase 5 and Open CBAA's migration rely on group powers Revised 2026-10-09: the remaining group behaviours become acting rules beside C9b4's qualifying rules, and "any one may act" an `elg:Intersects` ([consent sketch](../sketches/consent-and-group-powers.md) §2.2, §5). |
-| HQ-6 | **Deemings made watertight** (C7c-Q8, 2026-10-06). C7c states deemings in full, but the closure a deeming over absence licenses is ADR-A105's, not yet drafted. To settle: the closure declaration and its scope and window, rebuttal of a rebuttable deeming by later evidence and what that supersedes, the precedence of a conclusive deeming over a finding, deemings for one purpose only (`ins:forPurposeOf`) and how they stay out of other relations, deemed receipt counted in business days (HQ-3), and the deemed-fact record's link back to its deeming and closure | a deeming may be read as more or less than its words say, and a late fact may not supersede it correctly | a CCS slice, taking over NRS slice N5 (ADR-A105), as N4 and N8 were (HQ6-Q1, the maintainer, 2026-10-10). Split (HQ6-Q2): **HQ-6a**, before C9b3, whose set comparisons need licensed closures for deemed consent and "snooze you lose" ([consent sketch](../sketches/consent-and-group-powers.md) §2.3): ADR-A105, the closure declaration with its scope and window, a deeming as a closure source, compile-time refusal of an unlicensed absence-dependent check (NRS D7, as C9b0-Q2), and decisions recording their closure. **HQ-6b**, before C12: rebuttal and supersession, conclusive precedence, single-purpose deemings, deemed receipt in business days (HQ-3), the deemed-fact record's link, and the closure's binding to the store: its cut to the per-root sequence and receipt stream (formal-methods Track H, AO-Q6) and its completeness to `dal:BlockingContiguityCheck`. **HQ-6a holds no Persistence content** (2026-10-10). Track H owns the sequence and the audit, and its plan records the dependency. |
+| HQ-6 | **Deemings made watertight** (C7c-Q8, 2026-10-06). C7c states deemings in full, but the closure a deeming over absence licenses is ADR-A105's, not yet drafted. To settle: the closure declaration and its scope and window, rebuttal of a rebuttable deeming by later evidence and what that supersedes, the precedence of a conclusive deeming over a finding, deemings for one purpose only (`ins:forPurposeOf`) and how they stay out of other relations, deemed receipt counted in business days (HQ-3), and the deemed-fact record's link back to its deeming and closure | a deeming may be read as more or less than its words say, and a late fact may not supersede it correctly | a CCS slice, taking over NRS slice N5 (ADR-A105), as N4 and N8 were (HQ6-Q1, the maintainer, 2026-10-10). Split (HQ6-Q2): **HQ-6a**, before C9b3, whose set comparisons need licensed closures ([consent sketch](../sketches/consent-and-group-powers.md) §2.3): ADR-A105, an untimed closure declaration, complete as of the deciding record's recording time (HQ6a-Q4, 2026-10-12), its sources (a deeming, a term, a party, an operational profile), set readings deciding on completeness only under one (HQ6a-Q1 (b)), compile-time refusal of an unlicensed binding (NRS D7, as C9b0-Q2), and decisions recording their closure. **HQ-6b**, before C12: closures over a period anchored per subject, which deemed consent and "snooze you lose" need, rebuttal and supersession, conclusive precedence, single-purpose deemings, deemed receipt in business days (HQ-3), the deemed-fact record's link, and the closure's binding to the store: its cut to the per-root sequence and receipt stream (formal-methods Track H, AO-Q6) and its completeness to `dal:BlockingContiguityCheck`. **HQ-6a holds no Persistence content** (2026-10-10). Track H owns the sequence and the audit, and its plan records the dependency. |
 | HQ-7 | **Several instruments covering portions of one order** (raised 2026-10-06, C7c). A layer in an insurance programme may be placed on several policies, each covering a portion of the order, on different risks or on the same risk with different terms. They are separate instruments related to one placement, not a group of parties acting together, so neither Party's groups nor a section models them | a placement split across policies is modelled as a group or not at all, and the portions cannot be reconciled with the order | with the insurance applied layer's placement model, or C9 if it becomes an instrument relation |
 | HQ-8 | **Materiality beyond amendments** (MQ1, 2026-10-07). Material breach, a material adverse change in a party's circumstances and a material change in a risk classify an event or a state of affairs, as amendment materiality classifies a change. They share its sources (the contract's definition, a referenced one, a determination) and its split between enumerated and evaluative definitions ([change materiality sketch](../sketches/change-materiality.md)) | each is otherwise modelled ad hoc, and a definition such as "Material Adverse Effect" already exists as a condition word (C7c) without a rule for its evaluative part | later in the epic, after C9 and C12, reusing C9's mechanism |
 | HQ-9 | **Eligibility paths ending at an identity** (MQ7, 2026-10-07). A condition that asks whether a value is one of several named records, such as "any amendment to Clause 35" or "a claim on one of the named vessels". Matching is exact, with no hierarchy unless the condition walks a structure Eligibility does not import | until then a materiality definition naming a clause falls back to a determination (C9), and other layers tag records with concepts to be matched | its own Eligibility slice with an ADR, after ADR-A90, A91 and A103, cascading to every importer and the MORK and design-time OWL compilers |

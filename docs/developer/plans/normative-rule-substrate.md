@@ -351,7 +351,7 @@ than hand-built. Violation and compliance as `fnd:DecisionRecord` derived artefa
 supporting both derived breach (a deadline passing) and asserted breach (an adjudicator's finding,
 carrying `fnd:assertedBy`).
 
-**Blocked on N5** (since 2026-10-10, CCS HQ-6a). Without a closure licence a violation can never be derived and the whole chain
+**Blocked on N5** (since 2026-10-12, CCS HQ-6b, since a breach is an absence over a period). Without a closure licence a violation can never be derived and the whole chain
 is inert.
 
 **Revised 2026-09-30.** The chain is `ins:arisesOnBreachOf` on the secondary relation (it fans out,
@@ -373,10 +373,11 @@ N8 keeps any work is open (status record, NQ-3).
 **Moved to [CCS](computable-contract-substrate.md) on 2026-10-10** (HQ6-Q1). CCS's held
 question HQ-6 is this slice, and it runs as CCS work, as N4 and N8 did. Split by HQ6-Q2:
 
-- **HQ-6a, before CCS C9b3:** ADR-A105, the closure declaration with its scope and window, a deeming
-  as a closure source, compile-time refusal of an unlicensed absence-dependent check (D7, consistent
-  with CCS C9b0-Q2), and decisions recording the closure they relied on
-- **HQ-6b, before CCS C12:** rebuttal and supersession, the precedence of a conclusive deeming,
+- **HQ-6a, before CCS C9b3:** ADR-A105, an untimed closure declaration, complete as of the deciding
+  record's recording time, its sources (a deeming among them), compile-time refusal of an unlicensed
+  binding (D7, consistent with CCS C9b0-Q2), and decisions recording the closure they relied on.
+  Closures over a period moved to HQ-6b on 2026-10-12 (CCS HQ6a-Q4)
+- **HQ-6b, before CCS C12:** closures over a period anchored per subject, rebuttal and supersession, the precedence of a conclusive deeming,
   deemings for one purpose only, deemed receipt counted in business days (CCS HQ-3), the deemed-fact
   record's link to its deeming and closure, and the persistence profile's dense ordering and gap audit
 
