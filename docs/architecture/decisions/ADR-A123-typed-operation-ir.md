@@ -2,7 +2,7 @@
 
 # ADR-A123: A typed operation IR for the persistence compiler
 
-**Status:** Accepted, 2026-10-10, with the ADR-A79 addendum applied the same day, and two addenda of its own (2026-10-12)
+**Status:** Accepted, 2026-10-10, with the ADR-A79 addendum applied the same day, and three addenda of its own (2026-10-12)
 **Date:** 2026-10-10
 **Supersedes:** parts of [ADR-A79](ADR-A79-persistence-compiler-toolchain.md), listed under Decision 10. ADR-A79 stays Accepted for the rest
 **Related:** [ADR-A78](ADR-A78-persistence-profile-substrate-and-aggregate-boundaries.md),
@@ -171,4 +171,20 @@ Decided by the maintainer while planning slice H2.3 (Track H plan §4.1, H2.3-Q2
 
 This leaves ADR-A122 decision 8's rule unchanged and moves its enforcement to the caller only when the caller turns off
 both the query's naming and its guards.
+
+## Addendum, 2026-10-12: the path is the IR's reference to the tree, and the IR is not stored yet
+
+Decided by the maintainer while planning slice H2.4 (Track H plan §4.2, H2.4-Q1, and the status record's H2-Q7).
+
+1. **Decision 4's "the IR holds a reference to it" is corrected.** The IR is built by the builders inside `instantiate`
+   (FMH-H2-2, decision 2), which reads only the compiled profile (ADR-A79 decision 1), and the profile holds the owned path,
+   not the tree (H2-Q5). So the compiled path is the IR's reference to the `OwnershipTree`. A composite operation reads it
+   with `Bindings.path`, and its read set marks the sweep a closure read with the path's text. The tree stays in
+   `persistence.boundary`, where `compile`, H4's language check (C10) and H5's models use it. The sentence was written in the
+   typed IR brief without checking where the IR is built.
+2. **H2-Q5 stands, and a stored IR is decided with PDD-06's ADR.** The IR published, if any, is the semantic SPARQL IR that
+   PDD-06 proposes, so that one contract is published once. Until then the rules SI-1 to SI-6 of the
+   [typed IR sketch §9.4](../../developer/sketches/formal-methods-track-h-typed-ir.md#94-rules-that-keep-a-clean-stored-ir-possible)
+   keep a clean stored IR possible, and §9.5 lists what that ADR must decide. One rule does not hold today: a `Path` holds the
+   path's rendered text, not its structure.
 

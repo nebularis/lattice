@@ -23,8 +23,8 @@ design-time models, excludes all relational/SQL work)
 **Source:** [persistence-fml.md](../notes/rdf-engine/persistence-fml.md), an independent,
 exhaustive review of the Persistence layer against this epic's own techniques
 **Status:** In progress. H1 and the aggregate-ownership slices HO0 to HO9 are merged to `main` and
-signed off (2026-10-10). H2 is briefed, ADR-A123 is accepted (2026-10-10), and H2.0 to H2.3 are built, reviewed and ready for merge
-(2026-10-12). The live state is in the status
+signed off (2026-10-10). H2 is briefed, ADR-A123 is accepted (2026-10-10), H2.0 to H2.3 are merged and signed off
+(2026-10-12), and H2.4 is planned. The live state is in the status
 record
 
 ## 1. Scope
@@ -512,7 +512,7 @@ check of ADR-A122 decision 6, and the required-parameter guard that closes TD-34
 unchanged. Every hazard of the [specification sketch §3](../sketches/formal-methods-track-h-specification.md#3-the-typed-intermediate-representation)
 becomes a refusal by type, and H1.3's checks pass over the new output by construction. H2-Q1 to H2-Q6
 are answered ([sketch §1](../sketches/formal-methods-track-h-typed-ir.md#1-decisions-already-taken-2026-10-10)),
-ADR-A123 is accepted (2026-10-10). H2.0 to H2.3 are built and reviewed, ready for the merge (2026-10-12).
+ADR-A123 is accepted (2026-10-10). H2.0 to H2.3 are merged and signed off (2026-10-12).
 
 ### 4.1 H2.3: the named-graph row writers (planned 2026-10-12)
 
@@ -641,6 +641,135 @@ guard at the top level, a sweep without the join on `?g`, and a role swapped bet
 
 About 650k tokens for the one slice, against 400k in the sketch, since the sketch did not foresee H2.3-Q2 or the
 caller-named override.
+
+### 4.2 H2.4: the composite family, and what each store does (planned 2026-10-12)
+
+**Unit:** slice H2.4 of the [typed IR sketch §7](../sketches/formal-methods-track-h-typed-ir.md#7-slices), under ADR-A123
+and its two addenda of 2026-10-12. Builds on H2.2's harness and H2.3's ports. It has two parts of different kinds, the
+ports of the composite family and the measurements the sketch's §4.3 and H2.3-Q2 left to it. All four questions were decided on
+2026-10-12.
+
+#### The scene, checked against the templates
+
+| Template | Writes | Parameters | Note |
+|---|---|---|---|
+| `create-if-absent-composite` and its dataset-guard variant | the payload into the data graph, a version row at `seq 1`, the claim, the receipt | `$root`, `$epoch`, `$newRev`, `$txnId`, `$requestDigest`, the payload slot | guarded by no version row and by `FILTER NOT EXISTS { GRAPH {{{dataGraph}}} { $root ?anyP ?anyO } }`. It takes no path (`create_bindings` in `operations.py`) |
+| `cas-replace-composite-property` and its variant | deletes the root and every member from the data graph and the old row, writes the payload, the new row, the claim, the receipt | as create, with `$expectedSeq` and `$nextSeq` | the sweep is `OPTIONAL { GRAPH {{{dataGraph}}} { $root {{{ownedPath}}} ?s . ?s ?p ?o } }`. The receipt goes to `?logGraph2`, bound by `BIND(?logGraph AS ?logGraph2)` |
+| `tombstone-delete-composite` and its variant | deletes the root and every member, tombstones the row, writes the claim and a deletion receipt | as replace, with `$cause` and `$actor`, and no payload | the same sweep |
+
+Five facts constrain the slice.
+
+1. **The data graph is a constant.** Every composite pattern sits in `GRAPH {{{dataGraph}}}`, the profile's mandatory
+   `dal:dataGraph` (ADR-A122 decision 3). There is no `?g`, so H2.3-Q2's rule does not arise and `graph_names` changes
+   nothing for these operations, as T28 of H2.3 already checks for append.
+2. **The owned path arrives as text.** `compile` binds `ownedPath` as a `PropertyPath` from `tree.owned_path()`, and since
+   the H2.2 review `operation_context` wraps it by its declared type and `Bindings.path` reads it. The harness compares
+   paths by value, and tells apart a different order of alternatives (checked 2026-10-12), so builder and template must
+   give the same path, which they do, since both take the binding.
+3. **The `OwnershipTree` is not in the compiled profile.** `instantiate` sees the path and not the tree. ADR-A123 decision
+   4 says "the IR holds a reference to it". H2.4-Q1.
+4. **`?logGraph2` has no recorded reason.** It came with the first cut of the templates (`d1b53b66`). The port keeps it,
+   since a port changes nothing. Whether it can go is a change for later, with an engine test.
+5. **Oxigraph is not in the check environment.** `pyoxigraph` is installed only by hand, for `spikes/persistence-oxigraph`,
+   which no `mise` task runs. Version 0.5.11, the newest, has a native Python 3.14 wheel on PyPI, so it installs into this
+   checkout's `.venv` (an agent's dry run and download, 2026-10-12, and a run on 3.13 in a scratch environment). The spike
+   pins `pyoxigraph>=0.5.11,<0.6`, already the newest. Its README's caveat about "a Python the pyoxigraph wheels support"
+   is out of date. Measuring on Oxigraph (TD-42, H2.3-Q2, TD-44) needs a home. H2.4-Q2 and H2.4-Q3.
+
+#### What the measurements are for
+
+Each is a property of a store that the later tranches modelling each platform will branch on, and that H5's capability
+record will carry with a probe. H2.4 writes the probes and records what rdflib and Oxigraph do. It decides nothing about
+which form to generate.
+
+| Probe | What it asks | How | Feeds |
+|---|---|---|---|
+| P1 `snapshotUpdateSemantics` | does the store fill both templates from one solution sequence and remove before it adds | `DELETE { GRAPH <g> { ?d <p> <o> } } INSERT { GRAPH <g> { ?i <p> <o> } } WHERE { VALUES (?i ?d) { (<s> UNDEF) (UNDEF <s>) } }`, and the same with the rows swapped. The specification keeps `<s> <p> <o>` in both. A store that applies each solution in turn loses it in one order | TD-42's linear form R2 (sketch §4.3) |
+| P2 request failure atomicity | does a request whose second operation fails keep its first | `INSERT DATA { ... } ; CREATE GRAPH <existing>`, then read. This is the failure half of `atomicUpdateRequest`. Its isolation half needs concurrent writers, which is H5's | R1, the two-operation form |
+| P3 correlated graph join | does a `GRAPH ?g` in an inner group read only the graph an enclosing `BIND` names | time it over 1 and over 100 graphs of equal size. A store that evaluates the inner group before the join grows with the store | the cost note of H2.3-Q2, and whether `compile` should choose the caller-named form for a store |
+| P4 unbound graph variable in a template | is a template triple in `GRAPH ?g` with `?g` unbound skipped | run one and look for a new graph | TD-44 |
+
+And one benchmark, the cost of R0, the composite replace as shipped (TD-42): M stored triples and a payload of N, M = N
+from 10 to 10,000, on both engines. The sketch's §4.3 says what follows: if Oxigraph shows R0 to be **wrong**, not slow,
+H2.4 stops and asks.
+
+#### Questions for the maintainer
+
+| # | Question | Options and consequences | Leaning |
+|---|---|---|---|
+| H2.4-Q1 | ADR-A123 decision 4 says the IR holds a reference to the `OwnershipTree`, and `instantiate` has only the path | (a) **the compiled path is the IR's reference to the tree.** The builder takes it with `Bindings.path`, the read set marks the sweep `closure` with the path's text, and H5 reads the path. The tree stays in `persistence.boundary`, where `compile` and H2.8's payload check use it. A dated addendum corrects the wording of decision 4. (b) Carry the tree into the compiled profile, so `instantiate` can rebuild it. That needs the boundary shape in the profile, a vocabulary change, for no reader that the path does not already serve | (a). **Why it drifted, and the impact, 2026-10-12.** The sentence came from the typed IR brief (§3.1), which took the ownership sketch's "`OwnershipTree` as typed IR values" without checking where the IR is built. ADR-A79 already had `instantiate` read only the compiled profile, H2-Q5 (a) then kept the IR out of the profile, and FMH-H2-2's decision 2 put the builders in `instantiate`, so the IR can hold only what the profile holds, the path. Under (a) nothing in code changes. The read sets, H2.8's `payload-check` query and an SDK use the path. H4's C10 check and H5's models have the tree on the `compile` side, and a relational realisation reads it from the configuration. What `instantiate` cannot do is check the path against the tree, which HO4's property test and H4's C10 cover. **Decided 2026-10-12: (a)**, with H2-Q7 (A): the IR is not stored until PDD-06's ADR decides a stored IR, and the rules SI-1 to SI-6 of the [typed IR sketch §9.4](../sketches/formal-methods-track-h-typed-ir.md#94-rules-that-keep-a-clean-stored-ir-possible) keep that possible. Recorded as ADR-A123's third addendum |
+| H2.4-Q2 | where Oxigraph runs | (a) an optional extra of `tools/persistence`, (b) a spike only, (c) a required test dependency | **Decided 2026-10-12: a test-support package at `tools/testing/oxigraph`**, since it is not a runtime backend or store SPI (ADR-A75) but an engine for tests and conformance. It holds the in-memory Oxigraph adapter (`update`, `select`, `quads`, and binding `$name` parameters as a caller would), depends on `pyoxigraph>=0.5.11,<0.6`, and is installed by its own `bootstrap:testing-oxigraph`. The persistence engine tests are parametrised over rdflib and Oxigraph, and the Oxigraph cases skip when the package is absent. A task `check:persistence-oxigraph` installs it and runs them. `check:persistence` and `check` are unchanged. A new kind of directory under `tools/`, so [ADR-A125](../../architecture/decisions/ADR-A125-test-support-tooling.md), Proposed (step 0) |
+| H2.4-Q3 | where the benchmark lives | (a) a spike, (b) a `mise` task, (c) a slow test | **Decided 2026-10-12: a proper check in a new root, `benchmark/persistence-composite-cost`, run on demand.** Its task, `check:persistence-composite-cost`, is not a dependency of `check`. As a check it has a pass criterion: at every size and on both engines the replace leaves exactly the payload and the right row, and it fails on a wrong result. It writes the timings and the fitted growth per engine to a generated, git-ignored report, and it does not fail on slowness, since no budget exists before H5. The maintainer confirmed this pass criterion, and that it must not fail on time, on 2026-10-12. A new root, so [ADR-A124](../../architecture/decisions/ADR-A124-benchmark-root.md), Proposed (step 0) |
+| H2.4-Q4 | slice size | (a) **two slices.** H2.4a ports the six templates with their behaviour and engine tests, needing no new toolchain. H2.4b adds Oxigraph per Q2, the probes P1 to P4 and the benchmark per Q3. (b) One slice, about 30 cases, beyond the sizing rule as H-D21 allowed for H2.3 | (a). The two parts are different kinds of work, H2.4a can start before Q2 and Q3 are settled, and only H2.4b can trigger the stop. **Decided 2026-10-12: (a)** |
+
+#### Parameter kinds
+
+As H2.3: `$root`, `$newRev`, `$txnId`, `$cause` and `$actor` are `Iri`, `$epoch` is `Long`, `$expectedSeq` and `$nextSeq`
+are `Position`, `$requestDigest` is `Digest`, and `payloadTriples` is the payload slot. The composite family has no
+`$assertGraph` or `$retractGraph`.
+
+#### Steps
+
+H2.4a, the ports:
+
+1. Port `create-if-absent-composite`, `cas-replace-composite-property`, `tombstone-delete-composite` and their variants,
+   with the path read by `Bindings.path` and the data graph by `b.graph("dataGraph")`. Add the stems to `BUILDERS`, so
+   the harness, the binding check, the guard check and T20, T21 and T32 cover them.
+2. The read set of a replace and a tombstone marks the sweep a `closure` read with the path's text, and its write set holds
+   the data graph's `?s ?p ?o`, the payload where there is one, and the version row. A test states both, for H5.
+3. Behaviour on rdflib, over the reference fixture of ADR-A122 (`test_composite_sweep.py` already loads it): a create
+   writes the payload into the data graph and a row at `seq 1`, and a second create of a root that has triples there writes
+   nothing. A replace leaves exactly the payload and sweeps every member reached by the owned edges, through a recursion
+   and an inverse edge, and none of the references, vocabulary or other aggregates. A replace at the wrong `seq` writes
+   nothing. A tombstone empties the aggregate and marks the row deleted, and a later replace writes nothing. A replay is a
+   no-op. The variant rebases the row's epoch.
+4. The guard, F1's case for this family: a replace with no `$root` over two stored aggregates writes nothing. Without the
+   guard the expected result is worse than for a named graph, since the one payload is written once and every aggregate
+   at that `seq` is swept. The test records what rdflib does.
+5. **The stored-IR rules SI-1 and SI-2** (typed IR sketch §9.4) get a test: every ported operation, of every family,
+   goes through a generic structural encoding and back and is equal to itself, and building it twice gives equal values.
+   A value that holds anything SI-1 forbids fails it.
+6. Engine tests for the semantic rules the ports rely on (plan §5.1): a zero-length step of the path reaches the root
+   itself, an inverse step walks against the edge, and R0 stays right on an engine that applies an update one solution at a
+   time, shown by a replace whose payload keeps a triple the aggregate already has, which must survive on rdflib.
+
+H2.4b, the measurements:
+
+0. **ADR-A124 and ADR-A125 accepted** before H2.4b merges. Both were drafted, Proposed, on 2026-10-12:
+   [ADR-A124](../../architecture/decisions/ADR-A124-benchmark-root.md), a root `benchmark/` for checks that measure, run on
+   demand, and [ADR-A125](../../architecture/decisions/ADR-A125-test-support-tooling.md), `tools/testing/` for test-support
+   packages that are neither a runtime backend nor a store SPI. On acceptance, AGENTS.md's table of roots, the root README and
+   the Copilot copy (`mise run build:agent-guidance`) gain both. Re-check that A124 and A125 are free on every branch before
+   merging.
+7. Oxigraph per H2.4-Q2, at `tools/testing/oxigraph`. Correct the spike README's caveat about Python versions, and the behaviour tests of step 3 and of H2.2 and H2.3 that run an update also run on Oxigraph
+   where the extra is installed.
+8. The probes P1 to P4 as tests that assert what each engine does today, so a change in either engine's behaviour fails a
+   test, with a table of the results in the Validation Pack.
+9. The benchmark per H2.4-Q3, at `benchmark/persistence-composite-cost`, both engines, with M = N from 10 to 10,000. TD-42's row gains the Oxigraph figures, and its home is unchanged (H5 selects
+   R2 by `snapshotUpdateSemantics`). If R0 is wrong on Oxigraph, stop and ask.
+
+#### Planned validation
+
+One Validation Pack per slice, `FMH-H2-4a` and `FMH-H2-4b`, each with `mise run check:persistence` as its one command,
+and for H2.4b also `mise run check:persistence-oxigraph` and `mise run check:persistence-composite-cost`, the second
+run by hand. The adversarial probes at the gate include a path
+with one alternative dropped (the harness fails), the sweep moved out of its `OPTIONAL` (a replace of an empty aggregate
+then writes nothing), the guard at the top level (step 4 fails), and, for H2.4b, a probe that hard-codes one engine's
+answer.
+
+#### Deliberate non-coverage
+
+- The payload check against the boundary shape, H2.8. Its generated `payload-check` query uses the same path.
+- Recording the path or the read set in the compiled profile, H2.7.
+- The isolation half of `atomicUpdateRequest`, and the identical-insert conflict of the ownership sketch §15, which need
+  concurrent writers, H5.
+- R1 and R2 themselves. H2.4 measures, and H5 chooses.
+- Removing `?logGraph2`, a change for later.
+
+#### Estimate
+
+About 350k tokens for H2.4a and 400k for H2.4b, with ADR-A124 and the two new directories, against 400k for the whole slice in the sketch, which did not include the
+probes P2 to P4.
 
 **H3 (specification registry), outline:**
 - One machine-readable registry (syntax not yet chosen, specification sketch §2) generating:

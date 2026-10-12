@@ -468,3 +468,66 @@ its Validation Pack for countersignature, under the non-weakening rule.
 - PL-C, and the staged in-store payload check.
 - PL-D, a published SDK, sketched separately in [persistence-client-sdk.md](persistence-client-sdk.md).
 - Any relational realisation (ADR-A-FM4 decision 1). H2-Q6 only keeps its door open.
+
+## 9. Toward a stored IR (H2-Q7, decided 2026-10-12)
+
+H2-Q5 (a) keeps the IR out of the compiled profile, and the IR is never stored (§3). The maintainer asked whether to reverse
+that, since a stored IR gives more options. We decided to keep H2-Q5 for now and to decide what a stored IR is with PDD-06's
+ADR, so that the IR published is the semantic SPARQL IR of plan §5.1 and is published once. This section records why, and
+the rules that keep a clean stored IR possible until then.
+
+### 9.1 What a stored IR would give
+
+| Gain | How |
+|---|---|
+| the IR can hold the `OwnershipTree` | a stored IR is built by `compile`, where the tree exists, so ADR-A123 decision 4's "the IR holds a reference to it" becomes true |
+| `instantiate` becomes a printer | it turns a stored IR into text and decides nothing, which is the "mechanical, verified" last step PDD-06 asks for |
+| readers outside Python | an SDK built on one core (option S-C of the [SDK sketch](persistence-client-sdk.md)), renderers in other languages, a MORK mapping target (PDD-06), H5's models reading operations |
+| type rules as shapes | the rules of §3 written as SHACL shapes over the stored IR, so any language can check an operation |
+| an artefact to review | the structure of every operation, versioned and diffable beside the profile |
+
+### 9.2 What it would cost
+
+- **The IR becomes a contract.** Every change to it is an ontology change, versioned under ADR-A86 with release tags, where
+  today it can change with a builder.
+- **A vocabulary for SPARQL's structure**, written or adopted. SPIN's SPARQL syntax vocabulary, a W3C member submission of
+  2011, is one existing RDF encoding to evaluate. H2.7's vocabulary work grows with it.
+- **The builders move into `compile`**, which reverses FMH-H2-2's decision 2, and the harness compares the stored IR, printed,
+  with the templates.
+- **The compiled profile grows**, by roughly hundreds of triples per operation per target.
+- **Two migrations if it is done now.** Today's `persistence.ir` is a typed syntax tree, and PDD-06 plans to replace it with an
+  IR of SPARQL's semantics. Storing the syntax tree would publish a format we expect to retire.
+
+### 9.3 The options, and the decision
+
+| Option | Consequence |
+|---|---|
+| **(A) keep H2-Q5, re-decide it with PDD-06's ADR** | one contract, published once, in the shape PDD-06 settles. **Decided 2026-10-12** |
+| (B) reverse now, storing today's syntax IR as RDF | every gain of §9.1 now, at the cost of a contract we expect to replace and a second migration |
+| (C) also export the IR as an unversioned artefact | readable now without a vocabulary, at the risk of a dependence on a format that promises nothing |
+
+### 9.4 Rules that keep a clean stored IR possible
+
+Until PDD-06, nothing in H2 may make storing harder. Each rule holds today unless it says otherwise.
+
+| # | Rule | Why it matters to a stored IR | Today |
+|---|---|---|---|
+| SI-1 | every IR value is a frozen dataclass whose fields hold only IR values, enums, `str`, `int`, `bool`, tuples of these, or encoded terms from `persistence.terms`. No callables, no rdflib nodes, no mutable containers | a structural encoding exists for every value, so it can be written as RDF or any other form | holds, not enforced |
+| SI-2 | a builder is a pure function of its bindings and options. The same inputs give an equal `Operation`. It reads no file, clock or environment | a stored IR and a rebuilt one are the same value | holds, not enforced |
+| SI-3 | every option that changes an operation is visible in the value | a stored IR records it | holds. `GUARDS_OFF` is a field value, and `graph_names="caller"` shows as the parameter `$g` with its `equals` |
+| SI-4 | every graph names its role, from `GRAPH_ROLES` | a stored IR carries the logical resource of each pattern (H2-Q6) | holds, enforced by H2.2's T20, T21 and H2.3's T32 |
+| SI-5 | no IR value holds SPARQL text, apart from encoded terms | a stored IR is structure, not text to parse again | **does not hold for paths.** `Path` holds a `PropertyPath`, which is rendered text, because `instantiate` sees only the path's text in the profile. A stored IR would hold the path's structure, `persistence.paths.PathExpr`, which `compile` has |
+| SI-6 | the tree and the path agree | a stored IR built by `compile` can carry both | holds on the `compile` side, by HO4's property test and, later, H4's C10 check |
+
+SI-1 and SI-2 get a test in slice H2.4a: every ported operation goes through a generic structural encoding and back and is
+equal to itself, and building it twice gives equal values. SI-5's gap is recorded here and is what PDD-06 closes.
+
+### 9.5 What PDD-06's ADR has to decide about storage
+
+1. Which IR is stored: the semantic SPARQL IR, the configuration IR (the logical operation contract of H2-Q6), or both, and
+   which is canonical.
+2. Where it is stored: in the compiled profile, or beside it as its own artefact with its own version.
+3. Its encoding: a LATTICE vocabulary, SPIN's or another existing one, and whether its type rules are SHACL shapes.
+4. Who builds it: `compile`, with the builders moved there, and what `instantiate` keeps.
+5. How it is verified against the text: extraction of the printer, or translation validation by an independent parser.
+6. How it is versioned, and what an adopter's migration from today's profile looks like.

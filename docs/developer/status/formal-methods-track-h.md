@@ -3,7 +3,7 @@
 # Formal Methods, Track H: Status
 
 **Unit ID:** `formal-methods-track-h` (phase, within the `formal-methods` epic)
-**Status:** In progress. H1 (H1.1 to H1.5, with H1.4c) and the aggregate-ownership slices HO0 to HO9 are merged to `main` and signed off (2026-10-10). H2 is briefed. ADR-A123 is accepted, with two addenda of 2026-10-12. H2.0 to H2.3 are built, reviewed and ready for the maintainer's merge (2026-10-12), with `check:persistence` at `2003 passed, 1 xfailed`
+**Status:** In progress. H1 (H1.1 to H1.5, with H1.4c), the aggregate-ownership slices HO0 to HO9 and H2.0 to H2.3 are merged to `main` and signed off (H1 and HO 2026-10-10, H2.0 to H2.3 2026-10-12). ADR-A123 is accepted, with two addenda of 2026-10-12. H2.4 is planned and every question is decided. ADR-A124 and ADR-A125 are drafted, Proposed
 **Last updated:** 2026-10-10
 **Plan:** [formal-methods-track-h.md](../plans/formal-methods-track-h.md)
 **Sketches:** [formal-methods-track-h.md](../sketches/formal-methods-track-h.md) (main),
@@ -53,12 +53,12 @@ section below.
 
 ## Next action
 
-1. **The maintainer merges H2.0 to H2.3.** Everything is ready: `check:persistence` gave `2003 passed, 1 xfailed`
-   (2026-10-12, after the H2.3 review fix), the H2.3 countersignature items are signed, and every record is current.
-   Merging signs off each slice. Every decision in the four Validation Packs is taken. No release tag is owed, since no
-   ontology version changed.
-2. Then **H2.4**, **H2.5** or **H2.6** (examples first, with the paper check), in any order.
-3. Later, not scheduled: the SPARQL semantic IR of plan §5.1 (PDD-06).
+1. **H2.4a is ready to branch**: the composite ports, with the stored-IR test of SI-1 and SI-2 ([plan §4.2](../plans/formal-methods-track-h.md#42-h24-the-composite-family-and-what-each-store-does-planned-2026-10-12)).
+2. The maintainer reviews [ADR-A124](../../architecture/decisions/ADR-A124-benchmark-root.md) (the `benchmark/` root) and
+   [ADR-A125](../../architecture/decisions/ADR-A125-test-support-tooling.md) (`tools/testing/`), both Proposed. H2.4b builds
+   in both and merges after they are accepted.
+3. H2.5 and **H2.6** (examples first, with the paper check) can follow in any order.
+4. Later, not scheduled: the SPARQL semantic IR of plan §5.1 (PDD-06), which now also decides whether the IR is stored.
 
 ## Slices
 
@@ -84,11 +84,12 @@ section below.
 | HO7 (composite create and tombstone delete, TD-04) | **signed off** 2026-10-10, merged. [Validation Pack](../validation/FMH-HO7.md) | |
 | HO8 (injective graph naming within and across families, TD-38) | **signed off** 2026-10-10, merged. [Validation Pack](../validation/FMH-HO8.md) | |
 | HO9 (ownership documentation and close-out) | **signed off** 2026-10-10, merged. [Validation Pack](../validation/FMH-HO9.md) | |
-| H2.0 (ADR-A123) | **done** 2026-10-10. [Validation Pack](../validation/FMH-H2-0.md). A123 **accepted** 2026-10-10, ADR-A79 addendum applied | ready for the maintainer's merge |
-| H2.1 (the typed IR and its renderer) | **built and reviewed** 2026-10-10, five defects fixed. [Validation Pack](../validation/FMH-H2-1.md). Its four decisions confirmed. Its suite ran at `1875 passed, 1 xfailed` (2026-10-12) | ready for the maintainer's merge |
-| H2.2 (equivalence harness, `bootstrap-version-row` and `append-event` ported) | **built and reviewed** 2026-10-12, two review findings fixed. [Validation Pack](../validation/FMH-H2-2.md). TD-34 closed for these operations | ready for the maintainer's merge |
+| H2.0 (ADR-A123) | **done** 2026-10-10. [Validation Pack](../validation/FMH-H2-0.md). A123 **accepted** 2026-10-10, ADR-A79 addendum applied | merged and signed off 2026-10-12 |
+| H2.1 (the typed IR and its renderer) | **built and reviewed** 2026-10-10, five defects fixed. [Validation Pack](../validation/FMH-H2-1.md). Its four decisions confirmed. Its suite ran at `1875 passed, 1 xfailed` (2026-10-12) | merged and signed off 2026-10-12 |
+| H2.2 (equivalence harness, `bootstrap-version-row` and `append-event` ported) | **built and reviewed** 2026-10-12, two review findings fixed. [Validation Pack](../validation/FMH-H2-2.md). TD-34 closed for these operations | merged and signed off 2026-10-12 |
 | H2 (typed IR) | **briefed** 2026-10-10, split into H2.0 to H2.9 ([typed IR sketch §7](../sketches/formal-methods-track-h-typed-ir.md#7-slices)) | |
-| H2.3 (named-graph row writers) | **built and reviewed** 2026-10-12, one review fix. [Validation Pack](../validation/FMH-H2-3.md). [Plan §4.1](../plans/formal-methods-track-h.md#41-h23-the-named-graph-row-writers-planned-2026-10-12). Countersignature items signed 2026-10-12. TD-34 closed for its operations | ready for the maintainer's merge |
+| H2.3 (named-graph row writers) | **built and reviewed** 2026-10-12, one review fix. [Validation Pack](../validation/FMH-H2-3.md). [Plan §4.1](../plans/formal-methods-track-h.md#41-h23-the-named-graph-row-writers-planned-2026-10-12). Countersignature items signed 2026-10-12. TD-34 closed for its operations | merged and signed off 2026-10-12 |
+| H2.4 (composite family, store probes) | **planned** 2026-10-12, in [plan §4.2](../plans/formal-methods-track-h.md#42-h24-the-composite-family-and-what-each-store-does-planned-2026-10-12) | the maintainer's branch for H2.4a. ADR-A124 and ADR-A125 accepted before H2.4b merges |
 | H3 (specification registry) | not started, outlined in the plan | H2 preferred first (smaller, more self-contained), not a hard blocker |
 | H4 (exhaustive cross-axis validation, BDD/SMT) | not started, outline only | H3 |
 | H5 (capability-record extension, TLA+/Quint toolchain spike, protocol models A-D) | not started, outline only | H2 (read/write sets from the IR). ADR-A-FM4 is accepted |
@@ -127,6 +128,7 @@ section below.
 | H-D21 | H2.3 as one slice, beyond the slice-sizing rule (H2.3-Q4) | **decided 2026-10-12**: one slice, about 25 test cases, approved by the maintainer |
 | H2.3-Q1, H2.3-Q3 | the value guard's default graph, the patch-log parameters | **decided 2026-10-12: (a) for both**. TD-43 records the value guard |
 | H2.3-Q2 | a `GRAPH ?g` inside an inner group, `?g` bound outside it | **decided 2026-10-12**: (a) by default, the rule follows the join. (c), a caller-named `$g`, as an override the caller chooses, checked against the naming rule while guards are on. ADR-A123 addendum |
+| H2-Q7 | reopen H2-Q5: should the IR be stored | **decided 2026-10-12: (A)**. H2-Q5 stands, and a stored IR is decided with PDD-06's ADR, so the stored IR is the semantic one. Rules SI-1 to SI-6 keep it possible ([typed IR sketch §9](../sketches/formal-methods-track-h-typed-ir.md#9-toward-a-stored-ir-h2-q7-decided-2026-10-12)). ADR-A123's third addendum |
 | H-D7 | H1's checks live in one new module, `persistence.hygiene`, behind one `hygiene` subcommand, and run under `check:persistence`. No new `mise` task until H1's closing slice | agreed 2026-10-09 |
 
 ## Log
@@ -484,4 +486,25 @@ section below.
   recommended for acceptance.
 - 2026-10-12: the maintainer accepted FMH-H2-2's decisions 2 (`instantiate` renders the ported operations from their
   builders now) and 3 (the harness corpus is every fixture that compiles). No decision is open in H2.0 to H2.3.
+- 2026-10-12: H2.0 to H2.3 are merged to `main`, and `main` is merged back into this branch (`361b25e`). H2.4 planned in
+  [plan §4.2](../plans/formal-methods-track-h.md#42-h24-the-composite-family-and-what-each-store-does-planned-2026-10-12):
+  the six composite templates, and the probes and benchmark that measure what rdflib and Oxigraph do (TD-42, TD-44, the
+  cost note of H2.3-Q2). Four questions are open, on the `OwnershipTree` reference of ADR-A123 decision 4, where Oxigraph
+  runs, where the benchmark lives, and whether to split the slice.
+- 2026-10-12: the maintainer decided H2.4-Q2 (Oxigraph as a test-support package at `tools/testing/oxigraph`, not a backend),
+  H2.4-Q3 (the benchmark as a check run on demand, in a new root `benchmark/persistence-composite-cost`) and H2.4-Q4 (split
+  into H2.4a and H2.4b). Both new directories need an accepted ADR under AGENTS.md, so H2.4b starts by drafting ADR-A124.
+  H2.4-Q1 is open, with the reason it drifted: the typed IR brief wrote that the IR holds the `OwnershipTree` without
+  checking that `instantiate`, which builds the IR, sees only the compiled profile and so only the path. An agent confirmed
+  `pyoxigraph` 0.5.11 has a native Python 3.14 wheel, so the spike's README caveat is out of date.
+- 2026-10-12: the maintainer asked whether H2-Q5 should be reversed so the IR is stored, for richer options. Raised as
+  H2-Q7, open, with three options and a leaning to keep H2-Q5 until PDD-06's ADR decides what a stored IR is, since storing
+  today's syntax IR would publish a format PDD-06 plans to replace. H2.4-Q1's answer waits on it. H2.4a does not.
+- 2026-10-12: the maintainer decided H2.4-Q1 (a) and H2-Q7 (A). The compiled path is the IR's reference to the
+  `OwnershipTree`, and the IR is not stored until PDD-06's ADR decides a stored IR, so that the semantic IR is the one
+  published. Written up as the [typed IR sketch §9](../sketches/formal-methods-track-h-typed-ir.md#9-toward-a-stored-ir-h2-q7-decided-2026-10-12)
+  (gains, costs, options, six rules SI-1 to SI-6 that keep a clean stored IR possible, and what PDD-06's ADR must decide),
+  ADR-A123's third addendum and PDD-06. One rule does not hold today: a `Path` holds rendered text, not the path's structure.
+  H2.4a gains a test of SI-1 and SI-2. The maintainer agreed a `benchmark/` root and a `tools/testing/` directory, and
+  confirmed the benchmark's pass criterion. Drafted ADR-A124 and ADR-A125, Proposed. Both numbers were free on every branch.
 
