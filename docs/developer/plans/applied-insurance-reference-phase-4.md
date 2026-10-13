@@ -23,15 +23,33 @@ about the world, not about cover. No class the substrate already provides.
 | AIR-4.5 | liability exposure: counterparty populations, relationship depth, exposure bases | §5.15 |
 | AIR-4.6 | London and US profiles as scheme bindings and shapes, the worked examples, and their persistence profiles (an aggregate boundary per exposure set version, a privacy profile for natural persons) | §10, §12, §5.2 |
 
-After 4.1, the slices form two independent chains: 4.2, 4.3 and 4.6, and 4.4 and 4.5. 4.2
-needs AIR-2.1, 4.3 needs AIR-2.3, 4.4 needs AIR-2.2, and 4.6 needs AIR-2.7. Order and lanes:
+After 4.1, 4.2 needs AIR-2.3, 2.4 and 2.6 (it links their concepts and uses their units), 4.3
+needs 4.2 (it reuses `aeo:perilScope`), 4.4 needs 4.3 (requirement scopes range over exposure
+units) and AIR-2.2, 4.5 needs 4.4 (its exposure bases are financial metrics), and 4.6 needs every
+other slice and AIR-2.7 (revised 2026-10-13). Order and lanes:
 [machines, branches and merges](applied-insurance-reference-lanes.md). S builds these slices on
 `air/applied-reference`.
 
 Milestone M3 closes in 4.3 and 4.6. Persistence profiles are deployment choices, so they are
 authored with the worked examples in 4.6, not in the core.
 
-## AIR-4.1 in detail
+**Review of earlier designs (2026-10-13).** Earlier private designs for exposure, catastrophe
+modelling and reference data were compared with this plan, and ten gaps (R1 to R10) were decided,
+recorded in the status record's history. Those for slices whose briefs are not yet written:
+
+- AIR-4.3: peril metric perspectives aligned with Oasis's Open Results Data (ground-up, insured and
+  reinsurance loss) and a calculation method, a scenario-loss metric kind (Lloyd's Realistic
+  Disaster Scenarios, a client's own scenarios), and a concept-valued grouping property on
+  location and asset under a drafter's scheme (a division, a portfolio, an OED location group),
+  so requirement scopes can select by group (R8, R9).
+- AIR-4.6: example zone editions (a national flood map, ASCE 7 seismic design categories, CRESTA
+  zones), a Solvency II class of business edition, and example key schemes for insurance industry
+  event identifiers.
+- AIR-6.1: the earlier designs' carrier question bridge (questions, expected answer forms,
+  placeholders, information gaps, client data requests), with the completeness warnings of AIR-4.2
+  as its gaps and questionnaire answers as assessments.
+
+
 
 **Machine:** S (Copilot Business). **Branch:** `air/applied-reference`, commits `[AIR-4.1] …`, the
 last being `[AIR-4.1] Handoff`. **Validation Pack:**
@@ -109,7 +127,7 @@ the mixins and restrictions in the sketch:
 |---|---|---|
 | `aeo:ExposureSet` | §5.2 | `fnd:Version`, `fnd:Governable`, `fnd:TemporallyScoped`, `fnd:Evidenced`. `aeo:reportingUnit` to `qnt:Unit`. Identity class `aeo:ExposureIdentity ⊑ fnd:PersistentIdentity` |
 | `aeo:Location` | §5.3 | `fnd:Version`. Identity `aeo:LocationIdentity`. `aeo:address` to `aeo:Address` (a node), `aeo:geometry` (range left open, GeoSPARQL alignment is optional), `aeo:geoPrecision`, `aeo:territory ⊑ cls:territory` |
-| `aeo:LegalEntity` | §5.1 | `⊑ pty:Actor`, `⊑ fnd:NaturallyKeyed`. Registration and tax numbers and the LEI are `fnd:naturalKey`s, key nodes of declared `fnd:KeyScheme`s (Foundation README §8). A tax number's scheme is sensitive |
+| `aeo:LegalEntity` | §5.1 | `⊑ pty:Actor`, `⊑ fnd:NaturallyKeyed`. Registration and tax numbers and the LEI are `fnd:naturalKey`s, key nodes of declared `fnd:KeyScheme`s (Foundation README §8). A tax number's scheme is sensitive. Added 2026-10-13 (review R2): `aeo:industry ⊑ cls:industry` (0..*, no primary industry is privileged by the property, so a primary industry is an attribute of the entity's assessment), `aeo:domicile ⊑ cls:territory` (functional, the jurisdiction of incorporation or registration) and `aeo:legalForm` (functional). Trading names are `skos:altLabel`s of the entity. Entity status (active, dormant, in liquidation, dissolved) is an attribute type in AIR-4.2, because it changes over time and is evidenced like any assessment |
 | `aeo:ControlRelation` | §5.1 | `fnd:TemporallyScoped`, `fnd:Evidenced`. `aeo:controller`, `aeo:controlled` (each exactly one `aeo:LegalEntity`), `aeo:controlKind`, optional `aeo:controlShare` (`qnt:Quantity`) |
 | `aeo:Asset` | §5.5 | `fnd:Version`. Identity `aeo:AssetIdentity`. `aeo:assetClass ⊑ cls:assetClass`, `aeo:locatedAt` (functional) to `aeo:Location`, `aeo:partOf` (asymmetric, irreflexive), `aeo:presence` to `aeo:Presence` (location, temporal scope, optional `aeo:presenceShare`) |
 | `aeo:Interest` | §5.5 | `fnd:TemporallyScoped`, `fnd:Evidenced`. `aeo:interestHolder` (`pty:RoleOccupancy`), `aeo:interestIn` (`aeo:Asset`), `aeo:interestKind`, optional `aeo:extent` (`qnt:Quantity`) |
@@ -133,11 +151,27 @@ bound as its `voc:boundScheme`, declared as `peril-vocab.ttl` declares schemes:
 | `aeo-voc:ValueTypeContract`, `aeo:valueType` | `Building`, `Contents`, `Stock`, `Machinery`, `GrossProfit`, `Revenue`, `Rental`, `ExtraExpense`, `OtherValue` |
 | `aeo-voc:ValuationBasisContract`, `aeo:valuationBasis` | `ReplacementCost`, `ActualCashValue`, `AgreedValue`, `MarketValue`, `FunctionalReplacement`, `Reinstatement` |
 | `aeo-voc:ValuationMethodContract`, `aeo:valuationMethod` | `Declared`, `Appraised`, `Indexed`, `Modelled`, `Audited` |
+| `aeo-voc:LegalFormContract`, `aeo:legalForm` | `Corporation`, `LimitedLiabilityCompany`, `Partnership`, `LimitedPartnership`, `SoleProprietorship`, `Trust`, `Mutual`, `Cooperative`, `Foundation`, `PublicBody`, `UnincorporatedAssociation` |
 
-`aeo:territory` and `aeo:assetClass` use the `cls-voc:` contracts through their super-properties,
-so no contract is declared for them here. Programme roles, declared as `icm-voc:Claimant` is:
-`aeo-voc:NamedInsured`, `FirstNamedInsured`, `AdditionalInsured`, `LossPayee`, `Mortgagee`,
-`LessorRole` (distinct from the interest kind `Lessor`) and `Bailor`.
+`aeo:territory`, `aeo:domicile`, `aeo:assetClass` and `aeo:industry` use the `cls-voc:` contracts
+through their super-properties, so no contract is declared for them here.
+
+**Notes for this slice's concepts (review of earlier designs, 2026-10-13).** The value types cite
+the Open Exposure Data (OED) location fields they correspond to (`Building` to `BuildingTIV`,
+`Contents` to `ContentsTIV`, `GrossProfit`, `Revenue` and `Rental` to `BITIV`, `Machinery`,
+`Stock` and `OtherValue` to `OtherTIV`), and say where OED is coarser. The legal forms are generic
+kinds. Their notes cite ISO 20275 (Entity Legal Forms), whose codes are per jurisdiction and run
+to thousands, so a deployment binds an ISO 20275 edition by territory, mapped to these kinds by
+`skos:broadMatch`. The reference scheme is the unscoped fallback. Programme roles, declared as `icm-voc:Claimant` is:
+`aeo-voc:NamedInsured`, `FirstNamedInsured`, `AdditionalInsured`, `LossPayee`, `LendersLossPayee`,
+`Mortgagee`, `LessorRole` (distinct from the interest kind `Lessor`), `Bailor` and
+`WaiverOfSubrogationBeneficiary`. `LendersLossPayee` is narrower than `LossPayee` (review R10). Its
+note cites the ISO commercial property loss payable provisions endorsement (CP 12 18), whose lender's
+loss payable clause gives the lender rights a simple loss payee lacks, and the London market's
+practice of noting a lender's interest with a loss payee clause. The waiver beneficiary's note says
+the waiver itself is a contract term (Phase 5) and the role only names who benefits. The additional
+insured variants by ISO endorsement (CG 20 10, CG 20 37, CG 20 38) are conferred by the contract and
+wait for Phase 5.
 
 ### Shapes, `core` region, `.version` 0.1.0
 
@@ -152,13 +186,16 @@ in `.github/copilot-instructions.md` ("Authoring SHACL-SPARQL shapes").
 | interest | exactly one holder, one asset and one kind |
 | valuation | exactly one `aeo:valueOf`, one value type and one basis. Either one amount, or one rate and one horizon, never both and never neither |
 | control | exactly one controller and one controlled, and no cycle through `aeo:controller` / `aeo:controlled` |
+| legal entity | at most one domicile and one legal form |
 | membership | a member belongs to at most one exposure set version |
 
 ### Other files
 
 - `examples/core.ttl`, no `owl:Ontology`: one exposure set version with two locations, a building
   and its contents, an owner's interest and a lender's, three valuations (one amount, one rate
-  with a 12-month horizon), and a parent controlling the insured. Passes every shape.
+  with a 12-month horizon), and a parent controlling the insured. The insured has an industry, a domicile and a legal form.
+  Amounts use a currency unit declared in the example (`ex:GBP`), because `common/`'s currencies
+  arrive with AIR-2.6, later in the trip. Passes every shape.
 - `tools/test_exposure_ontology.py`, modelled on `tools/test_peril_vocabulary.py`.
 - `README.md` for the module: purpose, files, namespaces, regions and their slices.
 - The exposure row of `insurance/domain-README.md` and the applied insurance row of
@@ -170,7 +207,7 @@ in `.github/copilot-instructions.md` ("Authoring SHACL-SPARQL shapes").
 | ID | Given / When / Then | Level | +/- |
 |---|---|---|---|
 | AIR41-01 | the spec and vocabulary / loaded with their import closures / parse, every import resolves, `peril/` is not imported | L1 | + |
-| AIR41-02 | the six contracts / Vocabulary's shapes / conform, each bound to its reference scheme | L1 | + |
+| AIR41-02 | the seven contracts / Vocabulary's shapes / conform, each bound to its reference scheme | L1 | + |
 | AIR41-03 | `aeo:territory` and `aeo:assetClass` / read / sub-properties of `cls:territory` and `cls:assetClass` | L1 | + |
 | AIR41-04 | the example / the exposure shapes / no result | L1 | + |
 | AIR41-05 | a location without a territory / validated / violation | L1 | − |
@@ -180,6 +217,456 @@ in `.github/copilot-instructions.md` ("Authoring SHACL-SPARQL shapes").
 | AIR41-09 | a location in two exposure set versions / validated / membership violation | L1 | − |
 | AIR41-10 | an exposure set without a reporting unit / validated / violation (the zero case) | L1 | − |
 | AIR41-11 | the four shape files and the vocabulary / read / every region of later slices is present and empty | L0 | + |
+| AIR41-12 | `aeo:industry`, `aeo:domicile` / read / sub-properties of `cls:industry` and `cls:territory`, and the legal form contract is bound to its reference scheme | L1 | + |
+| AIR41-13 | a legal entity with two domiciles / validated / violation | L1 | − |
+| AIR41-14 | `aeo-voc:LendersLossPayee` / read / `skos:broader` `aeo-voc:LossPayee`, and every role and legal form has a note | L1 | + |
+
+## AIR-4.2 in detail
+
+**Machine:** S (Copilot Business). **Branch:** `air/applied-reference`, commits `[AIR-4.2] …`, the
+last being `[AIR-4.2] Handoff`. **Validation Pack:**
+[applied-insurance-reference-4.2](../validation/applied-insurance-reference-4.2.md). **Decisions:**
+ADR-A98, ADR-A99. **Sketch:** asset exposure ontology §5.3, §5.4, §5.7, §5.8, §7, §8.
+**Decided 2026-10-13:** the proposal of that day (zones per hazard kind with empty reference
+editions, attribute types after OED, assessment kinds, the peril links), Q13 (two worked profiles),
+R6 (attribute types for all eight families, shapes for two) and the review's geospatial and
+geocoding additions.
+
+**Invariant:** a location carries zone designations and pool participations, every hazard
+attribute arrives as an attribute value in an evidenced assessment, and the peril vocabulary says
+which attributes and which geocoding precision each peril needs, so the shapes can warn when an
+exposure set lacks them.
+
+### Versions and imports
+
+No document bumps. `spec/exposure.ttl`, `vocab/exposure-vocab.ttl` and the shapes directory are
+new on the branch (AIR-4.1) and stay at `0.1.0` (lanes §2). The vocabulary adds imports of the
+peril vocabulary and re-pins `insurance/common-vocab`, both at the versions on the branch (read
+the live `owl:versionIRI`s: AIR-2.2 and AIR-2.6 bumped them). The spec imports nothing new: the
+properties it specialises (`icm:pool`, `icm:peril`) are in `insurance/common`, already imported.
+
+Everything below goes into the `zones-attributes-assessments` region of each document and README
+section, and follows the documentation rule (AIR-2.0).
+
+### Spec
+
+| Term | Kind | Definition |
+|---|---|---|
+| `aeo:ZoneDesignation` | class | `⊑ fnd:Evidenced ⊓ fnd:TemporallyScoped`, exactly one `aeo:zone`, exactly one `aeo:designationSource`. The temporal scope is the map's effective period |
+| `aeo:zoneDesignation` | property | location to zone designation, inverse functional |
+| `aeo:zone` | property | designation to concept. Not used directly: each hazard kind has a sub-property, so each can be constrained by its own contract |
+| `aeo:floodZone`, `aeo:seismicZone`, `aeo:windZone`, `aeo:wildfireZone`, `aeo:tsunamiZone`, `aeo:accumulationZone` | properties | `⊑ aeo:zone` |
+| `aeo:designationSource` | property | designation to concept |
+| `aeo:PoolParticipation` | class | `⊑ fnd:Evidenced ⊓ fnd:TemporallyScoped`, exactly one `aeo:pool`, at least one `aeo:perilScope` |
+| `aeo:poolParticipation` | property | location to pool participation, inverse functional |
+| `aeo:pool` | property | `⊑ icm:pool` |
+| `aeo:perilScope` | property | `⊑ icm:peril`, not functional. Peril metrics (AIR-4.3) and existing cover (AIR-4.4) reuse it |
+| `aeo:Assessment` | class | `⊑ fnd:Evidenced ⊓ fnd:TemporallyScoped`, at least one `aeo:assesses`, exactly one `aeo:assessmentKind`, at least one `aeo:hasAttribute` |
+| `aeo:hasAssessment` | property | exposure set membership, inverse functional (sketch §5.2) |
+| `aeo:assesses` | property | assessment to asset, location, legal entity or exposure set |
+| `aeo:assessmentKind` | property | how the account was obtained |
+| `aeo:profileFamily` | property | which family of questions the assessment answers, 0..*. Its shapes are selected by it |
+| `aeo:AttributeValue` | class | exactly one `aeo:attributeType` and exactly one of `aeo:conceptValue`, `aeo:quantityValue` (`qnt:Quantity`), `aeo:literalValue` |
+| `aeo:hasAttribute` | property | assessment to attribute value, inverse functional |
+| `aeo:valueForm` | property | attribute type concept to one of `aeo-voc:ConceptForm`, `QuantityForm`, `LiteralForm` |
+| `aeo:valueSpace` | property | attribute type to the `qnt:ValueSpace` its quantities are on |
+| `aeo:valueContract` | property | attribute type to the `voc:SchemeContract` its concepts are drawn under |
+| `aeo:literalDatatype` | property | attribute type to the XSD datatype of its literals (`xsd:boolean`, `xsd:gYear`, `xsd:date`, `xsd:string`) |
+| `aeo:attributeFamily` | property | attribute type to its family (below). COPE is the first four families |
+| `aeo:multiValued` | property | attribute type to `xsd:boolean`. True when one assessment may hold several values of the type |
+
+The assessment kind and the profile family are two properties, where sketch §5.8 has one. A
+questionnaire can answer cyber questions or construction questions, and a survey can answer both,
+so the source and the family vary independently, as valuation basis and method do (§5.6).
+
+### Vocabulary: contracts and reference schemes
+
+Each concept-valued property gets a `voc:SchemeContract` and, where marked, a flat reference scheme
+bound to it, declared as AIR-4.1 declares its contracts.
+
+| Contract, constrains | Reference concepts | Notes cite |
+|---|---|---|
+| `FloodZoneContract`, `SeismicZoneContract`, `WindZoneContract`, `WildfireZoneContract`, `TsunamiZoneContract`, `AccumulationZoneContract` | none. A deployment binds each jurisdiction's edition by territory scope (ADR-A99). AIR-4.6 adds example editions (national flood maps, ASCE 7 seismic design categories, CRESTA zones) | the kind of map each contract expects. If Vocabulary's shapes require a binding, stop and record it in the Handoff |
+| `DesignationSourceContract` | `PublishedMap`, `SpatialJoin`, `Survey`, `Declared` | a `SpatialJoin` designation is a derived artefact (sketch §5.4) |
+| `AssessmentKindContract` | `SurveyReport`, `ScheduleRow`, `Questionnaire`, `EngineeringInspection`, `EquipmentInspection`, `DesktopReview`, `ThirdPartyEnrichment`, `GeocoderRun`, `ScreeningRun` | |
+| `ProfileFamilyContract` | `ConstructionAndProtection`, `CyberPosture`, `BusinessContinuity`, `Environmental`, `Fleet`, `Compliance`, `OperationsAndWorkforce`, `SupplyChain` | sketch §5.8 |
+| `AttributeTypeContract` | the attribute types below | |
+| `AttributeFamilyScheme` (no contract, read by shapes only) | `Construction`, `Occupancy`, `Protection`, `ExternalExposure`, `GeocodingQuality`, `Equipment`, `Corporate`, and the eight profile families | COPE for the first four |
+
+`aeo-voc:ConceptForm`, `QuantityForm` and `LiteralForm` are concepts of a small `ValueFormScheme`.
+`aeo-voc:GeoPrecisionOrder` is a `skos:OrderedCollection` of AIR-4.1's precision concepts, finest
+first (`Rooftop`, `Parcel`, `Street`, `Postcode`, `City`, `ZoneCentroid`), which the precision
+shape reads.
+
+Value spaces, declared as AIR-2.6 declares its measure spaces, with the units of `insurance/common`:
+`Count`, `Area`, `Length`, `Duration`, `Speed` (reuse AIR-2.6's space if one fits, and say so in
+the Handoff), `AreaShare`, a `qnt:DerivedValueSpace` naming `Area` twice (ADR-A93), and
+`ConfidenceScore`, from 0 to 1 with no unit. Ordinal schemes, declared as AIR-2.6 declares ordinal scales:
+`SusceptibilityScale` (`VeryLow` to `VeryHigh`, notations 1 to 5) and `FrequencyScale`
+(`Continuous`, `Monthly`, `Quarterly`, `SemiAnnually`, `Annually`, `LessThanAnnually`, `Never`).
+
+### Vocabulary: attribute types
+
+Form is C (concept, with the scheme its reference values come from), Q (quantity, with its space),
+or L (literal, with its datatype). "Market" means a contract with no reference scheme, bound by
+market and bound in AIR-4.6's examples. Every attribute type that has an Open Exposure Data field
+cites it in a note. R checks those field names against the OED specification at verification, so S
+cites only the ones it is sure of and lists the rest in the Handoff.
+
+**Construction** (OED primary and secondary modifiers)
+
+| Type | Form | Values or space | Notes cite |
+|---|---|---|---|
+| `ConstructionClass` | C | market | OED construction codes, the US ISO construction classes 1 to 6 |
+| `YearBuilt`, `YearOfMajorRenovation`, `RoofYear` | L | `xsd:gYear` | OED |
+| `Storeys`, `StoreysBelowGround` | Q | `Count` | OED |
+| `FloorArea` | Q | `Area` | OED |
+| `BuildingHeight`, `FirstFloorHeight` | Q | `Length` | OED. First-floor height is above grade, and the note says so |
+| `RoofCover`, `RoofGeometry`, `RoofPitch`, `RoofDeck`, `RoofDeckAttachment`, `RoofAnchorage`, `OpeningProtection`, `WallType`, `FoundationType`, `SeismicRetrofit` | C | one flat reference scheme each, values after OED's code lists | OED secondary modifiers, FEMA P-804 (wind retrofit) for roof and opening concepts |
+| `ExternalCladding` | C | `NonCombustible`, `LimitedCombustibility`, `Combustible`, `Unknown` | EN 13501-1 reaction-to-fire classes (A1 and A2 limited, B to F combustible) |
+| `Basement`, `SoftStorey` | L | `xsd:boolean` | OED |
+
+**Occupancy**
+
+| Type | Form | Values or space | Notes cite |
+|---|---|---|---|
+| `OccupancyClass` | C | market | OED occupancy codes, ATC-13 |
+| `VacantShare` | Q | `AreaShare` | |
+| `OperatingHours` | C | `StandardHours`, `ExtendedHours`, `Continuous` | |
+| `HazardousMaterialsPresent` | L | `xsd:boolean` | |
+| `HazardousMaterialsDescription` | L | `xsd:string` | |
+
+**Protection**
+
+| Type | Form | Values or space | Notes cite |
+|---|---|---|---|
+| `SprinklerSystem` | C | `WetPipe`, `DryPipe`, `PreAction`, `Deluge`, `EarlySuppressionFastResponse`, `NoSprinklers` | NFPA 13, EN 12845 |
+| `SprinklerCoverage` | Q | `AreaShare` | |
+| `FireDetection` | C | `Smoke`, `Heat`, `Flame`, `Aspirating`, `Multisensor`, `NoDetection` | EN 54, NFPA 72 |
+| `AlarmMonitoring` | C | `LocalOnly`, `CentralStation`, `Proprietary`, `NoAlarm` | NFPA 72, BS 5839-1 |
+| `SpecialSuppression` | C | `CarbonDioxide`, `CleanAgent`, `InertGas`, `Foam`, `WaterMist`, `NoSpecialSuppression` | NFPA 12, 2001, 11, 750 |
+| `PublicProtectionClass` | C | market | the US public protection classification 1 to 10 |
+| `FireServiceResponseTime` | Q | `Duration` | |
+| `DistanceToFireStation`, `DistanceToHydrant` | Q | `Length` | |
+| `PhysicalSecurity` | C, several values allowed | `IntruderAlarm`, `Cctv`, `Guarding`, `AccessControl` | EN 50131, UL 681 |
+| `BackupPower` | L | `xsd:boolean` | |
+| `LossControlMeasure` | L | `xsd:string` | a measure taken, for example after a loss |
+
+**External exposure**
+
+| Type | Form | Values or space | Notes cite |
+|---|---|---|---|
+| `DistanceToCoast`, `DistanceToWaterBody`, `DistanceToFault`, `DefensibleSpace` | Q | `Length` | defensible space: NFPA 1144 |
+| `WaterBodyType` | C | `River`, `Lake`, `Sea`, `Estuary`, `Reservoir`, `Canal`, `Wetland` | |
+| `GroundElevation`, `BaseFloodElevation` | Q | `Length` | the note says a value is meaningless without its vertical datum, recorded on the assessment's evidence. Base flood elevation: the US flood insurance rate maps |
+| `SiteClass` | C | `SiteClassA` to `SiteClassF` | ASCE 7 (NEHRP). The note says Eurocode 8 ground types belong in a market edition |
+| `DesignWindSpeed` | Q | `Speed` | ASCE 7 |
+| `WindBorneDebrisRegion` | L | `xsd:boolean` | ASCE 7 |
+| `LiquefactionSusceptibility`, `LandslideSusceptibility`, `SubsidenceSusceptibility` | C | `SusceptibilityScale` | USGS susceptibility mapping, the British Geological Survey's shrink-swell ratings |
+| `VegetationManagement` | L | `xsd:boolean` | |
+
+**Geocoding quality**, on `GeocoderRun` assessments
+
+| Type | Form | Values or space |
+|---|---|---|
+| `GeocodeConfidence` | Q | `ConfidenceScore` |
+| `AddressMatchStatus` | C | `ExactMatch`, `Interpolated`, `Standardised`, `MultipleMatches`, `Unmatched` |
+
+**Equipment**: `Manufacturer`, `ModelDesignation` (L string), `YearOfManufacture` (L `xsd:gYear`),
+`ReplacementLeadTime` (Q `Duration`), `SpecialHazardEquipment` and `StatutoryInspectionCurrent`
+(L boolean). Equipment kinds are asset classes (`cls:assetClass`), not attribute values.
+
+**Corporate**: `EntityStatus` (C: `Active`, `Dormant`, `InLiquidation`, `Dissolved`, AIR-4.1's
+R2), `OperatingTerritory` (C, the territory contract).
+
+**Cyber posture** (notes cite the CIS Critical Security Controls v8, NIST CSF 2.0 and ISO/IEC
+27001:2022, naming the control or function each answers)
+
+| Type | Form | Values or space |
+|---|---|---|
+| `MfaCoverage` | C | `AllUsers`, `PrivilegedAndRemote`, `RemoteOnly`, `NoMfa` |
+| `EndpointDetectionAndResponse`, `PrivilegedAccessManagement`, `NetworkSegmentation`, `EmailSecurityFiltering`, `UnsupportedSoftwarePresent`, `IncidentResponsePlan`, `AiManagementSystem` | L | `xsd:boolean`. AI management system: ISO/IEC 42001 |
+| `IncidentResponsePlanLastTested` | L | `xsd:date` |
+| `BackupStrategy` | C, several allowed | `Offline`, `Immutable`, `AirGapped`, `CloudReplicated`, `NoBackup` |
+| `BackupRestoreTestFrequency`, `SecurityAwarenessTrainingFrequency` | C | `FrequencyScale` |
+| `CriticalPatchWindow` | Q | `Duration` |
+| `CertifiedFramework` | C, several allowed | `Iso27001`, `Soc2Type2`, `PciDss`, `CyberEssentialsPlus` |
+
+Ransomware history is loss history (AIR-4.4), and records held is a population basis (AIR-4.5),
+not attributes.
+
+**Business continuity** (ISO 22301, ISO/TS 22317): `BusinessContinuityPlan`,
+`DisasterRecoveryPlan`, `AlternateSite`, `ContractualDelayPenalties` (L boolean),
+`ContinuityPlanLastTested` (L date), `RecoveryTimeObjective`, `RecoveryPointObjective`,
+`MaximumTolerablePeriodOfDisruption` (Q `Duration`). The note on the last says it is the insured's
+own statement, and the maximum foreseeable interruption derived from dependencies (sketch §5.9) is
+a different figure.
+
+**Environmental**: `ContaminationHistory`, `EnvironmentalManagementSystem` (L boolean, ISO
+14001), `ContaminationDescription` (L string), `RemediationStatus` (C: `RemediationActive`,
+`RemediationCompleted`, `Monitoring`, `NotRequired`), `UndergroundStorageTankCount`,
+`AbovegroundStorageTankCount` (Q `Count`), `TankConstruction` (C: `SingleWalled`, `DoubleWalled`,
+`CathodicallyProtected`, US EPA 40 CFR Part 280), `TankContents` (L string).
+
+**Fleet** (one fleet asset per vehicle class, so a count belongs to one class): `VehicleCount` (Q
+`Count`), `AverageVehicleAge` (Q `Duration`), `RadiusOfOperation` (C: `Local`, `Intermediate`,
+`LongDistance`, notes cite the US commercial auto radius classes of 50 and 200 miles), `FleetUse`
+(C: `Service`, `Retail`, `Commercial`, `Personal`), `Telematics`, `DriverTrainingProgramme` (L
+boolean), `DriverRecordCheckFrequency` (C `FrequencyScale`).
+
+**Compliance**: `PendingLitigation`, `RegulatoryInvestigation` (L boolean), with descriptions (L
+string), and `SanctionsScreeningOutcome` (C: `NoMatch`, `PotentialMatch`, `ConfirmedMatch`). A
+screening outcome is a judgement, so it is allowed only in an assessment of kind `ScreeningRun`
+that is also a `fnd:DerivedArtefact`, whose derivation run names the lists screened (notes cite
+the OFAC SDN list, the EU consolidated list, the UN Security Council consolidated list and the UK
+financial sanctions list). Licences and permits are out of scope (epic §7).
+
+**Operations and workforce**: `OperationsDescription`, `ProductsAndServices`, `ShiftPattern` (L
+string), `HazardousProcess` (L boolean), `Headcount` (Q `Count`, on an assessment of a location for
+a per-location count or of the legal entity for the total). The share of revenue earned abroad is
+derived from turnover by territory (AIR-4.4), not stated.
+
+**Supply chain** (summaries from questionnaires. The structure is dependencies, AIR-4.3):
+`KeySupplierCount` (Q `Count`), `SingleSourceSupplier`, `SupplierDueDiligence`,
+`AlternativeSourcing`, `JustInTimeDependency` (L boolean), `InventoryBuffer` (Q `Duration`),
+`SupplierConcentration` (C, the territory contract).
+
+Each attribute type carries `aeo:valueForm`, `aeo:attributeFamily`, and `aeo:valueSpace`,
+`aeo:valueContract` or `aeo:literalDatatype` as its form needs. A type allowing several values says
+so with `aeo:multiValued true`, and the others are single-valued per assessment.
+
+### Vocabulary: links from perils to exposure
+
+Written in this vocabulary as triples on peril concepts (sketch §5.7). A link on a concept also
+holds for the concepts below it, and the shapes read it through `skos:broader*`, so it is stated
+once on the highest concept it fits.
+
+| Peril | `prl:relevantAttribute` | `prl:minimumGeoPrecision` |
+|---|---|---|
+| N.MET.TC.WND, N.MET.ETC.WND, N.MET.SCS.TOR, N.MET.SCS.SLW | `ConstructionClass`, `YearBuilt`, `Storeys`, `RoofGeometry`, `RoofCover`, `RoofDeckAttachment`, `RoofAnchorage`, `OpeningProtection`, `DesignWindSpeed`, `WindBorneDebrisRegion` | `Postcode` |
+| N.MET.SCS.HAI | `RoofCover`, `RoofYear`, `ExternalCladding` | `Postcode` |
+| N.GEO.EQ.SHK | `ConstructionClass`, `YearBuilt`, `Storeys`, `SoftStorey`, `SiteClass`, `SeismicRetrofit`, `FoundationType` | `Street` |
+| N.GEO.EQ.LIQ | `LiquefactionSusceptibility`, `SiteClass`, `FoundationType` | `Street` |
+| N.HYD.FLD, N.MET.TC.SRG | `FirstFloorHeight`, `Basement`, `GroundElevation`, `BaseFloodElevation`, `DistanceToWaterBody` | `Rooftop` |
+| N.HYD.FLD.CST | as N.HYD.FLD, plus `DistanceToCoast` | `Rooftop` |
+| N.CLI.WF | `DefensibleSpace`, `VegetationManagement`, `RoofCover`, `ExternalCladding` | `Rooftop` |
+| N.GEO.MM.SUB | `SubsidenceSusceptibility`, `FoundationType` | `Street` |
+| N.GEO.MM.LS | `LandslideSusceptibility` | `Street` |
+| T.FIR | `ConstructionClass`, `OccupancyClass`, `SprinklerSystem`, `SprinklerCoverage`, `FireDetection`, `AlarmMonitoring`, `PublicProtectionClass`, `FireServiceResponseTime`, `DistanceToHydrant`, `ExternalCladding` | |
+| H.THF.BUR | `PhysicalSecurity` | |
+| C.MAL | `MfaCoverage`, `EndpointDetectionAndResponse`, `BackupStrategy`, `PrivilegedAccessManagement`, `NetworkSegmentation`, `CriticalPatchWindow` | |
+
+Each link's note is on the attribute type, and says why the attribute changes loss for the peril.
+The precision rows say why that level is the coarsest that works (inundation depth varies over
+metres, ground motion over a street, a wind field over a postcode).
+
+### Shapes, `zones-attributes-assessments` region and `shapes/profiles/`
+
+| Shape | Rule | Severity |
+|---|---|---|
+| zone designation | exactly one zone, through one of the six sub-properties, exactly one source, a temporal scope | violation |
+| zone in territory | the zone's scheme is bound to its contract for one of the location's territories | violation |
+| spatial join | a designation whose source is `SpatialJoin` is a `fnd:DerivedArtefact` | violation |
+| pool participation | exactly one pool, at least one peril | violation |
+| assessment | at least one subject, exactly one kind, at least one attribute value, a temporal scope | violation |
+| attribute value | exactly one value form, the one its type declares. A quantity is on the type's space, a concept is in a scheme bound to the type's contract, a literal has the type's datatype | violation |
+| single-valued types | at most one value per type per assessment, unless the type is `aeo:multiValued` | violation |
+| screening | `SanctionsScreeningOutcome` only in a `ScreeningRun` assessment that is a derived artefact | violation |
+| peril completeness | for each peril named by `aeo:perilScope` on a member of the exposure set, and each attribute type relevant to it or to a broader concept, each location of the set has a value of that type in some assessment of the location or of an asset located there | warning |
+| geo precision for peril | for each such peril with a minimum precision, a location's `aeo:geoPrecision` is no coarser in `GeoPrecisionOrder` | warning |
+| profile: construction and protection | `shapes/profiles/construction-protection.ttl`. An assessment of this family assesses a location or asset and has `ConstructionClass`, `OccupancyClass`, `YearBuilt` and `Storeys`. Types outside the Construction, Occupancy, Protection and External exposure families are reported | violation for the four, warning for the rest |
+| profile: cyber posture | `shapes/profiles/cyber-posture.ttl`. Assesses a legal entity, has `MfaCoverage`, `BackupStrategy` and `EndpointDetectionAndResponse`. Types outside the family are reported | violation for the three, warning for the rest |
+
+The completeness shape is read per location, not per asset. Attribute types do not say which asset
+classes they apply to, so a per-asset rule would warn about a roof on stock. The six other
+families get kinds and attribute types now and shapes later (Q13).
+
+### Examples and tests
+
+`examples/attributes.ttl`, no `owl:Ontology`: AIR-4.1's example set gains a flood zone designation
+with a map period, a spatial-join designation as a derived artefact, a pool participation, a
+survey report of the construction and protection family on one location, a cyber posture
+questionnaire on the insured, and a geocoder run. It passes every shape with no warning, because
+its pool participation's peril (N.HYD.FLD) finds the flood attributes present.
+
+| ID | Given / When / Then | Level | +/- |
+|---|---|---|---|
+| AIR42-01 | the spec and vocabulary / loaded with their import closures / parse, every import resolves | L1 | + |
+| AIR42-02 | the contracts of this slice / Vocabulary's shapes / conform, those with reference schemes bound to them | L1 | + |
+| AIR42-03 | every attribute type / read / has a form, a family, and the space, contract or datatype its form needs | L1 | + |
+| AIR42-04 | the example / every exposure shape / no result, no warning | L1 | + |
+| AIR42-05 | an attribute value with a concept and a quantity / validated / violation | L1 | − |
+| AIR42-06 | `FirstFloorHeight` with a quantity on `Count` / validated / violation | L1 | − |
+| AIR42-07 | a zone designation of a scheme bound only for another territory / validated / violation | L1 | − |
+| AIR42-08 | the example without its first-floor height / validated / one warning for N.HYD.FLD, none for other perils | L1 | − |
+| AIR42-09 | the example with the flood location at `Postcode` / validated / one precision warning | L1 | − |
+| AIR42-10 | a sanctions outcome in a questionnaire / validated / violation | L1 | − |
+| AIR42-11 | a cyber posture assessment without `MfaCoverage` / validated / violation | L1 | − |
+| AIR42-12 | a link stated on N.HYD.FLD / the completeness shape over a location exposed to N.HYD.FLD.PLU / reads it | L1 | + |
+| AIR42-13 | every concept of this slice / the documentation shape / each has a note | L1 | + |
+
+**On R at verification:** catalogs. No release rows: the module's documents stay at `0.1.0` until
+the merge.
+
+## AIR-4.4 in detail
+
+**Machine:** S (Copilot Business). **Branch:** `air/applied-reference`, commits `[AIR-4.4] …`, the
+last being `[AIR-4.4] Handoff`. **Validation Pack:**
+[applied-insurance-reference-4.4](../validation/applied-insurance-reference-4.4.md). **Decisions:**
+ADR-A98, ADR-A99, ADR-A103 (set readings), epic D7 and D12. **Sketch:** asset exposure ontology
+§5.12 to §5.14.
+**Decided 2026-10-13:** the proposal of that day, Q11 (option a, recorded and effective
+characteristics), Q12 (no link to `ins:Obligation` before Phase 5), Q14 (currencies, in AIR-2.6),
+and the review's R1 (class of business), R3 (loss experience), R4 (cover history), R5
+(requirement strength and attachment).
+
+**Invariant:** an insured's loss experience states its period, source and completeness, each loss
+records its cause chain with recorded and effective characteristics kept apart, and requirements,
+existing cover, cover history and financial metrics are evidenced facts that gap analysis can read
+without any of them computing cover.
+
+### Versions and imports
+
+`insurance/common`'s spec changes for the first time on the branch, so this slice bumps it once,
+0.5.0 to 0.6.0 (MINOR, additions only), and changes the import of every importer on the branch to
+0.6.0: `peril/spec` (already bumped by AIR-2.2, so its own version does not change) and
+`exposure/spec`. `common-vocab` was bumped by AIR-2.6 and changes here without another bump. The
+exposure documents stay at `0.1.0`. The exposure spec adds an import of Eligibility at the version
+of `main` at the branch point, for `elg:AdmissionProfile`.
+
+### `insurance/common` additions
+
+| Term | Kind | Definition | Notes cite |
+|---|---|---|---|
+| `icm:LossEvent` | class | `⊑ fnd:Evidenced ⊓ fnd:TemporallyScoped ⊓ fnd:NaturallyKeyed`. One occurrence in the world (a storm, an earthquake, a cyber campaign) that many losses can share. Its temporal scope is the event's span, its perils are `icm:peril` values, its territories `cls:territory` values (epic D7) | the event is not an insurance occurrence: grouping losses into one occurrence under a contract is the contract's rule (AIR-6.3) |
+| `icm-voc:GlideNumber` | `fnd:KeyScheme` | the GLIDE number assigned by the Asian Disaster Reduction Center's GLobal IDEntifier scheme, as the open reference key | GLIDE. The note says insurance industry event identifiers (catastrophe serial numbers, industry loss index event codes) are key schemes their publishers own, declared in AIR-4.6's examples |
+| `icm:classOfBusiness` | property | to a concept, the class or line of business. No domain | R1 |
+| `icm-voc:ClassOfBusinessContract` | contract | constrains `icm:classOfBusiness`, no reference scheme. AIR-4.6 binds an example edition of the Solvency II lines of business | Commission Delegated Regulation (EU) 2015/35, Annex I |
+
+### Exposure spec
+
+**Loss experience and losses**
+
+| Term | Definition |
+|---|---|
+| `aeo:LossExperience` | `⊑ fnd:Evidenced ⊓ fnd:TemporallyScoped`. One source's account of an insured's losses over a period, its temporal scope. Exactly one `aeo:experienceOf` (legal entity), exactly one `aeo:experienceSource`, at most one `aeo:statedComplete` (`xsd:boolean`), any number of `aeo:classOfBusiness` (`⊑ icm:classOfBusiness`), the lines it covers |
+| `aeo:hasLossExperience` | exposure set membership, inverse functional |
+| `aeo:hasLossRecord` | loss experience to loss record, inverse functional. Records belong to an experience, not directly to the exposure set as sketch §5.2 has it, so that an experience with no records, stated complete, says "no losses in the period" and an absent experience says nothing |
+| `aeo:LossRecord` | `⊑ fnd:Evidenced`, `fnd:NaturallyKeyed` for the claim reference. Exactly one `aeo:lossDate` (`xsd:date`), at most one `aeo:lossAt` (location), exactly one `aeo:lossStatus`, at most one `aeo:classOfBusiness` (the line it was paid under), at most one `aeo:lossEvent` (`icm:LossEvent`), any number of `aeo:hasCause` and `aeo:consequence` (`⊑ icm:consequence`) |
+| money on a loss record | each at most one `qnt:Quantity` in a currency: `aeo:grossAmount` (before deductible), `aeo:deductibleApplied`, `aeo:paid`, `aeo:reserved`, `aeo:incurred`, `aeo:recovered` (subrogation and salvage) |
+| `aeo:LossCause` | `⊑ fnd:Evidenced`. Exactly one `aeo:peril` (`⊑ icm:peril`), exactly one `aeo:causePosition`, at most one `aeo:agency` (`⊑ icm:agency`), any number of `aeo:mechanism` (`⊑ icm:mechanism`). These are what the source recorded |
+| `aeo:effectiveAgency`, `aeo:effectiveMechanism` | `⊑ icm:agency`, `⊑ icm:mechanism`. Written by the derivation below, never by hand. Eligibility bindings read these (Q11) |
+| `aeo:DefaultedCharacteristic` | `⊑ fnd:DerivedArtefact`. One per effective value that was defaulted rather than copied: exactly one `aeo:defaultedOn` (the loss cause), exactly one `aeo:defaultedProperty` (`aeo:effectiveAgency` or `aeo:effectiveMechanism`), `prov:wasDerivedFrom` the cause concept whose typical value was used, `prov:wasGeneratedBy` the derivation run |
+
+A loss cause may record a mechanism or agency that differs from the cause concept's typical value.
+The recorded value wins and is copied. Only where nothing is recorded is the typical value used,
+and then a reviewer sees a `DefaultedCharacteristic` beside it. A cause concept without typical
+values (a drafter's flat code) leaves the effective value empty, and a check reading it is
+Undetermined (sketch §5.12).
+
+**Requirements**
+
+| Term | Definition |
+|---|---|
+| `aeo:CoverageRequirement` | `⊑ fnd:Version ⊓ fnd:Evidenced`. Exactly one `aeo:requirementSource`, exactly one `aeo:requirementStrength`, at least one `aeo:requiredMeasure`, at most one `aeo:requirementScope` (`elg:AdmissionProfile` whose subject class is `aeo:ExposureUnit`, AIR-4.3), any number of `aeo:classOfBusiness`, at most one `aeo:owedTo` (`pty:RoleOccupancy`, the lender as mortgagee, for example) |
+| `aeo:hasRequirement` | exposure set membership, inverse functional |
+| `aeo:MeasureConstraint` | exactly one `aeo:measure`, exactly one `aeo:bound` (`qnt:RangeSet` on the measure's space), at most one `aeo:atReturnPeriod` (`qnt:Quantity` in years, for `NetRetainedLoss`), at most one `aeo:relativeTo` (`aeo:FinancialMetric`) |
+| `aeo:measureSpace` | measure concept to the space its bounds are on |
+
+A relative bound (net loss at 1 in 100 not above 10% of equity) is on a `qnt:DerivedValueSpace`
+naming the money space twice (ADR-A93) and names the metric with `aeo:relativeTo`. If Quantification
+at the live version has a construct for a bound relative to a value, use it and say so in the
+Handoff. `aeo:arisesFrom` to `ins:Obligation` is not built (Q12): Instrument is being rewritten
+by CCS, and Phase 5 adds the link. `aeo:owedTo` names the obligee until then.
+
+**Existing cover and cover history**
+
+| Term | Definition |
+|---|---|
+| `aeo:ExistingCover` | `⊑ fnd:Evidenced ⊓ fnd:TemporallyScoped` (the policy period). Exactly one `aeo:coverRelation`, at most one `aeo:coverReference` (`xsd:anyURI`, the contract, which the contract module owns), at most one `aeo:triggerBasis`, any number of `aeo:perilScope`, `aeo:classOfBusiness`, `aeo:insurer` (`pty:Actor`) and `aeo:summaryTerm` |
+| `aeo:summaryTerm` | to an `aeo:TermSummary`: exactly one `aeo:measure`, exactly one `aeo:summaryValue` (`qnt:Quantity`). The expiring limit, retention or premium, when the contract itself is not in the graph |
+| `aeo:hasExistingCover` | exposure set membership, inverse functional |
+| `aeo:CoverHistoryEvent` | `⊑ fnd:Evidenced`. Exactly one `aeo:historyEventKind`, exactly one `aeo:eventDate` (`xsd:date`), at most one `aeo:byInsurer` (`pty:Actor`), any number of `aeo:classOfBusiness`, at most one `aeo:reasonGiven` (`xsd:string`) |
+| `aeo:hasCoverHistoryEvent` | exposure set membership, inverse functional |
+
+**Financial metrics**
+
+| Term | Definition |
+|---|---|
+| `aeo:FinancialMetric` | `⊑ fnd:Evidenced ⊓ fnd:TemporallyScoped` (the reporting period). Exactly one `aeo:metricOf` (legal entity), exactly one `aeo:financialMetricKind`, exactly one `aeo:metricAmount` (`qnt:Quantity`), at most one `aeo:audited` (`xsd:boolean`), any number of `aeo:metricTerritory` (`⊑ cls:territory`, for turnover by territory) |
+| `aeo:hasFinancialMetric` | exposure set membership, inverse functional |
+
+Disjointness (sketch §6) extends to every class of this slice.
+
+### Vocabulary
+
+| Contract, constrains | Reference concepts | Notes cite |
+|---|---|---|
+| `LossExperienceSourceContract` | `InsuredDeclared`, `InsurerLossRun`, `ClaimsAdministratorReport`, `BrokerRecord` | |
+| `LossStatusContract` | `Open`, `Closed`, `ClosedWithoutPayment`, `Reopened`, `InLitigation`, `InRecovery` | ACORD claim status practice |
+| `CausePositionContract` | `Initiating`, `Intermediate`, `Proximate` | English law's proximate cause, the dominant or effective cause (*Leyland Shipping v Norwich Union* [1918] AC 350), concurrent causes (*Wayne Tank v Employers Liability* [1974] QB 57), and the US efficient proximate cause doctrine (*Sabella v Wisler*, 59 Cal.2d 21 (1963)). The note says several links can be proximate under concurrent causation, and which link a contract reads is the contract's rule |
+| `RequirementSourceContract` | `RiskAppetite`, `LenderCovenant`, `Regulation`, `LeaseOrContract`, `BoardMandate` | sketch §5.13 |
+| `RequirementStrengthContract` | `Mandatory`, `Preferred`, `Optional` | RFC 2119's MUST, SHOULD and MAY, as an analogy for the force of a client's requirement |
+| `MeasureContract` | `Limit`, `SubLimit`, `Attachment`, `Retention`, `IndemnityPeriod`, `WaitingPeriod`, `CapacityShare`, `NetRetainedLoss`, `Premium` | each with `aeo:measureSpace`: money for amounts, duration (calendar months and hours) for periods, a share of the limit for capacity. `Premium` is for summary terms only, and a shape keeps it out of requirements |
+| `CoverRelationContract` | `Underlying`, `Alongside`, `Replaced` | |
+| `TriggerBasisContract` | `Indemnity`, `Parametric`, `IndustryLossIndex` | |
+| `CoverHistoryEventKindContract` | `Declined`, `NonRenewed`, `Cancelled`, `SpecialTermsImposed`, `Avoided` | the UK Insurance Act 2015 duty of fair presentation (s.3) and remedies (Schedule 1), and the prior cover questions of the ACORD 125 commercial application |
+| `FinancialMetricKindContract` | `Revenue`, `GrossProfit`, `Ebitda`, `NetIncome`, `Equity`, `TotalAssets`, `Payroll`, `Headcount`, `MarketCapitalisation`, `Fees`, `Turnover` | IFRS 15 for revenue, IAS 1 for the statement lines. The note on `Ebitda` says it is not defined by IFRS, so its source's definition is evidence. `Headcount` is a count, the rest money |
+
+### The effective characteristics derivation
+
+`tools/exposure_derivations.py`, one function `effective_characteristics(graph)` returning the
+triples to add. One SPARQL `CONSTRUCT` per characteristic: copy each recorded value to the effective
+property, and where none is recorded and the cause concept has `prl:typicalAgency` or
+`prl:typicalMechanism`, write the typical values and one `aeo:DefaultedCharacteristic` each, with a
+`fnd:DerivationRun` for the call. Code executes, the layer states: the function writes no other
+triple. `examples/losses.ttl` holds its output for the example's causes, and a test checks the file
+equals the function's output on the example's input.
+
+### Shapes, `losses-requirements-cover` region
+
+| Shape | Rule | Severity |
+|---|---|---|
+| loss experience | exactly one entity, one source, a temporal scope | violation |
+| loss record | exactly one date, one status. Every money amount on it in one currency | violation |
+| loss in period | a record's date is within its experience's temporal scope | violation |
+| incurred | incurred equals paid plus reserved when all three are present | violation |
+| loss cause | exactly one peril, one position, at most one agency and one effective agency | violation |
+| defaulted | an effective value that differs from every recorded value has a `DefaultedCharacteristic`, and one with a recorded value has none | violation |
+| requirement | one source, one strength, at least one measure. Each bound on its measure's space. No `Premium`. A relative bound is on a share space and names a metric | violation |
+| requirement scope | the admission profile's subject class is `aeo:ExposureUnit` | violation |
+| existing cover | one relation, a temporal scope. A cover with neither a reference nor a summary term is reported | violation, warning |
+| cover history | one kind, one date | violation |
+| financial metric | one entity, one kind, one amount, a temporal scope. `Headcount` is a count, the others money | violation |
+
+### Examples and tests
+
+`examples/losses.ttl`, no `owl:Ontology`: a five-year loss experience stated complete, with two
+records (a flood loss with a two-link chain, the initiating cause a tropical cyclone and the
+proximate an inundation, one link with a recorded mechanism and one defaulted, and a fire loss
+grouped under a loss event with a GLIDE key), a second experience from an insurer's loss run with
+no records, a lender's flood requirement (mandatory, limit at least the principal, scope over flood
+exposure units in a special flood hazard area), an appetite requirement relative to equity, an
+expiring programme with summary terms, a non-renewal, and revenue by territory.
+
+| ID | Given / When / Then | Level | +/- |
+|---|---|---|---|
+| AIR44-01 | `common` and the exposure documents / loaded with their import closures / parse, every import resolves, every importer of `common` on the branch names 0.6.0 | L1 | + |
+| AIR44-02 | the contracts of this slice and `ClassOfBusinessContract` / Vocabulary's shapes / conform | L1 | + |
+| AIR44-03 | the example / every exposure shape / no result | L1 | + |
+| AIR44-04 | the example's input / `effective_characteristics` / equals `examples/losses.ttl`'s derived triples, one `DefaultedCharacteristic`, none for the recorded link | L2 | + |
+| AIR44-05 | a cause concept with no typical agency / the derivation / no effective agency and no `DefaultedCharacteristic` | L2 | + |
+| AIR44-06 | a loss dated outside its experience's period / validated / violation | L1 | − |
+| AIR44-07 | paid 10, reserved 5, incurred 20 / validated / violation | L1 | − |
+| AIR44-08 | an effective agency differing from the recorded one, with no defaulted node / validated / violation | L1 | − |
+| AIR44-09 | a requirement bound on a duration space for `Limit` / validated / violation | L1 | − |
+| AIR44-10 | a requirement with a `Premium` measure / validated / violation | L1 | − |
+| AIR44-11 | a requirement scope over `aeo:Location` / validated / violation | L1 | − |
+| AIR44-12 | an experience stated complete with no records / queried for losses in the period / the answer is "none" from a stated fact, and an insured with no experience gives no answer | L2 | + |
+| AIR44-13 | every concept of this slice / the documentation shape / each has a note | L1 | + |
+
+**On R at verification:** catalogs, and the release row for `insurance-common-v0.6.0` is written at
+the merge, not now.
 
 ## Documentation deltas
 

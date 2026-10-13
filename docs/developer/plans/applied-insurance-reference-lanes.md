@@ -205,9 +205,9 @@ second trip (§3), unless R can merge a verified prefix (§6).
 | 4 | AIR-2.3 causes N, T, E | |
 | 5 | AIR-2.4 causes H, P, C, F, L, cross-group links | |
 | 6 | AIR-4.2 zones, pools participation, attributes, assessments | |
-| 7 | AIR-4.4 loss history, `aeo:LossCause`, requirements, cover | |
-| 8 | AIR-2.7 pools scheme, example edition, precedence | |
-| 9 | AIR-4.3 dependencies, peril metrics, exposure units | |
+| 7 | AIR-4.3 dependencies, peril metrics, exposure units | |
+| 8 | AIR-4.4 loss experience, `aeo:LossCause`, requirements, cover | |
+| 9 | AIR-2.7 pools scheme, example edition, precedence | |
 | 10 | AIR-4.5 liability exposure | |
 | 11 | AIR-2.5 collections, open-perils example | M1 |
 | 12 | AIR-3.4 crosswalk of a market list, lift at ingestion | |
@@ -215,6 +215,9 @@ second trip (§3), unless R can merge a verified prefix (§6).
 | 14 | AIR-4.6 London and US profiles, examples | M3 |
 | 15 | AIR-6.1 submission | |
 | 16 | S6 spatial guidance (text only) | |
+
+AIR-4.3 precedes AIR-4.4 (revised 2026-10-13, at the AIR-4.4 brief): a requirement's scope is an
+admission profile over exposure units, which AIR-4.3 declares.
 
 AIR-2.6 precedes the cause families (revised 2026-10-13): the threshold shape requires every
 concept with basis Threshold to have a `prl:definingThreshold`, so the thresholds must exist when

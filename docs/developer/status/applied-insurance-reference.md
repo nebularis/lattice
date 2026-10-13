@@ -18,10 +18,10 @@ AIR-3.1, AIR-1.1 and AIR-2.1. Round 2 merged AIR-3.2 and AIR-1.2.
 **Branch:** one for all of S's slices, `air/applied-reference` (lanes §2 and §3, revised
 2026-10-13). The per-slice branches of rounds 1 to 3 were all merged into `main` and are deleted.
 **One trip for machine S (lanes §4, revised 2026-10-13):** AIR-2.0, 2.2, 4.1, 2.6, 2.3, 2.4, 4.2,
-4.4, 2.7, 4.3, 4.5, 2.5, 3.4, 3.5, 4.6, 6.1, then S6. The branch is created only when every brief
+4.3, 4.4, 2.7, 4.5, 2.5, 3.4, 3.5, 4.6, 6.1, then S6. The branch is created only when every brief
 is written, and comes to R once, when the trip is done.
-**Briefs written:** AIR-2.0, 2.2 (amended), 2.3, 2.4, 2.6, 4.1 (literate). **Briefs to write before
-the branch:** AIR-4.2, 4.4, 2.7, 4.3, 4.5, 2.5, 3.4, 3.5, 4.6, 6.1, S6. AIR-3.3 has a brief that is
+**Briefs written:** AIR-2.0, 2.2 (amended twice), 2.3, 2.4, 2.6, 4.1 (literate, amended), 4.2, 4.4.
+**Briefs to write before the branch:** AIR-4.3, 2.7, 4.5, 2.5, 3.4, 3.5, 4.6, 6.1, S6. AIR-3.3 has a brief that is
 blocked (phase 3 plan).
 **Concurrent work:** from round 3, machine R also builds the normative-rule-substrate unit, and
 from 2026-09-30 the computable-contract-substrate unit (CCS), which took over NRS N4, and on
@@ -64,11 +64,11 @@ on `air/applied-reference`.
 | 7 | AIR-4.1 | ready | brief refreshed 2026-10-13, literate |
 | 9 | AIR-2.3 | ready | after AIR-2.6 |
 | 10 | AIR-2.4 | ready | |
-| 11 | AIR-4.2 | waiting for brief | |
-| 12 | AIR-4.4 | waiting for brief | |
+| 11 | AIR-4.2 | ready | brief written 2026-10-13 |
+| 12 | AIR-4.4 | ready | brief written 2026-10-13. After AIR-4.3 |
 | 14 | AIR-2.6 | ready | before AIR-2.3 |
 | 15 | AIR-2.7 | waiting | |
-| 16 | AIR-4.3 | waiting | |
+| 16 | AIR-4.3 | waiting for brief | before AIR-4.4 |
 | 17 | AIR-4.5 | waiting | |
 | 18 | AIR-2.5 | waiting | |
 | 19 | AIR-3.4 | waiting | |
@@ -131,3 +131,13 @@ on `air/applied-reference`.
   windows (Q9), units in `insurance/common` aligned to QUDT (Q10). Every AIR module is literate, and
   every concept documents the standards it follows in `skos:note` (AIR-2.0, a new first slice).
   AIR-2.6 now precedes AIR-2.3.
+- 2026-10-13: earlier private designs for exposure, catastrophe modelling and reference data
+  reviewed against the plan. Decided the same day (R1 to R10): a class of business contract in
+  `insurance/common`, industry, domicile and legal form on the legal entity, a loss experience
+  stating period, source and completeness, cover history events and summary terms, requirement
+  strength and an attachment measure, attribute types for all eight profile families with shapes
+  for two, eight consequences and the tropical depression concept (287 causes), catastrophe model
+  results, multi-insured portfolios and licences out of scope (epic §7), a grouping property in
+  AIR-4.3, and two programme roles. Also decided: AIR-4.2 (Q13) and AIR-4.4 (Q11, Q12) proposals,
+  every active ISO 4217 currency in `insurance/common` with AIR-2.6 (Q14). AIR-4.3 now precedes
+  AIR-4.4. AIR-4.2 and AIR-4.4 briefs written.

@@ -73,7 +73,7 @@ All under `ontology/applied/insurance/peril/`.
    | `prl:measuredOn` | `owl:ObjectProperty`, domain `skos:Concept`, range `qnt:ValueSpace` |
    | `prl:definingThreshold` | `owl:ObjectProperty`, domain `skos:Concept`, range `qnt:RangeSet` |
    | `prl:customaryEventWindow` | `owl:ObjectProperty`, domain `skos:Concept`, range `qnt:Quantity` |
-   | `prl:ReferenceCode` | `rdfs:Datatype`, `owl:equivalentClass` a restriction of `xsd:string` with an `xsd:pattern` of the family class `[NTEHPCFL]` followed by `(\\.[A-Z]{2,4}){0,4}`, written as one Turtle string. It matches all 286 codes of sketch §5 |
+   | `prl:ReferenceCode` | `rdfs:Datatype`, `owl:equivalentClass` a restriction of `xsd:string` with an `xsd:pattern` of the family class `[NTEHPCFL]` followed by `(\\.[A-Z]{2,4}){0,4}`, written as one Turtle string. It matches all 287 codes of sketch §5 |
    | `prl:CatModelCode` | `rdfs:Datatype`, `owl:equivalentClass` a restriction of `xsd:string` with `xsd:pattern "[A-Z0-9]{2,5}"` |
 
    Nothing else. Collection classes arrive with AIR-2.5.
@@ -304,11 +304,23 @@ unchanged. Only the numbers moved.
    | `onset` | `prl-voc:OnsetScheme` | `Sudden`, `Gradual`, `Latent`, `Recurrent` |
    | `definition-basis` | `prl-voc:DefinitionBasisScheme` | `Physical`, `Designation`, `Threshold`, `WordingDefined`, `Statutory`, `Index` |
    | `accumulation-class` | `prl-voc:AccumulationClassScheme` | `Catastrophe`, `Systemic`, `Attritional` |
-   | `consequence` | `prl-voc:ConsequenceScheme` | `DirectPhysicalDamage`, `BusinessInterruption`, `ExtraExpense`, `Spoilage`, `DenialOfAccess`, `Recall`, `CleanUp`, `DataRestoration`, `ExtortionPayment`, `LiabilityToOthers`, `DefenceCosts` |
+   | `consequence` | `prl-voc:ConsequenceScheme` | `DirectPhysicalDamage`, `BusinessInterruption`, `ExtraExpense`, `Spoilage`, `DenialOfAccess`, `Recall`, `CleanUp`, `DataRestoration`, `ExtortionPayment`, `LiabilityToOthers`, `DefenceCosts`, `Delay`, `ShortageOrNonDelivery`, `GeneralAverageContribution`, `ReputationalHarm`, `RegulatoryPenalty`, `NotificationCosts`, `ForensicCosts`, `CancellationCosts` |
    | `harm-subject` | `prl-voc:HarmSubjectScheme` | `Property`, `Persons`, `FinancialInterest`, `DataAndSystems`, `Environment`, `Reputation` |
 
    `Explosion` is added to the sketch's mechanism list because peril vocabulary §6.8's cyber
    write-back names it. `UndeterminedAgency` avoids a clash with Eligibility's `Undetermined`.
+
+   **Amended again 2026-10-13, after the review of earlier designs.** Eight consequences added,
+   the heads of loss that marine, construction, event and cyber covers name. `Delay` covers delay
+   in start-up and transit delay (the notes cite the advance loss of profits and delay in start-up
+   covers of the construction and marine markets). `ShortageOrNonDelivery` is cargo that does not
+   arrive. `GeneralAverageContribution` is a cargo or hull owner's share of a general average
+   sacrifice (notes cite the York-Antwerp Rules 2016). `ReputationalHarm` is the cost of
+   responding to harm to reputation. `RegulatoryPenalty`, `NotificationCosts` and `ForensicCosts`
+   are the first-party cyber and privacy heads of loss (notes cite the GDPR's Articles 33, 34 and
+   83). `CancellationCosts` is the irrecoverable cost of a cancelled or abandoned event or
+   journey. Whether a penalty is insurable is a matter of law, so its note says the consequence
+   names a loss and not that cover for it is lawful.
 
    **Amended 2026-10-13, before S started.** The cause scheme's notes name mechanisms and
    consequences the first lists lacked (ground failure, burial and load, blast, deprivation,
@@ -424,6 +436,7 @@ The module README gains a "Sources consulted" section listing the standards abov
 | N.MET.TC.TYP | A tropical cyclone whose maximum sustained wind reaches hurricane strength in the western North Pacific basin. |
 | N.MET.TC.SEV | A tropical cyclone whose maximum sustained wind reaches hurricane strength in the South Pacific or Indian Ocean basins. |
 | N.MET.TC.TST | A tropical cyclone whose maximum sustained wind is above tropical depression strength and below hurricane strength. |
+| N.MET.TC.TDP | A tropical cyclone whose maximum sustained wind is below tropical storm strength. |
 | N.MET.NS | A storm given a name by a recognised meteorological authority, whatever its type. |
 | N.MET.ETC | A low-pressure system of the middle or high latitudes that draws its energy from horizontal temperature contrasts, typically along fronts. |
 | N.MET.ETC.WND | The damaging wind field of an extratropical cyclone. |
@@ -490,7 +503,7 @@ parent, and the characteristics the rules give it, and the vocabulary passes eve
 | N.BIO.OUT.PAN, N.EXT.GMS | accumulation | Systemic |
 | N.GEO.MM.SUB, N.GEO.MM.HVE, N.HYD.ERS, N.CLI.DRT, N.BIO.OUT, N.BIO.INF, N.BIO.CRD, N.BIO.ANI, N.BIO.MLD, N.BIO.ALG | onset | Gradual |
 | N.CLI.WF | agency | UndeterminedAgency |
-| N.MET.TC.HUR, N.MET.TC.TYP, N.MET.TC.SEV, N.MET.TC.TST, N.MET.SCS.SLW.DER, N.MET.WIN.BLZ | basis | Threshold |
+| N.MET.TC.HUR, N.MET.TC.TYP, N.MET.TC.SEV, N.MET.TC.TST, N.MET.TC.TDP, N.MET.SCS.SLW.DER, N.MET.WIN.BLZ | basis | Threshold |
 | N.CLI.DRT, N.CLI.HTW, N.CLI.CLD | basis | Index |
 | N.MET.NS, N.BIO.OUT.PAN | basis | Designation |
 | N.BIO.OUT, N.CLI.HTW | harm subject | Persons |
@@ -559,7 +572,7 @@ The data graph is the spec, the vocabulary and `peril-intensity.ttl` (AIR-2.6).
 
 | ID | Given / When / Then | Level | +/- |
 |---|---|---|---|
-| AIR23-01 | the vocabulary / read / N has 89 concepts, T 71 and E 15 (sketch §5.1 to §5.3), and every code is present once | L1 | + |
+| AIR23-01 | the vocabulary / read / N has 90 concepts, T 71 and E 15 (sketch §5.1 to §5.3), and every code is present once | L1 | + |
 | AIR23-02 | the vocabulary with `peril-intensity.ttl` / the peril shapes / no result | L1 | + |
 | AIR23-03 | every N, T and E concept / read / has exactly one onset and one basis and at least one agency, each the value the rules give. Check five: N.CLI.WF.FOR UndeterminedAgency, N.MET.TC.HUR Threshold, E.DET.COR Natural and Gradual, T.REL.ASB Latent, N.BIO.OUT.PAN Designation and Systemic | L1 | + |
 | AIR23-04 | N.GEO.EQ.FFE and N.MET.TC.SRG / read / partitive links and mechanisms Fire and Inundation | L1 | + |
@@ -661,7 +674,7 @@ the concept counts.
 
 | ID | Given / When / Then | Level | +/- |
 |---|---|---|---|
-| AIR24-01 | the vocabulary / read / H has 37 concepts, P 36, C 17, F 10 and L 11 (sketch §5.4 to §5.8), 286 in the whole scheme, and every code is present once | L1 | + |
+| AIR24-01 | the vocabulary / read / H has 37 concepts, P 36, C 17, F 10 and L 11 (sketch §5.4 to §5.8), 287 in the whole scheme, and every code is present once | L1 | + |
 | AIR24-02 | the whole cause scheme with `peril-intensity.ttl` / the peril shapes / no result | L1 | + |
 | AIR24-03 | the rules / read / H.WRA.EMP.DIS Intentional, P.PV.STK Intentional, F.INS Economic and Statutory, L.OCD Negligent, Latent and Statutory, C.NML.SWF Accidental and Negligent | L1 | + |
 | AIR24-04 | the scheme / read / eight top concepts, N to L | L1 | + |
@@ -691,16 +704,31 @@ domain needs them. `common-vocab.ttl` is bumped once on the branch (MINOR).
 | acceleration | standard gravity `unit:G`, `unit:M-PER-SEC2` |
 | speed | `unit:M-PER-SEC`, `unit:KN`, `unit:MI-PER-HR`, `unit:KiloM-PER-HR` |
 | pressure | `unit:KiloPA`, `unit:HectoPA` |
-| length | `unit:M`, `unit:MilliM`, `unit:KiloM` |
+| length | `unit:M`, `unit:MilliM`, `unit:KiloM`, `unit:FT`, `unit:MI` |
+| area | `unit:M2`, `unit:FT2` |
 | mass per area | `unit:KiloGM-PER-M2` |
 | power per length | `unit:KiloW-PER-M` |
 | temperature | `unit:DEG_C` |
-| duration | `unit:HR`, `unit:DAY` |
+| duration | `unit:HR`, `unit:DAY`, `unit:MO`, `unit:YR` |
+| currency | every currency in ISO 4217 List One, each `skos:exactMatch` its QUDT currency unit (`http://qudt.org/vocab/currency/`) |
 
 QUDT is `http://qudt.org/vocab/unit/`. Check each IRI against QUDT's published unit vocabulary at
 the start of the slice, and record any that does not resolve. Each conversion is a `qnt:Conversion`
 with its exact factor (1 kn = 1852/3600 m/s, 1 mph = 0.44704 m/s, 1 g = 9.80665 m/s², 1 hPa =
 0.1 kPa). Every unit carries a `skos:note` naming the SI definition or the convention it follows.
+
+**Currencies (decided 2026-10-13, Q14).** Exposure, loss and requirement amounts need money units,
+so `common/` declares every active currency of ISO 4217 List One as a `qnt:Unit` on one money
+space, `icm-voc:Money`. Each has its alphabetic code as local name (`icm-voc:USD`), its numeric code
+as `skos:notation`, its English name as `skos:prefLabel`, and a note citing ISO 4217 and giving its
+minor unit (2 for USD, 0 for JPY, 3 for KWD). Funds codes and precious metals (`XAU`, `XDR` and the
+like) are left out, and the note on the space says so. No conversion is declared between currencies:
+a rate depends on a date and a source, so it is a `qnt:Conversion` under a `qnt:ConversionContext`
+(Quantification's pattern), authored by whoever converts. S drafts the list from the standard. R
+checks it against the maintenance agency's published List One at verification and records the
+edition date in the README's "Sources consulted". The month and year are `qnt:CalendarUnit`s (ADR-A94),
+for horizons and indemnity periods: their length in days depends on the calendar and the date
+counted from, so any conversion to days is contextual and none is declared.
 
 ### Measures and their spaces (`vocab/peril-intensity.ttl`)
 
@@ -748,6 +776,7 @@ a `qnt:RangeSet` on the space of one of the concept's intensity measures.
 |---|---|---|---|
 | N.MET.TC.HUR | `SustainedWind1Min` | ≥ 64 kn | NHC, Saffir–Simpson |
 | N.MET.TC.TST | `SustainedWind1Min` | ≥ 34 kn and < 64 kn | NHC |
+| N.MET.TC.TDP | `SustainedWind1Min` | < 34 kn | NHC, WMO tropical cyclone classification. The note says a depression is numbered but not named in the North Atlantic, so it is not a named storm (N.MET.NS) |
 | N.MET.TC.TYP | `MeanWind10Min` | ≥ 64 kn | RSMC Tokyo (JMA). The note says JTWC's 1-minute figures belong in a market edition |
 | N.MET.TC.SEV | `MeanWind10Min` | ≥ 64 kn | Australian Bureau of Meteorology (category 3 and above), RSMC La Réunion. The note says IMD's 3-minute convention belongs in a market edition |
 | N.MET.SCS.SLW.DER | `WindGust3s`, `PathLength` | gusts ≥ 26 m/s, path ≥ 400 km | NOAA Storm Prediction Center |
@@ -804,6 +833,7 @@ AIR-2.3 and AIR-2.4 declare them later in the trip.
 | AIR26-06 | a value in knots / converted to m/s through the declared conversion / 64 kn is 32.92 m/s to two places | L2 | + |
 | AIR26-07 | a threshold of HUR placed on `WindGust3s`'s space / the threshold shape / violation, the space is not one of HUR's measures | L1 | − |
 | AIR26-08 | every measure, unit and ordinal concept / the documentation shape / each has a note | L1 | + |
+| AIR26-09 | the currency units / read / every one is on `icm-voc:Money`, with a three-digit notation and a QUDT match, `USD`, `EUR`, `GBP` and `JPY` are present, and no conversion links two currencies | L1 | + |
 
 ## Documentation deltas
 

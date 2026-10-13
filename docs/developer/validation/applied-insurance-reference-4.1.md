@@ -28,7 +28,7 @@ mise run check:ontology-catalog && mise run check:ontology-versioning
 ## Artefacts to inspect
 
 - `ontology/applied/insurance/exposure/spec/exposure.ttl`: imports, the seven classes, disjointness.
-- `vocab/exposure-vocab.ttl`: the six contracts, their schemes and the programme roles.
+- `vocab/exposure-vocab.ttl`: the seven contracts, their schemes and the programme roles.
 - `shapes/structural.ttl` and `shapes/constraints.ttl`: the valuation either-or rule and the control cycle rule.
 - `examples/core.ttl` and `tools/test_exposure_ontology.py`.
 

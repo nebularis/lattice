@@ -9,7 +9,7 @@
 
 ## Invariant
 
-Each intensity measure has its own value space with a unit contract, threshold-defined cause concepts point at range sets on their measures' spaces, and units are declared once in `insurance/common`, aligned to QUDT.
+Each intensity measure has its own value space with a unit contract, threshold-defined cause concepts point at range sets on their measures' spaces, and units, currencies among them, are declared once in `insurance/common`, aligned to QUDT and ISO 4217.
 
 ## Test cases
 
@@ -29,7 +29,8 @@ mise run check:ontology-catalog && mise run check:ontology-versioning
 
 - `vocab/peril-intensity.ttl` and its README sections.
 - The units section of `insurance/common`'s README and `common-vocab.ttl`.
-- The six threshold range sets, read against the plan's table and its cited sources.
+- The seven threshold range sets, read against the plan's table and its cited sources.
+- The currency list, against ISO 4217 List One as published on the day of verification.
 
 ## Deliberate non-coverage
 
