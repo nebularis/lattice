@@ -639,7 +639,7 @@ def _count(name: str, argument: Var, alias: str, *, distinct: bool = False) -> P
 
 
 def _key_claim_duplicate_audit(b: Bindings, *, guards: bool) -> Operation:
-    claim, owner = Var("claim"), Var("owner")
+    claim, owner = Var("claim", kind=Kind.IRI), Var("owner")
     return Operation.build(
         "key-claim-duplicate-audit",
         (),
@@ -657,7 +657,7 @@ def _key_claim_duplicate_audit(b: Bindings, *, guards: bool) -> Operation:
 
 
 def _fork_detection_audit(b: Bindings, *, guards: bool) -> Operation:
-    rev, txn = Var("rev"), Var("t")
+    rev, txn = Var("rev", kind=Kind.IRI), Var("t")
     return Operation.build(
         "fork-detection-audit",
         (),
@@ -681,7 +681,7 @@ _LOG_GRAPHS = Param("logGraphs", Kind.REGISTRY_LIST)
 
 
 def _revision_multi_txn_audit(b: Bindings, *, guards: bool) -> Operation:
-    rev, txn = Var("rev"), Var("t")
+    rev, txn = Var("rev", kind=Kind.IRI), Var("t")
     return Operation.build(
         "revision-multi-txn-audit",
         (_LOG_GRAPHS,),
@@ -696,7 +696,7 @@ def _revision_multi_txn_audit(b: Bindings, *, guards: bool) -> Operation:
 
 
 def _txn_multi_revision_audit(b: Bindings, *, guards: bool) -> Operation:
-    rev, txn = Var("rev"), Var("t")
+    rev, txn = Var("rev"), Var("t", kind=Kind.STRING)
     return Operation.build(
         "txn-multi-revision-audit",
         (_LOG_GRAPHS,),
@@ -715,7 +715,7 @@ def _gap_scan_audit(b: Bindings, *, guards: bool) -> Operation:
     must number exactly S - L + 1. Positions are compared as terms in guards and as values in audits (plan 4.3, step 12), so
     `?seq`, `?S` and `?L` declare `Compare.VALUE`: the stored positions are `xsd:long`, and a receipt written by hand with another
     integer type would otherwise be missed."""
-    target = Var("target")
+    target = Var("target", kind=Kind.IRI)
     seq, last, low, lwm = (Var(n, Kind.POSITION, Compare.VALUE) for n in ("seq", "S", "L", "lwm"))
     return Operation.build(
         "gap-scan-audit",

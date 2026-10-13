@@ -72,6 +72,18 @@ class Compare(Enum):
     VALUE = "value"
 
 
+class AccessMode(Enum):
+    """How an operation touches a logical resource (formal-methods H2.6). An absence read is what write skew turns on, so it
+    is named apart from a point read."""
+
+    POINT_READ = "PointRead"
+    ABSENCE_READ = "AbsenceRead"
+    SCAN_READ = "ScanRead"
+    WHOLE_AGGREGATE_READ = "WholeAggregateRead"
+    INSERT = "Insert"
+    DELETE = "Delete"
+
+
 class Binding(Enum):
     """Whether a variable used in a ``DELETE`` or ``INSERT`` template is bound in every solution."""
 
@@ -420,7 +432,7 @@ class Operation:
 
 
 __all__ = [
-    "IrError", "Kind", "SLOT_KINDS", "Compare", "Binding", "Param", "Var", "ParamRef", "Const", "RdfType", "A",
+    "IrError", "Kind", "SLOT_KINDS", "Compare", "AccessMode", "Binding", "Param", "Var", "ParamRef", "Const", "RdfType", "A",
     "Path", "Triple", "PayloadSlot", "RegistrySlot", "GraphRole", "Graph", "Func", "Op", "Not", "TermGuard",
     "ValueGuard", "Group", "GraphBlock", "Optional_", "NotExists", "Bind", "Filter", "Values", "Union_",
     "Projected", "Select", "SubSelect", "ParameterGuard", "GUARDS_OFF", "Operation",

@@ -24,7 +24,7 @@ from typing import Iterable, Optional
 from rdflib.namespace import XSD
 
 from .ir import (
-    Binding, Bind, Compare, Const, Expr, Filter, Func, Graph, GraphBlock, Group, IrError, Kind,
+    AccessMode, Binding, Bind, Compare, Const, Expr, Filter, Func, Graph, GraphBlock, GraphRole, Group, IrError, Kind,
     Not, NotExists, Op, Operation, Optional_, Param, ParameterGuard, ParamRef, Path, PayloadSlot, Projected, RdfType,
     RegistrySlot,
     SLOT_KINDS, Select, SubSelect, TermGuard, Triple, Union_, ValueGuard, Values, Var,
@@ -131,13 +131,15 @@ def _var_names(node, expand: Optional[SubSelect] = None) -> set:
 @dataclass(frozen=True, order=True)
 class Access:
     """One graph, subject and predicate an operation reads or writes. ``closure`` marks a pattern that
-    reaches a set of nodes through a property path, so its subjects are known only at execution."""
+    reaches a set of nodes through a property path, so its subjects are known only at execution. ``mode`` is an
+    :class:`~persistence.ir.AccessMode` value (formal-methods H2.6)."""
 
     role: str
     graph: str
     subject: str
     predicate: str
     closure: bool = False
+    mode: str = ""
 
 
 @dataclass(frozen=True)
@@ -176,6 +178,7 @@ class _Checker:
         self.writes: set[Access] = set()
         self.subselects: list[SubSelect] = []
         self.depth = 0
+        self.absence = 0
 
     # ---- entry
 
@@ -355,7 +358,9 @@ class _Checker:
             return self._mentioned(el.group.elements)
         if isinstance(el, NotExists):
             inner = scope.inner(copy=True)
+            self.absence += 1
             self._group(el.group.elements, inner, graph)
+            self.absence -= 1
             return self._mentioned(el.group.elements)
         if isinstance(el, Filter):
             names = self._expr(el.expr, guard=True)
@@ -432,8 +437,21 @@ class _Checker:
             if isinstance(part, Var):
                 names.add(part.name)
                 scope.definite.add(part.name)
-        self.reads.add(self._access(graph.graph, t))
+        self.reads.add(self._access(graph.graph, t, self._read_mode(graph.graph, t)))
         return names
+
+    def _read_mode(self, graph: Graph, t: Triple) -> str:
+        """An absence read inside ``NOT EXISTS``. A read through a path, or of every triple of a root's data graph, reads the
+        whole aggregate. A read with a variable subject elsewhere is a scan, and one with a given subject is a point read."""
+        if self.absence:
+            return AccessMode.ABSENCE_READ.value
+        if isinstance(t.predicate, Path):
+            return AccessMode.WHOLE_AGGREGATE_READ.value
+        if isinstance(t.subject, Var):
+            if graph.role is GraphRole.DATA and isinstance(t.predicate, Var):
+                return AccessMode.WHOLE_AGGREGATE_READ.value
+            return AccessMode.SCAN_READ.value
+        return AccessMode.POINT_READ.value
 
     def _mentioned(self, elements) -> set:
         names: set = set()
@@ -505,12 +523,12 @@ class _Checker:
                 for part in (el.subject, el.predicate, el.object):
                     if isinstance(part, Var):
                         self._tag(part)
-                target.add(self._access(block.graph, el))
+                target.add(self._access(block.graph, el, AccessMode.DELETE.value if deleting else AccessMode.INSERT.value))
             elif isinstance(el, PayloadSlot):
                 if deleting:
                     raise IrError("SlotMisuse", f"{self.op.id}: a payload slot is for an INSERT template, not a DELETE template")
                 self._slot(el.param, Kind.PAYLOAD)
-                target.add(Access(block.graph.role.value, _term_text(block.graph.term), "{payload}", "*"))
+                target.add(Access(block.graph.role.value, _term_text(block.graph.term), "{payload}", "*", False, AccessMode.INSERT.value))
             else:
                 raise IrError("UnsupportedInTemplate", f"{self.op.id}: a template holds triples and a payload slot only, got {el!r}")
 
@@ -757,9 +775,9 @@ class _Checker:
 
     # ---- access
 
-    def _access(self, graph: Graph, t: Triple) -> Access:
+    def _access(self, graph: Graph, t: Triple, mode: str) -> Access:
         closure = isinstance(t.predicate, Path)
-        return Access(graph.role.value, _term_text(graph.term), _term_text(t.subject), _term_text(t.predicate), closure)
+        return Access(graph.role.value, _term_text(graph.term), _term_text(t.subject), _term_text(t.predicate), closure, mode)
 
 
 def _term_text(term) -> str:

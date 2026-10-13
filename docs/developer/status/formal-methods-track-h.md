@@ -3,7 +3,7 @@
 # Formal Methods, Track H: Status
 
 **Unit ID:** `formal-methods-track-h` (phase, within the `formal-methods` epic)
-**Status:** In progress. H1 (H1.1 to H1.5, with H1.4c), the aggregate-ownership slices HO0 to HO9 and H2.0 to H2.3 are merged to `main` and signed off (H1 and HO 2026-10-10, H2.0 to H2.3 2026-10-12). H2.4a and H2.4b are built and reviewed, and every decision in their Validation Packs is taken (2026-10-13), awaiting the maintainer's merge with the triple-store record. ADR-A123 is accepted with five addenda, ADR-A124 and ADR-A125 are accepted. H2.5 is built and awaits review (2026-10-13), and H2.6 is planned to follow it
+**Status:** In progress. H1 (H1.1 to H1.5, with H1.4c), the aggregate-ownership slices HO0 to HO9 and H2.0 to H2.3 are merged to `main` and signed off (H1 and HO 2026-10-10, H2.0 to H2.3 2026-10-12). H2.4a and H2.4b are built and reviewed, and every decision in their Validation Packs is taken (2026-10-13), awaiting the maintainer's merge with the triple-store record. ADR-A123 is accepted with five addenda, ADR-A124 and ADR-A125 are accepted. H2.5 and H2.6 are built and await review (2026-10-13). H2.6 stops for the maintainer's review and commit of the expected profiles
 **Last updated:** 2026-10-13
 **Plan:** [formal-methods-track-h.md](../plans/formal-methods-track-h.md)
 **Sketches:** [formal-methods-track-h.md](../sketches/formal-methods-track-h.md) (main),
@@ -53,12 +53,12 @@ section below.
 
 ## Next action
 
-0. **The maintainer reviews H2.5** on this branch, from its [Validation Pack](../validation/FMH-H2-5.md): no open decision. Merge-rewrite on rdflib (TSD-16), the template's arithmetic (TSD-17) and the fragment-limit fields were decided on 2026-10-13 and are built. Run `mise run check:persistence`
-   (expect `2597 passed, 1 xfailed`) and `mise run check:persistence-oxigraph` (189 passed). No release tag is owed.
-1. **H2.5 is built** (2026-10-13), autonomously, in six gates, on the branch `claude/nice-bohr-pmj43u`. P5's stop condition did not arise.
-2. **Then H2.6**, from this branch once H2.5 is reviewed, or from `main` after the merge:
-   [plan §4.4](../plans/formal-methods-track-h.md#44-h26-the-expected-compiled-profile-examples-first-and-the-paper-check-planned-2026-10-13).
-   It stops for the maintainer's review and commit of its expected profiles.
+0. **The maintainer reviews H2.5 and H2.6** on this branch. H2.5: [FMH-H2-5](../validation/FMH-H2-5.md), no open decision. H2.6: [FMH-H2-6](../validation/FMH-H2-6.md), the
+   model with its proposed names, the paper check, and eight questions. Run `mise run check:persistence` (expect `2711 passed, 1 xfailed`) and
+   `mise run check:persistence-oxigraph` (189 passed). No release tag is owed.
+1. **H2.5 is built** (2026-10-13), autonomously, in six gates. P5's stop condition did not arise.
+2. **H2.6 is built and stopped** (2026-10-13), as the plan says: the ten expected-profile files are in
+   `ontology/persistence/test/expected-profiles/`, for the maintainer's review and commit. Examples first: H2.7 is briefed against them once reviewed.
 3. Then H2.7, the vocabulary and its emission, against those profiles.
 4. Both slices read [the order and handoff rules](../plans/formal-methods-track-h.md#45-order-h25-then-h26-then-h27-one-at-a-time-on-the-cloud-agent)
    and the [design review](../notes/track-h-feedback.md) first.
@@ -96,7 +96,7 @@ section below.
 | H2.4a (the composite ports) | **built and reviewed** 2026-10-12. [Validation Pack](../validation/FMH-H2-4a.md). [Plan §4.2](../plans/formal-methods-track-h.md#42-h24-the-composite-family-and-what-each-store-does-planned-2026-10-12) | the maintainer's merge |
 | H2.4b (Oxigraph, probes, benchmark) | **built** 2026-10-12, reviewed 2026-10-13. [Validation Pack](../validation/FMH-H2-4b.md). Decision 1 decided (option D, built in H2.5), and the corrected P1 test countersigned | the maintainer's merge |
 | H2.5 (key claims, audits, guard D, the `SELECT` fragment) | **built** 2026-10-13, autonomously, in six gates. [Validation Pack](../validation/FMH-H2-5.md). [Plan §4.3](../plans/formal-methods-track-h.md#43-h25-key-claims-the-audits-and-the-self-calibrating-guard-planned-2026-10-13). TD-34 closed. Every decision taken | the maintainer's review and merge |
-| H2.6 (expected compiled profiles, paper check) | **planned** 2026-10-13 and revised after the design review, in [plan §4.4](../plans/formal-methods-track-h.md#44-h26-the-expected-compiled-profile-examples-first-and-the-paper-check-planned-2026-10-13). Every question decided | H2.5's review (H-D22) |
+| H2.6 (expected compiled profiles, paper check) | **built and stopped** 2026-10-13, autonomously. [Validation Pack](../validation/FMH-H2-6.md). [Plan §4.4](../plans/formal-methods-track-h.md#44-h26-the-expected-compiled-profile-examples-first-and-the-paper-check-planned-2026-10-13). Eight questions for the review | the maintainer's review and commit of the expected profiles |
 | H3 (specification registry) | not started, outlined in the plan | H2 preferred first (smaller, more self-contained), not a hard blocker |
 | H4 (exhaustive cross-axis validation, BDD/SMT) | not started, outline only | H3 |
 | H5 (capability-record extension, TLA+/Quint toolchain spike, protocol models A-D) | not started, outline only | H2 (read/write sets from the IR). ADR-A-FM4 is accepted |
@@ -573,3 +573,10 @@ section below.
   function of a projection. Decision 2, how the builder and the template agree about arithmetic, is open with a leaning to parenthesise the template as well.
 - 2026-10-13: the maintainer decided FMH-H2-5 decision 2, option B, and approved the rest. The gap-scan template now says `(?S - ?L) + 1`, the harness
   normalisation for arithmetic chains is removed, and H2.5 has no open decision.
+- 2026-10-13: H2.6 built ([FMH-H2-6](../validation/FMH-H2-6.md)), autonomously on the branch, and stopped for the maintainer's review. The contract of an
+  operation is derived in production code (`persistence.contract`: kinds, access modes, the role-to-resource mapping, builder versions), with the checker
+  giving each access a mode. Ten files in `ontology/persistence/test/expected-profiles/` (the eight examples, the caller-named variant, and the
+  enumerations) are held to the builders, to `compile` and to a golden check on builder versions by 114 new cases. Mapping findings: only the keys graph
+  holds two resources (by predicate), and the pinned graph is a realisation of `Receipt`. Paper check against `lattice-sql.md`: every resource is logical
+  or realisation only, and the gaps are in §9 (the transaction claim, the retention mark, tombstone, `ProvidedConcurrency`) and in the contract (the
+  patch content of a patch log, the digest input of an append). One intended difference (the patch-log parameters), which H2.7 closes.

@@ -201,3 +201,17 @@ The test suite includes:
 - **`test_slice_4_privacy.py`** — per-property resolution of `dal:PrivacyProfile` and `dal:perSubjectScoped`, `dal:epochAuthority`'s promotion out of `dal:epochGuardScope`'s extras, and both privacy/erasure checks with a positive and negative case, including the two profile classes declared on separate individuals.
 - **`test_slice_5_uniqueness.py`** — `dal:onViolation` defaulting to `dal:Reject`, the three reconciler templates selected and bound, `MergeRelationRequired` positive and negative, `dualClaimScheme` mirroring `persistence.recipes`' active-scheme filter and selecting the dual-guard write template, and the registry-token digest-scheme exemption's positive case plus its `dal:HashedTargetDerivation` boundary negative case.
 - **`test_architecture.py`** — the Python equivalent of an ArchUnit rule: only `persistence.render` may import `chevron`, no wall-clock call exists in any resolution-critical module, and `chevron.render`'s template argument is never dynamically assembled.
+
+### The contract of an operation (formal-methods H2.6)
+
+`persistence.contract.contract_of` reads an operation and returns its logical kind, its builder version, whether its parameter guard is on, its
+parameters, the logical resources it accesses with the mode and key of each access (`PointRead`, `AbsenceRead`, `ScanRead`,
+`WholeAggregateRead`, `Insert`, `Delete`), the columns an audit returns, and its payload and request-digest contracts. It holds no SPARQL
+text. The tables behind it are `OPERATION_KINDS`, `resource_of` (a graph role, and for the keys graph the predicate, to a logical resource) and
+`BUILDER_VERSIONS`, which `tests/test_builder_versions.py` ties to the text each builder renders. `cas-replace-value-guard` has no
+builder (TD-43), so `HAND_DECLARED` holds its contract.
+
+`tests/expected_profiles.py` writes the expected compiled profile of each example into `ontology/persistence/test/expected-profiles/`, and
+`tests/test_expected_profiles.py` holds the files to the builders and to `compile`. After a change to a builder or to `compile` output, regenerate
+them in the same commit with `mise exec -- python tools/persistence/tests/expected_profiles.py --write`, and after a change to the text a builder
+renders, bump its version in `BUILDER_VERSIONS` and run `mise exec -- python tools/persistence/tests/builder_goldens.py --update`.

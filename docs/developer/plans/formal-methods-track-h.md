@@ -925,7 +925,7 @@ About 600k tokens, against 400k in the sketch, for the `SELECT` rules, the sub-s
 Built on 2026-10-13 as planned, in six gates. What it found and the decisions it leaves are in the [Validation Pack](../validation/FMH-H2-5.md). Fact 10's
 four unknowns are answered in TSD-16 to TSD-19, and a fifth difference between the stores, TSD-17, was found by running the gap scan.
 
-### 4.4 H2.6: the expected compiled profile, examples first, and the paper check (planned 2026-10-13)
+### 4.4 H2.6: the expected compiled profile, examples first, and the paper check (planned 2026-10-13, built 2026-10-13)
 
 **Unit:** slice H2.6 of the [typed IR sketch §7](../sketches/formal-methods-track-h-typed-ir.md#7-slices), §7.2 for the paper check. It
 runs after H2.5 has merged (§4.5), so every operation it describes has a builder. It writes, before any vocabulary exists, what H2.7's
@@ -1030,6 +1030,12 @@ declaration (the minted-IRI test fails).
 #### Estimate
 
 About 300k tokens, against 150k in the sketch, for the mapping in production code, the extended contract and the five tests.
+
+#### Built
+
+Built on 2026-10-13 and stopped for review, as step 5 says. The [Validation Pack](../validation/FMH-H2-6.md) lists three differences from this plan: ten files and not nine (the
+enumerations are declared in a tenth), the base-profile test compares by isomorphism and not by bytes (parsing relabels a blank node), and the contract is
+derived in `persistence.contract`, with the checker giving each access a mode, so that H2.7 reads the same code.
 
 ### 4.5 Order: H2.5, then H2.6, then H2.7, one at a time on the cloud agent
 
