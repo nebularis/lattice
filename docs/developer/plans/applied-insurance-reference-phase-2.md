@@ -27,7 +27,7 @@ example edition used by the binding tests.
 | AIR-2.7 | pools scheme and the example market edition bound by a scoped `voc:SchemeBinding` | §9.1, §9.4 | precedence tests: scoped binding wins, reference is the fallback |
 
 Branches, machines and rounds: [machines, branches and merges](applied-insurance-reference-lanes.md).
-Each slice is its own branch, even where one machine builds several in a row.
+S slices share one branch, `air/applied-reference`, as commit ranges (lanes §2).
 
 Each slice's pack includes an SKOS integrity case (no `skos:related` and no `prl:canTrigger`
 within one `broaderTransitive` chain) and a reasoner-free parse and shapes run through
@@ -158,7 +158,8 @@ shapes directory).
 
 ## AIR-2.2 in detail
 
-**Machine:** S (Copilot Business). **Branch:** `air/2.2-characteristics`. **Validation Pack:**
+**Machine:** S (Copilot Business). **Branch:** `air/applied-reference`, commits `[AIR-2.2] …`, the
+last being `[AIR-2.2] Handoff`. **Validation Pack:**
 [applied-insurance-reference-2.2](../validation/applied-insurance-reference-2.2.md), whose Handoff
 section S fills in. **Decisions:** ADR-A98 (decision 5), ADR-A99. **Sketch:** peril vocabulary §3,
 §6.3.
@@ -167,9 +168,31 @@ section S fills in. **Decisions:** ADR-A98 (decision 5), ADR-A99. **Sketch:** pe
 schemes `insurance/common/` has contracts for are bound to them, and the characteristic
 properties specialise `common/`'s properties so those contracts govern their values.
 
-### Spec changes (`spec/peril.ttl`, 0.1.0 → 0.2.0, MINOR)
+### Versions (refreshed 2026-10-13)
 
-1. Import `…/insurance/common/0.1.0` as well. ADR-A98 decision 5 has `peril/` import `common/`,
+CCS cascades moved every layer this slice pins since the brief was first written. The table is a
+snapshot of `main` at `69cb7675`. At the start of the slice, read the live `owl:versionIRI` of each
+document below and use those. If one differs from the table, use the live one and say so in the
+Handoff.
+
+| Document | Brief first pinned | Snapshot | Use |
+|---|---|---|---|
+| Foundation | 0.3.0 | 0.4.0 | already imported by `peril.ttl` and `peril-vocab.ttl`, no change |
+| Vocabulary | 0.3.0 | 0.4.0 | already imported by `peril-vocab.ttl`, no change |
+| Quantification | 0.5.0 | 0.8.0 | already imported by `peril.ttl`, no change |
+| `insurance/common` | 0.1.0 | 0.5.0 | new import of `peril.ttl` |
+| `insurance/common-vocab` | 0.1.0 | 0.5.0 | new import of `peril-vocab.ttl` |
+| `insurance/peril` | 0.1.0 | 0.4.0 | bumped here to 0.5.0 |
+| `insurance/peril-vocab` | 0.1.0 | 0.4.0 | bumped here to 0.5.0 |
+| `insurance/peril` shapes | 0.1.0 | 0.1.0 | unchanged |
+
+`peril.ttl` and `peril-vocab.ttl` were re-pinned by the CCS cascades without a slice of this epic
+touching them, so they sit at 0.4.0 although AIR-2.1 released 0.1.0. The designs below are
+unchanged. Only the numbers moved.
+
+### Spec changes (`spec/peril.ttl`, 0.4.0 → 0.5.0, MINOR)
+
+1. Import `…/insurance/common/0.5.0` as well. ADR-A98 decision 5 has `peril/` import `common/`,
    and AIR-2.1 was built before `common/` existed (flagged at AIR-1.2).
 2. Four sub-property axioms, so a check on a `common/` property also reads the peril vocabulary:
    `prl:typicalAgency ⊑ icm:agency`, `prl:typicalMechanism ⊑ icm:mechanism`,
@@ -177,9 +200,9 @@ properties specialise `common/`'s properties so those contracts govern their val
    `prl:onset`, `prl:definitionBasis` and `prl:accumulationClass` stay as they are: `common/` has
    no property for them, because only the peril vocabulary uses those axes.
 
-### Vocabulary changes (`vocab/peril-vocab.ttl`, 0.1.0 → 0.2.0, MINOR)
+### Vocabulary changes (`vocab/peril-vocab.ttl`, 0.4.0 → 0.5.0, MINOR)
 
-1. Re-pin the spec import to `…/insurance/peril/0.2.0`, and add `…/insurance/common-vocab/0.1.0`
+1. Re-pin the spec import to `…/insurance/peril/0.5.0`, and add `…/insurance/common-vocab/0.5.0`
    (the contracts the bindings name).
 2. Fill the seven characteristic and companion regions, and no other region. Every concept is
    `skos:Concept`, `skos:inScheme` its scheme, `skos:topConceptOf` its scheme (each scheme is flat),
@@ -208,8 +231,8 @@ properties specialise `common/`'s properties so those contracts govern their val
 2. `tools/test_peril_vocabulary.py` gains AIR22-01 to AIR22-08 below. The existing tests stay
    unchanged.
 
-**On R at verification:** catalogs, release rows and tags for `insurance-peril-v0.2.0` and
-`insurance-peril-vocab-v0.2.0`. The shapes directory does not change.
+**On R at verification:** catalogs, release rows and tags for `insurance-peril-v0.5.0` and
+`insurance-peril-vocab-v0.5.0`. The shapes directory does not change.
 
 | ID | Given / When / Then | Level | +/- |
 |---|---|---|---|

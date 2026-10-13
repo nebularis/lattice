@@ -3,7 +3,7 @@
 # Validation Pack: AIR-4.1, exposure core
 
 **Unit:** [`applied-insurance-reference`](../status/applied-insurance-reference.md)
-**Machine:** S (Copilot Business). **Branch:** `air/4.1-exposure-core`
+**Machine:** S (Copilot Business). **Branch:** `air/applied-reference`, commits `[AIR-4.1] …`
 **Plan and test cases:** [Phase 4 plan](../plans/applied-insurance-reference-phase-4.md) (AIR-4.1 in detail)
 **Decisions:** ADR-A98 (layout, namespaces), ADR-A102
 
@@ -18,7 +18,8 @@ verification.
 
 ## One command
 
-Run from the repository root on machine R, after `mise run build:ontology-catalog` and `mise run build:ontology-releases`.
+Run from the repository root. S runs it before the handoff commit. R runs it again at verification,
+after `mise run build:ontology-catalog` and `mise run build:ontology-releases`, which S cannot do.
 
 ```bash
 mise run check:ontology-catalog && mise run check:ontology-versioning
@@ -37,10 +38,12 @@ No peril link, zones, attributes, dependencies, metrics, losses or liability (AI
 
 ## Handoff
 
-Written by the building machine when the work is committed. S could not run the tests, so R runs them first.
+Written by S in the `[AIR-4.1] Handoff` commit. S runs the checks itself, so say which ran.
 
 - **Built:**
-- **Not run:**
+- **Run, with the result:**
+- **Not run, and why:**
+- **Versions used, if they differ from the plan's snapshot:**
 - **Check first:**
 - **Deviations from the plan:**
 

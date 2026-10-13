@@ -25,14 +25,16 @@ about the world, not about cover. No class the substrate already provides.
 
 After 4.1, the slices form two independent chains: 4.2, 4.3 and 4.6, and 4.4 and 4.5. 4.2
 needs AIR-2.1, 4.3 needs AIR-2.3, 4.4 needs AIR-2.2, and 4.6 needs AIR-2.7. Order and lanes:
-[machines, branches and merges](applied-insurance-reference-lanes.md).
+[machines, branches and merges](applied-insurance-reference-lanes.md). S builds these slices on
+`air/applied-reference`.
 
 Milestone M3 closes in 4.3 and 4.6. Persistence profiles are deployment choices, so they are
 authored with the worked examples in 4.6, not in the core.
 
 ## AIR-4.1 in detail
 
-**Machine:** S (Copilot Business). **Branch:** `air/4.1-exposure-core`. **Validation Pack:**
+**Machine:** S (Copilot Business). **Branch:** `air/applied-reference`, commits `[AIR-4.1] …`, the
+last being `[AIR-4.1] Handoff`. **Validation Pack:**
 [applied-insurance-reference-4.1](../validation/applied-insurance-reference-4.1.md), whose Handoff
 section S fills in. **Decisions:** ADR-A98 (layout, namespaces), ADR-A102 (roles). **Sketch:**
 asset exposure ontology §3, §5.1 to §5.3, §5.5, §5.6, §6, §8.
@@ -41,11 +43,32 @@ asset exposure ontology §3, §5.1 to §5.3, §5.5, §5.6, §6, §8.
 parties and control relations behind them, exist on LATTICE's own constructs, with the regions
 later Phase 4 slices fill.
 
-**Coordination (2026-09-30, revised 2026-10-03).** The computable-contract-substrate unit adds keys
-to Foundation (ADR-A114, slice F1) before this slice's branch takes work: `fnd:Key` with a
-`fnd:KeyScheme` and a value, `fnd:externalKey` and `fnd:naturalKey`. An organisation's registration
-and tax numbers and its LEI are then natural keys on the `aeo:LegalEntity`, and `aeo:identifier`
-and `aeo:Identifier` are not built. The rows below use Foundation's keys (revised 2026-10-03, with F1).
+**Coordination (revised 2026-10-13).** The computable-contract-substrate unit added keys to
+Foundation (ADR-A114, slice F1, merged, Foundation 0.4.0): `fnd:Key` with a `fnd:KeyScheme` and a
+value, `fnd:externalKey` and `fnd:naturalKey`. An organisation's registration and tax numbers and
+its LEI are natural keys on the `aeo:LegalEntity`, and `aeo:identifier` and `aeo:Identifier` are
+not built. The rows below use Foundation's keys. CCS slice C16c later removes Party's
+`pty:outwardShare` and `pty:inwardShare`. `aeo:controlShare` is a `qnt:Quantity` on the control
+relation and does not use them, so it is unaffected. Do not reuse Party's share properties here.
+
+### Versions (refreshed 2026-10-13)
+
+The brief first pinned the versions in the middle column. The right column is a snapshot of `main`
+at `69cb7675`. At the start of the slice, read the live `owl:versionIRI` of each document and use
+those. If one differs from the snapshot, use the live one and say so in the Handoff.
+
+| Document | Brief first pinned | Snapshot |
+|---|---|---|
+| Foundation | 0.3.0 | 0.4.0 |
+| Vocabulary | 0.3.0 | 0.4.0 |
+| Quantification | 0.5.0 | 0.8.0 |
+| Party | 0.5.0 | 0.9.0 |
+| `insurance/common` | 0.1.0 | 0.5.0 |
+| `insurance/common-vocab` | 0.1.0 | 0.5.0 |
+
+The designs below are unchanged. `pty:Actor`, `pty:RoleOccupancy`, `qnt:ValueSpace`, `qnt:Quantity`,
+`qnt:Unit`, `cls:territory`, `cls:assetClass` and `fnd:NaturallyKeyed` all still exist at the
+snapshot versions.
 
 ### Namespaces
 
@@ -54,10 +77,11 @@ and `aeo:Identifier` are not built. The rows below use Foundation's keys (revise
 | `spec/exposure.ttl` | `https://www.nebularis.org/neuro-semantic/insurance/exposure` | `…/insurance/exposure/0.1.0` | `aeo:` (`…/insurance/exposure#`) |
 | `vocab/exposure-vocab.ttl` | `…/insurance/exposure/vocab` | `…/insurance/exposure-vocab/0.1.0` | `aeo-voc:` (`…/insurance/exposure/vocab#`) |
 
-The spec imports, by exact version IRI: Foundation 0.3.0, Vocabulary 0.3.0, Quantification 0.5.0,
-Party 0.5.0 and `…/insurance/common/0.1.0` (which brings `classification/`). It does not import
-`peril/`: nothing in this slice uses it, and AIR-2.2 bumps it concurrently. AIR-4.3 adds the import
-with its first use. The vocabulary imports the spec 0.1.0 and `…/insurance/common-vocab/0.1.0`.
+The spec imports, by exact version IRI, the live versions of Foundation (0.4.0), Vocabulary (0.4.0),
+Quantification (0.8.0), Party (0.9.0) and `…/insurance/common` (0.5.0, which brings
+`classification/`). It does not import `peril/`: nothing in this slice uses it, and AIR-2.2 bumps it
+in the same trip. AIR-4.3 adds the import with its first use. The vocabulary imports the spec 0.1.0
+and the live `…/insurance/common-vocab` (0.5.0). Both new documents start at 0.1.0.
 
 ### Regions
 

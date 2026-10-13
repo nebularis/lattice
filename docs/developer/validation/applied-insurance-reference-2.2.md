@@ -3,7 +3,7 @@
 # Validation Pack: AIR-2.2, peril characteristics
 
 **Unit:** [`applied-insurance-reference`](../status/applied-insurance-reference.md)
-**Machine:** S (Copilot Business). **Branch:** `air/2.2-characteristics`
+**Machine:** S (Copilot Business). **Branch:** `air/applied-reference`, commits `[AIR-2.2] …`
 **Plan and test cases:** [Phase 2 plan](../plans/applied-insurance-reference-phase-2.md) (AIR-2.2 in detail)
 **Decisions:** ADR-A98 (namespaces, addendum), ADR-A99
 
@@ -18,7 +18,8 @@ verification.
 
 ## One command
 
-Run from the repository root on machine R, after `mise run build:ontology-catalog` and `mise run build:ontology-releases`.
+Run from the repository root. S runs it before the handoff commit. R runs it again at verification,
+after `mise run build:ontology-catalog` and `mise run build:ontology-releases`, which S cannot do.
 
 ```bash
 mise run check:ontology-catalog && mise run check:ontology-versioning
@@ -36,10 +37,12 @@ No cause concepts (AIR-2.3, AIR-2.4). No typical-characteristic links on cause c
 
 ## Handoff
 
-Written by the building machine when the work is committed. S could not run the tests, so R runs them first.
+Written by S in the `[AIR-2.2] Handoff` commit. S runs the checks itself, so say which ran.
 
 - **Built:**
-- **Not run:**
+- **Run, with the result:**
+- **Not run, and why:**
+- **Versions used, if they differ from the plan's snapshot:**
 - **Check first:**
 - **Deviations from the plan:**
 

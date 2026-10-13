@@ -204,6 +204,22 @@ Authored in ADR-A-C2 order: examples, then laws and README, then code.
 [applied-insurance-reference-3.3](../validation/applied-insurance-reference-3.3.md).
 **Decision:** ADR-A103 decisions 3 and 4.
 
+**Blocked (2026-10-13).** Do not start until CCS slice HQ-6a.2 (`ccs/hq6a2-closures-compilers`) has
+merged and AIR-3.3-Q1 is answered. HQ-6a.2 adds closed bindings to set readings and changes
+`eligibility_ir.py`, `sparql_backend.py` and `test_set_readings.py`, and leaves SWRL and OWL
+refusing set readings (HQ6a2-10), which this slice removes. HQ-6a.1 also changed the two examples
+AIR33-04 to AIR33-06 read. The branch is created from `main` after that merge, not reused: the old
+`air/3.3-readings-swrl-owl` held only the brief and is deleted.
+
+**AIR-3.3-Q1.** What do SWRL and OWL do with a closed binding?
+
+| Option | Consequence |
+|---|---|
+| (a) compile it as its open reading, with a mapping note | SWRL stays sound, since each rule it emits is fixed by one value and a closure only adds decisions SPARQL makes. OWL's open-world reading also ignores the closure, which fits design-time checks. Closures reach the reasoner routes as their open readings |
+| (b) keep refusing closed bindings in SWRL and OWL | simpler, but closures never reach the reasoner routes |
+
+Option (a) is the hypothesis to test. The brief below is amended with the answer.
+
 **Invariant:** the SWRL backend derives only outcomes a set reading fixes from positive facts,
 with heads swapped under negation, and every outcome it derives is the SPARQL reference's. The
 OWL backend compiles `elg:SomeValue` as `∃path.C`, `elg:EveryValue` as `∀path.C ⊓ ∃path.⊤`,
