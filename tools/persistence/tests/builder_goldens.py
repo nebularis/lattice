@@ -6,7 +6,7 @@
 version and a digest of the rendered text of every builder (`fixtures/ir/builder-goldens.json`), so a changed text fails
 `test_builder_versions.py` until the version is bumped and the record is updated:
 
-    mise exec -- python tools/persistence/tests/builder_goldens.py --update
+    mise run build:persistence-builder-goldens
 
 The update refuses to record a changed text under an unchanged version."""
 

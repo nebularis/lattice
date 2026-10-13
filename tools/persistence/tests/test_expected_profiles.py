@@ -51,6 +51,8 @@ def test_h2_6_t1_the_nine_expected_profiles_and_the_enumerations_exist_and_parse
     assert len(PROFILES) == 9 and set(parsed) == {name for name, _, _ in ep.CONFIGURATIONS} | {ep.KINDS_FILE}
     assert all(len(g) > 0 for g in parsed.values())
     assert not any(DAL.templatePath in {p for _, p, _ in g} for g in parsed.values())  # without dal:templatePath
+    ids = [str(o) for g in parsed.values() for o in g.objects(None, DAL.templateId)]
+    assert ids and not any(i.endswith(".mustache") for i in ids)  # the builder's identity, not a file name
 
 
 def _declaration_triples(graph: Graph):
@@ -87,16 +89,13 @@ def _without_new(graph: Graph) -> Graph:
 
 def _compiled_base(example: str) -> Graph:
     compiled, _ = compile_to_graph(witness._load_fixture(ep.EXAMPLES / f"{example}.ttl"))
-    base = Graph()
-    for s, p, o in compiled:
-        if p != DAL.templatePath:
-            base.add((s, p, o))
-    return base
+    return ep.as_expected(compiled)
 
 
 @pytest.mark.parametrize("path", PROFILES, ids=_name)
-def test_h2_6_t3_an_expected_profile_without_the_new_terms_is_todays_compiled_profile_without_the_template_path(path, parsed):
-    """Isomorphic and not byte identical, since parsing gives a blank node a fresh label. A change to `compile` output regenerates
+def test_h2_6_t3_an_expected_profile_without_the_new_terms_is_todays_compiled_profile_apart_from_the_two_listed_base_changes(path, parsed):
+    """The two base changes are no `dal:templatePath` and a `dal:templateId` without the `.mustache` suffix (`expected_profiles.as_expected`).
+    Isomorphic and not byte identical, since parsing gives a blank node a fresh label. A change to `compile` output regenerates
     the files in the same commit."""
     example, _ = CONFIG[_name(path)]
     assert isomorphic(_without_new(parsed[_name(path)]), _compiled_base(example))

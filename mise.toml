@@ -203,8 +203,21 @@ description = "Regenerate the pinned Unicode 16.0 tables from the UCD and fail i
 run = "python packages/minting/tools/generate_ucd_tables.py --check"
 
 [tasks."check:persistence"]
+depends = ["check:persistence-expected-profiles"]
 description = "Run the persistence profile compiler test suite (resolver, validator, capability, injection corpus, determinism)"
 run = "python -m pytest tools/persistence/tests -q"
+
+[tasks."check:persistence-expected-profiles"]
+description = "Check that the expected compiled profiles under ontology/persistence/test/expected-profiles are what the builders and compile give now (formal-methods H2.6). Fails with the names of the stale files. Part of check:persistence"
+run = "python tools/persistence/tests/expected_profiles.py --check"
+
+[tasks."build:persistence-expected-profiles"]
+description = "Regenerate the expected compiled profiles under ontology/persistence/test/expected-profiles, after a change to a builder or to compile output, in the same commit"
+run = "python tools/persistence/tests/expected_profiles.py --write"
+
+[tasks."build:persistence-builder-goldens"]
+description = "Record the version and a digest of the text each persistence builder renders, after bumping BUILDER_VERSIONS in persistence/contract.py. Refuses a changed text under an unchanged version"
+run = "python tools/persistence/tests/builder_goldens.py --update"
 
 [tasks."check:persistence-oxigraph"]
 depends = ["bootstrap:testing-oxigraph"]

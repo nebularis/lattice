@@ -1033,7 +1033,7 @@ About 300k tokens, against 150k in the sketch, for the mapping in production cod
 
 #### Built
 
-Built on 2026-10-13 and stopped for review, as step 5 says. The [Validation Pack](../validation/FMH-H2-6.md) lists three differences from this plan: ten files and not nine (the
+Built on 2026-10-13 and approved by the maintainer the same day. Review outcome: H-D24 to H-D28 (below), and three questions open in [the write-up](../notes/track-h-h26-review-questions.md) (H2.6-RQ4 to RQ6) that H2.7 waits for. Stopped for review, as step 5 says. The [Validation Pack](../validation/FMH-H2-6.md) lists three differences from this plan: ten files and not nine (the
 enumerations are declared in a tenth), the base-profile test compares by isomorphism and not by bytes (parsing relabels a blank node), and the contract is
 derived in `persistence.contract`, with the checker giving each access a mode, so that H2.7 reads the same code.
 
@@ -1176,6 +1176,12 @@ H-D18 to H-D20 and H2-Q1 to H2-Q6 come from H2's brief ([typed IR sketch](../ske
 | H-D21 | whether H2.3 is split to respect the slice-sizing rule (H2.3-Q4) | **decided 2026-10-12**: one slice of about 25 test cases. The maintainer approved exceeding the rule for H2.3, so that the named-graph row writers are ported and reviewed together |
 | H-D22 | whether H2.5 and H2.6 run in parallel | **decided 2026-10-13**: one after the other, on the cloud agent, H2.5 first (§4.5). The parallel rules and the precursor commit the design review proposed are dropped |
 | H-D23 | whether H2.5 is split to respect the slice-sizing rule | **decided 2026-10-13**: one slice of about 40 cases in six ordered gates (§4.3), as H-D21 allowed for H2.3 |
+| H-D24 | the names of the new `dal:` terms of the expected profiles (H2.6 review question 1) | **decided 2026-10-13**: the proposed names are fine. H2.7 settles any change when it writes the vocabulary |
+| H-D25 | whether `dal:templateId` keeps the `.mustache` suffix (H2.6 review question 2) | **decided 2026-10-13**: drop it. The builder's identity is the operation id. The expected profiles already show it, and the base-profile test allows that one change to today's `compile` output. H2.7 emits it, and H2.9 retires the files |
+| H-D26 | whether `Event`, `MergeRecord` and `KeyQuarantine` are folded into another resource (H2.6 review question 3) | **decided 2026-10-13**: kept apart, since each has its own key in both realisations |
+| H-D27 | whether the gaps of the paper check are recorded in the relational note (H2.6 review question 7) | **decided 2026-10-13**: yes, as [lattice-sql.md §9.1](../notes/rdf-engine/lattice-sql.md#91-gaps-found-by-the-paper-check-of-formal-methods-h26-2026-10-13) |
+| H-D28 | the type of `$oldValue` and `$newValue` of the value guard (H2.6 review question 8) | **decided 2026-10-13**: `IriOrLiteral` for now. TD-43 settles it |
+| H2.6-RQ4 to RQ6 | the pinned head, the append's digest and the patch content (H2.6 review questions 4 to 6) | **open**, with [a write-up](../notes/track-h-h26-review-questions.md) of the options, their consequences and a leaning for each. They are answered before H2.7 is briefed |
 | H2-Q1 to H2-Q6 | the typed payload, a named-graph family with no boundary shape, closed-shape payloads, where the parameter guard runs, what the compiled profile carries, logical or SPARQL declarations ([sketch §5](../sketches/formal-methods-track-h-typed-ir.md#5-questions-for-the-maintainer)) | **answered 2026-10-10**: PL-B, with PL-D later as an SDK ([sketch](../sketches/persistence-client-sdk.md)), (a) and (b), (a), (c), and (a) on condition it keeps the relational realisation open. H2-Q6, that condition, **answered 2026-10-10: (a)**, a logical operation contract. Our reading of H2-Q2 confirmed ([typed IR sketch §1](../sketches/formal-methods-track-h-typed-ir.md#1-decisions-already-taken-2026-10-10)) |
 
 ## 9. Alignment with other work

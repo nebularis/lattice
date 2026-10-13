@@ -1457,7 +1457,8 @@ ontology/persistence/
   docs/                      the precedence algorithm and the aggregate-boundary design
   test/expected-profiles/    the compiled profile each example is expected to give once the compiler emits the
                              contract of every generated operation (formal-methods H2.6). The terms in these
-                             files are proposals and are not in spec/ yet. Not validated against the shapes
+                             files are proposals and are not in spec/ yet. Not validated against the shapes.
+                             Regenerate with mise run build:persistence-expected-profiles
 ```
 
 The compiler that consumes this ontology lives in [`tools/persistence`](../../tools/persistence/README.md),

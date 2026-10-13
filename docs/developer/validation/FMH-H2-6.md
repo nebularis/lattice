@@ -82,15 +82,15 @@ classDiagram
     dal:partRole
     dal:partSource
   }
-  GeneratedOperation "1" --> "*" ParameterDeclaration : dal:parameter
-  GeneratedOperation "1" --> "*" ResourceAccess : dal:access
-  GeneratedOperation "1" --> "*" ResultColumn : dal:resultColumn
-  GeneratedOperation "1" --> "0..1" PayloadContract : dal:payloadContract
-  GeneratedOperation "1" --> "0..1" DigestContract : dal:digestContract
-  DigestContract "1" --> "4" DigestPart : dal:digestPart
-  ResourceAccess --> ParameterDeclaration : dal:keyedBy
-  PayloadContract --> ParameterDeclaration : dal:payloadParameter, dal:payloadRoot
-  DigestPart --> ParameterDeclaration : dal:partSource
+  GeneratedOperation "1" --> "*" ParameterDeclaration : parameter
+  GeneratedOperation "1" --> "*" ResourceAccess : access
+  GeneratedOperation "1" --> "*" ResultColumn : resultColumn
+  GeneratedOperation "1" --> "0..1" PayloadContract : payloadContract
+  GeneratedOperation "1" --> "0..1" DigestContract : digestContract
+  DigestContract "1" --> "4" DigestPart : digestPart
+  ResourceAccess --> ParameterDeclaration : keyedBy
+  PayloadContract --> ParameterDeclaration : payloadParameter and payloadRoot
+  DigestPart --> ParameterDeclaration : partSource
 ```
 
 Every declaration node has an IRI, `<target with # as />/compiled/<operation name>#<part>`, for example
@@ -245,7 +245,7 @@ Run from the repository root. `check:persistence` is the gate.
 ```bash
 mise run check:persistence                   # 2711 passed, 1 xfailed here (2597 before this slice, and 114 new cases)
 mise run check:persistence-oxigraph          # 5 adapter tests and 189 Oxigraph cases (no new engine case)
-mise exec -- python tools/persistence/tests/expected_profiles.py --check    # prints "stale" if a file needs regenerating
+mise run check:persistence-expected-profiles   # part of check:persistence. Fails with the names of the stale files. Regenerate with mise run build:persistence-expected-profiles
 ```
 
 ## Artefacts to inspect

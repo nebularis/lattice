@@ -213,5 +213,6 @@ builder (TD-43), so `HAND_DECLARED` holds its contract.
 
 `tests/expected_profiles.py` writes the expected compiled profile of each example into `ontology/persistence/test/expected-profiles/`, and
 `tests/test_expected_profiles.py` holds the files to the builders and to `compile`. After a change to a builder or to `compile` output, regenerate
-them in the same commit with `mise exec -- python tools/persistence/tests/expected_profiles.py --write`, and after a change to the text a builder
-renders, bump its version in `BUILDER_VERSIONS` and run `mise exec -- python tools/persistence/tests/builder_goldens.py --update`.
+them in the same commit with `mise run build:persistence-expected-profiles`, and after a change to the text a builder renders, bump its version in
+`BUILDER_VERSIONS` and run `mise run build:persistence-builder-goldens`. `mise run check:persistence-expected-profiles`, part of `check:persistence`, fails with the
+names of the files that are stale.

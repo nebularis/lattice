@@ -25,7 +25,7 @@ def test_h2_6_t13_the_recorded_version_and_digest_of_a_builder_are_those_of_its_
     """A changed text fails here until `BUILDER_VERSIONS` is bumped and `builder_goldens.py --update` records it."""
     assert goldens.current()[key] == goldens.recorded()[key], (
         f"{key}: the text it renders changed, or its version did. Bump BUILDER_VERSIONS and run "
-        "mise exec -- python tools/persistence/tests/builder_goldens.py --update"
+        "mise run build:persistence-builder-goldens"
     )
 
 
