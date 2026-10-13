@@ -354,6 +354,16 @@ def test_h2_5_t35_the_receipt_audits_find_a_merged_fork_and_a_request_applied_tw
     assert rows("revision-multi-txn-audit", engines.dataset()) == [] and rows("txn-multi-revision-audit", engines.dataset()) == []
 
 
+@engines.each_engine
+def test_h2_5_t36b_a_receipt_held_in_the_pinned_graph_and_in_its_bucket_is_one_receipt_to_the_receipt_audits():
+    """The pinned graph keeps the head receipt, which its bucket holds as well. Without `COUNT(DISTINCT ...)` the same
+    transaction would be counted twice and a clean store reported as a merged fork."""
+    ds = engines.dataset()
+    for bucket in (BUCKETS[0], "urn:g:txlog/pinned"):
+        _receipt(ds, bucket, "head", txn="only")
+    assert rows("revision-multi-txn-audit", ds) == [] and rows("txn-multi-revision-audit", ds) == []
+
+
 def _row(ds, target: str, seq: int, low: int | None = None) -> None:
     ds.graph(META).add((U(target), RDF.type, U(PAT + "VersionRow")))
     ds.graph(META).add((U(target), U(PAT + "seq"), LONG(seq)))
@@ -377,6 +387,7 @@ STREAM = "urn:stream:1"
     ("receipts below the retention low-water mark are not required", 3, 2, (2, 3), (), []),
     ("a gap above the low-water mark", 3, 2, (3,), (), [(STREAM, "3", "2", "1")]),
     ("the head kept in the pinned graph", 3, None, (1, 2), (3,), []),
+    ("the head kept in the pinned graph and in its bucket", 3, None, (1, 2, 3), (3,), []),
     ("a bootstrapped row has no receipts", 0, None, (), (), []),
 ], ids=lambda v: v if isinstance(v, str) else "")
 def test_h2_5_t36_the_gap_scan_reports_a_target_whose_receipts_do_not_number_s_minus_l_plus_one(name, seq, low, receipts, pinned, expected):
