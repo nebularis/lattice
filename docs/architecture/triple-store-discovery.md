@@ -43,12 +43,13 @@ version, and the two together are what we aim for. A finding built only on Docum
 first line.
 
 **A run record** goes with every Observed finding: the date, the store and its version, the Python version, and the kind of
-machine, never the machine or person (ADR-A124 decision 5). Two run records appear below.
+machine, never the machine or person (ADR-A124 decision 5). Three run records appear below.
 
 | Run | Machine | Python | Stores |
 |---|---|---|---|
 | **R-A** | a Linux x86_64 container, 15 GB, used by an agent for H2.4b, 2026-10-12 | 3.14.8 | rdflib 7.6.0, pyoxigraph 0.5.11 |
 | **R-B** | a macOS arm64 workstation, used for the H2 reviews and for this document, 2026-10-10 to 2026-10-13 | 3.14.7 | rdflib 7.6.0, pyoxigraph 0.5.11 |
+| **R-C** | a Linux x86_64 container, 15 GB, used by an agent for H2.5, 2026-10-13 | 3.14.8 | rdflib 7.6.0, pyoxigraph 0.5.11 |
 
 **How to add a finding** is in §6.0 and in the skill. In short: say what you were testing, how you found it, the smallest
 SPARQL that shows it, the result on each store you have, the reason if you can find it in the source, what it means for
@@ -208,6 +209,12 @@ to the store or where it is a matter of capacity.
 | [TSD-12](#tsd-12-initial-bindings-are-visible-inside-inner-groups-on-rdflib) | initial bindings inside an inner group | not specified | visible | not tested, the adapter substitutes text | Observed |
 | [TSD-13](#tsd-13-a-filter-at-the-top-of-a-group-sees-what-the-groups-patterns-bound) | a top-level `FILTER(BOUND(?x))` with `?x` in the group's patterns | sees `?x` bound by the data | ✔ | ✔ | Observed |
 | [TSD-14](#tsd-14-graph-management-operations-on-rdflib) | `CREATE GRAPH`, `DROP GRAPH` of an absent graph | defined | `CREATE` not implemented, `DROP` succeeds | `DROP` fails | Observed |
+| [TSD-15](#tsd-15-a-sub-select-and-the-variables-around-it) | a sub-select and the variables around it | evaluated on its own, only its projections leave it | ✘ an outer binding leaks in | ✔ | Observed |
+| [TSD-16](#tsd-16-min-and-max-over-iris) | `MIN` and `MAX` over IRIs | the lowest or highest IRI | ✘ a plain literal of the IRI text | ✔ an IRI | Observed |
+| [TSD-17](#tsd-17-a-chain-of-additions-and-subtractions) | `a - b + c` and `a / b / c` | grouped from the left | ✔ | ✘ grouped from the right | Observed |
+| [TSD-18](#tsd-18-count-distinct-over-xsdlong-and-xsdinteger-terms) | `COUNT(DISTINCT)` over `xsd:long` and `xsd:integer` | two terms, so two | counts them apart | counts them together, since it stores both as `xsd:integer` | Observed |
+| [TSD-19](#tsd-19-the-order-of-group_concat) | the order of `GROUP_CONCAT` | not specified | the order the data was stored in, whatever the hash seed (this query shape) | the order of the solutions | Observed |
+| [TSD-20](#tsd-20-a-filter-inside-not-exists-and-a-parameter) | a `FILTER` inside `NOT EXISTS` and a parameter or a sub-select's projection | sees them by substitution | ✔ by initial binding and by text | ✔ by text | Observed |
 
 ## 6. The findings
 
@@ -590,9 +597,13 @@ SELECT (DATATYPE(?o) AS ?d) WHERE { GRAPH <urn:g> { ?s ?p ?o } }
 **Why.** Not read. The observation is that Oxigraph stores an integer-derived literal as `xsd:integer`, and reports it so in every
 expression.
 
-**What it means for LATTICE.** On Oxigraph the guard's datatype test can never pass, so a deployment there must turn the guards
-off and loses the check for a missing parameter (TD-45, FMH-H2-4b decision 1, open). Because every number there is an
-`xsd:integer`, requests and stored rows still match each other, so the hazard the test guards against cannot arise there.
+**What it means for LATTICE.** The guard's first datatype test, `DATATYPE($p) = xsd:long`, could never pass on Oxigraph, so every
+guarded write there wrote nothing (TD-45, FMH-H2-4b decision 1). Guard D replaced it in H2.5 with `DATATYPE($p) = DATATYPE("0"^^xsd:long)`
+(ADR-A123, addendum of 2026-10-13), which compares the parameter with what the store makes of a constant. Probe P5 now asserts that
+a constant, a substituted parameter, a `VALUES` row and a stored value report one datatype on each store
+(`test_h2_5_t1_p5_a_long_has_one_datatype_in_every_form_on_each_engine_so_guard_d_can_pass`), and that a simple literal stays
+`xsd:string` in every form. Because every number on Oxigraph is an `xsd:integer`, requests and stored rows match each other, so the
+hazard the test guards against cannot arise there. What stays is that the profile's `xsd:long` pinning cannot be checked on Oxigraph.
 
 **Reproduce it.** The two operations above, on each store.
 
@@ -742,6 +753,139 @@ succeeds. On Oxigraph 0.5.11, `DROP GRAPH` of an absent graph fails, as the spec
 **What it means for LATTICE.** A probe or a test that needs an operation to fail at run time on rdflib uses `LOAD` of a source
 that does not exist.
 
+---
+
+### TSD-15. A sub-select and the variables around it
+
+**Evidence:** Observed on both stores, R-C. Answers TSD-Q9.
+
+**Context.** The merge and quarantine operations join a sub-select, `{ SELECT ?claim ... GROUP BY ?claim HAVING ... }`, to the
+patterns around it. The checker (H2.5) treats a sub-select as evaluated on its own, so it starts with nothing in scope and only its
+projections leave it, and it refuses an inner variable that is also used outside without being projected (`SubSelectLeak`).
+
+**What the store does.**
+
+```sparql
+# <urn:g2> holds three subjects, <urn:s1> to <urn:s3>
+SELECT ?c WHERE { VALUES ?s { <urn:s1> } { SELECT (COUNT(*) AS ?c) WHERE { GRAPH <urn:g2> { ?s <urn:p> ?o } } } }
+SELECT ?c WHERE { GRAPH <urn:g1> { { SELECT (COUNT(*) AS ?c) WHERE { ?s ?p ?o } } } }   # <urn:g1> holds two triples
+```
+
+| Query | Specification | rdflib | Oxigraph |
+|---|---|---|---|
+| the count with `?s` bound outside the sub-select | 3, since `?s` inside is another variable | **1**, the outer binding is let in | 3 |
+| the count inside `GRAPH <urn:g1>` | 2, the sub-select reads the active graph | 2 | 2 |
+
+**What it means for LATTICE.** A sub-select that reuses an outer variable's name without projecting it gives different results on the
+two stores. The `SubSelectLeak` rule makes that a refusal, so no operation the IR builds can depend on it. A sub-select inside a `GRAPH`
+block reads that graph on both, so the checker passes the enclosing graph to its patterns. Tests `test_h2_5_t12` and `test_h2_5_t13`.
+
+**Reproduce it.** The two queries on each store.
+
+---
+
+### TSD-16. `MIN` and `MAX` over IRIs
+
+**Evidence:** Observed on both stores, R-C. Answers TSD-Q6.
+
+**Context.** Merge-rewrite picks a claim's canonical owner with `MIN(?owner)` over the owners' IRIs, then compares it with each owner
+and writes a link from every other owner to it.
+
+**What the store does.**
+
+```sparql
+INSERT DATA { GRAPH <urn:g> { <urn:c> <urn:p> <urn:o:2> , <urn:o:10> , <urn:o:1> } }
+SELECT (MIN(?o) AS ?l) (MAX(?o) AS ?h) WHERE { GRAPH <urn:g> { <urn:c> <urn:p> ?o } }
+```
+
+| Store | `MIN` | `MAX` |
+|---|---|---|
+| rdflib 7.6.0 | the literal `"urn:o:1"` | the literal `"urn:o:2"` |
+| Oxigraph 0.5.11 | the IRI `<urn:o:1>` | the IRI `<urn:o:2>` |
+
+Both choose by the IRI's text, so `urn:o:10` sorts before `urn:o:2`. `IRI(MIN(STR(?o)))` gives the IRI on both.
+
+**What it means for LATTICE.** On rdflib merge-rewrite writes a plain literal as the link's object, and because an IRI is never equal to a
+literal, `?other != ?canonical` also holds for the canonical owner, which gets a link to itself. On Oxigraph it writes IRIs and no self-link. The
+builder equals its template, so it carries the template's behaviour, and the tests record both (`test_h2_5_t29` and `test_h2_5_t30`).
+Whether to make the operation store independent is a decision for the maintainer (FMH-H2-5, decision 1).
+
+**Reproduce it.** The two operations above on each store.
+
+---
+
+### TSD-17. A chain of additions and subtractions
+
+**Evidence:** Observed on Oxigraph, R-C, directly through `pyoxigraph`, and on rdflib.
+
+**Context.** The gap scan compares `COUNT(DISTINCT ?seq)` with `?S - ?L + 1`. On Oxigraph every audit row for a complete stream was reported
+as a gap.
+
+**What the store does.**
+
+```sparql
+SELECT (10 - 3 + 2 AS ?x) WHERE {}      SELECT (10 - 3 - 2 AS ?x) WHERE {}      SELECT (8 / 4 / 2 AS ?x) WHERE {}
+```
+
+| Query | Specification (from the left) | rdflib | Oxigraph |
+|---|---|---|---|
+| `10 - 3 + 2` | 9 | 9 | **5**, as `10 - (3 + 2)` |
+| `10 - 3 - 2` | 5 | 5 | **9**, as `10 - (3 - 2)` |
+| `8 / 4 / 2` | 1 | 1 | **4**, as `8 / (4 / 2)` |
+| `(10 - 3) + 2` | 9 | 9 | 9 |
+
+**What it means for LATTICE.** The gap scan's template, written as a chain, counts wrongly on Oxigraph. The renderer therefore always writes the
+parentheses of a nested arithmetic operand, which is correct on both. The Mustache template is unchanged until H2.9 retires it. The
+equivalence harness reads a left-nested chain as the flat chain it equals, since SPARQL defines them as one expression. Test
+`test_h2_5_t44`, and the harness mutation `test_h2_5_t47`.
+
+**Reproduce it.** The three queries on each store.
+
+---
+
+### TSD-18. `COUNT(DISTINCT)` over `xsd:long` and `xsd:integer` terms
+
+**Evidence:** Observed on both stores, R-C. Answers TSD-Q10 for the counts.
+
+**What the store does.** Three triples with the objects `"1"^^xsd:long`, `"1"^^xsd:integer` and `"2"^^xsd:long`, counted with
+`COUNT(DISTINCT ?o)`.
+
+| Count | rdflib | Oxigraph |
+|---|---|---|
+| over the stored objects | 3 | 2, since it stores both `1`s as `xsd:integer` (TSD-07) |
+| over a `VALUES` row of `"1"^^xsd:long` and `"1"^^xsd:integer` | 2 | 1 |
+
+**What it means for LATTICE.** The gap scan counts distinct `seq` terms. A receipt whose `seq` was written with another integer type adds a
+term on rdflib and none on Oxigraph, so a duplicate `seq` written that way is reported on rdflib only (`test_h2_5_t43`). Comparisons with `>=` and
+`<=` work across numeric types on both. The profile pins positions to `xsd:long`, so this arises only from data written outside the
+generated operations.
+
+---
+
+### TSD-19. The order of `GROUP_CONCAT`
+
+**Evidence:** Observed on rdflib, R-C. Answers TSD-Q7 for the query shape of the duplicate audit.
+
+**What the store does.** Six owners stored in a fixed order and concatenated by the duplicate audit's query, run in child processes under
+`PYTHONHASHSEED` 0 to 5 (12 seeds in the exploration), gave the same string every time, in the order the owners were stored. Unlike the update of
+TSD-01, this query does not go through a hash-ordered join.
+
+**What it means for LATTICE.** The order is the store's scan order and no guarantee. A different query shape or store could differ, so the
+audit tests compare owners as a set. Test `test_h2_5_t45`.
+
+---
+
+### TSD-20. A `FILTER` inside `NOT EXISTS` and a parameter
+
+**Evidence:** Observed on both stores, R-C. Answers TSD-Q8.
+
+**What the store does.** `FILTER NOT EXISTS { GRAPH <g> { ?claim <claimedBy> ?other . FILTER(?other != $owner) } }`, after a sub-select that
+projects `?claim`, keeps a claim held by the owner or by nobody and drops one held by someone else. The result is the same when `$owner` is
+put in the text and when it is an initial binding (rdflib).
+
+**What it means for LATTICE.** `key-claim-write` and merge-rewrite rely on this, and it holds on both stores for both ways of binding.
+Test `test_h2_5_t14`.
+
 ## 7. Corrections, and what they taught us
 
 ### 7.1 rdflib and the order of an update (TSD-01)
@@ -780,8 +924,5 @@ does not.
 | TSD-Q3 | whether the specification's zero-length path includes a constant endpoint in no triple | TSD-08 names one store as right without checking the text | re-read SPARQL 1.1 §18.4 |
 | TSD-Q4 | the isolation half of request atomicity, and whether inserting an identical statement conflicts | H5's models branch on both | H5, with concurrent writers |
 | TSD-Q5 | why Oxigraph turns `xsd:long` into `xsd:integer` | TSD-07 is observed, not explained | read Oxigraph's literal encoding |
-| TSD-Q6 | how each store orders IRIs for `MIN` | merge-rewrite picks a claim's canonical owner with `MIN(?owner)`, and two stores could choose different owners | an engine test in formal-methods H2.5, gate 6 |
-| TSD-Q7 | whether `GROUP_CONCAT`'s order follows the hash seed on rdflib | the duplicate audit's `?owners` column would then differ by process | an engine test in H2.5, gate 6 |
-| TSD-Q8 | whether a `FILTER` inside `NOT EXISTS` sees a parameter and a sub-select's projection, by substitution and by initial binding | `key-claim-write` and merge-rewrite rely on it, and `EXISTS` substitution is a known ambiguity of SPARQL 1.1 | an engine test in H2.5, gate 2 |
-| TSD-Q9 | which graph a sub-select inside a `GRAPH` block reads, and what it can see | engines have differed here | an engine test in H2.5, gate 2 |
-| TSD-Q10 | how `COUNT(DISTINCT)` and arithmetic treat `xsd:long` and `xsd:integer` terms together | the gap scan could raise a false alarm on rdflib | an engine test in H2.5, gate 6 |
+| TSD-Q11 | whether Oxigraph groups a chain of same-precedence operators from the right in a later version, and why in 0.5.11 | TSD-17 is observed, not explained, and the renderer works around it | read the parser, try the newer releases, and report it upstream if it still holds |
+| TSD-Q12 | whether Fuseki, which `platform/semantic-dataset-fuseki` targets, shows TSD-15 to TSD-18 | they are measured on two in-process stores only | run the same probes against it |

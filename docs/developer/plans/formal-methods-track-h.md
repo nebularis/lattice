@@ -769,7 +769,7 @@ answer.
 About 350k tokens for H2.4a and 400k for H2.4b, with ADR-A124 and the two new directories, against 400k for the whole slice in the sketch, which did not include the
 probes P2 to P4.
 
-### 4.3 H2.5: key claims, the audits, and the self-calibrating guard (planned 2026-10-13)
+### 4.3 H2.5: key claims, the audits, and the self-calibrating guard (planned 2026-10-13, built 2026-10-13)
 
 **Unit:** slice H2.5 of the [typed IR sketch §7](../sketches/formal-methods-track-h-typed-ir.md#7-slices), under ADR-A123 and its four
 addenda. The last ports, guard D (FMH-H2-4b decision 1), and the IR's `SELECT` rules. It runs first of the two, then H2.6 (§4.5).
@@ -919,6 +919,11 @@ probes at the gate: the guard reverted to a fixed `xsd:long` (the Oxigraph guard
 #### Estimate
 
 About 600k tokens, against 400k in the sketch, for the `SELECT` rules, the sub-select and guard D.
+
+#### Built
+
+Built on 2026-10-13 as planned, in six gates. What it found and the decisions it leaves are in the [Validation Pack](../validation/FMH-H2-5.md). Fact 10's
+four unknowns are answered in TSD-16 to TSD-19, and a fifth difference between the stores, TSD-17, was found by running the gap scan.
 
 ### 4.4 H2.6: the expected compiled profile, examples first, and the paper check (planned 2026-10-13)
 

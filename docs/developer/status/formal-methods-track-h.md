@@ -3,8 +3,8 @@
 # Formal Methods, Track H: Status
 
 **Unit ID:** `formal-methods-track-h` (phase, within the `formal-methods` epic)
-**Status:** In progress. H1 (H1.1 to H1.5, with H1.4c), the aggregate-ownership slices HO0 to HO9 and H2.0 to H2.3 are merged to `main` and signed off (H1 and HO 2026-10-10, H2.0 to H2.3 2026-10-12). H2.4a and H2.4b are built and reviewed, and every decision in their Validation Packs is taken (2026-10-13), awaiting the maintainer's merge with the triple-store record. ADR-A123 is accepted with five addenda, ADR-A124 and ADR-A125 are accepted. H2.5 and H2.6 are planned, to run in turn after that merge
-**Last updated:** 2026-10-10
+**Status:** In progress. H1 (H1.1 to H1.5, with H1.4c), the aggregate-ownership slices HO0 to HO9 and H2.0 to H2.3 are merged to `main` and signed off (H1 and HO 2026-10-10, H2.0 to H2.3 2026-10-12). H2.4a and H2.4b are built and reviewed, and every decision in their Validation Packs is taken (2026-10-13), awaiting the maintainer's merge with the triple-store record. ADR-A123 is accepted with five addenda, ADR-A124 and ADR-A125 are accepted. H2.5 is built and awaits review (2026-10-13), and H2.6 is planned to follow it
+**Last updated:** 2026-10-13
 **Plan:** [formal-methods-track-h.md](../plans/formal-methods-track-h.md)
 **Sketches:** [formal-methods-track-h.md](../sketches/formal-methods-track-h.md) (main),
 [formal-methods-track-h-protocols.md](../sketches/formal-methods-track-h-protocols.md),
@@ -53,13 +53,11 @@ section below.
 
 ## Next action
 
-0. **The maintainer merges this branch into `main`**: H2.4a, H2.4b, the triple-store record and its skill, the corrected P1 test, and
-   the H2.5 and H2.6 plans. Run `mise run check:persistence` (expect `2111 passed, 1 xfailed`) and `mise run check:persistence-oxigraph`
-   (66 passed) first. No release tag is owed.
-1. **H2.5 is ready to branch** after that merge, on the cloud agent, from `main`:
-   [plan §4.3](../plans/formal-methods-track-h.md#43-h25-key-claims-the-audits-and-the-self-calibrating-guard-planned-2026-10-13), in six
-   gates, starting with guard D and the extended probe P5, which carries a stop condition.
-2. **Then H2.6**, from `main` after H2.5 merges:
+0. **The maintainer reviews H2.5** on this branch, from its [Validation Pack](../validation/FMH-H2-5.md): three decisions (merge-rewrite on rdflib,
+   the parenthesised arithmetic, the fragment-limit fields), and a finding, TSD-16, behind the first. Run `mise run check:persistence`
+   (expect `2592 passed, 1 xfailed`) and `mise run check:persistence-oxigraph` (189 passed). No release tag is owed.
+1. **H2.5 is built** (2026-10-13), autonomously, in six gates, on the branch `claude/nice-bohr-pmj43u`. P5's stop condition did not arise.
+2. **Then H2.6**, from this branch once H2.5 is reviewed, or from `main` after the merge:
    [plan §4.4](../plans/formal-methods-track-h.md#44-h26-the-expected-compiled-profile-examples-first-and-the-paper-check-planned-2026-10-13).
    It stops for the maintainer's review and commit of its expected profiles.
 3. Then H2.7, the vocabulary and its emission, against those profiles.
@@ -98,8 +96,8 @@ section below.
 | H2.3 (named-graph row writers) | **built and reviewed** 2026-10-12, one review fix. [Validation Pack](../validation/FMH-H2-3.md). [Plan §4.1](../plans/formal-methods-track-h.md#41-h23-the-named-graph-row-writers-planned-2026-10-12). Countersignature items signed 2026-10-12. TD-34 closed for its operations | merged and signed off 2026-10-12 |
 | H2.4a (the composite ports) | **built and reviewed** 2026-10-12. [Validation Pack](../validation/FMH-H2-4a.md). [Plan §4.2](../plans/formal-methods-track-h.md#42-h24-the-composite-family-and-what-each-store-does-planned-2026-10-12) | the maintainer's merge |
 | H2.4b (Oxigraph, probes, benchmark) | **built** 2026-10-12, reviewed 2026-10-13. [Validation Pack](../validation/FMH-H2-4b.md). Decision 1 decided (option D, built in H2.5), and the corrected P1 test countersigned | the maintainer's merge |
-| H2.5 (key claims, audits, guard D, the `SELECT` fragment) | **planned** 2026-10-13 and revised after the [design review](../notes/track-h-feedback.md), in [plan §4.3](../plans/formal-methods-track-h.md#43-h25-key-claims-the-audits-and-the-self-calibrating-guard-planned-2026-10-13). Every question decided. Runs first (H-D22), one slice in six gates (H-D23) | the maintainer's branch |
-| H2.6 (expected compiled profiles, paper check) | **planned** 2026-10-13 and revised after the design review, in [plan §4.4](../plans/formal-methods-track-h.md#44-h26-the-expected-compiled-profile-examples-first-and-the-paper-check-planned-2026-10-13). Every question decided | H2.5's merge (H-D22) |
+| H2.5 (key claims, audits, guard D, the `SELECT` fragment) | **built** 2026-10-13, autonomously, in six gates. [Validation Pack](../validation/FMH-H2-5.md). [Plan §4.3](../plans/formal-methods-track-h.md#43-h25-key-claims-the-audits-and-the-self-calibrating-guard-planned-2026-10-13). TD-34 closed. Three decisions open, one from a finding (TSD-16) | the maintainer's review |
+| H2.6 (expected compiled profiles, paper check) | **planned** 2026-10-13 and revised after the design review, in [plan §4.4](../plans/formal-methods-track-h.md#44-h26-the-expected-compiled-profile-examples-first-and-the-paper-check-planned-2026-10-13). Every question decided | H2.5's review (H-D22) |
 | H3 (specification registry) | not started, outlined in the plan | H2 preferred first (smaller, more self-contained), not a hard blocker |
 | H4 (exhaustive cross-axis validation, BDD/SMT) | not started, outline only | H3 |
 | H5 (capability-record extension, TLA+/Quint toolchain spike, protocol models A-D) | not started, outline only | H2 (read/write sets from the IR). ADR-A-FM4 is accepted |
@@ -563,4 +561,11 @@ section below.
   cloud agent, not in parallel. H2.5 goes first, so H2.6 derives every operation from a builder. Plan §4.3 to §4.5, ADR-A123 (a fifth
   addendum and a point in the fourth), the typed IR sketch's §7 and §9.4, and five open questions in the triple-store record (TSD-Q6 to
   Q10) are updated. H2.5 is ready to branch.
-
+- 2026-10-13: H2.5 built ([FMH-H2-5](../validation/FMH-H2-5.md)), autonomously on the branch, in the six gates of plan §4.3. Guard D and the
+  extended probe P5 (no divergence, so no stop), the `SELECT` fragment with four new rules and the boundness table, ten builders (every
+  template but `cas-replace-value-guard` is now ported), and behaviour tests on both engines with the guards on and off. Running the audits
+  found three differences between the stores that change results, now TSD-16 (rdflib's `MIN` over IRIs returns a literal), TSD-17 (Oxigraph groups
+  `a - b + c` from the right, which made the gap scan report every complete stream) and TSD-15 (rdflib lets an outer binding into a sub-select),
+  with TSD-18 to TSD-20 beside them. TSD-17 is worked around in the renderer. TSD-16 needs a decision (Validation Pack, decision 1). TD-34 is
+  closed and TD-45's guard part is done. Seven adversarial probes were run and each was caught. `check:persistence` and
+  `check:persistence-oxigraph` ran and passed here.
