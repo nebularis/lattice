@@ -7,7 +7,7 @@
 [ADR-A124](../../architecture/decisions/ADR-A124-benchmark-root.md) and
 [ADR-A125](../../architecture/decisions/ADR-A125-test-support-tooling.md).
 **For the maintainer:** one open decision (decision 1) and four findings that change what earlier documents say.
-**For countersignature (non-weakening rule):** one, added 2026-10-13, below. No test was removed or loosened, and the spike's own checks, which had been
+**For countersignature (non-weakening rule):** one, added 2026-10-13, below, **countersigned by the maintainer on 2026-10-13**. No test was removed or loosened, and the spike's own checks, which had been
 failing since H2.2, were repaired (below).
 
 ## Invariant
@@ -34,7 +34,7 @@ nothing else.
   renders `DELETE {` across lines. They now run unguarded (the spike studies what the update does) and the regular expressions allow it.
   `mise run check` does not run the spike, which is why nothing showed it.
 
-### For countersignature (added 2026-10-13)
+### For countersignature (added 2026-10-13, countersigned 2026-10-13)
 
 1. **H2.4b-T1 and T2 changed their rdflib expectation.** They asserted that rdflib keeps the triple in both row orders, which held only for
    some hash seeds, so the default check failed at random. On rdflib T1 now runs the probe in child processes under `PYTHONHASHSEED` 0 to
@@ -84,7 +84,7 @@ killed by the container at 14 GB. Measured separately, a run at 2000 used 1.5 GB
 
 ## Decisions needing confirmation
 
-1. **OPEN: the parameter guard's datatype test cannot pass on Oxigraph (P5, TD-45).** Oxigraph stores any integer-derived literal as `xsd:integer`
+1. **Decided 2026-10-13: option D, built in H2.5.** The parameter guard's datatype test cannot pass on Oxigraph (P5, TD-45). Oxigraph stores any integer-derived literal as `xsd:integer`
    and `DATATYPE` reports it, in every expression and at any parse. So `DATATYPE($epoch) = xsd:long`, which ADR-A123's addendum names, is false for
    every request there, and an operation with the guard on writes nothing on Oxigraph. Every position there is an `xsd:integer`, so requests and
    stored rows still match each other, and the integer-versus-long hazard the test guards against cannot arise. I did not change the guard. The Oxigraph
@@ -96,8 +96,13 @@ killed by the container at 14 GB. Measured separately, a run at 2000 used 1.5 GB
    | B. Choose the datatype test by what the store keeps. An option on `instantiate` now (and on `compile`, recorded in the profile, from H2.7): `exact` as today, or `integer`, which tests `DATATYPE($p) = xsd:integer` and so accepts any integer-derived literal | Oxigraph keeps its guard, minus the long-versus-integer distinction it cannot make anyway. A second value of an option to maintain, and H5's capability record gets a field (whether a store keeps numeric datatypes) |
    | C. Weaken the test everywhere to `isNumeric($p)` for `Long` and `Position` | One form that runs on both. On a store that keeps datatypes it no longer catches an `xsd:integer` epoch, which a template that only writes the epoch (bootstrap, create) would store |
 
-   My leaning is B, since the hazard is real on rdflib and absent on Oxigraph, and the guard should say which it assumes. It touches the ADR-A123
-   addendum's wording (it names `xsd:long`), so I have not started it.
+   My leaning was B. **The maintainer chose a fourth option, D, on 2026-10-13: a self-calibrating test,
+   `DATATYPE($p) = DATATYPE("0"^^xsd:long)`**, which compares the parameter's datatype with what the store makes of an `xsd:long`
+   constant. On rdflib only `xsd:long` passes, exactly today's guard. On Oxigraph any integer-derived literal passes, which is
+   harmless there since all of them become `xsd:integer`. A missing or non-numeric value is refused on both, and no option or capability
+   field is needed. Measured on both engines on 2026-10-13 against `xsd:long`, `xsd:integer`, a plain integer, `xsd:int`, a string and an
+   unbound parameter. It assumes a store treats a constant, a parameter and a stored value alike, which P5 is extended to assert. Recorded
+   as ADR-A123's fourth addendum, and built in H2.5.
 2. **R0 needs memory quadratic in the aggregate on Oxigraph** (TD-42's row has the figures). The record of the plan is that H5 selects R2 (one
    operation, linear) by `snapshotUpdateSemantics`. P1 now says R2 is **unsafe on Oxigraph** (it applies in turn) and safe on rdflib, which is the
    reverse of what the sketch assumed. R1 (two operations in one request) is safe on Oxigraph (P2) and not on rdflib. So no single linear form fits

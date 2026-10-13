@@ -2,7 +2,7 @@
 
 # ADR-A123: A typed operation IR for the persistence compiler
 
-**Status:** Accepted, 2026-10-10, with the ADR-A79 addendum applied the same day, and three addenda of its own (2026-10-12)
+**Status:** Accepted, 2026-10-10, with the ADR-A79 addendum applied the same day, and four addenda of its own (2026-10-12 and 2026-10-13)
 **Date:** 2026-10-10
 **Supersedes:** parts of [ADR-A79](ADR-A79-persistence-compiler-toolchain.md), listed under Decision 10. ADR-A79 stays Accepted for the rest
 **Related:** [ADR-A78](ADR-A78-persistence-profile-substrate-and-aggregate-boundaries.md),
@@ -187,4 +187,19 @@ Decided by the maintainer while planning slice H2.4 (Track H plan §4.2, H2.4-Q1
    [typed IR sketch §9.4](../../developer/sketches/formal-methods-track-h-typed-ir.md#94-rules-that-keep-a-clean-stored-ir-possible)
    keep a clean stored IR possible, and §9.5 lists what that ADR must decide. One rule does not hold today: a `Path` holds the
    path's rendered text, not its structure.
+
+## Addendum, 2026-10-13: the datatype test calibrates itself to the store
+
+Decided by the maintainer after slice H2.4b (FMH-H2-4b, decision 1, option D). It amends the first addendum's point 2.
+
+1. **The test for `Long` and `Position` is `DATATYPE($p) = DATATYPE("0"^^xsd:long)`**, not `DATATYPE($p) = xsd:long`. It compares
+   the parameter's datatype with what the store makes of an `xsd:long` constant. Oxigraph 0.5.11 stores every integer-derived literal as
+   `xsd:integer`, in expressions as in data, so the first addendum's test could never pass there and every guarded write was refused
+   ([TSD-07](../triple-store-discovery.md#tsd-07-numeric-datatypes-are-not-kept-by-oxigraph)).
+2. **On a store that keeps datatypes it is the same test as before.** On rdflib only an `xsd:long` passes, so an `xsd:integer` epoch,
+   which a bootstrap or create would store and no later guarded replace would match, is still refused. On a store that turns every
+   integer into `xsd:integer`, any integer passes, and the mismatch cannot arise. A missing or non-numeric parameter is refused on both.
+3. **No option and no capability field.** The test adapts by evaluating in the store. It rests on the store treating a constant, a
+   parameter and a stored value alike, which probe P5 asserts per store. A store that fails P5 needs a decision of its own.
+4. The tests for `Iri`, `Digest`, `String`, `LangString` and `IriOrLiteral` are unchanged.
 
