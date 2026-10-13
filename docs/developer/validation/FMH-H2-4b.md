@@ -7,7 +7,7 @@
 [ADR-A124](../../architecture/decisions/ADR-A124-benchmark-root.md) and
 [ADR-A125](../../architecture/decisions/ADR-A125-test-support-tooling.md).
 **For the maintainer:** one open decision (decision 1) and four findings that change what earlier documents say.
-**For countersignature (non-weakening rule):** none. No test was removed or loosened, and the spike's own checks, which had been
+**For countersignature (non-weakening rule):** one, added 2026-10-13, below. No test was removed or loosened, and the spike's own checks, which had been
 failing since H2.2, were repaired (below).
 
 ## Invariant
@@ -34,13 +34,20 @@ nothing else.
   renders `DELETE {` across lines. They now run unguarded (the spike studies what the update does) and the regular expressions allow it.
   `mise run check` does not run the spike, which is why nothing showed it.
 
+### For countersignature (added 2026-10-13)
+
+1. **H2.4b-T1 and T2 changed their rdflib expectation.** They asserted that rdflib keeps the triple in both row orders, which held only for
+   some hash seeds, so the default check failed at random. On rdflib T1 now runs the probe in child processes under `PYTHONHASHSEED` 0 to
+   11 and requires both outcomes to occur, and T2 asserts that neither engine is snapshot. The Oxigraph expectations are unchanged. The
+   tests are no weaker. They now assert what the source shows and pass on every run (three runs, both engines, 2026-10-13).
+
 ## Findings, by probe
 
 rdflib 7.6.0 and Oxigraph 0.5.11, on 2026-10-12, Python 3.14.8, Linux x86_64.
 
 | Probe | rdflib | Oxigraph | Feeds |
 |---|---|---|---|
-| P1 `snapshotUpdateSemantics`: a `DELETE`/`INSERT` of one triple in two solutions, in both row orders | the triple survives in both orders. **True** | lost when the inserting row comes first. **False** | TD-42's linear form R2 |
+| P1 `snapshotUpdateSemantics`: a `DELETE`/`INSERT` of one triple in two solutions, in both row orders | **corrected 2026-10-13: False.** rdflib applies one solution at a time, in an order that follows `PYTHONHASHSEED`, so the triple survives or is lost by process. The first reading, True, held only for some seeds ([TSD-01](../../architecture/triple-store-discovery.md#tsd-01-the-order-in-which-a-delete-insert-where-is-applied)) | lost when the inserting row comes first. **False** | TD-42's linear form R2 |
 | P2 request failure atomicity: `INSERT DATA` then a failing operation | `CREATE GRAPH` is not implemented and `DROP GRAPH` of an absent graph does not fail. A failing `LOAD` leaves the first insert in place. **Not atomic** | a failing `DROP GRAPH` (an error at run time) rolls the insert back. **Atomic** | R1, two operations in one request |
 | P3 correlated `GRAPH ?g`: 100 graphs of 3000 triples against 1 | ratio 1.1 | ratio 1.1 | the cost note of H2.3-Q2. Neither scans every graph |
 | P4 unbound graph variable in a template | writes into a fresh blank-node graph | skips the quad, as the specification says | TD-44 |
@@ -49,9 +56,11 @@ rdflib 7.6.0 and Oxigraph 0.5.11, on 2026-10-12, Python 3.14.8, Linux x86_64.
 Two more were found on the way, and are tests: a zero-length path from a term that is in no triple of the graph matches itself on rdflib
 and nothing on Oxigraph (H2.4a-T6, now per engine), and `CREATE GRAPH` does not exist on rdflib.
 
-**P1 corrects the typed IR sketch §4.3**, which says rdflib applies each solution in turn and reports `false`. It is Oxigraph that does,
-and rdflib passes. The spike's README had already corrected the same claim about the retry (rdflib materialises the solutions of a `WHERE`
-before it applies any change). A dated note is in the sketch.
+**Corrected 2026-10-13.** This paragraph first said P1 corrects the typed IR sketch §4.3 and that rdflib passes. It does not. rdflib's
+`evalModify` deletes and inserts one solution at a time, and `evalJoin` puts the solutions of this `WHERE` in a Python `set`, so their order,
+and the probe's answer, follow the process's hash seed. Swept over seeds 0 to 11 the triple was lost in both orders for 6, kept for 4 and
+lost in one order for 2, and the test that asserted rdflib keeps it failed in 2 of 3 runs. The sketch's §4.3 was right. Neither engine is
+snapshot. [TSD-01](../../architecture/triple-store-discovery.md#tsd-01-the-order-in-which-a-delete-insert-where-is-applied) has the detail.
 
 ### R0 on Oxigraph
 

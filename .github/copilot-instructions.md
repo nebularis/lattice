@@ -39,6 +39,10 @@ along the way.
 | `docs/developer/` | sketches, plans, status records, review requests, Validation Packs, and durable guidance |
 | `.claude/skills/` | the skills below |
 
+How each triple store behaves, and how we found out, is recorded in
+[docs/architecture/triple-store-discovery.md](../docs/architecture/triple-store-discovery.md). Read it before relying on what a
+store does with SPARQL, and add to it when you find something new (skill `lattice-triple-stores`).
+
 Do not add a directory at the root, or a new kind of directory anywhere, without an accepted ADR.
 `mise` is the only task entry point (ADR-A29). Every command you run or give the maintainer goes
 through it, as `mise run <task>` or `mise exec -- <command>`, never a bare `python`, `pytest` or `pip`.
@@ -107,3 +111,4 @@ Load the skill whose description matches the task. Each lives in `.claude/skills
 | `lattice-toolchain` | building, testing, running checks, or setting up or repairing an environment |
 | `lattice-testing` | a slow test suite, writing or extending a Python test under `tools/` that parses an ontology graph or calls pySHACL, sharing state across test modules with pytest fixtures, or a repository-wide text scan that must work on every platform |
 | `lattice-publication-hygiene` | before a commit or pull request, and whenever writing text that will be published |
+| `lattice-triple-stores` | relying on, probing or recording how a triple store behaves: running generated SPARQL on rdflib, Oxigraph or another engine, writing an engine test, or meeting unexpected store behaviour |

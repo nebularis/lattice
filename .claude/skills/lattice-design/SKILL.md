@@ -33,6 +33,9 @@ hard-codes one domain's practice as the only way is wrong at the substrate.
 - Check the design against the roadmap: the epic plans, the held design questions, and the slices
   waiting on this one. A design that works now and makes a roadmap item harder is wrong.
 - Say a design decision once, and cross-reference it.
+- A design that depends on how a triple store evaluates SPARQL cites the finding in
+  [docs/architecture/triple-store-discovery.md](../../../docs/architecture/triple-store-discovery.md) it rests on, or probes the
+  store and adds one first (skill `lattice-triple-stores`). The specification and a store often differ.
 
 ## Presenting a question to the maintainer
 

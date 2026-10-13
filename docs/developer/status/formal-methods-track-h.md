@@ -527,3 +527,12 @@ section below.
   the specification's order and Oxigraph applies each solution in turn, the reverse of what the typed IR sketch §4.3 assumed, so R2 is safe on rdflib and
   unsafe on Oxigraph and R1 the other way round (P1 and P2), corrected in the sketch; (4) the spike's own checks had been failing since H2.2, and are repaired.
   `check:persistence` gave `2111 passed, 1 xfailed`. Five implementation probes, all caught.
+- 2026-10-13: began [docs/architecture/triple-store-discovery.md](../../architecture/triple-store-discovery.md), the project's record of
+  how each triple store behaves (TSD-01 to TSD-14), with skill `lattice-triple-stores` and pointers from AGENTS.md, the testing,
+  toolchain and design skills, the docs site and the plugin marketplace. Writing it found that H2.4b's P1 was wrong about rdflib: rdflib
+  applies an update one solution at a time, in an order that follows `PYTHONHASHSEED` (`evalJoin` puts the solutions in a Python `set`),
+  so the probe's answer changed by process and its test failed `check:persistence` in 2 of 3 runs. The test now sweeps seeds in child
+  processes and passes on every run, listed for countersignature in FMH-H2-4b. The Validation Pack, the sketch's §4.3 note and TD-42 are
+  corrected. Oxigraph's findings were re-run directly and hold, and Oxigraph's source (`eval_delete_insert`) confirms it collects every
+  mutation in a `Vec` before applying them in order. `check:persistence-oxigraph` gave 66 passed.
+

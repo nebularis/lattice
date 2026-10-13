@@ -50,17 +50,52 @@ def _p1(rows: str) -> bool:
     return TRIPLE in ds.graph(U("urn:g"))
 
 
+_P1_CHILD = """
+import sys
+from rdflib import Dataset, URIRef
+t = (URIRef("urn:s"), URIRef("urn:p"), URIRef("urn:o"))
+d = Dataset(); d.graph(URIRef("urn:g")).add(t)
+d.update("DELETE { GRAPH <urn:g> { ?d <urn:p> <urn:o> } } INSERT { GRAPH <urn:g> { ?i <urn:p> <urn:o> } } WHERE { VALUES (?i ?d) { " + sys.argv[1] + " } }")
+print(t in d.graph(URIRef("urn:g")))
+"""
+
+
+def _p1_rdflib_by_seed(rows: str, seeds=range(12)) -> list[bool]:
+    """rdflib evaluates this WHERE as a non-lazy join, whose right side it puts in a Python set
+    (`evaluate.evalJoin`), so the order of the solutions follows the process's hash seed. `update.evalModify` then
+    deletes and inserts one solution at a time. Run in child processes with fixed seeds, so the answer is the same on
+    every run (docs/architecture/triple-store-discovery.md, TSD-01)."""
+    import os
+    import subprocess
+    import sys
+
+    out = []
+    for seed in seeds:
+        env = {**os.environ, "PYTHONHASHSEED": str(seed)}
+        result = subprocess.run([sys.executable, "-c", _P1_CHILD, rows], env=env, capture_output=True, text=True, check=True)
+        out.append(result.stdout.strip() == "True")
+    return out
+
+
 @pytest.mark.parametrize("order", sorted(_ROWS))
 def test_h2_4b_t1_p1_how_an_engine_applies_the_result_of_a_delete_insert_where(order):
-    survives = _p1(_ROWS[order])
-    expected = _pick(rdflib={"insert row first": True, "delete row first": True},
-                     oxigraph={"insert row first": False, "delete row first": True})
-    assert survives == expected[order]
+    if _current() == "rdflib":
+        # One solution at a time, in hash order: some seeds keep the triple and some lose it, in either written order.
+        by_seed = _p1_rdflib_by_seed(_ROWS[order])
+        assert True in by_seed and False in by_seed
+    else:
+        # One solution at a time, in the order the VALUES block gives (the mutations are collected, then applied in order).
+        assert _p1(_ROWS[order]) == {"insert row first": False, "delete row first": True}[order]
 
 
-def test_h2_4b_t2_p1_snapshot_update_semantics_holds_for_rdflib_and_not_for_oxigraph():
-    snapshot = all(_p1(rows) for rows in _ROWS.values())
-    assert snapshot == _pick(rdflib=True, oxigraph=False)
+def test_h2_4b_t2_p1_snapshot_update_semantics_holds_for_neither_engine():
+    """Corrected on 2026-10-13. The first version asserted that rdflib keeps the triple in both orders, which held only
+    for some hash seeds and made the test fail at random. Neither engine applies the specification's order."""
+    if _current() == "rdflib":
+        snapshot = all(all(_p1_rdflib_by_seed(rows)) for rows in _ROWS.values())
+    else:
+        snapshot = all(_p1(rows) for rows in _ROWS.values())
+    assert snapshot is False
 
 
 # ---- P2 a request whose second operation fails -----------------------------------------------------------------------

@@ -31,6 +31,8 @@ are in [environment-lessons.md](environment-lessons.md), beside this file.
 | Java under `platform/` | `check:java` |
 | an app under `apps/` | `check:frontend`, then `test:frontend` |
 | a formal-methods artefact | `check:formal-freshness`, and `check:proofs` where Isabelle is installed |
+| generated SPARQL, or a test that runs it on an engine | `check:persistence`, and `check:persistence-oxigraph` for the second engine (skill `lattice-triple-stores`) |
+| a benchmark under `benchmark/` | its own `check:<area>-<topic>`, run on demand, never part of `check` (ADR-A124) |
 | `AGENTS.md` or a skill | `build:agent-guidance`, then `check:agent-guidance` |
 | anything to be committed | `check:deny-terms` (skill `lattice-publication-hygiene`) |
 
