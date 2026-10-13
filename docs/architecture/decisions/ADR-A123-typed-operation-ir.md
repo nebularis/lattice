@@ -2,7 +2,7 @@
 
 # ADR-A123: A typed operation IR for the persistence compiler
 
-**Status:** Accepted, 2026-10-10, with the ADR-A79 addendum applied the same day, and four addenda of its own (2026-10-12 and 2026-10-13)
+**Status:** Accepted, 2026-10-10, with the ADR-A79 addendum applied the same day, and five addenda of its own (2026-10-12 and 2026-10-13)
 **Date:** 2026-10-10
 **Supersedes:** parts of [ADR-A79](ADR-A79-persistence-compiler-toolchain.md), listed under Decision 10. ADR-A79 stays Accepted for the rest
 **Related:** [ADR-A78](ADR-A78-persistence-profile-substrate-and-aggregate-boundaries.md),
@@ -201,5 +201,28 @@ Decided by the maintainer after slice H2.4b (FMH-H2-4b, decision 1, option D). I
    integer into `xsd:integer`, any integer passes, and the mismatch cannot arise. A missing or non-numeric parameter is refused on both.
 3. **No option and no capability field.** The test adapts by evaluating in the store. It rests on the store treating a constant, a
    parameter and a stored value alike, which probe P5 asserts per store. A store that fails P5 needs a decision of its own.
-4. The tests for `Iri`, `Digest`, `String`, `LangString` and `IriOrLiteral` are unchanged.
+4. The tests for `Iri`, `Digest`, `String`, `LangString` and `IriOrLiteral` are unchanged. `Digest` and `String` keep
+   `DATATYPE($p) = xsd:string`, since no probed store turns a simple literal into another datatype, and P5 asserts it per store.
+5. **The Python caller's own check is strict and store-independent** (decided 2026-10-13, NQ6 of the
+   [design review](../../developer/notes/track-h-feedback.md)): a `Long` or `Position` parameter must be exactly `xsd:long` on any store.
+   The SPARQL guard is the store-calibrated backstop, whose acceptance set differs by store, which H5's capability record carries as
+   whether a store normalises numeric datatypes. Built with the caller check in H2.8.
+
+## Addendum, 2026-10-13: queries, sub-selects and two parameter kinds
+
+Decided by the maintainer on the [design review](../../developer/notes/track-h-feedback.md) of slices H2.5 and H2.6 (Track H plan §4.3,
+H2.5-Q1 and Q2). It extends decision 2.
+
+1. **One `Select` value serves a query operation and a sub-select**, as a `SubSelect` pattern element. The fragment is closed: projection
+   of variables and aggregates, `GROUP BY` over variables, and `HAVING`.
+2. **Four further type rules**, each refused with a named rule because the form is illegal SPARQL or fails silently: an aggregate outside a
+   projection or `HAVING`, a projected variable neither grouped nor aggregated, a `HAVING` term neither a group key nor an aggregate, and an
+   inner variable used outside a sub-select without being projected.
+3. **A projected item is bound in every solution only as the plan's boundness table says.** `COUNT` always is. `MIN`, `MAX`, `SAMPLE`,
+   `SUM`, `AVG` and `GROUP_CONCAT` are only with an explicit `GROUP BY` and a bound argument that cannot raise a type error. No aggregate
+   but `COUNT` is, without a `GROUP BY`.
+4. **`ORDER BY`, `LIMIT`, `OFFSET`, `DISTINCT` inside a sub-select, and nested sub-selects are outside the fragment** for now. They are
+   limits, not type rules, each lifted with an engine test when a template needs it.
+5. **Two parameter kinds join decision 2's list**: `IriOrLiteral` (FMH-H2-2 decision 1), guarded by `isIRI($p) || isLiteral($p)`, and
+   `Literal`, guarded by `isLiteral($p) && LANG($p) = ""`, which accepts any timestamp datatype and refuses an IRI or a missing value.
 

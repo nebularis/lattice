@@ -772,175 +772,273 @@ probes P2 to P4.
 ### 4.3 H2.5: key claims, the audits, and the self-calibrating guard (planned 2026-10-13)
 
 **Unit:** slice H2.5 of the [typed IR sketch §7](../sketches/formal-methods-track-h-typed-ir.md#7-slices), under ADR-A123 and its four
-addenda. The last ports. It also builds the guard decided as option D of FMH-H2-4b (ADR-A123's fourth addendum). It can run beside
-H2.6 (§4.5). Questions H2.5-Q1 to H2.5-Q3 are for the maintainer before a branch.
+addenda. The last ports, guard D (FMH-H2-4b decision 1), and the IR's `SELECT` rules. It runs first of the two, then H2.6 (§4.5).
+**Revised** after a design review of H2.5 and H2.6,
+[track-h-feedback.md](../notes/track-h-feedback.md), whose points are cited below as "review §n". Every question is decided
+(2026-10-13). One slice of about 40 cases, beyond the sizing rule as H-D21 allowed for H2.3 (H-D23).
 
 #### The scene, checked against the templates
 
 | Template | Kind | Request-time parameters | What it needs from the IR |
 |---|---|---|---|
-| `key-claim-write` | update | `$claim`, `$owner` | a `FILTER(?other != $owner)` inside `NOT EXISTS` inside a `GRAPH` block, a value comparison of IRIs |
+| `key-claim-write` | update | `$claim`, `$owner` | `FILTER(?other != $owner)` inside `NOT EXISTS` inside a `GRAPH` block |
 | `key-claim-write-dual` | update | `$claimCurrent`, `$claimNext`, `$owner` | the same, twice |
-| `key-claim-retire` | update | `$claim`, `$owner`, `$now` | nothing new. `$now` is the caller's timestamp, H2.5-Q2 |
+| `key-claim-retire` | update | `$claim`, `$owner`, `$now` | nothing new. `$now` is the caller's timestamp |
 | `key-claim-quarantine` | update | none | **a sub-select** with `GROUP BY ?claim HAVING (COUNT(?owner) > 1)`, then `BIND(NOW() AS ?now)` for the record |
 | `key-claim-merge-rewrite` | update | none | **a sub-select** projecting `(MIN(?owner) AS ?canonical)`, and `{{{mergeRelation}}}` as a predicate |
 | `key-claim-duplicate-audit` | select | none | `COUNT`, `GROUP_CONCAT(STR(?owner); separator=" ")`, `HAVING` |
 | `fork-detection-audit` | select | none | `COUNT(DISTINCT ?t)` |
-| `gap-scan-audit` | select | the `logGraphs` slot | `VALUES ?log { {{{pinnedGraph}}} {{{logGraphs}}} }` and `GRAPH ?log` inside an `OPTIONAL`, `COALESCE(?lwm, "1"^^xsd:long)`, `FILTER (?seq >= ?L && ?seq <= ?S)` and `HAVING (COUNT(DISTINCT ?seq) != ?S - ?L + 1)` |
+| `gap-scan-audit` | select | the `logGraphs` slot | `VALUES ?log { {{{pinnedGraph}}} {{{logGraphs}}} }` and `GRAPH ?log` inside an `OPTIONAL`, `COALESCE`, value comparisons and `HAVING (COUNT(DISTINCT ?seq) != ?S - ?L + 1)` |
 | `revision-multi-txn-audit` | select | the `logGraphs` slot | `VALUES ?log` with the slot, `GRAPH ?log` |
 | `txn-multi-revision-audit` | select | the `logGraphs` slot | as above |
 
-Five facts constrain the slice.
+Ten facts constrain the slice, checked against the code and the templates on 2026-10-13.
 
-1. **The IR has no sub-select.** H2.1 left it to the slice that needs it (FMH-H2-1 decision 4). Two templates need one. H2.5-Q1.
-2. **No registry graph appears in a query.** `compile` binds `registryGraph` where a family declares one, but no template reads it, since
-   the caller reads the bucket list from it and fills `logGraphs` (README). So the harness's binding check expects the builders not to read
-   it, and `GRAPH_ROLES` needs no new role. `?log` is already `LOG`.
-3. **The audits' results depend on store behaviour we have not probed.** `MIN` over IRIs picks the canonical owner of a merge.
-   `COUNT(DISTINCT ?seq)` counts terms, and on rdflib `"1"^^xsd:long` and `"1"^^xsd:integer` are two terms where Oxigraph has one
-   ([TSD-07](../../architecture/triple-store-discovery.md#tsd-07-numeric-datatypes-are-not-kept-by-oxigraph)). `?S - ?L + 1` promotes
-   numeric types. And `GROUP_CONCAT`'s order follows the order of solutions, which on rdflib can follow the hash seed
-   ([TSD-01](../../architecture/triple-store-discovery.md#tsd-01-the-order-in-which-a-delete-insert-where-is-applied)). Each is an engine
-   test here and a finding in the record if the stores differ.
-4. **The guard's datatype test changes** (option D): `DATATYPE($p) = DATATYPE("0"^^xsd:long)` for `Long` and `Position`. It changes the
-   pinned renderings and every guard line, and lets the behaviour tests that ran on Oxigraph with the guards off (`engines.guards()`) run
-   with them on.
-5. **`cas-replace-value-guard` stays a template** (TD-43, H2.3-Q1), and is not in this slice.
+1. **The IR has a top-level `SELECT`, and nothing enforces its rules.** `Select` (projection, `GROUP BY`, `HAVING`) exists since H2.1 and
+   renders and parses (H2.1's audit forms in T10). But the random property test (T20) generates only updates, and the checker does not
+   refuse an ungrouped projected variable or a non-group term in `HAVING` (review §1.2, B1).
+2. **The IR has no sub-select.** Two templates need one (FMH-H2-1 decision 4).
+3. **No new graph role is needed.** `GRAPH_ROLES` already maps `pinnedGraph`, `retentionGraph`, `keyQuarantineGraph` and `keysGraph`,
+   and H2.2's T21 checks every template's graphs against it. `compile` binds `registryGraph`, but no template reads it, since the caller
+   reads the bucket list from it. The review's B3 is answered except for `?log` (fact 4).
+4. **`?log` ranges over the pinned graph and the log buckets.** It stays `LOG`, since the pinned head is the SPARQL realisation of receipt
+   retention and not a logical resource of its own (NQ2, decided 2026-10-13, H2.6's paper check tests it as a hypothesis).
+5. **Merge relations are written to the keys graph**, `GRAPH {{{keysGraph}}} { ?other <mergeRelation> ?canonical }`, so merge-rewrite
+   writes outside no guard it should have. `KEYS` then holds two logical resources, key claims and merge records, which H2.6's mapping
+   tells apart by predicate (NQ7, answered by the template).
+6. **Quarantine is idempotent by its template**: `FILTER NOT EXISTS { GRAPH {{{keyQuarantineGraph}}} { ?claim pat:quarantinedOwner ?other } }`.
+   A second run writes nothing, so its timestamp cannot repeat (review §1.5).
+7. **Append writes `xsd:long`**, `STRDT(STR(?n + 1), xsd:long)`. Mixed numeric datatypes in `seq` can come only from a caller binding an
+   `xsd:integer` with the guards off (review §1.6).
+8. **`$now` in retire is written to `pat:retiredAt`, whose range is `xsd:dateTime`** (patterns guide, "audit only").
+9. **Four scoping rules meet in these templates** (review §1.3): a `BIND` sees its own group (F4), a correlated `GRAPH ?g` is joined
+   afterwards (H2.3-Q2), a `FILTER` inside `[NOT] EXISTS` sees outer bindings by substitution, and a sub-select starts empty with only its
+   projections leaving it. `key-claim-write` relies on the third, and merge-rewrite on the third and fourth together.
+10. **The audits' results depend on store behaviour not yet probed**: `MIN` over IRIs, `COUNT(DISTINCT)` over mixed numeric terms
+    ([TSD-07](../../architecture/triple-store-discovery.md#tsd-07-numeric-datatypes-are-not-kept-by-oxigraph)), the arithmetic of
+    `?S - ?L + 1`, and `GROUP_CONCAT`'s order, which on rdflib may follow the hash seed
+    ([TSD-01](../../architecture/triple-store-discovery.md#tsd-01-the-order-in-which-a-delete-insert-where-is-applied)).
 
-#### Questions for the maintainer
+#### Decisions (2026-10-13)
 
-| # | Question | Options and consequences | Leaning |
-|---|---|---|---|
-| H2.5-Q1 | how the IR expresses a sub-select | (a) **a `SubSelect` pattern element** holding a `Select` (projection, `GROUP BY`, `HAVING`) and its own `WHERE`. Its scope starts empty, since SPARQL evaluates it on its own, and only its projected variables are visible after it. A projected aggregate counts as bound in every solution, since each group is non-empty. New refusals for a variable used outside that the sub-select does not project. Engine test of the scope. (b) Leave the two templates on Mustache until PDD-06. Neither has a request-time parameter, so TD-34 does not concern them, but H2.9 could not then retire Mustache | (a) |
-| H2.5-Q2 | the kind of `$now` in `key-claim-retire` | (a) **`IriOrLiteral`**, as `$occurredAt` (FMH-H2-2 decision 1): the guard catches a missing value and accepts any timestamp an adopter uses. (b) a `DateTime` kind tested as `xsd:dateTime`, which refuses `xsd:dateTimeStamp` and `xsd:date`, and which TSD-07's lesson says to probe per store first | (a), for the same reason as `$occurredAt` |
-| H2.5-Q3 | slice size, about 30 cases | (a) **one slice**, as H-D21 allowed for H2.3, since the work is all ports and the guard change is small. (b) two slices, the guard and the five key-claim templates with the sub-select, then the five audits | (a) |
+| # | Decided |
+|---|---|
+| H2.5-Q1 | **One `Select` value**, used as a query operation and wrapped as a `SubSelect` pattern element, in a **closed fragment**: projection of variables and aggregates, `GROUP BY` over variables, and `HAVING`. Boundness of a projected item follows the table below, not "each group is non-empty". Four refusals are **type rules of ADR-A123**, because each is illegal SPARQL or fails silently: an aggregate outside a projection or `HAVING`, a projected variable neither grouped nor aggregated, a `HAVING` term neither a group key nor an aggregate (which drops every group with no error), and an inner variable used outside a sub-select without being projected (a false correlation). Three are **fragment limits of H2.5**, each lifted when a template needs it, with an engine test: `ORDER BY`, `LIMIT` and `OFFSET` (non-determinism, and an order that differs by store), `DISTINCT` inside a sub-select (changes counts), and nested sub-selects (cost to the checker) |
+| H2.5-Q2 | **A new kind, `Literal`**, guarded by `isLiteral($p) && LANG($p) = ""`. It catches a missing value and an IRI and accepts any timestamp datatype, with no datatype test a store could disagree with. Chosen over a calibrated `xsd:dateTime` test, which would refuse `xsd:dateTimeStamp` and `xsd:date`. The asymmetry with quarantine, which uses `NOW()`, is kept by the port and recorded |
+| H2.5-Q3 | **One slice, in six ordered gates** (below), with a stop condition on P5 (H-D23) |
+| NQ6 | **The Python caller's check is strict**: an `xsd:long` parameter must be exactly `xsd:long`, on any store, in H2.8. The SPARQL guard is the store-calibrated backstop. Added to ADR-A123's fourth addendum |
+| guard D for strings | **`Digest` and `String` keep the fixed `DATATYPE($p) = xsd:string` test.** No store we have probed turns a simple literal into another datatype, and P5 asserts it per store. If one does, the calibrated form extends to them |
 
-#### Steps
+Boundness of a projected item, for the checker (review §1.2):
 
-1. **Guard D.** `_guard_expr` writes `DATATYPE($p) = DATATYPE("0"^^xsd:long)` for `Long` and `Position`. Regenerate the pinned
-   renderings. Extend probe P5 so it asserts, per store, that a constant, a substituted parameter, an initial binding (rdflib) and a stored
-   value of `"1"^^xsd:long` all report the same datatype, which is the assumption the addendum rests on. Run the guard tests and the
-   behaviour tests of H2.2 to H2.4 on Oxigraph with the guards on, and drop `engines.guards()` where it existed only for this. Update
-   TSD-07's consequences and TD-45.
-2. **The sub-select** per H2.5-Q1, with its refusals and its engine test (an inner query sees no outer variable, and only projected
-   variables are visible after it).
-3. **Port the five key-claim templates.** The value comparisons `?other != $owner` and `?other != ?canonical` declare their operands
-   `Kind.IRI`, which the checker allows. `mergeRelation` is a predicate read by `b.const`, and `constraintId` a literal.
-4. **Port the five audits.** The `logGraphs` slot is a `RegistrySlot` in a `VALUES` beside the `pinnedGraph` constant. `?seq`, `?S` and
-   `?L` are compared by value and declare `Compare.VALUE`.
-5. **Behaviour, on both engines** (`@engines.each_engine`): a claim is written once and refused for a second owner, the dual form guards
-   both claims, a retire moves the claim, quarantine records every owner of a duplicated claim once and is idempotent, merge-rewrite links
-   every non-canonical owner to the canonical one once, and each audit finds the defect it names on a fixture that has it and nothing on
-   one that does not. The audit tests compare sets, never `GROUP_CONCAT`'s order.
-6. **Engine tests for the semantic rules the ports rely on** (plan §5.1), and a finding in the triple-store record for each difference
-   between the stores: `MIN` over IRIs, `COUNT(DISTINCT ?seq)` over sequences of `xsd:long` and `xsd:integer`, the arithmetic and
-   comparison of `?S - ?L + 1` with a count, and `GROUP_CONCAT`'s order on rdflib under several hash seeds.
-7. **TD-34's row is removed.** Every operation with a request-time parameter, except the value guard (TD-43), is then built from a
-   builder with the guard.
+| Projected item | Bound in every solution when |
+|---|---|
+| `COUNT(...)`, `COUNT(DISTINCT ...)` | always, including over an empty group, where it is 0 |
+| a `GROUP BY ?k` key | `?k` is bound in every solution of the inner pattern |
+| `MIN`, `MAX`, `SAMPLE`, `SUM`, `AVG`, `GROUP_CONCAT` | there is an explicit `GROUP BY`, and the argument is bound in every inner solution, and it cannot raise a type error (`SUM` and `AVG` need a numeric argument) |
+| any aggregate but `COUNT`, with no `GROUP BY` | never. An implicit group over zero rows is one empty group |
+| `(expr AS ?v)` | as `BIND`. It can fail |
+
+#### Steps, in six gates
+
+**Gate 1, guard D and P5.**
+1. `_guard_expr` writes `DATATYPE($p) = DATATYPE("0"^^xsd:long)` for `Long` and `Position`, and `isLiteral($p) && LANG($p) = ""` for the
+   new `Literal` kind. A parameter-free operation gets no guard group at all, which harness step 4 accepts.
+2. It is a change, not a port (typed IR sketch §7.1). The Validation Pack lists the golden `.rq` diff of every operation it touches, and
+   the builder guard check (H2.2-T6, H2.3-T26) expects the new conjunct form.
+3. Extend P5 to assert, per store, that `"1"^^xsd:long` reports the same datatype as a constant, as a substituted parameter, as an initial
+   binding (rdflib), as a `VALUES` row, and as a stored value read back in the same query, and that a simple literal stays `xsd:string`.
+   **Stop and ask if a constant and a parameter diverge on any engine**, since guard D would then refuse every write there. Gates 2 to 6
+   continue on rdflib meanwhile.
+4. A regression test on Oxigraph: a guarded write with the guards on applies. Before guard D every such write was refused (TD-45), which
+   closes with this gate except for its pinning part. Run the behaviour tests of H2.2 to H2.4 with guards on and with guards off, on both
+   engines, keeping the off cases as an axis rather than deleting them, since `--no-parameter-guards` stays supported. Update TSD-07's
+   consequences.
+
+**Gate 2, `Select` and `SubSelect`**, per H2.5-Q1.
+5. The `SubSelect` element, the boundness table, the four type rules and the three fragment limits, each with a refusal test.
+6. Every walk enters a sub-select: the role checks (T20, T21, T32, so SI-4 holds inside), `access_sets`, the harness normaliser (rdflib
+   renames aggregates internally, so a builder emits them in the template's order, or the normaliser is shown to be insensitive to it), and
+   guard placement (the guard group stays first in the outer `WHERE`, never inside a sub-select).
+7. The H2.1 property test (T20) also generates queries and asserts each renders and parses as exactly one query. The harness's
+   non-vacuity count includes query stems.
+8. Engine tests, on both engines (plan §5.1): a sub-select sees no outer variable and only its projections leave it, a sub-select inside a
+   `GRAPH` block reads that graph, and a parameter and a sub-select's projection seen by a `FILTER` inside `NOT EXISTS`, bound by text
+   substitution and by initial binding.
+
+**Gate 3, roles.** Confirm fact 3 against the ported operations (T20, T21, T32), and that `?log`'s accesses are all `LOG`.
+
+**Gate 4, the five key-claim ports.**
+9. `?other != $owner` and `?other != ?canonical` declare their operands `Kind.IRI`. That `?other` is an IRI is a data invariant from the
+   patterns guide's shape on `pat:claimedBy` (`sh:nodeKind sh:IRI`), recorded as an assumption on the comparison, not as a type fact.
+   `mergeRelation` is read as an IRI constant in predicate position, and `constraintId` as a literal.
+10. Behaviour, on both engines: a claim is written once and refused for a second owner. The dual form writes both claims, and writes
+    nothing when the next claim is held by another owner and the current one is free. A retire by the owner deletes `pat:claimedBy` and
+    writes `pat:retiredBy` and `pat:retiredAt`, and a retire by a non-owner writes nothing. Quarantine records every owner of a duplicated
+    claim once, and a second run writes nothing (fact 6). Merge-rewrite links every non-canonical owner to the canonical one, in the keys
+    graph, once. A stored literal owner is handled as the data invariant says, guards on and off.
+11. Missing parameters, as for H2.3 and H2.4: write, dual and retire with each parameter left out write nothing with guards on, and with
+    guards off the test records what each engine does. Retire without `$now` is the case to watch.
+
+**Gate 5, the five audit ports.**
+12. The `logGraphs` slot is a `RegistrySlot` in a `VALUES` beside the `pinnedGraph` constant, and `GRAPH ?log` in the gap scan's
+    `OPTIONAL` is accepted under H2.3-Q2's rule (the gap scan is the clearest case of P3's sweep across buckets). `?seq`, `?S` and `?L` are
+    compared by value and declare `Compare.VALUE`. The rule is written down: positions are compared as terms in guards and as values in
+    audits.
+13. Behaviour, on both engines: each audit finds the defect it names on a fixture that has it, and nothing on a clean fixture that holds
+    the data it inspects, reusing H1.2's witnesses. An append followed by a replace on the same stream gives a clean gap scan. Results are
+    compared as sets, never by `GROUP_CONCAT`'s order. Column names stay the templates' (the harness enforces it), since H2.6 declares them
+    as the audits' result contract.
+
+**Gate 6, findings and debt.**
+14. Engine tests, and a finding in the [triple-store record](../../architecture/triple-store-discovery.md) for each difference: `MIN` over
+    IRIs, `COUNT(DISTINCT ?seq)` over `xsd:long` and `xsd:integer` terms, `?S - ?L + 1` compared with a count, and `GROUP_CONCAT`'s order on
+    rdflib under several hash seeds. A refusal test that `Now()` never binds the name of a declared parameter.
+15. **TD-34 is closed for every operation built with its guard**, and its residual moves to TD-43: the value guard's unguarded parameters,
+    and the guards-off case, which H2.8's `INFO` diagnostic reports.
 
 #### Planned validation
 
-One Validation Pack, `FMH-H2-5`, with `mise run check:persistence` and `mise run check:persistence-oxigraph`. The harness covers the ten
-new stems, the binding check confirms no builder reads `registryGraph`, and T20 and T32 cover the roles. The adversarial probes at the
-gate include the guard reverted to a fixed `xsd:long` (the Oxigraph runs with guards on fail), a sub-select that leaks an inner variable
-(a refusal fails), an audit that drops its `DISTINCT` (a behaviour test fails), and `MIN` replaced by `MAX` (the merge test fails).
+One Validation Pack, `FMH-H2-5`, recording H-D23, with `mise run check:persistence` and `mise run check:persistence-oxigraph`. Adversarial
+probes at the gate: the guard reverted to a fixed `xsd:long` (the Oxigraph guards-on regression fails), an aggregate projected with no
+`GROUP BY` counted as bound (a refusal fires), a sub-select that leaks an inner variable (a refusal fires), `NOT EXISTS` correlation broken
+(the engine test fails), an audit without its `DISTINCT` (a behaviour test fails), and `MIN` replaced by `MAX` (the merge test fails).
 
 #### Deliberate non-coverage
 
 - `cas-replace-value-guard` (TD-43, H2.7's vocabulary).
-- The caller-side check of `logGraphs` (H2.8).
-- Recording parameter declarations and read and write sets in the profile (H2.6 and H2.7).
+- The caller-side checks, including the strict `xsd:long` check (NQ6) and `logGraphs`, in H2.8. An empty `logGraphs` makes the gap scan
+  check only the pinned graph and report clean, a caller obligation for H2.8 and an applicability label for H9.
+- An ill-typed literal such as `"99999999999999999999"^^xsd:long`, which keeps its datatype on rdflib and passes the guard. H2.8's check.
+- Binding over the SPARQL 1.1 Protocol, which no engine here offers in process.
+- `COUNT(?owner)` in quarantine counts solutions, not distinct owners, which is right while one keys graph holds the claims. A review item
+  for when key sharding is honoured (TD-06, TD-41).
+- How the canonical owner of a merge is chosen beyond `MIN` (NQ5, after gate 6's finding). A lower IRI joining later changes the canonical
+  owner, which earlier merge relations do not follow. A known property, outside the port.
 
 #### Estimate
 
-About 500k tokens, against 400k in the sketch, for the sub-select and guard D.
+About 600k tokens, against 400k in the sketch, for the `SELECT` rules, the sub-select and guard D.
 
 ### 4.4 H2.6: the expected compiled profile, examples first, and the paper check (planned 2026-10-13)
 
-**Unit:** slice H2.6 of the [typed IR sketch §7](../sketches/formal-methods-track-h-typed-ir.md#7-slices), §7.2 for the paper check.
-It writes, before any vocabulary exists, what H2.7's compiler will emit, so the maintainer reviews the design as data and commits it
-first (examples first, the `lattice-lifecycle` skill). It can run beside H2.5 (§4.5). Questions H2.6-Q1 to H2.6-Q4 are for the
-maintainer before a branch.
+**Unit:** slice H2.6 of the [typed IR sketch §7](../sketches/formal-methods-track-h-typed-ir.md#7-slices), §7.2 for the paper check. It
+runs after H2.5 has merged (§4.5), so every operation it describes has a builder. It writes, before any vocabulary exists, what H2.7's
+compiler will emit, and stops for the maintainer's review and commit of those files (examples first, the `lattice-lifecycle` skill).
+**Revised** after [track-h-feedback.md](../notes/track-h-feedback.md). Every question is decided (2026-10-13).
 
-#### What H2.7 will add to a compiled profile
+#### What the contract holds
 
-Per generated operation, from ADR-A123 decisions 4 and 6 and its addenda:
+Per generated operation, the profile H2.7 emits carries what ADR-A123 decisions 4 and 6, H2-Q5 and H2-Q6 promise (review §2.1, B4, B5):
 
-- **parameter declarations**: each request-time parameter's name, kind, whether it is required, and for a caller-named graph the rule its
-  `equals` checks
-- **read and write sets** over **logical resources** (H2-Q6), each with its access (read or write), the parameter that names its subject,
-  and whether the read is a closure through the owned path
-- **the payload contract** for an operation with a payload: the boundary shape, the root parameter and the encoding `dal:GroundNTriples`
-- **whether the parameter guards are on**, and **who names a named graph**, as the compile run chose
-- and `dal:templatePath` removed, with `dal:templateId` and `dal:templateVersion` kept as the builder's identity
+| Part | Holds |
+|---|---|
+| operation kind | an individual of a closed kind, for example Create, Bootstrap, Replace, Tombstone, Append, UnconditionalWrite, KeyClaimWrite, KeyClaimRetire, Quarantine, MergeRewrite, Audit. Today's `dal:forOperation` string becomes this, and `dal:templateId` stays as the builder's identity |
+| builder version | `dal:templateVersion`, bumped by any change that alters the operation's golden `.rq`, which the golden check enforces |
+| parameters | each request-time parameter's name, kind and whether it is required. A caller-named graph's `equals` refers structurally to `dal:graphIriTemplate` (prefix, `ENCODE_FOR_URI` of the root, suffix), never as SPARQL text. A `RegistryList` parameter states that it is sourced from the family's `dal:registryGraph`, a caller obligation |
+| digest contract | for an operation that takes `$requestDigest`: what is hashed (the operation kind, the target, the expected `seq`, the sorted canonical N-Triples lines of the payload) and how, so a caller in another language can compute it, as a minting recipe allows for identities (NQ3) |
+| accesses | one per logical resource the operation touches, each with its **mode** (`PointRead`, `AbsenceRead`, `ScanRead`, `WholeAggregateRead`, `Insert`, `Delete`) and its **logical key**, the root, the stream, the transaction id, (target, epoch, seq), the claim, or none for a scan. Absence reads are what write skew turns on, so they are named |
+| payload contract | for an operation with a payload: the boundary shape, or its absence stated explicitly, the root parameter and the encoding `dal:GroundNTriples` |
+| result contract | for an audit: each projected column's name, kind and encoding, for example `GROUP_CONCAT`'s separator |
+| guard status | per operation, since an audit has no guard, the value guard has none generated, and the run may turn guards off |
+| graph naming | who names a named graph, as the run chose |
+| provenance | `dal:declarationSource`, derived from a builder or `dal:HandDeclared` (the value guard, H2.6-Q3) |
 
-The logical resources, read off `GRAPH_ROLES` and the subjects the builders write:
+Logical resources, as individuals of a closed kind (`dal:VersionRow a dal:LogicalResourceKind`), never classes, so the vocabulary stays
+OWL-light and the kinds closed (review §2.2):
 
-| Logical resource (proposed term) | SPARQL realisation | Written by |
-|---|---|---|
-| `dal:AggregateResource`, the root and its members | the data graph, or the root's named graph | create, replace, tombstone, unconditional write |
-| `dal:VersionRowResource` | the meta graph, subject the root or stream | create, replace, tombstone, bootstrap, append |
-| `dal:TransactionClaimResource` | the transaction graph | every guarded write |
-| `dal:ReceiptResource` | a log bucket | every guarded write |
-| `dal:EventResource` | an event bucket | append |
-| `dal:KeyClaimResource` | the keys graph | key-claim write, dual, retire, merge-rewrite |
-| `dal:KeyQuarantineResource` | the quarantine graph | quarantine |
-| `dal:DatasetEpochResource` | the dataset graph, read only | the dataset-guard variants |
-| `dal:RetentionMarkResource` | the retention graph, read only | the gap scan |
-| `dal:PinnedHeadResource` | the pinned graph, read only | the audits |
-
-#### Questions for the maintainer
-
-| # | Question | Options and consequences | Leaning |
+| Kind (proposed) | Logical key | SPARQL realisation | Touched by |
 |---|---|---|---|
-| H2.6-Q1 | where the expected profiles live. Every `ontology/persistence/examples/*.ttl` is compiled as a configuration by the integration tests, the witness harness and `build:persistence-execution`, so they cannot go there | (a) **`ontology/persistence/test/`**, the layer's own test directory that the README's layer layout already names ("the layer's own shape and rule tests") and that Behaviour has. They exercise the layer's vocabulary, and H2.7 validates them against its new shapes. No new kind of directory, but Persistence's README gains the directory. (b) `tools/persistence/tests/fixtures/expected-profiles/`, beside the tool's other fixtures, where they read as the tool's test data rather than the layer's design. (c) a subdirectory of `examples/`, which the non-recursive globs skip by accident, not by rule | (a) |
-| H2.6-Q2 | which configurations | (a) **eight existing examples that between them generate every operation kind** (compiled 2026-10-13): `baseline-single-class.ttl` (named-graph create, replace and tombstone, key-claim write, retire and duplicate audit, the four log audits), `epoch-dataset-level-guard.ttl` (the named-graph dataset-guard variants), `composite-project-ownership.ttl` (the composite family, a payload contract with a boundary shape), `append-stream-dataset-guard.ttl` (append and bootstrap, dataset-guarded), `uniqueness-merge-policy.ttl` (merge-rewrite, unconditional write), `uniqueness-quarantine-policy.ttl` (quarantine), `claim-scheme-dual-rotation.ttl` (the dual claim write) and `value-based-cas.ttl` (the value guard, for H2.6-Q3). One file each, `<example>.expected.ttl`. Only the composite family's dataset-guard variants are not covered, and their declarations differ from the plain forms by the dataset read alone. (b) one synthetic configuration that generates everything, which is shorter and tests a configuration no adopter would write | (a) |
-| H2.6-Q3 | an operation with no builder, today only `cas-replace-value-guard` (TD-43), whose declarations no builder can derive | (a) **H2.7 declares it by hand**, from its template's `$` variables, in one small table in the compiler, with a test that the table and the template agree, removed when TD-43 ports it. The expected profiles show it like any other. (b) H2.7 emits no declaration for it, and a caller must read the template. (c) Port the value guard first, which needs where a `dal:NoBoundary` target's data lives, the decision H2.3-Q1 put in H2.7 | (a) |
-| H2.6-Q4 | the shape of the terms | the expected profiles are the vocabulary's first draft. They propose the class and property names (the table above, `dal:ParameterDeclaration`, `dal:reads`, `dal:writes`, `dal:PayloadContract`, `dal:GroundNTriples`, `dal:parameterGuards`, `dal:graphNames`) and their Validation Pack lists every name for review. The maintainer's review of the examples is where the names are settled, before H2.7 builds them | settle at the examples' review |
+| `Aggregate` | the root | the data graph through the owned path, or the root's named graph | create, replace, tombstone, unconditional write |
+| `VersionRow` | the root or stream | the meta graph | the guarded writes, bootstrap, append |
+| `TransactionClaim` | the transaction id | the transaction graph | every operation that takes `$txnId` |
+| `Receipt` | (target, epoch, seq) | a log bucket, and the pinned graph for retained heads | the guarded writes, the log audits |
+| `Event` | (stream, seq) | an event bucket | append |
+| `KeyClaim` | the claim | the keys graph, `pat:claimedBy`, `pat:retiredBy` | key-claim write, dual, retire, the duplicate audit |
+| `MergeRecord` | the owner | the keys graph, the merge relation | merge-rewrite |
+| `KeyQuarantine` | (claim, owner) | the quarantine graph | quarantine |
+| `DatasetEpoch` | the dataset | the dataset graph | the dataset-guard variants |
+| `RetentionMark` | the target | the retention graph | the gap scan |
+| `PropertyValue` | (root, property) | the default graph today (TD-43) | the value guard |
+
+#### Decisions (2026-10-13)
+
+| # | Decided |
+|---|---|
+| H2.6-Q1 | **`ontology/persistence/test/expected-profiles/`**, the layer's own test directory, which the layer layout names and Behaviour uses. Before writing, confirm that no check over the layer flags undeclared `dal:` terms, that the catalogue and release tooling ignore `test/` (the versioning check covers `spec/`, `vocab/`, `shapes/` and `projection/` only, and exempts test fixtures), and that nothing globs `ontology/*/test/` as SHACL suites. Persistence's README gains the directory |
+| H2.6-Q2 | **The eight examples** (each `<example>.expected.ttl`): `baseline-single-class`, `epoch-dataset-level-guard`, `composite-project-ownership`, `append-stream-dataset-guard`, `uniqueness-merge-policy`, `uniqueness-quarantine-policy`, `claim-scheme-dual-rotation` and `value-based-cas`, **plus one variant**, `baseline-single-class.caller-named.expected.ttl`, with guards off and caller-named graphs. The patch-log parameters are shown required, as H2.7 designs, and a missing boundary shape is shown explicitly. Only the composite dataset-guard variants are uncovered, and the agreement test asserts they differ by the dataset read alone |
+| H2.6-Q3 | **The value guard is hand-declared**, marked `dal:declarationSource dal:HandDeclared`, with its guard status recorded per operation. Its agreement with the template's `$` variables uses the H-D11 convention, removed with TD-43 |
+| H2.6-Q4 | **The model is proposed now and the names are settled at review.** The Validation Pack shows the model as a class diagram with the proposed names |
+| NQ1, NQ2 | **The pinned head is a realisation of receipt retention**, so `?log` stays `LOG` and the pinned graph is part of `Receipt`'s realisation. The paper check tests it |
+| NQ3 | **The profile declares the digest contract** |
+| NQ4 | **Declaration nodes get minted IRIs**, derived from the target, the `templateId` and the parameter name or access index, for example `<…/compiled/LoanApplication/cas-replace-named-graph#param-root>`. No blank node and no order-dependent id in the new parts |
+
+Two rules hold for every value in the contract (review §2.6), and an H2.7 shape enforces them later: **no blank nodes** in the new parts,
+and **no SPARQL text**, so kinds, modes and resources are individuals, a caller-named graph's rule refers to `dal:graphIriTemplate`, and the
+owned path stays in the `ownedPath` binding (SI-5 of the typed IR sketch §9.4, enforced for the contract from H2.6 on).
 
 #### Steps
 
-1. Write the eight expected profiles per H2.6-Q1 and Q2. For each, the compiled profile as `compile` emits it today, plus the declarations,
-   the sets, the payload contract and the two run choices of H2.7, and without `dal:templatePath`. The parameter declarations and the read
-   and write sets of the operations already built from builders are taken from the builders (`build`, `access_sets`) and mapped to logical
-   resources by the table above. Those of H2.5's ten operations, if H2.5 has not merged, are written from their templates and the README.
-2. A test in `tools/persistence/tests` that parses every expected profile and checks, for each operation that has a builder, that its
-   declarations and sets equal what the builder gives through the same mapping. An operation whose builder does not yet exist is reported
-   as skipped and named. Whichever of H2.5 and H2.6 merges second makes that check complete (§4.5).
-3. The paper check of [typed IR sketch §7.2](../sketches/formal-methods-track-h-typed-ir.md#72-the-paper-check-of-the-logical-resources-h26):
-   a table in the Validation Pack, one row per logical resource, with its SPARQL realisation and its relational realisation from
-   [lattice-sql.md](../notes/rdf-engine/lattice-sql.md) §9. Rows we expect to need a look are the transaction claim and the pinned head,
-   which §9's table does not name. A failure goes to the maintainer before H2.7 is briefed.
-4. Stop for the maintainer's review and commit of the expected profiles (examples first). H2.7 is briefed against them.
+0. **The structure is fixed before the files** (review §2.10): the decisions above settle the `?log` and pinned-head treatment, the digest
+   contract, minted IRIs and the result contract. Draft the model as a class diagram first.
+1. **The mapping in production code** (review §2.8). A data table beside `GRAPH_ROLES` in `builders.py` maps each graph role, and where a
+   role holds two resources the predicate or the subject's type, to a logical resource kind. `access_sets` gains each access's mode and
+   logical key. Check each role against the templates. `KEYS` is known to hold two resources (H2.5 fact 5), and `META` is checked for the
+   append counter. Any other role found holding two is a finding for the review.
+2. **Write the nine expected profiles**: today's compiled profile for the example, plus the contract above, without `dal:templatePath`. The
+   derived parts come from the builders through the table of step 1. Only the value guard is written by hand.
+3. **Five tests in `tools/persistence/tests`**, under `mise run check:persistence`:
+   - *parse*: every expected profile parses
+   - *agreement*, with three outcomes (review §2.8): equal, an **intended difference** listed in a reviewed table with its reason and the
+     slice that closes it (for example "H2.7: `$assertGraph` and `$retractGraph` required under `dal:PatchLog`"), or a failure. H2.7 empties
+     the table. Every builder exists, since H2.5 has merged, so there is no "skipped"
+   - *base profile*: an expected profile, without the new terms, is byte-identical to today's `compile` output without `dal:templatePath`,
+     which H1.5's stable labels make possible. A change to compile output regenerates the expected files in the same commit
+   - *names*: every operation's declared parameter names equal the `$` names of its golden `.rq`, and for the value guard, of its template
+   - *minted IRIs*: two compiles give the same node IRIs
+4. **The paper check** of [typed IR sketch §7.2](../sketches/formal-methods-track-h-typed-ir.md#72-the-paper-check-of-the-logical-resources-h26),
+   against [lattice-sql.md](../notes/rdf-engine/lattice-sql.md) §9, extended (review §2.9): per resource, whether the logical key matches a
+   relational key, whether each access mode has a relational reading (an absence read as a unique index or `SELECT … FOR UPDATE`, a
+   whole-aggregate delete as a cascade, M37), and the atomicity scope per operation kind. Both directions: every §9 operation touches only
+   named resources, and every operation kind has a §9 counterpart or is marked as having none. Three outcomes per row, *logical*,
+   *realisation only*, or *gap*. Expected and recorded as hypotheses for the maintainer: the pinned head is *realisation only*, the
+   transaction claim is *logical* and §9's silence on it is a gap in §9 (a relational realisation needs an idempotency-key table), and the
+   retention mark and dataset epoch are *logical*.
+5. **Stop** for the maintainer's review of the model, the names and the paper check, and commit of the expected profiles. H2.7 is briefed
+   against them.
 
 #### Planned validation
 
-One Validation Pack, `FMH-H2-6`, with `mise run check:persistence` (the parse and agreement test) as its one command, the expected
-profiles as its artefacts, the paper-check table, and the list of proposed term names. No SHACL validation yet, since the shapes arrive in
-H2.7.
+One Validation Pack, `FMH-H2-6`, with `mise run check:persistence` as its one command, the expected profiles and the class diagram as its
+artefacts, the paper-check table, the list of proposed names, and the table of intended differences. Adversarial probes at the gate: a
+parameter dropped from one expected file (agreement fails), an undeclared `$` added to a golden `.rq` (the names test fails), an example's
+configuration changed without regenerating its expected profile (the base-profile test fails), and a blank node introduced into a
+declaration (the minted-IRI test fails).
 
 #### Deliberate non-coverage
 
 - The vocabulary itself, its shapes and the compiler's emission, H2.7.
-- The payload's own checks, H2.8.
+- The composite dataset-guard variants, beyond the agreement test's assertion.
+- The relational realisation, which is checked on paper only (ADR-A-FM4 decision 1).
+- The digest algorithm beyond its declaration, H2.8, and isolation semantics, H5.
 
 #### Estimate
 
-About 200k tokens, against 150k in the sketch, for the agreement test.
+About 300k tokens, against 150k in the sketch, for the mapping in production code, the extended contract and the five tests.
 
-### 4.5 Running H2.5 and H2.6 in parallel
+### 4.5 Order: H2.5, then H2.6, then H2.7, one at a time on the cloud agent
 
-They share no code. H2.5 changes `builders.py`, `ir_render.py` and the persistence tests. H2.6 adds the expected profiles, one test and its
-Validation Pack. Four points keep them apart.
+**Decided 2026-10-13 (H-D22).** The two slices run one after the other on the cloud agent, not in parallel. **H2.5 goes first.**
 
-| Point | Rule |
+| Reason | Effect |
 |---|---|
-| H2.5's ten operations appear in both | H2.6 writes them from the templates. H2.6's agreement test skips any operation without a builder and names it. Whichever slice merges second runs the test with every builder present and fixes any disagreement in its own branch |
-| graph roles and logical resources | fixed by §4.3 fact 2 and the table of §4.4. Neither slice adds a role or a resource without updating both sections |
-| the guard's form | not recorded in a profile (only whether guards are on), so guard D does not touch H2.6 |
-| shared documents | each slice edits only its own plan section and Validation Pack, and appends to the status record's log. The maintainer merges one after the other |
+| with H2.5 merged, every operation has a builder | H2.6 derives every operation's declarations and accesses from code, with no hand-written entries for H2.5's ten, no "skipped" outcome, and no slice editing the other's files |
+| H2.6 adds the role-to-resource mapping and the access modes and keys in `builders.py` | it does so after H2.5's builders exist, so it covers them in one pass, and no precursor commit is needed |
+| the audits' column names are fixed by H2.5's ports | H2.6 declares them as the result contract from what H2.5 shipped |
+| H2.6 stops for the maintainer's commit of its examples | H2.7 starts from reviewed examples |
 
-H2.6 is smaller and stops for the maintainer's commit of its examples, so it will likely merge first. H2.7 starts when both have merged.
+Each slice starts from `main` after the previous one merges, reads this plan section, its status record's next action and
+[track-h-feedback.md](../notes/track-h-feedback.md), and ends with its Validation Pack and a stop for the maintainer's review.
 
 **H3 (specification registry), outline:**
 - One machine-readable registry (syntax not yet chosen, specification sketch §2) generating:
@@ -1065,6 +1163,8 @@ H-D18 to H-D20 and H2-Q1 to H2-Q6 come from H2's brief ([typed IR sketch](../ske
 | H-D19 | whether the IR replaces the Mustache templates (option A) or adds typed declarations checked against them (option B) | **decided 2026-10-10: option A** |
 | H-D20 | how far the payload is typed | **decided 2026-10-10**: designed in full in the [typed IR sketch §4](../sketches/formal-methods-track-h-typed-ir.md#4-the-typed-payload), weighed by the configuration it asks of a user, and reviewed by the maintainer. Its own questions are H2-Q1 to H2-Q3 |
 | H-D21 | whether H2.3 is split to respect the slice-sizing rule (H2.3-Q4) | **decided 2026-10-12**: one slice of about 25 test cases. The maintainer approved exceeding the rule for H2.3, so that the named-graph row writers are ported and reviewed together |
+| H-D22 | whether H2.5 and H2.6 run in parallel | **decided 2026-10-13**: one after the other, on the cloud agent, H2.5 first (§4.5). The parallel rules and the precursor commit the design review proposed are dropped |
+| H-D23 | whether H2.5 is split to respect the slice-sizing rule | **decided 2026-10-13**: one slice of about 40 cases in six ordered gates (§4.3), as H-D21 allowed for H2.3 |
 | H2-Q1 to H2-Q6 | the typed payload, a named-graph family with no boundary shape, closed-shape payloads, where the parameter guard runs, what the compiled profile carries, logical or SPARQL declarations ([sketch §5](../sketches/formal-methods-track-h-typed-ir.md#5-questions-for-the-maintainer)) | **answered 2026-10-10**: PL-B, with PL-D later as an SDK ([sketch](../sketches/persistence-client-sdk.md)), (a) and (b), (a), (c), and (a) on condition it keeps the relational realisation open. H2-Q6, that condition, **answered 2026-10-10: (a)**, a logical operation contract. Our reading of H2-Q2 confirmed ([typed IR sketch §1](../sketches/formal-methods-track-h-typed-ir.md#1-decisions-already-taken-2026-10-10)) |
 
 ## 9. Alignment with other work

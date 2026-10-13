@@ -1404,7 +1404,8 @@ Any change to `spec/persistence.ttl`, to an example, to the compiler or to its t
 it, so regenerate after such a change, and before reading the output against this table. The task
 replaces `execution/` whole. Its output is deterministic, so a copy taken before the change and
 `diff -r` show exactly what the change did to the generated SPARQL. Compiled profiles are not
-written: their blank-node labels differ on every run.
+written here. Their blank-node labels are stable since formal-methods H1.5, so a compiled profile is byte-identical between runs
+(`tools/persistence/tests/test_compiled_profile_stable.py`), and H2.6 keeps expected compiled profiles under `test/expected-profiles/`.
 
 ---
 

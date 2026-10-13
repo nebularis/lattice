@@ -780,3 +780,8 @@ does not.
 | TSD-Q3 | whether the specification's zero-length path includes a constant endpoint in no triple | TSD-08 names one store as right without checking the text | re-read SPARQL 1.1 §18.4 |
 | TSD-Q4 | the isolation half of request atomicity, and whether inserting an identical statement conflicts | H5's models branch on both | H5, with concurrent writers |
 | TSD-Q5 | why Oxigraph turns `xsd:long` into `xsd:integer` | TSD-07 is observed, not explained | read Oxigraph's literal encoding |
+| TSD-Q6 | how each store orders IRIs for `MIN` | merge-rewrite picks a claim's canonical owner with `MIN(?owner)`, and two stores could choose different owners | an engine test in formal-methods H2.5, gate 6 |
+| TSD-Q7 | whether `GROUP_CONCAT`'s order follows the hash seed on rdflib | the duplicate audit's `?owners` column would then differ by process | an engine test in H2.5, gate 6 |
+| TSD-Q8 | whether a `FILTER` inside `NOT EXISTS` sees a parameter and a sub-select's projection, by substitution and by initial binding | `key-claim-write` and merge-rewrite rely on it, and `EXISTS` substitution is a known ambiguity of SPARQL 1.1 | an engine test in H2.5, gate 2 |
+| TSD-Q9 | which graph a sub-select inside a `GRAPH` block reads, and what it can see | engines have differed here | an engine test in H2.5, gate 2 |
+| TSD-Q10 | how `COUNT(DISTINCT)` and arithmetic treat `xsd:long` and `xsd:integer` terms together | the gap scan could raise a false alarm on rdflib | an engine test in H2.5, gate 6 |

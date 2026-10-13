@@ -3,7 +3,7 @@
 # Formal Methods, Track H: Status
 
 **Unit ID:** `formal-methods-track-h` (phase, within the `formal-methods` epic)
-**Status:** In progress. H1 (H1.1 to H1.5, with H1.4c), the aggregate-ownership slices HO0 to HO9 and H2.0 to H2.3 are merged to `main` and signed off (H1 and HO 2026-10-10, H2.0 to H2.3 2026-10-12). ADR-A123 is accepted, with two addenda of 2026-10-12. H2.4 is planned and every question is decided. ADR-A124 and ADR-A125 are accepted (2026-10-12)
+**Status:** In progress. H1 (H1.1 to H1.5, with H1.4c), the aggregate-ownership slices HO0 to HO9 and H2.0 to H2.3 are merged to `main` and signed off (H1 and HO 2026-10-10, H2.0 to H2.3 2026-10-12). H2.4a and H2.4b are built and reviewed, and every decision in their Validation Packs is taken (2026-10-13), awaiting the maintainer's merge with the triple-store record. ADR-A123 is accepted with five addenda, ADR-A124 and ADR-A125 are accepted. H2.5 and H2.6 are planned, to run in turn after that merge
 **Last updated:** 2026-10-10
 **Plan:** [formal-methods-track-h.md](../plans/formal-methods-track-h.md)
 **Sketches:** [formal-methods-track-h.md](../sketches/formal-methods-track-h.md) (main),
@@ -53,13 +53,19 @@ section below.
 
 ## Next action
 
-1. The maintainer answers H2.5-Q1 to Q3 and H2.6-Q1 to Q4, in the
-   [H2.5 plan](../plans/formal-methods-track-h.md#43-h25-key-claims-the-audits-and-the-self-calibrating-guard-planned-2026-10-13) and the
-   [H2.6 plan](../plans/formal-methods-track-h.md#44-h26-the-expected-compiled-profile-examples-first-and-the-paper-check-planned-2026-10-13).
-2. Then **H2.5 and H2.6 branch together**, by the rules of [plan §4.5](../plans/formal-methods-track-h.md#45-running-h25-and-h26-in-parallel).
-   H2.5 starts with the self-calibrating guard (FMH-H2-4b decision 1, option D).
-3. H2.7, the vocabulary and its emission, follows both.
-4. Later, not scheduled: the SPARQL semantic IR of plan §5.1 (PDD-06).
+0. **The maintainer merges this branch into `main`**: H2.4a, H2.4b, the triple-store record and its skill, the corrected P1 test, and
+   the H2.5 and H2.6 plans. Run `mise run check:persistence` (expect `2111 passed, 1 xfailed`) and `mise run check:persistence-oxigraph`
+   (66 passed) first. No release tag is owed.
+1. **H2.5 is ready to branch** after that merge, on the cloud agent, from `main`:
+   [plan §4.3](../plans/formal-methods-track-h.md#43-h25-key-claims-the-audits-and-the-self-calibrating-guard-planned-2026-10-13), in six
+   gates, starting with guard D and the extended probe P5, which carries a stop condition.
+2. **Then H2.6**, from `main` after H2.5 merges:
+   [plan §4.4](../plans/formal-methods-track-h.md#44-h26-the-expected-compiled-profile-examples-first-and-the-paper-check-planned-2026-10-13).
+   It stops for the maintainer's review and commit of its expected profiles.
+3. Then H2.7, the vocabulary and its emission, against those profiles.
+4. Both slices read [the order and handoff rules](../plans/formal-methods-track-h.md#45-order-h25-then-h26-then-h27-one-at-a-time-on-the-cloud-agent)
+   and the [design review](../notes/track-h-feedback.md) first.
+5. Later, not scheduled: the SPARQL semantic IR of plan §5.1 (PDD-06).
 
 ## Slices
 
@@ -90,10 +96,10 @@ section below.
 | H2.2 (equivalence harness, `bootstrap-version-row` and `append-event` ported) | **built and reviewed** 2026-10-12, two review findings fixed. [Validation Pack](../validation/FMH-H2-2.md). TD-34 closed for these operations | merged and signed off 2026-10-12 |
 | H2 (typed IR) | **briefed** 2026-10-10, split into H2.0 to H2.9 ([typed IR sketch §7](../sketches/formal-methods-track-h-typed-ir.md#7-slices)) | |
 | H2.3 (named-graph row writers) | **built and reviewed** 2026-10-12, one review fix. [Validation Pack](../validation/FMH-H2-3.md). [Plan §4.1](../plans/formal-methods-track-h.md#41-h23-the-named-graph-row-writers-planned-2026-10-12). Countersignature items signed 2026-10-12. TD-34 closed for its operations | merged and signed off 2026-10-12 |
-| H2.4a (the composite ports) | **built** 2026-10-12. [Validation Pack](../validation/FMH-H2-4a.md). [Plan §4.2](../plans/formal-methods-track-h.md#42-h24-the-composite-family-and-what-each-store-does-planned-2026-10-12) | the maintainer's run and merge |
-| H2.4b (Oxigraph, probes, benchmark) | **built** 2026-10-12. [Validation Pack](../validation/FMH-H2-4b.md). One open decision (the guard on Oxigraph) | the maintainer's decision 1, run and merge |
-| H2.5 (key claims, audits, guard D) | **planned** 2026-10-13, in [plan §4.3](../plans/formal-methods-track-h.md#43-h25-key-claims-the-audits-and-the-self-calibrating-guard-planned-2026-10-13) | H2.5-Q1 to H2.5-Q3 |
-| H2.6 (expected compiled profiles, paper check) | **planned** 2026-10-13, in [plan §4.4](../plans/formal-methods-track-h.md#44-h26-the-expected-compiled-profile-examples-first-and-the-paper-check-planned-2026-10-13), parallel with H2.5 by §4.5 | H2.6-Q1 to H2.6-Q4 |
+| H2.4a (the composite ports) | **built and reviewed** 2026-10-12. [Validation Pack](../validation/FMH-H2-4a.md). [Plan §4.2](../plans/formal-methods-track-h.md#42-h24-the-composite-family-and-what-each-store-does-planned-2026-10-12) | the maintainer's merge |
+| H2.4b (Oxigraph, probes, benchmark) | **built** 2026-10-12, reviewed 2026-10-13. [Validation Pack](../validation/FMH-H2-4b.md). Decision 1 decided (option D, built in H2.5), and the corrected P1 test countersigned | the maintainer's merge |
+| H2.5 (key claims, audits, guard D, the `SELECT` fragment) | **planned** 2026-10-13 and revised after the [design review](../notes/track-h-feedback.md), in [plan §4.3](../plans/formal-methods-track-h.md#43-h25-key-claims-the-audits-and-the-self-calibrating-guard-planned-2026-10-13). Every question decided. Runs first (H-D22), one slice in six gates (H-D23) | the maintainer's branch |
+| H2.6 (expected compiled profiles, paper check) | **planned** 2026-10-13 and revised after the design review, in [plan §4.4](../plans/formal-methods-track-h.md#44-h26-the-expected-compiled-profile-examples-first-and-the-paper-check-planned-2026-10-13). Every question decided | H2.5's merge (H-D22) |
 | H3 (specification registry) | not started, outlined in the plan | H2 preferred first (smaller, more self-contained), not a hard blocker |
 | H4 (exhaustive cross-axis validation, BDD/SMT) | not started, outline only | H3 |
 | H5 (capability-record extension, TLA+/Quint toolchain spike, protocol models A-D) | not started, outline only | H2 (read/write sets from the IR). ADR-A-FM4 is accepted |
@@ -133,6 +139,9 @@ section below.
 | H2.3-Q1, H2.3-Q3 | the value guard's default graph, the patch-log parameters | **decided 2026-10-12: (a) for both**. TD-43 records the value guard |
 | H2.3-Q2 | a `GRAPH ?g` inside an inner group, `?g` bound outside it | **decided 2026-10-12**: (a) by default, the rule follows the join. (c), a caller-named `$g`, as an override the caller chooses, checked against the naming rule while guards are on. ADR-A123 addendum |
 | H2-Q7 | reopen H2-Q5: should the IR be stored | **decided 2026-10-12: (A)**. H2-Q5 stands, and a stored IR is decided with PDD-06's ADR, so the stored IR is the semantic one. Rules SI-1 to SI-6 keep it possible ([typed IR sketch §9](../sketches/formal-methods-track-h-typed-ir.md#9-toward-a-stored-ir-h2-q7-decided-2026-10-12)). ADR-A123's third addendum |
+| H-D22 | H2.5 and H2.6 in parallel or in turn | **decided 2026-10-13**: in turn, on the cloud agent, H2.5 first ([plan §4.5](../plans/formal-methods-track-h.md#45-order-h25-then-h26-then-h27-one-at-a-time-on-the-cloud-agent)) |
+| H-D23 | H2.5 split or one slice | **decided 2026-10-13**: one slice, about 40 cases, six ordered gates |
+| H2.5-Q1 to Q3, H2.6-Q1 to Q4, NQ1 to NQ7 | the design review's questions and the plans' own ([track-h-feedback.md](../notes/track-h-feedback.md)) | **decided 2026-10-13**: the closed `SELECT` fragment with four type rules and three fragment limits, a `Literal` kind for `$now`, one H2.5 slice, `test/expected-profiles/`, nine expected profiles, the value guard hand-declared, the model proposed now, the pinned head a realisation of receipts, a digest contract, minted IRIs, a strict caller check (H2.8). NQ5 waits for H2.5's `MIN` finding, NQ7 was answered by the template (merge relations go to the keys graph). Recorded in plan §4.3 and §4.4 and ADR-A123's fourth and fifth addenda |
 | H-D7 | H1's checks live in one new module, `persistence.hygiene`, behind one `hygiene` subcommand, and run under `check:persistence`. No new `mise` task until H1's closing slice | agreed 2026-10-09 |
 
 ## Log
@@ -545,4 +554,13 @@ section below.
   and `GROUP_CONCAT`'s order) and H2.6 (expected compiled profiles for eight examples covering every operation kind, an agreement test with
   the builders, and the paper check). They can run in parallel by plan §4.5. While planning: no template reads `registryGraph`, so H2.5
   needs no new graph role, and an expected profile cannot sit in `examples/`, which three tools compile as configurations.
+- 2026-10-13: a design review of the H2.5 and H2.6 plans, kept at [docs/developer/notes/track-h-feedback.md](../notes/track-h-feedback.md),
+  found seven blocking issues. Checked against the code, two were partly handled already: the IR has a top-level `Select`, though nothing
+  enforces its rules and the property test covers only updates, and the pinned, retention and quarantine roles exist. H1.5 had already made
+  compiled profiles byte-stable, and the persistence README's sentence saying otherwise is corrected. The templates answered two of its
+  questions: merge relations are written to the keys graph, and quarantine is idempotent. The guide answered a third: `pat:retiredAt` has
+  range `xsd:dateTime`. The maintainer agreed every leaning, chose a `Literal` kind for `$now`, and decided the slices run in turn on the
+  cloud agent, not in parallel. H2.5 goes first, so H2.6 derives every operation from a builder. Plan §4.3 to §4.5, ADR-A123 (a fifth
+  addendum and a point in the fourth), the typed IR sketch's §7 and §9.4, and five open questions in the triple-store record (TSD-Q6 to
+  Q10) are updated. H2.5 is ready to branch.
 
