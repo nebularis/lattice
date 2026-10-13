@@ -53,11 +53,13 @@ section below.
 
 ## Next action
 
-1. **H2.4a is built** ([FMH-H2-4a](../validation/FMH-H2-4a.md), `2035 passed, 1 xfailed`), with the stored-IR test of SI-1 and SI-2. One countersignature item: the epoch type in three composite test files.
-2. **H2.4b is built** ([FMH-H2-4b](../validation/FMH-H2-4b.md), `2111 passed, 1 xfailed`), and decision 1 there is open (the parameter guard cannot pass on Oxigraph, TD-45). It was ready to branch, and: ADR-A124 and ADR-A125 are accepted (2026-10-12), so it can create `benchmark/` and
-   `tools/testing/`. It depends on H2.4a only for the composite engine tests it reruns on Oxigraph.
-3. H2.5 and **H2.6** (examples first, with the paper check) can follow in any order.
-4. Later, not scheduled: the SPARQL semantic IR of plan §5.1 (PDD-06), which now also decides whether the IR is stored.
+1. The maintainer answers H2.5-Q1 to Q3 and H2.6-Q1 to Q4, in the
+   [H2.5 plan](../plans/formal-methods-track-h.md#43-h25-key-claims-the-audits-and-the-self-calibrating-guard-planned-2026-10-13) and the
+   [H2.6 plan](../plans/formal-methods-track-h.md#44-h26-the-expected-compiled-profile-examples-first-and-the-paper-check-planned-2026-10-13).
+2. Then **H2.5 and H2.6 branch together**, by the rules of [plan §4.5](../plans/formal-methods-track-h.md#45-running-h25-and-h26-in-parallel).
+   H2.5 starts with the self-calibrating guard (FMH-H2-4b decision 1, option D).
+3. H2.7, the vocabulary and its emission, follows both.
+4. Later, not scheduled: the SPARQL semantic IR of plan §5.1 (PDD-06).
 
 ## Slices
 
@@ -90,6 +92,8 @@ section below.
 | H2.3 (named-graph row writers) | **built and reviewed** 2026-10-12, one review fix. [Validation Pack](../validation/FMH-H2-3.md). [Plan §4.1](../plans/formal-methods-track-h.md#41-h23-the-named-graph-row-writers-planned-2026-10-12). Countersignature items signed 2026-10-12. TD-34 closed for its operations | merged and signed off 2026-10-12 |
 | H2.4a (the composite ports) | **built** 2026-10-12. [Validation Pack](../validation/FMH-H2-4a.md). [Plan §4.2](../plans/formal-methods-track-h.md#42-h24-the-composite-family-and-what-each-store-does-planned-2026-10-12) | the maintainer's run and merge |
 | H2.4b (Oxigraph, probes, benchmark) | **built** 2026-10-12. [Validation Pack](../validation/FMH-H2-4b.md). One open decision (the guard on Oxigraph) | the maintainer's decision 1, run and merge |
+| H2.5 (key claims, audits, guard D) | **planned** 2026-10-13, in [plan §4.3](../plans/formal-methods-track-h.md#43-h25-key-claims-the-audits-and-the-self-calibrating-guard-planned-2026-10-13) | H2.5-Q1 to H2.5-Q3 |
+| H2.6 (expected compiled profiles, paper check) | **planned** 2026-10-13, in [plan §4.4](../plans/formal-methods-track-h.md#44-h26-the-expected-compiled-profile-examples-first-and-the-paper-check-planned-2026-10-13), parallel with H2.5 by §4.5 | H2.6-Q1 to H2.6-Q4 |
 | H3 (specification registry) | not started, outlined in the plan | H2 preferred first (smaller, more self-contained), not a hard blocker |
 | H4 (exhaustive cross-axis validation, BDD/SMT) | not started, outline only | H3 |
 | H5 (capability-record extension, TLA+/Quint toolchain spike, protocol models A-D) | not started, outline only | H2 (read/write sets from the IR). ADR-A-FM4 is accepted |
@@ -535,4 +539,10 @@ section below.
   processes and passes on every run, listed for countersignature in FMH-H2-4b. The Validation Pack, the sketch's §4.3 note and TD-42 are
   corrected. Oxigraph's findings were re-run directly and hold, and Oxigraph's source (`eval_delete_insert`) confirms it collects every
   mutation in a `Vec` before applying them in order. `check:persistence-oxigraph` gave 66 passed.
+- 2026-10-13: the maintainer decided FMH-H2-4b decision 1, option D, a self-calibrating datatype test
+  (`DATATYPE($p) = DATATYPE("0"^^xsd:long)`), recorded as ADR-A123's fourth addendum and built in H2.5, and countersigned the corrected P1
+  test. Planned H2.5 (the ten remaining ports, a sub-select in the IR, guard D, engine tests for `MIN` over IRIs, counts of numeric terms
+  and `GROUP_CONCAT`'s order) and H2.6 (expected compiled profiles for eight examples covering every operation kind, an agreement test with
+  the builders, and the paper check). They can run in parallel by plan §4.5. While planning: no template reads `registryGraph`, so H2.5
+  needs no new graph role, and an expected profile cannot sit in `examples/`, which three tools compile as configurations.
 
