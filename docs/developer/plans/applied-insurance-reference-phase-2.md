@@ -422,7 +422,7 @@ Rules for every `skos:definition`:
 
 The module README gains a "Sources consulted" section listing the standards above.
 
-**Sample, the N.MET group (drafted 2026-10-13, for the maintainer's review).** S drafts every other definition in this style, and changes the sample only as the review directs.
+**Sample, the N.MET group (drafted 2026-10-13, reviewed and accepted by the maintainer the same day).** S drafts every other definition in this style, and changes the sample only as the review directs.
 
 | Code | Definition |
 |---|---|
@@ -834,6 +834,200 @@ AIR-2.3 and AIR-2.4 declare them later in the trip.
 | AIR26-07 | a threshold of HUR placed on `WindGust3s`'s space / the threshold shape / violation, the space is not one of HUR's measures | L1 | − |
 | AIR26-08 | every measure, unit and ordinal concept / the documentation shape / each has a note | L1 | + |
 | AIR26-09 | the currency units / read / every one is on `icm-voc:Money`, with a three-digit notation and a QUDT match, `USD`, `EUR`, `GBP` and `JPY` are present, and no conversion links two currencies | L1 | + |
+
+## AIR-2.7 in detail
+
+**Machine:** S (Copilot Business). **Branch:** `air/applied-reference`, commits `[AIR-2.7] …`, the
+last being `[AIR-2.7] Handoff`. **Validation Pack:**
+[applied-insurance-reference-2.7](../validation/applied-insurance-reference-2.7.md). **Decisions:**
+ADR-A99 (decision 1, reference editions as fallback), ADR-A100. **Sketch:** peril vocabulary §9.1,
+§9.4, MORK bridge §2.
+
+**Invariant:** the reference cause scheme is the unscoped fallback of the peril contract, a pool
+scheme exists with an empty reference edition, and an example market edition, an example house list
+and an example pool edition resolve by LATTICE's precedence rule with no insurance logic.
+
+### Versions
+
+No bump. `peril/spec` and `peril-vocab` were bumped by AIR-2.2 and change here without another
+bump (lanes §2). `common-vocab` was bumped by AIR-2.6.
+
+### Spec additions (`spec/peril.ttl`)
+
+| Term | Definition |
+|---|---|
+| `prl:coversPeril` | object property, pool concept to a cause concept or a collection (AIR-2.5). A pool covers what is below a covered concept too |
+| `prl:poolTerritory` | object property, `⊑ cls:territory`, pool concept to the territory it operates in |
+
+### Vocabulary (`vocab/peril-vocab.ttl`, new README section `pools-and-bindings`)
+
+1. `prl-voc:PoolScheme`, a `skos:ConceptScheme` with no concepts. Its note says pools and residual
+   mechanisms are not perils, that they are created by statute or by market agreement in one
+   jurisdiction, and that a deployment binds its own edition by territory scope.
+2. The fallback bindings missing until now: `icm-voc:PerilContract voc:boundScheme
+   prl-voc:CauseScheme` and `icm-voc:PoolContract voc:boundScheme prl-voc:PoolScheme`. Check the
+   live `common-vocab` first: if either contract already has a `voc:boundScheme`, stop and record
+   it in the Handoff.
+
+### Examples
+
+All in `examples/`, no `owl:Ontology`, IRIs under `https://example.org/insurance/peril/`
+(`ex:`), each concept with a definition and a note, so the examples model the documentation rule.
+
+| File | Content |
+|---|---|
+| `scopes.ttl` | three `voc:BindingScope`s: `ex:london-market`, `ex:us-market`, `ex:us-risk-regime`, and a small territory scheme (`ex:GB`, `ex:FR`, `ex:ES`, `ex:TR`, `ex:US`, `ex:US-CA`, `ex:US-TX`, with `skos:broader` from the states to `ex:US`), each with its ISO 3166 code as `skos:notation` |
+| `house-list.ttl` | `ex:HouseList`, a flat scheme of eight codes a London house might use, no `skos:broader`, each with its code as `skos:notation` and a house definition: `FIRE`, `FLOOD`, `STORM` (any storm), `QUAKE`, `THEFT`, `CYBER` (any cyber event), `LIGHTNING-FIRE` (fire caused by lightning, a code naming a cause and a mechanism) and `DELAY` (a consequence with no cause). AIR-3.4 crosswalks it and AIR-3.5 uses it as the flat list |
+| `market-us.ttl` | `ex:UsMarketEdition`, a market edition that extends the reference: one concept `ex:us-NamedStorm`, a storm named by the US National Hurricane Center, `prl:broaderGeneric` and `skos:broader` `prl:N.MET.NS`, basis `Designation`, a customary event window of 72 hours (AIR-2.6's measure), and the characteristics the shapes require. AIR-2.5 adds its bundles |
+| `pools.ttl` | `ex:PoolEdition`, populated, one concept per pool below, each with `prl:coversPeril` and `prl:poolTerritory` |
+| `bindings.ttl` | `voc:SchemeBinding`s for `icm-voc:PerilContract`: house list scoped to `ex:london-market`, US edition scoped to `ex:london-market` and `ex:us-risk-regime` together, US edition scoped to `ex:us-market`. For `icm-voc:PoolContract`: the pool edition, unscoped, from 2026-01-01 |
+
+Example pools, each note citing the statute or scheme that creates it:
+
+| Pool | Covers | Territory | Notes cite |
+|---|---|---|---|
+| Flood Re | N.HYD.FLD | GB | Water Act 2014, Part 4 |
+| Pool Re | P.TER | GB | Reinsurance (Acts of Terrorism) Act 1993 |
+| Caisse Centrale de Réassurance, natural catastrophe scheme | N | FR | Code des assurances, art. L125-1 |
+| Consorcio de Compensación de Seguros | N, P.TER, P.PV | ES | its statute, Real Decreto Legislativo 7/2004 |
+| Turkish Catastrophe Insurance Pool | N.GEO.EQ, N.GEO.TSU.EQT | TR | Law No. 6305 |
+| California Earthquake Authority | N.GEO.EQ | US-CA | California Insurance Code §10089.5 onwards |
+| Texas Windstorm Insurance Association | N.MET.TC.WND, N.MET.SCS.HAI | US-TX | Texas Insurance Code, Chapter 2210 |
+
+The pools' covers are simplified, and each note says so: a pool's actual cover is its scheme's
+wording. The national flood programme in the US is existing cover, not a pool (asset exposure
+sketch §10), so it is not in the list. S writes the citations from the table. R checks them at
+verification.
+
+### Shapes
+
+| Shape | Rule | Severity |
+|---|---|---|
+| pool concept | a concept in a scheme bound to `icm-voc:PoolContract` has at least one `prl:coversPeril` and at least one `prl:poolTerritory` | violation |
+| covered peril | each `prl:coversPeril` value is a cause concept or a collection | violation |
+
+### Tests (`tools/test_peril_vocabulary.py`)
+
+Resolution uses `vocabulary.resolver.resolve` (`tools/vocabulary/src/vocabulary/resolver.py`).
+
+| ID | Given / When / Then | Level | +/- |
+|---|---|---|---|
+| AIR27-01 | the vocabulary / read / the peril contract's fallback is the cause scheme, the pool contract's the empty pool scheme | L1 | + |
+| AIR27-02 | the bindings / resolved with no scope / the cause scheme | L2 | + |
+| AIR27-03 | the same / with `ex:london-market` / the house list | L2 | + |
+| AIR27-04 | the same / with `ex:london-market` and `ex:us-risk-regime` / the US edition, the strict superset winning | L2 | + |
+| AIR27-05 | a second binding added for `ex:london-market` alone, naming another scheme / resolved with `ex:london-market` / `BindingConflictError` | L2 | − |
+| AIR27-06 | the pool binding / resolved at 2025-12-31 and at 2026-06-01 / the empty reference edition, then the pool edition | L2 | + |
+| AIR27-07 | every example file with the vocabulary / the peril shapes / no result | L1 | + |
+| AIR27-08 | a pool with no territory / the peril shapes / violation | L1 | − |
+| AIR27-09 | `ex:us-NamedStorm` / read / its `skos:broader` is `prl:N.MET.NS`, and it passes the cause shapes as an extension concept | L1 | + |
+
+## AIR-2.5 in detail
+
+**Machine:** S (Copilot Business). **Branch:** `air/applied-reference`, commits `[AIR-2.5] …`, the
+last being `[AIR-2.5] Handoff`. **Validation Pack:**
+[applied-insurance-reference-2.5](../validation/applied-insurance-reference-2.5.md). **Decisions:**
+ADR-A87 (wildcards), ADR-A99, ADR-A100. **Sketch:** peril vocabulary §7, §9.2, §9.3. **Milestone:** M1.
+
+**Invariant:** collections are editioned with the vocabulary, a collection used in a scope is
+expanded into concepts when the scope is bound, and an open-perils grant with exclusions admits
+and denies perils as sketch §7.2 states, with no Eligibility change.
+
+### Spec additions (`spec/peril.ttl`)
+
+`prl:ModelGrouping`, `prl:PerilBundle` and `prl:StandardSet`, each `⊑ skos:Collection`, disjoint
+with one another. A collection's `rdfs:comment` says membership includes the concepts below each
+member.
+
+### Vocabulary (`vocab/peril-collections.ttl`, new, `0.1.0`)
+
+A third vocabulary document of the module (AIR-2.0 allows several), with its own README section
+and `@output-file` directive. It imports `peril-vocab` at the branch version. Ontology IRI
+`…/insurance/peril/collections`, version IRI `…/insurance/peril-collections/0.1.0`.
+
+1. The eight reference collections of sketch §7.3, with the members and notes the table gives,
+   each typed by its kind: `prl:AllWind`, `prl:WindWithSurge`, `prl:AllFlood` and
+   `prl:AllEarthquake` are model groupings, `prl:FireAndExtendedPerils`,
+   `prl:VandalismAndMaliciousMischief` and `prl:StrikeRiotCivilCommotion` bundles,
+   `prl:CBAAStandardExclusions` a standard set.
+2. Model groupings for OED's group peril codes, each with its code as `skos:notation` typed
+   `prl:CatModelCode` and members from the cause scheme, for the group codes S is sure of (for
+   example the all-flood and wind-with-surge groups). A model grouping whose members equal one of
+   step 1's carries the code on that collection, not a second one. R checks the codes against the
+   OED specification, as for AIR-2.3's notations.
+3. Every collection has a `skos:prefLabel`, a `skos:definition` and a note, which cites the
+   market practice or model convention it follows (for example the fire and extended perils
+   bundle follows the London market's FLEXA and the US extended coverage endorsement, and its
+   note says a market edition overrides it).
+
+### The US example edition's bundles (`examples/market-us.ttl`)
+
+`ex:BasicCausesOfLoss` and `ex:BroadCausesOfLoss`, `prl:PerilBundle`s whose notes cite the ISO
+commercial property causes of loss forms (CP 10 10 basic, CP 10 20 broad), naming the forms and
+not quoting them:
+
+| Bundle | Members |
+|---|---|
+| basic | T.FIR, N.MET.SCS.LTG, T.EXP, N.MET.LWS, N.MET.SCS.HAI, T.IMP.ACR, T.IMP.VEH, P.PV.RIO, P.PV.CCM, H.MAL.VAN, T.EOW.SPR, N.GEO.MM.SNK, N.GEO.VOL |
+| broad | the basic members, plus T.IMP.FOB, N.MET.WIN.SNL, N.MET.WIN.ICE, T.EOW |
+
+Smoke, a peril of both forms, is a mechanism (`Smoke`), so the basic bundle's note says the form's
+smoke peril is read through the mechanism and not as a member. Windstorm is `N.MET.LWS` here
+because the forms' windstorm is any wind, and the note says a market edition may prefer a
+wider set. The special form is open perils with exclusions (sketch §9.3) and is not a bundle.
+
+### Binding-time expansion (`tools/peril_binding.py`)
+
+Two functions, the code that executes what the vocabulary states:
+
+- `members(graph, collection)`: the collection's members, following nested collections. Not their
+  narrower concepts, since a hierarchical condition reaches those itself.
+- `open_perils_condition(graph, scheme, condition, exclusions)`: the triples of a hierarchical
+  condition whose required concepts are the scheme's top concepts and whose excluded concepts are
+  the members of the given collections and concepts, with `elg:wildcardSemantics elg:NoWildcard`
+  (ADR-A87).
+
+### Milestone M1 (`examples/open-perils.ttl`)
+
+The sketch §7.2 condition, constrained by `icm-voc:PerilContract` rather than Open CBAA's contract,
+generated by `open_perils_condition` from the reference scheme with exclusions N.HYD.FLD, N.GEO.EQ,
+N.MET.TC.SRG and N.MET.TC.RFL, and a second condition generated with `prl:CBAAStandardExclusions`
+as its exclusion. The file holds both generated conditions and candidate perils. A test checks the
+file equals the function's output. Recorded decisions, evaluated with the SPARQL backend as
+`tools/mork_compilers/src/mork_compilers/test_evidence_bindings.py` builds and runs a plan:
+
+| Candidate | First condition | Second condition |
+|---|---|---|
+| T.FIR.ELF | Permitted | Permitted |
+| N.MET.TC.WND | Permitted | Permitted |
+| N.HYD.FLD.FLU | Denied | Permitted |
+| N.GEO.EQ.SHK | Denied | Permitted |
+| N.MET.TC.SRG | Denied | Permitted |
+| P.TER.CBR.BIO | Permitted | Denied |
+| T.NUC | Permitted | Denied |
+
+### Shapes
+
+| Shape | Rule | Severity |
+|---|---|---|
+| collection members | every member of a collection in the module, or in an edition extending it, is in a scheme of the release or of that edition, or is itself a collection | violation |
+| model grouping code | a `prl:CatModelCode` notation is unique among the module's collections | violation |
+
+### Tests (`tools/test_peril_vocabulary.py`)
+
+| ID | Given / When / Then | Level | +/- |
+|---|---|---|---|
+| AIR25-01 | the collections document / loaded with its imports / parses, every import resolves | L1 | + |
+| AIR25-02 | each reference collection / read / its members are the sketch table's, and its kind | L1 | + |
+| AIR25-03 | `members` of `prl:WindWithSurge` / called / the AllWind members and the two surges | L2 | + |
+| AIR25-04 | `examples/open-perils.ttl` / compared with the function's output / equal | L2 | + |
+| AIR25-05 | the M1 conditions / SPARQL backend over the candidates / the decisions in the table | L2 | + |
+| AIR25-06 | the same / SHACL backend / agrees with SPARQL | L2 | + |
+| AIR25-07 | a bundle with a member from no scheme / the peril shapes / violation | L1 | − |
+| AIR25-08 | the US edition's bundles / read / broad includes every basic member | L1 | + |
+| AIR25-09 | every collection / the documentation shape / each has a note | L1 | + |
+
+**On R at verification:** catalogs. The collections document is new and stays at `0.1.0`.
 
 ## Documentation deltas
 

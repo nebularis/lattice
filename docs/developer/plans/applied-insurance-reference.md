@@ -201,6 +201,9 @@ filed here because Phase 3 implements them.
 
 ## 7. Out of scope
 
+Every item here, and the workflow around information requests that AIR-6.1 leaves to consumers,
+is collected in [leftovers](air-leftovers.md).
+
 Catastrophe model internals, pricing, a consumer's statement modules and decision logs, market
 editions other than examples (they are published by their owners and bound by scope), and any
 runtime store or UI work.

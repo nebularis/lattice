@@ -508,6 +508,125 @@ its pool participation's peril (N.HYD.FLD) finds the flood attributes present.
 **On R at verification:** catalogs. No release rows: the module's documents stay at `0.1.0` until
 the merge.
 
+## AIR-4.3 in detail
+
+**Machine:** S (Copilot Business). **Branch:** `air/applied-reference`, commits `[AIR-4.3] …`, the
+last being `[AIR-4.3] Handoff`. **Validation Pack:**
+[applied-insurance-reference-4.3](../validation/applied-insurance-reference-4.3.md). **Decisions:**
+ADR-A90 (option B, single-valued paths from a case), ADR-A98, epic E3. Decided 2026-10-13: R8, R9.
+**Sketch:** asset exposure ontology §5.9 to §5.11, §6, §8. **Milestone:** M3, with AIR-4.6.
+
+**Invariant:** dependencies between locations, assets and third parties are evidenced relations,
+peril metrics are derived artefacts with comparable scopes, and exposure units are computed on
+demand for the perils a check asks about, never asserted by hand and never required to be stored.
+
+### Versions and imports
+
+No bump (the module is new on the branch). Everything goes into the `dependencies-metrics-units`
+region of each document and README section.
+
+### Spec
+
+**Dependencies**
+
+| Term | Definition |
+|---|---|
+| `aeo:Dependency` | `⊑ fnd:TemporallyScoped ⊓ fnd:Evidenced`. Exactly one `aeo:dependent` (location or asset), exactly one `aeo:provider` (location, asset or `pty:Actor`), exactly one `aeo:dependencyKind`. Optional: `aeo:shareAtRisk` (`qnt:Quantity` on `OutputShare`), `aeo:recoveryLeadTime` (`qnt:Quantity` on `Duration`), `aeo:substitutability`, `aeo:singleSource` (`xsd:boolean`) |
+| `aeo:hasDependency` | exposure set membership, inverse functional |
+
+**Peril metrics**
+
+| Term | Definition |
+|---|---|
+| `aeo:PerilMetric` | `⊑ fnd:DerivedArtefact ⊓ fnd:Evidenced`. At least one `aeo:perilScope` (AIR-4.2), exactly one `aeo:metricSubject` (exposure set, location or asset), exactly one `aeo:metricKind`, exactly one `aeo:perspective`, exactly one `aeo:metricValue` (`qnt:Value`: a money quantity, or a quantity or ordinal value on a score space). Optional: `aeo:regionScope` (`⊑ cls:territory`), `aeo:returnPeriod` or `aeo:exceedanceProbability` (exactly one of them for exceedance kinds), `aeo:calculationMethod`, `aeo:modelOption` (several), `aeo:scenario` (for scenario losses), `aeo:scoreSpace` (for hazard scores) |
+| `aeo:hasPerilMetric` | exposure set membership, inverse functional |
+
+The model and its version are the `fnd:DerivationRun`'s (`prov:wasGeneratedBy`), and the model's
+output file is evidence. Full curves and event tables are out of scope (epic §7).
+
+**Exposure units**
+
+| Term | Definition |
+|---|---|
+| `aeo:ExposureUnit` | `⊑ fnd:DerivedArtefact`. Exactly one `aeo:unitLocation`, one `aeo:unitAssetClass` (`⊑ cls:assetClass`), one `aeo:unitPeril` (`⊑ icm:peril`), at most one `aeo:unitValue` (money `qnt:Quantity`) |
+
+**Groupings (R9)**
+
+| Term | Definition |
+|---|---|
+| `aeo:scheduleGroup` | location or asset to a concept naming a group the insured or drafter uses (a division, a portfolio, an OED location group). Not functional |
+
+### Vocabulary
+
+| Contract, constrains | Reference concepts | Notes cite |
+|---|---|---|
+| `DependencyKindContract` | `SupplyOfGoods`, `Utility`, `ItService`, `Logistics`, `Customer` | sketch §5.9. Customer dependencies give contingent business interruption on the customer side |
+| `SubstitutabilityContract` | `NotSubstitutable`, `PartlySubstitutable`, `FullySubstitutable` | |
+| `MetricKindContract` | `AverageAnnualLoss`, `OccurrenceExceedanceLoss`, `AggregateExceedanceLoss`, `OccurrenceTailValueAtRisk`, `AggregateTailValueAtRisk`, `ProbabilityOfEvents`, `HazardScore`, `ScenarioLoss` | Oasis Open Results Data (AAL, OEP, AEP and their TVaR), Solvency II's 1 in 200 convention for return periods, Lloyd's Realistic Disaster Scenarios for scenario losses. The note on `ProbabilityOfEvents` says it names a count with `aeo:returnPeriod` unused |
+| `PerspectiveContract` | `GroundUpLoss`, `InsuredLoss`, `ReinsuranceLoss` | Open Results Data's GUL, IL and RIL. The note says the market's "gross" is usually insured loss and its "net" loss after reinsurance, and that a metric states which it is |
+| `CalculationMethodContract` | the exceedance curve calculation methods of Open Results Data (for example full uncertainty and per-sample mean), those S is sure of | R checks them against the specification |
+| `ModelOptionContract` | `SecondaryUncertainty`, `DemandSurge`, `StormSurgeIncluded`, `FireFollowingIncluded`, `ClimateConditioned` | |
+| `ScheduleGroupContract` | none. Bound per insured or drafter, at agreement or organisation scope | OED's location group field |
+
+Value spaces: `OutputShare`, a `qnt:DerivedValueSpace` over a production space named twice (its note
+says the share is of the dependent's output), and the score spaces a deployment declares per
+provider. A hazard score from one provider is never on another's space (sketch §5.10).
+
+### Derivation of exposure units (`tools/exposure_derivations.py`)
+
+`exposure_units(graph, perils, run)` returns the units for every location of the exposure set,
+asset class present there and peril in `perils`, as a separate graph. It never writes into the
+source graph. A unit's value is the sum of the amounts of the valuations of that class's assets at
+that location, when they share one currency. With several currencies and no conversion in the
+graph, the value is omitted and the function reports it, since converting needs a rate and a
+date (Quantification's pattern). A peril applies to a location's unit when the location has any
+asset (the function does not decide physical exposure, which is a model's work).
+
+"On demand" (sketch §5.11, route R1) means a check calls this function for the perils its
+conditions name, evaluates over the result together with the source graph, and discards it. A
+deployment may persist the result as a derived artefact, and nothing requires it to.
+
+### Milestone M3, first half (`examples/units.ttl`)
+
+AIR-4.2's example set grows to four locations, two in a special flood hazard area (example zone
+concepts, until AIR-4.6 binds a real edition). An Eligibility admission profile over
+`aeo:ExposureUnit`, two conditions: the unit's peril is under N.HYD.FLD (hierarchical), and the
+unit's location has a flood zone in the special flood hazard set (set membership, read through
+`aeo:unitLocation`, `aeo:zoneDesignation`, `aeo:floodZone`). Recorded decisions: the two zone
+locations' flood units Permitted, the other two Denied, every wind unit Denied. The test computes
+the units, evaluates with the SPARQL backend, and checks the source graph has no unit triples
+afterwards.
+
+### Shapes
+
+| Shape | Rule | Severity |
+|---|---|---|
+| dependency | exactly one dependent, provider and kind | violation |
+| dependency cycle | a cycle of dependencies is reported | warning |
+| peril metric | the cardinalities above. An exceedance kind has exactly one of return period or exceedance probability | violation |
+| comparability | two metrics cited by one derived artefact as compared have equal peril scope, region scope and perspective | violation |
+| score | a hazard score's value is on its declared score space | violation |
+| exposure unit | the cardinalities above | violation |
+| unit not asserted | an exposure unit in a graph without a derivation run is reported | warning |
+
+The maximum foreseeable interruption derived from the dependency graph (sketch §5.9) is deferred:
+it needs a graph algorithm and a policy for parallel paths, and no milestone reads it. The
+dependency data it would read is complete in this slice.
+
+### Tests
+
+| ID | Given / When / Then | Level | +/- |
+|---|---|---|---|
+| AIR43-01 | the documents / loaded with their import closures / parse | L1 | + |
+| AIR43-02 | the contracts of this slice / Vocabulary's shapes / conform | L1 | + |
+| AIR43-03 | the examples / every exposure shape / no result | L1 | + |
+| AIR43-04 | `exposure_units` over the example for N.HYD.FLD and N.MET.TC.WND / called / one unit per location, class and peril, with summed values | L2 | + |
+| AIR43-05 | a location with values in two currencies / `exposure_units` / that unit has no value and the function reports it | L2 | − |
+| AIR43-06 | the M3 profile / SPARQL over the computed units / the recorded decisions, and no unit triple in the source graph | L2 | + |
+| AIR43-07 | an occurrence exceedance metric with neither return period nor probability / validated / violation | L1 | − |
+| AIR43-08 | a comparison of a ground-up and an insured-loss metric / validated / violation | L1 | − |
+| AIR43-09 | every concept of this slice / the documentation shape / each has a note | L1 | + |
+
 ## AIR-4.4 in detail
 
 **Machine:** S (Copilot Business). **Branch:** `air/applied-reference`, commits `[AIR-4.4] …`, the
@@ -667,6 +786,136 @@ expiring programme with summary terms, a non-renewal, and revenue by territory.
 
 **On R at verification:** catalogs, and the release row for `insurance-common-v0.6.0` is written at
 the merge, not now.
+
+## AIR-4.5 in detail
+
+**Machine:** S (Copilot Business). **Branch:** `air/applied-reference`, commits `[AIR-4.5] …`, the
+last being `[AIR-4.5] Handoff`. **Validation Pack:**
+[applied-insurance-reference-4.5](../validation/applied-insurance-reference-4.5.md). **Decisions:**
+ADR-A102 (liability role types), epic E4. **Sketch:** asset exposure ontology §5.15, term
+parameters §7.3.
+
+**Invariant:** exposure to claims by parties unknown at binding is described by populations (who
+could claim, how they relate to the insured, how many and where), never by named claimants, and
+nothing here records liability direction, which is derived from roles (E4).
+
+### Spec (`liability` region)
+
+| Term | Definition |
+|---|---|
+| `aeo:CounterpartyPopulation` | `⊑ fnd:Evidenced ⊓ fnd:TemporallyScoped`. Exactly one `aeo:populationOf` (legal entity), one `aeo:populationKind`, one `aeo:relationshipDepth`, at most one `aeo:populationSize` (`qnt:Quantity` on `Count`), any number of `aeo:populationTerritory` (`⊑ cls:territory`), at most one `aeo:exposureBasis` (a `FinancialMetricKind` concept), at most one `aeo:exposureMetric` (`aeo:FinancialMetric`, the figure itself) |
+| `aeo:hasPopulation` | exposure set membership, inverse functional |
+
+### Vocabulary
+
+| Contract, constrains | Reference concepts | Notes cite |
+|---|---|---|
+| `PopulationKindContract` | `Shareholders`, `SecuritiesHolders`, `Creditors`, `Employees`, `Customers`, `Patients`, `DataSubjects`, `Regulators`, `GeneralPublic`, `CustomersCustomers` | data subjects: GDPR Art. 4(1). Patients and customers, for professional liability |
+| `RelationshipDepthContract` | `Direct`, `ThroughOneIntermediary`, `Further` | term parameters §7.3, the third and fourth party readings |
+
+Attribute types for securities listings, family `Corporate`, on the legal entity's assessments
+(sketch §5.15): `ListingVenue` (C, a market contract with no reference scheme, its note citing
+ISO 10383 market identifier codes as the edition a deployment binds), `ListingKind` (C:
+`PrimaryListing`, `SecondaryListing`, `DepositaryReceipt`, `OverTheCounter`), `ListedSince` (L
+`xsd:date`). Records held are a data subjects population's size, not an attribute.
+
+### Shapes
+
+| Shape | Rule | Severity |
+|---|---|---|
+| population | the cardinalities above | violation |
+| basis and figure | an exposure metric, when present, is of the exposure basis kind and belongs to the population's entity | violation |
+| no claimant | a population names no `pty:Actor` other than its entity | violation |
+
+### Examples (`examples/liability.ttl`)
+
+A listed manufacturer: securities holders (direct, size a market capitalisation basis), employees
+(direct, payroll basis, two territories), its customers' customers (further, through a customer
+dependency of AIR-4.3), data subjects (direct, size two million records). Passes every shape.
+
+| ID | Given / When / Then | Level | +/- |
+|---|---|---|---|
+| AIR45-01 | the documents / loaded / parse, the two contracts conform | L1 | + |
+| AIR45-02 | the example / every exposure shape / no result | L1 | + |
+| AIR45-03 | a population with a payroll basis citing a revenue metric / validated / violation | L1 | − |
+| AIR45-04 | a population naming a claimant actor / validated / violation | L1 | − |
+| AIR45-05 | every concept of this slice / the documentation shape / each has a note | L1 | + |
+
+## AIR-4.6 in detail
+
+**Machine:** S (Copilot Business). **Branch:** `air/applied-reference`, commits `[AIR-4.6] …`, the
+last being `[AIR-4.6] Handoff`. **Validation Pack:**
+[applied-insurance-reference-4.6](../validation/applied-insurance-reference-4.6.md). **Decisions:**
+ADR-A99, ADR-A98. **Sketch:** asset exposure ontology §10, §12, §5.2.
+**Milestone:** M3, with AIR-4.3.
+
+**Invariant:** a market profile is scheme bindings and shapes and never a class. The London and US
+profiles bind example editions for every market-bound contract of Phase 4 and make their
+market's required data mandatory, and the worked examples pass under each profile.
+
+### What a profile is
+
+A deployment loads a profile's bindings and its shapes when it works in that market. Nothing in an
+exposure set says which market it is placed in (that is the submission's, AIR-6.1), so a profile's
+shapes target every exposure set they are run over.
+
+| File | Content |
+|---|---|
+| `examples/profile-us.ttl`, `examples/profile-london.ttl` | editions and bindings, scoped to `ex:us-market` with `ex:us-risk-regime`, and to `ex:london-market` (AIR-2.7's scopes) |
+| `shapes/profiles/market-us.ttl`, `shapes/profiles/market-london.ttl` | the profile shapes below |
+| `examples/worked-london.ttl`, `examples/worked-us.ttl` | sketch §12's two fragments, completed until they pass, with the profile's bindings |
+| `examples/persistence.ttl` | the persistence profiles |
+
+### Example editions
+
+Each is a small scheme with notes citing its source, and each says it is an example, not a
+maintained edition.
+
+| Contract | Edition | Profile | Notes cite |
+|---|---|---|---|
+| `FloodZoneContract` | US national flood map zones `A`, `AE`, `AH`, `AO`, `AR`, `A99`, `V`, `VE`, `X`, `D`, with a collection of the special flood hazard area zones (the A and V zones) | US, territory `ex:US` | FEMA flood insurance rate map zone definitions |
+| `FloodZoneContract` | England's flood zones `1`, `2`, `3a`, `3b` | London, territory `ex:GB` | National Planning Policy Framework flood zones (Environment Agency) |
+| `SeismicZoneContract` | seismic design categories `A` to `F` | US | ASCE 7 |
+| `AccumulationZoneContract` | a handful of CRESTA zones of one country, by code | London | CRESTA zone definitions. The note says the full zone set is obtained from its publisher |
+| `ConstructionClass` | the US construction classes 1 to 6 (frame, joisted masonry, non-combustible, masonry non-combustible, modified fire resistive, fire resistive) | US | ISO construction classes |
+| `ConstructionClass` | a short international set (timber, masonry, concrete, steel frame, mixed) | London | OED construction codes, as close matches |
+| `OccupancyClass` | a short set from OED occupancy codes | both | OED |
+| `PublicProtectionClass` | classes 1 to 10 | US | the public protection classification |
+| `icm-voc:ClassOfBusinessContract` | the twelve Solvency II non-life direct lines of business | both | Commission Delegated Regulation (EU) 2015/35, Annex I |
+| key schemes | `ex:PcsSerialNumber`, `ex:PerilsEventId`, for `icm:LossEvent` keys | US, London | the publishers' own event identifiers, named as key schemes and not reproduced |
+
+### Profile shapes
+
+| Profile | Rule | Severity |
+|---|---|---|
+| US | every location in `ex:US` has a building valuation with an amount (percentage deductibles read it), a flood zone designation, a construction class and a year built | violation |
+| US | a location in a special flood hazard area with a lender's interest has a mandatory lender requirement for flood (sketch §10) | warning |
+| US | a loss cause records both initiating and proximate links when it has more than one link (causation varies by state) | warning |
+| London | every location has an accumulation zone designation | violation |
+| London | every exposure set with business income valuations has a rate with a horizon on each | violation |
+| both | every concept-valued attribute in a market-bound contract resolves under the profile's bindings | violation |
+
+### Persistence profiles (`examples/persistence.ttl`)
+
+An aggregate boundary profile per exposure set version (`dal:NamedGraphBoundary`, a graph IRI
+template on the version's identity), as sketch §5.2 states, and a privacy profile for legal
+entities that are natural persons (`dal:PersonalData`, `dal:PerSubjectGraphDrop`). These are
+deployment choices, so they are examples. Persistence is being reworked on its own branch
+(ADR-A122, aggregate ownership): use Persistence at the version of `main` at the branch point,
+and R re-checks this file at the merge.
+
+### Tests
+
+| ID | Given / When / Then | Level | +/- |
+|---|---|---|---|
+| AIR46-01 | each profile's files / loaded with the module / parse, every binding resolves under its scopes | L1 | + |
+| AIR46-02 | `worked-us.ttl` with the US profile / every shape / no result | L1 | + |
+| AIR46-03 | `worked-london.ttl` with the London profile / every shape / no result | L1 | + |
+| AIR46-04 | the US worked example without a flood zone designation / US profile / violation | L1 | − |
+| AIR46-05 | `worked-london.ttl` / the US profile / violations, showing profiles are chosen by loading | L1 | − |
+| AIR46-06 | M3, second half: the AIR-4.3 profile rebound to the US flood zone edition's special flood hazard collection / units computed for `worked-us.ttl` / the coastal hotel's flood unit Permitted | L2 | + |
+| AIR46-07 | the persistence example / Persistence's shapes / no result | L1 | + |
+| AIR46-08 | every example concept / the documentation shape / each has a note | L1 | + |
 
 ## Documentation deltas
 

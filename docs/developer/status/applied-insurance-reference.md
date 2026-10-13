@@ -20,9 +20,9 @@ AIR-3.1, AIR-1.1 and AIR-2.1. Round 2 merged AIR-3.2 and AIR-1.2.
 **One trip for machine S (lanes §4, revised 2026-10-13):** AIR-2.0, 2.2, 4.1, 2.6, 2.3, 2.4, 4.2,
 4.3, 4.4, 2.7, 4.5, 2.5, 3.4, 3.5, 4.6, 6.1, then S6. The branch is created only when every brief
 is written, and comes to R once, when the trip is done.
-**Briefs written:** AIR-2.0, 2.2 (amended twice), 2.3, 2.4, 2.6, 4.1 (literate, amended), 4.2, 4.4.
-**Briefs to write before the branch:** AIR-4.3, 2.7, 4.5, 2.5, 3.4, 3.5, 4.6, 6.1, S6. AIR-3.3 has a brief that is
-blocked (phase 3 plan).
+**Briefs written:** every slice of the trip, the last on 2026-10-13. **Before the branch:** answers to
+AIR-3.4-Q1 and AIR-3.4-Q2 (the briefs are written at their leanings). AIR-3.3
+has a brief that is blocked (phase 3 plan).
 **Concurrent work:** from round 3, machine R also builds the normative-rule-substrate unit, and
 from 2026-09-30 the computable-contract-substrate unit (CCS), which took over NRS N4, and on
 2026-10-10 N1, N2 and N5 as well. AIR-3.3 waits for CCS HQ-6a.2 to merge and for AIR-3.3-Q1 (phase 3 plan),
@@ -67,15 +67,15 @@ on `air/applied-reference`.
 | 11 | AIR-4.2 | ready | brief written 2026-10-13 |
 | 12 | AIR-4.4 | ready | brief written 2026-10-13. After AIR-4.3 |
 | 14 | AIR-2.6 | ready | before AIR-2.3 |
-| 15 | AIR-2.7 | waiting | |
-| 16 | AIR-4.3 | waiting for brief | before AIR-4.4 |
-| 17 | AIR-4.5 | waiting | |
-| 18 | AIR-2.5 | waiting | |
-| 19 | AIR-3.4 | waiting | |
-| 20 | AIR-4.6 | waiting | |
-| 21 | AIR-3.5 | waiting | moved from R on 2026-10-13 (lanes §2) |
-| 22 | AIR-6.1 | waiting | |
-| 23+ | S6 | waiting | |
+| 15 | AIR-2.7 | ready | brief written 2026-10-13 |
+| 16 | AIR-4.3 | ready | brief written 2026-10-13, before AIR-4.4 |
+| 17 | AIR-4.5 | ready | brief written 2026-10-13 |
+| 18 | AIR-2.5 | ready | brief written 2026-10-13 |
+| 19 | AIR-3.4 | ready, two questions open | brief written 2026-10-13 at the leanings of AIR-3.4-Q1 and Q2 |
+| 20 | AIR-4.6 | ready | brief written 2026-10-13 |
+| 21 | AIR-3.5 | ready | moved from R on 2026-10-13 (lanes §2). Brief written the same day |
+| 22 | AIR-6.1 | ready | brief written 2026-10-13, AIR-6.1-Q1 decided 2026-10-14 |
+| 23+ | S6 | ready | brief written 2026-10-13 (substrate plan) |
 
 ## Merge log (machine R only)
 
@@ -141,3 +141,13 @@ on `air/applied-reference`.
   AIR-4.3, and two programme roles. Also decided: AIR-4.2 (Q13) and AIR-4.4 (Q11, Q12) proposals,
   every active ISO 4217 currency in `insurance/common` with AIR-2.6 (Q14). AIR-4.3 now precedes
   AIR-4.4. AIR-4.2 and AIR-4.4 briefs written.
+- 2026-10-13: the N.MET sample definitions accepted. Briefs written for AIR-4.3, 2.7, 2.5, 3.4, 3.5,
+  4.5, 4.6, 6.1 and S6, with their Validation Packs, so every slice of the trip has a brief. Three
+  questions remain open, and the briefs follow their leanings: AIR-3.4-Q1 (crosswalk OED's peril
+  codes and an example house list, and not yet the CBAA cause-of-loss list), AIR-3.4-Q2 (a lifted
+  value is a derived `aeo:liftedPeril` beside the recorded code), AIR-6.1-Q1 (requests, answers as
+  assessments and derived gaps, not the rest of the earlier designs' question bridge). AIR-2.7
+  adds the peril contract's missing fallback binding to the cause scheme.
+- 2026-10-14: AIR-6.1-Q1 walked through and settled at its leaning. What AIR-6.1 does not build,
+  with everything else the epic leaves to consumers, is collected in
+  [air-leftovers.md](../plans/air-leftovers.md).
