@@ -284,20 +284,20 @@ No ontology changes, so no version bumps, catalog rows or tags. The examples are
 last being `[AIR-3.4] Handoff`. **Validation Pack:**
 [applied-insurance-reference-3.4](../validation/applied-insurance-reference-3.4.md). **Decisions:**
 ADR-A100 (decisions 4 and 5), ADR-A13 (MORK review). **Sketch:** MORK bridge §3, §4.1, §6, §7,
-peril vocabulary §9.2. **Pending:** AIR-3.4-Q1 and AIR-3.4-Q2 (below), written here at their
+peril vocabulary §9.2. **Decided 2026-10-14:** AIR-3.4-Q1 and AIR-3.4-Q2 (below), at their
 leanings.
 
 **Invariant:** a crosswalk is a reviewed graph of SKOS mapping triples and characteristic values,
 recorded as a derived artefact whose read set is the two scheme editions. Only an exact mapping
 lifts a value to the reference, and a crosswalk is stale as soon as either edition changes.
 
-**AIR-3.4-Q1, which lists.** Leaning: OED's peril codes in full, published with the reference
+**AIR-3.4-Q1, which lists.** Decided: OED's peril codes in full, published with the reference
 because Oasis's licence allows it (PV-O6), and AIR-2.7's example house list, which has a code of
 every shape MORK bridge §4.1 names. The CBAA cause-of-loss list (several hundred codes, sketch
 §9.2) waits until its owner's terms are confirmed, and its review is a person's task (PV-O5), so it
 is not in the trip.
 
-**AIR-3.4-Q2, where a lifted value goes.** Leaning: a derived property, `aeo:liftedPeril`
+**AIR-3.4-Q2, where a lifted value goes.** Decided: a derived property, `aeo:liftedPeril`
 (`⊑ icm:peril`), written beside `aeo:peril` by the lift, never instead of it. The operative value
 stays the drafter's (MORK bridge B1), a check written against the reference reads the lifted
 value, and an inexact mapping writes nothing (B5). The alternatives, lifting inside Eligibility at

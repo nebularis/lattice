@@ -5,7 +5,7 @@
 **Unit:** [`applied-insurance-reference`](../status/applied-insurance-reference.md)
 **Machine:** S (Copilot Business). **Branch:** `air/applied-reference`, commits `[AIR-3.4] …`
 **Plan and test cases:** [Phase 3 plan](../plans/applied-insurance-reference-phase-3.md) (AIR-3.4 in detail)
-**Decisions:** ADR-A100, ADR-A13. Pending AIR-3.4-Q1 and Q2, built at their leanings
+**Decisions:** ADR-A100, ADR-A13. AIR-3.4-Q1 and Q2, decided 2026-10-14
 
 ## Invariant
 

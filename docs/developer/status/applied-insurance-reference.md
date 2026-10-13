@@ -20,9 +20,9 @@ AIR-3.1, AIR-1.1 and AIR-2.1. Round 2 merged AIR-3.2 and AIR-1.2.
 **One trip for machine S (lanes §4, revised 2026-10-13):** AIR-2.0, 2.2, 4.1, 2.6, 2.3, 2.4, 4.2,
 4.3, 4.4, 2.7, 4.5, 2.5, 3.4, 3.5, 4.6, 6.1, then S6. The branch is created only when every brief
 is written, and comes to R once, when the trip is done.
-**Briefs written:** every slice of the trip, the last on 2026-10-13. **Before the branch:** answers to
-AIR-3.4-Q1 and AIR-3.4-Q2 (the briefs are written at their leanings). AIR-3.3
-has a brief that is blocked (phase 3 plan).
+**Briefs written:** every slice of the trip, the last on 2026-10-13. Every question of the trip is
+decided (2026-10-14), so the branch can be created. AIR-3.3 has a brief that is blocked (phase 3
+plan).
 **Concurrent work:** from round 3, machine R also builds the normative-rule-substrate unit, and
 from 2026-09-30 the computable-contract-substrate unit (CCS), which took over NRS N4, and on
 2026-10-10 N1, N2 and N5 as well. AIR-3.3 waits for CCS HQ-6a.2 to merge and for AIR-3.3-Q1 (phase 3 plan),
@@ -32,10 +32,11 @@ branch point, and R re-pins once at the merge (lanes §6 step 4).
 
 ## Machine R
 
-**Position:** round 3. Rounds 1 and 2 complete, Phase 1 complete. AIR-2.2, AIR-4.1 and AIR-3.3
-briefs drafted, the first two refreshed on 2026-10-13. Next: write the remaining briefs of the
-one trip with the maintainer, before the branch is created. NRS N2 moved to CCS on 2026-10-10 (NRS NQ-2).
-**Last updated:** 2026-10-13
+**Position:** round 3. Rounds 1 and 2 complete, Phase 1 complete. Every brief of the one trip
+written and every question decided (2026-10-14). Next: the maintainer creates and pushes
+`air/applied-reference` from `main`, and R verifies S's bundle when the trip is done. AIR-3.3 waits
+on CCS HQ-6a.2. NRS N2 moved to CCS on 2026-10-10 (NRS NQ-2).
+**Last updated:** 2026-10-14
 **Blockers:** AIR-3.3 waits for CCS HQ-6a.2 to merge and for AIR-3.3-Q1.
 
 | Seq | Slice | Branch | State | Note |
@@ -49,9 +50,9 @@ Verifying queue (S slices handed over and not yet merged): none.
 
 ## Machine S
 
-**Position:** round 3, trip 1. AIR-1.1, AIR-2.1 and AIR-1.2 merged. Next: AIR-2.2, then AIR-4.1,
-on `air/applied-reference`.
-**Last updated:** 2026-10-13
+**Position:** round 3, the one trip. AIR-1.1, AIR-2.1 and AIR-1.2 merged. Next: AIR-2.0, then the
+trip's order (lanes §4), on `air/applied-reference` once it is pushed.
+**Last updated:** 2026-10-14
 **Blockers:** none. The branch is pushed before S starts.
 
 | Seq | Slice | State | Note |
@@ -71,7 +72,7 @@ on `air/applied-reference`.
 | 16 | AIR-4.3 | ready | brief written 2026-10-13, before AIR-4.4 |
 | 17 | AIR-4.5 | ready | brief written 2026-10-13 |
 | 18 | AIR-2.5 | ready | brief written 2026-10-13 |
-| 19 | AIR-3.4 | ready, two questions open | brief written 2026-10-13 at the leanings of AIR-3.4-Q1 and Q2 |
+| 19 | AIR-3.4 | ready | brief written 2026-10-13, AIR-3.4-Q1 and Q2 decided 2026-10-14 |
 | 20 | AIR-4.6 | ready | brief written 2026-10-13 |
 | 21 | AIR-3.5 | ready | moved from R on 2026-10-13 (lanes §2). Brief written the same day |
 | 22 | AIR-6.1 | ready | brief written 2026-10-13, AIR-6.1-Q1 decided 2026-10-14 |
@@ -151,3 +152,5 @@ on `air/applied-reference`.
 - 2026-10-14: AIR-6.1-Q1 walked through and settled at its leaning. What AIR-6.1 does not build,
   with everything else the epic leaves to consumers, is collected in
   [air-leftovers.md](../plans/air-leftovers.md).
+- 2026-10-14: AIR-3.4-Q1 and AIR-3.4-Q2 decided at their leanings. No question of the trip remains
+  open, so `air/applied-reference` can be created.
