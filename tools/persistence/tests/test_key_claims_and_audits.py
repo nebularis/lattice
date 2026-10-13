@@ -545,6 +545,7 @@ def test_h2_5_t46_now_never_binds_the_name_of_a_declared_parameter():
     ("key-claim-duplicate-audit", "HAVING (COUNT(?owner) > 1)", "HAVING (COUNT(?owner) >= 1)"),
     ("fork-detection-audit", "COUNT(DISTINCT ?t) AS ?n", "COUNT(?t) AS ?n"),
     ("gap-scan-audit", "FILTER(", "FILTER(!"),
+    ("gap-scan-audit", "(?S - ?L) + 1", "?S - (?L + 1)"),
     ("key-claim-merge-rewrite", "MIN(STR(?owner))", "MAX(STR(?owner))"),
     ("key-claim-quarantine", "SELECT ?claim", "SELECT ?claim ?owner"),
     ("key-claim-merge-rewrite", "GROUP BY ?claim", "GROUP BY ?claim ?owner"),

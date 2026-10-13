@@ -53,9 +53,8 @@ section below.
 
 ## Next action
 
-0. **The maintainer reviews H2.5** on this branch, from its [Validation Pack](../validation/FMH-H2-5.md): one open decision (how the builder and the template agree
-   about arithmetic, TSD-17). Merge-rewrite on rdflib (TSD-16) was decided on 2026-10-13, option B, and built, and the fragment-limit fields are fine for now. Run `mise run check:persistence`
-   (expect `2596 passed, 1 xfailed`) and `mise run check:persistence-oxigraph` (189 passed). No release tag is owed.
+0. **The maintainer reviews H2.5** on this branch, from its [Validation Pack](../validation/FMH-H2-5.md): no open decision. Merge-rewrite on rdflib (TSD-16), the template's arithmetic (TSD-17) and the fragment-limit fields were decided on 2026-10-13 and are built. Run `mise run check:persistence`
+   (expect `2597 passed, 1 xfailed`) and `mise run check:persistence-oxigraph` (189 passed). No release tag is owed.
 1. **H2.5 is built** (2026-10-13), autonomously, in six gates, on the branch `claude/nice-bohr-pmj43u`. P5's stop condition did not arise.
 2. **Then H2.6**, from this branch once H2.5 is reviewed, or from `main` after the merge:
    [plan §4.4](../plans/formal-methods-track-h.md#44-h26-the-expected-compiled-profile-examples-first-and-the-paper-check-planned-2026-10-13).
@@ -96,7 +95,7 @@ section below.
 | H2.3 (named-graph row writers) | **built and reviewed** 2026-10-12, one review fix. [Validation Pack](../validation/FMH-H2-3.md). [Plan §4.1](../plans/formal-methods-track-h.md#41-h23-the-named-graph-row-writers-planned-2026-10-12). Countersignature items signed 2026-10-12. TD-34 closed for its operations | merged and signed off 2026-10-12 |
 | H2.4a (the composite ports) | **built and reviewed** 2026-10-12. [Validation Pack](../validation/FMH-H2-4a.md). [Plan §4.2](../plans/formal-methods-track-h.md#42-h24-the-composite-family-and-what-each-store-does-planned-2026-10-12) | the maintainer's merge |
 | H2.4b (Oxigraph, probes, benchmark) | **built** 2026-10-12, reviewed 2026-10-13. [Validation Pack](../validation/FMH-H2-4b.md). Decision 1 decided (option D, built in H2.5), and the corrected P1 test countersigned | the maintainer's merge |
-| H2.5 (key claims, audits, guard D, the `SELECT` fragment) | **built** 2026-10-13, autonomously, in six gates. [Validation Pack](../validation/FMH-H2-5.md). [Plan §4.3](../plans/formal-methods-track-h.md#43-h25-key-claims-the-audits-and-the-self-calibrating-guard-planned-2026-10-13). TD-34 closed. One decision open (TSD-17) | the maintainer's review |
+| H2.5 (key claims, audits, guard D, the `SELECT` fragment) | **built** 2026-10-13, autonomously, in six gates. [Validation Pack](../validation/FMH-H2-5.md). [Plan §4.3](../plans/formal-methods-track-h.md#43-h25-key-claims-the-audits-and-the-self-calibrating-guard-planned-2026-10-13). TD-34 closed. Every decision taken | the maintainer's review and merge |
 | H2.6 (expected compiled profiles, paper check) | **planned** 2026-10-13 and revised after the design review, in [plan §4.4](../plans/formal-methods-track-h.md#44-h26-the-expected-compiled-profile-examples-first-and-the-paper-check-planned-2026-10-13). Every question decided | H2.5's review (H-D22) |
 | H3 (specification registry) | not started, outlined in the plan | H2 preferred first (smaller, more self-contained), not a hard blocker |
 | H4 (exhaustive cross-axis validation, BDD/SMT) | not started, outline only | H3 |
@@ -572,3 +571,5 @@ section below.
 - 2026-10-13: the maintainer decided FMH-H2-5 decision 1, option B (the canonical owner of a merge is `IRI(MIN(STR(?owner)))`), and that decision 3
   (the fragment-limit fields) is fine for now. Option B is built in the template and the builder, with the checker allowing an aggregate inside a scalar
   function of a projection. Decision 2, how the builder and the template agree about arithmetic, is open with a leaning to parenthesise the template as well.
+- 2026-10-13: the maintainer decided FMH-H2-5 decision 2, option B, and approved the rest. The gap-scan template now says `(?S - ?L) + 1`, the harness
+  normalisation for arithmetic chains is removed, and H2.5 has no open decision.

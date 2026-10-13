@@ -834,10 +834,9 @@ SELECT (10 - 3 + 2 AS ?x) WHERE {}      SELECT (10 - 3 - 2 AS ?x) WHERE {}      
 | `8 / 4 / 2` | 1 | 1 | **4**, as `8 / (4 / 2)` |
 | `(10 - 3) + 2` | 9 | 9 | 9 |
 
-**What it means for LATTICE.** The gap scan's template, written as a chain, counts wrongly on Oxigraph. The renderer therefore always writes the
-parentheses of a nested arithmetic operand, which is correct on both. The Mustache template is unchanged until H2.9 retires it. The
-equivalence harness reads a left-nested chain as the flat chain it equals, since SPARQL defines them as one expression. Test
-`test_h2_5_t44`, and the harness mutation `test_h2_5_t47`.
+**What it means for LATTICE.** The gap scan's template, written as a chain, counted wrongly on Oxigraph. The renderer therefore always writes the
+parentheses of a nested arithmetic operand, and the template now says `(?S - ?L) + 1` (FMH-H2-5, decision 2), both correct on either store. Test
+`test_h2_5_t44`, and the harness mutation `test_h2_5_t47`, which fails a builder that groups the sum from the right.
 
 **Reproduce it.** The three queries on each store.
 

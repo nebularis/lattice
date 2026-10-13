@@ -220,7 +220,7 @@ def test_gap_scan_is_row_driven_with_low_water_mark():
     assert "?target a pat:VersionRow ; pat:seq ?S" in text
     assert "pat:retentionLowWaterMark" in text
     assert 'COALESCE(?lwm, "1"^^xsd:long)' in text
-    assert "HAVING (COUNT(DISTINCT ?seq) != ?S - ?L + 1)" in text
+    assert "HAVING (COUNT(DISTINCT ?seq) != (?S - ?L) + 1)" in text
     assert "$epoch" not in text
 
 

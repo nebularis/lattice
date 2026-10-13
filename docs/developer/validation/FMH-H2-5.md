@@ -5,7 +5,7 @@
 **Unit:** [`formal-methods-track-h`](../status/formal-methods-track-h.md), slice H2.5, planned in
 [plan §4.3](../plans/formal-methods-track-h.md#43-h25-key-claims-the-audits-and-the-self-calibrating-guard-planned-2026-10-13) (H-D23, one slice in
 six gates) under [ADR-A123](../../architecture/decisions/ADR-A123-typed-operation-ir.md) and its addenda of 2026-10-13.
-**For the maintainer:** decision 2 below is open. Decisions 1 and 3 were taken on 2026-10-13 (1 is built in this slice). The stop condition on P5 did not arise.
+**For the maintainer:** all three decisions were taken on 2026-10-13, and 1 and 2 are built in this slice. Nothing is open. The stop condition on P5 did not arise.
 **For countersignature (non-weakening rule):** none. No test was removed or loosened. Two existing tests changed their expected text to follow
 the guard (below).
 
@@ -30,8 +30,8 @@ Oxigraph alike. The `SELECT` fragment of the IR refuses the forms that are illeg
 - **Ten builders** (gates 4 and 5) in `builders.py`, registered in `BUILDERS`. Every template apart from `cas-replace-value-guard` (TD-43) is now
   ported. `?other` and `?canonical` are declared `Kind.IRI`, with the data invariant from the patterns guide recorded in the builder. The
   gap scan declares `?seq`, `?S` and `?L` as `Compare.VALUE`.
-- **The renderer** writes the parentheses of every nested arithmetic operand (TSD-17), and `SELECT DISTINCT` for a top-level query.
-- **The harness** (`tests/equivalence.py`) reads a left-nested chain of additions, or of multiplications, as the flat chain it equals.
+- **The renderer** writes the parentheses of every nested arithmetic operand (TSD-17), and `SELECT DISTINCT` for a top-level query. The gap-scan template says
+  `(?S - ?L) + 1` for the same reason (decision 2), so the harness needs no normalisation for it.
 - **The tests' engine axis.** `engines.guards()` is now on for both engines. `@engines.each_engine_and_guards` runs a behaviour test with the
   guards on and off (the `guard_axis` fixture), on both engines. **61 behaviour tests across seven modules have the axis**, which doubles each of them.
   The guards-off cases are kept, since `--no-parameter-guards` stays supported.
@@ -73,25 +73,25 @@ form, and expects no guard group at all for an operation with no required parame
    Built: the template and the builder project `IRI(MIN(STR(?owner)))`. The checker now lets an aggregate sit inside a scalar function of a projection (and still
    refuses one inside another aggregate), and the boundness rule follows the function (`IRI(MIN(...))` is bound with a `GROUP BY` and not without).
    H2.5-T29 and T30 now hold on both engines with no engine branch: links to the lowest owner, none to itself, all IRIs. Option C stays with H2.7.
-2. **Open: how the builder and the template agree about arithmetic** (TSD-17). Oxigraph groups `?S - ?L + 1` from the right, so the gap scan's template, written as a
-   chain, counts wrongly there. To keep the builder right we made two changes. The renderer always writes the parentheses of a nested arithmetic operand, and the
-   equivalence harness reads a left-nested chain as the flat chain it equals, since SPARQL defines them as one expression. So the builder is equal to its template
-   as algebra and not as text. The question is whether that is how we want it, or whether the template should change too, as for decision 1.
+2. **Decided 2026-10-13: option B, built in this slice.** How the builder and the template agree about arithmetic (TSD-17). Oxigraph groups `?S - ?L + 1` from the right, so the
+   gap scan's template, written as a chain, counted wrongly there. We first made the renderer write the parentheses of every nested arithmetic operand and made the
+   equivalence harness read a left-nested chain as the flat one it equals. Options for the template were:
 
    | Option | Consequence |
    |---|---|
-   | A. Keep what is built | The harness has one normalisation beyond reordering what SPARQL does not order. The template of the gap scan stays wrong on Oxigraph until H2.9, reachable only through an overriding template directory (H2.2-T18) |
-   | B. Parenthesise the template as well, and remove the harness normalisation | Template and builder agree as text, the harness is back to reordering only, and the known defect leaves the legacy path. A one-line template change, and a template and a builder that move together as in decision 1 |
-   | C. Render the chain flat, as the template has it | The gap scan reports every complete stream as a gap on Oxigraph. Not recommended |
+   | A. Keep what was built | The harness keeps one normalisation beyond reordering what SPARQL leaves unordered, and the template stays wrong on Oxigraph until H2.9 |
+   | B. Parenthesise the template as well, and remove the harness normalisation | Template and builder agree as text, the harness only reorders, and the known defect leaves the legacy path |
+   | C. Render the chain flat, as the template had it | The gap scan reports every complete stream as a gap on Oxigraph |
 
-   Our leaning is B. A smaller trusted harness is worth the template edit, and decision 1 has already put the template and the builder on the same footing.
+   Built: the template says `(?S - ?L) + 1`, the harness normalisation is removed, and `test_h2_5_t47` now also fails a builder that groups the sum from the
+   right. The alignment test that pins the template text follows. The renderer's rule stays.
 3. **Decided 2026-10-13: fine for now.** `Select` carries `distinct`, `order_by`, `limit` and `offset` so that each can be refused with `FragmentLimit`.** That gives the plan's "each with a
    refusal test", at the price of four fields nothing uses. The alternative is no fields, and a limit that is simply unrepresentable and untested.
 
 ## Deviations from the plan
 
-- **The harness gained one normalisation**, the chain of operators (decision 2), and no other. Aggregate names did not need one, because the builders
-  emit the aggregates in the template's order and the equivalence holds.
+- **The harness gained no normalisation.** A first version read a left-nested arithmetic chain as the flat one, and decision 2 removed it by parenthesising the
+  template. Aggregate names did not need one either, because the builders emit the aggregates in the template's order and the equivalence holds.
 - **Gate 1, step 4:** the axis is a fixture and a marker, not a duplicate of each test. The behaviour tests that assert the guard itself take
   `guards=` explicitly and are unchanged.
 - **The boundness table** names `SUM` and `AVG`, which are not in the fragment's function set, so only `COUNT`, `MIN`, `MAX`, `SAMPLE` and
@@ -124,7 +124,7 @@ form, and expects no guard group at all for an operation with no required parame
 | H2.5-T39, T40 | the ten operations / roles of every access, the role table / as listed, no entry added | L1 | gate 3 | + |
 | H2.5-T41 to T45 | `MIN` over IRIs (the store finding, kept), `COUNT(DISTINCT)` over mixed integers, a duplicate seq, a chain of operators, `GROUP_CONCAT` under hash seeds / each engine / as TSD-16 to TSD-19 | L4 | what each engine does | + |
 | H2.5-T46 | `NOW()` bound to a parameter's name / `check` / `NameCollision` | L1 | gate 6 | - |
-| H2.5-T47 | six mutated queries or sub-selects / the harness / `Mismatch` | L2 | the harness catches a changed query | - |
+| H2.5-T47 | seven mutated queries or sub-selects, one of them a sum grouped from the right / the harness / `Mismatch` | L2 | the harness catches a changed query | - |
 | H2.2-T1 to T6, T20, T21 and H2.3-T32 | the ported list, equality with every template (now 27), reads, roles, guard position / run / pass for the ten new operations too | L3 | the port | ± |
 
 ## One command
@@ -132,7 +132,7 @@ form, and expects no guard group at all for an operation with no required parame
 Run from the repository root. `check:persistence` is the gate.
 
 ```bash
-mise run check:persistence                   # 2596 passed, 1 xfailed here (2111 before this slice)
+mise run check:persistence                   # 2597 passed, 1 xfailed here (2111 before this slice)
 mise run check:persistence-oxigraph          # 5 adapter tests and 189 Oxigraph cases, about 15 s (66 before this slice)
 ```
 

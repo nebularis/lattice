@@ -2,7 +2,9 @@
     whose receipts are missing entirely is still examined. For each row
     with sequence S and retention low-water mark L (default 1), the
     receipts with seq in the closed range L to S must number exactly
-    S - L + 1. Groups by target across epochs, since pat:seq continues
+    S - L + 1. The sum is parenthesised
+    because Oxigraph groups a chain of additions and subtractions from the
+    right (triple-store record, TSD-17). Groups by target across epochs, since pat:seq continues
     across an epoch bump. The pinned-head graph is always included.
     logGraphs is a request-time Mustache slot: the caller
     renders it with the IRIs of every log bucket the family's registry lists
@@ -25,4 +27,4 @@ WHERE {
   }
 }
 GROUP BY ?target ?S ?L
-HAVING (COUNT(DISTINCT ?seq) != ?S - ?L + 1)
+HAVING (COUNT(DISTINCT ?seq) != (?S - ?L) + 1)
