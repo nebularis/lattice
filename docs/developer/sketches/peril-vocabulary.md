@@ -73,7 +73,7 @@ One release contains several schemes, each a separate `voc:ConceptScheme` editio
 identity, so each can be versioned and bound on its own.
 
 ```mermaid
-flowchart TB
+flowchart LR
     subgraph Release["Reference peril vocabulary release"]
         C["Cause scheme (backbone)<br/>~240 concepts, 8 families"]
         M["Mechanism scheme"]

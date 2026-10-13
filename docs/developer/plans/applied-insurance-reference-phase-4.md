@@ -51,6 +51,15 @@ not built. The rows below use Foundation's keys. CCS slice C16c later removes Pa
 `pty:outwardShare` and `pty:inwardShare`. `aeo:controlShare` is a `qnt:Quantity` on the control
 relation and does not use them, so it is unaffected. Do not reuse Party's share properties here.
 
+**Literate from the start (AIR-2.0, decided 2026-10-13).** The module's `README.md` is its source:
+every Turtle construct below goes into a fenced block (`turtle-spec`, `turtle-vocab`,
+`turtle-shapes`) beside the prose that explains it, with an "Extraction contract" section, a test
+running `literate_extract --check` (`--layer applied/insurance/exposure`), and a "Sources
+consulted" section. The regions below are README sections. Every concept in an `aeo-voc:` scheme
+follows the documentation rule of AIR-2.0 (at least one `skos:note` naming the standards it follows,
+for example ISO 4217 for currencies, the LEI standard ISO 17442 for legal entity identifiers, or a
+national flood map's own zone definitions), and the shapes carry the documentation rule.
+
 ### Versions (refreshed 2026-10-13)
 
 The brief first pinned the versions in the middle column. The right column is a snapshot of `main`

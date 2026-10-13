@@ -85,15 +85,16 @@ from `main` when their briefs are on it.
 | 3 | AIR-1.1 drop legacy module, layout | merged | S | Copilot Business | 1 (merged) |
 | 4 | AIR-1.2 `classification/`, `insurance/common/` | merged | S | Copilot Business | 3 |
 | 5 | AIR-2.1 `prl:` spec, shapes, file regions | merged | S | Copilot Business | 1 (merged) |
-| 6 | AIR-2.2 characteristic and companion schemes | `air/applied-reference` | S | Copilot Business | 4, 5 (merged) |
+| 5a | AIR-2.0 literate `common` and `peril`, extractor, documentation rule | `air/applied-reference` | S | Copilot Business | 4, 5 (merged) |
+| 6 | AIR-2.2 characteristic and companion schemes | `air/applied-reference` | S | Copilot Business | 5a |
 | 7 | AIR-4.1 exposure core, file regions | `air/applied-reference` | S | Copilot Business | 4 (merged) |
 | 8 | AIR-3.2 set readings and negation: Eligibility, IR, SPARQL, SHACL | merged | R | Claude | 2 |
-| 9 | AIR-2.3 causes N, T, E | `air/applied-reference` | S | Copilot Business | 6 |
-| 10 | AIR-2.4 causes H, P, C, F, L, cross-group links | `air/applied-reference` | S | Copilot Business | 6 |
+| 9 | AIR-2.3 causes N, T, E | `air/applied-reference` | S | Copilot Business | 6, 14 |
+| 10 | AIR-2.4 causes H, P, C, F, L, cross-group links | `air/applied-reference` | S | Copilot Business | 9 |
 | 11 | AIR-4.2 zones, pools, attributes, assessments | `air/applied-reference` | S | Copilot Business | 5, 7 |
 | 12 | AIR-4.4 loss history, `aeo:LossCause`, requirements, cover | `air/applied-reference` | S | Copilot Business | 6, 7 |
 | 13 | AIR-3.3 set readings and negation: SWRL, OWL | `air/3.3-readings-swrl-owl`, created from `main` after CCS HQ-6a.2 merges | R | Claude | 8, HQ-6a.2, AIR-3.3-Q1 |
-| 14 | AIR-2.6 intensity measures and thresholds | `air/applied-reference` | S | Copilot Business | 9 |
+| 14 | AIR-2.6 intensity measures and thresholds | `air/applied-reference` | S | Copilot Business | 6 |
 | 15 | AIR-2.7 pools scheme, example edition, precedence | `air/applied-reference` | S | Copilot Business | 9, 10 |
 | 16 | AIR-4.3 dependencies, peril metrics, exposure units | `air/applied-reference` | S | Copilot Business | 9, 11 |
 | 17 | AIR-4.5 liability exposure | `air/applied-reference` | S | Copilot Business | 12 |
@@ -197,13 +198,14 @@ second trip (§3), unless R can merge a verified prefix (§6).
 
 | Order | Slice | Milestone |
 |---|---|---|
+| 0 | AIR-2.0 literate modules, extractor, documentation rule | |
 | 1 | AIR-2.2 characteristic and companion schemes | |
 | 2 | AIR-4.1 exposure core | |
-| 3 | AIR-2.3 causes N, T, E | |
-| 4 | AIR-2.4 causes H, P, C, F, L, cross-group links | |
-| 5 | AIR-4.2 zones, pools participation, attributes, assessments | |
-| 6 | AIR-4.4 loss history, `aeo:LossCause`, requirements, cover | |
-| 7 | AIR-2.6 intensity measures and thresholds | |
+| 3 | AIR-2.6 intensity measures and thresholds | |
+| 4 | AIR-2.3 causes N, T, E | |
+| 5 | AIR-2.4 causes H, P, C, F, L, cross-group links | |
+| 6 | AIR-4.2 zones, pools participation, attributes, assessments | |
+| 7 | AIR-4.4 loss history, `aeo:LossCause`, requirements, cover | |
 | 8 | AIR-2.7 pools scheme, example edition, precedence | |
 | 9 | AIR-4.3 dependencies, peril metrics, exposure units | |
 | 10 | AIR-4.5 liability exposure | |
@@ -213,6 +215,12 @@ second trip (§3), unless R can merge a verified prefix (§6).
 | 14 | AIR-4.6 London and US profiles, examples | M3 |
 | 15 | AIR-6.1 submission | |
 | 16 | S6 spatial guidance (text only) | |
+
+AIR-2.6 precedes the cause families (revised 2026-10-13): the threshold shape requires every
+concept with basis Threshold to have a `prl:definingThreshold`, so the thresholds must exist when
+AIR-2.3 assigns that basis. AIR-2.6 writes the threshold range sets and every link from a cause
+concept to its intensity measures and threshold, naming cause concepts by IRI before AIR-2.3
+declares them.
 
 Not in the trip, and why:
 
@@ -309,7 +317,7 @@ The handoff ends with `🔴 RELEASE TAGS REQUIRED` while tags remain to create (
 
 ## 7. Critical path
 
-All on S: 2.2 → 2.3 and 2.4 → 3.4 → 3.5 (M2). Loss history (4.4) is on it too, because 3.5 reads
+All on S: 2.0 → 2.2 → 2.6 → 2.3 → 2.4 → 3.4 → 3.5 (M2). Loss history (4.4) is on it too, because 3.5 reads
 `aeo:LossCause`. The trip's length is the sum of S's slices, since S builds in sequence.
 
 ## 8. Rules for shared files

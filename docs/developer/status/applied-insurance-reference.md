@@ -17,24 +17,24 @@ Validation Pack, never here.
 AIR-3.1, AIR-1.1 and AIR-2.1. Round 2 merged AIR-3.2 and AIR-1.2.
 **Branch:** one for all of S's slices, `air/applied-reference` (lanes §2 and §3, revised
 2026-10-13). The per-slice branches of rounds 1 to 3 were all merged into `main` and are deleted.
-**Trip 1 for machine S, in this order:** AIR-2.2, then AIR-4.1. Both briefs are on the branch and
-use the versions of `main` at `69cb7675`. S stops after AIR-4.1 and hands over.
-**Briefs ready on the branch:** AIR-1.1, AIR-2.1, AIR-3.1, AIR-1.2, AIR-3.2 (all merged), AIR-2.2,
-AIR-4.1. AIR-3.3 has a brief that is blocked (phase 3 plan).
-**Briefs to draft before trip 2 (lanes §1):** AIR-2.3, AIR-2.4, AIR-4.2 and AIR-4.4.
+**One trip for machine S (lanes §4, revised 2026-10-13):** AIR-2.0, 2.2, 4.1, 2.6, 2.3, 2.4, 4.2,
+4.4, 2.7, 4.3, 4.5, 2.5, 3.4, 3.5, 4.6, 6.1, then S6. The branch is created only when every brief
+is written, and comes to R once, when the trip is done.
+**Briefs written:** AIR-2.0, 2.2 (amended), 2.3, 2.4, 2.6, 4.1 (literate). **Briefs to write before
+the branch:** AIR-4.2, 4.4, 2.7, 4.3, 4.5, 2.5, 3.4, 3.5, 4.6, 6.1, S6. AIR-3.3 has a brief that is
+blocked (phase 3 plan).
 **Concurrent work:** from round 3, machine R also builds the normative-rule-substrate unit, and
 from 2026-09-30 the computable-contract-substrate unit (CCS), which took over NRS N4, and on
-2026-10-10 N1, N2 and N5 as well. R verifies S's bundles before continuing CCS or NRS slices, AIR-3.3
-waits for CCS HQ-6a.2 to merge and for AIR-3.3-Q1 (phase 3 plan), and lands before CCS's N1 and
-C13. NRS N9 waits for Phase 2, substrate S2 is authored with CCS C9b3, and CCS C9 merges before
-Phase 5 (epic §3b). CCS bumps of Foundation, Vocabulary, Quantification and Party force a re-pin of
-the applied modules at each sync (lanes §6 step 4), so trips stay short.
+2026-10-10 N1, N2 and N5 as well. AIR-3.3 waits for CCS HQ-6a.2 to merge and for AIR-3.3-Q1 (phase 3 plan),
+and lands before CCS's N1 and C13. NRS N9 waits for Phase 2, substrate S2 is authored with CCS
+C9b3, and CCS C9 merges before Phase 5 (epic §3b). The trip's imports stay pinned to `main` at the
+branch point, and R re-pins once at the merge (lanes §6 step 4).
 
 ## Machine R
 
 **Position:** round 3. Rounds 1 and 2 complete, Phase 1 complete. AIR-2.2, AIR-4.1 and AIR-3.3
-briefs drafted, the first two refreshed on 2026-10-13. Next: draft the trip 2 briefs while S builds
-trip 1. NRS N2 moved to CCS on 2026-10-10 (NRS NQ-2).
+briefs drafted, the first two refreshed on 2026-10-13. Next: write the remaining briefs of the
+one trip with the maintainer, before the branch is created. NRS N2 moved to CCS on 2026-10-10 (NRS NQ-2).
 **Last updated:** 2026-10-13
 **Blockers:** AIR-3.3 waits for CCS HQ-6a.2 to merge and for AIR-3.3-Q1.
 
@@ -43,7 +43,6 @@ trip 1. NRS N2 moved to CCS on 2026-10-10 (NRS NQ-2).
 | 2 | AIR-3.1 | `air/3.1-flat-hierarchy` | merged | tags `eligibility-vocab-v0.7.0`, `executable-v0.6.0` |
 | 8 | AIR-3.2 | `air/3.2-set-readings` | merged | eight tags (Validation Pack Results) |
 | 13 | AIR-3.3 | `air/3.3-readings-swrl-owl`, created from `main` after HQ-6a.2 merges | waiting | brief blocked on AIR-3.3-Q1 |
-| 21 | AIR-3.5 | `air/3.5-m2-check` | waiting | |
 | 23+ | substrate ADRs, S1, S2, S4, S5, S7 | `air/s<n>-<slug>` | waiting | ADRs drafted in round 4 |
 
 Verifying queue (S slices handed over and not yet merged): none.
@@ -60,19 +59,21 @@ on `air/applied-reference`.
 | 3 | AIR-1.1 | merged | set by R. No version bumps, no tags |
 | 4 | AIR-1.2 | merged | set by R. Tags `applied-classification-v0.1.0`, `applied-classification-vocab-v0.1.0`, `insurance-common-v0.1.0`, `insurance-common-vocab-v0.1.0` |
 | 5 | AIR-2.1 | merged | set by R: three shape defects fixed at verification. Tags `applied-insurance-peril-shapes-v0.1.0`, `insurance-peril-v0.1.0`, `insurance-peril-vocab-v0.1.0` |
-| 6 | AIR-2.2 | ready | trip 1, first. Brief refreshed 2026-10-13 |
-| 7 | AIR-4.1 | ready | trip 1, second. Brief refreshed 2026-10-13 |
-| 9 | AIR-2.3 | waiting for brief | trip 2 |
-| 10 | AIR-2.4 | waiting for brief | trip 2 |
-| 11 | AIR-4.2 | waiting for brief | trip 2 |
-| 12 | AIR-4.4 | waiting for brief | trip 2 |
-| 14 | AIR-2.6 | waiting | |
+| 5a | AIR-2.0 | ready | the trip's first slice. Brief written 2026-10-13 |
+| 6 | AIR-2.2 | ready | brief refreshed and amended 2026-10-13 |
+| 7 | AIR-4.1 | ready | brief refreshed 2026-10-13, literate |
+| 9 | AIR-2.3 | ready | after AIR-2.6 |
+| 10 | AIR-2.4 | ready | |
+| 11 | AIR-4.2 | waiting for brief | |
+| 12 | AIR-4.4 | waiting for brief | |
+| 14 | AIR-2.6 | ready | before AIR-2.3 |
 | 15 | AIR-2.7 | waiting | |
 | 16 | AIR-4.3 | waiting | |
 | 17 | AIR-4.5 | waiting | |
 | 18 | AIR-2.5 | waiting | |
 | 19 | AIR-3.4 | waiting | |
 | 20 | AIR-4.6 | waiting | |
+| 21 | AIR-3.5 | waiting | moved from R on 2026-10-13 (lanes §2) |
 | 22 | AIR-6.1 | waiting | |
 | 23+ | S6 | waiting | |
 
@@ -119,3 +120,14 @@ on `air/applied-reference`.
   `air/applied-reference` (lanes revised). AIR-2.2 and AIR-4.1 briefs re-pinned to the layer
   versions of `main` at `69cb7675`. AIR-3.3 is blocked on CCS HQ-6a.2 and AIR-3.3-Q1. Trip 1 for
   S is AIR-2.2 then AIR-4.1.
+- 2026-10-13: re-planned as one trip for S (lanes §1, §4): versioning governs `main`, not a
+  branch, and the applied modules have no importer on `main` outside AIR, so S builds every slice
+  that does not wait on CCS or NRS before the branch comes to R once. AIR-3.5 moves to S. Every brief
+  is written on R first. Decided the same day: agency values `Intentional` and `Economic`, thirteen
+  mechanisms and four consequences added to AIR-2.2 (Q1, Q2, Q5), P wording-defined (Q3), latent
+  onset for wrongful acts and professional error (Q4), the cause characteristics by inheritance with
+  overrides, a sample of definitions reviewed on R before S drafts the rest (Q6), 10-minute winds for
+  typhoon and severe tropical cyclone (Q7), heat and cold waves index-based (Q8), the hours-clause
+  windows (Q9), units in `insurance/common` aligned to QUDT (Q10). Every AIR module is literate, and
+  every concept documents the standards it follows in `skos:note` (AIR-2.0, a new first slice).
+  AIR-2.6 now precedes AIR-2.3.
