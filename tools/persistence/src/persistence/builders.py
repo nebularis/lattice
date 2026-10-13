@@ -609,6 +609,8 @@ def _key_claim_quarantine(b: Bindings, *, guards: bool) -> Operation:
 
 
 def _key_claim_merge_rewrite(b: Bindings, *, guards: bool) -> Operation:
+    """The canonical owner is the lowest owner IRI, taken over the IRI text and turned back into an IRI, because rdflib's `MIN` over
+    IRIs returns a plain literal (TSD-16, decided in FMH-H2-5, decision 1). The Mustache template says the same."""
     claim, owner, canonical = Var("claim"), Var("owner"), Var("canonical")
     other = Var("other", kind=Kind.IRI)
     relation = b.const("mergeRelation")
@@ -617,7 +619,7 @@ def _key_claim_merge_rewrite(b: Bindings, *, guards: bool) -> Operation:
         "key-claim-merge-rewrite",
         (),
         Group((
-            _duplicated_claims(b, project=(claim, Projected(Func("MIN", (owner,)), canonical))),
+            _duplicated_claims(b, project=(claim, Projected(Func("IRI", (Func("MIN", (Func("STR", (owner,)),)),)), canonical))),
             GraphBlock(keys, (Triple(claim, _pat("claimedBy"), other),)),
             Filter(ValueGuard("!=", other, Var("canonical", kind=Kind.IRI))),
             NotExists(Group((GraphBlock(keys, (Triple(other, relation, canonical),)),))),

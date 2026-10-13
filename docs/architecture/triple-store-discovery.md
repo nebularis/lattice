@@ -805,10 +805,10 @@ SELECT (MIN(?o) AS ?l) (MAX(?o) AS ?h) WHERE { GRAPH <urn:g> { <urn:c> <urn:p> ?
 
 Both choose by the IRI's text, so `urn:o:10` sorts before `urn:o:2`. `IRI(MIN(STR(?o)))` gives the IRI on both.
 
-**What it means for LATTICE.** On rdflib merge-rewrite writes a plain literal as the link's object, and because an IRI is never equal to a
-literal, `?other != ?canonical` also holds for the canonical owner, which gets a link to itself. On Oxigraph it writes IRIs and no self-link. The
-builder equals its template, so it carries the template's behaviour, and the tests record both (`test_h2_5_t29` and `test_h2_5_t30`).
-Whether to make the operation store independent is a decision for the maintainer (FMH-H2-5, decision 1).
+**What it means for LATTICE.** The first port of merge-rewrite equalled its template, so on rdflib it wrote a plain literal as the link's object, and because
+an IRI is never equal to a literal, `?other != ?canonical` also held for the canonical owner, which got a link to itself. On Oxigraph it wrote IRIs and no
+self-link. Decided 2026-10-13 (FMH-H2-5, decision 1): the template and the builder project `IRI(MIN(STR(?owner)))`, which gives an IRI on both
+(`test_h2_5_t30`). The `MIN` itself is still different on the two stores and `test_h2_5_t41` keeps the probe.
 
 **Reproduce it.** The two operations above on each store.
 

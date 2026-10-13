@@ -68,6 +68,8 @@ _TABLE = [
     ("MIN with a GROUP BY and a bound argument", MIN, "lowest", BY_CLAIM, False, True),
     ("MIN with no GROUP BY", MIN, "lowest", (), False, False),
     ("MIN with a GROUP BY and a possibly unbound argument", MIN, "lowest", BY_CLAIM, True, False),
+    ("a scalar function of MIN with a GROUP BY", Projected(Func("IRI", (Func("MIN", (Func("STR", (OWNER,)),)),)), Var("lowest")), "lowest", BY_CLAIM, False, True),
+    ("a scalar function of MIN with no GROUP BY", Projected(Func("IRI", (Func("MIN", (Func("STR", (OWNER,)),)),)), Var("lowest")), "lowest", (), False, False),
     ("a GROUP BY key bound by the pattern", CLAIM, "claim", BY_CLAIM, False, True),
     ("an expression over bound variables", Projected(Func("STR", (OWNER,)), Var("text")), "text", (), False, True),
     ("an expression over a possibly unbound variable", Projected(Func("STR", (OWNER,)), Var("text")), "text", (), True, False),

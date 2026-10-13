@@ -168,6 +168,7 @@ def _refusals() -> list[tuple[str, str, object]]:
         ("UnknownOperator", "unknown Op", lambda: valid(where_=(*where(), Bind(Op("%", string("a"), string("b")), Var("r"))))),
         ("UnknownOperator", "unknown comparison", lambda: valid(where_=(*where(), Filter(ValueGuard("~", ROOT, ROOT))))),
         ("AggregateOutsideSelect", "COUNT in BIND", lambda: valid(where_=(*where(), Bind(Func("COUNT", (Var("now"),)), Var("r"))))),
+        ("AggregateOutsideSelect", "an aggregate inside an aggregate", lambda: _query(Select((Projected(Func("COUNT", (Func("MIN", (Var("owner"),)),)), Var("n")),), group_by=(Var("claim"),)))),
         ("UngroupedProjection", "a variable that is not grouped", lambda: _query(Select((Var("claim"), Var("owner")), group_by=(Var("claim"),)))),
         ("UngroupedProjection", "a variable beside an aggregate with no GROUP BY", lambda: _query(Select((Var("claim"), _COUNT)))),
         ("UngroupedProjection", "an expression over an ungrouped variable", lambda: _query(Select((Projected(Func("STR", (Var("owner"),)), Var("s")), _COUNT)))),

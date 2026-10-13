@@ -657,7 +657,8 @@ class _Checker:
             raise IrError("UnknownFunction", f"{self.op.id}: a separator applies to GROUP_CONCAT only")
         names: set = set()
         for arg in f.args:
-            names |= self._expr(arg, guard=guard, aggregate_ok=False)
+            # An aggregate may sit inside a scalar function of a projection, such as IRI(MIN(STR(?x))), and never inside another aggregate.
+            names |= self._expr(arg, guard=guard, aggregate_ok=aggregate_ok and name not in AGGREGATES)
         if name == "NOW" and guard:
             raise IrError("ClockInGuard", f"{self.op.id}: NOW() in a guard")
         return names
@@ -716,25 +717,29 @@ class _Checker:
     def _select_names(self, select: Select, inner: _Scope) -> tuple[set, set]:
         """The projected names of a sub-select that are bound in every solution, and those that may not be (the boundness
         table of the plan, 4.3). Only ``COUNT`` is bound over an empty group, and any other aggregate needs a ``GROUP BY``
-        and an argument that is bound in every inner solution."""
+        and an argument that is bound in every inner solution. A scalar function of an aggregate is bound when its arguments are."""
         definite: set = set()
         possible: set = set()
         for item in select.projection:
             if isinstance(item, Var):
-                ok = item.name in inner.definite
-                name = item.name
+                ok, name = item.name in inner.definite, item.name
             else:
-                name = item.var.name
-                expr = item.expr
-                if isinstance(expr, Func) and expr.name in AGGREGATES:
-                    if expr.name == "COUNT":
-                        ok = True
-                    else:
-                        ok = bool(select.group_by) and self._definitely_bound(expr.args[0], inner)
-                else:
-                    ok = self._definitely_bound(expr, inner)
+                ok, name = self._projected_bound(item.expr, select, inner), item.var.name
             (definite if ok else possible).add(name)
         return definite, possible
+
+    def _projected_bound(self, expr, select: Select, inner: _Scope) -> bool:
+        if isinstance(expr, Func):
+            if expr.name in AGGREGATES:
+                return expr.name == "COUNT" or (bool(select.group_by) and self._definitely_bound(expr.args[0], inner))
+            if expr.name == "COALESCE":
+                return any(self._projected_bound(a, select, inner) for a in expr.args)
+            return all(self._projected_bound(a, select, inner) for a in expr.args)
+        if isinstance(expr, (Op, ValueGuard, TermGuard)):
+            return self._projected_bound(expr.left, select, inner) and self._projected_bound(expr.right, select, inner)
+        if isinstance(expr, Not):
+            return self._projected_bound(expr.arg, select, inner)
+        return self._definitely_bound(expr, inner)
 
     def _sub_select_leaks(self) -> None:
         if not self.subselects:

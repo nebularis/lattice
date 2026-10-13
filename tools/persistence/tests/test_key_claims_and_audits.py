@@ -255,31 +255,25 @@ def links(ds) -> set:
 
 
 def _expected_links(canonical: URIRef, others) -> set:
-    """What the operation writes. rdflib's `MIN` over IRIs returns a plain literal of the IRI text and not the IRI (TSD-16), so
-    `?other != ?canonical` holds for the canonical owner too, which gets a link to itself, and every object is a literal.
-    Oxigraph returns the IRI, as SPARQL 1.1 specifies."""
-    pairs = {(str(o), str(canonical)) for o in others}
-    return pairs | ({(str(canonical), str(canonical))} if engines.CURRENT == "rdflib" else set())
+    return {(str(o), str(canonical)) for o in others}
 
 
 @engines.each_engine_and_guards
 def test_h2_5_t29_merge_links_every_non_canonical_owner_to_the_lowest_one_in_the_keys_graph_once():
     ds = with_claims(*MERGED)
     update("key-claim-merge-rewrite", ds)
-    assert links(ds) == _expected_links(O1, (O2, O3))
+    assert links(ds) == _expected_links(O1, (O2, O3))  # no link from the canonical owner to itself, on either engine
     update("key-claim-merge-rewrite", ds)
     assert links(ds) == _expected_links(O1, (O2, O3))
 
 
 @engines.each_engine
-def test_h2_5_t30_the_canonical_owner_is_an_iri_on_oxigraph_and_a_literal_on_rdflib():
-    """TSD-16, the divergence found in gate 6. The port is equal to its template, so it carries the template's behaviour. Whether
-    to make the operation store independent, for example with `IRI(MIN(STR(?owner)))`, is a decision recorded in the Validation
-    Pack."""
+def test_h2_5_t30_the_canonical_owner_is_an_iri_on_both_engines():
+    """TSD-16, decided in FMH-H2-5 (decision 1, option B). `IRI(MIN(STR(?owner)))` gives an IRI where rdflib's `MIN(?owner)` gave a
+    literal, so the links are the same on both engines."""
     ds = with_claims(*MERGED)
     update("key-claim-merge-rewrite", ds)
-    objects = {type(o) for s, p, o in graph_of(ds, KEYS) if p == RELATION}
-    assert objects == {RdfLiteral if engines.CURRENT == "rdflib" else URIRef}
+    assert {type(o) for s, p, o in graph_of(ds, KEYS) if p == RELATION} == {URIRef}
 
 
 @engines.each_engine_and_guards
@@ -551,7 +545,7 @@ def test_h2_5_t46_now_never_binds_the_name_of_a_declared_parameter():
     ("key-claim-duplicate-audit", "HAVING (COUNT(?owner) > 1)", "HAVING (COUNT(?owner) >= 1)"),
     ("fork-detection-audit", "COUNT(DISTINCT ?t) AS ?n", "COUNT(?t) AS ?n"),
     ("gap-scan-audit", "FILTER(", "FILTER(!"),
-    ("key-claim-merge-rewrite", "MIN(?owner)", "MAX(?owner)"),
+    ("key-claim-merge-rewrite", "MIN(STR(?owner))", "MAX(STR(?owner))"),
     ("key-claim-quarantine", "SELECT ?claim", "SELECT ?claim ?owner"),
     ("key-claim-merge-rewrite", "GROUP BY ?claim", "GROUP BY ?claim ?owner"),
 ])

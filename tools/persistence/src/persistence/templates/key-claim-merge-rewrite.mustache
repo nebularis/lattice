@@ -3,7 +3,9 @@
     the adopter-named relation (dal:mergeRelation), pointing from every
     non-canonical owner to a canonical one, so the merge is a plain,
     revocable statement -- never owl:sameAs (dal:MergeRelationRequiredShape).
-    The lexicographically lowest owner IRI is the canonical choice:
+    The lexicographically lowest owner IRI is the canonical choice,
+    taken over the IRI text and turned back into an IRI because rdflib's
+    MIN over IRIs returns a plain literal (triple-store record, TSD-16):
     arbitrary but deterministic and total, documented here rather than
     left implicit (the same convention as the dataset-guard graph IRI in
     operations.py). Idempotent: re-running after the relation is already
@@ -19,7 +21,7 @@ INSERT {
 }
 WHERE {
   {
-    SELECT ?claim (MIN(?owner) AS ?canonical)
+    SELECT ?claim (IRI(MIN(STR(?owner))) AS ?canonical)
     WHERE {
       GRAPH {{{keysGraph}}} { ?claim a pat:KeyClaim ; pat:constraint {{{constraintId}}} ; pat:claimedBy ?owner }
     }

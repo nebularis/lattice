@@ -5,7 +5,7 @@
 **Unit:** [`formal-methods-track-h`](../status/formal-methods-track-h.md), slice H2.5, planned in
 [plan §4.3](../plans/formal-methods-track-h.md#43-h25-key-claims-the-audits-and-the-self-calibrating-guard-planned-2026-10-13) (H-D23, one slice in
 six gates) under [ADR-A123](../../architecture/decisions/ADR-A123-typed-operation-ir.md) and its addenda of 2026-10-13.
-**For the maintainer:** three decisions below, the first from a finding in gate 6. The stop condition on P5 did not arise.
+**For the maintainer:** decision 2 below is open. Decisions 1 and 3 were taken on 2026-10-13 (1 is built in this slice). The stop condition on P5 did not arise.
 **For countersignature (non-weakening rule):** none. No test was removed or loosened. Two existing tests changed their expected text to follow
 the guard (below).
 
@@ -26,6 +26,7 @@ Oxigraph alike. The `SELECT` fragment of the IR refuses the forms that are illeg
   four new rules, `UngroupedProjection`, `HavingNotGrouped`, `SubSelectLeak` and `FragmentLimit`, and the boundness table of the plan
   for a sub-select's projected items. Every walk enters a sub-select (reads and writes, roles, clock variables, boundness, the guard's place).
   A sub-select starts with nothing in scope, and inside a `GRAPH` block it reads that graph.
+- **Merge-rewrite takes `IRI(MIN(STR(?owner)))`** (decision 1), in the template and the builder.
 - **Ten builders** (gates 4 and 5) in `builders.py`, registered in `BUILDERS`. Every template apart from `cas-replace-value-guard` (TD-43) is now
   ported. `?other` and `?canonical` are declared `Kind.IRI`, with the data invariant from the patterns guide recorded in the builder. The
   gap scan declares `?seq`, `?S` and `?L` as `Compare.VALUE`.
@@ -53,28 +54,38 @@ form, and expects no guard group at all for an operation with no required parame
 | 1 | P5 extended: a constant, a substituted parameter, a `VALUES` row and a stored value report one datatype on each store (`xsd:long` on rdflib, `xsd:integer` on Oxigraph), and a simple literal stays `xsd:string`. **No divergence, so guard D stands on both** and the stop condition did not arise. A guarded write now applies on Oxigraph (TD-45's guard part). An `xsd:integer` epoch is refused on rdflib and accepted on Oxigraph, as the addendum says | H2.5-T1 to T4, [TSD-07](../../architecture/triple-store-discovery.md#tsd-07-numeric-datatypes-are-not-kept-by-oxigraph) |
 | 2 | rdflib lets an outer binding into a sub-select (a count of 1 where SPARQL and Oxigraph give 3). A sub-select inside a `GRAPH` block reads that graph on both. A `FILTER` inside `NOT EXISTS` sees a parameter and a sub-select's projection on both, by text and by initial binding | H2.5-T12 to T14, TSD-15, TSD-20 |
 | 5 | **Oxigraph 0.5.11 groups a chain of same-precedence operators from the right** (`10 - 3 + 2` is 5, `8 / 4 / 2` is 4). The gap scan's `?S - ?L + 1` then reported every complete stream as a gap. Found by running the audit, and fixed in the renderer | H2.5-T44, TSD-17 |
-| 6 | **rdflib's `MIN` and `MAX` over IRIs return plain literals.** Merge-rewrite then writes literal objects and a self-link for the canonical owner on rdflib, and IRIs and no self-link on Oxigraph. Both choose the same owner | H2.5-T29, T30, T41, TSD-16, decision 1 below |
+| 6 | **rdflib's `MIN` and `MAX` over IRIs return plain literals.** Merge-rewrite then wrote literal objects and a self-link for the canonical owner on rdflib, and IRIs and no self-link on Oxigraph. Both chose the same owner. **Fixed by decision 1 (option B)** | H2.5-T29, T30, T41, TSD-16 |
 | 6 | `COUNT(DISTINCT)` counts `xsd:long` and `xsd:integer` terms apart on rdflib and together on Oxigraph. A duplicate `seq` written with another integer type is reported by the gap scan on rdflib only | H2.5-T42, T43, TSD-18 |
 | 6 | `GROUP_CONCAT` keeps the stored order whatever the hash seed, for the duplicate audit's shape | H2.5-T45, TSD-19 |
 | 4 | With the guards off, a missing parameter writes: a claim with no owner (`key-claim-write` without `$owner`), one claim of two (dual without `$claimCurrent` or `$claimNext`), and for a retire a half retirement with no time (`$now`), or the retirement of the claims of the owner it does name (no `$claim`). The two engines agree on all eight cases | H2.5-T22, T23 |
 
 ## Decisions needing confirmation
 
-1. **Merge-rewrite on rdflib** (TSD-16). The port equals its template, so on rdflib it writes `"urn:o:1"` as a plain literal and links the canonical owner
-   to itself. On Oxigraph it writes IRIs. Both pick the same owner. We did not change the operation. Options:
+1. **Decided 2026-10-13: option B, built in this slice.** Merge-rewrite on rdflib (TSD-16). The port equalled its template, so on rdflib it wrote `"urn:o:1"` as a plain
+   literal and linked the canonical owner to itself, and on Oxigraph it wrote IRIs. Both picked the same owner. Options were:
 
    | Option | Consequence |
    |---|---|
-   | A. Keep it as a port, with the difference recorded | Nothing to build. A deployment on rdflib gets literal links and a self-link, which a reader of the merge relation must tolerate |
-   | B. Compute the canonical owner as `IRI(MIN(STR(?owner)))` | An IRI on both, and the self-link goes since `?other != ?canonical` then compares two IRIs. It is a change and not a port (typed IR sketch §7.1), so the golden text, the equivalence harness's reading of the template, and the template itself all move. About 30k tokens |
+   | A. Keep it as a port, with the difference recorded | Nothing to build. A deployment on rdflib gets literal links and a self-link |
+   | B. Compute the canonical owner as `IRI(MIN(STR(?owner)))` | An IRI on both, and the self-link goes since `?other != ?canonical` then compares two IRIs. A change and not a port (typed IR sketch §7.1), so the template changed with the builder and the harness still holds them equal |
    | C. As B, plus a shape that the merge relation's objects are IRIs | B, and the property is checked in the data. A shape on the adopter's merge relation belongs with H2.7's vocabulary |
 
-   Our leaning is B in H2.7's slice, with the template left until H2.9, since the profile's expected contract (H2.6) can state the
-   canonical owner is an IRI.
-2. **Arithmetic is always parenthesised, and the harness reads a left-nested chain as the flat one** (TSD-17). It keeps the gap scan right on Oxigraph at
-   the price of a builder that is algebra-equal to its template and not text-equal. The alternative, to render the chain as the template does, would
-   leave the gap scan wrong on Oxigraph. The Mustache template of the gap scan is still wrong there until H2.9 retires it.
-3. **`Select` carries `distinct`, `order_by`, `limit` and `offset` so that each can be refused with `FragmentLimit`.** That gives the plan's "each with a
+   Built: the template and the builder project `IRI(MIN(STR(?owner)))`. The checker now lets an aggregate sit inside a scalar function of a projection (and still
+   refuses one inside another aggregate), and the boundness rule follows the function (`IRI(MIN(...))` is bound with a `GROUP BY` and not without).
+   H2.5-T29 and T30 now hold on both engines with no engine branch: links to the lowest owner, none to itself, all IRIs. Option C stays with H2.7.
+2. **Open: how the builder and the template agree about arithmetic** (TSD-17). Oxigraph groups `?S - ?L + 1` from the right, so the gap scan's template, written as a
+   chain, counts wrongly there. To keep the builder right we made two changes. The renderer always writes the parentheses of a nested arithmetic operand, and the
+   equivalence harness reads a left-nested chain as the flat chain it equals, since SPARQL defines them as one expression. So the builder is equal to its template
+   as algebra and not as text. The question is whether that is how we want it, or whether the template should change too, as for decision 1.
+
+   | Option | Consequence |
+   |---|---|
+   | A. Keep what is built | The harness has one normalisation beyond reordering what SPARQL does not order. The template of the gap scan stays wrong on Oxigraph until H2.9, reachable only through an overriding template directory (H2.2-T18) |
+   | B. Parenthesise the template as well, and remove the harness normalisation | Template and builder agree as text, the harness is back to reordering only, and the known defect leaves the legacy path. A one-line template change, and a template and a builder that move together as in decision 1 |
+   | C. Render the chain flat, as the template has it | The gap scan reports every complete stream as a gap on Oxigraph. Not recommended |
+
+   Our leaning is B. A smaller trusted harness is worth the template edit, and decision 1 has already put the template and the builder on the same footing.
+3. **Decided 2026-10-13: fine for now.** `Select` carries `distinct`, `order_by`, `limit` and `offset` so that each can be refused with `FragmentLimit`.** That gives the plan's "each with a
    refusal test", at the price of four fields nothing uses. The alternative is no fields, and a limit that is simply unrepresentable and untested.
 
 ## Deviations from the plan
@@ -104,14 +115,14 @@ form, and expects no guard group at all for an operation with no required parame
 | H2.5-T22, T23 | each key-claim operation with one parameter left out / guards on and off / nothing written with the guard, the recorded writes without (8 cases, both engines) | L4 | TD-34 | ± |
 | H2.5-T24 | a stored literal owner / a write by an IRI owner / refused | L4 | the data invariant | - |
 | H2.5-T25 to T28 | quarantine / duplicated claims, a second run, another constraint, a third owner joining / every owner recorded once, nothing deleted, nothing repeated | L4 | idempotent quarantine | ± |
-| H2.5-T29, T30, T30b | merge-rewrite / owners 1 to 3, a second run, a lower owner joining later / links to the lowest, once, as TSD-16 says per engine | L4 | merge | ± |
+| H2.5-T29, T30, T30b | merge-rewrite / owners 1 to 3, a second run, a lower owner joining later / links to the lowest, once, all IRIs, none to itself, the same on both engines | L4 | merge | ± |
 | H2.5-T31 | merge-rewrite / a claim with one owner / nothing | L4 | scope of the merge | - |
 | H2.5-T32, T33 | the duplicate audit / a clean store, a duplicate, another constraint / the claim, `n`, a set of owners, nothing | L4 | audit finds its defect | ± |
 | H2.5-T34 | the fork audit / two transaction claims on one revision / reported | L4 | audit finds its defect | ± |
 | H2.5-T35, T36b | the receipt audits / a merged fork and a request applied twice across buckets, the pinned graph, an unlisted bucket, one receipt held twice / reported, or not | L4 | audit finds its defect, `DISTINCT` | ± |
 | H2.5-T36, T37, T38 | the gap scan / 8 shapes of receipts, rows and low-water marks, a receipt out of range, and an append then a replace / reported or clean | L4 | audit finds its defect | ± |
 | H2.5-T39, T40 | the ten operations / roles of every access, the role table / as listed, no entry added | L1 | gate 3 | + |
-| H2.5-T41 to T45 | `MIN` over IRIs, `COUNT(DISTINCT)` over mixed integers, a duplicate seq, a chain of operators, `GROUP_CONCAT` under hash seeds / each engine / as TSD-16 to TSD-19 | L4 | what each engine does | + |
+| H2.5-T41 to T45 | `MIN` over IRIs (the store finding, kept), `COUNT(DISTINCT)` over mixed integers, a duplicate seq, a chain of operators, `GROUP_CONCAT` under hash seeds / each engine / as TSD-16 to TSD-19 | L4 | what each engine does | + |
 | H2.5-T46 | `NOW()` bound to a parameter's name / `check` / `NameCollision` | L1 | gate 6 | - |
 | H2.5-T47 | six mutated queries or sub-selects / the harness / `Mismatch` | L2 | the harness catches a changed query | - |
 | H2.2-T1 to T6, T20, T21 and H2.3-T32 | the ported list, equality with every template (now 27), reads, roles, guard position / run / pass for the ten new operations too | L3 | the port | ± |
@@ -121,7 +132,7 @@ form, and expects no guard group at all for an operation with no required parame
 Run from the repository root. `check:persistence` is the gate.
 
 ```bash
-mise run check:persistence                   # 2592 passed, 1 xfailed here (2111 before this slice)
+mise run check:persistence                   # 2596 passed, 1 xfailed here (2111 before this slice)
 mise run check:persistence-oxigraph          # 5 adapter tests and 189 Oxigraph cases, about 15 s (66 before this slice)
 ```
 
@@ -143,7 +154,7 @@ Run on 2026-10-13 on the committed slice, each file restored from git afterwards
 | a sub-select that leaks an inner variable accepted (`SubSelectLeak` skipped) | 4 refusal cases fail |
 | the `NOT EXISTS` of `key-claim-write` correlated to nothing | 4 cases fail (T15, T16, on both engines) |
 | `revision-multi-txn-audit` without its `DISTINCT` | H2.5-T36b fails on both engines |
-| `MIN` replaced by `MAX` in merge-rewrite | 4 cases fail (H2.5-T29) |
+| `MIN` replaced by `MAX` in merge-rewrite | the merge cases fail (H2.5-T29, T30b), run again after decision 1 |
 | the parentheses dropped from the gap scan's chain | 7 cases fail (the gap-scan cases on Oxigraph and T44) |
 
 ## Deliberate non-coverage
