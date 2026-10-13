@@ -79,7 +79,7 @@ def created(root=ROOT, *, dataset_epoch: int | None = None) -> Dataset:
 # ---- create-if-absent ------------------------------------------------------------------------------------------
 
 
-@engines.each_engine
+@engines.each_engine_and_guards
 def test_h2_3_t3_a_create_writes_the_payload_into_the_roots_own_graph_and_a_version_row_at_seq_1():
     ds = created()
     assert quads(ds, graph_of(ROOT)) == {("urn:root:1", "urn:p", "v1")}
@@ -90,7 +90,7 @@ def test_h2_3_t3_a_create_writes_the_payload_into_the_roots_own_graph_and_a_vers
     assert len(receipts) == 1 and (URIRef(f"urn:rev:{ROOT}/1"), URIRef(PAT + "target"), ROOT) in receipts[0]
 
 
-@engines.each_engine
+@engines.each_engine_and_guards
 def test_h2_3_t4_a_second_create_of_the_same_root_writes_nothing():
     ds = created()
     before = everything(ds)
@@ -108,7 +108,7 @@ def test_h2_3_t5_without_a_root_nothing_is_written_and_without_the_guard_a_claim
     assert not any(g == "urn:g:meta" for g, *_ in written) and not any(g.startswith("urn:g:orders/") for g, *_ in written)
 
 
-@engines.each_engine
+@engines.each_engine_and_guards
 def test_h2_3_t6_a_create_under_the_dataset_guard_needs_the_matching_dataset_epoch():
     assert quads(created(dataset_epoch=3), graph_of(ROOT)) == {("urn:root:1", "urn:p", "v1")}
     ds = engines.dataset()
@@ -120,7 +120,7 @@ def test_h2_3_t6_a_create_under_the_dataset_guard_needs_the_matching_dataset_epo
 # ---- unconditional-write -----------------------------------------------------------------------------------------
 
 
-@engines.each_engine
+@engines.each_engine_and_guards
 def test_h2_3_t7_an_unconditional_write_writes_into_the_roots_graph_and_nowhere_else():
     ds = run("unconditional-write", engines.dataset(), {"root": ROOT})
     assert everything(ds) == {(str(graph_of(ROOT)), "urn:root:1", "urn:p", "v1")}
@@ -139,7 +139,7 @@ def test_h2_3_t8_a_literal_root_builds_a_graph_name_only_without_the_guard_and_a
 # ---- cas-replace ---------------------------------------------------------------------------------------------------
 
 
-@engines.each_engine
+@engines.each_engine_and_guards
 def test_h2_3_t9_a_replace_leaves_exactly_the_payload_and_moves_the_row():
     ds = created()
     run("cas-replace-named-graph", ds, replace_args(), payload=PAYLOAD2)
@@ -149,7 +149,7 @@ def test_h2_3_t9_a_replace_leaves_exactly_the_payload_and_moves_the_row():
     assert (str(ROOT), "head", f"urn:rev:{ROOT}/2") in meta and (str(ROOT), "head", f"urn:rev:{ROOT}/1") not in meta
 
 
-@engines.each_engine
+@engines.each_engine_and_guards
 def test_h2_3_t10_a_replace_at_the_wrong_seq_writes_nothing():
     ds = created()
     before = everything(ds)
@@ -157,7 +157,7 @@ def test_h2_3_t10_a_replace_at_the_wrong_seq_writes_nothing():
     assert everything(ds) == before
 
 
-@engines.each_engine
+@engines.each_engine_and_guards
 def test_h2_3_t11_the_first_replace_after_a_create_chains_its_receipt_to_the_create():
     ds = created()
     run("cas-replace-named-graph", ds, replace_args(), payload=PAYLOAD2)
@@ -165,7 +165,7 @@ def test_h2_3_t11_the_first_replace_after_a_create_chains_its_receipt_to_the_cre
     assert (URIRef(f"urn:rev:{ROOT}/2"), URIRef(PAT + "prevRev"), URIRef(f"urn:rev:{ROOT}/1")) in receipts
 
 
-@engines.each_engine
+@engines.each_engine_and_guards
 def test_h2_3_t12_a_replace_without_asserted_and_retracted_graphs_writes_the_receipt_without_those_two_triples():
     ds = created()
     run("cas-replace-named-graph", ds, replace_args(), payload=PAYLOAD2)
@@ -178,7 +178,7 @@ def test_h2_3_t12_a_replace_without_asserted_and_retracted_graphs_writes_the_rec
     assert (URIRef(f"urn:rev:{ROOT}/3"), URIRef(PAT + "asserts"), URIRef("urn:g:added")) in receipts
 
 
-@engines.each_engine
+@engines.each_engine_and_guards
 def test_h2_3_t13_a_replace_of_one_root_leaves_another_roots_graph_alone():
     ds = created()
     run("create-if-absent-named-graph", ds, create_args(OTHER, n=3), payload='<urn:root:2> <urn:p> "other" .')
@@ -187,7 +187,7 @@ def test_h2_3_t13_a_replace_of_one_root_leaves_another_roots_graph_alone():
     assert quads(ds, graph_of(OTHER)) == other == {("urn:root:2", "urn:p", "other")}
 
 
-@engines.each_engine
+@engines.each_engine_and_guards
 def test_h2_3_t14_a_replay_of_a_replace_changes_nothing():
     ds = created()
     run("cas-replace-named-graph", ds, replace_args(), payload=PAYLOAD2)
@@ -196,7 +196,7 @@ def test_h2_3_t14_a_replay_of_a_replace_changes_nothing():
     assert everything(ds) == before
 
 
-@engines.each_engine
+@engines.each_engine_and_guards
 def test_h2_3_t15_a_replace_under_the_dataset_guard_rebases_the_rows_epoch():
     ds = created(dataset_epoch=3)
     ds.graph(URIRef("urn:g:dataset")).remove((None, None, None))
@@ -227,7 +227,7 @@ def test_h2_3_t16_a_replace_with_no_root_writes_nothing_where_without_the_guard_
 # ---- tombstone-delete --------------------------------------------------------------------------------------------
 
 
-@engines.each_engine
+@engines.each_engine_and_guards
 def test_h2_3_t17_a_tombstone_empties_the_graph_marks_the_row_and_writes_a_deletion_receipt_with_cause_and_actor():
     ds = created()
     run("tombstone-delete-named-graph", ds, tombstone_args())
@@ -239,7 +239,7 @@ def test_h2_3_t17_a_tombstone_empties_the_graph_marks_the_row_and_writes_a_delet
     assert (rev, URIRef(PAT + "cause"), URIRef("urn:cause:gdpr")) in receipts and (rev, URIRef(PAT + "actor"), URIRef("urn:actor:admin")) in receipts
 
 
-@engines.each_engine
+@engines.each_engine_and_guards
 def test_h2_3_t18_after_a_tombstone_a_replace_writes_nothing_and_a_replay_of_the_tombstone_changes_nothing():
     ds = created()
     run("tombstone-delete-named-graph", ds, tombstone_args())
@@ -249,7 +249,7 @@ def test_h2_3_t18_after_a_tombstone_a_replace_writes_nothing_and_a_replay_of_the
     assert everything(ds) == before
 
 
-@engines.each_engine
+@engines.each_engine_and_guards
 def test_h2_3_t19_a_tombstone_under_the_dataset_guard_needs_the_matching_dataset_epoch():
     ds = created(dataset_epoch=3)
     ds.graph(URIRef("urn:g:dataset")).remove((None, None, None))
@@ -279,7 +279,7 @@ def _normalised(ds: Dataset) -> set:
     return {(g, s, p, "<time>" if p.endswith("recordedAt") else o) for g, s, p, o in everything(ds)}
 
 
-@engines.each_engine
+@engines.each_engine_and_guards
 def test_h2_3_t21_with_the_right_g_a_replace_gives_the_same_result_as_the_query_naming_the_graph():
     by_query = created()
     run("cas-replace-named-graph", by_query, replace_args(), payload=PAYLOAD2)
@@ -327,7 +327,7 @@ def _substitute(text: str, args: dict) -> str:
     return text
 
 
-@engines.each_engine
+@engines.each_engine_and_guards
 def test_h2_3_t25_a_caller_that_substitutes_text_gets_a_constant_graph_and_the_same_result():
     args = {**replace_args(), "g": graph_of(ROOT)}
     text = render(build("cas-replace-named-graph", CONTEXT, guards=engines.guards(), graph_names="caller")).replace(SLOT, PAYLOAD2)

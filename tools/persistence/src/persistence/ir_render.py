@@ -16,6 +16,7 @@ with prefixes, so the output reads like the templates it replaces.
 
 from __future__ import annotations
 
+import dataclasses
 import re
 from dataclasses import dataclass, field
 from typing import Iterable, Optional
@@ -26,7 +27,7 @@ from .ir import (
     Binding, Bind, Compare, Const, Expr, Filter, Func, Graph, GraphBlock, Group, IrError, Kind,
     Not, NotExists, Op, Operation, Optional_, Param, ParameterGuard, ParamRef, Path, PayloadSlot, Projected, RdfType,
     RegistrySlot,
-    SLOT_KINDS, Select, TermGuard, Triple, Union_, ValueGuard, Values, Var,
+    SLOT_KINDS, Select, SubSelect, TermGuard, Triple, Union_, ValueGuard, Values, Var,
 )
 from .namespaces import PAT
 from .terms import Iri, Literal
@@ -59,6 +60,10 @@ RULES: tuple[str, ...] = (
     "UnknownFunction",
     "UnknownOperator",
     "AggregateOutsideSelect",
+    "UngroupedProjection",
+    "HavingNotGrouped",
+    "SubSelectLeak",
+    "FragmentLimit",
 )
 """Every refusal, in the order a reader meets it. A test names each one."""
 
@@ -75,7 +80,48 @@ _ARITHMETIC = {"+", "-", "*", "/"}
 _BOOLEAN = {"&&", "||"}
 _COMPARISONS = {"=", "!=", "<", "<=", ">", ">="}
 _TERM_PINNED = frozenset({Kind.LONG, Kind.POSITION, Kind.DIGEST, Kind.STRING, Kind.LANG_STRING})
-_GUARD_DATATYPE = {Kind.LONG: XSD.long, Kind.POSITION: XSD.long, Kind.DIGEST: XSD.string, Kind.STRING: XSD.string}
+_GUARD_DATATYPE = {Kind.DIGEST: XSD.string, Kind.STRING: XSD.string}
+
+
+def _has_aggregate(expr) -> bool:
+    if isinstance(expr, Func):
+        return expr.name in AGGREGATES or any(_has_aggregate(a) for a in expr.args)
+    if isinstance(expr, (Op, ValueGuard, TermGuard)):
+        return _has_aggregate(expr.left) or _has_aggregate(expr.right)
+    if isinstance(expr, Not):
+        return _has_aggregate(expr.arg)
+    return False
+
+
+def _free_vars(expr) -> set:
+    """The variables of ``expr`` outside any aggregate, which a grouped query allows only if they are group keys."""
+    if isinstance(expr, Var):
+        return {expr.name}
+    if isinstance(expr, Func):
+        return set() if expr.name in AGGREGATES else set().union(*(_free_vars(a) for a in expr.args))
+    if isinstance(expr, (Op, ValueGuard, TermGuard)):
+        return _free_vars(expr.left) | _free_vars(expr.right)
+    if isinstance(expr, Not):
+        return _free_vars(expr.arg)
+    return set()
+
+
+def _projected_names(select: Select) -> set:
+    return {i.name if isinstance(i, Var) else i.var.name for i in select.projection}
+
+
+def _var_names(node, expand: Optional[SubSelect] = None) -> set:
+    """Every variable name in an IR value. A sub-select other than ``expand`` contributes its projections only, since
+    nothing else of it is visible outside."""
+    if isinstance(node, Var):
+        return {node.name}
+    if isinstance(node, SubSelect) and node is not expand:
+        return _projected_names(node.select)
+    if dataclasses.is_dataclass(node) and not isinstance(node, type):
+        return set().union(*(_var_names(getattr(node, f.name), expand) for f in dataclasses.fields(node)))
+    if isinstance(node, (tuple, list)):
+        return set().union(*(_var_names(i, expand) for i in node))
+    return set()
 
 
 # ---------------------------------------------------------------------------
@@ -128,6 +174,8 @@ class _Checker:
         self.slot_uses: list[str] = []
         self.reads: set[Access] = set()
         self.writes: set[Access] = set()
+        self.subselects: list[SubSelect] = []
+        self.depth = 0
 
     # ---- entry
 
@@ -150,9 +198,11 @@ class _Checker:
         scope = _Scope(set(), set())
         self._group(op.where.elements, scope, graph=None)
         if is_select:
-            self._select(op.select)
+            self._check_select(op.select, sub=False)
+            self._projection_bound(op.select, self._mentioned(op.where.elements))
         else:
             self._template_variables(scope)
+        self._sub_select_leaks()
         self._params_used()
         return AccessSets(frozenset(self.reads), frozenset(self.writes))
 
@@ -350,6 +400,21 @@ class _Checker:
                 scope.definite |= common
                 scope.possible |= every - common
             return names
+        if isinstance(el, SubSelect):
+            if self.depth:
+                raise IrError("FragmentLimit", f"{self.op.id}: a sub-select inside a sub-select is outside the fragment (ADR-A123, addendum of 2026-10-13)")
+            self._check_select(el.select, sub=True)
+            # A sub-select is evaluated on its own, so it starts with nothing in scope, and only its projections leave it.
+            inner = _Scope(set(), set(), set())
+            self.depth += 1
+            self._group(el.where.elements, inner, graph)
+            self.depth -= 1
+            self._projection_bound(el.select, self._mentioned(el.where.elements))
+            definite, possible = self._select_names(el.select, inner)
+            scope.definite |= definite
+            scope.possible |= possible - definite
+            self.subselects.append(el)
+            return _projected_names(el.select)
         if isinstance(el, Group):
             inner = scope.inner()
             self._group(el.elements, inner, graph)
@@ -386,6 +451,8 @@ class _Checker:
             elif isinstance(el, Union_):
                 for g in el.groups:
                     names |= self._mentioned(g.elements)
+            elif isinstance(el, SubSelect):
+                names |= _projected_names(el.select)
             elif isinstance(el, Bind):
                 names.add(el.var.name)
             elif isinstance(el, Values):
@@ -487,6 +554,8 @@ class _Checker:
                     walk(el.group.elements)
                 elif isinstance(el, Group):
                     walk(el.elements)
+                elif isinstance(el, SubSelect):
+                    walk(el.where.elements)
                 elif isinstance(el, Union_):
                     for g in el.groups:
                         walk(g.elements)
@@ -595,22 +664,91 @@ class _Checker:
 
     # ---- select
 
-    def _select(self, select: Select) -> None:
+    def _check_select(self, select: Select, *, sub: bool) -> None:
+        """The rules of a ``SELECT`` that hold whether it is a query or a sub-select (ADR-A123, addendum of 2026-10-13)."""
+        op = self.op.id
+        if select.order_by or select.limit is not None or select.offset is not None:
+            raise IrError("FragmentLimit", f"{op}: ORDER BY, LIMIT and OFFSET are outside the fragment, since an order differs by store and a limit makes a result depend on it")
+        if select.distinct and sub:
+            raise IrError("FragmentLimit", f"{op}: DISTINCT inside a sub-select is outside the fragment, since it changes the counts above it")
         for item in select.projection:
             if isinstance(item, Var):
                 self._var(item)
             elif isinstance(item, Projected):
+                if not isinstance(item.var, Var):
+                    raise IrError("InvalidForm", f"{op}: a projected expression needs a Var to bind")
                 self._var(item.var)
                 self._expr(item.expr, guard=False, aggregate_ok=True)
             else:
-                raise IrError("InvalidForm", f"{self.op.id}: a SELECT list holds Vars and Projected expressions, got {item!r}")
+                raise IrError("InvalidForm", f"{op}: a SELECT list holds Vars and Projected expressions, got {item!r}")
         for var in select.group_by:
             if not isinstance(var, Var):
-                raise IrError("InvalidForm", f"{self.op.id}: GROUP BY holds Vars")
+                raise IrError("InvalidForm", f"{op}: GROUP BY holds Vars")
             self._var(var)
+        grouped = {v.name for v in select.group_by}
+        aggregating = bool(grouped) or any(isinstance(i, Projected) and _has_aggregate(i.expr) for i in select.projection) or bool(select.having)
+        if aggregating:
+            for item in select.projection:
+                free = {item.name} if isinstance(item, Var) else _free_vars(item.expr)
+                loose = free - grouped
+                if loose:
+                    raise IrError(
+                        "UngroupedProjection",
+                        f"{op}: ?{sorted(loose)[0]} is projected and is neither a GROUP BY key nor inside an aggregate. SPARQL refuses the query, "
+                        "or a store may pick any value",
+                    )
         for expr in select.having:
             self._expr(expr, guard=True, aggregate_ok=True)
             self._clock_check(expr, True)
+            loose = _free_vars(expr) - grouped
+            if loose:
+                raise IrError(
+                    "HavingNotGrouped",
+                    f"{op}: ?{sorted(loose)[0]} in HAVING is neither a GROUP BY key nor inside an aggregate, so the test is an error "
+                    "and the group is dropped with no message",
+                )
+
+    def _projection_bound(self, select: Select, mentioned: set) -> None:
+        for name in [*(_projected_names(select) & {i.name for i in select.projection if isinstance(i, Var)}), *(v.name for v in select.group_by)]:
+            if name not in mentioned:
+                raise IrError("InvalidForm", f"{self.op.id}: ?{name} is projected or grouped and the WHERE never binds it")
+
+    def _select_names(self, select: Select, inner: _Scope) -> tuple[set, set]:
+        """The projected names of a sub-select that are bound in every solution, and those that may not be (the boundness
+        table of the plan, 4.3). Only ``COUNT`` is bound over an empty group, and any other aggregate needs a ``GROUP BY``
+        and an argument that is bound in every inner solution."""
+        definite: set = set()
+        possible: set = set()
+        for item in select.projection:
+            if isinstance(item, Var):
+                ok = item.name in inner.definite
+                name = item.name
+            else:
+                name = item.var.name
+                expr = item.expr
+                if isinstance(expr, Func) and expr.name in AGGREGATES:
+                    if expr.name == "COUNT":
+                        ok = True
+                    else:
+                        ok = bool(select.group_by) and self._definitely_bound(expr.args[0], inner)
+                else:
+                    ok = self._definitely_bound(expr, inner)
+            (definite if ok else possible).add(name)
+        return definite, possible
+
+    def _sub_select_leaks(self) -> None:
+        if not self.subselects:
+            return
+        outside = _var_names(self.op)
+        for sub in self.subselects:
+            hidden = _var_names(sub, expand=sub) - _projected_names(sub.select)
+            leaked = hidden & outside
+            if leaked:
+                raise IrError(
+                    "SubSelectLeak",
+                    f"{self.op.id}: ?{sorted(leaked)[0]} is used inside a sub-select and outside it without being projected. "
+                    "The two are different variables, so the outer use is joined to nothing",
+                )
 
     # ---- access
 
@@ -717,6 +855,8 @@ class _Out:
                 left = self.expr(e.left) if _same_op(e.left, e.op) or _comparison(e.left) else self._wrap(e.left)
                 right = self.expr(e.right) if _same_op(e.right, e.op) or _comparison(e.right) else self._wrap(e.right)
             else:
+                # Always parenthesise a nested operand, even a left one of the same precedence. SPARQL 1.1 reads `a - b + c`
+                # as `(a - b) + c`, and Oxigraph 0.5.11 evaluates it as `a - (b + c)` (TSD-17).
                 left, right = self._wrap(e.left), self._wrap(e.right)
             return f"{left} {e.op} {right}"
         raise IrError("UnknownOperator", f"{e!r} is not an expression")
@@ -783,6 +923,10 @@ class _Out:
                 ("{{{" + i.param + "}}}") if isinstance(i, RegistrySlot) else self.term(i) for i in el.items
             )
             return [f"VALUES ?{el.var.name} {{ {items} }}"]
+        if isinstance(el, SubSelect):
+            block = self.braced("", self.select_lines(el.select, self.statements(el.where.elements)))
+            block[0] = block[0].lstrip()
+            return block
         if isinstance(el, Union_):
             out: list[str] = []
             for i, g in enumerate(el.groups):
@@ -799,6 +943,21 @@ class _Out:
             block[0] = block[0].lstrip()
             return block
         raise IrError("UnsupportedInTemplate", f"{el!r} is not a pattern element")
+
+    def select_lines(self, select: Select, where_lines: list[str]) -> list[str]:
+        """``SELECT``, ``WHERE``, ``GROUP BY`` and ``HAVING`` of a query or a sub-select."""
+        head = "SELECT " + ("DISTINCT " if select.distinct else "") + " ".join(self.projection(i) for i in select.projection)
+        lines = [head, "WHERE {", *("  " + ln for ln in where_lines), "}"]
+        if select.group_by:
+            lines.append("GROUP BY " + " ".join(f"?{v.name}" for v in select.group_by))
+        for h in select.having:
+            lines.append(f"HAVING ({self.expr(h)})")
+        return lines
+
+    def projection(self, item) -> str:
+        if isinstance(item, Var):
+            return f"?{item.name}"
+        return f"({self.expr(item.expr)} AS ?{item.var.name})"
 
     def graph_block(self, block: GraphBlock) -> list[str]:
         head = f"GRAPH {self.term(block.graph.term)}"
@@ -824,8 +983,15 @@ def _guard_expr(op: Operation) -> Optional[Expr]:
         elif param.kind is Kind.IRI_OR_LITERAL:
             # any bound IRI or literal: a value the adopter owns, such as the valid time of an event
             conjuncts.append(Op("||", Func("ISIRI", (ref,)), Func("ISLITERAL", (ref,))))
+        elif param.kind is Kind.LITERAL:
+            # any literal without a language tag, so a timestamp of any datatype passes and an IRI or a missing value does not
+            conjuncts.append(Op("&&", Func("ISLITERAL", (ref,)), ValueGuard("=", Func("LANG", (ref,)), Const(Literal.encode("")))))
         elif param.kind is Kind.LANG_STRING:
             conjuncts.append(ValueGuard("!=", Func("LANG", (ref,)), Const(Literal.encode(""))))
+        elif param.kind in (Kind.LONG, Kind.POSITION):
+            # Guard D (ADR-A123, addendum of 2026-10-13): the datatype is compared with what the store makes of an xsd:long
+            # constant, so the test adapts to a store that does not keep numeric datatypes (TSD-07).
+            conjuncts.append(ValueGuard("=", Func("DATATYPE", (ref,)), Func("DATATYPE", (Const(Literal.encode("0", datatype=str(XSD.long))),))))
         else:
             conjuncts.append(ValueGuard("=", Func("DATATYPE", (ref,)), Const(Iri.encode(str(_GUARD_DATATYPE[param.kind])))))
         if param.equals is not None:
@@ -850,28 +1016,17 @@ def render(op: Operation) -> str:
         # the guard would pass. In its own group the guard is tested before anything can bind the parameter.
         where_elements.insert(0, Group((Filter(guard),)))
     body: list[str] = []
+    where_lines = out.statements(tuple(where_elements))
     if op.select is not None:
-        body.append("SELECT " + " ".join(_projection(out, i) for i in op.select.projection))
+        body.extend(out.select_lines(op.select, where_lines))
     else:
         if op.delete:
             body.extend(_template_lines(out, "DELETE", op.delete))
         if op.insert:
             body.extend(_template_lines(out, "INSERT", op.insert))
-    where_lines = out.statements(tuple(where_elements))
-    body.extend(["WHERE {", *("  " + ln for ln in where_lines), "}"])
-    if op.select is not None:
-        if op.select.group_by:
-            body.append("GROUP BY " + " ".join(f"?{v.name}" for v in op.select.group_by))
-        for h in op.select.having:
-            body.append(f"HAVING ({out.expr(h)})")
+        body.extend(["WHERE {", *("  " + ln for ln in where_lines), "}"])
     prefixes = [f"PREFIX {p}: <{_PREFIXES[p]}>" for p in sorted(out.used)]
     return "\n".join([*prefixes, *([""] if prefixes else []), *body]) + "\n"
-
-
-def _projection(out: _Out, item) -> str:
-    if isinstance(item, Var):
-        return f"?{item.name}"
-    return f"({out.expr(item.expr)} AS ?{item.var.name})"
 
 
 def _template_lines(out: _Out, keyword: str, blocks: Iterable[GraphBlock]) -> list[str]:

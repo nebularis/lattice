@@ -106,14 +106,14 @@ def _graphs_holding(ds: Dataset, obj: Literal) -> set[str]:
 DATA_GRAPH_NAME = "urn:g:orders"
 
 
-@engines.each_engine
+@engines.each_engine_and_guards
 def test_ho1_t1_the_payload_lands_in_the_data_graph_and_nowhere_else():
     ds = _dataset(PLAIN)
     _replace(ds, PLAIN)
     assert _graphs_holding(ds, Literal("paid")) == {DATA_GRAPH_NAME}
 
 
-@engines.each_engine
+@engines.each_engine_and_guards
 def test_ho1_t2_the_old_payload_is_gone_and_no_payload_triple_is_in_a_log_graph():
     ds = _dataset(PLAIN)
     _replace(ds, PLAIN)
@@ -122,7 +122,7 @@ def test_ho1_t2_the_old_payload_is_gone_and_no_payload_triple_is_in_a_log_graph(
     assert payload_in_log == []
 
 
-@engines.each_engine
+@engines.each_engine_and_guards
 def test_ho1_t3_one_revision_for_sequence_two_is_in_a_log_graph():
     ds = _dataset(PLAIN)
     _replace(ds, PLAIN)
@@ -132,7 +132,7 @@ def test_ho1_t3_one_revision_for_sequence_two_is_in_a_log_graph():
     assert [q[2] for q in seqs] == [engines.canon(Literal(2, datatype=XSD.long))]
 
 
-@engines.each_engine
+@engines.each_engine_and_guards
 def test_ho1_t4_the_dataset_guard_variant_does_the_same():
     ds = _dataset(DATASET_GUARD)
     _replace(ds, DATASET_GUARD)
@@ -141,7 +141,7 @@ def test_ho1_t4_the_dataset_guard_variant_does_the_same():
     assert len([q for q in _quads(ds) if q[1] == RDF.type and q[2] == URIRef(PAT + "Revision")]) == 1
 
 
-@engines.each_engine
+@engines.each_engine_and_guards
 @pytest.mark.parametrize("template", [PLAIN, DATASET_GUARD])
 def test_ho1_t5_the_sweep_does_work_linear_in_the_aggregate(template):
     """A root of 5 triples and 3 line items of 4 triples each. One solution per triple of the
@@ -157,7 +157,7 @@ def test_ho1_t5_the_sweep_does_work_linear_in_the_aggregate(template):
     assert int(row[0]) == 17
 
 
-@engines.each_engine
+@engines.each_engine_and_guards
 def test_ho1_t6_a_stale_sequence_changes_nothing():
     ds = _dataset(PLAIN)
     before = _quads(ds)

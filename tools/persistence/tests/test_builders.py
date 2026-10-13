@@ -54,7 +54,7 @@ def _first(stem: str):
 
 
 def test_h2_2_t1_the_ported_operations_are_the_templates_listed_and_every_one_is_generated_by_a_fixture():
-    assert PORTED == [
+    assert PORTED == sorted([
         "append-event", "append-event-dataset-guard", "bootstrap-version-row", "bootstrap-version-row-dataset-guard",
         "cas-replace-composite-property", "cas-replace-composite-property-dataset-guard",
         "cas-replace-named-graph", "cas-replace-named-graph-dataset-guard",
@@ -62,7 +62,10 @@ def test_h2_2_t1_the_ported_operations_are_the_templates_listed_and_every_one_is
         "create-if-absent-named-graph", "create-if-absent-named-graph-dataset-guard",
         "tombstone-delete-composite", "tombstone-delete-composite-dataset-guard",
         "tombstone-delete-named-graph", "tombstone-delete-named-graph-dataset-guard", "unconditional-write",
-    ]
+        # H2.5: the key claims and the audits. Every template is ported, apart from cas-replace-value-guard (TD-43).
+        "key-claim-write", "key-claim-write-dual", "key-claim-retire", "key-claim-quarantine", "key-claim-merge-rewrite",
+        "key-claim-duplicate-audit", "fork-detection-audit", "gap-scan-audit", "revision-multi-txn-audit", "txn-multi-revision-audit",
+    ])
     assert {stem for _, _, stem, _ in _ported()} == set(PORTED)
 
 
@@ -137,11 +140,13 @@ def _expected_guard_line(params) -> str:
         if p.kind is Kind.IRI:
             tests.append(f"ISIRI(${p.name})")
         elif p.kind in (Kind.LONG, Kind.POSITION):
-            tests.append(f"DATATYPE(${p.name}) = xsd:long")
+            tests.append(f"DATATYPE(${p.name}) = DATATYPE(\"0\"^^xsd:long)")
         elif p.kind in (Kind.DIGEST, Kind.STRING):
             tests.append(f"DATATYPE(${p.name}) = xsd:string")
         elif p.kind is Kind.IRI_OR_LITERAL:
             tests.append(f"(ISIRI(${p.name}) || ISLITERAL(${p.name}))")
+        elif p.kind is Kind.LITERAL:
+            tests.append(f'ISLITERAL(${p.name}) && LANG(${p.name}) = ""')
         if p.equals is not None:  # computed from the parameter list, as the type tests are
             tests.append(_Out().expr(TermGuard(ParamRef(p.name), p.equals)))
     return "FILTER(" + " && ".join(tests) + ")"
@@ -156,8 +161,12 @@ def test_h2_2_t6_the_guard_is_exactly_one_group_with_one_filter_of_type_tests_fi
     assert bare.guard == GUARDS_OFF and guarded.guard != GUARDS_OFF
     assert dataclasses.replace(guarded, guard=GUARDS_OFF) == bare
     on, off = render(guarded).splitlines(), render(bare).splitlines()
+    required = [p for p in guarded.params if p.required and p.kind not in SLOT_KINDS]
+    if not required:
+        assert on == off  # nothing to require, so no guard group at all (plan 4.3, gate 1)
+        return
     start = on.index("WHERE {")
-    line = _expected_guard_line([p for p in guarded.params if p.required and p.kind not in SLOT_KINDS])
+    line = _expected_guard_line(required)
     # one group, one FILTER, first in WHERE, on one line when short and on three otherwise
     candidates = [["  { " + line + " }"], ["  {", "    " + line, "  }"]]
     assert any(on == off[: start + 1] + group + off[start + 1:] for group in candidates)
@@ -202,7 +211,7 @@ def _meta(ds: Dataset) -> set:
     return {(str(s), str(p).removeprefix(PAT), str(o)) for s, p, o in ds.graph(URIRef("urn:g:meta"))}
 
 
-@engines.each_engine
+@engines.each_engine_and_guards
 def test_h2_2_t7_append_writes_the_event_the_receipt_the_log_and_moves_the_head():
     ds = _run("append-event", _store(), APPEND)
     rev = "urn:rev:orders/1/e3/0000000000000000001"
@@ -215,7 +224,7 @@ def test_h2_2_t7_append_writes_the_event_the_receipt_the_log_and_moves_the_head(
     assert len(log_graphs) == 1
 
 
-@engines.each_engine
+@engines.each_engine_and_guards
 def test_h2_2_t8_the_first_revision_has_no_previous_revision_and_is_still_written():
     ds = _run("append-event", _store(), APPEND)
     log = next(g for g in ds.graphs() if str(g.identifier).startswith(LOG))
@@ -223,7 +232,7 @@ def test_h2_2_t8_the_first_revision_has_no_previous_revision_and_is_still_writte
     assert len(list(log.objects(None, URIRef(PAT + "recordedAt")))) == 1
 
 
-@engines.each_engine
+@engines.each_engine_and_guards
 def test_h2_2_t9_a_retry_with_the_same_transaction_changes_nothing():
     ds = _run("append-event", _store(), APPEND)
     before = {(str(g.identifier), s, p, o) for g in ds.graphs() for s, p, o in g}
@@ -231,7 +240,7 @@ def test_h2_2_t9_a_retry_with_the_same_transaction_changes_nothing():
     assert {(str(g.identifier), s, p, o) for g in ds.graphs() for s, p, o in g} == before
 
 
-@engines.each_engine
+@engines.each_engine_and_guards
 def test_h2_2_t10_a_second_event_chains_to_the_first():
     ds = _run("append-event", _store(), APPEND)
     second = {**APPEND, "txnId": URIRef("urn:txn:2"), "event": URIRef("urn:event:2"), "opSeq": LONG(2)}
@@ -241,7 +250,7 @@ def test_h2_2_t10_a_second_event_chains_to_the_first():
     assert (URIRef("urn:rev:orders/1/e3/0000000000000000002"), URIRef(PAT + "prevRev"), URIRef("urn:rev:orders/1/e3/0000000000000000001")) in log
 
 
-@engines.each_engine
+@engines.each_engine_and_guards
 def test_h2_2_t11_the_dataset_guard_variant_writes_only_while_the_dataset_epoch_matches():
     wrote = _run("append-event-dataset-guard", _store(dataset_epoch=3), APPEND)
     assert (str(STREAM), "seq", "1") in _meta(wrote)
@@ -249,7 +258,7 @@ def test_h2_2_t11_the_dataset_guard_variant_writes_only_while_the_dataset_epoch_
     assert (str(STREAM), "seq", "0") in _meta(refused) and not any(s == str(STREAM) and p == "head" for s, p, _ in _meta(refused))
 
 
-@engines.each_engine
+@engines.each_engine_and_guards
 def test_h2_2_t12_bootstrap_creates_the_row_once():
     target = URIRef("urn:stream:new")
     ds = _run("bootstrap-version-row", engines.dataset(), {"target": target, "epoch": LONG(3)})
@@ -259,7 +268,7 @@ def test_h2_2_t12_bootstrap_creates_the_row_once():
     assert _meta(ds) == rows
 
 
-@engines.each_engine
+@engines.each_engine_and_guards
 def test_h2_2_t13_the_bootstrap_dataset_guard_variant_needs_a_matching_dataset_epoch():
     target = URIRef("urn:stream:new")
     assert _meta(_run("bootstrap-version-row-dataset-guard", _store(rows=0, dataset_epoch=4), {"target": target, "epoch": LONG(3)})) == set()

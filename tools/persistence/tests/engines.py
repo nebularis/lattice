@@ -21,12 +21,19 @@ CURRENT = "rdflib"
 DEFAULT_GRAPH = URIRef("urn:x-rdflib:default")
 ENGINES = ["rdflib", pytest.param("oxigraph", marks=pytest.mark.oxigraph)]
 each_engine = pytest.mark.usefixtures("engine")
+each_engine_and_guards = pytest.mark.usefixtures("engine", "guard_axis")
+
+
+GUARDS = True
+"""Whether a test that executes an update and does not say otherwise asks for the parameter guards. The ``guard_axis`` fixture
+sets it, so a behaviour test that does not depend on the guard runs with the guards on and off (FMH-H2-5, gate 1)."""
 
 
 def guards(requested: bool | None = None) -> bool:
     """Whether a test that executes an update asks for the parameter guards. A test that is about the guard says so. The
-    others take the engine's default: on, except where the engine cannot run the guard's datatype test (FMH-H2-4b, P5)."""
-    return (CURRENT == "rdflib") if requested is None else requested
+    others take the axis, which is on unless the ``guard_axis`` fixture turns it off. Guard D (ADR-A123, addendum of
+    2026-10-13) passes on both engines, so there is no engine default any more."""
+    return GUARDS if requested is None else requested
 
 
 _INTEGER_TYPES = {str(XSD) + n for n in ("long", "int", "short", "byte", "nonNegativeInteger", "positiveInteger", "unsignedLong", "unsignedInt", "unsignedShort", "unsignedByte", "nonPositiveInteger", "negativeInteger")}

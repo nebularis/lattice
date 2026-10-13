@@ -127,7 +127,7 @@ def _text_stand_in() -> str:
 # ---- the variants and replays (step 3, what the lifecycle tests do not) ---------------------------------------------
 
 
-@engines.each_engine
+@engines.each_engine_and_guards
 def test_h2_4a_t4_a_replay_of_a_replace_and_of_a_tombstone_changes_nothing():
     for template, kwargs in ((REPLACE, {"payload": {(ROOT, _px("name"), Literal("Back"))}}), (TOMBSTONE, {})):
         ds = _dataset(template, data=_data())
@@ -137,7 +137,7 @@ def test_h2_4a_t4_a_replay_of_a_replace_and_of_a_tombstone_changes_nothing():
         assert _quads(ds) == after, template
 
 
-@engines.each_engine
+@engines.each_engine_and_guards
 def test_h2_4a_t5_a_replace_of_a_row_whose_aggregate_is_empty_still_moves_the_row():
     """The sweep is optional. An aggregate with a row and no triples is replaced, and the payload is written."""
     ds = _dataset(REPLACE, data=None)
@@ -155,7 +155,7 @@ def _select(ds: Dataset, query: str) -> set:
         return {tuple(str(v) for v in row) for row in ds.query(query)}
 
 
-@engines.each_engine
+@engines.each_engine_and_guards
 def test_h2_4a_t6_a_path_that_may_match_no_steps_reaches_the_root_itself_and_an_inverse_step_walks_against_the_edge():
     ds = engines.dataset()
     g = ds.graph(URIRef("urn:g"))
@@ -168,7 +168,7 @@ def test_h2_4a_t6_a_path_that_may_match_no_steps_reaches_the_root_itself_and_an_
     assert absent == ({("urn:lonely",)} if engines.CURRENT == "rdflib" else set())
 
 
-@engines.each_engine
+@engines.each_engine_and_guards
 def test_h2_4a_t7_a_payload_that_keeps_a_triple_the_aggregate_already_has_keeps_it_on_an_engine_that_applies_each_solution_in_turn():
     """R0 inserts the whole payload in every solution, so the result does not depend on the order an engine applies
     removals and additions in (typed IR sketch 4.3). rdflib applies one solution at a time."""

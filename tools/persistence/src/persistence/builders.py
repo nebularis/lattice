@@ -18,8 +18,8 @@ from __future__ import annotations
 from typing import Callable, Mapping
 
 from .ir import (
-    A, Bind, Binding, Const, Filter, Func, Graph, GraphBlock, GraphRole, Group, Kind, NotExists, Op, Operation,
-    Optional_, Param, ParamRef, PayloadSlot, Path, Triple, Var,
+    A, Bind, Binding, Compare, Const, Filter, Func, Graph, GraphBlock, GraphRole, Group, Kind, NotExists, Op, Operation,
+    Optional_, Param, ParamRef, PayloadSlot, Path, Projected, RegistrySlot, Select, SubSelect, Triple, ValueGuard, Values, Var,
 )
 from .namespaces import PAT
 from .terms import Integer, Iri, Literal, PropertyPath
@@ -516,6 +516,229 @@ def _composite_tombstone(b: Bindings, *, guards: bool, dataset_guard: bool) -> O
     )
 
 
+# ---- the key claims
+
+_KEY_CLAIM = "KeyClaim"
+
+
+def _other_owner(b: Bindings, claim: ParamRef, owner: ParamRef, other: str) -> NotExists:
+    """`FILTER NOT EXISTS { GRAPH keys { claim pat:claimedBy ?other . FILTER(?other != owner) } }`. That `?other` is an IRI is a
+    data invariant, from the patterns guide's shape on `pat:claimedBy` (`sh:nodeKind sh:IRI`), assumed here and not proved by the
+    types."""
+    var = Var(other, kind=Kind.IRI)
+    return NotExists(Group((GraphBlock(b.graph("keysGraph"), (
+        Triple(claim, _pat("claimedBy"), var),
+        Filter(ValueGuard("!=", var, owner)),
+    )),)))
+
+
+def _claim_triples(b: Bindings, claim: ParamRef, owner: ParamRef) -> tuple:
+    return (
+        Triple(claim, A, _pat(_KEY_CLAIM)),
+        Triple(claim, _pat("constraint"), b.const("constraintId")),
+        Triple(claim, _pat("claimedBy"), owner),
+    )
+
+
+def _key_claim_write(b: Bindings, *, guards: bool) -> Operation:
+    claim, owner = ParamRef("claim"), ParamRef("owner")
+    return Operation.build(
+        "key-claim-write",
+        (Param("claim", Kind.IRI), Param("owner", Kind.IRI)),
+        Group((_other_owner(b, claim, owner, "other"),)),
+        guards=guards,
+        insert=(GraphBlock(b.graph("keysGraph"), _claim_triples(b, claim, owner)),),
+    )
+
+
+def _key_claim_write_dual(b: Bindings, *, guards: bool) -> Operation:
+    current, following, owner = ParamRef("claimCurrent"), ParamRef("claimNext"), ParamRef("owner")
+    return Operation.build(
+        "key-claim-write-dual",
+        (Param("claimCurrent", Kind.IRI), Param("claimNext", Kind.IRI), Param("owner", Kind.IRI)),
+        Group((_other_owner(b, current, owner, "otherCurrent"), _other_owner(b, following, owner, "otherNext"))),
+        guards=guards,
+        insert=(GraphBlock(b.graph("keysGraph"), (*_claim_triples(b, current, owner), *_claim_triples(b, following, owner))),),
+    )
+
+
+def _key_claim_retire(b: Bindings, *, guards: bool) -> Operation:
+    claim, owner = ParamRef("claim"), ParamRef("owner")
+    keys = b.graph("keysGraph")
+    return Operation.build(
+        "key-claim-retire",
+        (Param("claim", Kind.IRI), Param("owner", Kind.IRI), Param("now", Kind.LITERAL)),
+        Group((GraphBlock(keys, (Triple(claim, _pat("claimedBy"), owner),)),)),
+        guards=guards,
+        delete=(GraphBlock(keys, (Triple(claim, _pat("claimedBy"), owner),)),),
+        insert=(GraphBlock(keys, (Triple(claim, _pat("retiredBy"), owner), Triple(claim, _pat("retiredAt"), ParamRef("now")))),),
+    )
+
+
+def _duplicated_claims(b: Bindings, *, project) -> SubSelect:
+    """The claims with more than one owner, from the keys graph, scoped to one constraint."""
+    claim, owner = Var("claim"), Var("owner")
+    return SubSelect(
+        Select(project, group_by=(claim,), having=(ValueGuard(">", Func("COUNT", (owner,)), _int(1)),)),
+        Group((GraphBlock(b.graph("keysGraph"), (
+            Triple(claim, A, _pat(_KEY_CLAIM)), Triple(claim, _pat("constraint"), b.const("constraintId")),
+            Triple(claim, _pat("claimedBy"), owner),
+        )),)),
+    )
+
+
+def _key_claim_quarantine(b: Bindings, *, guards: bool) -> Operation:
+    claim, other, now = Var("claim"), Var("other"), Var("now")
+    quarantine = b.graph("keyQuarantineGraph")
+    return Operation.build(
+        "key-claim-quarantine",
+        (),
+        Group((
+            _duplicated_claims(b, project=(claim,)),
+            GraphBlock(b.graph("keysGraph"), (Triple(claim, _pat("claimedBy"), other),)),
+            NotExists(Group((GraphBlock(quarantine, (Triple(claim, _pat("quarantinedOwner"), other),)),))),
+            Bind(Func("NOW"), now),
+        )),
+        guards=guards,
+        insert=(GraphBlock(quarantine, (
+            Triple(_bound("claim"), _pat("quarantinedOwner"), _bound("other")),
+            Triple(_bound("claim"), _pat("quarantinedAt"), _bound("now")),
+            Triple(_bound("claim"), _pat("constraint"), b.const("constraintId")),
+        )),),
+    )
+
+
+def _key_claim_merge_rewrite(b: Bindings, *, guards: bool) -> Operation:
+    claim, owner, canonical = Var("claim"), Var("owner"), Var("canonical")
+    other = Var("other", kind=Kind.IRI)
+    relation = b.const("mergeRelation")
+    keys = b.graph("keysGraph")
+    return Operation.build(
+        "key-claim-merge-rewrite",
+        (),
+        Group((
+            _duplicated_claims(b, project=(claim, Projected(Func("MIN", (owner,)), canonical))),
+            GraphBlock(keys, (Triple(claim, _pat("claimedBy"), other),)),
+            Filter(ValueGuard("!=", other, Var("canonical", kind=Kind.IRI))),
+            NotExists(Group((GraphBlock(keys, (Triple(other, relation, canonical),)),))),
+        )),
+        guards=guards,
+        insert=(GraphBlock(keys, (Triple(_bound("other"), relation, _bound("canonical")),)),),
+    )
+
+
+# ---- the audits
+
+_VALUE = dict(compare=Compare.VALUE)
+
+
+def _count(name: str, argument: Var, alias: str, *, distinct: bool = False) -> Projected:
+    return Projected(Func(name, (argument,), distinct=distinct), Var(alias))
+
+
+def _key_claim_duplicate_audit(b: Bindings, *, guards: bool) -> Operation:
+    claim, owner = Var("claim"), Var("owner")
+    return Operation.build(
+        "key-claim-duplicate-audit",
+        (),
+        Group((GraphBlock(b.graph("keysGraph"), (
+            Triple(claim, A, _pat(_KEY_CLAIM)), Triple(claim, _pat("constraint"), b.const("constraintId")),
+            Triple(claim, _pat("claimedBy"), owner),
+        )),)),
+        guards=guards,
+        select=Select(
+            (claim, _count("COUNT", owner, "n"), Projected(Func("GROUP_CONCAT", (Func("STR", (owner,)),), separator=" "), Var("owners"))),
+            group_by=(claim,),
+            having=(ValueGuard(">", Func("COUNT", (owner,)), _int(1)),),
+        ),
+    )
+
+
+def _fork_detection_audit(b: Bindings, *, guards: bool) -> Operation:
+    rev, txn = Var("rev"), Var("t")
+    return Operation.build(
+        "fork-detection-audit",
+        (),
+        Group((GraphBlock(b.graph("txnGraph"), (Triple(txn, _pat("rev"), rev),)),)),
+        guards=guards,
+        select=Select(
+            (rev, _count("COUNT", txn, "n", distinct=True)),
+            group_by=(rev,),
+            having=(ValueGuard(">", Func("COUNT", (txn,), distinct=True), _int(1)),),
+        ),
+    )
+
+
+def _log_values(b: Bindings) -> Values:
+    """`VALUES ?log { <pinned graph> {{{logGraphs}}} }`. The pinned head is the SPARQL realisation of receipt retention, so ?log
+    ranges over receipts and has the role LOG (plan 4.3, NQ2)."""
+    return Values(Var("log"), (b.const("pinnedGraph"), RegistrySlot("logGraphs")))
+
+
+_LOG_GRAPHS = Param("logGraphs", Kind.REGISTRY_LIST)
+
+
+def _revision_multi_txn_audit(b: Bindings, *, guards: bool) -> Operation:
+    rev, txn = Var("rev"), Var("t")
+    return Operation.build(
+        "revision-multi-txn-audit",
+        (_LOG_GRAPHS,),
+        Group((_log_values(b), GraphBlock(graph_var("log"), (Triple(rev, A, _pat("Revision")), Triple(rev, _pat("txn"), txn))))),
+        guards=guards,
+        select=Select(
+            (rev, _count("COUNT", txn, "n", distinct=True)),
+            group_by=(rev,),
+            having=(ValueGuard(">", Func("COUNT", (txn,), distinct=True), _int(1)),),
+        ),
+    )
+
+
+def _txn_multi_revision_audit(b: Bindings, *, guards: bool) -> Operation:
+    rev, txn = Var("rev"), Var("t")
+    return Operation.build(
+        "txn-multi-revision-audit",
+        (_LOG_GRAPHS,),
+        Group((_log_values(b), GraphBlock(graph_var("log"), (Triple(rev, A, _pat("Revision")), Triple(rev, _pat("txn"), txn))))),
+        guards=guards,
+        select=Select(
+            (txn, _count("COUNT", rev, "n", distinct=True)),
+            group_by=(txn,),
+            having=(ValueGuard(">", Func("COUNT", (rev,), distinct=True), _int(1)),),
+        ),
+    )
+
+
+def _gap_scan_audit(b: Bindings, *, guards: bool) -> Operation:
+    """For each version row with sequence S and retention low-water mark L, the receipts with seq in the closed range L to S
+    must number exactly S - L + 1. Positions are compared as terms in guards and as values in audits (plan 4.3, step 12), so
+    `?seq`, `?S` and `?L` declare `Compare.VALUE`: the stored positions are `xsd:long`, and a receipt written by hand with another
+    integer type would otherwise be missed."""
+    target = Var("target")
+    seq, last, low, lwm = (Var(n, Kind.POSITION, Compare.VALUE) for n in ("seq", "S", "L", "lwm"))
+    return Operation.build(
+        "gap-scan-audit",
+        (_LOG_GRAPHS,),
+        Group((
+            GraphBlock(b.graph("metaGraphPrefix"), (Triple(target, A, _pat("VersionRow")), Triple(target, _pat("seq"), last))),
+            Optional_(Group((GraphBlock(b.graph("retentionGraph"), (Triple(target, _pat("retentionLowWaterMark"), lwm),)),))),
+            Bind(Func("COALESCE", (lwm, _long("1"))), low),
+            Optional_(Group((
+                _log_values(b),
+                GraphBlock(graph_var("log"), (
+                    Triple(Var("r"), A, _pat("Revision")), Triple(Var("r"), _pat("target"), target), Triple(Var("r"), _pat("seq"), seq),
+                )),
+                Filter(Op("&&", ValueGuard(">=", seq, low), ValueGuard("<=", seq, last))),
+            ))),
+        )),
+        guards=guards,
+        select=Select(
+            (target, last, low, _count("COUNT", seq, "n", distinct=True)),
+            group_by=(target, last, low),
+            having=(ValueGuard("!=", Func("COUNT", (seq,), distinct=True), Op("+", Op("-", last, low), _int(1))),),
+        ),
+    )
+
+
 Builder = Callable[[Bindings, bool, str], Operation]
 
 BUILDERS: dict[str, Builder] = {
@@ -536,6 +759,16 @@ BUILDERS: dict[str, Builder] = {
     "cas-replace-composite-property-dataset-guard": lambda b, guards, names: _composite_replace(b, guards=guards, dataset_guard=True),
     "tombstone-delete-composite": lambda b, guards, names: _composite_tombstone(b, guards=guards, dataset_guard=False),
     "tombstone-delete-composite-dataset-guard": lambda b, guards, names: _composite_tombstone(b, guards=guards, dataset_guard=True),
+    "key-claim-write": lambda b, guards, names: _key_claim_write(b, guards=guards),
+    "key-claim-write-dual": lambda b, guards, names: _key_claim_write_dual(b, guards=guards),
+    "key-claim-retire": lambda b, guards, names: _key_claim_retire(b, guards=guards),
+    "key-claim-quarantine": lambda b, guards, names: _key_claim_quarantine(b, guards=guards),
+    "key-claim-merge-rewrite": lambda b, guards, names: _key_claim_merge_rewrite(b, guards=guards),
+    "key-claim-duplicate-audit": lambda b, guards, names: _key_claim_duplicate_audit(b, guards=guards),
+    "fork-detection-audit": lambda b, guards, names: _fork_detection_audit(b, guards=guards),
+    "gap-scan-audit": lambda b, guards, names: _gap_scan_audit(b, guards=guards),
+    "revision-multi-txn-audit": lambda b, guards, names: _revision_multi_txn_audit(b, guards=guards),
+    "txn-multi-revision-audit": lambda b, guards, names: _txn_multi_revision_audit(b, guards=guards),
 }
 """The ported operations, keyed by template stem. A template with no entry is still rendered by Mustache."""
 

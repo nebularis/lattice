@@ -31,10 +31,27 @@ from request_slots import fill_request_slots
 _BGP_LISTS = {("BGP", "triples"), ("TriplesBlock", "triples")}
 
 
+_CHAINS = ("AdditiveExpression", "MultiplicativeExpression")
+
+
+def _flatten_chain(node: CompValue) -> CompValue:
+    """``(a - b) + c`` and ``a - b + c`` are one expression, since SPARQL 1.1 groups a chain of the same precedence from the left.
+    The builder always writes the parentheses, because Oxigraph 0.5.11 groups the chain from the right (TSD-17), so the harness
+    reads a left operand of the same kind as the head of the chain."""
+    inner = node.get("expr")
+    while isinstance(inner, CompValue) and inner.name == node.name and "other" in inner:
+        node = CompValue(node.name, expr=inner["expr"], op=[*inner.get("op", []), *node.get("op", [])], other=[*inner["other"], *node.get("other", [])])
+        inner = node.get("expr")
+    return node
+
+
 def _canonical(node, parent: str = "", key: str = ""):
     """``node`` as nested tuples, with unordered parts sorted."""
     if isinstance(node, CompValue):
         name = node.name
+        if name in _CHAINS:
+            node = _flatten_chain(node)
+            return (name, tuple(sorted(((k, _canonical(v, name, k)) for k, v in node.items() if k != "_vars"), key=lambda kv: kv[0])))
         if name == "ConditionalAndExpression":
             conjuncts = [node["expr"], *node.get("other", [])]
             return ("and", tuple(sorted((_canonical(c) for c in conjuncts), key=repr)))

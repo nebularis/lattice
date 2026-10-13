@@ -15,7 +15,7 @@ INSERT {
 }
 WHERE {
   {
-    FILTER(ISIRI($root) && DATATYPE($epoch) = xsd:long && DATATYPE($expectedSeq) = xsd:long && DATATYPE($nextSeq) = xsd:long && ISIRI($newRev) && ISIRI($txnId) && DATATYPE($requestDigest) = xsd:string && ISIRI($g) && sameTerm($g, IRI(CONCAT("urn:g:orders/", ENCODE_FOR_URI(STR($root)), ""))))
+    FILTER(ISIRI($root) && DATATYPE($epoch) = DATATYPE("0"^^xsd:long) && DATATYPE($expectedSeq) = DATATYPE("0"^^xsd:long) && DATATYPE($nextSeq) = DATATYPE("0"^^xsd:long) && ISIRI($newRev) && ISIRI($txnId) && DATATYPE($requestDigest) = xsd:string && ISIRI($g) && sameTerm($g, IRI(CONCAT("urn:g:orders/", ENCODE_FOR_URI(STR($root)), ""))))
   }
   BIND(IRI(CONCAT(STR(<urn:g:txlog/>), SUBSTR(STR(NOW()), 1, 7))) AS ?logGraph)
   GRAPH <urn:g:meta> {

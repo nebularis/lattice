@@ -53,6 +53,7 @@ class Kind(Enum):
     POSITION = "Position"
     DIGEST = "Digest"
     IRI_OR_LITERAL = "IriOrLiteral"
+    LITERAL = "Literal"
     PAYLOAD = "Payload"
     REGISTRY_LIST = "RegistryList"
 
@@ -349,9 +350,29 @@ class Projected:
 
 @dataclass(frozen=True)
 class Select:
+    """A ``SELECT``: the whole of a query operation, or the head of a :class:`SubSelect`. The fragment is closed
+    (ADR-A123, addendum of 2026-10-13): projection of variables and aggregates, ``GROUP BY`` over variables, and
+    ``HAVING``. ``distinct``, ``order_by``, ``limit`` and ``offset`` exist so that the checker can refuse them with a
+    named rule, ``FragmentLimit``, and each is lifted when a template needs it, with an engine test. Only ``distinct``
+    on a top-level query is allowed."""
+
     projection: tuple = ()
     group_by: tuple = ()
     having: tuple = ()
+    distinct: bool = False
+    order_by: tuple = ()
+    limit: Optional[int] = None
+    offset: Optional[int] = None
+
+
+@dataclass(frozen=True)
+class SubSelect:
+    """``{ SELECT ... WHERE { ... } GROUP BY ... HAVING ... }`` as a pattern element. It is evaluated on its own,
+    before it is joined with the rest of its group, so it sees no variable of the enclosing group and only its
+    projections leave it. Inside a ``GRAPH`` block it reads that graph."""
+
+    select: Select
+    where: Group
 
 
 @dataclass(frozen=True)
@@ -402,5 +423,5 @@ __all__ = [
     "IrError", "Kind", "SLOT_KINDS", "Compare", "Binding", "Param", "Var", "ParamRef", "Const", "RdfType", "A",
     "Path", "Triple", "PayloadSlot", "RegistrySlot", "GraphRole", "Graph", "Func", "Op", "Not", "TermGuard",
     "ValueGuard", "Group", "GraphBlock", "Optional_", "NotExists", "Bind", "Filter", "Values", "Union_",
-    "Projected", "Select", "ParameterGuard", "GUARDS_OFF", "Operation",
+    "Projected", "Select", "SubSelect", "ParameterGuard", "GUARDS_OFF", "Operation",
 ]

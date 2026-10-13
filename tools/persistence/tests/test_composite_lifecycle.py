@@ -144,7 +144,7 @@ def test_ho7_t1b_a_pre_created_row_gets_no_create_and_still_a_tombstone():
 # ---- create
 
 
-@engines.each_engine
+@engines.each_engine_and_guards
 def test_ho7_t2_a_create_writes_the_payload_to_the_data_graph_a_version_row_and_one_revision():
     data = _data()
     payload = _delete_set(data)
@@ -157,7 +157,7 @@ def test_ho7_t2_a_create_writes_the_payload_to_the_data_graph_a_version_row_and_
     assert not any(g == str(DATASET_DEFAULT_GRAPH_ID) for *_, g in quads)
 
 
-@engines.each_engine
+@engines.each_engine_and_guards
 def test_ho7_t3_a_second_create_with_another_transaction_changes_nothing():
     ds = _dataset(CREATE, data=None, row_seq=None)
     _run(ds, CREATE, txn="a", payload=_delete_set(_data()))
@@ -166,7 +166,7 @@ def test_ho7_t3_a_second_create_with_another_transaction_changes_nothing():
     assert _quads(ds) == before
 
 
-@engines.each_engine
+@engines.each_engine_and_guards
 def test_ho7_t4_a_create_over_a_root_that_already_has_triples_changes_nothing():
     data = _data()
     ds = _dataset(CREATE, data=data, row_seq=None)  # the aggregate is there, the version row is not
@@ -178,7 +178,7 @@ def test_ho7_t4_a_create_over_a_root_that_already_has_triples_changes_nothing():
 # ---- tombstone delete
 
 
-@engines.each_engine
+@engines.each_engine_and_guards
 def test_ho7_t5_a_tombstone_delete_removes_the_delete_set_and_tombstones_the_row():
     data = _data()
     ds = _dataset(TOMBSTONE, data=data)
@@ -192,7 +192,7 @@ def test_ho7_t5_a_tombstone_delete_removes_the_delete_set_and_tombstones_the_row
     assert len(deletions) == 1
 
 
-@engines.each_engine
+@engines.each_engine_and_guards
 def test_ho7_t6_a_stale_sequence_changes_nothing():
     ds = _dataset(TOMBSTONE, data=_data())
     before = _quads(ds)
@@ -200,7 +200,7 @@ def test_ho7_t6_a_stale_sequence_changes_nothing():
     assert _quads(ds) == before
 
 
-@engines.each_engine
+@engines.each_engine_and_guards
 def test_ho7_t7_after_a_tombstone_a_replace_is_refused_by_the_tombstone_guard():
     data = _data()
     ds = _dataset(TOMBSTONE, data=data)
@@ -210,7 +210,7 @@ def test_ho7_t7_after_a_tombstone_a_replace_is_refused_by_the_tombstone_guard():
     assert _quads(ds) == before
 
 
-@engines.each_engine
+@engines.each_engine_and_guards
 def test_ho7_t7b_a_tombstone_leaves_a_copy_of_the_data_in_the_default_graph_alone():
     data = _data()
     ds = _dataset(TOMBSTONE, data=data, default_copy=data)

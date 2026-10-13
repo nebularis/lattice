@@ -178,17 +178,76 @@ def test_h2_4b_t6_p5_an_integer_derived_literal_keeps_its_datatype_on_rdflib_and
     assert (str(stored), str(reported)) == (expected, expected)
 
 
-def test_h2_4b_t7_p5_the_parameter_guards_datatype_test_cannot_pass_a_long_on_oxigraph():
-    """So an operation with the guard on writes nothing there, and an operation without it writes. A guard whose test an
-    engine can never pass is unusable on that engine (FMH-H2-4b, decision 1)."""
+def _datatype_forms(literal: str) -> dict[str, str]:
+    """The datatype each engine reports for one literal in five forms: a constant, a parameter substituted by the caller
+    (an initial binding on rdflib, text on Oxigraph, as `engines.OxDataset` does), a `VALUES` row, a stored value read back,
+    and a stored value compared with the constant in the same query."""
+    from rdflib.plugins.sparql.parser import parseQuery  # noqa: F401 (the literal below must be well formed)
+
+    term = literal
+    ds = engines.dataset()
+    ds.update(f"INSERT DATA {{ GRAPH <urn:g> {{ <urn:s> <urn:p> {term} }} }}")
+    param = ds.query(f"SELECT (DATATYPE($p) AS ?d) WHERE {{}}", initBindings={"p": _term(term)})
+    forms = {
+        "constant": list(ds.query(f"SELECT (DATATYPE({term}) AS ?d) WHERE {{}}"))[0][0],
+        "parameter": list(param)[0][0],
+        "values": list(ds.query(f"SELECT (DATATYPE(?v) AS ?d) WHERE {{ VALUES ?v {{ {term} }} }}"))[0][0],
+        "stored": list(ds.query("SELECT (DATATYPE(?o) AS ?d) WHERE { GRAPH <urn:g> { <urn:s> <urn:p> ?o } }"))[0][0],
+    }
+    same = list(ds.query(f"SELECT (DATATYPE(?o) = DATATYPE({term}) AS ?same) WHERE {{ GRAPH <urn:g> {{ <urn:s> <urn:p> ?o }} }}"))[0][0]
+    return {**{k: str(v) for k, v in forms.items()}, "stored equals constant": str(same)}
+
+
+def _term(text: str):
+    value, _, datatype = text.partition("^^")
+    return Literal(value.strip('"'), datatype=URIRef(datatype.strip("<>"))) if datatype else Literal(value.strip('"'))
+
+
+def test_h2_5_t1_p5_a_long_has_one_datatype_in_every_form_on_each_engine_so_guard_d_can_pass():
+    """Guard D compares a parameter's datatype with a constant's (ADR-A123, addendum of 2026-10-13). That rests on a store
+    treating the two alike. If an engine ever reports different datatypes for them, guard D refuses every write there, and the
+    slice stops for the maintainer (plan 4.3, gate 1)."""
+    forms = _datatype_forms(f'"1"^^<{LONG}>')
+    expected = _pick(rdflib=LONG, oxigraph="http://www.w3.org/2001/XMLSchema#integer")
+    assert set(forms) == {"constant", "parameter", "values", "stored", "stored equals constant"}
+    assert {k: v for k, v in forms.items() if k != "stored equals constant"} == dict.fromkeys(("constant", "parameter", "values", "stored"), expected)
+    assert forms["stored equals constant"] == "true"
+
+
+def test_h2_5_t2_p5_a_simple_literal_stays_xsd_string_in_every_form_on_each_engine():
+    """Why `Digest` and `String` keep the fixed `xsd:string` test (ADR-A123, addendum of 2026-10-13, point 4)."""
+    forms = _datatype_forms('"abc"')
+    assert {k: v for k, v in forms.items() if k != "stored equals constant"} == dict.fromkeys(
+        ("constant", "parameter", "values", "stored"), "http://www.w3.org/2001/XMLSchema#string")
+
+
+def _bootstrap_written(bindings: dict, *, guards: bool) -> bool:
     from persistence.builders import build
     from persistence.ir_render import render
-    from test_builders import CONTEXT, LONG as LONG_TERM
+    from test_builders import CONTEXT
 
-    def row_written(guards: bool) -> bool:
-        ds = engines.dataset()
-        ds.update(render(build("bootstrap-version-row", CONTEXT, guards=guards)), initBindings={"target": U("urn:stream:new"), "epoch": LONG_TERM(3)})
-        return bool(len(ds.graph(U("urn:g:meta"))))
+    ds = engines.dataset()
+    ds.update(render(build("bootstrap-version-row", CONTEXT, guards=guards)), initBindings=bindings)
+    return bool(len(ds.graph(U("urn:g:meta"))))
 
-    assert row_written(False)
-    assert row_written(True) == _pick(rdflib=True, oxigraph=False)
+
+@pytest.mark.parametrize("guards", [True, False])
+def test_h2_5_t3_a_guarded_write_applies_on_each_engine_where_before_guard_d_every_one_was_refused_on_oxigraph(guards):
+    """TD-45. With the guards on, a bootstrap with a well typed epoch writes its row on rdflib and on Oxigraph."""
+    from test_builders import LONG as LONG_TERM
+
+    assert _bootstrap_written({"target": U("urn:stream:new"), "epoch": LONG_TERM(3)}, guards=guards)
+
+
+def test_h2_5_t4_guard_d_refuses_a_missing_or_non_numeric_epoch_on_each_engine_and_an_integer_one_only_where_datatypes_are_kept():
+    from rdflib import XSD
+    from test_builders import LONG as LONG_TERM
+
+    target = U("urn:stream:new")
+    assert not _bootstrap_written({"target": target}, guards=True)
+    assert not _bootstrap_written({"target": target, "epoch": Literal("three")}, guards=True)
+    assert not _bootstrap_written({"target": target, "epoch": U("urn:epoch")}, guards=True)
+    # The addendum's second point: on a store that keeps datatypes only an xsd:long passes, on one that turns every integer
+    # into xsd:integer any integer passes and the mismatch cannot arise.
+    assert _bootstrap_written({"target": target, "epoch": Literal(3, datatype=XSD.integer)}, guards=True) == _pick(rdflib=False, oxigraph=True)
+    assert _bootstrap_written({"target": target, "epoch": LONG_TERM(3)}, guards=True)
