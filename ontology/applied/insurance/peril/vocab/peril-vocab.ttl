@@ -2,6 +2,7 @@
 
 @prefix prl:     <https://www.nebularis.org/neuro-semantic/insurance/peril#> .
 @prefix prl-voc: <https://www.nebularis.org/neuro-semantic/insurance/peril/vocab#> .
+@prefix icm-voc: <https://www.nebularis.org/neuro-semantic/insurance/common/vocab#> .
 @prefix voc:     <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
 @prefix fnd:     <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
 @prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
@@ -11,10 +12,11 @@
 
 <https://www.nebularis.org/neuro-semantic/insurance/peril/vocab>
     rdf:type owl:Ontology ;
-    owl:versionIRI <https://www.nebularis.org/neuro-semantic/insurance/peril-vocab/0.4.0> ;
-    owl:imports <https://www.nebularis.org/neuro-semantic/insurance/peril/0.4.0> ,
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/insurance/peril-vocab/0.5.0> ;
+    owl:imports <https://www.nebularis.org/neuro-semantic/insurance/peril/0.5.0> ,
                 <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.4.0> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.4.0> .
+                <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.4.0> ,
+                <https://www.nebularis.org/neuro-semantic/insurance/common-vocab/0.5.0> .
 
 #################################################################
 #    The eight reference schemes (ADR-A99 §5, §6). Each is an
@@ -73,26 +75,535 @@ prl-voc:HarmSubjectScheme a voc:ConceptScheme ;
     skos:prefLabel "Reference harm-subject scheme"@en ;
     skos:editorialNote "Reference edition published by LATTICE. Not a market standard."@en .
 
-# Filled by AIR-2.2: Natural, Accidental, Negligent, Intentional, MaliciousCriminal,
-# MaliciousPolitical, Sovereign, Belligerent, Economic, UndeterminedAgency.
+#################################################################
+#    Reference bindings (AIR-2.2, ADR-A99 decision 1): the four
+#    insurance/common contracts that have a reference scheme are
+#    bound to it here, as the unscoped fallback. A deployment binds
+#    its own editions by scope, which wins over this binding
+#    (ADR-A99 §9, AIR-2.7's precedence tests).
+#################################################################
 
-# Filled by AIR-2.2: Shaking, GroundFailure, Inundation, WaterDamage, WindLoad, Load, Fire,
-# Smoke, Heat, Freezing, Explosion, Impact, Collapse, Breakdown, Corrosion, Erosion,
-# Contamination, BiologicalAgent, Radiation, ElectricalOverstress, DataEncryption, Deprivation.
+icm-voc:AgencyContract voc:boundScheme prl-voc:AgencyScheme .
+icm-voc:MechanismContract voc:boundScheme prl-voc:MechanismScheme .
+icm-voc:ConsequenceContract voc:boundScheme prl-voc:ConsequenceScheme .
+icm-voc:HarmSubjectContract voc:boundScheme prl-voc:HarmSubjectScheme .
 
-# Filled by AIR-2.2: Sudden, Gradual, Latent, Recurrent.
+prl-voc:Natural a skos:Concept ;
+    skos:inScheme prl-voc:AgencyScheme ;
+    skos:topConceptOf prl-voc:AgencyScheme ;
+    skos:prefLabel "Natural"@en ;
+    skos:definition "Caused by a natural process, without human involvement."@en ;
+    skos:note "No single published standard names an agency axis for perils. Follows common catastrophe-modelling usage, which separates a hazard's physical cause from who or what is responsible for it."@en .
 
-# Filled by AIR-2.2: Physical, Designation, Threshold, WordingDefined, Statutory, Index.
+prl-voc:Accidental a skos:Concept ;
+    skos:inScheme prl-voc:AgencyScheme ;
+    skos:topConceptOf prl-voc:AgencyScheme ;
+    skos:prefLabel "Accidental"@en ;
+    skos:definition "Caused unintentionally, without negligence or a deliberate act."@en ;
+    skos:note "No single published standard names this value. Follows common market usage distinguishing a pure accident from a negligent or deliberate act."@en .
 
-# Filled by AIR-2.2: Catastrophe, Systemic, Attritional.
+prl-voc:Negligent a skos:Concept ;
+    skos:inScheme prl-voc:AgencyScheme ;
+    skos:topConceptOf prl-voc:AgencyScheme ;
+    skos:prefLabel "Negligent"@en ;
+    skos:definition "Caused by a failure to take reasonable care, without intent to cause harm."@en ;
+    skos:note "Follows the general legal meaning of negligence (a failure of a duty of care), not a jurisdiction-specific test."@en .
 
-# Filled by AIR-2.2: DirectPhysicalDamage, BusinessInterruption, ExtraExpense, Spoilage,
-# DenialOfAccess, Recall, CleanUp, DataRestoration, ExtortionPayment, LiabilityToOthers,
-# DefenceCosts, Delay, ShortageOrNonDelivery, GeneralAverageContribution, ReputationalHarm,
-# RegulatoryPenalty, NotificationCosts, ForensicCosts, CancellationCosts.
+prl-voc:Intentional a skos:Concept ;
+    skos:inScheme prl-voc:AgencyScheme ;
+    skos:topConceptOf prl-voc:AgencyScheme ;
+    skos:prefLabel "Intentional"@en ;
+    skos:definition "Caused by a deliberate act that is not itself a crime, such as a lawful strike or an employment decision alleged wrongful."@en ;
+    skos:note "Distinguishes a deliberate but lawful act from MaliciousCriminal and MaliciousPolitical, which are deliberate unlawful acts. No single published standard names this distinction."@en .
 
-# Filled by AIR-2.2: Property, Persons, FinancialInterest, DataAndSystems, Environment,
-# Reputation.
+prl-voc:MaliciousCriminal a skos:Concept ;
+    skos:inScheme prl-voc:AgencyScheme ;
+    skos:topConceptOf prl-voc:AgencyScheme ;
+    skos:prefLabel "Malicious criminal"@en ;
+    skos:definition "Caused by a deliberate unlawful act of an individual or group acting outside public authority."@en ;
+    skos:note "Follows common market usage distinguishing ordinary criminal malice from MaliciousPolitical and Belligerent agency, which the political violence and war markets treat separately."@en .
+
+prl-voc:MaliciousPolitical a skos:Concept ;
+    skos:inScheme prl-voc:AgencyScheme ;
+    skos:topConceptOf prl-voc:AgencyScheme ;
+    skos:prefLabel "Malicious political"@en ;
+    skos:definition "Caused by a deliberate act done for a political, ideological or religious purpose."@en ;
+    skos:note "Follows common usage in the terrorism and political violence markets. The event's own cause scheme (family P) is Phase 2's reference for named political perils."@en .
+
+prl-voc:Sovereign a skos:Concept ;
+    skos:inScheme prl-voc:AgencyScheme ;
+    skos:topConceptOf prl-voc:AgencyScheme ;
+    skos:prefLabel "Sovereign"@en ;
+    skos:definition "Caused by the exercise of state power, such as expropriation, confiscation or nationalisation."@en ;
+    skos:note "Follows common political risk market usage for acts of a state in its sovereign capacity."@en .
+
+prl-voc:Belligerent a skos:Concept ;
+    skos:inScheme prl-voc:AgencyScheme ;
+    skos:topConceptOf prl-voc:AgencyScheme ;
+    skos:prefLabel "Belligerent"@en ;
+    skos:definition "Caused by an act of war or warlike operations between states or organised armed groups."@en ;
+    skos:note "Follows common war risks market usage. Distinguished from MaliciousPolitical, which names a group's own political purpose rather than a state of war between parties."@en .
+
+prl-voc:Economic a skos:Concept ;
+    skos:inScheme prl-voc:AgencyScheme ;
+    skos:topConceptOf prl-voc:AgencyScheme ;
+    skos:prefLabel "Economic"@en ;
+    skos:definition "Caused by the failure of a commercial counterparty, or by market forces, rather than by a physical event."@en ;
+    skos:note "Added for the financial family (F) of the cause scheme, whose perils are not physical events. No single published standard names this value."@en .
+
+prl-voc:UndeterminedAgency a skos:Concept ;
+    skos:inScheme prl-voc:AgencyScheme ;
+    skos:topConceptOf prl-voc:AgencyScheme ;
+    skos:prefLabel "Undetermined agency"@en ;
+    skos:definition "The agency behind the event has not been established."@en ;
+    skos:note "Named 'UndeterminedAgency', not 'Undetermined', to avoid a name clash with Eligibility's elg:Undetermined (ADR-A99 §5)."@en .
+
+prl-voc:AgencyScheme skos:hasTopConcept prl-voc:Natural , prl-voc:Accidental , prl-voc:Negligent ,
+    prl-voc:Intentional , prl-voc:MaliciousCriminal , prl-voc:MaliciousPolitical , prl-voc:Sovereign ,
+    prl-voc:Belligerent , prl-voc:Economic , prl-voc:UndeterminedAgency .
+
+prl-voc:Shaking a skos:Concept ;
+    skos:inScheme prl-voc:MechanismScheme ;
+    skos:topConceptOf prl-voc:MechanismScheme ;
+    skos:prefLabel "Shaking"@en ;
+    skos:definition "Harm from ground vibration transmitted through the earth."@en ;
+    skos:note "Follows common seismic engineering usage for ground-motion damage, distinct from GroundFailure (a permanent change in the ground's state)."@en .
+
+prl-voc:GroundFailure a skos:Concept ;
+    skos:inScheme prl-voc:MechanismScheme ;
+    skos:topConceptOf prl-voc:MechanismScheme ;
+    skos:prefLabel "Ground failure"@en ;
+    skos:definition "Harm from the ground losing its ability to bear or retain its position, such as by liquefaction or landslide."@en ;
+    skos:note "Follows common geotechnical usage. Covers liquefaction, landslide and subsidence mechanisms alike, which the cause scheme's own concepts distinguish by cause, not by this shared mechanism."@en .
+
+prl-voc:Inundation a skos:Concept ;
+    skos:inScheme prl-voc:MechanismScheme ;
+    skos:topConceptOf prl-voc:MechanismScheme ;
+    skos:prefLabel "Inundation"@en ;
+    skos:definition "Harm from water covering land or a structure that is normally dry."@en ;
+    skos:note "Follows common flood engineering usage for standing or flowing surface water, distinct from WaterDamage (water escaping from or entering a structure other than by flood)."@en .
+
+prl-voc:WaterDamage a skos:Concept ;
+    skos:inScheme prl-voc:MechanismScheme ;
+    skos:topConceptOf prl-voc:MechanismScheme ;
+    skos:prefLabel "Water damage"@en ;
+    skos:definition "Harm from water escaping from, or entering, a structure other than by flood."@en ;
+    skos:note "Follows common property market usage distinguishing an escape of water (for example a burst pipe) from Inundation (flood)."@en .
+
+prl-voc:WindLoad a skos:Concept ;
+    skos:inScheme prl-voc:MechanismScheme ;
+    skos:topConceptOf prl-voc:MechanismScheme ;
+    skos:prefLabel "Wind load"@en ;
+    skos:definition "Harm from the force wind exerts on a structure or object."@en ;
+    skos:note "Follows common wind engineering usage for aerodynamic loading, distinct from Impact (a solid object striking another, which wind-borne debris also causes)."@en .
+
+prl-voc:Load a skos:Concept ;
+    skos:inScheme prl-voc:MechanismScheme ;
+    skos:topConceptOf prl-voc:MechanismScheme ;
+    skos:prefLabel "Load"@en ;
+    skos:definition "Harm from the weight of material bearing on a structure or object beyond what it was built to carry."@en ;
+    skos:note "Follows common structural engineering usage for static or accumulating weight, such as snow or ash load, distinct from Impact (a moving object striking another)."@en .
+
+prl-voc:Fire a skos:Concept ;
+    skos:inScheme prl-voc:MechanismScheme ;
+    skos:topConceptOf prl-voc:MechanismScheme ;
+    skos:prefLabel "Fire"@en ;
+    skos:definition "Harm from uncontrolled combustion."@en ;
+    skos:note "Common usage across every market that names fire as a peril."@en .
+
+prl-voc:Smoke a skos:Concept ;
+    skos:inScheme prl-voc:MechanismScheme ;
+    skos:topConceptOf prl-voc:MechanismScheme ;
+    skos:prefLabel "Smoke"@en ;
+    skos:definition "Harm from the products of combustion carried away from a fire."@en ;
+    skos:note "Follows common property market usage separating smoke damage from the fire itself, since smoke can harm property a fire never reaches."@en .
+
+prl-voc:Heat a skos:Concept ;
+    skos:inScheme prl-voc:MechanismScheme ;
+    skos:topConceptOf prl-voc:MechanismScheme ;
+    skos:prefLabel "Heat"@en ;
+    skos:definition "Harm from elevated temperature, without combustion."@en ;
+    skos:note "Distinguishes thermal harm without fire (such as a heatwave's effect on crops or people) from Fire itself."@en .
+
+prl-voc:Freezing a skos:Concept ;
+    skos:inScheme prl-voc:MechanismScheme ;
+    skos:topConceptOf prl-voc:MechanismScheme ;
+    skos:prefLabel "Freezing"@en ;
+    skos:definition "Harm from a substance or structure being cooled below the freezing point of water."@en ;
+    skos:note "Follows common property and agricultural market usage for frost and freeze damage."@en .
+
+prl-voc:Explosion a skos:Concept ;
+    skos:inScheme prl-voc:MechanismScheme ;
+    skos:topConceptOf prl-voc:MechanismScheme ;
+    skos:prefLabel "Explosion"@en ;
+    skos:definition "Harm from a sudden, violent release of energy."@en ;
+    skos:note "Common usage across every market that names explosion as a peril."@en .
+
+prl-voc:Impact a skos:Concept ;
+    skos:inScheme prl-voc:MechanismScheme ;
+    skos:topConceptOf prl-voc:MechanismScheme ;
+    skos:prefLabel "Impact"@en ;
+    skos:definition "Harm from a solid object striking another."@en ;
+    skos:note "Common usage. Covers hail, falling debris, vehicle impact and similar mechanisms, which the cause scheme's own concepts distinguish by cause."@en .
+
+prl-voc:Collapse a skos:Concept ;
+    skos:inScheme prl-voc:MechanismScheme ;
+    skos:topConceptOf prl-voc:MechanismScheme ;
+    skos:prefLabel "Collapse"@en ;
+    skos:definition "The loss of a structure's ability to stand."@en ;
+    skos:note "Follows common structural engineering usage, where collapse is the ultimate consequence a Load, GroundFailure or Shaking mechanism may bring about."@en .
+
+prl-voc:Breakdown a skos:Concept ;
+    skos:inScheme prl-voc:MechanismScheme ;
+    skos:topConceptOf prl-voc:MechanismScheme ;
+    skos:prefLabel "Breakdown"@en ;
+    skos:definition "The internal failure of machinery or electrical equipment."@en ;
+    skos:note "Follows common engineering insurance usage (machinery breakdown cover), distinguishing an internal failure from an external cause such as ElectricalOverstress."@en .
+
+prl-voc:Corrosion a skos:Concept ;
+    skos:inScheme prl-voc:MechanismScheme ;
+    skos:topConceptOf prl-voc:MechanismScheme ;
+    skos:prefLabel "Corrosion"@en ;
+    skos:definition "Harm from the gradual chemical or electrochemical degradation of a material."@en ;
+    skos:note "Follows common engineering usage. Always a Gradual-onset mechanism, named here for completeness though no family default binds it (AIR-2.3, AIR-2.4) in this edition."@en .
+
+prl-voc:Erosion a skos:Concept ;
+    skos:inScheme prl-voc:MechanismScheme ;
+    skos:topConceptOf prl-voc:MechanismScheme ;
+    skos:prefLabel "Erosion"@en ;
+    skos:definition "Harm from the gradual removal of soil or rock by wind or water."@en ;
+    skos:note "Follows common geotechnical usage for the gradual counterpart of Inundation and GroundFailure."@en .
+
+prl-voc:Contamination a skos:Concept ;
+    skos:inScheme prl-voc:MechanismScheme ;
+    skos:topConceptOf prl-voc:MechanismScheme ;
+    skos:prefLabel "Contamination"@en ;
+    skos:definition "Harm from a substance rendering a person, place or thing impure or unsafe."@en ;
+    skos:note "Common usage, covering chemical, biological and radiological contamination alike, which BiologicalAgent and Radiation further specialise where the agent itself is the relevant mechanism."@en .
+
+prl-voc:BiologicalAgent a skos:Concept ;
+    skos:inScheme prl-voc:MechanismScheme ;
+    skos:topConceptOf prl-voc:MechanismScheme ;
+    skos:prefLabel "Biological agent"@en ;
+    skos:definition "Harm from a living organism or its toxin."@en ;
+    skos:note "Follows the EM-DAT biological hazard usage, narrowed to the mechanism of harm rather than the hazard's classification."@en .
+
+prl-voc:Radiation a skos:Concept ;
+    skos:inScheme prl-voc:MechanismScheme ;
+    skos:topConceptOf prl-voc:MechanismScheme ;
+    skos:prefLabel "Radiation"@en ;
+    skos:definition "Harm from the emission of ionising energy."@en ;
+    skos:note "Common usage across the nuclear, war risks and extra-terrestrial (solar) perils that name it."@en .
+
+prl-voc:ElectricalOverstress a skos:Concept ;
+    skos:inScheme prl-voc:MechanismScheme ;
+    skos:topConceptOf prl-voc:MechanismScheme ;
+    skos:prefLabel "Electrical overstress"@en ;
+    skos:definition "Harm from an electrical current or voltage beyond what equipment or a system was built to withstand."@en ;
+    skos:note "Follows common engineering usage for a geomagnetic storm's or a lightning strike's effect on electrical systems."@en .
+
+prl-voc:DataEncryption a skos:Concept ;
+    skos:inScheme prl-voc:MechanismScheme ;
+    skos:topConceptOf prl-voc:MechanismScheme ;
+    skos:prefLabel "Data encryption"@en ;
+    skos:definition "Harm from data being rendered unreadable without an authorised key."@en ;
+    skos:note "Follows common cyber market usage for ransomware's mechanism of harm."@en .
+
+prl-voc:Deprivation a skos:Concept ;
+    skos:inScheme prl-voc:MechanismScheme ;
+    skos:topConceptOf prl-voc:MechanismScheme ;
+    skos:prefLabel "Deprivation"@en ;
+    skos:definition "Harm from being permanently or temporarily deprived of property, a right or a person's liberty."@en ;
+    skos:note "Follows common usage for theft, seizure, confiscation, kidnap and detention mechanisms alike, which the cause scheme's own concepts distinguish by cause."@en .
+
+prl-voc:MechanismScheme skos:hasTopConcept prl-voc:Shaking , prl-voc:GroundFailure , prl-voc:Inundation ,
+    prl-voc:WaterDamage , prl-voc:WindLoad , prl-voc:Load , prl-voc:Fire , prl-voc:Smoke , prl-voc:Heat ,
+    prl-voc:Freezing , prl-voc:Explosion , prl-voc:Impact , prl-voc:Collapse , prl-voc:Breakdown ,
+    prl-voc:Corrosion , prl-voc:Erosion , prl-voc:Contamination , prl-voc:BiologicalAgent ,
+    prl-voc:Radiation , prl-voc:ElectricalOverstress , prl-voc:DataEncryption , prl-voc:Deprivation .
+
+prl-voc:Sudden a skos:Concept ;
+    skos:inScheme prl-voc:OnsetScheme ;
+    skos:topConceptOf prl-voc:OnsetScheme ;
+    skos:prefLabel "Sudden"@en ;
+    skos:definition "Onset within a short, identifiable period."@en ;
+    skos:note "No single published standard names an onset axis for perils. Follows common catastrophe-modelling usage (the distinction behind 'occurrence' versus 'aggregate' treaty forms)."@en .
+
+prl-voc:Gradual a skos:Concept ;
+    skos:inScheme prl-voc:OnsetScheme ;
+    skos:topConceptOf prl-voc:OnsetScheme ;
+    skos:prefLabel "Gradual"@en ;
+    skos:definition "Onset over an extended period, without one identifiable moment."@en ;
+    skos:note "Follows common usage for a cause whose harm accumulates (for example corrosion or subsidence), as the opposite of Sudden onset."@en .
+
+prl-voc:Latent a skos:Concept ;
+    skos:inScheme prl-voc:OnsetScheme ;
+    skos:topConceptOf prl-voc:OnsetScheme ;
+    skos:prefLabel "Latent"@en ;
+    skos:definition "A cause whose harm does not become apparent until long after the originating act or exposure."@en ;
+    skos:note "Follows common liability market usage for a latent-defect or long-tail exposure (for example asbestos), distinct from Gradual (which is ongoing, not hidden)."@en .
+
+prl-voc:Recurrent a skos:Concept ;
+    skos:inScheme prl-voc:OnsetScheme ;
+    skos:topConceptOf prl-voc:OnsetScheme ;
+    skos:prefLabel "Recurrent"@en ;
+    skos:definition "A cause whose occurrences repeat at intervals, each a fresh instance of the same kind of event."@en ;
+    skos:note "Follows common usage for a peril that returns in distinct episodes (for example a seasonal hazard), distinct from Gradual (one continuing process)."@en .
+
+prl-voc:OnsetScheme skos:hasTopConcept prl-voc:Sudden , prl-voc:Gradual , prl-voc:Latent , prl-voc:Recurrent .
+
+prl-voc:Physical a skos:Concept ;
+    skos:inScheme prl-voc:DefinitionBasisScheme ;
+    skos:topConceptOf prl-voc:DefinitionBasisScheme ;
+    skos:prefLabel "Physical"@en ;
+    skos:definition "Exists as a distinct thing by its own physical character, needing no external designation or threshold."@en ;
+    skos:note "No single published standard names this axis. Introduced by this vocabulary (ADR-A99 §10, PV6) to separate what makes a peril a distinct thing from what it typically does."@en .
+
+prl-voc:Designation a skos:Concept ;
+    skos:inScheme prl-voc:DefinitionBasisScheme ;
+    skos:topConceptOf prl-voc:DefinitionBasisScheme ;
+    skos:prefLabel "Designation"@en ;
+    skos:definition "Exists as a distinct thing only once a recognised authority names or designates an occurrence as such, such as a named storm."@en ;
+    skos:note "Follows WMO practice of naming storms, and public-health practice of designating an outbreak a pandemic, generalised to a definition basis."@en .
+
+prl-voc:Threshold a skos:Concept ;
+    skos:inScheme prl-voc:DefinitionBasisScheme ;
+    skos:topConceptOf prl-voc:DefinitionBasisScheme ;
+    skos:prefLabel "Threshold"@en ;
+    skos:definition "Exists as a distinct thing only once a measured intensity crosses a stated threshold."@en ;
+    skos:note "No single published standard names this axis. A threshold-defined concept's own numeric threshold is recorded in peril-intensity.ttl (AIR-2.6), never here."@en .
+
+prl-voc:WordingDefined a skos:Concept ;
+    skos:inScheme prl-voc:DefinitionBasisScheme ;
+    skos:topConceptOf prl-voc:DefinitionBasisScheme ;
+    skos:prefLabel "Wording defined"@en ;
+    skos:definition "Exists as a distinct thing only as the contract wording itself defines it."@en ;
+    skos:note "Follows the epic's own principle E1: the contract's wording is always the operative definition, and the reference edition is the unscoped fallback. Family P (political) is wording-defined throughout."@en .
+
+prl-voc:Statutory a skos:Concept ;
+    skos:inScheme prl-voc:DefinitionBasisScheme ;
+    skos:topConceptOf prl-voc:DefinitionBasisScheme ;
+    skos:prefLabel "Statutory"@en ;
+    skos:definition "Exists as a distinct thing only as a statute or regulation defines it."@en ;
+    skos:note "Distinguishes a definition fixed by law (for example a notifiable disease, or a terrorism pool's statutory certification) from WordingDefined (fixed by the contract)."@en .
+
+prl-voc:Index a skos:Concept ;
+    skos:inScheme prl-voc:DefinitionBasisScheme ;
+    skos:topConceptOf prl-voc:DefinitionBasisScheme ;
+    skos:prefLabel "Index"@en ;
+    skos:definition "Exists as a distinct thing only by reference to a published index value."@en ;
+    skos:note "Follows common parametric market usage, where an index (for example a drought or market index) fixes whether, and how severely, the cause occurred."@en .
+
+prl-voc:DefinitionBasisScheme skos:hasTopConcept prl-voc:Physical , prl-voc:Designation , prl-voc:Threshold ,
+    prl-voc:WordingDefined , prl-voc:Statutory , prl-voc:Index .
+
+prl-voc:Catastrophe a skos:Concept ;
+    skos:inScheme prl-voc:AccumulationClassScheme ;
+    skos:topConceptOf prl-voc:AccumulationClassScheme ;
+    skos:prefLabel "Catastrophe"@en ;
+    skos:definition "An accumulation character in which many risks in one area are affected by a single event."@en ;
+    skos:note "No single published standard names this three-value axis, though the distinction itself is standard catastrophe-modelling and reinsurance practice."@en .
+
+prl-voc:Systemic a skos:Concept ;
+    skos:inScheme prl-voc:AccumulationClassScheme ;
+    skos:topConceptOf prl-voc:AccumulationClassScheme ;
+    skos:prefLabel "Systemic"@en ;
+    skos:definition "An accumulation character in which many risks are affected together through a common dependency, without a single localised event."@en ;
+    skos:note "Follows common usage for a pandemic, a utility failure or a cyber event propagating through shared infrastructure or a shared supplier, distinguishing it from a geographically localised Catastrophe."@en .
+
+prl-voc:Attritional a skos:Concept ;
+    skos:inScheme prl-voc:AccumulationClassScheme ;
+    skos:topConceptOf prl-voc:AccumulationClassScheme ;
+    skos:prefLabel "Attritional"@en ;
+    skos:definition "An accumulation character of frequent, individually small losses, each affecting one risk."@en ;
+    skos:note "Follows common reinsurance usage for day-to-day loss experience, as the opposite of Catastrophe and Systemic."@en .
+
+prl-voc:AccumulationClassScheme skos:hasTopConcept prl-voc:Catastrophe , prl-voc:Systemic , prl-voc:Attritional .
+
+prl-voc:DirectPhysicalDamage a skos:Concept ;
+    skos:inScheme prl-voc:ConsequenceScheme ;
+    skos:topConceptOf prl-voc:ConsequenceScheme ;
+    skos:prefLabel "Direct physical damage"@en ;
+    skos:definition "Physical harm to tangible property."@en ;
+    skos:note "Common usage across every property market."@en .
+
+prl-voc:BusinessInterruption a skos:Concept ;
+    skos:inScheme prl-voc:ConsequenceScheme ;
+    skos:topConceptOf prl-voc:ConsequenceScheme ;
+    skos:prefLabel "Business interruption"@en ;
+    skos:definition "Loss of income or increased cost of working following an interruption to a business's operations."@en ;
+    skos:note "Common property and casualty market usage."@en .
+
+prl-voc:ExtraExpense a skos:Concept ;
+    skos:inScheme prl-voc:ConsequenceScheme ;
+    skos:topConceptOf prl-voc:ConsequenceScheme ;
+    skos:prefLabel "Extra expense"@en ;
+    skos:definition "Cost incurred to avoid or reduce a loss that would otherwise follow an interruption."@en ;
+    skos:note "Common property market usage, distinct from BusinessInterruption's own lost income or increased cost of working."@en .
+
+prl-voc:Spoilage a skos:Concept ;
+    skos:inScheme prl-voc:ConsequenceScheme ;
+    skos:topConceptOf prl-voc:ConsequenceScheme ;
+    skos:prefLabel "Spoilage"@en ;
+    skos:definition "Loss of goods or stock that perish or deteriorate."@en ;
+    skos:note "Common usage in the equipment breakdown and perishable-goods markets, typically following loss of power or refrigeration."@en .
+
+prl-voc:DenialOfAccess a skos:Concept ;
+    skos:inScheme prl-voc:ConsequenceScheme ;
+    skos:topConceptOf prl-voc:ConsequenceScheme ;
+    skos:prefLabel "Denial of access"@en ;
+    skos:definition "Loss arising from being prevented from accessing a location or system, without physical damage to it."@en ;
+    skos:note "Common usage in both the property market (for example a cordon following a nearby event) and the cyber market (for example a denial-of-service attack)."@en .
+
+prl-voc:Recall a skos:Concept ;
+    skos:inScheme prl-voc:ConsequenceScheme ;
+    skos:topConceptOf prl-voc:ConsequenceScheme ;
+    skos:prefLabel "Recall"@en ;
+    skos:definition "Cost of withdrawing a product from the market or from use."@en ;
+    skos:note "Common product liability and product recall market usage."@en .
+
+prl-voc:CleanUp a skos:Concept ;
+    skos:inScheme prl-voc:ConsequenceScheme ;
+    skos:topConceptOf prl-voc:ConsequenceScheme ;
+    skos:prefLabel "Clean-up"@en ;
+    skos:definition "Cost of removing or remediating contamination or debris."@en ;
+    skos:note "Common environmental and property market usage."@en .
+
+prl-voc:DataRestoration a skos:Concept ;
+    skos:inScheme prl-voc:ConsequenceScheme ;
+    skos:topConceptOf prl-voc:ConsequenceScheme ;
+    skos:prefLabel "Data restoration"@en ;
+    skos:definition "Cost of restoring or recreating data or software."@en ;
+    skos:note "Common cyber market usage."@en .
+
+prl-voc:ExtortionPayment a skos:Concept ;
+    skos:inScheme prl-voc:ConsequenceScheme ;
+    skos:topConceptOf prl-voc:ConsequenceScheme ;
+    skos:prefLabel "Extortion payment"@en ;
+    skos:definition "Payment made in response to a threat."@en ;
+    skos:note "Common usage across the kidnap and ransom and cyber markets, where a ransomware demand is a form of extortion."@en .
+
+prl-voc:LiabilityToOthers a skos:Concept ;
+    skos:inScheme prl-voc:ConsequenceScheme ;
+    skos:topConceptOf prl-voc:ConsequenceScheme ;
+    skos:prefLabel "Liability to others"@en ;
+    skos:definition "A legal obligation to compensate a third party for harm."@en ;
+    skos:note "Common liability market usage. Never states a direction of liability itself, which ADR-A102 derives from party roles, not from this characteristic."@en .
+
+prl-voc:DefenceCosts a skos:Concept ;
+    skos:inScheme prl-voc:ConsequenceScheme ;
+    skos:topConceptOf prl-voc:ConsequenceScheme ;
+    skos:prefLabel "Defence costs"@en ;
+    skos:definition "Cost of investigating, defending or settling a claim or proceeding."@en ;
+    skos:note "Common liability and directors' and officers' market usage."@en .
+
+prl-voc:Delay a skos:Concept ;
+    skos:inScheme prl-voc:ConsequenceScheme ;
+    skos:topConceptOf prl-voc:ConsequenceScheme ;
+    skos:prefLabel "Delay"@en ;
+    skos:definition "Loss arising from a later start, or a longer transit, than planned."@en ;
+    skos:note "Covers both delay in start-up (construction and project markets) and transit delay (marine and cargo markets), following each market's advance loss of profits and delay-in-start-up covers."@en .
+
+prl-voc:ShortageOrNonDelivery a skos:Concept ;
+    skos:inScheme prl-voc:ConsequenceScheme ;
+    skos:topConceptOf prl-voc:ConsequenceScheme ;
+    skos:prefLabel "Shortage or non-delivery"@en ;
+    skos:definition "Loss of goods that do not arrive at their destination."@en ;
+    skos:note "Common marine and cargo market usage."@en .
+
+prl-voc:GeneralAverageContribution a skos:Concept ;
+    skos:inScheme prl-voc:ConsequenceScheme ;
+    skos:topConceptOf prl-voc:ConsequenceScheme ;
+    skos:prefLabel "General average contribution"@en ;
+    skos:definition "A cargo or hull owner's proportionate share of a loss voluntarily and reasonably incurred to save a maritime venture."@en ;
+    skos:note "Follows the York-Antwerp Rules 2016, the market's own codification of general average."@en .
+
+prl-voc:ReputationalHarm a skos:Concept ;
+    skos:inScheme prl-voc:ConsequenceScheme ;
+    skos:topConceptOf prl-voc:ConsequenceScheme ;
+    skos:prefLabel "Reputational harm"@en ;
+    skos:definition "Cost of responding to harm to reputation or standing."@en ;
+    skos:note "Common crisis management and cyber market usage. Names a loss, not that cover for it is lawful, which is a matter of law."@en .
+
+prl-voc:RegulatoryPenalty a skos:Concept ;
+    skos:inScheme prl-voc:ConsequenceScheme ;
+    skos:topConceptOf prl-voc:ConsequenceScheme ;
+    skos:prefLabel "Regulatory penalty"@en ;
+    skos:definition "A fine or penalty imposed by a regulator."@en ;
+    skos:note "Follows the GDPR's Article 83 as a working example of a regulatory penalty regime a cyber or privacy event can trigger. Names a loss, not that cover for it is lawful, which is a matter of law and varies by jurisdiction."@en .
+
+prl-voc:NotificationCosts a skos:Concept ;
+    skos:inScheme prl-voc:ConsequenceScheme ;
+    skos:topConceptOf prl-voc:ConsequenceScheme ;
+    skos:prefLabel "Notification costs"@en ;
+    skos:definition "Cost of notifying affected individuals or authorities of an event."@en ;
+    skos:note "Follows the GDPR's Articles 33 and 34 as a working example of a notification duty a cyber or privacy event can trigger."@en .
+
+prl-voc:ForensicCosts a skos:Concept ;
+    skos:inScheme prl-voc:ConsequenceScheme ;
+    skos:topConceptOf prl-voc:ConsequenceScheme ;
+    skos:prefLabel "Forensic costs"@en ;
+    skos:definition "Cost of investigating the cause and extent of an event."@en ;
+    skos:note "Common cyber market usage, where a forensic investigation typically precedes notification and remediation."@en .
+
+prl-voc:CancellationCosts a skos:Concept ;
+    skos:inScheme prl-voc:ConsequenceScheme ;
+    skos:topConceptOf prl-voc:ConsequenceScheme ;
+    skos:prefLabel "Cancellation costs"@en ;
+    skos:definition "Irrecoverable cost of a cancelled or abandoned event or journey."@en ;
+    skos:note "Common event cancellation and travel market usage."@en .
+
+prl-voc:ConsequenceScheme skos:hasTopConcept prl-voc:DirectPhysicalDamage , prl-voc:BusinessInterruption ,
+    prl-voc:ExtraExpense , prl-voc:Spoilage , prl-voc:DenialOfAccess , prl-voc:Recall , prl-voc:CleanUp ,
+    prl-voc:DataRestoration , prl-voc:ExtortionPayment , prl-voc:LiabilityToOthers , prl-voc:DefenceCosts ,
+    prl-voc:Delay , prl-voc:ShortageOrNonDelivery , prl-voc:GeneralAverageContribution ,
+    prl-voc:ReputationalHarm , prl-voc:RegulatoryPenalty , prl-voc:NotificationCosts , prl-voc:ForensicCosts ,
+    prl-voc:CancellationCosts .
+
+prl-voc:Property a skos:Concept ;
+    skos:inScheme prl-voc:HarmSubjectScheme ;
+    skos:topConceptOf prl-voc:HarmSubjectScheme ;
+    skos:prefLabel "Property"@en ;
+    skos:definition "Tangible property."@en ;
+    skos:note "Common usage across every property market."@en .
+
+prl-voc:Persons a skos:Concept ;
+    skos:inScheme prl-voc:HarmSubjectScheme ;
+    skos:topConceptOf prl-voc:HarmSubjectScheme ;
+    skos:prefLabel "Persons"@en ;
+    skos:definition "A natural person's life, health or physical integrity."@en ;
+    skos:note "Common usage across the life, health and liability markets."@en .
+
+prl-voc:FinancialInterest a skos:Concept ;
+    skos:inScheme prl-voc:HarmSubjectScheme ;
+    skos:topConceptOf prl-voc:HarmSubjectScheme ;
+    skos:prefLabel "Financial interest"@en ;
+    skos:definition "A financial interest, such as an investment, a debt or an expected profit."@en ;
+    skos:note "Common usage across the financial lines and trade credit markets."@en .
+
+prl-voc:DataAndSystems a skos:Concept ;
+    skos:inScheme prl-voc:HarmSubjectScheme ;
+    skos:topConceptOf prl-voc:HarmSubjectScheme ;
+    skos:prefLabel "Data and systems"@en ;
+    skos:definition "Data, or the systems that store, process or transmit it."@en ;
+    skos:note "Common cyber market usage."@en .
+
+prl-voc:Environment a skos:Concept ;
+    skos:inScheme prl-voc:HarmSubjectScheme ;
+    skos:topConceptOf prl-voc:HarmSubjectScheme ;
+    skos:prefLabel "Environment"@en ;
+    skos:definition "The natural environment."@en ;
+    skos:note "Common environmental liability market usage."@en .
+
+prl-voc:Reputation a skos:Concept ;
+    skos:inScheme prl-voc:HarmSubjectScheme ;
+    skos:topConceptOf prl-voc:HarmSubjectScheme ;
+    skos:prefLabel "Reputation"@en ;
+    skos:definition "A person's or organisation's standing or reputation."@en ;
+    skos:note "Common crisis management market usage."@en .
+
+prl-voc:HarmSubjectScheme skos:hasTopConcept prl-voc:Property , prl-voc:Persons , prl-voc:FinancialInterest ,
+    prl-voc:DataAndSystems , prl-voc:Environment , prl-voc:Reputation .
 
 # Filled by AIR-2.3: 90 concepts (geophysical, hydrological, meteorological, climatological,
 # biological, extraterrestrial), sketch §5.1.

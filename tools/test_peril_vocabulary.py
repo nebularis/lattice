@@ -121,12 +121,14 @@ def test_spec_and_vocab_parse_and_import_the_pinned_versions():
         "http://www.w3.org/2004/02/skos/core",
         "https://www.nebularis.org/neuro-semantic/lattice/foundation/0.4.0",
         "https://www.nebularis.org/neuro-semantic/lattice/quantification/0.8.0",
+        "https://www.nebularis.org/neuro-semantic/insurance/common/0.5.0",
     }
     vocab_imports = {str(o) for o in vocab.objects(None, OWL.imports)}
     assert vocab_imports == {
-        "https://www.nebularis.org/neuro-semantic/insurance/peril/0.4.0",
+        "https://www.nebularis.org/neuro-semantic/insurance/peril/0.5.0",
         "https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.4.0",
         "https://www.nebularis.org/neuro-semantic/lattice/foundation/0.4.0",
+        "https://www.nebularis.org/neuro-semantic/insurance/common-vocab/0.5.0",
     }
 
 
@@ -269,3 +271,126 @@ def test_threshold_basis_concept_without_defining_threshold_is_rejected():
     data = _fixture()
     data.remove((PRLV["N.MET.TC.HUR"], PRL.definingThreshold, None))
     assert THRESHOLD_DEFINITION in shapes_for(PRLV["N.MET.TC.HUR"], data)
+
+
+# ---- AIR22-01: spec/vocab import closures, spec imports common/ --------------------------------
+
+
+def test_air22_01_spec_imports_common_and_every_import_resolves():
+    spec = _spec()
+    assert "https://www.nebularis.org/neuro-semantic/insurance/common/0.5.0" in {
+        str(o) for o in spec.objects(None, OWL.imports)
+    }
+
+
+# ---- AIR22-02: four sub-property axioms, onset/definitionBasis specialise nothing --------------
+
+
+ICM = Namespace("https://www.nebularis.org/neuro-semantic/insurance/common#")
+
+
+def test_air22_02_four_characteristics_specialise_common_and_two_do_not():
+    spec = _spec()
+    assert (PRL.typicalAgency, RDFS.subPropertyOf, ICM.agency) in spec
+    assert (PRL.typicalMechanism, RDFS.subPropertyOf, ICM.mechanism) in spec
+    assert (PRL.typicalConsequence, RDFS.subPropertyOf, ICM.consequence) in spec
+    assert (PRL.harmSubject, RDFS.subPropertyOf, ICM.harmSubject) in spec
+    assert (PRL.onset, RDFS.subPropertyOf, None) not in spec
+    assert (PRL.definitionBasis, RDFS.subPropertyOf, None) not in spec
+
+
+# ---- AIR22-03: each of the seven characteristic/companion schemes holds its table's concepts ----
+
+
+CHARACTERISTIC_SCHEMES = {
+    PRLV.AgencyScheme: {
+        "Natural", "Accidental", "Negligent", "Intentional", "MaliciousCriminal",
+        "MaliciousPolitical", "Sovereign", "Belligerent", "Economic", "UndeterminedAgency",
+    },
+    PRLV.MechanismScheme: {
+        "Shaking", "GroundFailure", "Inundation", "WaterDamage", "WindLoad", "Load", "Fire",
+        "Smoke", "Heat", "Freezing", "Explosion", "Impact", "Collapse", "Breakdown", "Corrosion",
+        "Erosion", "Contamination", "BiologicalAgent", "Radiation", "ElectricalOverstress",
+        "DataEncryption", "Deprivation",
+    },
+    PRLV.OnsetScheme: {"Sudden", "Gradual", "Latent", "Recurrent"},
+    PRLV.DefinitionBasisScheme: {
+        "Physical", "Designation", "Threshold", "WordingDefined", "Statutory", "Index",
+    },
+    PRLV.AccumulationClassScheme: {"Catastrophe", "Systemic", "Attritional"},
+    PRLV.ConsequenceScheme: {
+        "DirectPhysicalDamage", "BusinessInterruption", "ExtraExpense", "Spoilage",
+        "DenialOfAccess", "Recall", "CleanUp", "DataRestoration", "ExtortionPayment",
+        "LiabilityToOthers", "DefenceCosts", "Delay", "ShortageOrNonDelivery",
+        "GeneralAverageContribution", "ReputationalHarm", "RegulatoryPenalty",
+        "NotificationCosts", "ForensicCosts", "CancellationCosts",
+    },
+    PRLV.HarmSubjectScheme: {
+        "Property", "Persons", "FinancialInterest", "DataAndSystems", "Environment", "Reputation",
+    },
+}
+
+
+def test_air22_03_each_scheme_holds_exactly_its_table_each_a_top_concept():
+    vocab = _vocab()
+    for scheme, names in CHARACTERISTIC_SCHEMES.items():
+        members = set(vocab.subjects(SKOS.inScheme, scheme))
+        tops = set(vocab.subjects(SKOS.topConceptOf, scheme))
+        has_tops = set(vocab.objects(scheme, SKOS.hasTopConcept))
+        expected = {PRLV[name] for name in names}
+        assert members == expected, scheme
+        assert tops == expected, scheme
+        assert has_tops == expected, scheme
+
+
+# ---- AIR22-04: the vocabulary alone conforms to the peril shapes -------------------------------
+
+
+def test_air22_04_vocabulary_alone_has_no_results():
+    assert results(_vocab()) == []
+
+
+# ---- AIR22-05: the four bound contracts conform to Vocabulary's shapes -------------------------
+
+
+def test_air22_05_four_contracts_bound_and_conform_to_vocabulary_shapes():
+    data = _vocab()
+    shapes = _graph(VOCAB_SHAPES / "structural.ttl", VOCAB_SHAPES / "constraints.ttl")
+    conforms, _, report = validate(data, shacl_graph=shapes, advanced=True, inference="none", allow_warnings=True)
+    assert conforms, report
+    ICMV = Namespace("https://www.nebularis.org/neuro-semantic/insurance/common/vocab#")
+    VOCB = Namespace("https://www.nebularis.org/neuro-semantic/lattice/vocabulary#")
+    bindings = {
+        ICMV.AgencyContract: PRLV.AgencyScheme,
+        ICMV.MechanismContract: PRLV.MechanismScheme,
+        ICMV.ConsequenceContract: PRLV.ConsequenceScheme,
+        ICMV.HarmSubjectContract: PRLV.HarmSubjectScheme,
+    }
+    for contract, scheme in bindings.items():
+        assert (contract, VOCB.boundScheme, scheme) in data
+
+
+# ---- AIR22-06: the well-formed fixture, now without local characteristic concepts --------------
+
+
+def test_air22_06_fixture_still_has_no_results_against_the_real_schemes():
+    assert results(_fixture()) == []
+
+
+# ---- AIR22-07: a characteristic concept without skos:definition -------------------------------
+
+
+def test_air22_07_characteristic_concept_without_definition_is_rejected():
+    data = _vocab()
+    data.remove((PRLV.Natural, SKOS.definition, None))
+    assert LABEL_AND_DEFINITION in shapes_for(PRLV.Natural, data)
+
+
+# ---- AIR22-08: a cause concept whose onset is a mechanism concept ------------------------------
+
+
+def test_air22_08_cause_concept_with_mismatched_scheme_characteristic_is_rejected():
+    data = _fixture()
+    data.remove((PRLV["N.MET.TC.SRG"], PRL.onset, None))
+    data.add((PRLV["N.MET.TC.SRG"], PRL.onset, PRLV.Shaking))
+    assert CHARACTERISTICS in shapes_for(PRLV["N.MET.TC.SRG"], data)

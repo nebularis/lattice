@@ -1,49 +1,25 @@
 # SPDX-License-Identifier: MPL-2.0
 
-# Positive fixture (applied-insurance-reference AIR-2.1): a small, real
-# fragment of the cause scheme that passes every shape in structural.ttl and
-# constraints.ttl. No owl:Ontology header: not a released document.
+# Positive fixture (applied-insurance-reference AIR-2.1, AIR-2.2): a small,
+# real fragment of the cause scheme that passes every shape in
+# structural.ttl and constraints.ttl. No owl:Ontology header: not a released
+# document.
 #
 # Six cause concepts: two family tops (N, T), the N.MET / N.MET.TC path to
 # them, N.MET.TC.SRG as a partitive part of N.MET.TC, and N.MET.TC.HUR as a
 # generic kind of N.MET.TC, threshold-defined with a prl:definingThreshold.
-# Four characteristic concepts it uses (Natural, Sudden, Physical,
-# Threshold), declared here since AIR-2.2 has not landed. Reference codes
-# follow sketch §5. The Quantification range set behind N.MET.TC.HUR's
-# threshold is a minimal placeholder in its own example namespace, not the
-# peril vocabulary's: the real intensity-measure value spaces are AIR-2.6.
+# Their characteristic values (Natural, Sudden, Physical, Threshold) are the
+# vocabulary's own reference concepts (AIR-2.2), not local placeholders.
+# Reference codes follow sketch §5. The Quantification range set behind
+# N.MET.TC.HUR's threshold is a minimal placeholder in its own example
+# namespace, not the peril vocabulary's: the real intensity-measure value
+# spaces are AIR-2.6.
 
 @prefix prl:     <https://www.nebularis.org/neuro-semantic/insurance/peril#> .
 @prefix prl-voc: <https://www.nebularis.org/neuro-semantic/insurance/peril/vocab#> .
 @prefix qnt:     <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
 @prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
 @prefix ex:      <https://example.org/lattice/insurance/peril/examples#> .
-
-# ---- Characteristic placeholders (AIR-2.2 builds the real schemes) -------
-
-prl-voc:Natural a skos:Concept ;
-    skos:inScheme prl-voc:AgencyScheme ;
-    skos:prefLabel "Natural"@en ;
-    skos:definition "Caused by a natural process, without human involvement."@en ;
-    skos:note "No single published standard names an agency axis for perils. Follows common catastrophe-modelling usage, which separates a hazard's physical cause from who or what is responsible for it."@en .
-
-prl-voc:Sudden a skos:Concept ;
-    skos:inScheme prl-voc:OnsetScheme ;
-    skos:prefLabel "Sudden"@en ;
-    skos:definition "Onset within a short, identifiable period."@en ;
-    skos:note "No single published standard names an onset axis for perils. Follows common catastrophe-modelling usage (the distinction behind 'occurrence' versus 'aggregate' treaty forms)."@en .
-
-prl-voc:Physical a skos:Concept ;
-    skos:inScheme prl-voc:DefinitionBasisScheme ;
-    skos:prefLabel "Physical"@en ;
-    skos:definition "Exists as a distinct thing by its own physical character, needing no external designation or threshold."@en ;
-    skos:note "No single published standard names this axis. Introduced by this vocabulary (ADR-A99 §10, PV6) to separate what makes a peril a distinct thing from what it typically does."@en .
-
-prl-voc:Threshold a skos:Concept ;
-    skos:inScheme prl-voc:DefinitionBasisScheme ;
-    skos:prefLabel "Threshold"@en ;
-    skos:definition "Exists as a distinct thing only once a measured intensity crosses a stated threshold."@en ;
-    skos:note "No single published standard names this axis. A threshold-defined concept's own numeric threshold is recorded in peril-intensity.ttl (AIR-2.6), never here."@en .
 
 # ---- Cause concepts --------------------------------------------------------
 
