@@ -50,18 +50,18 @@ Verifying queue (S slices handed over and not yet merged): none.
 
 ## Machine S
 
-**Position:** round 3, the one trip. AIR-1.1, AIR-2.1 and AIR-1.2 merged. Next: AIR-2.0, then the
-trip's order (lanes §4), on `air/applied-reference` once it is pushed.
+**Position:** round 3, the one trip. AIR-1.1, AIR-2.1, AIR-1.2 and AIR-2.0 built on
+`air/applied-reference` (not yet handed to R). Next: AIR-2.2.
 **Last updated:** 2026-10-14
-**Blockers:** none. The branch is pushed before S starts.
+**Blockers:** none.
 
 | Seq | Slice | State | Note |
 |---|---|---|---|
 | 3 | AIR-1.1 | merged | set by R. No version bumps, no tags |
 | 4 | AIR-1.2 | merged | set by R. Tags `applied-classification-v0.1.0`, `applied-classification-vocab-v0.1.0`, `insurance-common-v0.1.0`, `insurance-common-vocab-v0.1.0` |
 | 5 | AIR-2.1 | merged | set by R: three shape defects fixed at verification. Tags `applied-insurance-peril-shapes-v0.1.0`, `insurance-peril-v0.1.0`, `insurance-peril-vocab-v0.1.0` |
-| 5a | AIR-2.0 | ready | the trip's first slice. Brief written 2026-10-13 |
-| 6 | AIR-2.2 | ready | brief refreshed and amended 2026-10-13 |
+| 5a | AIR-2.0 | built | `insurance/common` and `insurance/peril` converted to literate READMEs, the extractor extended (nested `--layer` paths, `@output-file` on `turtle-vocab`), `prl:DocumentationShape` added (shapes `0.1.0` → `0.2.0`). No spec/vocab version change. [Validation Pack](../validation/applied-insurance-reference-2.0.md) |
+| 6 | AIR-2.2 | in progress | brief refreshed and amended 2026-10-13 |
 | 7 | AIR-4.1 | ready | brief refreshed 2026-10-13, literate |
 | 9 | AIR-2.3 | ready | after AIR-2.6 |
 | 10 | AIR-2.4 | ready | |
