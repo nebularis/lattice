@@ -1,0 +1,110 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Positive fixture (applied-insurance-reference AIR-4.3): extends
+# examples/core.ttl with dependencies, peril metrics and a metric
+# comparison. No owl:Ontology header: not a released document.
+#
+# The factory depends on a steel supplier as its only source, for 40% of
+# its output, with a six-week recovery lead time, and the warehouse depends
+# on the factory for logistics. Three peril metrics come from one model
+# run: a ground-up average annual flood loss, an insured occurrence
+# exceedance loss at a 200 year return period, and a hazard score on a
+# provider's own score space. A second ground-up average annual loss from
+# an earlier model run is compared with the first, which the comparability
+# shape allows because their peril scope, region scope and perspective are
+# equal. A hazard score has no loss perspective to speak of, and the
+# metric shape still asks for one (AIR-4.3 question for the maintainer, in
+# the Validation Pack), so this example states the ground-up perspective.
+# Loaded together with examples/core.ttl and peril's vocab (for the
+# prl-voc: cause concepts), it passes every shape with no warning.
+
+@prefix aeo:      <https://www.nebularis.org/neuro-semantic/insurance/exposure#> .
+@prefix aeo-voc:  <https://www.nebularis.org/neuro-semantic/insurance/exposure/vocab#> .
+@prefix prl-voc:  <https://www.nebularis.org/neuro-semantic/insurance/peril/vocab#> .
+@prefix fnd:      <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix qnt:      <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
+@prefix prov:     <http://www.w3.org/ns/prov#> .
+@prefix rdfs:     <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:      <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex:       <https://example.org/lattice/insurance/exposure/examples#> .
+
+# ---- The supplier and the dependencies ---------------------------------
+
+ex:steel-supplier a aeo:LegalEntity , fnd:NaturallyKeyed ;
+    rdfs:label "Northern Steel Ltd" .
+
+ex:years a qnt:ValueSpace ;
+    qnt:spaceKey "years" ; qnt:orderKind qnt:TotalOrder ; qnt:densityKind qnt:Dense ;
+    qnt:spaceHash "years-v1" .
+
+ex:factory-steel-dependency a aeo:Dependency ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-01-01T00:00:00Z"^^xsd:dateTime ] ;
+    aeo:dependent ex:factory ;
+    aeo:provider ex:steel-supplier ;
+    aeo:dependencyKind aeo-voc:SupplyOfGoods ;
+    aeo:shareAtRisk [ a qnt:Quantity ; qnt:onSpace aeo-voc:OutputShare ; qnt:numericValue "0.4"^^xsd:decimal ] ;
+    aeo:recoveryLeadTime [ a qnt:Quantity ; qnt:onSpace aeo-voc:Duration ; qnt:numericValue "1008"^^xsd:decimal ] ;
+    aeo:substitutability aeo-voc:PartlySubstitutable ;
+    aeo:singleSource true .
+
+ex:warehouse-factory-dependency a aeo:Dependency ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-01-01T00:00:00Z"^^xsd:dateTime ] ;
+    aeo:dependent ex:warehouse ;
+    aeo:provider ex:factory ;
+    aeo:dependencyKind aeo-voc:Logistics .
+
+ex:schedule-2027 aeo:hasDependency ex:factory-steel-dependency , ex:warehouse-factory-dependency .
+
+# ---- Peril metrics from one model run ------------------------------------
+
+ex:flood-model-run a fnd:DerivationRun .
+ex:flood-model-run-2026 a fnd:DerivationRun .
+
+ex:flood-aal a aeo:PerilMetric ;
+    prov:wasGeneratedBy ex:flood-model-run ;
+    aeo:metricSubject ex:schedule-2027 ;
+    aeo:perilScope prl-voc:N.HYD.FLD ;
+    aeo:metricKind aeo-voc:AverageAnnualLoss ;
+    aeo:perspective aeo-voc:GroundUpLoss ;
+    aeo:metricValue [ a qnt:Quantity ; qnt:onSpace ex:GBP ; qnt:numericValue "125000"^^xsd:decimal ] .
+
+ex:flood-aal-2026 a aeo:PerilMetric ;
+    prov:wasGeneratedBy ex:flood-model-run-2026 ;
+    aeo:metricSubject ex:schedule-2027 ;
+    aeo:perilScope prl-voc:N.HYD.FLD ;
+    aeo:metricKind aeo-voc:AverageAnnualLoss ;
+    aeo:perspective aeo-voc:GroundUpLoss ;
+    aeo:metricValue [ a qnt:Quantity ; qnt:onSpace ex:GBP ; qnt:numericValue "118000"^^xsd:decimal ] .
+
+ex:flood-oep-200 a aeo:PerilMetric ;
+    prov:wasGeneratedBy ex:flood-model-run ;
+    aeo:metricSubject ex:schedule-2027 ;
+    aeo:perilScope prl-voc:N.HYD.FLD ;
+    aeo:regionScope ex:great-britain ;
+    aeo:metricKind aeo-voc:OccurrenceExceedanceLoss ;
+    aeo:perspective aeo-voc:InsuredLoss ;
+    aeo:returnPeriod [ a qnt:Quantity ; qnt:onSpace aeo-voc:ReturnPeriodSpace ; qnt:numericValue "200"^^xsd:decimal ] ;
+    aeo:calculationMethod aeo-voc:FullUncertainty ;
+    aeo:modelOption aeo-voc:SecondaryUncertainty ;
+    aeo:metricValue [ a qnt:Quantity ; qnt:onSpace ex:GBP ; qnt:numericValue "2100000"^^xsd:decimal ] .
+
+ex:provider-flood-score a qnt:ValueSpace ;
+    qnt:spaceKey "provider-flood-score" ; qnt:orderKind qnt:TotalOrder ; qnt:densityKind qnt:Discrete ;
+    qnt:spaceHash "provider-flood-score-v1" .
+
+ex:warehouse-flood-score a aeo:PerilMetric ;
+    prov:wasGeneratedBy ex:flood-model-run ;
+    aeo:metricSubject ex:warehouse ;
+    aeo:perilScope prl-voc:N.HYD.FLD ;
+    aeo:metricKind aeo-voc:HazardScore ;
+    aeo:perspective aeo-voc:GroundUpLoss ;
+    aeo:scoreSpace ex:provider-flood-score ;
+    aeo:metricValue [ a qnt:Quantity ; qnt:onSpace ex:provider-flood-score ; qnt:numericValue "7"^^xsd:decimal ] .
+
+ex:schedule-2027 aeo:hasPerilMetric ex:flood-aal , ex:flood-aal-2026 , ex:flood-oep-200 , ex:warehouse-flood-score .
+
+# ---- A comparison of two comparable metrics -------------------------------
+
+ex:flood-aal-change a aeo:MetricComparison ;
+    prov:wasGeneratedBy ex:flood-model-run ;
+    aeo:comparedMetric ex:flood-aal , ex:flood-aal-2026 .

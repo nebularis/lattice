@@ -42,8 +42,9 @@ flowchart TB
 ```
 
 Exposure imports Foundation, Vocabulary, Quantification, Party and `insurance/common` (which
-brings `classification/`), all by exact version IRI. It does not import `insurance/peril`: AIR-4.3
-adds that import with its first use (exposure units need peril characteristics). Imported in turn
+brings `classification/`), all by exact version IRI. It does not import the `insurance/peril` spec, which no term here uses: perils are
+`icm:peril` values, and only the vocabulary imports `insurance/peril`'s vocabulary, for the cause
+concepts it links. Imported in turn
 by later Phase 4 slices and, eventually, the contract module (Phase 5).
 
 ## 2. Namespace and prefixes
@@ -187,7 +188,7 @@ aeo:ExposureSet a owl:Class ;
         [ a owl:Restriction ; owl:onProperty aeo:reportingUnit ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ;
     rdfs:label "Exposure set"@en ;
     rdfs:comment "A versioned snapshot of one insured's schedule, as of a date." ;
-    fnd:utility "Subject: an exposure set version. Its identity (aeo:ExposureIdentity) follows the schedule across renewals. Governance state is Draft while assembled, Active when submitted, Superseded by the next version. Link members with aeo:hasLocation, aeo:hasAsset, aeo:hasInterest and aeo:hasValuation." .
+    fnd:utility "Subject: an exposure set version. Its identity (aeo:ExposureIdentity) follows the schedule across renewals. Governance state is Draft while assembled, Active when submitted, Superseded by the next version. Link members with aeo:hasLocation, aeo:hasAsset, aeo:hasInterest, aeo:hasValuation, aeo:hasAssessment, aeo:hasDependency and aeo:hasPerilMetric." .
 
 aeo:reportingUnit a owl:ObjectProperty, owl:FunctionalProperty ;
     rdfs:domain aeo:ExposureSet ; rdfs:range qnt:Unit ;
@@ -555,10 +556,10 @@ aeo:pool a owl:ObjectProperty ;
 
 aeo:perilScope a owl:ObjectProperty ;
     rdfs:subPropertyOf icm:peril ;
-    rdfs:domain aeo:PoolParticipation ; rdfs:range skos:Concept ;
+    rdfs:range skos:Concept ;
     rdfs:label "peril scope"@en ;
     rdfs:comment "A peril this pool participation covers at this location." ;
-    fnd:utility "Subject: a pool participation. Value: a cause concept, bound under insurance/common's peril contract. Not functional: several perils may be named. Specialises icm:peril. Reused by peril metrics (AIR-4.3) and existing cover (AIR-4.4) for the same purpose: naming which perils a scope is about." .
+    fnd:utility "Subject: a pool participation. Value: a cause concept, bound under insurance/common's peril contract. Not functional: several perils may be named. Specialises icm:peril. Declared with no domain (AIR-4.3) because it is reused by peril metrics (AIR-4.3) and existing cover (AIR-4.4) for the same purpose: naming which perils a scope is about." .
 
 #################################################################
 #    Assessments and attribute values (AIR-4.2, sketch §5.7, §5.8)
@@ -677,6 +678,290 @@ aeo:multiValued a owl:DatatypeProperty, owl:FunctionalProperty ;
 aeo:LegalEntity owl:disjointWith aeo:ExposureSet , aeo:Location , aeo:Asset , aeo:Interest ,
     aeo:Valuation , aeo:ControlRelation , aeo:Presence , aeo:Address ,
     aeo:ZoneDesignation , aeo:PoolParticipation , aeo:Assessment , aeo:AttributeValue .
+```
+
+### 4.3 Dependencies, peril metrics and exposure units (AIR-4.3)
+
+Three groups of terms, none of which says what a contract insures.
+
+A **dependency** is an evidenced relation: a location or asset depends on a provider (another
+location or asset, or a party) for something, such as power, a part or a customer's custom. It
+carries the dependency's kind and, where known, the share of the dependent's output at risk, a
+recovery lead time, whether the provider can be substituted and whether it is the only source.
+These are the structure contingent business interruption underwriting reads. The maximum
+foreseeable interruption that could be derived from the dependency graph is deferred (see the
+Phase 4 plan). The data it would read is complete here.
+
+A **peril metric** is a derived artefact, a figure a model or a provider computed for a subject
+(an exposure set, a location or an asset) and a set of perils. The model and its version belong to
+the derivation run (`prov:wasGeneratedBy`) and its output file is evidence. A metric states its
+kind (an average annual loss, an exceedance loss, a tail value at risk, a probability of events, a
+hazard score or a scenario loss), its perspective (ground-up, insured or after reinsurance), and a
+value. An exceedance kind states exactly one of a return period and an exceedance probability.
+Two metrics are comparable only with equal peril scope, region scope and perspective, which a
+`aeo:MetricComparison` that cites them is checked for. Full curves and event tables are out of
+scope (epic §7).
+
+An **exposure unit** is a derived artefact for one location, one asset class and one peril, with
+the summed value of the assets of that class at that location. Units are computed on demand for
+the perils a check asks about by `tools/exposure_derivations.py`, never asserted by hand and never
+required to be stored. A graph that holds units without the derivation run that produced them is
+reported.
+
+```mermaid
+classDiagram
+    class Dependency["aeo:Dependency"] {
+        fnd:TemporallyScoped
+        fnd:Evidenced
+        aeo:dependent 1
+        aeo:provider 1
+        aeo:dependencyKind 1
+        aeo:shareAtRisk 0..1
+        aeo:recoveryLeadTime 0..1
+        aeo:substitutability 0..1
+        aeo:singleSource 0..1
+    }
+    class PerilMetric["aeo:PerilMetric"] {
+        fnd:DerivedArtefact
+        fnd:Evidenced
+        aeo:perilScope 1..*
+        aeo:metricSubject 1
+        aeo:metricKind 1
+        aeo:perspective 1
+        aeo:metricValue 1
+        aeo:returnPeriod 0..1
+        aeo:exceedanceProbability 0..1
+    }
+    class ExposureUnit["aeo:ExposureUnit"] {
+        fnd:DerivedArtefact
+        aeo:unitLocation 1
+        aeo:unitAssetClass 1
+        aeo:unitPeril 1
+        aeo:unitValue 0..1
+    }
+    class MetricComparison["aeo:MetricComparison"] {
+        fnd:DerivedArtefact
+        aeo:comparedMetric 2..*
+    }
+    MetricComparison --> PerilMetric : aeo:comparedMetric
+```
+
+```turtle-spec
+#################################################################
+#    Dependencies (AIR-4.3, sketch §5.9)
+#################################################################
+
+aeo:Dependency a owl:Class ;
+    rdfs:subClassOf fnd:TemporallyScoped , fnd:Evidenced ,
+        [ a owl:Restriction ; owl:onProperty aeo:dependent ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty aeo:provider ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty aeo:dependencyKind ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ;
+    rdfs:label "Dependency"@en ;
+    rdfs:comment "A location or asset depends on a provider for something it needs to operate, for a period." ;
+    fnd:utility "Subject: a dependency. Exactly one dependent, one provider and one kind, a temporal scope, and the evidence a fnd:Evidenced node carries. Optional: the share of the dependent's output at risk, a recovery lead time, a substitutability and whether the provider is the only source. Link it to its exposure set with aeo:hasDependency." .
+
+aeo:dependent a owl:ObjectProperty ;
+    rdfs:domain aeo:Dependency ;
+    rdfs:label "dependent"@en ;
+    rdfs:comment "The location or asset that depends on the provider." ;
+    fnd:utility "Subject: a dependency. Value: an aeo:Location or aeo:Asset. Exactly one." .
+
+aeo:provider a owl:ObjectProperty ;
+    rdfs:domain aeo:Dependency ;
+    rdfs:label "provider"@en ;
+    rdfs:comment "What the dependent depends on: another location or asset, or a party that supplies or buys." ;
+    fnd:utility "Subject: a dependency. Value: an aeo:Location, an aeo:Asset or a pty:Actor (a supplier, a utility, a customer). Exactly one." .
+
+aeo:dependencyKind a owl:ObjectProperty ;
+    rdfs:domain aeo:Dependency ; rdfs:range skos:Concept ;
+    rdfs:label "dependency kind"@en ;
+    rdfs:comment "What the dependent depends on the provider for (supply of goods, a utility, an IT service, logistics or custom)." ;
+    fnd:utility "Subject: a dependency. Value: a concept bound by aeo-voc:DependencyKindContract. Exactly one." .
+
+aeo:shareAtRisk a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain aeo:Dependency ; rdfs:range qnt:Quantity ;
+    rdfs:label "share at risk"@en ;
+    rdfs:comment "The share of the dependent's output that relies on the provider." ;
+    fnd:utility "Subject: a dependency. Value: a qnt:Quantity on aeo-voc:OutputShare. At most one." .
+
+aeo:recoveryLeadTime a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain aeo:Dependency ; rdfs:range qnt:Quantity ;
+    rdfs:label "recovery lead time"@en ;
+    rdfs:comment "How long the dependent takes to restore the provider's contribution after a failure." ;
+    fnd:utility "Subject: a dependency. Value: a qnt:Quantity on aeo-voc:Duration. At most one." .
+
+aeo:substitutability a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain aeo:Dependency ; rdfs:range skos:Concept ;
+    rdfs:label "substitutability"@en ;
+    rdfs:comment "Whether another provider could take the place of this one." ;
+    fnd:utility "Subject: a dependency. Value: a concept bound by aeo-voc:SubstitutabilityContract. At most one." .
+
+aeo:singleSource a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:domain aeo:Dependency ; rdfs:range xsd:boolean ;
+    rdfs:label "single source"@en ;
+    rdfs:comment "Whether the provider is the dependent's only source of what it provides." ;
+    fnd:utility "Subject: a dependency. Value: true when the provider is the only source. At most one." .
+
+aeo:hasDependency a owl:ObjectProperty ;
+    rdfs:domain aeo:ExposureSet ; rdfs:range aeo:Dependency ;
+    rdfs:label "has dependency"@en ;
+    rdfs:comment "A dependency listed in this exposure set version." ;
+    fnd:utility "Subject: an exposure set. Value: one of its dependencies. Not inverse functional, for the same reason as aeo:hasLocation (TD-49)." .
+
+#################################################################
+#    Peril metrics (AIR-4.3, sketch §5.10)
+#################################################################
+
+aeo:PerilMetric a owl:Class ;
+    rdfs:subClassOf fnd:DerivedArtefact , fnd:Evidenced ,
+        [ a owl:Restriction ; owl:onProperty aeo:perilScope ; owl:minCardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty aeo:metricSubject ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty aeo:metricKind ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty aeo:perspective ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty aeo:metricValue ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ;
+    rdfs:label "Peril metric"@en ;
+    rdfs:comment "A figure a model or a provider computed for a subject and a set of perils." ;
+    fnd:utility "Subject: a peril metric. At least one peril scope, exactly one subject, kind, perspective and value, and the evidence a fnd:Evidenced node carries. The model and its version are the fnd:DerivationRun's (prov:wasGeneratedBy), and the model's output file is evidence. An exceedance kind states exactly one of a return period and an exceedance probability. Link it to its exposure set with aeo:hasPerilMetric." .
+
+aeo:metricSubject a owl:ObjectProperty ;
+    rdfs:domain aeo:PerilMetric ;
+    rdfs:label "metric subject"@en ;
+    rdfs:comment "What the metric is a figure for." ;
+    fnd:utility "Subject: a peril metric. Value: an aeo:ExposureSet, aeo:Location or aeo:Asset. Exactly one." .
+
+aeo:metricKind a owl:ObjectProperty ;
+    rdfs:domain aeo:PerilMetric ; rdfs:range skos:Concept ;
+    rdfs:label "metric kind"@en ;
+    rdfs:comment "What kind of figure the metric is (an average annual loss, an exceedance loss, a hazard score)." ;
+    fnd:utility "Subject: a peril metric. Value: a concept bound by aeo-voc:MetricKindContract. Exactly one." .
+
+aeo:perspective a owl:ObjectProperty ;
+    rdfs:domain aeo:PerilMetric ; rdfs:range skos:Concept ;
+    rdfs:label "perspective"@en ;
+    rdfs:comment "Which loss the metric measures: before policy terms, after them, or after reinsurance." ;
+    fnd:utility "Subject: a peril metric. Value: a concept bound by aeo-voc:PerspectiveContract. Exactly one." .
+
+aeo:metricValue a owl:ObjectProperty ;
+    rdfs:domain aeo:PerilMetric ; rdfs:range qnt:Value ;
+    rdfs:label "metric value"@en ;
+    rdfs:comment "The figure itself." ;
+    fnd:utility "Subject: a peril metric. Value: a qnt:Value, a money quantity, or a quantity or ordinal value on a score space. Exactly one." .
+
+aeo:regionScope a owl:ObjectProperty ;
+    rdfs:subPropertyOf cls:territory ;
+    rdfs:domain aeo:PerilMetric ; rdfs:range skos:Concept ;
+    rdfs:label "region scope"@en ;
+    rdfs:comment "The territory a metric's figure is limited to, where it is." ;
+    fnd:utility "Subject: a peril metric. Value: a territory concept. Not functional. Two metrics are compared only with equal region scope (the metric-comparability shape)." .
+
+aeo:returnPeriod a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain aeo:PerilMetric ; rdfs:range qnt:Quantity ;
+    rdfs:label "return period"@en ;
+    rdfs:comment "The mean interval, in years, at which a loss at least as large is expected." ;
+    fnd:utility "Subject: a peril metric of an exceedance kind. Value: a qnt:Quantity on aeo-voc:ReturnPeriodSpace. At most one, and exactly one of this and aeo:exceedanceProbability." .
+
+aeo:exceedanceProbability a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain aeo:PerilMetric ; rdfs:range qnt:Quantity ;
+    rdfs:label "exceedance probability"@en ;
+    rdfs:comment "The annual probability that a loss at least as large occurs." ;
+    fnd:utility "Subject: a peril metric of an exceedance kind. Value: a qnt:Quantity on aeo-voc:ExceedanceProbabilitySpace. At most one, and exactly one of this and aeo:returnPeriod." .
+
+aeo:calculationMethod a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain aeo:PerilMetric ; rdfs:range skos:Concept ;
+    rdfs:label "calculation method"@en ;
+    rdfs:comment "How an exceedance curve was calculated from the model's samples." ;
+    fnd:utility "Subject: a peril metric of an exceedance kind. Value: a concept bound by aeo-voc:CalculationMethodContract. At most one." .
+
+aeo:modelOption a owl:ObjectProperty ;
+    rdfs:domain aeo:PerilMetric ; rdfs:range skos:Concept ;
+    rdfs:label "model option"@en ;
+    rdfs:comment "An option the model was run with that changes what the figure includes." ;
+    fnd:utility "Subject: a peril metric. Value: a concept bound by aeo-voc:ModelOptionContract. Not functional." .
+
+aeo:scenario a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain aeo:PerilMetric ; rdfs:range skos:Concept ;
+    rdfs:label "scenario"@en ;
+    rdfs:comment "The scenario a scenario-loss metric is the loss from." ;
+    fnd:utility "Subject: a peril metric of kind aeo-voc:ScenarioLoss. Value: a concept bound by aeo-voc:ScenarioContract (a regulator's or a client's own scenario list, bound by a deployment). Exactly one for that kind." .
+
+aeo:scoreSpace a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain aeo:PerilMetric ; rdfs:range qnt:ValueSpace ;
+    rdfs:label "score space"@en ;
+    rdfs:comment "The provider's own space a hazard score is expressed on." ;
+    fnd:utility "Subject: a peril metric of kind aeo-voc:HazardScore. Value: a qnt:ValueSpace the deployment declares per provider. Exactly one for that kind, and the metric's value is on it (the hazard-score shape). A score from one provider is never on another's space." .
+
+aeo:hasPerilMetric a owl:ObjectProperty ;
+    rdfs:domain aeo:ExposureSet ; rdfs:range aeo:PerilMetric ;
+    rdfs:label "has peril metric"@en ;
+    rdfs:comment "A peril metric listed in this exposure set version." ;
+    fnd:utility "Subject: an exposure set. Value: one of its peril metrics. Not inverse functional, for the same reason as aeo:hasLocation (TD-49)." .
+
+aeo:MetricComparison a owl:Class ;
+    rdfs:subClassOf fnd:DerivedArtefact , fnd:Evidenced ,
+        [ a owl:Restriction ; owl:onProperty aeo:comparedMetric ; owl:minCardinality "2"^^xsd:nonNegativeInteger ] ;
+    rdfs:label "Metric comparison"@en ;
+    rdfs:comment "A derived artefact that compares two or more peril metrics (a ratio, a difference, a ranking)." ;
+    fnd:utility "Subject: a comparison. At least two compared metrics, which must have equal peril scope, region scope and perspective (the metric-comparability shape): a ground-up and an insured loss are not compared as if they were one measure." .
+
+aeo:comparedMetric a owl:ObjectProperty ;
+    rdfs:domain aeo:MetricComparison ; rdfs:range aeo:PerilMetric ;
+    rdfs:label "compared metric"@en ;
+    rdfs:comment "A peril metric that a comparison compares." ;
+    fnd:utility "Subject: a metric comparison. Value: a peril metric. At least two." .
+
+#################################################################
+#    Exposure units (AIR-4.3, sketch §5.11)
+#################################################################
+
+aeo:ExposureUnit a owl:Class ;
+    rdfs:subClassOf fnd:DerivedArtefact ,
+        [ a owl:Restriction ; owl:onProperty aeo:unitLocation ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty aeo:unitAssetClass ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty aeo:unitPeril ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty aeo:unitValue ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ;
+    rdfs:label "Exposure unit"@en ;
+    rdfs:comment "The exposure of one asset class at one location to one peril, computed from the schedule on demand." ;
+    fnd:utility "Subject: an exposure unit. Exactly one location, asset class and peril, and at most one value (the sum of the valuations of that class's assets at that location, when they share one currency). Computed by tools/exposure_derivations.py for the perils a check names, never asserted by hand and never required to be stored. A unit in a graph with no derivation run is reported (the unit-derivation shape)." .
+
+aeo:unitLocation a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain aeo:ExposureUnit ; rdfs:range aeo:Location ;
+    rdfs:label "unit location"@en ;
+    rdfs:comment "The location the exposure unit is at." ;
+    fnd:utility "Subject: an exposure unit. Value: an aeo:Location. Exactly one." .
+
+aeo:unitAssetClass a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:subPropertyOf cls:assetClass ;
+    rdfs:domain aeo:ExposureUnit ; rdfs:range skos:Concept ;
+    rdfs:label "unit asset class"@en ;
+    rdfs:comment "The asset class the exposure unit sums." ;
+    fnd:utility "Subject: an exposure unit. Value: an asset class concept. Exactly one. Specialises cls:assetClass." .
+
+aeo:unitPeril a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:subPropertyOf icm:peril ;
+    rdfs:domain aeo:ExposureUnit ; rdfs:range skos:Concept ;
+    rdfs:label "unit peril"@en ;
+    rdfs:comment "The peril the exposure unit is exposed to." ;
+    fnd:utility "Subject: an exposure unit. Value: a cause concept under insurance/common's peril contract. Exactly one. Specialises icm:peril." .
+
+aeo:unitValue a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain aeo:ExposureUnit ; rdfs:range qnt:Quantity ;
+    rdfs:label "unit value"@en ;
+    rdfs:comment "The summed value of the unit's assets, where they share one currency." ;
+    fnd:utility "Subject: an exposure unit. Value: a money qnt:Quantity. At most one. Omitted, with the derivation reporting it, when the assets' valuations are in several currencies and the graph holds no conversion (a conversion needs a rate and a date)." .
+
+#################################################################
+#    Groupings (AIR-4.3, R9)
+#################################################################
+
+aeo:scheduleGroup a owl:ObjectProperty ;
+    rdfs:range skos:Concept ;
+    rdfs:label "schedule group"@en ;
+    rdfs:comment "A group the insured or drafter uses for a location or asset (a division, a portfolio, a location group of the Open Exposure Data schema)." ;
+    fnd:utility "Subject: an aeo:Location or aeo:Asset. Value: a concept bound by aeo-voc:ScheduleGroupContract, a scheme a deployment binds per insured or drafter. Not functional. A coverage requirement's scope (AIR-4.4) can select by group." .
+
+[] a owl:AllDisjointClasses ;
+    owl:members ( aeo:ExposureSet aeo:Location aeo:Asset aeo:Interest aeo:Valuation
+                  aeo:Dependency aeo:PerilMetric aeo:ExposureUnit aeo:MetricComparison ) .
 ```
 
 ## 5. Vocabulary, `core` region
@@ -2505,6 +2790,244 @@ prl-voc:C.MAL prl:relevantAttribute aeo-voc:MfaCoverage , aeo-voc:EndpointDetect
 # ==== END README SECTION zones-attributes-assessments ====
 
 # ==== BEGIN README SECTION dependencies-metrics-units (AIR-4.3) ====
+
+#################################################################
+#    Value spaces (AIR-4.3). OutputShare is a proportion over a
+#    production space named twice (ADR-A93), so a share of one
+#    dependent's output is never summed with a share of another's.
+#################################################################
+
+aeo-voc:ProductionOutput a qnt:ValueSpace ;
+    qnt:spaceKey "production-output" ; qnt:orderKind qnt:TotalOrder ; qnt:densityKind qnt:Dense ; qnt:spaceHash "production-output-v1" ;
+    skos:note "A dependent's own output, in whatever unit it measures it. Exists so that OutputShare has a space to name twice, and is not otherwise used."@en .
+aeo-voc:OutputShare a qnt:DerivedValueSpace ;
+    qnt:spaceKey "output-share" ; qnt:orderKind qnt:TotalOrder ; qnt:densityKind qnt:Dense ; qnt:spaceHash "output-share-v1" ;
+    qnt:numeratorSpace aeo-voc:ProductionOutput ; qnt:denominatorSpace aeo-voc:ProductionOutput ;
+    skos:note "A proportion space (ADR-A93): the share of the dependent's output that relies on a provider. Dimensionless, from 0 to 1. The share is of the dependent's own output, never of a portfolio's."@en .
+aeo-voc:ReturnPeriodSpace a qnt:ValueSpace ;
+    qnt:spaceKey "return-period" ; qnt:orderKind qnt:TotalOrder ; qnt:densityKind qnt:Dense ; qnt:spaceHash "return-period-v1" ;
+    skos:note "Canonical unit the year. A return period of 200 years is a 1 in 200 annual exceedance probability, the convention of Solvency II's capital calculation."@en .
+aeo-voc:ExceedanceProbabilitySpace a qnt:ValueSpace ;
+    qnt:spaceKey "exceedance-probability" ; qnt:orderKind qnt:TotalOrder ; qnt:densityKind qnt:Dense ; qnt:spaceHash "exceedance-probability-v1" ;
+    skos:note "Dimensionless, an annual probability from 0 to 1. The reciprocal of a return period in years."@en .
+
+#################################################################
+#    Reference schemes (AIR-4.3), each the unscoped fallback
+#    (ADR-A99 decision 1).
+#################################################################
+
+aeo-voc:DependencyKindScheme a voc:ConceptScheme ;
+    fnd:hasIdentity aeo-voc:DependencyKindScheme-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Reference dependency kind scheme"@en ;
+    skos:editorialNote "Reference edition published by LATTICE. Not a market standard."@en .
+
+aeo-voc:SubstitutabilityScheme a voc:ConceptScheme ;
+    fnd:hasIdentity aeo-voc:SubstitutabilityScheme-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Reference substitutability scheme"@en ;
+    skos:editorialNote "Reference edition published by LATTICE. Not a market standard."@en .
+
+aeo-voc:MetricKindScheme a voc:ConceptScheme ;
+    fnd:hasIdentity aeo-voc:MetricKindScheme-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Reference metric kind scheme"@en ;
+    skos:editorialNote "Reference edition published by LATTICE. Not a market standard."@en .
+
+aeo-voc:PerspectiveScheme a voc:ConceptScheme ;
+    fnd:hasIdentity aeo-voc:PerspectiveScheme-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Reference metric perspective scheme"@en ;
+    skos:editorialNote "Reference edition published by LATTICE. Not a market standard."@en .
+
+aeo-voc:CalculationMethodScheme a voc:ConceptScheme ;
+    fnd:hasIdentity aeo-voc:CalculationMethodScheme-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Reference calculation method scheme"@en ;
+    skos:editorialNote "Reference edition published by LATTICE. Not a market standard."@en .
+
+aeo-voc:ModelOptionScheme a voc:ConceptScheme ;
+    fnd:hasIdentity aeo-voc:ModelOptionScheme-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Reference model option scheme"@en ;
+    skos:editorialNote "Reference edition published by LATTICE. Not a market standard."@en .
+
+#################################################################
+#    Reference bindings (AIR-4.3). The schedule group and scenario
+#    contracts have no reference scheme: a deployment binds one per
+#    insured, drafter or regulator (ADR-A99).
+#################################################################
+
+aeo-voc:DependencyKindContract a voc:SchemeContract ;
+    fnd:hasIdentity aeo-voc:DependencyKindContract-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Dependency kind scheme contract"@en ;
+    voc:constrainsProperty aeo:dependencyKind ;
+    voc:boundScheme aeo-voc:DependencyKindScheme .
+
+aeo-voc:SubstitutabilityContract a voc:SchemeContract ;
+    fnd:hasIdentity aeo-voc:SubstitutabilityContract-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Substitutability scheme contract"@en ;
+    voc:constrainsProperty aeo:substitutability ;
+    voc:boundScheme aeo-voc:SubstitutabilityScheme .
+
+aeo-voc:MetricKindContract a voc:SchemeContract ;
+    fnd:hasIdentity aeo-voc:MetricKindContract-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Metric kind scheme contract"@en ;
+    voc:constrainsProperty aeo:metricKind ;
+    voc:boundScheme aeo-voc:MetricKindScheme .
+
+aeo-voc:PerspectiveContract a voc:SchemeContract ;
+    fnd:hasIdentity aeo-voc:PerspectiveContract-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Metric perspective scheme contract"@en ;
+    voc:constrainsProperty aeo:perspective ;
+    voc:boundScheme aeo-voc:PerspectiveScheme .
+
+aeo-voc:CalculationMethodContract a voc:SchemeContract ;
+    fnd:hasIdentity aeo-voc:CalculationMethodContract-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Calculation method scheme contract"@en ;
+    voc:constrainsProperty aeo:calculationMethod ;
+    voc:boundScheme aeo-voc:CalculationMethodScheme .
+
+aeo-voc:ModelOptionContract a voc:SchemeContract ;
+    fnd:hasIdentity aeo-voc:ModelOptionContract-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Model option scheme contract"@en ;
+    voc:constrainsProperty aeo:modelOption ;
+    voc:boundScheme aeo-voc:ModelOptionScheme .
+
+aeo-voc:ScheduleGroupContract a voc:SchemeContract ;
+    fnd:hasIdentity aeo-voc:ScheduleGroupContract-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Schedule group scheme contract"@en ;
+    skos:note "Expects the group a drafter or insured uses for locations and assets (a division, a portfolio, a location group of the Open Exposure Data schema). No reference scheme: unbound until a deployment binds one."@en ;
+    voc:constrainsProperty aeo:scheduleGroup .
+
+aeo-voc:ScenarioContract a voc:SchemeContract ;
+    fnd:hasIdentity aeo-voc:ScenarioContract-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Scenario scheme contract"@en ;
+    skos:note "Expects a scenario list a regulator or client keeps (for example the Lloyd's Realistic Disaster Scenarios). No reference scheme: unbound until a deployment binds one."@en ;
+    voc:constrainsProperty aeo:scenario .
+
+#################################################################
+#    Dependency kind
+#################################################################
+
+aeo-voc:SupplyOfGoods a skos:Concept ; skos:inScheme aeo-voc:DependencyKindScheme ; skos:topConceptOf aeo-voc:DependencyKindScheme ;
+    skos:prefLabel "Supply of goods"@en ; skos:definition "The dependent relies on the provider for goods, parts or materials it uses."@en ;
+    skos:note "Common contingent business interruption underwriting usage. Covers a supplier of components or raw materials."@en .
+aeo-voc:Utility a skos:Concept ; skos:inScheme aeo-voc:DependencyKindScheme ; skos:topConceptOf aeo-voc:DependencyKindScheme ;
+    skos:prefLabel "Utility"@en ; skos:definition "The dependent relies on the provider for power, water, gas or telecommunications."@en ;
+    skos:note "Common contingent business interruption underwriting usage. Named utility services dependency."@en .
+aeo-voc:ItService a skos:Concept ; skos:inScheme aeo-voc:DependencyKindScheme ; skos:topConceptOf aeo-voc:DependencyKindScheme ;
+    skos:prefLabel "IT service"@en ; skos:definition "The dependent relies on the provider for a hosted or managed information technology service."@en ;
+    skos:note "Common contingent business interruption underwriting usage. Covers cloud and managed service providers."@en .
+aeo-voc:Logistics a skos:Concept ; skos:inScheme aeo-voc:DependencyKindScheme ; skos:topConceptOf aeo-voc:DependencyKindScheme ;
+    skos:prefLabel "Logistics"@en ; skos:definition "The dependent relies on the provider to transport, store or deliver goods."@en ;
+    skos:note "Common contingent business interruption underwriting usage."@en .
+aeo-voc:Customer a skos:Concept ; skos:inScheme aeo-voc:DependencyKindScheme ; skos:topConceptOf aeo-voc:DependencyKindScheme ;
+    skos:prefLabel "Customer"@en ; skos:definition "The dependent relies on the provider as a customer who takes its output."@en ;
+    skos:note "Common contingent business interruption underwriting usage. A customer dependency gives contingent business interruption on the customer side."@en .
+aeo-voc:DependencyKindScheme skos:hasTopConcept aeo-voc:SupplyOfGoods , aeo-voc:Utility , aeo-voc:ItService , aeo-voc:Logistics , aeo-voc:Customer .
+
+#################################################################
+#    Substitutability
+#################################################################
+
+aeo-voc:NotSubstitutable a skos:Concept ; skos:inScheme aeo-voc:SubstitutabilityScheme ; skos:topConceptOf aeo-voc:SubstitutabilityScheme ;
+    skos:prefLabel "Not substitutable"@en ; skos:definition "No other provider could take the place of this one within the recovery lead time."@en ;
+    skos:note "Common underwriting usage."@en .
+aeo-voc:PartlySubstitutable a skos:Concept ; skos:inScheme aeo-voc:SubstitutabilityScheme ; skos:topConceptOf aeo-voc:SubstitutabilityScheme ;
+    skos:prefLabel "Partly substitutable"@en ; skos:definition "Another provider could replace part of what this one provides, or replace all of it after a delay."@en ;
+    skos:note "Common underwriting usage."@en .
+aeo-voc:FullySubstitutable a skos:Concept ; skos:inScheme aeo-voc:SubstitutabilityScheme ; skos:topConceptOf aeo-voc:SubstitutabilityScheme ;
+    skos:prefLabel "Fully substitutable"@en ; skos:definition "Another provider could replace all of what this one provides without material delay."@en ;
+    skos:note "Common underwriting usage."@en .
+aeo-voc:SubstitutabilityScheme skos:hasTopConcept aeo-voc:NotSubstitutable , aeo-voc:PartlySubstitutable , aeo-voc:FullySubstitutable .
+
+#################################################################
+#    Metric kind
+#################################################################
+
+aeo-voc:AverageAnnualLoss a skos:Concept ; skos:inScheme aeo-voc:MetricKindScheme ; skos:topConceptOf aeo-voc:MetricKindScheme ;
+    skos:prefLabel "Average annual loss"@en ; skos:definition "The expected loss in a year, averaged over all events and years the model considers."@en ;
+    skos:note "Follows the average annual loss (AAL) of Oasis Open Results Data (ORD)."@en .
+aeo-voc:OccurrenceExceedanceLoss a skos:Concept ; skos:inScheme aeo-voc:MetricKindScheme ; skos:topConceptOf aeo-voc:MetricKindScheme ;
+    skos:prefLabel "Occurrence exceedance loss"@en ; skos:definition "The loss in the largest single event of a year that is exceeded with a stated probability or return period."@en ;
+    skos:note "Follows the occurrence exceedance probability (OEP) of Oasis Open Results Data (ORD). States exactly one of aeo:returnPeriod and aeo:exceedanceProbability."@en .
+aeo-voc:AggregateExceedanceLoss a skos:Concept ; skos:inScheme aeo-voc:MetricKindScheme ; skos:topConceptOf aeo-voc:MetricKindScheme ;
+    skos:prefLabel "Aggregate exceedance loss"@en ; skos:definition "The total loss over a year that is exceeded with a stated probability or return period."@en ;
+    skos:note "Follows the aggregate exceedance probability (AEP) of Oasis Open Results Data (ORD). States exactly one of aeo:returnPeriod and aeo:exceedanceProbability. A 1 in 200 year return period is the convention of Solvency II's capital calculation."@en .
+aeo-voc:OccurrenceTailValueAtRisk a skos:Concept ; skos:inScheme aeo-voc:MetricKindScheme ; skos:topConceptOf aeo-voc:MetricKindScheme ;
+    skos:prefLabel "Occurrence tail value at risk"@en ; skos:definition "The mean of the largest single-event losses beyond a stated occurrence exceedance threshold."@en ;
+    skos:note "Follows the occurrence tail value at risk (OEP TVaR) of Oasis Open Results Data (ORD). States exactly one of aeo:returnPeriod and aeo:exceedanceProbability."@en .
+aeo-voc:AggregateTailValueAtRisk a skos:Concept ; skos:inScheme aeo-voc:MetricKindScheme ; skos:topConceptOf aeo-voc:MetricKindScheme ;
+    skos:prefLabel "Aggregate tail value at risk"@en ; skos:definition "The mean of the largest annual total losses beyond a stated aggregate exceedance threshold."@en ;
+    skos:note "Follows the aggregate tail value at risk (AEP TVaR) of Oasis Open Results Data (ORD). States exactly one of aeo:returnPeriod and aeo:exceedanceProbability."@en .
+aeo-voc:ProbabilityOfEvents a skos:Concept ; skos:inScheme aeo-voc:MetricKindScheme ; skos:topConceptOf aeo-voc:MetricKindScheme ;
+    skos:prefLabel "Probability of events"@en ; skos:definition "The probability, or expected number, of events of a stated kind in a stated period, not a loss."@en ;
+    skos:note "A hazard frequency figure as catastrophe model and hazard data providers report it. Not an exceedance kind, so aeo:returnPeriod is unused here and the exceedance shape does not apply."@en .
+aeo-voc:HazardScore a skos:Concept ; skos:inScheme aeo-voc:MetricKindScheme ; skos:topConceptOf aeo-voc:MetricKindScheme ;
+    skos:prefLabel "Hazard score"@en ; skos:definition "A score a hazard data provider assigns to a location for a peril, on the provider's own score space."@en ;
+    skos:note "Common hazard data provider usage. States aeo:scoreSpace, and its value is on that space. A score from one provider is never on another provider's space, so scores are not compared across providers."@en .
+aeo-voc:ScenarioLoss a skos:Concept ; skos:inScheme aeo-voc:MetricKindScheme ; skos:topConceptOf aeo-voc:MetricKindScheme ;
+    skos:prefLabel "Scenario loss"@en ; skos:definition "The loss from a stated scenario, rather than from the model's whole event set."@en ;
+    skos:note "Lloyd's Realistic Disaster Scenarios are the market example, and a client's own scenarios are another. States aeo:scenario."@en .
+aeo-voc:MetricKindScheme skos:hasTopConcept aeo-voc:AverageAnnualLoss , aeo-voc:OccurrenceExceedanceLoss , aeo-voc:AggregateExceedanceLoss , aeo-voc:OccurrenceTailValueAtRisk , aeo-voc:AggregateTailValueAtRisk , aeo-voc:ProbabilityOfEvents , aeo-voc:HazardScore , aeo-voc:ScenarioLoss .
+
+#################################################################
+#    Metric perspective
+#################################################################
+
+aeo-voc:GroundUpLoss a skos:Concept ; skos:inScheme aeo-voc:PerspectiveScheme ; skos:topConceptOf aeo-voc:PerspectiveScheme ;
+    skos:prefLabel "Ground-up loss"@en ; skos:definition "The loss before any policy terms are applied."@en ;
+    skos:note "Follows the ground-up loss (GUL) perspective of Oasis Open Results Data (ORD)."@en .
+aeo-voc:InsuredLoss a skos:Concept ; skos:inScheme aeo-voc:PerspectiveScheme ; skos:topConceptOf aeo-voc:PerspectiveScheme ;
+    skos:prefLabel "Insured loss"@en ; skos:definition "The loss after policy terms (limits, deductibles) are applied."@en ;
+    skos:note "Follows the insured loss (IL) perspective of Oasis Open Results Data (ORD). The market's gross loss is usually this perspective, and a metric states which perspective it is rather than relying on the word."@en .
+aeo-voc:ReinsuranceLoss a skos:Concept ; skos:inScheme aeo-voc:PerspectiveScheme ; skos:topConceptOf aeo-voc:PerspectiveScheme ;
+    skos:prefLabel "Reinsurance loss"@en ; skos:definition "The loss after reinsurance recoveries are applied."@en ;
+    skos:note "Follows the reinsurance loss (RIL) perspective of Oasis Open Results Data (ORD). The market's net loss is the loss after reinsurance, and a metric states which perspective it is rather than relying on the word."@en .
+aeo-voc:PerspectiveScheme skos:hasTopConcept aeo-voc:GroundUpLoss , aeo-voc:InsuredLoss , aeo-voc:ReinsuranceLoss .
+
+#################################################################
+#    Calculation method
+#################################################################
+
+aeo-voc:FullUncertainty a skos:Concept ; skos:inScheme aeo-voc:CalculationMethodScheme ; skos:topConceptOf aeo-voc:CalculationMethodScheme ;
+    skos:prefLabel "Full uncertainty"@en ; skos:definition "The exceedance curve is built from every sampled loss, with the model's uncertainty carried through."@en ;
+    skos:note "Follows the full uncertainty exceedance curve calculation named in the exceedance probability table of Oasis Open Results Data (ORD)."@en .
+aeo-voc:PerSampleMean a skos:Concept ; skos:inScheme aeo-voc:CalculationMethodScheme ; skos:topConceptOf aeo-voc:CalculationMethodScheme ;
+    skos:prefLabel "Per-sample mean"@en ; skos:definition "The exceedance curve is built from each sample's own losses and the curves are averaged across samples."@en ;
+    skos:note "Follows the per-sample mean exceedance curve calculation named in the exceedance probability table of Oasis Open Results Data (ORD)."@en .
+aeo-voc:CalculationMethodScheme skos:hasTopConcept aeo-voc:FullUncertainty , aeo-voc:PerSampleMean .
+
+#################################################################
+#    Model option
+#################################################################
+
+aeo-voc:SecondaryUncertainty a skos:Concept ; skos:inScheme aeo-voc:ModelOptionScheme ; skos:topConceptOf aeo-voc:ModelOptionScheme ;
+    skos:prefLabel "Secondary uncertainty"@en ; skos:definition "The model samples the damage around its mean for each event rather than using the mean alone."@en ;
+    skos:note "Common catastrophe-modelling usage."@en .
+aeo-voc:DemandSurge a skos:Concept ; skos:inScheme aeo-voc:ModelOptionScheme ; skos:topConceptOf aeo-voc:ModelOptionScheme ;
+    skos:prefLabel "Demand surge"@en ; skos:definition "The model adds the rise in repair costs that follows a large event."@en ;
+    skos:note "Common catastrophe-modelling usage."@en .
+aeo-voc:StormSurgeIncluded a skos:Concept ; skos:inScheme aeo-voc:ModelOptionScheme ; skos:topConceptOf aeo-voc:ModelOptionScheme ;
+    skos:prefLabel "Storm surge included"@en ; skos:definition "The wind model includes loss from storm surge."@en ;
+    skos:note "Common catastrophe-modelling usage."@en .
+aeo-voc:FireFollowingIncluded a skos:Concept ; skos:inScheme aeo-voc:ModelOptionScheme ; skos:topConceptOf aeo-voc:ModelOptionScheme ;
+    skos:prefLabel "Fire following included"@en ; skos:definition "The earthquake model includes loss from fire that follows the shaking."@en ;
+    skos:note "Common catastrophe-modelling usage."@en .
+aeo-voc:ClimateConditioned a skos:Concept ; skos:inScheme aeo-voc:ModelOptionScheme ; skos:topConceptOf aeo-voc:ModelOptionScheme ;
+    skos:prefLabel "Climate conditioned"@en ; skos:definition "The model's event rates or intensities are adjusted to a stated climate state."@en ;
+    skos:note "Common catastrophe-modelling usage. The adjustment itself belongs in the metric's derivation run."@en .
+aeo-voc:ModelOptionScheme skos:hasTopConcept aeo-voc:SecondaryUncertainty , aeo-voc:DemandSurge , aeo-voc:StormSurgeIncluded , aeo-voc:FireFollowingIncluded , aeo-voc:ClimateConditioned .
+
 # ==== END README SECTION dependencies-metrics-units ====
 
 # ==== BEGIN README SECTION losses-requirements-cover (AIR-4.4) ====
@@ -2540,6 +3063,15 @@ the shape itself since `sh:sparql`'s value is a constraint, not a nested propert
 | `aeo:SingleValuedTypesShape` (AIR-4.2) | at most one value per attribute type per assessment, unless the type is `aeo:multiValued` |
 | `aeo:ScreeningShape` (AIR-4.2) | `aeo-voc:SanctionsScreeningOutcome` only in an assessment of kind `aeo-voc:ScreeningRun` that is a `fnd:DerivedArtefact` |
 | `aeo:PerilCompletenessShape` (AIR-4.2, warning) | a location exposed to a peril should have a value for each attribute type that peril, or a broader cause concept, names relevant, read per location not per asset |
+| `aeo:DependencyShape` (AIR-4.3) | exactly one dependent, provider and dependency kind |
+| `aeo:PerilMetricShape` (AIR-4.3) | at least one peril scope, exactly one subject, kind, perspective and value |
+| `aeo:ExceedanceMetricShape` (AIR-4.3) | an exceedance or tail value-at-risk kind states exactly one of a return period and an exceedance probability |
+| `aeo:HazardScoreShape` (AIR-4.3) | a hazard score states one score space and its value is on it |
+| `aeo:ScenarioMetricShape` (AIR-4.3) | a scenario-loss metric names exactly one scenario |
+| `aeo:ExposureUnitShape` (AIR-4.3) | exactly one location, asset class and peril, at most one value |
+| `aeo:DependencyCycleShape` (AIR-4.3, warning) | a cycle of dependencies is reported |
+| `aeo:MetricComparabilityShape` (AIR-4.3) | metrics compared together have equal peril scope, region scope and perspective |
+| `aeo:UnitDerivationShape` (AIR-4.3, warning) | an exposure unit with no derivation run that produced it is reported |
 | `aeo:GeoPrecisionForPerilShape` (AIR-4.2, warning) | a location exposed to a peril with a minimum geographic precision should be known at least that precisely |
 | `shapes/profiles/construction-protection.ttl` (AIR-4.2) | an assessment of this profile family assesses a location or an asset, and has `ConstructionClass`, `OccupancyClass`, `YearBuilt` and `Storeys` (violation). A type outside the Construction, Occupancy, Protection or External exposure families is reported (warning) |
 | `shapes/profiles/cyber-posture.ttl` (AIR-4.2) | an assessment of this profile family assesses a legal entity, and has `MfaCoverage`, `BackupStrategy` and `EndpointDetectionAndResponse` (violation). A type outside the Cyber posture family is reported (warning) |
@@ -2922,6 +3454,125 @@ aeo:ScreeningShape a sh:NodeShape ;
               FILTER (!EXISTS { $this aeo:assessmentKind aeo-voc:ScreeningRun } || !EXISTS { $this a fnd:DerivedArtefact })
             }
         """ ] .
+
+#################################################################
+#    AIR-4.3: dependencies, peril metrics, exposure units
+#################################################################
+
+aeo:DependencyShape a sh:NodeShape ;
+    sh:targetClass aeo:Dependency ;
+    sh:sparql [
+        sh:message "A dependency must have exactly one dependent, one provider and one dependency kind." ;
+        sh:select """
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            SELECT $this WHERE {
+              {
+                SELECT $this (COUNT(DISTINCT ?d) AS ?nd) (COUNT(DISTINCT ?p) AS ?np) (COUNT(DISTINCT ?k) AS ?nk) WHERE {
+                  $this a aeo:Dependency .
+                  OPTIONAL { $this aeo:dependent ?d }
+                  OPTIONAL { $this aeo:provider ?p }
+                  OPTIONAL { $this aeo:dependencyKind ?k }
+                } GROUP BY $this
+              }
+              FILTER (?nd != 1 || ?np != 1 || ?nk != 1)
+            }
+        """ ] .
+
+aeo:PerilMetricShape a sh:NodeShape ;
+    sh:targetClass aeo:PerilMetric ;
+    sh:sparql [
+        sh:message "A peril metric must have at least one peril scope and exactly one subject, kind, perspective and value." ;
+        sh:select """
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            SELECT $this WHERE {
+              {
+                SELECT $this (COUNT(DISTINCT ?s) AS ?ns) (COUNT(DISTINCT ?u) AS ?nu) (COUNT(DISTINCT ?k) AS ?nk) (COUNT(DISTINCT ?p) AS ?np) (COUNT(DISTINCT ?v) AS ?nv) WHERE {
+                  $this a aeo:PerilMetric .
+                  OPTIONAL { $this aeo:perilScope ?s }
+                  OPTIONAL { $this aeo:metricSubject ?u }
+                  OPTIONAL { $this aeo:metricKind ?k }
+                  OPTIONAL { $this aeo:perspective ?p }
+                  OPTIONAL { $this aeo:metricValue ?v }
+                } GROUP BY $this
+              }
+              FILTER (?ns < 1 || ?nu != 1 || ?nk != 1 || ?np != 1 || ?nv != 1)
+            }
+        """ ] .
+
+aeo:ExceedanceMetricShape a sh:NodeShape ;
+    sh:targetClass aeo:PerilMetric ;
+    sh:sparql [
+        sh:message "A metric of an exceedance or tail value-at-risk kind must state exactly one of a return period and an exceedance probability." ;
+        sh:select """
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX aeo-voc: <https://www.nebularis.org/neuro-semantic/insurance/exposure/vocab#>
+            SELECT $this WHERE {
+              {
+                SELECT $this (COUNT(DISTINCT ?r) AS ?nr) (COUNT(DISTINCT ?e) AS ?ne) WHERE {
+                  $this a aeo:PerilMetric ; aeo:metricKind ?kind .
+                  FILTER (?kind IN (aeo-voc:OccurrenceExceedanceLoss, aeo-voc:AggregateExceedanceLoss,
+                                    aeo-voc:OccurrenceTailValueAtRisk, aeo-voc:AggregateTailValueAtRisk))
+                  OPTIONAL { $this aeo:returnPeriod ?r }
+                  OPTIONAL { $this aeo:exceedanceProbability ?e }
+                } GROUP BY $this
+              }
+              FILTER (?nr + ?ne != 1)
+            }
+        """ ] .
+
+aeo:HazardScoreShape a sh:NodeShape ;
+    sh:targetClass aeo:PerilMetric ;
+    sh:sparql [
+        sh:message "A hazard score must state exactly one score space, and its value must be on that space." ;
+        sh:select """
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX aeo-voc: <https://www.nebularis.org/neuro-semantic/insurance/exposure/vocab#>
+            PREFIX qnt: <https://www.nebularis.org/neuro-semantic/lattice/quantification#>
+            SELECT $this WHERE {
+              $this a aeo:PerilMetric ; aeo:metricKind aeo-voc:HazardScore .
+              OPTIONAL { $this aeo:scoreSpace ?space }
+              OPTIONAL { $this aeo:metricValue/qnt:onSpace ?valueSpace }
+              FILTER (!BOUND(?space) || !BOUND(?valueSpace) || ?valueSpace != ?space)
+            }
+        """ ] .
+
+aeo:ScenarioMetricShape a sh:NodeShape ;
+    sh:targetClass aeo:PerilMetric ;
+    sh:sparql [
+        sh:message "A scenario-loss metric must name exactly one scenario." ;
+        sh:select """
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX aeo-voc: <https://www.nebularis.org/neuro-semantic/insurance/exposure/vocab#>
+            SELECT $this WHERE {
+              {
+                SELECT $this (COUNT(DISTINCT ?s) AS ?ns) WHERE {
+                  $this a aeo:PerilMetric ; aeo:metricKind aeo-voc:ScenarioLoss .
+                  OPTIONAL { $this aeo:scenario ?s }
+                } GROUP BY $this
+              }
+              FILTER (?ns != 1)
+            }
+        """ ] .
+
+aeo:ExposureUnitShape a sh:NodeShape ;
+    sh:targetClass aeo:ExposureUnit ;
+    sh:sparql [
+        sh:message "An exposure unit must have exactly one location, asset class and peril, and at most one value." ;
+        sh:select """
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            SELECT $this WHERE {
+              {
+                SELECT $this (COUNT(DISTINCT ?l) AS ?nl) (COUNT(DISTINCT ?c) AS ?nc) (COUNT(DISTINCT ?p) AS ?np) (COUNT(DISTINCT ?v) AS ?nv) WHERE {
+                  $this a aeo:ExposureUnit .
+                  OPTIONAL { $this aeo:unitLocation ?l }
+                  OPTIONAL { $this aeo:unitAssetClass ?c }
+                  OPTIONAL { $this aeo:unitPeril ?p }
+                  OPTIONAL { $this aeo:unitValue ?v }
+                } GROUP BY $this
+              }
+              FILTER (?nl != 1 || ?nc != 1 || ?np != 1 || ?nv > 1)
+            }
+        """ ] .
 ```
 
 ```turtle-shapes
@@ -2996,6 +3647,62 @@ aeo:GeoPrecisionForPerilShape a sh:NodeShape ;
               ?locPrecision skos:notation ?locRank .
               ?minPrecision skos:notation ?minRank .
               FILTER (xsd:integer(?locRank) > xsd:integer(?minRank))
+            }
+        """ ] .
+
+#################################################################
+#    AIR-4.3: dependency cycles, comparability, unit derivation
+#################################################################
+
+aeo:DependencyCycleShape a sh:NodeShape ;
+    sh:targetClass aeo:Dependency ;
+    sh:severity sh:Warning ;
+    sh:sparql [
+        sh:message "A cycle of dependencies is reported: a provider that depends, through other providers, on the dependent that depends on it." ;
+        sh:select """
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            SELECT $this WHERE {
+              $this aeo:dependent ?a ; aeo:provider ?b .
+              ?b (^aeo:dependent/aeo:provider)+ ?a .
+            }
+        """ ] .
+
+aeo:MetricComparabilityShape a sh:NodeShape ;
+    sh:targetClass aeo:MetricComparison ;
+    sh:sparql [
+        sh:message "Peril metrics compared together must have equal peril scope, region scope and perspective." ;
+        sh:select """
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            SELECT $this WHERE {
+              $this aeo:comparedMetric ?m1 .
+              $this aeo:comparedMetric ?m2 .
+              FILTER (?m1 != ?m2)
+              {
+                ?m1 aeo:perspective ?p1 . ?m2 aeo:perspective ?p2 . FILTER (?p1 != ?p2)
+              } UNION {
+                ?m1 aeo:perilScope ?s . FILTER NOT EXISTS { ?m2 aeo:perilScope ?s }
+              } UNION {
+                ?m2 aeo:perilScope ?s . FILTER NOT EXISTS { ?m1 aeo:perilScope ?s }
+              } UNION {
+                ?m1 aeo:regionScope ?r . FILTER NOT EXISTS { ?m2 aeo:regionScope ?r }
+              } UNION {
+                ?m2 aeo:regionScope ?r . FILTER NOT EXISTS { ?m1 aeo:regionScope ?r }
+              }
+            }
+        """ ] .
+
+aeo:UnitDerivationShape a sh:NodeShape ;
+    sh:targetClass aeo:ExposureUnit ;
+    sh:severity sh:Warning ;
+    sh:sparql [
+        sh:message "An exposure unit in a graph with no derivation run that produced it is reported: units are computed on demand, not asserted." ;
+        sh:select """
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX fnd: <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+            PREFIX prov: <http://www.w3.org/ns/prov#>
+            SELECT $this WHERE {
+              $this a aeo:ExposureUnit .
+              FILTER NOT EXISTS { $this prov:wasGeneratedBy ?run . ?run a fnd:DerivationRun }
             }
         """ ] .
 ```
@@ -3134,6 +3841,9 @@ scales or sources it follows, how it follows them, and where it departs from the
 - the Oasis Open Exposure Data (OED) location schema, for the value type notations
 - the ISO commercial property loss payable provisions endorsement (CP 12 18), for the lender's
   loss payee role
+- Oasis Open Results Data (ORD), for the metric kinds, perspectives and exceedance curve calculation
+  methods
+- Commission Delegated Regulation (EU) 2015/35 (Solvency II), for the 1 in 200 return period convention
 - for geographic precision, control kind, interest kind, valuation basis and valuation method,
   which the above do not cover, common catastrophe-modelling and property market usage, stated
   neutrally
@@ -3152,9 +3862,17 @@ schedule sharing an unchanged location, building and valuation by identity, with
 changed between them. It passes every shape, and is the case that fails if membership is made
 inverse functional again.
 
+[`examples/dependencies.ttl`](examples/dependencies.ttl) (AIR-4.3) shows a dependency chain with a
+single-source supplier, three peril metrics (an average annual loss, an occurrence exceedance loss
+and a hazard score) and a comparison of two comparable metrics. [`examples/units.ttl`](examples/units.ttl)
+is milestone M3's first half: four locations, two in a special flood hazard area, the exposure
+units `tools/exposure_derivations.py` computes for flood and wind, and an Eligibility admission
+profile over them.
+
 ## 10. Release notes
 
 | Version | Change |
 |---|---|
 | `0.1.0` | AIR-4.1: exposure set, location, legal entity, control relations, asset, interest, valuation. Seven scheme contracts, nine programme roles. Literate from the start |
 | `0.1.0` (AIR-4.2a) | Exposure set membership, zone designations, pool participations, assessments and attribute values are no longer inverse functional, and `aeo:MembershipShape` is withdrawn (TD-49). Unchanged members are shared across exposure set versions by identity, as this README always stated. Corrects `0.1.0` before it is released, so no version bump. Example `versions.ttl` added |
+| `0.1.0` (AIR-4.3) | Dependencies, peril metrics, metric comparisons and exposure units, with the dependency kind, substitutability, metric kind, perspective, calculation method and model option schemes, the schedule group and scenario contracts, and the output share, return period and exceedance probability spaces. `aeo:perilScope` loses its domain (AIR-4.2 gave it `aeo:PoolParticipation`, which a metric's use would have contradicted). Nine shapes |

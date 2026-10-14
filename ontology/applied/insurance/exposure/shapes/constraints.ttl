@@ -73,3 +73,59 @@ aeo:GeoPrecisionForPerilShape a sh:NodeShape ;
               FILTER (xsd:integer(?locRank) > xsd:integer(?minRank))
             }
         """ ] .
+
+#################################################################
+#    AIR-4.3: dependency cycles, comparability, unit derivation
+#################################################################
+
+aeo:DependencyCycleShape a sh:NodeShape ;
+    sh:targetClass aeo:Dependency ;
+    sh:severity sh:Warning ;
+    sh:sparql [
+        sh:message "A cycle of dependencies is reported: a provider that depends, through other providers, on the dependent that depends on it." ;
+        sh:select """
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            SELECT $this WHERE {
+              $this aeo:dependent ?a ; aeo:provider ?b .
+              ?b (^aeo:dependent/aeo:provider)+ ?a .
+            }
+        """ ] .
+
+aeo:MetricComparabilityShape a sh:NodeShape ;
+    sh:targetClass aeo:MetricComparison ;
+    sh:sparql [
+        sh:message "Peril metrics compared together must have equal peril scope, region scope and perspective." ;
+        sh:select """
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            SELECT $this WHERE {
+              $this aeo:comparedMetric ?m1 .
+              $this aeo:comparedMetric ?m2 .
+              FILTER (?m1 != ?m2)
+              {
+                ?m1 aeo:perspective ?p1 . ?m2 aeo:perspective ?p2 . FILTER (?p1 != ?p2)
+              } UNION {
+                ?m1 aeo:perilScope ?s . FILTER NOT EXISTS { ?m2 aeo:perilScope ?s }
+              } UNION {
+                ?m2 aeo:perilScope ?s . FILTER NOT EXISTS { ?m1 aeo:perilScope ?s }
+              } UNION {
+                ?m1 aeo:regionScope ?r . FILTER NOT EXISTS { ?m2 aeo:regionScope ?r }
+              } UNION {
+                ?m2 aeo:regionScope ?r . FILTER NOT EXISTS { ?m1 aeo:regionScope ?r }
+              }
+            }
+        """ ] .
+
+aeo:UnitDerivationShape a sh:NodeShape ;
+    sh:targetClass aeo:ExposureUnit ;
+    sh:severity sh:Warning ;
+    sh:sparql [
+        sh:message "An exposure unit in a graph with no derivation run that produced it is reported: units are computed on demand, not asserted." ;
+        sh:select """
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX fnd: <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+            PREFIX prov: <http://www.w3.org/ns/prov#>
+            SELECT $this WHERE {
+              $this a aeo:ExposureUnit .
+              FILTER NOT EXISTS { $this prov:wasGeneratedBy ?run . ?run a fnd:DerivationRun }
+            }
+        """ ] .

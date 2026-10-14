@@ -58,7 +58,7 @@ aeo:ExposureSet a owl:Class ;
         [ a owl:Restriction ; owl:onProperty aeo:reportingUnit ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ;
     rdfs:label "Exposure set"@en ;
     rdfs:comment "A versioned snapshot of one insured's schedule, as of a date." ;
-    fnd:utility "Subject: an exposure set version. Its identity (aeo:ExposureIdentity) follows the schedule across renewals. Governance state is Draft while assembled, Active when submitted, Superseded by the next version. Link members with aeo:hasLocation, aeo:hasAsset, aeo:hasInterest and aeo:hasValuation." .
+    fnd:utility "Subject: an exposure set version. Its identity (aeo:ExposureIdentity) follows the schedule across renewals. Governance state is Draft while assembled, Active when submitted, Superseded by the next version. Link members with aeo:hasLocation, aeo:hasAsset, aeo:hasInterest, aeo:hasValuation, aeo:hasAssessment, aeo:hasDependency and aeo:hasPerilMetric." .
 
 aeo:reportingUnit a owl:ObjectProperty, owl:FunctionalProperty ;
     rdfs:domain aeo:ExposureSet ; rdfs:range qnt:Unit ;
@@ -426,10 +426,10 @@ aeo:pool a owl:ObjectProperty ;
 
 aeo:perilScope a owl:ObjectProperty ;
     rdfs:subPropertyOf icm:peril ;
-    rdfs:domain aeo:PoolParticipation ; rdfs:range skos:Concept ;
+    rdfs:range skos:Concept ;
     rdfs:label "peril scope"@en ;
     rdfs:comment "A peril this pool participation covers at this location." ;
-    fnd:utility "Subject: a pool participation. Value: a cause concept, bound under insurance/common's peril contract. Not functional: several perils may be named. Specialises icm:peril. Reused by peril metrics (AIR-4.3) and existing cover (AIR-4.4) for the same purpose: naming which perils a scope is about." .
+    fnd:utility "Subject: a pool participation. Value: a cause concept, bound under insurance/common's peril contract. Not functional: several perils may be named. Specialises icm:peril. Declared with no domain (AIR-4.3) because it is reused by peril metrics (AIR-4.3) and existing cover (AIR-4.4) for the same purpose: naming which perils a scope is about." .
 
 #################################################################
 #    Assessments and attribute values (AIR-4.2, sketch §5.7, §5.8)
@@ -548,3 +548,219 @@ aeo:multiValued a owl:DatatypeProperty, owl:FunctionalProperty ;
 aeo:LegalEntity owl:disjointWith aeo:ExposureSet , aeo:Location , aeo:Asset , aeo:Interest ,
     aeo:Valuation , aeo:ControlRelation , aeo:Presence , aeo:Address ,
     aeo:ZoneDesignation , aeo:PoolParticipation , aeo:Assessment , aeo:AttributeValue .
+
+#################################################################
+#    Dependencies (AIR-4.3, sketch §5.9)
+#################################################################
+
+aeo:Dependency a owl:Class ;
+    rdfs:subClassOf fnd:TemporallyScoped , fnd:Evidenced ,
+        [ a owl:Restriction ; owl:onProperty aeo:dependent ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty aeo:provider ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty aeo:dependencyKind ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ;
+    rdfs:label "Dependency"@en ;
+    rdfs:comment "A location or asset depends on a provider for something it needs to operate, for a period." ;
+    fnd:utility "Subject: a dependency. Exactly one dependent, one provider and one kind, a temporal scope, and the evidence a fnd:Evidenced node carries. Optional: the share of the dependent's output at risk, a recovery lead time, a substitutability and whether the provider is the only source. Link it to its exposure set with aeo:hasDependency." .
+
+aeo:dependent a owl:ObjectProperty ;
+    rdfs:domain aeo:Dependency ;
+    rdfs:label "dependent"@en ;
+    rdfs:comment "The location or asset that depends on the provider." ;
+    fnd:utility "Subject: a dependency. Value: an aeo:Location or aeo:Asset. Exactly one." .
+
+aeo:provider a owl:ObjectProperty ;
+    rdfs:domain aeo:Dependency ;
+    rdfs:label "provider"@en ;
+    rdfs:comment "What the dependent depends on: another location or asset, or a party that supplies or buys." ;
+    fnd:utility "Subject: a dependency. Value: an aeo:Location, an aeo:Asset or a pty:Actor (a supplier, a utility, a customer). Exactly one." .
+
+aeo:dependencyKind a owl:ObjectProperty ;
+    rdfs:domain aeo:Dependency ; rdfs:range skos:Concept ;
+    rdfs:label "dependency kind"@en ;
+    rdfs:comment "What the dependent depends on the provider for (supply of goods, a utility, an IT service, logistics or custom)." ;
+    fnd:utility "Subject: a dependency. Value: a concept bound by aeo-voc:DependencyKindContract. Exactly one." .
+
+aeo:shareAtRisk a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain aeo:Dependency ; rdfs:range qnt:Quantity ;
+    rdfs:label "share at risk"@en ;
+    rdfs:comment "The share of the dependent's output that relies on the provider." ;
+    fnd:utility "Subject: a dependency. Value: a qnt:Quantity on aeo-voc:OutputShare. At most one." .
+
+aeo:recoveryLeadTime a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain aeo:Dependency ; rdfs:range qnt:Quantity ;
+    rdfs:label "recovery lead time"@en ;
+    rdfs:comment "How long the dependent takes to restore the provider's contribution after a failure." ;
+    fnd:utility "Subject: a dependency. Value: a qnt:Quantity on aeo-voc:Duration. At most one." .
+
+aeo:substitutability a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain aeo:Dependency ; rdfs:range skos:Concept ;
+    rdfs:label "substitutability"@en ;
+    rdfs:comment "Whether another provider could take the place of this one." ;
+    fnd:utility "Subject: a dependency. Value: a concept bound by aeo-voc:SubstitutabilityContract. At most one." .
+
+aeo:singleSource a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:domain aeo:Dependency ; rdfs:range xsd:boolean ;
+    rdfs:label "single source"@en ;
+    rdfs:comment "Whether the provider is the dependent's only source of what it provides." ;
+    fnd:utility "Subject: a dependency. Value: true when the provider is the only source. At most one." .
+
+aeo:hasDependency a owl:ObjectProperty ;
+    rdfs:domain aeo:ExposureSet ; rdfs:range aeo:Dependency ;
+    rdfs:label "has dependency"@en ;
+    rdfs:comment "A dependency listed in this exposure set version." ;
+    fnd:utility "Subject: an exposure set. Value: one of its dependencies. Not inverse functional, for the same reason as aeo:hasLocation (TD-49)." .
+
+#################################################################
+#    Peril metrics (AIR-4.3, sketch §5.10)
+#################################################################
+
+aeo:PerilMetric a owl:Class ;
+    rdfs:subClassOf fnd:DerivedArtefact , fnd:Evidenced ,
+        [ a owl:Restriction ; owl:onProperty aeo:perilScope ; owl:minCardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty aeo:metricSubject ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty aeo:metricKind ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty aeo:perspective ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty aeo:metricValue ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ;
+    rdfs:label "Peril metric"@en ;
+    rdfs:comment "A figure a model or a provider computed for a subject and a set of perils." ;
+    fnd:utility "Subject: a peril metric. At least one peril scope, exactly one subject, kind, perspective and value, and the evidence a fnd:Evidenced node carries. The model and its version are the fnd:DerivationRun's (prov:wasGeneratedBy), and the model's output file is evidence. An exceedance kind states exactly one of a return period and an exceedance probability. Link it to its exposure set with aeo:hasPerilMetric." .
+
+aeo:metricSubject a owl:ObjectProperty ;
+    rdfs:domain aeo:PerilMetric ;
+    rdfs:label "metric subject"@en ;
+    rdfs:comment "What the metric is a figure for." ;
+    fnd:utility "Subject: a peril metric. Value: an aeo:ExposureSet, aeo:Location or aeo:Asset. Exactly one." .
+
+aeo:metricKind a owl:ObjectProperty ;
+    rdfs:domain aeo:PerilMetric ; rdfs:range skos:Concept ;
+    rdfs:label "metric kind"@en ;
+    rdfs:comment "What kind of figure the metric is (an average annual loss, an exceedance loss, a hazard score)." ;
+    fnd:utility "Subject: a peril metric. Value: a concept bound by aeo-voc:MetricKindContract. Exactly one." .
+
+aeo:perspective a owl:ObjectProperty ;
+    rdfs:domain aeo:PerilMetric ; rdfs:range skos:Concept ;
+    rdfs:label "perspective"@en ;
+    rdfs:comment "Which loss the metric measures: before policy terms, after them, or after reinsurance." ;
+    fnd:utility "Subject: a peril metric. Value: a concept bound by aeo-voc:PerspectiveContract. Exactly one." .
+
+aeo:metricValue a owl:ObjectProperty ;
+    rdfs:domain aeo:PerilMetric ; rdfs:range qnt:Value ;
+    rdfs:label "metric value"@en ;
+    rdfs:comment "The figure itself." ;
+    fnd:utility "Subject: a peril metric. Value: a qnt:Value, a money quantity, or a quantity or ordinal value on a score space. Exactly one." .
+
+aeo:regionScope a owl:ObjectProperty ;
+    rdfs:subPropertyOf cls:territory ;
+    rdfs:domain aeo:PerilMetric ; rdfs:range skos:Concept ;
+    rdfs:label "region scope"@en ;
+    rdfs:comment "The territory a metric's figure is limited to, where it is." ;
+    fnd:utility "Subject: a peril metric. Value: a territory concept. Not functional. Two metrics are compared only with equal region scope (the metric-comparability shape)." .
+
+aeo:returnPeriod a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain aeo:PerilMetric ; rdfs:range qnt:Quantity ;
+    rdfs:label "return period"@en ;
+    rdfs:comment "The mean interval, in years, at which a loss at least as large is expected." ;
+    fnd:utility "Subject: a peril metric of an exceedance kind. Value: a qnt:Quantity on aeo-voc:ReturnPeriodSpace. At most one, and exactly one of this and aeo:exceedanceProbability." .
+
+aeo:exceedanceProbability a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain aeo:PerilMetric ; rdfs:range qnt:Quantity ;
+    rdfs:label "exceedance probability"@en ;
+    rdfs:comment "The annual probability that a loss at least as large occurs." ;
+    fnd:utility "Subject: a peril metric of an exceedance kind. Value: a qnt:Quantity on aeo-voc:ExceedanceProbabilitySpace. At most one, and exactly one of this and aeo:returnPeriod." .
+
+aeo:calculationMethod a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain aeo:PerilMetric ; rdfs:range skos:Concept ;
+    rdfs:label "calculation method"@en ;
+    rdfs:comment "How an exceedance curve was calculated from the model's samples." ;
+    fnd:utility "Subject: a peril metric of an exceedance kind. Value: a concept bound by aeo-voc:CalculationMethodContract. At most one." .
+
+aeo:modelOption a owl:ObjectProperty ;
+    rdfs:domain aeo:PerilMetric ; rdfs:range skos:Concept ;
+    rdfs:label "model option"@en ;
+    rdfs:comment "An option the model was run with that changes what the figure includes." ;
+    fnd:utility "Subject: a peril metric. Value: a concept bound by aeo-voc:ModelOptionContract. Not functional." .
+
+aeo:scenario a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain aeo:PerilMetric ; rdfs:range skos:Concept ;
+    rdfs:label "scenario"@en ;
+    rdfs:comment "The scenario a scenario-loss metric is the loss from." ;
+    fnd:utility "Subject: a peril metric of kind aeo-voc:ScenarioLoss. Value: a concept bound by aeo-voc:ScenarioContract (a regulator's or a client's own scenario list, bound by a deployment). Exactly one for that kind." .
+
+aeo:scoreSpace a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain aeo:PerilMetric ; rdfs:range qnt:ValueSpace ;
+    rdfs:label "score space"@en ;
+    rdfs:comment "The provider's own space a hazard score is expressed on." ;
+    fnd:utility "Subject: a peril metric of kind aeo-voc:HazardScore. Value: a qnt:ValueSpace the deployment declares per provider. Exactly one for that kind, and the metric's value is on it (the hazard-score shape). A score from one provider is never on another's space." .
+
+aeo:hasPerilMetric a owl:ObjectProperty ;
+    rdfs:domain aeo:ExposureSet ; rdfs:range aeo:PerilMetric ;
+    rdfs:label "has peril metric"@en ;
+    rdfs:comment "A peril metric listed in this exposure set version." ;
+    fnd:utility "Subject: an exposure set. Value: one of its peril metrics. Not inverse functional, for the same reason as aeo:hasLocation (TD-49)." .
+
+aeo:MetricComparison a owl:Class ;
+    rdfs:subClassOf fnd:DerivedArtefact , fnd:Evidenced ,
+        [ a owl:Restriction ; owl:onProperty aeo:comparedMetric ; owl:minCardinality "2"^^xsd:nonNegativeInteger ] ;
+    rdfs:label "Metric comparison"@en ;
+    rdfs:comment "A derived artefact that compares two or more peril metrics (a ratio, a difference, a ranking)." ;
+    fnd:utility "Subject: a comparison. At least two compared metrics, which must have equal peril scope, region scope and perspective (the metric-comparability shape): a ground-up and an insured loss are not compared as if they were one measure." .
+
+aeo:comparedMetric a owl:ObjectProperty ;
+    rdfs:domain aeo:MetricComparison ; rdfs:range aeo:PerilMetric ;
+    rdfs:label "compared metric"@en ;
+    rdfs:comment "A peril metric that a comparison compares." ;
+    fnd:utility "Subject: a metric comparison. Value: a peril metric. At least two." .
+
+#################################################################
+#    Exposure units (AIR-4.3, sketch §5.11)
+#################################################################
+
+aeo:ExposureUnit a owl:Class ;
+    rdfs:subClassOf fnd:DerivedArtefact ,
+        [ a owl:Restriction ; owl:onProperty aeo:unitLocation ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty aeo:unitAssetClass ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty aeo:unitPeril ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty aeo:unitValue ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ;
+    rdfs:label "Exposure unit"@en ;
+    rdfs:comment "The exposure of one asset class at one location to one peril, computed from the schedule on demand." ;
+    fnd:utility "Subject: an exposure unit. Exactly one location, asset class and peril, and at most one value (the sum of the valuations of that class's assets at that location, when they share one currency). Computed by tools/exposure_derivations.py for the perils a check names, never asserted by hand and never required to be stored. A unit in a graph with no derivation run is reported (the unit-derivation shape)." .
+
+aeo:unitLocation a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain aeo:ExposureUnit ; rdfs:range aeo:Location ;
+    rdfs:label "unit location"@en ;
+    rdfs:comment "The location the exposure unit is at." ;
+    fnd:utility "Subject: an exposure unit. Value: an aeo:Location. Exactly one." .
+
+aeo:unitAssetClass a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:subPropertyOf cls:assetClass ;
+    rdfs:domain aeo:ExposureUnit ; rdfs:range skos:Concept ;
+    rdfs:label "unit asset class"@en ;
+    rdfs:comment "The asset class the exposure unit sums." ;
+    fnd:utility "Subject: an exposure unit. Value: an asset class concept. Exactly one. Specialises cls:assetClass." .
+
+aeo:unitPeril a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:subPropertyOf icm:peril ;
+    rdfs:domain aeo:ExposureUnit ; rdfs:range skos:Concept ;
+    rdfs:label "unit peril"@en ;
+    rdfs:comment "The peril the exposure unit is exposed to." ;
+    fnd:utility "Subject: an exposure unit. Value: a cause concept under insurance/common's peril contract. Exactly one. Specialises icm:peril." .
+
+aeo:unitValue a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain aeo:ExposureUnit ; rdfs:range qnt:Quantity ;
+    rdfs:label "unit value"@en ;
+    rdfs:comment "The summed value of the unit's assets, where they share one currency." ;
+    fnd:utility "Subject: an exposure unit. Value: a money qnt:Quantity. At most one. Omitted, with the derivation reporting it, when the assets' valuations are in several currencies and the graph holds no conversion (a conversion needs a rate and a date)." .
+
+#################################################################
+#    Groupings (AIR-4.3, R9)
+#################################################################
+
+aeo:scheduleGroup a owl:ObjectProperty ;
+    rdfs:range skos:Concept ;
+    rdfs:label "schedule group"@en ;
+    rdfs:comment "A group the insured or drafter uses for a location or asset (a division, a portfolio, a location group of the Open Exposure Data schema)." ;
+    fnd:utility "Subject: an aeo:Location or aeo:Asset. Value: a concept bound by aeo-voc:ScheduleGroupContract, a scheme a deployment binds per insured or drafter. Not functional. A coverage requirement's scope (AIR-4.4) can select by group." .
+
+[] a owl:AllDisjointClasses ;
+    owl:members ( aeo:ExposureSet aeo:Location aeo:Asset aeo:Interest aeo:Valuation
+                  aeo:Dependency aeo:PerilMetric aeo:ExposureUnit aeo:MetricComparison ) .

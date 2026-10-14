@@ -70,7 +70,7 @@ AIR-2.3, AIR-2.4 and AIR-4.2 built on `air/applied-reference` (not yet handed to
 | 12 | AIR-4.4 | ready | brief written 2026-10-13. After AIR-4.3 |
 | 14 | AIR-2.6 | built | `common-vocab` `0.5.0`→`0.6.0` (QUDT-aligned units across nine families, four exact conversions, ISO 4217 currencies on `icm-voc:Money`). New document `vocab/peril-intensity.ttl` (own ontology IRI, version in unison with `peril-vocab` `0.5.0`): the intensity measure scheme, 24 measures each with a `qnt:ValueSpace`, three ordinal sub-schemes (MMI, Saffir–Simpson, Enhanced Fujita), seven threshold-defined cause concepts' `prl:definingThreshold` range sets, other causes' `prl:intensityMeasure` links, and `prl:customaryEventWindow` for two groups. `prl:ThresholdDefinitionShape` extended to cross-check a threshold's space against the concept's own measures (peril shapes `0.2.0`→`0.3.0`). [Validation Pack](../validation/applied-insurance-reference-2.6.md) |
 | 15 | AIR-2.7 | ready | brief written 2026-10-13 |
-| 16 | AIR-4.3 | ready | brief written 2026-10-13, before AIR-4.4 |
+| 16 | AIR-4.3 | built | dependencies, peril metrics, metric comparisons and exposure units in the exposure module: spec, six schemes and contracts, two contracts with no reference scheme, four value spaces, nine shapes, `tools/exposure_derivations.py`, `examples/dependencies.ttl` and `examples/units.ttl` (M3, first half). `aeo:perilScope` loses its domain. Built by R. [Validation Pack](../validation/applied-insurance-reference-4.3.md) |
 | 17 | AIR-4.5 | ready | brief written 2026-10-13 |
 | 18 | AIR-2.5 | ready | brief written 2026-10-13 |
 | 19 | AIR-3.4 | ready | brief written 2026-10-13, AIR-3.4-Q1 and Q2 decided 2026-10-14 |
