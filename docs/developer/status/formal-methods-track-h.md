@@ -655,4 +655,11 @@ section below.
   capacity's Phase 0 needs the same answer. So no change to Behaviour in Track H. Capacity's `capx:ExecutableBalance` is an in-place
   current balance with its own version token, a projection beside Behaviour's records. AIR-6.1 pins an exposure set version as evidence,
   which refines VH-Q2. CCS C16b already decides "point, do not copy" for generated meaning. Nothing decided.
+- 2026-10-14: cross-referenced the placement vision papers (outside the repository) with LATTICE's layers and the plans under way
+  (CCS, AIR, the evaluation context, capacity, Surface, insurml-alignment), as
+  [sketch §9](../sketches/persistence-history-and-versioning.md#9-the-vision-papers-lattice-and-the-data-a-placement-makes-2026-10-14).
+  Most of the papers' ideas have a home. Four departures to test: state read from acts rather than authored, binding by assent rather
+  than copy, versioning chosen per family, the words' history in Wording's amendments. A quote carrying wording and meaning costs about
+  5,000 triples a version copied, about 270 under C7c's rules, and about 5 to 20 a requote with sharing (judgement). Eight strategies
+  listed for the examples to exercise.
 

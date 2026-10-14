@@ -4,7 +4,7 @@
 
 **Unit:** [`formal-methods-track-h`](../status/formal-methods-track-h.md), the patch-log half of H2.6b and H2.10, held for this sketch
 on 2026-10-14 (H-D33)
-**Status:** draft for the maintainer, 2026-10-14. Questions VH-Q1 to VH-Q7 are open. VH-Q7 researched 2026-10-14 (§6.1)
+**Status:** draft for the maintainer, 2026-10-14. Questions VH-Q1 to VH-Q7 are open. VH-Q7 researched 2026-10-14 (§6.1). §9 cross-references the placement vision papers, 2026-10-14
 **Touches:** Foundation's versioning, Behaviour's runtime records, Wording's references by identity
 ([ADR-A112 addendum](../../architecture/decisions/ADR-A112-wording-layer.md#addendum-2026-10-06-references-by-identity)),
 the bi-temporal model ([ADR-A67](../../architecture/decisions/ADR-A67-bi-temporal-model.md)), the receipt models of
@@ -361,3 +361,111 @@ Persistence needs three write disciplines, not two, which VH-Q4 and VH-Q5 should
 Answers decide whether the patch log is built as planned in H2.6b's held half, rebuilt as an append write for versioned families, or
 narrowed to in-place data, and what H2.10 builds. An ADR follows the answers, since VH-Q1 and VH-Q3 change how persistence relates to
 Foundation.
+
+## 9. The vision papers, LATTICE, and the data a placement makes (2026-10-14)
+
+At the maintainer's request, before the examples are designed, we read a series of vision papers
+against LATTICE's layers and the plans under way. The papers predate LATTICE. LATTICE's designs 
+supersede theirs, and their end-state goals stay as direction: a broker's programme connected to 
+large volumes of data, every decision traced to evidence, and history reconstructable at any time. 
+LATTICE serves more than placement. Delegated authority in the London market (Open CBAA, through 
+Instrument's `ins:boundUnder` and powers) and the other domains of Instrument's worked examples 
+(facilities, licences, trials, frameworks) put the same questions to data management.
+
+### 9.1 Where each idea of the papers lands
+
+| Idea in the papers | In LATTICE | State |
+|---|---|---|
+| a contract's structure (elements, term applications, facets, flow directives) | Wording elements, Instrument's stated and bound terms, relations and qualifiers, Quantification's amounts, Eligibility's conditions | built (CCS C3 to C9b2). The template library is C8a, planned |
+| a quote as a "proto-contract", structurally a contract | an instrument version whose words are a proposal (CCS sketch, "proposals are many, and are fragments of instruments") | modelled in outline. A proposal arriving as data without words is held question HQ-1 |
+| epistemic status: commitment, precision, completeness, as an overlay on the terms | "precision … and completeness are recorded beside its terms, never inside them" (CCS sketch §7.4). Commitment reads from legal acts: a binding quote is the carrier's `ins:Assent` to a version, and binding is the client's assent to the same version. "Pending, decided and lapsed are derived, never stored" (`ins:Proposal`) | acts built (C9b1). The overlay's terms are not yet defined |
+| `p_bind` copies the quote's structure into a child contract | no copy: the bound contract is the version both parties assented to. A change at binding, such as a signed-down line, is an amendment | a hypothesis for the examples to test |
+| master contract, arrangement assembly, panels and subscription | Instrument's sections (§16), Party's groups, held question HQ-7 (several instruments covering portions of one order) | partly modelled. PDD-09 |
+| tower, block, coverage term set, the contract-tower and fulfilment bindings | the AIR contract module's "coverage, layers, term parameters" (Phase 5), AIR-4.4's coverage requirements, AIR-6.1's submission | not modelled. Phase 5 is deferred |
+| negotiation thread as an append-only sequence of moves, state derived | legal acts (Instrument) and records (Behaviour), with state evaluated from them | the pieces exist. PDD-09 |
+| a fact ledger, immutable, hash-chained, superseded by corrections | `fnd:Evidence`, Behaviour's records, ADR-A67's corrections as new versions, persistence's receipts and request digests | built in parts |
+| `VersionedEntity` with valid-from and valid-to, "never deleted, superseded" | `fnd:Version` with `fnd:supersededBy`, `fnd:TemporalScope` for valid time, persistence for transaction time, a current pointer (VH-Q4) | built, VH-Q4 open |
+| a terms hash that followers acknowledge | content-addressed element versions (ADR-A51, C7c D2) | built |
+| a term delta fact, an endorsement change fact: the diff in business terms | `wrd:Amendment`'s operations and `ins:Amendment`, which already record the change in the words and its legal effect | built (C5, C9a) |
+| coverage gaps and spans, materialised and recomputed within minimal scope | derived artefacts (ADR-A92), Surface projections with read-set invalidation (ADR-A27), interval geometry (workload note §19) | built in parts |
+| the behaviour model's tank state, per scenario | the evaluation context's ledger (PDD-08), the reference evaluator's laws | sketched |
+| an exposure set versioned with every member | AIR's exposure module, with members shared across versions (TD-49) | built on the AIR branch, TD-49 to fix |
+| a coverholder binding risks under an authority, bordereaux, an income limit | `ins:boundUnder` and powers, Open CBAA's migration after C9 and C12, the ledger for the limit (PDD-08) | partly built |
+
+Four places where LATTICE departs from the papers, each a hypothesis the examples should test:
+
+1. **State is read, not authored.** The papers keep a thread state, a quote status, a binding status
+   and a fulfilment status side by side. LATTICE evaluates state from acts and records, so four
+   stored statuses become one derivation and cannot disagree.
+2. **Binding points, it does not copy.** See the table.
+3. **Versioning is chosen per family**, not applied to every entity, by the three disciplines of §6.3.
+4. **History of the words lives in the words.** Wording's amendments are the domain-level patch log
+   the papers built as delta facts.
+
+### 9.2 How much data a placement makes, revisited
+
+The workload note counts a quote version as 80 triples. Once a quote carries wording and meaning, the
+count depends on which of LATTICE's rules are applied. Judgement, for a policy form of about 150
+elements whose bound meaning is about 1,000 nodes (TD-19):
+
+| What a quote version stores | Triples per version | 300 versions, a medium programme |
+|---|---|---|
+| everything, copied: its wording and its bound meaning | about 5,000 | about 1,500,000 |
+| only what differs from its form (C7c D1): inclusions, about 30 values, parties, header. Stated meaning shared by content address (D2). Bound meaning generated, not stored (D4) | about 270 | about 81,000 |
+| as above, and a requote shares the unchanged inclusions and values of the version it follows (VH-Q2) | about 5 to 20 for a one-value requote | about 6,000 |
+
+```mermaid
+flowchart LR
+  subgraph shared["shared, content-addressed, once per library"]
+    EL["clause versions"] --> SM["stated meaning"]
+  end
+  subgraph stored["stored per quote version, only what differs"]
+    Q["instrument version"] --> AW["assembled wording:<br/>inclusions, values"]
+    Q --> P["parties"]
+  end
+  subgraph acts["acts and records, append-only"]
+    PR["proposal, assent"] --> Q
+  end
+  subgraph generated["generated on demand, cached or not"]
+    BM["bound meaning"]
+    GAP["gaps, spans, tower view"]
+  end
+  AW --> EL
+  SM --> BM
+  AW --> BM
+  P --> BM
+  BM --> GAP
+```
+
+### 9.3 The levers, decided and open
+
+| Lever | Saves | State |
+|---|---|---|
+| content-addressed element versions and stated meaning | restating a clause, across every instrument that uses it | decided, C7c D2 |
+| an instance stores only what differs from its form | copying the form into each instance | decided, C7c D1 |
+| bound meaning generated, cached as need dictates | storing about 1,000 nodes per instrument version | decided, C7c D4. Sharing across instruments is C16b |
+| sharing within an instrument by resolution signature | one bound term per section with the same words | decided, C7c D5 |
+| references by identity, versions fixed at the root | a version per ancestor for every change | decided for Wording (ADR-A112). VH-Q2 for persistence |
+| members shared across versions of a set | copying unchanged members | TD-49 for exposure. VH-Q2 for inclusions and values |
+| derived artefacts and projections, regenerated within minimal scope | storing what can be computed, and recomputing more than changed | decided (ADR-A92, ADR-A27). Which to materialise is open |
+| the hot set sized by Little's law, the rest tiered and partitioned by tenant | keeping prior years hot | workload note §6.2, §17, unratified |
+| a write discipline per family, a retention per kind | keeping history no one reads, or losing history someone needs | this sketch, TD-47 |
+
+### 9.4 The strategies the examples should exercise
+
+The examples should show each of these where it fits, so that guidance on "what works best when" rests
+on worked cases:
+
+| # | Strategy | Keeps | Costs | Likely fit |
+|---|---|---|---|---|
+| S1 | edit in place, receipts only | current state, who wrote when | 9 triples per write | working drafts, a broker's design workspace |
+| S2 | edit in place with a patch log | current state, and what each write changed | 11 plus the change | data edited often whose history matters but whose old states are not cited |
+| S3 | append versions, members shared, a current pointer | every version, each citable | the changed nodes plus pointers | instruments, wordings, submissions, exposure sets: what is cited as "as it was" |
+| S4 | append records, state derived | every act and observation | one record per event | negotiation moves, assents, findings, stimuli |
+| S5 | derived artefact, generated on demand | nothing but its recipe | compute per read, or a cache | bound meaning, gaps, spans, balances |
+| S6 | content-addressed sharing | one node for equal content | a hash per node | library wording, stated meaning, bound meaning across instruments (C16b) |
+| S7 | a projection, materialised and current | a fast read for a known query | refresh on change | "load my tower" within the 1 to 2 second budget (workload note §10) |
+| S8 | tiering and export, an outgoing event stream | everything, cold or elsewhere | a columnar store, a stream | closed years, change capture to other systems |
+
+A family declares its strategy, as it declares its receipt model today. That the declaration belongs
+to persistence or to the domain layer is VH-Q3.
