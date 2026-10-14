@@ -26,12 +26,18 @@
     <uri name="https://www.nebularis.org/neuro-semantic/instrument-acts" uri="instrument/spec/instrument-acts.ttl"/>
     <uri name="https://www.nebularis.org/neuro-semantic/instrument-vocab" uri="instrument/vocab/instrument-vocab.ttl"/>
     <uri name="https://www.nebularis.org/neuro-semantic/insurance/common" uri="applied/insurance/common/spec/common.ttl"/>
-    <uri name="https://www.nebularis.org/neuro-semantic/insurance/common-vocab/0.5.0" uri="applied/insurance/common/vocab/common-vocab.ttl"/>
-    <uri name="https://www.nebularis.org/neuro-semantic/insurance/common/0.5.0" uri="applied/insurance/common/spec/common.ttl"/>
+    <uri name="https://www.nebularis.org/neuro-semantic/insurance/common-vocab/0.6.0" uri="applied/insurance/common/vocab/common-vocab.ttl"/>
+    <uri name="https://www.nebularis.org/neuro-semantic/insurance/common/0.6.0" uri="applied/insurance/common/spec/common.ttl"/>
     <uri name="https://www.nebularis.org/neuro-semantic/insurance/common/vocab" uri="applied/insurance/common/vocab/common-vocab.ttl"/>
+    <uri name="https://www.nebularis.org/neuro-semantic/insurance/exposure" uri="applied/insurance/exposure/spec/exposure.ttl"/>
+    <uri name="https://www.nebularis.org/neuro-semantic/insurance/exposure-vocab/0.1.0" uri="applied/insurance/exposure/vocab/exposure-vocab.ttl"/>
+    <uri name="https://www.nebularis.org/neuro-semantic/insurance/exposure/0.1.0" uri="applied/insurance/exposure/spec/exposure.ttl"/>
+    <uri name="https://www.nebularis.org/neuro-semantic/insurance/exposure/vocab" uri="applied/insurance/exposure/vocab/exposure-vocab.ttl"/>
     <uri name="https://www.nebularis.org/neuro-semantic/insurance/peril" uri="applied/insurance/peril/spec/peril.ttl"/>
-    <uri name="https://www.nebularis.org/neuro-semantic/insurance/peril-vocab/0.4.0" uri="applied/insurance/peril/vocab/peril-vocab.ttl"/>
-    <uri name="https://www.nebularis.org/neuro-semantic/insurance/peril/0.4.0" uri="applied/insurance/peril/spec/peril.ttl"/>
+    <uri name="https://www.nebularis.org/neuro-semantic/insurance/peril-intensity/0.5.0" uri="applied/insurance/peril/vocab/peril-intensity.ttl"/>
+    <uri name="https://www.nebularis.org/neuro-semantic/insurance/peril-vocab/0.5.0" uri="applied/insurance/peril/vocab/peril-vocab.ttl"/>
+    <uri name="https://www.nebularis.org/neuro-semantic/insurance/peril/0.5.0" uri="applied/insurance/peril/spec/peril.ttl"/>
+    <uri name="https://www.nebularis.org/neuro-semantic/insurance/peril/intensity" uri="applied/insurance/peril/vocab/peril-intensity.ttl"/>
     <uri name="https://www.nebularis.org/neuro-semantic/insurance/peril/vocab" uri="applied/insurance/peril/vocab/peril-vocab.ttl"/>
     <uri name="https://www.nebularis.org/neuro-semantic/lattice/applied/capacity/execution" uri="applied/capacity/spec/applied_capacity_execution_spec_capx_Version2.ttl"/>
     <uri name="https://www.nebularis.org/neuro-semantic/lattice/applied/capacity/execution/0.15.0" uri="applied/capacity/spec/applied_capacity_execution_spec_capx_Version2.ttl"/>

@@ -75,9 +75,9 @@ deferred (amendment of 2026-10-14), so the heavy suites did not run. Cheap ad ho
   - Two terms beyond the brief: `aeo:MetricComparison` with `aeo:comparedMetric`, which gives the
     comparability shape something to read, and `aeo-voc:ScenarioContract`, because
     `aeo:scenario` is concept-valued.
-  - Only two calculation methods (`FullUncertainty`, `PerSampleMean`), as the brief allowed. Their
-    names and the EPType mapping of the metric kinds follow the Oasis Open Results Data
-    specification as remembered and are not checked against it, so R's check is open.
+  - The Open Results Data names were checked against the specification by the maintainer on
+    2026-10-14, which corrected the third perspective and added two calculation methods (see
+    above).
   - `aeo-voc:ProbabilityOfEvents` is described as the probability or expected number of events,
     because the brief's wording ("names a count") could be read either way.
   - The maximum foreseeable interruption is deferred, as the brief said.
