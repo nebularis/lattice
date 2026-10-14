@@ -201,6 +201,17 @@ filed here because Phase 3 implements them.
 
 ## 7. Out of scope
 
+Every item here, and the workflow around information requests that AIR-6.1 leaves to consumers,
+is collected in [leftovers](air-leftovers.md).
+
 Catastrophe model internals, pricing, a consumer's statement modules and decision logs, market
 editions other than examples (they are published by their owners and bound by scope), and any
 runtime store or UI work.
+
+Added 2026-10-13, after a review of earlier designs against this plan:
+
+| Out of scope | Why, and where it would go |
+|---|---|
+| catastrophe model results: model runs, event sets, event and year loss tables, exceedance probability curves, hazard footprints | a follow-on unit, aligned with Oasis's Open Results Data. This epic records summary peril metrics (AIR-4.3), which cite a model's full output by IRI as evidence |
+| exposure of portfolios of many insureds, as a cedent's treaty portfolio or a binding authority's bordereau | Open CBAA's risks cover bordereaux. A treaty portfolio belongs with the contract module's reinsurance structures |
+| an insured's licences and permits | they are instruments granted by an authority, modelled once the Instrument rewrite (CCS C9) has merged |

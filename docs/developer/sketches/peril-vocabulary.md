@@ -73,7 +73,7 @@ One release contains several schemes, each a separate `voc:ConceptScheme` editio
 identity, so each can be versioned and bound on its own.
 
 ```mermaid
-flowchart TB
+flowchart LR
     subgraph Release["Reference peril vocabulary release"]
         C["Cause scheme (backbone)<br/>~240 concepts, 8 families"]
         M["Mechanism scheme"]
@@ -106,7 +106,7 @@ flowchart TB
 | Onset | sudden, gradual, latent, recurrent | pollution and long-tail distinctions, deterioration exclusions |
 | Definition basis | physical, designation, threshold, wording-defined, statutory, index | named storm, hurricane, cyber event, flood under a national scheme, parametric triggers |
 | Accumulation class | catastrophe, systemic, attritional | aggregates, capacity, portfolio questions |
-| Consequence | heads of loss: direct physical damage, business interruption, extra expense, recall, clean-up, liability to others, defence costs | coverage types and the market's habit of calling these perils (whitepaper §3.1) |
+| Consequence | heads of loss: direct physical damage, business interruption, extra expense, recall, clean-up, liability to others, defence costs, delay, general average contribution, notification and forensic costs, among others (phase 2 plan, AIR-2.2) | coverage types and the market's habit of calling these perils (whitepaper §3.1) |
 | Harm subject | property, persons, financial interest, data and systems, environment, reputation | what was harmed. Liability direction is derived from party roles, not from this scheme ([term parameters](term-parameters.md) §7) |
 | Intensity measure | PGA, spectral acceleration, 3-second gust, sustained wind, flood depth, flow velocity, surge height, hail diameter, fireline intensity, ash load, snow load | threshold definitions, parametric triggers, exposure hazard attributes |
 
@@ -191,6 +191,7 @@ last column gives the open cat-model code where one exists, and notes.
 | N.MET.TC.TYP | Typhoon | K | threshold, western North Pacific basin |
 | N.MET.TC.SEV | Severe tropical cyclone | K | threshold, South Pacific and Indian Ocean basins. Alt label "cyclone" |
 | N.MET.TC.TST | Tropical storm | K | below hurricane strength |
+| N.MET.TC.TDP | Tropical depression | K | threshold, below tropical storm strength (WMO). Added 2026-10-13 |
 | N.MET.NS | Named storm | K | definition basis designation: a storm named by a recognised meteorological authority. `prl:overlaps` N.MET.TC and N.MET.ETC. Not a kind of either (whitepaper §3.4) |
 | N.MET.ETC | Extratropical cyclone | K | WEC. Alt labels "windstorm", "European windstorm" |
 | N.MET.ETC.WND | Extratropical cyclone wind | P | WEC |

@@ -537,7 +537,7 @@ longer exist. Five slices, about 180k tokens.
 
 | Field | Value |
 |-------|-------|
-| **Status** | 🚧 Rounds 1 and 2 complete (AIR-3.1, 1.1, 2.1, 3.2, 1.2), Phase 1 complete. Round 3 next (AIR-2.2, 4.1, 3.3), briefs to draft. Phase 0 complete, AIR-0.1 merged (`3377a71`), A-98, A-99, A-100, A-102, A-103 Accepted. [Review](review/applied-insurance-reference-review.md), [VP](validation/applied-insurance-reference-0.1.md) |
+| **Status** | 🚧 Rounds 1 and 2 complete (AIR-3.1, 1.1, 2.1, 3.2, 1.2), Phase 1 complete. Round 3 under way. Machine S builds AIR-2.2, then AIR-4.1, on one branch, `air/applied-reference` (trip 1, 2026-10-13). AIR-3.3 waits for CCS HQ-6a.2 and AIR-3.3-Q1. Trip 2 briefs (AIR-2.3, 2.4, 4.2, 4.4) to draft. Phase 0 complete, AIR-0.1 merged (`3377a71`), A-98, A-99, A-100, A-102, A-103 Accepted. [Review](review/applied-insurance-reference-review.md), [VP](validation/applied-insurance-reference-0.1.md) |
 | **Unit ID** | `applied-insurance-reference` (epic) |
 | **Sketches** | [peril-vocabulary.md](sketches/peril-vocabulary.md), [asset-exposure-ontology.md](sketches/asset-exposure-ontology.md), [term-parameters.md](sketches/term-parameters.md), [mork-bridge.md](sketches/mork-bridge.md), [peril-structure-whitepaper.md](sketches/peril-structure-whitepaper.md) |
 | **Plan** | [applied-insurance-reference.md](plans/applied-insurance-reference.md), with phase plans 0 to 6, a substrate track, and [lanes and merge order](plans/applied-insurance-reference-lanes.md) |
