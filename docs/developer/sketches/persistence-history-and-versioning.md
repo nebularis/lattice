@@ -4,7 +4,7 @@
 
 **Unit:** [`formal-methods-track-h`](../status/formal-methods-track-h.md), the patch-log half of H2.6b and H2.10, held for this sketch
 on 2026-10-14 (H-D33)
-**Status:** draft for the maintainer, 2026-10-14. Questions VH-Q1 to VH-Q7 are open
+**Status:** draft for the maintainer, 2026-10-14. Questions VH-Q1 to VH-Q7 are open. VH-Q7 researched 2026-10-14 (§6.1)
 **Touches:** Foundation's versioning, Behaviour's runtime records, Wording's references by identity
 ([ADR-A112 addendum](../../architecture/decisions/ADR-A112-wording-layer.md#addendum-2026-10-06-references-by-identity)),
 the bi-temporal model ([ADR-A67](../../architecture/decisions/ADR-A67-bi-temporal-model.md)), the receipt models of
@@ -93,9 +93,11 @@ on the terms.
 | C. a new quote version pinning new member versions | about 80, nothing removed | in the data | follow the current pointer | the version current at t |
 | D. a new version of the smallest versioned node, members named by identity, the root's manifest fixing versions | the changed node plus one manifest entry per member | in the data | resolve through the manifest | the manifest current at t |
 
-B is what the composite strategy does today if the quote sits in the tower's aggregate. A medium programme's tower holds about 9,600 quote
-triples (8 layers, 15 carriers, 80 triples), and TD-42's sweep fills about M × N of them per write, so roughly 92 million template fills
-for a one-value change, and about 19,000 once TD-42 is fixed. A requote in its own aggregate, written by appending, writes about 80.
+B is what the composite strategy does today if the quote sits in the tower's aggregate. No new nodes are created. The whole tower is
+deleted and written back. A medium programme's tower holds about 9,600 quote triples (8 layers, 15 carriers, 80 triples), so a
+one-value change rewrites about 19,200 triples (9,600 out, 9,600 back), and TD-42's quadratic sweep makes that roughly 92 million template
+fills today. C, with the quote in its own aggregate, adds one quote version of about 80 triples and touches nothing else. A writes 2.
+Clarified 2026-10-14: an earlier wording read as if the 19,000 were new nodes under C.
 
 ### 4.2 Where the quote belongs
 
@@ -198,18 +200,144 @@ The maintainer suspects Behaviour's different approach has a reason, to be resea
 | occasion occupancies | derived artefacts, `prov:wasDerivedFrom` their read set (law B1) | derived, so provenance, not succession |
 | allowance accounts | a new record per change, `prov:wasDerivedFrom` the last and the execution, no shared identity | the odd one out: a balance is a state of a continuant, the account |
 
-Hypothesis. The split between versions and records is principled: a version is a state of something that persists, and a record is
-something that happened. The allowance account is the case to examine, since it is a persisting thing's state written as a chain of
-derivations. Options to research:
+### 6.1 Research, 2026-10-14
 
-| Option | Says |
-|---|---|
-| (a) keep, and state the principle in Behaviour's README: records are never versioned, derived state is a `fnd:DerivedArtefact` chained by `prov:wasDerivedFrom` | the account record is typed as a derived artefact, and current is the latest by recording time |
-| (b) the account becomes versions of an account identity | current is a pointer, as VH-Q4 (a). Loses the derivation's read set unless kept as well |
-| (c) both: an account record is a version of the account and a derived artefact | `fnd:Version` and `fnd:DerivedArtefact` are not disjoint, so this is allowed. Succession and provenance each recorded once |
+Sources read: ADR-A08 (the four tiers), ADR-A92 (derived artefacts), ADR-A106 decision 5, the nested-states sketch §4, the
+[evaluation-context sketch](evaluation-context.md) §5, §8 and §9 (unplanned since 2026-10-02), the examples `ordered-draws.ttl` and
+`sequential-allowance.ttl`, and `bhv:AllowanceAccountShape`.
 
-The research reads the nested-states sketch, CCS C11 and C12 plans and ADR-A92 for why the ledger was written this way, and checks the
-evaluator's reads (law B8) against each option.
+**Finding 1. Behaviour has three disciplines, and each has a reason.**
+
+| Discipline | Behaviour's members | Why not versions |
+|---|---|---|
+| authored and edited, so **versions** | configuration | it is what versions are for |
+| something that happened, so an **immutable record** | stimuli, executions, act and exercise records, state occupancies | an occurrence has no later state. A resumed state is a new occupancy, never a reopened one (nested-states §4) |
+| computed from records, so a **derived artefact** | occasion occupancies (law B1), and in practice the allowance balances | a judgement is evaluated from facts, never authored (AGENTS.md, "Modelling"). Its provenance is its read set, which can span several accounts |
+
+**Finding 2. A balance is computed state, and its order is the stimulus log's.** The evaluation-context sketch makes the ledger at
+position p + 1 a function of the ledger at p and the pass at p + 1 (§8), positions come from the stimulus log because the engine never
+reads a clock (law B3), and the Datalog form is `balance(Account, V, p)` (§9). A sequential pass adds micro-positions (p, i) in priority
+order. So a balance record is keyed by its account and its position, and the log order already orders it. Because positions are log
+order, which only grows, a late stimulus takes a later position, and the balance at an earlier position is never recomputed. That is
+why no succession link is needed (a hypothesis, holding while law B3 and the evaluation-context design stand).
+
+**Finding 3. `prov:wasDerivedFrom` carries what `fnd:supersededBy` cannot.** In `ordered-draws.ttl` the alert draw's guard reads the seat
+bundle as the seat draw left it, so `alerts-1` derives from `alerts-0`, from the execution and from `bundle-2`, another account. Succession
+links one identity's states. A read set crosses identities.
+
+```mermaid
+flowchart LR
+  B1["bundle-1<br/>seats 2"] --> B2["bundle-2<br/>seats 1"]
+  X2["seat draw, pass 2"] --> B2
+  A0["alerts-0<br/>quota 3"] --> A1["alerts-1<br/>quota 2"]
+  B2 -- "the guard read it" --> A1
+  XA["alert draw, pass 2"] --> A1
+```
+
+Arrows are `prov:wasDerivedFrom`, from source to derived record. Under versions, `bundle-2` would succeed `bundle-1` and `alerts-1`
+would succeed `alerts-0`, and the edge from `bundle-2` to `alerts-1`, the reason the alert fired, would have nowhere to go.
+
+**Finding 4. The account record is under-keyed.** Three gaps, each a gap between a stated design and the model:
+
+1. `bhv:AllowanceAccount` is not typed `fnd:DerivedArtefact`, although its examples treat it as one and occasion occupancies are (B1).
+2. A record names no owner and no position. The shape requires only `bhv:tracksAllowance` and `bhv:availableBalance`. The
+   evaluation-context sketch says a ledger belongs to a persistent identity, as regime state does (ADR-A106 decision 5). Two licences on
+   one allowance definition write records nobody can tell apart, and "current" can be read only from `fnd:recordedAt`, which is
+   recording time, not the log position.
+3. The name `AllowanceAccount` is used for a balance at a position. The account itself, the thing with an identity, has no node. The
+   evaluation-context sketch's EC-Q2, whether allowances become ledger accounts, is the open question that would settle this.
+
+The balances in the examples are blank nodes. Persistence writes no blank node (guide Chapter 5), so a balance quantity needs a minted
+IRI before it is stored.
+
+### 6.2 Options, revised
+
+| Option | Says | Consequences |
+|---|---|---|
+| (a) **keep the three disciplines, and key the balance** | state the disciplines in Behaviour's README. A balance record is a `fnd:DerivedArtefact`, names its account's owner (a persistent identity) and its position, and keeps its read set in `prov:wasDerivedFrom`. Current is the record at the greatest position | matches the evaluation-context sketch and B3. About 2 more triples a record (owner, position). Each draw writes one record, append-only, so persistence writes it as a record-append family. A breaking change to Behaviour (ADR-A113), smaller if EC-Q2 decides it |
+| (b) the balance becomes versions of an account identity | `fnd:hasIdentity` and `fnd:supersededBy` per record | loses the cross-account read set unless `prov:wasDerivedFrom` is kept too. Treats a computed value as authored, against the modelling rule. Within one pass, succession repeats the micro-position order |
+| (c) both | allowed, since `fnd:Version` and `fnd:DerivedArtefact` are not disjoint | succession duplicates the position order at 2 triples a record, and invites a reader to edit a computed value as a version |
+
+**Leaning (a)**, revised by §6.4. Behaviour is right to differ: what persistence calls "versioning" is one of three disciplines, and the
+sketch's §5 should be read as "a versioned family" for the first, "a record family" for the other two. Finding 4 is input to EC-Q2, not a
+change this sketch makes.
+
+### 6.4 The roadmap, 2026-10-14
+
+At the maintainer's request, before deciding anything for Behaviour, we read the planned and sketched work that touches the same
+ground: the CCS plan, status and held questions, the evaluation-context, contract-amounts, reference-evaluator and terms-in-time
+sketches, the capacity design and its execution profile, the AIR plans for Phases 5 and 6, the platform's phase 3 plan, the pending
+design decisions and the debt register.
+
+**Each need already has a home.**
+
+| Need | Where it is planned or sketched | State |
+|---|---|---|
+| an account with an identity, keyed balances, a ledger of accounts on a tree, debits by path | [evaluation-context](evaluation-context.md) §5 and EC-Q2 ("generalising allowances into ledger accounts … at the cost of a breaking change to Behaviour"), [contract-amounts](contract-amounts.md) §3 items 1, 4, 8 | unplanned, and "comes back in" at CCS C12 (a pass as a run of the context), C13 and AIR Phase 5, which "should not start its contract module without this designed" |
+| the balance at a position as a function of the previous one and the pass | evaluation-context §8, §9. [Reference evaluator](reference-evaluator.md) laws RE2 (a pass commits whole) and RE4 | sketched. RE2 and RE4 are conformance laws for formal-methods tracks B and E |
+| repairing Behaviour's allowance contract: effect, application, definition, account | the [capacity design](../../architecture/capacity-domain-analysis-and-design.md) §12, Phase 0, whose exit criterion is "one unambiguous Behaviour contract for consuming a declared allowance and updating a tracked balance" | no unit. Capacity's source ontology (`cap:`) is designed, not authored, and AIR does not author it before Phase 5 |
+| a capacity resource as the persistent thing a balance belongs to | `cap:CapacityResource`, linked by `cap:hasCapacityAccount` to "the balance record" | designed, not authored |
+| a current balance for the hot path | `capx:ExecutableBalance`, one per resource (`capx:balanceRef` is functional), updated in place with its own `capx:balanceVersion` token and `capx:lastUpdatedAt` ([ADR-A-CAP1](../../architecture/decisions/ADR-A-CAP1-capacity-runtime-projection-profile_Version2.md), Proposed) | authored, 0.10.0, a projection materialised from the source |
+| an instance stores only what differs, generated nodes shared by content address | CCS C7c D1 to D5, decided. CCS C16b builds the sharing, its cache and invalidation (TD-19) | planned, required before CCS closes |
+| a record that cites exactly the data it saw | AIR-6.1: `sbm:Submission` is versioned and cites an exposure set *version*, "so an insurer's quote always refers to the data it saw". `sbm:InformationGap` is a derived artefact | briefed, in AIR's current trip |
+| the quote and its firming, placements split across policies | CCS HQ-1 (a proposal arriving as data, without words), HQ-7 (several instruments covering portions of one order), AIR-6.1's `sbm:Approach` with status `Quoted`, insurml-alignment Phase 5 (placement records) | held questions and later phases. `NegotiationThread` appears only in the workload note |
+| `fnd:Version` renamed `fnd:Versioned` | TD-20, "a Foundation maintenance unit, planned with its full cascade" | unplanned |
+| the engine that writes Behaviour's runtime records | the platform's [phase 3 plan](../plans/phase-3-plan.md): the behaviour engine loads configuration and writes stimuli, executions, occupancies and records | rolling-wave placeholder |
+
+```mermaid
+flowchart LR
+  subgraph here["this sketch, persistence"]
+    WD["three write disciplines"]
+  end
+  subgraph ccs["CCS and its sketches"]
+    EC["evaluation context<br/>ledger, EC-Q2"]
+    C12["C12 runtime evaluator"]
+    C16b["C16b sharing by<br/>content address"]
+  end
+  subgraph air["AIR and capacity"]
+    P5["Phase 5 contract module"]
+    CAP["capacity Phase 0<br/>repair the allowance contract"]
+    CAPX["capx current balance<br/>in place, versioned token"]
+    S61["AIR-6.1 submission<br/>pins a version"]
+  end
+  EC --> C12
+  EC --> P5
+  CAP --> P5
+  CAPX -. "a projection of" .-> EC
+  WD -. "serves" .-> C12
+  WD -. "serves" .-> CAPX
+  WD -. "serves" .-> S61
+  C16b -. "the same principle as VH-Q2" .-> WD
+```
+
+**What this changes.**
+
+1. **Behaviour should not change in Track H.** The account's identity and keying (finding 4) is EC-Q2's to decide, and EC-Q2 comes back
+   at CCS C12 and AIR Phase 5, where capacity's Phase 0 needs the same answer. Changing `bhv:AllowanceAccount` here would pre-empt both. Our
+   finding 4 is input to EC-Q2, not a change of our own.
+2. **The word "account" is open.** The evaluation-context sketch says "ledger account", capacity says "resource" with an "account",
+   and the maintainer asks for a less domain-bearing word. That choice belongs with EC-Q2 too.
+3. **The three disciplines are confirmed across the roadmap.** AIR-6.1 versions its submission, records its approaches, and derives its
+   information gaps. Capacity versions its dependencies and rules, records its demands and draws, and projects a current balance.
+4. **Two balance forms coexist, by design.** Behaviour's records hold the history, and capacity's `capx:ExecutableBalance` is the current
+   value for the hot path, which is ADR-A67's two-path split. The projection is an in-place family. Its `capx:balanceVersion` is an
+   optimistic-concurrency token of its own, which a persistence profile's version row already provides. That is input to VH-Q5.
+5. **VH-Q2 needs a refinement.** References by identity hold inside content (ADR-A112), but a record that must cite exactly what it saw
+   pins a version: the assembled wording pins its elements, and AIR-6.1's submission pins its exposure set. So the rule is "by identity
+   inside content, pinned at the root and wherever a record is evidence of what was seen".
+6. **CCS C16b is where "point, do not copy" is already decided** for generated meaning (TD-19). VH-Q2 should cite it rather than restate it.
+7. **TD-20 and VH-Q3 touch the same term.** A Foundation unit renaming `fnd:Version` is the natural moment for any change VH-Q3 makes
+   that touches Foundation, and the reason VH-Q3 leans away from importing Foundation into persistence.
+
+### 6.3 What this changes for persistence
+
+Persistence needs three write disciplines, not two, which VH-Q4 and VH-Q5 should name:
+
+| Discipline | Persistence write | History |
+|---|---|---|
+| versions | append a version, move the identity's current pointer (VH-Q4) | in the data |
+| records, occurrences and derived artefacts | append only, never replace, keyed by what they are about and their position | in the data. Derived records can be regenerated from the records they derive from, so retention may treat them as a cache |
+| in place | replace, as today | a storage log, if wanted (VH-Q5) |
 
 ## 7. Out of scope here
 
@@ -223,12 +351,12 @@ evaluator's reads (law B8) against each option.
 | # | Question | Leaning |
 |---|---|---|
 | VH-Q1 | where history lives (§5.1) | (a), domain history in the data |
-| VH-Q2 | how versions refer to each other (§5.2) | (a), ADR-A112's rule generalised |
+| VH-Q2 | how versions refer to each other (§5.2) | (a), ADR-A112's rule generalised, refined by §6.4 point 5: by identity inside content, pinned at the root and wherever a record is evidence of what was seen |
 | VH-Q3 | how persistence learns a class is versioned (§5.3) | (b), a persistence declaration with a warning shape |
 | VH-Q4 | the write for a versioned family (§5.4) | (a), append and move a current pointer on the identity's row |
 | VH-Q5 | what remains of the receipt models (§5.5) | the table in §5.5 |
 | VH-Q6 | retention of superseded versions (§5.6) | never prune a version a retained version references |
-| VH-Q7 | Behaviour's versioning (§6) | research first, then (a) or (c) |
+| VH-Q7 | Behaviour's versioning (§6) | researched 2026-10-14 (§6.1, §6.4). Behaviour's three disciplines are right. The keying of a balance is EC-Q2's, at CCS C12 and AIR Phase 5, so no change to Behaviour here |
 
 Answers decide whether the patch log is built as planned in H2.6b's held half, rebuilt as an append write for versioned families, or
 narrowed to in-place data, and what H2.10 builds. An ADR follows the answers, since VH-Q1 and VH-Q3 change how persistence relates to

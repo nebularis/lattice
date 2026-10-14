@@ -57,8 +57,8 @@ section below.
    which stays a draft until then.
 2. **Meanwhile, locally,** the maintainer reviews the [history and versioning sketch](../sketches/persistence-history-and-versioning.md),
    VH-Q1 to VH-Q7, and we work on the design changes it leads to. VH-Q7 needs research first.
-3. **Before H2.7 and H2.8 branch**, the maintainer decides whether H2.7 waits for VH-Q1, Q3 and Q5, so the vocabulary is published once,
-   and answers H2.7-Q1 to Q4
+3. **H2.7 waits for VH-Q1, Q3 and Q5** (H-D34), so the vocabulary is published once. Before H2.7 and H2.8 branch, the maintainer
+   answers H2.7-Q1 to Q4
    ([§4.7](../plans/formal-methods-track-h.md#47-h27-the-vocabulary-and-the-compilers-emission-planned-2026-10-14)) and H2.8-Q1 to Q3
    ([§4.8](../plans/formal-methods-track-h.md#48-h28-the-typed-payload-and-the-caller-side-checks-planned-2026-10-14)). They follow H2.6b in
    turn, each from `main` after the previous one merges (H-D32). H2.7 owes release tags for `persistence` and `persistence-shapes` 0.4.0.
@@ -152,6 +152,7 @@ section below.
 | H-D31 | H2.6-RQ6, the patch content of a patch log | **decided 2026-10-14: B**, recorded in the same update, built in H2.6b |
 | H-D32 | the order of the remaining H2 slices | **decided 2026-10-14**: H2.6b, H2.7, H2.8, on the cloud agent |
 | H-D33 | H2.6b's patch-log half, and H2.10 | **decided 2026-10-14**: held for the [history and versioning sketch](../sketches/persistence-history-and-versioning.md). H2.6b ships its event half |
+| H-D34 | whether H2.7 waits for the history and versioning sketch | **decided 2026-10-14**: H2.7 waits for VH-Q1, VH-Q3 and VH-Q5, so the `persistence` vocabulary is published once |
 | H2.6b-Q1 to Q5 | which writes log patches, who names the delta graphs, the snapshot model, events per request, the digest parts | **decided** 2026-10-14, (a) for Q1 to Q3 and Q5, (c) for Q4, the guide's batch. Q3's warning covers both receipt models while the patch log is held (H-D33). Q1 and Q2 are held with the patch-log half |
 | H2.7-Q1 to Q4, H2.8-Q1 to Q3 | the remaining questions of the plans (plan §4.7, §4.8) | **open**, the maintainer. Leanings (a) |
 | VH-Q1 to VH-Q7 | history, versions and the receipt models ([sketch §8](../sketches/persistence-history-and-versioning.md#8-questions-for-the-maintainer)) | **open**, the maintainer. VH-Q7 needs research first |
@@ -642,4 +643,16 @@ section below.
   guards, so H2.8 gains a `Rows` type beside `Payload`.
 - 2026-10-14: the maintainer approved H2.6b's event half and marked it complete, re-approved its six regenerated expected profiles and
   countersigned the change to `test_ho6_t14` under the non-weakening rule. The ADR-A123 addendum stays a draft until accepted.
+- 2026-10-14: the maintainer decided H2.7 waits for VH-Q1, Q3 and Q5 (H-D34), and asked for the VH-Q7 research on Behaviour's versioning,
+  on this branch.
+- 2026-10-14: VH-Q7 researched ([sketch §6.1](../sketches/persistence-history-and-versioning.md#61-research-2026-10-14)). Behaviour has three
+  disciplines, each with a reason: versions for authored configuration, immutable records for what happened, derived artefacts for what is
+  computed. A balance is computed per stimulus-log position (evaluation-context sketch, law B3), and its read set crosses accounts, which
+  succession cannot carry. Leaning (a). The account record is under-keyed: not typed a derived artefact, no owner, no position. Persistence
+  needs three write disciplines, not two.
+- 2026-10-14: at the maintainer's request, widened VH-Q7 to the roadmap ([sketch §6.4](../sketches/persistence-history-and-versioning.md#64-the-roadmap-2026-10-14)).
+  The account's identity and keying belong to the evaluation-context sketch's EC-Q2, which comes back at CCS C12 and AIR Phase 5, and
+  capacity's Phase 0 needs the same answer. So no change to Behaviour in Track H. Capacity's `capx:ExecutableBalance` is an in-place
+  current balance with its own version token, a projection beside Behaviour's records. AIR-6.1 pins an exposure set version as evidence,
+  which refines VH-Q2. CCS C16b already decides "point, do not copy" for generated meaning. Nothing decided.
 
